@@ -1,0 +1,4 @@
+[submodule "symbiote"]
+	path = symbiote
+	url = git@github.com:uploadcare/symbiote.js.git
+	branch = main

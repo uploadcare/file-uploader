@@ -1,0 +1,15 @@
+{
+  "name": "sw-manager",
+  "version": "0.0.1",
+  "description": "Common management for Service Worker handlers",
+  "main": "sw-manager.js",
+  "scripts": {
+    "test": "test"
+  },
+  "keywords": [
+    "Service",
+    "Worker"
+  ],
+  "author": "Uploadcare inc.",
+  "license": "MIT"
+}
