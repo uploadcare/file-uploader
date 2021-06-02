@@ -1,10 +1,15 @@
+function generateSwKey() {
+  return [...btoa(Date.now().toString()).replaceAll('=', '')].sort().join('');
+}
+
 /**
  * 
  * @param {String} swPath 
  * @param {String} scope 
- * @returns {Promise<ServiceWorker>}
+ * @param {String} [key]
+ * @returns {Promise<String>}
  */
-export function registerSw(swPath, scope) {
+export function registerSw(swPath, scope, key = generateSwKey()) {
   let swState = 'activated';
   return new Promise(async (resolve, reject) => {
     if (!navigator.serviceWorker) {
@@ -16,11 +21,17 @@ export function registerSw(swPath, scope) {
     });
     let swr = await navigator.serviceWorker.ready;
     if (swr.active.state === swState) {
-      resolve(swr.active);
+      swr.active.postMessage({
+        setKey: key,
+      });
+      resolve(key);
     } else {
       swr.active.onstatechange = () => {
         if (swr.active.state === swState) {
-          resolve(swr.active);
+          swr.active.postMessage({
+            setKey: key,
+          });
+          resolve(key);
         }
       }
     }
@@ -29,10 +40,30 @@ export function registerSw(swPath, scope) {
 
 /**
  * 
- * @param {ServiceWorker} sw
- * @param {'fetch' | 'message' | 'activate'} eventType 
- * @param {Function} handler 
+ * @param {(swCtx: ServiceWorkerGlobalScope, sharedCtx: {string: *}) => *} swFunction
+ * @param {String} key
  */
-export function registerHandler(sw, eventType, handler) {
+export function callSwFunction(swFunction, key) {
+  navigator.serviceWorker.controller.postMessage({
+    key,
+    fnStr: swFunction.toString(),
+  });
+}
 
+/**
+ * 
+ * @param {String} eventType 
+ * @param {String} id 
+ * @param {(eventObj, swCtx: ServiceWorkerGlobalScope, sharedCtx: {string: *}) => *} handler 
+ * @param {String} key
+ */
+export function registerHandler(eventType, id, handler, key) {
+  navigator.serviceWorker.controller.postMessage({
+    key,
+    registerHandler: {
+      id,
+      type: eventType,
+      handler: handler.toString(),
+    },
+  });
 }
