@@ -23,7 +23,7 @@ self.addEventListener('message', (e) => {
     Object.assign(sharedCtx, msg.sharedCtx);
   }
   if (msg.fnStr && msg.fnStr.constructor === String) {
-    /** @type {(swCtx, sharedCtx: {string: *}) => *} */
+    /** @type {(swCtx, sharedCtx: Object<string, *>) => *} */
     let fn = new Function('return ' + msg.fnStr)();
     fn(self, sharedCtx);
   }

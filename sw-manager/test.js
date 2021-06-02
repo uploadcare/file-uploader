@@ -1,16 +1,21 @@
-import {registerSw, callSwFunction, registerHandler} from './sw-manager.js';
+import {registerSw, callSwFunction, registerHandler, publishSharedCtx} from './sw-manager.js';
 
 let swKey = await registerSw('./sw.js', './');
+
+publishSharedCtx({
+  myProp: 'some value',
+}, swKey);
 
 callSwFunction((ctx, shared) => {
   console.log('Hello from Service Worker!');
   console.log(ctx);
   console.log(shared);
 
-  // You cannot add 'fetch' listener from here.
-  // This will not work:
+  // You cannot add first 'fetch' listener from here.
+  // This will work only if SW already have 'fetch' listener.
+  // Yes, that's strange... (checked in Chrome)
   ctx.addEventListener('fetch', (e) => {
-    // console.log(e);
+    console.log(shared.myProp);
   });
 }, swKey);
 

@@ -40,7 +40,7 @@ export function registerSw(swPath, scope, key = generateSwKey()) {
 
 /**
  * 
- * @param {(swCtx: ServiceWorkerGlobalScope, sharedCtx: {string: *}) => *} swFunction
+ * @param {(swCtx: ServiceWorkerGlobalScope, sharedCtx: Object<string, *>) => *} swFunction
  * @param {String} key
  */
 export function callSwFunction(swFunction, key) {
@@ -54,7 +54,7 @@ export function callSwFunction(swFunction, key) {
  * 
  * @param {String} eventType 
  * @param {String} id 
- * @param {(eventObj, swCtx: ServiceWorkerGlobalScope, sharedCtx: {string: *}) => *} handler 
+ * @param {(eventObj, swCtx: ServiceWorkerGlobalScope, sharedCtx: Object<string, *>) => *} handler 
  * @param {String} key
  */
 export function registerHandler(eventType, id, handler, key) {
@@ -67,3 +67,15 @@ export function registerHandler(eventType, id, handler, key) {
     },
   });
 }
+
+/**
+ * 
+ * @param {Object<string, *>} sharedCtx 
+ * @param {String} key 
+ */
+export function publishSharedCtx(sharedCtx, key) {
+  navigator.serviceWorker.controller.postMessage({
+    key,
+    sharedCtx,
+  });
+};
