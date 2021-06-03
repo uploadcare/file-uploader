@@ -1,0 +1,22 @@
+{
+  "name": "deployer",
+  "version": "0.0.1",
+  "type": "module",
+  "description": "Uploadcare web publishing tool",
+  "main": "deployer.js",
+  "scripts": {
+    "test": "test"
+  },
+  "keywords": [
+    "node",
+    "uploadcare",
+    "hosting"
+  ],
+  "author": "Uploadcare inc.",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^15.9.0",
+    "form-data": "^4.0.0",
+    "node-fetch": "^2.6.1"
+  }
+}

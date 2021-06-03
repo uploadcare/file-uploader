@@ -54,7 +54,7 @@ export function callSwFunction(swFunction, key) {
  * 
  * @param {String} eventType 
  * @param {String} id 
- * @param {(eventObj, swCtx: ServiceWorkerGlobalScope, sharedCtx: Object<string, *>) => *} handler 
+ * @param {(eventObj: FetchEvent, swCtx: ServiceWorkerGlobalScope, sharedCtx: Object<string, *>) => *} handler 
  * @param {String} key
  */
 export function registerHandler(eventType, id, handler, key) {
