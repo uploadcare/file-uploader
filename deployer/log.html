@@ -1,0 +1,37 @@
+<style>
+  body {
+    font-family: sans-serif;
+  }
+  tr:nth-child(odd) {
+    background-color: #eee;
+  }
+  tr[stable] {
+    font-weight: bold;
+  }
+  td {
+    padding: 6px;
+  }
+</style>
+<script>
+  async function renderLog() {
+    let log = await (await fetch('https://uc-uploader-next.web.app/log.json')).json();
+    let table = document.createElement('table');
+    Object.keys(log).reverse().forEach((deplId) => {
+      let deplMeta = log[deplId].__META__;
+      let url = `https://uc-uploader-next.web.app/?uuid=${deplId}`;
+      let tr = document.createElement('tr');
+      if (deplMeta.isStable) {
+        tr.setAttribute('stable', '');
+      }
+      tr.innerHTML = /*html*/ `
+        <td>${deplMeta.isStable ? 'STABLE' : 'WIP'}</td>
+        <td>${deplMeta.date}</td>
+        <td><a href="${url}">${url}</a></td>
+        <td>${deplMeta.message}</td>
+      `;
+      table.appendChild(tr);
+    });
+    document.body.appendChild(table);
+  }
+  renderLog();
+</script>

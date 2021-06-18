@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="style-src 'self'; script-src 'self';">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Upload Blocks</title>
+  <script src="./test.js" type="module"></script>
+</head>
+<body>
+  <shadow-wrapper hidden css-src="./test.css">
+    <upload-source-select 
+      multiple 
+      accept="jpg, png, gif, webp" 
+      btn-txt="Upload from:"
+      ctx-name="uploader-1">
+        <option value="local">📁 Local files</option>
+        <option value="camera">📷 Use camera</option>
+        <option value="url">🌐 URL</option>
+    </upload-source-select>
+    <modal-win ctx-name="uploader-1">
+      <camera-source ctx-name="uploader-1"></camera-source>
+      <url-source ctx-name="uploader-1"></url-source>
+      <upload-list 
+        ctx-name="uploader-1"
+        pubkey="demopublickey"
+        btn-txt="📤 Upload all"
+        modal-caption-txt="Selected:"></upload-list>
+      <image-viewer ctx-name="uploader-1"></image-viewer>
+      <message-container ctx-name="uploader-1"></message-container>
+    </modal-win>
+  </shadow-wrapper>
+  <upload-output ctx-name="uploader-1"></upload-output>
+</body>
+</html>
