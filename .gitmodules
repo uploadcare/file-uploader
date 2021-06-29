@@ -2,3 +2,7 @@
 	path = symbiote
 	url = git@github.com:uploadcare/symbiote.js.git
 	branch = main
+[submodule "re4ma"]
+	path = re4ma
+	url = https://github.com/foxeyes/Re4ma.git
+	branch = master
