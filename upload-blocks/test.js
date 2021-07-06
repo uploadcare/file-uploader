@@ -1,4 +1,4 @@
-import { ShadowWrapper } from '../ShadowWrapper/ShadowWrapper.js';
+import { ShadowWrapper } from '../shadow-wrapper-element/ShadowWrapper.js';
 import { UploadSourceSelect } from './UploadSourceSelect/UploadSourceSelect.js';
 import { ModalWin } from './ModalWin/ModalWin.js';
 import { UploadList } from './UploadList/UploadList.js';

@@ -1,5 +1,5 @@
 import { AppComponent } from '../AppComponent/AppComponent.js';
-import { UploadClientLight } from '../../lib/UploadClientLight.js';
+import { UploadClientLight } from '../../common-utils/UploadClientLight.js';
 
 export class UrlSource extends AppComponent {
   constructor() {

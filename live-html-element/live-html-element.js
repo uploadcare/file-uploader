@@ -121,6 +121,15 @@ export class LiveHtmlElement extends HTMLElement {
     this._updTimeout = window.setTimeout(() => {
       // @ts-ignore
       this.ref('vp').srcdoc = this.ref('editor').textContent;
+      if (this.hasAttribute('console-output')) {
+        /** @type {Window} */
+        // @ts-ignore
+        let docWin = this.ref('vp').contentWindow;
+        this.ref('vp').onload = () => {
+          console.dirxml(docWin.document.body);
+        };
+      }
+      
     }, 300);
     this._hl();
   }

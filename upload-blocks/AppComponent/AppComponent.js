@@ -1,4 +1,4 @@
-import { State } from '../../../symbiote/core/State.js';
+import { State } from '../../symbiote/core/State.js';
 
 export class AppComponent extends HTMLElement {
   static set template(html) {

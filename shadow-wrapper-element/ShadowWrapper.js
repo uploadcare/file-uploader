@@ -1,5 +1,5 @@
-import { applyStyles } from '../lib/applyStyles.js';
-import { createElement } from '../lib/createElement.js';
+import { applyElementStyles } from '../symbiote/core/css_utils.js';
+import { createElement } from '../common-utils/createElement.js';
 
 const STYLES = {
   display: 'contents',
@@ -73,7 +73,7 @@ export class ShadowWrapper extends HTMLElement {
   attributeChangedCallback(name, oldVal, newVal) {
     this.styleLink.href = newVal;
     this.styleLink.onload = () => {
-      applyStyles(this, STYLES);
+      applyElementStyles(this, STYLES);
       this.removeAttribute('hidden');
       this._notify(ShadowWrapper.EVENT.CSS_READY);
     };

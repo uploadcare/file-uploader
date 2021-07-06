@@ -2,7 +2,6 @@ import http from 'http';
 import url from 'url';
 import fs from 'fs';
 import path from 'path';
-import child from 'child_process';
 
 const MIME_MAP = {
   '.ico': 'image/x-icon',

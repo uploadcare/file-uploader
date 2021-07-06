@@ -1,0 +1,13 @@
+{
+  "name": "localhost",
+  "version": "0.0.1",
+  "description": "",
+  "type": "module",
+  "main": "localhost.js",
+  "scripts": {
+    "test": "test",
+    "start": "node server.js"
+  },
+  "author": "",
+  "license": "MIT"
+}
