@@ -42,8 +42,10 @@ export class AppComponent extends HTMLElement {
     /** @type {Set<(fr: DocumentFragment) => any>} */
     this.tplProcessors = new Set();
     /** @type {Object<string, HTMLElement>} */
-    this.refs = Object.create(null);
+    this.ref = Object.create(null);
     this.allSubs = new Set();
+    this.pauseRender = false;
+    this.readyToDestroy = true;
   }
 
   /**
@@ -67,13 +69,13 @@ export class AppComponent extends HTMLElement {
           isAttr = true;
           prop = prop.replace('@', '');
         }
-        if (!state.has(kv[1])) {
+        if (state && !state.has(kv[1])) {
           state.add(kv[1], undefined);
         }
         subs.add(
           state.sub(kv[1], (val) => {
             if (isAttr) {
-              if (val.constructor === Boolean) {
+              if (val?.constructor === Boolean) {
                 val ? el.setAttribute(prop, '') : el.removeAttribute(prop);
               } else {
                 el.setAttribute(prop, val);
@@ -109,30 +111,112 @@ export class AppComponent extends HTMLElement {
     return this.ctxName ? State.getNamedCtx(this.ctxName) || State.registerNamedCtx(this.ctxName, this.__appSateInit || {}) : null;
   }
 
+  __initState() {
+    if (!this.localState) {
+      this.localState = State.registerLocalCtx(this.__localStateInitObj || {});
+    }
+  }
+
   connectedCallback() {
-    this.localState = State.registerLocalCtx(this.__localStateInitObj || {});
-    this.addTemplateProcessor((fr) => {
-      [...fr.querySelectorAll('[ref]')].forEach((/** @type {HTMLElement} */ el) => {
-        let refName = el.getAttribute('ref');
-        this.refs[refName] = el;
-        el.removeAttribute('ref');
+    if (this.__disconnectTimeout) {
+      window.clearTimeout(this.__disconnectTimeout);
+    }
+    if (!this.connectedOnce) {
+      this.__initChildren = [...this.children];
+      this.__initState();
+      this.addTemplateProcessor((fr) => {
+        let slot = fr.querySelector('slot');
+        if (!slot) {
+          return;
+        }
+        this.__initChildren.forEach((el) => {
+          slot.parentNode.insertBefore(el, slot);
+        });
+        slot.remove();
       });
-    });
-    this.addTemplateProcessor((fr) => {
-      AppComponent.connectToState(fr, 'sub', this.localState, this.allSubs);
-    });
-    this.addTemplateProcessor((fr) => {
-      AppComponent.connectToState(fr, 'app', this.appState, this.allSubs);
-    });
+      this.addTemplateProcessor((fr) => {
+        [...fr.querySelectorAll('[ref]')].forEach((/** @type {HTMLElement} */ el) => {
+          let refName = el.getAttribute('ref');
+          this.ref[refName] = el;
+          el.removeAttribute('ref');
+        });
+      });
+      this.addTemplateProcessor((fr) => {
+        AppComponent.connectToState(fr, 'sub', this.localState, this.allSubs);
+      });
+      this.addTemplateProcessor((fr) => {
+        AppComponent.connectToState(fr, 'app', this.appState, this.allSubs);
+      });
+      if (!this.pauseRender) {
+        this.render();
+      }
+    }
+    this.connectedOnce = true;
   }
 
   disconnectedCallback() {
-    this.allSubs.forEach((sub) => {
-      sub.remove();
-      this.allSubs.delete(sub);
-    });
-    this.tplProcessors.forEach((fn) => {
-      this.tplProcessors.delete(fn);
-    });
+    if (!this.readyToDestroy) {
+      return;
+    }
+    if (this.__disconnectTimeout) {
+      window.clearTimeout(this.__disconnectTimeout);
+    }
+    this.__disconnectTimeout = window.setTimeout(() => {
+      this.allSubs.forEach((sub) => {
+        sub.remove();
+        this.allSubs.delete(sub);
+      });
+      this.tplProcessors.forEach((fn) => {
+        this.tplProcessors.delete(fn);
+      });
+    }, 100);
   }
+
+  /**
+   * 
+   * @param {String} [tagName] 
+   * @param {Boolean} [isAlias] 
+   */
+  static reg(tagName, isAlias = false) {
+    if (!tagName) {
+      tagName = this.name.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
+    }
+    if (window.customElements.get(tagName)) {
+      console.warn(`${tagName} - is already in custom elements registry`);
+      return;
+    }
+    window.customElements.define(tagName, isAlias ? class extends this {} : this);
+    this.__tag = tagName;
+  }
+
+  static get is() {
+    return this.__tag;
+  }
+
+  /**
+   * 
+   * @param {Object<string, {sub?: Boolean, app?: Boolean, prop?: Boolean}>} desc 
+   */
+  static bindAttributes(desc) {
+    this.observedAttributes = Object.keys(desc);
+    this.__attrDesc = desc;
+  }
+
+  attributeChangedCallback(name, oldVal, newVal) {
+    if (oldVal === newVal) {
+      return;
+    }
+    let desc = this.constructor['__attrDesc'][name];
+    if (desc.sub) {
+      this.__initState();
+      this.localState.add(name, newVal);
+    }
+    if (desc.app) {
+      this.addToAppState({name: newVal});
+    }
+    if (desc.prop) {
+      this[name] = newVal;
+    }
+  }
+
 }

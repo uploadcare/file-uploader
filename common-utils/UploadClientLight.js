@@ -133,7 +133,21 @@ export class UploadClientLight {
         reject(fileId);
       };
       xhr.onload = (e) => {
-        let respJson = JSON.parse(xhr.responseText);
+        let respJson;
+        try {
+          respJson = JSON.parse(xhr.responseText);
+        } catch (e) {
+          fireEvent(
+            new UploadInfo({
+              type: EVENT_TYPES.ERROR,
+              uploadId,
+              progress: 0,
+              error: e,
+            })
+          );
+          reject(fileId);
+          return;
+        }
         let result = new UploadInfo({
           type: EVENT_TYPES.SUCCESS,
           uploadId,

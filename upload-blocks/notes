@@ -1,0 +1,24 @@
+* file-item
+* progress-bar
+* upload-list
+* modal-win
+* upload-output/result
+* pre-editor
+* post-editor
+* drop-area
+* img-preview
+* message-box
+* source-select
+* url-source
+* camera-source
+* local-source
+* external-source
+* icon-ui
+* button-ui
+* slider-ui
+* focus-lock
+* resize-sensor
+* qa-tracker
+* custom-panel
+
+* upload-widget

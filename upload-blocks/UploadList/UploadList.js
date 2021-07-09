@@ -8,10 +8,14 @@ export class UploadList extends AppComponent {
     super();
     this.initLocalState({
       uploadBtnTxt: 'Upload',
-      uploadClicked: () => {
-        [...this.refs.files.querySelectorAll('file-item')].forEach((/** @type {FileItem} */ item) => {
+      cancelBtnTxt: 'Cancel',
+      'on.upload': () => {
+        [...this.ref.files.querySelectorAll('file-item')].forEach((/** @type {FileItem} */ item) => {
           item.upload();
         });
+      },
+      'on.cancel': () => {
+        this.appState.pub('modalActive', false);
       },
     });
     this.addToAppState({
@@ -24,7 +28,7 @@ export class UploadList extends AppComponent {
     super.connectedCallback();
     this.render();
     this.appState.sub('files', (/** @type {File[]} */ files) => {
-      this.refs.files.innerHTML = '';
+      this.ref.files.innerHTML = '';
       if (!files) {
         return;
       }
@@ -37,15 +41,15 @@ export class UploadList extends AppComponent {
           let item = new FileItem();
           item.file = file;
           item.setAttribute('ctx-name', this.getAttribute('ctx-name'));
-          this.refs.files.appendChild(item);
+          this.ref.files.appendChild(item);
         });
         this.filesObserver = new MutationObserver(() => {
-          if (!this.refs.files.childNodes.length) {
+          if (!this.ref.files.childNodes.length) {
             this.appState.pub('listActive', false);
             this.appState.pub('modalActive', false);
           }
         });
-        this.filesObserver.observe(this.refs.files, {
+        this.filesObserver.observe(this.ref.files, {
           childList: true,
         });
       }
@@ -79,14 +83,17 @@ export class UploadList extends AppComponent {
 
   disconnectedCallback() {
     super.disconnectedCallback();
-    this.filesObserver.disconnect();
-    this.filesObserver = null;
+    if (this.filesObserver) {
+      this.filesObserver.disconnect();
+      this.filesObserver = null;
+    }
   }
 }
 
 UploadList.template = /*html*/ `
 <div files-el ref="files"></div>
 <div toolbar-el>
-  <button upload-btn sub="textContent: uploadBtnTxt; onclick: uploadClicked"></button>
+  <button cancel-btn sub="textContent: cancelBtnTxt; onclick: on.cancel"></button>
+  <button upload-btn sub="textContent: uploadBtnTxt; onclick: on.upload"></button>
 </div>
 `;
