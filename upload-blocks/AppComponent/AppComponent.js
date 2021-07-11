@@ -6,25 +6,39 @@ export class AppComponent extends HTMLElement {
     this.__tpl.innerHTML = html;
   }
 
-  /** @param {String | DocumentFragment} [template] */
-  render(template) {
-    while (this.firstChild) {
-      this.firstChild.remove();
-    }
+  /** 
+   * @param {String | DocumentFragment} [template] 
+   * @param {Boolean} [shadow]
+   */
+  render(template, shadow = this.renderShadow) {
     /** @type {DocumentFragment} */
     let fr;
-    if (template?.constructor === DocumentFragment) {
-      fr = template;
-    } else if (template?.constructor === String) {
-      let tpl = document.createElement('template');
-      fr = document.importNode(tpl.content, true);
-    } else {
-      fr = document.importNode(this.constructor['__tpl'].content, true);
+    if (template || this.constructor['__tpl']) {
+      while (this.firstChild) {
+        this.firstChild.remove();
+      }
+      if (template?.constructor === DocumentFragment) {
+        fr = template;
+      } else if (template?.constructor === String) {
+        let tpl = document.createElement('template');
+        fr = document.importNode(tpl.content, true);
+      } else if (this.constructor['__tpl']) {
+        fr = document.importNode(this.constructor['__tpl'].content, true);
+      }
+      this.tplProcessors.forEach((fn) => {
+        fn(fr);
+      });
     }
-    this.tplProcessors.forEach((fn) => {
-      fn(fr);
-    });
-    this.appendChild(fr);
+    if (shadow) {
+      if (!this.shadowRoot) {
+        this.attachShadow({
+          mode: 'open',
+        });
+      }
+      fr && this.shadowRoot.appendChild(fr);
+    } else {
+      fr && this.appendChild(fr);
+    }
   }
 
   /** @param {(fr: DocumentFragment) => any} processorFn */
@@ -45,6 +59,7 @@ export class AppComponent extends HTMLElement {
     this.ref = Object.create(null);
     this.allSubs = new Set();
     this.pauseRender = false;
+    this.renderShadow = false;
     this.readyToDestroy = true;
   }
 
@@ -122,18 +137,20 @@ export class AppComponent extends HTMLElement {
       window.clearTimeout(this.__disconnectTimeout);
     }
     if (!this.connectedOnce) {
-      this.__initChildren = [...this.children];
+      this.__initChildren = [...this.childNodes];
       this.__initState();
-      this.addTemplateProcessor((fr) => {
-        let slot = fr.querySelector('slot');
-        if (!slot) {
-          return;
-        }
-        this.__initChildren.forEach((el) => {
-          slot.parentNode.insertBefore(el, slot);
+      if (!this.renderShadow) {
+        this.addTemplateProcessor((fr) => {
+          let slot = fr.querySelector('slot');
+          if (!slot) {
+            return;
+          }
+          this.__initChildren.forEach((el) => {
+            slot.parentNode.insertBefore(el, slot);
+          });
+          slot.remove();
         });
-        slot.remove();
-      });
+      }
       this.addTemplateProcessor((fr) => {
         [...fr.querySelectorAll('[ref]')].forEach((/** @type {HTMLElement} */ el) => {
           let refName = el.getAttribute('ref');

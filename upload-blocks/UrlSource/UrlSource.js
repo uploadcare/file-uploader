@@ -6,7 +6,7 @@ export class UrlSource extends AppComponent {
     super();
     this.initLocalState({
       onUpload: async () => {
-        let info = await UploadClientLight.uploadFromUrl(this.refs.input['value'], this.appState.read('pubkey'), this.refs.input['value']);
+        let info = await UploadClientLight.uploadFromUrl(this.ref.input['value'], this.appState.read('pubkey'), this.ref.input['value']);
         let outArr = this.appState.read('uploadOutput');
         outArr.push(info.cdnUrl);
         this.appState.pub('uploadOutput', [...outArr]);
@@ -20,22 +20,24 @@ export class UrlSource extends AppComponent {
   }
 
   connectedCallback() {
-    super.connectedCallback();
-    this.render();
-    this.appState.sub('urlActive', (val) => {
-      if (val) {
-        this.appState.pub('listActive', false);
-        this.appState.pub('modalActive', true);
-        this.appState.pub('modalCaption', 'Upload from URL');
-        this.setAttribute('active', '');
-      } else {
-        this.removeAttribute('active');
-      }
-    });
+    if (!this.hasSubs) {
+      super.connectedCallback();
+      this.appState.sub('urlActive', (val) => {
+        if (val) {
+          this.appState.pub('listActive', false);
+          this.appState.pub('modalActive', true);
+          this.appState.pub('modalCaption', 'Upload from URL');
+          this.setAttribute('active', '');
+        } else {
+          this.removeAttribute('active');
+        }
+      });
+      this.hasSubs = true;
+    }
   }
 }
 
 UrlSource.template = /*html*/ `
-<input type="text" ref="input" />
-<button sub="onclick: onUpload">Upload</button>
+<input placeholder="https://..." -url-input- type="text" ref="input" />
+<button -url-upload-btn- sub="onclick: onUpload"></button>
 `;

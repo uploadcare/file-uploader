@@ -13,14 +13,14 @@ export class ModalWin extends AppComponent {
         this.appState.pub('modalActive', false);
       },
     });
+  }
+
+  connectedCallback() {
     this.addToAppState({
       modalIcon: ICONS.default,
       modalActive: false,
       modalCaption: 'Modal caption',
     });
-  }
-
-  connectedCallback() {
     super.connectedCallback();
     this.appState.sub('modalActive', (val) => {
       val ? this.setAttribute('active', '') : this.removeAttribute('active');

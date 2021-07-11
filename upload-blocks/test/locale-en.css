@@ -1,0 +1,14 @@
+:host {
+  --l10n-upload-files: 'Upload Files';
+  --l10n-powered-by: 'Powered by Uploadcare ©';
+  --l10n-drop-files-here: 'Or drop files here...';
+  --l10n-local-files: 'Local Files';
+  --l10n-from-url: 'From URL';
+  --l10n-camera: 'Camera';
+  --l10n-upload: 'Upload';
+  --l10n-cancel: 'Cancel';
+  --l10n-camera-shot: 'Shot';
+  --l10n-upload-url: 'Import';
+  --l10n-edit-image: 'Edit Image';
+  --l10n-back: 'Back';
+}

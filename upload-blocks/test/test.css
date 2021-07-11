@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@300&display=swap');
+@import url('./locale-en.css');
 
 :host {
   font-family: 'Roboto Condensed', sans-serif;
@@ -6,12 +7,12 @@
   --rgb-1: 6, 2, 196;
   --rgb-2: 255, 255, 255;
   --rgb-txt: 20, 20, 20;
-  --opacity-min: .06;
+  --opacity-min: .1;
   --opacity-mid: .4;
   --opacity-max: .6;
   --ui-size: 38px;
   --ui-radius-1: 12px;
-  --ui-radius-2: 6px;
+  --ui-radius-2: 4px;
   --ui-transition: .2s;
   --ui-shadow: 0 2px 12px rgba(0, 0, 0, .1), 0 2px 4px rgba(0, 0, 0, .03);
   --gap-min: 2px;
@@ -36,7 +37,23 @@
 }
 
 button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
   font-size: 1em;
+  padding-left: 1em;
+  padding-right: 1em;
+  box-sizing: border-box;
+  border: none;
+  height: var(--ui-size);
+  border-radius: var(--ui-radius-2);
+  font-family: inherit;
+  cursor: pointer;
+}
+button[disabled] {
+  pointer-events: none;
+  opacity: var(--opacity-mid);
+  filter: grayscale(0.5);
 }
 
 upload-source-select {
@@ -163,61 +180,58 @@ upload-list {
 upload-list:not([active]) {
   display: none;
 }
-upload-list [files-el] {
+upload-list [-files-el-] {
   display: grid;
 }
-upload-list [toolbar-el] {
+upload-list [-toolbar-el-] {
   display: flex;
   justify-content: space-between;
   padding: var(--gap-mid);
 }
-upload-list [upload-btn] {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border: none;
+upload-list [-upload-btn-] {
   background-color: var(--clr-shade-1);
   color: var(--clr-1);
-  height: var(--ui-size);
-  padding-left: 1em;
-  padding-right: 1em;
-  border-radius: var(--ui-radius-2);
-  font-family: inherit;
-  cursor: pointer;
 }
-upload-list [cancel-btn] {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border: none;
+upload-list [-upload-btn-]::after {
+  content: var(--l10n-upload);
+}
+upload-list [-cancel-btn-] {
   background-color: var(--clr-2);
-  color: var(--clr-1);
-  height: var(--ui-size);
-  padding-left: 1em;
-  padding-right: 1em;
-  border-radius: var(--ui-radius);
-  font-family: inherit;
-  cursor: pointer;
+  color: var(--clr-txt);
+}
+upload-list [-cancel-btn-]::after {
+  content: var(--l10n-cancel);
 }
 
 file-item {
   position: relative;
   display: grid;
   grid-template-columns: min-content auto min-content min-content;
-  height: var(--ui-size);
   transition: var(--ui-transition);
-  padding-right: var(--gap-mid);
+  padding: var(--gap-mid);
   border-bottom: var(--line-width) solid var(--clr-shade-1);
-  box-sizing: border-box;
 }
 file-item:first-of-type {
   border-top: var(--line-width) solid var(--clr-shade-1);
 }
+file-item[focused] {
+  background-color: var(--clr-shade-1);
+}
+file-item[uploading] [-edit-btn-] {
+  display: none;
+}
+file-item[error] {
+  --clr-shade-1: rgba(255, 20, 20, .1);
+}
+
 file-item [-thumb-] {
   display: inline-flex;
   height: var(--ui-size);
   width: var(--ui-size);
   background-color: var(--clr-shade-1);
+  background-size: cover;
+  background-position: center center;
+  border-radius: var(--ui-radius-2);
 }
 file-item [file-name] {
   display: flex;
@@ -254,10 +268,10 @@ file-item [-progress-] {
   left: 0;
   bottom: 0;
   width: 0%;
+  opacity: 1;
   background-color: var(--clr-shade-1);
-  transition: .2s;
+  transition: .6s;
 }
-
 
 url-source:not([active]) {
   display: none;
@@ -284,7 +298,8 @@ drop-area [dropzone] {
   justify-content: center;
   user-select: none;
 }
-drop-area [dropzone] [drop-txt] {
+drop-area [dropzone] [drop-txt]::after {
+  content: var(--l10n-drop-files-here);
   color: var(--clr-1);
   opacity: var(--opacity-mid);
 }
@@ -292,8 +307,8 @@ drop-area [dropzone] [drop-txt] {
 drop-area [dropzone]::after {
   position: absolute;
   bottom: 0;
-  right: 0;
-  content: 'Powered by Uploadcare ©';
+  right: var(--gap-mid);
+  content: var(--l10n-powered-by);
   font-size: 10px;
   color: var(--clr-soft-1);
 }
@@ -307,8 +322,21 @@ source-btn {
   user-select: none;
   cursor: pointer;
 }
+source-btn:last-of-type {
+  border-bottom: none;
+}
 
-source-btn [button] {
+source-btn[type="local"] > [-button-]::after {
+  content: var(--l10n-local-files);
+}
+source-btn[type="camera"] > [-button-]::after {
+  content: var(--l10n-camera);
+}
+source-btn[type="url"] > [-button-]::after {
+  content: var(--l10n-from-url);
+}
+
+source-btn [-button-] {
   display: flex;
   align-items: center;
   height: 100%;
@@ -336,4 +364,106 @@ icon-ui svg {
 }
 icon-ui path {
   fill: currentColor;
+}
+
+activity-mngr {
+  display: contents;
+}
+
+activity-mngr > *:not([active]) {
+  display: none;
+}
+
+url-source {
+  display: grid;
+  grid-template-columns: 1fr min-content;
+  grid-gap: var(--gap-min);
+  padding: var(--gap-mid);
+  padding-top: 0;
+}
+url-source [-url-input-] {
+  display: flex;
+  border: var(--line-width) solid var(--clr-shade-1);
+  height: var(--ui-size);
+  border-radius: var(--ui-radius-2);
+  padding-left: 1em;
+  padding-right: 1em;
+}
+url-source [-url-upload-btn-] {
+  color: var(--clr-1);
+  background-color: var(--clr-shade-1);
+}
+url-source [-url-upload-btn-]::after {
+  content: var(--l10n-upload-url);
+}
+
+camera-source {
+  display: grid;
+  grid-template-rows: min-content min-content;
+}
+camera-source video {
+  display: block;
+  width: 100%;
+  background-color: var(--clr-shade-1);
+}
+camera-source [-toolbar-] {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--gap-mid);
+}
+camera-source [-shot-btn-] {
+  color: var(--clr-1);
+  background-color: var(--clr-shade-1);
+}
+camera-source [-shot-btn-]::after {
+  content: var(--l10n-camera-shot);
+}
+camera-source [-cancel-btn-] {
+  color: var(--clr-1);
+  background-color: var(--clr-2);
+}
+camera-source [-cancel-btn-]::after {
+  content: var(--l10n-cancel);
+}
+
+pre-editor {
+  display: grid;
+  grid-template-rows: min-content min-content;
+}
+
+pre-editor canvas {
+  max-width: 100%;
+  max-height: 500px;
+  object-fit: contain;
+}
+
+pre-editor [-toolbar-] {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--gap-mid);
+}
+
+pre-editor [-edit-btn-]::after {
+  content: var(--l10n-edit-image);
+}
+pre-editor [-back-btn-]::after {
+  content: var(--l10n-back);
+}
+
+simple-btn {
+  display: inline-flex;
+}
+simple-btn button {
+  color: var(--clr-2);
+  background-color: var(--clr-1);
+}
+simple-btn button::after {
+  content: var(--l10n-upload-files);
+}
+
+modal-win drop-area {
+  border-radius: var(--ui-radius-2);
+  margin: var(--gap-mid);
+  margin-top: 0;
+  border: none;
 }

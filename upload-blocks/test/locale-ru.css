@@ -1,0 +1,10 @@
+:host {
+  --l10n-powered-by: 'Технология Uploadcare ©';
+  --l10n-drop-files-here: 'Перетащите файлы сюда...';
+  --l10n-local-files: 'Локальные файлы';
+  --l10n-from-url: 'Скачать по ссылке';
+  --l10n-camera: 'Сделать Фото';
+  --l10n-upload: 'Загрузить';
+  --l10n-cancel: 'Отмена';
+  --l10n-camera-shot: 'Сделать снимок',
+}
