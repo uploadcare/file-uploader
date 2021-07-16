@@ -1,5 +1,3 @@
-import { UID } from '../../symbiote/utils/UID.js';
-
 import { SimpleBtn } from '../SimpleBtn/SimpleBtn.js';
 import { AppComponent } from '../AppComponent/AppComponent.js';
 import { SystemCall } from '../SystemCall/SystemCall.js';
@@ -12,18 +10,22 @@ import { ActivityMngr } from '../ActivityMngr/ActivityMngr.js';
 import { UrlSource } from '../UrlSource/UrlSource.js';
 import { CameraSource } from '../CameraSource/CameraSource.js';
 import { PreEditor } from '../PreEditor/PreEditor.js';
+import { MessageBox } from '../MessageBox/MessageBox.js';
+import { UploadsList} from '../UploadsList/UploadsList.js';
 
-SimpleBtn.reg();
-ActivityMngr.reg();
-SystemCall.reg();
-DropArea.reg();
-SourceBtn.reg();
-FileItem.reg();
-ModalWin.reg();
-UploadList.reg();
-UrlSource.reg();
-CameraSource.reg();
-PreEditor.reg();
+SimpleBtn.reg('simple-btn');
+ActivityMngr.reg('activity-mngr');
+SystemCall.reg('system-call');
+DropArea.reg('drop-area');
+SourceBtn.reg('source-btn');
+FileItem.reg('file-item');
+ModalWin.reg('modal-win');
+UploadList.reg('upload-list');
+UrlSource.reg('url-source');
+CameraSource.reg('camera-source');
+PreEditor.reg('pre-editor');
+MessageBox.reg('message-box');
+UploadsList.reg('uploads-list');
 
 export class WidgetBase extends AppComponent {
 
@@ -35,7 +37,6 @@ export class WidgetBase extends AppComponent {
       'css-src': '',
       ctxName: this.ctxName,
     });
-    this.setAttribute('ctx-name', UID.generate());
   }
 
   connectedCallback() {

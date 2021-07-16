@@ -1,12 +1,12 @@
 import { AppComponent } from '../AppComponent/AppComponent.js';
-import { UploadClientLight } from '../../common-utils/UploadClientLight.js';
+import { uploadFromUrl } from '../../common-utils/UploadClientLight.js';
 
 export class UrlSource extends AppComponent {
   constructor() {
     super();
     this.initLocalState({
       onUpload: async () => {
-        let info = await UploadClientLight.uploadFromUrl(this.ref.input['value'], this.appState.read('pubkey'), this.ref.input['value']);
+        let info = await uploadFromUrl(this.ref.input['value'], this.appState.read('pubkey'), this.ref.input['value']);
         let outArr = this.appState.read('uploadOutput');
         outArr.push(info.cdnUrl);
         this.appState.pub('uploadOutput', [...outArr]);

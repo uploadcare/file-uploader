@@ -1,14 +1,12 @@
 import { AppComponent } from '../AppComponent/AppComponent.js';
 
-export class DropArea extends AppComponent {
-
-}
+export class DropArea extends AppComponent {}
 
 DropArea.template = /*html*/ `
-<div sources>
+<div -sources->
   <slot></slot>
 </div>
-<div dropzone>
-  <div drop-txt></div>
+<div -dropzone->
+  <div -drop-txt-></div>
 </div>
 `;

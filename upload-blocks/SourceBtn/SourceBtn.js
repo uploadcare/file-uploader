@@ -31,6 +31,7 @@ export class SourceBtn extends AppComponent {
       local: () => {
         this.localState.pub('path', ICONS.local);
         this.onclick = () => {
+          this.appState.pub('modalActive', false);
           this.appState.pub('currentActivity', 'upload-list');
           this.appState.pub('modalCaption', 'Selected');
           this.appState.pub('modalIcon', ICONS.local);
@@ -82,7 +83,7 @@ export class SourceBtn extends AppComponent {
 }
 SourceBtn.template = /*html*/ `
 <icon-ui sub="@path: path"></icon-ui>
-<div -button-></div>
+<div -txt-></div>
 `;
 SourceBtn.bindAttributes({
   type: {

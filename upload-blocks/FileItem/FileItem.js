@@ -1,5 +1,5 @@
 import { AppComponent } from '../AppComponent/AppComponent.js';
-import { UploadClientLight } from '../../common-utils/UploadClientLight.js';
+import { uploadFileDirect } from '../../common-utils/UploadClientLight.js';
 import { resizeImage } from '../../common-utils/resizeImage.js'
 
 const ICONS = {
@@ -17,6 +17,7 @@ export class FileItem extends AppComponent {
       'on.edit': () => {
         this.appState.pub('modalCaption', 'Edit file');
         this.appState.pub('focusedFile', this._file);
+        this.appState.pub('prevActivity', 'upload-list');
         this.appState.pub('currentActivity', 'pre-edit');
       },
       'on.remove': () => {
@@ -32,11 +33,14 @@ export class FileItem extends AppComponent {
 
   connectedCallback() {
     super.connectedCallback();
-    this.render();
     this.addToAppState({
       focusedItem: null,
       uploadOutput: [],
+      uploadTrigger: null,
+      uploads: [],
+      errors: [],
     });
+    this.appState.pub('uploadTrigger', null);
     FileItem.activeInstances.add(this);
     this.localState.pub('fileName', this._file?.name || 'Empty');
     if (this._file.type.includes('image')) {
@@ -44,6 +48,12 @@ export class FileItem extends AppComponent {
         this.ref.thumb.style.backgroundImage = `url(${img})`;
       });
     }
+    this.appState.sub('uploadTrigger', (val) => {
+      if (!val) {
+        return;
+      }
+      this.upload();
+    });
     this.onclick = () => {
       FileItem.activeInstances.forEach((inst) => {
         if (inst === this) {
@@ -61,34 +71,32 @@ export class FileItem extends AppComponent {
   }
 
   async upload() {
-    let fileName = this.localState.read('fileName');
     this.removeAttribute('focused');
     this.setAttribute('uploading', '');
-    let uploadId = this.ctxName + ':' + fileName;
-    this._uploadHandler = (e) => {
-      if (e.detail.uploadId !== uploadId) {
-        return;
+    let fileInfo = await uploadFileDirect(this._file, this.appState.read('pubkey'), (info) => {
+      if (info.type === 'progress') {
+        this.ref.progress.style.width = info.progress + '%';
       }
-      // console.log(e.detail);
-      if (e.detail.type === 'progress') {
-        this.ref.progress.style.width = e.detail.progress + '%';
-      }
-      if (e.detail.type === 'success') {
+      if (info.type === 'success') {
         this.ref.progress.style.opacity = '0';
         this.setAttribute('loaded', '');
         this.removeAttribute('uploading');
+        let uploads = this.appState.read('uploads');
+        uploads.push(info);
+        this.appState.pub('uploads', [...uploads]);
       }
-      if (e.detail.type === 'error') {
+      if (info.type === 'error') {
         this.setAttribute('error', '');
+        let errors = this.appState.read('errors');
+        errors.push(this._file);
+        this.appState.pub('errors', [...errors]);
         this.appState.pub('message', {
-          text: 'Eorror',
-          type: 'error',
+          caption: 'Upload error: ' + this._file.name,
+          text: info.error,
+          isError: true,
         });
       }
-    };
-    window.addEventListener('uc-client-event', this._uploadHandler);
-    let fileInfo = await UploadClientLight.uploadFileDirect(this._file, this.appState.read('pubkey'), uploadId);
-    window.removeEventListener('uc-client-event', this._uploadHandler);
+    });
     let outArr = this.appState.read('uploadOutput');
     outArr.push(fileInfo.cdnUrl);
     this.appState.pub('uploadOutput', [...outArr]);
@@ -101,9 +109,6 @@ FileItem.template = /*html*/ `
 <div file-name sub="textContent: fileName"></div>
 <button -edit-btn- sub="onclick: on.edit;">
   <icon-ui path="${ICONS.edit}"></icon-ui>
-</button>
-<button sub="onclick: on.remove;">
-  <icon-ui path="${ICONS.remove}"></icon-ui>
 </button>
 <div ref="progress" -progress-></div>
 `;

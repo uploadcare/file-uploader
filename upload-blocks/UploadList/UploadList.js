@@ -23,10 +23,13 @@ export class UploadList extends AppComponent {
       uploadBtnDisabled: false,
       'on.upload': () => {
         this.localState.pub('uploadBtnDisabled', true);
-        let files = [...this.ref.files.querySelectorAll('file-item')];
-        files.forEach((/** @type {FileItem} */ item) => {
-          item.upload();
-          window.addEventListener('uc-client-event', this._uploadHandler, false);
+        this.appState.pub('uploadTrigger', {});
+        this.appState.sub('uploads', (val) => {
+          let errors = this.appState.read('errors');
+          if ((val?.length + errors.length) === this._files.length) {
+            this.appState.pub('files', []);
+            this.appState.pub('currentActivity', 'uploads-list');
+          }
         });
       },
       'on.cancel': () => {
@@ -44,10 +47,12 @@ export class UploadList extends AppComponent {
     super.connectedCallback();
     this.appState.sub('files', (/** @type {File[]} */ files) => {
       this.ref.files.innerHTML = '';
-      if (!files) {
+      if (!files?.length) {
+        this.appState.pub('modalActive', false);
         return;
       }
       if (files.length) {
+        this._files = files;
         this.localState.pub('uploadBtnDisabled', false);
         // console.log(files);
         files.forEach((file) => {

@@ -4,18 +4,18 @@
 :host {
   font-family: 'Roboto Condensed', sans-serif;
 
-  --rgb-1: 6, 2, 196;
-  --rgb-2: 255, 255, 255;
-  --rgb-txt: 20, 20, 20;
+  --rgb-1: 60, 200, 255;
+  --rgb-2: 25, 25, 25;
+  --rgb-txt: 200, 200, 200;
   --rgb-err: 255, 20, 20;
-  --opacity-min: .1;
-  --opacity-mid: .4;
-  --opacity-max: .6;
+  --opacity-min: .2;
+  --opacity-mid: .6;
+  --opacity-max: .8;
   --ui-size: 38px;
   --ui-radius-1: 12px;
   --ui-radius-2: 4px;
   --ui-transition: .2s;
-  --ui-shadow: 0 2px 12px rgba(0, 0, 0, .1), 0 2px 4px rgba(0, 0, 0, .03);
+  --ui-shadow: 0 2px 12px rgba(0, 0, 0, .3), 0 2px 4px rgba(0, 0, 0, .08), -1px -1px 8px rgba(var(--rgb-1), .6);
   --gap-min: 2px;
   --gap-mid: 10px;
   --gap-max: 20px;
@@ -51,6 +51,7 @@ button {
   border-radius: var(--ui-radius-2);
   font-family: inherit;
   cursor: pointer;
+  white-space: nowrap;
 }
 button[disabled] {
   pointer-events: none;
@@ -171,6 +172,7 @@ modal-win [heading-el] {
   grid-template-columns: min-content 1fr min-content;
   line-height: var(--ui-size);
   padding: var(--gap-mid);
+  color: var(--clr-txt);
 }
 modal-win [caption-el] {
   font-size: 1em;
@@ -252,13 +254,10 @@ file-item:hover [file-name] {
   opacity: 1;
 }
 file-item button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   width: var(--ui-size);
   height: var(--ui-size);
-  border: none;
   background-color: transparent;
+  color: var(--clr-txt);
   cursor: pointer;
 }
 
@@ -266,6 +265,9 @@ file-item [-edit-btn-] {
   opacity: var(--opacity-mid);
 }
 file-item:hover [-edit-btn-] {
+  opacity: 1;
+}
+file-item[focused] [-edit-btn-] {
   opacity: 1;
 }
 file-item [-progress-] {
@@ -445,20 +447,51 @@ pre-editor {
   grid-template-rows: min-content min-content;
 }
 
+pre-editor [-viewport-] {
+  position: relative;
+}
+
+pre-editor [-viewport-] [-meta-editor-] {
+  position: absolute;
+  bottom: var(--gap-mid);
+  left: var(--gap-mid);
+}
+
 pre-editor canvas {
   max-width: 100%;
   max-height: 500px;
   object-fit: contain;
+  background-color: var(--clr-shade-1);
 }
 
 pre-editor [-toolbar-] {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: min-content 1fr min-content min-content;
+  grid-gap: var(--gap-mid);
   padding: var(--gap-mid);
+}
+
+pre-editor [-back-btn-] {
+  background-color: var(--clr-shade-1);
+  color: var(--clr-1);
+  padding-left: 0;
+}
+pre-editor [-remove-btn-] {
+  background-color: var(--clr-err);
+  color: #fff;
+  padding-left: 0;
+}
+pre-editor [-edit-btn-] {
+  background-color: var(--clr-shade-1);
+  color: var(--clr-1);
+  padding-left: 0;
 }
 
 pre-editor [-edit-btn-]::after {
   content: var(--l10n-edit-image);
+}
+pre-editor [-remove-btn-]::after {
+  content: var(--l10n-remove-from-list);
 }
 pre-editor [-back-btn-]::after {
   content: var(--l10n-back);
@@ -468,8 +501,9 @@ simple-btn {
   display: inline-flex;
 }
 simple-btn button {
-  color: var(--clr-2);
-  background-color: var(--clr-1);
+  color: var(--clr-1);
+  background-color: var(--clr-2);
+  padding-left: 0;
 }
 simple-btn button::after {
   content: var(--l10n-upload-files);
@@ -498,7 +532,7 @@ message-box {
   display: grid;
   grid-template-rows: min-content auto;
   background-color: var(--clr-1);
-  color: var(--clr-2);
+  color: #fff;
   transition: .4s;
   border-radius: var(--ui-radius-1);
   box-shadow: var(--ui-shadow);
@@ -523,8 +557,8 @@ message-box [-caption-] {
 }
 message-box [-heading-] button {
   background-color: transparent;
-  color: var(--clr-2);
   width: var(--ui-size);
+  color: currentColor;
 }
 message-box [-msg-] {
   padding: var(--gap-max);
