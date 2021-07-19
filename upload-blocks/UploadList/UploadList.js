@@ -21,6 +21,9 @@ export class UploadList extends AppComponent {
 
     this.initLocalState({
       uploadBtnDisabled: false,
+      'on.add': () => {
+        this.appState.pub('currentActivity', 'source-select');
+      },
       'on.upload': () => {
         this.localState.pub('uploadBtnDisabled', true);
         this.appState.pub('uploadTrigger', {});
@@ -28,7 +31,7 @@ export class UploadList extends AppComponent {
           let errors = this.appState.read('errors');
           if ((val?.length + errors.length) === this._files.length) {
             this.appState.pub('files', []);
-            this.appState.pub('currentActivity', 'uploads-list');
+            this.appState.pub('currentActivity', 'result');
           }
         });
       },
@@ -48,7 +51,6 @@ export class UploadList extends AppComponent {
     this.appState.sub('files', (/** @type {File[]} */ files) => {
       this.ref.files.innerHTML = '';
       if (!files?.length) {
-        this.appState.pub('modalActive', false);
         return;
       }
       if (files.length) {
@@ -78,6 +80,8 @@ UploadList.template = /*html*/ `
 <div -files-el- ref="files"></div>
 <div -toolbar-el->
   <button -cancel-btn- sub="onclick: on.cancel"></button>
+  <div></div>
+  <button -add-more-btn- sub="onclick: on.add; @disabled: uploadBtnDisabled"></button>
   <button -upload-btn- sub="onclick: on.upload; @disabled: uploadBtnDisabled"></button>
 </div>
 `;

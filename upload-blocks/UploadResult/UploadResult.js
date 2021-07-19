@@ -1,6 +1,6 @@
 import { AppComponent } from '../AppComponent/AppComponent.js';
 
-export class UploadOutput extends AppComponent {
+export class UploadResult extends AppComponent {
   connectedCallback() {
     super.connectedCallback();
     this.render();
@@ -8,15 +8,16 @@ export class UploadOutput extends AppComponent {
       uploadOutput: [],
     });
     this.appState.sub('uploadOutput', (/** @type {String[]} */ outArr) => {
-      this.refs.out.innerHTML = '';
+      this.ref.out.innerHTML = '';
+      this.appState.pub('modalCaption', 'Uploaded');
       outArr.forEach((cdnUrl) => {
-        let urlDiv = document.createElement('div');
+        let urlDiv = document.createElement('cdn-item');
         urlDiv.textContent = cdnUrl;
-        this.refs.out.appendChild(urlDiv);
+        this.ref.out.appendChild(urlDiv);
       });
     });
   }
 }
-UploadOutput.template = /*html*/ `
+UploadResult.template = /*html*/ `
 <div ref="out"></div>
 `;

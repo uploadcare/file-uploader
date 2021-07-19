@@ -1,5 +1,5 @@
 import { AppComponent } from '../AppComponent/AppComponent.js';
-import { uploadFileDirect } from '../../common-utils/UploadClientLight.js';
+import { uploadFileDirect, getInfo } from '../../common-utils/UploadClientLight.js';
 import { resizeImage } from '../../common-utils/resizeImage.js'
 
 const ICONS = {
@@ -49,9 +49,10 @@ export class FileItem extends AppComponent {
       });
     }
     this.appState.sub('uploadTrigger', (val) => {
-      if (!val) {
+      if (!val || !this.isConnected) {
         return;
       }
+      console.log(val);
       this.upload();
     });
     this.onclick = () => {
@@ -97,6 +98,7 @@ export class FileItem extends AppComponent {
         });
       }
     });
+    console.log(await getInfo(fileInfo.uuid, this.appState.read('pubkey')));
     let outArr = this.appState.read('uploadOutput');
     outArr.push(fileInfo.cdnUrl);
     this.appState.pub('uploadOutput', [...outArr]);

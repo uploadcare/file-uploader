@@ -11,7 +11,7 @@ import { UrlSource } from '../UrlSource/UrlSource.js';
 import { CameraSource } from '../CameraSource/CameraSource.js';
 import { PreEditor } from '../PreEditor/PreEditor.js';
 import { MessageBox } from '../MessageBox/MessageBox.js';
-import { UploadsList} from '../UploadsList/UploadsList.js';
+import { UploadResult } from '../UploadResult/UploadResult.js';
 
 SimpleBtn.reg('simple-btn');
 ActivityMngr.reg('activity-mngr');
@@ -25,7 +25,7 @@ UrlSource.reg('url-source');
 CameraSource.reg('camera-source');
 PreEditor.reg('pre-editor');
 MessageBox.reg('message-box');
-UploadsList.reg('uploads-list');
+UploadResult.reg('upload-result');
 
 export class WidgetBase extends AppComponent {
 

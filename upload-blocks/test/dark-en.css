@@ -15,7 +15,7 @@
   --ui-radius-1: 12px;
   --ui-radius-2: 4px;
   --ui-transition: .2s;
-  --ui-shadow: 0 2px 12px rgba(0, 0, 0, .3), 0 2px 4px rgba(0, 0, 0, .08), -1px -1px 8px rgba(var(--rgb-1), .6);
+  --ui-shadow: 0 2px 12px rgba(0, 0, 0, .3), 0 2px 4px rgba(0, 0, 0, .08), 0 0 8px rgba(var(--rgb-1), .6);
   --gap-min: 2px;
   --gap-mid: 10px;
   --gap-max: 20px;
@@ -193,13 +193,21 @@ upload-list [-files-el-] {
   display: grid;
 }
 upload-list [-toolbar-el-] {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: min-content 1fr min-content min-content;
+  grid-gap: var(--gap-mid);
   padding: var(--gap-mid);
 }
 upload-list [-upload-btn-] {
   background-color: var(--clr-shade-1);
   color: var(--clr-1);
+}
+upload-list [-add-more-btn-] {
+  background-color: transparent;
+  color: var(--clr-1);
+}
+upload-list [-add-more-btn-]::after {
+  content: var(--l10n-add-more);
 }
 upload-list [-upload-btn-]::after {
   content: var(--l10n-upload);
@@ -503,7 +511,7 @@ simple-btn {
 simple-btn button {
   color: var(--clr-1);
   background-color: var(--clr-2);
-  padding-left: 0;
+  padding-left: 0.2em;
 }
 simple-btn button::after {
   content: var(--l10n-upload-files);
@@ -561,6 +569,12 @@ message-box [-heading-] button {
   color: currentColor;
 }
 message-box [-msg-] {
+  padding: var(--gap-max);
+  padding-top: 0;
+}
+
+upload-result {
+  display: grid;
   padding: var(--gap-max);
   padding-top: 0;
 }

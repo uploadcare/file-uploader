@@ -20,7 +20,6 @@ UploadWidgetBtn.template = /*html*/ `
     <external-source activity="external" sub="@ctx-name: ctxName"></external-source>
     <pre-editor activity="pre-edit" sub="@ctx-name: ctxName"></pre-editor>
     <upload-result activity="result" sub="@ctx-name: ctxName"></upload-result>
-    <uploads-list  activity="uploads-list" sub="@ctx-name: ctxName"></uploads-list>
   </activity-mngr>
 </modal-win>
 <message-box sub="@ctx-name: ctxName"><message-box>

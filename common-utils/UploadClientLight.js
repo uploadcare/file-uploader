@@ -93,7 +93,7 @@ export async function uploadFileDirect(file, pubkey, uploadCallback) {
   let data = new FormData();
   data.append('UPLOADCARE_PUB_KEY', pubkey);
   data.append('UPLOADCARE_STORE', '1');
-  data.append('file', file);
+  data.append('file', file, file.name);
   return new Promise((resolve, reject) => {
     let xhr = new XMLHttpRequest();
     xhr.upload.onprogress = (e) => {

@@ -50,6 +50,12 @@ export class PreEditor extends AppComponent {
       /** @type {File} */
       this._file = file;
       this.ref['file-name-input']['value'] = this._file.name;
+      this.ref['file-name-input'].oninput = () => {
+        Object.defineProperty(this._file, 'name', {
+          writable: true,
+          value: this.ref['file-name-input']['value'],
+        });
+      };
       /** @type {HTMLCanvasElement} */
       // @ts-ignore
       this._canv = this.ref.canvas;
@@ -72,7 +78,6 @@ PreEditor.template = /*html*/ `
   <canvas ref="canvas"></canvas>
   <div -meta-editor->
     <input ref="file-name-input" type="text" />
-    <input type="text" />
   </div>
 </div>
 <div -toolbar->
