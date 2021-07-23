@@ -13,10 +13,11 @@ import { UploadList } from '../UploadList/UploadList.js';
 import { ActivityMngr } from '../ActivityMngr/ActivityMngr.js';
 import { UrlSource } from '../UrlSource/UrlSource.js';
 import { CameraSource } from '../CameraSource/CameraSource.js';
-import { PreEditor } from '../PreEditor/PreEditor.js';
+import { UploadDetails } from '../UploadDetails/UploadDetails.js'
 import { MessageBox } from '../MessageBox/MessageBox.js';
 import { UploadResult } from '../UploadResult/UploadResult.js';
 import { ConfirmationDialog } from '../ConfirmationDialog/ConfirmationDialog.js';
+import { ProgressBar } from '../ProgressBar/ProgressBar.js'
 
 SimpleBtn.reg('simple-btn');
 ActivityMngr.reg('activity-mngr');
@@ -28,10 +29,11 @@ ModalWin.reg('modal-win');
 UploadList.reg('upload-list');
 UrlSource.reg('url-source');
 CameraSource.reg('camera-source');
-PreEditor.reg('pre-editor');
+UploadDetails.reg('upload-details');
 MessageBox.reg('message-box');
 UploadResult.reg('upload-result');
 ConfirmationDialog.reg('confirmation-dialog');
+ProgressBar.reg('progress-bar');
 
 export class UploadWidget extends WidgetBase {
 
@@ -49,7 +51,15 @@ export class UploadWidget extends WidgetBase {
     });
     this.uploadCollection.observe((changeMap) => {
       if (changeMap.uploadProgress) {
-        console.log(changeMap.uploadProgress);
+        let commonProgress = 0;
+        /** @type {String[]} */
+        let items = this.uploadCollection.findItems((entry) => {
+          return !entry.getValue('uploadErrorMsg');
+        });
+        items.forEach((id) => {
+          commonProgress += this.uploadCollection.readProp(id, 'uploadProgress');
+        });
+        this.appState.pub('commonProgress', commonProgress / items.length);
       }
     });
   }
@@ -57,10 +67,10 @@ export class UploadWidget extends WidgetBase {
   connectedCallback() {
     super.connectedCallback();
     this.addToAppState({
+      commonProgress: 0,
       pubkey: 'demopublickey',
       uploadList: [],
       uploadCollection: this.uploadCollection,
-      totalProgress: 0,
       files: [],
       results: [],
     });

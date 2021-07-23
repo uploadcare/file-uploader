@@ -31,7 +31,7 @@ export class UploadInfo {
  * @param {String} url
  * @param {String} pubkey
  * @param {(info: UploadInfo) => *} [uploadCallback]
- * @returns {Promise<UploadInfo>}
+ * @returns {Promise}
  */
 export async function uploadFromUrl(url, pubkey, uploadCallback) {
   /** @param {String} token */
@@ -58,7 +58,6 @@ export async function uploadFromUrl(url, pubkey, uploadCallback) {
           );
           reject(null);
         } else {
-          console.log(resp);
           let result = new UploadInfo({
             type: EVENT_TYPES.SUCCESS,
             progress: 100,

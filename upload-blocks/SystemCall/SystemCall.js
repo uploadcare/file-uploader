@@ -29,6 +29,7 @@ export class SystemCall extends AppComponent {
             isImage: file.type.includes('image'),
             mimeType: file.type,
             fileName: file.name,
+            fileSize: file.size,
           });
         });
         this.appState.pub('currentActivity', 'upload-list');

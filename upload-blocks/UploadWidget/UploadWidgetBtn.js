@@ -16,10 +16,11 @@ UploadWidgetBtn.template = /*html*/ `
     <camera-source activity="camera" sub="@ctx-name: ctxName"></camera-source>
     <url-source activity="url" sub="@ctx-name: ctxName"></url-source>
     <external-source activity="external" sub="@ctx-name: ctxName"></external-source>
-    <pre-editor activity="pre-edit" sub="@ctx-name: ctxName"></pre-editor>
+    <upload-details activity="pre-edit" sub="@ctx-name: ctxName"></upload-details>
     <confirmation-dialog activity="confirmation" sub="@ctx-name: ctxName"></confirmation-dialog>
   </activity-mngr>
 </modal-win>
-<message-box sub="@ctx-name: ctxName"><message-box>
+<message-box sub="@ctx-name: ctxName"></message-box>
+<progress-bar sub="@ctx-name: ctxName"></progress-bar>
 `;
 UploadWidgetBtn.reg('upload-widget-btn');

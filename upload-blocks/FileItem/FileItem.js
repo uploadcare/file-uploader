@@ -1,6 +1,6 @@
 import { AppComponent } from '../AppComponent/AppComponent.js';
 import { TypedState } from '../AppComponent/TypedState.js';
-import { uploadFileDirect, getInfo } from '../../common-utils/UploadClientLight.js';
+import { uploadFileDirect } from '../../common-utils/UploadClientLight.js';
 import { resizeImage } from '../../common-utils/resizeImage.js'
 
 const ICONS = {
@@ -30,9 +30,20 @@ export class FileItem extends AppComponent {
   set 'entry-id'(id) {
     /** @type {import('../AppComponent/TypedState.js').TypedState} */
     this.entry = this.collection?.read(id);
+
+    this.entry.subscribe('uuid', (uuid) => {
+      if (uuid) {
+        this.setAttribute('loaded', '');
+      }
+    });
+
+    this.entry.subscribe('fileName', (name) => {
+      this.localState.pub('fileName', name || 'No name...');
+    });
+
     this.file = this.entry.getValue('file');
-    this.localState.pub('fileName', this.file?.name || 'Empty');
-    if (this.file.type.includes('image')) {
+    
+    if (this.file?.type.includes('image')) {
       resizeImage(this.file, 76).then((img) => {
         this.ref.thumb.style.backgroundImage = `url(${img})`;
       });
@@ -60,7 +71,6 @@ export class FileItem extends AppComponent {
       if (!val || !this.isConnected) {
         return;
       }
-      console.log(val);
       this.upload();
     });
     this.onclick = () => {
@@ -80,17 +90,25 @@ export class FileItem extends AppComponent {
   }
 
   async upload() {
+    if (this.hasAttribute('loaded') || this.entry.getValue('uuid')) {
+      return;
+    }
+    this.ref.progress.style.width = '0';
     this.removeAttribute('focused');
+    this.removeAttribute('error');
     this.setAttribute('uploading', '');
-    let fileInfo = await uploadFileDirect(this.file, this.appState.read('pubkey'), (info) => {
+    await uploadFileDirect(this.file, this.appState.read('pubkey'), async (info) => {
       if (info.type === 'progress') {
         this.ref.progress.style.width = info.progress + '%';
+        this.entry.setValue('uploadProgress', info.progress);
       }
       if (info.type === 'success') {
         this.ref.progress.style.opacity = '0';
         this.setAttribute('loaded', '');
         this.removeAttribute('uploading');
         this.localState.pub('badgeIcon', ICONS.ok);
+        this.entry.setValue('uuid', info.uuid);
+        this.entry.setValue('uploadProgress', 100);
       }
       if (info.type === 'error') {
         this.setAttribute('error', '');
@@ -101,26 +119,22 @@ export class FileItem extends AppComponent {
           text: info.error,
           isError: true,
         });
+        this.entry.setValue('uploadErrorMsg', info.error);
       }
     });
-    console.log(await getInfo(fileInfo.uuid, this.appState.read('pubkey')));
-    let outArr = this.appState.read('uploadOutput');
-    outArr.push(fileInfo.cdnUrl);
-    this.appState.pub('uploadOutput', [...outArr]);
-    // this.remove();
   }
 }
 
 FileItem.template = /*html*/ `
 <div -thumb- ref="thumb"></div>
 <div file-name sub="textContent: fileName"></div>
+<div -badge->
+  <icon-ui sub="@path: badgeIcon"></icon-ui>
+</div>
 <button -edit-btn- sub="onclick: on.edit;">
   <icon-ui path="${ICONS.edit}"></icon-ui>
 </button>
 <div ref="progress" -progress-></div>
-<div -badge->
-  <icon-ui sub="@path: badgeIcon"></icon-ui>
-</div>
 `;
 FileItem.activeInstances = new Set();
 

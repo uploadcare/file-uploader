@@ -138,6 +138,10 @@ export class TypedCollection {
     return result;
   }
 
+  items() {
+    return [...this.__items];
+  }
+
   destroy() {
     this.__state.remove();
     for (let id in this.__subsMap) {
