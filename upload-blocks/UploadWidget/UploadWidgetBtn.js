@@ -1,8 +1,6 @@
-import { WidgetBase } from '../WidgetBase/WidgetBase.js';
+import { UploadWidget } from './UploadWidget.js';
 
-export class UploadWidget extends WidgetBase {}
-
-export class UploadWidgetBtn extends WidgetBase {}
+export class UploadWidgetBtn extends UploadWidget {}
 UploadWidgetBtn.template = /*html*/ `
 <simple-btn sub="@ctx-name: ctxName"></simple-btn>
 <system-call sub="@ctx-name: ctxName"></system-call>
@@ -19,7 +17,7 @@ UploadWidgetBtn.template = /*html*/ `
     <url-source activity="url" sub="@ctx-name: ctxName"></url-source>
     <external-source activity="external" sub="@ctx-name: ctxName"></external-source>
     <pre-editor activity="pre-edit" sub="@ctx-name: ctxName"></pre-editor>
-    <upload-result activity="result" sub="@ctx-name: ctxName"></upload-result>
+    <confirmation-dialog activity="confirmation" sub="@ctx-name: ctxName"></confirmation-dialog>
   </activity-mngr>
 </modal-win>
 <message-box sub="@ctx-name: ctxName"><message-box>

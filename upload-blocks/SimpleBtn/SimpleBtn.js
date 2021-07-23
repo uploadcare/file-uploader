@@ -5,10 +5,18 @@ const ICON = 'M19.35,10.04C18.67,6.59 15.64,4 12,4C9.11,4 6.6,5.64 5.35,8.04C2.3
 export class SimpleBtn extends AppComponent {
   connectedCallback() {
     super.connectedCallback();
+    this.appState.sub('uploadList', (/** @type {String[]} */ list) => {
+      this._length = list.length;
+    });
     this.onclick = () => {
-      this.appState.pub('currentActivity', 'source-select');
-      this.appState.pub('modalCaption', 'Select File Source');
-      this.appState.pub('modalActive', 'true');
+      if (this._length) {
+        this.appState.pub('currentActivity', 'upload-list');
+        this.appState.pub('modalActive', 'true');
+      } else {
+        this.appState.pub('currentActivity', 'source-select');
+        this.appState.pub('modalCaption', 'Select File Source');
+        this.appState.pub('modalActive', 'true');
+      }
     };
   }
 }

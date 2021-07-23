@@ -7,18 +7,6 @@ export class UploadList extends AppComponent {
 
   constructor() {
     super();
-    this._uploads = [];
-    this._ufailed = [];
-
-    this._uploadHandler = (e) => {
-      if (e.detail.type === 'success') {
-        this._uploads.push(e.detail);
-      }
-      if (e.detail.type === 'error') {
-        this._uploads.push(e.detail.fileName);
-      }
-    };
-
     this.initLocalState({
       uploadBtnDisabled: false,
       'on.add': () => {
@@ -27,43 +15,52 @@ export class UploadList extends AppComponent {
       'on.upload': () => {
         this.localState.pub('uploadBtnDisabled', true);
         this.appState.pub('uploadTrigger', {});
-        this.appState.sub('uploads', (val) => {
-          let errors = this.appState.read('errors');
-          if ((val?.length + errors.length) === this._files.length) {
-            this.appState.pub('files', []);
-            this.appState.pub('currentActivity', 'result');
-          }
-        });
       },
       'on.cancel': () => {
-        this.appState.pub('modalActive', false);
-        this.appState.pub('files', []);
+        this.appState.pub('confirmationAction', () => {
+          this.appState.pub('modalActive', false);
+          this.collection.clearAll();
+        });
+        this.appState.pub('currentActivity', 'confirmation');
       },
     });
+
+    this._renderMap = Object.create(null);
   }
 
   connectedCallback() {
-    this.addToAppState({
-      listActive: false,
-      pubkey: 'demopublickey',
-    });
     super.connectedCallback();
-    this.appState.sub('files', (/** @type {File[]} */ files) => {
-      this.ref.files.innerHTML = '';
-      if (!files?.length) {
+
+    this.appState.sub('uploadCollection', (collection) => {
+      /** @type {import('../AppComponent/TypedCollection.js').TypedCollection} */
+      this.collection = collection;
+      this.collection.observe(() => {
+        let notUploaded = this.collection.findItems((item) => {
+          return !item.getValue('uuid');
+        });
+        this.localState.pub('uploadBtnDisabled', !notUploaded.length);
+      });
+    });
+    this.appState.sub('uploadList', (/** @type {String[]} */ list) => {
+      if (!list.length) {
+        this.appState.pub('currentActivity', '');
         return;
       }
-      if (files.length) {
-        this._files = files;
-        this.localState.pub('uploadBtnDisabled', false);
-        // console.log(files);
-        files.forEach((file) => {
+      list.forEach((id) => {
+        if (!this._renderMap[id]) {
           let item = new FileItem();
-          item.file = file;
-          item.setAttribute('ctx-name', this.getAttribute('ctx-name'));
-          this.ref.files.appendChild(item);
-        });
-      }
+          item.setAttribute('ctx-name', this.ctxName);
+          this.ref.files.prepend(item);
+          item.setAttribute('entry-id', id);
+          this._renderMap[id] = item;
+        }
+        for (let id in this._renderMap) {
+          if (!list.includes(id)) {
+            this._renderMap[id].remove();
+            delete this._renderMap[id];
+          }
+        }
+      });
     });
   }
 
@@ -79,9 +76,9 @@ export class UploadList extends AppComponent {
 UploadList.template = /*html*/ `
 <div -files-el- ref="files"></div>
 <div -toolbar-el->
-  <button -cancel-btn- sub="onclick: on.cancel"></button>
+  <button -cancel-btn- sub="onclick: on.cancel;"></button>
   <div></div>
-  <button -add-more-btn- sub="onclick: on.add; @disabled: uploadBtnDisabled"></button>
+  <button -add-more-btn- sub="onclick: on.add"></button>
   <button -upload-btn- sub="onclick: on.upload; @disabled: uploadBtnDisabled"></button>
 </div>
 `;

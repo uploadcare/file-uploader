@@ -5,7 +5,7 @@
   font-family: 'Roboto Condensed', sans-serif;
 
   --rgb-1: 60, 200, 255;
-  --rgb-2: 25, 25, 25;
+  --rgb-2: 40, 40, 40;
   --rgb-txt: 200, 200, 200;
   --rgb-err: 255, 20, 20;
   --opacity-min: .2;
@@ -45,7 +45,6 @@ button {
   font-size: 1em;
   padding-left: 1em;
   padding-right: 1em;
-  box-sizing: border-box;
   border: none;
   height: var(--ui-size);
   border-radius: var(--ui-radius-2);
@@ -289,6 +288,28 @@ file-item [-progress-] {
   background-color: var(--clr-shade-1);
   transition: .6s;
 }
+file-item[error] [-badge-], file-item[loaded] [-badge-] {
+  display: inline-flex;
+}
+file-item [-badge-] {
+  position: absolute;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  height: 26px;
+  width: 26px;
+  border-radius: 100%;
+  background-color: var(--clr-1);
+  color: var(--clr-2);
+  font-size: 14px;
+  right: -32px;
+  top: 50%;
+  transform: translateY(-13px);
+}
+file-item[error] [-badge-] {
+  background-color: var(--clr-err);
+  color: #fff;
+}
 
 url-source:not([active]) {
   display: none;
@@ -457,6 +478,10 @@ pre-editor {
 
 pre-editor [-viewport-] {
   position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: var(--clr-shade-1);
 }
 
 pre-editor [-viewport-] [-meta-editor-] {
@@ -469,12 +494,13 @@ pre-editor canvas {
   max-width: 100%;
   max-height: 500px;
   object-fit: contain;
+  object-position: 50% 50%;
   background-color: var(--clr-shade-1);
 }
 
 pre-editor [-toolbar-] {
   display: grid;
-  grid-template-columns: min-content 1fr min-content min-content;
+  grid-template-columns: min-content 1fr min-content min-content min-content;
   grid-gap: var(--gap-mid);
   padding: var(--gap-mid);
 }
@@ -489,12 +515,20 @@ pre-editor [-remove-btn-] {
   color: #fff;
   padding-left: 0;
 }
+pre-editor [-detail-btn-] {
+  background-color: var(--clr-shade-1);
+  color: var(--clr-1);
+  padding-left: 0;
+}
 pre-editor [-edit-btn-] {
   background-color: var(--clr-shade-1);
   color: var(--clr-1);
   padding-left: 0;
 }
 
+pre-editor [-detail-btn-]::after {
+  content: var(--l10n-edit-detail);
+}
 pre-editor [-edit-btn-]::after {
   content: var(--l10n-edit-image);
 }
@@ -577,4 +611,28 @@ upload-result {
   display: grid;
   padding: var(--gap-max);
   padding-top: 0;
+}
+
+confirmation-dialog {
+  display: block;
+  padding: var(--gap-mid);
+}
+confirmation-dialog [-txt-] {
+  display: flex;
+  justify-content: center;
+}
+confirmation-dialog [-toolbar-] {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--gap-mid);
+  margin-top: var(--gap-mid);
+}
+confirmation-dialog [-yes-btn-] {
+  background-color: var(--clr-shade-1);
+  color: var(--clr-1);
+}
+confirmation-dialog [-no-btn-] {
+  background-color: transparent;
+  color: var(--clr-1);
+  border: var(--line-width) solid var(--clr-shade-1);
 }

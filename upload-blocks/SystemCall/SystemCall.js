@@ -4,6 +4,7 @@ export class SystemCall extends AppComponent {
 
   connectedCallback() {
     if (!this._hasSubs) {
+      super.connectedCallback();
       this.addToAppState({
         multiple: true,
         accept: 'image/*',
@@ -16,11 +17,23 @@ export class SystemCall extends AppComponent {
         }
         this.ref.input.dispatchEvent(new MouseEvent('click'));
       });
-      super.connectedCallback();
+      this.appState.sub('uploadCollection', (collection) => {
+        /** @type {import('../AppComponent/TypedCollection.js').TypedCollection} */
+        this.collection = collection;
+      });
       this.ref.input.onchange = () => {
-        this.appState.pub('files', [...this.ref.input['files']]);
+        let files = [...this.ref.input['files']];
+        files.forEach((/** @type {File} */ file) => {
+          this.collection.add({
+            file,
+            isImage: file.type.includes('image'),
+            mimeType: file.type,
+            fileName: file.name,
+          });
+        });
         this.appState.pub('currentActivity', 'upload-list');
         this.appState.pub('modalActive', true);
+        this.ref.input['value'] = '';
       };
       this._hasSubs = true;
     }

@@ -21,9 +21,10 @@ export class AppComponent extends HTMLElement {
         fr = template;
       } else if (template?.constructor === String) {
         let tpl = document.createElement('template');
-        fr = document.importNode(tpl.content, true);
+        // @ts-ignore
+        fr = tpl.content.cloneNode(true);
       } else if (this.constructor['__tpl']) {
-        fr = document.importNode(this.constructor['__tpl'].content, true);
+        fr = this.constructor['__tpl'].content.cloneNode(true);
       }
       this.tplProcessors.forEach((fn) => {
         fn(fr);
