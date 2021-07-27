@@ -57,7 +57,7 @@ export class CameraSource extends BaseComponent {
     });
   }
 
-  readyCallback() {
+  initCallback() {
     this.externalState.sub('currentActivity', (val) => {
       if (val === 'camera') {
         this._init();

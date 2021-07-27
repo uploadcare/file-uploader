@@ -13,7 +13,7 @@ export class ConfirmationDialog extends BaseComponent {
     });
   }
 
-  readyCallback() {
+  initCallback() {
     this.addToExternalState({
       confirmationAction: () => {
         console.log('CONFIRMATION');

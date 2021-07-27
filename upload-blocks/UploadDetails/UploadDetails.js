@@ -70,7 +70,7 @@ export class UploadDetails extends BaseComponent {
     img.src = url;
   }
 
-  readyCallback() {
+  initCallback() {
     this.addToExternalState({
       focusedEntry: null,
     });

@@ -26,7 +26,7 @@ export class UploadList extends BaseComponent {
     this._renderMap = Object.create(null);
   }
 
-  readyCallback() {
+  initCallback() {
     this.externalState.sub('uploadCollection', (collection) => {
       /** @type {import('../../symbiote/core/TypedCollection.js').TypedCollection} */
       this.collection = collection;
@@ -58,14 +58,7 @@ export class UploadList extends BaseComponent {
       });
     });
   }
-
-  disconnectedCallback() {
-    super.disconnectedCallback();
-    if (this.filesObserver) {
-      this.filesObserver.disconnect();
-      this.filesObserver = null;
-    }
-  }
+  
 }
 
 UploadList.template = /*html*/ `

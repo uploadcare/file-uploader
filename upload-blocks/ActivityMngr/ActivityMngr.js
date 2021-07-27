@@ -4,7 +4,7 @@ const ACTIVE_ATTR = 'active';
 
 export class ActivityMngr extends BaseComponent {
 
-  readyCallback() {
+  initCallback() {
     this.addToExternalState({
       currentActivity: '',
       history: [],

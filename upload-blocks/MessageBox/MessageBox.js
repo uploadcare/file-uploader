@@ -22,7 +22,7 @@ export class MessageBox extends BaseComponent {
 
   }
 
-  readyCallback() {
+  initCallback() {
     this.addToExternalState({
       message: null,
     });

@@ -20,7 +20,7 @@ export class SourceBtn extends BaseComponent {
     });
   }
 
-  readyCallback() {
+  initCallback() {
     this.setAttribute('role', 'button');
     this._setType(this._type);
   }

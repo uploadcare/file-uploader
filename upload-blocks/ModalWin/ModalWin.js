@@ -15,7 +15,7 @@ export class ModalWin extends BaseComponent {
     });
   }
 
-  readyCallback() {
+  initCallback() {
     this.addToExternalState({
       modalIcon: ICONS.default,
       modalActive: false,

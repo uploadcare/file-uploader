@@ -33,7 +33,7 @@ export class UploadData extends BaseComponent {
     });
   }
 
-  readyCallback() {
+  initCallback() {
     this.addToExternalState({
       commonProgress: 0,
       pubkey: 'demopublickey',

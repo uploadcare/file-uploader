@@ -41,7 +41,7 @@ export class PreEditor extends BaseComponent {
     img.src = url;
   }
 
-  readyCallback() {
+  initCallback() {
     this.addToExternalState({
       focusedEntry: null,
     });

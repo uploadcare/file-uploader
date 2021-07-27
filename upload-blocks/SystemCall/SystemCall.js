@@ -2,7 +2,7 @@ import { BaseComponent } from '../../symbiote/core/BaseComponent.js';
 
 export class SystemCall extends BaseComponent {
 
-  readyCallback() {
+  initCallback() {
     this.addToExternalState({
       multiple: true,
       accept: 'image/*',

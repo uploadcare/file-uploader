@@ -55,7 +55,7 @@ export class FileItem extends BaseComponent {
     return this.entry.__ctxId;
   }
 
-  readyCallback() {
+  initCallback() {
     this.addToExternalState({
       focusedEntry: null,
       uploadTrigger: null,

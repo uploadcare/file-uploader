@@ -9,7 +9,7 @@ export class IconUi extends BaseComponent {
     });
   }
 
-  readyCallback() {
+  initCallback() {
     this.localState.pub('path', this._path);
   }
 

@@ -4,7 +4,7 @@ const ICON = 'M19.35,10.04C18.67,6.59 15.64,4 12,4C9.11,4 6.6,5.64 5.35,8.04C2.3
 
 export class SimpleBtn extends BaseComponent {
 
-  readyCallback() {
+  initCallback() {
     this.externalState.sub('uploadList', (/** @type {String[]} */ list) => {
       this._length = list.length;
     });

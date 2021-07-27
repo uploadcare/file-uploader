@@ -33,7 +33,7 @@ export class UrlSource extends BaseComponent {
     });
   }
 
-  readyCallback() {
+  initCallback() {
     this.externalState.sub('uploadCollection', (collection) => {
       /** @type {import('../../symbiote/core/TypedCollection.js').TypedCollection} */
       this.collection = collection;

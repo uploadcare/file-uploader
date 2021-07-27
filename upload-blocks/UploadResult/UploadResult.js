@@ -1,7 +1,7 @@
 import { BaseComponent } from '../../symbiote/core/BaseComponent.js';
 
 export class UploadResult extends BaseComponent {
-  readyCallback() {
+  initCallback() {
     this.render();
     this.addToExternalState({
       uploadOutput: [],
