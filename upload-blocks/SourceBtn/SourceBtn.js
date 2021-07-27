@@ -1,4 +1,4 @@
-import { AppComponent } from '../AppComponent/AppComponent.js';
+import { BaseComponent } from '../../symbiote/core/BaseComponent.js';
 import { IconUi } from '../IconUi/IconUi.js';
 
 IconUi.reg();
@@ -11,7 +11,7 @@ const ICONS = {
   dots: 'M16,12A2,2 0 0,1 18,10A2,2 0 0,1 20,12A2,2 0 0,1 18,14A2,2 0 0,1 16,12M10,12A2,2 0 0,1 12,10A2,2 0 0,1 14,12A2,2 0 0,1 12,14A2,2 0 0,1 10,12M4,12A2,2 0 0,1 6,10A2,2 0 0,1 8,12A2,2 0 0,1 6,14A2,2 0 0,1 4,12Z',
 };
 
-export class SourceBtn extends AppComponent {
+export class SourceBtn extends BaseComponent {
 
   constructor() {
     super();
@@ -20,8 +20,7 @@ export class SourceBtn extends AppComponent {
     });
   }
 
-  connectedCallback() {
-    super.connectedCallback();
+  readyCallback() {
     this.setAttribute('role', 'button');
     this._setType(this._type);
   }
@@ -31,42 +30,50 @@ export class SourceBtn extends AppComponent {
       local: () => {
         this.localState.pub('path', ICONS.local);
         this.onclick = () => {
-          this.appState.pub('modalActive', false);
-          this.appState.pub('currentActivity', 'upload-list');
-          this.appState.pub('modalCaption', 'Selected');
-          this.appState.pub('modalIcon', ICONS.local);
-          if (!this.appState.read('files')?.length) {
-            this.appState.pub('systemTrigger', {});
+          this.externalState.multiPub({
+            modalActive: false,
+            currentActivity: 'upload-list',
+            modalCaption: 'Selected',
+            modalIcon: ICONS.local,
+          });
+          if (!this.externalState.read('files')?.length) {
+            this.externalState.pub('systemTrigger', {});
           } else {
-            this.appState.pub('modalActive', true);
+            this.externalState.pub('modalActive', true);
           }
         };
       },
       url: () => {
         this.localState.pub('path', ICONS.url);
         this.onclick = () => {
-          this.appState.pub('currentActivity', 'url');
-          this.appState.pub('modalActive', true);
-          this.appState.pub('modalCaption', 'Import from external URL');
-          this.appState.pub('modalIcon', ICONS.url);
+          this.externalState.multiPub({
+            currentActivity: 'url',
+            modalCaption: 'Import from external URL',
+            modalIcon: ICONS.url,
+            modalActive: true,
+          });
         };
       },
       camera: () => {
         this.localState.pub('path', ICONS.camera);
         this.onclick = () => {
-          this.appState.pub('currentActivity', 'camera');
-          this.appState.pub('modalActive', true);
-          this.appState.pub('modalCaption', 'Camera');
-          this.appState.pub('modalIcon', ICONS.camera);
+          this.externalState.multiPub({
+            currentActivity: 'camera',
+            modalCaption: 'Camera',
+            modalIcon: ICONS.camera,
+            modalActive: true,
+          });
         };
       },
       other: () => {
         this.localState.pub('path', ICONS.dots);
         this.onclick = () => {
-          this.appState.pub('currentActivity', 'external');
-          this.appState.pub('modalActive', true);
-          this.appState.pub('modalCaption', 'Other sources');
-          this.appState.pub('modalIcon', ICONS.dots);
+          this.externalState.multiPub({
+            currentActivity: 'external',
+            modalCaption: 'Other sources',
+            modalIcon: ICONS.dots,
+            modalActive: true,
+          });
         };
       },
     };
@@ -82,11 +89,9 @@ export class SourceBtn extends AppComponent {
 
 }
 SourceBtn.template = /*html*/ `
-<icon-ui sub="@path: path"></icon-ui>
+<icon-ui loc="@path: path"></icon-ui>
 <div -txt-></div>
 `;
 SourceBtn.bindAttributes({
-  type: {
-    prop: true,
-  },
+  type: ['property'],
 });

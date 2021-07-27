@@ -1,8 +1,5 @@
 import { WidgetBase } from '../WidgetBase/WidgetBase.js';
-import { TypedCollection } from '../AppComponent/TypedCollection.js';
-
-import { uploadEntrySchema } from './uploadEntrySchema.js';
-
+import { UploadData } from '../UploadData/UploadData.js';
 import { SimpleBtn } from '../SimpleBtn/SimpleBtn.js';
 import { SystemCall } from '../SystemCall/SystemCall.js';
 import { DropArea } from '../DropArea/DropArea.js';
@@ -19,6 +16,7 @@ import { UploadResult } from '../UploadResult/UploadResult.js';
 import { ConfirmationDialog } from '../ConfirmationDialog/ConfirmationDialog.js';
 import { ProgressBar } from '../ProgressBar/ProgressBar.js'
 
+UploadData.reg('upload-data');
 SimpleBtn.reg('simple-btn');
 ActivityMngr.reg('activity-mngr');
 SystemCall.reg('system-call');
@@ -35,53 +33,7 @@ UploadResult.reg('upload-result');
 ConfirmationDialog.reg('confirmation-dialog');
 ProgressBar.reg('progress-bar');
 
-export class UploadWidget extends WidgetBase {
-
-  constructor() {
-    super();
-    this.uploadCollection = new TypedCollection({
-      typedSchema: uploadEntrySchema,
-      watchList: [
-        'uploadProgress',
-        'uuid',
-      ],
-      handler: (entries) => {
-        this.appState.pub('uploadList', entries);
-      },
-    });
-    this.uploadCollection.observe((changeMap) => {
-      if (changeMap.uploadProgress) {
-        let commonProgress = 0;
-        /** @type {String[]} */
-        let items = this.uploadCollection.findItems((entry) => {
-          return !entry.getValue('uploadErrorMsg');
-        });
-        items.forEach((id) => {
-          commonProgress += this.uploadCollection.readProp(id, 'uploadProgress');
-        });
-        this.appState.pub('commonProgress', commonProgress / items.length);
-      }
-    });
-  }
-
-  connectedCallback() {
-    super.connectedCallback();
-    this.addToAppState({
-      commonProgress: 0,
-      pubkey: 'demopublickey',
-      uploadList: [],
-      uploadCollection: this.uploadCollection,
-      files: [],
-      results: [],
-    });
-  }
-
-  disconnectedCallback() {
-    super.disconnectedCallback();
-    this.uploadCollection.destroy();
-  }
-
-}
+export class UploadWidget extends WidgetBase {}
 
 UploadWidget.template = /*html*/ `
 <drop-area sub="@ctx-name: ctxName">

@@ -2,25 +2,26 @@ import { UploadWidget } from './UploadWidget.js';
 
 export class UploadWidgetBtn extends UploadWidget {}
 UploadWidgetBtn.template = /*html*/ `
-<simple-btn sub="@ctx-name: ctxName"></simple-btn>
-<system-call sub="@ctx-name: ctxName"></system-call>
-<modal-win sub="@ctx-name: ctxName">
-  <activity-mngr sub="@ctx-name: ctxName">
-    <drop-area activity="source-select" sub="@ctx-name: ctxName">
-      <source-btn type="local" sub="@ctx-name: ctxName"></source-btn>
-      <source-btn type="url" sub="@ctx-name: ctxName"></source-btn>
-      <source-btn type="camera" sub="@ctx-name: ctxName"></source-btn>
-      <source-btn type="other" sub="@ctx-name: ctxName"></source-btn>
+<upload-data></upload-data>
+<simple-btn></simple-btn>
+<system-call></system-call>
+<modal-win>
+  <activity-mngr>
+    <drop-area activity="source-select">
+      <source-btn type="local"></source-btn>
+      <source-btn type="url"></source-btn>
+      <source-btn type="camera"></source-btn>
+      <source-btn type="other"></source-btn>
     </drop-area>
-    <upload-list activity="upload-list" sub="@ctx-name: ctxName"></upload-list>
-    <camera-source activity="camera" sub="@ctx-name: ctxName"></camera-source>
-    <url-source activity="url" sub="@ctx-name: ctxName"></url-source>
-    <external-source activity="external" sub="@ctx-name: ctxName"></external-source>
-    <upload-details activity="pre-edit" sub="@ctx-name: ctxName"></upload-details>
-    <confirmation-dialog activity="confirmation" sub="@ctx-name: ctxName"></confirmation-dialog>
+    <upload-list activity="upload-list"></upload-list>
+    <camera-source activity="camera"></camera-source>
+    <url-source activity="url"></url-source>
+    <external-source activity="external"></external-source>
+    <upload-details activity="pre-edit"></upload-details>
+    <confirmation-dialog activity="confirmation"></confirmation-dialog>
   </activity-mngr>
 </modal-win>
-<message-box sub="@ctx-name: ctxName"></message-box>
-<progress-bar sub="@ctx-name: ctxName"></progress-bar>
+<message-box></message-box>
+<progress-bar></progress-bar>
 `;
 UploadWidgetBtn.reg('upload-widget-btn');

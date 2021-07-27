@@ -1,6 +1,6 @@
-import { AppComponent } from '../AppComponent/AppComponent.js';
+import { BaseComponent } from '../../symbiote/core/BaseComponent.js';
 
-export class IconUi extends AppComponent {
+export class IconUi extends BaseComponent {
 
   constructor() {
     super();
@@ -9,8 +9,7 @@ export class IconUi extends AppComponent {
     });
   }
 
-  connectedCallback() {
-    super.connectedCallback();
+  readyCallback() {
     this.localState.pub('path', this._path);
   }
 
@@ -27,11 +26,9 @@ IconUi.template = /*html*/ `
 <svg
   viewBox="0 0 24 24"
   xmlns="http://www.w3.org/2000/svg">
-  <path sub="@d: path"></path>
+  <path loc="@d: path"></path>
 </svg>
 `;
 IconUi.bindAttributes({
-  path: {
-    prop: true,
-  },
+  path: ['property'],
 });

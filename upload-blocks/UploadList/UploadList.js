@@ -1,38 +1,34 @@
-import { AppComponent } from '../AppComponent/AppComponent.js';
+import { BaseComponent } from '../../symbiote/core/BaseComponent.js';
 import { FileItem } from '../FileItem/FileItem.js';
 
-window.customElements.define('file-item', FileItem);
-
-export class UploadList extends AppComponent {
+export class UploadList extends BaseComponent {
 
   constructor() {
     super();
     this.initLocalState({
       uploadBtnDisabled: false,
       'on.add': () => {
-        this.appState.pub('currentActivity', 'source-select');
+        this.externalState.pub('currentActivity', 'source-select');
       },
       'on.upload': () => {
         this.localState.pub('uploadBtnDisabled', true);
-        this.appState.pub('uploadTrigger', {});
+        this.externalState.pub('uploadTrigger', {});
       },
       'on.cancel': () => {
-        this.appState.pub('confirmationAction', () => {
-          this.appState.pub('modalActive', false);
+        this.externalState.pub('confirmationAction', () => {
+          this.externalState.pub('modalActive', false);
           this.collection.clearAll();
         });
-        this.appState.pub('currentActivity', 'confirmation');
+        this.externalState.pub('currentActivity', 'confirmation');
       },
     });
 
     this._renderMap = Object.create(null);
   }
 
-  connectedCallback() {
-    super.connectedCallback();
-
-    this.appState.sub('uploadCollection', (collection) => {
-      /** @type {import('../AppComponent/TypedCollection.js').TypedCollection} */
+  readyCallback() {
+    this.externalState.sub('uploadCollection', (collection) => {
+      /** @type {import('../../symbiote/core/TypedCollection.js').TypedCollection} */
       this.collection = collection;
       this.collection.observe(() => {
         let notUploaded = this.collection.findItems((item) => {
@@ -41,15 +37,14 @@ export class UploadList extends AppComponent {
         this.localState.pub('uploadBtnDisabled', !notUploaded.length);
       });
     });
-    this.appState.sub('uploadList', (/** @type {String[]} */ list) => {
+    this.externalState.sub('uploadList', (/** @type {String[]} */ list) => {
       if (!list.length) {
-        this.appState.pub('currentActivity', '');
+        this.externalState.pub('currentActivity', '');
         return;
       }
       list.forEach((id) => {
         if (!this._renderMap[id]) {
           let item = new FileItem();
-          item.setAttribute('ctx-name', this.ctxName);
           this.ref.files.prepend(item);
           item.setAttribute('entry-id', id);
           this._renderMap[id] = item;
@@ -76,9 +71,9 @@ export class UploadList extends AppComponent {
 UploadList.template = /*html*/ `
 <div -files-el- ref="files"></div>
 <div -toolbar-el->
-  <button -cancel-btn- sub="onclick: on.cancel;"></button>
+  <button -cancel-btn- loc="onclick: on.cancel;"></button>
   <div></div>
-  <button -add-more-btn- sub="onclick: on.add"></button>
-  <button -upload-btn- sub="onclick: on.upload; @disabled: uploadBtnDisabled"></button>
+  <button -add-more-btn- loc="onclick: on.add"></button>
+  <button -upload-btn- loc="onclick: on.upload; @disabled: uploadBtnDisabled"></button>
 </div>
 `;

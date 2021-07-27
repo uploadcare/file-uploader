@@ -1,6 +1,6 @@
-import { AppComponent } from '../AppComponent/AppComponent.js';
+import { BaseComponent } from '../../symbiote/core/BaseComponent.js';
 
-export class WidgetBase extends AppComponent {
+export class WidgetBase extends BaseComponent {
 
   constructor() {
     super();
@@ -8,7 +8,6 @@ export class WidgetBase extends AppComponent {
     this.renderShadow = true;
     this.initLocalState({
       'css-src': '',
-      ctxName: this.ctxName,
     });
   }
 
@@ -32,7 +31,5 @@ export class WidgetBase extends AppComponent {
 }
 
 WidgetBase.bindAttributes({
-  'css-src': {
-    prop: true,
-  },
+  'css-src': ['property'],
 });

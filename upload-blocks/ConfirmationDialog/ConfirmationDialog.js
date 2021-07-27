@@ -1,21 +1,20 @@
-import { AppComponent } from '../AppComponent/AppComponent.js';
+import { BaseComponent } from '../../symbiote/core/BaseComponent.js';
 
-export class ConfirmationDialog extends AppComponent {
+export class ConfirmationDialog extends BaseComponent {
   constructor() {
     super();
     this.initLocalState({
       'on.no': () => {
-        this.appState.pub('backTrigger', {});
+        this.externalState.pub('backTrigger', {});
       },
       'on.yes': () => {
-        this.appState.read('confirmationAction')?.();
+        this.externalState.read('confirmationAction')?.();
       },
     });
   }
 
-  connectedCallback() {
-    super.connectedCallback();
-    this.addToAppState({
+  readyCallback() {
+    this.addToExternalState({
       confirmationAction: () => {
         console.log('CONFIRMATION');
       },
@@ -26,7 +25,7 @@ export class ConfirmationDialog extends AppComponent {
 ConfirmationDialog.template = /*html*/ `
 <div -txt->Are you sure?</div>
 <div -toolbar->
-  <button -no-btn- sub="onclick: on.no">No</button>
-  <button -yes-btn- sub="onclick: on.yes">Yes</button>
+  <button -no-btn- loc="onclick: on.no">No</button>
+  <button -yes-btn- loc="onclick: on.yes">Yes</button>
 </div>
 `;

@@ -1,10 +1,9 @@
-import { AppComponent } from '../AppComponent/AppComponent.js';
+import { BaseComponent } from '../../symbiote/core/BaseComponent.js';
 
-export class ProgressBar extends AppComponent {
+export class ProgressBar extends BaseComponent {
 
-  connectedCallback() {
-    super.connectedCallback();
-    this.appState.sub('commonProgress', (progress) => {
+  readyCallback() {
+    this.externalState.sub('commonProgress', (progress) => {
       if (progress === 0 || progress === 100) {
         this.removeAttribute('active');
       } else {

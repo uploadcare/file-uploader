@@ -1,5 +1,4 @@
-import { AppComponent } from '../AppComponent/AppComponent.js';
-import { TypedState } from '../AppComponent/TypedState.js';
+import { BaseComponent } from '../../symbiote/core/BaseComponent.js';
 import { uploadFileDirect } from '../../common-utils/UploadClientLight.js';
 import { resizeImage } from '../../common-utils/resizeImage.js'
 
@@ -10,7 +9,7 @@ const ICONS = {
   error: 'M11,15H13V17H11V15M11,7H13V13H11V7M12,2C6.47,2 2,6.5 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20Z',
 };
 
-export class FileItem extends AppComponent {
+export class FileItem extends BaseComponent {
   constructor() {
     super();
 
@@ -20,15 +19,17 @@ export class FileItem extends AppComponent {
       notImage: true,
       badgeIcon: ICONS.ok,
       'on.edit': () => {
-        this.appState.pub('modalCaption', 'Edit file');
-        this.appState.pub('focusedEntry', this.entry);
-        this.appState.pub('currentActivity', 'pre-edit');
+        this.externalState.multiPub({
+          modalCaption: 'Edit file',
+          focusedEntry: this.entry,
+          currentActivity: 'pre-edit',
+        });
       },
     });
   }
 
   set 'entry-id'(id) {
-    /** @type {import('../AppComponent/TypedState.js').TypedState} */
+    /** @type {import('../../symbiote/core/TypedState.js').TypedState} */
     this.entry = this.collection?.read(id);
 
     this.entry.subscribe('uuid', (uuid) => {
@@ -54,20 +55,19 @@ export class FileItem extends AppComponent {
     return this.entry.__ctxId;
   }
 
-  connectedCallback() {
-    super.connectedCallback();
-    this.addToAppState({
+  readyCallback() {
+    this.addToExternalState({
       focusedEntry: null,
       uploadTrigger: null,
     });
-    this.appState.sub('uploadCollection', (collection) => {
-      /** @type {import('../AppComponent/TypedCollection.js').TypedCollection} */
+    this.externalState.sub('uploadCollection', (collection) => {
+      /** @type {import('../../symbiote/core/TypedCollection.js').TypedCollection} */
       this.collection = collection;
     });
-    this.appState.pub('uploadTrigger', null);
+    this.externalState.pub('uploadTrigger', null);
     FileItem.activeInstances.add(this);
 
-    this.appState.sub('uploadTrigger', (val) => {
+    this.externalState.sub('uploadTrigger', (val) => {
       if (!val || !this.isConnected) {
         return;
       }
@@ -97,7 +97,7 @@ export class FileItem extends AppComponent {
     this.removeAttribute('focused');
     this.removeAttribute('error');
     this.setAttribute('uploading', '');
-    await uploadFileDirect(this.file, this.appState.read('pubkey'), async (info) => {
+    await uploadFileDirect(this.file, this.externalState.read('pubkey'), async (info) => {
       if (info.type === 'progress') {
         this.ref.progress.style.width = info.progress + '%';
         this.entry.setValue('uploadProgress', info.progress);
@@ -113,8 +113,10 @@ export class FileItem extends AppComponent {
       if (info.type === 'error') {
         this.setAttribute('error', '');
         this.removeAttribute('uploading');
-        this.localState.pub('badgeIcon', ICONS.error);
-        this.appState.pub('message', {
+        this.localState.multiPub({
+          badgeIcon: ICONS.error,
+        });
+        this.externalState.pub('message', {
           caption: 'Upload error: ' + this.file.name,
           text: info.error,
           isError: true,
@@ -127,11 +129,11 @@ export class FileItem extends AppComponent {
 
 FileItem.template = /*html*/ `
 <div -thumb- ref="thumb"></div>
-<div file-name sub="textContent: fileName"></div>
+<div file-name loc="textContent: fileName"></div>
 <div -badge->
-  <icon-ui sub="@path: badgeIcon"></icon-ui>
+  <icon-ui loc="@path: badgeIcon"></icon-ui>
 </div>
-<button -edit-btn- sub="onclick: on.edit;">
+<button -edit-btn- loc="onclick: on.edit;">
   <icon-ui path="${ICONS.edit}"></icon-ui>
 </button>
 <div ref="progress" -progress-></div>
@@ -139,7 +141,5 @@ FileItem.template = /*html*/ `
 FileItem.activeInstances = new Set();
 
 FileItem.bindAttributes({
-  'entry-id': {
-    prop: true,
-  },
+  'entry-id': ['property'],
 });

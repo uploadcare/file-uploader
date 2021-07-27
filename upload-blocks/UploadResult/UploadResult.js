@@ -1,15 +1,14 @@
-import { AppComponent } from '../AppComponent/AppComponent.js';
+import { BaseComponent } from '../../symbiote/core/BaseComponent.js';
 
-export class UploadResult extends AppComponent {
-  connectedCallback() {
-    super.connectedCallback();
+export class UploadResult extends BaseComponent {
+  readyCallback() {
     this.render();
-    this.addToAppState({
+    this.addToExternalState({
       uploadOutput: [],
     });
-    this.appState.sub('uploadOutput', (/** @type {String[]} */ outArr) => {
+    this.externalState.sub('uploadOutput', (/** @type {String[]} */ outArr) => {
       this.ref.out.innerHTML = '';
-      this.appState.pub('modalCaption', 'Uploaded');
+      this.externalState.pub('modalCaption', 'Uploaded');
       outArr.forEach((cdnUrl) => {
         let urlDiv = document.createElement('cdn-item');
         urlDiv.textContent = cdnUrl;

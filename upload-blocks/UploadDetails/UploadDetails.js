@@ -1,4 +1,4 @@
-import { AppComponent } from '../AppComponent/AppComponent.js';
+import { BaseComponent } from '../../symbiote/core/BaseComponent.js';
 
 const ICONS = {
   back: 'M15.41,16.58L10.83,12L15.41,7.41L14,6L8,12L14,18L15.41,16.58Z',
@@ -7,7 +7,7 @@ const ICONS = {
   detail: 'M5,3C3.89,3 3,3.89 3,5V19C3,20.11 3.89,21 5,21H19C20.11,21 21,20.11 21,19V5C21,3.89 20.11,3 19,3H5M5,5H19V19H5V5M7,7V9H17V7H7M7,11V13H17V11H7M7,15V17H14V15H7Z',
 };
 
-export class UploadDetails extends AppComponent {
+export class UploadDetails extends BaseComponent {
 
   constructor() {
     super();
@@ -16,12 +16,12 @@ export class UploadDetails extends AppComponent {
       cdnUrl: '',
       errorTxt: '',
       'on.back': () => {
-        this.appState.pub('backTrigger', {});
+        this.externalState.pub('backTrigger', {});
       },
       'on.remove': () => {
         /** @type {File[]} */
         this.collection.remove(this.entry.__ctxId);
-        this.appState.pub('backTrigger', {});
+        this.externalState.pub('backTrigger', {});
       },
       'on.preview': () => {
         this.ref['preview-tab'].setAttribute('current', '');
@@ -70,16 +70,15 @@ export class UploadDetails extends AppComponent {
     img.src = url;
   }
 
-  connectedCallback() {
-    super.connectedCallback();
-    this.addToAppState({
+  readyCallback() {
+    this.addToExternalState({
       focusedEntry: null,
     });
-    this.appState.sub('uploadCollection', (collection) => {
-      /** @type {import('../AppComponent/TypedCollection.js').TypedCollection} */
+    this.externalState.sub('uploadCollection', (collection) => {
+      /** @type {import('../../symbiote/core/TypedCollection.js').TypedCollection} */
       this.collection = collection;
     });
-    this.appState.sub('focusedEntry', (/** @type {import('../AppComponent/TypedState.js').TypedState} */ entry) => {
+    this.externalState.sub('focusedEntry', (/** @type {import('../../symbiote/core/TypedState.js').TypedState} */ entry) => {
       if (this._ctx) {
         this._ctx.clearRect(0, 0, this._canv.width, this._canv.height);
       }
@@ -136,8 +135,8 @@ export class UploadDetails extends AppComponent {
 
 UploadDetails.template = /*html*/ `
 <div -tabs->
-  <button current ref="preview-tab" sub="onclick: on.preview">Preview</button>
-  <button ref="details-tab" sub="onclick: on.details">File Details</button>
+  <button current ref="preview-tab" loc="onclick: on.preview">Preview</button>
+  <button ref="details-tab" loc="onclick: on.details">File Details</button>
 </div>
 <div hidden ref="details" -details->
 
@@ -148,28 +147,28 @@ UploadDetails.template = /*html*/ `
 
   <fieldset>
     <legend>File Size</legend>
-    <div sub="textContent: fileSize"></div>
+    <div loc="textContent: fileSize"></div>
   </fieldset>
 
   <fieldset>
     <legend>CDN URL</legend>
-    <a target="_blanc" sub="textContent: cdnUrl; @href: cdnUrl;"></a>
+    <a target="_blanc" loc="textContent: cdnUrl; @href: cdnUrl;"></a>
   </fieldset>
 
-  <div sub="textContent: errorTxt;"></div>
+  <div loc="textContent: errorTxt;"></div>
   
 </div>
 <div ref="viewport" -viewport->
   <canvas ref="canvas"></canvas>
 </div>
 <div -toolbar->
-  <button -back-btn- sub="onclick: on.back">
+  <button -back-btn- loc="onclick: on.back">
     <icon-ui path="${ICONS.back}"></icon-ui>
   </button>
-  <button -edit-btn- sub="onclick: on.edit">
+  <button -edit-btn- loc="onclick: on.edit">
     <icon-ui path="${ICONS.edit}"></icon-ui>
   </button>
-  <button -remove-btn- sub="onclick: on.remove">
+  <button -remove-btn- loc="onclick: on.remove">
     <icon-ui path="${ICONS.remove}"></icon-ui>
   </button>
 </div>

@@ -1,15 +1,14 @@
-import { AppComponent } from '../AppComponent/AppComponent.js';
-// import { UploadClientLight } from '../../common-utils/UploadClientLight.js';
+import { BaseComponent } from '../../symbiote/core/BaseComponent.js';
 
-export class CameraSource extends AppComponent {
+export class CameraSource extends BaseComponent {
 
   constructor() {
     super();
     this.initLocalState({
       video: null,
       'on.cancel': () => {
-        this.appState.pub('modalActive', false);
-        this.appState.pub('currentActivity', '');
+        this.externalState.pub('modalActive', false);
+        this.externalState.pub('currentActivity', '');
       },
       'on.shot': () => {
         this._shot();
@@ -50,17 +49,16 @@ export class CameraSource extends AppComponent {
         lastModified: date,
         type: 'image/png',
       });
-      this.appState.pub('focusedFile', file);
-      this.appState.pub('modalCaption', `Edit file ${name}`);
-      this.appState.pub('currentActivity', 'pre-edit');
-      // await UploadClientLight.uploadFileDirect(file, this.appState.read('pubkey'), this.ctxName + ':' + name);
-      // this.appState.pub('modalActive', false);
+      this.externalState.multiPub({
+        focusedFile: file,
+        modalCaption: `Edit file ${name}`,
+        currentActivity: 'pre-edit',
+      });
     });
   }
 
-  connectedCallback() {
-    super.connectedCallback();
-    this.appState.sub('currentActivity', (val) => {
+  readyCallback() {
+    this.externalState.sub('currentActivity', (val) => {
       if (val === 'camera') {
         this._init();
       } else {
@@ -75,10 +73,10 @@ CameraSource.template = /*html*/ `
 <video 
   autoplay 
   playsinline 
-  sub="srcObject: video"
+  loc="srcObject: video"
   ref="video"></video>
 <div -toolbar->
-  <button -cancel-btn- sub="onclick: on.cancel"></button>
-  <button -shot-btn- sub="onclick: on.shot"></button>
+  <button -cancel-btn- loc="onclick: on.cancel"></button>
+  <button -shot-btn- loc="onclick: on.shot"></button>
 </div>
 `;
