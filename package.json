@@ -1,0 +1,18 @@
+{
+  "name": "jsdk",
+  "version": "0.0.1",
+  "description": "",
+  "type": "module",
+  "main": "",
+  "scripts": {
+    "test": "test",
+    "copy-css": "cp -R site/css site/dist",
+    "copy-snippets": "cp -R site/snippets site/dist",
+    "build-site": "node ./re4ma/builder.js && node ./build-site.js && npm run copy-css && npm run copy-snippets"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "esbuild": "^0.12.16"
+  }
+}

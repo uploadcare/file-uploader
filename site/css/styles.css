@@ -1,0 +1,109 @@
+:root {
+  --rgb-1: 230, 230, 230;
+  --rgb-2: 23, 23, 23;
+
+  --clr-1: rgb(var(--rgb-1));
+  --clr-2: rgb(var(--rgb-2));
+
+  --gap-min: 2px;
+  --gap-mid: 10px;
+  --gap-max: 20px;
+
+  --ui-height: 38px;
+}
+
+html, body {
+  padding: 0;
+  margin: 0;
+  font-family: monospace;
+  font-size: 16px;
+  background-color: var(--clr-2);
+  color: var(--clr-1);
+}
+
+body {
+  display: grid;
+  grid-template-rows: min-content auto min-content;
+  min-height: 100vh;
+}
+
+header {
+  padding: var(--gap-max);
+}
+
+header [-sub-] {
+  opacity: 0.4;
+}
+
+footer {
+  padding: var(--gap-max);
+}
+
+content {
+  display: block;
+  padding: var(--gap-max);
+}
+
+h3 {
+  margin: 0;
+}
+
+code {
+  display: block;
+  background-color: #000;
+  color: rgb(172, 217, 255);
+  padding: var(--gap-max);
+}
+
+code .hl {
+  color: rgb(255, 177, 251);
+}
+
+package-card-css {
+  display: inline-grid;
+  grid-gap: var(--gap-mid);
+  padding: var(--gap-mid);
+  background-color: var(--clr-1);
+  color: var(--clr-2);
+  margin-right: var(--gap-mid);
+  margin-bottom: var(--gap-mid);
+  box-shadow: 4px 4px 0 rgba(var(--rgb-1), .2);
+}
+package-card-css:hover {
+  background-color: #fff;
+}
+
+package-card-css [-toolbar-] {
+  display: inline-grid;
+  grid-template-columns: min-content min-content;
+  grid-gap: var(--gap-mid);
+  margin-top: var(--gap-mid);
+}
+
+package-card-css a {
+  display: inline-flex;
+  align-items: center;
+  height: var(--ui-height);
+  background-color: var(--clr-2);
+  color: var(--clr-1);
+  border: none;
+  padding-left: 1em;
+  padding-right: 1em;
+  white-space: nowrap;
+  cursor: pointer;
+  font-size: 14px;
+  text-decoration: none;
+}
+
+column-css {
+  display: block;
+  max-width: 960px;
+}
+
+duck-css {
+  display: flex;
+  justify-content: flex-end;
+  font-size: 60px;
+  transform: scaleX(-1);
+  padding: var(--gap-mid);
+}

@@ -1,0 +1,30 @@
+<link rel="stylesheet" href="css/dark-en.css">
+
+<script 
+  src="js/uploader.js"
+  type="module">
+</script>
+
+<upload-data hidden ctx-name="my-uploader"></upload-data>
+<simple-btn ctx-name="my-uploader"></simple-btn>
+<system-call ctx-name="my-uploader"></system-call>
+
+<modal-win style="--ctx-name:my-uploader">
+  <activity-mngr>
+    <drop-area activity="source-select">
+      <source-btn type="local"></source-btn>
+      <source-btn type="url"></source-btn>
+      <source-btn type="camera"></source-btn>
+      <source-btn type="other"></source-btn>
+    </drop-area>
+    <upload-list activity="upload-list"></upload-list>
+    <camera-source activity="camera"></camera-source>
+    <url-source activity="url"></url-source>
+    <external-source activity="external"></external-source>
+    <upload-details activity="upload-details"></upload-details>
+    <confirmation-dialog activity="confirmation"></confirmation-dialog>
+  </activity-mngr>
+</modal-win>
+
+<message-box ctx-name="my-uploader"></message-box>
+<progress-bar ctx-name="my-uploader"></progress-bar>

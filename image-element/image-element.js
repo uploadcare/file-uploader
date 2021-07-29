@@ -1,4 +1,4 @@
-import { registerSw,  } from '../sw-manager/sw-manager.js';
+import { registerSw } from '../sw-manager/sw-manager.js';
 import { State } from '../symbiote/core/State.js';
 
 window.onload = () => {

@@ -1,28 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>live-html-element</title>
-</head>
-<body>
-  <style>
-    /* @font-face {
-      font-family: 'hlfont';
-      src: url('./font.woff2');
-    }
-    body {
-      font-family: 'hlfont', monospace;
-    } */
-    .hl {
-      color: rgb(255, 83, 183);
-    }
-  </style>
-  <script type="module">
-    import { LiveHtmlElement } from './live-html-element.js';
-    window.customElements.define('live-html-element', LiveHtmlElement);
-  </script>
-  <live-html-element src="./ref.html"></live-html-element>
-</body>
-</html>
+<link rel="stylesheet" href="test.css">
+<script type="module">
+  import { LiveHtmlElement } from './live-html-element.js';
+  LiveHtmlElement.reg('live-html');
+</script>
+<live-html src="./ref.html"></live-html>

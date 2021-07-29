@@ -3,7 +3,7 @@ import { ACT } from '../dictionary.js';
 
 export class UploadWidgetBtn extends UploadWidget {}
 UploadWidgetBtn.template = /*html*/ `
-<upload-data></upload-data>
+<upload-data hidden></upload-data>
 <simple-btn></simple-btn>
 <system-call></system-call>
 <modal-win>

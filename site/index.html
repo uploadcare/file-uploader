@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Uploadcare JSDK</title>
+  <link rel="stylesheet" href="./css/styles.css">
+  <base href=".">
+  <script src="../../re4ma/render/render.js" type="module" re-move></script>
+</head>
+<body>
+  <re-htm src="./htm/page-layout.htm">
+    <column-css>
+      <re-md src="./md/ph.md"></re-md>
+      <re-htm src="./htm/duck.htm"></re-htm>
+      <re-peat 
+        data-src="./json/packages.json" 
+        template-src="./htm/package-card.htm">
+      </re-peat>
+    </column-css>
+  </re-htm>
+</body>
+</html>

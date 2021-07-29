@@ -3,9 +3,14 @@ import fs from 'fs';
 
 const buildSequence = [
   {
-    in: './test/test.js',
-    out: './dist/test.js',
-    minifyHtml: true,
+    in: './site/js/live.js',
+    out: './site/dist/js/live.js',
+    minifyHtml: false,
+  },
+  {
+    in: './site/js/uploader.js',
+    out: './site/dist/js/uploader.js',
+    minifyHtml: false,
   },
 ];
 

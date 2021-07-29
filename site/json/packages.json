@@ -1,0 +1,39 @@
+{
+  "symbiote.js": {
+    "description": "Ultralight and ultrapowerful UI library",
+    "readme": "../../symbiote/README.md",
+    "page": "pages/symbiote.html",
+    "demo": ""
+  },
+  "re4ma": {
+    "description": "World simplest HTML page generator",
+    "readme": "../../re4ma/README.md",
+    "page": "pages/re4ma.html",
+    "demo": ""
+  },
+  "upload-blocks": {
+    "description": "Build your own file uploader in minutes",
+    "page": "pages/upload-blocks.html",
+    "demo": "snippets/upload-blocks.html"
+  },
+  "uc-image": {
+    "description": "Adaptive image delivery",
+    "page": "pages/uc-image.html",
+    "demo": ""
+  },
+  "cdn-editor": {
+    "description": "GUI for CDN transformations API",
+    "page": "pages/cdn-edit.html",
+    "demo": ""
+  },
+  "upload-client": {
+    "description": "Upload large files faster form Node.js or browser",
+    "page": "pages/upload-client.html",
+    "demo": ""
+  },
+  "live-html": {
+    "description": "Live code editor and useful snippets for Uploadcare ecosystem",
+    "page": "pages/cdn-edit.html",
+    "demo": ""
+  }
+}
