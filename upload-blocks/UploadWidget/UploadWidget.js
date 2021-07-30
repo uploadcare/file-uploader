@@ -1,4 +1,5 @@
 import { WidgetBase } from '../WidgetBase/WidgetBase.js';
+import { IconUi } from '../IconUi/IconUi.js';
 import { UploadData } from '../UploadData/UploadData.js';
 import { SimpleBtn } from '../SimpleBtn/SimpleBtn.js';
 import { SystemCall } from '../SystemCall/SystemCall.js';
@@ -16,6 +17,7 @@ import { UploadResult } from '../UploadResult/UploadResult.js';
 import { ConfirmationDialog } from '../ConfirmationDialog/ConfirmationDialog.js';
 import { ProgressBar } from '../ProgressBar/ProgressBar.js'
 
+IconUi.reg('icon-ui');
 UploadData.reg('upload-data');
 SimpleBtn.reg('simple-btn');
 ActivityMngr.reg('activity-mngr');

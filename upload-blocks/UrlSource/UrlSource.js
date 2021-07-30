@@ -18,11 +18,13 @@ export class UrlSource extends BaseComponent {
           if (info.type === 'success') {
             let fileInfo = await getInfo(info.uuid, pubkey);
             console.log(fileInfo);
-            entry.setValue('uuid', fileInfo.uuid);
-            entry.setValue('fileName', fileInfo.filename);
-            entry.setValue('fileSize', fileInfo.size);
-            entry.setValue('isImage', fileInfo.is_image);
-            entry.setValue('mimeType', fileInfo.mime_type);
+            entry.setMultipleValues({
+              uuid: fileInfo.uuid,
+              fileName: fileInfo.filename,
+              fileSize: fileInfo.size,
+              isImage: fileInfo.is_image,
+              mimeType: fileInfo.mime_type,
+            });
             this.externalState.pub('currentActivity', 'upload-list');
           }
         });

@@ -49,10 +49,15 @@ export class CameraSource extends BaseComponent {
         lastModified: date,
         type: 'image/png',
       });
+      this.collection.add({
+        file,
+        fileName: name,
+        fileSize: file.size,
+        isImage: true,
+        mimeType: file.type,
+      });
       this.externalState.multiPub({
-        focusedFile: file,
-        modalCaption: `Edit file ${name}`,
-        currentActivity: 'pre-edit',
+        currentActivity: 'upload-list',
       });
     });
   }
@@ -66,6 +71,10 @@ export class CameraSource extends BaseComponent {
         this.localState.pub('video', null);
       }
     });
+    this.externalState.sub('uploadCollection', (collection) => {
+      /** @type {import('../../symbiote/core/TypedCollection.js').TypedCollection} */
+      this.collection = collection;
+    });
   }
 }
 
@@ -74,7 +83,8 @@ CameraSource.template = /*html*/ `
   autoplay 
   playsinline 
   loc="srcObject: video"
-  ref="video"></video>
+  ref="video">
+</video>
 <div -toolbar->
   <button -cancel-btn- loc="onclick: on.cancel"></button>
   <button -shot-btn- loc="onclick: on.shot"></button>
