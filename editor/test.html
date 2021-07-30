@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Editor</title>
+  <script src="./src/UploadcareEditor.js" type="module"></script>
+</head>
+<body>
+<uc-editor id="editor" uuid="84313a71-6c6d-4064-83f5-abcba112b67b" public-key="demopublickey"></uc-editor>
+<script>
+  let editor = document.querySelector('#editor');
+  editor.addEventListener('apply', e => {
+    let {originalUrl, transformationsUrl, transformations} = e.detail;
+    console.log('APPLY', {originalUrl, transformationsUrl, transformations})
+  })
+</script>
+</body>
+</html>

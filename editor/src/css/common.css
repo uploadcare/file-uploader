@@ -1,0 +1,97 @@
+:host {
+  /* Theme settings >>> */
+  --rgb-primary-accent: 6, 2, 196;
+  --rgb-text-base: 0, 0, 0;
+  --rgb-text-accent-contrast: 255, 255, 255;
+  --rgb-fill-contrast: 255, 255, 255;
+  --rgb-fill-shaded: 245, 245, 245;
+  --rgb-shadow: 0, 0, 0;
+  --rgb-error: 209, 81, 81;
+  --opacity-shade-mid: .2;
+  /* <<< Theme settings */
+
+  --color-primary-accent: rgb(var(--rgb-primary-accent));
+  --color-text-base: rgb(var(--rgb-text-base));
+  --color-text-accent-contrast: rgb(var(--rgb-text-accent-contrast));
+  --color-text-soft: rgb(var(--rgb-fill-contrast));
+  --color-text-error: rgb(var(--rgb-error));
+  --color-fill-contrast: rgb(var(--rgb-fill-contrast));
+  --color-modal-backdrop: rgba(var(--rgb-fill-shaded), 0.95);
+  --color-image-background: rgba(var(--rgb-fill-shaded));
+  --color-outline: rgba(var(--rgb-text-base), var(--opacity-shade-mid));
+  --color-underline: rgba(var(--rgb-text-base), 0.08);
+  --color-shade: rgba(var(--rgb-text-base), 0.02);
+  --color-focus-ring: var(--color-primary-accent);
+  --color-input-placeholder: rgba(var(--rgb-text-base), 0.32);
+  --color-error: rgb(var(--rgb-error));
+
+  --font-size-ui: 16px;
+  --font-size-title: 18px;
+  --font-weight-title: 500;
+  --font-size-soft: 14px;
+
+  --size-touch-area: 40px;
+  --size-panel-heading: 66px;
+  --size-ui-min-width: 130px;
+  --size-line-width: 1px;
+  --size-modal-width: 650px;
+
+  --border-radius-connect: 2px;
+  --border-radius-editor: 3px;
+  --border-radius-thumb: 4px;
+  --border-radius-ui: 5px;
+  --border-radius-base: 6px;
+
+  --gap-min: 5px;
+  --gap-mid-1: 10px;
+  --gap-mid-2: 15px;
+  --gap-max: 20px;
+
+  --opacity-min: var(--opacity-shade-mid);
+  --opacity-mid: 0.1;
+  --opacity-max: 0.05;
+
+  --transition-duration-2: var(--transition-duration-all, 0.2s);
+  --transition-duration-3: var(--transition-duration-all, 0.3s);
+  --transition-duration-4: var(--transition-duration-all, 0.4s);
+  --transition-duration-5: var(--transition-duration-all, 0.5s);
+
+  --shadow-base: 0px 5px 15px rgba(var(--rgb-shadow), 0.1), 0px 1px 4px rgba(var(--rgb-shadow), 0.15);
+}
+
+[can-handle-paste]:hover, [can-handle-paste]:focus {
+  --can-handle-paste: 'true',
+}
+
+/* uploadcare-source-select */
+[uc-ss-item]:hover, [uc-ss-item]:focus {
+  background-color: var(--color-shade);
+}
+
+[tabindex][focus-visible], [tabindex]:hover, [with-effects][focus-visible], [with-effects]:hover {
+  --filter-effect: var(--hover-filter) !important;
+  --opacity-effect: var(--hover-opacity) !important;
+  --color-effect: var(--hover-color-rgb) !important;
+}
+
+[tabindex]:active, [with-effects]:active {
+  --filter-effect: var(--down-filter) !important;
+  --opacity-effect: var(--down-opacity) !important;
+  --color-effect: var(--down-color-rgb) !important;
+}
+
+[tabindex][active], [with-effects][active]  {
+  --filter-effect: var(--active-filter) !important;
+  --opacity-effect: var(--active-opacity) !important;
+  --color-effect: var(--active-color-rgb) !important;
+}
+
+
+[hidden-scrollbar]::-webkit-scrollbar {
+  display: none;
+}
+
+[hidden-scrollbar] {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
