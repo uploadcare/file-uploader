@@ -1,44 +1,48 @@
-import { applyElementStyles } from '../../symbiote/core/css_utils.js';
-import { ucIconHtml } from './icons/ucIconHtml.js';
-import { AppComponent } from './AppComponent.js';
+import { AppComponent } from './AppComponent.js'
+import { EditorCropButtonControl } from './EditorCropButtonControl.js'
+import { EditorFilterControl } from './EditorFilterControl.js'
+import { EditorOperationControl } from './EditorOperationControl.js'
+import { EditorScroller } from './EditorScroller.js'
+import { EditorSlider, FAKE_ORIGINAL_FILTER } from './EditorSlider.js'
+import { UcBtnUi } from './elements/button/UcBtnUi.js'
+import { LineLoaderUi } from './elements/line-loader/LineLoaderUi.js'
+import { PresenceToggle } from './elements/presence-toggle/PresenceToggle.js'
 // import { BREAKPOINTS } from '../../shared-styles/design-system.js';
-import { ALL_COLOR_OPERATIONS, ALL_FILTERS, ALL_CROP_OPERATIONS, TabId, TABS } from './toolbar-constants.js';
-import { EditorOperationControl } from './EditorOperationControl.js';
-import { STYLES, COND } from './toolbar-styles.js';
-import { EditorCropButtonControl } from './EditorCropButtonControl.js';
-import { viewerImageSrc } from './viewer_util.js';
-import { batchPreloadImages } from './lib/preloadImage.js';
-import { LineLoaderUi } from './elements/line-loader/LineLoaderUi.js';
-import { EditorSlider, FAKE_ORIGINAL_FILTER } from './EditorSlider.js';
-import { EditorFilterControl } from './EditorFilterControl.js';
-import { UcBtnUi } from './elements/button/UcBtnUi.js';
-import { PresenceToggle } from './elements/presence-toggle/PresenceToggle.js';
-import { EditorScroller } from './EditorScroller.js';
-import { debounce } from './lib/debounce.js';
+import { classNames } from './lib/classNames.js'
+import { debounce } from './lib/debounce.js'
+import { batchPreloadImages } from './lib/preloadImage.js'
+import {
+  ALL_COLOR_OPERATIONS,
+  ALL_CROP_OPERATIONS,
+  ALL_FILTERS,
+  TabId,
+  TABS,
+} from './toolbar-constants.js'
+import { viewerImageSrc } from './viewer_util.js'
 
 function renderTabToggle(id) {
   return /*html*/ `
     <${UcBtnUi.is} theme="boring" ref="tab-toggle-${id}" data-id="${id}" icon="${id}" tabindex="0" set="ariaClick: on.clickTab;">
     </${UcBtnUi.is}>
-  `;
+  `
 }
 
 function renderTabContent(id) {
   return /*html*/ `
-    <${PresenceToggle.is} css="tab-content" set="visible: presence.tabContent${id}">
+    <${PresenceToggle.is} class="tab-content" set="visible: presence.tabContent${id}">
         <${EditorScroller.is} hidden-scrollbar>
-          <div css="controls-list_align">
-            <div css="controls-list_inner" ref="controls-list-${id}">
+          <div class="controls-list_align">
+            <div class="controls-list_inner" ref="controls-list-${id}">
             </div>
           </div>
         </${EditorScroller.is}>
     </${PresenceToggle.is}>
-  `;
+  `
 }
 
 export class EditorToolbar extends AppComponent {
   constructor() {
-    super();
+    super()
 
     // TODO: investigate TS error:
     // @ts-ignore
@@ -60,215 +64,220 @@ export class EditorToolbar extends AppComponent {
       operationTooltip: null,
       networkProblems: false,
 
-      'css.operationTooltip': COND.operation_tooltip_hidden,
-
       'presence.mainToolbar': true,
       'presence.subToolbar': false,
       [`presence.tabContent${TabId.CROP}`]: false,
       [`presence.tabContent${TabId.SLIDERS}`]: false,
       [`presence.tabContent${TabId.FILTERS}`]: false,
       'presence.subTopToolbarStyles': {
-        hidden: STYLES['sub-toolbar--top-hidden'],
-        visible: STYLES['sub-toolbar--visible'],
+        hidden: 'sub-toolbar--top-hidden',
+        visible: 'sub-toolbar--visible',
       },
       'presence.subBottomToolbarStyles': {
-        hidden: STYLES['sub-toolbar--bottom-hidden'],
-        visible: STYLES['sub-toolbar--visible'],
+        hidden: 'sub-toolbar--bottom-hidden',
+        visible: 'sub-toolbar--visible',
       },
       'on.cancel': (e) => {
-        this._cancel();
-        this.read('*on.close')();
+        this._cancel()
+        this.read('*on.close')()
       },
       'on.apply': (e) => {
-        this._apply();
-        this.read('*on.close')();
+        this._apply()
+        this.read('*on.close')()
       },
       'on.applySlider': (e) => {
-        this['slider-el'].apply();
-        this._onSliderClose();
+        this['slider-el'].apply()
+        this._onSliderClose()
       },
       'on.cancelSlider': (e) => {
-        this['slider-el'].cancel();
-        this._onSliderClose();
+        this['slider-el'].cancel()
+        this._onSliderClose()
       },
       'on.clickTab': (e) => {
-        let id = e.currentTarget.getAttribute('data-id');
-        this._activateTab(id, { fromViewer: false });
+        let id = e.currentTarget.getAttribute('data-id')
+        this._activateTab(id, { fromViewer: false })
       },
-    };
+    }
 
     this.defineAccessor('imgContainerEl', (el) => {
-      this._imgContainerEl = el;
-    });
+      this._imgContainerEl = el
+    })
 
     this.defineAccessor('faderEl', (el) => {
       if (el) {
         /** @type {import('./EditorImageFader').EditorImageFader} */
-        this.state.faderEl = el;
+        this.state.faderEl = el
       }
-    });
+    })
 
     this.defineAccessor('cropperEl', (el) => {
       /** @type {import('./EditorImageCropper').EditorImageCropper} */
-      this._cropperEl = el;
-    });
+      this._cropperEl = el
+    })
 
-    this._debouncedShowLoader = debounce(this._showLoader.bind(this), 500);
+    this._debouncedShowLoader = debounce(this._showLoader.bind(this), 500)
   }
 
   get tabId() {
-    return this.state.tabId;
+    return this.state.tabId
   }
 
   _onSliderClose() {
-    this.state.showSlider = false;
+    this.state.showSlider = false
     if (this.state.tabId === TabId.SLIDERS) {
-      this.state['css.operationTooltip'] = COND.operation_tooltip_hidden;
+      this['tooltip-el'].className = classNames('filter-tooltip', {
+        'filter-tooltip_visible': false,
+        'filter-tooltip_hidden': true,
+      })
     }
   }
 
   _cancel() {
-    this._cancelPreload && this._cancelPreload();
-    this.state.editorTransformations = this.read('*transformations');
+    this._cancelPreload && this._cancelPreload()
+    this.state.editorTransformations = this.read('*transformations')
   }
 
   _apply() {
-    this.pub('*transformations', this.state.editorTransformations);
+    this.pub('*transformations', this.state.editorTransformations)
   }
 
   /** @param {string} operation */
   _createOperationControl(operation) {
-    let el = EditorOperationControl.is && new EditorOperationControl();
-    el.dataCtxProvider = this;
-    el['faderEl'] = this.state.faderEl;
-    el['sliderEl'] = this['slider-el'];
-    el['operation'] = operation;
-    return el;
+    let el = EditorOperationControl.is && new EditorOperationControl()
+    el.dataCtxProvider = this
+    el['faderEl'] = this.state.faderEl
+    el['sliderEl'] = this['slider-el']
+    el['operation'] = operation
+    return el
   }
 
   /** @param {string} filter */
   _createFilterControl(filter) {
-    let el = EditorFilterControl.is && new EditorFilterControl();
-    el.dataCtxProvider = this;
-    el['faderEl'] = this.state.faderEl;
-    el['sliderEl'] = this['slider-el'];
-    el['filter'] = filter;
-    return el;
+    let el = EditorFilterControl.is && new EditorFilterControl()
+    el.dataCtxProvider = this
+    el['faderEl'] = this.state.faderEl
+    el['sliderEl'] = this['slider-el']
+    el['filter'] = filter
+    return el
   }
 
   _createToggleControl(operation) {
-    let el = EditorCropButtonControl.is && new EditorCropButtonControl();
-    el.dataCtxProvider = this;
-    el['cropperEl'] = this._cropperEl;
-    el['operation'] = operation;
-    return el;
+    let el = EditorCropButtonControl.is && new EditorCropButtonControl()
+    el.dataCtxProvider = this
+    el['cropperEl'] = this._cropperEl
+    el['operation'] = operation
+    return el
   }
 
   /** @param {string} tabId */
   _renderControlsList(tabId) {
-    let listEl = this[`controls-list-${tabId}`];
-    let fr = document.createDocumentFragment();
+    let listEl = this[`controls-list-${tabId}`]
+    let fr = document.createDocumentFragment()
 
     if (tabId === TabId.CROP) {
       this.state.cropOperations.forEach((operation) => {
-        let el = this._createToggleControl(operation);
+        let el = this._createToggleControl(operation)
         // @ts-ignore
-        fr.appendChild(el);
-      });
+        fr.appendChild(el)
+      })
     } else if (tabId === TabId.FILTERS) {
-      [FAKE_ORIGINAL_FILTER, ...this.state.filters].forEach((filterId) => {
-        let el = this._createFilterControl(filterId);
+      ;[FAKE_ORIGINAL_FILTER, ...this.state.filters].forEach((filterId) => {
+        let el = this._createFilterControl(filterId)
         // @ts-ignore
-        fr.appendChild(el);
-      });
+        fr.appendChild(el)
+      })
     } else if (tabId === TabId.SLIDERS) {
       this.state.colorOperations.forEach((operation) => {
-        let el = this._createOperationControl(operation);
+        let el = this._createOperationControl(operation)
         // @ts-ignore
-        fr.appendChild(el);
-      });
+        fr.appendChild(el)
+      })
     }
 
-    fr.childNodes.forEach((el, idx) => {
+    fr.childNodes.forEach((/** @type {HTMLElement} */ el, idx) => {
       if (idx === fr.childNodes.length - 1) {
-        applyElementStyles(/** @type {HTMLElement} */ (el), STYLES['controls-list_last-item']);
+        el.classList.add('controls-list_last-item')
       }
-    });
+    })
 
-    listEl.innerHTML = '';
-    listEl.appendChild(fr);
+    listEl.innerHTML = ''
+    listEl.appendChild(fr)
   }
 
   /** @param {string} id */
   _activateTab(id, { fromViewer }) {
-    this.state.tabId = id;
+    this.state.tabId = id
 
     if (id === TabId.CROP) {
-      this.state.faderEl.deactivate();
-      this._cropperEl.activate(this.read('*imageSize'), { fromViewer });
+      this.state.faderEl.deactivate()
+      this._cropperEl.activate(this.read('*imageSize'), { fromViewer })
     } else {
-      this.state.faderEl.activate({ url: this.state.originalUrl, fromViewer });
-      this._cropperEl.deactivate({ seamlessTransition: true });
+      this.state.faderEl.activate({ url: this.state.originalUrl, fromViewer })
+      this._cropperEl.deactivate({ seamlessTransition: true })
     }
 
     for (let tabId of TABS) {
-      let isCurrentTab = tabId === id;
+      let isCurrentTab = tabId === id
 
-      let tabToggleEl = this[`tab-toggle-${tabId}`];
-      tabToggleEl.active = isCurrentTab;
+      let tabToggleEl = this[`tab-toggle-${tabId}`]
+      tabToggleEl.active = isCurrentTab
 
       if (isCurrentTab) {
-        this._renderControlsList(id);
-        this._syncTabIndicator();
+        this._renderControlsList(id)
+        this._syncTabIndicator()
       } else {
-        this._unmountTabControls(tabId);
+        this._unmountTabControls(tabId)
       }
 
-      this.state[`presence.tabContent${tabId}`] = isCurrentTab;
+      this.state[`presence.tabContent${tabId}`] = isCurrentTab
     }
   }
 
   /** @param {string} tabId */
   _unmountTabControls(tabId) {
-    let listEl = this[`controls-list-${tabId}`];
+    let listEl = this[`controls-list-${tabId}`]
     if (listEl) {
-      listEl.innerHTML = '';
+      listEl.innerHTML = ''
     }
   }
 
   _syncTabIndicator() {
-    let tabToggleEl = this[`tab-toggle-${this.state.tabId}`];
-    let indicatorEl = this['tabs-indicator'];
-    indicatorEl.style.transform = `translateX(${tabToggleEl.offsetLeft}px)`;
+    let tabToggleEl = this[`tab-toggle-${this.state.tabId}`]
+    let indicatorEl = this['tabs-indicator']
+    indicatorEl.style.transform = `translateX(${tabToggleEl.offsetLeft}px)`
   }
 
   _preloadEditedImage() {
     if (this._imgContainerEl && this.state.originalUrl) {
-      let width = this._imgContainerEl.offsetWidth;
-      let src = viewerImageSrc(this.state.originalUrl, width, this.state.editorTransformations);
-      this._cancelPreload && this._cancelPreload();
-      let { cancel } = batchPreloadImages([src]);
+      let width = this._imgContainerEl.offsetWidth
+      let src = viewerImageSrc(
+        this.state.originalUrl,
+        width,
+        this.state.editorTransformations,
+      )
+      this._cancelPreload && this._cancelPreload()
+      let { cancel } = batchPreloadImages([src])
       this._cancelPreload = () => {
-        cancel();
-        this._cancelPreload = undefined;
-      };
+        cancel()
+        this._cancelPreload = undefined
+      }
     }
   }
 
   _showLoader(show) {
-    this.state.showLoader = show;
+    this.state.showLoader = show
   }
 
   readyCallback() {
-    super.readyCallback();
+    super.readyCallback()
 
     this.sub('*imageSize', (imageSize) => {
       if (imageSize) {
         setTimeout(() => {
-          this._activateTab(this.state.tabId, { fromViewer: true });
-        }, 0);
+          this._activateTab(this.state.tabId, { fromViewer: true })
+        }, 0)
       }
-    });
+    })
 
     // this.sub('*widthBreakpoint', (bp) => {
     //   let isMobile = bp < BREAKPOINTS.max;
@@ -277,109 +286,129 @@ export class EditorToolbar extends AppComponent {
     // });
 
     this.sub('currentFilter', (currentFilter) => {
-      this.state.operationTooltip = currentFilter || FAKE_ORIGINAL_FILTER;
-      this.state['css.operationTooltip'] = currentFilter
-        ? COND.operation_tooltip_visible
-        : COND.operation_tooltip_hidden;
-    });
+      this.state.operationTooltip = currentFilter || FAKE_ORIGINAL_FILTER
+      this['tooltip-el'].className = classNames('filter-tooltip', {
+        'filter-tooltip_visible': currentFilter,
+        'filter-tooltip_hidden': !currentFilter,
+      })
+    })
 
     this.sub('currentOperation', (currentOperation) => {
       if (this.state.tabId !== TabId.SLIDERS) {
-        return;
+        return
       }
-      this.state.operationTooltip = currentOperation;
-      this.state['css.operationTooltip'] = currentOperation
-        ? COND.operation_tooltip_visible
-        : COND.operation_tooltip_hidden;
-    });
+      this.state.operationTooltip = currentOperation
+      this['tooltip-el'].className = classNames('filter-tooltip', {
+        'filter-tooltip_visible': currentOperation,
+        'filter-tooltip_hidden': !currentOperation,
+      })
+    })
 
     this.sub('tabId', (tabId) => {
       if (tabId === TabId.FILTERS) {
-        this.state.operationTooltip = this.state.currentFilter;
-        this.state['css.operationTooltip'] = COND.operation_tooltip_visible;
-        return;
+        this.state.operationTooltip = this.state.currentFilter
       }
-      this.state['css.operationTooltip'] = COND.operation_tooltip_hidden;
-    });
+      this['tooltip-el'].className = classNames('filter-tooltip', {
+        'filter-tooltip_visible': tabId === TabId.FILTERS,
+        'filter-tooltip_hidden': tabId !== TabId.FILTERS,
+      })
+    })
 
     this.sub('*originalUrl', (originalUrl) => {
-      this.state.originalUrl = originalUrl;
-      this.state.faderEl && this.state.faderEl.deactivate();
-    });
+      this.state.originalUrl = originalUrl
+      this.state.faderEl && this.state.faderEl.deactivate()
+    })
 
     this.sub('editorTransformations', (transformations) => {
-      this._preloadEditedImage();
+      this._preloadEditedImage()
       if (this.state.faderEl) {
-        this.state.faderEl.setTransformations(transformations);
+        this.state.faderEl.setTransformations(transformations)
       }
-    });
+    })
 
     this.sub('*transformations', (transformations) => {
       if (transformations) {
-        this.state.editorTransformations = transformations;
+        this.state.editorTransformations = transformations
       }
-    });
+    })
 
     this.sub('loadingOperations', (loadingOperations) => {
-      let loading = Object.values(loadingOperations).some((obj) => Object.values(obj).some(Boolean));
-      this._debouncedShowLoader(loading);
-    });
+      let loading = Object.values(loadingOperations).some((obj) =>
+        Object.values(obj).some(Boolean),
+      )
+      this._debouncedShowLoader(loading)
+    })
 
     this.sub('showSlider', (showSlider) => {
-      this.state['presence.subToolbar'] = showSlider;
-      this.state['presence.mainToolbar'] = !showSlider;
-    });
+      this.state['presence.subToolbar'] = showSlider
+      this.state['presence.mainToolbar'] = !showSlider
+    })
 
     this.sub('networkProblems', (networkProblems) => {
       if (this.read('*networkProblems') !== networkProblems) {
-        this.pub('*networkProblems', networkProblems);
+        this.pub('*networkProblems', networkProblems)
       }
-    });
+    })
 
     this.sub('*networkProblems', (networkProblems) => {
       if (this.state.networkProblems !== networkProblems) {
-        this.state.networkProblems = networkProblems;
+        this.state.networkProblems = networkProblems
       }
-    });
+    })
   }
 }
 
-EditorToolbar.renderShadow = false;
-EditorToolbar.styles = STYLES;
+EditorToolbar.renderShadow = false
 
 EditorToolbar.template = /*html*/ `
 <${LineLoaderUi.is} set="active: showLoader"></${LineLoaderUi.is}>
-<div css="filter-tooltip_container">
-  <div css="filter-tooltip_wrapper">
-    <div css set="css: css.operationTooltip; textContent: operationTooltip"></div>
+<div class="filter-tooltip_container">
+  <div class="filter-tooltip_wrapper">
+    <div ref="tooltip-el" class="filter-tooltip filter-tooltip_visible" set="textContent: operationTooltip"></div>
   </div>
 </div>
-<div css="toolbar-container">
-  <${PresenceToggle.is} css="sub-toolbar" set="visible: presence.mainToolbar; styles: presence.subTopToolbarStyles">
-      <div css="tab-content-row">
+<div class="toolbar-container">
+  <${
+    PresenceToggle.is
+  } class="sub-toolbar" set="visible: presence.mainToolbar; styles: presence.subTopToolbarStyles">
+      <div class="tab-content-row">
       ${TABS.map(renderTabContent).join('')}
       </div>
-      <div css="controls-row">
-        <${UcBtnUi.is} theme="boring" icon="closeMax" set="ariaClick: on.cancel">
+      <div class="controls-row">
+        <${
+          UcBtnUi.is
+        } theme="boring" icon="closeMax" set="ariaClick: on.cancel">
         </${UcBtnUi.is}>
-        <div css="tab-toggles">
-          <div ref="tabs-indicator" css="tab-toggles_indicator"></div>
+        <div class="tab-toggles">
+          <div ref="tabs-indicator" class="tab-toggles_indicator"></div>
           ${TABS.map(renderTabToggle).join('')}
         </div>
         <${UcBtnUi.is} theme="primary" icon="done" set="ariaClick: on.apply">
         </${UcBtnUi.is}>
       </div>
   </${PresenceToggle.is}>
-  <${PresenceToggle.is} css="sub-toolbar" set="visible: presence.subToolbar; styles: presence.subBottomToolbarStyles">
-      <div css="slider">
-        <${EditorSlider.is} set="faderEl: faderEl; dataCtxProvider: ctxProvider" ref="slider-el"></${EditorSlider.is}>
+  <${
+    PresenceToggle.is
+  } class="sub-toolbar" set="visible: presence.subToolbar; styles: presence.subBottomToolbarStyles">
+      <div class="slider">
+        <${
+          EditorSlider.is
+        } set="faderEl: faderEl; dataCtxProvider: ctxProvider" ref="slider-el"></${
+  EditorSlider.is
+}>
       </div>
-      <div css="controls-row">
-        <${UcBtnUi.is} theme="boring" set="ariaClick: on.cancelSlider; text: [l10n]Cancel">
+      <div class="controls-row">
+        <${
+          UcBtnUi.is
+        } theme="boring" set="ariaClick: on.cancelSlider; text: [l10n]Cancel">
         </${UcBtnUi.is}>
-        <${UcBtnUi.is} theme="primary" set="ariaClick: on.applySlider; text: [l10n]Apply">
+        <${
+          UcBtnUi.is
+        } theme="primary" set="ariaClick: on.applySlider; text: [l10n]Apply">
         </${UcBtnUi.is}>
       </div>
   </${PresenceToggle.is}>
 </div>
-`;
+`
+
+EditorToolbar.is = 'editor-toolbar'

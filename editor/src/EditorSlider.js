@@ -2,16 +2,6 @@ import { AppComponent } from './AppComponent.js';
 import { SliderUi } from './elements/slider/SliderUi.js';
 import { COLOR_OPERATIONS_CONFIG } from './toolbar-constants.js';
 
-const STYLES = {
-  ':host': {
-    display: 'flex',
-    justifyContent: 'center',
-    width: '100%',
-    height: '66px',
-    alignItems: 'center',
-  },
-};
-
 const ControlType = {
   FILTER: 'filter',
   COLOR_OPERATION: 'color_operation',
@@ -129,8 +119,9 @@ export class EditorSlider extends AppComponent {
 }
 
 EditorSlider.renderShadow = false;
-EditorSlider.styles = STYLES;
 
 EditorSlider.template = /*html*/ `
 <${SliderUi.is} ref="slider-el" set="disabled: disabled; min: min; max: max; defaultValue: defaultValue; zero: zero; onInput: on.input;"></${SliderUi.is}>
 `;
+
+EditorSlider.is = 'editor-slider'

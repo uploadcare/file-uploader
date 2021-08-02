@@ -2,16 +2,6 @@ import { AppComponent } from './AppComponent.js';
 
 const X_THRESHOLD = 1;
 
-const STYLES = {
-  ':host': {
-    width: '100%',
-    height: '100%',
-    overflowX: 'scroll',
-    display: 'flex',
-    alignItems: 'center',
-  },
-};
-
 export class EditorScroller extends AppComponent {
   readyCallback() {
     super.readyCallback();
@@ -29,8 +19,9 @@ export class EditorScroller extends AppComponent {
 }
 
 EditorScroller.renderShadow = false;
-EditorScroller.styles = STYLES;
 
 EditorScroller.template = /*html*/ `
 <slot></slot>
 `;
+
+EditorScroller.is = 'editor-scroller'

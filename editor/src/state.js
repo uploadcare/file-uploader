@@ -1,6 +1,4 @@
-import { COND, STYLES } from './styles.js';
-import { TRANSPARENT_PIXEL_SRC } from './lib/transparentPixelSrc.js';
-import { constructCdnUrl, COMMON_OPERATIONS, transformationsToString } from './lib/cdnUtils.js';
+import { TRANSPARENT_PIXEL_SRC } from './lib/transparentPixelSrc.js'
 
 export function initState(fnCtx) {
   return {
@@ -28,25 +26,22 @@ export function initState(fnCtx) {
     uuid: null,
     'public-key': null,
 
-    'css.wrapper': 'wrapper _desktop',
-    'css.image': COND.img_visible_editor,
-
     'presence.networkProblems': false,
     'presence.modalCaption': true,
     'presence.editorToolbar': false,
     'presence.viewerToolbar': true,
 
     'on.retryNetwork': () => {
-      let images = fnCtx.shadowRoot.querySelectorAll('img');
+      let images = fnCtx.shadowRoot.querySelectorAll('img')
       for (let img of images) {
-        let originalSrc = img.src;
-        img.src = TRANSPARENT_PIXEL_SRC;
-        img.src = originalSrc;
+        let originalSrc = img.src
+        img.src = TRANSPARENT_PIXEL_SRC
+        img.src = originalSrc
       }
-      fnCtx.state.networkProblems = false;
+      fnCtx.state.networkProblems = false
     },
     'on.close': () => {
-      fnCtx.remove();
+      fnCtx.remove()
     },
-  };
+  }
 }

@@ -1,3 +1,5 @@
+@import url('./editor.css');
+
 :host {
   /* Theme settings >>> */
   --rgb-primary-accent: 6, 2, 196;
@@ -7,7 +9,7 @@
   --rgb-fill-shaded: 245, 245, 245;
   --rgb-shadow: 0, 0, 0;
   --rgb-error: 209, 81, 81;
-  --opacity-shade-mid: .2;
+  --opacity-shade-mid: 0.2;
   /* <<< Theme settings */
 
   --color-primary-accent: rgb(var(--rgb-primary-accent));
@@ -56,36 +58,43 @@
   --transition-duration-4: var(--transition-duration-all, 0.4s);
   --transition-duration-5: var(--transition-duration-all, 0.5s);
 
-  --shadow-base: 0px 5px 15px rgba(var(--rgb-shadow), 0.1), 0px 1px 4px rgba(var(--rgb-shadow), 0.15);
+  --shadow-base: 0px 5px 15px rgba(var(--rgb-shadow), 0.1),
+    0px 1px 4px rgba(var(--rgb-shadow), 0.15);
 }
 
-[can-handle-paste]:hover, [can-handle-paste]:focus {
-  --can-handle-paste: 'true',
+[can-handle-paste]:hover,
+[can-handle-paste]:focus {
+  --can-handle-paste: 'true';
 }
 
 /* uploadcare-source-select */
-[uc-ss-item]:hover, [uc-ss-item]:focus {
+[uc-ss-item]:hover,
+[uc-ss-item]:focus {
   background-color: var(--color-shade);
 }
 
-[tabindex][focus-visible], [tabindex]:hover, [with-effects][focus-visible], [with-effects]:hover {
+[tabindex][focus-visible],
+[tabindex]:hover,
+[with-effects][focus-visible],
+[with-effects]:hover {
   --filter-effect: var(--hover-filter) !important;
   --opacity-effect: var(--hover-opacity) !important;
   --color-effect: var(--hover-color-rgb) !important;
 }
 
-[tabindex]:active, [with-effects]:active {
+[tabindex]:active,
+[with-effects]:active {
   --filter-effect: var(--down-filter) !important;
   --opacity-effect: var(--down-opacity) !important;
   --color-effect: var(--down-color-rgb) !important;
 }
 
-[tabindex][active], [with-effects][active]  {
+[tabindex][active],
+[with-effects][active] {
   --filter-effect: var(--active-filter) !important;
   --opacity-effect: var(--active-opacity) !important;
   --color-effect: var(--active-color-rgb) !important;
 }
-
 
 [hidden-scrollbar]::-webkit-scrollbar {
   display: none;

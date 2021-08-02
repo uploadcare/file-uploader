@@ -8,34 +8,34 @@ import { EditorImageFader } from './EditorImageFader.js';
 import { EditorToolbar } from './EditorToolbar.js';
 
 export const TEMPLATE = /*html*/ `
-    <div css set="css: css.wrapper">
-      <${PresenceToggle.is} css="network_problems_splash" set="visible: presence.networkProblems;">
-         <div css="network_problems_content">
-          <div css="network_problems_icon">
+    <div class="wrapper wrapper_desktop">
+      <${PresenceToggle.is} class="network_problems_splash" set="visible: presence.networkProblems;">
+         <div class="network_problems_content">
+          <div class="network_problems_icon">
             ${ucIconHtml('sad')}
           </div>
-          <div css="network_problems_text">
+          <div class="network_problems_text">
             Network error
           </div>
          </div>
-         <div css="network_problems_footer">
+         <div class="network_problems_footer">
             <${UcBtnUi.is} theme="primary" text="Retry" set="ariaClick: on.retryNetwork"></${UcBtnUi.is}>
          </div>
       </${PresenceToggle.is}>
-      <div css="viewport">
-        <div css="file_type_outer">
-          <div css="file_type" set="textContent: fileType"></div>
+      <div class="viewport">
+        <div class="file_type_outer">
+          <div class="file_type" set="textContent: fileType"></div>
         </div>
-        <div css="image_container" ref="img-container-el">
-          <img css ref="img-el" set="css: css.image;">
+        <div class="image_container" ref="img-container-el">
+          <img class="image image_visible_from_editor" ref="img-el">
           <${EditorImageCropper.is} ref="cropper-el" set="dataCtxProvider: editorToolbarEl"></${EditorImageCropper.is}>
           <${EditorImageFader.is} ref="fader-el" set="dataCtxProvider: editorToolbarEl"></${EditorImageFader.is}>
         </div>
-        <div css="info_pan" set="textContent: msg"></div>
+        <div class="info_pan" set="textContent: msg"></div>
       </div>
-      <div css="toolbar">
+      <div class="toolbar">
         <${LineLoaderUi.is} set="active: showLoader"></${LineLoaderUi.is}>
-        <div css="toolbar_content toolbar_content__editor">
+        <div class="toolbar_content toolbar_content__editor">
             <${EditorToolbar.is}
               ref="editor-toolbar-el"
               set="${toDslString({

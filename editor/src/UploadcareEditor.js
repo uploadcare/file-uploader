@@ -1,19 +1,14 @@
-import { applyElementStyles } from '../../symbiote/core/css_utils.js'
 import { AppComponent } from './AppComponent.js'
-// import { BREAKPOINTS } from '../../shared-styles/design-system.js';
-import { initState } from './state.js'
-import { COND, STYLES } from './styles.js'
-import { TEMPLATE } from './template.js'
-import { viewerImageSrc } from './util.js'
+import { constructCdnUrl, transformationsToString } from './lib/cdnUtils.js'
+import { classNames } from './lib/classNames.js'
+import { debounce } from './lib/debounce.js'
 import { preloadImage } from './lib/preloadImage.js'
 import { TRANSPARENT_PIXEL_SRC } from './lib/transparentPixelSrc.js'
-import { debounce } from './lib/debounce.js'
+// import { BREAKPOINTS } from '../../shared-styles/design-system.js';
+import { initState } from './state.js'
+import { TEMPLATE } from './template.js'
 import { TabId } from './toolbar-constants.js'
-import {
-  constructCdnUrl,
-  COMMON_OPERATIONS,
-  transformationsToString,
-} from './lib/cdnUtils.js'
+import { viewerImageSrc } from './util.js'
 
 export class UploadcareEditor extends AppComponent {
   constructor() {
@@ -68,7 +63,7 @@ export class UploadcareEditor extends AppComponent {
     this.state.cropperEl = this['cropper-el']
     this.state.imgContainerEl = this['img-container-el']
 
-    applyElementStyles(this, STYLES.editor_ON)
+    this.classList.add('editor_ON')
 
     this.sub('networkProblems', (networkProblems) => {
       this.state['presence.networkProblems'] = networkProblems
@@ -104,12 +99,14 @@ export class UploadcareEditor extends AppComponent {
     })
 
     this.state.editorToolbarEl.sub('tabId', (tabId) => {
-      this.state['css.image'] =
-        tabId === TabId.CROP ? COND.img_hidden_cropper : COND.img_hidden_effects
+      this['img-el'].className = classNames('image', {
+        image_hidden_to_cropper: tabId === TabId.CROP,
+        image_hidden_effects: tabId !== TabId.CROP,
+      })
     })
 
     this.sub('transformations', (transformations) => {
-      if(!transformations) {
+      if (!transformations) {
         return
       }
       let transformationsUrl = constructCdnUrl(
@@ -136,7 +133,8 @@ export class UploadcareEditor extends AppComponent {
 }
 
 UploadcareEditor.reflectToState(['uuid', 'public-key'])
-UploadcareEditor.styles = STYLES
 UploadcareEditor.template = TEMPLATE
 UploadcareEditor.flowInitiator(true)
 UploadcareEditor.topLevel(true)
+
+UploadcareEditor.is = 'uc-editor'
