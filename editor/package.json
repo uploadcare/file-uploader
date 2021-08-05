@@ -1,0 +1,27 @@
+{
+  "type": "module",
+  "name": "editor",
+  "version": "0.0.1-alpha.0.2",
+  "description": "",
+  "main": "test.js",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.23.0",
+    "@babel/parser": "^7.14.8",
+    "@babel/traverse": "^7.14.8",
+    "esbuild": "^0.12.16",
+    "fast-glob": "^3.2.7",
+    "js-beautify": "^1.14.0",
+    "serve": "^12.0.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "serve": "serve ./",
+    "esbuild": "node ./esbuild.js",
+    "build": "npm run esbuild && npm run copy-locales && npm run copy-css",
+    "copy-locales": "mkdir -p dist/l10n/locales && cp -R ./src/l10n/locales ./dist/l10n/",
+    "copy-css": "mkdir -p ./dist/css && cp ./src/css/common.css ./dist/css/common.css",
+    "deploy": "npm run build && node ./deploy-to-s3.js"
+  },
+  "author": "",
+  "license": "ISC"
+}
