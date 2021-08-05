@@ -1,4 +1,4 @@
-import { BaseComponent } from '../../symbiote/core/BaseComponent.js';
+import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 
 const ICONS = {
   back: 'M15.41,16.58L10.83,12L15.41,7.41L14,6L8,12L14,18L15.41,16.58Z',
@@ -7,7 +7,7 @@ const ICONS = {
   detail: 'M5,3C3.89,3 3,3.89 3,5V19C3,20.11 3.89,21 5,21H19C20.11,21 21,20.11 21,19V5C21,3.89 20.11,3 19,3H5M5,5H19V19H5V5M7,7V9H17V7H7M7,11V13H17V11H7M7,15V17H14V15H7Z',
 };
 
-export class UploadDetails extends BaseComponent {
+export class UploadDetails extends BlockComponent {
 
   constructor() {
     super();
@@ -20,7 +20,7 @@ export class UploadDetails extends BaseComponent {
       },
       'on.remove': () => {
         /** @type {File[]} */
-        this.collection.remove(this.entry.__ctxId);
+        this.uploadCollection.remove(this.entry.__ctxId);
         this.externalState.pub('backTrigger', {});
       },
       'on.preview': () => {
@@ -73,10 +73,6 @@ export class UploadDetails extends BaseComponent {
   initCallback() {
     this.addToExternalState({
       focusedEntry: null,
-    });
-    this.externalState.sub('uploadCollection', (collection) => {
-      /** @type {import('../../symbiote/core/TypedCollection.js').TypedCollection} */
-      this.collection = collection;
     });
     this.externalState.sub('focusedEntry', (/** @type {import('../../symbiote/core/TypedState.js').TypedState} */ entry) => {
       if (this._ctx) {

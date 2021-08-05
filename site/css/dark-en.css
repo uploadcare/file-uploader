@@ -3,6 +3,7 @@
 :root {
   font-family: 'Roboto Condensed', sans-serif;
 
+  --cfg-pubkey: 'demopublickey';
   --cfg-multiple: 1;
   --cfg-confirm-upload: 1;
   --cfg-img-only: 0;

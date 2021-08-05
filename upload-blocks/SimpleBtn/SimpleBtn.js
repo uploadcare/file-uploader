@@ -1,6 +1,6 @@
-import { BaseComponent } from '../../symbiote/core/BaseComponent.js';
+import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 
-export class SimpleBtn extends BaseComponent {
+export class SimpleBtn extends BlockComponent {
 
   initCallback() {
     this.externalState.sub('uploadList', (/** @type {String[]} */ list) => {

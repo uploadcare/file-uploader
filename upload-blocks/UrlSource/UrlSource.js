@@ -1,14 +1,14 @@
-import { BaseComponent } from '../../symbiote/core/BaseComponent.js';
+import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 import { uploadFromUrl, getInfo } from '../../common-utils/UploadClientLight.js';
 
-export class UrlSource extends BaseComponent {
+export class UrlSource extends BlockComponent {
   constructor() {
     super();
     this.initLocalState({
       onUpload: async () => {
         let url = this.ref.input['value'];
         let pubkey = this.externalState.read('pubkey')
-        let entry = this.collection.add({
+        let entry = this.uploadCollection.add({
           externalUrl: url,
         });
         await uploadFromUrl(url, pubkey, async (info) => {
@@ -36,10 +36,6 @@ export class UrlSource extends BaseComponent {
   }
 
   initCallback() {
-    this.externalState.sub('uploadCollection', (collection) => {
-      /** @type {import('../../symbiote/core/TypedCollection.js').TypedCollection} */
-      this.collection = collection;
-    });
     this.externalState.sub('urlActive', (val) => {
       if (val) {
         this.externalState.multiPub({

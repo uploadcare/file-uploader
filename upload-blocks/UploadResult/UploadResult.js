@@ -1,6 +1,6 @@
-import { BaseComponent } from '../../symbiote/core/BaseComponent.js';
+import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 
-export class UploadResult extends BaseComponent {
+export class UploadResult extends BlockComponent {
   initCallback() {
     this.render();
     this.addToExternalState({

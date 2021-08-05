@@ -1,6 +1,6 @@
-import { BaseComponent } from '../../symbiote/core/BaseComponent.js';
+import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 
-export class CameraSource extends BaseComponent {
+export class CameraSource extends BlockComponent {
 
   constructor() {
     super();
@@ -49,7 +49,7 @@ export class CameraSource extends BaseComponent {
         lastModified: date,
         type: 'image/png',
       });
-      this.collection.add({
+      this.uploadCollection.add({
         file,
         fileName: name,
         fileSize: file.size,
@@ -70,10 +70,6 @@ export class CameraSource extends BaseComponent {
         this._stream?.getTracks()[0].stop();
         this.localState.pub('video', null);
       }
-    });
-    this.externalState.sub('uploadCollection', (collection) => {
-      /** @type {import('../../symbiote/core/TypedCollection.js').TypedCollection} */
-      this.collection = collection;
     });
   }
 }

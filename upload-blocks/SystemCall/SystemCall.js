@@ -1,6 +1,6 @@
-import { BaseComponent } from '../../symbiote/core/BaseComponent.js';
+import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 
-export class SystemCall extends BaseComponent {
+export class SystemCall extends BlockComponent {
 
   initCallback() {
     this.addToExternalState({
@@ -15,14 +15,11 @@ export class SystemCall extends BaseComponent {
       }
       this.ref.input.dispatchEvent(new MouseEvent('click'));
     });
-    this.externalState.sub('uploadCollection', (collection) => {
-      /** @type {import('../../symbiote/core/TypedCollection.js').TypedCollection} */
-      this.collection = collection;
-    });
+
     this.ref.input.onchange = () => {
       let files = [...this.ref.input['files']];
       files.forEach((/** @type {File} */ file) => {
-        this.collection.add({
+        this.uploadCollection.add({
           file,
           isImage: file.type.includes('image'),
           mimeType: file.type,

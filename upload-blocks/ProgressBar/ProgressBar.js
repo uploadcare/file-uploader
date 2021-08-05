@@ -1,6 +1,6 @@
-import { BaseComponent } from '../../symbiote/core/BaseComponent.js';
+import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 
-export class ProgressBar extends BaseComponent {
+export class ProgressBar extends BlockComponent {
 
   initCallback() {
     this.externalState.sub('commonProgress', (progress) => {

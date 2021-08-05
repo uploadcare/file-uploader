@@ -1,9 +1,9 @@
-import { BaseComponent } from '../../symbiote/core/BaseComponent.js';
+import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 import { uploadFileDirect } from '../../common-utils/UploadClientLight.js';
 import { resizeImage } from '../../common-utils/resizeImage.js';
 import { ACT } from '../dictionary.js';
 
-export class FileItem extends BaseComponent {
+export class FileItem extends BlockComponent {
   constructor() {
     super();
 

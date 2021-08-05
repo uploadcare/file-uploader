@@ -1,6 +1,6 @@
-import { BaseComponent } from '../../symbiote/core/BaseComponent.js';
+import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 
-export class MessageBox extends BaseComponent {
+export class MessageBox extends BlockComponent {
 
   constructor() {
     super();

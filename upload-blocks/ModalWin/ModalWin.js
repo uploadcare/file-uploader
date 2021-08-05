@@ -1,6 +1,6 @@
-import { BaseComponent } from '../../symbiote/core/BaseComponent.js';
+import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 
-export class ModalWin extends BaseComponent {
+export class ModalWin extends BlockComponent {
   constructor() {
     super();
     this.initLocalState({

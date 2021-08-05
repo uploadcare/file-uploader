@@ -1,8 +1,8 @@
-import { BaseComponent } from '../../symbiote/core/BaseComponent.js';
+import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 
 const ACTIVE_ATTR = 'active';
 
-export class ActivityMngr extends BaseComponent {
+export class ActivityMngr extends BlockComponent {
 
   initCallback() {
     this.addToExternalState({

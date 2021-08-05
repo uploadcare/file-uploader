@@ -1,7 +1,7 @@
-import { BaseComponent } from '../../symbiote/core/BaseComponent.js';
+import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 import { FileItem } from '../FileItem/FileItem.js';
 
-export class UploadList extends BaseComponent {
+export class UploadList extends BlockComponent {
 
   constructor() {
     super();
@@ -17,7 +17,7 @@ export class UploadList extends BaseComponent {
       'on.cancel': () => {
         this.externalState.pub('confirmationAction', () => {
           this.externalState.pub('modalActive', false);
-          this.collection.clearAll();
+          this.uploadCollection.clearAll();
         });
         this.externalState.pub('currentActivity', 'confirmation');
       },
@@ -27,15 +27,11 @@ export class UploadList extends BaseComponent {
   }
 
   initCallback() {
-    this.externalState.sub('uploadCollection', (collection) => {
-      /** @type {import('../../symbiote/core/TypedCollection.js').TypedCollection} */
-      this.collection = collection;
-      this.collection.observe(() => {
-        let notUploaded = this.collection.findItems((item) => {
-          return !item.getValue('uuid');
-        });
-        this.localState.pub('uploadBtnDisabled', !notUploaded.length);
+    this.uploadCollection.observe(() => {
+      let notUploaded = this.uploadCollection.findItems((item) => {
+        return !item.getValue('uuid');
       });
+      this.localState.pub('uploadBtnDisabled', !notUploaded.length);
     });
     this.externalState.sub('uploadList', (/** @type {String[]} */ list) => {
       if (!list.length) {

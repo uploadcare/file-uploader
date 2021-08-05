@@ -1,6 +1,6 @@
-import { BaseComponent } from '../../symbiote/core/BaseComponent.js';
+import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 
-export class DropArea extends BaseComponent {}
+export class DropArea extends BlockComponent {}
 
 DropArea.template = /*html*/ `
 <div -sources->

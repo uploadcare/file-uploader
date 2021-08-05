@@ -1,6 +1,6 @@
-import { BaseComponent } from '../../symbiote/core/BaseComponent.js';
+import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 
-export class SourceBtn extends BaseComponent {
+export class SourceBtn extends BlockComponent {
 
   constructor() {
     super();
@@ -44,15 +44,21 @@ export class SourceBtn extends BaseComponent {
         };
       },
       camera: () => {
-        this.localState.pub('iconName', 'camera');
-        this.onclick = () => {
-          this.externalState.multiPub({
-            currentActivity: 'camera',
-            modalCaption: 'Camera',
-            modalIcon: 'camera',
-            modalActive: true,
-          });
-        };
+        window.setTimeout(() => {
+          if (this.blockRegistry['camera-source']) {
+            this.localState.pub('iconName', 'camera');
+            this.onclick = () => {
+              this.externalState.multiPub({
+                currentActivity: 'camera',
+                modalCaption: 'Camera',
+                modalIcon: 'camera',
+                modalActive: true,
+              });
+            };
+          } else {
+            this.style.display = 'none';
+          }
+        });
       },
       other: () => {
         this.localState.pub('iconName', 'dots');
