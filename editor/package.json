@@ -19,7 +19,7 @@
     "esbuild": "node ./esbuild.js",
     "build": "npm run esbuild && npm run copy-locales && npm run copy-css",
     "copy-locales": "mkdir -p dist/l10n/locales && cp -R ./src/l10n/locales ./dist/l10n/",
-    "copy-css": "mkdir -p ./dist/css && cp ./src/css/common.css ./dist/css/common.css",
+    "copy-css": "mkdir -p ./dist/css && cp ./src/css/*.css ./dist/css/",
     "deploy": "npm run build && node ./deploy-to-s3.js"
   },
   "author": "",
