@@ -642,6 +642,10 @@ editor-toolbar .controls-list_inner {
   grid-gap: calc((var(--gap-min) - 1px) * 3);
 }
 
+editor-toolbar .controls-list_inner:last-child {
+  padding-right: var(--gap-max);
+}
+
 editor-toolbar .controls-list_last-item {
   margin-right: var(--gap-max);
 }
