@@ -27,8 +27,6 @@
   position: relative;
   display: grid;
   grid-template-rows: minmax(var(--l-min-img-height), var(--l-max-img-height)) max-content;
-  border-bottom-left-radius: var(--border-radius-base);
-  border-bottom-right-radius: var(--border-radius-base);
   overflow: hidden;
   transition: 0.3s;
 }
@@ -100,8 +98,6 @@
   width: 100%;
   height: 100%;
   background-color: var(--color-image-background);
-  border-top-left-radius: var(--viewer-border-top-radius);
-  border-top-right-radius: var(--viewer-border-top-radius);
   transition: var(--transition-duration-3);
 }
 
