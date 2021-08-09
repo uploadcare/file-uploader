@@ -1,4 +1,5 @@
 import { BaseComponent } from '../../symbiote/core/BaseComponent.js';
+import { ENUM } from './enum.js';
 import { TypedCollection } from '../../symbiote/core/TypedCollection.js';
 import { uploadEntrySchema } from './uploadEntrySchema.js';
 
@@ -13,7 +14,7 @@ export class BlockComponent extends BaseComponent {
       });
       let registry = this.externalState.read('registry');
       registry[this.tagName.toLowerCase()] = this;
-      this.externalState.pub('registry', registry);
+      this.pub('external', 'registry', registry);
 
       this.__connectedOnce = true;
     } else {
@@ -33,7 +34,7 @@ export class BlockComponent extends BaseComponent {
           'uuid',
         ],
         handler: (entries) => {
-          this.externalState.pub('uploadList', entries);
+          this.pub('external', 'uploadList', entries);
         },
       });
       uploadCollection.observe((changeMap) => {
@@ -46,7 +47,7 @@ export class BlockComponent extends BaseComponent {
           items.forEach((id) => {
             commonProgress += uploadCollection.readProp(id, 'uploadProgress');
           });
-          this.externalState.pub('commonProgress', commonProgress / items.length);
+          this.pub('external', 'commonProgress', commonProgress / items.length);
         }
       });
 
@@ -67,9 +68,20 @@ export class BlockComponent extends BaseComponent {
     return this.externalState.read('registry');
   }
 
+  get config() {
+    let conf = {};
+    let style = window.getComputedStyle(this);
+    for (let prop in BlockComponent.enum.CSS.CFG) {
+      conf[prop] = JSON.parse(style.getPropertyValue(BlockComponent.enum.CSS.CFG[prop]).trim());
+    }
+    return conf;
+  }
+
   disconnectedCallback() {
     super.disconnectedCallback();
     // TODO: destroy uploadCollection
   }
 
 }
+
+BlockComponent.enum = ENUM;
