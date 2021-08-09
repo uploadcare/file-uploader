@@ -5,6 +5,20 @@ import { uploadEntrySchema } from './uploadEntrySchema.js';
 
 export class BlockComponent extends BaseComponent {
 
+  constructor() {
+    super();
+    this.addTemplateProcessor((fr) => {
+      [...fr.querySelectorAll('*')].forEach((el) => {
+        [...el.attributes].forEach((attr) => {
+          if (attr.name.startsWith('.')) {
+            el.classList.add(attr.name.replace('.', ''));
+            el.removeAttribute(attr.name);
+          }
+        });
+      });
+    });
+  }
+
   connectedCallback() {
     if (!this.__connectedOnce) {
       super.connectedCallback();

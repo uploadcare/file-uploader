@@ -85,7 +85,7 @@ export class SourceBtn extends BlockComponent {
 }
 SourceBtn.template = /*html*/ `
 <icon-ui loc="@name: iconName"></icon-ui>
-<div -txt-></div>
+<div .txt></div>
 `;
 SourceBtn.bindAttributes({
   type: ['property'],

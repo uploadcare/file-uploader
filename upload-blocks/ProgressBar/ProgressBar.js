@@ -15,5 +15,5 @@ export class ProgressBar extends BlockComponent {
 }
 
 ProgressBar.template = /*html*/ `
-<div ref="bar" -bar-></div>
+<div ref="bar" .bar></div>
 `;

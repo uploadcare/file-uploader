@@ -122,15 +122,15 @@ export class FileItem extends BlockComponent {
 }
 
 FileItem.template = /*html*/ `
-<div -thumb- ref="thumb"></div>
+<div .thumb ref="thumb"></div>
 <div file-name loc="textContent: fileName"></div>
-<div -badge->
+<div .badge>
   <icon-ui loc="@name: badgeIcon"></icon-ui>
 </div>
-<button -edit-btn- loc="onclick: on.edit;">
+<button .edit-btn loc="onclick: on.edit;">
   <icon-ui name="edit-file"></icon-ui>
 </button>
-<div ref="progress" -progress-></div>
+<div ref="progress" .progress></div>
 `;
 FileItem.activeInstances = new Set();
 

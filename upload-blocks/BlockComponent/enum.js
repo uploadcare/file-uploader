@@ -1,11 +1,15 @@
-export const ENUM = Object.freeze({
-  TAG: {
+const frz = function(obj) {
+  return Object.freeze(obj);
+};
+
+export const ENUM = frz({
+  TAG: frz({
     ACTIVITY_MNGR: {
 
     }
-  },
+  }),
   CSS: {
-    CFG: {
+    CFG: frz({
       PUBKEY: '--cfg-pubkey',
       MULTIPLE: '--cfg-multiple',
       CONFIRM_UPLOAD: '--cfg-confirm-upload',
@@ -15,12 +19,12 @@ export const ENUM = Object.freeze({
       CAMERA_MIRROR: '--cfg-camera-mirror',
       EXT_SOURCE_LIST: '--cfg-ext-source-list',
       MAX_FILES: '--cfg-max-files',
-    },
+    }),
     L10N: {
 
     },
   },
-  ACT: {
-    
-  },
+  ACT: frz({
+
+  }),
 });

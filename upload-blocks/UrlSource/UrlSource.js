@@ -51,6 +51,6 @@ export class UrlSource extends BlockComponent {
 }
 
 UrlSource.template = /*html*/ `
-<input placeholder="https://..." -url-input- type="text" ref="input" />
-<button -url-upload-btn- loc="onclick: onUpload"></button>
+<input placeholder="https://..." .url-input type="text" ref="input" />
+<button .url-upload-btn loc="onclick: onUpload"></button>
 `;

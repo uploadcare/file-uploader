@@ -237,34 +237,34 @@ upload-list {
 upload-list:not([active]) {
   display: none;
 }
-upload-list [-files-el-] {
+upload-list .files-el {
   display: grid;
 }
-upload-list [-toolbar-el-] {
+upload-list .toolbar-el {
   display: grid;
   grid-template-columns: min-content 1fr min-content min-content;
   grid-gap: var(--gap-mid);
   padding: var(--gap-mid);
 }
-upload-list [-upload-btn-] {
+upload-list .upload-btn {
   background-color: var(--clr-shade-1);
   color: var(--clr-1);
 }
-upload-list [-add-more-btn-] {
+upload-list .add-more-btn {
   background-color: transparent;
   color: var(--clr-1);
 }
-upload-list [-add-more-btn-]::after {
+upload-list .add-more-btn::after {
   content: var(--l10n-add-more);
 }
-upload-list [-upload-btn-]::after {
+upload-list .upload-btn::after {
   content: var(--l10n-upload);
 }
-upload-list [-cancel-btn-] {
+upload-list .cancel-btn {
   background-color: var(--clr-2);
   color: var(--clr-txt);
 }
-upload-list [-cancel-btn-]::after {
+upload-list .cancel-btn::after {
   content: var(--l10n-cancel);
 }
 
@@ -282,14 +282,14 @@ file-item:first-of-type {
 file-item[focused] {
   background-color: var(--clr-shade-1);
 }
-file-item[uploading] [-edit-btn-] {
+file-item[uploading] .edit-btn {
   display: none;
 }
 file-item[error] {
   --clr-shade-1: rgba(255, 20, 20, .1);
 }
 
-file-item [-thumb-] {
+file-item .thumb {
   display: inline-flex;
   height: var(--ui-size);
   width: var(--ui-size);
@@ -317,16 +317,16 @@ file-item button {
   cursor: pointer;
 }
 
-file-item [-edit-btn-] {
+file-item .edit-btn {
   opacity: var(--opacity-mid);
 }
-file-item:hover [-edit-btn-] {
+file-item:hover .edit-btn {
   opacity: 1;
 }
-file-item[focused] [-edit-btn-] {
+file-item[focused] .edit-btn {
   opacity: 1;
 }
-file-item [-progress-] {
+file-item .progress {
   position: absolute;
   pointer-events: none;
   top: 0;
@@ -337,10 +337,10 @@ file-item [-progress-] {
   background-color: var(--clr-shade-1);
   transition: .6s;
 }
-file-item[error] [-badge-], file-item[loaded] [-badge-] {
+file-item[error] .badge, file-item[loaded] .badge {
   display: inline-flex;
 }
-file-item [-badge-] {
+file-item .badge {
   display: none;
   align-items: center;
   justify-content: center;
@@ -348,7 +348,7 @@ file-item [-badge-] {
   width: var(--ui-size);
   color: var(--clr-1);
 }
-file-item[error] [-badge-] {
+file-item[error] .badge {
   color: var(--clr-err);
 }
 
@@ -365,25 +365,25 @@ drop-area {
   overflow: hidden;
   background-color: var(--clr-shade-1);
 }
-drop-area [-sources-] {
+drop-area .sources {
   background-color: var(--clr-2);
   border-radius: var(--ui-radius-2);
   overflow: hidden;
 }
-drop-area [-dropzone-] {
+drop-area .dropzone {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   user-select: none;
 }
-drop-area [-dropzone-] [-drop-txt-]::after {
+drop-area .dropzone .drop-txt::after {
   content: var(--l10n-drop-files-here);
   color: var(--clr-1);
   opacity: var(--opacity-mid);
 }
 
-drop-area [-dropzone-]::after {
+drop-area .dropzone::after {
   position: absolute;
   bottom: 0;
   right: var(--gap-mid);
@@ -411,20 +411,20 @@ source-btn icon-ui {
   justify-content: center;
 }
 
-source-btn[type="local"] > [-txt-]::after {
+source-btn[type="local"] > .txt::after {
   content: var(--l10n-local-files);
 }
-source-btn[type="camera"] > [-txt-]::after {
+source-btn[type="camera"] > .txt::after {
   content: var(--l10n-camera);
 }
-source-btn[type="url"] > [-txt-]::after {
+source-btn[type="url"] > .txt::after {
   content: var(--l10n-from-url);
 }
-source-btn[type="other"] > [-txt-]::after {
+source-btn[type="other"] > .txt::after {
   content: var(--l10n-other);
 }
 
-source-btn [-txt-] {
+source-btn .txt {
   display: flex;
   align-items: center;
   height: 100%;
@@ -467,7 +467,7 @@ url-source {
   padding: var(--gap-mid);
   padding-top: 0;
 }
-url-source [-url-input-] {
+url-source .url-input {
   display: flex;
   border: var(--line-width) solid var(--clr-shade-1);
   height: var(--ui-size);
@@ -475,11 +475,11 @@ url-source [-url-input-] {
   padding-left: 1em;
   padding-right: 1em;
 }
-url-source [-url-upload-btn-] {
+url-source .url-upload-btn {
   color: var(--clr-1);
   background-color: var(--clr-shade-1);
 }
-url-source [-url-upload-btn-]::after {
+url-source .url-upload-btn::after {
   content: var(--l10n-upload-url);
 }
 
@@ -492,23 +492,23 @@ camera-source video {
   width: 100%;
   background-color: var(--clr-shade-1);
 }
-camera-source [-toolbar-] {
+camera-source .toolbar {
   display: flex;
   justify-content: space-between;
   padding: var(--gap-mid);
 }
-camera-source [-shot-btn-] {
+camera-source .shot-btn {
   color: var(--clr-1);
   background-color: var(--clr-shade-1);
 }
-camera-source [-shot-btn-]::after {
+camera-source .shot-btn::after {
   content: var(--l10n-camera-shot);
 }
-camera-source [-cancel-btn-] {
+camera-source .cancel-btn {
   color: var(--clr-1);
   background-color: var(--clr-2);
 }
-camera-source [-cancel-btn-]::after {
+camera-source .cancel-btn::after {
   content: var(--l10n-cancel);
 }
 
@@ -517,18 +517,18 @@ upload-details {
   grid-template-rows: min-content min-content min-content;
 }
 
-upload-details [-viewport-] {
+upload-details .viewport {
   position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
   background-color: var(--clr-shade-1);
 }
-upload-details [-viewport-][hidden] {
+upload-details .viewport[hidden] {
   display: none;
 }
 
-upload-details [-viewport-] [-meta-editor-] {
+upload-details .viewport .meta-editor {
   position: absolute;
   bottom: var(--gap-mid);
   left: var(--gap-mid);
@@ -542,51 +542,51 @@ upload-details canvas {
   background-color: var(--clr-shade-1);
 }
 
-upload-details [-toolbar-] {
+upload-details .toolbar {
   display: flex;
   justify-content: space-between;
   padding: var(--gap-mid);
 }
 
-upload-details [-back-btn-] {
+upload-details .back-btn {
   background-color: var(--clr-shade-1);
   color: var(--clr-1);
   padding-left: 0;
 }
-upload-details [-remove-btn-] {
+upload-details .remove-btn {
   background-color: var(--clr-err);
   color: #fff;
   padding-left: 0;
 }
-upload-details [-detail-btn-] {
+upload-details .detail-btn {
   background-color: var(--clr-shade-1);
   color: var(--clr-1);
   padding-left: 0;
 }
-upload-details [-edit-btn-] {
+upload-details .edit-btn {
   background-color: transparent;
   color: var(--clr-1);
   padding-left: 0;
 }
 
-upload-details [-detail-btn-]::after {
+upload-details .detail-btn::after {
   content: var(--l10n-edit-detail);
 }
-upload-details [-edit-btn-]::after {
+upload-details .edit-btn::after {
   content: var(--l10n-edit-image);
 }
-upload-details [-remove-btn-]::after {
+upload-details .remove-btn::after {
   content: var(--l10n-remove-from-list);
 }
-upload-details [-back-btn-]::after {
+upload-details .back-btn::after {
   content: var(--l10n-back);
 }
-upload-details [-tabs-] {
+upload-details .tabs {
   display: flex;
   justify-content: space-around;
   border-top: var(--line-width) solid var(--clr-shade-1);
 }
-upload-details [-tabs-] button {
+upload-details .tabs button {
   background-color: transparent;
   color: var(--clr-1);
   border-radius: 0;
@@ -594,16 +594,16 @@ upload-details [-tabs-] button {
   opacity: var(--opacity-max);
   border-bottom: var(--gap-min) solid transparent;
 }
-upload-details [-tabs-] button[current] {
+upload-details .tabs button[current] {
   opacity: 1;
   background-color: var(--clr-shade-1);
   border-bottom: var(--gap-min) solid var(--clr-1);
   pointer-events: none;
 }
-upload-details [-tabs-] button:hover {
+upload-details .tabs button:hover {
   opacity: 1;
 }
-upload-details [-details-] {
+upload-details .details {
   padding: var(--gap-max);
 }
 
@@ -626,10 +626,10 @@ modal-win drop-area {
   border: none;
   padding: 0;
 }
-modal-win drop-area [-sources-] {
+modal-win drop-area .sources {
   border-radius: 0;
 }
-modal-win drop-area [-dropzone-]::after {
+modal-win drop-area .dropzone::after {
   content: '';
 }
 
@@ -656,21 +656,21 @@ message-box[error] {
   background-color: var(--clr-err);
 }
 
-message-box [-heading-] {
+message-box .heading {
   display: grid;
   grid-template-columns: min-content auto min-content;
   padding: var(--gap-mid);
 }
-message-box [-caption-] {
+message-box .caption {
   display: flex;
   align-items: center;
 }
-message-box [-heading-] button {
+message-box .heading button {
   background-color: transparent;
   width: var(--ui-size);
   color: currentColor;
 }
-message-box [-msg-] {
+message-box .msg {
   padding: var(--gap-max);
   padding-top: 0;
 }
@@ -685,21 +685,21 @@ confirmation-dialog {
   display: block;
   padding: var(--gap-mid);
 }
-confirmation-dialog [-txt-] {
+confirmation-dialog .txt {
   display: flex;
   justify-content: center;
 }
-confirmation-dialog [-toolbar-] {
+confirmation-dialog .toolbar {
   display: flex;
   justify-content: space-between;
   padding: var(--gap-mid);
   margin-top: var(--gap-mid);
 }
-confirmation-dialog [-yes-btn-] {
+confirmation-dialog .yes-btn {
   background-color: var(--clr-shade-1);
   color: var(--clr-1);
 }
-confirmation-dialog [-no-btn-] {
+confirmation-dialog .no-btn {
   background-color: transparent;
   color: var(--clr-1);
   border: var(--line-width) solid var(--clr-shade-1);
@@ -720,7 +720,7 @@ progress-bar:not([active]) {
   opacity: 0;
 }
 
-progress-bar [-bar-] {
+progress-bar .bar {
   position: absolute;
   width: 0;
   left: 0;

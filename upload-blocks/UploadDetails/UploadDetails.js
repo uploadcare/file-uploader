@@ -130,11 +130,11 @@ export class UploadDetails extends BlockComponent {
 }
 
 UploadDetails.template = /*html*/ `
-<div -tabs->
+<div .tabs>
   <button current ref="preview-tab" loc="onclick: on.preview">Preview</button>
   <button ref="details-tab" loc="onclick: on.details">File Details</button>
 </div>
-<div hidden ref="details" -details->
+<div hidden ref="details" .details>
 
   <fieldset>
     <legend>File Name</legend>
@@ -154,17 +154,17 @@ UploadDetails.template = /*html*/ `
   <div loc="textContent: errorTxt;"></div>
   
 </div>
-<div ref="viewport" -viewport->
+<div ref="viewport" .viewport>
   <canvas ref="canvas"></canvas>
 </div>
-<div -toolbar->
-  <button -back-btn- loc="onclick: on.back">
+<div .toolbar>
+  <button .back-btn loc="onclick: on.back">
     <icon-ui path="${ICONS.back}"></icon-ui>
   </button>
-  <button -edit-btn- loc="onclick: on.edit">
+  <button .edit-btn loc="onclick: on.edit">
     <icon-ui path="${ICONS.edit}"></icon-ui>
   </button>
-  <button -remove-btn- loc="onclick: on.remove">
+  <button .remove-btn loc="onclick: on.remove">
     <icon-ui path="${ICONS.remove}"></icon-ui>
   </button>
 </div>
