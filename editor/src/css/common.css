@@ -925,7 +925,7 @@ line-loader-ui .line {
   width: 100%;
   height: 100%;
   transition: transform 1s;
-  transform: translateX(-100%);
+  transform: translateX(-101%);
 }
 
 slider-ui {
