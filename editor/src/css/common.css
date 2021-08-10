@@ -116,14 +116,12 @@
   --modal-header-opacity: 0;
   --modal-header-height: 0px;
   --modal-toolbar-height: calc(var(--size-panel-heading) * 2);
-  --viewer-border-top-radius: var(--border-radius-base);
 }
 
 :host(.editor_OFF) {
   --modal-header-opacity: 1;
   --modal-header-height: var(--size-panel-heading);
   --modal-toolbar-height: var(--size-panel-heading);
-  --viewer-border-top-radius: 0px;
 }
 
 :host .wrapper {
@@ -359,6 +357,7 @@ crop-frame .thumb {
   --hover-color-rgb: var(--color-primary-accent);
   --focus-color-rgb: var(--color-primary-accent);
   --down-color-rgb: var(--color-primary-accent);
+  --color-effect: var(--idle-color-rgb);
   color: var(--color-effect);
   transition: color var(--transition-duration-3),
     opacity var(--transition-duration-3);
