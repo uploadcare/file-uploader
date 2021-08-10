@@ -16,12 +16,12 @@ export class UploadDetails extends BlockComponent {
       cdnUrl: '',
       errorTxt: '',
       'on.back': () => {
-        this.externalState.pub('backTrigger', {});
+        this.pub('external', 'backTrigger', {});
       },
       'on.remove': () => {
         /** @type {File[]} */
         this.uploadCollection.remove(this.entry.__ctxId);
-        this.externalState.pub('backTrigger', {});
+        this.pub('external', 'backTrigger', {});
       },
       'on.preview': () => {
         this.ref['preview-tab'].setAttribute('current', '');
@@ -74,7 +74,7 @@ export class UploadDetails extends BlockComponent {
     this.addToExternalState({
       focusedEntry: null,
     });
-    this.externalState.sub('focusedEntry', (/** @type {import('../../symbiote/core/TypedState.js').TypedState} */ entry) => {
+    this.sub('external', 'focusedEntry', (/** @type {import('../../symbiote/core/TypedState.js').TypedState} */ entry) => {
       if (this._ctx) {
         this._ctx.clearRect(0, 0, this._canv.width, this._canv.height);
       }
@@ -101,21 +101,19 @@ export class UploadDetails extends BlockComponent {
         };
       });
       this.entry.subscribe('fileSize', (size) => {
-        this.localState.pub('fileSize', size);
+        this.pub('local', 'fileSize', size);
       });
       this.entry.subscribe('uuid', (uuid) => {
         if (uuid) {
-          this.localState.pub('cdnUrl', `https://ucarecdn.com/${uuid}/`);
+          this.pub('local', 'cdnUrl', `https://ucarecdn.com/${uuid}/`);
         } else {
-          this.localState.pub('cdnUrl', 'Not uploaded yet...');
+          this.pub('local', 'cdnUrl', 'Not uploaded yet...');
         }
       });
       this.entry.subscribe('uploadErrorMsg', (msg) => {
-        this.localState.pub('errorTxt', msg);
+        this.pub('local', 'errorTxt', msg);
       });
-      // this.entry.subscribe('validationErrorMsg', (msg) => {
-      //   this.localState.pub('errorTxt', msg);
-      // });
+
       this.entry.subscribe('externalUrl', (url) => {
         if (!url) {
           return;

@@ -7,8 +7,8 @@ export class CameraSource extends BlockComponent {
     this.initLocalState({
       video: null,
       'on.cancel': () => {
-        this.externalState.pub('modalActive', false);
-        this.externalState.pub('currentActivity', '');
+        this.pub('external', 'modalActive', false);
+        this.pub('external', 'currentActivity', '');
       },
       'on.shot': () => {
         this._shot();
@@ -34,7 +34,7 @@ export class CameraSource extends BlockComponent {
     this._canvas = document.createElement('canvas');
     this._ctx = this._canvas.getContext('2d');
     this._stream = await navigator.mediaDevices.getUserMedia(constr);
-    this.localState.pub('video', this._stream);
+    this.pub('local', 'video', this._stream);
   }
 
   _shot() {
@@ -56,19 +56,19 @@ export class CameraSource extends BlockComponent {
         isImage: true,
         mimeType: file.type,
       });
-      this.externalState.multiPub({
+      this.multiPub('external', {
         currentActivity: 'upload-list',
       });
     });
   }
 
   initCallback() {
-    this.externalState.sub('currentActivity', (val) => {
+    this.sub('external', 'currentActivity', (val) => {
       if (val === 'camera') {
         this._init();
       } else {
         this._stream?.getTracks()[0].stop();
-        this.localState.pub('video', null);
+        this.pub('local', 'video', null);
       }
     });
   }
@@ -81,8 +81,8 @@ CameraSource.template = /*html*/ `
   loc="srcObject: video"
   ref="video">
 </video>
-<div class="toolbar">
-  <button class="cancel-btn" loc="onclick: on.cancel"></button>
-  <button class="shot-btn" loc="onclick: on.shot"></button>
+<div .toolbar>
+  <button .cancel-btn loc="onclick: on.cancel"></button>
+  <button .shot-btn loc="onclick: on.shot"></button>
 </div>
 `;

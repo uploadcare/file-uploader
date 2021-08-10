@@ -20,9 +20,9 @@ export class MessageBox extends BlockComponent {
     this.addToExternalState({
       message: null,
     });
-    this.externalState?.sub('message', (msg) => {
+    this.sub('external', 'message', (msg) => {
       if (msg) {
-        this.localState.multiPub({
+        this.multiPub('local',{
           captionTxt: msg.caption,
           msgTxt: msg.text,
           iconName: msg.isError ? 'error' : 'info',

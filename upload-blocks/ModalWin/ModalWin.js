@@ -5,7 +5,7 @@ export class ModalWin extends BlockComponent {
     super();
     this.initLocalState({
       closeClicked: () => {
-        this.externalState.pub('modalActive', false);
+        this.pub('external', 'modalActive', false);
       },
     });
     this.pauseRender = true;
@@ -18,7 +18,7 @@ export class ModalWin extends BlockComponent {
       modalCaption: 'Modal caption',
     });
     this.render();
-    this.externalState.sub('modalActive', (val) => {
+    this.sub('external', 'modalActive', (val) => {
       val ? this.setAttribute('active', '') : this.removeAttribute('active');
     });
   }

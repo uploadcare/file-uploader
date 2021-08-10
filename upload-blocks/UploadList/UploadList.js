@@ -8,18 +8,18 @@ export class UploadList extends BlockComponent {
     this.initLocalState({
       uploadBtnDisabled: false,
       'on.add': () => {
-        this.externalState.pub('currentActivity', 'source-select');
+        this.pub('external', 'currentActivity', 'source-select');
       },
       'on.upload': () => {
-        this.localState.pub('uploadBtnDisabled', true);
-        this.externalState.pub('uploadTrigger', {});
+        this.pub('local', 'uploadBtnDisabled', true);
+        this.pub('external', 'uploadTrigger', {});
       },
       'on.cancel': () => {
-        this.externalState.pub('confirmationAction', () => {
-          this.externalState.pub('modalActive', false);
+        this.pub('external', 'confirmationAction', () => {
+          this.pub('external', 'modalActive', false);
           this.uploadCollection.clearAll();
         });
-        this.externalState.pub('currentActivity', 'confirmation');
+        this.pub('external', 'currentActivity', 'confirmation');
       },
     });
 
@@ -31,11 +31,11 @@ export class UploadList extends BlockComponent {
       let notUploaded = this.uploadCollection.findItems((item) => {
         return !item.getValue('uuid');
       });
-      this.localState.pub('uploadBtnDisabled', !notUploaded.length);
+      this.pub('local', 'uploadBtnDisabled', !notUploaded.length);
     });
-    this.externalState.sub('uploadList', (/** @type {String[]} */ list) => {
+    this.sub('external', 'uploadList', (/** @type {String[]} */ list) => {
       if (!list.length) {
-        this.externalState.pub('currentActivity', '');
+        this.pub('external', 'currentActivity', '');
         return;
       }
       list.forEach((id) => {

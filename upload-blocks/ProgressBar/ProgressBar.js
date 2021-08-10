@@ -3,7 +3,7 @@ import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 export class ProgressBar extends BlockComponent {
 
   initCallback() {
-    this.externalState.sub('commonProgress', (progress) => {
+    this.sub('external', 'commonProgress', (progress) => {
       if (progress === 0 || progress === 100) {
         this.removeAttribute('active');
       } else {

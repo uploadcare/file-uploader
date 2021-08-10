@@ -10,7 +10,7 @@ export class IconUi extends BaseComponent {
       if (!val) {
         return;
       }
-      this.localState.pub('path', this.getCssData(`--icon-${val}`));
+      this.pub('local', 'path', this.getCssData(`--icon-${val}`));
     }, true);
   }
 }

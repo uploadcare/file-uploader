@@ -10,9 +10,9 @@ export class ActivityMngr extends BlockComponent {
       history: [],
       backTrigger: null,
     });
-    this.externalState.sub('currentActivity', (val) => {
+    this.sub('external', 'currentActivity', (val) => {
       /** @type {String[]} */
-      let history = this.externalState.read('history');
+      let history = this.read('external', 'history');
       if (this._currentActivity !== val) {
         history.push(val);
       }
@@ -25,16 +25,16 @@ export class ActivityMngr extends BlockComponent {
         }
       });
     });
-    this.externalState.sub('backTrigger', (val) => {
+    this.sub('external', 'backTrigger', (val) => {
       /** @type {String[]} */
-      let history = this.externalState.read('history');
+      let history = this.read('external', 'history');
       history.pop();
       let prevActivity = history.pop();
-      this.externalState.pub('currentActivity', prevActivity);
+      this.pub('external', 'currentActivity', prevActivity);
       if (history.length > 10) {
         history = history.slice(history.length - 11, history.length - 1);
       }
-      this.externalState.pub('history', history);
+      this.pub('external', 'history', history);
       // console.log(history)
     });
 

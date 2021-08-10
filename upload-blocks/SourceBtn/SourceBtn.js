@@ -17,25 +17,25 @@ export class SourceBtn extends BlockComponent {
   _setType(type) {
     let types = {
       local: () => {
-        this.localState.pub('iconName', 'local');
+        this.pub('local', 'iconName', 'local');
         this.onclick = () => {
-          this.externalState.multiPub({
+          this.multiPub('external', {
             modalActive: false,
             currentActivity: 'upload-list',
             modalCaption: 'Selected',
             modalIcon: 'local',
           });
-          if (!this.externalState.read('files')?.length) {
-            this.externalState.pub('systemTrigger', {});
+          if (!this.read('external', 'files')?.length) {
+            this.pub('external', 'systemTrigger', {});
           } else {
-            this.externalState.pub('modalActive', true);
+            this.pub('external', 'modalActive', true);
           }
         };
       },
       url: () => {
-        this.localState.pub('iconName', 'url');
+        this.pub('local', 'iconName', 'url');
         this.onclick = () => {
-          this.externalState.multiPub({
+          this.multiPub('external', {
             currentActivity: 'url',
             modalCaption: 'Import from external URL',
             modalIcon: 'url',
@@ -46,9 +46,9 @@ export class SourceBtn extends BlockComponent {
       camera: () => {
         window.setTimeout(() => {
           if (this.blockRegistry['camera-source']) {
-            this.localState.pub('iconName', 'camera');
+            this.pub('local', 'iconName', 'camera');
             this.onclick = () => {
-              this.externalState.multiPub({
+              this.multiPub('external', {
                 currentActivity: 'camera',
                 modalCaption: 'Camera',
                 modalIcon: 'camera',
@@ -61,9 +61,9 @@ export class SourceBtn extends BlockComponent {
         });
       },
       other: () => {
-        this.localState.pub('iconName', 'dots');
+        this.pub('local', 'iconName', 'dots');
         this.onclick = () => {
-          this.externalState.multiPub({
+          this.multiPub('external', {
             currentActivity: 'external',
             modalCaption: 'Other sources',
             modalIcon: 'dots',

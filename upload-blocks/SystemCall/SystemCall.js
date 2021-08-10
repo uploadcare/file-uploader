@@ -9,7 +9,7 @@ export class SystemCall extends BlockComponent {
       files: [],
       systemTrigger: null,
     });
-    this.externalState.sub('systemTrigger', (val) => {
+    this.sub('external', 'systemTrigger', (val) => {
       if (!val) {
         return;
       }
@@ -27,7 +27,7 @@ export class SystemCall extends BlockComponent {
           fileSize: file.size,
         });
       });
-      this.externalState.multiPub({
+      this.multiPub('external', {
         currentActivity: 'upload-list',
         modalActive: true,
       });

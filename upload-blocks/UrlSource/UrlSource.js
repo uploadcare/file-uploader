@@ -7,7 +7,7 @@ export class UrlSource extends BlockComponent {
     this.initLocalState({
       onUpload: async () => {
         let url = this.ref.input['value'];
-        let pubkey = this.externalState.read('pubkey')
+        let pubkey = this.config.PUBKEY;
         let entry = this.uploadCollection.add({
           externalUrl: url,
         });
@@ -25,7 +25,7 @@ export class UrlSource extends BlockComponent {
               isImage: fileInfo.is_image,
               mimeType: fileInfo.mime_type,
             });
-            this.externalState.pub('currentActivity', 'upload-list');
+            this.pub('external', 'currentActivity', 'upload-list');
           }
         });
       },
@@ -36,9 +36,9 @@ export class UrlSource extends BlockComponent {
   }
 
   initCallback() {
-    this.externalState.sub('urlActive', (val) => {
+    this.sub('external', 'urlActive', (val) => {
       if (val) {
-        this.externalState.multiPub({
+        this.multiPub('external', {
           modalActive: true,
           modalCaption: 'Upload from URL',
         });

@@ -13,7 +13,7 @@ export class FileItem extends BlockComponent {
       notImage: true,
       badgeIcon: 'check',
       'on.edit': () => {
-        this.externalState.multiPub({
+        this.multiPub('external', {
           modalCaption: 'Edit file',
           focusedEntry: this.entry,
           currentActivity: ACT.UPLOAD_DETAILS,
@@ -24,7 +24,7 @@ export class FileItem extends BlockComponent {
 
   set 'entry-id'(id) {
     /** @type {import('../../symbiote/core/TypedState.js').TypedState} */
-    this.entry = this.collection?.read(id);
+    this.entry = this.uploadCollection?.read(id);
 
     this.entry.subscribe('uuid', (uuid) => {
       if (uuid) {
@@ -33,7 +33,7 @@ export class FileItem extends BlockComponent {
     });
 
     this.entry.subscribe('fileName', (name) => {
-      this.localState.pub('fileName', name || 'No name...');
+      this.pub('local', 'fileName', name || 'No name...');
     });
 
     this.file = this.entry.getValue('file');
@@ -54,14 +54,11 @@ export class FileItem extends BlockComponent {
       focusedEntry: null,
       uploadTrigger: null,
     });
-    this.externalState.sub('uploadCollection', (collection) => {
-      /** @type {import('../../symbiote/core/TypedCollection.js').TypedCollection} */
-      this.collection = collection;
-    });
-    this.externalState.pub('uploadTrigger', null);
+
+    this.pub('external', 'uploadTrigger', null);
     FileItem.activeInstances.add(this);
 
-    this.externalState.sub('uploadTrigger', (val) => {
+    this.sub('external', 'uploadTrigger', (val) => {
       if (!val || !this.isConnected) {
         return;
       }
@@ -91,7 +88,7 @@ export class FileItem extends BlockComponent {
     this.removeAttribute('focused');
     this.removeAttribute('error');
     this.setAttribute('uploading', '');
-    await uploadFileDirect(this.file, this.externalState.read('pubkey'), async (info) => {
+    await uploadFileDirect(this.file, this.config.PUBKEY, async (info) => {
       if (info.type === 'progress') {
         this.ref.progress.style.width = info.progress + '%';
         this.entry.setValue('uploadProgress', info.progress);
@@ -100,17 +97,17 @@ export class FileItem extends BlockComponent {
         this.ref.progress.style.opacity = '0';
         this.setAttribute('loaded', '');
         this.removeAttribute('uploading');
-        this.localState.pub('badgeIcon', 'check');
+        this.pub('local', 'badgeIcon', 'check');
         this.entry.setValue('uuid', info.uuid);
         this.entry.setValue('uploadProgress', 100);
       }
       if (info.type === 'error') {
         this.setAttribute('error', '');
         this.removeAttribute('uploading');
-        this.localState.multiPub({
+        this.multiPub('local', {
           badgeIcon: 'upload-error',
         });
-        this.externalState.pub('message', {
+        this.pub('external', 'message', {
           caption: 'Upload error: ' + this.file.name,
           text: info.error,
           isError: true,
