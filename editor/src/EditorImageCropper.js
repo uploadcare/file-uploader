@@ -261,10 +261,10 @@ export class EditorImageCropper extends AppComponent {
       this._alignTransition()
       setTimeout(() => {
         this.className = classNames({
-          'active_from_viewer': fromViewer,
-          'active_from_editor': !fromViewer,
-          'inactive_to_editor': false,
-          'inactive_instant': false
+          active_from_viewer: fromViewer,
+          active_from_editor: !fromViewer,
+          inactive_to_editor: false,
+          inactive_instant: false,
         })
       })
     }
@@ -416,10 +416,10 @@ export class EditorImageCropper extends AppComponent {
     }
 
     this.className = classNames({
-      'active_from_viewer': false,
-      'active_from_editor': false,
-      'inactive_to_editor': seamlessTransition,
-      'inactive_instant': !seamlessTransition
+      active_from_viewer: false,
+      active_from_editor: false,
+      inactive_to_editor: seamlessTransition,
+      inactive_instant: !seamlessTransition,
     })
 
     this.ref('frame-el').toggleThumbs(false)
@@ -429,9 +429,11 @@ export class EditorImageCropper extends AppComponent {
   _alignTransition() {
     let dimensions = this._calculateDimensions()
     let scaleX =
-      Math.min(this.offsetWidth, dimensions[0]) / this.state.cropBox.width
+      Math.min(this.offsetWidth - this.state.padding * 2, dimensions[0]) /
+      this.state.cropBox.width
     let scaleY =
-      Math.min(this.offsetHeight, dimensions[1]) / this.state.cropBox.height
+      Math.min(this.offsetHeight - this.state.padding * 2, dimensions[1]) /
+      this.state.cropBox.height
     let scale = Math.min(scaleX, scaleY)
     let cropCenterX = this.state.cropBox.x + this.state.cropBox.width / 2
     let cropCenterY = this.state.cropBox.y + this.state.cropBox.height / 2

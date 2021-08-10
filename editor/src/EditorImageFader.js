@@ -199,7 +199,7 @@ export class EditorImageFader extends AppComponent {
     image.addEventListener('load', stop, { once: true })
     image.addEventListener('error', stop, { once: true })
     keypoint.image = image
-    image.classList.add('image')
+    image.classList.add('fader-image')
 
     image.addEventListener(
       'load',
@@ -264,7 +264,7 @@ export class EditorImageFader extends AppComponent {
 
   _createPreviewImage() {
     let image = new Image()
-    image.classList.add('image', 'image--preview')
+    image.classList.add('fader-image', 'fader-image--preview')
     image.style.opacity = '0'
     return image
   }
@@ -297,7 +297,7 @@ export class EditorImageFader extends AppComponent {
       this._container = container
       this._keypoints.forEach((kp, idx) => {
         let kpImage = images[idx]
-        kpImage.classList.add('image')
+        kpImage.classList.add('fader-image')
         kp.image = kpImage
         this._container.appendChild(kpImage)
       })
