@@ -138,7 +138,7 @@ export class CropFrame extends AppComponent {
       let disableThumb = this._shouldThumbBeDisabled(direction)
       groupNode.setAttribute(
         'class',
-        classNames({
+        classNames('thumb', {
           'thumb--hidden': disableThumb,
           'thumb--visible': !disableThumb,
         }),
@@ -369,7 +369,7 @@ export class CropFrame extends AppComponent {
       .forEach((groupNode) => {
         groupNode.setAttribute(
           'class',
-          classNames({
+          classNames('thumb', {
             'thumb--hidden': !visible,
             'thumb--visible': visible,
           }),
