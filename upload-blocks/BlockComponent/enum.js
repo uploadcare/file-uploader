@@ -2,7 +2,7 @@ const frz = function(obj) {
   return Object.freeze(obj);
 };
 
-export const CFG = {
+const CFG = {
   PUBKEY: '--cfg-pubkey',
   MULTIPLE: '--cfg-multiple',
   CONFIRM_UPLOAD: '--cfg-confirm-upload',
@@ -10,8 +10,16 @@ export const CFG = {
   ACCEPT: '--cfg-accept',
   STORE: '--cfg-store',
   CAMERA_MIRROR: '--cfg-camera-mirror',
-  EXT_SOURCE_LIST: '--cfg-ext-source-list',
+  EXT_SRC_LIST: '--cfg-ext-source-list',
   MAX_FILES: '--cfg-max-files',
+};
+
+const ACT = {
+
+};
+
+const L10N = {
+
 };
 
 export const ENUM = frz({
@@ -21,12 +29,8 @@ export const ENUM = frz({
     }
   }),
   CSS: {
-    CFG,
-    L10N: {
-
-    },
+    CFG: frz(CFG),
+    L10N: frz(L10N),
   },
-  ACT: frz({
-
-  }),
+  ACT: frz(ACT),
 });

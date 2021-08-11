@@ -1,8 +1,8 @@
 [submodule "symbiote"]
 	path = symbiote
 	url = git@github.com:uploadcare/symbiote.js.git
-	branch = main
+	branch = v2
 [submodule "re4ma"]
 	path = re4ma
-	url = https://github.com/foxeyes/Re4ma.git
-	branch = master
+	url = git@github.com:uploadcare/re4ma.git
+	branch = main
