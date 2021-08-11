@@ -1,11 +1,11 @@
 import { TRANSPARENT_PIXEL_SRC } from './lib/transparentPixelSrc.js'
+import { constructCdnUrl, transformationsToString } from './lib/cdnUtils.js'
 
 export function initState(fnCtx) {
   return {
     entry: null,
     extension: null,
     originalUrl: null,
-    transformations: null,
     editorMode: false,
     editorToolbarEl: null,
     faderEl: null,
@@ -40,8 +40,31 @@ export function initState(fnCtx) {
       }
       fnCtx.state.networkProblems = false
     },
-    'on.close': () => {
+    'on.apply': (transformations) => {
       fnCtx.remove()
+      if (!transformations) {
+        return
+      }
+      let transformationsUrl = constructCdnUrl(
+        fnCtx.state.originalUrl,
+        transformationsToString(transformations),
+        'preview',
+      )
+
+      fnCtx.dispatchEvent(
+        new CustomEvent('apply', {
+          detail: {
+            originalUrl: fnCtx.state.originalUrl,
+            transformationsUrl,
+            transformations,
+          },
+        }),
+      )
+    },
+    'on.cancel': () => {
+      fnCtx.remove()
+
+      fnCtx.dispatchEvent(new CustomEvent('cancel'))
     },
   }
 }
