@@ -10,7 +10,7 @@ export class LineLoaderUi extends AppComponent {
       let lineEl = this['line-el']
       lineEl.style.transition = `initial`
       lineEl.style.opacity = '0'
-      lineEl.style.transform = `translateX(-100%)`
+      lineEl.style.transform = `translateX(-101%)`
       this._active && this._start()
     }
   }

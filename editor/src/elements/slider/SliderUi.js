@@ -67,6 +67,7 @@ export class SliderUi extends AppComponent {
     let slope = 100 / (this.state.max - this.state.min)
     let mappedValue = slope * (value - this.state.min)
     let offset = (mappedValue * (width - this._thumbSize)) / 100
+
     window.requestAnimationFrame(() => {
       this['thumb-el'].style.transform = `translateX(${offset}px)`
     })
@@ -140,7 +141,7 @@ export class SliderUi extends AppComponent {
     this._observer.observe(this)
 
     this._thumbSize = parseInt(
-      this.style.getPropertyValue('--l-thumb-size'),
+      window.getComputedStyle(this).getPropertyValue('--l-thumb-size'),
       10,
     )
 

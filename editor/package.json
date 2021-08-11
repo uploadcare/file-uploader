@@ -1,7 +1,7 @@
 {
   "type": "module",
   "name": "editor",
-  "version": "0.0.1-alpha.0.2",
+  "version": "0.0.1-alpha.0.6",
   "description": "",
   "main": "test.js",
   "dependencies": {
@@ -17,10 +17,11 @@
   "scripts": {
     "serve": "serve ./",
     "esbuild": "node ./esbuild.js",
-    "build": "npm run esbuild && npm run copy-locales && npm run copy-css",
+    "build": "npm run clean && npm run esbuild && npm run copy-locales && npm run copy-css",
     "copy-locales": "mkdir -p dist/l10n/locales && cp -R ./src/l10n/locales ./dist/l10n/",
     "copy-css": "mkdir -p ./dist/css && cp ./src/css/*.css ./dist/css/",
-    "deploy": "npm run build && node ./deploy-to-s3.js"
+    "deploy": "npm run build && node ./deploy-to-s3.js",
+    "clean": "rm -rf ./dist/"
   },
   "author": "",
   "license": "ISC"
