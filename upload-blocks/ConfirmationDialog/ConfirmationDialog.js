@@ -5,7 +5,7 @@ export class ConfirmationDialog extends BlockComponent {
     super();
     this.initLocalState({
       'on.no': () => {
-        this.pub('external', 'backTrigger', {});
+        this.historyBack();
       },
       'on.yes': () => {
         this.read('external', 'confirmationAction')?.();

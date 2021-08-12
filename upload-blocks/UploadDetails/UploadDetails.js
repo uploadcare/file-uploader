@@ -16,12 +16,12 @@ export class UploadDetails extends BlockComponent {
       cdnUrl: '',
       errorTxt: '',
       'on.back': () => {
-        this.pub('external', 'backTrigger', {});
+        this.historyBack();
       },
       'on.remove': () => {
         /** @type {File[]} */
         this.uploadCollection.remove(this.entry.__ctxId);
-        this.pub('external', 'backTrigger', {});
+        this.historyBack();
       },
       'on.preview': () => {
         this.ref['preview-tab'].setAttribute('current', '');

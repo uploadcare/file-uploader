@@ -21,6 +21,47 @@ export class BlockComponent extends BaseComponent {
     });
   }
 
+  historyBack() {
+    // TODO: fix history
+    /** @type {String[]} */
+    let history = this.read('external', 'history');
+    history.pop();
+    let prevActivity = history.pop();
+    this.pub('external', 'currentActivity', prevActivity);
+    if (history.length > 10) {
+      history = history.slice(history.length - 11, history.length - 1);
+    }
+    this.pub('external', 'history', history);
+    // console.log(history)
+  }
+
+  addFiles(files) {
+    files.forEach((/** @type {File} */ file) => {
+      this.uploadCollection.add({
+        file,
+        isImage: file.type.includes('image'),
+        mimeType: file.type,
+        fileName: file.name,
+        fileSize: file.size,
+      });
+    });
+  }
+
+  openSystemDialog() {
+    this.fileInput = document.createElement('input');
+    this.fileInput.type = 'file';
+    this.fileInput.dispatchEvent(new MouseEvent('click'));
+    this.fileInput.onchange = () => {
+      this.addFiles([...this.fileInput['files']]);
+      this.multiPub('external', {
+        currentActivity: 'upload-list',
+        modalActive: true,
+      });
+      this.fileInput['value'] = '';
+      this.fileInput = null;
+    };
+  }
+
   connectedCallback() {
     if (!this.__connectedOnce) {
       
@@ -28,10 +69,12 @@ export class BlockComponent extends BaseComponent {
         registry: Object.create(null),
         currentActivity: '',
         history: [],
-        backTrigger: null,
         commonProgress: 0,
         pubkey: 'demopublickey',
         uploadList: [],
+        multiple: true,
+        accept: 'image/*',
+        files: [],
       });
 
       super.connectedCallback();
@@ -53,18 +96,6 @@ export class BlockComponent extends BaseComponent {
           } else {
             this.removeAttribute(ACTIVE_ATTR);
           }
-        });
-        this.sub('external', 'backTrigger', (val) => {
-          /** @type {String[]} */
-          let history = this.read('external', 'history');
-          history.pop();
-          let prevActivity = history.pop();
-          this.pub('external', 'currentActivity', prevActivity);
-          if (history.length > 10) {
-            history = history.slice(history.length - 11, history.length - 1);
-          }
-          this.pub('external', 'history', history);
-          // console.log(history)
         });
       }
 

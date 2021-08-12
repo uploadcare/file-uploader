@@ -1,7 +1,6 @@
 import { WidgetBase } from '../WidgetBase/WidgetBase.js';
 import { IconUi } from '../IconUi/IconUi.js';
 import { SimpleBtn } from '../SimpleBtn/SimpleBtn.js';
-import { SystemCall } from '../SystemCall/SystemCall.js';
 import { DropArea } from '../DropArea/DropArea.js';
 import { SourceBtn } from '../SourceBtn/SourceBtn.js';
 import { FileItem } from '../FileItem/FileItem.js';
@@ -17,7 +16,6 @@ import { ProgressBar } from '../ProgressBar/ProgressBar.js'
 
 IconUi.reg('icon-ui');
 SimpleBtn.reg('simple-btn');
-SystemCall.reg('system-call');
 DropArea.reg('drop-area');
 SourceBtn.reg('source-btn');
 FileItem.reg('file-item');

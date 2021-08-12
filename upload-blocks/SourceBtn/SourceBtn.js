@@ -26,7 +26,7 @@ export class SourceBtn extends BlockComponent {
             modalIcon: 'local',
           });
           if (!this.read('external', 'files')?.length) {
-            this.pub('external', 'systemTrigger', {});
+            this.openSystemDialog();
           } else {
             this.pub('external', 'modalActive', true);
           }
