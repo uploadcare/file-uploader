@@ -7,7 +7,6 @@ import { SourceBtn } from '../SourceBtn/SourceBtn.js';
 import { FileItem } from '../FileItem/FileItem.js';
 import { ModalWin } from '../ModalWin/ModalWin.js';
 import { UploadList } from '../UploadList/UploadList.js';
-import { ActivityMngr } from '../ActivityMngr/ActivityMngr.js';
 import { UrlSource } from '../UrlSource/UrlSource.js';
 import { CameraSource } from '../CameraSource/CameraSource.js';
 import { UploadDetails } from '../UploadDetails/UploadDetails.js'
@@ -18,7 +17,6 @@ import { ProgressBar } from '../ProgressBar/ProgressBar.js'
 
 IconUi.reg('icon-ui');
 SimpleBtn.reg('simple-btn');
-ActivityMngr.reg('activity-mngr');
 SystemCall.reg('system-call');
 DropArea.reg('drop-area');
 SourceBtn.reg('source-btn');

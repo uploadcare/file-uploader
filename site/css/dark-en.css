@@ -3,6 +3,8 @@
 :root {
   font-family: 'Roboto Condensed', sans-serif;
 
+  --ctx-name: 'my-uploader';
+
   --cfg-pubkey: 'demopublickey';
   --cfg-multiple: 1;
   --cfg-confirm-upload: 1;
