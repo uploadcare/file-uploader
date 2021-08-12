@@ -452,11 +452,7 @@ icon-ui path {
   fill: currentColor;
 }
 
-activity-mngr {
-  display: contents;
-}
-
-activity-mngr > *:not([active]) {
+[activity]:not([active]) {
   display: none;
 }
 

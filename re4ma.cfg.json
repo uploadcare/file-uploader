@@ -3,12 +3,13 @@
   "renderItems": [
     {
       "source": "site/",
-      "output": "site/dist/"
+      "output": "site/dist/",
+      "minify": true
     },
     {
       "source": "site/pages/",
-      "output": "site/dist/pages/"
+      "output": "site/dist/pages/",
+      "minify": false
     }
-  ],
-  "minify": false
+  ]
 }

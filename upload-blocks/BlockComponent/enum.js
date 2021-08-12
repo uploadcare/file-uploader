@@ -19,7 +19,9 @@ const ACT = {
 };
 
 const L10N = {
-
+  STATIC: {},
+  MODAL: {},
+  MSG: {},
 };
 
 export const ENUM = frz({

@@ -3,6 +3,8 @@ import { ENUM } from './enum.js';
 import { TypedCollection } from '../../symbiote/core/TypedCollection.js';
 import { uploadEntrySchema } from './uploadEntrySchema.js';
 
+const ACTIVE_ATTR = 'active';
+
 export class BlockComponent extends BaseComponent {
 
   constructor() {
@@ -24,6 +26,9 @@ export class BlockComponent extends BaseComponent {
       
       this.addToExternalState({
         registry: Object.create(null),
+        currentActivity: '',
+        history: [],
+        backTrigger: null,
         commonProgress: 0,
         pubkey: 'demopublickey',
         uploadList: [],
@@ -34,6 +39,34 @@ export class BlockComponent extends BaseComponent {
       let registry = this.read('external', 'registry');
       registry[this.tagName.toLowerCase()] = this;
       this.pub('external', 'registry', registry);
+
+      if (this.getAttribute('activity')) {
+        this.sub('external', 'currentActivity', (val) => {
+          /** @type {String[]} */
+          let history = this.read('external', 'history');
+          if (this._currentActivity !== val) {
+            history.push(val);
+          }
+          this._currentActivity = val;
+          if (this.getAttribute('activity') === val) {
+            this.setAttribute(ACTIVE_ATTR, '');
+          } else {
+            this.removeAttribute(ACTIVE_ATTR);
+          }
+        });
+        this.sub('external', 'backTrigger', (val) => {
+          /** @type {String[]} */
+          let history = this.read('external', 'history');
+          history.pop();
+          let prevActivity = history.pop();
+          this.pub('external', 'currentActivity', prevActivity);
+          if (history.length > 10) {
+            history = history.slice(history.length - 11, history.length - 1);
+          }
+          this.pub('external', 'history', history);
+          // console.log(history)
+        });
+      }
 
       this.__connectedOnce = true;
     } else {
