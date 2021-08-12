@@ -1,5 +1,4 @@
 import { AppComponent } from './AppComponent.js'
-import { constructCdnUrl, transformationsToString } from './lib/cdnUtils.js'
 import { classNames } from './lib/classNames.js'
 import { debounce } from './lib/debounce.js'
 import { preloadImage } from './lib/preloadImage.js'
@@ -103,27 +102,6 @@ export class UploadcareEditor extends AppComponent {
         image_hidden_to_cropper: tabId === TabId.CROP,
         image_hidden_effects: tabId !== TabId.CROP,
       })
-    })
-
-    this.sub('transformations', (transformations) => {
-      if (!transformations) {
-        return
-      }
-      let transformationsUrl = constructCdnUrl(
-        this.state.originalUrl,
-        transformationsToString(transformations),
-        'preview',
-      )
-
-      this.dispatchEvent(
-        new CustomEvent('apply', {
-          detail: {
-            originalUrl: this.state.originalUrl,
-            transformationsUrl,
-            transformations,
-          },
-        }),
-      )
     })
   }
 

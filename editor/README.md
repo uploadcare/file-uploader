@@ -8,4 +8,7 @@
     let {originalUrl, transformationsUrl, transformations} = e.detail;
     console.log('APPLY', {originalUrl, transformationsUrl, transformations})
   })
+  editor.addEventListener('cancel', e => {
+    console.log('CANCEL')
+  })
 ```

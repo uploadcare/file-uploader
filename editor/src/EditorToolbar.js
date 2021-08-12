@@ -78,12 +78,11 @@ export class EditorToolbar extends AppComponent {
         visible: 'sub-toolbar--visible',
       },
       'on.cancel': (e) => {
-        this._cancel()
-        this.read('*on.close')()
+        this._cancelPreload && this._cancelPreload()
+        this.read('*on.cancel')()
       },
       'on.apply': (e) => {
-        this._apply()
-        this.read('*on.close')()
+        this.read('*on.apply')(this.state.editorTransformations)
       },
       'on.applySlider': (e) => {
         this['slider-el'].apply()
@@ -130,15 +129,6 @@ export class EditorToolbar extends AppComponent {
         'filter-tooltip_hidden': true,
       })
     }
-  }
-
-  _cancel() {
-    this._cancelPreload && this._cancelPreload()
-    this.state.editorTransformations = this.read('*transformations')
-  }
-
-  _apply() {
-    this.pub('*transformations', this.state.editorTransformations)
   }
 
   /** @param {string} operation */
