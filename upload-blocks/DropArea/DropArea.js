@@ -35,6 +35,6 @@ DropArea.template = /*html*/ `
   <slot></slot>
 </div>
 <div .dropzone>
-  <div .drop-txt></div>
+  <div .drop-txt l10n="drop-files-here"></div>
 </div>
 `;

@@ -27,4 +27,5 @@ export class SimpleBtn extends BlockComponent {
 SimpleBtn.template = /*html*/ `
 <button>
   <icon-ui name="upload"></icon-ui>
+  <span l10n="upload-files"></span>
 </button>`;

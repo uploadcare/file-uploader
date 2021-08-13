@@ -10,6 +10,15 @@ export class BlockComponent extends BaseComponent {
   constructor() {
     super();
     this.addTemplateProcessor((fr) => {
+      [...fr.querySelectorAll('[l10n]')].forEach((el) => {
+        let key = el.getAttribute('l10n');
+        let ctxKey = 'l10n:' + key;
+        this.localState.add(ctxKey, key);
+        this.sub('local', ctxKey, (val) => {
+          el.textContent = this.getCssData('--l10n-' + val);
+        });
+        el.removeAttribute('l10n');
+      });
       [...fr.querySelectorAll('*')].forEach((el) => {
         [...el.attributes].forEach((attr) => {
           if (attr.name.startsWith('.')) {
@@ -19,6 +28,15 @@ export class BlockComponent extends BaseComponent {
         });
       });
     });
+  }
+
+  /**
+   * 
+   * @param {String} localPropKey 
+   * @param {String} l10nKey 
+   */
+  applyL10nKey(localPropKey, l10nKey) {
+    this.pub('local', 'l10n:' + localPropKey, l10nKey);
   }
 
   historyBack() {
@@ -161,8 +179,7 @@ export class BlockComponent extends BaseComponent {
     return conf;
   }
 
-  disconnectedCallback() {
-    super.disconnectedCallback();
+  destroyCallback() {
     // TODO: destroy uploadCollection
   }
 

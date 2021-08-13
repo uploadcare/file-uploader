@@ -36,10 +36,6 @@
   --l10n-upload-files: 'Upload Files';
   --l10n-powered-by: 'Powered by Uploadcare ©';
   --l10n-drop-files-here: 'Or drop files here...';
-  --l10n-local-files: 'Local Files';
-  --l10n-from-url: 'From URL';
-  --l10n-camera: 'Camera';
-  --l10n-other: 'Other';
   --l10n-upload: 'Upload';
   --l10n-add-more: 'Add more';
   --l10n-cancel: 'Cancel';
@@ -49,6 +45,13 @@
   --l10n-edit-detail: 'Details';
   --l10n-back: 'Back';
   --l10n-remove-from-list: 'Remove';
+
+  --l10n-src-type-local: 'Local File';
+  --l10n-src-type-from-url: 'From URL';
+  --l10n-src-type-camera: 'Camera';
+  --l10n-src-type-other: 'Other';
+
+  --l10n-src-type: var(--l10n-src-type-local);
 
   --rgb-1: 152, 197, 255;
   --rgb-2: 40, 40, 40;
@@ -379,8 +382,7 @@ drop-area .dropzone {
   justify-content: center;
   user-select: none;
 }
-drop-area .dropzone .drop-txt::after {
-  content: var(--l10n-drop-files-here);
+drop-area .dropzone .drop-txt {
   color: var(--clr-1);
   opacity: var(--opacity-mid);
 }
@@ -612,9 +614,6 @@ simple-btn button {
   color: var(--clr-1);
   background-color: var(--clr-2);
   padding-left: 0.2em;
-}
-simple-btn button::after {
-  content: var(--l10n-upload-files);
 }
 
 modal-win drop-area {

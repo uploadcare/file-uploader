@@ -17,6 +17,7 @@ export class SourceBtn extends BlockComponent {
   _setType(type) {
     let types = {
       local: () => {
+        this.applyL10nKey('src-type', 'src-type-local');
         this.pub('local', 'iconName', 'local');
         this.onclick = () => {
           this.multiPub('external', {
@@ -33,6 +34,7 @@ export class SourceBtn extends BlockComponent {
         };
       },
       url: () => {
+        this.applyL10nKey('src-type', 'src-type-from-url');
         this.pub('local', 'iconName', 'url');
         this.onclick = () => {
           this.multiPub('external', {
@@ -44,6 +46,7 @@ export class SourceBtn extends BlockComponent {
         };
       },
       camera: () => {
+        this.applyL10nKey('src-type', 'src-type-camera');
         window.setTimeout(() => {
           if (this.blockRegistry['camera-source']) {
             this.pub('local', 'iconName', 'camera');
@@ -61,6 +64,7 @@ export class SourceBtn extends BlockComponent {
         });
       },
       other: () => {
+        this.applyL10nKey('src-type', 'src-type-other');
         this.pub('local', 'iconName', 'dots');
         this.onclick = () => {
           this.multiPub('external', {
@@ -85,7 +89,7 @@ export class SourceBtn extends BlockComponent {
 }
 SourceBtn.template = /*html*/ `
 <icon-ui loc="@name: iconName"></icon-ui>
-<div .txt></div>
+<div .txt l10n="src-type"></div>
 `;
 SourceBtn.bindAttributes({
   type: ['property'],
