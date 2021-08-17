@@ -12,7 +12,8 @@ import { UploadDetails } from '../UploadDetails/UploadDetails.js'
 import { MessageBox } from '../MessageBox/MessageBox.js';
 import { UploadResult } from '../UploadResult/UploadResult.js';
 import { ConfirmationDialog } from '../ConfirmationDialog/ConfirmationDialog.js';
-import { ProgressBar } from '../ProgressBar/ProgressBar.js'
+import { ProgressBar } from '../ProgressBar/ProgressBar.js';
+import { LocalEditor } from '../LocalEditor/LocalEditor.js';
 
 IconUi.reg('icon-ui');
 SimpleBtn.reg('simple-btn');
@@ -28,6 +29,7 @@ MessageBox.reg('message-box');
 UploadResult.reg('upload-result');
 ConfirmationDialog.reg('confirmation-dialog');
 ProgressBar.reg('progress-bar');
+LocalEditor.reg('local-editor');
 
 export class UploadWidget extends WidgetBase {}
 

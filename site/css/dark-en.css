@@ -34,7 +34,6 @@
   --icon-upload-error: 'M11,15H13V17H11V15M11,7H13V13H11V7M12,2C6.47,2 2,6.5 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20Z';
 
   --l10n-upload-files: 'Upload Files';
-  --l10n-powered-by: 'Powered by Uploadcare ©';
   --l10n-drop-files-here: 'Or drop files here...';
   --l10n-upload: 'Upload';
   --l10n-add-more: 'Add more';
@@ -45,6 +44,9 @@
   --l10n-edit-detail: 'Details';
   --l10n-back: 'Back';
   --l10n-remove-from-list: 'Remove';
+  --l10n-no: 'No';
+  --l10n-yes: 'Yes';
+  --l10n-are-you-sure: 'Are you sure?';
 
   --l10n-src-type-local: 'Local File';
   --l10n-src-type-from-url: 'From URL';
@@ -259,18 +261,10 @@ upload-list .add-more-btn {
   background-color: transparent;
   color: var(--clr-1);
 }
-upload-list .add-more-btn::after {
-  content: var(--l10n-add-more);
-}
-upload-list .upload-btn::after {
-  content: var(--l10n-upload);
-}
+
 upload-list .cancel-btn {
   background-color: var(--clr-2);
   color: var(--clr-txt);
-}
-upload-list .cancel-btn::after {
-  content: var(--l10n-cancel);
 }
 
 file-item {
@@ -387,11 +381,10 @@ drop-area .dropzone .drop-txt {
   opacity: var(--opacity-mid);
 }
 
-drop-area .dropzone::after {
+drop-area .powered {
   position: absolute;
   bottom: 0;
   right: var(--gap-mid);
-  content: var(--l10n-powered-by);
   font-size: 10px;
   color: var(--clr-soft-1);
 }
@@ -501,15 +494,10 @@ camera-source .shot-btn {
   color: var(--clr-1);
   background-color: var(--clr-shade-1);
 }
-camera-source .shot-btn::after {
-  content: var(--l10n-camera-shot);
-}
+
 camera-source .cancel-btn {
   color: var(--clr-1);
   background-color: var(--clr-2);
-}
-camera-source .cancel-btn::after {
-  content: var(--l10n-cancel);
 }
 
 upload-details {
@@ -724,4 +712,11 @@ progress-bar .bar {
   height: 100%;
   background-color: var(--clr-1);
   transition: .2s;
+}
+
+.local-editor-toolbar {
+  position: absolute;
+  display: grid;
+  grid-gap: var(--gap-mid);
+  left: var(--gap-mid);
 }

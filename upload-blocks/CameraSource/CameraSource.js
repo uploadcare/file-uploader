@@ -82,7 +82,7 @@ CameraSource.template = /*html*/ `
   ref="video">
 </video>
 <div .toolbar>
-  <button .cancel-btn loc="onclick: on.cancel"></button>
-  <button .shot-btn loc="onclick: on.shot"></button>
+  <button .cancel-btn loc="onclick: on.cancel" l10n="cancel"></button>
+  <button .shot-btn loc="onclick: on.shot" l10n="camera-shot"></button>
 </div>
 `;

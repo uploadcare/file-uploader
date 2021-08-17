@@ -1,0 +1,109 @@
+@import url('https://fonts.googleapis.com/css2?family=Inconsolata:wght@300&display=swap');
+
+:root {
+  --rgb-1: 210, 220, 250;
+  --rgb-2: 20, 20, 20;
+
+  --clr-1: rgb(var(--rgb-1));
+  --clr-2: rgb(var(--rgb-2));
+
+  --gap-min: 2px;
+  --gap-mid: 10px;
+  --gap-max: 20px;
+
+  --ui-height: 38px;
+}
+
+html, body {
+  padding: 0;
+  margin: 0;
+  font-family: 'Inconsolata', monospace;
+  font-size: 16px;
+  background-color: #000;
+  color: var(--clr-1);
+}
+
+body {
+  position: relative;
+  display: grid;
+  grid-template-rows: min-content auto min-content;
+  min-height: 100vh;
+}
+
+.pan {
+  display: flex;
+  justify-content: center;
+  position: fixed;
+  left: 0;
+  right: 0;
+  padding: var(--gap-max);
+  background-color: rgba(0, 0, 0, .3);
+  backdrop-filter: blur(4px);
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.6);
+  z-index: 10000;
+}
+
+header {
+  top: 0;
+}
+
+footer {
+  display: flex;
+  justify-content: center;
+  padding: var(--gap-max);
+  padding-top: 0;
+}
+
+main {
+  display: block;
+}
+
+section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--gap-max);
+  min-height: calc(100vh - var(--gap-max)*2);
+  box-sizing: border-box;
+  background-color: var(--clr-2);
+  margin: var(--gap-max);
+  background-image: url('../img/bg.svg');
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  background-position: center center;
+}
+
+section > * {
+  margin: var(--gap-max);
+}
+
+h3 {
+  margin: 0;
+}
+
+code {
+  display: block;
+  background-color: #000;
+  color: rgb(172, 217, 255);
+  padding: var(--gap-max);
+}
+
+code .hl {
+  color: rgb(255, 177, 251);
+}
+
+button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--clr-1);
+  color: var(--clr-2);
+  font-family: inherit;
+  height: 42px;
+  border: none;
+  padding-left: 2em;
+  padding-right: 2em;
+  cursor: pointer;
+  box-shadow: 0 0 12px rgba(0, 0, 0, .6);
+}

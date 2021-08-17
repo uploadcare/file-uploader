@@ -120,7 +120,7 @@ export class LiveHtmlElement extends BaseComponent {
     this.ref.editor.innerHTML = html;
 
     Caret.setPosition(offset, this.ref.editor);
-    this.ref.editor.focus();
+    // this.ref.editor.focus();
   }
 
   sync() {

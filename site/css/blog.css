@@ -1,0 +1,33 @@
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  display: grid;
+  grid-template-rows: min-content auto min-content;
+  min-height: 100vh;
+}
+
+h1 {
+  font-size: 22px;
+}
+
+header, main, footer {
+  padding: 6px;
+}
+
+header, footer {
+  background-color: #ccc;
+}
+
+code {
+  display: block;
+  background-color: #000;
+  color: rgb(172, 217, 255);
+  padding: 10px;
+}
+
+code .hl {
+  color: rgb(255, 177, 251);
+}

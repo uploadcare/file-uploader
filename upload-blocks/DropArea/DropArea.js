@@ -36,5 +36,6 @@ DropArea.template = /*html*/ `
 </div>
 <div .dropzone>
   <div .drop-txt l10n="drop-files-here"></div>
+  <div .powered>Powered by Uploadcare ©</div>
 </div>
 `;

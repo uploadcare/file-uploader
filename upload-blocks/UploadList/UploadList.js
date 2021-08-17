@@ -60,9 +60,9 @@ export class UploadList extends BlockComponent {
 UploadList.template = /*html*/ `
 <div .files-el ref="files"></div>
 <div .toolbar-el>
-  <button .cancel-btn loc="onclick: on.cancel;"></button>
+  <button .cancel-btn loc="onclick: on.cancel;" l10n="cancel"></button>
   <div></div>
-  <button .add-more-btn loc="onclick: on.add"></button>
-  <button .upload-btn loc="onclick: on.upload; @disabled: uploadBtnDisabled"></button>
+  <button .add-more-btn loc="onclick: on.add" l10n="add-more"></button>
+  <button .upload-btn loc="onclick: on.upload; @disabled: uploadBtnDisabled" l10n="upload"></button>
 </div>
 `;

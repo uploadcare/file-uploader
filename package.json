@@ -7,6 +7,7 @@
   "scripts": {
     "test": "test",
     "copy-css": "cp -R site/css site/dist",
+    "copy-img": "cp -R site/img site/dist",
     "copy-snippets": "cp -R site/snippets site/dist",
     "build-site": "node ./re4ma/builder.js && node ./build-site.js && npm run copy-css && npm run copy-snippets"
   },

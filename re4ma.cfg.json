@@ -10,6 +10,11 @@
       "source": "site/pages/",
       "output": "site/dist/pages/",
       "minify": false
+    },
+    {
+      "source": "site/future/",
+      "output": "site/dist/future/",
+      "minify": false
     }
   ]
 }

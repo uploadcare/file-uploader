@@ -23,9 +23,9 @@ export class ConfirmationDialog extends BlockComponent {
 }
 
 ConfirmationDialog.template = /*html*/ `
-<div .txt>Are you sure?</div>
+<div .txt l10n="are-you-sure"></div>
 <div .toolbar>
-  <button .no-btn loc="onclick: on.no">No</button>
-  <button .yes-btn loc="onclick: on.yes">Yes</button>
+  <button .no-btn loc="onclick: on.no" l10n="no"></button>
+  <button .yes-btn loc="onclick: on.yes" l10n="yes"></button>
 </div>
 `;
