@@ -29,7 +29,7 @@ function renderTabToggle(id) {
 
 function renderTabContent(id) {
   return /*html*/ `
-    <${PresenceToggle.is} class="tab-content" set="visible: presence.tabContent${id}">
+    <${PresenceToggle.is} class="tab-content" set="visible: presence.tabContent${id}; styles: presence.tabContentStyles">
         <${EditorScroller.is} hidden-scrollbar>
           <div class="controls-list_align">
             <div class="controls-list_inner" ref="controls-list-${id}">
@@ -76,6 +76,10 @@ export class EditorToolbar extends AppComponent {
       'presence.subBottomToolbarStyles': {
         hidden: 'sub-toolbar--bottom-hidden',
         visible: 'sub-toolbar--visible',
+      },
+      'presence.tabContentStyles': {
+        hidden: 'tab-content--hidden',
+        visible: 'tab-content--visible',
       },
       'on.cancel': (e) => {
         this._cancelPreload && this._cancelPreload()
@@ -313,12 +317,6 @@ export class EditorToolbar extends AppComponent {
       this._preloadEditedImage()
       if (this.state.faderEl) {
         this.state.faderEl.setTransformations(transformations)
-      }
-    })
-
-    this.sub('*transformations', (transformations) => {
-      if (transformations) {
-        this.state.editorTransformations = transformations
       }
     })
 
