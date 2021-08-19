@@ -14,6 +14,8 @@ import { UploadResult } from '../UploadResult/UploadResult.js';
 import { ConfirmationDialog } from '../ConfirmationDialog/ConfirmationDialog.js';
 import { ProgressBar } from '../ProgressBar/ProgressBar.js';
 import { LocalEditor } from '../LocalEditor/LocalEditor.js';
+import { CloudImageEditor } from '../CloudImageEditor/CloudImageEditor.js'
+import { SocialSource } from '../SocialSource/SocialSource.js'
 
 IconUi.reg('icon-ui');
 SimpleBtn.reg('simple-btn');
@@ -30,6 +32,8 @@ UploadResult.reg('upload-result');
 ConfirmationDialog.reg('confirmation-dialog');
 ProgressBar.reg('progress-bar');
 LocalEditor.reg('local-editor');
+CloudImageEditor.reg('cloud-image-editor');
+SocialSource.reg('social-source')
 
 export class UploadWidget extends WidgetBase {}
 
@@ -42,12 +46,14 @@ UploadWidget.template = /*html*/ `
 </drop-area>
 <system-call></system-call>
 <modal-win>
-  <activity-mngr>
+<activity-mngr>
     <upload-list activity="upload-list"></upload-list>
     <camera-source activity="camera"></camera-source>
     <url-source activity="url"></url-source>
     <external-source activity="external"></external-source>
     <pre-editor activity="pre-edit"></pre-editor>
+    <cloud-image-editor activity="cloud-image-edit"></cloud-image-editor>
+    <social-source activity="social-source"></social-source>
   </activity-mngr>
 </modal-win>
 <upload-result></upload-result>

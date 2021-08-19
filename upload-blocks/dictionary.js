@@ -6,4 +6,6 @@ export const ACT = Object.freeze({
   EXTERNAL: 'external',
   UPLOAD_DETAILS: 'upload-details',
   COMFIRMATION: 'confirmation',
+  CLOUD_IMAGE_EDIT: 'cloud-image-edit',
+  SOCIAL_SOURCE: 'social-source',
 });

@@ -20,6 +20,8 @@ UploadWidgetBtn.template = /*html*/ `
     <external-source activity="${ACT.EXTERNAL}"></external-source>
     <upload-details activity="${ACT.UPLOAD_DETAILS}"></upload-details>
     <confirmation-dialog activity="${ACT.COMFIRMATION}"></confirmation-dialog>
+    <cloud-image-editor activity="${ACT.CLOUD_IMAGE_EDIT}"></cloud-image-editor>
+    <social-source activity="${ACT.SOCIAL_SOURCE}"></social-source>
   </activity-mngr>
 </modal-win>
 <message-box></message-box>

@@ -36,8 +36,15 @@ export class FileItem extends BlockComponent {
       this.pub('local', 'fileName', name || 'No name...');
     });
 
+    this.entry.subscribe('transformationsUrl', (transformationsUrl) => {
+      if(!transformationsUrl) {
+        return
+      }
+      this.ref.thumb.style.backgroundImage = `url(${transformationsUrl}-/scale_crop/80x80/)`;
+    });
+
     this.file = this.entry.getValue('file');
-    
+
     if (this.file?.type.includes('image')) {
       resizeImage(this.file, 76).then((img) => {
         this.ref.thumb.style.backgroundImage = `url(${img})`;
