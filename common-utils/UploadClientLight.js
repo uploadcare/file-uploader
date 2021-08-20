@@ -1,10 +1,10 @@
-export const UC_CLIENT_EVENT_NAME = 'uc-client-event';
+export const UC_CLIENT_EVENT_NAME = 'uc-client-event'
 
 export const EVENT_TYPES = {
   SUCCESS: 'success',
   ERROR: 'error',
   PROGRESS: 'progress',
-};
+}
 
 export class UploadInfo {
   /**
@@ -16,14 +16,14 @@ export class UploadInfo {
    * @param {any} [init.error]
    */
   constructor(init) {
-    this.date = Date.now();
-    this.type = init.type;
+    this.date = Date.now()
+    this.type = init.type
     /** @type {String} */
-    this.uploadToken = init.uploadToken || null;
-    this.progress = init.progress;
-    this.uuid = init.uuid || null;
-    this.cdnUrl = init.uuid ? `https://ucarecdn.com/${init.uuid}/` : null;
-    this.error = init.error || null;
+    this.uploadToken = init.uploadToken || null
+    this.progress = init.progress
+    this.uuid = init.uuid || null
+    this.cdnUrl = init.uuid ? `https://ucarecdn.com/${init.uuid}/` : null
+    this.error = init.error || null
   }
 }
 
@@ -38,48 +38,58 @@ export async function uploadFromUrl(url, pubkey, uploadCallback) {
   function checkUpload(token) {
     return new Promise(async (resolve, reject) => {
       let getStatus = async () => {
-        let resp = await (await window.fetch(`https://upload.uploadcare.com/from_url/status/?token=${token}`)).json();
+        let resp = await (
+          await window.fetch(
+            `https://upload.uploadcare.com/from_url/status/?token=${token}`,
+          )
+        ).json()
         if (resp.status === 'progress') {
           uploadCallback?.(
             new UploadInfo({
               type: EVENT_TYPES.PROGRESS,
               uploadToken: token,
               progress: resp.progress,
-            })
-          );
-          getStatus();
+            }),
+          )
+          getStatus()
         } else if (resp.status === 'error') {
           uploadCallback?.(
             new UploadInfo({
               type: EVENT_TYPES.ERROR,
               error: resp,
               progress: 0,
-            })
-          );
-          reject(null);
+            }),
+          )
+          reject(null)
         } else {
           let result = new UploadInfo({
             type: EVENT_TYPES.SUCCESS,
             progress: 100,
             uuid: resp.uuid,
-          });
-          uploadCallback?.(result);
-          resolve(result);
+          })
+          uploadCallback?.(result)
+          resolve(result)
         }
-      };
-      getStatus();
-    });
+      }
+      getStatus()
+    })
   }
 
-  let fileId = null;
-  let response = await (await window.fetch(`https://upload.uploadcare.com/from_url/?pub_key=${pubkey}&store=1&source_url=${url}`)).json();
+  let fileId = null
+  let response = await (
+    await window.fetch(
+      `https://upload.uploadcare.com/from_url/?pub_key=${pubkey}&store=1&source_url=${encodeURIComponent(
+        url,
+      )}`,
+    )
+  ).json()
   if (response.token) {
-    let uuid = await checkUpload(response.token);
+    let uuid = await checkUpload(response.token)
     if (uuid) {
-      fileId = uuid;
+      fileId = uuid
     }
   }
-  return fileId;
+  return fileId
 }
 
 /**
@@ -89,56 +99,56 @@ export async function uploadFromUrl(url, pubkey, uploadCallback) {
  * @returns {Promise<UploadInfo>}
  */
 export async function uploadFileDirect(file, pubkey, uploadCallback) {
-  let data = new FormData();
-  data.append('UPLOADCARE_PUB_KEY', pubkey);
-  data.append('UPLOADCARE_STORE', '1');
-  data.append('file', file, file.name);
+  let data = new FormData()
+  data.append('UPLOADCARE_PUB_KEY', pubkey)
+  data.append('UPLOADCARE_STORE', '1')
+  data.append('file', file, file.name)
   return new Promise((resolve, reject) => {
-    let xhr = new XMLHttpRequest();
+    let xhr = new XMLHttpRequest()
     xhr.upload.onprogress = (e) => {
       uploadCallback?.(
         new UploadInfo({
           type: EVENT_TYPES.PROGRESS,
           progress: Math.round((e.loaded / e.total) * 100),
-        })
-      );
-    };
+        }),
+      )
+    }
     xhr.onerror = (e) => {
       uploadCallback?.(
         new UploadInfo({
           type: EVENT_TYPES.ERROR,
           progress: 0,
           error: e,
-        })
-      );
-      reject(null);
-    };
+        }),
+      )
+      reject(null)
+    }
     xhr.onload = (e) => {
-      let respJson;
+      let respJson
       try {
-        respJson = JSON.parse(xhr.responseText);
+        respJson = JSON.parse(xhr.responseText)
       } catch (err) {
         uploadCallback?.(
           new UploadInfo({
             type: EVENT_TYPES.ERROR,
             progress: 0,
             error: xhr.responseText,
-          })
-        );
-        reject(null);
-        return;
+          }),
+        )
+        reject(null)
+        return
       }
       let result = new UploadInfo({
         type: EVENT_TYPES.SUCCESS,
         progress: 100,
         uuid: respJson.file,
-      });
-      uploadCallback?.(result);
-      resolve(result);
-    };
-    xhr.open('POST', 'https://upload.uploadcare.com/base/');
-    xhr.send(data);
-  });
+      })
+      uploadCallback?.(result)
+      resolve(result)
+    }
+    xhr.open('POST', 'https://upload.uploadcare.com/base/')
+    xhr.send(data)
+  })
 }
 
 /**
@@ -146,5 +156,9 @@ export async function uploadFileDirect(file, pubkey, uploadCallback) {
  * @param {String} pubkey
  */
 export async function getInfo(uuid, pubkey) {
-  return await (await window.fetch(`https://upload.uploadcare.com/info/?pub_key=${pubkey}&file_id=${uuid}`)).json();
+  return await (
+    await window.fetch(
+      `https://upload.uploadcare.com/info/?pub_key=${pubkey}&file_id=${uuid}`,
+    )
+  ).json()
 }

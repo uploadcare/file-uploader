@@ -3,9 +3,22 @@ export const ACT = Object.freeze({
   UPLOAD_LIST: 'upload-list',
   CAMERA: 'camera',
   URL: 'url',
-  EXTERNAL: 'external',
   UPLOAD_DETAILS: 'upload-details',
   COMFIRMATION: 'confirmation',
   CLOUD_IMAGE_EDIT: 'cloud-image-edit',
-  SOCIAL_SOURCE: 'social-source',
-});
+  EXTERNAL_SOURCE: 'external-source',
+})
+
+export const EXTERNAL_SOURCE = Object.freeze({
+  FACEBOOK: 'facebook',
+  DROPBOX: 'dropbox',
+  GDRIVE: 'gdrive',
+  GPHOTOS: 'gphotos',
+  INSTAGRAM: 'instagram',
+  FLICKR: 'flickr',
+  VK: 'vk',
+  EVERNOTE: 'evernote',
+  BOX: 'box',
+  ONEDRIVE: 'onedrive',
+  HUDDLE: 'huddle',
+})
