@@ -24,7 +24,7 @@ export class SourceBtn extends BlockComponent {
             this.onclick = () => {
               this.multiPub('external', {
                 externalSourceType: type,
-                currentActivity: 'external-source',
+                currentActivity: 'external',
                 modalCaption: `${type[0].toUpperCase()}${type.slice(1)}`,
                 modalIcon: type,
                 modalActive: true,

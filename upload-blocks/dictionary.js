@@ -6,7 +6,7 @@ export const ACT = Object.freeze({
   UPLOAD_DETAILS: 'upload-details',
   COMFIRMATION: 'confirmation',
   CLOUD_IMAGE_EDIT: 'cloud-image-edit',
-  EXTERNAL_SOURCE: 'external-source',
+  EXTERNAL_SOURCE: 'external',
 })
 
 export const EXTERNAL_SOURCE = Object.freeze({

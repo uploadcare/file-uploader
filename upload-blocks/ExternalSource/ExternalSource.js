@@ -24,7 +24,7 @@ export class ExternalSource extends BlockComponent {
     })
 
     this.externalState.sub('currentActivity', (val) => {
-      if (val === 'external-source') {
+      if (val === 'external') {
         this.mountIframe()
       } else if (this._iframe) {
         this.unmountIframe()
