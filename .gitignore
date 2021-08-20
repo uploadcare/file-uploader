@@ -9,3 +9,4 @@ node_modules
 */pkg/
 */wasm-pack.log
 .DS_Store
+.firebase
