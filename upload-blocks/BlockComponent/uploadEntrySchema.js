@@ -47,4 +47,8 @@ export const uploadEntrySchema = Object.freeze({
     type: String,
     value: null,
   },
+  transformationsUrl: {
+    type: String,
+    value: null,
+  },
 });

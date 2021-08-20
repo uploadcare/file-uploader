@@ -38,14 +38,16 @@ export class UploadDetails extends BlockComponent {
         this.ref['viewport'].setAttribute('hidden', '');
       },
       'on.edit': () => {
-
+        if(this.entry.getValue('uuid')) {
+          this.externalState.pub('currentActivity', 'cloud-image-edit');
+        }
       },
     });
   }
 
   /**
-   * 
-   * @param {File} imgFile 
+   *
+   * @param {File} imgFile
    */
   _renderFilePreview(imgFile) {
     let url = URL.createObjectURL(imgFile);
@@ -53,8 +55,8 @@ export class UploadDetails extends BlockComponent {
   }
 
   /**
-   * 
-   * @param {String} url 
+   *
+   * @param {String} url
    */
   _renderPreview(url) {
     /** @type {HTMLCanvasElement} */
@@ -87,7 +89,7 @@ export class UploadDetails extends BlockComponent {
       if (file) {
         /** @type {File} */
         this._file = file;
-        if (this._file.type.includes('image')) {
+        if (this._file.type.includes('image') && !entry.getValue('transformationsUrl')) {
           this._renderFilePreview(this._file);
         }
       }
@@ -118,8 +120,16 @@ export class UploadDetails extends BlockComponent {
         if (!url) {
           return;
         }
-        if (this.entry.getValue('isImage')) {
+        if (this.entry.getValue('isImage') && !this.entry.getValue('transformationsUrl')) {
           this._renderPreview(this.localState.read('cdnUrl'));
+        }
+      });
+      this.entry.subscribe('transformationsUrl', (url) => {
+        if (!url) {
+          return;
+        }
+        if (this.entry.getValue('isImage')) {
+          this._renderPreview(url);
         }
       });
     });
@@ -150,7 +160,7 @@ UploadDetails.template = /*html*/ `
   </fieldset>
 
   <div loc="textContent: errorTxt;"></div>
-  
+
 </div>
 <div ref="viewport" .viewport>
   <canvas ref="canvas"></canvas>
