@@ -52,11 +52,11 @@ export class CloudImageEditor extends BlockComponent {
     let result = e.detail
     let { transformationsUrl } = result
     this.entry.setValue('transformationsUrl', transformationsUrl)
-    this.historyBack()
+    this.pub('external', 'currentActivity', 'upload-details')
   }
 
   handleCancel() {
-    this.historyBack()
+    this.pub('external', 'currentActivity', 'upload-details')
   }
 
   mountEditor() {
