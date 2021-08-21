@@ -748,9 +748,9 @@ progress-bar .bar {
 }
 
 external-source {
-  display: flex;
+  display: grid;
+  grid-template-rows: auto min-content;
   position: relative;
-  background-color: #ffffff;
   width: 600px;
   height: 400px;
 }
