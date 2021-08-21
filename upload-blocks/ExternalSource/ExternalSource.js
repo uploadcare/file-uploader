@@ -24,7 +24,7 @@ export class ExternalSource extends BlockComponent {
     this.initLocalState({
       counter: 0,
       'on.back': () => {
-        this.pub('external', 'currentActivity', 'upload-list')
+        this.historyBack()
       },
     })
   }
