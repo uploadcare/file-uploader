@@ -63,7 +63,7 @@ UploadWidget.template = /*html*/ `
     <url-source activity="url"></url-source>
     <pre-editor activity="pre-edit"></pre-editor>
     <cloud-image-editor activity="cloud-image-edit"></cloud-image-editor>
-    <external-source activity="external-source"></external-source>
+    <external-source activity="external"></external-source>
   </activity-mngr>
 </modal-win>
 <upload-result></upload-result>

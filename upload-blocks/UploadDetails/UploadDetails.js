@@ -167,13 +167,13 @@ UploadDetails.template = /*html*/ `
 </div>
 <div .toolbar>
   <button .back-btn loc="onclick: on.back">
-    <icon-ui path="${ICONS.back}"></icon-ui>
+    <icon-ui name="back"></icon-ui>
   </button>
   <button .edit-btn loc="onclick: on.edit">
-    <icon-ui path="${ICONS.edit}"></icon-ui>
+    <icon-ui name="edit"></icon-ui>
   </button>
   <button .remove-btn loc="onclick: on.remove">
-    <icon-ui path="${ICONS.remove}"></icon-ui>
+    <icon-ui name="remove"></icon-ui>
   </button>
 </div>
 `;
