@@ -102,10 +102,9 @@ export class BlockComponent extends BaseComponent {
         this.sub('external', 'currentActivity', (val) => {
           /** @type {String[]} */
           let history = this.read('external', 'history')
-          if (val && this._currentActivity !== val && !history.includes(val)) {
+          if (val && history[history.length - 1] !== val) {
             history.push(val)
           }
-          this._currentActivity = val
           if (this.getAttribute('activity') === val) {
             this.setAttribute(ACTIVE_ATTR, '')
           } else {
