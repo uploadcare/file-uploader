@@ -80,6 +80,8 @@ section > * {
 
 h3 {
   margin: 0;
+  color: rgb(255, 180, 255);
+  text-shadow: 0 0 8px rgb(255, 180, 255);
 }
 
 code {
@@ -106,4 +108,20 @@ button {
   padding-right: 2em;
   cursor: pointer;
   box-shadow: 0 0 12px rgba(0, 0, 0, .6);
+}
+
+ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+li {
+  margin-bottom: 6px;
+}
+
+li::before {
+  content: '> ';
+  color: rgb(255, 180, 255);
+  text-shadow: 0 0 8px rgb(255, 180, 255);
 }
