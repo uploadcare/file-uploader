@@ -68,7 +68,7 @@ section {
   box-sizing: border-box;
   background-color: var(--clr-2);
   margin: var(--gap-max);
-  background-image: url('../img/bg.svg');
+  background-image: url('../img/bga.svg');
   background-repeat: no-repeat;
   background-size: 100% 100%;
   background-position: center center;

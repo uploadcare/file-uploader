@@ -5,15 +5,6 @@
       "firebase.json",
       "**/.*",
       "**/node_modules/**"
-    ],
-    "headers": [{
-      "source": "*",
-      "headers": [
-        {
-          "key": "Feature-Policy",
-          "value": "ch-DPR https://ucarecdn.com 'self'; ch-Width https://ucarecdn.com 'self'"
-        }
-      ]
-    }]
+    ]
   }
 }

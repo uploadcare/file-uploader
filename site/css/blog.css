@@ -17,8 +17,12 @@ header, main, footer {
   padding: 6px;
 }
 
-header, footer {
-  background-color: #ccc;
+header {
+  border-bottom: 1px dashed currentColor;
+}
+
+footer {
+  border-top: 1px dashed currentColor;
 }
 
 code {
