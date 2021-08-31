@@ -23,7 +23,7 @@ export class ExternalSource extends BlockComponent {
 
     this.initLocalState({
       counter: 0,
-      'on.back': () => {
+      'on.done': () => {
         this.pub('external', 'currentActivity', 'upload-list');
       },
     });
@@ -150,12 +150,12 @@ ExternalSource.template = /*html*/ `
 <div ref="iframe-wrapper" .iframe-wrapper>
 </div>
 <div .toolbar>
-  <button .back-btn loc="onclick: on.back">
-    <icon-ui name="back"></icon-ui>
-  </button>
   <div .selected-counter>
     <span l10n="selected-count"></span>
     <span loc="textContent: counter"></span>
   </div>
+  <button .done-btn loc="onclick: on.done">
+    <icon-ui name="check"></icon-ui>
+  </button>
 </div>
 `;

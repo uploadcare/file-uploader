@@ -61,6 +61,7 @@
   --l10n-yes: 'Yes';
   --l10n-are-you-sure: 'Are you sure?';
   --l10n-selected-count: 'Selected:';
+  --l10n-done: 'Done';
 
   --l10n-src-type-local: 'Local File';
   --l10n-src-type-from-url: 'From URL';
@@ -770,14 +771,14 @@ external-source .toolbar {
   align-items: center;
 }
 
-external-source .back-btn {
+external-source .done-btn {
   background-color: var(--clr-shade-1);
   color: var(--clr-1);
   padding-left: 0;
 }
 
-external-source .back-btn::after {
-  content: var(--l10n-back);
+external-source .done-btn::after {
+  content: var(--l10n-done);
 }
 
 external-source .selected-counter {
