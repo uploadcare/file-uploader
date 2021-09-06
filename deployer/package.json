@@ -1,9 +1,10 @@
 {
-  "name": "@nd0ut/deployer",
+  "name": "@uploadcare/deployer",
   "version": "0.0.1",
   "type": "module",
   "description": "Uploadcare web publishing tool",
   "main": "deployer.js",
+  "repository":"https://github.com/uploadcare/jsdk/",
   "scripts": {
     "test": "test"
   },
@@ -18,5 +19,6 @@
     "@types/node": "^15.9.0",
     "form-data": "^4.0.0",
     "node-fetch": "^2.6.1"
-  }
+  },
+  "gitHead": "7154654a5951930345e660e0f6fa39b9b5669ee2"
 }

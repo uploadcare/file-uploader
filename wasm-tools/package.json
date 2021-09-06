@@ -1,8 +1,9 @@
 {
-  "name": "@nd0ut/wasm-tools",
+  "name": "@uploadcare/wasm-tools",
   "version": "0.0.1",
   "description": "<div align=\"center\">",
   "main": "index.js",
+  "repository":"https://github.com/uploadcare/jsdk/",
   "directories": {
     "test": "tests"
   },
@@ -11,5 +12,6 @@
     "build": "wasm-pack build --target web"
   },
   "author": "",
-  "license": "MIT"
+  "license": "MIT",
+  "gitHead": "7154654a5951930345e660e0f6fa39b9b5669ee2"
 }
