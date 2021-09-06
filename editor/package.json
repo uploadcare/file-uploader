@@ -1,7 +1,7 @@
 {
   "type": "module",
   "name": "@nd0ut/editor",
-  "version": "0.0.1-alpha.0.9",
+  "version": "0.0.1",
   "description": "",
   "main": "test.js",
   "dependencies": {
@@ -13,7 +13,6 @@
     "js-beautify": "^1.14.0",
     "serve": "^12.0.0"
   },
-  "devDependencies": {},
   "scripts": {
     "serve": "serve ./",
     "esbuild": "node ./esbuild.js",
