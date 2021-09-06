@@ -52,7 +52,12 @@ export async function uploadFromUrl(url, pubkey, uploadCallback) {
             }),
           )
           getStatus()
-        } else if (resp.status === 'error') {
+        }
+        else if (resp.status === 'waiting') {
+          // TODO: needs to be throttled
+          getStatus()
+        }
+        else if (resp.status === 'error') {
           uploadCallback?.(
             new UploadInfo({
               type: EVENT_TYPES.ERROR,
