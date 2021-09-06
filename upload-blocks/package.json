@@ -1,10 +1,10 @@
 {
   "type": "module",
   "name": "@uploadcare/upload-blocks",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "",
   "main": "index.html",
-  "repository":"https://github.com/uploadcare/jsdk/",
+  "repository": "https://github.com/uploadcare/jsdk/",
   "scripts": {
     "test": "test",
     "build": "node ./esbuild.js"

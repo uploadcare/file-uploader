@@ -1,9 +1,9 @@
 {
   "name": "@uploadcare/wasm-tools",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "<div align=\"center\">",
   "main": "index.js",
-  "repository":"https://github.com/uploadcare/jsdk/",
+  "repository": "https://github.com/uploadcare/jsdk/",
   "directories": {
     "test": "tests"
   },

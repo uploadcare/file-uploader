@@ -1,10 +1,10 @@
 {
   "name": "@uploadcare/deployer",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "type": "module",
   "description": "Uploadcare web publishing tool",
   "main": "deployer.js",
-  "repository":"https://github.com/uploadcare/jsdk/",
+  "repository": "https://github.com/uploadcare/jsdk/",
   "scripts": {
     "test": "test"
   },

@@ -1,10 +1,10 @@
 {
   "name": "@uploadcare/slocalhost",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "",
   "type": "module",
   "main": "localhost.js",
-  "repository":"https://github.com/uploadcare/jsdk/",
+  "repository": "https://github.com/uploadcare/jsdk/",
   "scripts": {
     "test": "test",
     "start": "node server.js"

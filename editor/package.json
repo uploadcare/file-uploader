@@ -1,10 +1,10 @@
 {
   "type": "module",
   "name": "@uploadcare/editor",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "",
   "main": "test.js",
-  "repository":"https://github.com/uploadcare/jsdk/",
+  "repository": "https://github.com/uploadcare/jsdk/",
   "dependencies": {
     "@aws-sdk/client-s3": "^3.23.0",
     "@babel/parser": "^7.14.8",
