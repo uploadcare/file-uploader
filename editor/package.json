@@ -1,6 +1,6 @@
 {
   "type": "module",
-  "name": "editor",
+  "name": "@nd0ut/editor",
   "version": "0.0.1-alpha.0.9",
   "description": "",
   "main": "test.js",

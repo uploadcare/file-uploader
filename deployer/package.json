@@ -1,5 +1,5 @@
 {
-  "name": "deployer",
+  "name": "@nd0ut/deployer",
   "version": "0.0.1",
   "type": "module",
   "description": "Uploadcare web publishing tool",

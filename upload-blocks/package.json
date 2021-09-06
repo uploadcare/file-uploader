@@ -1,6 +1,6 @@
 {
   "type": "module",
-  "name": "upload-blocks",
+  "name": "@nd0ut/upload-blocks",
   "version": "0.0.1",
   "description": "",
   "main": "index.html",

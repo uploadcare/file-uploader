@@ -1,5 +1,5 @@
 {
-  "name": "wasm-tools",
+  "name": "@nd0ut/wasm-tools",
   "version": "0.0.1",
   "description": "<div align=\"center\">",
   "main": "index.js",
