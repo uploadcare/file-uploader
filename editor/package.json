@@ -24,6 +24,6 @@
     "clean": "rm -rf ./dist/"
   },
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "gitHead": "7154654a5951930345e660e0f6fa39b9b5669ee2"
 }
