@@ -5,16 +5,33 @@ import { uploadEntrySchema } from './uploadEntrySchema.js';
 
 const ACTIVE_ATTR = 'active';
 
+let DOC_READY = document.readyState === 'complete';
+if (!DOC_READY) {
+  window.addEventListener('load', () => {
+    DOC_READY = true;
+  });
+}
+
 export class BlockComponent extends BaseComponent {
+  l10n(str) {
+    return this.getCssData('--l10n-' + str);
+  }
+
   constructor() {
     super();
     this.addTemplateProcessor((fr) => {
       [...fr.querySelectorAll('[l10n]')].forEach((el) => {
         let key = el.getAttribute('l10n');
+        let elProp = 'textContent';
+        if (key.includes(':')) {
+          let arr = key.split(':');
+          elProp = arr[0];
+          key = arr[1];
+        }
         let ctxKey = 'l10n:' + key;
         this.localState.add(ctxKey, key);
         this.sub('local', ctxKey, (val) => {
-          el.textContent = this.getCssData('--l10n-' + val);
+          el[elProp] = this.l10n(val);
         });
         el.removeAttribute('l10n');
       });
@@ -78,6 +95,16 @@ export class BlockComponent extends BaseComponent {
   }
 
   connectedCallback() {
+    if (DOC_READY) {
+      this.connected();
+    } else {
+      window.addEventListener('load', () => {
+        this.connected();
+      });
+    }
+  }
+
+  connected() {
     if (!this.__connectedOnce) {
       this.addToExternalState({
         registry: Object.create(null),
@@ -179,6 +206,11 @@ export class BlockComponent extends BaseComponent {
 
   destroyCallback() {
     // TODO: destroy uploadCollection
+  }
+
+  static reg(name) {
+    let prefix = 'uc-';
+    super.reg(name.startsWith(prefix) ? name : prefix + name);
   }
 }
 

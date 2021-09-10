@@ -1,7 +1,6 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 
 export class SimpleBtn extends BlockComponent {
-
   initCallback() {
     this.sub('external', 'uploadList', (/** @type {String[]} */ list) => {
       this._length = list.length;
@@ -26,6 +25,6 @@ export class SimpleBtn extends BlockComponent {
 
 SimpleBtn.template = /*html*/ `
 <button>
-  <icon-ui name="upload"></icon-ui>
+  <uc-icon-ui name="upload"></uc-icon-ui>
   <span l10n="upload-files"></span>
 </button>`;

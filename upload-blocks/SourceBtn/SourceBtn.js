@@ -85,6 +85,18 @@ export class SourceBtn extends BlockComponent {
           }
         });
       },
+      draw: () => {
+        this.applyL10nKey('src-type', 'src-type-draw');
+        this.pub('local', 'iconName', 'edit-draw');
+        this.onclick = () => {
+          this.multiPub('external', {
+            currentActivity: 'draw',
+            modalCaption: 'Draw',
+            modalIcon: 'edit-draw',
+            modalActive: true,
+          });
+        };
+      },
       other: () => {
         this.applyL10nKey('src-type', 'src-type-other');
         this.pub('local', 'iconName', 'dots');

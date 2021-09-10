@@ -1,7 +1,6 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 
 export class CameraSource extends BlockComponent {
-
   constructor() {
     super();
     this.initLocalState({
@@ -44,7 +43,7 @@ export class CameraSource extends BlockComponent {
     this._ctx.drawImage(this.ref.video, 0, 0);
     let date = Date.now();
     let name = `camera-${date}.png`;
-    this._canvas.toBlob(async (blob) => {
+    this._canvas.toBlob((blob) => {
       let file = new File([blob], name, {
         lastModified: date,
         type: 'image/png',
