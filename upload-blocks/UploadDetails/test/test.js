@@ -9,17 +9,20 @@ EditableCanvas.reg('editable-canvas');
 window.onload = () => {
   /** @type {UploadDetails} */
   let details = document.querySelector(UploadDetails.is);
-  let file = new File(['test'], 'test', {
-    lastModified: Date.now(),
-    type: 'image/png',
+  window.fetch('./test.png').then(async (resp) => {
+    let blob = await resp.blob();
+    let file = new File([blob], 'test', {
+      lastModified: Date.now(),
+      type: 'image/png',
+    });
+    let entry = details.uploadCollection.add({
+      file,
+      fileName: file.name,
+      fileSize: file.size,
+      isImage: true,
+      mimeType: file.type,
+    });
+    details.pub('external', 'focusedEntry', entry);
+    console.log(details);
   });
-  let entry = details.uploadCollection.add({
-    file,
-    fileName: file.name,
-    fileSize: file.size,
-    isImage: true,
-    mimeType: file.type,
-  });
-  details.pub('external', 'focusedEntry', entry);
-  console.log(details);
 };

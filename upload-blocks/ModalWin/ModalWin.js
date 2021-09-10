@@ -27,10 +27,10 @@ export class ModalWin extends BlockComponent {
 ModalWin.template = /*html*/ `
 <div dialog-el>
   <div heading-el>
-    <icon-ui ext="@name: modalIcon"></icon-ui>
+    <uc-icon-ui ext="@name: modalIcon"></uc-icon-ui>
     <div caption-el loc="textContent: caption" ext="textContent: modalCaption"></div>
     <button close-btn loc="onclick: closeClicked">
-      <icon-ui name="close"></icon-ui>
+      <uc-icon-ui name="close"></uc-icon-ui>
     </button>
   </div>
   <slot></slot>

@@ -1,7 +1,6 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 
 export class MessageBox extends BlockComponent {
-
   constructor() {
     super();
     this.initLocalState({
@@ -13,7 +12,6 @@ export class MessageBox extends BlockComponent {
         this.removeAttribute('active');
       },
     });
-
   }
 
   initCallback() {
@@ -22,7 +20,7 @@ export class MessageBox extends BlockComponent {
     });
     this.sub('external', 'message', (msg) => {
       if (msg) {
-        this.multiPub('local',{
+        this.multiPub('local', {
           captionTxt: msg.caption,
           msgTxt: msg.text,
           iconName: msg.isError ? 'error' : 'info',
@@ -38,15 +36,14 @@ export class MessageBox extends BlockComponent {
       }
     });
   }
-
 }
 
 MessageBox.template = /*html*/ `
 <div .heading>
-  <icon-ui loc="@name: iconName"></icon-ui>
+  <uc-icon-ui loc="@name: iconName"></uc-icon-ui>
   <div .caption loc="textContent: captionTxt"></div>
   <button loc="onclick: on.close">
-    <icon-ui name="close"></icon-ui>
+    <uc-icon-ui name="close"></uc-icon-ui>
   </button>
 </div>
 <div .msg loc="textContent: msgTxt"></div>

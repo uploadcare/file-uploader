@@ -390,7 +390,7 @@ uc-source-btn:last-of-type {
   border-bottom: none;
 }
 
-uc-source-btn icon-ui {
+uc-source-btn uc-icon-ui {
   display: inline-flex;
   flex-grow: 1;
   min-width: var(--ui-size);
@@ -593,17 +593,17 @@ uc-simple-btn button {
   padding-left: 0.2em;
 }
 
-uc-modal-win drop-area {
+uc-modal-win uc-drop-area {
   border-radius: var(--ui-radius-2);
   margin: var(--gap-mid);
   margin-top: 0;
   border: none;
   padding: 0;
 }
-uc-modal-win drop-area .sources {
+uc-modal-win uc-drop-area .sources {
   border-radius: 0;
 }
-uc-modal-win drop-area .dropzone::after {
+uc-modal-win uc-drop-area .dropzone::after {
   content: '';
 }
 

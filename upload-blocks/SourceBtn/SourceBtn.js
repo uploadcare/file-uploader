@@ -19,7 +19,7 @@ export class SourceBtn extends BlockComponent {
       [type]: () => {
         this.applyL10nKey('src-type', `src-type-${type}`);
         window.setTimeout(() => {
-          if (this.blockRegistry['external-source']) {
+          if (this.blockRegistry['uc-external-source']) {
             this.pub('local', 'iconName', type);
             this.onclick = () => {
               this.multiPub('external', {
@@ -133,7 +133,7 @@ export class SourceBtn extends BlockComponent {
   }
 }
 SourceBtn.template = /*html*/ `
-<icon-ui loc="@name: iconName"></icon-ui>
+<uc-icon-ui loc="@name: iconName"></uc-icon-ui>
 <div .txt l10n="src-type"></div>
 `;
 SourceBtn.bindAttributes({
