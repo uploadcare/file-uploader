@@ -45,7 +45,7 @@ export class SourceBtn extends BlockComponent {
           this.multiPub('external', {
             modalActive: false,
             currentActivity: 'upload-list',
-            modalCaption: 'Selected',
+            modalCaption: this.l10n('selected'),
             modalIcon: 'local',
           });
           if (!this.read('external', 'files')?.length) {

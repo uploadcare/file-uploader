@@ -16,6 +16,7 @@ import { ProgressBar } from '../ProgressBar/ProgressBar.js';
 import { EditableCanvas } from '../EditableCanvas/EditableCanvas.js';
 import { CloudImageEditor } from '../CloudImageEditor/CloudImageEditor.js';
 import { ExternalSource } from '../ExternalSource/ExternalSource.js';
+import { Tabs } from '../Tabs/Tabs.js';
 
 // IconUi - is extended from BaseComponent
 IconUi.reg('uc-icon-ui');
@@ -40,6 +41,8 @@ ConfirmationDialog.reg('confirmation-dialog');
 ProgressBar.reg('progress-bar');
 EditableCanvas.reg('editable-canvas');
 CloudImageEditor.reg('cloud-image-editor');
+
+Tabs.reg('tabs');
 
 export class UploadWidget extends WidgetBase {}
 

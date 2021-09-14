@@ -11,6 +11,13 @@ export class CanMan {
     });
     applyStyles(this.svgEl, {
       position: 'absolute',
+      objectFit: 'scale-down',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      height: '100%',
+      width: '100%',
     });
     this.svgGroupEl = document.createElementNS(SVGNS, 'g');
     this.svgImgEl = document.createElementNS(SVGNS, 'image');
@@ -89,6 +96,11 @@ export class CanMan {
   constructor(canvas) {
     /** @type {HTMLCanvasElement} */
     this.can = canvas;
+    applyStyles(this.can, {
+      maxHeight: '100%',
+      maxWidth: '100%',
+      objectFit: 'scale-down',
+    });
     this.ctx = this.can.getContext('2d');
     this._prepare();
 

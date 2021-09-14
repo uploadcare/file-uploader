@@ -12,7 +12,7 @@ const FS_ICON = {
   EXIT: 'fullscreen-exit',
 };
 
-export class LocalEditorToolbar extends BlockComponent {
+export class EditorToolbar extends BlockComponent {
   set canvas(canvEl) {
     /** @type {CanMan} */
     this.canMan = new CanMan(canvEl);
@@ -152,7 +152,7 @@ export class LocalEditorToolbar extends BlockComponent {
     });
   }
 }
-LocalEditorToolbar.template = /*html*/ `
+EditorToolbar.template = /*html*/ `
 <div .btns ref="btns" loc="onclick: onBtnClick">${getButtons()}</div>
 <div .range-caption loc="textContent: rangeCaption"></div>
 <uc-range-ui 
@@ -164,4 +164,4 @@ LocalEditorToolbar.template = /*html*/ `
 </uc-range-ui>
 <input ref="color" value="${CanMan.defaultColor}" type="color" loc="onchange: onColorChange">
 `;
-LocalEditorToolbar.reg('local-editor-toolbar');
+EditorToolbar.reg('editor-toolbar');

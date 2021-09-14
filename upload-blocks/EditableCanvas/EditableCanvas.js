@@ -1,11 +1,17 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
-import { LocalEditorToolbar } from './EditorToolbar.js';
-import { applyAttributes } from '../../symbiote/utils/dom-helpers.js';
+import { EditorToolbar } from './EditorToolbar.js';
+import { applyStyles } from '../../symbiote/utils/dom-helpers.js';
 
 export class EditableCanvas extends BlockComponent {
   constructor() {
     super();
     this.pauseRender = true;
+    applyStyles(this, {
+      position: 'relative',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+    });
   }
 
   initCallback() {
@@ -16,7 +22,7 @@ export class EditableCanvas extends BlockComponent {
     }
     this.canvCtx = this.canvas.getContext('2d');
     this.canvParent = this.canvas.parentElement;
-    this.toolbar = new LocalEditorToolbar();
+    this.toolbar = new EditorToolbar();
     this.toolbar.canvas = this.canvas;
     this.toolbar.editor = this;
     this.canvParent.appendChild(this.toolbar);

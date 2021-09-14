@@ -1,0 +1,23 @@
+uc-confirmation-dialog {
+  display: block;
+  padding: var(--gap-mid);
+}
+uc-confirmation-dialog .txt {
+  display: flex;
+  justify-content: center;
+}
+uc-confirmation-dialog .toolbar {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--gap-mid);
+  margin-top: var(--gap-mid);
+}
+uc-confirmation-dialog .yes-btn {
+  background-color: var(--clr-shade-1);
+  color: var(--clr-1);
+}
+uc-confirmation-dialog .no-btn {
+  background-color: transparent;
+  color: var(--clr-1);
+  border: var(--line-width) solid var(--clr-shade-1);
+}

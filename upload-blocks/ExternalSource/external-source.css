@@ -1,0 +1,40 @@
+uc-external-source {
+  display: grid;
+  grid-template-rows: auto min-content;
+  position: relative;
+  max-width: 600px;
+  max-height: 400px;
+  width: 100%;
+  height: 100%;
+}
+
+uc-external-source iframe {
+  width: 100%;
+  height: 100%;
+}
+
+uc-external-source .toolbar {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--gap-mid);
+  grid-gap: var(--gap-mid);
+  align-items: center;
+}
+
+uc-external-source .back-btn {
+  background-color: var(--clr-shade-1);
+  color: var(--clr-1);
+  padding-left: 0;
+}
+
+uc-external-source .back-btn::after {
+  content: var(--l10n-back);
+}
+
+uc-external-source .selected-counter {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--gap-mid);
+  grid-gap: var(--gap-mid);
+  align-items: center;
+}

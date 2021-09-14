@@ -15,7 +15,7 @@ export class SimpleBtn extends BlockComponent {
       } else {
         this.multiPub('external', {
           currentActivity: 'source-select',
-          modalCaption: 'Select File Source',
+          modalCaption: this.l10n('select-file-source'),
           modalActive: true,
         });
       }

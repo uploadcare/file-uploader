@@ -1,0 +1,94 @@
+uc-upload-details {
+  display: grid;
+  grid-template-rows: min-content min-content min-content;
+}
+
+uc-upload-details .viewport {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: var(--clr-shade-1);
+}
+uc-upload-details .viewport[hidden] {
+  display: none;
+}
+
+uc-upload-details .viewport .meta-editor {
+  position: absolute;
+  bottom: var(--gap-mid);
+  left: var(--gap-mid);
+}
+
+uc-upload-details canvas {
+  max-width: 100%;
+  max-height: 500px;
+  object-fit: contain;
+  object-position: 50% 50%;
+  background-color: var(--clr-shade-1);
+}
+
+uc-upload-details .toolbar {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--gap-mid);
+}
+
+uc-upload-details .back-btn {
+  background-color: var(--clr-shade-1);
+  color: var(--clr-1);
+  padding-left: 0;
+}
+uc-upload-details .remove-btn {
+  background-color: var(--clr-err);
+  color: #fff;
+  padding-left: 0;
+}
+uc-upload-details .detail-btn {
+  background-color: var(--clr-shade-1);
+  color: var(--clr-1);
+  padding-left: 0;
+}
+uc-upload-details .edit-btn {
+  background-color: transparent;
+  color: var(--clr-1);
+  padding-left: 0;
+}
+
+uc-upload-details .detail-btn::after {
+  content: var(--l10n-edit-detail);
+}
+uc-upload-details .edit-btn::after {
+  content: var(--l10n-edit-image);
+}
+uc-upload-details .remove-btn::after {
+  content: var(--l10n-remove-from-list);
+}
+uc-upload-details .back-btn::after {
+  content: var(--l10n-back);
+}
+uc-upload-details .tabs {
+  display: flex;
+  justify-content: space-around;
+  border-top: var(--line-width) solid var(--clr-shade-1);
+}
+uc-upload-details .tabs button {
+  background-color: transparent;
+  color: var(--clr-1);
+  border-radius: 0;
+  flex-grow: 1;
+  opacity: var(--opacity-max);
+  border-bottom: var(--gap-min) solid transparent;
+}
+uc-upload-details .tabs button[current] {
+  opacity: 1;
+  background-color: var(--clr-shade-1);
+  border-bottom: var(--gap-min) solid var(--clr-1);
+  pointer-events: none;
+}
+uc-upload-details .tabs button:hover {
+  opacity: 1;
+}
+uc-upload-details .details {
+  padding: var(--gap-max);
+}

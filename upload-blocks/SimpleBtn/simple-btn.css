@@ -1,0 +1,8 @@
+uc-simple-btn {
+  display: inline-flex;
+}
+uc-simple-btn button {
+  color: var(--clr-1);
+  background-color: var(--clr-2);
+  padding-left: 0.2em;
+}

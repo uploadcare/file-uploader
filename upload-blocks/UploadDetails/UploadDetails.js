@@ -130,33 +130,33 @@ export class UploadDetails extends BlockComponent {
 }
 
 UploadDetails.template = /*html*/ `
-<div .tabs>
-  <button current ref="preview-tab" loc="onclick: on.preview">Preview</button>
-  <button ref="details-tab" loc="onclick: on.details">File Details</button>
-</div>
-<div hidden ref="details" .details>
+<uc-tabs tab-list="tab-preview, tab-details" current="tab-preview">
+  <div tab-ctx="tab-details" ref="details" .details>
 
-  <fieldset>
-    <legend>File Name</legend>
-    <input name="name-input" ref="file-name-input" type="text" />
-  </fieldset>
+    <fieldset>
+      <legend>File Name</legend>
+      <input name="name-input" ref="file-name-input" type="text" />
+    </fieldset>
 
-  <fieldset>
-    <legend>File Size</legend>
-    <div loc="textContent: fileSize"></div>
-  </fieldset>
+    <fieldset>
+      <legend>File Size</legend>
+      <div loc="textContent: fileSize"></div>
+    </fieldset>
 
-  <fieldset>
-    <legend>CDN URL</legend>
-    <a target="_blanc" loc="textContent: cdnUrl; @href: cdnUrl;"></a>
-  </fieldset>
+    <fieldset>
+      <legend>CDN URL</legend>
+      <a target="_blanc" loc="textContent: cdnUrl; @href: cdnUrl;"></a>
+    </fieldset>
 
-  <div loc="textContent: errorTxt;"></div>
+    <div loc="textContent: errorTxt;"></div>
 
-</div>
-<div ref="viewport" .viewport>
-  <uc-editable-canvas ref="canvas"></uc-editable-canvas>
-</div>
+  </div>
+
+  <div tab-ctx="tab-preview" ref="viewport" .viewport>
+    <uc-editable-canvas ref="canvas"></uc-editable-canvas>
+  </div>
+</uc-tabs>
+
 <div .toolbar>
   <button .back-btn loc="onclick: on.back">
     <uc-icon-ui name="back"></uc-icon-ui>

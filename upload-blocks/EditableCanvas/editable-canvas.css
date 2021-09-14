@@ -1,0 +1,60 @@
+uc-editable-canvas {
+  position: relative;
+  display: block;
+}
+
+uc-editor-toolbar {
+  position: absolute;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10000;
+  overflow: hidden;
+}
+uc-editor-toolbar .btns {
+  position: absolute;
+  display: grid;
+  top: var(--gap-mid);
+  left: var(--gap-mid);
+}
+uc-editor-toolbar .btns > button {
+  display: inline-flex;
+  width: var(--ui-size);
+  height: var(--ui-size);
+  border-radius: 0;
+  background-color: var(--clr-2);
+  color: var(--clr-1);
+}
+uc-editor-toolbar .btns > button:first-of-type {
+  border-top-left-radius: 100%;
+  border-top-right-radius: 100%;
+}
+uc-editor-toolbar .btns > button:last-of-type {
+  border-bottom-left-radius: 100%;
+  border-bottom-right-radius: 100%;
+}
+uc-editor-toolbar .btns > button[current] {
+  background-color: var(--clr-1);
+  color: var(--clr-2);
+}
+
+uc-editor-toolbar > .range-caption {
+  position: absolute !important;
+  bottom: 100px;
+  transition: .2s;
+  color: var(--clr-2);
+}
+
+uc-editor-toolbar > uc-range-ui {
+  position: absolute !important;
+  bottom: var(--gap-max);
+  width: 100%;
+  transition: .2s;
+}
+uc-editor-toolbar > uc-range-ui:not([visible]) {
+  transform: translateY(60px);
+}

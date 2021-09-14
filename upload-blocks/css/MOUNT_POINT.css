@@ -1,0 +1,71 @@
+/* FONT: */
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@300&display=swap');
+
+/* BASE CONFIGURATION: */
+@import url('config.css');
+
+/* ICONS: */
+@import url('icons.css');
+
+/* L10N: */
+@import url('l10n.css');
+
+/* THEME */
+@import url('theme.css');
+
+/* UI COMPONENTS: */
+@import url('../IconUi/icon.css');
+
+/* BLOCKS: */
+@import url('../SimpleBtn/simple-btn.css');
+@import url('../SourceBtn/source-btn.css');
+@import url('../DropArea/drop-area.css');
+@import url('../ModalWin/modal.css');
+@import url('../UrlSource/url-source.css');
+@import url('../CameraSource/camera-source.css');
+@import url('../ExternalSource/external-source.css');
+@import url('../UploadList/upload-list.css');
+@import url('../FileItem/file-item.css');
+@import url('../UploadDetails/upload-details.css');
+@import url('../EditableCanvas/editable-canvas.css');
+@import url('../MessageBox/message-box.css');
+@import url('../ConfirmationDialog/confirmation.css');
+@import url('../ProgressBar/progress-bar.css');
+
+.uc-wgt-theme, .uc-wgt-common, :host {
+  font-family: 'Roboto Condensed', sans-serif;
+  color: var(--clr-txt);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1em;
+  padding-left: 1em;
+  padding-right: 1em;
+  border: none;
+  height: var(--ui-size);
+  border-radius: var(--ui-radius-2);
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+button[disabled] {
+  pointer-events: none;
+  opacity: var(--opacity-mid);
+  filter: grayscale(0.5);
+}
+
+a {
+  text-decoration: none;
+  color: var(--clr-1);
+}
+
+[activity]:not([active]) {
+  display: none;
+}
