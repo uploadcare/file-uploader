@@ -2,7 +2,18 @@ import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 import { create } from '../../symbiote/utils/dom-helpers.js';
 
 export class Tabs extends BlockComponent {
+  /** @param {String} tabL10nStr */
   setCurrentTab(tabL10nStr) {
+    if (!tabL10nStr) {
+      return;
+    }
+    this.dispatchEvent(
+      new CustomEvent('change', {
+        detail: {
+          tab: tabL10nStr,
+        },
+      })
+    );
     let ctxList = [...this.ref.context.querySelectorAll('[tab-ctx]')];
     ctxList.forEach((ctxEl) => {
       if (ctxEl.getAttribute('tab-ctx') === tabL10nStr) {
@@ -11,9 +22,18 @@ export class Tabs extends BlockComponent {
         ctxEl.setAttribute('hidden', '');
       }
     });
+    for (let lStr in this._tabMap) {
+      if (lStr === tabL10nStr) {
+        this._tabMap[lStr].setAttribute('current', '');
+      } else {
+        this._tabMap[lStr].removeAttribute('current');
+      }
+    }
   }
 
   initCallback() {
+    /** @type {Object<string, HTMLElement>} */
+    this._tabMap = {};
     this.defineAccessor('tab-list', (/** @type {String} */ val) => {
       if (!val) {
         return;
@@ -25,7 +45,7 @@ export class Tabs extends BlockComponent {
         let tabEl = create({
           tag: 'div',
           attributes: {
-            class: 'tabs',
+            class: 'tab',
           },
           properties: {
             onclick: () => {
@@ -35,12 +55,17 @@ export class Tabs extends BlockComponent {
         });
         tabEl.textContent = this.l10n(tabL10nStr);
         this.ref.row.appendChild(tabEl);
+        this._tabMap[tabL10nStr] = tabEl;
       });
     });
 
     this.defineAccessor('default', (val) => {
       this.setCurrentTab(val);
     });
+
+    if (!this.hasAttribute('default')) {
+      this.setCurrentTab(Object.keys(this._tabMap)[0]);
+    }
   }
 }
 

@@ -15,6 +15,8 @@
 
 /* UI COMPONENTS: */
 @import url('../IconUi/icon.css');
+@import url('../Tabs/tabs.css');
+@import url('../RangeUi/range.css');
 
 /* BLOCKS: */
 @import url('../SimpleBtn/simple-btn.css');
@@ -41,6 +43,10 @@
   box-sizing: border-box;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 button {
   display: flex;
   justify-content: center;
@@ -64,6 +70,25 @@ button[disabled] {
 a {
   text-decoration: none;
   color: var(--clr-1);
+}
+
+input[type="text"] {
+  display: flex;
+  height: var(--ui-size);
+  padding-left: 0.5em;
+  padding-right: 0.5em;
+  width: 100%;
+  font-family: inherit;
+  font-size: var(--f);
+  border: none;
+  border-bottom: 2px solid currentColor;
+  background-color: var(--clr-shade-1);
+  color: var(--clr-1);
+  transition: .2s;
+}
+input[type="text"]:focus {
+  background-color: transparent;
+  outline: none;
 }
 
 [activity]:not([active]) {

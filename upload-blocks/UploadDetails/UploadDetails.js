@@ -7,6 +7,7 @@ export class UploadDetails extends BlockComponent {
       fileSize: 0,
       cdnUrl: '',
       errorTxt: '',
+      editBtnHidden: true,
       'on.back': () => {
         this.historyBack();
       },
@@ -14,6 +15,9 @@ export class UploadDetails extends BlockComponent {
         /** @type {File[]} */
         this.uploadCollection.remove(this.entry.__ctxId);
         this.historyBack();
+      },
+      'on.tabSelected': (e) => {
+        console.log(e.detail);
       },
       'on.preview': () => {
         this.ref['preview-tab'].setAttribute('current', '');
@@ -83,6 +87,9 @@ export class UploadDetails extends BlockComponent {
           this._file = file;
           if (this._file.type.includes('image') && !entry.getValue('transformationsUrl')) {
             this.eCanvas.setImageFile(this._file);
+            this.multiPub('local', {
+              editBtnHidden: false,
+            });
           }
         }
         this.entry.subscribe('fileName', (name) => {
@@ -130,29 +137,29 @@ export class UploadDetails extends BlockComponent {
 }
 
 UploadDetails.template = /*html*/ `
-<uc-tabs tab-list="tab-preview, tab-details" current="tab-preview">
+<uc-tabs tab-list="tab-view, tab-details" loc="onchange: on.tabSelected">
   <div tab-ctx="tab-details" ref="details" .details>
 
-    <fieldset>
-      <legend>File Name</legend>
+    <div .info-block>
+      <div .info-block_name l10n="file-name"></div>
       <input name="name-input" ref="file-name-input" type="text" />
-    </fieldset>
+    </div>
 
-    <fieldset>
-      <legend>File Size</legend>
+    <div .info-block>
+      <div .info-block_name l10n="file-size"></div>
       <div loc="textContent: fileSize"></div>
-    </fieldset>
+    </div>
 
-    <fieldset>
-      <legend>CDN URL</legend>
+    <div .info-block>
+      <div .info-block_name l10n="cdn-url"></div>
       <a target="_blanc" loc="textContent: cdnUrl; @href: cdnUrl;"></a>
-    </fieldset>
+    </div>
 
     <div loc="textContent: errorTxt;"></div>
 
   </div>
 
-  <div tab-ctx="tab-preview" ref="viewport" .viewport>
+  <div tab-ctx="tab-view" ref="viewport" .viewport>
     <uc-editable-canvas ref="canvas"></uc-editable-canvas>
   </div>
 </uc-tabs>
@@ -160,12 +167,15 @@ UploadDetails.template = /*html*/ `
 <div .toolbar>
   <button .back-btn loc="onclick: on.back">
     <uc-icon-ui name="back"></uc-icon-ui>
+    <span l10n="back"></span>
   </button>
-  <button .edit-btn loc="onclick: on.edit">
+  <button .edit-btn loc="onclick: on.edit; @hidden: editBtnHidden;">
     <uc-icon-ui name="edit"></uc-icon-ui>
+    <span l10n="edit-image"></span>
   </button>
   <button .remove-btn loc="onclick: on.remove">
     <uc-icon-ui name="remove"></uc-icon-ui>
+    <span l10n="remove-from-list"></span>
   </button>
 </div>
 `;

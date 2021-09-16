@@ -51,8 +51,12 @@
   --l10n-draw: 'Draw';
   --l10n-cancel-edit: 'Cancel edit';
 
-  --l10n-tab-preview: 'Preview';
+  --l10n-tab-view: 'View';
   --l10n-tab-details: 'Details';
+
+  --l10n-file-name: 'File name';
+  --l10n-file-size: 'File size';
+  --l10n-cdn-url: 'CDN URL';
 }
 
 .uc-wgt-l10n_ru {
@@ -96,6 +100,6 @@
   --l10n-draw: 'Рисование';
   --l10n-cancel-edit: 'Вернуть как было';
 
-  --l10n-tab-preview: 'Просмотр';
+  --l10n-tab-view: 'Просмотр';
   --l10n-tab-details: 'Детали';
 }

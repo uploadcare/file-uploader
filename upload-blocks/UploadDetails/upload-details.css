@@ -55,40 +55,22 @@ uc-upload-details .edit-btn {
   padding-left: 0;
 }
 
-uc-upload-details .detail-btn::after {
-  content: var(--l10n-edit-detail);
-}
-uc-upload-details .edit-btn::after {
-  content: var(--l10n-edit-image);
-}
-uc-upload-details .remove-btn::after {
-  content: var(--l10n-remove-from-list);
-}
-uc-upload-details .back-btn::after {
-  content: var(--l10n-back);
-}
-uc-upload-details .tabs {
-  display: flex;
-  justify-content: space-around;
-  border-top: var(--line-width) solid var(--clr-shade-1);
-}
-uc-upload-details .tabs button {
-  background-color: transparent;
-  color: var(--clr-1);
-  border-radius: 0;
-  flex-grow: 1;
-  opacity: var(--opacity-max);
-  border-bottom: var(--gap-min) solid transparent;
-}
-uc-upload-details .tabs button[current] {
-  opacity: 1;
-  background-color: var(--clr-shade-1);
-  border-bottom: var(--gap-min) solid var(--clr-1);
-  pointer-events: none;
-}
-uc-upload-details .tabs button:hover {
-  opacity: 1;
-}
 uc-upload-details .details {
   padding: var(--gap-max);
+}
+
+uc-upload-details .info-block {
+  padding: var(--gap-mid);
+  box-shadow: var(--ui-shadow);
+  border-top: 1px solid var(--clr-shade-1);
+  border-left: 2px solid var(--clr-shade-1);
+  margin-top: var(--gap-mid);
+  border-radius: var(--ui-radius-1);
+  color: var(--clr-txt);
+}
+
+uc-upload-details .info-block > .info-block_name {
+  font-size: 0.8em;
+  margin-bottom: var(--gap-mid);
+  color: var(--clr-1);
 }
