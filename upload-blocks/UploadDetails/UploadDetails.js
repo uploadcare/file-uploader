@@ -19,47 +19,12 @@ export class UploadDetails extends BlockComponent {
       'on.tabSelected': (e) => {
         console.log(e.detail);
       },
-      'on.preview': () => {
-        this.ref['preview-tab'].setAttribute('current', '');
-        this.ref['details-tab'].removeAttribute('current');
-
-        this.ref['viewport'].removeAttribute('hidden');
-        this.ref['details'].setAttribute('hidden', '');
-      },
-      'on.details': () => {
-        this.ref['details-tab'].setAttribute('current', '');
-        this.ref['preview-tab'].removeAttribute('current');
-
-        this.ref['details'].removeAttribute('hidden');
-        this.ref['viewport'].setAttribute('hidden', '');
-      },
       'on.edit': () => {
         if (this.entry.getValue('uuid')) {
           this.externalState.pub('currentActivity', 'cloud-image-edit');
         }
       },
     });
-  }
-
-  /** @param {File} imgFile */
-  _renderFilePreview(imgFile) {
-    let url = URL.createObjectURL(imgFile);
-    this._renderPreview(url);
-  }
-
-  /** @param {String} url */
-  _renderPreview(url) {
-    /** @type {HTMLCanvasElement} */
-    // @ts-ignore
-    this._canv = this.ref.canvas;
-    this._ctx = this._canv.getContext('2d');
-    let img = new Image();
-    img.onload = () => {
-      this._canv.height = img.height;
-      this._canv.width = img.width;
-      this._ctx.drawImage(img, 0, 0);
-    };
-    img.src = url;
   }
 
   initCallback() {
@@ -73,9 +38,6 @@ export class UploadDetails extends BlockComponent {
       'external',
       'focusedEntry',
       (/** @type {import('../../symbiote/core/TypedState.js').TypedState} */ entry) => {
-        if (this._ctx) {
-          this._ctx.clearRect(0, 0, this._canv.width, this._canv.height);
-        }
         if (!entry) {
           return;
         }
@@ -120,7 +82,7 @@ export class UploadDetails extends BlockComponent {
             return;
           }
           if (this.entry.getValue('isImage') && !this.entry.getValue('transformationsUrl')) {
-            this._renderPreview(this.localState.read('cdnUrl'));
+            this.eCanvas.setImageUrl(this.localState.read('cdnUrl'));
           }
         });
         this.entry.subscribe('transformationsUrl', (url) => {
@@ -128,7 +90,7 @@ export class UploadDetails extends BlockComponent {
             return;
           }
           if (this.entry.getValue('isImage')) {
-            this._renderPreview(url);
+            this.eCanvas.setImageUrl(url);
           }
         });
       }
@@ -137,7 +99,9 @@ export class UploadDetails extends BlockComponent {
 }
 
 UploadDetails.template = /*html*/ `
-<uc-tabs tab-list="tab-view, tab-details" loc="onchange: on.tabSelected">
+<uc-tabs 
+  tab-list="tab-view, tab-details"
+  loc="onchange: on.tabSelected">
   <div tab-ctx="tab-details" ref="details" .details>
 
     <div .info-block>
@@ -152,7 +116,7 @@ UploadDetails.template = /*html*/ `
 
     <div .info-block>
       <div .info-block_name l10n="cdn-url"></div>
-      <a target="_blanc" loc="textContent: cdnUrl; @href: cdnUrl;"></a>
+      <a target="_blank" loc="textContent: cdnUrl; @href: cdnUrl;"></a>
     </div>
 
     <div loc="textContent: errorTxt;"></div>
@@ -160,7 +124,10 @@ UploadDetails.template = /*html*/ `
   </div>
 
   <div tab-ctx="tab-view" ref="viewport" .viewport>
-    <uc-editable-canvas ref="canvas"></uc-editable-canvas>
+    <uc-editable-canvas 
+      tab-ctx="tab-view"
+      ref="canvas">
+    </uc-editable-canvas>
   </div>
 </uc-tabs>
 

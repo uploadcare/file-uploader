@@ -12,6 +12,17 @@
       "**/node_modules/**",
       "node_modules",
       "build-site.js"
+    ],
+    "headers": [
+      {
+        "source": "*",
+        "headers": [
+          {
+            "key": "Access-Control-Allow-Origin",
+            "value": "*"
+          }
+        ]
+      }
     ]
   }
 }

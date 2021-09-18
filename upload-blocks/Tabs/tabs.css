@@ -1,5 +1,8 @@
 uc-tabs {
   color: var(--clr-1);
+  height: 100%;
+  display: grid;
+  grid-template-rows: min-content auto;
 }
 
 uc-tabs > .tabs-row {

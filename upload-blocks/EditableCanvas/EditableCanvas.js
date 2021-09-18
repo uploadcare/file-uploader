@@ -7,7 +7,6 @@ export class EditableCanvas extends BlockComponent {
     super();
     this.pauseRender = true;
     applyStyles(this, {
-      position: 'relative',
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
@@ -47,6 +46,13 @@ export class EditableCanvas extends BlockComponent {
   setImageFile(imgFile) {
     let img = new Image();
     let url = URL.createObjectURL(imgFile);
+    img.src = url;
+    this.setImage(img);
+  }
+
+  /** @param {String} url */
+  setImageUrl(url) {
+    let img = new Image();
     img.src = url;
     this.setImage(img);
   }
