@@ -11,11 +11,11 @@
       ".*",
       "**/node_modules/**",
       "node_modules",
-      "build-site.js"
+      "build-libs.js"
     ],
     "headers": [
       {
-        "source": "*",
+        "source": "**",
         "headers": [
           {
             "key": "Access-Control-Allow-Origin",

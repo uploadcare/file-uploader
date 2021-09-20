@@ -3,15 +3,15 @@ import fs from 'fs';
 
 const buildSequence = [
   {
-    in: './site/js/live.js',
-    out: './site/dist/js/live.js',
+    in: './re4ma/render/render.js',
+    out: './build/re4ma.js',
     minifyHtml: false,
   },
-  {
-    in: './site/js/uploader.js',
-    out: './site/dist/js/uploader.js',
-    minifyHtml: false,
-  },
+  // {
+  //   in: './site/js/uploader.js',
+  //   out: './site/dist/js/uploader.js',
+  //   minifyHtml: false,
+  // },
 ];
 
 function build(buildItem) {
