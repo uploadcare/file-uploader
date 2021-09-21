@@ -3,34 +3,6 @@ import { applyStyles, applyAttributes, create } from '../../symbiote/utils/dom-h
 const SVGNS = 'http://www.w3.org/2000/svg';
 
 export class CanMan {
-  _prepare() {
-    this.svgEl = document.createElementNS(SVGNS, 'svg');
-    applyAttributes(this.svgEl, {
-      xmlns: SVGNS,
-      canman: '',
-    });
-    applyStyles(this.svgEl, {
-      position: 'absolute',
-      objectFit: 'scale-down',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      height: '100%',
-      width: '100%',
-    });
-    this.svgGroupEl = document.createElementNS(SVGNS, 'g');
-    this.svgImgEl = document.createElementNS(SVGNS, 'image');
-    applyAttributes(this.svgImgEl, {
-      x: 0,
-      y: 0,
-    });
-    this.svgGroupEl.appendChild(this.svgImgEl);
-    this.svgEl.appendChild(this.svgGroupEl);
-    this.can.parentElement.appendChild(this.svgEl);
-    this.vImg = new Image();
-  }
-
   _syncSvgSize() {
     let rect = this.svgGroupEl.getBoundingClientRect();
     applyAttributes(this.svgEl, {
@@ -96,13 +68,12 @@ export class CanMan {
   constructor(canvas, svg) {
     /** @type {HTMLCanvasElement} */
     this.can = canvas;
-    applyStyles(this.can, {
-      maxHeight: '100%',
-      maxWidth: '100%',
-      objectFit: 'scale-down',
-    });
+    this.svgEl = svg;
+    this.svgGroupEl = this.svgEl.querySelector('g');
+    this.svgImgEl = this.svgEl.querySelector('image');
+    this.vImg = new Image();
+
     this.ctx = this.can.getContext('2d');
-    this._prepare();
 
     this.currentColor = CanMan.defaultColor;
 

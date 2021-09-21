@@ -62,8 +62,12 @@ export class EditableCanvas extends BlockComponent {
 }
 
 EditableCanvas.template = /*html*/ `
-<canvas ref="cvs"></canvas>
-<svg xmlns="http://www.w3.org/2000/svg" ref="svg"></svg>
+<canvas .img-view ref="cvs"></canvas>
+<svg .img-view xmlns="http://www.w3.org/2000/svg" ref="svg">
+  <g>
+    <image x="0" y="0"></image>
+  </g>
+</svg>
 <uc-editor-toolbar 
   ref="toolbar"
   loc="canvas: canvas; editor: editor; svg: svg">
