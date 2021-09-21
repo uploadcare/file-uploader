@@ -1,7 +1,7 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 import { applyStyles } from '../../symbiote/utils/dom-helpers.js';
 
-export class RangeUi extends BlockComponent {
+export class Range extends BlockComponent {
   constructor() {
     super();
     applyStyles(this, {
@@ -61,7 +61,7 @@ export class RangeUi extends BlockComponent {
       this.ref.slider.style.left = `${pcnt}%`;
       this.value = this.ref.range['value'];
       this.dispatchEvent(new Event('change'));
-      console.log(this.value);
+      // console.log(this.value);
     };
     this.onmousedown = () => {
       this.onmousemove = (e) => {
@@ -78,7 +78,7 @@ export class RangeUi extends BlockComponent {
   }
 }
 
-RangeUi.template = /*html*/ `
+Range.template = /*html*/ `
 <datalist id="range-values" hidden>
   <option value="0" label="min"></option>
   <option value="100" label="0"></option>

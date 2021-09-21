@@ -14,15 +14,15 @@
 @import url('theme.css');
 
 /* UI COMPONENTS: */
-@import url('../IconUi/icon.css');
+@import url('../Icon/icon.css');
 @import url('../Tabs/tabs.css');
-@import url('../RangeUi/range.css');
+@import url('../Range/range.css');
 
 /* BLOCKS: */
 @import url('../SimpleBtn/simple-btn.css');
 @import url('../SourceBtn/source-btn.css');
 @import url('../DropArea/drop-area.css');
-@import url('../ModalWin/modal.css');
+@import url('../Modal/modal.css');
 @import url('../UrlSource/url-source.css');
 @import url('../CameraSource/camera-source.css');
 @import url('../ExternalSource/external-source.css');

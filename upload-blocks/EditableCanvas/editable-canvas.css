@@ -53,12 +53,12 @@ uc-editor-toolbar > .range-caption {
   color: var(--clr-2);
 }
 
-uc-editor-toolbar > uc-range-ui {
+uc-editor-toolbar > uc-range {
   position: absolute !important;
   bottom: var(--gap-max);
   width: 100%;
   transition: .2s;
 }
-uc-editor-toolbar > uc-range-ui:not([visible]) {
+uc-editor-toolbar > uc-range:not([visible]) {
   transform: translateY(60px);
 }

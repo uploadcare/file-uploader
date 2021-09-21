@@ -92,10 +92,10 @@ function bthHtml(btn) {
   action="${btn.action}" 
   ref="${btn.ref}"
   l10n="title:${btn.l10n_name}">
-  <uc-icon-ui 
+  <uc-icon
     loc="${btn.loc}" 
     name="${btn.icon}">
-  </uc-icon-ui>
+  </uc-icon>
 </button>`.trim();
 }
 

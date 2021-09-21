@@ -93,7 +93,7 @@ export class CanMan {
   }
 
   /** @param {HTMLCanvasElement} canvas */
-  constructor(canvas) {
+  constructor(canvas, svg) {
     /** @type {HTMLCanvasElement} */
     this.can = canvas;
     applyStyles(this.can, {

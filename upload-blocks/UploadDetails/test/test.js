@@ -1,9 +1,9 @@
 import { UploadDetails } from '../UploadDetails.js';
-import { IconUi } from '../../IconUi/IconUi.js';
+import { Icon } from '../../Icon/Icon.js';
 import { EditableCanvas } from '../../EditableCanvas/EditableCanvas.js';
 import { Tabs } from '../../Tabs/Tabs.js';
 
-IconUi.reg('uc-icon-ui');
+Icon.reg('uc-icon');
 UploadDetails.reg('upload-details');
 EditableCanvas.reg('editable-canvas');
 Tabs.reg('tabs');

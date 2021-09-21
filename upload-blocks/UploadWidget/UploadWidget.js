@@ -1,10 +1,11 @@
-import { WidgetBase } from '../WidgetBase/WidgetBase.js';
-import { IconUi } from '../IconUi/IconUi.js';
+import { ShadowWrapper } from '../ShadowWrapper/ShadowWrapper.js';
+
+import { Icon } from '../Icon/Icon.js';
 import { SimpleBtn } from '../SimpleBtn/SimpleBtn.js';
 import { DropArea } from '../DropArea/DropArea.js';
 import { SourceBtn } from '../SourceBtn/SourceBtn.js';
 import { FileItem } from '../FileItem/FileItem.js';
-import { ModalWin } from '../ModalWin/ModalWin.js';
+import { Modal } from '../Modal/Modal.js';
 import { UploadList } from '../UploadList/UploadList.js';
 import { UrlSource } from '../UrlSource/UrlSource.js';
 import { CameraSource } from '../CameraSource/CameraSource.js';
@@ -18,15 +19,15 @@ import { CloudImageEditor } from '../CloudImageEditor/CloudImageEditor.js';
 import { ExternalSource } from '../ExternalSource/ExternalSource.js';
 import { Tabs } from '../Tabs/Tabs.js';
 
-// IconUi - is extended from BaseComponent
-IconUi.reg('uc-icon-ui');
+// Icon - is extended from BaseComponent
+Icon.reg('uc-icon');
 
 // Other components are extended from BlockComponent:
 SimpleBtn.reg('simple-btn');
 DropArea.reg('drop-area');
 SourceBtn.reg('source-btn');
 FileItem.reg('file-item');
-ModalWin.reg('modal-win');
+Modal.reg('modal');
 UploadList.reg('upload-list');
 
 // File sources:
@@ -44,38 +45,4 @@ CloudImageEditor.reg('cloud-image-editor');
 
 Tabs.reg('tabs');
 
-export class UploadWidget extends WidgetBase {}
-
-UploadWidget.template = /*html*/ `
-<uc-drop-area>
-  <uc-source-btn type="local"></uc-source-btn>
-  <uc-source-btn type="url"></uc-source-btn>
-  <uc-source-btn type="camera"></uc-source-btn>
-  <uc-source-btn type="facebook"></uc-source-btn>
-  <uc-source-btn type="dropbox"></uc-source-btn>
-  <uc-source-btn type="gdrive"></uc-source-btn>
-  <uc-source-btn type="gphotos"></uc-source-btn>
-  <uc-source-btn type="instagram"></uc-source-btn>
-  <uc-source-btn type="flickr"></uc-source-btn>
-  <uc-source-btn type="vk"></uc-source-btn>
-  <uc-source-btn type="evernote"></uc-source-btn>
-  <uc-source-btn type="box"></uc-source-btn>
-  <uc-source-btn type="onedrive"></uc-source-btn>
-  <uc-source-btn type="huddle"></uc-source-btn>
-  <uc-source-btn type="other"></uc-source-btn>
-</uc-drop-area>
-<uc-system-call></uc-system-call>
-<uc-modal-win>
-<uc-activity-mngr>
-    <uc-upload-list activity="upload-list"></uc-upload-list>
-    <uc-camera-source activity="camera"></uc-camera-source>
-    <uc-url-source activity="url"></uc-url-source>
-    <uc-pre-editor activity="pre-edit"></uc-pre-editor>
-    <uc-cloud-image-editor activity="cloud-image-edit"></uc-cloud-image-editor>
-    <uc-external-source activity="external"></uc-external-source>
-  </uc-activity-mngr>
-</uc-modal-win>
-<uc-upload-result></uc-upload-result>
-<uc-message-box><uc-message-box>
-`;
-UploadWidget.reg('upload-widget');
+export class UploadWidget extends ShadowWrapper {}

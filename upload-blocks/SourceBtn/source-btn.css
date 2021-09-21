@@ -10,7 +10,7 @@ uc-source-btn:last-of-type {
   border-bottom: none;
 }
 
-uc-source-btn uc-icon-ui {
+uc-source-btn uc-icon {
   display: inline-flex;
   flex-grow: 1;
   min-width: var(--ui-size);

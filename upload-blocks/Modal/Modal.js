@@ -1,6 +1,6 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 
-export class ModalWin extends BlockComponent {
+export class Modal extends BlockComponent {
   constructor() {
     super();
     this.initLocalState({
@@ -24,13 +24,13 @@ export class ModalWin extends BlockComponent {
   }
 }
 
-ModalWin.template = /*html*/ `
-<div dialog-el>
-  <div heading-el>
-    <uc-icon-ui ext="@name: modalIcon"></uc-icon-ui>
-    <div caption-el loc="textContent: caption" ext="textContent: modalCaption"></div>
-    <button close-btn loc="onclick: closeClicked">
-      <uc-icon-ui name="close"></uc-icon-ui>
+Modal.template = /*html*/ `
+<div .dialog-el>
+  <div .heading-el>
+    <uc-icon ext="@name: modalIcon"></uc-icon>
+    <div .caption-el loc="textContent: caption" ext="textContent: modalCaption"></div>
+    <button .close-btn loc="onclick: closeClicked">
+      <uc-icon name="close"></uc-icon>
     </button>
   </div>
   <slot></slot>

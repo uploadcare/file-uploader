@@ -1,27 +1,31 @@
 import { BaseComponent } from '../../symbiote/core/BaseComponent.js';
 
-export class IconUi extends BaseComponent {
+export class Icon extends BaseComponent {
   constructor() {
     super();
     this.initLocalState({
       path: '',
     });
-    this.defineAccessor('name', (val) => {
-      if (!val) {
-        return;
-      }
-      this.pub('local', 'path', this.getCssData(`--icon-${val}`));
-    }, true);
+    this.defineAccessor(
+      'name',
+      (val) => {
+        if (!val) {
+          return;
+        }
+        this.pub('local', 'path', this.getCssData(`--icon-${val}`));
+      },
+      true
+    );
   }
 }
 
-IconUi.template = /*html*/ `
+Icon.template = /*html*/ `
 <svg
   viewBox="0 0 24 24"
   xmlns="http://www.w3.org/2000/svg">
   <path loc="@d: path"></path>
 </svg>
 `;
-IconUi.bindAttributes({
+Icon.bindAttributes({
   name: ['property'],
 });

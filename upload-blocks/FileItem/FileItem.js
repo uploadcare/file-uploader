@@ -137,10 +137,10 @@ FileItem.template = /*html*/ `
 <div .thumb ref="thumb"></div>
 <div file-name loc="textContent: fileName"></div>
 <div .badge>
-  <uc-icon-ui loc="@name: badgeIcon"></uc-icon-ui>
+  <uc-icon loc="@name: badgeIcon"></uc-icon>
 </div>
 <button .edit-btn loc="onclick: on.edit;">
-  <uc-icon-ui name="edit-file"></uc-icon-ui>
+  <uc-icon name="edit-file"></uc-icon>
 </button>
 <div ref="progress" .progress></div>
 `;

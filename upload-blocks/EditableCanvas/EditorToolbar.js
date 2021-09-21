@@ -1,11 +1,11 @@
 import { applyAttributes, applyStyles } from '../../symbiote/utils/dom-helpers.js';
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 import { CanMan } from './CanMan.js';
-import { RangeUi } from '../RangeUi/RangeUi.js';
+import { Range } from '../Range/Range.js';
 
 import { getButtons } from './buttons.js';
 
-RangeUi.reg('range-ui');
+Range.reg('range');
 
 const FS_ICON = {
   FS: 'fullscreen',
@@ -25,11 +25,11 @@ export class EditorToolbar extends BlockComponent {
   get actionsMap() {
     return {
       fullscreen: () => {
-        if (document.fullscreenElement === this.editor.canvParent) {
+        if (document.fullscreenElement === this.editor) {
           document.exitFullscreen();
           this.pub('local', 'fsIcon', FS_ICON.FS);
         } else {
-          this.editor.canvParent.requestFullscreen();
+          this.editor.requestFullscreen();
           this.pub('local', 'fsIcon', FS_ICON.EXIT);
         }
       },
@@ -128,7 +128,7 @@ export class EditorToolbar extends BlockComponent {
         this.actionsMap[action]();
       },
       onRangeChange: () => {
-        this.canMan[this.rangeCtx] && this.canMan[this.rangeCtx](this.ref.range['value']);
+        this.canMan?.[this.rangeCtx]?.(this.ref.range['value']);
       },
       onColorChange: () => {
         this.ref.color_btn.style.color = this.ref.color['value'];
@@ -155,13 +155,12 @@ export class EditorToolbar extends BlockComponent {
 EditorToolbar.template = /*html*/ `
 <div .btns ref="btns" loc="onclick: onBtnClick">${getButtons()}</div>
 <div .range-caption loc="textContent: rangeCaption"></div>
-<uc-range-ui 
+<uc-range 
   min="0" 
   max="200" 
   value="100" 
   ref="range"
   loc="onchange: onRangeChange; @visible: rangeActive">
-</uc-range-ui>
+</uc-range>
 <input ref="color" value="${CanMan.defaultColor}" type="color" loc="onchange: onColorChange">
 `;
-EditorToolbar.reg('editor-toolbar');

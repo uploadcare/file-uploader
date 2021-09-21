@@ -2,29 +2,32 @@ import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 import { EditorToolbar } from './EditorToolbar.js';
 import { applyStyles } from '../../symbiote/utils/dom-helpers.js';
 
+EditorToolbar.reg('editor-toolbar');
+
 export class EditableCanvas extends BlockComponent {
   constructor() {
     super();
-    this.pauseRender = true;
     applyStyles(this, {
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
     });
+    this.initLocalState({
+      canvas: null,
+      editor: this,
+      svg: null,
+    });
   }
 
   initCallback() {
-    this.canvas = this.querySelector('canvas');
-    if (!this.canvas) {
-      this.canvas = document.createElement('canvas');
-      this.appendChild(this.canvas);
-    }
+    /** @type {HTMLCanvasElement} */
+    // @ts-ignore
+    this.canvas = this.ref.cvs;
     this.canvCtx = this.canvas.getContext('2d');
-    this.canvParent = this.canvas.parentElement;
-    this.toolbar = new EditorToolbar();
-    this.toolbar.canvas = this.canvas;
-    this.toolbar.editor = this;
-    this.canvParent.appendChild(this.toolbar);
+    this.multiPub('local', {
+      canvas: this.canvas,
+      svg: this.ref.svg,
+    });
   }
 
   /** @param {HTMLImageElement} img */
@@ -57,3 +60,12 @@ export class EditableCanvas extends BlockComponent {
     this.setImage(img);
   }
 }
+
+EditableCanvas.template = /*html*/ `
+<canvas ref="cvs"></canvas>
+<svg xmlns="http://www.w3.org/2000/svg" ref="svg"></svg>
+<uc-editor-toolbar 
+  ref="toolbar"
+  loc="canvas: canvas; editor: editor; svg: svg">
+</uc-editor-toolbar>
+`;

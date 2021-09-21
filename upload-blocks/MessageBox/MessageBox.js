@@ -40,10 +40,10 @@ export class MessageBox extends BlockComponent {
 
 MessageBox.template = /*html*/ `
 <div .heading>
-  <uc-icon-ui loc="@name: iconName"></uc-icon-ui>
+  <uc-icon loc="@name: iconName"></uc-icon>
   <div .caption loc="textContent: captionTxt"></div>
   <button loc="onclick: on.close">
-    <uc-icon-ui name="close"></uc-icon-ui>
+    <uc-icon name="close"></uc-icon>
   </button>
 </div>
 <div .msg loc="textContent: msgTxt"></div>

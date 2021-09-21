@@ -1,4 +1,4 @@
-uc-modal-win {
+uc-modal {
   position: absolute;
   top: 0;
   left: 0;
@@ -15,11 +15,11 @@ uc-modal-win {
   backdrop-filter: blur(3px);
   -webkit-backdrop-filter: blur(3px);
 }
-uc-modal-win:not([active]) {
+uc-modal:not([active]) {
   opacity: 0;
   visibility: hidden;
 }
-uc-modal-win button[close-btn] {
+uc-modal button.close-btn {
   display: inline-flex;
   justify-content: center;
   align-items: center;
@@ -31,38 +31,32 @@ uc-modal-win button[close-btn] {
   border: none;
   cursor: pointer;
 }
-uc-modal-win > [dialog-el] {
+uc-modal > .dialog-el {
   background-color: rgb(var(--rgb-2));
   box-shadow: var(--ui-shadow);
   border-radius: var(--ui-radius-1);
   min-width: 410px;
   min-height: var(--ui-size);
 }
-uc-modal-win [heading-el] {
+uc-modal .heading-el {
   display: grid;
   grid-template-columns: min-content 1fr min-content;
   line-height: var(--ui-size);
   padding: var(--gap-mid);
   color: var(--clr-txt);
 }
-uc-modal-win [caption-el] {
+uc-modal .caption-el {
   font-size: 1em;
   color: var(--clr-txt);
 }
-uc-modal-win [content-el] {
-  margin-top: var(--gap-mid);
-}
 
-uc-modal-win uc-drop-area {
+uc-modal uc-drop-area {
   border-radius: var(--ui-radius-2);
   margin: var(--gap-mid);
   margin-top: 0;
   border: none;
   padding: 0;
 }
-uc-modal-win uc-drop-area .sources {
+uc-modal uc-drop-area .sources {
   border-radius: 0;
-}
-uc-modal-win uc-drop-area .dropzone::after {
-  content: '';
 }

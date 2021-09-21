@@ -1,7 +1,6 @@
 import { BaseComponent } from '../../symbiote/core/BaseComponent.js';
 
-export class WidgetBase extends BaseComponent {
-
+export class ShadowWrapper extends BaseComponent {
   constructor() {
     super();
     this.pauseRender = true;
@@ -23,13 +22,16 @@ export class WidgetBase extends BaseComponent {
     link.type = 'text/css';
     link.href = val;
     link.onload = () => {
-      this.render();
+      // CSS modules can be not loaded at this moment
+      // TODO: investigate better solution
+      window.requestAnimationFrame(() => {
+        this.render();
+      });
     };
     this.shadowRoot.appendChild(link);
   }
-
 }
 
-WidgetBase.bindAttributes({
+ShadowWrapper.bindAttributes({
   'css-src': ['property'],
 });
