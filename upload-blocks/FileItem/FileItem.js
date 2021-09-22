@@ -1,7 +1,7 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
-import { uploadFileDirect } from '../../common-utils/UploadClientLight.js';
 import { resizeImage } from '../../common-utils/resizeImage.js';
 import { ACT } from '../dictionary.js';
+import { uploadFile } from '../node_modules/@uploadcare/upload-client/dist/index.browser.js';
 
 export class FileItem extends BlockComponent {
   constructor() {
@@ -103,33 +103,35 @@ export class FileItem extends BlockComponent {
     this.removeAttribute('focused');
     this.removeAttribute('error');
     this.setAttribute('uploading', '');
-    await uploadFileDirect(this.file, this.config.PUBKEY, async (info) => {
-      if (info.type === 'progress') {
-        this.ref.progress.style.width = info.progress + '%';
-        this.entry.setValue('uploadProgress', info.progress);
-      }
-      if (info.type === 'success') {
-        this.ref.progress.style.opacity = '0';
-        this.setAttribute('loaded', '');
-        this.removeAttribute('uploading');
-        this.pub('local', 'badgeIcon', 'check');
-        this.entry.setValue('uuid', info.uuid);
-        this.entry.setValue('uploadProgress', 100);
-      }
-      if (info.type === 'error') {
-        this.setAttribute('error', '');
-        this.removeAttribute('uploading');
-        this.multiPub('local', {
-          badgeIcon: 'upload-error',
-        });
-        this.pub('external', 'message', {
-          caption: 'Upload error: ' + this.file.name,
-          text: info.error,
-          isError: true,
-        });
-        this.entry.setValue('uploadErrorMsg', info.error);
-      }
-    });
+    try {
+      // @ts-ignore
+      let fileInfo = await uploadFile(this.file, {
+        publicKey: this.config.PUBKEY,
+        onProgress: (progress) => {
+          let percentage = progress.value * 100;
+          this.ref.progress.style.width = percentage + '%';
+          this.entry.setValue('uploadProgress', percentage);
+        },
+      });
+      this.ref.progress.style.opacity = '0';
+      this.setAttribute('loaded', '');
+      this.removeAttribute('uploading');
+      this.pub('local', 'badgeIcon', 'check');
+      this.entry.setValue('uuid', fileInfo.uuid);
+      this.entry.setValue('uploadProgress', 100);
+    } catch (error) {
+      this.setAttribute('error', '');
+      this.removeAttribute('uploading');
+      this.multiPub('local', {
+        badgeIcon: 'upload-error',
+      });
+      this.pub('external', 'message', {
+        caption: 'Upload error: ' + this.file.name,
+        text: error,
+        isError: true,
+      });
+      this.entry.setValue('uploadErrorMsg', error);
+    }
   }
 }
 

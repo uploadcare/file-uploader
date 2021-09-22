@@ -1,6 +1,6 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 import { registerMessage, unregisterMessage } from './messages.js';
-import { uploadFromUrl, getInfo } from '../../common-utils/UploadClientLight.js';
+import { uploadFile } from '../node_modules/@uploadcare/upload-client/dist/index.browser.js';
 
 let styleToCss = (style) => {
   let css = Object.keys(style).reduce((acc, selector) => {
@@ -61,21 +61,21 @@ export class ExternalSource extends BlockComponent {
     let entry = this.uploadCollection.add({
       externalUrl: url,
     });
-    await uploadFromUrl(url, pubkey, async (info) => {
-      if (info.type === 'progress') {
-        entry.setValue('uploadProgress', info.progress);
-      }
-      if (info.type === 'success') {
-        let fileInfo = await getInfo(info.uuid, pubkey);
-        console.log(fileInfo);
-        entry.setMultipleValues({
-          uuid: fileInfo.uuid,
-          fileName: fileInfo.filename,
-          fileSize: fileInfo.size,
-          isImage: fileInfo.is_image,
-          mimeType: fileInfo.mime_type,
-        });
-      }
+    // @ts-ignore
+    let fileInfo = await uploadFile(url, {
+      publicKey: pubkey,
+      onProgress: (progress) => {
+        let percentage = progress.value * 100;
+        entry.setValue('uploadProgress', percentage);
+      },
+    });
+    console.log(fileInfo);
+    entry.setMultipleValues({
+      uuid: fileInfo.uuid,
+      fileName: fileInfo.name,
+      fileSize: fileInfo.size,
+      isImage: fileInfo.isImage,
+      mimeType: fileInfo.mimeType,
     });
   }
 
