@@ -1,0 +1,23 @@
+uc-camera-source {
+  display: grid;
+  grid-template-rows: min-content min-content;
+}
+uc-camera-source video {
+  display: block;
+  width: 100%;
+  background-color: var(--clr-shade-1);
+}
+uc-camera-source .toolbar {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--gap-mid);
+}
+uc-camera-source .shot-btn {
+  color: var(--clr-1);
+  background-color: var(--clr-shade-1);
+}
+
+uc-camera-source .cancel-btn {
+  color: var(--clr-1);
+  background-color: var(--clr-2);
+}

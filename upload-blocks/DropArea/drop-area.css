@@ -1,0 +1,33 @@
+uc-drop-area {
+  display: grid;
+  grid-template-columns: min-content auto;
+  border: var(--line-width) dashed var(--clr-txt);
+  border-radius: var(--ui-radius-1);
+  padding: var(--gap-mid);
+  overflow: hidden;
+  background-color: var(--clr-shade-1);
+}
+uc-drop-area .sources {
+  background-color: var(--clr-2);
+  border-radius: var(--ui-radius-2);
+  overflow: hidden;
+}
+uc-drop-area .dropzone {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+uc-drop-area .dropzone .drop-txt {
+  color: var(--clr-1);
+  opacity: var(--opacity-mid);
+}
+
+uc-drop-area .powered {
+  position: absolute;
+  bottom: var(--gap-mid);
+  right: var(--gap-mid);
+  font-size: 10px;
+  color: var(--clr-soft-1);
+}

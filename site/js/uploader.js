@@ -1,1 +1,0 @@
-import { UploadWidgetBtn } from '../../upload-blocks/UploadWidget/UploadWidgetBtn.js';

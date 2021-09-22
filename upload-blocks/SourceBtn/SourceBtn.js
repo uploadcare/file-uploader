@@ -19,7 +19,7 @@ export class SourceBtn extends BlockComponent {
       [type]: () => {
         this.applyL10nKey('src-type', `src-type-${type}`);
         window.setTimeout(() => {
-          if (this.blockRegistry['external-source']) {
+          if (this.blockRegistry['uc-external-source']) {
             this.pub('local', 'iconName', type);
             this.onclick = () => {
               this.multiPub('external', {
@@ -45,7 +45,7 @@ export class SourceBtn extends BlockComponent {
           this.multiPub('external', {
             modalActive: false,
             currentActivity: 'upload-list',
-            modalCaption: 'Selected',
+            modalCaption: this.l10n('selected'),
             modalIcon: 'local',
           });
           if (!this.read('external', 'files')?.length) {
@@ -85,6 +85,18 @@ export class SourceBtn extends BlockComponent {
           }
         });
       },
+      draw: () => {
+        this.applyL10nKey('src-type', 'src-type-draw');
+        this.pub('local', 'iconName', 'edit-draw');
+        this.onclick = () => {
+          this.multiPub('external', {
+            currentActivity: 'draw',
+            modalCaption: 'Draw',
+            modalIcon: 'edit-draw',
+            modalActive: true,
+          });
+        };
+      },
       other: () => {
         this.applyL10nKey('src-type', 'src-type-other');
         this.pub('local', 'iconName', 'dots');
@@ -121,7 +133,7 @@ export class SourceBtn extends BlockComponent {
   }
 }
 SourceBtn.template = /*html*/ `
-<icon-ui loc="@name: iconName"></icon-ui>
+<uc-icon loc="@name: iconName"></uc-icon>
 <div .txt l10n="src-type"></div>
 `;
 SourceBtn.bindAttributes({

@@ -1,0 +1,23 @@
+uc-progress-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: block;
+  background-color: var(--clr-2);
+  height: var(--gap-mid);
+  z-index: 10000;
+}
+
+uc-progress-bar:not([active]) {
+  opacity: 0;
+}
+
+uc-progress-bar .bar {
+  position: absolute;
+  width: 0;
+  left: 0;
+  height: 100%;
+  background-color: var(--clr-1);
+  transition: 0.2s;
+}

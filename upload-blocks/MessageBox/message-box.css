@@ -1,0 +1,41 @@
+uc-message-box {
+  position: fixed;
+  z-index: 100000;
+  bottom: var(--gap-mid);
+  left: var(--gap-mid);
+  right: var(--gap-mid);
+  display: grid;
+  grid-template-rows: min-content auto;
+  background-color: var(--clr-1);
+  color: #fff;
+  transition: 0.4s;
+  border-radius: var(--ui-radius-1);
+  box-shadow: var(--ui-shadow);
+}
+uc-message-box:not([active]) {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(10px);
+}
+uc-message-box[error] {
+  background-color: var(--clr-err);
+}
+
+uc-message-box .heading {
+  display: grid;
+  grid-template-columns: min-content auto min-content;
+  padding: var(--gap-mid);
+}
+uc-message-box .caption {
+  display: flex;
+  align-items: center;
+}
+uc-message-box .heading button {
+  background-color: transparent;
+  width: var(--ui-size);
+  color: currentColor;
+}
+uc-message-box .msg {
+  padding: var(--gap-max);
+  padding-top: 0;
+}

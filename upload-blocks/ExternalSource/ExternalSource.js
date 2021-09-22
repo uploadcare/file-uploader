@@ -155,7 +155,7 @@ ExternalSource.template = /*html*/ `
     <span loc="textContent: counter"></span>
   </div>
   <button .done-btn loc="onclick: on.done">
-    <icon-ui name="check"></icon-ui>
+    <uc-icon name="check"></uc-icon>
   </button>
 </div>
 `;

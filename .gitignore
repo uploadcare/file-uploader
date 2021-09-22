@@ -10,3 +10,4 @@ node_modules
 */wasm-pack.log
 .DS_Store
 .firebase
+build

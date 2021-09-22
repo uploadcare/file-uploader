@@ -107,3 +107,7 @@ duck-css {
   transform: scaleX(-1);
   padding: var(--gap-mid);
 }
+
+live-html {
+  height: 100%;
+}

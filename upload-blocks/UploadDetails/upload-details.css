@@ -1,0 +1,61 @@
+uc-upload-details {
+  display: grid;
+  grid-template-rows: auto min-content;
+  height: 100%;
+}
+
+uc-upload-details .viewport {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: var(--clr-shade-1);
+  height: 100%;
+}
+
+uc-upload-details .toolbar {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--gap-mid);
+}
+
+uc-upload-details .back-btn {
+  background-color: var(--clr-shade-1);
+  color: var(--clr-1);
+  padding-left: 0;
+}
+uc-upload-details .remove-btn {
+  background-color: var(--clr-err);
+  color: #fff;
+  padding-left: 0;
+}
+uc-upload-details .detail-btn {
+  background-color: var(--clr-shade-1);
+  color: var(--clr-1);
+  padding-left: 0;
+}
+uc-upload-details .edit-btn {
+  background-color: transparent;
+  color: var(--clr-1);
+  padding-left: 0;
+}
+
+uc-upload-details .details {
+  padding: var(--gap-max);
+}
+
+uc-upload-details .info-block {
+  padding: var(--gap-mid);
+  box-shadow: var(--ui-shadow);
+  border-top: 1px solid var(--clr-shade-1);
+  border-left: 2px solid var(--clr-shade-1);
+  margin-top: var(--gap-mid);
+  border-radius: var(--ui-radius-1);
+  color: var(--clr-txt);
+}
+
+uc-upload-details .info-block > .info-block_name {
+  font-size: 0.8em;
+  margin-bottom: var(--gap-mid);
+  color: var(--clr-1);
+}

@@ -1,0 +1,37 @@
+<script type="module">
+import { UploadWidget } from '../UploadWidget/UploadWidget.js';
+
+UploadWidget.template = /*html*/ `
+<uc-simple-btn></uc-simple-btn>
+
+<uc-modal>
+  <uc-drop-area activity="source-select">
+    <uc-source-btn type="local"></uc-source-btn>
+    <uc-source-btn type="url"></uc-source-btn>
+    <uc-source-btn type="camera"></uc-source-btn>
+    <uc-source-btn type="draw"></uc-source-btn>
+    <uc-source-btn type="facebook"></uc-source-btn>
+    <uc-source-btn type="dropbox"></uc-source-btn>
+    <uc-source-btn type="gdrive"></uc-source-btn>
+    <uc-source-btn type="gphotos"></uc-source-btn>
+    <uc-source-btn type="instagram"></uc-source-btn>
+  </uc-drop-area>
+  <uc-upload-list activity="upload-list"></uc-upload-list>
+  <uc-camera-source activity="camera"></uc-camera-source>
+  <uc-url-source activity="url"></uc-url-source>
+  <uc-external-source activity="external"></uc-external-source>
+  <uc-upload-details activity="upload-details"></uc-upload-details>
+  <uc-confirmation-dialog activity="confirmation"></uc-confirmation-dialog>
+  <uc-cloud-image-editor activity="cloud-image-edit"></uc-cloud-image-editor>
+</uc-modal>
+
+<uc-message-box></uc-message-box>
+<uc-progress-bar></uc-progress-bar>
+`;
+
+UploadWidget.reg('uc-upload-wgt');
+</script>
+
+<uc-upload-wgt
+  css-src="../css/MOUNT_POINT.css">
+</uc-upload-wgt>

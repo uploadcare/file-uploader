@@ -1,0 +1,43 @@
+uc-source-btn {
+  display: flex;
+  align-items: center;
+  padding-right: 1em;
+  border-bottom: var(--line-width) solid var(--clr-shade-1);
+  user-select: none;
+  cursor: pointer;
+}
+uc-source-btn:last-of-type {
+  border-bottom: none;
+}
+
+uc-source-btn uc-icon {
+  display: inline-flex;
+  flex-grow: 1;
+  min-width: var(--ui-size);
+  justify-content: center;
+}
+
+uc-source-btn[type='local'] > .txt::after {
+  content: var(--l10n-local-files);
+}
+uc-source-btn[type='camera'] > .txt::after {
+  content: var(--l10n-camera);
+}
+uc-source-btn[type='url'] > .txt::after {
+  content: var(--l10n-from-url);
+}
+uc-source-btn[type='other'] > .txt::after {
+  content: var(--l10n-other);
+}
+
+uc-source-btn .txt {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+  height: var(--ui-size);
+  padding: 0;
+  border: none;
+  box-sizing: border-box;
+  white-space: nowrap;
+}

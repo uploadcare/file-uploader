@@ -1,7 +1,6 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 
 export class SimpleBtn extends BlockComponent {
-
   initCallback() {
     this.sub('external', 'uploadList', (/** @type {String[]} */ list) => {
       this._length = list.length;
@@ -16,7 +15,7 @@ export class SimpleBtn extends BlockComponent {
       } else {
         this.multiPub('external', {
           currentActivity: 'source-select',
-          modalCaption: 'Select File Source',
+          modalCaption: this.l10n('select-file-source'),
           modalActive: true,
         });
       }
@@ -26,6 +25,6 @@ export class SimpleBtn extends BlockComponent {
 
 SimpleBtn.template = /*html*/ `
 <button>
-  <icon-ui name="upload"></icon-ui>
+  <uc-icon name="upload"></uc-icon>
   <span l10n="upload-files"></span>
 </button>`;
