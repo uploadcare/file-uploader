@@ -7,17 +7,23 @@ const buildSequence = [
     out: './build/re4ma.js',
     minifyHtml: false,
   },
-  // {
-  //   in: './site/js/uploader.js',
-  //   out: './site/dist/js/uploader.js',
-  //   minifyHtml: false,
-  // },
+  {
+    in: './upload-blocks/UploadWidget/UploadWidget.js',
+    out: './build/upload-blocks.js',
+    minifyHtml: true,
+  },
+  {
+    in: './symbiote/core/BaseComponent.js',
+    out: './build/symbiote.js',
+    minifyHtml: true,
+  },
 ];
 
 function build(buildItem) {
   esbuild
     .build({
       entryPoints: [buildItem.in],
+      format: 'esm',
       bundle: true,
       minify: true,
       sourcemap: false,

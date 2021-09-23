@@ -13,9 +13,7 @@ export class EditableCanvas extends BlockComponent {
       alignItems: 'center',
     });
     this.initLocalState({
-      canvas: null,
-      editor: this,
-      svg: null,
+      refMap: null,
     });
   }
 
@@ -25,8 +23,7 @@ export class EditableCanvas extends BlockComponent {
     this.canvas = this.ref.cvs;
     this.canvCtx = this.canvas.getContext('2d');
     this.multiPub('local', {
-      canvas: this.canvas,
-      svg: this.ref.svg,
+      refMap: { ...this.ref },
     });
   }
 
@@ -64,12 +61,11 @@ export class EditableCanvas extends BlockComponent {
 EditableCanvas.template = /*html*/ `
 <canvas .img-view ref="cvs"></canvas>
 <svg .img-view xmlns="http://www.w3.org/2000/svg" ref="svg">
-  <g>
-    <image x="0" y="0"></image>
+  <g ref="svg_g">
+    <image ref="svg_img" x="0" y="0"></image>
   </g>
 </svg>
 <uc-editor-toolbar 
-  ref="toolbar"
-  loc="canvas: canvas; editor: editor; svg: svg">
+  loc="refMap: refMap">
 </uc-editor-toolbar>
 `;

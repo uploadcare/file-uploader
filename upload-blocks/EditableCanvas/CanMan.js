@@ -1,5 +1,5 @@
 // Canvas Manipulator
-import { applyStyles, applyAttributes, create } from '../../symbiote/utils/dom-helpers.js';
+import { applyStyles, applyAttributes } from '../../symbiote/utils/dom-helpers.js';
 const SVGNS = 'http://www.w3.org/2000/svg';
 
 export class CanMan {
@@ -64,13 +64,13 @@ export class CanMan {
     await this._backSyncSvg();
   }
 
-  /** @param {HTMLCanvasElement} canvas */
-  constructor(canvas, svg) {
+  /** @param {Object} refMap */
+  constructor(refMap) {
     /** @type {HTMLCanvasElement} */
-    this.can = canvas;
-    this.svgEl = svg;
+    this.can = refMap.cvs;
+    this.svgEl = refMap.svg;
     this.svgGroupEl = this.svgEl.querySelector('g');
-    this.svgImgEl = this.svgEl.querySelector('image');
+    this.svgImgEl = this.svgGroupEl.querySelector('image');
     this.vImg = new Image();
 
     this.ctx = this.can.getContext('2d');

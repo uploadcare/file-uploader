@@ -17,7 +17,7 @@ export class UploadDetails extends BlockComponent {
         this.historyBack();
       },
       'on.tabSelected': (e) => {
-        console.log(e.detail);
+        console.log(e.detail.tab);
       },
       'on.edit': () => {
         if (this.entry.getValue('uuid')) {

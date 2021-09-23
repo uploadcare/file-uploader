@@ -13,15 +13,6 @@ const FS_ICON = {
 };
 
 export class EditorToolbar extends BlockComponent {
-  set canvas(canvEl) {
-    /** @type {CanMan} */
-    this.canMan = new CanMan(canvEl);
-  }
-
-  get canvas() {
-    return this.canMan.can;
-  }
-
   get actionsMap() {
     return {
       fullscreen: () => {
@@ -86,13 +77,8 @@ export class EditorToolbar extends BlockComponent {
 
   constructor() {
     super();
-    applyStyles(this, {
-      height: '100%',
-      width: '100%',
-      boxSizing: 'border-box',
-      pointerEvents: 'none',
-    });
     this.buttons = new Set();
+
     /** @type {import('./EditableCanvas.js').EditableCanvas} */
     this.editor = null;
     this.initLocalState({
@@ -139,16 +125,13 @@ export class EditorToolbar extends BlockComponent {
 
   initCallback() {
     this.ref.color_btn.style.color = CanMan.defaultColor;
-    applyStyles(this.ref.btns, {
-      pointerEvents: 'all',
-    });
-    applyStyles(this.ref.range, {
-      pointerEvents: 'all',
-    });
-    applyStyles(this.ref.color, {
-      position: 'absolute',
-      opacity: '0',
-      pointerEvents: 'all',
+    this.defineAccessor('refMap', (rMap) => {
+      if (!rMap) {
+        return;
+      }
+      /** @type {CanMan} */
+      this.canMan = new CanMan(rMap);
+      console.log(rMap);
     });
   }
 }

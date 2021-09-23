@@ -33,12 +33,14 @@ uc-editor-toolbar {
   bottom: 0;
   z-index: 10000;
   overflow: hidden;
+  pointer-events: none;
 }
 uc-editor-toolbar .btns {
   position: absolute;
   display: grid;
   top: var(--gap-mid);
   left: var(--gap-mid);
+  pointer-events: all;
 }
 uc-editor-toolbar .btns > button {
   display: inline-flex;
@@ -73,6 +75,7 @@ uc-editor-toolbar > uc-range {
   bottom: var(--gap-max);
   width: 100%;
   transition: .2s;
+  pointer-events: all;
 }
 uc-editor-toolbar > uc-range:not([visible]) {
   transform: translateY(60px);
