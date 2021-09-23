@@ -4,16 +4,6 @@
   "version": "0.0.1",
   "description": "",
   "main": "index.html",
-  "scripts": {
-    "test": "test",
-    "build": "node ./esbuild.js"
-  },
   "author": "",
-  "license": "MIT",
-  "devDependencies": {
-    "esbuild": "^0.11.11"
-  },
-  "dependencies": {
-    "@uploadcare/upload-client": "^2.0.0-alpha.12"
-  }
+  "license": "MIT"
 }

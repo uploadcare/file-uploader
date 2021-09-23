@@ -1,5 +1,5 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
-import { uploadFile } from '../node_modules/@uploadcare/upload-client/dist/index.browser.js';
+import { uploadFile } from '../../web_modules/upload-client.js';
 
 export class UrlSource extends BlockComponent {
   constructor() {

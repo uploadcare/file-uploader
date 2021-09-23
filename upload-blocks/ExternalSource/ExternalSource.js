@@ -1,6 +1,6 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 import { registerMessage, unregisterMessage } from './messages.js';
-import { uploadFile } from '../node_modules/@uploadcare/upload-client/dist/index.browser.js';
+import { uploadFile } from '../../web_modules/upload-client.js';
 
 let styleToCss = (style) => {
   let css = Object.keys(style).reduce((acc, selector) => {

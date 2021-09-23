@@ -1,7 +1,7 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 import { resizeImage } from '../../common-utils/resizeImage.js';
 import { ACT } from '../dictionary.js';
-import { uploadFile } from '../node_modules/@uploadcare/upload-client/dist/index.browser.js';
+import { uploadFile } from '../../web_modules/upload-client.js';
 
 export class FileItem extends BlockComponent {
   constructor() {

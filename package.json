@@ -8,7 +8,11 @@
     "test": "test",
     "dev": "node ./re4ma/dev.js",
     "build-libs": "node ./build-libs.js",
+    "wpm": "node ./re4ma/wpm.js",
     "deploy": "npm run build-libs && firebase deploy"
+  },
+  "webDependencies": {
+    "upload-client.js": "https://unpkg.com/@uploadcare/upload-client@2.0.0-alpha.6/dist/index.browser.js"
   },
   "devDependencies": {
     "esbuild": "^0.12.16",
