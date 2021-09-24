@@ -6,7 +6,7 @@
   "main": "",
   "scripts": {
     "git-mdl": "git submodule update --init --recursive --remote",
-    "prepare": "npm run git-mdl && npm run wpm && cd ./re4ma && npm run wpm && cd .. && npm install && npm run build-libs",
+    "setup": "npm run git-mdl && npm run wpm && cd ./re4ma && npm run wpm && cd .. && npm i && npm run build-libs",
     "test": "test",
     "dev": "node ./re4ma/dev.js",
     "build-libs": "node ./build-libs.js",
