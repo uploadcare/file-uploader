@@ -23,22 +23,25 @@
 * Common purpose components and tools
 * etc...
 
+## ⚙️ Installation and startup:
+
+1. Clone repository: `git clone git@github.com:uploadcare/jsdk.git ./`
+2. Run dependencies setup: `npm run setup`
+3. Start local dev-server: `npm run dev` 
+4. Go to http://localhost:5000/
+
+**Or you can use any other local server at the project root**
+
+All code in this repository works without any additional build process in any modern browser, so you can just open any HTML file in project structure to make it work during development or for the testing purposes. No source maps or rebuilds are needed.
+
+Also, all content (except node_modules) fully accessible at https://uc-jsdk.web.app/ with the same folder structure.
+
+## Typescript support
+
+to be updated...
+
 ## 🚀 Feedback
 
 Issues and PRs are welcome. You can provide your feedback or drop us a support request at hello@uploadcare.com.
 
-## ⚙️ Git submodule installation:
 
-`git submodule add -b main https://github.com/uploadcare/jsdk.git ucare-jsdk`
-
-To update submodules:
-
-`git submodule update --init --recursive --remote`
-
-## ⚙️ Git subtree installation:
-
-`to be updated soon...`
-
-## 🛠 Using with NPM:
-
-`to be updated soon...`
