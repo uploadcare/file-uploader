@@ -1,18 +1,15 @@
 {
-  "type": "module",
-  "name": "@uploadcare/upload-blocks",
+  "name": "@uploadcare/localhost",
   "version": "0.0.2",
   "description": "",
-  "main": "index.html",
+  "type": "module",
+  "main": "localhost.js",
   "repository": "https://github.com/uploadcare/jsdk/",
   "scripts": {
     "test": "test",
-    "build": "node ./esbuild.js"
+    "start": "node server.js"
   },
   "author": "",
   "license": "MIT",
-  "devDependencies": {
-    "esbuild": "^0.11.11"
-  },
   "gitHead": "7154654a5951930345e660e0f6fa39b9b5669ee2"
 }
