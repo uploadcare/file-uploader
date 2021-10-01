@@ -17,6 +17,8 @@
     "upload-client.js": "https://unpkg.com/@uploadcare/upload-client@2.0.0-alpha.6/dist/index.browser.js"
   },
   "devDependencies": {
+    "@babel/eslint-parser": "^7.15.7",
+    "@babel/preset-env": "^7.15.6",
     "esbuild": "^0.12.16",
     "eslint": "^6.8.0",
     "eslint-config-prettier": "^6.11.0",

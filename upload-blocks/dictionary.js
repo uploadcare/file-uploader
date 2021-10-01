@@ -7,7 +7,7 @@ export const ACT = Object.freeze({
   COMFIRMATION: 'confirmation',
   CLOUD_IMAGE_EDIT: 'cloud-image-edit',
   EXTERNAL_SOURCE: 'external',
-})
+});
 
 export const EXTERNAL_SOURCE = Object.freeze({
   FACEBOOK: 'facebook',
@@ -21,4 +21,4 @@ export const EXTERNAL_SOURCE = Object.freeze({
   BOX: 'box',
   ONEDRIVE: 'onedrive',
   HUDDLE: 'huddle',
-})
+});

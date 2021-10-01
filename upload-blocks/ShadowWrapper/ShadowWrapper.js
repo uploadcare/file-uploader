@@ -1,14 +1,12 @@
 import { BaseComponent } from '../../symbiote/core/BaseComponent.js';
 
 export class ShadowWrapper extends BaseComponent {
-  constructor() {
-    super();
-    this.pauseRender = true;
-    this.renderShadow = true;
-    this.initLocalState({
-      'css-src': '',
-    });
-  }
+  init$ = {
+    'css-src': '',
+  };
+
+  pauseRender = true;
+  renderShadow = true;
 
   set 'css-src'(val) {
     if (!val) {
@@ -33,5 +31,5 @@ export class ShadowWrapper extends BaseComponent {
 }
 
 ShadowWrapper.bindAttributes({
-  'css-src': ['property'],
+  'css-src': null,
 });

@@ -3,13 +3,9 @@ import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 let EDITOR_SCRIPT_SRC = 'https://ucarecdn.com/libs/editor/0.0.1-alpha.0.9/uploadcare-editor.js';
 
 export class CloudImageEditor extends BlockComponent {
-  constructor() {
-    super();
-
-    this.initLocalState({
-      uuid: null,
-    });
-  }
+  init$ = {
+    uuid: null,
+  };
 
   loadScript() {
     let script = document.createElement('script');
@@ -23,7 +19,7 @@ export class CloudImageEditor extends BlockComponent {
     this.style.position = 'relative';
 
     this.loadScript();
-    this.externalState.sub('currentActivity', (val) => {
+    this.sub('*currentActivity', (val) => {
       if (val === 'cloud-image-edit') {
         this.mountEditor();
       } else {
@@ -31,21 +27,18 @@ export class CloudImageEditor extends BlockComponent {
       }
     });
 
-    this.externalState.sub(
-      'focusedEntry',
-      (/** @type {import('../../symbiote/core/TypedState.js').TypedState} */ entry) => {
-        if (!entry) {
-          return;
-        }
-        this.entry = entry;
-
-        this.entry.subscribe('uuid', (uuid) => {
-          if (uuid) {
-            this.localState.pub('uuid', uuid);
-          }
-        });
+    this.sub('*focusedEntry', (/** @type {import('../../symbiote/core/TypedData.js').TypedData} */ entry) => {
+      if (!entry) {
+        return;
       }
-    );
+      this.entry = entry;
+
+      this.entry.subscribe('uuid', (uuid) => {
+        if (uuid) {
+          this.$.uuid = uuid;
+        }
+      });
+    });
   }
 
   handleApply(e) {
@@ -63,8 +56,8 @@ export class CloudImageEditor extends BlockComponent {
     let editorClass = window.customElements.get('uc-editor');
     let instance = new editorClass();
 
-    let uuid = this.localState.read('uuid');
-    let publicKey = this.externalState.read('pubkey');
+    let uuid = this.$.uuid;
+    let publicKey = this.$['*pubkey'];
     instance.setAttribute('uuid', uuid);
     instance.setAttribute('public-key', publicKey);
 
@@ -83,5 +76,3 @@ export class CloudImageEditor extends BlockComponent {
     this.innerHTML = '';
   }
 }
-
-CloudImageEditor.template = /*html*/ ``;

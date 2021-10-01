@@ -11,7 +11,6 @@ import { UrlSource } from '../UrlSource/UrlSource.js';
 import { CameraSource } from '../CameraSource/CameraSource.js';
 import { UploadDetails } from '../UploadDetails/UploadDetails.js';
 import { MessageBox } from '../MessageBox/MessageBox.js';
-import { UploadResult } from '../UploadResult/UploadResult.js';
 import { ConfirmationDialog } from '../ConfirmationDialog/ConfirmationDialog.js';
 import { ProgressBar } from '../ProgressBar/ProgressBar.js';
 import { EditableCanvas } from '../EditableCanvas/EditableCanvas.js';
@@ -37,7 +36,6 @@ ExternalSource.reg('external-source');
 
 UploadDetails.reg('upload-details');
 MessageBox.reg('message-box');
-UploadResult.reg('upload-result');
 ConfirmationDialog.reg('confirmation-dialog');
 ProgressBar.reg('progress-bar');
 EditableCanvas.reg('editable-canvas');

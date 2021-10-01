@@ -1,26 +1,20 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 
 export class MessageBox extends BlockComponent {
-  constructor() {
-    super();
-    this.initLocalState({
-      iconName: 'info',
-      captionTxt: 'Message caption',
-      msgTxt: 'Message...',
-
-      'on.close': () => {
-        this.removeAttribute('active');
-      },
-    });
-  }
+  init$ = {
+    iconName: 'info',
+    captionTxt: 'Message caption',
+    msgTxt: 'Message...',
+    'on.close': () => {
+      this.removeAttribute('active');
+    },
+    '*message': null,
+  };
 
   initCallback() {
-    this.addToExternalState({
-      message: null,
-    });
-    this.sub('external', 'message', (msg) => {
+    this.sub('*message', (msg) => {
       if (msg) {
-        this.multiPub('local', {
+        this.set$({
           captionTxt: msg.caption,
           msgTxt: msg.text,
           iconName: msg.isError ? 'error' : 'info',
@@ -40,11 +34,11 @@ export class MessageBox extends BlockComponent {
 
 MessageBox.template = /*html*/ `
 <div .heading>
-  <uc-icon loc="@name: iconName"></uc-icon>
-  <div .caption loc="textContent: captionTxt"></div>
-  <button loc="onclick: on.close">
+  <uc-icon set="@name: iconName"></uc-icon>
+  <div .caption set="textContent: captionTxt"></div>
+  <button set="onclick: on.close">
     <uc-icon name="close"></uc-icon>
   </button>
 </div>
-<div .msg loc="textContent: msgTxt"></div>
+<div .msg set="textContent: msgTxt"></div>
 `;

@@ -2,110 +2,100 @@ import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 import { EXTERNAL_SOURCE } from '../dictionary.js';
 
 export class SourceBtn extends BlockComponent {
-  constructor() {
-    super();
-    this.initLocalState({
-      iconName: 'default',
-    });
-  }
+  init$ = {
+    iconName: 'default',
+  };
 
   initCallback() {
     this.setAttribute('role', 'button');
-    this._setType(this._type);
+    this.defineAccessor('type', (val) => {
+      if (!val) {
+        return;
+      }
+      this._setType(val);
+    });
   }
 
   _setType(type) {
     let externalType = (type) => ({
       [type]: () => {
         this.applyL10nKey('src-type', `src-type-${type}`);
-        window.setTimeout(() => {
-          if (this.blockRegistry['uc-external-source']) {
-            this.pub('local', 'iconName', type);
-            this.onclick = () => {
-              this.multiPub('external', {
-                externalSourceType: type,
-                currentActivity: 'external',
-                modalCaption: `${type[0].toUpperCase()}${type.slice(1)}`,
-                modalIcon: type,
-                modalActive: true,
-              });
-            };
-          } else {
-            this.style.display = 'none';
-          }
-        });
+        this.$.iconName = type;
+        this.onclick = () => {
+          this.set$({
+            '*externalSourceType': type,
+            '*currentActivity': 'external',
+            '*modalCaption': `${type[0].toUpperCase()}${type.slice(1)}`,
+            '*modalIcon': type,
+            '*modalActive': true,
+          });
+        };
       },
     });
 
     let types = {
       local: () => {
         this.applyL10nKey('src-type', 'src-type-local');
-        this.pub('local', 'iconName', 'local');
+        this.$.iconName = 'local';
         this.onclick = () => {
-          this.multiPub('external', {
-            modalActive: false,
-            currentActivity: 'upload-list',
-            modalCaption: this.l10n('selected'),
-            modalIcon: 'local',
+          this.set$({
+            '*modalActive': false,
+            '*currentActivity': 'upload-list',
+            '*modalCaption': this.l10n('selected'),
+            '*modalIcon': 'local',
           });
-          if (!this.read('external', 'files')?.length) {
+          if (!this.$['*files']?.length) {
             this.openSystemDialog();
           } else {
-            this.pub('external', 'modalActive', true);
+            this.$['*modalActive'] = true;
           }
         };
       },
       url: () => {
         this.applyL10nKey('src-type', 'src-type-from-url');
-        this.pub('local', 'iconName', 'url');
+        this.$.iconName = 'url';
         this.onclick = () => {
-          this.multiPub('external', {
-            currentActivity: 'url',
-            modalCaption: 'Import from external URL',
-            modalIcon: 'url',
-            modalActive: true,
+          this.set$({
+            '*currentActivity': 'url',
+            '*modalCaption': 'Import from external URL',
+            '*modalIcon': 'url',
+            '*modalActive': true,
           });
         };
       },
       camera: () => {
         this.applyL10nKey('src-type', 'src-type-camera');
-        window.setTimeout(() => {
-          if (this.blockRegistry['camera-source']) {
-            this.pub('local', 'iconName', 'camera');
-            this.onclick = () => {
-              this.multiPub('external', {
-                currentActivity: 'camera',
-                modalCaption: 'Camera',
-                modalIcon: 'camera',
-                modalActive: true,
-              });
-            };
-          } else {
-            this.style.display = 'none';
-          }
-        });
+        this.$.iconName = 'camera';
+        this.onclick = () => {
+          this.set$({
+            '*currentActivity': 'camera',
+            '*modalCaption': 'Camera',
+            '*modalIcon': 'camera',
+            '*modalActive': true,
+          });
+        };
       },
       draw: () => {
         this.applyL10nKey('src-type', 'src-type-draw');
-        this.pub('local', 'iconName', 'edit-draw');
+        this.$.iconName = 'edit-draw';
         this.onclick = () => {
-          this.multiPub('external', {
-            currentActivity: 'draw',
-            modalCaption: 'Draw',
-            modalIcon: 'edit-draw',
-            modalActive: true,
+          this.set$({
+            '*currentActivity': 'draw',
+            '*modalCaption': 'Draw',
+            '*modalIcon': 'edit-draw',
+            '*modalActive': true,
           });
         };
       },
       other: () => {
         this.applyL10nKey('src-type', 'src-type-other');
-        this.pub('local', 'iconName', 'dots');
+        this.$.iconName = 'dots';
         this.onclick = () => {
-          this.multiPub('external', {
-            currentActivity: 'external',
-            modalCaption: 'Other sources',
-            modalIcon: 'dots',
-            modalActive: true,
+          this.set$({
+            '*currentActivity': 'external',
+            '*modalCaption': 'Other sources',
+            '*modalIcon': 'dots',
+            '*modalActive': true,
           });
         };
       },
@@ -124,18 +114,11 @@ export class SourceBtn extends BlockComponent {
     };
     types[type]();
   }
-
-  set type(val) {
-    if (!val) {
-      return;
-    }
-    this._type = val;
-  }
 }
 SourceBtn.template = /*html*/ `
-<uc-icon loc="@name: iconName"></uc-icon>
+<uc-icon set="@name: iconName"></uc-icon>
 <div .txt l10n="src-type"></div>
 `;
 SourceBtn.bindAttributes({
-  type: ['property'],
+  type: null,
 });

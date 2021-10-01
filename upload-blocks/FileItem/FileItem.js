@@ -4,26 +4,24 @@ import { ACT } from '../dictionary.js';
 import { uploadFile } from '../../web_modules/upload-client.js';
 
 export class FileItem extends BlockComponent {
-  constructor() {
-    super();
-
-    this.initLocalState({
-      fileName: '',
-      thumb: '',
-      notImage: true,
-      badgeIcon: 'check',
-      'on.edit': () => {
-        this.multiPub('external', {
-          modalCaption: 'Edit file',
-          focusedEntry: this.entry,
-          currentActivity: ACT.UPLOAD_DETAILS,
-        });
-      },
-    });
-  }
+  init$ = {
+    fileName: '',
+    thumb: '',
+    notImage: true,
+    badgeIcon: 'check',
+    'on.edit': () => {
+      this.set$({
+        '*modalCaption': 'Edit file',
+        '*focusedEntry': this.entry,
+        '*currentActivity': ACT.UPLOAD_DETAILS,
+      });
+    },
+    '*focusedEntry': null,
+    '*uploadTrigger': null,
+  };
 
   set 'entry-id'(id) {
-    /** @type {import('../../symbiote/core/TypedState.js').TypedState} */
+    /** @type {import('../../symbiote/core/TypedData.js').TypedData} */
     this.entry = this.uploadCollection?.read(id);
 
     this.entry.subscribe('uuid', (uuid) => {
@@ -33,7 +31,7 @@ export class FileItem extends BlockComponent {
     });
 
     this.entry.subscribe('fileName', (name) => {
-      this.pub('local', 'fileName', name || 'No name...');
+      this.$.fileName = name || 'No name...';
     });
 
     this.entry.subscribe('uuid', (uuid) => {
@@ -65,15 +63,10 @@ export class FileItem extends BlockComponent {
   }
 
   initCallback() {
-    this.addToExternalState({
-      focusedEntry: null,
-      uploadTrigger: null,
-    });
-
-    this.pub('external', 'uploadTrigger', null);
+    this.$['*uploadTrigger'] = null;
     FileItem.activeInstances.add(this);
 
-    this.sub('external', 'uploadTrigger', (val) => {
+    this.sub('*uploadTrigger', (val) => {
       if (!val || !this.isConnected) {
         return;
       }
@@ -90,7 +83,7 @@ export class FileItem extends BlockComponent {
     };
   }
 
-  disconnectedCallback() {
+  destroyCallback() {
     super.disconnectedCallback();
     FileItem.activeInstances.delete(this);
   }
@@ -116,19 +109,19 @@ export class FileItem extends BlockComponent {
       this.ref.progress.style.opacity = '0';
       this.setAttribute('loaded', '');
       this.removeAttribute('uploading');
-      this.pub('local', 'badgeIcon', 'check');
+      this.$.badgeIcon = 'check';
       this.entry.setValue('uuid', fileInfo.uuid);
       this.entry.setValue('uploadProgress', 100);
     } catch (error) {
       this.setAttribute('error', '');
       this.removeAttribute('uploading');
-      this.multiPub('local', {
+      this.set$({
         badgeIcon: 'upload-error',
-      });
-      this.pub('external', 'message', {
-        caption: 'Upload error: ' + this.file.name,
-        text: error,
-        isError: true,
+        '*message': {
+          caption: 'Upload error: ' + this.file.name,
+          text: error,
+          isError: true,
+        },
       });
       this.entry.setValue('uploadErrorMsg', error);
     }
@@ -137,11 +130,11 @@ export class FileItem extends BlockComponent {
 
 FileItem.template = /*html*/ `
 <div .thumb ref="thumb"></div>
-<div file-name loc="textContent: fileName"></div>
+<div file-name set="textContent: fileName"></div>
 <div .badge>
-  <uc-icon loc="@name: badgeIcon"></uc-icon>
+  <uc-icon set="@name: badgeIcon"></uc-icon>
 </div>
-<button .edit-btn loc="onclick: on.edit;">
+<button .edit-btn set="onclick: on.edit;">
   <uc-icon name="edit-file"></uc-icon>
 </button>
 <div ref="progress" .progress></div>
@@ -149,5 +142,5 @@ FileItem.template = /*html*/ `
 FileItem.activeInstances = new Set();
 
 FileItem.bindAttributes({
-  'entry-id': ['property'],
+  'entry-id': null,
 });

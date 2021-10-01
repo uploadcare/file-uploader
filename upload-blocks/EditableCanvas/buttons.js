@@ -3,86 +3,86 @@ export const buttonsModel = [
     action: 'fullscreen',
     icon: '',
     l10n_name: 'toggle-fullscreen',
-    loc: '@name: fsIcon',
+    set: '@name: fsIcon',
   },
   // {
   //   action: 'guides',
   //   icon: 'edit-guides',
   //   l10n_name: 'toggle-guides',
-  //   loc: '',
+  //   set: '',
   // },
   {
     action: 'rotate_cw',
     icon: 'edit-rotate',
     l10n_name: 'rotate',
-    loc: '',
+    set: '',
   },
   {
     action: 'flip_v',
     icon: 'edit-flip-v',
     l10n_name: 'flip-vertical',
-    loc: '',
+    set: '',
   },
   {
     action: 'flip_h',
     icon: 'edit-flip-h',
     l10n_name: 'flip-horizontal',
-    loc: '',
+    set: '',
   },
   {
     action: 'brightness',
     icon: 'edit-brightness',
     l10n_name: 'brightness',
-    loc: '',
+    set: '',
   },
   {
     action: 'contrast',
     icon: 'edit-contrast',
     l10n_name: 'contrast',
-    loc: '',
+    set: '',
   },
   {
     action: 'saturation',
     icon: 'edit-saturation',
     l10n_name: 'saturation',
-    loc: '',
+    set: '',
   },
   // {
   //   action: 'resize',
   //   icon: 'edit-resize',
   //   l10n_name: 'resize',
-  //   loc: '',
+  //   set: '',
   // },
   // {
   //   action: 'crop',
   //   icon: 'edit-crop',
   //   l10n_name: 'crop',
-  //   loc: '',
+  //   set: '',
   // },
   {
     action: 'color',
     icon: 'edit-color',
     l10n_name: 'select-color',
-    loc: '',
+    set: '',
     ref: 'color_btn',
   },
   {
     action: 'text',
     icon: 'edit-text',
     l10n_name: 'text',
-    loc: '',
+    set: '',
   },
   {
     action: 'draw',
     icon: 'edit-draw',
     l10n_name: 'draw',
-    loc: '',
+    set: '',
   },
   {
     action: 'cancel',
     icon: 'close',
     l10n_name: 'cancel-edit',
-    loc: '',
+    set: '',
   },
 ];
 
@@ -93,7 +93,7 @@ function bthHtml(btn) {
   ref="${btn.ref}"
   l10n="title:${btn.l10n_name}">
   <uc-icon
-    loc="${btn.loc}" 
+    set="${btn.set}" 
     name="${btn.icon}">
   </uc-icon>
 </button>`.trim();

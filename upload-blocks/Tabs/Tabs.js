@@ -70,8 +70,8 @@ export class Tabs extends BlockComponent {
 }
 
 Tabs.bindAttributes({
-  'tab-list': ['property'],
-  default: ['property'],
+  'tab-list': null,
+  default: null,
 });
 
 Tabs.template = /*html*/ `

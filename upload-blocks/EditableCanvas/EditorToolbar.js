@@ -1,4 +1,3 @@
-import { applyAttributes, applyStyles } from '../../symbiote/utils/dom-helpers.js';
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 import { CanMan } from './CanMan.js';
 import { Range } from '../Range/Range.js';
@@ -18,10 +17,10 @@ export class EditorToolbar extends BlockComponent {
       fullscreen: () => {
         if (document.fullscreenElement === this.editor) {
           document.exitFullscreen();
-          this.pub('local', 'fsIcon', FS_ICON.FS);
+          this.$.fsIcon = FS_ICON.FS;
         } else {
           this.editor.requestFullscreen();
-          this.pub('local', 'fsIcon', FS_ICON.EXIT);
+          this.$.fsIcon = FS_ICON.EXIT;
         }
       },
       rotate_cw: () => {
@@ -35,21 +34,21 @@ export class EditorToolbar extends BlockComponent {
       },
       brightness: () => {
         this.rangeCtx = 'brightness';
-        this.multiPub('local', {
+        this.set$({
           rangeActive: true,
           rangeCaption: this.l10n('brightness'),
         });
       },
       contrast: () => {
         this.rangeCtx = 'contrast';
-        this.multiPub('local', {
+        this.set$({
           rangeActive: true,
           rangeCaption: this.l10n('contrast'),
         });
       },
       saturation: () => {
         this.rangeCtx = 'saturate';
-        this.multiPub('local', {
+        this.set$({
           rangeActive: true,
           rangeCaption: this.l10n('saturation'),
         });
@@ -75,53 +74,50 @@ export class EditorToolbar extends BlockComponent {
     };
   }
 
-  constructor() {
-    super();
-    this.buttons = new Set();
+  init$ = {
+    fsIcon: FS_ICON.FS,
+    rangeActive: false,
+    rangeCaption: '',
 
-    /** @type {import('./EditableCanvas.js').EditableCanvas} */
-    this.editor = null;
-    this.initLocalState({
-      fsIcon: FS_ICON.FS,
-      rangeActive: false,
-      rangeCaption: '',
-
-      onBtnClick: (e) => {
-        this.canMan.stopText();
-        this.rangeCtx = null;
-        this.ref.range['setValue'](100);
-        this.multiPub('local', {
-          rangeActive: false,
-          rangeCaption: '',
+    onBtnClick: (e) => {
+      this.canMan.stopText();
+      this.rangeCtx = null;
+      this.ref.range['setValue'](100);
+      this.set$({
+        rangeActive: false,
+        rangeCaption: '',
+      });
+      /** @type {HTMLButtonElement} */
+      let btnEl = e.target.closest('button');
+      if (btnEl) {
+        this.buttons.add(btnEl);
+        this.buttons.forEach((btn) => {
+          if (btn === btnEl) {
+            btn.setAttribute('current', '');
+          } else {
+            btn.removeAttribute('current', '');
+          }
         });
-        /** @type {HTMLButtonElement} */
-        let btnEl = e.target.closest('button');
-        if (btnEl) {
-          this.buttons.add(btnEl);
-          this.buttons.forEach((btn) => {
-            if (btn === btnEl) {
-              btn.setAttribute('current', '');
-            } else {
-              btn.removeAttribute('current', '');
-            }
-          });
-        }
-        let action = btnEl.getAttribute('action');
-        console.log(action);
-        if (!action) {
-          return;
-        }
-        this.actionsMap[action]();
-      },
-      onRangeChange: () => {
-        this.canMan?.[this.rangeCtx]?.(this.ref.range['value']);
-      },
-      onColorChange: () => {
-        this.ref.color_btn.style.color = this.ref.color['value'];
-        this.canMan.setColor(this.ref.color['value']);
-      },
-    });
-  }
+      }
+      let action = btnEl.getAttribute('action');
+      console.log(action);
+      if (!action) {
+        return;
+      }
+      this.actionsMap[action]();
+    },
+    onRangeChange: () => {
+      this.canMan?.[this.rangeCtx]?.(this.ref.range['value']);
+    },
+    onColorChange: () => {
+      this.ref.color_btn.style.color = this.ref.color['value'];
+      this.canMan.setColor(this.ref.color['value']);
+    },
+  };
+
+  buttons = new Set();
+  /** @type {import('./EditableCanvas.js').EditableCanvas} */
+  editor = null;
 
   initCallback() {
     this.ref.color_btn.style.color = CanMan.defaultColor;
@@ -136,14 +132,24 @@ export class EditorToolbar extends BlockComponent {
   }
 }
 EditorToolbar.template = /*html*/ `
-<div .btns ref="btns" loc="onclick: onBtnClick">${getButtons()}</div>
-<div .range-caption loc="textContent: rangeCaption"></div>
+<div 
+  .btns 
+  ref="btns" 
+  set="onclick: onBtnClick">${getButtons()}</div>
+<div 
+  .range-caption
+  set="textContent: rangeCaption">
+</div>
 <uc-range 
   min="0" 
   max="200" 
   value="100" 
   ref="range"
-  loc="onchange: onRangeChange; @visible: rangeActive">
+  set="onchange: onRangeChange; @visible: rangeActive">
 </uc-range>
-<input ref="color" value="${CanMan.defaultColor}" type="color" loc="onchange: onColorChange">
+<input 
+  ref="color" 
+  value="${CanMan.defaultColor}" 
+  type="color" 
+  set="onchange: onColorChange">
 `;
