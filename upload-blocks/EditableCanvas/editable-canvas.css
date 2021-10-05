@@ -72,7 +72,7 @@ uc-editor-toolbar > .range-caption {
 
 uc-editor-toolbar > uc-range {
   position: absolute !important;
-  bottom: var(--gap-max);
+  bottom: 0;
   width: 100%;
   transition: .2s;
   pointer-events: all;
