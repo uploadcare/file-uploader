@@ -28,7 +28,7 @@ uc-file-item .thumb {
   background-position: center center;
   border-radius: var(--ui-radius-2);
 }
-uc-file-item [file-name] {
+uc-file-item .file-name {
   display: flex;
   align-items: center;
   padding-left: var(--gap-mid);
@@ -36,7 +36,7 @@ uc-file-item [file-name] {
   font-size: 0.9em;
   opacity: var(--opacity-max);
 }
-uc-file-item:hover [file-name] {
+uc-file-item:hover .file-name {
   opacity: 1;
 }
 uc-file-item button {
