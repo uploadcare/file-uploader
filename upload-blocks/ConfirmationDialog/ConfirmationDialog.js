@@ -2,10 +2,10 @@ import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 
 export class ConfirmationDialog extends BlockComponent {
   init$ = {
-    'on.no': () => {
+    onNo: () => {
       this.historyBack();
     },
-    'on.yes': () => {
+    onYes: () => {
       this.$['*confirmationAction']?.();
     },
     '*confirmationAction': () => {
@@ -17,7 +17,7 @@ export class ConfirmationDialog extends BlockComponent {
 ConfirmationDialog.template = /*html*/ `
 <div .txt l10n="are-you-sure"></div>
 <div .toolbar>
-  <button .no-btn set="onclick: on.no" l10n="no"></button>
-  <button .yes-btn set="onclick: on.yes" l10n="yes"></button>
+  <button .no-btn set="onclick: onNo" l10n="no"></button>
+  <button .yes-btn set="onclick: onYes" l10n="yes"></button>
 </div>
 `;

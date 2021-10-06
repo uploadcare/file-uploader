@@ -5,7 +5,7 @@ export class MessageBox extends BlockComponent {
     iconName: 'info',
     captionTxt: 'Message caption',
     msgTxt: 'Message...',
-    'on.close': () => {
+    onClose: () => {
       this.removeAttribute('active');
     },
     '*message': null,
@@ -36,7 +36,7 @@ MessageBox.template = /*html*/ `
 <div .heading>
   <uc-icon set="@name: iconName"></uc-icon>
   <div .caption set="textContent: captionTxt"></div>
-  <button set="onclick: on.close">
+  <button set="onclick: onClose">
     <uc-icon name="close"></uc-icon>
   </button>
 </div>

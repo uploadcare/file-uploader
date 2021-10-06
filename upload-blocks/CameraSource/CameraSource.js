@@ -3,13 +3,13 @@ import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 export class CameraSource extends BlockComponent {
   init$ = {
     video: null,
-    'on.cancel': () => {
+    onCancel: () => {
       this.set$({
         '*modalActive': false,
         '*currentActivity': '',
       });
     },
-    'on.shot': () => {
+    onShot: () => {
       this._shot();
     },
   };
@@ -80,7 +80,15 @@ CameraSource.template = /*html*/ `
   ref="video">
 </video>
 <div .toolbar>
-  <button .cancel-btn set="onclick: on.cancel" l10n="cancel"></button>
-  <button .shot-btn set="onclick: on.shot" l10n="camera-shot"></button>
+  <button 
+    .cancel-btn 
+    set="onclick: onCancel" 
+    l10n="cancel">
+  </button>
+  <button 
+    .shot-btn 
+    set="onclick: onShot" 
+    l10n="camera-shot">
+  </button>
 </div>
 `;

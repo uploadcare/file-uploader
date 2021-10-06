@@ -55,4 +55,5 @@ uc-range .center {
 
 uc-range .caption {
   position: absolute;
+  user-select: none;
 }

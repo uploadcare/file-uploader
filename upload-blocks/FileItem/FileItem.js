@@ -9,7 +9,7 @@ export class FileItem extends BlockComponent {
     thumb: '',
     notImage: true,
     badgeIcon: 'check',
-    'on.edit': () => {
+    onEdit: () => {
       this.set$({
         '*modalCaption': 'Edit file',
         '*focusedEntry': this.entry,
@@ -134,7 +134,7 @@ FileItem.template = /*html*/ `
 <div .badge>
   <uc-icon set="@name: badgeIcon"></uc-icon>
 </div>
-<button .edit-btn set="onclick: on.edit;">
+<button .edit-btn set="onclick: onEdit;">
   <uc-icon name="edit-file"></uc-icon>
 </button>
 <div ref="progress" .progress></div>

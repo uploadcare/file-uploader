@@ -4,16 +4,16 @@ import { FileItem } from '../FileItem/FileItem.js';
 export class UploadList extends BlockComponent {
   init$ = {
     uploadBtnDisabled: false,
-    'on.add': () => {
+    onAdd: () => {
       this.$['*currentActivity'] = 'source-select';
     },
-    'on.upload': () => {
+    onUpload: () => {
       this.set$({
         uploadBtnDisabled: true,
         '*uploadTrigger': {},
       });
     },
-    'on.cancel': () => {
+    onCancel: () => {
       this.set$({
         '*confirmationAction': () => {
           this.$['*modalActive'] = false;
@@ -61,16 +61,16 @@ UploadList.template = /*html*/ `
 <div .toolbar-el>
   <button 
     .cancel-btn 
-    set="onclick: on.cancel;" 
+    set="onclick: onCancel;" 
     l10n="cancel"></button>
   <div></div>
   <button 
     .add-more-btn 
-    set="onclick: on.add" 
+    set="onclick: onAdd" 
     l10n="add-more"></button>
   <button 
     .upload-btn 
-    set="onclick: on.upload; @disabled: uploadBtnDisabled" 
+    set="onclick: onUpload; @disabled: uploadBtnDisabled" 
     l10n="upload"></button>
 </div>
 `;

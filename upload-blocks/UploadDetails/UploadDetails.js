@@ -3,21 +3,24 @@ import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 export class UploadDetails extends BlockComponent {
   init$ = {
     fileSize: 0,
+    fileName: '',
     cdnUrl: '',
     errorTxt: '',
     editBtnHidden: true,
-    'on.back': () => {
+    onNameInput: null,
+    onBack: () => {
       this.historyBack();
     },
-    'on.remove': () => {
+    onRemove: () => {
       /** @type {File[]} */
       this.uploadCollection.remove(this.entry.__ctxId);
       this.historyBack();
     },
-    'on.tabSelected': (e) => {
-      console.log(e.detail.tab);
+    onTabSelected: (e) => {
+      // TODO: catches event from range input
+      console.log(e?.detail?.tab);
     },
-    'on.edit': () => {
+    onEdit: () => {
       if (this.entry.getValue('uuid')) {
         this.$['*currentActivity'] = 'cloud-image-edit';
       }
@@ -47,11 +50,11 @@ export class UploadDetails extends BlockComponent {
         }
       }
       this.entry.subscribe('fileName', (name) => {
-        this.ref['file-name-input']['value'] = name;
-        this.ref['file-name-input'].oninput = () => {
+        this.$.fileName = name;
+        this.$.onNameInput = () => {
           Object.defineProperty(this._file, 'name', {
             writable: true,
-            value: this.ref['file-name-input']['value'],
+            value: this.ref.file_name_input['value'],
           });
         };
       });
@@ -92,12 +95,16 @@ export class UploadDetails extends BlockComponent {
 UploadDetails.template = /*html*/ `
 <uc-tabs 
   tab-list="tab-view, tab-details"
-  set="onchange: on.tabSelected">
+  set="onchange: onTabSelected">
   <div tab-ctx="tab-details" ref="details" .details>
 
     <div .info-block>
       <div .info-block_name l10n="file-name"></div>
-      <input name="name-input" ref="file-name-input" type="text" />
+      <input 
+        name="name-input"
+        ref="file_name_input"
+        set="value: fileName; oninput: onNameInput"
+        type="text" />
     </div>
 
     <div .info-block>
@@ -107,7 +114,9 @@ UploadDetails.template = /*html*/ `
 
     <div .info-block>
       <div .info-block_name l10n="cdn-url"></div>
-      <a target="_blank" set="textContent: cdnUrl; @href: cdnUrl;"></a>
+      <a 
+        target="_blank" 
+        set="textContent: cdnUrl; @href: cdnUrl;"></a>
     </div>
 
     <div set="textContent: errorTxt;"></div>
@@ -123,15 +132,21 @@ UploadDetails.template = /*html*/ `
 </uc-tabs>
 
 <div .toolbar>
-  <button .back-btn set="onclick: on.back">
+  <button 
+    .back-btn 
+    set="onclick: onBack">
     <uc-icon name="back"></uc-icon>
     <span l10n="back"></span>
   </button>
-  <button .edit-btn set="onclick: on.edit; @hidden: editBtnHidden;">
+  <button 
+    .edit-btn 
+    set="onclick: onEdit; @hidden: editBtnHidden;">
     <uc-icon name="edit"></uc-icon>
     <span l10n="edit-image"></span>
   </button>
-  <button .remove-btn set="onclick: on.remove">
+  <button 
+    .remove-btn 
+    set="onclick: onRemove">
     <uc-icon name="remove"></uc-icon>
     <span l10n="remove-from-list"></span>
   </button>
