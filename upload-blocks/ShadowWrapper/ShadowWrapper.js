@@ -1,10 +1,6 @@
 import { BaseComponent } from '../../symbiote/core/BaseComponent.js';
 
 export class ShadowWrapper extends BaseComponent {
-  init$ = {
-    'css-src': '',
-  };
-
   pauseRender = true;
   renderShadow = true;
 

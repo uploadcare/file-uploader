@@ -3,6 +3,7 @@ uc-range {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  height: var(--ui-size);
 }
 
 uc-range datalist {
@@ -25,6 +26,7 @@ uc-range .track {
   left: 0;
   right: 0;
   height: var(--ui-size);
+  border: 2px solid var(--clr-2);
 }
 
 uc-range .slider {
@@ -38,22 +40,28 @@ uc-range .slider {
 
 uc-range .bar {
   position: absolute;
-  height: var(--ui-size);
+  height: 100%;
   left: 0;
+  background-color: var(--clr-shade-1);
+  transition: background-color .2s;
+}
+uc-range .bar[active] {
   background-color: var(--clr-1);
 }
 
 uc-range .center {
   position: absolute;
-  background-color: var(--clr-2);
-  height: 3px;
-  width: 3px;
+  height: 100%;
+  border: 5px solid transparent;
+  border-top: 5px solid var(--clr-1);
+  border-bottom: 5px solid var(--clr-1);
   left: 50%;
-  border-radius: 100%;
   transform: translateX(-50%);
 }
 
 uc-range .caption {
+  display: inline-flex;
+  justify-content: center;
   position: absolute;
   user-select: none;
 }

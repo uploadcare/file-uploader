@@ -63,13 +63,6 @@ uc-editor-toolbar .btns > button[current] {
   color: var(--clr-2);
 }
 
-uc-editor-toolbar > .range-caption {
-  position: absolute !important;
-  bottom: 100px;
-  transition: .2s;
-  color: var(--clr-2);
-}
-
 uc-editor-toolbar > uc-range {
   position: absolute !important;
   bottom: 0;

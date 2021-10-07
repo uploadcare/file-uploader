@@ -1,10 +1,12 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 import { CanMan } from './CanMan.js';
 import { Range } from '../Range/Range.js';
+import { Color } from '../Color/Color.js';
 
 import { getButtons } from './buttons.js';
 
 Range.reg('range');
+Color.reg('color');
 
 const FS_ICON = {
   FS: 'fullscreen',
@@ -78,6 +80,7 @@ export class EditorToolbar extends BlockComponent {
     fsIcon: FS_ICON.FS,
     rangeActive: false,
     rangeCaption: '',
+    rangeVal: 100,
 
     onBtnClick: (e) => {
       this.canMan.stopText();
@@ -88,7 +91,7 @@ export class EditorToolbar extends BlockComponent {
         rangeCaption: '',
       });
       /** @type {HTMLButtonElement} */
-      let btnEl = e.target.closest('button');
+      let btnEl = e.target.closest('[action]');
       if (btnEl) {
         this.buttons.add(btnEl);
         this.buttons.forEach((btn) => {
@@ -109,8 +112,7 @@ export class EditorToolbar extends BlockComponent {
     onRangeChange: () => {
       this.canMan?.[this.rangeCtx]?.(this.ref.range['value']);
     },
-    onColorChange: () => {
-      this.ref.color_btn.style.color = this.ref.color['value'];
+    onColor: () => {
       this.canMan.setColor(this.ref.color['value']);
     },
   };
@@ -120,7 +122,6 @@ export class EditorToolbar extends BlockComponent {
   editor = null;
 
   initCallback() {
-    this.ref.color_btn.style.color = CanMan.defaultColor;
     this.defineAccessor('refMap', (rMap) => {
       if (!rMap) {
         return;
@@ -136,20 +137,10 @@ EditorToolbar.template = /*html*/ `
   .btns 
   ref="btns" 
   set="onclick: onBtnClick">${getButtons()}</div>
-<div 
-  .range-caption
-  set="textContent: rangeCaption">
-</div>
 <uc-range 
   min="0" 
   max="200" 
-  value="100" 
   ref="range"
-  set="onchange: onRangeChange; @visible: rangeActive">
+  set="value: rangeVal; onchange: onRangeChange; @visible: rangeActive; $.caption: rangeCaption">
 </uc-range>
-<input 
-  ref="color" 
-  value="${CanMan.defaultColor}" 
-  type="color" 
-  set="onchange: onColorChange">
 `;

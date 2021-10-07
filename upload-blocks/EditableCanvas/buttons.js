@@ -60,11 +60,7 @@ export const buttonsModel = [
   //   set: '',
   // },
   {
-    action: 'color',
-    icon: 'edit-color',
-    l10n_name: 'select-color',
-    set: '',
-    ref: 'color_btn',
+    clr: true,
   },
   {
     action: 'text',
@@ -87,8 +83,7 @@ export const buttonsModel = [
 ];
 
 function bthHtml(btn) {
-  return /*html*/ `
-<button 
+  return /*html*/ `<button 
   action="${btn.action}" 
   ref="${btn.ref}"
   l10n="title:${btn.l10n_name}">
@@ -99,8 +94,14 @@ function bthHtml(btn) {
 </button>`.trim();
 }
 
+const clrHtml = /*html*/ `<uc-color 
+  ref="color" 
+  action="color"
+  set="onchange: onColor" 
+  l10n="title:select-color"></uc-color>`;
+
 export function getButtons() {
   return buttonsModel.reduce((acc, btn) => {
-    return (acc += bthHtml(btn));
+    return (acc += btn.clr ? clrHtml : bthHtml(btn));
   }, '');
 }

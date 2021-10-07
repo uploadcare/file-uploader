@@ -25,4 +25,5 @@
   --clr-soft-2: rgba(var(--rgb-2), var(--opacity-mid));
 
   --clr-shade-1: rgba(var(--rgb-1), var(--opacity-min));
+  --clr-shade-2: rgba(var(--rgb-2), var(--opacity-mid));
 }
