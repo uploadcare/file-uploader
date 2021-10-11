@@ -1,16 +1,16 @@
 .uc-wgt-theme, .uc-wgt-common, :host {
-  --rgb-1: 194, 225, 255;
-  --rgb-2: 40, 40, 40;
-  --rgb-txt: 210, 210, 210;
+  --rgb-1: 0, 122, 255;
+  --rgb-2: 241, 241, 241;
+  --rgb-txt: 35, 35, 35;
   --rgb-err: 255, 20, 20;
   --opacity-min: 0.2;
   --opacity-mid: 0.6;
   --opacity-max: 0.8;
   --ui-size: 38px;
-  --ui-radius-1: 4px;
+  --ui-radius-1: 10px;
   --ui-radius-2: 4px;
   --ui-transition: 0.2s;
-  --ui-shadow: 0 2px 12px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.08);
+  --ui-shadow: 0px 0px 1px rgba(0, 0, 0, 0.49), 0px 6px 40px rgba(0, 0, 0, 0.25), inset 0px 0px 2px rgba(255, 255, 255, 0.8);
   --gap-min: 2px;
   --gap-mid: 10px;
   --gap-max: 20px;
