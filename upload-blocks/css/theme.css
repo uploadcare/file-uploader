@@ -1,6 +1,7 @@
 .uc-wgt-theme, .uc-wgt-common, :host {
-  --rgb-1: 0, 122, 255;
-  --rgb-2: 241, 241, 241;
+  --rgb-1: 89, 101, 112;
+  --rgb-2: 233, 233, 233;
+
   --rgb-txt: 35, 35, 35;
   --rgb-err: 255, 20, 20;
   --opacity-min: 0.2;
@@ -15,15 +16,53 @@
   --gap-mid: 10px;
   --gap-max: 20px;
   --line-width: 1px;
+  
 
+
+
+  /* trying HSL */
+  --h-basis: 208;
+  --s-basis: 4%;
+
+  --h-action: 211;
+  --s-action: 100%;
+
+  --l-darkest: 15%;
+  --l-mid: 50%;
+  --l-light: 92%;
+  --l-lightest: 97%;
+
+  --rgb-action: 0, 122, 255;
+
+
+
+
+
+
+  /*clrs*/
+
+  
+  --clr-txt: hsl(var(--h-basis),var(--s-basis),var(--l-darkest));
+  --clr-soft-txt: hsl(var(--h-basis),var(--s-basis),var(--l-mid));
+
+  --clr-primary-bgr: hsl(var(--h-basis),var(--s-basis),var(--l-lightest));
+  --clr-secondary-bgr: hsl(var(--h-basis),var(--s-basis),var(--l-light));
+
+  --clr-err: rgb(var(--rgb-err));
+
+  --clr-btn-txt: hsl(var(--h-action),var(--s-action),var(--l-mid));
+
+  /*borders*/
+  --border-thin: 1px solid hsla(var(--h-basis),var(--s-basis),var(--l-darkest), 0.05);
+  
+
+  /* hard to use */
   --clr-1: rgb(var(--rgb-1));
   --clr-2: rgb(var(--rgb-2));
-  --clr-txt: rgb(var(--rgb-txt));
-  --clr-err: rgb(var(--rgb-err));
 
   --clr-soft-1: rgba(var(--rgb-1), var(--opacity-mid));
   --clr-soft-2: rgba(var(--rgb-2), var(--opacity-mid));
 
   --clr-shade-1: rgba(var(--rgb-1), var(--opacity-min));
-  --clr-shade-2: rgba(var(--rgb-2), var(--opacity-mid));
+  --clr-shade-2: rgba(var(--rgb-2), var(--opacity-min));
 }

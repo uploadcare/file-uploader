@@ -7,7 +7,7 @@ uc-modal {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: rgba(var(--rgb-1), var(--opacity-min));
+  background-color: var(--clr-modal-bgr);
   color: rgb(var(--rgb-1));
   padding: var(--gap-mid);
   z-index: 10000;
@@ -26,13 +26,18 @@ uc-modal button.close-btn {
   height: var(--ui-size);
   width: var(--ui-size);
   background-color: transparent;
-  color: var(--clr-1);
+  color: var(--clr-txt);
   border-radius: var(--ui-radius-2);
   border: none;
   cursor: pointer;
+  opacity: 0.5;
+  transition: opacity var(--ui-transition) ease;
+}
+uc-modal button.close-btn:hover {
+  opacity: 1;
 }
 uc-modal > .dialog-el {
-  background-color: rgb(var(--rgb-2));
+  background-color: var(--clr-bgr);
   box-shadow: var(--ui-shadow);
   border-radius: var(--ui-radius-1);
   min-width: 410px;
@@ -43,11 +48,14 @@ uc-modal .heading-el {
   grid-template-columns: min-content 1fr min-content;
   line-height: var(--ui-size);
   padding: var(--gap-mid);
-  color: var(--clr-txt);
+  color: var(--clr-soft-txt);
+  background-color: var(--clr-secondary-bgr);
+  border-radius: var(--ui-radius-1) var(--ui-radius-1) 0 0;
+  border-bottom: var(--border-thin);
 }
 uc-modal .caption-el {
-  font-size: 1em;
-  color: var(--clr-txt);
+  font-size: 0.9em;
+  font-weight: bold;
 }
 
 uc-modal uc-drop-area {
