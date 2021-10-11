@@ -28,11 +28,10 @@
   --s-action: 100%;
 
   --l-darkest: 15%;
-  --l-mid: 50%;
-  --l-light: 92%;
+  --l-dark: 50%;
+  --l-mid: 75%;
+  --l-light: 93%;
   --l-lightest: 97%;
-
-  --rgb-action: 0, 122, 255;
 
 
 
@@ -43,18 +42,19 @@
 
   
   --clr-txt: hsl(var(--h-basis),var(--s-basis),var(--l-darkest));
-  --clr-soft-txt: hsl(var(--h-basis),var(--s-basis),var(--l-mid));
+  --clr-soft-txt: hsl(var(--h-basis),var(--s-basis),var(--l-dark));
 
   --clr-primary-bgr: hsl(var(--h-basis),var(--s-basis),var(--l-lightest));
   --clr-secondary-bgr: hsl(var(--h-basis),var(--s-basis),var(--l-light));
+  --clr-shader: hsla(var(--h-basis),var(--s-basis),var(--l-darkest),var(--opacity-mid));
 
   --clr-err: rgb(var(--rgb-err));
 
-  --clr-btn-txt: hsl(var(--h-action),var(--s-action),var(--l-mid));
+  --clr-btn-txt: hsl(var(--h-action),var(--s-action),var(--l-dark));
 
   /*borders*/
   --border-thin: 1px solid hsla(var(--h-basis),var(--s-basis),var(--l-darkest), 0.05);
-  
+  --border-dashed: 2px dashed hsla(var(--h-basis),var(--s-basis),var(--l-mid));
 
   /* hard to use */
   --clr-1: rgb(var(--rgb-1));

@@ -1,13 +1,9 @@
 uc-source-btn {
   display: flex;
   align-items: center;
-  padding-right: 1em;
-  border-bottom: var(--line-width) solid var(--clr-shade-1);
+  padding-right: 1.5em;
   user-select: none;
   cursor: pointer;
-}
-uc-source-btn:last-of-type {
-  border-bottom: none;
 }
 
 uc-source-btn uc-icon {

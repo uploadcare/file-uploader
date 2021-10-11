@@ -7,8 +7,8 @@ uc-modal {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: var(--clr-modal-bgr);
-  color: rgb(var(--rgb-1));
+  background-color: var(--clr-shader);
+  color: var(--clr-txt);
   padding: var(--gap-mid);
   z-index: 10000;
   transition: opacity 0.4s;
@@ -30,18 +30,18 @@ uc-modal button.close-btn {
   border-radius: var(--ui-radius-2);
   border: none;
   cursor: pointer;
-  opacity: 0.5;
+  opacity: 0.4;
   transition: opacity var(--ui-transition) ease;
 }
 uc-modal button.close-btn:hover {
   opacity: 1;
 }
 uc-modal > .dialog-el {
-  background-color: var(--clr-bgr);
   box-shadow: var(--ui-shadow);
   border-radius: var(--ui-radius-1);
   min-width: 410px;
   min-height: var(--ui-size);
+  background-color: var(--clr-primary-bgr);
 }
 uc-modal .heading-el {
   display: grid;
@@ -61,7 +61,6 @@ uc-modal .caption-el {
 uc-modal uc-drop-area {
   border-radius: var(--ui-radius-2);
   margin: var(--gap-mid);
-  margin-top: 0;
   border: none;
   padding: 0;
 }

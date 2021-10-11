@@ -2,13 +2,11 @@ uc-drop-area {
   display: grid;
   grid-template-columns: min-content auto;
   border: var(--line-width) dashed var(--clr-txt);
-  border-radius: var(--ui-radius-1);
   padding: var(--gap-mid);
   overflow: hidden;
-  background-color: var(--clr-shade-1);
 }
 uc-drop-area .sources {
-  background-color: var(--clr-2);
+  background-color: var(--clr-primary-bgr);
   border-radius: var(--ui-radius-2);
   overflow: hidden;
 }
@@ -18,6 +16,9 @@ uc-drop-area .dropzone {
   align-items: center;
   justify-content: center;
   user-select: none;
+  border-radius: var(--ui-radius-1);
+  border: var(--border-dashed);
+  background-color: var(--clr-secondary-bgr);
 }
 uc-drop-area .dropzone .drop-txt {
   color: var(--clr-1);
