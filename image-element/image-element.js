@@ -1,14 +1,12 @@
 import { registerSw } from '../sw-manager/sw-manager.js';
-import { State } from '../symbiote/core/State.js';
+import { Data } from '../symbiote/core/Data.js';
 
 window.onload = () => {
-  document.execCommand("Stop", false);
+  document.execCommand('Stop', false);
   window.stop();
-}
-
+};
 
 export class ImageElement extends HTMLElement {
-
   constructor() {
     super();
     this.img = new Image();
@@ -51,7 +49,7 @@ export class ImageElement extends HTMLElement {
 
       if (!img.height) {
         img.height = 1;
-        clearHeight = true; 
+        clearHeight = true;
       }
 
       img.removeAttribute('src');
@@ -77,7 +75,6 @@ export class ImageElement extends HTMLElement {
       this._replace();
     }
     if (this.hasAttribute('use-proxy')) {
-
     }
   }
 
@@ -101,15 +98,6 @@ export class ImageElement extends HTMLElement {
   }
 
   static get observedAttributes() {
-    return [
-      'uuid',
-      'src',
-      'format',
-      'quality',
-      'w-step',
-      'use-proxy',
-      'use-worker',
-    ];
+    return ['uuid', 'src', 'format', 'quality', 'w-step', 'use-proxy', 'use-worker'];
   }
-  
 }

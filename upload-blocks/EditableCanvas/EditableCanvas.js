@@ -5,15 +5,16 @@ import { applyStyles } from '../../symbiote/utils/dom-helpers.js';
 EditorToolbar.reg('editor-toolbar');
 
 export class EditableCanvas extends BlockComponent {
+  init$ = {
+    refMap: null,
+  };
+
   constructor() {
     super();
     applyStyles(this, {
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
-    });
-    this.initLocalState({
-      refMap: null,
     });
   }
 
@@ -22,9 +23,7 @@ export class EditableCanvas extends BlockComponent {
     // @ts-ignore
     this.canvas = this.ref.cvs;
     this.canvCtx = this.canvas.getContext('2d');
-    this.multiPub('local', {
-      refMap: { ...this.ref },
-    });
+    this.$.refMap = { ...this.ref };
   }
 
   /** @param {HTMLImageElement} img */
@@ -66,6 +65,6 @@ EditableCanvas.template = /*html*/ `
   </g>
 </svg>
 <uc-editor-toolbar 
-  loc="refMap: refMap">
+  set="refMap: refMap">
 </uc-editor-toolbar>
 `;

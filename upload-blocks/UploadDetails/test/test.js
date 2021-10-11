@@ -24,7 +24,7 @@ window.onload = () => {
       isImage: true,
       mimeType: file.type,
     });
-    details.pub('external', 'focusedEntry', entry);
+    details.$['*focusedEntry'] = entry;
     console.log(details);
   });
 };

@@ -103,20 +103,23 @@ class Caret {
 }
 
 export class LiveHtmlElement extends BaseComponent {
-
   hl() {
     let offset = Caret.getPosition(this.ref.editor);
 
     this.ref.editor.textContent = this.ref.editor.textContent;
     let html = this.ref.editor.innerHTML;
-    html = html.replace(/&lt;/g, '<span -tag-arr->&lt;</span>')
+    html = html
+      .replace(/&lt;/g, '<span -tag-arr->&lt;</span>')
       .replace(/&gt;/g, '<span -tag-arr->&gt;</span>')
-      .split('="').map((chunk) => {
+      .split('="')
+      .map((chunk) => {
         return chunk.replace('"', '</span>"');
-      }).join(`="<span -attr->`)
+      })
+      .join(`="<span -attr->`)
       .replace(/"/g, '<span -quote->"</span>')
       .replace(/=/g, '<span -equal->=</span>')
-      .split('<span -tag-arr->&lt;</span>/').join('<span -tag-arr->&lt;/</span>');
+      .split('<span -tag-arr->&lt;</span>/')
+      .join('<span -tag-arr->&lt;/</span>');
     this.ref.editor.innerHTML = html;
 
     Caret.setPosition(offset, this.ref.editor);
@@ -188,11 +191,10 @@ export class LiveHtmlElement extends BaseComponent {
       this._setDefault();
     }
   }
-
 }
 
 LiveHtmlElement.bindAttributes({
-  src: ['property'],
+  src: null,
 });
 
 LiveHtmlElement.template = /*html*/ `

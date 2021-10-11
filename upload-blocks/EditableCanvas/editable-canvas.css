@@ -35,10 +35,10 @@ uc-editor-toolbar {
   overflow: hidden;
   pointer-events: none;
 }
+
 uc-editor-toolbar .btns {
   position: absolute;
   display: grid;
-  top: var(--gap-mid);
   left: var(--gap-mid);
   pointer-events: all;
 }
@@ -51,28 +51,21 @@ uc-editor-toolbar .btns > button {
   color: var(--clr-1);
 }
 uc-editor-toolbar .btns > button:first-of-type {
-  border-top-left-radius: 100%;
-  border-top-right-radius: 100%;
+  border-top-left-radius: var(--ui-radius-1);
+  border-top-right-radius: var(--ui-radius-1);
 }
 uc-editor-toolbar .btns > button:last-of-type {
-  border-bottom-left-radius: 100%;
-  border-bottom-right-radius: 100%;
+  border-bottom-left-radius: var(--ui-radius-1);
+  border-bottom-right-radius: var(--ui-radius-1);
 }
 uc-editor-toolbar .btns > button[current] {
   background-color: var(--clr-1);
   color: var(--clr-2);
 }
 
-uc-editor-toolbar > .range-caption {
-  position: absolute !important;
-  bottom: 100px;
-  transition: .2s;
-  color: var(--clr-2);
-}
-
 uc-editor-toolbar > uc-range {
   position: absolute !important;
-  bottom: var(--gap-max);
+  bottom: 0;
   width: 100%;
   transition: .2s;
   pointer-events: all;

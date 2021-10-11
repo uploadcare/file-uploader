@@ -1,19 +1,18 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 
 export class CameraSource extends BlockComponent {
-  constructor() {
-    super();
-    this.initLocalState({
-      video: null,
-      'on.cancel': () => {
-        this.pub('external', 'modalActive', false);
-        this.pub('external', 'currentActivity', '');
-      },
-      'on.shot': () => {
-        this._shot();
-      },
-    });
-  }
+  init$ = {
+    video: null,
+    onCancel: () => {
+      this.set$({
+        '*modalActive': false,
+        '*currentActivity': '',
+      });
+    },
+    onShot: () => {
+      this._shot();
+    },
+  };
 
   async _init() {
     let constr = {
@@ -33,7 +32,7 @@ export class CameraSource extends BlockComponent {
     this._canvas = document.createElement('canvas');
     this._ctx = this._canvas.getContext('2d');
     this._stream = await navigator.mediaDevices.getUserMedia(constr);
-    this.pub('local', 'video', this._stream);
+    this.$.video = this._stream;
   }
 
   _shot() {
@@ -55,19 +54,19 @@ export class CameraSource extends BlockComponent {
         isImage: true,
         mimeType: file.type,
       });
-      this.multiPub('external', {
-        currentActivity: 'upload-list',
+      this.set$({
+        '*currentActivity': 'upload-list',
       });
     });
   }
 
   initCallback() {
-    this.sub('external', 'currentActivity', (val) => {
+    this.sub('*currentActivity', (val) => {
       if (val === 'camera') {
         this._init();
       } else {
         this._stream?.getTracks()[0].stop();
-        this.pub('local', 'video', null);
+        this.$.video = null;
       }
     });
   }
@@ -77,11 +76,19 @@ CameraSource.template = /*html*/ `
 <video 
   autoplay 
   playsinline 
-  loc="srcObject: video"
+  set="srcObject: video"
   ref="video">
 </video>
 <div .toolbar>
-  <button .cancel-btn loc="onclick: on.cancel" l10n="cancel"></button>
-  <button .shot-btn loc="onclick: on.shot" l10n="camera-shot"></button>
+  <button 
+    .cancel-btn 
+    set="onclick: onCancel" 
+    l10n="cancel">
+  </button>
+  <button 
+    .shot-btn 
+    set="onclick: onShot" 
+    l10n="camera-shot">
+  </button>
 </div>
 `;

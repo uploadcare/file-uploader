@@ -15,32 +15,25 @@ let styleToCss = (style) => {
 };
 
 export class ExternalSource extends BlockComponent {
-  constructor() {
-    super();
+  init$ = {
+    counter: 0,
+    onDone: () => {
+      this.$['*currentActivity'] = 'upload-list';
+    },
+    '*externalSourceType': null,
+  };
 
-    this._externalSourceType = null;
-    this._iframe = null;
-
-    this.initLocalState({
-      counter: 0,
-      'on.done': () => {
-        this.pub('external', 'currentActivity', 'upload-list');
-      },
-    });
-  }
+  _externalSourceType = null;
+  _iframe = null;
 
   initCallback() {
-    this.addToExternalState({
-      externalSourceType: null,
-    });
-
-    this.externalState.sub('externalSourceType', (externalSourceType) => {
+    this.sub('*externalSourceType', (externalSourceType) => {
       this._externalSourceType = externalSourceType;
     });
 
-    this.externalState.sub('currentActivity', (val) => {
+    this.sub('*currentActivity', (val) => {
       if (val === 'external') {
-        this.pub('local', 'counter', 0);
+        this.$.counter = 0;
         this.mountIframe();
       } else if (this._iframe) {
         this.unmountIframe();
@@ -53,7 +46,7 @@ export class ExternalSource extends BlockComponent {
   }
 
   async handleFileSelected(message) {
-    this.pub('local', 'counter', this.localState.read('counter') + 1);
+    this.$.counter = this.$.counter + 1;
 
     // TODO: check for alternatives, see https://github.com/uploadcare/uploadcare-widget/blob/f5d3e8c9f67781bed2eb69814c8f86a4cc035473/src/widget/tabs/remote-tab.js#L102
     let { url } = message;
@@ -152,9 +145,9 @@ ExternalSource.template = /*html*/ `
 <div .toolbar>
   <div .selected-counter>
     <span l10n="selected-count"></span>
-    <span loc="textContent: counter"></span>
+    <span set="textContent: counter"></span>
   </div>
-  <button .done-btn loc="onclick: on.done">
+  <button .done-btn set="onclick: onDone">
     <uc-icon name="check"></uc-icon>
   </button>
 </div>

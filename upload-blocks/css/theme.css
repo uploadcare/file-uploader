@@ -7,8 +7,8 @@
   --opacity-mid: 0.6;
   --opacity-max: 0.8;
   --ui-size: 38px;
-  --ui-radius-1: 2px;
-  --ui-radius-2: 2px;
+  --ui-radius-1: 4px;
+  --ui-radius-2: 4px;
   --ui-transition: 0.2s;
   --ui-shadow: 0 2px 12px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.08);
   --gap-min: 2px;
@@ -25,4 +25,5 @@
   --clr-soft-2: rgba(var(--rgb-2), var(--opacity-mid));
 
   --clr-shade-1: rgba(var(--rgb-1), var(--opacity-min));
+  --clr-shade-2: rgba(var(--rgb-2), var(--opacity-mid));
 }

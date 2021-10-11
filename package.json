@@ -17,10 +17,13 @@
     "upload-client.js": "https://unpkg.com/@uploadcare/upload-client@2.0.0-alpha.10/dist/index.browser.js"
   },
   "devDependencies": {
+    "@babel/eslint-parser": "^7.15.7",
+    "@babel/preset-env": "^7.15.6",
     "esbuild": "^0.12.16",
     "eslint": "^6.8.0",
     "eslint-config-prettier": "^6.11.0",
     "husky": "^1.3.1",
+    "lerna": "^3.22.1",
     "lint-staged": "^11.1.2",
     "prettier": "^2.0.5",
     "prettier-plugin-jsdoc": "0.0.17",

@@ -2,47 +2,47 @@ import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 import { FileItem } from '../FileItem/FileItem.js';
 
 export class UploadList extends BlockComponent {
-
-  constructor() {
-    super();
-    this.initLocalState({
-      uploadBtnDisabled: false,
-      'on.add': () => {
-        this.pub('external', 'currentActivity', 'source-select');
-      },
-      'on.upload': () => {
-        this.pub('local', 'uploadBtnDisabled', true);
-        this.pub('external', 'uploadTrigger', {});
-      },
-      'on.cancel': () => {
-        this.pub('external', 'confirmationAction', () => {
-          this.pub('external', 'modalActive', false);
+  init$ = {
+    uploadBtnDisabled: false,
+    onAdd: () => {
+      this.$['*currentActivity'] = 'source-select';
+    },
+    onUpload: () => {
+      this.set$({
+        uploadBtnDisabled: true,
+        '*uploadTrigger': {},
+      });
+    },
+    onCancel: () => {
+      this.set$({
+        '*confirmationAction': () => {
+          this.$['*modalActive'] = false;
           this.uploadCollection.clearAll();
-        });
-        this.pub('external', 'currentActivity', 'confirmation');
-      },
-    });
+        },
+        '*currentActivity': 'confirmation',
+      });
+    },
+  };
 
-    this._renderMap = Object.create(null);
-  }
+  _renderMap = Object.create(null);
 
   initCallback() {
     this.uploadCollection.observe(() => {
       let notUploaded = this.uploadCollection.findItems((item) => {
         return !item.getValue('uuid');
       });
-      this.pub('local', 'uploadBtnDisabled', !notUploaded.length);
+      this.$.uploadBtnDisabled = !notUploaded.length;
     });
-    this.sub('external', 'uploadList', (/** @type {String[]} */ list) => {
+    this.sub('*uploadList', (/** @type {String[]} */ list) => {
       if (!list.length) {
-        this.pub('external', 'currentActivity', '');
+        this.$['*currentActivity'] = '';
         return;
       }
       list.forEach((id) => {
         if (!this._renderMap[id]) {
           let item = new FileItem();
           this.ref.files.prepend(item);
-          item.setAttribute('entry-id', id);
+          item['entry-id'] = id;
           this._renderMap[id] = item;
         }
         for (let id in this._renderMap) {
@@ -54,15 +54,23 @@ export class UploadList extends BlockComponent {
       });
     });
   }
-  
 }
 
 UploadList.template = /*html*/ `
 <div .files-el ref="files"></div>
 <div .toolbar-el>
-  <button .cancel-btn loc="onclick: on.cancel;" l10n="cancel"></button>
+  <button 
+    .cancel-btn 
+    set="onclick: onCancel;" 
+    l10n="cancel"></button>
   <div></div>
-  <button .add-more-btn loc="onclick: on.add" l10n="add-more"></button>
-  <button .upload-btn loc="onclick: on.upload; @disabled: uploadBtnDisabled" l10n="upload"></button>
+  <button 
+    .add-more-btn 
+    set="onclick: onAdd" 
+    l10n="add-more"></button>
+  <button 
+    .upload-btn 
+    set="onclick: onUpload; @disabled: uploadBtnDisabled" 
+    l10n="upload"></button>
 </div>
 `;
