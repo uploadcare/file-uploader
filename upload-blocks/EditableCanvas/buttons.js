@@ -82,7 +82,7 @@ export const buttonsModel = [
   },
 ];
 
-function bthHtml(btn) {
+function getBthHtml(btn) {
   return /*html*/ `<button 
   action="${btn.action}" 
   ref="${btn.ref}"
@@ -102,6 +102,6 @@ const clrHtml = /*html*/ `<uc-color
 
 export function getButtons() {
   return buttonsModel.reduce((acc, btn) => {
-    return (acc += btn.clr ? clrHtml : bthHtml(btn));
+    return (acc += btn.clr ? clrHtml : getBthHtml(btn));
   }, '');
 }

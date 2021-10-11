@@ -16,10 +16,6 @@ export class UploadDetails extends BlockComponent {
       this.uploadCollection.remove(this.entry.__ctxId);
       this.historyBack();
     },
-    onTabSelected: (e) => {
-      // TODO: catches event from range input
-      console.log(e?.detail?.tab);
-    },
     onEdit: () => {
       if (this.entry.getValue('uuid')) {
         this.$['*currentActivity'] = 'cloud-image-edit';
@@ -94,8 +90,7 @@ export class UploadDetails extends BlockComponent {
 
 UploadDetails.template = /*html*/ `
 <uc-tabs 
-  tab-list="tab-view, tab-details"
-  set="onchange: onTabSelected">
+  tab-list="tab-view, tab-details">
   <div tab-ctx="tab-details" ref="details" .details>
 
     <div .info-block>

@@ -1,7 +1,11 @@
 uc-upload-details {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   display: grid;
   grid-template-rows: auto min-content;
-  height: 100%;
 }
 
 uc-upload-details .viewport {

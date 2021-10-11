@@ -80,15 +80,15 @@ export class EditorToolbar extends BlockComponent {
     fsIcon: FS_ICON.FS,
     rangeActive: false,
     rangeCaption: '',
-    rangeVal: 100,
 
     onBtnClick: (e) => {
       this.canMan.stopText();
       this.rangeCtx = null;
-      this.ref.range['setValue'](100);
+
       this.set$({
         rangeActive: false,
         rangeCaption: '',
+        '*rangeValue': 100,
       });
       /** @type {HTMLButtonElement} */
       let btnEl = e.target.closest('[action]');
@@ -141,6 +141,6 @@ EditorToolbar.template = /*html*/ `
   min="0" 
   max="200" 
   ref="range"
-  set="value: rangeVal; onchange: onRangeChange; @visible: rangeActive; $.caption: rangeCaption">
+  set="@visible: rangeActive; $.caption: rangeCaption">
 </uc-range>
 `;

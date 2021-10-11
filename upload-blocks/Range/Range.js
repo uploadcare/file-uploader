@@ -1,51 +1,27 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 
 export class Range extends BlockComponent {
-  get ev() {
-    return new Event('change', {
-      bubbles: false,
-    });
-  }
-
   init$ = {
-    value: 100,
     cssLeft: '50%',
     caption: 'CAPTION',
     barActive: false,
+    '*rangeValue': 100,
     onChange: () => {
-      let pcnt = (this.ref.range['value'] / this.ref.range['max']) * 100;
-      this.$.cssLeft = `${pcnt}%`;
-      this.value = this.ref.range['value'];
-      this.dispatchEvent(this.ev);
+      this.$['*rangeValue'] = this.ref.range['value'];
     },
   };
 
-  setValue(val) {
-    this.$.value = val;
-  }
-
   initCallback() {
     [...this.attributes].forEach((attr) => {
-      let exclude = ['style'];
+      let exclude = ['style', 'ref'];
       if (!exclude.includes(attr.name)) {
         this.ref.range.setAttribute(attr.name, attr.value);
       }
     });
-    this.onmousedown = () => {
-      this.$.barActive = true;
-      this.onmousemove = (e) => {
-        this.$.cssLeft = `${e.offsetX}px`;
-      };
-    };
-    this.onmouseup = () => {
-      this.$.barActive = false;
-      this.onmousemove = null;
-    };
-    this.onmouseleave = () => {
-      this.$.barActive = false;
-      this.onmousemove = null;
-    };
-    // this.ref.range.dispatchEvent(this.ev);
+    this.sub('*rangeValue', (val) => {
+      let pcnt = (val / this.ref.range['max']) * 100;
+      this.$.cssLeft = `${pcnt}%`;
+    });
   }
 }
 
@@ -65,5 +41,5 @@ Range.template = /*html*/ `
   type="range"
   ref="range"
   list="range-values" 
-  set="value: value; onchange: onChange">
+  set="@value: *rangeValue; oninput: onChange">
 `;

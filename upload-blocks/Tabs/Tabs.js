@@ -7,13 +7,6 @@ export class Tabs extends BlockComponent {
     if (!tabL10nStr) {
       return;
     }
-    this.dispatchEvent(
-      new CustomEvent('change', {
-        detail: {
-          tab: tabL10nStr,
-        },
-      })
-    );
     let ctxList = [...this.ref.context.querySelectorAll('[tab-ctx]')];
     ctxList.forEach((ctxEl) => {
       if (ctxEl.getAttribute('tab-ctx') === tabL10nStr) {

@@ -5,6 +5,7 @@ body {
   height: 100vh;
 }
 modal-css {
+  position: relative;
   display: block;
   height: 600px;
   width: 800px;
