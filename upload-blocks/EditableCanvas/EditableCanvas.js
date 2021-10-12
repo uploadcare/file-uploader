@@ -1,6 +1,7 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 import { EditorToolbar } from './EditorToolbar.js';
 import { applyStyles } from '../../symbiote/utils/dom-helpers.js';
+import { checkerboardCssBg } from '../svg-backgrounds/svg-backgrounds.js';
 
 EditorToolbar.reg('editor-toolbar');
 
@@ -24,6 +25,7 @@ export class EditableCanvas extends BlockComponent {
     this.canvas = this.ref.cvs;
     this.canvCtx = this.canvas.getContext('2d');
     this.$.refMap = { ...this.ref };
+    this.style.backgroundImage = `url(${checkerboardCssBg()})`;
   }
 
   /** @param {HTMLImageElement} img */

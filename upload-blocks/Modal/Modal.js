@@ -1,4 +1,5 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
+import { strokesCssBg } from '../svg-backgrounds/svg-backgrounds.js';
 
 export class Modal extends BlockComponent {
   init$ = {
@@ -15,6 +16,9 @@ export class Modal extends BlockComponent {
     this.sub('*modalActive', (val) => {
       val ? this.setAttribute('active', '') : this.removeAttribute('active');
     });
+    if (this.hasAttribute('strokes')) {
+      this.style.backgroundImage = `url(${strokesCssBg()})`;
+    }
   }
 }
 
