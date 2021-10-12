@@ -1,4 +1,13 @@
 uc-upload-details {
+  position: relative;
+  display: block;
+  height: 100vh;
+  max-height: var(--modal-h);
+  width: 100vw;
+  max-width: var(--modal-w);
+}
+
+uc-upload-details > .wrapper {
   position: absolute;
   top: 0;
   left: 0;

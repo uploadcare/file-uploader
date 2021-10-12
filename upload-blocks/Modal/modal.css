@@ -31,21 +31,21 @@ uc-modal button.close-btn {
   border: none;
   cursor: pointer;
 }
-uc-modal > .dialog-el {
+uc-modal > .dialog {
   background-color: rgb(var(--rgb-2));
   box-shadow: var(--ui-shadow);
   border-radius: var(--ui-radius-1);
   min-width: 410px;
   min-height: var(--ui-size);
 }
-uc-modal .heading-el {
+uc-modal .heading {
   display: grid;
   grid-template-columns: min-content 1fr min-content;
   line-height: var(--ui-size);
   padding: var(--gap-mid);
   color: var(--clr-txt);
 }
-uc-modal .caption-el {
+uc-modal .caption {
   font-size: 1em;
   color: var(--clr-txt);
 }
