@@ -79,15 +79,14 @@ input[type="text"] {
   width: 100%;
   font-family: inherit;
   font-size: var(--f);
-  border: none;
-  border-bottom: 2px solid currentColor;
-  background-color: var(--clr-shade-1);
-  color: var(--clr-1);
+  border: var(--border-mid);
+  background-color: var(--clr-background-light);
+  box-shadow: var(--ui-inset-shadow);
+  color: var(--clr-txt);
   transition: .2s;
 }
 input[type="text"]:focus {
-  background-color: transparent;
-  outline: none;
+  border: var(--border-mid);
 }
 
 [activity]:not([active]) {

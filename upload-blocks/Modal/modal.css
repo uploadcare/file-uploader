@@ -52,8 +52,8 @@ uc-modal .heading-el {
   padding: var(--gap-mid);
   color: var(--clr-txt-light);
   border-radius: var(--ui-radius-1) var(--ui-radius-1) 0 0;
-  border-bottom: var(--border-thin);
-  background-color: var(--clr-background);
+  border-bottom: var(--border-mid);
+  background-color: var(--clr-background-light);
 }
 uc-modal .caption-el {
   font-size: 0.9em;
