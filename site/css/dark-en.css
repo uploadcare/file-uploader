@@ -1,1 +1,5 @@
 @import url('../../upload-blocks/css/MOUNT_POINT.css');
+
+body {
+  font-size: 15px;
+}
