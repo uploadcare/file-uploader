@@ -3,7 +3,6 @@ uc-url-source {
   grid-template-columns: 1fr min-content;
   grid-gap: var(--gap-min);
   padding: var(--gap-mid);
-  padding-top: 0;
 }
 uc-url-source .url-input {
   display: flex;

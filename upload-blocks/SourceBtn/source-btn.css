@@ -1,9 +1,22 @@
 uc-source-btn {
   display: flex;
   align-items: center;
-  padding-right: 1.5em;
+  padding-right: 1em;
   user-select: none;
   cursor: pointer;
+  border-radius: var(--ui-radius-2);
+  transition-property: background-color, color;
+  transition-duration: var(--ui-transition);
+  transition-timing-function: var(--ui-transition-curve);
+  color: var(--clr-txt-mid);
+}
+uc-source-btn:hover{
+  background-color: var(--clr-shade-lv1);
+  color: var(--clr-txt);
+}
+uc-source-btn:active{
+  background-color: var(--clr-shade-lv2);
+  color: var(--clr-txt);
 }
 
 uc-source-btn uc-icon {
