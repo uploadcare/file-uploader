@@ -18,7 +18,7 @@ export class ExternalSource extends BlockComponent {
   init$ = {
     counter: 0,
     onDone: () => {
-      this.$['*currentActivity'] = 'upload-list';
+      this.$['*currentActivity'] = BlockComponent.activities.UPLOAD_LIST;
     },
     '*externalSourceType': null,
   };
@@ -32,7 +32,7 @@ export class ExternalSource extends BlockComponent {
     });
 
     this.sub('*currentActivity', (val) => {
-      if (val === 'external') {
+      if (val === BlockComponent.activities.EXTERNAL) {
         this.$.counter = 0;
         this.mountIframe();
       } else if (this._iframe) {

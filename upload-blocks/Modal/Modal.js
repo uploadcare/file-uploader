@@ -1,37 +1,41 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
+import { strokesCssBg } from '../svg-backgrounds/svg-backgrounds.js';
 
 export class Modal extends BlockComponent {
   init$ = {
     caption: '',
+    '*modalIcon': 'default',
+    '*modalActive': false,
+    '*modalCaption': 'Modal caption',
     closeClicked: () => {
       this.$['*modalActive'] = false;
     },
   };
 
-  pauseRender = true;
-
   initCallback() {
-    this.add$({
-      '*modalIcon': 'default',
-      '*modalActive': false,
-      '*modalCaption': 'Modal caption',
-    });
-    this.render();
     this.sub('*modalActive', (val) => {
       val ? this.setAttribute('active', '') : this.removeAttribute('active');
     });
+    if (this.hasAttribute('strokes')) {
+      this.style.backgroundImage = `url(${strokesCssBg()})`;
+    }
   }
 }
 
 Modal.template = /*html*/ `
-<div .dialog-el>
-  <div .heading-el>
+<div .dialog>
+  <div .heading>
     <uc-icon set="@name: *modalIcon"></uc-icon>
-    <div .caption-el set="textContent: caption, *modalCaption"></div>
-    <button .close-btn set="onclick: closeClicked">
+    <div 
+      .caption 
+      set="textContent: caption, *modalCaption">
+    </div>
+    <button
+      .close-btn 
+      set="onclick: closeClicked">
       <uc-icon name="close"></uc-icon>
     </button>
   </div>
-  <slot></slot>
+  <slot></slot> 
 </div>
 `;

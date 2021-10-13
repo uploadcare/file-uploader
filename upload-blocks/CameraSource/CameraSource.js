@@ -55,14 +55,14 @@ export class CameraSource extends BlockComponent {
         mimeType: file.type,
       });
       this.set$({
-        '*currentActivity': 'upload-list',
+        '*currentActivity': BlockComponent.activities.UPLOAD_LIST,
       });
     });
   }
 
   initCallback() {
     this.sub('*currentActivity', (val) => {
-      if (val === 'camera') {
+      if (val === BlockComponent.activities.CAMERA) {
         this._init();
       } else {
         this._stream?.getTracks()[0].stop();

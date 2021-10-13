@@ -1,19 +1,27 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 
+export class UiMessage {
+  caption = '';
+  text = '';
+  iconName = '';
+  isError = false;
+}
+
 export class MessageBox extends BlockComponent {
   init$ = {
     iconName: 'info',
     captionTxt: 'Message caption',
     msgTxt: 'Message...',
-    onClose: () => {
-      this.removeAttribute('active');
-    },
     '*message': null,
+    onClose: () => {
+      this.$['*message'] = null;
+    },
   };
 
   initCallback() {
-    this.sub('*message', (msg) => {
+    this.sub('*message', (/** @type {UiMessage} */ msg) => {
       if (msg) {
+        this.setAttribute('active', '');
         this.set$({
           captionTxt: msg.caption,
           msgTxt: msg.text,
@@ -24,7 +32,6 @@ export class MessageBox extends BlockComponent {
         } else {
           this.removeAttribute('error');
         }
-        this.setAttribute('active', msg.text);
       } else {
         this.removeAttribute('active');
       }

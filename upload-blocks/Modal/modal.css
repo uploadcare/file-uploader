@@ -39,7 +39,8 @@ uc-modal button.close-btn:hover {
 uc-modal button.close-btn:active {
   color: var(--clr-txt-mid);
 }
-uc-modal > .dialog-el {
+uc-modal > .dialog {
+  background-color: rgb(var(--rgb-2));
   box-shadow: var(--ui-shadow);
   border-radius: var(--ui-radius-1);
   min-width: 410px;
@@ -50,7 +51,7 @@ uc-modal > .dialog-el {
 uc-modal:not([active]) > .dialog-el {
   transform:  translateY(20px);
 }
-uc-modal .heading-el {
+uc-modal .heading {
   display: grid;
   grid-template-columns: min-content 1fr min-content;
   line-height: var(--ui-size);
@@ -60,9 +61,9 @@ uc-modal .heading-el {
   border-bottom: var(--border-light);
   background-color: var(--clr-background-light);
 }
-uc-modal .caption-el {
-  font-size: 0.9em;
-  font-weight: bold;
+uc-modal .caption {
+  font-size: 1em;
+  color: var(--clr-txt);
 }
 
 uc-modal uc-drop-area {

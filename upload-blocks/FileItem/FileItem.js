@@ -1,7 +1,7 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 import { resizeImage } from '../../common-utils/resizeImage.js';
-import { ACT } from '../dictionary.js';
 import { uploadFile } from '../../web_modules/upload-client.js';
+import { UiMessage } from '../MessageBox/MessageBox.js';
 
 export class FileItem extends BlockComponent {
   init$ = {
@@ -14,9 +14,9 @@ export class FileItem extends BlockComponent {
     badgeIcon: 'check',
     onEdit: () => {
       this.set$({
-        '*modalCaption': 'Edit file',
+        '*modalCaption': this.l10n('caption-edit-file'),
         '*focusedEntry': this.entry,
-        '*currentActivity': ACT.UPLOAD_DETAILS,
+        '*currentActivity': BlockComponent.activities.DETAILS,
       });
     },
     '*focusedEntry': null,
@@ -28,7 +28,7 @@ export class FileItem extends BlockComponent {
     this.entry = this.uploadCollection?.read(id);
 
     this.entry.subscribe('fileName', (name) => {
-      this.$.fileName = name || 'No name...';
+      this.$.fileName = name || this.l10n('file-no-name');
     });
 
     this.entry.subscribe('uuid', (uuid) => {
@@ -114,13 +114,13 @@ export class FileItem extends BlockComponent {
     } catch (error) {
       this.setAttribute('error', '');
       this.removeAttribute('uploading');
+      let msg = new UiMessage();
+      msg.caption = this.l10n('upload-error') + ': ' + this.file.name;
+      msg.text = error;
+      msg.isError = true;
       this.set$({
         badgeIcon: 'upload-error',
-        '*message': {
-          caption: 'Upload error: ' + this.file.name,
-          text: error,
-          isError: true,
-        },
+        '*message': msg,
       });
       this.entry.setValue('uploadErrorMsg', error);
     }

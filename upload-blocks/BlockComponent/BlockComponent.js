@@ -1,5 +1,4 @@
 import { BaseComponent } from '../../symbiote/core/BaseComponent.js';
-import { ENUM } from './enum.js';
 import { TypedCollection } from '../../symbiote/core/TypedCollection.js';
 import { uploadEntrySchema } from './uploadEntrySchema.js';
 
@@ -204,8 +203,8 @@ export class BlockComponent extends BaseComponent {
   get config() {
     let conf = {};
     let style = window.getComputedStyle(this);
-    for (let prop in BlockComponent.enum.CSS.CFG) {
-      conf[prop] = JSON.parse(style.getPropertyValue(BlockComponent.enum.CSS.CFG[prop]).trim());
+    for (let prop in BlockComponent.cfgCssMap) {
+      conf[prop] = JSON.parse(style.getPropertyValue(BlockComponent.cfgCssMap[prop]).trim());
     }
     // @ts-ignore
     return conf;
@@ -221,4 +220,40 @@ export class BlockComponent extends BaseComponent {
   }
 }
 
-BlockComponent.enum = ENUM;
+BlockComponent.activities = Object.freeze({
+  SOURSE_SELECT: 'source-select',
+  CAMERA: 'camera',
+  DRAW: 'draw',
+  UPLOAD_LIST: 'upload-list',
+  URL: 'url',
+  CONFIRMATION: 'confirmation',
+  CLOUD_IMG_EDIT: 'cloud-image-edit',
+  EXTERNAL: 'external',
+  DETAILS: 'details',
+});
+
+BlockComponent.extSrcList = Object.freeze({
+  FACEBOOK: 'facebook',
+  DROPBOX: 'dropbox',
+  GDRIVE: 'gdrive',
+  GPHOTOS: 'gphotos',
+  INSTAGRAM: 'instagram',
+  FLICKR: 'flickr',
+  VK: 'vk',
+  EVERNOTE: 'evernote',
+  BOX: 'box',
+  ONEDRIVE: 'onedrive',
+  HUDDLE: 'huddle',
+});
+
+BlockComponent.cfgCssMap = Object.freeze({
+  PUBKEY: '--cfg-pubkey',
+  MULTIPLE: '--cfg-multiple',
+  CONFIRM_UPLOAD: '--cfg-confirm-upload',
+  IMG_ONLY: '--cfg-img-only',
+  ACCEPT: '--cfg-accept',
+  STORE: '--cfg-store',
+  CAMERA_MIRROR: '--cfg-camera-mirror',
+  EXT_SRC_LIST: '--cfg-ext-source-list',
+  MAX_FILES: '--cfg-max-files',
+});

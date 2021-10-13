@@ -18,7 +18,6 @@
   --gap-mid: 10px;
   --gap-max: 20px;
   --line-width: 1px;
-  
 
 
 
@@ -49,7 +48,8 @@ action -> lightness
 shader < background + opacity
 */
 
-
+  --modal-w: 800px;
+  --modal-h: 600px;
 
 
   /*clrs*/

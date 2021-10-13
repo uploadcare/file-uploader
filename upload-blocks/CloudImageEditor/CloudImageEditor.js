@@ -20,7 +20,7 @@ export class CloudImageEditor extends BlockComponent {
 
     this.loadScript();
     this.sub('*currentActivity', (val) => {
-      if (val === 'cloud-image-edit') {
+      if (val === BlockComponent.activities.CLOUD_IMG_EDIT) {
         this.mountEditor();
       } else {
         this.unmountEditor();

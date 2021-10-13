@@ -8,6 +8,7 @@ export class UploadDetails extends BlockComponent {
     errorTxt: '',
     editBtnHidden: true,
     onNameInput: null,
+    '*focusedEntry': null,
     onBack: () => {
       this.historyBack();
     },
@@ -18,10 +19,9 @@ export class UploadDetails extends BlockComponent {
     },
     onEdit: () => {
       if (this.entry.getValue('uuid')) {
-        this.$['*currentActivity'] = 'cloud-image-edit';
+        this.$['*currentActivity'] = BlockComponent.activities.CLOUD_IMG_EDIT;
       }
     },
-    '*focusedEntry': null,
   };
 
   initCallback() {
@@ -89,61 +89,63 @@ export class UploadDetails extends BlockComponent {
 }
 
 UploadDetails.template = /*html*/ `
-<uc-tabs 
-  tab-list="tab-view, tab-details">
-  <div tab-ctx="tab-details" ref="details" .details>
+<div .wrapper>
+  <uc-tabs 
+    tab-list="tab-view, tab-details">
+    <div tab-ctx="tab-details" ref="details" .details>
 
-    <div .info-block>
-      <div .info-block_name l10n="file-name"></div>
-      <input 
-        name="name-input"
-        ref="file_name_input"
-        set="value: fileName; oninput: onNameInput"
-        type="text" />
+      <div .info-block>
+        <div .info-block_name l10n="file-name"></div>
+        <input 
+          name="name-input"
+          ref="file_name_input"
+          set="value: fileName; oninput: onNameInput"
+          type="text" />
+      </div>
+
+      <div .info-block>
+        <div .info-block_name l10n="file-size"></div>
+        <div set="textContent: fileSize"></div>
+      </div>
+
+      <div .info-block>
+        <div .info-block_name l10n="cdn-url"></div>
+        <a 
+          target="_blank" 
+          set="textContent: cdnUrl; @href: cdnUrl;"></a>
+      </div>
+
+      <div set="textContent: errorTxt;"></div>
+
     </div>
 
-    <div .info-block>
-      <div .info-block_name l10n="file-size"></div>
-      <div set="textContent: fileSize"></div>
+    <div tab-ctx="tab-view" ref="viewport" .viewport>
+      <uc-editable-canvas 
+        tab-ctx="tab-view"
+        ref="canvas">
+      </uc-editable-canvas>
     </div>
+  </uc-tabs>
 
-    <div .info-block>
-      <div .info-block_name l10n="cdn-url"></div>
-      <a 
-        target="_blank" 
-        set="textContent: cdnUrl; @href: cdnUrl;"></a>
-    </div>
-
-    <div set="textContent: errorTxt;"></div>
-
+  <div .toolbar>
+    <button 
+      .back-btn 
+      set="onclick: onBack">
+      <uc-icon name="back"></uc-icon>
+      <span l10n="back"></span>
+    </button>
+    <button 
+      .edit-btn 
+      set="onclick: onEdit; @hidden: editBtnHidden;">
+      <uc-icon name="edit"></uc-icon>
+      <span l10n="edit-image"></span>
+    </button>
+    <button 
+      .remove-btn 
+      set="onclick: onRemove">
+      <uc-icon name="remove"></uc-icon>
+      <span l10n="remove-from-list"></span>
+    </button>
   </div>
-
-  <div tab-ctx="tab-view" ref="viewport" .viewport>
-    <uc-editable-canvas 
-      tab-ctx="tab-view"
-      ref="canvas">
-    </uc-editable-canvas>
-  </div>
-</uc-tabs>
-
-<div .toolbar>
-  <button 
-    .back-btn 
-    set="onclick: onBack">
-    <uc-icon name="back"></uc-icon>
-    <span l10n="back"></span>
-  </button>
-  <button 
-    .edit-btn 
-    set="onclick: onEdit; @hidden: editBtnHidden;">
-    <uc-icon name="edit"></uc-icon>
-    <span l10n="edit-image"></span>
-  </button>
-  <button 
-    .remove-btn 
-    set="onclick: onRemove">
-    <uc-icon name="remove"></uc-icon>
-    <span l10n="remove-from-list"></span>
-  </button>
 </div>
 `;

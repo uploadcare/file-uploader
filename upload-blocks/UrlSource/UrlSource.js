@@ -25,7 +25,7 @@ export class UrlSource extends BlockComponent {
         isImage: fileInfo.isImage,
         mimeType: fileInfo.mimeType,
       });
-      this.$['*currentActivity'] = 'upload-list';
+      this.$['*currentActivity'] = BlockComponent.activities.UPLOAD_LIST;
     },
   };
 }
