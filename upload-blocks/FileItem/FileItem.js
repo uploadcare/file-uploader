@@ -15,7 +15,7 @@ export class FileItem extends BlockComponent {
     badgeIcon: 'check',
     onEdit: () => {
       this.set$({
-        '*modalCaption': 'Edit file',
+        '*modalCaption': this.l10n('caption-edit-file'),
         '*focusedEntry': this.entry,
         '*currentActivity': ACT.UPLOAD_DETAILS,
       });
@@ -29,7 +29,7 @@ export class FileItem extends BlockComponent {
     this.entry = this.uploadCollection?.read(id);
 
     this.entry.subscribe('fileName', (name) => {
-      this.$.fileName = name || 'No name...';
+      this.$.fileName = name || this.l10n('file-no-name');
     });
 
     this.entry.subscribe('uuid', (uuid) => {
