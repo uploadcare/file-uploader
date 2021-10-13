@@ -6,16 +6,9 @@ uc-url-source {
 }
 uc-url-source .url-input {
   display: flex;
-  border: var(--border-thin);
-  height: var(--ui-size);
-  border-radius: var(--ui-radius-2);
-  padding-left: 1em;
-  padding-right: 1em;
 }
 uc-url-source .url-upload-btn {
-  color: var(--clr-btn-txt-primary);
-  background-color: var(--clr-btn-bgr-primary);
-  box-shadow: var(--shadow-btn-primary);
+  /* nothing to say... */
 }
 uc-url-source .url-upload-btn::after {
   content: var(--l10n-upload-url);

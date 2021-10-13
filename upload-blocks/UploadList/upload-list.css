@@ -13,6 +13,7 @@ uc-upload-list .toolbar-el {
   grid-template-columns: min-content 1fr min-content min-content;
   grid-gap: var(--gap-mid);
   padding: var(--gap-mid);
+  border-top: var(--border-light);
 }
 uc-upload-list .upload-btn {
   background-color: var(--clr-shade-1);
@@ -26,4 +27,9 @@ uc-upload-list .add-more-btn {
 uc-upload-list .cancel-btn {
   background-color: var(--clr-2);
   color: var(--clr-txt);
+}
+
+uc-upload-list .add-more-row {
+  height: 60px;
+  width: 100%;
 }

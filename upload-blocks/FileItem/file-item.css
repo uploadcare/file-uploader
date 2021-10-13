@@ -4,10 +4,10 @@ uc-file-item {
   grid-template-columns: min-content auto min-content min-content;
   transition: var(--ui-transition);
   padding: var(--gap-mid);
-  border-bottom: var(--line-width) solid var(--clr-shade-1);
+  border-bottom: var(--border-light);
 }
 uc-file-item:first-of-type {
-  border-top: var(--line-width) solid var(--clr-shade-1);
+  border-top: none;
 }
 uc-file-item[focused] {
   background-color: var(--clr-shade-1);

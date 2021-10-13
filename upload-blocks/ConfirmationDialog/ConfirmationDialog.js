@@ -52,10 +52,12 @@ ConfirmationDialog.template = /*html*/ `
 <div .toolbar>
   <button 
     .confirm-btn 
+    .primary-btn
     set="textContent: denyBtnTxt; onclick: onDeny">
   </button>
   <button 
     .deny-btn 
+    .secondary-btn
     set="textContent: confirmBtnTxt; onclick: onConfirm">
   </button>
 </div>

@@ -48,8 +48,8 @@ uc-modal > .dialog {
   background-color: var(--clr-background);
   transition: transform 0.4s;
 }
-uc-modal:not([active]) > .dialog-el {
-  transform:  translateY(20px);
+uc-modal:not([active]) > .dialog {
+  transform: translateY(20px);
 }
 uc-modal .heading {
   display: grid;

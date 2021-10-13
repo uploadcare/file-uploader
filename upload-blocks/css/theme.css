@@ -84,16 +84,16 @@ shader < background + opacity
 
   /* to be calculated */
   --clr-btn-bgr-primary: var(--clr-accent);
-  --clr-btn-bgr-primary-hover: hsl(var(--h-accent),var(--s-accent),calc(var(--l-accent) + 5%));
-  --clr-btn-bgr-primary-active: hsl(var(--h-accent),var(--s-accent),calc(var(--l-accent) - 5%));
+  --clr-btn-bgr-primary-hover: hsl(var(--h-accent),var(--s-accent),calc(var(--l-accent) - 3%));
+  --clr-btn-bgr-primary-active: hsl(var(--h-accent),var(--s-accent),calc(var(--l-accent) - 7%));
   --clr-btn-txt-primary: hsl(0,0%,100%);
   --shadow-btn-primary: 0px 1px 2px rgba(0, 0, 0, 0.26), 0px 2px 8px rgba(0, 0, 0, 0.08), inset 0px 0px 2px rgba(0, 0, 0, 0.2);
  
   --clr-btn-bgr-secondary: var(--clr-background-light);
-  --clr-btn-bgr-secondary-hover: hsl(var(--h-background),var(--s-background),calc(var(--l-background) - 2%));
-  --clr-btn-bgr-secondary-active: hsl(var(--h-background),var(--s-background),calc(var(--l-background) - 5%));
+  --clr-btn-bgr-secondary-hover: hsl(var(--h-background),var(--s-background),calc(var(--l-background) - 1%));
+  --clr-btn-bgr-secondary-active: hsl(var(--h-background),var(--s-background),calc(var(--l-background) - 4%));
   --clr-btn-txt-secondary: var(--clr-txt);
-  --shadow-btn-secondary: 0px 1px 2px rgba(0, 0, 0, 0.1), 0px 2px 8px rgba(0, 0, 0, 0.15), inset 0px 0px 2px rgba(0, 0, 0, 0.15);
+  --shadow-btn-secondary: 0px 1px 1px rgba(0, 0, 0, 0.08), 0px 2px 8px rgba(0, 0, 0, 0.08), inset 0px 0px 1px rgba(0, 0, 0, 0.5);
  
   --clr-curtain: hsla(var(--h-background),var(--s-background),calc(var(--l-background) - 10%), 0.4);
 
