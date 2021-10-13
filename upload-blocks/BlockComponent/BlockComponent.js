@@ -222,3 +222,13 @@ export class BlockComponent extends BaseComponent {
 }
 
 BlockComponent.enum = ENUM;
+BlockComponent.activities = Object.freeze({
+  SOURSE_SELECT: 'source-select',
+  CAMERA: 'camera',
+  DRAW: 'draw',
+  UPLOAD_LIST: 'upload-list',
+  URL: 'url',
+  CONFIRMATION: 'confirmation',
+  CLOUD_IMG_EDIT: 'cloud-image-edit',
+  EXTERNAL: 'external',
+});

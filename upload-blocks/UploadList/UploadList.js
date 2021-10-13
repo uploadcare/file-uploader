@@ -1,11 +1,12 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 import { FileItem } from '../FileItem/FileItem.js';
+import { UiConfirmation } from '../ConfirmationDialog/ConfirmationDialog.js';
 
 export class UploadList extends BlockComponent {
   init$ = {
     uploadBtnDisabled: false,
     onAdd: () => {
-      this.$['*currentActivity'] = 'source-select';
+      this.$['*currentActivity'] = BlockComponent.activities.SOURSE_SELECT;
     },
     onUpload: () => {
       this.set$({
@@ -14,13 +15,15 @@ export class UploadList extends BlockComponent {
       });
     },
     onCancel: () => {
-      this.set$({
-        '*confirmationAction': () => {
-          this.$['*modalActive'] = false;
-          this.uploadCollection.clearAll();
-        },
-        '*currentActivity': 'confirmation',
-      });
+      let cfn = new UiConfirmation();
+      cfn.confirmAction = () => {
+        this.$['*modalActive'] = false;
+        this.uploadCollection.clearAll();
+      };
+      cfn.denyAction = () => {
+        this.historyBack();
+      };
+      this.$['*confirmation'] = cfn;
     },
   };
 

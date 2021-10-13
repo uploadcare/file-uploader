@@ -24,7 +24,7 @@ export class SourceBtn extends BlockComponent {
         this.onclick = () => {
           this.set$({
             '*externalSourceType': type,
-            '*currentActivity': 'external',
+            '*currentActivity': BlockComponent.activities.EXTERNAL,
             '*modalCaption': `${type[0].toUpperCase()}${type.slice(1)}`,
             '*modalIcon': type,
             '*modalActive': true,
@@ -40,7 +40,7 @@ export class SourceBtn extends BlockComponent {
         this.onclick = () => {
           this.set$({
             '*modalActive': false,
-            '*currentActivity': 'upload-list',
+            '*currentActivity': BlockComponent.activities.UPLOAD_LIST,
             '*modalCaption': this.l10n('selected'),
             '*modalIcon': 'local',
           });
@@ -56,8 +56,8 @@ export class SourceBtn extends BlockComponent {
         this.$.iconName = 'url';
         this.onclick = () => {
           this.set$({
-            '*currentActivity': 'url',
-            '*modalCaption': 'Import from external URL',
+            '*currentActivity': BlockComponent.activities.URL,
+            '*modalCaption': this.l10n('caption-from-url'),
             '*modalIcon': 'url',
             '*modalActive': true,
           });
@@ -68,8 +68,8 @@ export class SourceBtn extends BlockComponent {
         this.$.iconName = 'camera';
         this.onclick = () => {
           this.set$({
-            '*currentActivity': 'camera',
-            '*modalCaption': 'Camera',
+            '*currentActivity': BlockComponent.activities.CAMERA,
+            '*modalCaption': this.l10n('caption-camera'),
             '*modalIcon': 'camera',
             '*modalActive': true,
           });
@@ -80,25 +80,25 @@ export class SourceBtn extends BlockComponent {
         this.$.iconName = 'edit-draw';
         this.onclick = () => {
           this.set$({
-            '*currentActivity': 'draw',
-            '*modalCaption': 'Draw',
+            '*currentActivity': BlockComponent.activities.DRAW,
+            '*modalCaption': this.l10n('caption-draw'),
             '*modalIcon': 'edit-draw',
             '*modalActive': true,
           });
         };
       },
-      other: () => {
-        this.applyL10nKey('src-type', 'src-type-other');
-        this.$.iconName = 'dots';
-        this.onclick = () => {
-          this.set$({
-            '*currentActivity': 'external',
-            '*modalCaption': 'Other sources',
-            '*modalIcon': 'dots',
-            '*modalActive': true,
-          });
-        };
-      },
+      // other: () => {
+      //   this.applyL10nKey('src-type', 'src-type-other');
+      //   this.$.iconName = 'dots';
+      //   this.onclick = () => {
+      //     this.set$({
+      //       '*currentActivity': 'external',
+      //       '*modalCaption': 'Other sources',
+      //       '*modalIcon': 'dots',
+      //       '*modalActive': true,
+      //     });
+      //   };
+      // },
       ...externalType(EXTERNAL_SOURCE.INSTAGRAM),
       ...externalType(EXTERNAL_SOURCE.FACEBOOK),
       ...externalType(EXTERNAL_SOURCE.DROPBOX),

@@ -24,10 +24,7 @@ export function strokesCssBg(color = 'rgba(0, 0, 0, .1)') {
   return (
     dataPrefix +
     btoa(/*svg*/ `<svg height="10" width="10" viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg">
-    <line 
-      x1="0" y1="10" 
-      x2="10" y2="0" 
-      stroke="${color}" />
+    <line x1="0" y1="10" x2="10" y2="0" stroke="${color}" />
   </svg>`)
   );
 }

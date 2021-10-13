@@ -14,8 +14,10 @@
   --l10n-remove-from-list: 'Remove';
   --l10n-no: 'No';
   --l10n-yes: 'Yes';
+  --l10n-confirm-your-action: 'Confirm your action';
   --l10n-are-you-sure: 'Are you sure?';
   --l10n-selected-count: 'Selected:';
+  --l10n-upload-error: 'Upload error';
 
   --l10n-src-type-local: 'Local File';
   --l10n-src-type-from-url: 'From URL';
@@ -35,6 +37,10 @@
   --l10n-src-type-other: 'Other';
 
   --l10n-src-type: var(--l10n-src-type-local);
+
+  --l10n-caption-from-url: 'Import from external URL';
+  --l10n-caption-camera: 'Camera';
+  --l10n-caption-draw: 'Draw';
 
   --l10n-toggle-fullscreen: 'Toggle fullscreen';
   --l10n-toggle-guides: 'Toggle guides';

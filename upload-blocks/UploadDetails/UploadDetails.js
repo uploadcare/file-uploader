@@ -19,7 +19,7 @@ export class UploadDetails extends BlockComponent {
     },
     onEdit: () => {
       if (this.entry.getValue('uuid')) {
-        this.$['*currentActivity'] = 'cloud-image-edit';
+        this.$['*currentActivity'] = BlockComponent.activities.CLOUD_IMG_EDIT;
       }
     },
   };
