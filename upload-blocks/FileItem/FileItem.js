@@ -1,6 +1,5 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 import { resizeImage } from '../../common-utils/resizeImage.js';
-import { ACT } from '../dictionary.js';
 import { uploadFile } from '../../web_modules/upload-client.js';
 import { UiMessage } from '../MessageBox/MessageBox.js';
 
@@ -17,7 +16,7 @@ export class FileItem extends BlockComponent {
       this.set$({
         '*modalCaption': this.l10n('caption-edit-file'),
         '*focusedEntry': this.entry,
-        '*currentActivity': ACT.UPLOAD_DETAILS,
+        '*currentActivity': BlockComponent.activities.DETAILS,
       });
     },
     '*focusedEntry': null,

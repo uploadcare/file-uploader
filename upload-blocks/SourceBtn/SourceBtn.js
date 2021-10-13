@@ -1,5 +1,4 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
-import { EXTERNAL_SOURCE } from '../dictionary.js';
 
 export class SourceBtn extends BlockComponent {
   init$ = {
@@ -99,18 +98,18 @@ export class SourceBtn extends BlockComponent {
       //     });
       //   };
       // },
-      ...externalType(EXTERNAL_SOURCE.INSTAGRAM),
-      ...externalType(EXTERNAL_SOURCE.FACEBOOK),
-      ...externalType(EXTERNAL_SOURCE.DROPBOX),
-      ...externalType(EXTERNAL_SOURCE.GDRIVE),
-      ...externalType(EXTERNAL_SOURCE.GPHOTOS),
-      ...externalType(EXTERNAL_SOURCE.INSTAGRAM),
-      ...externalType(EXTERNAL_SOURCE.FLICKR),
-      ...externalType(EXTERNAL_SOURCE.VK),
-      ...externalType(EXTERNAL_SOURCE.EVERNOTE),
-      ...externalType(EXTERNAL_SOURCE.BOX),
-      ...externalType(EXTERNAL_SOURCE.ONEDRIVE),
-      ...externalType(EXTERNAL_SOURCE.HUDDLE),
+      ...externalType(BlockComponent.extSrcList.INSTAGRAM),
+      ...externalType(BlockComponent.extSrcList.FACEBOOK),
+      ...externalType(BlockComponent.extSrcList.DROPBOX),
+      ...externalType(BlockComponent.extSrcList.GDRIVE),
+      ...externalType(BlockComponent.extSrcList.GPHOTOS),
+      ...externalType(BlockComponent.extSrcList.INSTAGRAM),
+      ...externalType(BlockComponent.extSrcList.FLICKR),
+      ...externalType(BlockComponent.extSrcList.VK),
+      ...externalType(BlockComponent.extSrcList.EVERNOTE),
+      ...externalType(BlockComponent.extSrcList.BOX),
+      ...externalType(BlockComponent.extSrcList.ONEDRIVE),
+      ...externalType(BlockComponent.extSrcList.HUDDLE),
     };
     types[type]();
   }
