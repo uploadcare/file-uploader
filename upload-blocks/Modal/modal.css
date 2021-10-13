@@ -11,7 +11,7 @@ uc-modal {
   color: var(--clr-txt);
   padding: var(--gap-mid);
   z-index: 10000;
-  transition: opacity 0.4s;
+  transition: opacity 0.4s, visibility 0.4s;
   backdrop-filter: blur(3px);
   -webkit-backdrop-filter: blur(3px);
 }
@@ -25,6 +25,7 @@ uc-modal button.close-btn {
   align-items: center;
   height: var(--ui-size);
   width: var(--ui-size);
+  padding: 0;
   background-color: transparent;
   color: var(--clr-txt-lightest);
   border-radius: var(--ui-radius-2);
@@ -44,6 +45,10 @@ uc-modal > .dialog-el {
   min-width: 410px;
   min-height: var(--ui-size);
   background-color: var(--clr-background);
+  transition: transform 0.4s;
+}
+uc-modal:not([active]) > .dialog-el {
+  transform:  translateY(20px);
 }
 uc-modal .heading-el {
   display: grid;
@@ -52,7 +57,7 @@ uc-modal .heading-el {
   padding: var(--gap-mid);
   color: var(--clr-txt-light);
   border-radius: var(--ui-radius-1) var(--ui-radius-1) 0 0;
-  border-bottom: var(--border-mid);
+  border-bottom: var(--border-light);
   background-color: var(--clr-background-light);
 }
 uc-modal .caption-el {

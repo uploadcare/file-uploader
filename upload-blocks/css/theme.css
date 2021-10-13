@@ -9,11 +9,11 @@
   --opacity-max: 0.8;
   --ui-size: 38px;
   --ui-radius-1: 10px;
-  --ui-radius-2: 6px;
+  --ui-radius-2: 7px;
   --ui-transition: 0.2s;
   --ui-transition-curve: ease;
   --ui-shadow: 0px 0px 1px rgba(0, 0, 0, 0.49), 0px 6px 40px rgba(0, 0, 0, 0.25), inset 0px 0px 2px rgba(255, 255, 255, 0.8);
-  --ui-inset-shadow: inset 0px 2px 4px rgba(0, 0, 0, 0.1);
+  --ui-inset-shadow: inset 0px 2px 4px rgba(0, 0, 0, 0.12);
   --gap-min: 2px;
   --gap-mid: 10px;
   --gap-max: 20px;
@@ -31,9 +31,9 @@
   --s-background: 4%;
   --l-background: 95%;
 
-  --h-action: 211;
-  --s-action: 100%;
-  --l-action: 50%;
+  --h-accent: 211;
+  --s-accent: 100%;
+  --l-accent: 50%;
 
   --h-shade: 208;
   --s-shade: 10%;
@@ -54,17 +54,17 @@ shader < background + opacity
 
   /*clrs*/
   --clr-foreground: hsl(var(--h-foreground),var(--s-foreground),var(--l-foreground));
+
   --clr-background: hsl(var(--h-background),var(--s-background),var(--l-background));
-  --clr-background-light: hsl(var(--h-background),var(--s-background),calc(var(--l-background) + 4%));
+  --clr-background-light: hsl(var(--h-background),var(--s-background),calc(var(--l-background) + 3%));
+
+  --clr-accent:  hsl(var(--h-accent),var(--s-accent),var(--l-accent));
+  --clr-accent-light:  hsla(var(--h-accent),var(--s-accent),var(--l-accent), 0.5);
 
   --clr-txt: var(--clr-foreground);
   --clr-txt-mid: hsl(var(--h-foreground),var(--s-foreground),calc(var(--l-foreground) + 15%));
   --clr-txt-light: hsl(var(--h-foreground),var(--s-foreground),calc(var(--l-foreground) + 30%));
   --clr-txt-lightest: hsl(var(--h-foreground),var(--s-foreground),calc(var(--l-foreground) + 50%));
-
-  --clr-primary-bgr: hsl(var(--h-foreground),var(--s-foreground),var(--l-lightest));
-  
-  --clr-curtain: hsla(var(--h-shade),var(--s-shade),var(--l-shade), 0.6);
 
   --clr-shade-lv1: hsla(var(--h-shade),var(--s-shade),var(--l-shade), 0.05);
   --clr-shade-lv2: hsla(var(--h-shade),var(--s-shade),var(--l-shade), 0.08);
@@ -72,12 +72,30 @@ shader < background + opacity
 
   --clr-err: rgb(var(--rgb-err));
 
-  --clr-btn-txt: hsl(var(--h-action),var(--s-action),var(--l-action));
+  --clr-btn-txt: hsl(var(--h-accent),var(--s-accent),var(--l-accent));
 
   /*borders*/
-  --border-light: 1px solid hsla(var(--h-foreground),var(--s-foreground),var(--l-foreground), 0.05);
-  --border-mid: 1px solid hsla(var(--h-foreground),var(--s-foreground),var(--l-foreground), 0.18);
+  --border-light: 1px solid hsla(var(--h-foreground),var(--s-foreground),var(--l-foreground), 0.1);
+  --border-mid: 1px solid hsla(var(--h-foreground),var(--s-foreground),var(--l-foreground), 0.25);
+  --border-accent: 1px solid hsla(var(--h-accent),var(--s-accent),var(--l-accent), 1.0);
   --border-dashed: 2px dashed hsla(var(--h-foreground),var(--s-foreground),var(--l-foreground), 0.1);
+
+  
+
+  /* to be calculated */
+  --clr-btn-bgr-primary: var(--clr-accent);
+  --clr-btn-bgr-primary-hover: hsl(var(--h-accent),var(--s-accent),calc(var(--l-accent) + 5%));
+  --clr-btn-bgr-primary-active: hsl(var(--h-accent),var(--s-accent),calc(var(--l-accent) - 5%));
+  --clr-btn-txt-primary: hsl(0,0%,100%);
+  --shadow-btn-primary: 0px 1px 2px rgba(0, 0, 0, 0.26), 0px 2px 8px rgba(0, 0, 0, 0.08), inset 0px 0px 2px rgba(0, 0, 0, 0.2);
+ 
+  --clr-btn-bgr-secondary: var(--clr-background-light);
+  --clr-btn-bgr-secondary-hover: hsl(var(--h-background),var(--s-background),calc(var(--l-background) - 2%));
+  --clr-btn-bgr-secondary-active: hsl(var(--h-background),var(--s-background),calc(var(--l-background) - 5%));
+  --clr-btn-txt-secondary: var(--clr-txt);
+  --shadow-btn-secondary: 0px 1px 2px rgba(0, 0, 0, 0.1), 0px 2px 8px rgba(0, 0, 0, 0.15), inset 0px 0px 2px rgba(0, 0, 0, 0.15);
+ 
+  --clr-curtain: hsla(var(--h-background),var(--s-background),calc(var(--l-background) - 10%), 0.4);
 
   /* hard to use */
   --clr-1: rgb(var(--rgb-1));
