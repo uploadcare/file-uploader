@@ -129,22 +129,24 @@ UploadDetails.template = /*html*/ `
 
   <div .toolbar>
     <button 
-      .back-btn 
-      set="onclick: onBack">
-      <uc-icon name="back"></uc-icon>
-      <span l10n="back"></span>
-    </button>
-    <button 
+      .secondary-btn
       .edit-btn 
       set="onclick: onEdit; @hidden: editBtnHidden;">
       <uc-icon name="edit"></uc-icon>
       <span l10n="edit-image"></span>
     </button>
     <button 
+      .secondary-btn
       .remove-btn 
       set="onclick: onRemove">
       <uc-icon name="remove"></uc-icon>
       <span l10n="remove-from-list"></span>
+    </button>
+    <button 
+      .primary-btn
+      .back-btn 
+      set="onclick: onBack">
+      <span l10n="done"></span>
     </button>
   </div>
 </div>

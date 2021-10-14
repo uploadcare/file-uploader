@@ -99,6 +99,7 @@ shader < background + opacity
  
   --clr-curtain: hsla(var(--h-background),var(--s-background),calc(var(--l-background) - 10%), 0.4);
 
+
   /* hard to use */
   --clr-1: rgb(var(--rgb-1));
   --clr-2: rgb(var(--rgb-2));
