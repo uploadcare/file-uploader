@@ -27,6 +27,7 @@ uc-upload-details .viewport {
 }
 
 uc-upload-details .toolbar {
+  border-top: var(--border-light);
   display: grid;
   grid-template-columns: min-content min-content 1fr min-content;
   gap: var(--gap-mid);
@@ -54,17 +55,21 @@ uc-upload-details .details {
 }
 
 uc-upload-details .info-block {
-  padding: var(--gap-mid);
-  box-shadow: var(--ui-shadow);
-  border-top: 1px solid var(--clr-shade-1);
-  border-left: 2px solid var(--clr-shade-1);
-  margin-top: var(--gap-mid);
-  border-radius: var(--ui-radius-1);
+  padding-top: var(--gap-mid);
+  padding-bottom: var(--gap-mid);
   color: var(--clr-txt);
+  border-bottom: var(--border-light);
 }
+uc-upload-details .info-block:first-of-type {
+  padding-top: 0;
+}
+uc-upload-details .info-block:last-of-type {
+  border-bottom: none;
+}
+
 
 uc-upload-details .info-block > .info-block_name {
   font-size: 0.8em;
-  margin-bottom: var(--gap-mid);
-  color: var(--clr-1);
+  margin-bottom: 0.4em;
+  color: var(--clr-txt-light);
 }
