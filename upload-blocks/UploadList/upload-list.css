@@ -16,20 +16,38 @@ uc-upload-list .toolbar-el {
   border-top: var(--border-light);
 }
 uc-upload-list .upload-btn {
-  background-color: var(--clr-shade-1);
-  color: var(--clr-1);
+  /* nothing to say */
 }
 uc-upload-list .add-more-btn {
-  background-color: transparent;
-  color: var(--clr-1);
+  /* nothing to say */
 }
 
 uc-upload-list .cancel-btn {
-  background-color: var(--clr-2);
-  color: var(--clr-txt);
+  /* nothing to say */
 }
 
 uc-upload-list .add-more-row {
-  height: 60px;
   width: 100%;
+  background-color: var(--clr-background-light);
+  display: grid;
+  grid-template-columns: min-content 1fr;
+  grid-gap: var(--gap-mid);
+  padding: var(--gap-mid);
+}
+
+uc-upload-list .add-more-icon {
+  height: var(--ui-size);
+  width: var(--ui-size);
+  background-color: var(--clr-shade-lv1);
+  border-radius: var(--ui-radius-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+uc-upload-list .add-more-label {
+  display: flex;
+  align-items: center;
+  color: var(--clr-txt);
+  font-size: 0.9em;
 }
