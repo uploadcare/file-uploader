@@ -11,7 +11,7 @@ uc-modal {
   color: var(--clr-txt);
   padding: var(--gap-mid);
   z-index: 10000;
-  transition: opacity 0.4s, visibility 0.4s;
+  transition: opacity 0.4s;
   backdrop-filter: blur(3px);
   -webkit-backdrop-filter: blur(3px);
 }
