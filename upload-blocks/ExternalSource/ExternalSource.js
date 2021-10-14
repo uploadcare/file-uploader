@@ -15,6 +15,8 @@ let styleToCss = (style) => {
 };
 
 export class ExternalSource extends BlockComponent {
+  activityType = BlockComponent.activities.EXTERNAL;
+
   init$ = {
     counter: 0,
     onDone: () => {

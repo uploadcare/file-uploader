@@ -1,6 +1,8 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 
 export class UploadDetails extends BlockComponent {
+  activityType = BlockComponent.activities.DETAILS;
+
   init$ = {
     fileSize: 0,
     fileName: '',

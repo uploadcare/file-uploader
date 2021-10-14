@@ -3,6 +3,8 @@ import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 let EDITOR_SCRIPT_SRC = 'https://ucarecdn.com/libs/editor/0.0.1-alpha.0.9/uploadcare-editor.js';
 
 export class CloudImageEditor extends BlockComponent {
+  activityType = BlockComponent.activities.CLOUD_IMG_EDIT;
+
   init$ = {
     uuid: null,
   };

@@ -3,6 +3,8 @@ import { FileItem } from '../FileItem/FileItem.js';
 import { UiConfirmation } from '../ConfirmationDialog/ConfirmationDialog.js';
 
 export class UploadList extends BlockComponent {
+  activityType = BlockComponent.activities.UPLOAD_LIST;
+
   init$ = {
     uploadBtnDisabled: false,
     onAdd: () => {

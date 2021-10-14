@@ -46,6 +46,8 @@ export class BlockComponent extends BaseComponent {
 
   constructor() {
     super();
+    /** @type {String} */
+    this.activityType = null;
     this.addTemplateProcessor(blockProcessor);
   }
 
@@ -126,7 +128,8 @@ export class BlockComponent extends BaseComponent {
 
       super.connectedCallback();
 
-      if (this.hasAttribute('activity')) {
+      if (this.activityType) {
+        this.setAttribute('activity', '');
         let registry = this.$['*registry'];
         registry[this.tagName.toLowerCase()] = this;
         this.$['*registry'] = registry;
@@ -135,7 +138,7 @@ export class BlockComponent extends BaseComponent {
             this.removeAttribute(ACTIVE_ATTR);
             return;
           }
-          if (this.getAttribute('activity') === val) {
+          if (this.activityType === val) {
             /** @type {String[]} */
             let history = this.$['*history'];
             if (val && history[history.length - 1] !== val) {

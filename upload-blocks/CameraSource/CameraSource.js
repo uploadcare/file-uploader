@@ -1,6 +1,8 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 
 export class CameraSource extends BlockComponent {
+  activityType = BlockComponent.activities.CAMERA;
+
   init$ = {
     video: null,
     onCancel: () => {

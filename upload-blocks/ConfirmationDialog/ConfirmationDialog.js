@@ -15,6 +15,8 @@ export class UiConfirmation {
 }
 
 export class ConfirmationDialog extends BlockComponent {
+  activityType = BlockComponent.activities.CONFIRMATION;
+
   _defaults = new UiConfirmation();
 
   init$ = {

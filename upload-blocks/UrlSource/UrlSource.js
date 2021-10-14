@@ -2,6 +2,8 @@ import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 import { uploadFile } from '../../web_modules/upload-client.js';
 
 export class UrlSource extends BlockComponent {
+  activityType = BlockComponent.activities.URL;
+
   init$ = {
     onUpload: async () => {
       let url = this.ref.input['value'];
