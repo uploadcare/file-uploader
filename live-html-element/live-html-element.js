@@ -145,21 +145,14 @@ export class LiveHtmlElement extends BaseComponent {
     }, 300);
   }
 
-  _setDefault() {
-    window.requestAnimationFrame(() => {
-      this.ref.editor.textContent = INIT_HTML;
+  init$ = {
+    src: '',
+    code: INIT_HTML,
+    spellcheck: false,
+    onInput: () => {
       this.sync();
-    });
-  }
-
-  initCallback() {
-    this.ref.editor.spellcheck = false;
-
-    this.ref.editor.oninput = () => {
-      this.sync();
-    };
-
-    this.ref.editor.onkeydown = (e) => {
+    },
+    onKeydown: (e) => {
       if (e.keyCode === 13) {
         e.preventDefault();
         document.execCommand('insertHTML', false, '\n');
@@ -167,37 +160,38 @@ export class LiveHtmlElement extends BaseComponent {
         e.preventDefault();
         document.execCommand('insertHTML', false, '&nbsp;&nbsp;');
       }
-    };
-
-    this.ref.editor.onpaste = (e) => {
+    },
+    onPaste: (e) => {
       e.preventDefault();
       let text = e.clipboardData.getData('text/plain');
       document.execCommand('insertText', false, text);
-    };
+    },
+  };
 
-    if (!this.hasAttribute('src')) {
-      this._setDefault();
-    }
-  }
-
-  set src(val) {
-    if (val) {
-      window.fetch(val).then(async (resp) => {
-        let code = await resp.text();
-        this.ref.editor.textContent = code;
-        this.sync();
-      });
-    } else {
-      this._setDefault();
-    }
+  initCallback() {
+    this.sub('src', (val) => {
+      if (val) {
+        window.fetch(val).then(async (resp) => {
+          let code = await resp.text();
+          this.$.code = code;
+          this.sync();
+        });
+      } else {
+        this.$.code = INIT_HTML;
+      }
+    });
   }
 }
 
 LiveHtmlElement.bindAttributes({
-  src: null,
+  src: 'src',
 });
 
 LiveHtmlElement.template = /*html*/ `
-<div ref="editor" contenteditable="true"></div>
+<div
+  ref="editor"
+  contenteditable="true"
+  set="textContent:code; oninput:onInput; onpaste:onPaste; onkeydown:onKeydown; spellcheck:spellcheck">
+</div>
 <iframe ref="vp"></iframe>
 `;

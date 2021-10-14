@@ -14,7 +14,7 @@
   "upload-blocks": {
     "description": "Build your own file uploader in minutes",
     "page": "pages/upload-blocks.html",
-    "demo": "snippets/upload-blocks.html"
+    "demo": "./upload-blocks/test/raw-build.html"
   },
   "uc-image": {
     "description": "Adaptive image delivery",
