@@ -27,20 +27,18 @@ uc-upload-details .viewport {
 }
 
 uc-upload-details .toolbar {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: min-content min-content 1fr min-content;
+  gap: var(--gap-mid);
   padding: var(--gap-mid);
 }
 
 uc-upload-details .back-btn {
-  background-color: var(--clr-shade-1);
-  color: var(--clr-1);
-  padding-left: 0;
+  /* nothing to say */
 }
 uc-upload-details .remove-btn {
-  background-color: var(--clr-err);
-  color: #fff;
-  padding-left: 0;
+  color: var(--clr-err) !important;
+  padding-left: 0.5em;
 }
 uc-upload-details .detail-btn {
   background-color: var(--clr-shade-1);
@@ -48,9 +46,7 @@ uc-upload-details .detail-btn {
   padding-left: 0;
 }
 uc-upload-details .edit-btn {
-  background-color: transparent;
-  color: var(--clr-1);
-  padding-left: 0;
+  padding-left: 0.5em;
 }
 
 uc-upload-details .details {

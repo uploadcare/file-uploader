@@ -142,6 +142,7 @@ UploadDetails.template = /*html*/ `
       <uc-icon name="remove"></uc-icon>
       <span l10n="remove-from-list"></span>
     </button>
+    <div></div>
     <button 
       .primary-btn
       .back-btn 
