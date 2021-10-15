@@ -47,6 +47,7 @@ uc-modal > .dialog {
   min-height: var(--ui-size);
   background-color: var(--clr-background);
   transition: transform 0.4s;
+  overflow: hidden;
 }
 uc-modal:not([active]) > .dialog {
   transform: translateY(20px);
@@ -54,6 +55,8 @@ uc-modal:not([active]) > .dialog {
 uc-modal .heading {
   display: grid;
   grid-template-columns: min-content 1fr min-content;
+  font-size: 1.1em;
+  font-weight: 500;
   line-height: var(--ui-size);
   padding: var(--gap-mid);
   color: var(--clr-txt-light);

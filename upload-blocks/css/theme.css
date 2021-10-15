@@ -10,10 +10,10 @@
   --ui-size: 36px;
   --ui-radius-1: 10px;
   --ui-radius-2: 7px;
-  --ui-radius-3: 4px;
+  --ui-radius-3: 5px;
   --ui-transition: 0.2s;
   --ui-transition-curve: ease;
-  --ui-shadow: 0px 0px 1px rgba(0, 0, 0, 0.35), 0px 6px 40px rgba(0, 0, 0, 0.2), inset 0px 0px 2px rgba(255, 255, 255, 0.8);
+  --ui-shadow: 0px 0px 1px rgba(0, 0, 0, 0.35), 0px 6px 40px rgba(0, 0, 0, 0.2), inset 0px 0px 1px rgba(255, 255, 255, 0.6);
   --ui-inset-shadow: inset 0px 2px 3px rgba(0, 0, 0, 0.09);
   --gap-min: 2px;
   --gap-mid: 10px;
@@ -23,21 +23,29 @@
 
 
   /* trying HSL */
+  --dark: 0;
+
   --h-foreground: 208;
   --s-foreground: 4%;
-  --l-foreground: 15%;
+  --l-foreground: calc(15% + 85% * var(--dark));
 
   --h-background: 208;
   --s-background: 4%;
-  --l-background: 95%;
+  --l-background: calc(95% - 80% * var(--dark));
 
   --h-accent: 211;
   --s-accent: 100%;
   --l-accent: 50%;
 
-  --h-shade: 208;
-  --s-shade: 10%;
-  --l-shade: 5%;
+  --h-confirm: 140;
+  --s-confirm: 60%;
+  --l-confirm: 60%;
+
+  --h-error: 358;
+  --s-error: 100%;
+  --l-error: 66%;
+
+ 
 
 /* 
 background -> lightness
@@ -62,15 +70,22 @@ shader < background + opacity
 
   --clr-accent:  hsl(var(--h-accent),var(--s-accent),var(--l-accent));
   --clr-accent-light:  hsla(var(--h-accent),var(--s-accent),var(--l-accent), 0.5);
+  --clr-accent-lightest:  hsla(var(--h-accent),var(--s-accent),var(--l-accent), 0.1);
+
+  --clr-confirm: hsl(var(--h-confirm),var(--s-confirm),var(--l-confirm));
+
+  --clr-error:  hsl(var(--h-error),var(--s-error),var(--l-error));
+  --clr-error-light:  hsla(var(--h-error),var(--s-error),var(--l-error), 0.15);
+  --clr-error-lightest:  hsla(var(--h-error),var(--s-error),var(--l-error), 0.05);
 
   --clr-txt: var(--clr-foreground);
   --clr-txt-mid: hsl(var(--h-foreground),var(--s-foreground),calc(var(--l-foreground) + 15%));
   --clr-txt-light: hsl(var(--h-foreground),var(--s-foreground),calc(var(--l-foreground) + 30%));
   --clr-txt-lightest: hsl(var(--h-foreground),var(--s-foreground),calc(var(--l-foreground) + 50%));
 
-  --clr-shade-lv1: hsla(var(--h-shade),var(--s-shade),var(--l-shade), 0.05);
-  --clr-shade-lv2: hsla(var(--h-shade),var(--s-shade),var(--l-shade), 0.08);
-  --clr-shade-lv3: hsla(var(--h-shade),var(--s-shade),var(--l-shade), 0.12);
+  --clr-shade-lv1: hsla(var(--h-foreground),var(--s-foreground),var(--l-foreground), 0.05);
+  --clr-shade-lv2: hsla(var(--h-foreground),var(--s-foreground),var(--l-foreground), 0.08);
+  --clr-shade-lv3: hsla(var(--h-foreground),var(--s-foreground),var(--l-foreground), 0.12);
 
   --clr-err: rgb(var(--rgb-err));
 
@@ -96,7 +111,11 @@ shader < background + opacity
   --clr-btn-bgr-secondary-active: hsl(var(--h-background),var(--s-background),calc(var(--l-background) - 3%));
   --clr-btn-txt-secondary: var(--clr-txt);
   --shadow-btn-secondary: 0px 1px 1px rgba(0, 0, 0, 0.07), 0px 2px 8px rgba(0, 0, 0, 0.06), inset 0px 0px 1px rgba(0, 0, 0, 0.4);
- 
+
+  --clr-btn-bgr-disabled: var(--clr-background);
+  --clr-btn-txt-disabled: var(--clr-txt-lightest);
+  --shadow-btn-disabled: inset 0px 0px 1px rgba(0, 0, 0, 0.4);
+
   --clr-curtain: hsla(var(--h-background),var(--s-background),calc(var(--l-background) - 10%), 0.4);
 
 

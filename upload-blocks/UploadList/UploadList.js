@@ -61,7 +61,6 @@ export class UploadList extends BlockComponent {
 
 UploadList.template = /*html*/ `
 <div .files-el ref="files">
-  <div .add-more-row><div .add-more-icon>+</div><div .add-more-label>Add more</div></div>
 </div>
 <div .toolbar-el>
   <button 

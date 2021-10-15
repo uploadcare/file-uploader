@@ -38,7 +38,6 @@ uc-upload-details .back-btn {
   /* nothing to say */
 }
 uc-upload-details .remove-btn {
-  color: var(--clr-err) !important;
   padding-left: 0.5em;
 }
 uc-upload-details .detail-btn {
@@ -56,7 +55,7 @@ uc-upload-details .details {
 
 uc-upload-details .info-block {
   padding-top: var(--gap-max);
-  padding-bottom: var(--gap-mid);
+  padding-bottom: var(--gap-max);
   color: var(--clr-txt);
   border-bottom: var(--border-light);
 }
