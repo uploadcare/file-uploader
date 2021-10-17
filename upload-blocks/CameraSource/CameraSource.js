@@ -5,6 +5,7 @@ export class CameraSource extends BlockComponent {
 
   init$ = {
     video: null,
+    videoTransformCss: this.config.CAMERA_MIRROR ? 'scaleX(-1)' : null,
     onCancel: () => {
       this.set$({
         '*modalActive': false,
@@ -78,7 +79,7 @@ CameraSource.template = /*html*/ `
 <video 
   autoplay 
   playsinline 
-  set="srcObject: video"
+  set="srcObject: video; style.transform: videoTransformCss"
   ref="video">
 </video>
 <div .toolbar>

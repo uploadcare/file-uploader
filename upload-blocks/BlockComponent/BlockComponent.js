@@ -88,6 +88,8 @@ export class BlockComponent extends BaseComponent {
     this.fileInput = document.createElement('input');
     this.fileInput.type = 'file';
     this.fileInput.multiple = !!this.config.MULTIPLE;
+    this.fileInput.max = this.config.MAX_FILES + '';
+    this.fileInput.accept = this.config.ACCEPT;
     this.fileInput.dispatchEvent(new MouseEvent('click'));
     this.fileInput.onchange = () => {
       this.addFiles([...this.fileInput['files']]);
