@@ -13,6 +13,10 @@ const buildSequence = [
     minifyHtml: false,
   },
   {
+    in: './upload-blocks/css/MOUNT_POINT.css',
+    out: './build/upload-blocks.css',
+  },
+  {
     in: './symbiote/core/BaseComponent.js',
     out: './build/symbiote.js',
     minifyHtml: true,

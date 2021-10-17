@@ -1,4 +1,5 @@
 .uc-wgt-l10n_en-US, .uc-wgt-common, :host {
+  --l10n-upload-file: 'Upload File';
   --l10n-upload-files: 'Upload Files';
   --l10n-drop-files-here: 'Or drop files here...';
   --l10n-select-file-source: 'Select File Source';

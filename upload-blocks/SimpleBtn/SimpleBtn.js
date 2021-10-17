@@ -2,7 +2,7 @@ import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 
 export class SimpleBtn extends BlockComponent {
   init$ = {
-    '*simpleButtonText': this.l10n('upload-files'),
+    '*simpleButtonText': this.config.MULTIPLE ? this.l10n('upload-files') : this.l10n('upload-file'),
   };
 
   initCallback() {
