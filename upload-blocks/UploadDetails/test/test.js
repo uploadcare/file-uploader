@@ -11,6 +11,7 @@ Tabs.reg('tabs');
 window.onload = () => {
   /** @type {UploadDetails} */
   let details = document.querySelector(UploadDetails.is);
+  details.$['*currentActivity'] = UploadDetails.activities.DETAILS;
   window.fetch('./test.png').then(async (resp) => {
     let blob = await resp.blob();
     let file = new File([blob], 'test', {

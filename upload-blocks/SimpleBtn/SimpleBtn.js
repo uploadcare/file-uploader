@@ -1,6 +1,10 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 
 export class SimpleBtn extends BlockComponent {
+  init$ = {
+    '*simpleButtonText': this.l10n('upload-files'),
+  };
+
   initCallback() {
     this.onclick = () => {
       if (this.$['*uploadList'].length) {
@@ -22,5 +26,6 @@ export class SimpleBtn extends BlockComponent {
 SimpleBtn.template = /*html*/ `
 <button>
   <uc-icon name="upload"></uc-icon>
-  <span l10n="upload-files"></span>
+  <span set="textContent: *simpleButtonText"></span>
+  <slot></slot>
 </button>`;

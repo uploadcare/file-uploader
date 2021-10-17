@@ -5,13 +5,12 @@ export class UiConfirmation {
   messsageL10Str = 'are-you-sure';
   confirmL10nStr = 'yes';
   denyL10nStr = 'no';
-  confirmAction = () => {
+  confirmAction() {
     console.log('Confirmed');
-  };
-  denyAction = () => {
-    // @ts-ignore
-    this.historyBack();
-  };
+  }
+  denyAction() {
+    this['historyBack']();
+  }
 }
 
 export class ConfirmationDialog extends BlockComponent {
@@ -23,9 +22,9 @@ export class ConfirmationDialog extends BlockComponent {
     messageTxt: this.l10n(this._defaults.messsageL10Str),
     confirmBtnTxt: this.l10n(this._defaults.confirmL10nStr),
     denyBtnTxt: this.l10n(this._defaults.denyL10nStr),
-    onDeny: this._defaults.denyAction.bind(this),
-    onConfirm: this._defaults.confirmAction.bind(this),
     '*confirmation': null,
+    onConfirm: this._defaults.confirmAction,
+    onDeny: this._defaults.denyAction.bind(this),
   };
 
   initCallback() {

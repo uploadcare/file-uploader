@@ -54,6 +54,10 @@ export class FileItem extends BlockComponent {
         this.$.thumbUrl = `url(${img})`;
       });
     }
+
+    if (!this.config.CONFIRM_UPLOAD) {
+      this.upload();
+    }
   }
 
   get 'entry-id'() {
@@ -97,6 +101,7 @@ export class FileItem extends BlockComponent {
       // @ts-ignore
       let fileInfo = await uploadFile(this.file, {
         publicKey: this.config.PUBKEY,
+        store: !!this.config.STORE,
         onProgress: (progress) => {
           let percentage = progress.value * 100;
           this.$.progressWidth = percentage + '%';

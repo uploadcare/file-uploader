@@ -13,15 +13,25 @@ const FS_ICON = {
   EXIT: 'fullscreen-exit',
 };
 
+/**
+ * @typedef {any} RefMap
+ * @property {import('./EditableCanvas.js').EditableCanvas} parent
+ * @property {HTMLCanvasElement} canvas
+ * @property {CanvasRenderingContext2D} canvCtx
+ * @property {SVGElement} svg
+ * @property {SVGGElement} svgGroup
+ * @property {SVGImageElement} svgImg
+ */
+
 export class EditorToolbar extends BlockComponent {
   get actionsMap() {
     return {
       fullscreen: () => {
-        if (document.fullscreenElement === this.editor) {
+        if (document.fullscreenElement === this.rMap.parent) {
           document.exitFullscreen();
           this.$.fsIcon = FS_ICON.FS;
         } else {
-          this.editor.requestFullscreen();
+          this.rMap.parent.requestFullscreen();
           this.$.fsIcon = FS_ICON.EXIT;
         }
       },
@@ -109,12 +119,6 @@ export class EditorToolbar extends BlockComponent {
       }
       this.actionsMap[action]();
     },
-    onRangeChange: () => {
-      this.canMan?.[this.rangeCtx]?.(this.ref.range['value']);
-    },
-    onColor: () => {
-      this.canMan.setColor(this.ref.color['value']);
-    },
   };
 
   buttons = new Set();
@@ -122,13 +126,20 @@ export class EditorToolbar extends BlockComponent {
   editor = null;
 
   initCallback() {
-    this.defineAccessor('refMap', (rMap) => {
+    this.defineAccessor('refMap', (/** @type {RefMap} */ rMap) => {
       if (!rMap) {
         return;
       }
+      this.rMap = rMap;
       /** @type {CanMan} */
       this.canMan = new CanMan(rMap);
       console.log(rMap);
+    });
+    this.sub('*rangeValue', (val) => {
+      this.canMan?.[this.rangeCtx]?.(val);
+    });
+    this.sub('*selectedColor', (val) => {
+      this.canMan?.setColor(val);
     });
   }
 }

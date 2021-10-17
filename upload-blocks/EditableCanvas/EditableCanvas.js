@@ -20,12 +20,19 @@ export class EditableCanvas extends BlockComponent {
   }
 
   initCallback() {
+    this.style.backgroundImage = `url(${checkerboardCssBg()})`;
     /** @type {HTMLCanvasElement} */
     // @ts-ignore
     this.canvas = this.ref.cvs;
     this.canvCtx = this.canvas.getContext('2d');
-    this.$.refMap = { ...this.ref };
-    this.style.backgroundImage = `url(${checkerboardCssBg()})`;
+    this.$.refMap = {
+      parent: this,
+      canvas: this.canvas,
+      canvCtx: this.canvCtx,
+      svg: this.ref.svg,
+      svgGroup: this.ref.svg_g,
+      svgImg: this.ref.svg_img,
+    };
   }
 
   /** @param {HTMLImageElement} img */
