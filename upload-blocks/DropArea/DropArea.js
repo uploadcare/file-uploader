@@ -1,8 +1,6 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 
 export class DropArea extends BlockComponent {
-  activityType = BlockComponent.activities.SOURSE_SELECT;
-
   initCallback() {
     this.addEventListener('dragover', (e) => {
       e.stopPropagation();

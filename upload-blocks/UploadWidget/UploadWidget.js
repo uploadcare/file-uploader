@@ -2,6 +2,7 @@ import { ShadowWrapper } from '../ShadowWrapper/ShadowWrapper.js';
 
 import { Icon } from '../Icon/Icon.js';
 import { SimpleBtn } from '../SimpleBtn/SimpleBtn.js';
+import { ActivityWrapper } from '../ActivityWrapper/ActivityWrapper.js';
 import { DropArea } from '../DropArea/DropArea.js';
 import { SourceBtn } from '../SourceBtn/SourceBtn.js';
 import { SourceList } from '../SourceList/SourceList.js';
@@ -24,6 +25,7 @@ Icon.reg('uc-icon');
 
 // Other components are extended from BlockComponent:
 SimpleBtn.reg('simple-btn');
+ActivityWrapper.reg('activity-wrapper');
 DropArea.reg('drop-area');
 SourceBtn.reg('source-btn');
 SourceList.reg('source-list');
