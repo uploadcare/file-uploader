@@ -149,7 +149,7 @@ ExternalSource.template = /*html*/ `
     <span l10n="selected-count"></span>
     <span set="textContent: counter"></span>
   </div>
-  <button .done-btn set="onclick: onDone">
+  <button .done-btn .primary-btn set="onclick: onDone">
     <uc-icon name="check"></uc-icon>
   </button>
 </div>
