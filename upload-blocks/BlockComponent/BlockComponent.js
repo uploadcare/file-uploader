@@ -135,7 +135,9 @@ export class BlockComponent extends BaseComponent {
       super.connectedCallback();
 
       if (this.activityType) {
-        this.setAttribute('activity', '');
+        if (!this.hasAttribute('activity')) {
+          this.setAttribute('activity', this.activityType);
+        }
         let registry = this.$['*registry'];
         registry[this.tagName.toLowerCase()] = this;
         this.$['*registry'] = registry;
