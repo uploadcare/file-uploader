@@ -9,6 +9,10 @@ export class SourceList extends BlockComponent {
     list.forEach((srcName) => {
       html += /*html*/ `<uc-source-btn type="${srcName}"></uc-source-btn>`;
     });
-    this.outerHTML = html;
+    if (this.hasAttribute('wrap')) {
+      this.innerHTML = html;
+    } else {
+      this.outerHTML = html;
+    }
   }
 }

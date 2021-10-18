@@ -1,33 +1,12 @@
 uc-drop-area {
-  display: grid;
-  grid-template-columns: min-content auto;
-  padding: var(--gap-mid);
-  overflow: hidden;
-}
-uc-drop-area .sources {
-  border-radius: var(--ui-radius-2);
-  overflow: hidden;
-  margin-right: var(--gap-mid);
-}
-uc-drop-area .dropzone {
-  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  user-select: none;
+  border: var(--line-width) dashed var(--clr-txt);
   border-radius: var(--ui-radius-1);
-  border: var(--border-dashed);
-  background-color: var(--clr-shade-lv1);
+  padding: var(--gap-mid);
+  background-color: var(--clr-shade-1);
 }
-uc-drop-area .dropzone .drop-txt {
-  color: var(--clr-1);
-  opacity: var(--opacity-mid);
-}
-
-uc-drop-area .powered {
-  position: absolute;
-  bottom: var(--gap-mid);
-  right: var(--gap-mid);
-  font-size: 10px;
-  color: var(--clr-txt-lightest);
+uc-drop-area::after {
+  content: var(--l10n-drop-files-here);
 }

@@ -8,9 +8,8 @@ UploadWidget.template = /*html*/ `
 
 <uc-modal>
   <uc-activity-wrapper activity="source-select">
-    <uc-drop-area>
-      <uc-source-list></uc-source-list>
-    </uc-drop-area>
+    <uc-source-list wrap></uc-source-list>
+    <uc-drop-area></uc-drop-area>
   </uc-activity-wrapper>
   <uc-upload-list></uc-upload-list>
   <uc-camera-source></uc-camera-source>
@@ -29,5 +28,5 @@ UploadWidget.reg('uc-upload-wgt');
 </script>
 
 <uc-upload-wgt
-  css-src="./upload-blocks/css/MOUNT_POINT.css">
+  css-src="./upload-blocks/themes/dev/index.css">
 </uc-upload-wgt>

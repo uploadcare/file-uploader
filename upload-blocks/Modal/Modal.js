@@ -7,6 +7,7 @@ export class Modal extends BlockComponent {
     '*modalIcon': 'default',
     '*modalActive': false,
     '*modalCaption': 'Modal caption',
+    '*modalHeaderHidden': false,
     closeClicked: () => {
       this.$['*modalActive'] = false;
     },
@@ -24,7 +25,7 @@ export class Modal extends BlockComponent {
 
 Modal.template = /*html*/ `
 <div .dialog>
-  <div .heading>
+  <div .heading set="@hidden: *modalHeaderHidden">
     <uc-icon set="@name: *modalIcon"></uc-icon>
     <div 
       .caption 

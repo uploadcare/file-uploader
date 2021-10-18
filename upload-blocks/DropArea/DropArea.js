@@ -31,13 +31,3 @@ export class DropArea extends BlockComponent {
     );
   }
 }
-
-DropArea.template = /*html*/ `
-<div .sources>
-  <slot></slot>
-</div>
-<div .dropzone>
-  <div .drop-txt l10n="drop-files-here"></div>
-  <div .powered>Powered by Uploadcare ©</div>
-</div>
-`;
