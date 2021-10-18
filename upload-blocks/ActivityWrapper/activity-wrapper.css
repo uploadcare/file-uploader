@@ -1,0 +1,4 @@
+uc-activity-wrapper[activity="source-select"] {
+  display: grid;
+  grid-template-columns: min-content auto;
+}

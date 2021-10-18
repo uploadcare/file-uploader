@@ -11,26 +11,27 @@
 @import url('theme.css');
 
 /* UI COMPONENTS: */
-@import url('../Icon/icon.css');
-@import url('../Tabs/tabs.css');
-@import url('../Range/range.css');
-@import url('../Color/color.css');
+@import url('../../Icon/icon.css');
+@import url('../../Tabs/tabs.css');
+@import url('../../Range/range.css');
+@import url('../../Color/color.css');
 
 /* BLOCKS: */
-@import url('../SimpleBtn/simple-btn.css');
-@import url('../SourceBtn/source-btn.css');
-@import url('../DropArea/drop-area.css');
-@import url('../Modal/modal.css');
-@import url('../UrlSource/url-source.css');
-@import url('../CameraSource/camera-source.css');
-@import url('../ExternalSource/external-source.css');
-@import url('../UploadList/upload-list.css');
-@import url('../FileItem/file-item.css');
-@import url('../UploadDetails/upload-details.css');
-@import url('../EditableCanvas/editable-canvas.css');
-@import url('../MessageBox/message-box.css');
-@import url('../ConfirmationDialog/confirmation.css');
-@import url('../ProgressBar/progress-bar.css');
+@import url('../../SimpleBtn/simple-btn.css');
+@import url('../../ActivityWrapper/activity-wrapper.css');
+@import url('../../SourceBtn/source-btn.css');
+@import url('../../DropArea/drop-area.css');
+@import url('../../Modal/modal.css');
+@import url('../../UrlSource/url-source.css');
+@import url('../../CameraSource/camera-source.css');
+@import url('../../ExternalSource/external-source.css');
+@import url('../../UploadList/upload-list.css');
+@import url('../../FileItem/file-item.css');
+@import url('../../UploadDetails/upload-details.css');
+@import url('../../EditableCanvas/editable-canvas.css');
+@import url('../../MessageBox/message-box.css');
+@import url('../../ConfirmationDialog/confirmation.css');
+@import url('../../ProgressBar/progress-bar.css');
 
 .uc-wgt-theme, .uc-wgt-common, :host {
   font-family: sans-serif;
