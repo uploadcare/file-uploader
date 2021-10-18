@@ -64,16 +64,16 @@ export class CanMan {
     await this._backSyncSvg();
   }
 
-  /** @param {Object} refMap */
+  /** @param {import('./EditorToolbar.js').RefMap} refMap */
   constructor(refMap) {
     /** @type {HTMLCanvasElement} */
-    this.can = refMap.cvs;
+    this.can = refMap.canvas;
     this.svgEl = refMap.svg;
-    this.svgGroupEl = this.svgEl.querySelector('g');
-    this.svgImgEl = this.svgGroupEl.querySelector('image');
+    this.svgGroupEl = refMap.svgGroup;
+    this.svgImgEl = refMap.svgImg;
     this.vImg = new Image();
 
-    this.ctx = this.can.getContext('2d');
+    this.ctx = refMap.canvCtx;
 
     this.currentColor = CanMan.defaultColor;
 
@@ -122,21 +122,18 @@ export class CanMan {
     this.applyCss({
       filter: `brightness(${val}%)`,
     });
-    this.bake();
   }
 
   contrast(val) {
     this.applyCss({
       filter: `contrast(${val}%)`,
     });
-    this.bake();
   }
 
   saturate(val) {
     this.applyCss({
       filter: `saturate(${val}%)`,
     });
-    this.bake();
   }
 
   setColor(val) {

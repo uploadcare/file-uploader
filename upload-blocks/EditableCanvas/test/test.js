@@ -10,4 +10,7 @@ window.onload = () => {
   let img = new Image();
   img.src = 'test.jpg';
   edtr.setImage(img);
+  window.setTimeout(() => {
+    edtr.setAttribute('active', '');
+  }, 100);
 };

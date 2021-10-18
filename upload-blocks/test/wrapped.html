@@ -6,25 +6,19 @@ import { UploadWidget } from './upload-blocks/UploadWidget/UploadWidget.js';
 UploadWidget.template = /*html*/ `
 <uc-simple-btn></uc-simple-btn>
 
-<uc-modal>
-  <uc-drop-area activity="source-select">
-    <uc-source-btn type="local"></uc-source-btn>
-    <uc-source-btn type="url"></uc-source-btn>
-    <uc-source-btn type="camera"></uc-source-btn>
-    <uc-source-btn type="draw"></uc-source-btn>
-    <uc-source-btn type="facebook"></uc-source-btn>
-    <uc-source-btn type="dropbox"></uc-source-btn>
-    <uc-source-btn type="gdrive"></uc-source-btn>
-    <uc-source-btn type="gphotos"></uc-source-btn>
-    <uc-source-btn type="instagram"></uc-source-btn>
-  </uc-drop-area>
-  <uc-upload-list activity="upload-list"></uc-upload-list>
-  <uc-camera-source activity="camera"></uc-camera-source>
-  <uc-url-source activity="url"></uc-url-source>
-  <uc-external-source activity="external"></uc-external-source>
-  <uc-upload-details activity="details"></uc-upload-details>
-  <uc-confirmation-dialog activity="confirmation"></uc-confirmation-dialog>
-  <uc-cloud-image-editor activity="cloud-image-edit"></uc-cloud-image-editor>
+<uc-modal strokes>
+  <uc-activity-wrapper activity="source-select">
+    <uc-drop-area>
+      <uc-source-list></uc-source-list>
+    </uc-drop-area>
+  </uc-activity-wrapper>
+  <uc-upload-list></uc-upload-list>
+  <uc-camera-source></uc-camera-source>
+  <uc-url-source></uc-url-source>
+  <uc-external-source></uc-external-source>
+  <uc-upload-details></uc-upload-details>
+  <uc-confirmation-dialog></uc-confirmation-dialog>
+  <uc-cloud-image-editor></uc-cloud-image-editor>
 </uc-modal>
 
 <uc-message-box></uc-message-box>

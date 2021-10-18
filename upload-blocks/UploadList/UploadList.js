@@ -3,8 +3,11 @@ import { FileItem } from '../FileItem/FileItem.js';
 import { UiConfirmation } from '../ConfirmationDialog/ConfirmationDialog.js';
 
 export class UploadList extends BlockComponent {
+  activityType = BlockComponent.activities.UPLOAD_LIST;
+
   init$ = {
     uploadBtnDisabled: false,
+    moreBtnDisabled: !this.config.MULTIPLE,
     onAdd: () => {
       this.$['*currentActivity'] = BlockComponent.activities.SOURSE_SELECT;
     },
@@ -60,9 +63,8 @@ export class UploadList extends BlockComponent {
 }
 
 UploadList.template = /*html*/ `
-<div .files-el ref="files">
-</div>
-<div .toolbar-el>
+<div .files ref="files"></div>
+<div .toolbar>
   <button 
     .cancel-btn 
     .secondary-btn
@@ -71,8 +73,7 @@ UploadList.template = /*html*/ `
   <div></div>
   <button 
     .add-more-btn 
-    .secondary-btn
-    set="onclick: onAdd" 
+    set="onclick: onAdd; @disabled: moreBtnDisabled"
     l10n="add-more"></button>
   <button 
     .upload-btn 

@@ -7,7 +7,7 @@
   --cfg-img-only: 0;
   --cfg-accept: '';
   --cfg-store: 1;
-  --cfg-camera-mirror: 1;
-  --cfg-ext-source-list: 'dropbox, google-drive, facebook';
+  --cfg-camera-mirror: 0;
+  --cfg-source-list: 'local, url, camera, draw, dropbox, gdrive, facebook';
   --cfg-max-files: 10;
 }

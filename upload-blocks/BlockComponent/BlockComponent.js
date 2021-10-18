@@ -46,6 +46,8 @@ export class BlockComponent extends BaseComponent {
 
   constructor() {
     super();
+    /** @type {String} */
+    this.activityType = null;
     this.addTemplateProcessor(blockProcessor);
   }
 
@@ -85,13 +87,19 @@ export class BlockComponent extends BaseComponent {
   openSystemDialog() {
     this.fileInput = document.createElement('input');
     this.fileInput.type = 'file';
+    this.fileInput.multiple = !!this.config.MULTIPLE;
+    this.fileInput.max = this.config.MAX_FILES + '';
+    this.fileInput.accept = this.config.ACCEPT;
     this.fileInput.dispatchEvent(new MouseEvent('click'));
     this.fileInput.onchange = () => {
       this.addFiles([...this.fileInput['files']]);
-      this.set$({
-        '*currentActivity': 'upload-list',
-        '*modalActive': true,
-      });
+      // To call uploadTrigger UploadList should draw file items first:
+      this.$['*currentActivity'] = BlockComponent.activities.UPLOAD_LIST;
+      if (!this.config.CONFIRM_UPLOAD) {
+        this.$['*modalActive'] = false;
+      } else {
+        this.$['*modalActive'] = true;
+      }
       this.fileInput['value'] = '';
       this.fileInput = null;
     };
@@ -126,7 +134,10 @@ export class BlockComponent extends BaseComponent {
 
       super.connectedCallback();
 
-      if (this.hasAttribute('activity')) {
+      if (this.activityType) {
+        if (!this.hasAttribute('activity')) {
+          this.setAttribute('activity', this.activityType);
+        }
         let registry = this.$['*registry'];
         registry[this.tagName.toLowerCase()] = this;
         this.$['*registry'] = registry;
@@ -135,7 +146,7 @@ export class BlockComponent extends BaseComponent {
             this.removeAttribute(ACTIVE_ATTR);
             return;
           }
-          if (this.getAttribute('activity') === val) {
+          if (this.activityType === val) {
             /** @type {String[]} */
             let history = this.$['*history'];
             if (val && history[history.length - 1] !== val) {
@@ -196,7 +207,7 @@ export class BlockComponent extends BaseComponent {
    *   ACCEPT: string;
    *   STORE: number;
    *   CAMERA_MIRROR: number;
-   *   EXT_SRC_LIST: string;
+   *   SRC_LIST: string;
    *   MAX_FILES: number;
    * }}
    */
@@ -254,6 +265,6 @@ BlockComponent.cfgCssMap = Object.freeze({
   ACCEPT: '--cfg-accept',
   STORE: '--cfg-store',
   CAMERA_MIRROR: '--cfg-camera-mirror',
-  EXT_SRC_LIST: '--cfg-ext-source-list',
+  SRC_LIST: '--cfg-source-list',
   MAX_FILES: '--cfg-max-files',
 });
