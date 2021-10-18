@@ -73,6 +73,7 @@ UploadList.template = /*html*/ `
   <div></div>
   <button 
     .add-more-btn 
+    .secondary-btn
     set="onclick: onAdd; @disabled: moreBtnDisabled"
     l10n="add-more"></button>
   <button 
