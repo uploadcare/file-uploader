@@ -68,13 +68,3 @@ uc-modal .caption {
   font-size: 1em;
   color: var(--clr-txt);
 }
-
-uc-modal uc-drop-area {
-  border-radius: var(--ui-radius-2);
-  margin: var(--gap-mid);
-  border: none;
-  padding: 0;
-}
-uc-modal uc-drop-area .sources {
-  border-radius: 0;
-}

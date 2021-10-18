@@ -4,7 +4,6 @@ uc-drop-area {
   justify-content: center;
   border: var(--line-width) dashed var(--clr-txt);
   border-radius: var(--ui-radius-1);
-  padding: var(--gap-mid);
   background-color: var(--clr-shade-1);
 }
 uc-drop-area::after {
