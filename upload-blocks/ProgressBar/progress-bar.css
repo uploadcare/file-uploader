@@ -18,6 +18,6 @@ uc-progress-bar .bar {
   width: 0;
   left: 0;
   height: 100%;
-  background-color: var(--clr-foreground);
+  background-color: var(--clr-accent);
   transition: 0.2s;
 }
