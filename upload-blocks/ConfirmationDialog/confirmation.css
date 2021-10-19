@@ -1,21 +1,18 @@
 uc-confirmation-dialog {
   display: block;
   padding: var(--gap-mid);
+  padding-top: var(--gap-max);
 }
 uc-confirmation-dialog .message {
   display: flex;
   justify-content: center;
-  padding-top: var(--gap-mid);
+  padding: var(--gap-mid);
   padding-bottom: var(--gap-max);
 }
 uc-confirmation-dialog .toolbar {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--gap-mid);
-  justify-content: center;
-}
-uc-confirmation-dialog .heading {
-  display: none;
+  display: flex;
+  justify-content: space-between;
+  margin-top: var(--gap-mid);
 }
 uc-confirmation-dialog .confirm-btn {
   /* nothing to say */
