@@ -33,13 +33,20 @@ export class ConfirmationDialog extends BlockComponent {
         return;
       }
       this.set$({
+        '*modalHeaderHidden': true,
         '*currentActivity': BlockComponent.activities.CONFIRMATION,
         '*modalCaption': this.l10n(cfn.captionL10nStr),
         messageTxt: this.l10n(cfn.messsageL10Str),
         confirmBtnTxt: this.l10n(cfn.confirmL10nStr),
         denyBtnTxt: this.l10n(cfn.denyL10nStr),
-        onDeny: cfn.denyAction,
-        onConfirm: cfn.confirmAction,
+        onDeny: () => {
+          this.$['*modalHeaderHidden'] = false;
+          cfn.denyAction();
+        },
+        onConfirm: () => {
+          this.$['*modalHeaderHidden'] = false;
+          cfn.confirmAction();
+        },
       });
     });
   }

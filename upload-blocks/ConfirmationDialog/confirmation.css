@@ -1,15 +1,17 @@
 uc-confirmation-dialog {
   display: block;
   padding: var(--gap-mid);
+  padding-top: var(--gap-max);
 }
 uc-confirmation-dialog .message {
   display: flex;
   justify-content: center;
+  padding: var(--gap-mid);
+  padding-bottom: var(--gap-max);
 }
 uc-confirmation-dialog .toolbar {
   display: flex;
   justify-content: space-between;
-  padding: var(--gap-mid);
   margin-top: var(--gap-mid);
 }
 uc-confirmation-dialog .confirm-btn {
