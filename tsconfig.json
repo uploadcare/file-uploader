@@ -17,12 +17,6 @@
     "checkJs": true,
     "noEmit": true,
     "strict": false,
-
-    "strictFunctionTypes": false,
-    "suppressExcessPropertyErrors": true,
-    "suppressImplicitAnyIndexErrors": true,
-
-    "noImplicitThis": true,
     "alwaysStrict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,

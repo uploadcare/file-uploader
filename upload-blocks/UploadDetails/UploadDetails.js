@@ -30,63 +30,70 @@ export class UploadDetails extends BlockComponent {
     /** @type {import('../EditableCanvas/EditableCanvas.js').EditableCanvas} */
     // @ts-ignore
     this.eCanvas = this.ref.canvas;
-    this.sub('*focusedEntry', (/** @type {import('../../symbiote/core/TypedData.js').TypedData} */ entry) => {
-      if (!entry) {
-        return;
-      }
-      this.entry = entry;
-      /** @type {File} */
-      let file = entry.getValue('file');
-      if (file) {
+    this._currentSubscription = this.createSubscription(
+      '*focusedEntry',
+      (/** @type {import('../../symbiote/core/TypedData.js').TypedData} */ entry) => {
+        if (this._currentSubscription) {
+          this._currentSubscription.remove();
+          this._currentSubscription = null;
+        }
+        if (!entry) {
+          return;
+        }
+        this.entry = entry;
         /** @type {File} */
-        this._file = file;
-        if (this._file.type.includes('image') && !entry.getValue('transformationsUrl')) {
-          this.eCanvas.setImageFile(this._file);
-          this.set$({
-            editBtnHidden: false,
-          });
+        let file = entry.getValue('file');
+        if (file) {
+          /** @type {File} */
+          this._file = file;
+          if (this._file.type.includes('image') && !entry.getValue('transformationsUrl')) {
+            this.eCanvas.setImageFile(this._file);
+            this.set$({
+              editBtnHidden: false,
+            });
+          }
         }
-      }
-      this.entry.subscribe('fileName', (name) => {
-        this.$.fileName = name;
-        this.$.onNameInput = () => {
-          Object.defineProperty(this._file, 'name', {
-            writable: true,
-            value: this.ref.file_name_input['value'],
-          });
-        };
-      });
-      this.entry.subscribe('fileSize', (size) => {
-        this.$.fileSize = size;
-      });
-      this.entry.subscribe('uuid', (uuid) => {
-        if (uuid) {
-          this.$.cdnUrl = `https://ucarecdn.com/${uuid}/`;
-        } else {
-          this.$.cdnUrl = 'Not uploaded yet...';
-        }
-      });
-      this.entry.subscribe('uploadErrorMsg', (msg) => {
-        this.$.errorTxt = msg;
-      });
+        this.entry.subscribe('fileName', (name) => {
+          this.$.fileName = name;
+          this.$.onNameInput = () => {
+            Object.defineProperty(this._file, 'name', {
+              writable: true,
+              value: this.ref.file_name_input['value'],
+            });
+          };
+        });
+        this.entry.subscribe('fileSize', (size) => {
+          this.$.fileSize = size;
+        });
+        this.entry.subscribe('uuid', (uuid) => {
+          if (uuid) {
+            this.$.cdnUrl = `https://ucarecdn.com/${uuid}/`;
+          } else {
+            this.$.cdnUrl = 'Not uploaded yet...';
+          }
+        });
+        this.entry.subscribe('uploadErrorMsg', (msg) => {
+          this.$.errorTxt = msg;
+        });
 
-      this.entry.subscribe('externalUrl', (url) => {
-        if (!url) {
-          return;
-        }
-        if (this.entry.getValue('isImage') && !this.entry.getValue('transformationsUrl')) {
-          this.eCanvas.setImageUrl(this.$.cdnUrl);
-        }
-      });
-      this.entry.subscribe('transformationsUrl', (url) => {
-        if (!url) {
-          return;
-        }
-        if (this.entry.getValue('isImage')) {
-          this.eCanvas.setImageUrl(url);
-        }
-      });
-    });
+        this.entry.subscribe('externalUrl', (url) => {
+          if (!url) {
+            return;
+          }
+          if (this.entry.getValue('isImage') && !this.entry.getValue('transformationsUrl')) {
+            this.eCanvas.setImageUrl(this.$.cdnUrl);
+          }
+        });
+        this.entry.subscribe('transformationsUrl', (url) => {
+          if (!url) {
+            return;
+          }
+          if (this.entry.getValue('isImage')) {
+            this.eCanvas.setImageUrl(url);
+          }
+        });
+      }
+    );
   }
 }
 
