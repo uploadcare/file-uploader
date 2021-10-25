@@ -1,0 +1,45 @@
+uc-custom-source-btn {
+  display: flex;
+  align-items: center;
+  padding-right: 1em;
+  border-bottom: var(--line-width) solid var(--clr-shade-1);
+  user-select: none;
+  cursor: pointer;
+
+  --l10n-src-type-custom: 'CUSTOM TEXT';
+}
+uc-custom-source-btn:last-of-type {
+  border-bottom: none;
+}
+
+uc-custom-source-btn uc-icon {
+  display: inline-flex;
+  flex-grow: 1;
+  min-width: var(--ui-size);
+  justify-content: center;
+}
+
+uc-custom-source-btn[type='local'] > .txt::after {
+  content: var(--l10n-local-files);
+}
+uc-custom-source-btn[type='camera'] > .txt::after {
+  content: var(--l10n-camera);
+}
+uc-custom-source-btn[type='url'] > .txt::after {
+  content: var(--l10n-from-url);
+}
+uc-custom-source-btn[type='other'] > .txt::after {
+  content: var(--l10n-other);
+}
+
+uc-custom-source-btn .txt {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+  height: var(--ui-size);
+  padding: 0;
+  border: none;
+  box-sizing: border-box;
+  white-space: nowrap;
+}
