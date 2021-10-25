@@ -1,8 +1,9 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 import { FileItem } from '../FileItem/FileItem.js';
 import { UiConfirmation } from '../ConfirmationDialog/ConfirmationDialog.js';
+import { ActivityComponent } from '../ActivityComponent/ActivityComponent.js';
 
-export class UploadList extends BlockComponent {
+export class UploadList extends ActivityComponent {
   activityType = BlockComponent.activities.UPLOAD_LIST;
 
   init$ = {
@@ -32,7 +33,23 @@ export class UploadList extends BlockComponent {
 
   _renderMap = Object.create(null);
 
+  onActivate() {
+    let modalActive = true;
+    if (!this.$['*files']?.length) {
+      modalActive = false;
+      this.openSystemDialog();
+    }
+
+    this.set$({
+      '*modalCaption': this.l10n('selected'),
+      '*modalIcon': 'local',
+      '*modalActive': modalActive,
+    });
+  }
+
   initCallback() {
+    super.initCallback();
+
     this.uploadCollection.observe(() => {
       let notUploaded = this.uploadCollection.findItems((item) => {
         return !item.getValue('uuid');
@@ -65,18 +82,18 @@ export class UploadList extends BlockComponent {
 UploadList.template = /*html*/ `
 <div .files ref="files"></div>
 <div .toolbar>
-  <button 
-    .cancel-btn 
-    set="onclick: onCancel;" 
+  <button
+    .cancel-btn
+    set="onclick: onCancel;"
     l10n="cancel"></button>
   <div></div>
-  <button 
-    .add-more-btn 
+  <button
+    .add-more-btn
     set="onclick: onAdd; @disabled: moreBtnDisabled"
     l10n="add-more"></button>
-  <button 
-    .upload-btn 
-    set="onclick: onUpload; @disabled: uploadBtnDisabled" 
+  <button
+    .upload-btn
+    set="onclick: onUpload; @disabled: uploadBtnDisabled"
     l10n="upload"></button>
 </div>
 `;

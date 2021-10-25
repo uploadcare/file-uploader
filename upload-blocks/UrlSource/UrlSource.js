@@ -1,7 +1,8 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 import { uploadFile } from '../../web_modules/upload-client.js';
+import { ActivityComponent } from '../ActivityComponent/ActivityComponent.js';
 
-export class UrlSource extends BlockComponent {
+export class UrlSource extends ActivityComponent {
   activityType = BlockComponent.activities.URL;
 
   init$ = {
@@ -30,6 +31,14 @@ export class UrlSource extends BlockComponent {
       this.$['*currentActivity'] = BlockComponent.activities.UPLOAD_LIST;
     },
   };
+
+  onActivate() {
+    this.set$({
+      '*modalCaption': this.l10n('caption-from-url'),
+      '*modalIcon': 'url',
+      '*modalActive': true,
+    });
+  }
 }
 
 UrlSource.template = /*html*/ `
