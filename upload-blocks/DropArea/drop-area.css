@@ -8,4 +8,5 @@ uc-drop-area {
 }
 uc-drop-area::after {
   content: var(--l10n-drop-files-here);
+  color: var(--clr-txt-light);
 }
