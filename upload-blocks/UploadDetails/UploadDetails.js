@@ -34,6 +34,14 @@ export class UploadDetails extends BlockComponent {
       if (!entry) {
         return;
       }
+      if (this._entrySubs) {
+        this._entrySubs.forEach((sub) => {
+          this._entrySubs.delete(sub);
+          sub.remove();
+        });
+      } else {
+        this._entrySubs = new Set();
+      }
       this.entry = entry;
       /** @type {File} */
       let file = entry.getValue('file');
@@ -47,7 +55,10 @@ export class UploadDetails extends BlockComponent {
           });
         }
       }
-      this.entry.subscribe('fileName', (name) => {
+      let tmpSub = (prop, callback) => {
+        this._entrySubs.add(this.entry.subscribe(prop, callback));
+      };
+      tmpSub('fileName', (name) => {
         this.$.fileName = name;
         this.$.onNameInput = () => {
           Object.defineProperty(this._file, 'name', {
@@ -56,21 +67,21 @@ export class UploadDetails extends BlockComponent {
           });
         };
       });
-      this.entry.subscribe('fileSize', (size) => {
+      tmpSub('fileSize', (size) => {
         this.$.fileSize = size;
       });
-      this.entry.subscribe('uuid', (uuid) => {
+      tmpSub('uuid', (uuid) => {
         if (uuid) {
           this.$.cdnUrl = `https://ucarecdn.com/${uuid}/`;
         } else {
           this.$.cdnUrl = 'Not uploaded yet...';
         }
       });
-      this.entry.subscribe('uploadErrorMsg', (msg) => {
+      tmpSub('uploadErrorMsg', (msg) => {
         this.$.errorTxt = msg;
       });
 
-      this.entry.subscribe('externalUrl', (url) => {
+      tmpSub('externalUrl', (url) => {
         if (!url) {
           return;
         }
@@ -78,7 +89,7 @@ export class UploadDetails extends BlockComponent {
           this.eCanvas.setImageUrl(this.$.cdnUrl);
         }
       });
-      this.entry.subscribe('transformationsUrl', (url) => {
+      tmpSub('transformationsUrl', (url) => {
         if (!url) {
           return;
         }
