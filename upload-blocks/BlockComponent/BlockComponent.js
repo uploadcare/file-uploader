@@ -121,6 +121,7 @@ export class BlockComponent extends BaseComponent {
         this.add$({
           '*registry': Object.create(null),
           '*currentActivity': '',
+          '*currentActivityParams': {},
           '*history': [],
           '*commonProgress': 0,
           '*pubkey': 'demopublickey',
@@ -255,6 +256,14 @@ BlockComponent.extSrcList = Object.freeze({
   BOX: 'box',
   ONEDRIVE: 'onedrive',
   HUDDLE: 'huddle',
+});
+
+BlockComponent.sourceTypes = Object.freeze({
+  LOCAL: 'local',
+  URL: 'url',
+  CAMERA: 'camera',
+  DRAW: 'draw',
+  ...BlockComponent.extSrcList,
 });
 
 BlockComponent.cfgCssMap = Object.freeze({
