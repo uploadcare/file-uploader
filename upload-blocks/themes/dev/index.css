@@ -1,14 +1,14 @@
 /* BASE CONFIGURATION: */
-@import url('config.css');
+@import url('./config.css');
 
 /* ICONS: */
-@import url('icons.css');
+@import url('./icons.css');
 
 /* L10N: */
-@import url('l10n.css');
+@import url('./l10n.css');
 
 /* THEME */
-@import url('theme.css');
+@import url('./theme.css');
 
 /* UI COMPONENTS: */
 @import url('../../Icon/icon.css');
