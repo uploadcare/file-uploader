@@ -4,6 +4,8 @@ import { uploadFile } from '../../web_modules/upload-client.js';
 import { UiMessage } from '../MessageBox/MessageBox.js';
 
 export class FileItem extends BlockComponent {
+  pauseRender = true;
+
   init$ = {
     fileName: '',
     thumb: '',
@@ -133,8 +135,8 @@ export class FileItem extends BlockComponent {
 }
 
 FileItem.template = /*html*/ `
-<div 
-  .thumb 
+<div
+  .thumb
   set="style.backgroundImage: thumbUrl">
 </div>
 <div .file-name set="textContent: fileName"></div>
@@ -144,7 +146,7 @@ FileItem.template = /*html*/ `
 <button .edit-btn set="onclick: onEdit;">
   <uc-icon name="edit-file"></uc-icon>
 </button>
-<div 
+<div
   .progress
   set="style.width: progressWidth; style.opacity: progressOpacity">
 </div>

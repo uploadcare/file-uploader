@@ -64,16 +64,25 @@ export class UploadList extends ActivityComponent {
       list.forEach((id) => {
         if (!this._renderMap[id]) {
           let item = new FileItem();
-          this.ref.files.prepend(item);
-          item['entry-id'] = id;
           this._renderMap[id] = item;
         }
-        for (let id in this._renderMap) {
-          if (!list.includes(id)) {
-            this._renderMap[id].remove();
-            delete this._renderMap[id];
-          }
+      });
+
+      for (let id in this._renderMap) {
+        if (!list.includes(id)) {
+          this._renderMap[id].remove();
+          delete this._renderMap[id];
         }
+      }
+
+      let fr = document.createDocumentFragment();
+      Object.values(this._renderMap).forEach((el) => fr.appendChild(el));
+      this.ref.files.replaceChildren(fr);
+      Object.entries(this._renderMap).forEach(([id, el]) => {
+        setTimeout(() => {
+          el['entry-id'] = id;
+          el.render();
+        });
       });
     });
   }
