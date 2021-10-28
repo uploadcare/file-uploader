@@ -17,6 +17,9 @@ export class SourceBtn extends BlockComponent {
     this.registerType({
       type: BlockComponent.sourceTypes.LOCAL,
       activity: BlockComponent.activities.UPLOAD_LIST,
+      activityParams: {
+        openSystemDialog: true,
+      },
     });
     this.registerType({
       type: BlockComponent.sourceTypes.URL,

@@ -35,7 +35,7 @@ export class UploadList extends ActivityComponent {
 
   onActivate() {
     let modalActive = true;
-    if (!this.$['*files']?.length) {
+    if (this.activityParams.openSystemDialog && !this.$['*files']?.length) {
       modalActive = false;
       this.openSystemDialog();
     }
