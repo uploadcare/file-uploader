@@ -37,6 +37,9 @@ uc-modal > .dialog {
   border-radius: var(--ui-radius-1);
   min-width: 410px;
   min-height: var(--ui-size);
+  max-height: 100%;
+  display: grid;
+  grid-template-rows: max-content 1fr;
 }
 uc-modal .heading {
   display: grid;

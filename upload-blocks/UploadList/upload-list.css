@@ -1,12 +1,14 @@
 uc-upload-list {
   display: grid;
   transition: opacity var(--ui-transition);
+  overflow: hidden;
 }
 uc-upload-list:not([active]) {
   display: none;
 }
 uc-upload-list .files {
   display: grid;
+  overflow: auto;
 }
 uc-upload-list .toolbar {
   display: grid;
