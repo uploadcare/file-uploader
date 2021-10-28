@@ -623,6 +623,11 @@ uc-upload-list .upload-btn {
   color: var(--clr-1)
 }
 
+uc-upload-list .done-btn {
+  background-color: var(--clr-shade-1);
+  color: var(--clr-1)
+}
+
 uc-upload-list .add-more-btn {
   background-color: transparent;
   color: var(--clr-1)

@@ -7,6 +7,8 @@ export class UploadList extends ActivityComponent {
   activityType = BlockComponent.activities.UPLOAD_LIST;
 
   init$ = {
+    doneBtnVisible: false,
+    uploadBtnVisible: true,
     uploadBtnDisabled: false,
     moreBtnDisabled: !this.config.MULTIPLE,
     onAdd: () => {
@@ -14,8 +16,12 @@ export class UploadList extends ActivityComponent {
     },
     onUpload: () => {
       this.set$({
-        uploadBtnDisabled: true,
         '*uploadTrigger': {},
+      });
+    },
+    onDone: () => {
+      this.set$({
+        '*modalActive': false,
       });
     },
     onCancel: () => {
@@ -51,10 +57,21 @@ export class UploadList extends ActivityComponent {
     super.initCallback();
 
     this.uploadCollection.observe(() => {
+      //TODO: probably we need to optimize it, too many iterations and allocations just to calc uploaded files
       let notUploaded = this.uploadCollection.findItems((item) => {
         return !item.getValue('uuid');
       });
-      this.$.uploadBtnDisabled = !notUploaded.length;
+      let inProgress = this.uploadCollection.findItems((item) => {
+        return !item.getValue('uuid') && item.getValue('uploadProgress') > 0;
+      });
+
+      let everythingUploaded = notUploaded.length === 0;
+      let somethingUploading = inProgress.length > 0;
+      this.set$({
+        uploadBtnVisible: !everythingUploaded,
+        uploadBtnDisabled: somethingUploading,
+        doneBtnVisible: everythingUploaded,
+      });
     });
     this.sub('*uploadList', (/** @type {String[]} */ list) => {
       if (!list.length) {
@@ -93,7 +110,13 @@ UploadList.template = /*html*/ `
     l10n="add-more"></button>
   <button
     .upload-btn
+    if="uploadBtnVisible"
     set="onclick: onUpload; @disabled: uploadBtnDisabled"
     l10n="upload"></button>
+    <button
+    .done-btn
+    if="doneBtnVisible"
+    set="onclick: onDone"
+    l10n="done"></button>
 </div>
 `;
