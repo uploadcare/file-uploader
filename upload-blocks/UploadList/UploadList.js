@@ -7,8 +7,8 @@ export class UploadList extends ActivityComponent {
   activityType = BlockComponent.activities.UPLOAD_LIST;
 
   init$ = {
-    doneBtnVisible: false,
-    uploadBtnVisible: true,
+    doneBtnHidden: true,
+    uploadBtnHidden: false,
     uploadBtnDisabled: false,
     moreBtnDisabled: !this.config.MULTIPLE,
     onAdd: () => {
@@ -68,9 +68,9 @@ export class UploadList extends ActivityComponent {
       let everythingUploaded = notUploaded.length === 0;
       let somethingUploading = inProgress.length > 0;
       this.set$({
-        uploadBtnVisible: !everythingUploaded,
+        uploadBtnHidden: everythingUploaded,
         uploadBtnDisabled: somethingUploading,
-        doneBtnVisible: everythingUploaded,
+        doneBtnHidden: !everythingUploaded,
       });
     });
     this.sub('*uploadList', (/** @type {String[]} */ list) => {
@@ -110,13 +110,11 @@ UploadList.template = /*html*/ `
     l10n="add-more"></button>
   <button
     .upload-btn
-    if="uploadBtnVisible"
-    set="onclick: onUpload; @disabled: uploadBtnDisabled"
+    set="@hidden: uploadBtnHidden; onclick: onUpload; @disabled: uploadBtnDisabled"
     l10n="upload"></button>
     <button
     .done-btn
-    if="doneBtnVisible"
-    set="onclick: onDone"
+    set="@hidden: doneBtnHidden; onclick: onDone"
     l10n="done"></button>
 </div>
 `;

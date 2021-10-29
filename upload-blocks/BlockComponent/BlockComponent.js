@@ -37,20 +37,6 @@ function blockProcessor(fr, fnCtx) {
   });
 }
 
-function conditionalRenderProcessor(fr, fnCtx) {
-  [...fr.querySelectorAll('[if]')].forEach((el) => {
-    let key = el.getAttribute('if');
-    fnCtx.sub(key, (val) => {
-      if (val) {
-        el.removeAttribute('hidden');
-      } else {
-        el.setAttribute('hidden', '');
-      }
-    });
-    el.removeAttribute('if');
-  });
-}
-
 let externalPropsAdded = false;
 
 export class BlockComponent extends BaseComponent {
@@ -63,7 +49,6 @@ export class BlockComponent extends BaseComponent {
     /** @type {String} */
     this.activityType = null;
     this.addTemplateProcessor(blockProcessor);
-    this.addTemplateProcessor(conditionalRenderProcessor);
   }
 
   /**
