@@ -71,8 +71,10 @@ export class FileItem extends BlockComponent {
     let [entry] = entries;
     if (entry.intersectionRatio > 0) {
       if (this.file?.type.includes('image') && !this.$.thumbUrl) {
-        resizeImage(this.file, 76).then((img) => {
-          this.$.thumbUrl = `url(${img})`;
+        window.setTimeout(() => {
+          resizeImage(this.file, 76).then((img) => {
+            this.$.thumbUrl = `url(${img})`;
+          });
         });
       }
     }
