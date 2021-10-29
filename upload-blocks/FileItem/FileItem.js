@@ -51,19 +51,31 @@ export class FileItem extends BlockComponent {
 
     this.file = this.entry.getValue('file');
 
-    if (this.file?.type.includes('image')) {
-      resizeImage(this.file, 76).then((img) => {
-        this.$.thumbUrl = `url(${img})`;
-      });
-    }
-
     if (!this.config.CONFIRM_UPLOAD) {
       this.upload();
     }
+
+    this._observer = new window.IntersectionObserver(this._observerCallback.bind(this), {
+      root: this.parentElement,
+      rootMargin: '50% 0px 50% 0px',
+      threshold: [0, 1],
+    });
+    this._observer.observe(this);
   }
 
   get 'entry-id'() {
     return this.entry.__ctxId;
+  }
+
+  _observerCallback(entries) {
+    let [entry] = entries;
+    if (entry.intersectionRatio > 0) {
+      if (this.file?.type.includes('image') && !this.$.thumbUrl) {
+        resizeImage(this.file, 76).then((img) => {
+          this.$.thumbUrl = `url(${img})`;
+        });
+      }
+    }
   }
 
   initCallback() {
@@ -89,6 +101,7 @@ export class FileItem extends BlockComponent {
 
   destroyCallback() {
     FileItem.activeInstances.delete(this);
+    this._observer.unobserve(this);
   }
 
   async upload() {

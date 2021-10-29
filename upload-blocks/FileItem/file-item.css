@@ -5,7 +5,6 @@ uc-file-item {
   transition: var(--ui-transition);
   padding: var(--gap-mid);
   border-bottom: var(--line-width) solid var(--clr-shade-1);
-  /* content-visibility: auto; */
 }
 uc-file-item:first-of-type {
   border-top: var(--line-width) solid var(--clr-shade-1);
