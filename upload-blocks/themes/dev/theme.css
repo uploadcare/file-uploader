@@ -17,6 +17,7 @@
   --line-width: 1px;
   --modal-w: 800px;
   --modal-h: 600px;
+  --file-item-height: 60px;
 
   --clr-1: rgb(var(--rgb-1));
   --clr-2: rgb(var(--rgb-2));

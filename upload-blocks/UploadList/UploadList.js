@@ -79,6 +79,7 @@ export class UploadList extends ActivityComponent {
       Object.values(this._renderMap).forEach((el) => fr.appendChild(el));
       this.ref.files.replaceChildren(fr);
       Object.entries(this._renderMap).forEach(([id, el]) => {
+        // rendering components async improves initial list render time a bit
         setTimeout(() => {
           el['entry-id'] = id;
           el.render();
