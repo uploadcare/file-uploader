@@ -1,6 +1,7 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
+import { ActivityComponent } from '../ActivityComponent/ActivityComponent.js';
 
-export class CameraSource extends BlockComponent {
+export class CameraSource extends ActivityComponent {
   activityType = BlockComponent.activities.CAMERA;
 
   init$ = {
@@ -63,36 +64,40 @@ export class CameraSource extends BlockComponent {
     });
   }
 
-  initCallback() {
-    this.sub('*currentActivity', (val) => {
-      if (val === BlockComponent.activities.CAMERA) {
-        this._init();
-      } else {
-        this._stream?.getTracks()[0].stop();
-        this.$.video = null;
-      }
+  onActivate() {
+    this._init();
+
+    this.set$({
+      '*modalCaption': this.l10n('caption-camera'),
+      '*modalIcon': 'camera',
+      '*modalActive': true,
     });
+  }
+
+  onDeactivate() {
+    this._stream?.getTracks()[0].stop();
+    this.$.video = null;
   }
 }
 
 CameraSource.template = /*html*/ `
-<video 
-  autoplay 
-  playsinline 
+<video
+  autoplay
+  playsinline
   set="srcObject: video; style.transform: videoTransformCss"
   ref="video">
 </video>
 <div .toolbar>
-  <button 
-    .cancel-btn 
+  <button
+    .cancel-btn
     .secondary-btn
-    set="onclick: onCancel" 
+    set="onclick: onCancel"
     l10n="cancel">
   </button>
-  <button 
-    .shot-btn 
+  <button
+    .shot-btn
     .primary-btn
-    set="onclick: onShot" 
+    set="onclick: onShot"
     l10n="camera-shot">
   </button>
 </div>

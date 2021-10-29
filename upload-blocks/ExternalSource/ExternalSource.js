@@ -1,6 +1,7 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 import { registerMessage, unregisterMessage } from './messages.js';
 import { uploadFile } from '../../web_modules/upload-client.js';
+import { ActivityComponent } from '../ActivityComponent/ActivityComponent.js';
 
 let styleToCss = (style) => {
   let css = Object.keys(style).reduce((acc, selector) => {
@@ -14,7 +15,7 @@ let styleToCss = (style) => {
   return css;
 };
 
-export class ExternalSource extends BlockComponent {
+export class ExternalSource extends ActivityComponent {
   activityType = BlockComponent.activities.EXTERNAL;
 
   init$ = {
@@ -22,25 +23,25 @@ export class ExternalSource extends BlockComponent {
     onDone: () => {
       this.$['*currentActivity'] = BlockComponent.activities.UPLOAD_LIST;
     },
-    '*externalSourceType': null,
   };
 
-  _externalSourceType = null;
   _iframe = null;
 
-  initCallback() {
-    this.sub('*externalSourceType', (externalSourceType) => {
-      this._externalSourceType = externalSourceType;
+  onActivate() {
+    let { externalSourceType } = this.activityParams;
+
+    this.set$({
+      '*modalCaption': `${externalSourceType[0].toUpperCase()}${externalSourceType.slice(1)}`,
+      '*modalIcon': externalSourceType,
+      '*modalActive': true,
     });
 
-    this.sub('*currentActivity', (val) => {
-      if (val === BlockComponent.activities.EXTERNAL) {
-        this.$.counter = 0;
-        this.mountIframe();
-      } else if (this._iframe) {
-        this.unmountIframe();
-      }
-    });
+    this.$.counter = 0;
+    this.mountIframe();
+  }
+
+  onDeactivate() {
+    this.unmountIframe();
   }
 
   sendMessage(message) {
@@ -109,8 +110,8 @@ export class ExternalSource extends BlockComponent {
     let pubkey = this.config.PUBKEY;
     let version = '3.11.3';
     let imagesOnly = false.toString();
-
-    return `https://social.uploadcare.com/window3/${this._externalSourceType}?lang=en&public_key=${pubkey}&widget_version=${version}&images_only=${imagesOnly}&pass_window_open=false`;
+    let { externalSourceType } = this.activityParams;
+    return `https://social.uploadcare.com/window3/${externalSourceType}?lang=en&public_key=${pubkey}&widget_version=${version}&images_only=${imagesOnly}&pass_window_open=false`;
   }
 
   mountIframe() {
