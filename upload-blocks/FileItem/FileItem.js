@@ -37,8 +37,10 @@ export class FileItem extends BlockComponent {
       if (!uuid) {
         return;
       }
+      this._observer.unobserve(this);
       this.setAttribute('loaded', '');
       let url = `https://ucarecdn.com/${uuid}/`;
+      this._revokeThumbUrl();
       this.$.thumbUrl = `url(${url}-/scale_crop/76x76/)`;
     });
 
@@ -46,6 +48,7 @@ export class FileItem extends BlockComponent {
       if (!transformationsUrl) {
         return;
       }
+      this._revokeThumbUrl();
       this.$.thumbUrl = `url(${transformationsUrl}-/scale_crop/76x76/)`;
     });
 
@@ -69,14 +72,25 @@ export class FileItem extends BlockComponent {
 
   _observerCallback(entries) {
     let [entry] = entries;
-    if (entry.intersectionRatio > 0) {
-      if (this.file?.type.includes('image') && !this.$.thumbUrl) {
-        window.setTimeout(() => {
-          resizeImage(this.file, 76).then((img) => {
-            this.$.thumbUrl = `url(${img})`;
-          });
-        });
-      }
+    if (entry.intersectionRatio === 0) {
+      clearTimeout(this._thumbTimeoutId);
+      this._thumbTimeoutId = undefined;
+    } else if (!this._thumbTimeoutId) {
+      this._thumbTimeoutId = setTimeout(() => this._generateThumbnail(), 100);
+    }
+  }
+
+  _generateThumbnail() {
+    if (this.file?.type.includes('image') && !this.$.thumbUrl) {
+      resizeImage(this.file, 76).then((url) => {
+        this.$.thumbUrl = `url(${url})`;
+      });
+    }
+  }
+
+  _revokeThumbUrl() {
+    if (this.$.thumbUrl?.startsWith('blob:')) {
+      URL.revokeObjectURL(this.$.thumbUrl);
     }
   }
 
@@ -104,6 +118,7 @@ export class FileItem extends BlockComponent {
   destroyCallback() {
     FileItem.activeInstances.delete(this);
     this._observer.unobserve(this);
+    clearTimeout(this._thumbTimeoutId);
   }
 
   async upload() {
