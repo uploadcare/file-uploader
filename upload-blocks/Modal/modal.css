@@ -29,7 +29,7 @@ uc-modal button.close-btn {
   padding: 0;
   background-color: transparent;
   color: var(--clr-txt-lightest);
-  border-radius: var(--ui-radius-2);
+  border-radius: var(--border-radius-m);
   border: none;
   cursor: pointer;
   transition: color var(--ui-transition) ease;

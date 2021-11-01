@@ -57,7 +57,7 @@ button {
   padding-right: 1.4em;
   border: none;
   height: var(--ui-size);
-  border-radius: var(--ui-radius-2);
+  border-radius: var(--border-radius-m);
   font-family: inherit;
   cursor: pointer;
   white-space: nowrap;
@@ -115,7 +115,7 @@ input[type="text"] {
   box-shadow: var(--ui-inset-shadow);
   color: var(--clr-txt);
   transition: var(--ui-transition);
-  border-radius: var(--ui-radius-2);
+  border-radius: var(--border-radius-m);
 }
 input[type="text"]:hover {
   border-color: var(--clr-accent-light); 

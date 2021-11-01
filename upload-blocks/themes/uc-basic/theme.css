@@ -8,9 +8,6 @@
   --opacity-mid: 0.6;
   --opacity-max: 0.8;
   --ui-size: 36px;
-  --ui-radius-1: 10px;
-  --ui-radius-2: 7.5px;
-  --ui-radius-3: 5px;
   --ui-transition: 0.2s;
   --ui-transition-curve: ease;
   --ui-shadow: 0px 0px 1px rgba(0, 0, 0, 0.35), 0px 6px 40px rgba(0, 0, 0, 0.2), inset 0px 0px 1px rgba(255, 255, 255, 0.6);
@@ -58,8 +55,6 @@
 
   /* Derivative values*/
 
-  --clr-foreground: hsl(var(--h-foreground),var(--s-foreground),var(--l-foreground));
-
   --clr-background-dark: hsl(var(--h-background),var(--s-background),calc(var(--l-background) - 3%));
   --clr-background: hsl(var(--h-background),var(--s-background),var(--l-background));
   --clr-background-light: hsl(var(--h-background),var(--s-background),calc(var(--l-background) + 3%));
@@ -74,7 +69,7 @@
   --clr-error-light:  hsla(var(--h-error),var(--s-error),var(--l-error), 0.15);
   --clr-error-lightest:  hsla(var(--h-error),var(--s-error),var(--l-error), 0.05);
 
-  --clr-txt: var(--clr-foreground);
+  --clr-txt: hsl(var(--h-foreground),var(--s-foreground),var(--l-foreground));
   --clr-txt-mid: hsl(var(--h-foreground),var(--s-foreground),calc(var(--l-foreground) + 15%));
   --clr-txt-light: hsl(var(--h-foreground),var(--s-foreground),calc(var(--l-foreground) + 30%));
   --clr-txt-lightest: hsl(var(--h-foreground),var(--s-foreground),calc(var(--l-foreground) + 50%));
@@ -83,15 +78,10 @@
   --clr-shade-lv2: hsla(var(--h-foreground),var(--s-foreground),var(--l-foreground), 0.08);
   --clr-shade-lv3: hsla(var(--h-foreground),var(--s-foreground),var(--l-foreground), 0.12);
 
-  --clr-err: rgb(var(--rgb-err));
-
-  --clr-btn-txt: hsl(var(--h-accent),var(--s-accent),var(--l-accent));
-
   --border-radius-s: var(--border-radius);
   --border-radius-m: calc(var(--border-radius) * 1.5);
   --border-radius-l: calc(var(--border-radius) * 2);
 
-  /*borders*/
   --border-light: 1px solid hsla(var(--h-foreground),var(--s-foreground),var(--l-foreground), 0.1);
   --border-mid: 1px solid hsla(var(--h-foreground),var(--s-foreground),var(--l-foreground), 0.2);
   --border-accent: 1px solid hsla(var(--h-accent),var(--s-accent),var(--l-accent), 1.0);
