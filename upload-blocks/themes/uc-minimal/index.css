@@ -181,6 +181,7 @@
   --line-width: 1px;
   --modal-w: 800px;
   --modal-h: 600px;
+  --file-item-height: 60px;
   --clr-1: rgb(var(--rgb-1));
   --clr-2: rgb(var(--rgb-2));
   --clr-txt: rgb(var(--rgb-txt));
@@ -601,14 +602,16 @@ uc-external-source .selected-counter {
 uc-upload-list {
   display: grid;
   transition: opacity var(--ui-transition)
+  overflow: hidden;
 }
 
 uc-upload-list:not([active]) {
-  display: none
+  display: none;
 }
 
 uc-upload-list .files {
-  display: grid
+  display: grid;
+  overflow: auto;
 }
 
 uc-upload-list .toolbar {
@@ -619,6 +622,11 @@ uc-upload-list .toolbar {
 }
 
 uc-upload-list .upload-btn {
+  background-color: var(--clr-shade-1);
+  color: var(--clr-1)
+}
+
+uc-upload-list .done-btn {
   background-color: var(--clr-shade-1);
   color: var(--clr-1)
 }

@@ -19,7 +19,10 @@ export function resizeImage(imgFile, size = 40) {
       ctx.fillStyle = 'rgb(240, 240, 240)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      resolve(canvas.toDataURL('image/png'));
+      canvas.toBlob((blob) => {
+        let url = URL.createObjectURL(blob);
+        resolve(url);
+      }, 'image/png');
     };
     img.onerror = (err) => {
       console.warn('Resize error...');

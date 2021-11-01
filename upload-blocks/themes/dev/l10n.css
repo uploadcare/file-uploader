@@ -18,6 +18,7 @@
   --l10n-confirm-your-action: 'Confirm your action';
   --l10n-are-you-sure: 'Are you sure?';
   --l10n-selected-count: 'Selected:';
+  --l10n-done: 'Done';
   --l10n-upload-error: 'Upload error';
 
   --l10n-src-type-local: 'Local File';
@@ -87,6 +88,7 @@
   --l10n-yes: 'Да';
   --l10n-are-you-sure: 'Вы уверены?';
   --l10n-selected-count: 'Выбрано:';
+  --l10n-done: 'Готово';
 
   --l10n-src-type-local: 'На диске';
   --l10n-src-type-from-url: 'Из URL';

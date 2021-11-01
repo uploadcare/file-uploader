@@ -12,8 +12,9 @@ uc-modal {
   padding: var(--gap-mid);
   z-index: 10000;
   transition: opacity 0.4s;
-  backdrop-filter: blur(3px);
-  -webkit-backdrop-filter: blur(3px);
+  /* backdop filter causes scrolling glitches */
+  /* backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px); */
 }
 uc-modal:not([active]) {
   opacity: 0;
@@ -51,6 +52,9 @@ uc-modal > .dialog {
 }
 uc-modal:not([active]) > .dialog {
   transform: translateY(20px);
+  max-height: 100%;
+  display: grid;
+  grid-template-rows: max-content 1fr;
 }
 uc-modal .heading {
   display: grid;
