@@ -3,7 +3,7 @@ uc-drop-area {
   align-items: center;
   justify-content: center;
   border: var(--border-dashed);
-  border-radius: var(--ui-radius-1);
+  border-radius: var(--border-radius-max);
   background-color: var(--clr-shade-lv1);
 }
 uc-drop-area::after {

@@ -29,10 +29,10 @@ uc-modal button.close-btn {
   padding: 0;
   background-color: transparent;
   color: var(--clr-txt-lightest);
-  border-radius: var(--border-radius-m);
+  border-radius: var(--border-radius-mid);
   border: none;
   cursor: pointer;
-  transition: color var(--ui-transition) ease;
+  transition: color var(--transition-duration) ease;
 }
 uc-modal button.close-btn:hover {
   color: var(--clr-txt-light);
@@ -43,7 +43,7 @@ uc-modal button.close-btn:active {
 uc-modal > .dialog {
   background-color: rgb(var(--rgb-2));
   box-shadow: var(--modal-shadow);
-  border-radius: var(--border-radius-l);
+  border-radius: var(--border-radius-max);
   min-width: 410px;
   min-height: var(--ui-size);
   background-color: var(--clr-background);

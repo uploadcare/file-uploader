@@ -4,10 +4,9 @@ uc-source-btn {
   padding-right: 1em;
   user-select: none;
   cursor: pointer;
-  border-radius: var(--border-radius-m);
+  border-radius: var(--border-radius-mid);
   transition-property: background-color, color;
-  transition-duration: var(--ui-transition);
-  transition-timing-function: var(--ui-transition-curve);
+  transition-duration: var(--transition-duration);
   color: var(--clr-txt-mid);
 }
 uc-source-btn:hover{

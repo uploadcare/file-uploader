@@ -2,7 +2,7 @@ uc-file-item {
   position: relative;
   display: grid;
   grid-template-columns: min-content auto min-content min-content;
-  transition: var(--ui-transition);
+  transition: var(--transition-duration);
   padding: var(--gap-mid);
   background-color: transparent;
   border-bottom: var(--border-light);

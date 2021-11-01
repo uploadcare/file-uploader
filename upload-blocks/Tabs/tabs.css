@@ -19,7 +19,7 @@ uc-tabs .tabs-row > .tab {
   align-items: center;
   cursor: pointer;
   border-bottom: var(--border-light);
-  transition: var(--ui-transition);
+  transition: var(--transition-duration);
 }
 uc-tabs .tabs-row > .tab[current] {
   border-color: var(--clr-txt);

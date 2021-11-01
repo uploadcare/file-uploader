@@ -1,7 +1,7 @@
 uc-upload-list {
   display: grid;
   background-color: var(--clr-background-light);
-  transition: opacity var(--ui-transition);
+  transition: opacity var(--transition-duration);
   overflow: hidden;
 }
 uc-upload-list:not([active]) {

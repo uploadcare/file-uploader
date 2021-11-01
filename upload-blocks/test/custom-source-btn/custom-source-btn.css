@@ -2,7 +2,7 @@ uc-custom-source-btn {
   display: flex;
   align-items: center;
   padding-right: 1em;
-  border-bottom: var(--line-width) solid var(--clr-shade-1);
+  border-bottom: var(--border-light);
   user-select: none;
   cursor: pointer;
 
