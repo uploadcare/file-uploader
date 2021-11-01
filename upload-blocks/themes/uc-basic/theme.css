@@ -1,6 +1,4 @@
 .uc-wgt-theme, .uc-wgt-common, :host {
-  --rgb-1: 89, 101, 112;
-  --rgb-2: 233, 233, 233;
 
   --rgb-txt: 35, 35, 35;
   --rgb-err: 255, 20, 20;
@@ -10,7 +8,6 @@
   --ui-size: 36px;
   --ui-transition: 0.2s;
   --ui-transition-curve: ease;
-  --ui-shadow: 0px 0px 1px rgba(0, 0, 0, 0.35), 0px 6px 40px rgba(0, 0, 0, 0.2), inset 0px 0px 1px rgba(255, 255, 255, 0.6);
   --ui-inset-shadow: inset 0px 2px 3px rgba(0, 0, 0, 0.09);
   --gap-min: 2px;
   --gap-mid: 10px;
