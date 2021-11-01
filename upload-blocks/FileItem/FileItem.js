@@ -4,6 +4,8 @@ import { uploadFile } from '../../web_modules/upload-client.js';
 import { UiMessage } from '../MessageBox/MessageBox.js';
 
 export class FileItem extends BlockComponent {
+  pauseRender = true;
+
   init$ = {
     fileName: '',
     thumb: '',
@@ -35,8 +37,10 @@ export class FileItem extends BlockComponent {
       if (!uuid) {
         return;
       }
+      this._observer.unobserve(this);
       this.setAttribute('loaded', '');
       let url = `https://ucarecdn.com/${uuid}/`;
+      this._revokeThumbUrl();
       this.$.thumbUrl = `url(${url}-/scale_crop/76x76/)`;
     });
 
@@ -44,24 +48,50 @@ export class FileItem extends BlockComponent {
       if (!transformationsUrl) {
         return;
       }
+      this._revokeThumbUrl();
       this.$.thumbUrl = `url(${transformationsUrl}-/scale_crop/76x76/)`;
     });
 
     this.file = this.entry.getValue('file');
 
-    if (this.file?.type.includes('image')) {
-      resizeImage(this.file, 76).then((img) => {
-        this.$.thumbUrl = `url(${img})`;
-      });
-    }
-
     if (!this.config.CONFIRM_UPLOAD) {
       this.upload();
     }
+
+    this._observer = new window.IntersectionObserver(this._observerCallback.bind(this), {
+      root: this.parentElement,
+      rootMargin: '50% 0px 50% 0px',
+      threshold: [0, 1],
+    });
+    this._observer.observe(this);
   }
 
   get 'entry-id'() {
     return this.entry.__ctxId;
+  }
+
+  _observerCallback(entries) {
+    let [entry] = entries;
+    if (entry.intersectionRatio === 0) {
+      clearTimeout(this._thumbTimeoutId);
+      this._thumbTimeoutId = undefined;
+    } else if (!this._thumbTimeoutId) {
+      this._thumbTimeoutId = setTimeout(() => this._generateThumbnail(), 100);
+    }
+  }
+
+  _generateThumbnail() {
+    if (this.file?.type.includes('image') && !this.$.thumbUrl) {
+      resizeImage(this.file, 76).then((url) => {
+        this.$.thumbUrl = `url(${url})`;
+      });
+    }
+  }
+
+  _revokeThumbUrl() {
+    if (this.$.thumbUrl?.startsWith('blob:')) {
+      URL.revokeObjectURL(this.$.thumbUrl);
+    }
   }
 
   initCallback() {
@@ -87,6 +117,8 @@ export class FileItem extends BlockComponent {
 
   destroyCallback() {
     FileItem.activeInstances.delete(this);
+    this._observer.unobserve(this);
+    clearTimeout(this._thumbTimeoutId);
   }
 
   async upload() {
@@ -133,8 +165,8 @@ export class FileItem extends BlockComponent {
 }
 
 FileItem.template = /*html*/ `
-<div 
-  .thumb 
+<div
+  .thumb
   set="style.backgroundImage: thumbUrl">
 </div>
 <div .file-name set="textContent: fileName"></div>
@@ -144,7 +176,7 @@ FileItem.template = /*html*/ `
 <button .edit-btn set="onclick: onEdit;">
   <uc-icon name="edit-file"></uc-icon>
 </button>
-<div 
+<div
   .progress
   set="style.width: progressWidth; style.opacity: progressOpacity">
 </div>
