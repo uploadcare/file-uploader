@@ -64,7 +64,6 @@ uc-modal .heading {
   line-height: var(--ui-size);
   padding: var(--gap-mid);
   color: var(--clr-txt-light);
-  border-radius: var(--ui-radius-1) var(--ui-radius-1) 0 0;
   border-bottom: var(--border-light);
   background-color: var(--clr-background-light);
 }
