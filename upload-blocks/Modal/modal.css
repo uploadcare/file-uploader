@@ -43,7 +43,7 @@ uc-modal button.close-btn:active {
 uc-modal > .dialog {
   background-color: rgb(var(--rgb-2));
   box-shadow: var(--ui-shadow);
-  border-radius: var(--ui-radius-1);
+  border-radius: var(--border-radius-l);
   min-width: 410px;
   min-height: var(--ui-size);
   background-color: var(--clr-background);
