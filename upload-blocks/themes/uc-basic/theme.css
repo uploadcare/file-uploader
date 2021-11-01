@@ -9,7 +9,7 @@
   --opacity-max: 0.8;
   --ui-size: 36px;
   --ui-radius-1: 10px;
-  --ui-radius-2: 7px;
+  --ui-radius-2: 7.5px;
   --ui-radius-3: 5px;
   --ui-transition: 0.2s;
   --ui-transition-curve: ease;
@@ -22,7 +22,8 @@
 
 
 
-  /* trying HSL */
+  /* Base values */
+
   --dark: 0;
 
   --h-foreground: 208;
@@ -45,23 +46,18 @@
   --s-error: 100%;
   --l-error: 66%;
 
- 
+  --border-radius: 5px;
+  --transition-duration: 0.2s;
 
-/* 
-background -> lightness
-foreground -> lightness
-shade -> transparency
-action -> lightness
-
-
-shader < background + opacity
-*/
+  --modal-shadow: 0px 0px 1px rgba(0, 0, 0, 0.35), 0px 6px 40px rgba(0, 0, 0, 0.2), inset 0px 0px 1px rgba(255, 255, 255, 0.6);
+  --inset-shadow: inset 0px 2px 3px rgba(0, 0, 0, 0.09);
 
   --modal-w: 800px;
   --modal-h: 600px;
 
 
-  /*clrs*/
+  /* Derivative values*/
+
   --clr-foreground: hsl(var(--h-foreground),var(--s-foreground),var(--l-foreground));
 
   --clr-background-dark: hsl(var(--h-background),var(--s-background),calc(var(--l-background) - 3%));
@@ -91,6 +87,10 @@ shader < background + opacity
 
   --clr-btn-txt: hsl(var(--h-accent),var(--s-accent),var(--l-accent));
 
+  --border-radius-s: var(--border-radius);
+  --border-radius-m: calc(var(--border-radius) * 1.5);
+  --border-radius-l: calc(var(--border-radius) * 2);
+
   /*borders*/
   --border-light: 1px solid hsla(var(--h-foreground),var(--s-foreground),var(--l-foreground), 0.1);
   --border-mid: 1px solid hsla(var(--h-foreground),var(--s-foreground),var(--l-foreground), 0.2);
@@ -116,7 +116,7 @@ shader < background + opacity
   --clr-btn-txt-disabled: var(--clr-txt-lightest);
   --shadow-btn-disabled: inset 0px 0px 1px rgba(0, 0, 0, 0.4);
 
-  --clr-curtain: hsla(var(--h-background),var(--s-background),calc(var(--l-background) - 10%), 0.4);
+  --clr-curtain: hsla(var(--h-background),var(--s-background),calc(var(--l-background) - 10%), 0.7);
 
 
   /* hard to use */
