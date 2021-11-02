@@ -5,7 +5,7 @@ uc-camera-source {
 uc-camera-source video {
   display: block;
   width: 100%;
-  background-color: var(--clr-shade-1);
+  background-color: var(--clr-background);
 }
 uc-camera-source .toolbar {
   display: flex;

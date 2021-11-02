@@ -23,8 +23,6 @@ uc-external-source .toolbar {
 }
 
 uc-external-source .back-btn {
-  background-color: var(--clr-shade-1);
-  color: var(--clr-1);
   padding-left: 0;
 }
 

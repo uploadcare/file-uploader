@@ -127,6 +127,7 @@ UploadList.template = /*html*/ `
     l10n="upload"></button>
     <button
     .done-btn
+    .primary-btn
     set="@hidden: doneBtnHidden; onclick: onDone"
     l10n="done"></button>
 </div>

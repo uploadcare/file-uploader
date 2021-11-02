@@ -44,7 +44,7 @@
   --modal-h: 600px;
 
 
-  /* Derivative values*/
+  /* Derivative values */
 
   --clr-background: hsl(var(--h-background),var(--s-background),var(--l-background));
   --clr-background-dark: hsl(var(--h-background),var(--s-background),calc(var(--l-background) - 3%));
@@ -81,6 +81,7 @@
   --clr-curtain: hsla(var(--h-background),var(--s-background),calc(var(--l-background) - 10%), 0.7);
 
   /* TODO: move button styles here and remove this section */
+
   --clr-btn-bgr-primary: var(--clr-accent);
   --clr-btn-bgr-primary-hover: hsl(var(--h-accent),var(--s-accent),calc(var(--l-accent) - 4%));
   --clr-btn-bgr-primary-active: hsl(var(--h-accent),var(--s-accent),calc(var(--l-accent) - 8%));
@@ -98,12 +99,85 @@
   --shadow-btn-disabled: inset 0px 0px 1px rgba(0, 0, 0, 0.4);
 
   /* TODO: replace with new */
-  --clr-1: rgb(var(--rgb-1));
-  --clr-2: rgb(var(--rgb-2));
 
-  --clr-soft-1: rgba(var(--rgb-1), var(--opacity-mid));
-  --clr-soft-2: rgba(var(--rgb-2), var(--opacity-mid));
+  --clr-1: var(--clr-txt);
+  --clr-2: var(--clr-background);
 
   --clr-shade-1: rgba(var(--rgb-1), var(--opacity-min));
   --clr-shade-2: rgba(var(--rgb-2), var(--opacity-min));
+}
+
+/* Common styles */
+
+button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1em;
+  padding-left: 1.4em;
+  padding-right: 1.4em;
+  border: none;
+  height: var(--ui-size);
+  border-radius: var(--border-radius-mid);
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+  
+}
+button[disabled] {
+  pointer-events: none;
+  color: var(--clr-btn-txt-disabled) !important;
+  background-color: var(--clr-btn-bgr-disabled) !important;
+  box-shadow: var(--shadow-btn-disabled) !important;
+}
+button.primary-btn {
+  color: var(--clr-btn-txt-primary);
+  background-color: var(--clr-btn-bgr-primary);
+  box-shadow: var(--shadow-btn-primary);
+  transition: background-color var(--transition-duration);
+}
+button.primary-btn:hover {
+  background-color: var(--clr-btn-bgr-primary-hover);
+}
+button.primary-btn:active {
+  background-color: var(--clr-btn-bgr-primary-active);
+}
+button.secondary-btn {
+  color: var(--clr-btn-txt-secondary);
+  background-color: var(--clr-btn-bgr-secondary);
+  box-shadow: var(--shadow-btn-secondary);
+  transition: background-color var(--transition-duration);
+}
+button.secondary-btn:hover {
+  background-color: var(--clr-btn-bgr-secondary-hover);
+}
+button.secondary-btn:active {
+  background-color: var(--clr-btn-bgr-secondary-active);
+}
+a {
+  text-decoration: none;
+  color: var(--clr-accent);
+}
+input[type="text"] {
+  display: flex;
+  height: var(--ui-size);
+  padding-left: 0.6em;
+  padding-right: 0.6em;
+  width: 100%;
+  font-family: inherit;
+  font-size: var(--f);
+  border: var(--border-mid);
+  background-color: var(--clr-background-light);
+  box-shadow: var(--inset-shadow);
+  color: var(--clr-txt);
+  transition: var(--transition-duration);
+  border-radius: var(--border-radius-mid);
+}
+input[type="text"]:hover {
+  border-color: var(--clr-accent-light); 
+}
+input[type="text"]:focus {
+  border-color: var(--clr-accent); 
+  outline: none;
 }

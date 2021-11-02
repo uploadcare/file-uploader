@@ -22,7 +22,7 @@ uc-upload-details .viewport {
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: var(--clr-shade-1);
+  background-color: var(--clr-background);
   height: 100%;
 }
 
@@ -41,8 +41,8 @@ uc-upload-details .remove-btn {
   padding-left: 0.5em;
 }
 uc-upload-details .detail-btn {
-  background-color: var(--clr-shade-1);
-  color: var(--clr-1);
+  background-color: var(--clr-background);
+  color: var(--clr-txt);
   padding-left: 0;
 }
 uc-upload-details .edit-btn {
