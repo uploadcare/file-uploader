@@ -24,11 +24,11 @@
   --s-error: 100%;
   --l-error: 66%;
 
-  --ui-size: 36px;
-
   --opacity-min: 0.2;
   --opacity-mid: 0.6;
   --opacity-max: 0.8;
+
+  --ui-size: 36px;
 
   --gap-min: 2px;
   --gap-mid: 10px;
@@ -125,6 +125,9 @@ button {
   white-space: nowrap;
   user-select: none;
 }
+
+/* TODO: check if we can avoid !important */
+
 button[disabled] {
   pointer-events: none;
   color: var(--clr-btn-txt-disabled) !important;
