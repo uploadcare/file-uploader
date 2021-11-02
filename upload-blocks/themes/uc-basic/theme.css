@@ -1,9 +1,5 @@
 .uc-wgt-theme, .uc-wgt-common, :host {
 
-  --rgb-txt: 35, 35, 35;
-  --rgb-err: 255, 20, 20;
-  --ui-size: 36px;
-
   /* Base values */
 
   --dark: 0;
@@ -27,6 +23,8 @@
   --h-error: 358;
   --s-error: 100%;
   --l-error: 66%;
+
+  --ui-size: 36px;
 
   --opacity-min: 0.2;
   --opacity-mid: 0.6;
@@ -99,7 +97,7 @@
   --clr-btn-txt-disabled: var(--clr-txt-lightest);
   --shadow-btn-disabled: inset 0px 0px 1px rgba(0, 0, 0, 0.4);
 
-  /* hard to use */
+  /* TODO: replace with new */
   --clr-1: rgb(var(--rgb-1));
   --clr-2: rgb(var(--rgb-2));
 
