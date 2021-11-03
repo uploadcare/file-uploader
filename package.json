@@ -13,9 +13,6 @@
     "build-libs": "node ./build-libs.js",
     "deploy": "npm run build-libs && firebase deploy"
   },
-  "webDependencies": {
-    "upload-client.js": "https://unpkg.com/@uploadcare/upload-client@2.0.0-alpha.10/dist/index.browser.js"
-  },
   "devDependencies": {
     "@babel/eslint-parser": "^7.15.7",
     "@babel/preset-env": "^7.15.6",
