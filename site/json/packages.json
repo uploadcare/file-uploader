@@ -1,7 +1,7 @@
 {
   "symbiote.js": {
     "description": "Ultralight and ultrapowerful UI library",
-    "readme": "../../symbiote/README.md",
+    "readme": "https://symbiotejs.github.io/symbiote.js/README.md",
     "page": "pages/symbiote.html",
     "demo": ""
   },
