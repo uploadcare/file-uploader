@@ -226,6 +226,12 @@ export class BlockComponent extends BaseComponent {
     return this._config;
   }
 
+  dropCache() {
+    // TODO: add l10n hot reload support
+    this.dropCssDataCache();
+    this._config = null;
+  }
+
   disconnectedCallback() {
     super.disconnectedCallback();
     this._config = null;
