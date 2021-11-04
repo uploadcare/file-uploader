@@ -213,15 +213,22 @@ export class BlockComponent extends BaseComponent {
    * }}
    */
   get config() {
-    let conf = {};
-    for (let prop in BlockComponent.cfgCssMap) {
-      let val = this.getCssData(BlockComponent.cfgCssMap[prop], true);
-      if (val !== null) {
-        conf[prop] = val;
+    if (!this._config) {
+      this._config = {};
+      for (let prop in BlockComponent.cfgCssMap) {
+        let val = this.getCssData(BlockComponent.cfgCssMap[prop], true);
+        if (val !== null) {
+          this._config[prop] = val;
+        }
       }
     }
     // @ts-ignore
-    return conf;
+    return this._config;
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    this._config = null;
   }
 
   destroyCallback() {
