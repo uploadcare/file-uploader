@@ -21,6 +21,7 @@ function blockProcessor(fr, fnCtx) {
       key = arr[1];
     }
     let ctxKey = 'l10n:' + key;
+    fnCtx.__l10nKeys.push(ctxKey);
     fnCtx.add(ctxKey, key);
     fnCtx.sub(ctxKey, (val) => {
       el[elProp] = fnCtx.l10n(val);
@@ -49,6 +50,15 @@ export class BlockComponent extends BaseComponent {
     /** @type {String} */
     this.activityType = null;
     this.addTemplateProcessor(blockProcessor);
+    /** @type {String[]} */
+    this.__l10nKeys = [];
+    this.__l10nUpdate = () => {
+      this.dropCssDataCache();
+      for (let key in this.__l10nKeys) {
+        this.notify(key);
+      }
+    };
+    window.addEventListener('uc-l10n-update', this.__l10nUpdate);
   }
 
   /**
@@ -238,6 +248,8 @@ export class BlockComponent extends BaseComponent {
   }
 
   destroyCallback() {
+    window.removeEventListener('uc-l10n-update', this.__l10nUpdate);
+    this.__l10nKeys = null;
     // TODO: destroy uploadCollection
   }
 
