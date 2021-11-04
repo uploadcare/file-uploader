@@ -54,7 +54,7 @@ export class BlockComponent extends BaseComponent {
     this.__l10nKeys = [];
     this.__l10nUpdate = () => {
       this.dropCssDataCache();
-      for (let key in this.__l10nKeys) {
+      for (let key of this.__l10nKeys) {
         this.notify(key);
       }
     };
