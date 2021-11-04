@@ -214,9 +214,11 @@ export class BlockComponent extends BaseComponent {
    */
   get config() {
     let conf = {};
-    let style = window.getComputedStyle(this);
     for (let prop in BlockComponent.cfgCssMap) {
-      conf[prop] = JSON.parse(style.getPropertyValue(BlockComponent.cfgCssMap[prop]).trim());
+      let val = this.getCssData(BlockComponent.cfgCssMap[prop], true);
+      if (val !== null) {
+        conf[prop] = val;
+      }
     }
     // @ts-ignore
     return conf;

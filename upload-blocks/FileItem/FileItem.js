@@ -129,11 +129,15 @@ export class FileItem extends BlockComponent {
     this.removeAttribute('focused');
     this.removeAttribute('error');
     this.setAttribute('uploading', '');
+    let storeSetting = {};
+    if (Object.keys(this.config).includes('STORE')) {
+      storeSetting.store = !!this.config.STORE;
+    }
     try {
       // @ts-ignore
       let fileInfo = await uploadFile(this.file, {
+        ...storeSetting,
         publicKey: this.config.PUBKEY,
-        store: !!this.config.STORE,
         onProgress: (progress) => {
           let percentage = progress.value * 100;
           this.$.progressWidth = percentage + '%';
