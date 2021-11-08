@@ -32,6 +32,7 @@
 @import url('../../MessageBox/message-box.css');
 @import url('../../ConfirmationDialog/confirmation.css');
 @import url('../../ProgressBar/progress-bar.css');
+@import url('../../DataOutput/data-output.css');
 
 .uc-wgt-theme, .uc-wgt-common, :host {
   font-family: sans-serif;

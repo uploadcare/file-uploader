@@ -25,51 +25,6 @@ export class FileItem extends BlockComponent {
     '*uploadTrigger': null,
   };
 
-  set 'entry-id'(id) {
-    /** @type {import('../../symbiote/core/TypedData.js').TypedData} */
-    this.entry = this.uploadCollection?.read(id);
-
-    this.entry.subscribe('fileName', (name) => {
-      this.$.fileName = name || this.l10n('file-no-name');
-    });
-
-    this.entry.subscribe('uuid', (uuid) => {
-      if (!uuid) {
-        return;
-      }
-      this._observer.unobserve(this);
-      this.setAttribute('loaded', '');
-      let url = `https://ucarecdn.com/${uuid}/`;
-      this._revokeThumbUrl();
-      this.$.thumbUrl = `url(${url}-/scale_crop/76x76/)`;
-    });
-
-    this.entry.subscribe('transformationsUrl', (transformationsUrl) => {
-      if (!transformationsUrl) {
-        return;
-      }
-      this._revokeThumbUrl();
-      this.$.thumbUrl = `url(${transformationsUrl}-/scale_crop/76x76/)`;
-    });
-
-    this.file = this.entry.getValue('file');
-
-    if (!this.config.CONFIRM_UPLOAD) {
-      this.upload();
-    }
-
-    this._observer = new window.IntersectionObserver(this._observerCallback.bind(this), {
-      root: this.parentElement,
-      rootMargin: '50% 0px 50% 0px',
-      threshold: [0, 1],
-    });
-    this._observer.observe(this);
-  }
-
-  get 'entry-id'() {
-    return this.entry.__ctxId;
-  }
-
   _observerCallback(entries) {
     let [entry] = entries;
     if (entry.intersectionRatio === 0) {
@@ -95,6 +50,50 @@ export class FileItem extends BlockComponent {
   }
 
   initCallback() {
+    this.defineAccessor('entry-id', (id) => {
+      if (!id) {
+        return;
+      }
+      /** @type {import('../../symbiote/core/TypedData.js').TypedData} */
+      this.entry = this.uploadCollection?.read(id);
+
+      this.entry.subscribe('fileName', (name) => {
+        this.$.fileName = name || this.l10n('file-no-name');
+      });
+
+      this.entry.subscribe('uuid', (uuid) => {
+        if (!uuid) {
+          return;
+        }
+        this._observer.unobserve(this);
+        this.setAttribute('loaded', '');
+        let url = `https://ucarecdn.com/${uuid}/`;
+        this._revokeThumbUrl();
+        this.$.thumbUrl = `url(${url}-/scale_crop/76x76/)`;
+      });
+
+      this.entry.subscribe('transformationsUrl', (transformationsUrl) => {
+        if (!transformationsUrl) {
+          return;
+        }
+        this._revokeThumbUrl();
+        this.$.thumbUrl = `url(${transformationsUrl}-/scale_crop/76x76/)`;
+      });
+
+      this.file = this.entry.getValue('file');
+
+      if (!this.config.CONFIRM_UPLOAD) {
+        this.upload();
+      }
+
+      this._observer = new window.IntersectionObserver(this._observerCallback.bind(this), {
+        root: this.parentElement,
+        rootMargin: '50% 0px 50% 0px',
+        threshold: [0, 1],
+      });
+      this._observer.observe(this);
+    });
+
     this.$['*uploadTrigger'] = null;
     FileItem.activeInstances.add(this);
 

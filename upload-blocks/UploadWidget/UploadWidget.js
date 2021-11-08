@@ -19,6 +19,7 @@ import { EditableCanvas } from '../EditableCanvas/EditableCanvas.js';
 import { CloudImageEditor } from '../CloudImageEditor/CloudImageEditor.js';
 import { ExternalSource } from '../ExternalSource/ExternalSource.js';
 import { Tabs } from '../Tabs/Tabs.js';
+import { DataOutput } from '../DataOutput/DataOutput.js';
 
 // Icon - is extended from BaseComponent
 Icon.reg('uc-icon');
@@ -44,6 +45,7 @@ ConfirmationDialog.reg('confirmation-dialog');
 ProgressBar.reg('progress-bar');
 EditableCanvas.reg('editable-canvas');
 CloudImageEditor.reg('cloud-image-editor');
+DataOutput.reg('data-output');
 
 Tabs.reg('tabs');
 

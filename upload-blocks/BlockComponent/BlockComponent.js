@@ -1,4 +1,5 @@
 import { BaseComponent } from '../../symbiote/core/BaseComponent.js';
+import { Data } from '../../symbiote/core/Data.js';
 import { TypedCollection } from '../../symbiote/core/TypedCollection.js';
 import { uploadEntrySchema } from './uploadEntrySchema.js';
 
@@ -94,6 +95,15 @@ export class BlockComponent extends BaseComponent {
     });
   }
 
+  output() {
+    let data = [];
+    let items = this.uploadCollection.items();
+    items.forEach((itemId) => {
+      data.push(Data.getNamedCtx(itemId).store);
+    });
+    this.$['*outputData'] = data;
+  }
+
   openSystemDialog() {
     this.fileInput = document.createElement('input');
     this.fileInput.type = 'file';
@@ -139,6 +149,7 @@ export class BlockComponent extends BaseComponent {
           '*multiple': true,
           '*accept': 'image/*',
           '*files': [],
+          '*outputData': null,
         });
         externalPropsAdded = true;
       }
