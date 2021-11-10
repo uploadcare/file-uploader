@@ -47,8 +47,8 @@ uc-editor-toolbar .btns > button {
   width: var(--ui-size);
   height: var(--ui-size);
   border-radius: 0;
-  background-color: var(--clr-2);
-  color: var(--clr-1);
+  background-color: var(--clr-background);
+  color: var(--clr-txt);
 }
 uc-editor-toolbar .btns > button:first-of-type {
   border-top-left-radius: var(--ui-radius-1);
@@ -59,8 +59,8 @@ uc-editor-toolbar .btns > button:last-of-type {
   border-bottom-right-radius: var(--ui-radius-1);
 }
 uc-editor-toolbar .btns > button[current] {
-  background-color: var(--clr-1);
-  color: var(--clr-2);
+  background-color: var(--clr-background);
+  color: var(--clr-txt);
 }
 
 uc-editor-toolbar > uc-range {
