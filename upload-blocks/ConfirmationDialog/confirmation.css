@@ -5,13 +5,16 @@ uc-confirmation-dialog {
 }
 uc-confirmation-dialog .message {
   display: flex;
+  font-size: 1.1em;
+  font-weight: 500;
   justify-content: center;
   padding: var(--gap-mid);
   padding-bottom: var(--gap-max);
 }
 uc-confirmation-dialog .toolbar {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap:var(--gap-mid);
   margin-top: var(--gap-mid);
 }
 uc-confirmation-dialog .confirm-btn {
