@@ -1,4 +1,5 @@
 import { BaseComponent } from '../../symbiote/core/BaseComponent.js';
+import { Data } from '../../symbiote/core/Data.js';
 import { TypedCollection } from '../../symbiote/core/TypedCollection.js';
 import { uploadEntrySchema } from './uploadEntrySchema.js';
 
@@ -21,6 +22,7 @@ function blockProcessor(fr, fnCtx) {
       key = arr[1];
     }
     let ctxKey = 'l10n:' + key;
+    fnCtx.__l10nKeys.push(ctxKey);
     fnCtx.add(ctxKey, key);
     fnCtx.sub(ctxKey, (val) => {
       el[elProp] = fnCtx.l10n(val);
@@ -49,6 +51,15 @@ export class BlockComponent extends BaseComponent {
     /** @type {String} */
     this.activityType = null;
     this.addTemplateProcessor(blockProcessor);
+    /** @type {String[]} */
+    this.__l10nKeys = [];
+    this.__l10nUpdate = () => {
+      this.dropCssDataCache();
+      for (let key of this.__l10nKeys) {
+        this.notify(key);
+      }
+    };
+    window.addEventListener('uc-l10n-update', this.__l10nUpdate);
   }
 
   /**
@@ -82,6 +93,15 @@ export class BlockComponent extends BaseComponent {
         fileSize: file.size,
       });
     });
+  }
+
+  output() {
+    let data = [];
+    let items = this.uploadCollection.items();
+    items.forEach((itemId) => {
+      data.push(Data.getNamedCtx(itemId).store);
+    });
+    this.$['*outputData'] = data;
   }
 
   openSystemDialog() {
@@ -129,6 +149,7 @@ export class BlockComponent extends BaseComponent {
           '*multiple': true,
           '*accept': 'image/*',
           '*files': [],
+          '*outputData': null,
         });
         externalPropsAdded = true;
       }
@@ -213,16 +234,33 @@ export class BlockComponent extends BaseComponent {
    * }}
    */
   get config() {
-    let conf = {};
-    let style = window.getComputedStyle(this);
-    for (let prop in BlockComponent.cfgCssMap) {
-      conf[prop] = JSON.parse(style.getPropertyValue(BlockComponent.cfgCssMap[prop]).trim());
+    if (!this._config) {
+      this._config = {};
+      for (let prop in BlockComponent.cfgCssMap) {
+        let val = this.getCssData(BlockComponent.cfgCssMap[prop], true);
+        if (val !== null) {
+          this._config[prop] = val;
+        }
+      }
     }
     // @ts-ignore
-    return conf;
+    return this._config;
+  }
+
+  dropCache() {
+    // TODO: add l10n hot reload support
+    this.dropCssDataCache();
+    this._config = null;
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    this._config = null;
   }
 
   destroyCallback() {
+    window.removeEventListener('uc-l10n-update', this.__l10nUpdate);
+    this.__l10nKeys = null;
     // TODO: destroy uploadCollection
   }
 

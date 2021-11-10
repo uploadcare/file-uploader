@@ -23,6 +23,7 @@ export class UploadList extends ActivityComponent {
       this.set$({
         '*modalActive': false,
       });
+      this.output();
     },
     onCancel: () => {
       let cfn = new UiConfirmation();

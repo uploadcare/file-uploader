@@ -22,6 +22,10 @@ UploadWidget.template = /*html*/ `
 
 <uc-message-box></uc-message-box>
 <uc-progress-bar></uc-progress-bar>
+
+<uc-data-output
+  item-template="<img height='200' src='https://ucarecdn.com/{{uuid}}/' />"
+  fire-event></uc-data-output>
 `;
 
 UploadWidget.reg('uc-upload-wgt');
