@@ -90,13 +90,13 @@ export class ExternalSource extends ActivityComponent {
         color: this.getCssValue('--clr-txt'),
       },
       '.side-bar': {
-        'background-color': this.getCssValue('--clr-shade-1'),
+        'background-color': this.getCssValue('--clr-shade-lv1'),
       },
       '.list-table-row': {
         color: this.getCssValue('--clr-txt'),
       },
       '.list-table-row:hover': {
-        background: this.getCssValue('--clr-shade-1'),
+        background: this.getCssValue('--clr-shade-lv1'),
       },
     };
 
