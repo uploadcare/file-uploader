@@ -45,7 +45,7 @@
 
   /* Derivative values */
 
-  --minus: calc(1 + var(--darkmode) * -2);
+  --darkmode-minus: calc(1 + var(--darkmode) * -2);
 
   --clr-background: hsl(var(--h-background),var(--s-background),var(--l-background));
   --clr-background-dark: hsl(var(--h-background),var(--s-background),calc(var(--l-background) - 3%));
@@ -62,9 +62,9 @@
   --clr-error-lightest:  hsla(var(--h-error),var(--s-error),var(--l-error), 0.05);
 
   --clr-txt: hsl(var(--h-foreground),var(--s-foreground),var(--l-foreground));
-  --clr-txt-mid: hsl(var(--h-foreground),var(--s-foreground),calc(var(--l-foreground) + 15% * var(--minus)));
-  --clr-txt-light: hsl(var(--h-foreground),var(--s-foreground),calc(var(--l-foreground) + 30% * var(--minus)));
-  --clr-txt-lightest: hsl(var(--h-foreground),var(--s-foreground),calc(var(--l-foreground) + 50% * var(--minus)));
+  --clr-txt-mid: hsl(var(--h-foreground),var(--s-foreground),calc(var(--l-foreground) + 15% * var(--darkmode-minus)));
+  --clr-txt-light: hsl(var(--h-foreground),var(--s-foreground),calc(var(--l-foreground) + 30% * var(--darkmode-minus)));
+  --clr-txt-lightest: hsl(var(--h-foreground),var(--s-foreground),calc(var(--l-foreground) + 50% * var(--darkmode-minus)));
 
   --clr-shade-lv1: hsla(var(--h-foreground),var(--s-foreground),var(--l-foreground), 0.05);
   --clr-shade-lv2: hsla(var(--h-foreground),var(--s-foreground),var(--l-foreground), 0.08);
@@ -84,8 +84,8 @@
   /* TODO: move button styles here and remove this section */
 
   --clr-btn-bgr-primary: var(--clr-accent);
-  --clr-btn-bgr-primary-hover: hsl(var(--h-accent),var(--s-accent),calc(var(--l-accent) - 4% * var(--minus)));
-  --clr-btn-bgr-primary-active: hsl(var(--h-accent),var(--s-accent),calc(var(--l-accent) - 8% * var(--minus)));
+  --clr-btn-bgr-primary-hover: hsl(var(--h-accent),var(--s-accent),calc(var(--l-accent) - 4% * var(--darkmode-minus)));
+  --clr-btn-bgr-primary-active: hsl(var(--h-accent),var(--s-accent),calc(var(--l-accent) - 8% * var(--darkmode-minus)));
   --clr-btn-txt-primary: hsl(0,0%,100%);
   --shadow-btn-primary: 0px 1px 2px rgba(0, 0, 0, 0.26), 0px 2px 8px rgba(0, 0, 0, 0.08), inset 0px 0px 2px rgba(0, 0, 0, 0.2);
  
@@ -98,14 +98,6 @@
   --clr-btn-bgr-disabled: var(--clr-background);
   --clr-btn-txt-disabled: var(--clr-txt-lightest);
   --shadow-btn-disabled: inset 0px 0px 1px rgba(0, 0, 0, 0.4);
-
-  /* TODO: replace with new */
-
-  --clr-1: var(--clr-txt);
-  --clr-2: var(--clr-background);
-
-  --clr-shade-1: rgba(var(--rgb-1), var(--opacity-min));
-  --clr-shade-2: rgba(var(--rgb-2), var(--opacity-min));
 }
 
 /* Common styles */
