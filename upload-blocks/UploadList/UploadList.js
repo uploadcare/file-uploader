@@ -51,6 +51,7 @@ export class UploadList extends ActivityComponent {
       '*modalCaption': this.l10n('selected'),
       '*modalIcon': 'local',
       '*modalActive': modalActive,
+      '*currentActivityParams': {},
     });
   }
 
