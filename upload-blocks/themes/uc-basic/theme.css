@@ -118,13 +118,11 @@ button {
   user-select: none;
 }
 
-/* TODO: check if we can avoid !important */
-
-button[disabled] {
+button[disabled], button.primary-btn[disabled], button.secondary-btn[disabled] {
   pointer-events: none;
-  color: var(--clr-btn-txt-disabled) !important;
-  background-color: var(--clr-btn-bgr-disabled) !important;
-  box-shadow: var(--shadow-btn-disabled) !important;
+  color: var(--clr-btn-txt-disabled);
+  background-color: var(--clr-btn-bgr-disabled);
+  box-shadow: var(--shadow-btn-disabled);
 }
 button.primary-btn {
   color: var(--clr-btn-txt-primary);
