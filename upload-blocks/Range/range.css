@@ -22,11 +22,11 @@ uc-range .track {
   align-items: center;
   justify-content: center;
   pointer-events: none;
-  background-color: var(--clr-shade-2);
+  background-color: var(--clr-shade-lv1);
   left: 0;
   right: 0;
   height: var(--ui-size);
-  border: 2px solid var(--clr-2);
+  border: 2px solid var(--clr-background);
   user-select: none;
 }
 
@@ -43,7 +43,7 @@ uc-range .bar {
   position: absolute;
   height: 100%;
   left: 0;
-  background-color: var(--clr-1);
+  background-color: var(--clr-accent);
   transition: opacity .2s;
   opacity: .5;
 }
@@ -55,8 +55,8 @@ uc-range .center {
   position: absolute;
   height: 100%;
   border: 4px solid transparent;
-  border-top: 4px solid var(--clr-2);
-  border-bottom: 4px solid var(--clr-2);
+  border-top: 4px solid var(--clr-background);
+  border-bottom: 4px solid var(--clr-background);
   left: 50%;
   transform: translateX(-50%);
 }

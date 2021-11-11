@@ -5,7 +5,7 @@ uc-camera-source {
 uc-camera-source video {
   display: block;
   width: 100%;
-  background-color: var(--clr-shade-1);
+  background-color: var(--clr-background);
 }
 uc-camera-source .toolbar {
   display: flex;
@@ -13,11 +13,8 @@ uc-camera-source .toolbar {
   padding: var(--gap-mid);
 }
 uc-camera-source .shot-btn {
-  color: var(--clr-1);
-  background-color: var(--clr-shade-1);
+  /* nothing to say */
 }
-
 uc-camera-source .cancel-btn {
-  color: var(--clr-1);
-  background-color: var(--clr-2);
+  /* nothing to say */
 }

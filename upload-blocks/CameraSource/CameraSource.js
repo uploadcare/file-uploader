@@ -90,11 +90,13 @@ CameraSource.template = /*html*/ `
 <div .toolbar>
   <button
     .cancel-btn
+    .secondary-btn
     set="onclick: onCancel"
     l10n="cancel">
   </button>
   <button
     .shot-btn
+    .primary-btn
     set="onclick: onShot"
     l10n="camera-shot">
   </button>

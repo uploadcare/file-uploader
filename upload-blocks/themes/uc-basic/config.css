@@ -1,0 +1,13 @@
+.uc-wgt-cfg, .uc-wgt-common, :host {
+  --ctx-name: 'my-uploader';
+
+  --cfg-pubkey: 'demopublickey';
+  --cfg-multiple: 1;
+  --cfg-confirm-upload: 1;
+  --cfg-img-only: 0;
+  --cfg-accept: '';
+  --cfg-store: 1;
+  --cfg-camera-mirror: 0;
+  --cfg-source-list: 'local, url, camera, draw, dropbox, gdrive, facebook';
+  --cfg-max-files: 10;
+}

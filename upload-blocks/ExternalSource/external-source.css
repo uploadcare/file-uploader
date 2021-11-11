@@ -19,11 +19,10 @@ uc-external-source .toolbar {
   padding: var(--gap-mid);
   grid-gap: var(--gap-mid);
   align-items: center;
+  border-top: var(--border-light);
 }
 
 uc-external-source .back-btn {
-  background-color: var(--clr-shade-1);
-  color: var(--clr-1);
   padding-left: 0;
 }
 
