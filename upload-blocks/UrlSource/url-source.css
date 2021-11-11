@@ -1,21 +1,14 @@
 uc-url-source {
   display: grid;
   grid-template-columns: 1fr min-content;
-  grid-gap: var(--gap-min);
+  grid-gap: var(--gap-mid);
   padding: var(--gap-mid);
-  padding-top: 0;
 }
 uc-url-source .url-input {
   display: flex;
-  border: var(--line-width) solid var(--clr-shade-1);
-  height: var(--ui-size);
-  border-radius: var(--ui-radius-2);
-  padding-left: 1em;
-  padding-right: 1em;
 }
 uc-url-source .url-upload-btn {
-  color: var(--clr-1);
-  background-color: var(--clr-shade-1);
+  /* nothing to say... */
 }
 uc-url-source .url-upload-btn::after {
   content: var(--l10n-upload-url);

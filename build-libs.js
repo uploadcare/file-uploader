@@ -17,6 +17,10 @@ const buildSequence = [
     out: './build/upload-blocks/upload-blocks_dev.css',
   },
   {
+    in: './upload-blocks/themes/uc-basic/index.css',
+    out: './build/upload-blocks/upload-blocks_uc-basic.css',
+  },
+  {
     in: './symbiote/core/BaseComponent.js',
     out: './build/symbiote/symbiote.js',
     minifyHtml: true,

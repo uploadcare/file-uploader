@@ -1,5 +1,5 @@
 uc-tabs {
-  color: var(--clr-1);
+  color: var(--clr-txt-lightest);
   height: 100%;
   display: grid;
   grid-template-rows: min-content auto;
@@ -8,6 +8,7 @@ uc-tabs {
 uc-tabs > .tabs-row {
   display: flex;
   grid-template-columns: minmax();
+  background-color: var(--clr-background-light);
 }
 
 uc-tabs .tabs-row > .tab {
@@ -17,11 +18,10 @@ uc-tabs .tabs-row > .tab {
   justify-content: center;
   align-items: center;
   cursor: pointer;
-  border-bottom: 2px solid transparent;
-  transition: .4s;
-  opacity: 0.6;
+  border-bottom: var(--border-light);
+  transition: var(--transition-duration);
 }
 uc-tabs .tabs-row > .tab[current] {
-  border-bottom: 2px solid currentColor;
-  opacity: 1;
+  border-color: var(--clr-txt);
+  color: var(--clr-txt);
 }

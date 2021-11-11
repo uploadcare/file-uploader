@@ -43,5 +43,5 @@ export class UrlSource extends ActivityComponent {
 
 UrlSource.template = /*html*/ `
 <input placeholder="https://..." .url-input type="text" ref="input" />
-<button .url-upload-btn set="onclick: onUpload"></button>
+<button .url-upload-btn .primary-btn set="onclick: onUpload"></button>
 `;

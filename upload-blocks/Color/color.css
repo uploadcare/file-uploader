@@ -3,7 +3,7 @@ uc-color {
   display: inline-flex;
   justify-content: center;
   align-items: center;
-  background-color: var(--clr-2);
+  background-color: var(--clr-background);
   height: var(--ui-size);
   width: var(--ui-size);
   cursor: pointer;
@@ -11,7 +11,7 @@ uc-color {
 }
 
 uc-color[current] {
-  background-color: var(--clr-1);
+  background-color: var(--clr-txt);
 }
 
 uc-color input[type="color"] {

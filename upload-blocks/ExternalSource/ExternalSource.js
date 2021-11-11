@@ -90,13 +90,13 @@ export class ExternalSource extends ActivityComponent {
         color: this.getCssValue('--clr-txt'),
       },
       '.side-bar': {
-        'background-color': this.getCssValue('--clr-shade-1'),
+        'background-color': this.getCssValue('--clr-background-light'),
       },
       '.list-table-row': {
         color: this.getCssValue('--clr-txt'),
       },
       '.list-table-row:hover': {
-        background: this.getCssValue('--clr-shade-1'),
+        background: this.getCssValue('--clr-shade-lv1'),
       },
     };
 
@@ -150,7 +150,7 @@ ExternalSource.template = /*html*/ `
     <span l10n="selected-count"></span>
     <span set="textContent: counter"></span>
   </div>
-  <button .done-btn set="onclick: onDone">
+  <button .done-btn .primary-btn set="onclick: onDone">
     <uc-icon name="check"></uc-icon>
   </button>
 </div>

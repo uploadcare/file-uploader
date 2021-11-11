@@ -113,19 +113,23 @@ UploadList.template = /*html*/ `
 <div .toolbar>
   <button
     .cancel-btn
+    .secondary-btn
     set="onclick: onCancel;"
     l10n="cancel"></button>
   <div></div>
   <button
     .add-more-btn
+    .secondary-btn
     set="onclick: onAdd; @disabled: moreBtnDisabled"
     l10n="add-more"></button>
   <button
     .upload-btn
+    .primary-btn
     set="@hidden: uploadBtnHidden; onclick: onUpload; @disabled: uploadBtnDisabled"
     l10n="upload"></button>
     <button
     .done-btn
+    .primary-btn
     set="@hidden: doneBtnHidden; onclick: onDone"
     l10n="done"></button>
 </div>
