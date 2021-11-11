@@ -9,16 +9,16 @@ const buildSequence = [
   },
   {
     in: './upload-blocks/UploadWidget/UploadWidget.js',
-    out: './build/upload-blocks.js',
+    out: './build/upload-blocks/upload-blocks.js',
     minifyHtml: false,
   },
   {
     in: './upload-blocks/themes/dev/index.css',
-    out: './build/upload-blocks_dev.css',
+    out: './build/upload-blocks/upload-blocks_dev.css',
   },
   {
     in: './symbiote/core/BaseComponent.js',
-    out: './build/symbiote.js',
+    out: './build/symbiote/symbiote.js',
     minifyHtml: true,
   },
   {
