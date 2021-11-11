@@ -81,8 +81,6 @@
 
   --clr-curtain: hsla(var(--h-background),var(--s-background),calc(var(--l-background) - 10%), 0.7);
 
-  /* TODO: move button styles here and remove this section */
-
   --clr-btn-bgr-primary: var(--clr-accent);
   --clr-btn-bgr-primary-hover: hsl(var(--h-accent),var(--s-accent),calc(var(--l-accent) - 4% * var(--darkmode-minus)));
   --clr-btn-bgr-primary-active: hsl(var(--h-accent),var(--s-accent),calc(var(--l-accent) - 8% * var(--darkmode-minus)));
