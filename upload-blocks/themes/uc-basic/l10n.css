@@ -1,9 +1,9 @@
 .uc-wgt-l10n_en-US, .uc-wgt-common, :host {
-  --l10n-upload-file: 'Upload File';
-  --l10n-upload-files: 'Upload Files';
-  --l10n-drop-files-here: 'Or drop files here...';
+  --l10n-upload-file: 'Upload file';
+  --l10n-upload-files: 'Upload files';
+  --l10n-drop-files-here: 'Drop files here...';
   --l10n-select-file-source: 'Select file source';
-  --l10n-selected: 'Selected:';
+  --l10n-selected: 'Selected';
   --l10n-upload: 'Upload';
   --l10n-add-more: 'Add more';
   --l10n-cancel: 'Cancel';
@@ -31,7 +31,7 @@
   --l10n-src-type-gphotos: 'Gphotos';
   --l10n-src-type-instagram: 'Instagram';
   --l10n-src-type-flickr: 'Flickr';
-  --l10n-src-type-vk: 'Vk';
+  --l10n-src-type-vk: 'VK';
   --l10n-src-type-evernote: 'Evernote';
   --l10n-src-type-box: 'Box';
   --l10n-src-type-onedrive: 'Onedrive';
@@ -73,8 +73,8 @@
 .uc-wgt-l10n_ru {
   --l10n-upload-files: 'Загрузить файлы';
   --l10n-drop-files-here: 'Перетащите файлы сюда...';
-  --l10n-select-file-source: 'Выбрать источник загрузки';
-  --l10n-selected: 'Выбрано:';
+  --l10n-select-file-source: 'Выберите источник загрузки';
+  --l10n-selected: 'Выбрано';
   --l10n-upload: 'Загрузить';
   --l10n-add-more: 'Добавить';
   --l10n-cancel: 'Отмена';
