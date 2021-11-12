@@ -3,11 +3,12 @@ import '@uploadcare/upload-blocks';
 import style from './App.module.css';
 
 function App() {
+  const ucClass = `uc-wgt-common ${style.ucConfig}`;
   return (
-    <div className={style.ucConfig}>
-      <uc-simple-btn class="uc-wgt-common"></uc-simple-btn>
+    <div>
+      <uc-simple-btn class={ucClass}></uc-simple-btn>
 
-      <uc-modal class="uc-wgt-common" strokes>
+      <uc-modal class={ucClass} strokes>
         <uc-activity-wrapper activity="source-select">
           <uc-source-list wrap></uc-source-list>
           <uc-drop-area></uc-drop-area>
@@ -21,14 +22,14 @@ function App() {
         <uc-cloud-image-editor></uc-cloud-image-editor>
       </uc-modal>
 
-      <uc-message-box class="uc-wgt-common"></uc-message-box>
-      <uc-progress-bar class="uc-wgt-common"></uc-progress-bar>
+      <uc-message-box class={ucClass}></uc-message-box>
+      <uc-progress-bar class={ucClass}></uc-progress-bar>
 
       <uc-data-output
         fire-event
         from="*outputData"
         item-template="<img height='200' src='https://ucarecdn.com/{{uuid}}/' />"
-        class="uc-wgt-common"
+        class={ucClass}
       ></uc-data-output>
     </div>
   );
