@@ -1,12 +1,41 @@
 uc-drop-area {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   border: var(--border-dashed);
   border-radius: var(--border-radius-max);
   background-color: var(--clr-shade-lv1);
+  padding: var(--gap-mid);
+  transition: background-color var(--transition-duration);
 }
-uc-drop-area::after {
+uc-drop-area:hover {
+  background-color: var(--clr-shade-lv2);
+}
+uc-drop-area::before {
   content: var(--l10n-drop-files-here);
   color: var(--clr-txt-light);
+  padding: var(--gap-mid);
+}
+
+/* uc-source-list compatibility */
+
+uc-drop-area uc-source-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+}
+
+@media only screen and (max-width: 300px) {
+  uc-drop-area uc-source-list {
+    display: grid;
+    grid-template-columns: 1fr;
+    width: 100%;
+    padding-top: var(--gap-max);
+  }
+  uc-drop-area uc-source-list uc-source-btn {
+    border-top: var(--border-light);
+    border-radius: 0;
+  }
 }
