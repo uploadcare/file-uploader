@@ -1,5 +1,6 @@
 uc-simple-btn {
   display: inline-flex;
+  position: relative;
 }
 uc-simple-btn button {
   color: var(--clr-btn-txt-secondary);
@@ -12,4 +13,18 @@ uc-simple-btn button:hover {
 }
 uc-simple-btn button:active {
   background-color: var(--clr-btn-bgr-secondary-active);
+}
+
+/* progress bar compatibility */
+
+uc-simple-btn uc-progress-bar {
+  background-color: transparent;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  overflow: hidden;
+  z-index: 1;
+}
+uc-simple-btn uc-progress-bar .bar {
+  background-color: var(--clr-accent-lightest);
 }
