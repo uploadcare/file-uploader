@@ -22,3 +22,17 @@ uc-progress-bar .bar {
   background-color: var(--clr-accent);
   transition: 0.2s;
 }
+
+/* simple-btn compatibility */
+
+uc-simple-btn uc-progress-bar {
+  background-color: transparent;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  overflow: hidden;
+  z-index: 1;
+}
+uc-simple-btn uc-progress-bar .bar {
+  background-color: var(--clr-accent-lightest);
+}
