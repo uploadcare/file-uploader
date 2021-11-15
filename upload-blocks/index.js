@@ -1,3 +1,6 @@
+import { ActivityComponent } from './ActivityComponent/ActivityComponent.js';
+import { BaseComponent } from '../symbiote/core/BaseComponent.js';
+
 import { Icon } from './Icon/Icon.js';
 import { SimpleBtn } from './SimpleBtn/SimpleBtn.js';
 import { ActivityWrapper } from './ActivityWrapper/ActivityWrapper.js';
@@ -22,6 +25,8 @@ import { DataOutput } from './DataOutput/DataOutput.js';
 export { UploadWidget } from './UploadWidget/UploadWidget.js';
 
 export {
+  ActivityComponent,
+  BaseComponent,
   Icon,
   SimpleBtn,
   ActivityWrapper,
