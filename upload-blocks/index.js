@@ -80,5 +80,6 @@ export function register() {
 }
 
 if (typeof window !== 'undefined') {
+  // TODO: should we register components automatically?
   register();
 }
