@@ -1,16 +1,11 @@
 {
   "packages": [
-    "deployer",
-    "editor",
-    "localhost",
-    "sw-manager",
-    "upload-blocks",
-    "wasm-tools"
+    "upload-blocks"
   ],
   "command": {
     "publish": {
       "registry": "https://npm.pkg.github.com"
     }
   },
-  "version": "0.0.2"
+  "version": "1.0.0-alpha.0"
 }
