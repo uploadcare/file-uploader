@@ -18,14 +18,14 @@ export class ConfirmationDialog extends BlockComponent {
 
   _defaults = new UiConfirmation();
 
-  init$ = {
+  init$ = () => ({
     messageTxt: this.l10n(this._defaults.messsageL10Str),
     confirmBtnTxt: this.l10n(this._defaults.confirmL10nStr),
     denyBtnTxt: this.l10n(this._defaults.denyL10nStr),
     '*confirmation': null,
     onConfirm: this._defaults.confirmAction,
     onDeny: this._defaults.denyAction.bind(this),
-  };
+  });
 
   initCallback() {
     this.sub('*confirmation', (/** @type {UiConfirmation} */ cfn) => {
@@ -53,18 +53,18 @@ export class ConfirmationDialog extends BlockComponent {
 }
 
 ConfirmationDialog.template = /*html*/ `
-<div 
-  .message 
+<div
+  .message
   set="textContent: messageTxt">
 </div>
 <div .toolbar>
-  <button 
-    .deny-btn 
+  <button
+    .deny-btn
     .secondary-btn
     set="textContent: denyBtnTxt; onclick: onDeny">
   </button>
-  <button 
-    .confirm-btn 
+  <button
+    .confirm-btn
     .primary-btn
     set="textContent: confirmBtnTxt; onclick: onConfirm">
   </button>
