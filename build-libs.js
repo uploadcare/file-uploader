@@ -8,17 +8,13 @@ const buildSequence = [
     minifyHtml: false,
   },
   {
-    in: './upload-blocks/UploadWidget/UploadWidget.js',
-    out: './build/upload-blocks/upload-blocks.js',
+    in: './upload-blocks/index.js',
+    out: './upload-blocks/build/upload-blocks.js',
     minifyHtml: false,
   },
   {
-    in: './upload-blocks/themes/dev/index.css',
-    out: './build/upload-blocks/upload-blocks_dev.css',
-  },
-  {
     in: './upload-blocks/themes/uc-basic/index.css',
-    out: './build/upload-blocks/upload-blocks_uc-basic.css',
+    out: './upload-blocks/build/uc-basic.css',
   },
   {
     in: './symbiote/core/BaseComponent.js',
@@ -41,6 +37,7 @@ function build(buildItem) {
       minify: true,
       sourcemap: false,
       outfile: buildItem.out,
+      target: 'es2019',
     })
     .then(async () => {
       if (!buildItem.minifyHtml) {

@@ -1,18 +1,18 @@
 {
   "type": "module",
   "name": "@uploadcare/upload-blocks",
-  "version": "0.0.1-alpha.0",
+  "version": "1.0.0-alpha.0",
   "description": "",
-  "main": "index.html",
+  "main": "./build/upload-blocks.js",
   "repository": "https://github.com/uploadcare/jsdk/",
   "scripts": {
-    "test": "test",
-    "build": "node ./esbuild.js"
+    "test": "test"
   },
   "author": "",
   "license": "MIT",
   "devDependencies": {
     "esbuild": "^0.11.11"
   },
-  "gitHead": "7154654a5951930345e660e0f6fa39b9b5669ee2"
+  "gitHead": "7154654a5951930345e660e0f6fa39b9b5669ee2",
+  "files": ["build/uc-basic.css", "build/upload-blocks.js", "README.md", "LICENCE.md"]
 }
