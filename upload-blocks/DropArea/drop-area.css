@@ -22,25 +22,3 @@ uc-drop-area::before {
 uc-drop-area:hover::before{
   color:var(--clr-txt-mid);
 }
-
-/* uc-source-list compatibility */
-
-uc-drop-area uc-source-list {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-}
-
-@media only screen and (max-width: 300px) {
-  uc-drop-area uc-source-list {
-    display: grid;
-    grid-template-columns: 1fr;
-    width: 100%;
-    padding-top: var(--gap-max);
-  }
-  uc-drop-area uc-source-list uc-source-btn {
-    border-top: var(--border-light);
-    border-radius: 0;
-  }
-}
