@@ -171,11 +171,11 @@ FileItem.template = /*html*/ `
 <div
   .thumb
   set="style.backgroundImage: thumbUrl">
-</div>
-<div .file-name set="textContent: fileName"></div>
-<div .badge>
+  <div .badge>
   <uc-icon set="@name: badgeIcon"></uc-icon>
 </div>
+</div>
+<div .file-name set="textContent: fileName"></div>
 <button .edit-btn set="onclick: onEdit;">
   <uc-icon name="edit-file"></uc-icon>
 </button>

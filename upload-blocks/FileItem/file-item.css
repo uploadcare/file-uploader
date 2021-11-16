@@ -25,6 +25,7 @@ uc-file-item[error] {
 
 uc-file-item .thumb {
   display: inline-flex;
+  position: relative;
   height: var(--ui-size);
   width: var(--ui-size);
   background-color: var(--clr-shade-lv1);
@@ -74,15 +75,19 @@ uc-file-item .progress {
 }
 uc-file-item[error] .badge,
 uc-file-item[loaded] .badge {
-  display: inline-flex;
+  display: block;
 }
 uc-file-item .badge {
   display: none;
+  position: absolute;
+  top: calc(var(--ui-size) * -0.45);
+  right: calc(var(--ui-size) * -0.45);
   align-items: center;
   justify-content: center;
   height: var(--ui-size);
   width: var(--ui-size);
   color: var(--clr-txt);
+  background-color: var(--clr-background-light);
 }
 uc-file-item[loaded] .badge {
   color: var(--clr-confirm);
