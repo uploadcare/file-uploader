@@ -7,11 +7,10 @@
   "scripts": {
     "git-mdl": "git submodule update --init --recursive --remote",
     "ldep:upload-client": "mkdir -p web_modules && curl https://unpkg.com/@uploadcare/upload-client@2.0.0/dist/index.browser.js --output web_modules/upload-client.js",
-    "setup": "npm run git-mdl && npm run ldep:upload-client && cd ./re4ma && npm run ldep && cd .. && npm i && npm run build-libs",
+    "setup": "npm run git-mdl && npm run ldep:upload-client && npm i && npm run build-libs",
     "test": "test",
-    "dev": "node ./re4ma/dev.js",
     "build-libs": "node ./build-libs.js",
-    "deploy": "npm run build-libs && firebase deploy"
+    "deploy": "npm run build-libs"
   },
   "devDependencies": {
     "@babel/eslint-parser": "^7.15.7",

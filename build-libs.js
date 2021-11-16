@@ -3,11 +3,6 @@ import fs from 'fs';
 
 const buildSequence = [
   {
-    in: './re4ma/render/render.js',
-    out: './build/re4ma.js',
-    minifyHtml: false,
-  },
-  {
     in: './upload-blocks/index.js',
     out: './upload-blocks/build/upload-blocks.js',
     minifyHtml: false,
@@ -19,11 +14,6 @@ const buildSequence = [
   {
     in: './symbiote/core/BaseComponent.js',
     out: './build/symbiote/symbiote.js',
-    minifyHtml: true,
-  },
-  {
-    in: './site/js/live.js',
-    out: './build/site-live-html.js',
     minifyHtml: true,
   },
 ];
