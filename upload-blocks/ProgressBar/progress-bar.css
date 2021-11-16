@@ -1,11 +1,11 @@
 uc-progress-bar {
   position: absolute;
-  bottom: 0;
+  top: 0;
   left: 0;
   right: 0;
   display: block;
   background-color: var(--clr-background);
-  height: var(--gap-mid);
+  height: var(--gap-min);
   z-index: 10000;
   transition: opacity var(--transition-duration);
 }
@@ -23,9 +23,9 @@ uc-progress-bar .bar {
   transition: 0.2s;
 }
 
-/* simple-btn compatibility */
+/* simple-btn & drop-area compatibility */
 
-uc-simple-btn uc-progress-bar {
+uc-simple-btn uc-progress-bar, uc-drop-area uc-progress-bar {
   background-color: transparent;
   width: 100%;
   height: 100%;
@@ -33,6 +33,6 @@ uc-simple-btn uc-progress-bar {
   overflow: hidden;
   z-index: 1;
 }
-uc-simple-btn uc-progress-bar .bar {
+uc-simple-btn uc-progress-bar .bar, uc-drop-area uc-progress-bar .bar {
   background-color: var(--clr-accent-lightest);
 }
