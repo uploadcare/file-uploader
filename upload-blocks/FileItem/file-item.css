@@ -90,3 +90,13 @@ uc-file-item[loaded] .badge {
 uc-file-item[error] .badge {
   color: var(--clr-error);
 }
+
+/* inside drop-area */
+
+uc-drop-area uc-file-item {
+  background-color: var(--clr-shade-lv1);
+  border-radius: var(--border-radius-mid);
+}
+uc-drop-area uc-file-item:hover {
+  background-color: var(--clr-shade-lv2);
+}

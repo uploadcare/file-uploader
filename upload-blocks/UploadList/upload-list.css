@@ -3,6 +3,7 @@ uc-upload-list {
   background-color: var(--clr-background-light);
   transition: opacity var(--transition-duration);
   overflow: hidden;
+  width: 100%;
 }
 uc-upload-list:not([active]) {
   display: none;
@@ -30,7 +31,21 @@ uc-upload-list .done-btn {
 uc-upload-list .add-more-btn {
   /* nothing to say */
 }
-
 uc-upload-list .cancel-btn {
   /* nothing to say */
+}
+
+/* inside drop-area compatibility */
+
+uc-drop-area uc-upload-list, uc-drop-area uc-upload-list .toolbar {
+  border: none;
+  background-color: transparent;
+  padding: 0;
+}
+uc-drop-area uc-upload-list {
+  border-radius: var(--border-radius-mid);
+  gap: var(--gap-min);
+}
+uc-drop-area uc-upload-list .toolbar {
+  padding-top: var(--gap-mid);
 }
