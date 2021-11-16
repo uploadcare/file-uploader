@@ -77,7 +77,7 @@
   --border-light: 1px solid hsla(var(--h-foreground),var(--s-foreground),var(--l-foreground), calc(0.1 - 0.05 * var(--darkmode)));
   --border-mid: 1px solid hsla(var(--h-foreground),var(--s-foreground),var(--l-foreground), calc(0.2 - 0.1 * var(--darkmode)));
   --border-accent: 1px solid hsla(var(--h-accent),var(--s-accent),var(--l-accent), 1.0);
-  --border-dashed: 2px dashed hsla(var(--h-foreground),var(--s-foreground),var(--l-foreground), 0.1);
+  --border-dashed: 2px dashed var(--clr-shade-lv2);
 
   --clr-curtain: hsla(var(--h-background),var(--s-background),calc(var(--l-background) - 10%), 0.7);
 
