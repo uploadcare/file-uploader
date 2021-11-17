@@ -146,7 +146,7 @@ export class FileItem extends BlockComponent {
       this.$.progressOpacity = 0;
       this.setAttribute('loaded', '');
       this.removeAttribute('uploading');
-      this.$.badgeIcon = 'check';
+      this.$.badgeIcon = 'badge-success';
       this.entry.setMultipleValues({
         uuid: fileInfo.uuid,
         uploadProgress: 100,
@@ -159,7 +159,7 @@ export class FileItem extends BlockComponent {
       msg.text = error;
       msg.isError = true;
       this.set$({
-        badgeIcon: 'upload-error',
+        badgeIcon: 'badge-error',
         '*message': msg,
       });
       this.entry.setValue('uploadErrorMsg', error);
@@ -172,8 +172,8 @@ FileItem.template = /*html*/ `
   .thumb
   set="style.backgroundImage: thumbUrl">
   <div .badge>
-  <uc-icon set="@name: badgeIcon"></uc-icon>
-</div>
+    <uc-icon set="@name: badgeIcon"></uc-icon>
+  </div>
 </div>
 <div .file-name set="textContent: fileName"></div>
 <button .edit-btn set="onclick: onEdit;">
