@@ -12,7 +12,7 @@ export class UploadList extends ActivityComponent {
     uploadBtnDisabled: false,
     moreBtnDisabled: !this.config.MULTIPLE,
     onAdd: () => {
-      this.$['*currentActivity'] = BlockComponent.activities.SOURSE_SELECT;
+      this.$['*currentActivity'] = BlockComponent.activities.SOURCE_SELECT;
     },
     onUpload: () => {
       this.set$({

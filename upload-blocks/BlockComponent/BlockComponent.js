@@ -271,7 +271,7 @@ export class BlockComponent extends BaseComponent {
 }
 
 BlockComponent.activities = Object.freeze({
-  SOURSE_SELECT: 'source-select',
+  SOURCE_SELECT: 'source-select',
   CAMERA: 'camera',
   DRAW: 'draw',
   UPLOAD_LIST: 'upload-list',
