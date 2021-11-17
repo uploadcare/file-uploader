@@ -115,7 +115,7 @@ UploadList.template = /*html*/ `
     .cancel-btn
     .secondary-btn
     set="onclick: onCancel;"
-    l10n="cancel"></button>
+    l10n="clear"></button>
   <div></div>
   <button
     .add-more-btn
