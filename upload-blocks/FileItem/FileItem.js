@@ -1,5 +1,5 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
-import { resizeImage } from '../../common-utils/resizeImage.js';
+import { resizeImage } from '../utils/resizeImage.js';
 import { uploadFile } from '../../web_modules/upload-client.js';
 import { UiMessage } from '../MessageBox/MessageBox.js';
 
