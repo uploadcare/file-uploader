@@ -179,6 +179,9 @@ FileItem.template = /*html*/ `
 <button .edit-btn set="onclick: onEdit;">
   <uc-icon name="edit-file"></uc-icon>
 </button>
+<button .edit-btn set="onclick: onEdit;">
+  <uc-icon name="remove-file"></uc-icon>
+</button>
 <div
   .progress
   set="style.width: progressWidth; style.opacity: progressOpacity">
