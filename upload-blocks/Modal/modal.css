@@ -44,11 +44,22 @@ uc-modal > .dialog {
   background-color: rgb(var(--rgb-2));
   box-shadow: var(--modal-shadow);
   border-radius: var(--border-radius-max);
-  min-width: 410px;
   min-height: var(--ui-size);
   background-color: var(--clr-background);
   transition: transform 0.4s;
   overflow: hidden;
+  max-width: var(--modal-max-w);
+  max-height: 100%;
+  width: var(--modal-desired-w, 100%);
+  height: var(--modal-desired-h, max-content);
+  display: grid;
+  grid-auto-rows: min-content auto;
+}
+@media only screen and (max-width: 480px) {
+  uc-modal > .dialog {
+    width: var(--modal-desired-mobile-w, 100%);
+    height: var(--modal-desired-mobile-h, 100%);
+  }
 }
 uc-modal:not([active]) > .dialog {
   transform: translateY(20px);

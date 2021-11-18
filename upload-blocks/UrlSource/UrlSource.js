@@ -33,6 +33,8 @@ export class UrlSource extends ActivityComponent {
   };
 
   onActivate() {
+    super.onActivate();
+
     this.set$({
       '*modalCaption': this.l10n('caption-from-url'),
       '*modalIcon': 'url',

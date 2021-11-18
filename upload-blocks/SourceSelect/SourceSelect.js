@@ -5,6 +5,8 @@ export class SourceSelect extends ActivityComponent {
   activityType = BlockComponent.activities.SOURCE_SELECT;
 
   onActivate() {
+    super.onActivate();
+
     this.set$({
       '*modalCaption': this.l10n('select-file-source'),
       '*modalIcon': 'default',

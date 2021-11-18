@@ -1,6 +1,10 @@
 uc-source-select {
+  --activity-desired-w: 600px;
+  --activity-desired-mobile-h: 100%;
+
   display: grid;
   grid-template-columns: min-content auto;
-  padding: var(--gap-mid);
   gap: var(--gap-mid);
+  padding: var(--gap-mid);
+
 }
