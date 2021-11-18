@@ -4,6 +4,7 @@ uc-upload-details {
 
   position: relative;
   display: block;
+  height: 100%;
 }
 
 uc-upload-details > .wrapper {
