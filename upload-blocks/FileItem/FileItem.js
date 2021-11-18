@@ -21,6 +21,9 @@ export class FileItem extends BlockComponent {
         '*currentActivity': BlockComponent.activities.DETAILS,
       });
     },
+    onRemove: () => {
+      /* TODO: remove file. Go back if list is empty */
+    },
     '*focusedEntry': null,
     '*uploadTrigger': null,
   };
@@ -179,7 +182,7 @@ FileItem.template = /*html*/ `
 <button .edit-btn set="onclick: onEdit;">
   <uc-icon name="edit-file"></uc-icon>
 </button>
-<button .edit-btn set="onclick: onEdit;">
+<button .remove-btn set="onclick: onRemove;">
   <uc-icon name="remove-file"></uc-icon>
 </button>
 <div
