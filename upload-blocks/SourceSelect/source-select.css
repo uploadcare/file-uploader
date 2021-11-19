@@ -6,5 +6,5 @@ uc-source-select {
   grid-template-columns: min-content auto;
   gap: var(--gap-mid);
   padding: var(--gap-mid);
-
+  height:  100%;
 }

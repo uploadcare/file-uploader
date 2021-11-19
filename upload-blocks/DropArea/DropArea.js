@@ -23,7 +23,6 @@ export class DropArea extends BlockComponent {
           });
           this.set$({
             '*currentActivity': BlockComponent.activities.UPLOAD_LIST,
-            '*modalActive': true,
           });
         }
       },

@@ -21,14 +21,14 @@ export class UploadList extends ActivityComponent {
     },
     onDone: () => {
       this.set$({
-        '*modalActive': false,
+        '*currentActivity': '',
       });
       this.output();
     },
     onCancel: () => {
       let cfn = new UiConfirmation();
       cfn.confirmAction = () => {
-        this.$['*modalActive'] = false;
+        this.$['*currentActivity'] = '';
         this.uploadCollection.clearAll();
       };
       cfn.denyAction = () => {
@@ -43,17 +43,9 @@ export class UploadList extends ActivityComponent {
   onActivate() {
     super.onActivate();
 
-    let modalActive = true;
-    if (this.activityParams.openSystemDialog && !this.$['*files']?.length) {
-      modalActive = false;
-      this.openSystemDialog();
-    }
-
     this.set$({
       '*modalCaption': this.l10n('selected'),
       '*modalIcon': 'local',
-      '*modalActive': modalActive,
-      '*currentActivityParams': {},
     });
   }
 

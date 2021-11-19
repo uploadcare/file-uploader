@@ -3,10 +3,7 @@ import { strokesCssBg } from '../svg-backgrounds/svg-backgrounds.js';
 
 export class Modal extends BlockComponent {
   init$ = {
-    caption: '',
-    '*modalIcon': 'default',
     '*modalActive': false,
-    '*modalCaption': 'Modal caption',
     '*modalHeaderHidden': false,
     '*modalDesiredWidth': '100%',
     '*modalDesiredHeight': '100%',
@@ -14,11 +11,16 @@ export class Modal extends BlockComponent {
     '*modalDesiredMobileHeight': '100%',
 
     closeClicked: () => {
-      this.$['*modalActive'] = false;
+      this.$['*currentActivity'] = '';
     },
   };
 
   initCallback() {
+    this.sub('*currentActivity', (val) => {
+      this.set$({
+        '*modalActive': !!val,
+      });
+    });
     this.sub('*modalActive', (val) => {
       val ? this.setAttribute('active', '') : this.removeAttribute('active');
     });
@@ -43,11 +45,8 @@ export class Modal extends BlockComponent {
 Modal.template = /*html*/ `
 <div .dialog>
   <div .heading set="@hidden: *modalHeaderHidden">
-    <uc-icon set="@name: *modalIcon"></uc-icon>
-    <div
-      .caption
-      set="textContent: caption, *modalCaption">
-    </div>
+    <uc-activity-icon></uc-activity-icon>
+    <uc-activity-caption></uc-activity-caption>
     <button
       .close-btn
       set="onclick: closeClicked">

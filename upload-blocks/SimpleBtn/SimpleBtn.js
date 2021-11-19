@@ -10,12 +10,10 @@ export class SimpleBtn extends BlockComponent {
       if (this.$['*uploadList'].length) {
         this.set$({
           '*currentActivity': BlockComponent.activities.UPLOAD_LIST,
-          '*modalActive': true,
         });
       } else {
         this.set$({
           '*currentActivity': BlockComponent.activities.SOURCE_SELECT,
-          '*modalActive': true,
         });
       }
     };

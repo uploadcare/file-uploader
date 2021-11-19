@@ -14,7 +14,9 @@ export class ActivityComponent extends BlockComponent {
     this.sub('*currentActivity', (currentActivity) => {
       if (currentActivity === this.activityType && !this._isActive) {
         this._isActive = true;
-        this.onActivate();
+        // TODO: timeout fixes case with separate activity-caption and activity-icon components
+        // they don't have time to initialize own state before this callback called first time
+        setTimeout(() => this.onActivate(), 0);
       } else if (currentActivity !== this.activityType && this._isActive) {
         this._isActive = false;
         this.onDeactivate();

@@ -9,8 +9,7 @@ export class CameraSource extends ActivityComponent {
     videoTransformCss: this.config.CAMERA_MIRROR ? 'scaleX(-1)' : null,
     onCancel: () => {
       this.set$({
-        '*modalActive': false,
-        '*currentActivity': '',
+        '*currentActivity': BlockComponent.activities.SOURCE_SELECT,
       });
     },
     onShot: () => {
@@ -71,7 +70,6 @@ export class CameraSource extends ActivityComponent {
     this.set$({
       '*modalCaption': this.l10n('caption-camera'),
       '*modalIcon': 'camera',
-      '*modalActive': true,
     });
   }
 
