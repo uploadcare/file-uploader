@@ -28,3 +28,39 @@ export function strokesCssBg(color = 'rgba(0, 0, 0, .1)') {
   </svg>`)
   );
 }
+
+/** @returns {String} */
+export function fileCssBg() {
+  return (
+    dataPrefix +
+    btoa(/*svg*/ `
+    <svg width="36" height="36" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <g filter="url(#a)">
+        <path d="m10 8.00298 11-.00029 5 4.99711v15.0027l-16 .0002V8.00298Z" fill="#fff"/>
+      </g>
+      <g filter="url(#b)">
+        <path d="m21 8 5 5h-5V8Z" fill="#fff"/>
+      </g>
+      <defs>
+        <filter id="a" x="8" y="6.50269" width="20" height="24" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+          <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+          <feColorMatrix in="SourceAlpha" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+          <feOffset dy=".5"/>
+          <feGaussianBlur stdDeviation="1"/>
+          <feColorMatrix values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.18 0"/>
+          <feBlend in2="BackgroundImageFix" result="effect1_dropShadow_2684_2129"/>
+          <feBlend in="SourceGraphic" in2="effect1_dropShadow_2684_2129" result="shape"/>
+        </filter>
+        <filter id="b" x="19" y="7" width="8" height="8" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+          <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+          <feColorMatrix in="SourceAlpha" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+          <feOffset dx="-.5" dy=".5"/>
+          <feGaussianBlur stdDeviation=".75"/>
+          <feColorMatrix values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.2 0"/>
+          <feBlend in2="BackgroundImageFix" result="effect1_dropShadow_2684_2129"/>
+          <feBlend in="SourceGraphic" in2="effect1_dropShadow_2684_2129" result="shape"/>
+        </filter>
+      </defs>
+    </svg>`)
+  );
+}
