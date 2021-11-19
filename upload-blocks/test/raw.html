@@ -1,16 +1,16 @@
 <base href="../../">
 
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="./upload-blocks/themes/uc-basic/index.css">
-
-<script src="./upload-blocks/UploadWidget/UploadWidget.js" type="module"></script>
+<script src="./upload-blocks/index.js" type="module"></script>
 
 <uc-simple-btn class="uc-wgt-common"></uc-simple-btn>
 
 <uc-modal class="uc-wgt-common" strokes>
-  <uc-activity-wrapper activity="source-select">
+  <uc-source-select>
     <uc-source-list wrap></uc-source-list>
     <uc-drop-area></uc-drop-area>
-  </uc-activity-wrapper>
+  </uc-source-select>
   <uc-upload-list></uc-upload-list>
   <uc-camera-source></uc-camera-source>
   <uc-url-source></uc-url-source>
@@ -26,5 +26,5 @@
 <uc-data-output
   fire-event
   from="*outputData"
-  item-template="<img height='200' src='https://ucarecdn.com/{{uuid}}/' />"
+  item-template="<img height='200' src='https://ucarecdn.com/{{uuid}}/-/preview/' />"
   class="uc-wgt-common"></uc-data-output>

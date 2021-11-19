@@ -1,7 +1,8 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
-import { resizeImage } from '../../common-utils/resizeImage.js';
+import { resizeImage } from '../utils/resizeImage.js';
 import { uploadFile } from '../../web_modules/upload-client.js';
 import { UiMessage } from '../MessageBox/MessageBox.js';
+import { fileCssBg } from '../svg-backgrounds/svg-backgrounds.js';
 
 export class FileItem extends BlockComponent {
   pauseRender = true;
@@ -16,7 +17,6 @@ export class FileItem extends BlockComponent {
     badgeIcon: 'check',
     onEdit: () => {
       this.set$({
-        '*modalCaption': this.l10n('caption-edit-file'),
         '*focusedEntry': this.entry,
         '*currentActivity': BlockComponent.activities.DETAILS,
       });
@@ -40,6 +40,8 @@ export class FileItem extends BlockComponent {
       resizeImage(this.file, 76).then((url) => {
         this.$.thumbUrl = `url(${url})`;
       });
+    } else {
+      this.$.thumbUrl = `url(${fileCssBg()})`;
     }
   }
 
@@ -146,7 +148,7 @@ export class FileItem extends BlockComponent {
       this.$.progressOpacity = 0;
       this.setAttribute('loaded', '');
       this.removeAttribute('uploading');
-      this.$.badgeIcon = 'check';
+      this.$.badgeIcon = 'badge-success';
       this.entry.setMultipleValues({
         uuid: fileInfo.uuid,
         uploadProgress: 100,
@@ -159,7 +161,7 @@ export class FileItem extends BlockComponent {
       msg.text = error;
       msg.isError = true;
       this.set$({
-        badgeIcon: 'upload-error',
+        badgeIcon: 'badge-error',
         '*message': msg,
       });
       this.entry.setValue('uploadErrorMsg', error);
@@ -171,11 +173,11 @@ FileItem.template = /*html*/ `
 <div
   .thumb
   set="style.backgroundImage: thumbUrl">
+  <div .badge>
+    <uc-icon set="@name: badgeIcon"></uc-icon>
+  </div>
 </div>
 <div .file-name set="textContent: fileName"></div>
-<div .badge>
-  <uc-icon set="@name: badgeIcon"></uc-icon>
-</div>
 <button .edit-btn set="onclick: onEdit;">
   <uc-icon name="edit-file"></uc-icon>
 </button>

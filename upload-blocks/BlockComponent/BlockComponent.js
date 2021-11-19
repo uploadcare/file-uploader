@@ -116,9 +116,7 @@ export class BlockComponent extends BaseComponent {
       // To call uploadTrigger UploadList should draw file items first:
       this.$['*currentActivity'] = BlockComponent.activities.UPLOAD_LIST;
       if (!this.config.CONFIRM_UPLOAD) {
-        this.$['*modalActive'] = false;
-      } else {
-        this.$['*modalActive'] = true;
+        this.$['*currentActivity'] = '';
       }
       this.fileInput['value'] = '';
       this.fileInput = null;
@@ -271,7 +269,7 @@ export class BlockComponent extends BaseComponent {
 }
 
 BlockComponent.activities = Object.freeze({
-  SOURSE_SELECT: 'source-select',
+  SOURCE_SELECT: 'source-select',
   CAMERA: 'camera',
   DRAW: 'draw',
   UPLOAD_LIST: 'upload-list',

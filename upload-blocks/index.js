@@ -6,9 +6,11 @@ import { SimpleBtn } from './SimpleBtn/SimpleBtn.js';
 import { ActivityWrapper } from './ActivityWrapper/ActivityWrapper.js';
 import { DropArea } from './DropArea/DropArea.js';
 import { SourceBtn } from './SourceBtn/SourceBtn.js';
+import { SourceSelect } from './SourceSelect/SourceSelect.js';
 import { SourceList } from './SourceList/SourceList.js';
 import { FileItem } from './FileItem/FileItem.js';
 import { Modal } from './Modal/Modal.js';
+import { Inline } from './Inline/Inline.js';
 import { UploadList } from './UploadList/UploadList.js';
 import { UrlSource } from './UrlSource/UrlSource.js';
 import { CameraSource } from './CameraSource/CameraSource.js';
@@ -21,6 +23,8 @@ import { CloudImageEditor } from './CloudImageEditor/CloudImageEditor.js';
 import { ExternalSource } from './ExternalSource/ExternalSource.js';
 import { Tabs } from './Tabs/Tabs.js';
 import { DataOutput } from './DataOutput/DataOutput.js';
+import { ActivityCaption } from './ActivityCaption/ActivityCaption.js';
+import { ActivityIcon } from './ActivityIcon/ActivityIcon.js';
 
 export { UploadWidget } from './UploadWidget/UploadWidget.js';
 
@@ -35,6 +39,7 @@ export {
   SourceList,
   FileItem,
   Modal,
+  Inline,
   UploadList,
   UrlSource,
   CameraSource,
@@ -47,6 +52,8 @@ export {
   ExternalSource,
   Tabs,
   DataOutput,
+  ActivityCaption,
+  ActivityIcon,
 };
 
 export function register() {
@@ -58,10 +65,14 @@ export function register() {
   ActivityWrapper.reg('activity-wrapper');
   DropArea.reg('drop-area');
   SourceBtn.reg('source-btn');
+  SourceSelect.reg('source-select');
   SourceList.reg('source-list');
   FileItem.reg('file-item');
   Modal.reg('modal');
+  Inline.reg('inline');
   UploadList.reg('upload-list');
+  ActivityCaption.reg('activity-caption');
+  ActivityIcon.reg('activity-icon');
 
   // File sources:
   UrlSource.reg('url-source');

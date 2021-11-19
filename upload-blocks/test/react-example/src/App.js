@@ -28,7 +28,7 @@ function App() {
       <uc-data-output
         fire-event
         from="*outputData"
-        item-template="<img height='200' src='https://ucarecdn.com/{{uuid}}/' />"
+        item-template="<img height='200' src='https://ucarecdn.com/{{uuid}}/-/preview/' />"
         class={ucClass}
       ></uc-data-output>
     </div>

@@ -1,4 +1,5 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
+import { ActivityComponent } from '../ActivityComponent/ActivityComponent.js';
 
 export class UiConfirmation {
   captionL10nStr = 'confirm-your-action';
@@ -13,7 +14,7 @@ export class UiConfirmation {
   }
 }
 
-export class ConfirmationDialog extends BlockComponent {
+export class ConfirmationDialog extends ActivityComponent {
   activityType = BlockComponent.activities.CONFIRMATION;
 
   _defaults = new UiConfirmation();
@@ -28,6 +29,8 @@ export class ConfirmationDialog extends BlockComponent {
   });
 
   initCallback() {
+    super.initCallback();
+
     this.sub('*confirmation', (/** @type {UiConfirmation} */ cfn) => {
       if (!cfn) {
         return;

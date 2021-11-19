@@ -22,9 +22,9 @@ uc-file-item[uploading] .edit-btn {
 uc-file-item[error] {
   background-color: var(--clr-error-lightest);
 }
-
 uc-file-item .thumb {
   display: inline-flex;
+  position: relative;
   height: var(--ui-size);
   width: var(--ui-size);
   background-color: var(--clr-shade-lv1);
@@ -50,7 +50,6 @@ uc-file-item button {
   color: var(--clr-txt);
   cursor: pointer;
 }
-
 uc-file-item .edit-btn {
   padding: 0;
   opacity: var(--opacity-mid);
@@ -74,19 +73,27 @@ uc-file-item .progress {
 }
 uc-file-item[error] .badge,
 uc-file-item[loaded] .badge {
-  display: inline-flex;
+  display: block;
 }
 uc-file-item .badge {
   display: none;
-  align-items: center;
-  justify-content: center;
-  height: var(--ui-size);
-  width: var(--ui-size);
-  color: var(--clr-txt);
+  position: absolute;
+  top: calc(var(--ui-size) * -0.15);
+  right: calc(var(--ui-size) * -0.15);
+  height: calc(var(--ui-size) * 0.42);
+  width: calc(var(--ui-size) * 0.42);
+  background-color: var(--clr-txt);
+  color: var(--clr-background-light);
+  border-radius: 50%;
 }
 uc-file-item[loaded] .badge {
-  color: var(--clr-confirm);
+  background-color: var(--clr-confirm);
 }
 uc-file-item[error] .badge {
-  color: var(--clr-error);
+  background-color: var(--clr-error);
+}
+uc-file-item .badge uc-icon, 
+uc-file-item .badge uc-icon svg {
+  width: 100%;
+  height: 100%;
 }
