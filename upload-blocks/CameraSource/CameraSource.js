@@ -65,6 +65,7 @@ export class CameraSource extends ActivityComponent {
   }
 
   onActivate() {
+    super.onActivate();
     this._init();
 
     this.set$({
@@ -75,18 +76,21 @@ export class CameraSource extends ActivityComponent {
   }
 
   onDeactivate() {
+    super.onDeactivate();
     this._stream?.getTracks()[0].stop();
     this.$.video = null;
   }
 }
 
 CameraSource.template = /*html*/ `
-<video
-  autoplay
-  playsinline
-  set="srcObject: video; style.transform: videoTransformCss"
-  ref="video">
-</video>
+<div .video-wrapper>
+  <video
+    autoplay
+    playsinline
+    set="srcObject: video; style.transform: videoTransformCss"
+    ref="video">
+  </video>
+</div>
 <div .toolbar>
   <button
     .cancel-btn

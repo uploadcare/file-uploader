@@ -41,6 +41,8 @@ export class UploadList extends ActivityComponent {
   _renderMap = Object.create(null);
 
   onActivate() {
+    super.onActivate();
+
     let modalActive = true;
     if (this.activityParams.openSystemDialog && !this.$['*files']?.length) {
       modalActive = false;

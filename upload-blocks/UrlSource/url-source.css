@@ -1,4 +1,7 @@
 uc-url-source {
+  --activity-desired-w: 600px;
+  --activity-desired-mobile-h: auto;
+
   display: grid;
   grid-template-columns: 1fr min-content;
   grid-gap: var(--gap-mid);

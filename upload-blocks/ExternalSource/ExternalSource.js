@@ -28,6 +28,8 @@ export class ExternalSource extends ActivityComponent {
   _iframe = null;
 
   onActivate() {
+    super.onActivate();
+
     let { externalSourceType } = this.activityParams;
 
     this.set$({
@@ -41,6 +43,7 @@ export class ExternalSource extends ActivityComponent {
   }
 
   onDeactivate() {
+    super.onDeactivate();
     this.unmountIframe();
   }
 

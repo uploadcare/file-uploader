@@ -16,7 +16,6 @@ export class FileItem extends BlockComponent {
     badgeIcon: 'check',
     onEdit: () => {
       this.set$({
-        '*modalCaption': this.l10n('caption-edit-file'),
         '*focusedEntry': this.entry,
         '*currentActivity': BlockComponent.activities.DETAILS,
       });
