@@ -1,4 +1,7 @@
 uc-confirmation-dialog {
+  --activity-desired-w: 300px;
+  --activity-desired-mobile-h: auto;
+
   display: block;
   padding: var(--gap-mid);
   padding-top: var(--gap-max);

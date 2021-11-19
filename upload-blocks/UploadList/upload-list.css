@@ -1,5 +1,8 @@
 uc-upload-list {
+  --activity-desired-w: 600px;
+
   display: grid;
+  grid-template-rows: auto max-content;
   background-color: var(--clr-background-light);
   transition: opacity var(--transition-duration);
   overflow: hidden;
@@ -11,6 +14,7 @@ uc-upload-list:not([active]) {
 uc-upload-list .files {
   display: grid;
   grid-auto-flow: row;
+  grid-template-rows: max-content;
   grid-auto-rows: var(--file-item-height);
   overflow: auto;
 }

@@ -27,6 +27,7 @@
 @import url('../../CameraSource/camera-source.css');
 @import url('../../ExternalSource/external-source.css');
 @import url('../../UploadList/upload-list.css');
+@import url('../../SourceSelect/source-select.css');
 @import url('../../FileItem/file-item.css');
 @import url('../../UploadDetails/upload-details.css');
 @import url('../../EditableCanvas/editable-canvas.css');

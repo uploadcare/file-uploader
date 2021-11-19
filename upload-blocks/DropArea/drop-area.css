@@ -7,8 +7,8 @@ uc-drop-area {
   border: var(--border-dashed);
   border-radius: var(--border-radius-max);
   background-color: var(--clr-shade-lv1);
-  padding: var(--gap-mid);
   transition: background-color var(--transition-duration), border-color var(--transition-duration);
+  padding: var(--gap-min);
 }
 uc-drop-area:hover {
   background-color: var(--clr-shade-lv2);

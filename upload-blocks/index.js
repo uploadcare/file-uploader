@@ -6,6 +6,7 @@ import { SimpleBtn } from './SimpleBtn/SimpleBtn.js';
 import { ActivityWrapper } from './ActivityWrapper/ActivityWrapper.js';
 import { DropArea } from './DropArea/DropArea.js';
 import { SourceBtn } from './SourceBtn/SourceBtn.js';
+import { SourceSelect } from './SourceSelect/SourceSelect.js';
 import { SourceList } from './SourceList/SourceList.js';
 import { FileItem } from './FileItem/FileItem.js';
 import { Modal } from './Modal/Modal.js';
@@ -58,6 +59,7 @@ export function register() {
   ActivityWrapper.reg('activity-wrapper');
   DropArea.reg('drop-area');
   SourceBtn.reg('source-btn');
+  SourceSelect.reg('source-select');
   SourceList.reg('source-list');
   FileItem.reg('file-item');
   Modal.reg('modal');

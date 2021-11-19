@@ -40,8 +40,10 @@
   --modal-shadow: 0px 0px 1px rgba(0, 0, 0, calc(0.35 + 0.65 * var(--darkmode))), 0px 6px 40px rgba(0, 0, 0, calc(0.2 + 0.4 * var(--darkmode)));
   --inset-shadow: inset 0px 2px 3px rgba(0, 0, 0, calc(0.09 + 0.1 * var(--darkmode)));
 
-  --modal-w: 800px;
-  --modal-h: 600px;
+  --modal-max-w: 800px;
+  --modal-max-h: 600px;
+
+  --file-item-height: 60px;
 
   /* Derivative values */
 
@@ -86,7 +88,7 @@
   --clr-btn-bgr-primary-active: hsl(var(--h-accent),var(--s-accent),calc(var(--l-accent) - 8% * var(--darkmode-minus)));
   --clr-btn-txt-primary: hsl(0,0%,100%);
   --shadow-btn-primary: 0px 1px 2px rgba(0, 0, 0, 0.26), 0px 2px 8px rgba(0, 0, 0, 0.08), inset 0px 0px 2px rgba(0, 0, 0, 0.2);
- 
+
   --clr-btn-bgr-secondary: hsl(var(--h-background),var(--s-background),calc(var(--l-background) + 3% + 3% * var(--darkmode)));
   --clr-btn-bgr-secondary-hover: hsl(var(--h-background),var(--s-background),calc(var(--l-background) + 8% * var(--darkmode)));
   --clr-btn-bgr-secondary-active: hsl(var(--h-background),var(--s-background),calc(var(--l-background) - 3% + 13% * var(--darkmode)));
@@ -166,9 +168,9 @@ input[type="text"] {
   border-radius: var(--border-radius-mid);
 }
 input[type="text"]:hover {
-  border-color: var(--clr-accent-light); 
+  border-color: var(--clr-accent-light);
 }
 input[type="text"]:focus {
-  border-color: var(--clr-accent); 
+  border-color: var(--clr-accent);
   outline: none;
 }

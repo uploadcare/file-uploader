@@ -12,7 +12,7 @@ export class UploadList extends ActivityComponent {
     uploadBtnDisabled: false,
     moreBtnDisabled: !this.config.MULTIPLE,
     onAdd: () => {
-      this.$['*currentActivity'] = BlockComponent.activities.SOURSE_SELECT;
+      this.$['*currentActivity'] = BlockComponent.activities.SOURCE_SELECT;
     },
     onUpload: () => {
       this.set$({
@@ -41,6 +41,8 @@ export class UploadList extends ActivityComponent {
   _renderMap = Object.create(null);
 
   onActivate() {
+    super.onActivate();
+
     let modalActive = true;
     if (this.activityParams.openSystemDialog && !this.$['*files']?.length) {
       modalActive = false;
@@ -115,7 +117,7 @@ UploadList.template = /*html*/ `
     .cancel-btn
     .secondary-btn
     set="onclick: onCancel;"
-    l10n="cancel"></button>
+    l10n="clear"></button>
   <div></div>
   <button
     .add-more-btn

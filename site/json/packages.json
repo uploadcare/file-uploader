@@ -28,7 +28,7 @@
   },
   "upload-client": {
     "description": "Upload large files faster form Node.js or browser",
-    "page": "pages/upload-client.html",
+    "page": "https://github.com/uploadcare/uploadcare-upload-client/",
     "demo": ""
   },
   "live-html": {

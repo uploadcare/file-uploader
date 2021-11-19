@@ -6,7 +6,7 @@
   "main": "",
   "scripts": {
     "git-mdl": "git submodule update --init --recursive --remote",
-    "ldep:upload-client": "mkdir -p web_modules && curl https://unpkg.com/@uploadcare/upload-client@2.0.0-alpha.10/dist/index.browser.js --output web_modules/upload-client.js",
+    "ldep:upload-client": "mkdir -p web_modules && curl https://unpkg.com/@uploadcare/upload-client@2.0.0/dist/index.browser.js --output web_modules/upload-client.js",
     "setup": "npm run git-mdl && npm run ldep:upload-client && cd ./re4ma && npm run ldep && cd .. && npm i && npm run build-libs",
     "test": "test",
     "dev": "node ./re4ma/dev.js",

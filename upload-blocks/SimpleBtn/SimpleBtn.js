@@ -14,8 +14,7 @@ export class SimpleBtn extends BlockComponent {
         });
       } else {
         this.set$({
-          '*currentActivity': BlockComponent.activities.SOURSE_SELECT,
-          '*modalCaption': this.l10n('select-file-source'),
+          '*currentActivity': BlockComponent.activities.SOURCE_SELECT,
           '*modalActive': true,
         });
       }
