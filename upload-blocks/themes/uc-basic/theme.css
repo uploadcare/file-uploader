@@ -24,6 +24,12 @@
   --s-error: 100%;
   --l-error: 66%;
 
+  --shadows: 1;
+
+  --h-shadow: 0;
+  --s-shadow: 0%;
+  --l-shadow: 0%;
+
   --opacity-normal: 0.5;
   --opacity-hover: 0.8;
   --opacity-active: 1;
@@ -36,9 +42,6 @@
 
   --border-radius: 5px;
   --transition-duration: 0.2s;
-
-  --modal-shadow: 0px 0px 1px rgba(0, 0, 0, calc(0.35 + 0.65 * var(--darkmode))), 0px 6px 40px rgba(0, 0, 0, calc(0.2 + 0.4 * var(--darkmode)));
-  --inset-shadow: inset 0px 2px 3px rgba(0, 0, 0, calc(0.09 + 0.1 * var(--darkmode)));
 
   --modal-max-w: 800px;
   --modal-max-h: 600px;
@@ -84,21 +87,32 @@
 
   --clr-curtain: hsla(var(--h-background),var(--s-background),calc(var(--l-background) - 10%), 0.7);
 
+  --hsl-shadow: var(--h-shadow), var(--s-shadow), var(--l-shadow);
+
+  --modal-shadow: 0px 0px 1px hsla(var(--hsl-shadow), calc(0.35 + 0.65 * var(--darkmode))), 
+                  0px 6px 40px hsla(var(--hsl-shadow), calc(0.2 + 0.4 * var(--darkmode)));
+
+  --inset-shadow: inset 0px 2px 3px hsla(var(--hsl-shadow), calc(0.09 + 0.1 * var(--darkmode)));
+
   --clr-btn-bgr-primary: var(--clr-accent);
   --clr-btn-bgr-primary-hover: hsl(var(--h-accent),var(--s-accent),calc(var(--l-accent) - 4% * var(--darkmode-minus)));
   --clr-btn-bgr-primary-active: hsl(var(--h-accent),var(--s-accent),calc(var(--l-accent) - 8% * var(--darkmode-minus)));
   --clr-btn-txt-primary: hsl(0,0%,100%);
-  --shadow-btn-primary: 0px 1px 2px rgba(0, 0, 0, 0.26), 0px 2px 8px rgba(0, 0, 0, 0.08), inset 0px 0px 2px rgba(0, 0, 0, 0.2);
+  --shadow-btn-primary: 0px 1px 2px hsla(var(--hsl-shadow), 0.26), 
+                        0px 2px 8px hsla(var(--hsl-shadow), 0.08), 
+                        inset 0px 0px 2px hsla(var(--hsl-shadow), 0.2);
 
   --clr-btn-bgr-secondary: hsl(var(--h-background),var(--s-background),calc(var(--l-background) + 3% + 3% * var(--darkmode)));
   --clr-btn-bgr-secondary-hover: hsl(var(--h-background),var(--s-background),calc(var(--l-background) + 8% * var(--darkmode)));
   --clr-btn-bgr-secondary-active: hsl(var(--h-background),var(--s-background),calc(var(--l-background) - 3% + 13% * var(--darkmode)));
   --clr-btn-txt-secondary: var(--clr-txt);
-  --shadow-btn-secondary: 0px 1px 1px rgba(0, 0, 0, 0.07), 0px 2px 8px rgba(0, 0, 0, 0.06), inset 0px 0px 1px rgba(0, 0, 0, 0.4);
+  --shadow-btn-secondary: 0px 1px 1px hsla(var(--hsl-shadow), 0.07), 
+                          0px 2px 8px hsla(var(--hsl-shadow), 0.06), 
+                          inset 0px 0px 1px hsla(var(--hsl-shadow), 0.4);
 
   --clr-btn-bgr-disabled: var(--clr-background);
   --clr-btn-txt-disabled: var(--clr-txt-lightest);
-  --shadow-btn-disabled: inset 0px 0px 1px rgba(0, 0, 0, 0.4);
+  --shadow-btn-disabled: inset 0px 0px 1px hsla(var(--hsl-shadow), 0.4);
 }
 
 /* Common styles */
