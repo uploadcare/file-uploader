@@ -46,15 +46,19 @@ uc-file-item button {
   width: var(--ui-size);
   height: var(--ui-size);
   background-color: transparent;
-  color: var(--clr-txt-lightest);
+  color: var(--clr-txt-light);
+  opacity: var(--opacity-normal);
   cursor: pointer;
-  transition: color var(--transition-duration);
+  transition: opacity var(--transition-duration);
+}
+uc-file-item button:hover  {
+  opacity: var(--opacity-hover);
+}
+uc-file-item button:active  {
+  opacity: var(--opacity-active);
 }
 uc-file-item .edit-btn {
   padding: 0;
-}
-uc-file-item button:hover  {
-  color: var(--clr-txt-mid);
 }
 uc-file-item .progress {
   position: absolute;
