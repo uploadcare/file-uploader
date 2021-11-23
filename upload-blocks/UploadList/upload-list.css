@@ -14,7 +14,6 @@ uc-upload-list:not([active]) {
 uc-upload-list .files {
   display: grid;
   grid-auto-flow: row;
-  grid-template-rows: max-content;
   grid-auto-rows: var(--file-item-height);
   overflow: auto;
 }
