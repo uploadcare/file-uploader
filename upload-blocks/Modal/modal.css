@@ -28,17 +28,18 @@ uc-modal button.close-btn {
   width: var(--ui-size);
   padding: 0;
   background-color: transparent;
-  color: var(--clr-txt-lightest);
+  color: var(--clr-txt-light);
+  opacity: var(--opacity-normal);
   border-radius: var(--border-radius-mid);
   border: none;
   cursor: pointer;
-  transition: color var(--transition-duration) ease;
+  transition: opacity var(--transition-duration) ease;
 }
 uc-modal button.close-btn:hover {
-  color: var(--clr-txt-light);
+  opacity: var(--opacity-hover);
 }
 uc-modal button.close-btn:active {
-  color: var(--clr-txt-mid);
+  opacity: var(--opacity-active);
 }
 uc-modal > .dialog {
   background-color: rgb(var(--rgb-2));
