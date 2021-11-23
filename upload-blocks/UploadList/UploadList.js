@@ -70,10 +70,6 @@ export class UploadList extends ActivityComponent {
       });
     });
     this.sub('*uploadList', (/** @type {String[]} */ list) => {
-      if (!list.length) {
-        this.$['*currentActivity'] = '';
-        return;
-      }
       list.forEach((id) => {
         if (!this._renderMap[id]) {
           let item = new FileItem();
