@@ -70,8 +70,8 @@ export class UploadList extends ActivityComponent {
       });
     });
     this.sub('*uploadList', (/** @type {String[]} */ list) => {
-      if (!list.length) {
-        this.$['*currentActivity'] = '';
+      if (!list.length && this.$['*modalActive']) {
+        this.$['*currentActivity'] = BlockComponent.activities.SOURCE_SELECT;
         return;
       }
       list.forEach((id) => {

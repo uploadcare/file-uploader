@@ -22,7 +22,7 @@ export class FileItem extends BlockComponent {
       });
     },
     onRemove: () => {
-      /* TODO: remove file. Go back if list is empty */
+      this.uploadCollection.remove(this.entry.__ctxId);
     },
     '*focusedEntry': null,
     '*uploadTrigger': null,
