@@ -21,6 +21,11 @@ export class Modal extends BlockComponent {
         '*modalActive': !!val,
       });
     });
+    this.sub('*uploadList', (list) => {
+      if (!list.length && this.$['*modalActive']) {
+        this.$['*currentActivity'] = BlockComponent.activities.SOURCE_SELECT;
+      }
+    });
     this.sub('*modalActive', (val) => {
       val ? this.setAttribute('active', '') : this.removeAttribute('active');
     });
