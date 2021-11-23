@@ -46,9 +46,9 @@
   --modal-max-w: 800px;
   --modal-max-h: 600px;
 
-  --file-item-height: 60px;
-
   /* Derivative values */
+
+  --file-item-height: calc(var(--ui-size) + var(--gap-mid) * 2); /* Maybe move to upload-list.css? */
 
   --darkmode-minus: calc(1 + var(--darkmode) * -2);
 
