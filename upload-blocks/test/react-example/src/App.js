@@ -9,10 +9,10 @@ function App() {
       <uc-simple-btn class={ucClass}></uc-simple-btn>
 
       <uc-modal class={ucClass} strokes>
-        <uc-activity-wrapper activity="source-select">
+        <uc-source-select>
           <uc-source-list wrap></uc-source-list>
           <uc-drop-area></uc-drop-area>
-        </uc-activity-wrapper>
+        </uc-source-select>
         <uc-upload-list></uc-upload-list>
         <uc-camera-source></uc-camera-source>
         <uc-url-source></uc-url-source>
