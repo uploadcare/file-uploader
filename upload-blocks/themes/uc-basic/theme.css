@@ -89,8 +89,8 @@
 
   --hsl-shadow: var(--h-shadow), var(--s-shadow), var(--l-shadow);
 
-  --modal-shadow: 0px 0px 1px hsla(var(--hsl-shadow), calc(0.35 + 0.65 * var(--darkmode))), 
-                  0px 6px 40px hsla(var(--hsl-shadow), calc(0.2 + 0.4 * var(--darkmode)));
+  --modal-shadow: 0px 0px 1px hsla(var(--hsl-shadow), calc((0.35 + 0.65 * var(--darkmode)) * var(--shadows))), 
+                  0px 6px 40px hsla(var(--hsl-shadow), calc((0.2 + 0.4 * var(--darkmode)) * var(--shadows)));
 
   --inset-shadow: inset 0px 2px 3px hsla(var(--hsl-shadow), calc(0.09 + 0.1 * var(--darkmode)));
 
@@ -98,21 +98,21 @@
   --clr-btn-bgr-primary-hover: hsl(var(--h-accent),var(--s-accent),calc(var(--l-accent) - 4% * var(--darkmode-minus)));
   --clr-btn-bgr-primary-active: hsl(var(--h-accent),var(--s-accent),calc(var(--l-accent) - 8% * var(--darkmode-minus)));
   --clr-btn-txt-primary: hsl(0,0%,100%);
-  --shadow-btn-primary: 0px 1px 2px hsla(var(--hsl-shadow), 0.26), 
-                        0px 2px 8px hsla(var(--hsl-shadow), 0.08), 
-                        inset 0px 0px 2px hsla(var(--hsl-shadow), 0.2);
+  --shadow-btn-primary: 0px 1px 2px hsla(var(--hsl-shadow), calc(0.26 * var(--shadows))), 
+                        0px 2px 8px hsla(var(--hsl-shadow), calc(0.08 * var(--shadows))), 
+                        inset 0px 0px 2px hsla(var(--hsl-shadow), calc(0.2 * var(--shadows)));
 
   --clr-btn-bgr-secondary: hsl(var(--h-background),var(--s-background),calc(var(--l-background) + 3% + 3% * var(--darkmode)));
   --clr-btn-bgr-secondary-hover: hsl(var(--h-background),var(--s-background),calc(var(--l-background) + 8% * var(--darkmode)));
   --clr-btn-bgr-secondary-active: hsl(var(--h-background),var(--s-background),calc(var(--l-background) - 3% + 13% * var(--darkmode)));
   --clr-btn-txt-secondary: var(--clr-txt);
-  --shadow-btn-secondary: 0px 1px 1px hsla(var(--hsl-shadow), 0.07), 
-                          0px 2px 8px hsla(var(--hsl-shadow), 0.06), 
-                          inset 0px 0px 1px hsla(var(--hsl-shadow), 0.4);
+  --shadow-btn-secondary: 0px 1px 1px hsla(var(--hsl-shadow), calc(0.07  * var(--shadows))), 
+                          0px 2px 8px hsla(var(--hsl-shadow), calc(0.06 * var(--shadows))), 
+                          inset 0px 0px 1px hsla(var(--hsl-shadow), calc(0.4 * var(--shadows)));
 
   --clr-btn-bgr-disabled: var(--clr-background);
   --clr-btn-txt-disabled: var(--clr-txt-lightest);
-  --shadow-btn-disabled: inset 0px 0px 1px hsla(var(--hsl-shadow), 0.4);
+  --shadow-btn-disabled: inset 0px 0px 1px hsla(var(--hsl-shadow), calc(0.4 * var(--shadows)));
 }
 
 /* Common styles */
