@@ -94,6 +94,8 @@
 
   --inset-shadow: inset 0px 2px 3px hsla(var(--hsl-shadow), calc(0.09 + 0.1 * var(--darkmode)));
 
+  /* Maybe move directly to the styles of the buttons? */
+
   --clr-btn-bgr-primary: var(--clr-accent);
   --clr-btn-bgr-primary-hover: hsl(var(--h-accent),var(--s-accent),calc(var(--l-accent) - 4% * var(--darkmode-minus)));
   --clr-btn-bgr-primary-active: hsl(var(--h-accent),var(--s-accent),calc(var(--l-accent) - 8% * var(--darkmode-minus)));
@@ -122,8 +124,8 @@ button {
   justify-content: center;
   align-items: center;
   font-size: 1em;
-  padding-left: 1.4em;
-  padding-right: 1.4em;
+  padding-left: 1.4em; /* Maybe calc from --ui-size? */
+  padding-right: 1.4em;  /* Maybe calc from --ui-size? */
   border: none;
   height: var(--ui-size);
   border-radius: var(--border-radius-mid);
@@ -170,8 +172,8 @@ a {
 input[type="text"] {
   display: flex;
   height: var(--ui-size);
-  padding-left: 0.6em;
-  padding-right: 0.6em;
+  padding-left: 0.6em; /* Maybe calc from --ui-size? */
+  padding-right: 0.6em;  /* Maybe calc from --ui-size? */
   width: 100%;
   font-family: inherit;
   font-size: var(--f);
