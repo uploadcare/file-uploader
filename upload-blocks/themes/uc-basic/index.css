@@ -22,6 +22,7 @@
 @import url('../../SourceBtn/source-btn.css');
 @import url('../../DropArea/drop-area.css');
 @import url('../../Modal/modal.css');
+@import url('../../Inline/inline.css');
 @import url('../../UrlSource/url-source.css');
 @import url('../../CameraSource/camera-source.css');
 @import url('../../ExternalSource/external-source.css');
@@ -33,6 +34,9 @@
 @import url('../../MessageBox/message-box.css');
 @import url('../../ConfirmationDialog/confirmation.css');
 @import url('../../ProgressBar/progress-bar.css');
+@import url('../../ActivityCaption/activity-caption.css');
+@import url('../../ActivityIcon/activity-icon.css');
+
 
 .uc-wgt-theme, .uc-wgt-common, :host {
   /* font-size and family for testing purposes, to be removed */

@@ -22,7 +22,6 @@ uc-file-item[uploading] .edit-btn {
 uc-file-item[error] {
   background-color: var(--clr-error-lightest);
 }
-
 uc-file-item .thumb {
   display: inline-flex;
   position: relative;

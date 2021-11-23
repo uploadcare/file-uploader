@@ -2,6 +2,7 @@ import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 import { resizeImage } from '../utils/resizeImage.js';
 import { uploadFile } from '../../web_modules/upload-client.js';
 import { UiMessage } from '../MessageBox/MessageBox.js';
+import { fileCssBg } from '../svg-backgrounds/svg-backgrounds.js';
 
 export class FileItem extends BlockComponent {
   pauseRender = true;
@@ -42,6 +43,8 @@ export class FileItem extends BlockComponent {
       resizeImage(this.file, 76).then((url) => {
         this.$.thumbUrl = `url(${url})`;
       });
+    } else {
+      this.$.thumbUrl = `url(${fileCssBg()})`;
     }
   }
 

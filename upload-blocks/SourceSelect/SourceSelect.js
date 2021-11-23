@@ -10,7 +10,6 @@ export class SourceSelect extends ActivityComponent {
     this.set$({
       '*modalCaption': this.l10n('select-file-source'),
       '*modalIcon': 'default',
-      '*modalActive': true,
     });
   }
 }

@@ -78,7 +78,3 @@ uc-modal .heading {
   border-bottom: var(--border-light);
   background-color: var(--clr-background-light);
 }
-uc-modal .caption {
-  font-size: 1em;
-  color: var(--clr-txt);
-}

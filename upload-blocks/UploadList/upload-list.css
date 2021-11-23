@@ -6,6 +6,7 @@ uc-upload-list {
   background-color: var(--clr-background-light);
   transition: opacity var(--transition-duration);
   overflow: hidden;
+  height: 100%;
 }
 uc-upload-list:not([active]) {
   display: none;
