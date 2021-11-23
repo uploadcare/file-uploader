@@ -47,18 +47,18 @@ uc-file-item button {
   width: var(--ui-size);
   height: var(--ui-size);
   background-color: transparent;
-  color: var(--clr-txt);
+  color: var(--clr-txt-lightest);
   cursor: pointer;
-}
-uc-file-item .edit-btn {
   padding: 0;
   opacity: var(--opacity-mid);
+  transition: opacity var(--transition-duration), color var(--transition-duration);
 }
-uc-file-item:hover .edit-btn {
+uc-file-item:hover button,
+uc-file-item[focused] button {
   opacity: 1;
 }
-uc-file-item[focused] .edit-btn {
-  opacity: 1;
+uc-file-item button:hover {
+  color: var(--clr-txt-mid);
 }
 uc-file-item .progress {
   position: absolute;

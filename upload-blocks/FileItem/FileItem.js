@@ -21,6 +21,9 @@ export class FileItem extends BlockComponent {
         '*currentActivity': BlockComponent.activities.DETAILS,
       });
     },
+    onRemove: () => {
+      this.uploadCollection.remove(this.entry.__ctxId);
+    },
     '*focusedEntry': null,
     '*uploadTrigger': null,
   };
@@ -183,6 +186,9 @@ FileItem.template = /*html*/ `
 <div .file-name set="textContent: fileName"></div>
 <button .edit-btn set="onclick: onEdit;">
   <uc-icon name="edit-file"></uc-icon>
+</button>
+<button .remove-btn set="onclick: onRemove;">
+  <uc-icon name="remove-file"></uc-icon>
 </button>
 <div
   .progress
