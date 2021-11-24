@@ -62,7 +62,6 @@ To quickly make upload-blocks match your design, you need to touch only a few va
 ## Derivative values
 Derivative values are calculated from the base values.
 
-* `--file-item-height` — height of the file item row in the list. Fixed value speeds up the render long file lists;
 * `--darkmode-minus` — used for dark mode color calculations. Gives `-1` when dark mode is enabled, `1` when disabled;
 * `--clr-background*` — lightness variations of the background color;
 * `--clr-accent*` — opacity variations of the accent color;
