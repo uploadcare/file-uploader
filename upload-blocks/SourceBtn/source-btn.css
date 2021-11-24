@@ -4,7 +4,7 @@ uc-source-btn {
   padding-right: 1em;
   user-select: none;
   cursor: pointer;
-  border-radius: var(--border-radius-mid);
+  border-radius: var(--border-radius-element);
   transition-property: background-color, color;
   transition-duration: var(--transition-duration);
   color: var(--clr-txt-mid);

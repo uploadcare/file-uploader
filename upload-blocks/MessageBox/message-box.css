@@ -10,7 +10,7 @@ uc-message-box {
   color: var(--clr-txt);
   font-size: 0.9em;
   transition: calc(var(--transition-duration) * 2);
-  border-radius: var(--border-radius-max);
+  border-radius: var(--border-radius-frame);
   box-shadow: var(--modal-shadow);
 }
 uc-message-box:not([active]) {

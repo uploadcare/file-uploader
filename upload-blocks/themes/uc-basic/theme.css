@@ -40,7 +40,10 @@
   --gap-mid: 10px;
   --gap-max: 20px;
 
-  --border-radius: 5px;
+  --border-radius-element: 7px;
+  --border-radius-frame: 10px;
+  --border-radius-thumb: 5px;
+
   --transition-duration: 0.2s;
 
   --modal-max-w: 800px;
@@ -75,10 +78,6 @@
   --clr-shade-lv1: hsla(var(--h-foreground),var(--s-foreground),var(--l-foreground), 0.05);
   --clr-shade-lv2: hsla(var(--h-foreground),var(--s-foreground),var(--l-foreground), 0.08);
   --clr-shade-lv3: hsla(var(--h-foreground),var(--s-foreground),var(--l-foreground), 0.12);
-
-  --border-radius-min: var(--border-radius);
-  --border-radius-mid: calc(var(--border-radius) * 1.5);
-  --border-radius-max: calc(var(--border-radius) * 2);
 
   --border-light: 1px solid hsla(var(--h-foreground),var(--s-foreground),var(--l-foreground), calc(0.1 - 0.05 * var(--darkmode)));
   --border-mid: 1px solid hsla(var(--h-foreground),var(--s-foreground),var(--l-foreground), calc(0.2 - 0.1 * var(--darkmode)));
@@ -128,7 +127,7 @@ button {
   padding-right: 1.4em;  /* Maybe calc from --ui-size? */
   border: none;
   height: var(--ui-size);
-  border-radius: var(--border-radius-mid);
+  border-radius: var(--border-radius-element);
   font-family: inherit;
   cursor: pointer;
   white-space: nowrap;
@@ -182,7 +181,7 @@ input[type="text"] {
   box-shadow: var(--inset-shadow);
   color: var(--clr-txt);
   transition: var(--transition-duration);
-  border-radius: var(--border-radius-mid);
+  border-radius: var(--border-radius-element);
 }
 input[type="text"]:hover {
   border-color: var(--clr-accent-light);

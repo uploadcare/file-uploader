@@ -30,7 +30,7 @@ uc-file-item .thumb {
   background-color: var(--clr-shade-lv1);
   background-size: cover;
   background-position: center center;
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius-thumb);
 }
 uc-file-item .file-name {
   display: flex;

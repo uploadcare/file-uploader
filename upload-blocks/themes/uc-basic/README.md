@@ -51,7 +51,9 @@ To quickly make upload-blocks match your design, you need to touch only a few va
 * `--opacity-*` — opacity of different states of small icon buttons;
 * `--ui-size` — minimum size of a clickable element. Also used to calculate size of the elements, that should be proportional to it;
 * `--gap-*` — paddings and margins;
-* `--border-radius` — border radius and it's larger variations;
+* `--border-radius-element` — border radius of buttons and inputs;
+* `--border-radius-frame` — border radius of modal windows and drop area;
+* `--border-radius-thumb` — border radius of thumbnails;
 * `--transition-duration` — duration of all animated transitions;
 * `--shadows` — `1`: shadows enabled, `0`: disabled. Can be a fractional, for example 0.5 will make shadows half as opaque.
 * `--*-shadow` — color of box shadows
