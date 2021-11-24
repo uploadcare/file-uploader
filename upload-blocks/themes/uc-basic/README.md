@@ -8,7 +8,7 @@ There are 4 levels of abstraction:
 * Common styles
 * Component styles
 
-We're using HSL because it allows to easily make derivative colors. That's what prefixes `--h-`, `--s-` and `--l-` are stand for.
+We use HSL color model because it allows to easily make derivative colors. That's what prefixes `--h-`, `--s-` and `--l-` are stand for.
 
 ## Quick customization
 To quickly make upload-blocks match your design, you need to touch only a few values. Here is an example:
@@ -28,10 +28,12 @@ To quickly make upload-blocks match your design, you need to touch only a few va
 --l-accent: 
 ```
 
-3. Change the corner radius
+3. Change the corner radii
 
 ```
---border-radius: 0;
+  --border-radius-element: 50%;
+  --border-radius-frame: 0px;
+  --border-radius-thumb: 0px;
 ```
 
 4. Switch off the shadows
@@ -51,12 +53,14 @@ To quickly make upload-blocks match your design, you need to touch only a few va
 * `--opacity-*` — opacity of different states of small icon buttons;
 * `--ui-size` — minimum size of a clickable element. Also used to calculate size of the elements, that should be proportional to it;
 * `--gap-*` — paddings and margins;
+* `--gap-table` — gap between elements in lists (for example, in upload-list);
+* `--borders` — `1`: borders enabled, `0`: disabled. Can be a fractional, for example 0.5 will make borders half as opaque;
 * `--border-radius-element` — border radius of buttons and inputs;
 * `--border-radius-frame` — border radius of modal windows and drop area;
 * `--border-radius-thumb` — border radius of thumbnails;
 * `--transition-duration` — duration of all animated transitions;
-* `--shadows` — `1`: shadows enabled, `0`: disabled. Can be a fractional, for example 0.5 will make shadows half as opaque.
-* `--*-shadow` — color of box shadows
+* `--shadows` — `1`: shadows enabled, `0`: disabled. Can be a fractional, for example 0.5 will make shadows half as opaque;
+* `--*-shadow` — color of box shadows;
 * `--modal-max-w`, `--modal-max-h` — maximum size of the modal window;
 
 ## Derivative values
@@ -69,8 +73,7 @@ Derivative values are calculated from the base values.
 * `--clr-error` — opacity and lighness variations of the error notifications color;
 * `--clr-txt*` — lightness variations of the text color;
 * `--clr-shade-lv*` — shading colors (foreground color with a low opacity variations);
-* `--border-radius-*` — corner radius variations;
-* `--border-*` — border variations
+* `--border-*` — border variations;
 * `--clr-curtain` — color of the background behind the modal window;
 * `--clr-btn-bgr-primary*`, `--clr-btn-txt-primary`, `--shadow-btn-primary` — primary action button values;
 * `--clr-btn-bgr-secondary*`, `--clr-btn-txt-secondary`, `--shadow-btn-secondary` — secondary action button values;
