@@ -51,8 +51,6 @@
 
   /* Derivative values */
 
-  --file-item-height: calc(var(--ui-size) + var(--gap-mid) * 2); /* Maybe move to upload-list.css? */
-
   --darkmode-minus: calc(1 + var(--darkmode) * -2);
 
   --clr-background: hsl(var(--h-background),var(--s-background),var(--l-background));
