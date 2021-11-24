@@ -39,7 +39,6 @@
 
 
 .uc-wgt-theme, .uc-wgt-common, :host {
-  /* font-size and family for testing purposes, to be removed */
   font-size: var(--f-size);
   font-family: var(--f-family);
   color: var(--clr-txt);
