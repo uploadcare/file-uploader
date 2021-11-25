@@ -30,35 +30,35 @@ uc-file-item .thumb {
   background-color: var(--clr-shade-lv1);
   background-size: cover;
   background-position: center center;
-  border-radius: var(--border-radius-thumb);
+  border-radius: var(--border-radius);
 }
 uc-file-item .file-name {
   display: flex;
   align-items: center;
   padding-left: var(--gap-mid);
   padding-right: var(--gap-mid);
-  color: var(--clr-txt-mid);
+  color: var(--clr-txt);
+  opacity: var(--opacity-max);
 }
 uc-file-item:hover .file-name {
-  color: var(--clr-txt);
+  opacity: 1;
 }
 uc-file-item button {
   width: var(--ui-size);
   height: var(--ui-size);
   background-color: transparent;
-  color: var(--clr-txt-light);
-  opacity: var(--opacity-normal);
+  color: var(--clr-txt-lightest);
   cursor: pointer;
-  transition: opacity var(--transition-duration);
-}
-uc-file-item button:hover  {
-  opacity: var(--opacity-hover);
-}
-uc-file-item button:active  {
-  opacity: var(--opacity-active);
-}
-uc-file-item .edit-btn {
   padding: 0;
+  opacity: var(--opacity-mid);
+  transition: opacity var(--transition-duration), color var(--transition-duration);
+}
+uc-file-item:hover button,
+uc-file-item[focused] button {
+  opacity: 1;
+}
+uc-file-item button:hover {
+  color: var(--clr-txt-mid);
 }
 uc-file-item .progress {
   position: absolute;

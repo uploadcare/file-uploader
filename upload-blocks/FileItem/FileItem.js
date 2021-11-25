@@ -21,6 +21,9 @@ export class FileItem extends BlockComponent {
         '*currentActivity': BlockComponent.activities.DETAILS,
       });
     },
+    onRemove: () => {
+      this.uploadCollection.remove(this.entry.__ctxId);
+    },
     '*focusedEntry': null,
     '*uploadTrigger': null,
   };
@@ -36,7 +39,10 @@ export class FileItem extends BlockComponent {
   }
 
   _generateThumbnail() {
-    if (this.file?.type.includes('image') && !this.$.thumbUrl) {
+    if (this.$.thumbUrl) {
+      return;
+    }
+    if (this.file?.type.includes('image')) {
       resizeImage(this.file, 76).then((url) => {
         this.$.thumbUrl = `url(${url})`;
       });
@@ -180,6 +186,9 @@ FileItem.template = /*html*/ `
 <div .file-name set="textContent: fileName"></div>
 <button .edit-btn set="onclick: onEdit;">
   <uc-icon name="edit-file"></uc-icon>
+</button>
+<button .remove-btn set="onclick: onRemove;">
+  <uc-icon name="remove-file"></uc-icon>
 </button>
 <div
   .progress
