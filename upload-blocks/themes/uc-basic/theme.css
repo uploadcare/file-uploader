@@ -3,9 +3,9 @@
   /* Base values */
 
   --f-size: inherit;
-  --f-family: inherit; /* -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; */
+  --f-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 
-  --darkmode: 1;
+  --darkmode: 0;
 
   --h-foreground: 208;
   --s-foreground: 4%;
@@ -86,7 +86,7 @@
   --border-light: 1px solid hsla(var(--h-foreground),var(--s-foreground),var(--l-foreground), calc((0.1 - 0.05 * var(--darkmode)) * var(--borders)));
   --border-mid: 1px solid hsla(var(--h-foreground),var(--s-foreground),var(--l-foreground), calc((0.2 - 0.1 * var(--darkmode)) * var(--borders)));
   --border-accent: 1px solid hsla(var(--h-accent),var(--s-accent),var(--l-accent), 1.0 * var(--borders));
-  --border-dashed: 2px dashed hsla(var(--h-foreground),var(--s-foreground),var(--l-foreground), 0.1 * var(--borders));
+  --border-dashed: 2px dashed hsla(var(--h-foreground),var(--s-foreground),var(--l-foreground), calc(0.1 * var(--borders)));
 
   --clr-curtain: hsla(var(--h-background),var(--s-background),calc(var(--l-background) - 10%), 0.7);
 

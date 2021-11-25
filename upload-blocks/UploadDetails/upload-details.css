@@ -55,7 +55,7 @@ uc-upload-details .details {
 
 uc-upload-details .info-block {
   padding-top: var(--gap-max);
-  padding-bottom: var(--gap-max);
+  padding-bottom: calc(var(--gap-max) + var(--gap-table));
   color: var(--clr-txt);
   border-bottom: var(--border-light);
 }
