@@ -1,5 +1,5 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
-import { uploadFile } from '../../web_modules/upload-client.js';
+import { uploadFile } from '../../ext_modules/upload-client.js';
 import { ActivityComponent } from '../ActivityComponent/ActivityComponent.js';
 
 export class UrlSource extends ActivityComponent {

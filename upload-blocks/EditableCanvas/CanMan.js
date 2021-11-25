@@ -1,5 +1,5 @@
 // Canvas Manipulator
-import { applyStyles, applyAttributes } from '../../symbiote/utils/dom-helpers.js';
+import { applyStyles, applyAttributes } from '../../ext_modules/symbiote.js';
 const SVGNS = 'http://www.w3.org/2000/svg';
 
 export class CanMan {

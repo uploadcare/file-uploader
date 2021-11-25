@@ -1,5 +1,5 @@
 node_modules
-web_modules
+html_output
 */node_modules
 */dist
 */pkg
@@ -11,4 +11,3 @@ web_modules
 */wasm-pack.log
 .DS_Store
 .firebase
-build

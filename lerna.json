@@ -1,11 +1,7 @@
 {
   "packages": [
-    "deployer",
-    "editor",
-    "localhost",
-    "sw-manager",
-    "upload-blocks",
-    "wasm-tools"
+    "cloud-editor",
+    "upload-blocks"
   ],
   "command": {
     "publish": {

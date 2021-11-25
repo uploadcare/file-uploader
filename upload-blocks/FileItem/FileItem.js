@@ -1,6 +1,6 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 import { resizeImage } from '../../common-utils/resizeImage.js';
-import { uploadFile } from '../../web_modules/upload-client.js';
+import { uploadFile } from '../../ext_modules/upload-client.js';
 import { UiMessage } from '../MessageBox/MessageBox.js';
 
 export class FileItem extends BlockComponent {
