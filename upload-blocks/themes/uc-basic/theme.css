@@ -2,7 +2,7 @@
 
   /* Base values */
 
-  --f-size: inherit;
+  --f-size: 15px;
   --f-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 
   --darkmode: 0;
@@ -102,7 +102,7 @@
   --clr-btn-bgr-primary: var(--clr-accent);
   --clr-btn-bgr-primary-hover: hsl(var(--h-accent),var(--s-accent),calc(var(--l-accent) - 4% * var(--darkmode-minus)));
   --clr-btn-bgr-primary-active: hsl(var(--h-accent),var(--s-accent),calc(var(--l-accent) - 8% * var(--darkmode-minus)));
-  --clr-btn-txt-primary: hsl(0,0%,100%);
+  --clr-btn-txt-primary: var(--clr-background-light);
   --shadow-btn-primary: 0px 1px 2px hsla(var(--hsl-shadow), calc(0.26 * var(--shadows))), 
                         0px 2px 8px hsla(var(--hsl-shadow), calc(0.08 * var(--shadows))), 
                         inset 0px 0px 2px hsla(var(--hsl-shadow), calc(0.2 * var(--shadows)));
