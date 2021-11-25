@@ -1,49 +1,26 @@
 # Basic theme for upload-blocks
-
------screenshot here-----
-
 There are 4 levels of abstraction:
-* Base values
-* Derivative values
-* Common styles
-* Component styles
+* [Base values](#base-values)
+* [Derivative values](#derivative-values])
+* [Common styles](#common-styles)
+* [Component styles](#component-styles)
 
-We use HSL color model because it allows to easily make derivative colors. That's what prefixes `--h-`, `--s-` and `--l-` are stand for.
+### HSL color space
+We use HSL color space because it allows to easily calculate derivative colors. That's what prefixes `--h-`, `--s-` and `--l-` are stand for.
 
-## Quick customization
-To quickly make upload-blocks match your design, you need to touch only a few values. Here is an example:
+### Quick styling
+In most cases switching the dark mode on or off and changing the accent color is enough to make upload-blocks match your design. If you want to do a deeper styling, see this guide **TODO: write a guide**.
 
----screenshot of the reference design----
-
-1. Turn on the darkmode
 ```
 --darkmode: 1;
 ```
-
-2. Change accent color to match the most saturated color of your design
-
 ```
---h-accent: 
---s-accent: 
---l-accent: 
-```
-
-3. Change the corner radii
-
-```
-  --border-radius-element: 50%;
-  --border-radius-frame: 0px;
-  --border-radius-thumb: 0px;
-```
-
-4. Switch off the shadows
-
-```
---shadows: 0;
+  --h-accent: 211;
+  --s-accent: 100%;
+  --l-accent: calc(50% - 5% * var(--darkmode));
 ```
 
 ## Base values
-
 * `--darkmode` — `1`: dark mode enabled, `0`: disabled;
 * `--*-foreground` — text color, borders and shaders. Should be in contrast to background;
 * `--*-background` — background color and it's variations;
@@ -81,3 +58,7 @@ Derivative values are calculated from the base values.
 
 ## Common styles
 Common styles define similar UI elements across different blocks: buttons, inputs and links.
+
+## Component styles
+Component styles are the most specific. **TODO: decide about recommendations here**
+
