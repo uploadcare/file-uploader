@@ -1,0 +1,3 @@
+### Markdown example
+
+My article from external markdown file...

@@ -1,0 +1,27 @@
+{
+  "upload-blocks": {
+    "description": "Build your own file uploader in minutes",
+    "page": "pages/upload-blocks.html",
+    "demo": "./upload-blocks/test/raw-build.html"
+  },
+  "adaptive-image-element": {
+    "description": "Adaptive image delivery",
+    "page": "pages/uc-image.html",
+    "demo": ""
+  },
+  "cloud-editor": {
+    "description": "GUI for CDN transformations API",
+    "page": "pages/cdn-edit.html",
+    "demo": ""
+  },
+  "upload-client": {
+    "description": "Upload large files faster form Node.js or browser",
+    "page": "pages/upload-client.html",
+    "demo": ""
+  },
+  "live-html": {
+    "description": "Live code editor and useful snippets for Uploadcare ecosystem",
+    "page": "pages/cdn-edit.html",
+    "demo": ""
+  }
+}
