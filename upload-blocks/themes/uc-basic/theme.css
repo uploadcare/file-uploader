@@ -127,8 +127,8 @@ button {
   justify-content: center;
   align-items: center;
   font-size: 1em;
-  padding-left: 1.4em; /* Maybe calc from --ui-size? */
-  padding-right: 1.4em;  /* Maybe calc from --ui-size? */
+  padding-left: calc(var(--ui-size) * 0.5);
+  padding-right: calc(var(--ui-size) * 0.5);
   border: none;
   height: var(--ui-size);
   border-radius: var(--border-radius-element);
@@ -175,8 +175,8 @@ a {
 input[type="text"] {
   display: flex;
   height: var(--ui-size);
-  padding-left: 0.6em; /* Maybe calc from --ui-size? */
-  padding-right: 0.6em;  /* Maybe calc from --ui-size? */
+  padding-left: calc(var(--ui-size) * 0.3);
+  padding-right: calc(var(--ui-size) * 0.3);
   width: 100%;
   font-family: inherit;
   font-size: var(--f);
