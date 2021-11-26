@@ -36,7 +36,7 @@ class Data {
    * @param {String} prop
    */
   static warn(actionName, prop) {
-    console.warn(`State: cannot ${actionName}. Prop name: ` + prop);
+    console.warn(`Symbiote Data: cannot ${actionName}. Prop name: ` + prop);
   }
 
   /** @param {String} prop */
@@ -512,10 +512,6 @@ class BaseComponent extends HTMLElement {
   initCallback() {}
 
   __initDataCtx() {
-    if (typeof this.init$ === 'function') {
-      this.init$ = this.init$();
-    }
-
     let attrDesc = this.constructor['__attrDesc'];
     if (attrDesc) {
       for (let prop of Object.values(attrDesc)) {

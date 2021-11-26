@@ -3,6 +3,5 @@
   "parserOptions": {
     "sourceType": "module",
     "ecmaVersion": 2020
-  },
-  "ignorePatterns": ["ext_modules", "build"]
+  }
 }

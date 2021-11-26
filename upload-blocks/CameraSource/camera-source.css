@@ -1,11 +1,21 @@
 uc-camera-source {
+  --activity-desired-w: 100%;
+  --activity-desired-h: var(--modal-max-h);
+
   display: grid;
-  grid-template-rows: min-content min-content;
+  grid-template-rows: auto max-content;
+  height: 100%;
+}
+uc-camera-source .video-wrapper {
+  position: relative;
+  overflow: hidden;
 }
 uc-camera-source video {
+  position: absolute;
   display: block;
+  background-color: var(--clr-background);
   width: 100%;
-  background-color: var(--clr-shade-1);
+  height: 100%;
 }
 uc-camera-source .toolbar {
   display: flex;
@@ -13,11 +23,8 @@ uc-camera-source .toolbar {
   padding: var(--gap-mid);
 }
 uc-camera-source .shot-btn {
-  color: var(--clr-1);
-  background-color: var(--clr-shade-1);
+  /* nothing to say */
 }
-
 uc-camera-source .cancel-btn {
-  color: var(--clr-1);
-  background-color: var(--clr-2);
+  /* nothing to say */
 }

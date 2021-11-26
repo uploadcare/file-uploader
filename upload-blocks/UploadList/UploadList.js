@@ -12,7 +12,7 @@ export class UploadList extends ActivityComponent {
     uploadBtnDisabled: false,
     moreBtnDisabled: !this.config.MULTIPLE,
     onAdd: () => {
-      this.$['*currentActivity'] = BlockComponent.activities.SOURSE_SELECT;
+      this.$['*currentActivity'] = BlockComponent.activities.SOURCE_SELECT;
     },
     onUpload: () => {
       this.set$({
@@ -21,14 +21,14 @@ export class UploadList extends ActivityComponent {
     },
     onDone: () => {
       this.set$({
-        '*modalActive': false,
+        '*currentActivity': '',
       });
       this.output();
     },
     onCancel: () => {
       let cfn = new UiConfirmation();
       cfn.confirmAction = () => {
-        this.$['*modalActive'] = false;
+        this.$['*currentActivity'] = '';
         this.uploadCollection.clearAll();
       };
       cfn.denyAction = () => {
@@ -41,16 +41,11 @@ export class UploadList extends ActivityComponent {
   _renderMap = Object.create(null);
 
   onActivate() {
-    let modalActive = true;
-    if (this.activityParams.openSystemDialog && !this.$['*files']?.length) {
-      modalActive = false;
-      this.openSystemDialog();
-    }
+    super.onActivate();
 
     this.set$({
       '*modalCaption': this.l10n('selected'),
       '*modalIcon': 'local',
-      '*modalActive': modalActive,
     });
   }
 
@@ -75,10 +70,6 @@ export class UploadList extends ActivityComponent {
       });
     });
     this.sub('*uploadList', (/** @type {String[]} */ list) => {
-      if (!list.length) {
-        this.$['*currentActivity'] = '';
-        return;
-      }
       list.forEach((id) => {
         if (!this._renderMap[id]) {
           let item = new FileItem();
@@ -112,19 +103,23 @@ UploadList.template = /*html*/ `
 <div .toolbar>
   <button
     .cancel-btn
+    .secondary-btn
     set="onclick: onCancel;"
-    l10n="cancel"></button>
+    l10n="clear"></button>
   <div></div>
   <button
     .add-more-btn
+    .secondary-btn
     set="onclick: onAdd; @disabled: moreBtnDisabled"
     l10n="add-more"></button>
   <button
     .upload-btn
+    .primary-btn
     set="@hidden: uploadBtnHidden; onclick: onUpload; @disabled: uploadBtnDisabled"
     l10n="upload"></button>
     <button
     .done-btn
+    .primary-btn
     set="@hidden: doneBtnHidden; onclick: onDone"
     l10n="done"></button>
 </div>

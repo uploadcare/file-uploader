@@ -1,12 +1,12 @@
 <base href="../../">
 
-<link rel="stylesheet" href="./build/upload-blocks_dev.css">
+<link rel="stylesheet" href="./upload-blocks/build/uc-basic.css">
 
-<script src="./build/upload-blocks.js" type="module"></script>
+<script src="./upload-blocks/build/upload-blocks.js" type="module"></script>
 
 <uc-simple-btn class="uc-wgt-common"></uc-simple-btn>
 
-<uc-modal class="uc-wgt-common" strokes>
+<uc-modal class="uc-wgt-common">
   <uc-activity-wrapper activity="source-select">
     <uc-source-list wrap></uc-source-list>
     <uc-drop-area></uc-drop-area>
@@ -25,5 +25,5 @@
 
 <uc-data-output
   fire-event
-  item-template="<img height='200' src='https://ucarecdn.com/{{uuid}}/' />"
+  item-template="<img height='200' src='https://ucarecdn.com/{{uuid}}/-/preview/s' />"
   class="uc-wgt-common"></uc-data-output>

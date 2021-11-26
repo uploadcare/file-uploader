@@ -1,6 +1,10 @@
-function D(c) {
+var X = Object.defineProperty;
+var O = (c, t, e) => (t in c ? X(c, t, { enumerable: !0, configurable: !0, writable: !0, value: e }) : (c[t] = e));
+var x = (c, t, e) => (O(c, typeof t != 'symbol' ? t + '' : t, e), e);
+function I(c) {
   let t = (e) => {
-    for (let s in e) e[s]?.constructor === Object && (e[s] = t(e[s]));
+    var s;
+    for (let i in e) ((s = e[i]) == null ? void 0 : s.constructor) === Object && (e[i] = t(e[i]));
     return { ...e };
   };
   return t(c);
@@ -10,12 +14,12 @@ var a = class {
     (this.uid = Symbol()),
       (this.name = t.name || null),
       t.schema.constructor === Object
-        ? (this.store = D(t.schema))
+        ? (this.store = I(t.schema))
         : ((this._storeIsProxy = !0), (this.store = t.schema)),
       (this.callbackMap = Object.create(null));
   }
   static warn(t, e) {
-    console.warn(`State: cannot ${t}. Prop name: ` + e);
+    console.warn(`Symbiote Data: cannot ${t}. Prop name: ` + e);
   }
   read(t) {
     return !this._storeIsProxy && !this.store.hasOwnProperty(t) ? (a.warn('read', t), null) : this.store[t];
@@ -94,16 +98,16 @@ var n = Object.freeze({
     EL_REF_ATTR: 'ref',
     AUTO_TAG_PRFX: 'sym',
   }),
-  x = '1234567890QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm',
-  X = x.length - 1,
-  A = class {
+  A = '1234567890QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm',
+  L = A.length - 1,
+  E = class {
     static generate(t = 'XXXXXXXXX-XXX') {
       let e = '';
-      for (let s = 0; s < t.length; s++) e += t[s] === '-' ? t[s] : x.charAt(Math.random() * X);
+      for (let s = 0; s < t.length; s++) e += t[s] === '-' ? t[s] : A.charAt(Math.random() * L);
       return e;
     }
   };
-function O(c, t) {
+function j(c, t) {
   if (t.renderShadow) return;
   let e = [...c.querySelectorAll('slot')];
   if (t.__initChildren.length && e.length) {
@@ -115,7 +119,8 @@ function O(c, t) {
         : (s.__default__ = { slot: i, fr: document.createDocumentFragment() });
     }),
       t.__initChildren.forEach((i) => {
-        let r = i.getAttribute?.('slot');
+        var o;
+        let r = (o = i.getAttribute) == null ? void 0 : o.call(i, 'slot');
         r ? s[r].fr.appendChild(i) : s.__default__ && s.__default__.fr.appendChild(i);
       }),
       Object.values(s).forEach((i) => {
@@ -123,7 +128,7 @@ function O(c, t) {
       });
   } else t.innerHTML = '';
 }
-function I(c, t) {
+function k(c, t) {
   [...c.querySelectorAll(`[${n.EL_REF_ATTR}]`)].forEach((e) => {
     let s = e.getAttribute(n.EL_REF_ATTR);
     (t.ref[s] = e), e.removeAttribute(n.EL_REF_ATTR);
@@ -150,35 +155,35 @@ function $(c, t) {
           let d = l.split('.');
           (g = () => {
             (f = e),
-              d.forEach((u, M) => {
-                M < d.length - 1 ? (f = f[u]) : (T = u);
+              d.forEach((h, D) => {
+                D < d.length - 1 ? (f = f[h]) : (T = h);
               });
           }),
             g();
         }
         for (let d of p)
-          t.sub(d, (u) => {
+          t.sub(d, (h) => {
             w
-              ? u?.constructor === Boolean
-                ? u
+              ? (h == null ? void 0 : h.constructor) === Boolean
+                ? h
                   ? e.setAttribute(l, '')
                   : e.removeAttribute(l)
-                : e.setAttribute(l, u)
+                : e.setAttribute(l, h)
               : C
               ? f
-                ? (f[T] = u)
+                ? (f[T] = h)
                 : window.setTimeout(() => {
-                    g(), (f[T] = u);
+                    g(), (f[T] = h);
                   })
-              : (e[l] = u);
+              : (e[l] = h);
           });
       }),
       e.removeAttribute(n.BIND_ATTR);
   });
 }
-var L = [O, I, $],
-  E = 0,
-  h = class extends HTMLElement {
+var F = [j, k, $],
+  S = 0,
+  u = class extends HTMLElement {
     render(t, e = this.renderShadow) {
       let s;
       if (t || this.constructor.template) {
@@ -191,8 +196,8 @@ var L = [O, I, $],
 
         )
           this.firstChild.remove();
-        if (t?.constructor === DocumentFragment) s = t;
-        else if (t?.constructor === String) {
+        if ((t == null ? void 0 : t.constructor) === DocumentFragment) s = t;
+        else if ((t == null ? void 0 : t.constructor) === String) {
           let i = document.createElement('template');
           (i.innerHTML = t), (s = i.content.cloneNode(!0));
         } else this.constructor.__tpl && (s = this.constructor.__tpl.content.cloneNode(!0));
@@ -218,7 +223,7 @@ var L = [O, I, $],
     get autoCtxName() {
       return (
         this.__autoCtxName ||
-          ((this.__autoCtxName = A.generate()), this.style.setProperty(n.CSS_CTX_PROP, `'${this.__autoCtxName}'`)),
+          ((this.__autoCtxName = E.generate()), this.style.setProperty(n.CSS_CTX_PROP, `'${this.__autoCtxName}'`)),
         this.__autoCtxName
       );
     }
@@ -226,7 +231,10 @@ var L = [O, I, $],
       return this.getCssData(n.CSS_CTX_PROP, !0);
     }
     get ctxName() {
-      return this.getAttribute(n.CTX_NAME_ATTR)?.trim() || this.cssCtxName || this.autoCtxName;
+      var t;
+      return (
+        ((t = this.getAttribute(n.CTX_NAME_ATTR)) == null ? void 0 : t.trim()) || this.cssCtxName || this.autoCtxName
+      );
     }
     get localCtx() {
       return this.__localCtx || (this.__localCtx = a.registerLocalCtx({})), this.__localCtx;
@@ -244,19 +252,19 @@ var L = [O, I, $],
       return { ctx: s, name: i };
     }
     sub(t, e) {
-      let s = h.__parseProp(t, this);
+      let s = u.__parseProp(t, this);
       this.allSubs.add(s.ctx.sub(s.name, e));
     }
     notify(t) {
-      let e = h.__parseProp(t, this);
+      let e = u.__parseProp(t, this);
       e.ctx.notify(e.name);
     }
     has(t) {
-      let e = h.__parseProp(t, this);
+      let e = u.__parseProp(t, this);
       return e.ctx.has(e.name);
     }
     add(t, e) {
-      let s = h.__parseProp(t, this);
+      let s = u.__parseProp(t, this);
       s.ctx.add(s.name, e, !1);
     }
     add$(t) {
@@ -267,11 +275,11 @@ var L = [O, I, $],
         let t = Object.create(null);
         this.__stateProxy = new Proxy(t, {
           set: (e, s, i) => {
-            let r = h.__parseProp(s, this);
+            let r = u.__parseProp(s, this);
             return r.ctx.pub(r.name, i), !0;
           },
           get: (e, s) => {
-            let i = h.__parseProp(s, this);
+            let i = u.__parseProp(s, this);
             return i.ctx.read(i.name);
           },
         });
@@ -283,7 +291,6 @@ var L = [O, I, $],
     }
     initCallback() {}
     __initDataCtx() {
-      typeof this.init$ == 'function' && (this.init$ = this.init$());
       let t = this.constructor.__attrDesc;
       if (t) for (let e of Object.values(t)) Object.keys(this.init$).includes(e) || (this.init$[e] = '');
       for (let e in this.init$)
@@ -300,13 +307,14 @@ var L = [O, I, $],
       this.__dataCtxInitialized = !0;
     }
     connectedCallback() {
+      var t, e;
       if ((this.__disconnectTimeout && window.clearTimeout(this.__disconnectTimeout), !this.connectedOnce)) {
-        let t = this.getAttribute(n.CTX_NAME_ATTR)?.trim();
-        t && this.style.setProperty(n.CSS_CTX_PROP, `'${t}'`),
+        let s = (t = this.getAttribute(n.CTX_NAME_ATTR)) == null ? void 0 : t.trim();
+        s && this.style.setProperty(n.CSS_CTX_PROP, `'${s}'`),
           this.__initDataCtx(),
           (this.__initChildren = [...this.childNodes]);
-        for (let e of L) this.addTemplateProcessor(e);
-        this.pauseRender || this.render(), this.initCallback?.();
+        for (let i of F) this.addTemplateProcessor(i);
+        this.pauseRender || this.render(), (e = this.initCallback) == null || e.call(this);
       }
       this.connectedOnce = !0;
     }
@@ -322,7 +330,7 @@ var L = [O, I, $],
           }, 100)));
     }
     static reg(t, e = !1) {
-      if ((t || (E++, (t = `${n.AUTO_TAG_PRFX}-${E}`)), (this.__tag = t), window.customElements.get(t))) {
+      if ((t || (S++, (t = `${n.AUTO_TAG_PRFX}-${S}`)), (this.__tag = t), window.customElements.get(t))) {
         console.warn(`${t} - is already in "customElements" registry`);
         return;
       }
@@ -366,9 +374,9 @@ var L = [O, I, $],
             (this[i] = r),
               s
                 ? window.setTimeout(() => {
-                    e?.(r);
+                    e == null || e(r);
                   })
-                : e?.(r);
+                : e == null || e(r);
           },
           get: () => this[i],
         }),
@@ -454,10 +462,11 @@ var m = class {
     let s = a.registerNamedCtx(t, { route: null, options: null, title: null });
     return (
       window.addEventListener(this.routingEventName, (i) => {
+        var r;
         s.multiPub({
           route: i.detail.route,
           options: i.detail.options,
-          title: i.detail.options?.title || this.defaultTitle || '',
+          title: ((r = i.detail.options) == null ? void 0 : r.title) || this.defaultTitle || '',
         });
       }),
       m.notify(),
@@ -469,15 +478,15 @@ m.appMap = Object.create(null);
 window.onpopstate = () => {
   m.notify();
 };
-var S = 'idb-store-ready',
-  j = 'symbiote-db',
-  k = 'symbiote-idb-update_',
-  P = class {
+var P = 'idb-store-ready',
+  H = 'symbiote-db',
+  q = 'symbiote-idb-update_',
+  v = class {
     _notifyWhenReady(t = null) {
-      window.dispatchEvent(new CustomEvent(S, { detail: { dbName: this.name, storeName: this.storeName, event: t } }));
+      window.dispatchEvent(new CustomEvent(P, { detail: { dbName: this.name, storeName: this.storeName, event: t } }));
     }
     get _updEventName() {
-      return k + this.name;
+      return q + this.name;
     }
     _getUpdateEvent(t) {
       return new CustomEvent(this._updEventName, { detail: { key: this.name, newValue: t } });
@@ -523,7 +532,10 @@ var S = 'idb-store-ready',
       let s = this.db.transaction(this.storeName, 'readwrite').objectStore(this.storeName).get(t);
       return new Promise((i, r) => {
         (s.onsuccess = (o) => {
-          o.target.result?._value ? i(o.target.result._value) : (i(null), console.warn(`IDB: cannot read "${t}"`));
+          var l;
+          ((l = o.target.result) == null ? void 0 : l._value)
+            ? i(o.target.result._value)
+            : (i(null), console.warn(`IDB: cannot read "${t}"`));
         }),
           (s.onerror = (o) => {
             r(o);
@@ -583,11 +595,11 @@ var S = 'idb-store-ready',
   },
   y = class {
     static get readyEventName() {
-      return S;
+      return P;
     }
-    static open(t = j, e = 'store') {
+    static open(t = H, e = 'store') {
       let s = `${t}/${e}`;
-      return this._reg[s] || (this._reg[s] = new P(t, e)), this._reg[s];
+      return this._reg[s] || (this._reg[s] = new v(t, e)), this._reg[s];
     }
     static clear(t) {
       window.indexedDB.deleteDatabase(t);
@@ -595,7 +607,7 @@ var S = 'idb-store-ready',
     }
   };
 y._reg = Object.create(null);
-var v =
+var R =
     `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Document</title></head><body> CONTENT </body></html>`.trim(),
   _ = class {
     static getPosition(t) {
@@ -633,7 +645,28 @@ var v =
       return !1;
     }
   },
-  b = class extends h {
+  b = class extends u {
+    constructor() {
+      super(...arguments);
+      x(this, 'init$', {
+        src: '',
+        code: R,
+        spellcheck: !1,
+        onInput: () => {
+          this.sync();
+        },
+        onKeydown: (t) => {
+          t.keyCode === 13
+            ? (t.preventDefault(), document.execCommand('insertHTML', !1, ` `))
+            : t.keyCode === 9 && (t.preventDefault(), document.execCommand('insertHTML', !1, '&nbsp;&nbsp;'));
+        },
+        onPaste: (t) => {
+          t.preventDefault();
+          let e = t.clipboardData.getData('text/plain');
+          document.execCommand('insertText', !1, e);
+        },
+      });
+    }
     hl() {
       let t = _.getPosition(this.ref.editor);
       this.ref.editor.textContent = this.ref.editor.textContent;
@@ -663,24 +696,6 @@ var v =
           }
         }, 300));
     }
-    init$ = {
-      src: '',
-      code: v,
-      spellcheck: !1,
-      onInput: () => {
-        this.sync();
-      },
-      onKeydown: (t) => {
-        t.keyCode === 13
-          ? (t.preventDefault(), document.execCommand('insertHTML', !1, ` `))
-          : t.keyCode === 9 && (t.preventDefault(), document.execCommand('insertHTML', !1, '&nbsp;&nbsp;'));
-      },
-      onPaste: (t) => {
-        t.preventDefault();
-        let e = t.clipboardData.getData('text/plain');
-        document.execCommand('insertText', !1, e);
-      },
-    };
     initCallback() {
       this.sub('src', (t) => {
         t
@@ -688,16 +703,16 @@ var v =
               let s = await e.text();
               (this.$.code = s), this.sync();
             })
-          : (this.$.code = v);
+          : (this.$.code = R);
       });
     }
   };
 b.bindAttributes({ src: 'src' });
 b.template = `<div ref="editor" contenteditable="true" set="textContent:code; oninput:onInput; onpaste:onPaste; onkeydown:onKeydown; spellcheck:spellcheck"></div><iframe ref="vp"></iframe>`;
-var R = 'live-html';
-b.reg(R);
-var N = document.location.search.replace('?', '');
-N &&
+var N = 'live-html';
+b.reg(N);
+var M = document.location.search.replace('?', '');
+M &&
   (window.onload = () => {
-    document.querySelector(R).setAttribute('src', N);
+    document.querySelector(N).setAttribute('src', M);
   });

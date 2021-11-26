@@ -7,8 +7,8 @@ uc-modal {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: rgba(var(--rgb-1), var(--opacity-min));
-  color: rgb(var(--rgb-1));
+  background-color: var(--clr-curtain);
+  color: var(--clr-txt);
   padding: var(--gap-mid);
   z-index: 10000;
   transition: opacity 0.4s;
@@ -26,18 +26,43 @@ uc-modal button.close-btn {
   align-items: center;
   height: var(--ui-size);
   width: var(--ui-size);
+  padding: 0;
   background-color: transparent;
-  color: var(--clr-1);
-  border-radius: var(--ui-radius-2);
+  color: var(--clr-txt-lightest);
+  border-radius: var(--border-radius-mid);
   border: none;
   cursor: pointer;
+  transition: color var(--transition-duration) ease;
+}
+uc-modal button.close-btn:hover {
+  color: var(--clr-txt-light);
+}
+uc-modal button.close-btn:active {
+  color: var(--clr-txt-mid);
 }
 uc-modal > .dialog {
   background-color: rgb(var(--rgb-2));
-  box-shadow: var(--ui-shadow);
-  border-radius: var(--ui-radius-1);
-  min-width: 410px;
+  box-shadow: var(--modal-shadow);
+  border-radius: var(--border-radius-max);
   min-height: var(--ui-size);
+  background-color: var(--clr-background);
+  transition: transform 0.4s;
+  overflow: hidden;
+  max-width: var(--modal-max-w);
+  max-height: 100%;
+  width: var(--modal-desired-w, 100%);
+  height: var(--modal-desired-h, max-content);
+  display: grid;
+  grid-auto-rows: min-content auto;
+}
+@media only screen and (max-width: 480px) {
+  uc-modal > .dialog {
+    width: var(--modal-desired-mobile-w, 100%);
+    height: var(--modal-desired-mobile-h, 100%);
+  }
+}
+uc-modal:not([active]) > .dialog {
+  transform: translateY(20px);
   max-height: 100%;
   display: grid;
   grid-template-rows: max-content 1fr;
@@ -45,22 +70,11 @@ uc-modal > .dialog {
 uc-modal .heading {
   display: grid;
   grid-template-columns: min-content 1fr min-content;
+  font-size: 1.1em;
+  font-weight: 500;
   line-height: var(--ui-size);
   padding: var(--gap-mid);
-  color: var(--clr-txt);
-}
-uc-modal .caption {
-  font-size: 1em;
-  color: var(--clr-txt);
-}
-
-uc-modal uc-drop-area {
-  border-radius: var(--ui-radius-2);
-  margin: var(--gap-mid);
-  margin-top: 0;
-  border: none;
-  padding: 0;
-}
-uc-modal uc-drop-area .sources {
-  border-radius: 0;
+  color: var(--clr-txt-light);
+  border-bottom: var(--border-light);
+  background-color: var(--clr-background-light);
 }

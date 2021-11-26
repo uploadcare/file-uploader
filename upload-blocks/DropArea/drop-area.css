@@ -2,11 +2,12 @@ uc-drop-area {
   display: flex;
   align-items: center;
   justify-content: center;
-  border: var(--line-width) dashed var(--clr-txt);
-  border-radius: var(--ui-radius-1);
-  padding: var(--gap-mid);
-  background-color: var(--clr-shade-1);
+  border: var(--border-dashed);
+  border-radius: var(--border-radius-max);
+  background-color: var(--clr-shade-lv1);
+  padding: var(--gap-min);
 }
 uc-drop-area::after {
   content: var(--l10n-drop-files-here);
+  color: var(--clr-txt-light);
 }

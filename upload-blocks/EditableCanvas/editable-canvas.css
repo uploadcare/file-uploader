@@ -47,20 +47,20 @@ uc-editor-toolbar .btns > button {
   width: var(--ui-size);
   height: var(--ui-size);
   border-radius: 0;
-  background-color: var(--clr-2);
-  color: var(--clr-1);
+  background-color: var(--clr-background);
+  color: var(--clr-txt);
 }
 uc-editor-toolbar .btns > button:first-of-type {
-  border-top-left-radius: var(--ui-radius-1);
-  border-top-right-radius: var(--ui-radius-1);
+  border-top-left-radius: var(--border-radius-mid);
+  border-top-right-radius: var(--border-radius-mid);
 }
 uc-editor-toolbar .btns > button:last-of-type {
-  border-bottom-left-radius: var(--ui-radius-1);
-  border-bottom-right-radius: var(--ui-radius-1);
+  border-bottom-left-radius: var(--border-radius-mid);
+  border-bottom-right-radius: var(--border-radius-mid);
 }
 uc-editor-toolbar .btns > button[current] {
-  background-color: var(--clr-1);
-  color: var(--clr-2);
+  background-color: var(--clr-background);
+  color: var(--clr-txt);
 }
 
 uc-editor-toolbar > uc-range {

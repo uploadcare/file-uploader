@@ -1,6 +1,7 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
+import { ActivityComponent } from '../ActivityComponent/ActivityComponent.js';
 
-export class UploadDetails extends BlockComponent {
+export class UploadDetails extends ActivityComponent {
   activityType = BlockComponent.activities.DETAILS;
 
   init$ = {
@@ -26,7 +27,16 @@ export class UploadDetails extends BlockComponent {
     },
   };
 
+  onActivate() {
+    super.onActivate();
+
+    this.set$({
+      '*modalCaption': this.l10n('caption-edit-file'),
+    });
+  }
+
   initCallback() {
+    super.initCallback();
     /** @type {import('../EditableCanvas/EditableCanvas.js').EditableCanvas} */
     // @ts-ignore
     this.eCanvas = this.ref.canvas;
@@ -103,13 +113,13 @@ export class UploadDetails extends BlockComponent {
 
 UploadDetails.template = /*html*/ `
 <div .wrapper>
-  <uc-tabs 
+  <uc-tabs
     tab-list="tab-view, tab-details">
     <div tab-ctx="tab-details" ref="details" .details>
 
       <div .info-block>
         <div .info-block_name l10n="file-name"></div>
-        <input 
+        <input
           name="name-input"
           ref="file_name_input"
           set="value: fileName; oninput: onNameInput"
@@ -123,8 +133,8 @@ UploadDetails.template = /*html*/ `
 
       <div .info-block>
         <div .info-block_name l10n="cdn-url"></div>
-        <a 
-          target="_blank" 
+        <a
+          target="_blank"
           set="textContent: cdnUrl; @href: cdnUrl;"></a>
       </div>
 
@@ -133,7 +143,7 @@ UploadDetails.template = /*html*/ `
     </div>
 
     <div tab-ctx="tab-view" ref="viewport" .viewport>
-      <uc-editable-canvas 
+      <uc-editable-canvas
         tab-ctx="tab-view"
         ref="canvas">
       </uc-editable-canvas>
@@ -141,23 +151,26 @@ UploadDetails.template = /*html*/ `
   </uc-tabs>
 
   <div .toolbar>
-    <button 
-      .back-btn 
-      set="onclick: onBack">
-      <uc-icon name="back"></uc-icon>
-      <span l10n="back"></span>
-    </button>
-    <button 
-      .edit-btn 
+    <button
+      .secondary-btn
+      .edit-btn
       set="onclick: onEdit; @hidden: editBtnHidden;">
       <uc-icon name="edit"></uc-icon>
       <span l10n="edit-image"></span>
     </button>
-    <button 
-      .remove-btn 
+    <button
+      .secondary-btn
+      .remove-btn
       set="onclick: onRemove">
       <uc-icon name="remove"></uc-icon>
       <span l10n="remove-from-list"></span>
+    </button>
+    <div></div>
+    <button
+      .primary-btn
+      .back-btn
+      set="onclick: onBack">
+      <span l10n="done"></span>
     </button>
   </div>
 </div>

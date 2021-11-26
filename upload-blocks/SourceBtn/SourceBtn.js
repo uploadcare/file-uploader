@@ -16,9 +16,9 @@ export class SourceBtn extends BlockComponent {
   initTypes() {
     this.registerType({
       type: BlockComponent.sourceTypes.LOCAL,
-      activity: BlockComponent.activities.UPLOAD_LIST,
-      activityParams: {
-        openSystemDialog: true,
+      activity: '',
+      onClick: () => {
+        this.openSystemDialog();
       },
     });
     this.registerType({
@@ -69,15 +69,16 @@ export class SourceBtn extends BlockComponent {
 
   applyType(type) {
     const configType = this._registeredTypes[type];
-    const { textKey = type, icon = type, activity, activityParams = {} } = configType;
+    const { textKey = type, icon = type, activity, onClick, activityParams = {} } = configType;
 
     this.applyL10nKey('src-type', `${L10N_PREFIX}${textKey}`);
     this.$.iconName = icon;
-    this.onclick = () => {
+    this.onclick = (e) => {
       this.set$({
         '*currentActivityParams': activityParams,
         '*currentActivity': activity,
       });
+      onClick && onClick(e);
     };
   }
 }

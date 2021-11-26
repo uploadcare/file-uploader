@@ -6,7 +6,7 @@
   --cfg-confirm-upload: 1;
   --cfg-img-only: 0;
   --cfg-accept: '';
-  --cfg-store: 0;
+  --cfg-store: 1;
   --cfg-camera-mirror: 0;
   --cfg-source-list: 'local, url, camera, draw, dropbox, gdrive, facebook';
   --cfg-max-files: 10;

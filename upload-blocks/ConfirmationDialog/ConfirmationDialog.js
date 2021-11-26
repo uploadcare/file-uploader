@@ -1,4 +1,5 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
+import { ActivityComponent } from '../ActivityComponent/ActivityComponent.js';
 
 export class UiConfirmation {
   captionL10nStr = 'confirm-your-action';
@@ -13,21 +14,27 @@ export class UiConfirmation {
   }
 }
 
-export class ConfirmationDialog extends BlockComponent {
+export class ConfirmationDialog extends ActivityComponent {
   activityType = BlockComponent.activities.CONFIRMATION;
 
   _defaults = new UiConfirmation();
 
   init$ = {
-    messageTxt: this.l10n(this._defaults.messsageL10Str),
-    confirmBtnTxt: this.l10n(this._defaults.confirmL10nStr),
-    denyBtnTxt: this.l10n(this._defaults.denyL10nStr),
+    messageTxt: '',
+    confirmBtnTxt: '',
+    denyBtnTxt: '',
     '*confirmation': null,
     onConfirm: this._defaults.confirmAction,
     onDeny: this._defaults.denyAction.bind(this),
   };
 
   initCallback() {
+    super.initCallback();
+    this.set$({
+      messageTxt: this.l10n(this._defaults.messsageL10Str),
+      confirmBtnTxt: this.l10n(this._defaults.confirmL10nStr),
+      denyBtnTxt: this.l10n(this._defaults.denyL10nStr),
+    });
     this.sub('*confirmation', (/** @type {UiConfirmation} */ cfn) => {
       if (!cfn) {
         return;
@@ -53,17 +60,19 @@ export class ConfirmationDialog extends BlockComponent {
 }
 
 ConfirmationDialog.template = /*html*/ `
-<div 
-  .message 
+<div
+  .message
   set="textContent: messageTxt">
 </div>
 <div .toolbar>
-  <button 
-    .confirm-btn 
+  <button
+    .deny-btn
+    .secondary-btn
     set="textContent: denyBtnTxt; onclick: onDeny">
   </button>
-  <button 
-    .deny-btn 
+  <button
+    .confirm-btn
+    .primary-btn
     set="textContent: confirmBtnTxt; onclick: onConfirm">
   </button>
 </div>

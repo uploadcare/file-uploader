@@ -23,17 +23,23 @@ export class ExternalSource extends ActivityComponent {
     onDone: () => {
       this.$['*currentActivity'] = BlockComponent.activities.UPLOAD_LIST;
     },
+    onCancel: () => {
+      this.set$({
+        '*currentActivity': BlockComponent.activities.SOURCE_SELECT,
+      });
+    },
   };
 
   _iframe = null;
 
   onActivate() {
+    super.onActivate();
+
     let { externalSourceType } = this.activityParams;
 
     this.set$({
       '*modalCaption': `${externalSourceType[0].toUpperCase()}${externalSourceType.slice(1)}`,
       '*modalIcon': externalSourceType,
-      '*modalActive': true,
     });
 
     this.$.counter = 0;
@@ -41,6 +47,7 @@ export class ExternalSource extends ActivityComponent {
   }
 
   onDeactivate() {
+    super.onDeactivate();
     this.unmountIframe();
   }
 
@@ -90,13 +97,13 @@ export class ExternalSource extends ActivityComponent {
         color: this.getCssValue('--clr-txt'),
       },
       '.side-bar': {
-        'background-color': this.getCssValue('--clr-shade-1'),
+        'background-color': this.getCssValue('--clr-background-light'),
       },
       '.list-table-row': {
         color: this.getCssValue('--clr-txt'),
       },
       '.list-table-row:hover': {
-        background: this.getCssValue('--clr-shade-1'),
+        background: this.getCssValue('--clr-shade-lv1'),
       },
     };
 
@@ -146,11 +153,18 @@ ExternalSource.template = /*html*/ `
 <div ref="iframe-wrapper" .iframe-wrapper>
 </div>
 <div .toolbar>
+  <button
+    .cancel-btn
+    .secondary-btn
+    set="onclick: onCancel"
+    l10n="cancel">
+  </button>
+  <div></div>
   <div .selected-counter>
     <span l10n="selected-count"></span>
     <span set="textContent: counter"></span>
   </div>
-  <button .done-btn set="onclick: onDone">
+  <button .done-btn .primary-btn set="onclick: onDone">
     <uc-icon name="check"></uc-icon>
   </button>
 </div>

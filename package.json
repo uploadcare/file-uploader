@@ -27,6 +27,12 @@
     "rimraf": "^2.6.3",
     "typescript": "^3.9.7"
   },
+  "eslintIgnore": [
+    "ext_modules", 
+    "build", 
+    "upload-blocks/test/react-example",
+    "html_output"
+  ],
   "eslintConfig": {
     "extends": [
       "eslint-config-prettier"

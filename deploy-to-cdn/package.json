@@ -1,0 +1,18 @@
+{
+  "name": "deploy-cdn",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.40.1",
+    "mime-types": "^2.1.34",
+    "semver": "^7.3.5",
+    "semver-parser": "^4.0.0"
+  }
+}

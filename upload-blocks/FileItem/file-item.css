@@ -2,38 +2,42 @@ uc-file-item {
   position: relative;
   display: grid;
   grid-template-columns: min-content auto min-content min-content;
-  transition: var(--ui-transition);
+  transition: var(--transition-duration);
   padding: var(--gap-mid);
-  border-bottom: var(--line-width) solid var(--clr-shade-1);
+  background-color: transparent;
+  border-bottom: var(--border-light);
 }
-uc-file-item:first-of-type {
-  border-top: var(--line-width) solid var(--clr-shade-1);
+uc-file-item:last-of-type {
+  border-bottom: none;
+}
+uc-file-item:hover {
+  background-color: var(--clr-background);
 }
 uc-file-item[focused] {
-  background-color: var(--clr-shade-1);
+  background-color: transparent;
 }
 uc-file-item[uploading] .edit-btn {
   display: none;
 }
 uc-file-item[error] {
-  --clr-shade-1: rgba(255, 20, 20, 0.1);
+  background-color: var(--clr-error-lightest);
 }
-
 uc-file-item .thumb {
   display: inline-flex;
+  position: relative;
   height: var(--ui-size);
   width: var(--ui-size);
-  background-color: var(--clr-shade-1);
+  background-color: var(--clr-shade-lv1);
   background-size: cover;
   background-position: center center;
-  border-radius: var(--ui-radius-2);
+  border-radius: var(--border-radius);
 }
 uc-file-item .file-name {
   display: flex;
   align-items: center;
   padding-left: var(--gap-mid);
+  padding-right: var(--gap-mid);
   color: var(--clr-txt);
-  font-size: 0.9em;
   opacity: var(--opacity-max);
 }
 uc-file-item:hover .file-name {
@@ -43,42 +47,53 @@ uc-file-item button {
   width: var(--ui-size);
   height: var(--ui-size);
   background-color: transparent;
-  color: var(--clr-txt);
+  color: var(--clr-txt-lightest);
   cursor: pointer;
-}
-
-uc-file-item .edit-btn {
+  padding: 0;
   opacity: var(--opacity-mid);
+  transition: opacity var(--transition-duration), color var(--transition-duration);
 }
-uc-file-item:hover .edit-btn {
+uc-file-item:hover button,
+uc-file-item[focused] button {
   opacity: 1;
 }
-uc-file-item[focused] .edit-btn {
-  opacity: 1;
+uc-file-item button:hover {
+  color: var(--clr-txt-mid);
 }
 uc-file-item .progress {
   position: absolute;
   pointer-events: none;
-  top: 0;
+  top: calc(100% - 2px);
   left: 0;
   bottom: 0;
   width: 0%;
   opacity: 1;
-  background-color: var(--clr-shade-1);
+  background-color: var(--clr-accent-light);
   transition: 0.6s;
 }
 uc-file-item[error] .badge,
 uc-file-item[loaded] .badge {
-  display: inline-flex;
+  display: block;
 }
 uc-file-item .badge {
   display: none;
-  align-items: center;
-  justify-content: center;
-  height: var(--ui-size);
-  width: var(--ui-size);
-  color: var(--clr-1);
+  position: absolute;
+  top: calc(var(--ui-size) * -0.15);
+  right: calc(var(--ui-size) * -0.15);
+  height: calc(var(--ui-size) * 0.42);
+  width: calc(var(--ui-size) * 0.42);
+  background-color: var(--clr-txt);
+  color: var(--clr-background-light);
+  border-radius: 50%;
+}
+uc-file-item[loaded] .badge {
+  background-color: var(--clr-confirm);
 }
 uc-file-item[error] .badge {
-  color: var(--clr-err);
+  background-color: var(--clr-error);
+}
+uc-file-item .badge uc-icon, 
+uc-file-item .badge uc-icon svg {
+  width: 100%;
+  height: 100%;
 }

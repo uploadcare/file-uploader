@@ -1,7 +1,7 @@
 <base href="../../">
 
 <script type="module">
-import { UploadWidget } from './upload-blocks/UploadWidget/UploadWidget.js';
+import { UploadWidget } from './upload-blocks/index.js';
 
 UploadWidget.template = /*html*/ `
 <uc-simple-btn></uc-simple-btn>
@@ -24,7 +24,7 @@ UploadWidget.template = /*html*/ `
 <uc-progress-bar></uc-progress-bar>
 
 <uc-data-output
-  item-template="<img height='200' src='https://ucarecdn.com/{{uuid}}/' />"
+  item-template="<img height='200' src='https://ucarecdn.com/{{uuid}}/-/preview/' />"
   fire-event></uc-data-output>
 `;
 
@@ -32,5 +32,5 @@ UploadWidget.reg('uc-upload-wgt');
 </script>
 
 <uc-upload-wgt
-  css-src="./upload-blocks/themes/dev/index.css">
+  css-src="./upload-blocks/themes/uc-basic/index.css">
 </uc-upload-wgt>

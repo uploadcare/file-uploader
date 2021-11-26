@@ -1,7 +1,12 @@
 uc-upload-list {
+  --activity-desired-w: 600px;
+
   display: grid;
-  transition: opacity var(--ui-transition);
+  grid-template-rows: auto max-content;
+  background-color: var(--clr-background-light);
+  transition: opacity var(--transition-duration);
   overflow: hidden;
+  height: 100%;
 }
 uc-upload-list:not([active]) {
   display: none;
@@ -17,21 +22,19 @@ uc-upload-list .toolbar {
   grid-template-columns: min-content 1fr min-content min-content;
   grid-gap: var(--gap-mid);
   padding: var(--gap-mid);
+  border-top: var(--border-light);
+  background-color: var(--clr-background);
 }
 uc-upload-list .upload-btn {
-  background-color: var(--clr-shade-1);
-  color: var(--clr-1);
+  /* nothing to say */
 }
 uc-upload-list .done-btn {
-  background-color: var(--clr-shade-1);
-  color: var(--clr-1);
+  /* nothing to say */
 }
 uc-upload-list .add-more-btn {
-  background-color: transparent;
-  color: var(--clr-1);
+  /* nothing to say */
 }
 
 uc-upload-list .cancel-btn {
-  background-color: var(--clr-2);
-  color: var(--clr-txt);
+  /* nothing to say */
 }

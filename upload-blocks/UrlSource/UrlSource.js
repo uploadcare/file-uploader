@@ -30,18 +30,30 @@ export class UrlSource extends ActivityComponent {
       });
       this.$['*currentActivity'] = BlockComponent.activities.UPLOAD_LIST;
     },
+    onCancel: () => {
+      this.set$({
+        '*currentActivity': BlockComponent.activities.SOURCE_SELECT,
+      });
+    },
   };
 
   onActivate() {
+    super.onActivate();
+
     this.set$({
       '*modalCaption': this.l10n('caption-from-url'),
       '*modalIcon': 'url',
-      '*modalActive': true,
     });
   }
 }
 
 UrlSource.template = /*html*/ `
 <input placeholder="https://..." .url-input type="text" ref="input" />
-<button .url-upload-btn set="onclick: onUpload"></button>
+<button .url-upload-btn .primary-btn set="onclick: onUpload"></button>
+<button
+  .cancel-btn
+  .secondary-btn
+  set="onclick: onCancel"
+  l10n="cancel">
+</button>
 `;

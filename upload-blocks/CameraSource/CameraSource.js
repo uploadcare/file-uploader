@@ -9,8 +9,7 @@ export class CameraSource extends ActivityComponent {
     videoTransformCss: this.config.CAMERA_MIRROR ? 'scaleX(-1)' : null,
     onCancel: () => {
       this.set$({
-        '*modalActive': false,
-        '*currentActivity': '',
+        '*currentActivity': BlockComponent.activities.SOURCE_SELECT,
       });
     },
     onShot: () => {
@@ -65,36 +64,41 @@ export class CameraSource extends ActivityComponent {
   }
 
   onActivate() {
+    super.onActivate();
     this._init();
 
     this.set$({
       '*modalCaption': this.l10n('caption-camera'),
       '*modalIcon': 'camera',
-      '*modalActive': true,
     });
   }
 
   onDeactivate() {
+    super.onDeactivate();
     this._stream?.getTracks()[0].stop();
     this.$.video = null;
   }
 }
 
 CameraSource.template = /*html*/ `
-<video
-  autoplay
-  playsinline
-  set="srcObject: video; style.transform: videoTransformCss"
-  ref="video">
-</video>
+<div .video-wrapper>
+  <video
+    autoplay
+    playsinline
+    set="srcObject: video; style.transform: videoTransformCss"
+    ref="video">
+  </video>
+</div>
 <div .toolbar>
   <button
     .cancel-btn
+    .secondary-btn
     set="onclick: onCancel"
     l10n="cancel">
   </button>
   <button
     .shot-btn
+    .primary-btn
     set="onclick: onShot"
     l10n="camera-shot">
   </button>

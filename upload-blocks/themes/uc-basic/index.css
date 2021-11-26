@@ -1,14 +1,14 @@
 /* BASE CONFIGURATION: */
-@import url('./config.css');
+@import url('config.css');
 
 /* ICONS: */
-@import url('./icons.css');
+@import url('icons.css');
 
 /* L10N: */
-@import url('./l10n.css');
+@import url('l10n.css');
 
 /* THEME */
-@import url('./theme.css');
+@import url('theme.css');
 
 /* UI COMPONENTS: */
 @import url('../../Icon/icon.css');
@@ -22,76 +22,34 @@
 @import url('../../SourceBtn/source-btn.css');
 @import url('../../DropArea/drop-area.css');
 @import url('../../Modal/modal.css');
+@import url('../../Inline/inline.css');
 @import url('../../UrlSource/url-source.css');
 @import url('../../CameraSource/camera-source.css');
 @import url('../../ExternalSource/external-source.css');
 @import url('../../UploadList/upload-list.css');
+@import url('../../SourceSelect/source-select.css');
 @import url('../../FileItem/file-item.css');
 @import url('../../UploadDetails/upload-details.css');
 @import url('../../EditableCanvas/editable-canvas.css');
 @import url('../../MessageBox/message-box.css');
 @import url('../../ConfirmationDialog/confirmation.css');
 @import url('../../ProgressBar/progress-bar.css');
-@import url('../../DataOutput/data-output.css');
+@import url('../../ActivityCaption/activity-caption.css');
+@import url('../../ActivityIcon/activity-icon.css');
+
 
 .uc-wgt-theme, .uc-wgt-common, :host {
-  font-family: sans-serif;
+  /* font-size and family for testing purposes, to be removed */
+  font-size: 15px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   color: var(--clr-txt);
 }
-
 * {
   box-sizing: border-box;
 }
-
 [hidden] {
   display: none !important;
 }
-
-button {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 1em;
-  padding-left: 1em;
-  padding-right: 1em;
-  border: none;
-  height: var(--ui-size);
-  border-radius: var(--ui-radius-2);
-  font-family: inherit;
-  cursor: pointer;
-  white-space: nowrap;
-  user-select: none;
-}
-button[disabled] {
-  pointer-events: none;
-  opacity: var(--opacity-mid);
-  filter: grayscale(0.5);
-}
-
-a {
-  text-decoration: none;
-  color: var(--clr-1);
-}
-
-input[type="text"] {
-  display: flex;
-  height: var(--ui-size);
-  padding-left: 0.5em;
-  padding-right: 0.5em;
-  width: 100%;
-  font-family: inherit;
-  font-size: var(--f);
-  border: none;
-  border-bottom: 2px solid currentColor;
-  background-color: var(--clr-shade-1);
-  color: var(--clr-1);
-  transition: .2s;
-}
-input[type="text"]:focus {
-  background-color: transparent;
-  outline: none;
-}
-
 [activity]:not([active]) {
   display: none;
 }
