@@ -10,6 +10,7 @@ export class UploadList extends ActivityComponent {
     doneBtnHidden: true,
     uploadBtnHidden: false,
     uploadBtnDisabled: false,
+    hasFiles: false,
     moreBtnDisabled: !this.config.MULTIPLE,
     onAdd: () => {
       this.$['*currentActivity'] = BlockComponent.activities.SOURCE_SELECT;
@@ -70,6 +71,8 @@ export class UploadList extends ActivityComponent {
       });
     });
     this.sub('*uploadList', (/** @type {String[]} */ list) => {
+      this.$.hasFiles = list.length > 0;
+
       list.forEach((id) => {
         if (!this._renderMap[id]) {
           let item = new FileItem();
@@ -99,6 +102,9 @@ export class UploadList extends ActivityComponent {
 }
 
 UploadList.template = /*html*/ `
+<div .no-files set="@hidden: hasFiles">
+  <slot name="empty"><span l10n="no-files"></span></slot>
+</div>
 <div .files ref="files"></div>
 <div .toolbar>
   <button
