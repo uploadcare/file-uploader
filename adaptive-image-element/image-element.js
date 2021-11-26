@@ -1,5 +1,5 @@
 import { registerSw } from '../sw-manager/sw-manager.js';
-import { Data } from '../symbiote/core/Data.js';
+import { Data } from '../ext_modules/symbiote.js';
 
 window.onload = () => {
   document.execCommand('Stop', false);

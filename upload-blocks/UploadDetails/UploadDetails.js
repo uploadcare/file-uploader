@@ -40,7 +40,7 @@ export class UploadDetails extends ActivityComponent {
     /** @type {import('../EditableCanvas/EditableCanvas.js').EditableCanvas} */
     // @ts-ignore
     this.eCanvas = this.ref.canvas;
-    this.sub('*focusedEntry', (/** @type {import('../../symbiote/core/TypedData.js').TypedData} */ entry) => {
+    this.sub('*focusedEntry', (/** @type {import('../../ext_modules/symbiote.js').TypedData} */ entry) => {
       if (!entry) {
         return;
       }
