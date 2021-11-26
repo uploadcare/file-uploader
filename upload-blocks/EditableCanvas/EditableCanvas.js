@@ -1,6 +1,6 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 import { EditorToolbar } from './EditorToolbar.js';
-import { applyStyles } from '../../symbiote/utils/dom-helpers.js';
+import { applyStyles } from '../../ext_modules/symbiote.js';
 import { checkerboardCssBg } from '../svg-backgrounds/svg-backgrounds.js';
 
 EditorToolbar.reg('editor-toolbar');

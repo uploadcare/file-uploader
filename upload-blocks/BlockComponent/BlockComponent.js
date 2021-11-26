@@ -1,6 +1,4 @@
-import { BaseComponent } from '../../symbiote/core/BaseComponent.js';
-import { Data } from '../../symbiote/core/Data.js';
-import { TypedCollection } from '../../symbiote/core/TypedCollection.js';
+import { BaseComponent, Data, TypedCollection } from '../../ext_modules/symbiote.js';
 import { uploadEntrySchema } from './uploadEntrySchema.js';
 
 const ACTIVE_ATTR = 'active';

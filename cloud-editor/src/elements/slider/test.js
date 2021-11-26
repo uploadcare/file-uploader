@@ -1,4 +1,4 @@
-import { BaseComponent } from '../../../jsdk/symbiote/core/BaseComponent.js';
+import { BaseComponent } from '../../../../ext_modules/symbiote.js';
 import { UploadcareUI } from '../../api/ui.js';
 import { SliderUi } from './SliderUi.js';
 

@@ -1,6 +1,6 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 import { resizeImage } from '../utils/resizeImage.js';
-import { uploadFile } from '../../web_modules/upload-client.js';
+import { uploadFile } from '../../ext_modules/upload-client.js';
 import { UiMessage } from '../MessageBox/MessageBox.js';
 import { fileCssBg } from '../svg-backgrounds/svg-backgrounds.js';
 
@@ -62,7 +62,7 @@ export class FileItem extends BlockComponent {
       if (!id) {
         return;
       }
-      /** @type {import('../../symbiote/core/TypedData.js').TypedData} */
+      /** @type {import('../../ext_modules/symbiote.js').TypedData} */
       this.entry = this.uploadCollection?.read(id);
 
       this.entry.subscribe('fileName', (name) => {

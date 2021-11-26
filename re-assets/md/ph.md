@@ -1,6 +1,6 @@
 ### Our development culture & philosophy
 
-* We don't use JavaScript if it can be made with CSS only
+* We don't use JavaScript if it can be made with HTML+CSS only
 * We think twice and more before adding one more dependency
 * We prefer to use native platform abilities instead of one more JS-library
 * We use the latest web-platform APIs

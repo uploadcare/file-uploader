@@ -1,5 +1,5 @@
 import { ActivityComponent } from './ActivityComponent/ActivityComponent.js';
-import { BaseComponent } from '../symbiote/core/BaseComponent.js';
+import { BaseComponent } from '../ext_modules/symbiote.js';
 
 import { Icon } from './Icon/Icon.js';
 import { SimpleBtn } from './SimpleBtn/SimpleBtn.js';

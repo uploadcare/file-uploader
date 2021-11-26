@@ -3,15 +3,15 @@
   "version": "0.0.1",
   "description": "",
   "type": "module",
-  "main": "",
   "scripts": {
-    "git-mdl": "git submodule update --init --recursive --remote",
-    "ldep:upload-client": "mkdir -p web_modules && curl https://unpkg.com/@uploadcare/upload-client@2.0.0/dist/index.browser.js --output web_modules/upload-client.js",
-    "setup": "npm run git-mdl && npm run ldep:upload-client && cd ./re4ma && npm run ldep && cd .. && npm i && npm run build-libs",
+    "dir": "mkdir -p ext_modules",
+    "ext:upload-client": "curl https://unpkg.com/@uploadcare/upload-client@2.0.0-alpha.10/dist/index.browser.js --output ext_modules/upload-client.js",
+    "ext:symbiote": "curl https://symbiotejs.github.io/symbiote.js/build/symbiote.jsdoc.js --output ext_modules/symbiote.js",
+    "ext:re-serve": "curl https://raw.githubusercontent.com/re4ma/re-serve/main/server/re-server.js --output ext_modules/re-server.js",
+    "setup": "npm run dir && npm run ext:symbiote && npm run ext:upload-client && npm run ext:re-serve && npm i && npm run build-libs",
     "test": "test",
-    "dev": "node ./re4ma/dev.js",
-    "build-libs": "node ./build-libs.js",
-    "deploy": "npm run build-libs && firebase deploy"
+    "dev": "node ext_modules/re-server.js",
+    "build-libs": "node ./build-libs.js"
   },
   "devDependencies": {
     "@babel/eslint-parser": "^7.15.7",
@@ -27,6 +27,12 @@
     "rimraf": "^2.6.3",
     "typescript": "^3.9.7"
   },
+  "eslintIgnore": [
+    "ext_modules", 
+    "build", 
+    "upload-blocks/test/react-example",
+    "html_output"
+  ],
   "eslintConfig": {
     "extends": [
       "eslint-config-prettier"

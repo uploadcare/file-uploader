@@ -1,27 +1,15 @@
 {
-  "symbiote.js": {
-    "description": "Ultralight and ultrapowerful UI library",
-    "readme": "https://symbiotejs.github.io/symbiote.js/README.md",
-    "page": "pages/symbiote.html",
-    "demo": ""
-  },
-  "re4ma": {
-    "description": "World simplest HTML page generator",
-    "readme": "../../re4ma/README.md",
-    "page": "pages/re4ma.html",
-    "demo": ""
-  },
   "upload-blocks": {
     "description": "Build your own file uploader in minutes",
     "page": "pages/upload-blocks.html",
     "demo": "./upload-blocks/test/raw-build.html"
   },
-  "uc-image": {
+  "adaptive-image-element": {
     "description": "Adaptive image delivery",
     "page": "pages/uc-image.html",
     "demo": ""
   },
-  "cdn-editor": {
+  "cloud-editor": {
     "description": "GUI for CDN transformations API",
     "page": "pages/cdn-edit.html",
     "demo": ""

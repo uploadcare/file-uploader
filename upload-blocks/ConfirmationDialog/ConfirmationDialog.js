@@ -19,18 +19,22 @@ export class ConfirmationDialog extends ActivityComponent {
 
   _defaults = new UiConfirmation();
 
-  init$ = () => ({
-    messageTxt: this.l10n(this._defaults.messsageL10Str),
-    confirmBtnTxt: this.l10n(this._defaults.confirmL10nStr),
-    denyBtnTxt: this.l10n(this._defaults.denyL10nStr),
+  init$ = {
+    messageTxt: '',
+    confirmBtnTxt: '',
+    denyBtnTxt: '',
     '*confirmation': null,
     onConfirm: this._defaults.confirmAction,
     onDeny: this._defaults.denyAction.bind(this),
-  });
+  };
 
   initCallback() {
     super.initCallback();
-
+    this.set$({
+      messageTxt: this.l10n(this._defaults.messsageL10Str),
+      confirmBtnTxt: this.l10n(this._defaults.confirmL10nStr),
+      denyBtnTxt: this.l10n(this._defaults.denyL10nStr),
+    });
     this.sub('*confirmation', (/** @type {UiConfirmation} */ cfn) => {
       if (!cfn) {
         return;
