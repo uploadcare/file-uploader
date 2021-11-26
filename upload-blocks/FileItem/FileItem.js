@@ -183,7 +183,10 @@ FileItem.template = /*html*/ `
     <uc-icon set="@name: badgeIcon"></uc-icon>
   </div>
 </div>
-<div .file-name set="textContent: fileName"></div>
+<div .file-text>
+  <div .file-name set="textContent: fileName"></div>
+  <div .file-error>File is too large</div>
+</div>
 <button .edit-btn set="onclick: onEdit;">
   <uc-icon name="edit-file"></uc-icon>
 </button>
