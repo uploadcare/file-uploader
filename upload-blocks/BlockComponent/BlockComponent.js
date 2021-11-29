@@ -183,7 +183,7 @@ export class BlockComponent extends BaseComponent {
     }
   }
 
-  /** @type {import('../../symbiote/core/TypedCollection.js').TypedCollection} */
+  /** @type {import('../../ext_modules/symbiote.js').TypedCollection} */
   get uploadCollection() {
     if (!this.has('*uploadCollection')) {
       let uploadCollection = new TypedCollection({
