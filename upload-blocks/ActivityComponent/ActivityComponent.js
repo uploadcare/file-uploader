@@ -33,12 +33,12 @@ export class ActivityComponent extends BlockComponent {
   }
 
   onActivate() {
-    this.set$({
-      '*modalDesiredWidth': window.getComputedStyle(this).getPropertyValue('--activity-desired-w'),
-      '*modalDesiredHeight': window.getComputedStyle(this).getPropertyValue('--activity-desired-h'),
-      '*modalDesiredMobileWidth': window.getComputedStyle(this).getPropertyValue('--activity-desired-mobile-w'),
-      '*modalDesiredMobileHeight': window.getComputedStyle(this).getPropertyValue('--activity-desired-mobile-h'),
-    });
+    // this.set$({
+    //   '*modalDesiredWidth': window.getComputedStyle(this).getPropertyValue('--activity-desired-w'),
+    //   '*modalDesiredHeight': window.getComputedStyle(this).getPropertyValue('--activity-desired-h'),
+    //   '*modalDesiredMobileWidth': window.getComputedStyle(this).getPropertyValue('--activity-desired-mobile-w'),
+    //   '*modalDesiredMobileHeight': window.getComputedStyle(this).getPropertyValue('--activity-desired-mobile-h'),
+    // });
   }
   onDeactivate() {}
 }

@@ -53,6 +53,10 @@ uc-file-item button {
   opacity: var(--opacity-mid);
   transition: opacity var(--transition-duration), color var(--transition-duration);
 }
+uc-file-item .upload-btn {
+  display: none;
+}
+
 uc-file-item:hover button,
 uc-file-item[focused] button {
   opacity: 1;

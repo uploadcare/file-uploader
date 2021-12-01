@@ -227,6 +227,7 @@ export class BlockComponent extends BaseComponent {
    *   CAMERA_MIRROR: number;
    *   SRC_LIST: string;
    *   MAX_FILES: number;
+   *   THUMB_SIZE: number;
    * }}
    */
   get config() {
@@ -241,6 +242,11 @@ export class BlockComponent extends BaseComponent {
     }
     // @ts-ignore
     return this._config;
+  }
+
+  /** @param {String} shortKey */
+  cfg(shortKey) {
+    return this.getCssData('--cfg-' + shortKey, true);
   }
 
   dropCache() {
@@ -310,4 +316,5 @@ BlockComponent.cfgCssMap = Object.freeze({
   CAMERA_MIRROR: '--cfg-camera-mirror',
   SRC_LIST: '--cfg-source-list',
   MAX_FILES: '--cfg-max-files',
+  THUMB_SIZE: '--cfg-thumb-size',
 });

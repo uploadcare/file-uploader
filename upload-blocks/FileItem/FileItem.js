@@ -15,6 +15,9 @@ export class FileItem extends BlockComponent {
     progressOpacity: 1,
     notImage: true,
     badgeIcon: 'check',
+    '*focusedEntry': null,
+    '*uploadTrigger': null,
+
     onEdit: () => {
       this.set$({
         '*focusedEntry': this.entry,
@@ -22,10 +25,11 @@ export class FileItem extends BlockComponent {
       });
     },
     onRemove: () => {
-      this.uploadCollection.remove(this.entry.__ctxId);
+      this.uploadCollection.remove(this.uid);
     },
-    '*focusedEntry': null,
-    '*uploadTrigger': null,
+    onUpload: () => {
+      this.upload();
+    },
   };
 
   _observerCallback(entries) {
@@ -43,7 +47,7 @@ export class FileItem extends BlockComponent {
       return;
     }
     if (this.file?.type.includes('image')) {
-      resizeImage(this.file, 76).then((url) => {
+      resizeImage(this.file, this.cfg('thumb-size') || 76).then((url) => {
         this.$.thumbUrl = `url(${url})`;
       });
     } else {
@@ -62,6 +66,8 @@ export class FileItem extends BlockComponent {
       if (!id) {
         return;
       }
+      this.uid = id;
+
       /** @type {import('../../ext_modules/symbiote.js').TypedData} */
       this.entry = this.uploadCollection?.read(id);
 
@@ -77,7 +83,8 @@ export class FileItem extends BlockComponent {
         this.setAttribute('loaded', '');
         let url = `https://ucarecdn.com/${uuid}/`;
         this._revokeThumbUrl();
-        this.$.thumbUrl = `url(${url}-/scale_crop/76x76/)`;
+        let size = this.cfg('thumb-size') || 76;
+        this.$.thumbUrl = `url(${url}-/scale_crop/${size}x${size}/)`;
       });
 
       this.entry.subscribe('transformationsUrl', (transformationsUrl) => {
@@ -85,7 +92,8 @@ export class FileItem extends BlockComponent {
           return;
         }
         this._revokeThumbUrl();
-        this.$.thumbUrl = `url(${transformationsUrl}-/scale_crop/76x76/)`;
+        let size = this.cfg('thumb-size') || 76;
+        this.$.thumbUrl = `url(${transformationsUrl}-/scale_crop/${size}x${size}/)`;
       });
 
       this.file = this.entry.getValue('file');
@@ -189,6 +197,9 @@ FileItem.template = /*html*/ `
 </button>
 <button .remove-btn set="onclick: onRemove;">
   <uc-icon name="remove-file"></uc-icon>
+</button>
+<button .upload-btn set="onclick: onUpload;">
+  <uc-icon name="upload"></uc-icon>
 </button>
 <div
   .progress

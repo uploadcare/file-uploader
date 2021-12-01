@@ -11,7 +11,7 @@ export class UploadList extends ActivityComponent {
     uploadBtnHidden: false,
     uploadBtnDisabled: false,
     hasFiles: false,
-    moreBtnDisabled: !this.config.MULTIPLE,
+    moreBtnDisabled: true,
     onAdd: () => {
       this.$['*currentActivity'] = BlockComponent.activities.SOURCE_SELECT;
     },
@@ -53,6 +53,8 @@ export class UploadList extends ActivityComponent {
   initCallback() {
     super.initCallback();
 
+    this.$.moreBtnDisabled = !this.config.MULTIPLE;
+
     this.uploadCollection.observe(() => {
       //TODO: probably we need to optimize it, too many iterations and allocations just to calc uploaded files
       let notUploaded = this.uploadCollection.findItems((item) => {
@@ -69,9 +71,17 @@ export class UploadList extends ActivityComponent {
         uploadBtnDisabled: somethingUploading,
         doneBtnHidden: !everythingUploaded,
       });
+      if (!this.config.CONFIRM_UPLOAD && everythingUploaded) {
+        this.$.onDone();
+      }
     });
     this.sub('*uploadList', (/** @type {String[]} */ list) => {
-      this.$.hasFiles = list.length > 0;
+      let isEmpty = !list.length;
+      if (isEmpty && !this.cfg('show-empty-list')) {
+        this.$['*currentActivity'] = 'source-select';
+        return;
+      }
+      this.$.hasFiles = !isEmpty;
 
       list.forEach((id) => {
         if (!this._renderMap[id]) {
@@ -123,7 +133,7 @@ UploadList.template = /*html*/ `
     .primary-btn
     set="@hidden: uploadBtnHidden; onclick: onUpload; @disabled: uploadBtnDisabled"
     l10n="upload"></button>
-    <button
+  <button
     .done-btn
     .primary-btn
     set="@hidden: doneBtnHidden; onclick: onDone"

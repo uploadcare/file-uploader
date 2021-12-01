@@ -10,4 +10,6 @@
   --cfg-camera-mirror: 0;
   --cfg-source-list: 'local, url, camera, draw, dropbox, gdrive, facebook';
   --cfg-max-files: 10;
+  --cfg-thumb-size: 76;
+  --cfg-show-empty-list: 1;
 }
