@@ -98,7 +98,7 @@ export class FileItem extends BlockComponent {
 
       this.file = this.entry.getValue('file');
 
-      if (!this.config.CONFIRM_UPLOAD) {
+      if (!this.cfg('confirm-upload')) {
         this.upload();
       }
 
@@ -145,14 +145,15 @@ export class FileItem extends BlockComponent {
     this.removeAttribute('error');
     this.setAttribute('uploading', '');
     let storeSetting = {};
-    if (Object.keys(this.config).includes('STORE')) {
-      storeSetting.store = !!this.config.STORE;
+    let store = this.cfg('store');
+    if (store !== null) {
+      storeSetting.store = !!store;
     }
     try {
       // @ts-ignore
       let fileInfo = await uploadFile(this.file, {
         ...storeSetting,
-        publicKey: this.config.PUBKEY,
+        publicKey: this.cfg('pubkey'),
         onProgress: (progress) => {
           let percentage = progress.value * 100;
           this.$.progressWidth = percentage + '%';

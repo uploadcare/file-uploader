@@ -105,15 +105,15 @@ export class BlockComponent extends BaseComponent {
   openSystemDialog() {
     this.fileInput = document.createElement('input');
     this.fileInput.type = 'file';
-    this.fileInput.multiple = !!this.config.MULTIPLE;
-    this.fileInput.max = this.config.MAX_FILES + '';
-    this.fileInput.accept = this.config.ACCEPT;
+    this.fileInput.multiple = !!this.cfg('multiple');
+    this.fileInput.max = this.cfg('max-files');
+    this.fileInput.accept = this.cfg('accept');
     this.fileInput.dispatchEvent(new MouseEvent('click'));
     this.fileInput.onchange = () => {
       this.addFiles([...this.fileInput['files']]);
       // To call uploadTrigger UploadList should draw file items first:
       this.$['*currentActivity'] = BlockComponent.activities.UPLOAD_LIST;
-      if (!this.config.CONFIRM_UPLOAD) {
+      if (!this.cfg('confirm-upload')) {
         this.$['*currentActivity'] = '';
       }
       this.fileInput['value'] = '';
@@ -238,34 +238,6 @@ export class BlockComponent extends BaseComponent {
     return this.$['*registry'];
   }
 
-  /**
-   * @type {{
-   *   PUBKEY: string;
-   *   MULTIPLE: number;
-   *   CONFIRM_UPLOAD: number;
-   *   IMG_ONLY: number;
-   *   ACCEPT: string;
-   *   STORE: number;
-   *   CAMERA_MIRROR: number;
-   *   SRC_LIST: string;
-   *   MAX_FILES: number;
-   *   THUMB_SIZE: number;
-   * }}
-   */
-  get config() {
-    if (!this._config) {
-      this._config = {};
-      for (let prop in BlockComponent.cfgCssMap) {
-        let val = this.getCssData(BlockComponent.cfgCssMap[prop], true);
-        if (val !== null) {
-          this._config[prop] = val;
-        }
-      }
-    }
-    // @ts-ignore
-    return this._config;
-  }
-
   /** @param {String} shortKey */
   cfg(shortKey) {
     return this.getCssData('--cfg-' + shortKey, true);
@@ -332,17 +304,4 @@ BlockComponent.sourceTypes = Object.freeze({
   CAMERA: 'camera',
   DRAW: 'draw',
   ...BlockComponent.extSrcList,
-});
-
-BlockComponent.cfgCssMap = Object.freeze({
-  PUBKEY: '--cfg-pubkey',
-  MULTIPLE: '--cfg-multiple',
-  CONFIRM_UPLOAD: '--cfg-confirm-upload',
-  IMG_ONLY: '--cfg-img-only',
-  ACCEPT: '--cfg-accept',
-  STORE: '--cfg-store',
-  CAMERA_MIRROR: '--cfg-camera-mirror',
-  SRC_LIST: '--cfg-source-list',
-  MAX_FILES: '--cfg-max-files',
-  THUMB_SIZE: '--cfg-thumb-size',
 });

@@ -48,7 +48,7 @@ export class UploadList extends BlockComponent {
       });
     });
 
-    this.$.moreBtnDisabled = !this.config.MULTIPLE;
+    this.$.moreBtnDisabled = !this.cfg('multiple');
 
     this.uploadCollection.observe(() => {
       //TODO: probably we need to optimize it, too many iterations and allocations just to calc uploaded files
@@ -66,7 +66,7 @@ export class UploadList extends BlockComponent {
         uploadBtnDisabled: somethingUploading,
         doneBtnHidden: !everythingUploaded,
       });
-      if (!this.config.CONFIRM_UPLOAD && everythingUploaded) {
+      if (!this.cfg('confirm-upload') && everythingUploaded) {
         this.$.onDone();
       }
     });

@@ -60,7 +60,7 @@ export class ExternalSource extends BlockComponent {
 
     // TODO: check for alternatives, see https://github.com/uploadcare/uploadcare-widget/blob/f5d3e8c9f67781bed2eb69814c8f86a4cc035473/src/widget/tabs/remote-tab.js#L102
     let { url } = message;
-    let pubkey = this.config.PUBKEY;
+    let pubkey = this.cfg('pubkey');
     let entry = this.uploadCollection.add({
       externalUrl: url,
     });
@@ -114,7 +114,7 @@ export class ExternalSource extends BlockComponent {
   }
 
   remoteUrl() {
-    let pubkey = this.config.PUBKEY;
+    let pubkey = this.cfg('pubkey');
     let version = '3.11.3';
     let imagesOnly = false.toString();
     let { externalSourceType } = this.activityParams;

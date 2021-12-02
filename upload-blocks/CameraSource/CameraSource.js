@@ -5,7 +5,7 @@ export class CameraSource extends BlockComponent {
 
   init$ = {
     video: null,
-    videoTransformCss: this.config.CAMERA_MIRROR ? 'scaleX(-1)' : null,
+    videoTransformCss: this.cfg('camera-mirror') ? 'scaleX(-1)' : null,
     onCancel: () => {
       this.set$({
         '*currentActivity': BlockComponent.activities.SOURCE_SELECT,

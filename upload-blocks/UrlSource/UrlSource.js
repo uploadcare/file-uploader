@@ -7,7 +7,7 @@ export class UrlSource extends BlockComponent {
   init$ = {
     onUpload: async () => {
       let url = this.ref.input['value'];
-      let pubkey = this.config.PUBKEY;
+      let pubkey = this.cfg('pubkey');
       let entry = this.uploadCollection.add({
         externalUrl: url,
       });
