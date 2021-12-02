@@ -1,7 +1,6 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
-import { ActivityComponent } from '../ActivityComponent/ActivityComponent.js';
 
-export class UploadDetails extends ActivityComponent {
+export class UploadDetails extends BlockComponent {
   activityType = BlockComponent.activities.DETAILS;
 
   init$ = {
@@ -27,16 +26,12 @@ export class UploadDetails extends ActivityComponent {
     },
   };
 
-  onActivate() {
-    super.onActivate();
-
-    this.set$({
-      '*modalCaption': this.l10n('caption-edit-file'),
-    });
-  }
-
   initCallback() {
-    super.initCallback();
+    this.registerActivity(this.activityType, () => {
+      this.set$({
+        '*modalCaption': this.l10n('caption-edit-file'),
+      });
+    });
     /** @type {import('../EditableCanvas/EditableCanvas.js').EditableCanvas} */
     // @ts-ignore
     this.eCanvas = this.ref.canvas;

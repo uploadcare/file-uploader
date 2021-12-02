@@ -1,7 +1,6 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
-import { ActivityComponent } from '../ActivityComponent/ActivityComponent.js';
 
-export class CameraSource extends ActivityComponent {
+export class CameraSource extends BlockComponent {
   activityType = BlockComponent.activities.CAMERA;
 
   init$ = {
@@ -63,20 +62,20 @@ export class CameraSource extends ActivityComponent {
     });
   }
 
-  onActivate() {
-    super.onActivate();
-    this._init();
-
-    this.set$({
-      '*modalCaption': this.l10n('caption-camera'),
-      '*modalIcon': 'camera',
-    });
-  }
-
-  onDeactivate() {
-    super.onDeactivate();
-    this._stream?.getTracks()[0].stop();
-    this.$.video = null;
+  initCallback() {
+    this.registerActivity(
+      this.activityType,
+      () => {
+        this.set$({
+          '*modalCaption': this.l10n('caption-camera'),
+          '*modalIcon': 'camera',
+        });
+      },
+      () => {
+        this._stream?.getTracks()[0].stop();
+        this.$.video = null;
+      }
+    );
   }
 }
 

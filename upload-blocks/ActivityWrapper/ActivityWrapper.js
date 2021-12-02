@@ -1,6 +1,6 @@
-import { ActivityComponent } from '../ActivityComponent/ActivityComponent.js';
+import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 
-export class ActivityWrapper extends ActivityComponent {
+export class ActivityWrapper extends BlockComponent {
   initCallback() {
     this.activityType = this.getAttribute('activity');
 

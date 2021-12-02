@@ -1,8 +1,7 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 import { uploadFile } from '../../ext_modules/upload-client.js';
-import { ActivityComponent } from '../ActivityComponent/ActivityComponent.js';
 
-export class UrlSource extends ActivityComponent {
+export class UrlSource extends BlockComponent {
   activityType = BlockComponent.activities.URL;
 
   init$ = {
@@ -37,12 +36,12 @@ export class UrlSource extends ActivityComponent {
     },
   };
 
-  onActivate() {
-    super.onActivate();
-
-    this.set$({
-      '*modalCaption': this.l10n('caption-from-url'),
-      '*modalIcon': 'url',
+  initCallback() {
+    this.registerActivity(this.activityType, () => {
+      this.set$({
+        '*modalCaption': this.l10n('caption-from-url'),
+        '*modalIcon': 'url',
+      });
     });
   }
 }

@@ -1,9 +1,8 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 import { FileItem } from '../FileItem/FileItem.js';
 import { UiConfirmation } from '../ConfirmationDialog/ConfirmationDialog.js';
-import { ActivityComponent } from '../ActivityComponent/ActivityComponent.js';
 
-export class UploadList extends ActivityComponent {
+export class UploadList extends BlockComponent {
   activityType = BlockComponent.activities.UPLOAD_LIST;
 
   init$ = {
@@ -41,17 +40,13 @@ export class UploadList extends ActivityComponent {
 
   _renderMap = Object.create(null);
 
-  onActivate() {
-    super.onActivate();
-
-    this.set$({
-      '*modalCaption': this.l10n('selected'),
-      '*modalIcon': 'local',
-    });
-  }
-
   initCallback() {
-    super.initCallback();
+    this.registerActivity(this.activityType, () => {
+      this.set$({
+        '*modalCaption': this.l10n('selected'),
+        '*modalIcon': 'local',
+      });
+    });
 
     this.$.moreBtnDisabled = !this.config.MULTIPLE;
 
@@ -76,12 +71,11 @@ export class UploadList extends ActivityComponent {
       }
     });
     this.sub('*uploadList', (/** @type {String[]} */ list) => {
-      let isEmpty = !list.length;
-      if (isEmpty && !this.cfg('show-empty-list')) {
-        this.$['*currentActivity'] = 'source-select';
+      if (list.length === 0 && !this.cfg('show-empty-list')) {
+        this.$['*currentActivity'] = BlockComponent.activities.SOURCE_SELECT;
         return;
       }
-      this.$.hasFiles = !isEmpty;
+      this.$.hasFiles = list.length > 0;
 
       list.forEach((id) => {
         if (!this._renderMap[id]) {

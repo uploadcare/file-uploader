@@ -1,7 +1,6 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 import { registerMessage, unregisterMessage } from './messages.js';
 import { uploadFile } from '../../ext_modules/upload-client.js';
-import { ActivityComponent } from '../ActivityComponent/ActivityComponent.js';
 
 let styleToCss = (style) => {
   let css = Object.keys(style).reduce((acc, selector) => {
@@ -15,7 +14,7 @@ let styleToCss = (style) => {
   return css;
 };
 
-export class ExternalSource extends ActivityComponent {
+export class ExternalSource extends BlockComponent {
   activityType = BlockComponent.activities.EXTERNAL;
 
   init$ = {
@@ -32,23 +31,24 @@ export class ExternalSource extends ActivityComponent {
 
   _iframe = null;
 
-  onActivate() {
-    super.onActivate();
+  initCallback() {
+    this.registerActivity(
+      this.activityType,
+      () => {
+        let { externalSourceType } = this.activityParams;
 
-    let { externalSourceType } = this.activityParams;
+        this.set$({
+          '*modalCaption': `${externalSourceType[0].toUpperCase()}${externalSourceType.slice(1)}`,
+          '*modalIcon': externalSourceType,
+        });
 
-    this.set$({
-      '*modalCaption': `${externalSourceType[0].toUpperCase()}${externalSourceType.slice(1)}`,
-      '*modalIcon': externalSourceType,
-    });
-
-    this.$.counter = 0;
-    this.mountIframe();
-  }
-
-  onDeactivate() {
-    super.onDeactivate();
-    this.unmountIframe();
+        this.$.counter = 0;
+        this.mountIframe();
+      },
+      () => {
+        this.unmountIframe();
+      }
+    );
   }
 
   sendMessage(message) {

@@ -1,12 +1,11 @@
-import { ActivityComponent } from './ActivityComponent/ActivityComponent.js';
 import { BaseComponent } from '../ext_modules/symbiote.js';
 
 import { Icon } from './Icon/Icon.js';
 import { SimpleBtn } from './SimpleBtn/SimpleBtn.js';
 import { ActivityWrapper } from './ActivityWrapper/ActivityWrapper.js';
+import { StartFrom } from './StartFrom/StartFrom.js';
 import { DropArea } from './DropArea/DropArea.js';
 import { SourceBtn } from './SourceBtn/SourceBtn.js';
-import { SourceSelect } from './SourceSelect/SourceSelect.js';
 import { SourceList } from './SourceList/SourceList.js';
 import { FileItem } from './FileItem/FileItem.js';
 import { Modal } from './Modal/Modal.js';
@@ -29,10 +28,10 @@ import { ActivityIcon } from './ActivityIcon/ActivityIcon.js';
 export { UploadWidget } from './UploadWidget/UploadWidget.js';
 
 export {
-  ActivityComponent,
   BaseComponent,
   Icon,
   SimpleBtn,
+  StartFrom,
   ActivityWrapper,
   DropArea,
   SourceBtn,
@@ -61,11 +60,11 @@ export function register() {
   Icon.reg('uc-icon');
 
   // Other components are extended from BlockComponent:
+  StartFrom.reg('start-from');
   SimpleBtn.reg('simple-btn');
   ActivityWrapper.reg('activity-wrapper');
   DropArea.reg('drop-area');
   SourceBtn.reg('source-btn');
-  SourceSelect.reg('source-select');
   SourceList.reg('source-list');
   FileItem.reg('file-item');
   Modal.reg('modal');

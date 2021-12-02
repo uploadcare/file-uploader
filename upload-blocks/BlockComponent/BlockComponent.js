@@ -156,31 +156,53 @@ export class BlockComponent extends BaseComponent {
         if (!this.hasAttribute('activity')) {
           this.setAttribute('activity', this.activityType);
         }
-        let registry = this.$['*registry'];
-        registry[this.tagName.toLowerCase()] = this;
-        this.$['*registry'] = registry;
-        this.sub('*currentActivity', (val) => {
-          if (!val) {
+        this.sub('*currentActivity', (/** @type {String} */ val) => {
+          if (!val || this.activityType !== val) {
             this.removeAttribute(ACTIVE_ATTR);
-            return;
-          }
-          if (this.activityType === val) {
+          } else {
             /** @type {String[]} */
             let history = this.$['*history'];
             if (val && history[history.length - 1] !== val) {
               history.push(val);
             }
             this.setAttribute(ACTIVE_ATTR, '');
-          } else {
-            this.removeAttribute(ACTIVE_ATTR);
+            let actDesc = BlockComponent._activityRegistry[val];
+            if (actDesc) {
+              actDesc.activateCallback?.();
+              if (BlockComponent._lastActivity) {
+                let lastActDesc = BlockComponent._activityRegistry[BlockComponent._lastActivity];
+                if (lastActDesc) {
+                  lastActDesc.deactivateCallback?.();
+                }
+              }
+            }
           }
+          BlockComponent._lastActivity = val;
         });
       }
-
       this.__connectedOnce = true;
     } else {
       super.connectedCallback();
     }
+  }
+
+  /**
+   * @param {String} name
+   * @param {() => void} [activateCallback]
+   * @param {() => void} [deactivateCallback]
+   */
+  registerActivity(name, activateCallback, deactivateCallback) {
+    if (!BlockComponent._activityRegistry) {
+      BlockComponent._activityRegistry = Object.create(null);
+    }
+    BlockComponent._activityRegistry[name] = {
+      activateCallback,
+      deactivateCallback,
+    };
+  }
+
+  get activityParams() {
+    return this.$['*currentActivityParams'];
   }
 
   /** @type {import('../../ext_modules/symbiote.js').TypedCollection} */
@@ -271,6 +293,12 @@ export class BlockComponent extends BaseComponent {
     super.reg(name.startsWith(prefix) ? name : prefix + name);
   }
 }
+
+/** @type {{ string: { activateCallback: Function; deactivateCallback: Function } }} */
+BlockComponent._activityRegistry = Object.create(null);
+
+/** @type {String} */
+BlockComponent._lastActivity = '';
 
 BlockComponent.activities = Object.freeze({
   SOURCE_SELECT: 'source-select',
