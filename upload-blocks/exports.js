@@ -1,6 +1,6 @@
+export { BlockComponent } from './BlockComponent/BlockComponent.js';
 export { Icon } from './Icon/Icon.js';
 export { SimpleBtn } from './SimpleBtn/SimpleBtn.js';
-export { ActivityWrapper } from './ActivityWrapper/ActivityWrapper.js';
 export { StartFrom } from './StartFrom/StartFrom.js';
 export { DropArea } from './DropArea/DropArea.js';
 export { SourceBtn } from './SourceBtn/SourceBtn.js';
