@@ -1,7 +1,7 @@
-import { UploadWidget } from '../../../index.js';
+import { UC } from '../../../index.js';
 import { TPL } from './template.js';
 
-class InlineUploader extends UploadWidget {
+class InlineUploader extends UC.BlockComponent {
   init$ = {
     '*currentActivity': 'source-select',
     selectClicked: (e) => {

@@ -4,6 +4,7 @@ import { uploadEntrySchema } from './uploadEntrySchema.js';
 
 const ACTIVE_ATTR = 'active';
 const TAG_PREFIX = 'uc-';
+const CSS_ATTRIBUTE = 'css-src';
 
 let DOC_READY = document.readyState === 'complete';
 if (!DOC_READY) {
@@ -87,12 +88,35 @@ export class BlockComponent extends BaseComponent {
   }
 
   connectedCallback() {
-    if (DOC_READY) {
-      this.connected();
-    } else {
-      window.addEventListener('load', () => {
+    let handleReadyState = () => {
+      if (DOC_READY) {
         this.connected();
+      } else {
+        window.addEventListener('load', () => {
+          this.connected();
+        });
+      }
+    };
+    let href = this.getAttribute(CSS_ATTRIBUTE);
+    if (href) {
+      this.renderShadow = true;
+      this.attachShadow({
+        mode: 'open',
       });
+      let link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.type = 'text/css';
+      link.href = href;
+      link.onload = () => {
+        // CSS modules can be not loaded at this moment
+        // TODO: investigate better solution
+        window.requestAnimationFrame(() => {
+          handleReadyState();
+        });
+      };
+      this.shadowRoot.appendChild(link);
+    } else {
+      handleReadyState();
     }
   }
 
