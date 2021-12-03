@@ -1,39 +1,14 @@
 import { BaseComponent, Data, TypedCollection } from '../../ext_modules/symbiote.js';
+import { blockProcessor } from './blockProcessor.js';
 import { uploadEntrySchema } from './uploadEntrySchema.js';
 
 const ACTIVE_ATTR = 'active';
+const TAG_PREFIX = 'uc-';
 
 let DOC_READY = document.readyState === 'complete';
 if (!DOC_READY) {
   window.addEventListener('load', () => {
     DOC_READY = true;
-  });
-}
-
-function blockProcessor(fr, fnCtx) {
-  [...fr.querySelectorAll('[l10n]')].forEach((el) => {
-    let key = el.getAttribute('l10n');
-    let elProp = 'textContent';
-    if (key.includes(':')) {
-      let arr = key.split(':');
-      elProp = arr[0];
-      key = arr[1];
-    }
-    let ctxKey = 'l10n:' + key;
-    fnCtx.__l10nKeys.push(ctxKey);
-    fnCtx.add(ctxKey, key);
-    fnCtx.sub(ctxKey, (val) => {
-      el[elProp] = fnCtx.l10n(val);
-    });
-    el.removeAttribute('l10n');
-  });
-  [...fr.querySelectorAll('*')].forEach((el) => {
-    [...el.attributes].forEach((attr) => {
-      if (attr.name.startsWith('.')) {
-        el.classList.add(attr.name.replace('.', ''));
-        el.removeAttribute(attr.name);
-      }
-    });
   });
 }
 
@@ -78,7 +53,6 @@ export class BlockComponent extends BaseComponent {
       history = history.slice(history.length - 11, history.length - 1);
     }
     this.$['*history'] = history;
-    // console.log(history)
   }
 
   addFiles(files) {
@@ -91,15 +65,6 @@ export class BlockComponent extends BaseComponent {
         fileSize: file.size,
       });
     });
-  }
-
-  output() {
-    let data = [];
-    let items = this.uploadCollection.items();
-    items.forEach((itemId) => {
-      data.push(Data.getNamedCtx(itemId).store);
-    });
-    this.$['*outputData'] = data;
   }
 
   openSystemDialog() {
@@ -135,16 +100,11 @@ export class BlockComponent extends BaseComponent {
     if (!this.__connectedOnce) {
       if (!externalPropsAdded) {
         this.add$({
-          '*registry': Object.create(null),
           '*currentActivity': '',
           '*currentActivityParams': {},
           '*history': [],
           '*commonProgress': 0,
-          '*pubkey': 'demopublickey',
           '*uploadList': [],
-          '*multiple': true,
-          '*accept': 'image/*',
-          '*files': [],
           '*outputData': null,
         });
         externalPropsAdded = true;
@@ -233,25 +193,18 @@ export class BlockComponent extends BaseComponent {
     return this.$['*uploadCollection'];
   }
 
-  /** @type {Object<string, BlockComponent>} */
-  get blockRegistry() {
-    return this.$['*registry'];
-  }
-
   /** @param {String} shortKey */
   cfg(shortKey) {
     return this.getCssData('--cfg-' + shortKey, true);
   }
 
-  dropCache() {
-    // TODO: add l10n hot reload support
-    this.dropCssDataCache();
-    this._config = null;
-  }
-
-  disconnectedCallback() {
-    super.disconnectedCallback();
-    this._config = null;
+  output() {
+    let data = [];
+    let items = this.uploadCollection.items();
+    items.forEach((itemId) => {
+      data.push(Data.getNamedCtx(itemId).store);
+    });
+    this.$['*outputData'] = data;
   }
 
   destroyCallback() {
@@ -261,8 +214,7 @@ export class BlockComponent extends BaseComponent {
   }
 
   static reg(name) {
-    let prefix = 'uc-';
-    super.reg(name.startsWith(prefix) ? name : prefix + name);
+    super.reg(name.startsWith(TAG_PREFIX) ? name : TAG_PREFIX + name);
   }
 }
 
