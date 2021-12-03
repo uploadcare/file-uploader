@@ -186,24 +186,24 @@ export class FileItem extends BlockComponent {
 
 FileItem.template = /*html*/ `
 <div
-  .thumb
+  class="thumb"
   set="style.backgroundImage: thumbUrl">
-  <div .badge>
+  <div class="badge">
     <uc-icon set="@name: badgeIcon"></uc-icon>
   </div>
 </div>
-<div .file-name set="textContent: fileName"></div>
-<button .edit-btn set="onclick: onEdit;">
+<div class="file-name" set="textContent: fileName"></div>
+<button class="edit-btn" set="onclick: onEdit;">
   <uc-icon name="edit-file"></uc-icon>
 </button>
-<button .remove-btn set="onclick: onRemove;">
+<button class="remove-btn" set="onclick: onRemove;">
   <uc-icon name="remove-file"></uc-icon>
 </button>
-<button .upload-btn set="onclick: onUpload;">
+<button class="upload-btn" set="onclick: onUpload;">
   <uc-icon name="upload"></uc-icon>
 </button>
 <div
-  .progress
+  class="progress"
   set="style.width: progressWidth; style.opacity: progressOpacity">
 </div>
 `;

@@ -88,7 +88,7 @@ CameraSource.template = /*html*/ `
     ref="video">
   </video>
 </div>
-<div .toolbar>
+<div class="toolbar">
   <button
     class="cancel-btn secondary-btn"
     set="onclick: onCancel"

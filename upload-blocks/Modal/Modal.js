@@ -48,17 +48,17 @@ export class Modal extends BlockComponent {
 }
 
 Modal.template = /*html*/ `
-<div .dialog>
-  <div .heading set="@hidden: *modalHeaderHidden">
+<div class="dialog">
+  <div class="heading" set="@hidden: *modalHeaderHidden">
     <uc-activity-icon></uc-activity-icon>
     <uc-activity-caption></uc-activity-caption>
     <button
-      .close-btn
+      class="close-btn"
       set="onclick: closeClicked">
       <uc-icon name="close"></uc-icon>
     </button>
   </div>
-  <div .content>
+  <div class="content">
     <slot></slot>
   </div>
 </div>

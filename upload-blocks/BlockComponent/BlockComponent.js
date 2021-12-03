@@ -1,5 +1,5 @@
 import { BaseComponent, Data, TypedCollection } from '../../ext_modules/symbiote.js';
-import { blockProcessor } from './blockProcessor.js';
+import { l10nProcessor } from './l10nProcessor.js';
 import { uploadEntrySchema } from './uploadEntrySchema.js';
 
 const ACTIVE_ATTR = 'active';
@@ -23,7 +23,7 @@ export class BlockComponent extends BaseComponent {
     super();
     /** @type {String} */
     this.activityType = null;
-    this.addTemplateProcessor(blockProcessor);
+    this.addTemplateProcessor(l10nProcessor);
     /** @type {String[]} */
     this.__l10nKeys = [];
     this.__l10nUpdate = () => {

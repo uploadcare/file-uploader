@@ -145,7 +145,7 @@ export class EditorToolbar extends BlockComponent {
 }
 EditorToolbar.template = /*html*/ `
 <div 
-  .btns 
+  class="btns"
   ref="btns" 
   set="onclick: onBtnClick">${getButtons()}</div>
 <uc-range 

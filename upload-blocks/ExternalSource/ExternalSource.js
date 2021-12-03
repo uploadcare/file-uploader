@@ -150,21 +150,20 @@ export class ExternalSource extends BlockComponent {
 }
 
 ExternalSource.template = /*html*/ `
-<div ref="iframe-wrapper" .iframe-wrapper>
+<div ref="iframe-wrapper" class="iframe-wrapper">
 </div>
-<div .toolbar>
+<div class="toolbar">
   <button
-    .cancel-btn
-    .secondary-btn
+    class="cancel-btn secondary-btn"
     set="onclick: onCancel"
     l10n="cancel">
   </button>
   <div></div>
-  <div .selected-counter>
+  <div class="selected-counter">
     <span l10n="selected-count"></span>
     <span set="textContent: counter"></span>
   </div>
-  <button .done-btn .primary-btn set="onclick: onDone">
+  <button class="done-btn primary-btn" set="onclick: onDone">
     <uc-icon name="check"></uc-icon>
   </button>
 </div>

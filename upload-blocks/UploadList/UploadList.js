@@ -106,30 +106,26 @@ export class UploadList extends BlockComponent {
 }
 
 UploadList.template = /*html*/ `
-<div .no-files set="@hidden: hasFiles">
+<div class="no-files" set="@hidden: hasFiles">
   <slot name="empty"><span l10n="no-files"></span></slot>
 </div>
-<div .files ref="files"></div>
-<div .toolbar>
+<div class="files" ref="files"></div>
+<div class="toolbar">
   <button
-    .cancel-btn
-    .secondary-btn
+    class="cancel-btn secondary-btn"
     set="onclick: onCancel;"
     l10n="clear"></button>
   <div></div>
   <button
-    .add-more-btn
-    .secondary-btn
+    class="add-more-btn secondary-btn"
     set="onclick: onAdd; @disabled: moreBtnDisabled"
     l10n="add-more"></button>
   <button
-    .upload-btn
-    .primary-btn
+    class="upload-btn primary-btn"
     set="@hidden: uploadBtnHidden; onclick: onUpload; @disabled: uploadBtnDisabled"
     l10n="upload"></button>
   <button
-    .done-btn
-    .primary-btn
+    class="done-btn primary-btn"
     set="@hidden: doneBtnHidden; onclick: onDone"
     l10n="done"></button>
 </div>

@@ -8,7 +8,7 @@ export class ActivityCaption extends BlockComponent {
 
 ActivityCaption.template = /* html */ `
 <div
-  .caption
+  class="caption"
   set="textContent: *modalCaption">
 </div>
 `;

@@ -60,18 +60,16 @@ export class ConfirmationDialog extends BlockComponent {
 
 ConfirmationDialog.template = /*html*/ `
 <div
-  .message
+  class="message"
   set="textContent: messageTxt">
 </div>
-<div .toolbar>
+<div class="toolbar">
   <button
-    .deny-btn
-    .secondary-btn
+    class="deny-btn secondary-btn"
     set="textContent: denyBtnTxt; onclick: onDeny">
   </button>
   <button
-    .confirm-btn
-    .primary-btn
+    class="confirm-btn primary-btn"
     set="textContent: confirmBtnTxt; onclick: onConfirm">
   </button>
 </div>

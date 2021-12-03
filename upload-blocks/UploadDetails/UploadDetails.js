@@ -110,10 +110,13 @@ UploadDetails.template = /*html*/ `
 <div .wrapper>
   <uc-tabs
     tab-list="tab-view, tab-details">
-    <div tab-ctx="tab-details" ref="details" .details>
+    <div 
+      tab-ctx="tab-details"
+      ref="details" 
+      class="details">
 
-      <div .info-block>
-        <div .info-block_name l10n="file-name"></div>
+      <div class="info-block">
+        <div class="info-block_name" l10n="file-name"></div>
         <input
           name="name-input"
           ref="file_name_input"
@@ -121,13 +124,13 @@ UploadDetails.template = /*html*/ `
           type="text" />
       </div>
 
-      <div .info-block>
-        <div .info-block_name l10n="file-size"></div>
+      <div class="info-block">
+        <div class="info-block_name" l10n="file-size"></div>
         <div set="textContent: fileSize"></div>
       </div>
 
-      <div .info-block>
-        <div .info-block_name l10n="cdn-url"></div>
+      <div class="info-block">
+        <div class="info-block_name" l10n="cdn-url"></div>
         <a
           target="_blank"
           set="textContent: cdnUrl; @href: cdnUrl;"></a>
@@ -137,7 +140,7 @@ UploadDetails.template = /*html*/ `
 
     </div>
 
-    <div tab-ctx="tab-view" ref="viewport" .viewport>
+    <div tab-ctx="tab-view" ref="viewport" class="viewport">
       <uc-editable-canvas
         tab-ctx="tab-view"
         ref="canvas">
@@ -145,25 +148,22 @@ UploadDetails.template = /*html*/ `
     </div>
   </uc-tabs>
 
-  <div .toolbar>
+  <div class="toolbar">
     <button
-      .secondary-btn
-      .edit-btn
+      class="edit-btn secondary-btn"
       set="onclick: onEdit; @hidden: editBtnHidden;">
       <uc-icon name="edit"></uc-icon>
       <span l10n="edit-image"></span>
     </button>
     <button
-      .secondary-btn
-      .remove-btn
+      class="remove-btn secondary-btn"
       set="onclick: onRemove">
       <uc-icon name="remove"></uc-icon>
       <span l10n="remove-from-list"></span>
     </button>
     <div></div>
     <button
-      .primary-btn
-      .back-btn
+      class="back-btn primary-btn"
       set="onclick: onBack">
       <span l10n="done"></span>
     </button>

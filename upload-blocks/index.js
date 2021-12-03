@@ -9,7 +9,6 @@ import { SourceBtn } from './SourceBtn/SourceBtn.js';
 import { SourceList } from './SourceList/SourceList.js';
 import { FileItem } from './FileItem/FileItem.js';
 import { Modal } from './Modal/Modal.js';
-import { Inline } from './Inline/Inline.js';
 import { UploadList } from './UploadList/UploadList.js';
 import { UrlSource } from './UrlSource/UrlSource.js';
 import { CameraSource } from './CameraSource/CameraSource.js';
@@ -38,7 +37,6 @@ export {
   SourceList,
   FileItem,
   Modal,
-  Inline,
   UploadList,
   UrlSource,
   CameraSource,
@@ -68,7 +66,6 @@ export function register() {
   SourceList.reg('source-list');
   FileItem.reg('file-item');
   Modal.reg('modal');
-  Inline.reg('inline');
   UploadList.reg('upload-list');
   ActivityCaption.reg('activity-caption');
   ActivityIcon.reg('activity-icon');

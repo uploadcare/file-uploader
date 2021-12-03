@@ -48,10 +48,12 @@ export class UrlSource extends BlockComponent {
 
 UrlSource.template = /*html*/ `
 <input placeholder="https://..." .url-input type="text" ref="input" />
-<button .url-upload-btn .primary-btn set="onclick: onUpload"></button>
+<button 
+  class="url-upload-btn primary-btn "
+  set="onclick: onUpload">
+</button>
 <button
-  .cancel-btn
-  .secondary-btn
+  class="cancel-btn secondary-btn"
   set="onclick: onCancel"
   l10n="cancel">
 </button>
