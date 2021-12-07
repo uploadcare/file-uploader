@@ -159,7 +159,7 @@ input[type="text"] {
   padding-right: 0.6em;
   width: 100%;
   font-family: inherit;
-  font-size: var(--f);
+  font-size: var(--font-size-ui);
   border: var(--border-mid);
   background-color: var(--clr-background-light);
   box-shadow: var(--inset-shadow);

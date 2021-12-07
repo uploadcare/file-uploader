@@ -35,6 +35,15 @@ export class CameraSource extends BlockComponent {
     this._ctx = this._canvas.getContext('2d');
     this._stream = await navigator.mediaDevices.getUserMedia(constr);
     this.$.video = this._stream;
+    this._initialized = true;
+  }
+
+  _deInit() {
+    if (this._initialized) {
+      this._stream?.getTracks()[0].stop();
+      this.$.video = null;
+      this._initialized = false;
+    }
   }
 
   _shot() {
@@ -63,19 +72,18 @@ export class CameraSource extends BlockComponent {
   }
 
   initCallback() {
-    this.registerActivity(
-      this.activityType,
-      () => {
-        this.set$({
-          '*modalCaption': this.l10n('caption-camera'),
-          '*modalIcon': 'camera',
-        });
-      },
-      () => {
-        this._stream?.getTracks()[0].stop();
-        this.$.video = null;
+    this.registerActivity(this.activityType, () => {
+      this.set$({
+        '*modalCaption': this.l10n('caption-camera'),
+        '*modalIcon': 'camera',
+      });
+      this._init();
+    });
+    this.sub('*currentActivity', (val) => {
+      if (val !== this.activityType) {
+        this._deInit();
       }
-    );
+    });
   }
 }
 
