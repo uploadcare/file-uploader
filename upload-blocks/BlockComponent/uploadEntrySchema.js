@@ -1,3 +1,5 @@
+import { UploadcareFile } from '../../ext_modules/upload-client.js';
+
 export const uploadEntrySchema = Object.freeze({
   file: {
     type: File,
@@ -49,6 +51,10 @@ export const uploadEntrySchema = Object.freeze({
   },
   transformationsUrl: {
     type: String,
+    value: null,
+  },
+  fileInfo: {
+    type: UploadcareFile,
     value: null,
   },
 });

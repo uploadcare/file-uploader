@@ -74,6 +74,7 @@ export class ExternalSource extends ActivityComponent {
     });
     console.log(fileInfo);
     entry.setMultipleValues({
+      fileInfo,
       uuid: fileInfo.uuid,
       fileName: fileInfo.name,
       fileSize: fileInfo.size,
