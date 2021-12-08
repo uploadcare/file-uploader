@@ -1,10 +1,11 @@
 uc-upload-list {
   display: grid;
-  grid-template-rows: 1fr max-content;
+  grid-template-rows: auto min-content;
   background-color: var(--clr-background-light);
   transition: opacity var(--transition-duration);
   overflow: hidden;
   height: 100%;
+  max-height: 100%;
 }
 uc-upload-list:not([active]) {
   display: none;
@@ -14,9 +15,7 @@ uc-upload-list .no-files {
   padding: var(--gap-max);
 }
 uc-upload-list .files {
-  display: grid;
-  grid-auto-flow: row;
-  grid-auto-rows: var(--file-item-height);
+  display: block;
   overflow: auto;
 }
 uc-upload-list .toolbar {
