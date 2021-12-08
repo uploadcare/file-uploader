@@ -28,7 +28,10 @@ export class UploadList extends BlockComponent {
     onCancel: () => {
       let cfn = new UiConfirmation();
       cfn.confirmAction = () => {
-        this.$['*currentActivity'] = '';
+        this.set$({
+          '*currentActivity': '',
+          '*modalActive': false,
+        });
         this.uploadCollection.clearAll();
       };
       cfn.denyAction = () => {

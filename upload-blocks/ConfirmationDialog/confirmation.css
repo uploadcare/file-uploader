@@ -1,7 +1,4 @@
 uc-confirmation-dialog {
-  --activity-desired-w: 300px;
-  --activity-desired-mobile-h: auto;
-
   display: block;
   padding: var(--gap-mid);
   padding-top: var(--gap-max);
@@ -20,9 +17,4 @@ uc-confirmation-dialog .toolbar {
   gap:var(--gap-mid);
   margin-top: var(--gap-mid);
 }
-uc-confirmation-dialog .confirm-btn {
-  /* nothing to say */
-}
-uc-confirmation-dialog .deny-btn {
-  /* nothing to say */
-}
+

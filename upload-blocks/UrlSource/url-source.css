@@ -1,7 +1,4 @@
 uc-url-source {
-  --activity-desired-w: 600px;
-  --activity-desired-mobile-h: auto;
-
   display: grid;
   grid-template-columns: 1fr min-content min-content;
   grid-gap: var(--gap-mid);
@@ -9,9 +6,6 @@ uc-url-source {
 }
 uc-url-source .url-input {
   display: flex;
-}
-uc-url-source .url-upload-btn {
-  /* nothing to say... */
 }
 uc-url-source .url-upload-btn::after {
   content: var(--l10n-upload-url);

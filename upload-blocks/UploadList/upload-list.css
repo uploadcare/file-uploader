@@ -1,6 +1,4 @@
 uc-upload-list {
-  --activity-desired-w: 600px;
-
   display: grid;
   grid-template-rows: 1fr max-content;
   background-color: var(--clr-background-light);
@@ -29,16 +27,4 @@ uc-upload-list .toolbar {
   border-top: var(--border-light);
   background-color: var(--clr-background);
 }
-uc-upload-list .upload-btn {
-  /* nothing to say */
-}
-uc-upload-list .done-btn {
-  /* nothing to say */
-}
-uc-upload-list .add-more-btn {
-  /* nothing to say */
-}
 
-uc-upload-list .cancel-btn {
-  /* nothing to say */
-}

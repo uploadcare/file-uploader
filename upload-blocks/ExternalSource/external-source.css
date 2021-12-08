@@ -1,7 +1,4 @@
 uc-external-source {
-  --activity-desired-w: 100%;
-  --activity-desired-h: var(--modal-max-h);
-
   display: grid;
   grid-template-rows: auto min-content;
   position: relative;
