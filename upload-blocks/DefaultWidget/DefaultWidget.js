@@ -6,6 +6,8 @@ DefaultWidget.template = /*html*/ `
 <uc-simple-btn></uc-simple-btn>
 
 <uc-modal strokes>
+  <uc-activity-icon slot="heading"></uc-activity-icon>
+  <uc-activity-caption slot="heading"></uc-activity-caption>
   <uc-start-from>
     <uc-source-list wrap></uc-source-list>
     <uc-drop-area></uc-drop-area>

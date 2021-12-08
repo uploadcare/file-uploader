@@ -10,6 +10,9 @@
 /* THEME */
 @import url('theme.css');
 
+/* COMMON STYLES */
+@import url('common.css');
+
 /* UI COMPONENTS: */
 @import url('../../Icon/icon.css');
 @import url('../../Tabs/tabs.css');
@@ -35,19 +38,3 @@
 @import url('../../ActivityCaption/activity-caption.css');
 @import url('../../ActivityIcon/activity-icon.css');
 
-
-.uc-wgt-theme, .uc-wgt-common, :host {
-  /* font-size and family for testing purposes, to be removed */
-  font-size: 15px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-  color: var(--clr-txt);
-}
-* {
-  box-sizing: border-box;
-}
-[hidden] {
-  display: none !important;
-}
-[activity]:not([active]) {
-  display: none;
-}

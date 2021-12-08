@@ -8,6 +8,7 @@ export class SimpleBtn extends BlockComponent {
   initCallback() {
     this.$['*simpleButtonText'] = this.cfg('multiple') ? this.l10n('upload-files') : this.l10n('upload-file');
     this.onclick = () => {
+      this.$['*modalActive'] = true;
       if (this.$['*uploadList'].length) {
         this.set$({
           '*currentActivity': BlockComponent.activities.UPLOAD_LIST,

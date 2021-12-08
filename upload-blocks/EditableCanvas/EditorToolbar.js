@@ -133,7 +133,7 @@ export class EditorToolbar extends BlockComponent {
       this.rMap = rMap;
       /** @type {CanMan} */
       this.canMan = new CanMan(rMap);
-      console.log(rMap);
+      // console.log(rMap);
     });
     this.sub('*rangeValue', (val) => {
       this.canMan?.[this.rangeCtx]?.(val);
