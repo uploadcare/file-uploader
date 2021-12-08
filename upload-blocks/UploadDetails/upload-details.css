@@ -1,7 +1,7 @@
 uc-upload-details {
   position: relative;
   display: block;
-  min-height: 450px;
+  min-height: var(--activity-h);
   height: 100%;
   display: grid;
   grid-template-rows: auto min-content;

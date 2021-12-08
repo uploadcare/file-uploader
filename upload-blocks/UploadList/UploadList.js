@@ -22,6 +22,7 @@ export class UploadList extends BlockComponent {
     onDone: () => {
       this.set$({
         '*currentActivity': '',
+        '*modalActive': false,
       });
       this.output();
     },

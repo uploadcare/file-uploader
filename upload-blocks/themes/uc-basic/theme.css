@@ -43,6 +43,8 @@
   --modal-max-w: 800px;
   --modal-max-h: 600px; /* ??? */
 
+  --activity-h: 500px;
+
   --file-item-height: 60px;
 
   /* Derivative values */

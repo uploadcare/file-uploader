@@ -1,3 +1,4 @@
+import { create } from '../../ext_modules/symbiote.js';
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 import { registerMessage, unregisterMessage } from './messages.js';
 import { uploadFile } from '../../ext_modules/upload-client.js';
@@ -32,23 +33,22 @@ export class ExternalSource extends BlockComponent {
   _iframe = null;
 
   initCallback() {
-    this.registerActivity(
-      this.activityType,
-      () => {
-        let { externalSourceType } = this.activityParams;
+    this.registerActivity(this.activityType, () => {
+      let { externalSourceType } = this.activityParams;
 
-        this.set$({
-          '*modalCaption': `${externalSourceType[0].toUpperCase()}${externalSourceType.slice(1)}`,
-          '*modalIcon': externalSourceType,
-        });
+      this.set$({
+        '*modalCaption': `${externalSourceType[0].toUpperCase()}${externalSourceType.slice(1)}`,
+        '*modalIcon': externalSourceType,
+      });
 
-        this.$.counter = 0;
-        this.mountIframe();
-      },
-      () => {
+      this.$.counter = 0;
+      this.mountIframe();
+    });
+    this.sub('*currentActivity', (val) => {
+      if (val !== this.activityType) {
         this.unmountIframe();
       }
-    );
+    });
   }
 
   sendMessage(message) {
@@ -122,18 +122,23 @@ export class ExternalSource extends BlockComponent {
   }
 
   mountIframe() {
-    let iframe = document.createElement('iframe');
+    console.log('IFRAME');
+    /** @type {HTMLIFrameElement} */
+    // @ts-ignore
+    let iframe = create({
+      tag: 'iframe',
+      attributes: {
+        src: this.remoteUrl(),
+        marginheight: 0,
+        marginwidth: 0,
+        frameborder: 0,
+        allowTransparency: true,
+      },
+    });
     iframe.addEventListener('load', this.handleIframeLoad.bind(this));
 
-    iframe.setAttribute('src', this.remoteUrl());
-    iframe.setAttribute('marginheight', '0');
-    iframe.setAttribute('marginwidth', '0');
-    iframe.setAttribute('frameborder', '0');
-    iframe.setAttribute('allowTransparency', 'true');
-
-    let wrapper = this.ref['iframe-wrapper'];
-    wrapper.innerHTML = '';
-    wrapper.appendChild(iframe);
+    this.ref.iframeWrapper.innerHTML = '';
+    this.ref.iframeWrapper.appendChild(iframe);
 
     registerMessage('file-selected', iframe.contentWindow, this.handleFileSelected.bind(this));
 
@@ -141,16 +146,16 @@ export class ExternalSource extends BlockComponent {
   }
 
   unmountIframe() {
-    unregisterMessage('file-selected', this._iframe.contentWindow);
-
-    let wrapper = this.ref['iframe-wrapper'];
-    wrapper.innerHTML = '';
+    this._iframe && unregisterMessage('file-selected', this._iframe.contentWindow);
+    this.ref.iframeWrapper.innerHTML = '';
     this._iframe = undefined;
   }
 }
 
 ExternalSource.template = /*html*/ `
-<div ref="iframe-wrapper" class="iframe-wrapper">
+<div 
+  ref="iframeWrapper" 
+  class="iframe-wrapper">
 </div>
 <div class="toolbar">
   <button

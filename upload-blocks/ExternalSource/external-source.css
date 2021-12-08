@@ -2,12 +2,14 @@ uc-external-source {
   display: grid;
   grid-template-rows: auto min-content;
   position: relative;
-  height: 100%;
+  height: var(--activity-h);
 }
 
 uc-external-source iframe {
-  width: 100%;
+  display: block;
+  border: none;
   height: 100%;
+  width: 100%;
 }
 
 uc-external-source .toolbar {
