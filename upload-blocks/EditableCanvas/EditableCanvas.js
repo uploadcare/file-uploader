@@ -9,6 +9,7 @@ export class EditableCanvas extends BlockComponent {
   init$ = {
     refMap: null,
     disabled: true,
+    toolbarHidden: true,
   };
 
   constructor() {
@@ -22,6 +23,9 @@ export class EditableCanvas extends BlockComponent {
 
   initCallback() {
     this.style.backgroundImage = `url(${checkerboardCssBg()})`;
+    this.sub('disabled', () => {
+      this.$.toolbarHidden = this.hasAttribute('disabled') && this.getAttribute('disabled') !== 'false';
+    });
     /** @type {HTMLCanvasElement} */
     // @ts-ignore
     this.canvas = this.ref.cvs;
@@ -75,7 +79,7 @@ EditableCanvas.template = /*html*/ `
   </g>
 </svg>
 <uc-editor-toolbar 
-  set="refMap: refMap; @hidden: disabled">
+  set="refMap: refMap; @hidden: toolbarHidden">
 </uc-editor-toolbar>
 `;
 

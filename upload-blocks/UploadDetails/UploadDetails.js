@@ -34,6 +34,9 @@ export class UploadDetails extends BlockComponent {
         '*modalCaption': this.l10n('caption-edit-file'),
       });
     });
+    // this.sub('editBtnHidden', (val) => {
+    //   this.$.localImageEditDisabled = !!val;
+    // });
     /** @type {import('../EditableCanvas/EditableCanvas.js').EditableCanvas} */
     // @ts-ignore
     this.eCanvas = this.ref.canvas;
@@ -58,7 +61,7 @@ export class UploadDetails extends BlockComponent {
         if (this._file.type.includes('image') && !entry.getValue('transformationsUrl')) {
           this.eCanvas.setImageFile(this._file);
           this.set$({
-            editBtnHidden: false,
+            editBtnHidden: !this.cfg('use-local-image-editor') && !this.cfg('use-cloud-image-editor'),
           });
         }
       }
@@ -148,7 +151,7 @@ UploadDetails.template = /*html*/ `
   </uc-editable-canvas>
 </uc-tabs>
 
-<div class="toolbar">
+<div class="toolbar" set="@edit-disabled: editBtnHidden">
   <button
     class="edit-btn secondary-btn"
     set="onclick: onEdit; @hidden: editBtnHidden;">

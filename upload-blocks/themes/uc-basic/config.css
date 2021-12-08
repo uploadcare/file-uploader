@@ -12,5 +12,6 @@
   --cfg-max-files: 10;
   --cfg-thumb-size: 76;
   --cfg-show-empty-list: 1;
-  --cfg-use-local-image-editor: 1;
+  --cfg-use-local-image-editor: 0;
+  --cfg-use-cloud-image-editor: 0;
 }
