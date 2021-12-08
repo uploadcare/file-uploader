@@ -1,4 +1,13 @@
-const dataPrefix = 'data:image/svg+xml;base64,';
+/**
+ * @param {String} svg
+ * @returns {String}
+ */
+function createSvgBlobUrl(svg) {
+  let blob = new Blob([svg], {
+    type: 'image/svg+xml',
+  });
+  return URL.createObjectURL(blob);
+}
 
 /**
  * @param {String} [color1]
@@ -6,14 +15,11 @@ const dataPrefix = 'data:image/svg+xml;base64,';
  * @returns {String}
  */
 export function checkerboardCssBg(color1 = '#fff', color2 = 'rgba(0, 0, 0, .1)') {
-  return (
-    dataPrefix +
-    btoa(/*svg*/ `<svg height="20" width="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+  return createSvgBlobUrl(/*svg*/ `<svg height="20" width="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
     <rect x="0" y="0" width="20" height="20" fill="${color1}" />
     <rect x="0" y="0" width="10" height="10" fill="${color2}" />
     <rect x="10" y="10" width="10" height="10" fill="${color2}" />
-  </svg>`)
-  );
+  </svg>`);
 }
 
 /**
@@ -21,19 +27,14 @@ export function checkerboardCssBg(color1 = '#fff', color2 = 'rgba(0, 0, 0, .1)')
  * @returns {String}
  */
 export function strokesCssBg(color = 'rgba(0, 0, 0, .1)') {
-  return (
-    dataPrefix +
-    btoa(/*svg*/ `<svg height="10" width="10" viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg">
+  return createSvgBlobUrl(/*svg*/ `<svg height="10" width="10" viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg">
     <line x1="0" y1="10" x2="10" y2="0" stroke="${color}" />
-  </svg>`)
-  );
+  </svg>`);
 }
 
 /** @returns {String} */
 export function fileCssBg() {
-  return (
-    dataPrefix +
-    btoa(/*svg*/ `
+  return createSvgBlobUrl(/*svg*/ `
     <svg width="36" height="36" fill="none" xmlns="http://www.w3.org/2000/svg">
       <g filter="url(#a)">
         <path d="m10 8.00298 11-.00029 5 4.99711v15.0027l-16 .0002V8.00298Z" fill="#fff"/>
@@ -61,6 +62,5 @@ export function fileCssBg() {
           <feBlend in="SourceGraphic" in2="effect1_dropShadow_2684_2129" result="shape"/>
         </filter>
       </defs>
-    </svg>`)
-  );
+    </svg>`);
 }

@@ -1,6 +1,0 @@
-uc-activity-wrapper[activity="source-select"] {
-  display: grid;
-  grid-template-columns: min-content auto;
-  padding: var(--gap-mid);
-  gap: var(--gap-mid);
-}

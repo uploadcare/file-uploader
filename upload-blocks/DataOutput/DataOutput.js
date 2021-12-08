@@ -5,6 +5,7 @@ export class DataOutput extends BlockComponent {
     let from = this.getAttribute('from');
     this.sub(from || DataOutput.defaultFrom, (/** @type {any[]} */ data) => {
       if (!data) {
+        this.innerHTML = '';
         return;
       }
       if (this.hasAttribute(DataOutput.fireEventAttrName)) {

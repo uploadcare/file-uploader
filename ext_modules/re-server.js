@@ -27,10 +27,11 @@ const MIME_MAP = {
 function getCfg() {
   return JSON.parse(fs.readFileSync('project.json').toString());
 }
-
+ 
 const TMP_NAME = 're4ma.tmp.json';
 
 export class ReServer {
+
   constructor() {
     this._server = http.createServer((request, response) => {
       if (request.method === 'POST') {
@@ -39,7 +40,7 @@ export class ReServer {
           data.push(chunk);
         });
         request.on('end', () => {
-          let reCall = JSON.parse(data.join(''));
+          let reCall =  JSON.parse(data.join(''));
           if (reCall.type === 'link') {
             let tmp = {};
             if (fs.existsSync(TMP_NAME)) {
@@ -91,17 +92,17 @@ export class ReServer {
       let parsedUrl = url.parse(request.url);
       let filePath = '.' + parsedUrl.pathname;
       let fileExt = path.parse(filePath).ext;
-      fs.stat(filePath, { bigint: false }, (err, stat) => {
+      fs.stat(filePath, {bigint: false}, (err, stat) => {
         if (err) {
           response.statusCode = 404;
           response.end('File not found: ' + filePath);
           return;
-        }
+        } 
         if (fs.statSync(filePath).isDirectory()) {
           filePath += 'index.html';
           fileExt = '.html';
         }
-
+      
         fs.readFile(filePath, {}, (err, /** @type {Buffer | String} */ data) => {
           if (err) {
             console.log(filePath);
@@ -129,6 +130,7 @@ export class ReServer {
       console.log(err);
     });
   }
+
 }
 
 const devServer = new ReServer();

@@ -68,8 +68,8 @@ Tabs.bindAttributes({
 });
 
 Tabs.template = /*html*/ `
-<div ref="row" .tabs-row></div>
-<div ref="context" .tabs-context>
+<div ref="row" class="tabs-row"></div>
+<div ref="context" class="tabs-context">
   <slot></slot>
 </div>
 `;

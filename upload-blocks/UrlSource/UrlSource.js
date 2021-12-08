@@ -1,14 +1,13 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 import { uploadFile } from '../../ext_modules/upload-client.js';
-import { ActivityComponent } from '../ActivityComponent/ActivityComponent.js';
 
-export class UrlSource extends ActivityComponent {
+export class UrlSource extends BlockComponent {
   activityType = BlockComponent.activities.URL;
 
   init$ = {
     onUpload: async () => {
       let url = this.ref.input['value'];
-      let pubkey = this.config.PUBKEY;
+      let pubkey = this.cfg('pubkey');
       let entry = this.uploadCollection.add({
         externalUrl: url,
       });
@@ -37,22 +36,24 @@ export class UrlSource extends ActivityComponent {
     },
   };
 
-  onActivate() {
-    super.onActivate();
-
-    this.set$({
-      '*modalCaption': this.l10n('caption-from-url'),
-      '*modalIcon': 'url',
+  initCallback() {
+    this.registerActivity(this.activityType, () => {
+      this.set$({
+        '*modalCaption': this.l10n('caption-from-url'),
+        '*modalIcon': 'url',
+      });
     });
   }
 }
 
 UrlSource.template = /*html*/ `
 <input placeholder="https://..." .url-input type="text" ref="input" />
-<button .url-upload-btn .primary-btn set="onclick: onUpload"></button>
+<button 
+  class="url-upload-btn primary-btn "
+  set="onclick: onUpload">
+</button>
 <button
-  .cancel-btn
-  .secondary-btn
+  class="cancel-btn secondary-btn"
   set="onclick: onCancel"
   l10n="cancel">
 </button>

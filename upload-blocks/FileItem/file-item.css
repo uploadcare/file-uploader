@@ -66,6 +66,9 @@ uc-file-item button {
   opacity: var(--opacity-normal);
   transition: opacity var(--transition-duration);
 }
+uc-file-item .upload-btn {
+  display: none;
+}
 uc-file-item button:hover {
   opacity: var(--opacity-hover);
 }

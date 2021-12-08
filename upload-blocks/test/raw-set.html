@@ -1,0 +1,29 @@
+<base href="../../">
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="./upload-blocks/themes/uc-basic/index.css">
+<script src="./upload-blocks/index.js" type="module"></script>
+
+<uc-simple-btn class="uc-wgt-common"></uc-simple-btn>
+
+<uc-modal class="uc-wgt-common" strokes>
+  <uc-start-from>
+    <uc-source-list wrap></uc-source-list>
+    <uc-drop-area></uc-drop-area>
+  </uc-start-from>
+  <uc-upload-list></uc-upload-list>
+  <uc-camera-source></uc-camera-source>
+  <uc-url-source></uc-url-source>
+  <uc-external-source></uc-external-source>
+  <uc-upload-details></uc-upload-details>
+  <uc-confirmation-dialog></uc-confirmation-dialog>
+</uc-modal>
+
+<uc-message-box class="uc-wgt-common"></uc-message-box>
+<uc-progress-bar class="uc-wgt-common"></uc-progress-bar>
+
+<uc-data-output
+  fire-event
+  from="*outputData"
+  item-template="<img height='200' src='https://ucarecdn.com/{{uuid}}/-/preview/' />"
+  class="uc-wgt-common"></uc-data-output>

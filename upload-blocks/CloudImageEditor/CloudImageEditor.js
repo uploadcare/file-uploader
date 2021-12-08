@@ -29,7 +29,7 @@ export class CloudImageEditor extends BlockComponent {
       }
     });
 
-    this.sub('*focusedEntry', (/** @type {import('../../symbiote/core/TypedData.js').TypedData} */ entry) => {
+    this.sub('*focusedEntry', (/** @type {import('../../ext_modules/symbiote.js').TypedData} */ entry) => {
       if (!entry) {
         return;
       }
@@ -59,7 +59,7 @@ export class CloudImageEditor extends BlockComponent {
     let instance = new editorClass();
 
     let uuid = this.$.uuid;
-    let publicKey = this.$['*pubkey'];
+    let publicKey = this.cfg('pubkey');
     instance.setAttribute('uuid', uuid);
     instance.setAttribute('public-key', publicKey);
 

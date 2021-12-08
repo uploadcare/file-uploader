@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dir": "mkdir -p ext_modules",
-    "ext:upload-client": "curl https://unpkg.com/@uploadcare/upload-client@2.0.0-alpha.10/dist/index.browser.js --output ext_modules/upload-client.js",
+    "ext:upload-client": "curl https://unpkg.com/@uploadcare/upload-client@2.0.0/dist/index.browser.js --output ext_modules/upload-client.js",
     "ext:symbiote": "curl https://symbiotejs.github.io/symbiote.js/build/symbiote.jsdoc.js --output ext_modules/symbiote.js",
     "ext:re-serve": "curl https://raw.githubusercontent.com/re4ma/re-serve/main/server/re-server.js --output ext_modules/re-server.js",
     "setup": "npm run dir && npm run ext:symbiote && npm run ext:upload-client && npm run ext:re-serve && npm i && npm run build-libs",
@@ -24,12 +24,11 @@
     "lint-staged": "^11.1.2",
     "prettier": "^2.0.5",
     "prettier-plugin-jsdoc": "0.0.17",
-    "rimraf": "^2.6.3",
     "typescript": "^3.9.7"
   },
   "eslintIgnore": [
-    "ext_modules", 
-    "build", 
+    "ext_modules",
+    "build",
     "upload-blocks/test/react-example",
     "html_output"
   ],

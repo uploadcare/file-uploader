@@ -1,29 +1,14 @@
 uc-upload-details {
-  --activity-desired-w: 100%;
-  --activity-desired-h: var(--modal-max-h);
-
   position: relative;
   display: block;
+  min-height: var(--activity-h);
   height: 100%;
-}
-
-uc-upload-details > .wrapper {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
   display: grid;
   grid-template-rows: auto min-content;
 }
 
-uc-upload-details .viewport {
+uc-upload-details uc-tabs .tabs-context {
   position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: var(--clr-background);
-  height: 100%;
 }
 
 uc-upload-details .toolbar {
@@ -33,10 +18,11 @@ uc-upload-details .toolbar {
   gap: var(--gap-mid);
   padding: var(--gap-mid);
 }
-
-uc-upload-details .back-btn {
-  /* nothing to say */
+uc-upload-details .toolbar[edit-disabled] {
+  display: flex;
+  justify-content: space-between;
 }
+
 uc-upload-details .remove-btn {
   padding-left: 0.5em;
 }
@@ -65,7 +51,6 @@ uc-upload-details .info-block:first-of-type {
 uc-upload-details .info-block:last-of-type {
   border-bottom: none;
 }
-
 
 uc-upload-details .info-block > .info-block_name {
   font-size: 0.8em;

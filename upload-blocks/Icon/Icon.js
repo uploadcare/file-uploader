@@ -1,6 +1,6 @@
-import { BaseComponent } from '../../ext_modules/symbiote.js';
+import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 
-export class Icon extends BaseComponent {
+export class Icon extends BlockComponent {
   init$ = {
     path: '',
   };

@@ -1,21 +1,21 @@
 uc-upload-list {
-  --activity-desired-w: 600px;
-
   display: grid;
-  grid-template-rows: auto max-content;
+  grid-template-rows: auto min-content;
   background-color: var(--clr-background-light);
   transition: opacity var(--transition-duration);
   overflow: hidden;
   height: 100%;
+  max-height: 100%;
 }
 uc-upload-list:not([active]) {
   display: none;
 }
+uc-upload-list .no-files {
+  height: var(--file-item-height);
+  padding: var(--gap-max);
+}
 uc-upload-list .files {
-  display: grid;
-  grid-auto-flow: row;
-  grid-auto-rows: calc(var(--ui-size) + var(--gap-mid) * 2); /* Fixed value to speed up the render */
-  gap: var(--gap-table);
+  display: block;
   overflow: auto;
 }
 uc-upload-list .toolbar {
@@ -26,16 +26,4 @@ uc-upload-list .toolbar {
   border-top: var(--border-light);
   background-color: var(--clr-background);
 }
-uc-upload-list .upload-btn {
-  /* nothing to say */
-}
-uc-upload-list .done-btn {
-  /* nothing to say */
-}
-uc-upload-list .add-more-btn {
-  /* nothing to say */
-}
 
-uc-upload-list .cancel-btn {
-  /* nothing to say */
-}

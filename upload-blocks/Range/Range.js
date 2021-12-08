@@ -31,11 +31,11 @@ Range.template = /*html*/ `
   <option value="100" label="0"></option>
   <option value="200" label="max"></option>
 </datalist>
-<div .track>
-  <div .bar set="style.width: cssLeft; @active: barActive"></div>
-  <div .slider set="style.left: cssLeft"></div>
-  <div .center></div>
-  <div .caption set="textContent: caption; @text: caption"></div>
+<div class="track">
+  <div class="bar" set="style.width: cssLeft; @active: barActive"></div>
+  <div class="slider" set="style.left: cssLeft"></div>
+  <div class="center"></div>
+  <div class="caption" set="textContent: caption; @text: caption"></div>
 </div>
 <input 
   type="range"

@@ -3,11 +3,7 @@ import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 const L10N_PREFIX = 'src-type-';
 
 export class SourceBtn extends BlockComponent {
-  constructor() {
-    super();
-
-    this._registeredTypes = {};
-  }
+  _registeredTypes = {};
 
   init$ = {
     iconName: 'default',
@@ -16,7 +12,7 @@ export class SourceBtn extends BlockComponent {
   initTypes() {
     this.registerType({
       type: BlockComponent.sourceTypes.LOCAL,
-      activity: '',
+      // activity: '',
       onClick: () => {
         this.openSystemDialog();
       },
@@ -74,17 +70,18 @@ export class SourceBtn extends BlockComponent {
     this.applyL10nKey('src-type', `${L10N_PREFIX}${textKey}`);
     this.$.iconName = icon;
     this.onclick = (e) => {
-      this.set$({
-        '*currentActivityParams': activityParams,
-        '*currentActivity': activity,
-      });
+      activity &&
+        this.set$({
+          '*currentActivityParams': activityParams,
+          '*currentActivity': activity,
+        });
       onClick && onClick(e);
     };
   }
 }
 SourceBtn.template = /*html*/ `
 <uc-icon set="@name: iconName"></uc-icon>
-<div .txt l10n="src-type"></div>
+<div class="txt" l10n="src-type"></div>
 `;
 SourceBtn.bindAttributes({
   type: null,

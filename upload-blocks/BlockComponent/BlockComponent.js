@@ -1,7 +1,10 @@
 import { BaseComponent, Data, TypedCollection } from '../../ext_modules/symbiote.js';
+import { l10nProcessor } from './l10nProcessor.js';
 import { uploadEntrySchema } from './uploadEntrySchema.js';
 
 const ACTIVE_ATTR = 'active';
+const TAG_PREFIX = 'uc-';
+const CSS_ATTRIBUTE = 'css-src';
 
 let DOC_READY = document.readyState === 'complete';
 if (!DOC_READY) {
@@ -10,45 +13,18 @@ if (!DOC_READY) {
   });
 }
 
-function blockProcessor(fr, fnCtx) {
-  [...fr.querySelectorAll('[l10n]')].forEach((el) => {
-    let key = el.getAttribute('l10n');
-    let elProp = 'textContent';
-    if (key.includes(':')) {
-      let arr = key.split(':');
-      elProp = arr[0];
-      key = arr[1];
-    }
-    let ctxKey = 'l10n:' + key;
-    fnCtx.__l10nKeys.push(ctxKey);
-    fnCtx.add(ctxKey, key);
-    fnCtx.sub(ctxKey, (val) => {
-      el[elProp] = fnCtx.l10n(val);
-    });
-    el.removeAttribute('l10n');
-  });
-  [...fr.querySelectorAll('*')].forEach((el) => {
-    [...el.attributes].forEach((attr) => {
-      if (attr.name.startsWith('.')) {
-        el.classList.add(attr.name.replace('.', ''));
-        el.removeAttribute(attr.name);
-      }
-    });
-  });
-}
-
 let externalPropsAdded = false;
 
 export class BlockComponent extends BaseComponent {
   l10n(str) {
-    return this.getCssData('--l10n-' + str);
+    return this.getCssData('--l10n-' + str, true) || str;
   }
 
   constructor() {
     super();
     /** @type {String} */
     this.activityType = null;
-    this.addTemplateProcessor(blockProcessor);
+    this.addTemplateProcessor(l10nProcessor);
     /** @type {String[]} */
     this.__l10nKeys = [];
     this.__l10nUpdate = () => {
@@ -78,7 +54,6 @@ export class BlockComponent extends BaseComponent {
       history = history.slice(history.length - 11, history.length - 1);
     }
     this.$['*history'] = history;
-    // console.log(history)
   }
 
   addFiles(files) {
@@ -93,27 +68,18 @@ export class BlockComponent extends BaseComponent {
     });
   }
 
-  output() {
-    let data = [];
-    let items = this.uploadCollection.items();
-    items.forEach((itemId) => {
-      data.push(Data.getNamedCtx(itemId).store);
-    });
-    this.$['*outputData'] = data;
-  }
-
   openSystemDialog() {
     this.fileInput = document.createElement('input');
     this.fileInput.type = 'file';
-    this.fileInput.multiple = !!this.config.MULTIPLE;
-    this.fileInput.max = this.config.MAX_FILES + '';
-    this.fileInput.accept = this.config.ACCEPT;
+    this.fileInput.multiple = !!this.cfg('multiple');
+    this.fileInput.max = this.cfg('max-files');
+    this.fileInput.accept = this.cfg('accept');
     this.fileInput.dispatchEvent(new MouseEvent('click'));
     this.fileInput.onchange = () => {
       this.addFiles([...this.fileInput['files']]);
       // To call uploadTrigger UploadList should draw file items first:
       this.$['*currentActivity'] = BlockComponent.activities.UPLOAD_LIST;
-      if (!this.config.CONFIRM_UPLOAD) {
+      if (!this.cfg('confirm-upload')) {
         this.$['*currentActivity'] = '';
       }
       this.fileInput['value'] = '';
@@ -122,12 +88,35 @@ export class BlockComponent extends BaseComponent {
   }
 
   connectedCallback() {
-    if (DOC_READY) {
-      this.connected();
-    } else {
-      window.addEventListener('load', () => {
+    let handleReadyState = () => {
+      if (DOC_READY) {
         this.connected();
+      } else {
+        window.addEventListener('load', () => {
+          this.connected();
+        });
+      }
+    };
+    let href = this.getAttribute(CSS_ATTRIBUTE);
+    if (href) {
+      this.renderShadow = true;
+      this.attachShadow({
+        mode: 'open',
       });
+      let link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.type = 'text/css';
+      link.href = href;
+      link.onload = () => {
+        // CSS modules can be not loaded at this moment
+        // TODO: investigate better solution
+        window.requestAnimationFrame(() => {
+          handleReadyState();
+        });
+      };
+      this.shadowRoot.appendChild(link);
+    } else {
+      handleReadyState();
     }
   }
 
@@ -135,16 +124,11 @@ export class BlockComponent extends BaseComponent {
     if (!this.__connectedOnce) {
       if (!externalPropsAdded) {
         this.add$({
-          '*registry': Object.create(null),
           '*currentActivity': '',
           '*currentActivityParams': {},
           '*history': [],
           '*commonProgress': 0,
-          '*pubkey': 'demopublickey',
           '*uploadList': [],
-          '*multiple': true,
-          '*accept': 'image/*',
-          '*files': [],
           '*outputData': null,
         });
         externalPropsAdded = true;
@@ -156,34 +140,56 @@ export class BlockComponent extends BaseComponent {
         if (!this.hasAttribute('activity')) {
           this.setAttribute('activity', this.activityType);
         }
-        let registry = this.$['*registry'];
-        registry[this.tagName.toLowerCase()] = this;
-        this.$['*registry'] = registry;
-        this.sub('*currentActivity', (val) => {
-          if (!val) {
+        this.sub('*currentActivity', (/** @type {String} */ val) => {
+          if (!val || this.activityType !== val) {
             this.removeAttribute(ACTIVE_ATTR);
-            return;
-          }
-          if (this.activityType === val) {
+          } else {
             /** @type {String[]} */
             let history = this.$['*history'];
             if (val && history[history.length - 1] !== val) {
               history.push(val);
             }
             this.setAttribute(ACTIVE_ATTR, '');
-          } else {
-            this.removeAttribute(ACTIVE_ATTR);
+            let actDesc = BlockComponent._activityRegistry[val];
+            if (actDesc) {
+              actDesc.activateCallback?.();
+              if (BlockComponent._lastActivity) {
+                let lastActDesc = BlockComponent._activityRegistry[BlockComponent._lastActivity];
+                if (lastActDesc) {
+                  lastActDesc.deactivateCallback?.();
+                }
+              }
+            }
           }
+          BlockComponent._lastActivity = val;
         });
       }
-
       this.__connectedOnce = true;
     } else {
       super.connectedCallback();
     }
   }
 
-  /** @type {import('../../symbiote/core/TypedCollection.js').TypedCollection} */
+  /**
+   * @param {String} name
+   * @param {() => void} [activateCallback]
+   * @param {() => void} [deactivateCallback]
+   */
+  registerActivity(name, activateCallback, deactivateCallback) {
+    if (!BlockComponent._activityRegistry) {
+      BlockComponent._activityRegistry = Object.create(null);
+    }
+    BlockComponent._activityRegistry[name] = {
+      activateCallback,
+      deactivateCallback,
+    };
+  }
+
+  get activityParams() {
+    return this.$['*currentActivityParams'];
+  }
+
+  /** @type {import('../../ext_modules/symbiote.js').TypedCollection} */
   get uploadCollection() {
     if (!this.has('*uploadCollection')) {
       let uploadCollection = new TypedCollection({
@@ -211,47 +217,40 @@ export class BlockComponent extends BaseComponent {
     return this.$['*uploadCollection'];
   }
 
-  /** @type {Object<string, BlockComponent>} */
-  get blockRegistry() {
-    return this.$['*registry'];
+  /** @param {String} shortKey */
+  cfg(shortKey) {
+    return this.getCssData('--cfg-' + shortKey, true);
   }
 
   /**
-   * @type {{
-   *   PUBKEY: string;
-   *   MULTIPLE: number;
-   *   CONFIRM_UPLOAD: number;
-   *   IMG_ONLY: number;
-   *   ACCEPT: string;
-   *   STORE: number;
-   *   CAMERA_MIRROR: number;
-   *   SRC_LIST: string;
-   *   MAX_FILES: number;
-   * }}
+   * @param {Number} bytes
+   * @param {Number} [decimals]
    */
-  get config() {
-    if (!this._config) {
-      this._config = {};
-      for (let prop in BlockComponent.cfgCssMap) {
-        let val = this.getCssData(BlockComponent.cfgCssMap[prop], true);
-        if (val !== null) {
-          this._config[prop] = val;
-        }
-      }
+  fileSizeFmt(bytes, decimals = 2) {
+    let units = ['B', 'KB', 'MB', 'GB', 'TB'];
+    /**
+     * @param {String} str
+     * @returns {String}
+     */
+    let getUnit = (str) => {
+      return this.getCssData('--l10n-unit-' + str.toLowerCase(), true) || str;
+    };
+    if (bytes === 0) {
+      return `0 ${getUnit(units[0])}`;
     }
-    // @ts-ignore
-    return this._config;
+    let k = 1024;
+    let dm = decimals < 0 ? 0 : decimals;
+    let i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / k ** i).toFixed(dm)) + ' ' + getUnit(units[i]);
   }
 
-  dropCache() {
-    // TODO: add l10n hot reload support
-    this.dropCssDataCache();
-    this._config = null;
-  }
-
-  disconnectedCallback() {
-    super.disconnectedCallback();
-    this._config = null;
+  output() {
+    let data = [];
+    let items = this.uploadCollection.items();
+    items.forEach((itemId) => {
+      data.push(Data.getNamedCtx(itemId).store);
+    });
+    this.$['*outputData'] = data;
   }
 
   destroyCallback() {
@@ -261,10 +260,15 @@ export class BlockComponent extends BaseComponent {
   }
 
   static reg(name) {
-    let prefix = 'uc-';
-    super.reg(name.startsWith(prefix) ? name : prefix + name);
+    super.reg(name.startsWith(TAG_PREFIX) ? name : TAG_PREFIX + name);
   }
 }
+
+/** @type {{ string: { activateCallback: Function; deactivateCallback: Function } }} */
+BlockComponent._activityRegistry = Object.create(null);
+
+/** @type {String} */
+BlockComponent._lastActivity = '';
 
 BlockComponent.activities = Object.freeze({
   SOURCE_SELECT: 'source-select',
@@ -298,16 +302,4 @@ BlockComponent.sourceTypes = Object.freeze({
   CAMERA: 'camera',
   DRAW: 'draw',
   ...BlockComponent.extSrcList,
-});
-
-BlockComponent.cfgCssMap = Object.freeze({
-  PUBKEY: '--cfg-pubkey',
-  MULTIPLE: '--cfg-multiple',
-  CONFIRM_UPLOAD: '--cfg-confirm-upload',
-  IMG_ONLY: '--cfg-img-only',
-  ACCEPT: '--cfg-accept',
-  STORE: '--cfg-store',
-  CAMERA_MIRROR: '--cfg-camera-mirror',
-  SRC_LIST: '--cfg-source-list',
-  MAX_FILES: '--cfg-max-files',
 });

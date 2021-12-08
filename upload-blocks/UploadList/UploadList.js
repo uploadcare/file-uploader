@@ -1,16 +1,16 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 import { FileItem } from '../FileItem/FileItem.js';
 import { UiConfirmation } from '../ConfirmationDialog/ConfirmationDialog.js';
-import { ActivityComponent } from '../ActivityComponent/ActivityComponent.js';
 
-export class UploadList extends ActivityComponent {
+export class UploadList extends BlockComponent {
   activityType = BlockComponent.activities.UPLOAD_LIST;
 
   init$ = {
     doneBtnHidden: true,
     uploadBtnHidden: false,
     uploadBtnDisabled: false,
-    moreBtnDisabled: !this.config.MULTIPLE,
+    hasFiles: false,
+    moreBtnDisabled: true,
     onAdd: () => {
       this.$['*currentActivity'] = BlockComponent.activities.SOURCE_SELECT;
     },
@@ -22,13 +22,17 @@ export class UploadList extends ActivityComponent {
     onDone: () => {
       this.set$({
         '*currentActivity': '',
+        '*modalActive': false,
       });
       this.output();
     },
     onCancel: () => {
       let cfn = new UiConfirmation();
       cfn.confirmAction = () => {
-        this.$['*currentActivity'] = '';
+        this.set$({
+          '*currentActivity': '',
+          '*modalActive': false,
+        });
         this.uploadCollection.clearAll();
       };
       cfn.denyAction = () => {
@@ -40,17 +44,15 @@ export class UploadList extends ActivityComponent {
 
   _renderMap = Object.create(null);
 
-  onActivate() {
-    super.onActivate();
-
-    this.set$({
-      '*modalCaption': this.l10n('selected'),
-      '*modalIcon': 'local',
-    });
-  }
-
   initCallback() {
-    super.initCallback();
+    this.registerActivity(this.activityType, () => {
+      this.set$({
+        '*modalCaption': this.l10n('selected'),
+        '*modalIcon': 'local',
+      });
+    });
+
+    this.$.moreBtnDisabled = !this.cfg('multiple');
 
     this.uploadCollection.observe(() => {
       //TODO: probably we need to optimize it, too many iterations and allocations just to calc uploaded files
@@ -68,8 +70,20 @@ export class UploadList extends ActivityComponent {
         uploadBtnDisabled: somethingUploading,
         doneBtnHidden: !everythingUploaded,
       });
+      if (!this.cfg('confirm-upload') && everythingUploaded) {
+        this.$.onDone();
+      }
     });
     this.sub('*uploadList', (/** @type {String[]} */ list) => {
+      if (list.length === 0 && !this.cfg('show-empty-list')) {
+        this.$['*currentActivity'] = BlockComponent.activities.SOURCE_SELECT;
+        return;
+      }
+      this.set$({
+        uploadBtnDisabled: !list.length,
+        hasFiles: list.length > 0,
+      });
+
       list.forEach((id) => {
         if (!this._renderMap[id]) {
           let item = new FileItem();
@@ -99,27 +113,26 @@ export class UploadList extends ActivityComponent {
 }
 
 UploadList.template = /*html*/ `
-<div .files ref="files"></div>
-<div .toolbar>
+<div class="no-files" set="@hidden: hasFiles">
+  <slot name="empty"><span l10n="no-files"></span></slot>
+</div>
+<div class="files" ref="files"></div>
+<div class="toolbar">
   <button
-    .cancel-btn
-    .secondary-btn
+    class="cancel-btn secondary-btn"
     set="onclick: onCancel;"
     l10n="clear"></button>
   <div></div>
   <button
-    .add-more-btn
-    .secondary-btn
+    class="add-more-btn secondary-btn"
     set="onclick: onAdd; @disabled: moreBtnDisabled"
     l10n="add-more"></button>
   <button
-    .upload-btn
-    .primary-btn
+    class="upload-btn primary-btn"
     set="@hidden: uploadBtnHidden; onclick: onUpload; @disabled: uploadBtnDisabled"
     l10n="upload"></button>
-    <button
-    .done-btn
-    .primary-btn
+  <button
+    class="done-btn primary-btn"
     set="@hidden: doneBtnHidden; onclick: onDone"
     l10n="done"></button>
 </div>
