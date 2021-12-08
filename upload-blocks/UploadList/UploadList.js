@@ -79,7 +79,10 @@ export class UploadList extends BlockComponent {
         this.$['*currentActivity'] = BlockComponent.activities.SOURCE_SELECT;
         return;
       }
-      this.$.hasFiles = list.length > 0;
+      this.set$({
+        uploadBtnDisabled: !list.length,
+        hasFiles: list.length > 0,
+      });
 
       list.forEach((id) => {
         if (!this._renderMap[id]) {
