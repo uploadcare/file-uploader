@@ -10,6 +10,7 @@
   --cfg-camera-mirror: 0;
   --cfg-source-list: 'local, url, camera, dropbox, gdrive, facebook';
   --cfg-max-files: 10;
+  --cfg-max-local-file-size-bytes: 30000;
   --cfg-thumb-size: 76;
   --cfg-show-empty-list: 1;
   --cfg-use-local-image-editor: 0;

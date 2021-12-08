@@ -5,7 +5,7 @@ export class UploadDetails extends BlockComponent {
 
   init$ = {
     localImageEditDisabled: true,
-    fileSize: 0,
+    fileSize: this.fileSizeFmt(0),
     fileName: '',
     cdnUrl: '',
     errorTxt: '',
@@ -78,7 +78,7 @@ export class UploadDetails extends BlockComponent {
         };
       });
       tmpSub('fileSize', (size) => {
-        this.$.fileSize = size;
+        this.$.fileSize = this.fileSizeFmt(size);
       });
       tmpSub('uuid', (uuid) => {
         if (uuid) {

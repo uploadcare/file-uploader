@@ -17,7 +17,7 @@ let externalPropsAdded = false;
 
 export class BlockComponent extends BaseComponent {
   l10n(str) {
-    return this.getCssData('--l10n-' + str);
+    return this.getCssData('--l10n-' + str, true) || str;
   }
 
   constructor() {
@@ -220,6 +220,28 @@ export class BlockComponent extends BaseComponent {
   /** @param {String} shortKey */
   cfg(shortKey) {
     return this.getCssData('--cfg-' + shortKey, true);
+  }
+
+  /**
+   * @param {Number} bytes
+   * @param {Number} [decimals]
+   */
+  fileSizeFmt(bytes, decimals = 2) {
+    let units = ['B', 'KB', 'MB', 'GB', 'TB'];
+    /**
+     * @param {String} str
+     * @returns {String}
+     */
+    let getUnit = (str) => {
+      return this.getCssData('--l10n-unit-' + str.toLowerCase(), true) || str;
+    };
+    if (bytes === 0) {
+      return `0 ${getUnit(units[0])}`;
+    }
+    let k = 1024;
+    let dm = decimals < 0 ? 0 : decimals;
+    let i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / k ** i).toFixed(dm)) + ' ' + getUnit(units[i]);
   }
 
   output() {
