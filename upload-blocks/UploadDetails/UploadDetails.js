@@ -7,6 +7,7 @@ export class UploadDetails extends BlockComponent {
     localImageEditDisabled: true,
     fileSize: this.fileSizeFmt(0),
     fileName: '',
+    notUploaded: true,
     cdnUrl: '',
     errorTxt: '',
     editBtnHidden: true,
@@ -82,7 +83,10 @@ export class UploadDetails extends BlockComponent {
       });
       tmpSub('uuid', (uuid) => {
         if (uuid) {
-          this.$.cdnUrl = `https://ucarecdn.com/${uuid}/`;
+          this.set$({
+            cdnUrl: `https://ucarecdn.com/${uuid}/`,
+            notUploaded: false,
+          });
         } else {
           this.$.cdnUrl = 'Not uploaded yet...';
         }
@@ -137,7 +141,7 @@ UploadDetails.template = /*html*/ `
       <div class="info-block_name" l10n="cdn-url"></div>
       <a
         target="_blank"
-        set="textContent: cdnUrl; @href: cdnUrl;"></a>
+        set="textContent: cdnUrl; @href: cdnUrl; @disabled: notUploaded"></a>
     </div>
 
     <div set="textContent: errorTxt;"></div>
