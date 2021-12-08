@@ -2,7 +2,7 @@
 
   /* Base values */
 
-  --darkmode: 0;
+  --darkmode: 0; /* ??? */
 
   --h-foreground: 208;
   --s-foreground: 4%;
@@ -41,7 +41,7 @@
   --inset-shadow: inset 0px 2px 3px rgba(0, 0, 0, calc(0.09 + 0.1 * var(--darkmode)));
 
   --modal-max-w: 800px;
-  --modal-max-h: 600px;
+  --modal-max-h: 600px; /* ??? */
 
   --file-item-height: 60px;
 
@@ -98,79 +98,4 @@
   --clr-btn-bgr-disabled: var(--clr-background);
   --clr-btn-txt-disabled: var(--clr-txt-lightest);
   --shadow-btn-disabled: inset 0px 0px 1px rgba(0, 0, 0, 0.4);
-}
-
-/* Common styles */
-
-button {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 1em;
-  padding-left: 1.4em;
-  padding-right: 1.4em;
-  border: none;
-  height: var(--ui-size);
-  border-radius: var(--border-radius-mid);
-  font-family: inherit;
-  cursor: pointer;
-  white-space: nowrap;
-  user-select: none;
-}
-
-button[disabled], button.primary-btn[disabled], button.secondary-btn[disabled] {
-  pointer-events: none;
-  color: var(--clr-btn-txt-disabled);
-  background-color: var(--clr-btn-bgr-disabled);
-  box-shadow: var(--shadow-btn-disabled);
-}
-button.primary-btn {
-  color: var(--clr-btn-txt-primary);
-  background-color: var(--clr-btn-bgr-primary);
-  box-shadow: var(--shadow-btn-primary);
-  transition: background-color var(--transition-duration);
-}
-button.primary-btn:hover {
-  background-color: var(--clr-btn-bgr-primary-hover);
-}
-button.primary-btn:active {
-  background-color: var(--clr-btn-bgr-primary-active);
-}
-button.secondary-btn {
-  color: var(--clr-btn-txt-secondary);
-  background-color: var(--clr-btn-bgr-secondary);
-  box-shadow: var(--shadow-btn-secondary);
-  transition: background-color var(--transition-duration);
-}
-button.secondary-btn:hover {
-  background-color: var(--clr-btn-bgr-secondary-hover);
-}
-button.secondary-btn:active {
-  background-color: var(--clr-btn-bgr-secondary-active);
-}
-a {
-  text-decoration: none;
-  color: var(--clr-accent);
-}
-input[type="text"] {
-  display: flex;
-  height: var(--ui-size);
-  padding-left: 0.6em;
-  padding-right: 0.6em;
-  width: 100%;
-  font-family: inherit;
-  font-size: var(--f);
-  border: var(--border-mid);
-  background-color: var(--clr-background-light);
-  box-shadow: var(--inset-shadow);
-  color: var(--clr-txt);
-  transition: var(--transition-duration);
-  border-radius: var(--border-radius-mid);
-}
-input[type="text"]:hover {
-  border-color: var(--clr-accent-light);
-}
-input[type="text"]:focus {
-  border-color: var(--clr-accent);
-  outline: none;
 }

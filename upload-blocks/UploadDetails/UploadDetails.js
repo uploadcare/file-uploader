@@ -1,10 +1,10 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
-import { ActivityComponent } from '../ActivityComponent/ActivityComponent.js';
 
-export class UploadDetails extends ActivityComponent {
+export class UploadDetails extends BlockComponent {
   activityType = BlockComponent.activities.DETAILS;
 
   init$ = {
+    localImageEditDisabled: true,
     fileSize: 0,
     fileName: '',
     cdnUrl: '',
@@ -27,16 +27,13 @@ export class UploadDetails extends ActivityComponent {
     },
   };
 
-  onActivate() {
-    super.onActivate();
-
-    this.set$({
-      '*modalCaption': this.l10n('caption-edit-file'),
-    });
-  }
-
   initCallback() {
-    super.initCallback();
+    this.$.localImageEditDisabled = !this.cfg('use-local-image-editor');
+    this.registerActivity(this.activityType, () => {
+      this.set$({
+        '*modalCaption': this.l10n('caption-edit-file'),
+      });
+    });
     /** @type {import('../EditableCanvas/EditableCanvas.js').EditableCanvas} */
     // @ts-ignore
     this.eCanvas = this.ref.canvas;
@@ -112,66 +109,63 @@ export class UploadDetails extends ActivityComponent {
 }
 
 UploadDetails.template = /*html*/ `
-<div .wrapper>
-  <uc-tabs
-    tab-list="tab-view, tab-details">
-    <div tab-ctx="tab-details" ref="details" .details>
+<uc-tabs
+  tab-list="tab-view, tab-details">
 
-      <div .info-block>
-        <div .info-block_name l10n="file-name"></div>
-        <input
-          name="name-input"
-          ref="file_name_input"
-          set="value: fileName; oninput: onNameInput"
-          type="text" />
-      </div>
+  <div 
+    tab-ctx="tab-details"
+    class="details">
 
-      <div .info-block>
-        <div .info-block_name l10n="file-size"></div>
-        <div set="textContent: fileSize"></div>
-      </div>
-
-      <div .info-block>
-        <div .info-block_name l10n="cdn-url"></div>
-        <a
-          target="_blank"
-          set="textContent: cdnUrl; @href: cdnUrl;"></a>
-      </div>
-
-      <div set="textContent: errorTxt;"></div>
-
+    <div class="info-block">
+      <div class="info-block_name" l10n="file-name"></div>
+      <input
+        name="name-input"
+        ref="file_name_input"
+        set="value: fileName; oninput: onNameInput"
+        type="text" />
     </div>
 
-    <div tab-ctx="tab-view" ref="viewport" .viewport>
-      <uc-editable-canvas
-        tab-ctx="tab-view"
-        ref="canvas">
-      </uc-editable-canvas>
+    <div class="info-block">
+      <div class="info-block_name" l10n="file-size"></div>
+      <div set="textContent: fileSize"></div>
     </div>
-  </uc-tabs>
 
-  <div .toolbar>
-    <button
-      .secondary-btn
-      .edit-btn
-      set="onclick: onEdit; @hidden: editBtnHidden;">
-      <uc-icon name="edit"></uc-icon>
-      <span l10n="edit-image"></span>
-    </button>
-    <button
-      .secondary-btn
-      .remove-btn
-      set="onclick: onRemove">
-      <uc-icon name="remove"></uc-icon>
-      <span l10n="remove-from-list"></span>
-    </button>
-    <div></div>
-    <button
-      .primary-btn
-      .back-btn
-      set="onclick: onBack">
-      <span l10n="done"></span>
-    </button>
+    <div class="info-block">
+      <div class="info-block_name" l10n="cdn-url"></div>
+      <a
+        target="_blank"
+        set="textContent: cdnUrl; @href: cdnUrl;"></a>
+    </div>
+
+    <div set="textContent: errorTxt;"></div>
+
   </div>
+
+  <uc-editable-canvas
+    tab-ctx="tab-view"
+    set="@disabled: localImageEditDisabled"
+    ref="canvas">
+  </uc-editable-canvas>
+</uc-tabs>
+
+<div class="toolbar">
+  <button
+    class="edit-btn secondary-btn"
+    set="onclick: onEdit; @hidden: editBtnHidden;">
+    <uc-icon name="edit"></uc-icon>
+    <span l10n="edit-image"></span>
+  </button>
+  <button
+    class="remove-btn secondary-btn"
+    set="onclick: onRemove">
+    <uc-icon name="remove"></uc-icon>
+    <span l10n="remove-from-list"></span>
+  </button>
+  <div></div>
+  <button
+    class="back-btn primary-btn"
+    set="onclick: onBack">
+    <span l10n="done"></span>
+  </button>
 </div>
 `;

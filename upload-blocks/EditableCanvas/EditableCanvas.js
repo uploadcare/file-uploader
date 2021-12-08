@@ -8,6 +8,7 @@ EditorToolbar.reg('editor-toolbar');
 export class EditableCanvas extends BlockComponent {
   init$ = {
     refMap: null,
+    disabled: true,
   };
 
   constructor() {
@@ -67,13 +68,17 @@ export class EditableCanvas extends BlockComponent {
 }
 
 EditableCanvas.template = /*html*/ `
-<canvas .img-view ref="cvs"></canvas>
-<svg .img-view xmlns="http://www.w3.org/2000/svg" ref="svg">
+<canvas class="img-view" ref="cvs"></canvas>
+<svg class="img-view" xmlns="http://www.w3.org/2000/svg" ref="svg">
   <g ref="svg_g">
     <image ref="svg_img" x="0" y="0"></image>
   </g>
 </svg>
 <uc-editor-toolbar 
-  set="refMap: refMap">
+  set="refMap: refMap; @hidden: disabled">
 </uc-editor-toolbar>
 `;
+
+EditableCanvas.bindAttributes({
+  disabled: 'disabled',
+});

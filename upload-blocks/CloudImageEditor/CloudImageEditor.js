@@ -59,7 +59,7 @@ export class CloudImageEditor extends BlockComponent {
     let instance = new editorClass();
 
     let uuid = this.$.uuid;
-    let publicKey = this.$['*pubkey'];
+    let publicKey = this.cfg('pubkey');
     instance.setAttribute('uuid', uuid);
     instance.setAttribute('public-key', publicKey);
 

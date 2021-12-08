@@ -20,7 +20,7 @@ export class ProgressBar extends BlockComponent {
 
 ProgressBar.template = /*html*/ `
 <div
-  .bar
+  class="bar"
   set="style.width: cssWidth">
 </div>
 `;

@@ -1,5 +1,4 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
-import { ActivityComponent } from '../ActivityComponent/ActivityComponent.js';
 
 export class UiConfirmation {
   captionL10nStr = 'confirm-your-action';
@@ -14,7 +13,7 @@ export class UiConfirmation {
   }
 }
 
-export class ConfirmationDialog extends ActivityComponent {
+export class ConfirmationDialog extends BlockComponent {
   activityType = BlockComponent.activities.CONFIRMATION;
 
   _defaults = new UiConfirmation();
@@ -61,18 +60,16 @@ export class ConfirmationDialog extends ActivityComponent {
 
 ConfirmationDialog.template = /*html*/ `
 <div
-  .message
+  class="message"
   set="textContent: messageTxt">
 </div>
-<div .toolbar>
+<div class="toolbar">
   <button
-    .deny-btn
-    .secondary-btn
+    class="deny-btn secondary-btn"
     set="textContent: denyBtnTxt; onclick: onDeny">
   </button>
   <button
-    .confirm-btn
-    .primary-btn
+    class="confirm-btn primary-btn"
     set="textContent: confirmBtnTxt; onclick: onConfirm">
   </button>
 </div>

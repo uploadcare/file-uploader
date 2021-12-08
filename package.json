@@ -24,7 +24,6 @@
     "lint-staged": "^11.1.2",
     "prettier": "^2.0.5",
     "prettier-plugin-jsdoc": "0.0.17",
-    "rimraf": "^2.6.3",
     "typescript": "^3.9.7"
   },
   "eslintIgnore": [

@@ -133,7 +133,7 @@ export class EditorToolbar extends BlockComponent {
       this.rMap = rMap;
       /** @type {CanMan} */
       this.canMan = new CanMan(rMap);
-      console.log(rMap);
+      // console.log(rMap);
     });
     this.sub('*rangeValue', (val) => {
       this.canMan?.[this.rangeCtx]?.(val);
@@ -145,7 +145,7 @@ export class EditorToolbar extends BlockComponent {
 }
 EditorToolbar.template = /*html*/ `
 <div 
-  .btns 
+  class="btns"
   ref="btns" 
   set="onclick: onBtnClick">${getButtons()}</div>
 <uc-range 

@@ -16,7 +16,7 @@ Color.template = /*html*/ `
   type="color" 
   set="oninput: onChange; style.opacity: inputOpacity">
 <div 
-  .current-color 
+  class="current-color"
   set="style.backgroundColor: *selectedColor">
 </div>
 `;

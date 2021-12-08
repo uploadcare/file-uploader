@@ -1,12 +1,11 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
-import { ActivityComponent } from '../ActivityComponent/ActivityComponent.js';
 
-export class CameraSource extends ActivityComponent {
+export class CameraSource extends BlockComponent {
   activityType = BlockComponent.activities.CAMERA;
 
   init$ = {
     video: null,
-    videoTransformCss: this.config.CAMERA_MIRROR ? 'scaleX(-1)' : null,
+    videoTransformCss: this.cfg('camera-mirror') ? 'scaleX(-1)' : null,
     onCancel: () => {
       this.set$({
         '*currentActivity': BlockComponent.activities.SOURCE_SELECT,
@@ -36,6 +35,15 @@ export class CameraSource extends ActivityComponent {
     this._ctx = this._canvas.getContext('2d');
     this._stream = await navigator.mediaDevices.getUserMedia(constr);
     this.$.video = this._stream;
+    this._initialized = true;
+  }
+
+  _deInit() {
+    if (this._initialized) {
+      this._stream?.getTracks()[0].stop();
+      this.$.video = null;
+      this._initialized = false;
+    }
   }
 
   _shot() {
@@ -63,20 +71,19 @@ export class CameraSource extends ActivityComponent {
     });
   }
 
-  onActivate() {
-    super.onActivate();
-    this._init();
-
-    this.set$({
-      '*modalCaption': this.l10n('caption-camera'),
-      '*modalIcon': 'camera',
+  initCallback() {
+    this.registerActivity(this.activityType, () => {
+      this.set$({
+        '*modalCaption': this.l10n('caption-camera'),
+        '*modalIcon': 'camera',
+      });
+      this._init();
     });
-  }
-
-  onDeactivate() {
-    super.onDeactivate();
-    this._stream?.getTracks()[0].stop();
-    this.$.video = null;
+    this.sub('*currentActivity', (val) => {
+      if (val !== this.activityType) {
+        this._deInit();
+      }
+    });
   }
 }
 
@@ -89,16 +96,14 @@ CameraSource.template = /*html*/ `
     ref="video">
   </video>
 </div>
-<div .toolbar>
+<div class="toolbar">
   <button
-    .cancel-btn
-    .secondary-btn
+    class="cancel-btn secondary-btn"
     set="onclick: onCancel"
     l10n="cancel">
   </button>
   <button
-    .shot-btn
-    .primary-btn
+    class="shot-btn primary-btn"
     set="onclick: onShot"
     l10n="camera-shot">
   </button>

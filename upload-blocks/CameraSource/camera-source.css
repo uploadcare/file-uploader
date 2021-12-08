@@ -1,7 +1,4 @@
 uc-camera-source {
-  --activity-desired-w: 100%;
-  --activity-desired-h: var(--modal-max-h);
-
   display: grid;
   grid-template-rows: auto max-content;
   height: 100%;
@@ -11,7 +8,6 @@ uc-camera-source .video-wrapper {
   overflow: hidden;
 }
 uc-camera-source video {
-  position: absolute;
   display: block;
   background-color: var(--clr-background);
   width: 100%;
@@ -22,9 +18,4 @@ uc-camera-source .toolbar {
   justify-content: space-between;
   padding: var(--gap-mid);
 }
-uc-camera-source .shot-btn {
-  /* nothing to say */
-}
-uc-camera-source .cancel-btn {
-  /* nothing to say */
-}
+

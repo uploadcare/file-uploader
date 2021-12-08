@@ -1,7 +1,6 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 import { registerMessage, unregisterMessage } from './messages.js';
 import { uploadFile } from '../../ext_modules/upload-client.js';
-import { ActivityComponent } from '../ActivityComponent/ActivityComponent.js';
 
 let styleToCss = (style) => {
   let css = Object.keys(style).reduce((acc, selector) => {
@@ -15,7 +14,7 @@ let styleToCss = (style) => {
   return css;
 };
 
-export class ExternalSource extends ActivityComponent {
+export class ExternalSource extends BlockComponent {
   activityType = BlockComponent.activities.EXTERNAL;
 
   init$ = {
@@ -32,23 +31,24 @@ export class ExternalSource extends ActivityComponent {
 
   _iframe = null;
 
-  onActivate() {
-    super.onActivate();
+  initCallback() {
+    this.registerActivity(
+      this.activityType,
+      () => {
+        let { externalSourceType } = this.activityParams;
 
-    let { externalSourceType } = this.activityParams;
+        this.set$({
+          '*modalCaption': `${externalSourceType[0].toUpperCase()}${externalSourceType.slice(1)}`,
+          '*modalIcon': externalSourceType,
+        });
 
-    this.set$({
-      '*modalCaption': `${externalSourceType[0].toUpperCase()}${externalSourceType.slice(1)}`,
-      '*modalIcon': externalSourceType,
-    });
-
-    this.$.counter = 0;
-    this.mountIframe();
-  }
-
-  onDeactivate() {
-    super.onDeactivate();
-    this.unmountIframe();
+        this.$.counter = 0;
+        this.mountIframe();
+      },
+      () => {
+        this.unmountIframe();
+      }
+    );
   }
 
   sendMessage(message) {
@@ -60,7 +60,7 @@ export class ExternalSource extends ActivityComponent {
 
     // TODO: check for alternatives, see https://github.com/uploadcare/uploadcare-widget/blob/f5d3e8c9f67781bed2eb69814c8f86a4cc035473/src/widget/tabs/remote-tab.js#L102
     let { url } = message;
-    let pubkey = this.config.PUBKEY;
+    let pubkey = this.cfg('pubkey');
     let entry = this.uploadCollection.add({
       externalUrl: url,
     });
@@ -114,7 +114,7 @@ export class ExternalSource extends ActivityComponent {
   }
 
   remoteUrl() {
-    let pubkey = this.config.PUBKEY;
+    let pubkey = this.cfg('pubkey');
     let version = '3.11.3';
     let imagesOnly = false.toString();
     let { externalSourceType } = this.activityParams;
@@ -150,21 +150,20 @@ export class ExternalSource extends ActivityComponent {
 }
 
 ExternalSource.template = /*html*/ `
-<div ref="iframe-wrapper" .iframe-wrapper>
+<div ref="iframe-wrapper" class="iframe-wrapper">
 </div>
-<div .toolbar>
+<div class="toolbar">
   <button
-    .cancel-btn
-    .secondary-btn
+    class="cancel-btn secondary-btn"
     set="onclick: onCancel"
     l10n="cancel">
   </button>
   <div></div>
-  <div .selected-counter>
+  <div class="selected-counter">
     <span l10n="selected-count"></span>
     <span set="textContent: counter"></span>
   </div>
-  <button .done-btn .primary-btn set="onclick: onDone">
+  <button class="done-btn primary-btn" set="onclick: onDone">
     <uc-icon name="check"></uc-icon>
   </button>
 </div>

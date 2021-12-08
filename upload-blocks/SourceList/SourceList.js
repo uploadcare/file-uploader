@@ -2,7 +2,11 @@ import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 
 export class SourceList extends BlockComponent {
   initCallback() {
-    let list = this.config.SRC_LIST.split(',').map((srcName) => {
+    let srcListStr = this.cfg('source-list');
+    if (!srcListStr) {
+      return;
+    }
+    let list = srcListStr.split(',').map((srcName) => {
       return srcName.trim();
     });
     let html = '';

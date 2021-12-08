@@ -15,6 +15,9 @@ export class FileItem extends BlockComponent {
     progressOpacity: 1,
     notImage: true,
     badgeIcon: 'check',
+    '*focusedEntry': null,
+    '*uploadTrigger': null,
+
     onEdit: () => {
       this.set$({
         '*focusedEntry': this.entry,
@@ -22,10 +25,11 @@ export class FileItem extends BlockComponent {
       });
     },
     onRemove: () => {
-      this.uploadCollection.remove(this.entry.__ctxId);
+      this.uploadCollection.remove(this.uid);
     },
-    '*focusedEntry': null,
-    '*uploadTrigger': null,
+    onUpload: () => {
+      this.upload();
+    },
   };
 
   _observerCallback(entries) {
@@ -43,7 +47,7 @@ export class FileItem extends BlockComponent {
       return;
     }
     if (this.file?.type.includes('image')) {
-      resizeImage(this.file, 76).then((url) => {
+      resizeImage(this.file, this.cfg('thumb-size') || 76).then((url) => {
         this.$.thumbUrl = `url(${url})`;
       });
     } else {
@@ -62,6 +66,8 @@ export class FileItem extends BlockComponent {
       if (!id) {
         return;
       }
+      this.uid = id;
+
       /** @type {import('../../ext_modules/symbiote.js').TypedData} */
       this.entry = this.uploadCollection?.read(id);
 
@@ -77,7 +83,8 @@ export class FileItem extends BlockComponent {
         this.setAttribute('loaded', '');
         let url = `https://ucarecdn.com/${uuid}/`;
         this._revokeThumbUrl();
-        this.$.thumbUrl = `url(${url}-/scale_crop/76x76/)`;
+        let size = this.cfg('thumb-size') || 76;
+        this.$.thumbUrl = `url(${url}-/scale_crop/${size}x${size}/)`;
       });
 
       this.entry.subscribe('transformationsUrl', (transformationsUrl) => {
@@ -85,12 +92,13 @@ export class FileItem extends BlockComponent {
           return;
         }
         this._revokeThumbUrl();
-        this.$.thumbUrl = `url(${transformationsUrl}-/scale_crop/76x76/)`;
+        let size = this.cfg('thumb-size') || 76;
+        this.$.thumbUrl = `url(${transformationsUrl}-/scale_crop/${size}x${size}/)`;
       });
 
       this.file = this.entry.getValue('file');
 
-      if (!this.config.CONFIRM_UPLOAD) {
+      if (!this.cfg('confirm-upload')) {
         this.upload();
       }
 
@@ -137,14 +145,15 @@ export class FileItem extends BlockComponent {
     this.removeAttribute('error');
     this.setAttribute('uploading', '');
     let storeSetting = {};
-    if (Object.keys(this.config).includes('STORE')) {
-      storeSetting.store = !!this.config.STORE;
+    let store = this.cfg('store');
+    if (store !== null) {
+      storeSetting.store = !!store;
     }
     try {
       // @ts-ignore
       let fileInfo = await uploadFile(this.file, {
         ...storeSetting,
-        publicKey: this.config.PUBKEY,
+        publicKey: this.cfg('pubkey'),
         onProgress: (progress) => {
           let percentage = progress.value * 100;
           this.$.progressWidth = percentage + '%';
@@ -177,21 +186,24 @@ export class FileItem extends BlockComponent {
 
 FileItem.template = /*html*/ `
 <div
-  .thumb
+  class="thumb"
   set="style.backgroundImage: thumbUrl">
-  <div .badge>
+  <div class="badge">
     <uc-icon set="@name: badgeIcon"></uc-icon>
   </div>
 </div>
-<div .file-name set="textContent: fileName"></div>
-<button .edit-btn set="onclick: onEdit;">
+<div class="file-name" set="textContent: fileName"></div>
+<button class="edit-btn" set="onclick: onEdit;">
   <uc-icon name="edit-file"></uc-icon>
 </button>
-<button .remove-btn set="onclick: onRemove;">
+<button class="remove-btn" set="onclick: onRemove;">
   <uc-icon name="remove-file"></uc-icon>
 </button>
+<button class="upload-btn" set="onclick: onUpload;">
+  <uc-icon name="upload"></uc-icon>
+</button>
 <div
-  .progress
+  class="progress"
   set="style.width: progressWidth; style.opacity: progressOpacity">
 </div>
 `;
