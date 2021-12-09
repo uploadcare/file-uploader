@@ -2,7 +2,7 @@
 
   /* Base values */
 
-  --darkmode: 0; /* ??? */
+  --darkmode: 1;
 
   --h-foreground: 208;
   --s-foreground: 4%;

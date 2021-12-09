@@ -6,18 +6,21 @@
 
 <uc-simple-btn class="uc-wgt-common"></uc-simple-btn>
 
-<uc-modal class="uc-wgt-common">
-  <uc-activity-wrapper activity="source-select">
+<uc-modal 
+  strokes 
+  class="uc-wgt-common">
+  <uc-activity-icon slot="heading"></uc-activity-icon>
+  <uc-activity-caption slot="heading"></uc-activity-caption>
+  <uc-start-from>
     <uc-source-list wrap></uc-source-list>
     <uc-drop-area></uc-drop-area>
-  </uc-activity-wrapper>
+  </uc-start-from>
   <uc-upload-list></uc-upload-list>
   <uc-camera-source></uc-camera-source>
   <uc-url-source></uc-url-source>
   <uc-external-source></uc-external-source>
   <uc-upload-details></uc-upload-details>
   <uc-confirmation-dialog></uc-confirmation-dialog>
-  <uc-cloud-image-editor></uc-cloud-image-editor>
 </uc-modal>
 
 <uc-message-box class="uc-wgt-common"></uc-message-box>
