@@ -42,6 +42,9 @@ export class DataOutput extends BlockComponent {
         }
         this._input.value = JSON.stringify(data);
       }
+      if (this.hasAttribute(DataOutput.consoleAttrName)) {
+        console.log(data);
+      }
     });
   }
 }
@@ -49,5 +52,6 @@ export class DataOutput extends BlockComponent {
 DataOutput.outputEventName = 'data-output';
 DataOutput.templateAttrName = 'item-template';
 DataOutput.fireEventAttrName = 'fire-event';
+DataOutput.consoleAttrName = 'console';
 DataOutput.formValueAttrName = 'form-value';
 DataOutput.defaultFrom = '*outputData';

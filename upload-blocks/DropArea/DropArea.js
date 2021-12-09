@@ -1,32 +1,43 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
+import { DropzoneState, addDropzone } from './addDropzone.js';
 
 export class DropArea extends BlockComponent {
+  init$ = {
+    state: DropzoneState.INACTIVE,
+  };
   initCallback() {
-    this.addEventListener('dragover', (e) => {
-      e.stopPropagation();
-      e.preventDefault();
-    });
-    this.addEventListener(
-      'drop',
-      (e) => {
-        e.stopPropagation();
-        e.preventDefault();
-        if (e.dataTransfer.files) {
-          [...e.dataTransfer.files].forEach((/** @type {File} */ file) => {
-            this.uploadCollection.add({
-              file,
-              isImage: file.type.includes('image'),
-              mimeType: file.type,
-              fileName: file.name,
-              fileSize: file.size,
-            });
-          });
-          this.set$({
-            '*currentActivity': BlockComponent.activities.UPLOAD_LIST,
-          });
-        }
+    this._destroyDropzone = addDropzone({
+      element: this,
+      onChange: (state) => {
+        this.$.state = state;
       },
-      false
-    );
+      onFiles: (files) => {
+        files.forEach((/** @type {File} */ file) => {
+          this.uploadCollection.add({
+            file,
+            isImage: file.type.includes('image'),
+            mimeType: file.type,
+            fileName: file.name,
+            fileSize: file.size,
+          });
+        });
+        this.set$({
+          '*currentActivity': BlockComponent.activities.UPLOAD_LIST,
+        });
+      },
+    });
+
+    this.sub('state', (state) => {
+      const stateText = Object.entries(DropzoneState)
+        .find(([, value]) => value === state)?.[0]
+        .toLowerCase();
+      if (stateText) {
+        this.setAttribute('drag-state', stateText);
+      }
+    });
+  }
+
+  destroyCallback() {
+    this._destroyDropzone?.();
   }
 }

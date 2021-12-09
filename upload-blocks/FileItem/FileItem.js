@@ -165,6 +165,7 @@ export class FileItem extends BlockComponent {
       this.removeAttribute('uploading');
       this.$.badgeIcon = 'badge-success';
       this.entry.setMultipleValues({
+        fileInfo,
         uuid: fileInfo.uuid,
         uploadProgress: 100,
       });
