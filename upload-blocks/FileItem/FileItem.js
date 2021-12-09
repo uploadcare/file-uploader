@@ -51,7 +51,7 @@ export class FileItem extends BlockComponent {
         this.$.thumbUrl = `url(${url})`;
       });
     } else {
-      this.$.thumbUrl = `url(${fileCssBg()})`;
+      this.$.thumbUrl = `url(${fileCssBg(window.getComputedStyle(this).getPropertyValue('--clr-background-light'))})`;
     }
   }
 

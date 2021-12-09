@@ -32,15 +32,18 @@ export function strokesCssBg(color = 'rgba(0, 0, 0, .1)') {
   </svg>`);
 }
 
-/** @returns {String} */
-export function fileCssBg() {
+/**
+ * @param {String} [color]
+ * @returns {String}
+ */
+export function fileCssBg(color = 'hsl(0, 0%, 100%)') {
   return createSvgBlobUrl(/*svg*/ `
     <svg width="36" height="36" fill="none" xmlns="http://www.w3.org/2000/svg">
       <g filter="url(#a)">
-        <path d="m10 8.00298 11-.00029 5 4.99711v15.0027l-16 .0002V8.00298Z" fill="#fff"/>
+        <path d="m10 8.00298 11-.00029 5 4.99711v15.0027l-16 .0002V8.00298Z" fill="${color}"/>
       </g>
       <g filter="url(#b)">
-        <path d="m21 8 5 5h-5V8Z" fill="#fff"/>
+        <path d="m21 8 5 5h-5V8Z" fill="${color}"/>
       </g>
       <defs>
         <filter id="a" x="8" y="6.50269" width="20" height="24" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
