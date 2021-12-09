@@ -168,7 +168,7 @@ const defaultSettings = {
 const defaultContentType = 'application/octet-stream';
 const defaultFilename = 'original';
 
-var version = '2.0.0';
+var version = '2.1.0';
 
 /**
  * Returns User Agent based on version and settings.
@@ -1427,4 +1427,4 @@ class UploadClient {
     }
 }
 
-export { AbortController, UploadClient, base, fromUrl, fromUrlStatus, group, groupInfo, info, multipartComplete, multipartStart, multipartUpload, uploadFromObject as uploadBase, uploadFile, uploadFileGroup, uploadFromUploaded, uploadFromUrl, uploadMultipart };
+export { AbortController, UploadClient, UploadcareFile, UploadcareGroup, base, fromUrl, fromUrlStatus, group, groupInfo, info, multipartComplete, multipartStart, multipartUpload, uploadFromObject as uploadBase, uploadFile, uploadFileGroup, uploadFromUploaded, uploadFromUrl, uploadMultipart };
