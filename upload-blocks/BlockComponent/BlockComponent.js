@@ -248,7 +248,9 @@ export class BlockComponent extends BaseComponent {
     let data = [];
     let items = this.uploadCollection.items();
     items.forEach((itemId) => {
-      data.push(Data.getNamedCtx(itemId).store);
+      let uploadEntryData = Data.getNamedCtx(itemId).store;
+      let info = uploadEntryData.fileInfo;
+      data.push(info);
     });
     this.$['*outputData'] = data;
   }
