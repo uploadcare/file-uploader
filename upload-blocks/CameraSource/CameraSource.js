@@ -5,7 +5,7 @@ export class CameraSource extends BlockComponent {
 
   init$ = {
     video: null,
-    videoTransformCss: this.cfg('camera-mirror') ? 'scaleX(-1)' : null,
+    videoTransformCss: null,
     onCancel: () => {
       this.set$({
         '*currentActivity': BlockComponent.activities.SOURCE_SELECT,
@@ -74,6 +74,7 @@ export class CameraSource extends BlockComponent {
   initCallback() {
     this.registerActivity(this.activityType, () => {
       this.set$({
+        videoTransformCss: this.cfg('camera-mirror') ? 'scaleX(-1)' : null,
         '*modalCaption': this.l10n('caption-camera'),
         '*modalIcon': 'camera',
       });
@@ -88,14 +89,13 @@ export class CameraSource extends BlockComponent {
 }
 
 CameraSource.template = /*html*/ `
-<div .video-wrapper>
-  <video
-    autoplay
-    playsinline
-    set="srcObject: video; style.transform: videoTransformCss"
-    ref="video">
-  </video>
-</div>
+<video
+  autoplay
+  playsinline
+  set="srcObject: video; style.transform: videoTransformCss"
+  ref="video">
+</video>
+
 <div class="toolbar">
   <button
     class="cancel-btn secondary-btn"

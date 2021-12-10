@@ -7,12 +7,12 @@
   --cfg-img-only: 0;
   --cfg-accept: '';
   --cfg-store: 1;
-  --cfg-camera-mirror: 0;
+  --cfg-camera-mirror: 1;
   --cfg-source-list: 'local, url, camera, dropbox, gdrive, facebook';
   --cfg-max-files: 10;
   --cfg-max-local-file-size-bytes: 30000;
   --cfg-thumb-size: 76;
-  --cfg-show-empty-list: 1;
+  --cfg-show-empty-list: 0;
   --cfg-use-local-image-editor: 0;
   --cfg-use-cloud-image-editor: 0;
 }
