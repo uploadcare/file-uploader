@@ -62,6 +62,8 @@
   --clr-background-dark: hsl(var(--h-background),var(--s-background),calc(var(--l-background) - 3%));
   --clr-background-light: hsl(var(--h-background),var(--s-background),calc(var(--l-background) + 3%));
 
+  --clr-generic-file-icon: hsl(var(--h-background),var(--s-background),calc(var(--l-background) + 4% * var(--darkmode-minus)));
+
   --clr-accent:  hsl(var(--h-accent),var(--s-accent),var(--l-accent));
   --clr-accent-light:  hsla(var(--h-accent),var(--s-accent),var(--l-accent), 0.5);
   --clr-accent-lightest:  hsla(var(--h-accent),var(--s-accent),var(--l-accent), 0.1);
