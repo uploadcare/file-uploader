@@ -52,7 +52,6 @@ uc-modal > .dialog {
   overflow: hidden;
   width: 100%;
   max-width: var(--modal-max-w);
-  max-height: 100%;
 }
 @media only screen and (max-width: 480px) {
   uc-modal > .dialog {
