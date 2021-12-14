@@ -18,21 +18,7 @@ You can use high-level simple HTML and CSS to customize layouts and define the m
 * CSP friendly - good for secure enterprise usage
 * (Jamstack)[https://jamstack.org/] friendly: enter the new world of web-development
 
-<x-wrap>
-  <h2>Demo:</h2>
-
-  <uc-default-widget 
-    css-src="../upload-blocks/build/uc-basic.css">
-  </uc-default-widget>
-
-  <div>&nbsp;</div>
-
-  <uc-default-widget
-    ctx-name="UPLDR2"
-    style="--darkmode:1"
-    css-src="../upload-blocks/build/uc-basic.css">
-  </uc-default-widget>
-<x-wrap>
+<re-htm src="./htm/upload-blocks-demo.htm"></re-htm>
 
 ## 🏠 Integration basics
 Integration HTML-code example:
