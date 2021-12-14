@@ -1,6 +1,5 @@
 .uc-wgt-cfg, .uc-wgt-common, :host {
   --ctx-name: 'my-uploader';
-
   --cfg-pubkey: 'demopublickey';
   --cfg-multiple: 1;
   --cfg-confirm-upload: 1;

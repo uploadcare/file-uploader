@@ -75,7 +75,7 @@ export class UploadList extends BlockComponent {
       }
     });
     this.sub('*uploadList', (/** @type {String[]} */ list) => {
-      if (list.length === 0 && !this.cfg('show-empty-list')) {
+      if (list && list.length === 0 && !this.cfg('show-empty-list')) {
         this.$['*currentActivity'] = BlockComponent.activities.SOURCE_SELECT;
         return;
       }

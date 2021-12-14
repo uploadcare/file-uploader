@@ -8,6 +8,11 @@ const buildSequence = [
     minifyHtml: false,
   },
   {
+    in: './upload-blocks/DefaultWidget/DefaultWidget.js',
+    out: './upload-blocks/build/default-widget.js',
+    minifyHtml: false,
+  },
+  {
     in: './upload-blocks/themes/uc-basic/index.css',
     out: './upload-blocks/build/uc-basic.css',
   },
