@@ -165,7 +165,6 @@ export class FileItem extends BlockComponent {
           this.entry.setValue('uploadProgress', percentage);
         },
       });
-      console.log(fileInfo);
       this.$.progressOpacity = 0;
       this.setAttribute('loaded', '');
       this.removeAttribute('uploading');
