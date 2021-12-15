@@ -1,7 +1,6 @@
 import { create } from '../../ext_modules/symbiote.js';
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 import { registerMessage, unregisterMessage } from './messages.js';
-import { uploadFile } from '../../ext_modules/upload-client.js';
 
 let styleToCss = (style) => {
   let css = Object.keys(style).reduce((acc, selector) => {
@@ -60,26 +59,8 @@ export class ExternalSource extends BlockComponent {
 
     // TODO: check for alternatives, see https://github.com/uploadcare/uploadcare-widget/blob/f5d3e8c9f67781bed2eb69814c8f86a4cc035473/src/widget/tabs/remote-tab.js#L102
     let { url } = message;
-    let pubkey = this.cfg('pubkey');
-    let entry = this.uploadCollection.add({
+    this.uploadCollection.add({
       externalUrl: url,
-    });
-    // @ts-ignore
-    let fileInfo = await uploadFile(url, {
-      publicKey: pubkey,
-      onProgress: (progress) => {
-        let percentage = progress.value * 100;
-        entry.setValue('uploadProgress', percentage);
-      },
-    });
-    console.log(fileInfo);
-    entry.setMultipleValues({
-      fileInfo,
-      uuid: fileInfo.uuid,
-      fileName: fileInfo.name,
-      fileSize: fileInfo.size,
-      isImage: fileInfo.isImage,
-      mimeType: fileInfo.mimeType,
     });
   }
 
@@ -154,8 +135,8 @@ export class ExternalSource extends BlockComponent {
 }
 
 ExternalSource.template = /*html*/ `
-<div 
-  ref="iframeWrapper" 
+<div
+  ref="iframeWrapper"
   class="iframe-wrapper">
 </div>
 <div class="toolbar">
