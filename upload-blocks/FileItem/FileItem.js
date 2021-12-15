@@ -203,7 +203,7 @@ FileItem.template = /*html*/ `
   </div>
 </div>
 <div class="file-name-wrapper">
-  <span class="file-name" set="textContent: itemName"></span>
+  <span class="file-name" set="textContent: itemName; @title: itemName"></span>
 </div>
 <button class="edit-btn" set="onclick: onEdit;">
   <uc-icon name="edit-file"></uc-icon>

@@ -70,6 +70,7 @@
   --l10n-file-name: 'Name';
   --l10n-file-size: 'Size';
   --l10n-cdn-url: 'CDN URL';
+  --l10n-file-size-unknown: 'Unknown';
 }
 
 .uc-wgt-l10n_ru {

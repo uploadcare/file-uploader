@@ -5,7 +5,7 @@ export class UploadDetails extends BlockComponent {
 
   init$ = {
     localImageEditDisabled: true,
-    fileSize: this.fileSizeFmt(0),
+    fileSize: null,
     fileName: '',
     notUploaded: true,
     cdnUrl: '',
@@ -30,6 +30,7 @@ export class UploadDetails extends BlockComponent {
 
   initCallback() {
     this.$.localImageEditDisabled = !this.cfg('use-local-image-editor');
+    this.$.fileSize = this.l10n('file-size-unknown');
     this.registerActivity(this.activityType, () => {
       this.set$({
         '*modalCaption': this.l10n('caption-edit-file'),
@@ -79,7 +80,7 @@ export class UploadDetails extends BlockComponent {
         };
       });
       tmpSub('fileSize', (size) => {
-        this.$.fileSize = this.fileSizeFmt(size);
+        this.$.fileSize = Number.isFinite(size) ? this.fileSizeFmt(size) : this.l10n('file-size-unknown');
       });
       tmpSub('uuid', (uuid) => {
         if (uuid) {
@@ -119,7 +120,7 @@ UploadDetails.template = /*html*/ `
 <uc-tabs
   tab-list="tab-view, tab-details">
 
-  <div 
+  <div
     tab-ctx="tab-details"
     class="details">
 

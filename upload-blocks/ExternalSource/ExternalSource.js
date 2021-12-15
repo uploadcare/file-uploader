@@ -1,18 +1,7 @@
 import { create } from '../../ext_modules/symbiote.js';
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 import { registerMessage, unregisterMessage } from './messages.js';
-
-let styleToCss = (style) => {
-  let css = Object.keys(style).reduce((acc, selector) => {
-    let propertiesObj = style[selector];
-    let propertiesStr = Object.keys(propertiesObj).reduce((acc, prop) => {
-      let value = propertiesObj[prop];
-      return acc + `${prop}: ${value};`;
-    }, '');
-    return acc + `${selector}{${propertiesStr}}`;
-  }, '');
-  return css;
-};
+import { buildStyles } from './buildStyles.js';
 
 export class ExternalSource extends BlockComponent {
   activityType = BlockComponent.activities.EXTERNAL;
@@ -58,9 +47,10 @@ export class ExternalSource extends BlockComponent {
     this.$.counter = this.$.counter + 1;
 
     // TODO: check for alternatives, see https://github.com/uploadcare/uploadcare-widget/blob/f5d3e8c9f67781bed2eb69814c8f86a4cc035473/src/widget/tabs/remote-tab.js#L102
-    let { url } = message;
+    let { url, filename } = message;
     this.uploadCollection.add({
       externalUrl: url,
+      fileName: filename,
     });
   }
 
@@ -74,24 +64,17 @@ export class ExternalSource extends BlockComponent {
   }
 
   applyStyles() {
-    let styleObj = {
-      body: {
-        color: this.getCssValue('--clr-txt'),
-      },
-      '.side-bar': {
-        'background-color': this.getCssValue('--clr-background-light'),
-      },
-      '.list-table-row': {
-        color: this.getCssValue('--clr-txt'),
-      },
-      '.list-table-row:hover': {
-        background: this.getCssValue('--clr-shade-lv1'),
-      },
+    let colors = {
+      backgroundColor: this.getCssValue('--clr-background-light'),
+      textColor: this.getCssValue('--clr-txt'),
+      shadeColor: this.getCssValue('--clr-shade-lv1'),
+      linkColor: '#157cfc',
+      linkColorHover: '#3891ff',
     };
 
     this.sendMessage({
       type: 'embed-css',
-      style: styleToCss(styleObj),
+      style: buildStyles(colors),
     });
   }
 
