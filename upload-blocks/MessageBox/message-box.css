@@ -6,11 +6,11 @@ uc-message-box {
   right: var(--gap-mid);
   display: grid;
   grid-template-rows: min-content auto;
-  background-color: var(--clr-background);
+  background: var(--clr-background);
   color: var(--clr-txt);
   font-size: 0.9em;
-  transition: 0.4s;
-  border-radius: var(--border-radius-max);
+  transition: calc(var(--transition-duration) * 2);
+  border-radius: var(--border-radius-frame);
   box-shadow: var(--modal-shadow);
 }
 uc-message-box:not([active]) {
@@ -19,8 +19,8 @@ uc-message-box:not([active]) {
   transform: translateY(10px);
 }
 uc-message-box[error] {
+  background-color: var(--clr-error-message-bgr);
   color: var(--clr-error);
-  background-color: var(--clr-error-light);
 }
 
 uc-message-box .heading {
@@ -37,13 +37,13 @@ uc-message-box .heading button {
   background-color: transparent;
   width: var(--ui-size);
   color: currentColor;
-  opacity: var(--opacity-mid);
+  opacity: var(--opacity-normal);
 }
 uc-message-box .heading button:hover {
-  opacity: var(--opacity-max);
+  opacity: var(--opacity-hover);
 }
 uc-message-box .heading button:active {
-  opacity: 1;
+  opacity: var(--opacity-active);
 }
 uc-message-box .msg {
   padding: var(--gap-max);

@@ -24,7 +24,7 @@ button {
   padding-right: 1.4em;
   border: none;
   height: var(--ui-size);
-  border-radius: var(--border-radius-mid);
+  border-radius: var(--border-radius-element);
   font-family: inherit;
   cursor: pointer;
   white-space: nowrap;
@@ -81,7 +81,7 @@ input[type="text"] {
   box-shadow: var(--inset-shadow);
   color: var(--clr-txt);
   transition: var(--transition-duration);
-  border-radius: var(--border-radius-mid);
+  border-radius: var(--border-radius-element);
 }
 input[type="text"]:hover {
   border-color: var(--clr-accent-light);
