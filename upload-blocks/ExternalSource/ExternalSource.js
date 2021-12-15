@@ -1,19 +1,7 @@
 import { create } from '../../ext_modules/symbiote.js';
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 import { registerMessage, unregisterMessage } from './messages.js';
-import { uploadFile } from '../../ext_modules/upload-client.js';
-
-let styleToCss = (style) => {
-  let css = Object.keys(style).reduce((acc, selector) => {
-    let propertiesObj = style[selector];
-    let propertiesStr = Object.keys(propertiesObj).reduce((acc, prop) => {
-      let value = propertiesObj[prop];
-      return acc + `${prop}: ${value};`;
-    }, '');
-    return acc + `${selector}{${propertiesStr}}`;
-  }, '');
-  return css;
-};
+import { buildStyles } from './buildStyles.js';
 
 export class ExternalSource extends BlockComponent {
   activityType = BlockComponent.activities.EXTERNAL;
@@ -59,27 +47,10 @@ export class ExternalSource extends BlockComponent {
     this.$.counter = this.$.counter + 1;
 
     // TODO: check for alternatives, see https://github.com/uploadcare/uploadcare-widget/blob/f5d3e8c9f67781bed2eb69814c8f86a4cc035473/src/widget/tabs/remote-tab.js#L102
-    let { url } = message;
-    let pubkey = this.cfg('pubkey');
-    let entry = this.uploadCollection.add({
+    let { url, filename } = message;
+    this.uploadCollection.add({
       externalUrl: url,
-    });
-    // @ts-ignore
-    let fileInfo = await uploadFile(url, {
-      publicKey: pubkey,
-      onProgress: (progress) => {
-        let percentage = progress.value * 100;
-        entry.setValue('uploadProgress', percentage);
-      },
-    });
-    console.log(fileInfo);
-    entry.setMultipleValues({
-      fileInfo,
-      uuid: fileInfo.uuid,
-      fileName: fileInfo.name,
-      fileSize: fileInfo.size,
-      isImage: fileInfo.isImage,
-      mimeType: fileInfo.mimeType,
+      fileName: filename,
     });
   }
 
@@ -93,24 +64,17 @@ export class ExternalSource extends BlockComponent {
   }
 
   applyStyles() {
-    let styleObj = {
-      body: {
-        color: this.getCssValue('--clr-txt'),
-      },
-      '.side-bar': {
-        'background-color': this.getCssValue('--clr-background-light'),
-      },
-      '.list-table-row': {
-        color: this.getCssValue('--clr-txt'),
-      },
-      '.list-table-row:hover': {
-        background: this.getCssValue('--clr-shade-lv1'),
-      },
+    let colors = {
+      backgroundColor: this.getCssValue('--clr-background-light'),
+      textColor: this.getCssValue('--clr-txt'),
+      shadeColor: this.getCssValue('--clr-shade-lv1'),
+      linkColor: '#157cfc',
+      linkColorHover: '#3891ff',
     };
 
     this.sendMessage({
       type: 'embed-css',
-      style: styleToCss(styleObj),
+      style: buildStyles(colors),
     });
   }
 
@@ -154,8 +118,8 @@ export class ExternalSource extends BlockComponent {
 }
 
 ExternalSource.template = /*html*/ `
-<div 
-  ref="iframeWrapper" 
+<div
+  ref="iframeWrapper"
   class="iframe-wrapper">
 </div>
 <div class="toolbar">

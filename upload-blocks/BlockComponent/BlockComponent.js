@@ -122,7 +122,7 @@ export class BlockComponent extends BaseComponent {
 
   connected() {
     if (!this.__connectedOnce) {
-      if (!externalPropsAdded) {
+      if (!BlockComponent._ctxConnectionsList.includes(this.ctxName)) {
         this.add$({
           '*currentActivity': '',
           '*currentActivityParams': {},
@@ -131,7 +131,7 @@ export class BlockComponent extends BaseComponent {
           '*uploadList': [],
           '*outputData': null,
         });
-        externalPropsAdded = true;
+        BlockComponent._ctxConnectionsList.push(this.ctxName);
       }
 
       super.connectedCallback();
@@ -141,6 +141,7 @@ export class BlockComponent extends BaseComponent {
           this.setAttribute('activity', this.activityType);
         }
         this.sub('*currentActivity', (/** @type {String} */ val) => {
+          let activityKey = val ? this.ctxName + val : '';
           if (!val || this.activityType !== val) {
             this.removeAttribute(ACTIVE_ATTR);
           } else {
@@ -150,7 +151,8 @@ export class BlockComponent extends BaseComponent {
               history.push(val);
             }
             this.setAttribute(ACTIVE_ATTR, '');
-            let actDesc = BlockComponent._activityRegistry[val];
+
+            let actDesc = BlockComponent._activityRegistry[activityKey];
             if (actDesc) {
               actDesc.activateCallback?.();
               if (BlockComponent._lastActivity) {
@@ -161,7 +163,7 @@ export class BlockComponent extends BaseComponent {
               }
             }
           }
-          BlockComponent._lastActivity = val;
+          BlockComponent._lastActivity = activityKey;
         });
       }
       this.__connectedOnce = true;
@@ -179,7 +181,8 @@ export class BlockComponent extends BaseComponent {
     if (!BlockComponent._activityRegistry) {
       BlockComponent._activityRegistry = Object.create(null);
     }
-    BlockComponent._activityRegistry[name] = {
+    let actKey = this.ctxName + name;
+    BlockComponent._activityRegistry[actKey] = {
       activateCallback,
       deactivateCallback,
     };
@@ -271,6 +274,9 @@ BlockComponent._activityRegistry = Object.create(null);
 
 /** @type {String} */
 BlockComponent._lastActivity = '';
+
+/** @type {String[]} */
+BlockComponent._ctxConnectionsList = [];
 
 BlockComponent.activities = Object.freeze({
   SOURCE_SELECT: 'source-select',

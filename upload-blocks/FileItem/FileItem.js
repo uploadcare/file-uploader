@@ -8,7 +8,7 @@ export class FileItem extends BlockComponent {
   pauseRender = true;
 
   init$ = {
-    fileName: '',
+    itemName: '',
     thumb: '',
     thumbUrl: '',
     progressWidth: 0,
@@ -72,7 +72,11 @@ export class FileItem extends BlockComponent {
       this.entry = this.uploadCollection?.read(id);
 
       this.entry.subscribe('fileName', (name) => {
-        this.$.fileName = name || this.l10n('file-no-name');
+        this.$.itemName = name || this.externalUrl || this.l10n('file-no-name');
+      });
+
+      this.entry.subscribe('externalUrl', (externalUrl) => {
+        this.$.itemName = this.entry.getValue('fileName') || externalUrl || this.l10n('file-no-name');
       });
 
       this.entry.subscribe('uuid', (uuid) => {
@@ -97,6 +101,7 @@ export class FileItem extends BlockComponent {
       });
 
       this.file = this.entry.getValue('file');
+      this.externalUrl = this.entry.getValue('externalUrl');
 
       if (!this.cfg('confirm-upload')) {
         this.upload();
@@ -151,7 +156,7 @@ export class FileItem extends BlockComponent {
     }
     try {
       // @ts-ignore
-      let fileInfo = await uploadFile(this.file, {
+      let fileInfo = await uploadFile(this.file || this.externalUrl, {
         ...storeSetting,
         publicKey: this.cfg('pubkey'),
         onProgress: (progress) => {
@@ -168,12 +173,16 @@ export class FileItem extends BlockComponent {
         fileInfo,
         uuid: fileInfo.uuid,
         uploadProgress: 100,
+        fileName: fileInfo.name,
+        fileSize: fileInfo.size,
+        isImage: fileInfo.isImage,
+        mimeType: fileInfo.mimeType,
       });
     } catch (error) {
       this.setAttribute('error', '');
       this.removeAttribute('uploading');
       let msg = new UiMessage();
-      msg.caption = this.l10n('upload-error') + ': ' + this.file.name;
+      msg.caption = this.l10n('upload-error') + ': ' + (this.file?.name || this.externalUrl);
       msg.text = error;
       msg.isError = true;
       this.set$({
@@ -193,9 +202,8 @@ FileItem.template = /*html*/ `
     <uc-icon set="@name: badgeIcon"></uc-icon>
   </div>
 </div>
-<div class="file-text">
-  <div class="file-name" set="textContent: fileName"></div>
-  <div class="file-error">File is too large</div>
+<div class="file-name-wrapper">
+  <span class="file-name" set="textContent: itemName; @title: itemName"></span>
 </div>
 <button class="edit-btn" set="onclick: onEdit;">
   <uc-icon name="edit-file"></uc-icon>

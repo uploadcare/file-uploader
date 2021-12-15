@@ -1,9 +1,10 @@
 <base href="../../">
 
 <script type="module">
-import { UploadWidget } from './upload-blocks/index.js';
+import { UC } from './upload-blocks/index.js';
 
-UploadWidget.template = /*html*/ `
+class WGT extends UC.BlockComponent {}
+WGT.template = /*html*/ `
 <uc-simple-btn></uc-simple-btn>
 
 <uc-modal strokes>
@@ -29,7 +30,7 @@ UploadWidget.template = /*html*/ `
   fire-event></uc-data-output>
 `;
 
-UploadWidget.reg('uc-upload-wgt');
+WGT.reg('upload-wgt');
 </script>
 
 <uc-upload-wgt
