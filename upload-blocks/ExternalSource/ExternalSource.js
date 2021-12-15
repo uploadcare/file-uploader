@@ -58,9 +58,10 @@ export class ExternalSource extends BlockComponent {
     this.$.counter = this.$.counter + 1;
 
     // TODO: check for alternatives, see https://github.com/uploadcare/uploadcare-widget/blob/f5d3e8c9f67781bed2eb69814c8f86a4cc035473/src/widget/tabs/remote-tab.js#L102
-    let { url } = message;
+    let { url, filename } = message;
     this.uploadCollection.add({
       externalUrl: url,
+      fileName: filename,
     });
   }
 
