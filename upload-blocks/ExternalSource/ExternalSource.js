@@ -75,18 +75,81 @@ export class ExternalSource extends BlockComponent {
   }
 
   applyStyles() {
+    let background = this.getCssValue('--clr-background-light');
+    let textColor = this.getCssValue('--clr-txt');
+    let shade = this.getCssValue('--clr-shade-lv1');
+    let border = `solid 1px ${shade}`;
+
+    // TODO: get link colors from the theme
+    let linkColor = '#157cfc';
+    let linkColorHover = '#3891ff';
+
+    // TODO: we need to update source source styles, add css custom properties to control theme
     let styleObj = {
       body: {
-        color: this.getCssValue('--clr-txt'),
+        color: textColor,
+        'background-color': background,
       },
       '.side-bar': {
-        'background-color': this.getCssValue('--clr-background-light'),
+        background: 'inherit',
+        'border-right': border,
+      },
+      '.main-content': {
+        background: 'inherit',
+      },
+      '.main-content-header': {
+        background: 'inherit',
+      },
+      '.main-content-footer': {
+        background: 'inherit',
       },
       '.list-table-row': {
-        color: this.getCssValue('--clr-txt'),
+        color: 'inherit',
       },
       '.list-table-row:hover': {
-        background: this.getCssValue('--clr-shade-lv1'),
+        background: shade,
+      },
+      '.list-table-row .list-table-cell-a, .list-table-row .list-table-cell-b': {
+        'border-top': border,
+      },
+      '.list-table-body .list-items': {
+        'border-bottom': border,
+      },
+      '.bread-crumbs a': {
+        color: linkColor,
+      },
+      '.bread-crumbs a:hover': {
+        color: linkColorHover,
+      },
+      '.main-content.loading': {
+        background: `${background} url(/static/images/loading_spinner.gif) center no-repeat`,
+        'background-size': '25px 25px',
+      },
+      '.list-icons-item': {
+        background: `center no-repeat ${shade}`,
+      },
+      '.source-gdrive .side-bar-menu a, .source-gphotos .side-bar-menu a': {
+        color: linkColor,
+      },
+      '.source-gdrive .side-bar-menu a, .source-gphotos .side-bar-menu a:hover': {
+        color: linkColorHover,
+      },
+      '.side-bar-menu a': {
+        color: linkColor,
+      },
+      '.side-bar-menu a:hover': {
+        color: linkColorHover,
+      },
+      '.source-gdrive .side-bar-menu .current, .source-gdrive .side-bar-menu a:hover, .source-gphotos .side-bar-menu .current, .source-gphotos .side-bar-menu a:hover':
+        {
+          color: linkColorHover,
+        },
+      '.source-vk .side-bar-menu a': {
+        color: linkColor,
+      },
+      '.source-vk .side-bar-menu a:hover': {
+        color: linkColorHover,
+        background: 'none',
       },
     };
 
