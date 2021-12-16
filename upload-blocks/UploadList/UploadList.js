@@ -21,7 +21,7 @@ export class UploadList extends BlockComponent {
     },
     onDone: () => {
       this.set$({
-        '*currentActivity': '',
+        '*currentActivity': this.doneActivity || '',
         '*modalActive': false,
       });
       this.output();
@@ -30,7 +30,7 @@ export class UploadList extends BlockComponent {
       let cfn = new UiConfirmation();
       cfn.confirmAction = () => {
         this.set$({
-          '*currentActivity': '',
+          '*currentActivity': this.cancelActivity || '',
           '*modalActive': false,
         });
         this.uploadCollection.clearAll();

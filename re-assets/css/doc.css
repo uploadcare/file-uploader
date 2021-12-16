@@ -73,6 +73,7 @@ blockquote {
   background-color: var(--clr-accent-shade);
   padding: var(--gap-mid);
   margin: 0;
+  margin-top: var(--gap-max);
   border-left: var(--gap-min) solid currentColor;
 }
 
