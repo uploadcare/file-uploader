@@ -51,12 +51,12 @@ uc-editor-toolbar .btns > button {
   color: var(--clr-txt);
 }
 uc-editor-toolbar .btns > button:first-of-type {
-  border-top-left-radius: var(--border-radius-mid);
-  border-top-right-radius: var(--border-radius-mid);
+  border-top-left-radius: var(--border-radius-element);
+  border-top-right-radius: var(--border-radius-element);
 }
 uc-editor-toolbar .btns > button:last-of-type {
-  border-bottom-left-radius: var(--border-radius-mid);
-  border-bottom-right-radius: var(--border-radius-mid);
+  border-bottom-left-radius: var(--border-radius-element);
+  border-bottom-right-radius: var(--border-radius-element);
 }
 uc-editor-toolbar .btns > button[current] {
   background-color: var(--clr-background);

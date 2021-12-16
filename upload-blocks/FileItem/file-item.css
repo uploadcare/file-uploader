@@ -30,11 +30,13 @@ uc-file-item .thumb {
   background-color: var(--clr-shade-lv1);
   background-size: cover;
   background-position: center center;
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius-thumb);
 }
 uc-file-item .file-name-wrapper {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
   padding-left: var(--gap-mid);
   padding-right: var(--gap-mid);
   color: var(--clr-txt);
@@ -58,19 +60,14 @@ uc-file-item button {
   color: var(--clr-txt-lightest);
   cursor: pointer;
   padding: 0;
-  opacity: var(--opacity-mid);
-  transition: opacity var(--transition-duration), color var(--transition-duration);
+  opacity: var(--opacity-normal);
+  transition: opacity var(--transition-duration);
 }
 uc-file-item .upload-btn {
   display: none;
 }
-
-uc-file-item:hover button,
-uc-file-item[focused] button {
-  opacity: 1;
-}
 uc-file-item button:hover {
-  color: var(--clr-txt-mid);
+  opacity: var(--opacity-hover);
 }
 uc-file-item .progress {
   position: absolute;
