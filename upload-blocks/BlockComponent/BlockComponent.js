@@ -172,6 +172,14 @@ export class BlockComponent extends BaseComponent {
     }
   }
 
+  get doneActivity() {
+    return this.getAttribute('done-activity');
+  }
+
+  get cancelActivity() {
+    return this.getAttribute('cancel-activity');
+  }
+
   /**
    * @param {String} name
    * @param {() => void} [activateCallback]
