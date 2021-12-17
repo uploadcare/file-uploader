@@ -14,8 +14,9 @@
 
 ## 📦 What’s in the box?
 
+* [upload-blocks](./upload-blocks/) - build your onw uploading flow with a simple HTML and CSS
 * Adaptive image delivery tools: all you need to distribute your web images efficiently
-* [File uploading client library: handle files from browser or node](./upload-blocks/)
+* File uploading client library: handle files from browser or node
 * Web components for media content representation: audio, video, image galleries, etc.
 * Cloud image editing tools: tune your pictures on fly
 * Analytic tools: get your page score
