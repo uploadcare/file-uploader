@@ -7,14 +7,14 @@
 ## 🍰 Concept description
 There are so many use cases and many workflows for file uploading... Is it possible to create uploading solution to fit them all? 
 
-We believe - yes, with a power of [Custom Elements standard](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_custom_elements) and our widget-specific open source [Symbiote.js](https://github.com/symbiotejs/symbiote.js) library.
+We believe - yes, with a power of [Custom Elements standard](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_custom_elements) and our widget-purpose-specific open source [Symbiote.js](https://github.com/symbiotejs/symbiote.js) library.
 
 You can use high-level simple HTML and CSS to customize layouts and define the most popular scenarios. You can create your onw blocks from scratch with JavaScript using our super-duper [BlockComponent base-class](./docs/block-component.html).
 
 Key features:
 
 * Easy to use within any modern toolchain: framework, library or CMS
-* Livesycle is controlled from inside, you don't need to manage it in your code
+* Livecycle is controlled from inside, you don't need to manage it in your code
 * You can easyly switch between encapsulated secure styling and common document styles. 
 * Using of [Shadow DOM](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_shadow_DOM) - is up to you
 * Very easy to set any customized data context for the blocks, to controll them in details
@@ -100,12 +100,13 @@ Some of widget settings in this example are passed via CSS variables. That means
 ```
 
 ## ⚙️ More in depth
-* Blocks
-* Contexts
-* Activities
-* Configuration
-* Texts
-* Icons
-* Styling
-* Symbiote.js
-* TypeScript
+* [Configuration](./docs/configuration/)
+* [Texts & localization](./docs/texts/)
+* [Icons](./docs/icons/)
+* [Styling](./docs/styling/)
+* [Blocks](./docs/blocks/)
+* [Contexts](./docs/contexts/)
+* [Activities](./docs/activities/)
+* [TypeScript](./docs/typescript/)
+* [Symbiote.js](https://github.com/symbiotejs/symbiote.js)
+

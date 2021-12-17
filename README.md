@@ -1,4 +1,4 @@
-# 🟡 Uploadcare SDK for JavaScript developers
+# Uploadcare SDK for JavaScript developers
 
 ## 💎 Core concept:
 
@@ -15,7 +15,7 @@
 ## 📦 What’s in the box?
 
 * Adaptive image delivery tools: all you need to distribute your web images efficiently
-* File uploading client library: handle files from browser or node 
+* [File uploading client library: handle files from browser or node](./upload-blocks/)
 * Web components for media content representation: audio, video, image galleries, etc.
 * Cloud image editing tools: tune your pictures on fly
 * Analytic tools: get your page score
