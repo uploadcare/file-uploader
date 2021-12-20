@@ -51,7 +51,8 @@ export class FileItem extends BlockComponent {
         this.$.thumbUrl = `url(${url})`;
       });
     } else {
-      this.$.thumbUrl = `url(${fileCssBg(window.getComputedStyle(this).getPropertyValue('--clr-generic-file-icon'))})`;
+      let color = window.getComputedStyle(this).getPropertyValue('--clr-generic-file-icon');
+      this.$.thumbUrl = `url(${fileCssBg(color)})`;
     }
   }
 
@@ -85,19 +86,24 @@ export class FileItem extends BlockComponent {
         }
         this._observer.unobserve(this);
         this.setAttribute('loaded', '');
-        let url = `https://ucarecdn.com/${uuid}/`;
-        this._revokeThumbUrl();
-        let size = this.cfg('thumb-size') || 76;
-        this.$.thumbUrl = `url(${url}-/scale_crop/${size}x${size}/)`;
+
+        if (this.entry.getValue('isImage')) {
+          let url = `https://ucarecdn.com/${uuid}/`;
+          this._revokeThumbUrl();
+          let size = this.cfg('thumb-size') || 76;
+          this.$.thumbUrl = `url(${url}-/scale_crop/${size}x${size}/center/)`;
+        }
       });
 
       this.entry.subscribe('transformationsUrl', (transformationsUrl) => {
         if (!transformationsUrl) {
           return;
         }
-        this._revokeThumbUrl();
-        let size = this.cfg('thumb-size') || 76;
-        this.$.thumbUrl = `url(${transformationsUrl}-/scale_crop/${size}x${size}/)`;
+        if (this.entry.getValue('isImage')) {
+          this._revokeThumbUrl();
+          let size = this.cfg('thumb-size') || 76;
+          this.$.thumbUrl = `url(${transformationsUrl}-/scale_crop/${size}x${size}/center/)`;
+        }
       });
 
       this.file = this.entry.getValue('file');
@@ -171,12 +177,12 @@ export class FileItem extends BlockComponent {
       this.$.badgeIcon = 'badge-success';
       this.entry.setMultipleValues({
         fileInfo,
-        uuid: fileInfo.uuid,
         uploadProgress: 100,
         fileName: fileInfo.name,
         fileSize: fileInfo.size,
         isImage: fileInfo.isImage,
         mimeType: fileInfo.mimeType,
+        uuid: fileInfo.uuid,
       });
     } catch (error) {
       this.setAttribute('error', '');
