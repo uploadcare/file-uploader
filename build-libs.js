@@ -1,6 +1,19 @@
 import esbuild from 'esbuild';
 import fs from 'fs';
 
+function jsBanner() {
+  const license = fs.readFileSync('./LICENSE').toString();
+  return (
+    '/**\n' +
+    ' * @license\n' +
+    license
+      .split('\n')
+      .map((line) => ` * ${line}`)
+      .join('\n') +
+    '\n */'
+  );
+}
+
 const buildSequence = [
   {
     in: './upload-blocks/index.js',
@@ -33,6 +46,9 @@ function build(buildItem) {
       sourcemap: false,
       outfile: buildItem.out,
       target: 'es2019',
+      banner: {
+        js: jsBanner(),
+      },
     })
     .then(async () => {
       if (!buildItem.minifyHtml) {
