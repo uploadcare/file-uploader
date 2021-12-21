@@ -1,16 +1,18 @@
 import esbuild from 'esbuild';
 import fs from 'fs';
 
-const license = fs.readFileSync('./LICENSE').toString();
-
-export const jsBanner =
-  '/**\n' +
-  ' * @license\n' +
-  license
-    .split('\n')
-    .map((line) => ` * ${line}`)
-    .join('\n') +
-  '\n */';
+function jsBanner() {
+  const license = fs.readFileSync('./LICENSE').toString();
+  return (
+    '/**\n' +
+    ' * @license\n' +
+    license
+      .split('\n')
+      .map((line) => ` * ${line}`)
+      .join('\n') +
+    '\n */'
+  );
+}
 
 const buildSequence = [
   {
@@ -45,7 +47,7 @@ function build(buildItem) {
       outfile: buildItem.out,
       target: 'es2019',
       banner: {
-        js: jsBanner,
+        js: jsBanner(),
       },
     })
     .then(async () => {
