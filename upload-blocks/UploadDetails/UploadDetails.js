@@ -1,9 +1,11 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
+import { fileCssBg } from '../svg-backgrounds/svg-backgrounds.js';
 
 export class UploadDetails extends BlockComponent {
   activityType = BlockComponent.activities.DETAILS;
 
   init$ = {
+    checkerboard: false,
     localImageEditDisabled: true,
     fileSize: null,
     fileName: '',
@@ -27,6 +29,15 @@ export class UploadDetails extends BlockComponent {
       }
     },
   };
+
+  showNonImageThumb() {
+    let color = window.getComputedStyle(this).getPropertyValue('--clr-generic-file-icon');
+    let url = fileCssBg(color, 108, 108);
+    this.eCanvas.setImageUrl(url);
+    this.set$({
+      checkerboard: false,
+    });
+  }
 
   initCallback() {
     this.$.localImageEditDisabled = !this.cfg('use-local-image-editor');
@@ -57,14 +68,20 @@ export class UploadDetails extends BlockComponent {
       this.entry = entry;
       /** @type {File} */
       let file = entry.getValue('file');
+      this.eCanvas.clear();
       if (file) {
         /** @type {File} */
         this._file = file;
-        if (this._file.type.includes('image') && !entry.getValue('transformationsUrl')) {
+        let isImage = this._file.type.includes('image');
+        if (isImage && !entry.getValue('transformationsUrl')) {
           this.eCanvas.setImageFile(this._file);
           this.set$({
+            checkerboard: true,
             editBtnHidden: !this.cfg('use-local-image-editor') && !this.cfg('use-cloud-image-editor'),
           });
+        }
+        if (!isImage) {
+          this.showNonImageThumb();
         }
       }
       let tmpSub = (prop, callback) => {
@@ -84,10 +101,12 @@ export class UploadDetails extends BlockComponent {
       });
       tmpSub('uuid', (uuid) => {
         if (uuid) {
+          this.eCanvas.clear();
           this.set$({
             cdnUrl: `https://ucarecdn.com/${uuid}/`,
             notUploaded: false,
           });
+          this.eCanvas.setImageUrl(this.$.cdnUrl);
         } else {
           this.$.cdnUrl = 'Not uploaded yet...';
         }
@@ -100,8 +119,8 @@ export class UploadDetails extends BlockComponent {
         if (!url) {
           return;
         }
-        if (this.entry.getValue('isImage') && !this.entry.getValue('transformationsUrl')) {
-          this.eCanvas.setImageUrl(this.$.cdnUrl);
+        if (!this.entry.getValue('uuid')) {
+          this.showNonImageThumb();
         }
       });
       tmpSub('transformationsUrl', (url) => {
@@ -151,7 +170,7 @@ UploadDetails.template = /*html*/ `
 
   <uc-editable-canvas
     tab-ctx="tab-view"
-    set="@disabled: localImageEditDisabled"
+    set="@disabled: localImageEditDisabled; @checkerboard: checkerboard;"
     ref="canvas">
   </uc-editable-canvas>
 </uc-tabs>

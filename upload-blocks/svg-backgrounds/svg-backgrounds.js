@@ -36,9 +36,9 @@ export function strokesCssBg(color = 'rgba(0, 0, 0, .1)') {
  * @param {String} [color]
  * @returns {String}
  */
-export function fileCssBg(color = 'hsl(0, 0%, 100%)') {
+export function fileCssBg(color = 'hsl(0, 0%, 100%)', width = 36, height = 36) {
   return createSvgBlobUrl(/*svg*/ `
-  <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <svg width="${width}" height="${height}" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M10.5 28L25.5 27.9997V29.0024L10.5 29.0027V28Z" fill="black" fill-opacity="0.06"/>
     <path d="M9.5 7.50029L21.25 7.5L26.5 12.75V28.4998L9.5 28.5001V7.50029Z" fill="black" fill-opacity="0.06"/>
     <path d="M10 8.00298L21 8.00269L26 12.9998V28.0025L10 28.0027V8.00298Z" fill="${color}"/>

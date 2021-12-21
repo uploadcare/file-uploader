@@ -10,6 +10,7 @@ export class EditableCanvas extends BlockComponent {
     refMap: null,
     disabled: true,
     toolbarHidden: true,
+    checkerboard: false,
   };
 
   constructor() {
@@ -22,9 +23,11 @@ export class EditableCanvas extends BlockComponent {
   }
 
   initCallback() {
-    this.style.backgroundImage = `url(${checkerboardCssBg()})`;
     this.sub('disabled', () => {
       this.$.toolbarHidden = this.hasAttribute('disabled') && this.getAttribute('disabled') !== 'false';
+    });
+    this.sub('checkerboard', () => {
+      this.style.backgroundImage = this.hasAttribute('checkerboard') ? `url(${checkerboardCssBg()})` : 'unset';
     });
     /** @type {HTMLCanvasElement} */
     // @ts-ignore
@@ -69,6 +72,10 @@ export class EditableCanvas extends BlockComponent {
     img.src = url;
     this.setImage(img);
   }
+
+  clear() {
+    this.canvCtx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+  }
 }
 
 EditableCanvas.template = /*html*/ `
@@ -78,11 +85,12 @@ EditableCanvas.template = /*html*/ `
     <image ref="svg_img" x="0" y="0"></image>
   </g>
 </svg>
-<uc-editor-toolbar 
+<uc-editor-toolbar
   set="refMap: refMap; @hidden: toolbarHidden">
 </uc-editor-toolbar>
 `;
 
 EditableCanvas.bindAttributes({
   disabled: 'disabled',
+  checkerboard: 'checkerboard',
 });
