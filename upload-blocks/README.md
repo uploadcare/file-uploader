@@ -23,7 +23,7 @@ Key features:
 * No any expensive for the bandwidth and performance libraries or other heavy dependencies are needed
 * So you have a strict design guides... it's not a problem anymore!
 * Everything is very close to the native browser API's and concepts, you don't need to learn something compleatly new
-* [CSP](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP) friendly - good for secure enterprise usage
+* [Content Security Policy (CSP)](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP) friendly - good for secure enterprise usage
 * [Jamstack](https://jamstack.org/) friendly: enter the new world of web-development!
 
 
