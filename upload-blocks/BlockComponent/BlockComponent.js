@@ -79,9 +79,6 @@ export class BlockComponent extends BaseComponent {
       this.addFiles([...this.fileInput['files']]);
       // To call uploadTrigger UploadList should draw file items first:
       this.$['*currentActivity'] = BlockComponent.activities.UPLOAD_LIST;
-      if (!this.cfg('confirm-upload')) {
-        this.$['*currentActivity'] = '';
-      }
       this.fileInput['value'] = '';
       this.fileInput = null;
     };
