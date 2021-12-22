@@ -112,7 +112,7 @@ export class UploadDetails extends BlockComponent {
         }
       });
       tmpSub('uploadError', (error) => {
-        this.$.errorTxt = error.message;
+        this.$.errorTxt = error?.message;
       });
 
       tmpSub('externalUrl', (url) => {
