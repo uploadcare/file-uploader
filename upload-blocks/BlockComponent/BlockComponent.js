@@ -215,7 +215,7 @@ export class BlockComponent extends BaseComponent {
           let commonProgress = 0;
           /** @type {String[]} */
           let items = uploadCollection.findItems((entry) => {
-            return !entry.getValue('uploadErrorMsg');
+            return !entry.getValue('uploadError');
           });
           items.forEach((id) => {
             commonProgress += uploadCollection.readProp(id, 'uploadProgress');
