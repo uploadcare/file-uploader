@@ -26,9 +26,7 @@ Key features:
 * [Content Security Policy (CSP)](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP) friendly - good for secure enterprise usage
 * [Jamstack](https://jamstack.org/) friendly: enter the new world of web-development!
 
-
-<re-htm src="./docs/common_assets/htm/upload-blocks-demo.htm"></re-htm>
-
+<re-htm src="./doc_assets/upload-blocks-demo.htm"></re-htm>
 
 ## 🏠 Integration basics
 

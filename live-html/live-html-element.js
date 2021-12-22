@@ -158,14 +158,14 @@ export class LiveHtmlElement extends BaseComponent {
         document.execCommand('insertHTML', false, '\n');
       } else if (e.keyCode === 9) {
         e.preventDefault();
-        document.execCommand('insertHTML', false, '&nbsp;&nbsp;');
+        document.execCommand('insertHTML', false, '  ');
       }
     },
-    onPaste: (e) => {
-      e.preventDefault();
-      let text = e.clipboardData.getData('text/plain');
-      document.execCommand('insertText', false, text);
-    },
+    // onPaste: (e) => {
+    //   e.preventDefault();
+    //   let text = e.clipboardData.getData('text/plain');
+    //   document.execCommand('insertText', false, text);
+    // },
   };
 
   initCallback() {
