@@ -14,13 +14,17 @@ function jsBanner() {
   );
 }
 
+let { version: uploadBlocksVersion } = JSON.parse(fs.readFileSync('./upload-blocks/package.json').toString());
+
 const buildSequence = [
   {
+    version: uploadBlocksVersion,
     in: './upload-blocks/index.js',
     out: './upload-blocks/build/upload-blocks.js',
     minifyHtml: false,
   },
   {
+    version: uploadBlocksVersion,
     in: './upload-blocks/DefaultWidget/DefaultWidget.js',
     out: './upload-blocks/build/default-widget.js',
     minifyHtml: false,
@@ -48,6 +52,9 @@ function build(buildItem) {
       target: 'es2019',
       banner: {
         js: jsBanner(),
+      },
+      define: {
+        __VERSION__: JSON.stringify(buildItem.version),
       },
     })
     .then(async () => {
