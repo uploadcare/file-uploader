@@ -4,10 +4,27 @@ uc-drop-area {
   justify-content: center;
   border: var(--border-dashed);
   border-radius: var(--border-radius-frame);
-  background-color: var(--clr-shade-lv1);
   padding: var(--gap-min);
 }
 uc-drop-area::after {
   content: var(--l10n-drop-files-here);
   color: var(--clr-txt-light);
+}
+
+uc-drop-area[drag-state="inactive"] {
+  background-color: var(--clr-shade-lv1);
+}
+
+uc-drop-area[drag-state="active"] {
+  background-color: var(--clr-accent-lightest);
+}
+
+uc-drop-area[drag-state="near"] {
+  background-color: var(--clr-accent-lightest);
+  border-color: var(--clr-accent-light);
+}
+
+uc-drop-area[drag-state="over"] {
+  background-color: var(--clr-accent-light);
+  border-color: var(--clr-accent);
 }
