@@ -3,6 +3,7 @@ import { resizeImage } from '../utils/resizeImage.js';
 import { uploadFile } from '../../ext_modules/upload-client.js';
 import { UiMessage } from '../MessageBox/MessageBox.js';
 import { fileCssBg } from '../svg-backgrounds/svg-backgrounds.js';
+import { customUserAgent } from '../utils/userAgent.js';
 
 export class FileItem extends BlockComponent {
   pauseRender = true;
@@ -165,6 +166,7 @@ export class FileItem extends BlockComponent {
       let fileInfo = await uploadFile(this.file || this.externalUrl, {
         ...storeSetting,
         publicKey: this.cfg('pubkey'),
+        userAgent: customUserAgent,
         onProgress: (progress) => {
           let percentage = progress.value * 100;
           this.$.progressWidth = percentage + '%';
