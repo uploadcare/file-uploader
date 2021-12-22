@@ -185,6 +185,7 @@ export class FileItem extends BlockComponent {
         uuid: fileInfo.uuid,
       });
     } catch (error) {
+      this.$.progressOpacity = 0;
       this.setAttribute('error', '');
       this.removeAttribute('uploading');
       let msg = new UiMessage();
