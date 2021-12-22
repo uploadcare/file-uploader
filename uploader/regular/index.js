@@ -1,8 +1,11 @@
-import { UC } from '../index.js';
+import * as UC from './exports.js';
+import { registerBlocks } from '../../upload-blocks/registerBlocks.js';
 
-export class DefaultWidget extends UC.BlockComponent {}
+registerBlocks(UC);
 
-DefaultWidget.template = /*html*/ `
+export class Uploader extends UC.BlockComponent {}
+
+Uploader.template = /*html*/ `
 <uc-simple-btn></uc-simple-btn>
 
 <uc-modal strokes block-body-scrolling>
@@ -23,5 +26,6 @@ DefaultWidget.template = /*html*/ `
 <uc-message-box></uc-message-box>
 <uc-progress-bar></uc-progress-bar>
 `;
+Uploader.reg('uploader');
 
-DefaultWidget.reg('default-widget');
+export { UC };
