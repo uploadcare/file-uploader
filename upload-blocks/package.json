@@ -1,7 +1,7 @@
 {
   "type": "module",
   "name": "@uploadcare/upload-blocks",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "",
   "main": "./build/upload-blocks.js",
   "repository": "https://github.com/uploadcare/jsdk/",
@@ -15,7 +15,12 @@
     "esbuild": "^0.11.11"
   },
   "gitHead": "7154654a5951930345e660e0f6fa39b9b5669ee2",
-  "files": ["build/uc-basic.css", "build/upload-blocks.js", "README.md", "LICENSE"],
+  "files": [
+    "build/uc-basic.css",
+    "build/upload-blocks.js",
+    "README.md",
+    "LICENSE"
+  ],
   "publishConfig": {
     "access": "public"
   }
