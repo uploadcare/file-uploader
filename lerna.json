@@ -2,10 +2,5 @@
   "packages": [
     "upload-blocks"
   ],
-  "command": {
-    "publish": {
-      "registry": "https://npm.pkg.github.com"
-    }
-  },
-  "version": "1.0.0-alpha.0"
+  "version": "0.0.0"
 }
