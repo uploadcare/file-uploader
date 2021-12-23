@@ -25,7 +25,7 @@ const buildSequence = [
     out: './upload-blocks/build/uc-basic.css',
   },
   {
-    in: './re-assets/js/live.js',
+    in: './doc_assets/js/live.js',
     out: './build/site-live-html.js',
     minifyHtml: true,
   },
