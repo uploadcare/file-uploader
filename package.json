@@ -11,7 +11,7 @@
     "setup": "npm run dir && npm run ext:symbiote && npm run ext:upload-client && npm run ext:re-serve && npm i && npm run build-libs",
     "test": "test",
     "dev": "node ext_modules/re-server.js",
-    "build-libs": "node ./build-libs.js"
+    "build-libs": "node ./build-libs.js && rollup --config rollup.config.js"
   },
   "devDependencies": {
     "@babel/eslint-parser": "^7.15.7",
@@ -24,6 +24,7 @@
     "lint-staged": "^11.1.2",
     "prettier": "^2.0.5",
     "prettier-plugin-jsdoc": "0.0.17",
+    "rollup": "^2.62.0",
     "typescript": "^3.9.7"
   },
   "eslintIgnore": [

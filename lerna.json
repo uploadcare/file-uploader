@@ -1,6 +1,8 @@
 {
   "packages": [
-    "upload-blocks"
+    "upload-blocks",
+    "uploader",
+    "live-html"
   ],
   "version": "0.0.1"
 }
