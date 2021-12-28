@@ -1,0 +1,26 @@
+# Table of contents
+
+The documentation is in the form of a readme in the repository https://github.com/uploadcare/jsdk.
+The structure of the documentation follows the structure of the repository.
+
+* [Uploadcare SDK for JavaScript developers](https://uploadcare.github.io/jsdk/) 
+   * [Uploader](https://uploadcare.github.io/jsdk/uploader/) 
+   * [Upload-blocks](https://uploadcare.github.io/jsdk/upload-blocks/)
+
+Upload-blocks built on Symbiote.js library.
+Upload-blocks are pieces of mosaic for your web app uploading needs.
+Uploader - a complete mosaic assembled from pieces.
+
+ 
+## Tasks
+1. Write a readme for Uploader.
+2. Define the spelling of the "Upload blocks". 
+   Note that the name goes back to the writing of the tag 
+   in [Custom elements standart](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_custom_elements).
+3. Define the spelling of the "uc-uploader".
+
+## Useful links
+1. [Configurations in CSS](https://github.com/uploadcare/jsdk/discussions/18)
+2. [Symbiote.js](https://github.com/symbiotejs/symbiote.js)
+3. [Re4ma.js](https://github.com/re4ma/re4ma.js)
+
