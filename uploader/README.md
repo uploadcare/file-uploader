@@ -9,10 +9,10 @@ All content fully accessible at https://uploadcare.github.io/jsdk/.
 
 ## Features
 * JS size. The total amount of JavaScript code in web applications has become smaller.
-* Minimum of external dependencies. We don't use JS libraries as jQuery anymore.
-* Modern web standards compatibility. We are use Shadow DOM or CSP in the integration environment.
+* Minimum of external dependencies. We don't use JS libraries such as jQuery anymore.
+* Modern web standards compatibility. We use Shadow DOM or CSP in the integration environment.
 * Build stage is not necessary for development. Use the code directly in any modern browser or Node.js.
-* Close to native web platform as possible. We don't force you to use any specific development environment tools.
+* As close to native web platform as possible. We don't force you to use any specific development environment tools.
 
 ## Supported browsers
 Uploader is supported and tested in all major modern desktop and mobile browsers:
@@ -22,7 +22,7 @@ Uploader is supported and tested in all major modern desktop and mobile browsers
 * Safari
 * Edge
 * Opera
-* etc
+* etc.
 
 [Internet Explorer](https://uploadcare.com/blog/uploadcare-stops-internet-explorer-support/) is outdated and not supported anymore.
 
@@ -117,7 +117,7 @@ You can configure the set of upload sources and choose the ones you need.
 ## Text customization
 
 Localization is a part of the configuration process. The default is an English locale. 
-If a string item is missing in a locale you created or customized, English will be a fallback.
+If a string item is missing in a locale you created or customized, English will be the fallback.
 
 ## Icon customization
 ...
