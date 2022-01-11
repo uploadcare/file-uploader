@@ -13,7 +13,8 @@
   "license": "MIT",
   "gitHead": "7154654a5951930345e660e0f6fa39b9b5669ee2",
   "files": [
-    "build/index.js",
+    "build/index.min.js",
+    "build/index.jsdoc.js",
     "README.md",
     "LICENSE"
   ],

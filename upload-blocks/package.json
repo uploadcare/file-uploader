@@ -17,8 +17,8 @@
   "gitHead": "7154654a5951930345e660e0f6fa39b9b5669ee2",
   "files": [
     "build/uc-basic.css",
-    "",
-    "build/upload-blocks.js",
+    "build/upload-blocks.jsdoc.js",
+    "build/upload-blocks.min.js",
     "README.md",
     "LICENSE"
   ],

@@ -1,7 +1,7 @@
 export const upload_blocks_build_cfg = [
   {
     in: './upload-blocks/index.js',
-    out: './upload-blocks/build/upload-blocks.js',
+    out: './upload-blocks/build/upload-blocks.min.js',
     minifyHtml: true,
   },
   {

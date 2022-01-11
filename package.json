@@ -6,7 +6,7 @@
   "scripts": {
     "dir": "mkdir -p ext_modules",
     "ext:upload-client": "curl -L https://unpkg.com/@uploadcare/upload-client@^2.0.0/dist/index.browser.js --output ext_modules/upload-client.js",
-    "ext:symbiote": "curl https://symbiotejs.github.io/symbiote.js/build/symbiote.jsdoc.js --output ext_modules/symbiote.js",
+    "ext:symbiote": "curl -L https://unpkg.com/@symbiotejs/symbiote@latest/build/symbiote.jsdoc.js --output ext_modules/symbiote.js",
     "ext:re-serve": "curl https://raw.githubusercontent.com/re4ma/re-serve/main/server/re-server.js --output ext_modules/re-server.js",
     "setup": "npm run dir && npm run ext:symbiote && npm run ext:upload-client && npm run ext:re-serve && npm i && npm run build-libs",
     "test": "test",

@@ -3,7 +3,6 @@
   "name": "@uploadcare/uploader",
   "version": "0.0.1",
   "description": "",
-  "main": "./build/regular/index.js",
   "repository": "https://github.com/uploadcare/jsdk/",
   "scripts": {
     "copy-license": "cp ../LICENSE ./LICENSE",
@@ -15,8 +14,9 @@
     "esbuild": "^0.11.11"
   },
   "files": [
-    "build/regular/index.css",
-    "build/regular/index.js",
+    "build/regular/uc-uploader.css",
+    "build/regular/uc-uploader.min.js",
+    "build/regular/uc-uploader.jsdoc.js",
     "README.md",
     "LICENSE"
   ],

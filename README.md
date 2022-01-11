@@ -14,12 +14,12 @@
 
 ## 📦 What’s in the box?
 
+* [uploader](./uploader/) - file uploader implementations for the most frequent use cases
 * [upload-blocks](./upload-blocks/) - build your own uploading flow with the simple HTML and CSS
 * Adaptive image delivery tools: all you need to distribute your web images efficiently
 * File uploading client library: handle files from browser or node
 * Web components for media content representation: audio, video, image galleries, etc.
 * Cloud image editing tools: tune your pictures on fly
-* Analytic tools: get your page score
 * Common purpose components and tools
 * etc...
 
