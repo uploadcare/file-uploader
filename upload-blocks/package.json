@@ -1,7 +1,7 @@
 {
   "type": "module",
   "name": "@uploadcare/upload-blocks",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "",
   "main": "./build/upload-blocks.js",
   "repository": "https://github.com/uploadcare/jsdk/",
