@@ -34,36 +34,19 @@ We use [Custom Elements](https://developer.mozilla.org/en-US/docs/Web/Web_Compon
 
 Also, we providing the set of [reference integrations](https://github.com/uploadcare/upload-blocks-examples).
 
-To integrate Uploadcare widget, first of all, you should connect our script:
-```html
-<script 
-  src="../upload-blocks/DefaultWidget/DefaultWidget.js"
-  type="module">
-</script>
-```
+## 🚀 Create your own solution
 
-You can use `npm` to install upload-blocks into your project:
+The common flow of the uploading widget creation is following:
 
-`npm install ...`
+1. Install upload-blocks: `npm i @uploadcare/upload-blocks`
+2. Create the set of all components you need (example: [exports.js](../uploader/regular/exports.js))
+3. Create your widget class with desired layout (example: [index.js](../uploader/regular/index.js))
+4. Create CSS configuration file (example: [index.css](../uploader/regular/index.css))
+5. Place resulting custom HTML-tag into your application markup and connect CSS ([example](./doc_assets/basic-demo.snpt.html))
 
-Basic integration HTML-code example:
-```html
-<uc-default-widget
-  css-src="../upload-blocks/themes/uc-basic/index.css">
-</uc-default-widget>
-```
-As you can see, it's very simple.
+As you can see, that's quite simple.
 
 > You shold obtain a Public API Key in your [Uploadcare project's dashboard](https://app.uploadcare.com/) to use file uploading features. 
-
-For demo-only purposes you can use `demopublickey` instead:
-```html
-<uc-default-widget
-  style="--pubkey:'demopublickey'; --darkmode: 1"
-  css-src="../upload-blocks/themes/uc-basic/index.css">
-</uc-default-widget>
-```
-Some of widget settings in this example are passed via CSS variables. That means you can use styles, CSS-classes and dedicated CSS-files to pass any setting to any block or redefine if using native DOM API or just native HTML syntax. Let's move forvard to the next section, to explain that.
 
 ## 🎨 Customize everything!
 
@@ -74,7 +57,6 @@ First of all, please take a look at [our CSS aproach discussion](https://github.
 All basic configurations for each block could be provided via the set of [CSS-variables](https://developer.mozilla.org/en-US/docs/Web/CSS/Using_CSS_custom_properties):
 ```css
 .uc-wgt-cfg, .uc-wgt-common, :host {
-  --ctx-name: 'my-uploader';
   --cfg-pubkey: 'demopublickey';
   --cfg-multiple: 1;
   --cfg-confirm-upload: 1;

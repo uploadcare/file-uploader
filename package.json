@@ -11,7 +11,8 @@
     "setup": "npm run dir && npm run ext:symbiote && npm run ext:upload-client && npm run ext:re-serve && npm i && npm run build-libs",
     "test": "test",
     "dev": "node ext_modules/re-server.js",
-    "build-libs": "node ./build-libs.js && rollup --config rollup.config.js"
+    "build-libs": "node ./build-libs.js && rollup --config rollup.config.js",
+    "pub": "lerna publish"
   },
   "devDependencies": {
     "@babel/eslint-parser": "^7.15.7",
