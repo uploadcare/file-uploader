@@ -5,7 +5,7 @@ You can use a custom uploader:
 * [Inline case](./inline/)
 * [Simplified case](./simplified/)
 
-All content fully accessible at https://uploadcare.github.io/jsdk/.
+All content fully accessible at [github.io/jsdk](https://uploadcare.github.io/jsdk/).
 
 ## Features
 * JS size. The total amount of JavaScript code in web applications has become smaller.
@@ -15,24 +15,30 @@ All content fully accessible at https://uploadcare.github.io/jsdk/.
 * As close to native web platform as possible. We don't force you to use any specific development environment tools.
 
 ## Supported browsers
-Uploader is supported and tested in all major modern desktop and mobile browsers:
+Uploader is supported and tested in all major modern browsers:
 
-* Chrome
-* Firefox
-* Safari
-* Edge
-* Opera
-* etc.
++-------------+----------------------+
+| **Desktop** | **Mobile**           |
++=============+======================+
+| Chrome: 37+ | Android Browser: 4.4+|
++-------------+----------------------+
+| Firefox: 32+| Opera Mobile: 8+     |
++-------------+----------------------+
+| Safari: 9+  | iOS Safari: 9+       |
++-------------+----------------------+
+| Edge: 12+   | IE Mobile: 11+       |
++-------------+----------------------+
 
 [Internet Explorer](https://uploadcare.com/blog/uploadcare-stops-internet-explorer-support/) is outdated and not supported anymore.
 
 ## Quick start
 ### Public Key
-Obtain a Public API Key in your Uploadcare project's dashboard to use file uploading features. 
-For demo-only purposes you can use demopublickey instead.
+Obtain a Public API Key in your [Uploadcare project's dashboard](https://app.uploadcare.com/projects/-/api-keys/) to use file uploading features. 
+
+For demo-only purposes you can use `demopublickey` instead.
 
 ### Integrate
-To integrate Uploadcare widget, first of all, you should connect our script:
+To integrate uc-uploader, first of all, you should connect our script:
 ```html
 <head>
 
@@ -96,21 +102,23 @@ Variables are used in the example:
 
 
 ## Upload Sources
-Upload Blocks supports 14 upload sources, including cloud services and social networks:
-* Local file storage
-* Web-camera
-* External URL
-* Gdrive
-* Dropbox
-* Onedrive
-* Huddle 
-* Box
-* Instagram
-* Vk
-* Facebook
-* Flickr
-* Gphotos
-* Evernote
+Upload Blocks supports several upload sources, including cloud services and social networks:
+
+* `local` - local disk.
+* `camera` - local web-camera.
+* `url` - any external URL.
+* `draw` - canvas image editor.
+* `gdrive` - Google Drive file storage.
+* `gphotos` - Google Photos storage.
+* `dropbox` - Dropbox file storage.
+* `onedrive` - OneDrive file storage.
+* `huddle` - Huddle file storage. 
+* `box` - Box file storage.
+* `flickr` - Flickr file storage.
+* `evernote` - Evernote file storage.
+* `instagram` - Instagram social network.
+* `vk` - VK social network.
+* `facebook` - Facebook social network.
 
 You can configure the set of upload sources and choose the ones you need.
 
