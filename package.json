@@ -12,7 +12,8 @@
     "test": "test",
     "dev": "node ext_modules/re-server.js",
     "build-libs": "node ./build-libs.js && rollup --config rollup.config.js",
-    "pub": "lerna publish"
+    "pub": "lerna publish",
+    "release": "shipjs prepare"
   },
   "devDependencies": {
     "@babel/eslint-parser": "^7.15.7",
@@ -26,18 +27,12 @@
     "prettier": "^2.0.5",
     "prettier-plugin-jsdoc": "0.0.17",
     "rollup": "^2.62.0",
+    "shipjs": "0.24.1",
     "typescript": "^3.9.7"
   },
-  "eslintIgnore": [
-    "ext_modules",
-    "build",
-    "upload-blocks/test/react-example",
-    "html_output"
-  ],
+  "eslintIgnore": ["ext_modules", "build", "upload-blocks/test/react-example", "html_output"],
   "eslintConfig": {
-    "extends": [
-      "eslint-config-prettier"
-    ],
+    "extends": ["eslint-config-prettier"],
     "rules": {
       "no-unused-vars": "off",
       "no-console": "off",
@@ -73,12 +68,7 @@
     }
   },
   "lint-staged": {
-    "*.js": [
-      "tsc --skipLibCheck --allowJs --noEmit",
-      "eslint --fix",
-      "prettier --write",
-      "git add"
-    ]
+    "*.js": ["tsc --skipLibCheck --allowJs --noEmit", "eslint --fix", "prettier --write", "git add"]
   },
   "author": "Uploadcare Inc.",
   "license": "MIT"
