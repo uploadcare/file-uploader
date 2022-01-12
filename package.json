@@ -30,9 +30,16 @@
     "shipjs": "0.24.1",
     "typescript": "^3.9.7"
   },
-  "eslintIgnore": ["ext_modules", "build", "upload-blocks/test/react-example", "html_output"],
+  "eslintIgnore": [
+    "ext_modules",
+    "build",
+    "upload-blocks/test/react-example",
+    "html_output"
+  ],
   "eslintConfig": {
-    "extends": ["eslint-config-prettier"],
+    "extends": [
+      "eslint-config-prettier"
+    ],
     "rules": {
       "no-unused-vars": "off",
       "no-console": "off",
@@ -68,7 +75,12 @@
     }
   },
   "lint-staged": {
-    "*.js": ["tsc --skipLibCheck --allowJs --noEmit", "eslint --fix", "prettier --write", "git add"]
+    "*.js": [
+      "tsc --skipLibCheck --allowJs --noEmit",
+      "eslint --fix",
+      "prettier --write",
+      "git add"
+    ]
   },
   "author": "Uploadcare Inc.",
   "license": "MIT"
