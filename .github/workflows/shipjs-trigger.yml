@@ -17,11 +17,7 @@ jobs:
         with:
           registry-url: "https://registry.npmjs.org"
       - run: |
-          if [ -f "yarn.lock" ]; then
-            yarn install
-          else
-            npm install
-          fi
+          npm ci
       - run: npx shipjs trigger
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

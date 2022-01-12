@@ -10,11 +10,7 @@ jobs:
           ref: main
       - uses: actions/setup-node@v1
       - run: |
-          if [ -f "yarn.lock" ]; then
-            yarn install
-          else
-            npm install
-          fi
+          npm ci
       - run: |
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
