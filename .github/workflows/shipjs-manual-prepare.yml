@@ -18,35 +18,3 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SLACK_INCOMING_HOOK: ${{ secrets.SLACK_INCOMING_HOOK }}
-
-  create_done_comment:
-    if: success()
-    needs: manual_prepare
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/github-script@v3
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            github.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: "@${{github.actor}} `shipjs prepare` done"
-            })
-
-  create_fail_comment:
-    if: cancelled() || failure()
-    needs: manual_prepare
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/github-script@v3
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            github.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: "@${{github.actor}} `shipjs prepare` fail"
-            })
