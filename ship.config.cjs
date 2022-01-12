@@ -1,8 +1,8 @@
 module.exports = {
   monorepo: {
     mainVersionFile: 'lerna.json',
-    packagesToBump: ['upload-blocks', 'uploader'],
-    packagesToPublish: ['upload-blocks', 'uploader'],
+    packagesToBump: ['upload-blocks'],
+    packagesToPublish: ['upload-blocks'],
   },
   buildCommand: () => 'npm run build-libs',
 };
