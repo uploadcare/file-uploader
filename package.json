@@ -12,7 +12,8 @@
     "test": "test",
     "dev": "node ext_modules/re-server.js",
     "build-libs": "node ./build-libs.js && rollup --config rollup.config.js",
-    "pub": "lerna publish"
+    "pub": "lerna publish",
+    "release": "shipjs prepare"
   },
   "devDependencies": {
     "@babel/eslint-parser": "^7.15.7",
@@ -26,6 +27,7 @@
     "prettier": "^2.0.5",
     "prettier-plugin-jsdoc": "0.0.17",
     "rollup": "^2.62.0",
+    "shipjs": "0.24.1",
     "typescript": "^3.9.7"
   },
   "eslintIgnore": [
