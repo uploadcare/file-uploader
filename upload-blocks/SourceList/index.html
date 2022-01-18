@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SourceList</title>
+  <link rel="stylesheet" href="../../doc_assets/css/doc.css">
+  <link rel="stylesheet" href="../themes/uc-basic/index.css">
+</head>
+<body>
+  <script type="module">
+    import { SourceList } from './SourceList.js';
+    import { SourceBtn } from '../SourceBtn/SourceBtn.js';
+    import { Icon } from '../Icon/Icon.js';
+    import { registerBlocks } from '../registerBlocks.js';
+    registerBlocks({SourceList, SourceBtn, Icon});
+    const sourceList = new SourceList();
+    sourceList.classList.add('uc-wgt-common');
+    window.onload = () => {
+      document.querySelector('#viewport').appendChild(sourceList);
+    }
+  </script>
+  <h1>SourceList</h1>
+  <div 
+    id="viewport" 
+    style="background-color: #fff; padding: 20px;">
+  </div>
+</body>
+</html>

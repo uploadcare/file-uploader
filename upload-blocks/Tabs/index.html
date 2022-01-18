@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tabs</title>
+  <link rel="stylesheet" href="../../doc_assets/css/doc.css">
+  <link rel="stylesheet" href="../themes/uc-basic/index.css">
+</head>
+<body>
+  <script type="module">
+    import { Tabs } from './Tabs.js';
+    import { registerBlocks } from '../registerBlocks.js';
+    registerBlocks({Tabs});
+    const tabs = new Tabs();
+    tabs.classList.add('uc-wgt-common');
+    window.onload = () => {
+      document.querySelector('#viewport').appendChild(tabs);
+      tabs.setAttribute('tab-list', 'First Tab, Second Tab');
+      tabs.setAttribute('default', 'First Tab');
+    }
+  </script>
+  <h1>Tabs</h1>
+  <div 
+    id="viewport" 
+    style="background-color: #fff; padding: 20px;">
+  </div>
+</body>
+</html>
