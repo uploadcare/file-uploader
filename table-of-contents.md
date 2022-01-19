@@ -1,6 +1,6 @@
 # Table of contents
 
-- [JSDK](./) - Repository root
+- [JSDK](./) - repository root
   
   - [uploader](./uploader/) - uploader implementations for the most frequent cases
     - [regular](./uploader/regular/) - overall case

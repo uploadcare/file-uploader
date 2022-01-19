@@ -1,5 +1,7 @@
 # Uploadcare SDK for JavaScript developers
 
+<re-htm src="./doc_assets/htm/doc-nav.htm"><re-htm>
+
 ## 💎 Core concept:
 
 * All in one place: here you can find everything you need to build modern and reliable web application with Uploadcare on board
