@@ -2,15 +2,20 @@ import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 
 export class Icon extends BlockComponent {
   init$ = {
+    name: '',
     path: '',
   };
 
-  initCallback() {
-    this.defineAccessor('name', (val) => {
+  connectedCallback() {
+    super.connectedCallback();
+    this.sub('name', (val) => {
       if (!val) {
         return;
       }
-      this.$.path = this.getCssData(`--icon-${val}`);
+      let path = this.getCssData(`--icon-${val}`);
+      if (path) {
+        this.$.path = path;
+      }
     });
   }
 }
@@ -24,5 +29,5 @@ Icon.template = /*html*/ `
 `;
 
 Icon.bindAttributes({
-  name: null,
+  name: 'name',
 });

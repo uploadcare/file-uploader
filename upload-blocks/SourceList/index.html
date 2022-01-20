@@ -19,12 +19,13 @@
     sourceList.classList.add('uc-wgt-common');
     window.onload = () => {
       document.querySelector('#viewport').appendChild(sourceList);
-    }
+    };
   </script>
   <h1>SourceList</h1>
   <div 
     id="viewport" 
-    style="background-color: #fff; padding: 20px;">
+    class="uc-wgt-common"
+    style="background-color: #fff; padding: 20px; --ctx-name: 'my-ctx'">
   </div>
 </body>
 </html>
