@@ -48,8 +48,8 @@ export class UploadList extends BlockComponent {
   initCallback() {
     this.registerActivity(this.activityType, () => {
       this.set$({
-        '*modalCaption': this.l10n('selected'),
-        '*modalIcon': 'local',
+        '*activityCaption': this.l10n('selected'),
+        '*activityIcon': 'local',
       });
     });
 

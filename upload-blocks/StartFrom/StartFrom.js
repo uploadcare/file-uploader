@@ -6,8 +6,8 @@ export class StartFrom extends BlockComponent {
   initCallback() {
     this.registerActivity(this.activityType, () => {
       this.set$({
-        '*modalCaption': this.l10n('select-file-source'),
-        '*modalIcon': 'default',
+        '*activityCaption': this.l10n('select-file-source'),
+        '*activityIcon': 'default',
       });
     });
   }
