@@ -119,6 +119,7 @@ export class EditorToolbar extends BlockComponent {
       }
       this.actionsMap[action]();
     },
+    onColor: () => false,
   };
 
   buttons = new Set();

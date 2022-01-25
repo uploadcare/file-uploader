@@ -12,3 +12,5 @@ html_output
 .DS_Store
 .firebase
 lerna-debug.log
+TMP
+

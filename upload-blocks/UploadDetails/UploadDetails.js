@@ -44,7 +44,7 @@ export class UploadDetails extends BlockComponent {
     this.$.fileSize = this.l10n('file-size-unknown');
     this.registerActivity(this.activityType, () => {
       this.set$({
-        '*modalCaption': this.l10n('caption-edit-file'),
+        '*activityCaption': this.l10n('caption-edit-file'),
       });
     });
     // this.sub('editBtnHidden', (val) => {
