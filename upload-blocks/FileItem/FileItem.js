@@ -153,6 +153,7 @@ export class FileItem extends BlockComponent {
       return;
     }
     this.$.progressWidth = 0;
+    this.$.progressOpacity = 1;
     this.removeAttribute('focused');
     this.removeAttribute('error');
     this.setAttribute('uploading', '');
@@ -187,6 +188,8 @@ export class FileItem extends BlockComponent {
         uuid: fileInfo.uuid,
       });
     } catch (error) {
+      this.$.progressOpacity = 0;
+      this.$.progressWidth = 0;
       this.setAttribute('error', '');
       this.removeAttribute('uploading');
       let msg = new UiMessage();

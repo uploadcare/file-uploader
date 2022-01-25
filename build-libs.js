@@ -1,6 +1,12 @@
 import esbuild from 'esbuild';
 import fs from 'fs';
 
+import { uploader_build_cfg } from './uploader/build.cfg.js';
+import { upload_blocks_build_cfg } from './upload-blocks/build.cfg.js';
+import { live_html_build_cfg } from './live-html/build.cfg.js';
+
+let { version: rootVersion } = JSON.parse(fs.readFileSync('./package.json').toString());
+
 function jsBanner() {
   const license = fs.readFileSync('./LICENSE').toString();
   return (
@@ -14,31 +20,7 @@ function jsBanner() {
   );
 }
 
-let { version: uploadBlocksVersion } = JSON.parse(fs.readFileSync('./upload-blocks/package.json').toString());
-
-const buildSequence = [
-  {
-    version: uploadBlocksVersion,
-    in: './upload-blocks/index.js',
-    out: './upload-blocks/build/upload-blocks.js',
-    minifyHtml: false,
-  },
-  {
-    version: uploadBlocksVersion,
-    in: './upload-blocks/DefaultWidget/DefaultWidget.js',
-    out: './upload-blocks/build/default-widget.js',
-    minifyHtml: false,
-  },
-  {
-    in: './upload-blocks/themes/uc-basic/index.css',
-    out: './upload-blocks/build/uc-basic.css',
-  },
-  {
-    in: './re-assets/js/live.js',
-    out: './build/site-live-html.js',
-    minifyHtml: true,
-  },
-];
+const buildSequence = [...uploader_build_cfg, ...upload_blocks_build_cfg, ...live_html_build_cfg];
 
 function build(buildItem) {
   esbuild
@@ -54,7 +36,7 @@ function build(buildItem) {
         js: jsBanner(),
       },
       define: {
-        __VERSION__: JSON.stringify(buildItem.version),
+        __VERSION__: JSON.stringify(rootVersion),
       },
     })
     .then(async () => {

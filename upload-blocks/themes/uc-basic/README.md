@@ -11,10 +11,10 @@ We use HSL color space because it allows to easily calculate derivative colors. 
 ### Quick styling
 In most cases switching the dark mode on or off and changing the accent color is enough to make upload-blocks match your design. If you want to do a deeper styling, see this guide **TODO: write a guide**.
 
-```
+```css
 --darkmode: 1;
 ```
-```
+```css
   --h-accent: 211;
   --s-accent: 100%;
   --l-accent: calc(50% - 5% * var(--darkmode));

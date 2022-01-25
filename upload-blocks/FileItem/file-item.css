@@ -78,7 +78,7 @@ uc-file-item .progress {
   width: 0%;
   opacity: 1;
   background-color: var(--clr-accent-light);
-  transition: 0.6s;
+  transition: width 0.6s;
 }
 uc-file-item[error] .badge,
 uc-file-item[loaded] .badge {

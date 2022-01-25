@@ -34,6 +34,7 @@ export class UploadList extends BlockComponent {
           '*modalActive': false,
         });
         this.uploadCollection.clearAll();
+        this.output();
       };
       cfn.denyAction = () => {
         this.historyBack();
