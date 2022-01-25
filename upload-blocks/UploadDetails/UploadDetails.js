@@ -111,8 +111,8 @@ export class UploadDetails extends BlockComponent {
           this.$.cdnUrl = 'Not uploaded yet...';
         }
       });
-      tmpSub('uploadErrorMsg', (msg) => {
-        this.$.errorTxt = msg;
+      tmpSub('uploadError', (error) => {
+        this.$.errorTxt = error?.message;
       });
 
       tmpSub('externalUrl', (url) => {
