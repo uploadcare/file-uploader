@@ -1,4 +1,5 @@
-import { VERSION } from '../env.js';
+import { VERSION, PACKAGE_NAME } from '../env.js';
+import { toPascalCase } from './toPascalCase.js';
 
 /**
  * @param {{
@@ -11,6 +12,6 @@ import { VERSION } from '../env.js';
  * @returns {string}
  */
 export function customUserAgent({ publicKey, languageName }) {
-  let libraryName = 'UploadBlocks';
+  let libraryName = toPascalCase(PACKAGE_NAME);
   return `${libraryName}/${VERSION}/${publicKey} (${languageName})`;
 }

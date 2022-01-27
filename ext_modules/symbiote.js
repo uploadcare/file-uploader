@@ -331,11 +331,70 @@ function domSetProcessor(fr, fnCtx) {
   });
 }
 
-var PROCESSORS = [slotProcessor, refProcessor, domSetProcessor];
+const OPEN_TOKEN = '{{';
+const CLOSE_TOKEN = '}}';
+const SKIP_ATTR = 'skip-text';
+
+function getTextNodesWithTokens(el) {
+  let node;
+  let result = [];
+  let walk = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, {
+    acceptNode: (txt) => {
+      return !txt.parentElement?.hasAttribute(SKIP_ATTR) && txt.textContent.includes(OPEN_TOKEN) && txt.textContent.includes(CLOSE_TOKEN) && 1;
+    },
+  });
+  while ((node = walk.nextNode())) {
+    result.push(node);
+  }
+  return result;
+}
+
+/**
+ * @param {DocumentFragment} fr
+ * @param {any} fnCtx
+ */
+const txtNodesProcessor = function (fr, fnCtx) {
+  let txtNodes = getTextNodesWithTokens(fr);
+  txtNodes.forEach((/** @type {Text} */ txtNode) => {
+    let tokenNodes = [];
+    let offset;
+    // Splitting of the text node:
+    while (txtNode.textContent.includes(CLOSE_TOKEN)) {
+      if (txtNode.textContent.startsWith(OPEN_TOKEN)) {
+        offset = txtNode.textContent.indexOf(CLOSE_TOKEN) + 2;
+        txtNode.splitText(offset);
+        tokenNodes.push(txtNode);
+      } else {
+        offset = txtNode.textContent.indexOf(OPEN_TOKEN);
+        txtNode.splitText(offset);
+      }
+      // @ts-ignore
+      txtNode = txtNode.nextSibling;
+    }
+    tokenNodes.forEach((tNode) => {
+      let prop = tNode.textContent.replace(OPEN_TOKEN, '').replace(CLOSE_TOKEN, '');
+      fnCtx.sub(prop, (val) => {
+        tNode.textContent = val;
+      });
+    });
+  });
+};
+
+var PROCESSORS = [slotProcessor, refProcessor, domSetProcessor, txtNodesProcessor];
 
 let autoTagsCount = 0;
 
 class BaseComponent extends HTMLElement {
+  initCallback() {}
+
+  __initCallback() {
+    if (this.__initialized) {
+      return;
+    }
+    this.__initialized = true;
+    this.initCallback?.();
+  }
+
   /**
    * @param {String | DocumentFragment} [template]
    * @param {Boolean} [shadow]
@@ -365,15 +424,27 @@ class BaseComponent extends HTMLElement {
         fn(fr, this);
       }
     }
-    if (shadow) {
-      if (!this.shadowRoot) {
-        this.attachShadow({
-          mode: 'open',
-        });
-      }
-      fr && this.shadowRoot.appendChild(fr);
+    if ((shadow || this.constructor['__shadowStylesUrl']) && !this.shadowRoot) {
+      this.attachShadow({
+        mode: 'open',
+      });
+    }
+
+    // for the possible asynchronous call:
+    let addFr = () => {
+      fr && ((shadow && this.shadowRoot.appendChild(fr)) || this.appendChild(fr));
+      this.__initCallback();
+    };
+
+    if (this.constructor['__shadowStylesUrl']) {
+      shadow = true; // is needed for cases when Shadow DOM was created manually for some other purposes
+      let styleLink = document.createElement('link');
+      styleLink.rel = 'stylesheet';
+      styleLink.href = this.constructor['__shadowStylesUrl'];
+      styleLink.onload = addFr;
+      this.shadowRoot.prepend(styleLink); // the link shoud be added before the other template elements
     } else {
-      fr && this.appendChild(fr);
+      addFr();
     }
   }
 
@@ -512,8 +583,6 @@ class BaseComponent extends HTMLElement {
     }
   }
 
-  initCallback() {}
-
   __initDataCtx() {
     let attrDesc = this.constructor['__attrDesc'];
     if (attrDesc) {
@@ -561,7 +630,6 @@ class BaseComponent extends HTMLElement {
       if (!this.pauseRender) {
         this.render();
       }
-      this.initCallback?.();
     }
     this.connectedOnce = true;
   }
@@ -662,6 +730,17 @@ class BaseComponent extends HTMLElement {
     return this.__cssDataCache[propName];
   }
 
+  /**
+   * @param {String} propName
+   * @param {Boolean} [external]
+   * @returns {String}
+   */
+  bindCssData(propName, external = true) {
+    let stateName = (external ? DICT.EXT_DATA_CTX_PRFX : '') + propName;
+    this.add(stateName, this.getCssData(propName, true));
+    return stateName;
+  }
+
   dropCssDataCache() {
     this.__cssDataCache = null;
     this.__computedStyle = null;
@@ -691,6 +770,14 @@ class BaseComponent extends HTMLElement {
       },
     });
     this[propName] = this[localPropName];
+  }
+
+  /** @param {String} cssTxt */
+  static set shadowStyles(cssTxt) {
+    let styleBlob = new Blob([cssTxt], {
+      type: 'text/css',
+    });
+    this.__shadowStylesUrl = URL.createObjectURL(styleBlob);
   }
 }
 

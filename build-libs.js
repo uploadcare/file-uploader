@@ -5,8 +5,6 @@ import { uploader_build_cfg } from './uploader/build.cfg.js';
 import { upload_blocks_build_cfg } from './upload-blocks/build.cfg.js';
 import { live_html_build_cfg } from './live-html/build.cfg.js';
 
-let { version: rootVersion } = JSON.parse(fs.readFileSync('./package.json').toString());
-
 function jsBanner() {
   const license = fs.readFileSync('./LICENSE').toString();
   return (
@@ -36,7 +34,8 @@ function build(buildItem) {
         js: jsBanner(),
       },
       define: {
-        __VERSION__: JSON.stringify(rootVersion),
+        __VERSION__: JSON.stringify(buildItem.version),
+        __PACKAGE_NAME__: JSON.stringify(buildItem.name),
       },
     })
     .then(async () => {
