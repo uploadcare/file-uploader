@@ -200,7 +200,7 @@ export class FileItem extends BlockComponent {
         badgeIcon: 'badge-error',
         '*message': msg,
       });
-      this.entry.setValue('uploadErrorMsg', error);
+      this.entry.setValue('uploadError', error);
     }
   }
 }

@@ -45,43 +45,51 @@ export class UploadList extends BlockComponent {
 
   _renderMap = Object.create(null);
 
+  updateButtonsState() {
+    let itemIds = this.uploadCollection.items();
+    let summary = {
+      total: itemIds.length,
+      uploaded: 0,
+      uploading: 0,
+    };
+    for (let id of itemIds) {
+      let item = this.uploadCollection.read(id);
+      if (item.getValue('uuid')) {
+        summary.uploaded += 1;
+      } else if (item.getValue('uploadProgress') > 0) {
+        summary.uploading += 1;
+      }
+    }
+    let allUploaded = summary.total === summary.uploaded;
+
+    this.set$({
+      uploadBtnHidden: allUploaded,
+      doneBtnHidden: !allUploaded,
+      uploadBtnDisabled: summary.uploading > 0,
+    });
+  }
+
   initCallback() {
     this.registerActivity(this.activityType, () => {
       this.set$({
-        '*modalCaption': this.l10n('selected'),
-        '*modalIcon': 'local',
+        '*activityCaption': this.l10n('selected'),
+        '*activityIcon': 'local',
       });
     });
 
     this.$.moreBtnDisabled = !this.cfg('multiple');
 
     this.uploadCollection.observe(() => {
-      //TODO: probably we need to optimize it, too many iterations and allocations just to calc uploaded files
-      let notUploaded = this.uploadCollection.findItems((item) => {
-        return !item.getValue('uuid');
-      });
-      let inProgress = this.uploadCollection.findItems((item) => {
-        return !item.getValue('uuid') && item.getValue('uploadProgress') > 0;
-      });
-
-      let everythingUploaded = notUploaded.length === 0;
-      let somethingUploading = inProgress.length > 0;
-      this.set$({
-        uploadBtnHidden: everythingUploaded,
-        uploadBtnDisabled: somethingUploading,
-        doneBtnHidden: !everythingUploaded,
-      });
-      if (!this.cfg('confirm-upload') && everythingUploaded) {
-        this.$.onDone();
-      }
+      this.updateButtonsState();
     });
     this.sub('*uploadList', (/** @type {String[]} */ list) => {
       if (list && list.length === 0 && !this.cfg('show-empty-list')) {
         this.$['*currentActivity'] = BlockComponent.activities.SOURCE_SELECT;
         return;
       }
+
+      this.updateButtonsState();
       this.set$({
-        uploadBtnDisabled: !list.length,
         hasFiles: list.length > 0,
       });
 
