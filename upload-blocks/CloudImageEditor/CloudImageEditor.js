@@ -20,6 +20,8 @@ export class CloudImageEditor extends BlockComponent {
     this.style.display = 'flex';
     this.style.position = 'relative';
 
+    this.bindCssData('--cfg-pubkey');
+
     this.loadScript();
     this.sub('*currentActivity', (val) => {
       if (val === BlockComponent.activities.CLOUD_IMG_EDIT) {
@@ -59,7 +61,7 @@ export class CloudImageEditor extends BlockComponent {
     let instance = new editorClass();
 
     let uuid = this.$.uuid;
-    let publicKey = this.cfg('pubkey');
+    let publicKey = this.$['*--cfg-pubkey'];
     instance.setAttribute('uuid', uuid);
     instance.setAttribute('public-key', publicKey);
 

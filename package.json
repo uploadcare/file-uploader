@@ -27,7 +27,7 @@
     "prettier": "^2.0.5",
     "prettier-plugin-jsdoc": "0.0.17",
     "rollup": "^2.62.0",
-    "shipjs": "0.24.1",
+    "shipjs": "^0.0.8",
     "typescript": "^3.9.7"
   },
   "eslintIgnore": [

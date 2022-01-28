@@ -47,7 +47,7 @@ export class FileItem extends BlockComponent {
       return;
     }
     if (this.file?.type.includes('image')) {
-      resizeImage(this.file, this.cfg('thumb-size') || 76).then((url) => {
+      resizeImage(this.file, this.$['*--cfg-thumb-size'] || 76).then((url) => {
         this.$.thumbUrl = `url(${url})`;
       });
     } else {
@@ -63,6 +63,7 @@ export class FileItem extends BlockComponent {
   }
 
   initCallback() {
+    this.bindCssData('--cfg-thumb-size');
     this.defineAccessor('entry-id', (id) => {
       if (!id) {
         return;
@@ -90,7 +91,7 @@ export class FileItem extends BlockComponent {
         if (this.entry.getValue('isImage')) {
           let url = `https://ucarecdn.com/${uuid}/`;
           this._revokeThumbUrl();
-          let size = this.cfg('thumb-size') || 76;
+          let size = this.$['*--cfg-thumb-size'] || 76;
           this.$.thumbUrl = `url(${url}-/scale_crop/${size}x${size}/center/)`;
         }
       });
@@ -101,7 +102,7 @@ export class FileItem extends BlockComponent {
         }
         if (this.entry.getValue('isImage')) {
           this._revokeThumbUrl();
-          let size = this.cfg('thumb-size') || 76;
+          let size = this.$['*--cfg-thumb-size'] || 76;
           this.$.thumbUrl = `url(${transformationsUrl}-/scale_crop/${size}x${size}/center/)`;
         }
       });
@@ -109,7 +110,7 @@ export class FileItem extends BlockComponent {
       this.file = this.entry.getValue('file');
       this.externalUrl = this.entry.getValue('externalUrl');
 
-      if (!this.cfg('confirm-upload')) {
+      if (!this.$['*--cfg-confirm-upload']) {
         this.upload();
       }
 
@@ -157,7 +158,7 @@ export class FileItem extends BlockComponent {
     this.removeAttribute('error');
     this.setAttribute('uploading', '');
     let storeSetting = {};
-    let store = this.cfg('store');
+    let store = this.$['*--cfg-store'];
     if (store !== null) {
       storeSetting.store = !!store;
     }
@@ -165,7 +166,7 @@ export class FileItem extends BlockComponent {
       // @ts-ignore
       let fileInfo = await uploadFile(this.file || this.externalUrl, {
         ...storeSetting,
-        publicKey: this.cfg('pubkey'),
+        publicKey: this.$['*--cfg-pubkey'],
         onProgress: (progress) => {
           let percentage = progress.value * 100;
           this.$.progressWidth = percentage + '%';
@@ -212,7 +213,7 @@ FileItem.template = /*html*/ `
   </div>
 </div>
 <div class="file-name-wrapper">
-  <span class="file-name" set="textContent: itemName; @title: itemName"></span>
+  <span class="file-name" set="@title: itemName">{{itemName}}</span>
 </div>
 <button class="edit-btn" set="onclick: onEdit;">
   <uc-icon name="edit-file"></uc-icon>

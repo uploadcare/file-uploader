@@ -68,25 +68,6 @@ export class BlockComponent extends BaseComponent {
     });
   }
 
-  openSystemDialog() {
-    this.fileInput = document.createElement('input');
-    this.fileInput.type = 'file';
-    this.fileInput.multiple = !!this.cfg('multiple');
-    this.fileInput.max = this.cfg('max-files');
-    this.fileInput.accept = this.cfg('accept');
-    this.fileInput.dispatchEvent(new MouseEvent('click'));
-    this.fileInput.onchange = () => {
-      this.addFiles([...this.fileInput['files']]);
-      // To call uploadTrigger UploadList should draw file items first:
-      this.$['*currentActivity'] = BlockComponent.activities.UPLOAD_LIST;
-      if (!this.cfg('confirm-upload')) {
-        this.$['*currentActivity'] = '';
-      }
-      this.fileInput['value'] = '';
-      this.fileInput = null;
-    };
-  }
-
   connectedCallback() {
     let handleReadyState = () => {
       if (DOC_READY) {
@@ -118,6 +99,22 @@ export class BlockComponent extends BaseComponent {
     } else {
       handleReadyState();
     }
+  }
+
+  __bindBasicCssData() {
+    if (!BlockComponent._cssDataBindingsList.includes(this.ctxName)) {
+      let unprefixedCfgProps = ['pubkey', 'store', 'multiple', 'max-files', 'accept', 'confirm-upload'];
+      unprefixedCfgProps.forEach((prop) => {
+        this.bindCssData(`--cfg-${prop}`);
+      });
+      BlockComponent._cssDataBindingsList.push(this.ctxName);
+    }
+  }
+
+  initCallback() {
+    // TODO: rethink initiation flow for the common context parameters
+    this.__bindBasicCssData();
+    // ^ in this case css-data-props will be initiated when there is one or more components without initCallback call
   }
 
   connected() {
@@ -170,6 +167,25 @@ export class BlockComponent extends BaseComponent {
     } else {
       super.connectedCallback();
     }
+  }
+
+  openSystemDialog() {
+    this.fileInput = document.createElement('input');
+    this.fileInput.type = 'file';
+    this.fileInput.multiple = !!this.$['*--cfg-multiple'];
+    this.fileInput.max = this.$['*--cfg-max-files'];
+    this.fileInput.accept = this.$['*--cfg-accept'];
+    this.fileInput.dispatchEvent(new MouseEvent('click'));
+    this.fileInput.onchange = () => {
+      this.addFiles([...this.fileInput['files']]);
+      // To call uploadTrigger UploadList should draw file items first:
+      this.$['*currentActivity'] = BlockComponent.activities.UPLOAD_LIST;
+      if (!this.$['*--cfg-confirm-upload']) {
+        this.$['*currentActivity'] = '';
+      }
+      this.fileInput['value'] = '';
+      this.fileInput = null;
+    };
   }
 
   get doneActivity() {
@@ -228,11 +244,6 @@ export class BlockComponent extends BaseComponent {
     return this.$['*uploadCollection'];
   }
 
-  /** @param {String} shortKey */
-  cfg(shortKey) {
-    return this.getCssData('--cfg-' + shortKey, true);
-  }
-
   /**
    * @param {Number} bytes
    * @param {Number} [decimals]
@@ -285,6 +296,9 @@ BlockComponent._lastActivity = '';
 
 /** @type {String[]} */
 BlockComponent._ctxConnectionsList = [];
+
+/** @type {String[]} */
+BlockComponent._cssDataBindingsList = [];
 
 BlockComponent.activities = Object.freeze({
   SOURCE_SELECT: 'source-select',

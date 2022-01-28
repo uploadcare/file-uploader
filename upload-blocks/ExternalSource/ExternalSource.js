@@ -79,7 +79,7 @@ export class ExternalSource extends BlockComponent {
   }
 
   remoteUrl() {
-    let pubkey = this.cfg('pubkey');
+    let pubkey = this.$['*--cfg-pubkey'];
     let version = '3.11.3';
     let imagesOnly = false.toString();
     let { externalSourceType } = this.activityParams;
@@ -130,9 +130,7 @@ ExternalSource.template = /*html*/ `
   </button>
   <div></div>
   <div class="selected-counter">
-    <span l10n="selected-count"></span>
-    <span set="textContent: counter"></span>
-  </div>
+    <span l10n="selected-count"></span>{{counter}}</div>
   <button class="done-btn primary-btn" set="onclick: onDone">
     <uc-icon name="check"></uc-icon>
   </button>

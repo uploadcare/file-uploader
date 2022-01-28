@@ -72,9 +72,12 @@ export class CameraSource extends BlockComponent {
   }
 
   initCallback() {
+    let camMirrProp = this.bindCssData('--cfg-camera-mirror');
+    this.sub(camMirrProp, (val) => {
+      this.$.videoTransformCss = val ? 'scaleX(-1)' : null;
+    });
     this.registerActivity(this.activityType, () => {
       this.set$({
-        videoTransformCss: this.cfg('camera-mirror') ? 'scaleX(-1)' : null,
         '*activityCaption': this.l10n('caption-camera'),
         '*activityIcon': 'camera',
       });

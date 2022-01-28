@@ -46,6 +46,8 @@ export class UploadList extends BlockComponent {
   _renderMap = Object.create(null);
 
   initCallback() {
+    this.bindCssData('--cfg-show-empty-list');
+
     this.registerActivity(this.activityType, () => {
       this.set$({
         '*activityCaption': this.l10n('selected'),
@@ -53,7 +55,9 @@ export class UploadList extends BlockComponent {
       });
     });
 
-    this.$.moreBtnDisabled = !this.cfg('multiple');
+    this.sub('*--cfg-multiple', (val) => {
+      this.$.moreBtnDisabled = !val;
+    });
 
     this.uploadCollection.observe(() => {
       //TODO: probably we need to optimize it, too many iterations and allocations just to calc uploaded files
@@ -71,12 +75,12 @@ export class UploadList extends BlockComponent {
         uploadBtnDisabled: somethingUploading,
         doneBtnHidden: !everythingUploaded,
       });
-      if (!this.cfg('confirm-upload') && everythingUploaded) {
+      if (!this.$['*--cfg-confirm-upload'] && everythingUploaded) {
         this.$.onDone();
       }
     });
     this.sub('*uploadList', (/** @type {String[]} */ list) => {
-      if (list && list.length === 0 && !this.cfg('show-empty-list')) {
+      if (list && list.length === 0 && !this.$['*--cfg-show-empty-list']) {
         this.$['*currentActivity'] = BlockComponent.activities.SOURCE_SELECT;
         return;
       }
