@@ -10,43 +10,18 @@ Ready-made uploaders list:
 
 <re-htm src="./doc_assets/case.ref.htm" style="--case: 'case'"></re-htm>
 
-This example uses the raw code without any build flow setup made. 
-You can inspect it via developer tools in your browser and discover all the details. 
-Note that this is a demo, and that approach may not be optimal. 
-For production usage, code bundling and minification are recommended.
-
 ## 💎 Solution benefits
 * No heavy dependencies.
 * Uniform and seamless integration flow for all major web development stacks.
 * CSP (Content Security Policy) compatible: no `unsafe-inline` flags for the CSS or JavaScript are needed.
 * Modern and efficient technologies under the hood.
-* Multiple file source support.
+* Multiple file source (local, any external URL, cloud services, and social networks) support.
 * Open source (MIT license).
 * Built with love ❤️
 
-### File source
-Supports several file sources, including cloud services and social networks:
-
-* `local` - local disk.
-* `camera` - local web-camera.
-* `url` - any external URL.
-* `draw` - canvas image editor.
-* `gdrive` - Google Drive file storage.
-* `gphotos` - Google Photos storage.
-* `dropbox` - Dropbox file storage.
-* `onedrive` - OneDrive file storage.
-* `huddle` - Huddle file storage. 
-* `box` - Box file storage.
-* `flickr` - Flickr file storage.
-* `evernote` - Evernote file storage.
-* `instagram` - Instagram social network.
-* `vk` - VK social network.
-* `facebook` - Facebook social network.
-
-You can configure the set of upload sources and choose the ones you need.
-
 ### Supported browsers
-Uploader is supported in all major modern [browsers](https://github.com/symbiotejs/symbiote.js#-browser-support).
+Uploader is supported in all major modern 
+[browsers](https://github.com/uploadcare/jsdk/blob/main/uploader/README.md#-Supported-browsers).
 
 [Internet Explorer](https://uploadcare.com/blog/uploadcare-stops-internet-explorer-support/) is outdated and not supported anymore.
 
@@ -190,7 +165,13 @@ There are three major levels of possible styling customizations:
 For more details, please follow this [guide](../upload-blocks/themes/uc-basic/).
 
 ## 🟢 CSP settings
-To be updated...
+If the application works with sensitive user data, such as personal photos, it is recommended to increase its security with [CSP settings](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP). Uploader is using `Blob` URL's for on-the-flight generated images and the stylesheets in some cases, so don't forget to add `blob:` source into the CSP settings:
+
+```html
+<meta 
+  http-equiv="Content-Security-Policy" 
+  content="style-src 'self' blob:; script-src 'self'; img-src 'self' https://ucarecdn.com blob:;">
+```
 
 ## 📤 Data output
 We provide the dedicated block for the data output purposes - `<uc-data-output>`. 
