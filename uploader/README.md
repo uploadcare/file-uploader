@@ -158,7 +158,13 @@ For more details, please follow these [guide](../upload-blocks/themes/uc-basic/)
 
 ## 🟢 CSP settings
 
-To be updated...
+Working with users sensitive data, such as personal photos, it's recommended to enhance your application security with [CSP settings](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP). Uploader is using `Blob` URL's for on-the-flight generated images and for the stylesheets in some cases, so don't forget to add `blob:` source into the CSP settings:
+
+```html
+<meta 
+  http-equiv="Content-Security-Policy" 
+  content="style-src 'self' blob:; script-src 'self'; img-src 'self' https://ucarecdn.com blob:;">
+```
 
 ## 📤 Data output
 
