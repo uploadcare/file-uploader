@@ -21,7 +21,7 @@ Ready-made uploaders list:
 
 ### Supported browsers
 Uploader is supported in all major modern 
-[browsers](https://github.com/uploadcare/jsdk/blob/main/uploader/README.md#-Supported-browsers).
+[browsers](https://github.com/uploadcare/jsdk/blob/main/uploader/README.md#-supported-browsers).
 
 [Internet Explorer](https://uploadcare.com/blog/uploadcare-stops-internet-explorer-support/) is outdated and not supported anymore.
 
