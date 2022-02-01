@@ -3,7 +3,7 @@
 Here you can find the set of ready-made uploaders for the most frequent file uploading cases. 
 Each uploader is highly customizable on its own and could be used as the custom build reference, but you can use it "as is".
 
-Ready-made uploaders list:
+Uploader builds list:
 * [Regular case](./regular/) - the most common solution.
 * [Inline case](./inline/) - no modals, could be used just in place.
 * [Simplified case](./simplified/) - minimal and compact.
