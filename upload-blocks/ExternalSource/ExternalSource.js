@@ -25,8 +25,8 @@ export class ExternalSource extends BlockComponent {
       let { externalSourceType } = this.activityParams;
 
       this.set$({
-        '*modalCaption': `${externalSourceType[0].toUpperCase()}${externalSourceType.slice(1)}`,
-        '*modalIcon': externalSourceType,
+        '*activityCaption': `${externalSourceType[0].toUpperCase()}${externalSourceType.slice(1)}`,
+        '*activityIcon': externalSourceType,
       });
 
       this.$.counter = 0;

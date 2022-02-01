@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EditableCanvas</title>
+  <link rel="stylesheet" href="../../doc_assets/css/doc.css">
+  <link rel="stylesheet" href="../themes/uc-basic/index.css">
+</head>
+<body>
+  <script type="module">
+    import { EditableCanvas } from './EditableCanvas.js';
+    import { registerBlocks } from '../registerBlocks.js';
+    registerBlocks({EditableCanvas});
+    const editableCanvas = new EditableCanvas();
+    editableCanvas.classList.add('uc-wgt-common');
+    window.onload = () => {
+      document.querySelector('#viewport').appendChild(editableCanvas);
+      let img = new Image();
+      img.src = 'test/test.jpg';
+      editableCanvas.setImage(img);
+    }
+  </script>
+  <h1>EditableCanvas</h1>
+  <div 
+    id="viewport" 
+    style="position: relative; height: 600px; background-color: #fff; padding: 20px;">
+  </div>
+</body>
+</html>

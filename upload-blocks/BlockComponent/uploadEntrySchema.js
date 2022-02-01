@@ -1,4 +1,4 @@
-import { UploadcareFile } from '../../ext_modules/upload-client.js';
+import { UploadcareFile, UploadClientError } from '../../ext_modules/upload-client.js';
 
 export const uploadEntrySchema = Object.freeze({
   file: {
@@ -37,8 +37,8 @@ export const uploadEntrySchema = Object.freeze({
     type: String,
     value: null,
   },
-  uploadErrorMsg: {
-    type: String,
+  uploadError: {
+    type: UploadClientError,
     value: null,
   },
   validationErrorMsg: {

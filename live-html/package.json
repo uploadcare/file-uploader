@@ -1,0 +1,24 @@
+{
+  "type": "module",
+  "name": "@uploadcare/live-html",
+  "version": "0.0.3-alpha.4",
+  "description": "",
+  "main": "./build/index.js",
+  "repository": "https://github.com/uploadcare/jsdk/",
+  "scripts": {
+    "copy-license": "cp ../LICENSE ./LICENSE",
+    "prepare": "npm run copy-license"
+  },
+  "author": "",
+  "license": "MIT",
+  "gitHead": "7154654a5951930345e660e0f6fa39b9b5669ee2",
+  "files": [
+    "build/index.min.js",
+    "build/index.jsdoc.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

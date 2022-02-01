@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ProgressBar</title>
+  <link rel="stylesheet" href="../../doc_assets/css/doc.css">
+  <link rel="stylesheet" href="../themes/uc-basic/index.css">
+</head>
+<body>
+  <script type="module">
+    import { ProgressBar } from './ProgressBar.js';
+    import { registerBlocks } from '../registerBlocks.js';
+    registerBlocks({ProgressBar});
+    const bar = new ProgressBar();
+    bar.classList.add('uc-wgt-common');
+    window.onload = () => {
+      document.querySelector('#viewport').appendChild(bar);
+      bar.$['*commonProgress'] = 55;
+    }
+  </script>
+  <h1>ProgressBar</h1>
+  <div 
+    id="viewport" 
+    style="position: relative; background-color: #fff; padding: 20px;">
+  </div>
+</body>
+</html>

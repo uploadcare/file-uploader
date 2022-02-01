@@ -75,8 +75,8 @@ export class CameraSource extends BlockComponent {
     this.registerActivity(this.activityType, () => {
       this.set$({
         videoTransformCss: this.cfg('camera-mirror') ? 'scaleX(-1)' : null,
-        '*modalCaption': this.l10n('caption-camera'),
-        '*modalIcon': 'camera',
+        '*activityCaption': this.l10n('caption-camera'),
+        '*activityIcon': 'camera',
       });
       this._init();
     });

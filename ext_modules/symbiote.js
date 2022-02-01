@@ -199,16 +199,18 @@ const CHARS = '1234567890QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm';
 const CHLENGTH = CHARS.length - 1;
 
 class UID {
+  
   /**
-   * @param {String} [pattern] Any symbols sequence with dashes. Default dash is used for human readability
-   * @returns {String} Output example: v6xYaSk7C-kzZ
+   * 
+   * @param {String} [pattern] any symbols sequence with dashes. Default dash is used for human readability
+   * @returns {String} output example: v6xYaSk7C-kzZ
    */
   static generate(pattern = 'XXXXXXXXX-XXX') {
     let uid = '';
-    for (let i = 0; i < pattern.length; i++) {
-      uid += pattern[i] === '-' ? pattern[i] : CHARS.charAt(Math.random() * CHLENGTH);
-    }
-    return uid;
+  	for (let i = 0; i < pattern.length; i++) {
+  		uid += pattern[i] === '-' ? pattern[i] : CHARS.charAt(Math.random() * CHLENGTH);
+  	}
+  	return uid;
   }
 }
 
@@ -697,8 +699,9 @@ const MSG_TYPE = '[Typed State] Wrong property type: ';
 
 class TypedData {
   /**
-   * @param {Object<string, { type: any; value: any }>} typedSchema
-   * @param {String} [ctxName]
+   * 
+   * @param {Object<string, {type: any, value: any}>} typedSchema 
+   * @param {String} [ctxName] 
    */
   constructor(typedSchema, ctxName) {
     this.__typedSchema = typedSchema;
@@ -711,8 +714,9 @@ class TypedData {
   }
 
   /**
-   * @param {String} prop
-   * @param {any} value
+   * 
+   * @param {String} prop 
+   * @param {*} value 
    */
   setValue(prop, value) {
     if (!this.__typedSchema.hasOwnProperty(prop)) {
@@ -726,14 +730,20 @@ class TypedData {
     this.__state.pub(prop, value);
   }
 
-  /** @param {Object<string, any>} updObj */
+  /**
+   * 
+   * @param {Object<string, *>} updObj 
+   */
   setMultipleValues(updObj) {
     for (let prop in updObj) {
       this.setValue(prop, updObj[prop]);
     }
   }
 
-  /** @param {String} prop */
+  /**
+   * 
+   * @param {String} prop 
+   */
   getValue(prop) {
     if (!this.__typedSchema.hasOwnProperty(prop)) {
       console.warn(MSG_NAME + prop);
@@ -743,8 +753,9 @@ class TypedData {
   }
 
   /**
-   * @param {String} prop
-   * @param {(newVal: any) => void} handler
+   * 
+   * @param {String} prop 
+   * @param {(newVal: any) => void} handler 
    */
   subscribe(prop, handler) {
     return this.__state.sub(prop, handler);
@@ -902,16 +913,23 @@ class TypedCollection {
 }
 
 class AppRouter {
+
   static _print(msg) {
     console.warn(msg);
   }
 
-  /** @param {String} title */
+  /**
+   *
+   * @param {String} title
+   */
   static setDefaultTitle(title) {
     this.defaultTitle = title;
   }
 
-  /** @param {Object<string, {}>} map */
+  /**
+   *
+   * @param {Object<string, {}>} map
+   */
   static setRoutingMap(map) {
     Object.assign(this.appMap, map);
     for (let route in this.appMap) {
@@ -979,8 +997,9 @@ class AppRouter {
   }
 
   /**
+   *
    * @param {String} route
-   * @param {Object<string, any>} [options]
+   * @param {Object<string, *>} [options]
    */
   static reflect(route, options = {}) {
     let routeScheme = this.appMap[route];
@@ -1002,15 +1021,19 @@ class AppRouter {
   }
 
   /**
-   * @param {String} route
-   * @param {Object<string, any>} [options]
-   */
+  *
+  * @param {String} route
+  * @param {Object<string, *>} [options]
+  */
   static applyRoute(route, options = {}) {
     this.reflect(route, options);
     this.notify();
   }
 
-  /** @param {String} char */
+  /**
+   * 
+   * @param {String} char 
+   */
   static setSeparator(char) {
     this._separator = char;
   }
@@ -1020,8 +1043,9 @@ class AppRouter {
   }
 
   /**
-   * @param {String} ctxName
-   * @param {Object<string, {}>} routingMap
+   * 
+   * @param {String} ctxName 
+   * @param {Object<string, {}>} routingMap 
    * @returns {Data}
    */
   static createRouterData(ctxName, routingMap) {
@@ -1041,6 +1065,7 @@ class AppRouter {
     AppRouter.notify();
     return routeData;
   }
+
 }
 
 AppRouter.appMap = Object.create(null);
@@ -1050,23 +1075,27 @@ window.onpopstate = () => {
 };
 
 /**
- * @typedef {any} StyleMap
+ * 
+ * @typedef StyleMap
  * @type {Object<string, string | number>}
  */
 
 /**
- * @typedef {any} AttrMap
- * @type {Object<string, string | number | boolean>}
+ * 
+ * @typedef AttrMap
+ * @type {Object<string, string | number | boolean>} 
  */
 
 /**
- * @typedef {any} PropMap
- * @type {Object<string, any>}
+ * 
+ * @typedef PropMap
+ * @type {Object<string, *>} 
  */
 
 /**
- * @param {any} el HTMLElement
- * @param {StyleMap} styleMap
+ * 
+ * @param {*} el HTMLElement
+ * @param {StyleMap} styleMap 
  */
 function applyStyles(el, styleMap) {
   for (let prop in styleMap) {
@@ -1078,10 +1107,11 @@ function applyStyles(el, styleMap) {
   }
 }
 /**
- * @param {any} el HTMLElement
- * @param {AttrMap} attrMap
+ * 
+ * @param {*} el HTMLElement
+ * @param {AttrMap} attrMap 
  */
-function applyAttributes(el, attrMap) {
+ function applyAttributes(el, attrMap) {
   for (let attrName in attrMap) {
     if (attrMap[attrName].constructor === Boolean) {
       if (attrMap[attrName]) {
@@ -1095,22 +1125,24 @@ function applyAttributes(el, attrMap) {
   }
 }
 /**
- * @typedef {any} ElementDescriptor
+ * 
+ * @typedef ElementDescriptor
  * @type {{
- *   tag?: String;
- *   attributes?: AttrMap;
- *   styles?: StyleMap;
- *   properties?: PropMap;
- *   processors?: Function[];
- *   children?: ElementDescriptor[];
+ *  tag?: String,
+ *  attributes?: AttrMap, 
+ *  styles?: StyleMap, 
+ *  properties?: PropMap,
+ *  processors?: Function[],
+ *  children?: ElementDescriptor[],
  * }}
  */
 
 /**
- * @param {ElementDescriptor} [desc]
+ * 
+ * @param {ElementDescriptor} [desc] 
  * @returns {HTMLElement}
  */
-function create(desc = { tag: 'div' }) {
+function create(desc = {tag: 'div'}) {
   let el = document.createElement(desc.tag);
   if (desc.attributes) {
     applyAttributes(el, desc.attributes);
