@@ -1,0 +1,26 @@
+{
+  "type": "module",
+  "name": "@uploadcare/uploader",
+  "version": "0.0.3-alpha.4",
+  "description": "",
+  "repository": "https://github.com/uploadcare/jsdk/",
+  "scripts": {
+    "copy-license": "cp ../LICENSE ./LICENSE",
+    "prepare": "npm run copy-license"
+  },
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "esbuild": "^0.11.11"
+  },
+  "files": [
+    "build/regular/uc-uploader.css",
+    "build/regular/uc-uploader.min.js",
+    "build/regular/uc-uploader.jsdoc.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

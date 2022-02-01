@@ -1,8 +1,25 @@
+<!-- Uploader script connection: -->
 <script 
-  src="./index.js" 
+  src="./regular/index.js" 
   type="module">
 </script>
 
-<uc-uploader
-  css-src="./index.css">
+<!-- Uploader styles and Data-in-CSS settings: -->
+<style>
+  @import url(./regular/index.css);
+  .my-settings {
+    --ctx-name: 'my-uploader';
+    --cfg-pubkey: 'demopublickey';
+  }
+</style>
+
+<!-- Uploader widget element: -->
+<uc-uploader 
+  class="my-settings uc-wgt-common">
 </uc-uploader>
+
+<!-- Upload data element with console output enabled: -->
+<uc-data-output
+  console
+  class="my-settings">
+</uc-data-output>

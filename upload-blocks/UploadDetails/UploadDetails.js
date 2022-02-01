@@ -44,7 +44,7 @@ export class UploadDetails extends BlockComponent {
     this.$.fileSize = this.l10n('file-size-unknown');
     this.registerActivity(this.activityType, () => {
       this.set$({
-        '*modalCaption': this.l10n('caption-edit-file'),
+        '*activityCaption': this.l10n('caption-edit-file'),
       });
     });
     // this.sub('editBtnHidden', (val) => {
@@ -111,8 +111,8 @@ export class UploadDetails extends BlockComponent {
           this.$.cdnUrl = 'Not uploaded yet...';
         }
       });
-      tmpSub('uploadErrorMsg', (msg) => {
-        this.$.errorTxt = msg;
+      tmpSub('uploadError', (error) => {
+        this.$.errorTxt = error?.message;
       });
 
       tmpSub('externalUrl', (url) => {

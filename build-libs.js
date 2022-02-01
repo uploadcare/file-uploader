@@ -1,6 +1,10 @@
 import esbuild from 'esbuild';
 import fs from 'fs';
 
+import { uploader_build_cfg } from './uploader/build.cfg.js';
+import { upload_blocks_build_cfg } from './upload-blocks/build.cfg.js';
+import { live_html_build_cfg } from './live-html/build.cfg.js';
+
 function jsBanner() {
   const license = fs.readFileSync('./LICENSE').toString();
   return (
@@ -14,22 +18,7 @@ function jsBanner() {
   );
 }
 
-const buildSequence = [
-  {
-    in: './upload-blocks/index.js',
-    out: './upload-blocks/build/upload-blocks.js',
-    minifyHtml: false,
-  },
-  {
-    in: './upload-blocks/themes/uc-basic/index.css',
-    out: './upload-blocks/build/uc-basic.css',
-  },
-  {
-    in: './doc_assets/js/live.js',
-    out: './build/site-live-html.js',
-    minifyHtml: true,
-  },
-];
+const buildSequence = [...uploader_build_cfg, ...upload_blocks_build_cfg, ...live_html_build_cfg];
 
 function build(buildItem) {
   esbuild

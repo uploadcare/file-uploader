@@ -30,76 +30,37 @@ Key features:
 
 ## 🏠 Integration basics
 
-We use [Custom Elements](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_custom_elements) standard to make integration seamless. That allows us to use simple HTML-code to define layouts and place our widgets into the any other templates or markup. Custom Elements are compatible with a most of modern technologies and providing the uniform workflow for all of them. Please, check out the list of a high level tests passed with a set of modern frontend frameworks and libraries: [Custom Elements Everywhere](https://custom-elements-everywhere.com/)
+We use [Custom Elements](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_custom_elements) standard to make integration seamless. That allows us to use simple HTML-code to define layouts and place our widgets into the any other templates or other markup. Custom Elements are compatible with a most of modern technologies and providing the uniform workflow for all of them. Please, check out the list of a high level tests passed with a set of modern frontend frameworks and libraries: [Custom Elements Everywhere](https://custom-elements-everywhere.com/)
 
 Also, we providing the set of [reference integrations](https://github.com/uploadcare/upload-blocks-examples).
 
-To integrate Uploadcare widget, first of all, you should connect our script:
-```html
-<script 
-  src="../upload-blocks/DefaultWidget/DefaultWidget.js"
-  type="module">
-</script>
-```
+## 🍱 Uploader solutions out of the box
 
-You can use `npm` to install upload-blocks into your project:
+We provide [the set of uploader builds](../uploader/) you can use for the most frequent cases or for the reference if you need to build your own.
 
-`npm install ...`
+## 🚀 Create your own file uploader
 
-Basic integration HTML-code example:
-```html
-<uc-default-widget
-  css-src="../upload-blocks/themes/uc-basic/index.css">
-</uc-default-widget>
-```
-As you can see, it's very simple.
+The common flow of the uploading widget creation is following:
+
+1. Install upload-blocks: `npm i @uploadcare/upload-blocks`
+2. Create the set of all components you need (example: [exports.js](../uploader/regular/exports.js))
+3. Create your widget class with desired layout (example: [index.js](../uploader/regular/index.js))
+4. Create CSS configuration file (example: [index.css](../uploader/regular/index.css))
+5. Place resulting custom HTML-tag into your application markup and connect CSS ([example](./doc_assets/basic-demo.snpt.html))
+
+As you can see, that's quite simple.
 
 > You shold obtain a Public API Key in your [Uploadcare project's dashboard](https://app.uploadcare.com/) to use file uploading features. 
-
-For demo-only purposes you can use `demopublickey` instead:
-```html
-<uc-default-widget
-  style="--pubkey:'demopublickey'; --darkmode: 1"
-  css-src="../upload-blocks/themes/uc-basic/index.css">
-</uc-default-widget>
-```
-Some of widget settings in this example are passed via CSS variables. That means you can use styles, CSS-classes and dedicated CSS-files to pass any setting to any block or redefine if using native DOM API or just native HTML syntax. Let's move forvard to the next section, to explain that.
 
 ## 🎨 Customize everything!
 
 First of all, please take a look at [our CSS aproach discussion](https://github.com/uploadcare/jsdk/discussions/18). Don't be shy to participate, your opinion is very important for us.
 
-### Basic configuration
-
-All basic configurations for each block could be provided via the set of [CSS-variables](https://developer.mozilla.org/en-US/docs/Web/CSS/Using_CSS_custom_properties):
-```css
-.uc-wgt-cfg, .uc-wgt-common, :host {
-  --ctx-name: 'my-uploader';
-  --cfg-pubkey: 'demopublickey';
-  --cfg-multiple: 1;
-  --cfg-confirm-upload: 1;
-  --cfg-img-only: 0;
-  --cfg-accept: '';
-  --cfg-store: 1;
-  --cfg-camera-mirror: 1;
-  --cfg-source-list: 'local, url, camera, dropbox, gdrive, facebook';
-  --cfg-max-files: 10;
-  --cfg-max-local-file-size-bytes: 30000;
-  --cfg-thumb-size: 76;
-  --cfg-show-empty-list: 0;
-  --cfg-use-local-image-editor: 0;
-  --cfg-use-cloud-image-editor: 0;
-}
-```
-Variable value should be a correct JSON value. Strings shoud be taken in quotes. We use the `1` or `0` numbers to define boolean flags.
-
-Any configuration value can be defined and redefined at any level of the DOM tree, at any time.
-
 ### Look & feel
 
 Each block has a reference CSS file, placed at the common directory with the JavaScript class defenition module. You can use it as the template to create your onw custom styling (or CSS-animations) for the any library block. All blocks and their children are acting like a regular DOM-elements in that case, you can use native CSS-selectors and the any of the well known styling approaches. All significant component states are provided as the element attribute flags, so you can use the full power of CSS to customize blocks in deep.
 
-[More about CSS theme creation]()
+[More about CSS theme creation](./themes/uc-basic/)
 
 ### Layout & composition
 
@@ -146,29 +107,6 @@ All elements created by upload-blocks are discoverable via developer tools in yo
 ### Custom blocks
 
 You can create your own custom upload-blocks to handle some specific use cases. You need to use [BlockComponent](./docs/block-component/) JavaScript base class, to do that.
-
-## 📤 Data output
-
-We providing the dedicated block for the data output purposes - `<uc-data-output>`. 
-This is a Custom Element which can be connected to some workflow context and provide you the convenient data access.
-
-Here is the code example:
-
-```html
-<uc-data-output
-  console
-  fire-events
-  from="*dataOutput"
-  item-template="<img src='https://ucarecdn.com/{{uuid}}/-/preview/' />">
-<uc-data-output>
-```
-Let's walk through its attributes:
-
-* `console` - this flag lets you enable browser console output without modifing the source code.
-* `fire-events` - this flag enables custom events (`data-output`) dispatching for the DOM-element. These events are containig all uploading data and could be processed at the any level of your application
-* `from` - data output could be connected to any field in the workflow context. You can specify the certain one. By default it is a `*dataOutput`, you can skip this setting for the default uploading case
-* `item-template` - uploading resuls cold be rendered as a list of nested DOM-elements. You can specify simple template for that.
-* `form-value` - could be used to handle HTML-forms
 
 ## ⚙️ More in depth
 

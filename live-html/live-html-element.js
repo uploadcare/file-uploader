@@ -119,7 +119,11 @@ export class LiveHtmlElement extends BaseComponent {
       .replace(/"/g, '<span -quote->"</span>')
       .replace(/=/g, '<span -equal->=</span>')
       .split('<span -tag-arr->&lt;</span>/')
-      .join('<span -tag-arr->&lt;/</span>');
+      .join('<span -tag-arr->&lt;/</span>')
+      .split('<span -tag-arr->&lt;</span>!--')
+      .join('<span -comment->&lt;!--')
+      .split('--<span -tag-arr->&gt;</span>')
+      .join('--&gt;</span>');
     this.ref.editor.innerHTML = html;
 
     Caret.setPosition(offset, this.ref.editor);

@@ -1,5 +1,6 @@
 # Texts
 
+All keys and values for the UI texts and translations are also placed in CSS:
 ```css
 .uc-wgt-l10n_en-US, .uc-wgt-common, :host {
   --l10n-upload-file: 'Upload file';
@@ -76,3 +77,42 @@
   --l10n-file-size-unknown: 'Unknown';
 }
 ```
+
+That means you can create your own variand of any UI text or add any new text to the your custom block.
+
+CSS:
+```css
+.my-txt-v1 {
+  --l10n-my-custom-txt: 'SOME TEXT 1';
+  --l10n-my-custom-title: 'some title 1';
+}
+.my-txt-v2 {
+  --l10n-my-custom-txt: 'SOME TEXT 2';
+  --l10n-my-custom-title: 'some title 2';
+}
+```
+JavaScript:
+```javascript
+import { UC } from '@uploadcare/upload-blocks';
+
+class MyBlock extends UC.BlockComponent {};
+
+MyBlock.template = /*html*/ `
+<div l10n="title:my-custom-title">
+  <span l10n="my-custom-txt"></span>
+</div>
+`;
+
+MyBlock.reg('my-block');
+```
+
+HTML:
+```html
+...
+<uc-my-block class="my-txt-v1"></uc-my-block>
+...
+<uc-my-block class="my-txt-v2"></uc-my-block>
+...
+```
+
+To connect some text to the some HTML-element property in your block template, instead of `textContent`, use `:` symbol separating element property name and the text key: `<div l10n="title:my-custom-title">`.

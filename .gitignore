@@ -11,3 +11,6 @@ html_output
 */wasm-pack.log
 .DS_Store
 .firebase
+lerna-debug.log
+TMP
+

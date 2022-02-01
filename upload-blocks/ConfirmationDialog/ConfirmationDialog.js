@@ -41,7 +41,7 @@ export class ConfirmationDialog extends BlockComponent {
       this.set$({
         '*modalHeaderHidden': true,
         '*currentActivity': BlockComponent.activities.CONFIRMATION,
-        '*modalCaption': this.l10n(cfn.captionL10nStr),
+        '*activityCaption': this.l10n(cfn.captionL10nStr),
         messageTxt: this.l10n(cfn.messageL10Str),
         confirmBtnTxt: this.l10n(cfn.confirmL10nStr),
         denyBtnTxt: this.l10n(cfn.denyL10nStr),
