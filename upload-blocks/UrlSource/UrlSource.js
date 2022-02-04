@@ -4,6 +4,7 @@ export class UrlSource extends BlockComponent {
   activityType = BlockComponent.activities.URL;
 
   init$ = {
+    importDisabled: true,
     onUpload: () => {
       let url = this.ref.input['value'];
       this.uploadCollection.add({
@@ -15,6 +16,10 @@ export class UrlSource extends BlockComponent {
       this.set$({
         '*currentActivity': BlockComponent.activities.SOURCE_SELECT,
       });
+    },
+    onInput: (e) => {
+      const value = e.target.value;
+      this.set$({ importDisabled: !value });
     },
   };
 
@@ -29,10 +34,10 @@ export class UrlSource extends BlockComponent {
 }
 
 UrlSource.template = /*html*/ `
-<input placeholder="https://..." .url-input type="text" ref="input" />
+<input placeholder="https://..." .url-input type="text" ref="input" set="oninput: onInput"/>
 <button
-  class="url-upload-btn primary-btn "
-  set="onclick: onUpload">
+  class="url-upload-btn primary-btn"
+  set="onclick: onUpload; @disabled: importDisabled">
 </button>
 <button
   class="cancel-btn secondary-btn"
