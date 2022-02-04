@@ -79,6 +79,10 @@ export class FileItem extends BlockComponent {
       /** @type {import('@symbiotejs/symbiote').TypedData} */
       this.entry = this.uploadCollection?.read(id);
 
+      if (!this.entry) {
+        return;
+      }
+
       this.entry.subscribe('fileName', (name) => {
         this.$.itemName = name || this.externalUrl || this.l10n('file-no-name');
       });
