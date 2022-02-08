@@ -15,16 +15,17 @@ export class Uploader extends UC.BlockComponent {
 
 Uploader.template = /*html*/ `
 <uc-start-from>
-  <uc-drop-area >
+  <uc-drop-area class="minimal-frame" >
     <button 
     l10n="browse"
       set="onclick: selectClicked"></button>
   </uc-drop-area>
 </uc-start-from>
-<uc-upload-list
+<uc-upload-list 
+  class="minimal-frame"
   cancel-activity="source-select"
   done-activity="source-select"></uc-upload-list>
-<uc-confirmation-dialog></uc-confirmation-dialog>
+<uc-confirmation-dialog class="minimal-frame"></uc-confirmation-dialog>
 <uc-message-box></uc-message-box>
 <uc-progress-bar></uc-progress-bar>
 `;

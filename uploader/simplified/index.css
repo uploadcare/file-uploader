@@ -4,8 +4,20 @@
     --l10n-drop-files-here-or: 'Drop files here or';
 }
 
+.minimal-frame {
+    border: var(--border-dashed);
+    border-radius: var(--border-radius-frame);
+}
+
+uc-start-from {
+    display: block; 
+    height: 300px; /* test value */
+    padding: 0;
+}
+
 uc-drop-area {
-    width: 400px;
+    width: 100%; 
+    height: 100%; 
     padding: 20px;
     flex-direction: column;
     text-align: center;
@@ -27,4 +39,11 @@ uc-drop-area button {
     height: auto;
     color: var(--clr-accent);
     line-height: inherit;
+    opacity: 0.8;
+    transition: opacity var(--transition-duration) ease;
 }
+
+uc-drop-area button:hover {
+    opacity: 1;
+}
+
