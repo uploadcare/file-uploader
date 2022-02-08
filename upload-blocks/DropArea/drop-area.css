@@ -5,6 +5,9 @@ uc-drop-area {
   border: var(--border-dashed);
   border-radius: var(--border-radius-frame);
   padding: var(--gap-min);
+  transition: border-color var(--transition-duration) ease, 
+              background-color var(--transition-duration) ease, 
+              opacity var(--transition-duration) ease;
 }
 uc-drop-area::after {
   content: var(--l10n-drop-files-here);
@@ -32,6 +35,6 @@ uc-drop-area[drag-state="near"] {
 
 uc-drop-area[drag-state="over"] {
   opacity: 1;
-  background-color: var(--clr-accent-light);
+  background-color: var(--clr-accent-lightest);
   border-color: var(--clr-accent);
 }
