@@ -29,6 +29,9 @@ uc-drop-area[drag-state="active"] {
 
 uc-drop-area[drag-state="near"] {
   opacity: 1;
+}
+
+uc-drop-area[drag-state="near"], uc-drop-area:hover {
   background-color: var(--clr-accent-lightest);
   border-color: var(--clr-accent-light);
 }
