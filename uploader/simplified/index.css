@@ -1,1 +1,30 @@
 @import url('../../upload-blocks/themes/uc-basic/index.css');
+
+.uc-wgt-l10n_en-US, .uc-wgt-common, :host {
+    --l10n-drop-files-here-or: 'Drop files here or';
+}
+
+uc-drop-area {
+    width: 400px;
+    padding: 20px;
+    flex-direction: column;
+    text-align: center;
+    line-height: 140%;
+}
+
+uc-drop-area::after {
+    content: "";
+}
+
+uc-drop-area::before {
+    content: var(--l10n-drop-files-here-or);
+}
+
+uc-drop-area button {
+    display: inline-block;
+    padding: 0;
+    background: transparent;
+    height: auto;
+    color: var(--clr-accent);
+    line-height: inherit;
+}

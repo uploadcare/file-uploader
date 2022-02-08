@@ -15,9 +15,9 @@ export class Uploader extends UC.BlockComponent {
 
 Uploader.template = /*html*/ `
 <uc-start-from>
-  <uc-drop-area>
+  <uc-drop-area >
     <button 
-      l10n="select-file"
+    l10n="browse"
       set="onclick: selectClicked"></button>
   </uc-drop-area>
 </uc-start-from>
