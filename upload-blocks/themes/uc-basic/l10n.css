@@ -1,7 +1,7 @@
 .uc-wgt-l10n_en-US, .uc-wgt-common, :host {
   --l10n-upload-file: 'Upload file';
   --l10n-upload-files: 'Upload files';
-  --l10n-drop-files-here: 'Drop files here...';
+  --l10n-drop-files-here: 'Drop files here';
   --l10n-select-file-source: 'Select file source';
   --l10n-selected: 'Selected';
   --l10n-upload: 'Upload';
@@ -22,6 +22,7 @@
   --l10n-selected-count: 'Selected:';
   --l10n-upload-error: 'Upload error';
   --l10n-no-files: 'No files selected';
+  --l10n-browse: 'Browse';
 
   --l10n-src-type-local: 'Local file';
   --l10n-src-type-from-url: 'From URL';
