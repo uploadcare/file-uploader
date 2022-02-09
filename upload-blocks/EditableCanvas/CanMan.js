@@ -1,5 +1,5 @@
 // Canvas Manipulator
-import { applyStyles, applyAttributes } from '../../ext_modules/symbiote.js';
+import { applyStyles, applyAttributes } from '../../node_modules/@symbiotejs/symbiote/build/symbiote.js';
 const SVGNS = 'http://www.w3.org/2000/svg';
 
 export class CanMan {
@@ -143,6 +143,7 @@ export class CanMan {
   startText() {
     let onStart = (e) => {
       let text = document.createElementNS(SVGNS, 'text');
+      // @ts-ignore
       applyAttributes(text, {
         fill: this.currentColor,
         x: e.offsetX,
@@ -163,6 +164,7 @@ export class CanMan {
   startDraw() {
     this.svgEl.addEventListener('mousedown', (e) => {
       let pLine = document.createElementNS(SVGNS, 'polyline');
+      // @ts-ignore
       applyAttributes(pLine, {
         fill: 'none',
         stroke: this.currentColor,

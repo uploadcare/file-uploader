@@ -31,7 +31,7 @@ export class CloudImageEditor extends BlockComponent {
       }
     });
 
-    this.sub('*focusedEntry', (/** @type {import('../../ext_modules/symbiote.js').TypedData} */ entry) => {
+    this.sub('*focusedEntry', (/** @type {import('@symbiotejs/symbiote').TypedData} */ entry) => {
       if (!entry) {
         return;
       }

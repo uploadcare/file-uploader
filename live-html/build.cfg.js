@@ -5,13 +5,3 @@ export const live_html_build_cfg = [
     minifyHtml: true,
   },
 ];
-
-export const live_html_build_cfg_ROLLUP = {
-  input: './live-html/index.js',
-  output: [
-    {
-      file: './live-html/build/index.jsdoc.js',
-      format: 'esm',
-    },
-  ],
-};

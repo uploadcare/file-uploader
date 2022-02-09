@@ -1,3 +1,8 @@
+/**
+ * @template {import('./BlockComponent.js').BlockComponent} T
+ * @param {DocumentFragment} fr
+ * @param {T} fnCtx
+ */
 export function l10nProcessor(fr, fnCtx) {
   [...fr.querySelectorAll('[l10n]')].forEach((el) => {
     let key = el.getAttribute('l10n');

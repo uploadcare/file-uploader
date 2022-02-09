@@ -1,4 +1,4 @@
-import { BaseComponent } from '../ext_modules/symbiote.js';
+import { BaseComponent } from '../node_modules/@symbiotejs/symbiote/build/symbiote.js';
 
 const INIT_HTML = /*html*/ `
 <!DOCTYPE html>

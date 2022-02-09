@@ -1,0 +1,36 @@
+{
+  "compilerOptions": {
+    "pretty": true,
+    "target": "esnext",
+    "module": "esnext",
+    "moduleResolution": "node",
+    "lib": [
+        "es2017",
+        "ESNext",
+        "ESNext.Array",
+        "DOM",
+        "DOM.Iterable",
+        "WebWorker"
+      ],
+    "allowJs": true,
+    "checkJs": true,
+    "strict": false,
+    "alwaysStrict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "types": [],
+    "noEmit": false,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "removeComments": true
+  },
+  "include": [
+    "**/*.js"
+  ],
+  "exclude": [
+    "./*.js",
+    "cloud-editor",
+    "node_modules",
+    "*/build"
+  ]
+}

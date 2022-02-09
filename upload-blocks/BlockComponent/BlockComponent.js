@@ -1,4 +1,4 @@
-import { BaseComponent, Data, TypedCollection } from '../../ext_modules/symbiote.js';
+import { BaseComponent, Data, TypedCollection } from '../../node_modules/@symbiotejs/symbiote/build/symbiote.js';
 import { l10nProcessor } from './l10nProcessor.js';
 import { uploadEntrySchema } from './uploadEntrySchema.js';
 
@@ -211,7 +211,7 @@ export class BlockComponent extends BaseComponent {
     return this.$['*currentActivityParams'];
   }
 
-  /** @type {import('../../ext_modules/symbiote.js').TypedCollection} */
+  /** @type {import('@symbiotejs/symbiote').TypedCollection} */
   get uploadCollection() {
     if (!this.has('*uploadCollection')) {
       let uploadCollection = new TypedCollection({

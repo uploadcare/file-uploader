@@ -1,3 +1,4 @@
+// @ts-nocheck
 const SourceBtnClass = window.customElements.get('uc-source-btn');
 
 class CustomSourceBtn extends SourceBtnClass {

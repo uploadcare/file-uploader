@@ -9,13 +9,3 @@ export const upload_blocks_build_cfg = [
     out: './upload-blocks/build/uc-basic.css',
   },
 ];
-
-export const upload_blocks_build_cfg_ROLLUP = {
-  input: './upload-blocks/index.js',
-  output: [
-    {
-      file: './upload-blocks/build/upload-blocks.jsdoc.js',
-      format: 'esm',
-    },
-  ],
-};
