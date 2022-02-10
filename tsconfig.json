@@ -28,6 +28,7 @@
     "./*.js",
     "cloud-editor",
     "node_modules",
-    "*/build"
+    "*/build",
+    "build-utils"
   ]
 }
