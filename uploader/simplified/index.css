@@ -12,6 +12,7 @@
 uc-start-from {
     display: block; 
     height: 300px; /* test value */
+    width: 300px; /* test value */
     padding: 0;
 }
 
@@ -22,6 +23,10 @@ uc-drop-area {
     flex-direction: column;
     text-align: center;
     line-height: 140%;
+}
+
+uc-drop-area[drag-state="inactive"] {
+    background-color: transparent;
 }
 
 uc-drop-area::after {
@@ -46,4 +51,18 @@ uc-drop-area button {
 uc-drop-area button:hover {
     opacity: 1;
 }
+uc-upload-list {
+    width: 100%;
+    height: 100%;
+    padding: var(--gap-mid);
+    gap: var(--gap-min)
+}
+uc-upload-list .toolbar {
+    background: none;
+    border-top: none;
+}
 
+uc-file-item {
+    border-bottom: none;
+    border-radius: var(--border-radius-element);
+}
