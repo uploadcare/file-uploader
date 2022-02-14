@@ -37,9 +37,11 @@ export class FileItem extends BlockComponent {
     let [entry] = entries;
     if (entry.intersectionRatio === 0) {
       clearTimeout(this._thumbTimeoutId);
+      /** @private */
       this._thumbTimeoutId = undefined;
     } else if (!this._thumbTimeoutId) {
-      this._thumbTimeoutId = setTimeout(() => this._generateThumbnail(), 100);
+      /** @private */
+      this._thumbTimeoutId = window.setTimeout(() => this._generateThumbnail(), 100);
     }
   }
 
@@ -110,13 +112,16 @@ export class FileItem extends BlockComponent {
         }
       });
 
+      /** @type {File} */
       this.file = this.entry.getValue('file');
+      /** @type {String} */
       this.externalUrl = this.entry.getValue('externalUrl');
 
       if (!this.$['*--cfg-confirm-upload']) {
         this.upload();
       }
 
+      /** @private */
       this._observer = new window.IntersectionObserver(this._observerCallback.bind(this), {
         root: this.parentElement,
         rootMargin: '50% 0px 50% 0px',

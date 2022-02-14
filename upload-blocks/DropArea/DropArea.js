@@ -38,6 +38,7 @@ export class DropArea extends BlockComponent {
   }
 
   destroyCallback() {
+    // TODO: is it private?
     this._destroyDropzone?.();
   }
 }

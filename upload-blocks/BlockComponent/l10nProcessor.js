@@ -13,6 +13,7 @@ export function l10nProcessor(fr, fnCtx) {
       key = arr[1];
     }
     let ctxKey = 'l10n:' + key;
+    // @ts-ignore
     fnCtx.__l10nKeys.push(ctxKey);
     fnCtx.add(ctxKey, key);
     fnCtx.sub(ctxKey, (val) => {

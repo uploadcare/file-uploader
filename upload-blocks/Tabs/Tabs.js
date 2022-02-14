@@ -25,7 +25,10 @@ export class Tabs extends BlockComponent {
   }
 
   initCallback() {
-    /** @type {Object<string, HTMLElement>} */
+    /**
+     * @private
+     * @type {Object<string, HTMLElement>}
+     */
     this._tabMap = {};
     this.defineAccessor('tab-list', (/** @type {String} */ val) => {
       if (!val) {

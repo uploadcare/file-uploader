@@ -32,10 +32,14 @@ export class CameraSource extends BlockComponent {
       },
       audio: false,
     };
+    /** @private */
     this._canvas = document.createElement('canvas');
+    /** @private */
     this._ctx = this._canvas.getContext('2d');
+    /** @private */
     this._stream = await navigator.mediaDevices.getUserMedia(constr);
     this.$.video = this._stream;
+    /** @private */
     this._initialized = true;
   }
 
