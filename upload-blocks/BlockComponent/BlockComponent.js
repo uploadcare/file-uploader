@@ -14,7 +14,10 @@ if (!DOC_READY) {
 }
 
 export class BlockComponent extends BaseComponent {
-  /** @returns {String} */
+  /**
+   * @param {String} str
+   * @returns {String}
+   */
   l10n(str) {
     return this.getCssData('--l10n-' + str, true) || str;
   }
@@ -59,6 +62,7 @@ export class BlockComponent extends BaseComponent {
     this.$['*history'] = history;
   }
 
+  /** @param {File[]} files */
   addFiles(files) {
     files.forEach((/** @type {File} */ file) => {
       this.uploadCollection.add({
@@ -286,22 +290,35 @@ export class BlockComponent extends BaseComponent {
     // TODO: destroy uploadCollection
   }
 
+  /** @param {String} name */
   static reg(name) {
     super.reg(name.startsWith(TAG_PREFIX) ? name : TAG_PREFIX + name);
   }
+
+  /**
+   * @private
+   * @type {{ string: { activateCallback: Function; deactivateCallback: Function } }}
+   */
+  static _activityRegistry = Object.create(null);
+
+  /**
+   * @private
+   * @type {String}
+   */
+  static _lastActivity = '';
+
+  /**
+   * @private
+   * @type {String[]}
+   */
+  static _ctxConnectionsList = [];
+
+  /**
+   * @private
+   * @type {String[]}
+   */
+  static _cssDataBindingsList = [];
 }
-
-/** @type {{ string: { activateCallback: Function; deactivateCallback: Function } }} */
-BlockComponent._activityRegistry = Object.create(null);
-
-/** @type {String} */
-BlockComponent._lastActivity = '';
-
-/** @type {String[]} */
-BlockComponent._ctxConnectionsList = [];
-
-/** @type {String[]} */
-BlockComponent._cssDataBindingsList = [];
 
 /** @enum {String} */
 BlockComponent.activities = Object.freeze({

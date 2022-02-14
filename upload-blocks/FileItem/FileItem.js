@@ -73,6 +73,7 @@ export class FileItem extends BlockComponent {
       if (!id) {
         return;
       }
+      /** @type {String} */
       this.uid = id;
 
       /** @type {import('@symbiotejs/symbiote').TypedData} */
