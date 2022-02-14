@@ -1,6 +1,6 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 import { resizeImage } from '../utils/resizeImage.js';
-import { uploadFile } from '../../node_modules/@uploadcare/upload-client/dist/index.browser.js';
+import { uploadFile } from '@uploadcare/upload-client';
 import { UiMessage } from '../MessageBox/MessageBox.js';
 import { fileCssBg } from '../svg-backgrounds/svg-backgrounds.js';
 

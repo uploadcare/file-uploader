@@ -1,4 +1,4 @@
-import { BaseComponent, Data, TypedCollection } from '../../node_modules/@symbiotejs/symbiote/build/symbiote.js';
+import { BaseComponent, Data, TypedCollection } from '@symbiotejs/symbiote';
 import { l10nProcessor } from './l10nProcessor.js';
 import { uploadEntrySchema } from './uploadEntrySchema.js';
 

@@ -1,4 +1,4 @@
-import { UploadcareFile, UploadClientError } from '../../node_modules/@uploadcare/upload-client/dist/index.browser.js';
+import { UploadcareFile, UploadClientError } from '@uploadcare/upload-client';
 
 /** @enum {{ type; value }} */
 export const uploadEntrySchema = Object.freeze({

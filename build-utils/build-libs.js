@@ -1,9 +1,9 @@
 import esbuild from 'esbuild';
 import fs from 'fs';
 
-import { uploader_build_cfg } from './uploader/build.cfg.js';
-import { upload_blocks_build_cfg } from './upload-blocks/build.cfg.js';
-import { live_html_build_cfg } from './live-html/build.cfg.js';
+import { uploader_build_cfg } from '../uploader/build.cfg.js';
+import { upload_blocks_build_cfg } from '../upload-blocks/build.cfg.js';
+import { live_html_build_cfg } from '../live-html/build.cfg.js';
 
 function jsBanner() {
   const license = fs.readFileSync('./LICENSE').toString();
@@ -18,7 +18,11 @@ function jsBanner() {
   );
 }
 
-const buildSequence = [...uploader_build_cfg, ...upload_blocks_build_cfg, ...live_html_build_cfg];
+const buildSequence = [
+  ...live_html_build_cfg, //
+  ...upload_blocks_build_cfg,
+  ...uploader_build_cfg,
+];
 
 function build(buildItem) {
   esbuild
@@ -26,7 +30,7 @@ function build(buildItem) {
       entryPoints: [buildItem.in],
       format: 'esm',
       bundle: true,
-      minify: true,
+      minify: buildItem.minify,
       sourcemap: false,
       outfile: buildItem.out,
       target: 'es2019',

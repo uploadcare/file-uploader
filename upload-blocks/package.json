@@ -4,6 +4,8 @@
   "version": "0.0.3-alpha.4",
   "description": "",
   "main": "./build/upload-blocks.min.js",
+  "module": "./build/index.js",
+  "types": "./build/index.d.ts",
   "repository": "https://github.com/uploadcare/jsdk/",
   "scripts": {
     "copy-license": "cp ../LICENSE ./LICENSE",
@@ -20,9 +22,7 @@
   },
   "gitHead": "7154654a5951930345e660e0f6fa39b9b5669ee2",
   "files": [
-    "build/uc-basic.css",
-    "build/upload-blocks.jsdoc.js",
-    "build/upload-blocks.min.js",
+    "build/*",
     "README.md",
     "LICENSE"
   ],
