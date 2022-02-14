@@ -36,6 +36,7 @@ export class DataOutput extends BlockComponent {
       this.value = data;
       if (this.hasAttribute(DataOutput.formValueAttrName)) {
         if (!this._input) {
+          /** @private */
           this._input = document.createElement('input');
           this._input.type = 'text';
           this.appendChild(this._input);

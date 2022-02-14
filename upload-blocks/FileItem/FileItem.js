@@ -32,6 +32,7 @@ export class FileItem extends BlockComponent {
     },
   };
 
+  /** @private */
   _observerCallback(entries) {
     let [entry] = entries;
     if (entry.intersectionRatio === 0) {
@@ -42,6 +43,7 @@ export class FileItem extends BlockComponent {
     }
   }
 
+  /** @private */
   _generateThumbnail() {
     if (this.$.thumbUrl) {
       return;
@@ -56,6 +58,7 @@ export class FileItem extends BlockComponent {
     }
   }
 
+  /** @private */
   _revokeThumbUrl() {
     if (this.$.thumbUrl?.startsWith('blob:')) {
       URL.revokeObjectURL(this.$.thumbUrl);

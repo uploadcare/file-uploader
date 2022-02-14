@@ -14,6 +14,7 @@ if (!DOC_READY) {
 }
 
 export class BlockComponent extends BaseComponent {
+  /** @returns {String} */
   l10n(str) {
     return this.getCssData('--l10n-' + str, true) || str;
   }
@@ -23,8 +24,12 @@ export class BlockComponent extends BaseComponent {
     /** @type {String} */
     this.activityType = null;
     this.addTemplateProcessor(l10nProcessor);
-    /** @type {String[]} */
+    /**
+     * @private
+     * @type {String[]}
+     */
     this.__l10nKeys = [];
+    /** @private */
     this.__l10nUpdate = () => {
       this.dropCssDataCache();
       for (let key of this.__l10nKeys) {
@@ -99,6 +104,7 @@ export class BlockComponent extends BaseComponent {
     }
   }
 
+  /** @private */
   __bindBasicCssData() {
     if (!BlockComponent._cssDataBindingsList.includes(this.ctxName)) {
       let unprefixedCfgProps = ['pubkey', 'store', 'multiple', 'max-files', 'accept', 'confirm-upload'];
@@ -161,6 +167,7 @@ export class BlockComponent extends BaseComponent {
           BlockComponent._lastActivity = activityKey;
         });
       }
+      /** @private */
       this.__connectedOnce = true;
     } else {
       super.connectedCallback();
@@ -211,7 +218,7 @@ export class BlockComponent extends BaseComponent {
     return this.$['*currentActivityParams'];
   }
 
-  /** @type {import('@symbiotejs/symbiote').TypedCollection} */
+  /** @returns {import('@symbiotejs/symbiote').TypedCollection} */
   get uploadCollection() {
     if (!this.has('*uploadCollection')) {
       let uploadCollection = new TypedCollection({
@@ -274,6 +281,7 @@ export class BlockComponent extends BaseComponent {
 
   destroyCallback() {
     window.removeEventListener('uc-l10n-update', this.__l10nUpdate);
+    /** @private */
     this.__l10nKeys = null;
     // TODO: destroy uploadCollection
   }
@@ -295,6 +303,7 @@ BlockComponent._ctxConnectionsList = [];
 /** @type {String[]} */
 BlockComponent._cssDataBindingsList = [];
 
+/** @enum {String} */
 BlockComponent.activities = Object.freeze({
   SOURCE_SELECT: 'source-select',
   CAMERA: 'camera',
@@ -307,6 +316,7 @@ BlockComponent.activities = Object.freeze({
   DETAILS: 'details',
 });
 
+/** @enum {String} */
 BlockComponent.extSrcList = Object.freeze({
   FACEBOOK: 'facebook',
   DROPBOX: 'dropbox',
@@ -321,6 +331,7 @@ BlockComponent.extSrcList = Object.freeze({
   HUDDLE: 'huddle',
 });
 
+/** @enum {String} */
 BlockComponent.sourceTypes = Object.freeze({
   LOCAL: 'local',
   URL: 'url',

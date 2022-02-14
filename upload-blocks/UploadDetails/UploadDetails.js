@@ -68,6 +68,7 @@ export class UploadDetails extends BlockComponent {
           sub.remove();
         });
       } else {
+        /** @private */
         this._entrySubs = new Set();
       }
       this.entry = entry;
@@ -75,7 +76,10 @@ export class UploadDetails extends BlockComponent {
       let file = entry.getValue('file');
       this.eCanvas.clear();
       if (file) {
-        /** @type {File} */
+        /**
+         * @private
+         * @type {File}
+         */
         this._file = file;
         let isImage = this._file.type.includes('image');
         if (isImage && !entry.getValue('transformationsUrl')) {

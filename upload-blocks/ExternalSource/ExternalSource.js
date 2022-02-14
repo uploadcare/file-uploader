@@ -18,6 +18,7 @@ export class ExternalSource extends BlockComponent {
     },
   };
 
+  /** @private */
   _iframe = null;
 
   initCallback() {

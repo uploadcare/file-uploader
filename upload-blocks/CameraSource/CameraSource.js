@@ -16,6 +16,7 @@ export class CameraSource extends BlockComponent {
     },
   };
 
+  /** @private */
   async _init() {
     let constr = {
       video: {
@@ -38,6 +39,7 @@ export class CameraSource extends BlockComponent {
     this._initialized = true;
   }
 
+  /** @private */
   _deInit() {
     if (this._initialized) {
       this._stream?.getTracks()[0].stop();
@@ -46,6 +48,7 @@ export class CameraSource extends BlockComponent {
     }
   }
 
+  /** @private */
   _shot() {
     this._canvas.height = this.ref.video['videoHeight'];
     this._canvas.width = this.ref.video['videoWidth'];

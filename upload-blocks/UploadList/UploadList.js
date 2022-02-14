@@ -43,6 +43,7 @@ export class UploadList extends BlockComponent {
     },
   };
 
+  /** @private */
   _renderMap = Object.create(null);
 
   updateButtonsState() {
