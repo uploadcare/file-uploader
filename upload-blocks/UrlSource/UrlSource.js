@@ -18,7 +18,7 @@ export class UrlSource extends BlockComponent {
       });
     },
     onInput: (e) => {
-      const value = e.target.value;
+      let value = e.target.value;
       this.set$({ importDisabled: !value });
     },
   };
