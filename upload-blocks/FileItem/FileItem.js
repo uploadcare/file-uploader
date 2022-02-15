@@ -165,6 +165,8 @@ export class FileItem extends BlockComponent {
     if (this.hasAttribute('loaded') || this.entry.getValue('uuid')) {
       return;
     }
+    this.entry.setValue('uploadProgress', 0.1);
+
     this.$.progressWidth = 0;
     this.$.progressOpacity = 1;
     this.removeAttribute('focused');
