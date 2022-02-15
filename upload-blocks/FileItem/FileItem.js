@@ -214,6 +214,7 @@ export class FileItem extends BlockComponent {
         badgeIcon: 'badge-error',
         '*message': msg,
       });
+      this.entry.setValue('uploadProgress', 0);
       this.entry.setValue('uploadError', error);
     }
   }
