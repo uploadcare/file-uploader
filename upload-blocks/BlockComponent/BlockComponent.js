@@ -160,15 +160,15 @@ export class BlockComponent extends BaseComponent {
             let actDesc = BlockComponent._activityRegistry[activityKey];
             if (actDesc) {
               actDesc.activateCallback?.();
-              if (BlockComponent._lastActivity) {
+              if (BlockComponent._lastActivity && BlockComponent._lastActivity !== activityKey) {
                 let lastActDesc = BlockComponent._activityRegistry[BlockComponent._lastActivity];
                 if (lastActDesc) {
                   lastActDesc.deactivateCallback?.();
                 }
               }
             }
+            BlockComponent._lastActivity = activityKey;
           }
-          BlockComponent._lastActivity = activityKey;
         });
       }
       /** @private */
