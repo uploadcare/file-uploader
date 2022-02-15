@@ -4,20 +4,21 @@
   "description": "",
   "type": "module",
   "scripts": {
-    "dir": "mkdir -p ext_modules",
-    "ext:upload-client": "curl -L https://unpkg.com/@uploadcare/upload-client@^2.0.0/dist/index.browser.js --output ext_modules/upload-client.js",
-    "ext:symbiote": "curl -L https://unpkg.com/@symbiotejs/symbiote@latest/build/symbiote.jsdoc.js --output ext_modules/symbiote.js",
-    "ext:re-serve": "curl https://raw.githubusercontent.com/re4ma/re-serve/main/server/re-server.js --output ext_modules/re-server.js",
-    "setup": "npm run dir && npm run ext:symbiote && npm run ext:upload-client && npm run ext:re-serve && npm i && npm run build-libs",
+    "setup": "npm i && npm run build-libs",
     "test": "test",
-    "dev": "node ext_modules/re-server.js",
-    "build-libs": "node ./build-libs.js && rollup --config rollup.config.js",
+    "dev": "node ./node_modules/@re4ma/re-serve",
+    "types": "dts-bundle-generator --config ./dts.cfg.json",
+    "build-libs": "node ./build-utils/build-libs.js && npm run types",
+    "dts-native": "tsc -p ./dts-native.cfg.json",
     "pub": "lerna publish",
     "release": "shipjs prepare"
   },
   "devDependencies": {
     "@babel/eslint-parser": "^7.15.7",
     "@babel/preset-env": "^7.15.6",
+    "@re4ma/re-serve": "github:re4ma/re-serve",
+    "@types/node": "^17.0.14",
+    "dts-bundle-generator": "^6.5.0",
     "esbuild": "^0.12.16",
     "eslint": "^8.1.0",
     "eslint-config-prettier": "^6.11.0",
@@ -27,8 +28,8 @@
     "prettier": "^2.0.5",
     "prettier-plugin-jsdoc": "0.0.17",
     "rollup": "^2.62.0",
-    "shipjs": "0.24.1",
-    "typescript": "^3.9.7"
+    "shipjs": "^0.24.2",
+    "typescript": "^4.5.5"
   },
   "eslintIgnore": [
     "ext_modules",
@@ -83,5 +84,9 @@
     ]
   },
   "author": "Uploadcare Inc.",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "@symbiotejs/symbiote": "^1.4.7",
+    "@uploadcare/upload-client": "^2.2.0"
+  }
 }

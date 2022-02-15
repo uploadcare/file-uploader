@@ -4,19 +4,25 @@
   "version": "0.0.3-alpha.4",
   "description": "",
   "repository": "https://github.com/uploadcare/jsdk/",
+  "module": "regular/index.js",
+  "types": "regular/index.d.ts",
   "scripts": {
     "copy-license": "cp ../LICENSE ./LICENSE",
     "prepare": "npm run copy-license"
   },
   "author": "",
   "license": "MIT",
+  "dependencies": {
+    "@symbiotejs/symbiote": "^1.4.7",
+    "@uploadcare/upload-blocks": "^0.0.1",
+    "@uploadcare/upload-client": "^2.2.0"
+  },
   "devDependencies": {
     "esbuild": "^0.11.11"
   },
   "files": [
-    "build/regular/uc-uploader.css",
-    "build/regular/uc-uploader.min.js",
-    "build/regular/uc-uploader.jsdoc.js",
+    "build/*",
+    "regular/*",
     "README.md",
     "LICENSE"
   ],

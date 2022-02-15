@@ -20,7 +20,7 @@ export class UploadDetails extends BlockComponent {
     },
     onRemove: () => {
       /** @type {File[]} */
-      this.uploadCollection.remove(this.entry.__ctxId);
+      this.uploadCollection.remove(this.entry.uid);
       this.historyBack();
     },
     onEdit: () => {
@@ -40,7 +40,12 @@ export class UploadDetails extends BlockComponent {
   }
 
   initCallback() {
-    this.$.localImageEditDisabled = !this.cfg('use-local-image-editor');
+    this.bindCssData('--cfg-use-local-image-editor');
+    this.sub('*--cfg-use-local-image-editor', (val) => {
+      this.set$({
+        localImageEditDisabled: !val,
+      });
+    });
     this.$.fileSize = this.l10n('file-size-unknown');
     this.registerActivity(this.activityType, () => {
       this.set$({
@@ -53,7 +58,7 @@ export class UploadDetails extends BlockComponent {
     /** @type {import('../EditableCanvas/EditableCanvas.js').EditableCanvas} */
     // @ts-ignore
     this.eCanvas = this.ref.canvas;
-    this.sub('*focusedEntry', (/** @type {import('../../ext_modules/symbiote.js').TypedData} */ entry) => {
+    this.sub('*focusedEntry', (/** @type {import('@symbiotejs/symbiote').TypedData} */ entry) => {
       if (!entry) {
         return;
       }
@@ -63,6 +68,7 @@ export class UploadDetails extends BlockComponent {
           sub.remove();
         });
       } else {
+        /** @private */
         this._entrySubs = new Set();
       }
       this.entry = entry;
@@ -70,14 +76,17 @@ export class UploadDetails extends BlockComponent {
       let file = entry.getValue('file');
       this.eCanvas.clear();
       if (file) {
-        /** @type {File} */
+        /**
+         * @private
+         * @type {File}
+         */
         this._file = file;
         let isImage = this._file.type.includes('image');
         if (isImage && !entry.getValue('transformationsUrl')) {
           this.eCanvas.setImageFile(this._file);
           this.set$({
             checkerboard: true,
-            editBtnHidden: !this.cfg('use-local-image-editor') && !this.cfg('use-cloud-image-editor'),
+            editBtnHidden: !this.$['*--cfg-use-local-image-editor'] && !this.$['*--cfg-use-cloud-image-editor'],
           });
         }
         if (!isImage) {
@@ -90,10 +99,12 @@ export class UploadDetails extends BlockComponent {
       tmpSub('fileName', (name) => {
         this.$.fileName = name;
         this.$.onNameInput = () => {
+          let name = this.ref.file_name_input['value'];
           Object.defineProperty(this._file, 'name', {
             writable: true,
-            value: this.ref.file_name_input['value'],
+            value: name,
           });
+          this.entry.setValue('fileName', name);
         };
       });
       tmpSub('fileSize', (size) => {
@@ -154,17 +165,17 @@ UploadDetails.template = /*html*/ `
 
     <div class="info-block">
       <div class="info-block_name" l10n="file-size"></div>
-      <div set="textContent: fileSize"></div>
+      <div>{{fileSize}}</div>
     </div>
 
     <div class="info-block">
       <div class="info-block_name" l10n="cdn-url"></div>
       <a
         target="_blank"
-        set="textContent: cdnUrl; @href: cdnUrl; @disabled: notUploaded"></a>
+        set="@href: cdnUrl; @disabled: notUploaded">{{cdnUrl}}</a>
     </div>
 
-    <div set="textContent: errorTxt;"></div>
+    <div>{{errorTxt}}</div>
 
   </div>
 

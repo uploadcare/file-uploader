@@ -16,6 +16,7 @@ export class CameraSource extends BlockComponent {
     },
   };
 
+  /** @private */
   async _init() {
     let constr = {
       video: {
@@ -31,13 +32,18 @@ export class CameraSource extends BlockComponent {
       },
       audio: false,
     };
+    /** @private */
     this._canvas = document.createElement('canvas');
+    /** @private */
     this._ctx = this._canvas.getContext('2d');
+    /** @private */
     this._stream = await navigator.mediaDevices.getUserMedia(constr);
     this.$.video = this._stream;
+    /** @private */
     this._initialized = true;
   }
 
+  /** @private */
   _deInit() {
     if (this._initialized) {
       this._stream?.getTracks()[0].stop();
@@ -46,6 +52,7 @@ export class CameraSource extends BlockComponent {
     }
   }
 
+  /** @private */
   _shot() {
     this._canvas.height = this.ref.video['videoHeight'];
     this._canvas.width = this.ref.video['videoWidth'];
@@ -72,9 +79,12 @@ export class CameraSource extends BlockComponent {
   }
 
   initCallback() {
+    let camMirrProp = this.bindCssData('--cfg-camera-mirror');
+    this.sub(camMirrProp, (val) => {
+      this.$.videoTransformCss = val ? 'scaleX(-1)' : null;
+    });
     this.registerActivity(this.activityType, () => {
       this.set$({
-        videoTransformCss: this.cfg('camera-mirror') ? 'scaleX(-1)' : null,
         '*activityCaption': this.l10n('caption-camera'),
         '*activityIcon': 'camera',
       });

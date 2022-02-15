@@ -3,6 +3,7 @@ import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 const L10N_PREFIX = 'src-type-';
 
 export class SourceBtn extends BlockComponent {
+  /** @private */
   _registeredTypes = {};
 
   init$ = {

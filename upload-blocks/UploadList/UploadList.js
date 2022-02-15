@@ -43,6 +43,7 @@ export class UploadList extends BlockComponent {
     },
   };
 
+  /** @private */
   _renderMap = Object.create(null);
 
   updateButtonsState() {
@@ -67,9 +68,15 @@ export class UploadList extends BlockComponent {
       doneBtnHidden: !allUploaded,
       uploadBtnDisabled: summary.uploading > 0,
     });
+
+    if (!this.$['*--cfg-confirm-upload'] && allUploaded) {
+      this.$.onDone();
+    }
   }
 
   initCallback() {
+    this.bindCssData('--cfg-show-empty-list');
+
     this.registerActivity(this.activityType, () => {
       this.set$({
         '*activityCaption': this.l10n('selected'),
@@ -77,13 +84,16 @@ export class UploadList extends BlockComponent {
       });
     });
 
-    this.$.moreBtnDisabled = !this.cfg('multiple');
+    this.sub('*--cfg-multiple', (val) => {
+      this.$.moreBtnDisabled = !val;
+    });
 
     this.uploadCollection.observe(() => {
       this.updateButtonsState();
     });
+
     this.sub('*uploadList', (/** @type {String[]} */ list) => {
-      if (list && list.length === 0 && !this.cfg('show-empty-list')) {
+      if (list && list.length === 0 && !this.$['*--cfg-show-empty-list']) {
         this.$['*currentActivity'] = BlockComponent.activities.SOURCE_SELECT;
         return;
       }

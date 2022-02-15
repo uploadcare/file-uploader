@@ -1,0 +1,15 @@
+{
+  "compilationOptions": {
+    "preferredConfigPath": "./dts-native.cfg.json"
+  },
+  "entries": [
+    {
+      "filePath": "./upload-blocks/index.js",
+      "outFile": "./upload-blocks/build/index.d.ts",
+      "noCheck": true,
+      "output": {
+        "noBanner": true
+      }
+    }
+  ]
+}

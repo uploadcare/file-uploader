@@ -1,6 +1,6 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 import { resizeImage } from '../utils/resizeImage.js';
-import { uploadFile } from '../../ext_modules/upload-client.js';
+import { uploadFile } from '@uploadcare/upload-client';
 import { UiMessage } from '../MessageBox/MessageBox.js';
 import { fileCssBg } from '../svg-backgrounds/svg-backgrounds.js';
 
@@ -32,22 +32,26 @@ export class FileItem extends BlockComponent {
     },
   };
 
+  /** @private */
   _observerCallback(entries) {
     let [entry] = entries;
     if (entry.intersectionRatio === 0) {
       clearTimeout(this._thumbTimeoutId);
+      /** @private */
       this._thumbTimeoutId = undefined;
     } else if (!this._thumbTimeoutId) {
-      this._thumbTimeoutId = setTimeout(() => this._generateThumbnail(), 100);
+      /** @private */
+      this._thumbTimeoutId = window.setTimeout(() => this._generateThumbnail(), 100);
     }
   }
 
+  /** @private */
   _generateThumbnail() {
     if (this.$.thumbUrl) {
       return;
     }
     if (this.file?.type.includes('image')) {
-      resizeImage(this.file, this.cfg('thumb-size') || 76).then((url) => {
+      resizeImage(this.file, this.$['*--cfg-thumb-size'] || 76).then((url) => {
         this.$.thumbUrl = `url(${url})`;
       });
     } else {
@@ -56,6 +60,7 @@ export class FileItem extends BlockComponent {
     }
   }
 
+  /** @private */
   _revokeThumbUrl() {
     if (this.$.thumbUrl?.startsWith('blob:')) {
       URL.revokeObjectURL(this.$.thumbUrl);
@@ -63,13 +68,15 @@ export class FileItem extends BlockComponent {
   }
 
   initCallback() {
+    this.bindCssData('--cfg-thumb-size');
     this.defineAccessor('entry-id', (id) => {
       if (!id) {
         return;
       }
+      /** @type {String} */
       this.uid = id;
 
-      /** @type {import('../../ext_modules/symbiote.js').TypedData} */
+      /** @type {import('@symbiotejs/symbiote').TypedData} */
       this.entry = this.uploadCollection?.read(id);
 
       this.entry.subscribe('fileName', (name) => {
@@ -90,7 +97,7 @@ export class FileItem extends BlockComponent {
         if (this.entry.getValue('isImage')) {
           let url = `https://ucarecdn.com/${uuid}/`;
           this._revokeThumbUrl();
-          let size = this.cfg('thumb-size') || 76;
+          let size = this.$['*--cfg-thumb-size'] || 76;
           this.$.thumbUrl = `url(${url}-/scale_crop/${size}x${size}/center/)`;
         }
       });
@@ -101,18 +108,21 @@ export class FileItem extends BlockComponent {
         }
         if (this.entry.getValue('isImage')) {
           this._revokeThumbUrl();
-          let size = this.cfg('thumb-size') || 76;
+          let size = this.$['*--cfg-thumb-size'] || 76;
           this.$.thumbUrl = `url(${transformationsUrl}-/scale_crop/${size}x${size}/center/)`;
         }
       });
 
+      /** @type {File} */
       this.file = this.entry.getValue('file');
+      /** @type {String} */
       this.externalUrl = this.entry.getValue('externalUrl');
 
-      if (!this.cfg('confirm-upload')) {
+      if (!this.$['*--cfg-confirm-upload']) {
         this.upload();
       }
 
+      /** @private */
       this._observer = new window.IntersectionObserver(this._observerCallback.bind(this), {
         root: this.parentElement,
         rootMargin: '50% 0px 50% 0px',
@@ -157,7 +167,7 @@ export class FileItem extends BlockComponent {
     this.removeAttribute('error');
     this.setAttribute('uploading', '');
     let storeSetting = {};
-    let store = this.cfg('store');
+    let store = this.$['*--cfg-store'];
     if (store !== null) {
       storeSetting.store = !!store;
     }
@@ -165,7 +175,7 @@ export class FileItem extends BlockComponent {
       // @ts-ignore
       let fileInfo = await uploadFile(this.file || this.externalUrl, {
         ...storeSetting,
-        publicKey: this.cfg('pubkey'),
+        publicKey: this.$['*--cfg-pubkey'],
         onProgress: (progress) => {
           let percentage = progress.value * 100;
           this.$.progressWidth = percentage + '%';
@@ -212,7 +222,7 @@ FileItem.template = /*html*/ `
   </div>
 </div>
 <div class="file-name-wrapper">
-  <span class="file-name" set="textContent: itemName; @title: itemName"></span>
+  <span class="file-name" set="@title: itemName">{{itemName}}</span>
 </div>
 <button class="edit-btn" set="onclick: onEdit;">
   <uc-icon name="edit-file"></uc-icon>

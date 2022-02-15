@@ -83,7 +83,11 @@ import { BlockComponent } from 'upload-blocks/BlockComponent/BlockComponent.js';
 
 class MyBlock extends BlockComponent {
   initCallback() {
-    console.log(this.cfg('my-custom-property'));
+    let statePropName = this.bindCssData('--cfg-my-custom-property'); 
+    // ^ this will return '*--cfg-my-custom-property'
+    this.sub(statePropName, (val) => {
+      console.log(val);
+    });
   }
 }
 ```

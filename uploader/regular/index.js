@@ -1,7 +1,6 @@
-import * as UC from './exports.js';
-import { registerBlocks } from '../../upload-blocks/registerBlocks.js';
+import * as UC from '@uploadcare/upload-blocks';
 
-registerBlocks(UC);
+UC.registerBlocks(UC);
 
 export class Uploader extends UC.BlockComponent {}
 
@@ -26,6 +25,7 @@ Uploader.template = /*html*/ `
 <uc-message-box></uc-message-box>
 <uc-progress-bar></uc-progress-bar>
 `;
+
 Uploader.reg('uploader');
 
 export { UC };

@@ -10,6 +10,6 @@ class MyCustomUploadBlock extends BlockComponent {
 }
 
 MyCustomUploadBlock.template = /*html*/ `
-  <div set="textContent: someProp"></div>
+  <div>{{someProp}}</div>
 `;
 ```

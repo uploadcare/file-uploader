@@ -4,7 +4,6 @@
     "target": "esnext",
     "module": "esnext",
     "moduleResolution": "node",
-    "resolveJsonModule": true,
     "lib": [
         "es2017",
         "ESNext",
@@ -15,19 +14,21 @@
       ],
     "allowJs": true,
     "checkJs": true,
-    "noEmit": true,
     "strict": false,
     "alwaysStrict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "types": []
+    "types": [],
+    "noEmit": true
   },
   "include": [
     "**/*.js"
   ],
   "exclude": [
+    "./*.js",
+    "cloud-editor",
     "node_modules",
-    "*/node_modules",
-    "upload-blocks/test/react-example/"
+    "*/build",
+    "build-utils"
   ]
 }

@@ -1,5 +1,5 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
-import { create } from '../../ext_modules/symbiote.js';
+import { create } from '../../node_modules/@symbiotejs/symbiote/build/symbiote.js';
 
 export class Tabs extends BlockComponent {
   /** @param {String} tabL10nStr */
@@ -25,7 +25,10 @@ export class Tabs extends BlockComponent {
   }
 
   initCallback() {
-    /** @type {Object<string, HTMLElement>} */
+    /**
+     * @private
+     * @type {Object<string, HTMLElement>}
+     */
     this._tabMap = {};
     this.defineAccessor('tab-list', (/** @type {String} */ val) => {
       if (!val) {

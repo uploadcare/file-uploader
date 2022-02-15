@@ -20,5 +20,9 @@
   ],
   "publishConfig": {
     "access": "public"
+  },
+  "dependencies": {
+    "@symbiotejs/symbiote": "^1.4.7",
+    "@uploadcare/upload-client": "^2.2.0"
   }
 }
