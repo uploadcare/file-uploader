@@ -1,0 +1,21 @@
+@import url('../../../themes/uc-basic/index.css');
+
+:host {
+  display: block;
+  max-width: 640px;
+  border: 1px solid red;
+}
+
+.activity-heading {
+  display: grid;
+  grid-template-columns: min-content auto;
+}
+
+.activity-heading_text {
+  display: flex;
+  align-items: center;
+}
+
+uc-activity-wrapper[activity="source-select"] {
+  display: block;
+}
