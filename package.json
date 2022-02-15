@@ -9,7 +9,7 @@
     "dev": "node ./node_modules/@re4ma/re-serve",
     "types": "dts-bundle-generator --config ./dts.cfg.json",
     "build-libs": "node ./build-utils/build-libs.js && npm run types",
-    "dts_native": "tsc -p ./dts-native.cfg.json",
+    "dts-native": "tsc -p ./dts-native.cfg.json",
     "pub": "lerna publish",
     "release": "shipjs prepare"
   },
