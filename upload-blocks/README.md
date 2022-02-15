@@ -1,6 +1,6 @@
 # &lt;upload-blocks&gt;
 
-## 🧩 Use predefined custom elements to build your own file uploading flow!
+## 🧩 Use predefined custom elements to build your own file uploading flow
 
 > Or dive deeper and create your own beautiful blocks!
 
