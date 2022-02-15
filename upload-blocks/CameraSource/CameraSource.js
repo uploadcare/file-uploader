@@ -5,7 +5,6 @@ import { debounce } from '../utils/debounce.js';
 export class CameraSource extends BlockComponent {
   activityType = BlockComponent.activities.CAMERA;
 
-  _isActive = false;
   _unsubPermissions = null;
 
   init$ = {
@@ -32,8 +31,6 @@ export class CameraSource extends BlockComponent {
 
   /** @private */
   _onActivate = () => {
-    this._isActive = true;
-
     this.set$({
       '*activityCaption': this.l10n('caption-camera'),
       '*activityIcon': 'camera',
@@ -47,8 +44,6 @@ export class CameraSource extends BlockComponent {
 
   /** @private */
   _onDeactivate = () => {
-    this._isActive = false;
-
     if (this._unsubPermissions) {
       this._unsubPermissions();
     }
@@ -127,7 +122,6 @@ export class CameraSource extends BlockComponent {
 
     try {
       this._setPermissionsState('prompt');
-      /** @private */
       let stream = await navigator.mediaDevices.getUserMedia(constr);
       stream.addEventListener('inactive', () => {
         this._setPermissionsState('denied');
@@ -181,7 +175,7 @@ export class CameraSource extends BlockComponent {
 
     let camMirrProp = this.bindCssData('--cfg-camera-mirror');
     this.sub(camMirrProp, (val) => {
-      if (!this._isActive) {
+      if (!this.isActive) {
         return;
       }
       this.$.videoTransformCss = val ? 'scaleX(-1)' : null;

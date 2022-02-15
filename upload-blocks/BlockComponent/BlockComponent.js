@@ -147,11 +147,13 @@ export class BlockComponent extends BaseComponent {
           let actDesc = BlockComponent._activityRegistry[activityKey];
 
           if (this.activityType !== val && this._isActive) {
+            /** @private */
             this._isActive = false;
             this.removeAttribute(ACTIVE_ATTR);
             actDesc?.deactivateCallback?.();
             console.log(`Activity "${this.activityType}" deactivated`);
           } else if (this.activityType === val && !this._isActive) {
+            /** @private */
             this._isActive = true;
             this.setAttribute(ACTIVE_ATTR, '');
             actDesc?.activateCallback?.();
@@ -195,6 +197,10 @@ export class BlockComponent extends BaseComponent {
 
   get cancelActivity() {
     return this.getAttribute('cancel-activity');
+  }
+
+  get isActive() {
+    return this._isActive;
   }
 
   /**
