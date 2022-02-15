@@ -1,5 +1,7 @@
 # Icons
 
+All icons are provided via the set of SVG path descriptions inside CSS:
+
 ```css
 .uc-wgt-icons, .uc-wgt-common, :host {
   --icon-default: 'm13 21.9506c5.0533-.5017 9-4.7653 9-9.9506 0-5.52285-4.4772-10-10-10-5.52285 0-10 4.47715-10 10 0 5.1853 3.94668 9.4489 9 9.9506v-11.5364l-2.79289 2.7929c-.39053.3906-1.02369.3906-1.41422 0-.39052-.3905-.39052-1.0237 0-1.4142l5.20711-5.20708 5.2071 5.20708c.3905.3905.3905 1.0237 0 1.4142-.3905.3906-1.0237.3906-1.4142 0l-2.7929-2.7929z';
@@ -52,4 +54,23 @@
   --icon-onedrive: var(--icon-external-source-placeholder);
   --icon-huddle: var(--icon-external-source-placeholder);
 }
+```
+
+You can change any of their values to customize your icons.
+
+To display the certain icon, use `uc-icon` component and the `name` attribute:
+
+```html
+<uc-icon name="detail"></uc-icon>
+```
+
+This will take `--icon-detail` CSS value and you will get this as the result:
+```html
+<uc-icon name="detail">
+  <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <path 
+      d="M5,3C3.89,3 3,3.89 3,5V19C3,20.11 3.89,21 5,21H19C20.11,21 21,20.11 21,19V5C21,3.89 20.11,3 19,3H5M5,5H19V19H5V5M7,7V9H17V7H7M7,11V13H17V11H7M7,15V17H14V15H7Z">
+    </path>
+  </svg>
+</uc-icon>
 ```

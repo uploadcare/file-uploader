@@ -16,6 +16,11 @@ live-html [contenteditable] {
 live-html [contenteditable] [-tag-arr-] {
   color: rgb(255, 112, 112);
 }
+live-html [contenteditable] [-comment-] {
+  font-style: italic;
+  opacity: .5;
+  color: aqua;
+}
 live-html [contenteditable] [-attr-] {
   color: rgb(152, 197, 255);
 }

@@ -32,7 +32,7 @@ Key features:
 
 ## 🏠 Integration basics
 
-We use [Custom Elements](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_custom_elements) standard to make integration seamless. That allows us to use simple HTML code to define layouts and place our widgets into any other templates or markup. Custom Elements are compatible with most modern technologies and provide a consistent workflow for all of them. Please, check out the list of high-level tests passed with a set of modern frontend frameworks and libraries: [Custom Elements Everywhere](https://custom-elements-everywhere.com/)
+We use [Custom Elements](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_custom_elements) standard to make integration seamless. That allows us to use simple HTML-code to define layouts and place our widgets into the any other templates or other markup. Custom Elements are compatible with a most of modern technologies and providing the uniform workflow for all of them. Please, check out the list of a high level tests passed with a set of modern frontend frameworks and libraries: [Custom Elements Everywhere](https://custom-elements-everywhere.com/)
 
 We also provide a set of [reference integrations](https://github.com/uploadcare/upload-blocks-examples).
 
@@ -67,12 +67,31 @@ For demo-only purposes, you can use `demopublickey` instead:
 
 Some of widget settings in this example are passed via CSS variables. That means you can use styles, CSS-classes and dedicated CSS-files to pass any setting to any block or redefine if using native DOM API or just native HTML syntax. Let's move forvard to the next section, to explain that.
 
+## 🍱 Uploader solutions out of the box
+
+We provide [the set of uploader builds](../uploader/) you can use for the most frequent cases or for the reference if you need to build your own.
+
+## 🚀 Create your own file uploader
+
+The common flow of the uploading widget creation is following:
+
+1. Install upload-blocks: `npm i @uploadcare/upload-blocks`
+2. Create the set of all components you need (example: [exports.js](../uploader/regular/exports.js))
+3. Create your widget class with desired layout (example: [index.js](../uploader/regular/index.js))
+4. Create CSS configuration file (example: [index.css](../uploader/regular/index.css))
+5. Place resulting custom HTML-tag into your application markup and connect CSS ([example](./doc_assets/basic-demo.snpt.html))
+
+As you can see, that's quite simple.
+
+> You shold obtain a Public API Key in your [Uploadcare project's dashboard](https://app.uploadcare.com/) to use file uploading features. 
+
 Some of the widget settings in this example are passed via CSS variables. That means you can use styles, CSS classes, and dedicated CSS files to give any setting to any block or redefine if using native DOM API or just native HTML syntax. Let's move forward to the next section to explain that.
 
 ## 🎨 Customize everything!
 
 First of all, please look at [our CSS approach discussion](https://github.com/uploadcare/jsdk/discussions/18). 
 Please don't be shy to participate; your opinion is very important for us.
+
 
 ### Basic configuration
 
@@ -106,7 +125,7 @@ Any configuration value can be defined and redefined at any level of the DOM tre
 
 Each block has a reference CSS file, placed at the common directory with the JavaScript class definition module. You can use it as the template to create your own custom styling (or CSS-animations) for any library block. All blocks and their children act like regular DOM elements; in that case, you can use native CSS-selectors and any of the well-known styling approaches. All significant component states are provided as the element attribute flags, so you can use the full power of CSS to customize blocks in deep.
 
-[More about CSS theme creation]()
+[More about CSS theme creation](./themes/uc-basic/)
 
 ### Layout & composition
 
