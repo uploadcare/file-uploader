@@ -16,6 +16,9 @@ export class UploadList extends BlockComponent {
     },
     onUpload: () => {
       this.set$({
+        uploadBtnHidden: false,
+        doneBtnHidden: true,
+        uploadBtnDisabled: true,
         '*uploadTrigger': {},
       });
     },
