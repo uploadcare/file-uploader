@@ -28,6 +28,10 @@ function build(buildItem) {
       banner: {
         js: jsBanner(),
       },
+      define: {
+        __VERSION__: JSON.stringify(buildItem.version),
+        __PACKAGE_NAME__: JSON.stringify(buildItem.name),
+      },
     })
     .then(async () => {
       if (!buildItem.minifyHtml) {
