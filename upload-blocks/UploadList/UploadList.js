@@ -16,6 +16,9 @@ export class UploadList extends BlockComponent {
     },
     onUpload: () => {
       this.set$({
+        uploadBtnHidden: false,
+        doneBtnHidden: true,
+        uploadBtnDisabled: true,
         '*uploadTrigger': {},
       });
     },
@@ -57,12 +60,11 @@ export class UploadList extends BlockComponent {
       let item = this.uploadCollection.read(id);
       if (item.getValue('uuid')) {
         summary.uploaded += 1;
-      } else if (item.getValue('uploadProgress') > 0) {
+      } else if (item.getValue('uploadProgress') > 0 && !item.getValue('uploadError')) {
         summary.uploading += 1;
       }
     }
     let allUploaded = summary.total === summary.uploaded;
-
     this.set$({
       uploadBtnHidden: allUploaded,
       doneBtnHidden: !allUploaded,

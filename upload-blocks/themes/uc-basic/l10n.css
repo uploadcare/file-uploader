@@ -71,4 +71,8 @@
   --l10n-file-size: 'Size';
   --l10n-cdn-url: 'CDN URL';
   --l10n-file-size-unknown: 'Unknown';
+
+  --l10n-camera-permissions-denied: 'Camera access denied';
+  --l10n-camera-permissions-prompt: 'Camera access prompted';
+  --l10n-camera-permissions-request: 'Request permissions';
 }

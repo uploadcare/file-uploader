@@ -79,6 +79,10 @@ export class FileItem extends BlockComponent {
       /** @type {import('@symbiotejs/symbiote').TypedData} */
       this.entry = this.uploadCollection?.read(id);
 
+      if (!this.entry) {
+        return;
+      }
+
       this.entry.subscribe('fileName', (name) => {
         this.$.itemName = name || this.externalUrl || this.l10n('file-no-name');
       });
@@ -161,6 +165,8 @@ export class FileItem extends BlockComponent {
     if (this.hasAttribute('loaded') || this.entry.getValue('uuid')) {
       return;
     }
+    this.entry.setValue('uploadProgress', 0.1);
+
     this.$.progressWidth = 0;
     this.$.progressOpacity = 1;
     this.removeAttribute('focused');
@@ -208,6 +214,7 @@ export class FileItem extends BlockComponent {
         badgeIcon: 'badge-error',
         '*message': msg,
       });
+      this.entry.setValue('uploadProgress', 0);
       this.entry.setValue('uploadError', error);
     }
   }
