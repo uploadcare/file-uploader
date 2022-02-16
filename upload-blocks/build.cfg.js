@@ -3,11 +3,12 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-let { name } = JSON.parse(fs.readFileSync(join(__dirname, './package.json')).toString());
+let { name, version } = JSON.parse(fs.readFileSync(join(__dirname, './package.json')).toString());
 
 export const buildCfg = [
   {
     name,
+    version,
     in: './index.js',
     out: './build/index.min.js',
     minify: true,
@@ -15,6 +16,7 @@ export const buildCfg = [
   },
   {
     name,
+    version,
     in: './index.js',
     out: './build/index.js',
     minify: false,
