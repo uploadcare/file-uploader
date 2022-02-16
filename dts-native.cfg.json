@@ -19,7 +19,10 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "types": [],
-    "noEmit": true
+    "noEmit": false,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "removeComments": true
   },
   "include": [
     "**/*.js"
@@ -28,7 +31,6 @@
     "./*.js",
     "cloud-editor",
     "node_modules",
-    "*/build",
-    "build-utils"
+    "*/build"
   ]
 }

@@ -6,7 +6,10 @@ export class SimpleBtn extends BlockComponent {
   };
 
   initCallback() {
-    this.$['*simpleButtonText'] = this.cfg('multiple') ? this.l10n('upload-files') : this.l10n('upload-file');
+    let multipleStateKey = this.bindCssData('--cfg-multiple');
+    this.sub(multipleStateKey, (val) => {
+      this.$['*simpleButtonText'] = val ? this.l10n('upload-files') : this.l10n('upload-file');
+    });
     this.onclick = () => {
       this.$['*modalActive'] = true;
       if (this.$['*uploadList']?.length) {
@@ -25,6 +28,6 @@ export class SimpleBtn extends BlockComponent {
 SimpleBtn.template = /*html*/ `
 <button>
   <uc-icon name="upload"></uc-icon>
-  <span set="textContent: *simpleButtonText"></span>
+  <span>{{*simpleButtonText}}</span>
   <slot></slot>
 </button>`;

@@ -16,6 +16,9 @@ export class UploadList extends BlockComponent {
     },
     onUpload: () => {
       this.set$({
+        uploadBtnHidden: false,
+        doneBtnHidden: true,
+        uploadBtnDisabled: true,
         '*uploadTrigger': {},
       });
     },
@@ -43,6 +46,7 @@ export class UploadList extends BlockComponent {
     },
   };
 
+  /** @private */
   _renderMap = Object.create(null);
 
   updateButtonsState() {
@@ -56,20 +60,25 @@ export class UploadList extends BlockComponent {
       let item = this.uploadCollection.read(id);
       if (item.getValue('uuid')) {
         summary.uploaded += 1;
-      } else if (item.getValue('uploadProgress') > 0) {
+      } else if (item.getValue('uploadProgress') > 0 && !item.getValue('uploadError')) {
         summary.uploading += 1;
       }
     }
     let allUploaded = summary.total === summary.uploaded;
-
     this.set$({
       uploadBtnHidden: allUploaded,
       doneBtnHidden: !allUploaded,
       uploadBtnDisabled: summary.uploading > 0,
     });
+
+    if (!this.$['*--cfg-confirm-upload'] && allUploaded) {
+      this.$.onDone();
+    }
   }
 
   initCallback() {
+    this.bindCssData('--cfg-show-empty-list');
+
     this.registerActivity(this.activityType, () => {
       this.set$({
         '*activityCaption': this.l10n('selected'),
@@ -77,13 +86,16 @@ export class UploadList extends BlockComponent {
       });
     });
 
-    this.$.moreBtnDisabled = !this.cfg('multiple');
+    this.sub('*--cfg-multiple', (val) => {
+      this.$.moreBtnDisabled = !val;
+    });
 
     this.uploadCollection.observe(() => {
       this.updateButtonsState();
     });
+
     this.sub('*uploadList', (/** @type {String[]} */ list) => {
-      if (list && list.length === 0 && !this.cfg('show-empty-list')) {
+      if (list && list.length === 0 && !this.$['*--cfg-show-empty-list']) {
         this.$['*currentActivity'] = BlockComponent.activities.SOURCE_SELECT;
         return;
       }

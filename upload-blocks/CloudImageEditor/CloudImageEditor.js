@@ -20,6 +20,8 @@ export class CloudImageEditor extends BlockComponent {
     this.style.display = 'flex';
     this.style.position = 'relative';
 
+    this.bindCssData('--cfg-pubkey');
+
     this.loadScript();
     this.sub('*currentActivity', (val) => {
       if (val === BlockComponent.activities.CLOUD_IMG_EDIT) {
@@ -29,7 +31,7 @@ export class CloudImageEditor extends BlockComponent {
       }
     });
 
-    this.sub('*focusedEntry', (/** @type {import('../../ext_modules/symbiote.js').TypedData} */ entry) => {
+    this.sub('*focusedEntry', (/** @type {import('@symbiotejs/symbiote').TypedData} */ entry) => {
       if (!entry) {
         return;
       }
@@ -59,7 +61,7 @@ export class CloudImageEditor extends BlockComponent {
     let instance = new editorClass();
 
     let uuid = this.$.uuid;
-    let publicKey = this.cfg('pubkey');
+    let publicKey = this.$['*--cfg-pubkey'];
     instance.setAttribute('uuid', uuid);
     instance.setAttribute('public-key', publicKey);
 

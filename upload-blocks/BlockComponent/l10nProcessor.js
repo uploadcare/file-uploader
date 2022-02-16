@@ -1,3 +1,8 @@
+/**
+ * @template {import('./BlockComponent.js').BlockComponent} T
+ * @param {DocumentFragment} fr
+ * @param {T} fnCtx
+ */
 export function l10nProcessor(fr, fnCtx) {
   [...fr.querySelectorAll('[l10n]')].forEach((el) => {
     let key = el.getAttribute('l10n');
@@ -8,6 +13,7 @@ export function l10nProcessor(fr, fnCtx) {
       key = arr[1];
     }
     let ctxKey = 'l10n:' + key;
+    // @ts-ignore
     fnCtx.__l10nKeys.push(ctxKey);
     fnCtx.add(ctxKey, key);
     fnCtx.sub(ctxKey, (val) => {

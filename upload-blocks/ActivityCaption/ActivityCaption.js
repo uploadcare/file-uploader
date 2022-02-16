@@ -7,8 +7,5 @@ export class ActivityCaption extends BlockComponent {
 }
 
 ActivityCaption.template = /* html */ `
-<div
-  class="caption"
-  set="textContent: *activityCaption">
-</div>
+<div class="caption">{{*activityCaption}}</div>
 `;

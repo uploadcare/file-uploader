@@ -1,16 +1,4 @@
-node_modules
-html_output
-*/node_modules
-*/dist
-*/pkg
-*/target
-**/*.rs.bk
-*/Cargo.lock
-*/bin/
-*/pkg/
-*/wasm-pack.log
+**/node_modules/**
 .DS_Store
-.firebase
 lerna-debug.log
 TMP
-

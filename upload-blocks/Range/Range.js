@@ -35,7 +35,7 @@ Range.template = /*html*/ `
   <div class="bar" set="style.width: cssLeft; @active: barActive"></div>
   <div class="slider" set="style.left: cssLeft"></div>
   <div class="center"></div>
-  <div class="caption" set="textContent: caption; @text: caption"></div>
+  <div class="caption" set="@text: caption">{{caption}}</div>
 </div>
 <input 
   type="range"

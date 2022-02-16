@@ -1,4 +1,4 @@
-import { BaseComponent, Data, TypedCollection } from '../../ext_modules/symbiote.js';
+import { BaseComponent, Data, TypedCollection } from '@symbiotejs/symbiote';
 import { l10nProcessor } from './l10nProcessor.js';
 import { uploadEntrySchema } from './uploadEntrySchema.js';
 
@@ -13,9 +13,11 @@ if (!DOC_READY) {
   });
 }
 
-let externalPropsAdded = false;
-
 export class BlockComponent extends BaseComponent {
+  /**
+   * @param {String} str
+   * @returns {String}
+   */
   l10n(str) {
     return this.getCssData('--l10n-' + str, true) || str;
   }
@@ -25,8 +27,12 @@ export class BlockComponent extends BaseComponent {
     /** @type {String} */
     this.activityType = null;
     this.addTemplateProcessor(l10nProcessor);
-    /** @type {String[]} */
+    /**
+     * @private
+     * @type {String[]}
+     */
     this.__l10nKeys = [];
+    /** @private */
     this.__l10nUpdate = () => {
       this.dropCssDataCache();
       for (let key of this.__l10nKeys) {
@@ -50,12 +56,10 @@ export class BlockComponent extends BaseComponent {
     history.pop();
     let prevActivity = history.pop();
     this.$['*currentActivity'] = prevActivity;
-    if (history.length > 10) {
-      history = history.slice(history.length - 11, history.length - 1);
-    }
     this.$['*history'] = history;
   }
 
+  /** @param {File[]} files */
   addFiles(files) {
     files.forEach((/** @type {File} */ file) => {
       this.uploadCollection.add({
@@ -66,22 +70,6 @@ export class BlockComponent extends BaseComponent {
         fileSize: file.size,
       });
     });
-  }
-
-  openSystemDialog() {
-    this.fileInput = document.createElement('input');
-    this.fileInput.type = 'file';
-    this.fileInput.multiple = !!this.cfg('multiple');
-    this.fileInput.max = this.cfg('max-files');
-    this.fileInput.accept = this.cfg('accept');
-    this.fileInput.dispatchEvent(new MouseEvent('click'));
-    this.fileInput.onchange = () => {
-      this.addFiles([...this.fileInput['files']]);
-      // To call uploadTrigger UploadList should draw file items first:
-      this.$['*currentActivity'] = BlockComponent.activities.UPLOAD_LIST;
-      this.fileInput['value'] = '';
-      this.fileInput = null;
-    };
   }
 
   connectedCallback() {
@@ -117,6 +105,23 @@ export class BlockComponent extends BaseComponent {
     }
   }
 
+  /** @private */
+  __bindBasicCssData() {
+    if (!BlockComponent._cssDataBindingsList.includes(this.ctxName)) {
+      let unprefixedCfgProps = ['pubkey', 'store', 'multiple', 'max-files', 'accept', 'confirm-upload'];
+      unprefixedCfgProps.forEach((prop) => {
+        this.bindCssData(`--cfg-${prop}`);
+      });
+      BlockComponent._cssDataBindingsList.push(this.ctxName);
+    }
+  }
+
+  initCallback() {
+    // TODO: rethink initiation flow for the common context parameters
+    this.__bindBasicCssData();
+    // ^ in this case css-data-props will be initiated when there is one or more components without initCallback call
+  }
+
   connected() {
     if (!this.__connectedOnce) {
       if (!BlockComponent._ctxConnectionsList.includes(this.ctxName)) {
@@ -138,35 +143,52 @@ export class BlockComponent extends BaseComponent {
           this.setAttribute('activity', this.activityType);
         }
         this.sub('*currentActivity', (/** @type {String} */ val) => {
-          let activityKey = val ? this.ctxName + val : '';
-          if (!val || this.activityType !== val) {
-            this.removeAttribute(ACTIVE_ATTR);
-          } else {
-            /** @type {String[]} */
-            let history = this.$['*history'];
-            if (val && history[history.length - 1] !== val) {
-              history.push(val);
-            }
-            this.setAttribute(ACTIVE_ATTR, '');
+          let activityKey = this.ctxName + this.activityType;
+          let actDesc = BlockComponent._activityRegistry[activityKey];
 
-            let actDesc = BlockComponent._activityRegistry[activityKey];
-            if (actDesc) {
-              actDesc.activateCallback?.();
-              if (BlockComponent._lastActivity) {
-                let lastActDesc = BlockComponent._activityRegistry[BlockComponent._lastActivity];
-                if (lastActDesc) {
-                  lastActDesc.deactivateCallback?.();
-                }
-              }
+          if (this.activityType !== val && this._isActive) {
+            /** @private */
+            this._isActive = false;
+            this.removeAttribute(ACTIVE_ATTR);
+            actDesc?.deactivateCallback?.();
+            console.log(`Activity "${this.activityType}" deactivated`);
+          } else if (this.activityType === val && !this._isActive) {
+            /** @private */
+            this._isActive = true;
+            this.setAttribute(ACTIVE_ATTR, '');
+            actDesc?.activateCallback?.();
+            console.log(`Activity "${this.activityType}" activated`);
+
+            let history = this.$['*history'];
+            if (history.length > 10) {
+              history = history.slice(history.length - 11, history.length - 1);
             }
+            history.push(this.activityType);
+            this.$['*history'] = history;
           }
-          BlockComponent._lastActivity = activityKey;
         });
       }
+      /** @private */
       this.__connectedOnce = true;
     } else {
       super.connectedCallback();
     }
+  }
+
+  openSystemDialog() {
+    this.fileInput = document.createElement('input');
+    this.fileInput.type = 'file';
+    this.fileInput.multiple = !!this.$['*--cfg-multiple'];
+    this.fileInput.max = this.$['*--cfg-max-files'];
+    this.fileInput.accept = this.$['*--cfg-accept'];
+    this.fileInput.dispatchEvent(new MouseEvent('click'));
+    this.fileInput.onchange = () => {
+      this.addFiles([...this.fileInput['files']]);
+      // To call uploadTrigger UploadList should draw file items first:
+      this.$['*currentActivity'] = BlockComponent.activities.UPLOAD_LIST;
+      this.fileInput['value'] = '';
+      this.fileInput = null;
+    };
   }
 
   get doneActivity() {
@@ -175,6 +197,10 @@ export class BlockComponent extends BaseComponent {
 
   get cancelActivity() {
     return this.getAttribute('cancel-activity');
+  }
+
+  get isActive() {
+    return this._isActive;
   }
 
   /**
@@ -197,7 +223,7 @@ export class BlockComponent extends BaseComponent {
     return this.$['*currentActivityParams'];
   }
 
-  /** @type {import('../../ext_modules/symbiote.js').TypedCollection} */
+  /** @returns {import('@symbiotejs/symbiote').TypedCollection} */
   get uploadCollection() {
     if (!this.has('*uploadCollection')) {
       let uploadCollection = new TypedCollection({
@@ -223,11 +249,6 @@ export class BlockComponent extends BaseComponent {
       this.add('*uploadCollection', uploadCollection);
     }
     return this.$['*uploadCollection'];
-  }
-
-  /** @param {String} shortKey */
-  cfg(shortKey) {
-    return this.getCssData('--cfg-' + shortKey, true);
   }
 
   /**
@@ -265,24 +286,42 @@ export class BlockComponent extends BaseComponent {
 
   destroyCallback() {
     window.removeEventListener('uc-l10n-update', this.__l10nUpdate);
+    /** @private */
     this.__l10nKeys = null;
     // TODO: destroy uploadCollection
   }
 
+  /** @param {String} name */
   static reg(name) {
     super.reg(name.startsWith(TAG_PREFIX) ? name : TAG_PREFIX + name);
   }
+
+  /**
+   * @private
+   * @type {{ string: { activateCallback: Function; deactivateCallback: Function } }}
+   */
+  static _activityRegistry = Object.create(null);
+
+  /**
+   * @private
+   * @type {String}
+   */
+  static _lastActivity = '';
+
+  /**
+   * @private
+   * @type {String[]}
+   */
+  static _ctxConnectionsList = [];
+
+  /**
+   * @private
+   * @type {String[]}
+   */
+  static _cssDataBindingsList = [];
 }
 
-/** @type {{ string: { activateCallback: Function; deactivateCallback: Function } }} */
-BlockComponent._activityRegistry = Object.create(null);
-
-/** @type {String} */
-BlockComponent._lastActivity = '';
-
-/** @type {String[]} */
-BlockComponent._ctxConnectionsList = [];
-
+/** @enum {String} */
 BlockComponent.activities = Object.freeze({
   SOURCE_SELECT: 'source-select',
   CAMERA: 'camera',
@@ -295,6 +334,7 @@ BlockComponent.activities = Object.freeze({
   DETAILS: 'details',
 });
 
+/** @enum {String} */
 BlockComponent.extSrcList = Object.freeze({
   FACEBOOK: 'facebook',
   DROPBOX: 'dropbox',
@@ -309,6 +349,7 @@ BlockComponent.extSrcList = Object.freeze({
   HUDDLE: 'huddle',
 });
 
+/** @enum {String} */
 BlockComponent.sourceTypes = Object.freeze({
   LOCAL: 'local',
   URL: 'url',

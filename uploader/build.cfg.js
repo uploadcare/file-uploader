@@ -5,25 +5,22 @@ import { fileURLToPath } from 'url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 let { name } = JSON.parse(fs.readFileSync(join(__dirname, './package.json')).toString());
 
-export const uploader_build_cfg = [
+export const buildCfg = [
   {
     name,
-    in: './uploader/regular/index.js',
-    out: './uploader/build/regular/uc-uploader.min.js',
+    in: './regular/index.js',
+    out: './build/regular/index.min.js',
+    minify: true,
     minifyHtml: true,
   },
   {
-    in: './uploader/regular/index.css',
-    out: './uploader/build/regular/uc-uploader.css',
+    in: './regular/index.css',
+    out: './build/regular/index.css',
+    minify: false,
+  },
+  {
+    in: './regular/index.css',
+    out: './build/regular/index.min.css',
+    minify: true,
   },
 ];
-
-export const uploader_build_cfg_ROLLUP = {
-  input: './uploader/regular/index.js',
-  output: [
-    {
-      file: './uploader/build/regular/uc-uploader.jsdoc.js',
-      format: 'esm',
-    },
-  ],
-};

@@ -1,11 +1,21 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
+import { canUsePermissionsApi } from '../utils/abilities.js';
+import { debounce } from '../utils/debounce.js';
 
 export class CameraSource extends BlockComponent {
   activityType = BlockComponent.activities.CAMERA;
 
+  _unsubPermissions = null;
+
   init$ = {
     video: null,
     videoTransformCss: null,
+    shotBtnDisabled: false,
+    videoHidden: false,
+    messageHidden: true,
+    requestBtnHidden: canUsePermissionsApi(),
+    l10nMessage: null,
+
     onCancel: () => {
       this.set$({
         '*currentActivity': BlockComponent.activities.SOURCE_SELECT,
@@ -14,9 +24,83 @@ export class CameraSource extends BlockComponent {
     onShot: () => {
       this._shot();
     },
+    onRequestPermissions: () => {
+      this._capture();
+    },
   };
 
-  async _init() {
+  /** @private */
+  _onActivate = () => {
+    this.set$({
+      '*activityCaption': this.l10n('caption-camera'),
+      '*activityIcon': 'camera',
+    });
+
+    if (canUsePermissionsApi()) {
+      this._subscribePermissions();
+    }
+    this._capture();
+  };
+
+  /** @private */
+  _onDeactivate = () => {
+    if (this._unsubPermissions) {
+      this._unsubPermissions();
+    }
+
+    this._stopCapture();
+  };
+
+  /** @private */
+  _handlePermissionsChange = () => {
+    this._capture();
+  };
+
+  /**
+   * @private
+   * @param {'granted' | 'denied' | 'prompt'} state
+   */
+  _setPermissionsState = debounce((state) => {
+    if (state === 'granted') {
+      this.set$({
+        videoHidden: false,
+        shotBtnDisabled: false,
+        messageHidden: true,
+      });
+    } else if (state === 'prompt') {
+      this.$.l10nMessage = this.l10n('camera-permissions-prompt');
+      this.set$({
+        videoHidden: true,
+        shotBtnDisabled: true,
+        messageHidden: false,
+      });
+      this._stopCapture();
+    } else {
+      this.$.l10nMessage = this.l10n('camera-permissions-denied');
+
+      this.set$({
+        videoHidden: true,
+        shotBtnDisabled: true,
+        messageHidden: false,
+      });
+      this._stopCapture();
+    }
+  }, 300);
+
+  /** @private */
+  async _subscribePermissions() {
+    try {
+      // @ts-ignore
+      let permissionsResponse = await navigator.permissions.query({ name: 'camera' });
+      permissionsResponse.addEventListener('change', this._handlePermissionsChange);
+    } catch (err) {
+      console.log('Failed to use permissions API. Fallback to manual request mode.', err);
+      this._capture();
+    }
+  }
+
+  /** @private */
+  async _capture() {
     let constr = {
       video: {
         width: {
@@ -31,21 +115,36 @@ export class CameraSource extends BlockComponent {
       },
       audio: false,
     };
+    /** @private */
     this._canvas = document.createElement('canvas');
+    /** @private */
     this._ctx = this._canvas.getContext('2d');
-    this._stream = await navigator.mediaDevices.getUserMedia(constr);
-    this.$.video = this._stream;
-    this._initialized = true;
-  }
 
-  _deInit() {
-    if (this._initialized) {
-      this._stream?.getTracks()[0].stop();
-      this.$.video = null;
-      this._initialized = false;
+    try {
+      this._setPermissionsState('prompt');
+      let stream = await navigator.mediaDevices.getUserMedia(constr);
+      stream.addEventListener('inactive', () => {
+        this._setPermissionsState('denied');
+      });
+      this.$.video = stream;
+      /** @private */
+      this._capturing = true;
+      this._setPermissionsState('granted');
+    } catch (err) {
+      this._setPermissionsState('denied');
     }
   }
 
+  /** @private */
+  _stopCapture() {
+    if (this._capturing) {
+      this.$.video?.getTracks()[0].stop();
+      this.$.video = null;
+      this._capturing = false;
+    }
+  }
+
+  /** @private */
   _shot() {
     this._canvas.height = this.ref.video['videoHeight'];
     this._canvas.width = this.ref.video['videoWidth'];
@@ -72,29 +171,31 @@ export class CameraSource extends BlockComponent {
   }
 
   initCallback() {
-    this.registerActivity(this.activityType, () => {
-      this.set$({
-        videoTransformCss: this.cfg('camera-mirror') ? 'scaleX(-1)' : null,
-        '*activityCaption': this.l10n('caption-camera'),
-        '*activityIcon': 'camera',
-      });
-      this._init();
-    });
-    this.sub('*currentActivity', (val) => {
-      if (val !== this.activityType) {
-        this._deInit();
+    this.registerActivity(this.activityType, this._onActivate, this._onDeactivate);
+
+    let camMirrProp = this.bindCssData('--cfg-camera-mirror');
+    this.sub(camMirrProp, (val) => {
+      if (!this.isActive) {
+        return;
       }
+      this.$.videoTransformCss = val ? 'scaleX(-1)' : null;
     });
   }
 }
 
 CameraSource.template = /*html*/ `
-<video
-  autoplay
-  playsinline
-  set="srcObject: video; style.transform: videoTransformCss"
-  ref="video">
-</video>
+<div class="content">
+  <video
+    autoplay
+    playsinline
+    set="srcObject: video; style.transform: videoTransformCss; @hidden: videoHidden"
+    ref="video">
+  </video>
+  <div class="message-box" set="@hidden: messageHidden">
+    <span>{{l10nMessage}}</span>
+    <button set="onclick: onRequestPermissions; @hidden: requestBtnHidden" l10n="camera-permissions-request"></button>
+  </div>
+</div>
 
 <div class="toolbar">
   <button
@@ -104,7 +205,7 @@ CameraSource.template = /*html*/ `
   </button>
   <button
     class="shot-btn primary-btn"
-    set="onclick: onShot"
+    set="onclick: onShot; @disabled: shotBtnDisabled"
     l10n="camera-shot">
   </button>
 </div>
