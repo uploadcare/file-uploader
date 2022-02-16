@@ -17,7 +17,7 @@ jobs:
         with:
           registry-url: "https://registry.npmjs.org"
           node-version: '16'
-      - run: npm ci --production
+      - run: npm ci
       - run: lerna bootstrap
       - run: npx shipjs trigger
         env:
