@@ -4,10 +4,11 @@
   "description": "",
   "type": "module",
   "scripts": {
-    "setup": "npm i && npm run build-libs",
+    "setup": "npm i && lerna bootstrap && npm run build-libs",
     "test": "test",
     "dev": "node ./node_modules/@re4ma/re-serve",
     "types": "dts-bundle-generator --config ./dts.cfg.json",
+    "build-libs": "lerna run build && npm run types",
     "dts-native": "tsc -p ./dts-native.cfg.json",
     "pub": "lerna publish",
     "release": "shipjs prepare"
