@@ -1,72 +1,20 @@
 <base href="../../">
 
 <style>
-  @import url(./upload-blocks/build/uc-basic.css);
+  @import url(./upload-blocks/themes/uc-basic/index.css);
   .uc-wgt-common {
     --ctx-name: 'my-uploader';
     --cfg-pubkey: 'demopublickey';
   }
 </style>
 
-<script src="./upload-blocks/build/upload-blocks.jsdoc.js" type="module"></script>
-
-<script type="module">
-import {
-  BlockComponent,
-Icon,
-SimpleBtn,
-StartFrom,
-DropArea,
-SourceBtn,
-SourceList,
-FileItem,
-Modal,
-UploadList,
-UrlSource,
-CameraSource,
-UploadDetails,
-MessageBox,
-ConfirmationDialog,
-ProgressBar,
-EditableCanvas,
-CloudImageEditor,
-ExternalSource,
-Tabs,
-DataOutput,
-ActivityCaption,
-ActivityIcon,
-registerBlocks
-} from './upload-blocks/build/upload-blocks.jsdoc.js'
-registerBlocks({
-  Icon,
-SimpleBtn,
-StartFrom,
-DropArea,
-SourceBtn,
-SourceList,
-FileItem,
-Modal,
-UploadList,
-UrlSource,
-CameraSource,
-UploadDetails,
-MessageBox,
-ConfirmationDialog,
-ProgressBar,
-EditableCanvas,
-CloudImageEditor,
-ExternalSource,
-Tabs,
-DataOutput,
-ActivityCaption,
-ActivityIcon,
-registerBlocks
-});
-</script>
+<script src="./upload-blocks/build/upload-blocks.js" type="module"></script>
 
 <uc-simple-btn class="uc-wgt-common"></uc-simple-btn>
 
-<uc-modal strokes block-body-scrolling class="uc-wgt-common">
+<uc-modal
+  strokes
+  class="uc-wgt-common">
   <uc-activity-icon slot="heading"></uc-activity-icon>
   <uc-activity-caption slot="heading"></uc-activity-caption>
   <uc-start-from>
@@ -81,8 +29,8 @@ registerBlocks
   <uc-confirmation-dialog></uc-confirmation-dialog>
 </uc-modal>
 
-<uc-message-box></uc-message-box>
-<uc-progress-bar></uc-progress-bar>
+<uc-message-box class="uc-wgt-common"></uc-message-box>
+<uc-progress-bar class="uc-wgt-common"></uc-progress-bar>
 
 <uc-data-output
   fire-event
