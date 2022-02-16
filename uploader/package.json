@@ -15,7 +15,7 @@
   "license": "MIT",
   "dependencies": {
     "@symbiotejs/symbiote": "^1.4.7",
-    "@uploadcare/upload-blocks": "^0.0.1",
+    "@uploadcare/upload-blocks": "^0.0.3-alpha.4",
     "@uploadcare/upload-client": "^2.2.1-alpha.0"
   },
   "devDependencies": {
