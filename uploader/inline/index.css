@@ -1,1 +1,68 @@
 @import url('../../upload-blocks/themes/uc-basic/index.css');
+
+.uc-wgt-l10n_en-US, .uc-wgt-common, :host {
+    --l10n-drop-files-here-or: 'Drop files here or';
+}
+
+.minimal-frame {
+    border: var(--border-dashed);
+    border-radius: var(--border-radius-frame);
+}
+
+uc-start-from {
+    display: block; 
+    height: 300px; /* test value */
+    width: 300px; /* test value */
+    padding: 0;
+}
+
+uc-drop-area {
+    width: 100%; 
+    height: 100%; 
+    padding: 20px;
+    flex-direction: column;
+    text-align: center;
+    line-height: 140%;
+}
+
+uc-drop-area[drag-state="inactive"] {
+    background-color: transparent;
+}
+
+uc-drop-area::after {
+    content: "";
+}
+
+uc-drop-area::before {
+    content: var(--l10n-drop-files-here-or);
+}
+
+uc-drop-area button {
+    display: inline-block;
+    padding: 0;
+    background: transparent;
+    height: auto;
+    color: var(--clr-accent);
+    line-height: inherit;
+    opacity: 0.8;
+    transition: opacity var(--transition-duration) ease;
+}
+
+uc-drop-area button:hover {
+    opacity: 1;
+}
+uc-upload-list {
+    width: 100%;
+    height: 100%;
+    padding: var(--gap-mid);
+    gap: var(--gap-min)
+}
+uc-upload-list .toolbar {
+    background: none;
+    border-top: none;
+}
+
+uc-file-item {
+    border-bottom: none;
+    border-radius: var(--border-radius-element);
+}

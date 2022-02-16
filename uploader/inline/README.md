@@ -1,3 +1,3 @@
-# uc-uploader | Inline case
+# uc-uploader | Simplified case
 
-<re-htm src="./doc_assets/case.ref.htm" style="--case: 'inline-case'"></re-htm>
+<re-htm src="./doc_assets/case.ref.htm" style="--case: 'simplified-case'"></re-htm>
