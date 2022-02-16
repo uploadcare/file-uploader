@@ -1,9 +1,6 @@
 import esbuild from 'esbuild';
 import fs from 'fs';
-
-import { uploader_build_cfg } from '../uploader/build.cfg.js';
-import { upload_blocks_build_cfg } from '../upload-blocks/build.cfg.js';
-import { live_html_build_cfg } from '../live-html/build.cfg.js';
+import path from 'path';
 
 function jsBanner() {
   const license = fs.readFileSync('./LICENSE').toString();
@@ -17,12 +14,6 @@ function jsBanner() {
     '\n */'
   );
 }
-
-const buildSequence = [
-  ...live_html_build_cfg, //
-  ...upload_blocks_build_cfg,
-  ...uploader_build_cfg,
-];
 
 function build(buildItem) {
   esbuild
@@ -68,6 +59,12 @@ function build(buildItem) {
     });
 }
 
-buildSequence.forEach((buildItem) => {
-  build(buildItem);
+const args = process.argv.slice(2);
+const buildConfigPath = path.join(process.cwd(), args[0]);
+
+import(buildConfigPath).then((module) => {
+  const buildConfig = module.buildCfg;
+  for (let item of buildConfig) {
+    build(item);
+  }
 });

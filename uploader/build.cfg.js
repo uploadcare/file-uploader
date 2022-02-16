@@ -1,18 +1,18 @@
-export const uploader_build_cfg = [
+export const buildCfg = [
   {
-    in: './uploader/regular/index.js',
-    out: './uploader/build/regular/index.min.js',
+    in: './regular/index.js',
+    out: './build/regular/index.min.js',
     minify: true,
     minifyHtml: true,
   },
   {
-    in: './uploader/regular/index.css',
-    out: './uploader/build/regular/index.css',
+    in: './regular/index.css',
+    out: './build/regular/index.css',
     minify: false,
   },
   {
-    in: './uploader/regular/index.css',
-    out: './uploader/build/regular/index.min.css',
+    in: './regular/index.css',
+    out: './build/regular/index.min.css',
     minify: true,
   },
 ];

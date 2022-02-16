@@ -1,24 +1,24 @@
-export const upload_blocks_build_cfg = [
+export const buildCfg = [
   {
-    in: './upload-blocks/index.js',
-    out: './upload-blocks/build/index.min.js',
+    in: './index.js',
+    out: './build/index.min.js',
     minify: true,
     minifyHtml: true,
   },
   {
-    in: './upload-blocks/index.js',
-    out: './upload-blocks/build/index.js',
+    in: './index.js',
+    out: './build/index.js',
     minify: false,
     minifyHtml: false,
   },
   {
-    in: './upload-blocks/themes/uc-basic/index.css',
-    out: './upload-blocks/build/index.css',
+    in: './themes/uc-basic/index.css',
+    out: './build/index.css',
     minify: false,
   },
   {
-    in: './upload-blocks/themes/uc-basic/index.css',
-    out: './upload-blocks/build/index.min.css',
+    in: './themes/uc-basic/index.css',
+    out: './build/index.min.css',
     minify: true,
   },
 ];
