@@ -1,5 +1,5 @@
 import * as UC from './exports.js';
-import { registerBlocks } from '../../upload-blocks/registerBlocks.js';
+import { registerBlocks } from '@uploadcare/upload-blocks';
 
 registerBlocks(UC);
 
@@ -16,7 +16,7 @@ export class Uploader extends UC.BlockComponent {
 Uploader.template = /*html*/ `
 <uc-start-from>
   <uc-drop-area>
-    <button 
+    <button
       l10n="select-file"
       set="onclick: selectClicked"></button>
   </uc-drop-area>

@@ -1,5 +1,5 @@
 // Canvas Manipulator
-import { applyStyles, applyAttributes } from '../../node_modules/@symbiotejs/symbiote/build/symbiote.js';
+import { applyStyles, applyAttributes } from '@symbiotejs/symbiote';
 const SVGNS = 'http://www.w3.org/2000/svg';
 
 export class CanMan {

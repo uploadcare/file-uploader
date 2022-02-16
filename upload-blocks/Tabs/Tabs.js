@@ -1,5 +1,5 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
-import { create } from '../../node_modules/@symbiotejs/symbiote/build/symbiote.js';
+import { create } from '@symbiotejs/symbiote';
 
 export class Tabs extends BlockComponent {
   /** @param {String} tabL10nStr */
