@@ -5,4 +5,5 @@ module.exports = {
     packagesToPublish: ['upload-blocks', 'uploader', 'live-html'],
   },
   buildCommand: () => 'npm run build-libs',
+  publishCommand: ({ defaultCommand }) => `${defaultCommand} --access public`,
 };
