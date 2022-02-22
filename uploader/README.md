@@ -20,8 +20,7 @@ Uploader builds list:
 * Built with love ❤️
 
 ### Supported browsers
-Uploader is supported in all major modern
-[browsers](https://github.com/uploadcare/jsdk/blob/main/uploader/README.md#-supported-browsers).
+Uploader is supported in all major modern [browsers](https://github.com/uploadcare/jsdk#supported-browsers).
 
 [Internet Explorer](https://uploadcare.com/blog/uploadcare-stops-internet-explorer-support/) is outdated and not supported anymore.
 
@@ -192,4 +191,3 @@ Let's walk through its attributes:
 * `from` - data output could be connected to any field in the workflow context. You can specify the certain one. By default, it is a `*dataOutput`; you can skip this setting for the default uploading case.
 * `item-template` - uploading results could be rendered as a list of nested DOM elements. You can specify a simple template for that.
 * `form-value` - could be used to handle HTML-forms.
-* 
