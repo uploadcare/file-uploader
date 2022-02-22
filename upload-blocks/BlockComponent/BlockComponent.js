@@ -56,9 +56,6 @@ export class BlockComponent extends BaseComponent {
     history.pop();
     let prevActivity = history.pop();
     this.$['*currentActivity'] = prevActivity;
-    if (history.length > 10) {
-      history = history.slice(history.length - 11, history.length - 1);
-    }
     this.$['*history'] = history;
   }
 
@@ -146,28 +143,28 @@ export class BlockComponent extends BaseComponent {
           this.setAttribute('activity', this.activityType);
         }
         this.sub('*currentActivity', (/** @type {String} */ val) => {
-          let activityKey = val ? this.ctxName + val : '';
-          if (!val || this.activityType !== val) {
-            this.removeAttribute(ACTIVE_ATTR);
-          } else {
-            /** @type {String[]} */
-            let history = this.$['*history'];
-            if (val && history[history.length - 1] !== val) {
-              history.push(val);
-            }
-            this.setAttribute(ACTIVE_ATTR, '');
+          let activityKey = this.ctxName + this.activityType;
+          let actDesc = BlockComponent._activityRegistry[activityKey];
 
-            let actDesc = BlockComponent._activityRegistry[activityKey];
-            if (actDesc) {
-              actDesc.activateCallback?.();
-              if (BlockComponent._lastActivity && BlockComponent._lastActivity !== activityKey) {
-                let lastActDesc = BlockComponent._activityRegistry[BlockComponent._lastActivity];
-                if (lastActDesc) {
-                  lastActDesc.deactivateCallback?.();
-                }
-              }
+          if (this.activityType !== val && this._isActive) {
+            /** @private */
+            this._isActive = false;
+            this.removeAttribute(ACTIVE_ATTR);
+            actDesc?.deactivateCallback?.();
+            console.log(`Activity "${this.activityType}" deactivated`);
+          } else if (this.activityType === val && !this._isActive) {
+            /** @private */
+            this._isActive = true;
+            this.setAttribute(ACTIVE_ATTR, '');
+            actDesc?.activateCallback?.();
+            console.log(`Activity "${this.activityType}" activated`);
+
+            let history = this.$['*history'];
+            if (history.length > 10) {
+              history = history.slice(history.length - 11, history.length - 1);
             }
-            BlockComponent._lastActivity = activityKey;
+            history.push(this.activityType);
+            this.$['*history'] = history;
           }
         });
       }
@@ -200,6 +197,10 @@ export class BlockComponent extends BaseComponent {
 
   get cancelActivity() {
     return this.getAttribute('cancel-activity');
+  }
+
+  get isActive() {
+    return this._isActive;
   }
 
   /**

@@ -16,9 +16,9 @@ jobs:
       - uses: actions/setup-node@v2
         with:
           registry-url: "https://registry.npmjs.org"
-          node-version: '14'
-      - run: |
-          npm ci
+          node-version: '16'
+      - run: npm ci
+      - run: lerna bootstrap
       - run: npx shipjs trigger
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

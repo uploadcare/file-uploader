@@ -1,31 +1,27 @@
 {
   "type": "module",
   "name": "@uploadcare/uploader",
-  "version": "0.0.3-alpha.4",
+  "version": "0.0.4",
   "description": "",
   "repository": "https://github.com/uploadcare/jsdk/",
   "module": "regular/index.js",
   "types": "regular/index.d.ts",
   "scripts": {
     "copy-license": "cp ../LICENSE ./LICENSE",
-    "prepare": "npm run copy-license"
+    "prepare": "npm run copy-license",
+    "build": "node ../build-utils/build-libs.js ./build.cfg.js"
   },
   "author": "",
   "license": "MIT",
   "dependencies": {
     "@symbiotejs/symbiote": "^1.4.7",
-    "@uploadcare/upload-blocks": "^0.0.1",
-    "@uploadcare/upload-client": "^2.2.0"
+    "@uploadcare/upload-blocks": "^0.0.4",
+    "@uploadcare/upload-client": "^2.2.1-alpha.0"
   },
   "devDependencies": {
     "esbuild": "^0.11.11"
   },
-  "files": [
-    "build/*",
-    "regular/*",
-    "README.md",
-    "LICENSE"
-  ],
+  "files": ["build/*", "regular/*", "README.md", "LICENSE"],
   "publishConfig": {
     "access": "public"
   }

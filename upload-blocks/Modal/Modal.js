@@ -6,7 +6,10 @@ export class Modal extends BlockComponent {
     '*modalActive': false,
     '*modalHeaderHidden': false,
     closeClicked: () => {
-      this.$['*modalActive'] = false;
+      this.set$({
+        '*modalActive': false,
+        '*currentActivity': '',
+      });
     },
   };
 

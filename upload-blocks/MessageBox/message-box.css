@@ -31,6 +31,7 @@ uc-message-box .heading {
 uc-message-box .caption {
   display: flex;
   align-items: center;
+  word-break: break-word;
 }
 uc-message-box .heading button {
   padding: 0;

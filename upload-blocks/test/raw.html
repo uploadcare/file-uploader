@@ -8,12 +8,25 @@
     --cfg-pubkey: 'demopublickey';
   }
 </style>
+<script type="importmap">
+{
+  "imports": {
+    "@symbiotejs/symbiote": "../../node_modules/@symbiotejs/symbiote/build/symbiote.js",
+    "@uploadcare/upload-client": "../../node_modules/@uploadcare/upload-client/dist/index.browser.js",
+    "@uploadcare/upload-blocks": "../../upload-blocks/index.js"
+  }
+}
+</script>
 <script src="./upload-blocks/index.js" type="module"></script>
+<script type="module">
+import * as UC from './upload-blocks/index.js'
+UC.registerBlocks(UC)
+</script>
 
 <uc-simple-btn class="uc-wgt-common"></uc-simple-btn>
 
-<uc-modal 
-  strokes 
+<uc-modal
+  strokes
   class="uc-wgt-common">
   <uc-activity-icon slot="heading"></uc-activity-icon>
   <uc-activity-caption slot="heading"></uc-activity-caption>

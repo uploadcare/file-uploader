@@ -1,24 +1,35 @@
-export const upload_blocks_build_cfg = [
+import fs from 'fs';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+let { name, version } = JSON.parse(fs.readFileSync(join(__dirname, './package.json')).toString());
+
+export const buildCfg = [
   {
-    in: './upload-blocks/index.js',
-    out: './upload-blocks/build/index.min.js',
+    name,
+    version,
+    in: './index.js',
+    out: './build/index.min.js',
     minify: true,
     minifyHtml: true,
   },
   {
-    in: './upload-blocks/index.js',
-    out: './upload-blocks/build/index.js',
+    name,
+    version,
+    in: './index.js',
+    out: './build/index.js',
     minify: false,
     minifyHtml: false,
   },
   {
-    in: './upload-blocks/themes/uc-basic/index.css',
-    out: './upload-blocks/build/index.css',
+    in: './themes/uc-basic/index.css',
+    out: './build/index.css',
     minify: false,
   },
   {
-    in: './upload-blocks/themes/uc-basic/index.css',
-    out: './upload-blocks/build/index.min.css',
+    in: './themes/uc-basic/index.css',
+    out: './build/index.min.css',
     minify: true,
   },
 ];
