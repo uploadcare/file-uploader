@@ -43,15 +43,13 @@ JSDK is supported and tested in all major modern desktop and mobile browsers:
 2. Run dependencies setup: `npm run setup`.
 3. Start local dev-server: `npm run dev`.
 
-**Or you can use any other local server at the project root.**
-
-All code in this repository works without any other build process in any modern browser, so you can open any HTML file in the project structure to make it work during development or for testing purposes. No source maps or rebuilds are needed.
-
-Also, all content (except node_modules) is fully accessible at https://uploadcare.github.io/jsdk/ with the same folder structure.
-
 ## Typescript support
 
-to be updated...
+We use [JSDoc type annotations](https://www.typescriptlang.org/docs/handbook/intro-to-js-ts.html) for TypeScript static analysis support during development. 
+
+Also we provide type definitions ([*.d.ts files](https://www.typescriptlang.org/docs/handbook/declaration-files/dts-from-js.html)) for the TypeScript projects in our packages.
+
+Check the [JSDoc Reference](https://www.typescriptlang.org/docs/handbook/jsdoc-supported-types.html) page in TypeScript official documentation.
 
 ## 🚀 Feedback
 
