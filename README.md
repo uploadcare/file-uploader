@@ -25,6 +25,18 @@
 * Common purpose components and tools.
 * etc.
 
+### Supported browsers
+
+JSDK is supported and tested in all major modern desktop and mobile browsers:
+* Chrome
+* Firefox
+* Safari
+* Edge
+* Opera
+* etc.
+ 
+[Internet Explorer](https://uploadcare.com/blog/uploadcare-stops-internet-explorer-support/) is outdated and not supported anymore.
+
 ## ⚙️ Installation and start
 
 1. Clone repository: `git clone git@github.com:uploadcare/jsdk.git ./`.
