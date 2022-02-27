@@ -4,6 +4,9 @@ import { uploadFile } from '@uploadcare/upload-client';
 import { UiMessage } from '../MessageBox/MessageBox.js';
 import { fileCssBg } from '../svg-backgrounds/svg-backgrounds.js';
 import { customUserAgent } from '../utils/userAgent.js';
+import { ProgressBar } from './ProgressBar.js';
+
+ProgressBar.reg('file-item-progress-bar');
 
 export class FileItem extends BlockComponent {
   pauseRender = true;
@@ -12,8 +15,9 @@ export class FileItem extends BlockComponent {
     itemName: '',
     thumb: '',
     thumbUrl: '',
-    progressWidth: 0,
-    progressOpacity: 1,
+    progressPercentage: 0,
+    progressVisible: false,
+    progressUnknown: false,
     notImage: true,
     badgeIcon: 'check',
     '*focusedEntry': null,
@@ -168,8 +172,8 @@ export class FileItem extends BlockComponent {
     }
     this.entry.setValue('uploadProgress', 0.1);
 
-    this.$.progressWidth = 0;
-    this.$.progressOpacity = 1;
+    this.$.progressPercentage = 0;
+    this.$.progressVisible = true;
     this.removeAttribute('focused');
     this.removeAttribute('error');
     this.setAttribute('uploading', '');
@@ -178,6 +182,9 @@ export class FileItem extends BlockComponent {
     if (store !== null) {
       storeSetting.store = !!store;
     }
+    if (!this.file && this.externalUrl) {
+      this.$.progressUnknown = true;
+    }
     try {
       // @ts-ignore
       let fileInfo = await uploadFile(this.file || this.externalUrl, {
@@ -185,12 +192,17 @@ export class FileItem extends BlockComponent {
         publicKey: this.$['*--cfg-pubkey'],
         userAgent: customUserAgent,
         onProgress: (progress) => {
-          let percentage = progress.value * 100;
-          this.$.progressWidth = percentage + '%';
-          this.entry.setValue('uploadProgress', percentage);
+          if (progress.isComputable) {
+            let percentage = progress.value * 100;
+            this.$.progressUnknown = false;
+            this.$.progressPercentage = percentage;
+            this.entry.setValue('uploadProgress', percentage);
+          } else {
+            this.$.progressUnknown = true;
+          }
         },
       });
-      this.$.progressOpacity = 0;
+      this.$.progressVisible = false;
       this.setAttribute('loaded', '');
       this.removeAttribute('uploading');
       this.$.badgeIcon = 'badge-success';
@@ -204,8 +216,8 @@ export class FileItem extends BlockComponent {
         uuid: fileInfo.uuid,
       });
     } catch (error) {
-      this.$.progressOpacity = 0;
-      this.$.progressWidth = 0;
+      this.$.progressVisible = false;
+      this.$.progressPercentage = 0;
       this.setAttribute('error', '');
       this.removeAttribute('uploading');
       let msg = new UiMessage();
@@ -242,10 +254,7 @@ FileItem.template = /*html*/ `
 <button class="upload-btn" set="onclick: onUpload;">
   <uc-icon name="upload"></uc-icon>
 </button>
-<div
-  class="progress"
-  set="style.width: progressWidth; style.opacity: progressOpacity">
-</div>
+<uc-file-item-progress-bar set="value: progressPercentage; visible: progressVisible; unknown: progressUnknown"></uc-file-item-progress-bar>
 `;
 FileItem.activeInstances = new Set();
 

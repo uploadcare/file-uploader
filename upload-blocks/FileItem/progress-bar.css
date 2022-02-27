@@ -1,0 +1,37 @@
+uc-file-item uc-file-item-progress-bar {
+  position: absolute;
+  pointer-events: none;
+  height: 2px;
+  top: calc(100% - 2px);
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  opacity: 1;
+  overflow: hidden;
+}
+
+uc-file-item uc-file-item-progress-bar .progress {
+  background-color: var(--clr-accent-light);
+  transition: width 0.6s;
+  transform: translateX(0);
+  width: calc(var(--l-width) * 1%);
+  height: 100%;
+}
+
+uc-file-item uc-file-item-progress-bar .unknown {
+  width: 100%;
+  animation: indeterminateAnimation 1s infinite linear;
+  transform-origin: 0% 50%;
+}
+
+@keyframes indeterminateAnimation {
+  0% {
+    transform:  translateX(0) scaleX(0);
+  }
+  40% {
+    transform:  translateX(0) scaleX(0.4);
+  }
+  100% {
+    transform:  translateX(100%) scaleX(0.5);
+  }
+}
