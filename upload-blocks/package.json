@@ -16,7 +16,7 @@
   "license": "MIT",
   "dependencies": {
     "@symbiotejs/symbiote": "^1.4.7",
-    "@uploadcare/upload-client": "^2.2.1-alpha.0"
+    "@uploadcare/upload-client": "^3.0.0"
   },
   "devDependencies": {
     "esbuild": "^0.11.11"
