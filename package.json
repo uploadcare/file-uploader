@@ -11,7 +11,7 @@
     "dts-native": "tsc -p ./dts-native.cfg.json",
     "pub": "lerna publish",
     "release": "shipjs prepare",
-    "dev": "wds --node-resolve --open"
+    "dev": "wds"
   },
   "devDependencies": {
     "@babel/eslint-parser": "^7.15.7",
