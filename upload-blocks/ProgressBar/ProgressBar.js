@@ -1,7 +1,9 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 
 export class ProgressBar extends BlockComponent {
+  /** @type {number} */
   _value = 0;
+  /** @type {boolean} */
   _unknownMode = false;
 
   init$ = {

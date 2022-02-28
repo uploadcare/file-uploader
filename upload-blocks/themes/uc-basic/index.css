@@ -30,12 +30,12 @@
 @import url('../../UploadList/upload-list.css');
 @import url('../../StartFrom/start-from.css');
 @import url('../../FileItem/file-item.css');
-@import url('../../FileItem/progress-bar.css');
 @import url('../../UploadDetails/upload-details.css');
 @import url('../../EditableCanvas/editable-canvas.css');
 @import url('../../MessageBox/message-box.css');
 @import url('../../ConfirmationDialog/confirmation.css');
 @import url('../../ProgressBarCommon/progress-bar-common.css');
+@import url('../../ProgressBar/progress-bar.css');
 @import url('../../ActivityCaption/activity-caption.css');
 @import url('../../ActivityIcon/activity-icon.css');
 

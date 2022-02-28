@@ -4,9 +4,7 @@ import { uploadFile } from '@uploadcare/upload-client';
 import { UiMessage } from '../MessageBox/MessageBox.js';
 import { fileCssBg } from '../svg-backgrounds/svg-backgrounds.js';
 import { customUserAgent } from '../utils/userAgent.js';
-import { ProgressBar } from './ProgressBar.js';
-
-ProgressBar.reg('file-item-progress-bar');
+import { ProgressBar } from '../ProgressBar/ProgressBar.js';
 
 export class FileItem extends BlockComponent {
   pauseRender = true;
@@ -170,6 +168,7 @@ export class FileItem extends BlockComponent {
     if (this.hasAttribute('loaded') || this.entry.getValue('uuid')) {
       return;
     }
+    this.entry.setValue('uploadError', null);
     this.entry.setValue('uploadProgress', 0.1);
 
     this.$.progressPercentage = 0;
@@ -254,7 +253,10 @@ FileItem.template = /*html*/ `
 <button class="upload-btn" set="onclick: onUpload;">
   <uc-icon name="upload"></uc-icon>
 </button>
-<uc-file-item-progress-bar set="value: progressPercentage; visible: progressVisible; unknown: progressUnknown"></uc-file-item-progress-bar>
+<uc-progress-bar
+  class="progress-bar"
+  set="value: progressPercentage; visible: progressVisible; unknown: progressUnknown">
+</uc-progress-bar>
 `;
 FileItem.activeInstances = new Set();
 

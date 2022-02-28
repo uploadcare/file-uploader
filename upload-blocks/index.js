@@ -14,6 +14,7 @@ export { UploadDetails } from './UploadDetails/UploadDetails.js';
 export { MessageBox } from './MessageBox/MessageBox.js';
 export { ConfirmationDialog } from './ConfirmationDialog/ConfirmationDialog.js';
 export { ProgressBarCommon } from './ProgressBarCommon/ProgressBarCommon.js';
+export { ProgressBar } from './ProgressBar/ProgressBar.js';
 export { EditableCanvas } from './EditableCanvas/EditableCanvas.js';
 export { CloudImageEditor } from './CloudImageEditor/CloudImageEditor.js';
 export { ExternalSource } from './ExternalSource/ExternalSource.js';

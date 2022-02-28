@@ -12,12 +12,3 @@ uc-progress-bar-common {
 uc-progress-bar-common:not([active]) {
   opacity: 0;
 }
-
-uc-progress-bar-common .bar {
-  position: absolute;
-  width: 0;
-  left: 0;
-  height: 100%;
-  background-color: var(--clr-accent);
-  transition: 0.2s;
-}

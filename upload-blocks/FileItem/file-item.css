@@ -95,3 +95,7 @@ uc-file-item .badge uc-icon svg {
   width: 100%;
   height: 100%;
 }
+uc-file-item .progress-bar {
+  height: 2px;
+  top: calc(100% - 2px);
+}
