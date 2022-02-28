@@ -11,7 +11,7 @@ export { CameraSource } from '../../upload-blocks/CameraSource/CameraSource.js';
 export { UploadDetails } from '../../upload-blocks/UploadDetails/UploadDetails.js';
 export { MessageBox } from '../../upload-blocks/MessageBox/MessageBox.js';
 export { ConfirmationDialog } from '../../upload-blocks/ConfirmationDialog/ConfirmationDialog.js';
-export { ProgressBar } from '../../upload-blocks/ProgressBar/ProgressBar.js';
+export { ProgressBarCommon } from '../../upload-blocks/ProgressBarCommon/ProgressBarCommon.js';
 export { ExternalSource } from '../../upload-blocks/ExternalSource/ExternalSource.js';
 export { DataOutput } from '../../upload-blocks/DataOutput/DataOutput.js';
 export { ActivityCaption } from '../../upload-blocks/ActivityCaption/ActivityCaption.js';

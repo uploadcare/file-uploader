@@ -1,6 +1,6 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 
-export class ProgressBar extends BlockComponent {
+export class ProgressBarCommon extends BlockComponent {
   init$ = {
     cssWidth: 0,
     '*commonProgress': 0,
@@ -18,7 +18,7 @@ export class ProgressBar extends BlockComponent {
   }
 }
 
-ProgressBar.template = /*html*/ `
+ProgressBarCommon.template = /*html*/ `
 <div
   class="bar"
   set="style.width: cssWidth">

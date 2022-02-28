@@ -1,4 +1,4 @@
-uc-progress-bar {
+uc-progress-bar-common {
   position: absolute;
   bottom: 0;
   left: 0;
@@ -9,11 +9,11 @@ uc-progress-bar {
   z-index: 10000;
 }
 
-uc-progress-bar:not([active]) {
+uc-progress-bar-common:not([active]) {
   opacity: 0;
 }
 
-uc-progress-bar .bar {
+uc-progress-bar-common .bar {
   position: absolute;
   width: 0;
   left: 0;
