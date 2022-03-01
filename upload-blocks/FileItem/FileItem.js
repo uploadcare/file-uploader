@@ -4,7 +4,6 @@ import { uploadFile } from '@uploadcare/upload-client';
 import { UiMessage } from '../MessageBox/MessageBox.js';
 import { fileCssBg } from '../svg-backgrounds/svg-backgrounds.js';
 import { customUserAgent } from '../utils/userAgent.js';
-import { ProgressBar } from '../ProgressBar/ProgressBar.js';
 
 export class FileItem extends BlockComponent {
   pauseRender = true;
