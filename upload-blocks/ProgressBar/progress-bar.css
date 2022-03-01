@@ -1,23 +1,42 @@
 uc-progress-bar {
   position: absolute;
-  bottom: 0;
+  pointer-events: none;
+  height: 2px;
+  top: 0px;
   left: 0;
-  right: 0;
-  display: block;
-  background-color: var(--clr-background);
-  height: var(--gap-mid);
-  z-index: 10000;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
 }
 
-uc-progress-bar:not([active]) {
+uc-progress-bar .progress {
+  opacity: 1;
+  transition: width 0.6s, opacity 0.3s;
+  background-color: var(--clr-accent-light);
+  transform: translateX(0);
+  width: calc(var(--l-width) * 1%);
+  height: 100%;
+}
+
+uc-progress-bar .progress--unknown {
+  width: 100%;
+  animation: indeterminateAnimation 1s infinite linear;
+  transform-origin: 0% 50%;
+}
+
+uc-progress-bar .progress--hidden {
   opacity: 0;
 }
 
-uc-progress-bar .bar {
-  position: absolute;
-  width: 0;
-  left: 0;
-  height: 100%;
-  background-color: var(--clr-accent);
-  transition: 0.2s;
+@keyframes indeterminateAnimation {
+  0% {
+    transform:  translateX(0) scaleX(0);
+  }
+  40% {
+    transform:  translateX(0) scaleX(0.4);
+  }
+  100% {
+    transform:  translateX(100%) scaleX(0.5);
+  }
 }

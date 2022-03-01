@@ -41,6 +41,7 @@ export const uploadEntrySchema = Object.freeze({
   uploadError: {
     type: UploadClientError,
     value: null,
+    nullable: true,
   },
   validationErrorMsg: {
     type: String,
@@ -57,5 +58,9 @@ export const uploadEntrySchema = Object.freeze({
   fileInfo: {
     type: UploadcareFile,
     value: null,
+  },
+  isUploading: {
+    type: Boolean,
+    value: false,
   },
 });

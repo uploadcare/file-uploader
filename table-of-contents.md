@@ -1,16 +1,16 @@
 # Table of contents
 
 - [JSDK](./) - repository root
-  
+
   - [uploader](./uploader/) - uploader implementations for the most frequent cases
     - [regular](./uploader/regular/) - overall case
     - [inline](./uploader/inline/) - without modal
     - [simplified](./uploader/simplified/) - minimal and compact
-  
+
   - [upload-blocks](./upload-blocks/) - building blocks for the custom uploading solutions
-    
+
     - docs
-      - [Configuration](./upload-blocks/docs/configuration/) - common settings 
+      - [Configuration](./upload-blocks/docs/configuration/) - common settings
       - [Texts & localization](./upload-blocks/docs/texts/) - custom texts and translations
       - [Icons](./upload-blocks/docs/icons/) - custom icons
       - [Styling](./upload-blocks/docs/styling/) - themes and styles for components
@@ -19,7 +19,7 @@
       - [Activities](./upload-blocks/docs/activities/) - how to set and switch user focused activities
       - [BlockComponent](./upload-blocks/docs/block-component/) - all about blocks base class
       - [TypeScript](./upload-blocks/docs/typescript/) - using types in TypeScript and JavaScript projects
-    
+
     - Library components
       - [ActivityCaption](./upload-blocks/ActivityCaption/) - shows heading text for the current activity
       - [ActivityIcon](./upload-blocks/ActivityIcon/) - shows actual icon for the current activity
@@ -34,8 +34,8 @@
       - [FileItem](./upload-blocks/FileItem/) - basic UI for the each uploading file entry
       - [Icon](./upload-blocks/Icon/) - displays an icon
       - [MessageBox](./upload-blocks/MessageBox/) - common container for the application messages
-      - [Modal](./upload-blocks/Modal/) - common pop-up window 
-      - [ProgressBar](./upload-blocks/ProgressBar/) - displays uploading progress for the all files selected
+      - [Modal](./upload-blocks/Modal/) - common pop-up window
+      - [ProgressBarCommon](./upload-blocks/ProgressBarCommon/) - displays uploading progress for the all files selected
       - [Range](./upload-blocks/Range/) - customizable wrapper for the range input element
       - [SimpleBtn](./upload-blocks/SimpleBtn/) - button for the file uploading workflow start
       - [SourceBtn](./upload-blocks/SourceBtn/) - button for the certain source activation
@@ -51,4 +51,4 @@
 ## External resources
 
 * [Symbiote.js](https://github.com/symbiotejs/symbiote.js) - core library for the Web Components creation and data-flow management
-* [Integration examples](https://github.com/uploadcare/upload-blocks-examples) - for the most popular front-end libraries and frameworks 
+* [Integration examples](https://github.com/uploadcare/upload-blocks-examples) - for the most popular front-end libraries and frameworks

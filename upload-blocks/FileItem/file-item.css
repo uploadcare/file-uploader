@@ -69,17 +69,6 @@ uc-file-item .upload-btn {
 uc-file-item button:hover {
   opacity: var(--opacity-hover);
 }
-uc-file-item .progress {
-  position: absolute;
-  pointer-events: none;
-  top: calc(100% - 2px);
-  left: 0;
-  bottom: 0;
-  width: 0%;
-  opacity: 1;
-  background-color: var(--clr-accent-light);
-  transition: width 0.6s;
-}
 uc-file-item[error] .badge,
 uc-file-item[loaded] .badge {
   display: block;
@@ -105,4 +94,8 @@ uc-file-item .badge uc-icon,
 uc-file-item .badge uc-icon svg {
   width: 100%;
   height: 100%;
+}
+uc-file-item .progress-bar {
+  height: 2px;
+  top: calc(100% - 2px);
 }

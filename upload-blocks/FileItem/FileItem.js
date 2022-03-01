@@ -12,8 +12,9 @@ export class FileItem extends BlockComponent {
     itemName: '',
     thumb: '',
     thumbUrl: '',
-    progressWidth: 0,
-    progressOpacity: 1,
+    progressValue: 0,
+    progressVisible: false,
+    progressUnknown: false,
     notImage: true,
     badgeIcon: 'check',
     '*focusedEntry': null,
@@ -83,6 +84,14 @@ export class FileItem extends BlockComponent {
       if (!this.entry) {
         return;
       }
+
+      this.entry.subscribe('isUploading', (isUploading) => {
+        this.$.progressVisible = isUploading;
+      });
+
+      this.entry.subscribe('uploadProgress', (uploadProgress) => {
+        this.$.progressValue = uploadProgress;
+      });
 
       this.entry.subscribe('fileName', (name) => {
         this.$.itemName = name || this.externalUrl || this.l10n('file-no-name');
@@ -166,10 +175,9 @@ export class FileItem extends BlockComponent {
     if (this.hasAttribute('loaded') || this.entry.getValue('uuid')) {
       return;
     }
-    this.entry.setValue('uploadProgress', 0.1);
+    this.entry.setValue('isUploading', true);
+    this.entry.setValue('uploadError', null);
 
-    this.$.progressWidth = 0;
-    this.$.progressOpacity = 1;
     this.removeAttribute('focused');
     this.removeAttribute('error');
     this.setAttribute('uploading', '');
@@ -178,6 +186,9 @@ export class FileItem extends BlockComponent {
     if (store !== null) {
       storeSetting.store = !!store;
     }
+    if (!this.file && this.externalUrl) {
+      this.$.progressUnknown = true;
+    }
     try {
       // @ts-ignore
       let fileInfo = await uploadFile(this.file || this.externalUrl, {
@@ -185,12 +196,14 @@ export class FileItem extends BlockComponent {
         publicKey: this.$['*--cfg-pubkey'],
         userAgent: customUserAgent,
         onProgress: (progress) => {
-          let percentage = progress.value * 100;
-          this.$.progressWidth = percentage + '%';
-          this.entry.setValue('uploadProgress', percentage);
+          if (progress.isComputable) {
+            let percentage = progress.value * 100;
+            this.entry.setValue('uploadProgress', percentage);
+          }
+          this.$.progressUnknown = !progress.isComputable;
         },
       });
-      this.$.progressOpacity = 0;
+      this.entry.setValue('isUploading', false);
       this.setAttribute('loaded', '');
       this.removeAttribute('uploading');
       this.$.badgeIcon = 'badge-success';
@@ -204,8 +217,8 @@ export class FileItem extends BlockComponent {
         uuid: fileInfo.uuid,
       });
     } catch (error) {
-      this.$.progressOpacity = 0;
-      this.$.progressWidth = 0;
+      this.entry.setValue('isUploading', false);
+      this.$.progressValue = 0;
       this.setAttribute('error', '');
       this.removeAttribute('uploading');
       let msg = new UiMessage();
@@ -242,10 +255,10 @@ FileItem.template = /*html*/ `
 <button class="upload-btn" set="onclick: onUpload;">
   <uc-icon name="upload"></uc-icon>
 </button>
-<div
-  class="progress"
-  set="style.width: progressWidth; style.opacity: progressOpacity">
-</div>
+<uc-progress-bar
+  class="progress-bar"
+  set="value: progressValue; visible: progressVisible; unknown: progressUnknown">
+</uc-progress-bar>
 `;
 FileItem.activeInstances = new Set();
 

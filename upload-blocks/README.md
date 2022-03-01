@@ -53,7 +53,7 @@ The standard flow of the uploading widget creation is following:
 
 As you can see, that's quite simple.
 
-> You should obtain a Public API Key in your [Uploadcare project's dashboard](https://app.uploadcare.com/) to use file uploading features. 
+> You should obtain a Public API Key in your [Uploadcare project's dashboard](https://app.uploadcare.com/) to use file uploading features.
 
 ## 🎨 Customize everything!
 
@@ -93,7 +93,7 @@ You can combine them to create a common workflow like this one:
 </uc-modal>
 
 <uc-message-box></uc-message-box>
-<uc-progress-bar></uc-progress-bar>
+<uc-progress-bar-common></uc-progress-bar-common>
 ```
 
 ### Block templates
@@ -103,7 +103,7 @@ You can quickly override any block template by setting the new `template` proper
 ```js
 import { UC } from '@uploadcare/upload-blocks';
 
-UC.ProgressBar.template = /*html*/ `
+UC.ProgressBarCommon.template = /*html*/ `
   <h1>My custom heading</h1>
   <div class="my-custom-class">
     My custom template

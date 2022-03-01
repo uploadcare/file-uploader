@@ -23,7 +23,7 @@ Uploader.template = /*html*/ `
 </uc-modal>
 
 <uc-message-box></uc-message-box>
-<uc-progress-bar></uc-progress-bar>
+<uc-progress-bar-common></uc-progress-bar-common>
 `;
 
 Uploader.reg('uploader');

@@ -23,7 +23,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@symbiotejs/symbiote": "^1.4.7",
+    "@symbiotejs/symbiote": "^1.5.1",
     "@uploadcare/upload-client": "^3.0.0"
   }
 }
