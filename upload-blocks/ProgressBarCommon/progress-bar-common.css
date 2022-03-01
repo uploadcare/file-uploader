@@ -7,6 +7,7 @@ uc-progress-bar-common {
   background-color: var(--clr-background);
   height: var(--gap-mid);
   z-index: 10000;
+  transition: opacity 0.3s;
 }
 
 uc-progress-bar-common:not([active]) {

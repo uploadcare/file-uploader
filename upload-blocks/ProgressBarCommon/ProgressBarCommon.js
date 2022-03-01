@@ -10,14 +10,24 @@ export class ProgressBarCommon extends BlockComponent {
   };
 
   initCallback() {
-    this.sub('*commonProgress', (progress) => {
-      if (progress === 0 || progress === 100) {
-        this.$.visible = false;
-        this.removeAttribute('active');
-      } else {
-        this.$.visible = true;
+    this.uploadCollection.observe(() => {
+      let anyUploading = this.uploadCollection.items().some((id) => {
+        let item = this.uploadCollection.read(id);
+        return item.getValue('isUploading');
+      });
+
+      this.$.visible = anyUploading;
+    });
+
+    this.sub('visible', (visible) => {
+      if (visible) {
         this.setAttribute('active', '');
+      } else {
+        this.removeAttribute('active');
       }
+    });
+
+    this.sub('*commonProgress', (progress) => {
       this.$.value = progress;
     });
   }

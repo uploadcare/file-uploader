@@ -20,12 +20,11 @@ export class ProgressBar extends BlockComponent {
       }
     });
     this.defineAccessor('visible', (visible) => {
-      let opacity = visible ? 1 : 0;
-      this.style.opacity = opacity.toString();
+      this.ref.line.classList.toggle('progress--hidden', !visible);
     });
     this.defineAccessor('unknown', (unknown) => {
       this._unknownMode = unknown;
-      this.ref.line.classList.toggle('unknown', unknown);
+      this.ref.line.classList.toggle('progress--unknown', unknown);
     });
   }
 }
