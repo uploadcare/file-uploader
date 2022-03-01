@@ -195,6 +195,7 @@ export class FileItem extends BlockComponent {
         ...storeSetting,
         publicKey: this.$['*--cfg-pubkey'],
         userAgent: customUserAgent,
+        fileName: this.entry.getValue('fileName'),
         onProgress: (progress) => {
           if (progress.isComputable) {
             let percentage = progress.value * 100;
