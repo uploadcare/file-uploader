@@ -16,13 +16,13 @@ export class Modal extends BlockComponent {
   initCallback() {
     this.sub('*modalActive', (val) => {
       val ? this.setAttribute('active', '') : this.removeAttribute('active');
-      if (val && this.hasAttribute('block-body-scrolling')) {
+      if (val && this.getCssData('--cfg-modal-scroll-lock')) {
         document.body.style.overflow = 'hidden';
       } else {
         document.body.style.overflow = null;
       }
     });
-    if (this.hasAttribute('strokes')) {
+    if (this.getCssData('--cfg-modal-backdrop-strokes')) {
       this.style.backgroundImage = `url(${strokesCssBg()})`;
     }
   }

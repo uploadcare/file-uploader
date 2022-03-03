@@ -1,6 +1,6 @@
 import { UploadcareFile, UploadClientError } from '@uploadcare/upload-client';
 
-/** @enum {{ type; value }} */
+/** @enum {{ type; value; nullable?: Boolean }} */
 export const uploadEntrySchema = Object.freeze({
   file: {
     type: File,
@@ -41,10 +41,12 @@ export const uploadEntrySchema = Object.freeze({
   uploadError: {
     type: UploadClientError,
     value: null,
+    nullable: true,
   },
   validationErrorMsg: {
     type: String,
     value: null,
+    nullable: true,
   },
   ctxName: {
     type: String,

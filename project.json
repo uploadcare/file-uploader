@@ -1,5 +1,0 @@
-{
-  "localPort": 9000,
-  "entry": "index.html",
-  "output": "./html_output"
-}

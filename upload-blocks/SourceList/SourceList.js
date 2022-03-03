@@ -14,7 +14,7 @@ export class SourceList extends BlockComponent {
       list.forEach((srcName) => {
         html += /*html*/ `<uc-source-btn type="${srcName}"></uc-source-btn>`;
       });
-      if (this.hasAttribute('wrap')) {
+      if (this.getCssData('--cfg-source-list-wrap')) {
         this.innerHTML = html;
       } else {
         this.outerHTML = html;
