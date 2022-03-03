@@ -26,7 +26,7 @@ Uploader.template = /*html*/ `
   done-activity="source-select"></uc-upload-list>
 <uc-confirmation-dialog></uc-confirmation-dialog>
 <uc-message-box></uc-message-box>
-<uc-progress-bar></uc-progress-bar>
+<uc-progress-bar-common></uc-progress-bar-common>
 `;
 Uploader.reg('uploader');
 

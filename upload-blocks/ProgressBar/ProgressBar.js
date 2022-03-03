@@ -1,26 +1,37 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 
 export class ProgressBar extends BlockComponent {
+  /** @type {number} */
+  _value = 0;
+  /** @type {boolean} */
+  _unknownMode = false;
+
   init$ = {
-    cssWidth: 0,
-    '*commonProgress': 0,
+    width: 0,
+    opacity: 0,
   };
 
   initCallback() {
-    this.sub('*commonProgress', (progress) => {
-      if (progress === 0 || progress === 100) {
-        this.removeAttribute('active');
-      } else {
-        this.setAttribute('active', '');
+    this.defineAccessor('value', (value) => {
+      this._value = value;
+
+      if (!this._unknownMode) {
+        this.style.setProperty('--l-width', this._value.toString());
       }
-      this.$.cssWidth = progress + '%';
+    });
+    this.defineAccessor('visible', (visible) => {
+      this.ref.line.classList.toggle('progress--hidden', !visible);
+    });
+    this.defineAccessor('unknown', (unknown) => {
+      this._unknownMode = unknown;
+      this.ref.line.classList.toggle('progress--unknown', unknown);
     });
   }
 }
 
 ProgressBar.template = /*html*/ `
 <div
-  class="bar"
-  set="style.width: cssWidth">
+  ref="line"
+  class="progress">
 </div>
 `;

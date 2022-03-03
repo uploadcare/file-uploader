@@ -60,4 +60,8 @@ export const uploadEntrySchema = Object.freeze({
     type: UploadcareFile,
     value: null,
   },
+  isUploading: {
+    type: Boolean,
+    value: false,
+  },
 });
