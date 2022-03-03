@@ -15,7 +15,14 @@
 
   --cfg-modal-scroll-lock: 1;
   --cfg-modal-backdrop-strokes: 1;
+  
   --cfg-source-list-wrap: 1;
+
   --cfg-init-activity: 'source-select';
   --cfg-done-activity: 'source-select';
+
+  --cfg-data-output-console: 1;
+  --cfg-data-output-fire-events: 1;
+  --cfg-data-output-from: '*dataOutput';
+  --cfg-data-output-form-value: 1;
 }

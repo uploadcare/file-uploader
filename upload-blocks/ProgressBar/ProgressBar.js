@@ -1,9 +1,9 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
 
 export class ProgressBar extends BlockComponent {
-  /** @type {number} */
+  /** @type {Number} */
   _value = 0;
-  /** @type {boolean} */
+  /** @type {Boolean} */
   _unknownMode = false;
 
   init$ = {
@@ -13,6 +13,9 @@ export class ProgressBar extends BlockComponent {
 
   initCallback() {
     this.defineAccessor('value', (value) => {
+      if (value === undefined) {
+        return;
+      }
       this._value = value;
 
       if (!this._unknownMode) {

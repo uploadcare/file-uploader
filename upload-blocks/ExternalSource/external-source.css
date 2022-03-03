@@ -2,7 +2,8 @@ uc-external-source {
   display: grid;
   grid-template-rows: auto min-content;
   position: relative;
-  height: var(--activity-h);
+  height: 100%;
+  min-height: var(--activity-h);
 }
 
 uc-external-source iframe {

@@ -146,7 +146,7 @@ All configurations could be provided via the set of [CSS-variables](https://deve
 
 The variable value should be a correct JSON value. Strings should be taken in quotes. We use the `1` or `0` numbers to define boolean flags.
 
-Any configuration value can be defined and redefined at any DOM tree-level regarding CSS selector specificity.
+Any configuration value can be defined and redefined at any DOM-tree level regarding CSS selector specificity.
 
 More details about configuration parameters you can find [here](../upload-blocks/docs/configuration/).
 
