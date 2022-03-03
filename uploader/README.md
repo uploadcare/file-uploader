@@ -53,7 +53,7 @@ After connection, use the `<uc-uploader>` tag in your application markup:
 Note that all configurations, localization texts, icons, and styling are placed into CSS file, so you should connect the default one (or create your own):
 ```html
 <style>
- @import url(https://unpkg.com/@uploadcare/uploader@latest/build/regular/uc-uploader.css);
+ @import url(https://unpkg.com/@uploadcare/uploader@latest/build/regular/index.min.css);
  .my-settings {
    --ctx-name: 'my-uploader';
    --cfg-pubkey: 'demopublickey';
@@ -72,7 +72,7 @@ If you need additional isolation and styling security levels, you can get it wit
 To enable it and encapsulate all styles into separated scope, use the `css-src` attribute:
 ```html
 <uc-uploader
- css-src="https://unpkg.com/@uploadcare/uploader@latest/build/regular/uc-uploader.css">
+ css-src="https://unpkg.com/@uploadcare/uploader@latest/build/regular/index.min.css">
 </uc-uploader>
 ```
 
