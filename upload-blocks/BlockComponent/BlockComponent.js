@@ -151,13 +151,13 @@ export class BlockComponent extends BaseComponent {
             this._isActive = false;
             this.removeAttribute(ACTIVE_ATTR);
             actDesc?.deactivateCallback?.();
-            console.log(`Activity "${this.activityType}" deactivated`);
+            // console.log(`Activity "${this.activityType}" deactivated`);
           } else if (this.activityType === val && !this._isActive) {
             /** @private */
             this._isActive = true;
             this.setAttribute(ACTIVE_ATTR, '');
             actDesc?.activateCallback?.();
-            console.log(`Activity "${this.activityType}" activated`);
+            // console.log(`Activity "${this.activityType}" activated`);
 
             let history = this.$['*history'];
             if (history.length > 10) {

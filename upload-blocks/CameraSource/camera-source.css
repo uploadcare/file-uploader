@@ -4,6 +4,7 @@ uc-camera-source {
   justify-content: center;
   align-items: center;
   height: 100%;
+  min-height: var(--activity-h);
   padding-bottom: calc(2*var(--gap-mid) + var(--ui-size));
 }
 uc-camera-source video {
