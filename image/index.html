@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>uc-img</title>
+  <script src="./index.js" type="module"></script>
+  <link rel="stylesheet" href="./index.css">
+  <style>
+    uc-img {
+      --uc-img-pubkey: '783b47cc436d0691892f';
+    }
+  </style>
+</head>
+
+<body>
+
+  <h3>Absolute src only</h3>
+  <uc-img src="https://holiday-js.web.app/assets/img/hd.png"></uc-img>
+
+  <h3>Absolute src + noscript + attribute ref</h3>
+  <uc-img some-attr src="https://holiday-js.web.app/assets/img/hd.png">
+    <noscript>
+      <img src="https://holiday-js.web.app/assets/img/hd.png" alt="ALT_TEXT">
+    </noscript>
+  </uc-img>
+
+  <h3>Relative src (dev mode)</h3>
+  <uc-img src="./test_media/kitten.jpg" width="600"></uc-img>
+
+  <h3>uuid</h3>
+  <uc-img uuid="0aa081d8-8571-4b16-9e3e-e7837d6d3bc3"></uc-img>
+
+</body>
+
+</html>
