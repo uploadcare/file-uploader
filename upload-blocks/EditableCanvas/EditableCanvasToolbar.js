@@ -5,6 +5,9 @@ import { Color } from '../Color/Color.js';
 
 import { getButtons } from './buttons.js';
 
+Range.reg('range');
+Color.reg('color');
+
 const FS_ICON = {
   FS: 'fullscreen',
   EXIT: 'fullscreen-exit',
@@ -23,11 +26,6 @@ const FS_ICON = {
 export class EditableCanvasToolbar extends BlockComponent {
   constructor() {
     super();
-    // TODO: it's side-effect, don't do it
-    // this code will run on any import of this file even if it's implicit
-    // for example `import { registerBlocks } from '@uploadcare/upload-blocks';`
-    Range.reg('range');
-    Color.reg('color');
   }
 
   get actionsMap() {
