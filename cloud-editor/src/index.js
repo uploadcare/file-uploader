@@ -1,4 +1,3 @@
-// TODO: could cause problems when added inside upload-blocs wrapped into activity
 export { Icon } from '@uploadcare/upload-blocks';
 
 export { CloudEditor } from './CloudEditor.js';

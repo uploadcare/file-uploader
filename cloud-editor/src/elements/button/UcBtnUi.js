@@ -16,7 +16,6 @@ export class UcBtnUi extends BlockComponent {
       theme: null,
     };
 
-    // TODO: active should be moved out of here
     this.defineAccessor('active', (active) => {
       if (active) {
         this.setAttribute('active', '');

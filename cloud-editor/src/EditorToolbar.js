@@ -33,8 +33,6 @@ export class EditorToolbar extends BlockComponent {
   constructor() {
     super();
 
-    // TODO: investigate TS error:
-    // @ts-ignore
     this.init$ = {
       '*sliderEl': null,
       '*loadingOperations': {},
