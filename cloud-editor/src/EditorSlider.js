@@ -10,7 +10,6 @@ export const FAKE_ORIGINAL_FILTER = 'original';
 
 export class EditorSlider extends BlockComponent {
   init$ = {
-    '*operationTooltip': undefined,
     disabled: false,
     min: 0,
     max: 100,

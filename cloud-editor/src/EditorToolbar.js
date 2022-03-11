@@ -48,7 +48,7 @@ export class EditorToolbar extends BlockComponent {
       filters: ALL_FILTERS,
       colorOperations: ALL_COLOR_OPERATIONS,
       cropOperations: ALL_CROP_OPERATIONS,
-      operationTooltip: null,
+      '*operationTooltip': null,
 
       'l10n.cancel': this.l10n('cancel'),
       'l10n.apply': this.l10n('apply'),
@@ -242,7 +242,7 @@ export class EditorToolbar extends BlockComponent {
     // });
 
     this.sub('*currentFilter', (currentFilter) => {
-      this.$.operationTooltip = this.l10n(currentFilter || FAKE_ORIGINAL_FILTER);
+      this.$['*operationTooltip'] = this.l10n(currentFilter || FAKE_ORIGINAL_FILTER);
       this.ref['tooltip-el'].className = classNames('filter-tooltip', {
         'filter-tooltip_visible': currentFilter,
         'filter-tooltip_hidden': !currentFilter,
@@ -253,7 +253,7 @@ export class EditorToolbar extends BlockComponent {
       if (this.$.tabId !== TabId.SLIDERS) {
         return;
       }
-      this.$.operationTooltip = currentOperation;
+      this.$['*operationTooltip'] = currentOperation;
       this.ref['tooltip-el'].className = classNames('filter-tooltip', {
         'filter-tooltip_visible': currentOperation,
         'filter-tooltip_hidden': !currentOperation,
@@ -262,7 +262,7 @@ export class EditorToolbar extends BlockComponent {
 
     this.sub('*tabId', (tabId) => {
       if (tabId === TabId.FILTERS) {
-        this.$.operationTooltip = this.$['*currentFilter'];
+        this.$['*operationTooltip'] = this.$['*currentFilter'];
       }
       this.ref['tooltip-el'].className = classNames('filter-tooltip', {
         'filter-tooltip_visible': tabId === TabId.FILTERS,
