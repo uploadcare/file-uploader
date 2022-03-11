@@ -4,10 +4,12 @@ export class Icon extends BlockComponent {
   init$ = {
     name: '',
     path: '',
+    size: '24',
+    viewBox: '',
   };
 
-  connectedCallback() {
-    super.connectedCallback();
+  initCallback() {
+    super.initCallback();
     this.sub('name', (val) => {
       if (!val) {
         return;
@@ -17,17 +19,36 @@ export class Icon extends BlockComponent {
         this.$.path = path;
       }
     });
+
+    this.sub('path', (path) => {
+      if (!path) {
+        return;
+      }
+      let isRaw = path.trimStart().startsWith('<');
+      if (isRaw) {
+        this.setAttribute('raw', '');
+        this.ref.svg.innerHTML = path;
+      } else {
+        this.removeAttribute('raw');
+        this.ref.svg.innerHTML = `<path d="${path}"></path>`;
+      }
+    });
+
+    this.sub('size', (size) => {
+      this.$.viewBox = `0 0 ${size} ${size}`;
+    });
   }
 }
 
 Icon.template = /*html*/ `
 <svg
-  viewBox="0 0 24 24"
-  xmlns="http://www.w3.org/2000/svg">
-  <path set="@d: path"></path>
+  ref="svg"
+  xmlns="http://www.w3.org/2000/svg"
+  set="@viewBox: viewBox; @height: size; @width: size">
 </svg>
 `;
 
 Icon.bindAttributes({
   name: 'name',
+  size: 'size',
 });

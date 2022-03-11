@@ -1,6 +1,7 @@
 import esbuild from 'esbuild';
 import fs from 'fs';
 import path from 'path';
+import { nodeExternalsPlugin } from 'esbuild-node-externals';
 
 function jsBanner() {
   const license = fs.readFileSync('./LICENSE').toString();
@@ -32,6 +33,7 @@ function build(buildItem) {
         __VERSION__: JSON.stringify(buildItem.version),
         __PACKAGE_NAME__: JSON.stringify(buildItem.name),
       },
+      plugins: [!buildItem.includeExternals && nodeExternalsPlugin()].filter(Boolean),
     })
     .then(async () => {
       if (!buildItem.minifyHtml) {

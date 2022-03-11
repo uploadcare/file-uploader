@@ -2,7 +2,8 @@
   "packages": [
     "upload-blocks",
     "uploader",
-    "live-html"
+    "live-html",
+    "cloud-editor"
   ],
   "version": "0.0.4"
 }

@@ -1,5 +1,4 @@
-import { AppComponent } from '../../AppComponent.js';
-import { applyElementStyles } from '../../../../symbiote/core/css_utils.js';
+import { BlockComponent } from '@uploadcare/upload-blocks';
 import { applyClassNames } from '../../lib/classNames.js';
 
 const DEFAULT_STYLE = {
@@ -8,7 +7,7 @@ const DEFAULT_STYLE = {
   hidden: 'hidden',
 };
 
-export class PresenceToggle extends AppComponent {
+export class PresenceToggle extends BlockComponent {
   constructor() {
     super();
 
@@ -23,9 +22,7 @@ export class PresenceToggle extends AppComponent {
       }
 
       this._visible = visible;
-      if (this.__readyOnce) {
-        this._handleVisible();
-      }
+      this._handleVisible();
     });
 
     this.defineAccessor('styles', (styles) => {
@@ -48,8 +45,8 @@ export class PresenceToggle extends AppComponent {
     this.setAttribute('aria-hidden', this._visible ? 'true' : 'false');
   }
 
-  readyCallback() {
-    super.readyCallback();
+  initCallback() {
+    super.initCallback();
 
     if (!this._externalTransitions) {
       this.classList.add(DEFAULT_STYLE.transition);
@@ -61,5 +58,3 @@ export class PresenceToggle extends AppComponent {
 PresenceToggle.template = /*html*/ `
 <slot></slot>
 `;
-
-PresenceToggle.is = 'presence-toggle';

@@ -3,7 +3,6 @@
   "name": "@uploadcare/upload-blocks",
   "version": "0.0.4",
   "description": "",
-  "main": "./build/upload-blocks.min.js",
   "module": "./build/index.js",
   "types": "./build/index.d.ts",
   "repository": "https://github.com/uploadcare/jsdk/",
@@ -16,7 +15,8 @@
   "license": "MIT",
   "dependencies": {
     "@symbiotejs/symbiote": "^1.5.1",
-    "@uploadcare/upload-client": "^3.0.0"
+    "@uploadcare/upload-client": "^3.0.0",
+    "@uploadcare/cloud-editor": "^3.0.0"
   },
   "devDependencies": {
     "esbuild": "^0.11.11"

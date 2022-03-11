@@ -17,18 +17,8 @@ function nextValue(operation, prev) {
 }
 
 export class EditorCropButtonControl extends EditorButtonControl {
-  constructor() {
-    super();
-
-    this.state['on.click'] = (e) => {
-      let prev = this._cropperEl.getValue(this._operation);
-      let next = nextValue(this._operation, prev);
-      this._cropperEl.setValue(this._operation, next);
-    };
-
-    this.defineAccessor('cropperEl', (cropperEl) => {
-      this._cropperEl = cropperEl;
-    });
+  initCallback() {
+    super.initCallback();
 
     this.defineAccessor('operation', (operation) => {
       if (!operation) {
@@ -36,13 +26,13 @@ export class EditorCropButtonControl extends EditorButtonControl {
       }
 
       this._operation = operation;
-      this.state['icon'] = operation;
+      this.$['icon'] = operation;
     });
-  }
 
-  connectedCallback() {
-    super.connectedCallback();
+    this.$['on.click'] = (e) => {
+      let prev = this.$['*cropperEl'].getValue(this._operation);
+      let next = nextValue(this._operation, prev);
+      this.$['*cropperEl'].setValue(this._operation, next);
+    };
   }
 }
-
-EditorCropButtonControl.is = 'editor-crop-button-control';

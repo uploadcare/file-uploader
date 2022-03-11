@@ -1,4 +1,4 @@
-import { AppComponent } from './AppComponent.js';
+import { BlockComponent } from '@uploadcare/upload-blocks';
 import {
   constraintRect,
   cornerPath,
@@ -22,13 +22,13 @@ import {
 } from './cropper-constants.js';
 import { classNames } from './lib/classNames.js';
 
-export class CropFrame extends AppComponent {
+export class CropFrame extends BlockComponent {
+  init$ = {
+    dragging: false,
+  };
+
   constructor() {
     super();
-
-    this.state = {
-      dragging: false,
-    };
 
     this._handlePointerUp = this._handlePointerUp_.bind(this);
     this._handlePointerMove = this._handlePointerMove_.bind(this);
@@ -36,7 +36,10 @@ export class CropFrame extends AppComponent {
   }
 
   _shouldThumbBeDisabled(direction) {
-    let imageBox = this.read('*imageBox');
+    let imageBox = this.$['*imageBox'];
+    if (!imageBox) {
+      return;
+    }
 
     if (direction === '' && imageBox.height <= MIN_CROP_SIZE && imageBox.width <= MIN_CROP_SIZE) {
       return true;
@@ -49,8 +52,12 @@ export class CropFrame extends AppComponent {
 
   _createBackdrop() {
     /** @type {import('./EditorImageCropper.js').Rectangle} */
-    let { x, y, width, height } = this.read('*cropBox');
-    let svg = this.ref('svg-el');
+    let cropBox = this.$['*cropBox'];
+    if (!cropBox) {
+      return;
+    }
+    let { x, y, width, height } = cropBox;
+    let svg = this.ref['svg-el'];
 
     let mask = createSvgNode('mask', { id: 'backdrop-mask' });
     let maskRectOuter = createSvgNode('rect', {
@@ -99,13 +106,21 @@ export class CropFrame extends AppComponent {
 
   _updateBackdrop() {
     /** @type {import('./EditorImageCropper.js').Rectangle} */
-    let { x, y, width, height } = this.read('*cropBox');
+    let cropBox = this.$['*cropBox'];
+    if (!cropBox) {
+      return;
+    }
+    let { x, y, width, height } = cropBox;
+
     setSvgNodeAttrs(this._backdropMaskInner, { x, y, width, height });
   }
 
   _updateFrame() {
     /** @type {import('./EditorImageCropper.js').Rectangle} */
-    let cropBox = this.read('*cropBox');
+    let cropBox = this.$['*cropBox'];
+    if (!cropBox) {
+      return;
+    }
     for (let thumb of Object.values(this._frameThumbs)) {
       let { direction, pathNode, interactionNode, groupNode } = thumb;
       let isCenter = direction === '';
@@ -225,7 +240,7 @@ export class CropFrame extends AppComponent {
   }
 
   _createFrame() {
-    let svg = this.ref('svg-el');
+    let svg = this.ref['svg-el'];
     let fr = document.createDocumentFragment();
 
     let frameGuides = this._createGuides();
@@ -247,12 +262,12 @@ export class CropFrame extends AppComponent {
       return;
     }
 
-    let cropBox = this.read('*cropBox');
-    let { x: svgX, y: svgY } = this.ref('svg-el').getBoundingClientRect();
+    let cropBox = this.$['*cropBox'];
+    let { x: svgX, y: svgY } = this.ref['svg-el'].getBoundingClientRect();
     let x = e.x - svgX;
     let y = e.y - svgY;
 
-    this.state.dragging = true;
+    this.$.dragging = true;
     this._draggingThumb = thumb;
     this._dragStartPoint = [x, y];
     /** @type {import('./EditorImageCropper.js').Rectangle} */
@@ -262,23 +277,23 @@ export class CropFrame extends AppComponent {
   _handlePointerUp_(e) {
     this._updateCursor();
 
-    if (!this.state.dragging) {
+    if (!this.$.dragging) {
       return;
     }
     e.stopPropagation();
     e.preventDefault();
 
-    this.state.dragging = false;
+    this.$.dragging = false;
   }
 
   _handlePointerMove_(e) {
-    if (!this.state.dragging) {
+    if (!this.$.dragging) {
       return;
     }
     e.stopPropagation();
     e.preventDefault();
 
-    let svg = this.ref('svg-el');
+    let svg = this.ref['svg-el'];
     let { x: svgX, y: svgY } = svg.getBoundingClientRect();
     let x = e.x - svgX;
     let y = e.y - svgY;
@@ -287,7 +302,7 @@ export class CropFrame extends AppComponent {
     let { direction } = this._draggingThumb;
 
     /** @type {import('./EditorImageCropper.js').Rectangle} */
-    let imageBox = this.read('*imageBox');
+    let imageBox = this.$['*imageBox'];
     let rect = this._dragStartCrop;
 
     if (direction === '') {
@@ -307,7 +322,7 @@ export class CropFrame extends AppComponent {
       });
       return;
     }
-    this.pub('*cropBox', rect);
+    this.$['*cropBox'] = rect;
   }
 
   _handleSvgPointerMove_(e) {
@@ -333,7 +348,7 @@ export class CropFrame extends AppComponent {
 
   _updateCursor() {
     let hoverThumb = this._hoverThumb;
-    this.ref('svg-el').style.cursor = hoverThumb ? thumbCursor(hoverThumb.direction) : 'initial';
+    this.ref['svg-el'].style.cursor = hoverThumb ? thumbCursor(hoverThumb.direction) : 'initial';
   }
 
   _render() {
@@ -355,8 +370,8 @@ export class CropFrame extends AppComponent {
       });
   }
 
-  readyCallback() {
-    super.readyCallback();
+  initCallback() {
+    super.initCallback();
 
     this._createBackdrop();
     this._createFrame();
@@ -369,6 +384,9 @@ export class CropFrame extends AppComponent {
     });
 
     this.sub('*cropBox', (cropBox) => {
+      if (!cropBox) {
+        return;
+      }
       this._guidesHidden = cropBox.height <= MIN_CROP_SIZE || cropBox.width <= MIN_CROP_SIZE;
       window.requestAnimationFrame(() => {
         this._render();
@@ -386,7 +404,7 @@ export class CropFrame extends AppComponent {
       );
     });
 
-    this.ref('svg-el').addEventListener('pointermove', this._handleSvgPointerMove, true);
+    this.ref['svg-el'].addEventListener('pointermove', this._handleSvgPointerMove, true);
     document.addEventListener('pointermove', this._handlePointerMove, true);
     document.addEventListener('pointerup', this._handlePointerUp, true);
   }
@@ -399,11 +417,7 @@ export class CropFrame extends AppComponent {
   }
 }
 
-CropFrame.renderShadow = false;
-
 CropFrame.template = /*html*/ `
   <svg class='svg' ref='svg-el' xmlns="http://www.w3.org/2000/svg">
   </svg>
 `;
-
-CropFrame.is = 'crop-frame';

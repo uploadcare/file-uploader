@@ -83,5 +83,8 @@
     ]
   },
   "author": "Uploadcare Inc.",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "esbuild-node-externals": "^1.4.1"
+  }
 }

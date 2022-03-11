@@ -8,7 +8,7 @@ class CtxProvider extends BaseComponent {
   constructor() {
     super();
 
-    this.state = {
+    this.init$ = {
       min: -200,
       max: 200,
       defaultValue: -100,
@@ -30,5 +30,5 @@ CtxProvider.styles = {
     paddingRight: '10px',
   },
 };
-CtxProvider.template = /*html*/ `<${SliderUi.is} set="min: min; max: max: defaultValue: defaultValue"></${SliderUi.is}>`;
+CtxProvider.template = /*html*/ `<uc-slider-ui set="min: min; max: max: defaultValue: defaultValue"></uc-slider-ui>`;
 window.customElements.define('ctx-provider', CtxProvider);

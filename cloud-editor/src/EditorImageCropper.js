@@ -1,14 +1,12 @@
-import { applyElementStyles } from '../../symbiote/core/css_utils.js';
-import { AppComponent } from './AppComponent.js';
-import { viewerImageSrc } from './viewer_util.js';
-import { CropFrame } from './CropFrame.js';
-import { intersectionRect, constraintRect, minRectSize } from './crop-utils.js';
+import { BlockComponent } from '@uploadcare/upload-blocks';
+import { constraintRect, minRectSize } from './crop-utils.js';
 import { CROP_PADDING, MIN_CROP_SIZE } from './cropper-constants.js';
+import { classNames } from './lib/classNames.js';
 import { debounce } from './lib/debounce.js';
-import { ResizeObserver } from './lib/ResizeObserver.js';
 import { pick } from './lib/pick.js';
 import { preloadImage } from './lib/preloadImage.js';
-import { classNames } from './lib/classNames.js';
+import { ResizeObserver } from './lib/ResizeObserver.js';
+import { viewerImageSrc } from './viewer_util.js';
 
 /**
  * @typedef {Object} Rectangle
@@ -62,36 +60,34 @@ function validateCrop(crop) {
   return shouldMatch.every((matcher) => matcher(crop));
 }
 
-export class EditorImageCropper extends AppComponent {
+export class EditorImageCropper extends BlockComponent {
+  init$ = {
+    image: null,
+    '*padding': CROP_PADDING,
+    /** @type {Operations} */
+    '*operations': {
+      rotate: 0,
+      mirror: false,
+      flip: false,
+    },
+    /** @type {Rectangle} */
+    '*imageBox': {
+      x: 0,
+      y: 0,
+      width: 0,
+      height: 0,
+    },
+    /** @type {Rectangle} */
+    '*cropBox': {
+      x: 0,
+      y: 0,
+      width: 0,
+      height: 0,
+    },
+  };
+
   constructor() {
     super();
-
-    this.state = {
-      ctxProvider: this,
-      image: null,
-      padding: CROP_PADDING,
-      /** @type {Operations} */
-      operations: {
-        rotate: 0,
-        mirror: false,
-        flip: false,
-      },
-      /** @type {Rectangle} */
-      imageBox: {
-        x: 0,
-        y: 0,
-        width: 0,
-        height: 0,
-      },
-      /** @type {Rectangle} */
-      cropBox: {
-        x: 0,
-        y: 0,
-        width: 0,
-        height: 0,
-      },
-    };
-
     this._commitDebounced = debounce(this._commit.bind(this), 300);
     this._handleResizeDebounced = debounce(this._handleResize.bind(this), 10);
   }
@@ -104,15 +100,15 @@ export class EditorImageCropper extends AppComponent {
   }
 
   _syncTransformations() {
-    let transformations = this.read('*editorTransformations');
-    let pickedTransformations = pick(transformations, Object.keys(this.state.operations));
-    let operations = { ...this.state.operations, ...pickedTransformations };
-    this.state.operations = operations;
+    let transformations = this.$['*editorTransformations'];
+    let pickedTransformations = pick(transformations, Object.keys(this.$['*operations']));
+    let operations = { ...this.$['*operations'], ...pickedTransformations };
+    this.$['*operations'] = operations;
   }
 
   _initCanvas() {
     /** @type {HTMLCanvasElement} */
-    let canvas = this['canvas-el'];
+    let canvas = this.ref['canvas-el'];
     let ctx = canvas.getContext('2d');
 
     let width = this.offsetWidth;
@@ -129,11 +125,13 @@ export class EditorImageCropper extends AppComponent {
   }
 
   _alignImage() {
-    if (!this._isActive || !this.state.image) {
+    if (!this._isActive || !this.$.image) {
       return;
     }
 
-    let { image, padding, operations } = this.state;
+    let image = this.$.image;
+    let padding = this.$['*padding'];
+    let operations = this.$['*operations'];
     let { rotate } = operations;
 
     let bounds = { width: this.offsetWidth, height: this.offsetHeight };
@@ -148,33 +146,35 @@ export class EditorImageCropper extends AppComponent {
         let height = width / imageAspectRatio;
         let x = 0 + padding;
         let y = padding + (bounds.height - padding * 2) / 2 - height / 2;
-        this.state.imageBox = { x, y, width, height };
+        this.$['*imageBox'] = { x, y, width, height };
       } else {
         let height = bounds.height - padding * 2;
         let width = height * imageAspectRatio;
         let x = padding + (bounds.width - padding * 2) / 2 - width / 2;
         let y = 0 + padding;
-        this.state.imageBox = { x, y, width, height };
+        this.$['*imageBox'] = { x, y, width, height };
       }
     } else {
       let { width, height } = naturalSize;
       let x = padding + (bounds.width - padding * 2) / 2 - width / 2;
       let y = padding + (bounds.height - padding * 2) / 2 - height / 2;
-      this.state.imageBox = { x, y, width, height };
+      this.$['*imageBox'] = { x, y, width, height };
     }
   }
 
   _alignCrop() {
-    let { imageBox, cropBox, operations } = this.state;
+    let cropBox = this.$['*cropBox'];
+    let imageBox = this.$['*imageBox'];
+    let operations = this.$['*operations'];
     let { rotate } = operations;
-    let transformation = this.read('*editorTransformations')['crop'];
+    let transformation = this.$['*editorTransformations']['crop'];
 
     if (transformation) {
       let {
         dimensions: [width, height],
         coords: [x, y],
       } = transformation;
-      let { width: previewWidth, x: previewX, y: previewY } = this.state.imageBox;
+      let { width: previewWidth, x: previewX, y: previewY } = this.$['*imageBox'];
       let { width: sourceWidth } = rotateSize(this._imageSize, rotate);
       let ratio = previewWidth / sourceWidth;
       cropBox = {
@@ -196,11 +196,13 @@ export class EditorImageCropper extends AppComponent {
     cropBox = minRectSize(cropBox, minCropRect, 'se');
     cropBox = constraintRect(cropBox, imageBox);
 
-    this.state.cropBox = cropBox;
+    this.$['*cropBox'] = cropBox;
   }
 
   _drawImage() {
-    let { image, imageBox, operations } = this.state;
+    let image = this.$.image;
+    let imageBox = this.$['*imageBox'];
+    let operations = this.$['*operations'];
     let { mirror, flip, rotate } = operations;
     let ctx = this._ctx;
     let rotated = rotateSize({ width: imageBox.width, height: imageBox.height }, rotate);
@@ -213,7 +215,7 @@ export class EditorImageCropper extends AppComponent {
   }
 
   _draw() {
-    if (!this._isActive || !this.state.image) {
+    if (!this._isActive || !this.$.image) {
       return;
     }
     let canvas = this._canvas;
@@ -225,8 +227,8 @@ export class EditorImageCropper extends AppComponent {
   }
 
   _animateIn({ fromViewer }) {
-    if (this.state.image) {
-      this.ref('frame-el').toggleThumbs(true);
+    if (this.$.image) {
+      this.ref['frame-el'].toggleThumbs(true);
       this._alignTransition();
       setTimeout(() => {
         this.className = classNames({
@@ -241,7 +243,9 @@ export class EditorImageCropper extends AppComponent {
 
   /** @returns {import('../../../src/types/UploadEntry.js').Transformations['crop']['dimensions']} */
   _calculateDimensions() {
-    let { imageBox, cropBox, operations } = this.state;
+    let cropBox = this.$['*cropBox'];
+    let imageBox = this.$['*imageBox'];
+    let operations = this.$['*operations'];
     let { rotate } = operations;
     let { width: previewWidth, height: previewHeight } = imageBox;
     let { width: sourceWidth, height: sourceHeight } = rotateSize(this._imageSize, rotate);
@@ -260,7 +264,9 @@ export class EditorImageCropper extends AppComponent {
 
   /** @returns {import('../../../src/types/UploadEntry.js').Transformations['crop']} */
   _calculateCrop() {
-    let { imageBox, cropBox, operations } = this.state;
+    let cropBox = this.$['*cropBox'];
+    let imageBox = this.$['*imageBox'];
+    let operations = this.$['*operations'];
     let { rotate } = operations;
     let { width: previewWidth, height: previewHeight, x: previewX, y: previewY } = imageBox;
     let { width: sourceWidth, height: sourceHeight } = rotateSize(this._imageSize, rotate);
@@ -290,11 +296,11 @@ export class EditorImageCropper extends AppComponent {
   }
 
   _commit() {
-    let { operations } = this.state;
+    let operations = this.$['*operations'];
     let { rotate, mirror, flip } = operations;
     let crop = this._calculateCrop();
     /** @type {import('../../../src/types/UploadEntry.js').Transformations} */
-    let editorTransformations = this.read('*editorTransformations');
+    let editorTransformations = this.$['*editorTransformations'];
     let transformations = {
       ...editorTransformations,
       crop,
@@ -303,13 +309,13 @@ export class EditorImageCropper extends AppComponent {
       flip,
     };
 
-    this.pub('*editorTransformations', transformations);
+    this.$['*editorTransformations'] = transformations;
   }
 
   setValue(operation, value) {
     console.log(`Apply cropper operation [${operation}=${value}]`);
-    this.state.operations = {
-      ...this.state.operations,
+    this.$['*operations'] = {
+      ...this.$['*operations'],
       [operation]: value,
     };
 
@@ -327,7 +333,7 @@ export class EditorImageCropper extends AppComponent {
    * @returns {number | boolean}
    */
   getValue(operation) {
-    return this.state.operations[operation];
+    return this.$['*operations'][operation];
   }
 
   async activate(imageSize, { fromViewer }) {
@@ -340,7 +346,7 @@ export class EditorImageCropper extends AppComponent {
     this._initCanvas();
 
     try {
-      this.state.image = await this._waitForImage(this.read('*originalUrl'), this.read('*editorTransformations'));
+      this.$.image = await this._waitForImage(this.$['*originalUrl'], this.$['*editorTransformations']);
       this._syncTransformations();
       this._alignImage();
       this._alignCrop();
@@ -369,17 +375,17 @@ export class EditorImageCropper extends AppComponent {
       inactive_instant: !seamlessTransition,
     });
 
-    this.ref('frame-el').toggleThumbs(false);
+    this.ref['frame-el'].toggleThumbs(false);
     this.addEventListener('transitionend', this._reset, { once: true });
   }
 
   _alignTransition() {
     let dimensions = this._calculateDimensions();
-    let scaleX = Math.min(this.offsetWidth - this.state.padding * 2, dimensions[0]) / this.state.cropBox.width;
-    let scaleY = Math.min(this.offsetHeight - this.state.padding * 2, dimensions[1]) / this.state.cropBox.height;
+    let scaleX = Math.min(this.offsetWidth - this.$['*padding'] * 2, dimensions[0]) / this.$['*cropBox'].width;
+    let scaleY = Math.min(this.offsetHeight - this.$['*padding'] * 2, dimensions[1]) / this.$['*cropBox'].height;
     let scale = Math.min(scaleX, scaleY);
-    let cropCenterX = this.state.cropBox.x + this.state.cropBox.width / 2;
-    let cropCenterY = this.state.cropBox.y + this.state.cropBox.height / 2;
+    let cropCenterX = this.$['*cropBox'].x + this.$['*cropBox'].width / 2;
+    let cropCenterY = this.$['*cropBox'].y + this.$['*cropBox'].height / 2;
 
     this.style.transform = `scale(${scale}) translate(${(this.offsetWidth / 2 - cropCenterX) / scale}px, ${
       (this.offsetHeight / 2 - cropCenterY) / scale
@@ -391,7 +397,7 @@ export class EditorImageCropper extends AppComponent {
     if (this._isActive) {
       return;
     }
-    this.state.image = null;
+    this.$.image = null;
   }
 
   /**
@@ -421,14 +427,14 @@ export class EditorImageCropper extends AppComponent {
       .then(() => image)
       .catch((err) => {
         console.error('Failed to load image', { error: err });
-        this.pub('*networProblems', true);
+        this.$['*networProblems'] = true;
         return Promise.resolve(image);
       });
   }
 
   _handleImageLoading(src) {
     let operation = 'crop';
-    let loadingOperations = { ...this.read('*loadingOperations') };
+    let loadingOperations = { ...this.$['*loadingOperations'] };
     if (!loadingOperations[operation]) {
       loadingOperations[operation] = {};
     }
@@ -441,30 +447,30 @@ export class EditorImageCropper extends AppComponent {
       },
     };
 
-    this.pub('*loadingOperations', loadingOperations);
+    this.$['*loadingOperations'] = loadingOperations;
 
     return () => {
       delete loadingOperations[operation][src];
-      this.pub('*loadingOperations', loadingOperations);
+      this.$['*loadingOperations'] = loadingOperations;
     };
   }
 
-  readyCallback() {
-    super.readyCallback();
+  initCallback() {
+    super.initCallback();
 
     this._observer = new ResizeObserver(() => {
-      if (this._isActive && this.state.image) {
+      if (this._isActive && this.$.image) {
         this._handleResizeDebounced();
       }
     });
     this._observer.observe(this);
 
-    this.sub('imageBox', () => {
+    this.sub('*imageBox', () => {
       this._draw();
     });
 
-    this.sub('cropBox', (cropBox) => {
-      if (this.state.image) {
+    this.sub('*cropBox', (cropBox) => {
+      if (this.$.image) {
         this._commitDebounced();
       }
     });
@@ -485,11 +491,7 @@ export class EditorImageCropper extends AppComponent {
   }
 }
 
-EditorImageCropper.renderShadow = false;
-
 EditorImageCropper.template = /*html*/ `
   <canvas class='canvas' ref='canvas-el'></canvas>
-  <${CropFrame.is} ref='frame-el' set="dataCtxProvider: ctxProvider"></${CropFrame.is}>
+  <uc-crop-frame ref='frame-el'></uc-crop-frame>
 `;
-
-EditorImageCropper.is = 'editor-image-cropper';

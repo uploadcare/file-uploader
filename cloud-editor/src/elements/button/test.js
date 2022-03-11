@@ -1,21 +1,20 @@
 import { AppComponent } from '../../lib/AppComponent.js';
 import { UcBtnUi } from './UcBtnUi.js';
 
-class TestApp extends AppComponent {
+class TestApp extends BlockComponent {
   constructor() {
     super();
-    this.state = {
+    this.init$ = {
       text: 'Button Text',
       icon: 'more',
     };
   }
 }
-TestApp.renderShadow = true;
 TestApp.template = /*html*/ `
 <link rel="stylesheet" href="../../css/common.css">
-<${UcBtnUi.is} reverse set="#text: text; #icon: icon"></${UcBtnUi.is}>
+<uc-btn-ui reverse set="#text: text; #icon: icon"></uc-btn-ui>
 <div>&nbsp;</div>
-<${UcBtnUi.is} text="One more button..."></${UcBtnUi.is}>
+<uc-btn-ui text="One more button..."></uc-btn-ui>
 <div>&nbsp;</div>
 `;
 TestApp.defineTag('test-app');

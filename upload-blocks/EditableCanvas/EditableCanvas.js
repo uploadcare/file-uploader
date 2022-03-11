@@ -1,9 +1,6 @@
 import { BlockComponent } from '../BlockComponent/BlockComponent.js';
-import { EditorToolbar } from './EditorToolbar.js';
 import { applyStyles } from '@symbiotejs/symbiote';
 import { checkerboardCssBg } from '../svg-backgrounds/svg-backgrounds.js';
-
-EditorToolbar.reg('editor-toolbar');
 
 export class EditableCanvas extends BlockComponent {
   init$ = {
@@ -85,9 +82,9 @@ EditableCanvas.template = /*html*/ `
     <image ref="svg_img" x="0" y="0"></image>
   </g>
 </svg>
-<uc-editor-toolbar
+<editable-canvas-toolbar
   set="refMap: refMap; @hidden: toolbarHidden">
-</uc-editor-toolbar>
+</editable-canvas-toolbar>
 `;
 
 EditableCanvas.bindAttributes({

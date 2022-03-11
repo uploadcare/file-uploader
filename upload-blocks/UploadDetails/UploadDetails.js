@@ -7,6 +7,7 @@ export class UploadDetails extends BlockComponent {
   init$ = {
     checkerboard: false,
     localImageEditDisabled: true,
+    cloudImageEditDisabled: true,
     fileSize: null,
     fileName: '',
     notUploaded: true,
@@ -14,7 +15,6 @@ export class UploadDetails extends BlockComponent {
     errorTxt: '',
     editBtnHidden: true,
     onNameInput: null,
-    '*focusedEntry': null,
     onBack: () => {
       this.historyBack();
     },
@@ -42,10 +42,14 @@ export class UploadDetails extends BlockComponent {
   initCallback() {
     this.bindCssData('--cfg-use-local-image-editor');
     this.sub('*--cfg-use-local-image-editor', (val) => {
-      this.set$({
-        localImageEditDisabled: !val,
-      });
+      this.$.localImageEditDisabled = !val;
     });
+
+    this.bindCssData('--cfg-use-cloud-image-editor');
+    this.sub('*--cfg-use-cloud-image-editor', (val) => {
+      this.$.cloudImageEditDisabled = !val;
+    });
+
     this.$.fileSize = this.l10n('file-size-unknown');
     this.registerActivity(this.activityType, () => {
       this.set$({

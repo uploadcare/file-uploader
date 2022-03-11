@@ -1,8 +1,7 @@
-import { AppComponent } from '../../AppComponent.js';
-import { ucIconHtml } from '../../icons/ucIconHtml.js';
+import { BlockComponent } from '@uploadcare/upload-blocks';
 import { classNames } from '../../lib/classNames.js';
 
-export class UcBtnUi extends AppComponent {
+export class UcBtnUi extends BlockComponent {
   constructor() {
     super();
 
@@ -10,7 +9,7 @@ export class UcBtnUi extends AppComponent {
     this._iconSingle = false;
     this._iconHidden = false;
 
-    this.state = {
+    this.init$ = {
       text: '',
       icon: '',
       iconCss: this._iconCss(),
@@ -36,19 +35,15 @@ export class UcBtnUi extends AppComponent {
     });
   }
 
-  readyCallback() {
-    super.readyCallback();
+  initCallback() {
+    super.initCallback();
 
     this.sub(
       'icon',
       (iconName) => {
-        if (iconName) {
-          this['icon-el'].innerHTML = ucIconHtml(iconName);
-        }
-
-        this._iconSingle = !this.state.text;
+        this._iconSingle = !this.$.text;
         this._iconHidden = !iconName;
-        this.state.iconCss = this._iconCss();
+        this.$.iconCss = this._iconCss();
       },
       undefined,
       true
@@ -65,11 +60,11 @@ export class UcBtnUi extends AppComponent {
 
   set text(txt) {
     this._iconSingle = false;
-    this.state.text = txt;
+    this.$.text = txt;
   }
 
   set icon(icon) {
-    this.state.icon = icon;
+    this.$.icon = icon;
   }
 
   set theme(theme) {
@@ -88,11 +83,9 @@ export class UcBtnUi extends AppComponent {
     }
   }
 }
-UcBtnUi.observeAttributes(['text', 'icon', 'reverse', 'theme']);
+UcBtnUi.bindAttributes({ text: 'text', icon: 'icon', reverse: 'reverse', theme: 'theme' });
 
 UcBtnUi.template = /*html*/ `
-<div ref="icon-el" set="class: iconCss"></div>
+<uc-icon size="20" set="class: iconCss; @name: icon;"></uc-icon>
 <div class="text" set="textContent: text"></div>
 `;
-
-UcBtnUi.is = 'uc-btn-ui';

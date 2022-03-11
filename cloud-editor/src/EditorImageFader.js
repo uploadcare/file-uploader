@@ -1,4 +1,4 @@
-import { AppComponent } from './AppComponent.js';
+import { BlockComponent } from '@uploadcare/upload-blocks';
 import { debounce } from './lib/debounce.js';
 import { linspace } from './lib/linspace.js';
 import { batchPreloadImages } from './lib/preloadImage.js';
@@ -69,14 +69,15 @@ function keypointsRange(operation, value) {
  * @property {number} value
  */
 
-export class EditorImageFader extends AppComponent {
+export class EditorImageFader extends BlockComponent {
   constructor() {
     super();
 
     this._isActive = false;
     this._hidden = true;
 
-    this.state = {
+    this.init$ = {
+      '*loadingOperations': undefined,
       loadingMap: {},
     };
 
@@ -88,21 +89,21 @@ export class EditorImageFader extends AppComponent {
   _handleImageLoading(src) {
     let operation = this._operation;
 
-    if (!this.state.loadingMap[operation]) {
-      this.state.loadingMap[operation] = {};
+    if (!this.$.loadingMap[operation]) {
+      this.$.loadingMap[operation] = {};
     }
 
-    this.state.loadingMap = {
-      ...this.state.loadingMap,
+    this.$.loadingMap = {
+      ...this.$.loadingMap,
       [operation]: {
-        ...this.state.loadingMap[operation],
+        ...this.$.loadingMap[operation],
         [src]: true,
       },
     };
 
     return () => {
-      delete this.state.loadingMap[operation][src];
-      this.state.loadingMap = { ...this.state.loadingMap };
+      delete this.$.loadingMap[operation][src];
+      this.$.loadingMap = { ...this.$.loadingMap };
     };
   }
 
@@ -209,7 +210,7 @@ export class EditorImageFader extends AppComponent {
     image.addEventListener(
       'error',
       () => {
-        this.pub('*networkProblems', true);
+        this.$['*networkProblems'] = true;
       },
       { once: true }
     );
@@ -302,7 +303,7 @@ export class EditorImageFader extends AppComponent {
       this._previewImage.addEventListener(
         'error',
         () => {
-          this.pub('*networkProblems', true);
+          this.$['*networkProblems'] = true;
         },
         { once: true }
       );
@@ -366,7 +367,7 @@ export class EditorImageFader extends AppComponent {
     image.addEventListener(
       'error',
       () => {
-        this.pub('*networkProblems', true);
+        this.$['*networkProblems'] = true;
       },
       { once: true }
     );
@@ -431,17 +432,13 @@ export class EditorImageFader extends AppComponent {
     }
   }
 
-  readyCallback() {
-    super.readyCallback();
+  initCallback() {
+    super.initCallback();
 
     setTimeout(() => {
       this.sub('loadingMap', (loadingMap) => {
-        this.pub('*loadingOperations', loadingMap);
+        this.$['*loadingOperations'] = loadingMap;
       });
     }, 0);
   }
 }
-
-EditorImageFader.renderShadow = false;
-
-EditorImageFader.is = 'editor-image-fader';

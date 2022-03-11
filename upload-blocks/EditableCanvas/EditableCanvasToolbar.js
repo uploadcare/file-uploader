@@ -5,9 +5,6 @@ import { Color } from '../Color/Color.js';
 
 import { getButtons } from './buttons.js';
 
-Range.reg('range');
-Color.reg('color');
-
 const FS_ICON = {
   FS: 'fullscreen',
   EXIT: 'fullscreen-exit',
@@ -23,7 +20,16 @@ const FS_ICON = {
  * @property {SVGImageElement} svgImg
  */
 
-export class EditorToolbar extends BlockComponent {
+export class EditableCanvasToolbar extends BlockComponent {
+  constructor() {
+    super();
+    // TODO: it's side-effect, don't do it
+    // this code will run on any import of this file even if it's implicit
+    // for example `import { registerBlocks } from '@uploadcare/upload-blocks';`
+    Range.reg('range');
+    Color.reg('color');
+  }
+
   get actionsMap() {
     return {
       fullscreen: () => {
@@ -144,14 +150,14 @@ export class EditorToolbar extends BlockComponent {
     });
   }
 }
-EditorToolbar.template = /*html*/ `
-<div 
+EditableCanvasToolbar.template = /*html*/ `
+<div
   class="btns"
-  ref="btns" 
+  ref="btns"
   set="onclick: onBtnClick">${getButtons()}</div>
-<uc-range 
-  min="0" 
-  max="200" 
+<uc-range
+  min="0"
+  max="200"
   ref="range"
   set="@visible: rangeActive; $.caption: rangeCaption">
 </uc-range>
