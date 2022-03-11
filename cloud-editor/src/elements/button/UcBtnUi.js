@@ -48,27 +48,22 @@ export class UcBtnUi extends BlockComponent {
       true
     );
 
+    this.sub('theme', (theme) => {
+      if (theme !== 'custom') {
+        this.className = theme;
+      }
+    });
+
+    this.sub('text', (txt) => {
+      this._iconSingle = false;
+    });
+
     this.setAttribute('role', 'button');
     if (this.tabIndex === -1) {
       this.tabIndex = 0;
     }
     if (!this.hasAttribute('theme')) {
       this.setAttribute('theme', 'default');
-    }
-  }
-
-  set text(txt) {
-    this._iconSingle = false;
-    this.$.text = txt;
-  }
-
-  set icon(icon) {
-    this.$.icon = icon;
-  }
-
-  set theme(theme) {
-    if (theme !== 'custom') {
-      this.className = theme;
     }
   }
 
@@ -85,6 +80,6 @@ export class UcBtnUi extends BlockComponent {
 UcBtnUi.bindAttributes({ text: 'text', icon: 'icon', reverse: 'reverse', theme: 'theme' });
 
 UcBtnUi.template = /*html*/ `
-<uc-icon size="20" set="class: iconCss; @name: icon;"></uc-icon>
+<uc-icon size="20" set="className: iconCss; @name: icon;"></uc-icon>
 <div class="text" set="textContent: text"></div>
 `;
