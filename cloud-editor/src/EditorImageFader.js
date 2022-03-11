@@ -77,7 +77,6 @@ export class EditorImageFader extends BlockComponent {
     this._hidden = true;
 
     this.init$ = {
-      '*loadingOperations': undefined,
       loadingMap: {},
     };
 
