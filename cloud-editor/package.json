@@ -1,7 +1,7 @@
 {
   "type": "module",
   "name": "@uploadcare/cloud-editor",
-  "version": "3.0.0",
+  "version": "0.0.4",
   "description": "",
   "repository": "https://github.com/uploadcare/jsdk/",
   "module": "./build/index.js",

@@ -16,7 +16,7 @@
   "dependencies": {
     "@symbiotejs/symbiote": "^1.5.1",
     "@uploadcare/upload-client": "^3.0.0",
-    "@uploadcare/cloud-editor": "^3.0.0"
+    "@uploadcare/cloud-editor": "^0.0.4"
   },
   "devDependencies": {
     "esbuild": "^0.11.11"
