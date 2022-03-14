@@ -11,7 +11,7 @@ export class UploadDetails extends BlockComponent {
     fileSize: null,
     fileName: '',
     notUploaded: true,
-    cdnUrl: '',
+    imageUrl: '',
     errorTxt: '',
     editBtnHidden: true,
     onNameInput: null,
@@ -115,15 +115,15 @@ export class UploadDetails extends BlockComponent {
         this.$.fileSize = Number.isFinite(size) ? this.fileSizeFmt(size) : this.l10n('file-size-unknown');
       });
       tmpSub('uuid', (uuid) => {
-        if (uuid) {
+        if (uuid && !entry.getValue('transformationsUrl')) {
           this.eCanvas.clear();
           this.set$({
-            cdnUrl: `https://ucarecdn.com/${uuid}/`,
+            imageUrl: `https://ucarecdn.com/${uuid}/`,
             notUploaded: false,
           });
-          this.eCanvas.setImageUrl(this.$.cdnUrl);
+          this.eCanvas.setImageUrl(this.$.imageUrl);
         } else {
-          this.$.cdnUrl = 'Not uploaded yet...';
+          this.$.imageUrl = 'Not uploaded yet...';
         }
       });
       tmpSub('uploadError', (error) => {
@@ -176,7 +176,7 @@ UploadDetails.template = /*html*/ `
       <div class="info-block_name" l10n="cdn-url"></div>
       <a
         target="_blank"
-        set="@href: cdnUrl; @disabled: notUploaded">{{cdnUrl}}</a>
+        set="@href: imageUrl; @disabled: notUploaded">{{imageUrl}}</a>
     </div>
 
     <div>{{errorTxt}}</div>
