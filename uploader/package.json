@@ -9,7 +9,8 @@
   "scripts": {
     "copy-license": "cp ../LICENSE ./LICENSE",
     "prepare": "npm run copy-license",
-    "build": "node ../build-utils/build-libs.js ./build.cfg.js"
+    "build": "node ../build-utils/build-libs.js ./build.cfg.js",
+    "dev": "npm run build -- --watch"
   },
   "author": "",
   "license": "MIT",
