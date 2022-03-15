@@ -16,15 +16,6 @@ export class PresenceToggle extends BlockComponent {
     this._hiddenStyle = DEFAULT_STYLE.hidden;
     this._externalTransitions = false;
 
-    this.defineAccessor('visible', (visible) => {
-      if (typeof visible !== 'boolean') {
-        return;
-      }
-
-      this._visible = visible;
-      this._handleVisible();
-    });
-
     this.defineAccessor('styles', (styles) => {
       if (!styles) {
         return;
@@ -32,6 +23,15 @@ export class PresenceToggle extends BlockComponent {
       this._externalTransitions = true;
       this._visibleStyle = styles.visible;
       this._hiddenStyle = styles.hidden;
+    });
+
+    this.defineAccessor('visible', (visible) => {
+      if (typeof visible !== 'boolean') {
+        return;
+      }
+
+      this._visible = visible;
+      this._handleVisible();
     });
   }
 
@@ -42,17 +42,19 @@ export class PresenceToggle extends BlockComponent {
       [this._visibleStyle]: this._visible,
       [this._hiddenStyle]: !this._visible,
     });
-    this.setAttribute('aria-hidden', this._visible ? 'true' : 'false');
+    this.setAttribute('aria-hidden', this._visible ? 'false' : 'true');
   }
 
   initCallback() {
     super.initCallback();
+    this.setAttribute('hidden', '');
 
     if (!this._externalTransitions) {
       this.classList.add(DEFAULT_STYLE.transition);
     }
 
     this._handleVisible();
+    setTimeout(() => this.removeAttribute('hidden'), 0);
   }
 }
 PresenceToggle.template = /*html*/ `

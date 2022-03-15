@@ -234,12 +234,6 @@ export class EditorToolbar extends BlockComponent {
       }
     });
 
-    // this.sub('*widthBreakpoint', (bp) => {
-    //   let isMobile = bp < BREAKPOINTS.max;
-    //   applyElementStyles(this, STYLES[isMobile ? ':host--mobile' : ':host--desktop']);
-    //   this._syncTabIndicator();
-    // });
-
     this.sub('*currentFilter', (currentFilter) => {
       this.$['*operationTooltip'] = this.l10n(currentFilter || FAKE_ORIGINAL_FILTER);
       this.ref['tooltip-el'].className = classNames('filter-tooltip', {
