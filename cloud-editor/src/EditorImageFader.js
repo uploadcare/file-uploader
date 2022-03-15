@@ -381,7 +381,7 @@ export class EditorImageFader extends BlockComponent {
     this._isActive = true;
     this._hidden = false;
     this._url = url;
-    this._operation = operation;
+    this._operation = operation || 'initial';
     this._value = value;
     this._filter = filter;
     this._fromViewer = fromViewer;

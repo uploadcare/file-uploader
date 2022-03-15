@@ -293,7 +293,6 @@ export class EditorToolbar extends BlockComponent {
           }
         }
       }
-      console.log('anyLoading', anyLoading);
       this._debouncedShowLoader(anyLoading);
     });
 

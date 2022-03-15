@@ -47,6 +47,7 @@ export class EditableCanvas extends BlockComponent {
       this.canvas.width = img.width;
       this.canvCtx.drawImage(img, 0, 0, img.width, img.height);
     } else {
+      this.clear();
       img.onload = () => {
         this.canvas.height = img.height;
         this.canvas.width = img.width;
