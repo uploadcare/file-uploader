@@ -1,10 +1,10 @@
 import { BlockComponent } from '@uploadcare/upload-blocks';
+import { classNames } from './lib/classNames.js';
 import { debounce } from './lib/debounce.js';
 import { linspace } from './lib/linspace.js';
 import { batchPreloadImages } from './lib/preloadImage.js';
 import { COLOR_OPERATIONS_CONFIG } from './toolbar-constants.js';
 import { viewerImageSrc } from './viewer_util.js';
-import { classNames } from './lib/classNames.js';
 
 /**
  * @param {number[]} numbers
@@ -101,8 +101,10 @@ export class EditorImageFader extends BlockComponent {
     };
 
     return () => {
-      delete this.$.loadingMap[operation][src];
-      this.$.loadingMap = { ...this.$.loadingMap };
+      if (this.$.loadingMap[operation]?.hasOwnProperty(src)) {
+        delete this.$.loadingMap[operation][src];
+        this.$.loadingMap = { ...this.$.loadingMap };
+      }
     };
   }
 

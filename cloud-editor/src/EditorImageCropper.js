@@ -450,8 +450,10 @@ export class EditorImageCropper extends BlockComponent {
     this.$['*loadingOperations'] = loadingOperations;
 
     return () => {
-      delete loadingOperations[operation][src];
-      this.$['*loadingOperations'] = loadingOperations;
+      if (loadingOperations[operation]?.hasOwnProperty(src)) {
+        delete loadingOperations[operation][src];
+        this.$['*loadingOperations'] = loadingOperations;
+      }
     };
   }
 
