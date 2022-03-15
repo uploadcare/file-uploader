@@ -76,10 +76,6 @@ export class EditorImageFader extends BlockComponent {
     this._isActive = false;
     this._hidden = true;
 
-    this.init$ = {
-      loadingMap: {},
-    };
-
     this._addKeypointDebounced = debounce(this._addKeypoint.bind(this), 600);
 
     this.classList.add('inactive_to_cropper');
@@ -88,22 +84,21 @@ export class EditorImageFader extends BlockComponent {
   _handleImageLoading(src) {
     let operation = this._operation;
 
-    if (!this.$.loadingMap[operation]) {
-      this.$.loadingMap[operation] = {};
+    /** @type {import('./types.js').LoadingOperations} */
+    let loadingOperations = this.$['*loadingOperations'];
+    if (!loadingOperations.get(operation)) {
+      loadingOperations.set(operation, new Map());
     }
 
-    this.$.loadingMap = {
-      ...this.$.loadingMap,
-      [operation]: {
-        ...this.$.loadingMap[operation],
-        [src]: true,
-      },
-    };
+    if (!loadingOperations.get(operation).get(src)) {
+      loadingOperations.set(operation, loadingOperations.get(operation).set(src, true));
+      this.$['*loadingOperations'] = loadingOperations;
+    }
 
     return () => {
-      if (this.$.loadingMap[operation]?.hasOwnProperty(src)) {
-        delete this.$.loadingMap[operation][src];
-        this.$.loadingMap = { ...this.$.loadingMap };
+      if (loadingOperations?.get(operation)?.has(src)) {
+        loadingOperations.get(operation).delete(src);
+        this.$['*loadingOperations'] = loadingOperations;
       }
     };
   }
@@ -431,15 +426,5 @@ export class EditorImageFader extends BlockComponent {
     } else {
       this._container && this._container.remove();
     }
-  }
-
-  initCallback() {
-    super.initCallback();
-
-    setTimeout(() => {
-      this.sub('loadingMap', (loadingMap) => {
-        this.$['*loadingOperations'] = loadingMap;
-      });
-    }, 0);
   }
 }

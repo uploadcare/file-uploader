@@ -434,24 +434,20 @@ export class EditorImageCropper extends BlockComponent {
 
   _handleImageLoading(src) {
     let operation = 'crop';
-    let loadingOperations = { ...this.$['*loadingOperations'] };
-    if (!loadingOperations[operation]) {
-      loadingOperations[operation] = {};
+    /** @type {import('./type.js').LoadingOperations} */
+    let loadingOperations = this.$['*loadingOperations'];
+    if (!loadingOperations.get(operation)) {
+      loadingOperations.set(operation, new Map());
     }
 
-    loadingOperations = {
-      ...loadingOperations,
-      [operation]: {
-        ...loadingOperations[operation],
-        [src]: true,
-      },
-    };
-
-    this.$['*loadingOperations'] = loadingOperations;
+    if (!loadingOperations.get(operation).get(src)) {
+      loadingOperations.set(operation, loadingOperations.get(operation).set(src, true));
+      this.$['*loadingOperations'] = loadingOperations;
+    }
 
     return () => {
-      if (loadingOperations[operation]?.hasOwnProperty(src)) {
-        delete loadingOperations[operation][src];
+      if (loadingOperations?.get(operation)?.has(src)) {
+        loadingOperations.get(operation).delete(src);
         this.$['*loadingOperations'] = loadingOperations;
       }
     };

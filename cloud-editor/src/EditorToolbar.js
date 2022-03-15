@@ -35,7 +35,8 @@ export class EditorToolbar extends BlockComponent {
 
     this.init$ = {
       '*sliderEl': null,
-      '*loadingOperations': {},
+      /** @type {import('./types.js').LoadingOperations} */
+      '*loadingOperations': new Map(),
       '*showSlider': false,
       /** @type {import('../../../src/types/UploadEntry.js').Transformations} */
       '*editorTransformations': {},
@@ -279,9 +280,21 @@ export class EditorToolbar extends BlockComponent {
       }
     });
 
-    this.sub('*loadingOperations', (loadingOperations) => {
-      let loading = Object.values(loadingOperations || {}).some((obj) => Object.values(obj).some(Boolean));
-      this._debouncedShowLoader(loading);
+    this.sub('*loadingOperations', (/** @type {import('./types.js').LoadingOperations} */ loadingOperations) => {
+      let anyLoading = false;
+      for (let [, mapping] of loadingOperations.entries()) {
+        if (anyLoading) {
+          break;
+        }
+        for (let [, loading] of mapping.entries()) {
+          if (loading) {
+            anyLoading = true;
+            break;
+          }
+        }
+      }
+      console.log('anyLoading', anyLoading);
+      this._debouncedShowLoader(anyLoading);
     });
 
     this.sub('*showSlider', (showSlider) => {
