@@ -47,7 +47,6 @@ uc-drop-area button {
     padding: 0;
     background: transparent;
     color: var(--clr-accent);
-    line-height: inherit;
     opacity: 0.8;
     transition: opacity var(--transition-duration) ease;
 }
