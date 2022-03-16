@@ -1,5 +1,4 @@
 export { BlockComponent } from '../../upload-blocks/BlockComponent/BlockComponent.js';
-export { Icon } from '../../upload-blocks/Icon/Icon.js';
 export { StartFrom } from '../../upload-blocks/StartFrom/StartFrom.js';
 export { DropArea } from '../../upload-blocks/DropArea/DropArea.js';
 export { SourceBtn } from '../../upload-blocks/SourceBtn/SourceBtn.js';
@@ -16,3 +15,5 @@ export { ExternalSource } from '../../upload-blocks/ExternalSource/ExternalSourc
 export { DataOutput } from '../../upload-blocks/DataOutput/DataOutput.js';
 export { ActivityCaption } from '../../upload-blocks/ActivityCaption/ActivityCaption.js';
 export { ActivityIcon } from '../../upload-blocks/ActivityIcon/ActivityIcon.js';
+
+export { Icon } from '@uploadcare/elements';

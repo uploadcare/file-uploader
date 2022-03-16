@@ -1,5 +1,4 @@
 export { BlockComponent } from './BlockComponent/BlockComponent.js';
-export { Icon } from './Icon/Icon.js';
 export { SimpleBtn } from './SimpleBtn/SimpleBtn.js';
 export { StartFrom } from './StartFrom/StartFrom.js';
 export { DropArea } from './DropArea/DropArea.js';
@@ -24,5 +23,7 @@ export { DataOutput } from './DataOutput/DataOutput.js';
 export { ActivityCaption } from './ActivityCaption/ActivityCaption.js';
 export { ActivityIcon } from './ActivityIcon/ActivityIcon.js';
 export { registerBlocks } from './registerBlocks.js';
+
+export { Icon } from '@uploadcare/elements';
 
 export * from '@uploadcare/cloud-editor';

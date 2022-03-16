@@ -1,4 +1,4 @@
-import { BlockComponent } from '@uploadcare/upload-blocks';
+import { ElementComponent } from '@uploadcare/elements';
 import { applyClassNames } from '../../lib/classNames.js';
 
 const DEFAULT_STYLE = {
@@ -7,7 +7,7 @@ const DEFAULT_STYLE = {
   hidden: 'hidden',
 };
 
-export class PresenceToggle extends BlockComponent {
+export class PresenceToggle extends ElementComponent {
   constructor() {
     super();
 

@@ -17,6 +17,7 @@
   "dependencies": {
     "@symbiotejs/symbiote": "^1.5.1",
     "@uploadcare/upload-blocks": "^0.0.4",
+    "@uploadcare/elements": "^0.0.4",
     "@uploadcare/upload-client": "^3.0.0"
   },
   "devDependencies": {

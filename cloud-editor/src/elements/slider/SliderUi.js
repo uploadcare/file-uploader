@@ -1,7 +1,7 @@
-import { BlockComponent } from '@uploadcare/upload-blocks';
+import { ElementComponent } from '@uploadcare/elements';
 import { ResizeObserver } from '../../lib/ResizeObserver.js';
 
-export class SliderUi extends BlockComponent {
+export class SliderUi extends ElementComponent {
   init$ = {
     disabled: false,
     min: 0,

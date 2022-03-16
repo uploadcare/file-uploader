@@ -1,6 +1,6 @@
-import { BlockComponent } from '@uploadcare/upload-blocks';
+import { ElementComponent } from '@uploadcare/elements';
 
-export class LineLoaderUi extends BlockComponent {
+export class LineLoaderUi extends ElementComponent {
   constructor() {
     super();
 

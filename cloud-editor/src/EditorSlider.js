@@ -1,4 +1,4 @@
-import { BlockComponent } from '@uploadcare/upload-blocks';
+import { ElementComponent } from '@uploadcare/elements';
 import { COLOR_OPERATIONS_CONFIG } from './toolbar-constants.js';
 
 const ControlType = {
@@ -8,7 +8,7 @@ const ControlType = {
 
 export const FAKE_ORIGINAL_FILTER = 'original';
 
-export class EditorSlider extends BlockComponent {
+export class EditorSlider extends ElementComponent {
   init$ = {
     disabled: false,
     min: 0,

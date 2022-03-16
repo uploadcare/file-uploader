@@ -1,4 +1,4 @@
-import { BlockComponent } from '@uploadcare/upload-blocks';
+import { ElementComponent } from '@uploadcare/elements';
 import { EditorCropButtonControl } from './EditorCropButtonControl.js';
 import { EditorFilterControl } from './EditorFilterControl.js';
 import { EditorOperationControl } from './EditorOperationControl.js';
@@ -29,7 +29,7 @@ function renderTabContent(id) {
   `;
 }
 
-export class EditorToolbar extends BlockComponent {
+export class EditorToolbar extends ElementComponent {
   constructor() {
     super();
 

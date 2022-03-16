@@ -1,4 +1,4 @@
-import { BlockComponent } from '@uploadcare/upload-blocks';
+import { ElementComponent } from '@uploadcare/elements';
 import { constraintRect, minRectSize } from './crop-utils.js';
 import { CROP_PADDING, MIN_CROP_SIZE } from './cropper-constants.js';
 import { classNames } from './lib/classNames.js';
@@ -60,7 +60,7 @@ function validateCrop(crop) {
   return shouldMatch.every((matcher) => matcher(crop));
 }
 
-export class EditorImageCropper extends BlockComponent {
+export class EditorImageCropper extends ElementComponent {
   init$ = {
     image: null,
     '*padding': CROP_PADDING,

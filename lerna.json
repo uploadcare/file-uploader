@@ -3,7 +3,8 @@
     "upload-blocks",
     "uploader",
     "live-html",
-    "cloud-editor"
+    "cloud-editor",
+    "elements"
   ],
   "version": "0.0.4"
 }

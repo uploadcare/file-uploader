@@ -1,8 +1,8 @@
-import { BlockComponent } from '@uploadcare/upload-blocks';
+import { ElementComponent } from '@uploadcare/elements';
 
 const X_THRESHOLD = 1;
 
-export class EditorScroller extends BlockComponent {
+export class EditorScroller extends ElementComponent {
   initCallback() {
     super.initCallback();
 

@@ -1,7 +1,7 @@
 import { AppComponent } from '../../lib/AppComponent.js';
 import { UcBtnUi } from './UcBtnUi.js';
 
-class TestApp extends BlockComponent {
+class TestApp extends ElementComponent {
   constructor() {
     super();
     this.init$ = {

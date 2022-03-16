@@ -1,6 +1,6 @@
-import { BlockComponent } from '../BlockComponent/BlockComponent.js';
+import { ElementComponent } from '../ElementComponent/ElementComponent.js';
 
-export class Icon extends BlockComponent {
+export class Icon extends ElementComponent {
   init$ = {
     name: '',
     path: '',

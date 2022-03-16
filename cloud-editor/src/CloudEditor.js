@@ -1,4 +1,4 @@
-import { BlockComponent } from '@uploadcare/upload-blocks';
+import { ElementComponent } from '@uploadcare/elements';
 import { classNames } from './lib/classNames.js';
 import { debounce } from './lib/debounce.js';
 import { preloadImage } from './lib/preloadImage.js';
@@ -8,7 +8,7 @@ import { TEMPLATE } from './template.js';
 import { TabId } from './toolbar-constants.js';
 import { viewerImageSrc } from './util.js';
 
-export class CloudEditor extends BlockComponent {
+export class CloudEditor extends ElementComponent {
   init$ = initState(this);
   _debouncedShowLoader = debounce(this._showLoader.bind(this), 300);
 

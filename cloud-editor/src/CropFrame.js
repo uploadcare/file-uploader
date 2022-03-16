@@ -1,4 +1,4 @@
-import { BlockComponent } from '@uploadcare/upload-blocks';
+import { ElementComponent } from '@uploadcare/elements';
 import {
   constraintRect,
   cornerPath,
@@ -22,7 +22,7 @@ import {
 } from './cropper-constants.js';
 import { classNames } from './lib/classNames.js';
 
-export class CropFrame extends BlockComponent {
+export class CropFrame extends ElementComponent {
   init$ = {
     dragging: false,
   };

@@ -1,7 +1,7 @@
-import { BlockComponent } from '@uploadcare/upload-blocks';
+import { ElementComponent } from '@uploadcare/elements';
 import { classNames } from '../../lib/classNames.js';
 
-export class UcBtnUi extends BlockComponent {
+export class UcBtnUi extends ElementComponent {
   constructor() {
     super();
 

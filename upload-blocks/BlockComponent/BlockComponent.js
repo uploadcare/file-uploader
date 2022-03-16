@@ -1,9 +1,8 @@
-import { BaseComponent, Data, TypedCollection } from '@symbiotejs/symbiote';
-import { l10nProcessor } from './l10nProcessor.js';
+import { Data, TypedCollection } from '@symbiotejs/symbiote';
 import { uploadEntrySchema } from './uploadEntrySchema.js';
+import { ElementComponent } from '@uploadcare/elements';
 
 const ACTIVE_ATTR = 'active';
-const TAG_PREFIX = 'uc-';
 const CSS_ATTRIBUTE = 'css-src';
 
 let DOC_READY = document.readyState === 'complete';
@@ -13,42 +12,9 @@ if (!DOC_READY) {
   });
 }
 
-export class BlockComponent extends BaseComponent {
-  /**
-   * @param {String} str
-   * @returns {String}
-   */
-  l10n(str) {
-    return this.getCssData('--l10n-' + str, true) || str;
-  }
-
-  constructor() {
-    super();
-    /** @type {String} */
-    this.activityType = null;
-    this.addTemplateProcessor(l10nProcessor);
-    /**
-     * @private
-     * @type {String[]}
-     */
-    this.__l10nKeys = [];
-    /** @private */
-    this.__l10nUpdate = () => {
-      this.dropCssDataCache();
-      for (let key of this.__l10nKeys) {
-        this.notify(key);
-      }
-    };
-    window.addEventListener('uc-l10n-update', this.__l10nUpdate);
-  }
-
-  /**
-   * @param {String} localPropKey
-   * @param {String} l10nKey
-   */
-  applyL10nKey(localPropKey, l10nKey) {
-    this.$['l10n:' + localPropKey] = l10nKey;
-  }
+export class BlockComponent extends ElementComponent {
+  /** @type {String} */
+  activityType = null;
 
   historyBack() {
     /** @type {String[]} */
@@ -283,22 +249,6 @@ export class BlockComponent extends BaseComponent {
       data.push(info);
     });
     this.$['*outputData'] = data;
-  }
-
-  destroyCallback() {
-    window.removeEventListener('uc-l10n-update', this.__l10nUpdate);
-    /** @private */
-    this.__l10nKeys = null;
-    // TODO: destroy uploadCollection
-  }
-
-  /** @param {String} name? */
-  static reg(name) {
-    if (!name) {
-      super.reg();
-      return;
-    }
-    super.reg(name.startsWith(TAG_PREFIX) ? name : TAG_PREFIX + name);
   }
 
   /**

@@ -14,7 +14,7 @@
 @import url('common.css');
 
 /* UI COMPONENTS: */
-@import url('../../Icon/icon.css');
+@import url('../../../elements/build/index.css');
 @import url('../../Tabs/tabs.css');
 @import url('../../Range/range.css');
 @import url('../../Color/color.css');

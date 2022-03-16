@@ -1,7 +1,7 @@
-import { BlockComponent } from '@uploadcare/upload-blocks';
+import { ElementComponent } from '@uploadcare/elements';
 import { classNames } from './lib/classNames.js';
 
-export class EditorButtonControl extends BlockComponent {
+export class EditorButtonControl extends ElementComponent {
   _iconName = null;
   _title = null;
 
