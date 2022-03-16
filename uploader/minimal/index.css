@@ -3,7 +3,6 @@
 .uc-wgt-l10n_en-US, .uc-wgt-common, :host {
     --cfg-multiple: 0;
     --cfg-confirm-upload: 0;
-    --l10n-drop-files-here-or: 'Drop files here or';
 }
 
 uc-start-from {
