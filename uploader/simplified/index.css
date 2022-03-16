@@ -18,11 +18,14 @@ uc-start-from {
 
 uc-drop-area {
     width: 100%; 
-    height: 100%; 
+    height: calc(var(--ui-size) + var(--gap-mid) * 2 + var(--gap-min) * 4);
     padding: 0;
     flex-direction: column;
     text-align: center;
     line-height: 140%;
+    border-style: solid;
+    border-color: var(--clr-accent-lightest);
+    border-radius: var(--border-radius-frame);
 }
 
 uc-drop-area p {
@@ -38,10 +41,11 @@ uc-drop-area::after {
 }
 
 uc-drop-area button {
+    width: 100%;
+    height: 100%;
     display: inline-block;
     padding: 0;
     background: transparent;
-    height: auto;
     color: var(--clr-accent);
     line-height: inherit;
     opacity: 0.8;
@@ -53,16 +57,28 @@ uc-drop-area button:hover {
 }
 uc-upload-list {
     width: 100%;
-    height: 100%;
-    padding: var(--gap-mid);
-    gap: var(--gap-min)
+    padding: var(--gap-min);
+    gap: 0;
+    background-color: transparent;
+    border-radius: var(--border-radius-frame);
+    border: var(--border-dashed);
+    border-style: solid;
 }
 uc-upload-list .toolbar {
-    background: none;
-    border-top: none;
+    display: none;
 }
 
-uc-file-item {
-    border-bottom: none;
+uc-file-item, uc-file-item:last-of-type {
+    border-radius: var(--border-radius-element);
+    
+}
+
+uc-file-item .edit-btn {
+    display: none;
+}
+
+uc-file-item .progress {
+    top: 0;
+    background-color: var(--clr-accent-lightest);
     border-radius: var(--border-radius-element);
 }
