@@ -1,3 +1,3 @@
-# uc-uploader | Simplified case
+# uc-uploader | Minimal case
 
-<re-htm src="./doc_assets/case.ref.htm" style="--case: 'simplified-case'"></re-htm>
+<re-htm src="./doc_assets/case.ref.htm" style="--case: 'minimal-case'"></re-htm>

@@ -4,7 +4,7 @@ Here you can find the set of ready-made uploaders for the most frequent file upl
 
 * [Regular](./regular/) - the most common solution
 * [Inline](./inline/) - no modals, could be used just in place
-* [Simplified](./simplified/) - minimal and compact
+* [Minimal](./minimal/) - minimal and compact
 
 <re-htm src="./doc_assets/case.ref.htm" style="--case: 'case'"></re-htm>
 
