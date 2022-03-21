@@ -301,7 +301,9 @@ EditorToolbar.template = /*html*/ `
 <uc-line-loader-ui set="active: showLoader"></uc-line-loader-ui>
 <div class="filter-tooltip_container">
   <div class="filter-tooltip_wrapper">
-    <div ref="tooltip-el" class="filter-tooltip filter-tooltip_visible" set="textContent: *operationTooltip"></div>
+    <div ref="tooltip-el" class="filter-tooltip filter-tooltip_visible">
+      {{*operationTooltip}}
+    </div>
   </div>
 </div>
 <div class="toolbar-container">

@@ -81,5 +81,5 @@ UcBtnUi.bindAttributes({ text: 'text', icon: 'icon', reverse: 'reverse', theme: 
 
 UcBtnUi.template = /*html*/ `
 <uc-icon size="20" set="className: iconCss; @name: icon;"></uc-icon>
-<div class="text" set="textContent: text"></div>
+<div class="text">{{text}}</div>
 `;

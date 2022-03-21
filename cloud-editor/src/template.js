@@ -15,14 +15,14 @@ export const TEMPLATE = /*html*/ `
   </uc-presence-toggle>
   <div class="viewport">
     <div class="file_type_outer">
-      <div class="file_type" set="textContent: fileType"></div>
+      <div class="file_type">{{fileType}}</div>
     </div>
     <div class="image_container" ref="img-container-el">
       <img class="image image_visible_from_editor" ref="img-el">
       <uc-editor-image-cropper ref="cropper-el"></uc-editor-image-cropper>
       <uc-editor-image-fader ref="fader-el"></uc-editor-image-fader>
     </div>
-    <div class="info_pan" set="textContent: msg"></div>
+    <div class="info_pan">{{msg}}</div>
   </div>
   <div class="toolbar">
     <uc-line-loader-ui set="active: showLoader"></uc-line-loader-ui>
