@@ -1,1 +1,0 @@
-### SVG Icons library

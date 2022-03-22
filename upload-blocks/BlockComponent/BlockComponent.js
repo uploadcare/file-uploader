@@ -132,6 +132,7 @@ export class BlockComponent extends BaseComponent {
           '*commonProgress': 0,
           '*uploadList': [],
           '*outputData': null,
+          '*focusedEntry': null,
         });
         BlockComponent._ctxConnectionsList.push(this.ctxName);
       }
@@ -291,8 +292,12 @@ export class BlockComponent extends BaseComponent {
     // TODO: destroy uploadCollection
   }
 
-  /** @param {String} name */
+  /** @param {String} name? */
   static reg(name) {
+    if (!name) {
+      super.reg();
+      return;
+    }
     super.reg(name.startsWith(TAG_PREFIX) ? name : TAG_PREFIX + name);
   }
 
@@ -301,12 +306,6 @@ export class BlockComponent extends BaseComponent {
    * @type {{ string: { activateCallback: Function; deactivateCallback: Function } }}
    */
   static _activityRegistry = Object.create(null);
-
-  /**
-   * @private
-   * @type {String}
-   */
-  static _lastActivity = '';
 
   /**
    * @private

@@ -1,29 +1,30 @@
 {
   "type": "module",
-  "name": "@uploadcare/editor",
-  "version": "0.0.2",
+  "name": "@uploadcare/cloud-editor",
+  "version": "0.0.4",
   "description": "",
-  "main": "test.js",
   "repository": "https://github.com/uploadcare/jsdk/",
-  "dependencies": {
-    "@aws-sdk/client-s3": "^3.23.0",
-    "@babel/parser": "^7.14.8",
-    "@babel/traverse": "^7.14.8",
-    "esbuild": "^0.12.16",
-    "fast-glob": "^3.2.7",
-    "js-beautify": "^1.14.0",
-    "serve": "^13.0.2"
-  },
+  "module": "./build/index.js",
   "scripts": {
-    "serve": "serve ./",
-    "esbuild": "node ./esbuild.js",
-    "build": "npm run clean && npm run esbuild && npm run copy-locales && npm run copy-css",
-    "copy-locales": "mkdir -p dist/l10n/locales && cp -R ./src/l10n/locales ./dist/l10n/",
-    "copy-css": "mkdir -p ./dist/css && cp ./src/css/*.css ./dist/css/",
-    "deploy": "npm run build && node ./deploy-to-s3.js",
-    "clean": "rm -rf ./dist/"
+    "copy-license": "cp ../LICENSE ./LICENSE",
+    "prepare": "npm run copy-license",
+    "build": "node ../build-utils/build-libs.js ./build.cfg.js",
+    "dev": "npm run build -- --watch"
   },
   "author": "",
   "license": "MIT",
-  "gitHead": "7154654a5951930345e660e0f6fa39b9b5669ee2"
+  "dependencies": {
+    "@uploadcare/upload-blocks": "^0.0.4"
+  },
+  "devDependencies": {
+    "esbuild": "^0.11.11"
+  },
+  "files": [
+    "build/*",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }

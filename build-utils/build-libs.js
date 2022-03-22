@@ -1,6 +1,7 @@
 import esbuild from 'esbuild';
 import fs from 'fs';
 import path from 'path';
+import { nodeExternalsPlugin } from 'esbuild-node-externals';
 
 function jsBanner() {
   const license = fs.readFileSync('./LICENSE').toString();
@@ -15,9 +16,15 @@ function jsBanner() {
   );
 }
 
-function build(buildItem) {
+function build(buildItem, watch) {
   esbuild
     .build({
+      watch: watch && {
+        onRebuild(error, result) {
+          if (error) console.error(`${buildItem.name}: watch build failed: `, error);
+          else console.log(`${buildItem.name}: watch build succeeded: `, result);
+        },
+      },
       entryPoints: [buildItem.in],
       format: 'esm',
       bundle: true,
@@ -32,6 +39,7 @@ function build(buildItem) {
         __VERSION__: JSON.stringify(buildItem.version),
         __PACKAGE_NAME__: JSON.stringify(buildItem.name),
       },
+      plugins: [!buildItem.includeExternals && nodeExternalsPlugin()].filter(Boolean),
     })
     .then(async () => {
       if (!buildItem.minifyHtml) {
@@ -65,10 +73,11 @@ function build(buildItem) {
 
 const args = process.argv.slice(2);
 const buildConfigPath = path.join(process.cwd(), args[0]);
+const watch = args.includes('--watch');
 
 import(buildConfigPath).then((module) => {
   const buildConfig = module.buildCfg;
   for (let item of buildConfig) {
-    build(item);
+    build(item, watch);
   }
 });

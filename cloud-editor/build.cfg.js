@@ -25,12 +25,12 @@ export const buildCfg = [
     includeExternals: false,
   },
   {
-    in: './themes/uc-basic/index.css',
+    in: './src/css/index.css',
     out: './build/index.css',
     minify: false,
   },
   {
-    in: './themes/uc-basic/index.css',
+    in: './src/css/index.css',
     out: './build/index.min.css',
     minify: true,
   },

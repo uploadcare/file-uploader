@@ -1,13 +1,13 @@
-import { AppComponent } from '../../AppComponent.js';
+import { BlockComponent } from '@uploadcare/upload-blocks';
 
-export class LineLoaderUi extends AppComponent {
+export class LineLoaderUi extends BlockComponent {
   constructor() {
     super();
 
     this._active = false;
 
     this._handleTransitionEndRight = () => {
-      let lineEl = this['line-el'];
+      let lineEl = this.ref['line-el'];
       lineEl.style.transition = `initial`;
       lineEl.style.opacity = '0';
       lineEl.style.transform = `translateX(-101%)`;
@@ -15,8 +15,8 @@ export class LineLoaderUi extends AppComponent {
     };
   }
 
-  readyCallback() {
-    super.readyCallback();
+  initCallback() {
+    super.initCallback();
     this.defineAccessor('active', (active) => {
       if (typeof active === 'boolean') {
         if (active) {
@@ -31,7 +31,7 @@ export class LineLoaderUi extends AppComponent {
   _start() {
     this._active = true;
     let { width } = this.getBoundingClientRect();
-    let lineEl = this['line-el'];
+    let lineEl = this.ref['line-el'];
     lineEl.style.transition = `transform 1s`;
     lineEl.style.opacity = '1';
     lineEl.style.transform = `translateX(${width}px)`;
@@ -50,5 +50,3 @@ LineLoaderUi.template = /*html*/ `
     <div class="line" ref="line-el"></div>
   </div>
 `;
-
-LineLoaderUi.is = 'line-loader-ui';

@@ -88,7 +88,6 @@ export class ExternalSource extends BlockComponent {
   }
 
   mountIframe() {
-    console.log('IFRAME');
     /** @type {HTMLIFrameElement} */
     // @ts-ignore
     let iframe = create({

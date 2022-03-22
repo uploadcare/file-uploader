@@ -10,6 +10,6 @@ uc-icon svg {
   height: 1.2em;
   width: 1.2em;
 }
-uc-icon path {
+uc-icon:not([raw]) path {
   fill: currentColor;
 }
