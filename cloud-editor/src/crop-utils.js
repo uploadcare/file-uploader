@@ -2,15 +2,15 @@ import { THUMB_CORNER_SIZE, THUMB_OFFSET, THUMB_SIDE_SIZE } from './cropper-cons
 
 /**
  * @param {SVGElement} node
- * @param {{ [key: string]: string | number }} attrs
+ * @param {{ [key: String]: String | Number }} attrs
  */
 export function setSvgNodeAttrs(node, attrs) {
   for (let p in attrs) node.setAttributeNS(null, p, attrs[p].toString());
 }
 
 /**
- * @param {string} name
- * @param {{ [key: string]: string | number }} attrs
+ * @param {String} name
+ * @param {{ [key: String]: String | Number }} attrs
  * @returns {SVGElement}
  */
 export function createSvgNode(name, attrs = {}) {
@@ -21,7 +21,7 @@ export function createSvgNode(name, attrs = {}) {
 
 /**
  * @param {import('./EditorImageCropper.js').Rectangle} rect
- * @param {string} direction
+ * @param {String} direction
  */
 export function cornerPath(rect, direction) {
   let { x, y, width, height } = rect;
@@ -52,7 +52,7 @@ export function cornerPath(rect, direction) {
 
 /**
  * @param {import('./EditorImageCropper.js').Rectangle} rect
- * @param {string} direction
+ * @param {String} direction
  */
 export function sidePath(rect, direction) {
   let { x, y, width, height } = rect;
@@ -76,7 +76,7 @@ export function sidePath(rect, direction) {
   return { d: path, center };
 }
 
-/** @param {string} direction */
+/** @param {String} direction */
 export function thumbCursor(direction) {
   if (direction === '') {
     return 'move';
@@ -95,7 +95,7 @@ export function thumbCursor(direction) {
 
 /**
  * @param {import('./EditorImageCropper.js').Rectangle} rect
- * @param {[number, number]} delta
+ * @param {[Number, Number]} delta
  */
 export function moveRect(rect, [dx, dy]) {
   return {
@@ -132,8 +132,8 @@ export function constraintRect(rect1, rect2) {
 
 /**
  * @param {import('./EditorImageCropper.js').Rectangle} rect
- * @param {[number, number]} delta
- * @param {string} direction
+ * @param {[Number, Number]} delta
+ * @param {String} direction
  */
 export function expandRect(rect, [dx, dy], direction) {
   let { x, y, width, height } = rect;
@@ -175,8 +175,8 @@ export function intersectionRect(rect1, rect2) {
 
 /**
  * @param {import('./EditorImageCropper.js').Rectangle} rect
- * @param {[number, number]} minSize
- * @param {string} direction
+ * @param {[Number, Number]} minSize
+ * @param {String} direction
  */
 export function minRectSize(rect, [minWidth, minHeight], direction) {
   let { x, y, width, height } = rect;
@@ -203,7 +203,7 @@ export function minRectSize(rect, [minWidth, minHeight], direction) {
 
 /**
  * @param {import('./EditorImageCropper.js').Rectangle} rect
- * @param {[number, number]} point
+ * @param {[Number, Number]} point
  */
 export function rectContainsPoint(rect, [x, y]) {
   return rect.x <= x && x <= rect.x + rect.width && rect.y <= y && y <= rect.y + rect.height;

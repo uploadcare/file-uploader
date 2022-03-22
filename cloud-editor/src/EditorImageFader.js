@@ -4,11 +4,11 @@ import { debounce } from './lib/debounce.js';
 import { linspace } from './lib/linspace.js';
 import { batchPreloadImages } from './lib/preloadImage.js';
 import { COLOR_OPERATIONS_CONFIG } from './toolbar-constants.js';
-import { viewerImageSrc } from './viewer_util.js';
+import { viewerImageSrc } from './util.js';
 
 /**
- * @param {number[]} numbers
- * @returns {[number, number][]}
+ * @param {Number[]} numbers
+ * @returns {[Number, Number][]}
  */
 function splitBySections(numbers) {
   return numbers.reduce(
@@ -18,9 +18,9 @@ function splitBySections(numbers) {
 }
 
 /**
- * @param {number[]} keypoints
- * @param {number} value
- * @param {number} zero
+ * @param {Number[]} keypoints
+ * @param {Number} value
+ * @param {Number} zero
  */
 function calculateOpacities(keypoints, value, zero) {
   let section = splitBySections(keypoints).find(([left, right]) => left <= value && value <= right);
@@ -39,17 +39,17 @@ function calculateOpacities(keypoints, value, zero) {
 }
 
 /**
- * @param {number[]} keypoints
- * @param {number} zero
+ * @param {Number[]} keypoints
+ * @param {Number} zero
  */
 function calculateZIndices(keypoints, zero) {
   return keypoints.map((point, idx) => (point < zero ? keypoints.length - idx : idx));
 }
 
 /**
- * @param {string} operation
- * @param {number} value
- * @returns {number[]}
+ * @param {String} operation
+ * @param {Number} value
+ * @returns {Number[]}
  */
 function keypointsRange(operation, value) {
   let n = COLOR_OPERATIONS_CONFIG[operation].keypointsNumber;
@@ -62,25 +62,40 @@ function keypointsRange(operation, value) {
 
 /**
  * @typedef {Object} Keypoint
- * @property {string} src
- * @property {number} opacity
- * @property {number} zIndex
+ * @property {String} src
+ * @property {Number} opacity
+ * @property {Number} zIndex
  * @property {HTMLImageElement} image
- * @property {number} value
+ * @property {Number} value
  */
 
 export class EditorImageFader extends BlockComponent {
   constructor() {
     super();
 
+    /**
+     * @private
+     * @type {boolean}
+     */
     this._isActive = false;
+
+    /**
+     * @private
+     * @type {boolean}
+     */
     this._hidden = true;
 
+    /** @private */
     this._addKeypointDebounced = debounce(this._addKeypoint.bind(this), 600);
 
     this.classList.add('inactive_to_cropper');
   }
 
+  /**
+   * @private
+   * @param {String} src
+   * @returns {() => void} Destructor
+   */
   _handleImageLoading(src) {
     let operation = this._operation;
 
@@ -103,6 +118,7 @@ export class EditorImageFader extends BlockComponent {
     };
   }
 
+  /** @private */
   _flush() {
     window.cancelAnimationFrame(this._raf);
     this._raf = window.requestAnimationFrame(() => {
@@ -117,12 +133,13 @@ export class EditorImageFader extends BlockComponent {
   }
 
   /**
+   * @private
    * @param {Object} options
-   * @param {string} [options.url]
-   * @param {string} [options.filter]
-   * @param {string} [options.operation]
-   * @param {number} [options.value]
-   * @returns {string}
+   * @param {String} [options.url]
+   * @param {String} [options.filter]
+   * @param {String} [options.operation]
+   * @param {Number} [options.value]
+   * @returns {String}
    */
   _imageSrc({ url = this._url, filter = this._filter, operation, value } = {}) {
     let transformations = { ...this._transformations };
@@ -137,8 +154,9 @@ export class EditorImageFader extends BlockComponent {
   }
 
   /**
-   * @param {string} operation
-   * @param {number} value
+   * @private
+   * @param {String} operation
+   * @param {Number} value
    * @returns {Keypoint}
    */
   _constructKeypoint(operation, value) {
@@ -155,8 +173,9 @@ export class EditorImageFader extends BlockComponent {
   /**
    * Check if current operation and filter equals passed ones
    *
-   * @param {string} operation
-   * @param {string} [filter]
+   * @private
+   * @param {String} operation
+   * @param {String} [filter]
    * @returns {boolean}
    */
   _isSame(operation, filter) {
@@ -164,9 +183,10 @@ export class EditorImageFader extends BlockComponent {
   }
 
   /**
-   * @param {string} operation
-   * @param {string | null} filter
-   * @param {number} value
+   * @private
+   * @param {String} operation
+   * @param {String | null} filter
+   * @param {Number} value
    */
   _addKeypoint(operation, filter, value) {
     let shouldSkip = () =>
@@ -212,7 +232,7 @@ export class EditorImageFader extends BlockComponent {
     );
   }
 
-  /** @param {string | number} value */
+  /** @param {String | Number} value */
   set(value) {
     value = typeof value === 'string' ? parseInt(value, 10) : value;
     this._update(this._operation, value);
@@ -220,8 +240,9 @@ export class EditorImageFader extends BlockComponent {
   }
 
   /**
-   * @param {string} operation
-   * @param {number} value
+   * @private
+   * @param {String} operation
+   * @param {Number} value
    */
   _update(operation, value) {
     this._operation = operation;
@@ -241,6 +262,7 @@ export class EditorImageFader extends BlockComponent {
     this._flush();
   }
 
+  /** @private */
   _createPreviewImage() {
     let image = new Image();
     image.classList.add('fader-image', 'fader-image--preview');
@@ -248,6 +270,7 @@ export class EditorImageFader extends BlockComponent {
     return image;
   }
 
+  /** @private */
   async _initNodes() {
     let fr = document.createDocumentFragment();
     this._previewImage = this._previewImage || this._createPreviewImage();
@@ -308,10 +331,10 @@ export class EditorImageFader extends BlockComponent {
 
   /**
    * @param {object} options
-   * @param {string} options.url
-   * @param {string} options.operation
-   * @param {number} options.value
-   * @param {string} [options.filter]
+   * @param {String} options.url
+   * @param {String} options.operation
+   * @param {Number} options.value
+   * @param {String} [options.filter]
    */
   preload({ url, filter, operation, value }) {
     this._cancelBatchPreload && this._cancelBatchPreload();
@@ -323,6 +346,7 @@ export class EditorImageFader extends BlockComponent {
     this._cancelBatchPreload = cancel;
   }
 
+  /** @private */
   _setOriginalSrc(src) {
     let image = this._previewImage || this._createPreviewImage();
     !this.contains(image) && this.appendChild(image);
@@ -371,10 +395,10 @@ export class EditorImageFader extends BlockComponent {
 
   /**
    * @param {object} options
-   * @param {string} options.url
-   * @param {string} [options.operation]
-   * @param {number} [options.value]
-   * @param {string} [options.filter]
+   * @param {String} options.url
+   * @param {String} [options.operation]
+   * @param {Number} [options.value]
+   * @param {String} [options.filter]
    * @param {boolean} [options.fromViewer]
    */
   activate({ url, operation, value, filter, fromViewer }) {
@@ -399,6 +423,7 @@ export class EditorImageFader extends BlockComponent {
     this._initNodes();
   }
 
+  /** @param {{ hide: boolean = true; seamlessTransition: boolean = true }} options */
   deactivate({ hide = true, seamlessTransition = true } = {}) {
     this._isActive = false;
 

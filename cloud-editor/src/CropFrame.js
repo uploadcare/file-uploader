@@ -30,8 +30,13 @@ export class CropFrame extends BlockComponent {
   constructor() {
     super();
 
+    /** @private */
     this._handlePointerUp = this._handlePointerUp_.bind(this);
+
+    /** @private */
     this._handlePointerMove = this._handlePointerMove_.bind(this);
+
+    /** @private */
     this._handleSvgPointerMove = this._handleSvgPointerMove_.bind(this);
   }
 
@@ -312,7 +317,7 @@ export class CropFrame extends BlockComponent {
       rect = expandRect(rect, [dx, dy], direction);
       rect = intersectionRect(rect, imageBox);
     }
-    /** @type {[number, number]} */
+    /** @type {[Number, Number]} */
     let minCropRect = [Math.min(imageBox.width, MIN_CROP_SIZE), Math.min(imageBox.height, MIN_CROP_SIZE)];
     rect = minRectSize(rect, minCropRect, direction);
 

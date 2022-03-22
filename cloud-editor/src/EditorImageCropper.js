@@ -6,37 +6,37 @@ import { debounce } from './lib/debounce.js';
 import { pick } from './lib/pick.js';
 import { preloadImage } from './lib/preloadImage.js';
 import { ResizeObserver } from './lib/ResizeObserver.js';
-import { viewerImageSrc } from './viewer_util.js';
+import { viewerImageSrc } from './util.js';
 
 /**
  * @typedef {Object} Rectangle
- * @property {number} x
- * @property {number} y
- * @property {number} width
- * @property {number} height
+ * @property {Number} x
+ * @property {Number} y
+ * @property {Number} width
+ * @property {Number} height
  */
 
 /**
  * @typedef {Object} Operations
  * @property {boolean} flip
  * @property {boolean} mirror
- * @property {number} rotate
+ * @property {Number} rotate
  */
 
 /**
- * @param {number} value
- * @param {number} min
- * @param {number} max
- * @returns {number}
+ * @param {Number} value
+ * @param {Number} min
+ * @param {Number} max
+ * @returns {Number}
  */
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
 }
 
 /**
- * @param {{ width: number; height: number }} size
- * @param {number} angle
- * @returns {{ width: number; height: number }}
+ * @param {import('./types.js').ImageSize} imageSize
+ * @param {Number} angle
+ * @returns {import('./types.js').ImageSize}
  */
 function rotateSize({ width, height }, angle) {
   let swap = (angle / 90) % 2 !== 0;
@@ -88,10 +88,15 @@ export class EditorImageCropper extends BlockComponent {
 
   constructor() {
     super();
+
+    /** @private */
     this._commitDebounced = debounce(this._commit.bind(this), 300);
+
+    /** @private */
     this._handleResizeDebounced = debounce(this._handleResize.bind(this), 10);
   }
 
+  /** @private */
   _handleResize() {
     this._initCanvas();
     this._alignImage();
@@ -99,6 +104,7 @@ export class EditorImageCropper extends BlockComponent {
     this._draw();
   }
 
+  /** @private */
   _syncTransformations() {
     let transformations = this.$['*editorTransformations'];
     let pickedTransformations = pick(transformations, Object.keys(this.$['*operations']));
@@ -106,6 +112,7 @@ export class EditorImageCropper extends BlockComponent {
     this.$['*operations'] = operations;
   }
 
+  /** @private */
   _initCanvas() {
     /** @type {HTMLCanvasElement} */
     let canvas = this.ref['canvas-el'];
@@ -124,6 +131,7 @@ export class EditorImageCropper extends BlockComponent {
     this._ctx = ctx;
   }
 
+  /** @private */
   _alignImage() {
     if (!this._isActive || !this.$.image) {
       return;
@@ -162,6 +170,7 @@ export class EditorImageCropper extends BlockComponent {
     }
   }
 
+  /** @private */
   _alignCrop() {
     let cropBox = this.$['*cropBox'];
     let imageBox = this.$['*imageBox'];
@@ -191,7 +200,7 @@ export class EditorImageCropper extends BlockComponent {
         height: imageBox.height,
       };
     }
-    /** @type {[number, number]} */
+    /** @type {[Number, Number]} */
     let minCropRect = [Math.min(imageBox.width, MIN_CROP_SIZE), Math.min(imageBox.height, MIN_CROP_SIZE)];
     cropBox = minRectSize(cropBox, minCropRect, 'se');
     cropBox = constraintRect(cropBox, imageBox);
@@ -199,6 +208,7 @@ export class EditorImageCropper extends BlockComponent {
     this.$['*cropBox'] = cropBox;
   }
 
+  /** @private */
   _drawImage() {
     let image = this.$.image;
     let imageBox = this.$['*imageBox'];
@@ -214,6 +224,7 @@ export class EditorImageCropper extends BlockComponent {
     ctx.restore();
   }
 
+  /** @private */
   _draw() {
     if (!this._isActive || !this.$.image) {
       return;
@@ -226,6 +237,7 @@ export class EditorImageCropper extends BlockComponent {
     this._drawImage();
   }
 
+  /** @private */
   _animateIn({ fromViewer }) {
     if (this.$.image) {
       this.ref['frame-el'].toggleThumbs(true);
@@ -241,7 +253,10 @@ export class EditorImageCropper extends BlockComponent {
     }
   }
 
-  /** @returns {import('../../../src/types/UploadEntry.js').Transformations['crop']['dimensions']} */
+  /**
+   * @private
+   * @returns {import('../../../src/types/UploadEntry.js').Transformations['crop']['dimensions']}
+   */
   _calculateDimensions() {
     let cropBox = this.$['*cropBox'];
     let imageBox = this.$['*imageBox'];
@@ -253,7 +268,7 @@ export class EditorImageCropper extends BlockComponent {
     let ratioW = previewWidth / sourceWidth;
     let ratioH = previewHeight / sourceHeight;
 
-    /** @type {[number, number]} */
+    /** @type {[Number, Number]} */
     let dimensions = [
       clamp(Math.round(cropWidth / ratioW), 1, sourceWidth),
       clamp(Math.round(cropHeight / ratioH), 1, sourceHeight),
@@ -262,7 +277,10 @@ export class EditorImageCropper extends BlockComponent {
     return dimensions;
   }
 
-  /** @returns {import('../../../src/types/UploadEntry.js').Transformations['crop']} */
+  /**
+   * @private
+   * @returns {import('../../../src/types/UploadEntry.js').Transformations['crop']}
+   */
   _calculateCrop() {
     let cropBox = this.$['*cropBox'];
     let imageBox = this.$['*imageBox'];
@@ -277,7 +295,7 @@ export class EditorImageCropper extends BlockComponent {
     let dimensions = this._calculateDimensions();
     let crop = {
       dimensions,
-      coords: /** @type {[number, number]} */ ([
+      coords: /** @type {[Number, Number]} */ ([
         clamp(Math.round((cropX - previewX) / ratioW), 0, sourceWidth - dimensions[0]),
         clamp(Math.round((cropY - previewY) / ratioH), 0, sourceHeight - dimensions[1]),
       ]),
@@ -295,6 +313,7 @@ export class EditorImageCropper extends BlockComponent {
     return crop;
   }
 
+  /** @private */
   _commit() {
     let operations = this.$['*operations'];
     let { rotate, mirror, flip } = operations;
@@ -312,6 +331,11 @@ export class EditorImageCropper extends BlockComponent {
     this.$['*editorTransformations'] = transformations;
   }
 
+  /**
+   * @param {String} operation
+   * @param {Number} value
+   * @returns {void}
+   */
   setValue(operation, value) {
     console.log(`Apply cropper operation [${operation}=${value}]`);
     this.$['*operations'] = {
@@ -330,12 +354,16 @@ export class EditorImageCropper extends BlockComponent {
 
   /**
    * @param {keyof Operations} operation
-   * @returns {number | boolean}
+   * @returns {Number | boolean}
    */
   getValue(operation) {
     return this.$['*operations'][operation];
   }
 
+  /**
+   * @param {import('./types.js').ImageSize} imageSize
+   * @param {{ fromViewer?: boolean }} options
+   */
   async activate(imageSize, { fromViewer }) {
     if (this._isActive) {
       return;
@@ -356,7 +384,7 @@ export class EditorImageCropper extends BlockComponent {
       console.error('Failed to activate cropper', { error: err });
     }
   }
-
+  /** @param {{ seamlessTransition?: boolean = false }} options */
   deactivate({ seamlessTransition = false } = {}) {
     if (!this._isActive) {
       return;
@@ -379,6 +407,7 @@ export class EditorImageCropper extends BlockComponent {
     this.addEventListener('transitionend', this._reset, { once: true });
   }
 
+  /** @private */
   _alignTransition() {
     let dimensions = this._calculateDimensions();
     let scaleX = Math.min(this.offsetWidth - this.$['*padding'] * 2, dimensions[0]) / this.$['*cropBox'].width;
@@ -393,6 +422,7 @@ export class EditorImageCropper extends BlockComponent {
     this.style.transformOrigin = `${cropCenterX}px ${cropCenterY}px`;
   }
 
+  /** @private */
   _reset() {
     if (this._isActive) {
       return;
@@ -401,7 +431,8 @@ export class EditorImageCropper extends BlockComponent {
   }
 
   /**
-   * @param {string} originalUrl
+   * @private
+   * @param {String} originalUrl
    * @param {import('../../../src/types/UploadEntry.js').Transformations} transformations
    * @returns {Promise<HTMLImageElement>}
    */
@@ -432,6 +463,11 @@ export class EditorImageCropper extends BlockComponent {
       });
   }
 
+  /**
+   * @private
+   * @param {String} src
+   * @returns {() => void} Destructor
+   */
   _handleImageLoading(src) {
     let operation = 'crop';
     /** @type {import('./type.js').LoadingOperations} */

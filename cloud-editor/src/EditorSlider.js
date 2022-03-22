@@ -23,8 +23,8 @@ export class EditorSlider extends BlockComponent {
   };
 
   /**
-   * @param {any} operation
-   * @param {any} [filter]
+   * @param {String} operation
+   * @param {String} [filter]
    */
   setOperation(operation, filter) {
     this._controlType = operation === 'filter' ? ControlType.FILTER : ControlType.COLOR_OPERATION;
@@ -44,6 +44,7 @@ export class EditorSlider extends BlockComponent {
     });
   }
 
+  /** @private */
   _initializeValues() {
     let { range, zero } = COLOR_OPERATIONS_CONFIG[this._operation];
     let [min, max] = range;

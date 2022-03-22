@@ -2,6 +2,12 @@ import { EditorButtonControl } from './EditorButtonControl.js';
 import { COLOR_OPERATIONS_CONFIG } from './toolbar-constants.js';
 
 export class EditorOperationControl extends EditorButtonControl {
+  /**
+   * @private
+   * @type {String}
+   */
+  _operation = '';
+
   initCallback() {
     super.initCallback();
 

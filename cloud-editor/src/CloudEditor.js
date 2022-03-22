@@ -10,6 +10,8 @@ import { viewerImageSrc } from './util.js';
 
 export class CloudEditor extends BlockComponent {
   init$ = initState(this);
+
+  /** @private */
   _debouncedShowLoader = debounce(this._showLoader.bind(this), 300);
 
   _showLoader(show) {

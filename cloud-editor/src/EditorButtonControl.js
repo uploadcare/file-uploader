@@ -2,9 +2,6 @@ import { BlockComponent } from '@uploadcare/upload-blocks';
 import { classNames } from './lib/classNames.js';
 
 export class EditorButtonControl extends BlockComponent {
-  _iconName = null;
-  _title = null;
-
   init$ = {
     active: false,
     title: '',

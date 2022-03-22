@@ -1,5 +1,11 @@
 /**
  * Mapping of loading resources per operation
  *
- * @typedef {Map<string, Map<string, boolean>>} LoadingOperations
+ * @typedef {Map<String, Map<String, boolean>>} LoadingOperations
+ */
+
+/**
+ * Image size
+ *
+ * @typedef {{ width: Number; height: Number }} ImageSize
  */

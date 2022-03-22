@@ -1,8 +1,8 @@
 /**
- * @param {number} a Start of sample (int)
- * @param {number} b End of sample (int)
- * @param {number} n Number of elements (int)
- * @returns {number[]}
+ * @param {Number} a Start of sample (int)
+ * @param {Number} b End of sample (int)
+ * @param {Number} n Number of elements (int)
+ * @returns {Number[]}
  */
 export function linspace(a, b, n) {
   let ret = Array(n);

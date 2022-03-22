@@ -23,12 +23,13 @@ export class EditorFilterControl extends EditorButtonControl {
     /** @type {import('../../../src/types/UploadEntry.js').Transformations} */
     let transformations = { ...this.$['*editorTransformations'] };
     transformations[this._operation] =
-      this._filter === FAKE_ORIGINAL_FILTER
-        ? undefined
-        : {
+      this._filter !== FAKE_ORIGINAL_FILTER
+        ? {
             name: this._filter,
             amount: filterValue,
-          };
+          }
+        : undefined;
+
     return constructCdnUrl(
       this._originalUrl,
       COMMON_OPERATIONS,

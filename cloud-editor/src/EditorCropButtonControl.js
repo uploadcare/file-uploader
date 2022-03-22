@@ -25,6 +25,7 @@ export class EditorCropButtonControl extends EditorButtonControl {
         return;
       }
 
+      /** @private */
       this._operation = operation;
       this.$['icon'] = operation;
     });

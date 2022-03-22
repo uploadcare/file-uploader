@@ -7,8 +7,9 @@ import { classNames } from './lib/classNames.js';
 import { debounce } from './lib/debounce.js';
 import { batchPreloadImages } from './lib/preloadImage.js';
 import { ALL_COLOR_OPERATIONS, ALL_CROP_OPERATIONS, ALL_FILTERS, TabId, TABS } from './toolbar-constants.js';
-import { viewerImageSrc } from './viewer_util.js';
+import { viewerImageSrc } from './util.js';
 
+/** @param {String} id */
 function renderTabToggle(id) {
   return /*html*/ `
     <uc-btn-ui theme="boring" ref="tab-toggle-${id}" data-id="${id}" icon="${id}" tabindex="0" set="onclick: on.clickTab;">
@@ -16,6 +17,7 @@ function renderTabToggle(id) {
   `;
 }
 
+/** @param {String} id */
 function renderTabContent(id) {
   return /*html*/ `
     <uc-presence-toggle class="tab-content" set="visible: presence.tabContent${id}; styles: presence.tabContentStyles">
@@ -90,6 +92,8 @@ export class EditorToolbar extends BlockComponent {
       },
     };
 
+    /** @private */
+
     this._debouncedShowLoader = debounce(this._showLoader.bind(this), 500);
   }
 
@@ -97,6 +101,7 @@ export class EditorToolbar extends BlockComponent {
     return this.$.tabId;
   }
 
+  /** @private */
   _onSliderClose() {
     this.$['*showSlider'] = false;
     if (this.$.tabId === TabId.SLIDERS) {
@@ -107,27 +112,40 @@ export class EditorToolbar extends BlockComponent {
     }
   }
 
-  /** @param {string} operation */
+  /**
+   * @private
+   * @param {String} operation
+   */
   _createOperationControl(operation) {
     let el = EditorOperationControl.is && new EditorOperationControl();
     el['operation'] = operation;
     return el;
   }
 
-  /** @param {string} filter */
+  /**
+   * @private
+   * @param {String} filter
+   */
   _createFilterControl(filter) {
     let el = EditorFilterControl.is && new EditorFilterControl();
     el['filter'] = filter;
     return el;
   }
 
+  /**
+   * @private
+   * @param {String} operation
+   */
   _createToggleControl(operation) {
     let el = EditorCropButtonControl.is && new EditorCropButtonControl();
     el['operation'] = operation;
     return el;
   }
 
-  /** @param {string} tabId */
+  /**
+   * @private
+   * @param {String} tabId
+   */
   _renderControlsList(tabId) {
     let listEl = this.ref[`controls-list-${tabId}`];
     let fr = document.createDocumentFragment();
@@ -162,7 +180,11 @@ export class EditorToolbar extends BlockComponent {
     listEl.appendChild(fr);
   }
 
-  /** @param {string} id */
+  /**
+   * @private
+   * @param {String} id
+   * @param {{ fromViewer?: boolean }} options
+   */
   _activateTab(id, { fromViewer }) {
     this.$.tabId = id;
 
@@ -190,7 +212,10 @@ export class EditorToolbar extends BlockComponent {
     }
   }
 
-  /** @param {string} tabId */
+  /**
+   * @private
+   * @param {String} tabId
+   */
   _unmountTabControls(tabId) {
     let listEl = this.ref[`controls-list-${tabId}`];
     if (listEl) {
@@ -198,12 +223,14 @@ export class EditorToolbar extends BlockComponent {
     }
   }
 
+  /** @private */
   _syncTabIndicator() {
     let tabToggleEl = this.ref[`tab-toggle-${this.$.tabId}`];
     let indicatorEl = this.ref['tabs-indicator'];
     indicatorEl.style.transform = `translateX(${tabToggleEl.offsetLeft}px)`;
   }
 
+  /** @private */
   _preloadEditedImage() {
     if (this.$['*imgContainerEl'] && this.$['*originalUrl']) {
       let width = this.$['*imgContainerEl'].offsetWidth;
@@ -217,6 +244,7 @@ export class EditorToolbar extends BlockComponent {
     }
   }
 
+  /** @private */
   _showLoader(show) {
     this.$.showLoader = show;
   }
