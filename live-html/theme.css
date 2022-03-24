@@ -30,6 +30,9 @@ live-html [contenteditable] [-quote-] {
 live-html [contenteditable] [-equal-] {
   color: rgb(255, 152, 241);
 }
+live-html [contenteditable] [-style-] {
+  color: rgb(255, 214, 152);
+}
 live-html iframe {
   display: block;
   height: 100%;

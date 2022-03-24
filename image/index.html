@@ -1,38 +1,114 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>uc-img</title>
-  <script src="./index.js" type="module"></script>
-  <link rel="stylesheet" href="./index.css">
-  <style>
-    uc-img {
-      --uc-img-pubkey: '783b47cc436d0691892f';
-    }
-  </style>
+  <link rel="stylesheet" href="../live-html/theme.css">
+  <link rel="stylesheet" href="../doc_assets/css/doc.css">
+  <script 
+    type="module"
+    src="https://unpkg.com/@re4ma/re4ma@latest/build/re4ma.js">
+  </script>
+  <script src="../live-html/index.js" type="module"></script>
 </head>
-
 <body>
 
-  <h3>Absolute src only</h3>
-  <uc-img src="https://holiday-js.web.app/assets/img/hd.png"></uc-img>
+<h2>Absolute path src</h2>
+<live-html>
+<script src="./index.js" type="module"></script>
 
-  <h3>Absolute src + noscript + attribute ref</h3>
-  <uc-img some-attr src="https://holiday-js.web.app/assets/img/hd.png">
-    <noscript>
-      <img src="https://holiday-js.web.app/assets/img/hd.png" alt="ALT_TEXT">
-    </noscript>
-  </uc-img>
+<style>
+  uc-img {
+    --uc-img-pubkey: '783b47cc436d0691892f';
+    display: contents;
+  }
+  uc-img > img {
+    transition: 1s;
+  }
+  uc-img > img[unresolved] {
+    opacity: 0;
+    transform: scale(.8);
+  }
+</style>
 
-  <h3>Relative src (dev mode)</h3>
-  <uc-img src="./test_media/kitten.jpg" width="600"></uc-img>
+<uc-img src="https://holiday-js.web.app/assets/img/hd.png">
+</uc-img>
 
-  <h3>uuid</h3>
-  <uc-img uuid="0aa081d8-8571-4b16-9e3e-e7837d6d3bc3"></uc-img>
+</live-html>
 
+<h2>Absolute src + noscript + image transformation</h2>
+<live-html>
+<script src="./index.js" type="module"></script>
+
+<style>
+  @import url('./test.css');
+  .invert {
+    --uc-img-cdn-transform: 'invert';
+  }
+</style>
+
+<uc-img src="https://holiday-js.web.app/assets/img/hd.png" class="invert">
+  <noscript>
+    <img src="https://holiday-js.web.app/assets/img/hd.png" alt="ALT_TEXT">
+  </noscript>
+</uc-img>
+
+</live-html>
+
+<h2>Background mode</h2>
+<live-html>
+<script src="./index.js" type="module"></script>
+
+<style>
+  @import url('./test.css');
+  #target {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 200px;
+    background-color: #000;
+    color: #FFF;
+  }
+</style>
+
+<div id="target">Some text...</div>
+
+<uc-img is-background-for="#target" src="https://holiday-js.web.app/assets/img/hd.png"></uc-img>
+</live-html>
+
+<h2>Relative path src (dev mode)</h2>
+<live-html>
+<script src="./index.js" type="module"></script>
+
+<uc-img src="./test_media/kitten.jpg" width="500"></uc-img>
+</live-html>
+
+<h2>UUID source</h2>
+<live-html>
+<script src="./index.js" type="module"></script>
+
+<style>
+  @import url('./test.css');
+  .invert {
+    --uc-img-cdn-transform: 'invert';
+  }
+  .blur {
+    --uc-img-cdn-transform: 'blur/50';
+  }
+</style>
+
+<uc-img uuid="0aa081d8-8571-4b16-9e3e-e7837d6d3bc3">
+</uc-img>
+
+<uc-img class="invert" uuid="0aa081d8-8571-4b16-9e3e-e7837d6d3bc3">
+</uc-img>
+
+<uc-img class="blur" uuid="0aa081d8-8571-4b16-9e3e-e7837d6d3bc3">
+</uc-img>
+
+</live-html>
+  
 </body>
-
 </html>

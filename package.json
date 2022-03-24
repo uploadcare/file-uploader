@@ -83,5 +83,8 @@
     ]
   },
   "author": "Uploadcare Inc.",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "@symbiotejs/symbiote": "^1.5.2"
+  }
 }

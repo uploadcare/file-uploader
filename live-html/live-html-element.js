@@ -123,7 +123,13 @@ export class LiveHtmlElement extends BaseComponent {
       .split('<span -tag-arr->&lt;</span>!--')
       .join('<span -comment->&lt;!--')
       .split('--<span -tag-arr->&gt;</span>')
-      .join('--&gt;</span>');
+      .join('--&gt;</span>')
+
+      .split('<span -tag-arr->&lt;</span>style<span -tag-arr->&gt;</span>')
+      .join('<span -tag-arr->&lt;</span>style<span -tag-arr->&gt;</span><span -style->')
+
+      .split('<span -tag-arr->&lt;/</span>style<span -tag-arr->&gt;</span>')
+      .join('</span><span -tag-arr->&lt;/</span>style<span -tag-arr->&gt;</span>');
     this.ref.editor.innerHTML = html;
 
     Caret.setPosition(offset, this.ref.editor);
@@ -172,18 +178,33 @@ export class LiveHtmlElement extends BaseComponent {
     // },
   };
 
+  connectedCallback() {
+    if (this.innerHTML.trim()) {
+      /** @private */
+      this.__innerHtml = this.innerHTML;
+    }
+    super.connectedCallback();
+  }
+
   initCallback() {
-    this.sub('src', (val) => {
-      if (val) {
-        window.fetch(val).then(async (resp) => {
-          let code = await resp.text();
-          this.$.code = code;
-          this.sync();
-        });
-      } else {
-        this.$.code = INIT_HTML;
-      }
-    });
+    if (this.hasAttribute('src')) {
+      this.sub('src', (val) => {
+        if (val) {
+          window.fetch(val).then(async (resp) => {
+            let code = await resp.text();
+            this.$.code = code;
+            this.sync();
+          });
+        } else {
+          this.$.code = INIT_HTML;
+        }
+      });
+    } else if (this.__innerHtml) {
+      this.$.code = this.__innerHtml;
+      this.sync();
+    } else {
+      this.$.code = INIT_HTML;
+    }
   }
 }
 
@@ -195,7 +216,7 @@ LiveHtmlElement.template = /*html*/ `
 <div
   ref="editor"
   contenteditable="true"
-  set="textContent:code; oninput:onInput; onpaste:onPaste; onkeydown:onKeydown; spellcheck:spellcheck">
+  set="textContent:code; oninput:onInput; onkeydown:onKeydown; spellcheck:spellcheck">
 </div>
 <iframe ref="vp"></iframe>
 `;

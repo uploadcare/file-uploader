@@ -26,7 +26,7 @@ html, body {
 
 body {
   padding: 20px;
-  max-width: 1080px;
+  max-width: 1200px;
 }
 
 body::before {
@@ -39,7 +39,7 @@ body::before {
 }
 body::after {
   display: block;
-  content: '© 2021 🦆';
+  content: '© 2022 🦆';
   padding: 10px;
   background-color: var(--clr-panel);
   border-radius: 10px;
