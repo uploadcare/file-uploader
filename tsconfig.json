@@ -25,10 +25,6 @@
     "**/*.js"
   ],
   "exclude": [
-    "./*.js",
-    "cloud-editor",
-    "node_modules",
-    "*/build",
-    "build-utils"
+    "./submodules/upload-client.js"
   ]
 }

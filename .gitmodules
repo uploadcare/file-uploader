@@ -1,0 +1,4 @@
+[submodule "submodules/symbiote"]
+	path = submodules/symbiote
+	url = https://github.com/symbiotejs/symbiote.js
+	

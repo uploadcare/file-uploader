@@ -1,6 +1,6 @@
-# Uploadcare SDK for JavaScript developers
+# uc-blocks: Uploadcare SDK for JavaScript developers
 
-<re-htm src="./doc_assets/htm/doc-nav.htm"><re-htm>
+<re-htm src="./assets/htm/doc-nav.htm"><re-htm>
 
 ## 💎 Core concepts
 
@@ -27,7 +27,7 @@
 
 ### Supported browsers
 
-JSDK is supported and tested in all major modern desktop and mobile browsers:
+uc-blocks are supported and tested in all major modern desktop and mobile browsers:
 * Chrome
 * Firefox
 * Safari

@@ -1,9 +1,0 @@
-{
-  "packages": [
-    "upload-blocks",
-    "uploader",
-    "live-html",
-    "cloud-editor"
-  ],
-  "version": "0.0.4"
-}

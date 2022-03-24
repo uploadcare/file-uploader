@@ -1,0 +1,6 @@
+# This list of authors is based on the git history of this repo.
+
+Zarema Khalilova <zarema.khalilova@gmail.com>
+Aleksandr Grenishin <nd0ut.me@gmail.com>
+jeetiss <za5rubley@gmail.com>
+Siarhei Bautrukevich <hello@bautrukevich.com>
