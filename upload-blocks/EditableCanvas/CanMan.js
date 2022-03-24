@@ -64,7 +64,7 @@ export class CanMan {
     await this._backSyncSvg();
   }
 
-  /** @param {import('./EditorToolbar.js').RefMap} refMap */
+  /** @param {import('./EditableCanvasToolbar.js').RefMap} refMap */
   constructor(refMap) {
     /** @type {HTMLCanvasElement} */
     this.can = refMap.canvas;

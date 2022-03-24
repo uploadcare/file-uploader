@@ -1,6 +1,6 @@
 /**
  * @param {function} callback
- * @param {number} wait
+ * @param {Number} wait
  * @returns {function}
  */
 export function debounce(callback, wait) {

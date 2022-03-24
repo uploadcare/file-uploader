@@ -22,7 +22,7 @@ uc-editable-canvas > .img-view {
   object-fit: scale-down;
 }
 
-uc-editor-toolbar {
+uc-editable-canvas-toolbar {
   position: absolute;
   display: flex;
   justify-content: center;
@@ -36,13 +36,13 @@ uc-editor-toolbar {
   pointer-events: none;
 }
 
-uc-editor-toolbar .btns {
+uc-editable-canvas-toolbar .btns {
   position: absolute;
   display: grid;
   left: var(--gap-mid);
   pointer-events: all;
 }
-uc-editor-toolbar .btns > button {
+uc-editable-canvas-toolbar .btns > button {
   display: inline-flex;
   width: var(--ui-size);
   height: var(--ui-size);
@@ -50,26 +50,26 @@ uc-editor-toolbar .btns > button {
   background-color: var(--clr-background);
   color: var(--clr-txt);
 }
-uc-editor-toolbar .btns > button:first-of-type {
+uc-editable-canvas-toolbar .btns > button:first-of-type {
   border-top-left-radius: var(--border-radius-element);
   border-top-right-radius: var(--border-radius-element);
 }
-uc-editor-toolbar .btns > button:last-of-type {
+uc-editable-canvas-toolbar .btns > button:last-of-type {
   border-bottom-left-radius: var(--border-radius-element);
   border-bottom-right-radius: var(--border-radius-element);
 }
-uc-editor-toolbar .btns > button[current] {
+uc-editable-canvas-toolbar .btns > button[current] {
   background-color: var(--clr-background);
   color: var(--clr-txt);
 }
 
-uc-editor-toolbar > uc-range {
+uc-editable-canvas-toolbar > uc-range {
   position: absolute !important;
   bottom: 0;
   width: 100%;
   transition: .2s;
   pointer-events: all;
 }
-uc-editor-toolbar > uc-range:not([visible]) {
+uc-editable-canvas-toolbar > uc-range:not([visible]) {
   transform: translateY(60px);
 }

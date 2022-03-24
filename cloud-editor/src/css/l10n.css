@@ -1,0 +1,13 @@
+.uc-cldtr-l10n_en-US, .uc-cldtr-common, :host {
+  --l10n-cancel: 'Cancel';
+  --l10n-apply: 'Apply';
+  --l10n-brightness: 'Brightness';
+  --l10n-exposure: 'Exposure';
+  --l10n-gamma: 'Gamma';
+  --l10n-contrast: 'Contrast';
+  --l10n-saturation: 'Saturation';
+  --l10n-vibrance: 'Vibrance';
+  --l10n-warmth: 'Warmth';
+  --l10n-enhance: 'Enhance';
+  --l10n-original: 'Original';
+}

@@ -1,8 +1,7 @@
-import { AppComponent } from '../../AppComponent.js';
-import { ucIconHtml } from '../../icons/ucIconHtml.js';
+import { BlockComponent } from '@uploadcare/upload-blocks';
 import { classNames } from '../../lib/classNames.js';
 
-export class UcBtnUi extends AppComponent {
+export class UcBtnUi extends BlockComponent {
   constructor() {
     super();
 
@@ -10,14 +9,13 @@ export class UcBtnUi extends AppComponent {
     this._iconSingle = false;
     this._iconHidden = false;
 
-    this.state = {
+    this.init$ = {
       text: '',
       icon: '',
       iconCss: this._iconCss(),
       theme: null,
     };
 
-    // TODO: active should be moved out of here
     this.defineAccessor('active', (active) => {
       if (active) {
         this.setAttribute('active', '');
@@ -36,23 +34,29 @@ export class UcBtnUi extends AppComponent {
     });
   }
 
-  readyCallback() {
-    super.readyCallback();
+  initCallback() {
+    super.initCallback();
 
     this.sub(
       'icon',
       (iconName) => {
-        if (iconName) {
-          this['icon-el'].innerHTML = ucIconHtml(iconName);
-        }
-
-        this._iconSingle = !this.state.text;
+        this._iconSingle = !this.$.text;
         this._iconHidden = !iconName;
-        this.state.iconCss = this._iconCss();
+        this.$.iconCss = this._iconCss();
       },
       undefined,
       true
     );
+
+    this.sub('theme', (theme) => {
+      if (theme !== 'custom') {
+        this.className = theme;
+      }
+    });
+
+    this.sub('text', (txt) => {
+      this._iconSingle = false;
+    });
 
     this.setAttribute('role', 'button');
     if (this.tabIndex === -1) {
@@ -60,21 +64,6 @@ export class UcBtnUi extends AppComponent {
     }
     if (!this.hasAttribute('theme')) {
       this.setAttribute('theme', 'default');
-    }
-  }
-
-  set text(txt) {
-    this._iconSingle = false;
-    this.state.text = txt;
-  }
-
-  set icon(icon) {
-    this.state.icon = icon;
-  }
-
-  set theme(theme) {
-    if (theme !== 'custom') {
-      this.className = theme;
     }
   }
 
@@ -88,11 +77,9 @@ export class UcBtnUi extends AppComponent {
     }
   }
 }
-UcBtnUi.observeAttributes(['text', 'icon', 'reverse', 'theme']);
+UcBtnUi.bindAttributes({ text: 'text', icon: 'icon', reverse: 'reverse', theme: 'theme' });
 
 UcBtnUi.template = /*html*/ `
-<div ref="icon-el" set="class: iconCss"></div>
-<div class="text" set="textContent: text"></div>
+<uc-icon size="20" set="className: iconCss; @name: icon;"></uc-icon>
+<div class="text">{{text}}</div>
 `;
-
-UcBtnUi.is = 'uc-btn-ui';

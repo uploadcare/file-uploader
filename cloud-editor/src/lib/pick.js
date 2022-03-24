@@ -1,6 +1,6 @@
 /**
  * @param {{}} obj
- * @param {string[]} keys
+ * @param {String[]} keys
  * @returns {{}}
  */
 export function pick(obj, keys) {

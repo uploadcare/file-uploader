@@ -17,7 +17,6 @@ export class FileItem extends BlockComponent {
     progressUnknown: false,
     notImage: true,
     badgeIcon: 'check',
-    '*focusedEntry': null,
     '*uploadTrigger': null,
 
     onEdit: () => {

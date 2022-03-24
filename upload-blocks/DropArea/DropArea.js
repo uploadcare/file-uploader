@@ -6,6 +6,7 @@ export class DropArea extends BlockComponent {
     state: DropzoneState.INACTIVE,
   };
   initCallback() {
+    /** @private */
     this._destroyDropzone = addDropzone({
       element: this,
       onChange: (state) => {
@@ -38,7 +39,6 @@ export class DropArea extends BlockComponent {
   }
 
   destroyCallback() {
-    // TODO: is it private?
     this._destroyDropzone?.();
   }
 }

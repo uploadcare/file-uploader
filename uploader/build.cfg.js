@@ -13,6 +13,16 @@ export const buildCfg = [
     out: './build/regular/index.min.js',
     minify: true,
     minifyHtml: true,
+    includeExternals: true,
+  },
+  {
+    name,
+    version,
+    in: './regular/index.js',
+    out: './build/regular/index.js',
+    minify: false,
+    minifyHtml: false,
+    includeExternals: false,
   },
   {
     in: './regular/index.css',

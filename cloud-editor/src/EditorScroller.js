@@ -1,10 +1,10 @@
-import { AppComponent } from './AppComponent.js';
+import { BlockComponent } from '@uploadcare/upload-blocks';
 
 const X_THRESHOLD = 1;
 
-export class EditorScroller extends AppComponent {
-  readyCallback() {
-    super.readyCallback();
+export class EditorScroller extends BlockComponent {
+  initCallback() {
+    super.initCallback();
 
     this.addEventListener('wheel', (e) => {
       e.preventDefault();
@@ -18,10 +18,6 @@ export class EditorScroller extends AppComponent {
   }
 }
 
-EditorScroller.renderShadow = false;
-
 EditorScroller.template = /*html*/ `
 <slot></slot>
 `;
-
-EditorScroller.is = 'editor-scroller';

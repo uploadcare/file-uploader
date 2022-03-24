@@ -12,9 +12,9 @@ export const OPERATIONS_ZEROS = {
 };
 
 /**
- * @param {string} operation
- * @param {number | string | object} options
- * @returns {string}
+ * @param {String} operation
+ * @param {Number | String | object} options
+ * @returns {String}
  */
 function operationToStr(operation, options) {
   if (typeof options === 'number') {
@@ -45,8 +45,8 @@ function operationToStr(operation, options) {
 }
 
 /**
- * @param {string[]} list
- * @returns {string}
+ * @param {String[]} list
+ * @returns {String}
  */
 export function joinCdnOperations(...list) {
   return list.join('/-/').replace(/\/\//g, '/');
@@ -70,7 +70,7 @@ const ORDER = [
 
 /**
  * @param {any} transformations
- * @returns {string}
+ * @returns {String}
  */
 export function transformationsToString(transformations) {
   return joinCdnOperations(
@@ -86,9 +86,9 @@ export function transformationsToString(transformations) {
 }
 
 /**
- * @param {string} originalUrl
- * @param {string[]} list
- * @returns {string}
+ * @param {String} originalUrl
+ * @param {String[]} list
+ * @returns {String}
  */
 export function constructCdnUrl(originalUrl, ...list) {
   return (

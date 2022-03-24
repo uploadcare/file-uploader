@@ -1,5 +1,4 @@
-import { AppComponent } from './AppComponent.js';
-import { SliderUi } from './elements/slider/SliderUi.js';
+import { BlockComponent } from '@uploadcare/upload-blocks';
 import { COLOR_OPERATIONS_CONFIG } from './toolbar-constants.js';
 
 const ControlType = {
@@ -9,32 +8,23 @@ const ControlType = {
 
 export const FAKE_ORIGINAL_FILTER = 'original';
 
-export class EditorSlider extends AppComponent {
-  constructor() {
-    super();
-
-    this.state = {
-      disabled: false,
-      min: 0,
-      max: 100,
-      value: 0,
-      defaultValue: 0,
-      zero: 0,
-      'on.input': (value) => {
-        this._faderEl.set(value);
-        this.state.value = value;
-      },
-    };
-
-    this.defineAccessor('faderEl', (faderEl) => {
-      /** @type {import('./EditorImageFader').EditorImageFader} */
-      this._faderEl = faderEl;
-    });
-  }
+export class EditorSlider extends BlockComponent {
+  init$ = {
+    disabled: false,
+    min: 0,
+    max: 100,
+    value: 0,
+    defaultValue: 0,
+    zero: 0,
+    'on.input': (value) => {
+      this.$['*faderEl'].set(value);
+      this.$.value = value;
+    },
+  };
 
   /**
-   * @param {any} operation
-   * @param {any} [filter]
+   * @param {String} operation
+   * @param {String} [filter]
    */
   setOperation(operation, filter) {
     this._controlType = operation === 'filter' ? ControlType.FILTER : ControlType.COLOR_OPERATION;
@@ -45,37 +35,38 @@ export class EditorSlider extends AppComponent {
 
     this._initializeValues();
 
-    this._faderEl.activate({
-      url: this.read('*originalUrl'),
+    this.$['*faderEl'].activate({
+      url: this.$['*originalUrl'],
       operation: this._operation,
-      value: this._filter === FAKE_ORIGINAL_FILTER ? undefined : this.state.value,
+      value: this._filter === FAKE_ORIGINAL_FILTER ? undefined : this.$.value,
       filter: this._filter === FAKE_ORIGINAL_FILTER ? undefined : this._filter,
       fromViewer: false,
     });
   }
 
+  /** @private */
   _initializeValues() {
     let { range, zero } = COLOR_OPERATIONS_CONFIG[this._operation];
     let [min, max] = range;
 
-    this.state.min = min;
-    this.state.max = max;
-    this.state.zero = zero;
+    this.$.min = min;
+    this.$.max = max;
+    this.$.zero = zero;
 
-    let transformation = this.read('*editorTransformations')[this._operation];
+    let transformation = this.$['*editorTransformations'][this._operation];
     if (this._controlType === ControlType.FILTER) {
       let value = max;
       if (transformation) {
         let { name, amount } = transformation;
         value = name === this._filter ? amount : max;
       }
-      this.state.value = value;
-      this.state.defaultValue = value;
+      this.$.value = value;
+      this.$.defaultValue = value;
     }
     if (this._controlType === ControlType.COLOR_OPERATION) {
       let value = typeof transformation !== 'undefined' ? transformation : zero;
-      this.state.value = value;
-      this.state.defaultValue = value;
+      this.$.value = value;
+      this.$.defaultValue = value;
     }
   }
 
@@ -85,23 +76,23 @@ export class EditorSlider extends AppComponent {
       if (this._filter === FAKE_ORIGINAL_FILTER) {
         operationValue = null;
       } else {
-        operationValue = { name: this._filter, amount: this.state.value };
+        operationValue = { name: this._filter, amount: this.$.value };
       }
     } else {
-      operationValue = this.state.value;
+      operationValue = this.$.value;
     }
 
     /** @type {import('../../../src/types/UploadEntry.js').Transformations} */
     let transformations = {
-      ...this.read('*editorTransformations'),
+      ...this.$['*editorTransformations'],
       [this._operation]: operationValue,
     };
 
-    this.pub('*editorTransformations', transformations);
+    this.$['*editorTransformations'] = transformations;
   }
 
   cancel() {
-    this._faderEl.deactivate({ hide: false });
+    this.$['*faderEl'].deactivate({ hide: false });
   }
 
   connectedCallback() {
@@ -113,15 +104,11 @@ export class EditorSlider extends AppComponent {
 
     this.sub('value', (value) => {
       let tooltip = `${this._filter || this._operation} ${value}`;
-      this.pub('*operationTooltip', tooltip);
+      this.$['*operationTooltip'] = tooltip;
     });
   }
 }
 
-EditorSlider.renderShadow = false;
-
 EditorSlider.template = /*html*/ `
-<${SliderUi.is} ref="slider-el" set="disabled: disabled; min: min; max: max; defaultValue: defaultValue; zero: zero; onInput: on.input;"></${SliderUi.is}>
+<uc-slider-ui ref="slider-el" set="disabled: disabled; min: min; max: max; defaultValue: defaultValue; zero: zero; onInput: on.input;"></uc-slider-ui>
 `;
-
-EditorSlider.is = 'editor-slider';

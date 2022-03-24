@@ -16,6 +16,7 @@ export { ConfirmationDialog } from './ConfirmationDialog/ConfirmationDialog.js';
 export { ProgressBarCommon } from './ProgressBarCommon/ProgressBarCommon.js';
 export { ProgressBar } from './ProgressBar/ProgressBar.js';
 export { EditableCanvas } from './EditableCanvas/EditableCanvas.js';
+export { EditableCanvasToolbar } from './EditableCanvas/EditableCanvasToolbar.js';
 export { CloudImageEditor } from './CloudImageEditor/CloudImageEditor.js';
 export { ExternalSource } from './ExternalSource/ExternalSource.js';
 export { Tabs } from './Tabs/Tabs.js';
@@ -23,3 +24,5 @@ export { DataOutput } from './DataOutput/DataOutput.js';
 export { ActivityCaption } from './ActivityCaption/ActivityCaption.js';
 export { ActivityIcon } from './ActivityIcon/ActivityIcon.js';
 export { registerBlocks } from './registerBlocks.js';
+
+export * from '@uploadcare/cloud-editor';
