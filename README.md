@@ -1,4 +1,4 @@
-# uc-blocks: Uploadcare SDK for JavaScript developers
+# uc-blocks: rich web-components for Uploadcare platform integration solutions
 
 <re-htm src="./assets/htm/doc-nav.htm"><re-htm>
 
@@ -16,13 +16,11 @@
 
 ## 📦 What’s in the box?
 
-* [uploader](./uploader/) - file uploader implementations for the most frequent use cases.
-* [upload-blocks](./upload-blocks/) - build your own uploading flow with the simple HTML and CSS.
-* Adaptive image delivery tools: all you need to distribute your web images efficiently.
-* File uploading client library: handle files from browser or node.
+* [File uploader solutions](./solutions/file-uploader/) - file uploader implementations for the most frequent use cases.
+* [Blocks to build your own custom solutions](./blocks/) - build your own integration solutions with the simple HTML and CSS.
+* [Adaptive image solution](./solutions/adaptive-image/): all you need to distribute your web images efficiently.
+* [Cloud image editing solution](./solutions/cloud-image-editor/): tune your pictures on the fly.
 * Web components for media content representation: audio, video, image galleries, etc.
-* Cloud image editing tools: tune your pictures on the fly.
-* Common purpose components and tools.
 * etc.
 
 ### Supported browsers
@@ -39,7 +37,7 @@ uc-blocks are supported and tested in all major modern desktop and mobile browse
 
 ## ⚙️ Installation and start
 
-1. Clone repository: `git clone git@github.com:uploadcare/jsdk.git ./`.
+1. Clone repository: `git clone git@github.com:uploadcare/uc-blocks.git ./`.
 2. Run dependencies setup: `npm run setup`.
 3. Start local dev-server: `npm run dev`.
 
@@ -54,3 +52,9 @@ Check the [JSDoc Reference](https://www.typescriptlang.org/docs/handbook/jsdoc-s
 ## 🚀 Feedback
 
 Issues and PRs are welcome. You can provide your feedback or drop us a support request at hello@uploadcare.com.
+
+## Browse documentation and live demos
+
+https://uploadcare.github.io/uc-blocks/
+
+> All the source code in demos is accessible and works in raw-mode (as is), so you can use your browser developer tools to discover it in details.
