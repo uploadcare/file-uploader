@@ -21,6 +21,7 @@
 
 <style>
   uc-img {
+    --uc-img-pubkey: '364c0864158c27472ffe';
     display: contents;
   }
   uc-img > img {
@@ -32,7 +33,7 @@
   }
 </style>
 
-<uc-img src="https://holiday-js.web.app/assets/img/hd.png">
+<uc-img width="100%" src="https://uploadcare.github.io/uc-blocks/blocks/Img/test_media/kitten.jpg">
 </uc-img>
 
 </uc-live-html>
@@ -48,9 +49,9 @@
   }
 </style>
 
-<uc-img src="https://holiday-js.web.app/assets/img/hd.png" class="invert">
+<uc-img width="100%" src="https://uploadcare.github.io/uc-blocks/blocks/Img/test_media/kitten.jpg" class="invert">
   <noscript>
-    <img src="https://holiday-js.web.app/assets/img/hd.png" alt="ALT_TEXT">
+    <img src="https://uploadcare.github.io/uc-blocks/blocks/Img/test_media/kitten.jpg" alt="ALT_TEXT">
   </noscript>
 </uc-img>
 
@@ -69,19 +70,20 @@
     height: 200px;
     background-color: #000;
     color: #FFF;
+    background-size: cover;
   }
 </style>
 
 <div id="target">Some text...</div>
 
-<uc-img is-background-for="#target" src="https://holiday-js.web.app/assets/img/hd.png"></uc-img>
+<uc-img is-background-for="#target" src="https://uploadcare.github.io/uc-blocks/blocks/Img/test_media/kitten.jpg"></uc-img>
 </uc-live-html>
 
 <h2>Relative path src (dev mode)</h2>
 <uc-live-html>
 <script src="./index.js" type="module"></script>
 
-<uc-img src="./test_media/kitten.jpg" width="500"></uc-img>
+<uc-img src="../../assets/media/kitten.jpg" width="500"></uc-img>
 </uc-live-html>
 
 <h2>UUID source</h2>
