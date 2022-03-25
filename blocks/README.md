@@ -119,14 +119,14 @@ You can create your own custom upload-blocks to handle some specific use cases. 
 
 ## ⚙️ More in depth
 
-* [Configuration](./docs/configuration/)
-* [Texts & localization](./docs/texts/)
-* [Icons](./docs/icons/)
-* [Styling](./docs/styling/)
-* [Blocks](./docs/blocks/)
-* [Contexts](./docs/contexts/)
-* [Activities](./docs/activities/)
-* [TypeScript](./docs/typescript/)
+* [Configuration](../docs/configuration/)
+* [Texts & localization](../docs/texts/)
+* [Icons](../docs/icons/)
+* [Styling](../docs/styling/)
+* [Blocks](../docs/blocks/)
+* [Contexts](../docs/contexts/)
+* [Activities](../docs/activities/)
+* [TypeScript](../docs/typescript/)
 * [Symbiote.js](https://github.com/symbiotejs/symbiote.js)
 
 ## 💬 Discussions
