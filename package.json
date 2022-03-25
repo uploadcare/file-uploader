@@ -4,6 +4,7 @@
   "description": "Building blocks for Uploadcare products integration",
   "type": "module",
   "module": "index.js",
+  "sideEffects": false,
   "repository": "https://github.com/uploadcare/uc-blocks/",
   "files": [
     "abstract/*",
@@ -19,10 +20,11 @@
     "access": "public"
   },
   "scripts": {
-    "setup": "npm i",
+    "update_submodules": "git submodule update --init --recursive --remote",
+    "setup": "npm run update_submodules && npm i",
     "test": "test",
     "release": "shipjs prepare",
-    "dev": "wds"
+    "dev": "wds --open"
   },
   "devDependencies": {
     "@babel/eslint-parser": "^7.15.7",
