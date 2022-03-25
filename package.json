@@ -20,6 +20,7 @@
     "access": "public"
   },
   "scripts": {
+    "sym": "git submodule add -b main https://github.com/symbiotejs/symbiote.js submodules/symbiote",
     "update_submodules": "git submodule update --init --recursive --remote",
     "setup": "npm run update_submodules && npm i",
     "test": "test",
