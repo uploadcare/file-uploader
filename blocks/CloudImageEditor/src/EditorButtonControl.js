@@ -1,7 +1,7 @@
-import { BlockComponent } from '@uploadcare/upload-blocks';
+import { Block } from '../../../abstract/Block.js';
 import { classNames } from './lib/classNames.js';
 
-export class EditorButtonControl extends BlockComponent {
+export class EditorButtonControl extends Block {
   init$ = {
     active: false,
     title: '',

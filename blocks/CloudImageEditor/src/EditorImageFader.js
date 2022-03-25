@@ -1,4 +1,4 @@
-import { BlockComponent } from '@uploadcare/upload-blocks';
+import { Block } from '../../../abstract/Block.js';
 import { classNames } from './lib/classNames.js';
 import { debounce } from './lib/debounce.js';
 import { linspace } from './lib/linspace.js';
@@ -69,7 +69,7 @@ function keypointsRange(operation, value) {
  * @property {Number} value
  */
 
-export class EditorImageFader extends BlockComponent {
+export class EditorImageFader extends Block {
   constructor() {
     super();
 
