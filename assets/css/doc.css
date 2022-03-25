@@ -46,8 +46,8 @@ body::after {
   margin-top: var(--gap-huge);
 }
 
-live-html {
-  min-height: 380px;
+uc-live-html {
+  min-height: 400px;
 }
 
 a {
