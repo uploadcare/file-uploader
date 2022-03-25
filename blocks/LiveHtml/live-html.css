@@ -30,6 +30,9 @@ uc-live-html [contenteditable] [-quote-] {
 uc-live-html [contenteditable] [-equal-] {
   color: rgb(255, 152, 241);
 }
+uc-live-html [contenteditable] [-style-] {
+  color: rgb(255, 207, 152);
+}
 uc-live-html iframe {
   display: block;
   height: 100%;
