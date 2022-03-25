@@ -39,17 +39,17 @@ We also provide a set of [reference integrations](https://github.com/uploadcare/
 
 ## 🍱 Uploader solutions out of the box
 
-We provide [the set of uploader builds](../uploader/) you can use for the most frequent cases or for references if you need to create your own.
+We provide [the set of uploader builds](../solutions/file-uploader/) you can use for the most frequent cases or for references if you need to create your own.
 
 ## 🚀 Create your own file uploader
 
 The standard flow of the uploading widget creation is following:
 
-1. Install upload-blocks: `npm i @uploadcare/uc-blocks`.
-2. Create the set of all components you need (example: [exports.js](../uploader/regular/exports.js)).
-3. Create your widget class with desired layout (example: [index.js](../uploader/regular/index.js)).
-4. Create CSS configuration file (example: [index.css](../uploader/regular/index.css)).
-5. Place resulting custom HTML-tag into your application markup and connect CSS ([example](./doc_assets/basic-demo.snpt.html)).
+1. Install uc-blocks package: `npm i @uploadcare/uc-blocks`.
+2. Create the set of all components you need (example: [index.js](../solutions/file-uploader/regular/index.js)).
+3. Create your widget class with desired layout (example: [index.js](../solutions/file-uploader/regular/index.jss)).
+4. Create CSS configuration file (example: [index.css](../solutions/file-uploader/regular/index.css)).
+5. Place resulting custom HTML-tag into your application markup and connect CSS.
 
 As you can see, that's quite simple.
 
@@ -57,7 +57,7 @@ As you can see, that's quite simple.
 
 ## 🎨 Customize everything!
 
-First of all, please look at [our CSS approach discussion](https://github.com/uploadcare/jsdk/discussions/18).
+First of all, please look at [our CSS approach discussion](https://github.com/uploadcare/uc-blocks/discussions/18).
 Please don't hesitate to take part; your opinion is very important to us.
 
 ### Look & feel
@@ -115,7 +115,7 @@ All elements created by upload-blocks are discoverable via developer tools in yo
 
 ### Custom blocks
 
-You can create your own custom upload-blocks to handle some specific use cases. You need to use the [BlockComponent](./docs/block-component/) JavaScript base class to do that.
+You can create your own custom upload-blocks to handle some specific use cases. You need to use the [Block](../abstract/) JavaScript base class to do that.
 
 ## ⚙️ More in depth
 
