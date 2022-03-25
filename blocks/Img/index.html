@@ -5,18 +5,18 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>uc-img</title>
-  <link rel="stylesheet" href="../live-html/theme.css">
+  <link rel="stylesheet" href="../LiveHtml/live-html.css">
   <link rel="stylesheet" href="../../assets/css/doc.css">
   <script 
     type="module"
     src="https://unpkg.com/@re4ma/re4ma@latest/build/re4ma.js">
   </script>
-  <script src="../live-html/index.js" type="module"></script>
+  <script src="../LiveHtml/LiveHtml.js" type="module"></script>
 </head>
 <body>
 
 <h2>Absolute path src</h2>
-<live-html>
+<uc-live-html>
 <script src="./index.js" type="module"></script>
 
 <style>
@@ -35,10 +35,10 @@
 <uc-img src="https://holiday-js.web.app/assets/img/hd.png">
 </uc-img>
 
-</live-html>
+</uc-live-html>
 
 <h2>Absolute src + noscript + image transformation</h2>
-<live-html>
+<uc-live-html>
 <script src="./index.js" type="module"></script>
 
 <style>
@@ -54,10 +54,10 @@
   </noscript>
 </uc-img>
 
-</live-html>
+</uc-live-html>
 
 <h2>Background mode</h2>
-<live-html>
+<uc-live-html>
 <script src="./index.js" type="module"></script>
 
 <style>
@@ -75,17 +75,17 @@
 <div id="target">Some text...</div>
 
 <uc-img is-background-for="#target" src="https://holiday-js.web.app/assets/img/hd.png"></uc-img>
-</live-html>
+</uc-live-html>
 
 <h2>Relative path src (dev mode)</h2>
-<live-html>
+<uc-live-html>
 <script src="./index.js" type="module"></script>
 
 <uc-img src="./test_media/kitten.jpg" width="500"></uc-img>
-</live-html>
+</uc-live-html>
 
 <h2>UUID source</h2>
-<live-html>
+<uc-live-html>
 <script src="./index.js" type="module"></script>
 
 <style>
@@ -107,7 +107,7 @@
 <uc-img class="blur" uuid="0aa081d8-8571-4b16-9e3e-e7837d6d3bc3">
 </uc-img>
 
-</live-html>
+</uc-live-html>
   
 </body>
 </html>
