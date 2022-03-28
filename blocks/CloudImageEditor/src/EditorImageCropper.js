@@ -12,14 +12,6 @@ import { ResizeObserver } from './lib/ResizeObserver.js';
 import { viewerImageSrc } from './util.js';
 
 /**
- * @typedef {Object} Rectangle
- * @property {Number} x
- * @property {Number} y
- * @property {Number} width
- * @property {Number} height
- */
-
-/**
  * @typedef {Object} Operations
  * @property {boolean} flip
  * @property {boolean} mirror
@@ -47,7 +39,7 @@ function rotateSize({ width, height }, angle) {
 }
 
 /**
- * @param {import('../../../src/types/UploadEntry.js').Transformations['crop']} crop
+ * @param {import('./types.js').Transformations['crop']} crop
  * @returns {boolean}
  */
 function validateCrop(crop) {
@@ -73,14 +65,14 @@ export class EditorImageCropper extends Block {
       mirror: false,
       flip: false,
     },
-    /** @type {Rectangle} */
+    /** @type {import('./types.js).Rectangle} */
     '*imageBox': {
       x: 0,
       y: 0,
       width: 0,
       height: 0,
     },
-    /** @type {Rectangle} */
+    /** @type {import('./types.js).Rectangle} */
     '*cropBox': {
       x: 0,
       y: 0,
@@ -258,7 +250,7 @@ export class EditorImageCropper extends Block {
 
   /**
    * @private
-   * @returns {import('../../../src/types/UploadEntry.js').Transformations['crop']['dimensions']}
+   * @returns {import('./types.js').Transformations['crop']['dimensions']}
    */
   _calculateDimensions() {
     let cropBox = this.$['*cropBox'];
@@ -282,7 +274,7 @@ export class EditorImageCropper extends Block {
 
   /**
    * @private
-   * @returns {import('../../../src/types/UploadEntry.js').Transformations['crop']}
+   * @returns {import('./types.js').Transformations['crop']}
    */
   _calculateCrop() {
     let cropBox = this.$['*cropBox'];
@@ -321,7 +313,7 @@ export class EditorImageCropper extends Block {
     let operations = this.$['*operations'];
     let { rotate, mirror, flip } = operations;
     let crop = this._calculateCrop();
-    /** @type {import('../../../src/types/UploadEntry.js').Transformations} */
+    /** @type {import('./types.js').Transformations} */
     let editorTransformations = this.$['*editorTransformations'];
     let transformations = {
       ...editorTransformations,
@@ -436,7 +428,7 @@ export class EditorImageCropper extends Block {
   /**
    * @private
    * @param {String} originalUrl
-   * @param {import('../../../src/types/UploadEntry.js').Transformations} transformations
+   * @param {import('./types.js').Transformations} transformations
    * @returns {Promise<HTMLImageElement>}
    */
   _waitForImage(originalUrl, transformations) {

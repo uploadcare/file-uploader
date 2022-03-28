@@ -40,7 +40,7 @@ export class EditorToolbar extends Block {
       /** @type {import('./types.js').LoadingOperations} */
       '*loadingOperations': new Map(),
       '*showSlider': false,
-      /** @type {import('../../../src/types/UploadEntry.js').Transformations} */
+      /** @type {import('./types.js').Transformations} */
       '*editorTransformations': {},
       '*currentFilter': FAKE_ORIGINAL_FILTER,
       '*currentOperation': null,
