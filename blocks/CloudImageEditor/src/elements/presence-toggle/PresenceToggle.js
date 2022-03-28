@@ -1,5 +1,5 @@
-import { BlockComponent } from '@uploadcare/upload-blocks';
 import { applyClassNames } from '../../lib/classNames.js';
+import { Block } from '../../../../../abstract/Block.js';
 
 const DEFAULT_STYLE = {
   transition: 'transition',
@@ -7,7 +7,7 @@ const DEFAULT_STYLE = {
   hidden: 'hidden',
 };
 
-export class PresenceToggle extends BlockComponent {
+export class PresenceToggle extends Block {
   constructor() {
     super();
 

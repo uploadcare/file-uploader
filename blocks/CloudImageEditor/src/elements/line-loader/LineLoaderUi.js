@@ -1,6 +1,6 @@
-import { BlockComponent } from '@uploadcare/upload-blocks';
+import { Block } from '../../../../../abstract/Block.js';
 
-export class LineLoaderUi extends BlockComponent {
+export class LineLoaderUi extends Block {
   constructor() {
     super();
 
