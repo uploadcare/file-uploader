@@ -129,7 +129,7 @@ export class LiveHtmlElement extends BaseComponent {
       .join('<span -tag-arr->&lt;</span>style<span -tag-arr->&gt;</span><span -style->')
 
       .split('<span -tag-arr->&lt;/</span>style<span -tag-arr->&gt;</span>')
-      .join('</span><span -tag-arr->&lt;/</span>style<span -tag-arr->&gt;</span>');;
+      .join('</span><span -tag-arr->&lt;/</span>style<span -tag-arr->&gt;</span>');
     this.ref.editor.innerHTML = html;
 
     Caret.setPosition(offset, this.ref.editor);
@@ -182,6 +182,7 @@ export class LiveHtmlElement extends BaseComponent {
     if (this.innerHTML.trim()) {
       /** @private */
       this.__innerHtml = this.innerHTML;
+      this.innerHTML = '';
     }
     super.connectedCallback();
   }
@@ -200,7 +201,7 @@ export class LiveHtmlElement extends BaseComponent {
         }
       });
     } else if (this.__innerHtml) {
-      this.$.code  = this.__innerHtml;
+      this.$.code = this.__innerHtml;
       this.sync();
     } else {
       this.$.code = INIT_HTML;
