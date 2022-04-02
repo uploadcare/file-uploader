@@ -1,8 +1,7 @@
-import * as UC from '../../../blocks/index.js';
+import { Block } from '../../../blocks/index.js';
 
-UC.registerBlocks(UC);
-
-export class Uploader extends UC.Block {}
+export * from '../../../blocks/index.js';
+export class Uploader extends Block {}
 
 Uploader.template = /*html*/ `
 <uc-simple-btn></uc-simple-btn>
@@ -25,7 +24,3 @@ Uploader.template = /*html*/ `
 <uc-message-box></uc-message-box>
 <uc-progress-bar-common></uc-progress-bar-common>
 `;
-
-Uploader.reg('uploader');
-
-export { UC };

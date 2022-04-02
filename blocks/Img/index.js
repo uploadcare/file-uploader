@@ -202,4 +202,5 @@ export class UCImg extends BaseComponent {
   }
 }
 
+// TODO: get rid of side effects
 UCImg.reg('uc-img');

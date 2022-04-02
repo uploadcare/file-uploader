@@ -5,6 +5,7 @@ import { Color } from '../Color/Color.js';
 
 import { getButtons } from './buttons.js';
 
+// TODO: get rid of side effects
 Range.reg('range');
 Color.reg('color');
 
@@ -145,13 +146,13 @@ export class EditorToolbar extends Block {
   }
 }
 EditorToolbar.template = /*html*/ `
-<div 
+<div
   class="btns"
-  ref="btns" 
+  ref="btns"
   set="onclick: onBtnClick">${getButtons()}</div>
-<uc-range 
-  min="0" 
-  max="200" 
+<uc-range
+  min="0"
+  max="200"
   ref="range"
   set="@visible: rangeActive; $.caption: rangeCaption">
 </uc-range>
