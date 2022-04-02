@@ -10,7 +10,7 @@
         "ESNext.Array",
         "DOM",
         "DOM.Iterable",
-        "WebWorker"
+        "WebWorker",
       ],
     "allowJs": true,
     "checkJs": true,
@@ -18,7 +18,9 @@
     "alwaysStrict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "types": [],
+    "types": [
+      "node"
+    ],
     "noEmit": true
   },
   "include": [

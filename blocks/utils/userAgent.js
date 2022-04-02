@@ -1,4 +1,4 @@
-import { VERSION, PACKAGE_NAME } from '../env.js';
+import { VERSION, PACKAGE_NAME } from '../../env.js';
 import { toPascalCase } from './toPascalCase.js';
 
 /**
