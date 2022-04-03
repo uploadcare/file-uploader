@@ -17,5 +17,3 @@ export class Img extends ImgBase {
     });
   }
 }
-
-Img.reg('uc-img');
