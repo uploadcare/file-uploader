@@ -20,7 +20,7 @@ export class EditorFilterControl extends EditorButtonControl {
     let quality = dpr >= 2 ? 'lightest' : 'normal';
     let filterValue = 100;
 
-    /** @type {import('../../../src/types/UploadEntry.js').Transformations} */
+    /** @type {import('./types.js').Transformations} */
     let transformations = { ...this.$['*editorTransformations'] };
     transformations[this._operation] =
       this._filter !== FAKE_ORIGINAL_FILTER

@@ -1,5 +1,4 @@
 export { Icon } from '../../Icon/Icon.js';
-
 export { CloudEditor } from './CloudEditor.js';
 export { CropFrame } from './CropFrame.js';
 export { EditorCropButtonControl } from './EditorCropButtonControl.js';

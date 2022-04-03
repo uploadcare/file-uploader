@@ -82,7 +82,7 @@ export class EditorSlider extends Block {
       operationValue = this.$.value;
     }
 
-    /** @type {import('../../../src/types/UploadEntry.js').Transformations} */
+    /** @type {import('./types.js').Transformations} */
     let transformations = {
       ...this.$['*editorTransformations'],
       [this._operation]: operationValue,

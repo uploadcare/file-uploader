@@ -1,0 +1,26 @@
+name: checks
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+      - name: Install dependencies
+        working-directory: ./
+        run: npm ci
+      - name: Run build
+        run: npm run build
+      - name: Run lint
+        run: npm run lint
+      - name: Run tsc
+        run: npm run tsc
+

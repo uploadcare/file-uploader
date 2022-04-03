@@ -56,7 +56,7 @@ export class CropFrame extends Block {
   }
 
   _createBackdrop() {
-    /** @type {import('./EditorImageCropper.js').Rectangle} */
+    /** @type {import('./types.js').Rectangle} */
     let cropBox = this.$['*cropBox'];
     if (!cropBox) {
       return;
@@ -110,7 +110,7 @@ export class CropFrame extends Block {
   }
 
   _updateBackdrop() {
-    /** @type {import('./EditorImageCropper.js').Rectangle} */
+    /** @type {import('./types.js').Rectangle} */
     let cropBox = this.$['*cropBox'];
     if (!cropBox) {
       return;
@@ -121,7 +121,7 @@ export class CropFrame extends Block {
   }
 
   _updateFrame() {
-    /** @type {import('./EditorImageCropper.js').Rectangle} */
+    /** @type {import('./types.js').Rectangle} */
     let cropBox = this.$['*cropBox'];
     if (!cropBox) {
       return;
@@ -275,7 +275,7 @@ export class CropFrame extends Block {
     this.$.dragging = true;
     this._draggingThumb = thumb;
     this._dragStartPoint = [x, y];
-    /** @type {import('./EditorImageCropper.js').Rectangle} */
+    /** @type {import('./types.js').Rectangle} */
     this._dragStartCrop = { ...cropBox };
   }
 
@@ -306,7 +306,7 @@ export class CropFrame extends Block {
     let dy = y - this._dragStartPoint[1];
     let { direction } = this._draggingThumb;
 
-    /** @type {import('./EditorImageCropper.js').Rectangle} */
+    /** @type {import('./types.js').Rectangle} */
     let imageBox = this.$['*imageBox'];
     let rect = this._dragStartCrop;
 

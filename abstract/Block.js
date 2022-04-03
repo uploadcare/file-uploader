@@ -3,6 +3,7 @@ import { l10nProcessor } from './l10nProcessor.js';
 import { uploadEntrySchema } from './uploadEntrySchema.js';
 
 const ACTIVE_ATTR = 'active';
+const ACTIVE_PROP = '___ACTIVITY_IS_ACTIVE___';
 const TAG_PREFIX = 'uc-';
 const CSS_ATTRIBUTE = 'css-src';
 
@@ -147,15 +148,15 @@ export class Block extends BaseComponent {
           let activityKey = this.ctxName + this.activityType;
           let actDesc = Block._activityRegistry[activityKey];
 
-          if (this.activityType !== val && this._isActive) {
+          if (this.activityType !== val && this[ACTIVE_PROP]) {
             /** @private */
-            this._isActive = false;
+            this[ACTIVE_PROP] = false;
             this.removeAttribute(ACTIVE_ATTR);
             actDesc?.deactivateCallback?.();
             // console.log(`Activity "${this.activityType}" deactivated`);
-          } else if (this.activityType === val && !this._isActive) {
+          } else if (this.activityType === val && !this[ACTIVE_PROP]) {
             /** @private */
-            this._isActive = true;
+            this[ACTIVE_PROP] = true;
             this.setAttribute(ACTIVE_ATTR, '');
             actDesc?.activateCallback?.();
             // console.log(`Activity "${this.activityType}" activated`);
@@ -200,8 +201,8 @@ export class Block extends BaseComponent {
     return this.getAttribute('cancel-activity');
   }
 
-  get isActive() {
-    return this._isActive;
+  get isActivityActive() {
+    return this[ACTIVE_PROP];
   }
 
   /**

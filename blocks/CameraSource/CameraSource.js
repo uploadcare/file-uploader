@@ -176,7 +176,7 @@ export class CameraSource extends Block {
 
     let camMirrProp = this.bindCssData('--cfg-camera-mirror');
     this.sub(camMirrProp, (val) => {
-      if (!this.isActive) {
+      if (!this.isActivityActive) {
         return;
       }
       this.$.videoTransformCss = val ? 'scaleX(-1)' : null;

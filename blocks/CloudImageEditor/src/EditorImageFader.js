@@ -308,7 +308,7 @@ export class EditorImageFader extends Block {
     }
   }
 
-  /** @param {import('../../../src/types/UploadEntry.js').Transformations} transformations */
+  /** @param {import('./types.js').Transformations} transformations */
   setTransformations(transformations) {
     this._transformations = transformations;
     if (this._previewImage) {
@@ -423,7 +423,7 @@ export class EditorImageFader extends Block {
     this._initNodes();
   }
 
-  /** @param {{ hide: boolean = true; seamlessTransition: boolean = true }} options */
+  /** @param {{ hide?: boolean; seamlessTransition?: boolean }} options */
   deactivate({ hide = true, seamlessTransition = true } = {}) {
     this._isActive = false;
 

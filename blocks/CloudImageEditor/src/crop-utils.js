@@ -20,7 +20,7 @@ export function createSvgNode(name, attrs = {}) {
 }
 
 /**
- * @param {import('./EditorImageCropper.js').Rectangle} rect
+ * @param {import('./types.js').Rectangle} rect
  * @param {String} direction
  */
 export function cornerPath(rect, direction) {
@@ -51,7 +51,7 @@ export function cornerPath(rect, direction) {
 }
 
 /**
- * @param {import('./EditorImageCropper.js').Rectangle} rect
+ * @param {import('./types.js').Rectangle} rect
  * @param {String} direction
  */
 export function sidePath(rect, direction) {
@@ -94,7 +94,7 @@ export function thumbCursor(direction) {
 }
 
 /**
- * @param {import('./EditorImageCropper.js').Rectangle} rect
+ * @param {import('./types.js').Rectangle} rect
  * @param {[Number, Number]} delta
  */
 export function moveRect(rect, [dx, dy]) {
@@ -106,8 +106,8 @@ export function moveRect(rect, [dx, dy]) {
 }
 
 /**
- * @param {import('./EditorImageCropper.js').Rectangle} rect1
- * @param {import('./EditorImageCropper.js').Rectangle} rect2
+ * @param {import('./types.js').Rectangle} rect1
+ * @param {import('./types.js').Rectangle} rect2
  */
 export function constraintRect(rect1, rect2) {
   let { x } = rect1;
@@ -131,7 +131,7 @@ export function constraintRect(rect1, rect2) {
 }
 
 /**
- * @param {import('./EditorImageCropper.js').Rectangle} rect
+ * @param {import('./types.js').Rectangle} rect
  * @param {[Number, Number]} delta
  * @param {String} direction
  */
@@ -161,8 +161,8 @@ export function expandRect(rect, [dx, dy], direction) {
 }
 
 /**
- * @param {import('./EditorImageCropper.js').Rectangle} rect1
- * @param {import('./EditorImageCropper.js').Rectangle} rect2
+ * @param {import('./types.js').Rectangle} rect1
+ * @param {import('./types.js').Rectangle} rect2
  */
 export function intersectionRect(rect1, rect2) {
   let leftX = Math.max(rect1.x, rect2.x);
@@ -174,7 +174,7 @@ export function intersectionRect(rect1, rect2) {
 }
 
 /**
- * @param {import('./EditorImageCropper.js').Rectangle} rect
+ * @param {import('./types.js').Rectangle} rect
  * @param {[Number, Number]} minSize
  * @param {String} direction
  */
@@ -202,7 +202,7 @@ export function minRectSize(rect, [minWidth, minHeight], direction) {
 }
 
 /**
- * @param {import('./EditorImageCropper.js').Rectangle} rect
+ * @param {import('./types.js').Rectangle} rect
  * @param {[Number, Number]} point
  */
 export function rectContainsPoint(rect, [x, y]) {
