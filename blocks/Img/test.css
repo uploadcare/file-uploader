@@ -1,5 +1,6 @@
 uc-img {
   --uc-img-pubkey: '364c0864158c27472ffe';
+  --uc-img-test: 'TEST';
   display: contents;
 }
 uc-img > img {

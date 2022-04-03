@@ -17,7 +17,7 @@
 
 <h2>Absolute path src</h2>
 <uc-live-html>
-<script src="./index.js" type="module"></script>
+<script src="./Img.js" type="module"></script>
 
 <style>
   uc-img {
@@ -33,25 +33,25 @@
   }
 </style>
 
-<uc-img width="100%" src="https://uploadcare.github.io/uc-blocks/blocks/Img/test_media/kitten.jpg">
+<uc-img width="100%" src="https://uploadcare.github.io/uc-blocks/assets/media/kitten.jpg?absolute">
 </uc-img>
 
 </uc-live-html>
 
 <h2>Absolute src + noscript + image transformation</h2>
 <uc-live-html>
-<script src="./index.js" type="module"></script>
+<script src="./Img.js" type="module"></script>
 
 <style>
   @import url('./test.css');
   .invert {
-    --uc-img-cdn-transform: 'invert';
+    --uc-img-cdn-operations: 'invert';
   }
 </style>
 
-<uc-img width="100%" src="https://uploadcare.github.io/uc-blocks/blocks/Img/test_media/kitten.jpg" class="invert">
+<uc-img width="100%" src="https://uploadcare.github.io/uc-blocks/assets/media/kitten.jpg?absolute_transform" class="invert">
   <noscript>
-    <img src="https://uploadcare.github.io/uc-blocks/blocks/Img/test_media/kitten.jpg" alt="ALT_TEXT">
+    <img src="https://uploadcare.github.io/uc-blocks/assets/media/kitten.jpg" alt="ALT_TEXT">
   </noscript>
 </uc-img>
 
@@ -59,7 +59,7 @@
 
 <h2>Background mode</h2>
 <uc-live-html>
-<script src="./index.js" type="module"></script>
+<script src="./Img.js" type="module"></script>
 
 <style>
   @import url('./test.css');
@@ -76,27 +76,31 @@
 
 <div id="target">Some text...</div>
 
-<uc-img is-background-for="#target" src="https://uploadcare.github.io/uc-blocks/assets/media/kitten.jpg"></uc-img>
+<uc-img is-background-for="#target" src="https://uploadcare.github.io/uc-blocks/assets/media/kitten.jpg?bg_mode"></uc-img>
 </uc-live-html>
 
 <h2>Relative path src (dev mode)</h2>
 <uc-live-html>
-<script src="./index.js" type="module"></script>
+<script src="./Img.js" type="module"></script>
 
-<uc-img src="../../assets/media/kitten.jpg" width="500"></uc-img>
+<style>
+  @import url('./test.css');
+</style>
+
+<uc-img src="../../assets/media/kitten.jpg?dev_mode" width="500"></uc-img>
 </uc-live-html>
 
 <h2>UUID source</h2>
 <uc-live-html>
-<script src="./index.js" type="module"></script>
+<script src="./Img.js" type="module"></script>
 
 <style>
   @import url('./test.css');
   .invert {
-    --uc-img-cdn-transform: 'invert';
+    --uc-img-cdn-operations: 'invert';
   }
   .blur {
-    --uc-img-cdn-transform: 'blur/50';
+    --uc-img-cdn-operations: 'blur/50';
   }
 </style>
 
@@ -107,6 +111,40 @@
 </uc-img>
 
 <uc-img class="blur" uuid="0aa081d8-8571-4b16-9e3e-e7837d6d3bc3">
+</uc-img>
+
+</uc-live-html>
+
+
+<h2>Lazy disabled (attribute)</h2>
+<uc-live-html>
+<script src="./Img.js" type="module"></script>
+
+<style>
+  @import url('./test.css');
+  uc-img {
+    --uc-img-lazy: 0;
+  }
+</style>
+
+<uc-img width="100%" src="https://uploadcare.github.io/uc-blocks/assets/media/kitten.jpg?lazy_attr">
+</uc-img>
+
+</uc-live-html>
+
+
+<h2>Lazy (observer)</h2>
+<uc-live-html>
+<script src="./Img.js" type="module"></script>
+
+<style>
+  @import url('./test.css');
+  uc-img {
+    --uc-img-intersection: 1;
+  }
+</style>
+
+<uc-img width="100%" src="https://uploadcare.github.io/uc-blocks/assets/media/kitten.jpg?lazy_observer">
 </uc-img>
 
 </uc-live-html>
