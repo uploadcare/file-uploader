@@ -71,9 +71,11 @@ export class ImgBase extends BaseComponent {
    */
   _getOps(size = '') {
     return join(
-      size ? '-/' + size : '',
+      //
+      size ? '-/resize/' + size : '',
       this.$$('cdn-operations') ? '-/' + this.$$('cdn-operations') : '',
-      '-/format/' + this.$$('format')
+      '-/format/' + this.$$('format'),
+      '-/quality/' + this.$$('quality')
     );
   }
 
@@ -92,23 +94,54 @@ export class ImgBase extends BaseComponent {
 
     // Alternative CDN name:
     if (this.$$('cdn-cname') && this.$$('uuid')) {
-      return join(this.$$('cdn-cname'), this.$$('uuid'), ops);
+      return join(
+        //
+        this.$$('cdn-cname'),
+        this.$$('uuid'),
+        ops
+      );
     }
 
     // UUID only:
     if (this.$$('uuid')) {
-      return join('https://ucarecdn.com/', this.$$('uuid'), ops);
+      return join(
+        //
+        'https://ucarecdn.com/',
+        this.$$('uuid'),
+        ops
+      );
     }
 
     // Alternative proxy name:
     if (this.$$('proxy-cname')) {
-      return join(this.$$('proxy-cname'), ops, this._fmtAbs(this.$$('src')));
+      return join(
+        //
+        this.$$('proxy-cname'),
+        ops,
+        this._fmtAbs(this.$$('src'))
+      );
     }
 
     // Project pubkey only:
     if (this.$$('pubkey')) {
-      return join(`https://${this.$$('pubkey')}.ucr.io/`, ops, this._fmtAbs(this.$$('src')));
+      return join(
+        //
+        `https://${this.$$('pubkey')}.ucr.io/`,
+        ops,
+        this._fmtAbs(this.$$('src'))
+      );
     }
+  }
+
+  /**
+   * @param {HTMLElement} el
+   * @param {Boolean} [double]
+   */
+  _getElSize(el, double = false) {
+    let rect = el.getBoundingClientRect();
+    let w = Math.round(double ? rect.width * 2 : rect.width);
+    let h = Math.round(double ? rect.height * 2 : rect.height);
+    return `${w ? w : ''}x${h ? h : ''}`;
   }
 
   initCallback() {
@@ -152,8 +185,20 @@ export class ImgBase extends BaseComponent {
 
   renderBg() {
     [...document.querySelectorAll(this.bgSelector)].forEach((el) => {
-      el.style.backgroundImage = `url("${this._getUrlBase()}")`;
+      // TODO: image-set
+      el.style.backgroundImage = `url("${this._getUrlBase(this._getElSize(el))}")`;
     });
+  }
+
+  getSrcset() {
+    let srcset = [];
+    if (!this.$$('breakpoints')) {
+      srcset.push(this._getUrlBase(this._getElSize(this.img)) + ' 1x');
+      if (this.$$('hi-res-support')) {
+        srcset.push(this._getUrlBase(this._getElSize(this.img, true)) + ' 2x');
+      }
+    }
+    return srcset.join();
   }
 
   init() {
@@ -161,10 +206,10 @@ export class ImgBase extends BaseComponent {
       this.renderBg();
     } else if (this.$$('intersection')) {
       this.initIntersection(() => {
-        this.img.srcset = this._getUrlBase();
+        this.img.srcset = this.getSrcset();
       });
     } else {
-      this.img.srcset = this._getUrlBase();
+      this.img.srcset = this.getSrcset();
     }
   }
 

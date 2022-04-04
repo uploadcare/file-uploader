@@ -9,7 +9,9 @@ export const PROPS_MAP = {
     default: 1,
   },
   intersection: {},
-  'step-px': {},
+  breakpoints: {
+    // '500' | '500x200' | '200, 300, 400'
+  },
   'cdn-cname': {},
   'proxy-cname': {},
   'hi-res-support': {
@@ -20,6 +22,8 @@ export const PROPS_MAP = {
   },
   'cdn-operations': {},
   progressive: {},
-  quality: {},
+  quality: {
+    default: 'smart',
+  },
   'is-background-for': {},
 };
