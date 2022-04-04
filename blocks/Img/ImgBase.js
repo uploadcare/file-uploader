@@ -197,6 +197,18 @@ export class ImgBase extends BaseComponent {
       if (this.$$('hi-res-support')) {
         srcset.push(this._getUrlBase(this._getElSize(this.img, true)) + ' 2x');
       }
+      if (this.$$('ultra-res-support')) {
+        srcset.push(this._getUrlBase(this._getElSize(this.img, true)) + ' 3x');
+      }
+    } else {
+      let bpArr = this.$$('breakpoints')
+        .split(',')
+        .map((bpStr) => {
+          return parseFloat(bpStr.trim());
+        });
+      bpArr.forEach((bp) => {
+        srcset.push(this._getUrlBase(bp + 'x') + ` ${bp}w`);
+      });
     }
     return srcset.join();
   }

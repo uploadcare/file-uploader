@@ -57,6 +57,23 @@
 
 </uc-live-html>
 
+
+<h2>Breakpoints</h2>
+<uc-live-html>
+<script src="./index.js" type="module"></script>
+
+<style>
+  @import url('./test.css');
+  uc-img {
+    --uc-img-breakpoints: '400, 800, 1200';
+  }
+</style>
+
+<uc-img width="100%" src="https://uploadcare.github.io/uc-blocks/assets/media/kitten.jpg?breakpoints">
+</uc-img>
+
+</uc-live-html>
+
 <h2>Background mode</h2>
 <uc-live-html>
 <script src="./index.js" type="module"></script>

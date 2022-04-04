@@ -4,7 +4,7 @@ export const PROPS_MAP = {
   uuid: {},
   src: {},
   alt: {},
-  'placeholder-src': {},
+  // 'placeholder-src': {}, // available via CSS
   lazy: {
     default: 1,
   },
@@ -17,6 +17,7 @@ export const PROPS_MAP = {
   'hi-res-support': {
     default: 1,
   },
+  'ultra-res-support': {}, // ?
   format: {
     default: 'auto',
   },
