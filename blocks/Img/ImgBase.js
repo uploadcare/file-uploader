@@ -249,7 +249,9 @@ export class ImgBase extends BaseComponent {
   }
 
   destroyCallback() {
-    this._isnObserver.unobserve(this.img);
+    if (this._isnObserver) {
+      this._isnObserver.unobserve(this.img);
+    }
   }
 
   static get observedAttributes() {

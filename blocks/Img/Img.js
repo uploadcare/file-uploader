@@ -13,7 +13,9 @@ export class Img extends ImgBase {
     });
 
     this.sub$$('lazy', (val) => {
-      this.img.loading = val ? 'lazy' : 'eager';
+      if (!this.$$('is-background-for')) {
+        this.img.loading = val ? 'lazy' : 'eager';
+      }
     });
   }
 }
