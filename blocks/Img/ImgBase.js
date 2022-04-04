@@ -189,8 +189,9 @@ export class ImgBase extends BaseComponent {
         `url("${this._getUrlBase(this._getElSize(el))}") 1x`,
         `url("${this._getUrlBase(this._getElSize(el, true))}") 2x`,
       ];
-      let iset = `-webkit-image-set(${imgSetArr.join(', ')})`;
+      let iset = `image-set(${imgSetArr.join(', ')})`;
       el.style.setProperty('background-image', iset);
+      el.style.setProperty('background-image', '-webkit-' + iset);
     });
   }
 
