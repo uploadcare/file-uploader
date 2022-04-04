@@ -27,9 +27,10 @@
     "test": "test",
     "release": "shipjs prepare",
     "dev": "wds --open",
-    "build": "node build.js",
+    "build": "npm run clean && node ./build.js",
     "tsc": "tsc --skipLibCheck --allowJs --noEmit",
-    "lint": "eslint ./"
+    "lint": "eslint ./",
+    "clean": "rimraf ./web/**/*.{js,css}"
   },
   "devDependencies": {
     "@babel/eslint-parser": "^7.15.7",
@@ -44,6 +45,7 @@
     "npm-run-all": "^4.1.5",
     "prettier": "^2.0.5",
     "prettier-plugin-jsdoc": "0.0.17",
+    "rimraf": "^3.0.2",
     "shipjs": "^0.24.3",
     "typescript": "^4.5.5"
   },
