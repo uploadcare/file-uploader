@@ -30,7 +30,7 @@ export class ImgBase extends BaseComponent {
     return this.$[CSS_PREF + key];
   }
 
-  /** @param {Object<string, string | number>} kvObj */
+  /** @param {Object<String, String | Number>} kvObj */
   set$$(kvObj) {
     for (let key in kvObj) {
       this.$[CSS_PREF + key] = kvObj[key];
@@ -185,8 +185,12 @@ export class ImgBase extends BaseComponent {
 
   renderBg() {
     [...document.querySelectorAll(this.bgSelector)].forEach((el) => {
-      // TODO: image-set
-      el.style.backgroundImage = `url("${this._getUrlBase(this._getElSize(el))}")`;
+      let imgSetArr = [
+        `url("${this._getUrlBase(this._getElSize(el))}") 1x`,
+        `url("${this._getUrlBase(this._getElSize(el, true))}") 2x`,
+      ];
+      let iset = `-webkit-image-set(${imgSetArr.join(', ')})`;
+      el.style.setProperty('background-image', iset);
     });
   }
 

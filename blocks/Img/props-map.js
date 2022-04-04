@@ -10,7 +10,7 @@ export const PROPS_MAP = {
   },
   intersection: {},
   breakpoints: {
-    // '500' | '500x200' | '200, 300, 400'
+    // '200, 300, 400'
   },
   'cdn-cname': {},
   'proxy-cname': {},
