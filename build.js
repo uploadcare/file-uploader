@@ -5,12 +5,14 @@ import { fileURLToPath } from 'url';
 import { buildItems } from './build-items.js';
 
 let __dirname = dirname(fileURLToPath(import.meta.url));
+let packageRootPath = __dirname;
+
 let { name: packageName, version: packageVersion } = JSON.parse(
-  fs.readFileSync(join(__dirname, './package.json')).toString()
+  fs.readFileSync(join(packageRootPath, './package.json')).toString()
 );
 
 function jsBanner() {
-  let license = fs.readFileSync('./LICENSE').toString();
+  let license = fs.readFileSync(path.join(packageRootPath, './LICENSE')).toString();
   return (
     '/**\n' +
     ' * @license\n' +
@@ -23,11 +25,11 @@ function jsBanner() {
 }
 
 function generateEnvFile(variables) {
-  let template = fs.readFileSync('./env.template.js').toString();
+  let template = fs.readFileSync(path.join(__dirname, './env.template.js')).toString();
   template = template.replaceAll(/{{(.+?)}}/g, (match, p1) => {
     return variables[p1];
   });
-  fs.writeFileSync('./env.js', template);
+  fs.writeFileSync(path.join(packageRootPath, './env.js'), template);
 }
 
 function build(buildItem, watch) {
