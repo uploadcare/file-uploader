@@ -27,7 +27,7 @@
     "test": "test",
     "release": "shipjs prepare",
     "dev": "wds --open",
-    "build": "node ./build.js",
+    "build": "npm run clean && node ./build.js",
     "tsc": "tsc --skipLibCheck --allowJs --noEmit",
     "lint": "eslint ./",
     "clean": "rimraf ./web/**/*.{js,css}"
