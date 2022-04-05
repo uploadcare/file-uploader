@@ -3,6 +3,8 @@ import { PROPS_MAP } from './props-map.js';
 
 const CSS_PREF = '--uc-img-';
 const UNRESOLVED_ATTR = 'unresolved';
+const HI_RES_K = 2;
+const ULTRA_RES_K = 3;
 const DEV_MODE =
   !window.location.host.trim() || window.location.host.includes(':') || window.location.hostname.includes('localhost');
 
@@ -201,24 +203,24 @@ export class ImgBase extends BaseComponent {
       this.breakpoints.forEach((bp) => {
         imgSet.push(`url("${this._getUrlBase(bp + 'x')}") ${bp}w`);
         if (this.$$('hi-res-support')) {
-          imgSet.push(`url("${this._getUrlBase(bp * 2 + 'x')}") ${bp * 2}w`);
+          imgSet.push(`url("${this._getUrlBase(bp * HI_RES_K + 'x')}") ${bp * HI_RES_K}w`);
         }
         if (this.$$('ultra-res-support')) {
-          imgSet.push(`url("${this._getUrlBase(bp * 3 + 'x')}") ${bp * 3}w`);
+          imgSet.push(`url("${this._getUrlBase(bp * ULTRA_RES_K + 'x')}") ${bp * ULTRA_RES_K}w`);
         }
       });
     } else {
       imgSet.push(`url("${this._getUrlBase(this._getElSize(el))}") 1x`);
       if (this.$$('hi-res-support')) {
-        imgSet.push(`url("${this._getUrlBase(this._getElSize(el, 2))}") 2x`);
+        imgSet.push(`url("${this._getUrlBase(this._getElSize(el, HI_RES_K))}") ${HI_RES_K}x`);
       }
       if (this.$$('ultra-res-support')) {
-        imgSet.push(`url("${this._getUrlBase(this._getElSize(el, 3))}") 3x`);
+        imgSet.push(`url("${this._getUrlBase(this._getElSize(el, ULTRA_RES_K))}") ${ULTRA_RES_K}x`);
       }
     }
-    let iset = `image-set(${imgSet.join(', ')})`;
-    el.style.setProperty('background-image', iset);
-    el.style.setProperty('background-image', '-webkit-' + iset);
+    let iSet = `image-set(${imgSet.join(', ')})`;
+    el.style.setProperty('background-image', iSet);
+    el.style.setProperty('background-image', '-webkit-' + iSet);
   }
 
   getSrcset() {
@@ -226,6 +228,12 @@ export class ImgBase extends BaseComponent {
     if (this.breakpoints) {
       this.breakpoints.forEach((bp) => {
         srcset.push(this._getUrlBase(bp + 'x') + ` ${bp}w`);
+        if (this.$$('hi-res-support')) {
+          srcset.push(this._getUrlBase(bp * HI_RES_K + 'x') + ` ${bp * HI_RES_K}w`);
+        }
+        if (this.$$('ultra-res-support')) {
+          srcset.push(this._getUrlBase(bp * ULTRA_RES_K + 'x') + ` ${bp * ULTRA_RES_K}w`);
+        }
       });
     } else {
       srcset.push(this._getUrlBase(this._getElSize(this.img)) + ' 1x');
