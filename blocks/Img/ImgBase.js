@@ -135,12 +135,13 @@ export class ImgBase extends BaseComponent {
 
   /**
    * @param {HTMLElement} el
-   * @param {Boolean} [double]
+   * @param {Number} [k]
+   * @param {Boolean} [wOnly]
    */
-  _getElSize(el, double = false) {
+  _getElSize(el, k = 1, wOnly = true) {
     let rect = el.getBoundingClientRect();
-    let w = Math.round(double ? rect.width * 2 : rect.width);
-    let h = Math.round(double ? rect.height * 2 : rect.height);
+    let w = k * Math.round(rect.width);
+    let h = wOnly ? '' : k * Math.round(rect.height);
     return `${w ? w : ''}x${h ? h : ''}`;
   }
 
@@ -183,46 +184,74 @@ export class ImgBase extends BaseComponent {
     });
   }
 
-  renderBg() {
-    [...document.querySelectorAll(this.bgSelector)].forEach((el) => {
-      let imgSetArr = [
-        `url("${this._getUrlBase(this._getElSize(el))}") 1x`,
-        `url("${this._getUrlBase(this._getElSize(el, true))}") 2x`,
-      ];
-      let iset = `image-set(${imgSetArr.join(', ')})`;
-      el.style.setProperty('background-image', iset);
-      el.style.setProperty('background-image', '-webkit-' + iset);
-    });
+  get breakpoints() {
+    return this.$$('breakpoints')
+      ? this.$$('breakpoints')
+          .split(',')
+          .map((bpStr) => {
+            return parseFloat(bpStr.trim());
+          })
+      : null;
+  }
+
+  /** @param {HTMLElement} el */
+  renderBg(el) {
+    let imgSet = [];
+    if (this.breakpoints) {
+      this.breakpoints.forEach((bp) => {
+        imgSet.push(`url("${this._getUrlBase(bp + 'x')}") ${bp}w`);
+        if (this.$$('hi-res-support')) {
+          imgSet.push(`url("${this._getUrlBase(bp * 2 + 'x')}") ${bp * 2}w`);
+        }
+        if (this.$$('ultra-res-support')) {
+          imgSet.push(`url("${this._getUrlBase(bp * 3 + 'x')}") ${bp * 3}w`);
+        }
+      });
+    } else {
+      imgSet.push(`url("${this._getUrlBase(this._getElSize(el))}") 1x`);
+      if (this.$$('hi-res-support')) {
+        imgSet.push(`url("${this._getUrlBase(this._getElSize(el, 2))}") 2x`);
+      }
+      if (this.$$('ultra-res-support')) {
+        imgSet.push(`url("${this._getUrlBase(this._getElSize(el, 3))}") 3x`);
+      }
+    }
+    let iset = `image-set(${imgSet.join(', ')})`;
+    el.style.setProperty('background-image', iset);
+    el.style.setProperty('background-image', '-webkit-' + iset);
   }
 
   getSrcset() {
     let srcset = [];
-    if (!this.$$('breakpoints')) {
-      srcset.push(this._getUrlBase(this._getElSize(this.img)) + ' 1x');
-      if (this.$$('hi-res-support')) {
-        srcset.push(this._getUrlBase(this._getElSize(this.img, true)) + ' 2x');
-      }
-      if (this.$$('ultra-res-support')) {
-        srcset.push(this._getUrlBase(this._getElSize(this.img, true)) + ' 3x');
-      }
-    } else {
-      let bpArr = this.$$('breakpoints')
-        .split(',')
-        .map((bpStr) => {
-          return parseFloat(bpStr.trim());
-        });
-      bpArr.forEach((bp) => {
+    if (this.breakpoints) {
+      this.breakpoints.forEach((bp) => {
         srcset.push(this._getUrlBase(bp + 'x') + ` ${bp}w`);
       });
+    } else {
+      srcset.push(this._getUrlBase(this._getElSize(this.img)) + ' 1x');
+      if (this.$$('hi-res-support')) {
+        srcset.push(this._getUrlBase(this._getElSize(this.img, 2)) + ' 2x');
+      }
+      if (this.$$('ultra-res-support')) {
+        srcset.push(this._getUrlBase(this._getElSize(this.img, 3)) + ' 3x');
+      }
     }
     return srcset.join();
   }
 
   init() {
     if (this.bgSelector) {
-      this.renderBg();
+      [...document.querySelectorAll(this.bgSelector)].forEach((el) => {
+        if (this.$$('intersection')) {
+          this.initIntersection(el, () => {
+            this.renderBg(el);
+          });
+        } else {
+          this.renderBg(el);
+        }
+      });
     } else if (this.$$('intersection')) {
-      this.initIntersection(() => {
+      this.initIntersection(this.img, () => {
         this.img.srcset = this.getSrcset();
       });
     } else {
@@ -230,8 +259,11 @@ export class ImgBase extends BaseComponent {
     }
   }
 
-  /** @param {() => void} cbkFn */
-  initIntersection(cbkFn) {
+  /**
+   * @param {HTMLElement} el
+   * @param {() => void} cbkFn
+   */
+  initIntersection(el, cbkFn) {
     let opts = {
       root: null,
       rootMargin: '0px',
@@ -241,16 +273,24 @@ export class ImgBase extends BaseComponent {
       entries.forEach((ent) => {
         if (ent.isIntersecting) {
           cbkFn();
-          this._isnObserver.unobserve(this.img);
+          this._isnObserver.unobserve(el);
         }
       });
     }, opts);
-    this._isnObserver.observe(this.img);
+    this._isnObserver.observe(el);
+    if (!this._observed) {
+      /** @private */
+      this._observed = new Set();
+    }
+    this._observed.add(el);
   }
 
   destroyCallback() {
     if (this._isnObserver) {
-      this._isnObserver.unobserve(this.img);
+      this._observed.forEach((el) => {
+        this._isnObserver.unobserve(el);
+      });
+      this._isnObserver = null;
     }
   }
 
