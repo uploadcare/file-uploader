@@ -19,17 +19,28 @@ AppShell.shadowStyles = /*css*/ `
 }
 header {
   padding: 20px;
-  background-color: rgba(0, 0, 0, .2);
+  background-color: rgba(0, 0, 0, .4);
 }
 nav {
-  position: fixed;
-  left: 0;
-  padding: 20px;
+  display: flex;
+  justify-content: center;
+  position: sticky;
+  top: 0;
+  padding: 10px;
+  background-color: rgba(0, 0, 0, .3);
+  height: 100%;
+  backdrop-filter: blur(4px);
+}
+nav > div {
+  display: flex;
+  justify-content: space-around;
+  width: 100%;
+  max-width: 1080px;
 }
 a {
   display: block;
   color: var(--clr-font);
-  margin-top: 10px;
+  margin: 10px;
   text-decoration: none;
 }
 main {
@@ -49,12 +60,15 @@ footer {
 
 AppShell.template = /*html*/ `
 <header>🟡 Uploadcare | uc-blocks</header>
+<nav>
+  <div>
+    <a href="/">Home</a>
+    <a href="/blocks/">Blocks</a>
+    <a href="/solutions/">Solutions</a>
+    <a href="/toc">TOC</a>
+  </div>
+</nav>
 <main>
-  <nav>
-    <a href="//">Home</a>
-    <a href="//blocks/">Blocks</a>
-    <a href="//solutions/">Solutions</a>
-  </nav>
   <col-css>
     <slot></slot>
   </col-css>
