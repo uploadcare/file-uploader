@@ -5,28 +5,22 @@
     "module": "esnext",
     "moduleResolution": "node",
     "lib": [
-        "es2017",
-        "ESNext",
-        "ESNext.Array",
-        "DOM",
-        "DOM.Iterable",
-        "WebWorker",
-      ],
+      "es2017",
+      "ESNext",
+      "ESNext.Array",
+      "DOM",
+      "DOM.Iterable",
+      "WebWorker"
+    ],
     "allowJs": true,
     "checkJs": true,
     "strict": false,
     "alwaysStrict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "types": [
-      "node"
-    ],
+    "types": ["node"],
     "noEmit": true
   },
-  "include": [
-    "**/*.js"
-  ],
-  "exclude": [
-    "./submodules/upload-client.js"
-  ]
+  "include": ["**/*.js"],
+  "exclude": ["./submodules/upload-client.js"]
 }

@@ -30,7 +30,13 @@
     "build": "npm run clean && node ./build.js",
     "tsc": "tsc --skipLibCheck --allowJs --noEmit",
     "lint": "eslint ./",
-    "clean": "rimraf ./web/**/*.{js,css}"
+    "lint:fix": "eslint ./ --fix",
+    "clean": "rimraf ./web/**/*.{js,css}",
+    "format:js": "prettier --write ./**/*.js;",
+    "format:css": "prettier --write --parser css ./**/*.css",
+    "format:html": "prettier --write --parser html ./**/*.html",
+    "format:json": "prettier --write --parser json ./**/*.json",
+    "format": "run-s lint:fix format:js format:css format:html format:json"
   },
   "devDependencies": {
     "@babel/eslint-parser": "^7.15.7",
@@ -39,12 +45,12 @@
     "@web/dev-server": "^0.1.30",
     "esbuild": "^0.14.21",
     "eslint": "^8.1.0",
-    "eslint-config-prettier": "^6.11.0",
+    "eslint-config-prettier": "^8.5.0",
     "husky": "^1.3.1",
     "lint-staged": "^11.1.2",
     "npm-run-all": "^4.1.5",
-    "prettier": "^2.0.5",
-    "prettier-plugin-jsdoc": "0.0.17",
+    "prettier": "^2.6.2",
+    "prettier-plugin-jsdoc": "0.3.36",
     "rimraf": "^3.0.2",
     "shipjs": "^0.24.3",
     "typescript": "^4.5.5"
@@ -63,6 +69,14 @@
     ],
     "*.css": [
       "prettier --write --parser css",
+      "git add"
+    ],
+    "*.html": [
+      "prettier --write --parser html",
+      "git add"
+    ],
+    "*.json": [
+      "prettier --write --parser json",
       "git add"
     ]
   },

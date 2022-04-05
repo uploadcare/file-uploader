@@ -1,8 +1,8 @@
 {
+  "plugins": ["prettier-plugin-jsdoc"],
   "singleQuote": true,
   "tabWidth": 2,
   "semi": true,
   "arrowParens": "always",
-  "printWidth": 120,
-  "parser": "jsdoc-parser"
+  "printWidth": 120
 }
