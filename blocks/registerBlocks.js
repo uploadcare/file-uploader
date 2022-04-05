@@ -10,6 +10,9 @@ export function registerBlocks(blockExports) {
     if (tagName.startsWith('-')) {
       tagName = tagName.replace('-', '');
     }
+    if (!tagName.startsWith('uc-')) {
+      tagName = 'uc-' + tagName;
+    }
     blockExports[blockName].reg?.(tagName);
   }
 }

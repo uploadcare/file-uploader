@@ -1,5 +1,6 @@
 export { Block } from './../abstract/Block.js';
 export { Icon } from './Icon/Icon.js';
+export { Img } from './Img/Img.js';
 export { SimpleBtn } from './SimpleBtn/SimpleBtn.js';
 export { StartFrom } from './StartFrom/StartFrom.js';
 export { DropArea } from './DropArea/DropArea.js';
