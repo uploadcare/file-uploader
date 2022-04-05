@@ -60,6 +60,10 @@
       "eslint --fix",
       "prettier --write",
       "git add"
+    ],
+    "*.css": [
+      "prettier --write --parser css",
+      "git add"
     ]
   },
   "author": "Uploadcare Inc.",
