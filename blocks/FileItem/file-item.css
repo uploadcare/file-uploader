@@ -2,10 +2,10 @@ uc-file-item {
   position: relative;
   display: grid;
   grid-template-columns: min-content auto min-content min-content;
-  transition: var(--transition-duration);
   padding: var(--gap-mid);
   background-color: transparent;
   border-bottom: var(--border-light);
+  transition: var(--transition-duration);
 }
 
 uc-file-item:last-of-type {
@@ -29,13 +29,13 @@ uc-file-item[error] {
 }
 
 uc-file-item .thumb {
-  display: inline-flex;
   position: relative;
-  height: var(--ui-size);
+  display: inline-flex;
   width: var(--ui-size);
+  height: var(--ui-size);
   background-color: var(--clr-shade-lv1);
-  background-size: cover;
   background-position: center center;
+  background-size: cover;
   border-radius: var(--border-radius-thumb);
 }
 
@@ -44,12 +44,12 @@ uc-file-item .file-name-wrapper {
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
-  padding-left: var(--gap-mid);
+  max-width: 100%;
   padding-right: var(--gap-mid);
+  padding-left: var(--gap-mid);
+  overflow: hidden;
   color: var(--clr-txt);
   opacity: var(--opacity-max);
-  overflow: hidden;
-  max-width: 100%;
 }
 
 uc-file-item:hover .file-name-wrapper {
@@ -59,17 +59,17 @@ uc-file-item:hover .file-name-wrapper {
 uc-file-item .file-name {
   max-width: 100%;
   overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 uc-file-item button {
   width: var(--ui-size);
   height: var(--ui-size);
-  background-color: transparent;
-  color: var(--clr-txt-lightest);
-  cursor: pointer;
   padding: 0;
+  color: var(--clr-txt-lightest);
+  background-color: transparent;
+  cursor: pointer;
   opacity: var(--opacity-normal);
   transition: opacity var(--transition-duration);
 }
@@ -83,14 +83,14 @@ uc-file-item button:hover {
 }
 
 uc-file-item .badge {
-  display: none;
   position: absolute;
   top: calc(var(--ui-size) * -0.15);
   right: calc(var(--ui-size) * -0.15);
-  height: calc(var(--ui-size) * 0.42);
+  display: none;
   width: calc(var(--ui-size) * 0.42);
-  background-color: var(--clr-txt);
+  height: calc(var(--ui-size) * 0.42);
   color: var(--clr-background-light);
+  background-color: var(--clr-txt);
   border-radius: 50%;
 }
 
@@ -114,6 +114,6 @@ uc-file-item .badge uc-icon svg {
 }
 
 uc-file-item .progress-bar {
-  height: 2px;
   top: calc(100% - 2px);
+  height: 2px;
 }

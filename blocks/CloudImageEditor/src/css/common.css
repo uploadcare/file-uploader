@@ -122,10 +122,10 @@ uc-cloud-editor.editor_OFF {
 }
 
 uc-cloud-editor > .wrapper {
-  height: 100%;
   position: relative;
   display: grid;
   grid-template-rows: minmax(var(--l-min-img-height), var(--l-max-img-height)) max-content;
+  height: 100%;
   overflow: hidden;
   transition: 0.3s;
 }
@@ -150,8 +150,8 @@ uc-cloud-editor > .wrapper {
 
 uc-cloud-editor > .wrapper > .viewport {
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
   overflow: hidden;
 }
 
@@ -161,17 +161,17 @@ uc-cloud-editor > .wrapper > .viewport > .image_container > .image {
   position: absolute;
   top: 0px;
   left: 0px;
+  z-index: 10;
   display: block;
+  box-sizing: border-box;
   width: 100%;
   height: 100%;
   object-fit: scale-down;
-  user-select: none;
-  opacity: var(--viewer-image-opacity);
-  transform: scale(1);
-  box-sizing: border-box;
-  z-index: 10;
-  pointer-events: auto;
   background-color: var(--color-image-background);
+  transform: scale(1);
+  opacity: var(--viewer-image-opacity);
+  user-select: none;
+  pointer-events: auto;
 }
 
 uc-cloud-editor > .wrapper > .viewport > .image_container > .image.image_visible_viewer {
@@ -179,20 +179,18 @@ uc-cloud-editor > .wrapper > .viewport > .image_container > .image.image_visible
 }
 
 uc-cloud-editor > .wrapper > .viewport > .image_container > .image.image_hidden_to_cropper {
-  pointer-events: none;
-  --viewer-image-opacity: 0;
-
   background-image: var(--transparent-pixel);
   transform: scale(1);
   transition: transform var(--transition-duration-4), opacity var(--transition-duration-3) steps(1, jump-end);
+  pointer-events: none;
+  --viewer-image-opacity: 0;
 }
 
 uc-cloud-editor > .wrapper > .viewport > .image_container > .image.image_hidden_effects {
-  pointer-events: none;
-  --viewer-image-opacity: 0;
-
   transform: scale(1);
   transition: opacity var(--transition-duration-3) cubic-bezier(0.5, 0, 1, 1), transform var(--transition-duration-4);
+  pointer-events: none;
+  --viewer-image-opacity: 0;
 }
 
 uc-cloud-editor > .wrapper > .viewport > .image_container {
@@ -212,22 +210,22 @@ uc-cloud-editor > .wrapper > .toolbar {
 
 uc-cloud-editor > .wrapper > .toolbar > .toolbar_content {
   position: absolute;
-  left: 0px;
   bottom: 0px;
+  left: 0px;
+  box-sizing: border-box;
   width: 100%;
   height: 100%;
   min-height: var(--size-panel-heading);
   background-color: var(--color-fill-contrast);
-  box-sizing: border-box;
 }
 
 uc-cloud-editor > .wrapper > .toolbar > .toolbar_content.toolbar_content__viewer {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding-left: var(--l-toolbar-horizontal-padding);
-  padding-right: var(--l-toolbar-horizontal-padding);
+  justify-content: space-between;
   height: var(--size-panel-heading);
+  padding-right: var(--l-toolbar-horizontal-padding);
+  padding-left: var(--l-toolbar-horizontal-padding);
 }
 
 uc-cloud-editor > .wrapper > .toolbar > .toolbar_content.toolbar_content__editor {
@@ -241,11 +239,11 @@ uc-cloud-editor > .wrapper > .viewport > .info_pan {
 
 uc-cloud-editor > .wrapper > .viewport > .file_type_outer {
   position: absolute;
-  user-select: none;
   z-index: 2;
   display: flex;
-  transform: translateX(-40px);
   max-width: 120px;
+  transform: translateX(-40px);
+  user-select: none;
 }
 
 uc-cloud-editor > .wrapper > .viewport > .file_type_outer > .file_type {
@@ -253,32 +251,32 @@ uc-cloud-editor > .wrapper > .viewport > .file_type_outer > .file_type {
 }
 
 uc-cloud-editor > .wrapper > .network_problems_splash {
-  background-color: var(--color-fill-contrast);
   position: absolute;
-  width: 100%;
-  height: 100%;
   z-index: 4;
   display: flex;
   flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background-color: var(--color-fill-contrast);
 }
 
 uc-cloud-editor > .wrapper > .network_problems_splash > .network_problems_content {
   display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
   flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 uc-cloud-editor > .wrapper > .network_problems_splash > .network_problems_content > .network_problems_icon {
-  background-color: rgba(var(--rgb-fill-shaded));
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 40px;
   height: 40px;
-  border-radius: 50%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
   color: rgb(var(--rgb-text-base) 0.6);
+  background-color: rgba(var(--rgb-fill-shaded));
+  border-radius: 50%;
 }
 
 uc-cloud-editor > .wrapper > .network_problems_splash > .network_problems_content > .network_problems_text {
@@ -288,8 +286,8 @@ uc-cloud-editor > .wrapper > .network_problems_splash > .network_problems_conten
 
 uc-cloud-editor > .wrapper > .network_problems_splash > .network_problems_footer {
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
   height: var(--size-panel-heading);
 }
 
@@ -297,13 +295,13 @@ uc-crop-frame > .svg {
   position: absolute;
   top: 0px;
   left: 0px;
+  z-index: 2;
   width: 100%;
   height: 100%;
-  z-index: 2;
-  opacity: inherit;
-  transition: var(--transition-duration-3);
   border-top-left-radius: var(--border-radius-base);
   border-top-right-radius: var(--border-radius-base);
+  opacity: inherit;
+  transition: var(--transition-duration-3);
 }
 
 uc-crop-frame > .thumb {
@@ -318,13 +316,13 @@ uc-crop-frame > .thumb {
 }
 
 uc-crop-frame > .thumb--visible {
-  pointer-events: auto;
   opacity: 1;
+  pointer-events: auto;
 }
 
 uc-crop-frame > .thumb--hidden {
-  pointer-events: none;
   opacity: 0;
+  pointer-events: none;
 }
 
 uc-crop-frame > .guides {
@@ -362,15 +360,15 @@ uc-editor-operation-control {
   --down-opacity: 0.12;
   --down-filter: 0.6;
 
-  outline: none;
   position: relative;
   display: grid;
   grid-template-columns: var(--l-base-min-width) auto;
   align-items: center;
-  cursor: pointer;
   height: var(--l-base-height);
-  transition: var(--l-width-transition);
   color: rgba(var(--idle-color-rgb));
+  outline: none;
+  cursor: pointer;
+  transition: var(--l-width-transition);
 }
 
 uc-editor-button-control > .active,
@@ -391,40 +389,40 @@ uc-editor-button-control > .before,
 uc-editor-operation-control > .before,
 uc-editor-crop-button-control > .before,
 uc-editor-filter-control > .before {
-  z-index: -1;
   position: absolute;
+  right: 0px;
+  left: 0px;
+  z-index: -1;
   width: 100%;
   height: 100%;
-  left: 0px;
-  right: 0px;
-  transition: var(--transition-duration-3);
   background-color: rgb(var(--color-effect) var(--opacity-effect));
   border-radius: var(--border-radius-editor);
+  transition: var(--transition-duration-3);
 }
 
 uc-editor-button-control > .title,
 uc-editor-operation-control > .title,
 uc-editor-crop-button-control > .title,
 uc-editor-filter-control > .title {
-  text-transform: uppercase;
   padding-right: var(--gap-mid-1);
-  letter-spacing: 1.004px;
   font-size: 0.7em;
+  letter-spacing: 1.004px;
+  text-transform: uppercase;
 }
 
 uc-editor-filter-control > .preview {
   position: absolute;
+  right: 0px;
+  left: 0px;
+  z-index: 1;
   width: 100%;
   height: var(--l-base-height);
-  left: 0px;
-  right: 0px;
-  border-radius: var(--border-radius-editor);
   background-repeat: no-repeat;
   background-size: contain;
-  transition: var(--transition-duration-3);
-  z-index: 1;
+  border-radius: var(--border-radius-editor);
   opacity: 0;
   filter: brightness(var(--filter-effect));
+  transition: var(--transition-duration-3);
 }
 
 uc-editor-filter-control > .original-icon {
@@ -436,41 +434,41 @@ uc-editor-image-cropper {
   position: absolute;
   top: 0px;
   left: 0px;
+  z-index: 10;
   display: block;
   width: 100%;
   height: 100%;
   opacity: 0;
   pointer-events: none;
   touch-action: none;
-  z-index: 10;
 }
 
 uc-editor-image-cropper.active_from_editor {
+  transform: scale(1) translate(0px, 0px);
+  opacity: 1;
   transition: transform var(--transition-duration-4) cubic-bezier(0.37, 0, 0.63, 1) 0.4s,
     opacity var(--transition-duration-3);
-  opacity: 1;
   pointer-events: auto;
-  transform: scale(1) translate(0px, 0px);
 }
 
 uc-editor-image-cropper.active_from_viewer {
+  transform: scale(1) translate(0px, 0px);
+  opacity: 1;
   transition: transform var(--transition-duration-4) cubic-bezier(0.37, 0, 0.63, 1) 0.4s,
     opacity var(--transition-duration-3);
-  opacity: 1;
   pointer-events: auto;
-  transform: scale(1) translate(0px, 0px);
 }
 
 uc-editor-image-cropper.inactive_to_editor {
+  opacity: 0;
   transition: transform var(--transition-duration-4) cubic-bezier(0.37, 0, 0.63, 1),
     opacity var(--transition-duration-3) calc(var(--transition-duration-3) + 0.05s);
-  opacity: 0;
   pointer-events: none;
 }
 
 uc-editor-image-cropper.inactive_instant {
-  transition: opacity var(--transition-duration-2);
   opacity: 0;
+  transition: opacity var(--transition-duration-2);
   pointer-events: none;
 }
 
@@ -478,10 +476,10 @@ uc-editor-image-cropper > .canvas {
   position: absolute;
   top: 0px;
   left: 0px;
+  z-index: 1;
   display: block;
   width: 100%;
   height: 100%;
-  z-index: 1;
 }
 
 uc-editor-image-fader {
@@ -494,27 +492,27 @@ uc-editor-image-fader {
 }
 
 uc-editor-image-fader.active_from_viewer {
-  opacity: 1;
-  pointer-events: auto;
-  transition: transform var(--transition-duration-4), opacity var(--transition-duration-3) steps(1, jump-start);
   z-index: 3;
   transform: scale(1);
+  opacity: 1;
+  transition: transform var(--transition-duration-4), opacity var(--transition-duration-3) steps(1, jump-start);
+  pointer-events: auto;
 }
 
 uc-editor-image-fader.active_from_cropper {
-  opacity: 1;
-  pointer-events: auto;
-  transition: transform var(--transition-duration-4), opacity var(--transition-duration-3) steps(1, jump-end);
   z-index: 3;
   transform: scale(1);
+  opacity: 1;
+  transition: transform var(--transition-duration-4), opacity var(--transition-duration-3) steps(1, jump-end);
+  pointer-events: auto;
 }
 
 uc-editor-image-fader.inactive_to_cropper {
-  opacity: 0;
-  pointer-events: none;
-  transition: transform var(--transition-duration-4), opacity var(--transition-duration-3) steps(1, jump-end);
-  transform: scale(1);
   z-index: 3;
+  transform: scale(1);
+  opacity: 0;
+  transition: transform var(--transition-duration-4), opacity var(--transition-duration-3) steps(1, jump-end);
+  pointer-events: none;
 }
 
 uc-editor-image-fader.inactive_rough {
@@ -529,40 +527,40 @@ uc-editor-image-fader .fader-image {
   width: 100%;
   height: 100%;
   object-fit: scale-down;
+  transform: scale(1);
   user-select: none;
   content-visibility: auto;
-  transform: scale(1);
 }
 
 uc-editor-image-fader .fader-image--preview {
-  transform: scale(1);
-  opacity: 0;
-  transition: var(--transition-duration-3);
   background-color: var(--color-image-background);
   border-top-left-radius: var(--border-radius-base);
   border-top-right-radius: var(--border-radius-base);
+  transform: scale(1);
+  opacity: 0;
+  transition: var(--transition-duration-3);
 }
 
 uc-editor-scroller {
+  display: flex;
+  align-items: center;
   width: 100%;
   height: 100%;
   overflow-x: scroll;
-  display: flex;
-  align-items: center;
 }
 
 uc-editor-slider {
   display: flex;
+  align-items: center;
   justify-content: center;
   width: 100%;
   height: 66px;
-  align-items: center;
 }
 
 uc-editor-toolbar {
   position: relative;
-  height: 100%;
   width: 100%;
+  height: 100%;
 }
 
 @media only screen and (max-width: 600px) {
@@ -583,46 +581,46 @@ uc-editor-toolbar {
 
 uc-editor-toolbar > .toolbar-container {
   position: relative;
-  height: 100%;
   width: 100%;
+  height: 100%;
   overflow: hidden;
 }
 
 uc-editor-toolbar > .toolbar-container > .sub-toolbar {
   position: absolute;
-  width: 100%;
-  height: 100%;
   display: grid;
   grid-template-rows: 1fr 1fr;
+  width: 100%;
+  height: 100%;
+  background-color: var(--color-fill-contrast);
   transition: opacity var(--transition-duration-3) ease-in-out, transform var(--transition-duration-3) ease-in-out,
     visibility var(--transition-duration-3) ease-in-out;
-  background-color: var(--color-fill-contrast);
 }
 
 uc-editor-toolbar > .toolbar-container > .sub-toolbar.sub-toolbar--visible {
+  transform: translateY(0px);
   opacity: 1;
   pointer-events: auto;
-  transform: translateY(0px);
 }
 
 uc-editor-toolbar > .toolbar-container > .sub-toolbar.sub-toolbar--top-hidden {
+  transform: translateY(100%);
   opacity: 0;
   pointer-events: none;
-  transform: translateY(100%);
 }
 
 uc-editor-toolbar > .toolbar-container > .sub-toolbar.sub-toolbar--bottom-hidden {
+  transform: translateY(-100%);
   opacity: 0;
   pointer-events: none;
-  transform: translateY(-100%);
 }
 
 uc-editor-toolbar > .toolbar-container > .sub-toolbar > .controls-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-left: var(--l-controls-padding);
   padding-right: var(--l-controls-padding);
+  padding-left: var(--l-controls-padding);
 }
 
 uc-editor-toolbar > .toolbar-container > .sub-toolbar > .controls-row > .tab-toggles {
@@ -630,8 +628,8 @@ uc-editor-toolbar > .toolbar-container > .sub-toolbar > .controls-row > .tab-tog
   display: grid;
   grid-auto-flow: column;
   grid-gap: 0px var(--l-tab-gap);
-  height: 100%;
   align-items: center;
+  height: 100%;
 }
 
 uc-editor-toolbar > .toolbar-container > .sub-toolbar > .controls-row > .tab-toggles > .tab-toggles_indicator {
@@ -651,14 +649,14 @@ uc-editor-toolbar > .toolbar-container > .sub-toolbar > .tab-content-row {
 
 uc-editor-toolbar > .toolbar-container > .sub-toolbar > .tab-content-row > .tab-content {
   position: absolute;
-  left: 0px;
   top: 0px;
+  left: 0px;
+  display: flex;
   width: 100%;
   height: 100%;
+  overflow: hidden;
   opacity: 0;
   content-visibility: auto;
-  display: flex;
-  overflow: hidden;
 }
 
 uc-editor-toolbar > .toolbar-container > .sub-toolbar > .tab-content-row > .tab-content.tab-content--visible {
@@ -675,14 +673,14 @@ uc-editor-toolbar > .toolbar-container > .sub-toolbar > .tab-content-row > .tab-
   display: grid;
   grid-template-areas: '. inner .';
   grid-template-columns: 1fr auto 1fr;
-  padding-left: var(--gap-max);
   box-sizing: border-box;
   min-width: 100%;
+  padding-left: var(--gap-max);
 }
 
 uc-editor-toolbar > .toolbar-container > .sub-toolbar > .tab-content-row > .tab-content .controls-list_inner {
-  grid-area: inner;
   display: grid;
+  grid-area: inner;
   grid-auto-flow: column;
   grid-gap: calc((var(--gap-min) - 1px) * 3);
 }
@@ -702,52 +700,52 @@ uc-editor-toolbar .controls-list_last-item {
 
 uc-editor-toolbar .filter-tooltip_container {
   position: absolute;
-  width: 100%;
-  height: 100%;
   display: flex;
   align-items: flex-start;
   justify-content: center;
+  width: 100%;
+  height: 100%;
 }
 
 uc-editor-toolbar .filter-tooltip_wrapper {
   position: absolute;
   top: calc(-100% - var(--gap-mid-2));
-  height: 100%;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
+  height: 100%;
   pointer-events: none;
 }
 
 uc-editor-toolbar .filter-tooltip {
-  background-color: var(--color-text-accent-contrast);
-  color: var(--color-text-base);
-  border-radius: var(--border-radius-editor);
-  text-transform: uppercase;
-  padding-left: var(--gap-min);
-  padding-right: var(--gap-min);
-  padding-top: calc(var(--gap-min) / 2);
-  padding-bottom: calc(var(--gap-min) / 2);
-  font-size: 0.7em;
-  transition: var(--transition-duration-3);
-  opacity: 0;
   z-index: 3;
+  padding-top: calc(var(--gap-min) / 2);
+  padding-right: var(--gap-min);
+  padding-bottom: calc(var(--gap-min) / 2);
+  padding-left: var(--gap-min);
+  color: var(--color-text-base);
+  font-size: 0.7em;
   letter-spacing: 1px;
+  text-transform: uppercase;
+  background-color: var(--color-text-accent-contrast);
+  border-radius: var(--border-radius-editor);
+  opacity: 0;
+  transition: var(--transition-duration-3);
 }
 
 uc-editor-toolbar .filter-tooltip_visible {
-  opacity: 1;
   transform: translateY(0px);
+  opacity: 1;
 }
 
 uc-editor-toolbar .filter-tooltip_hidden {
-  opacity: 0;
   transform: translateY(100%);
+  opacity: 0;
 }
 
 uc-editor-toolbar .slider {
-  padding-left: var(--l-slider-padding);
   padding-right: var(--l-slider-padding);
+  padding-left: var(--l-slider-padding);
 }
 
 uc-btn-ui {
@@ -758,16 +756,16 @@ uc-btn-ui {
 
   display: inline-flex;
   align-items: center;
+  box-sizing: var(--css-box-sizing, border-box);
   height: var(--css-height, var(--size-touch-area));
   padding-right: var(--css-padding-right, var(--gap-mid-1));
   padding-left: var(--css-padding-left, var(--gap-mid-1));
   color: rgb(var(--color-effect) var(--opacity-effect));
-  filter: brightness(var(--filter-effect));
-  cursor: pointer;
-  user-select: none;
   outline: none;
-  box-sizing: var(--css-box-sizing, border-box);
+  cursor: pointer;
+  filter: brightness(var(--filter-effect));
   transition: var(--l-transition-effect);
+  user-select: none;
 }
 
 uc-btn-ui .text {
@@ -775,32 +773,32 @@ uc-btn-ui .text {
 }
 
 uc-btn-ui .icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: rgb(var(--color-effect) var(--opacity-effect));
   filter: brightness(var(--filter-effect));
   transition: var(--l-transition-effect);
-  display: flex;
-  justify-content: center;
-  align-items: center;
 }
 
 uc-btn-ui .icon_left {
-  margin-left: 0px;
   margin-right: var(--gap-mid-1);
+  margin-left: 0px;
 }
 
 uc-btn-ui .icon_right {
-  margin-left: var(--gap-mid-1);
   margin-right: 0px;
+  margin-left: var(--gap-mid-1);
 }
 
 uc-btn-ui .icon_single {
-  margin-left: 0px;
   margin-right: 0px;
+  margin-left: 0px;
 }
 
 uc-btn-ui .icon_hidden {
-  margin: 0;
   display: none;
+  margin: 0;
 }
 
 uc-btn-ui.primary {
@@ -852,24 +850,24 @@ uc-line-loader-ui {
   position: absolute;
   top: 0px;
   left: 0px;
-  height: 2px;
-  width: 100%;
-  opacity: 0.5;
   z-index: 9999;
+  width: 100%;
+  height: 2px;
+  opacity: 0.5;
 }
 
 uc-line-loader-ui .inner {
-  height: 100%;
-  max-width: 200px;
   width: 25%;
+  max-width: 200px;
+  height: 100%;
 }
 
 uc-line-loader-ui .line {
-  background-color: var(--color-primary-accent);
   width: 100%;
   height: 100%;
-  transition: transform 1s;
+  background-color: var(--color-primary-accent);
   transform: translateX(-101%);
+  transition: transform 1s;
 }
 
 uc-slider-ui {
@@ -882,12 +880,12 @@ uc-slider-ui {
   --color-effect: var(--idle-color-rgb);
   --l-color: rgb(var(--color-effect));
 
-  width: 100%;
-  height: calc(var(--l-thumb-size) + (var(--l-zero-dot-size) + var(--l-zero-dot-offset)) * 2);
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 100%;
+  height: calc(var(--l-thumb-size) + (var(--l-zero-dot-size) + var(--l-zero-dot-offset)) * 2);
 }
 
 uc-slider-ui .thumb {
@@ -906,48 +904,48 @@ uc-slider-ui .steps {
   position: absolute;
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
   width: 100%;
   height: 100%;
-  box-sizing: border-box;
-  justify-content: space-between;
-  padding-left: calc(var(--l-thumb-size) / 2);
   padding-right: calc(var(--l-thumb-size) / 2);
+  padding-left: calc(var(--l-thumb-size) / 2);
 }
 
 uc-slider-ui .border-step {
-  height: 10px;
   width: 0px;
+  height: 10px;
   border-right: 1px solid var(--l-color);
   opacity: 0.6;
   transition: var(--transition-duration-2);
 }
 
 uc-slider-ui .minor-step {
-  height: 4px;
   width: 0px;
+  height: 4px;
   border-right: 1px solid var(--l-color);
   opacity: 0.2;
   transition: var(--transition-duration-2);
 }
 
 uc-slider-ui .zero-dot {
-  height: var(--l-zero-dot-size);
+  position: absolute;
+  top: calc(100% - var(--l-zero-dot-offset) * 2);
+  left: calc(var(--l-thumb-size) / 2 - var(--l-zero-dot-size) / 2);
   width: var(--l-zero-dot-size);
+  height: var(--l-zero-dot-size);
   background-color: var(--color-primary-accent);
   border-radius: 50%;
-  position: absolute;
-  left: calc(var(--l-thumb-size) / 2 - var(--l-zero-dot-size) / 2);
-  top: calc(100% - var(--l-zero-dot-offset) * 2);
   opacity: 0;
   transition: var(--transition-duration-3);
 }
 
 uc-slider-ui .input {
-  cursor: pointer;
   position: absolute;
   width: calc(100% - 10px);
   height: 100%;
   margin: 0;
+  cursor: pointer;
   opacity: 0;
 }
 
@@ -971,13 +969,13 @@ ctx-provider {
   --color-text-base: black;
   --color-primary-accent: blue;
 
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 190px;
   height: 40px;
+  padding-right: 10px;
+  padding-left: 10px;
   background-color: #f5f5f5;
   border-radius: 3px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding-left: 10px;
-  padding-right: 10px;
 }

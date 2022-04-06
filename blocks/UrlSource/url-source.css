@@ -1,7 +1,7 @@
 uc-url-source {
   display: grid;
-  grid-template-columns: 1fr min-content min-content;
   grid-gap: var(--gap-mid);
+  grid-template-columns: 1fr min-content min-content;
   padding: var(--gap-mid);
 }
 

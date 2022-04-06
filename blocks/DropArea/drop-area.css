@@ -2,14 +2,14 @@ uc-drop-area {
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: var(--gap-min);
   border: var(--border-dashed);
   border-radius: var(--border-radius-frame);
-  padding: var(--gap-min);
 }
 
 uc-drop-area::after {
-  content: var(--l10n-drop-files-here);
   color: var(--clr-txt-light);
+  content: var(--l10n-drop-files-here);
 }
 
 uc-drop-area[ghost][drag-state='inactive'] {
@@ -21,18 +21,18 @@ uc-drop-area[drag-state='inactive'] {
 }
 
 uc-drop-area[drag-state='active'] {
-  opacity: 1;
   background-color: var(--clr-accent-lightest);
+  opacity: 1;
 }
 
 uc-drop-area[drag-state='near'] {
-  opacity: 1;
   background-color: var(--clr-accent-lightest);
   border-color: var(--clr-accent-light);
+  opacity: 1;
 }
 
 uc-drop-area[drag-state='over'] {
-  opacity: 1;
   background-color: var(--clr-accent-light);
   border-color: var(--clr-accent);
+  opacity: 1;
 }

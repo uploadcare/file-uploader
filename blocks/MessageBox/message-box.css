@@ -1,28 +1,28 @@
 uc-message-box {
   position: fixed;
-  z-index: 100000;
+  right: var(--gap-mid);
   bottom: var(--gap-mid);
   left: var(--gap-mid);
-  right: var(--gap-mid);
+  z-index: 100000;
   display: grid;
   grid-template-rows: min-content auto;
-  background: var(--clr-background);
   color: var(--clr-txt);
   font-size: 0.9em;
-  transition: calc(var(--transition-duration) * 2);
+  background: var(--clr-background);
   border-radius: var(--border-radius-frame);
   box-shadow: var(--modal-shadow);
+  transition: calc(var(--transition-duration) * 2);
 }
 
 uc-message-box:not([active]) {
-  opacity: 0;
-  visibility: hidden;
   transform: translateY(10px);
+  visibility: hidden;
+  opacity: 0;
 }
 
 uc-message-box[error] {
-  background-color: var(--clr-error-message-bgr);
   color: var(--clr-error);
+  background-color: var(--clr-error-message-bgr);
 }
 
 uc-message-box .heading {
@@ -38,10 +38,10 @@ uc-message-box .caption {
 }
 
 uc-message-box .heading button {
-  padding: 0;
-  background-color: transparent;
   width: var(--ui-size);
+  padding: 0;
   color: currentColor;
+  background-color: transparent;
   opacity: var(--opacity-normal);
 }
 

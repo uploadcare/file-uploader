@@ -9,23 +9,23 @@
 
 uc-start-from {
   display: block;
-  height: 100%; /* test value */
-  width: 100%; /* test value */
-  padding: 0;
   flex-direction: column;
-  text-align: center;
   justify-items: center;
+  width: 100%; /* test value */
+  height: 100%; /* test value */
+  padding: 0;
+  text-align: center;
 }
 
 uc-drop-area {
+  flex-direction: column;
   width: 100%;
   height: calc(var(--ui-size) + var(--gap-mid) * 2 + var(--gap-min) * 4);
   padding: 0;
-  flex-direction: column;
-  text-align: center;
   line-height: 140%;
-  border-style: solid;
+  text-align: center;
   border-color: var(--clr-accent-lightest);
+  border-style: solid;
   border-radius: var(--border-radius-frame);
 }
 
@@ -42,12 +42,12 @@ uc-drop-area::after {
 }
 
 uc-drop-area button {
+  display: inline-block;
   width: 100%;
   height: 100%;
-  display: inline-block;
   padding: 0;
-  background: transparent;
   color: var(--clr-accent);
+  background: transparent;
   opacity: 0.8;
   transition: opacity var(--transition-duration) ease;
 }
@@ -57,13 +57,13 @@ uc-drop-area button:hover {
 }
 
 uc-upload-list {
+  gap: 0;
   width: 100%;
   padding: var(--gap-min);
-  gap: 0;
   background-color: transparent;
-  border-radius: var(--border-radius-frame);
   border: var(--border-dashed);
   border-style: solid;
+  border-radius: var(--border-radius-frame);
 }
 
 uc-upload-list .toolbar {

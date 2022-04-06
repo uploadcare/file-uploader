@@ -3,16 +3,16 @@ uc-modal {
 
   position: fixed;
   top: 0;
-  left: 0;
   right: 0;
   bottom: 0;
+  left: 0;
+  z-index: 10000;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: var(--clr-curtain);
-  color: var(--clr-txt);
   padding: var(--gap-mid);
-  z-index: 10000;
+  color: var(--clr-txt);
+  background-color: var(--clr-curtain);
   transition: opacity 0.4s;
 
   /* backdop filter causes scrolling glitches */
@@ -22,22 +22,22 @@ uc-modal {
 }
 
 uc-modal:not([active]) {
-  opacity: 0;
   visibility: hidden;
+  opacity: 0;
 }
 
 uc-modal button.close-btn {
   display: inline-flex;
-  justify-content: center;
   align-items: center;
-  height: var(--ui-size);
+  justify-content: center;
   width: var(--ui-size);
+  height: var(--ui-size);
   padding: 0;
-  background-color: transparent;
   color: var(--clr-txt-light);
-  opacity: var(--opacity-normal);
+  background-color: transparent;
   border: none;
   cursor: pointer;
+  opacity: var(--opacity-normal);
   transition: opacity var(--transition-duration) ease;
 }
 
@@ -52,14 +52,14 @@ uc-modal button.close-btn:active {
 uc-modal > .dialog {
   display: grid;
   grid-template-rows: min-content min-content;
-  box-shadow: var(--modal-shadow);
-  border-radius: var(--border-radius-frame);
-  min-height: var(--ui-size);
-  background-color: var(--clr-background);
-  transition: transform 0.4s;
-  overflow: hidden;
   width: 100%;
   max-width: var(--modal-max-w);
+  min-height: var(--ui-size);
+  overflow: hidden;
+  background-color: var(--clr-background);
+  border-radius: var(--border-radius-frame);
+  box-shadow: var(--modal-shadow);
+  transition: transform 0.4s;
 }
 @media only screen and (max-width: 480px) {
   uc-modal > .dialog {
@@ -84,11 +84,11 @@ uc-modal > .dialog > .content {
 uc-modal .heading {
   display: grid;
   grid-template-columns: min-content 1fr min-content;
-  font-size: 1.1em;
-  font-weight: 500;
-  line-height: var(--ui-size);
   padding: var(--gap-mid);
   color: var(--clr-txt-light);
-  border-bottom: var(--border-light);
+  font-weight: 500;
+  font-size: 1.1em;
+  line-height: var(--ui-size);
   background-color: var(--clr-background-light);
+  border-bottom: var(--border-light);
 }

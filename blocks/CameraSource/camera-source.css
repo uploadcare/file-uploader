@@ -1,8 +1,8 @@
 uc-camera-source {
   position: relative;
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
   height: 100%;
   min-height: var(--activity-h);
   padding-bottom: calc(2 * var(--gap-mid) + var(--ui-size));
@@ -10,19 +10,19 @@ uc-camera-source {
 
 uc-camera-source video {
   display: block;
-  background-color: var(--clr-background);
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
   object-position: center center;
+  background-color: var(--clr-background);
 }
 
 uc-camera-source .toolbar {
   position: absolute;
-  width: 100%;
   bottom: 0;
   display: flex;
   justify-content: space-between;
+  width: 100%;
   padding: var(--gap-mid);
   background-color: var(--clr-background);
 }
@@ -35,15 +35,15 @@ uc-camera-source .content {
 uc-camera-source .message-box {
   --padding: calc(var(--gap-max) * 2);
 
-  flex-direction: column;
-  padding: var(--padding) var(--padding) 0 var(--padding);
   display: flex;
-  justify-content: center;
-  align-items: center;
+  flex-direction: column;
   grid-gap: var(--gap-max);
+  align-items: center;
+  justify-content: center;
+  padding: var(--padding) var(--padding) 0 var(--padding);
 }
 
 uc-camera-source .message-box button {
-  background-color: var(--clr-btn-bgr-primary);
   color: var(--clr-btn-txt-primary);
+  background-color: var(--clr-btn-bgr-primary);
 }

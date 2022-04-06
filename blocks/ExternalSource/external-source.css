@@ -1,25 +1,25 @@
 uc-external-source {
+  position: relative;
   display: grid;
   grid-template-rows: auto min-content;
-  position: relative;
   height: 100%;
   min-height: var(--activity-h);
 }
 
 uc-external-source iframe {
   display: block;
-  border: none;
-  height: 100%;
   width: 100%;
+  height: 100%;
+  border: none;
 }
 
 uc-external-source .toolbar {
-  width: 100%;
   display: grid;
-  grid-template-columns: max-content 1fr max-content max-content;
-  padding: var(--gap-mid);
   grid-gap: var(--gap-mid);
+  grid-template-columns: max-content 1fr max-content max-content;
   align-items: center;
+  width: 100%;
+  padding: var(--gap-mid);
   border-top: var(--border-light);
 }
 
@@ -33,8 +33,8 @@ uc-external-source .back-btn::after {
 
 uc-external-source .selected-counter {
   display: flex;
-  justify-content: space-between;
-  padding: var(--gap-mid);
   grid-gap: var(--gap-mid);
   align-items: center;
+  justify-content: space-between;
+  padding: var(--gap-mid);
 }

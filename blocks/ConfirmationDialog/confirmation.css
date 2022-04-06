@@ -6,11 +6,11 @@ uc-confirmation-dialog {
 
 uc-confirmation-dialog .message {
   display: flex;
-  font-size: 1.1em;
-  font-weight: 500;
   justify-content: center;
   padding: var(--gap-mid);
   padding-bottom: var(--gap-max);
+  font-weight: 500;
+  font-size: 1.1em;
 }
 
 uc-confirmation-dialog .toolbar {

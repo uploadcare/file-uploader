@@ -1,9 +1,9 @@
 uc-upload-details {
   position: relative;
-  height: 100%;
-  min-height: var(--activity-h);
   display: grid;
   grid-template-rows: auto min-content;
+  height: 100%;
+  min-height: var(--activity-h);
 }
 
 uc-upload-details uc-tabs .tabs-context {
@@ -11,11 +11,11 @@ uc-upload-details uc-tabs .tabs-context {
 }
 
 uc-upload-details .toolbar {
-  border-top: var(--border-light);
   display: grid;
   grid-template-columns: min-content min-content 1fr min-content;
   gap: var(--gap-mid);
   padding: var(--gap-mid);
+  border-top: var(--border-light);
 }
 
 uc-upload-details .toolbar[edit-disabled] {
@@ -28,9 +28,9 @@ uc-upload-details .remove-btn {
 }
 
 uc-upload-details .detail-btn {
-  background-color: var(--clr-background);
-  color: var(--clr-txt);
   padding-left: 0;
+  color: var(--clr-txt);
+  background-color: var(--clr-background);
 }
 
 uc-upload-details .edit-btn {
@@ -57,7 +57,7 @@ uc-upload-details .info-block:last-of-type {
 }
 
 uc-upload-details .info-block > .info-block_name {
-  font-size: 0.8em;
   margin-bottom: 0.4em;
   color: var(--clr-txt-light);
+  font-size: 0.8em;
 }

@@ -19,11 +19,11 @@
 
 html,
 body {
-  padding: 0;
   margin: 0;
-  background-color: var(--clr-bg);
+  padding: 0;
   color: var(--clr-font);
   font-family: Roboto, sans-serif;
+  background-color: var(--clr-bg);
 }
 
 body[unresolved] {

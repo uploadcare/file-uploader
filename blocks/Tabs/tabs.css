@@ -1,8 +1,8 @@
 uc-tabs {
-  color: var(--clr-txt-lightest);
-  height: 100%;
   display: grid;
   grid-template-rows: min-content auto;
+  height: 100%;
+  color: var(--clr-txt-lightest);
 }
 
 uc-tabs > .tabs-row {
@@ -12,17 +12,17 @@ uc-tabs > .tabs-row {
 }
 
 uc-tabs .tabs-row > .tab {
-  flex-grow: 1;
-  height: var(--ui-size);
   display: flex;
-  justify-content: center;
+  flex-grow: 1;
   align-items: center;
-  cursor: pointer;
+  justify-content: center;
+  height: var(--ui-size);
   border-bottom: var(--border-light);
+  cursor: pointer;
   transition: var(--transition-duration);
 }
 
 uc-tabs .tabs-row > .tab[current] {
-  border-color: var(--clr-txt);
   color: var(--clr-txt);
+  border-color: var(--clr-txt);
 }

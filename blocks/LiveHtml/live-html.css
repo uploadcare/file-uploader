@@ -5,13 +5,13 @@ uc-live-html {
 }
 
 uc-live-html [contenteditable] {
+  padding: 20px;
+  overflow: auto;
+  color: rgb(255 255 255);
+  font-size: 14px;
+  font-family: monospace;
   white-space: pre;
   background-color: #000;
-  font-family: monospace;
-  font-size: 14px;
-  color: rgb(255 255 255);
-  overflow: auto;
-  padding: 20px;
   outline: none;
 }
 
@@ -20,9 +20,9 @@ uc-live-html [contenteditable] [-tag-arr-] {
 }
 
 uc-live-html [contenteditable] [-comment-] {
+  color: aqua;
   font-style: italic;
   opacity: 0.5;
-  color: aqua;
 }
 
 uc-live-html [contenteditable] [-attr-] {
@@ -43,8 +43,8 @@ uc-live-html [contenteditable] [-style-] {
 
 uc-live-html iframe {
   display: block;
-  height: 100%;
   width: 100%;
-  border: 0;
+  height: 100%;
   background-color: #fff;
+  border: 0;
 }

@@ -1,12 +1,12 @@
 uc-progress-bar-common {
   position: absolute;
+  right: 0;
   bottom: 0;
   left: 0;
-  right: 0;
-  display: block;
-  background-color: var(--clr-background);
-  height: var(--gap-mid);
   z-index: 10000;
+  display: block;
+  height: var(--gap-mid);
+  background-color: var(--clr-background);
   transition: opacity 0.3s;
 }
 

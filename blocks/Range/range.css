@@ -11,41 +11,41 @@ uc-range datalist {
 }
 
 uc-range input {
-  opacity: 0;
-  height: 100%;
   width: 100%;
+  height: 100%;
+  opacity: 0;
 }
 
 uc-range .track {
   position: absolute;
+  right: 0;
+  left: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  pointer-events: none;
-  background-color: var(--clr-shade-lv1);
-  left: 0;
-  right: 0;
   height: var(--ui-size);
+  background-color: var(--clr-shade-lv1);
   border: 2px solid var(--clr-background);
   user-select: none;
+  pointer-events: none;
 }
 
 uc-range .slider {
   position: absolute;
-  background-color: transparent;
-  height: var(--ui-size);
   width: var(--ui-size);
+  height: var(--ui-size);
+  background-color: transparent;
   border-radius: 100%;
   transform: translateX(-50%);
 }
 
 uc-range .bar {
   position: absolute;
-  height: 100%;
   left: 0;
+  height: 100%;
   background-color: var(--clr-accent);
-  transition: opacity 0.2s;
   opacity: 0.5;
+  transition: opacity 0.2s;
 }
 
 uc-range:hover:active .bar {
@@ -54,16 +54,16 @@ uc-range:hover:active .bar {
 
 uc-range .center {
   position: absolute;
+  left: 50%;
   height: 100%;
   border: 4px solid transparent;
   border-top: 4px solid var(--clr-background);
   border-bottom: 4px solid var(--clr-background);
-  left: 50%;
   transform: translateX(-50%);
 }
 
 uc-range .caption {
+  position: absolute;
   display: inline-flex;
   justify-content: center;
-  position: absolute;
 }
