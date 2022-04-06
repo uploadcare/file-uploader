@@ -5,32 +5,42 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DataOutput</title>
-  <link rel="stylesheet" href="../../doc_assets/css/doc.css">
-  <link rel="stylesheet" href="../themes/uc-basic/index.css">
+  <link rel="stylesheet" href="../../assets/css/doc.css">
+  <script src="../../assets/js/app-shell.js" type="module"></script>
 </head>
 <body>
-  <script type="module">
-    import { DataOutput } from './DataOutput.js';
-    import { registerBlocks } from '../registerBlocks.js';
-    registerBlocks({DataOutput});
-    const dataOutput = new DataOutput();
-    dataOutput.classList.add('uc-wgt-common');
-    dataOutput.setAttribute('console', '');
-    dataOutput.setAttribute('item-template', /*html*/ `<div>{{test}}</div>`);
-    window.onload = () => {
-      document.querySelector('#viewport').appendChild(dataOutput);
-      dataOutput.$['*outputData'] = [
-        {test: Date.now()},
-        {test: Date.now()},
-        {test: Date.now()},
-        {test: Date.now()},
-      ];
-    }
-  </script>
-  <h1>DataOutput</h1>
-  <div 
-    id="viewport" 
-    style="background-color: #fff; padding: 20px;">
-  </div>
+<app-shell base="../../">
+
+<h1>DataOutput</h1>
+
+<uc-live-html>
+<link rel="stylesheet" href="../themes/uc-basic/index.css">
+
+<script type="module">
+  import { DataOutput } from './DataOutput.js';
+  import { registerBlocks } from '../registerBlocks.js';
+  registerBlocks({DataOutput});
+  const dataOutput = new DataOutput();
+  dataOutput.classList.add('uc-wgt-common');
+  dataOutput.setAttribute('console', '');
+  dataOutput.setAttribute('item-template', /*html*/ `<div>{{test}}</div>`);
+  window.onload = () => {
+    document.querySelector('#viewport').appendChild(dataOutput);
+    dataOutput.$['*outputData'] = [
+      {test: Date.now()},
+      {test: Date.now()},
+      {test: Date.now()},
+      {test: Date.now()},
+    ];
+  }
+</script>
+
+<div 
+  id="viewport" 
+  style="background-color: #fff; padding: 20px;">
+</div>
+</uc-live-html>
+</app-shell>
+
 </body>
 </html>
