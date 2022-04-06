@@ -1,6 +1,8 @@
 export const SHELL_CSS = /*css*/ `
 :host {
-  display: block;
+  display: grid;
+  grid-template-rows: min-content min-content auto min-content;
+  min-height: 100vh;
 }
 header {
   padding: 20px;
@@ -11,7 +13,6 @@ nav {
   justify-content: center;
   position: sticky;
   top: 0;
-  padding: 10px;
   background-color: rgba(255, 255, 255, .1);
   height: 100%;
   backdrop-filter: blur(6px);
@@ -26,7 +27,7 @@ nav > div {
 a {
   display: block;
   color: var(--clr-font);
-  margin: 10px;
+  margin: 20px;
   text-decoration: none;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, .6);
 }
@@ -38,6 +39,7 @@ main {
 col-css {
   display: block;
   max-width: 1080px;
+  width: 100%;
 }
 footer {
   padding: 20px;

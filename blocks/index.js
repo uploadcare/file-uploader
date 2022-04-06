@@ -1,4 +1,7 @@
+// Abstract:
 export { Block } from './../abstract/Block.js';
+
+// Blocks:
 export { Icon } from './Icon/Icon.js';
 export { Img } from './Img/Img.js';
 export { SimpleBtn } from './SimpleBtn/SimpleBtn.js';
@@ -23,6 +26,12 @@ export { Tabs } from './Tabs/Tabs.js';
 export { DataOutput } from './DataOutput/DataOutput.js';
 export { ActivityCaption } from './ActivityCaption/ActivityCaption.js';
 export { ActivityIcon } from './ActivityIcon/ActivityIcon.js';
+
+// Solutions:
+export { FileUploaderRegular } from '../solutions/file-uploader/regular/FileUploaderRegular.js';
+// export { Img } from '../solutions/adaptive-image/index.js';
+
+// Utils:
 export { registerBlocks } from './registerBlocks.js';
 
 export * from './CloudImageEditor/index.js';
