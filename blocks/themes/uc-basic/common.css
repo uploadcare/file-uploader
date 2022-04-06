@@ -7,7 +7,7 @@
     'Helvetica Neue', sans-serif;
   color: var(--clr-txt);
 }
-* {
+:where(.uc-wgt-theme, .uc-wgt-common, :host) * {
   box-sizing: border-box;
 }
 :where(.uc-wgt-theme, .uc-wgt-common, :host) [hidden] {
