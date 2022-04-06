@@ -102,7 +102,7 @@ class Caret {
   }
 }
 
-export class LiveHtmlElement extends BaseComponent {
+export class LiveHtml extends BaseComponent {
   hl() {
     let offset = Caret.getPosition(this.ref.editor);
 
@@ -209,11 +209,11 @@ export class LiveHtmlElement extends BaseComponent {
   }
 }
 
-LiveHtmlElement.bindAttributes({
+LiveHtml.bindAttributes({
   src: 'src',
 });
 
-LiveHtmlElement.template = /*html*/ `
+LiveHtml.template = /*html*/ `
 <div
   ref="editor"
   contenteditable="true"
@@ -221,5 +221,3 @@ LiveHtmlElement.template = /*html*/ `
 </div>
 <iframe ref="vp"></iframe>
 `;
-
-LiveHtmlElement.reg('uc-live-html');

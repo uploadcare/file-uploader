@@ -1,71 +1,45 @@
+// @ts-ignore
+import {} from 'https://unpkg.com/@re4ma/re4ma@0.1.7/build/re4ma.js';
+
 import { BaseComponent } from '../../submodules/symbiote/core/BaseComponent.js';
-import { initStyles } from './styles.js';
+import { initStyles, SHELL_CSS } from './styles.js';
+
+import { LiveHtml } from '../../blocks/LiveHtml/LiveHtml.js';
+LiveHtml.reg('uc-live-html');
 
 initStyles(() => {
   document.body.removeAttribute('unresolved');
 });
 
 class AppShell extends BaseComponent {
-  processInnerHtml = true;
-
   init$ = {
-    test: true,
+    base: './',
+    heading: '🟡 Uploadcare | uc-blocks',
+    copy: '© 2022 🦆',
   };
+
+  initCallback() {
+    this.sub('base', (base) => {
+      if (!base) {
+        return;
+      }
+      [...this.ref.links.querySelectorAll('a')].forEach((a) => {
+        a.href = base + a.getAttribute('href');
+      });
+    });
+  }
 }
 
-AppShell.shadowStyles = /*css*/ `
-:host {
-  display: block;
-}
-header {
-  padding: 20px;
-  background-color: rgba(0, 0, 0, .4);
-}
-nav {
-  display: flex;
-  justify-content: center;
-  position: sticky;
-  top: 0;
-  padding: 10px;
-  background-color: rgba(0, 0, 0, .3);
-  height: 100%;
-  backdrop-filter: blur(4px);
-}
-nav > div {
-  display: flex;
-  justify-content: space-around;
-  width: 100%;
-  max-width: 1080px;
-}
-a {
-  display: block;
-  color: var(--clr-font);
-  margin: 10px;
-  text-decoration: none;
-}
-main {
-  display: flex;
-  justify-content: center;
-  padding: 20px;
-}
-col-css {
-  display: block;
-  max-width: 1080px;
-}
-footer {
-  padding: 20px;
-  background-color: rgba(0, 0, 0, .2);
-}
-`;
+AppShell.shadowStyles = SHELL_CSS;
 
 AppShell.template = /*html*/ `
-<header>🟡 Uploadcare | uc-blocks</header>
+<header>{{heading}}</header>
 <nav>
-  <div>
-    <a href="/">Home</a>
-    <a href="/blocks/">Blocks</a>
-    <a href="/solutions/">Solutions</a>
-    <a href="/toc">TOC</a>
+  <div ref="links">
+    <a href="">Home</a>
+    <a href="blocks/">Blocks</a>
+    <a href="solutions/">Solutions</a>
+    <a href="toc.html">TOC</a>
   </div>
 </nav>
 <main>
@@ -73,6 +47,9 @@ AppShell.template = /*html*/ `
     <slot></slot>
   </col-css>
 </main>
-<footer>© 2022 🦆</footer>
+<footer>{{copy}}</footer>
 `;
+AppShell.bindAttributes({
+  base: 'base',
+});
 AppShell.reg('app-shell');

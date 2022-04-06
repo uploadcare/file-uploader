@@ -1,6 +1,4 @@
-# uc-blocks: rich web-components for Uploadcare platform integration solutions
-
-<re-htm src="./assets/htm/doc-nav.htm"><re-htm>
+# uc-blocks: web-components for Uploadcare platform integration
 
 ## 💎 Core concepts
 

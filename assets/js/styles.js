@@ -1,33 +1,51 @@
-export const CSS = /*css*/ `
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap');
-
-:root {
-  --clr-bg: rgb(31, 29, 29);
-  --clr-font: rgb(224, 253, 255);
-  --clr-link: rgb(253, 255, 139);
-  --clr-panel: rgba(255, 255, 255, .1);
-  --clr-accent: rgb(233, 159, 255);
-  --clr-accent-shade: rgba(233, 159, 255, .06);
-  --clr-code: #fff;
-  --clr-code-hl: rgb(255, 112, 112);
-
-  --gap-min: 2px;
-  --gap-mid: 10px;
-  --gap-max: 20px;
-  --gap-huge: 60px;
+export const SHELL_CSS = /*css*/ `
+:host {
+  display: block;
 }
-
-html, body {
-  padding: 0;
-  margin: 0;
-  background-color: var(--clr-bg);
+header {
+  padding: 20px;
+  background-color: rgba(0, 0, 0, .4);
+}
+nav {
+  display: flex;
+  justify-content: center;
+  position: sticky;
+  top: 0;
+  padding: 10px;
+  background-color: rgba(255, 255, 255, .1);
+  height: 100%;
+  backdrop-filter: blur(6px);
+}
+nav > div {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  width: 100%;
+  max-width: 1080px;
+}
+a {
+  display: block;
   color: var(--clr-font);
-  font-family: 'Roboto', sans-serif;
+  margin: 10px;
+  text-decoration: none;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, .6);
 }
+main {
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+}
+col-css {
+  display: block;
+  max-width: 1080px;
+}
+footer {
+  padding: 20px;
+  background-color: rgba(0, 0, 0, .2);
+}
+`;
 
-body {
-  transition: .6s;
-}
+export const DOC_CSS = /*css*/ `
 
 uc-live-html {
   min-height: 400px;
@@ -81,7 +99,7 @@ li {
 
 /** @param {() => void} cb */
 export function initStyles(cb) {
-  let blob = new Blob([CSS], {
+  let blob = new Blob([DOC_CSS], {
     type: 'text/css',
   });
   let url = URL.createObjectURL(blob);
