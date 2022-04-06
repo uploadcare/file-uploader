@@ -4,9 +4,11 @@ uc-url-source {
   grid-gap: var(--gap-mid);
   padding: var(--gap-mid);
 }
+
 uc-url-source .url-input {
   display: flex;
 }
+
 uc-url-source .url-upload-btn::after {
   content: var(--l10n-upload-url);
 }

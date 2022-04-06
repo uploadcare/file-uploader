@@ -42,6 +42,7 @@ uc-editable-canvas-toolbar .btns {
   left: var(--gap-mid);
   pointer-events: all;
 }
+
 uc-editable-canvas-toolbar .btns > button {
   display: inline-flex;
   width: var(--ui-size);
@@ -50,14 +51,17 @@ uc-editable-canvas-toolbar .btns > button {
   background-color: var(--clr-background);
   color: var(--clr-txt);
 }
+
 uc-editable-canvas-toolbar .btns > button:first-of-type {
   border-top-left-radius: var(--border-radius-element);
   border-top-right-radius: var(--border-radius-element);
 }
+
 uc-editable-canvas-toolbar .btns > button:last-of-type {
   border-bottom-left-radius: var(--border-radius-element);
   border-bottom-right-radius: var(--border-radius-element);
 }
+
 uc-editable-canvas-toolbar .btns > button[current] {
   background-color: var(--clr-background);
   color: var(--clr-txt);
@@ -67,9 +71,10 @@ uc-editable-canvas-toolbar > uc-range {
   position: absolute !important;
   bottom: 0;
   width: 100%;
-  transition: .2s;
+  transition: 0.2s;
   pointer-events: all;
 }
+
 uc-editable-canvas-toolbar > uc-range:not([visible]) {
   transform: translateY(60px);
 }

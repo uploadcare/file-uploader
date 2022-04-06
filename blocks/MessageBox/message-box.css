@@ -13,11 +13,13 @@ uc-message-box {
   border-radius: var(--border-radius-frame);
   box-shadow: var(--modal-shadow);
 }
+
 uc-message-box:not([active]) {
   opacity: 0;
   visibility: hidden;
   transform: translateY(10px);
 }
+
 uc-message-box[error] {
   background-color: var(--clr-error-message-bgr);
   color: var(--clr-error);
@@ -28,11 +30,13 @@ uc-message-box .heading {
   grid-template-columns: min-content auto min-content;
   padding: var(--gap-mid);
 }
+
 uc-message-box .caption {
   display: flex;
   align-items: center;
   word-break: break-word;
 }
+
 uc-message-box .heading button {
   padding: 0;
   background-color: transparent;
@@ -40,12 +44,15 @@ uc-message-box .heading button {
   color: currentColor;
   opacity: var(--opacity-normal);
 }
+
 uc-message-box .heading button:hover {
   opacity: var(--opacity-hover);
 }
+
 uc-message-box .heading button:active {
   opacity: var(--opacity-active);
 }
+
 uc-message-box .msg {
   padding: var(--gap-max);
   padding-top: 0;

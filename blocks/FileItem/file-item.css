@@ -7,21 +7,27 @@ uc-file-item {
   background-color: transparent;
   border-bottom: var(--border-light);
 }
+
 uc-file-item:last-of-type {
   border-bottom: none;
 }
+
 uc-file-item:hover {
   background-color: var(--clr-background);
 }
+
 uc-file-item[focused] {
   background-color: transparent;
 }
+
 uc-file-item[uploading] .edit-btn {
   display: none;
 }
+
 uc-file-item[error] {
   background-color: var(--clr-error-lightest);
 }
+
 uc-file-item .thumb {
   display: inline-flex;
   position: relative;
@@ -32,6 +38,7 @@ uc-file-item .thumb {
   background-position: center center;
   border-radius: var(--border-radius-thumb);
 }
+
 uc-file-item .file-name-wrapper {
   display: flex;
   flex-direction: column;
@@ -44,15 +51,18 @@ uc-file-item .file-name-wrapper {
   overflow: hidden;
   max-width: 100%;
 }
+
 uc-file-item:hover .file-name-wrapper {
   opacity: 1;
 }
+
 uc-file-item .file-name {
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
 uc-file-item button {
   width: var(--ui-size);
   height: var(--ui-size);
@@ -63,16 +73,20 @@ uc-file-item button {
   opacity: var(--opacity-normal);
   transition: opacity var(--transition-duration);
 }
+
 uc-file-item .upload-btn {
   display: none;
 }
+
 uc-file-item button:hover {
   opacity: var(--opacity-hover);
 }
+
 uc-file-item[error] .badge,
 uc-file-item[loaded] .badge {
   display: block;
 }
+
 uc-file-item .badge {
   display: none;
   position: absolute;
@@ -84,17 +98,21 @@ uc-file-item .badge {
   color: var(--clr-background-light);
   border-radius: 50%;
 }
+
 uc-file-item[loaded] .badge {
   background-color: var(--clr-confirm);
 }
+
 uc-file-item[error] .badge {
   background-color: var(--clr-error);
 }
+
 uc-file-item .badge uc-icon,
 uc-file-item .badge uc-icon svg {
   width: 100%;
   height: 100%;
 }
+
 uc-file-item .progress-bar {
   height: 2px;
   top: calc(100% - 2px);

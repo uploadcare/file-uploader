@@ -21,6 +21,7 @@ uc-tabs .tabs-row > .tab {
   border-bottom: var(--border-light);
   transition: var(--transition-duration);
 }
+
 uc-tabs .tabs-row > .tab[current] {
   border-color: var(--clr-txt);
   color: var(--clr-txt);

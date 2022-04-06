@@ -7,17 +7,21 @@ uc-upload-list {
   height: 100%;
   max-height: 100%;
 }
+
 uc-upload-list:not([active]) {
   display: none;
 }
+
 uc-upload-list .no-files {
   height: var(--file-item-height);
   padding: var(--gap-max);
 }
+
 uc-upload-list .files {
   display: block;
   overflow: auto;
 }
+
 uc-upload-list .toolbar {
   display: grid;
   grid-template-columns: min-content 1fr min-content min-content;
@@ -26,4 +30,3 @@ uc-upload-list .toolbar {
   border-top: var(--border-light);
   background-color: var(--clr-background);
 }
-

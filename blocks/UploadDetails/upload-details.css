@@ -19,6 +19,7 @@ uc-upload-details .toolbar {
   gap: var(--gap-mid);
   padding: var(--gap-mid);
 }
+
 uc-upload-details .toolbar[edit-disabled] {
   display: flex;
   justify-content: space-between;
@@ -27,11 +28,13 @@ uc-upload-details .toolbar[edit-disabled] {
 uc-upload-details .remove-btn {
   padding-left: 0.5em;
 }
+
 uc-upload-details .detail-btn {
   background-color: var(--clr-background);
   color: var(--clr-txt);
   padding-left: 0;
 }
+
 uc-upload-details .edit-btn {
   padding-left: 0.5em;
 }
@@ -46,9 +49,11 @@ uc-upload-details .info-block {
   color: var(--clr-txt);
   border-bottom: var(--border-light);
 }
+
 uc-upload-details .info-block:first-of-type {
   padding-top: 0;
 }
+
 uc-upload-details .info-block:last-of-type {
   border-bottom: none;
 }

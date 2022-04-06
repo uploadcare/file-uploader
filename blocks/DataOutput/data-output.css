@@ -5,6 +5,7 @@ uc-data-output {
 uc-data-output > input {
   display: none;
 }
+
 uc-data-output > img {
   height: 100px;
 }

@@ -1,4 +1,5 @@
-.uc-cldtr-common, :host {
+.uc-cldtr-common,
+:host {
   /* Theme settings >>> */
   --rgb-primary-accent: 6, 2, 196;
   --rgb-text-base: 0, 0, 0;
@@ -8,6 +9,7 @@
   --rgb-shadow: 0, 0, 0;
   --rgb-error: 209, 81, 81;
   --opacity-shade-mid: 0.2;
+
   /* <<< Theme settings */
 
   --color-primary-accent: rgb(var(--rgb-primary-accent));
@@ -16,13 +18,13 @@
   --color-text-soft: rgb(var(--rgb-fill-contrast));
   --color-text-error: rgb(var(--rgb-error));
   --color-fill-contrast: rgb(var(--rgb-fill-contrast));
-  --color-modal-backdrop: rgba(var(--rgb-fill-shaded), 0.95);
+  --color-modal-backdrop: rgb(var(--rgb-fill-shaded) 0.95);
   --color-image-background: rgba(var(--rgb-fill-shaded));
-  --color-outline: rgba(var(--rgb-text-base), var(--opacity-shade-mid));
-  --color-underline: rgba(var(--rgb-text-base), 0.08);
-  --color-shade: rgba(var(--rgb-text-base), 0.02);
+  --color-outline: rgb(var(--rgb-text-base) var(--opacity-shade-mid));
+  --color-underline: rgb(var(--rgb-text-base) 0.08);
+  --color-shade: rgb(var(--rgb-text-base) 0.02);
   --color-focus-ring: var(--color-primary-accent);
-  --color-input-placeholder: rgba(var(--rgb-text-base), 0.32);
+  --color-input-placeholder: rgb(var(--rgb-text-base) 0.32);
   --color-error: rgb(var(--rgb-error));
 
   --font-size-ui: 16px;
@@ -56,8 +58,7 @@
   --transition-duration-4: var(--transition-duration-all, 0.4s);
   --transition-duration-5: var(--transition-duration-all, 0.5s);
 
-  --shadow-base: 0px 5px 15px rgba(var(--rgb-shadow), 0.1),
-    0px 1px 4px rgba(var(--rgb-shadow), 0.15);
+  --shadow-base: 0px 5px 15px rgb(var(--rgb-shadow) 0.1), 0px 1px 4px rgb(var(--rgb-shadow) 0.15);
 }
 
 [can-handle-paste]:hover,
@@ -162,6 +163,7 @@ uc-cloud-editor > .wrapper > .viewport {
 
 uc-cloud-editor > .wrapper > .viewport > .image_container > .image {
   --viewer-image-opacity: 1;
+
   position: absolute;
   top: 0px;
   left: 0px;
@@ -179,29 +181,24 @@ uc-cloud-editor > .wrapper > .viewport > .image_container > .image {
 }
 
 uc-cloud-editor > .wrapper > .viewport > .image_container > .image.image_visible_viewer {
-  transition: opacity var(--transition-duration-3) ease-in-out,
-    transform var(--transition-duration-4);
+  transition: opacity var(--transition-duration-3) ease-in-out, transform var(--transition-duration-4);
 }
 
-uc-cloud-editor
-  > .wrapper
-  > .viewport
-  > .image_container
-  > .image.image_hidden_to_cropper {
+uc-cloud-editor > .wrapper > .viewport > .image_container > .image.image_hidden_to_cropper {
   pointer-events: none;
   --viewer-image-opacity: 0;
+
   background-image: var(--transparent-pixel);
   transform: scale(1);
-  transition: transform var(--transition-duration-4),
-    opacity var(--transition-duration-3) steps(1, jump-end);
+  transition: transform var(--transition-duration-4), opacity var(--transition-duration-3) steps(1, jump-end);
 }
 
 uc-cloud-editor > .wrapper > .viewport > .image_container > .image.image_hidden_effects {
   pointer-events: none;
   --viewer-image-opacity: 0;
+
   transform: scale(1);
-  transition: opacity var(--transition-duration-3) cubic-bezier(0.5, 0, 1, 1),
-    transform var(--transition-duration-4);
+  transition: opacity var(--transition-duration-3) cubic-bezier(0.5, 0, 1, 1), transform var(--transition-duration-4);
 }
 
 uc-cloud-editor > .wrapper > .viewport > .image_container {
@@ -279,11 +276,7 @@ uc-cloud-editor > .wrapper > .network_problems_splash > .network_problems_conten
   flex: 1;
 }
 
-uc-cloud-editor
-  > .wrapper
-  > .network_problems_splash
-  > .network_problems_content
-  > .network_problems_icon {
+uc-cloud-editor > .wrapper > .network_problems_splash > .network_problems_content > .network_problems_icon {
   background-color: rgba(var(--rgb-fill-shaded));
   width: 40px;
   height: 40px;
@@ -291,14 +284,10 @@ uc-cloud-editor
   display: flex;
   justify-content: center;
   align-items: center;
-  color: rgba(var(--rgb-text-base), 0.6);
+  color: rgb(var(--rgb-text-base) 0.6);
 }
 
-uc-cloud-editor
-  > .wrapper
-  > .network_problems_splash
-  > .network_problems_content
-  > .network_problems_text {
+uc-cloud-editor > .wrapper > .network_problems_splash > .network_problems_content > .network_problems_text {
   margin-top: var(--gap-max);
   font-size: var(--font-size-ui);
 }
@@ -329,9 +318,9 @@ uc-crop-frame > .svg .thumb {
   --focus-color-rgb: var(--color-primary-accent);
   --down-color-rgb: var(--color-primary-accent);
   --color-effect: var(--idle-color-rgb);
+
   color: var(--color-effect);
-  transition: color var(--transition-duration-3),
-    opacity var(--transition-duration-3);
+  transition: color var(--transition-duration-3), opacity var(--transition-duration-3);
 }
 
 uc-crop-frame > .svg .thumb--visible {
@@ -378,6 +367,7 @@ uc-editor-operation-control {
   --down-color-rgb: var(--hover-color-rgb);
   --down-opacity: 0.12;
   --down-filter: 0.6;
+
   outline: none;
   position: relative;
   display: grid;
@@ -414,7 +404,7 @@ uc-editor-filter-control > .before {
   left: 0px;
   right: 0px;
   transition: var(--transition-duration-3);
-  background-color: rgba(var(--color-effect), var(--opacity-effect));
+  background-color: rgb(var(--color-effect) var(--opacity-effect));
   border-radius: var(--border-radius-editor);
 }
 
@@ -462,8 +452,7 @@ uc-editor-image-cropper {
 }
 
 uc-editor-image-cropper.active_from_editor {
-  transition: transform var(--transition-duration-4)
-      cubic-bezier(0.37, 0, 0.63, 1) 0.4s,
+  transition: transform var(--transition-duration-4) cubic-bezier(0.37, 0, 0.63, 1) 0.4s,
     opacity var(--transition-duration-3);
   opacity: 1;
   pointer-events: auto;
@@ -471,8 +460,7 @@ uc-editor-image-cropper.active_from_editor {
 }
 
 uc-editor-image-cropper.active_from_viewer {
-  transition: transform var(--transition-duration-4)
-      cubic-bezier(0.37, 0, 0.63, 1) 0.4s,
+  transition: transform var(--transition-duration-4) cubic-bezier(0.37, 0, 0.63, 1) 0.4s,
     opacity var(--transition-duration-3);
   opacity: 1;
   pointer-events: auto;
@@ -480,10 +468,8 @@ uc-editor-image-cropper.active_from_viewer {
 }
 
 uc-editor-image-cropper.inactive_to_editor {
-  transition: transform var(--transition-duration-4)
-      cubic-bezier(0.37, 0, 0.63, 1),
-    opacity var(--transition-duration-3)
-      calc(var(--transition-duration-3) + 0.05s);
+  transition: transform var(--transition-duration-4) cubic-bezier(0.37, 0, 0.63, 1),
+    opacity var(--transition-duration-3) calc(var(--transition-duration-3) + 0.05s);
   opacity: 0;
   pointer-events: none;
 }
@@ -516,8 +502,7 @@ uc-editor-image-fader {
 uc-editor-image-fader.active_from_viewer {
   opacity: 1;
   pointer-events: auto;
-  transition: transform var(--transition-duration-4),
-    opacity var(--transition-duration-3) steps(1, jump-start);
+  transition: transform var(--transition-duration-4), opacity var(--transition-duration-3) steps(1, jump-start);
   z-index: 3;
   transform: scale(1);
 }
@@ -525,8 +510,7 @@ uc-editor-image-fader.active_from_viewer {
 uc-editor-image-fader.active_from_cropper {
   opacity: 1;
   pointer-events: auto;
-  transition: transform var(--transition-duration-4),
-    opacity var(--transition-duration-3) steps(1, jump-end);
+  transition: transform var(--transition-duration-4), opacity var(--transition-duration-3) steps(1, jump-end);
   z-index: 3;
   transform: scale(1);
 }
@@ -534,8 +518,7 @@ uc-editor-image-fader.active_from_cropper {
 uc-editor-image-fader.inactive_to_cropper {
   opacity: 0;
   pointer-events: none;
-  transition: transform var(--transition-duration-4),
-    opacity var(--transition-duration-3) steps(1, jump-end);
+  transition: transform var(--transition-duration-4), opacity var(--transition-duration-3) steps(1, jump-end);
   transform: scale(1);
   z-index: 3;
 }
@@ -593,7 +576,7 @@ uc-editor-toolbar {
     --l-tab-gap: var(--gap-mid-1);
     --l-slider-padding: var(--gap-min);
     --l-controls-padding: var(--gap-min);
-    }
+  }
 }
 
 @media only screen and (min-width: 601px) {
@@ -601,7 +584,7 @@ uc-editor-toolbar {
     --l-tab-gap: calc(var(--gap-mid-1) + var(--gap-max));
     --l-slider-padding: var(--gap-mid-1);
     --l-controls-padding: var(--gap-mid-1);
-    }
+  }
 }
 
 uc-editor-toolbar > .toolbar-container {
@@ -617,8 +600,7 @@ uc-editor-toolbar > .toolbar-container > .sub-toolbar {
   height: 100%;
   display: grid;
   grid-template-rows: 1fr 1fr;
-  transition: opacity var(--transition-duration-3) ease-in-out,
-    transform var(--transition-duration-3) ease-in-out,
+  transition: opacity var(--transition-duration-3) ease-in-out, transform var(--transition-duration-3) ease-in-out,
     visibility var(--transition-duration-3) ease-in-out;
   background-color: var(--color-fill-contrast);
 }
@@ -649,11 +631,7 @@ uc-editor-toolbar > .toolbar-container > .sub-toolbar > .controls-row {
   padding-right: var(--l-controls-padding);
 }
 
-uc-editor-toolbar
-  > .toolbar-container
-  > .sub-toolbar
-  > .controls-row
-  > .tab-toggles {
+uc-editor-toolbar > .toolbar-container > .sub-toolbar > .controls-row > .tab-toggles {
   position: relative;
   display: grid;
   grid-auto-flow: column;
@@ -662,12 +640,7 @@ uc-editor-toolbar
   align-items: center;
 }
 
-uc-editor-toolbar
-  > .toolbar-container
-  > .sub-toolbar
-  > .controls-row
-  > .tab-toggles
-  > .tab-toggles_indicator {
+uc-editor-toolbar > .toolbar-container > .sub-toolbar > .controls-row > .tab-toggles > .tab-toggles_indicator {
   position: absolute;
   bottom: 0px;
   left: 0px;
@@ -682,11 +655,7 @@ uc-editor-toolbar > .toolbar-container > .sub-toolbar > .tab-content-row {
   position: relative;
 }
 
-uc-editor-toolbar
-  > .toolbar-container
-  > .sub-toolbar
-  > .tab-content-row
-  > .tab-content {
+uc-editor-toolbar > .toolbar-container > .sub-toolbar > .tab-content-row > .tab-content {
   position: absolute;
   left: 0px;
   top: 0px;
@@ -698,30 +667,17 @@ uc-editor-toolbar
   overflow: hidden;
 }
 
-uc-editor-toolbar
-  > .toolbar-container
-  > .sub-toolbar
-  > .tab-content-row
-  > .tab-content.tab-content--visible {
+uc-editor-toolbar > .toolbar-container > .sub-toolbar > .tab-content-row > .tab-content.tab-content--visible {
   opacity: 1;
   pointer-events: auto;
 }
 
-uc-editor-toolbar
-  > .toolbar-container
-  > .sub-toolbar
-  > .tab-content-row
-  > .tab-content.tab-content--hidden {
+uc-editor-toolbar > .toolbar-container > .sub-toolbar > .tab-content-row > .tab-content.tab-content--hidden {
   opacity: 0;
   pointer-events: none;
 }
 
-uc-editor-toolbar
-  > .toolbar-container
-  > .sub-toolbar
-  > .tab-content-row
-  > .tab-content
-  .controls-list_align {
+uc-editor-toolbar > .toolbar-container > .sub-toolbar > .tab-content-row > .tab-content .controls-list_align {
   display: grid;
   grid-template-areas: '. inner .';
   grid-template-columns: 1fr auto 1fr;
@@ -730,12 +686,7 @@ uc-editor-toolbar
   min-width: 100%;
 }
 
-uc-editor-toolbar
-  > .toolbar-container
-  > .sub-toolbar
-  > .tab-content-row
-  > .tab-content
-  .controls-list_inner {
+uc-editor-toolbar > .toolbar-container > .sub-toolbar > .tab-content-row > .tab-content .controls-list_inner {
   grid-area: inner;
   display: grid;
   grid-auto-flow: column;
@@ -809,17 +760,14 @@ uc-btn-ui {
   --filter-effect: var(--idle-brightness);
   --opacity-effect: var(--idle-opacity);
   --color-effect: var(--idle-color-rgb);
-  --l-transition-effect: var(
-    --css-transition,
-    color var(--transition-duration-2),
-    filter var(--transition-duration-2)
-  );
+  --l-transition-effect: var(--css-transition, color var(--transition-duration-2), filter var(--transition-duration-2));
+
   display: inline-flex;
   align-items: center;
   height: var(--css-height, var(--size-touch-area));
   padding-right: var(--css-padding-right, var(--gap-mid-1));
   padding-left: var(--css-padding-left, var(--gap-mid-1));
-  color: rgba(var(--color-effect), var(--opacity-effect));
+  color: rgb(var(--color-effect) var(--opacity-effect));
   filter: brightness(var(--filter-effect));
   cursor: pointer;
   user-select: none;
@@ -833,7 +781,7 @@ uc-btn-ui .text {
 }
 
 uc-btn-ui .icon {
-  color: rgba(var(--color-effect), var(--opacity-effect));
+  color: rgb(var(--color-effect) var(--opacity-effect));
   filter: brightness(var(--filter-effect));
   transition: var(--l-transition-effect);
   display: flex;
@@ -939,11 +887,9 @@ uc-slider-ui {
   --down-color-rgb: var(--rgb-primary-accent);
   --color-effect: var(--idle-color-rgb);
   --l-color: rgb(var(--color-effect));
+
   width: 100%;
-  height: calc(
-    var(--l-thumb-size) + (var(--l-zero-dot-size) + var(--l-zero-dot-offset)) *
-      2
-  );
+  height: calc(var(--l-thumb-size) + (var(--l-zero-dot-size) + var(--l-zero-dot-offset)) * 2);
   position: relative;
   display: flex;
   align-items: center;
@@ -1014,6 +960,7 @@ uc-slider-ui .input {
 ctx-provider {
   --color-text-base: black;
   --color-primary-accent: blue;
+
   width: 190px;
   height: 40px;
   background-color: #f5f5f5;
@@ -1026,8 +973,7 @@ ctx-provider {
 }
 
 uc-presence-toggle.transition {
-  transition: opacity var(--transition-duration-3),
-    visibility var(--transition-duration-3);
+  transition: opacity var(--transition-duration-3), visibility var(--transition-duration-3);
 }
 
 uc-presence-toggle.visible {

@@ -7,9 +7,11 @@
     'Helvetica Neue', sans-serif;
   color: var(--clr-txt);
 }
+
 :where(.uc-wgt-theme, .uc-wgt-common, :host) * {
   box-sizing: border-box;
 }
+
 :where(.uc-wgt-theme, .uc-wgt-common, :host) [hidden] {
   display: none !important;
 }
@@ -41,37 +43,46 @@
   background-color: var(--clr-btn-bgr-disabled);
   box-shadow: var(--shadow-btn-disabled);
 }
+
 :where(.uc-wgt-theme, .uc-wgt-common, :host) button.primary-btn {
   color: var(--clr-btn-txt-primary);
   background-color: var(--clr-btn-bgr-primary);
   box-shadow: var(--shadow-btn-primary);
   transition: background-color var(--transition-duration);
 }
+
 :where(.uc-wgt-theme, .uc-wgt-common, :host) button.primary-btn:hover {
   background-color: var(--clr-btn-bgr-primary-hover);
 }
+
 :where(.uc-wgt-theme, .uc-wgt-common, :host) button.primary-btn:active {
   background-color: var(--clr-btn-bgr-primary-active);
 }
+
 :where(.uc-wgt-theme, .uc-wgt-common, :host) button.secondary-btn {
   color: var(--clr-btn-txt-secondary);
   background-color: var(--clr-btn-bgr-secondary);
   box-shadow: var(--shadow-btn-secondary);
   transition: background-color var(--transition-duration);
 }
+
 :where(.uc-wgt-theme, .uc-wgt-common, :host) button.secondary-btn:hover {
   background-color: var(--clr-btn-bgr-secondary-hover);
 }
+
 :where(.uc-wgt-theme, .uc-wgt-common, :host) button.secondary-btn:active {
   background-color: var(--clr-btn-bgr-secondary-active);
 }
+
 :where(.uc-wgt-theme, .uc-wgt-common, :host) a {
   text-decoration: none;
   color: var(--clr-accent);
 }
+
 :where(.uc-wgt-theme, .uc-wgt-common, :host) a[disabled] {
   pointer-events: none;
 }
+
 :where(.uc-wgt-theme, .uc-wgt-common, :host) input[type='text'] {
   display: flex;
   height: var(--ui-size);
@@ -87,9 +98,11 @@
   transition: var(--transition-duration);
   border-radius: var(--border-radius-element);
 }
+
 :where(.uc-wgt-theme, .uc-wgt-common, :host) input[type='text']:hover {
   border-color: var(--clr-accent-light);
 }
+
 :where(.uc-wgt-theme, .uc-wgt-common, :host) input[type='text']:focus {
   border-color: var(--clr-accent);
   outline: none;
