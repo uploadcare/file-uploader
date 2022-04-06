@@ -7,9 +7,7 @@ import { buildItems } from './build-items.js';
 let __dirname = dirname(fileURLToPath(import.meta.url));
 let packageRootPath = __dirname;
 
-let { name: packageName, version: packageVersion } = JSON.parse(
-  fs.readFileSync(join(packageRootPath, './package.json')).toString()
-);
+let { version: packageVersion } = JSON.parse(fs.readFileSync(join(packageRootPath, './package.json')).toString());
 
 function jsBanner() {
   let license = fs.readFileSync(path.join(packageRootPath, './LICENSE')).toString();
@@ -82,7 +80,7 @@ function build(buildItem, watch) {
     });
 }
 
-generateEnvFile({ packageVersion, packageName });
+generateEnvFile({ packageVersion });
 
 for (let buildItem of buildItems) {
   build(buildItem);

@@ -1,5 +1,4 @@
-import { VERSION, PACKAGE_NAME } from '../../env.js';
-import { toPascalCase } from './toPascalCase.js';
+import { PACKAGE_VERSION, PACKAGE_NAME } from '../../env.js';
 
 /**
  * @param {{
@@ -12,6 +11,5 @@ import { toPascalCase } from './toPascalCase.js';
  * @returns {string}
  */
 export function customUserAgent({ publicKey, languageName }) {
-  let libraryName = toPascalCase(PACKAGE_NAME);
-  return `${libraryName}/${VERSION}/${publicKey} (${languageName})`;
+  return `${PACKAGE_NAME}/${PACKAGE_VERSION}/${publicKey} (${languageName})`;
 }
