@@ -98,7 +98,7 @@
     hsl(
       var(--h-foreground) var(--s-foreground) var(--l-foreground) / calc((0.2 - 0.1 * var(--darkmode)) * var(--borders))
     );
-  --border-accent: 1px solid hsl(var(--h-accent) var(--s-accent) var(--l-accent) / 1 * var(--borders));
+  --border-accent: 1px solid hsl(var(--h-accent) var(--s-accent) var(--l-accent) / 100% * var(--borders));
   --border-dashed: 2px dashed
     hsl(var(--h-foreground) var(--s-foreground) var(--l-foreground) / calc(0.1 * var(--borders)));
 

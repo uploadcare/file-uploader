@@ -82,11 +82,6 @@ uc-file-item button:hover {
   opacity: var(--opacity-hover);
 }
 
-uc-file-item[error] .badge,
-uc-file-item[loaded] .badge {
-  display: block;
-}
-
 uc-file-item .badge {
   display: none;
   position: absolute;
@@ -97,6 +92,11 @@ uc-file-item .badge {
   background-color: var(--clr-txt);
   color: var(--clr-background-light);
   border-radius: 50%;
+}
+
+uc-file-item[error] .badge,
+uc-file-item[loaded] .badge {
+  display: block;
 }
 
 uc-file-item[loaded] .badge {

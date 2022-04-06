@@ -1,7 +1,6 @@
 uc-progress-bar {
   position: absolute;
   pointer-events: none;
-  height: 2px;
   top: 0px;
   left: 0;
   bottom: 0;
@@ -21,7 +20,7 @@ uc-progress-bar .progress {
 
 uc-progress-bar .progress--unknown {
   width: 100%;
-  animation: indeterminateAnimation 1s infinite linear;
+  animation: uc-indeterminateAnimation 1s infinite linear;
   transform-origin: 0% 50%;
 }
 
@@ -29,7 +28,7 @@ uc-progress-bar .progress--hidden {
   opacity: 0;
 }
 
-@keyframes indeterminateAnimation {
+@keyframes uc-indeterminateAnimation {
   0% {
     transform: translateX(0) scaleX(0);
   }

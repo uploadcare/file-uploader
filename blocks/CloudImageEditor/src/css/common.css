@@ -61,45 +61,39 @@
   --shadow-base: 0px 5px 15px rgb(var(--rgb-shadow) 0.1), 0px 1px 4px rgb(var(--rgb-shadow) 0.15);
 }
 
-[can-handle-paste]:hover,
-[can-handle-paste]:focus {
+:where(.uc-cldtr-common, :host) :where([can-handle-paste]:hover, [can-handle-paste]:focus) {
   --can-handle-paste: 'true';
 }
 
 /* uploadcare-source-select */
-[uc-ss-item]:hover,
-[uc-ss-item]:focus {
+:where(.uc-cldtr-common, :host) :where([uc-ss-item]:hover, [uc-ss-item]:focus) {
   background-color: var(--color-shade);
 }
 
-[tabindex][focus-visible],
-[tabindex]:hover,
-[with-effects][focus-visible],
-[with-effects]:hover {
+:where(.uc-cldtr-common, :host)
+  :where([tabindex][focus-visible], [tabindex]:hover, [with-effects][focus-visible], [with-effects]:hover) {
   --filter-effect: var(--hover-filter) !important;
   --opacity-effect: var(--hover-opacity) !important;
   --color-effect: var(--hover-color-rgb) !important;
 }
 
-[tabindex]:active,
-[with-effects]:active {
+:where(.uc-cldtr-common, :host) :where([tabindex]:active, [with-effects]:active) {
   --filter-effect: var(--down-filter) !important;
   --opacity-effect: var(--down-opacity) !important;
   --color-effect: var(--down-color-rgb) !important;
 }
 
-[tabindex][active],
-[with-effects][active] {
+:where(.uc-cldtr-common, :host) :where([tabindex][active], [with-effects][active]) {
   --filter-effect: var(--active-filter) !important;
   --opacity-effect: var(--active-opacity) !important;
   --color-effect: var(--active-color-rgb) !important;
 }
 
-[hidden-scrollbar]::-webkit-scrollbar {
+:where(.uc-cldtr-common, :host) [hidden-scrollbar]::-webkit-scrollbar {
   display: none;
 }
 
-[hidden-scrollbar] {
+:where(.uc-cldtr-common, :host) [hidden-scrollbar] {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
@@ -112,7 +106,7 @@ uc-cloud-editor {
   --modal-header-height: var(--size-panel-heading);
   --modal-toolbar-height: var(--size-panel-heading);
 
-  --transparent-pixel: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=);
+  --transparent-pixel: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=');
 }
 
 uc-cloud-editor.editor_ON {
@@ -312,7 +306,7 @@ uc-crop-frame > .svg {
   border-top-right-radius: var(--border-radius-base);
 }
 
-uc-crop-frame > .svg .thumb {
+uc-crop-frame > .thumb {
   --idle-color-rgb: var(--color-text-base);
   --hover-color-rgb: var(--color-primary-accent);
   --focus-color-rgb: var(--color-primary-accent);
@@ -323,29 +317,29 @@ uc-crop-frame > .svg .thumb {
   transition: color var(--transition-duration-3), opacity var(--transition-duration-3);
 }
 
-uc-crop-frame > .svg .thumb--visible {
+uc-crop-frame > .thumb--visible {
   pointer-events: auto;
   opacity: 1;
 }
 
-uc-crop-frame > .svg .thumb--hidden {
+uc-crop-frame > .thumb--hidden {
   pointer-events: none;
   opacity: 0;
 }
 
-uc-crop-frame > .svg .guides {
+uc-crop-frame > .guides {
   transition: var(--transition-duration-3);
 }
 
-uc-crop-frame > .svg .guides--hidden {
+uc-crop-frame > .guides--hidden {
   opacity: 0;
 }
 
-uc-crop-frame > .svg .guides--semi-hidden {
+uc-crop-frame > .guides--semi-hidden {
   opacity: 0.2;
 }
 
-uc-crop-frame > .svg .guides--visible {
+uc-crop-frame > .guides--visible {
   opacity: 1;
 }
 
@@ -957,6 +951,22 @@ uc-slider-ui .input {
   opacity: 0;
 }
 
+uc-presence-toggle.transition {
+  transition: opacity var(--transition-duration-3), visibility var(--transition-duration-3);
+}
+
+uc-presence-toggle.visible {
+  opacity: 1;
+  pointer-events: inherit;
+}
+
+uc-presence-toggle.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* TODO: remove ctx-provider */
+/* stylelint-disable-next-line plugin/stylelint-force-app-name-prefix */
 ctx-provider {
   --color-text-base: black;
   --color-primary-accent: blue;
@@ -970,18 +980,4 @@ ctx-provider {
   align-items: center;
   padding-left: 10px;
   padding-right: 10px;
-}
-
-uc-presence-toggle.transition {
-  transition: opacity var(--transition-duration-3), visibility var(--transition-duration-3);
-}
-
-uc-presence-toggle.visible {
-  opacity: 1;
-  pointer-events: inherit;
-}
-
-uc-presence-toggle.hidden {
-  opacity: 0;
-  pointer-events: none;
 }

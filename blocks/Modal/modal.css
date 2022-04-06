@@ -52,7 +52,6 @@ uc-modal button.close-btn:active {
 uc-modal > .dialog {
   display: grid;
   grid-template-rows: min-content min-content;
-  background-color: rgb(var(--rgb-2));
   box-shadow: var(--modal-shadow);
   border-radius: var(--border-radius-frame);
   min-height: var(--ui-size);

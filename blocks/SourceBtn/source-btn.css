@@ -46,7 +46,6 @@ uc-source-btn[type='other'] > .txt::after {
 uc-source-btn .txt {
   display: flex;
   align-items: center;
-  height: 100%;
   width: 100%;
   height: var(--ui-size);
   padding: 0;
