@@ -29,15 +29,18 @@
     "dev": "wds --open",
     "build": "npm run clean && node ./build.js",
     "tsc": "tsc --skipLibCheck --allowJs --noEmit",
-    "lint": "eslint ./",
-    "lint:fix": "eslint ./ --fix",
+    "lint:js": "eslint ./",
+    "lint:js:fix": "eslint ./ --fix",
+    "lint:css": "stylelint './**/*.css'",
+    "lint:css:fix": "stylelint './**/*.css' --fix",
+    "lint": "run-s lint:js lint:css",
     "clean": "rimraf ./web/**/*.{js,css}",
-    "format:js": "prettier --write ./**/*.js;",
+    "format:js": "prettier --write ./**/*.{js,cjs};",
     "format:css": "prettier --write --parser css ./**/*.css",
     "format:html": "prettier --write --parser html ./**/*.html",
     "format:json": "prettier --write --parser json ./**/*.json",
     "format:md": "prettier --write --parser markdown ./**/*.md",
-    "format": "run-s lint:fix format:js format:css format:html format:json format:md"
+    "format": "run-s lint:js:fix lint:css:fix format:js format:css format:html format:json format:md"
   },
   "devDependencies": {
     "@babel/eslint-parser": "^7.15.7",
@@ -54,6 +57,12 @@
     "prettier-plugin-jsdoc": "0.3.36",
     "rimraf": "^3.0.2",
     "shipjs": "^0.24.3",
+    "stylelint": "^14.6.1",
+    "stylelint-config-prettier": "^9.0.3",
+    "stylelint-config-rational-order": "^0.1.2",
+    "stylelint-config-standard": "^25.0.0",
+    "stylelint-declaration-block-no-ignored-properties": "^2.5.0",
+    "stylelint-order": "^5.0.0",
     "typescript": "^4.5.5"
   },
   "husky": {
@@ -62,28 +71,11 @@
     }
   },
   "lint-staged": {
-    "*.js": [
-      "tsc --skipLibCheck --allowJs --noEmit",
-      "eslint --fix",
-      "prettier --write",
-      "git add"
-    ],
-    "*.css": [
-      "prettier --write --parser css",
-      "git add"
-    ],
-    "*.html": [
-      "prettier --write --parser html",
-      "git add"
-    ],
-    "*.json": [
-      "prettier --write --parser json",
-      "git add"
-    ],
-    "*.md": [
-      "prettier --write --parser markdown",
-      "git add"
-    ]
+    "*.{js,cjs}": ["tsc --skipLibCheck --allowJs --noEmit", "eslint --fix", "prettier --write", "git add"],
+    "*.css": ["prettier --write --parser css", "git add"],
+    "*.html": ["prettier --write --parser html", "git add"],
+    "*.json": ["prettier --write --parser json", "git add"],
+    "*.md": ["prettier --write --parser markdown", "git add"]
   },
   "author": "Uploadcare Inc.",
   "license": "MIT"
