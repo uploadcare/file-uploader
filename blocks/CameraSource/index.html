@@ -5,25 +5,35 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CameraSource</title>
-  <link rel="stylesheet" href="../../doc_assets/css/doc.css">
-  <link rel="stylesheet" href="../themes/uc-basic/index.css">
+  <link rel="stylesheet" href="../../assets/css/doc.css">
+  <script src="../../assets/js/app-shell.js" type="module"></script>
 </head>
 <body>
-  <script type="module">
-    import { CameraSource } from './CameraSource.js';
-    import { registerBlocks } from '../registerBlocks.js';
-    registerBlocks({CameraSource});
-    const cameraSrc = new CameraSource();
-    cameraSrc.classList.add('uc-wgt-common');
-    window.onload = () => {
-      document.querySelector('#viewport').appendChild(cameraSrc);
-      cameraSrc.$['*currentActivity'] = 'camera';
-    }
-  </script>
-  <h1>CameraSource</h1>
-  <div 
-    id="viewport" 
-    style="background-color: #fff; padding: 20px;">
-  </div>
+<app-shell base="../../">
+<h1>CameraSource</h1>
+
+<uc-live-html>
+<link rel="stylesheet" href="../themes/uc-basic/index.css">
+
+<script type="module">
+  import { CameraSource } from './CameraSource.js';
+  import { registerBlocks } from '../registerBlocks.js';
+  registerBlocks({CameraSource});
+  const cameraSrc = new CameraSource();
+  cameraSrc.classList.add('uc-wgt-common');
+  window.onload = () => {
+    document.querySelector('#viewport')?.appendChild(cameraSrc);
+    cameraSrc.$['*currentActivity'] = 'camera';
+  }
+</script>
+
+<div 
+  id="viewport" 
+  style="background-color: #fff;">
+</div>
+</uc-live-html>
+
+</app-shell>
+
 </body>
 </html>

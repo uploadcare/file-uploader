@@ -5,25 +5,32 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ActivityCaption</title>
-  <link rel="stylesheet" href="../../doc_assets/css/doc.css">
-  <link rel="stylesheet" href="../themes/uc-basic/index.css">
+  <link rel="stylesheet" href="../../assets/css/doc.css">
+  <script src="../../assets/js/app-shell.js" type="module"></script>
 </head>
 <body>
-  <script type="module">
-    import { ActivityCaption } from './ActivityCaption.js';
-    import { registerBlocks } from '../registerBlocks.js';
-    registerBlocks({ActivityCaption});
-    const actCap = new ActivityCaption();
-    actCap.classList.add('uc-wgt-common');
-    window.onload = () => {
-      document.querySelector('#viewport').appendChild(actCap);
-      actCap.$['*activityCaption'] = 'TEST CAPTION';
-    }
-  </script>
-  <h1>ActivityCaption</h1>
-  <div 
-    id="viewport" 
-    style="background-color: #fff; padding: 20px;">
-  </div>
+<app-shell base="../../">
+<h1>ActivityCaption</h1>
+<uc-live-html>
+<link rel="stylesheet" href="../themes/uc-basic/index.css">
+
+<script type="module">
+  import { ActivityCaption } from './ActivityCaption.js';
+  import { registerBlocks } from '../registerBlocks.js';
+  registerBlocks({ActivityCaption});
+  const actCap = new ActivityCaption();
+  actCap.classList.add('uc-wgt-common');
+  window.onload = () => {
+    document.querySelector('#viewport')?.appendChild(actCap);
+    actCap.$['*activityCaption'] = 'TEST CAPTION';
+  }
+</script>
+
+<div 
+  id="viewport" 
+  style="background-color: #fff; padding: 20px;">
+</div>
+</uc-live-html>
+</app-shell>
 </body>
 </html>

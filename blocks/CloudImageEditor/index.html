@@ -4,20 +4,31 @@
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CloudEditor</title>
-  <link rel="stylesheet" href="./src/css/index.css">
+  <title>CloudImageEditor</title>
+  <link rel="stylesheet" href="../../assets/css/doc.css">
+  <script src="../../assets/js/app-shell.js" type="module"></script>
 </head>
 <body>
-  <script type="module">
-    import * as blocks from '../index.js';
-    blocks.registerBlocks(blocks)
+<app-shell base="../../">
+<h1>Cloud image editor</h1>
 
-    window.addEventListener('DOMContentLoaded', () => {
-      document.querySelector('uc-cloud-editor').addEventListener('apply', (e) => {
-        console.log(e);
-      });
+<uc-live-html>
+<link rel="stylesheet" href="./src/css/index.css">
+
+<script type="module">
+  import * as blocks from '../index.js';
+  blocks.registerBlocks(blocks)
+
+  window.addEventListener('DOMContentLoaded', () => {
+    document.querySelector('uc-cloud-editor')?.addEventListener('apply', (e) => {
+      console.log(e);
     });
-  </script>
-  <uc-cloud-editor class="uc-cldtr-common" uuid="10b1c9f4-4234-467a-b44c-f223532fce0f"></uc-cloud-editor>
+  });
+</script>
+
+<uc-cloud-editor class="uc-cldtr-common" uuid="10b1c9f4-4234-467a-b44c-f223532fce0f"></uc-cloud-editor>
+</uc-live-html>
+</app-shell>
+
 </body>
 </html>
