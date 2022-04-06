@@ -3,7 +3,7 @@ module.exports = {
   plugins: ['stylelint-declaration-block-no-ignored-properties'],
   rules: {
     'plugin/declaration-block-no-ignored-properties': true,
-    'function-calc-no-unspaced-operator': null,
+    'function-calc-no-unspaced-operator': true, // can cause out of memory in some cases
     'keyframes-name-pattern': null,
     'selector-class-pattern': null,
     'custom-property-pattern': null,
