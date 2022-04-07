@@ -180,8 +180,23 @@ export class LiveHtml extends BaseComponent {
 
   connectedCallback() {
     if (this.innerHTML.trim()) {
+      let lines = this.innerHTML.split('\n');
+      let commonTabSize = 1000;
+      lines.forEach((line) => {
+        let tabs = line.match(/^ +/);
+        if (tabs) {
+          commonTabSize = Math.min(commonTabSize, tabs[0].length);
+        }
+      });
       /** @private */
-      this.__innerHtml = this.innerHTML;
+      this.__innerHtml = lines
+        .map((line) => {
+          for (let i = 0; i < commonTabSize; i++) {
+            line = line.replace(' ', '');
+          }
+          return line;
+        })
+        .join('\n');
       this.innerHTML = '';
     }
     super.connectedCallback();
