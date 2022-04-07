@@ -5,26 +5,36 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ExternalSource</title>
-  <link rel="stylesheet" href="../../doc_assets/css/doc.css">
-  <link rel="stylesheet" href="../themes/uc-basic/index.css">
+  <link rel="stylesheet" href="../../assets/css/doc.css">
+  <script src="../../assets/js/app-shell.js" type="module"></script>
 </head>
 <body>
-  <script type="module">
-    import { ExternalSource } from './ExternalSource.js';
-    import { Icon } from '../Icon/Icon.js'
-    import { registerBlocks } from '../registerBlocks.js';
-    registerBlocks({Icon, ExternalSource});
-    const extSrc = new ExternalSource();
-    extSrc.classList.add('uc-wgt-common');
-    window.onload = () => {
-      document.querySelector('#viewport').appendChild(extSrc);
-      extSrc.$['*currentActivity'] = 'external';
-    }
-  </script>
-  <h1>ExternalSource</h1>
-  <div 
-    id="viewport" 
-    style="background-color: #fff; padding: 20px;">
-  </div>
+<app-shell base="../../">
+
+<h1>ExternalSource</h1>
+
+<uc-live-html>
+<link rel="stylesheet" href="../themes/uc-basic/index.css">
+
+<script type="module">
+  import { ExternalSource } from './ExternalSource.js';
+  import { Icon } from '../Icon/Icon.js'
+  import { registerBlocks } from '../registerBlocks.js';
+  registerBlocks({Icon, ExternalSource});
+  const extSrc = new ExternalSource();
+  extSrc.classList.add('uc-wgt-common');
+  window.onload = () => {
+    document.querySelector('#viewport')?.appendChild(extSrc);
+    extSrc.$['*currentActivity'] = 'external';
+  }
+</script>
+
+<div 
+  id="viewport" 
+  style="background-color: #fff; padding: 20px;">
+</div>
+
+</uc-live-html>
+</app-shell>
 </body>
 </html>
