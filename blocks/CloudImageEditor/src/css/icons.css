@@ -1,15 +1,17 @@
+/* stylelint-disable string-no-newline */
 .uc-cldtr-common uc-icon {
   display: flex;
-  justify-content: center;
   align-items: center;
-  height: 100%;
+  justify-content: center;
   width: 100%;
+  height: 100%;
 }
 
 .uc-cldtr-common uc-icon svg {
-  height: unset;
   width: unset;
+  height: unset;
 }
+
 .uc-cldtr-common uc-icon:not([raw]) path {
   stroke-linejoin: round;
   fill: none;
@@ -17,7 +19,9 @@
   stroke-width: 1.2;
 }
 
-.uc-cldtr-icons, .uc-cldtr-common, :host {
+.uc-cldtr-icons,
+.uc-cldtr-common,
+:host {
   --icon-rotate: 'M13.5.399902L12 1.9999l1.5 1.6M12.0234 2H14.4C16.3882 2 18 3.61178 18 5.6V8M4 17h9c.5523 0 1-.4477 1-1V7c0-.55228-.4477-1-1-1H4c-.55228 0-1 .44771-1 1v9c0 .5523.44771 1 1 1z';
   --icon-mirror: 'M5.00042.399902l-1.5 1.599998 1.5 1.6M15.0004.399902l1.5 1.599998-1.5 1.6M3.51995 2H16.477M8.50042 16.7V6.04604c0-.30141-.39466-.41459-.5544-.159L1.28729 16.541c-.12488.1998.01877.459.2544.459h6.65873c.16568 0 .3-.1343.3-.3zm2.99998 0V6.04604c0-.30141.3947-.41459.5544-.159L18.7135 16.541c.1249.1998-.0187.459-.2544.459h-6.6587c-.1657 0-.3-.1343-.3-.3z';
   --icon-flip: 'M19.6001 4.99993l-1.6-1.5-1.6 1.5m3.2 9.99997l-1.6 1.5-1.6-1.5M18 3.52337V16.4765M3.3 8.49993h10.654c.3014 0 .4146-.39466.159-.5544L3.459 1.2868C3.25919 1.16192 3 1.30557 3 1.5412v6.65873c0 .16568.13432.3.3.3zm0 2.99997h10.654c.3014 0 .4146.3947.159.5544L3.459 18.7131c-.19981.1248-.459-.0188-.459-.2544v-6.6588c0-.1657.13432-.3.3-.3z';

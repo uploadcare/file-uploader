@@ -16,17 +16,17 @@ You can create your own blocks from scratch with JavaScript using our super-dupe
 
 Key features:
 
-* Easy to use within any modern toolchain: framework, library, or CMS.
-* Lifecycle is controlled from the inside; you don't need to manage it in your code.
-* You can easily switch between encapsulated secure styling and common document styles.
-* Using of [Shadow DOM](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_shadow_DOM) — is up to you.
-* It's easy to set any customized data context for the blocks, to control them in detail.
-* Total flexibility.
-* No heavy dependencies and no bandwidth- and performance-penalizing libraries are necessary.
-* It's easy to follow your strict design guidelines.
-* Everything is very close to the native browser APIs and concepts; you don't need to learn something completely new.
-* [Content Security Policy (CSP)](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP) friendly — good for secure enterprise usage.
-* [Jamstack](https://jamstack.org/) friendly: enter the new world of web development!
+- Easy to use within any modern toolchain: framework, library, or CMS.
+- Lifecycle is controlled from the inside; you don't need to manage it in your code.
+- You can easily switch between encapsulated secure styling and common document styles.
+- Using of [Shadow DOM](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_shadow_DOM) — is up to you.
+- It's easy to set any customized data context for the blocks, to control them in detail.
+- Total flexibility.
+- No heavy dependencies and no bandwidth- and performance-penalizing libraries are necessary.
+- It's easy to follow your strict design guidelines.
+- Everything is very close to the native browser APIs and concepts; you don't need to learn something completely new.
+- [Content Security Policy (CSP)](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP) friendly — good for secure enterprise usage.
+- [Jamstack](https://jamstack.org/) friendly: enter the new world of web development!
 
 <re-htm src="../assets/htm/upload-blocks-demo.htm"></re-htm>
 
@@ -119,15 +119,15 @@ You can create your own custom upload-blocks to handle some specific use cases. 
 
 ## ⚙️ More in depth
 
-* [Configuration](../docs/configuration/)
-* [Texts & localization](../docs/texts/)
-* [Icons](../docs/icons/)
-* [Styling](../docs/styling/)
-* [Blocks](../docs/blocks/)
-* [Contexts](../docs/contexts/)
-* [Activities](../docs/activities/)
-* [TypeScript](../docs/typescript/)
-* [Symbiote.js](https://github.com/symbiotejs/symbiote.js)
+- [Configuration](../docs/configuration/)
+- [Texts & localization](../docs/texts/)
+- [Icons](../docs/icons/)
+- [Styling](../docs/styling/)
+- [Blocks](../docs/blocks/)
+- [Contexts](../docs/contexts/)
+- [Activities](../docs/activities/)
+- [TypeScript](../docs/typescript/)
+- [Symbiote.js](https://github.com/symbiotejs/symbiote.js)
 
 ## 💬 Discussions
 

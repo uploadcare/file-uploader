@@ -1,42 +1,50 @@
 uc-live-html {
   display: grid;
   grid-template-columns: 50% 50%;
-  box-shadow: 0 5px 16px rgba(0, 0, 0, .6);
+  box-shadow: 0 5px 16px rgb(0 0 0 / 60%);
 }
+
 uc-live-html [contenteditable] {
+  padding: 20px;
+  overflow: auto;
+  color: rgb(255 255 255);
+  font-size: 14px;
+  font-family: monospace;
   white-space: pre;
   background-color: #000;
-  font-family: monospace;
-  font-size: 14px;
-  color: rgb(255, 255, 255);
-  overflow: auto;
-  padding: 20px;
   outline: none;
 }
+
 uc-live-html [contenteditable] [-tag-arr-] {
-  color: rgb(255, 112, 112);
+  color: rgb(255 112 112);
 }
+
 uc-live-html [contenteditable] [-comment-] {
-  font-style: italic;
-  opacity: .5;
   color: aqua;
+  font-style: italic;
+  opacity: 0.5;
 }
+
 uc-live-html [contenteditable] [-attr-] {
-  color: rgb(152, 197, 255);
+  color: rgb(152 197 255);
 }
+
 uc-live-html [contenteditable] [-quote-] {
-  color: rgb(169, 255, 152);
+  color: rgb(169 255 152);
 }
+
 uc-live-html [contenteditable] [-equal-] {
-  color: rgb(255, 152, 241);
+  color: rgb(255 152 241);
 }
+
 uc-live-html [contenteditable] [-style-] {
-  color: rgb(255, 207, 152);
+  color: rgb(255 207 152);
 }
+
 uc-live-html iframe {
   display: block;
-  height: 100%;
   width: 100%;
-  border: 0;
+  height: 100%;
   background-color: #fff;
+  border: 0;
 }

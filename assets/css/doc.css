@@ -2,14 +2,14 @@
 @import url('../../blocks/LiveHtml/live-html.css');
 
 :root {
-  --clr-bg: rgb(31, 29, 29);
-  --clr-font: rgb(224, 253, 255);
-  --clr-link: rgb(253, 255, 139);
-  --clr-panel: rgba(255, 255, 255, .1);
-  --clr-accent: rgb(233, 159, 255);
-  --clr-accent-shade: rgba(233, 159, 255, .06);
+  --clr-bg: rgb(31 29 29);
+  --clr-font: rgb(224 253 255);
+  --clr-link: rgb(253 255 139);
+  --clr-panel: rgb(255 255 255 / 10%);
+  --clr-accent: rgb(233 159 255);
+  --clr-accent-shade: rgb(233 159 255 / 6%);
   --clr-code: #fff;
-  --clr-code-hl: rgb(255, 112, 112);
+  --clr-code-hl: rgb(255 112 112);
 
   --gap-min: 2px;
   --gap-mid: 10px;
@@ -17,14 +17,15 @@
   --gap-huge: 60px;
 }
 
-html, body {
-  padding: 0;
+html,
+body {
   margin: 0;
-  background-color: var(--clr-bg);
+  padding: 0;
   color: var(--clr-font);
-  font-family: 'Roboto', sans-serif;
+  font-family: Roboto, sans-serif;
+  background-color: var(--clr-bg);
 }
 
-body[unresolved]  {
+body[unresolved] {
   opacity: 0;
 }

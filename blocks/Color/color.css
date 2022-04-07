@@ -1,32 +1,32 @@
 uc-color {
   position: relative;
   display: inline-flex;
-  justify-content: center;
   align-items: center;
-  background-color: var(--clr-background);
-  height: var(--ui-size);
+  justify-content: center;
   width: var(--ui-size);
-  cursor: pointer;
+  height: var(--ui-size);
   overflow: hidden;
+  background-color: var(--clr-background);
+  cursor: pointer;
 }
 
 uc-color[current] {
   background-color: var(--clr-txt);
 }
 
-uc-color input[type="color"] {
+uc-color input[type='color'] {
   position: absolute;
   display: block;
-  height: 100%;
   width: 100%;
+  height: 100%;
   opacity: 0;
 }
 
 uc-color .current-color {
   position: absolute;
-  height: 50%;
   width: 50%;
-  border-radius: 100%;
+  height: 50%;
   border: 2px solid #fff;
+  border-radius: 100%;
   pointer-events: none;
 }

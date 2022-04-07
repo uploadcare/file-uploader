@@ -109,7 +109,14 @@ export class Block extends BaseComponent {
   /** @private */
   __bindBasicCssData() {
     if (!Block._cssDataBindingsList.includes(this.ctxName)) {
-      let unprefixedCfgProps = ['pubkey', 'store', 'multiple', 'max-files', 'accept', 'confirm-upload'];
+      let unprefixedCfgProps = [
+        'pubkey',
+        'store',
+        'multiple',
+        'max-files',
+        'accept',
+        'confirm-upload',
+      ];
       unprefixedCfgProps.forEach((prop) => {
         this.bindCssData(`--cfg-${prop}`);
       });
@@ -230,7 +237,10 @@ export class Block extends BaseComponent {
     if (!this.has('*uploadCollection')) {
       let uploadCollection = new TypedCollection({
         typedSchema: uploadEntrySchema,
-        watchList: ['uploadProgress', 'uuid'],
+        watchList: [
+          'uploadProgress',
+          'uuid',
+        ],
         handler: (entries) => {
           this.$['*uploadList'] = entries;
         },
@@ -258,7 +268,13 @@ export class Block extends BaseComponent {
    * @param {Number} [decimals]
    */
   fileSizeFmt(bytes, decimals = 2) {
-    let units = ['B', 'KB', 'MB', 'GB', 'TB'];
+    let units = [
+      'B',
+      'KB',
+      'MB',
+      'GB',
+      'TB',
+    ];
     /**
      * @param {String} str
      * @returns {String}

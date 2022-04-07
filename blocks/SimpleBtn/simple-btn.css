@@ -1,15 +1,18 @@
 uc-simple-btn {
   display: inline-flex;
 }
+
 uc-simple-btn button {
+  padding-left: 0.2em;
   color: var(--clr-btn-txt-secondary);
   background-color: var(--clr-btn-bgr-secondary);
-  padding-left: 0.2em;
   box-shadow: var(--shadow-btn-secondary);
 }
+
 uc-simple-btn button:hover {
   background-color: var(--clr-btn-bgr-secondary-hover);
 }
+
 uc-simple-btn button:active {
   background-color: var(--clr-btn-bgr-secondary-active);
 }

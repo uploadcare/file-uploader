@@ -2,38 +2,43 @@ uc-source-btn {
   display: flex;
   align-items: center;
   padding-right: 1em;
-  user-select: none;
-  cursor: pointer;
-  border-radius: var(--border-radius-element);
-  transition-property: background-color, color;
-  transition-duration: var(--transition-duration);
   color: var(--clr-txt-mid);
+  border-radius: var(--border-radius-element);
+  cursor: pointer;
+  transition-duration: var(--transition-duration);
+  transition-property: background-color, color;
+  user-select: none;
 }
-uc-source-btn:hover{
+
+uc-source-btn:hover {
+  color: var(--clr-txt);
   background-color: var(--clr-shade-lv1);
-  color: var(--clr-txt);
 }
-uc-source-btn:active{
-  background-color: var(--clr-shade-lv2);
+
+uc-source-btn:active {
   color: var(--clr-txt);
+  background-color: var(--clr-shade-lv2);
 }
 
 uc-source-btn uc-icon {
   display: inline-flex;
   flex-grow: 1;
-  min-width: var(--ui-size);
   justify-content: center;
+  min-width: var(--ui-size);
 }
 
 uc-source-btn[type='local'] > .txt::after {
   content: var(--l10n-local-files);
 }
+
 uc-source-btn[type='camera'] > .txt::after {
   content: var(--l10n-camera);
 }
+
 uc-source-btn[type='url'] > .txt::after {
   content: var(--l10n-from-url);
 }
+
 uc-source-btn[type='other'] > .txt::after {
   content: var(--l10n-other);
 }
@@ -41,11 +46,10 @@ uc-source-btn[type='other'] > .txt::after {
 uc-source-btn .txt {
   display: flex;
   align-items: center;
-  height: 100%;
+  box-sizing: border-box;
   width: 100%;
   height: var(--ui-size);
   padding: 0;
-  border: none;
-  box-sizing: border-box;
   white-space: nowrap;
+  border: none;
 }
