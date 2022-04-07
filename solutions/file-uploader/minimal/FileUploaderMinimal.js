@@ -1,6 +1,6 @@
-import * as UC from '../../../blocks/index.js';
+import { Block } from '../../../blocks/index.js';
 
-export class FileUploaderMinimal extends UC.Block {
+export class FileUploaderMinimal extends Block {
   init$ = {
     '*currentActivity': 'source-select',
     selectClicked: (e) => {
