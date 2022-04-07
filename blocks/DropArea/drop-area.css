@@ -1,7 +1,7 @@
 uc-drop-area {
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
   padding: var(--gap-min);
   border: var(--border-dashed);
   border-radius: var(--border-radius-frame);
@@ -10,8 +10,8 @@ uc-drop-area {
 }
 
 uc-drop-area::after {
-  content: var(--l10n-drop-files-here);
   color: var(--clr-txt-light);
+  content: var(--l10n-drop-files-here);
 }
 
 uc-drop-area[ghost][drag-state='inactive'] {

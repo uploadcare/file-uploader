@@ -16,6 +16,7 @@ module.exports = {
         ignoreKeywords: ['currentColor'],
       },
     ],
+    'color-function-notation': null,
   },
   overrides: [
     {

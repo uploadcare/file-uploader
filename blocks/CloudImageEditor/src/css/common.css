@@ -18,13 +18,13 @@
   --color-text-soft: rgb(var(--rgb-fill-contrast));
   --color-text-error: rgb(var(--rgb-error));
   --color-fill-contrast: rgb(var(--rgb-fill-contrast));
-  --color-modal-backdrop: rgb(var(--rgb-fill-shaded) 0.95);
+  --color-modal-backdrop: rgba(var(--rgb-fill-shaded), 0.95);
   --color-image-background: rgba(var(--rgb-fill-shaded));
-  --color-outline: rgb(var(--rgb-text-base) var(--opacity-shade-mid));
-  --color-underline: rgb(var(--rgb-text-base) 0.08);
-  --color-shade: rgb(var(--rgb-text-base) 0.02);
+  --color-outline: rgba(var(--rgb-text-base), var(--opacity-shade-mid));
+  --color-underline: rgba(var(--rgb-text-base), 0.08);
+  --color-shade: rgba(var(--rgb-text-base), 0.02);
   --color-focus-ring: var(--color-primary-accent);
-  --color-input-placeholder: rgb(var(--rgb-text-base) 0.32);
+  --color-input-placeholder: rgba(var(--rgb-text-base), 0.32);
   --color-error: rgb(var(--rgb-error));
 
   --font-size-ui: 16px;
@@ -58,7 +58,7 @@
   --transition-duration-4: var(--transition-duration-all, 0.4s);
   --transition-duration-5: var(--transition-duration-all, 0.5s);
 
-  --shadow-base: 0px 5px 15px rgb(var(--rgb-shadow) 0.1), 0px 1px 4px rgb(var(--rgb-shadow) 0.15);
+  --shadow-base: 0px 5px 15px rgba(var(--rgb-shadow), 0.1), 0px 1px 4px rgba(var(--rgb-shadow), 0.15);
 }
 
 :where(.uc-cldtr-common, :host) :where([can-handle-paste]:hover, [can-handle-paste]:focus) {
@@ -274,7 +274,7 @@ uc-cloud-editor > .wrapper > .network_problems_splash > .network_problems_conten
   justify-content: center;
   width: 40px;
   height: 40px;
-  color: rgb(var(--rgb-text-base) 0.6);
+  color: rgba(var(--rgb-text-base), 0.6);
   background-color: rgba(var(--rgb-fill-shaded));
   border-radius: 50%;
 }
@@ -395,7 +395,7 @@ uc-editor-filter-control > .before {
   z-index: -1;
   width: 100%;
   height: 100%;
-  background-color: rgb(var(--color-effect) var(--opacity-effect));
+  background-color: rgba(var(--color-effect), var(--opacity-effect));
   border-radius: var(--border-radius-editor);
   transition: var(--transition-duration-3);
 }
@@ -760,7 +760,7 @@ uc-btn-ui {
   height: var(--css-height, var(--size-touch-area));
   padding-right: var(--css-padding-right, var(--gap-mid-1));
   padding-left: var(--css-padding-left, var(--gap-mid-1));
-  color: rgb(var(--color-effect) var(--opacity-effect));
+  color: rgba(var(--color-effect), var(--opacity-effect));
   outline: none;
   cursor: pointer;
   filter: brightness(var(--filter-effect));
@@ -776,7 +776,7 @@ uc-btn-ui .icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgb(var(--color-effect) var(--opacity-effect));
+  color: rgba(var(--color-effect), var(--opacity-effect));
   filter: brightness(var(--filter-effect));
   transition: var(--l-transition-effect);
 }
