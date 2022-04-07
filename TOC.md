@@ -2,10 +2,10 @@
 
 - [uc-blocks](./) - repository root
 
-
   - [solutions](./solutions/) - ready made solutions
 
     - [uploader](./solutions/file-uploader/) - uploader implementations for the most frequent cases
+
       - [regular](./solutions/file-uploader/regular/) - overall case
       - [inline](./solutions/file-uploader/inline/) - without modal
       - [minimal](./solutions/file-uploader/minimal/) - minimal and compact
@@ -16,15 +16,16 @@
   - [blocks](./blocks/) - building blocks for the custom integrations
 
     - docs:
-      - [Configuration](./blocks/docs/configuration/) - common settings
-      - [Texts & localization](./blocks/docs/texts/) - custom texts and translations
-      - [Icons](./blocks/docs/icons/) - custom icons
-      - [Styling](./blocks/docs/styling/) - themes and styles for components
-      - [Blocks](./blocks/docs/blocks/) - custom blocks and deeper workflow tuning
-      - [Contexts](./blocks/docs/contexts/) - how to unite blocks into common workflows and share common data
-      - [Activities](./blocks/docs/activities/) - how to set and switch user focused activities
-      - [BlockComponent](./blocks/docs/block-component/) - all about blocks base class
-      - [TypeScript](./blocks/docs/typescript/) - using types in TypeScript and JavaScript projects
+
+      - [Configuration](./docs/configuration/) - common settings
+      - [Texts & localization](./docs/texts/) - custom texts and translations
+      - [Icons](./docs/icons/) - custom icons
+      - [Styling](./docs/styling/) - themes and styles for components
+      - [Blocks](./docs/blocks/) - custom blocks and deeper workflow tuning
+      - [Contexts](./docs/contexts/) - how to unite blocks into common workflows and share common data
+      - [Activities](./docs/activities/) - how to set and switch user focused activities
+      - [BlockComponent](./docs/block-component/) - all about blocks base class
+      - [TypeScript](./docs/typescript/) - using types in TypeScript and JavaScript projects
 
     - blocks:
       - [ActivityCaption](./blocks/ActivityCaption/) - shows heading text for the current activity
@@ -51,10 +52,10 @@
       - [UploadDetails](./blocks/UploadDetails/) - displays file details and adittional features
       - [UploadList](./blocks/UploadList/) - shows the list of uploads
       - [UrlSource](./blocks/UrlSource/) - file uploading from the external URL
-    
+
   - [abstract](./abstract/) - common code abstractions (abstract classes)
 
 ## External resources
 
-* [Symbiote.js](https://github.com/symbiotejs/symbiote.js) - core library for the Web Components creation and data-flow management
-* [Integration examples](https://github.com/uploadcare/upload-blocks-examples) - for the most popular front-end libraries and frameworks
+- [Symbiote.js](https://github.com/symbiotejs/symbiote.js) - core library for the Web Components creation and data-flow management
+- [Integration examples](https://github.com/uploadcare/upload-blocks-examples) - for the most popular front-end libraries and frameworks
