@@ -186,6 +186,10 @@ export class LiveHtml extends BaseComponent {
         if (!line.trim()) {
           return;
         }
+        if (!line.startsWith(' ')) {
+          commonTabSize = 0;
+          return;
+        }
         let tabs = line.match(/^ +/);
         if (tabs) {
           commonTabSize = Math.min(commonTabSize, tabs[0].length);

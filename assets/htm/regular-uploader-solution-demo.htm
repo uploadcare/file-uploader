@@ -1,39 +1,35 @@
 <div class="demo-tile">
   <h2>🎬 Live Demo:</h2>
 
-<uc-live-html>
-<!-- Uploader script connection: -->
-<script
-  src="./regular/index.js"
-  type="module">
-</script>
+  <uc-live-html>
+    <!-- Uploader script connection: -->
+    <script src="./regular/index.js" type="module">
+    </script>
 
-<!-- Uploader styles and Data-in-CSS settings: -->
-<style>
-@import url(./regular/index.css);
-uc-uploader {
-  --ctx-name: 'my-uploader';
-  --cfg-pubkey: 'demopublickey';
-}
-</style>
+    <!-- Uploader styles and Data-in-CSS settings: -->
+    <style>
+      @import url(./regular/index.css);
 
-<!-- Uploader widget element: -->
-<uc-uploader
-  class="uc-wgt-common">
-</uc-uploader>
+      uc-uploader {
+        --ctx-name: 'my-uploader';
+        --cfg-pubkey: 'demopublickey';
+      }
+    </style>
 
-<!-- Upload data element with console output enabled: -->
-<uc-data-output
-  console
-  class="my-settings">
-</uc-data-output>
-</uc-live-html>
+    <!-- Uploader widget element: -->
+    <uc-uploader class="uc-wgt-common">
+    </uc-uploader>
+
+    <!-- Upload data element with console output enabled: -->
+    <uc-data-output console class="my-settings">
+    </uc-data-output>
+  </uc-live-html>
 
 </div>
 
 <blockquote>
-  These example is using the raw code, without any build flow setup made. 
+  These example is using the raw code, without any build flow setup made.
   So you can inspect it via developer tools in your browser and discover all the details.
-  Note, that this is a demo and that kind of approach could be not optimal. 
+  Note, that this is a demo and that kind of approach could be not optimal.
   For production usage code bundling and minification is recommended.
 </blockquote>
