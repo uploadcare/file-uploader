@@ -183,6 +183,9 @@ export class LiveHtml extends BaseComponent {
       let lines = this.innerHTML.split('\n');
       let commonTabSize = 1000;
       lines.forEach((line) => {
+        if (!line.trim()) {
+          return;
+        }
         let tabs = line.match(/^ +/);
         if (tabs) {
           commonTabSize = Math.min(commonTabSize, tabs[0].length);
@@ -192,7 +195,9 @@ export class LiveHtml extends BaseComponent {
       this.__innerHtml = lines
         .map((line) => {
           for (let i = 0; i < commonTabSize; i++) {
-            line = line.replace(' ', '');
+            if (line.startsWith(' ')) {
+              line = line.replace(' ', '');
+            }
           }
           return line;
         })
