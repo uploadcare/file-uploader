@@ -118,12 +118,13 @@ export class ImgBase extends BaseComponent {
 
     // Alternative proxy name:
     if (this.$$('proxy-cname')) {
-      return join(
+      let base = join(
         //
         this.$$('proxy-cname'),
         ops,
         this._fmtAbs(this.$$('src'))
       );
+      return base + this._fmtAbs(this.$$('src'));
     }
 
     // Project pubkey only:
