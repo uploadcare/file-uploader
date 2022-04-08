@@ -40,6 +40,7 @@
       - [ExternalSource](./blocks/ExternalSource/) - common wrapper for external file sources
       - [FileItem](./blocks/FileItem/) - basic UI for the each uploading file entry
       - [Icon](./blocks/Icon/) - displays an icon
+      - [Img](./blocks/Img/) - adaptive image
       - [MessageBox](./blocks/MessageBox/) - common container for the application messages
       - [Modal](./blocks/Modal/) - common pop-up window
       - [ProgressBarCommon](./blocks/ProgressBarCommon/) - displays uploading progress for the all files selected

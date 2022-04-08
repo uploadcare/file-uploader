@@ -1,38 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ConfirmationDialog</title>
-  <link rel="stylesheet" href="../../assets/css/doc.css">
-  <script src="../../assets/js/app-shell.js" type="module"></script>
-</head>
-<body>
-<app-shell base="../../">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ConfirmationDialog</title>
+    <link rel="stylesheet" href="../../assets/css/doc.css" />
+    <script src="../../assets/js/app-shell.js" type="module"></script>
+  </head>
 
-<h1>ConfirmationDialog</h1>
+  <body>
+    <app-shell base="../../">
+      <h1>ConfirmationDialog</h1>
+      <uc-live-html>
+        <link rel="stylesheet" href="../themes/uc-basic/index.css" />
 
-<uc-live-html>
-<link rel="stylesheet" href="../themes/uc-basic/index.css">
+        <script src="./test.js" type="module"></script>
 
-<script type="module">
-  import { ConfirmationDialog, UiConfirmation } from './ConfirmationDialog.js';
-  import { registerBlocks } from '../registerBlocks.js';
-  registerBlocks({ConfirmationDialog});
-  const confirmDialog = new ConfirmationDialog();
-  confirmDialog.classList.add('uc-wgt-common');
-  window.onload = () => {
-    document.querySelector('#viewport')?.appendChild(confirmDialog);
-    confirmDialog.$['*confirmation'] = new UiConfirmation();
-  }
-</script>
-
-<div 
-  id="viewport" 
-  style="background-color: #fff; padding: 20px;">
-</div>
-</uc-live-html>
-</app-shell>
-</body>
+        <div id="viewport"></div>
+      </uc-live-html>
+    </app-shell>
+  </body>
 </html>

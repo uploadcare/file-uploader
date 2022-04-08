@@ -1,44 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EditableCanvas</title>
-  <link rel="stylesheet" href="../../assets/css/doc.css">
-  <script src="../../assets/js/app-shell.js" type="module"></script>
-  <link rel="stylesheet" href="../themes/uc-basic/index.css">
-</head>
-<body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EditableCanvas</title>
+    <link rel="stylesheet" href="../../assets/css/doc.css" />
+    <script src="../../assets/js/app-shell.js" type="module"></script>
+    <link rel="stylesheet" href="../themes/uc-basic/index.css" />
+  </head>
 
-<app-shell base="../../">
+  <body>
+    <app-shell base="../../">
+      <h1>EditableCanvas</h1>
+      <uc-live-html>
+        <link rel="stylesheet" href="../themes/uc-basic/index.css" />
 
-<h1>EditableCanvas</h1>
+        <script src="./test.js" type="module"></script>
 
-<uc-live-html>
-<link rel="stylesheet" href="../themes/uc-basic/index.css">
-
-<script type="module">
-  import { EditableCanvas } from './EditableCanvas.js';
-  import { registerBlocks } from '../registerBlocks.js';
-  registerBlocks({EditableCanvas});
-  const editableCanvas = new EditableCanvas();
-  editableCanvas.classList.add('uc-wgt-common');
-  window.onload = () => {
-    document.querySelector('#viewport')?.appendChild(editableCanvas);
-    let img = new Image();
-    img.src = 'test/test.jpg';
-    editableCanvas.setImage(img);
-  }
-</script>
-
-<div 
-  id="viewport" 
-  style="position: relative; height: 600px; background-color: #fff;">
-</div>
-</script>
-</uc-live-html>
-</app-shell>
-
-</body>
+        <div id="viewport"></div>
+      </uc-live-html>
+    </app-shell>
+  </body>
 </html>

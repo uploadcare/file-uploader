@@ -87,6 +87,8 @@ export class ImgBase extends BaseComponent {
    * @returns {any}
    */
   _getUrlBase(size = '') {
+    // console.log(this.localCtx);
+
     // Localhost + relative image path (DO NOTHING):
     if (DEV_MODE && this.$$('src') && !this.$$('src').includes('//')) {
       return this.$$('src');
@@ -126,12 +128,12 @@ export class ImgBase extends BaseComponent {
 
     // Project pubkey only:
     if (this.$$('pubkey')) {
-      return join(
+      let base = join(
         //
         `https://${this.$$('pubkey')}.ucr.io/`,
-        ops,
-        this._fmtAbs(this.$$('src'))
+        ops
       );
+      return base + this._fmtAbs(this.$$('src'));
     }
   }
 

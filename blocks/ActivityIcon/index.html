@@ -1,37 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ActivityIcon</title>
-  <link rel="stylesheet" href="../../assets/css/doc.css">
-  <script src="../../assets/js/app-shell.js" type="module"></script>
-</head>
-<body>
-<app-shell base="../../">
-<h1>ActivityIcon</h1>
-<uc-live-html>
-<link rel="stylesheet" href="../themes/uc-basic/index.css">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ActivityIcon</title>
+    <link rel="stylesheet" href="../../assets/css/doc.css" />
+    <script src="../../assets/js/app-shell.js" type="module"></script>
+  </head>
 
-<script type="module">
-  import { Icon } from '../Icon/Icon.js';
-  import { ActivityIcon } from './ActivityIcon.js';
-  import { registerBlocks } from '../registerBlocks.js';
-  registerBlocks({Icon, ActivityIcon});
-  const actIcon = new ActivityIcon();
-  actIcon.classList.add('uc-wgt-common');
-  window.onload = () => {
-    document.querySelector('#viewport')?.appendChild(actIcon);
-    actIcon.$['*activityIcon'] = 'file';
-  }
-</script>
+  <body>
+    <app-shell base="../../">
+      <h1>ActivityIcon</h1>
+      <uc-live-html>
+        <link rel="stylesheet" href="../themes/uc-basic/index.css" />
 
-<div 
-  id="viewport" 
-  style="background-color: #fff; padding: 20px;">
-</div>
-</uc-live-html>
-</app-shell>
-</body>
+        <script src="./test.js" type="module"></script>
+
+        <div id="viewport"></div>
+      </uc-live-html>
+    </app-shell>
+  </body>
 </html>
