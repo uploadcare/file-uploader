@@ -116,6 +116,8 @@ export class Block extends BaseComponent {
         'max-files',
         'accept',
         'confirm-upload',
+        'init-activity',
+        'done-activity',
       ];
       unprefixedCfgProps.forEach((prop) => {
         this.bindCssData(`--cfg-${prop}`);
@@ -237,10 +239,7 @@ export class Block extends BaseComponent {
     if (!this.has('*uploadCollection')) {
       let uploadCollection = new TypedCollection({
         typedSchema: uploadEntrySchema,
-        watchList: [
-          'uploadProgress',
-          'uuid',
-        ],
+        watchList: ['uploadProgress', 'uuid'],
         handler: (entries) => {
           this.$['*uploadList'] = entries;
         },
@@ -268,13 +267,7 @@ export class Block extends BaseComponent {
    * @param {Number} [decimals]
    */
   fileSizeFmt(bytes, decimals = 2) {
-    let units = [
-      'B',
-      'KB',
-      'MB',
-      'GB',
-      'TB',
-    ];
+    let units = ['B', 'KB', 'MB', 'GB', 'TB'];
     /**
      * @param {String} str
      * @returns {String}

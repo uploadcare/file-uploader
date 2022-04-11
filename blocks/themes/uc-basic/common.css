@@ -9,19 +9,23 @@
     'Helvetica Neue', sans-serif;
 }
 
-:where(.uc-wgt-theme, .uc-wgt-common, :host) * {
+:where(.uc-wgt-theme, .uc-wgt-common) *,
+:host * {
   box-sizing: border-box;
 }
 
-:where(.uc-wgt-theme, .uc-wgt-common, :host) [hidden] {
+:where(.uc-wgt-theme, .uc-wgt-common, :host) [hidden],
+:host [hidden] {
   display: none !important;
 }
 
-:where(.uc-wgt-theme, .uc-wgt-common, :host) [activity]:not([active]) {
+:where(.uc-wgt-theme, .uc-wgt-common) [activity]:not([active]),
+:host [activity]:not([active]) {
   display: none;
 }
 
-:where(.uc-wgt-theme, .uc-wgt-common, :host) button {
+:where(.uc-wgt-theme, .uc-wgt-common, :host) button,
+:host button {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -37,54 +41,64 @@
   user-select: none;
 }
 
-:where(.uc-wgt-theme, .uc-wgt-common, :host)
-  :where(button[disabled], button.primary-btn[disabled], button.secondary-btn[disabled]) {
+:where(.uc-wgt-theme, .uc-wgt-common)
+  :where(button[disabled], button.primary-btn[disabled], button.secondary-btn[disabled]),
+:host :where(button[disabled], button.primary-btn[disabled], button.secondary-btn[disabled]) {
   color: var(--clr-btn-txt-disabled);
   background-color: var(--clr-btn-bgr-disabled);
   box-shadow: var(--shadow-btn-disabled);
   pointer-events: none;
 }
 
-:where(.uc-wgt-theme, .uc-wgt-common, :host) button.primary-btn {
+:where(.uc-wgt-theme, .uc-wgt-common, :host) button.primary-btn,
+:host button.primary-btn {
   color: var(--clr-btn-txt-primary);
   background-color: var(--clr-btn-bgr-primary);
   box-shadow: var(--shadow-btn-primary);
   transition: background-color var(--transition-duration);
 }
 
-:where(.uc-wgt-theme, .uc-wgt-common, :host) button.primary-btn:hover {
+:where(.uc-wgt-theme, .uc-wgt-common) button.primary-btn:hover,
+:host button.primary-btn:hover {
   background-color: var(--clr-btn-bgr-primary-hover);
 }
 
-:where(.uc-wgt-theme, .uc-wgt-common, :host) button.primary-btn:active {
+:where(.uc-wgt-theme, .uc-wgt-common) button.primary-btn:active,
+:host button.primary-btn:active {
   background-color: var(--clr-btn-bgr-primary-active);
 }
 
-:where(.uc-wgt-theme, .uc-wgt-common, :host) button.secondary-btn {
+:where(.uc-wgt-theme, .uc-wgt-common) button.secondary-btn,
+:host button.secondary-btn {
   color: var(--clr-btn-txt-secondary);
   background-color: var(--clr-btn-bgr-secondary);
   box-shadow: var(--shadow-btn-secondary);
   transition: background-color var(--transition-duration);
 }
 
-:where(.uc-wgt-theme, .uc-wgt-common, :host) button.secondary-btn:hover {
+:where(.uc-wgt-theme, .uc-wgt-common) button.secondary-btn:hover,
+:host button.secondary-btn:hover {
   background-color: var(--clr-btn-bgr-secondary-hover);
 }
 
-:where(.uc-wgt-theme, .uc-wgt-common, :host) button.secondary-btn:active {
+:where(.uc-wgt-theme, .uc-wgt-common) button.secondary-btn:active,
+:host button.secondary-btn:active {
   background-color: var(--clr-btn-bgr-secondary-active);
 }
 
-:where(.uc-wgt-theme, .uc-wgt-common, :host) a {
+:where(.uc-wgt-theme, .uc-wgt-common) a,
+:host a {
   color: var(--clr-accent);
   text-decoration: none;
 }
 
-:where(.uc-wgt-theme, .uc-wgt-common, :host) a[disabled] {
+:where(.uc-wgt-theme, .uc-wgt-common) a[disabled],
+:host a[disabled] {
   pointer-events: none;
 }
 
-:where(.uc-wgt-theme, .uc-wgt-common, :host) input[type='text'] {
+:where(.uc-wgt-theme, .uc-wgt-common) input[type='text'],
+:host input[type='text'] {
   display: flex;
   width: 100%;
   height: var(--ui-size);
@@ -100,11 +114,13 @@
   transition: var(--transition-duration);
 }
 
-:where(.uc-wgt-theme, .uc-wgt-common, :host) input[type='text']:hover {
+:where(.uc-wgt-theme, .uc-wgt-common) input[type='text']:hover,
+:host input[type='text']:hover {
   border-color: var(--clr-accent-light);
 }
 
-:where(.uc-wgt-theme, .uc-wgt-common, :host) input[type='text']:focus {
+:where(.uc-wgt-theme, .uc-wgt-common) input[type='text']:focus,
+:host input[type='text']:focus {
   border-color: var(--clr-accent);
   outline: none;
 }

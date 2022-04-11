@@ -8,10 +8,6 @@ uc-upload-list {
   transition: opacity var(--transition-duration);
 }
 
-uc-upload-list:not([active]) {
-  display: none;
-}
-
 uc-upload-list .no-files {
   height: var(--file-item-height);
   padding: var(--gap-max);

@@ -1,10 +1,10 @@
 @import url('../../../blocks/themes/uc-basic/index.css');
 
-.uc-wgt-l10n_en-US,
 .uc-wgt-common,
 :host {
   --cfg-multiple: 0;
   --cfg-confirm-upload: 0;
+  --cfg-init-activity: 'source-select';
 }
 
 uc-start-from {
