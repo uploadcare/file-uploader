@@ -148,7 +148,7 @@ The variable value should be a correct JSON value. Strings should be taken in qu
 
 Any configuration value can be defined and redefined at any DOM-tree level regarding CSS selector specificity.
 
-More details about configuration parameters you can find [here](../upload-blocks/docs/configuration/).
+More details about configuration parameters you can find [here](../uc-blocks/docs/configuration).
 
 ## 🎀 Styling
 For the look & feel customization, you can use the "Elements" section in your browser developer tools panel.
@@ -161,7 +161,7 @@ There are three major levels of possible styling customizations:
 2. The set of basic CSS variables used for the other styling calculations.
 3. Custom CSS rules for each element.
 
-For more details, please follow this [guide](../upload-blocks/themes/uc-basic/).
+For more details, please follow this [guide](../uc-blocks/blocks/themes/uc-basic).
 
 ## 🟢 CSP settings
 If the application works with sensitive user data, such as personal photos, it is recommended to increase its security with [CSP settings](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP). Uploader is using `Blob` URLs for on-the-flight generated images and the stylesheets in some cases, so don't forget to add `blob:` source into the CSP settings:
