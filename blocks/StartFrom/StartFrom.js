@@ -1,7 +1,12 @@
 import { Block } from '../../abstract/Block.js';
 
 export class StartFrom extends Block {
-  activityType = 'source-select';
+  activityType = 'start-from';
+
+  init$ = {
+    '*activityCaption': '',
+    '*activityIcon': '',
+  };
 
   initCallback() {
     this.registerActivity(this.activityType, () => {

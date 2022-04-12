@@ -12,7 +12,7 @@ export class UploadList extends Block {
     hasFiles: false,
     moreBtnDisabled: true,
     onAdd: () => {
-      this.$['*currentActivity'] = Block.activities.SOURCE_SELECT;
+      this.$['*currentActivity'] = Block.activities.START_FROM;
     },
     onUpload: () => {
       this.set$({
@@ -77,6 +77,8 @@ export class UploadList extends Block {
   }
 
   initCallback() {
+    super.initCallback();
+
     this.bindCssData('--cfg-show-empty-list');
 
     this.registerActivity(this.activityType, () => {
@@ -96,7 +98,7 @@ export class UploadList extends Block {
 
     this.sub('*uploadList', (/** @type {String[]} */ list) => {
       if (list && list.length === 0 && !this.$['*--cfg-show-empty-list']) {
-        this.$['*currentActivity'] = Block.activities.SOURCE_SELECT;
+        this.$['*currentActivity'] = Block.activities.START_FROM;
         return;
       }
 

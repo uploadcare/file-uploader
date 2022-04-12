@@ -13,7 +13,7 @@ export class ExternalSource extends Block {
     },
     onCancel: () => {
       this.set$({
-        '*currentActivity': Block.activities.SOURCE_SELECT,
+        '*currentActivity': this.cancelActivity,
       });
     },
   };

@@ -18,7 +18,7 @@ export class SimpleBtn extends Block {
         });
       } else {
         this.set$({
-          '*currentActivity': Block.activities.SOURCE_SELECT,
+          '*currentActivity': Block.activities.START_FROM,
         });
       }
     };

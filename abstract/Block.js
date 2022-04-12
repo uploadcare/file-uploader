@@ -118,10 +118,11 @@ export class Block extends BaseComponent {
         'confirm-upload',
         'init-activity',
         'done-activity',
+        'cancel-activity',
       ];
       unprefixedCfgProps.forEach((prop) => {
         this.bindCssData(`--cfg-${prop}`);
-      });
+      }, true);
       Block._cssDataBindingsList.push(this.ctxName);
     }
   }
@@ -202,12 +203,16 @@ export class Block extends BaseComponent {
     };
   }
 
+  get initActivity() {
+    return this.$['*--cfg-init-activity'];
+  }
+
   get doneActivity() {
-    return this.getAttribute('done-activity');
+    return this.$['*--cfg-done-activity'];
   }
 
   get cancelActivity() {
-    return this.getAttribute('cancel-activity');
+    return this.$['*--cfg-cancel-activity'];
   }
 
   get isActivityActive() {
@@ -332,7 +337,7 @@ export class Block extends BaseComponent {
 
 /** @enum {String} */
 Block.activities = Object.freeze({
-  SOURCE_SELECT: 'source-select',
+  START_FROM: 'start-from',
   CAMERA: 'camera',
   DRAW: 'draw',
   UPLOAD_LIST: 'upload-list',

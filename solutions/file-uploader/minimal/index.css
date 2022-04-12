@@ -4,7 +4,8 @@
 :host {
   --cfg-multiple: 0;
   --cfg-confirm-upload: 0;
-  --cfg-init-activity: 'source-select';
+  --cfg-init-activity: 'start-from';
+  --cfg-done-activity: 'upload-list';
 }
 
 uc-start-from {

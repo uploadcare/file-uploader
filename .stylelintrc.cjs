@@ -10,6 +10,7 @@ module.exports = {
     'declaration-block-no-redundant-longhand-properties': null,
     'custom-property-empty-line-before': null,
     'length-zero-no-unit': null,
+    'no-descending-specificity': null,
     'value-keyword-case': [
       'lower',
       {
