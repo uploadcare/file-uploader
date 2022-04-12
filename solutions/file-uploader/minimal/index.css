@@ -10,8 +10,6 @@
 
 uc-start-from {
   display: block;
-  flex-direction: column;
-  justify-items: center;
   width: 100%; /* test value */
   height: 100%; /* test value */
   padding: 0;
@@ -19,7 +17,6 @@ uc-start-from {
 }
 
 uc-drop-area {
-  flex-direction: column;
   width: 100%;
   height: calc(var(--ui-size) + var(--gap-mid) * 2 + var(--gap-min) * 4);
   padding: 0;
@@ -28,10 +25,6 @@ uc-drop-area {
   border-color: var(--clr-accent-lightest);
   border-style: solid;
   border-radius: var(--border-radius-frame);
-}
-
-uc-drop-area p {
-  margin: 0;
 }
 
 uc-drop-area[drag-state='inactive'] {
@@ -58,7 +51,6 @@ uc-drop-area button:hover {
 }
 
 uc-upload-list {
-  gap: 0;
   width: 100%;
   padding: var(--gap-min);
   background-color: transparent;
@@ -71,8 +63,7 @@ uc-upload-list .toolbar {
   display: none;
 }
 
-uc-file-item,
-uc-file-item:last-of-type {
+uc-file-item {
   border-radius: var(--border-radius-element);
 }
 
@@ -80,8 +71,12 @@ uc-file-item .edit-btn {
   display: none;
 }
 
-uc-file-item .progress {
-  top: 0;
+uc-file-item uc-progress-bar {
+  top: 0 !important;
+  height: 100% !important;
+}
+
+uc-file-item uc-progress-bar .progress {
   background-color: var(--clr-accent-lightest);
   border-radius: var(--border-radius-element);
 }
