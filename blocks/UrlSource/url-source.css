@@ -1,0 +1,14 @@
+uc-url-source {
+  display: grid;
+  grid-gap: var(--gap-mid);
+  grid-template-columns: 1fr min-content min-content;
+  padding: var(--gap-mid);
+}
+
+uc-url-source .url-input {
+  display: flex;
+}
+
+uc-url-source .url-upload-btn::after {
+  content: var(--l10n-upload-url);
+}

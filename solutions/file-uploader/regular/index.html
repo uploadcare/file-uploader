@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>File uploader (Regular)</title>
+    <link rel="stylesheet" href="../../../assets/css/doc.css" />
+    <script src="../../../assets/js/app-shell.js" type="module"></script>
+  </head>
+
+  <body>
+    <app-shell base="../../../">
+      <re-md src="./README.md"></re-md>
+
+      <uc-live-html>
+        <!-- Uploader script connection: -->
+        <script src="./index.js" type="module"></script>
+
+        <!-- CSS context properties: -->
+        <style>
+          uc-uploader {
+            --cfg-pubkey: 'demopublickey';
+          }
+        </style>
+
+        <!-- Uploader widget element: -->
+        <uc-uploader css-src="./index.css"></uc-uploader>
+      </uc-live-html>
+      <h2>Single source:</h2>
+      <uc-live-html>
+        <!-- Uploader script connection: -->
+        <script src="./index.js" type="module"></script>
+
+        <!-- CSS context properties: -->
+        <style>
+          uc-uploader {
+            --cfg-pubkey: 'demopublickey';
+            --cfg-source-list: 'local';
+          }
+        </style>
+
+        <!-- Uploader widget element: -->
+        <uc-uploader css-src="./index.css"></uc-uploader>
+      </uc-live-html>
+    </app-shell>
+  </body>
+</html>

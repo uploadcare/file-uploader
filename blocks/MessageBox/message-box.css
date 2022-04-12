@@ -1,0 +1,59 @@
+uc-message-box {
+  position: fixed;
+  right: var(--gap-mid);
+  bottom: var(--gap-mid);
+  left: var(--gap-mid);
+  z-index: 100000;
+  display: grid;
+  grid-template-rows: min-content auto;
+  color: var(--clr-txt);
+  font-size: 0.9em;
+  background: var(--clr-background);
+  border-radius: var(--border-radius-frame);
+  box-shadow: var(--modal-shadow);
+  transition: calc(var(--transition-duration) * 2);
+}
+
+uc-message-box:not([active]) {
+  transform: translateY(10px);
+  visibility: hidden;
+  opacity: 0;
+}
+
+uc-message-box[error] {
+  color: var(--clr-error);
+  background-color: var(--clr-error-message-bgr);
+}
+
+uc-message-box .heading {
+  display: grid;
+  grid-template-columns: min-content auto min-content;
+  padding: var(--gap-mid);
+}
+
+uc-message-box .caption {
+  display: flex;
+  align-items: center;
+  word-break: break-word;
+}
+
+uc-message-box .heading button {
+  width: var(--ui-size);
+  padding: 0;
+  color: currentColor;
+  background-color: transparent;
+  opacity: var(--opacity-normal);
+}
+
+uc-message-box .heading button:hover {
+  opacity: var(--opacity-hover);
+}
+
+uc-message-box .heading button:active {
+  opacity: var(--opacity-active);
+}
+
+uc-message-box .msg {
+  padding: var(--gap-max);
+  padding-top: 0;
+}

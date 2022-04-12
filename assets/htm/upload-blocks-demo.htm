@@ -1,0 +1,49 @@
+<h2>🎬 Live Demo (regular case):</h2>
+
+<uc-live-html>
+  <script type="module">
+    import * as UC from './index.js';
+    UC.registerBlocks(UC);
+  </script>
+
+  <style>
+    @import './themes/uc-basic/index.css';
+
+    .uc-wgt-common {
+      --ctx-name: 'UC';
+      --cfg-pubkey: 'demopublickey';
+    }
+  </style>
+
+  <div class="uc-wgt-common">
+    <uc-simple-btn></uc-simple-btn>
+
+    <uc-modal>
+      <uc-activity-icon slot="heading"></uc-activity-icon>
+      <uc-activity-caption slot="heading"></uc-activity-caption>
+      <uc-start-from>
+        <uc-source-list></uc-source-list>
+        <uc-drop-area></uc-drop-area>
+      </uc-start-from>
+      <uc-upload-list></uc-upload-list>
+      <uc-camera-source></uc-camera-source>
+      <uc-url-source></uc-url-source>
+      <uc-external-source></uc-external-source>
+      <uc-upload-details></uc-upload-details>
+      <uc-confirmation-dialog></uc-confirmation-dialog>
+    </uc-modal>
+
+    <uc-message-box></uc-message-box>
+    <uc-progress-bar></uc-progress-bar>
+  </div>
+</uc-live-html>
+
+<div>&nbsp;</div>
+<a href="../uploader/">More uploader implementation cases</a>
+
+<blockquote>
+  Code examples are using the raw code, without any build flow setup made.
+  So you can inspect them via developer tools in your browser and discover all the details.
+  Note, that this is a demo and that kind of approach could be not optimal for the
+  production usage.
+</blockquote>

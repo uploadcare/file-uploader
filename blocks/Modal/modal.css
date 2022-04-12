@@ -1,0 +1,94 @@
+uc-modal {
+  --l-content-height: calc(100vh - 4 * var(--gap-mid) - var(--ui-size));
+
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--gap-mid);
+  color: var(--clr-txt);
+  background-color: var(--clr-curtain);
+  transition: opacity 0.4s;
+
+  /* backdop filter causes scrolling glitches */
+
+  /* backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px); */
+}
+
+uc-modal:not([active]) {
+  visibility: hidden;
+  opacity: 0;
+}
+
+uc-modal button.close-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--ui-size);
+  height: var(--ui-size);
+  padding: 0;
+  color: var(--clr-txt-light);
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  opacity: var(--opacity-normal);
+  transition: opacity var(--transition-duration) ease;
+}
+
+uc-modal button.close-btn:hover {
+  opacity: var(--opacity-hover);
+}
+
+uc-modal button.close-btn:active {
+  opacity: var(--opacity-active);
+}
+
+uc-modal > .dialog {
+  display: grid;
+  grid-template-rows: min-content min-content;
+  width: 100%;
+  max-width: var(--modal-max-w);
+  min-height: var(--ui-size);
+  overflow: hidden;
+  background-color: var(--clr-background);
+  border-radius: var(--border-radius-frame);
+  box-shadow: var(--modal-shadow);
+  transition: transform 0.4s;
+}
+@media only screen and (max-width: 480px) {
+  uc-modal > .dialog {
+    width: 100%;
+    height: 100%;
+  }
+
+  uc-modal > .dialog > .content {
+    height: var(--l-content-height);
+  }
+}
+
+uc-modal:not([active]) > .dialog {
+  transform: translateY(20px);
+}
+
+uc-modal > .dialog > .content {
+  /* TODO: the following solution is not ideal... */
+  max-height: var(--l-content-height);
+}
+
+uc-modal .heading {
+  display: grid;
+  grid-template-columns: min-content 1fr min-content;
+  padding: var(--gap-mid);
+  color: var(--clr-txt-light);
+  font-weight: 500;
+  font-size: 1.1em;
+  line-height: var(--ui-size);
+  background-color: var(--clr-background-light);
+  border-bottom: var(--border-light);
+}

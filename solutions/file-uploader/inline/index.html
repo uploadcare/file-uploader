@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>uc-uploader</title>
+    <script type="module" src="../../../assets/js/app-shell.js"></script>
+    <link rel="stylesheet" href="../../../assets/css/doc.css" />
+  </head>
+  <body>
+    <app-shell base="../../../">
+      <re-md src="./README.md"></re-md>
+      <uc-live-html>
+        <!-- Uploader script connection: -->
+        <script src="./index.js" type="module"></script>
+
+        <!-- Uploader styles and Data-in-CSS settings: -->
+        <style>
+          @import url(./index.css);
+
+          uc-uploader {
+            --ctx-name: 'my-uploader';
+            --cfg-pubkey: 'demopublickey';
+          }
+        </style>
+
+        <!-- Uploader widget element: -->
+        <uc-uploader class="uc-wgt-common"></uc-uploader>
+      </uc-live-html>
+    </app-shell>
+  </body>
+</html>

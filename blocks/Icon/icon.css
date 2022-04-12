@@ -1,0 +1,16 @@
+uc-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--ui-size);
+  height: var(--ui-size);
+}
+
+uc-icon svg {
+  width: 1.2em;
+  height: 1.2em;
+}
+
+uc-icon:not([raw]) path {
+  fill: currentColor;
+}

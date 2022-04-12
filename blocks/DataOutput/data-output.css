@@ -1,0 +1,11 @@
+uc-data-output {
+  display: grid;
+}
+
+uc-data-output > input {
+  display: none;
+}
+
+uc-data-output > img {
+  height: 100px;
+}

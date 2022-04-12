@@ -1,0 +1,12 @@
+import { ConfirmationDialog, UiConfirmation } from './ConfirmationDialog.js';
+import { registerBlocks } from '../registerBlocks.js';
+
+registerBlocks({ ConfirmationDialog });
+
+const confirmDialog = new ConfirmationDialog();
+confirmDialog.classList.add('uc-wgt-common');
+
+window.onload = () => {
+  document.querySelector('#viewport')?.appendChild(confirmDialog);
+  confirmDialog.$['*confirmation'] = new UiConfirmation();
+};
