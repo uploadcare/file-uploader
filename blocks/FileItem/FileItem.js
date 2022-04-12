@@ -69,9 +69,10 @@ export class FileItem extends Block {
   }
 
   initCallback() {
+    super.initCallback();
     this.bindCssData('--cfg-thumb-size');
     this.defineAccessor('entry-id', (id) => {
-      if (!id) {
+      if (!id || id === this.uid) {
         return;
       }
       /** @type {String} */

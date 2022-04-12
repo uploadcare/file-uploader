@@ -124,11 +124,15 @@ export class UploadList extends Block {
       let fr = document.createDocumentFragment();
       Object.values(this._renderMap).forEach((el) => fr.appendChild(el));
       this.ref.files.replaceChildren(fr);
-      Object.entries(this._renderMap).forEach(([id, el]) => {
+      Object.keys(this._renderMap).forEach((id) => {
+        /** @type {Block} */
+        let el = this._renderMap[id];
         // rendering components async improves initial list render time a bit
         setTimeout(() => {
           el['entry-id'] = id;
-          el.render();
+          if (!el.innerHTML) {
+            el.render();
+          }
         });
       });
     });
