@@ -3,7 +3,7 @@ uc-simple-btn {
 }
 
 uc-simple-btn button {
-  padding-left: 0.2em;
+  padding-left: 0.2em !important;
   color: var(--clr-btn-txt-secondary);
   background-color: var(--clr-btn-bgr-secondary);
   box-shadow: var(--shadow-btn-secondary);

@@ -203,16 +203,31 @@ export class Block extends BaseComponent {
     };
   }
 
+  /** @type {String[]} */
+  get sourceList() {
+    let list = null;
+    if (this.$['*--cfg-source-list']) {
+      list = this.$['*--cfg-source-list'].split(',').map((/** @type {String} */ item) => {
+        return item.trim();
+      });
+    }
+    return list;
+  }
+
+  /** @type {String} */
   get initActivity() {
     return this.$['*--cfg-init-activity'];
   }
 
+  /** @type {String} */
   get doneActivity() {
     return this.$['*--cfg-done-activity'];
   }
 
+  /** @type {String} */
   get cancelActivity() {
-    return this.$['*--cfg-cancel-activity'];
+    // TODO: refactor?
+    return this.sourceList.length === 1 ? ((this.$['*modalActive'] = false), '') : this.$['*--cfg-cancel-activity'];
   }
 
   get isActivityActive() {

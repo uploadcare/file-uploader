@@ -2,6 +2,7 @@ import { Block } from '../../abstract/Block.js';
 
 export class SourceList extends Block {
   initCallback() {
+    super.initCallback();
     this.bindCssData('--cfg-source-list');
     this.sub('*--cfg-source-list', (val) => {
       if (!val) {
