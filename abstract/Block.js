@@ -226,8 +226,7 @@ export class Block extends BaseComponent {
 
   /** @type {String} */
   get cancelActivity() {
-    // TODO: refactor?
-    return this.sourceList.length === 1 ? ((this.$['*modalActive'] = false), '') : this.$['*--cfg-cancel-activity'];
+    return this.$['*--cfg-cancel-activity'];
   }
 
   get isActivityActive() {

@@ -98,12 +98,7 @@ export class UploadList extends Block {
 
     this.sub('*uploadList', (/** @type {String[]} */ list) => {
       if (list?.length === 0 && !this.$['*--cfg-show-empty-list']) {
-        if (this.sourceList?.length === 1) {
-          this.$['*modalActive'] = false;
-          this.$['*currentActivity'] = '';
-        } else {
-          this.$['*currentActivity'] = Block.activities.START_FROM;
-        }
+        this.$['*currentActivity'] = Block.activities.START_FROM;
         this.ref.files.innerHTML = '';
         return;
       }

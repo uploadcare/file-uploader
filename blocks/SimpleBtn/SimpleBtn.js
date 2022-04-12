@@ -6,6 +6,7 @@ export class SimpleBtn extends Block {
   };
 
   initCallback() {
+    super.initCallback();
     let multipleStateKey = this.bindCssData('--cfg-multiple');
     this.sub(multipleStateKey, (val) => {
       this.$['*simpleButtonText'] = val ? this.l10n('upload-files') : this.l10n('upload-file');
