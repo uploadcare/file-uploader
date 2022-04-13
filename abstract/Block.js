@@ -137,6 +137,7 @@ export class Block extends BaseComponent {
     if (!this.__connectedOnce) {
       if (!Block._ctxConnectionsList.includes(this.ctxName)) {
         this.add$({
+          '*ctxTargetsRegistry': new Set(),
           '*currentActivity': '',
           '*currentActivityParams': {},
           '*history': [],
@@ -147,6 +148,7 @@ export class Block extends BaseComponent {
         });
         Block._ctxConnectionsList.push(this.ctxName);
       }
+      this.$['*ctxTargetsRegistry'].add(this.constructor['is']);
 
       super.connectedCallback();
 
@@ -231,6 +233,60 @@ export class Block extends BaseComponent {
 
   get isActivityActive() {
     return this[ACTIVE_PROP];
+  }
+
+  initFlow() {
+    if (this.$['*uploadList']?.length) {
+      this.set$({
+        '*currentActivity': Block.activities.UPLOAD_LIST,
+      });
+      this.setForCtxTarget('uc-modal', '*modalActive', true);
+    } else {
+      if (this.sourceList?.length === 1) {
+        // Single source case:
+        if (this.sourceList[0] === 'local') {
+          this.$['*currentActivity'] = Block.activities.UPLOAD_LIST;
+          this.openSystemDialog();
+        } else {
+          this.$['*currentActivity'] = this.sourceList[0];
+          this.setForCtxTarget('uc-modal', '*modalActive', true);
+        }
+      } else {
+        // Multiple sources case:
+        this.set$({
+          '*currentActivity': Block.activities.START_FROM,
+        });
+        this.setForCtxTarget('uc-modal', '*modalActive', true);
+      }
+    }
+  }
+
+  cancelFlow() {
+    this.historyBack();
+    if (!this.$['*currentActivity']) {
+      this.setForCtxTarget('uc-modal', '*modalActive', false);
+    }
+  }
+
+  /**
+   * @param {String} targetTagName
+   * @returns {Boolean}
+   */
+  checkCtxTarget(targetTagName) {
+    /** @type {Set} */
+    let registry = this.$['*ctxTargetsRegistry'];
+    return registry.has(targetTagName);
+  }
+
+  /**
+   * @param {String} targetTagName
+   * @param {String} prop
+   * @param {any} newVal
+   */
+  setForCtxTarget(targetTagName, prop, newVal) {
+    if (this.checkCtxTarget(targetTagName)) {
+      this.$[prop] = newVal;
+    }
   }
 
   /**

@@ -136,6 +136,7 @@ export class UploadList extends Block {
           }
         });
       });
+      this.setForCtxTarget('uc-modal', '*modalActive', true);
     });
   }
 }
