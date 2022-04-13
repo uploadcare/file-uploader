@@ -1,19 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>uc-img</title>
-  <link rel="stylesheet" href="../../blocks/LiveHtml/live-html.css">
-  <link rel="stylesheet" href="../../assets/css/doc.css">
-  <script 
-    type="module"
-    src="https://unpkg.com/@re4ma/re4ma@0.1.7/build/re4ma.js">
-  </script>
-  <script src="../../blocks/LiveHtml/LiveHtml.js" type="module"></script>
-</head>
-<body>
-  
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>uc-cloud-image-editor</title>
+    <link rel="stylesheet" href="../../assets/css/doc.css" />
+    <script src="../../assets/js/app-shell.js" type="module"></script>
+  </head>
+  <body>
+    <app-shell base="../../">
+      <h1>Cloud image editor</h1>
+      <uc-live-html>
+        <!-- Script connection: -->
+        <script src="./index.js" type="module"></script>
+        <!-- CSS context properties: -->
+        <style>
+          @import url('./index.css');
+          uc-cloud-image-editor {
+            --cfg-pubkey: 'demopublickey';
+          }
+        </style>
+        <!-- Uploader widget element: -->
+        <uc-cloud-editor class="uc-cldtr-common" uuid="7c167b79-9f27-4489-8032-3f3be1840605"> </uc-cloud-editor>
+      </uc-live-html>
+    </app-shell>
+  </body>
 </html>
