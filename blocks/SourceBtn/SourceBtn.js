@@ -66,6 +66,10 @@ export class SourceBtn extends Block {
 
   applyType(type) {
     const configType = this._registeredTypes[type];
+    if (!configType) {
+      console.warn('Unsupported source type: ' + type);
+      return;
+    }
     const { textKey = type, icon = type, activity, onClick, activityParams = {} } = configType;
 
     this.applyL10nKey('src-type', `${L10N_PREFIX}${textKey}`);

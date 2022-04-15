@@ -12,9 +12,7 @@ export class ExternalSource extends Block {
       this.$['*currentActivity'] = Block.activities.UPLOAD_LIST;
     },
     onCancel: () => {
-      this.set$({
-        '*currentActivity': this.cancelActivity,
-      });
+      this.cancelFlow();
     },
   };
 

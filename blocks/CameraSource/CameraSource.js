@@ -18,9 +18,7 @@ export class CameraSource extends Block {
     l10nMessage: null,
 
     onCancel: () => {
-      this.set$({
-        '*currentActivity': this.cancelActivity,
-      });
+      this.cancelFlow();
     },
     onShot: () => {
       this._shot();

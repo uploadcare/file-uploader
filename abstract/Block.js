@@ -226,17 +226,13 @@ export class Block extends BaseComponent {
     return this.$['*--cfg-done-activity'];
   }
 
-  /** @type {String} */
-  get cancelActivity() {
-    return this.$['*--cfg-cancel-activity'];
-  }
-
   get isActivityActive() {
     return this[ACTIVE_PROP];
   }
 
-  initFlow() {
-    if (this.$['*uploadList']?.length) {
+  /** @param {Boolean} [force] */
+  initFlow(force = false) {
+    if (this.$['*uploadList']?.length && !force) {
       this.set$({
         '*currentActivity': Block.activities.UPLOAD_LIST,
       });
@@ -262,9 +258,14 @@ export class Block extends BaseComponent {
   }
 
   cancelFlow() {
-    this.historyBack();
-    if (!this.$['*currentActivity']) {
+    if (this.sourceList?.length === 1) {
+      this.$['*currentActivity'] = null;
       this.setForCtxTarget('uc-modal', '*modalActive', false);
+    } else {
+      this.historyBack();
+      if (!this.$['*currentActivity']) {
+        this.setForCtxTarget('uc-modal', '*modalActive', false);
+      }
     }
   }
 
