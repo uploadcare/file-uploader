@@ -14,7 +14,7 @@ initStyles(() => {
 class AppShell extends BaseComponent {
   init$ = {
     base: './',
-    heading: '🟡 Lighter / Blocks',
+    heading: '🟡 Uploadcare | uc-blocks',
     copy: '© 2022 🦆',
   };
 
