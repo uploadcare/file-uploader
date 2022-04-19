@@ -239,12 +239,22 @@ export class Block extends BaseComponent {
       this.setForCtxTarget('uc-modal', '*modalActive', true);
     } else {
       if (this.sourceList?.length === 1) {
+        let srcKey = this.sourceList[0];
         // Single source case:
-        if (this.sourceList[0] === 'local') {
+        if (srcKey === 'local') {
           this.$['*currentActivity'] = Block.activities.UPLOAD_LIST;
           this.openSystemDialog();
         } else {
-          this.$['*currentActivity'] = this.sourceList[0];
+          if (Object.values(Block.extSrcList).includes(srcKey)) {
+            this.set$({
+              '*currentActivityParams': {
+                externalSourceType: srcKey,
+              },
+              '*currentActivity': Block.activities.EXTERNAL,
+            });
+          } else {
+            this.$['*currentActivity'] = srcKey;
+          }
           this.setForCtxTarget('uc-modal', '*modalActive', true);
         }
       } else {
