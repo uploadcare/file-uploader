@@ -6,6 +6,10 @@ export class FileUploaderMinimal extends Block {
       this.openSystemDialog();
     },
   };
+
+  initCallback() {
+    this.$['*currentActivity'] = this.initActivity || Block.activities.START_FROM;
+  }
 }
 
 FileUploaderMinimal.template = /*html*/ `

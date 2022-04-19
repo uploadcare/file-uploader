@@ -118,7 +118,6 @@ export class Block extends BaseComponent {
         'confirm-upload',
         'init-activity',
         'done-activity',
-        'cancel-activity',
       ];
       unprefixedCfgProps.forEach((prop) => {
         this.bindCssData(`--cfg-${prop}`);
