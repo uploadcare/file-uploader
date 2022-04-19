@@ -97,6 +97,24 @@ h2 {
 li {
   margin-bottom: var(--gap-mid);
 }
+
+table {
+  width: 100%;
+}
+
+th {
+  padding: 10px;
+  background: rgba(0, 0, 0, .4);
+}
+
+td {
+  padding: 10px;
+  background: rgba(255, 255, 255, .1);
+}
+
+tr:hover {
+  background: rgba(255, 255, 255, .1);
+}
 `;
 
 /** @param {() => void} cb */

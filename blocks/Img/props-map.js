@@ -3,7 +3,7 @@ export const PROPS_MAP = {
   pubkey: {},
   uuid: {},
   src: {},
-  alt: {},
+  // alt: {},
   // 'placeholder-src': {}, // available via CSS
   lazy: {
     default: 1,
