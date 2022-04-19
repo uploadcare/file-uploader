@@ -13,9 +13,7 @@ export class UrlSource extends Block {
       this.$['*currentActivity'] = Block.activities.UPLOAD_LIST;
     },
     onCancel: () => {
-      this.set$({
-        '*currentActivity': this.cancelActivity,
-      });
+      this.cancelFlow();
     },
     onInput: (e) => {
       let value = e.target.value;

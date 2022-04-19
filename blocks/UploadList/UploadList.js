@@ -12,7 +12,7 @@ export class UploadList extends Block {
     hasFiles: false,
     moreBtnDisabled: true,
     onAdd: () => {
-      this.$['*currentActivity'] = Block.activities.START_FROM;
+      this.initFlow(true);
     },
     onUpload: () => {
       this.set$({
@@ -32,10 +32,7 @@ export class UploadList extends Block {
     onCancel: () => {
       let cfn = new UiConfirmation();
       cfn.confirmAction = () => {
-        this.set$({
-          '*currentActivity': this.cancelActivity || '',
-          '*modalActive': false,
-        });
+        this.cancelFlow();
         this.uploadCollection.clearAll();
         this.output();
       };
@@ -98,7 +95,7 @@ export class UploadList extends Block {
 
     this.sub('*uploadList', (/** @type {String[]} */ list) => {
       if (list?.length === 0 && !this.$['*--cfg-show-empty-list']) {
-        this.$['*currentActivity'] = Block.activities.START_FROM;
+        this.cancelFlow();
         this.ref.files.innerHTML = '';
         return;
       }
@@ -136,6 +133,7 @@ export class UploadList extends Block {
           }
         });
       });
+      this.setForCtxTarget('uc-modal', '*modalActive', true);
     });
   }
 }

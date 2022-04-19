@@ -22,7 +22,6 @@
 
   --cfg-init-activity: 'start-from';
   --cfg-done-activity: 'start-from';
-  --cfg-cancel-activity: 'start-from';
 
   --cfg-data-output-console: 1;
   --cfg-data-output-fire-events: 1;

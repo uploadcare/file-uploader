@@ -16,3 +16,11 @@ uc-simple-btn button:hover {
 uc-simple-btn button:active {
   background-color: var(--clr-btn-bgr-secondary-active);
 }
+
+uc-simple-btn > uc-drop-area {
+  display: contents;
+}
+
+uc-simple-btn > uc-drop-area::after {
+  content: '';
+}
