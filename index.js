@@ -34,5 +34,7 @@ export { ActivityIcon } from './blocks/ActivityIcon/ActivityIcon.js';
 export { FileUploaderRegular } from './solutions/file-uploader/regular/FileUploaderRegular.js';
 export { FileUploaderMinimal } from './solutions/file-uploader/minimal/FileUploaderMinimal.js';
 
+export * from './blocks/CloudImageEditor/index.js';
+
 // Utils:
 export { registerBlocks } from './abstract/registerBlocks.js';
