@@ -30,7 +30,7 @@ export function initState(fnCtx) {
     'presence.viewerToolbar': true,
 
     '*on.retryNetwork': () => {
-      let images = fnCtx.shadowRoot.querySelectorAll('img');
+      let images = fnCtx.querySelectorAll('img');
       for (let img of images) {
         let originalSrc = img.src;
         img.src = TRANSPARENT_PIXEL_SRC;
