@@ -52,6 +52,7 @@ export class CloudEditor extends Block {
       let start = Date.now();
 
       let callback = () => {
+        // there could be problem when element disconnected and connected again between ticks
         if (!this.isConnected) {
           clearInterval(interval);
           reject();
@@ -83,7 +84,8 @@ export class CloudEditor extends Block {
       if (err) {
         console.error(err);
       }
-      // no error - element become disconnected from dom - do nothing
+      // no error - element become disconnected from dom - stop init
+      return;
     }
 
     // TODO: fix hardcode
