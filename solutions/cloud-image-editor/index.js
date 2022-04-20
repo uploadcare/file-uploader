@@ -1,3 +1,4 @@
-import * as UC from '../../blocks/index.js';
+import * as CloudImageEditorBlocks from '../../blocks/CloudImageEditor/src/index.js';
+import { registerBlocks } from '../../blocks/registerBlocks.js';
 
-UC.registerBlocks(UC);
+registerBlocks(CloudImageEditorBlocks);

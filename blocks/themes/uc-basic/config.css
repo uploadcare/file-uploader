@@ -13,7 +13,7 @@
   --cfg-thumb-size: 76;
   --cfg-show-empty-list: 0;
   --cfg-use-local-image-editor: 0;
-  --cfg-use-cloud-image-editor: 0;
+  --cfg-use-cloud-image-editor: 1;
 
   --cfg-modal-scroll-lock: 1;
   --cfg-modal-backdrop-strokes: 1;

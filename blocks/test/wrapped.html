@@ -1,10 +1,10 @@
-<base href="../../">
+<base href="../../" />
 
 <script type="module">
-import { UC } from './upload-blocks/index.js';
+  import { UC } from './upload-blocks/index.js';
 
-class WGT extends UC.BlockComponent {}
-WGT.template = /*html*/ `
+  class WGT extends UC.BlockComponent {}
+  WGT.template = /*html*/ `
 <uc-simple-btn></uc-simple-btn>
 
 <uc-modal strokes>
@@ -20,6 +20,7 @@ WGT.template = /*html*/ `
   <uc-external-source></uc-external-source>
   <uc-upload-details></uc-upload-details>
   <uc-confirmation-dialog></uc-confirmation-dialog>
+  <uc-cloud-image-editor></uc-cloud-image-editor>
 </uc-modal>
 
 <uc-message-box></uc-message-box>
@@ -31,9 +32,7 @@ WGT.template = /*html*/ `
 </uc-data-output>
 `;
 
-WGT.reg('upload-wgt');
+  WGT.reg('upload-wgt');
 </script>
 
-<uc-upload-wgt
-  css-src="./upload-blocks/themes/uc-basic/index.css">
-</uc-upload-wgt>
+<uc-upload-wgt css-src="./upload-blocks/themes/uc-basic/index.css"> </uc-upload-wgt>
