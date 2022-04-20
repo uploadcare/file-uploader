@@ -12,6 +12,7 @@ nav {
   display: flex;
   justify-content: center;
   position: sticky;
+  z-index: 10000;
   top: 0;
   background-color: rgba(255, 255, 255, .1);
   height: 100%;
