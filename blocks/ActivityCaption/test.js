@@ -1,5 +1,5 @@
 import { ActivityCaption } from './ActivityCaption.js';
-import { registerBlocks } from '../registerBlocks.js';
+import { registerBlocks } from '../../abstract/registerBlocks.js';
 
 registerBlocks({ ActivityCaption });
 

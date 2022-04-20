@@ -1,5 +1,5 @@
 import { DropArea } from './DropArea.js';
-import { registerBlocks } from '../registerBlocks.js';
+import { registerBlocks } from '../../abstract/registerBlocks.js';
 
 registerBlocks({ DropArea });
 
