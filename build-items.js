@@ -37,4 +37,25 @@ export const buildItems = [
     out: './web/file-uploader-regular.min.css',
     minify: true,
   },
+
+  // file-uploader-minimal
+  {
+    in: './solutions/file-uploader/minimal/index.js',
+    out: './web/file-uploader-minimal.min.js',
+    minify: true,
+    minifyHtml: true,
+  },
+  {
+    in: './solutions/file-uploader/minimal/index.css',
+    out: './web/file-uploader-minimal.min.css',
+    minify: true,
+  },
+
+  // uc-img
+  {
+    in: './solutions/adaptive-image/index.js',
+    out: './web/uc-img.min.js',
+    minify: true,
+    minifyHtml: true,
+  },
 ];
