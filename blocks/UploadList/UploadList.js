@@ -25,8 +25,8 @@ export class UploadList extends Block {
     onDone: () => {
       this.set$({
         '*currentActivity': this.doneActivity || '',
-        '*modalActive': false,
       });
+      this.setForCtxTarget('uc-modal', '*modalActive', false);
       this.output();
     },
     onCancel: () => {
