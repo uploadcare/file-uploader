@@ -1,6 +1,6 @@
 {
   "name": "@uploadcare/uc-blocks",
-  "version": "0.0.6",
+  "version": "0.1.0",
   "description": "Building blocks for Uploadcare products integration",
   "type": "module",
   "module": "index.js",
@@ -71,11 +71,29 @@
     }
   },
   "lint-staged": {
-    "*.{js,cjs}": ["tsc --skipLibCheck --allowJs --noEmit", "eslint --fix", "prettier --write", "git add"],
-    "*.css": ["stylelint --fix", "prettier --write --parser css", "git add"],
-    "*.html": ["prettier --write --parser html", "git add"],
-    "*.json": ["prettier --write --parser json", "git add"],
-    "*.md": ["prettier --write --parser markdown", "git add"]
+    "*.{js,cjs}": [
+      "tsc --skipLibCheck --allowJs --noEmit",
+      "eslint --fix",
+      "prettier --write",
+      "git add"
+    ],
+    "*.css": [
+      "stylelint --fix",
+      "prettier --write --parser css",
+      "git add"
+    ],
+    "*.html": [
+      "prettier --write --parser html",
+      "git add"
+    ],
+    "*.json": [
+      "prettier --write --parser json",
+      "git add"
+    ],
+    "*.md": [
+      "prettier --write --parser markdown",
+      "git add"
+    ]
   },
   "author": "Uploadcare Inc.",
   "license": "MIT"
