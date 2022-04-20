@@ -1,4 +1,4 @@
-import { Block } from '../../../blocks/index.js';
+import { Block } from '../../../index.js';
 
 export class FileUploaderMinimal extends Block {
   init$ = {

@@ -1,6 +1,5 @@
-import { Block } from '../../../blocks/index.js';
+import { Block } from '../../../index.js';
 
-export * from '../../../blocks/index.js';
 export class FileUploaderRegular extends Block {}
 
 FileUploaderRegular.template = /*html*/ `

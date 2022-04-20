@@ -1,4 +1,4 @@
-import * as UC from '../../../blocks/index.js';
+import * as UC from '../../../index.js';
 
 UC.registerBlocks(UC);
 
