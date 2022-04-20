@@ -1,0 +1,16 @@
+@import url('./src/css/index.css');
+
+uc-cloud-image-editor {
+  position: relative;
+  display: flex;
+  overflow: hidden;
+}
+
+uc-cloud-image-editor[active] {
+  height: 100vh;
+}
+
+uc-cloud-image-editor:not([active]) {
+  width: 0px;
+  height: 0px;
+}

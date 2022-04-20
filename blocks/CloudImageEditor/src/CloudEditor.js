@@ -40,8 +40,51 @@ export class CloudEditor extends Block {
     return viewerImageSrc(this.$['*originalUrl'], width, {});
   }
 
-  initCallback() {
+  /**
+   * To proper work, we need non-zero size the element. So, we'll wait for it.
+   *
+   * @private
+   * @returns {Promise<void>}
+   */
+  _waitForSize() {
+    return new Promise((resolve, reject) => {
+      let timeout = 300;
+      let start = Date.now();
+
+      let callback = () => {
+        if (!this.isConnected) {
+          clearInterval(interval);
+          reject();
+          return;
+        }
+        if (Date.now() - start > timeout) {
+          clearInterval(interval);
+          reject(new Error('[cloud-image-editor] timout waiting for non-zero container size'));
+          return;
+        }
+        let { width, height } = this.getBoundingClientRect();
+
+        if (width > 0 && height > 0) {
+          clearInterval(interval);
+          resolve();
+        }
+      };
+      let interval = setInterval(callback, 50);
+      callback();
+    });
+  }
+
+  async initCallback() {
     super.initCallback();
+
+    try {
+      await this._waitForSize();
+    } catch (err) {
+      if (err) {
+        console.error(err);
+      }
+      // no error - element become disconnected from dom - do nothing
+    }
 
     // TODO: fix hardcode
     this.$['*originalUrl'] = `https://ucarecdn.com/${this.$.uuid}/`;
