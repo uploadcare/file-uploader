@@ -90,7 +90,7 @@ export class UploadDetails extends Block {
           this.eCanvas.setImageFile(this._file);
           this.set$({
             checkerboard: true,
-            editBtnHidden: !this.$['*--cfg-use-local-image-editor'] && !this.$['*--cfg-use-cloud-image-editor'],
+            editBtnHidden: !this.$['*--cfg-use-local-image-editor'],
           });
         }
         if (!isImage) {
@@ -115,11 +115,12 @@ export class UploadDetails extends Block {
         this.$.fileSize = Number.isFinite(size) ? this.fileSizeFmt(size) : this.l10n('file-size-unknown');
       });
       tmpSub('uuid', (uuid) => {
-        if (uuid && !entry.getValue('transformationsUrl')) {
+        if (uuid && !this.entry.getValue('transformationsUrl')) {
           this.eCanvas.clear();
           this.set$({
             imageUrl: `https://ucarecdn.com/${uuid}/`,
             notUploaded: false,
+            editBtnHidden: !this.entry.getValue('isImage') && !this.$['*--cfg-use-cloud-image-editor'],
           });
           this.eCanvas.setImageUrl(this.$.imageUrl);
         } else {
