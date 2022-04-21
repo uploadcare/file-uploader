@@ -21,11 +21,11 @@
       - [Texts & localization](./docs/texts/) - custom texts and translations
       - [Icons](./docs/icons/) - custom icons
       - [Styling](./docs/styling/) - themes and styles for components
-      - [Blocks](./docs/blocks/) - custom blocks and deeper workflow tuning
-      - [Contexts](./docs/contexts/) - how to unite blocks into common workflows and share common data
+        <!-- - [Blocks](./docs/blocks/) - custom blocks and deeper workflow tuning -->
+        <!-- - [Contexts](./docs/contexts/) - how to unite blocks into common workflows and share common data -->
       - [Activities](./docs/activities/) - how to set and switch user focused activities
-      - [BlockComponent](./docs/block-component/) - all about blocks base class
-      - [TypeScript](./docs/typescript/) - using types in TypeScript and JavaScript projects
+        <!-- - [BlockComponent](./docs/block-component/) - all about blocks base class -->
+        <!-- - [TypeScript](./docs/typescript/) - using types in TypeScript and JavaScript projects -->
 
     - blocks:
       - [ActivityCaption](./blocks/ActivityCaption/) - shows heading text for the current activity
@@ -43,6 +43,7 @@
       - [Img](./blocks/Img/) - adaptive image
       - [MessageBox](./blocks/MessageBox/) - common container for the application messages
       - [Modal](./blocks/Modal/) - common pop-up window
+      - [ProgressBar](./blocks/ProgressBar/) - abstract progress bar
       - [ProgressBarCommon](./blocks/ProgressBarCommon/) - displays uploading progress for the all files selected
       - [Range](./blocks/Range/) - customizable wrapper for the range input element
       - [SimpleBtn](./blocks/SimpleBtn/) - button for the file uploading workflow start
