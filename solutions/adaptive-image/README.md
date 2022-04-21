@@ -18,8 +18,19 @@
 Connect script:
 
 ```html
-<script src="SCRIPT_URL" type="module"></script>
+<script src="https://unpkg.com/@uploadcare/uc-blocks@0.1.1/web/uc-img.min.js" type="module"></script>
 ```
+
+Add basic settings:
+
+```css
+uc-img {
+  --uc-img-pubkey: 'YOUR_PROJECT_PUBLIC_KEY';
+  --uc-img-breakpoints: '200, 500, 800';
+}
+```
+
+Public key is necessary for the Proxy links generation, if custom proxy name is not used. You can obtain public key in your [Uploadcare project's dashboard](https://app.uploadcare.com/projects/-/api-keys/).
 
 Then use `<uc-img>` tag for the images in your HTML templates:
 
