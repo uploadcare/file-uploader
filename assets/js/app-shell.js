@@ -24,7 +24,10 @@ class AppShell extends BaseComponent {
         return;
       }
       [...this.ref.links.querySelectorAll('a')].forEach((a) => {
-        a.href = base + a.getAttribute('href');
+        let href = a.getAttribute('href');
+        if (!href.includes('//')) {
+          a.href = base + href;
+        }
       });
     });
   }
@@ -40,6 +43,7 @@ AppShell.template = /*html*/ `
     <a href="blocks/">Blocks</a>
     <a href="solutions/">Solutions</a>
     <a href="toc.html">TOC</a>
+    <a href="//github.com/uploadcare/uc-blocks/discussions">Discussions</a>
   </div>
 </nav>
 <main>
