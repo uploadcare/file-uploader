@@ -1,37 +1,22 @@
-// @ts-nocheck
-// TODO: fix test
-
-import { BaseComponent } from '../../../../ext_modules/symbiote.js';
-import { UploadcareUI } from '../../api/ui.js.js';
+import { Block } from '../../../../../abstract/Block.js';
+import { registerBlocks } from '../../../../../abstract/registerBlocks.js';
 import { SliderUi } from './SliderUi.js';
 
-UploadcareUI.init();
-
-class CtxProvider extends BaseComponent {
-  constructor() {
-    super();
-
-    this.init$ = {
-      min: -200,
-      max: 200,
-      defaultValue: -100,
-    };
-  }
+class CtxProvider extends Block {
+  init$ = {
+    min: 0,
+    max: 100,
+    defaultValue: 50,
+    value: 50,
+    'on.input': (value) => {
+      this.$.value = value;
+    },
+  };
 }
-CtxProvider.styles = {
-  ':host': {
-    '--color-text-base': 'black',
-    '--color-primary-accent': 'blue',
-    width: '190px',
-    height: '40px',
-    backgroundColor: '#F5F5F5',
-    borderRadius: '3px',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingLeft: '10px',
-    paddingRight: '10px',
-  },
-};
-CtxProvider.template = /*html*/ `<uc-slider-ui set="min: min; max: max: defaultValue: defaultValue"></uc-slider-ui>`;
-window.customElements.define('ctx-provider', CtxProvider);
+
+CtxProvider.template = /*html*/ `
+  <uc-slider-ui set="min: min; max: max: defaultValue: defaultValue; onInput: on.input"></uc-slider-ui>
+  <div>{{value}}</div>
+`;
+
+registerBlocks({ SliderUi, CtxProvider });
