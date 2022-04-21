@@ -3,7 +3,9 @@ import { Block } from '../../abstract/Block.js';
 export class SimpleBtn extends Block {
   init$ = {
     '*simpleButtonText': '',
-    onClick: this.initFlow.bind(this),
+    onClick: () => {
+      this.initFlow();
+    },
   };
 
   initCallback() {

@@ -1,4 +1,4 @@
-import { Block } from '../../../blocks/index.js';
+import { Block } from '../../../index.js';
 
 export class FileUploaderMinimal extends Block {
   init$ = {
@@ -6,6 +6,10 @@ export class FileUploaderMinimal extends Block {
       this.openSystemDialog();
     },
   };
+
+  initCallback() {
+    this.$['*currentActivity'] = this.initActivity || Block.activities.START_FROM;
+  }
 }
 
 FileUploaderMinimal.template = /*html*/ `

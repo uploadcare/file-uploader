@@ -1,5 +1,5 @@
 import { Icon } from './Icon.js';
-import { registerBlocks } from '../registerBlocks.js';
+import { registerBlocks } from '../../abstract/registerBlocks.js';
 
 registerBlocks({ Icon });
 

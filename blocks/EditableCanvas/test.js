@@ -1,5 +1,5 @@
 import { EditableCanvas } from './EditableCanvas.js';
-import { registerBlocks } from '../registerBlocks.js';
+import { registerBlocks } from '../../abstract/registerBlocks.js';
 
 registerBlocks({ EditableCanvas });
 
