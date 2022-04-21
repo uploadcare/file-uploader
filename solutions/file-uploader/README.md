@@ -6,7 +6,7 @@ Each uploader is highly customizable on its own and could be used as the custom 
 Uploader builds list:
 
 - [Regular case](./regular/) - the most common solution.
-- [Inline case](./inline/) - no modals, could be used just in place.
+<!-- - [Inline case](./inline/) - no modals, could be used just in place. -->
 - [Minimal case](./minimal/) - minimal and compact.
 
 <re-htm src="../../assets/htm/regular-uploader-solution-demo.htm"></re-htm>
