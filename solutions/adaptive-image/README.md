@@ -79,7 +79,7 @@ Disable:
   }
 </style>
 
-<uc-img src="SOURCE_IMAGE_PATH"> </uc-img>
+<uc-img src="SOURCE_IMAGE_PATH"></uc-img>
 ```
 
 Intersection observer enabled:
@@ -91,7 +91,7 @@ Intersection observer enabled:
   }
 </style>
 
-<uc-img src="SOURCE_IMAGE_PATH"> </uc-img>
+<uc-img src="SOURCE_IMAGE_PATH"></uc-img>
 ```
 
 ## Breakpoints
@@ -107,7 +107,7 @@ If you have some responsive layout where images could be resized in some cases, 
   }
 </style>
 
-<uc-img src="SOURCE_IMAGE_PATH"> </uc-img>
+<uc-img src="SOURCE_IMAGE_PATH"></uc-img>
 ```
 
 That will save the resources and make image behavior more expected. Browser will select most suitable image size automatically.
@@ -127,7 +127,7 @@ You can provide some transformation settings for the single image or for the set
   }
 </style>
 
-<uc-img class="invert" src="SOURCE_IMAGE_PATH"> </uc-img>
+<uc-img class="invert" src="SOURCE_IMAGE_PATH"></uc-img>
 ```
 
 Operations description syntax is the same as used in [REST API](https://uploadcare.com/docs/transformations/image/). More examples:
@@ -158,7 +158,7 @@ To use adaptive image as an element's background, you can use `is-background-for
 
 <div id="target">Some text...</div>
 
-<uc-img is-background-for="#target" src="SOURCE_IMAGE_PATH"> </uc-img>
+<uc-img is-background-for="#target" src="SOURCE_IMAGE_PATH"></uc-img>
 ```
 
 ## Development mode (relative image path)
