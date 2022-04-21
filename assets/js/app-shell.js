@@ -1,4 +1,5 @@
 // @ts-ignore
+// eslint-disable-next-line import/no-unresolved
 import {} from 'https://unpkg.com/@re4ma/re4ma@0.1.7/build/re4ma.js';
 
 import { BaseComponent } from '../../submodules/symbiote/core/BaseComponent.js';
