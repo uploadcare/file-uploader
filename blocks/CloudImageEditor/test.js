@@ -1,4 +1,4 @@
-import * as blocks from '../index.js';
+import * as blocks from '../../index.js';
 
 blocks.registerBlocks(blocks);
 

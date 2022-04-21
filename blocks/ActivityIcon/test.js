@@ -1,6 +1,6 @@
 import { Icon } from '../Icon/Icon.js';
 import { ActivityIcon } from './ActivityIcon.js';
-import { registerBlocks } from '../registerBlocks.js';
+import { registerBlocks } from '../../abstract/registerBlocks.js';
 
 registerBlocks({ Icon, ActivityIcon });
 

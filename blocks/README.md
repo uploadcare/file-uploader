@@ -12,7 +12,7 @@ Is it possible to create an uploading solution to fit them all?
 We believe it is — with the power of [Custom Elements standard](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_custom_elements) and our widget-purpose-specific open-source [Symbiote.js](https://github.com/symbiotejs/symbiote.js) library.
 
 You can use high-level, simple HTML and CSS to customize layouts and define the most popular scenarios.
-You can create your own blocks from scratch with JavaScript using our super-duper [BlockComponent base-class](./docs/block-component.html).
+You can create your own blocks from scratch with JavaScript using our super-duper [BlockComponent base-class](../docs/block-component/).
 
 Key features:
 
@@ -101,7 +101,7 @@ You can combine them to create a common workflow like this one:
 You can quickly override any block template by setting the new `template` property value to any block class. Here is an example:
 
 ```js
-import { UC } from '@uploadcare/upload-blocks';
+import { UC } from '@uploadcare/uc-blocks';
 
 UC.ProgressBarCommon.template = /*html*/ `
   <h1>My custom heading</h1>

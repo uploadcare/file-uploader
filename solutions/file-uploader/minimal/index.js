@@ -1,5 +1,6 @@
 import { FileUploaderMinimal } from './FileUploaderMinimal.js';
-import * as UC from '../../../blocks/index.js';
+import * as UC from '../../../index.js';
 UC.registerBlocks(UC);
 
-FileUploaderMinimal.reg('uploader');
+class Uploader extends FileUploaderMinimal {}
+Uploader.reg('uploader');
