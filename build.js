@@ -1,13 +1,11 @@
 import esbuild from 'esbuild';
 import fs from 'fs';
-import path, { dirname, join } from 'path';
+import path, { dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { buildItems } from './build-items.js';
 
 let __dirname = dirname(fileURLToPath(import.meta.url));
 let packageRootPath = __dirname;
-
-let { version: packageVersion } = JSON.parse(fs.readFileSync(join(packageRootPath, './package.json')).toString());
 
 function jsBanner() {
   let license = fs.readFileSync(path.join(packageRootPath, './LICENSE')).toString();
@@ -20,14 +18,6 @@ function jsBanner() {
       .join('\n') +
     '\n */'
   );
-}
-
-function generateEnvFile(variables) {
-  let template = fs.readFileSync(path.join(__dirname, './env.template.js')).toString();
-  template = template.replaceAll(/{{(.+?)}}/g, (match, p1) => {
-    return variables[p1];
-  });
-  fs.writeFileSync(path.join(packageRootPath, './env.js'), template);
 }
 
 function build(buildItem, watch) {
@@ -79,8 +69,6 @@ function build(buildItem, watch) {
       fs.writeFileSync(buildItem.out, result);
     });
 }
-
-generateEnvFile({ packageVersion });
 
 for (let buildItem of buildItems) {
   build(buildItem);
