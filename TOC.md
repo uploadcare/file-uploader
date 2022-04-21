@@ -7,7 +7,7 @@
     - [uploader](./solutions/file-uploader/) - uploader implementations for the most frequent cases
 
       - [regular](./solutions/file-uploader/regular/) - overall case
-      - [inline](./solutions/file-uploader/inline/) - without modal
+      <!-- - [inline](./solutions/file-uploader/inline/) - without modal -->
       - [minimal](./solutions/file-uploader/minimal/) - minimal and compact
 
     - [adaptive-image](./solutions/adaptive-image/) - efficient image rendering automation
