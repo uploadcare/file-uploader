@@ -1,3 +1,5 @@
+[![npm version](https://badge.fury.io/js/@uploadcare%2Fuc-blocks.svg)](https://www.npmjs.com/package/@uploadcare/uc-blocks)
+
 # uc-blocks: web-components for the Uploadcare platform integrations
 
 ## 💎 Core concepts
