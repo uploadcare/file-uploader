@@ -1,39 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Modal</title>
-  <link rel="stylesheet" href="../../doc_assets/css/doc.css">
-  <link rel="stylesheet" href="../themes/uc-basic/index.css">
-</head>
-<body>
-  <script type="module">
-    import { Modal } from './Modal.js';
-    import { Icon } from '../Icon/Icon.js';
-    import { registerBlocks } from '../registerBlocks.js';
-    registerBlocks({Modal, Icon});
-    const modal = new Modal();
-    modal.classList.add('uc-wgt-common');
-    window.onload = () => {
-      document.querySelector('#mdl-btn').onclick = () => {
-        modal.$['*modalActive'] = true;
-      };
-      modal.innerHTML = /*html*/ `
-        <uc-icon slot="heading" name="default"></uc-icon>
-        <div slot="heading">Modal Heading</div>
-        <div style="padding: 20px">Some content</div>
-      `;
-      document.querySelector('#viewport').appendChild(modal);
-      modal.$['*modalActive'] = true;
-    }
-  </script>
-  <h1>Modal</h1>
-  <div 
-    id="viewport" 
-    style="background-color: #fff; padding: 20px;">
-    <button id="mdl-btn">Open Modal</button>
-  </div>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Modal</title>
+    <link rel="stylesheet" href="../../assets/css/doc.css" />
+    <script src="../../assets/js/app-shell.js" type="module"></script>
+  </head>
+
+  <body>
+    <app-shell base="../../">
+      <h1>Modal</h1>
+      <uc-live-html>
+        <link rel="stylesheet" href="../themes/uc-basic/index.css" />
+
+        <script src="test.js" type="module"></script>
+
+        <div id="viewport">
+          <button id="mdl-btn">Open Modal</button>
+        </div>
+      </uc-live-html>
+    </app-shell>
+  </body>
 </html>

@@ -1,34 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MessageBox</title>
-  <link rel="stylesheet" href="../../doc_assets/css/doc.css">
-  <link rel="stylesheet" href="../themes/uc-basic/index.css">
-</head>
-<body>
-  <script type="module">
-    import { MessageBox, UiMessage } from './MessageBox.js';
-    import { Icon } from '../Icon/Icon.js';
-    import { registerBlocks } from '../registerBlocks.js';
-    registerBlocks({MessageBox, Icon});
-    const msgBox = new MessageBox();
-    msgBox.classList.add('uc-wgt-common');
-    window.onload = () => {
-      document.querySelector('#viewport').appendChild(msgBox);
-      let msg = new UiMessage();
-      msg.caption = 'Test Caption';
-      msg.text = 'Some text...';
-      msg.isError = true;
-      msgBox.$['*message'] = msg;
-    }
-  </script>
-  <h1>MessageBox</h1>
-  <div 
-    id="viewport" 
-    style="background-color: #fff; padding: 20px;">
-  </div>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MessageBox</title>
+    <link rel="stylesheet" href="../../assets/css/doc.css" />
+    <script src="../../assets/js/app-shell.js" type="module"></script>
+  </head>
+
+  <body>
+    <app-shell base="../../">
+      <h1>MessageBox</h1>
+      <uc-live-html>
+        <link rel="stylesheet" href="../themes/uc-basic/index.css" />
+
+        <script src="test.js" type="module"></script>
+
+        <div id="viewport"></div>
+      </uc-live-html>
+    </app-shell>
+  </body>
 </html>
