@@ -9,9 +9,6 @@ export class CloudImageEditor extends Block {
   };
 
   initCallback() {
-    this.style.display = 'flex';
-    this.style.position = 'relative';
-
     this.bindCssData('--cfg-pubkey');
 
     this.sub('*currentActivity', (val) => {
@@ -59,14 +56,10 @@ export class CloudImageEditor extends Block {
     instance.addEventListener('cancel', () => this.handleCancel());
 
     this.innerHTML = '';
-    this.style.width = '100%';
-    this.style.height = '100%';
     this.appendChild(instance);
   }
 
   unmountEditor() {
-    this.style.width = '0px';
-    this.style.height = '0px';
     this.innerHTML = '';
   }
 }

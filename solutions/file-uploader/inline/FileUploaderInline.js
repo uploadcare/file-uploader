@@ -19,4 +19,5 @@ FileUploaderInline.template = /*html*/ `
 <uc-confirmation-dialog></uc-confirmation-dialog>
 <uc-message-box></uc-message-box>
 <uc-progress-bar></uc-progress-bar>
+<uc-cloud-image-editor></uc-cloud-image-editor>
 `;

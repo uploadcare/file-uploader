@@ -4,4 +4,5 @@ uc-start-from {
   gap: var(--gap-mid);
   height: 100%;
   padding: var(--gap-mid);
+  overflow-y: auto;
 }

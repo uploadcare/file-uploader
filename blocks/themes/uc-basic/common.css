@@ -41,6 +41,14 @@
   user-select: none;
 }
 
+@media only screen and (max-width: 800px) {
+  :where(.uc-wgt-theme, .uc-wgt-common, :host) button,
+  :host button {
+    padding-right: 1em;
+    padding-left: 1em;
+  }
+}
+
 :where(.uc-wgt-theme, .uc-wgt-common)
   :where(button[disabled], button.primary-btn[disabled], button.secondary-btn[disabled]),
 :host :where(button[disabled], button.primary-btn[disabled], button.secondary-btn[disabled]) {

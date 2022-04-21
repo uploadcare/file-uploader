@@ -1,24 +1,22 @@
-<base href="../../">
+<base href="../../" />
 
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
-  @import url(./upload-blocks/themes/uc-basic/index.css);
+  @import url(./blocks/themes/uc-basic/index.css);
   .uc-wgt-common {
     --ctx-name: 'my-uploader';
     --cfg-pubkey: 'demopublickey';
   }
 </style>
-<script src="./upload-blocks/index.js" type="module"></script>
+<script src="./blocks/index.js" type="module"></script>
 <script type="module">
-import * as UC from './upload-blocks/index.js'
-UC.registerBlocks(UC)
+  import * as UC from './blocks/index.js';
+  UC.registerBlocks(UC);
 </script>
 
 <uc-simple-btn class="uc-wgt-common"></uc-simple-btn>
 
-<uc-modal
-  strokes
-  class="uc-wgt-common">
+<uc-modal strokes class="uc-wgt-common">
   <uc-activity-icon slot="heading"></uc-activity-icon>
   <uc-activity-caption slot="heading"></uc-activity-caption>
   <uc-start-from>
@@ -31,6 +29,7 @@ UC.registerBlocks(UC)
   <uc-external-source></uc-external-source>
   <uc-upload-details></uc-upload-details>
   <uc-confirmation-dialog></uc-confirmation-dialog>
+  <uc-cloud-image-editor></uc-cloud-image-editor>
 </uc-modal>
 
 <uc-message-box class="uc-wgt-common"></uc-message-box>
@@ -41,4 +40,5 @@ UC.registerBlocks(UC)
   fire-event
   from="*outputData"
   item-template="<img height='200' src='https://ucarecdn.com/{{uuid}}/-/preview/' />"
-  class="uc-wgt-common"></uc-data-output>
+  class="uc-wgt-common"
+></uc-data-output>

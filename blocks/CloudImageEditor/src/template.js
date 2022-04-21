@@ -1,3 +1,5 @@
+import { TRANSPARENT_PIXEL_SRC } from './lib/transparentPixelSrc.js';
+
 export const TEMPLATE = /*html*/ `
 <div class="wrapper wrapper_desktop">
   <uc-presence-toggle class="network_problems_splash" set="visible: presence.networkProblems;">
@@ -18,7 +20,7 @@ export const TEMPLATE = /*html*/ `
       <div class="file_type">{{fileType}}</div>
     </div>
     <div class="image_container" ref="img-container-el">
-      <img class="image image_visible_from_editor" ref="img-el">
+      <img src="${TRANSPARENT_PIXEL_SRC}" class="image image_visible_from_editor" ref="img-el">
       <uc-editor-image-cropper ref="cropper-el"></uc-editor-image-cropper>
       <uc-editor-image-fader ref="fader-el"></uc-editor-image-fader>
     </div>

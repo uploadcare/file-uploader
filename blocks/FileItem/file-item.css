@@ -49,11 +49,6 @@ uc-file-item .file-name-wrapper {
   padding-left: var(--gap-mid);
   overflow: hidden;
   color: var(--clr-txt);
-  opacity: var(--opacity-max);
-}
-
-uc-file-item:hover .file-name-wrapper {
-  opacity: 1;
 }
 
 uc-file-item .file-name {

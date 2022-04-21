@@ -2,8 +2,9 @@ uc-upload-details {
   position: relative;
   display: grid;
   grid-template-rows: auto min-content;
-  height: 100%;
-  min-height: var(--activity-h);
+  height: 100vh;
+  max-height: var(--modal-max-h);
+  overflow: hidden;
 }
 
 uc-upload-details uc-tabs .tabs-context {

@@ -10,6 +10,13 @@
   </head>
   <body>
     <app-shell base="../../">
+      <style>
+        uc-live-html {
+          grid-template-rows: 1fr 2fr;
+          grid-template-columns: unset;
+          min-height: 1000px;
+        }
+      </style>
       <h1>Cloud image editor</h1>
       <uc-live-html>
         <!-- Script connection: -->
@@ -18,13 +25,29 @@
         <!-- CSS context properties: -->
         <style>
           @import url('./index.css');
-          uc-cloud-editor {
-            --cfg-pubkey: 'demopublickey';
+          body {
+            height: 100vh;
+            width: 100vw;
+            margin: 0;
           }
         </style>
 
         <!-- Cloud image editor element: -->
-        <uc-cloud-editor class="uc-cldtr-common" uuid="7c167b79-9f27-4489-8032-3f3be1840605"> </uc-cloud-editor>
+        <uc-cloud-editor
+          id="editor"
+          class="uc-cldtr-common"
+          uuid="7c167b79-9f27-4489-8032-3f3be1840605"
+        ></uc-cloud-editor>
+
+        <script>
+          let callback = (text) => (event) => {
+            console.log(`${text}`, event.detail);
+            alert(`${text}. See results in console.`);
+          };
+          let instance = document.querySelector('#editor');
+          instance.addEventListener('apply', callback('Apply'));
+          instance.addEventListener('cancel', callback('Cancel'));
+        </script>
       </uc-live-html>
     </app-shell>
   </body>

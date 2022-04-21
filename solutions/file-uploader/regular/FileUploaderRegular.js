@@ -18,6 +18,7 @@ FileUploaderRegular.template = /*html*/ `
   <uc-external-source></uc-external-source>
   <uc-upload-details></uc-upload-details>
   <uc-confirmation-dialog></uc-confirmation-dialog>
+  <uc-cloud-image-editor></uc-cloud-image-editor>
 </uc-modal>
 
 <uc-message-box></uc-message-box>

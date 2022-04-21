@@ -1,4 +1,4 @@
-<base href="../../">
+<base href="../../" />
 
 <style>
   @import url(./upload-blocks/themes/uc-basic/index.css);
@@ -12,9 +12,7 @@
 
 <uc-simple-btn class="uc-wgt-common"></uc-simple-btn>
 
-<uc-modal
-  strokes
-  class="uc-wgt-common">
+<uc-modal strokes class="uc-wgt-common">
   <uc-activity-icon slot="heading"></uc-activity-icon>
   <uc-activity-caption slot="heading"></uc-activity-caption>
   <uc-start-from>
@@ -27,6 +25,7 @@
   <uc-external-source></uc-external-source>
   <uc-upload-details></uc-upload-details>
   <uc-confirmation-dialog></uc-confirmation-dialog>
+  <uc-cloud-image-editor></uc-cloud-image-editor>
 </uc-modal>
 
 <uc-message-box class="uc-wgt-common"></uc-message-box>
@@ -35,4 +34,5 @@
 <uc-data-output
   fire-event
   item-template="<img height='200' src='https://ucarecdn.com/{{uuid}}/-/preview/s' />"
-  class="uc-wgt-common"></uc-data-output>
+  class="uc-wgt-common"
+></uc-data-output>

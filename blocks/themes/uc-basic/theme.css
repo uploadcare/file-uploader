@@ -51,9 +51,7 @@
   --transition-duration: 0.2s;
 
   --modal-max-w: 800px;
-  --modal-max-h: 600px; /* ??? */
-
-  --activity-h: 500px;
+  --modal-max-h: 600px;
 
   /* Derivative values */
 
@@ -165,4 +163,21 @@
   --clr-btn-bgr-disabled: var(--clr-background);
   --clr-btn-txt-disabled: var(--clr-txt-lightest);
   --shadow-btn-disabled: inset 0px 0px 1px hsla(var(--hsl-shadow), calc(0.4 * var(--shadows)));
+}
+
+@media only screen and (max-height: 600px) {
+  .uc-wgt-theme,
+  .uc-wgt-common,
+  :host {
+    --modal-max-h: 100%;
+  }
+}
+
+@media only screen and (max-width: 800px) {
+  .uc-wgt-theme,
+  .uc-wgt-common,
+  :host {
+    --modal-max-w: 100%;
+    --modal-max-h: 100%;
+  }
 }
