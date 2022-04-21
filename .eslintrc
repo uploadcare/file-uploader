@@ -5,10 +5,12 @@
     "ecmaVersion": 2020
   },
   "extends": [
-    "eslint-config-prettier"
+    "eslint-config-prettier",
+    "plugin:import/recommended"
   ],
   "plugins": [],
   "rules": {
+    "import/no-cycle": [2, { "ignoreExternal": true }],
     "no-unused-vars": "off",
     "no-console": "off",
     "max-classes-per-file": "off",

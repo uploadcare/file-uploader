@@ -50,6 +50,7 @@
     "esbuild": "^0.14.21",
     "eslint": "^8.1.0",
     "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-import": "^2.26.0",
     "husky": "^1.3.1",
     "lint-staged": "^11.1.2",
     "npm-run-all": "^4.1.5",
@@ -71,29 +72,11 @@
     }
   },
   "lint-staged": {
-    "*.{js,cjs}": [
-      "tsc --skipLibCheck --allowJs --noEmit",
-      "eslint --fix",
-      "prettier --write",
-      "git add"
-    ],
-    "*.css": [
-      "stylelint --fix",
-      "prettier --write --parser css",
-      "git add"
-    ],
-    "*.html": [
-      "prettier --write --parser html",
-      "git add"
-    ],
-    "*.json": [
-      "prettier --write --parser json",
-      "git add"
-    ],
-    "*.md": [
-      "prettier --write --parser markdown",
-      "git add"
-    ]
+    "*.{js,cjs}": ["tsc --skipLibCheck --allowJs --noEmit", "eslint --fix", "prettier --write", "git add"],
+    "*.css": ["stylelint --fix", "prettier --write --parser css", "git add"],
+    "*.html": ["prettier --write --parser html", "git add"],
+    "*.json": ["prettier --write --parser json", "git add"],
+    "*.md": ["prettier --write --parser markdown", "git add"]
   },
   "author": "Uploadcare Inc.",
   "license": "MIT"
