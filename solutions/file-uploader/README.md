@@ -34,7 +34,7 @@ Uploader is supported in all major modern [browsers](https://github.com/uploadca
 Connect script:
 
 ```html
-<script src="https://unpkg.com/@uploadcare/uc-blocks@latest/web/uc-uploader-regular.min.js" type="module"></script>
+<script src="https://unpkg.com/@uploadcare/uc-blocks@latest/web/file-uploader-regular.min.js" type="module"></script>
 ```
 
 ### npm package
