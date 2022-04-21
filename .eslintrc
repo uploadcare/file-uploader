@@ -11,6 +11,7 @@
   "plugins": [],
   "rules": {
     "import/no-cycle": 2,
+    "import/no-unresolved": "off",
     "no-unused-vars": "off",
     "no-console": "off",
     "max-classes-per-file": "off",
