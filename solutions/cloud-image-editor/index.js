@@ -1,4 +1,4 @@
-import * as CloudImageEditorBlocks from '../../blocks/CloudImageEditor/src/index.js';
+import * as CloudEditorBlocks from './CloudEditor.js';
 import { registerBlocks } from '../../abstract/registerBlocks.js';
 
-registerBlocks(CloudImageEditorBlocks);
+registerBlocks(CloudEditorBlocks);
