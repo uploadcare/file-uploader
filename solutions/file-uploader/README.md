@@ -44,9 +44,11 @@ Install package: `npm i @uploadcare/uc-blocks`
 Then you can use `Uploader`-element class for your purposes:
 
 ```javascript
-import { Uploader } from '@uploadcare/uc-blocks';
+import * as UC from '@uploadcare/uc-blocks';
 
-document.body.appendChild(new Uploader());
+UC.registerBlocks(UC);
+
+document.body.appendChild(new UC.FileUploaderRegular());
 ```
 
 ### Application markup

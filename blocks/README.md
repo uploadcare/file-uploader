@@ -102,7 +102,7 @@ You can combine them to create a common workflow like this one:
 You can quickly override any block template by setting the new `template` property value to any block class. Here is an example:
 
 ```js
-import { UC } from '@uploadcare/uc-blocks';
+import * as UC from '@uploadcare/uc-blocks';
 
 UC.ProgressBarCommon.template = /*html*/ `
   <h1>My custom heading</h1>
