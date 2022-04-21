@@ -10,7 +10,7 @@
   ],
   "plugins": [],
   "rules": {
-    "import/no-cycle": [2, { "ignoreExternal": true }],
+    "import/no-cycle": 2,
     "no-unused-vars": "off",
     "no-console": "off",
     "max-classes-per-file": "off",

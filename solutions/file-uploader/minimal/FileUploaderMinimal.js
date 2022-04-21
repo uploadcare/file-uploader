@@ -1,4 +1,4 @@
-import { Block } from '../../../index.js';
+import { Block } from '../../../abstract/Block.js';
 
 export class FileUploaderMinimal extends Block {
   init$ = {
@@ -15,7 +15,7 @@ export class FileUploaderMinimal extends Block {
 FileUploaderMinimal.template = /*html*/ `
   <uc-start-from>
     <uc-drop-area>
-      <button 
+      <button
         l10n="drop-files-here"
         set="onclick: selectClicked">
       </button>
