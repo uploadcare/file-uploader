@@ -1,4 +1,4 @@
-import { Block } from '../../../index.js';
+import { Block } from '../../../abstract/Block.js';
 
 export class FileUploaderRegular extends Block {}
 

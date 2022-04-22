@@ -1,5 +1,6 @@
 // @ts-nocheck
-// TODO: fix test
+/* eslint-disable */
+// TODO: remove this test and component in favour of just button tag
 
 import { AppComponent } from '../../lib/AppComponent.js.js';
 import { UcBtnUi } from './UcBtnUi.js';
