@@ -2,3 +2,5 @@ node_modules
 .DS_Store
 TMP
 web
+**/*.d.ts
+**/*.d.ts.map
