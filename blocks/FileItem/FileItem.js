@@ -1,6 +1,6 @@
 import { Block } from '../../abstract/Block.js';
 import { resizeImage } from '../utils/resizeImage.js';
-import { uploadFile } from '../../submodules/upload-client.js';
+import { uploadFile } from '../../submodules/upload-client/upload-client.js';
 import { UiMessage } from '../MessageBox/MessageBox.js';
 import { fileCssBg } from '../svg-backgrounds/svg-backgrounds.js';
 import { customUserAgent } from '../utils/userAgent.js';

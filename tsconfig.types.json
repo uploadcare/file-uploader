@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "declarationMap": true
+  },
+  "include": ["**/*.js"],
+  "exclude": ["node_modules", "./submodules/upload-client/upload-client.js", "assets"]
+}

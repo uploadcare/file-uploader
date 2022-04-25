@@ -5,7 +5,7 @@ export class DataOutput extends Block {
     let from = this.getAttribute('from');
     this.sub(
       from || DataOutput.defaultFrom,
-      (/** @type {import('../../submodules/upload-client.js').UploadcareFile[]} */ data) => {
+      (/** @type {import('../../submodules/upload-client/upload-client.js').UploadcareFile[]} */ data) => {
         if (!data) {
           this.innerHTML = '';
           return;

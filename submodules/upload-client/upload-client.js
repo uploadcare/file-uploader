@@ -1,6 +1,5 @@
-// 3.0
+// 3.1.1
 // @ts-nocheck
-
 class UploadClientError extends Error {
     constructor(message, code, request, response, headers) {
         super();
@@ -123,31 +122,97 @@ function identity(obj) {
 const transformFile = identity;
 var getFormData = () => new FormData();
 
-const isFileTuple = (tuple) => tuple[0] === 'file';
-function buildFormData(body) {
+/**
+ * FileData type guard.
+ */
+const isFileData = (data) => {
+    return (data !== undefined &&
+        ((typeof Blob !== 'undefined' && data instanceof Blob) ||
+            (typeof File !== 'undefined' && data instanceof File) ||
+            (typeof Buffer !== 'undefined' && data instanceof Buffer)));
+};
+/**
+ * Uuid type guard.
+ */
+const isUuid = (data) => {
+    const UUID_REGEX = '[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}';
+    const regExp = new RegExp(UUID_REGEX);
+    return !isFileData(data) && regExp.test(data);
+};
+/**
+ * Url type guard.
+ *
+ * @param {NodeFile | BrowserFile | Url | Uuid} data
+ */
+const isUrl = (data) => {
+    const URL_REGEX = '^(?:\\w+:)?\\/\\/([^\\s\\.]+\\.\\S{2}|localhost[\\:?\\d]*)\\S*$';
+    const regExp = new RegExp(URL_REGEX);
+    return !isFileData(data) && regExp.test(data);
+};
+
+const isSimpleValue = (value) => {
+    return (typeof value === 'string' ||
+        typeof value === 'number' ||
+        typeof value === 'undefined');
+};
+const isObjectValue = (value) => {
+    return !!value && typeof value === 'object' && !Array.isArray(value);
+};
+const isFileValue = (value) => !!value &&
+    typeof value === 'object' &&
+    'data' in value &&
+    isFileData(value.data);
+function collectParams(params, inputKey, inputValue) {
+    if (isFileValue(inputValue)) {
+        const name = inputValue.name;
+        const file = transformFile(inputValue.data); // lgtm [js/superfluous-trailing-arguments]
+        params.push(name ? [inputKey, file, name] : [inputKey, file]);
+    }
+    else if (isObjectValue(inputValue)) {
+        for (const [key, value] of Object.entries(inputValue)) {
+            if (typeof value !== 'undefined') {
+                params.push([`${inputKey}[${key}]`, String(value)]);
+            }
+        }
+    }
+    else if (isSimpleValue(inputValue) && inputValue) {
+        params.push([inputKey, inputValue.toString()]);
+    }
+}
+function getFormDataParams(options) {
+    const params = [];
+    for (const [key, value] of Object.entries(options)) {
+        collectParams(params, key, value);
+    }
+    return params;
+}
+function buildFormData(options) {
     const formData = getFormData();
-    for (const tuple of body) {
-        if (Array.isArray(tuple[1])) {
-            // refactor this
-            tuple[1].forEach((val) => val && formData.append(tuple[0] + '[]', `${val}`));
-        }
-        else if (isFileTuple(tuple)) {
-            const name = tuple[2];
-            const file = transformFile(tuple[1]); // lgtm[js/superfluous-trailing-arguments]
-            formData.append(tuple[0], file, name);
-        }
-        else if (tuple[1] != null) {
-            formData.append(tuple[0], `${tuple[1]}`);
-        }
+    const params = getFormDataParams(options);
+    for (const param of params) {
+        formData.append(...param);
     }
     return formData;
 }
 
 const serializePair = (key, value) => typeof value !== 'undefined' ? `${key}=${encodeURIComponent(value)}` : null;
+// TODO: generalize value transforming logic and use it here and inside `buildFormData`
 const createQuery = (query) => Object.entries(query)
-    .reduce((params, [key, value]) => params.concat(Array.isArray(value)
-    ? value.map((value) => serializePair(`${key}[]`, value))
-    : serializePair(key, value)), [])
+    .reduce((params, [key, value]) => {
+    let param;
+    if (typeof value === 'object' && !Array.isArray(value)) {
+        param = Object.entries(value)
+            .filter((entry) => typeof entry[1] !== 'undefined')
+            .map((entry) => serializePair(`${key}[${entry[0]}]`, String(entry[1])));
+    }
+    else if (Array.isArray(value)) {
+        param = value.map((val) => serializePair(`${key}[]`, val));
+    }
+    else {
+        param = serializePair(key, value);
+    }
+    return params.concat(param);
+}, [])
     .filter((x) => !!x)
     .join('&');
 const getUrl = (base, path, query) => [
@@ -179,7 +244,7 @@ const defaultSettings = {
 const defaultContentType = 'application/octet-stream';
 const defaultFilename = 'original';
 
-var version = '3.0.0';
+var version = '3.1.1';
 
 /**
  * Returns User Agent based on version and settings.
@@ -279,11 +344,15 @@ function retryIfThrottled(fn, retryThrottledMaxTimes) {
     }));
 }
 
+function getStoreValue(store) {
+    return typeof store === 'undefined' ? 'auto' : store ? '1' : '0';
+}
+
 /**
  * Performs file uploading request to Uploadcare Upload API.
  * Can be canceled and has progress.
  */
-function base(file, { publicKey, fileName, baseURL = defaultSettings.baseURL, secureSignature, secureExpire, store, signal, onProgress, source = 'local', integration, userAgent, retryThrottledRequestMaxTimes = defaultSettings.retryThrottledRequestMaxTimes }) {
+function base(file, { publicKey, fileName, baseURL = defaultSettings.baseURL, secureSignature, secureExpire, store, signal, onProgress, source = 'local', integration, userAgent, retryThrottledRequestMaxTimes = defaultSettings.retryThrottledRequestMaxTimes, metadata }) {
     return retryIfThrottled(() => {
         var _a;
         return request({
@@ -294,17 +363,18 @@ function base(file, { publicKey, fileName, baseURL = defaultSettings.baseURL, se
             headers: {
                 'X-UC-User-Agent': getUserAgent({ publicKey, integration, userAgent })
             },
-            data: buildFormData([
-                ['file', file, (_a = fileName !== null && fileName !== void 0 ? fileName : file.name) !== null && _a !== void 0 ? _a : defaultFilename],
-                ['UPLOADCARE_PUB_KEY', publicKey],
-                [
-                    'UPLOADCARE_STORE',
-                    typeof store === 'undefined' ? 'auto' : store ? 1 : 0
-                ],
-                ['signature', secureSignature],
-                ['expire', secureExpire],
-                ['source', source]
-            ]),
+            data: buildFormData({
+                file: {
+                    data: file,
+                    name: (_a = fileName !== null && fileName !== void 0 ? fileName : file.name) !== null && _a !== void 0 ? _a : defaultFilename
+                },
+                UPLOADCARE_PUB_KEY: publicKey,
+                UPLOADCARE_STORE: getStoreValue(store),
+                signature: secureSignature,
+                expire: secureExpire,
+                source: source,
+                metadata
+            }),
             signal,
             onProgress
         }).then(({ data, headers, request }) => {
@@ -327,7 +397,7 @@ var TypeEnum;
 /**
  * Uploading files from URL.
  */
-function fromUrl(sourceUrl, { publicKey, baseURL = defaultSettings.baseURL, store, fileName, checkForUrlDuplicates, saveUrlForRecurrentUploads, secureSignature, secureExpire, source = 'url', signal, integration, userAgent, retryThrottledRequestMaxTimes = defaultSettings.retryThrottledRequestMaxTimes }) {
+function fromUrl(sourceUrl, { publicKey, baseURL = defaultSettings.baseURL, store, fileName, checkForUrlDuplicates, saveUrlForRecurrentUploads, secureSignature, secureExpire, source = 'url', signal, integration, userAgent, retryThrottledRequestMaxTimes = defaultSettings.retryThrottledRequestMaxTimes, metadata }) {
     return retryIfThrottled(() => request({
         method: 'POST',
         headers: {
@@ -337,13 +407,14 @@ function fromUrl(sourceUrl, { publicKey, baseURL = defaultSettings.baseURL, stor
             jsonerrors: 1,
             pub_key: publicKey,
             source_url: sourceUrl,
-            store: typeof store === 'undefined' ? 'auto' : store ? 1 : undefined,
+            store: getStoreValue(store),
             filename: fileName,
             check_URL_duplicates: checkForUrlDuplicates ? 1 : undefined,
             save_URL_duplicates: saveUrlForRecurrentUploads ? 1 : undefined,
             signature: secureSignature,
             expire: secureExpire,
-            source: source
+            source: source,
+            metadata
         }),
         signal
     }).then(({ data, headers, request }) => {
@@ -486,24 +557,25 @@ function info(uuid, { publicKey, baseURL = defaultSettings.baseURL, signal, sour
 /**
  * Start multipart uploading.
  */
-function multipartStart(size, { publicKey, contentType, fileName, multipartChunkSize = defaultSettings.multipartChunkSize, baseURL = '', secureSignature, secureExpire, store, signal, source = 'local', integration, userAgent, retryThrottledRequestMaxTimes = defaultSettings.retryThrottledRequestMaxTimes }) {
+function multipartStart(size, { publicKey, contentType, fileName, multipartChunkSize = defaultSettings.multipartChunkSize, baseURL = '', secureSignature, secureExpire, store, signal, source = 'local', integration, userAgent, retryThrottledRequestMaxTimes = defaultSettings.retryThrottledRequestMaxTimes, metadata }) {
     return retryIfThrottled(() => request({
         method: 'POST',
         url: getUrl(baseURL, '/multipart/start/', { jsonerrors: 1 }),
         headers: {
             'X-UC-User-Agent': getUserAgent({ publicKey, integration, userAgent })
         },
-        data: buildFormData([
-            ['filename', fileName !== null && fileName !== void 0 ? fileName : defaultFilename],
-            ['size', size],
-            ['content_type', contentType !== null && contentType !== void 0 ? contentType : defaultContentType],
-            ['part_size', multipartChunkSize],
-            ['UPLOADCARE_STORE', store ? '' : 'auto'],
-            ['UPLOADCARE_PUB_KEY', publicKey],
-            ['signature', secureSignature],
-            ['expire', secureExpire],
-            ['source', source]
-        ]),
+        data: buildFormData({
+            filename: fileName !== null && fileName !== void 0 ? fileName : defaultFilename,
+            size: size,
+            content_type: contentType !== null && contentType !== void 0 ? contentType : defaultContentType,
+            part_size: multipartChunkSize,
+            UPLOADCARE_STORE: getStoreValue(store),
+            UPLOADCARE_PUB_KEY: publicKey,
+            signature: secureSignature,
+            expire: secureExpire,
+            source: source,
+            metadata
+        }),
         signal
     }).then(({ data, headers, request }) => {
         const response = camelizeKeys(JSON.parse(data));
@@ -552,11 +624,11 @@ function multipartComplete(uuid, { publicKey, baseURL = defaultSettings.baseURL,
         headers: {
             'X-UC-User-Agent': getUserAgent({ publicKey, integration, userAgent })
         },
-        data: buildFormData([
-            ['uuid', uuid],
-            ['UPLOADCARE_PUB_KEY', publicKey],
-            ['source', source]
-        ]),
+        data: buildFormData({
+            uuid: uuid,
+            UPLOADCARE_PUB_KEY: publicKey,
+            source: source
+        }),
         signal
     }).then(({ data, headers, request }) => {
         const response = camelizeKeys(JSON.parse(data));
@@ -582,6 +654,8 @@ class UploadcareFile {
         this.originalFilename = null;
         this.imageInfo = null;
         this.videoInfo = null;
+        this.contentInfo = null;
+        this.metadata = null;
         const { uuid, s3Bucket } = fileInfo;
         const urlBase = s3Bucket
             ? `https://${s3Bucket}.s3.amazonaws.com/${uuid}/${fileInfo.filename}`
@@ -601,6 +675,8 @@ class UploadcareFile {
         this.originalFilename = fileInfo.originalFilename;
         this.imageInfo = camelizeKeys(fileInfo.imageInfo);
         this.videoInfo = camelizeKeys(fileInfo.videoInfo);
+        this.contentInfo = camelizeKeys(fileInfo.contentInfo);
+        this.metadata = fileInfo.metadata || null;
     }
 }
 
@@ -652,7 +728,7 @@ function isReadyPoll({ file, publicKey, baseURL, source, integration, userAgent,
     });
 }
 
-const uploadFromObject = (file, { publicKey, fileName, baseURL, secureSignature, secureExpire, store, signal, onProgress, source, integration, userAgent, retryThrottledRequestMaxTimes, baseCDN }) => {
+const uploadFromObject = (file, { publicKey, fileName, baseURL, secureSignature, secureExpire, store, signal, onProgress, source, integration, userAgent, retryThrottledRequestMaxTimes, baseCDN, metadata }) => {
     return base(file, {
         publicKey,
         fileName,
@@ -665,7 +741,8 @@ const uploadFromObject = (file, { publicKey, fileName, baseURL, secureSignature,
         source,
         integration,
         userAgent,
-        retryThrottledRequestMaxTimes
+        retryThrottledRequestMaxTimes,
+        metadata
     })
         .then(({ file }) => {
         return isReadyPoll({
@@ -968,7 +1045,7 @@ const pushStrategy = ({ token, pusherKey, signal, onProgress }) => new Promise((
         }
     });
 });
-const uploadFromUrl = (sourceUrl, { publicKey, fileName, baseURL, baseCDN, checkForUrlDuplicates, saveUrlForRecurrentUploads, secureSignature, secureExpire, store, signal, onProgress, source, integration, userAgent, retryThrottledRequestMaxTimes, pusherKey = defaultSettings.pusherKey }) => Promise.resolve(preconnect(pusherKey))
+const uploadFromUrl = (sourceUrl, { publicKey, fileName, baseURL, baseCDN, checkForUrlDuplicates, saveUrlForRecurrentUploads, secureSignature, secureExpire, store, signal, onProgress, source, integration, userAgent, retryThrottledRequestMaxTimes, pusherKey = defaultSettings.pusherKey, metadata }) => Promise.resolve(preconnect(pusherKey))
     .then(() => fromUrl(sourceUrl, {
     publicKey,
     fileName,
@@ -982,7 +1059,8 @@ const uploadFromUrl = (sourceUrl, { publicKey, fileName, baseURL, baseCDN, check
     source,
     integration,
     userAgent,
-    retryThrottledRequestMaxTimes
+    retryThrottledRequestMaxTimes,
+    metadata
 }))
     .catch((error) => {
     const pusher = getPusher(pusherKey);
@@ -1054,34 +1132,6 @@ const uploadFromUploaded = (uuid, { publicKey, fileName, baseURL, signal, onProg
 };
 
 /**
- * FileData type guard.
- */
-const isFileData = (data) => {
-    return (data !== undefined &&
-        ((typeof Blob !== 'undefined' && data instanceof Blob) ||
-            (typeof File !== 'undefined' && data instanceof File) ||
-            (typeof Buffer !== 'undefined' && data instanceof Buffer)));
-};
-/**
- * Uuid type guard.
- */
-const isUuid = (data) => {
-    const UUID_REGEX = '[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}';
-    const regExp = new RegExp(UUID_REGEX);
-    return !isFileData(data) && regExp.test(data);
-};
-/**
- * Url type guard.
- *
- * @param {NodeFile | BrowserFile | Url | Uuid} data
- */
-const isUrl = (data) => {
-    const URL_REGEX = '^(?:\\w+:)?\\/\\/([^\\s\\.]+\\.\\S{2}|localhost[\\:?\\d]*)\\S*$';
-    const regExp = new RegExp(URL_REGEX);
-    return !isFileData(data) && regExp.test(data);
-};
-
-/**
  * Get file size.
  */
 const getFileSize = (file) => {
@@ -1150,7 +1200,7 @@ const uploadPartWithRetry = (chunk, url, { publicKey, onProgress, signal, integr
     }
     throw error;
 }));
-const uploadMultipart = (file, { publicKey, fileName, fileSize, baseURL, secureSignature, secureExpire, store, signal, onProgress, source, integration, userAgent, retryThrottledRequestMaxTimes, contentType, multipartChunkSize = defaultSettings.multipartChunkSize, maxConcurrentRequests = defaultSettings.maxConcurrentRequests, multipartMaxAttempts = defaultSettings.multipartMaxAttempts, baseCDN }) => {
+const uploadMultipart = (file, { publicKey, fileName, fileSize, baseURL, secureSignature, secureExpire, store, signal, onProgress, source, integration, userAgent, retryThrottledRequestMaxTimes, contentType, multipartChunkSize = defaultSettings.multipartChunkSize, maxConcurrentRequests = defaultSettings.maxConcurrentRequests, multipartMaxAttempts = defaultSettings.multipartMaxAttempts, baseCDN, metadata }) => {
     const size = fileSize || getFileSize(file);
     let progressValues;
     const createProgressHandler = (totalChunks, chunkIdx) => {
@@ -1183,7 +1233,8 @@ const uploadMultipart = (file, { publicKey, fileName, fileSize, baseURL, secureS
         source,
         integration,
         userAgent,
-        retryThrottledRequestMaxTimes
+        retryThrottledRequestMaxTimes,
+        metadata
     })
         .then(({ uuid, parts }) => {
         const getChunk = prepareChunks(file, size, multipartChunkSize);
@@ -1230,10 +1281,10 @@ const uploadMultipart = (file, { publicKey, fileName, fileSize, baseURL, secureS
 /**
  * Uploads file from provided data.
  */
-function uploadFile(data, { publicKey, fileName, baseURL = defaultSettings.baseURL, secureSignature, secureExpire, store, signal, onProgress, source, integration, userAgent, retryThrottledRequestMaxTimes, contentType, multipartChunkSize, multipartMaxAttempts, maxConcurrentRequests, baseCDN = defaultSettings.baseCDN, checkForUrlDuplicates, saveUrlForRecurrentUploads, pusherKey }) {
+function uploadFile(data, { publicKey, fileName, baseURL = defaultSettings.baseURL, secureSignature, secureExpire, store, signal, onProgress, source, integration, userAgent, retryThrottledRequestMaxTimes, contentType, multipartMinFileSize, multipartChunkSize, multipartMaxAttempts, maxConcurrentRequests, baseCDN = defaultSettings.baseCDN, checkForUrlDuplicates, saveUrlForRecurrentUploads, pusherKey, metadata }) {
     if (isFileData(data)) {
         const fileSize = getFileSize(data);
-        if (isMultipart(fileSize)) {
+        if (isMultipart(fileSize, multipartMinFileSize)) {
             return uploadMultipart(data, {
                 publicKey,
                 contentType,
@@ -1251,7 +1302,8 @@ function uploadFile(data, { publicKey, fileName, baseURL = defaultSettings.baseU
                 userAgent,
                 maxConcurrentRequests,
                 retryThrottledRequestMaxTimes,
-                baseCDN
+                baseCDN,
+                metadata
             });
         }
         return uploadFromObject(data, {
@@ -1267,7 +1319,8 @@ function uploadFile(data, { publicKey, fileName, baseURL = defaultSettings.baseU
             integration,
             userAgent,
             retryThrottledRequestMaxTimes,
-            baseCDN
+            baseCDN,
+            metadata
         });
     }
     if (isUrl(data)) {
@@ -1287,7 +1340,8 @@ function uploadFile(data, { publicKey, fileName, baseURL = defaultSettings.baseU
             integration,
             userAgent,
             retryThrottledRequestMaxTimes,
-            pusherKey
+            pusherKey,
+            metadata
         });
     }
     if (isUuid(data)) {
