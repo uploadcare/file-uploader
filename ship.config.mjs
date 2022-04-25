@@ -1,3 +1,6 @@
+import fs from 'fs'
+import path from 'path'
+
 export default {
   buildCommand: () => 'npm run build',
   publishCommand: ({ defaultCommand }) => `${defaultCommand} --access public`,
