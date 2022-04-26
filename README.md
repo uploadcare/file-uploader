@@ -38,6 +38,12 @@ uc-blocks are supported and tested in all major modern desktop and mobile browse
 
 ## ⚙️ Installation and start
 
+### NPM
+
+`npm i @uploadcare/uc-blocks`
+
+### Contribution
+
 1. Clone repository: `git clone git@github.com:uploadcare/uc-blocks.git ./`.
 2. Run dependencies setup: `npm run setup`.
 3. Start local dev-server: `npm run dev`.
