@@ -4,7 +4,7 @@
 
   - [Regular](./file-uploader/regular/) - the most common case
   - [Minimal](./file-uploader/minimal/) - simple and compact
-  <!-- - [Inline](./file-uploader/inline/) - inline mode (no modal) -->
+  - [Inline](./file-uploader/inline/) - inline mode (no modal)
 
 - [Adaptive image](./adaptive-image/) - efficient image rendering automation
 

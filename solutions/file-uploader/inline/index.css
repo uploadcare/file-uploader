@@ -1,1 +1,8 @@
 @import url('../../../blocks/themes/uc-basic/index.css');
+
+uc-drop-area {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+}

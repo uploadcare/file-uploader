@@ -38,6 +38,19 @@ export const buildItems = [
     minify: true,
   },
 
+  // file-uploader-inline
+  {
+    in: './solutions/file-uploader/inline/index.js',
+    out: './web/file-uploader-inline.min.js',
+    minify: true,
+    minifyHtml: true,
+  },
+  {
+    in: './solutions/file-uploader/inline/index.css',
+    out: './web/file-uploader-inline.min.css',
+    minify: true,
+  },
+
   // file-uploader-minimal
   {
     in: './solutions/file-uploader/minimal/index.js',
