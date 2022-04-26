@@ -24,5 +24,5 @@ jobs:
       - name: Run lint
         run: npm run lint
       - name: Run tsc
-        run: npm run tsc
+        run: npm run clean && npm run tsc
 
