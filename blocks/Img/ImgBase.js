@@ -190,64 +190,68 @@ export class ImgBase extends BaseComponent {
   }
 
   get breakpoints() {
-    return this.$$('breakpoints')
-      ? this.$$('breakpoints')
-          .split(',')
-          .map((bpStr) => {
-            return parseFloat(bpStr.trim());
-          })
-      : null;
+    if (this.$$('breakpoints')) {
+      let bpSet = new Set();
+      this.$$('breakpoints')
+        .split(',')
+        .forEach((bpStr) => {
+          bpSet.add(parseFloat(bpStr.trim()));
+        });
+      return bpSet;
+    } else {
+      return null;
+    }
   }
 
   /** @param {HTMLElement} el */
   renderBg(el) {
-    let imgSet = [];
+    let imgSet = new Set();
     if (this.breakpoints) {
       this.breakpoints.forEach((bp) => {
-        imgSet.push(`url("${this._getUrlBase(bp + 'x')}") ${bp}w`);
+        imgSet.add(`url("${this._getUrlBase(bp + 'x')}") ${bp}w`);
         if (this.$$('hi-res-support')) {
-          imgSet.push(`url("${this._getUrlBase(bp * HI_RES_K + 'x')}") ${bp * HI_RES_K}w`);
+          imgSet.add(`url("${this._getUrlBase(bp * HI_RES_K + 'x')}") ${bp * HI_RES_K}w`);
         }
         if (this.$$('ultra-res-support')) {
-          imgSet.push(`url("${this._getUrlBase(bp * ULTRA_RES_K + 'x')}") ${bp * ULTRA_RES_K}w`);
+          imgSet.add(`url("${this._getUrlBase(bp * ULTRA_RES_K + 'x')}") ${bp * ULTRA_RES_K}w`);
         }
       });
     } else {
-      imgSet.push(`url("${this._getUrlBase(this._getElSize(el))}") 1x`);
+      imgSet.add(`url("${this._getUrlBase(this._getElSize(el))}") 1x`);
       if (this.$$('hi-res-support')) {
-        imgSet.push(`url("${this._getUrlBase(this._getElSize(el, HI_RES_K))}") ${HI_RES_K}x`);
+        imgSet.add(`url("${this._getUrlBase(this._getElSize(el, HI_RES_K))}") ${HI_RES_K}x`);
       }
       if (this.$$('ultra-res-support')) {
-        imgSet.push(`url("${this._getUrlBase(this._getElSize(el, ULTRA_RES_K))}") ${ULTRA_RES_K}x`);
+        imgSet.add(`url("${this._getUrlBase(this._getElSize(el, ULTRA_RES_K))}") ${ULTRA_RES_K}x`);
       }
     }
-    let iSet = `image-set(${imgSet.join(', ')})`;
+    let iSet = `image-set(${[...imgSet].join(', ')})`;
     el.style.setProperty('background-image', iSet);
     el.style.setProperty('background-image', '-webkit-' + iSet);
   }
 
   getSrcset() {
-    let srcset = [];
+    let srcset = new Set();
     if (this.breakpoints) {
       this.breakpoints.forEach((bp) => {
-        srcset.push(this._getUrlBase(bp + 'x') + ` ${bp}w`);
+        srcset.add(this._getUrlBase(bp + 'x') + ` ${bp}w`);
         if (this.$$('hi-res-support')) {
-          srcset.push(this._getUrlBase(bp * HI_RES_K + 'x') + ` ${bp * HI_RES_K}w`);
+          srcset.add(this._getUrlBase(bp * HI_RES_K + 'x') + ` ${bp * HI_RES_K}w`);
         }
         if (this.$$('ultra-res-support')) {
-          srcset.push(this._getUrlBase(bp * ULTRA_RES_K + 'x') + ` ${bp * ULTRA_RES_K}w`);
+          srcset.add(this._getUrlBase(bp * ULTRA_RES_K + 'x') + ` ${bp * ULTRA_RES_K}w`);
         }
       });
     } else {
-      srcset.push(this._getUrlBase(this._getElSize(this.img)) + ' 1x');
+      srcset.add(this._getUrlBase(this._getElSize(this.img)) + ' 1x');
       if (this.$$('hi-res-support')) {
-        srcset.push(this._getUrlBase(this._getElSize(this.img, 2)) + ' 2x');
+        srcset.add(this._getUrlBase(this._getElSize(this.img, 2)) + ' 2x');
       }
       if (this.$$('ultra-res-support')) {
-        srcset.push(this._getUrlBase(this._getElSize(this.img, 3)) + ' 3x');
+        srcset.add(this._getUrlBase(this._getElSize(this.img, 3)) + ' 3x');
       }
     }
-    return srcset.join();
+    return [...srcset].join();
   }
 
   init() {
