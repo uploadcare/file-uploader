@@ -1,5 +1,6 @@
 uc-modal {
-  --l-content-height: calc(100vh - 4 * var(--gap-mid) - var(--ui-size));
+  --modal-max-content-height: calc(100vh - 4 * var(--gap-mid) - var(--ui-size));
+  --modal-content-height-fill: 100vh;
 
   position: fixed;
   top: 0;
@@ -64,7 +65,7 @@ uc-modal > .dialog {
 }
 @media only screen and (max-width: 600px), only screen and (max-height: 800px) {
   uc-modal > .dialog > .content {
-    height: var(--l-content-height);
+    height: var(--modal-max-content-height);
   }
 }
 

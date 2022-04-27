@@ -1,6 +1,6 @@
 uc-tabs {
   display: grid;
-  grid-template-rows: min-content auto;
+  grid-template-rows: min-content minmax(var(--ui-size), auto);
   height: 100%;
   overflow: hidden;
   color: var(--clr-txt-lightest);

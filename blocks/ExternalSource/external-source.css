@@ -2,8 +2,8 @@ uc-external-source {
   position: relative;
   display: grid;
   grid-template-rows: auto min-content;
-  height: 100vh;
-  max-height: var(--modal-max-h);
+  height: var(--modal-content-height-fill, 100%);
+  max-height: var(--modal-max-content-height);
 }
 
 uc-external-source iframe {
