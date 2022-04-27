@@ -1,6 +1,17 @@
 @import url('../../../blocks/themes/uc-basic/index.css');
 
+/* stylelint-disable-next-line plugin/stylelint-force-app-name-prefix */
+body {
+  margin: 0;
+  padding: 8px;
+  width: 100vw;
+  height: 100vh;
+  box-sizing: border-box;
+}
+
 uc-uploader {
+  width: 100%;
+  height: 100%;
   display: block;
   border: 2px solid
     hsla(
