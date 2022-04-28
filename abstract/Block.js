@@ -151,6 +151,12 @@ export class Block extends BaseComponent {
 
       super.connectedCallback();
 
+      if (this.hasAttribute('current-activity')) {
+        this.sub('*currentActivity', (/** @type {String} */ val) => {
+          this.setAttribute('current-activity', val);
+        })
+      }
+
       if (this.activityType) {
         if (!this.hasAttribute('activity')) {
           this.setAttribute('activity', this.activityType);
