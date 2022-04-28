@@ -35,4 +35,12 @@
  * @property {{ dimensions: [number, number]; coords: [number, number] }} [crop]
  */
 
+/**
+ * @typedef {Object} ApplyResult
+ * @property {string} originalUrl
+ * @property {string} cdnUrlModifiers
+ * @property {string} cdnUrl
+ * @property {Transformations} transformations
+ */
+
 export {};

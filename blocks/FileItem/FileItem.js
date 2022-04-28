@@ -116,14 +116,14 @@ export class FileItem extends Block {
         }
       });
 
-      this.entry.subscribe('transformationsUrl', (transformationsUrl) => {
-        if (!transformationsUrl) {
+      this.entry.subscribe('cdnUrl', (cdnUrl) => {
+        if (!cdnUrl) {
           return;
         }
         if (this.entry.getValue('isImage')) {
           this._revokeThumbUrl();
           let size = this.$['*--cfg-thumb-size'] || 76;
-          this.$.thumbUrl = `url(${transformationsUrl}-/scale_crop/${size}x${size}/center/)`;
+          this.$.thumbUrl = `url(${cdnUrl}-/scale_crop/${size}x${size}/center/)`;
         }
       });
 

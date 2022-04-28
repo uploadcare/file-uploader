@@ -1,4 +1,5 @@
 import { BaseComponent, Data, TypedCollection } from '../submodules/symbiote/core/symbiote.js';
+import { UploadcareFile } from '../submodules/upload-client/upload-client.js';
 import { l10nProcessor } from './l10nProcessor.js';
 import { uploadEntrySchema } from './uploadEntrySchema.js';
 
@@ -374,8 +375,18 @@ export class Block extends BaseComponent {
     let items = this.uploadCollection.items();
     items.forEach((itemId) => {
       let uploadEntryData = Data.getNamedCtx(itemId).store;
-      let info = uploadEntryData.fileInfo;
-      data.push(info);
+      /** @type {UploadcareFile} */
+      let fileInfo = uploadEntryData.fileInfo;
+      // TODO: remove `cdnUrl` and `cdnUrlModifiers` from fileInfo object returned by upload-client
+      // TODO: create OutputItem instance instead of creating inline object,
+      //       fileInfo should be returned as is along with the other data
+      // TODO: pass editorTransformations to the user
+      let outputItem = {
+        ...fileInfo,
+        cdnUrlModifiers: uploadEntryData.cdnUrlModifiers || fileInfo.cdnUrlModifiers,
+        cdnUrl: uploadEntryData.cdnUrl || fileInfo.cdnUrl,
+      };
+      data.push(outputItem);
     });
     this.$['*outputData'] = data;
   }
