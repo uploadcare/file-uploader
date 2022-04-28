@@ -11,8 +11,6 @@ body {
 
 uc-uploader {
   display: block;
-  width: 100%;
-  height: 100%;
   border: 2px solid
     hsla(
       var(--h-foreground),
