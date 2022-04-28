@@ -41,7 +41,7 @@
     "format:json": "prettier --write --parser json ./**/*.json",
     "format:md": "prettier --write --parser markdown ./**/*.md",
     "format": "run-s lint:js:fix lint:css:fix format:js format:css format:html format:json format:md",
-    "prepare": "simple-git-hooks"
+    "prepare": "husky install"
   },
   "devDependencies": {
     "@babel/eslint-parser": "^7.17.0",
@@ -59,7 +59,6 @@
     "prettier-plugin-jsdoc": "0.3.38",
     "rimraf": "^3.0.2",
     "shipjs": "^0.24.4",
-    "simple-git-hooks": "^2.7.0",
     "stylelint": "^14.7.1",
     "stylelint-config-prettier": "^9.0.3",
     "stylelint-config-rational-order": "^0.1.2",
