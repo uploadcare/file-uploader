@@ -1,17 +1,17 @@
 # Adaptive Image
 
-> Universal web-component for the efficient image representation at any page.
+> Universal web-component for the efficient image representation on any page.
 > It generates the set of URLs for the initial image source with the desired parameters.
 
 <re-htm src="./demo.snippet.htm"><re-htm>
 
 ## Solution benefits
 
-- No need to initiate something or to scan document: browser takes care about it.
-- Uniform integration for the most of modern stacks.
+- No need to initiate something or to scan a document: the browser takes care of it.
+- Uniform integration for most of the modern stacks.
 - Modern standards support: `srcset`, native lazy loading, breakpoints, etc...
 - Creates adaptive background images if needed.
-- You need HTML and CSS only, to set it up.
+- You need HTML and CSS only to set it up.
 
 ## Quick start
 
@@ -30,7 +30,7 @@ uc-img {
 }
 ```
 
-Public key is necessary for the Proxy links generation, if custom proxy name is not used. You can obtain public key in your [Uploadcare project's dashboard](https://app.uploadcare.com/projects/-/api-keys/).
+A public key is necessary for the Proxy links generation if a custom proxy name is not used. You can obtain the public key key in your [Uploadcare project's dashboard](https://app.uploadcare.com/projects/-/api-keys/).
 
 Then use `<uc-img>` tag for the images in your HTML templates:
 
@@ -42,7 +42,7 @@ That's it!
 
 ## Workflow
 
-1. Web component initiating and read it's settings, including the source image path.
+1. Web component initiating and reading it's settings, including the source image path.
 2. Component uses [Uploadcare Proxy](https://uploadcare.com/docs/delivery/proxy/) service to upload the source image if that was not done before.
 3. Image component generates all necessary src sets for the resulting image and renders the `img` tag into the DOM.
 
@@ -58,7 +58,7 @@ For the SEO or NOSCRIPT purposes, use `<noscript>` sections on your integrations
 </uc-img>
 ```
 
-After initiating, if JavaScript is enabled in browser, that will be transformed into:
+After initiating, if JavaScript is enabled in the browser, that will be transformed into:
 
 ```html
 <uc-img src="SOURCE_IMAGE_PATH">
@@ -68,7 +68,7 @@ After initiating, if JavaScript is enabled in browser, that will be transformed 
 
 ## Lazy loading
 
-[Native lazy loading](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe#attr-loading) is enabled by default for all image components. You can disable it at all or use custom one based on [IntersectionObserver](https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API).
+[Native lazy loading](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe#attr-loading) is enabled by default for all images components. You can disable it or use a custom one based on [IntersectionObserver](https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API).
 
 Disable:
 
@@ -96,7 +96,7 @@ Intersection observer enabled:
 
 ## Breakpoints
 
-If you have some responsive layout where images could be resized in some cases, it's good to set a list of breakpoints to avoid exceed sized generation via Uploadcare CDN operations:
+If you have some responsive layout where images could be resized in some cases, it's good to set a list of breakpoints to exceed sized generation via Uploadcare CDN operations:
 
 ```html
 <style>
@@ -110,15 +110,15 @@ If you have some responsive layout where images could be resized in some cases, 
 <uc-img src="SOURCE_IMAGE_PATH"></uc-img>
 ```
 
-That will save the resources and make image behavior more expected. Browser will select most suitable image size automatically.
+That will save the resources and make image behavior more expected. The browser will select the most suitable image size automatically.
 
 ## Layout shift
 
-It's a good practice to set up initial size for the images to avoid layout shifting during loading.
+It's good to set up the initial size for the images to avoid layout shifting during loading.
 
 ## CDN Operations
 
-You can provide some transformation settings for the single image or for the set of images:
+You can provide some transformation settings for the single image or the set of images:
 
 ```html
 <style>
@@ -143,11 +143,11 @@ Operations description syntax is the same as used in [REST API](https://uploadca
 </style>
 ```
 
-As you can see, transformation definitions are separated with `/-/` symbols, just like you can use it in the REST API.
+As you can see, transformation definitions are separated with `/-/` symbols, just like you can use in the REST API.
 
 ## Background mode
 
-To use adaptive image as an element's background, you can use `is-background-for` attribute with the desired element's CSS selector in it's value:
+To use an adaptive image as an element's background, you can use `is-background-for` attribute with the desired element's CSS selector in it's value:
 
 ```html
 <style>
@@ -163,8 +163,8 @@ To use adaptive image as an element's background, you can use `is-background-for
 
 ## Development mode (relative image path)
 
-When you developing your application you can use some local development server and relative paths in your project structure for the images. In that case, Uploadcare Proxy service would be disabled for you development environment and you will see original local images in your application until you deploy it:
-
+When you develop your application, you can use some local development servers and relative paths in your project structure for the images. In that case, Uploadcare Proxy service would be disabled for your development environment, and you will see original local images in your application until you deploy it:
+  
 ```html
 <uc-img src="../LOCAL_IMAGE_PATH"></uc-img>
 ```
@@ -181,7 +181,7 @@ In this case, you don't need the `pubkey` setting to upload the source image.
 
 ## Settings
 
-CSS context properties are available for the all nested elements of any container just like any other CSS properties. HTML attribute settings has more priority and can redefine other settings.
+CSS context properties are available for any container's nested elements, just like any other CSS properties. HTML attribute settings have more priority and can redefine other settings.
 
 | CSS context property       | HTML Attribute    | Default value | Type        |
 | :------------------------- | :---------------- | :------------ | :---------- |
