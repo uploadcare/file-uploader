@@ -9,14 +9,22 @@ header {
   background-color: rgba(0, 0, 0, .4);
 }
 nav {
+  --l-bg-clr: rgba(60, 60, 60, .9);
+  --blur: 6px;
   display: flex;
   justify-content: center;
   position: sticky;
   z-index: 10000;
   top: 0;
-  background-color: rgba(255, 255, 255, .1);
+  background-color: var(--l-bg-clr);
   height: 100%;
-  backdrop-filter: blur(6px);
+}
+@supports ((-webkit-backdrop-filter: blur(var(--blur))) or (backdrop-filter: blur(var(--blur)))) {
+  nav {
+    --l-bg-clr: rgba(255, 255, 255, .1);
+    backdrop-filter: blur(var(--blur));
+    -webkit-backdrop-filter: blur(var(--blur));
+  }
 }
 nav > div {
   display: flex;
