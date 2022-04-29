@@ -147,7 +147,11 @@ export class ImgBase extends BaseComponent {
     let rect = el.getBoundingClientRect();
     let w = k * Math.round(rect.width);
     let h = wOnly ? '' : k * Math.round(rect.height);
-    return `${w ? w : ''}x${h ? h : ''}`;
+    if (w || h) {
+      return `${w ? w : ''}x${h ? h : ''}`;
+    } else {
+      return null;
+    }
   }
 
   initCallback() {
@@ -254,6 +258,10 @@ export class ImgBase extends BaseComponent {
     return [...srcset].join();
   }
 
+  getSrc() {
+    return this._getUrlBase();
+  }
+
   init() {
     if (this.bgSelector) {
       [...document.querySelectorAll(this.bgSelector)].forEach((el) => {
@@ -268,9 +276,11 @@ export class ImgBase extends BaseComponent {
     } else if (this.$$('intersection')) {
       this.initIntersection(this.img, () => {
         this.img.srcset = this.getSrcset();
+        this.img.src = this.getSrc();
       });
     } else {
       this.img.srcset = this.getSrcset();
+      this.img.src = this.getSrc();
     }
   }
 
