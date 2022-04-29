@@ -9,6 +9,11 @@
   <style>
     @import url(./index.css);
 
+    uc-uploader {
+      width: 100%;
+      height: 100%;
+    }
+
     .uc-wgt-common {
       --cfg-pubkey: 'demopublickey';
     }
@@ -28,6 +33,12 @@
   <style>
     @import url(./index.css);
 
+    uc-uploader[current-activity="details"],
+    uc-uploader[current-activity="cloud-image-edit"] {
+      width: 100%;
+      height: 100%;
+    }
+
     .uc-wgt-common {
       --cfg-pubkey: 'demopublickey';
       --cfg-source-list: 'local';
@@ -35,5 +46,5 @@
   </style>
 
   <!-- Uploader widget element: -->
-  <uc-uploader class="uc-wgt-common"></uc-uploader>
+  <uc-uploader current-activity class="uc-wgt-common"></uc-uploader>
 </uc-live-html>
