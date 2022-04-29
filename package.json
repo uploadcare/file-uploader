@@ -40,7 +40,8 @@
     "format:html": "prettier --write --parser html ./**/*.html",
     "format:json": "prettier --write --parser json ./**/*.json",
     "format:md": "prettier --write --parser markdown ./**/*.md",
-    "format": "run-s lint:js:fix lint:css:fix format:js format:css format:html format:json format:md"
+    "format": "run-s lint:js:fix lint:css:fix format:js format:css format:html format:json format:md",
+    "prepare": "husky install"
   },
   "devDependencies": {
     "@babel/eslint-parser": "^7.17.0",
@@ -65,36 +66,6 @@
     "stylelint-declaration-block-no-ignored-properties": "^2.5.0",
     "stylelint-order": "^5.0.0",
     "typescript": "^4.6.3"
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
-  },
-  "lint-staged": {
-    "*.{js,cjs}": [
-      "tsc --skipLibCheck --allowJs --noEmit",
-      "eslint --fix",
-      "prettier --write",
-      "git add"
-    ],
-    "*.css": [
-      "stylelint --fix",
-      "prettier --write --parser css",
-      "git add"
-    ],
-    "*.html": [
-      "prettier --write --parser html",
-      "git add"
-    ],
-    "*.json": [
-      "prettier --write --parser json",
-      "git add"
-    ],
-    "*.md": [
-      "prettier --write --parser markdown",
-      "git add"
-    ]
   },
   "author": "Uploadcare Inc.",
   "license": "MIT"
