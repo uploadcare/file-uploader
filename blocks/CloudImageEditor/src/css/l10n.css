@@ -1,4 +1,6 @@
-.uc-cldtr-l10n_en-US, .uc-cldtr-common, :host {
+.uc-cldtr-l10n_en-US,
+.uc-cldtr-common,
+:host {
   --l10n-cancel: 'Cancel';
   --l10n-apply: 'Apply';
   --l10n-brightness: 'Brightness';
