@@ -49,15 +49,6 @@
   }
 }
 
-:where(.uc-wgt-theme, .uc-wgt-common)
-  :where(button[disabled], button.primary-btn[disabled], button.secondary-btn[disabled]),
-:host :where(button[disabled], button.primary-btn[disabled], button.secondary-btn[disabled]) {
-  color: var(--clr-btn-txt-disabled);
-  background-color: var(--clr-btn-bgr-disabled);
-  box-shadow: var(--shadow-btn-disabled);
-  pointer-events: none;
-}
-
 :where(.uc-wgt-theme, .uc-wgt-common, :host) button.primary-btn,
 :host button.primary-btn {
   color: var(--clr-btn-txt-primary);
@@ -92,6 +83,15 @@
 :where(.uc-wgt-theme, .uc-wgt-common) button.secondary-btn:active,
 :host button.secondary-btn:active {
   background-color: var(--clr-btn-bgr-secondary-active);
+}
+
+:where(.uc-wgt-theme, .uc-wgt-common)
+  :is(button[disabled], button.primary-btn[disabled], button.secondary-btn[disabled]),
+:host :is(button[disabled], button.primary-btn[disabled], button.secondary-btn[disabled]) {
+  color: var(--clr-btn-txt-disabled);
+  background-color: var(--clr-btn-bgr-disabled);
+  box-shadow: var(--shadow-btn-disabled);
+  pointer-events: none;
 }
 
 :where(.uc-wgt-theme, .uc-wgt-common) a,

@@ -78,4 +78,8 @@
   --l10n-camera-permissions-denied: 'Camera access denied';
   --l10n-camera-permissions-prompt: 'Camera access prompted';
   --l10n-camera-permissions-request: 'Request permissions';
+
+  --l10n-files-count-limit-error-title: 'Files count limit overflow';
+  --l10n-files-count-limit-error-too-few: 'You’ve chosen {{total}}. At least {{min}} required.';
+  --l10n-files-count-limit-error-too-many: 'You’ve chosen too many files. {{max}} is maximum.';
 }

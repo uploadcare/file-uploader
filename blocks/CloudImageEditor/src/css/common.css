@@ -61,24 +61,24 @@
   --shadow-base: 0px 5px 15px rgba(var(--rgb-shadow), 0.1), 0px 1px 4px rgba(var(--rgb-shadow), 0.15);
 }
 
-:where(.uc-cldtr-common, :host) :where([can-handle-paste]:hover, [can-handle-paste]:focus) {
+:where(.uc-cldtr-common, :host) :is([can-handle-paste]:hover, [can-handle-paste]:focus) {
   --can-handle-paste: 'true';
 }
 
 :where(.uc-cldtr-common, :host)
-  :where([tabindex][focus-visible], [tabindex]:hover, [with-effects][focus-visible], [with-effects]:hover) {
+  :is([tabindex][focus-visible], [tabindex]:hover, [with-effects][focus-visible], [with-effects]:hover) {
   --filter-effect: var(--hover-filter) !important;
   --opacity-effect: var(--hover-opacity) !important;
   --color-effect: var(--hover-color-rgb) !important;
 }
 
-:where(.uc-cldtr-common, :host) :where([tabindex]:active, [with-effects]:active) {
+:where(.uc-cldtr-common, :host) :is([tabindex]:active, [with-effects]:active) {
   --filter-effect: var(--down-filter) !important;
   --opacity-effect: var(--down-opacity) !important;
   --color-effect: var(--down-color-rgb) !important;
 }
 
-:where(.uc-cldtr-common, :host) :where([tabindex][active], [with-effects][active]) {
+:where(.uc-cldtr-common, :host) :is([tabindex][active], [with-effects][active]) {
   --filter-effect: var(--active-filter) !important;
   --opacity-effect: var(--active-opacity) !important;
   --color-effect: var(--active-color-rgb) !important;

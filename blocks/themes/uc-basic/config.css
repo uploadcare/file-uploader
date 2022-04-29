@@ -8,12 +8,15 @@
   --cfg-store: 1;
   --cfg-camera-mirror: 1;
   --cfg-source-list: 'local, url, camera, dropbox, gdrive, facebook';
-  --cfg-max-files: 10;
   --cfg-max-local-file-size-bytes: 30000;
   --cfg-thumb-size: 76;
   --cfg-show-empty-list: 0;
   --cfg-use-local-image-editor: 0;
   --cfg-use-cloud-image-editor: 1;
+
+  /* value `0` means limit is disabled */
+  --cfg-multiple-min: 0;
+  --cfg-multiple-max: 0;
 
   --cfg-modal-scroll-lock: 1;
   --cfg-modal-backdrop-strokes: 1;

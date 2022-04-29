@@ -1,16 +1,44 @@
 import { Block } from '../../abstract/Block.js';
 import { FileItem } from '../FileItem/FileItem.js';
 import { UiConfirmation } from '../ConfirmationDialog/ConfirmationDialog.js';
+import { UiMessage } from '../MessageBox/MessageBox.js';
+
+/**
+ * TODO: extract this method to use in other blocks
+ *
+ * @template {import('../../abstract/Block.js').Block} [T=Block] Default is `Block`
+ * @param {Number} count
+ * @param {T} ctx
+ * @returns {{ passed: Boolean; tooFew: Boolean; tooMany: Boolean; min: Number; max: Number }}
+ */
+function validateFilesCount(count, ctx) {
+  let min = ctx.getCssData('--cfg-multiple-min');
+  let max = ctx.getCssData('--cfg-multiple-max');
+
+  let tooFew = min ? count < min : false;
+  let tooMany = max ? count > max : false;
+  let passed = !tooFew && !tooMany;
+  return {
+    passed,
+    tooFew,
+    tooMany,
+    min,
+    max,
+  };
+}
 
 export class UploadList extends Block {
   activityType = Block.activities.UPLOAD_LIST;
 
   init$ = {
-    doneBtnHidden: true,
+    doneBtnHidden: false,
+    doneBtnDisabled: false,
     uploadBtnHidden: false,
     uploadBtnDisabled: false,
+    addMoreBtnHidden: false,
+    addMoreBtnDisabled: false,
+
     hasFiles: false,
-    moreBtnDisabled: true,
     onAdd: () => {
       this.initFlow(true);
     },
@@ -48,8 +76,9 @@ export class UploadList extends Block {
 
   updateButtonsState() {
     let itemIds = this.uploadCollection.items();
+    let filesCount = itemIds.length;
     let summary = {
-      total: itemIds.length,
+      total: filesCount,
       uploaded: 0,
       uploading: 0,
     };
@@ -62,13 +91,19 @@ export class UploadList extends Block {
       }
     }
     let allUploaded = summary.total === summary.uploaded;
+    let { passed: fitCountRestrictions } = validateFilesCount(filesCount, this);
+
     this.set$({
-      uploadBtnHidden: allUploaded,
       doneBtnHidden: !allUploaded,
-      uploadBtnDisabled: summary.uploading > 0,
+      doneBtnDisabled: !fitCountRestrictions,
+
+      uploadBtnHidden: allUploaded,
+      uploadBtnDisabled: summary.uploading > 0 || !fitCountRestrictions,
+
+      addMoreBtnDisabled: !fitCountRestrictions,
     });
 
-    if (!this.$['*--cfg-confirm-upload'] && allUploaded) {
+    if (!this.$['*--cfg-confirm-upload'] && fitCountRestrictions && allUploaded) {
       this.$.onDone();
     }
   }
@@ -86,11 +121,30 @@ export class UploadList extends Block {
     });
 
     this.sub('*--cfg-multiple', (val) => {
-      this.$.moreBtnDisabled = !val;
+      this.$.addMoreBtnDisabled = !val;
     });
 
     this.uploadCollection.observe(() => {
       this.updateButtonsState();
+
+      let filesCount = this.uploadCollection.size;
+      let countValidationResult = validateFilesCount(filesCount, this);
+      if (!countValidationResult.passed) {
+        let msg = new UiMessage();
+        let textKey = countValidationResult.tooFew
+          ? 'files-count-limit-error-too-few'
+          : 'files-count-limit-error-too-many';
+        msg.caption = this.l10n('files-count-limit-error-title');
+        msg.text = this.l10n(textKey, {
+          min: countValidationResult.min,
+          max: countValidationResult.max,
+          total: filesCount,
+        });
+        msg.isError = true;
+        this.set$({
+          '*message': msg,
+        });
+      }
     });
 
     this.sub('*uploadList', (/** @type {String[]} */ list) => {
@@ -151,7 +205,7 @@ UploadList.template = /*html*/ `
   <div></div>
   <button
     class="add-more-btn secondary-btn"
-    set="onclick: onAdd; @disabled: moreBtnDisabled"
+    set="onclick: onAdd; @disabled: addMoreBtnDisabled; @hidden: addMoreBtnHidden"
     l10n="add-more"></button>
   <button
     class="upload-btn primary-btn"
@@ -159,7 +213,7 @@ UploadList.template = /*html*/ `
     l10n="upload"></button>
   <button
     class="done-btn primary-btn"
-    set="@hidden: doneBtnHidden; onclick: onDone"
+    set="@hidden: doneBtnHidden; onclick: onDone;  @disabled: doneBtnDisabled"
     l10n="done"></button>
 </div>
 `;

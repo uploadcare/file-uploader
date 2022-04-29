@@ -17,10 +17,18 @@ if (!DOC_READY) {
 export class Block extends BaseComponent {
   /**
    * @param {String} str
+   * @param {{ [key: string]: string | number }} variables
    * @returns {String}
    */
-  l10n(str) {
-    return this.getCssData('--l10n-' + str, true) || str;
+  l10n(str, variables = {}) {
+    str = this.getCssData('--l10n-' + str, true) || str;
+    // TODO: get rid of regexp
+    str = str.replaceAll(/{{(.+?)}}/g, (match, key) => {
+      let value = variables[key]?.toString();
+      !value && console.warn(`[l10n] ${key} is not defined in variables`);
+      return value || '__KEY_NOT_FOUND__';
+    });
+    return str;
   }
 
   constructor() {
@@ -154,7 +162,7 @@ export class Block extends BaseComponent {
       if (this.hasAttribute('current-activity')) {
         this.sub('*currentActivity', (/** @type {String} */ val) => {
           this.setAttribute('current-activity', val);
-        })
+        });
       }
 
       if (this.activityType) {
@@ -198,7 +206,8 @@ export class Block extends BaseComponent {
     this.fileInput = document.createElement('input');
     this.fileInput.type = 'file';
     this.fileInput.multiple = !!this.$['*--cfg-multiple'];
-    this.fileInput.max = this.$['*--cfg-max-files'];
+    // TODO: max prop is not about files count, it's about input value length, I think we can remove it
+    // this.fileInput.max = this.$['*--cfg-multiple-max'];
     this.fileInput.accept = this.$['*--cfg-accept'];
     this.fileInput.dispatchEvent(new MouseEvent('click'));
     this.fileInput.onchange = () => {

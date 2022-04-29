@@ -13,7 +13,7 @@ This is the list of pre-defined parameters used by default in our uploader build
   --cfg-store: 1;
   --cfg-camera-mirror: 1;
   --cfg-source-list: 'local, url, camera, dropbox, gdrive, facebook';
-  --cfg-max-files: 10;
+  --cfg-multiple-max: 10;
   --cfg-max-local-file-size-bytes: 30000;
   --cfg-thumb-size: 76;
   --cfg-show-empty-list: 0;
@@ -22,6 +22,7 @@ This is the list of pre-defined parameters used by default in our uploader build
   --cfg-remote-tab-session-key: '';
 }
 ```
+
 As you can see, all properties are grouped for the set of selectors:
 
 * `.uc-wgt-cfg` - specific selector for the configuration section in common CSS
@@ -44,7 +45,7 @@ Any configuration value can be defined and redefined at any level of the DOM tre
 |`--cfg-store`| Store files | `1` or `0` | - |
 |`--cfg-camera-mirror`| Flip camera image | `1` or `0` | `0` |
 |`--cfg-source-list`| Comma-separated list of file sources |`'local, url, camera'`| none |
-|`--cfg-max-files`| Maximum files in upload list | number | none |
+| `--cfg-multiple-max`              | Maximum files in upload list                  |         number         |  none   |
 |`--cfg-max-local-file-size-bytes`| Maximum file size in bytes | - | none |
 |`--cfg-thumb-size`| Image thumbnail size | `76` | `76` |
 |`--cfg-show-empty-list`| Show uploads list when it's empty | `1` or `0` | `0` |
@@ -80,6 +81,7 @@ You can create your own custom parameters and values for your custom blocks:
 ```
 
 Then you can read it in your upload-block:
+
 ```javascript
 import { BlockComponent } from 'upload-blocks/BlockComponent/BlockComponent.js';
 
