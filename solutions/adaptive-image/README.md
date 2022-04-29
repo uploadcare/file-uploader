@@ -18,7 +18,7 @@
 Connect script:
 
 ```html
-<script src="https://unpkg.com/@uploadcare/uc-blocks@0.1.1/web/uc-img.min.js" type="module"></script>
+<script src="https://unpkg.com/@uploadcare/uc-blocks@latest/web/uc-img.min.js" type="module"></script>
 ```
 
 Add basic settings:
