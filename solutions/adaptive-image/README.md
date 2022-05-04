@@ -68,7 +68,7 @@ After initiating, if JavaScript is enabled in the browser, that will be transfor
 
 ## Lazy loading
 
-[Native lazy loading](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe#attr-loading) is enabled by default for all images components. You can disable it or use a custom one based on [IntersectionObserver](https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API).
+[Native lazy loading](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe#attr-loading) is enabled by default for all image components. You can disable it or use a custom one based on [IntersectionObserver](https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API).
 
 Disable:
 
@@ -96,7 +96,7 @@ Intersection observer enabled:
 
 ## Breakpoints
 
-If you have some responsive layout where images could be resized in some cases, it's good to set a list of breakpoints to exceed sized generation via Uploadcare CDN operations:
+If you have some responsive layout where images could be resized in some cases, it's good to set a list of breakpoints to avoid exceeding sizes generation via Uploadcare CDN operations:
 
 ```html
 <style>
@@ -163,7 +163,7 @@ To use an adaptive image as an element's background, you can use `is-background-
 
 ## Development mode (relative image path)
 
-When you develop your application, you can use some local development servers and relative paths in your project structure for the images. In that case, Uploadcare Proxy service would be disabled for your development environment, and you will see original local images in your application until you deploy it:
+When you develop your application, you can use a local development server and relative paths in your project structure for the images. In that case, Uploadcare Proxy service would be disabled for your development environment, and you will see original local images in your application until you deploy it:
   
 ```html
 <uc-img src="../LOCAL_IMAGE_PATH"></uc-img>
