@@ -120,6 +120,8 @@ export class Block extends BaseComponent {
         'pubkey',
         'store',
         'multiple',
+        'multiple-min',
+        'multiple-max',
         'max-files',
         'accept',
         'confirm-upload',
