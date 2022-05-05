@@ -4,17 +4,12 @@ import { UiConfirmation } from '../ConfirmationDialog/ConfirmationDialog.js';
 import { UiMessage } from '../MessageBox/MessageBox.js';
 
 /**
- * TODO: extract this method to use in other blocks
- *
- * @template {import('../../abstract/Block.js').Block} [T=Block] Default is `Block`
+ * @param {Number} min
+ * @param {Number} max
  * @param {Number} count
- * @param {T} ctx
- * @returns {{ passed: Boolean; tooFew: Boolean; tooMany: Boolean; min: Number; max: Number }}
+ * @returns {{ passed: Boolean; tooFew: Boolean; tooMany: Boolean }}
  */
-function validateFilesCount(count, ctx) {
-  let min = ctx.getCssData('--cfg-multiple-min');
-  let max = ctx.getCssData('--cfg-multiple-max');
-
+function validateFilesCount(min, max, count) {
   let tooFew = min ? count < min : false;
   let tooMany = max ? count > max : false;
   let passed = !tooFew && !tooMany;
@@ -22,8 +17,6 @@ function validateFilesCount(count, ctx) {
     passed,
     tooFew,
     tooMany,
-    min,
-    max,
   };
 }
 
@@ -74,7 +67,32 @@ export class UploadList extends Block {
   /** @private */
   _renderMap = Object.create(null);
 
-  updateButtonsState() {
+  /** @private */
+  _updateCountLimitMessage() {
+    let filesCount = this.uploadCollection.size;
+    let min = this.$['*--cfg-multiple-min'];
+    let max = this.$['*--cfg-multiple-max'];
+    let countValidationResult = validateFilesCount(min, max, filesCount);
+    if (filesCount && !countValidationResult.passed) {
+      let msg = new UiMessage();
+      let textKey = countValidationResult.tooFew
+        ? 'files-count-limit-error-too-few'
+        : 'files-count-limit-error-too-many';
+      msg.caption = this.l10n('files-count-limit-error-title');
+      msg.text = this.l10n(textKey, {
+        min,
+        max,
+        total: filesCount,
+      });
+      msg.isError = true;
+      this.set$({
+        '*message': msg,
+      });
+    }
+  }
+
+  /** @private */
+  _updateButtonsState() {
     let itemIds = this.uploadCollection.items();
     let filesCount = itemIds.length;
     let summary = {
@@ -91,7 +109,11 @@ export class UploadList extends Block {
       }
     }
     let allUploaded = summary.total === summary.uploaded;
-    let { passed: fitCountRestrictions } = validateFilesCount(filesCount, this);
+    let { passed: fitCountRestrictions, tooMany } = validateFilesCount(
+      this.$['*--cfg-multiple-min'],
+      this.$['*--cfg-multiple-max'],
+      filesCount
+    );
 
     this.set$({
       doneBtnHidden: !allUploaded,
@@ -100,7 +122,7 @@ export class UploadList extends Block {
       uploadBtnHidden: allUploaded,
       uploadBtnDisabled: summary.uploading > 0 || !fitCountRestrictions,
 
-      addMoreBtnDisabled: !fitCountRestrictions,
+      addMoreBtnDisabled: tooMany,
     });
 
     if (!this.$['*--cfg-confirm-upload'] && fitCountRestrictions && allUploaded) {
@@ -112,6 +134,8 @@ export class UploadList extends Block {
     super.initCallback();
 
     this.bindCssData('--cfg-show-empty-list');
+    let multipleMinProp = this.bindCssData('--cfg-multiple-min');
+    let multipleMaxProp = this.bindCssData('--cfg-multiple-max');
 
     this.registerActivity(this.activityType, () => {
       this.set$({
@@ -124,27 +148,19 @@ export class UploadList extends Block {
       this.$.addMoreBtnDisabled = !val;
     });
 
-    this.uploadCollection.observe(() => {
-      this.updateButtonsState();
+    this.sub(multipleMinProp, () => {
+      this._updateButtonsState();
+      this._updateCountLimitMessage();
+    });
 
-      let filesCount = this.uploadCollection.size;
-      let countValidationResult = validateFilesCount(filesCount, this);
-      if (!countValidationResult.passed) {
-        let msg = new UiMessage();
-        let textKey = countValidationResult.tooFew
-          ? 'files-count-limit-error-too-few'
-          : 'files-count-limit-error-too-many';
-        msg.caption = this.l10n('files-count-limit-error-title');
-        msg.text = this.l10n(textKey, {
-          min: countValidationResult.min,
-          max: countValidationResult.max,
-          total: filesCount,
-        });
-        msg.isError = true;
-        this.set$({
-          '*message': msg,
-        });
-      }
+    this.sub(multipleMaxProp, () => {
+      this._updateButtonsState();
+      this._updateCountLimitMessage();
+    });
+
+    this.uploadCollection.observe(() => {
+      this._updateButtonsState();
+      this._updateCountLimitMessage();
     });
 
     this.sub('*uploadList', (/** @type {String[]} */ list) => {
@@ -154,7 +170,7 @@ export class UploadList extends Block {
         return;
       }
 
-      this.updateButtonsState();
+      this._updateButtonsState();
       this.set$({
         hasFiles: list.length > 0,
       });
