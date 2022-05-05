@@ -1,4 +1,5 @@
 import { BaseComponent, Data, TypedCollection } from '../submodules/symbiote/core/symbiote.js';
+import { stringTemplate } from '../utils/stringTemplate.js';
 import { l10nProcessor } from './l10nProcessor.js';
 import { uploadEntrySchema } from './uploadEntrySchema.js';
 
@@ -21,14 +22,12 @@ export class Block extends BaseComponent {
    * @returns {String}
    */
   l10n(str, variables = {}) {
-    str = this.getCssData('--l10n-' + str, true) || str;
-    // TODO: get rid of regexp
-    str = str.replaceAll(/{{(.+?)}}/g, (match, key) => {
-      let value = variables[key]?.toString();
-      !value && console.warn(`[l10n] ${key} is not defined in variables`);
-      return value || '__KEY_NOT_FOUND__';
-    });
-    return str;
+    let template = this.getCssData('--l10n-' + str, true) || str;
+    let interpolated = stringTemplate(template, variables);
+    if (interpolated.missingKeys.length > 0) {
+      interpolated.missingKeys.forEach((key) => console.warn(`[l10n] ${key} is not defined in variables`));
+    }
+    return interpolated.string;
   }
 
   constructor() {
@@ -206,8 +205,6 @@ export class Block extends BaseComponent {
     this.fileInput = document.createElement('input');
     this.fileInput.type = 'file';
     this.fileInput.multiple = !!this.$['*--cfg-multiple'];
-    // TODO: max prop is not about files count, it's about input value length, I think we can remove it
-    // this.fileInput.max = this.$['*--cfg-multiple-max'];
     this.fileInput.accept = this.$['*--cfg-accept'];
     this.fileInput.dispatchEvent(new MouseEvent('click'));
     this.fileInput.onchange = () => {
