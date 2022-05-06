@@ -103,12 +103,12 @@ export class UploadDetails extends Block {
       tmpSub('fileName', (name) => {
         this.$.fileName = name;
         this.$.onNameInput = () => {
-          let name = this.ref.file_name_input['value'];
+          let value = this.ref.file_name_input['value'];
           Object.defineProperty(this._file, 'name', {
             writable: true,
-            value: name,
+            value: value,
           });
-          this.entry.setValue('fileName', name);
+          this.entry.setValue('fileName', value);
         };
       });
       tmpSub('fileSize', (size) => {
