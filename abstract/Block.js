@@ -376,7 +376,7 @@ export class Block extends BaseComponent {
       let uploadEntryData = Data.getNamedCtx(itemId).store;
       /** @type {import('../submodules/upload-client/upload-client.js').UploadcareFile} */
       let fileInfo = uploadEntryData.fileInfo;
-      // TODO: remove `cdnUrl` and `cdnUrlModifiers` from fileInfo object returned by upload-client
+      // TODO: remove `cdnUrlModifiers` from fileInfo object returned by upload-client, `cdnUrl` should not contain modifiers
       // TODO: create OutputItem instance instead of creating inline object,
       //       fileInfo should be returned as is along with the other data
       // TODO: pass editorTransformations to the user
