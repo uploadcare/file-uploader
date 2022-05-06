@@ -33,10 +33,14 @@ export class CloudImageEditor extends Block {
     });
   }
 
+  /** @param {CustomEvent<import('./src/types.js').ApplyResult>} e */
   handleApply(e) {
     let result = e.detail;
-    let { transformationsUrl } = result;
-    this.entry.setValue('transformationsUrl', transformationsUrl);
+    this.entry.setMultipleValues({
+      cdnUrl: result.cdnUrl,
+      cdnUrlModifiers: result.cdnUrlModifiers,
+      editorTransformations: result.transformations
+    })
     this.historyBack();
   }
 

@@ -42,18 +42,25 @@ export function initState(fnCtx) {
       if (!transformations) {
         return;
       }
-      let transformationsUrl = constructCdnUrl(
-        fnCtx.$['*originalUrl'],
-        transformationsToString(transformations),
+      let originalUrl = fnCtx.$['*originalUrl']
+      let cdnUrlModifiers = constructCdnUrl(null, transformationsToString(transformations));
+
+      let cdnUrl = constructCdnUrl(
+        originalUrl,
+        cdnUrlModifiers,
         'preview'
-      );
+      )
+
+      /** @type {import('./types.js').ApplyResult} */
+      let eventData = {
+        originalUrl,
+        cdnUrlModifiers,
+        cdnUrl,
+        transformations,
+      }
       fnCtx.dispatchEvent(
         new CustomEvent('apply', {
-          detail: {
-            originalUrl: fnCtx.$['*originalUrl'],
-            transformationsUrl,
-            transformations,
-          },
+          detail: eventData,
         })
       );
       fnCtx.remove();

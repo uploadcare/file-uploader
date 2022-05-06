@@ -380,8 +380,18 @@ export class Block extends BaseComponent {
     let items = this.uploadCollection.items();
     items.forEach((itemId) => {
       let uploadEntryData = Data.getNamedCtx(itemId).store;
-      let info = uploadEntryData.fileInfo;
-      data.push(info);
+      /** @type {import('../submodules/upload-client/upload-client.js').UploadcareFile} */
+      let fileInfo = uploadEntryData.fileInfo;
+      // TODO: remove `cdnUrlModifiers` from fileInfo object returned by upload-client, `cdnUrl` should not contain modifiers
+      // TODO: create OutputItem instance instead of creating inline object,
+      //       fileInfo should be returned as is along with the other data
+      // TODO: pass editorTransformations to the user
+      let outputItem = {
+        ...fileInfo,
+        cdnUrlModifiers: uploadEntryData.cdnUrlModifiers || fileInfo.cdnUrlModifiers,
+        cdnUrl: uploadEntryData.cdnUrl || fileInfo.cdnUrl,
+      };
+      data.push(outputItem);
     });
     this.$['*outputData'] = data;
   }

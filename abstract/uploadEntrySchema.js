@@ -1,6 +1,27 @@
 import { UploadcareFile, UploadClientError } from '../submodules/upload-client/upload-client.js';
 
-/** @enum {{ type; value; nullable?: Boolean }} */
+/**
+ * @typedef {Object} UploadEntry
+ * @property {File} file
+ * @property {String} externalUrl
+ * @property {String} fileName
+ * @property {number} fileSize
+ * @property {number} lastModified
+ * @property {number} uploadProgress
+ * @property {String} uuid
+ * @property {Boolean} isImage
+ * @property {String} mimeType
+ * @property {UploadClientError} uploadError
+ * @property {String} validationErrorMsg
+ * @property {String} ctxName
+ * @property {String} cdnUrl
+ * @property {String} cdnUrlModifiers
+ * @property {import('../blocks/CloudImageEditor/src/types.js').Transformations} editorTransformations
+ * @property {UploadcareFile} fileInfo
+ * @property {Boolean} isUploading
+ */
+
+/** @type {{ [key in keyof UploadEntry]: { type; value; nullable?: Boolean } }} */
 export const uploadEntrySchema = Object.freeze({
   file: {
     type: File,
@@ -52,8 +73,16 @@ export const uploadEntrySchema = Object.freeze({
     type: String,
     value: null,
   },
-  transformationsUrl: {
+  cdnUrl: {
     type: String,
+    value: null,
+  },
+  cdnUrlModifiers: {
+    type: String,
+    value: null,
+  },
+  editorTransformations: {
+    type: Object,
     value: null,
   },
   fileInfo: {

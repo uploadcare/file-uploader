@@ -1,3 +1,5 @@
+// TODO: add tests for the all this stuff
+
 export const OPERATIONS_ZEROS = {
   brightness: 0,
   exposure: 0,
@@ -45,11 +47,16 @@ function operationToStr(operation, options) {
 }
 
 /**
+ * TODO: obviously, not using regexps will be faster, consider to get rid of it
+ *
  * @param {String[]} list
  * @returns {String}
  */
 export function joinCdnOperations(...list) {
-  return list.join('/-/').replace(/\/\//g, '/');
+  return list.map(str => {
+    str = str.replace(/^-\//g, ''); // remove leading '-/'
+    return str
+  }).join('/-/').replace(/\/\//g, '/');
 }
 
 const ORDER = [
@@ -81,7 +88,7 @@ export function transformationsToString(transformations) {
         let options = transformations[operation];
         return operationToStr(operation, options);
       })
-      .filter((str) => str && str.length > 0)
+      .filter((str) => !!str)
   );
 }
 
@@ -91,8 +98,11 @@ export function transformationsToString(transformations) {
  * @returns {String}
  */
 export function constructCdnUrl(originalUrl, ...list) {
+  if (originalUrl && originalUrl[originalUrl.length - 1] !== '/') {
+    originalUrl += '/';
+  }
   return (
-    originalUrl.replace(/\/$/g, '') + '/-/' + joinCdnOperations(...list.filter((str) => str && str.length > 0)) + '/'
+    (originalUrl?.replace(/\/$/g, '') || '') + '-/' + joinCdnOperations(...list.filter((str) => !!str).map(str => str.trim())) + '/'
   );
 }
 

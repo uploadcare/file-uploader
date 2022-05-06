@@ -86,7 +86,7 @@ export class UploadDetails extends Block {
          */
         this._file = file;
         let isImage = this._file.type.includes('image');
-        if (isImage && !entry.getValue('transformationsUrl')) {
+        if (isImage && !entry.getValue('cdnUrl')) {
           this.eCanvas.setImageFile(this._file);
           this.set$({
             checkerboard: true,
@@ -103,19 +103,19 @@ export class UploadDetails extends Block {
       tmpSub('fileName', (name) => {
         this.$.fileName = name;
         this.$.onNameInput = () => {
-          let name = this.ref.file_name_input['value'];
+          let value = this.ref.file_name_input['value'];
           Object.defineProperty(this._file, 'name', {
             writable: true,
-            value: name,
+            value: value,
           });
-          this.entry.setValue('fileName', name);
+          this.entry.setValue('fileName', value);
         };
       });
       tmpSub('fileSize', (size) => {
         this.$.fileSize = Number.isFinite(size) ? this.fileSizeFmt(size) : this.l10n('file-size-unknown');
       });
       tmpSub('uuid', (uuid) => {
-        if (uuid && !this.entry.getValue('transformationsUrl')) {
+        if (uuid && !this.entry.getValue('cdnUrl')) {
           this.eCanvas.clear();
           this.set$({
             imageUrl: `https://ucarecdn.com/${uuid}/`,
@@ -139,7 +139,7 @@ export class UploadDetails extends Block {
           this.showNonImageThumb();
         }
       });
-      tmpSub('transformationsUrl', (url) => {
+      tmpSub('cdnUrl', (url) => {
         if (!url) {
           return;
         }
