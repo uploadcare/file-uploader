@@ -2,6 +2,7 @@ import { create } from '../../submodules/symbiote/core/symbiote.js';
 import { Block } from '../../abstract/Block.js';
 import { registerMessage, unregisterMessage } from './messages.js';
 import { buildStyles } from './buildStyles.js';
+import { queryString } from './query-string.js';
 
 export class ExternalSource extends Block {
   activityType = Block.activities.EXTERNAL;
@@ -20,6 +21,8 @@ export class ExternalSource extends Block {
   _iframe = null;
 
   initCallback() {
+    this.bindCssData('--cfg-remote-tab-session-key');
+
     this.registerActivity(this.activityType, () => {
       let { externalSourceType } = this.activityParams;
 
@@ -79,10 +82,19 @@ export class ExternalSource extends Block {
 
   remoteUrl() {
     let pubkey = this.$['*--cfg-pubkey'];
-    let version = '3.11.3';
     let imagesOnly = false.toString();
     let { externalSourceType } = this.activityParams;
-    return `https://social.uploadcare.com/window3/${externalSourceType}?lang=en&public_key=${pubkey}&widget_version=${version}&images_only=${imagesOnly}&pass_window_open=false`;
+    let params = {
+      lang: 'en', // TOOD: pass correct lang
+      // TODO: we should add a new property to the social sources application
+      // to collect uc-blocks data separately from legacy widget
+      widget_version: '3.11.3',
+      public_key: pubkey,
+      images_only: imagesOnly,
+      pass_window_open: false,
+      session_key: this.$['*--cfg-remote-tab-session-key']
+    }
+    return `https://social.uploadcare.com/window3/${externalSourceType}?${queryString(params)}`;
   }
 
   mountIframe() {

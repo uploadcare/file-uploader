@@ -19,6 +19,7 @@ This is the list of pre-defined parameters, used by default in our uploader buil
   --cfg-show-empty-list: 0;
   --cfg-use-local-image-editor: 0;
   --cfg-use-cloud-image-editor: 0;
+  --cfg-remote-tab-session-key: '';
 }
 ```
 As you can see, all properties are grouped for the set of selectors:
@@ -49,6 +50,7 @@ Any configuration value can be defined and redefined at any level of the DOM tre
 |`--cfg-show-empty-list`| Show uploads list when it's empty | `1` or `0` | `0` |
 |`--cfg-use-local-image-editor`| Enable local image editing | `1` or `0` | `0` |
 |`--cfg-use-cloud-image-editor`| Enable cloud image editing | `1` or `0` | `0` |
+|`--cfg-remote-tab-session-key`| Key to revoke Custom OAuth access. See [docs](https://uploadcare.com/docs/start/settings/#project-settings-advanced-oauth) for details | string | none |
 
 ## Possible values for the source list
 
@@ -83,7 +85,7 @@ import { BlockComponent } from 'upload-blocks/BlockComponent/BlockComponent.js';
 
 class MyBlock extends BlockComponent {
   initCallback() {
-    let statePropName = this.bindCssData('--cfg-my-custom-property'); 
+    let statePropName = this.bindCssData('--cfg-my-custom-property');
     // ^ this will return '*--cfg-my-custom-property'
     this.sub(statePropName, (val) => {
       console.log(val);

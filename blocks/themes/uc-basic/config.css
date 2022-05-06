@@ -27,4 +27,6 @@
   --cfg-data-output-fire-events: 1;
   --cfg-data-output-from: '*dataOutput';
   --cfg-data-output-form-value: 1;
+
+  --cfg-remote-tab-session-key: '';
 }
