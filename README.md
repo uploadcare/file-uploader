@@ -23,19 +23,6 @@
 - Web components for media content representation: audio, video, image galleries, etc.
 - etc.
 
-### Supported browsers
-
-uc-blocks are supported and tested in all major modern desktop and mobile browsers:
-
-- Chrome
-- Firefox
-- Safari
-- Edge
-- Opera
-- etc.
-
-[Internet Explorer](https://uploadcare.com/blog/uploadcare-stops-internet-explorer-support/) is outdated and not supported anymore.
-
 ## ⚙️ Installation and start
 
 ### NPM
@@ -55,6 +42,19 @@ We use [JSDoc type annotations](https://www.typescriptlang.org/docs/handbook/int
 Also we provide type definitions ([\*.d.ts files](https://www.typescriptlang.org/docs/handbook/declaration-files/dts-from-js.html)) for the TypeScript projects in our packages.
 
 Check the [JSDoc Reference](https://www.typescriptlang.org/docs/handbook/jsdoc-supported-types.html) page in TypeScript official documentation.
+
+### Supported browsers
+
+uc-blocks are supported and tested in all major modern desktop and mobile browsers:
+
+- Chrome
+- Firefox
+- Safari
+- Edge
+- Opera
+- etc.
+
+[Internet Explorer](https://uploadcare.com/blog/uploadcare-stops-internet-explorer-support/) is outdated and not supported anymore.
 
 ## 🚀 Feedback
 
