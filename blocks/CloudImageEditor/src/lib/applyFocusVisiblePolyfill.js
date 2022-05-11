@@ -1,6 +1,6 @@
 /**
- * Helper function for legacy browsers and iframes which sometimes focus elements like document, body, and non-interactive
- * SVG.
+ * Helper function for legacy browsers and iframes which sometimes focus on elements like document, body, and
+ * non-interactive SVG.
  *
  * @param {EventTarget} el
  */
@@ -19,7 +19,7 @@ function isValidFocusTarget(el) {
 }
 
 /**
- * Computes whether the given element should automatically trigger the `focus-visible` class being added, i.e. whether it
+ * Computes whether the given element should automatically trigger the `focus-visible` class being added, i.e., whether it
  * should always match `:focus-visible` when focused.
  *
  * @param {EventTarget} el
@@ -47,8 +47,8 @@ let hadKeyboardEvent = true;
 let hadFocusVisibleRecently = false;
 
 /**
- * Applies the :focus-visible polyfill at the given scope. A scope in this case is either the top-level Document or a
- * Shadow Root.
+ * Applies the :focus-visible polyfill at the given scope. A scope, in this case, is either the top-level Document
+ * or a Shadow Root.
  *
  * @param {Document | ShadowRoot} scope
  * @param {(focusVisible: boolean, el: EventTarget) => void} [callback]
@@ -58,7 +58,7 @@ export function applyFocusVisiblePolyfill(scope, callback) {
   let hadFocusVisibleRecentlyTimeout = null;
 
   /**
-   * Add the `focus-visible` class to the given element if it was not added by the author.
+   * Add the `focus-visible` class to the given element if the author did not add it.
    *
    * @param {EventTarget} el
    */
@@ -68,7 +68,7 @@ export function applyFocusVisiblePolyfill(scope, callback) {
   }
 
   /**
-   * Remove the `focus-visible` class from the given element if it was not originally added by the author.
+   * Remove the `focus-visible` class from the given element if the author did not originally add it.
    *
    * @param {EventTarget} el
    */
@@ -81,9 +81,9 @@ export function applyFocusVisiblePolyfill(scope, callback) {
   }
 
   /**
-   * If the most recent user interaction was via the keyboard; and the key press did not include a meta, alt/option, or
-   * control key; then the modality is keyboard. Otherwise, the modality is not keyboard. Apply `focus-visible` to any
-   * current active element and keep track of our keyboard modality state with `hadKeyboardEvent`.
+   * If the most recent user interaction was via the keyboard, and the keypress did not include a meta, alt/option,
+   * or control key, then the keyboard's modality. Otherwise, the modality is not the keyboard.Apply `focus-visible`
+   * to any current active element and keep track of our keyboard modality state with `hadKeyboardEvent`.
    *
    * @param {KeyboardEvent} e
    */
@@ -100,9 +100,9 @@ export function applyFocusVisiblePolyfill(scope, callback) {
   }
 
   /**
-   * If at any point a user clicks with a pointing device, ensure that we change the modality away from keyboard. This
-   * avoids the situation where a user presses a key on an already focused element, and then clicks on a different element,
-   * focusing it with a pointing device, while we still think we're in keyboard modality.
+   * If at any point a user clicks with a pointing device, ensure that we change the modality away from the keyboard. This
+   * avoids the situation where a user presses a key on an already focused element, and then clicks on a different element
+   * focusing it with a pointing device while we still think we're in keyboard modality.
    *
    * @param {Event} e
    */
@@ -112,7 +112,7 @@ export function applyFocusVisiblePolyfill(scope, callback) {
 
   /**
    * On `focus`, add the `focus-visible` class to the target if: - the target received focus as a result of keyboard
-   * navigation, or - the event target is an element that will likely require interaction via the keyboard (e.g. a text box)
+   * navigation or - the event target is an element that will likely require interaction via the keyboard (e.g., a text box).
    *
    * @param {Event} e
    */
@@ -153,7 +153,7 @@ export function applyFocusVisiblePolyfill(scope, callback) {
 
   /**
    * Add a group of listeners to detect usage of any pointing devices. These listeners will be added when the polyfill first
-   * loads, and anytime the window is blurred, so that they are active when the window regains focus.
+   * loads and anytime the window is blurred so that they are active when the window regains focus.
    */
   function addInitialPointerMoveListeners() {
     /* eslint-disable no-use-before-define */
@@ -202,8 +202,8 @@ export function applyFocusVisiblePolyfill(scope, callback) {
   }
 
   /**
-   * When the polfyill first loads, assume the user is in keyboard modality. If any event is received from a pointing device
-   * (e.g. mouse, pointer, touch), turn off keyboard modality. This accounts for situations where focus enters the page from
+   * When the polyfill first loads, assume the user is in keyboard modality. If any event is received from a pointing device
+   * (e.g., mouse, pointer, touch), turn off keyboard modality. This accounts for situations where focus enters the page from
    * the URL bar.
    *
    * @param {Event} e
@@ -222,8 +222,8 @@ export function applyFocusVisiblePolyfill(scope, callback) {
     removeInitialPointerMoveListeners();
   }
 
-  // For some kinds of state, we are interested in changes at the global scope
-  // only. For example, global pointer input, global key presses and global
+  // We are interested in changes at the global scope only for some kinds of states.
+  // For example, global pointer input, global key presses, and global
   // visibility change should affect the state at every scope:
   document.addEventListener('keydown', onKeyDown, true);
   document.addEventListener('mousedown', onPointerDown, true);
@@ -233,8 +233,8 @@ export function applyFocusVisiblePolyfill(scope, callback) {
 
   addInitialPointerMoveListeners();
 
-  // For focus and blur, we specifically care about state changes in the local
-  // scope. This is because focus / blur events that originate from within a
+  // We specifically care about state changes in the local scope for focus and blur.
+  // This is because focus/blur events that originate from within a
   // shadow root are not re-dispatched from the host element if it was already
   // the active element in its own scope:
   scope.addEventListener('focus', onFocus, true);

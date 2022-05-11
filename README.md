@@ -8,16 +8,16 @@
 - Modern technologies: web components, service workers, wasm, and other cutting edge web standards are ready to show their power.
 - Type safety with a JSDoc declaration and TypeScript static analysis.
 - Modern ESM-level code sharing.
-- Build stage is unnecessary for development: use the code directly in any modern browser or node.js.
+- The build stage is unnecessary for development: use the code directly in any modern browser or node.js.
 - Fast and secure.
 - Minimum of external dependencies: security audit is not expensive.
-- We are trying to be as close to the native web platform as possible and not force you to use any specific development environment tools.
+- We try to be as close to the native web platform as possible and not force you to use any specific development environment tools.
 - Tested by un Uploadcare community.
 
 ## 📦 What’s in the box?
 
 - [File uploader solutions](./solutions/file-uploader/) - file uploader implementations for the most frequent use cases.
-- [Blocks to build your own custom solutions](./blocks/) - build your own integration solutions with the simple HTML and CSS.
+- [Blocks to build your own custom solutions](./blocks/) - build your own integration solutions with simple HTML and CSS.
 - [Adaptive image solution](./solutions/adaptive-image/): all you need to distribute your web images efficiently.
 - [Cloud image editing solution](./solutions/cloud-image-editor/): tune your pictures on the fly.
 - Web components for media content representation: audio, video, image galleries, etc.
@@ -64,4 +64,4 @@ Issues and PRs are welcome. You can provide your feedback or drop us a support r
 
 https://uploadcare.github.io/uc-blocks/
 
-> All the source code in demos is accessible and works in raw-mode (as is), so you can use your browser developer tools to discover it in details.
+> All the source code in demos is accessible and works in raw mode (as is), so you can use your browser developer tools to discover it in detail.

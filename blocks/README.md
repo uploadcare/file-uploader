@@ -17,12 +17,12 @@ You can create your own blocks from scratch with JavaScript using our super-dupe
 Key features:
 
 - Easy to use within any modern toolchain: framework, library, or CMS.
-- Lifecycle is controlled from the inside; you don't need to manage it in your code.
+- The lifecycle is controlled from the inside; you don't need to manage it in your code.
 - You can easily switch between encapsulated secure styling and common document styles.
-- Using of [Shadow DOM](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_shadow_DOM) — is up to you.
-- It's easy to set any customized data context for the blocks, to control them in detail.
+- Using [Shadow DOM](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_shadow_DOM) — is up to you.
+- It's easy to set any customized data context for the blocks to control them in detail.
 - Total flexibility.
-- No heavy dependencies and no bandwidth- and performance-penalizing libraries are necessary.
+- No heavy dependencies and no bandwidth - and performance-penalizing libraries are necessary.
 - It's easy to follow your strict design guidelines.
 - Everything is very close to the native browser APIs and concepts; you don't need to learn something completely new.
 - [Content Security Policy (CSP)](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP) friendly — good for secure enterprise usage.
@@ -39,7 +39,7 @@ We also provide a set of [reference integrations](https://github.com/uploadcare/
 
 ## 🍱 Uploader solutions out of the box
 
-We provide [the set of uploader builds](../solutions/file-uploader/) you can use for the most frequent cases or for references if you need to create your own.
+We provide [the set of uploader builds](../solutions/file-uploader/) you can use for the most frequent cases or references if you need to create your own.
 
 ## 🚀 Create your own file uploader
 
