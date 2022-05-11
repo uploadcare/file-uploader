@@ -1,6 +1,6 @@
 # Activities
 
-**Activity** - is a current user interaction stage focused by uploader application. It helps to manage visibility of components and to switch between several UI states. To create activity, you will need to register it in your custom upload-block:
+**Activity** - is a current user interaction stage focused on the uploader application. It helps manage the visibility of components and switches between several UI states. To create an activity, you will need to register it in your custom upload-block:
 
 ```javascript
 import { UC } from '@uploadcare/upload-blocks';
@@ -19,7 +19,7 @@ class MyBlock extends UC.BlockComponent {
 }
 ```
 
-Then, if some other component will cal the registered activity, it will be activated with `active` attribute and the activation callback will be called.
+Then, if some other component will call the registered activity, it will be activated with `active` attribute, and the activation callback will be called.
 
 JavaScript: 
 ```javascript
@@ -49,4 +49,3 @@ Here is the list of reserved pre-defined activities:
 * `cloud-image-edit`
 * `*external`
 * `details`
-
