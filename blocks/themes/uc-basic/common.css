@@ -132,3 +132,9 @@
   border-color: var(--clr-accent);
   outline: none;
 }
+
+:where(.uc-wgt-theme, .uc-wgt-common) input[disabled],
+:host input[disabled] {
+  pointer-events: none;
+  opacity: .6;
+}

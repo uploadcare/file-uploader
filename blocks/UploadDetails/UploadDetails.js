@@ -4,14 +4,13 @@ import { fileCssBg } from '../svg-backgrounds/svg-backgrounds.js';
 export class UploadDetails extends Block {
   activityType = Block.activities.DETAILS;
 
+  pauseRender = true;
+
   init$ = {
     checkerboard: false,
-    localImageEditDisabled: true,
-    cloudImageEditDisabled: true,
     fileSize: null,
     fileName: '',
-    notUploaded: true,
-    imageUrl: '',
+    cdnUrl: '',
     errorTxt: '',
     editBtnHidden: true,
     onNameInput: null,
@@ -23,7 +22,7 @@ export class UploadDetails extends Block {
       this.uploadCollection.remove(this.entry.uid);
       this.historyBack();
     },
-    onEdit: () => {
+    onCloudEdit: () => {
       if (this.entry.getValue('uuid')) {
         this.$['*currentActivity'] = Block.activities.CLOUD_IMG_EDIT;
       }
@@ -41,24 +40,15 @@ export class UploadDetails extends Block {
 
   initCallback() {
     this.bindCssData('--cfg-use-local-image-editor');
-    this.sub('*--cfg-use-local-image-editor', (val) => {
-      this.$.localImageEditDisabled = !val;
-    });
-
     this.bindCssData('--cfg-use-cloud-image-editor');
-    this.sub('*--cfg-use-cloud-image-editor', (val) => {
-      this.$.cloudImageEditDisabled = !val;
-    });
-
+    // Rendering is postponed for the CSS-context-properties usage in template:
+    this.render();
     this.$.fileSize = this.l10n('file-size-unknown');
     this.registerActivity(this.activityType, () => {
       this.set$({
         '*activityCaption': this.l10n('caption-edit-file'),
       });
     });
-    // this.sub('editBtnHidden', (val) => {
-    //   this.$.localImageEditDisabled = !!val;
-    // });
     /** @type {import('../EditableCanvas/EditableCanvas.js').EditableCanvas} */
     // @ts-ignore
     this.eCanvas = this.ref.canvas;
@@ -90,7 +80,6 @@ export class UploadDetails extends Block {
           this.eCanvas.setImageFile(this._file);
           this.set$({
             checkerboard: true,
-            editBtnHidden: !this.$['*--cfg-use-local-image-editor'],
           });
         }
         if (!isImage) {
@@ -115,16 +104,15 @@ export class UploadDetails extends Block {
         this.$.fileSize = Number.isFinite(size) ? this.fileSizeFmt(size) : this.l10n('file-size-unknown');
       });
       tmpSub('uuid', (uuid) => {
-        if (uuid && !this.entry.getValue('cdnUrl')) {
+        if (uuid) {
           this.eCanvas.clear();
           this.set$({
-            imageUrl: `https://ucarecdn.com/${uuid}/`,
-            notUploaded: false,
-            editBtnHidden: !this.entry.getValue('isImage') && !this.$['*--cfg-use-cloud-image-editor'],
+            cdnUrl: `https://ucarecdn.com/${uuid}/`,
+            editBtnHidden: !this.entry.getValue('isImage') || !this.$['*--cfg-use-cloud-image-editor'],
           });
-          this.eCanvas.setImageUrl(this.$.imageUrl);
+          this.entry.getValue('isImage') && this.eCanvas.setImageUrl(this.$.cdnUrl);
         } else {
-          this.$.imageUrl = 'Not uploaded yet...';
+          this.$.cdnUrl = '';
         }
       });
       tmpSub('uploadError', (error) => {
@@ -164,7 +152,7 @@ UploadDetails.template = /*html*/ `
       <input
         name="name-input"
         ref="file_name_input"
-        set="value: fileName; oninput: onNameInput"
+        set="value: fileName; oninput: onNameInput; @disabled: !!cdnUrl"
         type="text" />
     </div>
 
@@ -176,8 +164,9 @@ UploadDetails.template = /*html*/ `
     <div class="info-block">
       <div class="info-block_name" l10n="cdn-url"></div>
       <a
+        class="cdn-link"
         target="_blank"
-        set="@href: imageUrl; @disabled: notUploaded">{{imageUrl}}</a>
+        set="@href: cdnUrl; @disabled: !cdnUrl">{{cdnUrl}}</a>
     </div>
 
     <div>{{errorTxt}}</div>
@@ -186,7 +175,7 @@ UploadDetails.template = /*html*/ `
 
   <uc-editable-canvas
     tab-ctx="tab-view"
-    set="@disabled: localImageEditDisabled; @checkerboard: checkerboard;"
+    set="@disabled: !*--cfg-use-local-image-editor; @checkerboard: checkerboard;"
     ref="canvas">
   </uc-editable-canvas>
 </uc-tabs>
@@ -194,7 +183,7 @@ UploadDetails.template = /*html*/ `
 <div class="toolbar" set="@edit-disabled: editBtnHidden">
   <button
     class="edit-btn secondary-btn"
-    set="onclick: onEdit; @hidden: editBtnHidden;">
+    set="onclick: onCloudEdit; @hidden: editBtnHidden;">
     <uc-icon name="edit"></uc-icon>
     <span l10n="edit-image"></span>
   </button>
