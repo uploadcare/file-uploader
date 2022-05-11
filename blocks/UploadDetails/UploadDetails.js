@@ -12,7 +12,7 @@ export class UploadDetails extends Block {
     fileName: '',
     cdnUrl: '',
     errorTxt: '',
-    editBtnHidden: true,
+    cloudEditBtnHidden: true,
     onNameInput: null,
     onBack: () => {
       this.historyBack();
@@ -108,7 +108,7 @@ export class UploadDetails extends Block {
           this.eCanvas.clear();
           this.set$({
             cdnUrl: `https://ucarecdn.com/${uuid}/`,
-            editBtnHidden: !this.entry.getValue('isImage') || !this.$['*--cfg-use-cloud-image-editor'],
+            cloudEditBtnHidden: !this.entry.getValue('isImage') || !this.$['*--cfg-use-cloud-image-editor'],
           });
           this.entry.getValue('isImage') && this.eCanvas.setImageUrl(this.$.cdnUrl);
         } else {
@@ -180,10 +180,10 @@ UploadDetails.template = /*html*/ `
   </uc-editable-canvas>
 </uc-tabs>
 
-<div class="toolbar" set="@edit-disabled: editBtnHidden">
+<div class="toolbar" set="@edit-disabled: cloudEditBtnHidden">
   <button
     class="edit-btn secondary-btn"
-    set="onclick: onCloudEdit; @hidden: editBtnHidden;">
+    set="onclick: onCloudEdit; @hidden: cloudEditBtnHidden;">
     <uc-icon name="edit"></uc-icon>
     <span l10n="edit-image"></span>
   </button>
