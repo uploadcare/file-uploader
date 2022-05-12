@@ -1,6 +1,5 @@
 /**
- * Helper function for legacy browsers and iframes which sometimes focus on elements like document, body, and
- * non-interactive SVG.
+ * Helper function for legacy browsers and iframes which sometimes focus on elements like document, body, and non-interactive SVG.
  *
  * @param {EventTarget} el
  */
@@ -19,8 +18,8 @@ function isValidFocusTarget(el) {
 }
 
 /**
- * Computes whether the given element should automatically trigger the `focus-visible` class being added, i.e., whether it
- * should always match `:focus-visible` when focused.
+ * Computes whether the given element should automatically trigger the `focus-visible` class being added, i.e., whether
+ * it should always match `:focus-visible` when focused.
  *
  * @param {EventTarget} el
  * @returns {boolean}
@@ -47,8 +46,8 @@ let hadKeyboardEvent = true;
 let hadFocusVisibleRecently = false;
 
 /**
- * Applies the :focus-visible polyfill at the given scope. A scope, in this case, is either the top-level Document
- * or a Shadow Root.
+ * Applies the :focus-visible polyfill at the given scope. A scope, in this case, is either the top-level Document or a
+ * Shadow Root.
  *
  * @param {Document | ShadowRoot} scope
  * @param {(focusVisible: boolean, el: EventTarget) => void} [callback]
@@ -81,9 +80,9 @@ export function applyFocusVisiblePolyfill(scope, callback) {
   }
 
   /**
-   * If the most recent user interaction was via the keyboard, and the keypress did not include a meta, alt/option,
-   * or control key, then the keyboard's modality. Otherwise, the modality is not the keyboard.Apply `focus-visible`
-   * to any current active element and keep track of our keyboard modality state with `hadKeyboardEvent`.
+   * If the most recent user interaction was via the keyboard, and the keypress did not include a meta, alt/option, or
+   * control key, then the keyboard's modality. Otherwise, the modality is not the keyboard.Apply `focus-visible` to any
+   * current active element and keep track of our keyboard modality state with `hadKeyboardEvent`.
    *
    * @param {KeyboardEvent} e
    */
@@ -100,9 +99,9 @@ export function applyFocusVisiblePolyfill(scope, callback) {
   }
 
   /**
-   * If at any point a user clicks with a pointing device, ensure that we change the modality away from the keyboard. This
-   * avoids the situation where a user presses a key on an already focused element, and then clicks on a different element
-   * focusing it with a pointing device while we still think we're in keyboard modality.
+   * If at any point a user clicks with a pointing device, ensure that we change the modality away from the keyboard.
+   * This avoids the situation where a user presses a key on an already focused element, and then clicks on a different
+   * element focusing it with a pointing device while we still think we're in keyboard modality.
    *
    * @param {Event} e
    */
@@ -152,8 +151,8 @@ export function applyFocusVisiblePolyfill(scope, callback) {
   }
 
   /**
-   * Add a group of listeners to detect usage of any pointing devices. These listeners will be added when the polyfill first
-   * loads and anytime the window is blurred so that they are active when the window regains focus.
+   * Add a group of listeners to detect usage of any pointing devices. These listeners will be added when the polyfill
+   * first loads and anytime the window is blurred so that they are active when the window regains focus.
    */
   function addInitialPointerMoveListeners() {
     /* eslint-disable no-use-before-define */
@@ -202,9 +201,9 @@ export function applyFocusVisiblePolyfill(scope, callback) {
   }
 
   /**
-   * When the polyfill first loads, assume the user is in keyboard modality. If any event is received from a pointing device
-   * (e.g., mouse, pointer, touch), turn off keyboard modality. This accounts for situations where focus enters the page from
-   * the URL bar.
+   * When the polyfill first loads, assume the user is in keyboard modality. If any event is received from a pointing
+   * device (e.g., mouse, pointer, touch), turn off keyboard modality. This accounts for situations where focus enters
+   * the page from the URL bar.
    *
    * @param {Event} e
    */

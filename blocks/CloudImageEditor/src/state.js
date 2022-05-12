@@ -42,14 +42,10 @@ export function initState(fnCtx) {
       if (!transformations) {
         return;
       }
-      let originalUrl = fnCtx.$['*originalUrl']
+      let originalUrl = fnCtx.$['*originalUrl'];
       let cdnUrlModifiers = constructCdnUrl(null, transformationsToString(transformations));
 
-      let cdnUrl = constructCdnUrl(
-        originalUrl,
-        cdnUrlModifiers,
-        'preview'
-      )
+      let cdnUrl = constructCdnUrl(originalUrl, cdnUrlModifiers, 'preview');
 
       /** @type {import('./types.js').ApplyResult} */
       let eventData = {
@@ -57,7 +53,7 @@ export function initState(fnCtx) {
         cdnUrlModifiers,
         cdnUrl,
         transformations,
-      }
+      };
       fnCtx.dispatchEvent(
         new CustomEvent('apply', {
           detail: eventData,

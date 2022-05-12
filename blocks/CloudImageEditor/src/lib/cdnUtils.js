@@ -53,10 +53,13 @@ function operationToStr(operation, options) {
  * @returns {String}
  */
 export function joinCdnOperations(...list) {
-  return list.map(str => {
-    str = str.replace(/^-\//g, ''); // remove leading '-/'
-    return str
-  }).join('/-/').replace(/\/\//g, '/');
+  return list
+    .map((str) => {
+      str = str.replace(/^-\//g, ''); // remove leading '-/'
+      return str;
+    })
+    .join('/-/')
+    .replace(/\/\//g, '/');
 }
 
 const ORDER = [
@@ -102,7 +105,10 @@ export function constructCdnUrl(originalUrl, ...list) {
     originalUrl += '/';
   }
   return (
-    (originalUrl?.replace(/\/$/g, '') || '') + '-/' + joinCdnOperations(...list.filter((str) => !!str).map(str => str.trim())) + '/'
+    (originalUrl?.replace(/\/$/g, '') || '') +
+    '-/' +
+    joinCdnOperations(...list.filter((str) => !!str).map((str) => str.trim())) +
+    '/'
   );
 }
 

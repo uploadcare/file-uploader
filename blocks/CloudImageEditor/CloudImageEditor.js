@@ -47,8 +47,8 @@ export class CloudImageEditor extends Block {
     this.entry.setMultipleValues({
       cdnUrl: result.cdnUrl,
       cdnUrlModifiers: result.cdnUrlModifiers,
-      editorTransformations: result.transformations
-    })
+      editorTransformations: result.transformations,
+    });
     this.historyBack();
   }
 

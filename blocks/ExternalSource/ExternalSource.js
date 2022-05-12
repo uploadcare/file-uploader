@@ -107,8 +107,8 @@ export class ExternalSource extends Block {
       public_key: pubkey,
       images_only: imagesOnly,
       pass_window_open: false,
-      session_key: this.$['*--cfg-remote-tab-session-key']
-    }
+      session_key: this.$['*--cfg-remote-tab-session-key'],
+    };
     return `https://social.uploadcare.com/window3/${externalSourceType}?${queryString(params)}`;
   }
 
