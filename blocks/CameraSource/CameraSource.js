@@ -16,11 +16,12 @@ import { debounce } from '../utils/debounce.js';
  * @property {() => void} onRequestPermissions
  */
 
-// prettier-ignore-start
 /**
- * @extends {Block<State & Partial<import('../ActivityIcon/ActivityIcon.js').State & import('../ActivityCaption/ActivityCaption.js').State & import('../../abstract/Block.js').BlockState>>}
+ * @typedef {State &
+ *   Partial<import('../ActivityIcon/ActivityIcon.js').State & import('../ActivityCaption/ActivityCaption.js').State>} CameraSourceState
  */
-// prettier-ignore-end
+
+/** @extends {Block<CameraSourceState>} */
 export class CameraSource extends Block {
   activityType = Block.activities.CAMERA;
 

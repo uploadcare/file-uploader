@@ -11,11 +11,13 @@ import { queryString } from './query-string.js';
  * @property {() => void} onCancel
  */
 
-// prettier-ignore-start
 /**
- * @extends {Block<State & Partial<import('../ActivityCaption/ActivityCaption').State> & Partial<import('../ActivityIcon/ActivityIcon').State>>}
+ * @typedef {State &
+ *   Partial<import('../ActivityCaption/ActivityCaption').State> &
+ *   Partial<import('../ActivityIcon/ActivityIcon').State>} ExternalSourceState
  */
-// prettier-ignore-end
+
+/** @extends {Block<ExternalSourceState>} */
 export class ExternalSource extends Block {
   activityType = Block.activities.EXTERNAL;
 
