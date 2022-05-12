@@ -78,7 +78,7 @@ All keys and values for the UI texts and translations are also placed in CSS:
 }
 ```
 
-That means you can create your own variand of any UI text or add any new text to the your custom block.
+That means you can create your own variant of any UI text or add any new text to your custom block.
 
 CSS:
 ```css
