@@ -26,20 +26,12 @@ if (!DOC_READY) {
  *   '*outputData': any[] | null;
  *   '*focusedEntry': any | null;
  *   '*uploadCollection': TypedCollection;
- *   '*--cfg-pubkey': String;
- *   '*--cfg-store': Boolean;
- *   '*--cfg-multiple': Boolean;
- *   '*--cfg-max-files': Number;
- *   '*--cfg-accept': String;
- *   '*--cfg-confirm-upload': Boolean;
- *   '*--cfg-init-activity': String;
- *   '*--cfg-done-activity': String;
  * }} BlockState
  */
 
 /**
  * @template S
- * @extends {BaseComponent<S & Partial<BlockState>>}
+ * @extends {BaseComponent<S & Partial<BlockState & import('../css-types.js').CssConfigTypes>>}
  */
 export class Block extends BaseComponent {
   /**
@@ -340,7 +332,7 @@ export class Block extends BaseComponent {
    */
   setForCtxTarget(targetTagName, prop, newVal) {
     if (this.checkCtxTarget(targetTagName)) {
-      this.$[prop] = newVal;
+      this.$['prop'] = newVal;
     }
   }
 

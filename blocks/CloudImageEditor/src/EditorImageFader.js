@@ -79,7 +79,7 @@ function keypointsRange(operation, value) {
 
 /**
  * @template S
- * @extends {Block<S & Partial<State>>}
+ * @extends {Block<S & Partial<State & import('./EditorToolbar.js').State & import('./CloudEditor.js').State>>}
  */
 export class EditorImageFader extends Block {
   constructor() {
@@ -111,7 +111,6 @@ export class EditorImageFader extends Block {
   _handleImageLoading(src) {
     let operation = this._operation;
 
-    /** @type {import('./types.js').LoadingOperations} */
     let loadingOperations = this.$['*loadingOperations'];
     if (!loadingOperations.get(operation)) {
       loadingOperations.set(operation, new Map());
