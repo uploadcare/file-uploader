@@ -26,6 +26,7 @@ if (!DOC_READY) {
  *   '*outputData': any[] | null;
  *   '*focusedEntry': any | null;
  *   '*uploadCollection': TypedCollection;
+ *   [key: String]: unknown;
  * }} BlockState
  */
 
@@ -70,7 +71,9 @@ export class Block extends BaseComponent {
    * @param {String} l10nKey
    */
   applyL10nKey(localPropKey, l10nKey) {
-    this.$['l10n:' + localPropKey] = l10nKey;
+    let prop = 'l10n:' + localPropKey;
+    this.$[/** @type {keyof S} */ (prop)] = /** @type {any} */ (l10nKey);
+    this.__l10nKeys.push(localPropKey);
   }
 
   historyBack() {
@@ -332,7 +335,7 @@ export class Block extends BaseComponent {
    */
   setForCtxTarget(targetTagName, prop, newVal) {
     if (this.checkCtxTarget(targetTagName)) {
-      this.$[prop] = newVal;
+      this.$[/** @type {keyof S} */ (prop)] = newVal;
     }
   }
 
@@ -445,7 +448,7 @@ export class Block extends BaseComponent {
 
   /**
    * @private
-   * @type {{ string: { activateCallback: Function; deactivateCallback: Function } }}
+   * @type {{ String: { activateCallback: Function; deactivateCallback: Function } }}
    */
   static _activityRegistry = Object.create(null);
 
