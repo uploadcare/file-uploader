@@ -2,12 +2,37 @@ import { Block } from '../../abstract/Block.js';
 import { canUsePermissionsApi } from '../utils/abilities.js';
 import { debounce } from '../utils/debounce.js';
 
+/**
+ * @typedef {Object} State
+ * @property {any} video
+ * @property {String} videoTransformCss
+ * @property {Boolean} shotBtnDisabled
+ * @property {Boolean} videoHidden
+ * @property {Boolean} messageHidden
+ * @property {Boolean} requestBtnHidden
+ * @property {String} l10nMessage
+ * @property {() => void} onCancel
+ * @property {() => void} onShot
+ * @property {() => void} onRequestPermissions
+ */
+
+/**
+ * @extends {Block<
+ *   State &
+ *     Partial<
+ *       import('../ActivityIcon/ActivityIcon.js').State &
+ *         import('../ActivityCaption/ActivityCaption.js').State &
+ *         import('../../abstract/Block.js').BlockState
+ *     >
+ * >}
+ */
 export class CameraSource extends Block {
   activityType = Block.activities.CAMERA;
 
   /** @private */
   _unsubPermissions = null;
 
+  /** @type {State} */
   init$ = {
     video: null,
     videoTransformCss: null,

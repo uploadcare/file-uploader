@@ -3,6 +3,18 @@ import { FAKE_ORIGINAL_FILTER } from './EditorSlider.js';
 import { COMMON_OPERATIONS, constructCdnUrl, transformationsToString } from './lib/cdnUtils.js';
 import { preloadImage } from './lib/preloadImage.js';
 
+/**
+ * @typedef {{
+ *   active: Boolean;
+ *   title: String;
+ *   icon: String;
+ *   isOriginal: Boolean;
+ *   iconSize: Number;
+ *   'on.click': () => void;
+ * }} State
+ */
+
+/** @extends {EditorButtonControl<State>} */
 export class EditorFilterControl extends EditorButtonControl {
   init$ = {
     active: false,

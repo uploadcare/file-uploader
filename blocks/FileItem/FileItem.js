@@ -5,9 +5,30 @@ import { UiMessage } from '../MessageBox/MessageBox.js';
 import { fileCssBg } from '../svg-backgrounds/svg-backgrounds.js';
 import { customUserAgent } from '../utils/userAgent.js';
 
+/** @typedef {Partial<import('../MessageBox/MessageBox.js').State>} ExternalState */
+
+/**
+ * @typedef {{
+ *   itemName: String;
+ *   thumb: String;
+ *   thumbUrl: String;
+ *   progressValue: Number;
+ *   progressVisible: Boolean;
+ *   progressUnknown: Boolean;
+ *   notImage: Boolean;
+ *   badgeIcon: String;
+ *   '*uploadTrigger': {};
+ *   onEdit: () => void;
+ *   onRemove: () => void;
+ *   onUpload: () => void;
+ * }} State
+ */
+
+/** @extends {Block<State & ExternalState>} */
 export class FileItem extends Block {
   pauseRender = true;
 
+  /** @type {State} */
   init$ = {
     itemName: '',
     thumb: '',

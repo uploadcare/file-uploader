@@ -8,6 +8,38 @@ import { TEMPLATE } from './template.js';
 import { TabId } from './toolbar-constants.js';
 import { viewerImageSrc } from './util.js';
 
+/**
+ * @typedef {{
+ *   '*originalUrl': String;
+ *   '*tabId': String;
+ *   '*faderEl': HTMLElement;
+ *   '*cropperEl': HTMLElement;
+ *   '*imgEl': HTMLElement;
+ *   '*imgContainerEl': HTMLElement;
+ *   '*modalEl': HTMLElement;
+ *   '*networkProblems': Boolean;
+ *   '*imageSize': import('./types.js').ImageSize;
+ *   entry: import('../../../submodules/symbiote/core/symbiote.js').TypedData;
+ *   extension: String;
+ *   editorMode: Boolean;
+ *   modalCaption: String;
+ *   isImage: Boolean;
+ *   msg: String;
+ *   src: String;
+ *   fileType: String;
+ *   showLoader: Boolean;
+ *   uuid: String;
+ *   'presence.networkProblems': Boolean;
+ *   'presence.modalCaption': Boolean;
+ *   'presence.editorToolbar': Boolean;
+ *   'presence.viewerToolbar': Boolean;
+ *   '*on.retryNetwork': () => void;
+ *   '*on.apply': (transformations: import('./types.js').Transformations) => void;
+ *   '*on.cancel': () => void;
+ * }} State
+ */
+
+/** @extends {Block<State>} */
 export class CloudEditor extends Block {
   init$ = initState(this);
 

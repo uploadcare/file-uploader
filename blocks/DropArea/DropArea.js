@@ -1,7 +1,11 @@
 import { Block } from '../../abstract/Block.js';
 import { DropzoneState, addDropzone } from './addDropzone.js';
 
+/** @typedef {{ state: DropzoneState }} State */
+
+/** @extends {Block<State>} */
 export class DropArea extends Block {
+  /** @type {State} */
   init$ = {
     state: DropzoneState.INACTIVE,
   };

@@ -1,8 +1,25 @@
 import { Block } from '../../abstract/Block.js';
 
+/**
+ * @typedef {{
+ *   importDisabled: Boolean;
+ *   onUpload: () => void;
+ *   onCancel: () => void;
+ *   onInput: (e: InputEvent) => void;
+ * }} State
+ */
+
+/**
+ * @extends {Block<
+ *   State &
+ *     Partial<import('../ActivityCaption/ActivityCaption').State> &
+ *     Partial<import('../ActivityIcon/ActivityIcon').State>
+ * >}
+ */
 export class UrlSource extends Block {
   activityType = Block.activities.URL;
 
+  /** @type {State} */
   init$ = {
     importDisabled: true,
     onUpload: () => {
@@ -16,7 +33,7 @@ export class UrlSource extends Block {
       this.cancelFlow();
     },
     onInput: (e) => {
-      let value = e.target.value;
+      let value = /** @type {HTMLInputElement} */ (e.target).value;
       this.set$({ importDisabled: !value });
     },
   };

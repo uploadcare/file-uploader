@@ -2,7 +2,28 @@ import { Block } from '../../abstract/Block.js';
 import { applyStyles } from '../../submodules/symbiote/core/symbiote.js';
 import { checkerboardCssBg } from '../svg-backgrounds/svg-backgrounds.js';
 
+/**
+ * @typedef {Object} RefMap
+ * @property {import('./EditableCanvas.js').EditableCanvas} parent
+ * @property {HTMLCanvasElement} canvas
+ * @property {CanvasRenderingContext2D} canvCtx
+ * @property {SVGElement} svg
+ * @property {SVGElement} svgGroup
+ * @property {SVGImageElement} svgImg
+ */
+
+/**
+ * @typedef {{
+ *   refMap: RefMap;
+ *   disabled: Boolean;
+ *   toolbarHidden: Boolean;
+ *   checkerboard: Boolean;
+ * }} State
+ */
+
+/** @extends {Block<State>} */
 export class EditableCanvas extends Block {
+  /** @type {State} */
   init$ = {
     refMap: null,
     disabled: true,

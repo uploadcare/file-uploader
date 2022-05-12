@@ -4,9 +4,24 @@ import { registerMessage, unregisterMessage } from './messages.js';
 import { buildStyles } from './buildStyles.js';
 import { queryString } from './query-string.js';
 
+/**
+ * @typedef {Object} State
+ * @property {Number} counter
+ * @property {() => void} onDone
+ * @property {() => void} onCancel
+ */
+
+/**
+ * @extends {Block<
+ *   State &
+ *     Partial<import('../ActivityCaption/ActivityCaption').State> &
+ *     Partial<import('../ActivityIcon/ActivityIcon').State>
+ * >}
+ */
 export class ExternalSource extends Block {
   activityType = Block.activities.EXTERNAL;
 
+  /** @type {State} */
   init$ = {
     counter: 0,
     onDone: () => {

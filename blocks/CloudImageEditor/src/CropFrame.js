@@ -22,6 +22,12 @@ import {
 } from './cropper-constants.js';
 import { classNames } from './lib/classNames.js';
 
+/**
+ * @typedef {Object} State
+ * @property {Boolean} dragging
+ */
+
+/** @extends {Block<State>} */
 export class CropFrame extends Block {
   init$ = {
     dragging: false,

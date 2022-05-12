@@ -13,12 +13,29 @@ export class UiConfirmation {
   }
 }
 
+/**
+ * @typedef {{
+ *   messageTxt: String;
+ *   confirmBtnTxt: String;
+ *   denyBtnTxt: String;
+ *   '*confirmation': UiConfirmation;
+ *   onConfirm: () => void;
+ *   onDeny: () => void;
+ * }} State
+ */
+
+/**
+ * @extends {Block<
+ *   State & Partial<import('../Modal/Modal').State> & Partial<import('../ActivityCaption/ActivityCaption').State>
+ * >}
+ */
 export class ConfirmationDialog extends Block {
   activityType = Block.activities.CONFIRMATION;
 
   /** @private */
   _defaults = new UiConfirmation();
 
+  /** @type {State} */
   init$ = {
     messageTxt: '',
     confirmBtnTxt: '',

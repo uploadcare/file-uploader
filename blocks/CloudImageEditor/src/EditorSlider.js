@@ -8,6 +8,19 @@ const ControlType = {
 
 export const FAKE_ORIGINAL_FILTER = 'original';
 
+/**
+ * @typedef {{
+ *   disabled: Boolean;
+ *   min: Number;
+ *   max: Number;
+ *   value: Number;
+ *   defaultValue: Number;
+ *   zero: Number;
+ *   'on.input': (value: Number) => void;
+ * }} State
+ */
+
+/** @extends {Block<State>} */
 export class EditorSlider extends Block {
   init$ = {
     disabled: false,

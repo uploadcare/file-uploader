@@ -1,5 +1,12 @@
 import { Block } from '../../../abstract/Block.js';
 
+/**
+ * @typedef {{
+ *   dropAreaHidden: Boolean;
+ * }} State
+ */
+
+/** @extends {Block<State>} */
 export class FileUploaderInline extends Block {
   init$ = {
     dropAreaHidden: false,

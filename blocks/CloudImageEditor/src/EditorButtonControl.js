@@ -1,12 +1,24 @@
 import { Block } from '../../../abstract/Block.js';
 import { classNames } from './lib/classNames.js';
 
+/**
+ * @typedef {{
+ *   active: Boolean;
+ *   title: String;
+ *   icon: String;
+ * }} State
+ */
+
+/**
+ * @template [S=State] Default is `State`
+ * @extends {Block<S & Partial<State>>}
+ */
 export class EditorButtonControl extends Block {
+  /** @type {any} */
   init$ = {
     active: false,
     title: '',
     icon: '',
-    'on.click': null,
   };
 
   initCallback() {

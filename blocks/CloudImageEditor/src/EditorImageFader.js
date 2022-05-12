@@ -69,19 +69,31 @@ function keypointsRange(operation, value) {
  * @property {Number} value
  */
 
+/**
+ * @typedef {{
+ *   active: boolean;
+ *   title: string;
+ *   icon: string;
+ * }} State
+ */
+
+/**
+ * @template S
+ * @extends {Block<S & Partial<State>>}
+ */
 export class EditorImageFader extends Block {
   constructor() {
     super();
 
     /**
      * @private
-     * @type {boolean}
+     * @type {Boolean}
      */
     this._isActive = false;
 
     /**
      * @private
-     * @type {boolean}
+     * @type {Boolean}
      */
     this._hidden = true;
 
@@ -176,7 +188,7 @@ export class EditorImageFader extends Block {
    * @private
    * @param {String} operation
    * @param {String} [filter]
-   * @returns {boolean}
+   * @returns {Boolean}
    */
   _isSame(operation, filter) {
     return this._operation === operation && this._filter === filter;
@@ -185,7 +197,7 @@ export class EditorImageFader extends Block {
   /**
    * @private
    * @param {String} operation
-   * @param {String | null} filter
+   * @param {string | null} filter
    * @param {Number} value
    */
   _addKeypoint(operation, filter, value) {
@@ -232,7 +244,7 @@ export class EditorImageFader extends Block {
     );
   }
 
-  /** @param {String | Number} value */
+  /** @param {string | Number} value */
   set(value) {
     value = typeof value === 'string' ? parseInt(value, 10) : value;
     this._update(this._operation, value);
@@ -399,7 +411,7 @@ export class EditorImageFader extends Block {
    * @param {String} [options.operation]
    * @param {Number} [options.value]
    * @param {String} [options.filter]
-   * @param {boolean} [options.fromViewer]
+   * @param {Boolean} [options.fromViewer]
    */
   activate({ url, operation, value, filter, fromViewer }) {
     this._isActive = true;
@@ -423,7 +435,7 @@ export class EditorImageFader extends Block {
     this._initNodes();
   }
 
-  /** @param {{ hide?: boolean; seamlessTransition?: boolean }} options */
+  /** @param {{ hide?: Boolean; seamlessTransition?: Boolean }} options */
   deactivate({ hide = true, seamlessTransition = true } = {}) {
     this._isActive = false;
 
