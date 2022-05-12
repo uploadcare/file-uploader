@@ -3,9 +3,9 @@ import { Block } from '../../../../../abstract/Block.js';
 
 /**
  * @typedef {Object} Style
- * @property {string} [transition]
- * @property {string} [visible]
- * @property {string} [hidden]
+ * @property {String} [transition]
+ * @property {String} [visible]
+ * @property {String} [hidden]
  */
 
 /** @type {Style} */

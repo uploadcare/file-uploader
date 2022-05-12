@@ -72,8 +72,8 @@ function keypointsRange(operation, value) {
 /**
  * @typedef {{
  *   active: boolean;
- *   title: string;
- *   icon: string;
+ *   title: String;
+ *   icon: String;
  * }} State
  */
 
@@ -197,7 +197,7 @@ export class EditorImageFader extends Block {
   /**
    * @private
    * @param {String} operation
-   * @param {string | null} filter
+   * @param {String | null} filter
    * @param {Number} value
    */
   _addKeypoint(operation, filter, value) {
@@ -244,7 +244,7 @@ export class EditorImageFader extends Block {
     );
   }
 
-  /** @param {string | Number} value */
+  /** @param {String | Number} value */
   set(value) {
     value = typeof value === 'string' ? parseInt(value, 10) : value;
     this._update(this._operation, value);
