@@ -12,11 +12,11 @@ import { viewerImageSrc } from './util.js';
  * @typedef {{
  *   '*originalUrl': String;
  *   '*tabId': String;
- *   '*faderEl': HTMLElement;
- *   '*cropperEl': HTMLElement;
- *   '*imgEl': HTMLElement;
+ *   '*faderEl': import('./EditorImageFader.js').EditorImageFader;
+ *   '*cropperEl': import('./EditorImageCropper.js').EditorImageCropper;
+ *   '*imgEl': HTMLImageElement;
  *   '*imgContainerEl': HTMLElement;
- *   '*modalEl': HTMLElement;
+ *   '*modalEl': import('../../Modal/Modal.js').Modal;
  *   '*networkProblems': Boolean;
  *   '*imageSize': import('./types.js').ImageSize;
  *   entry: import('../../../submodules/symbiote/core/symbiote.js').TypedData;

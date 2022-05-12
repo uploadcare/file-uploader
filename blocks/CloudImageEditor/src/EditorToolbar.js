@@ -33,7 +33,7 @@ function renderTabContent(id) {
 
 /**
  * @typedef {{
- *   '*sliderEl': HTMLElement;
+ *   '*sliderEl': import('./EditorSlider.js').EditorSlider;
  *   '*loadingOperations': import('./types.js').LoadingOperations;
  *   '*showSlider': Boolean;
  *   '*editorTransformations': import('./types.js').Transformations;
@@ -63,7 +63,7 @@ function renderTabContent(id) {
  * }} State
  */
 
-/** @extends {Block<State>} */
+/** @extends {Block<State & Partial<import('./CloudEditor.js').State>>} */
 export class EditorToolbar extends Block {
   constructor() {
     super();

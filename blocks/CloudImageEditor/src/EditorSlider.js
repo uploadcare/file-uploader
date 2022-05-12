@@ -20,7 +20,7 @@ export const FAKE_ORIGINAL_FILTER = 'original';
  * }} State
  */
 
-/** @extends {Block<State>} */
+/** @extends {Block<State & Partial<import('./CloudEditor.js').State>>} */
 export class EditorSlider extends Block {
   init$ = {
     disabled: false,

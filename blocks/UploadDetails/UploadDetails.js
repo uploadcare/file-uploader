@@ -60,13 +60,13 @@ export class UploadDetails extends Block {
   }
 
   initCallback() {
-    this.bindCssData('--cfg-use-local-image-editor');
-    this.sub('*--cfg-use-local-image-editor', (val) => {
+    let useLocalImageEditor = this.bindCssData('--cfg-use-local-image-editor');
+    this.sub(useLocalImageEditor, (val) => {
       this.$.localImageEditDisabled = !val;
     });
 
-    this.bindCssData('--cfg-use-cloud-image-editor');
-    this.sub('*--cfg-use-cloud-image-editor', (val) => {
+    let useCloudImageEditor = this.bindCssData('--cfg-use-cloud-image-editor');
+    this.sub(useCloudImageEditor, (val) => {
       this.$.cloudImageEditDisabled = !val;
     });
 

@@ -6,6 +6,7 @@ import { classNames } from './lib/classNames.js';
  *   active: Boolean;
  *   title: String;
  *   icon: String;
+ *   'on.click': (e: MouseEvent) => void;
  * }} State
  */
 
@@ -19,6 +20,7 @@ export class EditorButtonControl extends Block {
     active: false,
     title: '',
     icon: '',
+    'on.click': null,
   };
 
   initCallback() {

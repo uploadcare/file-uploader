@@ -27,7 +27,7 @@ import { classNames } from './lib/classNames.js';
  * @property {Boolean} dragging
  */
 
-/** @extends {Block<State>} */
+/** @extends {Block<State & Partial<import('./EditorImageCropper.js').State>>} */
 export class CropFrame extends Block {
   init$ = {
     dragging: false,

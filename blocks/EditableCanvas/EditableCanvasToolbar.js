@@ -24,7 +24,7 @@ const FS_ICON = {
  * }} State
  */
 
-/** @extends {Block<State & Partial<import('../Range/Range').State>>} */
+/** @extends {Block<State & Partial<import('../Range/Range').State & import('../Color/Color.js').State>>} */
 export class EditorToolbar extends Block {
   get actionsMap() {
     return {

@@ -26,6 +26,14 @@ if (!DOC_READY) {
  *   '*outputData': any[] | null;
  *   '*focusedEntry': any | null;
  *   '*uploadCollection': TypedCollection;
+ *   '*--cfg-pubkey': String;
+ *   '*--cfg-store': Boolean;
+ *   '*--cfg-multiple': Boolean;
+ *   '*--cfg-max-files': Number;
+ *   '*--cfg-accept': String;
+ *   '*--cfg-confirm-upload': Boolean;
+ *   '*--cfg-init-activity': String;
+ *   '*--cfg-done-activity': String;
  * }} BlockState
  */
 

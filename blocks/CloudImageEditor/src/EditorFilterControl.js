@@ -14,7 +14,9 @@ import { preloadImage } from './lib/preloadImage.js';
  * }} State
  */
 
-/** @extends {EditorButtonControl<State>} */
+/** @typedef {State & Partial<import('./EditorToolbar.js').State & import('./CloudEditor.js').State>} EditorFilterControlState */
+
+/** @extends {EditorButtonControl<EditorFilterControlState>} */
 export class EditorFilterControl extends EditorButtonControl {
   init$ = {
     active: false,
