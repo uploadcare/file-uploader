@@ -332,7 +332,7 @@ export class Block extends BaseComponent {
    */
   setForCtxTarget(targetTagName, prop, newVal) {
     if (this.checkCtxTarget(targetTagName)) {
-      this.$['prop'] = newVal;
+      this.$[prop] = newVal;
     }
   }
 
