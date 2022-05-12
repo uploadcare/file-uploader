@@ -24,11 +24,11 @@ export class UiConfirmation {
  * }} State
  */
 
+// prettier-ignore-start
 /**
- * @extends {Block<
- *   State & Partial<import('../Modal/Modal').State> & Partial<import('../ActivityCaption/ActivityCaption').State>
- * >}
+ * @extends {Block<State & Partial<import('../Modal/Modal').State> & Partial<import('../ActivityCaption/ActivityCaption').State>>}
  */
+// prettier-ignore-end
 export class ConfirmationDialog extends Block {
   activityType = Block.activities.CONFIRMATION;
 

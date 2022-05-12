@@ -9,13 +9,11 @@ import { Block } from '../../abstract/Block.js';
  * }} State
  */
 
+// prettier-ignore-start
 /**
- * @extends {Block<
- *   State &
- *     Partial<import('../ActivityCaption/ActivityCaption').State> &
- *     Partial<import('../ActivityIcon/ActivityIcon').State>
- * >}
+ * @extends {Block<State & Partial<import('../ActivityCaption/ActivityCaption').State> & Partial<import('../ActivityIcon/ActivityIcon').State>>}
  */
+// prettier-ignore-end
 export class UrlSource extends Block {
   activityType = Block.activities.URL;
 
