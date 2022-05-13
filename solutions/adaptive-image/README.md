@@ -1,7 +1,7 @@
 # Adaptive Image
 
-> Universal web-component for the efficient image representation on any page.
-> It generates the set of URLs for the initial image source with the desired parameters.
+> Universal web component for the efficient image representation on any page.
+> It generates a set of URLs for the initial image source with the desired parameters.
 
 <re-htm src="./demo.snippet.htm"><re-htm>
 
