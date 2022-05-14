@@ -1,5 +1,5 @@
 import { BaseComponent, Data, TypedCollection } from '../submodules/symbiote/core/symbiote.js';
-import { stringTemplate } from '../utils/stringTemplate.js';
+import { applyTemplateData } from '../utils/applyTemplateData.js';
 import { l10nProcessor } from './l10nProcessor.js';
 import { uploadEntrySchema } from './uploadEntrySchema.js';
 
@@ -23,11 +23,8 @@ export class Block extends BaseComponent {
    */
   l10n(str, variables = {}) {
     let template = this.getCssData('--l10n-' + str, true) || str;
-    let interpolated = stringTemplate(template, variables);
-    if (interpolated.missingKeys.length > 0) {
-      interpolated.missingKeys.forEach((key) => console.warn(`[l10n] ${key} is not defined in variables`));
-    }
-    return interpolated.string;
+    let result = applyTemplateData(template, variables);
+    return result;
   }
 
   constructor() {
