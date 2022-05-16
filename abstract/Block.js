@@ -1,7 +1,7 @@
 import { BaseComponent, Data, TypedCollection } from '../submodules/symbiote/core/symbiote.js';
 import { applyTemplateData } from '../utils/applyTemplateData.js';
 import { mergeMimeTypes } from '../utils/mergeMimeTypes.js';
-import { imageMimeTypes } from './imageMimeTypes.js';
+import { imageMimeTypes } from '../utils/imageMimeTypes.js';
 import { l10nProcessor } from './l10nProcessor.js';
 import { uploadEntrySchema } from './uploadEntrySchema.js';
 
