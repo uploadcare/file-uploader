@@ -18,6 +18,8 @@ module.exports = {
       },
     ],
     'color-function-notation': null,
+    'order/properties-order': null,
+    'rule-empty-line-before': null,
   },
   overrides: [
     {
