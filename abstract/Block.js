@@ -1,4 +1,5 @@
 import { BaseComponent, Data, TypedCollection } from '../submodules/symbiote/core/symbiote.js';
+import { applyTemplateData } from '../utils/applyTemplateData.js';
 import { l10nProcessor } from './l10nProcessor.js';
 import { uploadEntrySchema } from './uploadEntrySchema.js';
 
@@ -17,10 +18,13 @@ if (!DOC_READY) {
 export class Block extends BaseComponent {
   /**
    * @param {String} str
+   * @param {{ [key: string]: string | number }} variables
    * @returns {String}
    */
-  l10n(str) {
-    return this.getCssData('--l10n-' + str, true) || str;
+  l10n(str, variables = {}) {
+    let template = this.getCssData('--l10n-' + str, true) || str;
+    let result = applyTemplateData(template, variables);
+    return result;
   }
 
   constructor() {
@@ -113,6 +117,8 @@ export class Block extends BaseComponent {
         'pubkey',
         'store',
         'multiple',
+        'multiple-min',
+        'multiple-max',
         'max-files',
         'accept',
         'confirm-upload',
@@ -154,7 +160,7 @@ export class Block extends BaseComponent {
       if (this.hasAttribute('current-activity')) {
         this.sub('*currentActivity', (/** @type {String} */ val) => {
           this.setAttribute('current-activity', val);
-        })
+        });
       }
 
       if (this.activityType) {
@@ -198,7 +204,6 @@ export class Block extends BaseComponent {
     this.fileInput = document.createElement('input');
     this.fileInput.type = 'file';
     this.fileInput.multiple = !!this.$['*--cfg-multiple'];
-    this.fileInput.max = this.$['*--cfg-max-files'];
     this.fileInput.accept = this.$['*--cfg-accept'];
     this.fileInput.dispatchEvent(new MouseEvent('click'));
     this.fileInput.onchange = () => {

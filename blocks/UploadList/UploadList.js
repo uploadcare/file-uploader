@@ -1,16 +1,20 @@
 import { Block } from '../../abstract/Block.js';
 import { FileItem } from '../FileItem/FileItem.js';
 import { UiConfirmation } from '../ConfirmationDialog/ConfirmationDialog.js';
+import { UiMessage } from '../MessageBox/MessageBox.js';
 
 export class UploadList extends Block {
   activityType = Block.activities.UPLOAD_LIST;
 
   init$ = {
-    doneBtnHidden: true,
+    doneBtnHidden: false,
+    doneBtnDisabled: false,
     uploadBtnHidden: false,
     uploadBtnDisabled: false,
+    addMoreBtnHidden: false,
+    addMoreBtnDisabled: false,
+
     hasFiles: false,
-    moreBtnDisabled: true,
     onAdd: () => {
       this.initFlow(true);
     },
@@ -46,10 +50,59 @@ export class UploadList extends Block {
   /** @private */
   _renderMap = Object.create(null);
 
-  updateButtonsState() {
+  /**
+   * @private
+   * @returns {{ passed: Boolean; tooFew: Boolean; tooMany: Boolean; exact: Boolean; min: Number; max: Number }}
+   */
+  _validateFilesCount() {
+    let multiple = !!this.$['*--cfg-multiple'];
+    let min = multiple ? this.$['*--cfg-multiple-min'] ?? 0 : 1;
+    let max = multiple ? this.$['*--cfg-multiple-max'] ?? 0 : 1;
+    let count = this.uploadCollection.size;
+
+    let tooFew = min ? count < min : false;
+    let tooMany = max ? count > max : false;
+    let passed = !tooFew && !tooMany;
+    let exact = max === count;
+
+    return {
+      passed,
+      tooFew,
+      tooMany,
+      min,
+      max,
+      exact,
+    };
+  }
+
+  /** @private */
+  _updateCountLimitMessage() {
+    let filesCount = this.uploadCollection.size;
+    let countValidationResult = this._validateFilesCount();
+    if (filesCount && !countValidationResult.passed) {
+      let msg = new UiMessage();
+      let textKey = countValidationResult.tooFew
+        ? 'files-count-limit-error-too-few'
+        : 'files-count-limit-error-too-many';
+      msg.caption = this.l10n('files-count-limit-error-title');
+      msg.text = this.l10n(textKey, {
+        min: countValidationResult.min,
+        max: countValidationResult.max,
+        total: filesCount,
+      });
+      msg.isError = true;
+      this.set$({
+        '*message': msg,
+      });
+    }
+  }
+
+  /** @private */
+  _updateButtonsState() {
     let itemIds = this.uploadCollection.items();
+    let filesCount = itemIds.length;
     let summary = {
-      total: itemIds.length,
+      total: filesCount,
       uploaded: 0,
       uploading: 0,
     };
@@ -62,13 +115,19 @@ export class UploadList extends Block {
       }
     }
     let allUploaded = summary.total === summary.uploaded;
+    let { passed: fitCountRestrictions, tooMany, exact } = this._validateFilesCount();
+
     this.set$({
-      uploadBtnHidden: allUploaded,
       doneBtnHidden: !allUploaded,
-      uploadBtnDisabled: summary.uploading > 0,
+      doneBtnDisabled: !fitCountRestrictions,
+
+      uploadBtnHidden: allUploaded,
+      uploadBtnDisabled: summary.uploading > 0 || !fitCountRestrictions,
+
+      addMoreBtnDisabled: tooMany || exact,
     });
 
-    if (!this.$['*--cfg-confirm-upload'] && allUploaded) {
+    if (!this.$['*--cfg-confirm-upload'] && fitCountRestrictions && allUploaded) {
       this.$.onDone();
     }
   }
@@ -85,13 +144,14 @@ export class UploadList extends Block {
       });
     });
 
-    this.sub('*--cfg-multiple', (val) => {
-      this.$.moreBtnDisabled = !val;
-    });
+    const handleStateUpdate = () => {
+      this._updateButtonsState();
+      this._updateCountLimitMessage();
+    };
 
-    this.uploadCollection.observe(() => {
-      this.updateButtonsState();
-    });
+    this.sub('*--cfg-multiple', handleStateUpdate);
+    this.sub('*--cfg-multiple-min', handleStateUpdate);
+    this.sub('*--cfg-multiple-max', handleStateUpdate);
 
     this.sub('*uploadList', (/** @type {String[]} */ list) => {
       if (list?.length === 0 && !this.$['*--cfg-show-empty-list']) {
@@ -100,7 +160,8 @@ export class UploadList extends Block {
         return;
       }
 
-      this.updateButtonsState();
+      handleStateUpdate();
+
       this.set$({
         hasFiles: list.length > 0,
       });
@@ -151,7 +212,7 @@ UploadList.template = /*html*/ `
   <div></div>
   <button
     class="add-more-btn secondary-btn"
-    set="onclick: onAdd; @disabled: moreBtnDisabled"
+    set="onclick: onAdd; @disabled: addMoreBtnDisabled; @hidden: addMoreBtnHidden"
     l10n="add-more"></button>
   <button
     class="upload-btn primary-btn"
@@ -159,7 +220,7 @@ UploadList.template = /*html*/ `
     l10n="upload"></button>
   <button
     class="done-btn primary-btn"
-    set="@hidden: doneBtnHidden; onclick: onDone"
+    set="@hidden: doneBtnHidden; onclick: onDone;  @disabled: doneBtnDisabled"
     l10n="done"></button>
 </div>
 `;

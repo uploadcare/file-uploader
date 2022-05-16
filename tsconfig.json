@@ -11,7 +11,7 @@
     "alwaysStrict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "types": ["node"],
+    "types": ["node", "chai", "mocha"],
     "noEmit": true
   },
   "include": ["**/*.js"],

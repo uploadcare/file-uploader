@@ -14,6 +14,10 @@ uc-message-box {
   transition: calc(var(--transition-duration) * 2);
 }
 
+uc-message-box[inline] {
+  position: static;
+}
+
 uc-message-box:not([active]) {
   transform: translateY(10px);
   visibility: hidden;
