@@ -1,4 +1,5 @@
 import { BaseComponent } from '../../submodules/symbiote/core/symbiote.js';
+import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl, joinCdnOperations } from '../../utils/cdn-utils.js';
 import { PROPS_MAP } from './props-map.js';
 
 const CSS_PREF = '--uc-img-';
@@ -7,21 +8,6 @@ const HI_RES_K = 2;
 const ULTRA_RES_K = 3;
 const DEV_MODE =
   !window.location.host.trim() || window.location.host.includes(':') || window.location.hostname.includes('localhost');
-
-/**
- * @param {...String} args
- * @returns {any}
- */
-function join(...args) {
-  return args
-    .map((subStr) => {
-      if (subStr?.trim() && !subStr.endsWith('/')) {
-        subStr += '/';
-      }
-      return subStr;
-    })
-    .join('');
-}
 
 export class ImgBase extends BaseComponent {
   /**
@@ -71,13 +57,13 @@ export class ImgBase extends BaseComponent {
    *
    * @param {String} [size]
    */
-  _getOps(size = '') {
-    return join(
+  _getCdnModifiers(size = '') {
+    return createCdnUrlModifiers(
       //
-      size ? '-/resize/' + size : '',
-      this.$$('cdn-operations') ? '-/' + this.$$('cdn-operations') : '',
-      '-/format/' + this.$$('format'),
-      '-/quality/' + this.$$('quality')
+      size && `resize/${size}`,
+      this.$$('cdn-operations'),
+      `format/${this.$$('format')}`,
+      `quality/${this.$$('quality')}`
     );
   }
 
@@ -94,47 +80,44 @@ export class ImgBase extends BaseComponent {
       return this.$$('src');
     }
 
-    let ops = this._getOps(size);
+    let cdnModifiers = this._getCdnModifiers(size);
 
     // Alternative CDN name:
     if (this.$$('cdn-cname') && this.$$('uuid')) {
-      return join(
+      return createCdnUrl(
         //
-        this.$$('cdn-cname'),
-        this.$$('uuid'),
-        ops
+        createOriginalUrl(this.$$('cdn-cname'), this.$$('uuid')),
+        cdnModifiers
       );
     }
 
     // UUID only:
     if (this.$$('uuid')) {
-      return join(
+      return createCdnUrl(
         //
-        'https://ucarecdn.com/',
-        this.$$('uuid'),
-        ops
+        createOriginalUrl('https://ucarecdn.com/', this.$$('uuid')),
+        cdnModifiers
       );
     }
 
     // Alternative proxy name:
     if (this.$$('proxy-cname')) {
-      let base = join(
+      return createCdnUrl(
         //
         this.$$('proxy-cname'),
-        ops,
+        cdnModifiers,
         this._fmtAbs(this.$$('src'))
       );
-      return base + this._fmtAbs(this.$$('src'));
     }
 
     // Project pubkey only:
     if (this.$$('pubkey')) {
-      let base = join(
+      return createCdnUrl(
         //
         `https://${this.$$('pubkey')}.ucr.io/`,
-        ops
+        cdnModifiers,
+        this._fmtAbs(this.$$('src'))
       );
-      return base + this._fmtAbs(this.$$('src'));
     }
   }
 

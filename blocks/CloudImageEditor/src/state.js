@@ -1,5 +1,6 @@
+import { createCdnUrl, createCdnUrlModifiers } from '../../../utils/cdn-utils.js';
+import { transformationsToString } from './lib/cdnUtils.js';
 import { TRANSPARENT_PIXEL_SRC } from './lib/transparentPixelSrc.js';
-import { constructCdnUrl, transformationsToString } from './lib/cdnUtils.js';
 
 export function initState(fnCtx) {
   return {
@@ -43,9 +44,8 @@ export function initState(fnCtx) {
         return;
       }
       let originalUrl = fnCtx.$['*originalUrl'];
-      let cdnUrlModifiers = constructCdnUrl(null, transformationsToString(transformations));
-
-      let cdnUrl = constructCdnUrl(originalUrl, cdnUrlModifiers, 'preview');
+      let cdnUrlModifiers = createCdnUrlModifiers(transformationsToString(transformations));
+      let cdnUrl = createCdnUrl(originalUrl, createCdnUrlModifiers(cdnUrlModifiers, 'preview'));
 
       /** @type {import('./types.js').ApplyResult} */
       let eventData = {
