@@ -1,5 +1,5 @@
 import { BaseComponent } from '../../submodules/symbiote/core/symbiote.js';
-import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl, joinCdnOperations } from '../../utils/cdn-utils.js';
+import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../utils/cdn-utils.js';
 import { PROPS_MAP } from './props-map.js';
 
 const CSS_PREF = '--uc-img-';
