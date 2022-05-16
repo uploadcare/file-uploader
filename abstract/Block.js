@@ -226,7 +226,14 @@ export class Block extends BaseComponent {
   }
 
   openSystemDialog() {
-    let accept = this.$['*--cfg-img-only'] ? imageMimeTypes : this.$['*--cfg-accept'];
+    let accept = this.$['*--cfg-accept'] + (this.$['*--cfg-img-only'] ? imageMimeTypes : '');
+    if (this.$['*--cfg-accept'].length > 0 && !!this.$['*--cfg-img-only']) {
+      console.warn(
+        'There could be mistake.\n' +
+          'Both `--cfg-accept` and `--cfg-img-only` parameters are set.\n' +
+          'The value of `--cfg-accept` will be concatenated with the internal image mime types list.'
+      );
+    }
     this.fileInput = document.createElement('input');
     this.fileInput.type = 'file';
     this.fileInput.multiple = !!this.$['*--cfg-multiple'];
