@@ -1,5 +1,4 @@
-:where (.uc-wgt-cfg,
-.uc-wgt-common),
+:where(.uc-wgt-cfg, .uc-wgt-common),
 :host {
   --cfg-pubkey: 'YOUR_PUBLIC_KEY';
   --cfg-multiple: 1;
