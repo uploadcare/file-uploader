@@ -1,5 +1,6 @@
 import { OPERATIONS_ZEROS } from './lib/cdnUtils.js';
 
+/** @type {{ CROP: 'crop'; SLIDERS: 'sliders'; FILTERS: 'filters' }} */
 export const TabId = {
   CROP: 'crop',
   SLIDERS: 'sliders',

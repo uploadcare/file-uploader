@@ -1,6 +1,10 @@
 import { Block } from '../../abstract/Block.js';
 
+/** @typedef {{ '*selectedColor': String; inputOpacity: Number; onChange: () => void }} State */
+
+/** @extends {Block<State>} */
 export class Color extends Block {
+  /** @type {State} */
   init$ = {
     inputOpacity: 0,
     '*selectedColor': '#f00',
@@ -11,11 +15,11 @@ export class Color extends Block {
 }
 
 Color.template = /*html*/ `
-<input 
+<input
   ref="input"
-  type="color" 
+  type="color"
   set="oninput: onChange; style.opacity: inputOpacity">
-<div 
+<div
   class="current-color"
   set="style.backgroundColor: *selectedColor">
 </div>

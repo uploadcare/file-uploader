@@ -1,11 +1,28 @@
 import { Block } from '../../abstract/Block.js';
 import { fileCssBg } from '../svg-backgrounds/svg-backgrounds.js';
 
+/**
+ * @typedef {{
+ *   checkerboard: Boolean;
+ *   fileSize: String;
+ *   fileName: String;
+ *   cdnUrl: String;
+ *   errorTxt: String;
+ *   cloudEditBtnHidden: Boolean;
+ *   onNameInput: () => void;
+ *   onBack: () => void;
+ *   onRemove: () => void;
+ *   onCloudEdit: () => void;
+ * }} State
+ */
+
+/** @extends {Block<State & Partial<import('../ActivityCaption/ActivityCaption').State>>} */
 export class UploadDetails extends Block {
   activityType = Block.activities.DETAILS;
 
   pauseRender = true;
 
+  /** @type {State} */
   init$ = {
     checkerboard: false,
     fileSize: null,

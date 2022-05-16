@@ -2,10 +2,18 @@ import { Block } from '../../abstract/Block.js';
 
 const L10N_PREFIX = 'src-type-';
 
+/**
+ * @typedef {{
+ *   iconName: String;
+ * }} State
+ */
+
+/** @extends {Block<State>} */
 export class SourceBtn extends Block {
   /** @private */
   _registeredTypes = {};
 
+  /** @type {State} */
   init$ = {
     iconName: 'default',
   };

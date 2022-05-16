@@ -1,6 +1,18 @@
 import { Block } from '../../abstract/Block.js';
 
+/**
+ * @typedef {{
+ *   cssLeft: String;
+ *   caption: String;
+ *   barActive: Boolean;
+ *   '*rangeValue': Number;
+ *   onChange: () => void;
+ * }} State
+ */
+
+/** @extends {Block<State>} */
 export class Range extends Block {
+  /** @type {State} */
   init$ = {
     cssLeft: '50%',
     caption: 'CAPTION',
@@ -37,9 +49,9 @@ Range.template = /*html*/ `
   <div class="center"></div>
   <div class="caption" set="@text: caption">{{caption}}</div>
 </div>
-<input 
+<input
   type="range"
   ref="range"
-  list="range-values" 
+  list="range-values"
   set="@value: *rangeValue; oninput: onChange">
 `;

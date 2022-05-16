@@ -1,5 +1,12 @@
 import { Block } from '../../../abstract/Block.js';
 
+/**
+ * @typedef {{
+ *   dropAreaHidden: Boolean;
+ * }} State
+ */
+
+/** @extends {Block<State>} */
 export class FileUploaderInline extends Block {
   init$ = {
     dropAreaHidden: false,
@@ -30,5 +37,4 @@ FileUploaderInline.template = /*html*/ `
 <uc-confirmation-dialog></uc-confirmation-dialog>
 <uc-message-box></uc-message-box>
 <uc-progress-bar></uc-progress-bar>
-<uc-cloud-image-editor></uc-cloud-image-editor>
-`;
+<uc-cloud-image-editor></uc-cloud-image-editor>`;

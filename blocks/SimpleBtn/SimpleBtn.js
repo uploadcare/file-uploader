@@ -1,6 +1,15 @@
 import { Block } from '../../abstract/Block.js';
 
+/**
+ * @typedef {{
+ *   '*simpleButtonText': String;
+ *   onClick: () => void;
+ * }} State
+ */
+
+/** @extends {Block<State>} */
 export class SimpleBtn extends Block {
+  /** @type {State} */
   init$ = {
     '*simpleButtonText': '',
     onClick: () => {

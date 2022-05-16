@@ -4,9 +4,24 @@ import { registerMessage, unregisterMessage } from './messages.js';
 import { buildStyles } from './buildStyles.js';
 import { queryString } from './query-string.js';
 
+/**
+ * @typedef {Object} State
+ * @property {Number} counter
+ * @property {() => void} onDone
+ * @property {() => void} onCancel
+ */
+
+/**
+ * @typedef {State &
+ *   Partial<import('../ActivityCaption/ActivityCaption').State> &
+ *   Partial<import('../ActivityIcon/ActivityIcon').State>} ExternalSourceState
+ */
+
+/** @extends {Block<ExternalSourceState>} */
 export class ExternalSource extends Block {
   activityType = Block.activities.EXTERNAL;
 
+  /** @type {State} */
   init$ = {
     counter: 0,
     onDone: () => {
@@ -92,8 +107,8 @@ export class ExternalSource extends Block {
       public_key: pubkey,
       images_only: imagesOnly,
       pass_window_open: false,
-      session_key: this.$['*--cfg-remote-tab-session-key']
-    }
+      session_key: this.$['*--cfg-remote-tab-session-key'],
+    };
     return `https://social.uploadcare.com/window3/${externalSourceType}?${queryString(params)}`;
   }
 

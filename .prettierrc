@@ -1,4 +1,5 @@
 {
+  "parser": "babel",
   "plugins": ["prettier-plugin-jsdoc"],
   "singleQuote": true,
   "tabWidth": 2,

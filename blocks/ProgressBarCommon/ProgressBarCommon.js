@@ -1,6 +1,17 @@
 import { Block } from '../../abstract/Block.js';
 
+/**
+ * @typedef {{
+ *   visible: Boolean;
+ *   unknown: Boolean;
+ *   value: Number;
+ *   '*commonProgress': Number;
+ * }} State
+ */
+
+/** @extends {Block<State>} */
 export class ProgressBarCommon extends Block {
+  /** @type {State} */
   init$ = {
     visible: false,
     unknown: false,

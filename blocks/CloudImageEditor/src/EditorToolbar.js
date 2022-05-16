@@ -20,7 +20,7 @@ function renderTabToggle(id) {
 /** @param {String} id */
 function renderTabContent(id) {
   return /*html*/ `
-    <uc-presence-toggle class="tab-content" set="visible: presence.tabContent${id}; styles: presence.tabContentStyles">
+    <uc-presence-toggle class="tab-content" set="visible: presence.tabContent.${id}; styles: presence.tabContentStyles">
         <uc-editor-scroller hidden-scrollbar>
           <div class="controls-list_align">
             <div class="controls-list_inner" ref="controls-list-${id}">
@@ -31,10 +31,44 @@ function renderTabContent(id) {
   `;
 }
 
+/**
+ * @typedef {{
+ *   '*sliderEl': import('./EditorSlider.js').EditorSlider;
+ *   '*loadingOperations': import('./types.js').LoadingOperations;
+ *   '*showSlider': Boolean;
+ *   '*editorTransformations': import('./types.js').Transformations;
+ *   '*currentFilter': String;
+ *   '*currentOperation': String;
+ *   showLoader: Boolean;
+ *   tabId: String;
+ *   filters: String[];
+ *   colorOperations: String[];
+ *   cropOperations: String[];
+ *   '*operationTooltip': String;
+ *   'l10n.cancel': String;
+ *   'l10n.apply': String;
+ *   'presence.mainToolbar': Boolean;
+ *   'presence.subToolbar': Boolean;
+ *   'presence.tabContent.crop': Boolean;
+ *   'presence.tabContent.sliders': Boolean;
+ *   'presence.tabContent.filters': Boolean;
+ *   'presence.subTopToolbarStyles': import('./elements/presence-toggle/PresenceToggle.js').Style;
+ *   'presence.subBottomToolbarStyles': import('./elements/presence-toggle/PresenceToggle.js').Style;
+ *   'presence.tabContentStyles': import('./elements/presence-toggle/PresenceToggle.js').Style;
+ *   'on.cancel': () => void;
+ *   'on.apply': () => void;
+ *   'on.applySlider': () => void;
+ *   'on.cancelSlider': () => void;
+ *   'on.clickTab': () => void;
+ * }} State
+ */
+
+/** @extends {Block<State & Partial<import('./CloudEditor.js').State>>} */
 export class EditorToolbar extends Block {
   constructor() {
     super();
 
+    /** @type {State} */
     this.init$ = {
       '*sliderEl': null,
       /** @type {import('./types.js').LoadingOperations} */
@@ -56,9 +90,9 @@ export class EditorToolbar extends Block {
 
       'presence.mainToolbar': true,
       'presence.subToolbar': false,
-      [`presence.tabContent${TabId.CROP}`]: false,
-      [`presence.tabContent${TabId.SLIDERS}`]: false,
-      [`presence.tabContent${TabId.FILTERS}`]: false,
+      'presence.tabContent.crop': false,
+      'presence.tabContent.sliders': false,
+      'presence.tabContent.filters': false,
       'presence.subTopToolbarStyles': {
         hidden: 'sub-toolbar--top-hidden',
         visible: 'sub-toolbar--visible',
@@ -183,7 +217,7 @@ export class EditorToolbar extends Block {
   /**
    * @private
    * @param {String} id
-   * @param {{ fromViewer?: boolean }} options
+   * @param {{ fromViewer?: Boolean }} options
    */
   _activateTab(id, { fromViewer }) {
     this.$.tabId = id;
@@ -208,7 +242,7 @@ export class EditorToolbar extends Block {
       } else {
         this._unmountTabControls(tabId);
       }
-      this.$[`presence.tabContent${tabId}`] = isCurrentTab;
+      this.$[`presence.tabContent.${tabId}`] = isCurrentTab;
     }
   }
 
