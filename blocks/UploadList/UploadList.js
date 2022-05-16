@@ -177,7 +177,7 @@ export class UploadList extends Block {
     this.sub('*--cfg-multiple-min', handleStateUpdate);
     this.sub('*--cfg-multiple-max', handleStateUpdate);
 
-    // TODO: could be perfonce issue on many file
+    // TODO: could be performance issue on many files
     // there is no need to update buttons state on every progress tick
     this.uploadCollection.observe(() => {
       handleStateUpdate();
