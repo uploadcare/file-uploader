@@ -1,5 +1,6 @@
 import { BaseComponent, Data, TypedCollection } from '../submodules/symbiote/core/symbiote.js';
 import { applyTemplateData } from '../utils/applyTemplateData.js';
+import { mergeMimeTypes } from '../utils/mergeMimeTypes.js';
 import { imageMimeTypes } from './imageMimeTypes.js';
 import { l10nProcessor } from './l10nProcessor.js';
 import { uploadEntrySchema } from './uploadEntrySchema.js';
@@ -226,10 +227,10 @@ export class Block extends BaseComponent {
   }
 
   openSystemDialog() {
-    let accept = this.$['*--cfg-accept'] + (this.$['*--cfg-img-only'] ? imageMimeTypes : '');
-    if (this.$['*--cfg-accept'].length > 0 && !!this.$['*--cfg-img-only']) {
+    let accept = mergeMimeTypes(this.$['*--cfg-img-only'] && imageMimeTypes.join(','), this.$['*--cfg-accept']);
+    if (this.$['*--cfg-accept'] && !!this.$['*--cfg-img-only']) {
       console.warn(
-        'There could be mistake.\n' +
+        'There could be a mistake.\n' +
           'Both `--cfg-accept` and `--cfg-img-only` parameters are set.\n' +
           'The value of `--cfg-accept` will be concatenated with the internal image mime types list.'
       );

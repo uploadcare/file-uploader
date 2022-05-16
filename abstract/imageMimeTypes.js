@@ -12,4 +12,4 @@ export const imageMimeTypes = [
   '.heics',
   '.avif',
   '.avifs',
-].join(',');
+];
