@@ -197,7 +197,7 @@ UploadDetails.template = /*html*/ `
   <button
     class="back-btn primary-btn"
     set="onclick: onBack">
-    <span l10n="done"></span>
+    <span l10n="ok"></span>
   </button>
 </div>
 `;
