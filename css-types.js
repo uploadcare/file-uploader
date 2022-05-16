@@ -8,12 +8,13 @@
  *   '*--cfg-store': Number;
  *   '*--cfg-camera-mirror': Number;
  *   '*--cfg-source-list': String;
- *   '*--cfg-max-files': Number;
  *   '*--cfg-max-local-file-size-bytes': Number;
  *   '*--cfg-thumb-size': Number;
  *   '*--cfg-show-empty-list': Number;
  *   '*--cfg-use-local-image-editor': Number;
  *   '*--cfg-use-cloud-image-editor': Number;
+ *   '*--cfg-multiple-min': Number;
+ *   '*--cfg-multiple-max': Number;
  *   '*--cfg-modal-scroll-lock': Number;
  *   '*--cfg-modal-backdrop-strokes': Number;
  *   '*--cfg-source-list-wrap': Number;

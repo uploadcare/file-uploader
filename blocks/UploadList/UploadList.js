@@ -12,10 +12,12 @@ import { UiMessage } from '../MessageBox/MessageBox.js';
 /**
  * @typedef {{
  *   doneBtnHidden: Boolean;
+ *   doneBtnDisabled: Boolean;
  *   uploadBtnHidden: Boolean;
  *   uploadBtnDisabled: Boolean;
+ *   addMoreBtnDisabled: Boolean;
+ *   addMoreBtnHidden: Boolean;
  *   hasFiles: Boolean;
- *   moreBtnDisabled: Boolean;
  *   onAdd: () => void;
  *   onUpload: () => void;
  *   onDone: () => void;
