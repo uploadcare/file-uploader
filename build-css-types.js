@@ -4,11 +4,7 @@ import prettier from 'prettier';
 
 const input = ['./blocks/themes/uc-basic/config.css'];
 
-let base = {
-  '--cfg-pubkey': 'String',
-};
-
-let types = new Map(Object.entries(base));
+let types = new Map();
 
 for (let filepath of input) {
   let css = fs.readFileSync(filepath).toString();

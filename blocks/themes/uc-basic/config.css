@@ -1,6 +1,7 @@
 .uc-wgt-cfg,
 .uc-wgt-common,
 :host {
+  --cfg-pubkey: 'YOUR_PUBLIC_KEY';
   --cfg-multiple: 1;
   --cfg-confirm-upload: 1;
   --cfg-img-only: 0;
