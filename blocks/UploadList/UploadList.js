@@ -3,9 +3,33 @@ import { FileItem } from '../FileItem/FileItem.js';
 import { UiConfirmation } from '../ConfirmationDialog/ConfirmationDialog.js';
 import { UiMessage } from '../MessageBox/MessageBox.js';
 
+/**
+ * @typedef {Partial<import('../FileItem/FileItem.js').State> &
+ *   Partial<import('../ActivityIcon/ActivityIcon.js').State> &
+ *   Partial<import('../ActivityCaption/ActivityCaption.js').State>} ExternalState
+ */
+
+/**
+ * @typedef {{
+ *   doneBtnHidden: Boolean;
+ *   doneBtnDisabled: Boolean;
+ *   uploadBtnHidden: Boolean;
+ *   uploadBtnDisabled: Boolean;
+ *   addMoreBtnDisabled: Boolean;
+ *   addMoreBtnHidden: Boolean;
+ *   hasFiles: Boolean;
+ *   onAdd: () => void;
+ *   onUpload: () => void;
+ *   onDone: () => void;
+ *   onCancel: () => void;
+ * }} State
+ */
+
+/** @extends {Block<State & ExternalState>} */
 export class UploadList extends Block {
   activityType = Block.activities.UPLOAD_LIST;
 
+  /** @type {State} */
   init$ = {
     doneBtnHidden: false,
     doneBtnDisabled: false,

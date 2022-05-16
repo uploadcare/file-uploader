@@ -1,5 +1,6 @@
 import { getDropFiles } from './getDropFiles.js';
 
+/** @enum {Number} */
 export const DropzoneState = {
   ACTIVE: 0,
   INACTIVE: 1,
@@ -78,7 +79,7 @@ export function addDropzone(desc) {
       setState(DropzoneState.ACTIVE);
     }
 
-    /** @type {any} [number, number] */
+    /** @type {[Number, Number]} */
     let dragPoint = [e.x, e.y];
     let targetRect = desc.element.getBoundingClientRect();
     let nearness = Math.floor(distance(dragPoint, targetRect));

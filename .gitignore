@@ -5,3 +5,4 @@ web
 **/*.d.ts
 **/*.d.ts.map
 !submodules/upload-client/upload-client.d.ts
+!global.d.ts

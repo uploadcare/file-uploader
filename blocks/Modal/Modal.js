@@ -1,7 +1,17 @@
 import { Block } from '../../abstract/Block.js';
 import { strokesCssBg } from '../svg-backgrounds/svg-backgrounds.js';
 
+/**
+ * @typedef {{
+ *   '*modalActive': Boolean;
+ *   '*modalHeaderHidden': Boolean;
+ *   closeClicked: () => void;
+ * }} State
+ */
+
+/** @extends {Block<State>} */
 export class Modal extends Block {
+  /** @type {State} */
   init$ = {
     '*modalActive': false,
     '*modalHeaderHidden': false,

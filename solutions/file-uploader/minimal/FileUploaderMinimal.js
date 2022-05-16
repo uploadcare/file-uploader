@@ -1,5 +1,12 @@
 import { Block } from '../../../abstract/Block.js';
 
+/**
+ * @typedef {{
+ *   selectClicked: () => void;
+ * }} State
+ */
+
+/** @extends {Block<State>} */
 export class FileUploaderMinimal extends Block {
   init$ = {
     selectClicked: () => {

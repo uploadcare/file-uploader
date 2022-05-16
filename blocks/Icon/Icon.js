@@ -1,6 +1,17 @@
 import { Block } from '../../abstract/Block.js';
 
+/**
+ * @typedef {{
+ *   name: String;
+ *   path: String;
+ *   size: String;
+ *   viewBox: String;
+ * }} State
+ */
+
+/** @extends {Block<State>} */
 export class Icon extends Block {
+  /** @type {State} */
   init$ = {
     name: '',
     path: '',

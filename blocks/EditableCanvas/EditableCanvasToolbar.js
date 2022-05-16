@@ -15,15 +15,16 @@ const FS_ICON = {
 };
 
 /**
- * @typedef {any} RefMap
- * @property {import('./EditableCanvas.js').EditableCanvas} parent
- * @property {HTMLCanvasElement} canvas
- * @property {CanvasRenderingContext2D} canvCtx
- * @property {SVGElement} svg
- * @property {SVGGElement} svgGroup
- * @property {SVGImageElement} svgImg
+ * @typedef {{
+ *   fsIcon: String;
+ *   rangeActive: Boolean;
+ *   rangeCaption: String;
+ *   onBtnClick: (e: MouseEvent) => void;
+ *   onColor: () => void;
+ * }} State
  */
 
+/** @extends {Block<State & Partial<import('../Range/Range').State & import('../Color/Color.js').State>>} */
 export class EditorToolbar extends Block {
   get actionsMap() {
     return {
@@ -87,6 +88,7 @@ export class EditorToolbar extends Block {
     };
   }
 
+  /** @type {State} */
   init$ = {
     fsIcon: FS_ICON.FS,
     rangeActive: false,
@@ -102,7 +104,7 @@ export class EditorToolbar extends Block {
         '*rangeValue': 100,
       });
       /** @type {HTMLButtonElement} */
-      let btnEl = e.target.closest('[action]');
+      let btnEl = /** @type {Element} */ (e.target).closest('[action]');
       if (btnEl) {
         this.buttons.add(btnEl);
         this.buttons.forEach((btn) => {
@@ -128,7 +130,7 @@ export class EditorToolbar extends Block {
   editor = null;
 
   initCallback() {
-    this.defineAccessor('refMap', (/** @type {RefMap} */ rMap) => {
+    this.defineAccessor('refMap', (/** @type {import('./EditableCanvas.js').RefMap} */ rMap) => {
       if (!rMap) {
         return;
       }

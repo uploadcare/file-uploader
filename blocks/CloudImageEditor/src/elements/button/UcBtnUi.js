@@ -1,6 +1,16 @@
 import { Block } from '../../../../../abstract/Block.js';
 import { classNames } from '../../lib/classNames.js';
 
+/**
+ * @typedef {{
+ *   text: String;
+ *   icon: String;
+ *   iconCss: String;
+ *   theme: String;
+ * }} State
+ */
+
+/** @extends {Block<State>} */
 export class UcBtnUi extends Block {
   constructor() {
     super();
@@ -38,11 +48,10 @@ export class UcBtnUi extends Block {
     super.initCallback();
 
     this.sub('icon', (iconName) => {
-        this._iconSingle = !this.$.text;
-        this._iconHidden = !iconName;
-        this.$.iconCss = this._iconCss();
-      }
-    );
+      this._iconSingle = !this.$.text;
+      this._iconHidden = !iconName;
+      this.$.iconCss = this._iconCss();
+    });
 
     this.sub('theme', (theme) => {
       if (theme !== 'custom') {

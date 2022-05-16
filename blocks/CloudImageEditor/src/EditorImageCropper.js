@@ -55,6 +55,17 @@ function validateCrop(crop) {
   return shouldMatch.every((matcher) => matcher(crop));
 }
 
+/**
+ * @typedef {{
+ *   image: HTMLImageElement;
+ *   '*padding': Number;
+ *   '*operations': Operations;
+ *   '*imageBox': import('./types.js').Rectangle;
+ *   '*cropBox': import('./types.js').Rectangle;
+ * }} State
+ */
+
+/** @extends {Block<State>} */
 export class EditorImageCropper extends Block {
   init$ = {
     image: null,
@@ -65,14 +76,14 @@ export class EditorImageCropper extends Block {
       mirror: false,
       flip: false,
     },
-    /** @type {import('./types.js).Rectangle} */
+    /** @type {import('./types.js').Rectangle} */
     '*imageBox': {
       x: 0,
       y: 0,
       width: 0,
       height: 0,
     },
-    /** @type {import('./types.js).Rectangle} */
+    /** @type {import('./types.js').Rectangle} */
     '*cropBox': {
       x: 0,
       y: 0,

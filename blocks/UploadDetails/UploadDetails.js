@@ -1,9 +1,29 @@
 import { Block } from '../../abstract/Block.js';
 import { fileCssBg } from '../svg-backgrounds/svg-backgrounds.js';
 
+/**
+ * @typedef {{
+ *   checkerboard: Boolean;
+ *   localImageEditDisabled: Boolean;
+ *   cloudImageEditDisabled: Boolean;
+ *   fileSize: String;
+ *   fileName: String;
+ *   notUploaded: Boolean;
+ *   imageUrl: String;
+ *   errorTxt: String;
+ *   editBtnHidden: Boolean;
+ *   onNameInput: () => void;
+ *   onBack: () => void;
+ *   onRemove: () => void;
+ *   onEdit: () => void;
+ * }} State
+ */
+
+/** @extends {Block<State & Partial<import('../ActivityCaption/ActivityCaption').State>>} */
 export class UploadDetails extends Block {
   activityType = Block.activities.DETAILS;
 
+  /** @type {State} */
   init$ = {
     checkerboard: false,
     localImageEditDisabled: true,
@@ -40,13 +60,13 @@ export class UploadDetails extends Block {
   }
 
   initCallback() {
-    this.bindCssData('--cfg-use-local-image-editor');
-    this.sub('*--cfg-use-local-image-editor', (val) => {
+    let useLocalImageEditor = this.bindCssData('--cfg-use-local-image-editor');
+    this.sub(useLocalImageEditor, (val) => {
       this.$.localImageEditDisabled = !val;
     });
 
-    this.bindCssData('--cfg-use-cloud-image-editor');
-    this.sub('*--cfg-use-cloud-image-editor', (val) => {
+    let useCloudImageEditor = this.bindCssData('--cfg-use-cloud-image-editor');
+    this.sub(useCloudImageEditor, (val) => {
       this.$.cloudImageEditDisabled = !val;
     });
 

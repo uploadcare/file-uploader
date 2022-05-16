@@ -1,6 +1,14 @@
 import { applyClassNames } from '../../lib/classNames.js';
 import { Block } from '../../../../../abstract/Block.js';
 
+/**
+ * @typedef {Object} Style
+ * @property {String} [transition]
+ * @property {String} [visible]
+ * @property {String} [hidden]
+ */
+
+/** @type {Style} */
 const DEFAULT_STYLE = {
   transition: 'transition',
   visible: 'visible',

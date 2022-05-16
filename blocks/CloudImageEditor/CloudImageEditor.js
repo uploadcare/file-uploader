@@ -1,9 +1,17 @@
 import { Block } from '../../abstract/Block.js';
 import { CloudEditor } from './index.js';
 
+/**
+ * @typedef {{
+ *   uuid: String;
+ * }} State
+ */
+
+/** @extends {Block<State>} */
 export class CloudImageEditor extends Block {
   activityType = Block.activities.CLOUD_IMG_EDIT;
 
+  /** @type {State} */
   init$ = {
     uuid: null,
   };
@@ -39,8 +47,8 @@ export class CloudImageEditor extends Block {
     this.entry.setMultipleValues({
       cdnUrl: result.cdnUrl,
       cdnUrlModifiers: result.cdnUrlModifiers,
-      editorTransformations: result.transformations
-    })
+      editorTransformations: result.transformations,
+    });
     this.historyBack();
   }
 
