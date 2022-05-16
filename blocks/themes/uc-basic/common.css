@@ -14,7 +14,7 @@
   box-sizing: border-box;
 }
 
-:where(.uc-wgt-theme, .uc-wgt-common, :host) [hidden],
+:where(.uc-wgt-theme, .uc-wgt-common) [hidden],
 :host [hidden] {
   display: none !important;
 }
@@ -24,7 +24,7 @@
   display: none;
 }
 
-:where(.uc-wgt-theme, .uc-wgt-common, :host) button,
+:where(.uc-wgt-theme, .uc-wgt-common) button,
 :host button {
   display: flex;
   align-items: center;
@@ -42,14 +42,14 @@
 }
 
 @media only screen and (max-width: 800px) {
-  :where(.uc-wgt-theme, .uc-wgt-common, :host) button,
+  :where(.uc-wgt-theme, .uc-wgt-common) button,
   :host button {
     padding-right: 1em;
     padding-left: 1em;
   }
 }
 
-:where(.uc-wgt-theme, .uc-wgt-common, :host) button.primary-btn,
+:where(.uc-wgt-theme, .uc-wgt-common) button.primary-btn,
 :host button.primary-btn {
   color: var(--clr-btn-txt-primary);
   background-color: var(--clr-btn-bgr-primary);
