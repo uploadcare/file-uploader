@@ -1,7 +1,7 @@
 # uc-uploader
 
 Here you can find the set of ready-made uploaders for the most frequent file uploading cases.
-Each uploader is highly customizable on its own and could be used as the custom build reference, but you can use it "as is".
+Each uploader is highly customizable on its own and could be used as a custom build reference, but you can use it as is.
 
 Uploader builds list:
 
