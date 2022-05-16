@@ -1,5 +1,6 @@
 import { BaseComponent, Data, TypedCollection } from '../submodules/symbiote/core/symbiote.js';
 import { applyTemplateData } from '../utils/applyTemplateData.js';
+import { imageMimeTypes } from './imageMimeTypes.js';
 import { l10nProcessor } from './l10nProcessor.js';
 import { uploadEntrySchema } from './uploadEntrySchema.js';
 
@@ -134,20 +135,21 @@ export class Block extends BaseComponent {
   /** @private */
   __bindBasicCssData() {
     if (!Block._cssDataBindingsList.includes(this.ctxName)) {
-      let unprefixedCfgProps = [
-        'pubkey',
-        'store',
-        'multiple',
-        'multiple-min',
-        'multiple-max',
-        'max-files',
-        'accept',
-        'confirm-upload',
-        'init-activity',
-        'done-activity',
+      let cfgProps = [
+        '--cfg-pubkey',
+        '--cfg-store',
+        '--cfg-multiple',
+        '--cfg-multiple-min',
+        '--cfg-multiple-max',
+        '--cfg-max-files',
+        '--cfg-accept',
+        '--cfg-img-only',
+        '--cfg-confirm-upload',
+        '--cfg-init-activity',
+        '--cfg-done-activity',
       ];
-      unprefixedCfgProps.forEach((prop) => {
-        this.bindCssData(`--cfg-${prop}`);
+      cfgProps.forEach((prop) => {
+        this.bindCssData(prop);
       }, true);
       Block._cssDataBindingsList.push(this.ctxName);
     }
@@ -224,10 +226,11 @@ export class Block extends BaseComponent {
   }
 
   openSystemDialog() {
+    let accept = this.$['*--cfg-img-only'] ? imageMimeTypes : this.$['*--cfg-accept'];
     this.fileInput = document.createElement('input');
     this.fileInput.type = 'file';
     this.fileInput.multiple = !!this.$['*--cfg-multiple'];
-    this.fileInput.accept = this.$['*--cfg-accept'];
+    this.fileInput.accept = accept;
     this.fileInput.dispatchEvent(new MouseEvent('click'));
     this.fileInput.onchange = () => {
       this.addFiles([...this.fileInput['files']]);
