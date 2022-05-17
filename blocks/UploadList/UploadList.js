@@ -160,6 +160,7 @@ export class UploadList extends Block {
       uploadBtnDisabled: summary.uploading > 0 || !fitCountRestrictions || !fitValidation,
 
       addMoreBtnDisabled: tooMany || exact,
+      addMoreBtnHidden: exact && !this.$['*--cfg-multiple'],
     });
 
     if (!this.$['*--cfg-confirm-upload'] && fitCountRestrictions && allUploaded) {
