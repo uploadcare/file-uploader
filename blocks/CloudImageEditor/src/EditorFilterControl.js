@@ -1,7 +1,7 @@
 import { createCdnUrl, createCdnUrlModifiers } from '../../../utils/cdn-utils.js';
 import { EditorButtonControl } from './EditorButtonControl.js';
 import { FAKE_ORIGINAL_FILTER } from './EditorSlider.js';
-import { COMMON_OPERATIONS, transformationsToString } from './lib/cdnUtils.js';
+import { COMMON_OPERATIONS, transformationsToOperations } from './lib/transformationUtils.js';
 import { preloadImage } from './lib/preloadImage.js';
 
 /**
@@ -49,7 +49,7 @@ export class EditorFilterControl extends EditorButtonControl {
       this._originalUrl,
       createCdnUrlModifiers(
         COMMON_OPERATIONS,
-        transformationsToString(transformations),
+        transformationsToOperations(transformations),
         `quality/${quality}`,
         `scale_crop/${size}x${size}/center`
       )

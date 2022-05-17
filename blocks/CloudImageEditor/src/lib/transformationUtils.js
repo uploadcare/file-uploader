@@ -18,7 +18,7 @@ export const OPERATIONS_ZEROS = {
  * @param {Number | String | object} options
  * @returns {String}
  */
-function operationToStr(operation, options) {
+function transformationToStr(operation, options) {
   if (typeof options === 'number') {
     return OPERATIONS_ZEROS[operation] !== options ? `${operation}/${options}` : '';
   }
@@ -66,14 +66,14 @@ const ORDER = [
  * @param {import('../types').Transformations} transformations
  * @returns {String}
  */
-export function transformationsToString(transformations) {
+export function transformationsToOperations(transformations) {
   return joinCdnOperations(
     ...ORDER.filter(
       (operation) => typeof transformations[operation] !== 'undefined' && transformations[operation] !== null
     )
       .map((operation) => {
         let options = transformations[operation];
-        return operationToStr(operation, options);
+        return transformationToStr(operation, options);
       })
       .filter((str) => !!str)
   );

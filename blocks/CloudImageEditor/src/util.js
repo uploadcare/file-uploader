@@ -1,5 +1,5 @@
 import { createCdnUrl, createCdnUrlModifiers } from '../../../utils/cdn-utils.js';
-import { COMMON_OPERATIONS, transformationsToString } from './lib/cdnUtils.js';
+import { COMMON_OPERATIONS, transformationsToOperations } from './lib/transformationUtils.js';
 
 export function viewerImageSrc(originalUrl, width, transformations) {
   const MAX_CDN_DIMENSION = 3000;
@@ -11,7 +11,7 @@ export function viewerImageSrc(originalUrl, width, transformations) {
     originalUrl,
     createCdnUrlModifiers(
       COMMON_OPERATIONS,
-      transformationsToString(transformations),
+      transformationsToOperations(transformations),
       `quality/${quality}`,
       `stretch/off/-/resize/${size}x`
     )
