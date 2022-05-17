@@ -164,7 +164,7 @@ To use an adaptive image as an element's background, you can use `is-background-
 ## Development mode (relative image path)
 
 When you develop your application, you can use a local development server and relative paths in your project structure for the images. In that case, Uploadcare Proxy service would be disabled for your development environment, and you will see original local images in your application until you deploy it:
-  
+
 ```html
 <uc-img src="../LOCAL_IMAGE_PATH"></uc-img>
 ```

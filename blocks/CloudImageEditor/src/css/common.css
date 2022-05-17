@@ -147,8 +147,8 @@ uc-cloud-editor > .wrapper {
 
 uc-cloud-editor > .wrapper > .viewport {
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   overflow: hidden;
 }
 
@@ -217,8 +217,8 @@ uc-cloud-editor > .wrapper > .toolbar > .toolbar_content {
 
 uc-cloud-editor > .wrapper > .toolbar > .toolbar_content.toolbar_content__viewer {
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
   height: var(--size-panel-heading);
   padding-right: var(--l-toolbar-horizontal-padding);
   padding-left: var(--l-toolbar-horizontal-padding);
@@ -260,14 +260,14 @@ uc-cloud-editor > .wrapper > .network_problems_splash > .network_problems_conten
   display: flex;
   flex: 1;
   flex-direction: column;
-  align-items: center;
   justify-content: center;
+  align-items: center;
 }
 
 uc-cloud-editor > .wrapper > .network_problems_splash > .network_problems_content > .network_problems_icon {
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   width: 40px;
   height: 40px;
   color: rgba(var(--rgb-text-base), 0.6);
@@ -282,8 +282,8 @@ uc-cloud-editor > .wrapper > .network_problems_splash > .network_problems_conten
 
 uc-cloud-editor > .wrapper > .network_problems_splash > .network_problems_footer {
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   height: var(--size-panel-heading);
 }
 
@@ -547,8 +547,8 @@ uc-editor-scroller {
 
 uc-editor-slider {
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   width: 100%;
   height: 66px;
 }
@@ -613,8 +613,8 @@ uc-editor-toolbar > .toolbar-container > .sub-toolbar.sub-toolbar--bottom-hidden
 
 uc-editor-toolbar > .toolbar-container > .sub-toolbar > .controls-row {
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
   padding-right: var(--l-controls-padding);
   padding-left: var(--l-controls-padding);
 }
@@ -697,8 +697,8 @@ uc-editor-toolbar .controls-list_last-item {
 uc-editor-toolbar .filter-tooltip_container {
   position: absolute;
   display: flex;
-  align-items: flex-start;
   justify-content: center;
+  align-items: flex-start;
   width: 100%;
   height: 100%;
 }
@@ -770,8 +770,8 @@ uc-btn-ui .text {
 
 uc-btn-ui .icon {
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   color: rgba(var(--color-effect), var(--opacity-effect));
   filter: brightness(var(--filter-effect));
   transition: var(--l-transition-effect);
@@ -878,8 +878,8 @@ uc-slider-ui {
 
   position: relative;
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   width: 100%;
   height: calc(var(--l-thumb-size) + (var(--l-zero-dot-size) + var(--l-zero-dot-offset)) * 2);
 }
@@ -899,8 +899,8 @@ uc-slider-ui .thumb {
 uc-slider-ui .steps {
   position: absolute;
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
   box-sizing: border-box;
   width: 100%;
   height: 100%;
@@ -966,8 +966,8 @@ ctx-provider {
   --color-primary-accent: blue;
 
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   width: 190px;
   height: 40px;
   padding-right: 10px;

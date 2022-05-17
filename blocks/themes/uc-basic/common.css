@@ -27,8 +27,8 @@
 :where(.uc-wgt-theme, .uc-wgt-common) button,
 :host button {
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   height: var(--ui-size);
   padding-right: 1.4em;
   padding-left: 1.4em;
@@ -131,4 +131,10 @@
 :host input[type='text']:focus {
   border-color: var(--clr-accent);
   outline: none;
+}
+
+:where(.uc-wgt-theme, .uc-wgt-common) input[disabled],
+:host input[disabled] {
+  opacity: 0.6;
+  pointer-events: none;
 }

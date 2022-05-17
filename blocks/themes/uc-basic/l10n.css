@@ -16,6 +16,7 @@
   --l10n-edit-detail: 'Details';
   --l10n-back: 'Back';
   --l10n-done: 'Done';
+  --l10n-ok: 'Ok';
   --l10n-remove-from-list: 'Remove';
   --l10n-no: 'No';
   --l10n-yes: 'Yes';
@@ -26,6 +27,7 @@
   --l10n-validation-error: 'Validation error';
   --l10n-no-files: 'No files selected';
   --l10n-browse: 'Browse';
+  --l10n-not-uploaded-yet: 'Not uploaded yet...';
 
   --l10n-src-type-local: 'Local file';
   --l10n-src-type-from-url: 'From URL';

@@ -62,3 +62,11 @@ uc-upload-details .info-block > .info-block_name {
   color: var(--clr-txt-light);
   font-size: 0.8em;
 }
+
+uc-upload-details .cdn-link[disabled] {
+  pointer-events: none;
+}
+uc-upload-details .cdn-link[disabled]::before {
+  content: var(--l10n-not-uploaded-yet);
+  filter: grayscale(1);
+}
