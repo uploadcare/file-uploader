@@ -21,12 +21,12 @@ if (!DOC_READY) {
  * @typedef {{
  *   '*ctxTargetsRegistry': Set<any>;
  *   '*currentActivity': String;
- *   '*currentActivityParams': { [key: String]: any };
+ *   '*currentActivityParams': { [key: String]: unknown };
  *   '*history': String[];
  *   '*commonProgress': Number;
- *   '*uploadList': any[];
- *   '*outputData': any[] | null;
- *   '*focusedEntry': any | null;
+ *   '*uploadList': String[];
+ *   '*outputData': unknown[] | null;
+ *   '*focusedEntry': unknown | null;
  *   '*uploadCollection': TypedCollection;
  *   [key: String]: unknown;
  * }} BlockState
@@ -148,6 +148,7 @@ export class Block extends BaseComponent {
         '--cfg-confirm-upload',
         '--cfg-init-activity',
         '--cfg-done-activity',
+        '--cfg-max-local-file-size-bytes',
       ];
       cfgProps.forEach((prop) => {
         this.bindCssData(prop);

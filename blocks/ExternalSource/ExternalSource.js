@@ -5,6 +5,11 @@ import { buildStyles } from './buildStyles.js';
 import { queryString } from './query-string.js';
 
 /**
+ * @typedef {Object} ActivityParams
+ * @property {String} externalSourceType
+ */
+
+/**
  * @typedef {Object} State
  * @property {Number} counter
  * @property {() => void} onDone
@@ -39,7 +44,7 @@ export class ExternalSource extends Block {
     this.bindCssData('--cfg-remote-tab-session-key');
 
     this.registerActivity(this.activityType, () => {
-      let { externalSourceType } = this.activityParams;
+      let { externalSourceType } = /** @type {ActivityParams} */ (this.activityParams);
 
       this.set$({
         '*activityCaption': `${externalSourceType[0].toUpperCase()}${externalSourceType.slice(1)}`,

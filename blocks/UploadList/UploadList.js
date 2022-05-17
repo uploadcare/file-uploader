@@ -122,6 +122,12 @@ export class UploadList extends Block {
   }
 
   /** @private */
+  _handleCollectionUpdate() {
+    this._updateButtonsState();
+    this._updateCountLimitMessage();
+  }
+
+  /** @private */
   _updateButtonsState() {
     let itemIds = this.uploadCollection.items();
     let filesCount = itemIds.length;
@@ -129,6 +135,7 @@ export class UploadList extends Block {
       total: filesCount,
       uploaded: 0,
       uploading: 0,
+      validationFailed: 0,
     };
     for (let id of itemIds) {
       let item = this.uploadCollection.read(id);
@@ -137,18 +144,23 @@ export class UploadList extends Block {
       } else if (item.getValue('isUploading')) {
         summary.uploading += 1;
       }
+      if (item.getValue('validationErrorMsg')) {
+        summary.validationFailed += 1;
+      }
     }
     let allUploaded = summary.total === summary.uploaded;
     let { passed: fitCountRestrictions, tooMany, exact } = this._validateFilesCount();
+    let fitValidation = summary.validationFailed === 0;
 
     this.set$({
       doneBtnHidden: !allUploaded,
-      doneBtnDisabled: !fitCountRestrictions,
+      doneBtnDisabled: !fitCountRestrictions || !fitValidation,
 
       uploadBtnHidden: allUploaded,
-      uploadBtnDisabled: summary.uploading > 0 || !fitCountRestrictions,
+      uploadBtnDisabled: summary.uploading > 0 || !fitCountRestrictions || !fitValidation,
 
       addMoreBtnDisabled: tooMany || exact,
+      addMoreBtnHidden: exact && !this.$['*--cfg-multiple'],
     });
 
     if (!this.$['*--cfg-confirm-upload'] && fitCountRestrictions && allUploaded) {
@@ -168,29 +180,24 @@ export class UploadList extends Block {
       });
     });
 
-    const handleStateUpdate = () => {
-      this._updateButtonsState();
-      this._updateCountLimitMessage();
-    };
-
-    this.sub('*--cfg-multiple', handleStateUpdate);
-    this.sub('*--cfg-multiple-min', handleStateUpdate);
-    this.sub('*--cfg-multiple-max', handleStateUpdate);
+    this.sub('*--cfg-multiple', () => this._handleCollectionUpdate());
+    this.sub('*--cfg-multiple-min', () => this._handleCollectionUpdate());
+    this.sub('*--cfg-multiple-max', () => this._handleCollectionUpdate());
 
     // TODO: could be performance issue on many files
     // there is no need to update buttons state on every progress tick
     this.uploadCollection.observe(() => {
-      handleStateUpdate();
+      this._handleCollectionUpdate();
     });
 
-    this.sub('*uploadList', (/** @type {String[]} */ list) => {
+    this.sub('*uploadList', (list) => {
       if (list?.length === 0 && !this.$['*--cfg-show-empty-list']) {
         this.cancelFlow();
         this.ref.files.innerHTML = '';
         return;
       }
 
-      handleStateUpdate();
+      this._handleCollectionUpdate();
 
       this.set$({
         hasFiles: list.length > 0,
@@ -239,7 +246,7 @@ UploadList.template = /*html*/ `
     class="cancel-btn secondary-btn"
     set="onclick: onCancel;"
     l10n="clear"></button>
-  <div></div>
+  <div class="toolbar-spacer"></div>
   <button
     class="add-more-btn secondary-btn"
     set="onclick: onAdd; @disabled: addMoreBtnDisabled; @hidden: addMoreBtnHidden"
