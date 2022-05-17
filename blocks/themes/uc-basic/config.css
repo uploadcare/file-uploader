@@ -13,7 +13,7 @@
   --cfg-thumb-size: 76;
   --cfg-show-empty-list: 0;
   --cfg-use-local-image-editor: 0;
-  --cfg-use-cloud-image-editor: 0;
+  --cfg-use-cloud-image-editor: 1;
 
   /* value `0` means limit is disabled */
   --cfg-multiple-min: 0;
