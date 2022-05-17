@@ -1,4 +1,4 @@
-// TODO: add tests for the all this stuff
+import { joinCdnOperations } from '../../../../utils/cdn-utils.js';
 
 export const OPERATIONS_ZEROS = {
   brightness: 0,
@@ -18,7 +18,7 @@ export const OPERATIONS_ZEROS = {
  * @param {Number | String | object} options
  * @returns {String}
  */
-function operationToStr(operation, options) {
+function transformationToStr(operation, options) {
   if (typeof options === 'number') {
     return OPERATIONS_ZEROS[operation] !== options ? `${operation}/${options}` : '';
   }
@@ -46,22 +46,6 @@ function operationToStr(operation, options) {
   return '';
 }
 
-/**
- * TODO: obviously, not using regexps will be faster, consider to get rid of it
- *
- * @param {String[]} list
- * @returns {String}
- */
-export function joinCdnOperations(...list) {
-  return list
-    .map((str) => {
-      str = str.replace(/^-\//g, ''); // remove leading '-/'
-      return str;
-    })
-    .join('/-/')
-    .replace(/\/\//g, '/');
-}
-
 const ORDER = [
   'enhance',
   'brightness',
@@ -79,32 +63,20 @@ const ORDER = [
 ];
 
 /**
- * @param {any} transformations
+ * @param {import('../types').Transformations} transformations
  * @returns {String}
  */
-export function transformationsToString(transformations) {
+export function transformationsToOperations(transformations) {
   return joinCdnOperations(
     ...ORDER.filter(
       (operation) => typeof transformations[operation] !== 'undefined' && transformations[operation] !== null
     )
       .map((operation) => {
         let options = transformations[operation];
-        return operationToStr(operation, options);
+        return transformationToStr(operation, options);
       })
       .filter((str) => !!str)
   );
 }
 
-/**
- * @param {String} originalUrl
- * @param {String[]} list
- * @returns {String}
- */
-export function constructCdnUrl(originalUrl, ...list) {
-  if (originalUrl && originalUrl[originalUrl.length - 1] !== '/') {
-    originalUrl += '/';
-  }
-  return (originalUrl || '') + '-/' + joinCdnOperations(...list.filter((str) => !!str).map((str) => str.trim())) + '/';
-}
-
-export const COMMON_OPERATIONS = ['format/auto', 'progressive/yes'].join('/-/');
+export const COMMON_OPERATIONS = joinCdnOperations('format/auto', 'progressive/yes');

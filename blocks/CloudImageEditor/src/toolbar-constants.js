@@ -1,4 +1,4 @@
-import { OPERATIONS_ZEROS } from './lib/cdnUtils.js';
+import { OPERATIONS_ZEROS } from './lib/transformationUtils.js';
 
 /** @type {{ CROP: 'crop'; SLIDERS: 'sliders'; FILTERS: 'filters' }} */
 export const TabId = {
