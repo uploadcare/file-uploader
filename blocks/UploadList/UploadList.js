@@ -246,7 +246,7 @@ UploadList.template = /*html*/ `
     class="cancel-btn secondary-btn"
     set="onclick: onCancel;"
     l10n="clear"></button>
-  <div></div>
+  <div class="toolbar-spacer"></div>
   <button
     class="add-more-btn secondary-btn"
     set="onclick: onAdd; @disabled: addMoreBtnDisabled; @hidden: addMoreBtnHidden"

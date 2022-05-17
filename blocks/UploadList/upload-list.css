@@ -19,10 +19,14 @@ uc-upload-list .files {
 }
 
 uc-upload-list .toolbar {
-  display: grid;
-  grid-gap: var(--gap-mid);
-  grid-template-columns: min-content 1fr min-content min-content;
+  display: flex;
+  gap: var(--gap-mid);
+  justify-content: space-between;
   padding: var(--gap-mid);
   background-color: var(--clr-background);
   border-top: var(--border-light);
+}
+
+uc-upload-list .toolbar-spacer {
+  flex: 1;
 }
