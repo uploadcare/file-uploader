@@ -104,12 +104,7 @@ export function constructCdnUrl(originalUrl, ...list) {
   if (originalUrl && originalUrl[originalUrl.length - 1] !== '/') {
     originalUrl += '/';
   }
-  return (
-    (originalUrl?.replace(/\/$/g, '') || '') +
-    '-/' +
-    joinCdnOperations(...list.filter((str) => !!str).map((str) => str.trim())) +
-    '/'
-  );
+  return (originalUrl || '') + '-/' + joinCdnOperations(...list.filter((str) => !!str).map((str) => str.trim())) + '/';
 }
 
 export const COMMON_OPERATIONS = ['format/auto', 'progressive/yes'].join('/-/');
