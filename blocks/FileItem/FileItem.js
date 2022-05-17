@@ -89,6 +89,23 @@ export class FileItem extends Block {
     }
   }
 
+  /**
+   * @private
+   * @param {'success' | 'error'} type
+   * @param {String} caption
+   * @param {String} text
+   */
+  _showMessage(type, caption, text) {
+    let msg = new UiMessage();
+    msg.caption = caption;
+    msg.text = text;
+    msg.isError = type === 'error';
+    this.set$({
+      badgeIcon: `badge-${type}`,
+      '*message': msg,
+    });
+  }
+
   initCallback() {
     super.initCallback();
     this.bindCssData('--cfg-thumb-size');
@@ -106,6 +123,23 @@ export class FileItem extends Block {
         return;
       }
 
+      this.entry.subscribe('validationErrorMsg', (validationErrorMsg) => {
+        if (!validationErrorMsg) {
+          return;
+        }
+        this.setAttribute('error', '');
+        let caption = this.l10n('validation-error') + ': ' + (this.file?.name || this.externalUrl);
+        this._showMessage('error', caption, validationErrorMsg);
+      });
+
+      this.entry.subscribe('uploadError', (uploadError) => {
+        if (!uploadError) {
+          return;
+        }
+        let caption = this.l10n('upload-error') + ': ' + (this.file?.name || this.externalUrl);
+        this._showMessage('error', caption, uploadError);
+      });
+
       this.entry.subscribe('isUploading', (isUploading) => {
         this.$.progressVisible = isUploading;
       });
@@ -116,6 +150,16 @@ export class FileItem extends Block {
 
       this.entry.subscribe('fileName', (name) => {
         this.$.itemName = name || this.externalUrl || this.l10n('file-no-name');
+      });
+
+      this.entry.subscribe('fileSize', (fileSize) => {
+        let maxFileSize = this.$['*--cfg-max-local-file-size-bytes'];
+        if (!maxFileSize) {
+          return;
+        }
+        if (fileSize && fileSize > maxFileSize) {
+          this.entry.setValue('validationErrorMsg', this.l10n('files-max-size-limit-error', { maxFileSize }));
+        }
       });
 
       this.entry.subscribe('externalUrl', (externalUrl) => {
@@ -243,14 +287,6 @@ export class FileItem extends Block {
       this.$.progressValue = 0;
       this.setAttribute('error', '');
       this.removeAttribute('uploading');
-      let msg = new UiMessage();
-      msg.caption = this.l10n('upload-error') + ': ' + (this.file?.name || this.externalUrl);
-      msg.text = error;
-      msg.isError = true;
-      this.set$({
-        badgeIcon: 'badge-error',
-        '*message': msg,
-      });
       this.entry.setValue('uploadProgress', 0);
       this.entry.setValue('uploadError', error);
     }

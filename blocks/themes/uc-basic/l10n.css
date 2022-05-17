@@ -23,6 +23,7 @@
   --l10n-are-you-sure: 'Are you sure?';
   --l10n-selected-count: 'Selected:';
   --l10n-upload-error: 'Upload error';
+  --l10n-validation-error: 'Validation error';
   --l10n-no-files: 'No files selected';
   --l10n-browse: 'Browse';
 
@@ -82,4 +83,6 @@
   --l10n-files-count-limit-error-title: 'Files count limit overflow';
   --l10n-files-count-limit-error-too-few: 'You’ve chosen {{total}}. At least {{min}} required.';
   --l10n-files-count-limit-error-too-many: 'You’ve chosen too many files. {{max}} is maximum.';
+
+  --l10n-files-max-size-limit-error: 'File is too big. Max file size is {{maxFileSize}} bytes.';
 }

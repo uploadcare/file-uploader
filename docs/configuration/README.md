@@ -5,10 +5,9 @@ We use the Data-in-CSS approach to set configurations.
 This is the list of pre-defined parameters used by default in our uploader builds:
 
 ```css
-.uc-wgt-cfg,
-.uc-wgt-common,
+:where(.uc-wgt-cfg, .uc-wgt-common),
 :host {
-  --cfg-pubkey: 'demopublickey';
+  --cfg-pubkey: 'YOUR_PUBLIC_KEY';
   --cfg-multiple: 1;
   --cfg-confirm-upload: 1;
   --cfg-img-only: 0;
@@ -16,12 +15,28 @@ This is the list of pre-defined parameters used by default in our uploader build
   --cfg-store: 1;
   --cfg-camera-mirror: 1;
   --cfg-source-list: 'local, url, camera, dropbox, gdrive, facebook';
-  --cfg-multiple-max: 10;
-  --cfg-max-local-file-size-bytes: 30000;
+  --cfg-max-local-file-size-bytes: 0;
   --cfg-thumb-size: 76;
   --cfg-show-empty-list: 0;
   --cfg-use-local-image-editor: 0;
-  --cfg-use-cloud-image-editor: 0;
+  --cfg-use-cloud-image-editor: 1;
+
+  --cfg-multiple-min: 0;
+  --cfg-multiple-max: 0;
+
+  --cfg-modal-scroll-lock: 1;
+  --cfg-modal-backdrop-strokes: 1;
+
+  --cfg-source-list-wrap: 1;
+
+  --cfg-init-activity: 'start-from';
+  --cfg-done-activity: 'start-from';
+
+  --cfg-data-output-console: 1;
+  --cfg-data-output-fire-events: 1;
+  --cfg-data-output-from: '*dataOutput';
+  --cfg-data-output-form-value: 1;
+
   --cfg-remote-tab-session-key: '';
 }
 ```
