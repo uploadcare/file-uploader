@@ -9,6 +9,8 @@ This is the list of pre-defined parameters used by default in our uploader build
 :host {
   --cfg-pubkey: 'YOUR_PUBLIC_KEY';
   --cfg-multiple: 1;
+  --cfg-multiple-min: 0;
+  --cfg-multiple-max: 0;
   --cfg-confirm-upload: 1;
   --cfg-img-only: 0;
   --cfg-accept: '';
@@ -20,9 +22,6 @@ This is the list of pre-defined parameters used by default in our uploader build
   --cfg-show-empty-list: 0;
   --cfg-use-local-image-editor: 0;
   --cfg-use-cloud-image-editor: 1;
-
-  --cfg-multiple-min: 0;
-  --cfg-multiple-max: 0;
 
   --cfg-modal-scroll-lock: 1;
   --cfg-modal-backdrop-strokes: 1;
