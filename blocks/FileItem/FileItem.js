@@ -287,6 +287,7 @@ export class FileItem extends Block {
         isImage: fileInfo.isImage,
         mimeType: fileInfo.mimeType,
         uuid: fileInfo.uuid,
+        cdnUrl: fileInfo.cdnUrl,
       });
     } catch (error) {
       this.entry.setValue('isUploading', false);

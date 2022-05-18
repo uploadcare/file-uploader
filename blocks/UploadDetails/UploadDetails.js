@@ -1,5 +1,5 @@
 import { Block } from '../../abstract/Block.js';
-import { createOriginalUrl } from '../../utils/cdn-utils.js';
+import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../utils/cdn-utils.js';
 import { fileCssBg } from '../svg-backgrounds/svg-backgrounds.js';
 
 /**
@@ -121,18 +121,6 @@ export class UploadDetails extends Block {
       tmpSub('fileSize', (size) => {
         this.$.fileSize = Number.isFinite(size) ? this.fileSizeFmt(size) : this.l10n('file-size-unknown');
       });
-      tmpSub('uuid', (uuid) => {
-        if (uuid) {
-          this.eCanvas.clear();
-          this.set$({
-            cdnUrl: createOriginalUrl(this.$['*--cfg-cdn-cname'], uuid),
-            cloudEditBtnHidden: !this.entry.getValue('isImage') || !this.$['*--cfg-use-cloud-image-editor'],
-          });
-          this.entry.getValue('isImage') && this.eCanvas.setImageUrl(this.$.cdnUrl);
-        } else {
-          this.$.cdnUrl = '';
-        }
-      });
       tmpSub('uploadError', (error) => {
         this.$.errorTxt = error?.message;
       });
@@ -145,12 +133,16 @@ export class UploadDetails extends Block {
           this.showNonImageThumb();
         }
       });
-      tmpSub('cdnUrl', (url) => {
-        if (!url) {
-          return;
-        }
+      tmpSub('cdnUrl', (cdnUrl) => {
+        this.set$({
+          cdnUrl,
+          cloudEditBtnHidden: !this.entry.getValue('isImage') || !this.$['*--cfg-use-cloud-image-editor'],
+        });
+
         if (this.entry.getValue('isImage')) {
-          this.eCanvas.setImageUrl(url);
+          // TODO: need to resize image to fit the canvas size
+          let imageUrl = createCdnUrl(cdnUrl, createCdnUrlModifiers('format/auto', 'preview'));
+          this.eCanvas.setImageUrl(imageUrl);
         }
       });
     });
