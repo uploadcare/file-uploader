@@ -2,6 +2,8 @@
  * @typedef {{
  *   '*--cfg-pubkey': String;
  *   '*--cfg-multiple': Number;
+ *   '*--cfg-multiple-min': Number;
+ *   '*--cfg-multiple-max': Number;
  *   '*--cfg-confirm-upload': Number;
  *   '*--cfg-img-only': Number;
  *   '*--cfg-accept': String;
@@ -13,8 +15,6 @@
  *   '*--cfg-show-empty-list': Number;
  *   '*--cfg-use-local-image-editor': Number;
  *   '*--cfg-use-cloud-image-editor': Number;
- *   '*--cfg-multiple-min': Number;
- *   '*--cfg-multiple-max': Number;
  *   '*--cfg-modal-scroll-lock': Number;
  *   '*--cfg-modal-backdrop-strokes': Number;
  *   '*--cfg-source-list-wrap': Number;
@@ -25,6 +25,7 @@
  *   '*--cfg-data-output-from': String;
  *   '*--cfg-data-output-form-value': Number;
  *   '*--cfg-remote-tab-session-key': String;
+ *   '*--cfg-cdn-base': String;
  * }} CssConfigTypes
  */
 export {};
