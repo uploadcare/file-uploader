@@ -42,15 +42,6 @@ export const createCdnUrlModifiers = (...cdnOperations) => {
 };
 
 /**
- * @param {String} input
- * @returns {String}
- */
-function withTrailingSlash(input) {
-  let url = new URL(input);
-  return url.toString();
-}
-
-/**
  * @param {String} cdnUrl
  * @returns {String}
  */
