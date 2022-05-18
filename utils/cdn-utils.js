@@ -50,10 +50,14 @@ export function extractFilename(cdnUrl) {
   let pathname = url.pathname;
   let urlFilenameIdx = pathname.lastIndexOf('http');
   let plainFilenameIdx = pathname.lastIndexOf('/');
-  let filename =
-    (urlFilenameIdx > 0 && pathname.slice(urlFilenameIdx)) ||
-    (plainFilenameIdx > 0 && pathname.slice(plainFilenameIdx + 1)) ||
-    '';
+  let filename = '';
+
+  if (urlFilenameIdx > 0) {
+    filename = pathname.slice(urlFilenameIdx) + url.search;
+    url.search = '';
+  } else if (plainFilenameIdx > 0) {
+    filename = pathname.slice(plainFilenameIdx + 1);
+  }
 
   return filename;
 }
@@ -66,10 +70,12 @@ export function trimFilename(cdnUrl) {
   let filename = extractFilename(cdnUrl);
 
   let url = new URL(cdnUrl);
-  let { pathname } = url;
-  let filenameIdx = pathname.lastIndexOf(filename);
-  if (filenameIdx + filename.length === pathname.length) {
-    url.pathname = pathname.substring(0, filenameIdx);
+  let { pathname, search } = url;
+  let pathnameWithSearch = pathname + search;
+  let filenameIdx = pathnameWithSearch.lastIndexOf(filename);
+  if (filenameIdx + filename.length === pathnameWithSearch.length) {
+    url.pathname = pathnameWithSearch.substring(0, filenameIdx);
+    url.search = '';
   }
   return url.toString();
 }
@@ -88,10 +94,10 @@ export const createCdnUrl = (baseCdnUrl, cdnModifiers, filename) => {
 };
 
 /**
- * Create
+ * Create url for an original file on CDN or Proxy CDN
  *
- * @param {String} cdnUrl
- * @param {String} uuidOrFileUrl
+ * @param {String} cdnUrl - URL to get base domain from, any pathname will be stripped
+ * @param {String} uuidOrFileUrl - Uuid for CDN or file URL for Proxy CDN
  * @returns {String}
  */
 export const createOriginalUrl = (cdnUrl, uuidOrFileUrl) => {

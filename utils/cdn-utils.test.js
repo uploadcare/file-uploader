@@ -76,17 +76,17 @@ describe('cdn-utils/createCdnUrl', () => {
     expect(createCdnUrl('https://ucarecdn.com/', '-/scale_crop/1x1/center/', 'image.jpeg')).to.eq(
       'https://ucarecdn.com/-/scale_crop/1x1/center/image.jpeg'
     );
-    expect(createCdnUrl('https://domain.ucr.io/', '-/scale_crop/1x1/center/', 'https://domain.com/image.jpg')).to.eq(
-      'https://domain.ucr.io/-/scale_crop/1x1/center/https://domain.com/image.jpg'
-    );
+    expect(
+      createCdnUrl('https://domain.ucr.io/', '-/scale_crop/1x1/center/', 'https://domain.com/image.jpg?q=1')
+    ).to.eq('https://domain.ucr.io/-/scale_crop/1x1/center/https://domain.com/image.jpg%3Fq=1');
   });
 
   it('should extract filename from baseCdnUrl and append it to the result', () => {
     expect(createCdnUrl('https://ucarecdn.com/:uuid/image.jpeg', '-/scale_crop/1x1/center/')).to.eq(
       'https://ucarecdn.com/:uuid/-/scale_crop/1x1/center/image.jpeg'
     );
-    expect(createCdnUrl('https://domain.ucr.io/https://domain.com/image.jpg', '-/scale_crop/1x1/center/')).to.eq(
-      'https://domain.ucr.io/-/scale_crop/1x1/center/https://domain.com/image.jpg'
+    expect(createCdnUrl('https://domain.ucr.io/https://domain.com/image.jpg?q=1', '-/scale_crop/1x1/center/')).to.eq(
+      'https://domain.ucr.io/-/scale_crop/1x1/center/https://domain.com/image.jpg%3Fq=1'
     );
   });
 
@@ -96,7 +96,7 @@ describe('cdn-utils/createCdnUrl', () => {
     );
     expect(
       createCdnUrl(
-        'https://domain.ucr.io/https://domain.com/image.jpg',
+        'https://domain.ucr.io/https://domain.com/image.jpg?q=1',
         '-/scale_crop/1x1/center/',
         'https://domain.com/override.jpg'
       )
@@ -108,8 +108,8 @@ describe('cdn-utils/createCdnUrl', () => {
       'https://ucarecdn.com/:uuid/-/resize/10x/-/scale_crop/1x1/center/'
     );
     expect(
-      createCdnUrl('https://domain.ucr.io/-/resize/10x/https://domain.com/image.jpg', '-/scale_crop/1x1/center/')
-    ).to.eq('https://domain.ucr.io/-/resize/10x/-/scale_crop/1x1/center/https://domain.com/image.jpg');
+      createCdnUrl('https://domain.ucr.io/-/resize/10x/https://domain.com/image.jpg?q=1', '-/scale_crop/1x1/center/')
+    ).to.eq('https://domain.ucr.io/-/resize/10x/-/scale_crop/1x1/center/https://domain.com/image.jpg%3Fq=1');
   });
 
   it('should add missing trailing slash to the base url', () => {
@@ -122,8 +122,8 @@ describe('cdn-utils/createCdnUrl', () => {
 describe('cdn-utils/createOriginalUrl', () => {
   it('should concatenate cdnBase and uuid/file url', () => {
     expect(createOriginalUrl('https://ucarecdn.com/', ':uuid')).to.eq('https://ucarecdn.com/:uuid/');
-    expect(createOriginalUrl('https://domain.ucr.io/', 'https://domain.com/image.jpg')).to.eq(
-      'https://domain.ucr.io/https://domain.com/image.jpg'
+    expect(createOriginalUrl('https://domain.ucr.io/', 'https://domain.com/image.jpg?q=1')).to.eq(
+      'https://domain.ucr.io/https://domain.com/image.jpg%3Fq=1'
     );
   });
 
@@ -131,15 +131,15 @@ describe('cdn-utils/createOriginalUrl', () => {
     expect(createOriginalUrl('https://ucarecdn.com/:old-uuid/-/resize/10x/', ':new-uuid')).to.eq(
       'https://ucarecdn.com/:new-uuid/'
     );
-    expect(createOriginalUrl('https://domain.ucr.io/-/resize/10x/', 'https://domain.com/image.jpg')).to.eq(
-      'https://domain.ucr.io/https://domain.com/image.jpg'
+    expect(createOriginalUrl('https://domain.ucr.io/-/resize/10x/', 'https://domain.com/image.jpg?q=1')).to.eq(
+      'https://domain.ucr.io/https://domain.com/image.jpg%3Fq=1'
     );
   });
 
   it('should add trailing slash to the base url', () => {
     expect(createOriginalUrl('https://ucarecdn.com', ':uuid')).to.eq('https://ucarecdn.com/:uuid/');
-    expect(createOriginalUrl('https://domain.ucr.io', 'https://domain.com/image.jpg')).to.eq(
-      'https://domain.ucr.io/https://domain.com/image.jpg'
+    expect(createOriginalUrl('https://domain.ucr.io', 'https://domain.com/image.jpg?q=1')).to.eq(
+      'https://domain.ucr.io/https://domain.com/image.jpg%3Fq=1'
     );
   });
 });
@@ -149,9 +149,11 @@ describe('cdn-utils/extractFilename', () => {
     expect(extractFilename('https://ucarecdn.com/:uuid/image.jpeg')).to.eq('image.jpeg');
     expect(extractFilename('https://ucarecdn.com/:uuid/-/resize/100x/image.jpeg')).to.eq('image.jpeg');
 
-    expect(extractFilename('https://domain.ucr.io/https://domain.com/image.jpg')).to.eq('https://domain.com/image.jpg');
-    expect(extractFilename('https://domain.ucr.io/-/resize/100x/https://domain.com/image.jpg')).to.eq(
-      'https://domain.com/image.jpg'
+    expect(extractFilename('https://domain.ucr.io/https://domain.com/image.jpg?q=1')).to.eq(
+      'https://domain.com/image.jpg?q=1'
+    );
+    expect(extractFilename('https://domain.ucr.io/-/resize/100x/https://domain.com/image.jpg?q=1')).to.eq(
+      'https://domain.com/image.jpg?q=1'
     );
   });
 
@@ -170,8 +172,8 @@ describe('cdn-utils/trimFilename', () => {
       'https://ucarecdn.com/:uuid/-/resize/100x/'
     );
 
-    expect(trimFilename('https://domain.ucr.io/https://domain.com/image.jpg')).to.eq('https://domain.ucr.io/');
-    expect(trimFilename('https://domain.ucr.io/-/resize/https://domain.com/image.jpg')).to.eq(
+    expect(trimFilename('https://domain.ucr.io/https://domain.com/image.jpg?q=1')).to.eq('https://domain.ucr.io/');
+    expect(trimFilename('https://domain.ucr.io/-/resize/https://domain.com/image.jpg?q=1')).to.eq(
       'https://domain.ucr.io/-/resize/'
     );
   });
