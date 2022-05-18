@@ -46,30 +46,25 @@ export const createCdnUrlModifiers = (...cdnOperations) => {
  * @returns {String}
  */
 function withTrailingSlash(input) {
-  if (!input.endsWith('/')) {
-    input = input + '/';
-  }
-  return input;
+  let url = new URL(input);
+  return url.toString();
 }
 
 /**
- * `cdnUrl` is expected to be a:
- *
- * - Just `cdnBase` with or without trailing slash
- * - `cdnBase` + `uuid` + `filename` with trailing slash
- * - `cdnBase` + `uuid` + `cdnModifiers` + `filename` with trailing slash
- *
  * @param {String} cdnUrl
  * @returns {String}
  */
 export function extractFilename(cdnUrl) {
-  let protocolSlashesIdx = cdnUrl.indexOf('//');
-  let lastSlashIndex = cdnUrl.lastIndexOf('/');
-  // if last slash is protocol double slash, then it's just a cdnBase
-  if (protocolSlashesIdx + 1 === lastSlashIndex) {
-    return '';
-  }
-  return cdnUrl.substring(lastSlashIndex + 1);
+  let url = new URL(cdnUrl);
+  let pathname = url.pathname;
+  let urlFilenameIdx = pathname.lastIndexOf('http');
+  let plainFilenameIdx = pathname.lastIndexOf('/');
+  let filename =
+    (urlFilenameIdx > 0 && pathname.slice(urlFilenameIdx)) ||
+    (plainFilenameIdx > 0 && pathname.slice(plainFilenameIdx + 1)) ||
+    '';
+
+  return filename;
 }
 
 /**
@@ -78,11 +73,14 @@ export function extractFilename(cdnUrl) {
  */
 export function trimFilename(cdnUrl) {
   let filename = extractFilename(cdnUrl);
-  let filenameIdx = cdnUrl.lastIndexOf(filename);
-  if (filenameIdx + filename.length === cdnUrl.length) {
-    return (cdnUrl = cdnUrl.substring(0, filenameIdx));
+
+  let url = new URL(cdnUrl);
+  let { pathname } = url;
+  let filenameIdx = pathname.lastIndexOf(filename);
+  if (filenameIdx + filename.length === pathname.length) {
+    url.pathname = pathname.substring(0, filenameIdx);
   }
-  return cdnUrl;
+  return url.toString();
 }
 
 /**
@@ -92,15 +90,23 @@ export function trimFilename(cdnUrl) {
  * @returns {String}
  */
 export const createCdnUrl = (baseCdnUrl, cdnModifiers, filename) => {
+  let url = new URL(trimFilename(baseCdnUrl));
   filename = filename || extractFilename(baseCdnUrl);
-  return withTrailingSlash(trimFilename(baseCdnUrl)) + (cdnModifiers || '') + (filename || '');
+  url.pathname = url.pathname + (cdnModifiers || '') + (filename || '');
+  return url.toString();
 };
 
 /**
- * @param {String} cdnBase
- * @param {String} uuid
+ * Create
+ *
+ * @param {String} cdnUrl
+ * @param {String} uuidOrFileUrl
  * @returns {String}
  */
-export const createOriginalUrl = (cdnBase, uuid) => {
-  return withTrailingSlash(cdnBase) + uuid + '/';
+export const createOriginalUrl = (cdnUrl, uuidOrFileUrl) => {
+  let isFileUrl = uuidOrFileUrl.startsWith('http');
+
+  let url = new URL(cdnUrl);
+  url.pathname = uuidOrFileUrl + (isFileUrl ? '' : '/');
+  return url.toString();
 };
