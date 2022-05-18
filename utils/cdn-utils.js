@@ -1,4 +1,9 @@
+const NORMALIZE_REGEX = /(^-\/|^\/)|(\/$)/g;
+const FILENAME_OR_FILE_URL_REGEX = /\/(http.+$|[^\/]+$)/;
+
 /**
+ * Trim leading `-/`, `/` and trailing `/` from CDN operation
+ *
  * @param {String | unknown} [operation]
  * @returns {String}
  */
@@ -6,23 +11,13 @@ export const normalizeCdnOperation = (operation) => {
   if (typeof operation !== 'string' || !operation) {
     return '';
   }
-  let str = operation.trim();
-  let start = 0;
-  let end = str.length;
-  if (str.startsWith('-/')) {
-    start = 2;
-  } else if (str.startsWith('/')) {
-    start = 1;
-  }
-
-  if (str.endsWith('/')) {
-    end = str.length - 1;
-  }
-  return str.substring(start, end);
+  return operation.replace(NORMALIZE_REGEX, '');
 };
 
 /**
- * @param {...(String | unknown)} operations
+ * Join multiple CDN operations into one string without trailing or leading delimeters
+ *
+ * @param {...(String | unknown)} [operations]
  * @returns {String}
  */
 export const joinCdnOperations = (...operations) => {
@@ -33,7 +28,10 @@ export const joinCdnOperations = (...operations) => {
 };
 
 /**
- * @param {...(String | unknown)} [cdnOperations]
+ * Create string with leading `-/` from passed CDN operations. Do the same as `joinCdnOperations` but adds leading `-/`
+ * and trailing `/`
+ *
+ * @param {...(String | unknown)} [cdnOperations] -
  * @returns {String}
  */
 export const createCdnUrlModifiers = (...cdnOperations) => {
@@ -42,68 +40,90 @@ export const createCdnUrlModifiers = (...cdnOperations) => {
 };
 
 /**
+ * Extract filename or file URL
+ *
  * @param {String} cdnUrl
  * @returns {String}
  */
 export function extractFilename(cdnUrl) {
   let url = new URL(cdnUrl);
-  let pathname = url.pathname;
-  let urlFilenameIdx = pathname.lastIndexOf('http');
-  let plainFilenameIdx = pathname.lastIndexOf('/');
-  let filename = '';
-
-  if (urlFilenameIdx > 0) {
-    filename = pathname.slice(urlFilenameIdx) + url.search;
-    url.search = '';
-  } else if (plainFilenameIdx > 0) {
-    filename = pathname.slice(plainFilenameIdx + 1);
-  }
-
-  return filename;
+  let noOrigin = url.pathname + url.search + url.hash;
+  let match = noOrigin.match(FILENAME_OR_FILE_URL_REGEX);
+  return match?.[1] || '';
 }
 
 /**
+ * Trim filename or file URL
+ *
  * @param {String} cdnUrl
  * @returns {String}
  */
 export function trimFilename(cdnUrl) {
-  let filename = extractFilename(cdnUrl);
-
   let url = new URL(cdnUrl);
-  let { pathname, search } = url;
-  let pathnameWithSearch = pathname + search;
-  let filenameIdx = pathnameWithSearch.lastIndexOf(filename);
-  if (filenameIdx + filename.length === pathnameWithSearch.length) {
-    url.pathname = pathnameWithSearch.substring(0, filenameIdx);
-    url.search = '';
-  }
+  url.pathname = url.pathname.replace(FILENAME_OR_FILE_URL_REGEX, '/');
+  url.search = '';
+  url.hash = '';
   return url.toString();
 }
 
 /**
- * @param {String} baseCdnUrl
- * @param {String} [cdnModifiers]
- * @param {String} [filename]
+ * Detect if filename is actually file URL
+ *
+ * @param {String} filename
+ * @returns {Boolean}
+ */
+export function isFileUrl(filename) {
+  return filename.startsWith('http');
+}
+
+/**
+ * Split file URL into the path and search parts
+ *
+ * @param {String} fileUrl
+ * @returns {{ pathname: String; search: String; hash: String }}
+ */
+export function splitFileUrl(fileUrl) {
+  let url = new URL(fileUrl);
+  return {
+    pathname: url.origin + url.pathname || '',
+    search: url.search || '',
+    hash: url.hash || '',
+  };
+}
+
+/**
+ * Create a final CDN URL with CDN modifiers and filename
+ *
+ * @param {String} baseCdnUrl - Base URL to CDN or Proxy, CDN modifiers and filename accepted
+ * @param {String} [cdnModifiers] - CDN modifiers to apply, will be appended to `baseCdnUrl` ones
+ * @param {String} [filename] - Filename for CDN or file URL for Proxy, will override one from `baseCdnUrl`
  * @returns {String}
  */
 export const createCdnUrl = (baseCdnUrl, cdnModifiers, filename) => {
   let url = new URL(trimFilename(baseCdnUrl));
   filename = filename || extractFilename(baseCdnUrl);
-  url.pathname = url.pathname + (cdnModifiers || '') + (filename || '');
+
+  if (isFileUrl(filename)) {
+    let splitted = splitFileUrl(filename);
+    url.pathname = url.pathname + (cdnModifiers || '') + (splitted.pathname || '');
+    url.search = splitted.search;
+    url.hash = splitted.hash;
+  } else {
+    url.pathname = url.pathname + (cdnModifiers || '') + (filename || '');
+  }
+
   return url.toString();
 };
 
 /**
- * Create url for an original file on CDN or Proxy CDN
+ * Create URL for an original file on CDN
  *
  * @param {String} cdnUrl - URL to get base domain from, any pathname will be stripped
- * @param {String} uuidOrFileUrl - Uuid for CDN or file URL for Proxy CDN
+ * @param {String} uuid
  * @returns {String}
  */
-export const createOriginalUrl = (cdnUrl, uuidOrFileUrl) => {
-  let isFileUrl = uuidOrFileUrl.startsWith('http');
-
+export const createOriginalUrl = (cdnUrl, uuid) => {
   let url = new URL(cdnUrl);
-  url.pathname = uuidOrFileUrl + (isFileUrl ? '' : '/');
+  url.pathname = uuid + '/';
   return url.toString();
 };
