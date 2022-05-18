@@ -5,6 +5,8 @@ import {
   createCdnUrlModifiers,
   createCdnUrl,
   createOriginalUrl,
+  extractFilename,
+  trimFilename,
 } from './cdn-utils.js';
 
 const falsyValues = ['', undefined, null, false, true, 0, 10];
@@ -76,6 +78,24 @@ describe('cdn-utils', () => {
       );
     });
 
+    it('should use filename from base cdn url', () => {
+      expect(createCdnUrl('https://ucarecdn.com/', '-/scale_crop/1x1/center/', 'image.jpeg')).to.eq(
+        'https://ucarecdn.com/-/scale_crop/1x1/center/image.jpeg'
+      );
+    });
+
+    it('should extract filename from baseCdnUrl and append it to the result', () => {
+      expect(createCdnUrl('https://ucarecdn.com/:uuid/image.jpeg', '-/scale_crop/1x1/center/')).to.eq(
+        'https://ucarecdn.com/:uuid/-/scale_crop/1x1/center/image.jpeg'
+      );
+    });
+
+    it('should override filename from baseCdnUrl with provided', () => {
+      expect(createCdnUrl('https://ucarecdn.com/:uuid/image.jpeg', '-/scale_crop/1x1/center/', 'override.jpeg')).to.eq(
+        'https://ucarecdn.com/:uuid/-/scale_crop/1x1/center/override.jpeg'
+      );
+    });
+
     it('should add missing trailing slash to the base url', () => {
       expect(createCdnUrl('https://ucarecdn.com', '-/scale_crop/1x1/center/')).to.eq(
         'https://ucarecdn.com/-/scale_crop/1x1/center/'
@@ -85,14 +105,42 @@ describe('cdn-utils', () => {
 
   describe('createOriginalUrl', () => {
     it('should concatenate cdnBase and uuid', () => {
-      expect(createOriginalUrl('https://ucarecdn.com/', 'e02aa8f3-9d28-4109-8c8c-310ef0f060ac')).to.eq(
-        'https://ucarecdn.com/e02aa8f3-9d28-4109-8c8c-310ef0f060ac/'
-      );
+      expect(createOriginalUrl('https://ucarecdn.com/', ':uuid')).to.eq('https://ucarecdn.com/:uuid/');
     });
 
     it('should add trailing slash to the base url', () => {
-      expect(createOriginalUrl('https://ucarecdn.com', 'e02aa8f3-9d28-4109-8c8c-310ef0f060ac')).to.eq(
-        'https://ucarecdn.com/e02aa8f3-9d28-4109-8c8c-310ef0f060ac/'
+      expect(createOriginalUrl('https://ucarecdn.com', ':uuid')).to.eq('https://ucarecdn.com/:uuid/');
+    });
+  });
+
+  describe('extractFilename', () => {
+    it('should extract filename', () => {
+      expect(extractFilename('https://ucarecdn.com/:uuid/image.jpeg')).to.eq('image.jpeg');
+      expect(extractFilename('https://ucarecdn.com/:uuid/-/resize/100x/image.jpeg')).to.eq('image.jpeg');
+    });
+
+    it('should return empty string if no filename found', () => {
+      expect(extractFilename('https://ucarecdn.com')).to.eq('');
+      expect(extractFilename('https://ucarecdn.com/')).to.eq('');
+      expect(extractFilename('https://ucarecdn.com/:uuid/')).to.eq('');
+      expect(extractFilename('https://ucarecdn.com/:uuid/-/resize/100x/')).to.eq('');
+    });
+  });
+
+  describe('trimFilename', () => {
+    it('should trim filename', () => {
+      expect(trimFilename('https://ucarecdn.com/:uuid/image.jpeg')).to.eq('https://ucarecdn.com/:uuid/');
+      expect(trimFilename('https://ucarecdn.com/:uuid/-/resize/100x/image.jpeg')).to.eq(
+        'https://ucarecdn.com/:uuid/-/resize/100x/'
+      );
+    });
+
+    it('should return original string if no filename found', () => {
+      expect(trimFilename('https://ucarecdn.com')).to.eq('https://ucarecdn.com');
+      expect(trimFilename('https://ucarecdn.com/')).to.eq('https://ucarecdn.com/');
+      expect(trimFilename('https://ucarecdn.com/:uuid/')).to.eq('https://ucarecdn.com/:uuid/');
+      expect(trimFilename('https://ucarecdn.com/:uuid/-/resize/100x/')).to.eq(
+        'https://ucarecdn.com/:uuid/-/resize/100x/'
       );
     });
   });
