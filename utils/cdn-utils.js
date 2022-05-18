@@ -1,6 +1,3 @@
-const NORMALIZE_REGEX = /(^-\/|^\/)|(\/$)/g;
-const FILENAME_OR_FILE_URL_REGEX = /\/(http.+$|[^\/]+$)/;
-
 /**
  * Trim leading `-/`, `/` and trailing `/` from CDN operation
  *
@@ -11,7 +8,17 @@ export const normalizeCdnOperation = (operation) => {
   if (typeof operation !== 'string' || !operation) {
     return '';
   }
-  return operation.replace(NORMALIZE_REGEX, '');
+  let str = operation.trim();
+  if (str.startsWith('-/')) {
+    str = str.slice(2);
+  } else if (str.startsWith('/')) {
+    str = str.slice(1);
+  }
+
+  if (str.endsWith('/')) {
+    str = str.slice(0, str.length - 1);
+  }
+  return str;
 };
 
 /**
@@ -48,8 +55,17 @@ export const createCdnUrlModifiers = (...cdnOperations) => {
 export function extractFilename(cdnUrl) {
   let url = new URL(cdnUrl);
   let noOrigin = url.pathname + url.search + url.hash;
-  let match = noOrigin.match(FILENAME_OR_FILE_URL_REGEX);
-  return match?.[1] || '';
+  let urlFilenameIdx = noOrigin.lastIndexOf('http');
+  let plainFilenameIdx = noOrigin.lastIndexOf('/');
+  let filename = '';
+
+  if (urlFilenameIdx >= 0) {
+    filename = noOrigin.slice(urlFilenameIdx);
+  } else if (plainFilenameIdx >= 0) {
+    filename = noOrigin.slice(plainFilenameIdx + 1);
+  }
+
+  return filename;
 }
 
 /**
@@ -60,7 +76,10 @@ export function extractFilename(cdnUrl) {
  */
 export function trimFilename(cdnUrl) {
   let url = new URL(cdnUrl);
-  url.pathname = url.pathname.replace(FILENAME_OR_FILE_URL_REGEX, '/');
+  let filename = extractFilename(cdnUrl);
+  let filenamePathPart = isFileUrl(filename) ? splitFileUrl(filename).pathname : filename;
+
+  url.pathname = url.pathname.replace(filenamePathPart, '');
   url.search = '';
   url.hash = '';
   return url.toString();
