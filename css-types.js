@@ -26,6 +26,8 @@
  *   '*--cfg-data-output-form-value': Number;
  *   '*--cfg-remote-tab-session-key': String;
  *   '*--cfg-cdn-cname': String;
+ *   '*--cfg-secure-signature': String;
+ *   '*--cfg-secure-expire': String;
  * }} CssConfigTypes
  */
 export {};

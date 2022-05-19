@@ -32,4 +32,6 @@
 
   --cfg-remote-tab-session-key: '';
   --cfg-cdn-cname: 'https://ucarecdn.com';
+  --cfg-secure-signature: '';
+  --cfg-secure-expire: '';
 }

@@ -6,7 +6,13 @@ import { fileCssBg } from '../svg-backgrounds/svg-backgrounds.js';
 import { customUserAgent } from '../utils/userAgent.js';
 import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../utils/cdn-utils.js';
 
-/** @typedef {Partial<import('../MessageBox/MessageBox.js').State>} ExternalState */
+/**
+ * @typedef {Pick<
+ *   import('../../css-types.js').CssConfigTypes,
+ *   '*--cfg-thumb-size' | '*--cfg-secure-signature' | '*--cfg-secure-expire'
+ * >} CssProps
+ */
+/** @typedef {Partial<import('../MessageBox/MessageBox.js').State & CssProps>} ExternalState */
 
 /**
  * @typedef {{
@@ -109,7 +115,11 @@ export class FileItem extends Block {
 
   initCallback() {
     super.initCallback();
+
     this.bindCssData('--cfg-thumb-size');
+    this.bindCssData('--cfg-secure-signature');
+    this.bindCssData('--cfg-secure-expire');
+
     this.defineAccessor('entry-id', (id) => {
       if (!id || id === this.uid) {
         return;
@@ -241,6 +251,24 @@ export class FileItem extends Block {
     clearTimeout(this._thumbTimeoutId);
   }
 
+  /** @private */
+  _baseUploadOptions() {
+    let storeSetting = {};
+    let store = this.$['*--cfg-store'];
+    if (store !== null) {
+      storeSetting.store = !!store;
+    }
+
+    return {
+      ...storeSetting,
+      publicKey: this.$['*--cfg-pubkey'],
+      baseCDN: this.$['*--cfg-cdn-cname'],
+      userAgent: customUserAgent,
+      secureSignature: this.$['*--cfg-secure-signature'],
+      secureExpire: this.$['*--cfg-secure-expire'],
+    };
+  }
+
   async upload() {
     if (this.hasAttribute('loaded') || this.entry.getValue('uuid')) {
       return;
@@ -251,21 +279,12 @@ export class FileItem extends Block {
     this.removeAttribute('focused');
     this.removeAttribute('error');
     this.setAttribute('uploading', '');
-    let storeSetting = {};
-    let store = this.$['*--cfg-store'];
-    if (store !== null) {
-      storeSetting.store = !!store;
-    }
     if (!this.file && this.externalUrl) {
       this.$.progressUnknown = true;
     }
     try {
-      // @ts-ignore
       let fileInfo = await uploadFile(this.file || this.externalUrl, {
-        ...storeSetting,
-        publicKey: this.$['*--cfg-pubkey'],
-        baseCDN: this.$['*--cfg-cdn-cname'],
-        userAgent: customUserAgent,
+        ...this._baseUploadOptions(),
         fileName: this.entry.getValue('fileName'),
         onProgress: (progress) => {
           if (progress.isComputable) {
