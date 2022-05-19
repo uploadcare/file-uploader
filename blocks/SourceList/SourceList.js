@@ -1,5 +1,6 @@
 import { Block } from '../../abstract/Block.js';
 
+/** @extends {Block<Partial<Pick<import('../../css-types.js').CssConfigTypes, '*--cfg-source-list'>>>} */
 export class SourceList extends Block {
   initCallback() {
     super.initCallback();
