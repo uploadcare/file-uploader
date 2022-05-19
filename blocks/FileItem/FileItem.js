@@ -251,7 +251,10 @@ export class FileItem extends Block {
     clearTimeout(this._thumbTimeoutId);
   }
 
-  /** @private */
+  /**
+   * @private
+   * @returns {import('../../submodules/upload-client/upload-client.js').FileFromOptions}
+   */
   _baseUploadOptions() {
     let storeSetting = {};
     let store = this.$['*--cfg-store'];
