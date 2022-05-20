@@ -14,6 +14,8 @@ http
     }
     let searchParams = url.searchParams;
     let fileUrl = searchParams.get('url');
+    let size = searchParams.get('size');
+    console.log(`Got request. Url: "${fileUrl}". Size: "${size}"`);
     if (!fileUrl) {
       return response.end('`url` parameter is required');
     }
