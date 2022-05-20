@@ -1,4 +1,5 @@
 import { Block } from '../../../abstract/Block.js';
+import { info } from '../../../submodules/upload-client/upload-client.js';
 import { createOriginalUrl } from '../../../utils/cdn-utils.js';
 import { classNames } from './lib/classNames.js';
 import { debounce } from './lib/debounce.js';
@@ -17,9 +18,9 @@ import { viewerImageSrc } from './util.js';
  *   '*cropperEl': import('./EditorImageCropper.js').EditorImageCropper;
  *   '*imgEl': HTMLImageElement;
  *   '*imgContainerEl': HTMLElement;
- *   '*modalEl': import('../../Modal/Modal.js').Modal;
  *   '*networkProblems': Boolean;
  *   '*imageSize': import('./types.js').ImageSize;
+ *   '*fileInfo': import('../../../submodules/upload-client/upload-client.js').FileInfo;
  *   entry: import('../../../submodules/symbiote/core/symbiote.js').TypedData;
  *   extension: String;
  *   editorMode: Boolean;
@@ -70,7 +71,7 @@ export class CloudEditor extends Block {
 
   _imageSrc() {
     let { width } = this.ref['img-container-el'].getBoundingClientRect();
-    return viewerImageSrc(this.$['*originalUrl'], width, {});
+    return this.proxyUrl(viewerImageSrc(this.$['*originalUrl'], width, {}), this.$['*fileInfo']);
   }
 
   /**
@@ -111,25 +112,10 @@ export class CloudEditor extends Block {
   async initCallback() {
     super.initCallback();
 
-    try {
-      await this._waitForSize();
-    } catch (err) {
-      if (err) {
-        console.error(err);
-      }
-      // no error - element become disconnected from dom - stop init
-      return;
-    }
+    this.bindCssData('--cfg-cdn-cname');
+    this.bindCssData('--cfg-pubkey');
 
     this.$['*originalUrl'] = createOriginalUrl(this.$['*--cfg-cdn-cname'], this.$.uuid);
-
-    fetch(`${this.$['*originalUrl']}-/json/`)
-      .then((response) => response.json())
-      .then(({ width, height }) => {
-        this.$['*imageSize'] = { width, height };
-      });
-
-    this._loadImageFromCdn();
 
     this.$['*faderEl'] = this.ref['fader-el'];
     this.$['*cropperEl'] = this.ref['cropper-el'];
@@ -172,6 +158,24 @@ export class CloudEditor extends Block {
         image_hidden_effects: tabId !== TabId.CROP,
       });
     });
+
+    try {
+      await info(this.$.uuid, { publicKey: this.$['*--cfg-pubkey'] }).then((fileInfo) => {
+        // TODO: here we have type FileInfo but in other blocks we have type UploadcareFile
+        // their API is the same, but they are two differrent types
+        // I think we should update `upload-client` and make it to return FileInfo everywhere instead of UploadcareFile
+        this.$['*fileInfo'] = fileInfo;
+        this.$['*imageSize'] = { width: fileInfo.imageInfo.width, height: fileInfo.imageInfo.height };
+      });
+      await this._waitForSize();
+      this._loadImageFromCdn();
+    } catch (err) {
+      if (err) {
+        console.error(err);
+      }
+      // no error - element become disconnected from dom - stop init
+      return;
+    }
   }
 
   disconnectedCallback() {

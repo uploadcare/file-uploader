@@ -2,6 +2,10 @@ import { createCdnUrl, createCdnUrlModifiers } from '../../../utils/cdn-utils.js
 import { transformationsToOperations } from './lib/transformationUtils.js';
 import { TRANSPARENT_PIXEL_SRC } from './lib/transparentPixelSrc.js';
 
+/**
+ * @param {import('./CloudEditor.js').CloudEditor} fnCtx
+ * @returns {import('./CloudEditor.js').State}
+ */
 export function initState(fnCtx) {
   return {
     '*originalUrl': null,
@@ -10,9 +14,9 @@ export function initState(fnCtx) {
     '*cropperEl': null,
     '*imgEl': null,
     '*imgContainerEl': null,
-    '*modalEl': fnCtx,
     '*networkProblems': false,
     '*imageSize': null,
+    '*fileInfo': null,
 
     entry: null,
     extension: null,

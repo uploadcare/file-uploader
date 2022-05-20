@@ -17,6 +17,8 @@ if (!DOC_READY) {
   });
 }
 
+/** @typedef {(cdnUrl: String, fileInfo: import('../submodules/upload-client/upload-client.js').FileInfo) => String} PreviewUrlCallback */
+
 /**
  * @typedef {{
  *   '*ctxTargetsRegistry': Set<any>;
@@ -28,6 +30,7 @@ if (!DOC_READY) {
  *   '*outputData': unknown[] | null;
  *   '*focusedEntry': unknown | null;
  *   '*uploadCollection': TypedCollection;
+ *   '*previewUrlCallback': PreviewUrlCallback;
  *   [key: String]: unknown;
  * }} BlockState
  */
@@ -44,7 +47,8 @@ if (!DOC_READY) {
  *   | '*--cfg-init-activity'
  *   | '*--cfg-done-activity'
  *   | '*--cfg-max-local-file-size-bytes'
- *   | '*--cfg-cdn-cname'} InitialAddedCssProps
+ *   | '*--cfg-cdn-cname'
+ *   | '*--cfg-preview-proxy'} InitialAddedCssProps
  */
 /** @typedef {'*--cfg-source-list'} UsedCssProps */
 /** @typedef {Pick<import('../css-types.js').CssConfigTypes, InitialAddedCssProps | UsedCssProps>} CssProps */
@@ -165,6 +169,7 @@ export class Block extends BaseComponent {
         '--cfg-done-activity',
         '--cfg-max-local-file-size-bytes',
         '--cfg-cdn-cname',
+        '--cfg-preview-proxy',
       ];
       cfgProps.forEach((prop) => {
         this.bindCssData(prop);
@@ -192,6 +197,8 @@ export class Block extends BaseComponent {
             '*uploadList': [],
             '*outputData': null,
             '*focusedEntry': null,
+            /** @type {PreviewUrlCallback} */
+            '*previewUrlCallback': (cdnUrl) => cdnUrl,
           })
         );
         Block._ctxConnectionsList.push(this.ctxName);
@@ -199,6 +206,25 @@ export class Block extends BaseComponent {
       this.$['*ctxTargetsRegistry'].add(this.constructor['is']);
 
       super.connectedCallback();
+
+      this.sub('*previewUrlCallback', (previewUrlCallback) => {
+        if (!previewUrlCallback) {
+          this.$['*previewUrlCallback'] = (cdnUrl) => cdnUrl;
+        }
+      });
+
+      this.sub('*--cfg-preview-proxy', (previewProxy) => {
+        if (!previewProxy) {
+          return;
+        }
+        this.$['*previewUrlCallback'] = (cdnUrl, fileInfo) => {
+          return applyTemplateData(
+            previewProxy,
+            { cdnUrl, fileInfo: { ...fileInfo } },
+            { transform: (value) => encodeURIComponent(value) }
+          );
+        };
+      });
 
       if (this.hasAttribute('current-activity')) {
         this.sub('*currentActivity', (/** @type {String} */ val) => {
@@ -435,6 +461,15 @@ export class Block extends BaseComponent {
     let dm = decimals < 0 ? 0 : decimals;
     let i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / k ** i).toFixed(dm)) + ' ' + getUnit(units[i]);
+  }
+
+  /**
+   * @param {String} url
+   * @param {import('../submodules/upload-client/upload-client.js').FileInfo} fileInfo
+   * @returns {String}
+   */
+  proxyUrl(url, fileInfo) {
+    return this.$['*previewUrlCallback'](url, fileInfo);
   }
 
   output() {

@@ -1,4 +1,5 @@
 :where(.uc-cldtr-common),
 :host {
   --cfg-cdn-cname: 'https://ucarecdn.com';
+  --cfg-pubkey: 'YOUR_PUBLIC_KEY';
 }

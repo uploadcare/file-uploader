@@ -63,7 +63,7 @@ export class EditorFilterControl extends EditorButtonControl {
   _observerCallback(entries, observer) {
     let intersectionEntry = entries[0];
     if (intersectionEntry.isIntersecting) {
-      let src = this._previewSrc();
+      let src = this.proxyUrl(this._previewSrc(), this.$['*fileInfo']);
       let previewEl = this.ref['preview-el'];
       let { promise, cancel } = preloadImage(src);
       this._cancelPreload = cancel;
@@ -146,7 +146,7 @@ export class EditorFilterControl extends EditorButtonControl {
 
     this.sub('*networkProblems', (networkProblems) => {
       if (!networkProblems) {
-        let src = this._previewSrc();
+        let src = this.proxyUrl(this._previewSrc(), this.$['*fileInfo']);
         let previewEl = this.ref['preview-el'];
         if (previewEl.style.backgroundImage) {
           previewEl.style.backgroundImage = 'none';
