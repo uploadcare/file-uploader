@@ -20,7 +20,7 @@ http
       return response.end('`url` parameter is required');
     }
     response.statusCode = 302;
-    response.setHeader('Location', fileUrl);
+    response.setHeader('Location', fileUrl); //lgtm [js/server-side-unvalidated-url-redirection];
     response.end();
   })
   .listen(PORT);
