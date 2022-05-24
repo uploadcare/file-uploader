@@ -17,7 +17,12 @@ if (!DOC_READY) {
   });
 }
 
-/** @typedef {(cdnUrl: String, fileInfo: import('../submodules/upload-client/upload-client.js').FileInfo) => String} PreviewUrlCallback */
+/**
+ * @typedef {(
+ *   cdnUrl: String,
+ *   fileInfo: import('../submodules/upload-client/upload-client.js').UploadcareFile
+ * ) => String} PreviewUrlCallback
+ */
 
 /**
  * @typedef {{
@@ -217,10 +222,10 @@ export class Block extends BaseComponent {
         if (!previewProxy) {
           return;
         }
-        this.$['*previewUrlCallback'] = (cdnUrl, fileInfo) => {
+        this.$['*previewUrlCallback'] = (previewUrl, fileInfo) => {
           return applyTemplateData(
             previewProxy,
-            { cdnUrl, fileInfo: { ...fileInfo } },
+            { previewUrl, fileInfo: { ...fileInfo } },
             { transform: (value) => encodeURIComponent(value) }
           );
         };
@@ -465,7 +470,7 @@ export class Block extends BaseComponent {
 
   /**
    * @param {String} url
-   * @param {import('../submodules/upload-client/upload-client.js').FileInfo} fileInfo
+   * @param {import('../submodules/upload-client/upload-client.js').UploadcareFile} fileInfo
    * @returns {String}
    */
   proxyUrl(url, fileInfo) {

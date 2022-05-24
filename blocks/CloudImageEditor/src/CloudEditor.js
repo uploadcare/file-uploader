@@ -1,5 +1,5 @@
 import { Block } from '../../../abstract/Block.js';
-import { info } from '../../../submodules/upload-client/upload-client.js';
+import { uploadFromUploaded } from '../../../submodules/upload-client/upload-client.js';
 import { createOriginalUrl } from '../../../utils/cdn-utils.js';
 import { classNames } from './lib/classNames.js';
 import { debounce } from './lib/debounce.js';
@@ -20,7 +20,7 @@ import { viewerImageSrc } from './util.js';
  *   '*imgContainerEl': HTMLElement;
  *   '*networkProblems': Boolean;
  *   '*imageSize': import('./types.js').ImageSize;
- *   '*fileInfo': import('../../../submodules/upload-client/upload-client.js').FileInfo;
+ *   '*fileInfo': import('../../../submodules/upload-client/upload-client.js').UploadcareFile;
  *   entry: import('../../../submodules/symbiote/core/symbiote.js').TypedData;
  *   extension: String;
  *   editorMode: Boolean;
@@ -160,7 +160,7 @@ export class CloudEditor extends Block {
     });
 
     try {
-      await info(this.$.uuid, { publicKey: this.$['*--cfg-pubkey'] }).then((fileInfo) => {
+      await uploadFromUploaded(this.$.uuid, { publicKey: this.$['*--cfg-pubkey'] }).then((fileInfo) => {
         // TODO: here we have type FileInfo but in other blocks we have type UploadcareFile
         // their API is the same, but they are two differrent types
         // I think we should update `upload-client` and make it to return FileInfo everywhere instead of UploadcareFile
