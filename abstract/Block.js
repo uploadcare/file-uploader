@@ -198,7 +198,7 @@ export class Block extends BaseComponent {
             '*outputData': null,
             '*focusedEntry': null,
             /** @type {PreviewUrlCallback} */
-            '*previewUrlCallback': (cdnUrl) => cdnUrl,
+            '*previewUrlCallback': (previewUrl) => previewUrl,
           })
         );
         Block._ctxConnectionsList.push(this.ctxName);
@@ -209,7 +209,7 @@ export class Block extends BaseComponent {
 
       this.sub('*previewUrlCallback', (previewUrlCallback) => {
         if (!previewUrlCallback) {
-          this.$['*previewUrlCallback'] = (cdnUrl) => cdnUrl;
+          this.$['*previewUrlCallback'] = (previewUrl) => previewUrl;
         }
       });
 

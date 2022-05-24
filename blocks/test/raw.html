@@ -8,7 +8,7 @@
     --cfg-pubkey: 'demopublickey';
     --cfg-multiple-min: 0;
     --cfg-multiple-max: 3;
-    --cfg-preview-proxy: 'http://localhost:3000/preview/?url={{cdnUrl}}&size={{fileInfo.size}}';
+    --cfg-preview-proxy: 'http://localhost:3000/preview/?url={{previewUrl}}';
   }
 </style>
 <script src="./index.js" type="module"></script>
@@ -17,8 +17,8 @@
   UC.registerBlocks(UC);
 
   // let configuration = document.querySelector('uc-configuration')
-  // configuration.setPreviewUrlCallback((cdnUrl, fileInfo) => {
-  //   return `http://localhost:3000/preview/?url=${encodeURIComponent(cdnUrl)}&size=${fileInfo.size}`
+  // configuration.setPreviewUrlCallback((previewUrl, fileInfo) => {
+  //   return `http://localhost:3000/preview/?url=${encodeURIComponent(previewUrl)}`
   // })
 </script>
 
