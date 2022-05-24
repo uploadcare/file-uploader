@@ -32,7 +32,7 @@ export function applyTemplateData(
     } else {
       let [path, text] = tokens;
       let value = getProperty(data, path)?.toString();
-      if (typeof value === 'string') {
+      if (!!value) {
         result += transform(value);
       } else {
         result += openToken + path + closeToken;
