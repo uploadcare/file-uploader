@@ -73,6 +73,7 @@ Any configuration value can be defined and redefined at any level of the DOM tre
 | `--cfg-cdn-cname`                 | Set Custom CNAME. See [docs](https://uploadcare.com/docs/delivery/cdn/#custom-cdn-cname) for details                                   |         string         | `https://ucarecdn.com` |
 | `--cfg-secure-signature`          | Set `signature` for Secure Uploads. See [docs](https://uploadcare.com/docs/security/secure-uploads/#expire-explained) for details      |         string         |          none          |
 | `--cfg-secure-expire`             | Set `expire` for Secure Uploads. See [docs](https://uploadcare.com/docs/security/secure-uploads/#expire-explained) for details         |         string         |          none          |
+| `--cfg-preview-proxy`             | Set `previewProxy` for Secure Delivery. See [docs](https://uploadcare.com/docs/security/secure-delivery/#preview-proxy) for details    |         string         |          none          |
 
 ## Possible values for the source list
 
