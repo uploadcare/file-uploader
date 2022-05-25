@@ -318,6 +318,7 @@ export class FileItem extends Block {
         cdnUrl: fileInfo.cdnUrl,
       });
     } catch (error) {
+      this.$.badgeIcon = 'badge-error';
       this.entry.setValue('isUploading', false);
       this.$.progressValue = 0;
       this.setAttribute('error', '');
