@@ -160,6 +160,7 @@ export class CloudEditor extends Block {
     });
 
     try {
+      // `uploadFromUploaded` this could be replaced with `/json/` request if we don't need `fileInfo`
       await uploadFromUploaded(this.$.uuid, { publicKey: this.$['*--cfg-pubkey'] }).then((fileInfo) => {
         this.$['*fileInfo'] = fileInfo;
         this.$['*imageSize'] = { width: fileInfo.imageInfo.width, height: fileInfo.imageInfo.height };
