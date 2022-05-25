@@ -181,6 +181,19 @@ export class Block extends BaseComponent {
       }, true);
       Block._cssDataBindingsList.push(this.ctxName);
     }
+
+    this.sub('*--cfg-preview-proxy', (previewProxy) => {
+      if (!previewProxy) {
+        return;
+      }
+      this.$['*previewUrlCallback'] = (previewUrl, fileInfo) => {
+        return applyTemplateData(
+          previewProxy,
+          { previewUrl, fileInfo: { ...fileInfo } },
+          { transform: (value) => encodeURIComponent(value) }
+        );
+      };
+    });
   }
 
   initCallback() {
@@ -216,19 +229,6 @@ export class Block extends BaseComponent {
         if (!previewUrlCallback) {
           this.$['*previewUrlCallback'] = (previewUrl) => previewUrl;
         }
-      });
-
-      this.sub('*--cfg-preview-proxy', (previewProxy) => {
-        if (!previewProxy) {
-          return;
-        }
-        this.$['*previewUrlCallback'] = (previewUrl, fileInfo) => {
-          return applyTemplateData(
-            previewProxy,
-            { previewUrl, fileInfo: { ...fileInfo } },
-            { transform: (value) => encodeURIComponent(value) }
-          );
-        };
       });
 
       if (this.hasAttribute('current-activity')) {
