@@ -161,9 +161,6 @@ export class CloudEditor extends Block {
 
     try {
       await uploadFromUploaded(this.$.uuid, { publicKey: this.$['*--cfg-pubkey'] }).then((fileInfo) => {
-        // TODO: here we have type FileInfo but in other blocks we have type UploadcareFile
-        // their API is the same, but they are two differrent types
-        // I think we should update `upload-client` and make it to return FileInfo everywhere instead of UploadcareFile
         this.$['*fileInfo'] = fileInfo;
         this.$['*imageSize'] = { width: fileInfo.imageInfo.width, height: fileInfo.imageInfo.height };
       });
