@@ -11,6 +11,7 @@ const ULTRA_RES_K = 3;
 const DEV_MODE =
   !window.location.host.trim() || window.location.host.includes(':') || window.location.hostname.includes('localhost');
 
+// TODO: implement secure delivery here
 export class ImgBase extends BaseComponent {
   /**
    * @param {String} key
