@@ -45,7 +45,7 @@ We provide [the set of uploader builds](../solutions/file-uploader/) you can use
 
 The standard flow of the uploading widget creation is following:
 
-1. Install lr-blocks package: `npm i @uploadcare/lr-blocks`.
+1. Install lr-blocks package: `npm i @uploadcare/uc-blocks`.
 2. Create the set of all components you need (example: [index.js](../solutions/file-uploader/regular/index.js)).
 3. Create your widget class with desired layout (example: [index.js](../solutions/file-uploader/regular/index.jss)).
 4. Create CSS configuration file (example: [index.css](../solutions/file-uploader/regular/index.css)).
@@ -57,7 +57,7 @@ As you can see, that's quite simple.
 
 ## 🎨 Customize everything!
 
-First of all, please look at [our CSS approach discussion](https://github.com/uploadcare/lr-blocks/discussions/18).
+First of all, please look at [our CSS approach discussion](https://github.com/uploadcare/uc-blocks/discussions/18).
 Please don't hesitate to take part; your opinion is very important to us.
 
 ### Look & feel
@@ -102,7 +102,7 @@ You can combine them to create a common workflow like this one:
 You can quickly override any block template by setting the new `template` property value to any block class. Here is an example:
 
 ```js
-import * as LR from '@uploadcare/lr-blocks';
+import * as LR from '@uploadcare/uc-blocks';
 
 LR.ProgressBarCommon.template = /*html*/ `
   <h1>My custom heading</h1>

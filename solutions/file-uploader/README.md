@@ -34,17 +34,17 @@ Uploader is supported in all major modern [browsers](https://github.com/uploadca
 Connect script:
 
 ```html
-<script src="https://unpkg.com/@uploadcare/lr-blocks@latest/web/file-uploader-regular.min.js" type="module"></script>
+<script src="https://unpkg.com/@uploadcare/uc-blocks@latest/web/file-uploader-regular.min.js" type="module"></script>
 ```
 
 ### npm package
 
-Install package: `npm i @uploadcare/lr-blocks`
+Install package: `npm i @uploadcare/uc-blocks`
 
 Then you can use `Uploader`-element class for your purposes:
 
 ```javascript
-import * as LR from '@uploadcare/lr-blocks';
+import * as LR from '@uploadcare/uc-blocks';
 
 LR.registerBlocks(LR);
 
@@ -63,7 +63,7 @@ Note that all configurations, localization texts, icons, and styling are placed 
 
 ```html
 <style>
-  @import url(https://unpkg.com/@uploadcare/lr-blocks@latest/web/file-uploader-regular.min.css);
+  @import url(https://unpkg.com/@uploadcare/uc-blocks@latest/web/file-uploader-regular.min.css);
   .my-settings {
     --ctx-name: 'my-uploader';
     --cfg-pubkey: 'demopublickey';
@@ -81,7 +81,7 @@ If you need additional isolation and styling security levels, you can get it wit
 To enable it and encapsulate all styles into separated scope, use the `css-src` attribute:
 
 ```html
-<lr-uploader css-src="https://unpkg.com/@uploadcare/lr-blocks@latest/web/file-uploader-regular.min.css"> </lr-uploader>
+<lr-uploader css-src="https://unpkg.com/@uploadcare/uc-blocks@latest/web/file-uploader-regular.min.css"> </lr-uploader>
 ```
 
 ### Custom tags naming convention

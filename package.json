@@ -1,11 +1,11 @@
 {
-  "name": "@uploadcare/lr-blocks",
+  "name": "@uploadcare/uc-blocks",
   "version": "0.2.0",
   "description": "Building blocks for Uploadcare products integration",
   "type": "module",
   "module": "index.js",
   "sideEffects": false,
-  "repository": "https://github.com/uploadcare/lr-blocks/",
+  "repository": "https://github.com/uploadcare/uc-blocks/",
   "files": [
     "{abstract,blocks,solutions,web,utils,submodules}/**/*.{js,css,d.ts,d.ts.map}",
     "index.{js,d.ts,d.ts.map}",

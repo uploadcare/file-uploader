@@ -43,7 +43,7 @@ AppShell.template = /*html*/ `
     <a href="blocks/">Blocks</a>
     <a href="solutions/">Solutions</a>
     <a href="toc.html">TOC</a>
-    <a href="//github.com/uploadcare/lr-blocks/discussions">Discussions</a>
+    <a href="//github.com/uploadcare/uc-blocks/discussions">Discussions</a>
   </div>
 </nav>
 <main>
