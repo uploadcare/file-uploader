@@ -1,6 +1,6 @@
-[![npm version](https://badge.fury.io/js/@uploadcare%2Fuc-blocks.svg)](https://www.npmjs.com/package/@uploadcare/uc-blocks)
+[![npm version](https://badge.fury.io/js/@uploadcare%2Flr-blocks.svg)](https://www.npmjs.com/package/@uploadcare/lr-blocks)
 
-# uc-blocks: web components for the Uploadcare platform integrations
+# lr-blocks: web components for the Uploadcare platform integrations
 
 ## 💎 Core concepts
 
@@ -27,11 +27,11 @@
 
 ### NPM
 
-`npm i @uploadcare/uc-blocks`
+`npm i @uploadcare/lr-blocks`
 
 ### Contribution
 
-1. Clone repository: `git clone git@github.com:uploadcare/uc-blocks.git ./`.
+1. Clone repository: `git clone git@github.com:uploadcare/lr-blocks.git ./`.
 2. Run dependencies setup: `npm run setup`.
 3. Start local dev-server: `npm run dev`.
 
@@ -45,7 +45,7 @@ Check the [JSDoc Reference](https://www.typescriptlang.org/docs/handbook/jsdoc-s
 
 ### Supported browsers
 
-uc-blocks are supported and tested in all major modern desktop and mobile browsers:
+lr-blocks are supported and tested in all major modern desktop and mobile browsers:
 
 - Chrome
 - Firefox
@@ -62,6 +62,6 @@ Issues and PRs are welcome. You can provide your feedback or drop us a support r
 
 ## Browse documentation and live demos
 
-https://uploadcare.github.io/uc-blocks/
+https://uploadcare.github.io/lr-blocks/
 
 > All the source code in demos is accessible and works in raw mode (as is), so you can use your browser developer tools to discover it in detail.

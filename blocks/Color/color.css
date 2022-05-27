@@ -1,4 +1,4 @@
-uc-color {
+lr-color {
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -10,11 +10,11 @@ uc-color {
   cursor: pointer;
 }
 
-uc-color[current] {
+lr-color[current] {
   background-color: var(--clr-txt);
 }
 
-uc-color input[type='color'] {
+lr-color input[type='color'] {
   position: absolute;
   display: block;
   width: 100%;
@@ -22,7 +22,7 @@ uc-color input[type='color'] {
   opacity: 0;
 }
 
-uc-color .current-color {
+lr-color .current-color {
   position: absolute;
   width: 50%;
   height: 50%;

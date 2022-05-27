@@ -13,7 +13,7 @@ export class SourceList extends Block {
       });
       let html = '';
       list.forEach((srcName) => {
-        html += /*html*/ `<uc-source-btn type="${srcName}"></uc-source-btn>`;
+        html += /*html*/ `<lr-source-btn type="${srcName}"></lr-source-btn>`;
       });
       if (this.getCssData('--cfg-source-list-wrap')) {
         this.innerHTML = html;

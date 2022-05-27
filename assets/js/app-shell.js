@@ -5,7 +5,7 @@ import { BaseComponent } from '../../submodules/symbiote/core/BaseComponent.js';
 import { initStyles, SHELL_CSS } from './styles.js';
 
 import { LiveHtml } from '../../blocks/LiveHtml/LiveHtml.js';
-LiveHtml.reg('uc-live-html');
+LiveHtml.reg('lr-live-html');
 
 initStyles(() => {
   document.body.removeAttribute('unresolved');
@@ -14,7 +14,7 @@ initStyles(() => {
 class AppShell extends BaseComponent {
   init$ = {
     base: './',
-    heading: '🟡 Uploadcare | uc-blocks',
+    heading: '🟡 Uploadcare | lr-blocks',
     copy: '© 2022 🦆',
   };
 
@@ -43,7 +43,7 @@ AppShell.template = /*html*/ `
     <a href="blocks/">Blocks</a>
     <a href="solutions/">Solutions</a>
     <a href="toc.html">TOC</a>
-    <a href="//github.com/uploadcare/uc-blocks/discussions">Discussions</a>
+    <a href="//github.com/uploadcare/lr-blocks/discussions">Discussions</a>
   </div>
 </nav>
 <main>

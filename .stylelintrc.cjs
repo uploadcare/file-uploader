@@ -28,7 +28,7 @@ module.exports = {
       plugins: ['./stylelint-force-app-name-prefix.cjs'],
       rules: {
         'plugin/stylelint-force-app-name-prefix': {
-          appName: 'uc',
+          appName: 'lr',
         },
       },
     },

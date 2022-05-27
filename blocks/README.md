@@ -1,4 +1,4 @@
-# &lt;uc-blocks&gt;
+# &lt;lr-blocks&gt;
 
 ## 🧩 Use predefined custom elements to build your own file uploading flow
 
@@ -45,7 +45,7 @@ We provide [the set of uploader builds](../solutions/file-uploader/) you can use
 
 The standard flow of the uploading widget creation is following:
 
-1. Install uc-blocks package: `npm i @uploadcare/uc-blocks`.
+1. Install lr-blocks package: `npm i @uploadcare/lr-blocks`.
 2. Create the set of all components you need (example: [index.js](../solutions/file-uploader/regular/index.js)).
 3. Create your widget class with desired layout (example: [index.js](../solutions/file-uploader/regular/index.jss)).
 4. Create CSS configuration file (example: [index.css](../solutions/file-uploader/regular/index.css)).
@@ -57,7 +57,7 @@ As you can see, that's quite simple.
 
 ## 🎨 Customize everything!
 
-First of all, please look at [our CSS approach discussion](https://github.com/uploadcare/uc-blocks/discussions/18).
+First of all, please look at [our CSS approach discussion](https://github.com/uploadcare/lr-blocks/discussions/18).
 Please don't hesitate to take part; your opinion is very important to us.
 
 ### Look & feel
@@ -67,7 +67,7 @@ You can use it as the template to create your own custom styling (or CSS animati
 All blocks and their children act like regular DOM elements; therefore, you can use native CSS selectors and any existing styling approach.
 All significant component states are provided as element attribute flags, so you can use the full power of CSS to customize the blocks deeply.
 
-[More about CSS theme creation](./themes/uc-basic/)
+[More about CSS theme creation](./themes/lr-basic/)
 
 ### Layout & composition
 
@@ -75,26 +75,26 @@ Block components can be used separately or in combinations.
 You can combine them to create a common workflow like this one:
 
 ```html
-<uc-simple-btn></uc-simple-btn>
+<lr-simple-btn></lr-simple-btn>
 
-<uc-modal strokes>
-  <uc-activity-icon slot="heading"></uc-activity-icon>
-  <uc-activity-caption slot="heading"></uc-activity-caption>
-  <uc-start-from>
-    <uc-source-list wrap></uc-source-list>
-    <uc-drop-area></uc-drop-area>
-  </uc-start-from>
-  <uc-upload-list></uc-upload-list>
-  <uc-camera-source></uc-camera-source>
-  <uc-url-source></uc-url-source>
-  <uc-external-source></uc-external-source>
-  <uc-upload-details></uc-upload-details>
-  <uc-confirmation-dialog></uc-confirmation-dialog>
-  <uc-cloud-image-editor></uc-cloud-image-editor>
-</uc-modal>
+<lr-modal strokes>
+  <lr-activity-icon slot="heading"></lr-activity-icon>
+  <lr-activity-caption slot="heading"></lr-activity-caption>
+  <lr-start-from>
+    <lr-source-list wrap></lr-source-list>
+    <lr-drop-area></lr-drop-area>
+  </lr-start-from>
+  <lr-upload-list></lr-upload-list>
+  <lr-camera-source></lr-camera-source>
+  <lr-url-source></lr-url-source>
+  <lr-external-source></lr-external-source>
+  <lr-upload-details></lr-upload-details>
+  <lr-confirmation-dialog></lr-confirmation-dialog>
+  <lr-cloud-image-editor></lr-cloud-image-editor>
+</lr-modal>
 
-<uc-message-box></uc-message-box>
-<uc-progress-bar-common></uc-progress-bar-common>
+<lr-message-box></lr-message-box>
+<lr-progress-bar-common></lr-progress-bar-common>
 ```
 
 ### Block templates
@@ -102,9 +102,9 @@ You can combine them to create a common workflow like this one:
 You can quickly override any block template by setting the new `template` property value to any block class. Here is an example:
 
 ```js
-import * as UC from '@uploadcare/uc-blocks';
+import * as LR from '@uploadcare/lr-blocks';
 
-UC.ProgressBarCommon.template = /*html*/ `
+LR.ProgressBarCommon.template = /*html*/ `
   <h1>My custom heading</h1>
   <div class="my-custom-class">
     My custom template

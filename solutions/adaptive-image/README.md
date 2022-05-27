@@ -18,24 +18,24 @@
 Connect script:
 
 ```html
-<script src="https://unpkg.com/@uploadcare/uc-blocks@latest/web/uc-img.min.js" type="module"></script>
+<script src="https://unpkg.com/@uploadcare/lr-blocks@latest/web/lr-img.min.js" type="module"></script>
 ```
 
 Add basic settings:
 
 ```css
-uc-img {
-  --uc-img-pubkey: 'YOUR_PROJECT_PUBLIC_KEY';
-  --uc-img-breakpoints: '200, 500, 800';
+lr-img {
+  --lr-img-pubkey: 'YOUR_PROJECT_PUBLIC_KEY';
+  --lr-img-breakpoints: '200, 500, 800';
 }
 ```
 
 A public key is necessary for the Proxy links generation if a custom proxy name is not used. You can obtain the public key key in your [Uploadcare project's dashboard](https://app.uploadcare.com/projects/-/api-keys/).
 
-Then use `<uc-img>` tag for the images in your HTML templates:
+Then use `<lr-img>` tag for the images in your HTML templates:
 
 ```html
-<uc-img src="SOURCE_IMAGE_PATH"></uc-img>
+<lr-img src="SOURCE_IMAGE_PATH"></lr-img>
 ```
 
 That's it!
@@ -51,19 +51,19 @@ That's it!
 For the SEO or NOSCRIPT purposes, use `<noscript>` sections on your integrations with the original image path:
 
 ```html
-<uc-img src="SOURCE_IMAGE_PATH">
+<lr-img src="SOURCE_IMAGE_PATH">
   <noscript>
     <img src="SOURCE_IMAGE_PATH" />
   </noscript>
-</uc-img>
+</lr-img>
 ```
 
 After initiating, if JavaScript is enabled in the browser, that will be transformed into:
 
 ```html
-<uc-img src="SOURCE_IMAGE_PATH">
+<lr-img src="SOURCE_IMAGE_PATH">
   <img srcset="...GENERATED_SRC_LIST" />
-</uc-img>
+</lr-img>
 ```
 
 ## Lazy loading
@@ -74,24 +74,24 @@ Disable:
 
 ```html
 <style>
-  uc-img {
-    --uc-img-lazy: 0;
+  lr-img {
+    --lr-img-lazy: 0;
   }
 </style>
 
-<uc-img src="SOURCE_IMAGE_PATH"></uc-img>
+<lr-img src="SOURCE_IMAGE_PATH"></lr-img>
 ```
 
 Intersection observer enabled:
 
 ```html
 <style>
-  uc-img {
-    --uc-img-intersection: 1;
+  lr-img {
+    --lr-img-intersection: 1;
   }
 </style>
 
-<uc-img src="SOURCE_IMAGE_PATH"></uc-img>
+<lr-img src="SOURCE_IMAGE_PATH"></lr-img>
 ```
 
 ## Breakpoints
@@ -102,12 +102,12 @@ If you have some responsive layout where images could be resized in some cases, 
 <style>
   @import url('./test.css');
 
-  uc-img {
-    --uc-img-breakpoints: '400, 800, 1200';
+  lr-img {
+    --lr-img-breakpoints: '400, 800, 1200';
   }
 </style>
 
-<uc-img src="SOURCE_IMAGE_PATH"></uc-img>
+<lr-img src="SOURCE_IMAGE_PATH"></lr-img>
 ```
 
 That will save the resources and make image behavior more expected. The browser will select the most suitable image size automatically.
@@ -123,11 +123,11 @@ You can provide some transformation settings for the single image or the set of 
 ```html
 <style>
   .invert {
-    --uc-img-cdn-operations: 'invert';
+    --lr-img-cdn-operations: 'invert';
   }
 </style>
 
-<uc-img class="invert" src="SOURCE_IMAGE_PATH"></uc-img>
+<lr-img class="invert" src="SOURCE_IMAGE_PATH"></lr-img>
 ```
 
 Operations description syntax is the same as used in [REST API](https://uploadcare.com/docs/transformations/image/). More examples:
@@ -135,10 +135,10 @@ Operations description syntax is the same as used in [REST API](https://uploadca
 ```html
 <style>
   .invert_grayscale {
-    --uc-img-cdn-operations: 'invert/-/grayscale';
+    --lr-img-cdn-operations: 'invert/-/grayscale';
   }
   .old_styled {
-    --uc-img-cdn-operations: 'saturation/-80/-/contrast/80/-/warmth/50';
+    --lr-img-cdn-operations: 'saturation/-80/-/contrast/80/-/warmth/50';
   }
 </style>
 ```
@@ -158,7 +158,7 @@ To use an adaptive image as an element's background, you can use `is-background-
 
 <div id="target">Some text...</div>
 
-<uc-img is-background-for="#target" src="SOURCE_IMAGE_PATH"></uc-img>
+<lr-img is-background-for="#target" src="SOURCE_IMAGE_PATH"></lr-img>
 ```
 
 ## Development mode (relative image path)
@@ -166,7 +166,7 @@ To use an adaptive image as an element's background, you can use `is-background-
 When you develop your application, you can use a local development server and relative paths in your project structure for the images. In that case, Uploadcare Proxy service would be disabled for your development environment, and you will see original local images in your application until you deploy it:
 
 ```html
-<uc-img src="../LOCAL_IMAGE_PATH"></uc-img>
+<lr-img src="../LOCAL_IMAGE_PATH"></lr-img>
 ```
 
 ## UUID
@@ -174,7 +174,7 @@ When you develop your application, you can use a local development server and re
 If you already have UUID for images uploaded to Uploadcare, you can use it in image component directly:
 
 ```html
-<uc-img uuid="CDN_UUID"></uc-img>
+<lr-img uuid="CDN_UUID"></lr-img>
 ```
 
 In this case, you don't need the `pubkey` setting to upload the source image.
@@ -185,19 +185,19 @@ CSS context properties are available for any container's nested elements, just l
 
 | CSS context property       | HTML Attribute    | Default value | Type        |
 | :------------------------- | :---------------- | :------------ | :---------- |
-| --uc-img-dev-mode          | dev-mode          | none          | number flag |
-| --uc-img-pubkey            | pubkey            | none          | string      |
-| --uc-img-uuid              | uuid              | none          | string      |
-| --uc-img-src               | src               | none          | string      |
-| --uc-img-lazy              | lazy              | `1`           | number flag |
-| --uc-img-intersection      | intersection      | `0`           | number flag |
-| --uc-img-breakpoints       | breakpoints       | none          | string      |
-| --uc-img-cdn-cname         | cdn-cname         | none          | string      |
-| --uc-img-proxy-cname       | proxy-cname       | none          | string      |
-| --uc-img-hi-res-support    | hi-res-support    | `1`           | number flag |
-| --uc-img-ultra-res-support | ultra-res-support | `0`           | number flag |
-| --uc-img-format            | format            | `'webp'`      | string      |
-| --uc-img-cdn-operations    | cdn-operations    | none          | string      |
-| --uc-img-progressive       | progressive       | none          | number flag |
-| --uc-img-quality           | quality           | `'smart'`     | string      |
-| --uc-img-is-background-for | is-background-for | none          | string      |
+| --lr-img-dev-mode          | dev-mode          | none          | number flag |
+| --lr-img-pubkey            | pubkey            | none          | string      |
+| --lr-img-uuid              | uuid              | none          | string      |
+| --lr-img-src               | src               | none          | string      |
+| --lr-img-lazy              | lazy              | `1`           | number flag |
+| --lr-img-intersection      | intersection      | `0`           | number flag |
+| --lr-img-breakpoints       | breakpoints       | none          | string      |
+| --lr-img-cdn-cname         | cdn-cname         | none          | string      |
+| --lr-img-proxy-cname       | proxy-cname       | none          | string      |
+| --lr-img-hi-res-support    | hi-res-support    | `1`           | number flag |
+| --lr-img-ultra-res-support | ultra-res-support | `0`           | number flag |
+| --lr-img-format            | format            | `'webp'`      | string      |
+| --lr-img-cdn-operations    | cdn-operations    | none          | string      |
+| --lr-img-progressive       | progressive       | none          | number flag |
+| --lr-img-quality           | quality           | `'smart'`     | string      |
+| --lr-img-is-background-for | is-background-for | none          | string      |

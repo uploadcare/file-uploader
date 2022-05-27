@@ -1,27 +1,27 @@
 export const buildItems = [
-  // uc-blocks
+  // lr-blocks
   {
     in: './index.js',
-    out: './web/uc-blocks.min.js',
+    out: './web/lr-blocks.min.js',
     minify: true,
     minifyHtml: true,
   },
   {
-    in: './blocks/themes/uc-basic/index.css',
-    out: './web/uc-basic.min.css',
+    in: './blocks/themes/lr-basic/index.css',
+    out: './web/lr-basic.min.css',
     minify: true,
   },
 
-  // uc-cloud-image-editor
+  // lr-cloud-image-editor
   {
     in: './blocks/CloudImageEditor/index.js',
-    out: './web/uc-cloud-image-editor.min.js',
+    out: './web/lr-cloud-image-editor.min.js',
     minify: true,
     minifyHtml: true,
   },
   {
     in: './blocks/CloudImageEditor/src/css/index.css',
-    out: './web/uc-cloud-image-editor.min.css',
+    out: './web/lr-cloud-image-editor.min.css',
     minify: true,
   },
 
@@ -64,10 +64,10 @@ export const buildItems = [
     minify: true,
   },
 
-  // uc-img
+  // lr-img
   {
     in: './solutions/adaptive-image/index.js',
-    out: './web/uc-img.min.js',
+    out: './web/lr-img.min.js',
     minify: true,
     minifyHtml: true,
   },

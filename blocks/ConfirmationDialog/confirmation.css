@@ -1,10 +1,10 @@
-uc-confirmation-dialog {
+lr-confirmation-dialog {
   display: block;
   padding: var(--gap-mid);
   padding-top: var(--gap-max);
 }
 
-uc-confirmation-dialog .message {
+lr-confirmation-dialog .message {
   display: flex;
   justify-content: center;
   padding: var(--gap-mid);
@@ -13,7 +13,7 @@ uc-confirmation-dialog .message {
   font-size: 1.1em;
 }
 
-uc-confirmation-dialog .toolbar {
+lr-confirmation-dialog .toolbar {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--gap-mid);

@@ -1,9 +1,9 @@
-<base href="../../">
+<base href="../../" />
 
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
-  @import url(./upload-blocks/themes/uc-basic/index.css);
-  .uc-wgt-common {
+  @import url(./upload-blocks/themes/lr-basic/index.css);
+  .lr-wgt-common {
     --ctx-name: 'my-uploader';
     --cfg-pubkey: 'demopublickey';
   }
@@ -11,75 +11,76 @@
 <script src="./upload-blocks/index.js" type="module"></script>
 
 <style>
-.uploader {
-  display: grid;
-  grid-template-rows: min-content 400px min-content;
-  grid-template-columns: 1fr 1fr;
-  margin: 40px;
-  grid-gap: 20px;
-  width: 1200px;
-}
+  .uploader {
+    display: grid;
+    grid-template-rows: min-content 400px min-content;
+    grid-template-columns: 1fr 1fr;
+    margin: 40px;
+    grid-gap: 20px;
+    width: 1200px;
+  }
 
-.header {
-  border: 1px solid black;
-  padding: 20px;
-  display: grid;
-  grid-gap: 20px;
-  grid-template-columns: min-content max-content;
-  align-items: center;
-  grid-area: 1 / span 2;
-}
+  .header {
+    border: 1px solid black;
+    padding: 20px;
+    display: grid;
+    grid-gap: 20px;
+    grid-template-columns: min-content max-content;
+    align-items: center;
+    grid-area: 1 / span 2;
+  }
 
-uc-inline {
-  border: 1px solid black;
-}
-.uc-wgt-common [activity="upload-list"] {
-  display: grid;
-  border: 1px solid black;
-}
-[activity][active] {
-  border: 2px solid green;
-}
-.output {
-  border: 1px solid black;
-  grid-area: 3/ span 2;
-}
+  lr-inline {
+    border: 1px solid black;
+  }
+  .lr-wgt-common [activity='upload-list'] {
+    display: grid;
+    border: 1px solid black;
+  }
+  [activity][active] {
+    border: 2px solid green;
+  }
+  .output {
+    border: 1px solid black;
+    grid-area: 3 / span 2;
+  }
 </style>
 
-<div class="uploader uc-wgt-common">
+<div class="uploader lr-wgt-common">
   <div class="header">
-    <uc-activity-icon></uc-activity-icon>
-    <uc-activity-caption></uc-activity-caption>
+    <lr-activity-icon></lr-activity-icon>
+    <lr-activity-caption></lr-activity-caption>
   </div>
   <!-- want to show confirmation in the modal -->
-  <!-- <uc-modal class="uc-wgt-common">
-    <uc-confirmation-dialog></uc-confirmation-dialog>
-  </uc-modal> -->
-  <div class="uc-wgt-common">
+  <!-- <lr-modal class="lr-wgt-common">
+    <lr-confirmation-dialog></lr-confirmation-dialog>
+  </lr-modal> -->
+  <div class="lr-wgt-common">
     <!-- source list should be active by default inside inline wrapper -->
-    <uc-source-select active>
-      <uc-source-list wrap></uc-source-list>
-      <uc-drop-area></uc-drop-area>
-    </uc-source-select>
-    <uc-camera-source></uc-camera-source>
-    <uc-url-source></uc-url-source>
-    <uc-external-source></uc-external-source>
-    <uc-upload-details></uc-upload-details>
-    <uc-cloud-image-editor></uc-cloud-image-editor>
-    <uc-confirmation-dialog></uc-confirmation-dialog>
+    <lr-source-select active>
+      <lr-source-list wrap></lr-source-list>
+      <lr-drop-area></lr-drop-area>
+    </lr-source-select>
+    <lr-camera-source></lr-camera-source>
+    <lr-url-source></lr-url-source>
+    <lr-external-source></lr-external-source>
+    <lr-upload-details></lr-upload-details>
+    <lr-cloud-image-editor></lr-cloud-image-editor>
+    <lr-confirmation-dialog></lr-confirmation-dialog>
   </div>
 
-  <uc-upload-list active></uc-upload-list>
+  <lr-upload-list active></lr-upload-list>
 
   <div class="output">
     Output:
-    <uc-data-output
-    fire-event
-    from="*outputData"
-    item-template="<img height='200' src='https://ucarecdn.com/{{uuid}}/-/preview/' />"
-    class="uc-wgt-common"></uc-data-output>
+    <lr-data-output
+      fire-event
+      from="*outputData"
+      item-template="<img height='200' src='https://ucarecdn.com/{{uuid}}/-/preview/' />"
+      class="lr-wgt-common"
+    ></lr-data-output>
   </div>
 </div>
 
-<uc-message-box class="uc-wgt-common"></uc-message-box>
-<uc-progress-bar-common class="uc-wgt-common"></uc-progress-bar-common>
+<lr-message-box class="lr-wgt-common"></lr-message-box>
+<lr-progress-bar-common class="lr-wgt-common"></lr-progress-bar-common>

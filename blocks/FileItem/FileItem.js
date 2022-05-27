@@ -298,25 +298,25 @@ FileItem.template = /*html*/ `
   class="thumb"
   set="style.backgroundImage: thumbUrl">
   <div class="badge">
-    <uc-icon set="@name: badgeIcon"></uc-icon>
+    <lr-icon set="@name: badgeIcon"></lr-icon>
   </div>
 </div>
 <div class="file-name-wrapper">
   <span class="file-name" set="@title: itemName">{{itemName}}</span>
 </div>
 <button class="edit-btn" set="onclick: onEdit;">
-  <uc-icon name="edit-file"></uc-icon>
+  <lr-icon name="edit-file"></lr-icon>
 </button>
 <button class="remove-btn" set="onclick: onRemove;">
-  <uc-icon name="remove-file"></uc-icon>
+  <lr-icon name="remove-file"></lr-icon>
 </button>
 <button class="upload-btn" set="onclick: onUpload;">
-  <uc-icon name="upload"></uc-icon>
+  <lr-icon name="upload"></lr-icon>
 </button>
-<uc-progress-bar
+<lr-progress-bar
   class="progress-bar"
   set="value: progressValue; visible: progressVisible; unknown: progressUnknown">
-</uc-progress-bar>
+</lr-progress-bar>
 `;
 FileItem.activeInstances = new Set();
 

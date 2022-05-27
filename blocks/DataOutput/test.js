@@ -4,7 +4,7 @@ import { registerBlocks } from '../../abstract/registerBlocks.js';
 registerBlocks({ DataOutput });
 
 const dataOutput = new DataOutput();
-dataOutput.classList.add('uc-wgt-common');
+dataOutput.classList.add('lr-wgt-common');
 dataOutput.setAttribute('console', '');
 dataOutput.setAttribute('item-template', /*html*/ `<div>{{test}}</div>`);
 

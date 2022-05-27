@@ -2,7 +2,7 @@ import { BaseComponent } from '../../submodules/symbiote/core/symbiote.js';
 import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../utils/cdn-utils.js';
 import { PROPS_MAP } from './props-map.js';
 
-const CSS_PREF = '--uc-img-';
+const CSS_PREF = '--lr-img-';
 const UNRESOLVED_ATTR = 'unresolved';
 const HI_RES_K = 2;
 const ULTRA_RES_K = 3;

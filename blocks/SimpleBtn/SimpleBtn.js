@@ -27,11 +27,11 @@ export class SimpleBtn extends Block {
 }
 
 SimpleBtn.template = /*html*/ `
-<uc-drop-area>
+<lr-drop-area>
   <button set="onclick: onClick">
-    <uc-icon name="upload"></uc-icon>
+    <lr-icon name="upload"></lr-icon>
     <span>{{*simpleButtonText}}</span>
     <slot></slot>
   </button>
-</uc-drop-area>
+</lr-drop-area>
 `;

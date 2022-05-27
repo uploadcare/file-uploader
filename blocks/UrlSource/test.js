@@ -4,7 +4,7 @@ import { registerBlocks } from '../../abstract/registerBlocks.js';
 registerBlocks({ UrlSource });
 
 const urlSource = new UrlSource();
-urlSource.classList.add('uc-wgt-common');
+urlSource.classList.add('lr-wgt-common');
 
 window.onload = () => {
   document.querySelector('#viewport')?.appendChild(urlSource);

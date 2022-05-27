@@ -1,5 +1,5 @@
 // @ts-nocheck
-const SourceBtnClass = window.customElements.get('uc-source-btn');
+const SourceBtnClass = window.customElements.get('lr-source-btn');
 
 class CustomSourceBtn extends SourceBtnClass {
   initTypes() {

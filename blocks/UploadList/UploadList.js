@@ -54,7 +54,7 @@ export class UploadList extends Block {
       this.set$({
         '*currentActivity': this.doneActivity || '',
       });
-      this.setForCtxTarget('uc-modal', '*modalActive', false);
+      this.setForCtxTarget('lr-modal', '*modalActive', false);
       this.output();
     },
     onCancel: () => {
@@ -231,7 +231,7 @@ export class UploadList extends Block {
           }
         });
       });
-      this.setForCtxTarget('uc-modal', '*modalActive', true);
+      this.setForCtxTarget('lr-modal', '*modalActive', true);
     });
   }
 }

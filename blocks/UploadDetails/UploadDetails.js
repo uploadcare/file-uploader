@@ -157,7 +157,7 @@ export class UploadDetails extends Block {
 }
 
 UploadDetails.template = /*html*/ `
-<uc-tabs
+<lr-tabs
   tab-list="tab-view, tab-details">
 
   <div
@@ -190,24 +190,24 @@ UploadDetails.template = /*html*/ `
 
   </div>
 
-  <uc-editable-canvas
+  <lr-editable-canvas
     tab-ctx="tab-view"
     set="@disabled: !*--cfg-use-local-image-editor; @checkerboard: checkerboard;"
     ref="canvas">
-  </uc-editable-canvas>
-</uc-tabs>
+  </lr-editable-canvas>
+</lr-tabs>
 
 <div class="toolbar" set="@edit-disabled: cloudEditBtnHidden">
   <button
     class="edit-btn secondary-btn"
     set="onclick: onCloudEdit; @hidden: cloudEditBtnHidden;">
-    <uc-icon name="edit"></uc-icon>
+    <lr-icon name="edit"></lr-icon>
     <span l10n="edit-image"></span>
   </button>
   <button
     class="remove-btn secondary-btn"
     set="onclick: onRemove">
-    <uc-icon name="remove"></uc-icon>
+    <lr-icon name="remove"></lr-icon>
     <span l10n="remove-from-list"></span>
   </button>
   <div></div>

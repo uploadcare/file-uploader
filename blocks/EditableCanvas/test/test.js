@@ -2,7 +2,7 @@ import { EditableCanvas } from '../EditableCanvas.js';
 import { Icon } from '../../Icon/Icon.js';
 
 EditableCanvas.reg('editable-canvas');
-Icon.reg('uc-icon');
+Icon.reg('lr-icon');
 
 window.onload = () => {
   /** @type {EditableCanvas} */

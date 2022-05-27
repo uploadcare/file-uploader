@@ -1,6 +1,6 @@
 # Table of contents
 
-- [uc-blocks](./) - repository root
+- [lr-blocks](./) - repository root
 
   - [solutions](./solutions/) - ready made solutions
 

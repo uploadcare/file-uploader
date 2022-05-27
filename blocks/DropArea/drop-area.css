@@ -1,4 +1,4 @@
-uc-drop-area {
+lr-drop-area {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -9,35 +9,35 @@ uc-drop-area {
     opacity var(--transition-duration) ease;
 }
 
-uc-drop-area::after {
+lr-drop-area::after {
   color: var(--clr-txt-light);
   content: var(--l10n-drop-files-here);
 }
 
-uc-drop-area[ghost][drag-state='inactive'] {
+lr-drop-area[ghost][drag-state='inactive'] {
   opacity: 0;
 }
 
-uc-drop-area[drag-state='inactive'] {
+lr-drop-area[drag-state='inactive'] {
   background-color: var(--clr-shade-lv1);
 }
 
-uc-drop-area[drag-state='active'] {
+lr-drop-area[drag-state='active'] {
   background-color: var(--clr-accent-lightest);
   opacity: 1;
 }
 
-uc-drop-area[drag-state='near'] {
+lr-drop-area[drag-state='near'] {
   opacity: 1;
 }
 
-uc-drop-area[drag-state='near'],
-uc-drop-area:hover {
+lr-drop-area[drag-state='near'],
+lr-drop-area:hover {
   background-color: var(--clr-accent-lightest);
   border-color: var(--clr-accent-light);
 }
 
-uc-drop-area[drag-state='over'] {
+lr-drop-area[drag-state='over'] {
   background-color: var(--clr-accent-lightest);
   border-color: var(--clr-accent);
   opacity: 1;

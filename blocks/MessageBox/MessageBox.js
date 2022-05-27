@@ -53,10 +53,10 @@ export class MessageBox extends Block {
 
 MessageBox.template = /*html*/ `
 <div class="heading">
-  <uc-icon set="@name: iconName"></uc-icon>
+  <lr-icon set="@name: iconName"></lr-icon>
   <div class="caption">{{captionTxt}}</div>
   <button set="onclick: onClose">
-    <uc-icon name="close"></uc-icon>
+    <lr-icon name="close"></lr-icon>
   </button>
 </div>
 <div class="msg">{{msgTxt}}</div>

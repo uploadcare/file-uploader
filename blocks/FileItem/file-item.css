@@ -1,4 +1,4 @@
-uc-file-item {
+lr-file-item {
   position: relative;
   display: grid;
   grid-template-columns: min-content auto min-content min-content;
@@ -8,27 +8,27 @@ uc-file-item {
   transition: var(--transition-duration);
 }
 
-uc-file-item:last-of-type {
+lr-file-item:last-of-type {
   border-bottom: none;
 }
 
-uc-file-item:hover {
+lr-file-item:hover {
   background-color: var(--clr-background);
 }
 
-uc-file-item[focused] {
+lr-file-item[focused] {
   background-color: transparent;
 }
 
-uc-file-item[uploading] .edit-btn {
+lr-file-item[uploading] .edit-btn {
   display: none;
 }
 
-uc-file-item[error] {
+lr-file-item[error] {
   background-color: var(--clr-error-lightest);
 }
 
-uc-file-item .thumb {
+lr-file-item .thumb {
   position: relative;
   display: inline-flex;
   width: var(--ui-size);
@@ -39,7 +39,7 @@ uc-file-item .thumb {
   border-radius: var(--border-radius-thumb);
 }
 
-uc-file-item .file-name-wrapper {
+lr-file-item .file-name-wrapper {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -51,14 +51,14 @@ uc-file-item .file-name-wrapper {
   color: var(--clr-txt);
 }
 
-uc-file-item .file-name {
+lr-file-item .file-name {
   max-width: 100%;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
 
-uc-file-item button {
+lr-file-item button {
   width: var(--ui-size);
   height: var(--ui-size);
   padding: 0;
@@ -69,15 +69,15 @@ uc-file-item button {
   transition: opacity var(--transition-duration);
 }
 
-uc-file-item .upload-btn {
+lr-file-item .upload-btn {
   display: none;
 }
 
-uc-file-item button:hover {
+lr-file-item button:hover {
   opacity: var(--opacity-hover);
 }
 
-uc-file-item .badge {
+lr-file-item .badge {
   position: absolute;
   top: calc(var(--ui-size) * -0.15);
   right: calc(var(--ui-size) * -0.15);
@@ -89,26 +89,26 @@ uc-file-item .badge {
   border-radius: 50%;
 }
 
-uc-file-item[error] .badge,
-uc-file-item[loaded] .badge {
+lr-file-item[error] .badge,
+lr-file-item[loaded] .badge {
   display: block;
 }
 
-uc-file-item[loaded] .badge {
+lr-file-item[loaded] .badge {
   background-color: var(--clr-confirm);
 }
 
-uc-file-item[error] .badge {
+lr-file-item[error] .badge {
   background-color: var(--clr-error);
 }
 
-uc-file-item .badge uc-icon,
-uc-file-item .badge uc-icon svg {
+lr-file-item .badge lr-icon,
+lr-file-item .badge lr-icon svg {
   width: 100%;
   height: 100%;
 }
 
-uc-file-item .progress-bar {
+lr-file-item .progress-bar {
   top: calc(100% - 2px);
   height: 2px;
 }
