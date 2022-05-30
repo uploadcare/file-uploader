@@ -1,4 +1,5 @@
 import { BaseComponent } from '../../submodules/symbiote/core/symbiote.js';
+import { applyTemplateData } from '../../utils/applyTemplateData.js';
 import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../utils/cdn-utils.js';
 import { PROPS_MAP } from './props-map.js';
 
@@ -80,48 +81,73 @@ export class ImgBase extends BaseComponent {
 
     // Localhost + relative image path (DO NOTHING):
     if (DEV_MODE && this.$$('src') && !this.$$('src').includes('//')) {
-      return this.$$('src');
+      return this._proxyUrl(this.$$('src'));
     }
 
     let cdnModifiers = this._getCdnModifiers(size);
 
     // Alternative CDN name:
     if (this.$$('cdn-cname') && this.$$('uuid')) {
-      return createCdnUrl(
-        //
-        createOriginalUrl(this.$$('cdn-cname'), this.$$('uuid')),
-        cdnModifiers
+      return this._proxyUrl(
+        createCdnUrl(
+          //
+          createOriginalUrl(this.$$('cdn-cname'), this.$$('uuid')),
+          cdnModifiers
+        )
       );
     }
 
     // UUID only:
     if (this.$$('uuid')) {
-      return createCdnUrl(
-        //
-        createOriginalUrl(this.$$['cdn-cname'] || DEFAULT_CDN_BASE, this.$$('uuid')),
-        cdnModifiers
+      return this._proxyUrl(
+        createCdnUrl(
+          //
+          createOriginalUrl(this.$$['cdn-cname'] || DEFAULT_CDN_BASE, this.$$('uuid')),
+          cdnModifiers
+        )
       );
     }
 
     // Alternative proxy name:
     if (this.$$('proxy-cname')) {
-      return createCdnUrl(
-        //
-        this.$$('proxy-cname'),
-        cdnModifiers,
-        this._fmtAbs(this.$$('src'))
+      return this._proxyUrl(
+        createCdnUrl(
+          //
+          this.$$('proxy-cname'),
+          cdnModifiers,
+          this._fmtAbs(this.$$('src'))
+        )
       );
     }
 
     // Project pubkey only:
     if (this.$$('pubkey')) {
-      return createCdnUrl(
-        //
-        `https://${this.$$('pubkey')}.ucr.io/`,
-        cdnModifiers,
-        this._fmtAbs(this.$$('src'))
+      return this._proxyUrl(
+        createCdnUrl(
+          //
+          `https://${this.$$('pubkey')}.ucr.io/`,
+          cdnModifiers,
+          this._fmtAbs(this.$$('src'))
+        )
       );
     }
+  }
+
+  /**
+   * @private
+   * @param {String} url
+   * @returns {String}
+   */
+  _proxyUrl(url) {
+    let previewProxy = this.$$('preview-proxy');
+    if (!previewProxy) {
+      return url;
+    }
+    return applyTemplateData(
+      this.$$('preview-proxy'),
+      { previewUrl: url },
+      { transform: (value) => window.encodeURIComponent(value) }
+    );
   }
 
   /**
