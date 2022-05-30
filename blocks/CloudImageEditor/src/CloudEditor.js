@@ -1,5 +1,4 @@
 import { Block } from '../../../abstract/Block.js';
-import { uploadFromUploaded } from '../../../submodules/upload-client/upload-client.js';
 import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../../utils/cdn-utils.js';
 import { classNames } from './lib/classNames.js';
 import { debounce } from './lib/debounce.js';
