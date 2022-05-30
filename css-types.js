@@ -28,7 +28,7 @@
  *   '*--cfg-cdn-cname': String;
  *   '*--cfg-secure-signature': String;
  *   '*--cfg-secure-expire': String;
- *   '*--cfg-preview-proxy': String;
+ *   '*--cfg-secure-delivery-proxy': String;
  * }} CssConfigTypes
  */
 export {};

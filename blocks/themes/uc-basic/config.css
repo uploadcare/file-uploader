@@ -34,5 +34,5 @@
   --cfg-cdn-cname: 'https://ucarecdn.com';
   --cfg-secure-signature: '';
   --cfg-secure-expire: '';
-  --cfg-preview-proxy: '';
+  --cfg-secure-delivery-proxy: '';
 }

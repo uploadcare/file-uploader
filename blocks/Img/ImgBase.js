@@ -138,12 +138,12 @@ export class ImgBase extends BaseComponent {
    * @returns {String}
    */
   _proxyUrl(url) {
-    let previewProxy = this.$$('preview-proxy');
+    let previewProxy = this.$$('secure-delivery-proxy');
     if (!previewProxy) {
       return url;
     }
     return applyTemplateData(
-      this.$$('preview-proxy'),
+      this.$$('secure-delivery-proxy'),
       { previewUrl: url },
       { transform: (value) => window.encodeURIComponent(value) }
     );

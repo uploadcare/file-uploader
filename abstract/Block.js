@@ -45,7 +45,7 @@ if (!DOC_READY) {
  *   | '*--cfg-done-activity'
  *   | '*--cfg-max-local-file-size-bytes'
  *   | '*--cfg-cdn-cname'
- *   | '*--cfg-preview-proxy'} InitialAddedCssProps
+ *   | '*--cfg-secure-delivery-proxy'} InitialAddedCssProps
  */
 /** @typedef {'*--cfg-source-list'} UsedCssProps */
 /** @typedef {Pick<import('../css-types.js').CssConfigTypes, InitialAddedCssProps | UsedCssProps>} CssProps */
@@ -166,7 +166,7 @@ export class Block extends BaseComponent {
         '--cfg-done-activity',
         '--cfg-max-local-file-size-bytes',
         '--cfg-cdn-cname',
-        '--cfg-preview-proxy',
+        '--cfg-secure-delivery-proxy',
       ];
       cfgProps.forEach((prop) => {
         this.bindCssData(prop);
@@ -444,7 +444,7 @@ export class Block extends BaseComponent {
    * @returns {String}
    */
   proxyUrl(url) {
-    let previewProxy = this.$['*--cfg-preview-proxy'];
+    let previewProxy = this.$['*--cfg-secure-delivery-proxy'];
     if (!previewProxy) {
       return url;
     }
