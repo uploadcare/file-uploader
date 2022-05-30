@@ -446,7 +446,11 @@ export class Block extends BaseComponent {
   proxyUrl(url) {
     let previewProxy = this.$['*--cfg-preview-proxy'];
     if (previewProxy) {
-      return applyTemplateData(previewProxy, { previewUrl: url });
+      return applyTemplateData(
+        previewProxy,
+        { previewUrl: url },
+        { transform: (value) => window.encodeURIComponent(value) }
+      );
     }
     return url;
   }
