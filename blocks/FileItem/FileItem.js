@@ -4,6 +4,7 @@ import { uploadFile } from '../../submodules/upload-client/upload-client.js';
 import { UiMessage } from '../MessageBox/MessageBox.js';
 import { fileCssBg } from '../svg-backgrounds/svg-backgrounds.js';
 import { customUserAgent } from '../utils/userAgent.js';
+import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../utils/cdn-utils.js';
 
 /** @typedef {Partial<import('../MessageBox/MessageBox.js').State>} ExternalState */
 
@@ -174,10 +175,13 @@ export class FileItem extends Block {
         this.setAttribute('loaded', '');
 
         if (this.entry.getValue('isImage')) {
-          let url = `https://ucarecdn.com/${uuid}/`;
           this._revokeThumbUrl();
           let size = this.$['*--cfg-thumb-size'] || 76;
-          this.$.thumbUrl = `url(${url}-/scale_crop/${size}x${size}/center/)`;
+          let thumbUrl = createCdnUrl(
+            createOriginalUrl(this.$['*--cfg-cdn-cname'], uuid),
+            createCdnUrlModifiers(`scale_crop/${size}x${size}/center`)
+          );
+          this.$.thumbUrl = `url(${thumbUrl})`;
         }
       });
 
@@ -188,7 +192,8 @@ export class FileItem extends Block {
         if (this.entry.getValue('isImage')) {
           this._revokeThumbUrl();
           let size = this.$['*--cfg-thumb-size'] || 76;
-          this.$.thumbUrl = `url(${cdnUrl}-/scale_crop/${size}x${size}/center/)`;
+          let thumbUrl = createCdnUrl(cdnUrl, createCdnUrlModifiers(`scale_crop/${size}x${size}/center`));
+          this.$.thumbUrl = `url(${thumbUrl})`;
         }
       });
 
@@ -259,6 +264,7 @@ export class FileItem extends Block {
       let fileInfo = await uploadFile(this.file || this.externalUrl, {
         ...storeSetting,
         publicKey: this.$['*--cfg-pubkey'],
+        baseCDN: this.$['*--cfg-cdn-cname'],
         userAgent: customUserAgent,
         fileName: this.entry.getValue('fileName'),
         onProgress: (progress) => {

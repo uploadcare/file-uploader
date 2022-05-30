@@ -1,4 +1,5 @@
 import { Block } from '../../abstract/Block.js';
+import { createOriginalUrl } from '../../utils/cdn-utils.js';
 import { fileCssBg } from '../svg-backgrounds/svg-backgrounds.js';
 
 /**
@@ -124,7 +125,7 @@ export class UploadDetails extends Block {
         if (uuid) {
           this.eCanvas.clear();
           this.set$({
-            cdnUrl: `https://ucarecdn.com/${uuid}/`,
+            cdnUrl: createOriginalUrl(this.$['*--cfg-cdn-cname'], uuid),
             cloudEditBtnHidden: !this.entry.getValue('isImage') || !this.$['*--cfg-use-cloud-image-editor'],
           });
           this.entry.getValue('isImage') && this.eCanvas.setImageUrl(this.$.cdnUrl);

@@ -1,4 +1,5 @@
 import { Block } from '../../../abstract/Block.js';
+import { createOriginalUrl } from '../../../utils/cdn-utils.js';
 import { classNames } from './lib/classNames.js';
 import { debounce } from './lib/debounce.js';
 import { preloadImage } from './lib/preloadImage.js';
@@ -120,8 +121,7 @@ export class CloudEditor extends Block {
       return;
     }
 
-    // TODO: fix hardcode
-    this.$['*originalUrl'] = `https://ucarecdn.com/${this.$.uuid}/`;
+    this.$['*originalUrl'] = createOriginalUrl(this.$['*--cfg-cdn-cname'], this.$.uuid);
 
     fetch(`${this.$['*originalUrl']}-/json/`)
       .then((response) => response.json())

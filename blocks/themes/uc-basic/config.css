@@ -31,4 +31,5 @@
   --cfg-data-output-form-value: 1;
 
   --cfg-remote-tab-session-key: '';
+  --cfg-cdn-cname: 'https://ucarecdn.com';
 }
