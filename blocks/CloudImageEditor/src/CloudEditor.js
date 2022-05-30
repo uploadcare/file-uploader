@@ -1,6 +1,6 @@
 import { Block } from '../../../abstract/Block.js';
 import { uploadFromUploaded } from '../../../submodules/upload-client/upload-client.js';
-import { createOriginalUrl } from '../../../utils/cdn-utils.js';
+import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../../utils/cdn-utils.js';
 import { classNames } from './lib/classNames.js';
 import { debounce } from './lib/debounce.js';
 import { preloadImage } from './lib/preloadImage.js';
@@ -20,7 +20,6 @@ import { viewerImageSrc } from './util.js';
  *   '*imgContainerEl': HTMLElement;
  *   '*networkProblems': Boolean;
  *   '*imageSize': import('./types.js').ImageSize;
- *   '*fileInfo': import('../../../submodules/upload-client/upload-client.js').UploadcareFile;
  *   entry: import('../../../submodules/symbiote/core/symbiote.js').TypedData;
  *   extension: String;
  *   editorMode: Boolean;
@@ -71,7 +70,7 @@ export class CloudEditor extends Block {
 
   _imageSrc() {
     let { width } = this.ref['img-container-el'].getBoundingClientRect();
-    return this.proxyUrl(viewerImageSrc(this.$['*originalUrl'], width, {}), this.$['*fileInfo']);
+    return this.proxyUrl(viewerImageSrc(this.$['*originalUrl'], width, {}));
   }
 
   /**
@@ -113,7 +112,6 @@ export class CloudEditor extends Block {
     super.initCallback();
 
     this.bindCssData('--cfg-cdn-cname');
-    this.bindCssData('--cfg-pubkey');
 
     this.$['*originalUrl'] = createOriginalUrl(this.$['*--cfg-cdn-cname'], this.$.uuid);
 
@@ -160,19 +158,18 @@ export class CloudEditor extends Block {
     });
 
     try {
-      // `uploadFromUploaded` this could be replaced with `/json/` request if we don't need `fileInfo`
-      await uploadFromUploaded(this.$.uuid, { publicKey: this.$['*--cfg-pubkey'] }).then((fileInfo) => {
-        this.$['*fileInfo'] = fileInfo;
-        this.$['*imageSize'] = { width: fileInfo.imageInfo.width, height: fileInfo.imageInfo.height };
-      });
+      // TODO: catch errors
+      fetch(createCdnUrl(this.$['*originalUrl'], createCdnUrlModifiers('json')))
+        .then((response) => response.json())
+        .then(({ width, height }) => {
+          this.$['*imageSize'] = { width, height };
+        });
       await this._waitForSize();
       this._loadImageFromCdn();
     } catch (err) {
       if (err) {
-        console.error(err);
+        console.error('Failed to load image info', err);
       }
-      // no error - element become disconnected from dom - stop init
-      return;
     }
   }
 

@@ -161,7 +161,7 @@ export class EditorImageFader extends Block {
 
     // do not use getBoundingClientRect because scale transform affects it
     let width = this.offsetWidth;
-    return this.proxyUrl(viewerImageSrc(url, width, transformations), this.$['*fileInfo']);
+    return this.proxyUrl(viewerImageSrc(url, width, transformations));
   }
 
   /**

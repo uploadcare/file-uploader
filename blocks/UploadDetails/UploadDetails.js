@@ -142,7 +142,7 @@ export class UploadDetails extends Block {
         if (this.entry.getValue('isImage')) {
           // TODO: need to resize image to fit the canvas size
           let imageUrl = createCdnUrl(cdnUrl, createCdnUrlModifiers('format/auto', 'preview'));
-          this.eCanvas.setImageUrl(this.proxyUrl(imageUrl, this.entry.getValue('fileInfo')));
+          this.eCanvas.setImageUrl(this.proxyUrl(imageUrl));
         }
       });
     });

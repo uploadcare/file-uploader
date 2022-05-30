@@ -8,18 +8,13 @@
     --cfg-pubkey: 'demopublickey';
     --cfg-multiple-min: 0;
     --cfg-multiple-max: 3;
-    --cfg-preview-proxy: 'http://localhost:3000/preview/?url={{previewUrl}}&size={{fileInfo.size}}';
+    --cfg-preview-proxy: 'http://localhost:3000/preview/?url={{previewUrl}}';
   }
 </style>
 <script src="./index.js" type="module"></script>
 <script type="module">
   import * as UC from './index.js';
   UC.registerBlocks(UC);
-
-  // let configuration = document.querySelector('uc-configuration')
-  // configuration.setPreviewUrlCallback((previewUrl, fileInfo) => {
-  //   return `http://localhost:3000/preview/?url=${encodeURIComponent(previewUrl)}`
-  // })
 </script>
 
 <uc-simple-btn class="uc-wgt-common"></uc-simple-btn>
@@ -42,7 +37,6 @@
 
 <uc-message-box class="uc-wgt-common"></uc-message-box>
 <uc-progress-bar-common class="uc-wgt-common"></uc-progress-bar-common>
-<uc-configuration class="uc-wgt-common"></uc-configuration>
 
 <uc-data-output
   console

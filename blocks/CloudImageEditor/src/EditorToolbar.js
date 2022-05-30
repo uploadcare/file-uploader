@@ -268,10 +268,7 @@ export class EditorToolbar extends Block {
   _preloadEditedImage() {
     if (this.$['*imgContainerEl'] && this.$['*originalUrl']) {
       let width = this.$['*imgContainerEl'].offsetWidth;
-      let src = this.proxyUrl(
-        viewerImageSrc(this.$['*originalUrl'], width, this.$['*editorTransformations']),
-        this.$['*fileInfo']
-      );
+      let src = this.proxyUrl(viewerImageSrc(this.$['*originalUrl'], width, this.$['*editorTransformations']));
       this._cancelPreload && this._cancelPreload();
       let { cancel } = batchPreloadImages([src]);
       this._cancelPreload = () => {

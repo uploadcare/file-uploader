@@ -16,7 +16,6 @@ export function initState(fnCtx) {
     '*imgContainerEl': null,
     '*networkProblems': false,
     '*imageSize': null,
-    '*fileInfo': null,
 
     entry: null,
     extension: null,

@@ -35,7 +35,6 @@ if (!DOC_READY) {
  *   '*outputData': unknown[] | null;
  *   '*focusedEntry': unknown | null;
  *   '*uploadCollection': TypedCollection;
- *   '*previewUrlCallback': PreviewUrlCallback;
  *   [key: String]: unknown;
  * }} BlockState
  */
@@ -186,13 +185,6 @@ export class Block extends BaseComponent {
       if (!previewProxy) {
         return;
       }
-      this.$['*previewUrlCallback'] = (previewUrl, fileInfo) => {
-        return applyTemplateData(
-          previewProxy,
-          { previewUrl, fileInfo: { ...fileInfo } },
-          { transform: (value) => encodeURIComponent(value) }
-        );
-      };
     });
   }
 
@@ -215,8 +207,6 @@ export class Block extends BaseComponent {
             '*uploadList': [],
             '*outputData': null,
             '*focusedEntry': null,
-            /** @type {PreviewUrlCallback} */
-            '*previewUrlCallback': (previewUrl) => previewUrl,
           })
         );
         Block._ctxConnectionsList.push(this.ctxName);
@@ -224,12 +214,6 @@ export class Block extends BaseComponent {
       this.$['*ctxTargetsRegistry'].add(this.constructor['is']);
 
       super.connectedCallback();
-
-      this.sub('*previewUrlCallback', (previewUrlCallback) => {
-        if (!previewUrlCallback) {
-          this.$['*previewUrlCallback'] = (previewUrl) => previewUrl;
-        }
-      });
 
       if (this.hasAttribute('current-activity')) {
         this.sub('*currentActivity', (/** @type {String} */ val) => {
@@ -470,11 +454,14 @@ export class Block extends BaseComponent {
 
   /**
    * @param {String} url
-   * @param {import('../submodules/upload-client/upload-client.js').UploadcareFile} fileInfo
    * @returns {String}
    */
-  proxyUrl(url, fileInfo) {
-    return this.$['*previewUrlCallback'](url, fileInfo);
+  proxyUrl(url) {
+    let previewProxy = this.$['*--cfg-preview-proxy'];
+    if (previewProxy) {
+      return applyTemplateData(previewProxy, { previewUrl: url });
+    }
+    return url;
   }
 
   output() {

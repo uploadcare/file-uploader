@@ -191,8 +191,7 @@ export class FileItem extends Block {
             createCdnUrl(
               createOriginalUrl(this.$['*--cfg-cdn-cname'], uuid),
               createCdnUrlModifiers(`scale_crop/${size}x${size}/center`)
-            ),
-            this.entry.getValue('fileInfo')
+            )
           );
           this.$.thumbUrl = `url(${thumbUrl})`;
         }
@@ -206,8 +205,7 @@ export class FileItem extends Block {
           this._revokeThumbUrl();
           let size = this.$['*--cfg-thumb-size'] || 76;
           let thumbUrl = this.proxyUrl(
-            createCdnUrl(cdnUrl, createCdnUrlModifiers(`scale_crop/${size}x${size}/center`)),
-            this.entry.getValue('fileInfo')
+            createCdnUrl(cdnUrl, createCdnUrlModifiers(`scale_crop/${size}x${size}/center`))
           );
           this.$.thumbUrl = `url(${thumbUrl})`;
         }
