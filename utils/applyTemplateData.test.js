@@ -15,16 +15,6 @@ describe('applyTemplateData', () => {
     expect(result).to.equal("Hello world! My name is John Doe. I'm 12 years old.");
   });
 
-  it('should replace deep variables', () => {
-    let result = applyTemplateData("Hello world! My name is {{deep.name}}. I'm {{deep.age}} years old.", {
-      deep: {
-        name: 'John Doe',
-        age: 12,
-      },
-    });
-    expect(result).to.equal("Hello world! My name is John Doe. I'm 12 years old.");
-  });
-
   it('should work with variables at start/end', () => {
     const result = applyTemplateData("{{name}} my name is. I'm {{age}}", { name: 'John Doe', age: 12 });
     expect(result).to.equal("John Doe my name is. I'm 12");

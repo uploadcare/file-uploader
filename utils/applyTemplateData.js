@@ -22,24 +22,9 @@ export function applyTemplateData(
   data,
   { openToken = '{{', closeToken = '}}', transform = DEFAULT_TRANSFORMER } = {}
 ) {
-  let result = '';
-
-  for (let part of template.split(openToken)) {
-    let tokens = part.split(closeToken);
-    if (tokens.length == 1) {
-      let text = tokens[0];
-      result += text;
-    } else {
-      let [path, text] = tokens;
-      let value = getProperty(data, path)?.toString();
-      if (!!value) {
-        result += transform(value);
-      } else {
-        result += openToken + path + closeToken;
-      }
-      result += text;
-    }
+  for (let key in data) {
+    let value = data[key]?.toString();
+    template = template.replaceAll(openToken + key + closeToken, typeof value === 'string' ? transform(value) : value);
   }
-
-  return result;
+  return template;
 }
