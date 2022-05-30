@@ -125,7 +125,7 @@ export class UploadDetails extends Block {
         if (uuid) {
           this.eCanvas.clear();
           this.set$({
-            cdnUrl: createOriginalUrl(this.$['*--cfg-cdn-base'], uuid),
+            cdnUrl: createOriginalUrl(this.$['*--cfg-cdn-cname'], uuid),
             cloudEditBtnHidden: !this.entry.getValue('isImage') || !this.$['*--cfg-use-cloud-image-editor'],
           });
           this.entry.getValue('isImage') && this.eCanvas.setImageUrl(this.$.cdnUrl);

@@ -25,7 +25,7 @@
  *   '*--cfg-data-output-from': String;
  *   '*--cfg-data-output-form-value': Number;
  *   '*--cfg-remote-tab-session-key': String;
- *   '*--cfg-cdn-base': String;
+ *   '*--cfg-cdn-cname': String;
  * }} CssConfigTypes
  */
 export {};

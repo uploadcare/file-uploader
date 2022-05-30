@@ -178,7 +178,7 @@ export class FileItem extends Block {
           this._revokeThumbUrl();
           let size = this.$['*--cfg-thumb-size'] || 76;
           let thumbUrl = createCdnUrl(
-            createOriginalUrl(this.$['*--cfg-cdn-base'], uuid),
+            createOriginalUrl(this.$['*--cfg-cdn-cname'], uuid),
             createCdnUrlModifiers(`scale_crop/${size}x${size}/center`)
           );
           this.$.thumbUrl = `url(${thumbUrl})`;
@@ -264,7 +264,7 @@ export class FileItem extends Block {
       let fileInfo = await uploadFile(this.file || this.externalUrl, {
         ...storeSetting,
         publicKey: this.$['*--cfg-pubkey'],
-        baseCDN: this.$['*--cfg-cdn-base'],
+        baseCDN: this.$['*--cfg-cdn-cname'],
         userAgent: customUserAgent,
         fileName: this.entry.getValue('fileName'),
         onProgress: (progress) => {

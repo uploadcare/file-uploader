@@ -121,7 +121,7 @@ export class CloudEditor extends Block {
       return;
     }
 
-    this.$['*originalUrl'] = createOriginalUrl(this.$['*--cfg-cdn-base'], this.$.uuid);
+    this.$['*originalUrl'] = createOriginalUrl(this.$['*--cfg-cdn-cname'], this.$.uuid);
 
     fetch(`${this.$['*originalUrl']}-/json/`)
       .then((response) => response.json())

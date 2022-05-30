@@ -97,7 +97,7 @@ export class ImgBase extends BaseComponent {
     if (this.$$('uuid')) {
       return createCdnUrl(
         //
-        createOriginalUrl(this.$$['cdn-base'] || DEFAULT_CDN_BASE, this.$$('uuid')),
+        createOriginalUrl(this.$$['cdn-cname'] || DEFAULT_CDN_BASE, this.$$('uuid')),
         cdnModifiers
       );
     }

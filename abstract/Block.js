@@ -149,7 +149,7 @@ export class Block extends BaseComponent {
         '--cfg-init-activity',
         '--cfg-done-activity',
         '--cfg-max-local-file-size-bytes',
-        '--cfg-cdn-base',
+        '--cfg-cdn-cname',
       ];
       cfgProps.forEach((prop) => {
         this.bindCssData(prop);

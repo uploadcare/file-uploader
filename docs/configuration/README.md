@@ -70,7 +70,7 @@ Any configuration value can be defined and redefined at any level of the DOM tre
 | `--cfg-use-local-image-editor`    | Enable local image editing                                                                                                             |       `1` or `0`       |          `0`           |
 | `--cfg-use-cloud-image-editor`    | Enable cloud image editing                                                                                                             |       `1` or `0`       |          `0`           |
 | `--cfg-remote-tab-session-key`    | Key to revoke Custom OAuth access. See [docs](https://uploadcare.com/docs/start/settings/#project-settings-advanced-oauth) for details |         string         |          none          |
-| `--cfg-cdn-base`                  | Set Custom CNAME. See [docs](https://uploadcare.com/docs/delivery/cdn/#custom-cdn-cname) for details                                   |         string         | `https://ucarecdn.com` |
+| `--cfg-cdn-cname`                 | Set Custom CNAME. See [docs](https://uploadcare.com/docs/delivery/cdn/#custom-cdn-cname) for details                                   |         string         | `https://ucarecdn.com` |
 
 ## Possible values for the source list
 
