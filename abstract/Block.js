@@ -33,8 +33,24 @@ if (!DOC_READY) {
  */
 
 /**
+ * @typedef {| '*--cfg-pubkey'
+ *   | '*--cfg-store'
+ *   | '*--cfg-multiple'
+ *   | '*--cfg-multiple-min'
+ *   | '*--cfg-multiple-max'
+ *   | '*--cfg-accept'
+ *   | '*--cfg-img-only'
+ *   | '*--cfg-confirm-upload'
+ *   | '*--cfg-init-activity'
+ *   | '*--cfg-done-activity'
+ *   | '*--cfg-max-local-file-size-bytes'
+ *   | '*--cfg-cdn-cname'} InitialAddedCssProps
+ */
+/** @typedef {'*--cfg-source-list'} UsedCssProps */
+/** @typedef {Pick<import('../css-types.js').CssConfigTypes, InitialAddedCssProps | UsedCssProps>} CssProps */
+/**
  * @template S
- * @extends {BaseComponent<S & Partial<BlockState & import('../css-types.js').CssConfigTypes>>}
+ * @extends {BaseComponent<S & Partial<BlockState & CssProps>>}
  */
 export class Block extends BaseComponent {
   /**
@@ -142,7 +158,6 @@ export class Block extends BaseComponent {
         '--cfg-multiple',
         '--cfg-multiple-min',
         '--cfg-multiple-max',
-        '--cfg-max-files',
         '--cfg-accept',
         '--cfg-img-only',
         '--cfg-confirm-upload',

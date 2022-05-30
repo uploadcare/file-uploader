@@ -16,10 +16,14 @@ import { queryString } from './query-string.js';
  * @property {() => void} onCancel
  */
 
+/** @typedef {'*--cfg-remote-tab-session-key'} UsedCssProps */
+/** @typedef {Partial<Pick<import('../../css-types.js').CssConfigTypes, UsedCssProps>>} CssProps */
+
 /**
  * @typedef {State &
- *   Partial<import('../ActivityCaption/ActivityCaption').State> &
- *   Partial<import('../ActivityIcon/ActivityIcon').State>} ExternalSourceState
+ *   Partial<
+ *     CssProps & import('../ActivityCaption/ActivityCaption').State & import('../ActivityIcon/ActivityIcon').State
+ *   >} ExternalSourceState
  */
 
 /** @extends {Block<ExternalSourceState>} */
