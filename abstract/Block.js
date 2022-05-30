@@ -445,14 +445,14 @@ export class Block extends BaseComponent {
    */
   proxyUrl(url) {
     let previewProxy = this.$['*--cfg-preview-proxy'];
-    if (previewProxy) {
-      return applyTemplateData(
-        previewProxy,
-        { previewUrl: url },
-        { transform: (value) => window.encodeURIComponent(value) }
-      );
+    if (!previewProxy) {
+      return url;
     }
-    return url;
+    return applyTemplateData(
+      previewProxy,
+      { previewUrl: url },
+      { transform: (value) => window.encodeURIComponent(value) }
+    );
   }
 
   output() {
