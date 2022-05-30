@@ -1,7 +1,5 @@
 /** @typedef {{ [key: String]: String | Number | Boolean | InputData }} InputData */
 
-import { getProperty } from './getProperty.js';
-
 const DEFAULT_TRANSFORMER = (value) => value;
 
 /**
