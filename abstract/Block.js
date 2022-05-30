@@ -44,7 +44,7 @@ if (!DOC_READY) {
  *   | '*--cfg-init-activity'
  *   | '*--cfg-done-activity'
  *   | '*--cfg-max-local-file-size-bytes'
- *   | '*--cfg-cdn-base'} InitialAddedCssProps
+ *   | '*--cfg-cdn-cname'} InitialAddedCssProps
  */
 /** @typedef {'*--cfg-source-list'} UsedCssProps */
 /** @typedef {Pick<import('../css-types.js').CssConfigTypes, InitialAddedCssProps | UsedCssProps>} CssProps */
