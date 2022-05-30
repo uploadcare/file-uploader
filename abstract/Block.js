@@ -18,13 +18,6 @@ if (!DOC_READY) {
 }
 
 /**
- * @typedef {(
- *   cdnUrl: String,
- *   fileInfo: import('../submodules/upload-client/upload-client.js').UploadcareFile
- * ) => String} PreviewUrlCallback
- */
-
-/**
  * @typedef {{
  *   '*ctxTargetsRegistry': Set<any>;
  *   '*currentActivity': String;
