@@ -173,12 +173,6 @@ export class Block extends BaseComponent {
       }, true);
       Block._cssDataBindingsList.push(this.ctxName);
     }
-
-    this.sub('*--cfg-preview-proxy', (previewProxy) => {
-      if (!previewProxy) {
-        return;
-      }
-    });
   }
 
   initCallback() {
