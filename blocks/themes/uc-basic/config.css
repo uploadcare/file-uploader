@@ -35,4 +35,11 @@
   --cfg-secure-signature: '';
   --cfg-secure-expire: '';
   --cfg-secure-delivery-proxy: '';
+  --cfg-retry-throttled-request-max-times: 1;
+  --cfg-multipart-min-file-size: 26214400; /* 25MB */
+  --cfg-multipart-chunk-size: 5242880; /* 5MB */
+  --cfg-max-concurrent-requests: 4;
+  --cfg-multipart-max-attempts: 3;
+  --cfg-check-for-url-duplicates: 0;
+  --cfg-save-url-for-recurrent-uploads: 0;
 }

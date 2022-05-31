@@ -4,6 +4,7 @@ import { mergeMimeTypes } from '../utils/mergeMimeTypes.js';
 import { imageMimeTypes } from '../utils/imageMimeTypes.js';
 import { l10nProcessor } from './l10nProcessor.js';
 import { uploadEntrySchema } from './uploadEntrySchema.js';
+import { customUserAgent } from '../blocks/utils/userAgent.js';
 
 const ACTIVE_ATTR = 'active';
 const ACTIVE_PROP = '___ACTIVITY_IS_ACTIVE___';
@@ -45,7 +46,16 @@ if (!DOC_READY) {
  *   | '*--cfg-done-activity'
  *   | '*--cfg-max-local-file-size-bytes'
  *   | '*--cfg-cdn-cname'
- *   | '*--cfg-secure-delivery-proxy'} InitialAddedCssProps
+ *   | '*--cfg-secure-delivery-proxy'
+ *   | '*--cfg-retry-throttled-request-max-times'
+ *   | '*--cfg-multipart-min-file-size'
+ *   | '*--cfg-multipart-chunk-size'
+ *   | '*--cfg-max-concurrent-requests'
+ *   | '*--cfg-multipart-max-attempts'
+ *   | '*--cfg-check-for-url-duplicates'
+ *   | '*--cfg-save-url-for-recurrent-uploads'
+ *   | '*--cfg-secure-signature'
+ *   | '*--cfg-secure-expire'} InitialAddedCssProps
  */
 /** @typedef {'*--cfg-source-list'} UsedCssProps */
 /** @typedef {Pick<import('../css-types.js').CssConfigTypes, InitialAddedCssProps | UsedCssProps>} CssProps */
@@ -167,6 +177,17 @@ export class Block extends BaseComponent {
         '--cfg-max-local-file-size-bytes',
         '--cfg-cdn-cname',
         '--cfg-secure-delivery-proxy',
+
+        // passed to upload client
+        '--cfg-retry-throttled-request-max-times',
+        '--cfg-multipart-min-file-size',
+        '--cfg-multipart-chunk-size',
+        '--cfg-max-concurrent-requests',
+        '--cfg-multipart-max-attempts',
+        '--cfg-check-for-url-duplicates',
+        '--cfg-save-url-for-recurrent-uploads',
+        '--cfg-secure-signature',
+        '--cfg-secure-expire',
       ];
       cfgProps.forEach((prop) => {
         this.bindCssData(prop);
@@ -453,6 +474,35 @@ export class Block extends BaseComponent {
       { previewUrl: url },
       { transform: (value) => window.encodeURIComponent(value) }
     );
+  }
+
+  /** @returns {import('../submodules/upload-client/upload-client.js').FileFromOptions} */
+  getUploadClientOptions() {
+    let storeSetting = {};
+    let store = this.$['*--cfg-store'];
+    if (store !== null) {
+      storeSetting.store = !!store;
+    }
+
+    let options = {
+      ...storeSetting,
+      publicKey: this.$['*--cfg-pubkey'],
+      baseCDN: this.$['*--cfg-cdn-cname'],
+      userAgent: customUserAgent,
+      secureSignature: this.$['*--cfg-secure-signature'],
+      secureExpire: this.$['*--cfg-secure-expire'],
+      retryThrottledRequestMaxTimes: this.$['*--cfg-retry-throttled-request-max-times'],
+      multipartMinFileSize: this.$['*--cfg-multipart-min-file-size'],
+      multipartChunkSize: this.$['*--cfg-multipart-chunk-size'],
+      maxConcurrentRequests: this.$['*--cfg-max-concurrent-requests'],
+      multipartMaxAttempts: this.$['*--cfg-multipart-max-attempts'],
+      checkForUrlDuplicates: !!this.$['*--cfg-check-for-url-duplicates'],
+      saveUrlForRecurrentUploads: !!this.$['*--cfg-save-url-for-recurrent-uploads'],
+    };
+
+    console.log('Upload client options:', options);
+
+    return options;
   }
 
   output() {

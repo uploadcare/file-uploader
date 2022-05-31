@@ -29,6 +29,13 @@
  *   '*--cfg-secure-signature': String;
  *   '*--cfg-secure-expire': String;
  *   '*--cfg-secure-delivery-proxy': String;
+ *   '*--cfg-retry-throttled-request-max-times': Number;
+ *   '*--cfg-multipart-min-file-size': Number;
+ *   '*--cfg-multipart-chunk-size': Number;
+ *   '*--cfg-max-concurrent-requests': Number;
+ *   '*--cfg-multipart-max-attempts': Number;
+ *   '*--cfg-check-for-url-duplicates': Number;
+ *   '*--cfg-save-url-for-recurrent-uploads': Number;
  * }} CssConfigTypes
  */
 export {};
