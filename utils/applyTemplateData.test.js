@@ -29,4 +29,13 @@ describe('applyTemplateData', () => {
     let result = applyTemplateData('My name is {{name}}');
     expect(result).to.equal('My name is {{name}}');
   });
+
+  it('should accept `transform` option', () => {
+    let result = applyTemplateData(
+      'My name is {{name}}',
+      { name: 'John Doe' },
+      { transform: (value) => value.toUpperCase() }
+    );
+    expect(result).to.equal('My name is JOHN DOE');
+  });
 });

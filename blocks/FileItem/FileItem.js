@@ -187,9 +187,11 @@ export class FileItem extends Block {
         if (this.entry.getValue('isImage')) {
           this._revokeThumbUrl();
           let size = this.$['*--cfg-thumb-size'] || 76;
-          let thumbUrl = createCdnUrl(
-            createOriginalUrl(this.$['*--cfg-cdn-cname'], uuid),
-            createCdnUrlModifiers(`scale_crop/${size}x${size}/center`)
+          let thumbUrl = this.proxyUrl(
+            createCdnUrl(
+              createOriginalUrl(this.$['*--cfg-cdn-cname'], uuid),
+              createCdnUrlModifiers(`scale_crop/${size}x${size}/center`)
+            )
           );
           this.$.thumbUrl = `url(${thumbUrl})`;
         }
@@ -202,7 +204,9 @@ export class FileItem extends Block {
         if (this.entry.getValue('isImage')) {
           this._revokeThumbUrl();
           let size = this.$['*--cfg-thumb-size'] || 76;
-          let thumbUrl = createCdnUrl(cdnUrl, createCdnUrlModifiers(`scale_crop/${size}x${size}/center`));
+          let thumbUrl = this.proxyUrl(
+            createCdnUrl(cdnUrl, createCdnUrlModifiers(`scale_crop/${size}x${size}/center`))
+          );
           this.$.thumbUrl = `url(${thumbUrl})`;
         }
       });
@@ -312,6 +316,7 @@ export class FileItem extends Block {
         cdnUrl: fileInfo.cdnUrl,
       });
     } catch (error) {
+      this.$.badgeIcon = 'badge-error';
       this.entry.setValue('isUploading', false);
       this.$.progressValue = 0;
       this.setAttribute('error', '');

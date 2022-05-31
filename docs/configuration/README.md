@@ -63,7 +63,7 @@ Any configuration value can be defined and redefined at any level of the DOM tre
 | `--cfg-accept`                    | Native file input accept attribute value                                                                                               |      `'image/*'`       |          none          |
 | `--cfg-store`                     | Store files                                                                                                                            |       `1` or `0`       |           -            |
 | `--cfg-camera-mirror`             | Flip camera image                                                                                                                      |       `1` or `0`       |          `0`           |
-| `--cfg-source-list`               | Comma-separated list of file sources                                                                                                   | `'local, url, camera'` |          none          |
+| `--cfg-source-list`               | Comma-separated list of file sources. See [here](./source-list/) for details                                                           | `'local, url, camera'` |          none          |
 | `--cfg-max-local-file-size-bytes` | Maximum file size in bytes                                                                                                             |           -            |          none          |
 | `--cfg-thumb-size`                | Image thumbnail size                                                                                                                   |          `76`          |          `76`          |
 | `--cfg-show-empty-list`           | Show uploads list when it's empty                                                                                                      |       `1` or `0`       |          `0`           |
@@ -73,23 +73,7 @@ Any configuration value can be defined and redefined at any level of the DOM tre
 | `--cfg-cdn-cname`                 | Set Custom CNAME. See [docs](https://uploadcare.com/docs/delivery/cdn/#custom-cdn-cname) for details                                   |         string         | `https://ucarecdn.com` |
 | `--cfg-secure-signature`          | Set `signature` for Secure Uploads. See [docs](https://uploadcare.com/docs/security/secure-uploads/#expire-explained) for details      |         string         |          none          |
 | `--cfg-secure-expire`             | Set `expire` for Secure Uploads. See [docs](https://uploadcare.com/docs/security/secure-uploads/#expire-explained) for details         |         string         |          none          |
-
-## Possible values for the source list
-
-- `local`
-- `url`
-- `camera`
-- `dropbox `
-- `gdrive`
-- `facebook`
-- `gphotos`
-- `instagram`
-- `flickr`
-- `vk`
-- `evernote`
-- `box`
-- `onedrive`
-- `huddle`
+| `--cfg-secure-delivery-proxy`     | Set proxy URL template for Secure Delivery. See [here](./secure-delivery-proxy/) for details                                           |         string         |          none          |
 
 ## Custom configurations
 

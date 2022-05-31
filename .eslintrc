@@ -12,7 +12,7 @@
   "rules": {
     "import/no-cycle": 2,
     "import/no-unresolved": "off",
-    "no-unused-vars": "off",
+    "no-unused-vars": 1,
     "no-console": "off",
     "max-classes-per-file": "off",
     "prefer-const": "off",

@@ -1,4 +1,4 @@
-import { UploadcareFile, UploadClientError } from '../submodules/upload-client/upload-client.js';
+import { UploadcareFile } from '../submodules/upload-client/upload-client.js';
 
 /**
  * @typedef {Object} UploadEntry
@@ -11,7 +11,7 @@ import { UploadcareFile, UploadClientError } from '../submodules/upload-client/u
  * @property {String} uuid
  * @property {Boolean} isImage
  * @property {String} mimeType
- * @property {UploadClientError} uploadError
+ * @property {Error} uploadError
  * @property {String} validationErrorMsg
  * @property {String} ctxName
  * @property {String} cdnUrl
@@ -60,7 +60,8 @@ export const uploadEntrySchema = Object.freeze({
     value: null,
   },
   uploadError: {
-    type: UploadClientError,
+    // TODO: there could be Error or UploadcareClientError
+    type: Error,
     value: null,
     nullable: true,
   },

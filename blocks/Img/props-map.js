@@ -14,6 +14,7 @@ export const PROPS_MAP = {
   },
   'cdn-cname': {},
   'proxy-cname': {},
+  'secure-delivery-proxy': {},
   'hi-res-support': {
     default: 1,
   },

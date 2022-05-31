@@ -23,6 +23,8 @@ jobs:
         run: npm run build
       - name: Run lint
         run: npm run lint
+      - name: Run test
+        run: npm run test
       - name: Run tsc
         run: npm run clean:types && npm run tsc
 

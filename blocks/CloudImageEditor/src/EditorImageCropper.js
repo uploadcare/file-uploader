@@ -451,7 +451,7 @@ export class EditorImageCropper extends Block {
       flip: undefined,
       mirror: undefined,
     };
-    let src = viewerImageSrc(originalUrl, width, transformations);
+    let src = this.proxyUrl(viewerImageSrc(originalUrl, width, transformations));
     let { promise, cancel, image } = preloadImage(src);
 
     let stop = this._handleImageLoading(src);

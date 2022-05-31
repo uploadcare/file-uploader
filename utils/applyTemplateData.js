@@ -1,13 +1,28 @@
+/** @typedef {{ [key: String]: String | Number | Boolean | InputData }} InputData */
+
+const DEFAULT_TRANSFORMER = (value) => value;
+
+/**
+ * @typedef {Object} Options
+ * @property {String} [openToken='{{'] Default is `'{{'`
+ * @property {String} [closeToken='}}'] Default is `'}}'`
+ * @property {(value: String) => String} [transform=DEFAULT_TRANSFORMER] Default is `DEFAULT_TRANSFORMER`
+ */
+
 /**
  * @param {String} template
- * @param {{ [key: String]: String | Number }} [data={}] Default is `{}`
- * @param {String} [openToken='{{'] Default is `'{{'`
- * @param {String} [closeToken='}}'] Default is `'}}'`
+ * @param {InputData} [data={}] Default is `{}`
+ * @param {Options} [options={}] Default is `{}`
  * @returns {String}
  */
-export function applyTemplateData(template, data, openToken = '{{', closeToken = '}}') {
+export function applyTemplateData(
+  template,
+  data,
+  { openToken = '{{', closeToken = '}}', transform = DEFAULT_TRANSFORMER } = {}
+) {
   for (let key in data) {
-    template = template.replaceAll(openToken + key + closeToken, data[key]?.toString());
+    let value = data[key]?.toString();
+    template = template.replaceAll(openToken + key + closeToken, typeof value === 'string' ? transform(value) : value);
   }
   return template;
 }

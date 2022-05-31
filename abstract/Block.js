@@ -44,7 +44,8 @@ if (!DOC_READY) {
  *   | '*--cfg-init-activity'
  *   | '*--cfg-done-activity'
  *   | '*--cfg-max-local-file-size-bytes'
- *   | '*--cfg-cdn-cname'} InitialAddedCssProps
+ *   | '*--cfg-cdn-cname'
+ *   | '*--cfg-secure-delivery-proxy'} InitialAddedCssProps
  */
 /** @typedef {'*--cfg-source-list'} UsedCssProps */
 /** @typedef {Pick<import('../css-types.js').CssConfigTypes, InitialAddedCssProps | UsedCssProps>} CssProps */
@@ -165,6 +166,7 @@ export class Block extends BaseComponent {
         '--cfg-done-activity',
         '--cfg-max-local-file-size-bytes',
         '--cfg-cdn-cname',
+        '--cfg-secure-delivery-proxy',
       ];
       cfgProps.forEach((prop) => {
         this.bindCssData(prop);
@@ -435,6 +437,22 @@ export class Block extends BaseComponent {
     let dm = decimals < 0 ? 0 : decimals;
     let i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / k ** i).toFixed(dm)) + ' ' + getUnit(units[i]);
+  }
+
+  /**
+   * @param {String} url
+   * @returns {String}
+   */
+  proxyUrl(url) {
+    let previewProxy = this.$['*--cfg-secure-delivery-proxy'];
+    if (!previewProxy) {
+      return url;
+    }
+    return applyTemplateData(
+      previewProxy,
+      { previewUrl: url },
+      { transform: (value) => window.encodeURIComponent(value) }
+    );
   }
 
   output() {
