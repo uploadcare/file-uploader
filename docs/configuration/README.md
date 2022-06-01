@@ -11,6 +11,7 @@ This is the list of pre-defined parameters used by default in our uploader build
   --cfg-multiple: 1;
   --cfg-multiple-min: 0;
   --cfg-multiple-max: 0;
+
   --cfg-confirm-upload: 1;
   --cfg-img-only: 0;
   --cfg-accept: '';
@@ -37,6 +38,17 @@ This is the list of pre-defined parameters used by default in our uploader build
   --cfg-data-output-form-value: 1;
 
   --cfg-remote-tab-session-key: '';
+  --cfg-cdn-cname: 'https://ucarecdn.com';
+  --cfg-secure-signature: '';
+  --cfg-secure-expire: '';
+  --cfg-secure-delivery-proxy: '';
+  --cfg-retry-throttled-request-max-times: 1;
+  --cfg-multipart-min-file-size: 26214400; /* 25MB */
+  --cfg-multipart-chunk-size: 5242880; /* 5MB */
+  --cfg-max-concurrent-requests: 4;
+  --cfg-multipart-max-attempts: 3;
+  --cfg-check-for-url-duplicates: 0;
+  --cfg-save-url-for-recurrent-uploads: 0;
 }
 ```
 

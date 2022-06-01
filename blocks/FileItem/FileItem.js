@@ -3,7 +3,6 @@ import { resizeImage } from '../utils/resizeImage.js';
 import { uploadFile } from '../../submodules/upload-client/upload-client.js';
 import { UiMessage } from '../MessageBox/MessageBox.js';
 import { fileCssBg } from '../svg-backgrounds/svg-backgrounds.js';
-import { customUserAgent } from '../utils/userAgent.js';
 import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../utils/cdn-utils.js';
 
 /**
@@ -117,8 +116,6 @@ export class FileItem extends Block {
     super.initCallback();
 
     this.bindCssData('--cfg-thumb-size');
-    this.bindCssData('--cfg-secure-signature');
-    this.bindCssData('--cfg-secure-expire');
 
     this.defineAccessor('entry-id', (id) => {
       if (!id || id === this.uid) {
@@ -255,27 +252,6 @@ export class FileItem extends Block {
     clearTimeout(this._thumbTimeoutId);
   }
 
-  /**
-   * @private
-   * @returns {import('../../submodules/upload-client/upload-client.js').FileFromOptions}
-   */
-  _baseUploadOptions() {
-    let storeSetting = {};
-    let store = this.$['*--cfg-store'];
-    if (store !== null) {
-      storeSetting.store = !!store;
-    }
-
-    return {
-      ...storeSetting,
-      publicKey: this.$['*--cfg-pubkey'],
-      baseCDN: this.$['*--cfg-cdn-cname'],
-      userAgent: customUserAgent,
-      secureSignature: this.$['*--cfg-secure-signature'],
-      secureExpire: this.$['*--cfg-secure-expire'],
-    };
-  }
-
   async upload() {
     if (this.hasAttribute('loaded') || this.entry.getValue('uuid')) {
       return;
@@ -291,7 +267,7 @@ export class FileItem extends Block {
     }
     try {
       let fileInfo = await uploadFile(this.file || this.externalUrl, {
-        ...this._baseUploadOptions(),
+        ...this.getUploadClientOptions(),
         fileName: this.entry.getValue('fileName'),
         onProgress: (progress) => {
           if (progress.isComputable) {
