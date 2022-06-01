@@ -35,7 +35,7 @@
     "lint:css:fix": "stylelint './**/*.css' --fix",
     "lint": "run-s lint:js lint:css",
     "clean:web": "rimraf './web/**/*.{js,css}'",
-    "clean:types": "rimraf './{abstract,blocks,solutions,web,utils,submodules/symbiote}/**/*.{d.ts,d.ts.map}' && rimraf './{!global}.{d.ts,d.ts.map}'",
+    "clean:types": "rimraf './{abstract,blocks,solutions,web,utils,submodules/symbiote}/**/*.{d.ts,d.ts.map}' && rimraf './!(global).{d.ts,d.ts.map}'",
     "clean": "run-s clean:*",
     "format:js": "prettier --write './**/*.{js,cjs}'",
     "format:css": "prettier --write --parser css './**/*.css'",

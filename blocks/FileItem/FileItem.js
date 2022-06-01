@@ -4,8 +4,15 @@ import { uploadFile } from '../../submodules/upload-client/upload-client.js';
 import { UiMessage } from '../MessageBox/MessageBox.js';
 import { fileCssBg } from '../svg-backgrounds/svg-backgrounds.js';
 import { customUserAgent } from '../utils/userAgent.js';
+import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../utils/cdn-utils.js';
 
-/** @typedef {Partial<import('../MessageBox/MessageBox.js').State>} ExternalState */
+/**
+ * @typedef {Pick<
+ *   import('../../css-types.js').CssConfigTypes,
+ *   '*--cfg-thumb-size' | '*--cfg-secure-signature' | '*--cfg-secure-expire'
+ * >} CssProps
+ */
+/** @typedef {Partial<import('../MessageBox/MessageBox.js').State & CssProps>} ExternalState */
 
 /**
  * @typedef {{
@@ -108,7 +115,11 @@ export class FileItem extends Block {
 
   initCallback() {
     super.initCallback();
+
     this.bindCssData('--cfg-thumb-size');
+    this.bindCssData('--cfg-secure-signature');
+    this.bindCssData('--cfg-secure-expire');
+
     this.defineAccessor('entry-id', (id) => {
       if (!id || id === this.uid) {
         return;
@@ -174,10 +185,15 @@ export class FileItem extends Block {
         this.setAttribute('loaded', '');
 
         if (this.entry.getValue('isImage')) {
-          let url = `https://ucarecdn.com/${uuid}/`;
           this._revokeThumbUrl();
           let size = this.$['*--cfg-thumb-size'] || 76;
-          this.$.thumbUrl = `url(${url}-/scale_crop/${size}x${size}/center/)`;
+          let thumbUrl = this.proxyUrl(
+            createCdnUrl(
+              createOriginalUrl(this.$['*--cfg-cdn-cname'], uuid),
+              createCdnUrlModifiers(`scale_crop/${size}x${size}/center`)
+            )
+          );
+          this.$.thumbUrl = `url(${thumbUrl})`;
         }
       });
 
@@ -188,7 +204,10 @@ export class FileItem extends Block {
         if (this.entry.getValue('isImage')) {
           this._revokeThumbUrl();
           let size = this.$['*--cfg-thumb-size'] || 76;
-          this.$.thumbUrl = `url(${cdnUrl}-/scale_crop/${size}x${size}/center/)`;
+          let thumbUrl = this.proxyUrl(
+            createCdnUrl(cdnUrl, createCdnUrlModifiers(`scale_crop/${size}x${size}/center`))
+          );
+          this.$.thumbUrl = `url(${thumbUrl})`;
         }
       });
 
@@ -236,6 +255,27 @@ export class FileItem extends Block {
     clearTimeout(this._thumbTimeoutId);
   }
 
+  /**
+   * @private
+   * @returns {import('../../submodules/upload-client/upload-client.js').FileFromOptions}
+   */
+  _baseUploadOptions() {
+    let storeSetting = {};
+    let store = this.$['*--cfg-store'];
+    if (store !== null) {
+      storeSetting.store = !!store;
+    }
+
+    return {
+      ...storeSetting,
+      publicKey: this.$['*--cfg-pubkey'],
+      baseCDN: this.$['*--cfg-cdn-cname'],
+      userAgent: customUserAgent,
+      secureSignature: this.$['*--cfg-secure-signature'],
+      secureExpire: this.$['*--cfg-secure-expire'],
+    };
+  }
+
   async upload() {
     if (this.hasAttribute('loaded') || this.entry.getValue('uuid')) {
       return;
@@ -246,20 +286,12 @@ export class FileItem extends Block {
     this.removeAttribute('focused');
     this.removeAttribute('error');
     this.setAttribute('uploading', '');
-    let storeSetting = {};
-    let store = this.$['*--cfg-store'];
-    if (store !== null) {
-      storeSetting.store = !!store;
-    }
     if (!this.file && this.externalUrl) {
       this.$.progressUnknown = true;
     }
     try {
-      // @ts-ignore
       let fileInfo = await uploadFile(this.file || this.externalUrl, {
-        ...storeSetting,
-        publicKey: this.$['*--cfg-pubkey'],
-        userAgent: customUserAgent,
+        ...this._baseUploadOptions(),
         fileName: this.entry.getValue('fileName'),
         onProgress: (progress) => {
           if (progress.isComputable) {
@@ -281,8 +313,10 @@ export class FileItem extends Block {
         isImage: fileInfo.isImage,
         mimeType: fileInfo.mimeType,
         uuid: fileInfo.uuid,
+        cdnUrl: fileInfo.cdnUrl,
       });
     } catch (error) {
+      this.$.badgeIcon = 'badge-error';
       this.entry.setValue('isUploading', false);
       this.$.progressValue = 0;
       this.setAttribute('error', '');

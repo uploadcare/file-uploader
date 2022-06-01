@@ -65,7 +65,7 @@ function validateCrop(crop) {
  * }} State
  */
 
-/** @extends {Block<State>} */
+/** @extends {Block<State & import('./CloudEditor.js').State>} */
 export class EditorImageCropper extends Block {
   init$ = {
     image: null,
@@ -451,7 +451,7 @@ export class EditorImageCropper extends Block {
       flip: undefined,
       mirror: undefined,
     };
-    let src = viewerImageSrc(originalUrl, width, transformations);
+    let src = this.proxyUrl(viewerImageSrc(originalUrl, width, transformations));
     let { promise, cancel, image } = preloadImage(src);
 
     let stop = this._handleImageLoading(src);
@@ -464,7 +464,7 @@ export class EditorImageCropper extends Block {
       .then(() => image)
       .catch((err) => {
         console.error('Failed to load image', { error: err });
-        this.$['*networProblems'] = true;
+        this.$['*networkProblems'] = true;
         return Promise.resolve(image);
       });
   }

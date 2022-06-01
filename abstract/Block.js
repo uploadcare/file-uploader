@@ -33,8 +33,25 @@ if (!DOC_READY) {
  */
 
 /**
+ * @typedef {| '*--cfg-pubkey'
+ *   | '*--cfg-store'
+ *   | '*--cfg-multiple'
+ *   | '*--cfg-multiple-min'
+ *   | '*--cfg-multiple-max'
+ *   | '*--cfg-accept'
+ *   | '*--cfg-img-only'
+ *   | '*--cfg-confirm-upload'
+ *   | '*--cfg-init-activity'
+ *   | '*--cfg-done-activity'
+ *   | '*--cfg-max-local-file-size-bytes'
+ *   | '*--cfg-cdn-cname'
+ *   | '*--cfg-secure-delivery-proxy'} InitialAddedCssProps
+ */
+/** @typedef {'*--cfg-source-list'} UsedCssProps */
+/** @typedef {Pick<import('../css-types.js').CssConfigTypes, InitialAddedCssProps | UsedCssProps>} CssProps */
+/**
  * @template S
- * @extends {BaseComponent<S & Partial<BlockState & import('../css-types.js').CssConfigTypes>>}
+ * @extends {BaseComponent<S & Partial<BlockState & CssProps>>}
  */
 export class Block extends BaseComponent {
   /**
@@ -142,13 +159,14 @@ export class Block extends BaseComponent {
         '--cfg-multiple',
         '--cfg-multiple-min',
         '--cfg-multiple-max',
-        '--cfg-max-files',
         '--cfg-accept',
         '--cfg-img-only',
         '--cfg-confirm-upload',
         '--cfg-init-activity',
         '--cfg-done-activity',
         '--cfg-max-local-file-size-bytes',
+        '--cfg-cdn-cname',
+        '--cfg-secure-delivery-proxy',
       ];
       cfgProps.forEach((prop) => {
         this.bindCssData(prop);
@@ -419,6 +437,22 @@ export class Block extends BaseComponent {
     let dm = decimals < 0 ? 0 : decimals;
     let i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / k ** i).toFixed(dm)) + ' ' + getUnit(units[i]);
+  }
+
+  /**
+   * @param {String} url
+   * @returns {String}
+   */
+  proxyUrl(url) {
+    let previewProxy = this.$['*--cfg-secure-delivery-proxy'];
+    if (!previewProxy) {
+      return url;
+    }
+    return applyTemplateData(
+      previewProxy,
+      { previewUrl: url },
+      { transform: (value) => window.encodeURIComponent(value) }
+    );
   }
 
   output() {

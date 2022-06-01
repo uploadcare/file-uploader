@@ -1,4 +1,6 @@
 /**
+ * Trim leading `-/`, `/` and trailing `/` from CDN operation
+ *
  * @param {String | unknown} [operation]
  * @returns {String}
  */
@@ -20,7 +22,9 @@ export const normalizeCdnOperation = (operation) => {
 };
 
 /**
- * @param {...(String | unknown)} operations
+ * Join multiple CDN operations into one string without trailing or leading delimeters
+ *
+ * @param {...(String | unknown)} [operations]
  * @returns {String}
  */
 export const joinCdnOperations = (...operations) => {
@@ -31,7 +35,10 @@ export const joinCdnOperations = (...operations) => {
 };
 
 /**
- * @param {...(String | unknown)} [cdnOperations]
+ * Create string with leading `-/` from passed CDN operations. Do the same as `joinCdnOperations` but adds leading `-/`
+ * and trailing `/`
+ *
+ * @param {...(String | unknown)} [cdnOperations] -
  * @returns {String}
  */
 export const createCdnUrlModifiers = (...cdnOperations) => {
@@ -40,31 +47,102 @@ export const createCdnUrlModifiers = (...cdnOperations) => {
 };
 
 /**
- * @param {String} input
+ * Extract filename or file URL
+ *
+ * @param {String} cdnUrl
  * @returns {String}
  */
-function withTrailingSlash(input) {
-  if (!input.endsWith('/')) {
-    input = input + '/';
+export function extractFilename(cdnUrl) {
+  let url = new URL(cdnUrl);
+  let noOrigin = url.pathname + url.search + url.hash;
+  let urlFilenameIdx = noOrigin.lastIndexOf('http');
+  let plainFilenameIdx = noOrigin.lastIndexOf('/');
+  let filename = '';
+
+  if (urlFilenameIdx >= 0) {
+    filename = noOrigin.slice(urlFilenameIdx);
+  } else if (plainFilenameIdx >= 0) {
+    filename = noOrigin.slice(plainFilenameIdx + 1);
   }
-  return input;
+
+  return filename;
 }
 
 /**
- * @param {String} baseUrl
- * @param {String} [cdnModifiers]
- * @param {String} [filename]
+ * Trim filename or file URL
+ *
+ * @param {String} cdnUrl
  * @returns {String}
  */
-export const createCdnUrl = (baseUrl, cdnModifiers, filename) => {
-  return withTrailingSlash(baseUrl) + (cdnModifiers || '') + (filename || '');
+export function trimFilename(cdnUrl) {
+  let url = new URL(cdnUrl);
+  let filename = extractFilename(cdnUrl);
+  let filenamePathPart = isFileUrl(filename) ? splitFileUrl(filename).pathname : filename;
+
+  url.pathname = url.pathname.replace(filenamePathPart, '');
+  url.search = '';
+  url.hash = '';
+  return url.toString();
+}
+
+/**
+ * Detect if filename is actually file URL
+ *
+ * @param {String} filename
+ * @returns {Boolean}
+ */
+export function isFileUrl(filename) {
+  return filename.startsWith('http');
+}
+
+/**
+ * Split file URL into the path and search parts
+ *
+ * @param {String} fileUrl
+ * @returns {{ pathname: String; search: String; hash: String }}
+ */
+export function splitFileUrl(fileUrl) {
+  let url = new URL(fileUrl);
+  return {
+    pathname: url.origin + url.pathname || '',
+    search: url.search || '',
+    hash: url.hash || '',
+  };
+}
+
+/**
+ * Create a final CDN URL with CDN modifiers and filename
+ *
+ * @param {String} baseCdnUrl - Base URL to CDN or Proxy, CDN modifiers and filename accepted
+ * @param {String} [cdnModifiers] - CDN modifiers to apply, will be appended to `baseCdnUrl` ones
+ * @param {String} [filename] - Filename for CDN or file URL for Proxy, will override one from `baseCdnUrl`
+ * @returns {String}
+ */
+export const createCdnUrl = (baseCdnUrl, cdnModifiers, filename) => {
+  let url = new URL(trimFilename(baseCdnUrl));
+  filename = filename || extractFilename(baseCdnUrl);
+
+  if (isFileUrl(filename)) {
+    let splitted = splitFileUrl(filename);
+    url.pathname = url.pathname + (cdnModifiers || '') + (splitted.pathname || '');
+    url.search = splitted.search;
+    url.hash = splitted.hash;
+  } else {
+    url.pathname = url.pathname + (cdnModifiers || '') + (filename || '');
+  }
+
+  return url.toString();
 };
 
 /**
- * @param {String} cdnBase
+ * Create URL for an original file on CDN
+ *
+ * @param {String} cdnUrl - URL to get base domain from, any pathname will be stripped
  * @param {String} uuid
  * @returns {String}
  */
-export const createOriginalUrl = (cdnBase, uuid) => {
-  return withTrailingSlash(cdnBase) + uuid + '/';
+export const createOriginalUrl = (cdnUrl, uuid) => {
+  let url = new URL(cdnUrl);
+  url.pathname = uuid + '/';
+  return url.toString();
 };

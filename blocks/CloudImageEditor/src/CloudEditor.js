@@ -1,4 +1,5 @@
 import { Block } from '../../../abstract/Block.js';
+import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../../utils/cdn-utils.js';
 import { classNames } from './lib/classNames.js';
 import { debounce } from './lib/debounce.js';
 import { preloadImage } from './lib/preloadImage.js';
@@ -16,7 +17,6 @@ import { viewerImageSrc } from './util.js';
  *   '*cropperEl': import('./EditorImageCropper.js').EditorImageCropper;
  *   '*imgEl': HTMLImageElement;
  *   '*imgContainerEl': HTMLElement;
- *   '*modalEl': import('../../Modal/Modal.js').Modal;
  *   '*networkProblems': Boolean;
  *   '*imageSize': import('./types.js').ImageSize;
  *   entry: import('../../../submodules/symbiote/core/symbiote.js').TypedData;
@@ -69,7 +69,7 @@ export class CloudEditor extends Block {
 
   _imageSrc() {
     let { width } = this.ref['img-container-el'].getBoundingClientRect();
-    return viewerImageSrc(this.$['*originalUrl'], width, {});
+    return this.proxyUrl(viewerImageSrc(this.$['*originalUrl'], width, {}));
   }
 
   /**
@@ -110,26 +110,9 @@ export class CloudEditor extends Block {
   async initCallback() {
     super.initCallback();
 
-    try {
-      await this._waitForSize();
-    } catch (err) {
-      if (err) {
-        console.error(err);
-      }
-      // no error - element become disconnected from dom - stop init
-      return;
-    }
+    this.bindCssData('--cfg-cdn-cname');
 
-    // TODO: fix hardcode
-    this.$['*originalUrl'] = `https://ucarecdn.com/${this.$.uuid}/`;
-
-    fetch(`${this.$['*originalUrl']}-/json/`)
-      .then((response) => response.json())
-      .then(({ width, height }) => {
-        this.$['*imageSize'] = { width, height };
-      });
-
-    this._loadImageFromCdn();
+    this.$['*originalUrl'] = createOriginalUrl(this.$['*--cfg-cdn-cname'], this.$.uuid);
 
     this.$['*faderEl'] = this.ref['fader-el'];
     this.$['*cropperEl'] = this.ref['cropper-el'];
@@ -172,6 +155,21 @@ export class CloudEditor extends Block {
         image_hidden_effects: tabId !== TabId.CROP,
       });
     });
+
+    try {
+      // TODO: catch errors
+      fetch(createCdnUrl(this.$['*originalUrl'], createCdnUrlModifiers('json')))
+        .then((response) => response.json())
+        .then(({ width, height }) => {
+          this.$['*imageSize'] = { width, height };
+        });
+      await this._waitForSize();
+      this._loadImageFromCdn();
+    } catch (err) {
+      if (err) {
+        console.error('Failed to load image info', err);
+      }
+    }
   }
 
   disconnectedCallback() {
