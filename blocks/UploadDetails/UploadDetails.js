@@ -134,11 +134,14 @@ export class UploadDetails extends Block {
         }
       });
       tmpSub('cdnUrl', (cdnUrl) => {
+        if (!cdnUrl) {
+          return;
+        }
+        this.eCanvas.clear();
         this.set$({
           cdnUrl,
           cloudEditBtnHidden: !this.entry.getValue('isImage') || !this.$['*--cfg-use-cloud-image-editor'],
         });
-
         if (this.entry.getValue('isImage')) {
           // TODO: need to resize image to fit the canvas size
           let imageUrl = createCdnUrl(cdnUrl, createCdnUrlModifiers('format/auto', 'preview'));
