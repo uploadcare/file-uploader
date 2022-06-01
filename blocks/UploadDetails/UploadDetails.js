@@ -134,15 +134,14 @@ export class UploadDetails extends Block {
         }
       });
       tmpSub('cdnUrl', (cdnUrl) => {
-        if (!cdnUrl) {
-          return;
-        }
+        const canUseCloudEditor = this.$['*--cfg-use-cloud-image-editor'] && cdnUrl && this.entry.getValue('isImage');
+
         this.eCanvas.clear();
         this.set$({
           cdnUrl,
-          cloudEditBtnHidden: !this.entry.getValue('isImage') || !this.$['*--cfg-use-cloud-image-editor'],
+          cloudEditBtnHidden: !canUseCloudEditor,
         });
-        if (this.entry.getValue('isImage')) {
+        if (cdnUrl && this.entry.getValue('isImage')) {
           // TODO: need to resize image to fit the canvas size
           let imageUrl = createCdnUrl(cdnUrl, createCdnUrlModifiers('format/auto', 'preview'));
           this.eCanvas.setImageUrl(this.proxyUrl(imageUrl));
