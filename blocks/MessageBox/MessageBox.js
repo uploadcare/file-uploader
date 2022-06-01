@@ -55,7 +55,7 @@ MessageBox.template = /*html*/ `
 <div class="heading">
   <uc-icon set="@name: iconName"></uc-icon>
   <div class="caption">{{captionTxt}}</div>
-  <button set="onclick: onClose">
+  <button type="button" set="onclick: onClose">
     <uc-icon name="close"></uc-icon>
   </button>
 </div>

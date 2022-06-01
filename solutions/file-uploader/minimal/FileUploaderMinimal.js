@@ -23,6 +23,7 @@ FileUploaderMinimal.template = /*html*/ `
   <uc-start-from>
     <uc-drop-area>
       <button
+        type="button"
         l10n="drop-files-here"
         set="onclick: selectClicked">
       </button>

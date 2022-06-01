@@ -314,13 +314,13 @@ FileItem.template = /*html*/ `
 <div class="file-name-wrapper">
   <span class="file-name" set="@title: itemName">{{itemName}}</span>
 </div>
-<button class="edit-btn" set="onclick: onEdit;">
+<button type="button" class="edit-btn" set="onclick: onEdit;">
   <uc-icon name="edit-file"></uc-icon>
 </button>
-<button class="remove-btn" set="onclick: onRemove;">
+<button type="button" class="remove-btn" set="onclick: onRemove;">
   <uc-icon name="remove-file"></uc-icon>
 </button>
-<button class="upload-btn" set="onclick: onUpload;">
+<button type="button" class="upload-btn" set="onclick: onUpload;">
   <uc-icon name="upload"></uc-icon>
 </button>
 <uc-progress-bar

@@ -43,6 +43,7 @@ Modal.template = /*html*/ `
   <div class="heading" set="@hidden: *modalHeaderHidden">
     <slot name="heading"></slot>
     <button
+      type="button"
       class="close-btn"
       set="onclick: closeClicked">
       <uc-icon name="close"></uc-icon>

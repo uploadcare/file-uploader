@@ -243,19 +243,23 @@ UploadList.template = /*html*/ `
 <div class="files" ref="files"></div>
 <div class="toolbar">
   <button
+    type="button"
     class="cancel-btn secondary-btn"
     set="onclick: onCancel;"
     l10n="clear"></button>
   <div class="toolbar-spacer"></div>
   <button
+    type="button"
     class="add-more-btn secondary-btn"
     set="onclick: onAdd; @disabled: addMoreBtnDisabled; @hidden: addMoreBtnHidden"
     l10n="add-more"></button>
   <button
+    type="button"
     class="upload-btn primary-btn"
     set="@hidden: uploadBtnHidden; onclick: onUpload; @disabled: uploadBtnDisabled"
     l10n="upload"></button>
   <button
+    type="button"
     class="done-btn primary-btn"
     set="@hidden: doneBtnHidden; onclick: onDone;  @disabled: doneBtnDisabled"
     l10n="done"></button>

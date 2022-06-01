@@ -83,21 +83,22 @@ export const buttonsModel = [
 ];
 
 function getBthHtml(btn) {
-  return /*html*/ `<button 
-  action="${btn.action}" 
+  return /*html*/ `<button
+  type="button"
+  action="${btn.action}"
   ref="${btn.ref}"
   l10n="title:${btn.l10n_name}">
   <uc-icon
-    set="${btn.set}" 
+    set="${btn.set}"
     name="${btn.icon}">
   </uc-icon>
 </button>`.trim();
 }
 
-const clrHtml = /*html*/ `<uc-color 
-  ref="color" 
+const clrHtml = /*html*/ `<uc-color
+  ref="color"
   action="color"
-  set="onchange: onColor" 
+  set="onchange: onColor"
   l10n="title:select-color"></uc-color>`;
 
 export function getButtons() {

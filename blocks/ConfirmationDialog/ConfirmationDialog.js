@@ -82,9 +82,11 @@ ConfirmationDialog.template = /*html*/ `
 <div class="message">{{messageTxt}}</div>
 <div class="toolbar">
   <button
+    type="button"
     class="deny-btn secondary-btn"
     set="onclick: onDeny">{{denyBtnTxt}}</button>
   <button
+    type="button"
     class="confirm-btn primary-btn"
     set="onclick: onConfirm">{{confirmBtnTxt}}</button>
 </div>

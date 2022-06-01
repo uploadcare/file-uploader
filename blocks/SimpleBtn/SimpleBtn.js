@@ -28,7 +28,7 @@ export class SimpleBtn extends Block {
 
 SimpleBtn.template = /*html*/ `
 <uc-drop-area>
-  <button set="onclick: onClick">
+  <button type="button" set="onclick: onClick">
     <uc-icon name="upload"></uc-icon>
     <span>{{*simpleButtonText}}</span>
     <slot></slot>

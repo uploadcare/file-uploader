@@ -213,17 +213,19 @@ CameraSource.template = /*html*/ `
   </video>
   <div class="message-box" set="@hidden: messageHidden">
     <span>{{l10nMessage}}</span>
-    <button set="onclick: onRequestPermissions; @hidden: requestBtnHidden" l10n="camera-permissions-request"></button>
+    <button type="button" set="onclick: onRequestPermissions; @hidden: requestBtnHidden" l10n="camera-permissions-request"></button>
   </div>
 </div>
 
 <div class="toolbar">
   <button
+    type="button"
     class="cancel-btn secondary-btn"
     set="onclick: onCancel"
     l10n="cancel">
   </button>
   <button
+    type="button"
     class="shot-btn primary-btn"
     set="onclick: onShot; @disabled: shotBtnDisabled"
     l10n="camera-shot">
