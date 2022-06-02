@@ -3,7 +3,7 @@
 // TODO: remove this test and component in favour of just button tag
 
 import { AppComponent } from '../../lib/AppComponent.js.js';
-import { UcBtnUi } from './UcBtnUi.js';
+import { LrBtnUi } from './LrBtnUi.js';
 
 class TestApp extends BlockComponent {
   constructor() {
@@ -16,9 +16,9 @@ class TestApp extends BlockComponent {
 }
 TestApp.template = /*html*/ `
 <link rel="stylesheet" href="../../css/common.css">
-<uc-btn-ui reverse set="#text: text; #icon: icon"></uc-btn-ui>
+<lr-btn-ui reverse set="#text: text; #icon: icon"></lr-btn-ui>
 <div>&nbsp;</div>
-<uc-btn-ui text="One more button..."></uc-btn-ui>
+<lr-btn-ui text="One more button..."></lr-btn-ui>
 <div>&nbsp;</div>
 `;
 TestApp.defineTag('test-app');

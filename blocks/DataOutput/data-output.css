@@ -1,11 +1,11 @@
-uc-data-output {
+lr-data-output {
   display: grid;
 }
 
-uc-data-output > input {
+lr-data-output > input {
   display: none;
 }
 
-uc-data-output > img {
+lr-data-output > img {
   height: 100px;
 }

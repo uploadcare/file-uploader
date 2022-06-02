@@ -4,7 +4,7 @@ import { registerBlocks } from '../../abstract/registerBlocks.js';
 registerBlocks({ ProgressBar });
 
 const bar = new ProgressBar();
-bar.classList.add('uc-wgt-common');
+bar.classList.add('lr-wgt-common');
 
 window.onload = () => {
   document.querySelector('#viewport')?.appendChild(bar);

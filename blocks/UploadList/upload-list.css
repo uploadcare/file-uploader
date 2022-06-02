@@ -1,4 +1,4 @@
-uc-upload-list {
+lr-upload-list {
   display: grid;
   grid-template-rows: auto min-content;
   height: 100%;
@@ -8,17 +8,17 @@ uc-upload-list {
   transition: opacity var(--transition-duration);
 }
 
-uc-upload-list .no-files {
+lr-upload-list .no-files {
   height: var(--file-item-height);
   padding: var(--gap-max);
 }
 
-uc-upload-list .files {
+lr-upload-list .files {
   display: block;
   overflow: auto;
 }
 
-uc-upload-list .toolbar {
+lr-upload-list .toolbar {
   display: flex;
   gap: var(--gap-mid);
   justify-content: space-between;
@@ -27,6 +27,6 @@ uc-upload-list .toolbar {
   border-top: var(--border-light);
 }
 
-uc-upload-list .toolbar-spacer {
+lr-upload-list .toolbar-spacer {
   flex: 1;
 }

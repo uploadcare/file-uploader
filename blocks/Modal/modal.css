@@ -1,4 +1,4 @@
-uc-modal {
+lr-modal {
   --modal-max-content-height: calc(100vh - 4 * var(--gap-mid) - var(--ui-size));
   --modal-content-height-fill: 100vh;
 
@@ -22,12 +22,12 @@ uc-modal {
   -webkit-backdrop-filter: blur(3px); */
 }
 
-uc-modal:not([active]) {
+lr-modal:not([active]) {
   visibility: hidden;
   opacity: 0;
 }
 
-uc-modal button.close-btn {
+lr-modal button.close-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -42,15 +42,15 @@ uc-modal button.close-btn {
   transition: opacity var(--transition-duration) ease;
 }
 
-uc-modal button.close-btn:hover {
+lr-modal button.close-btn:hover {
   opacity: var(--opacity-hover);
 }
 
-uc-modal button.close-btn:active {
+lr-modal button.close-btn:active {
   opacity: var(--opacity-active);
 }
 
-uc-modal > .dialog {
+lr-modal > .dialog {
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -64,20 +64,20 @@ uc-modal > .dialog {
   transition: transform 0.4s;
 }
 @media only screen and (max-width: 600px), only screen and (max-height: 800px) {
-  uc-modal > .dialog > .content {
+  lr-modal > .dialog > .content {
     height: var(--modal-max-content-height);
   }
 }
 
-uc-modal:not([active]) > .dialog {
+lr-modal:not([active]) > .dialog {
   transform: translateY(20px);
 }
 
-uc-modal > .dialog > .content {
+lr-modal > .dialog > .content {
   display: contents;
 }
 
-uc-modal .heading {
+lr-modal .heading {
   display: grid;
   grid-template-columns: min-content 1fr min-content;
   padding: var(--gap-mid);

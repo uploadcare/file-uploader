@@ -1,5 +1,5 @@
-.uc-wgt-theme,
-.uc-wgt-common,
+.lr-wgt-theme,
+.lr-wgt-common,
 :host {
   /* Base values */
 
@@ -166,16 +166,16 @@
 }
 
 @media only screen and (max-height: 600px) {
-  .uc-wgt-theme,
-  .uc-wgt-common,
+  .lr-wgt-theme,
+  .lr-wgt-common,
   :host {
     --modal-max-h: 100%;
   }
 }
 
 @media only screen and (max-width: 800px) {
-  .uc-wgt-theme,
-  .uc-wgt-common,
+  .lr-wgt-theme,
+  .lr-wgt-common,
   :host {
     --modal-max-w: 100%;
     --modal-max-h: 100%;

@@ -5,7 +5,7 @@ import { registerBlocks } from '../../abstract/registerBlocks.js';
 registerBlocks({ Icon, ExternalSource });
 
 const extSrc = new ExternalSource();
-extSrc.classList.add('uc-wgt-common');
+extSrc.classList.add('lr-wgt-common');
 
 window.onload = () => {
   document.querySelector('#viewport')?.appendChild(extSrc);

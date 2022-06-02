@@ -1,4 +1,4 @@
-# uc-uploader
+# lr-uploader
 
 Here you can find the set of ready-made uploaders for the most frequent file uploading cases.
 Each uploader is highly customizable on its own and could be used as a custom build reference, but you can use it as is.
@@ -44,19 +44,19 @@ Install package: `npm i @uploadcare/uc-blocks`
 Then you can use `Uploader`-element class for your purposes:
 
 ```javascript
-import * as UC from '@uploadcare/uc-blocks';
+import * as LR from '@uploadcare/uc-blocks';
 
-UC.registerBlocks(UC);
+LR.registerBlocks(LR);
 
-document.body.appendChild(new UC.FileUploaderRegular());
+document.body.appendChild(new LR.FileUploaderRegular());
 ```
 
 ### Application markup
 
-After connection, use the `<uc-uploader>` tag in your application markup:
+After connection, use the `<lr-uploader>` tag in your application markup:
 
 ```html
-<uc-uploader></uc-uploader>
+<lr-uploader></lr-uploader>
 ```
 
 Note that all configurations, localization texts, icons, and styling are placed into CSS file, so you should connect the default one (or create your own):
@@ -70,10 +70,10 @@ Note that all configurations, localization texts, icons, and styling are placed 
   }
 </style>
 
-<uc-uploader class="my-settings uc-wgt-common"> </uc-uploader>
+<lr-uploader class="my-settings lr-wgt-common"> </lr-uploader>
 ```
 
-- `uc-wgt-common` - is a pre-defined common CSS class containing all basic uploader parameters.
+- `lr-wgt-common` - is a pre-defined common CSS class containing all basic uploader parameters.
 
 ### Shadow DOM
 
@@ -81,23 +81,23 @@ If you need additional isolation and styling security levels, you can get it wit
 To enable it and encapsulate all styles into separated scope, use the `css-src` attribute:
 
 ```html
-<uc-uploader css-src="https://unpkg.com/@uploadcare/uc-blocks@latest/web/file-uploader-regular.min.css"> </uc-uploader>
+<lr-uploader css-src="https://unpkg.com/@uploadcare/uc-blocks@latest/web/file-uploader-regular.min.css"> </lr-uploader>
 ```
 
 ### Custom tags naming convention
 
 By design, all custom elements should have a dash symbol (`-`) in their names.
-All custom tags used in uploader are prefixed with the `uc-` part.
+All custom tags used in uploader are prefixed with the `lr-` part.
 
 Examples:
 
 ```html
 ...
-<uc-icon></uc-icon>
+<lr-icon></lr-icon>
 ...
-<uc-button></uc-button>
+<lr-button></lr-button>
 ...
-<uc-whatever></uc-whatever>
+<lr-whatever></lr-whatever>
 ...
 ```
 
@@ -140,9 +140,9 @@ By default, context will be created automatically, but if you need to bind uploa
 
 ```html
 ...
-<uc-uploader ctx-name="my-uploading-workflow"></uc-uploader>
+<lr-uploader ctx-name="my-uploading-workflow"></lr-uploader>
 ...
-<uc-data-output ctx-name="my-uploading-workflow"></uc-data-output>
+<lr-data-output ctx-name="my-uploading-workflow"></lr-data-output>
 ...
 ```
 
@@ -181,7 +181,7 @@ There are three major levels of possible styling customizations:
 2. The set of basic CSS variables used for the other styling calculations.
 3. Custom CSS rules for each element.
 
-For more details, please follow this [guide](../../blocks/themes/uc-basic/).
+For more details, please follow this [guide](../../blocks/themes/lr-basic/).
 
 ## 🟢 CSP settings
 
@@ -196,14 +196,14 @@ If the application works with sensitive user data, such as personal photos, it i
 
 ## 📤 Data output
 
-We provide the dedicated block for the data output purposes - `<uc-data-output>`.
+We provide the dedicated block for the data output purposes - `<lr-data-output>`.
 This Custom Element can be connected to some workflow context and provide you with convenient data access.
 
 Here is the code example:
 
 ```html
-<uc-data-output console fire-events item-template="<img src='https://ucarecdn.com/{{uuid}}/-/preview/' />">
-</uc-data-output>
+<lr-data-output console fire-events item-template="<img src='https://ucarecdn.com/{{uuid}}/-/preview/' />">
+</lr-data-output>
 ```
 
 Let's walk through its attributes:

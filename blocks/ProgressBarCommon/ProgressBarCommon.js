@@ -45,5 +45,5 @@ export class ProgressBarCommon extends Block {
 }
 
 ProgressBarCommon.template = /*html*/ `
-<uc-progress-bar set="visible: visible; unknown: unknown; value: value"></uc-progress-bar>
+<lr-progress-bar set="visible: visible; unknown: unknown; value: value"></lr-progress-bar>
 `;

@@ -1,4 +1,4 @@
-uc-icon {
+lr-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -6,11 +6,11 @@ uc-icon {
   height: var(--ui-size);
 }
 
-uc-icon svg {
+lr-icon svg {
   width: 1.2em;
   height: 1.2em;
 }
 
-uc-icon:not([raw]) path {
+lr-icon:not([raw]) path {
   fill: currentColor;
 }

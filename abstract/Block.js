@@ -8,7 +8,7 @@ import { customUserAgent } from '../blocks/utils/userAgent.js';
 
 const ACTIVE_ATTR = 'active';
 const ACTIVE_PROP = '___ACTIVITY_IS_ACTIVE___';
-const TAG_PREFIX = 'uc-';
+const TAG_PREFIX = 'lr-';
 const CSS_ATTRIBUTE = 'css-src';
 
 let DOC_READY = document.readyState === 'complete';
@@ -92,7 +92,7 @@ export class Block extends BaseComponent {
         this.notify(key);
       }
     };
-    window.addEventListener('uc-l10n-update', this.__l10nUpdate);
+    window.addEventListener('lr-l10n-update', this.__l10nUpdate);
   }
 
   /**
@@ -322,7 +322,7 @@ export class Block extends BaseComponent {
           '*currentActivity': Block.activities.UPLOAD_LIST,
         })
       );
-      this.setForCtxTarget('uc-modal', '*modalActive', true);
+      this.setForCtxTarget('lr-modal', '*modalActive', true);
     } else {
       if (this.sourceList?.length === 1) {
         let srcKey = this.sourceList[0];
@@ -343,7 +343,7 @@ export class Block extends BaseComponent {
           } else {
             this.$['*currentActivity'] = srcKey;
           }
-          this.setForCtxTarget('uc-modal', '*modalActive', true);
+          this.setForCtxTarget('lr-modal', '*modalActive', true);
         }
       } else {
         // Multiple sources case:
@@ -352,7 +352,7 @@ export class Block extends BaseComponent {
             '*currentActivity': Block.activities.START_FROM,
           })
         );
-        this.setForCtxTarget('uc-modal', '*modalActive', true);
+        this.setForCtxTarget('lr-modal', '*modalActive', true);
       }
     }
   }
@@ -360,11 +360,11 @@ export class Block extends BaseComponent {
   cancelFlow() {
     if (this.sourceList?.length === 1) {
       this.$['*currentActivity'] = null;
-      this.setForCtxTarget('uc-modal', '*modalActive', false);
+      this.setForCtxTarget('lr-modal', '*modalActive', false);
     } else {
       this.historyBack();
       if (!this.$['*currentActivity']) {
-        this.setForCtxTarget('uc-modal', '*modalActive', false);
+        this.setForCtxTarget('lr-modal', '*modalActive', false);
       }
     }
   }
@@ -527,7 +527,7 @@ export class Block extends BaseComponent {
   }
 
   destroyCallback() {
-    window.removeEventListener('uc-l10n-update', this.__l10nUpdate);
+    window.removeEventListener('lr-l10n-update', this.__l10nUpdate);
     /** @private */
     this.__l10nKeys = null;
     // TODO: destroy uploadCollection

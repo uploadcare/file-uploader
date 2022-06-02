@@ -3,7 +3,9 @@
 All icons are provided via the set of SVG path descriptions inside CSS:
 
 ```css
-.uc-wgt-icons, .uc-wgt-common, :host {
+.lr-wgt-icons,
+.lr-wgt-common,
+:host {
   --icon-default: 'm13 21.9506c5.0533-.5017 9-4.7653 9-9.9506 0-5.52285-4.4772-10-10-10-5.52285 0-10 4.47715-10 10 0 5.1853 3.94668 9.4489 9 9.9506v-11.5364l-2.79289 2.7929c-.39053.3906-1.02369.3906-1.41422 0-.39052-.3905-.39052-1.0237 0-1.4142l5.20711-5.20708 5.2071 5.20708c.3905.3905.3905 1.0237 0 1.4142-.3905.3906-1.0237.3906-1.4142 0l-2.7929-2.7929z';
   --icon-file: 'm13.3333 5.57143 4 3.85714h-4zm-6.66663-2.57143c-1.47266 0-2.66667 1.15121-2.66667 2.57143v12.85717c0 1.4202 1.19401 2.5714 2.66667 2.5714h10.66663c1.4727 0 2.6667-1.1512 2.6667-2.5714v-9.00003l-6.6667-6.42857z';
   --icon-close: 'M17.6569 7.75734c.3905-.39053.3905-1.02369 0-1.41421-.3906-.39053-1.0237-.39053-1.4143 0L12 10.5858 7.75736 6.34313c-.39053-.39053-1.02369-.39053-1.41421 0-.39053.39052-.39053 1.02368 0 1.41421L10.5858 12l-4.24266 4.2426c-.39052.3905-.39052 1.0237 0 1.4142.39053.3906 1.02369.3906 1.41422 0L12 13.4142l4.2426 4.2426c.3906.3906 1.0237.3906 1.4143 0 .3905-.3905.3905-1.0237 0-1.4142L13.4142 12l4.2427-4.24266Z';
@@ -58,19 +60,20 @@ All icons are provided via the set of SVG path descriptions inside CSS:
 
 You can change any of their values to customize your icons.
 
-To display the certain icon, use `uc-icon` component and the `name` attribute:
+To display the certain icon, use `lr-icon` component and the `name` attribute:
 
 ```html
-<uc-icon name="detail"></uc-icon>
+<lr-icon name="detail"></lr-icon>
 ```
 
 This will take `--icon-detail` CSS value and you will get this as the result:
+
 ```html
-<uc-icon name="detail">
+<lr-icon name="detail">
   <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-    <path 
-      d="M5,3C3.89,3 3,3.89 3,5V19C3,20.11 3.89,21 5,21H19C20.11,21 21,20.11 21,19V5C21,3.89 20.11,3 19,3H5M5,5H19V19H5V5M7,7V9H17V7H7M7,11V13H17V11H7M7,15V17H14V15H7Z">
-    </path>
+    <path
+      d="M5,3C3.89,3 3,3.89 3,5V19C3,20.11 3.89,21 5,21H19C20.11,21 21,20.11 21,19V5C21,3.89 20.11,3 19,3H5M5,5H19V19H5V5M7,7V9H17V7H7M7,11V13H17V11H7M7,15V17H14V15H7Z"
+    ></path>
   </svg>
-</uc-icon>
+</lr-icon>
 ```

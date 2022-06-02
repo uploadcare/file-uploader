@@ -1,4 +1,4 @@
-uc-external-source {
+lr-external-source {
   position: relative;
   display: grid;
   grid-template-rows: auto min-content;
@@ -6,14 +6,14 @@ uc-external-source {
   max-height: var(--modal-max-content-height);
 }
 
-uc-external-source iframe {
+lr-external-source iframe {
   display: block;
   width: 100%;
   height: 100%;
   border: none;
 }
 
-uc-external-source .toolbar {
+lr-external-source .toolbar {
   display: grid;
   grid-gap: var(--gap-mid);
   grid-template-columns: max-content 1fr max-content max-content;
@@ -23,15 +23,15 @@ uc-external-source .toolbar {
   border-top: var(--border-light);
 }
 
-uc-external-source .back-btn {
+lr-external-source .back-btn {
   padding-left: 0;
 }
 
-uc-external-source .back-btn::after {
+lr-external-source .back-btn::after {
   content: var(--l10n-back);
 }
 
-uc-external-source .selected-counter {
+lr-external-source .selected-counter {
   display: flex;
   grid-gap: var(--gap-mid);
   align-items: center;

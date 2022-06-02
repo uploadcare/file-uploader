@@ -111,7 +111,7 @@ export class ExternalSource extends Block {
     let params = {
       lang: 'en', // TOOD: pass correct lang
       // TODO: we should add a new property to the social sources application
-      // to collect uc-blocks data separately from legacy widget
+      // to collect lr-blocks data separately from legacy widget
       widget_version: '3.11.3',
       public_key: pubkey,
       images_only: imagesOnly,
@@ -166,7 +166,7 @@ ExternalSource.template = /*html*/ `
   <div class="selected-counter">
     <span l10n="selected-count"></span>{{counter}}</div>
   <button class="done-btn primary-btn" set="onclick: onDone">
-    <uc-icon name="check"></uc-icon>
+    <lr-icon name="check"></lr-icon>
   </button>
 </div>
 `;

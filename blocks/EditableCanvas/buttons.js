@@ -87,18 +87,18 @@ function getBthHtml(btn) {
   action="${btn.action}" 
   ref="${btn.ref}"
   l10n="title:${btn.l10n_name}">
-  <uc-icon
+  <lr-icon
     set="${btn.set}" 
     name="${btn.icon}">
-  </uc-icon>
+  </lr-icon>
 </button>`.trim();
 }
 
-const clrHtml = /*html*/ `<uc-color 
+const clrHtml = /*html*/ `<lr-color 
   ref="color" 
   action="color"
   set="onchange: onColor" 
-  l10n="title:select-color"></uc-color>`;
+  l10n="title:select-color"></lr-color>`;
 
 export function getButtons() {
   return buttonsModel.reduce((acc, btn) => {

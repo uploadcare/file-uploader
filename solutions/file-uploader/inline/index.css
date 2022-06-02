@@ -1,4 +1,4 @@
-@import url('../../../blocks/themes/uc-basic/index.css');
+@import url('../../../blocks/themes/lr-basic/index.css');
 
 /* stylelint-disable-next-line plugin/stylelint-force-app-name-prefix */
 body {
@@ -9,7 +9,7 @@ body {
   padding: 8px;
 }
 
-uc-uploader {
+lr-uploader {
   display: block;
   border: 2px solid
     hsla(

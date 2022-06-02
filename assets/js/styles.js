@@ -58,7 +58,7 @@ footer {
 
 export const DOC_CSS = /*css*/ `
 
-uc-live-html {
+lr-live-html {
   min-height: 400px;
 }
 

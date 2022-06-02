@@ -3,9 +3,9 @@
 **Activity** - is a current user interaction stage focused on the uploader application. It helps manage the visibility of components and switches between several UI states. To create an activity, you will need to register it in your custom upload-block:
 
 ```javascript
-import { UC } from '@uploadcare/upload-blocks';
+import { LR } from '@uploadcare/upload-blocks';
 
-class MyBlock extends UC.BlockComponent {
+class MyBlock extends LR.BlockComponent {
   initCallback() {
     this.onActivation = () => {
       '*activityCaption': this.l10n('some-caption'),
@@ -21,11 +21,12 @@ class MyBlock extends UC.BlockComponent {
 
 Then, if some other component will call the registered activity, it will be activated with `active` attribute, and the activation callback will be called.
 
-JavaScript: 
-```javascript
-import { UC } from '@uploadcare/upload-blocks';
+JavaScript:
 
-class MyOtherBlock extends UC.BlockComponent {
+```javascript
+import { LR } from '@uploadcare/upload-blocks';
+
+class MyOtherBlock extends LR.BlockComponent {
   onclick = () => {
     this.$['*currentActivity'] = 'my-activity-name';
   };
@@ -33,19 +34,20 @@ class MyOtherBlock extends UC.BlockComponent {
 ```
 
 Resulting HTML:
+
 ```html
-<uc-my-block activity="my-activity-name" active>...</uc-my-block>
+<lr-my-block activity="my-activity-name" active>...</lr-my-block>
 ```
 
-Then you can use `uc-my-block[active]` selector to specify visibility or animations with CSS.
+Then you can use `lr-my-block[active]` selector to specify visibility or animations with CSS.
 
 Here is the list of reserved pre-defined activities:
 
-* `source-select`
-* `camera`
-* `upload-list`
-* `url`
-* `confirmation`
-* `cloud-image-edit`
-* `*external`
-* `details`
+- `source-select`
+- `camera`
+- `upload-list`
+- `url`
+- `confirmation`
+- `cloud-image-edit`
+- `*external`
+- `details`

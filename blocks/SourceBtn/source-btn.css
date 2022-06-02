@@ -1,4 +1,4 @@
-uc-source-btn {
+lr-source-btn {
   display: flex;
   align-items: center;
   padding-right: 1em;
@@ -10,40 +10,40 @@ uc-source-btn {
   user-select: none;
 }
 
-uc-source-btn:hover {
+lr-source-btn:hover {
   color: var(--clr-txt);
   background-color: var(--clr-shade-lv1);
 }
 
-uc-source-btn:active {
+lr-source-btn:active {
   color: var(--clr-txt);
   background-color: var(--clr-shade-lv2);
 }
 
-uc-source-btn uc-icon {
+lr-source-btn lr-icon {
   display: inline-flex;
   flex-grow: 1;
   justify-content: center;
   min-width: var(--ui-size);
 }
 
-uc-source-btn[type='local'] > .txt::after {
+lr-source-btn[type='local'] > .txt::after {
   content: var(--l10n-local-files);
 }
 
-uc-source-btn[type='camera'] > .txt::after {
+lr-source-btn[type='camera'] > .txt::after {
   content: var(--l10n-camera);
 }
 
-uc-source-btn[type='url'] > .txt::after {
+lr-source-btn[type='url'] > .txt::after {
   content: var(--l10n-from-url);
 }
 
-uc-source-btn[type='other'] > .txt::after {
+lr-source-btn[type='other'] > .txt::after {
   content: var(--l10n-other);
 }
 
-uc-source-btn .txt {
+lr-source-btn .txt {
   display: flex;
   align-items: center;
   box-sizing: border-box;

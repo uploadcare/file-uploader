@@ -1,4 +1,4 @@
-uc-start-from {
+lr-start-from {
   display: grid;
   grid-template-columns: min-content auto;
   gap: var(--gap-mid);

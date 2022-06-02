@@ -11,5 +11,5 @@ export class ActivityIcon extends Block {
 }
 
 ActivityIcon.template = /* html */ `
-<uc-icon set="@name: *activityIcon"></uc-icon>
+<lr-icon set="@name: *activityIcon"></lr-icon>
 `;

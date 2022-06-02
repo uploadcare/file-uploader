@@ -4,21 +4,21 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>uc-cloud-image-editor</title>
+    <title>lr-cloud-image-editor</title>
     <link rel="stylesheet" href="../../assets/css/doc.css" />
     <script src="../../assets/js/app-shell.js" type="module"></script>
   </head>
   <body>
     <app-shell base="../../">
       <style>
-        uc-live-html {
+        lr-live-html {
           grid-template-rows: 1fr 2fr;
           grid-template-columns: unset;
           min-height: 1000px;
         }
       </style>
       <h1>Cloud image editor</h1>
-      <uc-live-html>
+      <lr-live-html>
         <!-- Script connection: -->
         <script src="./index.js" type="module"></script>
 
@@ -33,11 +33,11 @@
         </style>
 
         <!-- Cloud image editor element: -->
-        <uc-cloud-editor
+        <lr-cloud-editor
           id="editor"
-          class="uc-cldtr-common"
+          class="lr-cldtr-common"
           uuid="7c167b79-9f27-4489-8032-3f3be1840605"
-        ></uc-cloud-editor>
+        ></lr-cloud-editor>
 
         <script>
           let callback = (text) => (event) => {
@@ -48,7 +48,7 @@
           instance.addEventListener('apply', callback('Apply'));
           instance.addEventListener('cancel', callback('Cancel'));
         </script>
-      </uc-live-html>
+      </lr-live-html>
     </app-shell>
   </body>
 </html>

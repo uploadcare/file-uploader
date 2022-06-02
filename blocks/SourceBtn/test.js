@@ -5,7 +5,7 @@ import { registerBlocks } from '../../abstract/registerBlocks.js';
 registerBlocks({ SourceBtn, Icon });
 
 const sourceBtn = new SourceBtn();
-sourceBtn.classList.add('uc-wgt-common');
+sourceBtn.classList.add('lr-wgt-common');
 
 window.onload = () => {
   document.querySelector('#viewport')?.appendChild(sourceBtn);

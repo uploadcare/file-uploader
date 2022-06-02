@@ -1,6 +1,6 @@
-@import url('../../../blocks/themes/uc-basic/index.css');
+@import url('../../../blocks/themes/lr-basic/index.css');
 
-.uc-wgt-common,
+.lr-wgt-common,
 :host {
   --cfg-multiple: 0;
   --cfg-confirm-upload: 0;
@@ -8,7 +8,7 @@
   --cfg-done-activity: 'upload-list';
 }
 
-uc-start-from {
+lr-start-from {
   display: block;
   width: 100%; /* test value */
   height: 100%; /* test value */
@@ -16,7 +16,7 @@ uc-start-from {
   text-align: center;
 }
 
-uc-drop-area {
+lr-drop-area {
   width: 100%;
   height: calc(var(--ui-size) + var(--gap-mid) * 2 + var(--gap-min) * 4);
   padding: 0;
@@ -27,15 +27,15 @@ uc-drop-area {
   border-radius: var(--border-radius-frame);
 }
 
-uc-drop-area[drag-state='inactive'] {
+lr-drop-area[drag-state='inactive'] {
   background-color: transparent;
 }
 
-uc-drop-area::after {
+lr-drop-area::after {
   content: '';
 }
 
-uc-drop-area button {
+lr-drop-area button {
   display: inline-block;
   width: 100%;
   height: 100%;
@@ -46,11 +46,11 @@ uc-drop-area button {
   transition: opacity var(--transition-duration) ease;
 }
 
-uc-drop-area button:hover {
+lr-drop-area button:hover {
   opacity: 1;
 }
 
-uc-upload-list {
+lr-upload-list {
   width: 100%;
   padding: var(--gap-min);
   background-color: transparent;
@@ -59,24 +59,24 @@ uc-upload-list {
   border-radius: var(--border-radius-frame);
 }
 
-uc-upload-list .toolbar {
+lr-upload-list .toolbar {
   display: none;
 }
 
-uc-file-item {
+lr-file-item {
   border-radius: var(--border-radius-element);
 }
 
-uc-file-item .edit-btn {
+lr-file-item .edit-btn {
   display: none;
 }
 
-uc-file-item uc-progress-bar {
+lr-file-item lr-progress-bar {
   top: 0 !important;
   height: 100% !important;
 }
 
-uc-file-item uc-progress-bar .progress {
+lr-file-item lr-progress-bar .progress {
   background-color: var(--clr-accent-lightest);
   border-radius: var(--border-radius-element);
 }

@@ -533,5 +533,5 @@ export class EditorImageCropper extends Block {
 
 EditorImageCropper.template = /*html*/ `
   <canvas class='canvas' ref='canvas-el'></canvas>
-  <uc-crop-frame ref='frame-el'></uc-crop-frame>
+  <lr-crop-frame ref='frame-el'></lr-crop-frame>
 `;

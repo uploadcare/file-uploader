@@ -3,8 +3,8 @@
  *
  * @author @SunHuawei What modified:
  *
- *   - Use `.uc-` prefix instead of `.uc `
- *   - Add support for tag prefixes: `uc-`
+ *   - Use `.lr-` prefix instead of `.lr `
+ *   - Add support for tag prefixes: `lr-`
  */
 var _ = require('lodash');
 var stylelint = require('stylelint');

@@ -1,3 +1,3 @@
 import { Img } from './Img.js';
 
-Img.reg('uc-img');
+Img.reg('lr-img');

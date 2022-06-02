@@ -4,7 +4,7 @@ import { registerBlocks } from '../../abstract/registerBlocks.js';
 registerBlocks({ UploadList });
 
 const uploadList = new UploadList();
-uploadList.classList.add('uc-wgt-common');
+uploadList.classList.add('lr-wgt-common');
 
 window.onload = () => {
   document.querySelector('#viewport')?.appendChild(uploadList);
