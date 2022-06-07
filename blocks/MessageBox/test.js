@@ -5,7 +5,7 @@ import { registerBlocks } from '../../abstract/registerBlocks.js';
 registerBlocks({ MessageBox, Icon });
 
 const msgBox = new MessageBox();
-msgBox.classList.add('uc-wgt-common');
+msgBox.classList.add('lr-wgt-common');
 
 window.onload = () => {
   document.querySelector('#viewport')?.appendChild(msgBox);

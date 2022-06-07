@@ -11,7 +11,7 @@ import { classNames } from '../../lib/classNames.js';
  */
 
 /** @extends {Block<State>} */
-export class UcBtnUi extends Block {
+export class LrBtnUi extends Block {
   constructor() {
     super();
 
@@ -82,9 +82,9 @@ export class UcBtnUi extends Block {
     }
   }
 }
-UcBtnUi.bindAttributes({ text: 'text', icon: 'icon', reverse: 'reverse', theme: 'theme' });
+LrBtnUi.bindAttributes({ text: 'text', icon: 'icon', reverse: 'reverse', theme: 'theme' });
 
-UcBtnUi.template = /*html*/ `
-<uc-icon size="20" set="className: iconCss; @name: icon;"></uc-icon>
+LrBtnUi.template = /*html*/ `
+<lr-icon size="20" set="className: iconCss; @name: icon;"></lr-icon>
 <div class="text">{{text}}</div>
 `;

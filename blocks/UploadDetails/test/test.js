@@ -3,7 +3,7 @@ import { Icon } from '../../Icon/Icon.js';
 import { EditableCanvas } from '../../EditableCanvas/EditableCanvas.js';
 import { Tabs } from '../../Tabs/Tabs.js';
 
-Icon.reg('uc-icon');
+Icon.reg('lr-icon');
 UploadDetails.reg('upload-details');
 EditableCanvas.reg('editable-canvas');
 Tabs.reg('tabs');

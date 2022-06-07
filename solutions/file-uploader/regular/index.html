@@ -13,36 +13,36 @@
     <app-shell base="../../../">
       <re-md src="./README.md"></re-md>
 
-      <uc-live-html>
+      <lr-live-html>
         <!-- Uploader script connection: -->
         <script src="./index.js" type="module"></script>
 
         <!-- CSS context properties: -->
         <style>
-          uc-uploader {
+          lr-uploader {
             --cfg-pubkey: 'demopublickey';
           }
         </style>
 
         <!-- Uploader widget element: -->
-        <uc-uploader css-src="./index.css"></uc-uploader>
-      </uc-live-html>
+        <lr-uploader css-src="./index.css"></lr-uploader>
+      </lr-live-html>
       <h2>Single source:</h2>
-      <uc-live-html>
+      <lr-live-html>
         <!-- Uploader script connection: -->
         <script src="./index.js" type="module"></script>
 
         <!-- CSS context properties: -->
         <style>
-          uc-uploader {
+          lr-uploader {
             --cfg-pubkey: 'demopublickey';
             --cfg-source-list: 'local';
           }
         </style>
 
         <!-- Uploader widget element: -->
-        <uc-uploader css-src="./index.css"></uc-uploader>
-      </uc-live-html>
+        <lr-uploader css-src="./index.css"></lr-uploader>
+      </lr-live-html>
     </app-shell>
   </body>
 </html>

@@ -4,7 +4,7 @@ import { registerBlocks } from '../../abstract/registerBlocks.js';
 registerBlocks({ EditableCanvas });
 
 const editableCanvas = new EditableCanvas();
-editableCanvas.classList.add('uc-wgt-common');
+editableCanvas.classList.add('lr-wgt-common');
 
 window.onload = () => {
   document.querySelector('#viewport')?.appendChild(editableCanvas);

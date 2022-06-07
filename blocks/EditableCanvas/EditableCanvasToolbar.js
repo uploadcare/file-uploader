@@ -152,10 +152,10 @@ EditorToolbar.template = /*html*/ `
   class="btns"
   ref="btns"
   set="onclick: onBtnClick">${getButtons()}</div>
-<uc-range
+<lr-range
   min="0"
   max="200"
   ref="range"
   set="@visible: rangeActive; $.caption: rangeCaption">
-</uc-range>
+</lr-range>
 `;

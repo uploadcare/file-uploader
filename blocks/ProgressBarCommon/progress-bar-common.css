@@ -1,4 +1,4 @@
-uc-progress-bar-common {
+lr-progress-bar-common {
   position: absolute;
   right: 0;
   bottom: 0;
@@ -10,6 +10,6 @@ uc-progress-bar-common {
   transition: opacity 0.3s;
 }
 
-uc-progress-bar-common:not([active]) {
+lr-progress-bar-common:not([active]) {
   opacity: 0;
 }

@@ -1,6 +1,6 @@
 export const ResizeObserver =
   window.ResizeObserver ||
-  class UcResizeObserver {
+  class LrResizeObserver {
     /** @param {Function} callback */
     constructor(callback) {
       this._callback = callback;

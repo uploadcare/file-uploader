@@ -20,15 +20,15 @@ export class FileUploaderMinimal extends Block {
 }
 
 FileUploaderMinimal.template = /*html*/ `
-  <uc-start-from>
-    <uc-drop-area>
+  <lr-start-from>
+    <lr-drop-area>
       <button
         type="button"
         l10n="drop-files-here"
         set="onclick: selectClicked">
       </button>
-    </uc-drop-area>
-  </uc-start-from>
-  <uc-upload-list></uc-upload-list>
-  <uc-message-box></uc-message-box>
+    </lr-drop-area>
+  </lr-start-from>
+  <lr-upload-list></lr-upload-list>
+  <lr-message-box></lr-message-box>
 `;

@@ -1,7 +1,7 @@
 <h2>Live demo:</h2>
 
 <h3>Multiple sources:</h3>
-<uc-live-html>
+<lr-live-html>
   <!-- Uploader script connection: -->
   <script src="./index.js" type="module"></script>
 
@@ -9,23 +9,23 @@
   <style>
     @import url(./index.css);
 
-    uc-uploader {
+    lr-uploader {
       width: 100%;
       height: 100%;
     }
 
-    .uc-wgt-common {
+    .lr-wgt-common {
       --cfg-pubkey: 'demopublickey';
     }
   </style>
 
   <!-- Uploader widget element: -->
-  <uc-uploader class="uc-wgt-common"></uc-uploader>
-</uc-live-html>
+  <lr-uploader class="lr-wgt-common"></lr-uploader>
+</lr-live-html>
 
 
 <h3>Single source:</h3>
-<uc-live-html>
+<lr-live-html>
   <!-- Uploader script connection: -->
   <script src="./index.js" type="module"></script>
 
@@ -33,18 +33,18 @@
   <style>
     @import url(./index.css);
 
-    uc-uploader[current-activity="details"],
-    uc-uploader[current-activity="cloud-image-edit"] {
+    lr-uploader[current-activity="details"],
+    lr-uploader[current-activity="cloud-image-edit"] {
       width: 100%;
       height: 100%;
     }
 
-    .uc-wgt-common {
+    .lr-wgt-common {
       --cfg-pubkey: 'demopublickey';
       --cfg-source-list: 'local';
     }
   </style>
 
   <!-- Uploader widget element: -->
-  <uc-uploader current-activity class="uc-wgt-common"></uc-uploader>
-</uc-live-html>
+  <lr-uploader current-activity class="lr-wgt-common"></lr-uploader>
+</lr-live-html>

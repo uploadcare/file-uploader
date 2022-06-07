@@ -2,8 +2,8 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
-  @import url(./blocks/themes/uc-basic/index.css);
-  .uc-wgt-common {
+  @import url(./blocks/themes/lr-basic/index.css);
+  .lr-wgt-common {
     --ctx-name: 'my-uploader';
     --cfg-pubkey: 'demopublickey';
     --cfg-multiple-min: 0;
@@ -12,35 +12,35 @@
 </style>
 <script src="./index.js" type="module"></script>
 <script type="module">
-  import * as UC from './index.js';
-  UC.registerBlocks(UC);
+  import * as LR from './index.js';
+  LR.registerBlocks(LR);
 </script>
 
-<uc-simple-btn class="uc-wgt-common"></uc-simple-btn>
+<lr-simple-btn class="lr-wgt-common"></lr-simple-btn>
 
-<uc-modal strokes class="uc-wgt-common">
-  <uc-activity-icon slot="heading"></uc-activity-icon>
-  <uc-activity-caption slot="heading"></uc-activity-caption>
-  <uc-start-from>
-    <uc-source-list wrap></uc-source-list>
-    <uc-drop-area></uc-drop-area>
-  </uc-start-from>
-  <uc-upload-list></uc-upload-list>
-  <uc-camera-source></uc-camera-source>
-  <uc-url-source></uc-url-source>
-  <uc-external-source></uc-external-source>
-  <uc-upload-details></uc-upload-details>
-  <uc-confirmation-dialog></uc-confirmation-dialog>
-  <uc-cloud-image-editor></uc-cloud-image-editor>
-</uc-modal>
+<lr-modal strokes class="lr-wgt-common">
+  <lr-activity-icon slot="heading"></lr-activity-icon>
+  <lr-activity-caption slot="heading"></lr-activity-caption>
+  <lr-start-from>
+    <lr-source-list wrap></lr-source-list>
+    <lr-drop-area></lr-drop-area>
+  </lr-start-from>
+  <lr-upload-list></lr-upload-list>
+  <lr-camera-source></lr-camera-source>
+  <lr-url-source></lr-url-source>
+  <lr-external-source></lr-external-source>
+  <lr-upload-details></lr-upload-details>
+  <lr-confirmation-dialog></lr-confirmation-dialog>
+  <lr-cloud-image-editor></lr-cloud-image-editor>
+</lr-modal>
 
-<uc-message-box class="uc-wgt-common"></uc-message-box>
-<uc-progress-bar-common class="uc-wgt-common"></uc-progress-bar-common>
+<lr-message-box class="lr-wgt-common"></lr-message-box>
+<lr-progress-bar-common class="lr-wgt-common"></lr-progress-bar-common>
 
-<uc-data-output
+<lr-data-output
   console
   fire-event
   from="*outputData"
   item-template="<img height='200' src='https://ucarecdn.com/{{uuid}}/-/preview/' />"
-  class="uc-wgt-common"
-></uc-data-output>
+  class="lr-wgt-common"
+></lr-data-output>

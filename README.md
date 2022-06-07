@@ -1,6 +1,6 @@
 [![npm version](https://badge.fury.io/js/@uploadcare%2Fuc-blocks.svg)](https://www.npmjs.com/package/@uploadcare/uc-blocks)
 
-# uc-blocks: web components for the Uploadcare platform integrations
+# lr-blocks: web components for the Uploadcare platform integrations
 
 ## 💎 Core concepts
 
@@ -45,7 +45,7 @@ Check the [JSDoc Reference](https://www.typescriptlang.org/docs/handbook/jsdoc-s
 
 ### Supported browsers
 
-uc-blocks are supported and tested in all major modern desktop and mobile browsers:
+lr-blocks are supported and tested in all major modern desktop and mobile browsers:
 
 - Chrome
 - Firefox

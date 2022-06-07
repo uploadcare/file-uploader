@@ -4,27 +4,27 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>uc-uploader</title>
+    <title>lr-uploader</title>
     <script type="module" src="../../../assets/js/app-shell.js"></script>
     <link rel="stylesheet" href="../../../assets/css/doc.css" />
   </head>
   <body>
     <app-shell base="../../../">
       <re-md src="./README.md"></re-md>
-      <uc-live-html>
+      <lr-live-html>
         <!-- Uploader script connection: -->
         <script src="./index.js" type="module"></script>
 
         <!-- CSS context properties: -->
         <style>
-          uc-uploader {
+          lr-uploader {
             --cfg-pubkey: 'demopublickey';
           }
         </style>
 
         <!-- Uploader widget element: -->
-        <uc-uploader css-src="./index.css"></uc-uploader>
-      </uc-live-html>
+        <lr-uploader css-src="./index.css"></lr-uploader>
+      </lr-live-html>
     </app-shell>
   </body>
 </html>

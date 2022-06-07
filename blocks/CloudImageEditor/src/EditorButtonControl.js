@@ -56,6 +56,6 @@ export class EditorButtonControl extends Block {
 
 EditorButtonControl.template = /*html*/ `
   <div class="before"></div>
-  <uc-icon size="20" set="@name: icon;"></uc-icon>
+  <lr-icon size="20" set="@name: icon;"></lr-icon>
   <div class="title" ref="title-el">{{title}}</div>
 `;

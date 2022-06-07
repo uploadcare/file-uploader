@@ -1,4 +1,4 @@
-uc-camera-source {
+lr-camera-source {
   position: relative;
   display: flex;
   align-items: center;
@@ -8,7 +8,7 @@ uc-camera-source {
   padding-bottom: calc(2 * var(--gap-mid) + var(--ui-size));
 }
 
-uc-camera-source video {
+lr-camera-source video {
   display: block;
   max-width: 100%;
   max-height: 100%;
@@ -17,7 +17,7 @@ uc-camera-source video {
   background-color: var(--clr-background);
 }
 
-uc-camera-source .toolbar {
+lr-camera-source .toolbar {
   position: absolute;
   bottom: 0;
   display: flex;
@@ -27,13 +27,13 @@ uc-camera-source .toolbar {
   background-color: var(--clr-background);
 }
 
-uc-camera-source .content {
+lr-camera-source .content {
   display: flex;
   justify-content: center;
   height: 100%;
 }
 
-uc-camera-source .message-box {
+lr-camera-source .message-box {
   --padding: calc(var(--gap-max) * 2);
 
   display: flex;
@@ -44,7 +44,7 @@ uc-camera-source .message-box {
   padding: var(--padding) var(--padding) 0 var(--padding);
 }
 
-uc-camera-source .message-box button {
+lr-camera-source .message-box button {
   color: var(--clr-btn-txt-primary);
   background-color: var(--clr-btn-bgr-primary);
 }

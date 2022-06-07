@@ -3,24 +3,24 @@ import { Block } from '../../../abstract/Block.js';
 export class FileUploaderRegular extends Block {}
 
 FileUploaderRegular.template = /*html*/ `
-<uc-simple-btn></uc-simple-btn>
+<lr-simple-btn></lr-simple-btn>
 
-<uc-modal strokes block-body-scrolling>
-  <uc-activity-icon slot="heading"></uc-activity-icon>
-  <uc-activity-caption slot="heading"></uc-activity-caption>
-  <uc-start-from>
-    <uc-source-list wrap></uc-source-list>
-    <uc-drop-area></uc-drop-area>
-  </uc-start-from>
-  <uc-upload-list></uc-upload-list>
-  <uc-camera-source></uc-camera-source>
-  <uc-url-source></uc-url-source>
-  <uc-external-source></uc-external-source>
-  <uc-upload-details></uc-upload-details>
-  <uc-confirmation-dialog></uc-confirmation-dialog>
-  <uc-cloud-image-editor></uc-cloud-image-editor>
-</uc-modal>
+<lr-modal strokes block-body-scrolling>
+  <lr-activity-icon slot="heading"></lr-activity-icon>
+  <lr-activity-caption slot="heading"></lr-activity-caption>
+  <lr-start-from>
+    <lr-source-list wrap></lr-source-list>
+    <lr-drop-area></lr-drop-area>
+  </lr-start-from>
+  <lr-upload-list></lr-upload-list>
+  <lr-camera-source></lr-camera-source>
+  <lr-url-source></lr-url-source>
+  <lr-external-source></lr-external-source>
+  <lr-upload-details></lr-upload-details>
+  <lr-confirmation-dialog></lr-confirmation-dialog>
+  <lr-cloud-image-editor></lr-cloud-image-editor>
+</lr-modal>
 
-<uc-message-box></uc-message-box>
-<uc-progress-bar-common></uc-progress-bar-common>
+<lr-message-box></lr-message-box>
+<lr-progress-bar-common></lr-progress-bar-common>
 `;

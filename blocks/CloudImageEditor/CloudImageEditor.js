@@ -58,7 +58,7 @@ export class CloudImageEditor extends Block {
 
   mountEditor() {
     let instance = new CloudEditor();
-    instance.classList.add('uc-cldtr-common');
+    instance.classList.add('lr-cldtr-common');
     let uuid = this.$.uuid;
     // let publicKey = this.$['*--cfg-pubkey'];
     instance.setAttribute('uuid', uuid);

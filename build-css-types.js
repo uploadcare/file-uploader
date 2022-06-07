@@ -2,7 +2,7 @@ import postcss from 'postcss';
 import fs from 'fs';
 import prettier from 'prettier';
 
-const input = ['./blocks/themes/uc-basic/config.css'];
+const input = ['./blocks/themes/lr-basic/config.css'];
 
 let types = new Map();
 

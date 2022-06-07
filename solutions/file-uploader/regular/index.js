@@ -1,6 +1,6 @@
-import * as UC from '../../../index.js';
+import * as LR from '../../../index.js';
 
-UC.registerBlocks(UC);
+LR.registerBlocks(LR);
 
-class Uploader extends UC.FileUploaderRegular {}
+class Uploader extends LR.FileUploaderRegular {}
 Uploader.reg('uploader');

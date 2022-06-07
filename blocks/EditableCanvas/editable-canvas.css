@@ -1,4 +1,4 @@
-uc-editable-canvas {
+lr-editable-canvas {
   position: absolute;
   top: 0;
   right: 0;
@@ -9,7 +9,7 @@ uc-editable-canvas {
   justify-content: center;
 }
 
-uc-editable-canvas > .img-view {
+lr-editable-canvas > .img-view {
   position: absolute;
   top: 0;
   right: 0;
@@ -22,7 +22,7 @@ uc-editable-canvas > .img-view {
   object-fit: scale-down;
 }
 
-uc-editable-canvas-toolbar {
+lr-editable-canvas-toolbar {
   position: absolute;
   top: 0;
   right: 0;
@@ -36,14 +36,14 @@ uc-editable-canvas-toolbar {
   pointer-events: none;
 }
 
-uc-editable-canvas-toolbar .btns {
+lr-editable-canvas-toolbar .btns {
   position: absolute;
   left: var(--gap-mid);
   display: grid;
   pointer-events: all;
 }
 
-uc-editable-canvas-toolbar .btns > button {
+lr-editable-canvas-toolbar .btns > button {
   display: inline-flex;
   width: var(--ui-size);
   height: var(--ui-size);
@@ -52,22 +52,22 @@ uc-editable-canvas-toolbar .btns > button {
   border-radius: 0;
 }
 
-uc-editable-canvas-toolbar .btns > button:first-of-type {
+lr-editable-canvas-toolbar .btns > button:first-of-type {
   border-top-left-radius: var(--border-radius-element);
   border-top-right-radius: var(--border-radius-element);
 }
 
-uc-editable-canvas-toolbar .btns > button:last-of-type {
+lr-editable-canvas-toolbar .btns > button:last-of-type {
   border-bottom-right-radius: var(--border-radius-element);
   border-bottom-left-radius: var(--border-radius-element);
 }
 
-uc-editable-canvas-toolbar .btns > button[current] {
+lr-editable-canvas-toolbar .btns > button[current] {
   color: var(--clr-txt);
   background-color: var(--clr-background);
 }
 
-uc-editable-canvas-toolbar > uc-range {
+lr-editable-canvas-toolbar > lr-range {
   position: absolute !important;
   bottom: 0;
   width: 100%;
@@ -75,6 +75,6 @@ uc-editable-canvas-toolbar > uc-range {
   pointer-events: all;
 }
 
-uc-editable-canvas-toolbar > uc-range:not([visible]) {
+lr-editable-canvas-toolbar > lr-range:not([visible]) {
   transform: translateY(60px);
 }

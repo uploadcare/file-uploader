@@ -1,9 +1,9 @@
-<base href="../../">
+<base href="../../" />
 
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
-  @import url(./upload-blocks/themes/uc-basic/index.css);
-  .uc-wgt-common {
+  @import url(./upload-blocks/themes/lr-basic/index.css);
+  .lr-wgt-common {
     --ctx-name: 'my-uploader';
     --cfg-pubkey: 'demopublickey';
   }
@@ -11,59 +11,60 @@
 <script src="./upload-blocks/index.js" type="module"></script>
 
 <style>
-.uploader {
-  display: grid;
-  grid-template-rows: min-content 400px min-content;
-  margin: 40px;
-  grid-gap: 20px;
-  width: 600px;
-}
+  .uploader {
+    display: grid;
+    grid-template-rows: min-content 400px min-content;
+    margin: 40px;
+    grid-gap: 20px;
+    width: 600px;
+  }
 
-.header {
-  border: 1px solid black;
-  padding: 20px;
-  display: grid;
-  grid-gap: 20px;
-  grid-template-columns: min-content max-content;
-  align-items: center;
-}
+  .header {
+    border: 1px solid black;
+    padding: 20px;
+    display: grid;
+    grid-gap: 20px;
+    grid-template-columns: min-content max-content;
+    align-items: center;
+  }
 
-uc-inline {
-  border: 1px solid black;
-}
-.output {
-  border: 1px solid black;
-}
+  lr-inline {
+    border: 1px solid black;
+  }
+  .output {
+    border: 1px solid black;
+  }
 </style>
 
-<div class="uploader uc-wgt-common">
+<div class="uploader lr-wgt-common">
   <div class="header">
-    <uc-activity-icon></uc-activity-icon>
-    <uc-activity-caption></uc-activity-caption>
+    <lr-activity-icon></lr-activity-icon>
+    <lr-activity-caption></lr-activity-caption>
   </div>
-  <uc-inline class="uc-wgt-common">
-    <uc-source-select>
-      <uc-source-list wrap></uc-source-list>
-      <uc-drop-area></uc-drop-area>
-    </uc-source-select>
-    <uc-upload-list></uc-upload-list>
-    <uc-camera-source></uc-camera-source>
-    <uc-url-source></uc-url-source>
-    <uc-external-source></uc-external-source>
-    <uc-upload-details></uc-upload-details>
-    <uc-confirmation-dialog></uc-confirmation-dialog>
-    <uc-cloud-image-editor></uc-cloud-image-editor>
-  </uc-inline>
+  <lr-inline class="lr-wgt-common">
+    <lr-source-select>
+      <lr-source-list wrap></lr-source-list>
+      <lr-drop-area></lr-drop-area>
+    </lr-source-select>
+    <lr-upload-list></lr-upload-list>
+    <lr-camera-source></lr-camera-source>
+    <lr-url-source></lr-url-source>
+    <lr-external-source></lr-external-source>
+    <lr-upload-details></lr-upload-details>
+    <lr-confirmation-dialog></lr-confirmation-dialog>
+    <lr-cloud-image-editor></lr-cloud-image-editor>
+  </lr-inline>
 
   <div class="output">
     Output:
-    <uc-data-output
-    fire-event
-    from="*outputData"
-    item-template="<img height='200' src='https://ucarecdn.com/{{uuid}}/-/preview/' />"
-    class="uc-wgt-common"></uc-data-output>
+    <lr-data-output
+      fire-event
+      from="*outputData"
+      item-template="<img height='200' src='https://ucarecdn.com/{{uuid}}/-/preview/' />"
+      class="lr-wgt-common"
+    ></lr-data-output>
   </div>
 </div>
 
-<uc-message-box class="uc-wgt-common"></uc-message-box>
-<uc-progress-bar-common class="uc-wgt-common"></uc-progress-bar-common>
+<lr-message-box class="lr-wgt-common"></lr-message-box>
+<lr-progress-bar-common class="lr-wgt-common"></lr-progress-bar-common>

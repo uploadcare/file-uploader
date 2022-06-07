@@ -5,7 +5,7 @@ We use the Data-in-CSS approach to set configurations.
 This is the list of pre-defined parameters used by default in our uploader builds:
 
 ```css
-:where(.uc-wgt-cfg, .uc-wgt-common),
+:where(.lr-wgt-cfg, .lr-wgt-common),
 :host {
   --cfg-pubkey: 'YOUR_PUBLIC_KEY';
   --cfg-multiple: 1;
@@ -54,8 +54,8 @@ This is the list of pre-defined parameters used by default in our uploader build
 
 As you can see, all properties are grouped for the set of selectors:
 
-- `.uc-wgt-cfg` - specific selector for the configuration section in common CSS
-- `.uc-wgt-common` - common class for all types of settings and CSS data
+- `.lr-wgt-cfg` - specific selector for the configuration section in common CSS
+- `.lr-wgt-common` - common class for all types of settings and CSS data
 - `:host` - Shadow DOM root element selector (used when Shadow DOM is enabled)
 
 The variable value should be a correct JSON value. Strings should be taken in quotes. We use the 1 or 0 numbers to define boolean flags.

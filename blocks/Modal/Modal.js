@@ -46,7 +46,7 @@ Modal.template = /*html*/ `
       type="button"
       class="close-btn"
       set="onclick: closeClicked">
-      <uc-icon name="close"></uc-icon>
+      <lr-icon name="close"></lr-icon>
     </button>
   </div>
   <div class="content">

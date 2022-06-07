@@ -1,4 +1,4 @@
-uc-tabs {
+lr-tabs {
   display: grid;
   grid-template-rows: min-content minmax(var(--ui-size), auto);
   height: 100%;
@@ -6,17 +6,17 @@ uc-tabs {
   color: var(--clr-txt-lightest);
 }
 
-uc-tabs > .tabs-row {
+lr-tabs > .tabs-row {
   display: flex;
   grid-template-columns: minmax();
   background-color: var(--clr-background-light);
 }
 
-uc-tabs > .tabs-context {
+lr-tabs > .tabs-context {
   overflow-y: auto;
 }
 
-uc-tabs .tabs-row > .tab {
+lr-tabs .tabs-row > .tab {
   display: flex;
   flex-grow: 1;
   align-items: center;
@@ -27,7 +27,7 @@ uc-tabs .tabs-row > .tab {
   transition: var(--transition-duration);
 }
 
-uc-tabs .tabs-row > .tab[current] {
+lr-tabs .tabs-row > .tab[current] {
   color: var(--clr-txt);
   border-color: var(--clr-txt);
 }

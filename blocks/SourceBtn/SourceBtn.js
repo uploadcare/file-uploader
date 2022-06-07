@@ -93,7 +93,7 @@ export class SourceBtn extends Block {
   }
 }
 SourceBtn.template = /*html*/ `
-<uc-icon set="@name: iconName"></uc-icon>
+<lr-icon set="@name: iconName"></lr-icon>
 <div class="txt" l10n="src-type"></div>
 `;
 SourceBtn.bindAttributes({

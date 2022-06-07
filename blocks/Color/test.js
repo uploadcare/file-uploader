@@ -4,7 +4,7 @@ import { registerBlocks } from '../../abstract/registerBlocks.js';
 registerBlocks({ Color });
 
 const colorInput = new Color();
-colorInput.classList.add('uc-wgt-common');
+colorInput.classList.add('lr-wgt-common');
 
 window.onload = () => {
   document.querySelector('#viewport')?.appendChild(colorInput);

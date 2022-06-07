@@ -1,8 +1,11 @@
 # Texts
 
 All keys and values for the UI texts and translations are also placed in CSS:
+
 ```css
-.uc-wgt-l10n_en-US, .uc-wgt-common, :host {
+.lr-wgt-l10n_en-US,
+.lr-wgt-common,
+:host {
   --l10n-upload-file: 'Upload file';
   --l10n-upload-files: 'Upload files';
   --l10n-drop-files-here: 'Drop files here...';
@@ -81,6 +84,7 @@ All keys and values for the UI texts and translations are also placed in CSS:
 That means you can create your own variant of any UI text or add any new text to your custom block.
 
 CSS:
+
 ```css
 .my-txt-v1 {
   --l10n-my-custom-txt: 'SOME TEXT 1';
@@ -91,11 +95,13 @@ CSS:
   --l10n-my-custom-title: 'some title 2';
 }
 ```
-JavaScript:
-```javascript
-import { UC } from '@uploadcare/upload-blocks';
 
-class MyBlock extends UC.BlockComponent {};
+JavaScript:
+
+```javascript
+import { LR } from '@uploadcare/upload-blocks';
+
+class MyBlock extends LR.BlockComponent {}
 
 MyBlock.template = /*html*/ `
 <div l10n="title:my-custom-title">
@@ -107,11 +113,12 @@ MyBlock.reg('my-block');
 ```
 
 HTML:
+
 ```html
 ...
-<uc-my-block class="my-txt-v1"></uc-my-block>
+<lr-my-block class="my-txt-v1"></lr-my-block>
 ...
-<uc-my-block class="my-txt-v2"></uc-my-block>
+<lr-my-block class="my-txt-v2"></lr-my-block>
 ...
 ```
 
