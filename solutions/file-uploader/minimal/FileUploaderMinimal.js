@@ -23,6 +23,7 @@ FileUploaderMinimal.template = /*html*/ `
   <lr-start-from>
     <lr-drop-area>
       <button
+        type="button"
         l10n="drop-files-here"
         set="onclick: selectClicked">
       </button>

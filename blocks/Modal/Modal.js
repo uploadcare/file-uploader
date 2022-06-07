@@ -43,6 +43,7 @@ Modal.template = /*html*/ `
   <div class="heading" set="@hidden: *modalHeaderHidden">
     <slot name="heading"></slot>
     <button
+      type="button"
       class="close-btn"
       set="onclick: closeClicked">
       <lr-icon name="close"></lr-icon>

@@ -194,12 +194,14 @@ UploadDetails.template = /*html*/ `
 
 <div class="toolbar" set="@edit-disabled: cloudEditBtnHidden">
   <button
+    type="button"
     class="edit-btn secondary-btn"
     set="onclick: onCloudEdit; @hidden: cloudEditBtnHidden;">
     <lr-icon name="edit"></lr-icon>
     <span l10n="edit-image"></span>
   </button>
   <button
+    type="button"
     class="remove-btn secondary-btn"
     set="onclick: onRemove">
     <lr-icon name="remove"></lr-icon>
@@ -207,6 +209,7 @@ UploadDetails.template = /*html*/ `
   </button>
   <div></div>
   <button
+    type="button"
     class="back-btn primary-btn"
     set="onclick: onBack">
     <span l10n="ok"></span>

@@ -83,7 +83,8 @@ export const buttonsModel = [
 ];
 
 function getBthHtml(btn) {
-  return /*html*/ `<button 
+  return /*html*/ `<button
+  type="button"
   action="${btn.action}" 
   ref="${btn.ref}"
   l10n="title:${btn.l10n_name}">

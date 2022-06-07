@@ -28,7 +28,7 @@ export class SimpleBtn extends Block {
 
 SimpleBtn.template = /*html*/ `
 <lr-drop-area>
-  <button set="onclick: onClick">
+  <button type="button" set="onclick: onClick">
     <lr-icon name="upload"></lr-icon>
     <span>{{*simpleButtonText}}</span>
     <slot></slot>

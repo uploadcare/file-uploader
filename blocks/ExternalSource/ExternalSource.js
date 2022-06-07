@@ -157,7 +157,7 @@ ExternalSource.template = /*html*/ `
   class="iframe-wrapper">
 </div>
 <div class="toolbar">
-  <button
+  <button type="button"
     class="cancel-btn secondary-btn"
     set="onclick: onCancel"
     l10n="cancel">
@@ -165,7 +165,7 @@ ExternalSource.template = /*html*/ `
   <div></div>
   <div class="selected-counter">
     <span l10n="selected-count"></span>{{counter}}</div>
-  <button class="done-btn primary-btn" set="onclick: onDone">
+  <button type="button" class="done-btn primary-btn" set="onclick: onDone">
     <lr-icon name="check"></lr-icon>
   </button>
 </div>

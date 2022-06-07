@@ -55,7 +55,7 @@ MessageBox.template = /*html*/ `
 <div class="heading">
   <lr-icon set="@name: iconName"></lr-icon>
   <div class="caption">{{captionTxt}}</div>
-  <button set="onclick: onClose">
+  <button type="button" set="onclick: onClose">
     <lr-icon name="close"></lr-icon>
   </button>
 </div>

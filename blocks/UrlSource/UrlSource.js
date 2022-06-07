@@ -51,10 +51,12 @@ export class UrlSource extends Block {
 UrlSource.template = /*html*/ `
 <input placeholder="https://..." .url-input type="text" ref="input" set="oninput: onInput"/>
 <button
+  type="button"
   class="url-upload-btn primary-btn"
   set="onclick: onUpload; @disabled: importDisabled">
 </button>
 <button
+  type="button"
   class="cancel-btn secondary-btn"
   set="onclick: onCancel"
   l10n="cancel">
