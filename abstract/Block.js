@@ -5,6 +5,7 @@ import { imageMimeTypes } from '../utils/imageMimeTypes.js';
 import { l10nProcessor } from './l10nProcessor.js';
 import { uploadEntrySchema } from './uploadEntrySchema.js';
 import { customUserAgent } from '../blocks/utils/userAgent.js';
+import { CdnUrl, createOriginalUrl, isUrl } from '../utils/cdn-utils.js';
 
 const ACTIVE_ATTR = 'active';
 const ACTIVE_PROP = '___ACTIVITY_IS_ACTIVE___';
@@ -114,17 +115,47 @@ export class Block extends BaseComponent {
     this.$['*history'] = history;
   }
 
-  /** @param {File[]} files */
-  addFiles(files) {
-    files.forEach((/** @type {File} */ file) => {
-      this.uploadCollection.add({
-        file,
-        isImage: file.type.includes('image'),
-        mimeType: file.type,
-        fileName: file.name,
-        fileSize: file.size,
-      });
+  /** @param {File} file */
+  addFromFile(file) {
+    this.uploadCollection.add({
+      file,
+      isImage: file.type.includes('image'),
+      mimeType: file.type,
+      fileName: file.name,
+      fileSize: file.size,
     });
+  }
+
+  /** @param {String} cdnUrl */
+  addFromCdnUrl(cdnUrl) {
+    let url = new CdnUrl(cdnUrl);
+    this.uploadCollection.add({
+      cdnUrl,
+      uuid: url.uuid,
+      cdnUrlModifiers: url.modifiers,
+      fileName: url.filename,
+    });
+  }
+
+  /** @param {String} uuid */
+  addFromUuid(uuid) {
+    this.uploadCollection.add({
+      uuid,
+      cdnUrl: createOriginalUrl(this.$['*--cfg-cdn-cname'], uuid),
+    });
+  }
+
+  /** @param {(File | String)[]} files */
+  addFiles(files) {
+    for (let file of files) {
+      if (file instanceof File) {
+        this.addFromFile(file);
+      } else if (isUrl(file)) {
+        this.addFromCdnUrl(file);
+      } else {
+        this.addFromUuid(file);
+      }
+    }
   }
 
   connectedCallback() {
@@ -415,7 +446,7 @@ export class Block extends BaseComponent {
     if (!this.has('*uploadCollection')) {
       let uploadCollection = new TypedCollection({
         typedSchema: uploadEntrySchema,
-        watchList: ['uploadProgress', 'uuid'],
+        watchList: ['uploadProgress', 'fileInfo'],
         handler: (entries) => {
           this.$['*uploadList'] = entries;
         },
@@ -515,7 +546,7 @@ export class Block extends BaseComponent {
       // TODO: remove `cdnUrlModifiers` from fileInfo object returned by upload-client, `cdnUrl` should not contain modifiers
       // TODO: create OutputItem instance instead of creating inline object,
       //       fileInfo should be returned as is along with the other data
-      // TODO: pass editorTransformations to the user
+      // TODO: pass editorTransformations to the user? Maybe not
       let outputItem = {
         ...fileInfo,
         cdnUrlModifiers: uploadEntryData.cdnUrlModifiers || fileInfo.cdnUrlModifiers,
