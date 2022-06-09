@@ -199,8 +199,9 @@ export class UploadList extends Block {
 
       this._handleCollectionUpdate();
 
+      let hasFiles = list.length > 0;
       this.set$({
-        hasFiles: list.length > 0,
+        hasFiles,
       });
 
       list.forEach((id) => {
@@ -231,7 +232,9 @@ export class UploadList extends Block {
           }
         });
       });
-      this.setForCtxTarget('lr-modal', '*modalActive', true);
+      if (this.$['*currentActivity'] !== this.activityType) {
+        this.$['*currentActivity'] = this.activityType;
+      }
     });
   }
 }
