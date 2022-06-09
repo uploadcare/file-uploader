@@ -29,6 +29,7 @@ export { Tabs } from './blocks/Tabs/Tabs.js';
 export { DataOutput } from './blocks/DataOutput/DataOutput.js';
 export { ActivityCaption } from './blocks/ActivityCaption/ActivityCaption.js';
 export { ActivityIcon } from './blocks/ActivityIcon/ActivityIcon.js';
+export { Api } from './blocks/Api/Api.js';
 
 // Solutions:
 export { FileUploaderRegular } from './solutions/file-uploader/regular/FileUploaderRegular.js';

@@ -196,6 +196,7 @@ export class Block extends BaseComponent {
     if (!Block._cssDataBindingsList.includes(this.ctxName)) {
       let cfgProps = [
         '--cfg-pubkey',
+        '--cfg-source-list',
         '--cfg-store',
         '--cfg-multiple',
         '--cfg-multiple-min',
