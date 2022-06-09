@@ -7,6 +7,10 @@ import {
   createOriginalUrl,
   extractFilename,
   trimFilename,
+  CdnUrl,
+  extractCname,
+  extractUuid,
+  extractCdnModifiers,
 } from './cdn-utils.js';
 
 const falsyValues = ['', undefined, null, false, true, 0, 10];
@@ -16,6 +20,7 @@ describe('cdn-utils/normalizeCdnOperation', () => {
     expect(normalizeCdnOperation('scale_crop/1x1/center')).to.eq('scale_crop/1x1/center');
     expect(normalizeCdnOperation('/scale_crop/1x1/center/')).to.eq('scale_crop/1x1/center');
     expect(normalizeCdnOperation('-/scale_crop/1x1/center/')).to.eq('scale_crop/1x1/center');
+    expect(normalizeCdnOperation('/-/scale_crop/1x1/center/')).to.eq('scale_crop/1x1/center');
   });
 
   it('should return empty string if falsy value is passed', () => {
@@ -181,5 +186,68 @@ describe('cdn-utils/trimFilename', () => {
     expect(trimFilename('https://ucarecdn.com/:uuid/-/resize/100x/')).to.eq(
       'https://ucarecdn.com/:uuid/-/resize/100x/'
     );
+  });
+});
+
+describe('cdn-utils/extractCname', () => {
+  it('should extract cname (origin) from any url', () => {
+    expect(extractCname('https://ucarecdn.com')).to.eq('https://ucarecdn.com');
+    expect(extractCname('https://ucarecdn.com/')).to.eq('https://ucarecdn.com');
+    expect(extractCname('https://ucarecdn.com/:uuid/')).to.eq('https://ucarecdn.com');
+    expect(extractCname('https://custom-cname.com/')).to.eq('https://custom-cname.com');
+    expect(extractCname('http://custom-cname.com/')).to.eq('http://custom-cname.com');
+  });
+});
+
+describe('cdn-utils/extractUuid', () => {
+  it('should extract uuid from cdn url', () => {
+    expect(extractUuid('https://ucarecdn.com/:uuid/')).to.eq(':uuid');
+    expect(extractUuid('https://ucarecdn.com/:uuid/image.jpeg')).to.eq(':uuid');
+  });
+
+  it('should throw an Error if there is no uuid in the url', () => {
+    expect(extractUuid.bind(null, 'https://ucarecdn.com/')).to.throw(Error);
+  });
+});
+
+describe('cdn-utils/extractCdnModifiers', () => {
+  it('should extract cdn mdifiers from cdn url', () => {
+    expect(extractCdnModifiers('https://ucarecdn.com/:uuid/-/resize/100x/')).to.eq('-/resize/100x/');
+    expect(extractCdnModifiers('https://ucarecdn.com/:uuid/-/resize/100x/image.jpeg')).to.eq('-/resize/100x/');
+  });
+
+  it('should return empty string if there are no modifiers', () => {
+    expect(extractCdnModifiers('https://ucarecdn.com/')).to.eq('');
+    expect(extractCdnModifiers('https://ucarecdn.com/:uuid/')).to.eq('');
+  });
+});
+
+describe('cdn-utils/CdnUrl', () => {
+  it('should parse parts from input cdnUrl', () => {
+    let cdnUrl = new CdnUrl('https://ucarecdn.com/:uuid/-/resize/100x/image.jpeg');
+    expect(cdnUrl.cname).to.eq('https://ucarecdn.com');
+    expect(cdnUrl.uuid).to.eq(':uuid');
+    expect(cdnUrl.modifiers).to.eq('-/resize/100x/');
+    expect(cdnUrl.filename).to.eq('image.jpeg');
+  });
+
+  it('should serialize input url', () => {
+    let url = 'https://ucarecdn.com/:uuid/-/resize/100x/image.jpeg';
+    let cdnUrl = new CdnUrl(url);
+    expect(cdnUrl.toString()).to.eq(url);
+  });
+
+  it('should be able to update parts', () => {
+    let cdnUrl = new CdnUrl('https://ucarecdn.com/:uuid/-/resize/100x/image.jpeg');
+    cdnUrl.cname = 'https://custom-cname.com';
+    cdnUrl.uuid = ':another-uuid';
+    cdnUrl.modifiers = '-/resize/200x/';
+    cdnUrl.filename = 'image.png';
+
+    expect(cdnUrl.cname).to.eq('https://custom-cname.com');
+    expect(cdnUrl.uuid).to.eq(':another-uuid');
+    expect(cdnUrl.modifiers).to.eq('-/resize/200x/');
+    expect(cdnUrl.filename).to.eq('image.png');
+    expect(cdnUrl.toString()).to.eq('https://custom-cname.com/:another-uuid/-/resize/200x/image.png');
   });
 });
