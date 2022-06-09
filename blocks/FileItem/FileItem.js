@@ -1,6 +1,6 @@
 import { Block } from '../../abstract/Block.js';
 import { resizeImage } from '../utils/resizeImage.js';
-import { uploadFile } from '../../submodules/upload-client/upload-client.js';
+import { info, uploadFile } from '../../submodules/upload-client/upload-client.js';
 import { UiMessage } from '../MessageBox/MessageBox.js';
 import { fileCssBg } from '../svg-backgrounds/svg-backgrounds.js';
 import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../utils/cdn-utils.js';
@@ -115,6 +115,14 @@ export class FileItem extends Block {
   initCallback() {
     super.initCallback();
 
+    /** @private */
+    this._observer = new window.IntersectionObserver(this._observerCallback.bind(this), {
+      root: this.parentElement,
+      rootMargin: '50% 0px 50% 0px',
+      threshold: [0, 1],
+    });
+    this._observer.observe(this);
+
     this.bindCssData('--cfg-thumb-size');
 
     this.defineAccessor('entry-id', (id) => {
@@ -130,6 +138,16 @@ export class FileItem extends Block {
       if (!this.entry) {
         return;
       }
+
+      this.entry.subscribe('uuid', (uuid) => {
+        if (!uuid) {
+          return;
+        }
+        let haveFileInfo = !!this.entry.getValue('fileInfo');
+        if (!haveFileInfo) {
+          this.upload();
+        }
+      });
 
       this.entry.subscribe('validationErrorMsg', (validationErrorMsg) => {
         if (!validationErrorMsg) {
@@ -174,8 +192,8 @@ export class FileItem extends Block {
         this.$.itemName = this.entry.getValue('fileName') || externalUrl || this.l10n('file-no-name');
       });
 
-      this.entry.subscribe('uuid', (uuid) => {
-        if (!uuid) {
+      this.entry.subscribe('fileInfo', (fileInfo) => {
+        if (!fileInfo) {
           return;
         }
         this._observer.unobserve(this);
@@ -186,7 +204,7 @@ export class FileItem extends Block {
           let size = this.$['*--cfg-thumb-size'] || 76;
           let thumbUrl = this.proxyUrl(
             createCdnUrl(
-              createOriginalUrl(this.$['*--cfg-cdn-cname'], uuid),
+              createOriginalUrl(this.$['*--cfg-cdn-cname'], this.entry.getValue('uuid')),
               createCdnUrlModifiers(`scale_crop/${size}x${size}/center`)
             )
           );
@@ -216,14 +234,6 @@ export class FileItem extends Block {
       if (!this.$['*--cfg-confirm-upload']) {
         this.upload();
       }
-
-      /** @private */
-      this._observer = new window.IntersectionObserver(this._observerCallback.bind(this), {
-        root: this.parentElement,
-        rootMargin: '50% 0px 50% 0px',
-        threshold: [0, 1],
-      });
-      this._observer.observe(this);
     });
 
     this.$['*uploadTrigger'] = null;
@@ -253,7 +263,7 @@ export class FileItem extends Block {
   }
 
   async upload() {
-    if (this.hasAttribute('loaded') || this.entry.getValue('uuid')) {
+    if (this.hasAttribute('loaded')) {
       return;
     }
     this.entry.setValue('isUploading', true);
@@ -266,7 +276,7 @@ export class FileItem extends Block {
       this.$.progressUnknown = true;
     }
     try {
-      let fileInfo = await uploadFile(this.file || this.externalUrl, {
+      let fileInfo = await uploadFile(this.file || this.externalUrl || this.entry.getValue('uuid'), {
         ...this.getUploadClientOptions(),
         fileName: this.entry.getValue('fileName'),
         onProgress: (progress) => {
