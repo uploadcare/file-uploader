@@ -17,7 +17,15 @@
 
         <script src="./test.js" type="module"></script>
 
-        <div id="viewport"></div>
+        <form>
+          <lr-data-output ctx-name="TEST" use-console use-event form-value>
+            <h2>Files uploaded:</h2>
+            <div repeat="output">
+              <div>{{uuid}}</div>
+            </div>
+          </lr-data-output>
+          <button>Submit</button>
+        </form>
       </lr-live-html>
     </app-shell>
   </body>

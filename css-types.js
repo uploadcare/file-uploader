@@ -20,6 +20,7 @@
  *   '*--cfg-source-list-wrap': Number;
  *   '*--cfg-init-activity': String;
  *   '*--cfg-done-activity': String;
+ *   '*--cfg-group-output': Number;
  *   '*--cfg-data-output-console': Number;
  *   '*--cfg-data-output-fire-events': Number;
  *   '*--cfg-data-output-from': String;

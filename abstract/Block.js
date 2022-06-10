@@ -44,6 +44,7 @@ if (!DOC_READY) {
  *   | '*--cfg-confirm-upload'
  *   | '*--cfg-init-activity'
  *   | '*--cfg-done-activity'
+ *   | '*--cfg-group-output'
  *   | '*--cfg-max-local-file-size-bytes'
  *   | '*--cfg-cdn-cname'
  *   | '*--cfg-secure-delivery-proxy'
@@ -177,6 +178,7 @@ export class Block extends BaseComponent {
         '--cfg-max-local-file-size-bytes',
         '--cfg-cdn-cname',
         '--cfg-secure-delivery-proxy',
+        '--cfg-group-output',
 
         // passed to upload client
         '--cfg-retry-throttled-request-max-times',
