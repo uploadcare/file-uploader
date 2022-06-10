@@ -43,5 +43,5 @@
   --cfg-check-for-url-duplicates: 0;
   --cfg-save-url-for-recurrent-uploads: 0;
 
-  --cfg-group-output: 1;
+  --cfg-group-output: 0;
 }

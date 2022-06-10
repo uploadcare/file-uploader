@@ -8,6 +8,7 @@ export class DataOutput extends Block {
 
   init$ = {
     output: null,
+    filesData: null,
   };
 
   get dict() {
@@ -54,8 +55,10 @@ export class DataOutput extends Block {
     this.sub(this.dict.SRC_CTX_KEY, async (/** @type {FileList} */ data) => {
       if (!data) {
         this.$.output = null;
+        this.$.filesData = null;
         return;
       }
+      this.$.filesData = data;
       if (this.getCssData('--cfg-group-output') || this.hasAttribute(this.dict.GROUP_ATTR)) {
         let uuidList = data.map((fileDesc) => {
           return fileDesc.uuid;
