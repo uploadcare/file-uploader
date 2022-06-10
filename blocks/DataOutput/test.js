@@ -6,6 +6,7 @@ registerBlocks({ DataOutput });
 window.onload = () => {
   let outEl = document.querySelector('lr-data-output');
   if (outEl) {
+    // @ts-ignore
     outEl.$['*outputData'] = [{ uuid: Date.now() }, { uuid: Date.now() }, { uuid: Date.now() }];
   }
 };
