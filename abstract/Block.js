@@ -518,6 +518,7 @@ export class Block extends BaseComponent {
       // TODO: create OutputItem instance instead of creating inline object,
       //       fileInfo should be returned as is along with the other data
       // TODO: pass editorTransformations to the user
+      // TODO: create dedicated output type
       let outputItem = {
         ...fileInfo,
         cdnUrlModifiers: uploadEntryData.cdnUrlModifiers || fileInfo.cdnUrlModifiers,
