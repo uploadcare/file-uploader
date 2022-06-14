@@ -44,6 +44,7 @@ if (!DOC_READY) {
  *   | '*--cfg-confirm-upload'
  *   | '*--cfg-init-activity'
  *   | '*--cfg-done-activity'
+ *   | '*--cfg-group-output'
  *   | '*--cfg-max-local-file-size-bytes'
  *   | '*--cfg-cdn-cname'
  *   | '*--cfg-secure-delivery-proxy'
@@ -177,6 +178,7 @@ export class Block extends BaseComponent {
         '--cfg-max-local-file-size-bytes',
         '--cfg-cdn-cname',
         '--cfg-secure-delivery-proxy',
+        '--cfg-group-output',
 
         // passed to upload client
         '--cfg-retry-throttled-request-max-times',
@@ -516,6 +518,7 @@ export class Block extends BaseComponent {
       // TODO: create OutputItem instance instead of creating inline object,
       //       fileInfo should be returned as is along with the other data
       // TODO: pass editorTransformations to the user
+      // TODO: create dedicated output type
       let outputItem = {
         ...fileInfo,
         cdnUrlModifiers: uploadEntryData.cdnUrlModifiers || fileInfo.cdnUrlModifiers,

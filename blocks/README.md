@@ -121,6 +121,7 @@ You can create your own custom upload-blocks to handle some specific use cases. 
 ## ⚙️ More in depth
 
 - [Configuration](../docs/configuration/)
+- [Upload data output](../docs/output/)
 - [Texts & localization](../docs/texts/)
 - [Icons](../docs/icons/)
 - [Styling](../docs/styling/)

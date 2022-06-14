@@ -49,6 +49,8 @@ This is the list of pre-defined parameters used by default in our uploader build
   --cfg-multipart-max-attempts: 3;
   --cfg-check-for-url-duplicates: 0;
   --cfg-save-url-for-recurrent-uploads: 0;
+
+  --cfg-group-output: 0;
 }
 ```
 
@@ -86,6 +88,7 @@ Any configuration value can be defined and redefined at any level of the DOM tre
 | `--cfg-secure-signature`          | Set `signature` for Secure Uploads. See [docs](https://uploadcare.com/docs/security/secure-uploads/#expire-explained) for details      |         string         |          none          |
 | `--cfg-secure-expire`             | Set `expire` for Secure Uploads. See [docs](https://uploadcare.com/docs/security/secure-uploads/#expire-explained) for details         |         string         |          none          |
 | `--cfg-secure-delivery-proxy`     | Set proxy URL template for Secure Delivery. See [here](./secure-delivery-proxy/) for details                                           |         string         |          none          |
+| `--cfg-group-output`              | Enables files group creation                                                                                                           |          `0`           |          `0`           |
 
 ## Custom configurations
 

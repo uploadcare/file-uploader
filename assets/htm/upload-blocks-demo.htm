@@ -39,6 +39,17 @@
     <lr-message-box></lr-message-box>
     <lr-progress-bar></lr-progress-bar>
   </div>
+
+  <lr-data-output 
+    ctx-name="LR"
+    use-console
+    use-event>
+    <h3>Files uploaded:</h3>
+    <div repeat="filesData">
+      <img width="300" set="@src: cdnUrl" />
+      <div>{{uuid}}</div>
+    </div>
+  </lr-data-output>
 </lr-live-html>
 
 <div>&nbsp;</div>
