@@ -3,7 +3,6 @@
 ### Bug Fixes
 
 - add `type=button` to all the buttons to prevent form submit ([e681ca5](https://github.com/uploadcare/uc-blocks/commit/e681ca5e244e4a484cedca5941974ad16696f5e2))
-- **cloud-image-editor:** cropper typo ([3e5d150](https://github.com/uploadcare/uc-blocks/commit/3e5d150d15be22e7501a6aba794ca54df3402bd7))
 - **FileItem:** error icon ([094eb7b](https://github.com/uploadcare/uc-blocks/commit/094eb7bb8a8a1bb9f8ff2c7a6cb5be6f628c0b92))
 - TS fix ([72f6a91](https://github.com/uploadcare/uc-blocks/commit/72f6a915e820446f3affd137d428712c2a47fcfb))
 - **upload-details:** handle not-uploaded images and clear canvase before preview render ([d522818](https://github.com/uploadcare/uc-blocks/commit/d522818133bd175b7c3767635923d8cc2cf87fbe))
@@ -12,9 +11,9 @@
 
 ### Features
 
-- add `--cfg-cdn-base` option ([97880d4](https://github.com/uploadcare/uc-blocks/commit/97880d4e217dec5603b79be28ca1633bc744d297))
-- add `--cfg-preview-proxy` and `*previewUrlCallback` state ([633651a](https://github.com/uploadcare/uc-blocks/commit/633651a84c7361823717a22d810b60d5ed7f756f))
-- add `--cfg-secure-expire` and `--cfg-secure-signature` ([0a73ab4](https://github.com/uploadcare/uc-blocks/commit/0a73ab47e28617e6b74e6f1aea4fc0687463af2c))
+- add `--cfg-cdn-cname` option ([#154](https://github.com/uploadcare/uc-blocks/pull/154))
+- add `--cfg-preview-proxy` option state ([#157](https://github.com/uploadcare/uc-blocks/pull/157))
+- add `--cfg-secure-expire` and `--cfg-secure-signature` ([#156](https://github.com/uploadcare/uc-blocks/pull/156))
 - add `uc-configuration` block ([a8d3c27](https://github.com/uploadcare/uc-blocks/commit/a8d3c276c8d400632dbcbaa30357d2c40a6026ef))
 - **cloud-image-editor:** add separate config for the solution ([f6b1726](https://github.com/uploadcare/uc-blocks/commit/f6b172602f8b260e0c018ffc95457df64acff6e1))
 - **Img:** secure delivery support ([a14baa1](https://github.com/uploadcare/uc-blocks/commit/a14baa13a6ec0512825af6b2409f9ab2d1b818f5))
