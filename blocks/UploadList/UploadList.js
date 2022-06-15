@@ -71,6 +71,15 @@ export class UploadList extends Block {
     },
   };
 
+  cssInit$ = {
+    '--cfg-show-empty-list': 0,
+    '--cfg-multiple': 1,
+    '--cfg-multiple-min': 0,
+    '--cfg-multiple-max': 0,
+    '--cfg-confirm-upload': 1,
+    '--cfg-source-list': '',
+  };
+
   /** @private */
   _renderMap = Object.create(null);
 
@@ -79,9 +88,9 @@ export class UploadList extends Block {
    * @returns {{ passed: Boolean; tooFew: Boolean; tooMany: Boolean; exact: Boolean; min: Number; max: Number }}
    */
   _validateFilesCount() {
-    let multiple = !!this.$['*--cfg-multiple'];
-    let min = multiple ? this.$['*--cfg-multiple-min'] ?? 0 : 1;
-    let max = multiple ? this.$['*--cfg-multiple-max'] ?? 0 : 1;
+    let multiple = !!this.getCssData('--cfg-multiple');
+    let min = multiple ? this.getCssData('--cfg-multiple-min') ?? 0 : 1;
+    let max = multiple ? this.getCssData('--cfg-multiple-max') ?? 0 : 1;
     let count = this.uploadCollection.size;
 
     let tooFew = min ? count < min : false;
@@ -160,10 +169,10 @@ export class UploadList extends Block {
       uploadBtnDisabled: summary.uploading > 0 || !fitCountRestrictions || !fitValidation,
 
       addMoreBtnDisabled: tooMany || exact,
-      addMoreBtnHidden: exact && !this.$['*--cfg-multiple'],
+      addMoreBtnHidden: exact && !this.getCssData('--cfg-multiple'),
     });
 
-    if (!this.$['*--cfg-confirm-upload'] && fitCountRestrictions && allUploaded) {
+    if (!this.getCssData('--cfg-confirm-upload') && fitCountRestrictions && allUploaded) {
       this.$.onDone();
     }
   }
@@ -180,9 +189,9 @@ export class UploadList extends Block {
       });
     });
 
-    this.sub('*--cfg-multiple', () => this._handleCollectionUpdate());
-    this.sub('*--cfg-multiple-min', () => this._handleCollectionUpdate());
-    this.sub('*--cfg-multiple-max', () => this._handleCollectionUpdate());
+    this.sub('--cfg-multiple', () => this._handleCollectionUpdate());
+    this.sub('--cfg-multiple-min', () => this._handleCollectionUpdate());
+    this.sub('--cfg-multiple-max', () => this._handleCollectionUpdate());
 
     // TODO: could be performance issue on many files
     // there is no need to update buttons state on every progress tick
@@ -191,7 +200,7 @@ export class UploadList extends Block {
     });
 
     this.sub('*uploadList', (list) => {
-      if (list?.length === 0 && !this.$['*--cfg-show-empty-list']) {
+      if (list?.length === 0 && !this.getCssData('--cfg-show-empty-list')) {
         this.cancelFlow();
         this.ref.files.innerHTML = '';
         return;

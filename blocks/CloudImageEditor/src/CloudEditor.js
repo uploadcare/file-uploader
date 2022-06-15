@@ -107,12 +107,12 @@ export class CloudEditor extends Block {
     });
   }
 
+  cssInit$ = {
+    '--cfg-cdn-cname': 'https://ucarecdn.com',
+  };
+
   async initCallback() {
-    super.initCallback();
-
-    this.bindCssData('--cfg-cdn-cname');
-
-    this.$['*originalUrl'] = createOriginalUrl(this.$['*--cfg-cdn-cname'], this.$.uuid);
+    this.$['*originalUrl'] = createOriginalUrl(this.localCtx.read('--cfg-cdn-cname'), this.$.uuid);
 
     this.$['*faderEl'] = this.ref['fader-el'];
     this.$['*cropperEl'] = this.ref['cropper-el'];

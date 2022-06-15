@@ -2,10 +2,13 @@ import { Block } from '../../abstract/Block.js';
 
 /** @extends {Block<Partial<Pick<import('../../css-types.js').CssConfigTypes, '*--cfg-source-list'>>>} */
 export class SourceList extends Block {
+  cssInit$ = {
+    '--cfg-source-list': '',
+  };
+
   initCallback() {
     super.initCallback();
-    this.bindCssData('--cfg-source-list');
-    this.sub('*--cfg-source-list', (val) => {
+    this.sub('--cfg-source-list', (/** @type {String} */ val) => {
       if (!val) {
         return;
       }

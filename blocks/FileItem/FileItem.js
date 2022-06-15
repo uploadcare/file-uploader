@@ -5,13 +5,7 @@ import { UiMessage } from '../MessageBox/MessageBox.js';
 import { fileCssBg } from '../svg-backgrounds/svg-backgrounds.js';
 import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../utils/cdn-utils.js';
 
-/**
- * @typedef {Pick<
- *   import('../../css-types.js').CssConfigTypes,
- *   '*--cfg-thumb-size' | '*--cfg-secure-signature' | '*--cfg-secure-expire'
- * >} CssProps
- */
-/** @typedef {Partial<import('../MessageBox/MessageBox.js').State & CssProps>} ExternalState */
+/** @typedef {Partial<import('../MessageBox/MessageBox.js').State>} ExternalState */
 
 /**
  * @typedef {{
@@ -79,7 +73,7 @@ export class FileItem extends Block {
       return;
     }
     if (this.file?.type.includes('image')) {
-      resizeImage(this.file, this.$['*--cfg-thumb-size'] || 76).then((url) => {
+      resizeImage(this.file, this.getCssData('--cfg-thumb-size') || 76).then((url) => {
         this.$.thumbUrl = `url(${url})`;
       });
     } else {
@@ -114,8 +108,6 @@ export class FileItem extends Block {
 
   initCallback() {
     super.initCallback();
-
-    this.bindCssData('--cfg-thumb-size');
 
     this.defineAccessor('entry-id', (id) => {
       if (!id || id === this.uid) {
@@ -161,7 +153,7 @@ export class FileItem extends Block {
       });
 
       this.entry.subscribe('fileSize', (fileSize) => {
-        let maxFileSize = this.$['*--cfg-max-local-file-size-bytes'];
+        let maxFileSize = this.getCssData('--cfg-max-local-file-size-bytes');
         if (!maxFileSize) {
           return;
         }
@@ -183,10 +175,10 @@ export class FileItem extends Block {
 
         if (this.entry.getValue('isImage')) {
           this._revokeThumbUrl();
-          let size = this.$['*--cfg-thumb-size'] || 76;
+          let size = this.getCssData('--cfg-thumb-size') || 76;
           let thumbUrl = this.proxyUrl(
             createCdnUrl(
-              createOriginalUrl(this.$['*--cfg-cdn-cname'], uuid),
+              createOriginalUrl(this.getCssData('--cfg-cdn-cname'), uuid),
               createCdnUrlModifiers(`scale_crop/${size}x${size}/center`)
             )
           );
@@ -200,7 +192,7 @@ export class FileItem extends Block {
         }
         if (this.entry.getValue('isImage')) {
           this._revokeThumbUrl();
-          let size = this.$['*--cfg-thumb-size'] || 76;
+          let size = this.getCssData('--cfg-thumb-size') || 76;
           let thumbUrl = this.proxyUrl(
             createCdnUrl(cdnUrl, createCdnUrlModifiers(`scale_crop/${size}x${size}/center`))
           );
@@ -213,7 +205,7 @@ export class FileItem extends Block {
       /** @type {String} */
       this.externalUrl = this.entry.getValue('externalUrl');
 
-      if (!this.$['*--cfg-confirm-upload']) {
+      if (!this.getCssData('--cfg-confirm-upload')) {
         this.upload();
       }
 
