@@ -1,12 +1,13 @@
-name: Ship js Manual Prepare
+name: Ship js Prepare
 on:
   workflow_dispatch:
   push:
     branches:
       - main
 jobs:
-  manual_prepare:
+  prepare:
     runs-on: ubuntu-latest
+    if: ${{ !startsWith(github.head_commit, 'chore: release') }}
     steps:
       - uses: actions/checkout@v2
         with:
