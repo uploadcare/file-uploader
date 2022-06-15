@@ -1,6 +1,6 @@
 import { Block } from '../../abstract/Block.js';
 
-/** @extends {Block<Partial<Pick<import('../../css-types.js').CssConfigTypes, '--cfg-source-list'>>>} */
+/** @extends {Block<Partial<import('../../css-types.js').CssConfigTypes>>} */
 export class SourceList extends Block {
   cssInit$ = {
     '--cfg-source-list': '',
