@@ -1,4 +1,4 @@
-# &lt;lr-blocks&gt;
+# &lt;blocks&gt;
 
 ## 🧩 Use predefined custom elements to build your own file uploading flow
 

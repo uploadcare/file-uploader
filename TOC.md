@@ -1,6 +1,6 @@
 # Table of contents
 
-- [lr-blocks](./) - repository root
+- [blocks](./) - repository root
 
   - [solutions](./solutions/) - ready made solutions
 
