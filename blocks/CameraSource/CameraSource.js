@@ -49,6 +49,10 @@ export class CameraSource extends Block {
     },
   };
 
+  cssInit$ = {
+    '--cfg-camera-mirror': 1,
+  };
+
   /** @private */
   _onActivate = () => {
     this.set$({
@@ -193,11 +197,7 @@ export class CameraSource extends Block {
   initCallback() {
     this.registerActivity(this.activityType, this._onActivate, this._onDeactivate);
 
-    this.bindCssData('--cfg-camera-mirror');
     this.sub('--cfg-camera-mirror', (val) => {
-      if (!this.isActivityActive) {
-        return;
-      }
       this.$.videoTransformCss = val ? 'scaleX(-1)' : null;
     });
   }
