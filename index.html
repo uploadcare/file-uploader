@@ -5,12 +5,390 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>blocks</title>
-    <link rel="stylesheet" href="./assets/css/doc.css" />
-    <script type="module" src="./assets/js/app-shell.js"></script>
+    <script async src="https://unpkg.com/es-module-shims@1.5.6/dist/es-module-shims.js"></script>
+    <script type="importmap">
+      {
+        "imports": {
+          "@symbiotejs/symbiote": "//unpkg.com/@symbiotejs/symbiote@1.8.2/core/symbiote.js"
+        }
+      }
+    </script>
+    <script type="module" src="https://unpkg.com/@re4ma/re4ma@0.1.7/build/re4ma.js"></script>
+    <script type="module">
+      import { LiveHtml } from './blocks/LiveHtml/LiveHtml.js';
+      LiveHtml.reg('lr-live-html');
+    </script>
+    <script type="module">
+      /** - - @param{String}html * @returns{String} */ export function colorCode(html) {
+        return html
+          .replace(/&lt;/g, '<span -tag-arr->&lt;</span>')
+          .replace(/&gt;/g, '<span -tag-arr->&gt;</span>')
+          .split('="')
+          .map((chunk) => {
+            return chunk.replace('"', '</span>"');
+          })
+          .join(`="<span -attr->`)
+          .replace(/"/g, '<span -quote->"</span>')
+          .replace(/=/g, '<span -equal->=</span>')
+          .split('<span -tag-arr->&lt;</span>/')
+          .join('<span -tag-arr->&lt;/</span>')
+          .split('<span -tag-arr->&lt;</span>!--')
+          .join('<span -comment->&lt;!--')
+          .split('--<span -tag-arr->&gt;</span>')
+          .join('--&gt;</span>')
+          .split('<span -tag-arr->&lt;</span>style<span -tag-arr->&gt;</span>')
+          .join('<span -tag-arr->&lt;</span>style<span -tag-arr->&gt;</span><span -style->')
+          .split('<span -tag-arr->&lt;/</span>style<span -tag-arr->&gt;</span>')
+          .join('</span><span -tag-arr->&lt;/</span>style<span -tag-arr->&gt;</span>');
+      }
+      let codeElements = [...document.querySelectorAll('code')];
+      let tmpEl = document.createElement('div');
+      codeElements.forEach((codeEl) => {
+        tmpEl.textContent = codeEl.innerHTML;
+        codeEl.innerHTML = colorCode(tmpEl.textContent);
+      });
+    </script>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap');
+      :root {
+        --clr-bg: rgb(31 29 29);
+        --clr-font: rgb(224 253 255);
+        --clr-link: rgb(253 255 139);
+        --clr-panel: rgb(255 255 255 / 10%);
+        --clr-accent: rgb(233 159 255);
+        --clr-accent-shade: rgb(233 159 255 / 6%);
+        --clr-code: #fff;
+        --clr-code-hl: rgb(255 112 112);
+        --gap-min: 2px;
+        --gap-mid: 10px;
+        --gap-max: 20px;
+        --gap-huge: 60px;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        color: var(--clr-font);
+        font-family: Roboto, sans-serif;
+        background-color: var(--clr-bg);
+      }
+      body {
+        display: grid;
+        grid-template-rows: min-content min-content auto min-content;
+        min-height: 100vh;
+      }
+      header {
+        padding: 20px;
+        background-color: rgba(0, 0, 0, 0.4);
+      }
+      nav {
+        --l-bg-clr: rgba(60, 60, 60, 0.9);
+        --blur: 6px;
+        display: flex;
+        justify-content: center;
+        position: sticky;
+        z-index: 10000;
+        top: 0;
+        background-color: var(--l-bg-clr);
+        height: 100%;
+      }
+      @supports ((-webkit-backdrop-filter: blur(var(--blur))) or (backdrop-filter: blur(var(--blur)))) {
+        nav {
+          --l-bg-clr: rgba(255, 255, 255, 0.1);
+          backdrop-filter: blur(var(--blur));
+          -webkit-backdrop-filter: blur(var(--blur));
+        }
+      }
+      nav > div {
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        width: 100%;
+        max-width: 1080px;
+      }
+      nav a {
+        display: block;
+        color: var(--clr-font);
+        margin: 20px;
+        text-decoration: none;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6);
+      }
+      main {
+        display: flex;
+        justify-content: center;
+        padding: 20px;
+      }
+      col-css {
+        display: block;
+        max-width: 1080px;
+        width: 100%;
+      }
+      footer {
+        padding: 20px;
+        background-color: rgba(0, 0, 0, 0.2);
+      }
+      lr-live-html {
+        min-height: 400px;
+      }
+      main a {
+        color: var(--clr-link);
+      }
+      code {
+        display: block;
+        background-color: #000;
+        color: var(--clr-code);
+        padding: var(--gap-max);
+        overflow-x: auto;
+      }
+      code .hl {
+        color: var(--clr-code-hl);
+      }
+      code:not([class]) {
+        display: inline-block;
+        padding: var(--gap-min);
+        padding-left: 0.5em;
+        padding-right: 0.5em;
+      }
+      blockquote {
+        display: block;
+        color: var(--clr-accent);
+        background-color: var(--clr-accent-shade);
+        padding: var(--gap-mid);
+        margin: 0;
+        margin-top: var(--gap-max);
+        border-left: var(--gap-min) solid currentColor;
+      }
+      h1 {
+        color: var(--clr-accent);
+      }
+      h2 {
+        margin-top: calc(var(--gap-max) * 3);
+      }
+      li {
+        margin-bottom: var(--gap-mid);
+      }
+      table {
+        width: 100%;
+      }
+      th {
+        padding: 10px;
+        background: rgba(0, 0, 0, 0.4);
+      }
+      td {
+        padding: 10px;
+        background: rgba(255, 255, 255, 0.1);
+      }
+      tr:hover {
+        background: rgba(255, 255, 255, 0.1);
+      }
+      lr-live-html {
+        display: grid;
+        grid-template-columns: 50% 50%;
+        box-shadow: 0 5px 16px rgb(0 0 0 / 60%);
+      }
+      lr-live-html [contenteditable] {
+        padding: 20px;
+        overflow: auto;
+        color: rgb(255 255 255);
+        font-size: 14px;
+        font-family: monospace;
+        white-space: pre;
+        background-color: #000;
+        outline: none;
+      }
+      lr-live-html [contenteditable] [-tag-arr-] {
+        color: rgb(255 112 112);
+      }
+      lr-live-html [contenteditable] [-comment-] {
+        color: aqua;
+        font-style: italic;
+        opacity: 0.5;
+      }
+      lr-live-html [contenteditable] [-attr-] {
+        color: rgb(152 197 255);
+      }
+      lr-live-html [contenteditable] [-quote-] {
+        color: rgb(169 255 152);
+      }
+      lr-live-html [contenteditable] [-equal-] {
+        color: rgb(255 152 241);
+      }
+      lr-live-html [contenteditable] [-style-] {
+        color: rgb(255 207 152);
+      }
+      lr-live-html iframe {
+        display: block;
+        width: 100%;
+        height: 100%;
+        background-color: #fff;
+        border: 0;
+      }
+      lr-live-html {
+        display: grid;
+        grid-template-columns: 50% 50%;
+        box-shadow: 0 5px 16px rgb(0 0 0 / 60%);
+      }
+      code {
+        padding: 20px;
+        overflow: auto;
+        color: rgb(255 255 255);
+        font-size: 14px;
+        font-family: monospace;
+        white-space: pre;
+        background-color: #000;
+        outline: none;
+      }
+      code [-tag-arr-] {
+        color: rgb(255 112 112);
+      }
+      code [-comment-] {
+        color: aqua;
+        font-style: italic;
+        opacity: 0.5;
+      }
+      code [-attr-] {
+        color: rgb(152 197 255);
+      }
+      code [-quote-] {
+        color: rgb(169 255 152);
+      }
+      code [-equal-] {
+        color: rgb(255 152 241);
+      }
+      code [-style-] {
+        color: rgb(255 207 152);
+      }
+      lr-live-html iframe {
+        display: block;
+        width: 100%;
+        height: 100%;
+        background-color: #fff;
+        border: 0;
+      }
+    </style>
   </head>
-  <body unresolved>
-    <app-shell base="./">
-      <re-md src="./README.md"></re-md>
-    </app-shell>
+  <body>
+    <header>🟡 Uploadcare | blocks</header>
+    <nav>
+      <div>
+        <a href="./">Home</a>
+        <a href="./blocks/">Blocks</a>
+        <a href="./solutions/">Solutions</a>
+        <a href="./toc.html">TOC</a>
+        <a href="//github.com/uploadcare/uc-blocks/discussions">Discussions</a>
+      </div>
+    </nav>
+    <main>
+      <col-css
+        ><p>
+          <a href="https://www.npmjs.com/package/@uploadcare/uc-blocks"
+            ><img src="https://badge.fury.io/js/@uploadcare%2Fuc-blocks.svg" alt="npm version"
+          /></a>
+        </p>
+        <h1 id="blocks-web-components-for-the-uploadcare-platform-integrations">
+          blocks: web components for the Uploadcare platform integrations
+        </h1>
+        <h2 id="💎-core-concepts">💎 Core concepts</h2>
+        <ul>
+          <li>
+            All in one place: here, you can find everything you need to build a modern and reliable web application with
+            Uploadcare on board.
+          </li>
+          <li>
+            Modern technologies: web components, service workers, wasm, and other cutting edge web standards are ready
+            to show their power.
+          </li>
+          <li>Type safety with a JSDoc declaration and TypeScript static analysis.</li>
+          <li>Modern ESM-level code sharing.</li>
+          <li>
+            The build stage is unnecessary for development: use the code directly in any modern browser or node.js.
+          </li>
+          <li>Fast and secure.</li>
+          <li>Minimum of external dependencies: security audit is not expensive.</li>
+          <li>
+            We try to be as close to the native web platform as possible and not force you to use any specific
+            development environment tools.
+          </li>
+          <li>Tested by un Uploadcare community.</li>
+        </ul>
+        <h2 id="📦-whats-in-the-box">📦 What’s in the box?</h2>
+        <ul>
+          <li>
+            <a href="./solutions/file-uploader/">File uploader solutions</a> - file uploader implementations for the
+            most frequent use cases.
+          </li>
+          <li>
+            <a href="./blocks/">Blocks to build your own custom solutions</a> - build your own integration solutions
+            with simple HTML and CSS.
+          </li>
+          <li>
+            <a href="./solutions/adaptive-image/">Adaptive image solution</a>: all you need to distribute your web
+            images efficiently.
+          </li>
+          <li>
+            <a href="./solutions/cloud-image-editor/">Cloud image editing solution</a>: tune your pictures on the fly.
+          </li>
+          <li>Web components for media content representation: audio, video, image galleries, etc.</li>
+          <li>etc.</li>
+        </ul>
+        <h2 id="⚙️-installation-and-start">⚙️ Installation and start</h2>
+        <h3 id="npm">NPM</h3>
+        <p><code>npm i @uploadcare/uc-blocks</code></p>
+        <h3 id="contribution">Contribution</h3>
+        <ol>
+          <li>Clone repository: <code>git clone git@github.com:uploadcare/uc-blocks.git ./</code>.</li>
+          <li>Run dependencies setup: <code>npm run setup</code>.</li>
+          <li>Start local dev-server: <code>npm run dev</code>.</li>
+        </ol>
+        <h2 id="typescript-support">Typescript support</h2>
+        <p>
+          We use
+          <a href="https://www.typescriptlang.org/docs/handbook/intro-to-js-ts.html">JSDoc type annotations</a> for
+          TypeScript static analysis support during development.
+        </p>
+        <p>
+          Also we provide type definitions (<a
+            href="https://www.typescriptlang.org/docs/handbook/declaration-files/dts-from-js.html"
+            >*.d.ts files</a
+          >) for the TypeScript projects in our packages.
+        </p>
+        <p>
+          Check the
+          <a href="https://www.typescriptlang.org/docs/handbook/jsdoc-supported-types.html">JSDoc Reference</a> page in
+          TypeScript official documentation.
+        </p>
+        <h3 id="supported-browsers">Supported browsers</h3>
+        <p>lr-blocks are supported and tested in all major modern desktop and mobile browsers:</p>
+        <ul>
+          <li>Chrome</li>
+          <li>Firefox</li>
+          <li>Safari</li>
+          <li>Edge</li>
+          <li>Opera</li>
+          <li>etc.</li>
+        </ul>
+        <p>
+          <a href="https://uploadcare.com/blog/uploadcare-stops-internet-explorer-support/">Internet Explorer</a> is
+          outdated and not supported anymore.
+        </p>
+        <h2 id="🚀-feedback">🚀 Feedback</h2>
+        <p>
+          Issues and PRs are welcome. You can provide your feedback or drop us a support request at
+          <a
+            href="mailto:&#104;&#x65;&#108;&#x6c;&#111;&#x40;&#117;&#x70;&#x6c;&#111;&#x61;&#100;&#99;&#97;&#x72;&#101;&#46;&#x63;&#111;&#109;"
+            >&#104;&#x65;&#108;&#x6c;&#111;&#x40;&#117;&#x70;&#x6c;&#111;&#x61;&#100;&#99;&#97;&#x72;&#101;&#46;&#x63;&#111;&#109;</a
+          >.
+        </p>
+        <h2 id="browse-documentation-and-live-demos">Browse documentation and live demos</h2>
+        <p><a href="https://uploadcare.github.io/uc-blocks/">https://uploadcare.github.io/uc-blocks/</a></p>
+        <blockquote>
+          <p>
+            All the source code in demos is accessible and works in raw mode (as is), so you can use your browser
+            developer tools to discover it in detail.
+          </p>
+        </blockquote>
+      </col-css>
+    </main>
+    <footer>© 2022 🦆</footer>
   </body>
 </html>

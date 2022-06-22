@@ -1,5 +1,32 @@
-export const SHELL_CSS = /*css*/ `
-:host {
+export default /*css*/ `
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap');
+
+:root {
+  --clr-bg: rgb(31 29 29);
+  --clr-font: rgb(224 253 255);
+  --clr-link: rgb(253 255 139);
+  --clr-panel: rgb(255 255 255 / 10%);
+  --clr-accent: rgb(233 159 255);
+  --clr-accent-shade: rgb(233 159 255 / 6%);
+  --clr-code: #fff;
+  --clr-code-hl: rgb(255 112 112);
+
+  --gap-min: 2px;
+  --gap-mid: 10px;
+  --gap-max: 20px;
+  --gap-huge: 60px;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  color: var(--clr-font);
+  font-family: Roboto, sans-serif;
+  background-color: var(--clr-bg);
+}
+
+body {
   display: grid;
   grid-template-rows: min-content min-content auto min-content;
   min-height: 100vh;
@@ -19,6 +46,7 @@ nav {
   background-color: var(--l-bg-clr);
   height: 100%;
 }
+
 @supports ((-webkit-backdrop-filter: blur(var(--blur))) or (backdrop-filter: blur(var(--blur)))) {
   nav {
     --l-bg-clr: rgba(255, 255, 255, .1);
@@ -33,7 +61,7 @@ nav > div {
   width: 100%;
   max-width: 1080px;
 }
-a {
+nav a {
   display: block;
   color: var(--clr-font);
   margin: 20px;
@@ -54,15 +82,11 @@ footer {
   padding: 20px;
   background-color: rgba(0, 0, 0, .2);
 }
-`;
-
-export const DOC_CSS = /*css*/ `
-
 lr-live-html {
   min-height: 400px;
 }
 
-a {
+main a {
   color: var(--clr-link);
 }
 
@@ -125,18 +149,3 @@ tr:hover {
   background: rgba(255, 255, 255, .1);
 }
 `;
-
-/** @param {() => void} cb */
-export function initStyles(cb) {
-  let blob = new Blob([DOC_CSS], {
-    type: 'text/css',
-  });
-  let url = URL.createObjectURL(blob);
-  let link = document.createElement('link');
-  link.rel = 'stylesheet';
-  link.href = url;
-  link.onload = () => {
-    cb();
-  };
-  document.head.appendChild(link);
-}

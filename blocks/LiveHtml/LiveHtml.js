@@ -1,4 +1,4 @@
-import { BaseComponent } from '../../submodules/symbiote/core/BaseComponent.js';
+import { BaseComponent } from '@symbiotejs/symbiote';
 
 const INIT_HTML = /*html*/ `
 <!DOCTYPE html>
@@ -143,7 +143,7 @@ export class LiveHtml extends BaseComponent {
     }
     this._updTimeout = window.setTimeout(() => {
       // @ts-ignore
-      this.ref.vp.srcdoc = this.ref.editor.textContent;
+      this.ref.vp.srcdoc = (this.importmapHtml || '') + this.ref.editor.textContent;
       if (this.hasAttribute('console-output')) {
         /** @type {Window} */
         // @ts-ignore
@@ -212,6 +212,15 @@ export class LiveHtml extends BaseComponent {
   }
 
   initCallback() {
+    let docImportMap = document.querySelector('script[type="importmap"]');
+    if (docImportMap) {
+      let shimScriptHtml = '';
+      let shimScriptEl = document.querySelector('script[src*="es-module-shims.js"]');
+      if (shimScriptEl) {
+        shimScriptHtml = shimScriptEl.outerHTML;
+      }
+      this.importmapHtml = shimScriptHtml + docImportMap.outerHTML;
+    }
     if (this.hasAttribute('src')) {
       this.sub('src', (val) => {
         if (val) {

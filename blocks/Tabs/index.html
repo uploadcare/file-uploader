@@ -4,21 +4,292 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tabs</title>
-    <link rel="stylesheet" href="../../assets/css/doc.css" />
-    <script src="../../assets/js/app-shell.js" type="module"></script>
+    <title>blocks</title>
+    <script async src="https://unpkg.com/es-module-shims@1.5.6/dist/es-module-shims.js"></script>
+    <script type="importmap">
+      {
+        "imports": {
+          "@symbiotejs/symbiote": "//unpkg.com/@symbiotejs/symbiote@1.8.2/core/symbiote.js"
+        }
+      }
+    </script>
+    <script type="module" src="https://unpkg.com/@re4ma/re4ma@0.1.7/build/re4ma.js"></script>
+    <script type="module">
+      import { LiveHtml } from '../../blocks/LiveHtml/LiveHtml.js';
+      LiveHtml.reg('lr-live-html');
+    </script>
+    <script type="module">
+      /** - - @param{String}html * @returns{String} */ export function colorCode(html) {
+        return html
+          .replace(/&lt;/g, '<span -tag-arr->&lt;</span>')
+          .replace(/&gt;/g, '<span -tag-arr->&gt;</span>')
+          .split('="')
+          .map((chunk) => {
+            return chunk.replace('"', '</span>"');
+          })
+          .join(`="<span -attr->`)
+          .replace(/"/g, '<span -quote->"</span>')
+          .replace(/=/g, '<span -equal->=</span>')
+          .split('<span -tag-arr->&lt;</span>/')
+          .join('<span -tag-arr->&lt;/</span>')
+          .split('<span -tag-arr->&lt;</span>!--')
+          .join('<span -comment->&lt;!--')
+          .split('--<span -tag-arr->&gt;</span>')
+          .join('--&gt;</span>')
+          .split('<span -tag-arr->&lt;</span>style<span -tag-arr->&gt;</span>')
+          .join('<span -tag-arr->&lt;</span>style<span -tag-arr->&gt;</span><span -style->')
+          .split('<span -tag-arr->&lt;/</span>style<span -tag-arr->&gt;</span>')
+          .join('</span><span -tag-arr->&lt;/</span>style<span -tag-arr->&gt;</span>');
+      }
+      let codeElements = [...document.querySelectorAll('code')];
+      let tmpEl = document.createElement('div');
+      codeElements.forEach((codeEl) => {
+        tmpEl.textContent = codeEl.innerHTML;
+        codeEl.innerHTML = colorCode(tmpEl.textContent);
+      });
+    </script>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap');
+      :root {
+        --clr-bg: rgb(31 29 29);
+        --clr-font: rgb(224 253 255);
+        --clr-link: rgb(253 255 139);
+        --clr-panel: rgb(255 255 255 / 10%);
+        --clr-accent: rgb(233 159 255);
+        --clr-accent-shade: rgb(233 159 255 / 6%);
+        --clr-code: #fff;
+        --clr-code-hl: rgb(255 112 112);
+        --gap-min: 2px;
+        --gap-mid: 10px;
+        --gap-max: 20px;
+        --gap-huge: 60px;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        color: var(--clr-font);
+        font-family: Roboto, sans-serif;
+        background-color: var(--clr-bg);
+      }
+      body {
+        display: grid;
+        grid-template-rows: min-content min-content auto min-content;
+        min-height: 100vh;
+      }
+      header {
+        padding: 20px;
+        background-color: rgba(0, 0, 0, 0.4);
+      }
+      nav {
+        --l-bg-clr: rgba(60, 60, 60, 0.9);
+        --blur: 6px;
+        display: flex;
+        justify-content: center;
+        position: sticky;
+        z-index: 10000;
+        top: 0;
+        background-color: var(--l-bg-clr);
+        height: 100%;
+      }
+      @supports ((-webkit-backdrop-filter: blur(var(--blur))) or (backdrop-filter: blur(var(--blur)))) {
+        nav {
+          --l-bg-clr: rgba(255, 255, 255, 0.1);
+          backdrop-filter: blur(var(--blur));
+          -webkit-backdrop-filter: blur(var(--blur));
+        }
+      }
+      nav > div {
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        width: 100%;
+        max-width: 1080px;
+      }
+      nav a {
+        display: block;
+        color: var(--clr-font);
+        margin: 20px;
+        text-decoration: none;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6);
+      }
+      main {
+        display: flex;
+        justify-content: center;
+        padding: 20px;
+      }
+      col-css {
+        display: block;
+        max-width: 1080px;
+        width: 100%;
+      }
+      footer {
+        padding: 20px;
+        background-color: rgba(0, 0, 0, 0.2);
+      }
+      lr-live-html {
+        min-height: 400px;
+      }
+      main a {
+        color: var(--clr-link);
+      }
+      code {
+        display: block;
+        background-color: #000;
+        color: var(--clr-code);
+        padding: var(--gap-max);
+        overflow-x: auto;
+      }
+      code .hl {
+        color: var(--clr-code-hl);
+      }
+      code:not([class]) {
+        display: inline-block;
+        padding: var(--gap-min);
+        padding-left: 0.5em;
+        padding-right: 0.5em;
+      }
+      blockquote {
+        display: block;
+        color: var(--clr-accent);
+        background-color: var(--clr-accent-shade);
+        padding: var(--gap-mid);
+        margin: 0;
+        margin-top: var(--gap-max);
+        border-left: var(--gap-min) solid currentColor;
+      }
+      h1 {
+        color: var(--clr-accent);
+      }
+      h2 {
+        margin-top: calc(var(--gap-max) * 3);
+      }
+      li {
+        margin-bottom: var(--gap-mid);
+      }
+      table {
+        width: 100%;
+      }
+      th {
+        padding: 10px;
+        background: rgba(0, 0, 0, 0.4);
+      }
+      td {
+        padding: 10px;
+        background: rgba(255, 255, 255, 0.1);
+      }
+      tr:hover {
+        background: rgba(255, 255, 255, 0.1);
+      }
+      lr-live-html {
+        display: grid;
+        grid-template-columns: 50% 50%;
+        box-shadow: 0 5px 16px rgb(0 0 0 / 60%);
+      }
+      lr-live-html [contenteditable] {
+        padding: 20px;
+        overflow: auto;
+        color: rgb(255 255 255);
+        font-size: 14px;
+        font-family: monospace;
+        white-space: pre;
+        background-color: #000;
+        outline: none;
+      }
+      lr-live-html [contenteditable] [-tag-arr-] {
+        color: rgb(255 112 112);
+      }
+      lr-live-html [contenteditable] [-comment-] {
+        color: aqua;
+        font-style: italic;
+        opacity: 0.5;
+      }
+      lr-live-html [contenteditable] [-attr-] {
+        color: rgb(152 197 255);
+      }
+      lr-live-html [contenteditable] [-quote-] {
+        color: rgb(169 255 152);
+      }
+      lr-live-html [contenteditable] [-equal-] {
+        color: rgb(255 152 241);
+      }
+      lr-live-html [contenteditable] [-style-] {
+        color: rgb(255 207 152);
+      }
+      lr-live-html iframe {
+        display: block;
+        width: 100%;
+        height: 100%;
+        background-color: #fff;
+        border: 0;
+      }
+      lr-live-html {
+        display: grid;
+        grid-template-columns: 50% 50%;
+        box-shadow: 0 5px 16px rgb(0 0 0 / 60%);
+      }
+      code {
+        padding: 20px;
+        overflow: auto;
+        color: rgb(255 255 255);
+        font-size: 14px;
+        font-family: monospace;
+        white-space: pre;
+        background-color: #000;
+        outline: none;
+      }
+      code [-tag-arr-] {
+        color: rgb(255 112 112);
+      }
+      code [-comment-] {
+        color: aqua;
+        font-style: italic;
+        opacity: 0.5;
+      }
+      code [-attr-] {
+        color: rgb(152 197 255);
+      }
+      code [-quote-] {
+        color: rgb(169 255 152);
+      }
+      code [-equal-] {
+        color: rgb(255 152 241);
+      }
+      code [-style-] {
+        color: rgb(255 207 152);
+      }
+      lr-live-html iframe {
+        display: block;
+        width: 100%;
+        height: 100%;
+        background-color: #fff;
+        border: 0;
+      }
+    </style>
   </head>
-
   <body>
-    <app-shell base="../../">
-      <h1>Tabs</h1>
-      <lr-live-html>
-        <link rel="stylesheet" href="../themes/lr-basic/index.css" />
+    <header>🟡 Uploadcare | blocks</header>
+    <nav>
+      <div>
+        <a href="../../">Home</a>
+        <a href="../../blocks/">Blocks</a>
+        <a href="../../solutions/">Solutions</a>
+        <a href="../../toc.html">TOC</a>
+        <a href="//github.com/uploadcare/uc-blocks/discussions">Discussions</a>
+      </div>
+    </nav>
+    <main>
+      <col-css
+        ><h1>Tabs</h1>
 
-        <script src="test.js" type="module"></script>
+        <lr-live-html>
+          <link rel="stylesheet" href="../themes/lr-basic/index.css" />
 
-        <div id="viewport"></div>
-      </lr-live-html>
-    </app-shell>
+          <script src="test.js" type="module"></script>
+
+          <div id="viewport"></div> </lr-live-html
+      ></col-css>
+    </main>
+    <footer>© 2022 🦆</footer>
   </body>
 </html>

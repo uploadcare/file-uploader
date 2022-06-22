@@ -27,6 +27,7 @@
     "build:css:types": "node build-css-types.js",
     "build:jsx:types": "node build-jsx-types.js",
     "build:types": "npm run clean:types && tsc --build tsconfig.types.json",
+    "build:static": "node --experimental-fetch ./static-gen/build.js",
     "build": "run-s build:web build:types build:css:types build:jsx:types",
     "tsc": "tsc --skipLibCheck --allowJs --noEmit",
     "lint:js": "eslint ./",
@@ -60,10 +61,12 @@
     "eslint-plugin-import": "^2.26.0",
     "husky": "^7.0.4",
     "lint-staged": "^12.4.0",
+    "marked": "^4.0.17",
     "npm-run-all": "^4.1.5",
     "postcss": "^8.4.13",
     "prettier": "^2.6.2",
     "prettier-plugin-jsdoc": "0.3.38",
+    "puppeteer": "^14.4.1",
     "rimraf": "^3.0.2",
     "shipjs": "^0.24.4",
     "stylelint": "^14.7.1",
@@ -75,5 +78,9 @@
     "typescript": "^4.6.3"
   },
   "author": "Uploadcare Inc.",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "@jam-do/jam-tools": "^0.0.3",
+    "@symbiotejs/symbiote": "^1.8.2"
+  }
 }
