@@ -7,7 +7,7 @@ on:
 jobs:
   prepare:
     runs-on: ubuntu-latest
-    if: ${{ !startsWith(github.head_commit, format('chore{0} release', ':')) }}
+    if: ${{ !startsWith(github.event.head_commit.message, format('chore{0} release', ':')) }}
     steps:
       - uses: actions/checkout@v2
         with:
