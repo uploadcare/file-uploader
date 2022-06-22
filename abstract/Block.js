@@ -29,6 +29,7 @@ if (!DOC_READY) {
  *   '*outputData': unknown[] | null;
  *   '*focusedEntry': unknown | null;
  *   '*uploadCollection': TypedCollection;
+ *   '*uploadMetadata': import('../submodules/upload-client/upload-client.js').Metadata;
  *   [key: String]: unknown;
  * }} BlockState
  */
@@ -147,6 +148,7 @@ export class Block extends BaseComponent {
             '*uploadList': [],
             '*outputData': null,
             '*focusedEntry': null,
+            '*uploadMetadata': null,
           })
         );
         Block._ctxConnectionsList.push(this.ctxName);
@@ -154,6 +156,10 @@ export class Block extends BaseComponent {
       this.$['*ctxTargetsRegistry'].add(this.constructor['is']);
 
       super.connectedCallback();
+
+      if (this.__initialUploadMetadata) {
+        this.$['*uploadMetadata'] = this.__initialUploadMetadata;
+      }
 
       if (this.hasAttribute('current-activity')) {
         this.sub('*currentActivity', (/** @type {String} */ val) => {
@@ -436,6 +442,7 @@ export class Block extends BaseComponent {
       multipartMaxAttempts: this.getCssData('--cfg-multipart-max-attempts'),
       checkForUrlDuplicates: !!this.getCssData('--cfg-check-for-url-duplicates'),
       saveUrlForRecurrentUploads: !!this.getCssData('--cfg-save-url-for-recurrent-uploads'),
+      metadata: this.$['*uploadMetadata'],
     };
 
     console.log('Upload client options:', options);
@@ -450,19 +457,36 @@ export class Block extends BaseComponent {
       let uploadEntryData = Data.getNamedCtx(itemId).store;
       /** @type {import('../submodules/upload-client/upload-client.js').UploadcareFile} */
       let fileInfo = uploadEntryData.fileInfo;
-      // TODO: remove `cdnUrlModifiers` from fileInfo object returned by upload-client, `cdnUrl` should not contain modifiers
-      // TODO: create OutputItem instance instead of creating inline object,
-      //       fileInfo should be returned as is along with the other data
-      // TODO: pass editorTransformations to the user
       // TODO: create dedicated output type
       let outputItem = {
         ...fileInfo,
-        cdnUrlModifiers: uploadEntryData.cdnUrlModifiers || fileInfo.cdnUrlModifiers,
+        cdnUrlModifiers: uploadEntryData.cdnUrlModifiers,
         cdnUrl: uploadEntryData.cdnUrl || fileInfo.cdnUrl,
       };
       data.push(outputItem);
     });
     this.$['*outputData'] = data;
+  }
+
+  /** @private */
+  __initialUploadMetadata = null;
+
+  /**
+   * This is Public JS API method. Could be called before block initialization, so we need to delay state interactions
+   * until block init.
+   *
+   * TODO: If we add more public methods, it is better to use the single queue instead of tonns of private fields per
+   * each method. See https://github.com/uploadcare/uc-blocks/pull/162/
+   *
+   * @param {import('../submodules/upload-client/upload-client.js').Metadata} metadata
+   * @public
+   */
+  setUploadMetadata(metadata) {
+    if (!this.__connectedOnce) {
+      this.__initialUploadMetadata = metadata;
+    } else {
+      this.$['*uploadMetadata'] = metadata;
+    }
   }
 
   destroyCallback() {

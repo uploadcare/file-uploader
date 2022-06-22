@@ -1,4 +1,4 @@
-// 3.1.1
+// 4.0.1
 // @ts-nocheck
 class UploadClientError extends Error {
     constructor(message, code, request, response, headers) {
@@ -119,6 +119,7 @@ function identity(obj) {
     return obj;
 }
 
+const getFileOptions = ({ name }) => name ? [name] : [];
 const transformFile = identity;
 var getFormData = () => new FormData();
 
@@ -164,9 +165,10 @@ const isFileValue = (value) => !!value &&
     isFileData(value.data);
 function collectParams(params, inputKey, inputValue) {
     if (isFileValue(inputValue)) {
-        const name = inputValue.name;
+        const { name, contentType } = inputValue;
         const file = transformFile(inputValue.data); // lgtm [js/superfluous-trailing-arguments]
-        params.push(name ? [inputKey, file, name] : [inputKey, file]);
+        const options = getFileOptions({ name, contentType });
+        params.push([inputKey, file, ...options]);
     }
     else if (isObjectValue(inputValue)) {
         for (const [key, value] of Object.entries(inputValue)) {
@@ -188,9 +190,11 @@ function getFormDataParams(options) {
 }
 function buildFormData(options) {
     const formData = getFormData();
-    const params = getFormDataParams(options);
-    for (const param of params) {
-        formData.append(...param);
+    const paramsList = getFormDataParams(options);
+    for (const params of paramsList) {
+        const [key, value, ...options] = params;
+        // node form-data has another signature for append
+        formData.append(key, value, ...options);
     }
     return formData;
 }
@@ -244,7 +248,7 @@ const defaultSettings = {
 const defaultContentType = 'application/octet-stream';
 const defaultFilename = 'original';
 
-var version = '3.1.1';
+var version = '4.0.1';
 
 /**
  * Returns User Agent based on version and settings.
@@ -352,7 +356,7 @@ function getStoreValue(store) {
  * Performs file uploading request to Uploadcare Upload API.
  * Can be canceled and has progress.
  */
-function base(file, { publicKey, fileName, baseURL = defaultSettings.baseURL, secureSignature, secureExpire, store, signal, onProgress, source = 'local', integration, userAgent, retryThrottledRequestMaxTimes = defaultSettings.retryThrottledRequestMaxTimes, metadata }) {
+function base(file, { publicKey, fileName, contentType, baseURL = defaultSettings.baseURL, secureSignature, secureExpire, store, signal, onProgress, source = 'local', integration, userAgent, retryThrottledRequestMaxTimes = defaultSettings.retryThrottledRequestMaxTimes, metadata }) {
     return retryIfThrottled(() => {
         var _a;
         return request({
@@ -366,7 +370,8 @@ function base(file, { publicKey, fileName, baseURL = defaultSettings.baseURL, se
             data: buildFormData({
                 file: {
                     data: file,
-                    name: (_a = fileName !== null && fileName !== void 0 ? fileName : file.name) !== null && _a !== void 0 ? _a : defaultFilename
+                    name: (_a = fileName !== null && fileName !== void 0 ? fileName : file.name) !== null && _a !== void 0 ? _a : defaultFilename,
+                    contentType
                 },
                 UPLOADCARE_PUB_KEY: publicKey,
                 UPLOADCARE_STORE: getStoreValue(store),
@@ -642,27 +647,25 @@ function multipartComplete(uuid, { publicKey, baseURL = defaultSettings.baseURL,
 }
 
 class UploadcareFile {
-    constructor(fileInfo, { baseCDN, defaultEffects, fileName }) {
+    constructor(fileInfo, { baseCDN, fileName }) {
         this.name = null;
         this.size = null;
         this.isStored = null;
         this.isImage = null;
         this.mimeType = null;
         this.cdnUrl = null;
-        this.cdnUrlModifiers = null;
-        this.originalUrl = null;
+        this.s3Url = null;
         this.originalFilename = null;
         this.imageInfo = null;
         this.videoInfo = null;
         this.contentInfo = null;
         this.metadata = null;
+        this.s3Bucket = null;
         const { uuid, s3Bucket } = fileInfo;
-        const urlBase = s3Bucket
+        const cdnUrl = `${baseCDN}/${uuid}/`;
+        const s3Url = s3Bucket
             ? `https://${s3Bucket}.s3.amazonaws.com/${uuid}/${fileInfo.filename}`
-            : `${baseCDN}/${uuid}/`;
-        const cdnUrlModifiers = defaultEffects ? `-/${defaultEffects}` : null;
-        const cdnUrl = `${urlBase}${cdnUrlModifiers || ''}`;
-        const originalUrl = uuid ? urlBase : null;
+            : null;
         this.uuid = uuid;
         this.name = fileName || fileInfo.filename;
         this.size = fileInfo.size;
@@ -670,13 +673,13 @@ class UploadcareFile {
         this.isImage = fileInfo.isImage;
         this.mimeType = fileInfo.mimeType;
         this.cdnUrl = cdnUrl;
-        this.cdnUrlModifiers = cdnUrlModifiers;
-        this.originalUrl = originalUrl;
         this.originalFilename = fileInfo.originalFilename;
         this.imageInfo = camelizeKeys(fileInfo.imageInfo);
         this.videoInfo = camelizeKeys(fileInfo.videoInfo);
         this.contentInfo = camelizeKeys(fileInfo.contentInfo);
         this.metadata = fileInfo.metadata || null;
+        this.s3Bucket = s3Bucket || null;
+        this.s3Url = s3Url;
     }
 }
 
@@ -728,10 +731,11 @@ function isReadyPoll({ file, publicKey, baseURL, source, integration, userAgent,
     });
 }
 
-const uploadFromObject = (file, { publicKey, fileName, baseURL, secureSignature, secureExpire, store, signal, onProgress, source, integration, userAgent, retryThrottledRequestMaxTimes, baseCDN, metadata }) => {
+const uploadDirect = (file, { publicKey, fileName, baseURL, secureSignature, secureExpire, store, contentType, signal, onProgress, source, integration, userAgent, retryThrottledRequestMaxTimes, baseCDN, metadata }) => {
     return base(file, {
         publicKey,
         fileName,
+        contentType,
         baseURL,
         secureSignature,
         secureExpire,
@@ -759,14 +763,6 @@ const uploadFromObject = (file, { publicKey, fileName, baseURL, secureSignature,
     })
         .then((fileInfo) => new UploadcareFile(fileInfo, { baseCDN }));
 };
-
-/*globals self, window */
-
-/*eslint-disable @mysticatea/prettier */
-const { AbortController, AbortSignal } =
-    typeof self !== "undefined" ? self :
-    typeof window !== "undefined" ? window :
-    /* otherwise */ undefined;
 
 const race = (fns, { signal } = {}) => {
     let lastError = null;
@@ -1306,9 +1302,10 @@ function uploadFile(data, { publicKey, fileName, baseURL = defaultSettings.baseU
                 metadata
             });
         }
-        return uploadFromObject(data, {
+        return uploadDirect(data, {
             publicKey,
             fileName,
+            contentType,
             baseURL,
             secureSignature,
             secureExpire,
@@ -1410,7 +1407,7 @@ const isUrlArray = (data) => {
     return true;
 };
 
-function uploadFileGroup(data, { publicKey, fileName, baseURL = defaultSettings.baseURL, secureSignature, secureExpire, store, signal, onProgress, source, integration, userAgent, retryThrottledRequestMaxTimes, contentType, multipartChunkSize = defaultSettings.multipartChunkSize, baseCDN = defaultSettings.baseCDN, jsonpCallback, defaultEffects }) {
+function uploadFileGroup(data, { publicKey, fileName, baseURL = defaultSettings.baseURL, secureSignature, secureExpire, store, signal, onProgress, source, integration, userAgent, retryThrottledRequestMaxTimes, contentType, multipartChunkSize = defaultSettings.multipartChunkSize, baseCDN = defaultSettings.baseCDN, jsonpCallback }) {
     if (!isFileDataArray(data) && !isUrlArray(data) && !isUuidArray(data)) {
         throw new TypeError(`Group uploading from "${data}" is not supported`);
     }
@@ -1452,13 +1449,6 @@ function uploadFileGroup(data, { publicKey, fileName, baseURL = defaultSettings.
         baseCDN
     }))).then((files) => {
         const uuids = files.map((file) => file.uuid);
-        const addDefaultEffects = (file) => {
-            const cdnUrlModifiers = defaultEffects ? `-/${defaultEffects}` : null;
-            const cdnUrl = `${file.urlBase}${cdnUrlModifiers || ''}`;
-            return Object.assign(Object.assign({}, file), { cdnUrlModifiers,
-                cdnUrl });
-        };
-        const filesInGroup = defaultEffects ? files.map(addDefaultEffects) : files;
         return group(uuids, {
             publicKey,
             baseURL,
@@ -1471,7 +1461,7 @@ function uploadFileGroup(data, { publicKey, fileName, baseURL = defaultSettings.
             userAgent,
             retryThrottledRequestMaxTimes
         })
-            .then((groupInfo) => new UploadcareGroup(groupInfo, filesInGroup))
+            .then((groupInfo) => new UploadcareGroup(groupInfo, files))
             .then((group) => {
             onProgress && onProgress({ isComputable: true, value: 1 });
             return group;
@@ -1493,50 +1483,50 @@ class UploadClient {
     getSettings() {
         return this.settings;
     }
-    base(file, options) {
+    base(file, options = {}) {
         const settings = this.getSettings();
         return base(file, populateOptionsWithSettings(options, settings));
     }
-    info(uuid, options) {
+    info(uuid, options = {}) {
         const settings = this.getSettings();
         return info(uuid, populateOptionsWithSettings(options, settings));
     }
-    fromUrl(sourceUrl, options) {
+    fromUrl(sourceUrl, options = {}) {
         const settings = this.getSettings();
         return fromUrl(sourceUrl, populateOptionsWithSettings(options, settings));
     }
-    fromUrlStatus(token, options) {
+    fromUrlStatus(token, options = {}) {
         const settings = this.getSettings();
         return fromUrlStatus(token, populateOptionsWithSettings(options, settings));
     }
-    group(uuids, options) {
+    group(uuids, options = {}) {
         const settings = this.getSettings();
         return group(uuids, populateOptionsWithSettings(options, settings));
     }
-    groupInfo(id, options) {
+    groupInfo(id, options = {}) {
         const settings = this.getSettings();
         return groupInfo(id, populateOptionsWithSettings(options, settings));
     }
-    multipartStart(size, options) {
+    multipartStart(size, options = {}) {
         const settings = this.getSettings();
         return multipartStart(size, populateOptionsWithSettings(options, settings));
     }
-    multipartUpload(part, url, options) {
+    multipartUpload(part, url, options = {}) {
         const settings = this.getSettings();
         return multipartUpload(part, url, populateOptionsWithSettings(options, settings));
     }
-    multipartComplete(uuid, options) {
+    multipartComplete(uuid, options = {}) {
         const settings = this.getSettings();
         return multipartComplete(uuid, populateOptionsWithSettings(options, settings));
     }
-    uploadFile(data, options) {
+    uploadFile(data, options = {}) {
         const settings = this.getSettings();
         return uploadFile(data, populateOptionsWithSettings(options, settings));
     }
-    uploadFileGroup(data, options) {
+    uploadFileGroup(data, options = {}) {
         const settings = this.getSettings();
         return uploadFileGroup(data, populateOptionsWithSettings(options, settings));
     }
 }
 
-export { AbortController, UploadClient, UploadClientError, UploadcareFile, UploadcareGroup, base, fromUrl, fromUrlStatus, group, groupInfo, info, multipartComplete, multipartStart, multipartUpload, uploadFromObject as uploadBase, uploadFile, uploadFileGroup, uploadFromUploaded, uploadFromUrl, uploadMultipart };
+export { UploadClient, UploadClientError, UploadcareFile, UploadcareGroup, base, fromUrl, fromUrlStatus, group, groupInfo, info, multipartComplete, multipartStart, multipartUpload, uploadDirect, uploadFile, uploadFileGroup, uploadFromUploaded, uploadFromUrl, uploadMultipart };

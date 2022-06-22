@@ -68,7 +68,7 @@ Any configuration value can be defined and redefined at any level of the DOM tre
 
 | Name                              | Description                                                                                                                            |         Values         |        Default         |
 | --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | :--------------------: | :--------------------: |
-| `--cfg-pubkey`                    | Your project Public Key                                                                                                                |   `'demopublickey'`    |          none          |
+| `--cfg-pubkey`                    | Your project Public Key                                                                                                                |         string         |   `YOUR_PUBLIC_KEY`    |
 | `--cfg-multiple`                  | Allow to upload multiple files                                                                                                         |       `1` or `0`       |          `1`           |
 | `--cfg-multiple-min`              | Minimum number of files that can be selected.                                                                                          |         number         |          none          |
 | `--cfg-multiple-max`              | Maximum number of files that can be selected.                                                                                          |         number         |          none          |
@@ -114,4 +114,55 @@ class MyBlock extends BlockComponent {
     });
   }
 }
+```
+
+## Dynamic configuration
+
+### via `style` property
+
+We're handle `style` property updates automatically.
+It means that you can update your configuration in the following way:
+
+```javascript
+let uploader = document.querySelector('lr-uploader');
+uploader.style.setProperty('--cfg-source-list', 'local, url');
+```
+
+### via `class` property
+
+If you want to switch the whole configuration CSS class,
+you need to call method `updateCssData()` explicitly.
+
+```css
+.config-1 {
+  --cfg-source-list: 'local, url';
+}
+.config-2 {
+  --cfg-source-list: 'local, camera';
+}
+```
+
+```html
+<lr-uploader class="lr-wgt-common config-1"></lr-uploader>
+```
+
+```javascript
+let uploader = document.querySelector('lr-uploader');
+uploader.classList.replace('config-1', 'config-2');
+uploader.updateCssData();
+```
+
+## Extended configuration using JS API
+
+To set configuration properties with complex data types, you can use JS API on any block.
+
+| Name                              | Description                                                                                   |
+| --------------------------------- | --------------------------------------------------------------------------------------------- |
+| `setUploadMetadata(metadata: {})` | File Metadata. See [docs](https://uploadcare.com/api-refs/rest-api/v0.7.0/#tag/File-metadata) |
+
+Example:
+
+```javascript
+let uploader = document.querySelector('lr-uploader');
+uploader.setUploadMetadata({ foo: 'bar' });
 ```
