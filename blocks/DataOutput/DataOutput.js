@@ -11,6 +11,10 @@ export class DataOutput extends Block {
     filesData: null,
   };
 
+  cssInit$ = {
+    '--cfg-group-output': 0,
+  };
+
   get dict() {
     return DataOutput.dict;
   }

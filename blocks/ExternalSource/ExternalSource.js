@@ -16,14 +16,9 @@ import { queryString } from './query-string.js';
  * @property {() => void} onCancel
  */
 
-/** @typedef {'*--cfg-remote-tab-session-key'} UsedCssProps */
-/** @typedef {Partial<Pick<import('../../css-types.js').CssConfigTypes, UsedCssProps>>} CssProps */
-
 /**
  * @typedef {State &
- *   Partial<
- *     CssProps & import('../ActivityCaption/ActivityCaption').State & import('../ActivityIcon/ActivityIcon').State
- *   >} ExternalSourceState
+ *   Partial<import('../ActivityCaption/ActivityCaption').State & import('../ActivityIcon/ActivityIcon').State>} ExternalSourceState
  */
 
 /** @extends {Block<ExternalSourceState>} */
@@ -45,8 +40,6 @@ export class ExternalSource extends Block {
   _iframe = null;
 
   initCallback() {
-    this.bindCssData('--cfg-remote-tab-session-key');
-
     this.registerActivity(this.activityType, () => {
       let { externalSourceType } = /** @type {ActivityParams} */ (this.activityParams);
 
@@ -105,7 +98,7 @@ export class ExternalSource extends Block {
   }
 
   remoteUrl() {
-    let pubkey = this.$['*--cfg-pubkey'];
+    let pubkey = this.getCssData('--cfg-pubkey');
     let imagesOnly = false.toString();
     let { externalSourceType } = this.activityParams;
     let params = {
@@ -116,7 +109,7 @@ export class ExternalSource extends Block {
       public_key: pubkey,
       images_only: imagesOnly,
       pass_window_open: false,
-      session_key: this.$['*--cfg-remote-tab-session-key'],
+      session_key: this.getCssData('--cfg-remote-tab-session-key'),
     };
     return `https://social.uploadcare.com/window3/${externalSourceType}?${queryString(params)}`;
   }
