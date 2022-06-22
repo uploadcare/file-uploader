@@ -116,7 +116,7 @@ export class FileItem extends Block {
       /** @type {String} */
       this.uid = id;
 
-      /** @type {import('../../submodules/symbiote/core/symbiote.js').TypedData} */
+      /** @type {import('@symbiotejs/symbiote').TypedData} */
       this.entry = this.uploadCollection?.read(id);
 
       if (!this.entry) {

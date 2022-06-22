@@ -19,7 +19,7 @@ import { viewerImageSrc } from './util.js';
  *   '*imgContainerEl': HTMLElement;
  *   '*networkProblems': Boolean;
  *   '*imageSize': import('./types.js').ImageSize;
- *   entry: import('../../../submodules/symbiote/core/symbiote.js').TypedData;
+ *   entry: import('@symbiotejs/symbiote').TypedData;
  *   extension: String;
  *   editorMode: Boolean;
  *   modalCaption: String;

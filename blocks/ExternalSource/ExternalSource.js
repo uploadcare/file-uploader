@@ -1,4 +1,4 @@
-import { create } from '../../submodules/symbiote/core/symbiote.js';
+import { create } from '@symbiotejs/symbiote';
 import { Block } from '../../abstract/Block.js';
 import { registerMessage, unregisterMessage } from './messages.js';
 import { buildStyles } from './buildStyles.js';
