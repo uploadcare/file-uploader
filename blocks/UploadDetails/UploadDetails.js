@@ -47,6 +47,11 @@ export class UploadDetails extends Block {
     },
   };
 
+  cssInit$ = {
+    '--cfg-use-cloud-image-editor': 0,
+    '--cfg-use-local-image-editor': 0,
+  };
+
   showNonImageThumb() {
     let color = window.getComputedStyle(this).getPropertyValue('--clr-generic-file-icon');
     let url = fileCssBg(color, 108, 108);
@@ -57,8 +62,6 @@ export class UploadDetails extends Block {
   }
 
   initCallback() {
-    this.bindCssData('--cfg-use-local-image-editor');
-    this.bindCssData('--cfg-use-cloud-image-editor');
     // Rendering is postponed for the CSS-context-properties usage in template:
     this.render();
     this.$.fileSize = this.l10n('file-size-unknown');
@@ -70,7 +73,7 @@ export class UploadDetails extends Block {
     /** @type {import('../EditableCanvas/EditableCanvas.js').EditableCanvas} */
     // @ts-ignore
     this.eCanvas = this.ref.canvas;
-    this.sub('*focusedEntry', (/** @type {import('../../submodules/symbiote/core/symbiote.js').TypedData} */ entry) => {
+    this.sub('*focusedEntry', (/** @type {import('@symbiotejs/symbiote').TypedData} */ entry) => {
       if (!entry) {
         return;
       }
@@ -134,7 +137,7 @@ export class UploadDetails extends Block {
         }
       });
       tmpSub('cdnUrl', (cdnUrl) => {
-        const canUseCloudEditor = this.$['*--cfg-use-cloud-image-editor'] && cdnUrl && this.entry.getValue('isImage');
+        const canUseCloudEditor = this.$['--cfg-use-cloud-image-editor'] && cdnUrl && this.entry.getValue('isImage');
 
         this.eCanvas.clear();
         this.set$({
@@ -187,7 +190,7 @@ UploadDetails.template = /*html*/ `
 
   <lr-editable-canvas
     tab-ctx="tab-view"
-    set="@disabled: !*--cfg-use-local-image-editor; @checkerboard: checkerboard;"
+    set="@disabled: !--cfg-use-local-image-editor; @checkerboard: checkerboard;"
     ref="canvas">
   </lr-editable-canvas>
 </lr-tabs>

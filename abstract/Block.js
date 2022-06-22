@@ -1,4 +1,4 @@
-import { BaseComponent, Data, TypedCollection } from '../submodules/symbiote/core/symbiote.js';
+import { BaseComponent, Data, TypedCollection } from '@symbiotejs/symbiote';
 import { applyTemplateData } from '../utils/applyTemplateData.js';
 import { mergeMimeTypes } from '../utils/mergeMimeTypes.js';
 import { imageMimeTypes } from '../utils/imageMimeTypes.js';
@@ -29,40 +29,14 @@ if (!DOC_READY) {
  *   '*outputData': unknown[] | null;
  *   '*focusedEntry': unknown | null;
  *   '*uploadCollection': TypedCollection;
+ *   '*uploadMetadata': import('../submodules/upload-client/upload-client.js').Metadata;
  *   [key: String]: unknown;
  * }} BlockState
  */
 
 /**
- * @typedef {| '*--cfg-pubkey'
- *   | '*--cfg-store'
- *   | '*--cfg-multiple'
- *   | '*--cfg-multiple-min'
- *   | '*--cfg-multiple-max'
- *   | '*--cfg-accept'
- *   | '*--cfg-img-only'
- *   | '*--cfg-confirm-upload'
- *   | '*--cfg-init-activity'
- *   | '*--cfg-done-activity'
- *   | '*--cfg-group-output'
- *   | '*--cfg-max-local-file-size-bytes'
- *   | '*--cfg-cdn-cname'
- *   | '*--cfg-secure-delivery-proxy'
- *   | '*--cfg-retry-throttled-request-max-times'
- *   | '*--cfg-multipart-min-file-size'
- *   | '*--cfg-multipart-chunk-size'
- *   | '*--cfg-max-concurrent-requests'
- *   | '*--cfg-multipart-max-attempts'
- *   | '*--cfg-check-for-url-duplicates'
- *   | '*--cfg-save-url-for-recurrent-uploads'
- *   | '*--cfg-secure-signature'
- *   | '*--cfg-secure-expire'} InitialAddedCssProps
- */
-/** @typedef {'*--cfg-source-list'} UsedCssProps */
-/** @typedef {Pick<import('../css-types.js').CssConfigTypes, InitialAddedCssProps | UsedCssProps>} CssProps */
-/**
  * @template S
- * @extends {BaseComponent<S & Partial<BlockState & CssProps>>}
+ * @extends {BaseComponent<S & Partial<BlockState>>}
  */
 export class Block extends BaseComponent {
   /**
@@ -161,49 +135,6 @@ export class Block extends BaseComponent {
     }
   }
 
-  /** @private */
-  __bindBasicCssData() {
-    if (!Block._cssDataBindingsList.includes(this.ctxName)) {
-      let cfgProps = [
-        '--cfg-pubkey',
-        '--cfg-store',
-        '--cfg-multiple',
-        '--cfg-multiple-min',
-        '--cfg-multiple-max',
-        '--cfg-accept',
-        '--cfg-img-only',
-        '--cfg-confirm-upload',
-        '--cfg-init-activity',
-        '--cfg-done-activity',
-        '--cfg-max-local-file-size-bytes',
-        '--cfg-cdn-cname',
-        '--cfg-secure-delivery-proxy',
-        '--cfg-group-output',
-
-        // passed to upload client
-        '--cfg-retry-throttled-request-max-times',
-        '--cfg-multipart-min-file-size',
-        '--cfg-multipart-chunk-size',
-        '--cfg-max-concurrent-requests',
-        '--cfg-multipart-max-attempts',
-        '--cfg-check-for-url-duplicates',
-        '--cfg-save-url-for-recurrent-uploads',
-        '--cfg-secure-signature',
-        '--cfg-secure-expire',
-      ];
-      cfgProps.forEach((prop) => {
-        this.bindCssData(prop);
-      }, true);
-      Block._cssDataBindingsList.push(this.ctxName);
-    }
-  }
-
-  initCallback() {
-    // TODO: rethink initiation flow for the common context parameters
-    this.__bindBasicCssData();
-    // ^ in this case css-data-props will be initiated when there is one or more components without initCallback call
-  }
-
   connected() {
     if (!this.__connectedOnce) {
       if (!Block._ctxConnectionsList.includes(this.ctxName)) {
@@ -217,6 +148,7 @@ export class Block extends BaseComponent {
             '*uploadList': [],
             '*outputData': null,
             '*focusedEntry': null,
+            '*uploadMetadata': null,
           })
         );
         Block._ctxConnectionsList.push(this.ctxName);
@@ -224,6 +156,10 @@ export class Block extends BaseComponent {
       this.$['*ctxTargetsRegistry'].add(this.constructor['is']);
 
       super.connectedCallback();
+
+      if (this.__initialUploadMetadata) {
+        this.$['*uploadMetadata'] = this.__initialUploadMetadata;
+      }
 
       if (this.hasAttribute('current-activity')) {
         this.sub('*currentActivity', (/** @type {String} */ val) => {
@@ -269,8 +205,11 @@ export class Block extends BaseComponent {
   }
 
   openSystemDialog() {
-    let accept = mergeMimeTypes(this.$['*--cfg-img-only'] && imageMimeTypes.join(','), this.$['*--cfg-accept']);
-    if (this.$['*--cfg-accept'] && !!this.$['*--cfg-img-only']) {
+    let accept = mergeMimeTypes(
+      this.getCssData('--cfg-img-only') && imageMimeTypes.join(','),
+      this.getCssData('--cfg-accept')
+    );
+    if (this.getCssData('--cfg-accept') && !!this.getCssData('--cfg-img-only')) {
       console.warn(
         'There could be a mistake.\n' +
           'Both `--cfg-accept` and `--cfg-img-only` parameters are set.\n' +
@@ -279,7 +218,7 @@ export class Block extends BaseComponent {
     }
     this.fileInput = document.createElement('input');
     this.fileInput.type = 'file';
-    this.fileInput.multiple = !!this.$['*--cfg-multiple'];
+    this.fileInput.multiple = !!this.getCssData('--cfg-multiple');
     this.fileInput.accept = accept;
     this.fileInput.dispatchEvent(new MouseEvent('click'));
     this.fileInput.onchange = () => {
@@ -294,22 +233,24 @@ export class Block extends BaseComponent {
   /** @type {String[]} */
   get sourceList() {
     let list = null;
-    if (this.$['*--cfg-source-list']) {
-      list = this.$['*--cfg-source-list'].split(',').map((/** @type {String} */ item) => {
-        return item.trim();
-      });
+    if (this.getCssData('--cfg-source-list')) {
+      list = this.getCssData('--cfg-source-list')
+        .split(',')
+        .map((/** @type {String} */ item) => {
+          return item.trim();
+        });
     }
     return list;
   }
 
   /** @type {String} */
   get initActivity() {
-    return this.$['*--cfg-init-activity'];
+    return this.getCssData('--cfg-init-activity');
   }
 
   /** @type {String} */
   get doneActivity() {
-    return this.$['*--cfg-done-activity'];
+    return this.getCssData('--cfg-done-activity');
   }
 
   get isActivityActive() {
@@ -333,6 +274,7 @@ export class Block extends BaseComponent {
           this.$['*currentActivity'] = Block.activities.UPLOAD_LIST;
           this.openSystemDialog();
         } else {
+          /** @ts-ignore */
           if (Object.values(Block.extSrcList).includes(srcKey)) {
             this.set$(
               /** @type {Partial<S & BlockState>} */ ({
@@ -467,7 +409,7 @@ export class Block extends BaseComponent {
    * @returns {String}
    */
   proxyUrl(url) {
-    let previewProxy = this.$['*--cfg-secure-delivery-proxy'];
+    let previewProxy = this.getCssData('--cfg-secure-delivery-proxy', true);
     if (!previewProxy) {
       return url;
     }
@@ -481,25 +423,26 @@ export class Block extends BaseComponent {
   /** @returns {import('../submodules/upload-client/upload-client.js').FileFromOptions} */
   getUploadClientOptions() {
     let storeSetting = {};
-    let store = this.$['*--cfg-store'];
+    let store = this.getCssData('--cfg-store');
     if (store !== null) {
       storeSetting.store = !!store;
     }
 
     let options = {
       ...storeSetting,
-      publicKey: this.$['*--cfg-pubkey'],
-      baseCDN: this.$['*--cfg-cdn-cname'],
+      publicKey: this.getCssData('--cfg-pubkey'),
+      baseCDN: this.getCssData('--cfg-cdn-cname'),
       userAgent: customUserAgent,
-      secureSignature: this.$['*--cfg-secure-signature'],
-      secureExpire: this.$['*--cfg-secure-expire'],
-      retryThrottledRequestMaxTimes: this.$['*--cfg-retry-throttled-request-max-times'],
-      multipartMinFileSize: this.$['*--cfg-multipart-min-file-size'],
-      multipartChunkSize: this.$['*--cfg-multipart-chunk-size'],
-      maxConcurrentRequests: this.$['*--cfg-max-concurrent-requests'],
-      multipartMaxAttempts: this.$['*--cfg-multipart-max-attempts'],
-      checkForUrlDuplicates: !!this.$['*--cfg-check-for-url-duplicates'],
-      saveUrlForRecurrentUploads: !!this.$['*--cfg-save-url-for-recurrent-uploads'],
+      secureSignature: this.getCssData('--cfg-secure-signature'),
+      secureExpire: this.getCssData('--cfg-secure-expire'),
+      retryThrottledRequestMaxTimes: this.getCssData('--cfg-retry-throttled-request-max-times'),
+      multipartMinFileSize: this.getCssData('--cfg-multipart-min-file-size'),
+      multipartChunkSize: this.getCssData('--cfg-multipart-chunk-size'),
+      maxConcurrentRequests: this.getCssData('--cfg-max-concurrent-requests'),
+      multipartMaxAttempts: this.getCssData('--cfg-multipart-max-attempts'),
+      checkForUrlDuplicates: !!this.getCssData('--cfg-check-for-url-duplicates'),
+      saveUrlForRecurrentUploads: !!this.getCssData('--cfg-save-url-for-recurrent-uploads'),
+      metadata: this.$['*uploadMetadata'],
     };
 
     console.log('Upload client options:', options);
@@ -514,19 +457,36 @@ export class Block extends BaseComponent {
       let uploadEntryData = Data.getNamedCtx(itemId).store;
       /** @type {import('../submodules/upload-client/upload-client.js').UploadcareFile} */
       let fileInfo = uploadEntryData.fileInfo;
-      // TODO: remove `cdnUrlModifiers` from fileInfo object returned by upload-client, `cdnUrl` should not contain modifiers
-      // TODO: create OutputItem instance instead of creating inline object,
-      //       fileInfo should be returned as is along with the other data
-      // TODO: pass editorTransformations to the user
       // TODO: create dedicated output type
       let outputItem = {
         ...fileInfo,
-        cdnUrlModifiers: uploadEntryData.cdnUrlModifiers || fileInfo.cdnUrlModifiers,
+        cdnUrlModifiers: uploadEntryData.cdnUrlModifiers,
         cdnUrl: uploadEntryData.cdnUrl || fileInfo.cdnUrl,
       };
       data.push(outputItem);
     });
     this.$['*outputData'] = data;
+  }
+
+  /** @private */
+  __initialUploadMetadata = null;
+
+  /**
+   * This is Public JS API method. Could be called before block initialization, so we need to delay state interactions
+   * until block init.
+   *
+   * TODO: If we add more public methods, it is better to use the single queue instead of tonns of private fields per
+   * each method. See https://github.com/uploadcare/uc-blocks/pull/162/
+   *
+   * @param {import('../submodules/upload-client/upload-client.js').Metadata} metadata
+   * @public
+   */
+  setUploadMetadata(metadata) {
+    if (!this.__connectedOnce) {
+      this.__initialUploadMetadata = metadata;
+    } else {
+      this.$['*uploadMetadata'] = metadata;
+    }
   }
 
   destroyCallback() {

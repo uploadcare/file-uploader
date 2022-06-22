@@ -1,4 +1,4 @@
-import { BaseComponent } from '../../submodules/symbiote/core/symbiote.js';
+import { BaseComponent } from '@symbiotejs/symbiote';
 import { applyTemplateData } from '../../utils/applyTemplateData.js';
 import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../utils/cdn-utils.js';
 import { PROPS_MAP } from './props-map.js';
@@ -12,7 +12,14 @@ const ULTRA_RES_K = 3;
 const DEV_MODE =
   !window.location.host.trim() || window.location.host.includes(':') || window.location.hostname.includes('localhost');
 
+const CSS_PROPS = Object.create(null);
+for (let prop in PROPS_MAP) {
+  CSS_PROPS[CSS_PREF + prop] = PROPS_MAP[prop]?.default || '';
+}
+
 export class ImgBase extends BaseComponent {
+  cssInit$ = CSS_PROPS;
+
   /**
    * @param {String} key
    * @returns {any}
@@ -162,18 +169,6 @@ export class ImgBase extends BaseComponent {
       return `${w ? w : ''}x${h ? h : ''}`;
     } else {
       return null;
-    }
-  }
-
-  initCallback() {
-    for (let propKey in PROPS_MAP) {
-      let cssKey = CSS_PREF + propKey;
-      this.bindCssData(cssKey, false);
-      if (this.$$(propKey) === null && PROPS_MAP[propKey].hasOwnProperty('default')) {
-        this.set$$({
-          [propKey]: PROPS_MAP[propKey].default,
-        });
-      }
     }
   }
 

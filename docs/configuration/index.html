@@ -4,13 +4,251 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Configuration</title>
-    <script type="module" src="../../assets/js/app-shell.js"></script>
-    <link rel="stylesheet" href="../../assets/css/doc.css" />
+    <title>blocks</title>
+    <script async src="https://unpkg.com/es-module-shims@1.5.6/dist/es-module-shims.js"></script>
+    <script type="importmap">{
+  "imports": {
+    "@symbiotejs/symbiote": "//unpkg.com/@symbiotejs/symbiote@1.8.2/core/symbiote.js"
+  }
+}
+</script>
+    <script type="module" src="https://unpkg.com/@re4ma/re4ma@0.1.7/build/re4ma.js"></script>
+    <script type="module">
+      import { LiveHtml } from '../../blocks/LiveHtml/LiveHtml.js';
+      LiveHtml.reg('lr-live-html');
+    </script>
+    <script type="module">/** * @param{String}html * @returns{String}*/ export function colorCode(html){return html .replace(/&lt;/g,'<span -tag-arr->&lt;</span>') .replace(/&gt;/g,'<span -tag-arr->&gt;</span>') .split('="') .map((chunk)=>{return chunk.replace('"','</span>"');}) .join(`="<span -attr->`) .replace(/"/g,'<span -quote->"</span>') .replace(/=/g,'<span -equal->=</span>') .split('<span -tag-arr->&lt;</span>/') .join('<span -tag-arr->&lt;/</span>') .split('<span -tag-arr->&lt;</span>!--') .join('<span -comment->&lt;!--') .split('--<span -tag-arr->&gt;</span>') .join('--&gt;</span>') .split('<span -tag-arr->&lt;</span>style<span -tag-arr->&gt;</span>') .join('<span -tag-arr->&lt;</span>style<span -tag-arr->&gt;</span><span -style->') .split('<span -tag-arr->&lt;/</span>style<span -tag-arr->&gt;</span>') .join('</span><span -tag-arr->&lt;/</span>style<span -tag-arr->&gt;</span>');}let codeElements=[...document.querySelectorAll('code')];let tmpEl=document.createElement('div');codeElements.forEach((codeEl)=>{tmpEl.textContent=codeEl.innerHTML;codeEl.innerHTML=colorCode(tmpEl.textContent);});</script>
+    <style> @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap');:root{--clr-bg:rgb(31 29 29);--clr-font:rgb(224 253 255);--clr-link:rgb(253 255 139);--clr-panel:rgb(255 255 255 / 10%);--clr-accent:rgb(233 159 255);--clr-accent-shade:rgb(233 159 255 / 6%);--clr-code:#fff;--clr-code-hl:rgb(255 112 112);--gap-min:2px;--gap-mid:10px;--gap-max:20px;--gap-huge:60px;}html,body{margin:0;padding:0;color:var(--clr-font);font-family:Roboto,sans-serif;background-color:var(--clr-bg);}body{display:grid;grid-template-rows:min-content min-content auto min-content;min-height:100vh;}header{padding:20px;background-color:rgba(0,0,0,.4);}nav{--l-bg-clr:rgba(60,60,60,.9);--blur:6px;display:flex;justify-content:center;position:sticky;z-index:10000;top:0;background-color:var(--l-bg-clr);height:100%;}@supports ((-webkit-backdrop-filter:blur(var(--blur))) or (backdrop-filter:blur(var(--blur)))){nav{--l-bg-clr:rgba(255,255,255,.1);backdrop-filter:blur(var(--blur));-webkit-backdrop-filter:blur(var(--blur));}}nav > div{display:flex;justify-content:space-around;align-items:center;width:100%;max-width:1080px;}nav a{display:block;color:var(--clr-font);margin:20px;text-decoration:none;text-shadow:1px 1px 2px rgba(0,0,0,.6);}main{display:flex;justify-content:center;padding:20px;}col-css{display:block;max-width:1080px;width:100%;}footer{padding:20px;background-color:rgba(0,0,0,.2);}lr-live-html{min-height:400px;}main a{color:var(--clr-link);}code{display:block;background-color:#000;color:var(--clr-code);padding:var(--gap-max);overflow-x:auto;}code .hl{color:var(--clr-code-hl);}code:not([class]){display:inline-block;padding:var(--gap-min);padding-left:.5em;padding-right:.5em;}blockquote{display:block;color:var(--clr-accent);background-color:var(--clr-accent-shade);padding:var(--gap-mid);margin:0;margin-top:var(--gap-max);border-left:var(--gap-min) solid currentColor;}h1{color:var(--clr-accent);}h2{margin-top:calc(var(--gap-max) * 3);}li{margin-bottom:var(--gap-mid);}table{width:100%;}th{padding:10px;background:rgba(0,0,0,.4);}td{padding:10px;background:rgba(255,255,255,.1);}tr:hover{background:rgba(255,255,255,.1);}lr-live-html{display:grid;grid-template-columns:50% 50%;box-shadow:0 5px 16px rgb(0 0 0 / 60%);}lr-live-html [contenteditable]{padding:20px;overflow:auto;color:rgb(255 255 255);font-size:14px;font-family:monospace;white-space:pre;background-color:#000;outline:none;}lr-live-html [contenteditable] [-tag-arr-]{color:rgb(255 112 112);}lr-live-html [contenteditable] [-comment-]{color:aqua;font-style:italic;opacity:0.5;}lr-live-html [contenteditable] [-attr-]{color:rgb(152 197 255);}lr-live-html [contenteditable] [-quote-]{color:rgb(169 255 152);}lr-live-html [contenteditable] [-equal-]{color:rgb(255 152 241);}lr-live-html [contenteditable] [-style-]{color:rgb(255 207 152);}lr-live-html iframe{display:block;width:100%;height:100%;background-color:#fff;border:0;}lr-live-html{display:grid;grid-template-columns:50% 50%;box-shadow:0 5px 16px rgb(0 0 0 / 60%);}code{padding:20px;overflow:auto;color:rgb(255 255 255);font-size:14px;font-family:monospace;white-space:pre;background-color:#000;outline:none;}code [-tag-arr-]{color:rgb(255 112 112);}code [-comment-]{color:aqua;font-style:italic;opacity:0.5;}code [-attr-]{color:rgb(152 197 255);}code [-quote-]{color:rgb(169 255 152);}code [-equal-]{color:rgb(255 152 241);}code [-style-]{color:rgb(255 207 152);}lr-live-html iframe{display:block;width:100%;height:100%;background-color:#fff;border:0;}</style>
   </head>
   <body>
-    <app-shell base="../../">
-      <re-md src="./README.md"></re-md>
-    </app-shell>
+    <header>🟡 Uploadcare | blocks</header>
+    <nav>
+      <div>
+        <a href="../../">Home</a>
+        <a href="../../blocks/">Blocks</a>
+        <a href="../../solutions/">Solutions</a>
+        <a href="../../toc.html">TOC</a>
+        <a href="//github.com/uploadcare/uc-blocks/discussions">Discussions</a>
+      </div>
+    </nav>
+    <main>
+      <col-css><h1 id="configuration">Configuration</h1>
+<p>We use the Data-in-CSS approach to set configurations.</p>
+<p>This is the list of pre-defined parameters used by default in our uploader builds:</p>
+<pre><code class="language-css">:where(.lr-wgt-cfg, .lr-wgt-common),
+:host {
+  --cfg-pubkey: &#39;YOUR_PUBLIC_KEY&#39;;
+  --cfg-multiple: 1;
+  --cfg-multiple-min: 0;
+  --cfg-multiple-max: 0;
+
+  --cfg-confirm-upload: 1;
+  --cfg-img-only: 0;
+  --cfg-accept: &#39;&#39;;
+  --cfg-store: 1;
+  --cfg-camera-mirror: 1;
+  --cfg-source-list: &#39;local, url, camera, dropbox, gdrive, facebook&#39;;
+  --cfg-max-local-file-size-bytes: 0;
+  --cfg-thumb-size: 76;
+  --cfg-show-empty-list: 0;
+  --cfg-use-local-image-editor: 0;
+  --cfg-use-cloud-image-editor: 1;
+
+  --cfg-modal-scroll-lock: 1;
+  --cfg-modal-backdrop-strokes: 1;
+
+  --cfg-source-list-wrap: 1;
+
+  --cfg-init-activity: &#39;start-from&#39;;
+  --cfg-done-activity: &#39;start-from&#39;;
+
+  --cfg-data-output-console: 1;
+  --cfg-data-output-fire-events: 1;
+  --cfg-data-output-from: &#39;*dataOutput&#39;;
+  --cfg-data-output-form-value: 1;
+
+  --cfg-remote-tab-session-key: &#39;&#39;;
+  --cfg-cdn-cname: &#39;https://ucarecdn.com&#39;;
+  --cfg-secure-signature: &#39;&#39;;
+  --cfg-secure-expire: &#39;&#39;;
+  --cfg-secure-delivery-proxy: &#39;&#39;;
+  --cfg-retry-throttled-request-max-times: 1;
+  --cfg-multipart-min-file-size: 26214400; /* 25MB */
+  --cfg-multipart-chunk-size: 5242880; /* 5MB */
+  --cfg-max-concurrent-requests: 4;
+  --cfg-multipart-max-attempts: 3;
+  --cfg-check-for-url-duplicates: 0;
+  --cfg-save-url-for-recurrent-uploads: 0;
+
+  --cfg-group-output: 0;
+}
+</code></pre>
+<p>As you can see, all properties are grouped for the set of selectors:</p>
+<ul>
+<li><code>.lr-wgt-cfg</code> - specific selector for the configuration section in common CSS</li>
+<li><code>.lr-wgt-common</code> - common class for all types of settings and CSS data</li>
+<li><code>:host</code> - Shadow DOM root element selector (used when Shadow DOM is enabled)</li>
+</ul>
+<p>The variable value should be a correct JSON value. Strings should be taken in quotes. We use the 1 or 0 numbers to define boolean flags.</p>
+<p>Any configuration value can be defined and redefined at any level of the DOM tree regarding CSS selector specificity.</p>
+<h2 id="parameters-description">Parameters description</h2>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Description</th>
+<th align="center">Values</th>
+<th align="center">Default</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>--cfg-pubkey</code></td>
+<td>Your project Public Key</td>
+<td align="center"><code>&#39;demopublickey&#39;</code></td>
+<td align="center">none</td>
+</tr>
+<tr>
+<td><code>--cfg-multiple</code></td>
+<td>Allow to upload multiple files</td>
+<td align="center"><code>1</code> or <code>0</code></td>
+<td align="center"><code>1</code></td>
+</tr>
+<tr>
+<td><code>--cfg-multiple-min</code></td>
+<td>Minimum number of files that can be selected.</td>
+<td align="center">number</td>
+<td align="center">none</td>
+</tr>
+<tr>
+<td><code>--cfg-multiple-max</code></td>
+<td>Maximum number of files that can be selected.</td>
+<td align="center">number</td>
+<td align="center">none</td>
+</tr>
+<tr>
+<td><code>--cfg-confirm-upload</code></td>
+<td>Enables user confirmation for upload starting</td>
+<td align="center"><code>1</code> or <code>0</code></td>
+<td align="center"><code>1</code></td>
+</tr>
+<tr>
+<td><code>--cfg-img-only</code></td>
+<td>Accept images only</td>
+<td align="center"><code>1</code> or <code>0</code></td>
+<td align="center"><code>0</code></td>
+</tr>
+<tr>
+<td><code>--cfg-accept</code></td>
+<td>Native file input accept attribute value</td>
+<td align="center"><code>&#39;image/*&#39;</code></td>
+<td align="center">none</td>
+</tr>
+<tr>
+<td><code>--cfg-store</code></td>
+<td>Store files</td>
+<td align="center"><code>1</code> or <code>0</code></td>
+<td align="center">-</td>
+</tr>
+<tr>
+<td><code>--cfg-camera-mirror</code></td>
+<td>Flip camera image</td>
+<td align="center"><code>1</code> or <code>0</code></td>
+<td align="center"><code>0</code></td>
+</tr>
+<tr>
+<td><code>--cfg-source-list</code></td>
+<td>Comma-separated list of file sources. See <a href="./source-list/">here</a> for details</td>
+<td align="center"><code>&#39;local, url, camera&#39;</code></td>
+<td align="center">none</td>
+</tr>
+<tr>
+<td><code>--cfg-max-local-file-size-bytes</code></td>
+<td>Maximum file size in bytes</td>
+<td align="center">-</td>
+<td align="center">none</td>
+</tr>
+<tr>
+<td><code>--cfg-thumb-size</code></td>
+<td>Image thumbnail size</td>
+<td align="center"><code>76</code></td>
+<td align="center"><code>76</code></td>
+</tr>
+<tr>
+<td><code>--cfg-show-empty-list</code></td>
+<td>Show uploads list when it&#39;s empty</td>
+<td align="center"><code>1</code> or <code>0</code></td>
+<td align="center"><code>0</code></td>
+</tr>
+<tr>
+<td><code>--cfg-use-local-image-editor</code></td>
+<td>Enable local image editing</td>
+<td align="center"><code>1</code> or <code>0</code></td>
+<td align="center"><code>0</code></td>
+</tr>
+<tr>
+<td><code>--cfg-use-cloud-image-editor</code></td>
+<td>Enable cloud image editing</td>
+<td align="center"><code>1</code> or <code>0</code></td>
+<td align="center"><code>0</code></td>
+</tr>
+<tr>
+<td><code>--cfg-remote-tab-session-key</code></td>
+<td>Key to revoke Custom OAuth access. See <a href="https://uploadcare.com/docs/start/settings/#project-settings-advanced-oauth">docs</a> for details</td>
+<td align="center">string</td>
+<td align="center">none</td>
+</tr>
+<tr>
+<td><code>--cfg-cdn-cname</code></td>
+<td>Set Custom CNAME. See <a href="https://uploadcare.com/docs/delivery/cdn/#custom-cdn-cname">docs</a> for details</td>
+<td align="center">string</td>
+<td align="center"><code>https://ucarecdn.com</code></td>
+</tr>
+<tr>
+<td><code>--cfg-secure-signature</code></td>
+<td>Set <code>signature</code> for Secure Uploads. See <a href="https://uploadcare.com/docs/security/secure-uploads/#expire-explained">docs</a> for details</td>
+<td align="center">string</td>
+<td align="center">none</td>
+</tr>
+<tr>
+<td><code>--cfg-secure-expire</code></td>
+<td>Set <code>expire</code> for Secure Uploads. See <a href="https://uploadcare.com/docs/security/secure-uploads/#expire-explained">docs</a> for details</td>
+<td align="center">string</td>
+<td align="center">none</td>
+</tr>
+<tr>
+<td><code>--cfg-secure-delivery-proxy</code></td>
+<td>Set proxy URL template for Secure Delivery. See <a href="./secure-delivery-proxy/">here</a> for details</td>
+<td align="center">string</td>
+<td align="center">none</td>
+</tr>
+<tr>
+<td><code>--cfg-group-output</code></td>
+<td>Enables files group creation</td>
+<td align="center"><code>0</code></td>
+<td align="center"><code>0</code></td>
+</tr>
+</tbody></table>
+<h2 id="custom-configurations">Custom configurations</h2>
+<p>You can create your own custom parameters and values for your custom blocks:</p>
+<pre><code class="language-css">.my-custom-config {
+  --cfg-my-custom-property: &#39;SOME VALUE&#39;;
+}
+</code></pre>
+<p>Then you can read it in your upload-block:</p>
+<pre><code class="language-javascript">import { BlockComponent } from &#39;upload-blocks/BlockComponent/BlockComponent.js&#39;;
+
+class MyBlock extends BlockComponent {
+  initCallback() {
+    let statePropName = this.bindCssData(&#39;--cfg-my-custom-property&#39;);
+    // ^ this will return &#39;*--cfg-my-custom-property&#39;
+    this.sub(statePropName, (val) =&gt; {
+      console.log(val);
+    });
+  }
+}
+</code></pre>
+</col-css>
+    </main>
+    <footer>© 2022 🦆</footer>
   </body>
 </html>

@@ -3,7 +3,7 @@
 > Universal web component for the efficient image representation on any page.
 > It generates a set of URLs for the initial image source with the desired parameters.
 
-<re-htm src="./demo.snippet.htm"><re-htm>
+<re-htm src="./demo.htm"></re-htm>
 
 ## Solution benefits
 

@@ -19,7 +19,7 @@ import { viewerImageSrc } from './util.js';
  *   '*imgContainerEl': HTMLElement;
  *   '*networkProblems': Boolean;
  *   '*imageSize': import('./types.js').ImageSize;
- *   entry: import('../../../submodules/symbiote/core/symbiote.js').TypedData;
+ *   entry: import('@symbiotejs/symbiote').TypedData;
  *   extension: String;
  *   editorMode: Boolean;
  *   modalCaption: String;
@@ -107,12 +107,12 @@ export class CloudEditor extends Block {
     });
   }
 
+  cssInit$ = {
+    '--cfg-cdn-cname': 'https://ucarecdn.com',
+  };
+
   async initCallback() {
-    super.initCallback();
-
-    this.bindCssData('--cfg-cdn-cname');
-
-    this.$['*originalUrl'] = createOriginalUrl(this.$['*--cfg-cdn-cname'], this.$.uuid);
+    this.$['*originalUrl'] = createOriginalUrl(this.localCtx.read('--cfg-cdn-cname'), this.$.uuid);
 
     this.$['*faderEl'] = this.ref['fader-el'];
     this.$['*cropperEl'] = this.ref['cropper-el'];

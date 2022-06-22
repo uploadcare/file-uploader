@@ -27,7 +27,7 @@ export class CloudImageEditor extends Block {
       }
     });
 
-    this.sub('*focusedEntry', (/** @type {import('../../submodules/symbiote/core/symbiote.js').TypedData} */ entry) => {
+    this.sub('*focusedEntry', (/** @type {import('@symbiotejs/symbiote').TypedData} */ entry) => {
       if (!entry) {
         return;
       }
@@ -60,7 +60,7 @@ export class CloudImageEditor extends Block {
     let instance = new CloudEditor();
     instance.classList.add('lr-cldtr-common');
     let uuid = this.$.uuid;
-    // let publicKey = this.$['*--cfg-pubkey'];
+    // let publicKey = this.getCssData('--cfg-pubkey');
     instance.setAttribute('uuid', uuid);
     // instance.setAttribute('public-key', publicKey);
 
