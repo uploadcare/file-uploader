@@ -29,6 +29,7 @@ if (!DOC_READY) {
  *   '*outputData': unknown[] | null;
  *   '*focusedEntry': unknown | null;
  *   '*uploadCollection': TypedCollection;
+ *   '*uploadMetadata': import('../submodules/upload-client/upload-client.js').Metadata;
  *   [key: String]: unknown;
  * }} BlockState
  */
@@ -147,6 +148,7 @@ export class Block extends BaseComponent {
             '*uploadList': [],
             '*outputData': null,
             '*focusedEntry': null,
+            '*uploadMetadata': null,
           })
         );
         Block._ctxConnectionsList.push(this.ctxName);
@@ -154,6 +156,10 @@ export class Block extends BaseComponent {
       this.$['*ctxTargetsRegistry'].add(this.constructor['is']);
 
       super.connectedCallback();
+
+      if (this.__initialUploadMetadata) {
+        this.$['*uploadMetadata'] = this.__initialUploadMetadata;
+      }
 
       if (this.hasAttribute('current-activity')) {
         this.sub('*currentActivity', (/** @type {String} */ val) => {
@@ -436,6 +442,7 @@ export class Block extends BaseComponent {
       multipartMaxAttempts: this.getCssData('--cfg-multipart-max-attempts'),
       checkForUrlDuplicates: !!this.getCssData('--cfg-check-for-url-duplicates'),
       saveUrlForRecurrentUploads: !!this.getCssData('--cfg-save-url-for-recurrent-uploads'),
+      metadata: this.$['*uploadMetadata'],
     };
 
     console.log('Upload client options:', options);
@@ -459,6 +466,27 @@ export class Block extends BaseComponent {
       data.push(outputItem);
     });
     this.$['*outputData'] = data;
+  }
+
+  /** @private */
+  __initialUploadMetadata = null;
+
+  /**
+   * This is Public JS API method. Could be called before block initialization, so we need to delay state interactions
+   * until block init.
+   *
+   * TODO: If we add more public methods, it is better to use the single queue instead of tonns of private fields per
+   * each method. See https://github.com/uploadcare/uc-blocks/pull/162/
+   *
+   * @param {import('../submodules/upload-client/upload-client.js').Metadata} metadata
+   * @public
+   */
+  setUploadMetadata(metadata) {
+    if (!this.__connectedOnce) {
+      this.__initialUploadMetadata = metadata;
+    } else {
+      this.$['*uploadMetadata'] = metadata;
+    }
   }
 
   destroyCallback() {
