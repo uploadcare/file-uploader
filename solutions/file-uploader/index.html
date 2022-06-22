@@ -4,13 +4,188 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>lr-uploader</title>
-    <link rel="stylesheet" href="../../assets/css/doc.css" />
-    <script type="module" src="../../assets/js/app-shell.js"></script>
+    <title>blocks</title>
+    <script async src="https://unpkg.com/es-module-shims@1.5.6/dist/es-module-shims.js"></script>
+    <script type="importmap">{
+  "imports": {
+    "@symbiotejs/symbiote": "//unpkg.com/@symbiotejs/symbiote@1.8.2/core/symbiote.js"
+  }
+}
+</script>
+    <script type="module" src="https://unpkg.com/@re4ma/re4ma@0.1.7/build/re4ma.js"></script>
+    <script type="module">
+      import { LiveHtml } from '../../blocks/LiveHtml/LiveHtml.js';
+      LiveHtml.reg('lr-live-html');
+    </script>
+    <script type="module">/** * @param{String}html * @returns{String}*/ export function colorCode(html){return html .replace(/&lt;/g,'<span -tag-arr->&lt;</span>') .replace(/&gt;/g,'<span -tag-arr->&gt;</span>') .split('="') .map((chunk)=>{return chunk.replace('"','</span>"');}) .join(`="<span -attr->`) .replace(/"/g,'<span -quote->"</span>') .replace(/=/g,'<span -equal->=</span>') .split('<span -tag-arr->&lt;</span>/') .join('<span -tag-arr->&lt;/</span>') .split('<span -tag-arr->&lt;</span>!--') .join('<span -comment->&lt;!--') .split('--<span -tag-arr->&gt;</span>') .join('--&gt;</span>') .split('<span -tag-arr->&lt;</span>style<span -tag-arr->&gt;</span>') .join('<span -tag-arr->&lt;</span>style<span -tag-arr->&gt;</span><span -style->') .split('<span -tag-arr->&lt;/</span>style<span -tag-arr->&gt;</span>') .join('</span><span -tag-arr->&lt;/</span>style<span -tag-arr->&gt;</span>');}let codeElements=[...document.querySelectorAll('code')];let tmpEl=document.createElement('div');codeElements.forEach((codeEl)=>{tmpEl.textContent=codeEl.innerHTML;codeEl.innerHTML=colorCode(tmpEl.textContent);});</script>
+    <style> @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap');:root{--clr-bg:rgb(31 29 29);--clr-font:rgb(224 253 255);--clr-link:rgb(253 255 139);--clr-panel:rgb(255 255 255 / 10%);--clr-accent:rgb(233 159 255);--clr-accent-shade:rgb(233 159 255 / 6%);--clr-code:#fff;--clr-code-hl:rgb(255 112 112);--gap-min:2px;--gap-mid:10px;--gap-max:20px;--gap-huge:60px;}html,body{margin:0;padding:0;color:var(--clr-font);font-family:Roboto,sans-serif;background-color:var(--clr-bg);}body{display:grid;grid-template-rows:min-content min-content auto min-content;min-height:100vh;}header{padding:20px;background-color:rgba(0,0,0,.4);}nav{--l-bg-clr:rgba(60,60,60,.9);--blur:6px;display:flex;justify-content:center;position:sticky;z-index:10000;top:0;background-color:var(--l-bg-clr);height:100%;}@supports ((-webkit-backdrop-filter:blur(var(--blur))) or (backdrop-filter:blur(var(--blur)))){nav{--l-bg-clr:rgba(255,255,255,.1);backdrop-filter:blur(var(--blur));-webkit-backdrop-filter:blur(var(--blur));}}nav > div{display:flex;justify-content:space-around;align-items:center;width:100%;max-width:1080px;}nav a{display:block;color:var(--clr-font);margin:20px;text-decoration:none;text-shadow:1px 1px 2px rgba(0,0,0,.6);}main{display:flex;justify-content:center;padding:20px;}col-css{display:block;max-width:1080px;width:100%;}footer{padding:20px;background-color:rgba(0,0,0,.2);}lr-live-html{min-height:400px;}main a{color:var(--clr-link);}code{display:block;background-color:#000;color:var(--clr-code);padding:var(--gap-max);overflow-x:auto;}code .hl{color:var(--clr-code-hl);}code:not([class]){display:inline-block;padding:var(--gap-min);padding-left:.5em;padding-right:.5em;}blockquote{display:block;color:var(--clr-accent);background-color:var(--clr-accent-shade);padding:var(--gap-mid);margin:0;margin-top:var(--gap-max);border-left:var(--gap-min) solid currentColor;}h1{color:var(--clr-accent);}h2{margin-top:calc(var(--gap-max) * 3);}li{margin-bottom:var(--gap-mid);}table{width:100%;}th{padding:10px;background:rgba(0,0,0,.4);}td{padding:10px;background:rgba(255,255,255,.1);}tr:hover{background:rgba(255,255,255,.1);}lr-live-html{display:grid;grid-template-columns:50% 50%;box-shadow:0 5px 16px rgb(0 0 0 / 60%);}lr-live-html [contenteditable]{padding:20px;overflow:auto;color:rgb(255 255 255);font-size:14px;font-family:monospace;white-space:pre;background-color:#000;outline:none;}lr-live-html [contenteditable] [-tag-arr-]{color:rgb(255 112 112);}lr-live-html [contenteditable] [-comment-]{color:aqua;font-style:italic;opacity:0.5;}lr-live-html [contenteditable] [-attr-]{color:rgb(152 197 255);}lr-live-html [contenteditable] [-quote-]{color:rgb(169 255 152);}lr-live-html [contenteditable] [-equal-]{color:rgb(255 152 241);}lr-live-html [contenteditable] [-style-]{color:rgb(255 207 152);}lr-live-html iframe{display:block;width:100%;height:100%;background-color:#fff;border:0;}lr-live-html{display:grid;grid-template-columns:50% 50%;box-shadow:0 5px 16px rgb(0 0 0 / 60%);}code{padding:20px;overflow:auto;color:rgb(255 255 255);font-size:14px;font-family:monospace;white-space:pre;background-color:#000;outline:none;}code [-tag-arr-]{color:rgb(255 112 112);}code [-comment-]{color:aqua;font-style:italic;opacity:0.5;}code [-attr-]{color:rgb(152 197 255);}code [-quote-]{color:rgb(169 255 152);}code [-equal-]{color:rgb(255 152 241);}code [-style-]{color:rgb(255 207 152);}lr-live-html iframe{display:block;width:100%;height:100%;background-color:#fff;border:0;}</style>
   </head>
   <body>
-    <app-shell base="../../">
-      <re-md src="./README.md"></re-md>
-    </app-shell>
+    <header>🟡 Uploadcare | blocks</header>
+    <nav>
+      <div>
+        <a href="../../">Home</a>
+        <a href="../../blocks/">Blocks</a>
+        <a href="../../solutions/">Solutions</a>
+        <a href="../../toc.html">TOC</a>
+        <a href="//github.com/uploadcare/uc-blocks/discussions">Discussions</a>
+      </div>
+    </nav>
+    <main>
+      <col-css><h1 id="lr-uploader">lr-uploader</h1>
+<p>Here you can find the set of ready-made uploaders for the most frequent file uploading cases.
+Each uploader is highly customizable on its own and could be used as a custom build reference, but you can use it as is.</p>
+<p>Uploader builds list:</p>
+<ul>
+<li><a href="./regular/">Regular case</a> - the most common solution.</li>
+<li><a href="./inline/">Inline case</a> - no modals, could be used just in place.</li>
+<li><a href="./minimal/">Minimal case</a> - minimal and compact.</li>
+</ul>
+<p><re-htm src="../../assets/htm/regular-uploader-solution-demo.htm"></re-htm></p>
+<h2 id="💎-solution-benefits">💎 Solution benefits</h2>
+<ul>
+<li>No heavy dependencies.</li>
+<li>Uniform and seamless integration flow for all major web development stacks.</li>
+<li>CSP (Content Security Policy) compatible: no <code>unsafe-inline</code> flags for the CSS or JavaScript are needed.</li>
+<li>Modern and efficient technologies under the hood.</li>
+<li>Multiple file source (local, any external URL, cloud services, and social networks) support.</li>
+<li>Open source (MIT license).</li>
+<li>Built with love ❤️</li>
+</ul>
+<h3 id="supported-browsers">Supported browsers</h3>
+<p>Uploader is supported in all major modern <a href="https://github.com/uploadcare/jsdk#supported-browsers">browsers</a>.</p>
+<p><a href="https://uploadcare.com/blog/uploadcare-stops-internet-explorer-support/">Internet Explorer</a> is outdated and not supported anymore.</p>
+<h2 id="⚙️-integration">⚙️ Integration</h2>
+<h3 id="cdn-version">CDN version</h3>
+<p>Connect script:</p>
+<pre><code class="language-html">&lt;script src=&quot;https://unpkg.com/@uploadcare/uc-blocks@latest/web/file-uploader-regular.min.js&quot; type=&quot;module&quot;&gt;&lt;/script&gt;
+</code></pre>
+<h3 id="npm-package">npm package</h3>
+<p>Install package: <code>npm i @uploadcare/uc-blocks</code></p>
+<p>Then you can use <code>Uploader</code>-element class for your purposes:</p>
+<pre><code class="language-javascript">import * as LR from &#39;@uploadcare/uc-blocks&#39;;
+
+LR.registerBlocks(LR);
+
+document.body.appendChild(new LR.FileUploaderRegular());
+</code></pre>
+<h3 id="application-markup">Application markup</h3>
+<p>After connection, use the <code>&lt;lr-uploader&gt;</code> tag in your application markup:</p>
+<pre><code class="language-html">&lt;lr-uploader&gt;&lt;/lr-uploader&gt;
+</code></pre>
+<p>Note that all configurations, localization texts, icons, and styling are placed into CSS file, so you should connect the default one (or create your own):</p>
+<pre><code class="language-html">&lt;style&gt;
+  @import url(https://unpkg.com/@uploadcare/uc-blocks@latest/web/file-uploader-regular.min.css);
+  .my-settings {
+    --ctx-name: &#39;my-uploader&#39;;
+    --cfg-pubkey: &#39;demopublickey&#39;;
+  }
+&lt;/style&gt;
+
+&lt;lr-uploader class=&quot;my-settings lr-wgt-common&quot;&gt; &lt;/lr-uploader&gt;
+</code></pre>
+<ul>
+<li><code>lr-wgt-common</code> - is a pre-defined common CSS class containing all basic uploader parameters.</li>
+</ul>
+<h3 id="shadow-dom">Shadow DOM</h3>
+<p>If you need additional isolation and styling security levels, you can get it with Shadow DOM.
+To enable it and encapsulate all styles into separated scope, use the <code>css-src</code> attribute:</p>
+<pre><code class="language-html">&lt;lr-uploader css-src=&quot;https://unpkg.com/@uploadcare/uc-blocks@latest/web/file-uploader-regular.min.css&quot;&gt; &lt;/lr-uploader&gt;
+</code></pre>
+<h3 id="custom-tags-naming-convention">Custom tags naming convention</h3>
+<p>By design, all custom elements should have a dash symbol (<code>-</code>) in their names.
+All custom tags used in uploader are prefixed with the <code>lr-</code> part.</p>
+<p>Examples:</p>
+<pre><code class="language-html">...
+&lt;lr-icon&gt;&lt;/lr-icon&gt;
+...
+&lt;lr-button&gt;&lt;/lr-button&gt;
+...
+&lt;lr-whatever&gt;&lt;/lr-whatever&gt;
+...
+</code></pre>
+<p>So, to exclude naming collisions, use the other prefixes for your own custom elements.</p>
+<p>Examples:</p>
+<pre><code class="language-html">...
+&lt;my-own-icon&gt;&lt;/my-own-icon&gt;
+...
+&lt;my-own-button&gt;&lt;/my-own-button&gt;
+...
+&lt;my-own-whatever&gt;&lt;/my-own-whatever&gt;
+...
+</code></pre>
+<h2 id="🛠-configuration">🛠 Configuration</h2>
+<p>There are two major parameters you should know about first of all:</p>
+<ol>
+<li>Your Uploadcare project public key: <code>--cfg-pubkey: &#39;YOUR_PUBLIC_KEY&#39;;</code>.</li>
+<li>Workflow context name: <code>--ctx-name: &#39;CONTEXT_NAME&#39;;</code>.</li>
+</ol>
+<h3 id="public-key">Public key</h3>
+<p>You should obtain a Public API Key in your <a href="https://app.uploadcare.com/projects/-/api-keys/">Uploadcare project&#39;s dashboard</a> to use file uploading features.</p>
+<p>For demo-only purposes, you can use <code>demopublickey</code> instead.</p>
+<h3 id="context-name">Context name</h3>
+<p>Our concept of workflow contexts is very similar to native HTML <code>name</code> attributes for the &quot;radio&quot; inputs.
+When you use the same names, elements act in one common context.
+In the case of &quot;radio&quot; inputs, all elements in the same context will know the state of the others (and you can make only one possible selection).</p>
+<p>In the case of uploader, you can also set the context with a <code>ctx-name</code> attribute or <code>--ctx-name</code> custom CSS property.
+That helps to create the link between each uploader instance and its internal or external entities.
+By default, context will be created automatically, but if you need to bind uploader to some other workflow, you can use the following approach:</p>
+<pre><code class="language-html">...
+&lt;lr-uploader ctx-name=&quot;my-uploading-workflow&quot;&gt;&lt;/lr-uploader&gt;
+...
+&lt;lr-data-output ctx-name=&quot;my-uploading-workflow&quot;&gt;&lt;/lr-data-output&gt;
+...
+</code></pre>
+<p>For more information, please visit <a href="https://symbiotejs.org/?context">&quot;context&quot; section</a> in Symbiote.js documentation.</p>
+<h3 id="css-custom-properties">CSS custom properties</h3>
+<p>All configurations could be provided via the set of <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/Using_CSS_custom_properties">CSS-variables</a>:</p>
+<pre><code class="language-css">.my-settings {
+  --cfg-pubkey: &#39;demopublickey&#39;;
+  --cfg-multiple: 1;
+  --cfg-img-only: 0;
+  --cfg-source-list: &#39;local, url, camera, dropbox, gdrive, facebook&#39;;
+  ...;
+}
+</code></pre>
+<p>The variable value should be a correct JSON value. Strings should be taken in quotes. We use the <code>1</code> or <code>0</code> numbers to define boolean flags.</p>
+<p>Any configuration value can be defined and redefined at any DOM-tree level regarding CSS selector specificity.</p>
+<p>More details about configuration parameters you can find <a href="../../docs/configuration/">here</a>.</p>
+<h2 id="🎀-styling">🎀 Styling</h2>
+<p>For the look &amp; feel customization, you can use the &quot;Elements&quot; section in your browser developer tools panel.
+It&#39;s easy to find any uploader inner components and their contents because they have custom tag names.
+You don&#39;t need any specific tools, unlike with such libraries as React.
+Those tag names could be used as convenient CSS selectors.</p>
+<p>There are three major levels of possible styling customizations:</p>
+<ol>
+<li>Light and dark theme flag: <code>--darkmode:1;</code> (enabled) or <code>--darkmode:0;</code> (disabled).</li>
+<li>The set of basic CSS variables used for the other styling calculations.</li>
+<li>Custom CSS rules for each element.</li>
+</ol>
+<p>For more details, please follow this <a href="../../blocks/themes/lr-basic/">guide</a>.</p>
+<h2 id="🟢-csp-settings">🟢 CSP settings</h2>
+<p>If the application works with sensitive user data, such as personal photos, it is recommended to increase its security with <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP">CSP settings</a>. Uploader is using <code>Blob</code> URLs for on-the-flight generated images and the stylesheets in some cases, so don&#39;t forget to add <code>blob:</code> source into the CSP settings:</p>
+<pre><code class="language-html">&lt;meta
+  http-equiv=&quot;Content-Security-Policy&quot;
+  content=&quot;style-src &#39;self&#39; blob:; script-src &#39;self&#39;; img-src &#39;self&#39; https://ucarecdn.com blob:;&quot;
+/&gt;
+</code></pre>
+<h2 id="📤-data-output">📤 Data output</h2>
+<p>We provide the dedicated block for the data output purposes - <code>&lt;lr-data-output&gt;</code>.
+This Custom Element can be connected to some workflow context and provide you with convenient data access.</p>
+<p>Here is the code example:</p>
+<pre><code class="language-html">&lt;lr-data-output console fire-events item-template=&quot;&lt;img src=&#39;https://ucarecdn.com/{{uuid}}/-/preview/&#39; /&gt;&quot;&gt;
+&lt;/lr-data-output&gt;
+</code></pre>
+<p>Let&#39;s walk through its attributes:</p>
+<ul>
+<li><code>console</code> - this flag lets you enable browser console output without modifying the source code.</li>
+<li><code>fire-events</code> - this flag enables custom events (<code>data-output</code>) dispatching for the DOM element. These events contain all uploading data and could be processed at any level of your application.</li>
+<li><code>from</code> - data output could be connected to any field in the workflow context. You can specify the certain one. By default, it is a <code>*dataOutput</code>; you can skip this setting for the default uploading case.</li>
+<li><code>item-template</code> - uploading results could be rendered as a list of nested DOM elements. You can specify a simple template for that.</li>
+<li><code>form-value</code> - could be used to handle HTML-forms.</li>
+</ul>
+</col-css>
+    </main>
+    <footer>© 2022 🦆</footer>
   </body>
 </html>

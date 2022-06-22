@@ -5,12 +5,109 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>blocks</title>
-    <link rel="stylesheet" href="./assets/css/doc.css" />
-    <script type="module" src="./assets/js/app-shell.js"></script>
+    <script async src="https://unpkg.com/es-module-shims@1.5.6/dist/es-module-shims.js"></script>
+    <script type="importmap">{
+  "imports": {
+    "@symbiotejs/symbiote": "//unpkg.com/@symbiotejs/symbiote@1.8.2/core/symbiote.js"
+  }
+}
+</script>
+    <script type="module" src="https://unpkg.com/@re4ma/re4ma@0.1.7/build/re4ma.js"></script>
+    <script type="module">
+      import { LiveHtml } from './blocks/LiveHtml/LiveHtml.js';
+      LiveHtml.reg('lr-live-html');
+    </script>
+    <script type="module">/** * @param{String}html * @returns{String}*/ export function colorCode(html){return html .replace(/&lt;/g,'<span -tag-arr->&lt;</span>') .replace(/&gt;/g,'<span -tag-arr->&gt;</span>') .split('="') .map((chunk)=>{return chunk.replace('"','</span>"');}) .join(`="<span -attr->`) .replace(/"/g,'<span -quote->"</span>') .replace(/=/g,'<span -equal->=</span>') .split('<span -tag-arr->&lt;</span>/') .join('<span -tag-arr->&lt;/</span>') .split('<span -tag-arr->&lt;</span>!--') .join('<span -comment->&lt;!--') .split('--<span -tag-arr->&gt;</span>') .join('--&gt;</span>') .split('<span -tag-arr->&lt;</span>style<span -tag-arr->&gt;</span>') .join('<span -tag-arr->&lt;</span>style<span -tag-arr->&gt;</span><span -style->') .split('<span -tag-arr->&lt;/</span>style<span -tag-arr->&gt;</span>') .join('</span><span -tag-arr->&lt;/</span>style<span -tag-arr->&gt;</span>');}let codeElements=[...document.querySelectorAll('code')];let tmpEl=document.createElement('div');codeElements.forEach((codeEl)=>{tmpEl.textContent=codeEl.innerHTML;codeEl.innerHTML=colorCode(tmpEl.textContent);});</script>
+    <style> @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap');:root{--clr-bg:rgb(31 29 29);--clr-font:rgb(224 253 255);--clr-link:rgb(253 255 139);--clr-panel:rgb(255 255 255 / 10%);--clr-accent:rgb(233 159 255);--clr-accent-shade:rgb(233 159 255 / 6%);--clr-code:#fff;--clr-code-hl:rgb(255 112 112);--gap-min:2px;--gap-mid:10px;--gap-max:20px;--gap-huge:60px;}html,body{margin:0;padding:0;color:var(--clr-font);font-family:Roboto,sans-serif;background-color:var(--clr-bg);}body{display:grid;grid-template-rows:min-content min-content auto min-content;min-height:100vh;}header{padding:20px;background-color:rgba(0,0,0,.4);}nav{--l-bg-clr:rgba(60,60,60,.9);--blur:6px;display:flex;justify-content:center;position:sticky;z-index:10000;top:0;background-color:var(--l-bg-clr);height:100%;}@supports ((-webkit-backdrop-filter:blur(var(--blur))) or (backdrop-filter:blur(var(--blur)))){nav{--l-bg-clr:rgba(255,255,255,.1);backdrop-filter:blur(var(--blur));-webkit-backdrop-filter:blur(var(--blur));}}nav > div{display:flex;justify-content:space-around;align-items:center;width:100%;max-width:1080px;}nav a{display:block;color:var(--clr-font);margin:20px;text-decoration:none;text-shadow:1px 1px 2px rgba(0,0,0,.6);}main{display:flex;justify-content:center;padding:20px;}col-css{display:block;max-width:1080px;width:100%;}footer{padding:20px;background-color:rgba(0,0,0,.2);}lr-live-html{min-height:400px;}main a{color:var(--clr-link);}code{display:block;background-color:#000;color:var(--clr-code);padding:var(--gap-max);overflow-x:auto;}code .hl{color:var(--clr-code-hl);}code:not([class]){display:inline-block;padding:var(--gap-min);padding-left:.5em;padding-right:.5em;}blockquote{display:block;color:var(--clr-accent);background-color:var(--clr-accent-shade);padding:var(--gap-mid);margin:0;margin-top:var(--gap-max);border-left:var(--gap-min) solid currentColor;}h1{color:var(--clr-accent);}h2{margin-top:calc(var(--gap-max) * 3);}li{margin-bottom:var(--gap-mid);}table{width:100%;}th{padding:10px;background:rgba(0,0,0,.4);}td{padding:10px;background:rgba(255,255,255,.1);}tr:hover{background:rgba(255,255,255,.1);}lr-live-html{display:grid;grid-template-columns:50% 50%;box-shadow:0 5px 16px rgb(0 0 0 / 60%);}lr-live-html [contenteditable]{padding:20px;overflow:auto;color:rgb(255 255 255);font-size:14px;font-family:monospace;white-space:pre;background-color:#000;outline:none;}lr-live-html [contenteditable] [-tag-arr-]{color:rgb(255 112 112);}lr-live-html [contenteditable] [-comment-]{color:aqua;font-style:italic;opacity:0.5;}lr-live-html [contenteditable] [-attr-]{color:rgb(152 197 255);}lr-live-html [contenteditable] [-quote-]{color:rgb(169 255 152);}lr-live-html [contenteditable] [-equal-]{color:rgb(255 152 241);}lr-live-html [contenteditable] [-style-]{color:rgb(255 207 152);}lr-live-html iframe{display:block;width:100%;height:100%;background-color:#fff;border:0;}lr-live-html{display:grid;grid-template-columns:50% 50%;box-shadow:0 5px 16px rgb(0 0 0 / 60%);}code{padding:20px;overflow:auto;color:rgb(255 255 255);font-size:14px;font-family:monospace;white-space:pre;background-color:#000;outline:none;}code [-tag-arr-]{color:rgb(255 112 112);}code [-comment-]{color:aqua;font-style:italic;opacity:0.5;}code [-attr-]{color:rgb(152 197 255);}code [-quote-]{color:rgb(169 255 152);}code [-equal-]{color:rgb(255 152 241);}code [-style-]{color:rgb(255 207 152);}lr-live-html iframe{display:block;width:100%;height:100%;background-color:#fff;border:0;}</style>
   </head>
-  <body unresolved>
-    <app-shell base="./">
-      <re-md src="./TOC.md"></re-md>
-    </app-shell>
+  <body>
+    <header>🟡 Uploadcare | blocks</header>
+    <nav>
+      <div>
+        <a href="./">Home</a>
+        <a href="./blocks/">Blocks</a>
+        <a href="./solutions/">Solutions</a>
+        <a href="./toc.html">TOC</a>
+        <a href="//github.com/uploadcare/uc-blocks/discussions">Discussions</a>
+      </div>
+    </nav>
+    <main>
+      <col-css><h1 id="table-of-contents">Table of contents</h1>
+<ul>
+<li><p><a href="./">blocks</a> - repository root</p>
+<ul>
+<li><p><a href="./solutions/">solutions</a> - ready made solutions</p>
+<ul>
+<li><p><a href="./solutions/file-uploader/">uploader</a> - uploader implementations for the most frequent cases</p>
+<ul>
+<li><a href="./solutions/file-uploader/regular/">regular</a> - overall case</li>
+<li><a href="./solutions/file-uploader/inline/">inline</a> - without modal</li>
+<li><a href="./solutions/file-uploader/minimal/">minimal</a> - minimal and compact</li>
+</ul>
+</li>
+<li><p><a href="./solutions/adaptive-image/">adaptive-image</a> - efficient image rendering automation</p>
+</li>
+<li><p><a href="./solutions/cloud-image-editor/">cloud-image-editor</a> - rich UI for CDN transformations API</p>
+</li>
+</ul>
+</li>
+<li><p><a href="./blocks/">blocks</a> - building blocks for the custom integrations</p>
+<ul>
+<li><p>docs:</p>
+<ul>
+<li><a href="./docs/configuration/">Configuration</a> - common settings</li>
+<li><a href="./docs/texts/">Texts &amp; localization</a> - custom texts and translations</li>
+<li><a href="./docs/icons/">Icons</a> - custom icons</li>
+<li><a href="./docs/styling/">Styling</a> - themes and styles for components<!-- - [Blocks](./docs/blocks/) - custom blocks and deeper workflow tuning -->
+<!-- - [Contexts](./docs/contexts/) - how to unite blocks into common workflows and share common data --></li>
+<li><a href="./docs/activities/">Activities</a> - how to set and switch user focused activities<!-- - [BlockComponent](./docs/block-component/) - all about blocks base class -->
+<!-- - [TypeScript](./docs/typescript/) - using types in TypeScript and JavaScript projects --></li>
+</ul>
+</li>
+<li><p>blocks:</p>
+<ul>
+<li><a href="./blocks/ActivityCaption/">ActivityCaption</a> - shows heading text for the current activity</li>
+<li><a href="./blocks/ActivityIcon/">ActivityIcon</a> - shows actual icon for the current activity</li>
+<li><a href="./blocks/CameraSource/">CameraSource</a> - getting image for upload from the device camera</li>
+<li><a href="./blocks/CloudImageEditor/">CloudImageEditor</a> - image editing via Uploadcare cloud functions</li>
+<li><a href="./blocks/Color/">Color</a> - simple wrapper for the native color selector in browser</li>
+<li><a href="./blocks/ConfirmationDialog/">ComfirmationDialog</a> - user confirmations for the most sensitive actions</li>
+<li><a href="./blocks/DataOutput/">DataOutput</a> - dedicated element for the upload data extraction in host application</li>
+<li><a href="./blocks/DropArea/">DropArea</a> - wrapper element for the the drag-n-drop feature adding</li>
+<li><a href="./blocks/EditableCanvas/">EditableCanvas</a> - minimalistic in-browser image editing</li>
+<li><a href="./blocks/ExternalSource/">ExternalSource</a> - common wrapper for external file sources</li>
+<li><a href="./blocks/FileItem/">FileItem</a> - basic UI for the each uploading file entry</li>
+<li><a href="./blocks/Icon/">Icon</a> - displays an icon</li>
+<li><a href="./blocks/Img/">Img</a> - adaptive image</li>
+<li><a href="./blocks/MessageBox/">MessageBox</a> - common container for the application messages</li>
+<li><a href="./blocks/Modal/">Modal</a> - common pop-up window</li>
+<li><a href="./blocks/ProgressBar/">ProgressBar</a> - abstract progress bar</li>
+<li><a href="./blocks/ProgressBarCommon/">ProgressBarCommon</a> - displays uploading progress for the all files selected</li>
+<li><a href="./blocks/Range/">Range</a> - customizable wrapper for the range input element</li>
+<li><a href="./blocks/SimpleBtn/">SimpleBtn</a> - button for the file uploading workflow start</li>
+<li><a href="./blocks/SourceBtn/">SourceBtn</a> - button for the certain source activation</li>
+<li><a href="./blocks/SourceList/">SourceList</a> - renders the list of file sources basing on configuration provided</li>
+<li><a href="./blocks/StartFrom/">StartFrom</a> - wrapper element for the uploading workflow initiation</li>
+<li><a href="./blocks/Tabs/">Tabs</a> - implements tabbing UI</li>
+<li><a href="./blocks/UploadDetails/">UploadDetails</a> - displays file details and adittional features</li>
+<li><a href="./blocks/UploadList/">UploadList</a> - shows the list of uploads</li>
+<li><a href="./blocks/UrlSource/">UrlSource</a> - file uploading from the external URL</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><a href="./abstract/">abstract</a> - common code abstractions (abstract classes)</p>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="external-resources">External resources</h2>
+<ul>
+<li><a href="https://github.com/symbiotejs/symbiote.js">Symbiote.js</a> - core library for the Web Components creation and data-flow management</li>
+<li><a href="https://github.com/uploadcare/upload-blocks-examples">Integration examples</a> - for the most popular front-end libraries and frameworks</li>
+</ul>
+</col-css>
+    </main>
+    <footer>© 2022 🦆</footer>
   </body>
 </html>

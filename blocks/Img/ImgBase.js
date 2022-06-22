@@ -1,4 +1,4 @@
-import { BaseComponent } from '../../submodules/symbiote/core/symbiote.js';
+import { BaseComponent } from '@symbiotejs/symbiote';
 import { applyTemplateData } from '../../utils/applyTemplateData.js';
 import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../utils/cdn-utils.js';
 import { PROPS_MAP } from './props-map.js';

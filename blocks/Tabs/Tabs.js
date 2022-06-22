@@ -1,5 +1,5 @@
 import { Block } from '../../abstract/Block.js';
-import { create } from '../../submodules/symbiote/core/symbiote.js';
+import { create } from '@symbiotejs/symbiote';
 
 export class Tabs extends Block {
   /** @param {String} tabL10nStr */

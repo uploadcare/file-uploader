@@ -1,5 +1,5 @@
 import { Block } from '../../abstract/Block.js';
-import { applyStyles } from '../../submodules/symbiote/core/symbiote.js';
+import { applyStyles } from '@symbiotejs/symbiote';
 import { checkerboardCssBg } from '../svg-backgrounds/svg-backgrounds.js';
 
 /**

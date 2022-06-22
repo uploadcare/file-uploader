@@ -1,3 +1,3 @@
 # File uploader (Inline)
 
-<re-htm src="./demo.snippet.htm"></re-htm>
+<re-htm src="./demo.htm"></re-htm>

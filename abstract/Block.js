@@ -1,4 +1,4 @@
-import { BaseComponent, Data, TypedCollection } from '../submodules/symbiote/core/symbiote.js';
+import { BaseComponent, Data, TypedCollection } from '@symbiotejs/symbiote';
 import { applyTemplateData } from '../utils/applyTemplateData.js';
 import { mergeMimeTypes } from '../utils/mergeMimeTypes.js';
 import { imageMimeTypes } from '../utils/imageMimeTypes.js';
