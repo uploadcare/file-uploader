@@ -21,6 +21,7 @@
     "update_submodules": "git submodule update --init --recursive --remote",
     "setup": "npm run update_submodules && npm i",
     "test": "web-test-runner \"./{abstract,blocks,solutions,web,utils}/**/*.test.js\" --node-resolve",
+    "test:light": "node ./test/test.js",
     "release": "shipjs prepare",
     "dev": "wds --open",
     "build:web": "npm run clean:web && node ./build.js",
