@@ -12,8 +12,7 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "types": ["node", "chai", "mocha"],
-    "noEmit": true,
-    "maxNodeModuleJsDepth": 3
+    "noEmit": true
   },
   "include": ["**/*.js"],
   "exclude": ["node_modules", "./submodules/upload-client/upload-client.js"]
