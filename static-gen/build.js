@@ -9,7 +9,7 @@ import { mdProcessor } from './mdProcessor.js';
 let IMPORTMAP = fs.readFileSync('./static-gen/importmap.json').toString();
 let LIVE_HTML_CSS = fs.readFileSync('blocks/LiveHtml/live-html.css').toString();
 let CODE_CSS = LIVE_HTML_CSS.replaceAll('lr-live-html [contenteditable]', 'code');
-let JS = fs.readFileSync('./static-gen/script.js').toString();
+let JS = fs.readFileSync('./static-gen/js/script.js').toString();
 
 function getBase(path) {
   let slashes = path.split('/').length - 1;

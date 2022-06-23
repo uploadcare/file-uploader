@@ -27,9 +27,13 @@ export function colorCode(html) {
     .join('</span><span -tag-arr->&lt;/</span>style<span -tag-arr->&gt;</span>');
 }
 
-let codeElements = [...document.querySelectorAll('code')];
-let tmpEl = document.createElement('div');
-codeElements.forEach((codeEl) => {
-  tmpEl.textContent = codeEl.innerHTML;
-  codeEl.innerHTML = colorCode(tmpEl.textContent);
-});
+function colorize() {
+  let codeElements = [...document.querySelectorAll('code')];
+  let tmpEl = document.createElement('div');
+  codeElements.forEach((codeEl) => {
+    tmpEl.textContent = codeEl.innerHTML;
+    codeEl.innerHTML = colorCode(tmpEl.textContent);
+  });
+}
+
+window.onload = colorize;
