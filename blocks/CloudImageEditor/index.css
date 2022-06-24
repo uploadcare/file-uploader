@@ -6,5 +6,4 @@ lr-cloud-image-editor {
   width: 100%;
   height: var(--modal-content-height-fill, 100%);
   overflow: hidden;
-  --cfg-cdn-cname: '';
 }
