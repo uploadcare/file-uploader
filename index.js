@@ -33,6 +33,7 @@ export { ActivityIcon } from './blocks/ActivityIcon/ActivityIcon.js';
 // Solutions:
 export { FileUploaderRegular } from './solutions/file-uploader/regular/FileUploaderRegular.js';
 export { FileUploaderMinimal } from './solutions/file-uploader/minimal/FileUploaderMinimal.js';
+export { FileUploaderInline } from './solutions/file-uploader/inline/FileUploaderInline.js';
 export * from './solutions/cloud-image-editor/CloudEditor.js';
 
 // Utils:
