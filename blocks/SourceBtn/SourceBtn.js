@@ -1,50 +1,44 @@
-import { Block } from '../../abstract/Block.js';
+import { UploaderBlock } from '../../abstract/UploaderBlock.js';
+import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 
 const L10N_PREFIX = 'src-type-';
 
-/**
- * @typedef {{
- *   iconName: String;
- * }} State
- */
-
-/** @extends {Block<State>} */
-export class SourceBtn extends Block {
+export class SourceBtn extends UploaderBlock {
   /** @private */
   _registeredTypes = {};
 
-  /** @type {State} */
   init$ = {
+    ...this.init$,
     iconName: 'default',
   };
 
   initTypes() {
     this.registerType({
-      type: Block.sourceTypes.LOCAL,
+      type: UploaderBlock.sourceTypes.LOCAL,
       // activity: '',
       onClick: () => {
         this.openSystemDialog();
       },
     });
     this.registerType({
-      type: Block.sourceTypes.URL,
-      activity: Block.activities.URL,
+      type: UploaderBlock.sourceTypes.URL,
+      activity: ActivityBlock.activities.URL,
       textKey: 'from-url',
     });
     this.registerType({
-      type: Block.sourceTypes.CAMERA,
-      activity: Block.activities.CAMERA,
+      type: UploaderBlock.sourceTypes.CAMERA,
+      activity: ActivityBlock.activities.CAMERA,
     });
     this.registerType({
       type: 'draw',
-      activity: Block.activities.DRAW,
+      activity: ActivityBlock.activities.DRAW,
       icon: 'edit-draw',
     });
 
-    for (let externalSourceType of Object.values(Block.extSrcList)) {
+    for (let externalSourceType of Object.values(UploaderBlock.extSrcList)) {
       this.registerType({
         type: externalSourceType,
-        activity: Block.activities.EXTERNAL,
+        activity: ActivityBlock.activities.EXTERNAL,
         activityParams: {
           externalSourceType: externalSourceType,
         },

@@ -1,36 +1,14 @@
-import { Block } from '../../abstract/Block.js';
+import { UploaderBlock } from '../../abstract/UploaderBlock.js';
+import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 import { FileItem } from '../FileItem/FileItem.js';
 import { UiConfirmation } from '../ConfirmationDialog/ConfirmationDialog.js';
 import { UiMessage } from '../MessageBox/MessageBox.js';
 
-/**
- * @typedef {Partial<import('../FileItem/FileItem.js').State> &
- *   Partial<import('../ActivityIcon/ActivityIcon.js').State> &
- *   Partial<import('../ActivityCaption/ActivityCaption.js').State>} ExternalState
- */
+export class UploadList extends UploaderBlock {
+  activityType = ActivityBlock.activities.UPLOAD_LIST;
 
-/**
- * @typedef {{
- *   doneBtnHidden: Boolean;
- *   doneBtnDisabled: Boolean;
- *   uploadBtnHidden: Boolean;
- *   uploadBtnDisabled: Boolean;
- *   addMoreBtnDisabled: Boolean;
- *   addMoreBtnHidden: Boolean;
- *   hasFiles: Boolean;
- *   onAdd: () => void;
- *   onUpload: () => void;
- *   onDone: () => void;
- *   onCancel: () => void;
- * }} State
- */
-
-/** @extends {Block<State & ExternalState>} */
-export class UploadList extends Block {
-  activityType = Block.activities.UPLOAD_LIST;
-
-  /** @type {State} */
   init$ = {
+    ...this.init$,
     doneBtnHidden: false,
     doneBtnDisabled: false,
     uploadBtnHidden: false,
@@ -230,7 +208,7 @@ export class UploadList extends Block {
       Object.values(this._renderMap).forEach((el) => fr.appendChild(el));
       this.ref.files.replaceChildren(fr);
       Object.keys(this._renderMap).forEach((id) => {
-        /** @type {Block} */
+        /** @type {UploaderBlock} */
         let el = this._renderMap[id];
         // rendering components async improves initial list render time a bit
         setTimeout(() => {

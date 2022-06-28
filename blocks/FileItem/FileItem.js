@@ -1,4 +1,5 @@
-import { Block } from '../../abstract/Block.js';
+import { UploaderBlock } from '../../abstract/UploaderBlock.js';
+import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 import { resizeImage } from '../utils/resizeImage.js';
 import { uploadFile } from '../../submodules/upload-client/upload-client.js';
 import { UiMessage } from '../MessageBox/MessageBox.js';
@@ -7,29 +8,11 @@ import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../ut
 
 /** @typedef {Partial<import('../MessageBox/MessageBox.js').State>} ExternalState */
 
-/**
- * @typedef {{
- *   itemName: String;
- *   thumb: String;
- *   thumbUrl: String;
- *   progressValue: Number;
- *   progressVisible: Boolean;
- *   progressUnknown: Boolean;
- *   notImage: Boolean;
- *   badgeIcon: String;
- *   '*uploadTrigger': {};
- *   onEdit: () => void;
- *   onRemove: () => void;
- *   onUpload: () => void;
- * }} State
- */
-
-/** @extends {Block<State & ExternalState>} */
-export class FileItem extends Block {
+export class FileItem extends UploaderBlock {
   pauseRender = true;
 
-  /** @type {State} */
   init$ = {
+    ...this.init$,
     itemName: '',
     thumb: '',
     thumbUrl: '',
@@ -43,7 +26,7 @@ export class FileItem extends Block {
     onEdit: () => {
       this.set$({
         '*focusedEntry': this.entry,
-        '*currentActivity': Block.activities.DETAILS,
+        '*currentActivity': ActivityBlock.activities.DETAILS,
       });
     },
     onRemove: () => {

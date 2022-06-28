@@ -1,26 +1,21 @@
-import { Block } from '../../abstract/Block.js';
+import { UploaderBlock } from '../../abstract/UploaderBlock.js';
+import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 import { CloudEditor } from './index.js';
 
-/**
- * @typedef {{
- *   uuid: String;
- * }} State
- */
+export class CloudImageEditor extends UploaderBlock {
+  activityType = ActivityBlock.activities.CLOUD_IMG_EDIT;
 
-/** @extends {Block<State>} */
-export class CloudImageEditor extends Block {
-  activityType = Block.activities.CLOUD_IMG_EDIT;
-
-  /** @type {State} */
   init$ = {
+    ...this.init$,
     uuid: null,
   };
 
   initCallback() {
+    super.initCallback();
     this.bindCssData('--cfg-pubkey');
 
     this.sub('*currentActivity', (val) => {
-      if (val === Block.activities.CLOUD_IMG_EDIT) {
+      if (val === ActivityBlock.activities.CLOUD_IMG_EDIT) {
         this.mountEditor();
       } else {
         this.unmountEditor();

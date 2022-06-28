@@ -1,22 +1,9 @@
 import { Block } from '../../../../../abstract/Block.js';
 import { ResizeObserver } from '../../lib/ResizeObserver.js';
 
-/**
- * @typedef {{
- *   disabled: Boolean;
- *   min: Number;
- *   max: Number;
- *   defaultValue: Number;
- *   onInput: (value: Number) => void;
- *   onChange: (value: Number) => void;
- *   'on.sliderInput': () => void;
- *   'on.sliderChange': () => void;
- * }} State
- */
-
-/** @extends {Block<State>} */
 export class SliderUi extends Block {
   init$ = {
+    ...this.init$,
     disabled: false,
     min: 0,
     max: 100,

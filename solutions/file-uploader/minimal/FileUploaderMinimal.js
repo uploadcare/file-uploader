@@ -1,21 +1,16 @@
-import { Block } from '../../../abstract/Block.js';
+import { UploaderBlock } from '../../../abstract/UploaderBlock.js';
+import { ActivityBlock } from '../../../abstract/ActivityBlock.js';
 
-/**
- * @typedef {{
- *   selectClicked: () => void;
- * }} State
- */
-
-/** @extends {Block<State>} */
-export class FileUploaderMinimal extends Block {
+export class FileUploaderMinimal extends UploaderBlock {
   init$ = {
+    ...this.init$,
     selectClicked: () => {
       this.openSystemDialog();
     },
   };
 
   initCallback() {
-    this.$['*currentActivity'] = this.initActivity || Block.activities.START_FROM;
+    this.$['*currentActivity'] = this.initActivity || ActivityBlock.activities.START_FROM;
   }
 }
 

@@ -1,12 +1,13 @@
-import { Block } from '../../abstract/Block.js';
+import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { uploadFileGroup } from '../../submodules/upload-client/upload-client.js';
 
 /** @typedef {import('../../submodules/upload-client/upload-client.js').UploadcareFile[]} FileList} */
 
-export class DataOutput extends Block {
+export class DataOutput extends UploaderBlock {
   processInnerHtml = true;
 
   init$ = {
+    ...this.init$,
     output: null,
     filesData: null,
   };
@@ -20,6 +21,7 @@ export class DataOutput extends Block {
   }
 
   initCallback() {
+    super.initCallback();
     this.sub('output', (data) => {
       if (!data) {
         return;

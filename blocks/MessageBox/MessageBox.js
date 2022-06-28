@@ -7,20 +7,9 @@ export class UiMessage {
   isError = false;
 }
 
-/**
- * @typedef {{
- *   iconName: String;
- *   captionTxt: String;
- *   msgTxt: String;
- *   '*message': UiMessage;
- *   onClose: () => void;
- * }} State
- */
-
-/** @extends {Block<State>} */
 export class MessageBox extends Block {
-  /** @type {State} */
   init$ = {
+    ...this.init$,
     iconName: 'info',
     captionTxt: 'Message caption',
     msgTxt: 'Message...',

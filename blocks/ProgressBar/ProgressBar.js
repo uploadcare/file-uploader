@@ -1,21 +1,13 @@
 import { Block } from '../../abstract/Block.js';
 
-/**
- * @typedef {{
- *   width: Number;
- *   opacity: Number;
- * }} State
- */
-
-/** @extends {Block<State>} */
 export class ProgressBar extends Block {
   /** @type {Number} */
   _value = 0;
   /** @type {Boolean} */
   _unknownMode = false;
 
-  /** @type {State} */
   init$ = {
+    ...this.init$,
     width: 0,
     opacity: 0,
   };

@@ -12,19 +12,9 @@ import { checkerboardCssBg } from '../svg-backgrounds/svg-backgrounds.js';
  * @property {SVGImageElement} svgImg
  */
 
-/**
- * @typedef {{
- *   refMap: RefMap;
- *   disabled: Boolean;
- *   toolbarHidden: Boolean;
- *   checkerboard: Boolean;
- * }} State
- */
-
-/** @extends {Block<State>} */
 export class EditableCanvas extends Block {
-  /** @type {State} */
   init$ = {
+    ...this.init$,
     refMap: null,
     disabled: true,
     toolbarHidden: true,

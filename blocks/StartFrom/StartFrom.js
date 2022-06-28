@@ -1,7 +1,6 @@
-import { Block } from '../../abstract/Block.js';
+import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 
-/** @extends {Block<import('../ActivityCaption/ActivityCaption').State & import('../ActivityIcon/ActivityIcon').State>} */
-export class StartFrom extends Block {
+export class StartFrom extends ActivityBlock {
   activityType = 'start-from';
 
   initCallback() {

@@ -1,6 +1,3 @@
-// @ts-nocheck
-// TODO: fix it
-
 import { Block } from '../../../abstract/Block.js';
 import { constraintRect, minRectSize } from './crop-utils.js';
 import { CROP_PADDING, MIN_CROP_SIZE } from './cropper-constants.js';
@@ -55,19 +52,9 @@ function validateCrop(crop) {
   return shouldMatch.every((matcher) => matcher(crop));
 }
 
-/**
- * @typedef {{
- *   image: HTMLImageElement;
- *   '*padding': Number;
- *   '*operations': Operations;
- *   '*imageBox': import('./types.js').Rectangle;
- *   '*cropBox': import('./types.js').Rectangle;
- * }} State
- */
-
-/** @extends {Block<State & import('./CloudEditor.js').State>} */
 export class EditorImageCropper extends Block {
   init$ = {
+    ...this.init$,
     image: null,
     '*padding': CROP_PADDING,
     /** @type {Operations} */
@@ -390,7 +377,7 @@ export class EditorImageCropper extends Block {
       console.error('Failed to activate cropper', { error: err });
     }
   }
-  /** @param {{ seamlessTransition?: boolean = false }} options */
+  /** @param {{ seamlessTransition?: boolean }} options */
   deactivate({ seamlessTransition = false } = {}) {
     if (!this._isActive) {
       return;
@@ -476,7 +463,6 @@ export class EditorImageCropper extends Block {
    */
   _handleImageLoading(src) {
     let operation = 'crop';
-    /** @type {import('./type.js.js').LoadingOperations} */
     let loadingOperations = this.$['*loadingOperations'];
     if (!loadingOperations.get(operation)) {
       loadingOperations.set(operation, new Map());

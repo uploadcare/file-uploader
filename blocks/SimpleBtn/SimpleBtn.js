@@ -1,16 +1,8 @@
-import { Block } from '../../abstract/Block.js';
+import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 
-/**
- * @typedef {{
- *   '*simpleButtonText': String;
- *   onClick: () => void;
- * }} State
- */
-
-/** @extends {Block<State>} */
-export class SimpleBtn extends Block {
-  /** @type {State} */
+export class SimpleBtn extends UploaderBlock {
   init$ = {
+    ...this.init$,
     '*simpleButtonText': '',
     onClick: () => {
       this.initFlow();

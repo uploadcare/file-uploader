@@ -1,24 +1,19 @@
-import { Block } from '../../../abstract/Block.js';
+import { UploaderBlock } from '../../../abstract/UploaderBlock.js';
+import { ActivityBlock } from '../../../abstract/ActivityBlock.js';
 
-/**
- * @typedef {{
- *   dropAreaHidden: Boolean;
- * }} State
- */
-
-/** @extends {Block<State>} */
-export class FileUploaderInline extends Block {
+export class FileUploaderInline extends UploaderBlock {
   init$ = {
+    ...this.init$,
     dropAreaHidden: false,
   };
 
   initCallback() {
     this.sub('*currentActivity', (val) => {
       if (!val) {
-        this.$['*currentActivity'] = this.initActivity || Block.activities.START_FROM;
+        this.$['*currentActivity'] = this.initActivity || ActivityBlock.activities.START_FROM;
       }
     });
-    if (this.sourceList.length === 1 && !this.sourceList.includes(Block.sourceTypes.LOCAL)) {
+    if (this.sourceList.length === 1 && !this.sourceList.includes(UploaderBlock.sourceTypes.LOCAL)) {
       this.$.dropAreaHidden = true;
     }
   }
