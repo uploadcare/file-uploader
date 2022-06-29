@@ -31,7 +31,7 @@ const onCancel = (signal, callback) => {
 
 const request = ({ method, url, data, headers = {}, signal, onProgress }) => new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    const requestMethod = (method === null || method === void 0 ? void 0 : method.toUpperCase()) || 'GET';
+    const requestMethod = method?.toUpperCase() || 'GET';
     let aborted = false;
     xhr.open(requestMethod, url);
     if (headers) {
@@ -199,34 +199,36 @@ function buildFormData(options) {
     return formData;
 }
 
-const serializePair = (key, value) => typeof value !== 'undefined' ? `${key}=${encodeURIComponent(value)}` : null;
-// TODO: generalize value transforming logic and use it here and inside `buildFormData`
-const createQuery = (query) => Object.entries(query)
-    .reduce((params, [key, value]) => {
-    let param;
-    if (typeof value === 'object' && !Array.isArray(value)) {
-        param = Object.entries(value)
-            .filter((entry) => typeof entry[1] !== 'undefined')
-            .map((entry) => serializePair(`${key}[${entry[0]}]`, String(entry[1])));
+const buildSearchParams = (query) => {
+    const searchParams = new URLSearchParams();
+    for (const [key, value] of Object.entries(query)) {
+        if (value && typeof value === 'object' && !Array.isArray(value)) {
+            Object.entries(value)
+                .filter((entry) => entry[1] ?? false)
+                .forEach((entry) => searchParams.set(`${key}[${entry[0]}]`, String(entry[1])));
+        }
+        else if (Array.isArray(value)) {
+            value.forEach((val) => {
+                searchParams.append(`${key}[]`, val);
+            });
+        }
+        else if (typeof value === 'string' && value) {
+            searchParams.set(key, value);
+        }
+        else if (typeof value === 'number') {
+            searchParams.set(key, value.toString());
+        }
     }
-    else if (Array.isArray(value)) {
-        param = value.map((val) => serializePair(`${key}[]`, val));
+    return searchParams.toString();
+};
+const getUrl = (base, path, query) => {
+    const url = new URL(base);
+    url.pathname = path;
+    if (query) {
+        url.search = buildSearchParams(query);
     }
-    else {
-        param = serializePair(key, value);
-    }
-    return params.concat(param);
-}, [])
-    .filter((x) => !!x)
-    .join('&');
-const getUrl = (base, path, query) => [
-    base,
-    path,
-    query && Object.keys(query).length > 0 ? '?' : '',
-    query && createQuery(query)
-]
-    .filter(Boolean)
-    .join('');
+    return url.toString();
+};
 
 /*
   Settings for future support:
@@ -276,6 +278,13 @@ function getUserAgent({ userAgent, publicKey = '', integration = '' } = {}) {
     return `${mainInfo} (${additionInfo})`;
 }
 
+/**
+ * setTimeout as Promise.
+ *
+ * @param {number} ms Timeout in milliseconds.
+ */
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 const SEPARATOR = /\W|_/g;
 /**
  * Transforms a string to camelCased.
@@ -302,13 +311,6 @@ function camelizeKeys(source) {
     }, {});
 }
 
-/**
- * setTimeout as Promise.
- *
- * @param {number} ms Timeout in milliseconds.
- */
-const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
 const defaultOptions = {
     factor: 2,
     time: 100
@@ -316,8 +318,8 @@ const defaultOptions = {
 function retrier(fn, options = defaultOptions) {
     let attempts = 0;
     function runAttempt(fn) {
-        const defaultDelayTime = Math.round(options.time * Math.pow(options.factor, attempts));
-        const retry = (ms) => delay(ms !== null && ms !== void 0 ? ms : defaultDelayTime).then(() => {
+        const defaultDelayTime = Math.round(options.time * options.factor ** attempts);
+        const retry = (ms) => delay(ms ?? defaultDelayTime).then(() => {
             attempts += 1;
             return runAttempt(fn);
         });
@@ -340,7 +342,7 @@ function getTimeoutFromThrottledRequest(error) {
 function retryIfThrottled(fn, retryThrottledMaxTimes) {
     return retrier(({ attempt, retry }) => fn().catch((error) => {
         if ('response' in error &&
-            (error === null || error === void 0 ? void 0 : error.code) === REQUEST_WAS_THROTTLED_CODE &&
+            error?.code === REQUEST_WAS_THROTTLED_CODE &&
             attempt < retryThrottledMaxTimes) {
             return retry(getTimeoutFromThrottledRequest(error));
         }
@@ -357,41 +359,38 @@ function getStoreValue(store) {
  * Can be canceled and has progress.
  */
 function base(file, { publicKey, fileName, contentType, baseURL = defaultSettings.baseURL, secureSignature, secureExpire, store, signal, onProgress, source = 'local', integration, userAgent, retryThrottledRequestMaxTimes = defaultSettings.retryThrottledRequestMaxTimes, metadata }) {
-    return retryIfThrottled(() => {
-        var _a;
-        return request({
-            method: 'POST',
-            url: getUrl(baseURL, '/base/', {
-                jsonerrors: 1
-            }),
-            headers: {
-                'X-UC-User-Agent': getUserAgent({ publicKey, integration, userAgent })
+    return retryIfThrottled(() => request({
+        method: 'POST',
+        url: getUrl(baseURL, '/base/', {
+            jsonerrors: 1
+        }),
+        headers: {
+            'X-UC-User-Agent': getUserAgent({ publicKey, integration, userAgent })
+        },
+        data: buildFormData({
+            file: {
+                data: file,
+                name: fileName ?? file.name ?? defaultFilename,
+                contentType
             },
-            data: buildFormData({
-                file: {
-                    data: file,
-                    name: (_a = fileName !== null && fileName !== void 0 ? fileName : file.name) !== null && _a !== void 0 ? _a : defaultFilename,
-                    contentType
-                },
-                UPLOADCARE_PUB_KEY: publicKey,
-                UPLOADCARE_STORE: getStoreValue(store),
-                signature: secureSignature,
-                expire: secureExpire,
-                source: source,
-                metadata
-            }),
-            signal,
-            onProgress
-        }).then(({ data, headers, request }) => {
-            const response = camelizeKeys(JSON.parse(data));
-            if ('error' in response) {
-                throw new UploadClientError(response.error.content, response.error.errorCode, request, response, headers);
-            }
-            else {
-                return response;
-            }
-        });
-    }, retryThrottledRequestMaxTimes);
+            UPLOADCARE_PUB_KEY: publicKey,
+            UPLOADCARE_STORE: getStoreValue(store),
+            signature: secureSignature,
+            expire: secureExpire,
+            source: source,
+            metadata
+        }),
+        signal,
+        onProgress
+    }).then(({ data, headers, request }) => {
+        const response = camelizeKeys(JSON.parse(data));
+        if ('error' in response) {
+            throw new UploadClientError(response.error.content, response.error.errorCode, request, response, headers);
+        }
+        else {
+            return response;
+        }
+    }), retryThrottledRequestMaxTimes);
 }
 
 var TypeEnum;
@@ -570,9 +569,9 @@ function multipartStart(size, { publicKey, contentType, fileName, multipartChunk
             'X-UC-User-Agent': getUserAgent({ publicKey, integration, userAgent })
         },
         data: buildFormData({
-            filename: fileName !== null && fileName !== void 0 ? fileName : defaultFilename,
+            filename: fileName ?? defaultFilename,
             size: size,
-            content_type: contentType !== null && contentType !== void 0 ? contentType : defaultContentType,
+            content_type: contentType ?? defaultContentType,
             part_size: multipartChunkSize,
             UPLOADCARE_STORE: getStoreValue(store),
             UPLOADCARE_PUB_KEY: publicKey,
@@ -804,8 +803,7 @@ class Events {
         this.events = Object.create({});
     }
     emit(event, data) {
-        var _a;
-        (_a = this.events[event]) === null || _a === void 0 ? void 0 : _a.forEach((fn) => fn(data));
+        this.events[event]?.forEach((fn) => fn(data));
     }
     on(event, callback) {
         this.events[event] = this.events[event] || [];
@@ -823,12 +821,12 @@ class Events {
 
 const response = (type, data) => {
     if (type === 'success') {
-        return Object.assign({ status: Status.Success }, data);
+        return { status: Status.Success, ...data };
     }
     if (type === 'progress') {
-        return Object.assign({ status: Status.Progress }, data);
+        return { status: Status.Progress, ...data };
     }
-    return Object.assign({ status: Status.Error }, data);
+    return { status: Status.Error, ...data };
 };
 class Pusher {
     constructor(pusherKey, disconnectTime = 30000) {
@@ -876,8 +874,7 @@ class Pusher {
     }
     disconnect() {
         const actualDisconect = () => {
-            var _a;
-            (_a = this.ws) === null || _a === void 0 ? void 0 : _a.close();
+            this.ws?.close();
             this.ws = undefined;
             this.isConnected = false;
         };
@@ -891,9 +888,8 @@ class Pusher {
         }
     }
     send(event, data) {
-        var _a;
         const str = JSON.stringify({ event, data });
-        (_a = this.ws) === null || _a === void 0 ? void 0 : _a.send(str);
+        this.ws?.send(str);
     }
     subscribe(token, handler) {
         this.subscribers += 1;
@@ -1060,7 +1056,7 @@ const uploadFromUrl = (sourceUrl, { publicKey, fileName, baseURL, baseCDN, check
 }))
     .catch((error) => {
     const pusher = getPusher(pusherKey);
-    pusher === null || pusher === void 0 ? void 0 : pusher.disconnect();
+    pusher?.disconnect();
     return Promise.reject(error);
 })
     .then((urlResponse) => {
@@ -1220,7 +1216,7 @@ const uploadMultipart = (file, { publicKey, fileName, fileSize, baseURL, secureS
     return multipartStart(size, {
         publicKey,
         contentType,
-        fileName: fileName !== null && fileName !== void 0 ? fileName : file.name,
+        fileName: fileName ?? file.name,
         baseURL,
         secureSignature,
         secureExpire,
@@ -1472,7 +1468,10 @@ function uploadFileGroup(data, { publicKey, fileName, baseURL = defaultSettings.
 /**
  * Populate options with settings.
  */
-const populateOptionsWithSettings = (options, settings) => (Object.assign(Object.assign({}, settings), options));
+const populateOptionsWithSettings = (options, settings) => ({
+    ...settings,
+    ...options
+});
 class UploadClient {
     constructor(settings) {
         this.settings = Object.assign({}, defaultSettings, settings);
