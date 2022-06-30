@@ -1,9 +1,11 @@
-import { BaseComponent } from '@symbiotejs/symbiote';
+import { Block } from '../../abstract/Block.js';
 
 const CSS_ATTRIBUTE = 'css-src';
 
-export class ShadowWrapper extends BaseComponent {
+export class ShadowWrapper extends Block {
   pauseRender = true;
+
+  shadowReadyCallback() {}
 
   initCallback() {
     let href = this.getAttribute(CSS_ATTRIBUTE);
@@ -21,11 +23,13 @@ export class ShadowWrapper extends BaseComponent {
         // TODO: investigate better solution
         window.requestAnimationFrame(() => {
           this.render();
+          this.shadowReadyCallback();
         });
       };
       this.shadowRoot.appendChild(link);
     } else {
       this.render();
+      this.shadowReadyCallback();
     }
   }
 }

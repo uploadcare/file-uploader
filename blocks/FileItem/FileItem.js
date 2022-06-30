@@ -6,13 +6,11 @@ import { UiMessage } from '../MessageBox/MessageBox.js';
 import { fileCssBg } from '../svg-backgrounds/svg-backgrounds.js';
 import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../utils/cdn-utils.js';
 
-/** @typedef {Partial<import('../MessageBox/MessageBox.js').State>} ExternalState */
-
 export class FileItem extends UploaderBlock {
   pauseRender = true;
 
   init$ = {
-    ...this.init$,
+    // ...this.init$,
     itemName: '',
     thumb: '',
     thumbUrl: '',
@@ -40,6 +38,9 @@ export class FileItem extends UploaderBlock {
   /** @private */
   _observerCallback(entries) {
     let [entry] = entries;
+    if (entry.isIntersecting && !this.innerHTML) {
+      this.render();
+    }
     if (entry.intersectionRatio === 0) {
       clearTimeout(this._thumbTimeoutId);
       /** @private */
@@ -92,7 +93,7 @@ export class FileItem extends UploaderBlock {
   initCallback() {
     super.initCallback();
 
-    this.defineAccessor('entry-id', (id) => {
+    this.sub('uid', (id) => {
       if (!id || id === this.uid) {
         return;
       }
@@ -201,15 +202,6 @@ export class FileItem extends UploaderBlock {
       this._observer.observe(this);
     });
 
-    this.$['*uploadTrigger'] = null;
-    FileItem.activeInstances.add(this);
-
-    this.sub('*uploadTrigger', (val) => {
-      if (!val || !this.isConnected) {
-        return;
-      }
-      this.upload();
-    });
     this.onclick = () => {
       FileItem.activeInstances.forEach((inst) => {
         if (inst === this) {
@@ -219,11 +211,21 @@ export class FileItem extends UploaderBlock {
         }
       });
     };
+
+    this.$['*uploadTrigger'] = null;
+
+    this.sub('*uploadTrigger', (val) => {
+      if (!val || !this.isConnected) {
+        return;
+      }
+      this.upload();
+    });
+    FileItem.activeInstances.add(this);
   }
 
   destroyCallback() {
     FileItem.activeInstances.delete(this);
-    this._observer.unobserve(this);
+    // this._observer.unobserve(this);
     clearTimeout(this._thumbTimeoutId);
   }
 
@@ -304,7 +306,3 @@ FileItem.template = /*html*/ `
 </lr-progress-bar>
 `;
 FileItem.activeInstances = new Set();
-
-FileItem.bindAttributes({
-  'entry-id': null,
-});

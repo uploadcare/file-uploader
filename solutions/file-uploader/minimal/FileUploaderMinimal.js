@@ -1,16 +1,18 @@
-import { UploaderBlock } from '../../../abstract/UploaderBlock.js';
+import { ShadowWrapper } from '../../../blocks/ShadowWrapper/ShadowWrapper.js';
 import { ActivityBlock } from '../../../abstract/ActivityBlock.js';
 
-export class FileUploaderMinimal extends UploaderBlock {
+export class FileUploaderMinimal extends ShadowWrapper {
+  pauseRender = true;
+
   init$ = {
     ...this.init$,
     selectClicked: () => {
-      this.openSystemDialog();
+      this.ref.uBlock.openSystemDialog();
     },
   };
 
-  initCallback() {
-    this.$['*currentActivity'] = this.initActivity || ActivityBlock.activities.START_FROM;
+  shadowReadyCallback() {
+    this.ref.uBlock.$['*currentActivity'] = this.ref.uBlock.initActivity || ActivityBlock.activities.START_FROM;
   }
 }
 
@@ -24,6 +26,6 @@ FileUploaderMinimal.template = /*html*/ `
       </button>
     </lr-drop-area>
   </lr-start-from>
-  <lr-upload-list></lr-upload-list>
+  <lr-upload-list ref="uBlock"></lr-upload-list>
   <lr-message-box></lr-message-box>
 `;

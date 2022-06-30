@@ -158,8 +158,6 @@ export class UploadList extends UploaderBlock {
   initCallback() {
     super.initCallback();
 
-    this.bindCssData('--cfg-show-empty-list');
-
     this.registerActivity(this.activityType, () => {
       this.set$({
         '*activityCaption': this.l10n('selected'),
@@ -180,7 +178,6 @@ export class UploadList extends UploaderBlock {
     this.sub('*uploadList', (list) => {
       if (list?.length === 0 && !this.getCssData('--cfg-show-empty-list')) {
         this.cancelFlow();
-        this.ref.files.innerHTML = '';
         return;
       }
 
@@ -190,34 +187,6 @@ export class UploadList extends UploaderBlock {
         hasFiles: list.length > 0,
       });
 
-      list.forEach((id) => {
-        if (!this._renderMap[id]) {
-          let item = new FileItem();
-          this._renderMap[id] = item;
-        }
-      });
-
-      for (let id in this._renderMap) {
-        if (!list.includes(id)) {
-          this._renderMap[id].remove();
-          delete this._renderMap[id];
-        }
-      }
-
-      let fr = document.createDocumentFragment();
-      Object.values(this._renderMap).forEach((el) => fr.appendChild(el));
-      this.ref.files.replaceChildren(fr);
-      Object.keys(this._renderMap).forEach((id) => {
-        /** @type {UploaderBlock} */
-        let el = this._renderMap[id];
-        // rendering components async improves initial list render time a bit
-        setTimeout(() => {
-          el['entry-id'] = id;
-          if (!el.innerHTML) {
-            el.render();
-          }
-        });
-      });
       this.setForCtxTarget('lr-modal', '*modalActive', true);
     });
   }
@@ -227,7 +196,12 @@ UploadList.template = /*html*/ `
 <div class="no-files" set="@hidden: hasFiles">
   <slot name="empty"><span l10n="no-files"></span></slot>
 </div>
-<div class="files" ref="files"></div>
+
+<div 
+  class="files" 
+  repeat="*uploadList"
+  repeat-item-tag="lr-file-item"></div>
+
 <div class="toolbar">
   <button
     type="button"

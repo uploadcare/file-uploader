@@ -125,7 +125,7 @@ It generates a set of URLs for the initial image source with the desired paramet
 
 &lt;lr-img class=&quot;invert&quot; src=&quot;SOURCE_IMAGE_PATH&quot;&gt;&lt;/lr-img&gt;
 </code></pre>
-<p>Operations description syntax is the same as used in <a href="https://uploadcare.com/docs/transformations/image/">REST API</a>. More examples:</p>
+<p>Operations description syntax is the same as used in <a href="https://uploadcare.com/docs/transformations/image/">Image processing API</a>. More examples:</p>
 <pre><code class="language-html">&lt;style&gt;
   .invert_grayscale {
     --lr-img-cdn-operations: &#39;invert/-/grayscale&#39;;
@@ -135,7 +135,7 @@ It generates a set of URLs for the initial image source with the desired paramet
   }
 &lt;/style&gt;
 </code></pre>
-<p>As you can see, transformation definitions are separated with <code>/-/</code> symbols, just like you can use in the REST API.</p>
+<p>As you can see, transformation definitions are separated with <code>/-/</code> symbols, just like you can use in the <a href="https://uploadcare.com/docs/transformations/image/">Image processing API</a>.</p>
 <h2 id="background-mode">Background mode</h2>
 <p>To use an adaptive image as an element&#39;s background, you can use <code>is-background-for</code> attribute with the desired element&#39;s CSS selector in it&#39;s value:</p>
 <pre><code class="language-html">&lt;style&gt;

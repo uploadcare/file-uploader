@@ -153,7 +153,9 @@ export class UploaderBlock extends ActivityBlock {
         typedSchema: uploadEntrySchema,
         watchList: ['uploadProgress', 'uuid'],
         handler: (entries) => {
-          this.$['*uploadList'] = entries;
+          this.$['*uploadList'] = entries.map((uid) => {
+            return { uid };
+          });
         },
       });
       uploadCollection.observe((changeMap) => {
