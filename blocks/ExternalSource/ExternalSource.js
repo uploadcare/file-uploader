@@ -33,7 +33,7 @@ export class ExternalSource extends UploaderBlock {
       let { externalSourceType } = /** @type {ActivityParams} */ (this.activityParams);
 
       this.set$({
-        '*activityCaption': `${externalSourceType[0].toUpperCase()}${externalSourceType.slice(1)}`,
+        '*activityCaption': `${externalSourceType?.[0].toUpperCase()}${externalSourceType?.slice(1)}`,
         '*activityIcon': externalSourceType,
       });
 

@@ -7,6 +7,9 @@ registerBlocks({ Modal, Icon });
 const modal = new Modal();
 modal.classList.add('lr-wgt-common');
 window.onload = () => {
+  if (window.location.host) {
+    return;
+  }
   document.querySelector('button').onclick = () => {
     modal.$['*modalActive'] = true;
   };

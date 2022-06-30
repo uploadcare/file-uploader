@@ -64,7 +64,7 @@ export class Block extends BaseComponent {
   }
 
   initCallback() {
-    this.$['*ctxTargetsRegistry'].add(this.constructor['is']);
+    this.$['*ctxTargetsRegistry']?.add(this.constructor['is']);
   }
 
   /**
