@@ -25,6 +25,7 @@ export class Tabs extends Block {
   }
 
   initCallback() {
+    super.initCallback();
     /**
      * @private
      * @type {Object<string, HTMLElement>}

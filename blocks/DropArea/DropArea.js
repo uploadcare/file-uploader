@@ -8,6 +8,7 @@ export class DropArea extends UploaderBlock {
     state: DropzoneState.INACTIVE,
   };
   initCallback() {
+    super.initCallback();
     /** @private */
     this._destroyDropzone = addDropzone({
       element: this,

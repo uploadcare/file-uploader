@@ -20,6 +20,7 @@ export class MessageBox extends Block {
   };
 
   initCallback() {
+    super.initCallback();
     this.sub('*message', (/** @type {UiMessage} */ msg) => {
       if (msg) {
         this.setAttribute('active', '');

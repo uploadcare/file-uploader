@@ -116,7 +116,7 @@ export class FileItem extends UploaderBlock {
         this._showMessage('error', caption, validationErrorMsg);
       });
 
-      this.entry.subscribe('uploadError', (uploadError) => {
+      this.entry.subscribe('uploadErrorMsg', (uploadError) => {
         if (!uploadError) {
           return;
         }
@@ -275,7 +275,8 @@ export class FileItem extends UploaderBlock {
       this.setAttribute('error', '');
       this.removeAttribute('uploading');
       this.entry.setValue('uploadProgress', 0);
-      this.entry.setValue('uploadError', error);
+      // this.entry.setValue('uploadError', error);
+      this.entry.setValue('uploadErrorMsg', error?.toString() || 'Upload error');
     }
   }
 }

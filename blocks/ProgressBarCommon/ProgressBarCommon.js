@@ -11,6 +11,7 @@ export class ProgressBarCommon extends UploaderBlock {
   };
 
   initCallback() {
+    super.initCallback();
     this.uploadCollection.observe(() => {
       let anyUploading = this.uploadCollection.items().some((id) => {
         let item = this.uploadCollection.read(id);

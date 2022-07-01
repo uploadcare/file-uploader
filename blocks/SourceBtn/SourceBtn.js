@@ -47,6 +47,7 @@ export class SourceBtn extends UploaderBlock {
   }
 
   initCallback() {
+    super.initCallback();
     this.initTypes();
 
     this.setAttribute('role', 'button');

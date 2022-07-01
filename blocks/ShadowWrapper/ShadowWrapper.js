@@ -8,6 +8,7 @@ export class ShadowWrapper extends Block {
   shadowReadyCallback() {}
 
   initCallback() {
+    super.initCallback();
     let href = this.getAttribute(CSS_ATTRIBUTE);
     if (href) {
       this.renderShadow = true;

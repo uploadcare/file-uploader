@@ -13,6 +13,7 @@ export class Range extends Block {
   };
 
   initCallback() {
+    super.initCallback();
     [...this.attributes].forEach((attr) => {
       let exclude = ['style', 'ref'];
       if (!exclude.includes(attr.name)) {

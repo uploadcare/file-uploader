@@ -13,6 +13,7 @@ export class ProgressBar extends Block {
   };
 
   initCallback() {
+    super.initCallback();
     this.defineAccessor('value', (value) => {
       if (value === undefined) {
         return;

@@ -119,6 +119,7 @@ export class EditorToolbar extends Block {
   editor = null;
 
   initCallback() {
+    super.initCallback();
     this.defineAccessor('refMap', (/** @type {import('./EditableCanvas.js').RefMap} */ rMap) => {
       if (!rMap) {
         return;

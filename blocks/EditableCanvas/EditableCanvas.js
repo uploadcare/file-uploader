@@ -31,6 +31,7 @@ export class EditableCanvas extends Block {
   }
 
   initCallback() {
+    super.initCallback();
     this.sub('disabled', () => {
       this.$.toolbarHidden = this.hasAttribute('disabled') && this.getAttribute('disabled') !== 'false';
     });
