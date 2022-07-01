@@ -1,18 +1,9 @@
 import { Block } from '../../abstract/Block.js';
 import { strokesCssBg } from '../svg-backgrounds/svg-backgrounds.js';
 
-/**
- * @typedef {{
- *   '*modalActive': Boolean;
- *   '*modalHeaderHidden': Boolean;
- *   closeClicked: () => void;
- * }} State
- */
-
-/** @extends {Block<State>} */
 export class Modal extends Block {
-  /** @type {State} */
   init$ = {
+    ...this.init$,
     '*modalActive': false,
     '*modalHeaderHidden': false,
     closeClicked: () => {
@@ -24,6 +15,7 @@ export class Modal extends Block {
   };
 
   initCallback() {
+    super.initCallback();
     this.sub('*modalActive', (val) => {
       val ? this.setAttribute('active', '') : this.removeAttribute('active');
       if (val && this.getCssData('--cfg-modal-scroll-lock')) {

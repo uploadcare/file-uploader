@@ -46,8 +46,8 @@
     use-event>
     <h3>Files uploaded:</h3>
     <div repeat="filesData">
-      <img width="300" set="@src: cdnUrl" />
-      <div>{{uuid}}</div>
+      <lr-img width="300" set="@uuid: uuid"></lr-img>
+      <div><a set="@href: cdnUrl">{{cdnUrl}}</a></div>
     </div>
   </lr-data-output>
 </lr-live-html>

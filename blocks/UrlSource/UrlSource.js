@@ -1,33 +1,18 @@
-import { Block } from '../../abstract/Block.js';
+import { UploaderBlock } from '../../abstract/UploaderBlock.js';
+import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 
-/**
- * @typedef {{
- *   importDisabled: Boolean;
- *   onUpload: () => void;
- *   onCancel: () => void;
- *   onInput: (e: InputEvent) => void;
- * }} State
- */
+export class UrlSource extends UploaderBlock {
+  activityType = ActivityBlock.activities.URL;
 
-/**
- * @typedef {State &
- *   Partial<import('../ActivityCaption/ActivityCaption').State> &
- *   Partial<import('../ActivityIcon/ActivityIcon').State>} UrlSourceState
- */
-
-/** @extends {Block<UrlSourceState>} */
-export class UrlSource extends Block {
-  activityType = Block.activities.URL;
-
-  /** @type {State} */
   init$ = {
+    ...this.init$,
     importDisabled: true,
     onUpload: () => {
       let url = this.ref.input['value'];
       this.uploadCollection.add({
         externalUrl: url,
       });
-      this.$['*currentActivity'] = Block.activities.UPLOAD_LIST;
+      this.$['*currentActivity'] = ActivityBlock.activities.UPLOAD_LIST;
     },
     onCancel: () => {
       this.cancelFlow();
@@ -39,6 +24,7 @@ export class UrlSource extends Block {
   };
 
   initCallback() {
+    super.initCallback();
     this.registerActivity(this.activityType, () => {
       this.set$({
         '*activityCaption': this.l10n('caption-from-url'),

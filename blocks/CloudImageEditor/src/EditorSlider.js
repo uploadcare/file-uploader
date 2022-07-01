@@ -8,21 +8,9 @@ const ControlType = {
 
 export const FAKE_ORIGINAL_FILTER = 'original';
 
-/**
- * @typedef {{
- *   disabled: Boolean;
- *   min: Number;
- *   max: Number;
- *   value: Number;
- *   defaultValue: Number;
- *   zero: Number;
- *   'on.input': (value: Number) => void;
- * }} State
- */
-
-/** @extends {Block<State & Partial<import('./CloudEditor.js').State & import('./EditorToolbar.js').State>>} */
 export class EditorSlider extends Block {
   init$ = {
+    ...this.init$,
     disabled: false,
     min: 0,
     max: 100,

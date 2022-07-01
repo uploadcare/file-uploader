@@ -1,35 +1,16 @@
-import { Block } from '../../abstract/Block.js';
+import { UploaderBlock } from '../../abstract/UploaderBlock.js';
+import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 import { canUsePermissionsApi } from '../utils/abilities.js';
 import { debounce } from '../utils/debounce.js';
 
-/**
- * @typedef {Object} State
- * @property {any} video
- * @property {String} videoTransformCss
- * @property {Boolean} shotBtnDisabled
- * @property {Boolean} videoHidden
- * @property {Boolean} messageHidden
- * @property {Boolean} requestBtnHidden
- * @property {String} l10nMessage
- * @property {() => void} onCancel
- * @property {() => void} onShot
- * @property {() => void} onRequestPermissions
- */
-
-/**
- * @typedef {State &
- *   Partial<import('../ActivityIcon/ActivityIcon.js').State & import('../ActivityCaption/ActivityCaption.js').State>} CameraSourceState
- */
-
-/** @extends {Block<CameraSourceState>} */
-export class CameraSource extends Block {
-  activityType = Block.activities.CAMERA;
+export class CameraSource extends UploaderBlock {
+  activityType = ActivityBlock.activities.CAMERA;
 
   /** @private */
   _unsubPermissions = null;
 
-  /** @type {State} */
   init$ = {
+    ...this.init$,
     video: null,
     videoTransformCss: null,
     shotBtnDisabled: false,
@@ -189,12 +170,13 @@ export class CameraSource extends Block {
         mimeType: file.type,
       });
       this.set$({
-        '*currentActivity': Block.activities.UPLOAD_LIST,
+        '*currentActivity': ActivityBlock.activities.UPLOAD_LIST,
       });
     });
   }
 
   initCallback() {
+    super.initCallback();
     this.registerActivity(this.activityType, this._onActivate, this._onDeactivate);
 
     this.sub('--cfg-camera-mirror', (val) => {

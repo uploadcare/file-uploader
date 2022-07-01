@@ -1,11 +1,8 @@
-import { Block } from '../../abstract/Block.js';
+import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 
-/** @typedef {{ '*activityCaption': String }} State */
-
-/** @extends {Block<State>} */
-export class ActivityCaption extends Block {
-  /** @type {State} */
+export class ActivityCaption extends ActivityBlock {
   init$ = {
+    ...this.init$,
     '*activityCaption': undefined,
   };
 }

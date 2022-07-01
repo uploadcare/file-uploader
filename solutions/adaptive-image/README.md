@@ -130,7 +130,7 @@ You can provide some transformation settings for the single image or the set of 
 <lr-img class="invert" src="SOURCE_IMAGE_PATH"></lr-img>
 ```
 
-Operations description syntax is the same as used in [REST API](https://uploadcare.com/docs/transformations/image/). More examples:
+Operations description syntax is the same as used in [Image processing API](https://uploadcare.com/docs/transformations/image/). More examples:
 
 ```html
 <style>
@@ -143,7 +143,7 @@ Operations description syntax is the same as used in [REST API](https://uploadca
 </style>
 ```
 
-As you can see, transformation definitions are separated with `/-/` symbols, just like you can use in the REST API.
+As you can see, transformation definitions are separated with `/-/` symbols, just like you can use in the [Image processing API](https://uploadcare.com/docs/transformations/image/).
 
 ## Background mode
 

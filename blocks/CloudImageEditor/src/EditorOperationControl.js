@@ -1,7 +1,6 @@
 import { EditorButtonControl } from './EditorButtonControl.js';
 import { COLOR_OPERATIONS_CONFIG } from './toolbar-constants.js';
 
-/** @extends {EditorButtonControl<Partial<import('./EditorToolbar.js').State>>} */
 export class EditorOperationControl extends EditorButtonControl {
   /**
    * @private

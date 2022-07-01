@@ -2,10 +2,7 @@ import { createCdnUrl, createCdnUrlModifiers } from '../../../utils/cdn-utils.js
 import { transformationsToOperations } from './lib/transformationUtils.js';
 import { TRANSPARENT_PIXEL_SRC } from './lib/transparentPixelSrc.js';
 
-/**
- * @param {import('./CloudEditor.js').CloudEditor} fnCtx
- * @returns {import('./CloudEditor.js').State}
- */
+/** @param {import('./CloudEditor.js').CloudEditor} fnCtx */
 export function initState(fnCtx) {
   return {
     '*originalUrl': null,
@@ -32,7 +29,7 @@ export function initState(fnCtx) {
     'presence.modalCaption': true,
     'presence.editorToolbar': false,
     'presence.viewerToolbar': true,
-
+    // TODO: beware of wrong ctx in case of element re-creation:
     '*on.retryNetwork': () => {
       let images = fnCtx.querySelectorAll('img');
       for (let img of images) {

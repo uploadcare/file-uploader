@@ -1,4 +1,4 @@
-import { Block } from '../../abstract/Block.js';
+import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 
 export class UiConfirmation {
   captionL10nStr = 'confirm-your-action';
@@ -13,32 +13,14 @@ export class UiConfirmation {
   }
 }
 
-/**
- * @typedef {{
- *   messageTxt: String;
- *   confirmBtnTxt: String;
- *   denyBtnTxt: String;
- *   '*confirmation': UiConfirmation;
- *   onConfirm: () => void;
- *   onDeny: () => void;
- * }} State
- */
-
-/**
- * @typedef {State &
- *   Partial<import('../Modal/Modal').State> &
- *   Partial<import('../ActivityCaption/ActivityCaption').State>} ConfirmationDialogState
- */
-
-/** @extends {Block<ConfirmationDialogState>} */
-export class ConfirmationDialog extends Block {
-  activityType = Block.activities.CONFIRMATION;
+export class ConfirmationDialog extends ActivityBlock {
+  activityType = ActivityBlock.activities.CONFIRMATION;
 
   /** @private */
   _defaults = new UiConfirmation();
 
-  /** @type {State} */
   init$ = {
+    ...this.init$,
     messageTxt: '',
     confirmBtnTxt: '',
     denyBtnTxt: '',
@@ -60,7 +42,7 @@ export class ConfirmationDialog extends Block {
       }
       this.set$({
         '*modalHeaderHidden': true,
-        '*currentActivity': Block.activities.CONFIRMATION,
+        '*currentActivity': ActivityBlock.activities.CONFIRMATION,
         '*activityCaption': this.l10n(cfn.captionL10nStr),
         messageTxt: this.l10n(cfn.messageL10Str),
         confirmBtnTxt: this.l10n(cfn.confirmL10nStr),

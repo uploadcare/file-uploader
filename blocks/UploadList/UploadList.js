@@ -1,36 +1,14 @@
-import { Block } from '../../abstract/Block.js';
+import { UploaderBlock } from '../../abstract/UploaderBlock.js';
+import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 import { FileItem } from '../FileItem/FileItem.js';
 import { UiConfirmation } from '../ConfirmationDialog/ConfirmationDialog.js';
 import { UiMessage } from '../MessageBox/MessageBox.js';
 
-/**
- * @typedef {Partial<import('../FileItem/FileItem.js').State> &
- *   Partial<import('../ActivityIcon/ActivityIcon.js').State> &
- *   Partial<import('../ActivityCaption/ActivityCaption.js').State>} ExternalState
- */
+export class UploadList extends UploaderBlock {
+  activityType = ActivityBlock.activities.UPLOAD_LIST;
 
-/**
- * @typedef {{
- *   doneBtnHidden: Boolean;
- *   doneBtnDisabled: Boolean;
- *   uploadBtnHidden: Boolean;
- *   uploadBtnDisabled: Boolean;
- *   addMoreBtnDisabled: Boolean;
- *   addMoreBtnHidden: Boolean;
- *   hasFiles: Boolean;
- *   onAdd: () => void;
- *   onUpload: () => void;
- *   onDone: () => void;
- *   onCancel: () => void;
- * }} State
- */
-
-/** @extends {Block<State & ExternalState>} */
-export class UploadList extends Block {
-  activityType = Block.activities.UPLOAD_LIST;
-
-  /** @type {State} */
   init$ = {
+    ...this.init$,
     doneBtnHidden: false,
     doneBtnDisabled: false,
     uploadBtnHidden: false,
@@ -180,8 +158,6 @@ export class UploadList extends Block {
   initCallback() {
     super.initCallback();
 
-    this.bindCssData('--cfg-show-empty-list');
-
     this.registerActivity(this.activityType, () => {
       this.set$({
         '*activityCaption': this.l10n('selected'),
@@ -202,7 +178,6 @@ export class UploadList extends Block {
     this.sub('*uploadList', (list) => {
       if (list?.length === 0 && !this.getCssData('--cfg-show-empty-list')) {
         this.cancelFlow();
-        this.ref.files.innerHTML = '';
         return;
       }
 
@@ -212,34 +187,6 @@ export class UploadList extends Block {
         hasFiles: list.length > 0,
       });
 
-      list.forEach((id) => {
-        if (!this._renderMap[id]) {
-          let item = new FileItem();
-          this._renderMap[id] = item;
-        }
-      });
-
-      for (let id in this._renderMap) {
-        if (!list.includes(id)) {
-          this._renderMap[id].remove();
-          delete this._renderMap[id];
-        }
-      }
-
-      let fr = document.createDocumentFragment();
-      Object.values(this._renderMap).forEach((el) => fr.appendChild(el));
-      this.ref.files.replaceChildren(fr);
-      Object.keys(this._renderMap).forEach((id) => {
-        /** @type {Block} */
-        let el = this._renderMap[id];
-        // rendering components async improves initial list render time a bit
-        setTimeout(() => {
-          el['entry-id'] = id;
-          if (!el.innerHTML) {
-            el.render();
-          }
-        });
-      });
       this.setForCtxTarget('lr-modal', '*modalActive', true);
     });
   }
@@ -249,7 +196,12 @@ UploadList.template = /*html*/ `
 <div class="no-files" set="@hidden: hasFiles">
   <slot name="empty"><span l10n="no-files"></span></slot>
 </div>
-<div class="files" ref="files"></div>
+
+<div 
+  class="files" 
+  repeat="*uploadList"
+  repeat-item-tag="lr-file-item"></div>
+
 <div class="toolbar">
   <button
     type="button"

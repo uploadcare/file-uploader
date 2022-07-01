@@ -1,15 +1,14 @@
-import { Block } from '../../abstract/Block.js';
+import { UploaderBlock } from '../../abstract/UploaderBlock.js';
+import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 import { DropzoneState, addDropzone } from './addDropzone.js';
 
-/** @typedef {{ state: DropzoneState }} State */
-
-/** @extends {Block<State>} */
-export class DropArea extends Block {
-  /** @type {State} */
+export class DropArea extends UploaderBlock {
   init$ = {
+    ...this.init$,
     state: DropzoneState.INACTIVE,
   };
   initCallback() {
+    super.initCallback();
     /** @private */
     this._destroyDropzone = addDropzone({
       element: this,
@@ -27,7 +26,7 @@ export class DropArea extends Block {
           });
         });
         this.set$({
-          '*currentActivity': Block.activities.UPLOAD_LIST,
+          '*currentActivity': ActivityBlock.activities.UPLOAD_LIST,
         });
       },
     });

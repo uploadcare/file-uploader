@@ -69,18 +69,6 @@ function keypointsRange(operation, value) {
  * @property {Number} value
  */
 
-/**
- * @typedef {{
- *   active: boolean;
- *   title: String;
- *   icon: String;
- * }} State
- */
-
-/**
- * @template S
- * @extends {Block<S & Partial<State & import('./EditorToolbar.js').State & import('./CloudEditor.js').State>>}
- */
 export class EditorImageFader extends Block {
   constructor() {
     super();

@@ -1,19 +1,8 @@
 import { Block } from '../../abstract/Block.js';
 
-/**
- * @typedef {{
- *   cssLeft: String;
- *   caption: String;
- *   barActive: Boolean;
- *   '*rangeValue': Number;
- *   onChange: () => void;
- * }} State
- */
-
-/** @extends {Block<State>} */
 export class Range extends Block {
-  /** @type {State} */
   init$ = {
+    ...this.init$,
     cssLeft: '50%',
     caption: 'CAPTION',
     barActive: false,
@@ -24,6 +13,7 @@ export class Range extends Block {
   };
 
   initCallback() {
+    super.initCallback();
     [...this.attributes].forEach((attr) => {
       let exclude = ['style', 'ref'];
       if (!exclude.includes(attr.name)) {

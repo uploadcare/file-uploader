@@ -1,30 +1,15 @@
-import { Block } from '../../abstract/Block.js';
+import { UploaderBlock } from '../../abstract/UploaderBlock.js';
+import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../utils/cdn-utils.js';
 import { fileCssBg } from '../svg-backgrounds/svg-backgrounds.js';
 
-/**
- * @typedef {{
- *   checkerboard: Boolean;
- *   fileSize: String;
- *   fileName: String;
- *   cdnUrl: String;
- *   errorTxt: String;
- *   cloudEditBtnHidden: Boolean;
- *   onNameInput: () => void;
- *   onBack: () => void;
- *   onRemove: () => void;
- *   onCloudEdit: () => void;
- * }} State
- */
-
-/** @extends {Block<State & Partial<import('../ActivityCaption/ActivityCaption').State>>} */
-export class UploadDetails extends Block {
-  activityType = Block.activities.DETAILS;
+export class UploadDetails extends UploaderBlock {
+  activityType = ActivityBlock.activities.DETAILS;
 
   pauseRender = true;
 
-  /** @type {State} */
   init$ = {
+    ...this.init$,
     checkerboard: false,
     fileSize: null,
     fileName: '',
@@ -42,7 +27,7 @@ export class UploadDetails extends Block {
     },
     onCloudEdit: () => {
       if (this.entry.getValue('uuid')) {
-        this.$['*currentActivity'] = Block.activities.CLOUD_IMG_EDIT;
+        this.$['*currentActivity'] = ActivityBlock.activities.CLOUD_IMG_EDIT;
       }
     },
   };
@@ -62,6 +47,7 @@ export class UploadDetails extends Block {
   }
 
   initCallback() {
+    super.initCallback();
     // Rendering is postponed for the CSS-context-properties usage in template:
     this.render();
     this.$.fileSize = this.l10n('file-size-unknown');
