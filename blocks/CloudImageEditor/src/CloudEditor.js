@@ -10,7 +10,10 @@ import { TabId } from './toolbar-constants.js';
 import { viewerImageSrc } from './util.js';
 
 export class CloudEditor extends Block {
-  init$ = initState(this);
+  init$ = {
+    ...this.init$,
+    ...initState(this),
+  };
 
   /** @private */
   _debouncedShowLoader = debounce(this._showLoader.bind(this), 300);

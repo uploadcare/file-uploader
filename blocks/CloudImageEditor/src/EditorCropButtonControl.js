@@ -16,7 +16,6 @@ function nextValue(operation, prev) {
   return null;
 }
 
-/** @extends {EditorButtonControl<import('./CloudEditor.js').State>} */
 export class EditorCropButtonControl extends EditorButtonControl {
   initCallback() {
     super.initCallback();
