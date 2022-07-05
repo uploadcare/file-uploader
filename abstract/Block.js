@@ -114,3 +114,5 @@ export class Block extends BaseComponent {
     super.reg(name.startsWith(TAG_PREFIX) ? name : TAG_PREFIX + name);
   }
 }
+
+export { BaseComponent };
