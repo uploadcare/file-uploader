@@ -23,6 +23,9 @@ export class CameraSource extends UploaderBlock {
 
     onCameraSelectChange: (e) => {
       console.log(e.target.value);
+      /** @type {String} */
+      this._selectedCameraId = e.target.value;
+      this._capture();
     },
     onCancel: () => {
       this.cancelFlow();
@@ -125,6 +128,11 @@ export class CameraSource extends UploaderBlock {
       },
       audio: false,
     };
+    if (this._selectedCameraId) {
+      constr.video.deviceId = {
+        exact: this._selectedCameraId,
+      };
+    }
     /** @private */
     this._canvas = document.createElement('canvas');
     /** @private */
@@ -199,7 +207,7 @@ export class CameraSource extends UploaderBlock {
           value: info.deviceId,
         };
       });
-    if (cameraSelectOptions.length > 0) {
+    if (cameraSelectOptions.length > 1) {
       this.$.cameraSelectOptions = cameraSelectOptions;
       this.$.cameraSelectHidden = false;
     }
