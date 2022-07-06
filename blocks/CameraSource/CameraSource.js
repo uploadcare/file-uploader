@@ -22,7 +22,6 @@ export class CameraSource extends UploaderBlock {
     cameraSelectHidden: true,
 
     onCameraSelectChange: (e) => {
-      console.log(e.target.value);
       /** @type {String} */
       this._selectedCameraId = e.target.value;
       this._capture();
