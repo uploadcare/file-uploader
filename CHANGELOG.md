@@ -1,3 +1,14 @@
+# [0.5.0](https://github.com/uploadcare/uc-blocks/compare/v0.4.1...v0.5.0) (2022-07-06)
+
+### Bug Fixes
+
+- TS fix ([ed631f8](https://github.com/uploadcare/uc-blocks/commit/ed631f8980ef184d38819b56de23169f81fd0f48))
+
+### Features
+
+- camera selector ([18dbd99](https://github.com/uploadcare/uc-blocks/commit/18dbd993460923f2802993079d040179dc52d48e))
+- lr-select + camera selector WIP ([aad6e9b](https://github.com/uploadcare/uc-blocks/commit/aad6e9bcd059493bf75b9f3bf5c94a7b30af9499))
+
 ## [0.4.1](https://github.com/uploadcare/uc-blocks/compare/v0.4.0...v0.4.1) (2022-06-29)
 
 ### Bug Fixes
