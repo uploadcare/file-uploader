@@ -1,3 +1,9 @@
+## [0.5.1](https://github.com/uploadcare/uc-blocks/compare/v0.5.0...v0.5.1) (2022-07-06)
+
+### Bug Fixes
+
+- camera-source with symbiote updated ([5d136e4](https://github.com/uploadcare/uc-blocks/commit/5d136e481258edc4bca270d03b33422195a55dda))
+
 # [0.5.0](https://github.com/uploadcare/uc-blocks/compare/v0.4.1...v0.5.0) (2022-07-06)
 
 ### Bug Fixes
