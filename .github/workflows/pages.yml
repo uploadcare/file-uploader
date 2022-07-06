@@ -12,10 +12,16 @@ jobs:
       - uses: actions/setup-node@v2
         with:
           node-version: '16'
-      - name: Install and Build 🔧
-        run: |
-          npm i
-          npm run build:static
+      - name: Install deps
+        run: npm i
+
+        # CI should be able to commit built files to the gh-pages branch
+        # It's impossible if they're ignored
+      - name: Update .gitignore
+        run: sed -ie '/__REMOVE_BELOW_LINE__/,+1 d' .gitignore
+
+      - name: Build
+        run: npm run build:static
       - name: Deploy 🚀
         uses: JamesIves/github-pages-deploy-action@v4.3.3
         with:
