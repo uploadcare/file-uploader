@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>blocks</title>
+    <script async src="https://unpkg.com/es-module-shims@1.5.6/dist/es-module-shims.js"></script>
+    <script type="importmap">{
+  "imports": {
+    "@symbiotejs/symbiote": "https://unpkg.com/@symbiotejs/symbiote@1.8.5/core/symbiote.js"
+  }
+}
+</script>
+    <script type="module" src="https://unpkg.com/@re4ma/re4ma@0.1.7/build/re4ma.js"></script>
+    <script type="module">
+      import { LiveHtml } from '../../blocks/LiveHtml/LiveHtml.js';
+      LiveHtml.reg('lr-live-html');
+    </script>
+    <script type="module">/** * @param{String}html * @returns{String}*/ export function colorCode(html){return html .replace(/&lt;/g,'<span -tag-arr->&lt;</span>') .replace(/&gt;/g,'<span -tag-arr->&gt;</span>') .split('="') .map((chunk)=>{return chunk.replace('"','</span>"');}) .join(`="<span -attr->`) .replace(/"/g,'<span -quote->"</span>') .replace(/=/g,'<span -equal->=</span>') .split('<span -tag-arr->&lt;</span>/') .join('<span -tag-arr->&lt;/</span>') .split('<span -tag-arr->&lt;</span>!--') .join('<span -comment->&lt;!--') .split('--<span -tag-arr->&gt;</span>') .join('--&gt;</span>') .split('<span -tag-arr->&lt;</span>style<span -tag-arr->&gt;</span>') .join('<span -tag-arr->&lt;</span>style<span -tag-arr->&gt;</span><span -style->') .split('<span -tag-arr->&lt;/</span>style<span -tag-arr->&gt;</span>') .join('</span><span -tag-arr->&lt;/</span>style<span -tag-arr->&gt;</span>');}let codeElements=[...document.querySelectorAll('code')];let tmpEl=document.createElement('div');codeElements.forEach((codeEl)=>{tmpEl.textContent=codeEl.innerHTML;codeEl.innerHTML=colorCode(tmpEl.textContent);});</script>
+    <style> @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap');:root{--clr-bg:rgb(31 29 29);--clr-font:rgb(224 253 255);--clr-link:rgb(253 255 139);--clr-panel:rgb(255 255 255 / 10%);--clr-accent:rgb(233 159 255);--clr-accent-shade:rgb(233 159 255 / 6%);--clr-code:#fff;--clr-code-hl:rgb(255 112 112);--gap-min:2px;--gap-mid:10px;--gap-max:20px;--gap-huge:60px;}html,body{margin:0;padding:0;color:var(--clr-font);font-family:Roboto,sans-serif;background-color:var(--clr-bg);}body{display:grid;grid-template-rows:min-content min-content auto min-content;min-height:100vh;}header{padding:20px;background-color:rgba(0,0,0,.4);}nav{--l-bg-clr:rgba(60,60,60,.9);--blur:6px;display:flex;justify-content:center;position:sticky;z-index:10000;top:0;background-color:var(--l-bg-clr);height:100%;}@supports ((-webkit-backdrop-filter:blur(var(--blur))) or (backdrop-filter:blur(var(--blur)))){nav{--l-bg-clr:rgba(255,255,255,.1);backdrop-filter:blur(var(--blur));-webkit-backdrop-filter:blur(var(--blur));}}nav > div{display:flex;justify-content:space-around;align-items:center;width:100%;max-width:1080px;}nav a{display:block;color:var(--clr-font);margin:20px;text-decoration:none;text-shadow:1px 1px 2px rgba(0,0,0,.6);}main{display:flex;justify-content:center;padding:20px;}col-css{display:block;max-width:1080px;width:100%;}footer{padding:20px;background-color:rgba(0,0,0,.2);}lr-live-html{min-height:400px;}main a{color:var(--clr-link);}code{display:block;background-color:#000;color:var(--clr-code);padding:var(--gap-max);overflow-x:auto;}code .hl{color:var(--clr-code-hl);}code:not([class]){display:inline-block;padding:var(--gap-min);padding-left:.5em;padding-right:.5em;}blockquote{display:block;color:var(--clr-accent);background-color:var(--clr-accent-shade);padding:var(--gap-mid);margin:0;margin-top:var(--gap-max);border-left:var(--gap-min) solid currentColor;}h1{color:var(--clr-accent);}h2{margin-top:calc(var(--gap-max) * 3);}li{margin-bottom:var(--gap-mid);}table{width:100%;}th{padding:10px;background:rgba(0,0,0,.4);}td{padding:10px;background:rgba(255,255,255,.1);}tr:hover{background:rgba(255,255,255,.1);}lr-live-html{display:grid;grid-template-columns:50% 50%;box-shadow:0 5px 16px rgb(0 0 0 / 60%);}lr-live-html [contenteditable]{padding:20px;overflow:auto;color:rgb(255 255 255);font-size:14px;font-family:monospace;white-space:pre;background-color:#000;outline:none;}lr-live-html [contenteditable] [-tag-arr-]{color:rgb(255 112 112);}lr-live-html [contenteditable] [-comment-]{color:aqua;font-style:italic;opacity:0.5;}lr-live-html [contenteditable] [-attr-]{color:rgb(152 197 255);}lr-live-html [contenteditable] [-quote-]{color:rgb(169 255 152);}lr-live-html [contenteditable] [-equal-]{color:rgb(255 152 241);}lr-live-html [contenteditable] [-style-]{color:rgb(255 207 152);}lr-live-html iframe{display:block;width:100%;height:100%;background-color:#fff;border:0;}lr-live-html{display:grid;grid-template-columns:50% 50%;box-shadow:0 5px 16px rgb(0 0 0 / 60%);}code{padding:20px;overflow:auto;color:rgb(255 255 255);font-size:14px;font-family:monospace;white-space:pre;background-color:#000;outline:none;}code [-tag-arr-]{color:rgb(255 112 112);}code [-comment-]{color:aqua;font-style:italic;opacity:0.5;}code [-attr-]{color:rgb(152 197 255);}code [-quote-]{color:rgb(169 255 152);}code [-equal-]{color:rgb(255 152 241);}code [-style-]{color:rgb(255 207 152);}lr-live-html iframe{display:block;width:100%;height:100%;background-color:#fff;border:0;}</style>
+  </head>
+  <body>
+    <header>🟡 Uploadcare | blocks</header>
+    <nav>
+      <div>
+        <a href="../../">Home</a>
+        <a href="../../blocks/">Blocks</a>
+        <a href="../../solutions/">Solutions</a>
+        <a href="../../toc.html">TOC</a>
+        <a href="//github.com/uploadcare/uc-blocks/discussions">Discussions</a>
+      </div>
+    </nav>
+    <main>
+      <col-css><h1 id="texts">Texts</h1>
+<p>All keys and values for the UI texts and translations are also placed in CSS:</p>
+<pre><code class="language-css">.lr-wgt-l10n_en-US,
+.lr-wgt-common,
+:host {
+  --l10n-upload-file: &#39;Upload file&#39;;
+  --l10n-upload-files: &#39;Upload files&#39;;
+  --l10n-drop-files-here: &#39;Drop files here...&#39;;
+  --l10n-select-file-source: &#39;Select file source&#39;;
+  --l10n-selected: &#39;Selected&#39;;
+  --l10n-upload: &#39;Upload&#39;;
+  --l10n-add-more: &#39;Add more&#39;;
+  --l10n-cancel: &#39;Cancel&#39;;
+  --l10n-clear: &#39;Clear&#39;;
+  --l10n-camera-shot: &#39;Shot&#39;;
+  --l10n-upload-url: &#39;Import&#39;;
+  --l10n-edit-image: &#39;Edit image&#39;;
+  --l10n-edit-detail: &#39;Details&#39;;
+  --l10n-back: &#39;Back&#39;;
+  --l10n-done: &#39;Done&#39;;
+  --l10n-remove-from-list: &#39;Remove&#39;;
+  --l10n-no: &#39;No&#39;;
+  --l10n-yes: &#39;Yes&#39;;
+  --l10n-confirm-your-action: &#39;Confirm your action&#39;;
+  --l10n-are-you-sure: &#39;Are you sure?&#39;;
+  --l10n-selected-count: &#39;Selected:&#39;;
+  --l10n-upload-error: &#39;Upload error&#39;;
+  --l10n-no-files: &#39;No files selected&#39;;
+
+  --l10n-src-type-local: &#39;Local file&#39;;
+  --l10n-src-type-from-url: &#39;From URL&#39;;
+  --l10n-src-type-camera: &#39;Camera&#39;;
+  --l10n-src-type-draw: &#39;Draw&#39;;
+  --l10n-src-type-facebook: &#39;Facebook&#39;;
+  --l10n-src-type-dropbox: &#39;Dropbox&#39;;
+  --l10n-src-type-gdrive: &#39;Gdrive&#39;;
+  --l10n-src-type-gphotos: &#39;Gphotos&#39;;
+  --l10n-src-type-instagram: &#39;Instagram&#39;;
+  --l10n-src-type-flickr: &#39;Flickr&#39;;
+  --l10n-src-type-vk: &#39;VK&#39;;
+  --l10n-src-type-evernote: &#39;Evernote&#39;;
+  --l10n-src-type-box: &#39;Box&#39;;
+  --l10n-src-type-onedrive: &#39;Onedrive&#39;;
+  --l10n-src-type-huddle: &#39;Huddle&#39;;
+  --l10n-src-type-other: &#39;Other&#39;;
+
+  --l10n-src-type: var(--l10n-src-type-local);
+
+  --l10n-caption-from-url: &#39;Import from external URL&#39;;
+  --l10n-caption-camera: &#39;Camera&#39;;
+  --l10n-caption-draw: &#39;Draw&#39;;
+  --l10n-caption-edit-file: &#39;Edit file&#39;;
+
+  --l10n-file-no-name: &#39;No name...&#39;;
+
+  --l10n-toggle-fullscreen: &#39;Toggle fullscreen&#39;;
+  --l10n-toggle-guides: &#39;Toggle guides&#39;;
+  --l10n-rotate: &#39;Rotate&#39;;
+  --l10n-flip-vertical: &#39;Flip vertical&#39;;
+  --l10n-flip-horizontal: &#39;Flip horizontal&#39;;
+  --l10n-brightness: &#39;Brightness&#39;;
+  --l10n-contrast: &#39;Contrast&#39;;
+  --l10n-saturation: &#39;Saturation&#39;;
+  --l10n-resize: &#39;Resize image&#39;;
+  --l10n-crop: &#39;Crop&#39;;
+  --l10n-select-color: &#39;Select color&#39;;
+  --l10n-text: &#39;Text&#39;;
+  --l10n-draw: &#39;Draw&#39;;
+  --l10n-cancel-edit: &#39;Cancel edit&#39;;
+
+  --l10n-tab-view: &#39;Preview&#39;;
+  --l10n-tab-details: &#39;Details&#39;;
+
+  --l10n-file-name: &#39;Name&#39;;
+  --l10n-file-size: &#39;Size&#39;;
+  --l10n-cdn-url: &#39;CDN URL&#39;;
+  --l10n-file-size-unknown: &#39;Unknown&#39;;
+}
+</code></pre>
+<p>That means you can create your own variant of any UI text or add any new text to your custom block.</p>
+<p>CSS:</p>
+<pre><code class="language-css">.my-txt-v1 {
+  --l10n-my-custom-txt: &#39;SOME TEXT 1&#39;;
+  --l10n-my-custom-title: &#39;some title 1&#39;;
+}
+.my-txt-v2 {
+  --l10n-my-custom-txt: &#39;SOME TEXT 2&#39;;
+  --l10n-my-custom-title: &#39;some title 2&#39;;
+}
+</code></pre>
+<p>JavaScript:</p>
+<pre><code class="language-javascript">import { LR } from &#39;@uploadcare/upload-blocks&#39;;
+
+class MyBlock extends LR.BlockComponent {}
+
+MyBlock.template = /*html*/ `
+&lt;div l10n=&quot;title:my-custom-title&quot;&gt;
+  &lt;span l10n=&quot;my-custom-txt&quot;&gt;&lt;/span&gt;
+&lt;/div&gt;
+`;
+
+MyBlock.reg(&#39;my-block&#39;);
+</code></pre>
+<p>HTML:</p>
+<pre><code class="language-html">...
+&lt;lr-my-block class=&quot;my-txt-v1&quot;&gt;&lt;/lr-my-block&gt;
+...
+&lt;lr-my-block class=&quot;my-txt-v2&quot;&gt;&lt;/lr-my-block&gt;
+...
+</code></pre>
+<p>To connect some text to the some HTML-element property in your block template, instead of <code>textContent</code>, use <code>:</code> symbol separating element property name and the text key: <code>&lt;div l10n=&quot;title:my-custom-title&quot;&gt;</code>.</p>
+</col-css>
+    </main>
+    <footer>© 2022 🦆</footer>
+  </body>
+</html>
