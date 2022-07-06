@@ -1,12 +1,14 @@
 import { CameraSource } from './CameraSource.js';
+import { Select } from '../Select/Select.js';
+import { Icon } from '../Icon/Icon.js';
 import { registerBlocks } from '../../abstract/registerBlocks.js';
 
-registerBlocks({ CameraSource });
-
-const cameraSrc = new CameraSource();
-cameraSrc.classList.add('lr-wgt-common');
-
 window.onload = () => {
-  document.querySelector('#viewport')?.appendChild(cameraSrc);
+  if (window.location.host) {
+    return;
+  }
+  registerBlocks({ CameraSource, Select, Icon });
+  /** @type {CameraSource} */
+  const cameraSrc = document.querySelector('lr-camera-source');
   cameraSrc.$['*currentActivity'] = 'camera';
 };

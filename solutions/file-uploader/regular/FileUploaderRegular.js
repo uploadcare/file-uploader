@@ -1,6 +1,6 @@
-import { Block } from '../../../abstract/Block.js';
+import { ShadowWrapper } from '../../../blocks/ShadowWrapper/ShadowWrapper.js';
 
-export class FileUploaderRegular extends Block {}
+export class FileUploaderRegular extends ShadowWrapper {}
 
 FileUploaderRegular.template = /*html*/ `
 <lr-simple-btn></lr-simple-btn>

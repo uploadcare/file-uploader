@@ -31,45 +31,12 @@ function renderTabContent(id) {
   `;
 }
 
-/**
- * @typedef {{
- *   '*sliderEl': import('./EditorSlider.js').EditorSlider;
- *   '*loadingOperations': import('./types.js').LoadingOperations;
- *   '*showSlider': Boolean;
- *   '*editorTransformations': import('./types.js').Transformations;
- *   '*currentFilter': String;
- *   '*currentOperation': String;
- *   showLoader: Boolean;
- *   tabId: String;
- *   filters: String[];
- *   colorOperations: String[];
- *   cropOperations: String[];
- *   '*operationTooltip': String;
- *   'l10n.cancel': String;
- *   'l10n.apply': String;
- *   'presence.mainToolbar': Boolean;
- *   'presence.subToolbar': Boolean;
- *   'presence.tabContent.crop': Boolean;
- *   'presence.tabContent.sliders': Boolean;
- *   'presence.tabContent.filters': Boolean;
- *   'presence.subTopToolbarStyles': import('./elements/presence-toggle/PresenceToggle.js').Style;
- *   'presence.subBottomToolbarStyles': import('./elements/presence-toggle/PresenceToggle.js').Style;
- *   'presence.tabContentStyles': import('./elements/presence-toggle/PresenceToggle.js').Style;
- *   'on.cancel': () => void;
- *   'on.apply': () => void;
- *   'on.applySlider': () => void;
- *   'on.cancelSlider': () => void;
- *   'on.clickTab': () => void;
- * }} State
- */
-
-/** @extends {Block<State & Partial<import('./CloudEditor.js').State>>} */
 export class EditorToolbar extends Block {
   constructor() {
     super();
 
-    /** @type {State} */
     this.init$ = {
+      ...this.init$,
       '*sliderEl': null,
       /** @type {import('./types.js').LoadingOperations} */
       '*loadingOperations': new Map(),

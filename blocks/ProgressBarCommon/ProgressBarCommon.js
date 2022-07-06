@@ -1,18 +1,8 @@
-import { Block } from '../../abstract/Block.js';
+import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 
-/**
- * @typedef {{
- *   visible: Boolean;
- *   unknown: Boolean;
- *   value: Number;
- *   '*commonProgress': Number;
- * }} State
- */
-
-/** @extends {Block<State>} */
-export class ProgressBarCommon extends Block {
-  /** @type {State} */
+export class ProgressBarCommon extends UploaderBlock {
   init$ = {
+    ...this.init$,
     visible: false,
     unknown: false,
     value: 0,
@@ -21,6 +11,7 @@ export class ProgressBarCommon extends Block {
   };
 
   initCallback() {
+    super.initCallback();
     this.uploadCollection.observe(() => {
       let anyUploading = this.uploadCollection.items().some((id) => {
         let item = this.uploadCollection.read(id);

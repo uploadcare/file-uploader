@@ -14,17 +14,6 @@ const FS_ICON = {
   EXIT: 'fullscreen-exit',
 };
 
-/**
- * @typedef {{
- *   fsIcon: String;
- *   rangeActive: Boolean;
- *   rangeCaption: String;
- *   onBtnClick: (e: MouseEvent) => void;
- *   onColor: () => void;
- * }} State
- */
-
-/** @extends {Block<State & Partial<import('../Range/Range').State & import('../Color/Color.js').State>>} */
 export class EditorToolbar extends Block {
   get actionsMap() {
     return {
@@ -88,8 +77,8 @@ export class EditorToolbar extends Block {
     };
   }
 
-  /** @type {State} */
   init$ = {
+    ...this.init$,
     fsIcon: FS_ICON.FS,
     rangeActive: false,
     rangeCaption: '',
@@ -130,6 +119,7 @@ export class EditorToolbar extends Block {
   editor = null;
 
   initCallback() {
+    super.initCallback();
     this.defineAccessor('refMap', (/** @type {import('./EditableCanvas.js').RefMap} */ rMap) => {
       if (!rMap) {
         return;

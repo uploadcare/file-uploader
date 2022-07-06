@@ -1,11 +1,8 @@
 import { Block } from '../../abstract/Block.js';
 
-/** @typedef {{ '*selectedColor': String; inputOpacity: Number; onChange: () => void }} State */
-
-/** @extends {Block<State>} */
 export class Color extends Block {
-  /** @type {State} */
   init$ = {
+    ...this.init$,
     inputOpacity: 0,
     '*selectedColor': '#f00',
     onChange: () => {

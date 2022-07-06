@@ -1,35 +1,16 @@
-import { Block } from '../../abstract/Block.js';
+import { UploaderBlock } from '../../abstract/UploaderBlock.js';
+import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 import { canUsePermissionsApi } from '../utils/abilities.js';
 import { debounce } from '../utils/debounce.js';
 
-/**
- * @typedef {Object} State
- * @property {any} video
- * @property {String} videoTransformCss
- * @property {Boolean} shotBtnDisabled
- * @property {Boolean} videoHidden
- * @property {Boolean} messageHidden
- * @property {Boolean} requestBtnHidden
- * @property {String} l10nMessage
- * @property {() => void} onCancel
- * @property {() => void} onShot
- * @property {() => void} onRequestPermissions
- */
-
-/**
- * @typedef {State &
- *   Partial<import('../ActivityIcon/ActivityIcon.js').State & import('../ActivityCaption/ActivityCaption.js').State>} CameraSourceState
- */
-
-/** @extends {Block<CameraSourceState>} */
-export class CameraSource extends Block {
-  activityType = Block.activities.CAMERA;
+export class CameraSource extends UploaderBlock {
+  activityType = ActivityBlock.activities.CAMERA;
 
   /** @private */
   _unsubPermissions = null;
 
-  /** @type {State} */
   init$ = {
+    ...this.init$,
     video: null,
     videoTransformCss: null,
     shotBtnDisabled: false,
@@ -37,7 +18,15 @@ export class CameraSource extends Block {
     messageHidden: true,
     requestBtnHidden: canUsePermissionsApi(),
     l10nMessage: null,
+    cameraSelectOptions: null,
+    cameraSelectHidden: true,
 
+    onCameraSelectChange: (e) => {
+      console.log(e.target.value);
+      /** @type {String} */
+      this._selectedCameraId = e.target.value;
+      this._capture();
+    },
     onCancel: () => {
       this.cancelFlow();
     },
@@ -139,6 +128,11 @@ export class CameraSource extends Block {
       },
       audio: false,
     };
+    if (this._selectedCameraId) {
+      constr.video.deviceId = {
+        exact: this._selectedCameraId,
+      };
+    }
     /** @private */
     this._canvas = document.createElement('canvas');
     /** @private */
@@ -189,17 +183,34 @@ export class CameraSource extends Block {
         mimeType: file.type,
       });
       this.set$({
-        '*currentActivity': Block.activities.UPLOAD_LIST,
+        '*currentActivity': ActivityBlock.activities.UPLOAD_LIST,
       });
     });
   }
 
-  initCallback() {
+  async initCallback() {
+    super.initCallback();
     this.registerActivity(this.activityType, this._onActivate, this._onDeactivate);
 
     this.sub('--cfg-camera-mirror', (val) => {
       this.$.videoTransformCss = val ? 'scaleX(-1)' : null;
     });
+
+    let deviceList = await navigator.mediaDevices.enumerateDevices();
+    let cameraSelectOptions = deviceList
+      .filter((info) => {
+        return info.kind === 'videoinput';
+      })
+      .map((info) => {
+        return {
+          text: info.label,
+          value: info.deviceId,
+        };
+      });
+    if (cameraSelectOptions.length > 1) {
+      this.$.cameraSelectOptions = cameraSelectOptions;
+      this.$.cameraSelectHidden = false;
+    }
   }
 }
 
@@ -224,6 +235,9 @@ CameraSource.template = /*html*/ `
     set="onclick: onCancel"
     l10n="cancel">
   </button>
+  <lr-select 
+    set="$.options: cameraSelectOptions; @hidden: cameraSelectHidden; onchange: onCameraSelectChange">
+  </lr-select>
   <button
     type="button"
     class="shot-btn primary-btn"

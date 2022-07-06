@@ -1,5 +1,6 @@
 import { create } from '@symbiotejs/symbiote';
-import { Block } from '../../abstract/Block.js';
+import { UploaderBlock } from '../../abstract/UploaderBlock.js';
+import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 import { registerMessage, unregisterMessage } from './messages.js';
 import { buildStyles } from './buildStyles.js';
 import { queryString } from './query-string.js';
@@ -9,27 +10,14 @@ import { queryString } from './query-string.js';
  * @property {String} externalSourceType
  */
 
-/**
- * @typedef {Object} State
- * @property {Number} counter
- * @property {() => void} onDone
- * @property {() => void} onCancel
- */
+export class ExternalSource extends UploaderBlock {
+  activityType = ActivityBlock.activities.EXTERNAL;
 
-/**
- * @typedef {State &
- *   Partial<import('../ActivityCaption/ActivityCaption').State & import('../ActivityIcon/ActivityIcon').State>} ExternalSourceState
- */
-
-/** @extends {Block<ExternalSourceState>} */
-export class ExternalSource extends Block {
-  activityType = Block.activities.EXTERNAL;
-
-  /** @type {State} */
   init$ = {
+    ...this.init$,
     counter: 0,
     onDone: () => {
-      this.$['*currentActivity'] = Block.activities.UPLOAD_LIST;
+      this.$['*currentActivity'] = ActivityBlock.activities.UPLOAD_LIST;
     },
     onCancel: () => {
       this.cancelFlow();
@@ -40,11 +28,12 @@ export class ExternalSource extends Block {
   _iframe = null;
 
   initCallback() {
+    super.initCallback();
     this.registerActivity(this.activityType, () => {
       let { externalSourceType } = /** @type {ActivityParams} */ (this.activityParams);
 
       this.set$({
-        '*activityCaption': `${externalSourceType[0].toUpperCase()}${externalSourceType.slice(1)}`,
+        '*activityCaption': `${externalSourceType?.[0].toUpperCase()}${externalSourceType?.slice(1)}`,
         '*activityIcon': externalSourceType,
       });
 

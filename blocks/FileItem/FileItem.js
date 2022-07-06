@@ -1,35 +1,16 @@
-import { Block } from '../../abstract/Block.js';
+import { UploaderBlock } from '../../abstract/UploaderBlock.js';
+import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 import { resizeImage } from '../utils/resizeImage.js';
 import { uploadFile } from '../../submodules/upload-client/upload-client.js';
 import { UiMessage } from '../MessageBox/MessageBox.js';
 import { fileCssBg } from '../svg-backgrounds/svg-backgrounds.js';
 import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../utils/cdn-utils.js';
 
-/** @typedef {Partial<import('../MessageBox/MessageBox.js').State>} ExternalState */
-
-/**
- * @typedef {{
- *   itemName: String;
- *   thumb: String;
- *   thumbUrl: String;
- *   progressValue: Number;
- *   progressVisible: Boolean;
- *   progressUnknown: Boolean;
- *   notImage: Boolean;
- *   badgeIcon: String;
- *   '*uploadTrigger': {};
- *   onEdit: () => void;
- *   onRemove: () => void;
- *   onUpload: () => void;
- * }} State
- */
-
-/** @extends {Block<State & ExternalState>} */
-export class FileItem extends Block {
+export class FileItem extends UploaderBlock {
   pauseRender = true;
 
-  /** @type {State} */
   init$ = {
+    // ...this.init$,
     itemName: '',
     thumb: '',
     thumbUrl: '',
@@ -43,7 +24,7 @@ export class FileItem extends Block {
     onEdit: () => {
       this.set$({
         '*focusedEntry': this.entry,
-        '*currentActivity': Block.activities.DETAILS,
+        '*currentActivity': ActivityBlock.activities.DETAILS,
       });
     },
     onRemove: () => {
@@ -57,6 +38,9 @@ export class FileItem extends Block {
   /** @private */
   _observerCallback(entries) {
     let [entry] = entries;
+    if (entry.isIntersecting && !this.innerHTML) {
+      this.render();
+    }
     if (entry.intersectionRatio === 0) {
       clearTimeout(this._thumbTimeoutId);
       /** @private */
@@ -109,7 +93,7 @@ export class FileItem extends Block {
   initCallback() {
     super.initCallback();
 
-    this.defineAccessor('entry-id', (id) => {
+    this.sub('uid', (id) => {
       if (!id || id === this.uid) {
         return;
       }
@@ -132,7 +116,7 @@ export class FileItem extends Block {
         this._showMessage('error', caption, validationErrorMsg);
       });
 
-      this.entry.subscribe('uploadError', (uploadError) => {
+      this.entry.subscribe('uploadErrorMsg', (uploadError) => {
         if (!uploadError) {
           return;
         }
@@ -218,15 +202,6 @@ export class FileItem extends Block {
       this._observer.observe(this);
     });
 
-    this.$['*uploadTrigger'] = null;
-    FileItem.activeInstances.add(this);
-
-    this.sub('*uploadTrigger', (val) => {
-      if (!val || !this.isConnected) {
-        return;
-      }
-      this.upload();
-    });
     this.onclick = () => {
       FileItem.activeInstances.forEach((inst) => {
         if (inst === this) {
@@ -236,11 +211,21 @@ export class FileItem extends Block {
         }
       });
     };
+
+    this.$['*uploadTrigger'] = null;
+
+    this.sub('*uploadTrigger', (val) => {
+      if (!val || !this.isConnected) {
+        return;
+      }
+      this.upload();
+    });
+    FileItem.activeInstances.add(this);
   }
 
   destroyCallback() {
     FileItem.activeInstances.delete(this);
-    this._observer.unobserve(this);
+    // this._observer.unobserve(this);
     clearTimeout(this._thumbTimeoutId);
   }
 
@@ -290,7 +275,8 @@ export class FileItem extends Block {
       this.setAttribute('error', '');
       this.removeAttribute('uploading');
       this.entry.setValue('uploadProgress', 0);
-      this.entry.setValue('uploadError', error);
+      // this.entry.setValue('uploadError', error);
+      this.entry.setValue('uploadErrorMsg', error?.toString() || 'Upload error');
     }
   }
 }
@@ -321,7 +307,3 @@ FileItem.template = /*html*/ `
 </lr-progress-bar>
 `;
 FileItem.activeInstances = new Set();
-
-FileItem.bindAttributes({
-  'entry-id': null,
-});
