@@ -17,8 +17,6 @@
     "access": "public"
   },
   "scripts": {
-    "sym": "git submodule add -b main https://github.com/symbiotejs/symbiote.js submodules/symbiote",
-    "update_submodules": "git submodule update --init --recursive --remote",
     "setup": "npm run update_submodules && npm i",
     "test": "web-test-runner \"./{abstract,blocks,solutions,web,utils}/**/*.test.js\" --node-resolve",
     "test:light": "node ./test/test.js",
@@ -37,7 +35,8 @@
     "lint:css:fix": "stylelint './**/*.css' --fix",
     "lint": "run-s lint:js lint:css",
     "clean:web": "rimraf './web/**/*.{js,css}'",
-    "clean:types": "rimraf './{abstract,blocks,solutions,web,utils,submodules/symbiote}/**/*.{d.ts,d.ts.map}' && rimraf './!(global).{d.ts,d.ts.map}'",
+    "clean:html": "rimraf './**/*.html'",
+    "clean:types": "rimraf './{abstract,blocks,solutions,web,utils,static-gen}/**/*.{d.ts,d.ts.map}' && rimraf './!(global).{d.ts,d.ts.map}'",
     "clean": "run-s clean:*",
     "format:js": "prettier --write './**/*.{js,cjs}'",
     "format:css": "prettier --write --parser css './**/*.css'",
@@ -82,6 +81,6 @@
   "license": "MIT",
   "dependencies": {
     "@jam-do/jam-tools": "^0.0.3",
-    "@symbiotejs/symbiote": "^1.8.4"
+    "@symbiotejs/symbiote": "^1.8.5"
   }
 }
