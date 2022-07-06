@@ -6,3 +6,6 @@ web
 **/*.d.ts.map
 !submodules/upload-client/upload-client.d.ts
 !global.d.ts
+
+# html files are treated as generated with build:static
+**/*.html
