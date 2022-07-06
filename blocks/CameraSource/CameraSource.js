@@ -18,7 +18,15 @@ export class CameraSource extends UploaderBlock {
     messageHidden: true,
     requestBtnHidden: canUsePermissionsApi(),
     l10nMessage: null,
+    cameraSelectOptions: null,
+    cameraSelectHidden: true,
 
+    onCameraSelectChange: (e) => {
+      console.log(e.target.value);
+      /** @type {String} */
+      this._selectedCameraId = e.target.value;
+      this._capture();
+    },
     onCancel: () => {
       this.cancelFlow();
     },
@@ -120,6 +128,11 @@ export class CameraSource extends UploaderBlock {
       },
       audio: false,
     };
+    if (this._selectedCameraId) {
+      constr.video.deviceId = {
+        exact: this._selectedCameraId,
+      };
+    }
     /** @private */
     this._canvas = document.createElement('canvas');
     /** @private */
@@ -175,13 +188,29 @@ export class CameraSource extends UploaderBlock {
     });
   }
 
-  initCallback() {
+  async initCallback() {
     super.initCallback();
     this.registerActivity(this.activityType, this._onActivate, this._onDeactivate);
 
     this.sub('--cfg-camera-mirror', (val) => {
       this.$.videoTransformCss = val ? 'scaleX(-1)' : null;
     });
+
+    let deviceList = await navigator.mediaDevices.enumerateDevices();
+    let cameraSelectOptions = deviceList
+      .filter((info) => {
+        return info.kind === 'videoinput';
+      })
+      .map((info) => {
+        return {
+          text: info.label,
+          value: info.deviceId,
+        };
+      });
+    if (cameraSelectOptions.length > 1) {
+      this.$.cameraSelectOptions = cameraSelectOptions;
+      this.$.cameraSelectHidden = false;
+    }
   }
 }
 
@@ -206,6 +235,9 @@ CameraSource.template = /*html*/ `
     set="onclick: onCancel"
     l10n="cancel">
   </button>
+  <lr-select 
+    set="$.options: cameraSelectOptions; @hidden: cameraSelectHidden; onchange: onCameraSelectChange">
+  </lr-select>
   <button
     type="button"
     class="shot-btn primary-btn"

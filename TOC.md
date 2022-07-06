@@ -46,6 +46,8 @@
       - [ProgressBar](./blocks/ProgressBar/) - abstract progress bar
       - [ProgressBarCommon](./blocks/ProgressBarCommon/) - displays uploading progress for the all files selected
       - [Range](./blocks/Range/) - customizable wrapper for the range input element
+      - [Select](./blocks/Select/) - customizable selector
+      - [ShadowWrapper](./blocks/ShadowWrapper/) - Shadow DOM wrapper to encapsulate your solution
       - [SimpleBtn](./blocks/SimpleBtn/) - button for the file uploading workflow start
       - [SourceBtn](./blocks/SourceBtn/) - button for the certain source activation
       - [SourceList](./blocks/SourceList/) - renders the list of file sources basing on configuration provided
