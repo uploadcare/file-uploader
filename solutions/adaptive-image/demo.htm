@@ -1,0 +1,26 @@
+<h2>Live demo:</h2>
+
+<lr-live-html>
+  <script src="./index.js" type="module"></script>
+
+  <style>
+    lr-img {
+      --lr-img-pubkey: '364c0864158c27472ffe';
+      display: contents;
+    }
+
+    lr-img > img {
+      transition: 1s;
+    }
+
+    lr-img > img[unresolved] {
+      opacity: 0;
+      transform: scale(0.8);
+    }
+  </style>
+  
+  <lr-img 
+    width="100%"
+    src="https://uploadcare.github.io/uc-blocks/assets/media/kitten.jpg?absolute">
+  </lr-img>
+</lr-live-html>

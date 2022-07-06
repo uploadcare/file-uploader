@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "pretty": true,
+    "target": "esnext",
+    "module": "esnext",
+    "moduleResolution": "node",
+    "lib": ["es2017", "ESNext", "ESNext.Array", "DOM", "DOM.Iterable", "WebWorker"],
+    "allowJs": true,
+    "checkJs": true,
+    "strict": false,
+    "alwaysStrict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "types": ["node", "chai", "mocha"],
+    "noEmit": true
+  },
+  "include": ["**/*.js"],
+  "exclude": ["node_modules", "./submodules/upload-client/upload-client.js"]
+}

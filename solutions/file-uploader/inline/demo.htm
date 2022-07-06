@@ -1,0 +1,50 @@
+<h2>Live demo:</h2>
+
+<h3>Multiple sources:</h3>
+<lr-live-html>
+  <!-- Uploader script connection: -->
+  <script src="./index.js" type="module"></script>
+
+  <!-- CSS context properties: -->
+  <style>
+    @import url(./index.css);
+
+    lr-uploader {
+      width: 100%;
+      height: 100%;
+    }
+
+    .lr-wgt-common {
+      --cfg-pubkey: 'demopublickey';
+    }
+  </style>
+
+  <!-- Uploader widget element: -->
+  <lr-uploader class="lr-wgt-common"></lr-uploader>
+</lr-live-html>
+
+
+<h3>Single source:</h3>
+<lr-live-html>
+  <!-- Uploader script connection: -->
+  <script src="./index.js" type="module"></script>
+
+  <!-- CSS context properties: -->
+  <style>
+    @import url(./index.css);
+
+    lr-uploader[current-activity="details"],
+    lr-uploader[current-activity="cloud-image-edit"] {
+      width: 100%;
+      height: 100%;
+    }
+
+    .lr-wgt-common {
+      --cfg-pubkey: 'demopublickey';
+      --cfg-source-list: 'local';
+    }
+  </style>
+
+  <!-- Uploader widget element: -->
+  <lr-uploader current-activity class="lr-wgt-common"></lr-uploader>
+</lr-live-html>

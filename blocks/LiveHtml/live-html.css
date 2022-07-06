@@ -1,0 +1,50 @@
+lr-live-html {
+  display: grid;
+  grid-template-columns: 50% 50%;
+  box-shadow: 0 5px 16px rgb(0 0 0 / 60%);
+}
+
+lr-live-html [contenteditable] {
+  padding: 20px;
+  overflow: auto;
+  color: rgb(255 255 255);
+  font-size: 14px;
+  font-family: monospace;
+  white-space: pre;
+  background-color: #000;
+  outline: none;
+}
+
+lr-live-html [contenteditable] [-tag-arr-] {
+  color: rgb(255 112 112);
+}
+
+lr-live-html [contenteditable] [-comment-] {
+  color: aqua;
+  font-style: italic;
+  opacity: 0.5;
+}
+
+lr-live-html [contenteditable] [-attr-] {
+  color: rgb(152 197 255);
+}
+
+lr-live-html [contenteditable] [-quote-] {
+  color: rgb(169 255 152);
+}
+
+lr-live-html [contenteditable] [-equal-] {
+  color: rgb(255 152 241);
+}
+
+lr-live-html [contenteditable] [-style-] {
+  color: rgb(255 207 152);
+}
+
+lr-live-html iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background-color: #fff;
+  border: 0;
+}

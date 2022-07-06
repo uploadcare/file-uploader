@@ -1,0 +1,55 @@
+lr-source-btn {
+  display: flex;
+  align-items: center;
+  padding-right: 1em;
+  color: var(--clr-txt-mid);
+  border-radius: var(--border-radius-element);
+  cursor: pointer;
+  transition-duration: var(--transition-duration);
+  transition-property: background-color, color;
+  user-select: none;
+}
+
+lr-source-btn:hover {
+  color: var(--clr-txt);
+  background-color: var(--clr-shade-lv1);
+}
+
+lr-source-btn:active {
+  color: var(--clr-txt);
+  background-color: var(--clr-shade-lv2);
+}
+
+lr-source-btn lr-icon {
+  display: inline-flex;
+  flex-grow: 1;
+  justify-content: center;
+  min-width: var(--ui-size);
+}
+
+lr-source-btn[type='local'] > .txt::after {
+  content: var(--l10n-local-files);
+}
+
+lr-source-btn[type='camera'] > .txt::after {
+  content: var(--l10n-camera);
+}
+
+lr-source-btn[type='url'] > .txt::after {
+  content: var(--l10n-from-url);
+}
+
+lr-source-btn[type='other'] > .txt::after {
+  content: var(--l10n-other);
+}
+
+lr-source-btn .txt {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  width: 100%;
+  height: var(--ui-size);
+  padding: 0;
+  white-space: nowrap;
+  border: none;
+}

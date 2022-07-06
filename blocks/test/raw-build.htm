@@ -1,0 +1,38 @@
+<base href="../../" />
+
+<style>
+  @import url(./upload-blocks/themes/lr-basic/index.css);
+  .lr-wgt-common {
+    --ctx-name: 'my-uploader';
+    --cfg-pubkey: 'demopublickey';
+  }
+</style>
+
+<script src="./upload-blocks/build/upload-blocks.js" type="module"></script>
+
+<lr-simple-btn class="lr-wgt-common"></lr-simple-btn>
+
+<lr-modal strokes class="lr-wgt-common">
+  <lr-activity-icon slot="heading"></lr-activity-icon>
+  <lr-activity-caption slot="heading"></lr-activity-caption>
+  <lr-start-from>
+    <lr-source-list wrap></lr-source-list>
+    <lr-drop-area></lr-drop-area>
+  </lr-start-from>
+  <lr-upload-list></lr-upload-list>
+  <lr-camera-source></lr-camera-source>
+  <lr-url-source></lr-url-source>
+  <lr-external-source></lr-external-source>
+  <lr-upload-details></lr-upload-details>
+  <lr-confirmation-dialog></lr-confirmation-dialog>
+  <lr-cloud-image-editor></lr-cloud-image-editor>
+</lr-modal>
+
+<lr-message-box class="lr-wgt-common"></lr-message-box>
+<lr-progress-bar-common class="lr-wgt-common"></lr-progress-bar-common>
+
+<lr-data-output
+  fire-event
+  item-template="<img height='200' src='https://ucarecdn.com/{{uuid}}/-/preview/s' />"
+  class="lr-wgt-common"
+></lr-data-output>

@@ -1,0 +1,17 @@
+<h1>DataOutput</h1>
+
+<lr-live-html>
+  <link rel="stylesheet" href="../themes/lr-basic/index.css" />
+
+  <script src="./test.js" type="module"></script>
+
+  <form>
+    <lr-data-output ctx-name="TEST" use-console use-event form-value>
+      <h2>Files uploaded:</h2>
+      <div repeat="filesData">
+        <div>{{uuid}}</div>
+      </div>
+    </lr-data-output>
+    <button>Submit</button>
+  </form>
+</lr-live-html>

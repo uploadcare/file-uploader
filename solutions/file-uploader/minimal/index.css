@@ -1,0 +1,82 @@
+@import url('../../../blocks/themes/lr-basic/index.css');
+
+.lr-wgt-common,
+:host {
+  --cfg-multiple: 0;
+  --cfg-confirm-upload: 0;
+  --cfg-init-activity: 'start-from';
+  --cfg-done-activity: 'upload-list';
+}
+
+lr-start-from {
+  display: block;
+  width: 100%; /* test value */
+  height: 100%; /* test value */
+  padding: 0;
+  text-align: center;
+}
+
+lr-drop-area {
+  width: 100%;
+  height: calc(var(--ui-size) + var(--gap-mid) * 2 + var(--gap-min) * 4);
+  padding: 0;
+  line-height: 140%;
+  text-align: center;
+  border-color: var(--clr-accent-lightest);
+  border-style: solid;
+  border-radius: var(--border-radius-frame);
+}
+
+lr-drop-area[drag-state='inactive'] {
+  background-color: transparent;
+}
+
+lr-drop-area::after {
+  content: '';
+}
+
+lr-drop-area button {
+  display: inline-block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  color: var(--clr-accent);
+  background: transparent;
+  opacity: 0.8;
+  transition: opacity var(--transition-duration) ease;
+}
+
+lr-drop-area button:hover {
+  opacity: 1;
+}
+
+lr-upload-list {
+  width: 100%;
+  padding: var(--gap-min);
+  background-color: transparent;
+  border: var(--border-dashed);
+  border-style: solid;
+  border-radius: var(--border-radius-frame);
+}
+
+lr-upload-list .toolbar {
+  display: none;
+}
+
+lr-file-item {
+  border-radius: var(--border-radius-element);
+}
+
+lr-file-item .edit-btn {
+  display: none;
+}
+
+lr-file-item lr-progress-bar {
+  top: 0 !important;
+  height: 100% !important;
+}
+
+lr-file-item lr-progress-bar .progress {
+  background-color: var(--clr-accent-lightest);
+  border-radius: var(--border-radius-element);
+}

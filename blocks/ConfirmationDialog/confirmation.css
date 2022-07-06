@@ -1,0 +1,21 @@
+lr-confirmation-dialog {
+  display: block;
+  padding: var(--gap-mid);
+  padding-top: var(--gap-max);
+}
+
+lr-confirmation-dialog .message {
+  display: flex;
+  justify-content: center;
+  padding: var(--gap-mid);
+  padding-bottom: var(--gap-max);
+  font-weight: 500;
+  font-size: 1.1em;
+}
+
+lr-confirmation-dialog .toolbar {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--gap-mid);
+  margin-top: var(--gap-mid);
+}

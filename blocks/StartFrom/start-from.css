@@ -1,0 +1,8 @@
+lr-start-from {
+  display: grid;
+  grid-template-columns: min-content auto;
+  gap: var(--gap-mid);
+  height: 100%;
+  padding: var(--gap-mid);
+  overflow-y: auto;
+}

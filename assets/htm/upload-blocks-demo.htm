@@ -1,0 +1,62 @@
+<h2>🎬 Live Demo (regular case):</h2>
+
+<lr-live-html>
+  <script type="module">
+    import * as LR from '../index.js';
+    LR.registerBlocks(LR);
+  </script>
+
+  <style>
+    @import './themes/lr-basic/index.css';
+
+    .lr-wgt-common {
+      --ctx-name: 'LR';
+      --cfg-pubkey: 'demopublickey';
+      --cfg-use-local-image-editor: 0;
+      --cfg-use-cloud-image-editor: 1;
+    }
+  </style>
+
+  <div class="lr-wgt-common">
+    <lr-simple-btn></lr-simple-btn>
+
+    <lr-modal>
+      <lr-activity-icon slot="heading"></lr-activity-icon>
+      <lr-activity-caption slot="heading"></lr-activity-caption>
+      <lr-start-from>
+        <lr-source-list></lr-source-list>
+        <lr-drop-area></lr-drop-area>
+      </lr-start-from>
+      <lr-upload-list></lr-upload-list>
+      <lr-camera-source></lr-camera-source>
+      <lr-url-source></lr-url-source>
+      <lr-external-source></lr-external-source>
+      <lr-upload-details></lr-upload-details>
+      <lr-confirmation-dialog></lr-confirmation-dialog>
+      <lr-cloud-image-editor></lr-cloud-image-editor>
+    </lr-modal>
+
+    <lr-message-box></lr-message-box>
+    <lr-progress-bar></lr-progress-bar>
+  </div>
+
+  <lr-data-output 
+    ctx-name="LR"
+    use-console
+    use-event>
+    <h3>Files uploaded:</h3>
+    <div repeat="filesData">
+      <lr-img width="300" set="@uuid: uuid"></lr-img>
+      <div><a set="@href: cdnUrl">{{cdnUrl}}</a></div>
+    </div>
+  </lr-data-output>
+</lr-live-html>
+
+<div>&nbsp;</div>
+<a href="../uploader/">More uploader implementation cases</a>
+
+<blockquote>
+  Code examples are using the raw code without any build flow setup made. 
+  So you can inspect them via developer tools in your browser and discover all the details. 
+  Note that this is a demo, and that approach could not be optimal for production usage.
+</blockquote>

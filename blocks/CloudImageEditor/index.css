@@ -1,0 +1,9 @@
+@import url('./src/css/index.css');
+
+lr-cloud-image-editor {
+  position: relative;
+  display: flex;
+  width: 100%;
+  height: var(--modal-content-height-fill, 100%);
+  overflow: hidden;
+}

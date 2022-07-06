@@ -1,0 +1,33 @@
+lr-tabs {
+  display: grid;
+  grid-template-rows: min-content minmax(var(--ui-size), auto);
+  height: 100%;
+  overflow: hidden;
+  color: var(--clr-txt-lightest);
+}
+
+lr-tabs > .tabs-row {
+  display: flex;
+  grid-template-columns: minmax();
+  background-color: var(--clr-background-light);
+}
+
+lr-tabs > .tabs-context {
+  overflow-y: auto;
+}
+
+lr-tabs .tabs-row > .tab {
+  display: flex;
+  flex-grow: 1;
+  align-items: center;
+  justify-content: center;
+  height: var(--ui-size);
+  border-bottom: var(--border-light);
+  cursor: pointer;
+  transition: var(--transition-duration);
+}
+
+lr-tabs .tabs-row > .tab[current] {
+  color: var(--clr-txt);
+  border-color: var(--clr-txt);
+}
