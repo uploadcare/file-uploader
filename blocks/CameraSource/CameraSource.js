@@ -200,9 +200,9 @@ export class CameraSource extends UploaderBlock {
       .filter((info) => {
         return info.kind === 'videoinput';
       })
-      .map((info) => {
+      .map((info, idx) => {
         return {
-          text: info.label,
+          text: info.label.trim() || `${this.l10n('caption-camera')} ${idx + 1}`,
           value: info.deviceId,
         };
       });
