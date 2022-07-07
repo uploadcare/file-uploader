@@ -1,10 +1,3 @@
-## [0.5.2](https://github.com/uploadcare/uc-blocks/compare/v0.5.1...v0.5.2) (2022-07-07)
-
-### Bug Fixes
-
-- camera label ([287700f](https://github.com/uploadcare/uc-blocks/commit/287700f26ddb6fe98e55f8edbf1423d0e1e364e4))
-- empty camera labels return on some platforms ([d66b471](https://github.com/uploadcare/uc-blocks/commit/d66b471feb6be7f1dcc67d687cabfe2ce758becc))
-
 ## [0.5.1](https://github.com/uploadcare/uc-blocks/compare/v0.5.0...v0.5.1) (2022-07-06)
 
 ### Bug Fixes
