@@ -5,7 +5,7 @@ export default /*html*/ `<!DOCTYPE html>
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>blocks</title>
-    <script async src="https://unpkg.com/es-module-shims@1.5.6/dist/es-module-shims.js"></script>
+    <script async src="https://unpkg.com/es-module-shims@1.5.8/dist/es-module-shims.js"></script>
     <script type="importmap">{{IMPORTMAP}}</script>
     <script type="module" src="https://unpkg.com/@re4ma/re4ma@0.1.7/build/re4ma.js"></script>
     <script type="module">
