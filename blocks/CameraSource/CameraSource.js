@@ -202,7 +202,7 @@ export class CameraSource extends UploaderBlock {
       })
       .map((info, idx) => {
         return {
-          text: info.label.trim() || `${this.getCssData('--l10n-camera', true) || 'Camera'} ${idx + 1}`,
+          text: info.label.trim() || `${this.l10n('caption-camera')} ${idx + 1}`,
           value: info.deviceId,
         };
       });
