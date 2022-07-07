@@ -9,6 +9,8 @@ export class ActivityBlock extends Block {
     '*currentActivity': '',
     '*currentActivityParams': {},
     '*history': [],
+    '*activityCaption': '',
+    '*activityIcon': '',
   };
 
   initCallback() {
