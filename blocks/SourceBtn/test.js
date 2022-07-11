@@ -1,13 +1,8 @@
+import { ifRef } from '../../utils/ifRef.js';
 import { SourceBtn } from './SourceBtn.js';
 import { Icon } from '../Icon/Icon.js';
 import { registerBlocks } from '../../abstract/registerBlocks.js';
 
-registerBlocks({ SourceBtn, Icon });
-
-const sourceBtn = new SourceBtn();
-sourceBtn.classList.add('lr-wgt-common');
-
-window.onload = () => {
-  document.querySelector('#viewport')?.appendChild(sourceBtn);
-  sourceBtn['type'] = 'camera';
-};
+ifRef(() => {
+  registerBlocks({ SourceBtn, Icon });
+});

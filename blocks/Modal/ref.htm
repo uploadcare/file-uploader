@@ -2,10 +2,13 @@
 
 <lr-live-html>
   <link rel="stylesheet" href="../themes/lr-basic/index.css" />
+  <script src="./test.js" type="module"></script>
 
-  <script src="test.js" type="module"></script>
+  <button id="mdl-btn">Open Modal</button>
 
-  <div id="viewport">
-    <button id="mdl-btn">Open Modal</button>
-  </div>
+  <lr-modal class="lr-wgt-common">
+    <lr-icon slot="heading" name="default"></lr-icon>
+    <div slot="heading">Modal Heading</div>
+    <div style="padding: 20px">Some content</div>
+  </lr-modal>
 </lr-live-html>
