@@ -1,12 +1,10 @@
+import { ifRef } from '../../utils/ifRef.js';
 import { DataOutput } from './DataOutput.js';
 import { registerBlocks } from '../../abstract/registerBlocks.js';
 
-registerBlocks({ DataOutput });
-
-window.onload = () => {
-  let outEl = document.querySelector('lr-data-output');
-  if (outEl) {
-    // @ts-ignore
-    outEl.$['*outputData'] = [{ uuid: Date.now() }, { uuid: Date.now() }, { uuid: Date.now() }];
-  }
-};
+ifRef(() => {
+  registerBlocks({ DataOutput });
+  /** @type {DataOutput} */
+  let outEl = document.querySelector(DataOutput.is);
+  outEl.$['*outputData'] = [{ uuid: Date.now() }, { uuid: Date.now() }, { uuid: Date.now() }];
+});

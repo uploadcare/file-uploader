@@ -1,12 +1,10 @@
+import { ifRef } from '../../utils/ifRef.js';
 import { ConfirmationDialog, UiConfirmation } from './ConfirmationDialog.js';
 import { registerBlocks } from '../../abstract/registerBlocks.js';
 
-registerBlocks({ ConfirmationDialog });
-
-const confirmDialog = new ConfirmationDialog();
-confirmDialog.classList.add('lr-wgt-common');
-
-window.onload = () => {
-  document.querySelector('#viewport')?.appendChild(confirmDialog);
+ifRef(() => {
+  registerBlocks({ ConfirmationDialog });
+  /** @type {ConfirmationDialog} */
+  let confirmDialog = document.querySelector(ConfirmationDialog.is);
   confirmDialog.$['*confirmation'] = new UiConfirmation();
-};
+});

@@ -24,7 +24,9 @@ export class ShadowWrapper extends Block {
         // TODO: investigate better solution
         window.requestAnimationFrame(() => {
           this.render();
-          this.shadowReadyCallback();
+          window.setTimeout(() => {
+            this.shadowReadyCallback();
+          });
         });
       };
       this.shadowRoot.appendChild(link);
