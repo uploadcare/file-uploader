@@ -1,4 +1,4 @@
-import { ifRef } from '../../utils/IfRef.js';
+import { ifRef } from '../../utils/ifRef.js';
 import { CameraSource } from './CameraSource.js';
 import { Select } from '../Select/Select.js';
 import { Icon } from '../Icon/Icon.js';
