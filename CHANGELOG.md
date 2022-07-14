@@ -1,3 +1,14 @@
+# [0.6.0](https://github.com/uploadcare/uc-blocks/compare/v0.5.2...v0.6.0) (2022-07-14)
+
+### Bug Fixes
+
+- blocks test refs ([3f72272](https://github.com/uploadcare/uc-blocks/commit/3f7227263a7e94743478bcd2d00d3650cb6bcc2c))
+- irRef in CameraSource ref ([881fbb8](https://github.com/uploadcare/uc-blocks/commit/881fbb8110adb74111a5855ecade731ebcda12be))
+
+### Features
+
+- **img:** proxify image load and error events ([#202](https://github.com/uploadcare/uc-blocks/issues/202)) ([7350c97](https://github.com/uploadcare/uc-blocks/commit/7350c9775b3cd04f6e3689360955a3eb0be8d837))
+
 ## [0.5.2](https://github.com/uploadcare/uc-blocks/compare/v0.5.1...v0.5.2) (2022-07-07)
 
 ### Bug Fixes
