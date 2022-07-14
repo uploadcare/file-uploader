@@ -151,3 +151,26 @@
   <lr-img width="100%" src="https://uploadcare.github.io/uc-blocks/assets/media/kitten.jpg?lazy_observer">
   </lr-img>
 </lr-live-html>
+
+<h2>Event proxy</h2>
+<lr-live-html>
+  <script src="./test.js" type="module"></script>
+
+  <style>
+    @import url('./test.css');
+  </style>
+
+  <lr-img width="100%" src="https://uploadcare.github.io/uc-blocks/assets/media/kitten.jpg?absolute">
+  </lr-img>
+
+  <script>
+    const el = document.querySelector('lr-img')
+    el.addEventListener('load', (e) => {
+      console.log('load event triggered', e)
+    })
+
+    el.onload = (e) => {
+      console.log('onload callback triggered', e)
+    }
+  </script>
+</lr-live-html>

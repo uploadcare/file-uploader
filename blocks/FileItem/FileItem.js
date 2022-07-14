@@ -10,7 +10,8 @@ export class FileItem extends UploaderBlock {
   pauseRender = true;
 
   init$ = {
-    // ...this.init$,
+    ...this.init$,
+    uid: '',
     itemName: '',
     thumb: '',
     thumbUrl: '',

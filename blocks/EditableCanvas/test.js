@@ -1,15 +1,12 @@
+import { ifRef } from '../../utils/ifRef.js';
 import { EditableCanvas } from './EditableCanvas.js';
 import { registerBlocks } from '../../abstract/registerBlocks.js';
 
-window.onload = () => {
-  if (window.location.host) {
-    return;
-  }
+ifRef(() => {
   registerBlocks({ EditableCanvas });
-  const editableCanvas = new EditableCanvas();
-  editableCanvas.classList.add('lr-wgt-common');
-  document.querySelector('#viewport')?.appendChild(editableCanvas);
+  /** @type {EditableCanvas} */
+  const editableCanvas = document.querySelector(EditableCanvas.is);
   let img = new Image();
   img.src = '../../assets/media/kitten.jpg';
   editableCanvas.setImage(img);
-};
+});

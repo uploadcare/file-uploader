@@ -81,6 +81,6 @@
   "license": "MIT",
   "dependencies": {
     "@jam-do/jam-tools": "^0.0.3",
-    "@symbiotejs/symbiote": "^1.8.5"
+    "@symbiotejs/symbiote": "^1.9.0"
   }
 }

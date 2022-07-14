@@ -2,10 +2,11 @@ import { Select } from './Select.js';
 import { Icon } from '../Icon/Icon.js';
 import { registerBlocks } from '../../abstract/registerBlocks.js';
 
-function init() {
+if (!window.location.host) {
   registerBlocks({ Select, Icon });
+
   /** @type {Select} */
-  let select = document.querySelector('lr-select');
+  let select = document.querySelector(Select.is);
   select.$.options = [
     {
       text: 'Option 1',
@@ -20,18 +21,9 @@ function init() {
       value: 3,
     },
   ];
+
   select.onchange = (e) => {
     console.log(e);
     console.log(select.value);
   };
 }
-
-window.onload = () => {
-  if (window.location.host) {
-    return;
-  }
-
-  window.requestAnimationFrame(() => {
-    init();
-  });
-};

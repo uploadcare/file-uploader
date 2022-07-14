@@ -8,7 +8,7 @@
     <script async src="https://unpkg.com/es-module-shims@1.5.8/dist/es-module-shims.js"></script>
     <script type="importmap">{
   "imports": {
-    "@symbiotejs/symbiote": "https://unpkg.com/@symbiotejs/symbiote@1.8.6/core/symbiote.js"
+    "@symbiotejs/symbiote": "https://ga.jspm.io/npm:@symbiotejs/symbiote@1.9.0/build/symbiote.js"
   }
 }
 </script>
@@ -184,7 +184,31 @@
 
   <lr-img width="100%" src="https://uploadcare.github.io/uc-blocks/assets/media/kitten.jpg?lazy_observer">
   </lr-img>
-</lr-live-html></col-css>
+</lr-live-html>
+
+<h2>Event proxy</h2>
+<lr-live-html>
+  <script src="./test.js" type="module"></script>
+
+  <style>
+    @import url('./test.css');
+  </style>
+
+  <lr-img width="100%" src="https://uploadcare.github.io/uc-blocks/assets/media/kitten.jpg?absolute">
+  </lr-img>
+
+  <script>
+    const el = document.querySelector('lr-img')
+    el.addEventListener('load', (e) => {
+      console.log('load event triggered', e)
+    })
+
+    el.onload = (e) => {
+      console.log('onload callback triggered', e)
+    }
+  </script>
+</lr-live-html>
+</col-css>
     </main>
     <footer>© 2022 🦆</footer>
   </body>

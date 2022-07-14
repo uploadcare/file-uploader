@@ -1,3 +1,6 @@
+import { ifRef } from '../../utils/ifRef.js';
 import { Img } from './Img.js';
 
-Img.reg('lr-img');
+ifRef(() => {
+  Img.reg('lr-img');
+});

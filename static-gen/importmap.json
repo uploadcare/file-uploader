@@ -1,5 +1,5 @@
 {
   "imports": {
-    "@symbiotejs/symbiote": "https://unpkg.com/@symbiotejs/symbiote@1.8.6/core/symbiote.js"
+    "@symbiotejs/symbiote": "https://ga.jspm.io/npm:@symbiotejs/symbiote@1.9.0/build/symbiote.js"
   }
 }
