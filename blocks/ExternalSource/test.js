@@ -1,14 +1,11 @@
+import { ifRef } from '../../utils/ifRef.js';
 import { ExternalSource } from './ExternalSource.js';
 import { Icon } from '../Icon/Icon.js';
 import { registerBlocks } from '../../abstract/registerBlocks.js';
 
-window.onload = () => {
-  if (window.location.host) {
-    return;
-  }
+ifRef(() => {
   registerBlocks({ Icon, ExternalSource });
-  const extSrc = new ExternalSource();
-  extSrc.classList.add('lr-wgt-common');
-  document.querySelector('#viewport')?.appendChild(extSrc);
+  /** @type {ExternalSource} */
+  const extSrc = document.querySelector(ExternalSource.is);
   extSrc.$['*currentActivity'] = 'external';
-};
+});

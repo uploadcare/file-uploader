@@ -12,7 +12,7 @@ export class FileUploaderMinimal extends ShadowWrapper {
   };
 
   shadowReadyCallback() {
-    this.ref.uBlock.$['*currentActivity'] = this.ref.uBlock.initActivity || ActivityBlock.activities.START_FROM;
+    this.$['*currentActivity'] = ActivityBlock.activities.START_FROM;
   }
 }
 

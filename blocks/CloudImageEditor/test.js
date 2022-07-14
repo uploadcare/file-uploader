@@ -1,9 +1,9 @@
+import { ifRef } from '../../utils/ifRef.js';
 import * as blocks from '../../index.js';
 
-blocks.registerBlocks(blocks);
-
-window.addEventListener('DOMContentLoaded', () => {
-  document.querySelector('lr-cloud-editor')?.addEventListener('apply', (e) => {
+ifRef(() => {
+  blocks.registerBlocks(blocks);
+  document.querySelector(blocks.CloudEditor.is)?.addEventListener('apply', (e) => {
     console.log(e);
   });
 });
