@@ -1,7 +1,6 @@
 {
   "imports": {
     "@symbiotejs/symbiote": "https://ga.jspm.io/npm:@symbiotejs/symbiote@1.9.0/build/symbiote.js",
-    "//@uploadcare/upload-client": "https://ga.jspm.io/npm:@uploadcare/upload-client@4.3.0/dist/index.browser.js",
-    "@uploadcare/upload-client": "https://unpkg.com/@uploadcare/upload-client@4.3.0/dist/index.browser.js"
+    "@uploadcare/upload-client": "https://ga.jspm.io/npm:@uploadcare/upload-client@4.3.0/dist/index.browser.js"
   }
 }
