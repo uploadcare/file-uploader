@@ -7,7 +7,7 @@
   "sideEffects": false,
   "repository": "https://github.com/uploadcare/uc-blocks/",
   "files": [
-    "{abstract,blocks,solutions,web,utils,submodules}/**/*.{js,css,d.ts,d.ts.map}",
+    "{abstract,blocks,solutions,web,utils}/**/*.{js,css,d.ts,d.ts.map}",
     "index.{js,d.ts,d.ts.map}",
     "env.{js,d.ts,d.ts.map}",
     "README.md",
@@ -17,7 +17,6 @@
     "access": "public"
   },
   "scripts": {
-    "setup": "npm run update_submodules && npm i",
     "test": "web-test-runner \"./{abstract,blocks,solutions,web,utils}/**/*.test.js\" --node-resolve",
     "test:light": "node ./test/test.js",
     "release": "shipjs prepare",
@@ -75,12 +74,13 @@
     "stylelint-config-standard": "^25.0.0",
     "stylelint-declaration-block-no-ignored-properties": "^2.5.0",
     "stylelint-order": "^5.0.0",
-    "typescript": "^4.6.3"
+    "typescript": "^4.6.3",
+    "@jam-do/jam-tools": "^0.0.3"
   },
   "author": "Uploadcare Inc.",
   "license": "MIT",
   "dependencies": {
-    "@jam-do/jam-tools": "^0.0.3",
-    "@symbiotejs/symbiote": "^1.9.0"
+    "@symbiotejs/symbiote": "^1.9.0",
+    "@uploadcare/upload-client": "^4.3.0"
   }
 }

@@ -1,7 +1,7 @@
 import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 import { resizeImage } from '../utils/resizeImage.js';
-import { uploadFile } from '../../submodules/upload-client/upload-client.js';
+import { uploadFile } from '@uploadcare/upload-client';
 import { UiMessage } from '../MessageBox/MessageBox.js';
 import { fileCssBg } from '../svg-backgrounds/svg-backgrounds.js';
 import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../utils/cdn-utils.js';
