@@ -189,6 +189,7 @@ export class UploaderBlock extends ActivityBlock {
       publicKey: this.getCssData('--cfg-pubkey'),
       baseCDN: this.getCssData('--cfg-cdn-cname'),
       userAgent: customUserAgent,
+      integration: this.getCssData('--cfg-user-agent-integration'),
       secureSignature: this.getCssData('--cfg-secure-signature'),
       secureExpire: this.getCssData('--cfg-secure-expire'),
       retryThrottledRequestMaxTimes: this.getCssData('--cfg-retry-throttled-request-max-times'),
