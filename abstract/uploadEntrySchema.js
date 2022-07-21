@@ -1,4 +1,4 @@
-import { UploadcareFile } from '../submodules/upload-client/upload-client.js';
+import { UploadcareFile } from '@uploadcare/upload-client';
 
 /**
  * @typedef {Object} UploadEntry
