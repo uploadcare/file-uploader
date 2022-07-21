@@ -1,6 +1,6 @@
 import watch from 'node-watch';
 import { execSync } from 'child_process';
-import { debounce } from './blocks/utils/debounce';
+import { debounce } from './blocks/utils/debounce.js';
 
 let onChange = debounce((type, filepath) => {
   console.log(type, filepath);
