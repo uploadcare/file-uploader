@@ -63,6 +63,14 @@ export class Block extends BaseComponent {
     }
   }
 
+  connectedCallback() {
+    if (this.hasAttribute('retpl')) {
+      this.constructor['template'] = null;
+      this.processInnerHtml = true;
+    }
+    super.connectedCallback();
+  }
+
   initCallback() {
     this.$['*ctxTargetsRegistry']?.add(this.constructor['is']);
   }

@@ -1,0 +1,29 @@
+{
+  "sources": [
+    {
+      "label": "HQ",
+      "src": "3765e47f-3b7e-4895-b020-f70e9b12eea3",
+      "type": "video/mp4"
+    },
+    {
+      "label": "MQ",
+      "src": "3765e47f-3b7e-4895-b020-f70e9b12eea3",
+      "type": "video/mp4"
+    },
+    {
+      "label": "LQ",
+      "src": "3765e47f-3b7e-4895-b020-f70e9b12eea3",
+      "type": "video/mp4"
+    }
+  ],
+  "tracks": [
+    {
+      "kind": "subtitles",
+      "src": "71f032e0-9a8f-4b92-895a-25dc1867d18f",
+      "srclang": "en",
+      "label": "EN",
+      "default": true
+    }
+  ],
+  "poster": "89409d82-8939-4c6f-8410-d4b6bcb404d9"
+}
