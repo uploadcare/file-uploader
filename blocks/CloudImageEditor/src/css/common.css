@@ -462,12 +462,6 @@ lr-editor-image-cropper.inactive_to_editor {
   pointer-events: none;
 }
 
-lr-editor-image-cropper.inactive_instant {
-  opacity: 0;
-  transition: opacity var(--transition-duration-2);
-  pointer-events: none;
-}
-
 lr-editor-image-cropper > .canvas {
   position: absolute;
   top: 0px;
@@ -509,10 +503,6 @@ lr-editor-image-fader.inactive_to_cropper {
   opacity: 0;
   transition: transform var(--transition-duration-4), opacity var(--transition-duration-3) steps(1, jump-end);
   pointer-events: none;
-}
-
-lr-editor-image-fader.inactive_rough {
-  transform: scale(1);
 }
 
 lr-editor-image-fader .fader-image {

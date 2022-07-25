@@ -358,7 +358,6 @@ export class EditorImageFader extends Block {
         active_from_viewer: this._fromViewer,
         active_from_cropper: !this._fromViewer,
         inactive_to_cropper: false,
-        inactive_rough: false,
       });
       return;
     }
@@ -377,7 +376,6 @@ export class EditorImageFader extends Block {
             active_from_viewer: this._fromViewer,
             active_from_cropper: !this._fromViewer,
             inactive_to_cropper: false,
-            inactive_rough: false,
           });
         }
       },
@@ -422,8 +420,8 @@ export class EditorImageFader extends Block {
     this._initNodes();
   }
 
-  /** @param {{ hide?: Boolean; seamlessTransition?: Boolean }} options */
-  deactivate({ hide = true, seamlessTransition = true } = {}) {
+  /** @param {{ hide?: Boolean }} options */
+  deactivate({ hide = true } = {}) {
     this._isActive = false;
 
     this._cancelLastImages && this._cancelLastImages();
@@ -437,8 +435,7 @@ export class EditorImageFader extends Block {
       this.className = classNames({
         active_from_viewer: false,
         active_from_cropper: false,
-        inactive_to_cropper: seamlessTransition,
-        inactive_rough: !seamlessTransition,
+        inactive_to_cropper: true,
       });
       this.addEventListener(
         'transitionend',
