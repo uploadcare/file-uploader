@@ -15,5 +15,5 @@
     "noEmit": true
   },
   "include": ["**/*.js"],
-  "exclude": ["node_modules", "./submodules/upload-client/upload-client.js"]
+  "exclude": ["node_modules"]
 }

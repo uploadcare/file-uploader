@@ -26,7 +26,7 @@ export class UploaderBlock extends ActivityBlock {
    * TODO: If we add more public methods, it is better to use the single queue instead of tonns of private fields per
    * each method. See https://github.com/uploadcare/uc-blocks/pull/162/
    *
-   * @param {import('../submodules/upload-client/upload-client.js').Metadata} metadata
+   * @param {import('@uploadcare/upload-client').Metadata} metadata
    * @public
    */
   setUploadMetadata(metadata) {
@@ -176,7 +176,7 @@ export class UploaderBlock extends ActivityBlock {
     return this.$['*uploadCollection'];
   }
 
-  /** @returns {import('../submodules/upload-client/upload-client.js').FileFromOptions} */
+  /** @returns {import('@uploadcare/upload-client').FileFromOptions} */
   getUploadClientOptions() {
     let storeSetting = {};
     let store = this.getCssData('--cfg-store');
@@ -189,6 +189,7 @@ export class UploaderBlock extends ActivityBlock {
       publicKey: this.getCssData('--cfg-pubkey'),
       baseCDN: this.getCssData('--cfg-cdn-cname'),
       userAgent: customUserAgent,
+      integration: this.getCssData('--cfg-user-agent-integration'),
       secureSignature: this.getCssData('--cfg-secure-signature'),
       secureExpire: this.getCssData('--cfg-secure-expire'),
       retryThrottledRequestMaxTimes: this.getCssData('--cfg-retry-throttled-request-max-times'),
@@ -211,7 +212,7 @@ export class UploaderBlock extends ActivityBlock {
     let items = this.uploadCollection.items();
     items.forEach((itemId) => {
       let uploadEntryData = Data.getNamedCtx(itemId).store;
-      /** @type {import('../submodules/upload-client/upload-client.js').UploadcareFile} */
+      /** @type {import('@uploadcare/upload-client').UploadcareFile} */
       let fileInfo = uploadEntryData.fileInfo;
       // TODO: create dedicated output type
       let outputItem = {

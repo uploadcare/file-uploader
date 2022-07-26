@@ -172,11 +172,26 @@ export class ImgBase extends BaseComponent {
     }
   }
 
+  /** @param {HTMLImageElement} img */
+  _setupEventProxy(img) {
+    /** @param {Event} e */
+    let proxifyEvent = (e) => {
+      e.stopPropagation();
+      let event = new Event(e.type, e);
+      this.dispatchEvent(event);
+    };
+    let EVENTS = ['load', 'error'];
+    for (let event of EVENTS) {
+      img.addEventListener(event, proxifyEvent);
+    }
+  }
+
   /** @type {HTMLImageElement} */
   get img() {
     if (!this._img) {
       /** @private */
       this._img = new Image();
+      this._setupEventProxy(this.img);
       this._img.setAttribute(UNRESOLVED_ATTR, '');
       this.img.onload = () => {
         this.img.removeAttribute(UNRESOLVED_ATTR);

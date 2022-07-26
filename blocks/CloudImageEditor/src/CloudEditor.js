@@ -10,6 +10,10 @@ import { TabId } from './toolbar-constants.js';
 import { viewerImageSrc } from './util.js';
 
 export class CloudEditor extends Block {
+  get ctxName() {
+    return this.autoCtxName;
+  }
+
   init$ = {
     ...this.init$,
     ...initState(this),
