@@ -76,6 +76,11 @@ export class Video extends Block {
     this._video.volume = val ? 1 / val : 0;
   }
 
+  /** @type {HTMLElement} */
+  get progress() {
+    return this.ref.progress;
+  }
+
   init$ = {
     ...this.init$,
     src: '',
@@ -104,6 +109,10 @@ export class Video extends Block {
     onVolChange: (e) => {
       let val = parseFloat(e.target.value);
       this.setVolume(val);
+    },
+    progressClicked: (e) => {
+      let progressRect = this.progress.getBoundingClientRect();
+      this._video.currentTime = this._video.duration * (e.offsetX / progressRect.width);
     },
   };
 
@@ -258,7 +267,11 @@ Video.template = /*html*/ `
 
 <div class="toolbar">
 
-  <div class="progress">
+  <div 
+    class="progress"
+    ref="progress"
+    set
+    -onclick="progressClicked">
     <div 
       class="bar" 
       set 

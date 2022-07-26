@@ -91,9 +91,13 @@ lr-video .toolbar .tb-block button {
 }
 lr-video .progress {
   position: absolute;
-  top: 0;
+  top: -18px;
   right: 0;
   left: 0;
+  display: flex;
+  align-items: flex-end;
+  height: 20px;
+  cursor: pointer;
 }
 lr-video .progress .bar {
   height: 2px;
