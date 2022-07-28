@@ -164,8 +164,7 @@ export class SliderUi extends Block {
   }
 
   destroyCallback() {
-    this._observer.unobserve(this);
-    this._observer = undefined;
+    this._observer?.disconnect();
   }
 }
 SliderUi.template = /*html*/ `

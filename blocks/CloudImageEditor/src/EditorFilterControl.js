@@ -64,7 +64,6 @@ export class EditorFilterControl extends EditorButtonControl {
             previewEl.style.opacity = '1';
           });
 
-          // @ts-ignore
           observer.unobserve(this);
         });
     } else {
@@ -144,9 +143,7 @@ export class EditorFilterControl extends EditorButtonControl {
 
   destroyCallback() {
     super.destroyCallback();
-    // @ts-ignore
-    this._observer.unobserve(this);
-    this._observer = undefined;
+    this._observer?.disconnect();
     this._cancelPreload && this._cancelPreload();
   }
 }

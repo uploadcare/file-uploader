@@ -226,7 +226,7 @@ export class FileItem extends UploaderBlock {
 
   destroyCallback() {
     FileItem.activeInstances.delete(this);
-    this._observer?.unobserve(this);
+    this._observer?.disconnect();
     clearTimeout(this._thumbTimeoutId);
   }
 
