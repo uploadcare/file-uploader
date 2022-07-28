@@ -142,8 +142,8 @@ export class EditorFilterControl extends EditorButtonControl {
     });
   }
 
-  disconnectedCallback() {
-    super.disconnectedCallback();
+  destroyCallback() {
+    super.destroyCallback();
     // @ts-ignore
     this._observer.unobserve(this);
     this._observer = undefined;

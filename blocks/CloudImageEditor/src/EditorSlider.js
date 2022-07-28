@@ -96,8 +96,8 @@ export class EditorSlider extends Block {
     this.$['*faderEl'].deactivate({ hide: false });
   }
 
-  connectedCallback() {
-    super.connectedCallback();
+  initCallback() {
+    super.initCallback();
 
     this.sub('*originalUrl', (originalUrl) => {
       this._originalUrl = originalUrl;

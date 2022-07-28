@@ -514,8 +514,8 @@ export class EditorImageCropper extends Block {
     }, 0);
   }
 
-  disconnectedCallback() {
-    super.disconnectedCallback();
+  destroyCallback() {
+    super.destroyCallback();
     this._observer.unobserve(this);
     this._observer = undefined;
   }

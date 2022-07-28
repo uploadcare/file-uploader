@@ -148,8 +148,8 @@ export class CloudEditor extends Block {
     }
   }
 
-  disconnectedCallback() {
-    super.disconnectedCallback();
+  destroyCallback() {
+    super.destroyCallback();
   }
 }
 
