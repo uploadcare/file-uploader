@@ -73,7 +73,8 @@ export class Video extends Block {
 
   setVolume(val) {
     window.localStorage.setItem(Video.is + ':volume', val);
-    this._video.volume = val ? 1 / val : 0;
+    let volume = val ? val / 100 : 0;
+    this._video.volume = volume;
   }
 
   /** @type {HTMLElement} */
@@ -107,7 +108,8 @@ export class Video extends Block {
       this.toggleSound();
     },
     onVolChange: (e) => {
-      let val = parseFloat(e.target.value);
+      // TODO: cast range.value instead of range.$.value
+      let val = parseFloat(e.currentTarget.$.value);
       this.setVolume(val);
     },
     progressClicked: (e) => {

@@ -25,6 +25,15 @@ export class Block extends BaseComponent {
     /** @type {String} */
     this.activityType = null;
     this.addTemplateProcessor(l10nProcessor);
+    // TODO: inspect template on lr-* elements
+    // this.addTemplateProcessor((fr) => {
+    //   [...fr.querySelectorAll('*')].forEach((el) => {
+    //     if (el.tagName.includes('LR-')) {
+    //       let tag = el.tagName.toLowerCase();
+    //       console.log(window.customElements.get(tag)?.name);
+    //     }
+    //   });
+    // });
     /**
      * @private
      * @type {String[]}
