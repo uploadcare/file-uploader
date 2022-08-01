@@ -16,6 +16,18 @@ lr-range input {
   opacity: 0;
 }
 
+lr-range .track-wrapper {
+  position: absolute;
+  right: 10px;
+  left: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 2px;
+  user-select: none;
+  pointer-events: none;
+}
+
 lr-range .track {
   position: absolute;
   right: 0;
@@ -23,18 +35,17 @@ lr-range .track {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: var(--ui-size);
-  background-color: var(--clr-shade-lv1);
-  border: 2px solid var(--clr-background);
-  user-select: none;
-  pointer-events: none;
+  height: 2px;
+  background-color: currentColor;
+  border-radius: 2px;
+  opacity: 0.5;
 }
 
 lr-range .slider {
   position: absolute;
-  width: var(--ui-size);
-  height: var(--ui-size);
-  background-color: transparent;
+  width: 16px;
+  height: 16px;
+  background-color: currentColor;
   border-radius: 100%;
   transform: translateX(-50%);
 }
@@ -43,23 +54,8 @@ lr-range .bar {
   position: absolute;
   left: 0;
   height: 100%;
-  background-color: var(--clr-accent);
-  opacity: 0.5;
-  transition: opacity 0.2s;
-}
-
-lr-range:hover:active .bar {
-  opacity: 1;
-}
-
-lr-range .center {
-  position: absolute;
-  left: 50%;
-  height: 100%;
-  border: 4px solid transparent;
-  border-top: 4px solid var(--clr-background);
-  border-bottom: 4px solid var(--clr-background);
-  transform: translateX(-50%);
+  background-color: currentColor;
+  border-radius: 2px;
 }
 
 lr-range .caption {

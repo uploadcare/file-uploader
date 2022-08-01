@@ -1,47 +1,60 @@
-import { Block } from '../../abstract/Block.js';
+import { BaseComponent } from '@symbiotejs/symbiote';
 
-export class Range extends Block {
+export class Range extends BaseComponent {
   init$ = {
-    ...this.init$,
     cssLeft: '50%',
-    caption: 'CAPTION',
     barActive: false,
-    '*rangeValue': 100,
-    onChange: () => {
-      this.$['*rangeValue'] = this.ref.range['value'];
+    value: 50,
+    onChange: (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.$.value = parseFloat(this._range.value);
+      this.dispatchEvent(new Event('change'));
     },
   };
 
   initCallback() {
     super.initCallback();
+    /** @type {HTMLInputElement} */
+    this._range = this.ref.range;
     [...this.attributes].forEach((attr) => {
       let exclude = ['style', 'ref'];
       if (!exclude.includes(attr.name)) {
         this.ref.range.setAttribute(attr.name, attr.value);
       }
     });
-    this.sub('*rangeValue', (val) => {
-      let pcnt = (val / this.ref.range['max']) * 100;
+    this.sub('value', (val) => {
+      let pcnt = (val / 100) * 100;
       this.$.cssLeft = `${pcnt}%`;
+    });
+    this.defineAccessor('value', (val) => {
+      this.$.value = val;
     });
   }
 }
 
 Range.template = /*html*/ `
-<datalist id="range-values">
-  <option value="0" label="min"></option>
-  <option value="100" label="0"></option>
-  <option value="200" label="max"></option>
-</datalist>
-<div class="track">
-  <div class="bar" set="style.width: cssLeft; @active: barActive"></div>
-  <div class="slider" set="style.left: cssLeft"></div>
-  <div class="center"></div>
-  <div class="caption" set="@text: caption">{{caption}}</div>
+<div class="track-wrapper">
+  <div
+    class="track">
+  </div>
+  <div 
+    class="bar" 
+    set
+    -style.width="cssLeft"
+    -@active="barActive">
+  </div>
+  <div 
+    class="slider" 
+    set
+    -style.left="cssLeft">
+  </div>
 </div>
+
 <input
   type="range"
   ref="range"
-  list="range-values"
-  set="@value: *rangeValue; oninput: onChange">
+  set
+  -@value="value"
+  -oninput="onChange" />
 `;
