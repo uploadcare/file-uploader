@@ -4,7 +4,7 @@
   "description": "Building blocks for Uploadcare products integration",
   "type": "module",
   "module": "index.js",
-  "sideEffects": false,
+  "sideEffects": ["*.css"],
   "repository": "https://github.com/uploadcare/uc-blocks/",
   "files": [
     "{abstract,blocks,solutions,web,utils}/**/*.{js,css,d.ts,d.ts.map}",
