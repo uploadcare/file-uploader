@@ -101,7 +101,7 @@ export class FileItem extends UploaderBlock {
       /** @type {String} */
       this.uid = id;
 
-      /** @type {import('@symbiotejs/symbiote').TypedData} */
+      /** @type {import('../../abstract/TypedData.js').TypedData} */
       this.entry = this.uploadCollection?.read(id);
 
       if (!this.entry) {
