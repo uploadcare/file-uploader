@@ -147,10 +147,6 @@ export class CloudEditor extends Block {
       }
     }
   }
-
-  destroyCallback() {
-    super.destroyCallback();
-  }
 }
 
 CloudEditor.template = TEMPLATE;
