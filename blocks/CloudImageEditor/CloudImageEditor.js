@@ -22,7 +22,7 @@ export class CloudImageEditor extends UploaderBlock {
       }
     });
 
-    this.sub('*focusedEntry', (/** @type {import('@symbiotejs/symbiote').TypedData} */ entry) => {
+    this.sub('*focusedEntry', (/** @type {import('../../abstract/TypedData.js').TypedData} */ entry) => {
       if (!entry) {
         return;
       }

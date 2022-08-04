@@ -1,10 +1,11 @@
 import { ActivityBlock } from './ActivityBlock.js';
 
-import { Data, TypedCollection } from '@symbiotejs/symbiote';
+import { Data } from '@symbiotejs/symbiote';
 import { mergeMimeTypes } from '../utils/mergeMimeTypes.js';
 import { imageMimeTypes } from '../utils/imageMimeTypes.js';
 import { uploadEntrySchema } from './uploadEntrySchema.js';
 import { customUserAgent } from '../blocks/utils/userAgent.js';
+import { TypedCollection } from './TypedCollection.js';
 
 export class UploaderBlock extends ActivityBlock {
   init$ = {
