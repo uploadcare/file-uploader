@@ -64,7 +64,6 @@ export class EditorFilterControl extends EditorButtonControl {
             previewEl.style.opacity = '1';
           });
 
-          // @ts-ignore
           observer.unobserve(this);
         });
     } else {
@@ -142,11 +141,9 @@ export class EditorFilterControl extends EditorButtonControl {
     });
   }
 
-  disconnectedCallback() {
-    super.disconnectedCallback();
-    // @ts-ignore
-    this._observer.unobserve(this);
-    this._observer = undefined;
+  destroyCallback() {
+    super.destroyCallback();
+    this._observer?.disconnect();
     this._cancelPreload && this._cancelPreload();
   }
 }

@@ -26,7 +26,6 @@ export class DataOutput extends UploaderBlock {
       if (!data) {
         return;
       }
-      this.value = data;
 
       if (this.hasAttribute(this.dict.FIRE_EVENT_ATTR)) {
         this.dispatchEvent(

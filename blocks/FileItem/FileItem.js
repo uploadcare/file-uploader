@@ -41,6 +41,7 @@ export class FileItem extends UploaderBlock {
     let [entry] = entries;
     if (entry.isIntersecting && !this.innerHTML) {
       this.render();
+      this._observer?.unobserve(this);
     }
     if (entry.intersectionRatio === 0) {
       clearTimeout(this._thumbTimeoutId);
@@ -155,7 +156,6 @@ export class FileItem extends UploaderBlock {
         if (!uuid) {
           return;
         }
-        this._observer.unobserve(this);
         this.setAttribute('loaded', '');
 
         if (this.entry.getValue('isImage')) {
@@ -226,7 +226,7 @@ export class FileItem extends UploaderBlock {
 
   destroyCallback() {
     FileItem.activeInstances.delete(this);
-    // this._observer.unobserve(this);
+    this._observer?.disconnect();
     clearTimeout(this._thumbTimeoutId);
   }
 

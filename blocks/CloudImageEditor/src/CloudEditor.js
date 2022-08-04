@@ -147,10 +147,6 @@ export class CloudEditor extends Block {
       }
     }
   }
-
-  disconnectedCallback() {
-    super.disconnectedCallback();
-  }
 }
 
 CloudEditor.template = TEMPLATE;

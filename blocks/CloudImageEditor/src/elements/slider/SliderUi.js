@@ -60,6 +60,39 @@ export class SliderUi extends Block {
       if (!onChange) return;
       this.$.onChange = onChange;
     });
+
+    this._updateSteps();
+
+    this._observer = new ResizeObserver(() => {
+      this._updateSteps();
+      let value = parseInt(this.ref['input-el'].value, 10);
+      this._updateValue(value);
+    });
+    this._observer.observe(this);
+
+    this._thumbSize = parseInt(window.getComputedStyle(this).getPropertyValue('--l-thumb-size'), 10);
+
+    setTimeout(() => {
+      let value = parseInt(this.ref['input-el'].value, 10);
+      this._updateValue(value);
+    }, 0);
+
+    this.sub('disabled', (disabled) => {
+      let el = this.ref['input-el'];
+      if (disabled) {
+        el.setAttribute('disabled', 'disabled');
+      } else {
+        el.removeAttribute('disabled');
+      }
+    });
+
+    let inputEl = this.ref['input-el'];
+    inputEl.addEventListener('focus', () => {
+      this.style.setProperty('--color-effect', 'var(--hover-color-rgb)');
+    });
+    inputEl.addEventListener('blur', () => {
+      this.style.setProperty('--color-effect', 'var(--idle-color-rgb)');
+    });
   }
 
   _updateValue(value) {
@@ -130,46 +163,8 @@ export class SliderUi extends Block {
     this._stepsCount = count;
   }
 
-  connectedCallback() {
-    super.connectedCallback();
-
-    this._updateSteps();
-
-    this._observer = new ResizeObserver(() => {
-      this._updateSteps();
-      let value = parseInt(this.ref['input-el'].value, 10);
-      this._updateValue(value);
-    });
-    this._observer.observe(this);
-
-    this._thumbSize = parseInt(window.getComputedStyle(this).getPropertyValue('--l-thumb-size'), 10);
-
-    setTimeout(() => {
-      let value = parseInt(this.ref['input-el'].value, 10);
-      this._updateValue(value);
-    }, 0);
-
-    this.sub('disabled', (disabled) => {
-      let el = this.ref['input-el'];
-      if (disabled) {
-        el.setAttribute('disabled', 'disabled');
-      } else {
-        el.removeAttribute('disabled');
-      }
-    });
-
-    let inputEl = this.ref['input-el'];
-    inputEl.addEventListener('focus', () => {
-      this.style.setProperty('--color-effect', 'var(--hover-color-rgb)');
-    });
-    inputEl.addEventListener('blur', () => {
-      this.style.setProperty('--color-effect', 'var(--idle-color-rgb)');
-    });
-  }
-
-  disconnectedCallback() {
-    this._observer.unobserve(this);
-    this._observer = undefined;
+  destroyCallback() {
+    this._observer?.disconnect();
   }
 }
 SliderUi.template = /*html*/ `
