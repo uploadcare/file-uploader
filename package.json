@@ -21,7 +21,7 @@
     "test:light": "node ./test/test.js",
     "release": "shipjs prepare",
     "wds": "wds --open",
-    "dev": "run-p build:static:watch wds",
+    "dev": "npm run build:static && run-p build:static:watch wds",
     "build:web": "npm run clean:web && node ./build.js",
     "build:jsx:types": "node build-jsx-types.js",
     "build:types": "npm run clean:types && tsc --build tsconfig.types.json",
