@@ -1,3 +1,20 @@
+# [0.7.0](https://github.com/uploadcare/uc-blocks/compare/v0.6.0...v0.7.0) (2022-08-04)
+
+### Bug Fixes
+
+- **cloud-editor:** create own context ([db97b19](https://github.com/uploadcare/uc-blocks/commit/db97b1981bfb08bcbb5851c9fac068d79edcf41d))
+- **data-output:** do not set value property ([88c5deb](https://github.com/uploadcare/uc-blocks/commit/88c5debccc5f23915baf4446e3322b9c50a20711))
+- **file-item:** call IntersectionObserver.unobserve in the right places ([3216ad7](https://github.com/uploadcare/uc-blocks/commit/3216ad767a2198a00ea9cdbb5f308b3b5c6c4275))
+- move TypedCollection and TypedData from symbiote to our repo ([#211](https://github.com/uploadcare/uc-blocks/issues/211)) ([eb99ce7](https://github.com/uploadcare/uc-blocks/commit/eb99ce7186d9e2f4e53921bcd1fc0c07eb5a447a))
+- specify side-effects for .css files ([#210](https://github.com/uploadcare/uc-blocks/issues/210)) ([30d7e51](https://github.com/uploadcare/uc-blocks/commit/30d7e51de5c91ffcc5f68d4326c2b9f99910f19f))
+- use zero specific css selectors for common classes to allow user to override styles ([#209](https://github.com/uploadcare/uc-blocks/issues/209)) ([959931b](https://github.com/uploadcare/uc-blocks/commit/959931bf7cd15c3a15d992d0a8e6c9c24d33aa5f))
+- volume range behavior ([aede13b](https://github.com/uploadcare/uc-blocks/commit/aede13b1fbacbcb25ce1b5dd75a17f9d7540cce6))
+
+### Features
+
+- add `--cfg-user-agent-integration` option ([75eebf0](https://github.com/uploadcare/uc-blocks/commit/75eebf018faec79d2a5c7d94f059136456de1c4f))
+- lr-video stage 1 ([626d5b6](https://github.com/uploadcare/uc-blocks/commit/626d5b66e1c685ee69247666fdb49289d827d939))
+
 # [0.6.0](https://github.com/uploadcare/uc-blocks/compare/v0.5.2...v0.6.0) (2022-07-14)
 
 ### Bug Fixes
