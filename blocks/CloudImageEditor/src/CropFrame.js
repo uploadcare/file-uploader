@@ -415,8 +415,8 @@ export class CropFrame extends Block {
     document.addEventListener('pointerup', this._handlePointerUp, true);
   }
 
-  disconnectedCallback() {
-    super.disconnectedCallback();
+  destroyCallback() {
+    super.destroyCallback();
 
     document.removeEventListener('pointermove', this._handlePointerMove);
     document.removeEventListener('pointerup', this._handlePointerUp);

@@ -1,5 +1,4 @@
-.lr-wgt-l10n_en-US,
-.lr-wgt-common,
+:where(.lr-wgt-l10n_en-US, .lr-wgt-common),
 :host {
   --l10n-upload-file: 'Upload file';
   --l10n-upload-files: 'Upload files';

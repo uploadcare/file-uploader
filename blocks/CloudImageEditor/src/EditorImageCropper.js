@@ -234,13 +234,12 @@ export class EditorImageCropper extends Block {
   _animateIn({ fromViewer }) {
     if (this.$.image) {
       this.ref['frame-el'].toggleThumbs(true);
-      this._alignTransition();
+      this._transitionToImage();
       setTimeout(() => {
         this.className = classNames({
           active_from_viewer: fromViewer,
           active_from_editor: !fromViewer,
           inactive_to_editor: false,
-          inactive_instant: false,
         });
       });
     }
@@ -377,23 +376,19 @@ export class EditorImageCropper extends Block {
       console.error('Failed to activate cropper', { error: err });
     }
   }
-  /** @param {{ seamlessTransition?: boolean }} options */
-  deactivate({ seamlessTransition = false } = {}) {
+  deactivate() {
     if (!this._isActive) {
       return;
     }
     this._commit();
     this._isActive = false;
 
-    if (seamlessTransition) {
-      this._alignTransition();
-    }
+    this._transitionToCrop();
 
     this.className = classNames({
       active_from_viewer: false,
       active_from_editor: false,
-      inactive_to_editor: seamlessTransition,
-      inactive_instant: !seamlessTransition,
+      inactive_to_editor: true,
     });
 
     this.ref['frame-el'].toggleThumbs(false);
@@ -401,10 +396,10 @@ export class EditorImageCropper extends Block {
   }
 
   /** @private */
-  _alignTransition() {
+  _transitionToCrop() {
     let dimensions = this._calculateDimensions();
-    let scaleX = Math.min(this.offsetWidth - this.$['*padding'] * 2, dimensions[0]) / this.$['*cropBox'].width;
-    let scaleY = Math.min(this.offsetHeight - this.$['*padding'] * 2, dimensions[1]) / this.$['*cropBox'].height;
+    let scaleX = Math.min(this.offsetWidth, dimensions[0]) / this.$['*cropBox'].width;
+    let scaleY = Math.min(this.offsetHeight, dimensions[1]) / this.$['*cropBox'].height;
     let scale = Math.min(scaleX, scaleY);
     let cropCenterX = this.$['*cropBox'].x + this.$['*cropBox'].width / 2;
     let cropCenterY = this.$['*cropBox'].y + this.$['*cropBox'].height / 2;
@@ -412,6 +407,15 @@ export class EditorImageCropper extends Block {
     this.style.transform = `scale(${scale}) translate(${(this.offsetWidth / 2 - cropCenterX) / scale}px, ${
       (this.offsetHeight / 2 - cropCenterY) / scale
     }px)`;
+    this.style.transformOrigin = `${cropCenterX}px ${cropCenterY}px`;
+  }
+
+  /** @private */
+  _transitionToImage() {
+    let cropCenterX = this.$['*cropBox'].x + this.$['*cropBox'].width / 2;
+    let cropCenterY = this.$['*cropBox'].y + this.$['*cropBox'].height / 2;
+
+    this.style.transform = `scale(1)`;
     this.style.transformOrigin = `${cropCenterX}px ${cropCenterY}px`;
   }
 
@@ -510,10 +514,9 @@ export class EditorImageCropper extends Block {
     }, 0);
   }
 
-  disconnectedCallback() {
-    super.disconnectedCallback();
-    this._observer.unobserve(this);
-    this._observer = undefined;
+  destroyCallback() {
+    super.destroyCallback();
+    this._observer?.disconnect();
   }
 }
 

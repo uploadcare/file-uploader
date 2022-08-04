@@ -1,7 +1,7 @@
 import { UploaderBlock } from '../../abstract/UploaderBlock.js';
-import { uploadFileGroup } from '../../submodules/upload-client/upload-client.js';
+import { uploadFileGroup } from '@uploadcare/upload-client';
 
-/** @typedef {import('../../submodules/upload-client/upload-client.js').UploadcareFile[]} FileList} */
+/** @typedef {import('@uploadcare/upload-client').UploadcareFile[]} FileList} */
 
 export class DataOutput extends UploaderBlock {
   processInnerHtml = true;
@@ -26,7 +26,6 @@ export class DataOutput extends UploaderBlock {
       if (!data) {
         return;
       }
-      this.value = data;
 
       if (this.hasAttribute(this.dict.FIRE_EVENT_ATTR)) {
         this.dispatchEvent(

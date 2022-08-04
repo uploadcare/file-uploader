@@ -8,13 +8,14 @@
     <script async src="https://unpkg.com/es-module-shims@1.5.8/dist/es-module-shims.js"></script>
     <script type="importmap">{
   "imports": {
-    "@symbiotejs/symbiote": "https://ga.jspm.io/npm:@symbiotejs/symbiote@1.9.0/build/symbiote.js"
+    "@symbiotejs/symbiote": "https://ga.jspm.io/npm:@symbiotejs/symbiote@1.9.0/build/symbiote.js",
+    "@uploadcare/upload-client": "https://ga.jspm.io/npm:@uploadcare/upload-client@4.3.0/dist/index.browser.js"
   }
 }
 </script>
     <script type="module" src="https://unpkg.com/@re4ma/re4ma@0.1.7/build/re4ma.js"></script>
     <script type="module">
-      import { LiveHtml } from '../blocks/LiveHtml/LiveHtml.js';
+      import { LiveHtml } from '../../blocks/LiveHtml/LiveHtml.js';
       LiveHtml.reg('lr-live-html');
     </script>
     <script type="module">/** * @param{String}html * @returns{String}*/ export function colorCode(html){return html .replace(/&lt;/g,'<span -tag-arr->&lt;</span>') .replace(/&gt;/g,'<span -tag-arr->&gt;</span>') .split('="') .map((chunk)=>{return chunk.replace('"','</span>"');}) .join(`="<span -attr->`) .replace(/"/g,'<span -quote->"</span>') .replace(/=/g,'<span -equal->=</span>') .split('<span -tag-arr->&lt;</span>/') .join('<span -tag-arr->&lt;/</span>') .split('<span -tag-arr->&lt;</span>!--') .join('<span -comment->&lt;!--') .split('--<span -tag-arr->&gt;</span>') .join('--&gt;</span>') .split('<span -tag-arr->&lt;</span>style<span -tag-arr->&gt;</span>') .join('<span -tag-arr->&lt;</span>style<span -tag-arr->&gt;</span><span -style->') .split('<span -tag-arr->&lt;/</span>style<span -tag-arr->&gt;</span>') .join('</span><span -tag-arr->&lt;/</span>style<span -tag-arr->&gt;</span>');}let codeElements=[...document.querySelectorAll('code')];let tmpEl=document.createElement('div');codeElements.forEach((codeEl)=>{tmpEl.textContent=codeEl.innerHTML;codeEl.innerHTML=colorCode(tmpEl.textContent);});</script>
@@ -24,20 +25,22 @@
     <header>🟡 Uploadcare | blocks</header>
     <nav>
       <div>
-        <a href="../">Home</a>
-        <a href="../blocks/">Blocks</a>
-        <a href="../solutions/">Solutions</a>
-        <a href="../toc.html">TOC</a>
+        <a href="../../">Home</a>
+        <a href="../../blocks/">Blocks</a>
+        <a href="../../solutions/">Solutions</a>
+        <a href="../../toc.html">TOC</a>
         <a href="//github.com/uploadcare/uc-blocks/discussions">Discussions</a>
       </div>
     </nav>
     <main>
-      <col-css><h1 id="do-not-modify-this-folder-contents">Do not modify this folder contents!</h1>
-<h2 id="why-git-submodules">Why Git submodules?</h2>
-<p>We wanted to use relative paths for module resolving to make our code base work in raw mode (without build stage). 
-It needed for code accessibility in browsers environment and at the GitHub pages (submodules are accessible if they set with https source) for documentation purposes. 
-Also that is more convenient for testing, code referencing and type checking flow. Unfortunately that&#39;s all impossible with NPM-style module resolving.</p>
-</col-css>
+      <col-css><h1>Video</h1>
+
+<lr-live-html>
+  <link rel="stylesheet" href="./video.css" />
+  <script src="./test.js" type="module"></script>
+
+  <lr-video controls video="e14a694f-d76e-4b02-8a7c-14e9d873f407"></lr-video>
+</lr-live-html></col-css>
     </main>
     <footer>© 2022 🦆</footer>
   </body>

@@ -56,6 +56,7 @@
       - [UploadDetails](./blocks/UploadDetails/) - displays file details and adittional features
       - [UploadList](./blocks/UploadList/) - shows the list of uploads
       - [UrlSource](./blocks/UrlSource/) - file uploading from the external URL
+      - [Video](./blocks/Video/) - wrapper element for the browser video tag
 
   - [abstract](./abstract/) - common code abstractions (abstract classes)
 
