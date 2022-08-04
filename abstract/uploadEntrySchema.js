@@ -1,4 +1,4 @@
-import { UploadcareFile } from '../submodules/upload-client/upload-client.js';
+import { UploadcareFile } from '@uploadcare/upload-client';
 
 /**
  * @typedef {Object} UploadEntry
@@ -17,7 +17,6 @@ import { UploadcareFile } from '../submodules/upload-client/upload-client.js';
  * @property {String} ctxName
  * @property {String} cdnUrl
  * @property {String} cdnUrlModifiers
- * @property {import('../blocks/CloudImageEditor/src/types.js').Transformations} editorTransformations
  * @property {UploadcareFile} fileInfo
  * @property {Boolean} isUploading
  */
@@ -86,10 +85,6 @@ export const uploadEntrySchema = Object.freeze({
   },
   cdnUrlModifiers: {
     type: String,
-    value: null,
-  },
-  editorTransformations: {
-    type: Object,
     value: null,
   },
   fileInfo: {

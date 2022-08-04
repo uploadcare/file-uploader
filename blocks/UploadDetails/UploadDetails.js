@@ -59,7 +59,7 @@ export class UploadDetails extends UploaderBlock {
     /** @type {import('../EditableCanvas/EditableCanvas.js').EditableCanvas} */
     // @ts-ignore
     this.eCanvas = this.ref.canvas;
-    this.sub('*focusedEntry', (/** @type {import('@symbiotejs/symbiote').TypedData} */ entry) => {
+    this.sub('*focusedEntry', (/** @type {import('../../abstract/TypedData.js').TypedData} */ entry) => {
       if (!entry) {
         return;
       }

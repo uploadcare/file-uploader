@@ -1,6 +1,6 @@
 @import url('../../../blocks/themes/lr-basic/index.css');
 
-.lr-wgt-common,
+:where(.lr-wgt-common),
 :host {
   --cfg-multiple: 0;
   --cfg-confirm-upload: 0;

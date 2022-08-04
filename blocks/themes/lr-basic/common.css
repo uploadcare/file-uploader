@@ -1,5 +1,4 @@
-.lr-wgt-theme,
-.lr-wgt-common,
+:where(.lr-wgt-theme, .lr-wgt-common),
 :host {
   color: var(--clr-txt);
 

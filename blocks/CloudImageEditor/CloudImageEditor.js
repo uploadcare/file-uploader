@@ -22,7 +22,7 @@ export class CloudImageEditor extends UploaderBlock {
       }
     });
 
-    this.sub('*focusedEntry', (/** @type {import('@symbiotejs/symbiote').TypedData} */ entry) => {
+    this.sub('*focusedEntry', (/** @type {import('../../abstract/TypedData.js').TypedData} */ entry) => {
       if (!entry) {
         return;
       }
@@ -42,7 +42,6 @@ export class CloudImageEditor extends UploaderBlock {
     this.entry.setMultipleValues({
       cdnUrl: result.cdnUrl,
       cdnUrlModifiers: result.cdnUrlModifiers,
-      editorTransformations: result.transformations,
     });
     this.historyBack();
   }
@@ -55,9 +54,7 @@ export class CloudImageEditor extends UploaderBlock {
     let instance = new CloudEditor();
     instance.classList.add('lr-cldtr-common');
     let uuid = this.$.uuid;
-    // let publicKey = this.getCssData('--cfg-pubkey');
     instance.setAttribute('uuid', uuid);
-    // instance.setAttribute('public-key', publicKey);
 
     instance.addEventListener('apply', (result) => this.handleApply(result));
     instance.addEventListener('cancel', () => this.handleCancel());

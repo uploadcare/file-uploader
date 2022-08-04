@@ -44,4 +44,5 @@
   --cfg-save-url-for-recurrent-uploads: 0;
 
   --cfg-group-output: 0;
+  --cfg-user-agent-integration: '';
 }

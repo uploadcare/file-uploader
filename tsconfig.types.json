@@ -7,5 +7,5 @@
     "declarationMap": true
   },
   "include": ["**/*.js"],
-  "exclude": ["node_modules", "./submodules/upload-client/upload-client.js", "assets"]
+  "exclude": ["node_modules"]
 }

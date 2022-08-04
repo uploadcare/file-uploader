@@ -1,5 +1,4 @@
-.lr-cldtr-l10n_en-US,
-.lr-cldtr-common,
+:where(.lr-cldtr-l10n_en-US, .lr-cldtr-common),
 :host {
   --l10n-cancel: 'Cancel';
   --l10n-apply: 'Apply';

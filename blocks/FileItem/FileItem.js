@@ -1,7 +1,7 @@
 import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 import { resizeImage } from '../utils/resizeImage.js';
-import { uploadFile } from '../../submodules/upload-client/upload-client.js';
+import { uploadFile } from '@uploadcare/upload-client';
 import { UiMessage } from '../MessageBox/MessageBox.js';
 import { fileCssBg } from '../svg-backgrounds/svg-backgrounds.js';
 import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../utils/cdn-utils.js';
@@ -41,6 +41,7 @@ export class FileItem extends UploaderBlock {
     let [entry] = entries;
     if (entry.isIntersecting && !this.innerHTML) {
       this.render();
+      this._observer?.unobserve(this);
     }
     if (entry.intersectionRatio === 0) {
       clearTimeout(this._thumbTimeoutId);
@@ -101,7 +102,7 @@ export class FileItem extends UploaderBlock {
       /** @type {String} */
       this.uid = id;
 
-      /** @type {import('@symbiotejs/symbiote').TypedData} */
+      /** @type {import('../../abstract/TypedData.js').TypedData} */
       this.entry = this.uploadCollection?.read(id);
 
       if (!this.entry) {
@@ -155,7 +156,6 @@ export class FileItem extends UploaderBlock {
         if (!uuid) {
           return;
         }
-        this._observer.unobserve(this);
         this.setAttribute('loaded', '');
 
         if (this.entry.getValue('isImage')) {
@@ -226,7 +226,7 @@ export class FileItem extends UploaderBlock {
 
   destroyCallback() {
     FileItem.activeInstances.delete(this);
-    // this._observer.unobserve(this);
+    this._observer?.disconnect();
     clearTimeout(this._thumbTimeoutId);
   }
 

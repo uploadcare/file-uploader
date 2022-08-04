@@ -194,7 +194,7 @@ export class EditorToolbar extends Block {
       this.$['*cropperEl'].activate(this.$['*imageSize'], { fromViewer });
     } else {
       this.$['*faderEl'].activate({ url: this.$['*originalUrl'], fromViewer });
-      this.$['*cropperEl'].deactivate({ seamlessTransition: true });
+      this.$['*cropperEl'].deactivate();
     }
 
     for (let tabId of TABS) {

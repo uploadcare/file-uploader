@@ -1,5 +1,5 @@
 // Symbiote.js
-export { BaseComponent, Data, TypedCollection, TypedData } from '@symbiotejs/symbiote';
+export { BaseComponent, Data } from '@symbiotejs/symbiote';
 
 // Abstract:
 export { Block } from './abstract/Block.js';
@@ -17,6 +17,7 @@ export { Modal } from './blocks/Modal/Modal.js';
 export { UploadList } from './blocks/UploadList/UploadList.js';
 export { UrlSource } from './blocks/UrlSource/UrlSource.js';
 export { CameraSource } from './blocks/CameraSource/CameraSource.js';
+export { UploadCtxProvider } from './blocks/UploadCtxProvider/UploadCtxProvider.js';
 export { UploadDetails } from './blocks/UploadDetails/UploadDetails.js';
 export { MessageBox } from './blocks/MessageBox/MessageBox.js';
 export { ConfirmationDialog } from './blocks/ConfirmationDialog/ConfirmationDialog.js';

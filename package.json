@@ -4,10 +4,10 @@
   "description": "Building blocks for Uploadcare products integration",
   "type": "module",
   "module": "index.js",
-  "sideEffects": false,
+  "sideEffects": ["*.css"],
   "repository": "https://github.com/uploadcare/uc-blocks/",
   "files": [
-    "{abstract,blocks,solutions,web,utils,submodules}/**/*.{js,css,d.ts,d.ts.map}",
+    "{abstract,blocks,solutions,web,utils}/**/*.{js,css,d.ts,d.ts.map}",
     "index.{js,d.ts,d.ts.map}",
     "env.{js,d.ts,d.ts.map}",
     "README.md",
@@ -17,17 +17,17 @@
     "access": "public"
   },
   "scripts": {
-    "setup": "npm run update_submodules && npm i",
     "test": "web-test-runner \"./{abstract,blocks,solutions,web,utils}/**/*.test.js\" --node-resolve",
     "test:light": "node ./test/test.js",
     "release": "shipjs prepare",
-    "dev": "wds --open",
+    "wds": "wds --open",
+    "dev": "run-p build:static:watch wds",
     "build:web": "npm run clean:web && node ./build.js",
-    "build:css:types": "node build-css-types.js",
     "build:jsx:types": "node build-jsx-types.js",
     "build:types": "npm run clean:types && tsc --build tsconfig.types.json",
     "build:static": "node --experimental-fetch ./static-gen/build.js",
-    "build": "run-s build:web build:types build:css:types build:jsx:types",
+    "build:static:watch": "node watch.js",
+    "build": "run-s build:web build:types build:jsx:types",
     "tsc": "tsc --skipLibCheck --allowJs --noEmit",
     "lint:js": "eslint ./",
     "lint:js:fix": "eslint ./ --fix",
@@ -36,7 +36,7 @@
     "lint": "run-s lint:js lint:css",
     "clean:web": "rimraf './web/**/*.{js,css}'",
     "clean:html": "rimraf './**/*.html'",
-    "clean:types": "rimraf './{abstract,blocks,solutions,web,utils,static-gen}/**/*.{d.ts,d.ts.map}' && rimraf './!(global).{d.ts,d.ts.map}'",
+    "clean:types": "rimraf './{abstract,blocks,solutions,web,utils,static-gen,test}/**/*.{d.ts,d.ts.map}' && rimraf './!(global).{d.ts,d.ts.map}'",
     "clean": "run-s clean:*",
     "format:js": "prettier --write './**/*.{js,cjs}'",
     "format:css": "prettier --write --parser css './**/*.css'",
@@ -50,6 +50,7 @@
     "@babel/eslint-parser": "^7.17.0",
     "@babel/preset-env": "^7.16.11",
     "@esm-bundle/chai": "^4.3.4-fix.0",
+    "@jam-do/jam-tools": "^0.0.3",
     "@types/chai": "^4.3.1",
     "@types/mocha": "^9.1.1",
     "@types/node": "^17.0.25",
@@ -62,6 +63,7 @@
     "husky": "^7.0.4",
     "lint-staged": "^12.4.0",
     "marked": "^4.0.17",
+    "node-watch": "^0.7.3",
     "npm-run-all": "^4.1.5",
     "postcss": "^8.4.13",
     "prettier": "^2.6.2",
@@ -80,7 +82,7 @@
   "author": "Uploadcare Inc.",
   "license": "MIT",
   "dependencies": {
-    "@jam-do/jam-tools": "^0.0.3",
-    "@symbiotejs/symbiote": "^1.9.0"
+    "@symbiotejs/symbiote": "^1.10.0",
+    "@uploadcare/upload-client": "^4.3.0"
   }
 }
