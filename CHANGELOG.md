@@ -2,7 +2,6 @@
 
 ### Bug Fixes
 
-- camera-source test ([b244727](https://github.com/uploadcare/uc-blocks/commit/b244727928642965cac9002fff6fe829c052263f))
 - **cloud-editor:** create own context ([db97b19](https://github.com/uploadcare/uc-blocks/commit/db97b1981bfb08bcbb5851c9fac068d79edcf41d))
 - **data-output:** do not set value property ([88c5deb](https://github.com/uploadcare/uc-blocks/commit/88c5debccc5f23915baf4446e3322b9c50a20711))
 - **file-item:** call IntersectionObserver.unobserve in the right places ([3216ad7](https://github.com/uploadcare/uc-blocks/commit/3216ad767a2198a00ea9cdbb5f308b3b5c6c4275))
@@ -14,7 +13,6 @@
 ### Features
 
 - add `--cfg-user-agent-integration` option ([75eebf0](https://github.com/uploadcare/uc-blocks/commit/75eebf018faec79d2a5c7d94f059136456de1c4f))
-- go-to-time ([136e2e6](https://github.com/uploadcare/uc-blocks/commit/136e2e69ed6f6c9aa25215e1613615402ed8e52f))
 - lr-video stage 1 ([626d5b6](https://github.com/uploadcare/uc-blocks/commit/626d5b66e1c685ee69247666fdb49289d827d939))
 
 # [0.6.0](https://github.com/uploadcare/uc-blocks/compare/v0.5.2...v0.6.0) (2022-07-14)
