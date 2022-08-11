@@ -1,6 +1,6 @@
 {
   "imports": {
-    "@symbiotejs/symbiote": "https://ga.jspm.io/npm:@symbiotejs/symbiote@1.9.0/build/symbiote.js",
+    "@symbiotejs/symbiote": "https://ga.jspm.io/npm:@symbiotejs/symbiote@1.10.2/build/symbiote.js",
     "@uploadcare/upload-client": "https://ga.jspm.io/npm:@uploadcare/upload-client@4.3.0/dist/index.browser.js"
   }
 }

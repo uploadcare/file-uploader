@@ -25,7 +25,7 @@
       <lr-activity-caption slot="heading"></lr-activity-caption>
       <lr-start-from>
         <lr-source-list></lr-source-list>
-        <lr-drop-area></lr-drop-area>
+        <lr-drop-area clickable></lr-drop-area>
       </lr-start-from>
       <lr-upload-list></lr-upload-list>
       <lr-camera-source></lr-camera-source>
@@ -40,15 +40,19 @@
     <lr-progress-bar></lr-progress-bar>
   </div>
 
-  <lr-data-output 
-    ctx-name="LR"
-    use-console
-    use-event>
+  <template id="output-template">
     <h3>Files uploaded:</h3>
     <div repeat="filesData">
       <lr-img width="300" set="@uuid: uuid"></lr-img>
       <div><a set="@href: cdnUrl">{{cdnUrl}}</a></div>
     </div>
+  </template>
+
+  <lr-data-output 
+    ctx-name="LR"
+    use-console
+    use-event
+    use-template="#output-template">
   </lr-data-output>
 </lr-live-html>
 

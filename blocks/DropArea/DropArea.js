@@ -39,9 +39,23 @@ export class DropArea extends UploaderBlock {
         this.setAttribute('drag-state', stateText);
       }
     });
+
+    if (this.hasAttribute('clickable')) {
+      let clickable = this.getAttribute('clickable');
+      if (clickable === '' || clickable === 'true') {
+        // @private
+        this._onAreaClicked = () => {
+          this.openSystemDialog();
+        };
+        this.addEventListener('click', this._onAreaClicked);
+      }
+    }
   }
 
   destroyCallback() {
     this._destroyDropzone?.();
+    if (this._onAreaClicked) {
+      this.removeEventListener('click', this._onAreaClicked);
+    }
   }
 }

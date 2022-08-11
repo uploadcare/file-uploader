@@ -26,7 +26,7 @@ export class FileUploaderInline extends ShadowWrapper {
 FileUploaderInline.template = /*html*/ `
 <lr-start-from>
   <lr-source-list wrap></lr-source-list>
-  <lr-drop-area set="@hidden: dropAreaHidden"></lr-drop-area>
+  <lr-drop-area set="@hidden: dropAreaHidden" clickable></lr-drop-area>
 </lr-start-from>
 <lr-upload-list ref="uBlock"></lr-upload-list>
 <lr-camera-source></lr-camera-source>
