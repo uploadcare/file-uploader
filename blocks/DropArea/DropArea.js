@@ -1,6 +1,7 @@
 import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 import { DropzoneState, addDropzone } from './addDropzone.js';
+import { UiMessage } from '../MessageBox/MessageBox.js';
 
 export class DropArea extends UploaderBlock {
   init$ = {
@@ -17,13 +18,28 @@ export class DropArea extends UploaderBlock {
       },
       onFiles: (files) => {
         files.forEach((/** @type {File} */ file) => {
-          this.uploadCollection.add({
-            file,
-            isImage: file.type.includes('image'),
-            mimeType: file.type,
-            fileName: file.name,
-            fileSize: file.size,
-          });
+          let hasValidationErrors = false;
+          let isImage = file.type.includes('image');
+          // This solution doesn't check --cfg-accept setting.
+          // TODO: Needs to be improved in future.
+          if (this.getCssData('--cfg-img-only') && !isImage) {
+            hasValidationErrors = true;
+          } else {
+            this.uploadCollection.add({
+              file,
+              isImage: isImage,
+              mimeType: file.type,
+              fileName: file.name,
+              fileSize: file.size,
+            });
+          }
+          if (hasValidationErrors) {
+            let msg = new UiMessage();
+            msg.caption = 'Error';
+            msg.text = this.l10n('has-validation-errors');
+            msg.isError = true;
+            this.$['*message'] = msg;
+          }
         });
         this.set$({
           '*currentActivity': ActivityBlock.activities.UPLOAD_LIST,
