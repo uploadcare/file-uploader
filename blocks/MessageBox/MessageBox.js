@@ -25,8 +25,8 @@ export class MessageBox extends Block {
       if (msg) {
         this.setAttribute('active', '');
         this.set$({
-          captionTxt: msg.caption,
-          msgTxt: msg.text,
+          captionTxt: msg.caption || '',
+          msgTxt: msg.text || '',
           iconName: msg.isError ? 'error' : 'info',
         });
         if (msg.isError) {

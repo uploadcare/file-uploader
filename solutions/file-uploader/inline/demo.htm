@@ -9,7 +9,7 @@
   <style>
     @import url(./index.css);
 
-    lr-uploader {
+    lr-file-uploader-inline {
       width: 100%;
       height: 100%;
     }
@@ -20,7 +20,8 @@
   </style>
 
   <!-- Uploader widget element: -->
-  <lr-uploader class="lr-wgt-common"></lr-uploader>
+  <lr-file-uploader-inline class="lr-wgt-common">
+  </lr-file-uploader-inline>
 </lr-live-html>
 
 
@@ -33,8 +34,8 @@
   <style>
     @import url(./index.css);
 
-    lr-uploader[current-activity="details"],
-    lr-uploader[current-activity="cloud-image-edit"] {
+    lr-file-uploader-inline[current-activity="details"],
+    lr-file-uploader-inline[current-activity="cloud-image-edit"] {
       width: 100%;
       height: 100%;
     }
@@ -46,5 +47,6 @@
   </style>
 
   <!-- Uploader widget element: -->
-  <lr-uploader current-activity class="lr-wgt-common"></lr-uploader>
+  <lr-file-uploader-inline current-activity class="lr-wgt-common">
+  </lr-file-uploader-inline>
 </lr-live-html>
