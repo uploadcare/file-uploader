@@ -12,9 +12,11 @@ export class FileUploaderMinimal extends ShadowWrapper {
   };
 
   shadowReadyCallback() {
+    /** @type {import('../../../abstract/UploaderBlock.js').UploaderBlock} */
+    const uBlock = this.ref.uBlock;
     this.sub('*currentActivity', (val) => {
       if (!val) {
-        this.$['*currentActivity'] = this.ref.uBlock.initActivity || ActivityBlock.activities.START_FROM;
+        this.$['*currentActivity'] = uBlock.initActivity || ActivityBlock.activities.START_FROM;
       }
     });
   }

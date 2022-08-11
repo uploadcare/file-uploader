@@ -5,6 +5,8 @@ import { l10nProcessor } from './l10nProcessor.js';
 const TAG_PREFIX = 'lr-';
 
 export class Block extends BaseComponent {
+  allowCustomTemplate = true;
+
   init$ = {
     '*ctxTargetsRegistry': new Set(),
   };

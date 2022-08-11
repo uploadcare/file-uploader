@@ -22,63 +22,71 @@ export class DataOutput extends UploaderBlock {
 
   initCallback() {
     super.initCallback();
-    this.sub('output', (data) => {
-      if (!data) {
-        return;
-      }
-
-      if (this.hasAttribute(this.dict.FIRE_EVENT_ATTR)) {
-        this.dispatchEvent(
-          new CustomEvent(this.dict.EVENT_NAME, {
-            bubbles: true,
-            composed: true,
-            detail: {
-              timestamp: Date.now(),
-              ctxName: this.ctxName,
-              data,
-            },
-          })
-        );
-      }
-
-      if (this.hasAttribute(this.dict.FORM_VALUE_ATTR)) {
-        if (!this._input) {
-          /** @private */
-          this._input = document.createElement('input');
-          this._input.type = 'text';
-          this._input.hidden = true;
-          this.appendChild(this._input);
+    this.sub(
+      'output',
+      (data) => {
+        if (!data) {
+          return;
         }
-        this._input.value = JSON.stringify(data);
-      }
 
-      if (this.hasAttribute(this.dict.CONSOLE_ATTR)) {
-        console.log(data);
-      }
-    });
+        if (this.hasAttribute(this.dict.FIRE_EVENT_ATTR)) {
+          this.dispatchEvent(
+            new CustomEvent(this.dict.EVENT_NAME, {
+              bubbles: true,
+              composed: true,
+              detail: {
+                timestamp: Date.now(),
+                ctxName: this.ctxName,
+                data,
+              },
+            })
+          );
+        }
 
-    this.sub(this.dict.SRC_CTX_KEY, async (/** @type {FileList} */ data) => {
-      if (!data) {
-        this.$.output = null;
-        this.$.filesData = null;
-        return;
-      }
-      this.$.filesData = data;
-      if (this.getCssData('--cfg-group-output') || this.hasAttribute(this.dict.GROUP_ATTR)) {
-        let uuidList = data.map((fileDesc) => {
-          return fileDesc.uuid;
-        });
-        let resp = await uploadFileGroup(uuidList, {
-          ...this.getUploadClientOptions(),
-        });
-        this.$.output = {
-          groupData: resp,
-          files: data,
-        };
-      } else {
-        this.$.output = data;
-      }
-    });
+        if (this.hasAttribute(this.dict.FORM_VALUE_ATTR)) {
+          if (!this._input) {
+            /** @private */
+            this._input = document.createElement('input');
+            this._input.type = 'text';
+            this._input.hidden = true;
+            this.appendChild(this._input);
+          }
+          this._input.value = JSON.stringify(data);
+        }
+
+        if (this.hasAttribute(this.dict.CONSOLE_ATTR)) {
+          console.log(data);
+        }
+      },
+      false
+    );
+
+    this.sub(
+      this.dict.SRC_CTX_KEY,
+      async (/** @type {FileList} */ data) => {
+        if (!data) {
+          this.$.output = null;
+          this.$.filesData = null;
+          return;
+        }
+        this.$.filesData = data;
+        if (this.getCssData('--cfg-group-output') || this.hasAttribute(this.dict.GROUP_ATTR)) {
+          let uuidList = data.map((fileDesc) => {
+            return fileDesc.uuid;
+          });
+          let resp = await uploadFileGroup(uuidList, {
+            ...this.getUploadClientOptions(),
+          });
+          this.$.output = {
+            groupData: resp,
+            files: data,
+          };
+        } else {
+          this.$.output = data;
+        }
+      },
+      false
+    );
   }
 }
 
