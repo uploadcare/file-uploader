@@ -189,6 +189,7 @@ export class UploaderBlock extends ActivityBlock {
       ...storeSetting,
       publicKey: this.getCssData('--cfg-pubkey'),
       baseCDN: this.getCssData('--cfg-cdn-cname'),
+      baseURL: this.getCssData('--cfg-base-url'),
       userAgent: customUserAgent,
       integration: this.getCssData('--cfg-user-agent-integration'),
       secureSignature: this.getCssData('--cfg-secure-signature'),
