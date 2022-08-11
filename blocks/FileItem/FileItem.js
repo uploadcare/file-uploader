@@ -30,6 +30,9 @@ export class FileItem extends UploaderBlock {
     },
     onRemove: () => {
       this.uploadCollection.remove(this.uid);
+      if (this.hasAttribute('loaded')) {
+        this.output();
+      }
     },
     onUpload: () => {
       this.upload();

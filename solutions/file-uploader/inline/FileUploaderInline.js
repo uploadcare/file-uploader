@@ -9,17 +9,18 @@ export class FileUploaderInline extends ShadowWrapper {
   };
 
   shadowReadyCallback() {
+    /** @type {import('../../../abstract/UploaderBlock.js').UploaderBlock} */
+    const uBlock = this.ref.uBlock;
     this.sub('*currentActivity', (val) => {
       if (!val) {
-        this.$['*currentActivity'] = this.ref.uBlock.initActivity || ActivityBlock.activities.START_FROM;
+        this.$['*currentActivity'] = uBlock.initActivity || ActivityBlock.activities.START_FROM;
       }
     });
-    if (
-      this.ref.uBlock.sourceList.length === 1 &&
-      !this.ref.uBlock.sourceList.includes(UploaderBlock.sourceTypes.LOCAL)
-    ) {
-      this.$.dropAreaHidden = true;
-    }
+    window.customElements.whenDefined(uBlock.tagName.toLowerCase()).then(() => {
+      if (uBlock.sourceList.length === 1 && !uBlock.sourceList.includes(UploaderBlock.sourceTypes.LOCAL)) {
+        this.$.dropAreaHidden = true;
+      }
+    });
   }
 }
 
