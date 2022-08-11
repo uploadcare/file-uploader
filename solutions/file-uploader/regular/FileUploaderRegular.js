@@ -10,7 +10,7 @@ FileUploaderRegular.template = /*html*/ `
   <lr-activity-caption slot="heading"></lr-activity-caption>
   <lr-start-from>
     <lr-source-list wrap></lr-source-list>
-    <lr-drop-area></lr-drop-area>
+    <lr-drop-area clickable></lr-drop-area>
   </lr-start-from>
   <lr-upload-list></lr-upload-list>
   <lr-camera-source></lr-camera-source>

@@ -71,9 +71,9 @@ export class ImgBase extends BaseComponent {
     return createCdnUrlModifiers(
       //
       size && `resize/${size}`,
-      this.$$('cdn-operations'),
-      `format/${this.$$('format')}`,
-      `quality/${this.$$('quality')}`
+      this.$$('cdn-operations') || '',
+      `format/${this.$$('format') || PROPS_MAP.format.default}`,
+      `quality/${this.$$('quality') || PROPS_MAP.quality.default}`
     );
   }
 

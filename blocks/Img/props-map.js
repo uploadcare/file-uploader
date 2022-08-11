@@ -1,4 +1,4 @@
-export const PROPS_MAP = {
+export const PROPS_MAP = Object.freeze({
   'dev-mode': {},
   pubkey: {},
   uuid: {},
@@ -28,4 +28,4 @@ export const PROPS_MAP = {
     default: 'smart',
   },
   'is-background-for': {},
-};
+});
