@@ -9,7 +9,7 @@ export class UploadDetails extends UploaderBlock {
   pauseRender = true;
 
   init$ = {
-    ...this.init$,
+    ...this.ctxInit,
     checkerboard: false,
     fileSize: null,
     fileName: '',

@@ -6,16 +6,10 @@ import { imageMimeTypes } from '../utils/imageMimeTypes.js';
 import { uploadEntrySchema } from './uploadEntrySchema.js';
 import { customUserAgent } from '../blocks/utils/userAgent.js';
 import { TypedCollection } from './TypedCollection.js';
+import { UPLOADER_BLOCK_CTX } from './CTX.js';
 
 export class UploaderBlock extends ActivityBlock {
-  init$ = {
-    ...this.init$,
-    '*commonProgress': 0,
-    '*uploadList': [],
-    '*outputData': null,
-    '*focusedEntry': null,
-    '*uploadMetadata': null,
-  };
+  ctxInit = UPLOADER_BLOCK_CTX;
 
   /** @private */
   __initialUploadMetadata = null;
@@ -152,11 +146,13 @@ export class UploaderBlock extends ActivityBlock {
     if (!this.has('*uploadCollection')) {
       let uploadCollection = new TypedCollection({
         typedSchema: uploadEntrySchema,
-        watchList: ['uploadProgress', 'uuid'],
+        watchList: ['uploadProgress', 'uuid', 'fileInfo'],
         handler: (entries) => {
           this.$['*uploadList'] = entries.map((uid) => {
             return { uid };
           });
+          console.log(uploadCollection.items());
+          this.output();
         },
       });
       uploadCollection.observe((changeMap) => {
@@ -170,6 +166,9 @@ export class UploaderBlock extends ActivityBlock {
             commonProgress += uploadCollection.readProp(id, 'uploadProgress');
           });
           this.$['*commonProgress'] = commonProgress / items.length;
+        }
+        if (changeMap.fileInfo) {
+          this.output();
         }
       });
       this.add('*uploadCollection', uploadCollection);
@@ -210,21 +209,28 @@ export class UploaderBlock extends ActivityBlock {
   }
 
   output() {
-    let data = [];
-    let items = this.uploadCollection.items();
-    items.forEach((itemId) => {
-      let uploadEntryData = Data.getNamedCtx(itemId).store;
-      /** @type {import('@uploadcare/upload-client').UploadcareFile} */
-      let fileInfo = uploadEntryData.fileInfo;
-      // TODO: create dedicated output type
-      let outputItem = {
-        ...fileInfo,
-        cdnUrlModifiers: uploadEntryData.cdnUrlModifiers,
-        cdnUrl: uploadEntryData.cdnUrl || fileInfo.cdnUrl,
-      };
-      data.push(outputItem);
+    if (this.__outputDebounceTimeout) {
+      window.clearTimeout(this.__outputDebounceTimeout);
+    }
+    /** @private */
+    this.__outputDebounceTimeout = window.setTimeout(() => {
+      let data = [];
+      let items = this.uploadCollection.items();
+      items.forEach((itemId) => {
+        let uploadEntryData = Data.getCtx(itemId).store;
+        /** @type {import('@uploadcare/upload-client').UploadcareFile} */
+        let fileInfo = uploadEntryData.fileInfo;
+        if (fileInfo) {
+          let outputItem = {
+            ...fileInfo,
+            cdnUrlModifiers: uploadEntryData.cdnUrlModifiers,
+            cdnUrl: uploadEntryData.cdnUrl || fileInfo.cdnUrl,
+          };
+          data.push(outputItem);
+        }
+      });
+      this.$['*outputData'] = data;
     });
-    this.$['*outputData'] = data;
   }
 }
 

@@ -7,7 +7,7 @@ export class ProgressBar extends Block {
   _unknownMode = false;
 
   init$ = {
-    ...this.init$,
+    ...this.ctxInit,
     width: 0,
     opacity: 0,
   };

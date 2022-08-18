@@ -24,7 +24,7 @@ export class TypedCollection {
      * @private
      * @type {Data}
      */
-    this.__data = Data.registerNamedCtx(this.__ctxId, {});
+    this.__data = Data.registerCtx({}, this.__ctxId);
     /**
      * @private
      * @type {string[]}
@@ -188,7 +188,7 @@ export class TypedCollection {
   }
 
   destroy() {
-    this.__data.remove();
+    Data.deleteCtx(this.__data);
     this.__observers = null;
     for (let id in this.__subsMap) {
       this.__subsMap[id].forEach((sub) => {

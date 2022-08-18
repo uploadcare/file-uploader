@@ -5,7 +5,7 @@ import { UiMessage } from '../MessageBox/MessageBox.js';
 
 export class DropArea extends UploaderBlock {
   init$ = {
-    ...this.init$,
+    ...this.ctxInit,
     state: DropzoneState.INACTIVE,
   };
   initCallback() {
@@ -17,6 +17,9 @@ export class DropArea extends UploaderBlock {
         this.$.state = state;
       },
       onFiles: (files) => {
+        if (!this.getCssData('--cfg-multiple')) {
+          files = [files[0]];
+        }
         files.forEach((/** @type {File} */ file) => {
           let hasValidationErrors = false;
           let isImage = file.type.includes('image');
@@ -69,6 +72,7 @@ export class DropArea extends UploaderBlock {
   }
 
   destroyCallback() {
+    super.destroyCallback();
     this._destroyDropzone?.();
     if (this._onAreaClicked) {
       this.removeEventListener('click', this._onAreaClicked);

@@ -1,11 +1,11 @@
-import { ShadowWrapper } from '../../../blocks/ShadowWrapper/ShadowWrapper.js';
+import { SolutionBlock } from '../../../abstract/SolutionBlock.js';
 import { ActivityBlock } from '../../../abstract/ActivityBlock.js';
 
-export class FileUploaderMinimal extends ShadowWrapper {
+export class FileUploaderMinimal extends SolutionBlock {
   pauseRender = true;
 
   init$ = {
-    ...this.init$,
+    ...this.ctxInit,
     selectClicked: () => {
       this.ref.uBlock.openSystemDialog();
     },
@@ -24,13 +24,7 @@ export class FileUploaderMinimal extends ShadowWrapper {
 
 FileUploaderMinimal.template = /*html*/ `
   <lr-start-from>
-    <lr-drop-area>
-      <button
-        type="button"
-        l10n="drop-files-here"
-        set="onclick: selectClicked">
-      </button>
-    </lr-drop-area>
+    <lr-drop-area clickable l10n="drop-files-here"></lr-drop-area>
   </lr-start-from>
   <lr-upload-list ref="uBlock"></lr-upload-list>
   <lr-message-box></lr-message-box>

@@ -10,7 +10,7 @@ export class FileItem extends UploaderBlock {
   pauseRender = true;
 
   init$ = {
-    ...this.init$,
+    ...this.ctxInit,
     uid: '',
     itemName: '',
     thumb: '',
@@ -30,9 +30,6 @@ export class FileItem extends UploaderBlock {
     },
     onRemove: () => {
       this.uploadCollection.remove(this.uid);
-      if (this.hasAttribute('loaded')) {
-        this.output();
-      }
     },
     onUpload: () => {
       this.upload();
@@ -228,6 +225,7 @@ export class FileItem extends UploaderBlock {
   }
 
   destroyCallback() {
+    super.destroyCallback();
     FileItem.activeInstances.delete(this);
     this._observer?.disconnect();
     clearTimeout(this._thumbTimeoutId);

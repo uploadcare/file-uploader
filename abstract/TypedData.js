@@ -22,7 +22,7 @@ export class TypedData {
      * @private
      * @type {Data}
      */
-    this.__data = Data.registerNamedCtx(this.__ctxId, this.__schema);
+    this.__data = Data.registerCtx(this.__schema, this.__ctxId);
   }
 
   /** @returns {String} */
@@ -72,6 +72,6 @@ export class TypedData {
   }
 
   remove() {
-    this.__data.remove();
+    Data.deleteCtx(this.__ctxId);
   }
 }

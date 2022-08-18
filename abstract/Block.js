@@ -1,15 +1,15 @@
-import { BaseComponent } from '@symbiotejs/symbiote';
+import { BaseComponent, Data } from '@symbiotejs/symbiote';
 import { applyTemplateData } from '../utils/applyTemplateData.js';
 import { l10nProcessor } from './l10nProcessor.js';
+import { BLOCK_CTX } from './CTX.js';
 
 const TAG_PREFIX = 'lr-';
 
 export class Block extends BaseComponent {
   allowCustomTemplate = true;
 
-  init$ = {
-    '*ctxTargetsRegistry': new Set(),
-  };
+  ctxInit = BLOCK_CTX;
+  init$ = this.ctxInit;
 
   /**
    * @param {String} str
@@ -60,7 +60,7 @@ export class Block extends BaseComponent {
   checkCtxTarget(targetTagName) {
     /** @type {Set} */
     let registry = this.$['*ctxTargetsRegistry'];
-    return registry.has(targetTagName);
+    return registry?.has(targetTagName);
   }
 
   /**
@@ -78,6 +78,10 @@ export class Block extends BaseComponent {
     if (this.hasAttribute('retpl')) {
       this.constructor['template'] = null;
       this.processInnerHtml = true;
+    }
+    if (this.isConnected && this['__ctxOwner']) {
+      let data = Data.getCtx(this.ctxName);
+      data.store = {};
     }
     super.connectedCallback();
   }

@@ -8,7 +8,7 @@ export class UploadList extends UploaderBlock {
   activityType = ActivityBlock.activities.UPLOAD_LIST;
 
   init$ = {
-    ...this.init$,
+    ...this.ctxInit,
     doneBtnHidden: false,
     doneBtnDisabled: false,
     uploadBtnHidden: false,
@@ -39,7 +39,7 @@ export class UploadList extends UploaderBlock {
       cfn.confirmAction = () => {
         this.cancelFlow();
         this.uploadCollection.clearAll();
-        this.output();
+        // this.output();
       };
       cfn.denyAction = () => {
         this.historyBack();
@@ -135,9 +135,9 @@ export class UploadList extends UploaderBlock {
       }
     }
     let allUploaded = summary.total === summary.uploaded;
-    if (summary.uploaded && allUploaded) {
-      this.output();
-    }
+    // if (summary.uploaded && allUploaded) {
+    //   this.output();
+    // }
     let { passed: fitCountRestrictions, tooMany, exact } = this._validateFilesCount();
     let fitValidation = summary.validationFailed === 0;
 

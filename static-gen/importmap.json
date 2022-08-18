@@ -1,6 +1,6 @@
 {
   "imports": {
-    "@symbiotejs/symbiote": "https://ga.jspm.io/npm:@symbiotejs/symbiote@1.10.2/build/symbiote.js",
-    "@uploadcare/upload-client": "https://ga.jspm.io/npm:@uploadcare/upload-client@4.3.0/dist/index.browser.js"
+    "@symbiotejs/symbiote": "https://cdn.skypack.dev/-/@symbiotejs/symbiote@v1.10.5-NLgLW1XQCe5drkP3wBQX/dist=es2019,mode=imports/optimized/@symbiotejs/symbiote.js",
+    "@uploadcare/upload-client": "https://ga.jspm.io/npm:@uploadcare/upload-client@4.3.1-alpha.0/dist/index.browser.js"
   }
 }

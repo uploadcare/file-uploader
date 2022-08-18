@@ -5,7 +5,7 @@ export class UrlSource extends UploaderBlock {
   activityType = ActivityBlock.activities.URL;
 
   init$ = {
-    ...this.init$,
+    ...this.ctxInit,
     importDisabled: true,
     onUpload: () => {
       let url = this.ref.input['value'];

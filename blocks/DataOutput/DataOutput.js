@@ -7,7 +7,7 @@ export class DataOutput extends UploaderBlock {
   processInnerHtml = true;
 
   init$ = {
-    ...this.init$,
+    ...this.ctxInit,
     output: null,
     filesData: null,
   };

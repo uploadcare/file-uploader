@@ -36,7 +36,7 @@ export class EditorToolbar extends Block {
     super();
 
     this.init$ = {
-      ...this.init$,
+      ...this.ctxInit,
       '*sliderEl': null,
       /** @type {import('./types.js').LoadingOperations} */
       '*loadingOperations': new Map(),
