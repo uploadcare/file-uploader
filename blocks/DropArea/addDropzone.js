@@ -1,5 +1,8 @@
 import { getDropFiles } from './getDropFiles.js';
 
+/** @type {String} */
+let dragImageSrc = null;
+
 /** @enum {Number} */
 export const DropzoneState = {
   ACTIVE: 0,
@@ -29,6 +32,7 @@ function distance(p, r) {
  * @param {HTMLElement} desc.element
  * @param {Function} desc.onChange
  * @param {Function} desc.onFiles
+ * @param {(src: String) => void} desc.onImgElement
  */
 export function addDropzone(desc) {
   let switchHandlers = new Set();
@@ -73,6 +77,7 @@ export function addDropzone(desc) {
   });
 
   let onDragOver = (e) => {
+    // console.log(e)
     // Not sure that it won't conflict with other dnd elements on the page
     e.preventDefault();
     if (state === DropzoneState.INACTIVE) {
@@ -101,6 +106,12 @@ export function addDropzone(desc) {
 
   let onDrop = async (e) => {
     e.preventDefault();
+    if (dragImageSrc) {
+      desc.onImgElement.bind(desc.element)(dragImageSrc);
+      dragImageSrc = null;
+      setState(DropzoneState.INACTIVE);
+      return;
+    }
     let files = await getDropFiles(e.dataTransfer);
     desc.onFiles(files);
     setState(DropzoneState.INACTIVE);
@@ -113,6 +124,12 @@ export function addDropzone(desc) {
     desc.element.removeEventListener('drop', onDrop);
     FINAL_EVENTS.forEach((eventName) => {
       window.removeEventListener(eventName, onFinalEvent, false);
+      dragImageSrc = null;
     });
   };
 }
+
+window.addEventListener('dragstart', (e) => {
+  // @ts-ignore
+  dragImageSrc = e.target.constructor === HTMLImageElement ? e.target.src : null;
+});

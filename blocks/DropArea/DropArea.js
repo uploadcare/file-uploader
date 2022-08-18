@@ -17,6 +17,9 @@ export class DropArea extends UploaderBlock {
         this.$.state = state;
       },
       onFiles: (files) => {
+        if (!files.length) {
+          return;
+        }
         if (!this.getCssData('--cfg-multiple')) {
           files = [files[0]];
         }
@@ -44,6 +47,16 @@ export class DropArea extends UploaderBlock {
             this.$['*message'] = msg;
           }
         });
+        this.set$({
+          '*currentActivity': ActivityBlock.activities.UPLOAD_LIST,
+        });
+      },
+      onImgElement(src) {
+        // @ts-ignore
+        this.uploadCollection.add({
+          externalUrl: src,
+        });
+        // @ts-ignore
         this.set$({
           '*currentActivity': ActivityBlock.activities.UPLOAD_LIST,
         });
