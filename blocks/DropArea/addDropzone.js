@@ -118,6 +118,11 @@ export function addDropzone(desc) {
   };
   desc.element.addEventListener('drop', onDrop);
 
+  window.addEventListener('dragstart', (e) => {
+    // @ts-ignore
+    dragImageSrc = e.target.constructor === HTMLImageElement ? e.target.src : null;
+  });
+
   return () => {
     nearnessRegistry.delete(desc.element);
     window.removeEventListener('dragover', onDragOver, false);
@@ -128,8 +133,3 @@ export function addDropzone(desc) {
     });
   };
 }
-
-window.addEventListener('dragstart', (e) => {
-  // @ts-ignore
-  dragImageSrc = e.target.constructor === HTMLImageElement ? e.target.src : null;
-});
