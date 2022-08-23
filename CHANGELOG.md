@@ -1,3 +1,23 @@
+# [0.8.0](https://github.com/uploadcare/uc-blocks/compare/v0.7.2...v0.8.0) (2022-08-23)
+
+### Bug Fixes
+
+- #BLOCKS-130 ([165d9d2](https://github.com/uploadcare/uc-blocks/commit/165d9d28dbc04c199962d0eec30dd4233fe838e7)), closes [#BLOCKS-130](https://github.com/uploadcare/uc-blocks/issues/BLOCKS-130)
+- data output call bound to upload state and uploaded items removal + lr-img fix ([863fe99](https://github.com/uploadcare/uc-blocks/commit/863fe9956a605e3f5d88e674802e76160293f759))
+- double slash bug with --cfg-cdn-cname trailing slash ([6a121c9](https://github.com/uploadcare/uc-blocks/commit/6a121c9101b7d0bcc30c5d70c5b05cadeda3061a))
+- merge issues ([ba48502](https://github.com/uploadcare/uc-blocks/commit/ba48502a9d44a7ed32ba79b47abc6632ca38d07e))
+- modal layout in Safari ([52bbc4a](https://github.com/uploadcare/uc-blocks/commit/52bbc4aa8b5b1ff8d63b4ecbcc9237112a0adb1e))
+- TS error ([f0babf1](https://github.com/uploadcare/uc-blocks/commit/f0babf16e99556e58b1cd647b189b87c4fa64dcb))
+
+### Features
+
+- add clickable attribute to DropArea ([d486788](https://github.com/uploadcare/uc-blocks/commit/d48678897b589893ddd4d706e85f2afbd38ee2b6))
+- connectBlocksFrom added ([4c80a97](https://github.com/uploadcare/uc-blocks/commit/4c80a978dcc21db34b19077d63d7d3f14f45cdd9))
+- custom base upload URL support ([6d03fd1](https://github.com/uploadcare/uc-blocks/commit/6d03fd1624263cc61e3de73277d6ee9bc009637e))
+- drag-n-drop page img ([0ec0e69](https://github.com/uploadcare/uc-blocks/commit/0ec0e69a14d4682b0cc72d001affc5f6873c1c78))
+- lr-drop-area is-image validation support ([3bc8ae5](https://github.com/uploadcare/uc-blocks/commit/3bc8ae5343ba90e5ee585ce194e7a4a296f8d68f))
+- workflow evens ([7709a1d](https://github.com/uploadcare/uc-blocks/commit/7709a1df16892b9194b0d2386fe195d4586e0cab))
+
 ## [0.7.2](https://github.com/uploadcare/uc-blocks/compare/v0.7.1...v0.7.2) (2022-08-11)
 
 ## [0.7.1](https://github.com/uploadcare/uc-blocks/compare/v0.7.0...v0.7.1) (2022-08-04)
