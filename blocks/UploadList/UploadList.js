@@ -145,9 +145,6 @@ export class UploadList extends UploaderBlock {
       }
     }
     let allUploaded = summary.total === summary.uploaded;
-    if (summary.uploaded && allUploaded) {
-      this.output();
-    }
     let { passed: fitCountRestrictions, tooMany, exact } = this._validateFilesCount();
     let fitValidation = summary.validationFailed === 0;
 
