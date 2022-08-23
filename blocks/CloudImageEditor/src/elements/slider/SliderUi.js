@@ -3,7 +3,7 @@ import { ResizeObserver } from '../../lib/ResizeObserver.js';
 
 export class SliderUi extends Block {
   init$ = {
-    ...this.init$,
+    ...this.ctxInit,
     disabled: false,
     min: 0,
     max: 100,

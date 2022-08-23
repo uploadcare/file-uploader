@@ -3,7 +3,7 @@ import { strokesCssBg } from '../svg-backgrounds/svg-backgrounds.js';
 
 export class Modal extends Block {
   init$ = {
-    ...this.init$,
+    ...this.ctxInit,
     '*modalActive': false,
     '*modalHeaderHidden': false,
     closeClicked: () => {

@@ -6,6 +6,7 @@ import { preloadImage } from './lib/preloadImage.js';
 
 export class EditorFilterControl extends EditorButtonControl {
   init$ = {
+    ...this.ctxInit,
     active: false,
     title: '',
     icon: '',

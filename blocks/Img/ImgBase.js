@@ -332,6 +332,7 @@ export class ImgBase extends BaseComponent {
   }
 
   destroyCallback() {
+    super.destroyCallback();
     if (this._isnObserver) {
       this._observed.forEach((el) => {
         this._isnObserver.unobserve(el);

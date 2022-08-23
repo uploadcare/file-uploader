@@ -10,7 +10,7 @@ export class LrBtnUi extends Block {
     this._iconHidden = false;
 
     this.init$ = {
-      ...this.init$,
+      ...this.ctxInit,
       text: '',
       icon: '',
       iconCss: this._iconCss(),

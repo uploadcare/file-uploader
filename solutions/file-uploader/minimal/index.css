@@ -6,12 +6,15 @@
   --cfg-confirm-upload: 0;
   --cfg-init-activity: 'start-from';
   --cfg-done-activity: 'upload-list';
+
+  position: relative;
+  display: block;
 }
 
 lr-start-from {
   display: block;
   width: 100%; /* test value */
-  height: 100%; /* test value */
+  height: unset; /* test value */
   padding: 0;
   text-align: center;
 }
@@ -20,6 +23,7 @@ lr-drop-area {
   width: 100%;
   height: calc(var(--ui-size) + var(--gap-mid) * 2 + var(--gap-min) * 4);
   padding: 0;
+  color: var(--clr-accent);
   line-height: 140%;
   text-align: center;
   border-color: var(--clr-accent-lightest);
@@ -35,23 +39,9 @@ lr-drop-area::after {
   content: '';
 }
 
-lr-drop-area button {
-  display: inline-block;
-  width: 100%;
-  height: 100%;
-  padding: 0;
-  color: var(--clr-accent);
-  background: transparent;
-  opacity: 0.8;
-  transition: opacity var(--transition-duration) ease;
-}
-
-lr-drop-area button:hover {
-  opacity: 1;
-}
-
 lr-upload-list {
   width: 100%;
+  height: unset;
   padding: var(--gap-min);
   background-color: transparent;
   border: var(--border-dashed);

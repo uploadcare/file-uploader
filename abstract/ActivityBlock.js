@@ -1,17 +1,11 @@
 import { Block } from './Block.js';
+import { ACTIVITY_BLOCK_CTX } from './CTX.js';
 
 const ACTIVE_ATTR = 'active';
 const ACTIVE_PROP = '___ACTIVITY_IS_ACTIVE___';
 
 export class ActivityBlock extends Block {
-  init$ = {
-    ...this.init$,
-    '*currentActivity': '',
-    '*currentActivityParams': {},
-    '*history': [],
-    '*activityCaption': '',
-    '*activityIcon': '',
-  };
+  ctxInit = ACTIVITY_BLOCK_CTX;
 
   initCallback() {
     super.initCallback();
@@ -43,11 +37,13 @@ export class ActivityBlock extends Block {
           // console.log(`Activity "${this.activityType}" activated`);
 
           let history = this.$['*history'];
-          if (history.length > 10) {
-            history = history.slice(history.length - 11, history.length - 1);
+          if (history) {
+            if (history.length > 10) {
+              history = history.slice(history.length - 11, history.length - 1);
+            }
+            history.push(this.activityType);
+            this.$['*history'] = history;
           }
-          history.push(this.activityType);
-          this.$['*history'] = history;
         }
       });
     }
@@ -96,10 +92,12 @@ export class ActivityBlock extends Block {
   historyBack() {
     /** @type {String[]} */
     let history = this.$['*history'];
-    history.pop();
-    let prevActivity = history.pop();
-    this.$['*currentActivity'] = prevActivity;
-    this.$['*history'] = history;
+    if (history) {
+      history.pop();
+      let prevActivity = history.pop();
+      this.$['*currentActivity'] = prevActivity;
+      this.$['*history'] = history;
+    }
   }
 }
 

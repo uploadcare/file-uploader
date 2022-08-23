@@ -2,7 +2,7 @@ import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 
 export class ProgressBarCommon extends UploaderBlock {
   init$ = {
-    ...this.init$,
+    ...this.ctxInit,
     visible: false,
     unknown: false,
     value: 0,

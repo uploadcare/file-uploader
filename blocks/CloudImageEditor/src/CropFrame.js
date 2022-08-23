@@ -24,7 +24,7 @@ import { classNames } from './lib/classNames.js';
 
 export class CropFrame extends Block {
   init$ = {
-    ...this.init$,
+    ...this.ctxInit,
     dragging: false,
   };
 

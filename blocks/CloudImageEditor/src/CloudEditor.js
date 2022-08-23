@@ -15,7 +15,7 @@ export class CloudEditor extends Block {
   }
 
   init$ = {
-    ...this.init$,
+    ...this.ctxInit,
     ...initState(this),
   };
 

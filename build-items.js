@@ -11,6 +11,12 @@ export const buildItems = [
     out: './web/lr-basic.min.css',
     minify: true,
   },
+  {
+    in: './index-window.js',
+    out: './web/lr-blocks-window.min.js',
+    minify: true,
+    minifyHtml: true,
+  },
 
   // lr-cloud-image-editor
   {

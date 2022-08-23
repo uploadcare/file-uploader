@@ -78,7 +78,7 @@ export class EditorToolbar extends Block {
   }
 
   init$ = {
-    ...this.init$,
+    ...this.ctxInit,
     fsIcon: FS_ICON.FS,
     rangeActive: false,
     rangeCaption: '',

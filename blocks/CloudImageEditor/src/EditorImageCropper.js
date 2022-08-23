@@ -54,7 +54,7 @@ function validateCrop(crop) {
 
 export class EditorImageCropper extends Block {
   init$ = {
-    ...this.init$,
+    ...this.ctxInit,
     image: null,
     '*padding': CROP_PADDING,
     /** @type {Operations} */
