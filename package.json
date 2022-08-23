@@ -1,6 +1,6 @@
 {
   "name": "@uploadcare/uc-blocks",
-  "version": "0.5.1",
+  "version": "0.7.2",
   "description": "Building blocks for Uploadcare products integration",
   "type": "module",
   "module": "index.js",
