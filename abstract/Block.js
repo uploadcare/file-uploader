@@ -128,7 +128,7 @@ export class Block extends BaseComponent {
     );
   }
 
-  /** @param {String} name? */
+  /** @param {String} [name] */
   static reg(name) {
     if (!name) {
       super.reg();

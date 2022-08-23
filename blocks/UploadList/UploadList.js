@@ -1,8 +1,9 @@
+import { Data } from '@symbiotejs/symbiote';
 import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
-import { FileItem } from '../FileItem/FileItem.js';
 import { UiConfirmation } from '../ConfirmationDialog/ConfirmationDialog.js';
 import { UiMessage } from '../MessageBox/MessageBox.js';
+import { EVENT_TYPES, EventData, EventManager } from '../../abstract/EventManager.js';
 
 export class UploadList extends UploaderBlock {
   activityType = ActivityBlock.activities.UPLOAD_LIST;
@@ -37,9 +38,18 @@ export class UploadList extends UploaderBlock {
     onCancel: () => {
       let cfn = new UiConfirmation();
       cfn.confirmAction = () => {
+        let data = this.getOutputData((dataItem) => {
+          return !!dataItem.getValue('uuid');
+        });
+        EventManager.emit(
+          new EventData({
+            type: EVENT_TYPES.REMOVE,
+            ctx: this.ctxName,
+            data,
+          })
+        );
         this.cancelFlow();
         this.uploadCollection.clearAll();
-        // this.output();
       };
       cfn.denyAction = () => {
         this.historyBack();
@@ -135,9 +145,6 @@ export class UploadList extends UploaderBlock {
       }
     }
     let allUploaded = summary.total === summary.uploaded;
-    // if (summary.uploaded && allUploaded) {
-    //   this.output();
-    // }
     let { passed: fitCountRestrictions, tooMany, exact } = this._validateFilesCount();
     let fitValidation = summary.validationFailed === 0;
 
