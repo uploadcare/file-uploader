@@ -4,7 +4,7 @@ import { UploaderBlock } from '../../../abstract/UploaderBlock.js';
 
 export class FileUploaderInline extends ShadowWrapper {
   init$ = {
-    ...this.init$,
+    ...this.ctxInit,
     dropAreaHidden: false,
   };
 

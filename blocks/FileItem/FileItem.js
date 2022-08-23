@@ -5,12 +5,13 @@ import { uploadFile } from '@uploadcare/upload-client';
 import { UiMessage } from '../MessageBox/MessageBox.js';
 import { fileCssBg } from '../svg-backgrounds/svg-backgrounds.js';
 import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../utils/cdn-utils.js';
+import { EVENT_TYPES, EventData, EventManager } from '../../abstract/EventManager.js';
 
 export class FileItem extends UploaderBlock {
   pauseRender = true;
 
   init$ = {
-    ...this.init$,
+    ...this.ctxInit,
     uid: '',
     itemName: '',
     thumb: '',
@@ -29,10 +30,20 @@ export class FileItem extends UploaderBlock {
       });
     },
     onRemove: () => {
-      this.uploadCollection.remove(this.uid);
-      if (this.hasAttribute('loaded')) {
-        this.output();
+      let entryUuid = this.entry.getValue('uuid');
+      if (entryUuid) {
+        let data = this.getOutputData((dataItem) => {
+          return dataItem.getValue('uuid') === entryUuid;
+        });
+        EventManager.emit(
+          new EventData({
+            type: EVENT_TYPES.REMOVE,
+            ctx: this.ctxName,
+            data,
+          })
+        );
       }
+      this.uploadCollection.remove(this.uid);
     },
     onUpload: () => {
       this.upload();
@@ -228,6 +239,7 @@ export class FileItem extends UploaderBlock {
   }
 
   destroyCallback() {
+    super.destroyCallback();
     FileItem.activeInstances.delete(this);
     this._observer?.disconnect();
     clearTimeout(this._thumbTimeoutId);
@@ -237,6 +249,16 @@ export class FileItem extends UploaderBlock {
     if (this.hasAttribute('loaded') || this.entry.getValue('uuid')) {
       return;
     }
+    let data = this.getOutputData((dataItem) => {
+      return !dataItem.getValue('uuid');
+    });
+    EventManager.emit(
+      new EventData({
+        type: EVENT_TYPES.UPLOAD_START,
+        ctx: this.ctxName,
+        data,
+      })
+    );
     this.entry.setValue('isUploading', true);
     this.entry.setValue('uploadError', null);
 

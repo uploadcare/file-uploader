@@ -14,7 +14,7 @@ export class ExternalSource extends UploaderBlock {
   activityType = ActivityBlock.activities.EXTERNAL;
 
   init$ = {
-    ...this.init$,
+    ...this.ctxInit,
     counter: 0,
     onDone: () => {
       this.$['*currentActivity'] = ActivityBlock.activities.UPLOAD_LIST;

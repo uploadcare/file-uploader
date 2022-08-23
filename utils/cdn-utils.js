@@ -121,7 +121,10 @@ export function splitFileUrl(fileUrl) {
 export const createCdnUrl = (baseCdnUrl, cdnModifiers, filename) => {
   let url = new URL(trimFilename(baseCdnUrl));
   filename = filename || extractFilename(baseCdnUrl);
-
+  // TODO: fix double slash pathname bug (--cfg-cdn-cname: 'https://ucarecdn.com/' - trailing slash case)
+  if (url.pathname.startsWith('//')) {
+    url.pathname = url.pathname.replace('//', '/');
+  }
   if (isFileUrl(filename)) {
     let splitted = splitFileUrl(filename);
     url.pathname = url.pathname + (cdnModifiers || '') + (splitted.pathname || '');
@@ -130,7 +133,6 @@ export const createCdnUrl = (baseCdnUrl, cdnModifiers, filename) => {
   } else {
     url.pathname = url.pathname + (cdnModifiers || '') + (filename || '');
   }
-
   return url.toString();
 };
 
