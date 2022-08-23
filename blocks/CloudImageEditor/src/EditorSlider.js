@@ -10,7 +10,7 @@ export const FAKE_ORIGINAL_FILTER = 'original';
 
 export class EditorSlider extends Block {
   init$ = {
-    ...this.init$,
+    ...this.ctxInit,
     disabled: false,
     min: 0,
     max: 100,

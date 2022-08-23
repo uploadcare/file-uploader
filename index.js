@@ -3,6 +3,8 @@ export { BaseComponent, Data } from '@symbiotejs/symbiote';
 
 // Abstract:
 export { Block } from './abstract/Block.js';
+export { ActivityBlock } from './abstract/ActivityBlock.js';
+export { UploaderBlock } from './abstract/UploaderBlock.js';
 
 // Blocks:
 export { Icon } from './blocks/Icon/Icon.js';
@@ -40,3 +42,4 @@ export * from './solutions/cloud-image-editor/CloudEditor.js';
 
 // Utils:
 export { registerBlocks } from './abstract/registerBlocks.js';
+export { connectBlocksFrom } from './abstract/connectBlocksFrom.js';
