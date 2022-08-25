@@ -83,6 +83,6 @@
   "license": "MIT",
   "dependencies": {
     "@symbiotejs/symbiote": "^1.10.5",
-    "@uploadcare/upload-client": "^4.3.0"
+    "@uploadcare/upload-client": "^4.3.1"
   }
 }
