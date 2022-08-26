@@ -80,8 +80,10 @@ export class Block extends BaseComponent {
       this.processInnerHtml = true;
     }
     if (this.isConnected && this['__ctxOwner']) {
-      let data = Data.getCtx(this.ctxName);
-      data.store = {};
+      let data = Data.getCtx(this.ctxName, false);
+      if (data) {
+        data.store = { ...this.ctxInit };
+      }
     }
     super.connectedCallback();
   }
