@@ -1,8 +1,7 @@
-import { ShadowWrapper } from '../../../blocks/ShadowWrapper/ShadowWrapper.js';
+import { SolutionBlock } from '../../../abstract/SolutionBlock.js';
 import { ActivityBlock } from '../../../abstract/ActivityBlock.js';
 import { UploaderBlock } from '../../../abstract/UploaderBlock.js';
-
-export class FileUploaderInline extends ShadowWrapper {
+export class FileUploaderInline extends SolutionBlock {
   init$ = {
     ...this.ctxInit,
     dropAreaHidden: false,
