@@ -36,7 +36,7 @@
     "lint": "run-s lint:js lint:css",
     "clean:web": "rimraf './web/**/*.{js,css}'",
     "clean:html": "rimraf './**/*.html'",
-    "clean:types": "rimraf './{abstract,blocks,solutions,web,utils,static-gen,test}/**/*.{d.ts,d.ts.map}' && rimraf './!(global).{d.ts,d.ts.map}'",
+    "clean:types": "rimraf './{abstract,blocks,solutions,web,utils,static-gen,test}/**/*.{d.ts,d.ts.map}' && rimraf './{**,!(types)}/*.{d.ts,d.ts.map}'",
     "clean": "run-s clean:*",
     "format:js": "prettier --write './**/*.{js,cjs}'",
     "format:css": "prettier --write --parser css './**/*.css'",
