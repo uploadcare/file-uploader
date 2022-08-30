@@ -1,6 +1,6 @@
 {
   "name": "@uploadcare/uc-blocks",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "description": "Building blocks for Uploadcare products integration",
   "keywords": [
     "web components",
@@ -114,6 +114,6 @@
   "license": "MIT",
   "dependencies": {
     "@symbiotejs/symbiote": "^1.10.5",
-    "@uploadcare/upload-client": "^4.3.0"
+    "@uploadcare/upload-client": "^4.3.1"
   }
 }
