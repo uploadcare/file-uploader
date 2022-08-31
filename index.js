@@ -33,6 +33,7 @@ export { DataOutput } from './blocks/DataOutput/DataOutput.js';
 export { ActivityCaption } from './blocks/ActivityCaption/ActivityCaption.js';
 export { ActivityIcon } from './blocks/ActivityIcon/ActivityIcon.js';
 export { Select } from './blocks/Select/Select.js';
+export { Video } from './blocks/Video/Video.js';
 
 // Solutions:
 export { FileUploaderRegular } from './solutions/file-uploader/regular/FileUploaderRegular.js';

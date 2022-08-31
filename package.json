@@ -1,7 +1,37 @@
 {
-  "name": "@uploadcare/uc-blocks",
-  "version": "0.8.0",
+  "name": "@uploadcare/blocks",
+  "version": "0.8.1",
   "description": "Building blocks for Uploadcare products integration",
+  "keywords": [
+    "web components",
+    "uploadcare",
+    "file uploader",
+    "adaptive image",
+    "image optimization",
+    "image editing",
+    "image size",
+    "cloud image editor",
+    "symbiote.js",
+    "upload api client",
+    "building blocks",
+    "lr-blocks",
+    "uc-blocks",
+    "widget",
+    "integrations",
+    "frontend",
+    "typescript",
+    "smart cdn",
+    "cloud file platform",
+    "transformation api",
+    "webp",
+    "avif",
+    "custom elements",
+    "shadow dom",
+    "shadow root",
+    "css context properties",
+    "meta applications",
+    "MIT"
+  ],
   "type": "module",
   "module": "index.js",
   "sideEffects": ["*.css"],
@@ -84,6 +114,6 @@
   "license": "MIT",
   "dependencies": {
     "@symbiotejs/symbiote": "^1.10.5",
-    "@uploadcare/upload-client": "^4.3.0"
+    "@uploadcare/upload-client": "^4.3.1"
   }
 }

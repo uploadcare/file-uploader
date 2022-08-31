@@ -1,4 +1,4 @@
-[![npm version](https://badge.fury.io/js/@uploadcare%2Fuc-blocks.svg)](https://www.npmjs.com/package/@uploadcare/uc-blocks)
+[![npm version](https://badge.fury.io/js/@uploadcare%2Fblocks.svg)](https://www.npmjs.com/package/@uploadcare/blocks)
 
 # blocks: web components for the Uploadcare platform integrations
 
@@ -27,7 +27,7 @@
 
 ### NPM
 
-`npm i @uploadcare/uc-blocks`
+`npm i @uploadcare/blocks`
 
 ### Contribution
 

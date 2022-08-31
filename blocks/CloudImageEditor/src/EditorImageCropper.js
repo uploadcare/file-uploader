@@ -91,6 +91,9 @@ export class EditorImageCropper extends Block {
 
   /** @private */
   _handleResize() {
+    if (!this.isConnected) {
+      return;
+    }
     this._initCanvas();
     this._alignImage();
     this._alignCrop();
@@ -307,6 +310,9 @@ export class EditorImageCropper extends Block {
 
   /** @private */
   _commit() {
+    if (!this.isConnected) {
+      return;
+    }
     let operations = this.$['*operations'];
     let { rotate, mirror, flip } = operations;
     let crop = this._calculateCrop();

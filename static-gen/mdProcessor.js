@@ -3,8 +3,10 @@ import hljs from 'highlight.js';
 
 marked.setOptions({
   highlight: (code, lang, callback) => {
-    // @ts-ignore
-    code = hljs.highlight(code, { language: lang }).value;
+    if (lang) {
+      // @ts-ignore
+      code = hljs.highlight(code, { language: lang }).value;
+    }
     callback && callback(undefined, code);
   },
 });

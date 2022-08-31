@@ -1,3 +1,10 @@
+## [0.8.1](https://github.com/uploadcare/uc-blocks/compare/v0.8.0...v0.8.1) (2022-08-26)
+
+### Bug Fixes
+
+- **cloud-image-editor:** errors while edit image multiple times ([#232](https://github.com/uploadcare/uc-blocks/issues/232)) ([743220d](https://github.com/uploadcare/uc-blocks/commit/743220d08ec5da0687a6c85438d615cf0ab5a7ee))
+- ctx-owner rendering issue (React) ([0365765](https://github.com/uploadcare/uc-blocks/commit/0365765caf861f02112149ef30c338c274bae248))
+
 # [0.8.0](https://github.com/uploadcare/uc-blocks/compare/v0.7.2...v0.8.0) (2022-08-23)
 
 ### Bug Fixes

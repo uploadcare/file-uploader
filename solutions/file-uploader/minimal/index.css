@@ -1,4 +1,58 @@
-@import url('../../../blocks/themes/lr-basic/index.css');
+@import url('../../../blocks/themes/lr-basic/config.css');
+
+/* COMMON STYLES */
+@import url('../../../blocks/themes/lr-basic/common.css');
+
+/* THEME */
+@import url('../../../blocks/themes/lr-basic/theme.css');
+
+/* BLOCKS: */
+@import url('../../../blocks/StartFrom/start-from.css');
+@import url('../../../blocks/DropArea/drop-area.css');
+@import url('../../../blocks/UploadList/upload-list.css');
+@import url('../../../blocks/FileItem/file-item.css');
+@import url('../../../blocks/Icon/icon.css');
+@import url('../../../blocks/ProgressBar/progress-bar.css');
+@import url('../../../blocks/MessageBox/message-box.css');
+
+/* ICONS: */
+:where(.lr-wgt-icons, .lr-wgt-common),
+:host {
+  --icon-close: 'M17.6569 7.75734c.3905-.39053.3905-1.02369 0-1.41421-.3906-.39053-1.0237-.39053-1.4143 0L12 10.5858 7.75736 6.34313c-.39053-.39053-1.02369-.39053-1.41421 0-.39053.39052-.39053 1.02368 0 1.41421L10.5858 12l-4.24266 4.2426c-.39052.3905-.39052 1.0237 0 1.4142.39053.3906 1.02369.3906 1.41422 0L12 13.4142l4.2426 4.2426c.3906.3906 1.0237.3906 1.4143 0 .3905-.3905.3905-1.0237 0-1.4142L13.4142 12l4.2427-4.24266Z';
+  --icon-info: 'M11,9H13V7H11M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,17H13V11H11V17Z';
+  --icon-error: 'M13,13H11V7H13M13,17H11V15H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z';
+  --icon-remove: 'm6.35673 9.71429c-.76333 0-1.35856.66121-1.27865 1.42031l1.01504 9.6429c.06888.6543.62067 1.1511 1.27865 1.1511h9.25643c.658 0 1.2098-.4968 1.2787-1.1511l1.015-9.6429c.0799-.7591-.5153-1.42031-1.2786-1.42031zm.50041-4.5v.32142h-2.57143c-.71008 0-1.28571.57564-1.28571 1.28572s.57563 1.28571 1.28571 1.28571h15.42859c.7101 0 1.2857-.57563 1.2857-1.28571s-.5756-1.28572-1.2857-1.28572h-2.5714v-.32142c0-1.77521-1.4391-3.21429-3.2143-3.21429h-3.8572c-1.77517 0-3.21426 1.43908-3.21426 3.21429zm7.07146-.64286c.355 0 .6428.28782.6428.64286v.32142h-5.14283v-.32142c0-.35504.28782-.64286.64283-.64286z';
+  --icon-check: 'm12 22c5.5228 0 10-4.4772 10-10 0-5.52285-4.4772-10-10-10-5.52285 0-10 4.47715-10 10 0 5.5228 4.47715 10 10 10zm4.7071-11.4929-5.9071 5.9071-3.50711-3.5071c-.39052-.3905-.39052-1.0237 0-1.4142.39053-.3906 1.02369-.3906 1.41422 0l2.09289 2.0929 4.4929-4.49294c.3905-.39052 1.0237-.39052 1.4142 0 .3905.39053.3905 1.02374 0 1.41424z';
+  --icon-remove-file: 'm12 22c5.5228 0 10-4.4772 10-10 0-5.52285-4.4772-10-10-10-5.52285 0-10 4.47715-10 10 0 5.5228 4.47715 10 10 10zm3.7071-13.70711c.3905.39053.3905 1.02369 0 1.41422l-2.2929 2.29289 2.2929 2.2929c.3905.3905.3905 1.0237 0 1.4142s-1.0237.3905-1.4142 0l-2.2929-2.2929-2.29289 2.2929c-.39053.3905-1.02369.3905-1.41422 0-.39052-.3905-.39052-1.0237 0-1.4142l2.29291-2.2929-2.2929-2.29289c-.39053-.39053-.39053-1.02369 0-1.41422.39052-.39052 1.02369-.39052 1.41421 0l2.29289 2.29291 2.2929-2.29291c.3905-.39052 1.0237-.39052 1.4142 0z';
+  --icon-trash-file: var(--icon-remove);
+  --icon-upload-error: var(--icon-error);
+  --icon-badge-success: 'M10.5 18.2044L18.0992 10.0207C18.6629 9.41362 18.6277 8.46452 18.0207 7.90082C17.4136 7.33711 16.4645 7.37226 15.9008 7.97933L10.5 13.7956L8.0992 11.2101C7.53549 10.603 6.5864 10.5679 5.97933 11.1316C5.37226 11.6953 5.33711 12.6444 5.90082 13.2515L10.5 18.2044Z';
+  --icon-badge-error: 'm13.6 18.4c0 .8837-.7164 1.6-1.6 1.6-.8837 0-1.6-.7163-1.6-1.6s.7163-1.6 1.6-1.6c.8836 0 1.6.7163 1.6 1.6zm-1.6-13.9c.8284 0 1.5.67157 1.5 1.5v7c0 .8284-.6716 1.5-1.5 1.5s-1.5-.6716-1.5-1.5v-7c0-.82843.6716-1.5 1.5-1.5z';
+}
+
+/* L10N: */
+:where(.lr-wgt-l10n_en-US, .lr-wgt-common),
+:host {
+  --l10n-drop-files-here: 'Drop files here';
+
+  --l10n-upload-error: 'Upload error';
+  --l10n-validation-error: 'Validation error';
+  --l10n-no-files: 'No files selected';
+  --l10n-browse: 'Browse';
+  --l10n-not-uploaded-yet: 'Not uploaded yet...';
+
+  --l10n-file-name: 'Name';
+  --l10n-file-size: 'Size';
+  --l10n-cdn-url: 'CDN URL';
+  --l10n-file-size-unknown: 'Unknown';
+
+  --l10n-files-count-limit-error-title: 'Files count limit overflow';
+  --l10n-files-count-limit-error-too-few: 'You’ve chosen {{total}}. At least {{min}} required.';
+  --l10n-files-count-limit-error-too-many: 'You’ve chosen too many files. {{max}} is maximum.';
+
+  --l10n-files-max-size-limit-error: 'File is too big. Max file size is {{maxFileSize}} bytes.';
+  --l10n-has-validation-errors: 'File validation error ocurred. Please, check your files before upload.';
+}
 
 :where(.lr-wgt-common),
 :host {
