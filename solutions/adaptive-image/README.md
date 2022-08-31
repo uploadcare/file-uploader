@@ -18,7 +18,7 @@
 Connect script:
 
 ```html
-<script src="https://unpkg.com/@uploadcare/uc-blocks@latest/web/lr-img.min.js" type="module"></script>
+<script src="https://cdn.skypack.dev/@uploadcare/blocks/web/lr-img.min.js" type="module"></script>
 ```
 
 Add basic settings:

@@ -3,6 +3,7 @@ node_modules
 TMP
 web
 **/*.d.ts
+!types/**
 **/*.d.ts.map
 !global.d.ts
 

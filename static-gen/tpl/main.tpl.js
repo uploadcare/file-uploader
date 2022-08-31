@@ -12,7 +12,6 @@ export default /*html*/ `<!DOCTYPE html>
       import { LiveHtml } from '{{BASE}}blocks/LiveHtml/LiveHtml.js';
       LiveHtml.reg('lr-live-html');
     </script>
-    <script type="module">{{JS}}</script>
     <style>{{CSS}}</style>
   </head>
   <body>

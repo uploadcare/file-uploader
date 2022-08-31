@@ -2,7 +2,7 @@ export const buildItems = [
   // lr-blocks
   {
     in: './index.js',
-    out: './web/lr-blocks.min.js',
+    out: './web/blocks.min.js',
     minify: true,
     minifyHtml: true,
   },
@@ -12,8 +12,8 @@ export const buildItems = [
     minify: true,
   },
   {
-    in: './index-window.js',
-    out: './web/lr-blocks-window.min.js',
+    in: './index-browser.js',
+    out: './web/blocks-browser.min.js',
     minify: true,
     minifyHtml: true,
   },
