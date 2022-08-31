@@ -83,6 +83,7 @@ lr-drop-area {
   border-color: var(--clr-accent-lightest);
   border-style: solid;
   border-radius: var(--border-radius-frame);
+  cursor: pointer;
 }
 
 lr-drop-area[drag-state='inactive'] {
