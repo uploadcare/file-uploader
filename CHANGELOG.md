@@ -1,3 +1,9 @@
+## [0.9.1](https://github.com/uploadcare/uc-blocks/compare/v0.9.0...v0.9.1) (2022-08-31)
+
+### Bug Fixes
+
+- DropArea > prevent activity change on empty list ([f65806e](https://github.com/uploadcare/uc-blocks/commit/f65806ed40ce25ec200ee0dfc85bf9ce709b6c9b))
+
 # [0.9.0](https://github.com/uploadcare/uc-blocks/compare/v0.8.1...v0.9.0) (2022-08-31)
 
 ### Bug Fixes
