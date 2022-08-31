@@ -47,9 +47,11 @@ export class DropArea extends UploaderBlock {
             this.$['*message'] = msg;
           }
         });
-        this.set$({
-          '*currentActivity': ActivityBlock.activities.UPLOAD_LIST,
-        });
+        if (this.uploadCollection.size) {
+          this.set$({
+            '*currentActivity': ActivityBlock.activities.UPLOAD_LIST,
+          });
+        }
       },
       onImgElement(src) {
         // @ts-ignore
