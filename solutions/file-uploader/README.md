@@ -27,29 +27,15 @@ Uploader is supported in all major modern [browsers](https://github.com/uploadca
 
 [Internet Explorer](https://uploadcare.com/blog/uploadcare-stops-internet-explorer-support/) is outdated and not supported anymore.
 
-## ⚙️ Integration
+## Receiving upload data
 
-### CDN version
-
-Connect script:
-
-```html
-<script src="https://unpkg.com/@uploadcare/uc-blocks@latest/web/file-uploader-regular.min.js" type="module"></script>
+```js
+window.addEventListener('LR_DATA_OUTPUT', (e) => {
+  console.log(e.detail);
+});
 ```
 
-### npm package
-
-Install package: `npm i @uploadcare/uc-blocks`
-
-Then you can use `Uploader`-element class for your purposes:
-
-```javascript
-import * as LR from '@uploadcare/uc-blocks';
-
-LR.registerBlocks(LR);
-
-document.body.appendChild(new LR.FileUploaderRegular());
-```
+More information about upload events you can find [here](../../docs/events/).
 
 ### Application markup
 
@@ -63,7 +49,7 @@ Note that all configurations, localization texts, icons, and styling are placed 
 
 ```html
 <style>
-  @import url(https://unpkg.com/@uploadcare/uc-blocks@latest/web/file-uploader-regular.min.css);
+  @import url(https://cdn.skypack.dev/@uploadcare/blocks/web/file-uploader-regular.min.css);
   .my-settings {
     --ctx-name: 'my-uploader';
     --cfg-pubkey: 'demopublickey';
@@ -81,7 +67,7 @@ If you need additional isolation and styling security levels, you can get it wit
 To enable it and encapsulate all styles into separated scope, use the `css-src` attribute:
 
 ```html
-<lr-uploader css-src="https://unpkg.com/@uploadcare/uc-blocks@latest/web/file-uploader-regular.min.css"> </lr-uploader>
+<lr-uploader css-src="https://cdn.skypack.dev/@uploadcare/blocks/web/file-uploader-regular.min.css"> </lr-uploader>
 ```
 
 ### Custom tags naming convention
