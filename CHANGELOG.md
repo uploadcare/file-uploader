@@ -1,3 +1,10 @@
+## [0.8.2](https://github.com/uploadcare/uc-blocks/compare/v0.8.1...v0.8.2) (2022-08-31)
+
+### Bug Fixes
+
+- gitignore exception fro types ([98acdeb](https://github.com/uploadcare/uc-blocks/commit/98acdeb7777277e910c27c947e7b016f26d795b4))
+- types ([8fdcd59](https://github.com/uploadcare/uc-blocks/commit/8fdcd591b4a103f53d8cf04f802693545b178e67))
+
 ## [0.8.1](https://github.com/uploadcare/uc-blocks/compare/v0.8.0...v0.8.1) (2022-08-26)
 
 ### Bug Fixes
