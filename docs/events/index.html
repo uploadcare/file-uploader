@@ -32,48 +32,38 @@
       </div>
     </nav>
     <main>
-      <col-css><h1 id="activities">Activities</h1>
-<p><strong>Activity</strong> - is a current user interaction stage focused on the uploader application. It helps manage the visibility of components and switches between several UI states. To create an activity, you will need to register it in your custom upload-block:</p>
-<pre><code class="language-javascript"><span class="hljs-keyword">import</span> { <span class="hljs-variable constant_">LR</span> } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;@uploadcare/upload-blocks&#x27;</span>;
-
-<span class="hljs-keyword">class</span> <span class="hljs-title class_">MyBlock</span> <span class="hljs-keyword">extends</span> <span class="hljs-title class_ inherited__">LR.BlockComponent</span> {
-  <span class="hljs-title function_">initCallback</span>(<span class="hljs-params"></span>) {
-    <span class="hljs-variable language_">this</span>.<span class="hljs-property">onActivation</span> = <span class="hljs-function">() =&gt;</span> {
-      <span class="hljs-string">&#x27;*activityCaption&#x27;</span>: <span class="hljs-variable language_">this</span>.<span class="hljs-title function_">l10n</span>(<span class="hljs-string">&#x27;some-caption&#x27;</span>),
-      <span class="hljs-string">&#x27;*activityIcon&#x27;</span>: <span class="hljs-string">&#x27;my-icon-name&#x27;</span>,
-    };
-    <span class="hljs-variable language_">this</span>.<span class="hljs-property">onDeactivation</span> = <span class="hljs-function">() =&gt;</span> {
-      <span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(<span class="hljs-string">&#x27;activity-name is deactivated&#x27;</span>);
-    };
-    <span class="hljs-variable language_">this</span>.<span class="hljs-title function_">registerActivity</span>(<span class="hljs-string">&#x27;my-activity-name&#x27;</span>, <span class="hljs-variable language_">this</span>.<span class="hljs-property">onActivation</span>, <span class="hljs-variable language_">this</span>.<span class="hljs-property">onDeactivation</span>);
-  }
-}
-</code></pre>
-<p>Then, if some other component will call the registered activity, it will be activated with <code>active</code> attribute, and the activation callback will be called.</p>
-<p>JavaScript:</p>
-<pre><code class="language-javascript"><span class="hljs-keyword">import</span> { <span class="hljs-variable constant_">LR</span> } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;@uploadcare/upload-blocks&#x27;</span>;
-
-<span class="hljs-keyword">class</span> <span class="hljs-title class_">MyOtherBlock</span> <span class="hljs-keyword">extends</span> <span class="hljs-title class_ inherited__">LR.BlockComponent</span> {
-  onclick = <span class="hljs-function">() =&gt;</span> {
-    <span class="hljs-variable language_">this</span>.<span class="hljs-property">$</span>[<span class="hljs-string">&#x27;*currentActivity&#x27;</span>] = <span class="hljs-string">&#x27;my-activity-name&#x27;</span>;
-  };
-}
-</code></pre>
-<p>Resulting HTML:</p>
-<pre><code class="language-html"><span class="hljs-tag">&lt;<span class="hljs-name">lr-my-block</span> <span class="hljs-attr">activity</span>=<span class="hljs-string">&quot;my-activity-name&quot;</span> <span class="hljs-attr">active</span>&gt;</span>...<span class="hljs-tag">&lt;/<span class="hljs-name">lr-my-block</span>&gt;</span>
-</code></pre>
-<p>Then you can use <code>lr-my-block[active]</code> selector to specify visibility or animations with CSS.</p>
-<p>Here is the list of reserved pre-defined activities:</p>
+      <col-css><h1 id="events">Events</h1>
+<h2 id="upload-flow-events">Upload flow events</h2>
 <ul>
-<li><code>source-select</code></li>
-<li><code>camera</code></li>
-<li><code>upload-list</code></li>
-<li><code>url</code></li>
-<li><code>confirmation</code></li>
-<li><code>cloud-image-edit</code></li>
-<li><code>*external</code></li>
-<li><code>details</code></li>
+<li><code>LR_UPLOAD_START</code> - upload started for the file list selected by user</li>
+<li><code>LR_REMOVE</code> - fired when one of uploaded items removed from uploading list</li>
+<li><code>LR_UPLOAD_PROGRESS</code> - common upload progress for the list</li>
+<li><code>LR_UPLOAD_FINISH</code> - uploading is finished</li>
+<li><code>LR_UPLOAD_ERROR</code> - error ocurred during files uploading</li>
+<li><code>LR_VALIDATION_ERROR</code> - file not passed the checks according to validation settings</li>
+<li><code>LR_CLOUD_MODIFICATION</code> - image was modified via cloud API</li>
+<li><code>LR_DATA_OUTPUT</code> - common data about uploads</li>
 </ul>
+<p>You can catch all events in window scope:</p>
+<pre><code class="language-js"><span class="hljs-variable language_">window</span>.<span class="hljs-title function_">addEventListener</span>(<span class="hljs-string">&#x27;LR_UPLOAD_START&#x27;</span>, <span class="hljs-function">(<span class="hljs-params">e</span>) =&gt;</span> {
+  <span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(e.<span class="hljs-property">detail</span>);
+});
+</code></pre>
+<p>To define what exact workflow caused an event, use the context name:</p>
+<pre><code class="language-html">...
+<span class="hljs-tag">&lt;<span class="hljs-name">lr-file-uploader-regular</span> <span class="hljs-attr">ctx-name</span>=<span class="hljs-string">&quot;UPLOADER_1&quot;</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">lr-file-uploader-regular</span>&gt;</span>
+...
+<span class="hljs-tag">&lt;<span class="hljs-name">lr-file-uploader-regular</span> <span class="hljs-attr">ctx-name</span>=<span class="hljs-string">&quot;UPLOADER_2&quot;</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">lr-file-uploader-regular</span>&gt;</span>
+...
+</code></pre>
+<pre><code class="language-js"><span class="hljs-variable language_">window</span>.<span class="hljs-title function_">addEventListener</span>(<span class="hljs-string">&#x27;LR_UPLOAD_START&#x27;</span>, <span class="hljs-function">(<span class="hljs-params">e</span>) =&gt;</span> {
+  <span class="hljs-keyword">if</span> (e.<span class="hljs-property">detail</span>.<span class="hljs-property">ctx</span> === <span class="hljs-string">&#x27;UPLOADER_1&#x27;</span>) {
+    <span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(<span class="hljs-string">&#x27;Uploading started in the FIRST uploader instance.&#x27;</span>, e.<span class="hljs-property">detail</span>.<span class="hljs-property">data</span>);
+  } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (e.<span class="hljs-property">detail</span>.<span class="hljs-property">ctx</span> === <span class="hljs-string">&#x27;UPLOADER_2&#x27;</span>) {
+    <span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(<span class="hljs-string">&#x27;Uploading started in the SECOND uploader instance.&#x27;</span>, e.<span class="hljs-property">detail</span>.<span class="hljs-property">data</span>);
+  }
+});
+</code></pre>
 </col-css>
     </main>
     <footer>© 2022 🦆</footer>

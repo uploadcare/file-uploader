@@ -18,8 +18,7 @@
       import { LiveHtml } from '../../blocks/LiveHtml/LiveHtml.js';
       LiveHtml.reg('lr-live-html');
     </script>
-    <script type="module">/** * @param{String}html * @returns{String}*/ export function colorCode(html){return html .replace(/&lt;/g,'<span -tag-arr->&lt;</span>') .replace(/&gt;/g,'<span -tag-arr->&gt;</span>') .split('="') .map((chunk)=>{return chunk.replace('"','</span>"');}) .join(`="<span -attr->`) .replace(/"/g,'<span -quote->"</span>') .replace(/=/g,'<span -equal->=</span>') .split('<span -tag-arr->&lt;</span>/') .join('<span -tag-arr->&lt;/</span>') .split('<span -tag-arr->&lt;</span>!--') .join('<span -comment->&lt;!--') .split('--<span -tag-arr->&gt;</span>') .join('--&gt;</span>') .split('<span -tag-arr->&lt;</span>style<span -tag-arr->&gt;</span>') .join('<span -tag-arr->&lt;</span>style<span -tag-arr->&gt;</span><span -style->') .split('<span -tag-arr->&lt;/</span>style<span -tag-arr->&gt;</span>') .join('</span><span -tag-arr->&lt;/</span>style<span -tag-arr->&gt;</span>');}let codeElements=[...document.querySelectorAll('code')];let tmpEl=document.createElement('div');codeElements.forEach((codeEl)=>{tmpEl.textContent=codeEl.innerHTML;codeEl.innerHTML=colorCode(tmpEl.textContent);});</script>
-    <style> @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap');:root{--clr-bg:rgb(31 29 29);--clr-font:rgb(224 253 255);--clr-link:rgb(253 255 139);--clr-panel:rgb(255 255 255 / 10%);--clr-accent:rgb(233 159 255);--clr-accent-shade:rgb(233 159 255 / 6%);--clr-code:#fff;--clr-code-hl:rgb(255 112 112);--gap-min:2px;--gap-mid:10px;--gap-max:20px;--gap-huge:60px;}html,body{margin:0;padding:0;color:var(--clr-font);font-family:Roboto,sans-serif;background-color:var(--clr-bg);}body{display:grid;grid-template-rows:min-content min-content auto min-content;min-height:100vh;}header{padding:20px;background-color:rgba(0,0,0,.4);}nav{--l-bg-clr:rgba(60,60,60,.9);--blur:6px;display:flex;justify-content:center;position:sticky;z-index:10000;top:0;background-color:var(--l-bg-clr);height:100%;}@supports ((-webkit-backdrop-filter:blur(var(--blur))) or (backdrop-filter:blur(var(--blur)))){nav{--l-bg-clr:rgba(255,255,255,.1);backdrop-filter:blur(var(--blur));-webkit-backdrop-filter:blur(var(--blur));}}nav > div{display:flex;justify-content:space-around;align-items:center;width:100%;max-width:1080px;}nav a{display:block;color:var(--clr-font);margin:20px;text-decoration:none;text-shadow:1px 1px 2px rgba(0,0,0,.6);}main{display:flex;justify-content:center;padding:20px;}col-css{display:block;max-width:1080px;width:100%;}footer{padding:20px;background-color:rgba(0,0,0,.2);}lr-live-html{min-height:400px;}main a{color:var(--clr-link);}code{display:block;background-color:#000;color:var(--clr-code);padding:var(--gap-max);overflow-x:auto;}code .hl{color:var(--clr-code-hl);}code:not([class]){display:inline-block;padding:var(--gap-min);padding-left:.5em;padding-right:.5em;}blockquote{display:block;color:var(--clr-accent);background-color:var(--clr-accent-shade);padding:var(--gap-mid);margin:0;margin-top:var(--gap-max);border-left:var(--gap-min) solid currentColor;}h1{color:var(--clr-accent);}h2{margin-top:calc(var(--gap-max) * 3);}li{margin-bottom:var(--gap-mid);}table{width:100%;}th{padding:10px;background:rgba(0,0,0,.4);}td{padding:10px;background:rgba(255,255,255,.1);}tr:hover{background:rgba(255,255,255,.1);}lr-live-html{display:grid;grid-template-columns:50% 50%;box-shadow:0 5px 16px rgb(0 0 0 / 60%);}lr-live-html [contenteditable]{padding:20px;overflow:auto;color:rgb(255 255 255);font-size:14px;font-family:monospace;white-space:pre;background-color:#000;outline:none;}lr-live-html [contenteditable] [-tag-arr-]{color:rgb(255 112 112);}lr-live-html [contenteditable] [-comment-]{color:aqua;font-style:italic;opacity:0.5;}lr-live-html [contenteditable] [-attr-]{color:rgb(152 197 255);}lr-live-html [contenteditable] [-quote-]{color:rgb(169 255 152);}lr-live-html [contenteditable] [-equal-]{color:rgb(255 152 241);}lr-live-html [contenteditable] [-style-]{color:rgb(255 207 152);}lr-live-html iframe{display:block;width:100%;height:100%;background-color:#fff;border:0;}lr-live-html{display:grid;grid-template-columns:50% 50%;box-shadow:0 5px 16px rgb(0 0 0 / 60%);}code{padding:20px;overflow:auto;color:rgb(255 255 255);font-size:14px;font-family:monospace;white-space:pre;background-color:#000;outline:none;}code [-tag-arr-]{color:rgb(255 112 112);}code [-comment-]{color:aqua;font-style:italic;opacity:0.5;}code [-attr-]{color:rgb(152 197 255);}code [-quote-]{color:rgb(169 255 152);}code [-equal-]{color:rgb(255 152 241);}code [-style-]{color:rgb(255 207 152);}lr-live-html iframe{display:block;width:100%;height:100%;background-color:#fff;border:0;}</style>
+    <style> @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap');:root{--clr-bg:rgb(31 29 29);--clr-font:rgb(224 253 255);--clr-link:rgb(253 255 139);--clr-panel:rgb(255 255 255 / 10%);--clr-accent:rgb(233 159 255);--clr-accent-shade:rgb(233 159 255 / 6%);--clr-code:#fff;--clr-code-hl:rgb(255 112 112);--gap-min:2px;--gap-mid:10px;--gap-max:20px;--gap-huge:60px;}html,body{margin:0;padding:0;color:var(--clr-font);font-family:Roboto,sans-serif;background-color:var(--clr-bg);}body{display:grid;grid-template-rows:min-content min-content auto min-content;min-height:100vh;}header{padding:20px;background-color:rgba(0,0,0,.4);}nav{--l-bg-clr:rgba(60,60,60,.9);--blur:6px;display:flex;justify-content:center;position:sticky;z-index:10000;top:0;background-color:var(--l-bg-clr);height:100%;}@supports ((-webkit-backdrop-filter:blur(var(--blur))) or (backdrop-filter:blur(var(--blur)))){nav{--l-bg-clr:rgba(255,255,255,.1);backdrop-filter:blur(var(--blur));-webkit-backdrop-filter:blur(var(--blur));}}nav > div{display:flex;justify-content:space-around;align-items:center;width:100%;max-width:1080px;}nav a{display:block;color:var(--clr-font);margin:20px;text-decoration:none;text-shadow:1px 1px 2px rgba(0,0,0,.6);}main{display:flex;justify-content:center;padding:20px;}col-css{display:block;max-width:1080px;width:100%;}footer{padding:20px;background-color:rgba(0,0,0,.2);}lr-live-html{min-height:400px;}main a{color:var(--clr-link);}code{display:block;background-color:#000;color:var(--clr-code);padding:var(--gap-max);overflow-x:auto;}code .hl{color:var(--clr-code-hl);}code:not([class]){display:inline-block;padding:var(--gap-min);padding-left:.5em;padding-right:.5em;}blockquote{display:block;color:var(--clr-accent);background-color:var(--clr-accent-shade);padding:var(--gap-mid);margin:0;margin-top:var(--gap-max);border-left:var(--gap-min) solid currentColor;}h1{color:var(--clr-accent);}h2{margin-top:calc(var(--gap-max) * 3);}li{margin-bottom:var(--gap-mid);}table{width:100%;}th{padding:10px;background:rgba(0,0,0,.4);}td{padding:10px;background:rgba(255,255,255,.1);}tr:hover{background:rgba(255,255,255,.1);}lr-live-html{display:grid;grid-template-columns:50% 50%;box-shadow:0 5px 16px rgb(0 0 0 / 60%);}lr-live-html [contenteditable]{padding:20px;overflow:auto;color:rgb(255 255 255);font-size:14px;font-family:monospace;white-space:pre;background-color:#000;outline:none;}lr-live-html [contenteditable] .hljs-string{color:rgb(251,182,79);}lr-live-html [contenteditable] .hljs-comment{color:rgb(149,149,149);font-style:italic;}lr-live-html [contenteditable] .hljs-attr{color:rgb(138,218,172);}lr-live-html [contenteditable] .hljs-function{color:rgb(239,235,149);}lr-live-html [contenteditable] .hljs-variable{color:rgb(121,183,255);}lr-live-html [contenteditable] .hljs-title{color:rgb(180,243,255);}lr-live-html [contenteditable] .hljs-property{color:rgb(238,131,252);}lr-live-html [contenteditable] .hljs-keyword{color:rgb(254,165,176);}lr-live-html [contenteditable] .hljs-tag{color:rgb(254,165,176);}lr-live-html [contenteditable] .hljs-name{color:rgb(165,245,254);}lr-live-html iframe{display:block;width:100%;height:100%;background-color:#fff;border:0;}lr-live-html{display:grid;grid-template-columns:50% 50%;box-shadow:0 5px 16px rgb(0 0 0 / 60%);}code{padding:20px;overflow:auto;color:rgb(255 255 255);font-size:14px;font-family:monospace;white-space:pre;background-color:#000;outline:none;}code .hljs-string{color:rgb(251,182,79);}code .hljs-comment{color:rgb(149,149,149);font-style:italic;}code .hljs-attr{color:rgb(138,218,172);}code .hljs-function{color:rgb(239,235,149);}code .hljs-variable{color:rgb(121,183,255);}code .hljs-title{color:rgb(180,243,255);}code .hljs-property{color:rgb(238,131,252);}code .hljs-keyword{color:rgb(254,165,176);}code .hljs-tag{color:rgb(254,165,176);}code .hljs-name{color:rgb(165,245,254);}lr-live-html iframe{display:block;width:100%;height:100%;background-color:#fff;border:0;}</style>
   </head>
   <body>
     <header>🟡 Uploadcare | blocks</header>
@@ -35,112 +34,112 @@
     <main>
       <col-css><h1 id="texts">Texts</h1>
 <p>All keys and values for the UI texts and translations are also placed in CSS:</p>
-<pre><code class="language-css">.lr-wgt-l10n_en-US,
-.lr-wgt-common,
-:host {
-  --l10n-upload-file: &#39;Upload file&#39;;
-  --l10n-upload-files: &#39;Upload files&#39;;
-  --l10n-drop-files-here: &#39;Drop files here...&#39;;
-  --l10n-select-file-source: &#39;Select file source&#39;;
-  --l10n-selected: &#39;Selected&#39;;
-  --l10n-upload: &#39;Upload&#39;;
-  --l10n-add-more: &#39;Add more&#39;;
-  --l10n-cancel: &#39;Cancel&#39;;
-  --l10n-clear: &#39;Clear&#39;;
-  --l10n-camera-shot: &#39;Shot&#39;;
-  --l10n-upload-url: &#39;Import&#39;;
-  --l10n-edit-image: &#39;Edit image&#39;;
-  --l10n-edit-detail: &#39;Details&#39;;
-  --l10n-back: &#39;Back&#39;;
-  --l10n-done: &#39;Done&#39;;
-  --l10n-remove-from-list: &#39;Remove&#39;;
-  --l10n-no: &#39;No&#39;;
-  --l10n-yes: &#39;Yes&#39;;
-  --l10n-confirm-your-action: &#39;Confirm your action&#39;;
-  --l10n-are-you-sure: &#39;Are you sure?&#39;;
-  --l10n-selected-count: &#39;Selected:&#39;;
-  --l10n-upload-error: &#39;Upload error&#39;;
-  --l10n-no-files: &#39;No files selected&#39;;
+<pre><code class="language-css"><span class="hljs-selector-class">.lr-wgt-l10n_en-US</span>,
+<span class="hljs-selector-class">.lr-wgt-common</span>,
+<span class="hljs-selector-pseudo">:host</span> {
+  <span class="hljs-attr">--l10n-upload-file</span>: <span class="hljs-string">&#x27;Upload file&#x27;</span>;
+  <span class="hljs-attr">--l10n-upload-files</span>: <span class="hljs-string">&#x27;Upload files&#x27;</span>;
+  <span class="hljs-attr">--l10n-drop-files-here</span>: <span class="hljs-string">&#x27;Drop files here...&#x27;</span>;
+  <span class="hljs-attr">--l10n-select-file-source</span>: <span class="hljs-string">&#x27;Select file source&#x27;</span>;
+  <span class="hljs-attr">--l10n-selected</span>: <span class="hljs-string">&#x27;Selected&#x27;</span>;
+  <span class="hljs-attr">--l10n-upload</span>: <span class="hljs-string">&#x27;Upload&#x27;</span>;
+  <span class="hljs-attr">--l10n-add-more</span>: <span class="hljs-string">&#x27;Add more&#x27;</span>;
+  <span class="hljs-attr">--l10n-cancel</span>: <span class="hljs-string">&#x27;Cancel&#x27;</span>;
+  <span class="hljs-attr">--l10n-clear</span>: <span class="hljs-string">&#x27;Clear&#x27;</span>;
+  <span class="hljs-attr">--l10n-camera-shot</span>: <span class="hljs-string">&#x27;Shot&#x27;</span>;
+  <span class="hljs-attr">--l10n-upload-url</span>: <span class="hljs-string">&#x27;Import&#x27;</span>;
+  <span class="hljs-attr">--l10n-edit-image</span>: <span class="hljs-string">&#x27;Edit image&#x27;</span>;
+  <span class="hljs-attr">--l10n-edit-detail</span>: <span class="hljs-string">&#x27;Details&#x27;</span>;
+  <span class="hljs-attr">--l10n-back</span>: <span class="hljs-string">&#x27;Back&#x27;</span>;
+  <span class="hljs-attr">--l10n-done</span>: <span class="hljs-string">&#x27;Done&#x27;</span>;
+  <span class="hljs-attr">--l10n-remove-from-list</span>: <span class="hljs-string">&#x27;Remove&#x27;</span>;
+  <span class="hljs-attr">--l10n-no</span>: <span class="hljs-string">&#x27;No&#x27;</span>;
+  <span class="hljs-attr">--l10n-yes</span>: <span class="hljs-string">&#x27;Yes&#x27;</span>;
+  <span class="hljs-attr">--l10n-confirm-your-action</span>: <span class="hljs-string">&#x27;Confirm your action&#x27;</span>;
+  <span class="hljs-attr">--l10n-are-you-sure</span>: <span class="hljs-string">&#x27;Are you sure?&#x27;</span>;
+  <span class="hljs-attr">--l10n-selected-count</span>: <span class="hljs-string">&#x27;Selected:&#x27;</span>;
+  <span class="hljs-attr">--l10n-upload-error</span>: <span class="hljs-string">&#x27;Upload error&#x27;</span>;
+  <span class="hljs-attr">--l10n-no-files</span>: <span class="hljs-string">&#x27;No files selected&#x27;</span>;
 
-  --l10n-src-type-local: &#39;Local file&#39;;
-  --l10n-src-type-from-url: &#39;From URL&#39;;
-  --l10n-src-type-camera: &#39;Camera&#39;;
-  --l10n-src-type-draw: &#39;Draw&#39;;
-  --l10n-src-type-facebook: &#39;Facebook&#39;;
-  --l10n-src-type-dropbox: &#39;Dropbox&#39;;
-  --l10n-src-type-gdrive: &#39;Gdrive&#39;;
-  --l10n-src-type-gphotos: &#39;Gphotos&#39;;
-  --l10n-src-type-instagram: &#39;Instagram&#39;;
-  --l10n-src-type-flickr: &#39;Flickr&#39;;
-  --l10n-src-type-vk: &#39;VK&#39;;
-  --l10n-src-type-evernote: &#39;Evernote&#39;;
-  --l10n-src-type-box: &#39;Box&#39;;
-  --l10n-src-type-onedrive: &#39;Onedrive&#39;;
-  --l10n-src-type-huddle: &#39;Huddle&#39;;
-  --l10n-src-type-other: &#39;Other&#39;;
+  <span class="hljs-attr">--l10n-src-type-local</span>: <span class="hljs-string">&#x27;Local file&#x27;</span>;
+  <span class="hljs-attr">--l10n-src-type-from-url</span>: <span class="hljs-string">&#x27;From URL&#x27;</span>;
+  <span class="hljs-attr">--l10n-src-type-camera</span>: <span class="hljs-string">&#x27;Camera&#x27;</span>;
+  <span class="hljs-attr">--l10n-src-type-draw</span>: <span class="hljs-string">&#x27;Draw&#x27;</span>;
+  <span class="hljs-attr">--l10n-src-type-facebook</span>: <span class="hljs-string">&#x27;Facebook&#x27;</span>;
+  <span class="hljs-attr">--l10n-src-type-dropbox</span>: <span class="hljs-string">&#x27;Dropbox&#x27;</span>;
+  <span class="hljs-attr">--l10n-src-type-gdrive</span>: <span class="hljs-string">&#x27;Gdrive&#x27;</span>;
+  <span class="hljs-attr">--l10n-src-type-gphotos</span>: <span class="hljs-string">&#x27;Gphotos&#x27;</span>;
+  <span class="hljs-attr">--l10n-src-type-instagram</span>: <span class="hljs-string">&#x27;Instagram&#x27;</span>;
+  <span class="hljs-attr">--l10n-src-type-flickr</span>: <span class="hljs-string">&#x27;Flickr&#x27;</span>;
+  <span class="hljs-attr">--l10n-src-type-vk</span>: <span class="hljs-string">&#x27;VK&#x27;</span>;
+  <span class="hljs-attr">--l10n-src-type-evernote</span>: <span class="hljs-string">&#x27;Evernote&#x27;</span>;
+  <span class="hljs-attr">--l10n-src-type-box</span>: <span class="hljs-string">&#x27;Box&#x27;</span>;
+  <span class="hljs-attr">--l10n-src-type-onedrive</span>: <span class="hljs-string">&#x27;Onedrive&#x27;</span>;
+  <span class="hljs-attr">--l10n-src-type-huddle</span>: <span class="hljs-string">&#x27;Huddle&#x27;</span>;
+  <span class="hljs-attr">--l10n-src-type-other</span>: <span class="hljs-string">&#x27;Other&#x27;</span>;
 
-  --l10n-src-type: var(--l10n-src-type-local);
+  <span class="hljs-attr">--l10n-src-type</span>: <span class="hljs-built_in">var</span>(--l10n-src-type-local);
 
-  --l10n-caption-from-url: &#39;Import from external URL&#39;;
-  --l10n-caption-camera: &#39;Camera&#39;;
-  --l10n-caption-draw: &#39;Draw&#39;;
-  --l10n-caption-edit-file: &#39;Edit file&#39;;
+  <span class="hljs-attr">--l10n-caption-from-url</span>: <span class="hljs-string">&#x27;Import from external URL&#x27;</span>;
+  <span class="hljs-attr">--l10n-caption-camera</span>: <span class="hljs-string">&#x27;Camera&#x27;</span>;
+  <span class="hljs-attr">--l10n-caption-draw</span>: <span class="hljs-string">&#x27;Draw&#x27;</span>;
+  <span class="hljs-attr">--l10n-caption-edit-file</span>: <span class="hljs-string">&#x27;Edit file&#x27;</span>;
 
-  --l10n-file-no-name: &#39;No name...&#39;;
+  <span class="hljs-attr">--l10n-file-no-name</span>: <span class="hljs-string">&#x27;No name...&#x27;</span>;
 
-  --l10n-toggle-fullscreen: &#39;Toggle fullscreen&#39;;
-  --l10n-toggle-guides: &#39;Toggle guides&#39;;
-  --l10n-rotate: &#39;Rotate&#39;;
-  --l10n-flip-vertical: &#39;Flip vertical&#39;;
-  --l10n-flip-horizontal: &#39;Flip horizontal&#39;;
-  --l10n-brightness: &#39;Brightness&#39;;
-  --l10n-contrast: &#39;Contrast&#39;;
-  --l10n-saturation: &#39;Saturation&#39;;
-  --l10n-resize: &#39;Resize image&#39;;
-  --l10n-crop: &#39;Crop&#39;;
-  --l10n-select-color: &#39;Select color&#39;;
-  --l10n-text: &#39;Text&#39;;
-  --l10n-draw: &#39;Draw&#39;;
-  --l10n-cancel-edit: &#39;Cancel edit&#39;;
+  <span class="hljs-attr">--l10n-toggle-fullscreen</span>: <span class="hljs-string">&#x27;Toggle fullscreen&#x27;</span>;
+  <span class="hljs-attr">--l10n-toggle-guides</span>: <span class="hljs-string">&#x27;Toggle guides&#x27;</span>;
+  <span class="hljs-attr">--l10n-rotate</span>: <span class="hljs-string">&#x27;Rotate&#x27;</span>;
+  <span class="hljs-attr">--l10n-flip-vertical</span>: <span class="hljs-string">&#x27;Flip vertical&#x27;</span>;
+  <span class="hljs-attr">--l10n-flip-horizontal</span>: <span class="hljs-string">&#x27;Flip horizontal&#x27;</span>;
+  <span class="hljs-attr">--l10n-brightness</span>: <span class="hljs-string">&#x27;Brightness&#x27;</span>;
+  <span class="hljs-attr">--l10n-contrast</span>: <span class="hljs-string">&#x27;Contrast&#x27;</span>;
+  <span class="hljs-attr">--l10n-saturation</span>: <span class="hljs-string">&#x27;Saturation&#x27;</span>;
+  <span class="hljs-attr">--l10n-resize</span>: <span class="hljs-string">&#x27;Resize image&#x27;</span>;
+  <span class="hljs-attr">--l10n-crop</span>: <span class="hljs-string">&#x27;Crop&#x27;</span>;
+  <span class="hljs-attr">--l10n-select-color</span>: <span class="hljs-string">&#x27;Select color&#x27;</span>;
+  <span class="hljs-attr">--l10n-text</span>: <span class="hljs-string">&#x27;Text&#x27;</span>;
+  <span class="hljs-attr">--l10n-draw</span>: <span class="hljs-string">&#x27;Draw&#x27;</span>;
+  <span class="hljs-attr">--l10n-cancel-edit</span>: <span class="hljs-string">&#x27;Cancel edit&#x27;</span>;
 
-  --l10n-tab-view: &#39;Preview&#39;;
-  --l10n-tab-details: &#39;Details&#39;;
+  <span class="hljs-attr">--l10n-tab-view</span>: <span class="hljs-string">&#x27;Preview&#x27;</span>;
+  <span class="hljs-attr">--l10n-tab-details</span>: <span class="hljs-string">&#x27;Details&#x27;</span>;
 
-  --l10n-file-name: &#39;Name&#39;;
-  --l10n-file-size: &#39;Size&#39;;
-  --l10n-cdn-url: &#39;CDN URL&#39;;
-  --l10n-file-size-unknown: &#39;Unknown&#39;;
+  <span class="hljs-attr">--l10n-file-name</span>: <span class="hljs-string">&#x27;Name&#x27;</span>;
+  <span class="hljs-attr">--l10n-file-size</span>: <span class="hljs-string">&#x27;Size&#x27;</span>;
+  <span class="hljs-attr">--l10n-cdn-url</span>: <span class="hljs-string">&#x27;CDN URL&#x27;</span>;
+  <span class="hljs-attr">--l10n-file-size-unknown</span>: <span class="hljs-string">&#x27;Unknown&#x27;</span>;
 }
 </code></pre>
 <p>That means you can create your own variant of any UI text or add any new text to your custom block.</p>
 <p>CSS:</p>
-<pre><code class="language-css">.my-txt-v1 {
-  --l10n-my-custom-txt: &#39;SOME TEXT 1&#39;;
-  --l10n-my-custom-title: &#39;some title 1&#39;;
+<pre><code class="language-css"><span class="hljs-selector-class">.my-txt-v1</span> {
+  <span class="hljs-attr">--l10n-my-custom-txt</span>: <span class="hljs-string">&#x27;SOME TEXT 1&#x27;</span>;
+  <span class="hljs-attr">--l10n-my-custom-title</span>: <span class="hljs-string">&#x27;some title 1&#x27;</span>;
 }
-.my-txt-v2 {
-  --l10n-my-custom-txt: &#39;SOME TEXT 2&#39;;
-  --l10n-my-custom-title: &#39;some title 2&#39;;
+<span class="hljs-selector-class">.my-txt-v2</span> {
+  <span class="hljs-attr">--l10n-my-custom-txt</span>: <span class="hljs-string">&#x27;SOME TEXT 2&#x27;</span>;
+  <span class="hljs-attr">--l10n-my-custom-title</span>: <span class="hljs-string">&#x27;some title 2&#x27;</span>;
 }
 </code></pre>
 <p>JavaScript:</p>
-<pre><code class="language-javascript">import { LR } from &#39;@uploadcare/upload-blocks&#39;;
+<pre><code class="language-javascript"><span class="hljs-keyword">import</span> { <span class="hljs-variable constant_">LR</span> } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;@uploadcare/upload-blocks&#x27;</span>;
 
-class MyBlock extends LR.BlockComponent {}
+<span class="hljs-keyword">class</span> <span class="hljs-title class_">MyBlock</span> <span class="hljs-keyword">extends</span> <span class="hljs-title class_ inherited__">LR.BlockComponent</span> {}
 
-MyBlock.template = /*html*/ `
+<span class="hljs-title class_">MyBlock</span>.<span class="hljs-property">template</span> = <span class="hljs-comment">/*html*/</span> <span class="hljs-string">`
 &lt;div l10n=&quot;title:my-custom-title&quot;&gt;
   &lt;span l10n=&quot;my-custom-txt&quot;&gt;&lt;/span&gt;
 &lt;/div&gt;
-`;
+`</span>;
 
-MyBlock.reg(&#39;my-block&#39;);
+<span class="hljs-title class_">MyBlock</span>.<span class="hljs-title function_">reg</span>(<span class="hljs-string">&#x27;my-block&#x27;</span>);
 </code></pre>
 <p>HTML:</p>
 <pre><code class="language-html">...
-&lt;lr-my-block class=&quot;my-txt-v1&quot;&gt;&lt;/lr-my-block&gt;
+<span class="hljs-tag">&lt;<span class="hljs-name">lr-my-block</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;my-txt-v1&quot;</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">lr-my-block</span>&gt;</span>
 ...
-&lt;lr-my-block class=&quot;my-txt-v2&quot;&gt;&lt;/lr-my-block&gt;
+<span class="hljs-tag">&lt;<span class="hljs-name">lr-my-block</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;my-txt-v2&quot;</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">lr-my-block</span>&gt;</span>
 ...
 </code></pre>
 <p>To connect some text to the some HTML-element property in your block template, instead of <code>textContent</code>, use <code>:</code> symbol separating element property name and the text key: <code>&lt;div l10n=&quot;title:my-custom-title&quot;&gt;</code>.</p>

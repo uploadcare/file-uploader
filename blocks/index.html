@@ -18,8 +18,7 @@
       import { LiveHtml } from '../blocks/LiveHtml/LiveHtml.js';
       LiveHtml.reg('lr-live-html');
     </script>
-    <script type="module">/** * @param{String}html * @returns{String}*/ export function colorCode(html){return html .replace(/&lt;/g,'<span -tag-arr->&lt;</span>') .replace(/&gt;/g,'<span -tag-arr->&gt;</span>') .split('="') .map((chunk)=>{return chunk.replace('"','</span>"');}) .join(`="<span -attr->`) .replace(/"/g,'<span -quote->"</span>') .replace(/=/g,'<span -equal->=</span>') .split('<span -tag-arr->&lt;</span>/') .join('<span -tag-arr->&lt;/</span>') .split('<span -tag-arr->&lt;</span>!--') .join('<span -comment->&lt;!--') .split('--<span -tag-arr->&gt;</span>') .join('--&gt;</span>') .split('<span -tag-arr->&lt;</span>style<span -tag-arr->&gt;</span>') .join('<span -tag-arr->&lt;</span>style<span -tag-arr->&gt;</span><span -style->') .split('<span -tag-arr->&lt;/</span>style<span -tag-arr->&gt;</span>') .join('</span><span -tag-arr->&lt;/</span>style<span -tag-arr->&gt;</span>');}let codeElements=[...document.querySelectorAll('code')];let tmpEl=document.createElement('div');codeElements.forEach((codeEl)=>{tmpEl.textContent=codeEl.innerHTML;codeEl.innerHTML=colorCode(tmpEl.textContent);});</script>
-    <style> @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap');:root{--clr-bg:rgb(31 29 29);--clr-font:rgb(224 253 255);--clr-link:rgb(253 255 139);--clr-panel:rgb(255 255 255 / 10%);--clr-accent:rgb(233 159 255);--clr-accent-shade:rgb(233 159 255 / 6%);--clr-code:#fff;--clr-code-hl:rgb(255 112 112);--gap-min:2px;--gap-mid:10px;--gap-max:20px;--gap-huge:60px;}html,body{margin:0;padding:0;color:var(--clr-font);font-family:Roboto,sans-serif;background-color:var(--clr-bg);}body{display:grid;grid-template-rows:min-content min-content auto min-content;min-height:100vh;}header{padding:20px;background-color:rgba(0,0,0,.4);}nav{--l-bg-clr:rgba(60,60,60,.9);--blur:6px;display:flex;justify-content:center;position:sticky;z-index:10000;top:0;background-color:var(--l-bg-clr);height:100%;}@supports ((-webkit-backdrop-filter:blur(var(--blur))) or (backdrop-filter:blur(var(--blur)))){nav{--l-bg-clr:rgba(255,255,255,.1);backdrop-filter:blur(var(--blur));-webkit-backdrop-filter:blur(var(--blur));}}nav > div{display:flex;justify-content:space-around;align-items:center;width:100%;max-width:1080px;}nav a{display:block;color:var(--clr-font);margin:20px;text-decoration:none;text-shadow:1px 1px 2px rgba(0,0,0,.6);}main{display:flex;justify-content:center;padding:20px;}col-css{display:block;max-width:1080px;width:100%;}footer{padding:20px;background-color:rgba(0,0,0,.2);}lr-live-html{min-height:400px;}main a{color:var(--clr-link);}code{display:block;background-color:#000;color:var(--clr-code);padding:var(--gap-max);overflow-x:auto;}code .hl{color:var(--clr-code-hl);}code:not([class]){display:inline-block;padding:var(--gap-min);padding-left:.5em;padding-right:.5em;}blockquote{display:block;color:var(--clr-accent);background-color:var(--clr-accent-shade);padding:var(--gap-mid);margin:0;margin-top:var(--gap-max);border-left:var(--gap-min) solid currentColor;}h1{color:var(--clr-accent);}h2{margin-top:calc(var(--gap-max) * 3);}li{margin-bottom:var(--gap-mid);}table{width:100%;}th{padding:10px;background:rgba(0,0,0,.4);}td{padding:10px;background:rgba(255,255,255,.1);}tr:hover{background:rgba(255,255,255,.1);}lr-live-html{display:grid;grid-template-columns:50% 50%;box-shadow:0 5px 16px rgb(0 0 0 / 60%);}lr-live-html [contenteditable]{padding:20px;overflow:auto;color:rgb(255 255 255);font-size:14px;font-family:monospace;white-space:pre;background-color:#000;outline:none;}lr-live-html [contenteditable] [-tag-arr-]{color:rgb(255 112 112);}lr-live-html [contenteditable] [-comment-]{color:aqua;font-style:italic;opacity:0.5;}lr-live-html [contenteditable] [-attr-]{color:rgb(152 197 255);}lr-live-html [contenteditable] [-quote-]{color:rgb(169 255 152);}lr-live-html [contenteditable] [-equal-]{color:rgb(255 152 241);}lr-live-html [contenteditable] [-style-]{color:rgb(255 207 152);}lr-live-html iframe{display:block;width:100%;height:100%;background-color:#fff;border:0;}lr-live-html{display:grid;grid-template-columns:50% 50%;box-shadow:0 5px 16px rgb(0 0 0 / 60%);}code{padding:20px;overflow:auto;color:rgb(255 255 255);font-size:14px;font-family:monospace;white-space:pre;background-color:#000;outline:none;}code [-tag-arr-]{color:rgb(255 112 112);}code [-comment-]{color:aqua;font-style:italic;opacity:0.5;}code [-attr-]{color:rgb(152 197 255);}code [-quote-]{color:rgb(169 255 152);}code [-equal-]{color:rgb(255 152 241);}code [-style-]{color:rgb(255 207 152);}lr-live-html iframe{display:block;width:100%;height:100%;background-color:#fff;border:0;}</style>
+    <style> @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap');:root{--clr-bg:rgb(31 29 29);--clr-font:rgb(224 253 255);--clr-link:rgb(253 255 139);--clr-panel:rgb(255 255 255 / 10%);--clr-accent:rgb(233 159 255);--clr-accent-shade:rgb(233 159 255 / 6%);--clr-code:#fff;--clr-code-hl:rgb(255 112 112);--gap-min:2px;--gap-mid:10px;--gap-max:20px;--gap-huge:60px;}html,body{margin:0;padding:0;color:var(--clr-font);font-family:Roboto,sans-serif;background-color:var(--clr-bg);}body{display:grid;grid-template-rows:min-content min-content auto min-content;min-height:100vh;}header{padding:20px;background-color:rgba(0,0,0,.4);}nav{--l-bg-clr:rgba(60,60,60,.9);--blur:6px;display:flex;justify-content:center;position:sticky;z-index:10000;top:0;background-color:var(--l-bg-clr);height:100%;}@supports ((-webkit-backdrop-filter:blur(var(--blur))) or (backdrop-filter:blur(var(--blur)))){nav{--l-bg-clr:rgba(255,255,255,.1);backdrop-filter:blur(var(--blur));-webkit-backdrop-filter:blur(var(--blur));}}nav > div{display:flex;justify-content:space-around;align-items:center;width:100%;max-width:1080px;}nav a{display:block;color:var(--clr-font);margin:20px;text-decoration:none;text-shadow:1px 1px 2px rgba(0,0,0,.6);}main{display:flex;justify-content:center;padding:20px;}col-css{display:block;max-width:1080px;width:100%;}footer{padding:20px;background-color:rgba(0,0,0,.2);}lr-live-html{min-height:400px;}main a{color:var(--clr-link);}code{display:block;background-color:#000;color:var(--clr-code);padding:var(--gap-max);overflow-x:auto;}code .hl{color:var(--clr-code-hl);}code:not([class]){display:inline-block;padding:var(--gap-min);padding-left:.5em;padding-right:.5em;}blockquote{display:block;color:var(--clr-accent);background-color:var(--clr-accent-shade);padding:var(--gap-mid);margin:0;margin-top:var(--gap-max);border-left:var(--gap-min) solid currentColor;}h1{color:var(--clr-accent);}h2{margin-top:calc(var(--gap-max) * 3);}li{margin-bottom:var(--gap-mid);}table{width:100%;}th{padding:10px;background:rgba(0,0,0,.4);}td{padding:10px;background:rgba(255,255,255,.1);}tr:hover{background:rgba(255,255,255,.1);}lr-live-html{display:grid;grid-template-columns:50% 50%;box-shadow:0 5px 16px rgb(0 0 0 / 60%);}lr-live-html [contenteditable]{padding:20px;overflow:auto;color:rgb(255 255 255);font-size:14px;font-family:monospace;white-space:pre;background-color:#000;outline:none;}lr-live-html [contenteditable] .hljs-string{color:rgb(251,182,79);}lr-live-html [contenteditable] .hljs-comment{color:rgb(149,149,149);font-style:italic;}lr-live-html [contenteditable] .hljs-attr{color:rgb(138,218,172);}lr-live-html [contenteditable] .hljs-function{color:rgb(239,235,149);}lr-live-html [contenteditable] .hljs-variable{color:rgb(121,183,255);}lr-live-html [contenteditable] .hljs-title{color:rgb(180,243,255);}lr-live-html [contenteditable] .hljs-property{color:rgb(238,131,252);}lr-live-html [contenteditable] .hljs-keyword{color:rgb(254,165,176);}lr-live-html [contenteditable] .hljs-tag{color:rgb(254,165,176);}lr-live-html [contenteditable] .hljs-name{color:rgb(165,245,254);}lr-live-html iframe{display:block;width:100%;height:100%;background-color:#fff;border:0;}lr-live-html{display:grid;grid-template-columns:50% 50%;box-shadow:0 5px 16px rgb(0 0 0 / 60%);}code{padding:20px;overflow:auto;color:rgb(255 255 255);font-size:14px;font-family:monospace;white-space:pre;background-color:#000;outline:none;}code .hljs-string{color:rgb(251,182,79);}code .hljs-comment{color:rgb(149,149,149);font-style:italic;}code .hljs-attr{color:rgb(138,218,172);}code .hljs-function{color:rgb(239,235,149);}code .hljs-variable{color:rgb(121,183,255);}code .hljs-title{color:rgb(180,243,255);}code .hljs-property{color:rgb(238,131,252);}code .hljs-keyword{color:rgb(254,165,176);}code .hljs-tag{color:rgb(254,165,176);}code .hljs-name{color:rgb(165,245,254);}lr-live-html iframe{display:block;width:100%;height:100%;background-color:#fff;border:0;}</style>
   </head>
   <body>
     <header>🟡 Uploadcare | blocks</header>
@@ -68,7 +67,7 @@ That allows us to use simple HTML code to define layouts and place our widgets i
 <h2 id="🚀-create-your-own-file-uploader">🚀 Create your own file uploader</h2>
 <p>The standard flow of the uploading widget creation is following:</p>
 <ol>
-<li>Install lr-blocks package: <code>npm i @uploadcare/uc-blocks</code>.</li>
+<li>Install lr-blocks package: <code>npm i @uploadcare/blocks</code>.</li>
 <li>Create the set of all components you need (example: <a href="../solutions/file-uploader/regular/index.js">index.js</a>).</li>
 <li>Create your widget class with desired layout (example: <a href="../solutions/file-uploader/regular/index.jss">index.js</a>).</li>
 <li>Create CSS configuration file (example: <a href="../solutions/file-uploader/regular/index.css">index.css</a>).</li>
@@ -90,37 +89,37 @@ All significant component states are provided as element attribute flags, so you
 <h3 id="layout--composition">Layout &amp; composition</h3>
 <p>Block components can be used separately or in combinations.
 You can combine them to create a common workflow like this one:</p>
-<pre><code class="language-html">&lt;lr-simple-btn&gt;&lt;/lr-simple-btn&gt;
+<pre><code class="language-html"><span class="hljs-tag">&lt;<span class="hljs-name">lr-simple-btn</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">lr-simple-btn</span>&gt;</span>
 
-&lt;lr-modal strokes&gt;
-  &lt;lr-activity-icon slot=&quot;heading&quot;&gt;&lt;/lr-activity-icon&gt;
-  &lt;lr-activity-caption slot=&quot;heading&quot;&gt;&lt;/lr-activity-caption&gt;
-  &lt;lr-start-from&gt;
-    &lt;lr-source-list wrap&gt;&lt;/lr-source-list&gt;
-    &lt;lr-drop-area&gt;&lt;/lr-drop-area&gt;
-  &lt;/lr-start-from&gt;
-  &lt;lr-upload-list&gt;&lt;/lr-upload-list&gt;
-  &lt;lr-camera-source&gt;&lt;/lr-camera-source&gt;
-  &lt;lr-url-source&gt;&lt;/lr-url-source&gt;
-  &lt;lr-external-source&gt;&lt;/lr-external-source&gt;
-  &lt;lr-upload-details&gt;&lt;/lr-upload-details&gt;
-  &lt;lr-confirmation-dialog&gt;&lt;/lr-confirmation-dialog&gt;
-  &lt;lr-cloud-image-editor&gt;&lt;/lr-cloud-image-editor&gt;
-&lt;/lr-modal&gt;
+<span class="hljs-tag">&lt;<span class="hljs-name">lr-modal</span> <span class="hljs-attr">strokes</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">lr-activity-icon</span> <span class="hljs-attr">slot</span>=<span class="hljs-string">&quot;heading&quot;</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">lr-activity-icon</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">lr-activity-caption</span> <span class="hljs-attr">slot</span>=<span class="hljs-string">&quot;heading&quot;</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">lr-activity-caption</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">lr-start-from</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">lr-source-list</span> <span class="hljs-attr">wrap</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">lr-source-list</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">lr-drop-area</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">lr-drop-area</span>&gt;</span>
+  <span class="hljs-tag">&lt;/<span class="hljs-name">lr-start-from</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">lr-upload-list</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">lr-upload-list</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">lr-camera-source</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">lr-camera-source</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">lr-url-source</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">lr-url-source</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">lr-external-source</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">lr-external-source</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">lr-upload-details</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">lr-upload-details</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">lr-confirmation-dialog</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">lr-confirmation-dialog</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">lr-cloud-image-editor</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">lr-cloud-image-editor</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-name">lr-modal</span>&gt;</span>
 
-&lt;lr-message-box&gt;&lt;/lr-message-box&gt;
-&lt;lr-progress-bar-common&gt;&lt;/lr-progress-bar-common&gt;
+<span class="hljs-tag">&lt;<span class="hljs-name">lr-message-box</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">lr-message-box</span>&gt;</span>
+<span class="hljs-tag">&lt;<span class="hljs-name">lr-progress-bar-common</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">lr-progress-bar-common</span>&gt;</span>
 </code></pre>
 <h3 id="block-templates">Block templates</h3>
 <p>You can quickly override any block template by setting the new <code>template</code> property value to any block class. Here is an example:</p>
-<pre><code class="language-js">import * as LR from &#39;@uploadcare/uc-blocks&#39;;
+<pre><code class="language-js"><span class="hljs-keyword">import</span> * <span class="hljs-keyword">as</span> <span class="hljs-variable constant_">LR</span> <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;@uploadcare/blocks&#x27;</span>;
 
-LR.ProgressBarCommon.template = /*html*/ `
+<span class="hljs-variable constant_">LR</span>.<span class="hljs-property">ProgressBarCommon</span>.<span class="hljs-property">template</span> = <span class="hljs-comment">/*html*/</span> <span class="hljs-string">`
   &lt;h1&gt;My custom heading&lt;/h1&gt;
   &lt;div class=&quot;my-custom-class&quot;&gt;
     My custom template
   &lt;/div&gt;
-`;
+`</span>;
 </code></pre>
 <p>All elements created by upload-blocks are discoverable via developer tools in your browser, so it&#39;s easy to find out what exactly you should edit to achieve the proper result. You don&#39;t need to install any specific tool to do that.</p>
 <h3 id="custom-blocks">Custom blocks</h3>

@@ -23,6 +23,7 @@
       - [Styling](./docs/styling/) - themes and styles for components
         <!-- - [Blocks](./docs/blocks/) - custom blocks and deeper workflow tuning -->
         <!-- - [Contexts](./docs/contexts/) - how to unite blocks into common workflows and share common data -->
+      - [Events](./docs/events/) - events description
       - [Activities](./docs/activities/) - how to set and switch user focused activities
         <!-- - [BlockComponent](./docs/block-component/) - all about blocks base class -->
         <!-- - [TypeScript](./docs/typescript/) - using types in TypeScript and JavaScript projects -->

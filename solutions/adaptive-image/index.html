@@ -18,8 +18,7 @@
       import { LiveHtml } from '../../blocks/LiveHtml/LiveHtml.js';
       LiveHtml.reg('lr-live-html');
     </script>
-    <script type="module">/** * @param{String}html * @returns{String}*/ export function colorCode(html){return html .replace(/&lt;/g,'<span -tag-arr->&lt;</span>') .replace(/&gt;/g,'<span -tag-arr->&gt;</span>') .split('="') .map((chunk)=>{return chunk.replace('"','</span>"');}) .join(`="<span -attr->`) .replace(/"/g,'<span -quote->"</span>') .replace(/=/g,'<span -equal->=</span>') .split('<span -tag-arr->&lt;</span>/') .join('<span -tag-arr->&lt;/</span>') .split('<span -tag-arr->&lt;</span>!--') .join('<span -comment->&lt;!--') .split('--<span -tag-arr->&gt;</span>') .join('--&gt;</span>') .split('<span -tag-arr->&lt;</span>style<span -tag-arr->&gt;</span>') .join('<span -tag-arr->&lt;</span>style<span -tag-arr->&gt;</span><span -style->') .split('<span -tag-arr->&lt;/</span>style<span -tag-arr->&gt;</span>') .join('</span><span -tag-arr->&lt;/</span>style<span -tag-arr->&gt;</span>');}let codeElements=[...document.querySelectorAll('code')];let tmpEl=document.createElement('div');codeElements.forEach((codeEl)=>{tmpEl.textContent=codeEl.innerHTML;codeEl.innerHTML=colorCode(tmpEl.textContent);});</script>
-    <style> @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap');:root{--clr-bg:rgb(31 29 29);--clr-font:rgb(224 253 255);--clr-link:rgb(253 255 139);--clr-panel:rgb(255 255 255 / 10%);--clr-accent:rgb(233 159 255);--clr-accent-shade:rgb(233 159 255 / 6%);--clr-code:#fff;--clr-code-hl:rgb(255 112 112);--gap-min:2px;--gap-mid:10px;--gap-max:20px;--gap-huge:60px;}html,body{margin:0;padding:0;color:var(--clr-font);font-family:Roboto,sans-serif;background-color:var(--clr-bg);}body{display:grid;grid-template-rows:min-content min-content auto min-content;min-height:100vh;}header{padding:20px;background-color:rgba(0,0,0,.4);}nav{--l-bg-clr:rgba(60,60,60,.9);--blur:6px;display:flex;justify-content:center;position:sticky;z-index:10000;top:0;background-color:var(--l-bg-clr);height:100%;}@supports ((-webkit-backdrop-filter:blur(var(--blur))) or (backdrop-filter:blur(var(--blur)))){nav{--l-bg-clr:rgba(255,255,255,.1);backdrop-filter:blur(var(--blur));-webkit-backdrop-filter:blur(var(--blur));}}nav > div{display:flex;justify-content:space-around;align-items:center;width:100%;max-width:1080px;}nav a{display:block;color:var(--clr-font);margin:20px;text-decoration:none;text-shadow:1px 1px 2px rgba(0,0,0,.6);}main{display:flex;justify-content:center;padding:20px;}col-css{display:block;max-width:1080px;width:100%;}footer{padding:20px;background-color:rgba(0,0,0,.2);}lr-live-html{min-height:400px;}main a{color:var(--clr-link);}code{display:block;background-color:#000;color:var(--clr-code);padding:var(--gap-max);overflow-x:auto;}code .hl{color:var(--clr-code-hl);}code:not([class]){display:inline-block;padding:var(--gap-min);padding-left:.5em;padding-right:.5em;}blockquote{display:block;color:var(--clr-accent);background-color:var(--clr-accent-shade);padding:var(--gap-mid);margin:0;margin-top:var(--gap-max);border-left:var(--gap-min) solid currentColor;}h1{color:var(--clr-accent);}h2{margin-top:calc(var(--gap-max) * 3);}li{margin-bottom:var(--gap-mid);}table{width:100%;}th{padding:10px;background:rgba(0,0,0,.4);}td{padding:10px;background:rgba(255,255,255,.1);}tr:hover{background:rgba(255,255,255,.1);}lr-live-html{display:grid;grid-template-columns:50% 50%;box-shadow:0 5px 16px rgb(0 0 0 / 60%);}lr-live-html [contenteditable]{padding:20px;overflow:auto;color:rgb(255 255 255);font-size:14px;font-family:monospace;white-space:pre;background-color:#000;outline:none;}lr-live-html [contenteditable] [-tag-arr-]{color:rgb(255 112 112);}lr-live-html [contenteditable] [-comment-]{color:aqua;font-style:italic;opacity:0.5;}lr-live-html [contenteditable] [-attr-]{color:rgb(152 197 255);}lr-live-html [contenteditable] [-quote-]{color:rgb(169 255 152);}lr-live-html [contenteditable] [-equal-]{color:rgb(255 152 241);}lr-live-html [contenteditable] [-style-]{color:rgb(255 207 152);}lr-live-html iframe{display:block;width:100%;height:100%;background-color:#fff;border:0;}lr-live-html{display:grid;grid-template-columns:50% 50%;box-shadow:0 5px 16px rgb(0 0 0 / 60%);}code{padding:20px;overflow:auto;color:rgb(255 255 255);font-size:14px;font-family:monospace;white-space:pre;background-color:#000;outline:none;}code [-tag-arr-]{color:rgb(255 112 112);}code [-comment-]{color:aqua;font-style:italic;opacity:0.5;}code [-attr-]{color:rgb(152 197 255);}code [-quote-]{color:rgb(169 255 152);}code [-equal-]{color:rgb(255 152 241);}code [-style-]{color:rgb(255 207 152);}lr-live-html iframe{display:block;width:100%;height:100%;background-color:#fff;border:0;}</style>
+    <style> @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap');:root{--clr-bg:rgb(31 29 29);--clr-font:rgb(224 253 255);--clr-link:rgb(253 255 139);--clr-panel:rgb(255 255 255 / 10%);--clr-accent:rgb(233 159 255);--clr-accent-shade:rgb(233 159 255 / 6%);--clr-code:#fff;--clr-code-hl:rgb(255 112 112);--gap-min:2px;--gap-mid:10px;--gap-max:20px;--gap-huge:60px;}html,body{margin:0;padding:0;color:var(--clr-font);font-family:Roboto,sans-serif;background-color:var(--clr-bg);}body{display:grid;grid-template-rows:min-content min-content auto min-content;min-height:100vh;}header{padding:20px;background-color:rgba(0,0,0,.4);}nav{--l-bg-clr:rgba(60,60,60,.9);--blur:6px;display:flex;justify-content:center;position:sticky;z-index:10000;top:0;background-color:var(--l-bg-clr);height:100%;}@supports ((-webkit-backdrop-filter:blur(var(--blur))) or (backdrop-filter:blur(var(--blur)))){nav{--l-bg-clr:rgba(255,255,255,.1);backdrop-filter:blur(var(--blur));-webkit-backdrop-filter:blur(var(--blur));}}nav > div{display:flex;justify-content:space-around;align-items:center;width:100%;max-width:1080px;}nav a{display:block;color:var(--clr-font);margin:20px;text-decoration:none;text-shadow:1px 1px 2px rgba(0,0,0,.6);}main{display:flex;justify-content:center;padding:20px;}col-css{display:block;max-width:1080px;width:100%;}footer{padding:20px;background-color:rgba(0,0,0,.2);}lr-live-html{min-height:400px;}main a{color:var(--clr-link);}code{display:block;background-color:#000;color:var(--clr-code);padding:var(--gap-max);overflow-x:auto;}code .hl{color:var(--clr-code-hl);}code:not([class]){display:inline-block;padding:var(--gap-min);padding-left:.5em;padding-right:.5em;}blockquote{display:block;color:var(--clr-accent);background-color:var(--clr-accent-shade);padding:var(--gap-mid);margin:0;margin-top:var(--gap-max);border-left:var(--gap-min) solid currentColor;}h1{color:var(--clr-accent);}h2{margin-top:calc(var(--gap-max) * 3);}li{margin-bottom:var(--gap-mid);}table{width:100%;}th{padding:10px;background:rgba(0,0,0,.4);}td{padding:10px;background:rgba(255,255,255,.1);}tr:hover{background:rgba(255,255,255,.1);}lr-live-html{display:grid;grid-template-columns:50% 50%;box-shadow:0 5px 16px rgb(0 0 0 / 60%);}lr-live-html [contenteditable]{padding:20px;overflow:auto;color:rgb(255 255 255);font-size:14px;font-family:monospace;white-space:pre;background-color:#000;outline:none;}lr-live-html [contenteditable] .hljs-string{color:rgb(251,182,79);}lr-live-html [contenteditable] .hljs-comment{color:rgb(149,149,149);font-style:italic;}lr-live-html [contenteditable] .hljs-attr{color:rgb(138,218,172);}lr-live-html [contenteditable] .hljs-function{color:rgb(239,235,149);}lr-live-html [contenteditable] .hljs-variable{color:rgb(121,183,255);}lr-live-html [contenteditable] .hljs-title{color:rgb(180,243,255);}lr-live-html [contenteditable] .hljs-property{color:rgb(238,131,252);}lr-live-html [contenteditable] .hljs-keyword{color:rgb(254,165,176);}lr-live-html [contenteditable] .hljs-tag{color:rgb(254,165,176);}lr-live-html [contenteditable] .hljs-name{color:rgb(165,245,254);}lr-live-html iframe{display:block;width:100%;height:100%;background-color:#fff;border:0;}lr-live-html{display:grid;grid-template-columns:50% 50%;box-shadow:0 5px 16px rgb(0 0 0 / 60%);}code{padding:20px;overflow:auto;color:rgb(255 255 255);font-size:14px;font-family:monospace;white-space:pre;background-color:#000;outline:none;}code .hljs-string{color:rgb(251,182,79);}code .hljs-comment{color:rgb(149,149,149);font-style:italic;}code .hljs-attr{color:rgb(138,218,172);}code .hljs-function{color:rgb(239,235,149);}code .hljs-variable{color:rgb(121,183,255);}code .hljs-title{color:rgb(180,243,255);}code .hljs-property{color:rgb(238,131,252);}code .hljs-keyword{color:rgb(254,165,176);}code .hljs-tag{color:rgb(254,165,176);}code .hljs-name{color:rgb(165,245,254);}lr-live-html iframe{display:block;width:100%;height:100%;background-color:#fff;border:0;}</style>
   </head>
   <body>
     <header>🟡 Uploadcare | blocks</header>
@@ -49,17 +48,17 @@ It generates a set of URLs for the initial image source with the desired paramet
 </ul>
 <h2 id="quick-start">Quick start</h2>
 <p>Connect script:</p>
-<pre><code class="language-html">&lt;script src=&quot;https://unpkg.com/@uploadcare/uc-blocks@latest/web/lr-img.min.js&quot; type=&quot;module&quot;&gt;&lt;/script&gt;
+<pre><code class="language-html"><span class="hljs-tag">&lt;<span class="hljs-name">script</span> <span class="hljs-attr">src</span>=<span class="hljs-string">&quot;https://cdn.skypack.dev/@uploadcare/blocks/web/lr-img.min.js&quot;</span> <span class="hljs-attr">type</span>=<span class="hljs-string">&quot;module&quot;</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">script</span>&gt;</span>
 </code></pre>
 <p>Add basic settings:</p>
-<pre><code class="language-css">lr-img {
-  --lr-img-pubkey: &#39;YOUR_PROJECT_PUBLIC_KEY&#39;;
-  --lr-img-breakpoints: &#39;200, 500, 800&#39;;
+<pre><code class="language-css">lr-<span class="hljs-selector-tag">img</span> {
+  <span class="hljs-attr">--lr-img-pubkey</span>: <span class="hljs-string">&#x27;YOUR_PROJECT_PUBLIC_KEY&#x27;</span>;
+  <span class="hljs-attr">--lr-img-breakpoints</span>: <span class="hljs-string">&#x27;200, 500, 800&#x27;</span>;
 }
 </code></pre>
 <p>A public key is necessary for the Proxy links generation if a custom proxy name is not used. You can obtain the public key key in your <a href="https://app.uploadcare.com/projects/-/api-keys/">Uploadcare project&#39;s dashboard</a>.</p>
 <p>Then use <code>&lt;lr-img&gt;</code> tag for the images in your HTML templates:</p>
-<pre><code class="language-html">&lt;lr-img src=&quot;SOURCE_IMAGE_PATH&quot;&gt;&lt;/lr-img&gt;
+<pre><code class="language-html"><span class="hljs-tag">&lt;<span class="hljs-name">lr-img</span> <span class="hljs-attr">src</span>=<span class="hljs-string">&quot;SOURCE_IMAGE_PATH&quot;</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">lr-img</span>&gt;</span>
 </code></pre>
 <p>That&#39;s it!</p>
 <h2 id="workflow">Workflow</h2>
@@ -70,92 +69,92 @@ It generates a set of URLs for the initial image source with the desired paramet
 </ol>
 <h2 id="fallback">Fallback</h2>
 <p>For the SEO or NOSCRIPT purposes, use <code>&lt;noscript&gt;</code> sections on your integrations with the original image path:</p>
-<pre><code class="language-html">&lt;lr-img src=&quot;SOURCE_IMAGE_PATH&quot;&gt;
-  &lt;noscript&gt;
-    &lt;img src=&quot;SOURCE_IMAGE_PATH&quot; /&gt;
-  &lt;/noscript&gt;
-&lt;/lr-img&gt;
+<pre><code class="language-html"><span class="hljs-tag">&lt;<span class="hljs-name">lr-img</span> <span class="hljs-attr">src</span>=<span class="hljs-string">&quot;SOURCE_IMAGE_PATH&quot;</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">noscript</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">img</span> <span class="hljs-attr">src</span>=<span class="hljs-string">&quot;SOURCE_IMAGE_PATH&quot;</span> /&gt;</span>
+  <span class="hljs-tag">&lt;/<span class="hljs-name">noscript</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-name">lr-img</span>&gt;</span>
 </code></pre>
 <p>After initiating, if JavaScript is enabled in the browser, that will be transformed into:</p>
-<pre><code class="language-html">&lt;lr-img src=&quot;SOURCE_IMAGE_PATH&quot;&gt;
-  &lt;img srcset=&quot;...GENERATED_SRC_LIST&quot; /&gt;
-&lt;/lr-img&gt;
+<pre><code class="language-html"><span class="hljs-tag">&lt;<span class="hljs-name">lr-img</span> <span class="hljs-attr">src</span>=<span class="hljs-string">&quot;SOURCE_IMAGE_PATH&quot;</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">img</span> <span class="hljs-attr">srcset</span>=<span class="hljs-string">&quot;...GENERATED_SRC_LIST&quot;</span> /&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-name">lr-img</span>&gt;</span>
 </code></pre>
 <h2 id="lazy-loading">Lazy loading</h2>
 <p><a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe#attr-loading">Native lazy loading</a> is enabled by default for all image components. You can disable it or use a custom one based on <a href="https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API">IntersectionObserver</a>.</p>
 <p>Disable:</p>
-<pre><code class="language-html">&lt;style&gt;
-  lr-img {
-    --lr-img-lazy: 0;
+<pre><code class="language-html"><span class="hljs-tag">&lt;<span class="hljs-name">style</span>&gt;</span><span class="language-css">
+  lr-<span class="hljs-selector-tag">img</span> {
+    <span class="hljs-attr">--lr-img-lazy</span>: <span class="hljs-number">0</span>;
   }
-&lt;/style&gt;
+</span><span class="hljs-tag">&lt;/<span class="hljs-name">style</span>&gt;</span>
 
-&lt;lr-img src=&quot;SOURCE_IMAGE_PATH&quot;&gt;&lt;/lr-img&gt;
+<span class="hljs-tag">&lt;<span class="hljs-name">lr-img</span> <span class="hljs-attr">src</span>=<span class="hljs-string">&quot;SOURCE_IMAGE_PATH&quot;</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">lr-img</span>&gt;</span>
 </code></pre>
 <p>Intersection observer enabled:</p>
-<pre><code class="language-html">&lt;style&gt;
-  lr-img {
-    --lr-img-intersection: 1;
+<pre><code class="language-html"><span class="hljs-tag">&lt;<span class="hljs-name">style</span>&gt;</span><span class="language-css">
+  lr-<span class="hljs-selector-tag">img</span> {
+    <span class="hljs-attr">--lr-img-intersection</span>: <span class="hljs-number">1</span>;
   }
-&lt;/style&gt;
+</span><span class="hljs-tag">&lt;/<span class="hljs-name">style</span>&gt;</span>
 
-&lt;lr-img src=&quot;SOURCE_IMAGE_PATH&quot;&gt;&lt;/lr-img&gt;
+<span class="hljs-tag">&lt;<span class="hljs-name">lr-img</span> <span class="hljs-attr">src</span>=<span class="hljs-string">&quot;SOURCE_IMAGE_PATH&quot;</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">lr-img</span>&gt;</span>
 </code></pre>
 <h2 id="breakpoints">Breakpoints</h2>
 <p>If you have some responsive layout where images could be resized in some cases, it&#39;s good to set a list of breakpoints to avoid exceeding sizes generation via Uploadcare CDN operations:</p>
-<pre><code class="language-html">&lt;style&gt;
-  @import url(&#39;./test.css&#39;);
+<pre><code class="language-html"><span class="hljs-tag">&lt;<span class="hljs-name">style</span>&gt;</span><span class="language-css">
+  <span class="hljs-keyword">@import</span> url(<span class="hljs-string">&#x27;./test.css&#x27;</span>);
 
-  lr-img {
-    --lr-img-breakpoints: &#39;400, 800, 1200&#39;;
+  lr-<span class="hljs-selector-tag">img</span> {
+    <span class="hljs-attr">--lr-img-breakpoints</span>: <span class="hljs-string">&#x27;400, 800, 1200&#x27;</span>;
   }
-&lt;/style&gt;
+</span><span class="hljs-tag">&lt;/<span class="hljs-name">style</span>&gt;</span>
 
-&lt;lr-img src=&quot;SOURCE_IMAGE_PATH&quot;&gt;&lt;/lr-img&gt;
+<span class="hljs-tag">&lt;<span class="hljs-name">lr-img</span> <span class="hljs-attr">src</span>=<span class="hljs-string">&quot;SOURCE_IMAGE_PATH&quot;</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">lr-img</span>&gt;</span>
 </code></pre>
 <p>That will save the resources and make image behavior more expected. The browser will select the most suitable image size automatically.</p>
 <h2 id="layout-shift">Layout shift</h2>
 <p>It&#39;s good to set up the initial size for the images to avoid layout shifting during loading.</p>
 <h2 id="cdn-operations">CDN Operations</h2>
 <p>You can provide some transformation settings for the single image or the set of images:</p>
-<pre><code class="language-html">&lt;style&gt;
-  .invert {
-    --lr-img-cdn-operations: &#39;invert&#39;;
+<pre><code class="language-html"><span class="hljs-tag">&lt;<span class="hljs-name">style</span>&gt;</span><span class="language-css">
+  <span class="hljs-selector-class">.invert</span> {
+    <span class="hljs-attr">--lr-img-cdn-operations</span>: <span class="hljs-string">&#x27;invert&#x27;</span>;
   }
-&lt;/style&gt;
+</span><span class="hljs-tag">&lt;/<span class="hljs-name">style</span>&gt;</span>
 
-&lt;lr-img class=&quot;invert&quot; src=&quot;SOURCE_IMAGE_PATH&quot;&gt;&lt;/lr-img&gt;
+<span class="hljs-tag">&lt;<span class="hljs-name">lr-img</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;invert&quot;</span> <span class="hljs-attr">src</span>=<span class="hljs-string">&quot;SOURCE_IMAGE_PATH&quot;</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">lr-img</span>&gt;</span>
 </code></pre>
 <p>Operations description syntax is the same as used in <a href="https://uploadcare.com/docs/transformations/image/">Image processing API</a>. More examples:</p>
-<pre><code class="language-html">&lt;style&gt;
-  .invert_grayscale {
-    --lr-img-cdn-operations: &#39;invert/-/grayscale&#39;;
+<pre><code class="language-html"><span class="hljs-tag">&lt;<span class="hljs-name">style</span>&gt;</span><span class="language-css">
+  <span class="hljs-selector-class">.invert_grayscale</span> {
+    <span class="hljs-attr">--lr-img-cdn-operations</span>: <span class="hljs-string">&#x27;invert/-/grayscale&#x27;</span>;
   }
-  .old_styled {
-    --lr-img-cdn-operations: &#39;saturation/-80/-/contrast/80/-/warmth/50&#39;;
+  <span class="hljs-selector-class">.old_styled</span> {
+    <span class="hljs-attr">--lr-img-cdn-operations</span>: <span class="hljs-string">&#x27;saturation/-80/-/contrast/80/-/warmth/50&#x27;</span>;
   }
-&lt;/style&gt;
+</span><span class="hljs-tag">&lt;/<span class="hljs-name">style</span>&gt;</span>
 </code></pre>
 <p>As you can see, transformation definitions are separated with <code>/-/</code> symbols, just like you can use in the <a href="https://uploadcare.com/docs/transformations/image/">Image processing API</a>.</p>
 <h2 id="background-mode">Background mode</h2>
 <p>To use an adaptive image as an element&#39;s background, you can use <code>is-background-for</code> attribute with the desired element&#39;s CSS selector in it&#39;s value:</p>
-<pre><code class="language-html">&lt;style&gt;
-  #target {
-    background-size: cover;
+<pre><code class="language-html"><span class="hljs-tag">&lt;<span class="hljs-name">style</span>&gt;</span><span class="language-css">
+  <span class="hljs-selector-id">#target</span> {
+    <span class="hljs-attribute">background-size</span>: cover;
   }
-&lt;/style&gt;
+</span><span class="hljs-tag">&lt;/<span class="hljs-name">style</span>&gt;</span>
 
-&lt;div id=&quot;target&quot;&gt;Some text...&lt;/div&gt;
+<span class="hljs-tag">&lt;<span class="hljs-name">div</span> <span class="hljs-attr">id</span>=<span class="hljs-string">&quot;target&quot;</span>&gt;</span>Some text...<span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span>
 
-&lt;lr-img is-background-for=&quot;#target&quot; src=&quot;SOURCE_IMAGE_PATH&quot;&gt;&lt;/lr-img&gt;
+<span class="hljs-tag">&lt;<span class="hljs-name">lr-img</span> <span class="hljs-attr">is-background-for</span>=<span class="hljs-string">&quot;#target&quot;</span> <span class="hljs-attr">src</span>=<span class="hljs-string">&quot;SOURCE_IMAGE_PATH&quot;</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">lr-img</span>&gt;</span>
 </code></pre>
 <h2 id="development-mode-relative-image-path">Development mode (relative image path)</h2>
 <p>When you develop your application, you can use a local development server and relative paths in your project structure for the images. In that case, Uploadcare Proxy service would be disabled for your development environment, and you will see original local images in your application until you deploy it:</p>
-<pre><code class="language-html">&lt;lr-img src=&quot;../LOCAL_IMAGE_PATH&quot;&gt;&lt;/lr-img&gt;
+<pre><code class="language-html"><span class="hljs-tag">&lt;<span class="hljs-name">lr-img</span> <span class="hljs-attr">src</span>=<span class="hljs-string">&quot;../LOCAL_IMAGE_PATH&quot;</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">lr-img</span>&gt;</span>
 </code></pre>
 <h2 id="uuid">UUID</h2>
 <p>If you already have UUID for images uploaded to Uploadcare, you can use it in image component directly:</p>
-<pre><code class="language-html">&lt;lr-img uuid=&quot;CDN_UUID&quot;&gt;&lt;/lr-img&gt;
+<pre><code class="language-html"><span class="hljs-tag">&lt;<span class="hljs-name">lr-img</span> <span class="hljs-attr">uuid</span>=<span class="hljs-string">&quot;CDN_UUID&quot;</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">lr-img</span>&gt;</span>
 </code></pre>
 <p>In this case, you don&#39;t need the <code>pubkey</code> setting to upload the source image.</p>
 <h2 id="settings">Settings</h2>

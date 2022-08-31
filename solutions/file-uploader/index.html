@@ -18,8 +18,7 @@
       import { LiveHtml } from '../../blocks/LiveHtml/LiveHtml.js';
       LiveHtml.reg('lr-live-html');
     </script>
-    <script type="module">/** * @param{String}html * @returns{String}*/ export function colorCode(html){return html .replace(/&lt;/g,'<span -tag-arr->&lt;</span>') .replace(/&gt;/g,'<span -tag-arr->&gt;</span>') .split('="') .map((chunk)=>{return chunk.replace('"','</span>"');}) .join(`="<span -attr->`) .replace(/"/g,'<span -quote->"</span>') .replace(/=/g,'<span -equal->=</span>') .split('<span -tag-arr->&lt;</span>/') .join('<span -tag-arr->&lt;/</span>') .split('<span -tag-arr->&lt;</span>!--') .join('<span -comment->&lt;!--') .split('--<span -tag-arr->&gt;</span>') .join('--&gt;</span>') .split('<span -tag-arr->&lt;</span>style<span -tag-arr->&gt;</span>') .join('<span -tag-arr->&lt;</span>style<span -tag-arr->&gt;</span><span -style->') .split('<span -tag-arr->&lt;/</span>style<span -tag-arr->&gt;</span>') .join('</span><span -tag-arr->&lt;/</span>style<span -tag-arr->&gt;</span>');}let codeElements=[...document.querySelectorAll('code')];let tmpEl=document.createElement('div');codeElements.forEach((codeEl)=>{tmpEl.textContent=codeEl.innerHTML;codeEl.innerHTML=colorCode(tmpEl.textContent);});</script>
-    <style> @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap');:root{--clr-bg:rgb(31 29 29);--clr-font:rgb(224 253 255);--clr-link:rgb(253 255 139);--clr-panel:rgb(255 255 255 / 10%);--clr-accent:rgb(233 159 255);--clr-accent-shade:rgb(233 159 255 / 6%);--clr-code:#fff;--clr-code-hl:rgb(255 112 112);--gap-min:2px;--gap-mid:10px;--gap-max:20px;--gap-huge:60px;}html,body{margin:0;padding:0;color:var(--clr-font);font-family:Roboto,sans-serif;background-color:var(--clr-bg);}body{display:grid;grid-template-rows:min-content min-content auto min-content;min-height:100vh;}header{padding:20px;background-color:rgba(0,0,0,.4);}nav{--l-bg-clr:rgba(60,60,60,.9);--blur:6px;display:flex;justify-content:center;position:sticky;z-index:10000;top:0;background-color:var(--l-bg-clr);height:100%;}@supports ((-webkit-backdrop-filter:blur(var(--blur))) or (backdrop-filter:blur(var(--blur)))){nav{--l-bg-clr:rgba(255,255,255,.1);backdrop-filter:blur(var(--blur));-webkit-backdrop-filter:blur(var(--blur));}}nav > div{display:flex;justify-content:space-around;align-items:center;width:100%;max-width:1080px;}nav a{display:block;color:var(--clr-font);margin:20px;text-decoration:none;text-shadow:1px 1px 2px rgba(0,0,0,.6);}main{display:flex;justify-content:center;padding:20px;}col-css{display:block;max-width:1080px;width:100%;}footer{padding:20px;background-color:rgba(0,0,0,.2);}lr-live-html{min-height:400px;}main a{color:var(--clr-link);}code{display:block;background-color:#000;color:var(--clr-code);padding:var(--gap-max);overflow-x:auto;}code .hl{color:var(--clr-code-hl);}code:not([class]){display:inline-block;padding:var(--gap-min);padding-left:.5em;padding-right:.5em;}blockquote{display:block;color:var(--clr-accent);background-color:var(--clr-accent-shade);padding:var(--gap-mid);margin:0;margin-top:var(--gap-max);border-left:var(--gap-min) solid currentColor;}h1{color:var(--clr-accent);}h2{margin-top:calc(var(--gap-max) * 3);}li{margin-bottom:var(--gap-mid);}table{width:100%;}th{padding:10px;background:rgba(0,0,0,.4);}td{padding:10px;background:rgba(255,255,255,.1);}tr:hover{background:rgba(255,255,255,.1);}lr-live-html{display:grid;grid-template-columns:50% 50%;box-shadow:0 5px 16px rgb(0 0 0 / 60%);}lr-live-html [contenteditable]{padding:20px;overflow:auto;color:rgb(255 255 255);font-size:14px;font-family:monospace;white-space:pre;background-color:#000;outline:none;}lr-live-html [contenteditable] [-tag-arr-]{color:rgb(255 112 112);}lr-live-html [contenteditable] [-comment-]{color:aqua;font-style:italic;opacity:0.5;}lr-live-html [contenteditable] [-attr-]{color:rgb(152 197 255);}lr-live-html [contenteditable] [-quote-]{color:rgb(169 255 152);}lr-live-html [contenteditable] [-equal-]{color:rgb(255 152 241);}lr-live-html [contenteditable] [-style-]{color:rgb(255 207 152);}lr-live-html iframe{display:block;width:100%;height:100%;background-color:#fff;border:0;}lr-live-html{display:grid;grid-template-columns:50% 50%;box-shadow:0 5px 16px rgb(0 0 0 / 60%);}code{padding:20px;overflow:auto;color:rgb(255 255 255);font-size:14px;font-family:monospace;white-space:pre;background-color:#000;outline:none;}code [-tag-arr-]{color:rgb(255 112 112);}code [-comment-]{color:aqua;font-style:italic;opacity:0.5;}code [-attr-]{color:rgb(152 197 255);}code [-quote-]{color:rgb(169 255 152);}code [-equal-]{color:rgb(255 152 241);}code [-style-]{color:rgb(255 207 152);}lr-live-html iframe{display:block;width:100%;height:100%;background-color:#fff;border:0;}</style>
+    <style> @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap');:root{--clr-bg:rgb(31 29 29);--clr-font:rgb(224 253 255);--clr-link:rgb(253 255 139);--clr-panel:rgb(255 255 255 / 10%);--clr-accent:rgb(233 159 255);--clr-accent-shade:rgb(233 159 255 / 6%);--clr-code:#fff;--clr-code-hl:rgb(255 112 112);--gap-min:2px;--gap-mid:10px;--gap-max:20px;--gap-huge:60px;}html,body{margin:0;padding:0;color:var(--clr-font);font-family:Roboto,sans-serif;background-color:var(--clr-bg);}body{display:grid;grid-template-rows:min-content min-content auto min-content;min-height:100vh;}header{padding:20px;background-color:rgba(0,0,0,.4);}nav{--l-bg-clr:rgba(60,60,60,.9);--blur:6px;display:flex;justify-content:center;position:sticky;z-index:10000;top:0;background-color:var(--l-bg-clr);height:100%;}@supports ((-webkit-backdrop-filter:blur(var(--blur))) or (backdrop-filter:blur(var(--blur)))){nav{--l-bg-clr:rgba(255,255,255,.1);backdrop-filter:blur(var(--blur));-webkit-backdrop-filter:blur(var(--blur));}}nav > div{display:flex;justify-content:space-around;align-items:center;width:100%;max-width:1080px;}nav a{display:block;color:var(--clr-font);margin:20px;text-decoration:none;text-shadow:1px 1px 2px rgba(0,0,0,.6);}main{display:flex;justify-content:center;padding:20px;}col-css{display:block;max-width:1080px;width:100%;}footer{padding:20px;background-color:rgba(0,0,0,.2);}lr-live-html{min-height:400px;}main a{color:var(--clr-link);}code{display:block;background-color:#000;color:var(--clr-code);padding:var(--gap-max);overflow-x:auto;}code .hl{color:var(--clr-code-hl);}code:not([class]){display:inline-block;padding:var(--gap-min);padding-left:.5em;padding-right:.5em;}blockquote{display:block;color:var(--clr-accent);background-color:var(--clr-accent-shade);padding:var(--gap-mid);margin:0;margin-top:var(--gap-max);border-left:var(--gap-min) solid currentColor;}h1{color:var(--clr-accent);}h2{margin-top:calc(var(--gap-max) * 3);}li{margin-bottom:var(--gap-mid);}table{width:100%;}th{padding:10px;background:rgba(0,0,0,.4);}td{padding:10px;background:rgba(255,255,255,.1);}tr:hover{background:rgba(255,255,255,.1);}lr-live-html{display:grid;grid-template-columns:50% 50%;box-shadow:0 5px 16px rgb(0 0 0 / 60%);}lr-live-html [contenteditable]{padding:20px;overflow:auto;color:rgb(255 255 255);font-size:14px;font-family:monospace;white-space:pre;background-color:#000;outline:none;}lr-live-html [contenteditable] .hljs-string{color:rgb(251,182,79);}lr-live-html [contenteditable] .hljs-comment{color:rgb(149,149,149);font-style:italic;}lr-live-html [contenteditable] .hljs-attr{color:rgb(138,218,172);}lr-live-html [contenteditable] .hljs-function{color:rgb(239,235,149);}lr-live-html [contenteditable] .hljs-variable{color:rgb(121,183,255);}lr-live-html [contenteditable] .hljs-title{color:rgb(180,243,255);}lr-live-html [contenteditable] .hljs-property{color:rgb(238,131,252);}lr-live-html [contenteditable] .hljs-keyword{color:rgb(254,165,176);}lr-live-html [contenteditable] .hljs-tag{color:rgb(254,165,176);}lr-live-html [contenteditable] .hljs-name{color:rgb(165,245,254);}lr-live-html iframe{display:block;width:100%;height:100%;background-color:#fff;border:0;}lr-live-html{display:grid;grid-template-columns:50% 50%;box-shadow:0 5px 16px rgb(0 0 0 / 60%);}code{padding:20px;overflow:auto;color:rgb(255 255 255);font-size:14px;font-family:monospace;white-space:pre;background-color:#000;outline:none;}code .hljs-string{color:rgb(251,182,79);}code .hljs-comment{color:rgb(149,149,149);font-style:italic;}code .hljs-attr{color:rgb(138,218,172);}code .hljs-function{color:rgb(239,235,149);}code .hljs-variable{color:rgb(121,183,255);}code .hljs-title{color:rgb(180,243,255);}code .hljs-property{color:rgb(238,131,252);}code .hljs-keyword{color:rgb(254,165,176);}code .hljs-tag{color:rgb(254,165,176);}code .hljs-name{color:rgb(165,245,254);}lr-live-html iframe{display:block;width:100%;height:100%;background-color:#fff;border:0;}</style>
   </head>
   <body>
     <header>🟡 Uploadcare | blocks</header>
@@ -56,34 +55,26 @@ Each uploader is highly customizable on its own and could be used as a custom bu
 <h3 id="supported-browsers">Supported browsers</h3>
 <p>Uploader is supported in all major modern <a href="https://github.com/uploadcare/jsdk#supported-browsers">browsers</a>.</p>
 <p><a href="https://uploadcare.com/blog/uploadcare-stops-internet-explorer-support/">Internet Explorer</a> is outdated and not supported anymore.</p>
-<h2 id="⚙️-integration">⚙️ Integration</h2>
-<h3 id="cdn-version">CDN version</h3>
-<p>Connect script:</p>
-<pre><code class="language-html">&lt;script src=&quot;https://unpkg.com/@uploadcare/uc-blocks@latest/web/file-uploader-regular.min.js&quot; type=&quot;module&quot;&gt;&lt;/script&gt;
+<h2 id="receiving-upload-data">Receiving upload data</h2>
+<pre><code class="language-js"><span class="hljs-variable language_">window</span>.<span class="hljs-title function_">addEventListener</span>(<span class="hljs-string">&#x27;LR_DATA_OUTPUT&#x27;</span>, <span class="hljs-function">(<span class="hljs-params">e</span>) =&gt;</span> {
+  <span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(e.<span class="hljs-property">detail</span>);
+});
 </code></pre>
-<h3 id="npm-package">npm package</h3>
-<p>Install package: <code>npm i @uploadcare/uc-blocks</code></p>
-<p>Then you can use <code>Uploader</code>-element class for your purposes:</p>
-<pre><code class="language-javascript">import * as LR from &#39;@uploadcare/uc-blocks&#39;;
-
-LR.registerBlocks(LR);
-
-document.body.appendChild(new LR.FileUploaderRegular());
-</code></pre>
+<p>More information about upload events you can find <a href="../../docs/events/">here</a>.</p>
 <h3 id="application-markup">Application markup</h3>
 <p>After connection, use the <code>&lt;lr-uploader&gt;</code> tag in your application markup:</p>
-<pre><code class="language-html">&lt;lr-uploader&gt;&lt;/lr-uploader&gt;
+<pre><code class="language-html"><span class="hljs-tag">&lt;<span class="hljs-name">lr-uploader</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">lr-uploader</span>&gt;</span>
 </code></pre>
 <p>Note that all configurations, localization texts, icons, and styling are placed into CSS file, so you should connect the default one (or create your own):</p>
-<pre><code class="language-html">&lt;style&gt;
-  @import url(https://unpkg.com/@uploadcare/uc-blocks@latest/web/file-uploader-regular.min.css);
-  .my-settings {
-    --ctx-name: &#39;my-uploader&#39;;
-    --cfg-pubkey: &#39;demopublickey&#39;;
+<pre><code class="language-html"><span class="hljs-tag">&lt;<span class="hljs-name">style</span>&gt;</span><span class="language-css">
+  <span class="hljs-keyword">@import</span> url(<span class="hljs-attribute">https</span>://cdn.skypack.dev/@uploadcare/blocks/web/file-uploader-regular.min.css);
+  <span class="hljs-selector-class">.my-settings</span> {
+    <span class="hljs-attr">--ctx-name</span>: <span class="hljs-string">&#x27;my-uploader&#x27;</span>;
+    <span class="hljs-attr">--cfg-pubkey</span>: <span class="hljs-string">&#x27;demopublickey&#x27;</span>;
   }
-&lt;/style&gt;
+</span><span class="hljs-tag">&lt;/<span class="hljs-name">style</span>&gt;</span>
 
-&lt;lr-uploader class=&quot;my-settings lr-wgt-common&quot;&gt; &lt;/lr-uploader&gt;
+<span class="hljs-tag">&lt;<span class="hljs-name">lr-uploader</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;my-settings lr-wgt-common&quot;</span>&gt;</span> <span class="hljs-tag">&lt;/<span class="hljs-name">lr-uploader</span>&gt;</span>
 </code></pre>
 <ul>
 <li><code>lr-wgt-common</code> - is a pre-defined common CSS class containing all basic uploader parameters.</li>
@@ -91,28 +82,28 @@ document.body.appendChild(new LR.FileUploaderRegular());
 <h3 id="shadow-dom">Shadow DOM</h3>
 <p>If you need additional isolation and styling security levels, you can get it with Shadow DOM.
 To enable it and encapsulate all styles into separated scope, use the <code>css-src</code> attribute:</p>
-<pre><code class="language-html">&lt;lr-uploader css-src=&quot;https://unpkg.com/@uploadcare/uc-blocks@latest/web/file-uploader-regular.min.css&quot;&gt; &lt;/lr-uploader&gt;
+<pre><code class="language-html"><span class="hljs-tag">&lt;<span class="hljs-name">lr-uploader</span> <span class="hljs-attr">css-src</span>=<span class="hljs-string">&quot;https://cdn.skypack.dev/@uploadcare/blocks/web/file-uploader-regular.min.css&quot;</span>&gt;</span> <span class="hljs-tag">&lt;/<span class="hljs-name">lr-uploader</span>&gt;</span>
 </code></pre>
 <h3 id="custom-tags-naming-convention">Custom tags naming convention</h3>
 <p>By design, all custom elements should have a dash symbol (<code>-</code>) in their names.
 All custom tags used in uploader are prefixed with the <code>lr-</code> part.</p>
 <p>Examples:</p>
 <pre><code class="language-html">...
-&lt;lr-icon&gt;&lt;/lr-icon&gt;
+<span class="hljs-tag">&lt;<span class="hljs-name">lr-icon</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">lr-icon</span>&gt;</span>
 ...
-&lt;lr-button&gt;&lt;/lr-button&gt;
+<span class="hljs-tag">&lt;<span class="hljs-name">lr-button</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">lr-button</span>&gt;</span>
 ...
-&lt;lr-whatever&gt;&lt;/lr-whatever&gt;
+<span class="hljs-tag">&lt;<span class="hljs-name">lr-whatever</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">lr-whatever</span>&gt;</span>
 ...
 </code></pre>
 <p>So, to exclude naming collisions, use the other prefixes for your own custom elements.</p>
 <p>Examples:</p>
 <pre><code class="language-html">...
-&lt;my-own-icon&gt;&lt;/my-own-icon&gt;
+<span class="hljs-tag">&lt;<span class="hljs-name">my-own-icon</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">my-own-icon</span>&gt;</span>
 ...
-&lt;my-own-button&gt;&lt;/my-own-button&gt;
+<span class="hljs-tag">&lt;<span class="hljs-name">my-own-button</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">my-own-button</span>&gt;</span>
 ...
-&lt;my-own-whatever&gt;&lt;/my-own-whatever&gt;
+<span class="hljs-tag">&lt;<span class="hljs-name">my-own-whatever</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">my-own-whatever</span>&gt;</span>
 ...
 </code></pre>
 <h2 id="🛠-configuration">🛠 Configuration</h2>
@@ -132,19 +123,19 @@ In the case of &quot;radio&quot; inputs, all elements in the same context will k
 That helps to create the link between each uploader instance and its internal or external entities.
 By default, context will be created automatically, but if you need to bind uploader to some other workflow, you can use the following approach:</p>
 <pre><code class="language-html">...
-&lt;lr-uploader ctx-name=&quot;my-uploading-workflow&quot;&gt;&lt;/lr-uploader&gt;
+<span class="hljs-tag">&lt;<span class="hljs-name">lr-uploader</span> <span class="hljs-attr">ctx-name</span>=<span class="hljs-string">&quot;my-uploading-workflow&quot;</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">lr-uploader</span>&gt;</span>
 ...
-&lt;lr-data-output ctx-name=&quot;my-uploading-workflow&quot;&gt;&lt;/lr-data-output&gt;
+<span class="hljs-tag">&lt;<span class="hljs-name">lr-data-output</span> <span class="hljs-attr">ctx-name</span>=<span class="hljs-string">&quot;my-uploading-workflow&quot;</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">lr-data-output</span>&gt;</span>
 ...
 </code></pre>
 <p>For more information, please visit <a href="https://symbiotejs.org/?context">&quot;context&quot; section</a> in Symbiote.js documentation.</p>
 <h3 id="css-custom-properties">CSS custom properties</h3>
 <p>All configurations could be provided via the set of <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/Using_CSS_custom_properties">CSS-variables</a>:</p>
-<pre><code class="language-css">.my-settings {
-  --cfg-pubkey: &#39;demopublickey&#39;;
-  --cfg-multiple: 1;
-  --cfg-img-only: 0;
-  --cfg-source-list: &#39;local, url, camera, dropbox, gdrive, facebook&#39;;
+<pre><code class="language-css"><span class="hljs-selector-class">.my-settings</span> {
+  <span class="hljs-attr">--cfg-pubkey</span>: <span class="hljs-string">&#x27;demopublickey&#x27;</span>;
+  <span class="hljs-attr">--cfg-multiple</span>: <span class="hljs-number">1</span>;
+  <span class="hljs-attr">--cfg-img-only</span>: <span class="hljs-number">0</span>;
+  <span class="hljs-attr">--cfg-source-list</span>: <span class="hljs-string">&#x27;local, url, camera, dropbox, gdrive, facebook&#x27;</span>;
   ...;
 }
 </code></pre>
@@ -165,17 +156,17 @@ Those tag names could be used as convenient CSS selectors.</p>
 <p>For more details, please follow this <a href="../../blocks/themes/lr-basic/">guide</a>.</p>
 <h2 id="🟢-csp-settings">🟢 CSP settings</h2>
 <p>If the application works with sensitive user data, such as personal photos, it is recommended to increase its security with <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP">CSP settings</a>. Uploader is using <code>Blob</code> URLs for on-the-flight generated images and the stylesheets in some cases, so don&#39;t forget to add <code>blob:</code> source into the CSP settings:</p>
-<pre><code class="language-html">&lt;meta
-  http-equiv=&quot;Content-Security-Policy&quot;
-  content=&quot;style-src &#39;self&#39; blob:; script-src &#39;self&#39;; img-src &#39;self&#39; https://ucarecdn.com blob:;&quot;
-/&gt;
+<pre><code class="language-html"><span class="hljs-tag">&lt;<span class="hljs-name">meta</span>
+  <span class="hljs-attr">http-equiv</span>=<span class="hljs-string">&quot;Content-Security-Policy&quot;</span>
+  <span class="hljs-attr">content</span>=<span class="hljs-string">&quot;style-src &#x27;self&#x27; blob:; script-src &#x27;self&#x27;; img-src &#x27;self&#x27; https://ucarecdn.com blob:;&quot;</span>
+/&gt;</span>
 </code></pre>
 <h2 id="📤-data-output">📤 Data output</h2>
 <p>We provide the dedicated block for the data output purposes - <code>&lt;lr-data-output&gt;</code>.
 This Custom Element can be connected to some workflow context and provide you with convenient data access.</p>
 <p>Here is the code example:</p>
-<pre><code class="language-html">&lt;lr-data-output console fire-events item-template=&quot;&lt;img src=&#39;https://ucarecdn.com/{{uuid}}/-/preview/&#39; /&gt;&quot;&gt;
-&lt;/lr-data-output&gt;
+<pre><code class="language-html"><span class="hljs-tag">&lt;<span class="hljs-name">lr-data-output</span> <span class="hljs-attr">console</span> <span class="hljs-attr">fire-events</span> <span class="hljs-attr">item-template</span>=<span class="hljs-string">&quot;&lt;img src=&#x27;https://ucarecdn.com/{{uuid}}/-/preview/&#x27; /&gt;&quot;</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-name">lr-data-output</span>&gt;</span>
 </code></pre>
 <p>Let&#39;s walk through its attributes:</p>
 <ul>
