@@ -1,3 +1,5 @@
+## [0.9.2](https://github.com/uploadcare/blocks/compare/v0.9.1...v0.9.2) (2022-09-02)
+
 ## [0.9.1](https://github.com/uploadcare/uc-blocks/compare/v0.9.0...v0.9.1) (2022-08-31)
 
 ### Bug Fixes
