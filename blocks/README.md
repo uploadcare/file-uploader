@@ -57,7 +57,7 @@ As you can see, that's quite simple.
 
 ## 🎨 Customize everything!
 
-First of all, please look at [our CSS approach discussion](https://github.com/uploadcare/uc-blocks/discussions/18).
+First of all, please look at [our CSS approach discussion](https://github.com/uploadcare/blocks/discussions/18).
 Please don't hesitate to take part; your opinion is very important to us.
 
 ### Look & feel
