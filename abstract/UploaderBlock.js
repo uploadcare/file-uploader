@@ -19,8 +19,8 @@ export class UploaderBlock extends ActivityBlock {
    * This is Public JS API method. Could be called before block initialization, so we need to delay state interactions
    * until block init.
    *
-   * TODO: If we add more public methods, it is better to use the single queue instead of tonns of private fields per
-   * each method. See https://github.com/uploadcare/uc-blocks/pull/162/
+   * TODO: If we add more public methods, it is better to use the single queue instead of tons of private fields per
+   * each method. See https://github.com/uploadcare/blocks/pull/162/
    *
    * @param {import('@uploadcare/upload-client').Metadata} metadata
    * @public

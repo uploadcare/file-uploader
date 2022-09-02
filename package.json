@@ -5,6 +5,7 @@
   "keywords": [
     "web components",
     "uploadcare",
+    "lighter",
     "file uploader",
     "adaptive image",
     "image optimization",
@@ -14,6 +15,7 @@
     "symbiote.js",
     "upload api client",
     "building blocks",
+    "blocks",
     "lr-blocks",
     "uc-blocks",
     "widget",
@@ -35,7 +37,7 @@
   "type": "module",
   "module": "index.js",
   "sideEffects": ["*.css"],
-  "repository": "https://github.com/uploadcare/uc-blocks/",
+  "repository": "https://github.com/uploadcare/blocks/",
   "files": [
     "{abstract,blocks,solutions,web,utils}/**/*.{js,css,d.ts,d.ts.map}",
     "index.{js,d.ts,d.ts.map}",
