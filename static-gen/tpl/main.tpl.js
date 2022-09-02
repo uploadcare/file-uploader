@@ -22,7 +22,7 @@ export default /*html*/ `<!DOCTYPE html>
         <a href="{{BASE}}solutions/">Solutions</a>
         <a href="{{BASE}}blocks/">Blocks</a>
         <a href="{{BASE}}toc.html">TOC</a>
-        <a href="//github.com/uploadcare/uc-blocks/discussions">Discussions</a>
+        <a href="//github.com/uploadcare/blocks/discussions">Discussions</a>
       </div>
     </nav>
     <main>

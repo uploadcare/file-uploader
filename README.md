@@ -31,7 +31,7 @@
 
 ### Contribution
 
-1. Clone repository: `git clone git@github.com:uploadcare/uc-blocks.git ./`.
+1. Clone repository: `git clone git@github.com:uploadcare/blocks.git ./`.
 2. Run dependencies setup: `npm run setup`.
 3. Start local dev-server: `npm run dev`.
 
@@ -62,6 +62,6 @@ Issues and PRs are welcome. You can provide your feedback or drop us a support r
 
 ## Browse documentation and live demos
 
-https://uploadcare.github.io/uc-blocks/
+https://uploadcare.github.io/blocks/
 
 > All the source code in demos is accessible and works in raw mode (as is), so you can use your browser developer tools to discover it in detail.
