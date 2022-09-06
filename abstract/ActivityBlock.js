@@ -5,7 +5,7 @@ const ACTIVE_ATTR = 'active';
 const ACTIVE_PROP = '___ACTIVITY_IS_ACTIVE___';
 
 export class ActivityBlock extends Block {
-  ctxInit = ACTIVITY_BLOCK_CTX;
+  ctxInit = structuredClone(ACTIVITY_BLOCK_CTX);
 
   initCallback() {
     super.initCallback();

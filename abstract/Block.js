@@ -8,7 +8,7 @@ const TAG_PREFIX = 'lr-';
 export class Block extends BaseComponent {
   allowCustomTemplate = true;
 
-  ctxInit = BLOCK_CTX;
+  ctxInit = structuredClone(BLOCK_CTX);
   init$ = this.ctxInit;
 
   /**
