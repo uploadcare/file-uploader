@@ -520,9 +520,12 @@ export class EditorImageCropper extends Block {
     }, 0);
   }
 
-  destroyCallback() {
-    super.destroyCallback();
+  disconnectedCallback() {
+    super.disconnectedCallback();
+
     this._observer?.disconnect();
+    this._commitDebounced.cancel();
+    this._handleResizeDebounced.cancel();
   }
 }
 

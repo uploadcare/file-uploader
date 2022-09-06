@@ -72,6 +72,21 @@ export class EditorFilterControl extends EditorButtonControl {
     }
   }
 
+  connectedCallback() {
+    super.connectedCallback();
+
+    this._observer = new window.IntersectionObserver(this._observerCallback.bind(this), {
+      threshold: [0, 1],
+    });
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+
+    this._observer?.disconnect();
+    this._cancelPreload?.();
+  }
+
   initCallback() {
     super.initCallback();
 
@@ -92,10 +107,6 @@ export class EditorFilterControl extends EditorButtonControl {
       this._filter = filter;
       this.$.isOriginal = filter === FAKE_ORIGINAL_FILTER;
       this.$.icon = this.$.isOriginal ? 'original' : 'slider';
-    });
-
-    this._observer = new window.IntersectionObserver(this._observerCallback.bind(this), {
-      threshold: [0, 1],
     });
 
     let originalUrl = this.$['*originalUrl'];
@@ -140,12 +151,6 @@ export class EditorFilterControl extends EditorButtonControl {
         }
       }
     });
-  }
-
-  destroyCallback() {
-    super.destroyCallback();
-    this._observer?.disconnect();
-    this._cancelPreload && this._cancelPreload();
   }
 }
 

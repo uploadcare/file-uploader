@@ -26,6 +26,23 @@ export class SliderUi extends Block {
     this.setAttribute('with-effects', '');
   }
 
+  connectedCallback() {
+    super.connectedCallback();
+
+    this._observer = new ResizeObserver(() => {
+      this._updateSteps();
+      let value = parseInt(this.ref['input-el'].value, 10);
+      this._updateValue(value);
+    });
+    this._observer.observe(this);
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+
+    this._observer?.disconnect();
+  }
+
   initCallback() {
     super.initCallback();
 
@@ -62,13 +79,6 @@ export class SliderUi extends Block {
     });
 
     this._updateSteps();
-
-    this._observer = new ResizeObserver(() => {
-      this._updateSteps();
-      let value = parseInt(this.ref['input-el'].value, 10);
-      this._updateValue(value);
-    });
-    this._observer.observe(this);
 
     this._thumbSize = parseInt(window.getComputedStyle(this).getPropertyValue('--l-thumb-size'), 10);
 
@@ -161,10 +171,6 @@ export class SliderUi extends Block {
     stepsEl.innerHTML = '';
     stepsEl.appendChild(fr);
     this._stepsCount = count;
-  }
-
-  destroyCallback() {
-    this._observer?.disconnect();
   }
 }
 SliderUi.template = /*html*/ `

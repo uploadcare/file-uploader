@@ -238,11 +238,16 @@ export class FileItem extends UploaderBlock {
     FileItem.activeInstances.add(this);
   }
 
+  disconnectedCallback() {
+    super.disconnectedCallback();
+
+    this._observer?.disconnect();
+    clearTimeout(this._thumbTimeoutId);
+  }
+
   destroyCallback() {
     super.destroyCallback();
     FileItem.activeInstances.delete(this);
-    this._observer?.disconnect();
-    clearTimeout(this._thumbTimeoutId);
   }
 
   async upload() {
