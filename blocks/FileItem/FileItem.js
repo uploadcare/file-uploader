@@ -240,13 +240,16 @@ export class FileItem extends UploaderBlock {
 
   destroyCallback() {
     super.destroyCallback();
+    this.__abortController?.abort();
+    this.__abortController = null;
+
     FileItem.activeInstances.delete(this);
     this._observer?.disconnect();
     clearTimeout(this._thumbTimeoutId);
   }
 
   async upload() {
-    if (this.hasAttribute('loaded') || this.entry.getValue('uuid')) {
+    if (this.hasAttribute('loaded') || this.entry.getValue('uuid') || this.entry.getValue('isUploading')) {
       return;
     }
     let data = this.getOutputData((dataItem) => {
@@ -269,6 +272,7 @@ export class FileItem extends UploaderBlock {
       this.$.progressUnknown = true;
     }
     try {
+      this.__abortController = new AbortController();
       let fileInfo = await uploadFile(this.file || this.externalUrl, {
         ...this.getUploadClientOptions(),
         fileName: this.entry.getValue('fileName'),
@@ -279,6 +283,7 @@ export class FileItem extends UploaderBlock {
           }
           this.$.progressUnknown = !progress.isComputable;
         },
+        signal: this.__abortController.signal,
       });
       this.entry.setValue('isUploading', false);
       this.setAttribute('loaded', '');
@@ -295,14 +300,20 @@ export class FileItem extends UploaderBlock {
         cdnUrl: fileInfo.cdnUrl,
       });
     } catch (error) {
-      this.$.badgeIcon = 'badge-error';
+      this.__abortController?.abort();
+      this.__abortController = null;
+
       this.entry.setValue('isUploading', false);
       this.$.progressValue = 0;
-      this.setAttribute('error', '');
       this.removeAttribute('uploading');
       this.entry.setValue('uploadProgress', 0);
-      // this.entry.setValue('uploadError', error);
-      this.entry.setValue('uploadErrorMsg', error?.toString() || 'Upload error');
+
+      if (!error?.isCancel) {
+        this.$.badgeIcon = 'badge-error';
+        this.setAttribute('error', '');
+        // this.entry.setValue('uploadError', error);
+        this.entry.setValue('uploadErrorMsg', error?.toString() || 'Upload error');
+      }
     }
   }
 }
