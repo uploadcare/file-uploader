@@ -60,4 +60,5 @@ lr-message-box .heading button:active {
 lr-message-box .msg {
   padding: var(--gap-max);
   padding-top: 0;
+  text-align: left;
 }
