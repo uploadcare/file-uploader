@@ -10,7 +10,7 @@ import { UPLOADER_BLOCK_CTX } from './CTX.js';
 import { EVENT_TYPES, EventData, EventManager } from './EventManager.js';
 
 export class UploaderBlock extends ActivityBlock {
-  ctxInit = UPLOADER_BLOCK_CTX;
+  ctxInit = structuredClone(UPLOADER_BLOCK_CTX);
 
   /** @private */
   __initialUploadMetadata = null;

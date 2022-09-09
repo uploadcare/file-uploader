@@ -159,7 +159,7 @@ export class UploadList extends UploaderBlock {
       addMoreBtnHidden: exact && !this.getCssData('--cfg-multiple'),
     });
 
-    if (!this.getCssData('--cfg-confirm-upload') && fitCountRestrictions && allUploaded) {
+    if (filesCount > 0 && !this.getCssData('--cfg-confirm-upload') && fitCountRestrictions && allUploaded) {
       this.$.onDone();
     }
   }
@@ -206,8 +206,8 @@ UploadList.template = /*html*/ `
   <slot name="empty"><span l10n="no-files"></span></slot>
 </div>
 
-<div 
-  class="files" 
+<div
+  class="files"
   repeat="*uploadList"
   repeat-item-tag="lr-file-item"></div>
 
