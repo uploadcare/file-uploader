@@ -1,21 +1,21 @@
-export const BLOCK_CTX = {
+export const blockCtx = () => ({
   '*ctxTargetsRegistry': new Set(),
-};
+});
 
-export const ACTIVITY_BLOCK_CTX = {
-  ...BLOCK_CTX,
+export const activityBlockCtx = () => ({
+  ...blockCtx(),
   '*currentActivity': '',
   '*currentActivityParams': {},
   '*history': [],
   '*activityCaption': '',
   '*activityIcon': '',
-};
+});
 
-export const UPLOADER_BLOCK_CTX = {
-  ...ACTIVITY_BLOCK_CTX,
+export const uploaderBlockCtx = () => ({
+  ...activityBlockCtx(),
   '*commonProgress': 0,
   '*uploadList': [],
   '*outputData': null,
   '*focusedEntry': null,
   '*uploadMetadata': null,
-};
+});
