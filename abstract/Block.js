@@ -1,14 +1,14 @@
 import { BaseComponent, Data } from '@symbiotejs/symbiote';
 import { applyTemplateData } from '../utils/applyTemplateData.js';
 import { l10nProcessor } from './l10nProcessor.js';
-import { BLOCK_CTX } from './CTX.js';
+import { blockCtx } from './CTX.js';
 
 const TAG_PREFIX = 'lr-';
 
 export class Block extends BaseComponent {
   allowCustomTemplate = true;
 
-  ctxInit = structuredClone(BLOCK_CTX);
+  ctxInit = blockCtx();
   init$ = this.ctxInit;
 
   /**
