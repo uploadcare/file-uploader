@@ -1,6 +1,6 @@
 {
   "name": "@uploadcare/blocks",
-  "version": "0.9.3",
+  "version": "0.9.4",
   "description": "Building blocks for Uploadcare products integration",
   "keywords": [
     "web components",
