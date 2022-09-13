@@ -1,3 +1,10 @@
+## [0.9.4](https://github.com/uploadcare/blocks/compare/v0.9.3...v0.9.4) (2022-09-13)
+
+### Bug Fixes
+
+- do not use `structuredClone` due to unsupport in safari <= 15.3 ([#257](https://github.com/uploadcare/blocks/issues/257)) ([8708b08](https://github.com/uploadcare/blocks/commit/8708b08483b220e69d8a58be3b9ebad68664fc75))
+- **message-box:** specify text-align for message ([#254](https://github.com/uploadcare/blocks/issues/254)) ([2561eb6](https://github.com/uploadcare/blocks/commit/2561eb6b2441082826082ac7353892dd1b81130d))
+
 ## [0.9.3](https://github.com/uploadcare/blocks/compare/v0.9.2...v0.9.3) (2022-09-09)
 
 ### Bug Fixes
