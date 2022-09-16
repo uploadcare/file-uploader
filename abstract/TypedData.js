@@ -40,7 +40,7 @@ export class TypedData {
       return;
     }
     let pDesc = this.__typedSchema[prop];
-    if (value?.constructor === pDesc.type || (pDesc.nullable && value === null)) {
+    if (value?.constructor === pDesc.type || value instanceof pDesc.type || (pDesc.nullable && value === null)) {
       this.__data.pub(prop, value);
       return;
     }
