@@ -6,11 +6,11 @@ import { imageMimeTypes } from '../utils/imageMimeTypes.js';
 import { uploadEntrySchema } from './uploadEntrySchema.js';
 import { customUserAgent } from '../blocks/utils/userAgent.js';
 import { TypedCollection } from './TypedCollection.js';
-import { UPLOADER_BLOCK_CTX } from './CTX.js';
+import { uploaderBlockCtx } from './CTX.js';
 import { EVENT_TYPES, EventData, EventManager } from './EventManager.js';
 
 export class UploaderBlock extends ActivityBlock {
-  ctxInit = UPLOADER_BLOCK_CTX;
+  ctxInit = uploaderBlockCtx();
 
   /** @private */
   __initialUploadMetadata = null;

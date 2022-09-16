@@ -1,11 +1,11 @@
 import { Block } from './Block.js';
-import { ACTIVITY_BLOCK_CTX } from './CTX.js';
+import { activityBlockCtx } from './CTX.js';
 
 const ACTIVE_ATTR = 'active';
 const ACTIVE_PROP = '___ACTIVITY_IS_ACTIVE___';
 
 export class ActivityBlock extends Block {
-  ctxInit = ACTIVITY_BLOCK_CTX;
+  ctxInit = activityBlockCtx();
 
   initCallback() {
     super.initCallback();

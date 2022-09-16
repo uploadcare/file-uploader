@@ -1,6 +1,6 @@
 lr-upload-list {
-  display: grid;
-  grid-template-rows: 1fr min-content;
+  display: flex;
+  flex-direction: column;
 
   /* height: 100%; - this breaks inner modal layout height in Safari */
   max-height: 100%;
