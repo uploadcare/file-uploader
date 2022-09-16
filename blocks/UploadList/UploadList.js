@@ -67,9 +67,6 @@ export class UploadList extends UploaderBlock {
     '--cfg-source-list': '',
   };
 
-  /** @private */
-  _renderMap = Object.create(null);
-
   /**
    * @private
    * @returns {{ passed: Boolean; tooFew: Boolean; tooMany: Boolean; exact: Boolean; min: Number; max: Number }}
