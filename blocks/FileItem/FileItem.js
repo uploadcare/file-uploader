@@ -27,6 +27,8 @@ export class FileItem extends UploaderBlock {
   /** @private */
   _debouncedGenerateThumb = debounce(this._generateThumbnail.bind(this), 100);
   /** @private */
+  _debouncedCalculateState = debounce(this._calculateState.bind(this), 0);
+  /** @private */
   _renderedOnce = false;
 
   init$ = {
@@ -101,6 +103,22 @@ export class FileItem extends UploaderBlock {
   }
 
   /** @private */
+  _calculateState() {
+    let entry = this._entry;
+    let state = FileItemState.IDLE;
+
+    if (entry.getValue('uploadError') || entry.getValue('validationErrorMsg')) {
+      state = FileItemState.FAILED;
+    } else if (entry.getValue('isUploading')) {
+      state = FileItemState.UPLOADING;
+    } else if (entry.getValue('uuid')) {
+      state = FileItemState.FINISHED;
+    }
+
+    this.$.state = state;
+  }
+
+  /** @private */
   async _generateThumbnail() {
     let entry = this._entry;
 
@@ -169,10 +187,10 @@ export class FileItem extends UploaderBlock {
     }
 
     this._subEntry('validationErrorMsg', (validationErrorMsg) => {
+      this._debouncedCalculateState();
       if (!validationErrorMsg) {
         return;
       }
-      this.$.state = FileItemState.FAILED;
       let caption =
         this.l10n('validation-error') +
         ': ' +
@@ -180,25 +198,18 @@ export class FileItem extends UploaderBlock {
       this._showMessage('error', caption, validationErrorMsg);
     });
 
-    this._subEntry('uploadErrorMsg', (uploadError) => {
+    this._subEntry('uploadError', (uploadError) => {
+      this._debouncedCalculateState();
       if (!uploadError) {
         return;
       }
       let caption =
         this.l10n('upload-error') + ': ' + (this._entry.getValue('file')?.name || this._entry.vetValue('externalUrl'));
-      this._showMessage('error', caption, uploadError);
+      this._showMessage('error', caption, uploadError.message);
     });
 
-    this._subEntry('isUploading', (isUploading) => {
-      if (isUploading) {
-        this.$.state = FileItemState.UPLOADING;
-      }
-    });
-
-    this._subEntry('uploadErrorMsg', (uploadErrorMsg) => {
-      if (uploadErrorMsg) {
-        this.$.state = FileItemState.FAILED;
-      }
+    this._subEntry('isUploading', () => {
+      this._debouncedCalculateState();
     });
 
     this._subEntry('uploadProgress', (uploadProgress) => {
@@ -224,8 +235,8 @@ export class FileItem extends UploaderBlock {
     });
 
     this._subEntry('uuid', (uuid) => {
+      this._debouncedCalculateState();
       if (uuid) {
-        this.$.state = FileItemState.FINISHED;
         this._debouncedGenerateThumb();
       }
     });
@@ -251,7 +262,6 @@ export class FileItem extends UploaderBlock {
     });
 
     this.sub('state', (state) => {
-      console.log('state', state);
       this.set$({
         isFailed: state === FileItemState.FAILED,
         isUploading: state === FileItemState.UPLOADING,
@@ -337,9 +347,10 @@ export class FileItem extends UploaderBlock {
       })
     );
 
-    this.$.state = FileItemState.UPLOADING;
+    this._debouncedCalculateState();
     entry.setValue('isUploading', true);
     entry.setValue('uploadError', null);
+    entry.setValue('validationErrorMsg', null);
 
     if (!entry.getValue('file') && entry.getValue('externalUrl')) {
       this.$.progressUnknown = true;
@@ -361,7 +372,7 @@ export class FileItem extends UploaderBlock {
         signal: abortController.signal,
       });
       if (entry === this._entry) {
-        this.$.state = FileItemState.FINISHED;
+        this._debouncedCalculateState();
       }
       entry.setMultipleValues({
         fileInfo,
@@ -379,7 +390,7 @@ export class FileItem extends UploaderBlock {
       entry.setValue('uploadProgress', 0);
 
       if (entry === this._entry) {
-        this.$.state = error?.isCancel ? FileItemState.IDLE : FileItemState.FAILED;
+        this._debouncedCalculateState();
       }
 
       if (!error?.isCancel) {
