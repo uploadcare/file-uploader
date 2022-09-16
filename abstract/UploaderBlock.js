@@ -131,7 +131,7 @@ export class UploaderBlock extends ActivityBlock {
   }
 
   cancelFlow() {
-    if (this.sourceList?.length === 1) {
+    if (this.sourceList?.length === 1 || !this.$['*uploadList']?.length) {
       this.$['*currentActivity'] = null;
       this.setForCtxTarget('lr-modal', '*modalActive', false);
     } else {
