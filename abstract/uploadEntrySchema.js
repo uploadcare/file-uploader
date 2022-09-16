@@ -95,4 +95,14 @@ export const uploadEntrySchema = Object.freeze({
     type: Boolean,
     value: false,
   },
+  abortController: {
+    type: AbortController,
+    value: null,
+    nullable: true,
+  },
+  thumbUrl: {
+    type: String,
+    value: null,
+    nullable: true,
+  },
 });

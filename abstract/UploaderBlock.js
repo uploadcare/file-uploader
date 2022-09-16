@@ -148,7 +148,12 @@ export class UploaderBlock extends ActivityBlock {
       let uploadCollection = new TypedCollection({
         typedSchema: uploadEntrySchema,
         watchList: ['uploadProgress', 'uuid', 'uploadErrorMsg', 'validationErrorMsg', 'cdnUrlModifiers'],
-        handler: (entries) => {
+        handler: (entries, added, removed) => {
+          for (let entry of removed) {
+            entry?.getValue('abortController')?.abort();
+            entry?.setValue('abortController', null);
+            URL.revokeObjectURL(entry?.getValue('thumbUrl'));
+          }
           this.$['*uploadList'] = entries.map((uid) => {
             return { uid };
           });

@@ -1,7 +1,7 @@
 /**
  * @param {function} callback
  * @param {number} wait
- * @returns {function}
+ * @returns {function & { cancel: function }}
  */
 export function debounce(callback, wait) {
   let timer;
