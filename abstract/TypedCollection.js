@@ -6,7 +6,7 @@ export class TypedCollection {
    * @param {Object} options
    * @param {Object<string, { type: any; value: any }>} options.typedSchema
    * @param {String[]} [options.watchList]
-   * @param {(list: string[]) => void} [options.handler]
+   * @param {(list: string[], added: Set<any>, removed: Set<any>) => void} [options.handler]
    * @param {String} [options.ctxName]
    */
   constructor(options) {
@@ -32,7 +32,7 @@ export class TypedCollection {
     this.__watchList = options.watchList || [];
     /**
      * @private
-     * @type {(list: string[]) => void}
+     * @type {(list: string[], added: Set<any>, removed: Set<any>) => void}
      */
     this.__handler = options.handler || null;
     /**
@@ -50,6 +50,16 @@ export class TypedCollection {
      * @type {Set<string>}
      */
     this.__items = new Set();
+    /**
+     * @private
+     * @type {Set<any>}
+     */
+    this.__removed = new Set();
+    /**
+     * @private
+     * @type {Set<any>}
+     */
+    this.__added = new Set();
 
     let changeMap = Object.create(null);
 
@@ -82,7 +92,11 @@ export class TypedCollection {
     }
     /** @private */
     this.__notifyTimeout = window.setTimeout(() => {
-      this.__handler?.([...this.__items]);
+      let added = this.__added;
+      let removed = this.__removed;
+      this.__added = new Set();
+      this.__removed = new Set();
+      this.__handler?.([...this.__items], added, removed);
     });
   }
 
@@ -96,6 +110,7 @@ export class TypedCollection {
       item.setValue(prop, init[prop]);
     }
     this.__data.add(item.uid, item);
+    this.__added.add(item);
     this.__watchList.forEach((propName) => {
       if (!this.__subsMap[item.uid]) {
         this.__subsMap[item.uid] = [];
@@ -142,6 +157,7 @@ export class TypedCollection {
 
   /** @param {String} id */
   remove(id) {
+    this.__removed.add(this.__data.read(id));
     this.__items.delete(id);
     this.notify();
     this.__data.pub(id, null);
