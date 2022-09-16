@@ -94,8 +94,8 @@ export class TypedCollection {
     this.__notifyTimeout = window.setTimeout(() => {
       let added = this.__added;
       let removed = this.__removed;
-      this.__added = new Set();
-      this.__removed = new Set();
+      this.__added.clear();
+      this.__removed.clear();
       this.__handler?.([...this.__items], added, removed);
     });
   }
