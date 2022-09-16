@@ -1,17 +1,17 @@
 # Adaptive Image
 
-> Universal web component for the efficient image representation on any page.
-> It generates a set of URLs for the initial image source with the desired parameters.
+Universal web component for the efficient image representation on any page.
+It generates a set of URLs for the initial image source with the desired parameters.
 
-<re-htm src="./demo.htm"></re-htm>
-
-## Solution benefits
+## 💎 Solution benefits
 
 - No need to initiate something or to scan a document: the browser takes care of it.
 - Uniform integration for most of the modern stacks.
 - Modern standards support: `srcset`, native lazy loading, breakpoints, etc...
 - Creates adaptive background images if needed.
 - You need HTML and CSS only to set it up.
+
+<re-htm src="./demo.htm"></re-htm>
 
 ## Quick start
 
@@ -30,7 +30,7 @@ lr-img {
 }
 ```
 
-A public key is necessary for the Proxy links generation if a custom proxy name is not used. You can obtain the public key key in your [Uploadcare project's dashboard](https://app.uploadcare.com/projects/-/api-keys/).
+A public key is necessary for the Proxy links generation if a custom proxy name is not used. You can obtain the public key in your <a target="_blank" href="https://app.uploadcare.com/projects/-/api-keys/">Uploadcare project's dashboard</a>.
 
 Then use `<lr-img>` tag for the images in your HTML templates:
 
@@ -43,7 +43,7 @@ That's it!
 ## Workflow
 
 1. Web component initiating and reading it's settings, including the source image path.
-2. Component uses [Uploadcare Proxy](https://uploadcare.com/docs/delivery/proxy/) service to upload the source image if that was not done before.
+2. Component uses <a target="_blank" href="https://uploadcare.com/docs/delivery/proxy/">Uploadcare Proxy</a> service to upload the source image if that was not done before.
 3. Image component generates all necessary src sets for the resulting image and renders the `img` tag into the DOM.
 
 ## Fallback
@@ -68,7 +68,7 @@ After initiating, if JavaScript is enabled in the browser, that will be transfor
 
 ## Lazy loading
 
-[Native lazy loading](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe#attr-loading) is enabled by default for all image components. You can disable it or use a custom one based on [IntersectionObserver](https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API).
+<a target="_blank" href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe#attr-loading">Native lazy loading</a> is enabled by default for all image components. You can disable it or use a custom one based on <a target="_blank" href="https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API">IntersectionObserver</a>.
 
 Disable:
 
@@ -130,7 +130,7 @@ You can provide some transformation settings for the single image or the set of 
 <lr-img class="invert" src="SOURCE_IMAGE_PATH"></lr-img>
 ```
 
-Operations description syntax is the same as used in [Image processing API](https://uploadcare.com/docs/transformations/image/). More examples:
+Operations description syntax is the same as used in <a target="_blank" href="https://uploadcare.com/docs/transformations/image/">Image processing API</a>. More examples:
 
 ```html
 <style>
@@ -143,11 +143,11 @@ Operations description syntax is the same as used in [Image processing API](http
 </style>
 ```
 
-As you can see, transformation definitions are separated with `/-/` symbols, just like you can use in the [Image processing API](https://uploadcare.com/docs/transformations/image/).
+As you can see, transformation definitions are separated with `/-/` symbols, just like you can use in the <a target="_blank" href="https://uploadcare.com/docs/transformations/image/">Image processing API</a>.
 
 ## Background mode
 
-To use an adaptive image as an element's background, you can use `is-background-for` attribute with the desired element's CSS selector in it's value:
+To use an adaptive image as an element's background, you can use `is-background-for` attribute with the desired element's CSS selector in its value:
 
 ```html
 <style>
