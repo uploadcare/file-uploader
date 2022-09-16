@@ -1,13 +1,11 @@
-<h2>Live demo:</h2>
-
-<h3>Multiple sources:</h3>
+<h2>Multiple sources:</h2>
 <lr-live-html>
   <!-- Uploader script connection: -->
-  <script src="./index.js" type="module"></script>
+  <script src="./inline/index.js" type="module"></script>
 
   <!-- CSS context properties: -->
   <style>
-    @import url(./index.css);
+    @import url(./inline/index.css);
 
     lr-file-uploader-inline {
       width: 100%;
@@ -25,14 +23,14 @@
 </lr-live-html>
 
 
-<h3>Single source:</h3>
+<h2>Single source:</h2>
 <lr-live-html>
   <!-- Uploader script connection: -->
-  <script src="./index.js" type="module"></script>
+  <script src="./inline/index.js" type="module"></script>
 
   <!-- CSS context properties: -->
   <style>
-    @import url(./index.css);
+    @import url(./inline/index.css);
 
     lr-file-uploader-inline[current-activity="details"],
     lr-file-uploader-inline[current-activity="cloud-image-edit"] {

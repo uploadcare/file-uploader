@@ -1,5 +1,5 @@
 export default /*css*/ `
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;700&display=swap');
 
 :root {
   --clr-bg: rgb(31 29 29);
@@ -56,10 +56,10 @@ nav {
 }
 nav > div {
   display: flex;
-  justify-content: space-around;
+  justify-content: end;
   align-items: center;
   width: 100%;
-  max-width: 1080px;
+  max-width: 1300px;
 }
 nav a {
   display: block;
@@ -148,4 +148,83 @@ td {
 tr:hover {
   background: rgba(255, 255, 255, .1);
 }
+
+.sidebar-wrapper {
+  width: 14rem;
+  padding-right: 1rem;
+}
+
+.sidebar {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  align-self: flex-start;
+  top: 79px;
+}
+
+.sidebar a {
+  color: rgb(224 253 255);
+  text-decoration: none;
+}
+
+.menu-section {
+  margin-bottom: 1rem;
+}
+
+.menu-item {
+  padding: .5rem 0;
+}
+
+.menu-item:hover  {
+  color: rgba(186,186,186,.9);
+}
+
+.current {
+  color: aquamarine;
+}
+
+.level-1 {
+  padding-left: .5rem; 
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.level-2 {
+  padding-left: 1.5rem;
+  font-weight: 300;
+  cursor: pointer;
+}
+
+.level-2 .current {
+  list-style-type: disc;
+}
+
+.arrow-top {
+  cursor: pointer;
+  position: fixed;
+  bottom: 15px;
+  right: 15px;
+}
+
+.no-link {
+  cursor: auto;
+  color: rgb(224 253 255) !important;
+}
+
+a[target="_blank"]:after {
+  content: url(/assets/media/external-link-icon.svg);
+  margin-left: .1em;
+  position: relative;
+  bottom: 2px;
+}
+
+.github:before {
+  content: url(/assets/media/github-icon.svg);
+  margin-right: .1em;
+  position: relative;
+  top: 1px;
+  vertical-align: sub;
+}
+
 `;
