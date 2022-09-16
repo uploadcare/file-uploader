@@ -1,10 +1,12 @@
 /**
- * @param {function} callback
+ * @template {Function} T
+ * @param {T} callback
  * @param {number} wait
- * @returns {function & { cancel: function }}
+ * @returns {T & { cancel: function }}
  */
 export function debounce(callback, wait) {
   let timer;
+  /** @type {any} */
   let debounced = (...args) => {
     clearTimeout(timer);
     timer = setTimeout(() => callback(...args), wait);
