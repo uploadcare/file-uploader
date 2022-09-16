@@ -1,4 +1,3 @@
-import { Data } from '@symbiotejs/symbiote';
 import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 import { UiConfirmation } from '../ConfirmationDialog/ConfirmationDialog.js';
@@ -22,12 +21,8 @@ export class UploadList extends UploaderBlock {
       this.initFlow(true);
     },
     onUpload: () => {
-      this.set$({
-        uploadBtnHidden: false,
-        doneBtnHidden: true,
-        uploadBtnDisabled: true,
-        '*uploadTrigger': {},
-      });
+      this.$['*uploadTrigger'] = {};
+      this._updateUploadsState();
     },
     onDone: () => {
       this.set$({
@@ -150,7 +145,8 @@ export class UploadList extends UploaderBlock {
       doneBtnDisabled: !fitCountRestrictions || !fitValidation,
 
       uploadBtnHidden: allUploaded,
-      uploadBtnDisabled: summary.uploading > 0 || !fitCountRestrictions || !fitValidation,
+      uploadBtnDisabled:
+        summary.uploading + summary.uploaded === summary.total || !fitCountRestrictions || !fitValidation,
 
       addMoreBtnDisabled: tooMany || exact,
       addMoreBtnHidden: exact && !this.getCssData('--cfg-multiple'),
