@@ -383,7 +383,7 @@ export class FileItem extends UploaderBlock {
       }
 
       if (!error?.isCancel) {
-        entry.setValue('uploadErrorMsg', error?.toString() || 'Upload error');
+        entry.setValue('uploadError', error);
       }
     }
   }

@@ -12,7 +12,6 @@ import { UploadcareFile } from '@uploadcare/upload-client';
  * @property {Boolean} isImage
  * @property {String} mimeType
  * @property {Error} uploadError
- * @property {String} uploadErrorMsg
  * @property {String} validationErrorMsg
  * @property {String} ctxName
  * @property {String} cdnUrl
@@ -62,11 +61,6 @@ export const uploadEntrySchema = Object.freeze({
   uploadError: {
     // TODO: there could be Error or UploadcareClientError
     type: Error,
-    value: null,
-    nullable: true,
-  },
-  uploadErrorMsg: {
-    type: String,
     value: null,
     nullable: true,
   },
