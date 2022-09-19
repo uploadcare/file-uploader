@@ -151,10 +151,6 @@ export class UploadList extends UploaderBlock {
       addMoreBtnDisabled: tooMany || exact,
       addMoreBtnHidden: exact && !this.getCssData('--cfg-multiple'),
     });
-
-    if (filesCount > 0 && !this.getCssData('--cfg-confirm-upload') && fitCountRestrictions && allUploaded) {
-      this.$.onDone();
-    }
   }
 
   initCallback() {
