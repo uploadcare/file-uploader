@@ -1,6 +1,6 @@
 # Advanced customization: build your own uploading flow
 
-If our pre-built <a href="/components/file-uploader/">uploader solution</a> isn't enough for you, meet our highly customizable blocks.
+If our pre-built <a href="/solutions/file-uploader/">uploader solution</a> isn't enough for you, meet our highly customizable blocks.
 
 ## Blocks list:
 
@@ -39,7 +39,7 @@ If our pre-built <a href="/components/file-uploader/">uploader solution</a> isn'
 There are so many use cases and many workflows for file uploading.
 Is it possible to create an uploading solution to fit them all?
 
-We believe it is — with the power of <a target="_blank" href="https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_custom_elements">Custom Elements standard</a> and our widget-purpose-specific open-source <a target="_blank" href="https://github.com/symbiotejs/symbiote.js">Symbiote.js</a> library.
+We believe it is — with the power of <a target="_blank" href="https://developer.mozilla.org/en-US/docs/Web/Web_solutions/Using_custom_elements">Custom Elements standard</a> and our widget-purpose-specific open-source <a target="_blank" href="https://github.com/symbiotejs/symbiote.js">Symbiote.js</a> library.
 
 You can use high-level, simple HTML and CSS to customize layouts and define the most popular scenarios.
 You can create your own blocks from scratch with JavaScript using our super-duper <a target="_blank" href="https://github.com/uploadcare/blocks/blob/main/docs/block-component/index.htm">BlockComponent base-class</a>.
@@ -49,7 +49,7 @@ You can create your own blocks from scratch with JavaScript using our super-dupe
 - Easy to use within any modern toolchain: framework, library, or CMS.
 - The lifecycle is controlled from the inside; you don't need to manage it in your code.
 - You can easily switch between encapsulated secure styling and common document styles.
-- Using <a target="_blank" href="https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_shadow_DOM">Shadow DOM</a> — is up to you.
+- Using <a target="_blank" href="https://developer.mozilla.org/en-US/docs/Web/Web_solutions/Using_shadow_DOM">Shadow DOM</a> — is up to you.
 - It's easy to set any customized data context for the blocks to control them in detail.
 - Total flexibility.
 - No heavy dependencies and no bandwidth - and performance-penalizing libraries are necessary.
@@ -62,7 +62,7 @@ You can create your own blocks from scratch with JavaScript using our super-dupe
 
 ## 🏠 Integration basics
 
-We use the <a target="_blank" href="https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_custom_elements">Custom Elements</a> standard to make integration seamless.
+We use the <a target="_blank" href="https://developer.mozilla.org/en-US/docs/Web/Web_solutions/Using_custom_elements">Custom Elements</a> standard to make integration seamless.
 That allows us to use simple HTML code to define layouts and place our widgets into other templates or other markups. Custom Elements are compatible with most modern technologies and provide a consistent workflow. Please, check out the list of high-level tests passed with a set of modern frontend frameworks and libraries: <a target="_blank" href="https://custom-elements-everywhere.com/">Custom Elements Everywhere</a>
 
 We also provide a set of <a target="_blank" href="https://github.com/uploadcare/upload-blocks-examples">reference integrations</a>.

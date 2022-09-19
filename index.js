@@ -36,10 +36,10 @@ export { Select } from './blocks/Select/Select.js';
 export { Video } from './blocks/Video/Video.js';
 
 // Solutions:
-export { FileUploaderRegular } from './components/file-uploader/regular/FileUploaderRegular.js';
-export { FileUploaderMinimal } from './components/file-uploader/minimal/FileUploaderMinimal.js';
-export { FileUploaderInline } from './components/file-uploader/inline/FileUploaderInline.js';
-export * from './components/cloud-image-editor/CloudEditor.js';
+export { FileUploaderRegular } from './solutions/file-uploader/regular/FileUploaderRegular.js';
+export { FileUploaderMinimal } from './solutions/file-uploader/minimal/FileUploaderMinimal.js';
+export { FileUploaderInline } from './solutions/file-uploader/inline/FileUploaderInline.js';
+export * from './solutions/cloud-image-editor/CloudEditor.js';
 
 // Utils:
 export { registerBlocks } from './abstract/registerBlocks.js';

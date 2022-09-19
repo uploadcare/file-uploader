@@ -34,9 +34,9 @@ export default /*html*/ `<!DOCTYPE html>
             </div>
             <div class="menu-section">
                 <div class="menu-item level-1 no-link">Components</div>
-                <a href="/components/file-uploader/"><div class="menu-item level-2">File Uploader</div></a>
-                <a href="/components/adaptive-image/"><div class="menu-item level-2">Adaptive image</div></a>
-                <a href="/components/cloud-image-editor/"><div class="menu-item level-2">Image editor</div></a>
+                <a href="/solutions/file-uploader/"><div class="menu-item level-2">File Uploader</div></a>
+                <a href="/solutions/adaptive-image/"><div class="menu-item level-2">Adaptive image</div></a>
+                <a href="/solutions/cloud-image-editor/"><div class="menu-item level-2">Image editor</div></a>
             </div>
             <div class="menu-section">
                 <a href="/blocks/"><div class="menu-item level-1">Customization</div></a>

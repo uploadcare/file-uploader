@@ -29,7 +29,7 @@ window.addEventListener('LR_DATA_OUTPUT', (e) => {
 });
 ```
 
-More event types you can find on the [file uploader's page](/components/file-uploader/).
+More event types you can find on the [file uploader's page](/solutions/file-uploader/).
 
 ## Customization
 
@@ -58,7 +58,7 @@ Then just connect it to the integrated solution:
 <lr-file-uploader-regular css-src="./my-custom-styles.css"> </lr-file-uploader-regular>
 ```
 
-For example, this is the list of pre-defined parameters used by default in our [uploader](/components/file-uploader) builds:
+For example, this is the list of pre-defined parameters used by default in our [uploader](/solutions/file-uploader) builds:
 
 ```css
 :where(.lr-wgt-cfg, .lr-wgt-common),

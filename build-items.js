@@ -33,46 +33,46 @@ export const buildItems = [
 
   // file-uploader-regular
   {
-    in: './components/file-uploader/regular/index.js',
+    in: './solutions/file-uploader/regular/index.js',
     out: './web/file-uploader-regular.min.js',
     minify: true,
     minifyHtml: true,
   },
   {
-    in: './components/file-uploader/regular/index.css',
+    in: './solutions/file-uploader/regular/index.css',
     out: './web/file-uploader-regular.min.css',
     minify: true,
   },
 
   // file-uploader-inline
   {
-    in: './components/file-uploader/inline/index.js',
+    in: './solutions/file-uploader/inline/index.js',
     out: './web/file-uploader-inline.min.js',
     minify: true,
     minifyHtml: true,
   },
   {
-    in: './components/file-uploader/inline/index.css',
+    in: './solutions/file-uploader/inline/index.css',
     out: './web/file-uploader-inline.min.css',
     minify: true,
   },
 
   // file-uploader-minimal
   {
-    in: './components/file-uploader/minimal/index.js',
+    in: './solutions/file-uploader/minimal/index.js',
     out: './web/file-uploader-minimal.min.js',
     minify: true,
     minifyHtml: true,
   },
   {
-    in: './components/file-uploader/minimal/index.css',
+    in: './solutions/file-uploader/minimal/index.css',
     out: './web/file-uploader-minimal.min.css',
     minify: true,
   },
 
   // lr-img
   {
-    in: './components/adaptive-image/index.js',
+    in: './solutions/adaptive-image/index.js',
     out: './web/lr-img.min.js',
     minify: true,
     minifyHtml: true,

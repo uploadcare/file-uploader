@@ -16,10 +16,10 @@
 
 ## 📦 What’s in the box?
 
-- [File uploader solutions](components/file-uploader/) - file uploader implementations for the most frequent use cases.
+- [File uploader solutions](solutions/file-uploader/) - file uploader implementations for the most frequent use cases.
 - [Blocks to build your own custom solutions](./blocks/) - build your own integration solutions with simple HTML and CSS.
-- [Adaptive image solution](components/adaptive-image/): all you need to distribute your web images efficiently.
-- [Cloud image editing solution](components/cloud-image-editor/): tune your pictures on the fly.
+- [Adaptive image solution](solutions/adaptive-image/): all you need to distribute your web images efficiently.
+- [Cloud image editing solution](solutions/cloud-image-editor/): tune your pictures on the fly.
 - Web components for media content representation: audio, video, image galleries, etc.
 - etc.
 
