@@ -6,31 +6,56 @@ import { UiMessage } from '../MessageBox/MessageBox.js';
 import { fileCssBg } from '../svg-backgrounds/svg-backgrounds.js';
 import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../utils/cdn-utils.js';
 import { EVENT_TYPES, EventData, EventManager } from '../../abstract/EventManager.js';
+import { debounce } from '../utils/debounce.js';
+
+const FileItemState = {
+  FINISHED: Symbol(0),
+  FAILED: Symbol(1),
+  UPLOADING: Symbol(2),
+  IDLE: Symbol(3),
+};
 
 export class FileItem extends UploaderBlock {
   pauseRender = true;
+
+  /** @private */
+  _entrySubs = new Set();
+  /** @private */
+  _entry = null;
+  /** @private */
+  _isIntersecting = false;
+  /** @private */
+  _debouncedGenerateThumb = debounce(this._generateThumbnail.bind(this), 100);
+  /** @private */
+  _debouncedCalculateState = debounce(this._calculateState.bind(this), 0);
+  /** @private */
+  _renderedOnce = false;
 
   init$ = {
     ...this.ctxInit,
     uid: '',
     itemName: '',
-    thumb: '',
     thumbUrl: '',
     progressValue: 0,
     progressVisible: false,
     progressUnknown: false,
     notImage: true,
-    badgeIcon: 'check',
+    badgeIcon: '',
+    isFinished: false,
+    isFailed: false,
+    isUploading: false,
+    isFocused: false,
+    state: FileItemState.IDLE,
     '*uploadTrigger': null,
 
     onEdit: () => {
       this.set$({
-        '*focusedEntry': this.entry,
+        '*focusedEntry': this._entry,
         '*currentActivity': ActivityBlock.activities.DETAILS,
       });
     },
     onRemove: () => {
-      let entryUuid = this.entry.getValue('uuid');
+      let entryUuid = this._entry.getValue('uuid');
       if (entryUuid) {
         let data = this.getOutputData((dataItem) => {
           return dataItem.getValue('uuid') === entryUuid;
@@ -43,49 +68,88 @@ export class FileItem extends UploaderBlock {
           })
         );
       }
-      this.uploadCollection.remove(this.uid);
+      this.uploadCollection.remove(this.$.uid);
     },
     onUpload: () => {
       this.upload();
     },
   };
 
+  _reset() {
+    for (let sub of this._entrySubs) {
+      sub.remove();
+    }
+
+    this._debouncedGenerateThumb.cancel();
+    this._entrySubs = new Set();
+    this._entry = null;
+    this._isIntersecting = false;
+  }
+
   /** @private */
   _observerCallback(entries) {
     let [entry] = entries;
-    if (entry.isIntersecting && !this.innerHTML) {
+    this._isIntersecting = entry.isIntersecting;
+
+    if (entry.isIntersecting && !this._renderedOnce) {
       this.render();
-      this._observer?.unobserve(this);
+      this._renderedOnce = true;
     }
     if (entry.intersectionRatio === 0) {
-      clearTimeout(this._thumbTimeoutId);
-      /** @private */
-      this._thumbTimeoutId = undefined;
-    } else if (!this._thumbTimeoutId) {
-      /** @private */
-      this._thumbTimeoutId = window.setTimeout(() => this._generateThumbnail(), 100);
+      this._debouncedGenerateThumb.cancel();
+    } else {
+      this._debouncedGenerateThumb();
     }
   }
 
   /** @private */
-  _generateThumbnail() {
-    if (this.$.thumbUrl) {
+  _calculateState() {
+    let entry = this._entry;
+    let state = FileItemState.IDLE;
+
+    if (entry.getValue('uploadError') || entry.getValue('validationErrorMsg')) {
+      state = FileItemState.FAILED;
+    } else if (entry.getValue('isUploading')) {
+      state = FileItemState.UPLOADING;
+    } else if (entry.getValue('uuid')) {
+      state = FileItemState.FINISHED;
+    }
+
+    this.$.state = state;
+  }
+
+  /** @private */
+  async _generateThumbnail() {
+    let entry = this._entry;
+
+    let entryNeedsCdnThumb =
+      entry.getValue('uuid') &&
+      entry.getValue('isImage') &&
+      (!entry.getValue('thumbUrl') || entry.getValue('thumbUrl').startsWith('blob:'));
+    if (entryNeedsCdnThumb) {
+      let size = this.getCssData('--cfg-thumb-size') || 76;
+      let thumbUrl = this.proxyUrl(
+        createCdnUrl(
+          createOriginalUrl(this.getCssData('--cfg-cdn-cname'), this._entry.getValue('uuid')),
+          createCdnUrlModifiers(`scale_crop/${size}x${size}/center`)
+        )
+      );
+      let blobSrc = entry.getValue('thumbUrl');
+      entry.setValue('thumbUrl', thumbUrl);
+      URL.revokeObjectURL(blobSrc);
       return;
     }
-    if (this.file?.type.includes('image')) {
-      resizeImage(this.file, this.getCssData('--cfg-thumb-size') || 76).then((url) => {
-        this.$.thumbUrl = `url(${url})`;
-      });
+
+    if (entry.getValue('thumbUrl')) {
+      return;
+    }
+
+    if (entry.getValue('file')?.type.includes('image')) {
+      let thumbUrl = await resizeImage(entry.getValue('file'), this.getCssData('--cfg-thumb-size') || 76);
+      entry.setValue('thumbUrl', thumbUrl);
     } else {
       let color = window.getComputedStyle(this).getPropertyValue('--clr-generic-file-icon');
-      this.$.thumbUrl = `url(${fileCssBg(color)})`;
-    }
-  }
-
-  /** @private */
-  _revokeThumbUrl() {
-    if (this.$.thumbUrl?.startsWith('blob:')) {
-      URL.revokeObjectURL(this.$.thumbUrl);
+      entry.setValue('thumbUrl', fileCssBg(color));
     }
   }
 
@@ -106,115 +170,116 @@ export class FileItem extends UploaderBlock {
     });
   }
 
+  _subEntry(prop, handler) {
+    let sub = this._entry.subscribe(prop, handler);
+    this._entrySubs.add(sub);
+  }
+
+  /** @param {String} id */
+  _handleEntryId(id) {
+    this._reset();
+
+    /** @type {import('../../abstract/TypedData.js').TypedData} */
+    this._entry = this.uploadCollection?.read(id);
+
+    if (!this._entry) {
+      return;
+    }
+
+    this._subEntry('validationErrorMsg', (validationErrorMsg) => {
+      this._debouncedCalculateState();
+      if (!validationErrorMsg) {
+        return;
+      }
+      let caption =
+        this.l10n('validation-error') +
+        ': ' +
+        (this._entry.getValue('file')?.name || this._entry.vetValue('externalUrl'));
+      this._showMessage('error', caption, validationErrorMsg);
+    });
+
+    this._subEntry('uploadError', (uploadError) => {
+      this._debouncedCalculateState();
+      if (!uploadError) {
+        return;
+      }
+      let caption =
+        this.l10n('upload-error') + ': ' + (this._entry.getValue('file')?.name || this._entry.vetValue('externalUrl'));
+      this._showMessage('error', caption, uploadError.message);
+    });
+
+    this._subEntry('isUploading', () => {
+      this._debouncedCalculateState();
+    });
+
+    this._subEntry('uploadProgress', (uploadProgress) => {
+      this.$.progressValue = uploadProgress;
+    });
+
+    this._subEntry('fileName', (name) => {
+      this.$.itemName = name || this._entry.vetValue('externalUrl') || this.l10n('file-no-name');
+    });
+
+    this._subEntry('fileSize', (fileSize) => {
+      let maxFileSize = this.getCssData('--cfg-max-local-file-size-bytes');
+      if (!maxFileSize) {
+        return;
+      }
+      if (fileSize && fileSize > maxFileSize) {
+        this._entry.setValue('validationErrorMsg', this.l10n('files-max-size-limit-error', { maxFileSize }));
+      }
+    });
+
+    this._subEntry('externalUrl', (externalUrl) => {
+      this.$.itemName = this._entry.getValue('fileName') || externalUrl || this.l10n('file-no-name');
+    });
+
+    this._subEntry('uuid', (uuid) => {
+      this._debouncedCalculateState();
+      if (uuid) {
+        this._debouncedGenerateThumb();
+      }
+    });
+
+    this._subEntry('thumbUrl', (thumbUrl) => {
+      this.$.thumbUrl = thumbUrl ? `url(${thumbUrl})` : '';
+    });
+
+    if (!this.getCssData('--cfg-confirm-upload')) {
+      this.upload();
+    }
+
+    if (this._isIntersecting) {
+      this._debouncedGenerateThumb();
+    }
+  }
+
   initCallback() {
     super.initCallback();
 
-    this.sub('uid', (id) => {
-      if (!id || id === this.uid) {
-        return;
-      }
-      /** @type {String} */
-      this.uid = id;
+    this.sub('uid', (uid) => {
+      this._handleEntryId(uid);
+    });
 
-      /** @type {import('../../abstract/TypedData.js').TypedData} */
-      this.entry = this.uploadCollection?.read(id);
-
-      if (!this.entry) {
-        return;
-      }
-
-      this.entry.subscribe('validationErrorMsg', (validationErrorMsg) => {
-        if (!validationErrorMsg) {
-          return;
-        }
-        this.setAttribute('error', '');
-        let caption = this.l10n('validation-error') + ': ' + (this.file?.name || this.externalUrl);
-        this._showMessage('error', caption, validationErrorMsg);
+    this.sub('state', (state) => {
+      this.set$({
+        isFailed: state === FileItemState.FAILED,
+        isUploading: state === FileItemState.UPLOADING,
+        isFinished: state === FileItemState.FINISHED,
+        progressVisible: state === FileItemState.UPLOADING,
       });
 
-      this.entry.subscribe('uploadErrorMsg', (uploadError) => {
-        if (!uploadError) {
-          return;
-        }
-        let caption = this.l10n('upload-error') + ': ' + (this.file?.name || this.externalUrl);
-        this._showMessage('error', caption, uploadError);
-      });
-
-      this.entry.subscribe('isUploading', (isUploading) => {
-        this.$.progressVisible = isUploading;
-      });
-
-      this.entry.subscribe('uploadProgress', (uploadProgress) => {
-        this.$.progressValue = uploadProgress;
-      });
-
-      this.entry.subscribe('fileName', (name) => {
-        this.$.itemName = name || this.externalUrl || this.l10n('file-no-name');
-      });
-
-      this.entry.subscribe('fileSize', (fileSize) => {
-        let maxFileSize = this.getCssData('--cfg-max-local-file-size-bytes');
-        if (!maxFileSize) {
-          return;
-        }
-        if (fileSize && fileSize > maxFileSize) {
-          this.entry.setValue('validationErrorMsg', this.l10n('files-max-size-limit-error', { maxFileSize }));
-        }
-      });
-
-      this.entry.subscribe('externalUrl', (externalUrl) => {
-        this.$.itemName = this.entry.getValue('fileName') || externalUrl || this.l10n('file-no-name');
-      });
-
-      this.entry.subscribe('uuid', (uuid) => {
-        if (!uuid) {
-          return;
-        }
-        this.setAttribute('loaded', '');
-
-        if (this.entry.getValue('isImage')) {
-          this._revokeThumbUrl();
-          let size = this.getCssData('--cfg-thumb-size') || 76;
-          let thumbUrl = this.proxyUrl(
-            createCdnUrl(
-              createOriginalUrl(this.getCssData('--cfg-cdn-cname'), uuid),
-              createCdnUrlModifiers(`scale_crop/${size}x${size}/center`)
-            )
-          );
-          this.$.thumbUrl = `url(${thumbUrl})`;
-        }
-      });
-
-      this.entry.subscribe('cdnUrl', (cdnUrl) => {
-        if (!cdnUrl) {
-          return;
-        }
-        if (this.entry.getValue('isImage')) {
-          this._revokeThumbUrl();
-          let size = this.getCssData('--cfg-thumb-size') || 76;
-          let thumbUrl = this.proxyUrl(
-            createCdnUrl(cdnUrl, createCdnUrlModifiers(`scale_crop/${size}x${size}/center`))
-          );
-          this.$.thumbUrl = `url(${thumbUrl})`;
-        }
-      });
-
-      /** @type {File} */
-      this.file = this.entry.getValue('file');
-      /** @type {String} */
-      this.externalUrl = this.entry.getValue('externalUrl');
-
-      if (!this.getCssData('--cfg-confirm-upload')) {
-        this.upload();
+      if (state === FileItemState.FAILED) {
+        this.$.badgeIcon = 'badge-error';
+      } else if (state === FileItemState.FINISHED) {
+        this.$.badgeIcon = 'badge-success';
       }
 
-      /** @private */
-      this._observer = new window.IntersectionObserver(this._observerCallback.bind(this), {
-        root: this.parentElement,
-        rootMargin: '50% 0px 50% 0px',
-        threshold: [0, 1],
-      });
-      this._observer.observe(this);
+      if (state === FileItemState.UPLOADING) {
+        this.$.isFocused = false;
+      } else {
+        this.$.progressValue = 0;
+      }
     });
 
     this.onclick = () => {
@@ -230,6 +295,7 @@ export class FileItem extends UploaderBlock {
     this.$['*uploadTrigger'] = null;
 
     this.sub('*uploadTrigger', (val) => {
+      console.log('*uploadTrigger', val);
       if (!val || !this.isConnected) {
         return;
       }
@@ -240,16 +306,34 @@ export class FileItem extends UploaderBlock {
 
   destroyCallback() {
     super.destroyCallback();
-    this.__abortController?.abort();
-    this.__abortController = null;
 
+    this._debouncedGenerateThumb.cancel();
     FileItem.activeInstances.delete(this);
+
+    this._reset();
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+
+    /** @private */
+    this._observer = new window.IntersectionObserver(this._observerCallback.bind(this), {
+      root: this.parentElement,
+      rootMargin: '50% 0px 50% 0px',
+      threshold: [0, 1],
+    });
+    this._observer.observe(this);
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+
     this._observer?.disconnect();
-    clearTimeout(this._thumbTimeoutId);
   }
 
   async upload() {
-    if (this.hasAttribute('loaded') || this.entry.getValue('uuid') || this.entry.getValue('isUploading')) {
+    let entry = this._entry;
+    if (entry.getValue('uuid') || entry.getValue('isUploading')) {
       return;
     }
     let data = this.getOutputData((dataItem) => {
@@ -262,36 +346,37 @@ export class FileItem extends UploaderBlock {
         data,
       })
     );
-    this.entry.setValue('isUploading', true);
-    this.entry.setValue('uploadError', null);
 
-    this.removeAttribute('focused');
-    this.removeAttribute('error');
-    this.setAttribute('uploading', '');
-    if (!this.file && this.externalUrl) {
+    this._debouncedCalculateState();
+    entry.setValue('isUploading', true);
+    entry.setValue('uploadError', null);
+    entry.setValue('validationErrorMsg', null);
+
+    if (!entry.getValue('file') && entry.getValue('externalUrl')) {
       this.$.progressUnknown = true;
     }
     try {
-      this.__abortController = new AbortController();
-      let fileInfo = await uploadFile(this.file || this.externalUrl, {
+      let abortController = new AbortController();
+      entry.setValue('abortController', abortController);
+
+      let fileInfo = await uploadFile(entry.getValue('file') || entry.getValue('externalUrl'), {
         ...this.getUploadClientOptions(),
-        fileName: this.entry.getValue('fileName'),
+        fileName: entry.getValue('fileName'),
         onProgress: (progress) => {
           if (progress.isComputable) {
             let percentage = progress.value * 100;
-            this.entry.setValue('uploadProgress', percentage);
+            entry.setValue('uploadProgress', percentage);
           }
           this.$.progressUnknown = !progress.isComputable;
         },
-        signal: this.__abortController.signal,
+        signal: abortController.signal,
       });
-      this.entry.setValue('isUploading', false);
-      this.setAttribute('loaded', '');
-      this.removeAttribute('uploading');
-      this.$.badgeIcon = 'badge-success';
-      this.entry.setMultipleValues({
+      if (entry === this._entry) {
+        this._debouncedCalculateState();
+      }
+      entry.setMultipleValues({
         fileInfo,
-        uploadProgress: 100,
+        isUploading: false,
         fileName: fileInfo.name,
         fileSize: fileInfo.size,
         isImage: fileInfo.isImage,
@@ -300,19 +385,16 @@ export class FileItem extends UploaderBlock {
         cdnUrl: fileInfo.cdnUrl,
       });
     } catch (error) {
-      this.__abortController?.abort();
-      this.__abortController = null;
+      entry.setValue('abortController', null);
+      entry.setValue('isUploading', false);
+      entry.setValue('uploadProgress', 0);
 
-      this.entry.setValue('isUploading', false);
-      this.$.progressValue = 0;
-      this.removeAttribute('uploading');
-      this.entry.setValue('uploadProgress', 0);
+      if (entry === this._entry) {
+        this._debouncedCalculateState();
+      }
 
       if (!error?.isCancel) {
-        this.$.badgeIcon = 'badge-error';
-        this.setAttribute('error', '');
-        // this.entry.setValue('uploadError', error);
-        this.entry.setValue('uploadErrorMsg', error?.toString() || 'Upload error');
+        entry.setValue('uploadError', error);
       }
     }
   }
@@ -320,27 +402,31 @@ export class FileItem extends UploaderBlock {
 
 FileItem.template = /*html*/ `
 <div
-  class="thumb"
-  set="style.backgroundImage: thumbUrl">
-  <div class="badge">
-    <lr-icon set="@name: badgeIcon"></lr-icon>
+  class="inner"
+  set="@finished: isFinished; @uploading: isUploading; @failed: isFailed; @focused: isFocused">
+  <div
+    class="thumb"
+    set="style.backgroundImage: thumbUrl">
+    <div class="badge">
+      <lr-icon set="@name: badgeIcon"></lr-icon>
+    </div>
   </div>
+  <div class="file-name-wrapper">
+    <span class="file-name" set="@title: itemName">{{itemName}}</span>
+  </div>
+  <button type="button" class="edit-btn" set="onclick: onEdit;">
+    <lr-icon name="edit-file"></lr-icon>
+  </button>
+  <button type="button" class="remove-btn" set="onclick: onRemove;">
+    <lr-icon name="remove-file"></lr-icon>
+  </button>
+  <button type="button" class="upload-btn" set="onclick: onUpload;">
+    <lr-icon name="upload"></lr-icon>
+  </button>
+  <lr-progress-bar
+    class="progress-bar"
+    set="value: progressValue; visible: progressVisible; unknown: progressUnknown">
+  </lr-progress-bar>
 </div>
-<div class="file-name-wrapper">
-  <span class="file-name" set="@title: itemName">{{itemName}}</span>
-</div>
-<button type="button" class="edit-btn" set="onclick: onEdit;">
-  <lr-icon name="edit-file"></lr-icon>
-</button>
-<button type="button" class="remove-btn" set="onclick: onRemove;">
-  <lr-icon name="remove-file"></lr-icon>
-</button>
-<button type="button" class="upload-btn" set="onclick: onUpload;">
-  <lr-icon name="upload"></lr-icon>
-</button>
-<lr-progress-bar
-  class="progress-bar"
-  set="value: progressValue; visible: progressVisible; unknown: progressUnknown">
-</lr-progress-bar>
 `;
 FileItem.activeInstances = new Set();

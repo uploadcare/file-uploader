@@ -1,4 +1,4 @@
-lr-file-item {
+lr-file-item > .inner {
   position: relative;
   display: grid;
   grid-template-columns: min-content auto min-content min-content;
@@ -8,23 +8,23 @@ lr-file-item {
   transition: var(--transition-duration);
 }
 
-lr-file-item:last-of-type {
+lr-file-item:last-of-type > .inner {
   border-bottom: none;
 }
 
-lr-file-item:hover {
+lr-file-item:hover > .inner {
   background-color: var(--clr-background);
 }
 
-lr-file-item[focused] {
+lr-file-item > .inner[focused] {
   background-color: transparent;
 }
 
-lr-file-item[uploading] .edit-btn {
+lr-file-item > .inner[uploading] .edit-btn {
   display: none;
 }
 
-lr-file-item[error] {
+lr-file-item > .inner[failed] {
   background-color: var(--clr-error-lightest);
 }
 
@@ -89,16 +89,16 @@ lr-file-item .badge {
   border-radius: 50%;
 }
 
-lr-file-item[error] .badge,
-lr-file-item[loaded] .badge {
+lr-file-item > .inner[failed] .badge,
+lr-file-item > .inner[finished] .badge {
   display: block;
 }
 
-lr-file-item[loaded] .badge {
+lr-file-item > .inner[finished] .badge {
   background-color: var(--clr-confirm);
 }
 
-lr-file-item[error] .badge {
+lr-file-item > .inner[failed] .badge {
   background-color: var(--clr-error);
 }
 
