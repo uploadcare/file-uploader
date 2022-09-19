@@ -45,7 +45,7 @@ You can redefine styling or any other setting using custom CSS file. It's easy t
 Custom CSS-file example:
 
 ```css
-@import url('https://unpkg.com/@uploadcare/blocks@0.9.4/web/file-uploader-regular.min.css');
+@import url('https://unpkg.com/@uploadcare/blocks@0.10.0/web/file-uploader-regular.min.css');
 
 lr-modal {
   border: 2px solid #f00;
