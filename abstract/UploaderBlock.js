@@ -131,7 +131,7 @@ export class UploaderBlock extends ActivityBlock {
   }
 
   cancelFlow() {
-    if (this.sourceList?.length === 1) {
+    if (this.sourceList?.length === 1 || !this.$['*uploadList']?.length) {
       this.$['*currentActivity'] = null;
       this.setForCtxTarget('lr-modal', '*modalActive', false);
     } else {
@@ -147,8 +147,13 @@ export class UploaderBlock extends ActivityBlock {
     if (!this.has('*uploadCollection')) {
       let uploadCollection = new TypedCollection({
         typedSchema: uploadEntrySchema,
-        watchList: ['uploadProgress', 'uuid', 'uploadErrorMsg', 'validationErrorMsg', 'cdnUrlModifiers'],
-        handler: (entries) => {
+        watchList: ['uploadProgress', 'uuid', 'uploadError', 'validationErrorMsg', 'cdnUrlModifiers'],
+        handler: (entries, added, removed) => {
+          for (let entry of removed) {
+            entry?.getValue('abortController')?.abort();
+            entry?.setValue('abortController', null);
+            URL.revokeObjectURL(entry?.getValue('thumbUrl'));
+          }
           this.$['*uploadList'] = entries.map((uid) => {
             return { uid };
           });
@@ -181,7 +186,7 @@ export class UploaderBlock extends ActivityBlock {
             return !!entry.getValue('uuid');
           });
           let errorItems = uploadCollection.findItems((entry) => {
-            return !!entry.getValue('uploadErrorMsg') || !!entry.getValue('validationErrorMsg');
+            return !!entry.getValue('uploadError') || !!entry.getValue('validationErrorMsg');
           });
           if (uploadCollection.size - errorItems.length === loadedItems.length) {
             let data = this.getOutputData((dataItem) => {
@@ -196,16 +201,16 @@ export class UploaderBlock extends ActivityBlock {
             );
           }
         }
-        if (changeMap.uploadErrorMsg) {
+        if (changeMap.uploadError) {
           let items = uploadCollection.findItems((entry) => {
-            return !!entry.getValue('uploadErrorMsg');
+            return !!entry.getValue('uploadError');
           });
           items.forEach((id) => {
             EventManager.emit(
               new EventData({
                 type: EVENT_TYPES.UPLOAD_ERROR,
                 ctx: this.ctxName,
-                data: uploadCollection.readProp(id, 'uploadErrorMsg'),
+                data: uploadCollection.readProp(id, 'uploadError'),
               }),
               undefined,
               false
