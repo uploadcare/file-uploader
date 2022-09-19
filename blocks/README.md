@@ -1,63 +1,114 @@
-# &lt;blocks&gt;
+# Advanced customization: build your own uploading flow
 
-## 🧩 Use predefined custom elements to build your own file uploading flow
+If our pre-built <a href="/solutions/file-uploader/">uploader solution</a> isn't enough for you, meet our highly customizable blocks.
 
-> Or dive deeper and create your own beautiful blocks!
+## Blocks list:
+
+- [ActivityCaption](./ActivityCaption/) - shows heading text for the current activity
+- [ActivityIcon](./ActivityIcon/) - shows actual icon for the current activity
+- [CameraSource](./CameraSource/) - getting image for upload from the device camera
+- [CloudImageEditor](./CloudImageEditor/) - image editing via Uploadcare cloud functions
+- [Color](./Color/) - simple wrapper for the native color selector in browser
+- [ComfirmationDialog](./ConfirmationDialog/) - user confirmations for the most sensitive actions
+- [DataOutput](./DataOutput/) - dedicated element for the upload data extraction in host application
+- [DropArea](./DropArea/) - wrapper element for the the drag-n-drop feature adding
+- [EditableCanvas](./EditableCanvas/) - minimalistic in-browser image editing
+- [ExternalSource](./ExternalSource/) - common wrapper for external file sources
+- [FileItem](./FileItem/) - basic UI for the each uploading file entry
+- [Icon](./Icon/) - displays an icon
+- [Img](./Img/) - adaptive image
+- [MessageBox](./MessageBox/) - common container for the application messages
+- [Modal](./Modal/) - common pop-up window
+- [ProgressBar](./ProgressBar/) - abstract progress bar
+- [ProgressBarCommon](./ProgressBarCommon/) - displays uploading progress for the all files selected
+- [Range](./Range/) - customizable wrapper for the range input element
+- [Select](./Select/) - customizable selector
+- [ShadowWrapper](./ShadowWrapper/) - Shadow DOM wrapper to encapsulate your solution
+- [SimpleBtn](./SimpleBtn/) - button for the file uploading workflow start
+- [SourceBtn](./SourceBtn/) - button for the certain source activation
+- [SourceList](./SourceList/) - renders the list of file sources basing on configuration provided
+- [StartFrom](./StartFrom/) - wrapper element for the uploading workflow initiation
+- [Tabs](./Tabs/) - implements tabbing UI
+- [UploadDetails](./UploadDetails/) - displays file details and adittional features
+- [UploadList](./UploadList/) - shows the list of uploads
+- [UrlSource](./UrlSource/) - file uploading from the external URL
+- [Video](./Video/) - wrapper element for the browser video tag
 
 ## 🍰 Concept description
 
 There are so many use cases and many workflows for file uploading.
 Is it possible to create an uploading solution to fit them all?
 
-We believe it is — with the power of [Custom Elements standard](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_custom_elements) and our widget-purpose-specific open-source [Symbiote.js](https://github.com/symbiotejs/symbiote.js) library.
+We believe it is — with the power of <a target="_blank" href="https://developer.mozilla.org/en-US/docs/Web/Web_solutions/Using_custom_elements">Custom Elements standard</a> and our widget-purpose-specific open-source <a target="_blank" href="https://github.com/symbiotejs/symbiote.js">Symbiote.js</a> library.
 
 You can use high-level, simple HTML and CSS to customize layouts and define the most popular scenarios.
-You can create your own blocks from scratch with JavaScript using our super-duper [BlockComponent base-class](../docs/block-component/).
+You can create your own blocks from scratch with JavaScript using our super-duper <a target="_blank" href="https://github.com/uploadcare/blocks/blob/main/docs/block-component/index.htm">BlockComponent base-class</a>.
 
-Key features:
+### Key features:
 
 - Easy to use within any modern toolchain: framework, library, or CMS.
 - The lifecycle is controlled from the inside; you don't need to manage it in your code.
 - You can easily switch between encapsulated secure styling and common document styles.
-- Using [Shadow DOM](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_shadow_DOM) — is up to you.
+- Using <a target="_blank" href="https://developer.mozilla.org/en-US/docs/Web/Web_solutions/Using_shadow_DOM">Shadow DOM</a> — is up to you.
 - It's easy to set any customized data context for the blocks to control them in detail.
 - Total flexibility.
 - No heavy dependencies and no bandwidth - and performance-penalizing libraries are necessary.
 - It's easy to follow your strict design guidelines.
 - Everything is very close to the native browser APIs and concepts; you don't need to learn something completely new.
-- [Content Security Policy (CSP)](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP) friendly — good for secure enterprise usage.
-- [Jamstack](https://jamstack.org/) friendly: enter the new world of web development!
+- <a target="_blank" href="https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP">Content Security Policy (CSP)</a> friendly — good for secure enterprise usage.
+- <a target="_blank" href="https://jamstack.org/">Jamstack</a> friendly: enter the new world of web development!
 
 <re-htm src="../assets/htm/upload-blocks-demo.htm"></re-htm>
 
 ## 🏠 Integration basics
 
-We use the [Custom Elements](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_custom_elements) standard to make integration seamless.
-That allows us to use simple HTML code to define layouts and place our widgets into other templates or other markups. Custom Elements are compatible with most modern technologies and provide a consistent workflow. Please, check out the list of high-level tests passed with a set of modern frontend frameworks and libraries: [Custom Elements Everywhere](https://custom-elements-everywhere.com/)
+We use the <a target="_blank" href="https://developer.mozilla.org/en-US/docs/Web/Web_solutions/Using_custom_elements">Custom Elements</a> standard to make integration seamless.
+That allows us to use simple HTML code to define layouts and place our widgets into other templates or other markups. Custom Elements are compatible with most modern technologies and provide a consistent workflow. Please, check out the list of high-level tests passed with a set of modern frontend frameworks and libraries: <a target="_blank" href="https://custom-elements-everywhere.com/">Custom Elements Everywhere</a>
 
-We also provide a set of [reference integrations](https://github.com/uploadcare/upload-blocks-examples).
-
-## 🍱 Uploader solutions out of the box
-
-We provide [the set of uploader builds](../solutions/file-uploader/) you can use for the most frequent cases or references if you need to create your own.
+We also provide a set of <a target="_blank" href="https://github.com/uploadcare/upload-blocks-examples">reference integrations</a>.
 
 ## 🚀 Create your own file uploader
 
 The standard flow of the uploading widget creation is following:
 
 1. Install lr-blocks package: `npm i @uploadcare/blocks`.
-2. Create the set of all components you need (example: [index.js](../solutions/file-uploader/regular/index.js)).
-3. Create your widget class with desired layout (example: [index.js](../solutions/file-uploader/regular/index.jss)).
-4. Create CSS configuration file (example: [index.css](../solutions/file-uploader/regular/index.css)).
-5. Place resulting custom HTML-tag into your application markup and connect CSS.
+2. Create the set of all components you need.
+
+```js
+import * as LR from '@uploadcare/blocks';
+
+LR.registerBlocks(LR);
+
+class Uploader extends LR.FileUploaderRegular {}
+Uploader.reg('uploader');
+```
+
+3. Create your widget class with desired layout.
+
+```js
+import * as LR from '@uploadcare/blocks';
+
+LR.registerBlocks(LR);
+
+class Uploader extends LR.FileUploaderRegular {}
+Uploader.reg('uploader');
+```
+
+4. Create CSS configuration file.
+
+```css
+@import url('@uploadcare/blocks/blocks/themes/lr-basic/index.css');
+```
+
+6. Place resulting custom HTML-tag into your application markup and connect CSS.
 
 As you can see, that's quite simple.
 
-> You should obtain a Public API Key in your [Uploadcare project's dashboard](https://app.uploadcare.com/) to use file uploading features.
+> You should obtain a Public API Key in your <a target="_blank" href="https://app.uploadcare.com/">Uploadcare project's dashboard</a> to use file uploading features.
 
 ## 🎨 Customize everything!
 
-First of all, please look at [our CSS approach discussion](https://github.com/uploadcare/blocks/discussions/18).
+First, please look at <a target="_blank" href="https://github.com/uploadcare/blocks/discussions/18">our CSS approach discussion</a>.
 Please don't hesitate to take part; your opinion is very important to us.
 
 ### Look & feel
@@ -116,25 +167,22 @@ All elements created by upload-blocks are discoverable via developer tools in yo
 
 ### Custom blocks
 
-You can create your own custom upload-blocks to handle some specific use cases. You need to use the [Block](../abstract/) JavaScript base class to do that.
+You can create your own custom upload-blocks to handle some specific use cases. You need to use the Block JavaScript base class to do that.
 
 ## ⚙️ More in depth
 
-- [Configuration](../docs/configuration/)
+- [Configuration](../get-started/configuration/)
 - [Upload data output](../docs/output/)
-- [Texts & localization](../docs/texts/)
-- [Icons](../docs/icons/)
-- [Styling](../docs/styling/)
-- [Blocks](../docs/blocks/)
-- [Contexts](../docs/contexts/)
+- [Texts & localization](../get-started/localization/)
+- [Styling](../blocks/themes/lr-basic/)
 - [Activities](../docs/activities/)
 - [TypeScript](../docs/typescript/)
-- [Symbiote.js](https://github.com/symbiotejs/symbiote.js)
+- <a target="_blank" href="https://github.com/symbiotejs/symbiote.js">Symbiote.js</a>
 
 ## 💬 Discussions
 
-If you have questions, ideas, usage feedback, or would like to suggest any other topic, feel free to join our [GitHub Discussions](https://github.com/uploadcare/jsdk/discussions/categories/upload-blocks)!
+If you have questions, ideas, usage feedback, or would like to suggest any other topic, feel free to join our <a target="_blank" href="https://github.com/uploadcare/jsdk/discussions/categories/upload-blocks">GitHub Discussions</a>!
 
 ## ⚠️ Issues
 
-Found a problem? Create an [issue](https://github.com/uploadcare/jsdk/issues)!
+Found a problem? Create an <a href="https://github.com/uploadcare/jsdk/issues" target="_blank">issue</a>!
