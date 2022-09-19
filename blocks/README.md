@@ -97,7 +97,7 @@ Uploader.reg('uploader');
 4. Create CSS configuration file.
 
 ```css
-@import url('../../../blocks/themes/lr-basic/index.css');
+@import url('@uploadcare/blocks/blocks/themes/lr-basic/index.css');
 ```
 
 6. Place resulting custom HTML-tag into your application markup and connect CSS.
