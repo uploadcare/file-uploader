@@ -115,7 +115,9 @@ export class FileItem extends UploaderBlock {
       state = FileItemState.FINISHED;
     }
 
-    this.$.state = state;
+    if (this.$.state !== state) {
+      this.$.state = state;
+    }
   }
 
   /** @private */
