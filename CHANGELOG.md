@@ -1,3 +1,17 @@
+# [0.10.0](https://github.com/uploadcare/blocks/compare/v0.9.4...v0.10.0) (2022-09-19)
+
+### Bug Fixes
+
+- **file-item:** calculate state in the single place ([8eb5f6e](https://github.com/uploadcare/blocks/commit/8eb5f6e1b53b4c1e03d39a7c8bda792110a11dc6))
+- **file-item:** proper request abort, restore state on new entry, optimize thumb generation ([60038f2](https://github.com/uploadcare/blocks/commit/60038f2afabe37723f263cda506ffc846b13118f))
+- **upload-list:** enable `Upload` button if any file isn't started uploading ([9b980c4](https://github.com/uploadcare/blocks/commit/9b980c4600b7dbedf73a31c6f4294a63cea216ee))
+- **uploader-block:** do not history back if no any files in the collection ([34bbb7e](https://github.com/uploadcare/blocks/commit/34bbb7eac0e3ccfd1ec20bb768fc0649897e733c))
+
+### Features
+
+- **typed-collection:** check type with instanceof ([409feec](https://github.com/uploadcare/blocks/commit/409feec27c775ae235270cb47fec0d735712da4f))
+- **typed-collection:** notify subscribers about added and removed items ([624c282](https://github.com/uploadcare/blocks/commit/624c282839ecf7c621e01aafd2107f9f10d3cbf4))
+
 ## [0.9.4](https://github.com/uploadcare/blocks/compare/v0.9.3...v0.9.4) (2022-09-13)
 
 ### Bug Fixes
