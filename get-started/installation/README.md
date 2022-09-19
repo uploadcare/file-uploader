@@ -12,7 +12,7 @@
 Connect script to your document:
 
 ```html
-<script src="https://cdn.skypack.dev/@uploadcare/blocks/web/blocks-browser.min.js" type="module"></script>
+<script src="https://unpkg.com/@uploadcare/blocks@0.9.4/web/blocks-browser.min.js" type="module"></script>
 ```
 
 Then you can use blocks in your application markup.
@@ -20,7 +20,7 @@ Then you can use blocks in your application markup.
 File uploader example:
 
 ```html
-<lr-file-uploader-regular css-src="https://cdn.skypack.dev/@uploadcare/blocks/web/file-uploader-regular.min.css">
+<lr-file-uploader-regular css-src="https://unpkg.com/@uploadcare/blocks@0.9.4/web/file-uploader-regular.min.css">
 </lr-file-uploader-regular>
 ```
 
@@ -37,9 +37,9 @@ Then use `connectBlocksFrom` function to connect blocks:
 ```js
 import { connectBlocksFrom } from '@uploadcare/blocks/abstract/connectBlocksFrom.js';
 
-const STYLES = 'https://cdn.skypack.dev/@uploadcare/blocks/web/file-uploader-regular.min.css';
+const STYLES = 'https://unpkg.com/@uploadcare/blocks@0.9.4/web/file-uploader-regular.min.css';
 
-connectBlocksFrom('https://cdn.skypack.dev/@uploadcare/blocks/web/blocks-browser.min.js').then((blocks) => {
+connectBlocksFrom('https://unpkg.com/@uploadcare/blocks@0.9.4/web/blocks-browser.min.js').then((blocks) => {
   if (!blocks) {
     return; // To avoid errors in SSR case
   }

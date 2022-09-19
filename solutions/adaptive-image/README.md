@@ -18,7 +18,7 @@ It generates a set of URLs for the initial image source with the desired paramet
 Connect script:
 
 ```html
-<script src="https://cdn.skypack.dev/@uploadcare/blocks/web/lr-img.min.js" type="module"></script>
+<script src="https://unpkg.com/@uploadcare/blocks@0.9.4/web/lr-img.min.js" type="module"></script>
 ```
 
 Add basic settings:

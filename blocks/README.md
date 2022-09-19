@@ -75,7 +75,7 @@ The standard flow of the uploading widget creation is following:
 2. Create the set of all components you need.
 
 ```js
-import * as LR from '../../../index.js';
+import * as LR from '@uploadcare/blocks';
 
 LR.registerBlocks(LR);
 
@@ -86,7 +86,7 @@ Uploader.reg('uploader');
 3. Create your widget class with desired layout.
 
 ```js
-import * as LR from '../../../index.js';
+import * as LR from '@uploadcare/blocks';
 
 LR.registerBlocks(LR);
 

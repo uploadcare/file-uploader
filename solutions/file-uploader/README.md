@@ -80,7 +80,7 @@ All configurations, localization texts, icons, and styling are placed into CSS f
 
 ```html
 <style>
-  @import url(https://cdn.skypack.dev/@uploadcare/blocks/web/file-uploader-regular.min.css);
+  @import url(https://unpkg.com/@uploadcare/blocks@0.9.4/web/file-uploader-regular.min.css);
   .my-settings {
     --ctx-name: 'my-uploader';
     --cfg-pubkey: 'demopublickey';
@@ -320,7 +320,7 @@ If you need additional isolation and styling security levels, you can get it wit
 To enable it and encapsulate all styles into separated scope, use the `css-src` attribute:
 
 ```html
-<lr-uploader css-src="https://cdn.skypack.dev/@uploadcare/blocks/web/file-uploader-regular.min.css"> </lr-uploader>
+<lr-uploader css-src="https://unpkg.com/@uploadcare/blocks@0.9.4/web/file-uploader-regular.min.css"> </lr-uploader>
 ```
 
 <br/><br/><br/>
