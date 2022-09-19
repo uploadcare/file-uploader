@@ -86,7 +86,7 @@ For example, this is the list of pre-defined parameters used by default in our [
   --cfg-source-list-wrap: 1;
 
   --cfg-init-activity: 'start-from';
-  --cfg-done-activity: 'start-from';
+  --cfg-done-activity: '';
 
   --cfg-data-output-console: 1;
   --cfg-data-output-fire-events: 1;

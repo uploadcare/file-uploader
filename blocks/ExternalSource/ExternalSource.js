@@ -20,7 +20,7 @@ export class ExternalSource extends UploaderBlock {
       this.$['*currentActivity'] = ActivityBlock.activities.UPLOAD_LIST;
     },
     onCancel: () => {
-      this.cancelFlow();
+      this.historyBack();
     },
   };
 
@@ -29,16 +29,19 @@ export class ExternalSource extends UploaderBlock {
 
   initCallback() {
     super.initCallback();
-    this.registerActivity(this.activityType, () => {
-      let { externalSourceType } = /** @type {ActivityParams} */ (this.activityParams);
+    this.registerActivity(this.activityType, {
+      onActivate: () => {
+        let { externalSourceType } = /** @type {ActivityParams} */ (this.activityParams);
 
-      this.set$({
-        '*activityCaption': `${externalSourceType?.[0].toUpperCase()}${externalSourceType?.slice(1)}`,
-        '*activityIcon': externalSourceType,
-      });
+        this.set$({
+          '*activityCaption': `${externalSourceType?.[0].toUpperCase()}${externalSourceType?.slice(1)}`,
+          '*activityIcon': externalSourceType,
+        });
 
-      this.$.counter = 0;
-      this.mountIframe();
+        this.$.counter = 0;
+        this.mountIframe();
+      },
+      onClose: () => this.historyBack(),
     });
     this.sub('*currentActivity', (val) => {
       if (val !== this.activityType) {

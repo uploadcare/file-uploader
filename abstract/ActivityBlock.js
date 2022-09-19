@@ -1,3 +1,4 @@
+import { debounce } from '../blocks/utils/debounce.js';
 import { Block } from './Block.js';
 import { activityBlockCtx } from './CTX.js';
 
@@ -6,6 +7,8 @@ const ACTIVE_PROP = '___ACTIVITY_IS_ACTIVE___';
 
 export class ActivityBlock extends Block {
   ctxInit = activityBlockCtx();
+
+  _debouncedHistoryFlush = debounce(this._historyFlush.bind(this), 10);
 
   initCallback() {
     super.initCallback();
@@ -33,19 +36,28 @@ export class ActivityBlock extends Block {
           /** @private */
           this[ACTIVE_PROP] = true;
           this.setAttribute(ACTIVE_ATTR, '');
+          this.setForCtxTarget('lr-modal', '*modalCloseCallback', actDesc?.modalCloseCallback);
           actDesc?.activateCallback?.();
           // console.log(`Activity "${this.activityType}" activated`);
 
-          let history = this.$['*history'];
-          if (history) {
-            if (history.length > 10) {
-              history = history.slice(history.length - 11, history.length - 1);
-            }
-            history.push(this.activityType);
-            this.$['*history'] = history;
-          }
+          this._debouncedHistoryFlush();
+        }
+
+        if (!val) {
+          this.$['*history'] = [];
         }
       });
+    }
+  }
+
+  _historyFlush() {
+    let history = this.$['*history'];
+    if (history) {
+      if (history.length > 10) {
+        history = history.slice(history.length - 11, history.length - 1);
+      }
+      history.push(this.activityType);
+      this.$['*history'] = history;
     }
   }
 
@@ -61,17 +73,21 @@ export class ActivityBlock extends Block {
 
   /**
    * @param {String} name
-   * @param {() => void} [activateCallback]
-   * @param {() => void} [deactivateCallback]
+   * @param {Object} [options]
+   * @param {() => void} [options.onActivate]
+   * @param {() => void} [options.onDeactivate]
+   * @param {() => void} [options.onClose]
    */
-  registerActivity(name, activateCallback, deactivateCallback) {
+  registerActivity(name, options) {
+    const { onActivate, onDeactivate, onClose } = options;
     if (!ActivityBlock._activityRegistry) {
       ActivityBlock._activityRegistry = Object.create(null);
     }
     let actKey = this.ctxName + name;
     ActivityBlock._activityRegistry[actKey] = {
-      activateCallback,
-      deactivateCallback,
+      activateCallback: onActivate,
+      deactivateCallback: onDeactivate,
+      modalCloseCallback: onClose,
     };
   }
 
