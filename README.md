@@ -66,7 +66,7 @@ Issues and PRs are welcome. You can provide your feedback or drop us a support r
 ## Contribution
 
 1. Clone repository: `git clone git@github.com:uploadcare/blocks.git ./`.
-2. Run dependencies setup: `npm run setup`.
+2. Run dependencies setup: `npm install`.
 3. Start local dev-server: `npm run dev`.
 
 ## [Browse documentation and live examples](https://uploadcare.github.io/blocks/get-started/installation/) ➡️
