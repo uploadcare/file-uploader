@@ -27,19 +27,19 @@ export default /*html*/ `<!DOCTYPE html>
     <div class="sidebar-wrapper">
         <div class="sidebar">
             <div class="menu-section">
-                <a href="/"><div class="menu-item level-1">Get started</div></a>
-                <a href="/get-started/installation/"><div class="menu-item level-2">Installation</div></a>
-                <a href="/get-started/configuration/"><div class="menu-item level-2">Configuration</div></a>
-                <a href="/get-started/localization/"><div class="menu-item level-2">Localization</div></a>
+                <a href="{{BASE}}"><div class="menu-item level-1">Get started</div></a>
+                <a href="{{BASE}}get-started/installation/"><div class="menu-item level-2">Installation</div></a>
+                <a href="{{BASE}}get-started/configuration/"><div class="menu-item level-2">Configuration</div></a>
+                <a href="{{BASE}}get-started/localization/"><div class="menu-item level-2">Localization</div></a>
             </div>
             <div class="menu-section">
                 <div class="menu-item level-1 no-link">Components</div>
-                <a href="/solutions/file-uploader/"><div class="menu-item level-2">File Uploader</div></a>
-                <a href="/solutions/adaptive-image/"><div class="menu-item level-2">Adaptive image</div></a>
-                <a href="/solutions/cloud-image-editor/"><div class="menu-item level-2">Image editor</div></a>
+                <a href="{{BASE}}solutions/file-uploader/"><div class="menu-item level-2">File Uploader</div></a>
+                <a href="{{BASE}}solutions/adaptive-image/"><div class="menu-item level-2">Adaptive image</div></a>
+                <a href="{{BASE}}solutions/cloud-image-editor/"><div class="menu-item level-2">Image editor</div></a>
             </div>
             <div class="menu-section">
-                <a href="/blocks/"><div class="menu-item level-1">Customization</div></a>
+                <a href="{{BASE}}blocks/"><div class="menu-item level-1">Customization</div></a>
             </div>
         </div>
     </div>
