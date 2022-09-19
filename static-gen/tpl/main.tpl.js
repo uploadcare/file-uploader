@@ -5,9 +5,9 @@ export default /*html*/ `<!DOCTYPE html>
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Blocks by Uploadcare</title>
-    <script async src="https://unpkg.com/es-module-shims@1.5.8/dist/es-module-shims.js"></script>
+    <script async src="https://cdn.skypack.dev/-/es-module-shims@v1.5.8-O0uWfhbenfjMbv6D3d8E/dist=es2020,mode=raw,min/dist/es-module-shims.js"></script>
     <script type="importmap">{{IMPORTMAP}}</script>
-    <script type="module" src="https://unpkg.com/@re4ma/re4ma@0.1.7/build/re4ma.js"></script>
+    <script type="module" src="https://cdn.skypack.dev/pin/@re4ma/re4ma@v0.1.7-2fpA2FBNkO473Jd06xxO/mode=imports,min/unoptimized/build/re4ma.js"></script>
     <script type="module">
       import { LiveHtml } from '{{BASE}}blocks/LiveHtml/LiveHtml.js';
       LiveHtml.reg('lr-live-html');
@@ -61,13 +61,13 @@ export default /*html*/ `<!DOCTYPE html>
     document.addEventListener("DOMContentLoaded", function () {
         const sidebarItems = document.querySelectorAll('.menu-item')
         sidebarItems.forEach( i => {
-            if (i.parentElement.pathname === window.location.pathname ) 
+            if (i.parentElement.pathname === window.location.pathname )
             {
                 i.classList.add('current')
             }
         })
     })
-    
+
     function scrollToTop() {
         window.scrollTo(0, 0);
     }
