@@ -1,4 +1,4 @@
-# Texts
+# Localization
 
 All keys and values for the UI texts and translations are also placed in CSS:
 
@@ -122,4 +122,4 @@ HTML:
 ...
 ```
 
-To connect some text to the some HTML-element property in your block template, instead of `textContent`, use `:` symbol separating element property name and the text key: `<div l10n="title:my-custom-title">`.
+To connect some text to the HTML-element property in your block template, instead of `textContent`, use `:` symbol separating element property name and the text key: `<div l10n="title:my-custom-title">`.

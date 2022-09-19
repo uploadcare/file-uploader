@@ -49,7 +49,164 @@
             </div>
         </div>
     </div>
-      <col-css><h1 id="icons">Icons</h1>
+      <col-css><h1 id="configuration">Configuration</h1>
+<p>All the settings for the blocks should be provided with CSS. It could be CSS-files or
+CSS rules defined somewhere in your project.</p>
+<p>We recommend to use Shadow DOM mode enabled if you planning to use several solutions
+on one page at once.</p>
+<p><code>css-src</code> - attribute enables Shadow DOM and all provided styles start to work inside of it. That helps to avoid any possible collisions in styling and to control the scoping better.</p>
+<h2 id="context">Context</h2>
+<p>Each block plays it&#39;s onw role in some context. Context helps to connect some blocks into the one data flow, if they placed somewhere in host application. You can set this context manually to bind one block to another using <code>ctx-name</code> attribute:</p>
+<pre><code class="language-html"><span class="hljs-tag">&lt;<span class="hljs-name">lr-file-uploader-regular</span> <span class="hljs-attr">ctx-name</span>=<span class="hljs-string">&quot;MY_CONTEXT&quot;</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">lr-file-uploader-regular</span>&gt;</span>
+</code></pre>
+<h2 id="events">Events</h2>
+<p>To get useful workflow data from the blocks you can use events. Block events are firing to the window scope, so you don&#39;t need to have a link or reference to the certain DOM-element. To define what exact workflow caused the event, use context name:</p>
+<pre><code class="language-js"><span class="hljs-variable language_">window</span>.<span class="hljs-title function_">addEventListener</span>(<span class="hljs-string">&#x27;LR_DATA_OUTPUT&#x27;</span>, <span class="hljs-function">(<span class="hljs-params">e</span>) =&gt;</span> {
+  <span class="hljs-keyword">if</span> (e.<span class="hljs-property">detail</span>.<span class="hljs-property">ctx</span> === <span class="hljs-string">&#x27;MY_CONTEXT&#x27;</span>) {
+    <span class="hljs-comment">// oh, now I know where it comes from...</span>
+    <span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(e.<span class="hljs-property">detail</span>.<span class="hljs-property">data</span>);
+  }
+});
+</code></pre>
+<p>More event types you can find on the <a href="/solutions/file-uploader/">file uploader&#39;s page</a>.</p>
+<h2 id="customization">Customization</h2>
+<p>With blocks you can customize everything:</p>
+<ul>
+<li>Styles</li>
+<li>Texts</li>
+<li>Icons</li>
+<li>Layouts</li>
+</ul>
+<p>You can redefine styling or any other setting using custom CSS file. It&#39;s easy to discover proper elements and their selectors using developer tools in your browser.</p>
+<p>Custom CSS-file example:</p>
+<pre><code class="language-css"><span class="hljs-keyword">@import</span> url(<span class="hljs-string">&#x27;https://unpkg.com/@uploadcare/blocks@0.9.4/web/file-uploader-regular.min.css&#x27;</span>);
+
+lr-modal {
+  <span class="hljs-attribute">border</span>: <span class="hljs-number">2px</span> solid <span class="hljs-number">#f00</span>;
+}
+</code></pre>
+<p>Then just connect it to the integrated solution:</p>
+<pre><code class="language-html"><span class="hljs-tag">&lt;<span class="hljs-name">lr-file-uploader-regular</span> <span class="hljs-attr">css-src</span>=<span class="hljs-string">&quot;./my-custom-styles.css&quot;</span>&gt;</span> <span class="hljs-tag">&lt;/<span class="hljs-name">lr-file-uploader-regular</span>&gt;</span>
+</code></pre>
+<p>For example, this is the list of pre-defined parameters used by default in our <a href="/solutions/file-uploader">uploader</a> builds:</p>
+<pre><code class="language-css"><span class="hljs-selector-pseudo">:where</span>(<span class="hljs-selector-class">.lr-wgt-cfg</span>, <span class="hljs-selector-class">.lr-wgt-common</span>),
+<span class="hljs-selector-pseudo">:host</span> {
+  <span class="hljs-attr">--cfg-pubkey</span>: <span class="hljs-string">&#x27;YOUR_PUBLIC_KEY&#x27;</span>;
+  <span class="hljs-attr">--cfg-multiple</span>: <span class="hljs-number">1</span>;
+  <span class="hljs-attr">--cfg-multiple-min</span>: <span class="hljs-number">0</span>;
+  <span class="hljs-attr">--cfg-multiple-max</span>: <span class="hljs-number">0</span>;
+
+  <span class="hljs-attr">--cfg-confirm-upload</span>: <span class="hljs-number">1</span>;
+  <span class="hljs-attr">--cfg-img-only</span>: <span class="hljs-number">0</span>;
+  <span class="hljs-attr">--cfg-accept</span>: <span class="hljs-string">&#x27;&#x27;</span>;
+  <span class="hljs-attr">--cfg-store</span>: <span class="hljs-number">1</span>;
+  <span class="hljs-attr">--cfg-camera-mirror</span>: <span class="hljs-number">1</span>;
+  <span class="hljs-attr">--cfg-source-list</span>: <span class="hljs-string">&#x27;local, url, camera, dropbox, gdrive, facebook&#x27;</span>;
+  <span class="hljs-attr">--cfg-max-local-file-size-bytes</span>: <span class="hljs-number">0</span>;
+  <span class="hljs-attr">--cfg-thumb-size</span>: <span class="hljs-number">76</span>;
+  <span class="hljs-attr">--cfg-show-empty-list</span>: <span class="hljs-number">0</span>;
+  <span class="hljs-attr">--cfg-use-local-image-editor</span>: <span class="hljs-number">0</span>;
+  <span class="hljs-attr">--cfg-use-cloud-image-editor</span>: <span class="hljs-number">1</span>;
+
+  <span class="hljs-attr">--cfg-modal-scroll-lock</span>: <span class="hljs-number">1</span>;
+  <span class="hljs-attr">--cfg-modal-backdrop-strokes</span>: <span class="hljs-number">1</span>;
+
+  <span class="hljs-attr">--cfg-source-list-wrap</span>: <span class="hljs-number">1</span>;
+
+  <span class="hljs-attr">--cfg-init-activity</span>: <span class="hljs-string">&#x27;start-from&#x27;</span>;
+  <span class="hljs-attr">--cfg-done-activity</span>: <span class="hljs-string">&#x27;start-from&#x27;</span>;
+
+  <span class="hljs-attr">--cfg-data-output-console</span>: <span class="hljs-number">1</span>;
+  <span class="hljs-attr">--cfg-data-output-fire-events</span>: <span class="hljs-number">1</span>;
+  <span class="hljs-attr">--cfg-data-output-from</span>: <span class="hljs-string">&#x27;*dataOutput&#x27;</span>;
+  <span class="hljs-attr">--cfg-data-output-form-value</span>: <span class="hljs-number">1</span>;
+
+  <span class="hljs-attr">--cfg-remote-tab-session-key</span>: <span class="hljs-string">&#x27;&#x27;</span>;
+  <span class="hljs-attr">--cfg-cdn-cname</span>: <span class="hljs-string">&#x27;https://ucarecdn.com&#x27;</span>;
+  <span class="hljs-attr">--cfg-base-url</span>: <span class="hljs-string">&#x27;https://upload.uploadcare.com&#x27;</span>;
+  <span class="hljs-attr">--cfg-secure-signature</span>: <span class="hljs-string">&#x27;&#x27;</span>;
+  <span class="hljs-attr">--cfg-secure-expire</span>: <span class="hljs-string">&#x27;&#x27;</span>;
+  <span class="hljs-attr">--cfg-secure-delivery-proxy</span>: <span class="hljs-string">&#x27;&#x27;</span>;
+  <span class="hljs-attr">--cfg-retry-throttled-request-max-times</span>: <span class="hljs-number">1</span>;
+  <span class="hljs-attr">--cfg-multipart-min-file-size</span>: <span class="hljs-number">26214400</span>; <span class="hljs-comment">/* 25MB */</span>
+  <span class="hljs-attr">--cfg-multipart-chunk-size</span>: <span class="hljs-number">5242880</span>; <span class="hljs-comment">/* 5MB */</span>
+  <span class="hljs-attr">--cfg-max-concurrent-requests</span>: <span class="hljs-number">4</span>;
+  <span class="hljs-attr">--cfg-multipart-max-attempts</span>: <span class="hljs-number">3</span>;
+  <span class="hljs-attr">--cfg-check-for-url-duplicates</span>: <span class="hljs-number">0</span>;
+  <span class="hljs-attr">--cfg-save-url-for-recurrent-uploads</span>: <span class="hljs-number">0</span>;
+
+  <span class="hljs-attr">--cfg-group-output</span>: <span class="hljs-number">0</span>;
+}
+</code></pre>
+<p>As you can see, all properties are grouped for the set of selectors:</p>
+<ul>
+<li><code>.lr-wgt-cfg</code> - specific selector for the configuration section in common CSS</li>
+<li><code>.lr-wgt-common</code> - common class for all types of settings and CSS data</li>
+<li><code>:host</code> - Shadow DOM root element selector (used when Shadow DOM is enabled)</li>
+</ul>
+<p>The variable value should be a correct JSON value. Strings should be taken in quotes. We use the 1 or 0 numbers to define boolean flags.</p>
+<p>Any configuration value can be defined and redefined at any level of the DOM tree regarding CSS selector specificity.</p>
+<h2 id="custom-configurations">Custom configurations</h2>
+<p>You can create your own custom parameters and values for your custom blocks:</p>
+<pre><code class="language-css"><span class="hljs-selector-class">.my-custom-config</span> {
+  <span class="hljs-attr">--cfg-my-custom-property</span>: <span class="hljs-string">&#x27;SOME VALUE&#x27;</span>;
+}
+</code></pre>
+<p>Then you can read it in your upload-block:</p>
+<pre><code class="language-javascript"><span class="hljs-keyword">import</span> { <span class="hljs-title class_">BlockComponent</span> } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;upload-blocks/BlockComponent/BlockComponent.js&#x27;</span>;
+
+<span class="hljs-keyword">class</span> <span class="hljs-title class_">MyBlock</span> <span class="hljs-keyword">extends</span> <span class="hljs-title class_ inherited__">BlockComponent</span> {
+  <span class="hljs-title function_">initCallback</span>(<span class="hljs-params"></span>) {
+    <span class="hljs-keyword">let</span> statePropName = <span class="hljs-variable language_">this</span>.<span class="hljs-title function_">bindCssData</span>(<span class="hljs-string">&#x27;--cfg-my-custom-property&#x27;</span>);
+    <span class="hljs-comment">// ^ this will return &#x27;*--cfg-my-custom-property&#x27;</span>
+    <span class="hljs-variable language_">this</span>.<span class="hljs-title function_">sub</span>(statePropName, <span class="hljs-function">(<span class="hljs-params">val</span>) =&gt;</span> {
+      <span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(val);
+    });
+  }
+}
+</code></pre>
+<h2 id="dynamic-configuration">Dynamic configuration</h2>
+<h3 id="via-style-property">via <code>style</code> property</h3>
+<p>We&#39;re handle <code>style</code> property updates automatically.
+It means that you can update your configuration in the following way:</p>
+<pre><code class="language-javascript"><span class="hljs-keyword">let</span> uploader = <span class="hljs-variable language_">document</span>.<span class="hljs-title function_">querySelector</span>(<span class="hljs-string">&#x27;lr-uploader&#x27;</span>);
+uploader.<span class="hljs-property">style</span>.<span class="hljs-title function_">setProperty</span>(<span class="hljs-string">&#x27;--cfg-source-list&#x27;</span>, <span class="hljs-string">&#x27;local, url&#x27;</span>);
+</code></pre>
+<h3 id="via-class-property">via <code>class</code> property</h3>
+<p>If you want to switch the whole configuration CSS class,
+you need to call method <code>updateCssData()</code> explicitly.</p>
+<pre><code class="language-css"><span class="hljs-selector-class">.config-1</span> {
+  <span class="hljs-attr">--cfg-source-list</span>: <span class="hljs-string">&#x27;local, url&#x27;</span>;
+}
+<span class="hljs-selector-class">.config-2</span> {
+  <span class="hljs-attr">--cfg-source-list</span>: <span class="hljs-string">&#x27;local, camera&#x27;</span>;
+}
+</code></pre>
+<pre><code class="language-html"><span class="hljs-tag">&lt;<span class="hljs-name">lr-uploader</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;lr-wgt-common config-1&quot;</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">lr-uploader</span>&gt;</span>
+</code></pre>
+<pre><code class="language-javascript"><span class="hljs-keyword">let</span> uploader = <span class="hljs-variable language_">document</span>.<span class="hljs-title function_">querySelector</span>(<span class="hljs-string">&#x27;lr-uploader&#x27;</span>);
+uploader.<span class="hljs-property">classList</span>.<span class="hljs-title function_">replace</span>(<span class="hljs-string">&#x27;config-1&#x27;</span>, <span class="hljs-string">&#x27;config-2&#x27;</span>);
+uploader.<span class="hljs-title function_">updateCssData</span>();
+</code></pre>
+<h2 id="extended-configuration-using-js-api">Extended configuration using JS API</h2>
+<p>To set configuration properties with complex data types, you can use JS API on any block.</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>setUploadMetadata(metadata: {})</code></td>
+<td>File Metadata. See <a target="_blank" href="https://uploadcare.com/api-refs/rest-api/v0.7.0/#tag/File-metadata">docs</a></td>
+</tr>
+</tbody></table>
+<p>Example:</p>
+<pre><code class="language-javascript"><span class="hljs-keyword">let</span> uploader = <span class="hljs-variable language_">document</span>.<span class="hljs-title function_">querySelector</span>(<span class="hljs-string">&#x27;lr-uploader&#x27;</span>);
+uploader.<span class="hljs-title function_">setUploadMetadata</span>({ <span class="hljs-attr">foo</span>: <span class="hljs-string">&#x27;bar&#x27;</span> });
+</code></pre>
+<h2 id="icons">Icons</h2>
 <p>All icons are provided via the set of SVG path descriptions inside CSS:</p>
 <pre><code class="language-css"><span class="hljs-selector-class">.lr-wgt-icons</span>,
 <span class="hljs-selector-class">.lr-wgt-common</span>,
@@ -118,6 +275,7 @@
   <span class="hljs-tag">&lt;/<span class="hljs-name">svg</span>&gt;</span>
 <span class="hljs-tag">&lt;/<span class="hljs-name">lr-icon</span>&gt;</span>
 </code></pre>
+<h2 id="next-step-localization-➡️"><a href="/get-started/localization/">Next step: Localization</a> ➡️</h2>
 </col-css>
     </main>
     <footer>© 2022 🦆</footer>

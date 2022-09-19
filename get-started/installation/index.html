@@ -49,14 +49,77 @@
             </div>
         </div>
     </div>
-      <col-css><h1>ActivityIcon</h1>
+      <col-css><h1 id="installation">Installation</h1>
+<h2 id="script-tag-approach">Script tag approach</h2>
+<blockquote>
+<p>We recommend to use the one of modern code distribution services, such as:</p>
+<ul>
+<li><a href="https://www.skypack.dev/">https://www.skypack.dev/</a></li>
+<li><a href="https://www.jsdelivr.com/">https://www.jsdelivr.com/</a></li>
+<li><a href="https://unpkg.com/">https://unpkg.com/</a></li>
+<li>etc.</li>
+</ul>
+</blockquote>
+<p>Connect script to your document:</p>
+<pre><code class="language-html"><span class="hljs-tag">&lt;<span class="hljs-name">script</span> <span class="hljs-attr">src</span>=<span class="hljs-string">&quot;https://unpkg.com/@uploadcare/blocks@0.9.4/web/blocks-browser.min.js&quot;</span> <span class="hljs-attr">type</span>=<span class="hljs-string">&quot;module&quot;</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">script</span>&gt;</span>
+</code></pre>
+<p>Then you can use blocks in your application markup.</p>
+<p>File uploader example:</p>
+<pre><code class="language-html"><span class="hljs-tag">&lt;<span class="hljs-name">lr-file-uploader-regular</span> <span class="hljs-attr">css-src</span>=<span class="hljs-string">&quot;https://unpkg.com/@uploadcare/blocks@0.9.4/web/file-uploader-regular.min.css&quot;</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-name">lr-file-uploader-regular</span>&gt;</span>
+</code></pre>
+<h2 id="dynamic-script-connection-types-support">Dynamic script connection (types support)</h2>
+<p>First, install the npm package:</p>
+<pre><code class="language-sh">npm i @uploadcare/blocks
+</code></pre>
+<p>Then use <code>connectBlocksFrom</code> function to connect blocks:</p>
+<pre><code class="language-js"><span class="hljs-keyword">import</span> { connectBlocksFrom } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;@uploadcare/blocks/abstract/connectBlocksFrom.js&#x27;</span>;
 
-<lr-live-html>
-  <link rel="stylesheet" href="../themes/lr-basic/index.css" />
-  <script src="./test.js" type="module"></script>
+<span class="hljs-keyword">const</span> <span class="hljs-variable constant_">STYLES</span> = <span class="hljs-string">&#x27;https://unpkg.com/@uploadcare/blocks@0.9.4/web/file-uploader-regular.min.css&#x27;</span>;
 
-  <lr-activity-icon class="lr-wgt-common"></lr-activity-icon>
-</lr-live-html>
+<span class="hljs-title function_">connectBlocksFrom</span>(<span class="hljs-string">&#x27;https://unpkg.com/@uploadcare/blocks@0.9.4/web/blocks-browser.min.js&#x27;</span>).<span class="hljs-title function_">then</span>(<span class="hljs-function">(<span class="hljs-params">blocks</span>) =&gt;</span> {
+  <span class="hljs-keyword">if</span> (!blocks) {
+    <span class="hljs-keyword">return</span>; <span class="hljs-comment">// To avoid errors in SSR case</span>
+  }
+
+  <span class="hljs-comment">// Now you can add uploader using native DOM API methods:</span>
+  <span class="hljs-keyword">const</span> uploader = <span class="hljs-keyword">new</span> blocks.<span class="hljs-title class_">FileUploaderRegular</span>();
+  uploader.<span class="hljs-title function_">setAttribute</span>(<span class="hljs-string">&#x27;css-src&#x27;</span>, <span class="hljs-variable constant_">STYLES</span>);
+  <span class="hljs-variable language_">document</span>.<span class="hljs-property">body</span>.<span class="hljs-title function_">appendChild</span>(uploader);
+});
+</code></pre>
+<h2 id="advanced-mode">Advanced mode</h2>
+<p>Install the npm package:</p>
+<pre><code class="language-sh">npm i @uploadcare/blocks
+</code></pre>
+<p>Than you can use blocks and build your own solutions from the source code:</p>
+<pre><code class="language-js"><span class="hljs-keyword">import</span> * <span class="hljs-keyword">as</span> <span class="hljs-variable constant_">LR</span> <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;@uploadcare/blocks&#x27;</span>;
+
+<span class="hljs-variable constant_">LR</span>.<span class="hljs-title function_">registerBlocks</span>(<span class="hljs-variable constant_">LR</span>);
+</code></pre>
+<h2 id="custom-tags-naming-convention">Custom tags naming convention</h2>
+<p>By design, all custom elements should have a dash symbol (<code>-</code>) in their names.
+All custom tags used in uploader are prefixed with the <code>lr-</code> part.</p>
+<p>Examples:</p>
+<pre><code class="language-html">...
+<span class="hljs-tag">&lt;<span class="hljs-name">lr-icon</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">lr-icon</span>&gt;</span>
+...
+<span class="hljs-tag">&lt;<span class="hljs-name">lr-button</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">lr-button</span>&gt;</span>
+...
+<span class="hljs-tag">&lt;<span class="hljs-name">lr-whatever</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">lr-whatever</span>&gt;</span>
+...
+</code></pre>
+<p>So, to exclude naming collisions, use the other prefixes for your own custom elements.</p>
+<p>Examples:</p>
+<pre><code class="language-html">...
+<span class="hljs-tag">&lt;<span class="hljs-name">my-own-icon</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">my-own-icon</span>&gt;</span>
+...
+<span class="hljs-tag">&lt;<span class="hljs-name">my-own-button</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">my-own-button</span>&gt;</span>
+...
+<span class="hljs-tag">&lt;<span class="hljs-name">my-own-whatever</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">my-own-whatever</span>&gt;</span>
+...
+</code></pre>
+<h2 id="next-step-configuration-➡️"><a href="/get-started/configuration/">Next step: Configuration</a> ➡️</h2>
 </col-css>
     </main>
     <footer>© 2022 🦆</footer>

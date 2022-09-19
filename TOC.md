@@ -2,16 +2,16 @@
 
 - [blocks](./) - repository root
 
-  - [solutions](./solutions/) - ready made solutions
+  - [solutions](solutions/) - ready made solutions
 
-    - [uploader](./solutions/file-uploader/) - uploader implementations for the most frequent cases
+    - [uploader](solutions/file-uploader/) - uploader implementations for the most frequent cases
 
-      - [regular](./solutions/file-uploader/regular/) - overall case
-      - [inline](./solutions/file-uploader/inline/) - without modal
-      - [minimal](./solutions/file-uploader/minimal/) - minimal and compact
+      - [regular](solutions/file-uploader/regular/) - overall case
+      - [inline](solutions/file-uploader/inline/) - without modal
+      - [minimal](solutions/file-uploader/minimal/) - minimal and compact
 
-    - [adaptive-image](./solutions/adaptive-image/) - efficient image rendering automation
-    - [cloud-image-editor](./solutions/cloud-image-editor/) - rich UI for CDN transformations API
+    - [adaptive-image](solutions/adaptive-image/) - efficient image rendering automation
+    - [cloud-image-editor](solutions/cloud-image-editor/) - rich UI for CDN transformations API
 
   - [blocks](./blocks/) - building blocks for the custom integrations
 
