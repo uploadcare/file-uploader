@@ -14,12 +14,10 @@ export class CloudImageEditor extends UploaderBlock {
     super.initCallback();
     this.bindCssData('--cfg-pubkey');
 
-    this.sub('*currentActivity', (val) => {
-      if (val === ActivityBlock.activities.CLOUD_IMG_EDIT) {
-        this.mountEditor();
-      } else {
-        this.unmountEditor();
-      }
+    this.registerActivity(this.activityType, {
+      onActivate: () => this.mountEditor(),
+      onDeactivate: () => this.unmountEditor(),
+      onClose: () => this.historyBack(),
     });
 
     this.sub('*focusedEntry', (/** @type {import('../../abstract/TypedData.js').TypedData} */ entry) => {

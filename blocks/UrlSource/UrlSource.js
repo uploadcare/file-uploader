@@ -15,7 +15,7 @@ export class UrlSource extends UploaderBlock {
       this.$['*currentActivity'] = ActivityBlock.activities.UPLOAD_LIST;
     },
     onCancel: () => {
-      this.cancelFlow();
+      this.historyBack();
     },
     onInput: (e) => {
       let value = /** @type {HTMLInputElement} */ (e.target).value;
@@ -25,11 +25,14 @@ export class UrlSource extends UploaderBlock {
 
   initCallback() {
     super.initCallback();
-    this.registerActivity(this.activityType, () => {
-      this.set$({
-        '*activityCaption': this.l10n('caption-from-url'),
-        '*activityIcon': 'url',
-      });
+    this.registerActivity(this.activityType, {
+      onActivate: () => {
+        this.set$({
+          '*activityCaption': this.l10n('caption-from-url'),
+          '*activityIcon': 'url',
+        });
+      },
+      onClose: () => this.historyBack(),
     });
   }
 }

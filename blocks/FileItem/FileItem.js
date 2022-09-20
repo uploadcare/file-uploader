@@ -115,23 +115,21 @@ export class FileItem extends UploaderBlock {
       state = FileItemState.FINISHED;
     }
 
-    this.$.state = state;
+    if (this.$.state !== state) {
+      this.$.state = state;
+    }
   }
 
   /** @private */
   async _generateThumbnail() {
     let entry = this._entry;
 
-    let entryNeedsCdnThumb =
-      entry.getValue('uuid') &&
-      entry.getValue('isImage') &&
-      (!entry.getValue('thumbUrl') || entry.getValue('thumbUrl').startsWith('blob:'));
-    if (entryNeedsCdnThumb) {
+    if (entry.getValue('uuid') && entry.getValue('isImage')) {
       let size = this.getCssData('--cfg-thumb-size') || 76;
       let thumbUrl = this.proxyUrl(
         createCdnUrl(
           createOriginalUrl(this.getCssData('--cfg-cdn-cname'), this._entry.getValue('uuid')),
-          createCdnUrlModifiers(`scale_crop/${size}x${size}/center`)
+          createCdnUrlModifiers(entry.getValue('cdnUrlModifiers'), `scale_crop/${size}x${size}/center`)
         )
       );
       let blobSrc = entry.getValue('thumbUrl');
@@ -241,6 +239,10 @@ export class FileItem extends UploaderBlock {
       }
     });
 
+    this._subEntry('cdnUrlModifiers', () => {
+      this._debouncedGenerateThumb();
+    });
+
     this._subEntry('thumbUrl', (thumbUrl) => {
       this.$.thumbUrl = thumbUrl ? `url(${thumbUrl})` : '';
     });
@@ -295,7 +297,6 @@ export class FileItem extends UploaderBlock {
     this.$['*uploadTrigger'] = null;
 
     this.sub('*uploadTrigger', (val) => {
-      console.log('*uploadTrigger', val);
       if (!val || !this.isConnected) {
         return;
       }

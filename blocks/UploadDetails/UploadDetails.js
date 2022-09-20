@@ -51,10 +51,13 @@ export class UploadDetails extends UploaderBlock {
     // Rendering is postponed for the CSS-context-properties usage in template:
     this.render();
     this.$.fileSize = this.l10n('file-size-unknown');
-    this.registerActivity(this.activityType, () => {
-      this.set$({
-        '*activityCaption': this.l10n('caption-edit-file'),
-      });
+    this.registerActivity(this.activityType, {
+      onActivate: () => {
+        this.set$({
+          '*activityCaption': this.l10n('caption-edit-file'),
+        });
+      },
+      onClose: () => this.historyBack(),
     });
     /** @type {import('../EditableCanvas/EditableCanvas.js').EditableCanvas} */
     // @ts-ignore
