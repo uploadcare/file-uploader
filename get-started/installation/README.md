@@ -98,4 +98,4 @@ Examples:
 ...
 ```
 
-## [Next step: Configuration](/get-started/configuration/) ➡️
+## [Next step: Configuration](get-started/configuration/) ➡️

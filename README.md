@@ -26,7 +26,7 @@
 ## ⚙️ Installation and start
 
 Installation process is very easy and takes minutes.
-See our [Installation guide](/get-started/installation/).
+See our [Installation guide](get-started/installation/).
 
 ## Typescript support
 
@@ -69,6 +69,6 @@ Issues and PRs are welcome. You can provide your feedback or drop us a support r
 2. Run dependencies setup: `npm install`.
 3. Start local dev-server: `npm run dev`.
 
-## [Browse documentation and live examples](https://uploadcare.github.io/blocks/get-started/installation/) ➡️
+## [Browse documentation and live examples](get-started/installation/) ➡️
 
 > All the source code in demos is accessible and works in raw mode (as is), so you can use your browser developer tools to discover it in detail.
