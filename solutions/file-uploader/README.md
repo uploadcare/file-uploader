@@ -76,7 +76,7 @@ Uploader is supported and tested in all major modern desktop and mobile browsers
 
 ## General
 
-All configurations, localization texts, icons, and styling are placed into CSS file (we believe you have read [configuration page](get-started/configuration/) already), so you should connect the default one (or create your own):
+All configurations, localization texts, icons, and styling are placed into CSS file (we believe you have read [configuration page](/get-started/configuration/) already), so you should connect the default one (or create your own):
 
 ```html
 <style>

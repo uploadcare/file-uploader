@@ -4,35 +4,35 @@ If our pre-built <a href="/solutions/file-uploader/">uploader solution</a> isn't
 
 ## Blocks list:
 
-- [ActivityCaption](./ActivityCaption/) - shows heading text for the current activity
-- [ActivityIcon](./ActivityIcon/) - shows actual icon for the current activity
-- [CameraSource](./CameraSource/) - getting image for upload from the device camera
-- [CloudImageEditor](./CloudImageEditor/) - image editing via Uploadcare cloud functions
-- [Color](./Color/) - simple wrapper for the native color selector in browser
-- [ComfirmationDialog](./ConfirmationDialog/) - user confirmations for the most sensitive actions
-- [DataOutput](./DataOutput/) - dedicated element for the upload data extraction in host application
-- [DropArea](./DropArea/) - wrapper element for the the drag-n-drop feature adding
-- [EditableCanvas](./EditableCanvas/) - minimalistic in-browser image editing
-- [ExternalSource](./ExternalSource/) - common wrapper for external file sources
-- [FileItem](./FileItem/) - basic UI for the each uploading file entry
-- [Icon](./Icon/) - displays an icon
-- [Img](./Img/) - adaptive image
-- [MessageBox](./MessageBox/) - common container for the application messages
-- [Modal](./Modal/) - common pop-up window
-- [ProgressBar](./ProgressBar/) - abstract progress bar
-- [ProgressBarCommon](./ProgressBarCommon/) - displays uploading progress for the all files selected
-- [Range](./Range/) - customizable wrapper for the range input element
-- [Select](./Select/) - customizable selector
-- [ShadowWrapper](./ShadowWrapper/) - Shadow DOM wrapper to encapsulate your solution
-- [SimpleBtn](./SimpleBtn/) - button for the file uploading workflow start
-- [SourceBtn](./SourceBtn/) - button for the certain source activation
-- [SourceList](./SourceList/) - renders the list of file sources basing on configuration provided
-- [StartFrom](./StartFrom/) - wrapper element for the uploading workflow initiation
-- [Tabs](./Tabs/) - implements tabbing UI
-- [UploadDetails](./UploadDetails/) - displays file details and adittional features
-- [UploadList](./UploadList/) - shows the list of uploads
-- [UrlSource](./UrlSource/) - file uploading from the external URL
-- [Video](./Video/) - wrapper element for the browser video tag
+- [ActivityCaption](/blocks/ActivityCaption/) - shows heading text for the current activity
+- [ActivityIcon](/blocks/ActivityIcon/) - shows actual icon for the current activity
+- [CameraSource](/blocks/CameraSource/) - getting image for upload from the device camera
+- [CloudImageEditor](/blocks/CloudImageEditor/) - image editing via Uploadcare cloud functions
+- [Color](/blocks/Color/) - simple wrapper for the native color selector in browser
+- [ComfirmationDialog](/blocks/ConfirmationDialog/) - user confirmations for the most sensitive actions
+- [DataOutput](/blocks/DataOutput/) - dedicated element for the upload data extraction in host application
+- [DropArea](/blocks/DropArea/) - wrapper element for the the drag-n-drop feature adding
+- [EditableCanvas](/blocks/EditableCanvas/) - minimalistic in-browser image editing
+- [ExternalSource](/blocks/ExternalSource/) - common wrapper for external file sources
+- [FileItem](/blocks/FileItem/) - basic UI for the each uploading file entry
+- [Icon](/blocks/Icon/) - displays an icon
+- [Img](/blocks/Img/) - adaptive image
+- [MessageBox](/blocks/MessageBox/) - common container for the application messages
+- [Modal](/blocks/Modal/) - common pop-up window
+- [ProgressBar](/blocks/ProgressBar/) - abstract progress bar
+- [ProgressBarCommon](/blocks/ProgressBarCommon/) - displays uploading progress for the all files selected
+- [Range](/blocks/Range/) - customizable wrapper for the range input element
+- [Select](/blocks/Select/) - customizable selector
+- [ShadowWrapper](/blocks/ShadowWrapper/) - Shadow DOM wrapper to encapsulate your solution
+- [SimpleBtn](/blocks/SimpleBtn/) - button for the file uploading workflow start
+- [SourceBtn](/blocks/SourceBtn/) - button for the certain source activation
+- [SourceList](/blocks/SourceList/) - renders the list of file sources basing on configuration provided
+- [StartFrom](/blocks/StartFrom/) - wrapper element for the uploading workflow initiation
+- [Tabs](/blocks/Tabs/) - implements tabbing UI
+- [UploadDetails](/blocks/UploadDetails/) - displays file details and adittional features
+- [UploadList](/blocks/UploadList/) - shows the list of uploads
+- [UrlSource](/blocks/UrlSource/) - file uploading from the external URL
+- [Video](/blocks/Video/) - wrapper element for the browser video tag
 
 ## 🍰 Concept description
 
@@ -118,7 +118,7 @@ You can use it as the template to create your own custom styling (or CSS animati
 All blocks and their children act like regular DOM elements; therefore, you can use native CSS selectors and any existing styling approach.
 All significant component states are provided as element attribute flags, so you can use the full power of CSS to customize the blocks deeply.
 
-[More about CSS theme creation](./themes/lr-basic/)
+[More about CSS theme creation](/blocks/themes/lr-basic/)
 
 ### Layout & composition
 
@@ -171,12 +171,12 @@ You can create your own custom upload-blocks to handle some specific use cases. 
 
 ## ⚙️ More in depth
 
-- [Configuration](../get-started/configuration/)
-- [Upload data output](../docs/output/)
-- [Texts & localization](../get-started/localization/)
-- [Styling](../blocks/themes/lr-basic/)
-- [Activities](../docs/activities/)
-- [TypeScript](../docs/typescript/)
+- [Configuration](/get-started/configuration/)
+- [Upload data output](/docs/output/)
+- [Texts & localization](/get-started/localization/)
+- [Styling](/blocks/themes/lr-basic/)
+- [Activities](/docs/activities/)
+- [TypeScript](/docs/typescript/)
 - <a target="_blank" href="https://github.com/symbiotejs/symbiote.js">Symbiote.js</a>
 
 ## 💬 Discussions
