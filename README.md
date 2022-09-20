@@ -12,7 +12,7 @@
 - Fast and secure.
 - Minimum of external dependencies: security audit is not expensive.
 - We try to be as close to the native web platform as possible and not force you to use any specific development environment tools.
-- Tested by un Uploadcare community.
+- Tested by an Uploadcare community.
 
 ## 📦 What’s in the box?
 
@@ -30,11 +30,11 @@ See our [Installation guide](/get-started/installation/).
 
 ## Typescript support
 
-We use <a href="https://www.typescriptlang.org/docs/handbook/intro-to-js-ts.html" target="_blank">JSDoc type annotations</a> for TypeScript static analysis support during development.
+We use [JSDoc type annotations](https://www.typescriptlang.org/docs/handbook/intro-to-js-ts.html) for TypeScript static analysis support during development.
 
-Also, we provide type definitions (<a target="_blank" href="https://www.typescriptlang.org/docs/handbook/declaration-files/dts-from-js.html">\*.d.ts files</a>) for the TypeScript projects in our packages.
+Also, we provide type definitions ([\*.d.ts files](https://www.typescriptlang.org/docs/handbook/declaration-files/dts-from-js.html)) for the TypeScript projects in our packages.
 
-Check the <a target="_blank" href="https://www.typescriptlang.org/docs/handbook/jsdoc-supported-types.html">JSDoc Reference</a> page in TypeScript official documentation.
+Check the [JSDoc Reference](https://www.typescriptlang.org/docs/handbook/jsdoc-supported-types.html) page in TypeScript official documentation.
 
 ## Supported browsers
 
@@ -47,17 +47,17 @@ Blocks are supported and tested in all major modern desktop and mobile browsers:
 - Opera
 - etc.
 
-<a target="_blank" href="https://uploadcare.com/blog/uploadcare-stops-internet-explorer-support/">Internet Explorer</a> is outdated and not supported anymore.
+[Internet Explorer](https://uploadcare.com/blog/uploadcare-stops-internet-explorer-support/) is outdated and not supported anymore.
 
 ## Frameworks support
 
 Blocks are a framework-agnostic solution, so you can use it with any runtime you like. We have prepared examples for most popular frameworks.
 <br/>
 
-- <a href="https://github.com/uploadcare/uc-blocks-examples/tree/main/examples/react-uploader" target="_blank">React example</a>
-- <a href="https://github.com/uploadcare/uc-blocks-examples/tree/main/examples/vue-uploader" target="_blank">Vue example</a>
-- <a href="https://github.com/uploadcare/uc-blocks-examples/tree/main/examples/angular-uploader" target="_blank">Angular example</a>
-- <a href="https://github.com/uploadcare/uc-blocks-examples/tree/main/examples/svelte-uploader" target="_blank">Svelte example</a>
+- [React example](https://github.com/uploadcare/uc-blocks-examples/tree/main/examples/react-uploader)
+- [Vue example](https://github.com/uploadcare/uc-blocks-examples/tree/main/examples/vue-uploader)
+- [Angular example](https://github.com/uploadcare/uc-blocks-examples/tree/main/examples/angular-uploader)
+- [Svelte example](https://github.com/uploadcare/uc-blocks-examples/tree/main/examples/svelte-uploader)
 
 ## 🚀 Feedback
 

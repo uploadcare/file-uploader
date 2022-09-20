@@ -187,9 +187,9 @@ uploader.updateCssData();
 
 To set configuration properties with complex data types, you can use JS API on any block.
 
-| Name                              | Description                                                                                                              |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `setUploadMetadata(metadata: {})` | File Metadata. See <a target="_blank" href="https://uploadcare.com/api-refs/rest-api/v0.7.0/#tag/File-metadata">docs</a> |
+| Name                              | Description                                                                                   |
+| --------------------------------- | --------------------------------------------------------------------------------------------- |
+| `setUploadMetadata(metadata: {})` | File Metadata. See [docs](https://uploadcare.com/api-refs/rest-api/v0.7.0/#tag/File-metadata) |
 
 Example:
 
