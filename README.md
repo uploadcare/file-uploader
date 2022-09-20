@@ -16,10 +16,10 @@
 
 ## 📦 What’s in the box?
 
-- [File uploader solutions](solutions/file-uploader/) - file uploader implementations for the most frequent use cases.
-- [Blocks to build your own custom solutions](./blocks/) - build your own integration solutions with simple HTML and CSS.
-- [Adaptive image solution](solutions/adaptive-image/): all you need to distribute your web images efficiently.
-- [Cloud image editing solution](solutions/cloud-image-editor/): tune your pictures on the fly.
+- [File uploader solutions](/solutions/file-uploader/) - file uploader implementations for the most frequent use cases.
+- [Blocks to build your own custom solutions](/blocks/) - build your own integration solutions with simple HTML and CSS.
+- [Adaptive image solution](/solutions/adaptive-image/): all you need to distribute your web images efficiently.
+- [Cloud image editing solution](/solutions/cloud-image-editor/): tune your pictures on the fly.
 - Web components for media content representation: audio, video, image galleries, etc.
 - etc.
 
@@ -69,6 +69,6 @@ Issues and PRs are welcome. You can provide your feedback or drop us a support r
 2. Run dependencies setup: `npm install`.
 3. Start local dev-server: `npm run dev`.
 
-## [Browse documentation and live examples](https://uploadcare.github.io/blocks/get-started/installation/) ➡️
+## [Browse documentation and live examples](/get-started/installation/) ➡️
 
 > All the source code in demos is accessible and works in raw mode (as is), so you can use your browser developer tools to discover it in detail.
