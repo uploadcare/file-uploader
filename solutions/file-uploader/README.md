@@ -42,7 +42,7 @@ Uploader is supported and tested in all major modern desktop and mobile browsers
 - Opera
 - etc.
 
-<a target="_blank" href="https://uploadcare.com/blog/uploadcare-stops-internet-explorer-support/">Internet Explorer</a> is outdated and not supported anymore.
+[Internet Explorer](https://uploadcare.com/blog/uploadcare-stops-internet-explorer-support/) is outdated and not supported anymore.
 <br/><br/><br/>
 
 # <a name="example_regular"></a>Regular uploader
@@ -99,7 +99,7 @@ There are two major parameters you should know about first of all:
 
 ## Public key
 
-You should obtain a Public API Key in your <a target="_blank" href="https://app.uploadcare.com/projects/-/api-keys/">Uploadcare project's dashboard</a> to use file uploading features.
+You should obtain a Public API Key in your [Uploadcare project's dashboard](https://app.uploadcare.com/projects/-/api-keys/) to use file uploading features.
 
 For demo-only purposes, you can use `demopublickey` instead.
 
@@ -121,11 +121,11 @@ By default, context will be created automatically, but if you need to bind uploa
 ...
 ```
 
-For more information, please visit <a target="_blank" href="https://symbiotejs.org/?context">"context" section</a> in Symbiote.js documentation.
+For more information, please visit ["context" section](https://symbiotejs.org/?context) in Symbiote.js documentation.
 
 ## CSS custom properties
 
-All configurations could be provided via the set of <a target="_blank" href="https://developer.mozilla.org/en-US/docs/Web/CSS/Using_CSS_custom_properties">CSS-variables</a>:
+All configurations could be provided via the set of [CSS-variables](https://developer.mozilla.org/en-US/docs/Web/CSS/Using_CSS_custom_properties):
 
 ```css
 .my-settings {
@@ -143,30 +143,30 @@ Any configuration value can be defined and redefined at any DOM-tree level regar
 
 ## Parameters description
 
-| Name                              | Description                                                                                                                                                       |         Values         |             Default             |
-| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------------------: | :-----------------------------: |
-| `--cfg-pubkey`                    | Your project Public Key                                                                                                                                           |         string         |        `YOUR_PUBLIC_KEY`        |
-| `--cfg-multiple`                  | Allow to upload multiple files                                                                                                                                    |       `1` or `0`       |               `1`               |
-| `--cfg-multiple-min`              | Minimum number of files that can be selected.                                                                                                                     |         number         |              none               |
-| `--cfg-multiple-max`              | Maximum number of files that can be selected.                                                                                                                     |         number         |              none               |
-| `--cfg-confirm-upload`            | Enables user confirmation for upload starting                                                                                                                     |       `1` or `0`       |               `1`               |
-| `--cfg-img-only`                  | Accept images only                                                                                                                                                |       `1` or `0`       |               `0`               |
-| `--cfg-accept`                    | Native file input accept attribute value                                                                                                                          |      `'image/*'`       |              none               |
-| `--cfg-store`                     | Store files                                                                                                                                                       |       `1` or `0`       |                -                |
-| `--cfg-camera-mirror`             | Flip camera image                                                                                                                                                 |       `1` or `0`       |               `0`               |
-| `--cfg-source-list`               | Comma-separated list of file sources. See available sources [below](#source-list).                                                                                | `'local, url, camera'` |              none               |
-| `--cfg-max-local-file-size-bytes` | Maximum file size in bytes                                                                                                                                        |           -            |              none               |
-| `--cfg-thumb-size`                | Image thumbnail size                                                                                                                                              |          `76`          |              `76`               |
-| `--cfg-show-empty-list`           | Show uploads list when it's empty                                                                                                                                 |       `1` or `0`       |               `0`               |
-| `--cfg-use-local-image-editor`    | Enable local image editing                                                                                                                                        |       `1` or `0`       |               `0`               |
-| `--cfg-use-cloud-image-editor`    | Enable cloud image editing                                                                                                                                        |       `1` or `0`       |               `0`               |
-| `--cfg-remote-tab-session-key`    | Key to revoke Custom OAuth access. See <a target="_blank" href="https://uploadcare.com/docs/start/settings/#project-settings-advanced-oauth">docs</a> for details |         string         |              none               |
-| `--cfg-cdn-cname`                 | Set Custom CNAME. See <a target="_blank" href="https://uploadcare.com/docs/delivery/cdn/#custom-cdn-cname">docs</a> for details                                   |         string         |     `https://ucarecdn.com`      |
-| `--cfg-base-url`                  | Set custom upload URL.                                                                                                                                            |         string         | `https://upload.uploadcare.com` |
-| `--cfg-secure-signature`          | Set `signature` for Secure Uploads. See <a target="_blank" href="https://uploadcare.com/docs/security/secure-uploads/#expire-explained">docs</a> for details      |         string         |              none               |
-| `--cfg-secure-expire`             | Set `expire` for Secure Uploads. See <a target="_blank" href="https://uploadcare.com/docs/security/secure-uploads/#expire-explained">docs</a> for details         |         string         |              none               |
-| `--cfg-secure-delivery-proxy`     | Set proxy URL template for Secure Delivery. See [here](#secure-delivery-proxy) for details                                                                        |         string         |              none               |
-| `--cfg-group-output`              | Enables files group creation                                                                                                                                      |          `0`           |               `0`               |
+| Name                              | Description                                                                                                                            |         Values         |             Default             |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | :--------------------: | :-----------------------------: |
+| `--cfg-pubkey`                    | Your project Public Key                                                                                                                |         string         |        `YOUR_PUBLIC_KEY`        |
+| `--cfg-multiple`                  | Allow to upload multiple files                                                                                                         |       `1` or `0`       |               `1`               |
+| `--cfg-multiple-min`              | Minimum number of files that can be selected.                                                                                          |         number         |              none               |
+| `--cfg-multiple-max`              | Maximum number of files that can be selected.                                                                                          |         number         |              none               |
+| `--cfg-confirm-upload`            | Enables user confirmation for upload starting                                                                                          |       `1` or `0`       |               `1`               |
+| `--cfg-img-only`                  | Accept images only                                                                                                                     |       `1` or `0`       |               `0`               |
+| `--cfg-accept`                    | Native file input accept attribute value                                                                                               |      `'image/*'`       |              none               |
+| `--cfg-store`                     | Store files                                                                                                                            |       `1` or `0`       |                -                |
+| `--cfg-camera-mirror`             | Flip camera image                                                                                                                      |       `1` or `0`       |               `0`               |
+| `--cfg-source-list`               | Comma-separated list of file sources. See available sources [below](#source-list).                                                     | `'local, url, camera'` |              none               |
+| `--cfg-max-local-file-size-bytes` | Maximum file size in bytes                                                                                                             |           -            |              none               |
+| `--cfg-thumb-size`                | Image thumbnail size                                                                                                                   |          `76`          |              `76`               |
+| `--cfg-show-empty-list`           | Show uploads list when it's empty                                                                                                      |       `1` or `0`       |               `0`               |
+| `--cfg-use-local-image-editor`    | Enable local image editing                                                                                                             |       `1` or `0`       |               `0`               |
+| `--cfg-use-cloud-image-editor`    | Enable cloud image editing                                                                                                             |       `1` or `0`       |               `0`               |
+| `--cfg-remote-tab-session-key`    | Key to revoke Custom OAuth access. See [docs](https://uploadcare.com/docs/start/settings/#project-settings-advanced-oauth) for details |         string         |              none               |
+| `--cfg-cdn-cname`                 | Set Custom CNAME. See [docs](https://uploadcare.com/docs/delivery/cdn/#custom-cdn-cname) for details                                   |         string         |     `https://ucarecdn.com`      |
+| `--cfg-base-url`                  | Set custom upload URL.                                                                                                                 |         string         | `https://upload.uploadcare.com` |
+| `--cfg-secure-signature`          | Set `signature` for Secure Uploads. See [docs](https://uploadcare.com/docs/security/secure-uploads/#expire-explained) for details      |         string         |              none               |
+| `--cfg-secure-expire`             | Set `expire` for Secure Uploads. See [docs](https://uploadcare.com/docs/security/secure-uploads/#expire-explained) for details         |         string         |              none               |
+| `--cfg-secure-delivery-proxy`     | Set proxy URL template for Secure Delivery. See [here](#secure-delivery-proxy) for details                                             |         string         |              none               |
+| `--cfg-group-output`              | Enables files group creation                                                                                                           |          `0`           |               `0`               |
 
 ## <a name="source-list"></a> --cfg-source-list
 
@@ -195,11 +195,11 @@ Any configuration value can be defined and redefined at any DOM-tree level regar
 
 ## <a name="secure-delivery-proxy"></a> --cfg-secure-delivery-proxy
 
-The parameter can be used with <a target="_blank" href="https://uploadcare.com/docs/security/secure-delivery/#authenticated-urls">signed URLs</a>. Defines template for your proxy <a target="_blank" href="https://uploadcare.com/docs/security/secure-delivery/#proxy-backend">backend URL</a>.
+The parameter can be used with [signed URLs](https://uploadcare.com/docs/security/secure-delivery/#authenticated-urls). Defines template for your proxy [backend URL](https://uploadcare.com/docs/security/secure-delivery/#proxy-backend).
 
-This is replacement for the <a target="_blank" href="https://uploadcare.com/docs/security/secure-delivery/#preview-proxy">File Uploader `previewProxy` option</a>.
+This is replacement for the [File Uploader `previewProxy` option](https://uploadcare.com/docs/security/secure-delivery/#preview-proxy).
 
-**NOTE**: There is no replacement for <a target="_blank" href="https://uploadcare.com/docs/security/secure-delivery/#preview-url-callback">File Uploader `previewUrlCallback` option</a>. If you need such functionality, please create <a target="_blank" href="https://github.com/uploadcare/blocks/issues/new?template=feature_request.md&title=Secure%20delivery%20proxy%20callback">a feature request</a>.
+**NOTE**: There is no replacement for [File Uploader `previewUrlCallback` option](https://uploadcare.com/docs/security/secure-delivery/#preview-url-callback). If you need such functionality, please create [a feature request](https://github.com/uploadcare/blocks/issues/new?template=feature_request.md&title=Secure%20delivery%20proxy%20callback).
 
 Value for `--cfg-secure-delivery-proxy` is a string template with the following variables:
 
@@ -217,7 +217,7 @@ That means that you can use `{{previewUrl}}` in your template to insert the URL 
 
 ## CSP settings
 
-If the application works with sensitive user data, such as personal photos, it is recommended to increase its security with <a target="_blank" href="https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP">CSP settings</a>. Uploader is using `Blob` URLs for on-the-flight generated images and the stylesheets in some cases, so don't forget to add `blob:` source into the CSP settings:
+If the application works with sensitive user data, such as personal photos, it is recommended to increase its security with [CSP settings](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP). Uploader is using `Blob` URLs for on-the-flight generated images and the stylesheets in some cases, so don't forget to add `blob:` source into the CSP settings:
 
 ```html
 <meta
