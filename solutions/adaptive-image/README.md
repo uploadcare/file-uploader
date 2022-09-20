@@ -18,7 +18,7 @@ It generates a set of URLs for the initial image source with the desired paramet
 Connect script:
 
 ```html
-<script src="https://unpkg.com/@uploadcare/blocks@0.10.0/web/lr-img.min.js" type="module"></script>
+<script src="https://unpkg.com/@uploadcare/blocks@{{PACKAGE_VERSION}}/web/lr-img.min.js" type="module"></script>
 ```
 
 Add basic settings:
