@@ -1,3 +1,12 @@
+## [0.10.1](https://github.com/uploadcare/blocks/compare/v0.10.0...v0.10.1) (2022-09-20)
+
+### Bug Fixes
+
+- **file-item:** prevent flickering ([d04ec9d](https://github.com/uploadcare/blocks/commit/d04ec9d8ddf893410025adb49c262c24399d7fa3))
+- **file-item:** regenerate thumb on image edit ([15e567d](https://github.com/uploadcare/blocks/commit/15e567dddd5af05ffc7b3d76f02db25d31067516))
+- rework history ([f7e39f9](https://github.com/uploadcare/blocks/commit/f7e39f9234f384f40f50cb211268f319d3a5b3d5))
+- **upload-list:** do not close modal automatically if `--cfg-confirm-upload` enabled ([68f3e93](https://github.com/uploadcare/blocks/commit/68f3e931ffd37a37b2622653fb3a65ee78530a48))
+
 # [0.10.0](https://github.com/uploadcare/blocks/compare/v0.9.4...v0.10.0) (2022-09-19)
 
 ### Bug Fixes
