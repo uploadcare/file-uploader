@@ -185,7 +185,7 @@ tr:hover {
 }
 
 .level-1 {
-  padding-left: .5rem; 
+  padding-left: .5rem;
   font-weight: 600;
   cursor: pointer;
 }
@@ -213,14 +213,14 @@ tr:hover {
 }
 
 a[target="_blank"]:after {
-  content: url(/assets/media/external-link-icon.svg);
+  content: url({{BASE}}assets/media/external-link-icon.svg);
   margin-left: .1em;
   position: relative;
   bottom: 2px;
 }
 
 .github:before {
-  content: url(/assets/media/github-icon.svg);
+  content: url({{BASE}}assets/media/github-icon.svg);
   margin-right: .1em;
   position: relative;
   top: 1px;
