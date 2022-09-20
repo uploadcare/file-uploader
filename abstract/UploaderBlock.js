@@ -131,14 +131,12 @@ export class UploaderBlock extends ActivityBlock {
   }
 
   cancelFlow() {
-    if (this.sourceList?.length === 1 || !this.$['*uploadList']?.length) {
-      this.$['*currentActivity'] = null;
+    this.set$({
+      '*currentActivity': this.doneActivity,
+      '*history': this.doneActivity ? [this.doneActivity] : [],
+    });
+    if (!this.$['*currentActivity']) {
       this.setForCtxTarget('lr-modal', '*modalActive', false);
-    } else {
-      this.historyBack();
-      if (!this.$['*currentActivity']) {
-        this.setForCtxTarget('lr-modal', '*modalActive', false);
-      }
     }
   }
 

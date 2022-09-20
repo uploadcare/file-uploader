@@ -6,7 +6,12 @@ export class Modal extends Block {
     ...this.ctxInit,
     '*modalActive': false,
     '*modalHeaderHidden': false,
+    '*modalCloseCallback': null,
     closeClicked: () => {
+      if (this.$['*modalCloseCallback']) {
+        this.$['*modalCloseCallback']();
+        return;
+      }
       this.set$({
         '*modalActive': false,
         '*currentActivity': '',

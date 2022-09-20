@@ -5,14 +5,16 @@ export class StartFrom extends ActivityBlock {
 
   initCallback() {
     super.initCallback();
-    this.registerActivity(this.activityType, () => {
-      this.add$(
-        {
-          '*activityCaption': this.l10n('select-file-source'),
-          '*activityIcon': 'default',
-        },
-        true
-      );
+    this.registerActivity(this.activityType, {
+      onActivate: () => {
+        this.add$(
+          {
+            '*activityCaption': this.l10n('select-file-source'),
+            '*activityIcon': 'default',
+          },
+          true
+        );
+      },
     });
   }
 }

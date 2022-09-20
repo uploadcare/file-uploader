@@ -27,7 +27,7 @@ export class CameraSource extends UploaderBlock {
       this._capture();
     },
     onCancel: () => {
-      this.cancelFlow();
+      this.historyBack();
     },
     onShot: () => {
       this._shot();
@@ -61,6 +61,11 @@ export class CameraSource extends UploaderBlock {
     }
 
     this._stopCapture();
+  };
+
+  /** @private */
+  _onClose = () => {
+    this.historyBack();
   };
 
   /** @private */
@@ -189,7 +194,11 @@ export class CameraSource extends UploaderBlock {
 
   async initCallback() {
     super.initCallback();
-    this.registerActivity(this.activityType, this._onActivate, this._onDeactivate);
+    this.registerActivity(this.activityType, {
+      onActivate: this._onActivate,
+      onDeactivate: this._onDeactivate,
+      onClose: this._onClose,
+    });
 
     this.sub('--cfg-camera-mirror', (val) => {
       this.$.videoTransformCss = val ? 'scaleX(-1)' : null;
@@ -234,7 +243,7 @@ CameraSource.template = /*html*/ `
     set="onclick: onCancel"
     l10n="cancel">
   </button>
-  <lr-select 
+  <lr-select
     set="$.options: cameraSelectOptions; @hidden: cameraSelectHidden; onchange: onCameraSelectChange">
   </lr-select>
   <button

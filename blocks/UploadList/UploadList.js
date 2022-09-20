@@ -25,10 +25,7 @@ export class UploadList extends UploaderBlock {
       this._updateUploadsState();
     },
     onDone: () => {
-      this.set$({
-        '*currentActivity': this.doneActivity || '',
-      });
-      this.setForCtxTarget('lr-modal', '*modalActive', false);
+      this.cancelFlow();
     },
     onCancel: () => {
       let cfn = new UiConfirmation();
@@ -43,8 +40,8 @@ export class UploadList extends UploaderBlock {
             data,
           })
         );
-        this.cancelFlow();
         this.uploadCollection.clearAll();
+        this.historyBack();
       };
       cfn.denyAction = () => {
         this.historyBack();
@@ -142,34 +139,42 @@ export class UploadList extends UploaderBlock {
 
     this.set$({
       doneBtnHidden: !allUploaded,
-      doneBtnDisabled: !fitCountRestrictions || !fitValidation,
+      doneBtnDisabled: summary.total === 0 || !fitCountRestrictions || !fitValidation,
 
       uploadBtnHidden: allUploaded,
       uploadBtnDisabled:
         summary.uploading + summary.uploaded === summary.total || !fitCountRestrictions || !fitValidation,
 
-      addMoreBtnDisabled: tooMany || exact,
+      addMoreBtnDisabled: summary.total > 0 && (tooMany || exact),
       addMoreBtnHidden: exact && !this.getCssData('--cfg-multiple'),
     });
-
-    if (filesCount > 0 && !this.getCssData('--cfg-confirm-upload') && fitCountRestrictions && allUploaded) {
-      this.$.onDone();
-    }
   }
 
   initCallback() {
     super.initCallback();
 
-    this.registerActivity(this.activityType, () => {
-      this.set$({
-        '*activityCaption': this.l10n('selected'),
-        '*activityIcon': 'local',
-      });
+    this.registerActivity(this.activityType, {
+      onActivate: () => {
+        this.set$({
+          '*activityCaption': this.l10n('selected'),
+          '*activityIcon': 'local',
+        });
+      },
     });
 
     this.sub('--cfg-multiple', () => this._handleCollectionUpdate());
     this.sub('--cfg-multiple-min', () => this._handleCollectionUpdate());
     this.sub('--cfg-multiple-max', () => this._handleCollectionUpdate());
+
+    this.sub('*currentActivity', (currentActivity) => {
+      if (
+        this.uploadCollection?.size === 0 &&
+        !this.getCssData('--cfg-show-empty-list') &&
+        currentActivity === this.activityType
+      ) {
+        this.$['*currentActivity'] = this.initActivity;
+      }
+    });
 
     // TODO: could be performance issue on many files
     // there is no need to update buttons state on every progress tick
@@ -178,18 +183,15 @@ export class UploadList extends UploaderBlock {
     });
 
     this.sub('*uploadList', (list) => {
-      if (list?.length === 0 && !this.getCssData('--cfg-show-empty-list')) {
-        this.cancelFlow();
-        return;
-      }
-
       this._handleCollectionUpdate();
 
       this.set$({
         hasFiles: list.length > 0,
       });
 
-      this.setForCtxTarget('lr-modal', '*modalActive', true);
+      if (list?.length === 0 && !this.getCssData('--cfg-show-empty-list')) {
+        this.cancelFlow();
+      }
     });
   }
 }
