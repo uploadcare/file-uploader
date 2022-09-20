@@ -71,7 +71,7 @@ It generates a set of URLs for the initial image source with the desired paramet
   <span class="hljs-attr">--lr-img-breakpoints</span>: <span class="hljs-string">&#x27;200, 500, 800&#x27;</span>;
 }
 </code></pre>
-<p>A public key is necessary for the Proxy links generation if a custom proxy name is not used. You can obtain the public key in your <a target="_blank" href="https://app.uploadcare.com/projects/-/api-keys/">Uploadcare project&#39;s dashboard</a>.</p>
+<p>A public key is necessary for the Proxy links generation if a custom proxy name is not used. You can obtain the public key in your <a target='_blank'  href="https://app.uploadcare.com/projects/-/api-keys/">Uploadcare project&#39;s dashboard</a>.</p>
 <p>Then use <code>&lt;lr-img&gt;</code> tag for the images in your HTML templates:</p>
 <pre><code class="language-html"><span class="hljs-tag">&lt;<span class="hljs-name">lr-img</span> <span class="hljs-attr">src</span>=<span class="hljs-string">&quot;SOURCE_IMAGE_PATH&quot;</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">lr-img</span>&gt;</span>
 </code></pre>
@@ -79,7 +79,7 @@ It generates a set of URLs for the initial image source with the desired paramet
 <h2 id="workflow">Workflow</h2>
 <ol>
 <li>Web component initiating and reading it&#39;s settings, including the source image path.</li>
-<li>Component uses <a target="_blank" href="https://uploadcare.com/docs/delivery/proxy/">Uploadcare Proxy</a> service to upload the source image if that was not done before.</li>
+<li>Component uses <a target='_blank'  href="https://uploadcare.com/docs/delivery/proxy/">Uploadcare Proxy</a> service to upload the source image if that was not done before.</li>
 <li>Image component generates all necessary src sets for the resulting image and renders the <code>img</code> tag into the DOM.</li>
 </ol>
 <h2 id="fallback">Fallback</h2>
@@ -96,7 +96,7 @@ It generates a set of URLs for the initial image source with the desired paramet
 <span class="hljs-tag">&lt;/<span class="hljs-name">lr-img</span>&gt;</span>
 </code></pre>
 <h2 id="lazy-loading">Lazy loading</h2>
-<p><a target="_blank" href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe#attr-loading">Native lazy loading</a> is enabled by default for all image components. You can disable it or use a custom one based on <a target="_blank" href="https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API">IntersectionObserver</a>.</p>
+<p><a target='_blank'  href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe#attr-loading">Native lazy loading</a> is enabled by default for all image components. You can disable it or use a custom one based on <a target='_blank'  href="https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API">IntersectionObserver</a>.</p>
 <p>Disable:</p>
 <pre><code class="language-html"><span class="hljs-tag">&lt;<span class="hljs-name">style</span>&gt;</span><span class="language-css">
   lr-<span class="hljs-selector-tag">img</span> {
@@ -140,7 +140,7 @@ It generates a set of URLs for the initial image source with the desired paramet
 
 <span class="hljs-tag">&lt;<span class="hljs-name">lr-img</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;invert&quot;</span> <span class="hljs-attr">src</span>=<span class="hljs-string">&quot;SOURCE_IMAGE_PATH&quot;</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">lr-img</span>&gt;</span>
 </code></pre>
-<p>Operations description syntax is the same as used in <a target="_blank" href="https://uploadcare.com/docs/transformations/image/">Image processing API</a>. More examples:</p>
+<p>Operations description syntax is the same as used in <a target='_blank'  href="https://uploadcare.com/docs/transformations/image/">Image processing API</a>. More examples:</p>
 <pre><code class="language-html"><span class="hljs-tag">&lt;<span class="hljs-name">style</span>&gt;</span><span class="language-css">
   <span class="hljs-selector-class">.invert_grayscale</span> {
     <span class="hljs-attr">--lr-img-cdn-operations</span>: <span class="hljs-string">&#x27;invert/-/grayscale&#x27;</span>;
@@ -150,7 +150,7 @@ It generates a set of URLs for the initial image source with the desired paramet
   }
 </span><span class="hljs-tag">&lt;/<span class="hljs-name">style</span>&gt;</span>
 </code></pre>
-<p>As you can see, transformation definitions are separated with <code>/-/</code> symbols, just like you can use in the <a target="_blank" href="https://uploadcare.com/docs/transformations/image/">Image processing API</a>.</p>
+<p>As you can see, transformation definitions are separated with <code>/-/</code> symbols, just like you can use in the <a target='_blank'  href="https://uploadcare.com/docs/transformations/image/">Image processing API</a>.</p>
 <h2 id="background-mode">Background mode</h2>
 <p>To use an adaptive image as an element&#39;s background, you can use <code>is-background-for</code> attribute with the desired element&#39;s CSS selector in its value:</p>
 <pre><code class="language-html"><span class="hljs-tag">&lt;<span class="hljs-name">style</span>&gt;</span><span class="language-css">

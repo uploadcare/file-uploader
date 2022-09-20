@@ -87,7 +87,7 @@ Each uploader is highly customizable on its own and could be used as a custom bu
 <li>Opera</li>
 <li>etc.</li>
 </ul>
-<p><a target="_blank" href="https://uploadcare.com/blog/uploadcare-stops-internet-explorer-support/">Internet Explorer</a> is outdated and not supported anymore.
+<p><a target='_blank'  href="https://uploadcare.com/blog/uploadcare-stops-internet-explorer-support/">Internet Explorer</a> is outdated and not supported anymore.
 <br/><br/><br/></p>
 <h1 id="regular-uploader"><a name="example_regular"></a>Regular uploader</h1>
 <pre><code class="language-html"><span class="hljs-tag">&lt;<span class="hljs-name">lr-file-uploader-regular</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">lr-file-uploader-regular</span>&gt;</span>
@@ -126,7 +126,7 @@ Each uploader is highly customizable on its own and could be used as a custom bu
 <li>Workflow context name: <code>--ctx-name: &#39;CONTEXT_NAME&#39;;</code>.</li>
 </ol>
 <h2 id="public-key">Public key</h2>
-<p>You should obtain a Public API Key in your <a target="_blank" href="https://app.uploadcare.com/projects/-/api-keys/">Uploadcare project&#39;s dashboard</a> to use file uploading features.</p>
+<p>You should obtain a Public API Key in your <a target='_blank'  href="https://app.uploadcare.com/projects/-/api-keys/">Uploadcare project&#39;s dashboard</a> to use file uploading features.</p>
 <p>For demo-only purposes, you can use <code>demopublickey</code> instead.</p>
 <h2 id="context-name">Context name</h2>
 <p>Our concept of workflow contexts is very similar to native HTML <code>name</code> attributes for the &quot;radio&quot; inputs.
@@ -141,9 +141,9 @@ By default, context will be created automatically, but if you need to bind uploa
 <span class="hljs-tag">&lt;<span class="hljs-name">lr-data-output</span> <span class="hljs-attr">ctx-name</span>=<span class="hljs-string">&quot;my-uploading-workflow&quot;</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">lr-data-output</span>&gt;</span>
 ...
 </code></pre>
-<p>For more information, please visit <a target="_blank" href="https://symbiotejs.org/?context">&quot;context&quot; section</a> in Symbiote.js documentation.</p>
+<p>For more information, please visit <a target='_blank'  href="https://symbiotejs.org/?context">&quot;context&quot; section</a> in Symbiote.js documentation.</p>
 <h2 id="css-custom-properties">CSS custom properties</h2>
-<p>All configurations could be provided via the set of <a target="_blank" href="https://developer.mozilla.org/en-US/docs/Web/CSS/Using_CSS_custom_properties">CSS-variables</a>:</p>
+<p>All configurations could be provided via the set of <a target='_blank'  href="https://developer.mozilla.org/en-US/docs/Web/CSS/Using_CSS_custom_properties">CSS-variables</a>:</p>
 <pre><code class="language-css"><span class="hljs-selector-class">.my-settings</span> {
   <span class="hljs-attr">--cfg-pubkey</span>: <span class="hljs-string">&#x27;demopublickey&#x27;</span>;
   <span class="hljs-attr">--cfg-multiple</span>: <span class="hljs-number">1</span>;
@@ -256,13 +256,13 @@ By default, context will be created automatically, but if you need to bind uploa
 </tr>
 <tr>
 <td><code>--cfg-remote-tab-session-key</code></td>
-<td>Key to revoke Custom OAuth access. See <a target="_blank" href="https://uploadcare.com/docs/start/settings/#project-settings-advanced-oauth">docs</a> for details</td>
+<td>Key to revoke Custom OAuth access. See <a target='_blank'  href="https://uploadcare.com/docs/start/settings/#project-settings-advanced-oauth">docs</a> for details</td>
 <td align="center">string</td>
 <td align="center">none</td>
 </tr>
 <tr>
 <td><code>--cfg-cdn-cname</code></td>
-<td>Set Custom CNAME. See <a target="_blank" href="https://uploadcare.com/docs/delivery/cdn/#custom-cdn-cname">docs</a> for details</td>
+<td>Set Custom CNAME. See <a target='_blank'  href="https://uploadcare.com/docs/delivery/cdn/#custom-cdn-cname">docs</a> for details</td>
 <td align="center">string</td>
 <td align="center"><code>https://ucarecdn.com</code></td>
 </tr>
@@ -274,13 +274,13 @@ By default, context will be created automatically, but if you need to bind uploa
 </tr>
 <tr>
 <td><code>--cfg-secure-signature</code></td>
-<td>Set <code>signature</code> for Secure Uploads. See <a target="_blank" href="https://uploadcare.com/docs/security/secure-uploads/#expire-explained">docs</a> for details</td>
+<td>Set <code>signature</code> for Secure Uploads. See <a target='_blank'  href="https://uploadcare.com/docs/security/secure-uploads/#expire-explained">docs</a> for details</td>
 <td align="center">string</td>
 <td align="center">none</td>
 </tr>
 <tr>
 <td><code>--cfg-secure-expire</code></td>
-<td>Set <code>expire</code> for Secure Uploads. See <a target="_blank" href="https://uploadcare.com/docs/security/secure-uploads/#expire-explained">docs</a> for details</td>
+<td>Set <code>expire</code> for Secure Uploads. See <a target='_blank'  href="https://uploadcare.com/docs/security/secure-uploads/#expire-explained">docs</a> for details</td>
 <td align="center">string</td>
 <td align="center">none</td>
 </tr>
@@ -320,9 +320,9 @@ By default, context will be created automatically, but if you need to bind uploa
 }
 </code></pre>
 <h2 id="---cfg-secure-delivery-proxy"><a name="secure-delivery-proxy"></a> --cfg-secure-delivery-proxy</h2>
-<p>The parameter can be used with <a target="_blank" href="https://uploadcare.com/docs/security/secure-delivery/#authenticated-urls">signed URLs</a>. Defines template for your proxy <a target="_blank" href="https://uploadcare.com/docs/security/secure-delivery/#proxy-backend">backend URL</a>.</p>
-<p>This is replacement for the <a target="_blank" href="https://uploadcare.com/docs/security/secure-delivery/#preview-proxy">File Uploader <code>previewProxy</code> option</a>.</p>
-<p><strong>NOTE</strong>: There is no replacement for <a target="_blank" href="https://uploadcare.com/docs/security/secure-delivery/#preview-url-callback">File Uploader <code>previewUrlCallback</code> option</a>. If you need such functionality, please create <a target="_blank" href="https://github.com/uploadcare/blocks/issues/new?template=feature_request.md&title=Secure%20delivery%20proxy%20callback">a feature request</a>.</p>
+<p>The parameter can be used with <a target='_blank'  href="https://uploadcare.com/docs/security/secure-delivery/#authenticated-urls">signed URLs</a>. Defines template for your proxy <a target='_blank'  href="https://uploadcare.com/docs/security/secure-delivery/#proxy-backend">backend URL</a>.</p>
+<p>This is replacement for the <a target='_blank'  href="https://uploadcare.com/docs/security/secure-delivery/#preview-proxy">File Uploader <code>previewProxy</code> option</a>.</p>
+<p><strong>NOTE</strong>: There is no replacement for <a target='_blank'  href="https://uploadcare.com/docs/security/secure-delivery/#preview-url-callback">File Uploader <code>previewUrlCallback</code> option</a>. If you need such functionality, please create <a target='_blank'  href="https://github.com/uploadcare/blocks/issues/new?template=feature_request.md&amp;title=Secure%20delivery%20proxy%20callback">a feature request</a>.</p>
 <p>Value for <code>--cfg-secure-delivery-proxy</code> is a string template with the following variables:</p>
 <ul>
 <li><code>previewUrl</code></li>
@@ -334,7 +334,7 @@ By default, context will be created automatically, but if you need to bind uploa
 }
 </code></pre>
 <h2 id="csp-settings">CSP settings</h2>
-<p>If the application works with sensitive user data, such as personal photos, it is recommended to increase its security with <a target="_blank" href="https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP">CSP settings</a>. Uploader is using <code>Blob</code> URLs for on-the-flight generated images and the stylesheets in some cases, so don&#39;t forget to add <code>blob:</code> source into the CSP settings:</p>
+<p>If the application works with sensitive user data, such as personal photos, it is recommended to increase its security with <a target='_blank'  href="https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP">CSP settings</a>. Uploader is using <code>Blob</code> URLs for on-the-flight generated images and the stylesheets in some cases, so don&#39;t forget to add <code>blob:</code> source into the CSP settings:</p>
 <pre><code class="language-html"><span class="hljs-tag">&lt;<span class="hljs-name">meta</span>
   <span class="hljs-attr">http-equiv</span>=<span class="hljs-string">&quot;Content-Security-Policy&quot;</span>
   <span class="hljs-attr">content</span>=<span class="hljs-string">&quot;style-src &#x27;self&#x27; blob:; script-src &#x27;self&#x27;; img-src &#x27;self&#x27; https://ucarecdn.com blob:;&quot;</span>
