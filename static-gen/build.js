@@ -4,6 +4,7 @@ import { applyData, cssMin } from '@jam-do/jam-tools/iso/index.js';
 import DOC_TPL from './tpl/main.tpl.js';
 import DOC_CSS from './styles/css.js';
 import { mdProcessor } from './mdProcessor.js';
+import { PACKAGE_VERSION } from '../env.js';
 
 let LIVE_HTML_CSS = fs.readFileSync('blocks/LiveHtml/live-html.css').toString();
 let CODE_CSS = LIVE_HTML_CSS.replaceAll('lr-live-html [contenteditable]', 'code');
@@ -29,6 +30,9 @@ function processEntries(inputName, outputName, processor) {
     let base = getBase(entryPath);
     let content = fs.readFileSync(entryPath).toString();
     let contentHtml = processor ? await processor(content, { base }) : content;
+    contentHtml = applyData(contentHtml, {
+      PACKAGE_VERSION,
+    });
     let docCss = applyData(DOC_CSS, {
       BASE: base,
     });
