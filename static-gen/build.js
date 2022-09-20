@@ -28,10 +28,14 @@ function processEntries(inputName, outputName, processor) {
   entries.forEach(async (entryPath) => {
     let content = fs.readFileSync(entryPath).toString();
     let contentHtml = processor ? await processor(content) : content;
+    let base = getBase(entryPath);
+    let docCss = applyData(DOC_CSS, {
+      BASE: base,
+    });
     let output = applyData(DOC_TPL, {
       IMPORTMAP,
-      CSS: cssMin(DOC_CSS + LIVE_HTML_CSS + CODE_CSS),
-      BASE: getBase(entryPath),
+      CSS: cssMin(docCss + LIVE_HTML_CSS + CODE_CSS),
+      BASE: base,
       CONTENT: contentHtml,
     });
     fs.writeFileSync(entryPath.replace(inputName, outputName), output);
