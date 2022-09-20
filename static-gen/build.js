@@ -21,14 +21,14 @@ function getBase(path) {
 /**
  * @param {String} inputName
  * @param {String} outputName
- * @param {(tpl: String) => Promise<String>} [processor]
+ * @param {(tpl: String, options: Object) => Promise<String>} [processor]
  */
 function processEntries(inputName, outputName, processor) {
   let entries = findFiles('./', [inputName], ['node_modules']);
   entries.forEach(async (entryPath) => {
-    let content = fs.readFileSync(entryPath).toString();
-    let contentHtml = processor ? await processor(content) : content;
     let base = getBase(entryPath);
+    let content = fs.readFileSync(entryPath).toString();
+    let contentHtml = processor ? await processor(content, { base }) : content;
     let docCss = applyData(DOC_CSS, {
       BASE: base,
     });
