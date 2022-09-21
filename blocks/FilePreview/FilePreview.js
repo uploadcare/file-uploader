@@ -6,6 +6,7 @@ export class FilePreview extends Block {
   init$ = {
     ...this.ctxInit,
     checkerboard: false,
+    src: TRANSPARENT_PIXEL_SRC,
   };
 
   constructor() {
@@ -26,29 +27,29 @@ export class FilePreview extends Block {
 
   /** @param {HTMLImageElement} img */
   setImage(img) {
-    this.ref.img.src = img.src;
+    this.$.src = img.src;
   }
 
   /** @param {File} imgFile */
   setImageFile(imgFile) {
     let url = URL.createObjectURL(imgFile);
-    this.ref.img.src = url;
+    this.$.src = url;
     this._lastObjectUrl = url;
   }
 
   /** @param {String} url */
   setImageUrl(url) {
-    this.ref.img.src = url;
+    this.$.src = url;
   }
 
   clear() {
     URL.revokeObjectURL(this._lastObjectUrl);
-    this.ref.img.src = TRANSPARENT_PIXEL_SRC;
+    this.$.src = TRANSPARENT_PIXEL_SRC;
   }
 }
 
 FilePreview.template = /*html*/ `
-<img class="img-view" ref="img"/>
+<lr-img class="img-view" ref="img" set="@src: src; style.aa: src;"/>
 `;
 
 FilePreview.bindAttributes({

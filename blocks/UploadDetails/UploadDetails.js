@@ -40,7 +40,7 @@ export class UploadDetails extends UploaderBlock {
   showNonImageThumb() {
     let color = window.getComputedStyle(this).getPropertyValue('--clr-generic-file-icon');
     let url = fileCssBg(color, 108, 108);
-    this.eCanvas.setImageUrl(url);
+    this.ref.filePreview.setImageUrl(url);
     this.set$({
       checkerboard: false,
     });
@@ -57,11 +57,12 @@ export class UploadDetails extends UploaderBlock {
           '*activityCaption': this.l10n('caption-edit-file'),
         });
       },
+      onDeactivate: () => {
+        this.ref.filePreview.clear();
+      },
       onClose: () => this.historyBack(),
     });
-    /** @type {import('../EditableCanvas/EditableCanvas.js').EditableCanvas} */
-    // @ts-ignore
-    this.eCanvas = this.ref.canvas;
+    /** @type {import('../FilePreview/FilePreview.js').FilePreview} */
     this.sub('*focusedEntry', (/** @type {import('../../abstract/TypedData.js').TypedData} */ entry) => {
       if (!entry) {
         return;
@@ -78,7 +79,6 @@ export class UploadDetails extends UploaderBlock {
       this.entry = entry;
       /** @type {File} */
       let file = entry.getValue('file');
-      this.eCanvas.clear();
       if (file) {
         /**
          * @private
@@ -87,7 +87,7 @@ export class UploadDetails extends UploaderBlock {
         this._file = file;
         let isImage = this._file.type.includes('image');
         if (isImage && !entry.getValue('cdnUrl')) {
-          this.eCanvas.setImageFile(this._file);
+          this.ref.filePreview.setImageFile(this._file);
           this.set$({
             checkerboard: true,
           });
@@ -127,8 +127,7 @@ export class UploadDetails extends UploaderBlock {
       });
       tmpSub('cdnUrl', (cdnUrl) => {
         const canUseCloudEditor = this.$['--cfg-use-cloud-image-editor'] && cdnUrl && this.entry.getValue('isImage');
-
-        this.eCanvas.clear();
+        cdnUrl && this.ref.filePreview.clear();
         this.set$({
           cdnUrl,
           cloudEditBtnHidden: !canUseCloudEditor,
@@ -136,7 +135,7 @@ export class UploadDetails extends UploaderBlock {
         if (cdnUrl && this.entry.getValue('isImage')) {
           // TODO: need to resize image to fit the canvas size
           let imageUrl = createCdnUrl(cdnUrl, createCdnUrlModifiers('format/auto', 'preview'));
-          this.eCanvas.setImageUrl(this.proxyUrl(imageUrl));
+          this.ref.filePreview.setImageUrl(this.proxyUrl(imageUrl));
         }
       });
     });
@@ -177,11 +176,11 @@ UploadDetails.template = /*html*/ `
 
   </div>
 
-  <lr-editable-canvas
+  <lr-file-preview
     tab-ctx="tab-view"
-    set="@disabled: !--cfg-use-local-image-editor; @checkerboard: checkerboard;"
-    ref="canvas">
-  </lr-editable-canvas>
+    set="@checkerboard: checkerboard;"
+    ref="filePreview">
+  </lr-file-preview>
 </lr-tabs>
 
 <div class="toolbar" set="@edit-disabled: cloudEditBtnHidden">

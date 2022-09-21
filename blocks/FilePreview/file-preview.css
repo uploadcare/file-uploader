@@ -9,7 +9,11 @@ lr-file-preview {
   justify-content: center;
 }
 
-lr-file-preview > .img-view {
+lr-file-preview > lr-img {
+  display: contents;
+}
+
+lr-file-preview > lr-img > .img-view {
   position: absolute;
   top: 0;
   right: 0;
