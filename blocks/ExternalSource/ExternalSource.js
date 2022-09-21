@@ -150,7 +150,7 @@ ExternalSource.template = /*html*/ `
   <div></div>
   <div class="selected-counter">
     <span l10n="selected-count"></span>{{counter}}</div>
-  <button type="button" class="done-btn primary-btn" set="onclick: onDone">
+  <button type="button" class="done-btn primary-btn" set="onclick: onDone; @disabled: !counter">
     <lr-icon name="check"></lr-icon>
   </button>
 </div>
