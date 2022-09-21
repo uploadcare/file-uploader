@@ -1,6 +1,6 @@
 import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
-import { resizeImage } from '../utils/resizeImage.js';
+import { generateThumb } from '../utils/resizeImage.js';
 import { uploadFile } from '@uploadcare/upload-client';
 import { UiMessage } from '../MessageBox/MessageBox.js';
 import { fileCssBg } from '../svg-backgrounds/svg-backgrounds.js';
@@ -143,8 +143,13 @@ export class FileItem extends UploaderBlock {
     }
 
     if (entry.getValue('file')?.type.includes('image')) {
-      let thumbUrl = await resizeImage(entry.getValue('file'), this.getCssData('--cfg-thumb-size') || 76);
-      entry.setValue('thumbUrl', thumbUrl);
+      try {
+        let thumbUrl = await generateThumb(entry.getValue('file'), this.getCssData('--cfg-thumb-size') || 76);
+        entry.setValue('thumbUrl', thumbUrl);
+      } catch (err) {
+        let color = window.getComputedStyle(this).getPropertyValue('--clr-generic-file-icon');
+        entry.setValue('thumbUrl', fileCssBg(color));
+      }
     } else {
       let color = window.getComputedStyle(this).getPropertyValue('--clr-generic-file-icon');
       entry.setValue('thumbUrl', fileCssBg(color));

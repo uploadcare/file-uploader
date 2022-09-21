@@ -13,6 +13,7 @@ If our pre-built <a href="/solutions/file-uploader/">uploader solution</a> isn't
 - [DataOutput](/blocks/DataOutput/) - dedicated element for the upload data extraction in host application
 - [DropArea](/blocks/DropArea/) - wrapper element for the the drag-n-drop feature adding
 - [EditableCanvas](/blocks/EditableCanvas/) - minimalistic in-browser image editing
+- [FilePreview](/blocks/FilePreview/) - show file preview
 - [ExternalSource](/blocks/ExternalSource/) - common wrapper for external file sources
 - [FileItem](/blocks/FileItem/) - basic UI for the each uploading file entry
 - [Icon](/blocks/Icon/) - displays an icon

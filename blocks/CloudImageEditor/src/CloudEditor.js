@@ -3,7 +3,7 @@ import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../..
 import { classNames } from './lib/classNames.js';
 import { debounce } from './lib/debounce.js';
 import { preloadImage } from './lib/preloadImage.js';
-import { TRANSPARENT_PIXEL_SRC } from './lib/transparentPixelSrc.js';
+import { TRANSPARENT_PIXEL_SRC } from '../../../utils/transparentPixelSrc.js';
 import { initState } from './state.js';
 import { TEMPLATE } from './template.js';
 import { TabId } from './toolbar-constants.js';
