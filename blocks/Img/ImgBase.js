@@ -90,6 +90,10 @@ export class ImgBase extends BaseComponent {
 
     let cdnModifiers = this._getCdnModifiers(size);
 
+    if (this.$$('src').startsWith(this.$$('cdn-cname'))) {
+      return createCdnUrl(this.$$('src'), cdnModifiers);
+    }
+
     // Alternative CDN name:
     if (this.$$('cdn-cname') && this.$$('uuid')) {
       return this._proxyUrl(
