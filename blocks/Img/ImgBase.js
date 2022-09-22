@@ -81,7 +81,9 @@ export class ImgBase extends BaseComponent {
    * @returns {any}
    */
   _getUrlBase(size = '') {
-    // console.log(this.localCtx);
+    if (this.$$('src').startsWith('data:') || this.$$('src').startsWith('blob:')) {
+      return this.$$('src');
+    }
 
     // Localhost + relative image path (DO NOTHING):
     if (DEV_MODE && this.$$('src') && !this.$$('src').includes('//')) {
