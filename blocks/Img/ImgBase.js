@@ -3,8 +3,6 @@ import { applyTemplateData } from '../../utils/applyTemplateData.js';
 import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../utils/cdn-utils.js';
 import { PROPS_MAP } from './props-map.js';
 
-// TODO: move default config values somewhere outside
-const DEFAULT_CDN_BASE = 'https://ucarecdn.com';
 const CSS_PREF = '--lr-img-';
 const UNRESOLVED_ATTR = 'unresolved';
 const HI_RES_K = 2;
@@ -108,7 +106,7 @@ export class ImgBase extends BaseComponent {
       return this._proxyUrl(
         createCdnUrl(
           //
-          createOriginalUrl(this.$$['cdn-cname'] || DEFAULT_CDN_BASE, this.$$('uuid')),
+          createOriginalUrl(this.$$('cdn-cname'), this.$$('uuid')),
           cdnModifiers
         )
       );
