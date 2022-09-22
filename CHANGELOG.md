@@ -1,3 +1,9 @@
+## [0.10.2](https://github.com/uploadcare/blocks/compare/v0.10.1...v0.10.2) (2022-09-22)
+
+### Bug Fixes
+
+- **external-source:** disable `done` button when no files selected ([#278](https://github.com/uploadcare/blocks/issues/278)) ([7ae584f](https://github.com/uploadcare/blocks/commit/7ae584fc5dc1cab7e9718ea0ae2f4340b331a2dd))
+
 ## [0.10.1](https://github.com/uploadcare/blocks/compare/v0.10.0...v0.10.1) (2022-09-20)
 
 ### Bug Fixes
