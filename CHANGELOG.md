@@ -1,3 +1,10 @@
+## [0.10.3](https://github.com/uploadcare/blocks/compare/v0.10.2...v0.10.3) (2022-09-23)
+
+### Bug Fixes
+
+- **file-item:** uploading from external url (typo) ([#281](https://github.com/uploadcare/blocks/issues/281)) ([ed5c741](https://github.com/uploadcare/blocks/commit/ed5c741e0dc1f37fa6a58b073cd3df9e05a3168c))
+- unobserve upload collection on destroy ([#282](https://github.com/uploadcare/blocks/issues/282)) ([2c871e1](https://github.com/uploadcare/blocks/commit/2c871e1a1f77d82731b48374cef2713be90f3d64))
+
 ## [0.10.2](https://github.com/uploadcare/blocks/compare/v0.10.1...v0.10.2) (2022-09-22)
 
 ### Bug Fixes
