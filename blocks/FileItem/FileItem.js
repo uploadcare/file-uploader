@@ -192,7 +192,7 @@ export class FileItem extends UploaderBlock {
       let caption =
         this.l10n('validation-error') +
         ': ' +
-        (this._entry.getValue('file')?.name || this._entry.vetValue('externalUrl'));
+        (this._entry.getValue('file')?.name || this._entry.getValue('externalUrl'));
       this._showMessage('error', caption, validationErrorMsg);
     });
 
@@ -202,7 +202,7 @@ export class FileItem extends UploaderBlock {
         return;
       }
       let caption =
-        this.l10n('upload-error') + ': ' + (this._entry.getValue('file')?.name || this._entry.vetValue('externalUrl'));
+        this.l10n('upload-error') + ': ' + (this._entry.getValue('file')?.name || this._entry.getValue('externalUrl'));
       this._showMessage('error', caption, uploadError.message);
     });
 
@@ -215,7 +215,7 @@ export class FileItem extends UploaderBlock {
     });
 
     this._subEntry('fileName', (name) => {
-      this.$.itemName = name || this._entry.vetValue('externalUrl') || this.l10n('file-no-name');
+      this.$.itemName = name || this._entry.getValue('externalUrl') || this.l10n('file-no-name');
     });
 
     this._subEntry('fileSize', (fileSize) => {
