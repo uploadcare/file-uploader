@@ -1,8 +1,7 @@
 import { ActivityBlock } from './ActivityBlock.js';
 
 import { Data } from '@symbiotejs/symbiote';
-import { mergeMimeTypes } from '../utils/mergeMimeTypes.js';
-import { imageMimeTypes } from '../utils/imageMimeTypes.js';
+import { IMAGE_ACCEPT_LIST, mergeFileTypes, fileIsImage } from '../utils/fileTypes.js';
 import { uploadEntrySchema } from './uploadEntrySchema.js';
 import { customUserAgent } from '../blocks/utils/userAgent.js';
 import { TypedCollection } from './TypedCollection.js';
@@ -50,7 +49,7 @@ export class UploaderBlock extends ActivityBlock {
     files.forEach((/** @type {File} */ file) => {
       this.uploadCollection.add({
         file,
-        isImage: file.type.includes('image'),
+        isImage: fileIsImage(file),
         mimeType: file.type,
         fileName: file.name,
         fileSize: file.size,
@@ -59,10 +58,10 @@ export class UploaderBlock extends ActivityBlock {
   }
 
   openSystemDialog() {
-    let accept = mergeMimeTypes(
-      this.getCssData('--cfg-img-only') && imageMimeTypes.join(','),
-      this.getCssData('--cfg-accept')
-    );
+    let accept = mergeFileTypes([
+      ...(this.getCssData('--cfg-img-only') && IMAGE_ACCEPT_LIST),
+      ...this.getCssData('--cfg-accept'),
+    ]).join(',');
     if (this.getCssData('--cfg-accept') && !!this.getCssData('--cfg-img-only')) {
       console.warn(
         'There could be a mistake.\n' +

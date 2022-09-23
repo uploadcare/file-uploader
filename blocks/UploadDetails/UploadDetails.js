@@ -1,7 +1,8 @@
 import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
-import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../utils/cdn-utils.js';
+import { createCdnUrl, createCdnUrlModifiers } from '../../utils/cdn-utils.js';
 import { fileCssBg } from '../svg-backgrounds/svg-backgrounds.js';
+import { fileIsImage } from '../../utils/fileTypes.js';
 
 export class UploadDetails extends UploaderBlock {
   activityType = ActivityBlock.activities.DETAILS;
@@ -85,7 +86,7 @@ export class UploadDetails extends UploaderBlock {
          * @type {File}
          */
         this._file = file;
-        let isImage = this._file.type.includes('image');
+        let isImage = fileIsImage(this._file);
         if (isImage && !entry.getValue('cdnUrl')) {
           this.ref.filePreview.setImageFile(this._file);
           this.set$({

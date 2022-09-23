@@ -7,6 +7,7 @@ import { fileCssBg } from '../svg-backgrounds/svg-backgrounds.js';
 import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../utils/cdn-utils.js';
 import { EVENT_TYPES, EventData, EventManager } from '../../abstract/EventManager.js';
 import { debounce } from '../utils/debounce.js';
+import { IMAGE_ACCEPT_LIST, mergeFileTypes, matchFileType } from '../../utils/fileTypes.js';
 
 const FileItemState = {
   FINISHED: Symbol(0),
@@ -225,11 +226,25 @@ export class FileItem extends UploaderBlock {
 
     this._subEntry('fileSize', (fileSize) => {
       let maxFileSize = this.getCssData('--cfg-max-local-file-size-bytes');
-      if (!maxFileSize) {
-        return;
-      }
-      if (fileSize && fileSize > maxFileSize) {
+      if (maxFileSize && fileSize && fileSize > maxFileSize) {
         this._entry.setValue('validationErrorMsg', this.l10n('files-max-size-limit-error', { maxFileSize }));
+      }
+    });
+
+    this._subEntry('mimeType', (mimeType) => {
+      let imagesOnly = this.getCssData('--cfg-img-only');
+      let accept = this.getCssData('--cfg-accept');
+      let allowedFileTypes = mergeFileTypes([...(imagesOnly ? IMAGE_ACCEPT_LIST : []), accept]);
+      if (!matchFileType(mimeType, allowedFileTypes)) {
+        this._entry.setValue('validationErrorMsg', this.l10n('file-type-not-allowed'));
+      }
+    });
+
+    this._subEntry('isImage', (isImage) => {
+      let imagesOnly = this.getCssData('--cfg-img-only');
+
+      if (imagesOnly && !isImage) {
+        this._entry.setValue('validationErrorMsg', this.l10n('images-only-accepted'));
       }
     });
 
@@ -339,7 +354,7 @@ export class FileItem extends UploaderBlock {
 
   async upload() {
     let entry = this._entry;
-    if (entry.getValue('uuid') || entry.getValue('isUploading')) {
+    if (entry.getValue('uuid') || entry.getValue('isUploading') || entry.getValue('validationErrorMsg')) {
       return;
     }
     let data = this.getOutputData((dataItem) => {
