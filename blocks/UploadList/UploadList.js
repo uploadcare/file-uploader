@@ -3,6 +3,7 @@ import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 import { UiConfirmation } from '../ConfirmationDialog/ConfirmationDialog.js';
 import { UiMessage } from '../MessageBox/MessageBox.js';
 import { EVENT_TYPES, EventData, EventManager } from '../../abstract/EventManager.js';
+import { debounce } from '../utils/debounce.js';
 
 export class UploadList extends UploaderBlock {
   activityType = ActivityBlock.activities.UPLOAD_LIST;
@@ -59,6 +60,11 @@ export class UploadList extends UploaderBlock {
     '--cfg-source-list': '',
   };
 
+  _debouncedHandleCollectionUpdate = debounce(() => {
+    this._updateUploadsState();
+    this._updateCountLimitMessage();
+  }, 0);
+
   /**
    * @private
    * @returns {{ passed: Boolean; tooFew: Boolean; tooMany: Boolean; exact: Boolean; min: Number; max: Number }}
@@ -104,12 +110,6 @@ export class UploadList extends UploaderBlock {
         '*message': msg,
       });
     }
-  }
-
-  /** @private */
-  _handleCollectionUpdate() {
-    this._updateUploadsState();
-    this._updateCountLimitMessage();
   }
 
   /** @private */
@@ -162,9 +162,9 @@ export class UploadList extends UploaderBlock {
       },
     });
 
-    this.sub('--cfg-multiple', () => this._handleCollectionUpdate());
-    this.sub('--cfg-multiple-min', () => this._handleCollectionUpdate());
-    this.sub('--cfg-multiple-max', () => this._handleCollectionUpdate());
+    this.sub('--cfg-multiple', this._debouncedHandleCollectionUpdate);
+    this.sub('--cfg-multiple-min', this._debouncedHandleCollectionUpdate);
+    this.sub('--cfg-multiple-max', this._debouncedHandleCollectionUpdate);
 
     this.sub('*currentActivity', (currentActivity) => {
       if (
@@ -178,12 +178,10 @@ export class UploadList extends UploaderBlock {
 
     // TODO: could be performance issue on many files
     // there is no need to update buttons state on every progress tick
-    this.uploadCollection.observe(() => {
-      this._handleCollectionUpdate();
-    });
+    this.uploadCollection.observe(this._debouncedHandleCollectionUpdate);
 
     this.sub('*uploadList', (list) => {
-      this._handleCollectionUpdate();
+      this._debouncedHandleCollectionUpdate();
 
       this.set$({
         hasFiles: list.length > 0,
@@ -193,6 +191,11 @@ export class UploadList extends UploaderBlock {
         this.cancelFlow();
       }
     });
+  }
+
+  destroyCallback() {
+    super.destroyCallback();
+    this.uploadCollection.unobserve(this._debouncedHandleCollectionUpdate);
   }
 }
 

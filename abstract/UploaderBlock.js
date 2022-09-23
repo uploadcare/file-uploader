@@ -40,6 +40,11 @@ export class UploaderBlock extends ActivityBlock {
     }
   }
 
+  destroyCallback() {
+    super.destroyCallback();
+    this.uploadCollection.unobserve(this._handleCollectionUpdate);
+  }
+
   /** @param {File[]} files */
   addFiles(files) {
     files.forEach((/** @type {File} */ file) => {
@@ -157,101 +162,105 @@ export class UploaderBlock extends ActivityBlock {
           });
         },
       });
-      uploadCollection.observe((changeMap) => {
-        if (changeMap.uploadProgress) {
-          let commonProgress = 0;
-          /** @type {String[]} */
-          let items = uploadCollection.findItems((entry) => {
-            return !entry.getValue('uploadError');
-          });
-          items.forEach((id) => {
-            commonProgress += uploadCollection.readProp(id, 'uploadProgress');
-          });
-          let progress = Math.round(commonProgress / items.length);
-          this.$['*commonProgress'] = progress;
-          EventManager.emit(
-            new EventData({
-              type: EVENT_TYPES.UPLOAD_PROGRESS,
-              ctx: this.ctxName,
-              data: progress,
-            }),
-            undefined,
-            progress === 100
-          );
-        }
-        if (changeMap.uuid) {
-          let loadedItems = uploadCollection.findItems((entry) => {
-            return !!entry.getValue('uuid');
-          });
-          let errorItems = uploadCollection.findItems((entry) => {
-            return !!entry.getValue('uploadError') || !!entry.getValue('validationErrorMsg');
-          });
-          if (uploadCollection.size - errorItems.length === loadedItems.length) {
-            let data = this.getOutputData((dataItem) => {
-              return !!dataItem.getValue('uuid');
-            });
-            EventManager.emit(
-              new EventData({
-                type: EVENT_TYPES.UPLOAD_FINISH,
-                ctx: this.ctxName,
-                data,
-              })
-            );
-          }
-        }
-        if (changeMap.uploadError) {
-          let items = uploadCollection.findItems((entry) => {
-            return !!entry.getValue('uploadError');
-          });
-          items.forEach((id) => {
-            EventManager.emit(
-              new EventData({
-                type: EVENT_TYPES.UPLOAD_ERROR,
-                ctx: this.ctxName,
-                data: uploadCollection.readProp(id, 'uploadError'),
-              }),
-              undefined,
-              false
-            );
-          });
-        }
-        if (changeMap.validationErrorMsg) {
-          let items = uploadCollection.findItems((entry) => {
-            return !!entry.getValue('validationErrorMsg');
-          });
-          items.forEach((id) => {
-            EventManager.emit(
-              new EventData({
-                type: EVENT_TYPES.VALIDATION_ERROR,
-                ctx: this.ctxName,
-                data: uploadCollection.readProp(id, 'validationErrorMsg'),
-              }),
-              undefined,
-              false
-            );
-          });
-        }
-        if (changeMap.cdnUrlModifiers) {
-          let items = uploadCollection.findItems((entry) => {
-            return !!entry.getValue('cdnUrlModifiers');
-          });
-          items.forEach((id) => {
-            EventManager.emit(
-              new EventData({
-                type: EVENT_TYPES.CDN_MODIFICATION,
-                ctx: this.ctxName,
-                data: uploadCollection.readProp(id, 'cdnUrlModifiers'),
-              }),
-              undefined,
-              false
-            );
-          });
-        }
-      });
+      uploadCollection.observe(this._handleCollectionUpdate);
       this.add('*uploadCollection', uploadCollection);
     }
     return this.$['*uploadCollection'];
   }
+
+  /** @private */
+  _handleCollectionUpdate = (changeMap) => {
+    let uploadCollection = this.uploadCollection;
+    if (changeMap.uploadProgress) {
+      let commonProgress = 0;
+      /** @type {String[]} */
+      let items = uploadCollection.findItems((entry) => {
+        return !entry.getValue('uploadError');
+      });
+      items.forEach((id) => {
+        commonProgress += uploadCollection.readProp(id, 'uploadProgress');
+      });
+      let progress = Math.round(commonProgress / items.length);
+      this.$['*commonProgress'] = progress;
+      EventManager.emit(
+        new EventData({
+          type: EVENT_TYPES.UPLOAD_PROGRESS,
+          ctx: this.ctxName,
+          data: progress,
+        }),
+        undefined,
+        progress === 100
+      );
+    }
+    if (changeMap.uuid) {
+      let loadedItems = uploadCollection.findItems((entry) => {
+        return !!entry.getValue('uuid');
+      });
+      let errorItems = uploadCollection.findItems((entry) => {
+        return !!entry.getValue('uploadError') || !!entry.getValue('validationErrorMsg');
+      });
+      if (uploadCollection.size - errorItems.length === loadedItems.length) {
+        let data = this.getOutputData((dataItem) => {
+          return !!dataItem.getValue('uuid');
+        });
+        EventManager.emit(
+          new EventData({
+            type: EVENT_TYPES.UPLOAD_FINISH,
+            ctx: this.ctxName,
+            data,
+          })
+        );
+      }
+    }
+    if (changeMap.uploadError) {
+      let items = uploadCollection.findItems((entry) => {
+        return !!entry.getValue('uploadError');
+      });
+      items.forEach((id) => {
+        EventManager.emit(
+          new EventData({
+            type: EVENT_TYPES.UPLOAD_ERROR,
+            ctx: this.ctxName,
+            data: uploadCollection.readProp(id, 'uploadError'),
+          }),
+          undefined,
+          false
+        );
+      });
+    }
+    if (changeMap.validationErrorMsg) {
+      let items = uploadCollection.findItems((entry) => {
+        return !!entry.getValue('validationErrorMsg');
+      });
+      items.forEach((id) => {
+        EventManager.emit(
+          new EventData({
+            type: EVENT_TYPES.VALIDATION_ERROR,
+            ctx: this.ctxName,
+            data: uploadCollection.readProp(id, 'validationErrorMsg'),
+          }),
+          undefined,
+          false
+        );
+      });
+    }
+    if (changeMap.cdnUrlModifiers) {
+      let items = uploadCollection.findItems((entry) => {
+        return !!entry.getValue('cdnUrlModifiers');
+      });
+      items.forEach((id) => {
+        EventManager.emit(
+          new EventData({
+            type: EVENT_TYPES.CDN_MODIFICATION,
+            ctx: this.ctxName,
+            data: uploadCollection.readProp(id, 'cdnUrlModifiers'),
+          }),
+          undefined,
+          false
+        );
+      });
+    }
+  };
 
   /** @returns {import('@uploadcare/upload-client').FileFromOptions} */
   getUploadClientOptions() {
