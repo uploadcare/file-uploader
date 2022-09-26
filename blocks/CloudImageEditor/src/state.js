@@ -1,6 +1,6 @@
 import { createCdnUrl, createCdnUrlModifiers } from '../../../utils/cdn-utils.js';
 import { transformationsToOperations } from './lib/transformationUtils.js';
-import { TRANSPARENT_PIXEL_SRC } from './lib/transparentPixelSrc.js';
+import { TRANSPARENT_PIXEL_SRC } from '../../../utils/transparentPixelSrc.js';
 
 /** @param {import('./CloudEditor.js').CloudEditor} fnCtx */
 export function initState(fnCtx) {
