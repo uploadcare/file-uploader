@@ -1,3 +1,9 @@
+## [0.11.1](https://github.com/uploadcare/blocks/compare/v0.11.0...v0.11.1) (2022-09-26)
+
+### Bug Fixes
+
+- check file mime type before upload ([0ced1ef](https://github.com/uploadcare/blocks/commit/0ced1ef6b082b6bb3f2089f20dbe59de3db5f680))
+
 # [0.11.0](https://github.com/uploadcare/blocks/compare/v0.10.3...v0.11.0) (2022-09-26)
 
 ### Bug Fixes
