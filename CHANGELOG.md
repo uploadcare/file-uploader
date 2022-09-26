@@ -1,3 +1,15 @@
+# [0.11.0](https://github.com/uploadcare/blocks/compare/v0.10.3...v0.11.0) (2022-09-26)
+
+### Bug Fixes
+
+- **lr-image:** return data: and blob: sources as is ([e83518b](https://github.com/uploadcare/blocks/commit/e83518bfbbfd69bdf259ca0f5b8b3473cff5c7ae))
+- **lr-image:** set provided custom `cdn-cname` when uuid attr passed ([ff04d93](https://github.com/uploadcare/blocks/commit/ff04d93ff8f4a9e71d8ee3fe8e54678e1316db73))
+- svg image preview rendering in firefox ([1231951](https://github.com/uploadcare/blocks/commit/12319512296afc2576326094fad3a7a59b3cdcca))
+
+### Features
+
+- **lr-image:** don't proxify already uploaded images ([4d0dc0d](https://github.com/uploadcare/blocks/commit/4d0dc0da5d0a4e4a919911791f845913a23377d8))
+
 ## [0.10.3](https://github.com/uploadcare/blocks/compare/v0.10.2...v0.10.3) (2022-09-23)
 
 ### Bug Fixes
