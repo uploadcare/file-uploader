@@ -1,4 +1,4 @@
-import { TRANSPARENT_PIXEL_SRC } from './lib/transparentPixelSrc.js';
+import { TRANSPARENT_PIXEL_SRC } from '../../../utils/transparentPixelSrc.js';
 
 export const TEMPLATE = /*html*/ `
 <div class="wrapper wrapper_desktop">
