@@ -232,6 +232,9 @@ export class FileItem extends UploaderBlock {
     });
 
     this._subEntry('mimeType', (mimeType) => {
+      if (!mimeType) {
+        return;
+      }
       let imagesOnly = this.getCssData('--cfg-img-only');
       let accept = this.getCssData('--cfg-accept');
       let allowedFileTypes = mergeFileTypes([...(imagesOnly ? IMAGE_ACCEPT_LIST : []), accept]);
