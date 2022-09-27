@@ -243,7 +243,10 @@ export class FileItem extends UploaderBlock {
 
     this._subEntry('isImage', (isImage) => {
       let imagesOnly = this.getCssData('--cfg-img-only');
-
+      if (entry.getValue('externalUrl') && !entry.getValue('uuid') && imagesOnly && !isImage) {
+        // don't validate not uploaded files with external url, cause we don't know if they're images or not
+        return;
+      }
       if (imagesOnly && !isImage) {
         entry.setValue('validationErrorMsg', this.l10n('images-only-accepted'));
       }
