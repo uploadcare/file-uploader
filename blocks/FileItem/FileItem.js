@@ -236,7 +236,7 @@ export class FileItem extends UploaderBlock {
       let imagesOnly = this.getCssData('--cfg-img-only');
       let accept = this.getCssData('--cfg-accept');
       let allowedFileTypes = mergeFileTypes([...(imagesOnly ? IMAGE_ACCEPT_LIST : []), accept]);
-      if (!matchFileType(mimeType, allowedFileTypes)) {
+      if (allowedFileTypes.length > 0 && !matchFileType(mimeType, allowedFileTypes)) {
         entry.setValue('validationErrorMsg', this.l10n('file-type-not-allowed'));
       }
     });
