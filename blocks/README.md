@@ -1,6 +1,6 @@
 # Advanced customization: build your own uploading flow
 
-If our pre-built <a href="/solutions/file-uploader/">uploader solution</a> isn't enough for you, meet our highly customizable blocks.
+If our pre-built [uploader solution](/solutions/file-uploader/) isn't enough for you, meet our highly customizable blocks.
 
 ## Blocks list:
 
