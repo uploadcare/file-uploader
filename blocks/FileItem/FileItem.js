@@ -184,9 +184,10 @@ export class FileItem extends UploaderBlock {
     this._reset();
 
     /** @type {import('../../abstract/TypedData.js').TypedData} */
-    this._entry = this.uploadCollection?.read(id);
+    let entry = this.uploadCollection?.read(id);
+    this._entry = entry;
 
-    if (!this._entry) {
+    if (!entry) {
       return;
     }
 
@@ -196,9 +197,7 @@ export class FileItem extends UploaderBlock {
         return;
       }
       let caption =
-        this.l10n('validation-error') +
-        ': ' +
-        (this._entry.getValue('file')?.name || this._entry.getValue('externalUrl'));
+        this.l10n('validation-error') + ': ' + (entry.getValue('file')?.name || entry.getValue('externalUrl'));
       this._showMessage('error', caption, validationErrorMsg);
     });
 
@@ -207,8 +206,7 @@ export class FileItem extends UploaderBlock {
       if (!uploadError) {
         return;
       }
-      let caption =
-        this.l10n('upload-error') + ': ' + (this._entry.getValue('file')?.name || this._entry.getValue('externalUrl'));
+      let caption = this.l10n('upload-error') + ': ' + (entry.getValue('file')?.name || entry.getValue('externalUrl'));
       this._showMessage('error', caption, uploadError.message);
     });
 
@@ -221,35 +219,41 @@ export class FileItem extends UploaderBlock {
     });
 
     this._subEntry('fileName', (name) => {
-      this.$.itemName = name || this._entry.getValue('externalUrl') || this.l10n('file-no-name');
+      this.$.itemName = name || entry.getValue('externalUrl') || this.l10n('file-no-name');
     });
 
     this._subEntry('fileSize', (fileSize) => {
       let maxFileSize = this.getCssData('--cfg-max-local-file-size-bytes');
       if (maxFileSize && fileSize && fileSize > maxFileSize) {
-        this._entry.setValue('validationErrorMsg', this.l10n('files-max-size-limit-error', { maxFileSize }));
+        entry.setValue('validationErrorMsg', this.l10n('files-max-size-limit-error', { maxFileSize }));
       }
     });
 
     this._subEntry('mimeType', (mimeType) => {
+      if (!mimeType) {
+        return;
+      }
       let imagesOnly = this.getCssData('--cfg-img-only');
       let accept = this.getCssData('--cfg-accept');
       let allowedFileTypes = mergeFileTypes([...(imagesOnly ? IMAGE_ACCEPT_LIST : []), accept]);
-      if (!matchFileType(mimeType, allowedFileTypes)) {
-        this._entry.setValue('validationErrorMsg', this.l10n('file-type-not-allowed'));
+      if (allowedFileTypes.length > 0 && !matchFileType(mimeType, allowedFileTypes)) {
+        entry.setValue('validationErrorMsg', this.l10n('file-type-not-allowed'));
       }
     });
 
     this._subEntry('isImage', (isImage) => {
       let imagesOnly = this.getCssData('--cfg-img-only');
-
+      if (entry.getValue('externalUrl') && !entry.getValue('uuid') && imagesOnly && !isImage) {
+        // don't validate not uploaded files with external url, cause we don't know if they're images or not
+        return;
+      }
       if (imagesOnly && !isImage) {
-        this._entry.setValue('validationErrorMsg', this.l10n('images-only-accepted'));
+        entry.setValue('validationErrorMsg', this.l10n('images-only-accepted'));
       }
     });
 
     this._subEntry('externalUrl', (externalUrl) => {
-      this.$.itemName = this._entry.getValue('fileName') || externalUrl || this.l10n('file-no-name');
+      this.$.itemName = entry.getValue('fileName') || externalUrl || this.l10n('file-no-name');
     });
 
     this._subEntry('uuid', (uuid) => {
