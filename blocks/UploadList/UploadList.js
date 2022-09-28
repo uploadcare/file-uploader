@@ -10,12 +10,12 @@ export class UploadList extends UploaderBlock {
 
   init$ = {
     ...this.ctxInit,
-    doneBtnHidden: false,
-    doneBtnDisabled: false,
-    uploadBtnHidden: false,
-    uploadBtnDisabled: false,
-    addMoreBtnHidden: false,
-    addMoreBtnDisabled: false,
+    doneBtnVisible: false,
+    doneBtnEnabled: false,
+    uploadBtnVisible: false,
+    uploadBtnEnabled: false,
+    addMoreBtnVisible: false,
+    addMoreBtnEnabled: false,
 
     hasFiles: false,
     onAdd: () => {
@@ -118,35 +118,39 @@ export class UploadList extends UploaderBlock {
     let filesCount = itemIds.length;
     let summary = {
       total: filesCount,
-      uploaded: 0,
+      succeed: 0,
       uploading: 0,
-      validationFailed: 0,
+      failed: 0,
     };
     for (let id of itemIds) {
       let item = this.uploadCollection.read(id);
-      if (item.getValue('uuid')) {
-        summary.uploaded += 1;
-      } else if (item.getValue('isUploading')) {
+      if (item.getValue('uuid') && !item.getValue('validationErrorMsg')) {
+        summary.succeed += 1;
+      }
+      if (item.getValue('isUploading')) {
         summary.uploading += 1;
       }
-      if (item.getValue('validationErrorMsg')) {
-        summary.validationFailed += 1;
+      if (item.getValue('validationErrorMsg') || item.getValue('uploadError')) {
+        summary.failed += 1;
       }
     }
-    let allUploaded = summary.total === summary.uploaded;
+    let allDone = summary.total === summary.succeed + summary.failed;
     let { passed: fitCountRestrictions, tooMany, exact } = this._validateFilesCount();
-    let fitValidation = summary.validationFailed === 0;
+    let fitValidation = summary.failed === 0;
+
+    let doneBtnEnabled = summary.total > 0 && fitCountRestrictions && fitValidation;
+    let uploadBtnEnabled =
+      summary.total - summary.succeed - summary.uploading - summary.failed > 0 && fitCountRestrictions;
 
     this.set$({
-      doneBtnHidden: !allUploaded,
-      doneBtnDisabled: summary.total === 0 || !fitCountRestrictions || !fitValidation,
+      doneBtnVisible: allDone,
+      doneBtnEnabled: doneBtnEnabled,
 
-      uploadBtnHidden: allUploaded,
-      uploadBtnDisabled:
-        summary.uploading + summary.uploaded === summary.total || !fitCountRestrictions || !fitValidation,
+      uploadBtnVisible: !allDone,
+      uploadBtnEnabled,
 
-      addMoreBtnDisabled: summary.total > 0 && (tooMany || exact),
-      addMoreBtnHidden: exact && !this.getCssData('--cfg-multiple'),
+      addMoreBtnEnabled: summary.total === 0 || (!tooMany && !exact),
+      addMoreBtnVisible: !exact || this.getCssData('--cfg-multiple'),
     });
   }
 
@@ -219,17 +223,17 @@ UploadList.template = /*html*/ `
   <button
     type="button"
     class="add-more-btn secondary-btn"
-    set="onclick: onAdd; @disabled: addMoreBtnDisabled; @hidden: addMoreBtnHidden"
+    set="onclick: onAdd; @disabled: !addMoreBtnEnabled; @hidden: !addMoreBtnVisible"
     l10n="add-more"></button>
   <button
     type="button"
     class="upload-btn primary-btn"
-    set="@hidden: uploadBtnHidden; onclick: onUpload; @disabled: uploadBtnDisabled"
+    set="@hidden: !uploadBtnVisible; onclick: onUpload; @disabled: !uploadBtnEnabled"
     l10n="upload"></button>
   <button
     type="button"
     class="done-btn primary-btn"
-    set="@hidden: doneBtnHidden; onclick: onDone;  @disabled: doneBtnDisabled"
+    set="@hidden: !doneBtnVisible; onclick: onDone;  @disabled: !doneBtnEnabled"
     l10n="done"></button>
 </div>
 `;

@@ -59,8 +59,8 @@ export class UploaderBlock extends ActivityBlock {
 
   openSystemDialog() {
     let accept = mergeFileTypes([
-      ...(this.getCssData('--cfg-img-only') && IMAGE_ACCEPT_LIST),
-      ...this.getCssData('--cfg-accept'),
+      this.getCssData('--cfg-accept'),
+      ...(this.getCssData('--cfg-img-only') ? IMAGE_ACCEPT_LIST : []),
     ]).join(',');
     if (this.getCssData('--cfg-accept') && !!this.getCssData('--cfg-img-only')) {
       console.warn(
