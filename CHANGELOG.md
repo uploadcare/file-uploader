@@ -1,3 +1,9 @@
+## [0.11.2](https://github.com/uploadcare/blocks/compare/v0.11.1...v0.11.2) (2022-09-29)
+
+### Bug Fixes
+
+- **file-uploader-minimal:** add missing translations ([#291](https://github.com/uploadcare/blocks/issues/291)) ([2ee8964](https://github.com/uploadcare/blocks/commit/2ee8964f62343d4460640e29cefa0ba74de24695))
+
 ## [0.11.1](https://github.com/uploadcare/blocks/compare/v0.11.0...v0.11.1) (2022-09-28)
 
 ### Bug Fixes
