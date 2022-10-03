@@ -41,7 +41,11 @@ export class UploaderBlock extends ActivityBlock {
 
   destroyCallback() {
     super.destroyCallback();
-    this.uploadCollection.unobserve(this._handleCollectionUpdate);
+
+    let registry = this.$['*ctxTargetsRegistry'];
+    if (registry?.size === 0) {
+      this.uploadCollection.unobserve(this._handleCollectionUpdate);
+    }
   }
 
   /** @param {File[]} files */
