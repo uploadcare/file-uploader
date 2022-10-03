@@ -89,7 +89,23 @@ export class Block extends BaseComponent {
   }
 
   initCallback() {
-    this.$['*ctxTargetsRegistry']?.add(this.constructor['is']);
+    let tagName = this.constructor['is'];
+    let registry = this.$['*ctxTargetsRegistry'];
+    let counter = registry.has(tagName) ? registry.get(tagName) + 1 : 1;
+    registry.set(tagName, counter);
+    this.$['*ctxTargetsRegistry'] = registry;
+  }
+
+  destroyCallback() {
+    let tagName = this.constructor['is'];
+    let registry = this.$['*ctxTargetsRegistry'];
+    let newCount = registry.has(registry) ? registry.get(tagName) - 1 : 0;
+    if (newCount === 0) {
+      registry.delete(tagName);
+    } else {
+      registry.set(tagName, newCount);
+    }
+    this.$['*ctxTargetsRegistry'] = registry;
   }
 
   /**
