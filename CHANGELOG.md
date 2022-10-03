@@ -1,3 +1,14 @@
+# [0.12.0](https://github.com/uploadcare/blocks/compare/v0.11.1...v0.12.0) (2022-10-03)
+
+### Bug Fixes
+
+- count blocks number in the registry and unobserve upload collection when there are no any registred blocks ([9134f9b](https://github.com/uploadcare/blocks/commit/9134f9b261f09d2090230bf7c082befe28af94e3))
+- **file-uploader-minimal:** add missing translations ([#291](https://github.com/uploadcare/blocks/issues/291)) ([2ee8964](https://github.com/uploadcare/blocks/commit/2ee8964f62343d4460640e29cefa0ba74de24695))
+
+### Features
+
+- add export of `ShadowWrapper` ([6fedc7c](https://github.com/uploadcare/blocks/commit/6fedc7c6035d50171d06f1956a32de38b81becaa))
+
 ## [0.11.1](https://github.com/uploadcare/blocks/compare/v0.11.0...v0.11.1) (2022-09-28)
 
 ### Bug Fixes
