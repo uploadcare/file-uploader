@@ -332,7 +332,6 @@ export class FileItem extends UploaderBlock {
   destroyCallback() {
     super.destroyCallback();
 
-    this._debouncedGenerateThumb.cancel();
     FileItem.activeInstances.delete(this);
 
     this._reset();
@@ -353,6 +352,7 @@ export class FileItem extends UploaderBlock {
   disconnectedCallback() {
     super.disconnectedCallback();
 
+    this._debouncedGenerateThumb.cancel();
     this._observer?.disconnect();
   }
 
