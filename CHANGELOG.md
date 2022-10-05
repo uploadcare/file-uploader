@@ -1,3 +1,9 @@
+## [0.12.1](https://github.com/uploadcare/blocks/compare/v0.12.0...v0.12.1) (2022-10-05)
+
+### Bug Fixes
+
+- **file-item:** cancel debounced thumb generation on element disconnect ([#294](https://github.com/uploadcare/blocks/issues/294)) ([7371335](https://github.com/uploadcare/blocks/commit/7371335b1df55a5b4fdd1ca3e4880986d7b159cf))
+
 # [0.12.0](https://github.com/uploadcare/blocks/compare/v0.11.1...v0.12.0) (2022-10-03)
 
 ### Bug Fixes
