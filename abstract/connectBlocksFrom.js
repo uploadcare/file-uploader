@@ -13,7 +13,7 @@ export async function connectBlocksFrom(url, register = false) {
       resolve(null);
       return;
     }
-    if (typeof window === 'object' && window?.[LR_WINDOW_KEY]) {
+    if (typeof window === 'object' && window[LR_WINDOW_KEY]) {
       resolve(window[LR_WINDOW_KEY]);
       return;
     }
