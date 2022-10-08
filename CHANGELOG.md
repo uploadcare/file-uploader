@@ -1,3 +1,9 @@
+## [0.12.2](https://github.com/uploadcare/blocks/compare/v0.12.1...v0.12.2) (2022-10-08)
+
+### Bug Fixes
+
+- **connect-blocks-from:** remove optional chaining usage ([f93ab07](https://github.com/uploadcare/blocks/commit/f93ab07cc376a1201735163bdfa100f6cba7203b))
+
 ## [0.12.1](https://github.com/uploadcare/blocks/compare/v0.12.0...v0.12.1) (2022-10-05)
 
 ### Bug Fixes
