@@ -13,6 +13,8 @@ export function registerBlocks(blockExports) {
     if (!tagName.startsWith('lr-')) {
       tagName = 'lr-' + tagName;
     }
-    blockExports[blockName].reg?.(tagName);
+    if (blockExports[blockName].reg) {
+      blockExports[blockName].reg(tagName);
+    }
   }
 }
