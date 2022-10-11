@@ -81,7 +81,7 @@ For example, this is the list of pre-defined parameters used by default in our [
   --cfg-use-cloud-image-editor: 1;
 
   --cfg-modal-scroll-lock: 1;
-  --cfg-modal-backdrop-strokes: 1;
+  --cfg-modal-backdrop-strokes: 0;
 
   --cfg-source-list-wrap: 1;
 
