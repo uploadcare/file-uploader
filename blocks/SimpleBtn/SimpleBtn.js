@@ -18,12 +18,12 @@ export class SimpleBtn extends UploaderBlock {
   }
 }
 
-SimpleBtn.template = /*html*/ `
-<lr-drop-area>
-  <button type="button" set="onclick: onClick">
-    <lr-icon name="upload"></lr-icon>
-    <span>{{*simpleButtonText}}</span>
-    <slot></slot>
-  </button>
-</lr-drop-area>
+SimpleBtn.template = /* HTML */ `
+  <lr-drop-area>
+    <button type="button" set="onclick: onClick">
+      <lr-icon name="upload"></lr-icon>
+      <span>{{*simpleButtonText}}</span>
+      <slot></slot>
+    </button>
+  </lr-drop-area>
 `;

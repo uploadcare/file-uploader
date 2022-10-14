@@ -41,7 +41,7 @@ export class EditorButtonControl extends Block {
   }
 }
 
-EditorButtonControl.template = /*html*/ `
+EditorButtonControl.template = /* HTML */ `
   <div class="before"></div>
   <lr-icon size="20" set="@name: icon;"></lr-icon>
   <div class="title" ref="title-el">{{title}}</div>

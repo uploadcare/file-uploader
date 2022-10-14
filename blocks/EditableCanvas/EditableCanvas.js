@@ -88,16 +88,14 @@ export class EditableCanvas extends Block {
   }
 }
 
-EditableCanvas.template = /*html*/ `
-<canvas class="img-view" ref="cvs"></canvas>
-<svg class="img-view" xmlns="http://www.w3.org/2000/svg" ref="svg">
-  <g ref="svg_g">
-    <image ref="svg_img" x="0" y="0"></image>
-  </g>
-</svg>
-<editable-canvas-toolbar
-  set="refMap: refMap; @hidden: toolbarHidden">
-</editable-canvas-toolbar>
+EditableCanvas.template = /* HTML */ `
+  <canvas class="img-view" ref="cvs"></canvas>
+  <svg class="img-view" xmlns="http://www.w3.org/2000/svg" ref="svg">
+    <g ref="svg_g">
+      <image ref="svg_img" x="0" y="0"></image>
+    </g>
+  </svg>
+  <editable-canvas-toolbar set="refMap: refMap; @hidden: toolbarHidden"> </editable-canvas-toolbar>
 `;
 
 EditableCanvas.bindAttributes({

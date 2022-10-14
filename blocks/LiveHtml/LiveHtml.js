@@ -1,6 +1,6 @@
 import { Block } from '../../abstract/Block.js';
 
-const INIT_HTML = /*html*/ `
+const INIT_HTML = /* HTML */ `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -231,11 +231,11 @@ LiveHtml.bindAttributes({
   src: 'src',
 });
 
-LiveHtml.template = /*html*/ `
-<div
-  ref="editor"
-  contenteditable="true"
-  set="textContent:code; oninput:onInput; onkeydown:onKeydown; spellcheck:spellcheck">
-</div>
-<iframe ref="vp"></iframe>
+LiveHtml.template = /* HTML */ `
+  <div
+    ref="editor"
+    contenteditable="true"
+    set="textContent:code; oninput:onInput; onkeydown:onKeydown; spellcheck:spellcheck"
+  ></div>
+  <iframe ref="vp"></iframe>
 `;

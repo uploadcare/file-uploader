@@ -110,6 +110,9 @@ export class EditorSlider extends Block {
   }
 }
 
-EditorSlider.template = /*html*/ `
-<lr-slider-ui ref="slider-el" set="disabled: disabled; min: min; max: max; defaultValue: defaultValue; zero: zero; onInput: on.input;"></lr-slider-ui>
+EditorSlider.template = /* HTML */ `
+  <lr-slider-ui
+    ref="slider-el"
+    set="disabled: disabled; min: min; max: max; defaultValue: defaultValue; zero: zero; onInput: on.input;"
+  ></lr-slider-ui>
 `;

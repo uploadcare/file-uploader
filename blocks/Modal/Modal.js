@@ -35,19 +35,16 @@ export class Modal extends Block {
   }
 }
 
-Modal.template = /*html*/ `
-<div class="dialog">
-  <div class="heading" set="@hidden: *modalHeaderHidden">
-    <slot name="heading"></slot>
-    <button
-      type="button"
-      class="close-btn"
-      set="onclick: closeClicked">
-      <lr-icon name="close"></lr-icon>
-    </button>
+Modal.template = /* HTML */ `
+  <div class="dialog">
+    <div class="heading" set="@hidden: *modalHeaderHidden">
+      <slot name="heading"></slot>
+      <button type="button" class="close-btn" set="onclick: closeClicked">
+        <lr-icon name="close"></lr-icon>
+      </button>
+    </div>
+    <div class="content">
+      <slot></slot>
+    </div>
   </div>
-  <div class="content">
-    <slot></slot>
-  </div>
-</div>
 `;

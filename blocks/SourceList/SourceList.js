@@ -16,7 +16,7 @@ export class SourceList extends Block {
       });
       let html = '';
       list.forEach((srcName) => {
-        html += /*html*/ `<lr-source-btn type="${srcName}"></lr-source-btn>`;
+        html += /* HTML */ `<lr-source-btn type="${srcName}"></lr-source-btn>`;
       });
       if (this.getCssData('--cfg-source-list-wrap')) {
         this.innerHTML = html;

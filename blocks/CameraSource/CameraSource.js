@@ -222,35 +222,33 @@ export class CameraSource extends UploaderBlock {
   }
 }
 
-CameraSource.template = /*html*/ `
-<div class="content">
-  <video
-    autoplay
-    playsinline
-    set="srcObject: video; style.transform: videoTransformCss; @hidden: videoHidden"
-    ref="video">
-  </video>
-  <div class="message-box" set="@hidden: messageHidden">
-    <span>{{l10nMessage}}</span>
-    <button type="button" set="onclick: onRequestPermissions; @hidden: requestBtnHidden" l10n="camera-permissions-request"></button>
+CameraSource.template = /* HTML */ `
+  <div class="content">
+    <video
+      autoplay
+      playsinline
+      set="srcObject: video; style.transform: videoTransformCss; @hidden: videoHidden"
+      ref="video"
+    ></video>
+    <div class="message-box" set="@hidden: messageHidden">
+      <span>{{l10nMessage}}</span>
+      <button
+        type="button"
+        set="onclick: onRequestPermissions; @hidden: requestBtnHidden"
+        l10n="camera-permissions-request"
+      ></button>
+    </div>
   </div>
-</div>
 
-<div class="toolbar">
-  <button
-    type="button"
-    class="cancel-btn secondary-btn"
-    set="onclick: onCancel"
-    l10n="cancel">
-  </button>
-  <lr-select
-    set="$.options: cameraSelectOptions; @hidden: cameraSelectHidden; onchange: onCameraSelectChange">
-  </lr-select>
-  <button
-    type="button"
-    class="shot-btn primary-btn"
-    set="onclick: onShot; @disabled: shotBtnDisabled"
-    l10n="camera-shot">
-  </button>
-</div>
+  <div class="toolbar">
+    <button type="button" class="cancel-btn secondary-btn" set="onclick: onCancel" l10n="cancel"></button>
+    <lr-select set="$.options: cameraSelectOptions; @hidden: cameraSelectHidden; onchange: onCameraSelectChange">
+    </lr-select>
+    <button
+      type="button"
+      class="shot-btn primary-btn"
+      set="onclick: onShot; @disabled: shotBtnDisabled"
+      l10n="camera-shot"
+    ></button>
+  </div>
 `;

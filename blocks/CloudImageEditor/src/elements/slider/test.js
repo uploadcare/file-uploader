@@ -15,7 +15,7 @@ class CtxProvider extends Block {
   };
 }
 
-CtxProvider.template = /*html*/ `
+CtxProvider.template = /* HTML */ `
   <lr-slider-ui set="min: min; max: max: defaultValue: defaultValue; onInput: on.input"></lr-slider-ui>
   <div>{{value}}</div>
 `;

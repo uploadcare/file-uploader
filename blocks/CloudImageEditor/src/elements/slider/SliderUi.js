@@ -167,9 +167,14 @@ export class SliderUi extends Block {
     this._observer?.disconnect();
   }
 }
-SliderUi.template = /*html*/ `
-  <div class="steps" ref="steps-el">
-  </div>
+SliderUi.template = /* HTML */ `
+  <div class="steps" ref="steps-el"></div>
   <div ref="thumb-el" class="thumb"></div>
-  <input class="input" type='range' ref='input-el' tabindex="0" set="oninput: on.sliderInput; onchange: on.sliderChange; @min: min; @max: max; @value: defaultValue;">
+  <input
+    class="input"
+    type="range"
+    ref="input-el"
+    tabindex="0"
+    set="oninput: on.sliderInput; onchange: on.sliderChange; @min: min; @max: max; @value: defaultValue;"
+  />
 `;

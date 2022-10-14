@@ -87,9 +87,9 @@ export class SourceBtn extends UploaderBlock {
     };
   }
 }
-SourceBtn.template = /*html*/ `
-<lr-icon set="@name: iconName"></lr-icon>
-<div class="txt" l10n="src-type"></div>
+SourceBtn.template = /* HTML */ `
+  <lr-icon set="@name: iconName"></lr-icon>
+  <div class="txt" l10n="src-type"></div>
 `;
 SourceBtn.bindAttributes({
   type: null,

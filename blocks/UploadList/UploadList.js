@@ -203,37 +203,33 @@ export class UploadList extends UploaderBlock {
   }
 }
 
-UploadList.template = /*html*/ `
-<div class="no-files" set="@hidden: hasFiles">
-  <slot name="empty"><span l10n="no-files"></span></slot>
-</div>
+UploadList.template = /* HTML */ `
+  <div class="no-files" set="@hidden: hasFiles">
+    <slot name="empty"><span l10n="no-files"></span></slot>
+  </div>
 
-<div
-  class="files"
-  repeat="*uploadList"
-  repeat-item-tag="lr-file-item"></div>
+  <div class="files" repeat="*uploadList" repeat-item-tag="lr-file-item"></div>
 
-<div class="toolbar">
-  <button
-    type="button"
-    class="cancel-btn secondary-btn"
-    set="onclick: onCancel;"
-    l10n="clear"></button>
-  <div class="toolbar-spacer"></div>
-  <button
-    type="button"
-    class="add-more-btn secondary-btn"
-    set="onclick: onAdd; @disabled: !addMoreBtnEnabled; @hidden: !addMoreBtnVisible"
-    l10n="add-more"></button>
-  <button
-    type="button"
-    class="upload-btn primary-btn"
-    set="@hidden: !uploadBtnVisible; onclick: onUpload; @disabled: !uploadBtnEnabled"
-    l10n="upload"></button>
-  <button
-    type="button"
-    class="done-btn primary-btn"
-    set="@hidden: !doneBtnVisible; onclick: onDone;  @disabled: !doneBtnEnabled"
-    l10n="done"></button>
-</div>
+  <div class="toolbar">
+    <button type="button" class="cancel-btn secondary-btn" set="onclick: onCancel;" l10n="clear"></button>
+    <div class="toolbar-spacer"></div>
+    <button
+      type="button"
+      class="add-more-btn secondary-btn"
+      set="onclick: onAdd; @disabled: !addMoreBtnEnabled; @hidden: !addMoreBtnVisible"
+      l10n="add-more"
+    ></button>
+    <button
+      type="button"
+      class="upload-btn primary-btn"
+      set="@hidden: !uploadBtnVisible; onclick: onUpload; @disabled: !uploadBtnEnabled"
+      l10n="upload"
+    ></button>
+    <button
+      type="button"
+      class="done-btn primary-btn"
+      set="@hidden: !doneBtnVisible; onclick: onDone;  @disabled: !doneBtnEnabled"
+      l10n="done"
+    ></button>
+  </div>
 `;

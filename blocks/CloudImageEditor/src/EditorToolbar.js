@@ -11,22 +11,28 @@ import { viewerImageSrc } from './util.js';
 
 /** @param {String} id */
 function renderTabToggle(id) {
-  return /*html*/ `
-    <lr-btn-ui theme="boring" ref="tab-toggle-${id}" data-id="${id}" icon="${id}" tabindex="0" set="onclick: on.clickTab;">
+  return /* HTML */ `
+    <lr-btn-ui
+      theme="boring"
+      ref="tab-toggle-${id}"
+      data-id="${id}"
+      icon="${id}"
+      tabindex="0"
+      set="onclick: on.clickTab;"
+    >
     </lr-btn-ui>
   `;
 }
 
 /** @param {String} id */
 function renderTabContent(id) {
-  return /*html*/ `
+  return /* HTML */ `
     <lr-presence-toggle class="tab-content" set="visible: presence.tabContent.${id}; styles: presence.tabContentStyles">
-        <lr-editor-scroller hidden-scrollbar>
-          <div class="controls-list_align">
-            <div class="controls-list_inner" ref="controls-list-${id}">
-            </div>
-          </div>
-        </lr-editor-scroller>
+      <lr-editor-scroller hidden-scrollbar>
+        <div class="controls-list_align">
+          <div class="controls-list_inner" ref="controls-list-${id}"></div>
+        </div>
+      </lr-editor-scroller>
     </lr-presence-toggle>
   `;
 }
@@ -326,41 +332,33 @@ export class EditorToolbar extends Block {
   }
 }
 
-EditorToolbar.template = /*html*/ `
-<lr-line-loader-ui set="active: showLoader"></lr-line-loader-ui>
-<div class="filter-tooltip_container">
-  <div class="filter-tooltip_wrapper">
-    <div ref="tooltip-el" class="filter-tooltip filter-tooltip_visible">
-      {{*operationTooltip}}
+EditorToolbar.template = /* HTML */ `
+  <lr-line-loader-ui set="active: showLoader"></lr-line-loader-ui>
+  <div class="filter-tooltip_container">
+    <div class="filter-tooltip_wrapper">
+      <div ref="tooltip-el" class="filter-tooltip filter-tooltip_visible">{{*operationTooltip}}</div>
     </div>
   </div>
-</div>
-<div class="toolbar-container">
-  <lr-presence-toggle class="sub-toolbar" set="visible: presence.mainToolbar; styles: presence.subTopToolbarStyles">
-      <div class="tab-content-row">
-      ${TABS.map(renderTabContent).join('')}
-      </div>
+  <div class="toolbar-container">
+    <lr-presence-toggle class="sub-toolbar" set="visible: presence.mainToolbar; styles: presence.subTopToolbarStyles">
+      <div class="tab-content-row">${TABS.map(renderTabContent).join('')}</div>
       <div class="controls-row">
-        <lr-btn-ui theme="boring" icon="closeMax" set="onclick: on.cancel">
-        </lr-btn-ui>
+        <lr-btn-ui theme="boring" icon="closeMax" set="onclick: on.cancel"> </lr-btn-ui>
         <div class="tab-toggles">
           <div ref="tabs-indicator" class="tab-toggles_indicator"></div>
           ${TABS.map(renderTabToggle).join('')}
         </div>
-        <lr-btn-ui theme="primary" icon="done" set="onclick: on.apply">
-        </lr-btn-ui>
+        <lr-btn-ui theme="primary" icon="done" set="onclick: on.apply"> </lr-btn-ui>
       </div>
-  </lr-presence-toggle>
-  <lr-presence-toggle class="sub-toolbar" set="visible: presence.subToolbar; styles: presence.subBottomToolbarStyles">
+    </lr-presence-toggle>
+    <lr-presence-toggle class="sub-toolbar" set="visible: presence.subToolbar; styles: presence.subBottomToolbarStyles">
       <div class="slider">
         <lr-editor-slider ref="slider-el"></lr-editor-slider>
       </div>
       <div class="controls-row">
-        <lr-btn-ui theme="boring" set="@text: l10n.cancel; onclick: on.cancelSlider;">
-        </lr-btn-ui>
-        <lr-btn-ui theme="primary" set="@text: l10n.apply; onclick: on.applySlider;">
-        </lr-btn-ui>
+        <lr-btn-ui theme="boring" set="@text: l10n.cancel; onclick: on.cancelSlider;"> </lr-btn-ui>
+        <lr-btn-ui theme="primary" set="@text: l10n.apply; onclick: on.applySlider;"> </lr-btn-ui>
       </div>
-  </lr-presence-toggle>
-</div>
+    </lr-presence-toggle>
+  </div>
 `;
