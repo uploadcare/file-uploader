@@ -1,42 +1,95 @@
 import { Block } from '../../abstract/Block.js';
-import { strokesCssBg } from '../svg-backgrounds/svg-backgrounds.js';
 
 export class Modal extends Block {
+  _handleClose = () => {
+    if (this.$['*modalCloseCallback']) {
+      this.$['*modalCloseCallback']();
+      return;
+    }
+    this.set$({
+      '*modalActive': false,
+      '*currentActivity': '',
+    });
+  };
+
+  _handleClick = (e) => {
+    if (e.target === this.ref.dialog) {
+      this._handleClose();
+    }
+  };
   init$ = {
     ...this.ctxInit,
     '*modalActive': false,
     '*modalHeaderHidden': false,
     '*modalCloseCallback': null,
-    closeClicked: () => {
-      if (this.$['*modalCloseCallback']) {
-        this.$['*modalCloseCallback']();
-        return;
-      }
-      this.set$({
-        '*modalActive': false,
-        '*currentActivity': '',
-      });
-    },
+    isOpen: false,
+    closeClicked: this._handleClose,
   };
+
+  cssInit$ = {
+    '--cfg-modal-backdrop-strokes': 0,
+  };
+
+  show() {
+    if (this.ref.dialog.showModal) {
+      this.ref.dialog.showModal();
+    } else {
+      this.setAttribute('dialog-fallback', '');
+    }
+  }
+
+  hide() {
+    if (this.ref.dialog.close) {
+      this.ref.dialog.close();
+    } else {
+      this.removeAttribute('dialog-fallback');
+    }
+  }
 
   initCallback() {
     super.initCallback();
-    this.sub('*modalActive', (val) => {
-      val ? this.setAttribute('active', '') : this.removeAttribute('active');
-      if (val && this.getCssData('--cfg-modal-scroll-lock')) {
+    this.ref.dialog.addEventListener('close', this._handleClose);
+    this.ref.dialog.addEventListener('click', this._handleClick);
+    this.sub('*modalActive', (modalActive) => {
+      if (this.$.isOpen !== modalActive) {
+        this.$.isOpen = modalActive;
+      }
+
+      if (modalActive && this.getCssData('--cfg-modal-scroll-lock')) {
         document.body.style.overflow = 'hidden';
       } else {
         document.body.style.overflow = null;
       }
     });
-    if (this.getCssData('--cfg-modal-backdrop-strokes')) {
-      this.style.backgroundImage = `url(${strokesCssBg()})`;
-    }
+
+    this.sub('--cfg-modal-backdrop-strokes', (val) => {
+      if (val) {
+        this.setAttribute('strokes', '');
+      } else {
+        this.removeAttribute('strokes');
+      }
+    });
+
+    this.sub('isOpen', (isOpen) => {
+      if (isOpen) {
+        this.show();
+        this.ref.dialog.setAttribute('open', '');
+      } else {
+        this.hide();
+        this.ref.dialog.removeAttribute('open');
+      }
+    });
+  }
+
+  destroyCallback() {
+    super.destroyCallback();
+    this.ref.dialog.removeEventListener('close', this._handleClose);
+    this.ref.dialog.removeEventListener('click', this._handleClick);
   }
 }
 
 Modal.template = /* HTML */ `
-  <div class="dialog">
+  <dialog ref="dialog" class="dialog">
     <div class="heading" set="@hidden: *modalHeaderHidden">
       <slot name="heading"></slot>
       <button type="button" class="close-btn" set="onclick: closeClicked">
@@ -46,5 +99,5 @@ Modal.template = /* HTML */ `
     <div class="content">
       <slot></slot>
     </div>
-  </div>
+  </dialog>
 `;
