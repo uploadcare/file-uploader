@@ -1,4 +1,5 @@
 lr-live-html {
+  position: relative;
   display: grid;
   grid-template-columns: 50% 50%;
   box-shadow: 0 5px 16px rgb(0 0 0 / 60%);
@@ -53,4 +54,15 @@ lr-live-html iframe {
   height: 100%;
   background-color: #fff;
   border: 0;
+}
+
+lr-live-html > .open-new-tab-btn {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  display: none;
+}
+
+lr-live-html:hover > .open-new-tab-btn {
+  display: block;
 }
