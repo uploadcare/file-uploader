@@ -137,15 +137,7 @@ export class EditorToolbar extends Block {
     });
   }
 }
-EditorToolbar.template = /*html*/ `
-<div
-  class="btns"
-  ref="btns"
-  set="onclick: onBtnClick">${getButtons()}</div>
-<lr-range
-  min="0"
-  max="200"
-  ref="range"
-  set="@visible: rangeActive; $.caption: rangeCaption">
-</lr-range>
+EditorToolbar.template = /* HTML */ `
+  <div class="btns" ref="btns" set="onclick: onBtnClick">${getButtons()}</div>
+  <lr-range min="0" max="200" ref="range" set="@visible: rangeActive; $.caption: rangeCaption"> </lr-range>
 `;

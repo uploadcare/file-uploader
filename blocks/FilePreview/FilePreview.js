@@ -48,9 +48,7 @@ export class FilePreview extends Block {
   }
 }
 
-FilePreview.template = /*html*/ `
-<lr-img class="img-view" ref="img" set="@src: src; style.aa: src;"/>
-`;
+FilePreview.template = /* HTML */ ` <lr-img class="img-view" ref="img" set="@src: src; style.aa: src;" /> `;
 
 FilePreview.bindAttributes({
   checkerboard: 'checkerboard',

@@ -425,33 +425,30 @@ export class FileItem extends UploaderBlock {
   }
 }
 
-FileItem.template = /*html*/ `
-<div
-  class="inner"
-  set="@finished: isFinished; @uploading: isUploading; @failed: isFailed; @focused: isFocused">
-  <div
-    class="thumb"
-    set="style.backgroundImage: thumbUrl">
-    <div class="badge">
-      <lr-icon set="@name: badgeIcon"></lr-icon>
+FileItem.template = /* HTML */ `
+  <div class="inner" set="@finished: isFinished; @uploading: isUploading; @failed: isFailed; @focused: isFocused">
+    <div class="thumb" set="style.backgroundImage: thumbUrl">
+      <div class="badge">
+        <lr-icon set="@name: badgeIcon"></lr-icon>
+      </div>
     </div>
+    <div class="file-name-wrapper">
+      <span class="file-name" set="@title: itemName">{{itemName}}</span>
+    </div>
+    <button type="button" class="edit-btn" set="onclick: onEdit;">
+      <lr-icon name="edit-file"></lr-icon>
+    </button>
+    <button type="button" class="remove-btn" set="onclick: onRemove;">
+      <lr-icon name="remove-file"></lr-icon>
+    </button>
+    <button type="button" class="upload-btn" set="onclick: onUpload;">
+      <lr-icon name="upload"></lr-icon>
+    </button>
+    <lr-progress-bar
+      class="progress-bar"
+      set="value: progressValue; visible: progressVisible; unknown: progressUnknown"
+    >
+    </lr-progress-bar>
   </div>
-  <div class="file-name-wrapper">
-    <span class="file-name" set="@title: itemName">{{itemName}}</span>
-  </div>
-  <button type="button" class="edit-btn" set="onclick: onEdit;">
-    <lr-icon name="edit-file"></lr-icon>
-  </button>
-  <button type="button" class="remove-btn" set="onclick: onRemove;">
-    <lr-icon name="remove-file"></lr-icon>
-  </button>
-  <button type="button" class="upload-btn" set="onclick: onUpload;">
-    <lr-icon name="upload"></lr-icon>
-  </button>
-  <lr-progress-bar
-    class="progress-bar"
-    set="value: progressValue; visible: progressVisible; unknown: progressUnknown">
-  </lr-progress-bar>
-</div>
 `;
 FileItem.activeInstances = new Set();

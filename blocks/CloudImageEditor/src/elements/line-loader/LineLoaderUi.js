@@ -45,7 +45,7 @@ export class LineLoaderUi extends Block {
   }
 }
 
-LineLoaderUi.template = /*html*/ `
+LineLoaderUi.template = /* HTML */ `
   <div class="inner">
     <div class="line" ref="line-el"></div>
   </div>

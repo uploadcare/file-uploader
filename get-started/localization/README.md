@@ -103,10 +103,10 @@ import { LR } from '@uploadcare/upload-blocks';
 
 class MyBlock extends LR.BlockComponent {}
 
-MyBlock.template = /*html*/ `
-<div l10n="title:my-custom-title">
-  <span l10n="my-custom-txt"></span>
-</div>
+MyBlock.template = /* HTML */ `
+  <div l10n="title:my-custom-title">
+    <span l10n="my-custom-txt"></span>
+  </div>
 `;
 
 MyBlock.reg('my-block');
