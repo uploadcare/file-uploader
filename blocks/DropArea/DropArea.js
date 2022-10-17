@@ -37,6 +37,8 @@ export class DropArea extends UploaderBlock {
           this.set$({
             '*currentActivity': ActivityBlock.activities.UPLOAD_LIST,
           });
+          // @ts-ignore
+          this.setForCtxTarget('lr-modal', '*modalActive', true);
         }
       },
       onImgElement(src) {
@@ -48,6 +50,8 @@ export class DropArea extends UploaderBlock {
         this.set$({
           '*currentActivity': ActivityBlock.activities.UPLOAD_LIST,
         });
+        // @ts-ignore
+        this.setForCtxTarget('lr-modal', '*modalActive', true);
       },
     });
 
