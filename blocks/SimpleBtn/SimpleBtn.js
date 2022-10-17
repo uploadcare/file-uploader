@@ -24,6 +24,7 @@ SimpleBtn.template = /* HTML */ `
       <lr-icon name="upload"></lr-icon>
       <span>{{*simpleButtonText}}</span>
       <slot></slot>
+      <div class="visual-drop-area"></div>
     </button>
   </lr-drop-area>
 `;
