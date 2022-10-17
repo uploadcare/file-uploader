@@ -1,3 +1,5 @@
+## [0.12.5](https://github.com/uploadcare/blocks/compare/v0.12.4...v0.12.5) (2022-10-17)
+
 ## [0.12.4](https://github.com/uploadcare/blocks/compare/v0.12.3...v0.12.4) (2022-10-11)
 
 ### Bug Fixes
