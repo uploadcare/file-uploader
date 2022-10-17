@@ -156,6 +156,22 @@ export class LiveHtml extends Block {
         document.execCommand('insertHTML', false, '  ');
       }
     },
+    onNewTabClick: () => {
+      const url = new URL(document.location.toString());
+      url.hash = '';
+      const baseUrl = url.toString();
+
+      const code = `
+      <!DOCTYPE html>
+<html lang="en">
+<base href="${baseUrl}" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+${this.ref.vp.srcdoc}
+</html>
+      `;
+      const winUrl = URL.createObjectURL(new Blob([code], { type: 'text/html' }));
+      window.open(winUrl);
+    },
     // onPaste: (e) => {
     //   e.preventDefault();
     //   let text = e.clipboardData.getData('text/plain');
@@ -238,4 +254,5 @@ LiveHtml.template = /* HTML */ `
     set="textContent:code; oninput:onInput; onkeydown:onKeydown; spellcheck:spellcheck"
   ></div>
   <iframe ref="vp"></iframe>
+  <button class="open-new-tab-btn" set="onclick: onNewTabClick">Open in the new tab</button>
 `;
