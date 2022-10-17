@@ -1,3 +1,13 @@
+# [0.13.0](https://github.com/uploadcare/blocks/compare/v0.12.4...v0.13.0) (2022-10-17)
+
+### Bug Fixes
+
+- **drop-area:** open modal on files drop ([6c112a8](https://github.com/uploadcare/blocks/commit/6c112a88f02bbb5278e223f6f13f2d8b649c777d))
+
+### Features
+
+- **simple-button:** show drop area on files drag ([25fa023](https://github.com/uploadcare/blocks/commit/25fa023a997dca0c940bda55d3202cebf29db8b8))
+
 ## [0.12.4](https://github.com/uploadcare/blocks/compare/v0.12.3...v0.12.4) (2022-10-11)
 
 ### Bug Fixes
