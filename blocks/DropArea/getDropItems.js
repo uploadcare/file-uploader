@@ -30,7 +30,7 @@ function checkIsDirectory(file) {
 }
 
 function readEntryContentAsync(webkitEntry) {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     let reading = 0;
     let contents = [];
 
@@ -77,14 +77,17 @@ function readEntryContentAsync(webkitEntry) {
  * Note: dataTransfer will be destroyed outside of the call stack. So, do not try to process it asynchronous.
  *
  * @param {DataTransfer} dataTransfer
- * @returns {Promise<File[]>}
+ * @returns {Promise<(File | String)[]>}
  */
-export function getDropFiles(dataTransfer) {
+export function getDropItems(dataTransfer) {
   let files = [];
   let promises = [];
   for (let i = 0; i < dataTransfer.items.length; i++) {
     let item = dataTransfer.items[i];
-    if (item && item.kind === 'file') {
+    if (!item) {
+      continue;
+    }
+    if (item.kind === 'file') {
       if (typeof item.webkitGetAsEntry === 'function' || typeof (/** @type {any} */ (item).getAsEntry) === 'function') {
         let entry =
           typeof item.webkitGetAsEntry === 'function'
@@ -106,6 +109,15 @@ export function getDropFiles(dataTransfer) {
           } else {
             files.push(file);
           }
+        })
+      );
+    } else if (item.kind === 'string' && item.type.match('^text/uri-list')) {
+      promises.push(
+        new Promise((resolve) => {
+          item.getAsString((value) => {
+            files.push(value);
+            resolve();
+          });
         })
       );
     }
