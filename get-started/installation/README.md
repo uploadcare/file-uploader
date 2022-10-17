@@ -39,6 +39,24 @@ Then use `connectBlocksFrom` function to connect blocks:
 ```js
 import { connectBlocksFrom } from '@uploadcare/blocks/abstract/connectBlocksFrom.js';
 
+connectBlocksFrom('https://unpkg.com/@uploadcare/blocks@{{PACKAGE_VERSION}}/web/blocks-browser.min.js');
+```
+
+That's it! Now you can use components for placing into html, like this:
+
+```js
+<lr-file-uploader-inline
+  css-src="https://unpkg.com/@uploadcare/blocks@{{PACKAGE_VERSION}}/web/file-uploader-inline.min.css"
+  class="my-config-class"
+></lr-file-uploader-inline>
+```
+
+You may need to implement some logic, which depends on connected blocks or get access directly to the imported components.
+Since `connectBlocksFrom` returns `Promise`, place all you need using `.then()`
+
+```js
+import { connectBlocksFrom } from '@uploadcare/blocks/abstract/connectBlocksFrom.js';
+
 const STYLES = 'https://unpkg.com/@uploadcare/blocks@{{PACKAGE_VERSION}}/web/file-uploader-regular.min.css';
 
 connectBlocksFrom('https://unpkg.com/@uploadcare/blocks@{{PACKAGE_VERSION}}/web/blocks-browser.min.js').then(
@@ -47,7 +65,7 @@ connectBlocksFrom('https://unpkg.com/@uploadcare/blocks@{{PACKAGE_VERSION}}/web/
       return; // To avoid errors in SSR case
     }
 
-    // Now you can add uploader using native DOM API methods:
+    // Now you can realize your logic, e.g.:
     const uploader = new blocks.FileUploaderRegular();
     uploader.setAttribute('css-src', STYLES);
     document.body.appendChild(uploader);
@@ -63,7 +81,7 @@ Install the npm package:
 npm i @uploadcare/blocks
 ```
 
-Than you can use blocks and build your own solutions from the source code:
+Then you can use blocks and build your own solutions from the source code:
 
 ```js
 import * as LR from '@uploadcare/blocks';
