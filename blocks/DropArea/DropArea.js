@@ -16,21 +16,27 @@ export class DropArea extends UploaderBlock {
       onChange: (state) => {
         this.$.state = state;
       },
-      onFiles: (files) => {
-        if (!files.length) {
+      onItems: (items) => {
+        if (!items.length) {
           return;
         }
         if (!this.getCssData('--cfg-multiple')) {
-          files = [files[0]];
+          items = [items[0]];
         }
-        files.forEach((/** @type {File} */ file) => {
-          let isImage = fileIsImage(file);
+        items.forEach((/** @type {File | String} */ item) => {
+          if (typeof item === 'string') {
+            this.uploadCollection.add({
+              externalUrl: item,
+            });
+            return;
+          }
+          let isImage = fileIsImage(item);
           this.uploadCollection.add({
-            file,
+            file: item,
             isImage: isImage,
-            mimeType: file.type,
-            fileName: file.name,
-            fileSize: file.size,
+            mimeType: item.type,
+            fileName: item.name,
+            fileSize: item.size,
           });
         });
         if (this.uploadCollection.size) {
@@ -40,18 +46,6 @@ export class DropArea extends UploaderBlock {
           // @ts-ignore
           this.setForCtxTarget('lr-modal', '*modalActive', true);
         }
-      },
-      onImgElement(src) {
-        // @ts-ignore
-        this.uploadCollection.add({
-          externalUrl: src,
-        });
-        // @ts-ignore
-        this.set$({
-          '*currentActivity': ActivityBlock.activities.UPLOAD_LIST,
-        });
-        // @ts-ignore
-        this.setForCtxTarget('lr-modal', '*modalActive', true);
       },
     });
 
