@@ -71,9 +71,9 @@ Tabs.bindAttributes({
   default: null,
 });
 
-Tabs.template = /*html*/ `
-<div ref="row" class="tabs-row"></div>
-<div ref="context" class="tabs-context">
-  <slot></slot>
-</div>
+Tabs.template = /* HTML */ `
+  <div ref="row" class="tabs-row"></div>
+  <div ref="context" class="tabs-context">
+    <slot></slot>
+  </div>
 `;

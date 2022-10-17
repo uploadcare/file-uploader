@@ -156,11 +156,9 @@ You can quickly override any block template by setting the new `template` proper
 ```js
 import * as LR from '@uploadcare/blocks';
 
-LR.ProgressBarCommon.template = /*html*/ `
+LR.ProgressBarCommon.template = /* HTML */ `
   <h1>My custom heading</h1>
-  <div class="my-custom-class">
-    My custom template
-  </div>
+  <div class="my-custom-class">My custom template</div>
 `;
 ```
 

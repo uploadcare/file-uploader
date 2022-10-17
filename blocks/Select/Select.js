@@ -25,17 +25,17 @@ export class Select extends Block {
       this.$.currentText = options?.[0]?.text || '';
       let html = '';
       options?.forEach((opt) => {
-        html += /*html*/ `<option value="${opt.value}">${opt.text}</option>`;
+        html += /* HTML */ `<option value="${opt.value}">${opt.text}</option>`;
       });
       this.$.selectHtml = html;
     });
   }
 }
 
-Select.template = /*html*/ `
-<button>
-  {{currentText}}
-  <lr-icon name="select"></lr-icon>
-  <select ref="select" set="innerHTML: selectHtml; onchange: onSelect"></select>
-</button>
+Select.template = /* HTML */ `
+  <button>
+    {{currentText}}
+    <lr-icon name="select"></lr-icon>
+    <select ref="select" set="innerHTML: selectHtml; onchange: onSelect"></select>
+  </button>
 `;

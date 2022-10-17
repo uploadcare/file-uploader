@@ -136,22 +136,14 @@ export class ExternalSource extends UploaderBlock {
   }
 }
 
-ExternalSource.template = /*html*/ `
-<div
-  ref="iframeWrapper"
-  class="iframe-wrapper">
-</div>
-<div class="toolbar">
-  <button type="button"
-    class="cancel-btn secondary-btn"
-    set="onclick: onCancel"
-    l10n="cancel">
-  </button>
-  <div></div>
-  <div class="selected-counter">
-    <span l10n="selected-count"></span>{{counter}}</div>
-  <button type="button" class="done-btn primary-btn" set="onclick: onDone; @disabled: !counter">
-    <lr-icon name="check"></lr-icon>
-  </button>
-</div>
+ExternalSource.template = /* HTML */ `
+  <div ref="iframeWrapper" class="iframe-wrapper"></div>
+  <div class="toolbar">
+    <button type="button" class="cancel-btn secondary-btn" set="onclick: onCancel" l10n="cancel"></button>
+    <div></div>
+    <div class="selected-counter"><span l10n="selected-count"></span>{{counter}}</div>
+    <button type="button" class="done-btn primary-btn" set="onclick: onDone; @disabled: !counter">
+      <lr-icon name="check"></lr-icon>
+    </button>
+  </div>
 `;

@@ -14,11 +14,11 @@ class TestApp extends BlockComponent {
     };
   }
 }
-TestApp.template = /*html*/ `
-<link rel="stylesheet" href="../../css/common.css">
-<lr-btn-ui reverse set="#text: text; #icon: icon"></lr-btn-ui>
-<div>&nbsp;</div>
-<lr-btn-ui text="One more button..."></lr-btn-ui>
-<div>&nbsp;</div>
+TestApp.template = /* HTML */ `
+  <link rel="stylesheet" href="../../css/common.css" />
+  <lr-btn-ui reverse set="#text: text; #icon: icon"></lr-btn-ui>
+  <div>&nbsp;</div>
+  <lr-btn-ui text="One more button..."></lr-btn-ui>
+  <div>&nbsp;</div>
 `;
 TestApp.defineTag('test-app');
