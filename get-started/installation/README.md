@@ -44,7 +44,7 @@ connectBlocksFrom('https://unpkg.com/@uploadcare/blocks@{{PACKAGE_VERSION}}/web/
 
 That's it! Now you can use components for placing into html, like this:
 
-```js
+``html
 <lr-file-uploader-inline
   css-src="https://unpkg.com/@uploadcare/blocks@{{PACKAGE_VERSION}}/web/file-uploader-inline.min.css"
   class="my-config-class"
