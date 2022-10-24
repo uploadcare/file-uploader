@@ -5,7 +5,7 @@ lr-video {
 
   display: inline-grid;
   grid-template-rows: 1fr min-content;
-  max-height: 100vh;
+  max-height: var(--uploadcare-blocks-window-height, 100vh);
   overflow: hidden;
   font-family: monospace;
   background-color: #000;

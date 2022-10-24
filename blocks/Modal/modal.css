@@ -1,6 +1,6 @@
 lr-modal {
-  --modal-max-content-height: calc(100vh - 4 * var(--gap-mid) - var(--ui-size));
-  --modal-content-height-fill: 100vh;
+  --modal-max-content-height: calc(var(--uploadcare-blocks-window-height, 100vh) - 4 * var(--gap-mid) - var(--ui-size));
+  --modal-content-height-fill: var(--uploadcare-blocks-window-height, 100vh);
 
   position: fixed;
   top: 0;
