@@ -1,5 +1,6 @@
 :where(.lr-wgt-theme, .lr-wgt-common),
-:host {
+:host,
+::backdrop {
   /* Base values */
 
   --darkmode: 0;
@@ -51,6 +52,7 @@
 
   --modal-max-w: 800px;
   --modal-max-h: 600px;
+  --modal-backdrop-background-image: url('data:image/svg+xml;base64,PHN2ZyBoZWlnaHQ9IjEwIiB3aWR0aD0iMTAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHBhdGggc3Ryb2tlPSJyZ2JhKDAsIDAsIDAsIC4xKSIgZD0iTTAgMTAgMTAgMCIvPgo8L3N2Zz4=');
 
   /* Derivative values */
 

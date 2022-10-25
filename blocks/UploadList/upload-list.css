@@ -1,9 +1,7 @@
 lr-upload-list {
   display: flex;
   flex-direction: column;
-
-  /* height: 100%; - this breaks inner modal layout height in Safari */
-  max-height: 100%;
+  max-height: var(--modal-max-content-height);
   overflow: hidden;
   background-color: var(--clr-background-light);
   transition: opacity var(--transition-duration);
