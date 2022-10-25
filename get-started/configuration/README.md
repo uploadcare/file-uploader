@@ -71,7 +71,7 @@ For example, this is the list of pre-defined parameters used by default in our [
   --cfg-confirm-upload: 1;
   --cfg-img-only: 0;
   --cfg-accept: '';
-  --cfg-store: 1;
+  --cfg-store: unset; /* unset variable means 'auto' */
   --cfg-camera-mirror: 1;
   --cfg-source-list: 'local, url, camera, dropbox, gdrive, facebook';
   --cfg-max-local-file-size-bytes: 0;
