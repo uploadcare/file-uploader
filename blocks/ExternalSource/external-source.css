@@ -13,6 +13,10 @@ lr-external-source iframe {
   border: none;
 }
 
+lr-external-source .iframe-wrapper {
+  overflow: hidden;
+}
+
 lr-external-source .toolbar {
   display: grid;
   grid-gap: var(--gap-mid);
