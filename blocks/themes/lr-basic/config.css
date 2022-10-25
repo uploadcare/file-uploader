@@ -8,7 +8,7 @@
   --cfg-confirm-upload: 1;
   --cfg-img-only: 0;
   --cfg-accept: '';
-  --cfg-store: 1;
+  --cfg-store: unset;
   --cfg-camera-mirror: 1;
   --cfg-source-list: 'local, url, camera, dropbox, gdrive, facebook';
   --cfg-max-local-file-size-bytes: 0;

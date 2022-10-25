@@ -267,14 +267,10 @@ export class UploaderBlock extends ActivityBlock {
 
   /** @returns {import('@uploadcare/upload-client').FileFromOptions} */
   getUploadClientOptions() {
-    let storeSetting = {};
-    let store = this.getCssData('--cfg-store');
-    if (store !== null) {
-      storeSetting.store = !!store;
-    }
-
+    let store = this.getCssData('--cfg-store', true);
     let options = {
-      ...storeSetting,
+      // undefined 'store' means 'auto'
+      store: store === null ? undefined : !!store,
       publicKey: this.getCssData('--cfg-pubkey'),
       baseCDN: this.getCssData('--cfg-cdn-cname'),
       baseURL: this.getCssData('--cfg-base-url'),
