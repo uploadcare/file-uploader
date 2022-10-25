@@ -2,6 +2,7 @@ import { BaseComponent, Data } from '@symbiotejs/symbiote';
 import { applyTemplateData } from '../utils/applyTemplateData.js';
 import { l10nProcessor } from './l10nProcessor.js';
 import { blockCtx } from './CTX.js';
+import { createWindowHeightTracker, getIsWindowHeightTracked } from '../utils/createWindowHeightTracker.js';
 
 const TAG_PREFIX = 'lr-';
 
@@ -75,6 +76,9 @@ export class Block extends BaseComponent {
   }
 
   connectedCallback() {
+    if (!getIsWindowHeightTracked()) {
+      this._destroyInnerHeightTracker = createWindowHeightTracker();
+    }
     if (this.hasAttribute('retpl')) {
       this.constructor['template'] = null;
       this.processInnerHtml = true;
@@ -86,6 +90,11 @@ export class Block extends BaseComponent {
       }
     }
     super.connectedCallback();
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    this._destroyInnerHeightTracker?.();
   }
 
   initCallback() {

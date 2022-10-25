@@ -2,7 +2,7 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
+  height: var(--uploadcare-blocks-window-height, 100vh);
 }
 modal-css {
   position: relative;

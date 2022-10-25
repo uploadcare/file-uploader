@@ -18,6 +18,7 @@ export class CameraSource extends UploaderBlock {
     messageHidden: true,
     requestBtnHidden: canUsePermissionsApi(),
     l10nMessage: null,
+    originalErrorMessage: null,
     cameraSelectOptions: null,
     cameraSelectHidden: true,
 
@@ -78,6 +79,8 @@ export class CameraSource extends UploaderBlock {
    * @param {'granted' | 'denied' | 'prompt'} state
    */
   _setPermissionsState = debounce((state) => {
+    this.$.originalErrorMessage = null;
+
     if (state === 'granted') {
       this.set$({
         videoHidden: false,
@@ -154,6 +157,7 @@ export class CameraSource extends UploaderBlock {
       this._setPermissionsState('granted');
     } catch (err) {
       this._setPermissionsState('denied');
+      this.$.originalErrorMessage = err.message;
     }
   }
 
@@ -232,6 +236,7 @@ CameraSource.template = /* HTML */ `
     ></video>
     <div class="message-box" set="@hidden: messageHidden">
       <span>{{l10nMessage}}</span>
+      <span>{{originalErrorMessage}}</span>
       <button
         type="button"
         set="onclick: onRequestPermissions; @hidden: requestBtnHidden"
