@@ -1,3 +1,16 @@
+# [0.14.0](https://github.com/uploadcare/blocks/compare/v0.13.0...v0.14.0) (2022-10-26)
+
+### Bug Fixes
+
+- **external-source:** prevent iframe height overflow ([4fc669b](https://github.com/uploadcare/blocks/commit/4fc669b0d4f132c73a5cf533f01f06e2ac129bbc))
+- **store:** set store to `auto` by default ([464a5ce](https://github.com/uploadcare/blocks/commit/464a5ce0273cdac55dc7f9457ce60d234dcc2c56))
+
+### Features
+
+- **Block:** use real window height instead of 100vh ([577981e](https://github.com/uploadcare/blocks/commit/577981e8ddeb5a55729dcae16a0f198a312c5f16))
+- **camera-source:** show user media denied error to the user ([b4d167d](https://github.com/uploadcare/blocks/commit/b4d167d76fc80d213beb376c6e7a5b99685c4c30))
+- **modal:** use native `dialog` element & close modal on outside click ([5ec02e0](https://github.com/uploadcare/blocks/commit/5ec02e0a948de90370e838f2ee107bc1a7ede8e1))
+
 # [0.13.0](https://github.com/uploadcare/blocks/compare/v0.12.4...v0.13.0) (2022-10-17)
 
 ### Bug Fixes
