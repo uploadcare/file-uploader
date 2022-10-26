@@ -1,3 +1,9 @@
+## [0.14.1](https://github.com/uploadcare/blocks/compare/v0.14.0...v0.14.1) (2022-10-26)
+
+### Bug Fixes
+
+- fix processing escaped css property values in Firefox
+
 # [0.14.0](https://github.com/uploadcare/blocks/compare/v0.13.0...v0.14.0) (2022-10-26)
 
 ### Bug Fixes
