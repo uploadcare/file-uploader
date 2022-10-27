@@ -16,12 +16,12 @@
 
 ## 📦 What’s in the box?
 
-- [File uploader solutions](/solutions/file-uploader/) - file uploader implementations for the most frequent use cases.
-- [Blocks to build your own custom solutions](/blocks/) - build your own integration solutions with simple HTML and CSS.
+- [File uploader solutions](/solutions/file-uploader/) — file uploader implementations for the most frequent use cases.
+- [Blocks to build your own custom solutions](/blocks/) — build your own integration solutions with simple HTML and CSS.
 - [Adaptive image solution](/solutions/adaptive-image/): all you need to distribute your web images efficiently.
 - [Cloud image editing solution](/solutions/cloud-image-editor/): tune your pictures on the fly.
-- Web components for media content representation: audio, video, image galleries, etc.
-- etc.
+- Web components for media content representation: audio, video, image galleries, etc
+- etc
 
 ## ⚙️ Installation and start
 
@@ -45,7 +45,7 @@ Blocks are supported and tested in all major modern desktop and mobile browsers:
 - Safari
 - Edge
 - Opera
-- etc.
+- etc
 
 [Internet Explorer](https://uploadcare.com/blog/uploadcare-stops-internet-explorer-support/) is outdated and not supported anymore.
 

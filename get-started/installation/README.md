@@ -7,7 +7,7 @@
 > - https://www.skypack.dev/
 > - https://www.jsdelivr.com/
 > - https://unpkg.com/
-> - etc.
+> - etc
 
 Connect script to your document:
 

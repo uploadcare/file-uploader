@@ -7,7 +7,7 @@ It generates a set of URLs for the initial image source with the desired paramet
 
 - No need to initiate something or to scan a document: the browser takes care of it.
 - Uniform integration for most of the modern stacks.
-- Modern standards support: `srcset`, native lazy loading, breakpoints, etc...
+- Modern standards support: `srcset`, native lazy loading, breakpoints, etc.
 - Creates adaptive background images if needed.
 - You need HTML and CSS only to set it up.
 
