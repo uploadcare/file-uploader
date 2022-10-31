@@ -1,6 +1,6 @@
 # Localization
 
-All keys and values for the UI texts and translations are also placed in CSS:
+All keys and values for the UI texts and translations are placed in CSS:
 
 ```css
 .lr-wgt-l10n_en-US,
@@ -81,7 +81,7 @@ All keys and values for the UI texts and translations are also placed in CSS:
 }
 ```
 
-That means you can create your own variant of any UI text or add any new text to your custom block.
+You can create your own variant of any UI text or add any new text to your custom block.
 
 CSS:
 
