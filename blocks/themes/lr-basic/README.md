@@ -46,7 +46,7 @@ TODO: write a guide. -->
 - `--transition-duration` — duration of all animated transitions;
 - `--shadows` — `1`: shadows enabled, `0`: disabled. Can be fractional, for example 0.5, will make shadows half as opaque;
 - `--*-shadow` — the color of box shadows;
-- `--modal-max-w`, `--modal-max-h` — the maximum size of the modal window;
+- `--modal-max-w`, `--modal-max-h` — the maximum size of the modal window.
 
 ## Derivative values
 
@@ -63,13 +63,13 @@ Derivative values are calculated from the base values.
 - `--clr-curtain` — color of the background behind the modal window;
 - `--clr-btn-bgr-primary*`, `--clr-btn-txt-primary`, `--shadow-btn-primary` — primary action button values;
 - `--clr-btn-bgr-secondary*`, `--clr-btn-txt-secondary`, `--shadow-btn-secondary` — secondary action button values;
-- `--clr-btn-bgr-disabled`, `--clr-btn-txt-disabled`, `--shadow-btn-disabled` — disabled button values;
+- `--clr-btn-bgr-disabled`, `--clr-btn-txt-disabled`, `--shadow-btn-disabled` — disabled button values.
 
 ## Common styles
 
 Common styles define similar UI elements across different blocks: buttons, inputs, and links.
 
-<!-- ## Component styles
+## Component styles
 
 Component styles are the most specific.
-TODO: decide about recommendations here -->
+<!-- TODO: decide about recommendations here -->
