@@ -106,7 +106,7 @@ Uploader.reg('uploader');
 
 As you can see, that's quite simple.
 
-> You should get a Public API key in [Uploadcare project's dashboard](https://app.uploadcare.com/) to use file uploading features.
+> You should get a Public API key in [Uploadcare project's dashboard](https://app.uploadcare.com/projects/-/api-keys/) to use file uploading features.
 
 ## 🎨 Customize everything!
 
