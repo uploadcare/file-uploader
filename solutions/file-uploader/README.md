@@ -274,7 +274,7 @@ TODO: write a guide. -->
 
 - `--darkmode` — `1`: dark mode enabled, `0`: disabled;
 - `--*-foreground` — text color, borders, and shaders. It should be in contrast to the background;
-- `--*-background` — background color and it's variations;
+- `--*-background` — background color and its variations;
 - `--*-accent` — colors of buttons, links, and text input borders (hover and focus). It should be in contrast to the background;
 - `--*-confirm` — the color of confirmation notifications and badges;
 - `--*-error` — the color of error notifications and badges;

@@ -51,10 +51,10 @@ You can create your own blocks from scratch with JavaScript using [BlockComponen
 - The lifecycle is controlled from the inside; you don't need to manage it in your code.
 - You can easily switch between encapsulated secure styling and common document styles.
 - Using [Shadow DOM](https://developer.mozilla.org/en-US/docs/Web/Web_solutions/Using_shadow_DOM) is up to you.
-- It's easy to set any customized data context for the blocks to control them in detail.
+- Easy to set any customized data context for the blocks to control them in detail.
 - Total flexibility.
 - No heavy dependencies and no excessive bandwidth usage.
-- It's easy to follow the most strict design guidelines.
+- Easy to follow the most strict design guidelines.
 - Everything is very close to the native browser APIs and concepts; you don't need to learn something completely new.
 - [Content Security Policy (CSP)](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP) friendly — great for a secure enterprise usage.
 - [Jamstack](https://jamstack.org/) friendly: enter the new world of web development!
