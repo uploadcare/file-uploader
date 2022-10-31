@@ -23,8 +23,7 @@
 
 ## ⚙️ Installation and start
 
-Installation process is very easy and takes minutes.
-See our [installation guide](/get-started/installation/).
+Installation process is easy and takes minutes. See the [installation guide](/get-started/installation/).
 
 ## Typescript support
 
