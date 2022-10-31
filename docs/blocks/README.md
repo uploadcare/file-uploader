@@ -1,3 +1,3 @@
 # Blocks
 
-## Custom elements naming convention.
+## Custom elements naming convention

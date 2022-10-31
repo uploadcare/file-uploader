@@ -65,6 +65,6 @@ It's possible to render the output data using [Symbiote.js](https://github.com/s
 </lr-data-output>
 ```
 
-### How it works:
+### How it works
 
 Symbiote component allows to take [control of it's nested markup](https://symbiotejs.org/?control_capture) and to use it as component's template. And you can use the canonical Symbiote.js [dynamic list rendering](https://symbiotejs.org/?list) for the uploading data representation. As you can see, all you need is just to add some additional HTML. That's it.

@@ -62,12 +62,12 @@
         <col-css><h1 id="file-uploader">File uploader</h1>
 <p>Here you can find the set of ready-made uploaders for the most frequent file uploading cases.
 Each uploader is highly customizable on its own and could be used as a custom build reference, but you can use it as is.</p>
-<h3 id="on-this-page-youll-find">On this page you&#39;ll find:</h3>
+<h3 id="on-this-page-youll-find">On this page you&#39;ll find</h3>
 <h4 id="solutions">Solutions</h4>
 <ul>
-<li><a href="#example_regular">Regular case</a> - the most common solution.</li>
-<li><a href="#example_inline">Inline case</a> - no modals, could be used just in place.</li>
-<li><a href="#example_mini">Minimal case</a> - minimal and compact.</li>
+<li><a href="#example_regular">Regular case</a> — the most common solution.</li>
+<li><a href="#example_inline">Inline case</a> — no modals, could be used just in place.</li>
+<li><a href="#example_mini">Minimal case</a> — minimal and compact.</li>
 </ul>
 <h4 id="implementation">Implementation</h4>
 <ul>
@@ -95,7 +95,7 @@ Each uploader is highly customizable on its own and could be used as a custom bu
 <li>Safari</li>
 <li>Edge</li>
 <li>Opera</li>
-<li>etc.</li>
+<li>etc</li>
 </ul>
 <p><a target='_blank'  href="https://uploadcare.com/blog/uploadcare-stops-internet-explorer-support/">Internet Explorer</a> is outdated and not supported anymore.
 <br/><br/><br/></p>
@@ -128,7 +128,7 @@ Each uploader is highly customizable on its own and could be used as a custom bu
 <span class="hljs-tag">&lt;<span class="hljs-name">lr-uploader</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;my-settings lr-wgt-common&quot;</span>&gt;</span> <span class="hljs-tag">&lt;/<span class="hljs-name">lr-uploader</span>&gt;</span>
 </code></pre>
 <ul>
-<li><code>lr-wgt-common</code> - is a pre-defined common CSS class containing all basic uploader parameters.</li>
+<li><code>lr-wgt-common</code> — is a pre-defined common CSS class containing all basic uploader parameters.</li>
 </ul>
 <p>There are two major parameters you should know about first of all:</p>
 <ol>
@@ -430,7 +430,7 @@ To enable it and encapsulate all styles into separated scope, use the <code>css-
 <p><br/><br/><br/></p>
 <h1 id="🪤-data-handling"><a name="handling_data"></a>🪤 Data handling</h1>
 <h2 id="with-data-output">With data output</h2>
-<p>We provide the dedicated block for the data output purposes - <code>&lt;lr-data-output&gt;</code>.
+<p>We provide the dedicated block for the data output purposes — <code>&lt;lr-data-output&gt;</code>.
 This Custom Element can be connected to some workflow context and provide you with convenient data access.</p>
 <p>Here is the code example:</p>
 <pre><code class="language-html"><span class="hljs-tag">&lt;<span class="hljs-name">lr-data-output</span> <span class="hljs-attr">console</span> <span class="hljs-attr">fire-events</span> <span class="hljs-attr">item-template</span>=<span class="hljs-string">&quot;&lt;img src=&#x27;https://ucarecdn.com/{{uuid}}/-/preview/&#x27; /&gt;&quot;</span>&gt;</span>
@@ -438,11 +438,11 @@ This Custom Element can be connected to some workflow context and provide you wi
 </code></pre>
 <p>Let&#39;s walk through its attributes:</p>
 <ul>
-<li><code>console</code> - this flag lets you enable browser console output without modifying the source code.</li>
-<li><code>fire-events</code> - this flag enables custom events (<code>data-output</code>) dispatching for the DOM element. These events contain all uploading data and could be processed at any level of your application.</li>
-<li><code>from</code> - data output could be connected to any field in the workflow context. You can specify the certain one. By default, it is a <code>*dataOutput</code>; you can skip this setting for the default uploading case.</li>
-<li><code>item-template</code> - uploading results could be rendered as a list of nested DOM elements. You can specify a simple template for that.</li>
-<li><code>form-value</code> - could be used to handle HTML-forms.</li>
+<li><code>console</code> — this flag lets you enable browser console output without modifying the source code.</li>
+<li><code>fire-events</code> — this flag enables custom events (<code>data-output</code>) dispatching for the DOM element. These events contain all uploading data and could be processed at any level of your application.</li>
+<li><code>from</code> — data output could be connected to any field in the workflow context. You can specify the certain one. By default, it is a <code>*dataOutput</code>; you can skip this setting for the default uploading case.</li>
+<li><code>item-template</code> — uploading results could be rendered as a list of nested DOM elements. You can specify a simple template for that.</li>
+<li><code>form-value</code> — could be used to handle HTML-forms.</li>
 </ul>
 <h2 id="with-event-listener">With event listener</h2>
 <pre><code class="language-js"><span class="hljs-variable language_">window</span>.<span class="hljs-title function_">addEventListener</span>(<span class="hljs-string">&#x27;LR_DATA_OUTPUT&#x27;</span>, <span class="hljs-function">(<span class="hljs-params">e</span>) =&gt;</span> {
@@ -453,14 +453,14 @@ This Custom Element can be connected to some workflow context and provide you wi
 <h1 id="🔥-events"><a name="events"></a>🔥 Events</h1>
 <h2 id="upload-flow-events">Upload flow events</h2>
 <ul>
-<li><code>LR_UPLOAD_START</code> - upload started for the file list selected by user</li>
-<li><code>LR_REMOVE</code> - fired when one of uploaded items removed from uploading list</li>
-<li><code>LR_UPLOAD_PROGRESS</code> - common upload progress for the list</li>
-<li><code>LR_UPLOAD_FINISH</code> - uploading is finished</li>
-<li><code>LR_UPLOAD_ERROR</code> - error ocurred during files uploading</li>
-<li><code>LR_VALIDATION_ERROR</code> - file not passed the checks according to validation settings</li>
-<li><code>LR_CLOUD_MODIFICATION</code> - image was modified via cloud API</li>
-<li><code>LR_DATA_OUTPUT</code> - common data about uploads</li>
+<li><code>LR_UPLOAD_START</code> — upload started for the file list selected by user</li>
+<li><code>LR_REMOVE</code> — fired when one of uploaded items removed from uploading list</li>
+<li><code>LR_UPLOAD_PROGRESS</code> — common upload progress for the list</li>
+<li><code>LR_UPLOAD_FINISH</code> — uploading is finished</li>
+<li><code>LR_UPLOAD_ERROR</code> — error ocurred during files uploading</li>
+<li><code>LR_VALIDATION_ERROR</code> — file not passed the checks according to validation settings</li>
+<li><code>LR_CLOUD_MODIFICATION</code> — image was modified via cloud API</li>
+<li><code>LR_DATA_OUTPUT</code> — common data about uploads</li>
 </ul>
 <p>You can catch all events in window scope:</p>
 <pre><code class="language-js"><span class="hljs-variable language_">window</span>.<span class="hljs-title function_">addEventListener</span>(<span class="hljs-string">&#x27;LR_UPLOAD_START&#x27;</span>, <span class="hljs-function">(<span class="hljs-params">e</span>) =&gt;</span> {
@@ -484,7 +484,7 @@ This Custom Element can be connected to some workflow context and provide you wi
 </code></pre>
 <p><br/><br/><br/></p>
 <h1 id="activities"><a name="activities"></a>Activities</h1>
-<p><strong>Activity</strong> - is a current user interaction stage focused on the uploader application. It helps manage the visibility of components and switches between several UI states. To create an activity, you will need to register it in your custom upload-block:</p>
+<p><strong>Activity</strong> — is a current user interaction stage focused on the uploader application. It helps manage the visibility of components and switches between several UI states. To create an activity, you will need to register it in your custom upload-block:</p>
 <pre><code class="language-javascript"><span class="hljs-keyword">import</span> { <span class="hljs-variable constant_">LR</span> } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;@uploadcare/upload-blocks&#x27;</span>;
 
 <span class="hljs-keyword">class</span> <span class="hljs-title class_">MyBlock</span> <span class="hljs-keyword">extends</span> <span class="hljs-title class_ inherited__">LR.BlockComponent</span> {

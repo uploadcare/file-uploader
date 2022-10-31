@@ -3,13 +3,13 @@
 Here you can find the set of ready-made uploaders for the most frequent file uploading cases.
 Each uploader is highly customizable on its own and could be used as a custom build reference, but you can use it as is.
 
-### On this page you'll find:
+### On this page you'll find
 
 #### Solutions
 
-- [Regular case](#example_regular) - the most common solution.
-- [Inline case](#example_inline) - no modals, could be used just in place.
-- [Minimal case](#example_mini) - minimal and compact.
+- [Regular case](#example_regular) — the most common solution.
+- [Inline case](#example_inline) — no modals, could be used just in place.
+- [Minimal case](#example_mini) — minimal and compact.
 
 #### Implementation
 
@@ -40,7 +40,7 @@ Uploader is supported and tested in all major modern desktop and mobile browsers
 - Safari
 - Edge
 - Opera
-- etc.
+- etc
 
 [Internet Explorer](https://uploadcare.com/blog/uploadcare-stops-internet-explorer-support/) is outdated and not supported anymore.
 <br/><br/><br/>
@@ -90,7 +90,7 @@ All configurations, localization texts, icons, and styling are placed into CSS f
 <lr-uploader class="my-settings lr-wgt-common"> </lr-uploader>
 ```
 
-- `lr-wgt-common` - is a pre-defined common CSS class containing all basic uploader parameters.
+- `lr-wgt-common` — is a pre-defined common CSS class containing all basic uploader parameters.
 
 There are two major parameters you should know about first of all:
 
@@ -330,7 +330,7 @@ To enable it and encapsulate all styles into separated scope, use the `css-src` 
 
 ## With data output
 
-We provide the dedicated block for the data output purposes - `<lr-data-output>`.
+We provide the dedicated block for the data output purposes — `<lr-data-output>`.
 This Custom Element can be connected to some workflow context and provide you with convenient data access.
 
 Here is the code example:
@@ -342,11 +342,11 @@ Here is the code example:
 
 Let's walk through its attributes:
 
-- `console` - this flag lets you enable browser console output without modifying the source code.
-- `fire-events` - this flag enables custom events (`data-output`) dispatching for the DOM element. These events contain all uploading data and could be processed at any level of your application.
-- `from` - data output could be connected to any field in the workflow context. You can specify the certain one. By default, it is a `*dataOutput`; you can skip this setting for the default uploading case.
-- `item-template` - uploading results could be rendered as a list of nested DOM elements. You can specify a simple template for that.
-- `form-value` - could be used to handle HTML-forms.
+- `console` — this flag lets you enable browser console output without modifying the source code.
+- `fire-events` — this flag enables custom events (`data-output`) dispatching for the DOM element. These events contain all uploading data and could be processed at any level of your application.
+- `from` — data output could be connected to any field in the workflow context. You can specify the certain one. By default, it is a `*dataOutput`; you can skip this setting for the default uploading case.
+- `item-template` — uploading results could be rendered as a list of nested DOM elements. You can specify a simple template for that.
+- `form-value` — could be used to handle HTML-forms.
 
 ## With event listener
 
@@ -362,14 +362,14 @@ window.addEventListener('LR_DATA_OUTPUT', (e) => {
 
 ## Upload flow events
 
-- `LR_UPLOAD_START` - upload started for the file list selected by user
-- `LR_REMOVE` - fired when one of uploaded items removed from uploading list
-- `LR_UPLOAD_PROGRESS` - common upload progress for the list
-- `LR_UPLOAD_FINISH` - uploading is finished
-- `LR_UPLOAD_ERROR` - error ocurred during files uploading
-- `LR_VALIDATION_ERROR` - file not passed the checks according to validation settings
-- `LR_CLOUD_MODIFICATION` - image was modified via cloud API
-- `LR_DATA_OUTPUT` - common data about uploads
+- `LR_UPLOAD_START` — upload started for the file list selected by user
+- `LR_REMOVE` — fired when one of uploaded items removed from uploading list
+- `LR_UPLOAD_PROGRESS` — common upload progress for the list
+- `LR_UPLOAD_FINISH` — uploading is finished
+- `LR_UPLOAD_ERROR` — error ocurred during files uploading
+- `LR_VALIDATION_ERROR` — file not passed the checks according to validation settings
+- `LR_CLOUD_MODIFICATION` — image was modified via cloud API
+- `LR_DATA_OUTPUT` — common data about uploads
 
 You can catch all events in window scope:
 
@@ -403,7 +403,7 @@ window.addEventListener('LR_UPLOAD_START', (e) => {
 
 # <a name="activities"></a>Activities
 
-**Activity** - is a current user interaction stage focused on the uploader application. It helps manage the visibility of components and switches between several UI states. To create an activity, you will need to register it in your custom upload-block:
+**Activity** — is a current user interaction stage focused on the uploader application. It helps manage the visibility of components and switches between several UI states. To create an activity, you will need to register it in your custom upload-block:
 
 ```javascript
 import { LR } from '@uploadcare/upload-blocks';

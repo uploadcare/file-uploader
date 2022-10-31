@@ -2,38 +2,38 @@
 
 If our pre-built [uploader solution](/solutions/file-uploader/) isn't enough for you, meet our highly customizable blocks.
 
-## Blocks list:
+## Blocks list
 
-- [ActivityCaption](/blocks/ActivityCaption/) - shows heading text for the current activity
-- [ActivityIcon](/blocks/ActivityIcon/) - shows actual icon for the current activity
-- [CameraSource](/blocks/CameraSource/) - getting image for upload from the device camera
-- [CloudImageEditor](/blocks/CloudImageEditor/) - image editing via Uploadcare cloud functions
-- [Color](/blocks/Color/) - simple wrapper for the native color selector in browser
-- [ComfirmationDialog](/blocks/ConfirmationDialog/) - user confirmations for the most sensitive actions
-- [DataOutput](/blocks/DataOutput/) - dedicated element for the upload data extraction in host application
-- [DropArea](/blocks/DropArea/) - wrapper element for the the drag-n-drop feature adding
-- [EditableCanvas](/blocks/EditableCanvas/) - minimalistic in-browser image editing
-- [FilePreview](/blocks/FilePreview/) - show file preview
-- [ExternalSource](/blocks/ExternalSource/) - common wrapper for external file sources
-- [FileItem](/blocks/FileItem/) - basic UI for the each uploading file entry
-- [Icon](/blocks/Icon/) - displays an icon
-- [Img](/blocks/Img/) - adaptive image
-- [MessageBox](/blocks/MessageBox/) - common container for the application messages
-- [Modal](/blocks/Modal/) - common pop-up window
-- [ProgressBar](/blocks/ProgressBar/) - abstract progress bar
-- [ProgressBarCommon](/blocks/ProgressBarCommon/) - displays uploading progress for the all files selected
-- [Range](/blocks/Range/) - customizable wrapper for the range input element
-- [Select](/blocks/Select/) - customizable selector
-- [ShadowWrapper](/blocks/ShadowWrapper/) - Shadow DOM wrapper to encapsulate your solution
-- [SimpleBtn](/blocks/SimpleBtn/) - button for the file uploading workflow start
-- [SourceBtn](/blocks/SourceBtn/) - button for the certain source activation
-- [SourceList](/blocks/SourceList/) - renders the list of file sources basing on configuration provided
-- [StartFrom](/blocks/StartFrom/) - wrapper element for the uploading workflow initiation
-- [Tabs](/blocks/Tabs/) - implements tabbing UI
-- [UploadDetails](/blocks/UploadDetails/) - displays file details and adittional features
-- [UploadList](/blocks/UploadList/) - shows the list of uploads
-- [UrlSource](/blocks/UrlSource/) - file uploading from the external URL
-- [Video](/blocks/Video/) - wrapper element for the browser video tag
+- [ActivityCaption](/blocks/ActivityCaption/) — shows heading text for the current activity
+- [ActivityIcon](/blocks/ActivityIcon/) — shows actual icon for the current activity
+- [CameraSource](/blocks/CameraSource/) — getting image for upload from the device camera
+- [CloudImageEditor](/blocks/CloudImageEditor/) — image editing via Uploadcare cloud functions
+- [Color](/blocks/Color/) — simple wrapper for the native color selector in browser
+- [ComfirmationDialog](/blocks/ConfirmationDialog/) — user confirmations for the most sensitive actions
+- [DataOutput](/blocks/DataOutput/) — dedicated element for the upload data extraction in host application
+- [DropArea](/blocks/DropArea/) — wrapper element for the the drag-n-drop feature adding
+- [EditableCanvas](/blocks/EditableCanvas/) — minimalistic in-browser image editing
+- [FilePreview](/blocks/FilePreview/) — show file preview
+- [ExternalSource](/blocks/ExternalSource/) — common wrapper for external file sources
+- [FileItem](/blocks/FileItem/) — basic UI for the each uploading file entry
+- [Icon](/blocks/Icon/) — displays an icon
+- [Img](/blocks/Img/) — adaptive image
+- [MessageBox](/blocks/MessageBox/) — common container for the application messages
+- [Modal](/blocks/Modal/) — common pop-up window
+- [ProgressBar](/blocks/ProgressBar/) — abstract progress bar
+- [ProgressBarCommon](/blocks/ProgressBarCommon/) — displays uploading progress for the all files selected
+- [Range](/blocks/Range/) — customizable wrapper for the range input element
+- [Select](/blocks/Select/) — customizable selector
+- [ShadowWrapper](/blocks/ShadowWrapper/) — Shadow DOM wrapper to encapsulate your solution
+- [SimpleBtn](/blocks/SimpleBtn/) — button for the file uploading workflow start
+- [SourceBtn](/blocks/SourceBtn/) — button for the certain source activation
+- [SourceList](/blocks/SourceList/) — renders the list of file sources basing on configuration provided
+- [StartFrom](/blocks/StartFrom/) — wrapper element for the uploading workflow initiation
+- [Tabs](/blocks/Tabs/) — implements tabbing UI
+- [UploadDetails](/blocks/UploadDetails/) — displays file details and adittional features
+- [UploadList](/blocks/UploadList/) — shows the list of uploads
+- [UrlSource](/blocks/UrlSource/) — file uploading from the external URL
+- [Video](/blocks/Video/) — wrapper element for the browser video tag
 
 ## 🍰 Concept description
 
@@ -45,7 +45,7 @@ We believe it is — with the power of [Custom Elements standard](https://develo
 You can use high-level, simple HTML and CSS to customize layouts and define the most popular scenarios.
 You can create your own blocks from scratch with JavaScript using our super-duper [BlockComponent base-class](https://github.com/uploadcare/blocks/blob/main/docs/block-component/index.htm).
 
-### Key features:
+### Key features
 
 - Easy to use within any modern toolchain: framework, library, or CMS.
 - The lifecycle is controlled from the inside; you don't need to manage it in your code.
@@ -53,7 +53,7 @@ You can create your own blocks from scratch with JavaScript using our super-dupe
 - Using [Shadow DOM](https://developer.mozilla.org/en-US/docs/Web/Web_solutions/Using_shadow_DOM) — is up to you.
 - It's easy to set any customized data context for the blocks to control them in detail.
 - Total flexibility.
-- No heavy dependencies and no bandwidth - and performance-penalizing libraries are necessary.
+- No heavy dependencies and no bandwidth — and performance-penalizing libraries are necessary.
 - It's easy to follow your strict design guidelines.
 - Everything is very close to the native browser APIs and concepts; you don't need to learn something completely new.
 - [Content Security Policy (CSP)](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP) friendly — good for secure enterprise usage.
