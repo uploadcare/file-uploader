@@ -1,4 +1,4 @@
-# Basic theme for upload-blocks
+# Basic theme for blocks
 
 There are 4 levels of abstraction:
 
@@ -13,7 +13,7 @@ We use HSL color space because it allows us to easily calculate derivative color
 
 ### Quick styling
 
-In most cases switching the dark mode on or off and changing the accent color is enough to make upload-blocks match your design. 
+In most cases switching the dark mode on or off and changing the accent color is enough to make blocks match your design. 
 <!-- If you want to do a deeper styling, see this guide
 TODO: write a guide. -->
 

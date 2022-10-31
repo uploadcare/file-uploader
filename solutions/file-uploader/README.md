@@ -231,7 +231,7 @@ There are three major levels of possible styling customizations:
 2. The set of basic CSS variables used for the other styling calculations.
 3. Custom CSS rules for each element.
 
-## Basic theme for upload-blocks
+## Basic theme for blocks
 
 There are 4 levels of abstraction:
 
@@ -246,7 +246,7 @@ We use HSL color space because it allows us to easily calculate derivative color
 
 ### Quick styling
 
-In most cases switching the dark mode on or off and changing the accent color is enough to make upload-blocks match your design.
+In most cases switching the dark mode on or off and changing the accent color is enough to make block match your design.
 <!-- If you want to do a deeper styling, see this guide.
 TODO: write a guide. -->
 
@@ -395,7 +395,7 @@ window.addEventListener('LR_UPLOAD_START', (e) => {
 
 # <a name="activities"></a>Activities
 
-**Activity** — is a current user interaction stage focused on the uploader application. It helps manage the visibility of components and switches between several UI states. To create an activity, you will need to register it in your custom upload-block:
+_Activity_ is a current user interaction stage focused on the uploader application. It helps manage the visibility of components and switches between several UI states. To create an activity, you should register it in your custom block:
 
 ```javascript
 import { LR } from '@uploadcare/upload-blocks';

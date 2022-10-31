@@ -158,11 +158,11 @@ LR.ProgressBarCommon.template = /* HTML */ `
 `;
 ```
 
-All elements created by upload-blocks are discoverable via developer tools in your browser. It's easy to find out what exactly you should edit to achieve the proper result. You don't need to install any specific tool to do that.
+All elements created by blocks are discoverable via developer tools in your browser. It's easy to find out what exactly you should edit to achieve the proper result. You don't need to install any specific tool to do that.
 
 ### Custom blocks
 
-You can create your own custom upload-blocks to handle some specific use cases. You need to use the Block JavaScript base class to do that.
+You can create your own custom blocks to handle some specific use cases. You need to use the Block JavaScript base class to do that.
 
 ## ⚙️ More in depth
 
