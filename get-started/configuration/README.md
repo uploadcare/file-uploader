@@ -113,9 +113,9 @@ For example, this is the list of pre-defined parameters used by default in our [
 
 As you can see, all properties are grouped for the set of selectors:
 
-- `.lr-wgt-cfg` - specific selector for the configuration section in common CSS
-- `.lr-wgt-common` - common class for all types of settings and CSS data
-- `:host` - Shadow DOM root element selector (used when Shadow DOM is enabled)
+- `.lr-wgt-cfg` — specific selector for the configuration section in common CSS
+- `.lr-wgt-common` — common class for all types of settings and CSS data
+- `:host` — Shadow DOM root element selector (used when Shadow DOM is enabled)
 
 The variable value should be a correct JSON value. Strings should be taken in quotes. We use the 1 or 0 numbers to define boolean flags.
 
