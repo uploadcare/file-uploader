@@ -99,7 +99,7 @@ CSS:
 JavaScript:
 
 ```javascript
-import { LR } from '@uploadcare/upload-blocks';
+import { LR } from '@uploadcare/blocks';
 
 class MyBlock extends LR.BlockComponent {}
 

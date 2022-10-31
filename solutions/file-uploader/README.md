@@ -398,7 +398,7 @@ window.addEventListener('LR_UPLOAD_START', (e) => {
 _Activity_ is a current user interaction stage focused on the uploader application. It helps manage the visibility of components and switches between several UI states. To create an activity, you should register it in your custom block:
 
 ```javascript
-import { LR } from '@uploadcare/upload-blocks';
+import { LR } from '@uploadcare/blocks';
 
 class MyBlock extends LR.BlockComponent {
   initCallback() {
@@ -419,7 +419,7 @@ Then, if some other component will call the registered activity, it will be acti
 JavaScript:
 
 ```javascript
-import { LR } from '@uploadcare/upload-blocks';
+import { LR } from '@uploadcare/blocks';
 
 class MyOtherBlock extends LR.BlockComponent {
   onclick = () => {
