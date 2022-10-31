@@ -183,7 +183,7 @@ To set configuration properties with complex data types, you can use JS API on a
 
 | Name                              | Description                                                                                   |
 | --------------------------------- | --------------------------------------------------------------------- |
-| `setUploadMetadata(metadata: {})` | File Metadata. See [docs](https://uploadcare.com/docs/file-matadata/) |
+| `setUploadMetadata(metadata: {})` | File Metadata. See [docs](https://uploadcare.com/docs/file-metadata/) |
 
 Example:
 
