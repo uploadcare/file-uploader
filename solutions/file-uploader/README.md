@@ -256,7 +256,9 @@ We use HSL color space because it allows us to easily calculate derivative color
 
 ### Quick styling
 
-In most cases switching the dark mode on or off and changing the accent color is enough to make upload-blocks match your design. If you want to do a deeper styling, see this guide **TODO: write a guide**.
+In most cases switching the dark mode on or off and changing the accent color is enough to make upload-blocks match your design.
+<!-- If you want to do a deeper styling, see this guide.
+TODO: write a guide. -->
 
 ```css
 --darkmode: 1;
@@ -310,9 +312,10 @@ Derivative values are calculated from the base values.
 
 Common styles define similar UI elements across different blocks: buttons, inputs, and links.
 
-## Component styles
+<!-- ## Component styles
 
-Component styles are the most specific. **TODO: decide about recommendations here**
+Component styles are the most specific.
+TODO: decide about recommendations here -->
 
 ## Shadow DOM
 
