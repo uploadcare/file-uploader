@@ -35,16 +35,19 @@
     "MIT"
   ],
   "type": "module",
-  "module": "index.js",
   "sideEffects": ["*.css"],
   "repository": "https://github.com/uploadcare/blocks/",
-  "files": [
-    "{abstract,blocks,solutions,web,utils}/**/*.{js,css,d.ts,d.ts.map}",
-    "index.{js,d.ts,d.ts.map}",
-    "env.{js,d.ts,d.ts.map}",
-    "README.md",
-    "LICENSE"
-  ],
+  "files": ["dist", "abstract", "blocks/**/*.css", "web", "README.md", "LICENSE"],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./test": {
+      "types": "./dist/abstract/connectBlocksFrom.d.ts",
+      "default": "./abstract/connectBlocksFrom.js"
+    }
+  },
   "publishConfig": {
     "access": "public"
   },
@@ -56,10 +59,10 @@
     "dev": "npm run build:static && run-p build:static:watch wds",
     "build:web": "npm run clean:web && node ./build.js",
     "build:jsx:types": "node build-jsx-types.js",
-    "build:types": "npm run clean:types && tsc --build tsconfig.types.json",
+    "build:types": "npm run clean:dist && tsc --build tsconfig.types.json",
     "build:static": "node --experimental-fetch ./static-gen/build.js",
     "build:static:watch": "node watch.js",
-    "build": "run-s build:web build:types build:jsx:types",
+    "build": "run-s build:types build:web build:jsx:types",
     "tsc": "tsc --skipLibCheck --allowJs --noEmit",
     "lint:js": "eslint ./",
     "lint:js:fix": "eslint ./ --fix",
@@ -68,7 +71,7 @@
     "lint": "run-s lint:js lint:css",
     "clean:web": "rimraf './web/**/*.{js,css}'",
     "clean:html": "rimraf './**/*.html'",
-    "clean:types": "rimraf './{abstract,blocks,solutions,web,utils,static-gen,test}/**/*.{d.ts,d.ts.map}' && rimraf './*.{d.ts,d.ts.map}'",
+    "clean:dist": "rimraf './dist'",
     "clean": "run-s clean:*",
     "format:js": "prettier --write './**/*.{js,cjs}'",
     "format:css": "prettier --write --parser css './**/*.css'",
@@ -116,6 +119,6 @@
   "license": "MIT",
   "dependencies": {
     "@symbiotejs/symbiote": "^1.11.2",
-    "@uploadcare/upload-client": "^4.3.1"
+    "@uploadcare/upload-client": "^5.1.1"
   }
 }

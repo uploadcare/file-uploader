@@ -63,7 +63,7 @@ const ORDER = [
 ];
 
 /**
- * @param {import('../types').Transformations} transformations
+ * @param {import('../types.js').Transformations} transformations
  * @returns {String}
  */
 export function transformationsToOperations(transformations) {

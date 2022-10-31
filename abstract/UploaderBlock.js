@@ -21,7 +21,7 @@ export class UploaderBlock extends ActivityBlock {
    * TODO: If we add more public methods, it is better to use the single queue instead of tons of private fields per
    * each method. See https://github.com/uploadcare/blocks/pull/162/
    *
-   * @param {import('@uploadcare/upload-client').Metadata} metadata
+   * @param {import('@uploadcare/upload-client/browser').Metadata} metadata
    * @public
    */
   setUploadMetadata(metadata) {
@@ -265,7 +265,7 @@ export class UploaderBlock extends ActivityBlock {
     }
   };
 
-  /** @returns {import('@uploadcare/upload-client').FileFromOptions} */
+  /** @returns {import('@uploadcare/upload-client/browser').FileFromOptions} */
   getUploadClientOptions() {
     let store = this.getCssData('--cfg-store', true);
     let options = {
@@ -299,7 +299,7 @@ export class UploaderBlock extends ActivityBlock {
     let items = this.uploadCollection.findItems(checkFn);
     items.forEach((itemId) => {
       let uploadEntryData = Data.getCtx(itemId).store;
-      /** @type {import('@uploadcare/upload-client').UploadcareFile} */
+      /** @type {import('@uploadcare/upload-client/browser').UploadcareFile} */
       let fileInfo = uploadEntryData.fileInfo || {
         name: uploadEntryData.fileName,
         fileSize: uploadEntryData.fileSize,
@@ -352,7 +352,7 @@ Object.keys(EVENT_TYPES).forEach((eType) => {
       let data = [];
       uploadCollection.items().forEach((id) => {
         let uploadEntryData = Data.getCtx(id).store;
-        /** @type {import('@uploadcare/upload-client').UploadcareFile} */
+        /** @type {import('@uploadcare/upload-client/browser').UploadcareFile} */
         let fileInfo = uploadEntryData.fileInfo;
         if (fileInfo) {
           let outputItem = {

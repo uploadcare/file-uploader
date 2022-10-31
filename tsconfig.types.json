@@ -4,8 +4,9 @@
     "noEmit": false,
     "declaration": true,
     "emitDeclarationOnly": true,
-    "declarationMap": true
+    "declarationMap": true,
+    "outDir": "dist"
   },
-  "include": ["**/*.js", "types"],
+  "include": ["./index.js", "./types/*.d.ts"],
   "exclude": ["node_modules"]
 }

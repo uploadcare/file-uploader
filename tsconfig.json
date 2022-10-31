@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
     "pretty": true,
-    "target": "esnext",
+    "target": "ES2019",
     "module": "esnext",
-    "moduleResolution": "node",
+    "moduleResolution": "Node16",
     "lib": ["es2017", "ESNext", "ESNext.Array", "DOM", "DOM.Iterable", "WebWorker"],
     "allowJs": true,
     "checkJs": true,
@@ -14,6 +14,6 @@
     "types": ["node", "chai", "mocha"],
     "noEmit": true
   },
-  "include": ["**/*.js", "types"],
+  "include": ["**/*.{js,css}", "types"],
   "exclude": ["node_modules"]
 }

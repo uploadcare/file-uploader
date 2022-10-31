@@ -1,4 +1,4 @@
-import { UploadcareFile } from '@uploadcare/upload-client';
+import { UploadcareFile } from '@uploadcare/upload-client/browser';
 
 /**
  * @typedef {Object} UploadEntry

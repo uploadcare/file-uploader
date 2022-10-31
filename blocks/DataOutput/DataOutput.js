@@ -1,7 +1,7 @@
 import { UploaderBlock } from '../../abstract/UploaderBlock.js';
-import { uploadFileGroup } from '@uploadcare/upload-client';
+import { uploadFileGroup } from '@uploadcare/upload-client/browser';
 
-/** @typedef {import('@uploadcare/upload-client').UploadcareFile[]} FileList} */
+/** @typedef {import('@uploadcare/upload-client/browser').UploadcareFile[]} FileList} */
 
 export class DataOutput extends UploaderBlock {
   processInnerHtml = true;

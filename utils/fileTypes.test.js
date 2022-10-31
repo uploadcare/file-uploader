@@ -1,5 +1,5 @@
 import { expect } from '@esm-bundle/chai';
-import { mergeFileTypes, matchFileType, fileIsImage } from './fileTypes';
+import { mergeFileTypes, matchFileType, fileIsImage } from './fileTypes.js';
 
 describe('mergeFileTypes', () => {
   it('should join input strings with comma', () => {

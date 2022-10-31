@@ -1,4 +1,11 @@
 export const buildItems = [
+  // dist
+  {
+    in: './index.js',
+    out: './dist/index.js',
+    minify: true,
+    minifyHtml: true,
+  },
   // lr-blocks
   {
     in: './index.js',
