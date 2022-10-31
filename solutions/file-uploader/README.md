@@ -1,14 +1,13 @@
 # File uploader
 
-Here you can find the set of ready-made uploaders for the most frequent file uploading cases.
-Each uploader is highly customizable on its own and could be used as a custom build reference, but you can use it as is.
+Here you can find a set of ready-made uploaders for the most frequent file uploading use-cases. Each uploader is highly customizable on its own and could be used as a custom build reference, or you can use it as is.
 
 ### On this page you'll find
 
 #### Solutions
 
 - [Regular case](#example_regular) — the most common solution.
-- [Inline case](#example_inline) — no modals, could be used just in place.
+- [Inline case](#example_inline) — no modals, could be used inline.
 - [Minimal case](#example_mini) — minimal and compact.
 
 #### Implementation
@@ -23,26 +22,24 @@ Each uploader is highly customizable on its own and could be used as a custom bu
 
 ## 💎 Solution benefits
 
-- No heavy dependencies.
+- No heavy dependencies, modern and efficient technologies under the hood.
 - Uniform and seamless integration flow for all major web development stacks.
 - CSP (Content Security Policy) compatible: no `unsafe-inline` flags for the CSS or JavaScript are needed.
-- Modern and efficient technologies under the hood.
-- Multiple file source (local, any external URL, cloud services, and social networks) support.
+- Multiple file sources (local, camera, external URLs, cloud services and social networks) support.
 - Open source (MIT license).
 - Built with love ❤️
 
 ## 🌎 Supported browsers
 
-Uploader is supported and tested in all major modern desktop and mobile browsers:
+Blocks are supported and tested in all major modern desktop and mobile browsers:
 
 - Chrome
 - Firefox
 - Safari
 - Edge
 - Opera
-- etc
 
-[Internet Explorer](https://uploadcare.com/blog/uploadcare-stops-internet-explorer-support/) is outdated and not supported anymore.
+Internet Explorer is outdated and not supported [anymore](https://uploadcare.com/blog/uploadcare-stops-internet-explorer-support/).
 <br/><br/><br/>
 
 # <a name="example_regular"></a>Regular uploader
@@ -76,7 +73,7 @@ Uploader is supported and tested in all major modern desktop and mobile browsers
 
 ## General
 
-All configurations, localization texts, icons, and styling are placed into CSS file (we believe you have read [configuration page](/get-started/configuration/) already), so you should connect the default one (or create your own):
+All configurations, localization texts, icons, and styling are placed into CSS file (if you aren't familiar with this concept, read about [blocks configuration](/get-started/configuration/)), so you should connect the default one (or create your own):
 
 ```html
 <style>
@@ -92,26 +89,22 @@ All configurations, localization texts, icons, and styling are placed into CSS f
 
 - `lr-wgt-common` — is a pre-defined common CSS class containing all basic uploader parameters.
 
-There are two major parameters you should know about first of all:
+There are two major parameters you should know:
 
-1. Your Uploadcare project public key: `--cfg-pubkey: 'YOUR_PUBLIC_KEY';`.
+1. Your Uploadcare's project public key: `--cfg-pubkey: 'YOUR_PUBLIC_KEY';`.
 2. Workflow context name: `--ctx-name: 'CONTEXT_NAME';`.
 
 ## Public key
 
-You should obtain a Public API Key in your [Uploadcare project's dashboard](https://app.uploadcare.com/projects/-/api-keys/) to use file uploading features.
+You should get a Public API Key in your [Uploadcare project's dashboard](https://app.uploadcare.com/projects/-/api-keys/) to use file uploading features.
 
 For demo-only purposes, you can use `demopublickey` instead.
 
 ## Context name
 
-Our concept of workflow contexts is very similar to native HTML `name` attributes for the "radio" inputs.
-When you use the same names, elements act in one common context.
-In the case of "radio" inputs, all elements in the same context will know the state of the others (and you can make only one possible selection).
+Our concept of workflow contexts is very similar to native HTML `name` attributes for the "radio" inputs. When you use the same names, elements act in one common context. In the case of "radio" inputs, all elements in the same context will know the state of the others (and you can make only one possible selection).
 
-In the case of uploader, you can also set the context with a `ctx-name` attribute or `--ctx-name` custom CSS property.
-That helps to create the link between each uploader instance and its internal or external entities.
-By default, context will be created automatically, but if you need to bind uploader to some other workflow, you can use the following approach:
+In the case of uploader, you can also set the context with a `ctx-name` attribute or `--ctx-name` custom CSS property. This helps to create the link between each uploader instance and its internal or external entities. By default, context is created automatically, but if you need to bind uploader to some other workflow, you can use the following approach:
 
 ```html
 ...
@@ -121,7 +114,7 @@ By default, context will be created automatically, but if you need to bind uploa
 ...
 ```
 
-For more information, please visit ["context" section](https://symbiotejs.org/?context) in Symbiote.js documentation.
+For more information, read about ["context"](https://symbiotejs.org/?context) in Symbiote.js documentation.
 
 ## CSS custom properties
 
@@ -147,14 +140,14 @@ Any configuration value can be defined and redefined at any DOM-tree level regar
 | --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | :--------------------: | :-----------------------------: |
 | `--cfg-pubkey`                    | Your project Public Key                                                                                                                |         string         |        `YOUR_PUBLIC_KEY`        |
 | `--cfg-multiple`                  | Allow to upload multiple files                                                                                                         |       `1` or `0`       |               `1`               |
-| `--cfg-multiple-min`              | Minimum number of files that can be selected.                                                                                          |         number         |              none               |
-| `--cfg-multiple-max`              | Maximum number of files that can be selected.                                                                                          |         number         |              none               |
+| `--cfg-multiple-min`              | Minimum number of files that can be selected                                                                                           |         number         |              none               |
+| `--cfg-multiple-max`              | Maximum number of files that can be selected                                                                                           |         number         |              none               |
 | `--cfg-confirm-upload`            | Enables user confirmation for upload starting                                                                                          |       `1` or `0`       |               `1`               |
 | `--cfg-img-only`                  | Accept images only                                                                                                                     |       `1` or `0`       |               `0`               |
 | `--cfg-accept`                    | Native file input accept attribute value                                                                                               |      `'image/*'`       |              none               |
 | `--cfg-store`                     | Store files                                                                                                                            |       `1` or `0`       |                -                |
 | `--cfg-camera-mirror`             | Flip camera image                                                                                                                      |       `1` or `0`       |               `0`               |
-| `--cfg-source-list`               | Comma-separated list of file sources. See available sources [below](#source-list).                                                     | `'local, url, camera'` |              none               |
+| `--cfg-source-list`               | Comma-separated list of file sources. See available sources [below](#source-list)                                                      | `'local, url, camera'` |              none               |
 | `--cfg-max-local-file-size-bytes` | Maximum file size in bytes                                                                                                             |           -            |              none               |
 | `--cfg-thumb-size`                | Image thumbnail size                                                                                                                   |          `76`          |              `76`               |
 | `--cfg-show-empty-list`           | Show uploads list when it's empty                                                                                                      |       `1` or `0`       |               `0`               |
@@ -162,7 +155,7 @@ Any configuration value can be defined and redefined at any DOM-tree level regar
 | `--cfg-use-cloud-image-editor`    | Enable cloud image editing                                                                                                             |       `1` or `0`       |               `0`               |
 | `--cfg-remote-tab-session-key`    | Key to revoke Custom OAuth access. See [docs](https://uploadcare.com/docs/start/settings/#project-settings-advanced-oauth) for details |         string         |              none               |
 | `--cfg-cdn-cname`                 | Set Custom CNAME. See [docs](https://uploadcare.com/docs/delivery/cdn/#custom-cdn-cname) for details                                   |         string         |     `https://ucarecdn.com`      |
-| `--cfg-base-url`                  | Set custom upload URL.                                                                                                                 |         string         | `https://upload.uploadcare.com` |
+| `--cfg-base-url`                  | Set custom upload URL                                                                                                                  |         string         | `https://upload.uploadcare.com` |
 | `--cfg-secure-signature`          | Set `signature` for Secure Uploads. See [docs](https://uploadcare.com/docs/security/secure-uploads/#expire-explained) for details      |         string         |              none               |
 | `--cfg-secure-expire`             | Set `expire` for Secure Uploads. See [docs](https://uploadcare.com/docs/security/secure-uploads/#expire-explained) for details         |         string         |              none               |
 | `--cfg-secure-delivery-proxy`     | Set proxy URL template for Secure Delivery. See [here](#secure-delivery-proxy) for details                                             |         string         |              none               |
@@ -197,9 +190,9 @@ Any configuration value can be defined and redefined at any DOM-tree level regar
 
 The parameter can be used with [signed URLs](https://uploadcare.com/docs/security/secure-delivery/#authenticated-urls). Defines template for your proxy [backend URL](https://uploadcare.com/docs/security/secure-delivery/#proxy-backend).
 
-This is replacement for the [File Uploader `previewProxy` option](https://uploadcare.com/docs/security/secure-delivery/#preview-proxy).
+This is replacement for the [File Uploader v3 `previewProxy` option](https://uploadcare.com/docs/security/secure-delivery/#preview-proxy).
 
-**NOTE**: There is no replacement for [File Uploader `previewUrlCallback` option](https://uploadcare.com/docs/security/secure-delivery/#preview-url-callback). If you need such functionality, please create [a feature request](https://github.com/uploadcare/blocks/issues/new?template=feature_request.md&title=Secure%20delivery%20proxy%20callback).
+**NOTE**: There is no replacement for [File Uploader v3 `previewUrlCallback` option](https://uploadcare.com/docs/security/secure-delivery/#preview-url-callback). If you need such functionality, please create [a feature request](https://github.com/uploadcare/blocks/issues/new?template=feature_request.md&title=Secure%20delivery%20proxy%20callback).
 
 Value for `--cfg-secure-delivery-proxy` is a string template with the following variables:
 
@@ -217,7 +210,7 @@ That means that you can use `{{previewUrl}}` in your template to insert the URL 
 
 ## CSP settings
 
-If the application works with sensitive user data, such as personal photos, it is recommended to increase its security with [CSP settings](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP). Uploader is using `Blob` URLs for on-the-flight generated images and the stylesheets in some cases, so don't forget to add `blob:` source into the CSP settings:
+If the application works with sensitive user data (e.g personal photos), it is recommended to increase its security with [CSP settings](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP). Uploader is using `Blob` URLs for on-the-flight generated images and the stylesheets in some cases, so don't forget to add `blob:` source into the CSP settings:
 
 ```html
 <meta
@@ -230,10 +223,7 @@ If the application works with sensitive user data, such as personal photos, it i
 
 # <a name="styling"></a>🎀 Styling
 
-For the look & feel customization, you can use the "Elements" section in your browser developer tools panel.
-It's easy to find any uploader inner components and their contents because they have custom tag names.
-You don't need any specific tools, unlike with such libraries as React.
-Those tag names could be used as convenient CSS selectors.
+For the look & feel customization, you can use the "Elements" section in your browser developer tools panel. It's easy to find any uploader inner components and their contents because they have custom tag names. You don't need any specific tools, unlike with libraries like React. These tag names could be used as convenient CSS selectors.
 
 There are three major levels of possible styling customizations:
 
@@ -289,7 +279,7 @@ TODO: write a guide. -->
 - `--transition-duration` — duration of all animated transitions;
 - `--shadows` — `1`: shadows enabled, `0`: disabled. Can be fractional, for example 0.5, will make shadows half as opaque;
 - `--*-shadow` — the color of box shadows;
-- `--modal-max-w`, `--modal-max-h` — the maximum size of the modal window;
+- `--modal-max-w`, `--modal-max-h` — the maximum size of the modal window.
 
 ## Derivative values
 
@@ -306,16 +296,16 @@ Derivative values are calculated from the base values.
 - `--clr-curtain` — color of the background behind the modal window;
 - `--clr-btn-bgr-primary*`, `--clr-btn-txt-primary`, `--shadow-btn-primary` — primary action button values;
 - `--clr-btn-bgr-secondary*`, `--clr-btn-txt-secondary`, `--shadow-btn-secondary` — secondary action button values;
-- `--clr-btn-bgr-disabled`, `--clr-btn-txt-disabled`, `--shadow-btn-disabled` — disabled button values;
+- `--clr-btn-bgr-disabled`, `--clr-btn-txt-disabled`, `--shadow-btn-disabled` — disabled button values.
 
 ## Common styles
 
 Common styles define similar UI elements across different blocks: buttons, inputs, and links.
 
-<!-- ## Component styles
+## Component styles
 
 Component styles are the most specific.
-TODO: decide about recommendations here -->
+<!-- TODO: decide about recommendations here -->
 
 ## Shadow DOM
 
@@ -331,10 +321,9 @@ To enable it and encapsulate all styles into separated scope, use the `css-src` 
 
 # <a name="handling_data"></a>🪤 Data handling
 
-## With data output
+## With the data output
 
-We provide the dedicated block for the data output purposes — `<lr-data-output>`.
-This Custom Element can be connected to some workflow context and provide you with convenient data access.
+We provide the dedicated block for the data output purposes — `<lr-data-output>`. This Custom Element can be connected to some workflow context and provide you with convenient data access.
 
 Here is the code example:
 
@@ -345,13 +334,13 @@ Here is the code example:
 
 Let's walk through its attributes:
 
-- `console` — this flag lets you enable browser console output without modifying the source code.
-- `fire-events` — this flag enables custom events (`data-output`) dispatching for the DOM element. These events contain all uploading data and could be processed at any level of your application.
+- `console` — enables browser console output without modifying the source code.
+- `fire-events` —  enables custom events (`data-output`) dispatching for the DOM element. These events contain all uploading data and could be processed at any level of your application.
 - `from` — data output could be connected to any field in the workflow context. You can specify the certain one. By default, it is a `*dataOutput`; you can skip this setting for the default uploading case.
 - `item-template` — uploading results could be rendered as a list of nested DOM elements. You can specify a simple template for that.
 - `form-value` — could be used to handle HTML-forms.
 
-## With event listener
+## With the event listener
 
 ```js
 window.addEventListener('LR_DATA_OUTPUT', (e) => {
@@ -365,12 +354,12 @@ window.addEventListener('LR_DATA_OUTPUT', (e) => {
 
 ## Upload flow events
 
-- `LR_UPLOAD_START` — upload started for the file list selected by user
-- `LR_REMOVE` — fired when one of uploaded items removed from uploading list
+- `LR_UPLOAD_START` — upload is started for the file list selected by the user
+- `LR_REMOVE` — fired when one of the uploaded items is removed from the uploading list
 - `LR_UPLOAD_PROGRESS` — common upload progress for the list
 - `LR_UPLOAD_FINISH` — uploading is finished
-- `LR_UPLOAD_ERROR` — error ocurred during files uploading
-- `LR_VALIDATION_ERROR` — file not passed the checks according to validation settings
+- `LR_UPLOAD_ERROR` — error ocurred during file uploading
+- `LR_VALIDATION_ERROR` — file fails checks according to the validation settings
 - `LR_CLOUD_MODIFICATION` — image was modified via cloud API
 - `LR_DATA_OUTPUT` — common data about uploads
 
@@ -425,7 +414,7 @@ class MyBlock extends LR.BlockComponent {
 }
 ```
 
-Then, if some other component will call the registered activity, it will be activated with `active` attribute, and the activation callback will be called.
+Then, if some other component will call the registered activity, it will be activated with an  `active` attribute, and the activation callback will be called.
 
 JavaScript:
 
