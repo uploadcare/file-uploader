@@ -67,7 +67,7 @@ We use the [Custom Elements](https://developer.mozilla.org/en-US/docs/Web/Web_so
 
 That allows us to use simple HTML code to define layouts and place our widgets into other templates or other markups. Custom Elements are compatible with most modern technologies and provide a consistent workflow. Please, check out the list of high-level tests passed with a set of modern frontend frameworks and libraries: [Custom Elements Everywhere](https://custom-elements-everywhere.com/)
 
-We also provide a set of [reference integrations](https://github.com/uploadcare/upload-blocks-examples).
+We also provide a set of [reference integrations](https://github.com/uploadcare/blocks-examples).
 
 ## 🚀 Create your own file uploader
 

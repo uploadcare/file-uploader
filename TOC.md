@@ -65,4 +65,4 @@
 ## External resources
 
 - [Symbiote.js](https://github.com/symbiotejs/symbiote.js) — core library for the Web Components creation and data-flow management
-- [Integration examples](https://github.com/uploadcare/upload-blocks-examples) — for the most popular front-end libraries and frameworks
+- [Integration examples](https://github.com/uploadcare/blocks-examples) — for the most popular front-end libraries and frameworks
