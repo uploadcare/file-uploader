@@ -176,8 +176,8 @@ You can create your own custom blocks to handle some specific use cases. You nee
 
 ## 💬 Discussions
 
-If you have questions, ideas, usage feedback, or would like to suggest any other topic, feel free to join our [GitHub Discussions](https://github.com/uploadcare/jsdk/discussions/categories/upload-blocks)!
+If you have questions, ideas, usage feedback, or would like to suggest any other topic, feel free to join our [GitHub Discussions](https://github.com/uploadcare/blocks/discussions/categories/blocks)!
 
 ## ⚠️ Issues
 
-Found a problem? Create an [issue](https://github.com/uploadcare/jsdk/issues).
+Found a problem? Create an [issue](https://github.com/uploadcare/blocks/issues).
