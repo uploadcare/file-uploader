@@ -59,7 +59,7 @@ You can create your own blocks from scratch with JavaScript using [BlockComponen
 - [Content Security Policy (CSP)](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP) friendly — great for a secure enterprise usage.
 - [Jamstack](https://jamstack.org/) friendly: enter the new world of web development!
 
-<re-htm src="../assets/htm/upload-blocks-demo.htm"></re-htm>
+<re-htm src="../assets/htm/blocks-demo.htm"></re-htm>
 
 ## 🏠 Integration basics
 
