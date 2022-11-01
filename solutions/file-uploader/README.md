@@ -18,8 +18,6 @@ Here you can find a set of ready-made uploaders for the most frequent file uploa
 - [Events](#events)
 - [Activities](#activities)
 
-[comment]: <> (<re-htm src="../../assets/htm/regular-uploader-solution-demo.htm"></re-htm>)
-
 ## 💎 Solution benefits
 
 - No heavy dependencies, modern and efficient technologies under the hood.
