@@ -130,7 +130,7 @@ You can create your own custom parameters and values for your custom blocks:
 Then you can read it in a block:
 
 ```javascript
-import { BlockComponent } from 'upload-blocks/BlockComponent/BlockComponent.js';
+import { BlockComponent } from 'blocks/BlockComponent/BlockComponent.js';
 
 class MyBlock extends BlockComponent {
   initCallback() {
