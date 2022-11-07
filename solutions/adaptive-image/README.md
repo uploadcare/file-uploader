@@ -1,7 +1,6 @@
 # Adaptive Image
 
-Universal web component for the efficient image representation on any page.
-It generates a set of URLs for the initial image source with the desired parameters.
+Universal web component for the efficient image representation on any page. It generates a set of URLs for the initial image source with the desired parameters.
 
 ## 💎 Solution benefits
 
@@ -30,7 +29,7 @@ lr-img {
 }
 ```
 
-A public key is necessary for the Proxy links generation if a custom proxy name is not used. You can obtain the public key in your [Uploadcare project's dashboard](https://app.uploadcare.com/projects/-/api-keys/).
+A public key is necessary if your images aren't yet uploaded to the Uploadcare. Get the public key in [Uploadcare project's dashboard](https://app.uploadcare.com/projects/-/api-keys/).
 
 Then use `<lr-img>` tag for the images in your HTML templates:
 
@@ -38,17 +37,15 @@ Then use `<lr-img>` tag for the images in your HTML templates:
 <lr-img src="SOURCE_IMAGE_PATH"></lr-img>
 ```
 
-That's it!
-
 ## Workflow
 
-1. Web component initiating and reading it's settings, including the source image path.
-2. Component uses [Uploadcare Proxy](https://uploadcare.com/docs/delivery/proxy/) service to upload the source image if that was not done before.
+1. Web component initiats and reads its settings, including the source image path.
+2. Component uses [Uploadcare Proxy](https://uploadcare.com/docs/delivery/proxy/) to upload the source image if that hasn't been done before.
 3. Image component generates all necessary src sets for the resulting image and renders the `img` tag into the DOM.
 
 ## Fallback
 
-For the SEO or NOSCRIPT purposes, use `<noscript>` sections on your integrations with the original image path:
+For the SEO or NOSCRIPT purposes, use `<noscript>` sections in your integrations with the original image path:
 
 ```html
 <lr-img src="SOURCE_IMAGE_PATH">
@@ -70,7 +67,7 @@ After initiating, if JavaScript is enabled in the browser, that will be transfor
 
 [Native lazy loading](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe#attr-loading) is enabled by default for all image components. You can disable it or use a custom one based on [IntersectionObserver](https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API).
 
-Disable:
+Disable lazy loading:
 
 ```html
 <style>
@@ -82,7 +79,7 @@ Disable:
 <lr-img src="SOURCE_IMAGE_PATH"></lr-img>
 ```
 
-Intersection observer enabled:
+Enabled intersection observer:
 
 ```html
 <style>
@@ -96,7 +93,7 @@ Intersection observer enabled:
 
 ## Breakpoints
 
-If you have some responsive layout where images could be resized in some cases, it's good to set a list of breakpoints to avoid exceeding sizes generation via Uploadcare CDN operations:
+If you have a responsive layout where images could be resized in some cases, it's good to set a list of breakpoints to avoid exceeding sizes generation via Uploadcare CDN operations:
 
 ```html
 <style>
@@ -116,9 +113,9 @@ That will save the resources and make image behavior more expected. The browser 
 
 It's good to set up the initial size for the images to avoid layout shifting during loading.
 
-## CDN Operations
+## CDN operations
 
-You can provide some transformation settings for the single image or the set of images:
+You can provide transformation settings for the single image or the set of images:
 
 ```html
 <style>
@@ -130,7 +127,7 @@ You can provide some transformation settings for the single image or the set of 
 <lr-img class="invert" src="SOURCE_IMAGE_PATH"></lr-img>
 ```
 
-Operations description syntax is the same as used in [Image processing API](https://uploadcare.com/docs/transformations/image/). More examples:
+Operations description syntax is the same as used in [URL API](https://uploadcare.com/docs/transformations/image/). More examples:
 
 ```html
 <style>
@@ -143,7 +140,7 @@ Operations description syntax is the same as used in [Image processing API](http
 </style>
 ```
 
-As you can see, transformation definitions are separated with `/-/` symbols, just like you can use in the [Image processing API](https://uploadcare.com/docs/transformations/image/).
+As you can see, transformation definitions are separated with `/-/` symbols, just like you can use in the [URL API](https://uploadcare.com/docs/transformations/image/).
 
 ## Background mode
 
@@ -163,7 +160,7 @@ To use an adaptive image as an element's background, you can use `is-background-
 
 ## Development mode (relative image path)
 
-When you develop your application, you can use a local development server and relative paths in your project structure for the images. In that case, Uploadcare Proxy service would be disabled for your development environment, and you will see original local images in your application until you deploy it:
+When you develop an application, you can use a local development server and relative paths in your project structure for the images. In that case, Uploadcare Proxy would be disabled for your development environment, and you will see original local images in your application until you deploy it:
 
 ```html
 <lr-img src="../LOCAL_IMAGE_PATH"></lr-img>
@@ -171,17 +168,17 @@ When you develop your application, you can use a local development server and re
 
 ## UUID
 
-If you already have UUID for images uploaded to Uploadcare, you can use it in image component directly:
+If you already have UUIDs for images uploaded to Uploadcare, you can use them in image component directly:
 
 ```html
 <lr-img uuid="CDN_UUID"></lr-img>
 ```
 
-In this case, you don't need the `pubkey` setting to upload the source image.
+In this case, you don't need the `pubkey` setting to upload the source image for further processing.
 
 ## Settings
 
-CSS context properties are available for any container's nested elements, just like any other CSS properties. HTML attribute settings have more priority and can redefine other settings.
+CSS context properties are available for any container's nested element, just like any other CSS property. HTML attribute settings have more priority and can redefine other settings.
 
 | CSS context property       | HTML Attribute    | Default value | Type        |
 | :------------------------- | :---------------- | :------------ | :---------- |

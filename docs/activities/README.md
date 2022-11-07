@@ -1,9 +1,9 @@
 # Activities
 
-**Activity** — is a current user interaction stage focused on the uploader application. It helps manage the visibility of components and switches between several UI states. To create an activity, you will need to register it in your custom upload-block:
+**Activity** — is a current user interaction stage focused on the uploader application. It helps manage the visibility of components and switches between several UI states. To create an activity, you will need to register it in your custom block:
 
 ```javascript
-import { LR } from '@uploadcare/upload-blocks';
+import { LR } from '@uploadcare/blocks';
 
 class MyBlock extends LR.BlockComponent {
   initCallback() {
@@ -24,7 +24,7 @@ Then, if some other component will call the registered activity, it will be acti
 JavaScript:
 
 ```javascript
-import { LR } from '@uploadcare/upload-blocks';
+import { LR } from '@uploadcare/blocks';
 
 class MyOtherBlock extends LR.BlockComponent {
   onclick = () => {

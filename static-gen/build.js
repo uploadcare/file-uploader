@@ -53,11 +53,6 @@ const allTasks = [
     processor: mdProcessor,
   },
   {
-    in: 'TOC.md',
-    out: 'toc.html',
-    processor: mdProcessor,
-  },
-  {
     in: 'ref.htm',
     out: 'index.html',
   },

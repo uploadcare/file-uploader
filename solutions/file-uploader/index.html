@@ -60,13 +60,12 @@
           </div>
         </div>
         <col-css><h1 id="file-uploader">File uploader</h1>
-<p>Here you can find the set of ready-made uploaders for the most frequent file uploading cases.
-Each uploader is highly customizable on its own and could be used as a custom build reference, but you can use it as is.</p>
+<p>Here you can find a set of ready-made uploaders for the most frequent file uploading use-cases. Each uploader is highly customizable on its own and could be used as a custom build reference, or you can use it as is.</p>
 <h3 id="on-this-page-youll-find">On this page you&#39;ll find</h3>
 <h4 id="solutions">Solutions</h4>
 <ul>
 <li><a href="#example_regular">Regular case</a> — the most common solution.</li>
-<li><a href="#example_inline">Inline case</a> — no modals, could be used just in place.</li>
+<li><a href="#example_inline">Inline case</a> — no modals, could be used inline.</li>
 <li><a href="#example_mini">Minimal case</a> — minimal and compact.</li>
 </ul>
 <h4 id="implementation">Implementation</h4>
@@ -79,25 +78,23 @@ Each uploader is highly customizable on its own and could be used as a custom bu
 </ul>
 <h2 id="💎-solution-benefits">💎 Solution benefits</h2>
 <ul>
-<li>No heavy dependencies.</li>
+<li>No heavy dependencies, modern and efficient technologies under the hood.</li>
 <li>Uniform and seamless integration flow for all major web development stacks.</li>
 <li>CSP (Content Security Policy) compatible: no <code>unsafe-inline</code> flags for the CSS or JavaScript are needed.</li>
-<li>Modern and efficient technologies under the hood.</li>
-<li>Multiple file source (local, any external URL, cloud services, and social networks) support.</li>
+<li>Multiple file sources (local, camera, external URLs, cloud services and social networks) support.</li>
 <li>Open source (MIT license).</li>
 <li>Built with love ❤️</li>
 </ul>
 <h2 id="🌎-supported-browsers">🌎 Supported browsers</h2>
-<p>Uploader is supported and tested in all major modern desktop and mobile browsers:</p>
+<p>Blocks are supported and tested in all major modern desktop and mobile browsers:</p>
 <ul>
 <li>Chrome</li>
 <li>Firefox</li>
 <li>Safari</li>
 <li>Edge</li>
 <li>Opera</li>
-<li>etc</li>
 </ul>
-<p><a target='_blank'  href="https://uploadcare.com/blog/uploadcare-stops-internet-explorer-support/">Internet Explorer</a> is outdated and not supported anymore.
+<p>Internet Explorer is outdated and not supported <a target='_blank'  href="https://uploadcare.com/blog/uploadcare-stops-internet-explorer-support/">anymore</a>.
 <br/><br/><br/></p>
 <h1 id="regular-uploader"><a name="example_regular"></a>Regular uploader</h1>
 <pre><code class="language-html"><span class="hljs-tag">&lt;<span class="hljs-name">lr-file-uploader-regular</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">lr-file-uploader-regular</span>&gt;</span>
@@ -116,7 +113,7 @@ Each uploader is highly customizable on its own and could be used as a custom bu
 <br/><br/><br/></p>
 <h1 id="🛠-configuration"><a name="configuration"></a>🛠 Configuration</h1>
 <h2 id="general">General</h2>
-<p>All configurations, localization texts, icons, and styling are placed into CSS file (we believe you have read <a href="../../get-started/configuration/">configuration page</a> already), so you should connect the default one (or create your own):</p>
+<p>All configurations, localization texts, icons, and styling are placed into CSS file (if you aren&#39;t familiar with this concept, read about <a href="../../get-started/configuration/">blocks configuration</a>), so you should connect the default one (or create your own):</p>
 <pre><code class="language-html"><span class="hljs-tag">&lt;<span class="hljs-name">style</span>&gt;</span><span class="language-css">
   <span class="hljs-keyword">@import</span> url(<span class="hljs-attribute">https</span>://unpkg.com/@uploadcare/blocks@0.14.1/web/file-uploader-regular<span class="hljs-selector-class">.min</span><span class="hljs-selector-class">.css</span>);
   <span class="hljs-selector-class">.my-settings</span> {
@@ -130,28 +127,24 @@ Each uploader is highly customizable on its own and could be used as a custom bu
 <ul>
 <li><code>lr-wgt-common</code> — is a pre-defined common CSS class containing all basic uploader parameters.</li>
 </ul>
-<p>There are two major parameters you should know about first of all:</p>
+<p>There are two major parameters you should know:</p>
 <ol>
-<li>Your Uploadcare project public key: <code>--cfg-pubkey: &#39;YOUR_PUBLIC_KEY&#39;;</code>.</li>
+<li>Your Uploadcare&#39;s project public key: <code>--cfg-pubkey: &#39;YOUR_PUBLIC_KEY&#39;;</code>.</li>
 <li>Workflow context name: <code>--ctx-name: &#39;CONTEXT_NAME&#39;;</code>.</li>
 </ol>
 <h2 id="public-key">Public key</h2>
-<p>You should obtain a Public API Key in your <a target='_blank'  href="https://app.uploadcare.com/projects/-/api-keys/">Uploadcare project&#39;s dashboard</a> to use file uploading features.</p>
+<p>You should get a Public API Key in your <a target='_blank'  href="https://app.uploadcare.com/projects/-/api-keys/">Uploadcare project&#39;s dashboard</a> to use file uploading features.</p>
 <p>For demo-only purposes, you can use <code>demopublickey</code> instead.</p>
 <h2 id="context-name">Context name</h2>
-<p>Our concept of workflow contexts is very similar to native HTML <code>name</code> attributes for the &quot;radio&quot; inputs.
-When you use the same names, elements act in one common context.
-In the case of &quot;radio&quot; inputs, all elements in the same context will know the state of the others (and you can make only one possible selection).</p>
-<p>In the case of uploader, you can also set the context with a <code>ctx-name</code> attribute or <code>--ctx-name</code> custom CSS property.
-That helps to create the link between each uploader instance and its internal or external entities.
-By default, context will be created automatically, but if you need to bind uploader to some other workflow, you can use the following approach:</p>
+<p>Our concept of workflow contexts is very similar to native HTML <code>name</code> attributes for the &quot;radio&quot; inputs. When you use the same names, elements act in one common context. In the case of &quot;radio&quot; inputs, all elements in the same context will know the state of the others (and you can make only one possible selection).</p>
+<p>In the case of uploader, you can also set the context with a <code>ctx-name</code> attribute or <code>--ctx-name</code> custom CSS property. This helps to create the link between each uploader instance and its internal or external entities. By default, context is created automatically, but if you need to bind uploader to some other workflow, you can use the following approach:</p>
 <pre><code class="language-html">...
 <span class="hljs-tag">&lt;<span class="hljs-name">lr-uploader</span> <span class="hljs-attr">ctx-name</span>=<span class="hljs-string">&quot;my-uploading-workflow&quot;</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">lr-uploader</span>&gt;</span>
 ...
 <span class="hljs-tag">&lt;<span class="hljs-name">lr-data-output</span> <span class="hljs-attr">ctx-name</span>=<span class="hljs-string">&quot;my-uploading-workflow&quot;</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">lr-data-output</span>&gt;</span>
 ...
 </code></pre>
-<p>For more information, please visit <a target='_blank'  href="https://symbiotejs.org/?context">&quot;context&quot; section</a> in Symbiote.js documentation.</p>
+<p>For more information, read about <a target='_blank'  href="https://symbiotejs.org/?context">&quot;context&quot;</a> in Symbiote.js documentation.</p>
 <h2 id="css-custom-properties">CSS custom properties</h2>
 <p>All configurations could be provided via the set of <a target='_blank'  href="https://developer.mozilla.org/en-US/docs/Web/CSS/Using_CSS_custom_properties">CSS-variables</a>:</p>
 <pre><code class="language-css"><span class="hljs-selector-class">.my-settings</span> {
@@ -188,13 +181,13 @@ By default, context will be created automatically, but if you need to bind uploa
 </tr>
 <tr>
 <td><code>--cfg-multiple-min</code></td>
-<td>Minimum number of files that can be selected.</td>
+<td>Minimum number of files that can be selected</td>
 <td align="center">number</td>
 <td align="center">none</td>
 </tr>
 <tr>
 <td><code>--cfg-multiple-max</code></td>
-<td>Maximum number of files that can be selected.</td>
+<td>Maximum number of files that can be selected</td>
 <td align="center">number</td>
 <td align="center">none</td>
 </tr>
@@ -230,7 +223,7 @@ By default, context will be created automatically, but if you need to bind uploa
 </tr>
 <tr>
 <td><code>--cfg-source-list</code></td>
-<td>Comma-separated list of file sources. See available sources <a href="#source-list">below</a>.</td>
+<td>Comma-separated list of file sources. See available sources <a href="#source-list">below</a></td>
 <td align="center"><code>&#39;local, url, camera&#39;</code></td>
 <td align="center">none</td>
 </tr>
@@ -278,7 +271,7 @@ By default, context will be created automatically, but if you need to bind uploa
 </tr>
 <tr>
 <td><code>--cfg-base-url</code></td>
-<td>Set custom upload URL.</td>
+<td>Set custom upload URL</td>
 <td align="center">string</td>
 <td align="center"><code>https://upload.uploadcare.com</code></td>
 </tr>
@@ -331,8 +324,8 @@ By default, context will be created automatically, but if you need to bind uploa
 </code></pre>
 <h2 id="---cfg-secure-delivery-proxy"><a name="secure-delivery-proxy"></a> --cfg-secure-delivery-proxy</h2>
 <p>The parameter can be used with <a target='_blank'  href="https://uploadcare.com/docs/security/secure-delivery/#authenticated-urls">signed URLs</a>. Defines template for your proxy <a target='_blank'  href="https://uploadcare.com/docs/security/secure-delivery/#proxy-backend">backend URL</a>.</p>
-<p>This is replacement for the <a target='_blank'  href="https://uploadcare.com/docs/security/secure-delivery/#preview-proxy">File Uploader <code>previewProxy</code> option</a>.</p>
-<p><strong>NOTE</strong>: There is no replacement for <a target='_blank'  href="https://uploadcare.com/docs/security/secure-delivery/#preview-url-callback">File Uploader <code>previewUrlCallback</code> option</a>. If you need such functionality, please create <a target='_blank'  href="https://github.com/uploadcare/blocks/issues/new?template=feature_request.md&amp;title=Secure%20delivery%20proxy%20callback">a feature request</a>.</p>
+<p>This is replacement for the <a target='_blank'  href="https://uploadcare.com/docs/security/secure-delivery/#preview-proxy">File Uploader v3 <code>previewProxy</code> option</a>.</p>
+<p><strong>NOTE</strong>: There is no replacement for <a target='_blank'  href="https://uploadcare.com/docs/security/secure-delivery/#preview-url-callback">File Uploader v3 <code>previewUrlCallback</code> option</a>. If you need such functionality, please create <a target='_blank'  href="https://github.com/uploadcare/blocks/issues/new?template=feature_request.md&amp;title=Secure%20delivery%20proxy%20callback">a feature request</a>.</p>
 <p>Value for <code>--cfg-secure-delivery-proxy</code> is a string template with the following variables:</p>
 <ul>
 <li><code>previewUrl</code></li>
@@ -344,7 +337,7 @@ By default, context will be created automatically, but if you need to bind uploa
 }
 </code></pre>
 <h2 id="csp-settings">CSP settings</h2>
-<p>If the application works with sensitive user data, such as personal photos, it is recommended to increase its security with <a target='_blank'  href="https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP">CSP settings</a>. Uploader is using <code>Blob</code> URLs for on-the-flight generated images and the stylesheets in some cases, so don&#39;t forget to add <code>blob:</code> source into the CSP settings:</p>
+<p>If the application works with sensitive user data (e.g personal photos), it is recommended to increase its security with <a target='_blank'  href="https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP">CSP settings</a>. Uploader is using <code>Blob</code> URLs for on-the-flight generated images and the stylesheets in some cases, so don&#39;t forget to add <code>blob:</code> source into the CSP settings:</p>
 <pre><code class="language-html"><span class="hljs-tag">&lt;<span class="hljs-name">meta</span>
   <span class="hljs-attr">http-equiv</span>=<span class="hljs-string">&quot;Content-Security-Policy&quot;</span>
   <span class="hljs-attr">content</span>=<span class="hljs-string">&quot;style-src &#x27;self&#x27; blob:; script-src &#x27;self&#x27;; img-src &#x27;self&#x27; https://ucarecdn.com blob:;&quot;</span>
@@ -352,17 +345,14 @@ By default, context will be created automatically, but if you need to bind uploa
 </code></pre>
 <p><br/><br/><br/></p>
 <h1 id="🎀-styling"><a name="styling"></a>🎀 Styling</h1>
-<p>For the look &amp; feel customization, you can use the &quot;Elements&quot; section in your browser developer tools panel.
-It&#39;s easy to find any uploader inner components and their contents because they have custom tag names.
-You don&#39;t need any specific tools, unlike with such libraries as React.
-Those tag names could be used as convenient CSS selectors.</p>
+<p>For the look &amp; feel customization, you can use the &quot;Elements&quot; section in your browser developer tools panel. It&#39;s easy to find any uploader inner components and their contents because they have custom tag names. You don&#39;t need any specific tools, unlike with libraries like React. These tag names could be used as convenient CSS selectors.</p>
 <p>There are three major levels of possible styling customizations:</p>
 <ol>
 <li>Light and dark theme flag: <code>--darkmode:1;</code> (enabled) or <code>--darkmode:0;</code> (disabled).</li>
 <li>The set of basic CSS variables used for the other styling calculations.</li>
 <li>Custom CSS rules for each element.</li>
 </ol>
-<h2 id="basic-theme-for-upload-blocks">Basic theme for upload-blocks</h2>
+<h2 id="basic-theme-for-blocks">Basic theme for blocks</h2>
 <p>There are 4 levels of abstraction:</p>
 <ul>
 <li><a href="#base-values">Base values</a></li>
@@ -373,7 +363,10 @@ Those tag names could be used as convenient CSS selectors.</p>
 <h3 id="hsl-color-space">HSL color space</h3>
 <p>We use HSL color space because it allows us to easily calculate derivative colors. That&#39;s what prefixes <code>--h-</code>, <code>--s-</code>, and <code>--l-</code> are stand for.</p>
 <h3 id="quick-styling">Quick styling</h3>
-<p>In most cases switching the dark mode on or off and changing the accent color is enough to make upload-blocks match your design. If you want to do a deeper styling, see this guide <strong>TODO: write a guide</strong>.</p>
+<p>In most cases switching the dark mode on or off and changing the accent color is enough to make block match your design.</p>
+<!-- If you want to do a deeper styling, see this guide.
+TODO: write a guide. -->
+
 <pre><code class="language-css"><span class="hljs-attr">--darkmode</span>: <span class="hljs-number">1</span>;
 </code></pre>
 <pre><code class="language-css"><span class="hljs-attr">--h-accent</span>: <span class="hljs-number">211</span>;
@@ -384,7 +377,7 @@ Those tag names could be used as convenient CSS selectors.</p>
 <ul>
 <li><code>--darkmode</code> — <code>1</code>: dark mode enabled, <code>0</code>: disabled;</li>
 <li><code>--*-foreground</code> — text color, borders, and shaders. It should be in contrast to the background;</li>
-<li><code>--*-background</code> — background color and it&#39;s variations;</li>
+<li><code>--*-background</code> — background color and its variations;</li>
 <li><code>--*-accent</code> — colors of buttons, links, and text input borders (hover and focus). It should be in contrast to the background;</li>
 <li><code>--*-confirm</code> — the color of confirmation notifications and badges;</li>
 <li><code>--*-error</code> — the color of error notifications and badges;</li>
@@ -399,7 +392,7 @@ Those tag names could be used as convenient CSS selectors.</p>
 <li><code>--transition-duration</code> — duration of all animated transitions;</li>
 <li><code>--shadows</code> — <code>1</code>: shadows enabled, <code>0</code>: disabled. Can be fractional, for example 0.5, will make shadows half as opaque;</li>
 <li><code>--*-shadow</code> — the color of box shadows;</li>
-<li><code>--modal-max-w</code>, <code>--modal-max-h</code> — the maximum size of the modal window;</li>
+<li><code>--modal-max-w</code>, <code>--modal-max-h</code> — the maximum size of the modal window.</li>
 </ul>
 <h2 id="derivative-values">Derivative values</h2>
 <p>Derivative values are calculated from the base values.</p>
@@ -415,12 +408,14 @@ Those tag names could be used as convenient CSS selectors.</p>
 <li><code>--clr-curtain</code> — color of the background behind the modal window;</li>
 <li><code>--clr-btn-bgr-primary*</code>, <code>--clr-btn-txt-primary</code>, <code>--shadow-btn-primary</code> — primary action button values;</li>
 <li><code>--clr-btn-bgr-secondary*</code>, <code>--clr-btn-txt-secondary</code>, <code>--shadow-btn-secondary</code> — secondary action button values;</li>
-<li><code>--clr-btn-bgr-disabled</code>, <code>--clr-btn-txt-disabled</code>, <code>--shadow-btn-disabled</code> — disabled button values;</li>
+<li><code>--clr-btn-bgr-disabled</code>, <code>--clr-btn-txt-disabled</code>, <code>--shadow-btn-disabled</code> — disabled button values.</li>
 </ul>
 <h2 id="common-styles">Common styles</h2>
 <p>Common styles define similar UI elements across different blocks: buttons, inputs, and links.</p>
 <h2 id="component-styles">Component styles</h2>
-<p>Component styles are the most specific. <strong>TODO: decide about recommendations here</strong></p>
+<p>Component styles are the most specific.</p>
+<!-- TODO: decide about recommendations here -->
+
 <h2 id="shadow-dom">Shadow DOM</h2>
 <p>If you need additional isolation and styling security levels, you can get it with Shadow DOM.
 To enable it and encapsulate all styles into separated scope, use the <code>css-src</code> attribute:</p>
@@ -429,22 +424,21 @@ To enable it and encapsulate all styles into separated scope, use the <code>css-
 </code></pre>
 <p><br/><br/><br/></p>
 <h1 id="🪤-data-handling"><a name="handling_data"></a>🪤 Data handling</h1>
-<h2 id="with-data-output">With data output</h2>
-<p>We provide the dedicated block for the data output purposes — <code>&lt;lr-data-output&gt;</code>.
-This Custom Element can be connected to some workflow context and provide you with convenient data access.</p>
+<h2 id="with-the-data-output">With the data output</h2>
+<p>We provide the dedicated block for the data output purposes — <code>&lt;lr-data-output&gt;</code>. This Custom Element can be connected to some workflow context and provide you with convenient data access.</p>
 <p>Here is the code example:</p>
 <pre><code class="language-html"><span class="hljs-tag">&lt;<span class="hljs-name">lr-data-output</span> <span class="hljs-attr">console</span> <span class="hljs-attr">fire-events</span> <span class="hljs-attr">item-template</span>=<span class="hljs-string">&quot;&lt;img src=&#x27;https://ucarecdn.com/{{uuid}}/-/preview/&#x27; /&gt;&quot;</span>&gt;</span>
 <span class="hljs-tag">&lt;/<span class="hljs-name">lr-data-output</span>&gt;</span>
 </code></pre>
 <p>Let&#39;s walk through its attributes:</p>
 <ul>
-<li><code>console</code> — this flag lets you enable browser console output without modifying the source code.</li>
-<li><code>fire-events</code> — this flag enables custom events (<code>data-output</code>) dispatching for the DOM element. These events contain all uploading data and could be processed at any level of your application.</li>
+<li><code>console</code> — enables browser console output without modifying the source code.</li>
+<li><code>fire-events</code> —  enables custom events (<code>data-output</code>) dispatching for the DOM element. These events contain all uploading data and could be processed at any level of your application.</li>
 <li><code>from</code> — data output could be connected to any field in the workflow context. You can specify the certain one. By default, it is a <code>*dataOutput</code>; you can skip this setting for the default uploading case.</li>
 <li><code>item-template</code> — uploading results could be rendered as a list of nested DOM elements. You can specify a simple template for that.</li>
 <li><code>form-value</code> — could be used to handle HTML-forms.</li>
 </ul>
-<h2 id="with-event-listener">With event listener</h2>
+<h2 id="with-the-event-listener">With the event listener</h2>
 <pre><code class="language-js"><span class="hljs-variable language_">window</span>.<span class="hljs-title function_">addEventListener</span>(<span class="hljs-string">&#x27;LR_DATA_OUTPUT&#x27;</span>, <span class="hljs-function">(<span class="hljs-params">e</span>) =&gt;</span> {
   <span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(e.<span class="hljs-property">detail</span>);
 });
@@ -453,12 +447,12 @@ This Custom Element can be connected to some workflow context and provide you wi
 <h1 id="🔥-events"><a name="events"></a>🔥 Events</h1>
 <h2 id="upload-flow-events">Upload flow events</h2>
 <ul>
-<li><code>LR_UPLOAD_START</code> — upload started for the file list selected by user</li>
-<li><code>LR_REMOVE</code> — fired when one of uploaded items removed from uploading list</li>
+<li><code>LR_UPLOAD_START</code> — upload is started for the file list selected by the user</li>
+<li><code>LR_REMOVE</code> — fired when one of the uploaded items is removed from the uploading list</li>
 <li><code>LR_UPLOAD_PROGRESS</code> — common upload progress for the list</li>
 <li><code>LR_UPLOAD_FINISH</code> — uploading is finished</li>
-<li><code>LR_UPLOAD_ERROR</code> — error ocurred during files uploading</li>
-<li><code>LR_VALIDATION_ERROR</code> — file not passed the checks according to validation settings</li>
+<li><code>LR_UPLOAD_ERROR</code> — error ocurred during file uploading</li>
+<li><code>LR_VALIDATION_ERROR</code> — file fails checks according to the validation settings</li>
 <li><code>LR_CLOUD_MODIFICATION</code> — image was modified via cloud API</li>
 <li><code>LR_DATA_OUTPUT</code> — common data about uploads</li>
 </ul>
@@ -484,8 +478,8 @@ This Custom Element can be connected to some workflow context and provide you wi
 </code></pre>
 <p><br/><br/><br/></p>
 <h1 id="activities"><a name="activities"></a>Activities</h1>
-<p><strong>Activity</strong> — is a current user interaction stage focused on the uploader application. It helps manage the visibility of components and switches between several UI states. To create an activity, you will need to register it in your custom upload-block:</p>
-<pre><code class="language-javascript"><span class="hljs-keyword">import</span> { <span class="hljs-variable constant_">LR</span> } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;@uploadcare/upload-blocks&#x27;</span>;
+<p><em>Activity</em> is a current user interaction stage focused on the uploader application. It helps manage the visibility of components and switches between several UI states. To create an activity, you should register it in your custom block:</p>
+<pre><code class="language-javascript"><span class="hljs-keyword">import</span> { <span class="hljs-variable constant_">LR</span> } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;@uploadcare/blocks&#x27;</span>;
 
 <span class="hljs-keyword">class</span> <span class="hljs-title class_">MyBlock</span> <span class="hljs-keyword">extends</span> <span class="hljs-title class_ inherited__">LR.BlockComponent</span> {
   <span class="hljs-title function_">initCallback</span>(<span class="hljs-params"></span>) {
@@ -500,9 +494,9 @@ This Custom Element can be connected to some workflow context and provide you wi
   }
 }
 </code></pre>
-<p>Then, if some other component will call the registered activity, it will be activated with <code>active</code> attribute, and the activation callback will be called.</p>
+<p>Then, if some other component will call the registered activity, it will be activated with an  <code>active</code> attribute, and the activation callback will be called.</p>
 <p>JavaScript:</p>
-<pre><code class="language-javascript"><span class="hljs-keyword">import</span> { <span class="hljs-variable constant_">LR</span> } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;@uploadcare/upload-blocks&#x27;</span>;
+<pre><code class="language-javascript"><span class="hljs-keyword">import</span> { <span class="hljs-variable constant_">LR</span> } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;@uploadcare/blocks&#x27;</span>;
 
 <span class="hljs-keyword">class</span> <span class="hljs-title class_">MyOtherBlock</span> <span class="hljs-keyword">extends</span> <span class="hljs-title class_ inherited__">LR.BlockComponent</span> {
   onclick = <span class="hljs-function">() =&gt;</span> {
