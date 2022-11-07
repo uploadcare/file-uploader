@@ -43,30 +43,31 @@ Is it possible to create an uploading solution to fit them all?
 We believe it is — with the power of [Custom Elements standard](https://developer.mozilla.org/en-US/docs/Web/Web_solutions/Using_custom_elements) and our widget-purpose-specific open-source [Symbiote.js](https://github.com/symbiotejs/symbiote.js) library.
 
 You can use high-level, simple HTML and CSS to customize layouts and define the most popular scenarios.
-You can create your own blocks from scratch with JavaScript using our super-duper [BlockComponent base-class](https://github.com/uploadcare/blocks/blob/main/docs/block-component/index.htm).
+You can create your own blocks from scratch with JavaScript using [BlockComponent base-class](https://github.com/uploadcare/blocks/blob/main/docs/block-component/index.htm).
 
 ### Key features
 
 - Easy to use within any modern toolchain: framework, library, or CMS.
 - The lifecycle is controlled from the inside; you don't need to manage it in your code.
 - You can easily switch between encapsulated secure styling and common document styles.
-- Using [Shadow DOM](https://developer.mozilla.org/en-US/docs/Web/Web_solutions/Using_shadow_DOM) — is up to you.
-- It's easy to set any customized data context for the blocks to control them in detail.
+- Using [Shadow DOM](https://developer.mozilla.org/en-US/docs/Web/Web_solutions/Using_shadow_DOM) is up to you.
+- Easy to set any customized data context for the blocks to control them in detail.
 - Total flexibility.
-- No heavy dependencies and no bandwidth — and performance-penalizing libraries are necessary.
-- It's easy to follow your strict design guidelines.
+- No heavy dependencies and no excessive bandwidth usage.
+- Easy to follow the most strict design guidelines.
 - Everything is very close to the native browser APIs and concepts; you don't need to learn something completely new.
-- [Content Security Policy (CSP)](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP) friendly — good for secure enterprise usage.
+- [Content Security Policy (CSP)](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP) friendly — great for a secure enterprise usage.
 - [Jamstack](https://jamstack.org/) friendly: enter the new world of web development!
 
-<re-htm src="../assets/htm/upload-blocks-demo.htm"></re-htm>
+<re-htm src="../assets/htm/blocks-demo.htm"></re-htm>
 
 ## 🏠 Integration basics
 
 We use the [Custom Elements](https://developer.mozilla.org/en-US/docs/Web/Web_solutions/Using_custom_elements) standard to make integration seamless.
+
 That allows us to use simple HTML code to define layouts and place our widgets into other templates or other markups. Custom Elements are compatible with most modern technologies and provide a consistent workflow. Please, check out the list of high-level tests passed with a set of modern frontend frameworks and libraries: [Custom Elements Everywhere](https://custom-elements-everywhere.com/)
 
-We also provide a set of [reference integrations](https://github.com/uploadcare/upload-blocks-examples).
+We also provide a set of [reference integrations](https://github.com/uploadcare/blocks-examples).
 
 ## 🚀 Create your own file uploader
 
@@ -101,30 +102,25 @@ Uploader.reg('uploader');
 @import url('@uploadcare/blocks/blocks/themes/lr-basic/index.css');
 ```
 
-6. Place resulting custom HTML-tag into your application markup and connect CSS.
+5. Place resulting custom HTML-tag into your application markup and connect CSS.
 
 As you can see, that's quite simple.
 
-> You should obtain a Public API Key in your [Uploadcare project's dashboard](https://app.uploadcare.com/) to use file uploading features.
+> You should get a Public API key in [Uploadcare project's dashboard](https://app.uploadcare.com/projects/-/api-keys/) to use file uploading features.
 
 ## 🎨 Customize everything!
 
-First, please look at [our CSS approach discussion](https://github.com/uploadcare/blocks/discussions/18).
-Please don't hesitate to take part; your opinion is very important to us.
+First, please look at [our CSS approach discussion](https://github.com/uploadcare/blocks/discussions/18). Please don't hesitate to take part; your opinion is very important to us.
 
 ### Look & feel
 
-Each block has a reference CSS file located in a directory and a JavaScript class definition module.
-You can use it as the template to create your own custom styling (or CSS animations) for any library block.
-All blocks and their children act like regular DOM elements; therefore, you can use native CSS selectors and any existing styling approach.
-All significant component states are provided as element attribute flags, so you can use the full power of CSS to customize the blocks deeply.
+Each block has a reference CSS file located in a directory and a JavaScript class definition module. You can use it as the template to create your own custom styling (or CSS animations) for any library block. All blocks and their children act like regular DOM elements; therefore, you can use native CSS selectors and any existing styling approach. All significant component states are provided as element attribute flags, so you can use the full power of CSS to customize the blocks deeply.
 
-[More about CSS theme creation](/blocks/themes/lr-basic/)
+Lear more about [CSS theme creation](/blocks/themes/lr-basic/).
 
 ### Layout & composition
 
-Block components can be used separately or in combinations.
-You can combine them to create a common workflow like this one:
+Block components can be used separately or in combinations. You can combine them to create a common workflow like this one:
 
 ```html
 <lr-simple-btn></lr-simple-btn>
@@ -162,11 +158,11 @@ LR.ProgressBarCommon.template = /* HTML */ `
 `;
 ```
 
-All elements created by upload-blocks are discoverable via developer tools in your browser, so it's easy to find out what exactly you should edit to achieve the proper result. You don't need to install any specific tool to do that.
+All elements created by blocks are discoverable via developer tools in your browser. It's easy to find out what exactly you should edit to achieve the proper result. You don't need to install any specific tool to do that.
 
 ### Custom blocks
 
-You can create your own custom upload-blocks to handle some specific use cases. You need to use the Block JavaScript base class to do that.
+You can create your own custom blocks to handle some specific use cases. You need to use the Block JavaScript base class to do that.
 
 ## ⚙️ More in depth
 
@@ -180,8 +176,8 @@ You can create your own custom upload-blocks to handle some specific use cases. 
 
 ## 💬 Discussions
 
-If you have questions, ideas, usage feedback, or would like to suggest any other topic, feel free to join our [GitHub Discussions](https://github.com/uploadcare/jsdk/discussions/categories/upload-blocks)!
+If you have questions, ideas, usage feedback, or would like to suggest any other topic, feel free to join our [GitHub Discussions](https://github.com/uploadcare/blocks/discussions/categories/blocks)!
 
 ## ⚠️ Issues
 
-Found a problem? Create an [issue](https://github.com/uploadcare/jsdk/issues)!
+Found a problem? Create an [issue](https://github.com/uploadcare/blocks/issues).

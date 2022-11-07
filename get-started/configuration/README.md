@@ -1,16 +1,12 @@
 # Configuration
 
-All the settings for the blocks should be provided with CSS. It could be CSS-files or
-CSS rules defined somewhere in your project.
+All settings for the blocks should be provided in CSS. It could be CSS-files or CSS rules defined somewhere in your project.
 
-We recommend to use Shadow DOM mode enabled if you planning to use several solutions
-on one page at once.
-
-`css-src` - attribute enables Shadow DOM and all provided styles start to work inside of it. That helps to avoid any possible collisions in styling and to control the scoping better.
+We recommend to use Shadow DOM mode enabled if you plan to use several solutions on one page at once. `css-src` attribute enables Shadow DOM and all provided styles start to work inside of it. This helps to avoid any possible collisions in styling and to control the scoping better.
 
 ## Context
 
-Each block plays it's onw role in some context. Context helps to connect some blocks into the one data flow, if they placed somewhere in host application. You can set this context manually to bind one block to another using `ctx-name` attribute:
+Each block plays its role in some context. Context helps to connect some blocks into one data flow if they placed somewhere in a host application. You can set a context manually to bind one block to another using `ctx-name` attribute:
 
 ```html
 <lr-file-uploader-regular ctx-name="MY_CONTEXT"></lr-file-uploader-regular>
@@ -29,7 +25,7 @@ window.addEventListener('LR_DATA_OUTPUT', (e) => {
 });
 ```
 
-More event types you can find on the [file uploader's page](/solutions/file-uploader/).
+You can find more event types on the [file uploader's page](/solutions/file-uploader/).
 
 ## Customization
 
@@ -113,9 +109,9 @@ For example, this is the list of pre-defined parameters used by default in our [
 
 As you can see, all properties are grouped for the set of selectors:
 
-- `.lr-wgt-cfg` — specific selector for the configuration section in common CSS
-- `.lr-wgt-common` — common class for all types of settings and CSS data
-- `:host` — Shadow DOM root element selector (used when Shadow DOM is enabled)
+- `.lr-wgt-cfg` — specific selector for the configuration section in common CSS.
+- `.lr-wgt-common` — common class for all types of settings and CSS data.
+- `:host` — Shadow DOM root element selector (used when Shadow DOM is enabled).
 
 The variable value should be a correct JSON value. Strings should be taken in quotes. We use the 1 or 0 numbers to define boolean flags.
 
@@ -131,10 +127,10 @@ You can create your own custom parameters and values for your custom blocks:
 }
 ```
 
-Then you can read it in your upload-block:
+Then you can read it in a block:
 
 ```javascript
-import { BlockComponent } from 'upload-blocks/BlockComponent/BlockComponent.js';
+import { BlockComponent } from 'blocks/BlockComponent/BlockComponent.js';
 
 class MyBlock extends BlockComponent {
   initCallback() {
@@ -151,8 +147,7 @@ class MyBlock extends BlockComponent {
 
 ### via `style` property
 
-We're handle `style` property updates automatically.
-It means that you can update your configuration in the following way:
+We're handle `style` property updates automatically. It means that you can update your configuration in the following way:
 
 ```javascript
 let uploader = document.querySelector('lr-uploader');
@@ -161,8 +156,7 @@ uploader.style.setProperty('--cfg-source-list', 'local, url');
 
 ### via `class` property
 
-If you want to switch the whole configuration CSS class,
-you need to call method `updateCssData()` explicitly.
+If you want to switch the whole configuration CSS class, you need to call method `updateCssData()` explicitly.
 
 ```css
 .config-1 {
@@ -188,8 +182,8 @@ uploader.updateCssData();
 To set configuration properties with complex data types, you can use JS API on any block.
 
 | Name                              | Description                                                                                   |
-| --------------------------------- | --------------------------------------------------------------------------------------------- |
-| `setUploadMetadata(metadata: {})` | File Metadata. See [docs](https://uploadcare.com/api-refs/rest-api/v0.7.0/#tag/File-metadata) |
+| --------------------------------- | --------------------------------------------------------------------- |
+| `setUploadMetadata(metadata: {})` | File Metadata. See [docs](https://uploadcare.com/docs/file-metadata/) |
 
 Example:
 

@@ -51,8 +51,7 @@ That's it! Now you can use components for placing into html, like this:
 ></lr-file-uploader-inline>
 ```
 
-You may need to implement some logic, which depends on connected blocks or get access directly to the imported components.
-Since `connectBlocksFrom` returns `Promise`, place all you need using `.then()`
+You may need to implement some logic, which depends on connected blocks or get access directly to the imported components. Since `connectBlocksFrom` returns `Promise`, place all you need using `.then()`
 
 ```js
 import { connectBlocksFrom } from '@uploadcare/blocks/abstract/connectBlocksFrom.js';
@@ -106,7 +105,7 @@ Examples:
 ...
 ```
 
-So, to exclude naming collisions, use the other prefixes for your own custom elements.
+To exclude naming collisions, use the other prefixes for your own custom elements.
 
 Examples:
 
