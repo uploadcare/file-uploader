@@ -1,3 +1,9 @@
+## [0.14.2](https://github.com/uploadcare/blocks/compare/v0.14.1...v0.14.2) (2022-11-22)
+
+### Bug Fixes
+
+- wrap `::backdrop` with `:is` to prevent ignoring from unsupported browsers ([#332](https://github.com/uploadcare/blocks/issues/332)) ([e3ef691](https://github.com/uploadcare/blocks/commit/e3ef6919f3154c7d0017df73c1a5ba63c0a0e996))
+
 ## [0.14.1](https://github.com/uploadcare/blocks/compare/v0.14.0...v0.14.1) (2022-10-26)
 
 ### Bug Fixes
