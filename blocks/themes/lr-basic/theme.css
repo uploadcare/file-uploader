@@ -1,6 +1,5 @@
-:where(.lr-wgt-theme, .lr-wgt-common),
-:host,
-::backdrop {
+:where(.lr-wgt-theme, .lr-wgt-common, ::backdrop),
+:host {
   /* Base values */
 
   --darkmode: 0;
