@@ -1,9 +1,8 @@
 lr-source-btn {
   display: flex;
   align-items: center;
-  padding: var(--gap-min);
-  padding-right: var(--gap-mid);
-  padding-left: var(--gap-mid);
+  margin-bottom: var(--gap-min);
+  padding: var(--gap-min) var(--gap-mid);
   color: var(--clr-txt-mid);
   border-radius: var(--border-radius-element);
   cursor: pointer;

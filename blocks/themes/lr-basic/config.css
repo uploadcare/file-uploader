@@ -10,7 +10,7 @@
   --cfg-accept: '';
   --cfg-store: unset;
   --cfg-camera-mirror: 1;
-  --cfg-source-list: 'local, url, camera, dropbox, gdrive, facebook';
+  --cfg-source-list: 'local, url, camera, dropbox, gdrive';
   --cfg-max-local-file-size-bytes: 0;
   --cfg-thumb-size: 76;
   --cfg-show-empty-list: 0;
