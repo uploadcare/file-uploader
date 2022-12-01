@@ -43,9 +43,9 @@
 
   --borders: 1;
 
-  --border-radius-element: 7px;
-  --border-radius-frame: 10px;
-  --border-radius-thumb: 5px;
+  --border-radius-element: 8px;
+  --border-radius-frame: 12px;
+  --border-radius-thumb: 6px;
 
   --transition-duration: 0.2s;
 
