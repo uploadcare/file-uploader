@@ -1,6 +1,6 @@
 lr-start-from {
   display: grid;
-  grid-template-columns: min-content auto;
+  grid-template-columns: auto;
   gap: var(--gap-mid);
 
   /* height: 100%; - this breaks inner modal layout height in Safari */
