@@ -61,7 +61,7 @@ lr-modal > .dialog {
   margin: auto;
   padding: 0;
   overflow: hidden;
-  background-color: var(--clr-background);
+  background-color: var(--clr-background-light);
   border: 0;
   border-radius: var(--border-radius-frame);
   box-shadow: var(--modal-shadow);
@@ -91,5 +91,4 @@ lr-modal .heading {
   font-size: 1.1em;
   line-height: var(--ui-size);
   background-color: var(--clr-background-light);
-  border-bottom: var(--border-light);
 }
