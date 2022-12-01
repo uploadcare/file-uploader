@@ -14,6 +14,10 @@ lr-drop-area::after {
   content: var(--l10n-drop-files-here);
 }
 
+lr-drop-area[big-icon] {
+  min-height: 180px;
+}
+
 lr-drop-area[ghost][drag-state='inactive'] {
   opacity: 0;
 }
