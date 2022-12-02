@@ -17,8 +17,8 @@ lr-source-btn:hover {
 }
 
 lr-source-btn:active {
-  color: var(--clr-txt);
-  background-color: var(--clr-shade-lv2);
+  color: var(--clr-accent);
+  background-color: var(--clr-accent-light);
 }
 
 lr-source-btn lr-icon {

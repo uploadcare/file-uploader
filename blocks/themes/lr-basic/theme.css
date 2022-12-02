@@ -68,7 +68,7 @@
   );
 
   --clr-accent: hsl(var(--h-accent), var(--s-accent), var(--l-accent));
-  --clr-accent-light: hsla(var(--h-accent), var(--s-accent), var(--l-accent), 50%);
+  --clr-accent-light: hsla(var(--h-accent), var(--s-accent), var(--l-accent), 30%);
   --clr-accent-lightest: hsla(var(--h-accent), var(--s-accent), var(--l-accent), 10%);
 
   --clr-confirm: hsl(var(--h-confirm), var(--s-confirm), var(--l-confirm));
@@ -110,7 +110,7 @@
       calc((0.2 - 0.1 * var(--darkmode)) * var(--borders))
     );
   --border-accent: 1px solid hsla(var(--h-accent), var(--s-accent), var(--l-accent), 1 * var(--borders));
-  --border-dashed: 2px dashed
+  --border-dashed: 1px dashed
     hsla(var(--h-foreground), var(--s-foreground), var(--l-foreground), calc(0.1 * var(--borders)));
 
   --clr-curtain: hsla(var(--h-background), var(--s-background), calc(var(--l-background) - 10%), 70%);
