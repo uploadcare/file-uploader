@@ -111,7 +111,7 @@
     );
   --border-accent: 1px solid hsla(var(--h-accent), var(--s-accent), var(--l-accent), 1 * var(--borders));
   --border-dashed: 1px dashed
-    hsla(var(--h-foreground), var(--s-foreground), var(--l-foreground), calc(0.1 * var(--borders)));
+    hsla(var(--h-foreground), var(--s-foreground), var(--l-foreground), calc(0.2 * var(--borders)));
 
   --clr-curtain: hsla(var(--h-background), var(--s-background), calc(var(--l-background) - 10%), 70%);
 
