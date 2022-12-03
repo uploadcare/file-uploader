@@ -2,14 +2,16 @@ lr-file-item > .inner {
   position: relative;
   display: grid;
   grid-template-columns: min-content auto min-content min-content;
+  margin-bottom: calc(var(--gap-mid) / 2);
   padding: var(--gap-mid);
-  background-color: transparent;
-  border-bottom: var(--border-light);
+  font-size: 0.95em;
+  background-color: var(--clr-background);
+  border-radius: var(--border-radius-element);
   transition: var(--transition-duration);
 }
 
 lr-file-item:last-of-type > .inner {
-  border-bottom: none;
+  margin-bottom: 0;
 }
 
 lr-file-item:hover > .inner {
@@ -62,11 +64,16 @@ lr-file-item button {
   width: var(--ui-size);
   height: var(--ui-size);
   padding: 0;
-  color: var(--clr-txt-lightest);
+  color: var(--clr-txt-light);
   background-color: transparent;
   cursor: pointer;
   opacity: var(--opacity-normal);
   transition: opacity var(--transition-duration);
+}
+
+lr-file-item button lr-icon {
+  width: 1.05em;
+  height: 1.05em;
 }
 
 lr-file-item .upload-btn {

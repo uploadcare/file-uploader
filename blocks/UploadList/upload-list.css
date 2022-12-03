@@ -14,6 +14,7 @@ lr-upload-list .no-files {
 
 lr-upload-list .files {
   display: block;
+  padding: 0 var(--gap-mid);
   overflow: auto;
 }
 
@@ -22,8 +23,7 @@ lr-upload-list .toolbar {
   gap: var(--gap-mid);
   justify-content: space-between;
   padding: var(--gap-mid);
-  background-color: var(--clr-background);
-  border-top: var(--border-light);
+  background-color: var(--clr-background-light);
 }
 
 lr-upload-list .toolbar-spacer {

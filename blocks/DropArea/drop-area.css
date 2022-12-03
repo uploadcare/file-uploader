@@ -37,7 +37,8 @@ lr-drop-area:hover {
   border-color: var(--clr-accent-light);
 }
 
-lr-drop-area:hover::after {
+lr-drop-area:hover::after,
+lr-drop-area[big-icon]:hover::after {
   color: var(--clr-accent);
 }
 
