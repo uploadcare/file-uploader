@@ -70,8 +70,8 @@ export class DropArea extends UploaderBlock {
     }
 
     if (this.hasAttribute('big-icon')) {
-      let clickable = this.getAttribute('clickable');
-      if (clickable === '' || clickable === 'true') {
+      let bigIcon = this.getAttribute('big-icon');
+      if (bigIcon === '' || bigIcon === 'true') {
         // @private
         this.innerHTML = /* HTML */ `
           <div class="icon-container">
