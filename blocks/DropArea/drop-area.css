@@ -60,12 +60,14 @@ lr-drop-area[big-icon]::after {
   font-size: 1.1em;
 }
 
-lr-drop-area[big-icon] div {
+lr-drop-area[big-icon] .icon-container {
   position: relative;
   width: calc(var(--ui-size) * 2);
   height: calc(var(--ui-size) * 2);
+  margin: var(--gap-mid);
   overflow: hidden;
-  background-color: var(--clr-background);
+  color: var(--clr-txt);
+  background-color: var(--clr-btn-bgr-secondary);
   border-radius: 50%;
   transition: var(--transition-duration) ease;
 }
@@ -81,24 +83,22 @@ lr-drop-area[big-icon] lr-icon:last-child {
   transform: translateY(calc(var(--ui-size) * 1.5));
 }
 
-lr-drop-area[big-icon]:hover div {
+lr-drop-area[big-icon]:hover .icon-container {
   color: var(--clr-accent);
   background-color: var(--clr-accent-lightest);
 }
 
-lr-drop-area[big-icon][drag-state='active'] div,
-lr-drop-area[big-icon][drag-state='near'] div,
-lr-drop-area[big-icon][drag-state='over'] div {
+lr-drop-area[big-icon][drag-state='active'] .icon-container,
+lr-drop-area[big-icon][drag-state='near'] .icon-container,
+lr-drop-area[big-icon][drag-state='over'] .icon-container {
   color: white;
   background-color: var(--clr-accent);
-  transform: translateY(calc(var(--ui-size) * 0.5));
 }
 
 lr-drop-area[big-icon][drag-state='active']::after,
 lr-drop-area[big-icon][drag-state='near']::after,
 lr-drop-area[big-icon][drag-state='over']::after {
   color: var(--clr-accent);
-  transform: translateY(calc(var(--ui-size) * 1.75));
 }
 
 lr-drop-area[big-icon][drag-state='active'] lr-icon:first-child,

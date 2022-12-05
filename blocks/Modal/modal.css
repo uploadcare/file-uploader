@@ -35,7 +35,7 @@ lr-modal button.close-btn {
   width: var(--ui-size);
   height: var(--ui-size);
   padding: 0;
-  color: var(--clr-txt-light);
+  color: var(--clr-txt-mid);
   background-color: transparent;
   border: none;
   cursor: pointer;
@@ -85,6 +85,7 @@ lr-modal > .dialog > .content {
 lr-modal .heading {
   display: grid;
   grid-template-columns: min-content 1fr min-content;
+  gap: var(--gap-mid);
   padding: var(--gap-mid);
   color: var(--clr-txt-light);
   font-weight: 500;

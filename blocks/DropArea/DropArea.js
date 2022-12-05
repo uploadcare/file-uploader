@@ -74,7 +74,7 @@ export class DropArea extends UploaderBlock {
       if (clickable === '' || clickable === 'true') {
         // @private
         this.innerHTML = /* HTML */ `
-          <div>
+          <div class="icon-container">
             <lr-icon name="default"></lr-icon>
             <lr-icon name="arrow-down"></lr-icon>
           </div>
