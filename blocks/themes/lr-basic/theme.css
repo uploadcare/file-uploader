@@ -135,34 +135,30 @@
     var(--s-accent),
     calc(var(--l-accent) - 8% * var(--darkmode-minus))
   );
-  --clr-btn-txt-primary: var(--clr-background-light);
-  --shadow-btn-primary: 0px 1px 2px hsla(var(--hsl-shadow), calc(0.26 * var(--shadows))),
-    0px 2px 8px hsla(var(--hsl-shadow), calc(0.08 * var(--shadows))),
-    inset 0px 0px 2px hsla(var(--hsl-shadow), calc(0.2 * var(--shadows)));
+  --clr-btn-txt-primary: hsl(var(--h-accent), var(--s-accent), 98%);
+  --shadow-btn-primary: none;
 
   --clr-btn-bgr-secondary: hsl(
     var(--h-background),
     var(--s-background),
-    calc(var(--l-background) + 3% + 3% * var(--darkmode))
+    calc(var(--l-background) - 5% * var(--darkmode-minus))
   );
   --clr-btn-bgr-secondary-hover: hsl(
     var(--h-background),
     var(--s-background),
-    calc(var(--l-background) + 8% * var(--darkmode))
+    calc(var(--l-background) - 7% * var(--darkmode-minus))
   );
   --clr-btn-bgr-secondary-active: hsl(
     var(--h-background),
     var(--s-background),
-    calc(var(--l-background) - 3% + 13% * var(--darkmode))
+    calc(var(--l-background) - 12% * var(--darkmode-minus))
   );
-  --clr-btn-txt-secondary: var(--clr-txt);
-  --shadow-btn-secondary: 0px 1px 1px hsla(var(--hsl-shadow), calc(0.07 * var(--shadows))),
-    0px 2px 8px hsla(var(--hsl-shadow), calc(0.06 * var(--shadows))),
-    inset 0px 0px 1px hsla(var(--hsl-shadow), calc(0.4 * var(--shadows)));
+  --clr-btn-txt-secondary: var(--clr-txt-mid);
+  --shadow-btn-secondary: none;
 
   --clr-btn-bgr-disabled: var(--clr-background);
   --clr-btn-txt-disabled: var(--clr-txt-lightest);
-  --shadow-btn-disabled: inset 0px 0px 1px hsla(var(--hsl-shadow), calc(0.4 * var(--shadows)));
+  --shadow-btn-disabled: none;
 }
 
 @media only screen and (max-height: 600px) {
