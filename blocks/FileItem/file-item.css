@@ -71,11 +71,6 @@ lr-file-item button {
   transition: opacity var(--transition-duration);
 }
 
-lr-file-item button lr-icon {
-  width: 1.05em;
-  height: 1.05em;
-}
-
 lr-file-item .upload-btn {
   display: none;
 }
