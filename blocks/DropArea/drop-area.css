@@ -14,7 +14,7 @@ lr-drop-area::after {
   position: relative;
   margin: var(--gap-mid);
   color: var(--clr-txt-light);
-  transition: transform var(--transition-duration) ease;
+  transition: var(--transition-duration) ease;
   content: var(--l10n-drop-files-here);
 }
 
