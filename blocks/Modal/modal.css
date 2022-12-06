@@ -44,16 +44,15 @@ lr-modal button.close-btn {
   background-color: transparent;
   border: none;
   cursor: pointer;
-  opacity: var(--opacity-normal);
-  transition: opacity var(--transition-duration) ease;
+  transition: background-color var(--transition-duration) ease;
 }
 
 lr-modal button.close-btn:hover {
-  opacity: var(--opacity-hover);
+  background-color: var(--clr-background);
 }
 
 lr-modal button.close-btn:active {
-  opacity: var(--opacity-active);
+  background-color: var(--clr-background-dark);
 }
 
 lr-modal > .dialog {

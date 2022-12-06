@@ -49,7 +49,7 @@
 
   --transition-duration: 0.2s;
 
-  --modal-max-w: 800px;
+  --modal-max-w: 430px;
   --modal-max-h: 600px;
 
   /* Derivative values */
@@ -112,7 +112,7 @@
   --border-dashed: 1px dashed
     hsla(var(--h-foreground), var(--s-foreground), var(--l-foreground), calc(0.2 * var(--borders)));
 
-  --clr-curtain: hsla(var(--h-background), var(--s-background), calc(var(--l-background)), 50%);
+  --clr-curtain: hsla(var(--h-background), var(--s-background), calc(var(--l-background)), 40%);
 
   --hsl-shadow: var(--h-shadow), var(--s-shadow), var(--l-shadow);
 
@@ -167,7 +167,7 @@
   }
 }
 
-@media only screen and (max-width: 800px) {
+@media only screen and (max-width: 430px) {
   :where(.lr-wgt-theme, .lr-wgt-common),
   :host {
     --modal-max-w: 100%;

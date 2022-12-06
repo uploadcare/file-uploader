@@ -67,7 +67,7 @@ lr-drop-area[big-icon] .icon-container {
   margin: var(--gap-mid);
   overflow: hidden;
   color: var(--clr-txt);
-  background-color: var(--clr-btn-bgr-secondary);
+  background-color: var(--clr-background);
   border-radius: 50%;
   transition: var(--transition-duration) ease;
 }
