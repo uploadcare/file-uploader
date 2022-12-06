@@ -115,9 +115,8 @@
   font-size: var(--font-size-ui);
   font-family: inherit;
   background-color: var(--clr-background-light);
-  border: var(--border-mid);
+  border: var(--border-light);
   border-radius: var(--border-radius-element);
-  box-shadow: var(--inset-shadow);
   transition: var(--transition-duration);
 }
 

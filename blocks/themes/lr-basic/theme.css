@@ -116,10 +116,8 @@
 
   --hsl-shadow: var(--h-shadow), var(--s-shadow), var(--l-shadow);
 
-  --modal-shadow: 0px 0px 1px hsla(var(--hsl-shadow), calc((0.35 + 0.65 * var(--darkmode)) * var(--shadows))),
-    0px 6px 40px hsla(var(--hsl-shadow), calc((0.2 + 0.4 * var(--darkmode)) * var(--shadows)));
-
-  --inset-shadow: inset 0px 2px 3px hsla(var(--hsl-shadow), calc(0.09 + 0.1 * var(--darkmode)));
+  --modal-shadow: 0px 0px 1px hsla(var(--hsl-shadow), calc((0.3 + 0.65 * var(--darkmode)) * var(--shadows))),
+    0px 6px 20px hsla(var(--hsl-shadow), calc((0.1 + 0.4 * var(--darkmode)) * var(--shadows)));
 
   /* Maybe move directly to the styles of the buttons? */
 
