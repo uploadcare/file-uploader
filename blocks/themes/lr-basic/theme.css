@@ -57,8 +57,16 @@
   --darkmode-minus: calc(1 + var(--darkmode) * -2);
 
   --clr-background: hsl(var(--h-background), var(--s-background), var(--l-background));
-  --clr-background-dark: hsl(var(--h-background), var(--s-background), calc(var(--l-background) - 3%));
-  --clr-background-light: hsl(var(--h-background), var(--s-background), calc(var(--l-background) + 3%));
+  --clr-background-dark: hsl(
+    var(--h-background),
+    var(--s-background),
+    calc(var(--l-background) - 3% * var(--darkmode-minus))
+  );
+  --clr-background-light: hsl(
+    var(--h-background),
+    var(--s-background),
+    calc(var(--l-background) + 3% * var(--darkmode-minus))
+  );
 
   --clr-generic-file-icon: hsl(
     var(--h-background),
@@ -112,14 +120,12 @@
   --border-dashed: 1px dashed
     hsla(var(--h-foreground), var(--s-foreground), var(--l-foreground), calc(0.2 * var(--borders)));
 
-  --clr-curtain: hsla(var(--h-background), var(--s-background), calc(var(--l-background)), 40%);
+  --clr-curtain: hsla(var(--h-background), var(--s-background), calc(var(--l-background)), 60%);
 
   --hsl-shadow: var(--h-shadow), var(--s-shadow), var(--l-shadow);
 
   --modal-shadow: 0px 0px 1px hsla(var(--hsl-shadow), calc((0.3 + 0.65 * var(--darkmode)) * var(--shadows))),
     0px 6px 20px hsla(var(--hsl-shadow), calc((0.1 + 0.4 * var(--darkmode)) * var(--shadows)));
-
-  /* Maybe move directly to the styles of the buttons? */
 
   --clr-btn-bgr-primary: var(--clr-accent);
   --clr-btn-bgr-primary-hover: hsl(

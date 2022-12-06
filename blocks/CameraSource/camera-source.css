@@ -3,9 +3,12 @@ lr-camera-source {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: var(--modal-content-height-fill, 100%);
+
+  /* height: var(--modal-content-height-fill, 100%); */
   max-height: var(--modal-max-content-height);
-  padding-bottom: calc(2 * var(--gap-mid) + var(--ui-size));
+  padding: var(--gap-mid);
+  padding-top: 0;
+  border-radius: var(--border-radius-element);
 }
 
 lr-camera-source video {
@@ -15,6 +18,7 @@ lr-camera-source video {
   object-fit: contain;
   object-position: center center;
   background-color: var(--clr-background);
+  border-radius: var(--border-radius-element);
 }
 
 lr-camera-source .toolbar {
@@ -24,13 +28,14 @@ lr-camera-source .toolbar {
   justify-content: space-between;
   width: 100%;
   padding: var(--gap-mid);
-  background-color: var(--clr-background);
+  background-color: var(--clr-background-light);
 }
 
 lr-camera-source .content {
   display: flex;
   justify-content: center;
   height: 100%;
+  overflow: hidden;
 }
 
 lr-camera-source .message-box {
@@ -47,4 +52,45 @@ lr-camera-source .message-box {
 lr-camera-source .message-box button {
   color: var(--clr-btn-txt-primary);
   background-color: var(--clr-btn-bgr-primary);
+}
+
+lr-camera-source .shot-btn {
+  position: absolute;
+  bottom: var(--gap-max);
+  width: calc(var(--ui-size) * 1.8);
+  height: calc(var(--ui-size) * 1.8);
+  color: var(--clr-txt-mid);
+  background-color: var(--clr-background-light);
+  border-radius: 50%;
+  outline: 0px solid var(--clr-background-light);
+  opacity: 0.9;
+  transition: var(--transition-duration) ease;
+}
+
+lr-camera-source .shot-btn:hover {
+  color: var(--clr-accent);
+  outline-width: 2px;
+  opacity: 1;
+}
+
+lr-camera-source .shot-btn:active {
+  color: var(--clr-accent);
+  background-color: var(--clr-background-dark);
+  outline-width: 0px;
+  outline-color: var(--clr-background-dark);
+  opacity: 1;
+}
+
+lr-camera-source .shot-btn[disabled] {
+  bottom: calc(var(--gap-max) * -1 - var(--gap-mid) - var(--ui-size) * 2);
+}
+
+lr-camera-source .shot-btn lr-icon svg {
+  width: calc(var(--ui-size) / 1.5);
+  height: calc(var(--ui-size) / 1.5);
+}
+
+lr-camera-source .camera-select {
+  position: absolute;
+  top: var(--gap-mid);
 }
