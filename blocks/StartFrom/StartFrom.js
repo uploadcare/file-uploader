@@ -11,6 +11,7 @@ export class StartFrom extends ActivityBlock {
           {
             '*activityCaption': this.l10n('select-file-source'),
             '*activityIcon': null,
+            '*modalHeaderHidden': true,
           },
           true
         );
