@@ -10,7 +10,7 @@
 
   --h-background: 208;
   --s-background: 4%;
-  --l-background: calc(95% - 87% * var(--darkmode));
+  --l-background: calc(97% - 87% * var(--darkmode));
 
   --h-accent: 211;
   --s-accent: 100%;
@@ -51,7 +51,6 @@
 
   --modal-max-w: 800px;
   --modal-max-h: 600px;
-  --modal-backdrop-background-image: url('data:image/svg+xml;base64,PHN2ZyBoZWlnaHQ9IjEwIiB3aWR0aD0iMTAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHBhdGggc3Ryb2tlPSJyZ2JhKDAsIDAsIDAsIC4xKSIgZD0iTTAgMTAgMTAgMCIvPgo8L3N2Zz4=');
 
   /* Derivative values */
 
@@ -79,7 +78,7 @@
   --clr-error-message-bgr: hsl(var(--h-error), var(--s-error), calc(var(--l-error) + 30% * var(--darkmode-minus)));
 
   --clr-txt: hsl(var(--h-foreground), var(--s-foreground), var(--l-foreground));
-  --clr-txt-mid: hsl(var(--h-foreground), var(--s-foreground), calc(var(--l-foreground) + 15% * var(--darkmode-minus)));
+  --clr-txt-mid: hsl(var(--h-foreground), var(--s-foreground), calc(var(--l-foreground) + 20% * var(--darkmode-minus)));
   --clr-txt-light: hsl(
     var(--h-foreground),
     var(--s-foreground),
@@ -113,7 +112,7 @@
   --border-dashed: 1px dashed
     hsla(var(--h-foreground), var(--s-foreground), var(--l-foreground), calc(0.2 * var(--borders)));
 
-  --clr-curtain: hsla(var(--h-background), var(--s-background), calc(var(--l-background) - 10%), 70%);
+  --clr-curtain: hsla(var(--h-background), var(--s-background), calc(var(--l-background)), 50%);
 
   --hsl-shadow: var(--h-shadow), var(--s-shadow), var(--l-shadow);
 
@@ -141,7 +140,7 @@
   --clr-btn-bgr-secondary: hsl(
     var(--h-background),
     var(--s-background),
-    calc(var(--l-background) - 5% * var(--darkmode-minus))
+    calc(var(--l-background) - 3% * var(--darkmode-minus))
   );
   --clr-btn-bgr-secondary-hover: hsl(
     var(--h-background),

@@ -2,6 +2,7 @@ lr-modal {
   --modal-max-content-height: calc(var(--uploadcare-blocks-window-height, 100vh) - 4 * var(--gap-mid) - var(--ui-size));
   --modal-content-height-fill: var(--uploadcare-blocks-window-height, 100vh);
 }
+
 lr-modal[dialog-fallback] {
   position: fixed;
   top: 0px;
@@ -11,16 +12,20 @@ lr-modal[dialog-fallback] {
   justify-content: center;
   width: 100vw;
   height: 100vh;
-}
-
-lr-modal > :is(.dialog::backdrop),
-lr-modal[dialog-fallback] {
   background-color: var(--clr-curtain);
 }
 
-lr-modal[strokes] > :is(.dialog::backdrop),
 lr-modal[dialog-fallback][strokes] {
   background-image: var(--modal-backdrop-background-image);
+}
+
+@supports selector(.dialog::backdrop) {
+  lr-modal > .dialog::backdrop {
+    background-color: var(--clr-curtain);
+  }
+  lr-modal[strokes] > .dialog::backdrop {
+    background-image: var(--modal-backdrop-background-image);
+  }
 }
 
 lr-modal > .dialog:not([open]) {

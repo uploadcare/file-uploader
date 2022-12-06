@@ -161,7 +161,7 @@ export class UploadList extends UploaderBlock {
       onActivate: () => {
         this.set$({
           '*activityCaption': this.l10n('selected'),
-          '*activityIcon': 'local',
+          '*activityIcon': null,
         });
       },
     });

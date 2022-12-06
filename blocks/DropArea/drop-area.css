@@ -51,7 +51,7 @@ lr-drop-area[drag-state='over'] {
 lr-drop-area[big-icon] {
   display: flex;
   flex-direction: column;
-  min-height: calc(var(--ui-size) * 5);
+  min-height: calc(var(--ui-size) * 6);
 }
 
 lr-drop-area[big-icon]::after {
