@@ -5,7 +5,7 @@
   --cfg-multiple-min: 0;
   --cfg-multiple-max: 0;
 
-  --cfg-confirm-upload: 1;
+  --cfg-confirm-upload: 0;
   --cfg-img-only: 0;
   --cfg-accept: '';
   --cfg-store: unset;

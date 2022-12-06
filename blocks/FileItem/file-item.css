@@ -16,7 +16,7 @@ lr-file-item:last-of-type > .inner {
 }
 
 lr-file-item:hover > .inner {
-  background-color: var(--clr-background);
+  background-color: var(--clr-background-dark);
 }
 
 lr-file-item > .inner[focused] {
@@ -51,6 +51,11 @@ lr-file-item .file-name-wrapper {
   padding-right: var(--gap-mid);
   padding-left: var(--gap-mid);
   overflow: hidden;
+  color: var(--clr-txt-light);
+  transition: color var(--transition-duration);
+}
+
+lr-file-item:hover .file-name-wrapper {
   color: var(--clr-txt);
 }
 
