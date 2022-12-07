@@ -11,13 +11,19 @@ lr-camera-source {
   border-radius: var(--border-radius-element);
 }
 
+@media only screen and (max-width: 430px) {
+  lr-camera-source {
+    height: var(--modal-content-height-fill, 100%);
+  }
+}
+
 lr-camera-source video {
   display: block;
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
   object-position: center center;
-  background-color: var(--clr-background);
+  background-color: var(--clr-background-dark);
   border-radius: var(--border-radius-element);
 }
 

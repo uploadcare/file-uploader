@@ -72,7 +72,7 @@ lr-modal > .dialog {
   transition: transform 0.4s;
 }
 
-@media only screen and (max-width: 600px), only screen and (max-height: 800px) {
+@media only screen and (max-width: 430px), only screen and (max-height: 600px) {
   lr-modal > .dialog > .content {
     height: var(--modal-max-content-height);
   }
