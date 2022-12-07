@@ -65,25 +65,23 @@ lr-camera-source .shot-btn {
   bottom: var(--gap-max);
   width: calc(var(--ui-size) * 1.8);
   height: calc(var(--ui-size) * 1.8);
-  color: var(--clr-txt-mid);
-  background-color: var(--clr-background-light);
+  color: var(--clr-background-light);
+  background-color: var(--clr-txt);
   border-radius: 50%;
-  outline: 0px solid var(--clr-background-light);
+  outline: 0px solid var(--clr-txt);
   opacity: 0.9;
   transition: var(--transition-duration) ease;
 }
 
 lr-camera-source .shot-btn:hover {
-  color: var(--clr-accent);
   outline-width: 2px;
   opacity: 1;
 }
 
 lr-camera-source .shot-btn:active {
-  color: var(--clr-accent);
-  background-color: var(--clr-background-dark);
-  outline-width: 0px;
-  outline-color: var(--clr-background-dark);
+  color: var(--clr-background-light);
+  outline-width: 2px;
+  outline-color: var(--clr-background-light);
   opacity: 1;
 }
 

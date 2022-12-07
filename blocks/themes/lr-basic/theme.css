@@ -6,7 +6,7 @@
 
   --h-foreground: 208;
   --s-foreground: 4%;
-  --l-foreground: calc(15% + 70% * var(--darkmode));
+  --l-foreground: calc(10% + 70% * var(--darkmode));
 
   --h-background: 208;
   --s-background: 4%;
