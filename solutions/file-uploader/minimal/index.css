@@ -37,6 +37,9 @@
 :host {
   --l10n-drop-files-here: 'Drop file here';
 
+  --l10n-choose-file: 'Choose file...';
+  --l10n-choose-files: 'Choose files...';
+
   --l10n-upload-error: 'Upload error';
   --l10n-validation-error: 'Validation error';
   --l10n-no-files: 'No files selected';
@@ -79,18 +82,12 @@ lr-start-from {
 
 lr-drop-area {
   width: 100%;
-  height: calc(var(--ui-size) + var(--gap-mid) * 2 + var(--gap-min) * 4);
+  min-height: calc(var(--ui-size) + var(--gap-mid) * 2 + var(--gap-min) * 4);
   padding: 0;
-  color: var(--clr-accent);
   line-height: 140%;
   text-align: center;
-  border-color: var(--clr-accent-light);
   border-radius: var(--border-radius-frame);
   cursor: pointer;
-}
-
-lr-drop-area[drag-state='inactive'] {
-  background-color: transparent;
 }
 
 lr-drop-area::after {

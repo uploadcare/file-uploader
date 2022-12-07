@@ -6,8 +6,7 @@ lr-drop-area {
   overflow: hidden;
   border: var(--border-dashed);
   border-radius: var(--border-radius-frame);
-  transition: border-color var(--transition-duration) ease, background-color var(--transition-duration) ease,
-    opacity var(--transition-duration) ease;
+  transition: var(--transition-duration) ease;
 }
 
 lr-drop-area::after {
@@ -22,28 +21,29 @@ lr-drop-area[ghost][drag-state='inactive'] {
   opacity: 0;
 }
 
-lr-drop-area[drag-state='active'] {
-  background-color: var(--clr-accent-lightest);
-  opacity: 1;
-}
-
-lr-drop-area[drag-state='near'] {
-  opacity: 1;
-}
-
+lr-drop-area[drag-state='active'],
 lr-drop-area[drag-state='near'],
-lr-drop-area:hover {
-  background-color: var(--clr-accent-lightest);
-  border-color: var(--clr-accent-light);
-}
-
+lr-drop-area[drag-state='over'],
+lr-drop-area:hover,
 lr-drop-area:hover::after,
 lr-drop-area[big-icon]:hover::after {
   color: var(--clr-accent);
 }
 
-lr-drop-area[drag-state='over'] {
+lr-drop-area[drag-state='active'],
+lr-drop-area[drag-state='near'],
+lr-drop-area[drag-state='over'],
+lr-drop-area:hover {
   background-color: var(--clr-accent-lightest);
+  border-color: var(--clr-accent-light);
+}
+
+lr-drop-area[drag-state='active'],
+lr-drop-area[drag-state='near'] {
+  opacity: 1;
+}
+
+lr-drop-area[drag-state='over'] {
   border-color: var(--clr-accent);
   opacity: 1;
 }
