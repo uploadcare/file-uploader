@@ -2,6 +2,8 @@
 :host {
   --l10n-upload-file: 'Upload file';
   --l10n-upload-files: 'Upload files';
+  --l10n-choose-file: 'Choose file';
+  --l10n-choose-files: 'Choose files';
   --l10n-drop-files-here: 'Drop files here';
   --l10n-select-file-source: 'Select file source';
   --l10n-selected: 'Selected';
