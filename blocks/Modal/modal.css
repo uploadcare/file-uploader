@@ -37,14 +37,7 @@ lr-modal button.close-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: var(--ui-size);
-  height: var(--ui-size);
-  padding: 0;
   color: var(--clr-txt-mid);
-  background-color: transparent;
-  border: none;
-  cursor: pointer;
-  transition: background-color var(--transition-duration) ease;
 }
 
 lr-modal button.close-btn:hover {

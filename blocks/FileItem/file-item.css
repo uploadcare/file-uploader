@@ -2,6 +2,7 @@ lr-file-item > .inner {
   position: relative;
   display: grid;
   grid-template-columns: min-content auto min-content min-content;
+  gap: var(--gap-min);
   margin-bottom: calc(var(--gap-mid) / 2);
   padding: var(--gap-mid);
   overflow: hidden;
@@ -66,23 +67,17 @@ lr-file-item .file-name {
   text-overflow: ellipsis;
 }
 
-lr-file-item button {
-  width: var(--ui-size);
-  height: var(--ui-size);
-  padding: 0;
-  color: var(--clr-txt-light);
-  background-color: transparent;
-  cursor: pointer;
-  opacity: var(--opacity-normal);
-  transition: opacity var(--transition-duration);
+lr-file-item button.remove-btn,
+lr-file-item button.edit-btn {
+  color: var(--clr-txt-lightest);
 }
 
-lr-file-item .upload-btn {
+lr-file-item button.upload-btn {
   display: none;
 }
 
 lr-file-item button:hover {
-  opacity: var(--opacity-hover);
+  color: var(--clr-txt-light);
 }
 
 lr-file-item .badge {
