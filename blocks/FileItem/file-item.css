@@ -87,19 +87,22 @@ lr-file-item button:hover {
 
 lr-file-item .badge {
   position: absolute;
-  top: calc(var(--ui-size) * -0.15);
-  right: calc(var(--ui-size) * -0.15);
-  display: none;
-  width: calc(var(--ui-size) * 0.42);
-  height: calc(var(--ui-size) * 0.42);
+  top: calc(var(--ui-size) * -0.13);
+  right: calc(var(--ui-size) * -0.13);
+  width: calc(var(--ui-size) * 0.44);
+  height: calc(var(--ui-size) * 0.44);
   color: var(--clr-background-light);
   background-color: var(--clr-txt);
   border-radius: 50%;
+  transform: scale(0.3);
+  opacity: 0;
+  transition: var(--transition-duration) ease;
 }
 
 lr-file-item > .inner[failed] .badge,
 lr-file-item > .inner[finished] .badge {
-  display: block;
+  transform: scale(1);
+  opacity: 1;
 }
 
 lr-file-item > .inner[finished] .badge {

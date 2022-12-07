@@ -16,9 +16,9 @@
   --s-accent: 100%;
   --l-accent: calc(50% - 5% * var(--darkmode));
 
-  --h-confirm: 140;
-  --s-confirm: 60%;
-  --l-confirm: 60%;
+  --h-confirm: 137;
+  --s-confirm: 85%;
+  --l-confirm: 53%;
 
   --h-error: 358;
   --s-error: 100%;
