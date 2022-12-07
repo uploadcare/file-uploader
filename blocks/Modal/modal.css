@@ -62,7 +62,7 @@ lr-modal > .dialog {
   border: 0;
   border-radius: var(--border-radius-frame);
   box-shadow: var(--modal-shadow);
-  transition: transform 0.4s;
+  transition: transform calc(var(--transition-duration) * 2);
 }
 
 @media only screen and (max-width: 430px), only screen and (max-height: 600px) {

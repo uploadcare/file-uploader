@@ -20,7 +20,7 @@ lr-upload-list .files {
 
 lr-upload-list .toolbar {
   display: flex;
-  gap: var(--gap-mid);
+  gap: var(--gap-small);
   justify-content: space-between;
   padding: var(--gap-mid);
   background-color: var(--clr-background-light);
