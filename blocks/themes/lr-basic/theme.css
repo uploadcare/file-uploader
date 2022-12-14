@@ -1,5 +1,4 @@
-:where(.lr-wgt-theme, .lr-wgt-common, ::backdrop),
-:host {
+@define-mixin theme {
   /* Base values */
 
   --darkmode: 0;
@@ -163,6 +162,17 @@
   --clr-btn-bgr-disabled: var(--clr-background);
   --clr-btn-txt-disabled: var(--clr-txt-lightest);
   --shadow-btn-disabled: inset 0px 0px 1px hsla(var(--hsl-shadow), calc(0.4 * var(--shadows)));
+}
+
+:where(.lr-wgt-theme, .lr-wgt-common),
+:host {
+  @mixin theme;
+}
+
+@supports selector(::backdrop) {
+  ::backdrop {
+    @mixin theme;
+  }
 }
 
 @media only screen and (max-height: 600px) {
