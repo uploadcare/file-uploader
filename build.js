@@ -3,6 +3,7 @@ import fs from 'fs';
 import path, { dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { buildItems } from './build-items.js';
+import postcss from 'esbuild-postcss';
 
 let __dirname = dirname(fileURLToPath(import.meta.url));
 let packageRootPath = __dirname;
@@ -39,6 +40,7 @@ function build(buildItem, watch) {
       banner: {
         js: jsBanner(),
       },
+      plugins: [postcss()],
     })
     .then(async () => {
       if (!buildItem.minifyHtml) {
