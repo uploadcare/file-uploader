@@ -1,3 +1,10 @@
+## [0.14.3](https://github.com/uploadcare/blocks/compare/v0.14.2...v0.14.3) (2022-12-15)
+
+### Bug Fixes
+
+- single source behaviour ([#343](https://github.com/uploadcare/blocks/issues/343)) ([d2929de](https://github.com/uploadcare/blocks/commit/d2929de53e4352fee815f95124796cd20f930838))
+- wrap ::backdrop rules within [@supports](https://github.com/supports) rule ([105bebd](https://github.com/uploadcare/blocks/commit/105bebde4c65035b329d4d4695513f656d643bbd))
+
 ## [0.14.2](https://github.com/uploadcare/blocks/compare/v0.14.1...v0.14.2) (2022-11-22)
 
 ### Bug Fixes
