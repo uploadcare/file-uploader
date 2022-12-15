@@ -115,8 +115,7 @@ export class UploaderBlock extends ActivityBlock {
           this.$['*currentActivity'] = ActivityBlock.activities.UPLOAD_LIST;
           this?.['openSystemDialog']();
         } else {
-          /** @ts-ignore */
-          if (Object.values(Block.extSrcList).includes(srcKey)) {
+          if (Object.values(UploaderBlock.extSrcList).includes(/** @type {any} */ (srcKey))) {
             this.set$({
               '*currentActivityParams': {
                 externalSourceType: srcKey,
