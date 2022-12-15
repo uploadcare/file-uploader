@@ -113,6 +113,9 @@ export class ActivityBlock extends Block {
       let prevActivity = history.pop();
       this.$['*currentActivity'] = prevActivity;
       this.$['*history'] = history;
+      if (!prevActivity) {
+        this.setForCtxTarget('lr-modal', '*modalActive', false);
+      }
     }
   }
 }

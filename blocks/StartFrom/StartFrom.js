@@ -15,6 +15,7 @@ export class StartFrom extends ActivityBlock {
           true
         );
       },
+      onClose: () => this.historyBack(),
     });
   }
 }
