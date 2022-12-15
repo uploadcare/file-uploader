@@ -102,6 +102,12 @@ class Caret {
   }
 }
 
+const headerHtml = /* HTML */ `
+  <script>
+    window.__IS_REF__ = true;
+  </script>
+`;
+
 export class LiveHtml extends Block {
   async hl() {
     let offset = Caret.getPosition(this.ref.editor);
@@ -127,7 +133,7 @@ export class LiveHtml extends Block {
     }
     this._updTimeout = window.setTimeout(() => {
       // @ts-ignore
-      this.ref.vp.srcdoc = (this.importmapHtml || '') + this.ref.editor.textContent;
+      this.ref.vp.srcdoc = headerHtml + (this.importmapHtml || '') + this.ref.editor.textContent;
       if (this.hasAttribute('console-output')) {
         /** @type {Window} */
         // @ts-ignore

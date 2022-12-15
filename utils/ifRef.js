@@ -4,5 +4,6 @@
  * @param {Function} cb
  */
 export function ifRef(cb) {
-  !document.querySelector('meta') && !document.querySelector('title') && cb();
+  // @ts-ignore
+  typeof window.__IS_REF__ === 'boolean' && !!window.__IS_REF__ && cb();
 }
