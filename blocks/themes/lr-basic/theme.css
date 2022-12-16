@@ -50,8 +50,9 @@
 
   --transition-duration: 0.2s;
 
-  --modal-max-w: 430px;
+  --modal-max-w: 800px;
   --modal-max-h: 600px;
+  --modal-normal-w: 430px;
 
   /* Derivative values */
 
