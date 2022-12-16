@@ -340,10 +340,10 @@ UploaderBlock.extSrcList = Object.freeze({
   HUDDLE: 'huddle',
 });
 
-Object.keys(EVENT_TYPES).forEach((eType) => {
+Object.values(EVENT_TYPES).forEach((eType) => {
   let eName = EventManager.eName(eType);
   window.addEventListener(eName, (e) => {
-    let outputTypes = [EVENT_TYPES.UPLOAD_FINISH, EVENT_TYPES.REMOVE];
+    let outputTypes = [EVENT_TYPES.UPLOAD_FINISH, EVENT_TYPES.REMOVE, EVENT_TYPES.CDN_MODIFICATION];
     if (outputTypes.includes(e.detail.type)) {
       let dataCtx = Data.getCtx(e.detail.ctx);
       /** @type {TypedCollection} */
