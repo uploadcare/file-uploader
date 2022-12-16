@@ -255,7 +255,7 @@ export class UploaderBlock extends ActivityBlock {
           new EventData({
             type: EVENT_TYPES.CDN_MODIFICATION,
             ctx: this.ctxName,
-            data: uploadCollection.readProp(id, 'cdnUrlModifiers'),
+            data: Data.getCtx(id).store,
           }),
           undefined,
           false
