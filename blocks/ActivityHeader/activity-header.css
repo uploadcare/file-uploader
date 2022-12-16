@@ -1,0 +1,6 @@
+lr-activity-header {
+  display: grid;
+  grid-template-columns: min-content auto min-content;
+  color: var(--clr-txt);
+  font-size: 1em;
+}
