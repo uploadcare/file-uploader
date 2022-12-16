@@ -84,11 +84,6 @@ For example, this is the list of pre-defined parameters used by default in our [
   --cfg-init-activity: 'start-from';
   --cfg-done-activity: '';
 
-  --cfg-data-output-console: 1;
-  --cfg-data-output-fire-events: 1;
-  --cfg-data-output-from: '*dataOutput';
-  --cfg-data-output-form-value: 1;
-
   --cfg-remote-tab-session-key: '';
   --cfg-cdn-cname: 'https://ucarecdn.com';
   --cfg-base-url: 'https://upload.uploadcare.com';

@@ -245,6 +245,7 @@ We use HSL color space because it allows us to easily calculate derivative color
 ### Quick styling
 
 In most cases switching the dark mode on or off and changing the accent color is enough to make block match your design.
+
 <!-- If you want to do a deeper styling, see this guide.
 TODO: write a guide. -->
 
@@ -303,6 +304,7 @@ Common styles define similar UI elements across different blocks: buttons, input
 ## Component styles
 
 Component styles are the most specific.
+
 <!-- TODO: decide about recommendations here -->
 
 ## Shadow DOM
@@ -326,16 +328,22 @@ We provide the dedicated block for the data output purposes — `<lr-data-output
 Here is the code example:
 
 ```html
-<lr-data-output console fire-events item-template="<img src='https://ucarecdn.com/{{uuid}}/-/preview/' />">
-</lr-data-output>
+<template id="output-template">
+  <h3>Files uploaded:</h3>
+  <div repeat="filesData">
+    <lr-img width="300" set="@uuid: uuid"></lr-img>
+    <div><a set="@href: cdnUrl">{{cdnUrl}}</a></div>
+  </div>
+</template>
+<lr-data-output use-console use-event use-template="#output-template"> </lr-data-output>
 ```
 
 Let's walk through its attributes:
 
-- `console` — enables browser console output without modifying the source code.
-- `fire-events` —  enables custom events (`data-output`) dispatching for the DOM element. These events contain all uploading data and could be processed at any level of your application.
-- `from` — data output could be connected to any field in the workflow context. You can specify the certain one. By default, it is a `*dataOutput`; you can skip this setting for the default uploading case.
-- `item-template` — uploading results could be rendered as a list of nested DOM elements. You can specify a simple template for that.
+- `use-console` — enables browser console output without modifying the source code.
+- `use-event` — enables custom events (`data-output`) dispatching for the DOM element. These events contain all uploading data and could be processed at any level of your application.
+- `use-group` - create group from uploaded files, the same as `--cfg-group-output`.
+- `use-template` — uploading results could be rendered as a list of nested DOM elements. You can specify a simple template for that.
 - `form-value` — could be used to handle HTML-forms.
 
 ## With the event listener
@@ -412,7 +420,7 @@ class MyBlock extends LR.BlockComponent {
 }
 ```
 
-Then, if some other component will call the registered activity, it will be activated with an  `active` attribute, and the activation callback will be called.
+Then, if some other component will call the registered activity, it will be activated with an `active` attribute, and the activation callback will be called.
 
 JavaScript:
 
