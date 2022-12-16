@@ -3,6 +3,7 @@ lr-file-item > .inner {
   display: grid;
   grid-template-columns: min-content auto min-content min-content;
   gap: var(--gap-min);
+  height: calc(var(--gap-mid) * 2 + var(--ui-size));
   margin-bottom: calc(var(--gap-mid) / 2);
   padding: var(--gap-mid);
   overflow: hidden;
@@ -60,11 +61,19 @@ lr-file-item:hover .file-name-wrapper {
   color: var(--clr-txt);
 }
 
-lr-file-item .file-name {
+lr-file-item .file-name,
+lr-file-item .file-error {
   max-width: 100%;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+}
+
+lr-file-item .file-error {
+  display: none;
+  color: var(--clr-error);
+  font-size: 0.85em;
+  line-height: 130%;
 }
 
 lr-file-item button.remove-btn,
@@ -106,6 +115,10 @@ lr-file-item > .inner[finished] .badge {
 
 lr-file-item > .inner[failed] .badge {
   background-color: var(--clr-error);
+}
+
+lr-file-item > .inner[failed] .file-error {
+  display: block;
 }
 
 lr-file-item .badge lr-icon,
