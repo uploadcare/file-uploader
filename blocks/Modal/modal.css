@@ -52,7 +52,7 @@ lr-modal > .dialog {
   display: flex;
   flex-direction: column;
   width: fit-content;
-  max-width: calc(var(--modal-max-w) - var(--gap-mid) * 2);
+  max-width: min(calc(100% - var(--gap-mid) * 2), calc(var(--modal-max-w) - var(--gap-mid) * 2));
   min-height: var(--ui-size);
   max-height: calc(var(--modal-max-h) - var(--gap-mid) * 2);
   margin: auto;
@@ -66,10 +66,6 @@ lr-modal > .dialog {
 }
 
 @media only screen and (max-width: 430px), only screen and (max-height: 600px) {
-  lr-modal > .dialog,
-  lr-modal > .dialog > .content {
-    width: 100%;
-  }
   lr-modal > .dialog > .content {
     height: var(--modal-max-content-height);
   }

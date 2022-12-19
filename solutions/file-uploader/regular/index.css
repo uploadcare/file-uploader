@@ -1,6 +1,6 @@
 @import url('../../../blocks/themes/lr-basic/index.css');
-@media only screen and (min-width: 430px) {
-  lr-start-from {
-    width: calc(var(--modal-normal-w) - var(--gap-mid) * 2);
-  }
+
+lr-start-from,
+lr-upload-list {
+  width: min(calc(var(--modal-normal-w) - var(--gap-mid) * 2), calc(100vw - var(--gap-mid) * 2));
 }
