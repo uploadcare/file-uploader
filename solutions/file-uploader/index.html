@@ -427,8 +427,14 @@ To enable it and encapsulate all styles into separated scope, use the <code>css-
 <h2 id="with-the-data-output">With the data output</h2>
 <p>We provide the dedicated block for the data output purposes — <code>&lt;lr-data-output&gt;</code>. This Custom Element can be connected to some workflow context and provide you with convenient data access.</p>
 <p>Here is the code example:</p>
-<pre><code class="language-html"><span class="hljs-tag">&lt;<span class="hljs-name">lr-data-output</span> <span class="hljs-attr">console</span> <span class="hljs-attr">fire-events</span> <span class="hljs-attr">item-template</span>=<span class="hljs-string">&quot;&lt;img src=&#x27;https://ucarecdn.com/{{uuid}}/-/preview/&#x27; /&gt;&quot;</span>&gt;</span>
-<span class="hljs-tag">&lt;/<span class="hljs-name">lr-data-output</span>&gt;</span>
+<pre><code class="language-html"><span class="hljs-tag">&lt;<span class="hljs-name">template</span> <span class="hljs-attr">id</span>=<span class="hljs-string">&quot;output-template&quot;</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">h3</span>&gt;</span>Files uploaded:<span class="hljs-tag">&lt;/<span class="hljs-name">h3</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">div</span> <span class="hljs-attr">repeat</span>=<span class="hljs-string">&quot;filesData&quot;</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">lr-img</span> <span class="hljs-attr">width</span>=<span class="hljs-string">&quot;300&quot;</span> <span class="hljs-attr">set</span>=<span class="hljs-string">&quot;@uuid: uuid&quot;</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">lr-img</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">div</span>&gt;</span><span class="hljs-tag">&lt;<span class="hljs-name">a</span> <span class="hljs-attr">set</span>=<span class="hljs-string">&quot;@href: cdnUrl&quot;</span>&gt;</span>{{cdnUrl}}<span class="hljs-tag">&lt;/<span class="hljs-name">a</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span>
+  <span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-name">template</span>&gt;</span>
+<span class="hljs-tag">&lt;<span class="hljs-name">lr-data-output</span> <span class="hljs-attr">use-console</span> <span class="hljs-attr">use-event</span> <span class="hljs-attr">use-template</span>=<span class="hljs-string">&quot;#output-template&quot;</span>&gt;</span> <span class="hljs-tag">&lt;/<span class="hljs-name">lr-data-output</span>&gt;</span>
 </code></pre>
 <p>Let&#39;s walk through its attributes:</p>
 <ul>
