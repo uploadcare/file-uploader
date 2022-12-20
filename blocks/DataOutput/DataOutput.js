@@ -43,15 +43,17 @@ export class DataOutput extends UploaderBlock {
           );
         }
 
-        if (this.hasAttribute(this.dict.FORM_VALUE_ATTR)) {
-          if (!this._input) {
-            /** @private */
-            this._input = document.createElement('input');
-            this._input.type = 'text';
-            this._input.hidden = true;
-            this.appendChild(this._input);
+        if (this.hasAttribute(this.dict.FORM_INPUT_ATTR)) {
+          this.innerHTML = '';
+          let values = data.groupData ? [data.groupData.cdnUrl] : data.map((file) => file.cdnUrl);
+          for (let value of values) {
+            let input = document.createElement('input');
+            input.type = 'text';
+            input.name = this.getAttribute(this.dict.INPUT_NAME_ATTR) || this.ctxName;
+            input.hidden = true;
+            input.value = value;
+            this.appendChild(input);
           }
-          this._input.value = JSON.stringify(data);
         }
 
         if (this.hasAttribute(this.dict.CONSOLE_ATTR)) {
@@ -97,5 +99,6 @@ DataOutput.dict = {
   FIRE_EVENT_ATTR: 'use-event',
   CONSOLE_ATTR: 'use-console',
   GROUP_ATTR: 'use-group',
-  FORM_VALUE_ATTR: 'form-value',
+  FORM_INPUT_ATTR: 'use-input',
+  INPUT_NAME_ATTR: 'input-name',
 };

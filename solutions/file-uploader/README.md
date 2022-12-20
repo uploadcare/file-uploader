@@ -344,7 +344,8 @@ Let's walk through its attributes:
 - `use-event` — enables custom events (`data-output`) dispatching for the DOM element. These events contain all uploading data and could be processed at any level of your application.
 - `use-group` - create group from uploaded files, the same as `--cfg-group-output`.
 - `use-template` — uploading results could be rendered as a list of nested DOM elements. You can specify a simple template for that.
-- `form-value` — could be used to handle HTML-forms.
+- `use-input` — create input to be used inside HTML-form.
+- `input-name` — used together with `use-form`. Sets the input name. The context name will be used by default.
 
 ## With the event listener
 
