@@ -124,6 +124,7 @@ lr-upload-list .toolbar .done-btn {
 
 lr-upload-list .toolbar .add-more-btn {
   width: 100%;
+  height: calc(var(--ui-size) + var(--gap-mid) * 2);
 }
 
 lr-file-item {
