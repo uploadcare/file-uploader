@@ -73,6 +73,12 @@
   --clr-accent: hsl(var(--h-accent), var(--s-accent), var(--l-accent));
   --clr-accent-light: hsla(var(--h-accent), var(--s-accent), var(--l-accent), 30%);
   --clr-accent-lightest: hsla(var(--h-accent), var(--s-accent), var(--l-accent), 10%);
+  --clr-accent-light-opaque: hsl(var(--h-accent), var(--s-accent), calc(var(--l-accent) + 45% * var(--darkmode-minus)));
+  --clr-accent-lightest-opaque: hsl(
+    var(--h-accent),
+    var(--s-accent),
+    calc(var(--l-accent) + 47% * var(--darkmode-minus))
+  );
 
   --clr-confirm: hsl(var(--h-confirm), var(--s-confirm), var(--l-confirm));
 

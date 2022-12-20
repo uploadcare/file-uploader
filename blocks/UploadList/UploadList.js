@@ -233,4 +233,6 @@ UploadList.template = /* HTML */ `
       l10n="done"
     ></button>
   </div>
+
+  <lr-drop-area ghost></lr-drop-area>
 `;

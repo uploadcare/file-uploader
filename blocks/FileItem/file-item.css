@@ -4,7 +4,7 @@ lr-file-item > .inner {
   grid-template-columns: min-content auto min-content min-content;
   gap: var(--gap-min);
   height: calc(var(--gap-mid) * 2 + var(--ui-size));
-  margin-bottom: calc(var(--gap-mid) / 2);
+  margin-bottom: var(--gap-small);
   padding: var(--gap-mid);
   overflow: hidden;
   font-size: 0.95em;

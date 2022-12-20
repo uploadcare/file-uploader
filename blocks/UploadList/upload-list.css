@@ -29,3 +29,13 @@ lr-upload-list .toolbar {
 lr-upload-list .toolbar-spacer {
   flex: 1;
 }
+
+lr-upload-list lr-drop-area {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: calc(100% - var(--gap-mid) * 2);
+  height: calc(100% - var(--gap-mid) * 2);
+  margin: var(--gap-mid);
+  border-radius: var(--border-radius-element);
+}

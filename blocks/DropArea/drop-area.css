@@ -18,6 +18,7 @@ lr-drop-area::after {
 }
 
 lr-drop-area[ghost][drag-state='inactive'] {
+  display: none;
   opacity: 0;
 }
 
@@ -34,7 +35,7 @@ lr-drop-area[drag-state='active'],
 lr-drop-area[drag-state='near'],
 lr-drop-area[drag-state='over'],
 lr-drop-area:hover {
-  background-color: var(--clr-accent-lightest);
+  background: var(--clr-accent-lightest-opaque);
   border-color: var(--clr-accent-light);
 }
 
