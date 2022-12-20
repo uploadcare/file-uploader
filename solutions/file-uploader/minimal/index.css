@@ -40,6 +40,8 @@
   --l10n-choose-file: 'Choose file...';
   --l10n-choose-files: 'Choose files...';
 
+  --l10n-add-more: 'Add more';
+
   --l10n-upload-error: 'Upload error';
   --l10n-validation-error: 'Validation error';
   --l10n-no-files: 'No files selected';
@@ -67,6 +69,7 @@
   --cfg-confirm-upload: 0;
   --cfg-init-activity: 'start-from';
   --cfg-done-activity: 'upload-list';
+  --cfg-source-list: 'local';
 
   position: relative;
   display: block;
@@ -108,7 +111,19 @@ lr-upload-list .files {
 }
 
 lr-upload-list .toolbar {
+  display: block;
+  margin-top: var(--gap-small);
+  padding: 0;
+}
+
+lr-upload-list .toolbar .cancel-btn,
+lr-upload-list .toolbar .upload-btn,
+lr-upload-list .toolbar .done-btn {
   display: none;
+}
+
+lr-upload-list .toolbar .add-more-btn {
+  width: 100%;
 }
 
 lr-file-item {
