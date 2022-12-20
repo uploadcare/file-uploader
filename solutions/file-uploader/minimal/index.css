@@ -63,7 +63,7 @@
 
 :where(.lr-wgt-common),
 :host {
-  --cfg-multiple: 0;
+  --cfg-multiple: 1;
   --cfg-confirm-upload: 0;
   --cfg-init-activity: 'start-from';
   --cfg-done-activity: 'upload-list';
