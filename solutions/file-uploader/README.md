@@ -328,8 +328,14 @@ We provide the dedicated block for the data output purposes — `<lr-data-output
 Here is the code example:
 
 ```html
-<lr-data-output console fire-events item-template="<img src='https://ucarecdn.com/{{uuid}}/-/preview/' />">
-</lr-data-output>
+<template id="output-template">
+  <h3>Files uploaded:</h3>
+  <div repeat="filesData">
+    <lr-img width="300" set="@uuid: uuid"></lr-img>
+    <div><a set="@href: cdnUrl">{{cdnUrl}}</a></div>
+  </div>
+</template>
+<lr-data-output use-console use-event use-template="#output-template"> </lr-data-output>
 ```
 
 Let's walk through its attributes:
