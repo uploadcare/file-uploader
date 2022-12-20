@@ -65,7 +65,7 @@
   <script src="./test.js" type="module"></script>
 
   <form>
-    <lr-data-output ctx-name="TEST" use-console use-event form-value>
+    <lr-data-output ctx-name="TEST" use-console use-event use-input>
       <h2>Files uploaded:</h2>
       <div repeat="filesData">
         <div>{{uuid}}</div>
@@ -73,7 +73,8 @@
     </lr-data-output>
     <button>Submit</button>
   </form>
-</lr-live-html></col-css>
+</lr-live-html>
+</col-css>
       </main>
       <footer>© 2022 🦆</footer>
       <div class="arrow-top" onclick="scrollToTop()">

@@ -432,11 +432,12 @@ To enable it and encapsulate all styles into separated scope, use the <code>css-
 </code></pre>
 <p>Let&#39;s walk through its attributes:</p>
 <ul>
-<li><code>console</code> — enables browser console output without modifying the source code.</li>
-<li><code>fire-events</code> —  enables custom events (<code>data-output</code>) dispatching for the DOM element. These events contain all uploading data and could be processed at any level of your application.</li>
-<li><code>from</code> — data output could be connected to any field in the workflow context. You can specify the certain one. By default, it is a <code>*dataOutput</code>; you can skip this setting for the default uploading case.</li>
-<li><code>item-template</code> — uploading results could be rendered as a list of nested DOM elements. You can specify a simple template for that.</li>
-<li><code>form-value</code> — could be used to handle HTML-forms.</li>
+<li><code>use-console</code> — enables browser console output without modifying the source code.</li>
+<li><code>use-event</code> — enables custom events (<code>data-output</code>) dispatching for the DOM element. These events contain all uploading data and could be processed at any level of your application.</li>
+<li><code>use-group</code> - create group from uploaded files, the same as <code>--cfg-group-output</code>.</li>
+<li><code>use-template</code> — uploading results could be rendered as a list of nested DOM elements. You can specify a simple template for that.</li>
+<li><code>use-input</code> — create input to be used inside HTML-form.</li>
+<li><code>input-name</code> — used together with <code>use-form</code>. Sets the input name. The context name will be used by default.</li>
 </ul>
 <h2 id="with-the-event-listener">With the event listener</h2>
 <pre><code class="language-js"><span class="hljs-variable language_">window</span>.<span class="hljs-title function_">addEventListener</span>(<span class="hljs-string">&#x27;LR_DATA_OUTPUT&#x27;</span>, <span class="hljs-function">(<span class="hljs-params">e</span>) =&gt;</span> {
@@ -494,7 +495,7 @@ To enable it and encapsulate all styles into separated scope, use the <code>css-
   }
 }
 </code></pre>
-<p>Then, if some other component will call the registered activity, it will be activated with an  <code>active</code> attribute, and the activation callback will be called.</p>
+<p>Then, if some other component will call the registered activity, it will be activated with an <code>active</code> attribute, and the activation callback will be called.</p>
 <p>JavaScript:</p>
 <pre><code class="language-javascript"><span class="hljs-keyword">import</span> { <span class="hljs-variable constant_">LR</span> } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;@uploadcare/blocks&#x27;</span>;
 

@@ -86,9 +86,11 @@ outputElement.<span class="hljs-title function_">addEventListener</span>(<span c
 </code></pre>
 <h2 id="forms">Forms</h2>
 <p>It&#39;s possible to use <code>lr-data-output</code> inside the native <a target='_blank'  href="https://developer.mozilla.org/ru/docs/Web/HTML/Element/form">HTML forms</a>:</p>
-<pre><code class="language-html"><span class="hljs-tag">&lt;<span class="hljs-name">lr-data-output</span> <span class="hljs-attr">ctx-name</span>=<span class="hljs-string">&quot;&lt;MY_CTX&gt;&quot;</span> <span class="hljs-attr">form-value</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">lr-data-output</span>&gt;</span>
+<pre><code class="language-html"><span class="hljs-tag">&lt;<span class="hljs-name">form</span> <span class="hljs-attr">method</span>=<span class="hljs-string">&quot;post&quot;</span> <span class="hljs-attr">action</span>=<span class="hljs-string">&quot;/action&quot;</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">lr-data-output</span> <span class="hljs-attr">ctx-name</span>=<span class="hljs-string">&quot;&lt;MY_CTX&gt;&quot;</span> <span class="hljs-attr">use-input</span> <span class="hljs-attr">input-name</span>=<span class="hljs-string">&quot;my-file&quot;</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">lr-data-output</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-name">form</span>&gt;</span>
 </code></pre>
-<p>In this case, a <code>hidden</code> <code>input</code> element will be created, and whole uploading result will be provided as the text input value.</p>
+<p>In this case, a <code>hidden</code> <code>input</code> element will be created, and the URL of uploaded files or group result will be provided as the text input value.</p>
 <h2 id="output-data-rendering">Output data rendering</h2>
 <p>It&#39;s possible to render the output data using <a target='_blank'  href="https://github.com/symbiotejs/symbiote.js">Symbiote.js</a> features:</p>
 <pre><code class="language-html"><span class="hljs-tag">&lt;<span class="hljs-name">lr-data-output</span> <span class="hljs-attr">ctx-name</span>=<span class="hljs-string">&quot;&lt;MY_CTX&gt;&quot;</span>&gt;</span>

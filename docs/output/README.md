@@ -47,10 +47,12 @@ You also can enable browser console output for the setup testing:
 It's possible to use `lr-data-output` inside the native [HTML forms](https://developer.mozilla.org/ru/docs/Web/HTML/Element/form):
 
 ```html
-<lr-data-output ctx-name="<MY_CTX>" form-value></lr-data-output>
+<form method="post" action="/action">
+  <lr-data-output ctx-name="<MY_CTX>" use-input input-name="my-file"></lr-data-output>
+</form>
 ```
 
-In this case, a `hidden` `input` element will be created, and whole uploading result will be provided as the text input value.
+In this case, a `hidden` `input` element will be created, and the URL of uploaded files or group result will be provided as the text input value.
 
 ## Output data rendering
 
