@@ -3,7 +3,7 @@ lr-file-item > .inner {
   display: grid;
   grid-template-columns: min-content auto min-content min-content;
   gap: var(--gap-min);
-  height: calc(var(--gap-mid) * 2 + var(--ui-size));
+  align-items: center;
   margin-bottom: var(--gap-small);
   padding: var(--gap-mid);
   overflow: hidden;
@@ -61,8 +61,7 @@ lr-file-item:hover .file-name-wrapper {
   color: var(--clr-txt);
 }
 
-lr-file-item .file-name,
-lr-file-item .file-error {
+lr-file-item .file-name {
   max-width: 100%;
   overflow: hidden;
   white-space: nowrap;
