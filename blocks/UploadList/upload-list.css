@@ -26,6 +26,10 @@ lr-upload-list .toolbar {
   background-color: var(--clr-background-light);
 }
 
+lr-upload-list .toolbar .add-more-btn {
+  padding-left: 0.2em;
+}
+
 lr-upload-list .toolbar-spacer {
   flex: 1;
 }

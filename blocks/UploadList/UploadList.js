@@ -218,8 +218,9 @@ UploadList.template = /* HTML */ `
       type="button"
       class="add-more-btn secondary-btn"
       set="onclick: onAdd; @disabled: !addMoreBtnEnabled; @hidden: !addMoreBtnVisible"
-      l10n="add-more"
-    ></button>
+    >
+      <lr-icon name="add"></lr-icon><span l10n="add-more"></span>
+    </button>
     <button
       type="button"
       class="upload-btn primary-btn"
