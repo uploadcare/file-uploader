@@ -3,8 +3,7 @@ lr-camera-source {
   display: flex;
   align-items: center;
   justify-content: center;
-
-  /* height: var(--modal-content-height-fill, 100%); */
+  width: min(calc(var(--modal-max-w) - var(--gap-mid) * 2), calc(100vw - var(--gap-mid) * 2));
   max-height: var(--modal-max-content-height);
   padding: var(--gap-mid);
   padding-top: 0;
@@ -13,6 +12,7 @@ lr-camera-source {
 
 @media only screen and (max-width: 430px) {
   lr-camera-source {
+    width: calc(100vw - var(--gap-mid) * 2);
     height: var(--modal-content-height-fill, 100%);
   }
 }
@@ -40,6 +40,7 @@ lr-camera-source .toolbar {
 lr-camera-source .content {
   display: flex;
   justify-content: center;
+  width: 100%;
   height: 100%;
   overflow: hidden;
 }
