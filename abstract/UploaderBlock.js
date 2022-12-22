@@ -7,6 +7,7 @@ import { customUserAgent } from '../blocks/utils/userAgent.js';
 import { TypedCollection } from './TypedCollection.js';
 import { uploaderBlockCtx } from './CTX.js';
 import { EVENT_TYPES, EventData, EventManager } from './EventManager.js';
+import { Modal } from '../blocks/Modal/Modal.js';
 
 export class UploaderBlock extends ActivityBlock {
   ctxInit = uploaderBlockCtx();
@@ -42,9 +43,10 @@ export class UploaderBlock extends ActivityBlock {
   destroyCallback() {
     super.destroyCallback();
 
-    let registry = this.$['*ctxBlocksRegistry'];
-    if (registry?.size === 0) {
+    let blocksRegistry = this.$['*blocksRegistry'];
+    if (blocksRegistry.has(this)) {
       this.uploadCollection.unobserve(this._handleCollectionUpdate);
+      blocksRegistry.delete(this);
     }
   }
 
@@ -106,7 +108,7 @@ export class UploaderBlock extends ActivityBlock {
       this.set$({
         '*currentActivity': ActivityBlock.activities.UPLOAD_LIST,
       });
-      this.setForCtxTarget('lr-modal', '*modalActive', true);
+      this.setForCtxTarget(Modal.StateConsumerScope, '*modalActive', true);
     } else {
       if (this.sourceList?.length === 1) {
         let srcKey = this.sourceList[0];
@@ -125,14 +127,14 @@ export class UploaderBlock extends ActivityBlock {
           } else {
             this.$['*currentActivity'] = srcKey;
           }
-          this.setForCtxTarget('lr-modal', '*modalActive', true);
+          this.setForCtxTarget(Modal.StateConsumerScope, '*modalActive', true);
         }
       } else {
         // Multiple sources case:
         this.set$({
           '*currentActivity': ActivityBlock.activities.START_FROM,
         });
-        this.setForCtxTarget('lr-modal', '*modalActive', true);
+        this.setForCtxTarget(Modal.StateConsumerScope, '*modalActive', true);
       }
     }
   }
@@ -143,7 +145,7 @@ export class UploaderBlock extends ActivityBlock {
       '*history': this.doneActivity ? [this.doneActivity] : [],
     });
     if (!this.$['*currentActivity']) {
-      this.setForCtxTarget('lr-modal', '*modalActive', false);
+      this.setForCtxTarget(Modal.StateConsumerScope, '*modalActive', false);
     }
   }
 
