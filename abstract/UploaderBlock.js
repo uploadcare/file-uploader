@@ -63,7 +63,8 @@ export class UploaderBlock extends ActivityBlock {
     });
   }
 
-  openSystemDialog() {
+  /** @param {boolean} capture */
+  openSystemDialog(capture = false) {
     let accept = mergeFileTypes([
       this.getCssData('--cfg-accept'),
       ...(this.getCssData('--cfg-img-only') ? IMAGE_ACCEPT_LIST : []),
@@ -79,6 +80,9 @@ export class UploaderBlock extends ActivityBlock {
     this.fileInput.type = 'file';
     this.fileInput.multiple = !!this.getCssData('--cfg-multiple');
     this.fileInput.accept = accept;
+    if (capture) {
+      this.fileInput.capture = '';
+    }
     this.fileInput.dispatchEvent(new MouseEvent('click'));
     this.fileInput.onchange = () => {
       this.addFiles([...this.fileInput['files']]);
