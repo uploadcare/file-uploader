@@ -60,7 +60,7 @@ export class Block extends BaseComponent {
    */
   checkCtxTarget(targetTagName) {
     /** @type {Set} */
-    let registry = this.$['*ctxTargetsRegistry'];
+    let registry = this.$['*ctxBlocksRegistry'];
     return registry?.has(targetTagName);
   }
 
@@ -99,22 +99,22 @@ export class Block extends BaseComponent {
 
   initCallback() {
     let tagName = this.constructor['is'];
-    let registry = this.$['*ctxTargetsRegistry'];
+    let registry = this.$['*ctxBlocksRegistry'];
     let counter = registry.has(tagName) ? registry.get(tagName) + 1 : 1;
     registry.set(tagName, counter);
-    this.$['*ctxTargetsRegistry'] = registry;
+    this.$['*ctxBlocksRegistry'] = registry;
   }
 
   destroyCallback() {
     let tagName = this.constructor['is'];
-    let registry = this.$['*ctxTargetsRegistry'];
+    let registry = this.$['*ctxBlocksRegistry'];
     let newCount = registry.has(registry) ? registry.get(tagName) - 1 : 0;
     if (newCount === 0) {
       registry.delete(tagName);
     } else {
       registry.set(tagName, newCount);
     }
-    this.$['*ctxTargetsRegistry'] = registry;
+    this.$['*ctxBlocksRegistry'] = registry;
   }
 
   /**

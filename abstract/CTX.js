@@ -1,5 +1,5 @@
 export const blockCtx = () => ({
-  '*ctxTargetsRegistry': new Map(),
+  '*ctxBlocksRegistry': new Map(),
 });
 
 export const activityBlockCtx = () => ({
