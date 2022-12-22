@@ -434,14 +434,15 @@ FileItem.template = /* HTML */ `
     </div>
     <div class="file-name-wrapper">
       <span class="file-name" set="@title: itemName">{{itemName}}</span>
+      <span class="file-error">File is too large. Or some other really very long error text.</span>
     </div>
-    <button type="button" class="edit-btn" set="onclick: onEdit;">
+    <button type="button" class="edit-btn mini-btn" set="onclick: onEdit;">
       <lr-icon name="edit-file"></lr-icon>
     </button>
-    <button type="button" class="remove-btn" set="onclick: onRemove;">
+    <button type="button" class="remove-btn mini-btn" set="onclick: onRemove;">
       <lr-icon name="remove-file"></lr-icon>
     </button>
-    <button type="button" class="upload-btn" set="onclick: onUpload;">
+    <button type="button" class="upload-btn mini-btn" set="onclick: onUpload;">
       <lr-icon name="upload"></lr-icon>
     </button>
     <lr-progress-bar

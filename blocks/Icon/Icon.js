@@ -31,7 +31,7 @@ export class Icon extends Block {
         this.ref.svg.innerHTML = path;
       } else {
         this.removeAttribute('raw');
-        this.ref.svg.innerHTML = `<path d="${path}"></path>`;
+        this.ref.svg.innerHTML = `<path fill-rule="evenodd" d="${path}"></path>`;
       }
     });
 

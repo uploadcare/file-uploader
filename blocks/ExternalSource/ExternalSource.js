@@ -36,6 +36,7 @@ export class ExternalSource extends UploaderBlock {
         this.set$({
           '*activityCaption': `${externalSourceType?.[0].toUpperCase()}${externalSourceType?.slice(1)}`,
           '*activityIcon': externalSourceType,
+          '*modalHeaderHidden': false,
         });
 
         this.$.counter = 0;

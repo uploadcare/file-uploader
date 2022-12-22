@@ -47,6 +47,7 @@ export class CameraSource extends UploaderBlock {
     this.set$({
       '*activityCaption': this.l10n('caption-camera'),
       '*activityIcon': 'camera',
+      '*modalHeaderHidden': false,
     });
 
     if (canUsePermissionsApi()) {
@@ -243,17 +244,13 @@ CameraSource.template = /* HTML */ `
         l10n="camera-permissions-request"
       ></button>
     </div>
-  </div>
-
-  <div class="toolbar">
-    <button type="button" class="cancel-btn secondary-btn" set="onclick: onCancel" l10n="cancel"></button>
-    <lr-select set="$.options: cameraSelectOptions; @hidden: cameraSelectHidden; onchange: onCameraSelectChange">
+    <button type="button" class="shot-btn" set="onclick: onShot; @disabled: shotBtnDisabled">
+      <lr-icon name="camera"></lr-icon>
+    </button>
+    <lr-select
+      class="camera-select"
+      set="$.options: cameraSelectOptions; @hidden: cameraSelectHidden; onchange: onCameraSelectChange"
+    >
     </lr-select>
-    <button
-      type="button"
-      class="shot-btn primary-btn"
-      set="onclick: onShot; @disabled: shotBtnDisabled"
-      l10n="camera-shot"
-    ></button>
   </div>
 `;

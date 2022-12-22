@@ -68,6 +68,19 @@ export class DropArea extends UploaderBlock {
         this.addEventListener('click', this._onAreaClicked);
       }
     }
+
+    if (this.hasAttribute('big-icon')) {
+      let bigIcon = this.getAttribute('big-icon');
+      if (bigIcon === '' || bigIcon === 'true') {
+        // @private
+        this.innerHTML = /* HTML */ `
+          <div class="icon-container">
+            <lr-icon name="default"></lr-icon>
+            <lr-icon name="arrow-down"></lr-icon>
+          </div>
+        `;
+      }
+    }
   }
 
   destroyCallback() {

@@ -7,8 +7,8 @@ lr-icon {
 }
 
 lr-icon svg {
-  width: 1.2em;
-  height: 1.2em;
+  width: calc(var(--ui-size) / 2);
+  height: calc(var(--ui-size) / 2);
 }
 
 lr-icon:not([raw]) path {

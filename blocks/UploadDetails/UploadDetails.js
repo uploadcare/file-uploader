@@ -56,6 +56,8 @@ export class UploadDetails extends UploaderBlock {
       onActivate: () => {
         this.set$({
           '*activityCaption': this.l10n('caption-edit-file'),
+          '*activityIcon': null,
+          '*modalHeaderHidden': false,
         });
       },
       onDeactivate: () => {

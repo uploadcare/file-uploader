@@ -2,6 +2,7 @@ lr-modal {
   --modal-max-content-height: calc(var(--uploadcare-blocks-window-height, 100vh) - 4 * var(--gap-mid) - var(--ui-size));
   --modal-content-height-fill: var(--uploadcare-blocks-window-height, 100vh);
 }
+
 lr-modal[dialog-fallback] {
   position: fixed;
   top: 0px;
@@ -11,16 +12,20 @@ lr-modal[dialog-fallback] {
   justify-content: center;
   width: 100vw;
   height: 100vh;
-}
-
-lr-modal > :is(.dialog::backdrop),
-lr-modal[dialog-fallback] {
   background-color: var(--clr-curtain);
 }
 
-lr-modal[strokes] > :is(.dialog::backdrop),
 lr-modal[dialog-fallback][strokes] {
   background-image: var(--modal-backdrop-background-image);
+}
+
+@supports selector(.dialog::backdrop) {
+  lr-modal > .dialog::backdrop {
+    background-color: var(--clr-curtain);
+  }
+  lr-modal[strokes] > .dialog::backdrop {
+    background-image: var(--modal-backdrop-background-image);
+  }
 }
 
 lr-modal > .dialog:not([open]) {
@@ -32,43 +37,35 @@ lr-modal button.close-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: var(--ui-size);
-  height: var(--ui-size);
-  padding: 0;
-  color: var(--clr-txt-light);
-  background-color: transparent;
-  border: none;
-  cursor: pointer;
-  opacity: var(--opacity-normal);
-  transition: opacity var(--transition-duration) ease;
+  color: var(--clr-txt-mid);
 }
 
 lr-modal button.close-btn:hover {
-  opacity: var(--opacity-hover);
+  background-color: var(--clr-background);
 }
 
 lr-modal button.close-btn:active {
-  opacity: var(--opacity-active);
+  background-color: var(--clr-background-dark);
 }
 
 lr-modal > .dialog {
   display: flex;
   flex-direction: column;
-  width: 100%;
-  max-width: calc(var(--modal-max-w) - var(--gap-mid) * 2);
+  width: fit-content;
+  max-width: min(calc(100% - var(--gap-mid) * 2), calc(var(--modal-max-w) - var(--gap-mid) * 2));
   min-height: var(--ui-size);
   max-height: calc(var(--modal-max-h) - var(--gap-mid) * 2);
   margin: auto;
   padding: 0;
   overflow: hidden;
-  background-color: var(--clr-background);
+  background-color: var(--clr-background-light);
   border: 0;
   border-radius: var(--border-radius-frame);
   box-shadow: var(--modal-shadow);
-  transition: transform 0.4s;
+  transition: transform calc(var(--transition-duration) * 2);
 }
 
-@media only screen and (max-width: 600px), only screen and (max-height: 800px) {
+@media only screen and (max-width: 430px), only screen and (max-height: 600px) {
   lr-modal > .dialog > .content {
     height: var(--modal-max-content-height);
   }
@@ -85,11 +82,11 @@ lr-modal > .dialog > .content {
 lr-modal .heading {
   display: grid;
   grid-template-columns: min-content 1fr min-content;
+  gap: var(--gap-mid);
   padding: var(--gap-mid);
   color: var(--clr-txt-light);
   font-weight: 500;
   font-size: 1.1em;
   line-height: var(--ui-size);
   background-color: var(--clr-background-light);
-  border-bottom: var(--border-light);
 }

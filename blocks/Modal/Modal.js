@@ -92,7 +92,7 @@ Modal.template = /* HTML */ `
   <dialog ref="dialog" class="dialog">
     <div class="heading" set="@hidden: *modalHeaderHidden">
       <slot name="heading"></slot>
-      <button type="button" class="close-btn" set="onclick: closeClicked">
+      <button type="button" class="mini-btn close-btn" set="onclick: closeClicked">
         <lr-icon name="close"></lr-icon>
       </button>
     </div>

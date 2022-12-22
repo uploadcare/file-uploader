@@ -1,9 +1,10 @@
 lr-start-from {
   display: grid;
-  grid-template-columns: min-content auto;
-  gap: var(--gap-mid);
+  grid-template-columns: auto;
+  gap: var(--gap-max);
+  width: 100%;
 
   /* height: 100%; - this breaks inner modal layout height in Safari */
-  padding: var(--gap-mid);
+  padding: var(--gap-max);
   overflow-y: auto;
 }
