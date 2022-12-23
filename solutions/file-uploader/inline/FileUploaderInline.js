@@ -31,7 +31,6 @@ FileUploaderInline.template = /* HTML */ ` <lr-start-from>
   <lr-camera-source></lr-camera-source>
   <lr-url-source></lr-url-source>
   <lr-external-source></lr-external-source>
-  <lr-upload-details></lr-upload-details>
   <lr-confirmation-dialog></lr-confirmation-dialog>
   <lr-message-box></lr-message-box>
   <lr-progress-bar></lr-progress-bar>
