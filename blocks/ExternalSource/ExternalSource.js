@@ -42,7 +42,6 @@ export class ExternalSource extends UploaderBlock {
         this.$.counter = 0;
         this.mountIframe();
       },
-      onClose: () => this.historyBack(),
     });
     this.sub('*currentActivity', (val) => {
       if (val !== this.activityType) {

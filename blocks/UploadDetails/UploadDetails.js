@@ -63,7 +63,6 @@ export class UploadDetails extends UploaderBlock {
       onDeactivate: () => {
         this.ref.filePreview.clear();
       },
-      onClose: () => this.historyBack(),
     });
     /** @type {import('../FilePreview/FilePreview.js').FilePreview} */
     this.sub('*focusedEntry', (/** @type {import('../../abstract/TypedData.js').TypedData} */ entry) => {

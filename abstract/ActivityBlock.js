@@ -38,7 +38,6 @@ export class ActivityBlock extends Block {
           /** @private */
           this[ACTIVE_PROP] = true;
           this.setAttribute(ACTIVE_ATTR, '');
-          this.setForCtxTarget(Modal.StateConsumerScope, '*modalCloseCallback', actDesc?.modalCloseCallback);
           actDesc?.activateCallback?.();
           // console.log(`Activity "${this.activityType}" activated`);
 
@@ -80,10 +79,9 @@ export class ActivityBlock extends Block {
    * @param {Object} [options]
    * @param {() => void} [options.onActivate]
    * @param {() => void} [options.onDeactivate]
-   * @param {() => void} [options.onClose]
    */
   registerActivity(name, options) {
-    const { onActivate, onDeactivate, onClose } = options;
+    const { onActivate, onDeactivate } = options;
     if (!ActivityBlock._activityRegistry) {
       ActivityBlock._activityRegistry = Object.create(null);
     }
@@ -91,7 +89,6 @@ export class ActivityBlock extends Block {
     ActivityBlock._activityRegistry[actKey] = {
       activateCallback: onActivate,
       deactivateCallback: onDeactivate,
-      modalCloseCallback: onClose,
     };
   }
 

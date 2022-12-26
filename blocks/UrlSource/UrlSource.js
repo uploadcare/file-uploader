@@ -33,7 +33,6 @@ export class UrlSource extends UploaderBlock {
           '*modalHeaderHidden': false,
         });
       },
-      onClose: () => this.historyBack(),
     });
   }
 }

@@ -66,11 +66,6 @@ export class CameraSource extends UploaderBlock {
   };
 
   /** @private */
-  _onClose = () => {
-    this.historyBack();
-  };
-
-  /** @private */
   _handlePermissionsChange = () => {
     this._capture();
   };
@@ -202,7 +197,6 @@ export class CameraSource extends UploaderBlock {
     this.registerActivity(this.activityType, {
       onActivate: this._onActivate,
       onDeactivate: this._onDeactivate,
-      onClose: this._onClose,
     });
 
     this.sub('--cfg-camera-mirror', (val) => {

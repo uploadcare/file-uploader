@@ -4,10 +4,6 @@ export class Modal extends Block {
   static StateConsumerScope = 'modal';
 
   _handleClose = () => {
-    if (this.$['*modalCloseCallback']) {
-      this.$['*modalCloseCallback']();
-      return;
-    }
     this.set$({
       '*modalActive': false,
       '*currentActivity': '',
@@ -23,7 +19,6 @@ export class Modal extends Block {
     ...this.ctxInit,
     '*modalActive': false,
     '*modalHeaderHidden': false,
-    '*modalCloseCallback': null,
     isOpen: false,
     closeClicked: this._handleClose,
   };
@@ -94,9 +89,6 @@ Modal.template = /* HTML */ `
   <dialog ref="dialog" class="dialog">
     <div class="heading" set="@hidden: *modalHeaderHidden">
       <slot name="heading"></slot>
-      <button type="button" class="mini-btn close-btn" set="onclick: closeClicked">
-        <lr-icon name="close"></lr-icon>
-      </button>
     </div>
     <div class="content">
       <slot></slot>
