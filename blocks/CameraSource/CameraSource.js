@@ -209,20 +209,25 @@ export class CameraSource extends UploaderBlock {
       this.$.videoTransformCss = val ? 'scaleX(-1)' : null;
     });
 
-    let deviceList = await navigator.mediaDevices.enumerateDevices();
-    let cameraSelectOptions = deviceList
-      .filter((info) => {
-        return info.kind === 'videoinput';
-      })
-      .map((info, idx) => {
-        return {
-          text: info.label.trim() || `${this.l10n('caption-camera')} ${idx + 1}`,
-          value: info.deviceId,
-        };
-      });
-    if (cameraSelectOptions.length > 1) {
-      this.$.cameraSelectOptions = cameraSelectOptions;
-      this.$.cameraSelectHidden = false;
+    try {
+      let deviceList = await navigator.mediaDevices.enumerateDevices();
+      let cameraSelectOptions = deviceList
+        .filter((info) => {
+          return info.kind === 'videoinput';
+        })
+        .map((info, idx) => {
+          return {
+            text: info.label.trim() || `${this.l10n('caption-camera')} ${idx + 1}`,
+            value: info.deviceId,
+          };
+        });
+      if (cameraSelectOptions.length > 1) {
+        this.$.cameraSelectOptions = cameraSelectOptions;
+        this.$.cameraSelectHidden = false;
+      }
+    } catch (err) {
+      // mediaDevices isn't available for HTTP
+      // TODO: handle this case
     }
   }
 }

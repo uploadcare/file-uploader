@@ -9,12 +9,13 @@ lr-upload-list {
 }
 
 lr-upload-list .no-files {
-  height: var(--file-item-height);
+  height: var(--ui-size);
   padding: var(--gap-max);
 }
 
 lr-upload-list .files {
   display: block;
+  min-height: var(--ui-size);
   padding: 0 var(--gap-mid);
   overflow: auto;
 }
