@@ -76,19 +76,3 @@ lr-modal > .dialog {
 lr-modal .dialog:not([open]) {
   transform: translateY(20px);
 }
-
-lr-modal > .dialog > .content {
-  display: contents;
-}
-
-lr-modal .heading {
-  display: grid;
-  grid-template-columns: min-content 1fr min-content;
-  gap: var(--gap-mid);
-  padding: var(--gap-mid);
-  color: var(--clr-txt-light);
-  font-weight: 500;
-  font-size: 1.1em;
-  line-height: var(--ui-size);
-  background-color: var(--clr-background-light);
-}

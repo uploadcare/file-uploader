@@ -154,7 +154,6 @@ export class UploadList extends UploaderBlock {
         this.set$({
           '*activityCaption': this.l10n('selected'),
           '*activityIcon': '',
-          '*modalHeaderHidden': false,
         });
       },
     });

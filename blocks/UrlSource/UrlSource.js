@@ -30,7 +30,6 @@ export class UrlSource extends UploaderBlock {
         this.set$({
           '*activityCaption': this.l10n('caption-from-url'),
           '*activityIcon': 'url',
-          '*modalHeaderHidden': false,
         });
       },
     });

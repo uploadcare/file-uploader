@@ -41,18 +41,15 @@ export class ConfirmationDialog extends ActivityBlock {
         return;
       }
       this.set$({
-        '*modalHeaderHidden': true,
         '*currentActivity': ActivityBlock.activities.CONFIRMATION,
         '*activityCaption': this.l10n(cfn.captionL10nStr),
         messageTxt: this.l10n(cfn.messageL10Str),
         confirmBtnTxt: this.l10n(cfn.confirmL10nStr),
         denyBtnTxt: this.l10n(cfn.denyL10nStr),
         onDeny: () => {
-          this.$['*modalHeaderHidden'] = false;
           cfn.denyAction();
         },
         onConfirm: () => {
-          this.$['*modalHeaderHidden'] = false;
           cfn.confirmAction();
         },
       });

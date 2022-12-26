@@ -18,7 +18,6 @@ export class Modal extends Block {
   init$ = {
     ...this.ctxInit,
     '*modalActive': false,
-    '*modalHeaderHidden': false,
     isOpen: false,
     closeClicked: this._handleClose,
   };
@@ -87,11 +86,6 @@ export class Modal extends Block {
 
 Modal.template = /* HTML */ `
   <dialog ref="dialog" class="dialog">
-    <div class="heading" set="@hidden: *modalHeaderHidden">
-      <slot name="heading"></slot>
-    </div>
-    <div class="content">
-      <slot></slot>
-    </div>
+    <slot></slot>
   </dialog>
 `;

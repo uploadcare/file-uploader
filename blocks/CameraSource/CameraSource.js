@@ -47,7 +47,6 @@ export class CameraSource extends UploaderBlock {
     this.set$({
       '*activityCaption': this.l10n('caption-camera'),
       '*activityIcon': 'camera',
-      '*modalHeaderHidden': false,
     });
 
     if (canUsePermissionsApi()) {
