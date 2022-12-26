@@ -80,7 +80,7 @@ export class ActivityBlock extends Block {
    * @param {() => void} [options.onActivate]
    * @param {() => void} [options.onDeactivate]
    */
-  registerActivity(name, options) {
+  registerActivity(name, options = {}) {
     const { onActivate, onDeactivate } = options;
     if (!ActivityBlock._activityRegistry) {
       ActivityBlock._activityRegistry = Object.create(null);

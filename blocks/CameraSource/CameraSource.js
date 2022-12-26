@@ -226,6 +226,10 @@ export class CameraSource extends UploaderBlock {
 }
 
 CameraSource.template = /* HTML */ `
+  <lr-activity-header>
+    <lr-activity-icon></lr-activity-icon>
+    <lr-activity-caption></lr-activity-caption>
+  </lr-activity-header>
   <div class="content">
     <video
       autoplay

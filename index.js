@@ -33,6 +33,7 @@ export { Tabs } from './blocks/Tabs/Tabs.js';
 export { DataOutput } from './blocks/DataOutput/DataOutput.js';
 export { ActivityCaption } from './blocks/ActivityCaption/ActivityCaption.js';
 export { ActivityIcon } from './blocks/ActivityIcon/ActivityIcon.js';
+export { ActivityHeader } from './blocks/ActivityHeader/ActivityHeader.js';
 export { Select } from './blocks/Select/Select.js';
 export { Video } from './blocks/Video/Video.js';
 export { ShadowWrapper } from './blocks/ShadowWrapper/ShadowWrapper.js';

@@ -6,16 +6,6 @@ export class StartFrom extends ActivityBlock {
 
   initCallback() {
     super.initCallback();
-    this.registerActivity(this.activityType, {
-      onActivate: () => {
-        this.add$(
-          {
-            '*activityCaption': this.l10n('select-file-source'),
-            '*activityIcon': '',
-          },
-          true
-        );
-      },
-    });
+    this.registerActivity(this.activityType);
   }
 }

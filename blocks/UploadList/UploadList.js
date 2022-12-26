@@ -196,6 +196,10 @@ export class UploadList extends UploaderBlock {
 }
 
 UploadList.template = /* HTML */ `
+  <lr-activity-header>
+    <lr-activity-caption></lr-activity-caption>
+  </lr-activity-header>
+
   <div class="no-files" set="@hidden: hasFiles">
     <slot name="empty"><span l10n="no-files"></span></slot>
   </div>

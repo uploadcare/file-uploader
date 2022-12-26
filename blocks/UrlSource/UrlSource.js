@@ -37,7 +37,17 @@ export class UrlSource extends UploaderBlock {
 }
 
 UrlSource.template = /* HTML */ `
-  <input placeholder="https://..." .url-input type="text" ref="input" set="oninput: onInput" />
-  <button type="button" class="url-upload-btn primary-btn" set="onclick: onUpload; @disabled: importDisabled"></button>
-  <button type="button" class="cancel-btn secondary-btn" set="onclick: onCancel" l10n="cancel"></button>
+  <lr-activity-header>
+    <lr-activity-icon></lr-activity-icon>
+    <lr-activity-caption></lr-activity-caption>
+  </lr-activity-header>
+  <div class="content">
+    <input placeholder="https://..." .url-input type="text" ref="input" set="oninput: onInput" />
+    <button
+      type="button"
+      class="url-upload-btn primary-btn"
+      set="onclick: onUpload; @disabled: importDisabled"
+    ></button>
+    <button type="button" class="cancel-btn secondary-btn" set="onclick: onCancel" l10n="cancel"></button>
+  </div>
 `;
