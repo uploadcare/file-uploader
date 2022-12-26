@@ -1,6 +1,7 @@
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 
 export class StartFrom extends ActivityBlock {
+  historyTracked = true;
   activityType = 'start-from';
 
   initCallback() {

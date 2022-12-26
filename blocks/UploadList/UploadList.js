@@ -1,11 +1,11 @@
 import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
-import { UiConfirmation } from '../ConfirmationDialog/ConfirmationDialog.js';
 import { UiMessage } from '../MessageBox/MessageBox.js';
 import { EVENT_TYPES, EventData, EventManager } from '../../abstract/EventManager.js';
 import { debounce } from '../utils/debounce.js';
 
 export class UploadList extends UploaderBlock {
+  historyTracked = true;
   activityType = ActivityBlock.activities.UPLOAD_LIST;
 
   init$ = {
@@ -29,25 +29,17 @@ export class UploadList extends UploaderBlock {
       this.cancelFlow();
     },
     onCancel: () => {
-      let cfn = new UiConfirmation();
-      cfn.confirmAction = () => {
-        let data = this.getOutputData((dataItem) => {
-          return !!dataItem.getValue('uuid');
-        });
-        EventManager.emit(
-          new EventData({
-            type: EVENT_TYPES.REMOVE,
-            ctx: this.ctxName,
-            data,
-          })
-        );
-        this.uploadCollection.clearAll();
-        this.historyBack();
-      };
-      cfn.denyAction = () => {
-        this.historyBack();
-      };
-      this.$['*confirmation'] = cfn;
+      let data = this.getOutputData((dataItem) => {
+        return !!dataItem.getValue('uuid');
+      });
+      EventManager.emit(
+        new EventData({
+          type: EVENT_TYPES.REMOVE,
+          ctx: this.ctxName,
+          data,
+        })
+      );
+      this.uploadCollection.clearAll();
     },
   };
 
@@ -193,7 +185,7 @@ export class UploadList extends UploaderBlock {
       });
 
       if (list?.length === 0 && !this.getCssData('--cfg-show-empty-list')) {
-        this.cancelFlow();
+        this.historyBack();
       }
     });
   }
