@@ -136,7 +136,6 @@ Block components can be used separately or in combinations. You can combine them
   <lr-camera-source></lr-camera-source>
   <lr-url-source></lr-url-source>
   <lr-external-source></lr-external-source>
-  <lr-upload-details></lr-upload-details>
   <lr-confirmation-dialog></lr-confirmation-dialog>
   <lr-cloud-image-editor></lr-cloud-image-editor>
 </lr-modal>

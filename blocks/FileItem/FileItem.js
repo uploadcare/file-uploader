@@ -40,20 +40,24 @@ export class FileItem extends UploaderBlock {
     progressValue: 0,
     progressVisible: false,
     progressUnknown: false,
-    notImage: true,
     badgeIcon: '',
     isFinished: false,
     isFailed: false,
     isUploading: false,
     isFocused: false,
+    isEditable: false,
     state: FileItemState.IDLE,
     '*uploadTrigger': null,
 
     onEdit: () => {
       this.set$({
         '*focusedEntry': this._entry,
-        '*currentActivity': ActivityBlock.activities.DETAILS,
       });
+      if (this.findBlockInCtx((b) => b.activityType === ActivityBlock.activities.DETAILS)) {
+        this.$['*currentActivity'] = ActivityBlock.activities.DETAILS;
+      } else {
+        this.$['*currentActivity'] = ActivityBlock.activities.CLOUD_IMG_EDIT;
+      }
     },
     onRemove: () => {
       let entryUuid = this._entry.getValue('uuid');
@@ -242,6 +246,7 @@ export class FileItem extends UploaderBlock {
     });
 
     this._subEntry('isImage', (isImage) => {
+      this.$.isEditable = isImage;
       let imagesOnly = this.getCssData('--cfg-img-only');
       if (entry.getValue('externalUrl') && !entry.getValue('uuid') && imagesOnly && !isImage) {
         // don't validate not uploaded files with external url, cause we don't know if they're images or not
@@ -436,7 +441,7 @@ FileItem.template = /* HTML */ `
       <span class="file-name" set="@title: itemName">{{itemName}}</span>
       <span class="file-error">File is too large. Or some other really very long error text.</span>
     </div>
-    <button type="button" class="edit-btn mini-btn" set="onclick: onEdit;">
+    <button type="button" class="edit-btn mini-btn" set="onclick: onEdit; @hidden: !isEditable">
       <lr-icon name="edit-file"></lr-icon>
     </button>
     <button type="button" class="remove-btn mini-btn" set="onclick: onRemove;">

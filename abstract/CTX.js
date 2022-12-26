@@ -1,5 +1,6 @@
 export const blockCtx = () => ({
-  '*ctxTargetsRegistry': new Map(),
+  /** @type {Set<import('./Block').Block>} */
+  '*blocksRegistry': new Set(),
 });
 
 export const activityBlockCtx = () => ({

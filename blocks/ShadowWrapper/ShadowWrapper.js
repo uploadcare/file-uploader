@@ -5,10 +5,13 @@ const CSS_ATTRIBUTE = 'css-src';
 export class ShadowWrapper extends Block {
   pauseRender = true;
 
-  shadowReadyCallback() {}
+  shadowReadyCallback() {
+    this.removeAttribute('hidden');
+  }
 
   initCallback() {
     super.initCallback();
+    this.setAttribute('hidden', '');
     let href = this.getAttribute(CSS_ATTRIBUTE);
     if (href) {
       this.renderShadow = true;

@@ -1,6 +1,8 @@
 import { Block } from '../../abstract/Block.js';
 
 export class Modal extends Block {
+  static StateConsumerScope = 'modal';
+
   _handleClose = () => {
     if (this.$['*modalCloseCallback']) {
       this.$['*modalCloseCallback']();

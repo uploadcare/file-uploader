@@ -2,6 +2,7 @@ import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 import { DropzoneState, addDropzone } from './addDropzone.js';
 import { fileIsImage } from '../../utils/fileTypes.js';
+import { Modal } from '../Modal/Modal.js';
 
 export class DropArea extends UploaderBlock {
   init$ = {
@@ -43,8 +44,7 @@ export class DropArea extends UploaderBlock {
           this.set$({
             '*currentActivity': ActivityBlock.activities.UPLOAD_LIST,
           });
-          // @ts-ignore
-          this.setForCtxTarget('lr-modal', '*modalActive', true);
+          this.setForCtxTarget(Modal.StateConsumerScope, '*modalActive', true);
         }
       },
     });

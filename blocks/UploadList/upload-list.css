@@ -1,6 +1,7 @@
 lr-upload-list {
   display: flex;
   flex-direction: column;
+  width: min(calc(var(--modal-normal-w) - var(--gap-mid) * 2), calc(100vw - var(--gap-mid) * 2));
   max-height: var(--modal-max-content-height);
   overflow: hidden;
   background-color: var(--clr-background-light);

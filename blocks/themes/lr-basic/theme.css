@@ -178,7 +178,7 @@
 @media only screen and (max-width: 430px) {
   :where(.lr-wgt-theme, .lr-wgt-common),
   :host {
-    --modal-max-w: 100%;
-    --modal-max-h: 100%;
+    --modal-max-w: 100vw;
+    --modal-max-h: var(--uploadcare-blocks-window-height);
   }
 }

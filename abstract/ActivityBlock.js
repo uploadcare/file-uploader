@@ -1,3 +1,4 @@
+import { Modal } from '../blocks/Modal/Modal.js';
 import { debounce } from '../blocks/utils/debounce.js';
 import { Block } from './Block.js';
 import { activityBlockCtx } from './CTX.js';
@@ -36,7 +37,7 @@ export class ActivityBlock extends Block {
           /** @private */
           this[ACTIVE_PROP] = true;
           this.setAttribute(ACTIVE_ATTR, '');
-          this.setForCtxTarget('lr-modal', '*modalCloseCallback', actDesc?.modalCloseCallback);
+          this.setForCtxTarget(Modal.StateConsumerScope, '*modalCloseCallback', actDesc?.modalCloseCallback);
           actDesc?.activateCallback?.();
           // console.log(`Activity "${this.activityType}" activated`);
 
@@ -114,7 +115,7 @@ export class ActivityBlock extends Block {
       this.$['*currentActivity'] = prevActivity;
       this.$['*history'] = history;
       if (!prevActivity) {
-        this.setForCtxTarget('lr-modal', '*modalActive', false);
+        this.setForCtxTarget(Modal.StateConsumerScope, '*modalActive', false);
       }
     }
   }
