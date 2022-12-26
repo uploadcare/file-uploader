@@ -6,8 +6,6 @@ FileUploaderRegular.template = /* HTML */ `
   <lr-simple-btn></lr-simple-btn>
 
   <lr-modal strokes block-body-scrolling>
-    <lr-activity-icon slot="heading"></lr-activity-icon>
-    <lr-activity-caption slot="heading"></lr-activity-caption>
     <lr-start-from>
       <lr-drop-area big-icon clickable></lr-drop-area>
       <lr-source-list wrap></lr-source-list>

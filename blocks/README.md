@@ -126,8 +126,6 @@ Block components can be used separately or in combinations. You can combine them
 <lr-simple-btn></lr-simple-btn>
 
 <lr-modal strokes>
-  <lr-activity-icon slot="heading"></lr-activity-icon>
-  <lr-activity-caption slot="heading"></lr-activity-caption>
   <lr-start-from>
     <lr-source-list wrap></lr-source-list>
     <lr-drop-area></lr-drop-area>
