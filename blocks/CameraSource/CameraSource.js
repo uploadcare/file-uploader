@@ -222,9 +222,14 @@ export class CameraSource extends UploaderBlock {
 
 CameraSource.template = /* HTML */ `
   <lr-activity-header>
-    <lr-icon name="camera"></lr-icon>
-    <span l10n="caption-camera"></span>
     <button type="button" class="mini-btn close-btn" set="onclick: *historyBack">
+      <lr-icon name="back"></lr-icon>
+    </button>
+    <div>
+      <lr-icon name="camera"></lr-icon>
+      <span l10n="caption-camera"></span>
+    </div>
+    <button type="button" class="mini-btn close-btn" set="onclick: *closeModal">
       <lr-icon name="close"></lr-icon>
     </button>
   </lr-activity-header>

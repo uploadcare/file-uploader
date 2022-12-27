@@ -60,8 +60,11 @@ export class ConfirmationDialog extends ActivityBlock {
 
 ConfirmationDialog.template = /* HTML */ `
   <lr-activity-header>
-    <span>{{activityCaption}}</span>
     <button type="button" class="mini-btn close-btn" set="onclick: *historyBack">
+      <lr-icon name="back"></lr-icon>
+    </button>
+    <span>{{activityCaption}}</span>
+    <button type="button" class="mini-btn close-btn" set="onclick: *closeModal">
       <lr-icon name="close"></lr-icon>
     </button>
   </lr-activity-header>

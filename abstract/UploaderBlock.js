@@ -10,7 +10,7 @@ import { EVENT_TYPES, EventData, EventManager } from './EventManager.js';
 import { Modal } from '../blocks/Modal/Modal.js';
 
 export class UploaderBlock extends ActivityBlock {
-  ctxInit = uploaderBlockCtx();
+  ctxInit = uploaderBlockCtx(this);
 
   /** @private */
   __initialUploadMetadata = null;

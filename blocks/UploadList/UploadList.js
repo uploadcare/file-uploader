@@ -209,7 +209,7 @@ export class UploadList extends UploaderBlock {
 UploadList.template = /* HTML */ `
   <lr-activity-header>
     <span>{{headerText}}</span>
-    <button type="button" class="mini-btn close-btn" set="onclick: *historyBack">
+    <button type="button" class="mini-btn close-btn" set="onclick: *closeModal">
       <lr-icon name="close"></lr-icon>
     </button>
   </lr-activity-header>
