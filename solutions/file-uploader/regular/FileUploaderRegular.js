@@ -7,7 +7,7 @@ FileUploaderRegular.template = /* HTML */ `
 
   <lr-modal strokes block-body-scrolling>
     <lr-start-from>
-      <lr-drop-area big-icon clickable></lr-drop-area>
+      <lr-drop-area with-icon clickable></lr-drop-area>
       <lr-source-list wrap></lr-source-list>
     </lr-start-from>
     <lr-upload-list></lr-upload-list>
