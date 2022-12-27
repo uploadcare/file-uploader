@@ -36,6 +36,7 @@ export class FileItem extends UploaderBlock {
     ...this.ctxInit,
     uid: '',
     itemName: '',
+    errorText: '',
     thumbUrl: '',
     progressValue: 0,
     progressVisible: false,
@@ -197,21 +198,12 @@ export class FileItem extends UploaderBlock {
 
     this._subEntry('validationErrorMsg', (validationErrorMsg) => {
       this._debouncedCalculateState();
-      if (!validationErrorMsg) {
-        return;
-      }
-      let caption =
-        this.l10n('validation-error') + ': ' + (entry.getValue('file')?.name || entry.getValue('externalUrl'));
-      this._showMessage('error', caption, validationErrorMsg);
+      this.$.errorText = validationErrorMsg;
     });
 
     this._subEntry('uploadError', (uploadError) => {
       this._debouncedCalculateState();
-      if (!uploadError) {
-        return;
-      }
-      let caption = this.l10n('upload-error') + ': ' + (entry.getValue('file')?.name || entry.getValue('externalUrl'));
-      this._showMessage('error', caption, uploadError.message);
+      this.$.errorText = uploadError?.message;
     });
 
     this._subEntry('isUploading', () => {
@@ -439,7 +431,7 @@ FileItem.template = /* HTML */ `
     </div>
     <div class="file-name-wrapper">
       <span class="file-name" set="@title: itemName">{{itemName}}</span>
-      <span class="file-error">File is too large. Or some other really very long error text.</span>
+      <span class="file-error" set="@hidden: !errorText">{{errorText}}</span>
     </div>
     <button type="button" class="edit-btn mini-btn" set="onclick: onEdit; @hidden: !isEditable">
       <lr-icon name="edit-file"></lr-icon>
