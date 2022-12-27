@@ -4,8 +4,6 @@ If our pre-built [uploader solution](/solutions/file-uploader/) isn't enough for
 
 ## Blocks list
 
-- [ActivityCaption](/blocks/ActivityCaption/) — shows heading text for the current activity
-- [ActivityIcon](/blocks/ActivityIcon/) — shows actual icon for the current activity
 - [CameraSource](/blocks/CameraSource/) — getting image for upload from the device camera
 - [CloudImageEditor](/blocks/CloudImageEditor/) — image editing via Uploadcare cloud functions
 - [Color](/blocks/Color/) — simple wrapper for the native color selector in browser
