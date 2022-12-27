@@ -4,10 +4,7 @@ export class Modal extends Block {
   static StateConsumerScope = 'modal';
 
   _handleClose = () => {
-    this.set$({
-      '*modalActive': false,
-      '*currentActivity': '',
-    });
+    this.$['*historyBack']?.();
   };
 
   _handleClick = (e) => {

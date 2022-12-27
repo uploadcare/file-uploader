@@ -35,6 +35,7 @@ export class ActivityBlock extends Block {
           actDesc?.deactivateCallback?.();
           // console.log(`Activity "${this.activityType}" deactivated`);
         } else if (this.activityType === val && !this[ACTIVE_PROP]) {
+          this.$['*historyBack'] = this.historyBack.bind(this);
           /** @private */
           this[ACTIVE_PROP] = true;
           this.setAttribute(ACTIVE_ATTR, '');
