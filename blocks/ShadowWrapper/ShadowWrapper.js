@@ -5,9 +5,7 @@ const CSS_ATTRIBUTE = 'css-src';
 export class ShadowWrapper extends Block {
   pauseRender = true;
 
-  shadowReadyCallback() {
-    this.removeAttribute('hidden');
-  }
+  shadowReadyCallback() {}
 
   initCallback() {
     super.initCallback();
@@ -28,6 +26,7 @@ export class ShadowWrapper extends Block {
         window.requestAnimationFrame(() => {
           this.render();
           window.setTimeout(() => {
+            this.removeAttribute('hidden');
             this.shadowReadyCallback();
           });
         });
@@ -35,6 +34,7 @@ export class ShadowWrapper extends Block {
       this.shadowRoot.appendChild(link);
     } else {
       this.render();
+      this.removeAttribute('hidden');
       this.shadowReadyCallback();
     }
   }

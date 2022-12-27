@@ -53,7 +53,7 @@ lr-modal > .dialog {
   flex-direction: column;
 
   /* there was `fit-content` but it doesn't reduce width after activity change */
-  width: min-content;
+  width: max-content;
   max-width: min(calc(100% - var(--gap-mid) * 2), calc(var(--modal-max-w) - var(--gap-mid) * 2));
   min-height: var(--ui-size);
   max-height: calc(var(--modal-max-h) - var(--gap-mid) * 2);
@@ -75,20 +75,4 @@ lr-modal > .dialog {
 
 lr-modal .dialog:not([open]) {
   transform: translateY(20px);
-}
-
-lr-modal > .dialog > .content {
-  display: contents;
-}
-
-lr-modal .heading {
-  display: grid;
-  grid-template-columns: min-content 1fr min-content;
-  gap: var(--gap-mid);
-  padding: var(--gap-mid);
-  color: var(--clr-txt-light);
-  font-weight: 500;
-  font-size: 1.1em;
-  line-height: var(--ui-size);
-  background-color: var(--clr-background-light);
 }

@@ -1,0 +1,17 @@
+lr-activity-header {
+  display: flex;
+  gap: var(--gap-mid);
+  justify-content: space-between;
+  padding: var(--gap-mid);
+  color: var(--clr-txt-light);
+  color: var(--clr-txt);
+  font-weight: 500;
+  font-size: 1.1em;
+  font-size: 1em;
+  line-height: var(--ui-size);
+  background-color: var(--clr-background-light);
+}
+
+lr-activity-header lr-icon {
+  height: var(--ui-size);
+}

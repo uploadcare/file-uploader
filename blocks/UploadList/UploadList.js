@@ -149,15 +149,7 @@ export class UploadList extends UploaderBlock {
   initCallback() {
     super.initCallback();
 
-    this.registerActivity(this.activityType, {
-      onActivate: () => {
-        this.set$({
-          '*activityCaption': this.l10n('selected'),
-          '*activityIcon': '',
-          '*modalHeaderHidden': false,
-        });
-      },
-    });
+    this.registerActivity(this.activityType);
 
     this.sub('--cfg-multiple', this._debouncedHandleCollectionUpdate);
     this.sub('--cfg-multiple-min', this._debouncedHandleCollectionUpdate);
@@ -197,6 +189,13 @@ export class UploadList extends UploaderBlock {
 }
 
 UploadList.template = /* HTML */ `
+  <lr-activity-header>
+    <lr-activity-caption></lr-activity-caption>
+    <button type="button" class="mini-btn close-btn" set="onclick: *historyBack">
+      <lr-icon name="close"></lr-icon>
+    </button>
+  </lr-activity-header>
+
   <div class="no-files" set="@hidden: hasFiles">
     <slot name="empty"><span l10n="no-files"></span></slot>
   </div>

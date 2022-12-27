@@ -44,12 +44,6 @@ export class CameraSource extends UploaderBlock {
 
   /** @private */
   _onActivate = () => {
-    this.set$({
-      '*activityCaption': this.l10n('caption-camera'),
-      '*activityIcon': 'camera',
-      '*modalHeaderHidden': false,
-    });
-
     if (canUsePermissionsApi()) {
       this._subscribePermissions();
     }
@@ -63,11 +57,6 @@ export class CameraSource extends UploaderBlock {
     }
 
     this._stopCapture();
-  };
-
-  /** @private */
-  _onClose = () => {
-    this.historyBack();
   };
 
   /** @private */
@@ -202,7 +191,6 @@ export class CameraSource extends UploaderBlock {
     this.registerActivity(this.activityType, {
       onActivate: this._onActivate,
       onDeactivate: this._onDeactivate,
-      onClose: this._onClose,
     });
 
     this.sub('--cfg-camera-mirror', (val) => {
@@ -233,6 +221,13 @@ export class CameraSource extends UploaderBlock {
 }
 
 CameraSource.template = /* HTML */ `
+  <lr-activity-header>
+    <lr-icon name="camera"></lr-icon>
+    <span l10n="caption-camera"></span>
+    <button type="button" class="mini-btn close-btn" set="onclick: *historyBack">
+      <lr-icon name="close"></lr-icon>
+    </button>
+  </lr-activity-header>
   <div class="content">
     <video
       autoplay

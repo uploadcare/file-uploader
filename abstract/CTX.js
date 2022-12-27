@@ -8,8 +8,7 @@ export const activityBlockCtx = () => ({
   '*currentActivity': '',
   '*currentActivityParams': {},
   '*history': [],
-  '*activityCaption': '',
-  '*activityIcon': '',
+  '*historyBack': null,
 });
 
 export const uploaderBlockCtx = () => ({

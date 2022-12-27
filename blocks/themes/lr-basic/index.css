@@ -38,7 +38,6 @@
 @import url('../../ConfirmationDialog/confirmation.css');
 @import url('../../ProgressBarCommon/progress-bar-common.css');
 @import url('../../ProgressBar/progress-bar.css');
-@import url('../../ActivityCaption/activity-caption.css');
-@import url('../../ActivityIcon/activity-icon.css');
+@import url('../../ActivityHeader/activity-header.css');
 @import url('../../CloudImageEditor/index.css');
 @import url('../../Select/select.css');
