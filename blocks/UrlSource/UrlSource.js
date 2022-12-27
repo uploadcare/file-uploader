@@ -33,6 +33,9 @@ UrlSource.template = /* HTML */ `
   <lr-activity-header>
     <lr-icon name="url"></lr-icon>
     <span l10n="caption-from-url"></span>
+    <button type="button" class="mini-btn close-btn" set="onclick: *historyBack">
+      <lr-icon name="close"></lr-icon>
+    </button>
   </lr-activity-header>
   <div class="content">
     <input placeholder="https://..." .url-input type="text" ref="input" set="oninput: onInput" />

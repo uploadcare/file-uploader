@@ -224,6 +224,9 @@ CameraSource.template = /* HTML */ `
   <lr-activity-header>
     <lr-icon name="camera"></lr-icon>
     <span l10n="caption-camera"></span>
+    <button type="button" class="mini-btn close-btn" set="onclick: *historyBack">
+      <lr-icon name="close"></lr-icon>
+    </button>
   </lr-activity-header>
   <div class="content">
     <video

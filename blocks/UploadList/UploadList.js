@@ -191,6 +191,9 @@ export class UploadList extends UploaderBlock {
 UploadList.template = /* HTML */ `
   <lr-activity-header>
     <lr-activity-caption></lr-activity-caption>
+    <button type="button" class="mini-btn close-btn" set="onclick: *historyBack">
+      <lr-icon name="close"></lr-icon>
+    </button>
   </lr-activity-header>
 
   <div class="no-files" set="@hidden: hasFiles">

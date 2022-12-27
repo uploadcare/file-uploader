@@ -140,6 +140,9 @@ export class UploadDetails extends UploaderBlock {
 UploadDetails.template = /* HTML */ `
   <lr-activity-header>
     <span l10n="caption-edit-file"></span>
+    <button type="button" class="mini-btn close-btn" set="onclick: *historyBack">
+      <lr-icon name="close"></lr-icon>
+    </button>
   </lr-activity-header>
   <div class="content">
     <lr-tabs tab-list="tab-view, tab-details">

@@ -141,6 +141,9 @@ ExternalSource.template = /* HTML */ `
   <lr-activity-header>
     <lr-icon set="@name: activityIcon"></lr-icon>
     <span>{{activityCaption}}</span>
+    <button type="button" class="mini-btn close-btn" set="onclick: *historyBack">
+      <lr-icon name="close"></lr-icon>
+    </button>
   </lr-activity-header>
   <div class="content">
     <div ref="iframeWrapper" class="iframe-wrapper"></div>
