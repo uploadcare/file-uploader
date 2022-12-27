@@ -15,6 +15,8 @@ export class ExternalSource extends UploaderBlock {
 
   init$ = {
     ...this.ctxInit,
+    activityIcon: '',
+    activityCaption: '',
     counter: 0,
     onDone: () => {
       this.$['*currentActivity'] = ActivityBlock.activities.UPLOAD_LIST;
@@ -34,8 +36,8 @@ export class ExternalSource extends UploaderBlock {
         let { externalSourceType } = /** @type {ActivityParams} */ (this.activityParams);
 
         this.set$({
-          '*activityCaption': `${externalSourceType?.[0].toUpperCase()}${externalSourceType?.slice(1)}`,
-          '*activityIcon': externalSourceType,
+          activityCaption: `${externalSourceType?.[0].toUpperCase()}${externalSourceType?.slice(1)}`,
+          activityIcon: externalSourceType,
         });
 
         this.$.counter = 0;
@@ -137,8 +139,8 @@ export class ExternalSource extends UploaderBlock {
 
 ExternalSource.template = /* HTML */ `
   <lr-activity-header>
-    <lr-activity-icon></lr-activity-icon>
-    <lr-activity-caption></lr-activity-caption>
+    <lr-icon set="@name: activityIcon"></lr-icon>
+    <span>{{activityCaption}}</span>
   </lr-activity-header>
   <div class="content">
     <div ref="iframeWrapper" class="iframe-wrapper"></div>

@@ -21,6 +21,7 @@ export class ConfirmationDialog extends ActivityBlock {
 
   init$ = {
     ...this.ctxInit,
+    activityCaption: '',
     messageTxt: '',
     confirmBtnTxt: '',
     denyBtnTxt: '',
@@ -42,7 +43,7 @@ export class ConfirmationDialog extends ActivityBlock {
       }
       this.set$({
         '*currentActivity': ActivityBlock.activities.CONFIRMATION,
-        '*activityCaption': this.l10n(cfn.captionL10nStr),
+        activityCaption: this.l10n(cfn.captionL10nStr),
         messageTxt: this.l10n(cfn.messageL10Str),
         confirmBtnTxt: this.l10n(cfn.confirmL10nStr),
         denyBtnTxt: this.l10n(cfn.denyL10nStr),
@@ -58,6 +59,10 @@ export class ConfirmationDialog extends ActivityBlock {
 }
 
 ConfirmationDialog.template = /* HTML */ `
+  <lr-activity-header>
+    <span>{{activityCaption}}</span>
+  </lr-activity-header>
+
   <div class="message">{{messageTxt}}</div>
   <div class="toolbar">
     <button type="button" class="deny-btn secondary-btn" set="onclick: onDeny">{{denyBtnTxt}}</button>

@@ -149,14 +149,7 @@ export class UploadList extends UploaderBlock {
   initCallback() {
     super.initCallback();
 
-    this.registerActivity(this.activityType, {
-      onActivate: () => {
-        this.set$({
-          '*activityCaption': this.l10n('selected'),
-          '*activityIcon': '',
-        });
-      },
-    });
+    this.registerActivity(this.activityType);
 
     this.sub('--cfg-multiple', this._debouncedHandleCollectionUpdate);
     this.sub('--cfg-multiple-min', this._debouncedHandleCollectionUpdate);

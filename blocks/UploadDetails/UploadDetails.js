@@ -53,12 +53,6 @@ export class UploadDetails extends UploaderBlock {
     this.render();
     this.$.fileSize = this.l10n('file-size-unknown');
     this.registerActivity(this.activityType, {
-      onActivate: () => {
-        this.set$({
-          '*activityCaption': this.l10n('caption-edit-file'),
-          '*activityIcon': '',
-        });
-      },
       onDeactivate: () => {
         this.ref.filePreview.clear();
       },
@@ -144,46 +138,51 @@ export class UploadDetails extends UploaderBlock {
 }
 
 UploadDetails.template = /* HTML */ `
-  <lr-tabs tab-list="tab-view, tab-details">
-    <div tab-ctx="tab-details" class="details">
-      <div class="info-block">
-        <div class="info-block_name" l10n="file-name"></div>
-        <input
-          name="name-input"
-          ref="file_name_input"
-          set="value: fileName; oninput: onNameInput; @disabled: !!cdnUrl"
-          type="text"
-        />
+  <lr-activity-header>
+    <span l10n="caption-edit-file"></span>
+  </lr-activity-header>
+  <div class="content">
+    <lr-tabs tab-list="tab-view, tab-details">
+      <div tab-ctx="tab-details" class="details">
+        <div class="info-block">
+          <div class="info-block_name" l10n="file-name"></div>
+          <input
+            name="name-input"
+            ref="file_name_input"
+            set="value: fileName; oninput: onNameInput; @disabled: !!cdnUrl"
+            type="text"
+          />
+        </div>
+
+        <div class="info-block">
+          <div class="info-block_name" l10n="file-size"></div>
+          <div>{{fileSize}}</div>
+        </div>
+
+        <div class="info-block">
+          <div class="info-block_name" l10n="cdn-url"></div>
+          <a class="cdn-link" target="_blank" set="@href: cdnUrl; @disabled: !cdnUrl">{{cdnUrl}}</a>
+        </div>
+
+        <div>{{errorTxt}}</div>
       </div>
 
-      <div class="info-block">
-        <div class="info-block_name" l10n="file-size"></div>
-        <div>{{fileSize}}</div>
-      </div>
+      <lr-file-preview tab-ctx="tab-view" set="@checkerboard: checkerboard;" ref="filePreview"> </lr-file-preview>
+    </lr-tabs>
 
-      <div class="info-block">
-        <div class="info-block_name" l10n="cdn-url"></div>
-        <a class="cdn-link" target="_blank" set="@href: cdnUrl; @disabled: !cdnUrl">{{cdnUrl}}</a>
-      </div>
-
-      <div>{{errorTxt}}</div>
+    <div class="toolbar" set="@edit-disabled: cloudEditBtnHidden">
+      <button type="button" class="edit-btn secondary-btn" set="onclick: onCloudEdit; @hidden: cloudEditBtnHidden;">
+        <lr-icon name="edit"></lr-icon>
+        <span l10n="edit-image"></span>
+      </button>
+      <button type="button" class="remove-btn secondary-btn" set="onclick: onRemove">
+        <lr-icon name="remove"></lr-icon>
+        <span l10n="remove-from-list"></span>
+      </button>
+      <div></div>
+      <button type="button" class="back-btn primary-btn" set="onclick: onBack">
+        <span l10n="ok"></span>
+      </button>
     </div>
-
-    <lr-file-preview tab-ctx="tab-view" set="@checkerboard: checkerboard;" ref="filePreview"> </lr-file-preview>
-  </lr-tabs>
-
-  <div class="toolbar" set="@edit-disabled: cloudEditBtnHidden">
-    <button type="button" class="edit-btn secondary-btn" set="onclick: onCloudEdit; @hidden: cloudEditBtnHidden;">
-      <lr-icon name="edit"></lr-icon>
-      <span l10n="edit-image"></span>
-    </button>
-    <button type="button" class="remove-btn secondary-btn" set="onclick: onRemove">
-      <lr-icon name="remove"></lr-icon>
-      <span l10n="remove-from-list"></span>
-    </button>
-    <div></div>
-    <button type="button" class="back-btn primary-btn" set="onclick: onBack">
-      <span l10n="ok"></span>
-    </button>
   </div>
 `;

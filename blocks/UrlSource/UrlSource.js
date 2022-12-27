@@ -25,21 +25,14 @@ export class UrlSource extends UploaderBlock {
 
   initCallback() {
     super.initCallback();
-    this.registerActivity(this.activityType, {
-      onActivate: () => {
-        this.set$({
-          '*activityCaption': this.l10n('caption-from-url'),
-          '*activityIcon': 'url',
-        });
-      },
-    });
+    this.registerActivity(this.activityType);
   }
 }
 
 UrlSource.template = /* HTML */ `
   <lr-activity-header>
-    <lr-activity-icon></lr-activity-icon>
-    <lr-activity-caption></lr-activity-caption>
+    <lr-icon name="url"></lr-icon>
+    <span l10n="caption-from-url"></span>
   </lr-activity-header>
   <div class="content">
     <input placeholder="https://..." .url-input type="text" ref="input" set="oninput: onInput" />

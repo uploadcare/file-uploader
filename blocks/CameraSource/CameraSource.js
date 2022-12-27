@@ -44,11 +44,6 @@ export class CameraSource extends UploaderBlock {
 
   /** @private */
   _onActivate = () => {
-    this.set$({
-      '*activityCaption': this.l10n('caption-camera'),
-      '*activityIcon': 'camera',
-    });
-
     if (canUsePermissionsApi()) {
       this._subscribePermissions();
     }
@@ -227,8 +222,8 @@ export class CameraSource extends UploaderBlock {
 
 CameraSource.template = /* HTML */ `
   <lr-activity-header>
-    <lr-activity-icon></lr-activity-icon>
-    <lr-activity-caption></lr-activity-caption>
+    <lr-icon name="camera"></lr-icon>
+    <span l10n="caption-camera"></span>
   </lr-activity-header>
   <div class="content">
     <video
