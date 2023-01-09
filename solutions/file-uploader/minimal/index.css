@@ -98,6 +98,10 @@ lr-drop-area::after {
   content: '';
 }
 
+lr-upload-list lr-activity-header {
+  display: none;
+}
+
 lr-upload-list lr-drop-area::after {
   content: var(--l10n-drop-files-here);
 }
