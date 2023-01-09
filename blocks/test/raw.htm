@@ -29,25 +29,4 @@
 
 </head>
 
-<lr-shadow-wrapper class="config" use-template="#uploader" css-src="./blocks/themes/lr-basic/index.css">
-  <template id="uploader">
-    <lr-simple-btn></lr-simple-btn>
-
-    <lr-modal strokes block-body-scrolling>
-      <lr-start-from>
-        <lr-drop-area big-icon clickable></lr-drop-area>
-        <lr-source-list wrap></lr-source-list>
-      </lr-start-from>
-      <lr-upload-list></lr-upload-list>
-      <lr-camera-source></lr-camera-source>
-      <lr-url-source></lr-url-source>
-      <lr-external-source></lr-external-source>
-      <lr-confirmation-dialog></lr-confirmation-dialog>
-      <lr-cloud-image-editor></lr-cloud-image-editor>
-      <lr-upload-details></lr-upload-details>
-    </lr-modal>
-
-    <lr-message-box></lr-message-box>
-    <lr-progress-bar-common></lr-progress-bar-common>
-  </template>
-</lr-shadow-wrapper>
+<lr-file-uploader-regular class="config" css-src="./blocks/themes/lr-basic/index.css"></lr-file-uploader-regular>

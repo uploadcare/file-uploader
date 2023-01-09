@@ -24,7 +24,7 @@ export class FileUploaderInline extends SolutionBlock {
 }
 
 FileUploaderInline.template = /* HTML */ ` <lr-start-from>
-    <lr-drop-area set="@hidden: dropAreaHidden" big-icon clickable></lr-drop-area>
+    <lr-drop-area set="@hidden: dropAreaHidden" with-icon clickable></lr-drop-area>
     <lr-source-list wrap></lr-source-list>
   </lr-start-from>
   <lr-upload-list ref="uBlock"></lr-upload-list>
