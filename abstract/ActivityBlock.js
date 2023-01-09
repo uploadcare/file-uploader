@@ -8,7 +8,7 @@ const ACTIVE_PROP = '___ACTIVITY_IS_ACTIVE___';
 
 export class ActivityBlock extends Block {
   historyTracked = false;
-  ctxInit = activityBlockCtx();
+  ctxInit = activityBlockCtx(this);
 
   _debouncedHistoryFlush = debounce(this._historyFlush.bind(this), 10);
 
@@ -111,11 +111,10 @@ export class ActivityBlock extends Block {
     /** @type {String[]} */
     let history = this.$['*history'];
     if (history) {
-      let nextActivity;
-      do {
+      let nextActivity = history.pop();
+      while (nextActivity === this.activityType) {
         nextActivity = history.pop();
-      } while (nextActivity === this.activityType);
-
+      }
       this.$['*currentActivity'] = nextActivity;
       this.$['*history'] = history;
       if (!nextActivity) {

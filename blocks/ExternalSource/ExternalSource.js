@@ -139,8 +139,13 @@ export class ExternalSource extends UploaderBlock {
 
 ExternalSource.template = /* HTML */ `
   <lr-activity-header>
-    <lr-icon set="@name: activityIcon"></lr-icon>
-    <span>{{activityCaption}}</span>
+    <button type="button" class="mini-btn close-btn" set="onclick: *historyBack">
+      <lr-icon name="back"></lr-icon>
+    </button>
+    <div>
+      <lr-icon set="@name: activityIcon"></lr-icon>
+      <span>{{activityCaption}}</span>
+    </div>
     <button type="button" class="mini-btn close-btn" set="onclick: *historyBack">
       <lr-icon name="close"></lr-icon>
     </button>
