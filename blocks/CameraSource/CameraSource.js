@@ -13,8 +13,8 @@ export class CameraSource extends UploaderBlock {
     ...this.ctxInit,
     video: null,
     videoTransformCss: null,
-    shotBtnDisabled: false,
-    videoHidden: false,
+    shotBtnDisabled: true,
+    videoHidden: true,
     messageHidden: true,
     requestBtnHidden: canUsePermissionsApi(),
     l10nMessage: null,
@@ -70,6 +70,7 @@ export class CameraSource extends UploaderBlock {
    */
   _setPermissionsState = debounce((state) => {
     this.$.originalErrorMessage = null;
+    this.classList.toggle('initialized', state === 'granted');
 
     if (state === 'granted') {
       this.set$({
