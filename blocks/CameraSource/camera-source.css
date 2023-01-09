@@ -1,7 +1,15 @@
 lr-camera-source {
+  display: flex;
+  flex-direction: column;
   width: min(calc(var(--modal-max-w) - var(--gap-mid) * 2), calc(100vw - var(--gap-mid) * 2));
+  height: 100vh;
   max-height: var(--modal-max-content-height);
+  overflow: hidden;
   border-radius: var(--border-radius-element);
+}
+
+lr-camera-source.initialized {
+  height: max-content;
 }
 
 @media only screen and (max-width: 430px) {
@@ -13,7 +21,7 @@ lr-camera-source {
 
 lr-camera-source video {
   display: block;
-  max-width: 100%;
+  width: 100%;
   max-height: 100%;
   object-fit: contain;
   object-position: center center;
@@ -33,9 +41,9 @@ lr-camera-source .toolbar {
 
 lr-camera-source .content {
   display: flex;
+  flex: 1;
   justify-content: center;
   width: 100%;
-  height: 100%;
   padding: var(--gap-mid);
   padding-top: 0;
   overflow: hidden;
@@ -65,7 +73,6 @@ lr-camera-source .shot-btn {
   color: var(--clr-background-light);
   background-color: var(--clr-txt);
   border-radius: 50%;
-  outline: 0px solid var(--clr-txt);
   opacity: 0.9;
   transition: var(--transition-duration) ease;
 }
