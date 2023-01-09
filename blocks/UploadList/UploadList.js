@@ -16,6 +16,7 @@ export class UploadList extends UploaderBlock {
     uploadBtnEnabled: false,
     addMoreBtnVisible: false,
     addMoreBtnEnabled: false,
+    headerText: '',
 
     hasFiles: false,
     onAdd: () => {
@@ -143,7 +144,24 @@ export class UploadList extends UploaderBlock {
 
       addMoreBtnEnabled: summary.total === 0 || (!tooMany && !exact),
       addMoreBtnVisible: !exact || this.getCssData('--cfg-multiple'),
+
+      headerText: this._getHeaderText(summary),
     });
+  }
+
+  /** @private */
+  _getHeaderText(summary) {
+    if (summary.uploading > 0) {
+      return `Uploading ${summary.uploading} files`;
+    }
+    if (summary.failed > 0) {
+      return `${summary.failed} errors`;
+    }
+    if (summary.succeed > 0) {
+      return `${summary.succeed} files uploaded`;
+    }
+
+    return `${summary.total} files selected`;
   }
 
   initCallback() {
@@ -190,7 +208,7 @@ export class UploadList extends UploaderBlock {
 
 UploadList.template = /* HTML */ `
   <lr-activity-header>
-    <lr-activity-caption></lr-activity-caption>
+    <span>{{headerText}}</span>
     <button type="button" class="mini-btn close-btn" set="onclick: *historyBack">
       <lr-icon name="close"></lr-icon>
     </button>
