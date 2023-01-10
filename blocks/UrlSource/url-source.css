@@ -1,8 +1,9 @@
-lr-url-source {
+lr-url-source > .content {
   display: grid;
-  grid-gap: var(--gap-mid);
+  grid-gap: var(--gap-small);
   grid-template-columns: 1fr min-content min-content;
   padding: var(--gap-mid);
+  padding-top: 0;
 }
 
 lr-url-source .url-input {

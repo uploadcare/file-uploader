@@ -24,14 +24,13 @@ export class FileUploaderInline extends SolutionBlock {
 }
 
 FileUploaderInline.template = /* HTML */ ` <lr-start-from>
+    <lr-drop-area set="@hidden: dropAreaHidden" with-icon clickable></lr-drop-area>
     <lr-source-list wrap></lr-source-list>
-    <lr-drop-area set="@hidden: dropAreaHidden" clickable></lr-drop-area>
   </lr-start-from>
   <lr-upload-list ref="uBlock"></lr-upload-list>
   <lr-camera-source></lr-camera-source>
   <lr-url-source></lr-url-source>
   <lr-external-source></lr-external-source>
-  <lr-upload-details></lr-upload-details>
   <lr-confirmation-dialog></lr-confirmation-dialog>
   <lr-message-box></lr-message-box>
   <lr-progress-bar></lr-progress-bar>

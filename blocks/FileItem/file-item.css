@@ -1,19 +1,27 @@
+lr-file-item {
+  display: block;
+}
 lr-file-item > .inner {
   position: relative;
   display: grid;
   grid-template-columns: min-content auto min-content min-content;
+  gap: var(--gap-min);
+  align-items: center;
+  margin-bottom: var(--gap-small);
   padding: var(--gap-mid);
-  background-color: transparent;
-  border-bottom: var(--border-light);
+  overflow: hidden;
+  font-size: 0.95em;
+  background-color: var(--clr-background);
+  border-radius: var(--border-radius-element);
   transition: var(--transition-duration);
 }
 
 lr-file-item:last-of-type > .inner {
-  border-bottom: none;
+  margin-bottom: 0;
 }
 
 lr-file-item:hover > .inner {
-  background-color: var(--clr-background);
+  background-color: var(--clr-background-dark);
 }
 
 lr-file-item > .inner[focused] {
@@ -48,6 +56,11 @@ lr-file-item .file-name-wrapper {
   padding-right: var(--gap-mid);
   padding-left: var(--gap-mid);
   overflow: hidden;
+  color: var(--clr-txt-light);
+  transition: color var(--transition-duration);
+}
+
+lr-file-item:hover .file-name-wrapper {
   color: var(--clr-txt);
 }
 
@@ -58,40 +71,44 @@ lr-file-item .file-name {
   text-overflow: ellipsis;
 }
 
-lr-file-item button {
-  width: var(--ui-size);
-  height: var(--ui-size);
-  padding: 0;
-  color: var(--clr-txt-lightest);
-  background-color: transparent;
-  cursor: pointer;
-  opacity: var(--opacity-normal);
-  transition: opacity var(--transition-duration);
+lr-file-item .file-error {
+  display: none;
+  color: var(--clr-error);
+  font-size: 0.85em;
+  line-height: 130%;
 }
 
-lr-file-item .upload-btn {
+lr-file-item button.remove-btn,
+lr-file-item button.edit-btn {
+  color: var(--clr-txt-lightest);
+}
+
+lr-file-item button.upload-btn {
   display: none;
 }
 
 lr-file-item button:hover {
-  opacity: var(--opacity-hover);
+  color: var(--clr-txt-light);
 }
 
 lr-file-item .badge {
   position: absolute;
-  top: calc(var(--ui-size) * -0.15);
-  right: calc(var(--ui-size) * -0.15);
-  display: none;
-  width: calc(var(--ui-size) * 0.42);
-  height: calc(var(--ui-size) * 0.42);
+  top: calc(var(--ui-size) * -0.13);
+  right: calc(var(--ui-size) * -0.13);
+  width: calc(var(--ui-size) * 0.44);
+  height: calc(var(--ui-size) * 0.44);
   color: var(--clr-background-light);
   background-color: var(--clr-txt);
   border-radius: 50%;
+  transform: scale(0.3);
+  opacity: 0;
+  transition: var(--transition-duration) ease;
 }
 
 lr-file-item > .inner[failed] .badge,
 lr-file-item > .inner[finished] .badge {
-  display: block;
+  transform: scale(1);
+  opacity: 1;
 }
 
 lr-file-item > .inner[finished] .badge {
@@ -100,6 +117,10 @@ lr-file-item > .inner[finished] .badge {
 
 lr-file-item > .inner[failed] .badge {
   background-color: var(--clr-error);
+}
+
+lr-file-item > .inner[failed] .file-error {
+  display: block;
 }
 
 lr-file-item .badge lr-icon,

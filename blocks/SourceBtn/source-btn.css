@@ -1,7 +1,8 @@
 lr-source-btn {
   display: flex;
   align-items: center;
-  padding-right: 1em;
+  margin-bottom: var(--gap-min);
+  padding: var(--gap-min) var(--gap-mid);
   color: var(--clr-txt-mid);
   border-radius: var(--border-radius-element);
   cursor: pointer;
@@ -11,13 +12,13 @@ lr-source-btn {
 }
 
 lr-source-btn:hover {
-  color: var(--clr-txt);
-  background-color: var(--clr-shade-lv1);
+  color: var(--clr-accent);
+  background-color: var(--clr-accent-lightest);
 }
 
 lr-source-btn:active {
-  color: var(--clr-txt);
-  background-color: var(--clr-shade-lv2);
+  color: var(--clr-accent);
+  background-color: var(--clr-accent-light);
 }
 
 lr-source-btn lr-icon {
@@ -25,6 +26,7 @@ lr-source-btn lr-icon {
   flex-grow: 1;
   justify-content: center;
   min-width: var(--ui-size);
+  margin-right: var(--gap-mid);
 }
 
 lr-source-btn[type='local'] > .txt::after {

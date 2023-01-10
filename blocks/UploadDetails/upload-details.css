@@ -1,10 +1,17 @@
 lr-upload-details {
-  position: relative;
-  display: grid;
-  grid-template-rows: auto min-content;
+  display: flex;
+  flex-direction: column;
+  width: min(calc(var(--modal-max-w) - var(--gap-mid) * 2), calc(100vw - var(--gap-mid) * 2));
   height: var(--modal-content-height-fill, 100%);
   max-height: var(--modal-max-content-height);
   overflow: hidden;
+}
+
+lr-upload-details > .content {
+  position: relative;
+  display: grid;
+  flex: 1;
+  grid-template-rows: auto min-content;
 }
 
 lr-upload-details lr-tabs .tabs-context {

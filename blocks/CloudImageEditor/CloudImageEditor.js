@@ -17,7 +17,6 @@ export class CloudImageEditor extends UploaderBlock {
     this.registerActivity(this.activityType, {
       onActivate: () => this.mountEditor(),
       onDeactivate: () => this.unmountEditor(),
-      onClose: () => this.historyBack(),
     });
 
     this.sub('*focusedEntry', (/** @type {import('../../abstract/TypedData.js').TypedData} */ entry) => {
