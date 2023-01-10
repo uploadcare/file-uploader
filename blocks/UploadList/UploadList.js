@@ -13,7 +13,6 @@ export class UploadList extends UploaderBlock {
     doneBtnVisible: false,
     doneBtnEnabled: false,
     uploadBtnVisible: false,
-    uploadBtnEnabled: false,
     addMoreBtnVisible: false,
     addMoreBtnEnabled: false,
     headerText: '',
@@ -132,15 +131,14 @@ export class UploadList extends UploaderBlock {
     let fitValidation = summary.failed === 0;
 
     let doneBtnEnabled = summary.total > 0 && fitCountRestrictions && fitValidation;
-    let uploadBtnEnabled =
-      summary.total - summary.succeed - summary.uploading - summary.failed > 0 && fitCountRestrictions;
+    let uploadBtnVisible =
+      !allDone && summary.total - summary.succeed - summary.uploading - summary.failed > 0 && fitCountRestrictions;
 
     this.set$({
       doneBtnVisible: allDone,
       doneBtnEnabled: doneBtnEnabled,
 
-      uploadBtnVisible: !allDone,
-      uploadBtnEnabled,
+      uploadBtnVisible,
 
       addMoreBtnEnabled: summary.total === 0 || (!tooMany && !exact),
       addMoreBtnVisible: !exact || this.getCssData('--cfg-multiple'),
@@ -233,7 +231,7 @@ UploadList.template = /* HTML */ `
     <button
       type="button"
       class="upload-btn primary-btn"
-      set="@hidden: !uploadBtnVisible; onclick: onUpload; @disabled: !uploadBtnEnabled"
+      set="@hidden: !uploadBtnVisible; onclick: onUpload;"
       l10n="upload"
     ></button>
     <button
