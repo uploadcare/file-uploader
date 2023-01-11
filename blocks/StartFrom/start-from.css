@@ -7,4 +7,5 @@ lr-start-from {
   /* height: 100%; - this breaks inner modal layout height in Safari */
   padding: var(--gap-max);
   overflow-y: auto;
+  background-color: var(--clr-background-light);
 }

@@ -6,4 +6,5 @@ lr-cloud-image-editor {
   width: min(calc(var(--modal-max-w) - var(--gap-mid) * 2), calc(100vw - var(--gap-mid) * 2));
   height: var(--modal-content-height-fill, 100%);
   overflow: hidden;
+  background-color: var(--clr-background-light);
 }
