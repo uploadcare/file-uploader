@@ -29,6 +29,12 @@
   --l10n-no-files: 'No files selected';
   --l10n-browse: 'Browse';
   --l10n-not-uploaded-yet: 'Not uploaded yet...';
+  --l10n-file: 'file';
+  --l10n-files: 'files';
+  --l10n-header-uploading: 'Uploading {{count}} {{noun}}';
+  --l10n-header-failed: '{{count}} errors';
+  --l10n-header-succeed: '{{count}} {{noun}} uploaded';
+  --l10n-header-selected: '{{count}} {{noun}} selected';
 
   --l10n-src-type-local: 'From device';
   --l10n-src-type-from-url: 'From URL';

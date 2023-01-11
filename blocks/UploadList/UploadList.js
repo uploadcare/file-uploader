@@ -149,17 +149,23 @@ export class UploadList extends UploaderBlock {
 
   /** @private */
   _getHeaderText(summary) {
+    const localizedText = (status) => {
+      return this.l10n(`header-${status}`, {
+        count: summary[status],
+        noun: this.l10n(summary[status] === 1 ? 'file' : 'files'),
+      });
+    };
     if (summary.uploading > 0) {
-      return `Uploading ${summary.uploading} files`;
+      return localizedText('uploading');
     }
     if (summary.failed > 0) {
-      return `${summary.failed} errors`;
+      return localizedText('failed');
     }
     if (summary.succeed > 0) {
-      return `${summary.succeed} files uploaded`;
+      return localizedText('succeed');
     }
 
-    return `${summary.total} files selected`;
+    return this.l10n('selected');
   }
 
   initCallback() {
