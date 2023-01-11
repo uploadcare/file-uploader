@@ -226,10 +226,15 @@ CameraSource.template = /* HTML */ `
     <button type="button" class="mini-btn close-btn" set="onclick: *historyBack">
       <lr-icon name="back"></lr-icon>
     </button>
-    <div>
+    <div set="@hidden: !cameraSelectHidden">
       <lr-icon name="camera"></lr-icon>
       <span l10n="caption-camera"></span>
     </div>
+    <lr-select
+      class="camera-select"
+      set="$.options: cameraSelectOptions; @hidden: cameraSelectHidden; onchange: onCameraSelectChange"
+    >
+    </lr-select>
     <button type="button" class="mini-btn close-btn" set="onclick: *closeModal">
       <lr-icon name="close"></lr-icon>
     </button>
@@ -253,10 +258,5 @@ CameraSource.template = /* HTML */ `
     <button type="button" class="shot-btn" set="onclick: onShot; @disabled: shotBtnDisabled">
       <lr-icon name="camera"></lr-icon>
     </button>
-    <lr-select
-      class="camera-select"
-      set="$.options: cameraSelectOptions; @hidden: cameraSelectHidden; onchange: onCameraSelectChange"
-    >
-    </lr-select>
   </div>
 `;

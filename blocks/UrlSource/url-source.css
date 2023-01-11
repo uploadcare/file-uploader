@@ -1,3 +1,8 @@
+lr-url-source {
+  display: block;
+  background-color: var(--clr-background-light);
+}
+
 lr-url-source > .content {
   display: grid;
   grid-gap: var(--gap-small);
