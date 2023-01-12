@@ -370,17 +370,17 @@ lr-editor-operation-control {
   transition: var(--l-width-transition);
 }
 
-lr-editor-button-control > .active,
-lr-editor-operation-control > .active,
-lr-editor-crop-button-control > .active,
-lr-editor-filter-control > .active {
+lr-editor-button-control.active,
+lr-editor-operation-control.active,
+lr-editor-crop-button-control.active,
+lr-editor-filter-control.active {
   --idle-color-rgb: var(--rgb-primary-accent);
 }
 
-lr-editor-button-control > .not_active,
-lr-editor-operation-control > .not_active,
-lr-editor-crop-button-control > .not_active,
-lr-editor-filter-control > .not_active {
+lr-editor-button-control.not_active,
+lr-editor-operation-control.not_active,
+lr-editor-crop-button-control.not_active,
+lr-editor-filter-control.not_active {
   --idle-color-rgb: var(--rgb-text-base);
 }
 
