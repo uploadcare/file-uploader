@@ -115,7 +115,7 @@
   "author": "Uploadcare Inc.",
   "license": "MIT",
   "dependencies": {
-    "@symbiotejs/symbiote": "^1.11.2",
+    "@symbiotejs/symbiote": "^1.11.3",
     "@uploadcare/upload-client": "^6.0.0"
   }
 }
