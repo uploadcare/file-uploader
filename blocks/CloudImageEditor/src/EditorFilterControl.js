@@ -61,9 +61,7 @@ export class EditorFilterControl extends EditorButtonControl {
         })
         .finally(() => {
           previewEl.style.backgroundImage = `url(${src})`;
-          setTimeout(() => {
-            previewEl.style.opacity = '1';
-          });
+          previewEl.setAttribute('loaded', '');
 
           observer.unobserve(this);
         });

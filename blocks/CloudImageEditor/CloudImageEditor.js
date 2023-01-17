@@ -7,7 +7,7 @@ export class CloudImageEditor extends UploaderBlock {
 
   init$ = {
     ...this.ctxInit,
-    uuid: null,
+    cdnUrl: null,
   };
 
   initCallback() {
@@ -25,9 +25,9 @@ export class CloudImageEditor extends UploaderBlock {
       }
       this.entry = entry;
 
-      this.entry.subscribe('uuid', (uuid) => {
-        if (uuid) {
-          this.$.uuid = uuid;
+      this.entry.subscribe('cdnUrl', (cdnUrl) => {
+        if (cdnUrl) {
+          this.$.cdnUrl = cdnUrl;
         }
       });
     });
@@ -50,8 +50,8 @@ export class CloudImageEditor extends UploaderBlock {
   mountEditor() {
     let instance = new CloudEditor();
     instance.classList.add('lr-cldtr-common');
-    let uuid = this.$.uuid;
-    instance.setAttribute('uuid', uuid);
+    let cdnUrl = this.$.cdnUrl;
+    instance.setAttribute('cdn-url', cdnUrl);
 
     instance.addEventListener('apply', (result) => this.handleApply(result));
     instance.addEventListener('cancel', () => this.handleCancel());

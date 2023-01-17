@@ -370,17 +370,25 @@ lr-editor-operation-control {
   transition: var(--l-width-transition);
 }
 
-lr-editor-button-control > .active,
-lr-editor-operation-control > .active,
-lr-editor-crop-button-control > .active,
-lr-editor-filter-control > .active {
+lr-editor-button-control.active,
+lr-editor-operation-control.active,
+lr-editor-crop-button-control.active,
+lr-editor-filter-control.active {
   --idle-color-rgb: var(--rgb-primary-accent);
 }
 
-lr-editor-button-control > .not_active,
-lr-editor-operation-control > .not_active,
-lr-editor-crop-button-control > .not_active,
-lr-editor-filter-control > .not_active {
+lr-editor-filter-control.not_active .preview[loaded] {
+  opacity: 1;
+}
+
+lr-editor-filter-control.active .preview {
+  opacity: 0;
+}
+
+lr-editor-button-control.not_active,
+lr-editor-operation-control.not_active,
+lr-editor-crop-button-control.not_active,
+lr-editor-filter-control.not_active {
   --idle-color-rgb: var(--rgb-text-base);
 }
 
@@ -687,7 +695,7 @@ lr-editor-toolbar .controls-list_last-item {
   margin-right: var(--cldtr-gap-max);
 }
 
-lr-editor-toolbar .filter-tooltip_container {
+lr-editor-toolbar .info-tooltip_container {
   position: absolute;
   display: flex;
   align-items: flex-start;
@@ -696,7 +704,7 @@ lr-editor-toolbar .filter-tooltip_container {
   height: 100%;
 }
 
-lr-editor-toolbar .filter-tooltip_wrapper {
+lr-editor-toolbar .info-tooltip_wrapper {
   position: absolute;
   top: calc(-100% - var(--cldtr-gap-mid-2));
   display: flex;
@@ -706,7 +714,7 @@ lr-editor-toolbar .filter-tooltip_wrapper {
   pointer-events: none;
 }
 
-lr-editor-toolbar .filter-tooltip {
+lr-editor-toolbar .info-tooltip {
   z-index: 3;
   padding-top: calc(var(--cldtr-gap-min) / 2);
   padding-right: var(--cldtr-gap-min);
@@ -718,18 +726,14 @@ lr-editor-toolbar .filter-tooltip {
   text-transform: uppercase;
   background-color: var(--color-text-accent-contrast);
   border-radius: var(--border-radius-editor);
+  transform: translateY(100%);
   opacity: 0;
   transition: var(--transition-duration-3);
 }
 
-lr-editor-toolbar .filter-tooltip_visible {
+lr-editor-toolbar .info-tooltip_visible {
   transform: translateY(0px);
   opacity: 1;
-}
-
-lr-editor-toolbar .filter-tooltip_hidden {
-  transform: translateY(100%);
-  opacity: 0;
 }
 
 lr-editor-toolbar .slider {
