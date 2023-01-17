@@ -22,7 +22,11 @@ export class DropArea extends UploaderBlock {
       this.set$({ withIcon: typeof value === 'string' });
     });
     this.defineAccessor('text', (value) => {
-      this.set$({ text: this.l10n(value) || value || this.l10n('drop-files-here') });
+      if (value) {
+        this.set$({ text: this.l10n(value) || value });
+      } else {
+        this.set$({ text: this.l10n('drop-files-here') });
+      }
     });
 
     /** @private */

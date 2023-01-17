@@ -105,6 +105,15 @@ class Caret {
 const headerHtml = /* HTML */ `
   <script>
     window.__IS_REF__ = true;
+    window.addEventListener('DOMContentLoaded', () => {
+      const pageHtml = document.head.innerHTML + document.body.innerHTML;
+      //
+      if (['--darkmode:' + ' 1', '--darkmode:' + '1'].some((substr) => pageHtml.includes(substr))) {
+        document.body.style.background = 'white';
+        document.body.style.transition = 'background .3s ease-in-out';
+        document.body.style.background = 'black';
+      }
+    });
   </script>
 `;
 
