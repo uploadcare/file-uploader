@@ -153,7 +153,6 @@ export class UploadList extends UploaderBlock {
       const count = summary[status];
       return this.l10n(`header-${status}`, {
         count: count,
-        noun: this.pluralize('file', count),
       });
     };
     if (summary.uploading > 0) {

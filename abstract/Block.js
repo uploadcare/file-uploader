@@ -1,5 +1,5 @@
 import { BaseComponent, Data } from '@symbiotejs/symbiote';
-import { applyTemplateData } from '../utils/applyTemplateData.js';
+import { applyTemplateData, getPluralObjects } from '../utils/template-utils.js';
 import { l10nProcessor } from './l10nProcessor.js';
 import { blockCtx } from './CTX.js';
 import { createWindowHeightTracker, getIsWindowHeightTracked } from '../utils/createWindowHeightTracker.js';
@@ -19,7 +19,17 @@ export class Block extends BaseComponent {
    * @returns {String}
    */
   l10n(str, variables = {}) {
+    if (!str) {
+      return '';
+    }
     let template = this.getCssData('--l10n-' + str, true) || str;
+    let pluralObjects = getPluralObjects(template);
+    for (let pluralObject of pluralObjects) {
+      variables[pluralObject.variable] = this.pluralize(
+        pluralObject.pluralKey,
+        Number(variables[pluralObject.countVariable])
+      );
+    }
     let result = applyTemplateData(template, variables);
     return result;
   }
