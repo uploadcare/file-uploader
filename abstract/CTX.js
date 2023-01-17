@@ -1,9 +1,6 @@
-import { en } from './pluralizers.js';
-
 export const blockCtx = () => ({
   /** @type {Set<import('./Block').Block>} */
   '*blocksRegistry': new Set(),
-  '*pluralizer': en,
 });
 
 export const activityBlockCtx = (fnCtx) => ({
