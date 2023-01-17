@@ -24,6 +24,21 @@ export class Block extends BaseComponent {
     return result;
   }
 
+  /** @param {import('./pluralizers.js').Pluralizer} pluralizer */
+  setPluralizer(pluralizer) {
+    this.$['*pluralizer'] = pluralizer;
+  }
+
+  /**
+   * @param {string} key
+   * @param {number} count
+   * @returns {string}
+   */
+  pluralize(key, count) {
+    const pluralForm = this.$['*pluralizer'](count);
+    return this.l10n(`${key}__${pluralForm}`);
+  }
+
   constructor() {
     super();
     /** @type {String} */

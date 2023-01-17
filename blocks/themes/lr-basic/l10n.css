@@ -1,5 +1,7 @@
 :where(.lr-wgt-l10n_en-US, .lr-wgt-common),
 :host {
+  --l10n: 'en';
+
   --l10n-upload-file: 'Upload file';
   --l10n-upload-files: 'Upload files';
   --l10n-choose-file: 'Choose file';
@@ -29,8 +31,8 @@
   --l10n-no-files: 'No files selected';
   --l10n-browse: 'Browse';
   --l10n-not-uploaded-yet: 'Not uploaded yet...';
-  --l10n-file: 'file';
-  --l10n-files: 'files';
+  --l10n-file__one: 'file';
+  --l10n-file__many: 'files';
   --l10n-header-uploading: 'Uploading {{count}} {{noun}}';
   --l10n-header-failed: '{{count}} errors';
   --l10n-header-succeed: '{{count}} {{noun}} uploaded';

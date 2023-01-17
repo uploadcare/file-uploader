@@ -150,9 +150,10 @@ export class UploadList extends UploaderBlock {
   /** @private */
   _getHeaderText(summary) {
     const localizedText = (status) => {
+      const count = summary[status];
       return this.l10n(`header-${status}`, {
-        count: summary[status],
-        noun: this.l10n(summary[status] === 1 ? 'file' : 'files'),
+        count: count,
+        noun: this.pluralize('file', count),
       });
     };
     if (summary.uploading > 0) {
@@ -165,7 +166,7 @@ export class UploadList extends UploaderBlock {
       return localizedText('succeed');
     }
 
-    return this.l10n('selected');
+    return localizedText('selected');
   }
 
   initCallback() {
