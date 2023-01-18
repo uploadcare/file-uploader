@@ -31,7 +31,7 @@ export class SourceBtn extends UploaderBlock {
         let el = document.createElement('input');
         var supportsCapture = el.capture !== undefined;
         if (supportsCapture) {
-          this.openSystemDialog(true);
+          this.openSystemDialog({ captureCamera: true });
         }
         return !supportsCapture;
       },

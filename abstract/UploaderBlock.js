@@ -63,12 +63,13 @@ export class UploaderBlock extends ActivityBlock {
     });
   }
 
-  /** @param {boolean} capture */
-  openSystemDialog(capture = false) {
+  /** @param {{ captureCamera?: boolean }} options */
+  openSystemDialog(options = {}) {
     let accept = mergeFileTypes([
       this.getCssData('--cfg-accept'),
       ...(this.getCssData('--cfg-img-only') ? IMAGE_ACCEPT_LIST : []),
     ]).join(',');
+
     if (this.getCssData('--cfg-accept') && !!this.getCssData('--cfg-img-only')) {
       console.warn(
         'There could be a mistake.\n' +
@@ -79,9 +80,11 @@ export class UploaderBlock extends ActivityBlock {
     this.fileInput = document.createElement('input');
     this.fileInput.type = 'file';
     this.fileInput.multiple = !!this.getCssData('--cfg-multiple');
-    this.fileInput.accept = accept;
-    if (capture) {
+    if (options.captureCamera) {
       this.fileInput.capture = '';
+      this.fileInput.accept = IMAGE_ACCEPT_LIST.join(',');
+    } else {
+      this.fileInput.accept = accept;
     }
     this.fileInput.dispatchEvent(new MouseEvent('click'));
     this.fileInput.onchange = () => {
