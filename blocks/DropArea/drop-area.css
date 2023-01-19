@@ -79,8 +79,12 @@ lr-drop-area[with-icon] lr-icon:last-child {
   transform: translateY(calc(var(--ui-size) * 1.5));
 }
 
-lr-drop-area[with-icon]:hover .icon-container {
+lr-drop-area[with-icon]:hover .icon-container,
+lr-drop-area[with-icon]:hover .text {
   color: var(--clr-accent);
+}
+
+lr-drop-area[with-icon]:hover .icon-container {
   background-color: var(--clr-accent-lightest);
 }
 
