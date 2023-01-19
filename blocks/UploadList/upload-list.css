@@ -45,3 +45,7 @@ lr-upload-list lr-drop-area {
   margin: var(--gap-mid);
   border-radius: var(--border-radius-element);
 }
+
+lr-upload-list lr-activity-header > .header-text {
+  padding: 0 var(--gap-mid);
+}
