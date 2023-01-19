@@ -56,4 +56,5 @@ lr-external-source .selected-counter {
   align-items: center;
   justify-content: space-between;
   padding: var(--gap-mid);
+  color: var(--clr-txt-light);
 }
