@@ -30,7 +30,8 @@ lr-drop-area[drag-state='active'],
 lr-drop-area[drag-state='near'],
 lr-drop-area[drag-state='over'],
 lr-drop-area:hover {
-  background: var(--clr-accent-lightest-opaque);
+  color: var(--clr-accent);
+  background: var(--clr-accent-lightest);
   border-color: var(--clr-accent-light);
 }
 
