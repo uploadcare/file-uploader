@@ -20,10 +20,6 @@ lr-file-item:last-of-type > .inner {
   margin-bottom: 0;
 }
 
-lr-file-item:hover > .inner {
-  background-color: var(--clr-background-dark);
-}
-
 lr-file-item > .inner[focused] {
   background-color: transparent;
 }
@@ -58,10 +54,6 @@ lr-file-item .file-name-wrapper {
   overflow: hidden;
   color: var(--clr-txt-light);
   transition: color var(--transition-duration);
-}
-
-lr-file-item:hover .file-name-wrapper {
-  color: var(--clr-txt);
 }
 
 lr-file-item .file-name {
