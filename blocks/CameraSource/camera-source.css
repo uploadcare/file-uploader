@@ -60,6 +60,7 @@ lr-camera-source .message-box {
   align-items: center;
   justify-content: center;
   padding: var(--padding) var(--padding) 0 var(--padding);
+  color: var(--clr-txt);
 }
 
 lr-camera-source .message-box button {
@@ -75,19 +76,17 @@ lr-camera-source .shot-btn {
   color: var(--clr-background-light);
   background-color: var(--clr-txt);
   border-radius: 50%;
-  opacity: 0.9;
+  opacity: 0.85;
   transition: var(--transition-duration) ease;
 }
 
 lr-camera-source .shot-btn:hover {
-  outline-width: 2px;
+  transform: scale(1.05);
   opacity: 1;
 }
 
 lr-camera-source .shot-btn:active {
-  color: var(--clr-background-light);
-  outline-width: 2px;
-  outline-color: var(--clr-background-light);
+  background-color: var(--clr-txt-mid);
   opacity: 1;
 }
 

@@ -92,7 +92,7 @@
 
   --l10n-camera-permissions-denied: 'Camera access denied';
   --l10n-camera-permissions-prompt: 'Please allow access to the camera';
-  --l10n-camera-permissions-request: 'Request permissions';
+  --l10n-camera-permissions-request: 'Request access';
 
   --l10n-files-count-limit-error-title: 'Files count limit overflow';
   --l10n-files-count-limit-error-too-few: 'You’ve chosen {{total}}. At least {{min}} required.';
