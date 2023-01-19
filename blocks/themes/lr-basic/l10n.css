@@ -15,6 +15,7 @@
   --l10n-clear: 'Clear';
   --l10n-camera-shot: 'Shot';
   --l10n-upload-url: 'Import';
+  --l10n-upload-url-placeholder: 'Paste link here';
   --l10n-edit-image: 'Edit image';
   --l10n-edit-detail: 'Details';
   --l10n-back: 'Back';
@@ -41,7 +42,7 @@
   --l10n-header-selected: '{{count}} {{plural:file(count)}} selected';
 
   --l10n-src-type-local: 'From device';
-  --l10n-src-type-from-url: 'From URL';
+  --l10n-src-type-from-url: 'From link';
   --l10n-src-type-camera: 'Camera';
   --l10n-src-type-draw: 'Draw';
   --l10n-src-type-facebook: 'Facebook';
@@ -59,7 +60,7 @@
 
   --l10n-src-type: var(--l10n-src-type-local);
 
-  --l10n-caption-from-url: 'Import from external URL';
+  --l10n-caption-from-url: 'Import from link';
   --l10n-caption-camera: 'Camera';
   --l10n-caption-draw: 'Draw';
   --l10n-caption-edit-file: 'Edit file';
@@ -90,7 +91,7 @@
   --l10n-file-size-unknown: 'Unknown';
 
   --l10n-camera-permissions-denied: 'Camera access denied';
-  --l10n-camera-permissions-prompt: 'Camera access prompted';
+  --l10n-camera-permissions-prompt: 'Please allow access to the camera';
   --l10n-camera-permissions-request: 'Request permissions';
 
   --l10n-files-count-limit-error-title: 'Files count limit overflow';

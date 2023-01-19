@@ -133,7 +133,7 @@
   padding-right: 0.6em;
   padding-left: 0.6em;
   color: var(--clr-txt);
-  font-size: var(--font-size-ui);
+  font-size: 1em;
   font-family: inherit;
   background-color: var(--clr-background-light);
   border: var(--border-light);
