@@ -4,7 +4,7 @@ export class Modal extends Block {
   static StateConsumerScope = 'modal';
 
   _handleClose = () => {
-    this.$['*historyBack']?.();
+    this.setForCtxTarget(Modal.StateConsumerScope, '*modalActive', false);
   };
 
   _handleClick = (e) => {
