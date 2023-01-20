@@ -141,6 +141,11 @@
   transition: var(--transition-duration);
 }
 
+:where(.lr-wgt-theme, .lr-wgt-common) input[type='text'],
+:host input[type='text']::placeholder {
+  color: var(--clr-txt-lightest);
+}
+
 :where(.lr-wgt-theme, .lr-wgt-common) input[type='text']:hover,
 :host input[type='text']:hover {
   border-color: var(--clr-accent-light);
