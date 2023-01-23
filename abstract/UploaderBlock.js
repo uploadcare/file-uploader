@@ -91,6 +91,7 @@ export class UploaderBlock extends ActivityBlock {
       this.addFiles([...this.fileInput['files']]);
       // To call uploadTrigger UploadList should draw file items first:
       this.$['*currentActivity'] = ActivityBlock.activities.UPLOAD_LIST;
+      this.setForCtxTarget(Modal.StateConsumerScope, '*modalActive', true);
       this.fileInput['value'] = '';
       this.fileInput = null;
     };
