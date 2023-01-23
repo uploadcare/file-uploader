@@ -21,9 +21,11 @@ lr-modal[dialog-fallback][strokes] {
 
 @supports selector(.dialog::backdrop) {
   lr-modal > .dialog::backdrop {
-    background-color: var(--clr-curtain);
+    /* backdrop don't inherit theme properties */
+    background-color: rgba(247 247 248 60%);
   }
   lr-modal[strokes] > .dialog::backdrop {
+    /* TODO: it's not working, fix it */
     background-image: var(--modal-backdrop-background-image);
   }
 }

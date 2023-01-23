@@ -1,4 +1,4 @@
-:where(.lr-wgt-theme, .lr-wgt-common, ::backdrop),
+:where(.lr-wgt-theme, .lr-wgt-common),
 :host {
   /* Base values */
 
