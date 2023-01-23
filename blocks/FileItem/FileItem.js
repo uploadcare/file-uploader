@@ -238,7 +238,6 @@ export class FileItem extends UploaderBlock {
     });
 
     this._subEntry('isImage', (isImage) => {
-      this.$.isEditable = isImage;
       let imagesOnly = this.getCssData('--cfg-img-only');
       if (entry.getValue('externalUrl') && !entry.getValue('uuid') && imagesOnly && !isImage) {
         // don't validate not uploaded files with external url, cause we don't know if they're images or not
@@ -290,6 +289,7 @@ export class FileItem extends UploaderBlock {
         isUploading: state === FileItemState.UPLOADING,
         isFinished: state === FileItemState.FINISHED,
         progressVisible: state === FileItemState.UPLOADING,
+        isEditable: state === FileItemState.FINISHED && this._entry?.getValue('isImage'),
       });
 
       if (state === FileItemState.FAILED) {
@@ -393,9 +393,6 @@ export class FileItem extends UploaderBlock {
         },
         signal: abortController.signal,
       });
-      if (entry === this._entry) {
-        this._debouncedCalculateState();
-      }
       entry.setMultipleValues({
         fileInfo,
         isUploading: false,
@@ -406,10 +403,16 @@ export class FileItem extends UploaderBlock {
         uuid: fileInfo.uuid,
         cdnUrl: fileInfo.cdnUrl,
       });
+
+      if (entry === this._entry) {
+        this._debouncedCalculateState();
+      }
     } catch (error) {
-      entry.setValue('abortController', null);
-      entry.setValue('isUploading', false);
-      entry.setValue('uploadProgress', 0);
+      entry.setMultipleValues({
+        abortController: null,
+        isUploading: false,
+        uploadProgress: 0,
+      });
 
       if (entry === this._entry) {
         this._debouncedCalculateState();
