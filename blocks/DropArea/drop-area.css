@@ -128,9 +128,12 @@ lr-drop-area[with-icon][drag-state='over'] lr-icon:last-child {
 }
 
 lr-drop-area[fullscreen] {
-  position: absolute;
+  position: fixed;
   top: 0;
+  right: 0;
+  bottom: 0;
   left: 0;
+  z-index: 2147483647;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -158,4 +161,8 @@ lr-drop-area[with-icon][fullscreen][drag-state='near'] .content-wrapper {
 lr-drop-area[with-icon][fullscreen][drag-state='over'] .content-wrapper {
   transform: translateY(0px);
   opacity: 1;
+}
+
+:is(lr-drop-area[with-icon][fullscreen]) .content-wrapper lr-icon:first-child {
+  transform: translateY(calc(var(--ui-size) * -1.5));
 }

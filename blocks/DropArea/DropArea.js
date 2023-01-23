@@ -3,6 +3,7 @@ import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 import { DropzoneState, addDropzone } from './addDropzone.js';
 import { fileIsImage } from '../../utils/fileTypes.js';
 import { Modal } from '../Modal/Modal.js';
+import { Block } from '../../abstract/Block.js';
 
 export class DropArea extends UploaderBlock {
   init$ = {
@@ -10,6 +11,7 @@ export class DropArea extends UploaderBlock {
     state: DropzoneState.INACTIVE,
     withIcon: false,
     isClickable: false,
+    isFullscreen: false,
     text: this.l10n('drop-files-here'),
   };
   initCallback() {
@@ -21,6 +23,10 @@ export class DropArea extends UploaderBlock {
     this.defineAccessor('with-icon', (value) => {
       this.set$({ withIcon: typeof value === 'string' });
     });
+    this.defineAccessor('fullscreen', (value) => {
+      this.set$({ isFullscreen: typeof value === 'string' });
+    });
+
     this.defineAccessor('text', (value) => {
       if (value) {
         this.set$({ text: this.l10n(value) || value });
@@ -33,6 +39,10 @@ export class DropArea extends UploaderBlock {
     this._destroyDropzone = addDropzone({
       element: this,
       onChange: (state) => {
+        if (this.$.isFullscreen && this.getForCtxTarget(Modal.StateConsumerScope, '*modalActive')) {
+          return;
+        }
+
         this.$.state = state;
       },
       onItems: (items) => {
@@ -110,4 +120,5 @@ DropArea.bindAttributes({
   'with-icon': null,
   clickable: null,
   text: null,
+  fullscreen: null,
 });
