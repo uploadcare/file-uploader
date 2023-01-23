@@ -104,15 +104,13 @@ export class DropArea extends UploaderBlock {
 }
 
 DropArea.template = /* HTML */ `
-  <slot>
-    <div class="content-wrapper">
-      <div class="icon-container" set="@hidden: !withIcon">
-        <lr-icon name="default"></lr-icon>
-        <lr-icon name="arrow-down"></lr-icon>
-      </div>
-      <span class="text">{{text}}</span>
+  <div class="content-wrapper">
+    <div class="icon-container" set="@hidden: !withIcon">
+      <lr-icon name="default"></lr-icon>
+      <lr-icon name="arrow-down"></lr-icon>
     </div>
-  </slot>
+    <span class="text">{{text}}</span>
+  </div>
 `;
 
 DropArea.bindAttributes({
