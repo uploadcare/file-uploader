@@ -3,7 +3,6 @@ import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 import { DropzoneState, addDropzone } from './addDropzone.js';
 import { fileIsImage } from '../../utils/fileTypes.js';
 import { Modal } from '../Modal/Modal.js';
-import { Block } from '../../abstract/Block.js';
 
 export class DropArea extends UploaderBlock {
   init$ = {
