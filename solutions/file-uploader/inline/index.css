@@ -19,3 +19,13 @@ lr-uploader {
       calc((0.1 - 0.05 * var(--darkmode)) * var(--borders))
     );
 }
+
+:host {
+  container-type: inline-size;
+}
+
+@container (min-width: 500px) {
+  lr-start-from {
+    grid-auto-flow: column;
+  }
+}
