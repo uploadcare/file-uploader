@@ -34,17 +34,17 @@ export function applyTemplateData(template, data, options = {}) {
  */
 export function getPluralObjects(template) {
   const pluralObjects = [];
-  let open = template.indexOf('{{');
+  let open = template.indexOf(OPEN_TOKEN);
   while (open !== -1) {
-    const close = template.indexOf('}}', open);
+    const close = template.indexOf(CLOSE_TOKEN, open);
     const variable = template.substring(open + 2, close);
-    if (variable.startsWith('plural:')) {
-      const keyValue = template.substring(open + 2, close).replace('plural:', '');
+    if (variable.startsWith(PLURAL_PREFIX)) {
+      const keyValue = template.substring(open + 2, close).replace(PLURAL_PREFIX, '');
       const key = keyValue.substring(0, keyValue.indexOf('('));
       const count = keyValue.substring(keyValue.indexOf('(') + 1, keyValue.indexOf(')'));
       pluralObjects.push({ variable, pluralKey: key, countVariable: count });
     }
-    open = template.indexOf('{{', close);
+    open = template.indexOf(OPEN_TOKEN, close);
   }
   return pluralObjects;
 }
