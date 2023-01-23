@@ -1,4 +1,4 @@
-@import '../Range/range.css';
+@import url('../Range/range.css');
 
 lr-video {
   --color-accent: rgb(196, 243, 255);
