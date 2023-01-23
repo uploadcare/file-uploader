@@ -87,6 +87,9 @@ lr-start-from {
 }
 
 lr-drop-area {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
   min-height: calc(var(--ui-size) + var(--gap-mid) * 2 + var(--gap-min) * 4);
   padding: 0;
