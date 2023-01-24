@@ -101,15 +101,6 @@ export class Block extends BaseComponent {
       this.$[prop] = newVal;
     }
   }
-  /**
-   * @param {String} consumerScope
-   * @param {String} prop
-   */
-  getForCtxTarget(consumerScope, prop) {
-    if (this.findBlockInCtx((b) => /** @type {typeof Block} */ (b.constructor).StateConsumerScope === consumerScope)) {
-      return this.$[prop];
-    }
-  }
 
   /** @param {String} activityType */
   setActivity(activityType) {

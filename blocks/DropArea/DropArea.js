@@ -12,9 +12,14 @@ export class DropArea extends UploaderBlock {
     isClickable: false,
     isFullscreen: false,
     text: this.l10n('drop-files-here'),
+    'lr-drop-area/targets': null,
   };
   initCallback() {
     super.initCallback();
+    if (!this.$['lr-drop-area/targets']) {
+      this.$['lr-drop-area/targets'] = new Set();
+    }
+    this.$['lr-drop-area/targets'].add(this);
 
     this.defineAccessor('clickable', (value) => {
       this.set$({ isClickable: typeof value === 'string' });
@@ -38,7 +43,7 @@ export class DropArea extends UploaderBlock {
     this._destroyDropzone = addDropzone({
       element: this,
       onChange: (state) => {
-        if (this.$.isFullscreen && this.getForCtxTarget(Modal.StateConsumerScope, '*modalActive')) {
+        if (this._shouldIgnore()) {
           return;
         }
 
@@ -94,8 +99,28 @@ export class DropArea extends UploaderBlock {
     }
   }
 
+  /**
+   * Ignore drop events if there are other visible drop areas on the page
+   *
+   * @returns {Boolean}
+   */
+  _shouldIgnore() {
+    if (!this.$.isFullscreen) {
+      return false;
+    }
+    const otherTargets = [...this.$['lr-drop-area/targets']].filter((el) => el !== this);
+    const visibleTargets = otherTargets.filter((/** @type {HTMLElement} */ el) => {
+      const bounds = el.getBoundingClientRect();
+      return bounds.width > 0 && bounds.height > 0;
+    });
+    return visibleTargets.length > 0;
+  }
+
   destroyCallback() {
     super.destroyCallback();
+
+    this.$['lr-drop-area/targets']?.remove?.(this);
+
     this._destroyDropzone?.();
     if (this._onAreaClicked) {
       this.removeEventListener('click', this._onAreaClicked);
@@ -104,13 +129,15 @@ export class DropArea extends UploaderBlock {
 }
 
 DropArea.template = /* HTML */ `
-  <div class="content-wrapper">
-    <div class="icon-container" set="@hidden: !withIcon">
-      <lr-icon name="default"></lr-icon>
-      <lr-icon name="arrow-down"></lr-icon>
+  <slot>
+    <div class="content-wrapper">
+      <div class="icon-container" set="@hidden: !withIcon">
+        <lr-icon name="default"></lr-icon>
+        <lr-icon name="arrow-down"></lr-icon>
+      </div>
+      <span class="text">{{text}}</span>
     </div>
-    <span class="text">{{text}}</span>
-  </div>
+  </slot>
 `;
 
 DropArea.bindAttributes({
