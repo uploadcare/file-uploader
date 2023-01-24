@@ -13,8 +13,8 @@ export class CameraSource extends UploaderBlock {
     ...this.ctxInit,
     video: null,
     videoTransformCss: null,
-    shotBtnDisabled: true,
-    videoHidden: true,
+    shotBtnDisabled: false,
+    videoHidden: false,
     messageHidden: true,
     requestBtnHidden: canUsePermissionsApi(),
     l10nMessage: null,
@@ -44,6 +44,11 @@ export class CameraSource extends UploaderBlock {
 
   /** @private */
   _onActivate = () => {
+    this.set$({
+      '*activityCaption': this.l10n('caption-camera'),
+      '*activityIcon': 'camera',
+    });
+
     if (canUsePermissionsApi()) {
       this._subscribePermissions();
     }
@@ -60,6 +65,11 @@ export class CameraSource extends UploaderBlock {
   };
 
   /** @private */
+  _onClose = () => {
+    this.historyBack();
+  };
+
+  /** @private */
   _handlePermissionsChange = () => {
     this._capture();
   };
@@ -70,7 +80,6 @@ export class CameraSource extends UploaderBlock {
    */
   _setPermissionsState = debounce((state) => {
     this.$.originalErrorMessage = null;
-    this.classList.toggle('initialized', state === 'granted');
 
     if (state === 'granted') {
       this.set$({
@@ -192,48 +201,32 @@ export class CameraSource extends UploaderBlock {
     this.registerActivity(this.activityType, {
       onActivate: this._onActivate,
       onDeactivate: this._onDeactivate,
+      onClose: this._onClose,
     });
 
     this.sub('--cfg-camera-mirror', (val) => {
       this.$.videoTransformCss = val ? 'scaleX(-1)' : null;
     });
 
-    try {
-      let deviceList = await navigator.mediaDevices.enumerateDevices();
-      let cameraSelectOptions = deviceList
-        .filter((info) => {
-          return info.kind === 'videoinput';
-        })
-        .map((info, idx) => {
-          return {
-            text: info.label.trim() || `${this.l10n('caption-camera')} ${idx + 1}`,
-            value: info.deviceId,
-          };
-        });
-      if (cameraSelectOptions.length > 1) {
-        this.$.cameraSelectOptions = cameraSelectOptions;
-        this.$.cameraSelectHidden = false;
-      }
-    } catch (err) {
-      // mediaDevices isn't available for HTTP
-      // TODO: handle this case
+    let deviceList = await navigator.mediaDevices.enumerateDevices();
+    let cameraSelectOptions = deviceList
+      .filter((info) => {
+        return info.kind === 'videoinput';
+      })
+      .map((info, idx) => {
+        return {
+          text: info.label.trim() || `${this.l10n('caption-camera')} ${idx + 1}`,
+          value: info.deviceId,
+        };
+      });
+    if (cameraSelectOptions.length > 1) {
+      this.$.cameraSelectOptions = cameraSelectOptions;
+      this.$.cameraSelectHidden = false;
     }
   }
 }
 
 CameraSource.template = /* HTML */ `
-  <lr-activity-header>
-    <button type="button" class="mini-btn close-btn" set="onclick: *historyBack">
-      <lr-icon name="back"></lr-icon>
-    </button>
-    <div>
-      <lr-icon name="camera"></lr-icon>
-      <span l10n="caption-camera"></span>
-    </div>
-    <button type="button" class="mini-btn close-btn" set="onclick: *closeModal">
-      <lr-icon name="close"></lr-icon>
-    </button>
-  </lr-activity-header>
   <div class="content">
     <video
       autoplay
@@ -250,13 +243,17 @@ CameraSource.template = /* HTML */ `
         l10n="camera-permissions-request"
       ></button>
     </div>
-    <button type="button" class="shot-btn" set="onclick: onShot; @disabled: shotBtnDisabled">
-      <lr-icon name="camera"></lr-icon>
-    </button>
-    <lr-select
-      class="camera-select"
-      set="$.options: cameraSelectOptions; @hidden: cameraSelectHidden; onchange: onCameraSelectChange"
-    >
+  </div>
+
+  <div class="toolbar">
+    <button type="button" class="cancel-btn secondary-btn" set="onclick: onCancel" l10n="cancel"></button>
+    <lr-select set="$.options: cameraSelectOptions; @hidden: cameraSelectHidden; onchange: onCameraSelectChange">
     </lr-select>
+    <button
+      type="button"
+      class="shot-btn primary-btn"
+      set="onclick: onShot; @disabled: shotBtnDisabled"
+      l10n="camera-shot"
+    ></button>
   </div>
 `;

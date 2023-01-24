@@ -1,24 +1,18 @@
 export const blockCtx = () => ({
-  /** @type {Set<import('./Block').Block>} */
-  '*blocksRegistry': new Set(),
+  '*ctxTargetsRegistry': new Map(),
 });
 
-export const activityBlockCtx = (fnCtx) => ({
+export const activityBlockCtx = () => ({
   ...blockCtx(),
   '*currentActivity': '',
   '*currentActivityParams': {},
   '*history': [],
-  '*historyBack': null,
-  '*closeModal': () => {
-    fnCtx.set$({
-      '*modalActive': false,
-      '*currentActivity': '',
-    });
-  },
+  '*activityCaption': '',
+  '*activityIcon': '',
 });
 
-export const uploaderBlockCtx = (fnCtx) => ({
-  ...activityBlockCtx(fnCtx),
+export const uploaderBlockCtx = () => ({
+  ...activityBlockCtx(),
   '*commonProgress': 0,
   '*uploadList': [],
   '*outputData': null,

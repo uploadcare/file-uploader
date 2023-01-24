@@ -31,7 +31,8 @@ export { CloudImageEditor } from './blocks/CloudImageEditor/CloudImageEditor.js'
 export { ExternalSource } from './blocks/ExternalSource/ExternalSource.js';
 export { Tabs } from './blocks/Tabs/Tabs.js';
 export { DataOutput } from './blocks/DataOutput/DataOutput.js';
-export { ActivityHeader } from './blocks/ActivityHeader/ActivityHeader.js';
+export { ActivityCaption } from './blocks/ActivityCaption/ActivityCaption.js';
+export { ActivityIcon } from './blocks/ActivityIcon/ActivityIcon.js';
 export { Select } from './blocks/Select/Select.js';
 export { Video } from './blocks/Video/Video.js';
 export { ShadowWrapper } from './blocks/ShadowWrapper/ShadowWrapper.js';

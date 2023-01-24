@@ -7,10 +7,9 @@ import { customUserAgent } from '../blocks/utils/userAgent.js';
 import { TypedCollection } from './TypedCollection.js';
 import { uploaderBlockCtx } from './CTX.js';
 import { EVENT_TYPES, EventData, EventManager } from './EventManager.js';
-import { Modal } from '../blocks/Modal/Modal.js';
 
 export class UploaderBlock extends ActivityBlock {
-  ctxInit = uploaderBlockCtx(this);
+  ctxInit = uploaderBlockCtx();
 
   /** @private */
   __initialUploadMetadata = null;
@@ -43,10 +42,9 @@ export class UploaderBlock extends ActivityBlock {
   destroyCallback() {
     super.destroyCallback();
 
-    let blocksRegistry = this.$['*blocksRegistry'];
-    if (blocksRegistry.has(this)) {
+    let registry = this.$['*ctxTargetsRegistry'];
+    if (registry?.size === 0) {
       this.uploadCollection.unobserve(this._handleCollectionUpdate);
-      blocksRegistry.delete(this);
     }
   }
 
@@ -63,8 +61,7 @@ export class UploaderBlock extends ActivityBlock {
     });
   }
 
-  /** @param {boolean} capture */
-  openSystemDialog(capture = false) {
+  openSystemDialog() {
     let accept = mergeFileTypes([
       this.getCssData('--cfg-accept'),
       ...(this.getCssData('--cfg-img-only') ? IMAGE_ACCEPT_LIST : []),
@@ -80,9 +77,6 @@ export class UploaderBlock extends ActivityBlock {
     this.fileInput.type = 'file';
     this.fileInput.multiple = !!this.getCssData('--cfg-multiple');
     this.fileInput.accept = accept;
-    if (capture) {
-      this.fileInput.capture = '';
-    }
     this.fileInput.dispatchEvent(new MouseEvent('click'));
     this.fileInput.onchange = () => {
       this.addFiles([...this.fileInput['files']]);
@@ -112,7 +106,7 @@ export class UploaderBlock extends ActivityBlock {
       this.set$({
         '*currentActivity': ActivityBlock.activities.UPLOAD_LIST,
       });
-      this.setForCtxTarget(Modal.StateConsumerScope, '*modalActive', true);
+      this.setForCtxTarget('lr-modal', '*modalActive', true);
     } else {
       if (this.sourceList?.length === 1) {
         let srcKey = this.sourceList[0];
@@ -131,14 +125,14 @@ export class UploaderBlock extends ActivityBlock {
           } else {
             this.$['*currentActivity'] = srcKey;
           }
-          this.setForCtxTarget(Modal.StateConsumerScope, '*modalActive', true);
+          this.setForCtxTarget('lr-modal', '*modalActive', true);
         }
       } else {
         // Multiple sources case:
         this.set$({
           '*currentActivity': ActivityBlock.activities.START_FROM,
         });
-        this.setForCtxTarget(Modal.StateConsumerScope, '*modalActive', true);
+        this.setForCtxTarget('lr-modal', '*modalActive', true);
       }
     }
   }
@@ -149,7 +143,7 @@ export class UploaderBlock extends ActivityBlock {
       '*history': this.doneActivity ? [this.doneActivity] : [],
     });
     if (!this.$['*currentActivity']) {
-      this.setForCtxTarget(Modal.StateConsumerScope, '*modalActive', false);
+      this.setForCtxTarget('lr-modal', '*modalActive', false);
     }
   }
 

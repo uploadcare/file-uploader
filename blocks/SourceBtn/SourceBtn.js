@@ -15,6 +15,7 @@ export class SourceBtn extends UploaderBlock {
   initTypes() {
     this.registerType({
       type: UploaderBlock.sourceTypes.LOCAL,
+      // activity: '',
       onClick: () => {
         this.openSystemDialog();
       },
@@ -27,14 +28,6 @@ export class SourceBtn extends UploaderBlock {
     this.registerType({
       type: UploaderBlock.sourceTypes.CAMERA,
       activity: ActivityBlock.activities.CAMERA,
-      onClick: () => {
-        let el = document.createElement('input');
-        var supportsCapture = el.capture !== undefined;
-        if (supportsCapture) {
-          this.openSystemDialog(true);
-        }
-        return !supportsCapture;
-      },
     });
     this.registerType({
       type: 'draw',
@@ -85,12 +78,12 @@ export class SourceBtn extends UploaderBlock {
     this.applyL10nKey('src-type', `${L10N_PREFIX}${textKey}`);
     this.$.iconName = icon;
     this.onclick = (e) => {
-      const showActivity = onClick ? onClick(e) : !!activity;
-      showActivity &&
+      activity &&
         this.set$({
           '*currentActivityParams': activityParams,
           '*currentActivity': activity,
         });
+      onClick && onClick(e);
     };
   }
 }

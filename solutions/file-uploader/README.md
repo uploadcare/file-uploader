@@ -409,16 +409,14 @@ import { LR } from '@uploadcare/blocks';
 
 class MyBlock extends LR.BlockComponent {
   initCallback() {
-    const onActivate = () => {
-      console.log('activity-name is activated');
+    this.onActivation = () => {
+      '*activityCaption': this.l10n('some-caption'),
+      '*activityIcon': 'my-icon-name',
     };
-    const onDeactivate = () => {
-      console.log('activity-name is deactcivated');
+    this.onDeactivation = () => {
+      console.log('activity-name is deactivated');
     };
-    this.registerActivity('my-activity-name', {
-      onActivate,
-      onDeactivate,
-    });
+    this.registerActivity('my-activity-name', this.onActivation, this.onDeactivation);
   }
 }
 ```

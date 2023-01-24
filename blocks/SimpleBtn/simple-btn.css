@@ -10,11 +10,6 @@ lr-simple-btn button {
   box-shadow: var(--shadow-btn-secondary);
 }
 
-lr-simple-btn button lr-icon svg {
-  width: calc(var(--ui-size) * 0.4);
-  height: calc(var(--ui-size) * 0.4);
-}
-
 lr-simple-btn button:hover {
   background-color: var(--clr-btn-bgr-secondary-hover);
 }

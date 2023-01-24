@@ -1,23 +1,9 @@
 lr-external-source {
-  display: flex;
-  flex-direction: column;
-  width: min(calc(var(--modal-max-w) - var(--gap-mid) * 2), calc(100vw - var(--gap-mid) * 2));
-  height: var(--modal-content-height-fill, 100%);
-  max-height: var(--modal-max-content-height);
-}
-
-lr-external-source > .content {
   position: relative;
   display: grid;
-  flex: 1;
   grid-template-rows: 1fr min-content;
-}
-
-@media only screen and (max-width: 430px) {
-  lr-external-source {
-    width: calc(100vw - var(--gap-mid) * 2);
-    height: var(--modal-content-height-fill, 100%);
-  }
+  height: var(--modal-content-height-fill, 100%);
+  max-height: var(--modal-max-content-height);
 }
 
 lr-external-source iframe {

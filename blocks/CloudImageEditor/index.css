@@ -3,7 +3,7 @@
 lr-cloud-image-editor {
   position: relative;
   display: flex;
-  width: min(calc(var(--modal-max-w) - var(--gap-mid) * 2), calc(100vw - var(--gap-mid) * 2));
+  width: 100%;
   height: var(--modal-content-height-fill, 100%);
   overflow: hidden;
 }

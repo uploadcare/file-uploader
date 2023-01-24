@@ -15,8 +15,6 @@ export class ExternalSource extends UploaderBlock {
 
   init$ = {
     ...this.ctxInit,
-    activityIcon: '',
-    activityCaption: '',
     counter: 0,
     onDone: () => {
       this.$['*currentActivity'] = ActivityBlock.activities.UPLOAD_LIST;
@@ -36,13 +34,14 @@ export class ExternalSource extends UploaderBlock {
         let { externalSourceType } = /** @type {ActivityParams} */ (this.activityParams);
 
         this.set$({
-          activityCaption: `${externalSourceType?.[0].toUpperCase()}${externalSourceType?.slice(1)}`,
-          activityIcon: externalSourceType,
+          '*activityCaption': `${externalSourceType?.[0].toUpperCase()}${externalSourceType?.slice(1)}`,
+          '*activityIcon': externalSourceType,
         });
 
         this.$.counter = 0;
         this.mountIframe();
       },
+      onClose: () => this.historyBack(),
     });
     this.sub('*currentActivity', (val) => {
       if (val !== this.activityType) {
@@ -138,27 +137,13 @@ export class ExternalSource extends UploaderBlock {
 }
 
 ExternalSource.template = /* HTML */ `
-  <lr-activity-header>
-    <button type="button" class="mini-btn close-btn" set="onclick: *historyBack">
-      <lr-icon name="back"></lr-icon>
+  <div ref="iframeWrapper" class="iframe-wrapper"></div>
+  <div class="toolbar">
+    <button type="button" class="cancel-btn secondary-btn" set="onclick: onCancel" l10n="cancel"></button>
+    <div></div>
+    <div class="selected-counter"><span l10n="selected-count"></span>{{counter}}</div>
+    <button type="button" class="done-btn primary-btn" set="onclick: onDone; @disabled: !counter">
+      <lr-icon name="check"></lr-icon>
     </button>
-    <div>
-      <lr-icon set="@name: activityIcon"></lr-icon>
-      <span>{{activityCaption}}</span>
-    </div>
-    <button type="button" class="mini-btn close-btn" set="onclick: *historyBack">
-      <lr-icon name="close"></lr-icon>
-    </button>
-  </lr-activity-header>
-  <div class="content">
-    <div ref="iframeWrapper" class="iframe-wrapper"></div>
-    <div class="toolbar">
-      <button type="button" class="cancel-btn secondary-btn" set="onclick: onCancel" l10n="cancel"></button>
-      <div></div>
-      <div class="selected-counter"><span l10n="selected-count"></span>{{counter}}</div>
-      <button type="button" class="done-btn primary-btn" set="onclick: onDone; @disabled: !counter">
-        <lr-icon name="check"></lr-icon>
-      </button>
-    </div>
   </div>
 `;

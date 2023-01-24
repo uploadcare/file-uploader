@@ -1,10 +1,15 @@
 import { Block } from '../../abstract/Block.js';
 
 export class Modal extends Block {
-  static StateConsumerScope = 'modal';
-
   _handleClose = () => {
-    this.$['*historyBack']?.();
+    if (this.$['*modalCloseCallback']) {
+      this.$['*modalCloseCallback']();
+      return;
+    }
+    this.set$({
+      '*modalActive': false,
+      '*currentActivity': '',
+    });
   };
 
   _handleClick = (e) => {
@@ -15,6 +20,8 @@ export class Modal extends Block {
   init$ = {
     ...this.ctxInit,
     '*modalActive': false,
+    '*modalHeaderHidden': false,
+    '*modalCloseCallback': null,
     isOpen: false,
     closeClicked: this._handleClose,
   };
@@ -83,6 +90,14 @@ export class Modal extends Block {
 
 Modal.template = /* HTML */ `
   <dialog ref="dialog" class="dialog">
-    <slot></slot>
+    <div class="heading" set="@hidden: *modalHeaderHidden">
+      <slot name="heading"></slot>
+      <button type="button" class="close-btn" set="onclick: closeClicked">
+        <lr-icon name="close"></lr-icon>
+      </button>
+    </div>
+    <div class="content">
+      <slot></slot>
+    </div>
   </dialog>
 `;

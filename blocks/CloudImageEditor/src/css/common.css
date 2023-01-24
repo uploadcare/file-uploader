@@ -1,5 +1,3 @@
-/* TODO: we shuoud use basic theme there  */
-
 :where(.lr-cldtr-common),
 :host {
   /* Theme settings >>> */
@@ -46,10 +44,10 @@
   --border-radius-ui: 5px;
   --border-radius-base: 6px;
 
-  --cldtr-gap-min: 5px;
-  --cldtr-gap-mid-1: 10px;
-  --cldtr-gap-mid-2: 15px;
-  --cldtr-gap-max: 20px;
+  --gap-min: 5px;
+  --gap-mid-1: 10px;
+  --gap-mid-2: 15px;
+  --gap-max: 20px;
 
   --opacity-min: var(--opacity-shade-mid);
   --opacity-mid: 0.1;
@@ -138,13 +136,13 @@ lr-cloud-editor > .wrapper {
   --l-min-img-height: var(--modal-toolbar-height);
   --l-max-img-height: 100%;
   --l-edit-button-width: 120px;
-  --l-toolbar-horizontal-padding: var(--cldtr-gap-mid-1);
+  --l-toolbar-horizontal-padding: var(--gap-mid-1);
 }
 
 @media only screen and (max-width: 800px) {
   lr-cloud-editor > .wrapper {
     --l-edit-button-width: 70px;
-    --l-toolbar-horizontal-padding: var(--cldtr-gap-min);
+    --l-toolbar-horizontal-padding: var(--gap-min);
   }
 }
 
@@ -279,7 +277,7 @@ lr-cloud-editor > .wrapper > .network_problems_splash > .network_problems_conten
 }
 
 lr-cloud-editor > .wrapper > .network_problems_splash > .network_problems_content > .network_problems_text {
-  margin-top: var(--cldtr-gap-max);
+  margin-top: var(--gap-max);
   font-size: var(--font-size-ui);
 }
 
@@ -403,7 +401,7 @@ lr-editor-button-control > .title,
 lr-editor-operation-control > .title,
 lr-editor-crop-button-control > .title,
 lr-editor-filter-control > .title {
-  padding-right: var(--cldtr-gap-mid-1);
+  padding-right: var(--gap-mid-1);
   font-size: 0.7em;
   letter-spacing: 1.004px;
   text-transform: uppercase;
@@ -554,17 +552,17 @@ lr-editor-toolbar {
 
 @media only screen and (max-width: 600px) {
   lr-editor-toolbar {
-    --l-tab-gap: var(--cldtr-gap-mid-1);
-    --l-slider-padding: var(--cldtr-gap-min);
-    --l-controls-padding: var(--cldtr-gap-min);
+    --l-tab-gap: var(--gap-mid-1);
+    --l-slider-padding: var(--gap-min);
+    --l-controls-padding: var(--gap-min);
   }
 }
 
 @media only screen and (min-width: 601px) {
   lr-editor-toolbar {
-    --l-tab-gap: calc(var(--cldtr-gap-mid-1) + var(--cldtr-gap-max));
-    --l-slider-padding: var(--cldtr-gap-mid-1);
-    --l-controls-padding: var(--cldtr-gap-mid-1);
+    --l-tab-gap: calc(var(--gap-mid-1) + var(--gap-max));
+    --l-slider-padding: var(--gap-mid-1);
+    --l-controls-padding: var(--gap-mid-1);
   }
 }
 
@@ -664,14 +662,14 @@ lr-editor-toolbar > .toolbar-container > .sub-toolbar > .tab-content-row > .tab-
   grid-template-columns: 1fr auto 1fr;
   box-sizing: border-box;
   min-width: 100%;
-  padding-left: var(--cldtr-gap-max);
+  padding-left: var(--gap-max);
 }
 
 lr-editor-toolbar > .toolbar-container > .sub-toolbar > .tab-content-row > .tab-content .controls-list_inner {
   display: grid;
   grid-area: inner;
   grid-auto-flow: column;
-  grid-gap: calc((var(--cldtr-gap-min) - 1px) * 3);
+  grid-gap: calc((var(--gap-min) - 1px) * 3);
 }
 
 lr-editor-toolbar
@@ -680,11 +678,11 @@ lr-editor-toolbar
   > .tab-content-row
   > .tab-content
   .controls-list_inner:last-child {
-  padding-right: var(--cldtr-gap-max);
+  padding-right: var(--gap-max);
 }
 
 lr-editor-toolbar .controls-list_last-item {
-  margin-right: var(--cldtr-gap-max);
+  margin-right: var(--gap-max);
 }
 
 lr-editor-toolbar .filter-tooltip_container {
@@ -698,7 +696,7 @@ lr-editor-toolbar .filter-tooltip_container {
 
 lr-editor-toolbar .filter-tooltip_wrapper {
   position: absolute;
-  top: calc(-100% - var(--cldtr-gap-mid-2));
+  top: calc(-100% - var(--gap-mid-2));
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
@@ -708,10 +706,10 @@ lr-editor-toolbar .filter-tooltip_wrapper {
 
 lr-editor-toolbar .filter-tooltip {
   z-index: 3;
-  padding-top: calc(var(--cldtr-gap-min) / 2);
-  padding-right: var(--cldtr-gap-min);
-  padding-bottom: calc(var(--cldtr-gap-min) / 2);
-  padding-left: var(--cldtr-gap-min);
+  padding-top: calc(var(--gap-min) / 2);
+  padding-right: var(--gap-min);
+  padding-bottom: calc(var(--gap-min) / 2);
+  padding-left: var(--gap-min);
   color: var(--color-text-base);
   font-size: 0.7em;
   letter-spacing: 1px;
@@ -747,8 +745,8 @@ lr-btn-ui {
   align-items: center;
   box-sizing: var(--css-box-sizing, border-box);
   height: var(--css-height, var(--size-touch-area));
-  padding-right: var(--css-padding-right, var(--cldtr-gap-mid-1));
-  padding-left: var(--css-padding-left, var(--cldtr-gap-mid-1));
+  padding-right: var(--css-padding-right, var(--gap-mid-1));
+  padding-left: var(--css-padding-left, var(--gap-mid-1));
   color: rgba(var(--color-effect), var(--opacity-effect));
   outline: none;
   cursor: pointer;
@@ -771,13 +769,13 @@ lr-btn-ui .icon {
 }
 
 lr-btn-ui .icon_left {
-  margin-right: var(--cldtr-gap-mid-1);
+  margin-right: var(--gap-mid-1);
   margin-left: 0px;
 }
 
 lr-btn-ui .icon_right {
   margin-right: 0px;
-  margin-left: var(--cldtr-gap-mid-1);
+  margin-left: var(--gap-mid-1);
 }
 
 lr-btn-ui .icon_single {

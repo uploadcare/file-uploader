@@ -7,7 +7,6 @@ import { createWindowHeightTracker, getIsWindowHeightTracked } from '../utils/cr
 const TAG_PREFIX = 'lr-';
 
 export class Block extends BaseComponent {
-  static StateConsumerScope = null;
   allowCustomTemplate = true;
 
   ctxInit = blockCtx();
@@ -56,38 +55,24 @@ export class Block extends BaseComponent {
   }
 
   /**
-   * @param {(block: Block) => boolean} callback
+   * @param {String} targetTagName
    * @returns {Boolean}
    */
-  findBlockInCtx(callback) {
+  checkCtxTarget(targetTagName) {
     /** @type {Set} */
-    let blocksRegistry = this.$['*blocksRegistry'];
-    for (let block of blocksRegistry) {
-      if (callback(block)) {
-        return true;
-      }
-    }
-    return false;
+    let registry = this.$['*ctxTargetsRegistry'];
+    return registry?.has(targetTagName);
   }
 
   /**
-   * @param {String} consumerScope
+   * @param {String} targetTagName
    * @param {String} prop
    * @param {any} newVal
    */
-  setForCtxTarget(consumerScope, prop, newVal) {
-    if (this.findBlockInCtx((b) => /** @type {typeof Block} */ (b.constructor).StateConsumerScope === consumerScope)) {
+  setForCtxTarget(targetTagName, prop, newVal) {
+    if (this.checkCtxTarget(targetTagName)) {
       this.$[prop] = newVal;
     }
-  }
-
-  /** @param {String} activityType */
-  setActivity(activityType) {
-    if (this.findBlockInCtx((b) => b.activityType === activityType)) {
-      this.$['*currentActivity'] = activityType;
-      return;
-    }
-    console.warn(`Activity type "${activityType}" not found in the context`);
   }
 
   connectedCallback() {
@@ -113,13 +98,23 @@ export class Block extends BaseComponent {
   }
 
   initCallback() {
-    let blocksRegistry = this.$['*blocksRegistry'];
-    blocksRegistry.add(this);
+    let tagName = this.constructor['is'];
+    let registry = this.$['*ctxTargetsRegistry'];
+    let counter = registry.has(tagName) ? registry.get(tagName) + 1 : 1;
+    registry.set(tagName, counter);
+    this.$['*ctxTargetsRegistry'] = registry;
   }
 
   destroyCallback() {
-    let blocksRegistry = this.$['*blocksRegistry'];
-    blocksRegistry.delete(this);
+    let tagName = this.constructor['is'];
+    let registry = this.$['*ctxTargetsRegistry'];
+    let newCount = registry.has(registry) ? registry.get(tagName) - 1 : 0;
+    if (newCount === 0) {
+      registry.delete(tagName);
+    } else {
+      registry.set(tagName, newCount);
+    }
+    this.$['*ctxTargetsRegistry'] = registry;
   }
 
   /**

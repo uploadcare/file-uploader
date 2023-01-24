@@ -2,8 +2,6 @@
 :host {
   --l10n-upload-file: 'Upload file';
   --l10n-upload-files: 'Upload files';
-  --l10n-choose-file: 'Choose file';
-  --l10n-choose-files: 'Choose files';
   --l10n-drop-files-here: 'Drop files here';
   --l10n-select-file-source: 'Select file source';
   --l10n-selected: 'Selected';
@@ -30,7 +28,7 @@
   --l10n-browse: 'Browse';
   --l10n-not-uploaded-yet: 'Not uploaded yet...';
 
-  --l10n-src-type-local: 'From device';
+  --l10n-src-type-local: 'Local file';
   --l10n-src-type-from-url: 'From URL';
   --l10n-src-type-camera: 'Camera';
   --l10n-src-type-draw: 'Draw';

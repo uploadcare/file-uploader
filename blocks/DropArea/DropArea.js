@@ -2,29 +2,14 @@ import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 import { DropzoneState, addDropzone } from './addDropzone.js';
 import { fileIsImage } from '../../utils/fileTypes.js';
-import { Modal } from '../Modal/Modal.js';
 
 export class DropArea extends UploaderBlock {
   init$ = {
     ...this.ctxInit,
     state: DropzoneState.INACTIVE,
-    withIcon: false,
-    isClickable: false,
-    text: this.l10n('drop-files-here'),
   };
   initCallback() {
     super.initCallback();
-
-    this.defineAccessor('clickable', (value) => {
-      this.set$({ isClickable: typeof value === 'string' });
-    });
-    this.defineAccessor('with-icon', (value) => {
-      this.set$({ withIcon: typeof value === 'string' });
-    });
-    this.defineAccessor('text', (value) => {
-      this.set$({ text: this.l10n(value) || value || this.l10n('drop-files-here') });
-    });
-
     /** @private */
     this._destroyDropzone = addDropzone({
       element: this,
@@ -58,7 +43,8 @@ export class DropArea extends UploaderBlock {
           this.set$({
             '*currentActivity': ActivityBlock.activities.UPLOAD_LIST,
           });
-          this.setForCtxTarget(Modal.StateConsumerScope, '*modalActive', true);
+          // @ts-ignore
+          this.setForCtxTarget('lr-modal', '*modalActive', true);
         }
       },
     });
@@ -72,12 +58,15 @@ export class DropArea extends UploaderBlock {
       }
     });
 
-    if (this.$.isClickable) {
-      // @private
-      this._onAreaClicked = () => {
-        this.openSystemDialog();
-      };
-      this.addEventListener('click', this._onAreaClicked);
+    if (this.hasAttribute('clickable')) {
+      let clickable = this.getAttribute('clickable');
+      if (clickable === '' || clickable === 'true') {
+        // @private
+        this._onAreaClicked = () => {
+          this.openSystemDialog();
+        };
+        this.addEventListener('click', this._onAreaClicked);
+      }
     }
   }
 
@@ -89,19 +78,3 @@ export class DropArea extends UploaderBlock {
     }
   }
 }
-
-DropArea.template = /* HTML */ `
-  <slot>
-    <div class="icon-container" set="@hidden: !withIcon">
-      <lr-icon name="default"></lr-icon>
-      <lr-icon name="arrow-down"></lr-icon>
-    </div>
-    <span class="text">{{text}}</span>
-  </slot>
-`;
-
-DropArea.bindAttributes({
-  'with-icon': null,
-  clickable: null,
-  text: null,
-});

@@ -37,7 +37,8 @@ declare namespace JSX {
     'lr-external-source': any;
     'lr-tabs': any;
     'lr-data-output': any;
-    'lr-activity-heading': any;
+    'lr-activity-caption': any;
+    'lr-activity-icon': any;
     'lr-file-uploader-regular': any;
     'lr-file-uploader-minimal': any;
   }

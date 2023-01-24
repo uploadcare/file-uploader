@@ -1,7 +1,6 @@
 lr-upload-list {
   display: flex;
   flex-direction: column;
-  width: min(calc(var(--modal-normal-w) - var(--gap-mid) * 2), calc(100vw - var(--gap-mid) * 2));
   max-height: var(--modal-max-content-height);
   overflow: hidden;
   background-color: var(--clr-background-light);
@@ -9,39 +8,24 @@ lr-upload-list {
 }
 
 lr-upload-list .no-files {
-  height: var(--ui-size);
+  height: var(--file-item-height);
   padding: var(--gap-max);
 }
 
 lr-upload-list .files {
   display: block;
-  min-height: var(--ui-size);
-  padding: 0 var(--gap-mid);
   overflow: auto;
 }
 
 lr-upload-list .toolbar {
   display: flex;
-  gap: var(--gap-small);
+  gap: var(--gap-mid);
   justify-content: space-between;
   padding: var(--gap-mid);
-  background-color: var(--clr-background-light);
-}
-
-lr-upload-list .toolbar .add-more-btn {
-  padding-left: 0.2em;
+  background-color: var(--clr-background);
+  border-top: var(--border-light);
 }
 
 lr-upload-list .toolbar-spacer {
   flex: 1;
-}
-
-lr-upload-list lr-drop-area {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: calc(100% - var(--gap-mid) * 2);
-  height: calc(100% - var(--gap-mid) * 2);
-  margin: var(--gap-mid);
-  border-radius: var(--border-radius-element);
 }
