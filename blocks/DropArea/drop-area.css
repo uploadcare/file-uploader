@@ -6,7 +6,7 @@ lr-drop-area {
   transition: var(--transition-duration) ease;
 }
 
-lr-drop-area[fullscreen],
+lr-drop-area,
 lr-drop-area .content-wrapper {
   display: flex;
   align-items: center;
