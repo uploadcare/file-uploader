@@ -43,18 +43,24 @@ export class DropArea extends UploaderBlock {
     this._destroyDropzone = addDropzone({
       element: this,
       onChange: (state) => {
-        if (this._shouldIgnore()) {
+        if (this._shouldIgnoreDragEvents() || !this._couldHandleFiles()) {
           return;
         }
 
         this.$.state = state;
       },
+      /** @param {(File | String)[]} items */
       onItems: (items) => {
         if (!items.length) {
           return;
         }
-        if (!this.getCssData('--cfg-multiple')) {
-          items = [items[0]];
+        let isMultiple = this.getCssData('--cfg-multiple');
+        let multipleMax = this.getCssData('--cfg-multiple-max');
+        let currentFilesCount = this.uploadCollection.size;
+        if (isMultiple && multipleMax) {
+          items = items.slice(0, multipleMax - currentFilesCount - 1);
+        } else if (!isMultiple) {
+          items = items.slice(0, currentFilesCount > 0 ? 0 : 1);
         }
         items.forEach((/** @type {File | String} */ item) => {
           if (typeof item === 'string') {
@@ -81,6 +87,20 @@ export class DropArea extends UploaderBlock {
       },
     });
 
+    let contentWrapperEl = this.ref['content-wrapper'];
+    if (contentWrapperEl) {
+      this._destroyContentWrapperDropzone = addDropzone({
+        element: contentWrapperEl,
+        onChange: (state) => {
+          const stateText = Object.entries(DropzoneState)
+            .find(([, value]) => value === state)?.[0]
+            .toLowerCase();
+          stateText && contentWrapperEl.setAttribute('drag-state', stateText);
+        },
+        onItems: () => {},
+      });
+    }
+
     this.sub('state', (state) => {
       const stateText = Object.entries(DropzoneState)
         .find(([, value]) => value === state)?.[0]
@@ -104,8 +124,8 @@ export class DropArea extends UploaderBlock {
    *
    * @returns {Boolean}
    */
-  _shouldIgnore() {
-    if (!this.$.isFullscreen) {
+  _shouldIgnoreDragEvents() {
+    if (!this.$.isFullscreen || this.$.state !== DropzoneState.INACTIVE) {
       return false;
     }
     const otherTargets = [...this.$['lr-drop-area/targets']].filter((el) => el !== this);
@@ -116,12 +136,29 @@ export class DropArea extends UploaderBlock {
     return visibleTargets.length > 0;
   }
 
+  _couldHandleFiles() {
+    let isMultiple = this.getCssData('--cfg-multiple');
+    let multipleMax = this.getCssData('--cfg-multiple-max');
+    let currentFilesCount = this.uploadCollection.size;
+
+    if (isMultiple && multipleMax && currentFilesCount >= multipleMax) {
+      return false;
+    }
+
+    if (!isMultiple && currentFilesCount > 0) {
+      return false;
+    }
+
+    return true;
+  }
+
   destroyCallback() {
     super.destroyCallback();
 
     this.$['lr-drop-area/targets']?.remove?.(this);
 
     this._destroyDropzone?.();
+    this._destroyContentWrapperDropzone?.();
     if (this._onAreaClicked) {
       this.removeEventListener('click', this._onAreaClicked);
     }
@@ -130,7 +167,7 @@ export class DropArea extends UploaderBlock {
 
 DropArea.template = /* HTML */ `
   <slot>
-    <div class="content-wrapper">
+    <div ref="content-wrapper" class="content-wrapper">
       <div class="icon-container" set="@hidden: !withIcon">
         <lr-icon name="default"></lr-icon>
         <lr-icon name="arrow-down"></lr-icon>
