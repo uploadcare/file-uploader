@@ -3,11 +3,14 @@ lr-url-source {
   background-color: var(--clr-background-light);
 }
 
+lr-modal lr-url-source {
+  width: min(calc(var(--modal-normal-w) - var(--gap-mid) * 2), calc(100vw - var(--gap-mid) * 2));
+}
+
 lr-url-source > .content {
   display: grid;
   grid-gap: var(--gap-small);
   grid-template-columns: 1fr min-content;
-  width: min(calc(var(--modal-normal-w) - var(--gap-mid) * 2), calc(100vw - var(--gap-mid) * 2));
   padding: var(--gap-mid);
   padding-top: 0;
 }

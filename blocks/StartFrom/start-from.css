@@ -3,6 +3,7 @@ lr-start-from {
   grid-auto-flow: row;
   gap: var(--gap-max);
   width: 100%;
+  height: max-content;
   padding: var(--gap-max);
   overflow-y: auto;
   background-color: var(--clr-background-light);

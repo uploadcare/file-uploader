@@ -80,8 +80,6 @@
 
 lr-start-from {
   display: block;
-  width: 100%; /* test value */
-  height: unset; /* test value */
   padding: 0;
   text-align: center;
 }
@@ -100,20 +98,12 @@ lr-drop-area {
   cursor: pointer;
 }
 
-lr-drop-area::after {
-  content: '';
-}
-
 lr-upload-list lr-activity-header {
   display: none;
 }
 
 lr-upload-list > .toolbar {
   background-color: transparent;
-}
-
-lr-upload-list lr-drop-area::after {
-  content: var(--l10n-drop-files-here);
 }
 
 lr-upload-list {
@@ -131,7 +121,6 @@ lr-upload-list .files {
 
 lr-upload-list .toolbar {
   display: block;
-  margin-top: var(--gap-small);
   padding: 0;
 }
 
@@ -144,6 +133,7 @@ lr-upload-list .toolbar .done-btn {
 lr-upload-list .toolbar .add-more-btn {
   width: 100%;
   height: calc(var(--ui-size) + var(--gap-mid) * 2);
+  margin-top: var(--gap-small);
   background-color: var(--clr-background);
 }
 
