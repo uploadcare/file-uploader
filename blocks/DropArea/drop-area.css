@@ -31,22 +31,19 @@ lr-drop-area[ghost]:not([fullscreen]):is([drag-state='active'], [drag-state='nea
   background: var(--clr-background);
 }
 
-lr-drop-area[with-icon]:is([drag-state='active'], [drag-state='near'], [drag-state='over'])
+lr-drop-area[with-icon]
+  > .content-wrapper:is([drag-state='active'], [drag-state='near'], [drag-state='over'])
   :is(.text, .icon-container) {
   color: var(--clr-accent);
 }
 
-lr-drop-area[drag-state='active'],
-lr-drop-area[drag-state='near'],
-lr-drop-area[drag-state='over'],
-lr-drop-area:hover {
+lr-drop-area:is([drag-state='active'], [drag-state='near'], [drag-state='over'], :hover) {
   color: var(--clr-accent);
   background: var(--clr-accent-lightest);
   border-color: var(--clr-accent-light);
 }
 
-lr-drop-area[drag-state='active'],
-lr-drop-area[drag-state='near'] {
+lr-drop-area:is([drag-state='active'], [drag-state='near']) {
   opacity: 1;
 }
 
@@ -159,17 +156,17 @@ lr-drop-area[fullscreen] .content-wrapper {
   transition: var(--transition-duration) ease;
 }
 
-lr-drop-area[with-icon][fullscreen][drag-state='active'] .content-wrapper,
-lr-drop-area[with-icon][fullscreen][drag-state='near'] .content-wrapper {
+lr-drop-area[with-icon][fullscreen][drag-state='active'] > .content-wrapper,
+lr-drop-area[with-icon][fullscreen][drag-state='near'] > .content-wrapper {
   transform: translateY(var(--gap-mid));
   opacity: 0;
 }
 
-lr-drop-area[with-icon][fullscreen][drag-state='over'] .content-wrapper {
+lr-drop-area[with-icon][fullscreen][drag-state='over'] > .content-wrapper {
   transform: translateY(0px);
   opacity: 1;
 }
 
-:is(lr-drop-area[with-icon][fullscreen]) .content-wrapper lr-icon:first-child {
+:is(lr-drop-area[with-icon][fullscreen]) > .content-wrapper lr-icon:first-child {
   transform: translateY(calc(var(--ui-size) * -1.5));
 }
