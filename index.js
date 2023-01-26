@@ -35,6 +35,7 @@ export { ActivityHeader } from './blocks/ActivityHeader/ActivityHeader.js';
 export { Select } from './blocks/Select/Select.js';
 export { Video } from './blocks/Video/Video.js';
 export { ShadowWrapper } from './blocks/ShadowWrapper/ShadowWrapper.js';
+export { Copyright } from './blocks/Copyright/Copyright.js';
 
 // Solutions:
 export { FileUploaderRegular } from './solutions/file-uploader/regular/FileUploaderRegular.js';

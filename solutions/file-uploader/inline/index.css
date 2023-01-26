@@ -26,6 +26,14 @@ lr-uploader {
 
 @container (min-width: 500px) {
   lr-start-from {
-    grid-auto-flow: column;
+    grid-template-columns: 1fr max-content;
+  }
+
+  lr-start-from lr-copyright {
+    grid-column: 2;
+  }
+
+  lr-start-from lr-drop-area {
+    grid-row: span 2;
   }
 }

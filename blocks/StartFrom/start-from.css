@@ -1,6 +1,6 @@
 lr-start-from {
   display: grid;
-  grid-auto-flow: row;
+  grid-template-rows: 1fr max-content max-content;
   gap: var(--gap-max);
   width: 100%;
   height: max-content;
