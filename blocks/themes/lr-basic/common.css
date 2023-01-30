@@ -23,6 +23,11 @@
   display: none;
 }
 
+:where(.lr-wgt-theme, .lr-wgt-common) dialog:not([open]) [activity],
+:host dialog:not([open]) [activity] {
+  display: none;
+}
+
 :where(.lr-wgt-theme, .lr-wgt-common) button,
 :host button {
   display: flex;
