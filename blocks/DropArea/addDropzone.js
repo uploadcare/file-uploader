@@ -8,7 +8,7 @@ export const DropzoneState = {
   OVER: 3,
 };
 
-let FINAL_EVENTS = ['dragleave', 'dragexit', 'dragend', 'drop', 'mouseleave', 'mouseout'];
+let RESET_EVENTS = ['focus'];
 let NEAR_OFFSET = 100;
 let nearnessRegistry = new Map();
 
@@ -29,56 +29,53 @@ function distance(p, r) {
  * @param {HTMLElement} desc.element
  * @param {Function} desc.onChange
  * @param {Function} desc.onItems
+ * @param {() => Boolean} desc.shouldIgnore
  */
 export function addDropzone(desc) {
+  let eventCounter = 0;
+
+  let body = document.body;
   let switchHandlers = new Set();
   let handleSwitch = (fn) => switchHandlers.add(fn);
   let state = DropzoneState.INACTIVE;
 
   let setState = (newState) => {
+    if (desc.shouldIgnore() && newState !== DropzoneState.INACTIVE) {
+      return;
+    }
     if (state !== newState) {
       switchHandlers.forEach((fn) => fn(newState));
     }
     state = newState;
   };
 
-  let onFinalEvent = (e) => {
-    let { clientX, clientY } = e;
-    let bodyBounds = document.body.getBoundingClientRect();
-    let isDrop = e.type === 'drop';
-    let isOuterDrag = ['dragleave', 'dragexit', 'dragend'].includes(e.type) && clientX === 0 && clientY === 0;
-    let isOuterMouse =
-      ['mouseleave', 'mouseout'].includes(e.type) &&
-      (clientX < 0 || clientX > bodyBounds.width || clientY < 0 || clientY > bodyBounds.height);
-    if (isDrop || isOuterDrag || isOuterMouse) {
-      setState(DropzoneState.INACTIVE);
-    }
-    e.preventDefault();
-  };
-
   handleSwitch((newState) => desc.onChange(newState));
-  handleSwitch((newState) => {
-    if (newState === DropzoneState.ACTIVE) {
-      FINAL_EVENTS.forEach((eventName) => {
-        window.addEventListener(eventName, onFinalEvent, false);
-      });
-    }
-  });
-  handleSwitch((newState) => {
-    if (newState === DropzoneState.INACTIVE) {
-      FINAL_EVENTS.forEach((eventName) => {
-        window.removeEventListener(eventName, onFinalEvent, false);
-      });
-    }
-  });
 
-  let onDragOver = (e) => {
-    // console.log(e)
-    // Not sure that it won't conflict with other dnd elements on the page
-    e.preventDefault();
+  let onResetEvent = () => {
+    eventCounter = 0;
+    setState(DropzoneState.INACTIVE);
+  };
+  let onDragEnter = () => {
+    eventCounter += 1;
     if (state === DropzoneState.INACTIVE) {
       setState(DropzoneState.ACTIVE);
     }
+  };
+  let onDragLeave = () => {
+    eventCounter -= 1;
+    let draggingInPage = eventCounter > 0;
+    if (!draggingInPage) {
+      setState(DropzoneState.INACTIVE);
+    }
+  };
+  let onDrop = (e) => {
+    e.preventDefault();
+    eventCounter = 0;
+    setState(DropzoneState.INACTIVE);
+  };
+
+  let onDragOver = (e) => {
+    e.preventDefault();
 
     /** @type {[Number, Number]} */
     let dragPoint = [e.x, e.y];
@@ -98,22 +95,32 @@ export function addDropzone(desc) {
       setState(DropzoneState.ACTIVE);
     }
   };
-  window.addEventListener('dragover', onDragOver, false);
 
-  let onDrop = async (e) => {
+  let onElementDrop = async (e) => {
     e.preventDefault();
     let items = await getDropItems(e.dataTransfer);
     desc.onItems(items);
     setState(DropzoneState.INACTIVE);
   };
-  desc.element.addEventListener('drop', onDrop);
+
+  body.addEventListener('drop', onDrop);
+  body.addEventListener('dragleave', onDragLeave);
+  body.addEventListener('dragenter', onDragEnter);
+  body.addEventListener('dragover', onDragOver);
+  desc.element.addEventListener('drop', onElementDrop);
+  RESET_EVENTS.forEach((eventName) => {
+    window.addEventListener(eventName, onResetEvent);
+  });
 
   return () => {
     nearnessRegistry.delete(desc.element);
-    window.removeEventListener('dragover', onDragOver, false);
-    desc.element.removeEventListener('drop', onDrop);
-    FINAL_EVENTS.forEach((eventName) => {
-      window.removeEventListener(eventName, onFinalEvent, false);
+    body.removeEventListener('drop', onDrop);
+    body.removeEventListener('dragleave', onDragLeave);
+    body.removeEventListener('dragenter', onDragEnter);
+    body.removeEventListener('dragover', onDragOver);
+    desc.element.removeEventListener('drop', onElementDrop);
+    RESET_EVENTS.forEach((eventName) => {
+      window.removeEventListener(eventName, onResetEvent);
     });
   };
 }

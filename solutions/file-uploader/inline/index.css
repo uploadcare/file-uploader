@@ -20,12 +20,17 @@ lr-uploader {
     );
 }
 
+lr-start-from {
+  height: 100%;
+}
+
 :host {
   container-type: inline-size;
 }
 
 @container (min-width: 500px) {
   lr-start-from {
+    grid-template-rows: 1fr max-content;
     grid-template-columns: 1fr max-content;
   }
 

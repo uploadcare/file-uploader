@@ -14,6 +14,20 @@ export class DropArea extends UploaderBlock {
     text: this.l10n('drop-files-here'),
     'lr-drop-area/targets': null,
   };
+  isActive() {
+    const bounds = this.getBoundingClientRect();
+    const hasSize = bounds.width > 0 && bounds.height > 0;
+    const isInViewport =
+      bounds.top >= 0 &&
+      bounds.left >= 0 &&
+      bounds.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+      bounds.right <= (window.innerWidth || document.documentElement.clientWidth);
+
+    const style = window.getComputedStyle(this);
+    const visible = style.visibility !== 'hidden' && style.display !== 'none';
+
+    return hasSize && visible && isInViewport;
+  }
   initCallback() {
     super.initCallback();
     if (!this.$['lr-drop-area/targets']) {
@@ -42,11 +56,8 @@ export class DropArea extends UploaderBlock {
     /** @private */
     this._destroyDropzone = addDropzone({
       element: this,
+      shouldIgnore: () => this._isDisabled(),
       onChange: (state) => {
-        if (this._shouldIgnoreDragEvents() || !this._couldHandleFiles()) {
-          return;
-        }
-
         this.$.state = state;
       },
       /** @param {(File | String)[]} items */
@@ -98,6 +109,7 @@ export class DropArea extends UploaderBlock {
           stateText && contentWrapperEl.setAttribute('drag-state', stateText);
         },
         onItems: () => {},
+        shouldIgnore: () => this._isDisabled(),
       });
     }
 
@@ -124,16 +136,18 @@ export class DropArea extends UploaderBlock {
    *
    * @returns {Boolean}
    */
-  _shouldIgnoreDragEvents() {
-    if (!this.$.isFullscreen || this.$.state !== DropzoneState.INACTIVE) {
+  _isDisabled() {
+    if (!this._couldHandleFiles()) {
+      return true;
+    }
+    if (!this.$.isFullscreen) {
       return false;
     }
     const otherTargets = [...this.$['lr-drop-area/targets']].filter((el) => el !== this);
-    const visibleTargets = otherTargets.filter((/** @type {HTMLElement} */ el) => {
-      const bounds = el.getBoundingClientRect();
-      return bounds.width > 0 && bounds.height > 0;
+    const activeTargets = otherTargets.filter((/** @type {typeof this} */ el) => {
+      return el.isActive();
     });
-    return visibleTargets.length > 0;
+    return activeTargets.length > 0;
   }
 
   _couldHandleFiles() {
