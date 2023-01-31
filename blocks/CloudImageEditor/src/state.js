@@ -6,13 +6,14 @@ import { TRANSPARENT_PIXEL_SRC } from '../../../utils/transparentPixelSrc.js';
 export function initState(fnCtx) {
   return {
     '*originalUrl': null,
-    '*tabId': null,
     '*faderEl': null,
     '*cropperEl': null,
     '*imgEl': null,
     '*imgContainerEl': null,
     '*networkProblems': false,
     '*imageSize': null,
+    /** @type {import('./types.js').Transformations} */
+    '*editorTransformations': {},
 
     entry: null,
     extension: null,
@@ -24,6 +25,7 @@ export function initState(fnCtx) {
     fileType: '',
     showLoader: false,
     uuid: null,
+    cdnUrl: null,
 
     'presence.networkProblems': false,
     'presence.modalCaption': true,

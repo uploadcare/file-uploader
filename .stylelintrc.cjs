@@ -20,6 +20,18 @@ module.exports = {
     'color-function-notation': null,
     'order/properties-order': null,
     'rule-empty-line-before': null,
+    'at-rule-no-unknown': [
+      true,
+      {
+        ignoreAtRules: ['container'],
+      },
+    ],
+    'property-no-unknown': [
+      true,
+      {
+        ignoreProperties: ['container-type', 'container-name'],
+      },
+    ],
   },
   overrides: [
     {

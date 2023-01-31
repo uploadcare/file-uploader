@@ -19,3 +19,26 @@ lr-uploader {
       calc((0.1 - 0.05 * var(--darkmode)) * var(--borders))
     );
 }
+
+lr-start-from {
+  height: 100%;
+}
+
+:host {
+  container-type: inline-size;
+}
+
+@container (min-width: 500px) {
+  lr-start-from {
+    grid-template-rows: 1fr max-content;
+    grid-template-columns: 1fr max-content;
+  }
+
+  lr-start-from lr-copyright {
+    grid-column: 2;
+  }
+
+  lr-start-from lr-drop-area {
+    grid-row: span 2;
+  }
+}

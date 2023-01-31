@@ -12,8 +12,8 @@
       <script type="importmap">
         {
   "imports": {
-    "@symbiotejs/symbiote": "https://cdn.skypack.dev/pin/@symbiotejs/symbiote@v1.11.1-nb4uuMnoyFEHQ78uWIov/mode=imports,min/optimized/@symbiotejs/symbiote.js",
-    "@uploadcare/upload-client": "https://cdn.skypack.dev/-/@uploadcare/upload-client@v5.1.0-ikuQtxJ0wUDrZwcMWBtL/dist=es2020,mode=raw,min/dist/index.browser.js"
+    "@symbiotejs/symbiote": "https://cdn.skypack.dev/pin/@symbiotejs/symbiote@v1.11.5-xok0d4yq3JnqOTheB68R/mode=imports,min/optimized/@symbiotejs/symbiote.js",
+    "@uploadcare/upload-client": "https://cdn.skypack.dev/-/@uploadcare/upload-client@v6.2.1-BoihH4bL0d7hAb0UH0Rx/dist=es2020,mode=raw,min/dist/index.browser.js"
   }
 }
 
@@ -61,13 +61,26 @@
         </div>
         <col-css><h1>Cloud image editor</h1>
 
+<h2>Load image by UUID</h2>
+
 <lr-live-html>
   <link rel="stylesheet" href="./src/css/index.css" />
 
   <script src="./test.js" type="module"></script>
 
   <lr-cloud-editor class="lr-cldtr-common" uuid="7c167b79-9f27-4489-8032-3f3be1840605"></lr-cloud-editor>
-</lr-live-html></col-css>
+</lr-live-html>
+
+<h2>Load image by CDN URL</h2>
+
+<lr-live-html>
+  <link rel="stylesheet" href="./src/css/index.css" />
+
+  <script src="./test.js" type="module"></script>
+
+  <lr-cloud-editor class="lr-cldtr-common" cdn-url="https://ucarecdn.com/7c167b79-9f27-4489-8032-3f3be1840605/-/crop/100x100/0,0/"></lr-cloud-editor>
+</lr-live-html>
+</col-css>
       </main>
       <footer>© 2022 🦆</footer>
       <div class="arrow-top" onclick="scrollToTop()">

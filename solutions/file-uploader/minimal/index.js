@@ -7,6 +7,7 @@ import { FileItem } from '../../../blocks/FileItem/FileItem.js';
 import { Icon } from '../../../blocks/Icon/Icon.js';
 import { ProgressBar } from '../../../blocks/ProgressBar/ProgressBar.js';
 import { MessageBox } from '../../../blocks/MessageBox/MessageBox.js';
+import { Copyright } from '../../../blocks/Copyright/Copyright.js';
 
 registerBlocks({
   FileUploaderMinimal,
@@ -17,4 +18,5 @@ registerBlocks({
   Icon,
   ProgressBar,
   MessageBox,
+  Copyright,
 });

@@ -2,26 +2,76 @@ import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 import { DropzoneState, addDropzone } from './addDropzone.js';
 import { fileIsImage } from '../../utils/fileTypes.js';
+import { Modal } from '../Modal/Modal.js';
 
 export class DropArea extends UploaderBlock {
   init$ = {
     ...this.ctxInit,
     state: DropzoneState.INACTIVE,
+    withIcon: false,
+    isClickable: false,
+    isFullscreen: false,
+    text: this.l10n('drop-files-here'),
+    'lr-drop-area/targets': null,
   };
+  isActive() {
+    const bounds = this.getBoundingClientRect();
+    const hasSize = bounds.width > 0 && bounds.height > 0;
+    const isInViewport =
+      bounds.top >= 0 &&
+      bounds.left >= 0 &&
+      bounds.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+      bounds.right <= (window.innerWidth || document.documentElement.clientWidth);
+
+    const style = window.getComputedStyle(this);
+    const visible = style.visibility !== 'hidden' && style.display !== 'none';
+
+    return hasSize && visible && isInViewport;
+  }
   initCallback() {
     super.initCallback();
+    if (!this.$['lr-drop-area/targets']) {
+      this.$['lr-drop-area/targets'] = new Set();
+    }
+    this.$['lr-drop-area/targets'].add(this);
+
+    this.defineAccessor('clickable', (value) => {
+      this.set$({ isClickable: typeof value === 'string' });
+    });
+    this.defineAccessor('with-icon', (value) => {
+      this.set$({ withIcon: typeof value === 'string' });
+    });
+    this.defineAccessor('fullscreen', (value) => {
+      this.set$({ isFullscreen: typeof value === 'string' });
+    });
+
+    this.defineAccessor('text', (value) => {
+      if (value) {
+        this.set$({ text: this.l10n(value) || value });
+      } else {
+        this.set$({ text: this.l10n('drop-files-here') });
+      }
+    });
+
     /** @private */
     this._destroyDropzone = addDropzone({
       element: this,
+      shouldIgnore: () => this._isDisabled(),
       onChange: (state) => {
         this.$.state = state;
       },
+      /** @param {(File | String)[]} items */
       onItems: (items) => {
         if (!items.length) {
           return;
         }
-        if (!this.getCssData('--cfg-multiple')) {
-          items = [items[0]];
+        let isMultiple = this.getCssData('--cfg-multiple');
+        let multipleMax = this.getCssData('--cfg-multiple-max');
+        let currentFilesCount = this.uploadCollection.size;
+        if (isMultiple && multipleMax) {
+          items = items.slice(0, multipleMax - currentFilesCount - 1);
+        } else if (!isMultiple) {
+          items = items.slice(0, currentFilesCount > 0 ? 0 : 1);
         }
         items.forEach((/** @type {File | String} */ item) => {
           if (typeof item === 'string') {
@@ -43,11 +93,25 @@ export class DropArea extends UploaderBlock {
           this.set$({
             '*currentActivity': ActivityBlock.activities.UPLOAD_LIST,
           });
-          // @ts-ignore
-          this.setForCtxTarget('lr-modal', '*modalActive', true);
+          this.setForCtxTarget(Modal.StateConsumerScope, '*modalActive', true);
         }
       },
     });
+
+    let contentWrapperEl = this.ref['content-wrapper'];
+    if (contentWrapperEl) {
+      this._destroyContentWrapperDropzone = addDropzone({
+        element: contentWrapperEl,
+        onChange: (state) => {
+          const stateText = Object.entries(DropzoneState)
+            .find(([, value]) => value === state)?.[0]
+            .toLowerCase();
+          stateText && contentWrapperEl.setAttribute('drag-state', stateText);
+        },
+        onItems: () => {},
+        shouldIgnore: () => this._isDisabled(),
+      });
+    }
 
     this.sub('state', (state) => {
       const stateText = Object.entries(DropzoneState)
@@ -58,23 +122,78 @@ export class DropArea extends UploaderBlock {
       }
     });
 
-    if (this.hasAttribute('clickable')) {
-      let clickable = this.getAttribute('clickable');
-      if (clickable === '' || clickable === 'true') {
-        // @private
-        this._onAreaClicked = () => {
-          this.openSystemDialog();
-        };
-        this.addEventListener('click', this._onAreaClicked);
-      }
+    if (this.$.isClickable) {
+      // @private
+      this._onAreaClicked = () => {
+        this.openSystemDialog();
+      };
+      this.addEventListener('click', this._onAreaClicked);
     }
+  }
+
+  /**
+   * Ignore drop events if there are other visible drop areas on the page
+   *
+   * @returns {Boolean}
+   */
+  _isDisabled() {
+    if (!this._couldHandleFiles()) {
+      return true;
+    }
+    if (!this.$.isFullscreen) {
+      return false;
+    }
+    const otherTargets = [...this.$['lr-drop-area/targets']].filter((el) => el !== this);
+    const activeTargets = otherTargets.filter((/** @type {typeof this} */ el) => {
+      return el.isActive();
+    });
+    return activeTargets.length > 0;
+  }
+
+  _couldHandleFiles() {
+    let isMultiple = this.getCssData('--cfg-multiple');
+    let multipleMax = this.getCssData('--cfg-multiple-max');
+    let currentFilesCount = this.uploadCollection.size;
+
+    if (isMultiple && multipleMax && currentFilesCount >= multipleMax) {
+      return false;
+    }
+
+    if (!isMultiple && currentFilesCount > 0) {
+      return false;
+    }
+
+    return true;
   }
 
   destroyCallback() {
     super.destroyCallback();
+
+    this.$['lr-drop-area/targets']?.remove?.(this);
+
     this._destroyDropzone?.();
+    this._destroyContentWrapperDropzone?.();
     if (this._onAreaClicked) {
       this.removeEventListener('click', this._onAreaClicked);
     }
   }
 }
+
+DropArea.template = /* HTML */ `
+  <slot>
+    <div ref="content-wrapper" class="content-wrapper">
+      <div class="icon-container" set="@hidden: !withIcon">
+        <lr-icon name="default"></lr-icon>
+        <lr-icon name="arrow-down"></lr-icon>
+      </div>
+      <span class="text">{{text}}</span>
+    </div>
+  </slot>
+`;
+
+DropArea.bindAttributes({
+  'with-icon': null,
+  clickable: null,
+  text: null,
+  fullscreen: null,
+});

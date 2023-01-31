@@ -46,7 +46,8 @@ function transformationToStr(operation, options) {
   return '';
 }
 
-const ORDER = [
+// TODO: refactor all the operations constants
+const SUPPORTED_OPERATIONS_ORDERED = [
   'enhance',
   'brightness',
   'exposure',
@@ -68,7 +69,7 @@ const ORDER = [
  */
 export function transformationsToOperations(transformations) {
   return joinCdnOperations(
-    ...ORDER.filter(
+    ...SUPPORTED_OPERATIONS_ORDERED.filter(
       (operation) => typeof transformations[operation] !== 'undefined' && transformations[operation] !== null
     )
       .map((operation) => {
@@ -80,3 +81,53 @@ export function transformationsToOperations(transformations) {
 }
 
 export const COMMON_OPERATIONS = joinCdnOperations('format/auto', 'progressive/yes');
+
+const asNumber = ([value]) => (typeof value !== 'undefined' ? Number(value) : undefined);
+const asBoolean = () => true;
+const asFilter = ([name, amount]) => ({
+  name,
+  amount: Number(amount),
+});
+
+// Docs: https://uploadcare.com/docs/transformations/image/resize-crop/#operation-crop
+// We don't support percentages and aligment presets,
+// Because it's unclear how to handle them in the Editor UI
+// TODO: add support for percentages and aligment presets
+const asCrop = ([dimensions, coords]) => {
+  return { dimensions: dimensions.split('x').map(Number), coords: coords.split(',').map(Number) };
+};
+
+const OPERATION_PROCESSORS = {
+  enhance: asNumber,
+  brightness: asNumber,
+  exposure: asNumber,
+  gamma: asNumber,
+  contrast: asNumber,
+  saturation: asNumber,
+  vibrance: asNumber,
+  warmth: asNumber,
+  filter: asFilter,
+  mirror: asBoolean,
+  flip: asBoolean,
+  rotate: asNumber,
+  crop: asCrop,
+};
+
+/**
+ * @param {string[]} operations
+ * @returns {import('../types.js').Transformations}
+ */
+export function operationsToTransformations(operations) {
+  /** @type {import('../types.js').Transformations} */
+  let transformations = {};
+  for (let operation of operations) {
+    let [name, ...args] = operation.split('/');
+    if (!SUPPORTED_OPERATIONS_ORDERED.includes(name)) {
+      continue;
+    }
+    const processor = OPERATION_PROCESSORS[name];
+    const value = processor(args);
+    transformations[name] = value;
+  }
+  return transformations;
+}

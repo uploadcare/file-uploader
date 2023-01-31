@@ -36,24 +36,29 @@ export class FileItem extends UploaderBlock {
     ...this.ctxInit,
     uid: '',
     itemName: '',
+    errorText: '',
     thumbUrl: '',
     progressValue: 0,
     progressVisible: false,
     progressUnknown: false,
-    notImage: true,
     badgeIcon: '',
     isFinished: false,
     isFailed: false,
     isUploading: false,
     isFocused: false,
+    isEditable: false,
     state: FileItemState.IDLE,
     '*uploadTrigger': null,
 
     onEdit: () => {
       this.set$({
         '*focusedEntry': this._entry,
-        '*currentActivity': ActivityBlock.activities.DETAILS,
       });
+      if (this.findBlockInCtx((b) => b.activityType === ActivityBlock.activities.DETAILS)) {
+        this.$['*currentActivity'] = ActivityBlock.activities.DETAILS;
+      } else {
+        this.$['*currentActivity'] = ActivityBlock.activities.CLOUD_IMG_EDIT;
+      }
     },
     onRemove: () => {
       let entryUuid = this._entry.getValue('uuid');
@@ -193,21 +198,12 @@ export class FileItem extends UploaderBlock {
 
     this._subEntry('validationErrorMsg', (validationErrorMsg) => {
       this._debouncedCalculateState();
-      if (!validationErrorMsg) {
-        return;
-      }
-      let caption =
-        this.l10n('validation-error') + ': ' + (entry.getValue('file')?.name || entry.getValue('externalUrl'));
-      this._showMessage('error', caption, validationErrorMsg);
+      this.$.errorText = validationErrorMsg;
     });
 
     this._subEntry('uploadError', (uploadError) => {
       this._debouncedCalculateState();
-      if (!uploadError) {
-        return;
-      }
-      let caption = this.l10n('upload-error') + ': ' + (entry.getValue('file')?.name || entry.getValue('externalUrl'));
-      this._showMessage('error', caption, uploadError.message);
+      this.$.errorText = uploadError?.message;
     });
 
     this._subEntry('isUploading', () => {
@@ -293,6 +289,7 @@ export class FileItem extends UploaderBlock {
         isUploading: state === FileItemState.UPLOADING,
         isFinished: state === FileItemState.FINISHED,
         progressVisible: state === FileItemState.UPLOADING,
+        isEditable: state === FileItemState.FINISHED && this._entry?.getValue('isImage'),
       });
 
       if (state === FileItemState.FAILED) {
@@ -396,9 +393,6 @@ export class FileItem extends UploaderBlock {
         },
         signal: abortController.signal,
       });
-      if (entry === this._entry) {
-        this._debouncedCalculateState();
-      }
       entry.setMultipleValues({
         fileInfo,
         isUploading: false,
@@ -409,10 +403,16 @@ export class FileItem extends UploaderBlock {
         uuid: fileInfo.uuid,
         cdnUrl: fileInfo.cdnUrl,
       });
+
+      if (entry === this._entry) {
+        this._debouncedCalculateState();
+      }
     } catch (error) {
-      entry.setValue('abortController', null);
-      entry.setValue('isUploading', false);
-      entry.setValue('uploadProgress', 0);
+      entry.setMultipleValues({
+        abortController: null,
+        isUploading: false,
+        uploadProgress: 0,
+      });
 
       if (entry === this._entry) {
         this._debouncedCalculateState();
@@ -434,14 +434,15 @@ FileItem.template = /* HTML */ `
     </div>
     <div class="file-name-wrapper">
       <span class="file-name" set="@title: itemName">{{itemName}}</span>
+      <span class="file-error" set="@hidden: !errorText">{{errorText}}</span>
     </div>
-    <button type="button" class="edit-btn" set="onclick: onEdit;">
+    <button type="button" class="edit-btn mini-btn" set="onclick: onEdit; @hidden: !isEditable">
       <lr-icon name="edit-file"></lr-icon>
     </button>
-    <button type="button" class="remove-btn" set="onclick: onRemove;">
+    <button type="button" class="remove-btn mini-btn" set="onclick: onRemove;">
       <lr-icon name="remove-file"></lr-icon>
     </button>
-    <button type="button" class="upload-btn" set="onclick: onUpload;">
+    <button type="button" class="upload-btn mini-btn" set="onclick: onUpload;">
       <lr-icon name="upload"></lr-icon>
     </button>
     <lr-progress-bar

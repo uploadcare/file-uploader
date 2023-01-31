@@ -1,5 +1,5 @@
 import { BaseComponent } from '@symbiotejs/symbiote';
-import { applyTemplateData } from '../../utils/applyTemplateData.js';
+import { applyTemplateData } from '../../utils/template-utils.js';
 import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../utils/cdn-utils.js';
 import { PROPS_MAP } from './props-map.js';
 

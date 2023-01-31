@@ -1,29 +1,31 @@
 import { Block } from '../../abstract/Block.js';
 
 export class Modal extends Block {
-  _handleClose = () => {
-    if (this.$['*modalCloseCallback']) {
-      this.$['*modalCloseCallback']();
-      return;
-    }
-    this.set$({
-      '*modalActive': false,
-      '*currentActivity': '',
-    });
+  static StateConsumerScope = 'modal';
+
+  _handleBackdropClick = () => {
+    this._closeDialog();
   };
 
-  _handleClick = (e) => {
+  _closeDialog = () => {
+    this.setForCtxTarget(Modal.StateConsumerScope, '*modalActive', false);
+  };
+
+  _handleDialogClose = () => {
+    this._closeDialog();
+  };
+
+  _handleDialogClick = (e) => {
     if (e.target === this.ref.dialog) {
-      this._handleClose();
+      this._closeDialog();
     }
   };
+
   init$ = {
     ...this.ctxInit,
     '*modalActive': false,
-    '*modalHeaderHidden': false,
-    '*modalCloseCallback': null,
     isOpen: false,
-    closeClicked: this._handleClose,
+    closeClicked: this._handleDialogClose,
   };
 
   cssInit$ = {
@@ -31,25 +33,26 @@ export class Modal extends Block {
   };
 
   show() {
-    if (this.ref.dialog.showModal) {
-      this.ref.dialog.showModal();
-    } else {
-      this.setAttribute('dialog-fallback', '');
-    }
+    this.ref.dialog.showModal?.();
   }
 
   hide() {
-    if (this.ref.dialog.close) {
-      this.ref.dialog.close();
-    } else {
-      this.removeAttribute('dialog-fallback');
-    }
+    this.ref.dialog.close?.();
   }
 
   initCallback() {
     super.initCallback();
-    this.ref.dialog.addEventListener('close', this._handleClose);
-    this.ref.dialog.addEventListener('click', this._handleClick);
+    if (typeof HTMLDialogElement === 'function') {
+      this.ref.dialog.addEventListener('close', this._handleDialogClose);
+      this.ref.dialog.addEventListener('click', this._handleDialogClick);
+    } else {
+      this.setAttribute('dialog-fallback', '');
+      let backdrop = document.createElement('div');
+      backdrop.className = 'backdrop';
+      this.appendChild(backdrop);
+      backdrop.addEventListener('click', this._handleBackdropClick);
+    }
+
     this.sub('*modalActive', (modalActive) => {
       if (this.$.isOpen !== modalActive) {
         this.$.isOpen = modalActive;
@@ -83,21 +86,13 @@ export class Modal extends Block {
 
   destroyCallback() {
     super.destroyCallback();
-    this.ref.dialog.removeEventListener('close', this._handleClose);
-    this.ref.dialog.removeEventListener('click', this._handleClick);
+    this.ref.dialog.removeEventListener('close', this._handleDialogClose);
+    this.ref.dialog.removeEventListener('click', this._handleDialogClick);
   }
 }
 
 Modal.template = /* HTML */ `
-  <dialog ref="dialog" class="dialog">
-    <div class="heading" set="@hidden: *modalHeaderHidden">
-      <slot name="heading"></slot>
-      <button type="button" class="close-btn" set="onclick: closeClicked">
-        <lr-icon name="close"></lr-icon>
-      </button>
-    </div>
-    <div class="content">
-      <slot></slot>
-    </div>
+  <dialog ref="dialog">
+    <slot></slot>
   </dialog>
 `;

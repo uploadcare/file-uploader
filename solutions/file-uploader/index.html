@@ -12,8 +12,8 @@
       <script type="importmap">
         {
   "imports": {
-    "@symbiotejs/symbiote": "https://cdn.skypack.dev/pin/@symbiotejs/symbiote@v1.11.1-nb4uuMnoyFEHQ78uWIov/mode=imports,min/optimized/@symbiotejs/symbiote.js",
-    "@uploadcare/upload-client": "https://cdn.skypack.dev/-/@uploadcare/upload-client@v5.1.0-ikuQtxJ0wUDrZwcMWBtL/dist=es2020,mode=raw,min/dist/index.browser.js"
+    "@symbiotejs/symbiote": "https://cdn.skypack.dev/pin/@symbiotejs/symbiote@v1.11.5-xok0d4yq3JnqOTheB68R/mode=imports,min/optimized/@symbiotejs/symbiote.js",
+    "@uploadcare/upload-client": "https://cdn.skypack.dev/-/@uploadcare/upload-client@v6.2.1-BoihH4bL0d7hAb0UH0Rx/dist=es2020,mode=raw,min/dist/index.browser.js"
   }
 }
 
@@ -490,14 +490,16 @@ To enable it and encapsulate all styles into separated scope, use the <code>css-
 
 <span class="hljs-keyword">class</span> <span class="hljs-title class_">MyBlock</span> <span class="hljs-keyword">extends</span> <span class="hljs-title class_ inherited__">LR.BlockComponent</span> {
   <span class="hljs-title function_">initCallback</span>(<span class="hljs-params"></span>) {
-    <span class="hljs-variable language_">this</span>.<span class="hljs-property">onActivation</span> = <span class="hljs-function">() =&gt;</span> {
-      <span class="hljs-string">&#x27;*activityCaption&#x27;</span>: <span class="hljs-variable language_">this</span>.<span class="hljs-title function_">l10n</span>(<span class="hljs-string">&#x27;some-caption&#x27;</span>),
-      <span class="hljs-string">&#x27;*activityIcon&#x27;</span>: <span class="hljs-string">&#x27;my-icon-name&#x27;</span>,
+    <span class="hljs-keyword">const</span> <span class="hljs-title function_">onActivate</span> = (<span class="hljs-params"></span>) =&gt; {
+      <span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(<span class="hljs-string">&#x27;activity-name is activated&#x27;</span>);
     };
-    <span class="hljs-variable language_">this</span>.<span class="hljs-property">onDeactivation</span> = <span class="hljs-function">() =&gt;</span> {
-      <span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(<span class="hljs-string">&#x27;activity-name is deactivated&#x27;</span>);
+    <span class="hljs-keyword">const</span> <span class="hljs-title function_">onDeactivate</span> = (<span class="hljs-params"></span>) =&gt; {
+      <span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(<span class="hljs-string">&#x27;activity-name is deactcivated&#x27;</span>);
     };
-    <span class="hljs-variable language_">this</span>.<span class="hljs-title function_">registerActivity</span>(<span class="hljs-string">&#x27;my-activity-name&#x27;</span>, <span class="hljs-variable language_">this</span>.<span class="hljs-property">onActivation</span>, <span class="hljs-variable language_">this</span>.<span class="hljs-property">onDeactivation</span>);
+    <span class="hljs-variable language_">this</span>.<span class="hljs-title function_">registerActivity</span>(<span class="hljs-string">&#x27;my-activity-name&#x27;</span>, {
+      onActivate,
+      onDeactivate,
+    });
   }
 }
 </code></pre>
