@@ -1,17 +1,39 @@
 # [0.15.0](https://github.com/uploadcare/blocks/compare/v0.14.3...v0.15.0) (2023-01-31)
 
+We are excited to announce the launch of a brand-new design. This new design offers a more modern look and feels, making it easier and faster to use. We have also made several other UI improvements, such as improved navigation and a better overall user experience. We hope you enjoy the new design and experience.
+
+### Breaking changes
+
+If you haven't used custom templates, then there shouldn't be any breaking changes for you.
+
+If you're using custom templates, you will need to update them to comply with the new version's default template.
+The only difference is the content of the `lr-start-from` block.
+Here is the basic template for the `<lr-file-uploader-regular />` component:
+
+```html
+<lr-simple-btn></lr-simple-btn>
+
+<lr-modal strokes block-body-scrolling>
+  <lr-start-from>
+    <lr-drop-area with-icon clickable></lr-drop-area>
+    <lr-source-list wrap></lr-source-list>
+    <lr-copyright></lr-copyright>
+  </lr-start-from>
+  <lr-upload-list></lr-upload-list>
+  <lr-camera-source></lr-camera-source>
+  <lr-url-source></lr-url-source>
+  <lr-external-source></lr-external-source>
+  <lr-confirmation-dialog></lr-confirmation-dialog>
+  <lr-cloud-image-editor></lr-cloud-image-editor>
+</lr-modal>
+
+<lr-message-box></lr-message-box>
+<lr-progress-bar-common></lr-progress-bar-common>
+```
+
 ### Bug Fixes
 
-- activities widths ([6ff88af](https://github.com/uploadcare/blocks/commit/6ff88af371a34db0bbf8086bcbcd9fbfcb8b9a1a))
-- camera selector align ([1498b5e](https://github.com/uploadcare/blocks/commit/1498b5e4964a1581cf47c2695fb81505b37b4340))
-- hide activity header in minimal mode ([8e67b01](https://github.com/uploadcare/blocks/commit/8e67b01132f731fc1f3ac580afd4dbacb539c3cb))
-- hide upload button instead of disabling it ([099219f](https://github.com/uploadcare/blocks/commit/099219f1673ee73255b61a1ac862eb320aa03484))
-- **image-editor:** highlight active filters ([dca748a](https://github.com/uploadcare/blocks/commit/dca748ae86ba88a61fbeaa6590005196c1a7f637))
 - **image-editor:** restore transformations state from the cdn url ([32b1858](https://github.com/uploadcare/blocks/commit/32b18580e780bd55b18cfa2f0d31aa4d0b5b8742))
-- pluralize upload list header text ([ca2fe4d](https://github.com/uploadcare/blocks/commit/ca2fe4df31d0d233ae784d1124b5d2fcd2f87275))
-- revert cloud editor styles ([8053136](https://github.com/uploadcare/blocks/commit/805313654a32a2157549881ce930163a14d4da2f))
-- set `*activityIcon` to emptry string instead of `null` ([eace4b4](https://github.com/uploadcare/blocks/commit/eace4b453ea318bd7319b48930a20e0f0970bd60))
-- set background for minimal mode ([fa9644f](https://github.com/uploadcare/blocks/commit/fa9644f35ff114549502e661e3b4cc501c6d967f))
 - **shadow-wrapper:** hide container until css load ([ef9c552](https://github.com/uploadcare/blocks/commit/ef9c552c925a2c35689a4cdfe4bbd83e46e741db))
 - specify image types for file input capture accept, fixes Firefox on Android ([99b5f4f](https://github.com/uploadcare/blocks/commit/99b5f4f20bad0573cc7ee81a567c52cd88ca3f7c))
 
@@ -20,11 +42,7 @@
 - allow custom pluralizers ([62ecffb](https://github.com/uploadcare/blocks/commit/62ecffb387b2b912b061f43b3e9f7cd7903aee13))
 - do not confirm upload list clearing ([c90c57a](https://github.com/uploadcare/blocks/commit/c90c57a9d1d4ab3e335fbd7a6486195d02b15de8))
 - show `cloud editor` instead of `upload details` ([036be6c](https://github.com/uploadcare/blocks/commit/036be6c9ede40d81414c4aafa0a7c5ce244ced2f))
-- show camera instantly on mobile phones ([0c20a85](https://github.com/uploadcare/blocks/commit/0c20a8570cf351a222274f6be9f7490f707a5fa8))
-
-### Reverts
-
-- Revert "ActivityHeader init" ([1827d9c](https://github.com/uploadcare/blocks/commit/1827d9cb2a9793bf04e30f34df974887bf8900c1))
+- **drop-area**: fullscreen mode
 
 ## [0.14.3](https://github.com/uploadcare/blocks/compare/v0.14.2...v0.14.3) (2022-12-20)
 
