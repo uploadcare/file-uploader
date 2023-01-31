@@ -1,0 +1,23 @@
+lr-activity-header {
+  display: flex;
+  gap: var(--gap-mid);
+  justify-content: space-between;
+  padding: var(--gap-mid);
+  color: var(--clr-txt);
+  font-weight: 500;
+  font-size: 1em;
+  line-height: var(--ui-size);
+}
+
+lr-activity-header lr-icon {
+  height: var(--ui-size);
+}
+
+lr-activity-header button {
+  color: var(--clr-txt);
+}
+
+lr-activity-header > * {
+  display: flex;
+  align-items: center;
+}

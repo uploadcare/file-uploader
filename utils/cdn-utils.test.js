@@ -7,6 +7,8 @@ import {
   createOriginalUrl,
   extractFilename,
   trimFilename,
+  extractUuid,
+  extractOperations,
 } from './cdn-utils.js';
 
 const falsyValues = ['', undefined, null, false, true, 0, 10];
@@ -181,5 +183,31 @@ describe('cdn-utils/trimFilename', () => {
     expect(trimFilename('https://ucarecdn.com/:uuid/-/resize/100x/')).to.eq(
       'https://ucarecdn.com/:uuid/-/resize/100x/'
     );
+  });
+});
+
+describe('cdn-utils/extractUuid', () => {
+  it('should extract uuid from cdn url', () => {
+    expect(extractUuid('https://ucarecdn.com/:uuid/image.jpeg')).to.eq(':uuid');
+    expect(extractUuid('https://ucarecdn.com/:uuid/-/resize/100x/image.jpeg')).to.eq(':uuid');
+
+    expect(extractUuid('https://ucarecdn.com/c2499162-eb07-4b93-b31e-94a89a47e858/image.jpeg')).to.eq(
+      'c2499162-eb07-4b93-b31e-94a89a47e858'
+    );
+    expect(extractUuid('https://ucarecdn.com/c2499162-eb07-4b93-b31e-94a89a47e858/-/resize/100x/image.jpeg')).to.eq(
+      'c2499162-eb07-4b93-b31e-94a89a47e858'
+    );
+  });
+});
+
+describe('cdn-utils/extractOperations', () => {
+  it('should extract operations from cdn url', () => {
+    expect(extractOperations('https://ucarecdn.com/:uuid/image.jpeg')).to.eql([]);
+    expect(
+      extractOperations('https://ucarecdn.com/c2499162-eb07-4b93-b31e-94a89a47e858/-/resize/100x/image.jpeg')
+    ).to.eql(['resize/100x']);
+    expect(extractOperations('https://domain.ucr.io:8080/-/resize/100x/https://domain.com/image.jpg?q=1#hash')).to.eql([
+      'resize/100x',
+    ]);
   });
 });

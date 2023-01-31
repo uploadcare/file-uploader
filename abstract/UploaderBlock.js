@@ -7,9 +7,10 @@ import { customUserAgent } from '../blocks/utils/userAgent.js';
 import { TypedCollection } from './TypedCollection.js';
 import { uploaderBlockCtx } from './CTX.js';
 import { EVENT_TYPES, EventData, EventManager } from './EventManager.js';
+import { Modal } from '../blocks/Modal/Modal.js';
 
 export class UploaderBlock extends ActivityBlock {
-  ctxInit = uploaderBlockCtx();
+  ctxInit = uploaderBlockCtx(this);
 
   /** @private */
   __initialUploadMetadata = null;
@@ -42,9 +43,10 @@ export class UploaderBlock extends ActivityBlock {
   destroyCallback() {
     super.destroyCallback();
 
-    let registry = this.$['*ctxTargetsRegistry'];
-    if (registry?.size === 0) {
+    let blocksRegistry = this.$['*blocksRegistry'];
+    if (blocksRegistry.has(this)) {
       this.uploadCollection.unobserve(this._handleCollectionUpdate);
+      blocksRegistry.delete(this);
     }
   }
 
@@ -61,11 +63,13 @@ export class UploaderBlock extends ActivityBlock {
     });
   }
 
-  openSystemDialog() {
+  /** @param {{ captureCamera?: boolean }} options */
+  openSystemDialog(options = {}) {
     let accept = mergeFileTypes([
       this.getCssData('--cfg-accept'),
       ...(this.getCssData('--cfg-img-only') ? IMAGE_ACCEPT_LIST : []),
     ]).join(',');
+
     if (this.getCssData('--cfg-accept') && !!this.getCssData('--cfg-img-only')) {
       console.warn(
         'There could be a mistake.\n' +
@@ -76,12 +80,18 @@ export class UploaderBlock extends ActivityBlock {
     this.fileInput = document.createElement('input');
     this.fileInput.type = 'file';
     this.fileInput.multiple = !!this.getCssData('--cfg-multiple');
-    this.fileInput.accept = accept;
+    if (options.captureCamera) {
+      this.fileInput.capture = '';
+      this.fileInput.accept = IMAGE_ACCEPT_LIST.join(',');
+    } else {
+      this.fileInput.accept = accept;
+    }
     this.fileInput.dispatchEvent(new MouseEvent('click'));
     this.fileInput.onchange = () => {
       this.addFiles([...this.fileInput['files']]);
       // To call uploadTrigger UploadList should draw file items first:
       this.$['*currentActivity'] = ActivityBlock.activities.UPLOAD_LIST;
+      this.setForCtxTarget(Modal.StateConsumerScope, '*modalActive', true);
       this.fileInput['value'] = '';
       this.fileInput = null;
     };
@@ -106,7 +116,7 @@ export class UploaderBlock extends ActivityBlock {
       this.set$({
         '*currentActivity': ActivityBlock.activities.UPLOAD_LIST,
       });
-      this.setForCtxTarget('lr-modal', '*modalActive', true);
+      this.setForCtxTarget(Modal.StateConsumerScope, '*modalActive', true);
     } else {
       if (this.sourceList?.length === 1) {
         let srcKey = this.sourceList[0];
@@ -125,14 +135,14 @@ export class UploaderBlock extends ActivityBlock {
           } else {
             this.$['*currentActivity'] = srcKey;
           }
-          this.setForCtxTarget('lr-modal', '*modalActive', true);
+          this.setForCtxTarget(Modal.StateConsumerScope, '*modalActive', true);
         }
       } else {
         // Multiple sources case:
         this.set$({
           '*currentActivity': ActivityBlock.activities.START_FROM,
         });
-        this.setForCtxTarget('lr-modal', '*modalActive', true);
+        this.setForCtxTarget(Modal.StateConsumerScope, '*modalActive', true);
       }
     }
   }
@@ -143,7 +153,7 @@ export class UploaderBlock extends ActivityBlock {
       '*history': this.doneActivity ? [this.doneActivity] : [],
     });
     if (!this.$['*currentActivity']) {
-      this.setForCtxTarget('lr-modal', '*modalActive', false);
+      this.setForCtxTarget(Modal.StateConsumerScope, '*modalActive', false);
     }
   }
 

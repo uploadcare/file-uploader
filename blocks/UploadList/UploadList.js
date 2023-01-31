@@ -1,11 +1,11 @@
 import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
-import { UiConfirmation } from '../ConfirmationDialog/ConfirmationDialog.js';
 import { UiMessage } from '../MessageBox/MessageBox.js';
 import { EVENT_TYPES, EventData, EventManager } from '../../abstract/EventManager.js';
 import { debounce } from '../utils/debounce.js';
 
 export class UploadList extends UploaderBlock {
+  historyTracked = true;
   activityType = ActivityBlock.activities.UPLOAD_LIST;
 
   init$ = {
@@ -13,9 +13,9 @@ export class UploadList extends UploaderBlock {
     doneBtnVisible: false,
     doneBtnEnabled: false,
     uploadBtnVisible: false,
-    uploadBtnEnabled: false,
     addMoreBtnVisible: false,
     addMoreBtnEnabled: false,
+    headerText: '',
 
     hasFiles: false,
     onAdd: () => {
@@ -29,25 +29,17 @@ export class UploadList extends UploaderBlock {
       this.cancelFlow();
     },
     onCancel: () => {
-      let cfn = new UiConfirmation();
-      cfn.confirmAction = () => {
-        let data = this.getOutputData((dataItem) => {
-          return !!dataItem.getValue('uuid');
-        });
-        EventManager.emit(
-          new EventData({
-            type: EVENT_TYPES.REMOVE,
-            ctx: this.ctxName,
-            data,
-          })
-        );
-        this.uploadCollection.clearAll();
-        this.historyBack();
-      };
-      cfn.denyAction = () => {
-        this.historyBack();
-      };
-      this.$['*confirmation'] = cfn;
+      let data = this.getOutputData((dataItem) => {
+        return !!dataItem.getValue('uuid');
+      });
+      EventManager.emit(
+        new EventData({
+          type: EVENT_TYPES.REMOVE,
+          ctx: this.ctxName,
+          data,
+        })
+      );
+      this.uploadCollection.clearAll();
     },
   };
 
@@ -139,32 +131,47 @@ export class UploadList extends UploaderBlock {
     let fitValidation = summary.failed === 0;
 
     let doneBtnEnabled = summary.total > 0 && fitCountRestrictions && fitValidation;
-    let uploadBtnEnabled =
-      summary.total - summary.succeed - summary.uploading - summary.failed > 0 && fitCountRestrictions;
+    let uploadBtnVisible =
+      !allDone && summary.total - summary.succeed - summary.uploading - summary.failed > 0 && fitCountRestrictions;
 
     this.set$({
       doneBtnVisible: allDone,
       doneBtnEnabled: doneBtnEnabled,
 
-      uploadBtnVisible: !allDone,
-      uploadBtnEnabled,
+      uploadBtnVisible,
 
       addMoreBtnEnabled: summary.total === 0 || (!tooMany && !exact),
       addMoreBtnVisible: !exact || this.getCssData('--cfg-multiple'),
+
+      headerText: this._getHeaderText(summary),
     });
+  }
+
+  /** @private */
+  _getHeaderText(summary) {
+    const localizedText = (status) => {
+      const count = summary[status];
+      return this.l10n(`header-${status}`, {
+        count: count,
+      });
+    };
+    if (summary.uploading > 0) {
+      return localizedText('uploading');
+    }
+    if (summary.failed > 0) {
+      return localizedText('failed');
+    }
+    if (summary.succeed > 0) {
+      return localizedText('succeed');
+    }
+
+    return localizedText('selected');
   }
 
   initCallback() {
     super.initCallback();
 
-    this.registerActivity(this.activityType, {
-      onActivate: () => {
-        this.set$({
-          '*activityCaption': this.l10n('selected'),
-          '*activityIcon': 'local',
-        });
-      },
-    });
+    this.registerActivity(this.activityType);
 
     this.sub('--cfg-multiple', this._debouncedHandleCollectionUpdate);
     this.sub('--cfg-multiple-min', this._debouncedHandleCollectionUpdate);
@@ -192,7 +199,7 @@ export class UploadList extends UploaderBlock {
       });
 
       if (list?.length === 0 && !this.getCssData('--cfg-show-empty-list')) {
-        this.cancelFlow();
+        this.historyBack();
       }
     });
   }
@@ -204,6 +211,13 @@ export class UploadList extends UploaderBlock {
 }
 
 UploadList.template = /* HTML */ `
+  <lr-activity-header>
+    <span class="header-text">{{headerText}}</span>
+    <button type="button" class="mini-btn close-btn" set="onclick: *closeModal">
+      <lr-icon name="close"></lr-icon>
+    </button>
+  </lr-activity-header>
+
   <div class="no-files" set="@hidden: hasFiles">
     <slot name="empty"><span l10n="no-files"></span></slot>
   </div>
@@ -217,12 +231,13 @@ UploadList.template = /* HTML */ `
       type="button"
       class="add-more-btn secondary-btn"
       set="onclick: onAdd; @disabled: !addMoreBtnEnabled; @hidden: !addMoreBtnVisible"
-      l10n="add-more"
-    ></button>
+    >
+      <lr-icon name="add"></lr-icon><span l10n="add-more"></span>
+    </button>
     <button
       type="button"
       class="upload-btn primary-btn"
-      set="@hidden: !uploadBtnVisible; onclick: onUpload; @disabled: !uploadBtnEnabled"
+      set="@hidden: !uploadBtnVisible; onclick: onUpload;"
       l10n="upload"
     ></button>
     <button
@@ -232,4 +247,6 @@ UploadList.template = /* HTML */ `
       l10n="done"
     ></button>
   </div>
+
+  <lr-drop-area ghost></lr-drop-area>
 `;
