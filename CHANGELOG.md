@@ -7,7 +7,10 @@ We are excited to announce the launch of a brand-new design. This new design off
 If you haven't used custom templates, then there shouldn't be any breaking changes for you.
 
 If you're using custom templates, you will need to update them to comply with the new version's default template.
-The only difference is the content of the `lr-start-from` block.
+
+- Content of `<lr-start-from />` component was modified
+- `<lr-confirmation-dialog />` was removed
+
 Here is the basic template for the `<lr-file-uploader-regular />` component:
 
 ```html
@@ -23,7 +26,6 @@ Here is the basic template for the `<lr-file-uploader-regular />` component:
   <lr-camera-source></lr-camera-source>
   <lr-url-source></lr-url-source>
   <lr-external-source></lr-external-source>
-  <lr-confirmation-dialog></lr-confirmation-dialog>
   <lr-cloud-image-editor></lr-cloud-image-editor>
 </lr-modal>
 
@@ -43,6 +45,7 @@ Here is the basic template for the `<lr-file-uploader-regular />` component:
 - do not confirm upload list clearing ([c90c57a](https://github.com/uploadcare/blocks/commit/c90c57a9d1d4ab3e335fbd7a6486195d02b15de8))
 - show `cloud editor` instead of `upload details` ([036be6c](https://github.com/uploadcare/blocks/commit/036be6c9ede40d81414c4aafa0a7c5ce244ced2f))
 - **drop-area**: fullscreen mode
+- **upload-list**: show upload errors inside file item
 
 ## [0.14.3](https://github.com/uploadcare/blocks/compare/v0.14.2...v0.14.3) (2022-12-20)
 
