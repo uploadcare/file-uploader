@@ -86,6 +86,7 @@ lr-start-from {
   padding: 0;
   overflow: hidden;
   text-align: center;
+  background-color: transparent;
 }
 
 lr-drop-area {
