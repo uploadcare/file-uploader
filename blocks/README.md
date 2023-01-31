@@ -125,8 +125,9 @@ Block components can be used separately or in combinations. You can combine them
 
 <lr-modal strokes>
   <lr-start-from>
+    <lr-drop-area with-icon clickable></lr-drop-area>
     <lr-source-list wrap></lr-source-list>
-    <lr-drop-area></lr-drop-area>
+    <lr-copyright></lr-copyright>
   </lr-start-from>
   <lr-upload-list></lr-upload-list>
   <lr-camera-source></lr-camera-source>
