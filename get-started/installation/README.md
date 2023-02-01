@@ -1,5 +1,18 @@
 # Installation
 
+## Breaking changes ⚠️
+
+We don&rsquo;t follow
+<a href="https://semver.org/" target="_blank" rel="noopener noreferrer">
+SemVer
+</a>
+during the beta phase. That means that we may introduce changes that break existing features
+and functionality. It&rsquo;s important to pin your version and read
+<a href="https://github.com/uploadcare/blocks/blob/main/CHANGELOG.md" target="_blank" rel="noopener noreferrer">
+the changelog
+</a>
+before updating.
+
 ## Script tag approach
 
 > We recommend to use the one of modern code distribution services, such as:
@@ -31,7 +44,7 @@ File uploader example:
 First, install the npm package:
 
 ```sh
-npm i @uploadcare/blocks
+npm i --save-exact @uploadcare/blocks
 ```
 
 Then use `connectBlocksFrom` function to connect blocks:
