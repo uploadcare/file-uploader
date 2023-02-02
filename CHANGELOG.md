@@ -4,6 +4,7 @@
 
 - **file-item:** dont show edit button if `--cfg-use-cloud-image-editor` flag is false ([#374](https://github.com/uploadcare/blocks/issues/374)) ([85d79bb](https://github.com/uploadcare/blocks/commit/85d79bb30cfbd751471e9186ec65cedd468fcd75))
 
+
 # [0.15.0](https://github.com/uploadcare/blocks/compare/v0.14.3...v0.15.0) (2023-01-31)
 
 We are excited to announce the launch of a brand-new design. This new design offers a more modern look and feels, making it easier and faster to use. We have also made several other UI improvements, such as improved navigation and a better overall user experience. We hope you enjoy the new design and experience.
