@@ -32,6 +32,10 @@ export class FileItem extends UploaderBlock {
   /** @private */
   _renderedOnce = false;
 
+  cssInit$ = {
+    '--cfg-use-cloud-image-editor': 0,
+  };
+
   init$ = {
     ...this.ctxInit,
     uid: '',
@@ -289,7 +293,10 @@ export class FileItem extends UploaderBlock {
         isUploading: state === FileItemState.UPLOADING,
         isFinished: state === FileItemState.FINISHED,
         progressVisible: state === FileItemState.UPLOADING,
-        isEditable: state === FileItemState.FINISHED && this._entry?.getValue('isImage'),
+        isEditable:
+          this.$['--cfg-use-cloud-image-editor'] &&
+          state === FileItemState.FINISHED &&
+          this._entry?.getValue('isImage'),
       });
 
       if (state === FileItemState.FAILED) {
