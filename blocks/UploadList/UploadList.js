@@ -165,7 +165,7 @@ export class UploadList extends UploaderBlock {
       return localizedText('succeed');
     }
 
-    return localizedText('selected');
+    return localizedText('total');
   }
 
   initCallback() {
