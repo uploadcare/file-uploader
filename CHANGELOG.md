@@ -6,6 +6,7 @@
 
 ## [0.15.1](https://github.com/uploadcare/blocks/compare/v0.15.0...v0.15.1) (2023-02-02)
 
+
 ### Bug Fixes
 
 - **file-item:** dont show edit button if `--cfg-use-cloud-image-editor` flag is false ([#374](https://github.com/uploadcare/blocks/issues/374)) ([85d79bb](https://github.com/uploadcare/blocks/commit/85d79bb30cfbd751471e9186ec65cedd468fcd75))
