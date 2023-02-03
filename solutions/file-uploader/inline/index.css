@@ -4,7 +4,11 @@ lr-start-from {
   height: 100%;
 }
 
+.lr-wgt-common,
 :host {
+  --cfg-done-activity: 'start-from';
+  --cfg-init-activity: 'start-from';
+
   container-type: inline-size;
 }
 

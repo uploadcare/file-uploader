@@ -10,6 +10,8 @@
 - `LR_VALIDATION_ERROR` — file not passed the checks according to validation settings
 - `LR_CLOUD_MODIFICATION` — image was modified via cloud API
 - `LR_DATA_OUTPUT` — common data about uploads
+- `LR_INIT_FLOW` — User initiated upload flow
+- `LR_DONE_FLOW` — User finished upload flow
 
 You can catch all events in window scope:
 

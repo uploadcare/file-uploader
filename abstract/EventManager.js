@@ -8,6 +8,8 @@ export const EVENT_TYPES = {
   VALIDATION_ERROR: 'VALIDATION_ERROR',
   CDN_MODIFICATION: 'CLOUD_MODIFICATION',
   DATA_OUTPUT: 'DATA_OUTPUT',
+  DONE_FLOW: 'DONE_FLOW',
+  INIT_FLOW: 'INIT_FLOW',
 };
 
 export class EventData {
@@ -15,7 +17,7 @@ export class EventData {
    * @param {Object} src
    * @param {EVENT_TYPES} src.type
    * @param {String} src.ctx
-   * @param {any} src.data
+   * @param {any} [src.data]
    */
   constructor(src) {
     /** @type {String} */

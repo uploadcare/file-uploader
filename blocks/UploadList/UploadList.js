@@ -26,7 +26,7 @@ export class UploadList extends UploaderBlock {
       this._updateUploadsState();
     },
     onDone: () => {
-      this.cancelFlow();
+      this.doneFlow();
     },
     onCancel: () => {
       let data = this.getOutputData((dataItem) => {
@@ -183,7 +183,7 @@ export class UploadList extends UploaderBlock {
         !this.getCssData('--cfg-show-empty-list') &&
         currentActivity === this.activityType
       ) {
-        this.$['*currentActivity'] = this.initActivity;
+        this.initFlow();
       }
     });
 

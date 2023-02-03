@@ -145,9 +145,17 @@ export class UploaderBlock extends ActivityBlock {
         this.setForCtxTarget(Modal.StateConsumerScope, '*modalActive', true);
       }
     }
+    EventManager.emit(
+      new EventData({
+        type: EVENT_TYPES.INIT_FLOW,
+        ctx: this.ctxName,
+      }),
+      undefined,
+      false
+    );
   }
 
-  cancelFlow() {
+  doneFlow() {
     this.set$({
       '*currentActivity': this.doneActivity,
       '*history': this.doneActivity ? [this.doneActivity] : [],
@@ -155,6 +163,14 @@ export class UploaderBlock extends ActivityBlock {
     if (!this.$['*currentActivity']) {
       this.setForCtxTarget(Modal.StateConsumerScope, '*modalActive', false);
     }
+    EventManager.emit(
+      new EventData({
+        type: EVENT_TYPES.DONE_FLOW,
+        ctx: this.ctxName,
+      }),
+      undefined,
+      false
+    );
   }
 
   /** @returns {TypedCollection} */
