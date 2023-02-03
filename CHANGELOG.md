@@ -1,3 +1,13 @@
+# [0.16.0](https://github.com/uploadcare/blocks/compare/v0.15.2...v0.16.0) (2023-02-03)
+
+### Bug Fixes
+
+- **file-uploader-inline:** hide close button ([4026508](https://github.com/uploadcare/blocks/commit/4026508265e9202dd10ecca9441e2ce7dd0d19e9))
+
+### Features
+
+- add `LR_DONE_FLOW` and `LR_INIT_FLOW` events ([b5828ad](https://github.com/uploadcare/blocks/commit/b5828ad1f9b0c9222afb48fb9f440aa303d31ddb))
+
 ## [0.15.2](https://github.com/uploadcare/blocks/compare/v0.15.1...v0.15.2) (2023-02-03)
 
 ### Bug Fixes
@@ -5,7 +15,6 @@
 - **upload-list:** undefined files count in the header ([#376](https://github.com/uploadcare/blocks/issues/376)) ([c897986](https://github.com/uploadcare/blocks/commit/c8979864c6fe1a3ac1231caff1538263356ecf66))
 
 ## [0.15.1](https://github.com/uploadcare/blocks/compare/v0.15.0...v0.15.1) (2023-02-02)
-
 
 ### Bug Fixes
 
