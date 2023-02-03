@@ -39,7 +39,7 @@
   --l10n-header-uploading: 'Uploading {{count}} {{plural:file(count)}}';
   --l10n-header-failed: '{{count}} {{plural:error(count)}}';
   --l10n-header-succeed: '{{count}} {{plural:file(count)}} uploaded';
-  --l10n-header-selected: '{{count}} {{plural:file(count)}} selected';
+  --l10n-header-total: '{{count}} {{plural:file(count)}} selected';
 
   --l10n-src-type-local: 'From device';
   --l10n-src-type-from-url: 'From link';
