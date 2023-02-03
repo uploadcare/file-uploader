@@ -1,31 +1,15 @@
 @import url('../../../blocks/themes/lr-basic/index.css');
 
-/* stylelint-disable-next-line plugin/stylelint-force-app-name-prefix */
-body {
-  box-sizing: border-box;
-  width: 100vw;
-  height: var(--uploadcare-blocks-window-height, 100vh);
-  margin: 0;
-  padding: 8px;
-}
-
-lr-uploader {
-  display: block;
-  border: 2px solid
-    hsla(
-      var(--h-foreground),
-      var(--s-foreground),
-      var(--l-foreground),
-      calc((0.1 - 0.05 * var(--darkmode)) * var(--borders))
-    );
-}
-
 lr-start-from {
   height: 100%;
 }
 
 :host {
   container-type: inline-size;
+}
+
+lr-activity-header .close-btn {
+  display: none;
 }
 
 @container (min-width: 500px) {
