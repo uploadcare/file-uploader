@@ -1,6 +1,6 @@
 import { SolutionBlock } from '../../../abstract/SolutionBlock.js';
-import { ActivityBlock } from '../../../abstract/ActivityBlock.js';
 import { UploaderBlock } from '../../../abstract/UploaderBlock.js';
+
 export class FileUploaderInline extends SolutionBlock {
   init$ = {
     ...this.ctxInit,
@@ -12,7 +12,7 @@ export class FileUploaderInline extends SolutionBlock {
     const uBlock = this.ref.uBlock;
     this.sub('*currentActivity', (val) => {
       if (!val) {
-        this.$['*currentActivity'] = uBlock.initActivity || ActivityBlock.activities.START_FROM;
+        uBlock.initFlow();
       }
     });
     window.customElements.whenDefined(uBlock.tagName.toLowerCase()).then(() => {

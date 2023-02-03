@@ -70,6 +70,8 @@
 <li><code>LR_VALIDATION_ERROR</code> — file not passed the checks according to validation settings</li>
 <li><code>LR_CLOUD_MODIFICATION</code> — image was modified via cloud API</li>
 <li><code>LR_DATA_OUTPUT</code> — common data about uploads</li>
+<li><code>LR_INIT_FLOW</code> — User initiated upload flow</li>
+<li><code>LR_DONE_FLOW</code> — User finished upload flow</li>
 </ul>
 <p>You can catch all events in window scope:</p>
 <pre><code class="language-js"><span class="hljs-variable language_">window</span>.<span class="hljs-title function_">addEventListener</span>(<span class="hljs-string">&#x27;LR_UPLOAD_START&#x27;</span>, <span class="hljs-function">(<span class="hljs-params">e</span>) =&gt;</span> {

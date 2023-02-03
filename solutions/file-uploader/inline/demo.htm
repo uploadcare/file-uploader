@@ -7,9 +7,16 @@
   <style>
     @import url(./inline/index.css);
 
+    body {
+      width: 100vw;
+      height: 100vh;
+      margin: 0;
+    }
+
     lr-file-uploader-inline {
       width: 100%;
       height: 100%;
+      display: block;
     }
 
     .lr-wgt-common {
@@ -19,10 +26,8 @@
   </style>
 
   <!-- Uploader widget element: -->
-  <lr-file-uploader-inline class="lr-wgt-common">
-  </lr-file-uploader-inline>
+  <lr-file-uploader-inline class="lr-wgt-common"> </lr-file-uploader-inline>
 </lr-live-html>
-
 
 <h2>Single source</h2>
 <lr-live-html>
@@ -33,10 +38,16 @@
   <style>
     @import url(./inline/index.css);
 
-    lr-file-uploader-inline[current-activity="details"],
-    lr-file-uploader-inline[current-activity="cloud-image-edit"] {
+    body {
+      width: 100vw;
+      height: 100vh;
+      margin: 0;
+    }
+
+    lr-file-uploader-inline {
       width: 100%;
       height: 100%;
+      display: block;
     }
 
     .lr-wgt-common {
@@ -47,6 +58,5 @@
   </style>
 
   <!-- Uploader widget element: -->
-  <lr-file-uploader-inline current-activity class="lr-wgt-common">
-  </lr-file-uploader-inline>
+  <lr-file-uploader-inline current-activity class="lr-wgt-common"> </lr-file-uploader-inline>
 </lr-live-html>
