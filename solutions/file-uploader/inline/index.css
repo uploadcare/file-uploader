@@ -12,6 +12,12 @@ lr-start-from {
   container-type: inline-size;
 }
 
+lr-activity-header::after {
+  width: var(--ui-size);
+  height: var(--ui-size);
+  content: '';
+}
+
 lr-activity-header .close-btn {
   display: none;
 }

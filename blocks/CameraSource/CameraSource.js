@@ -223,7 +223,7 @@ export class CameraSource extends UploaderBlock {
 
 CameraSource.template = /* HTML */ `
   <lr-activity-header>
-    <button type="button" class="mini-btn close-btn" set="onclick: *historyBack">
+    <button type="button" class="mini-btn" set="onclick: *historyBack">
       <lr-icon name="back"></lr-icon>
     </button>
     <div set="@hidden: !cameraSelectHidden">
