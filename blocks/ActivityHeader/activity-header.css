@@ -13,11 +13,22 @@ lr-activity-header lr-icon {
   height: var(--ui-size);
 }
 
-lr-activity-header button {
-  color: var(--clr-txt);
-}
-
 lr-activity-header > * {
   display: flex;
   align-items: center;
+}
+
+lr-modal button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--clr-txt-mid);
+}
+
+lr-modal button:hover {
+  background-color: var(--clr-background);
+}
+
+lr-modal button:active {
+  background-color: var(--clr-background-dark);
 }

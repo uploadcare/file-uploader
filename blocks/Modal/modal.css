@@ -62,21 +62,6 @@ lr-modal > dialog:not([open]) {
   opacity: 0;
 }
 
-lr-modal button.close-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--clr-txt-mid);
-}
-
-lr-modal button.close-btn:hover {
-  background-color: var(--clr-background);
-}
-
-lr-modal button.close-btn:active {
-  background-color: var(--clr-background-dark);
-}
-
 lr-modal > dialog {
   display: flex;
   flex-direction: column;
