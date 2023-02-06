@@ -1,3 +1,9 @@
+## [0.16.1](https://github.com/uploadcare/blocks/compare/v0.16.0...v0.16.1) (2023-02-06)
+
+### Bug Fixes
+
+- do not call init flow without user interaction ([#380](https://github.com/uploadcare/blocks/issues/380)) ([be100a5](https://github.com/uploadcare/blocks/commit/be100a5ef0bc254d62f89ad776482b07bda27d3f))
+
 # [0.16.0](https://github.com/uploadcare/blocks/compare/v0.15.2...v0.16.0) (2023-02-03)
 
 ### Bug Fixes
