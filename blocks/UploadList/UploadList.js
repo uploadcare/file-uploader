@@ -183,7 +183,7 @@ export class UploadList extends UploaderBlock {
         !this.getCssData('--cfg-show-empty-list') &&
         currentActivity === this.activityType
       ) {
-        this.initFlow();
+        this.$['*currentActivity'] = this.initActivity;
       }
     });
 

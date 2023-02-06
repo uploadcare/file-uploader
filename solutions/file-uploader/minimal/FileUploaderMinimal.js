@@ -1,4 +1,5 @@
 import { SolutionBlock } from '../../../abstract/SolutionBlock.js';
+import { ActivityBlock } from '../../../abstract/ActivityBlock.js';
 
 export class FileUploaderMinimal extends SolutionBlock {
   pauseRender = true;
@@ -15,13 +16,13 @@ export class FileUploaderMinimal extends SolutionBlock {
     const uBlock = this.ref.uBlock;
     this.sub('*currentActivity', (val) => {
       if (!val) {
-        uBlock.initFlow();
+        this.$['*currentActivity'] = uBlock.initActivity || ActivityBlock.activities.START_FROM;
       }
     });
 
     this.sub('*uploadList', (list) => {
       if (list?.length === 0) {
-        uBlock.initFlow();
+        this.$['*currentActivity'] = uBlock.initActivity || ActivityBlock.activities.START_FROM;
       }
     });
   }
