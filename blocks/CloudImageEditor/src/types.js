@@ -43,4 +43,12 @@
  * @property {Transformations} transformations
  */
 
+/**
+ * @typedef {Object} ChangeResult
+ * @property {string} originalUrl
+ * @property {string} cdnUrlModifiers
+ * @property {string} cdnUrl
+ * @property {Transformations} transformations
+ */
+
 export {};
