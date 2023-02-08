@@ -15,6 +15,8 @@ import { TEMPLATE } from './template.js';
 import { TabId } from './toolbar-constants.js';
 
 export class CloudEditor extends Block {
+  pauseRender = true;
+
   get ctxName() {
     return this.autoCtxName;
   }
@@ -31,33 +33,53 @@ export class CloudEditor extends Block {
     this.$.showLoader = show;
   }
 
+  /**
+   * To proper work, we need non-zero size the element. So, we'll wait for it.
+   *
+   * @private
+   * @returns {Promise<void>}
+   */
+  _waitForSize() {
+    return new Promise((resolve, reject) => {
+      let timeout = 1000;
+      let start = Date.now();
+
+      let callback = () => {
+        // there could be problem when element disconnected and connected again between ticks
+        if (!this.isConnected) {
+          clearInterval(interval);
+          reject();
+          return;
+        }
+        if (Date.now() - start > timeout) {
+          clearInterval(interval);
+          reject(new Error('[cloud-image-editor] timout waiting for non-zero container size'));
+          return;
+        }
+        let { width, height } = this.getBoundingClientRect();
+
+        if (width > 0 && height > 0) {
+          clearInterval(interval);
+          resolve();
+        }
+      };
+      let interval = setInterval(callback, 50);
+      callback();
+    });
+  }
+
   cssInit$ = {
     '--cfg-cdn-cname': 'https://ucarecdn.com',
   };
 
-  async initCallback() {
-    if (this.$.cdnUrl) {
-      let uuid = extractUuid(this.$.cdnUrl);
-      this.$['*originalUrl'] = createOriginalUrl(this.$.cdnUrl, uuid);
-      let operations = extractOperations(this.$.cdnUrl);
-      let transformations = operationsToTransformations(operations);
-      this.$['*editorTransformations'] = transformations;
-    } else if (this.$.uuid) {
-      this.$['*originalUrl'] = createOriginalUrl(this.localCtx.read('--cfg-cdn-cname'), this.$.uuid);
-    } else {
-      throw new Error('No UUID nor CDN URL provided');
-    }
+  async connectedCallback() {
+    super.connectedCallback();
+    await this._waitForSize();
+    this.render();
 
     this.$['*faderEl'] = this.ref['fader-el'];
     this.$['*cropperEl'] = this.ref['cropper-el'];
     this.$['*imgContainerEl'] = this.ref['img-container-el'];
-
-    this.classList.add('editor_ON');
-
-    this.sub('*networkProblems', (networkProblems) => {
-      this.$['presence.networkProblems'] = networkProblems;
-      this.$['presence.modalCaption'] = !networkProblems;
-    });
 
     this.ref['img-el'].addEventListener('load', (e) => {
       this._imgLoading = false;
@@ -89,7 +111,31 @@ export class CloudEditor extends Block {
         image_hidden_effects: tabId !== TabId.CROP,
       });
     });
- this.sub('*editorTransformations', (transformations) => {
+  }
+
+  initCallback() {
+    super.initCallback();
+
+    if (this.$.cdnUrl) {
+      let uuid = extractUuid(this.$.cdnUrl);
+      this.$['*originalUrl'] = createOriginalUrl(this.$.cdnUrl, uuid);
+      let operations = extractOperations(this.$.cdnUrl);
+      let transformations = operationsToTransformations(operations);
+      this.$['*editorTransformations'] = transformations;
+    } else if (this.$.uuid) {
+      this.$['*originalUrl'] = createOriginalUrl(this.localCtx.read('--cfg-cdn-cname'), this.$.uuid);
+    } else {
+      throw new Error('No UUID nor CDN URL provided');
+    }
+
+    this.classList.add('editor_ON');
+
+    this.sub('*networkProblems', (networkProblems) => {
+      this.$['presence.networkProblems'] = networkProblems;
+      this.$['presence.modalCaption'] = !networkProblems;
+    });
+
+    this.sub('*editorTransformations', (transformations) => {
       let originalUrl = this.$['*originalUrl'];
       let cdnUrlModifiers = createCdnUrlModifiers(transformationsToOperations(transformations));
       let cdnUrl = createCdnUrl(originalUrl, createCdnUrlModifiers(cdnUrlModifiers, 'preview'));
@@ -109,8 +155,8 @@ export class CloudEditor extends Block {
         })
       );
     });
+
     try {
-      // TODO: catch errors
       fetch(createCdnUrl(this.$['*originalUrl'], createCdnUrlModifiers('json')))
         .then((response) => response.json())
         .then(({ width, height }) => {
