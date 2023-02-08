@@ -1,3 +1,15 @@
+# [0.17.0](https://github.com/uploadcare/blocks/compare/v0.16.1...v0.17.0) (2023-02-08)
+
+### Bug Fixes
+
+- **cloud-image-editor:** dispatch events with `bubble` and `composed` flags ([58733c4](https://github.com/uploadcare/blocks/commit/58733c49505d623dee0ac4aed53fb31df251f530))
+- **cloud-image-editor:** fix extraction of `filter` operation with undefined value ([351b080](https://github.com/uploadcare/blocks/commit/351b0801a7356550ebfde5e2ee5b6b89851cdbf9))
+- **cloud-image-editor:** pause render until container get non-zero size ([1e5a4a8](https://github.com/uploadcare/blocks/commit/1e5a4a8210f73c8a163ae363b6f7e7c993c83061))
+
+### Features
+
+- **cloud-image-editor:** Add `change` event ([1fff5fb](https://github.com/uploadcare/blocks/commit/1fff5fb95ca6bcd4661844fab956888e974531b6))
+
 ## [0.16.1](https://github.com/uploadcare/blocks/compare/v0.16.0...v0.16.1) (2023-02-06)
 
 ### Bug Fixes
