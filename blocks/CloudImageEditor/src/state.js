@@ -59,6 +59,8 @@ export function initState(fnCtx) {
       fnCtx.dispatchEvent(
         new CustomEvent('apply', {
           detail: eventData,
+          bubbles: true,
+          composed: true,
         })
       );
       fnCtx.remove();
@@ -66,7 +68,12 @@ export function initState(fnCtx) {
     '*on.cancel': () => {
       fnCtx.remove();
 
-      fnCtx.dispatchEvent(new CustomEvent('cancel'));
+      fnCtx.dispatchEvent(
+        new CustomEvent('cancel', {
+          bubbles: true,
+          composed: true,
+        })
+      );
     },
   };
 }

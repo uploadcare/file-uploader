@@ -86,7 +86,7 @@ const asNumber = ([value]) => (typeof value !== 'undefined' ? Number(value) : un
 const asBoolean = () => true;
 const asFilter = ([name, amount]) => ({
   name,
-  amount: Number(amount),
+  amount: typeof amount !== 'undefined' ? Number(amount) : 100,
 });
 
 // Docs: https://uploadcare.com/docs/transformations/image/resize-crop/#operation-crop
