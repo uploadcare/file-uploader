@@ -9,7 +9,7 @@ import {
 import { TRANSPARENT_PIXEL_SRC } from '../../../utils/transparentPixelSrc.js';
 import { classNames } from './lib/classNames.js';
 import { debounce } from './lib/debounce.js';
-import { operationsToTransformations } from './lib/transformationUtils.js';
+import { operationsToTransformations, transformationsToOperations } from './lib/transformationUtils.js';
 import { initState } from './state.js';
 import { TEMPLATE } from './template.js';
 import { TabId } from './toolbar-constants.js';
@@ -89,7 +89,26 @@ export class CloudEditor extends Block {
         image_hidden_effects: tabId !== TabId.CROP,
       });
     });
+ this.sub('*editorTransformations', (transformations) => {
+      let originalUrl = this.$['*originalUrl'];
+      let cdnUrlModifiers = createCdnUrlModifiers(transformationsToOperations(transformations));
+      let cdnUrl = createCdnUrl(originalUrl, createCdnUrlModifiers(cdnUrlModifiers, 'preview'));
 
+      /** @type {import('./types.js').ApplyResult} */
+      let eventData = {
+        originalUrl,
+        cdnUrlModifiers,
+        cdnUrl,
+        transformations,
+      };
+      this.dispatchEvent(
+        new CustomEvent('change', {
+          detail: eventData,
+          bubbles: true,
+          composed: true,
+        })
+      );
+    });
     try {
       // TODO: catch errors
       fetch(createCdnUrl(this.$['*originalUrl'], createCdnUrlModifiers('json')))
