@@ -1,3 +1,9 @@
+## [0.17.1](https://github.com/uploadcare/blocks/compare/v0.17.0...v0.17.1) (2023-02-14)
+
+### Bug Fixes
+
+- **cloud-image-editor:** get rid of `change` event double initial calling ([#386](https://github.com/uploadcare/blocks/issues/386)) ([0cc0b00](https://github.com/uploadcare/blocks/commit/0cc0b0089c8f897c0ba3e4e951dd20188b21cf86))
+
 # [0.17.0](https://github.com/uploadcare/blocks/compare/v0.16.1...v0.17.0) (2023-02-08)
 
 ### Bug Fixes
