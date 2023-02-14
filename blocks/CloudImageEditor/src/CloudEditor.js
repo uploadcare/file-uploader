@@ -135,26 +135,30 @@ export class CloudEditor extends Block {
       this.$['presence.modalCaption'] = !networkProblems;
     });
 
-    this.sub('*editorTransformations', (transformations) => {
-      let originalUrl = this.$['*originalUrl'];
-      let cdnUrlModifiers = createCdnUrlModifiers(transformationsToOperations(transformations));
-      let cdnUrl = createCdnUrl(originalUrl, createCdnUrlModifiers(cdnUrlModifiers, 'preview'));
+    this.sub(
+      '*editorTransformations',
+      (transformations) => {
+        let originalUrl = this.$['*originalUrl'];
+        let cdnUrlModifiers = createCdnUrlModifiers(transformationsToOperations(transformations));
+        let cdnUrl = createCdnUrl(originalUrl, createCdnUrlModifiers(cdnUrlModifiers, 'preview'));
 
-      /** @type {import('./types.js').ApplyResult} */
-      let eventData = {
-        originalUrl,
-        cdnUrlModifiers,
-        cdnUrl,
-        transformations,
-      };
-      this.dispatchEvent(
-        new CustomEvent('change', {
-          detail: eventData,
-          bubbles: true,
-          composed: true,
-        })
-      );
-    });
+        /** @type {import('./types.js').ApplyResult} */
+        let eventData = {
+          originalUrl,
+          cdnUrlModifiers,
+          cdnUrl,
+          transformations,
+        };
+        this.dispatchEvent(
+          new CustomEvent('change', {
+            detail: eventData,
+            bubbles: true,
+            composed: true,
+          })
+        );
+      },
+      false
+    );
 
     try {
       fetch(createCdnUrl(this.$['*originalUrl'], createCdnUrlModifiers('json')))
