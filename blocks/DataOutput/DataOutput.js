@@ -20,15 +20,31 @@ export class DataOutput extends UploaderBlock {
     return DataOutput.dict;
   }
 
+  get input() {
+    return this._inputElement;
+  }
+
   initCallback() {
     super.initCallback();
+
+    if (this.hasAttribute(this.dict.FORM_INPUT_ATTR) && this.hasAttribute(this.dict.INPUT_REQUIRED)) {
+      let input = document.createElement('input');
+      input.type = 'text';
+      input.name = '__UPLOADCARE_VALIDATION_INPUT__';
+      input.required = true;
+      this.appendChild(input);
+      this._inputElement = input;
+
+      this._dynamicInputsContainer = document.createElement('div');
+      this.appendChild(this._dynamicInputsContainer);
+    }
+
     this.sub(
       'output',
       (data) => {
         if (!data) {
           return;
         }
-
         if (this.hasAttribute(this.dict.FIRE_EVENT_ATTR)) {
           this.dispatchEvent(
             new CustomEvent(this.dict.EVENT_NAME, {
@@ -44,15 +60,17 @@ export class DataOutput extends UploaderBlock {
         }
 
         if (this.hasAttribute(this.dict.FORM_INPUT_ATTR)) {
-          this.innerHTML = '';
+          this._dynamicInputsContainer.innerHTML = '';
           let values = data.groupData ? [data.groupData.cdnUrl] : data.map((file) => file.cdnUrl);
           for (let value of values) {
             let input = document.createElement('input');
-            input.type = 'text';
+            input.type = 'hidden';
             input.name = this.getAttribute(this.dict.INPUT_NAME_ATTR) || this.ctxName;
-            input.hidden = true;
             input.value = value;
-            this.appendChild(input);
+            this._dynamicInputsContainer.appendChild(input);
+          }
+          if (this.hasAttribute(this.dict.INPUT_REQUIRED)) {
+            this._inputElement.value = values.length ? '__HAS_VALUE__' : '';
           }
         }
 
@@ -101,4 +119,5 @@ DataOutput.dict = {
   GROUP_ATTR: 'use-group',
   FORM_INPUT_ATTR: 'use-input',
   INPUT_NAME_ATTR: 'input-name',
+  INPUT_REQUIRED: 'input-required',
 };
