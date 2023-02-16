@@ -33,11 +33,19 @@ export class Modal extends Block {
   };
 
   show() {
-    this.ref.dialog.showModal?.();
+    if (this.ref.dialog.showModal) {
+      this.ref.dialog.showModal();
+    } else {
+      this.ref.dialog.setAttribute('open', '');
+    }
   }
 
   hide() {
-    this.ref.dialog.close?.();
+    if (this.ref.dialog.close) {
+      this.ref.dialog.close();
+    } else {
+      this.ref.dialog.removeAttribute('open');
+    }
   }
 
   initCallback() {
@@ -76,10 +84,8 @@ export class Modal extends Block {
     this.sub('isOpen', (isOpen) => {
       if (isOpen) {
         this.show();
-        this.ref.dialog.setAttribute('open', '');
       } else {
         this.hide();
-        this.ref.dialog.removeAttribute('open');
       }
     });
   }
