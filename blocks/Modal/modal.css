@@ -42,7 +42,7 @@ lr-modal[strokes][dialog-fallback] dialog[open] + .backdrop {
 @supports selector(dialog::backdrop) {
   lr-modal > dialog::backdrop {
     /* backdrop don't inherit theme properties */
-    background-color: rgba(247 247 248 60%);
+    background-color: rgba(247, 247, 248, 60%);
   }
   lr-modal[strokes] > dialog::backdrop {
     /* TODO: it's not working, fix it */
