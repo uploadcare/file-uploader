@@ -70,7 +70,7 @@ export class DataOutput extends UploaderBlock {
             this._dynamicInputsContainer.appendChild(input);
           }
           if (this.hasAttribute(this.dict.INPUT_REQUIRED)) {
-            this._inputElement.value = values.length ? '__HAS_VALUE__' : '';
+            this._inputElement.value = values.length ? '__VALUE__' : '';
           }
         }
 
