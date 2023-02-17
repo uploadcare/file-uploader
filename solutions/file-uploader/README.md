@@ -346,6 +346,7 @@ Let's walk through its attributes:
 - `use-template` — uploading results could be rendered as a list of nested DOM elements. You can specify a simple template for that.
 - `use-input` — create input to be used inside HTML-form.
 - `input-name` — used together with `use-form`. Sets the input name. The context name will be used by default.
+- `input-required` — whether the input is required or not. Works as the native [`required` attribute](https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/required).
 
 ## With the event listener
 
