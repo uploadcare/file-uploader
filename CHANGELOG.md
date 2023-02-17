@@ -1,3 +1,15 @@
+# [0.18.0](https://github.com/uploadcare/blocks/compare/v0.17.1...v0.18.0) (2023-02-17)
+
+### Bug Fixes
+
+- **modal:** backdrop color definition ([d8fcf51](https://github.com/uploadcare/blocks/commit/d8fcf51a93aef72250b1e3e0149f6557c34ad149))
+- **modal:** do not manipulate `open` attr if dialog is supported ([4a286b9](https://github.com/uploadcare/blocks/commit/4a286b9e72236300a0f00d82ac53ce2db4619f81))
+
+### Features
+
+- **data-output:** add `input-required` attribute ([0fb1370](https://github.com/uploadcare/blocks/commit/0fb13702143dffd1f7cc4c6eeb4249cccba14721))
+- **file-uploader-minimal:** include `lr-data-output` to the bundle ([a6e7802](https://github.com/uploadcare/blocks/commit/a6e78028e2369bf6e6c4ccf197f02a938b50a7a3))
+
 ## [0.17.1](https://github.com/uploadcare/blocks/compare/v0.17.0...v0.17.1) (2023-02-14)
 
 ### Bug Fixes
