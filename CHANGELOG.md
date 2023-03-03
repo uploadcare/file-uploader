@@ -1,3 +1,9 @@
+## [0.18.1](https://github.com/uploadcare/blocks/compare/v0.18.0...v0.18.1) (2023-03-03)
+
+### Bug Fixes
+
+- **docs:** set cloud-editor examples body height ([#398](https://github.com/uploadcare/blocks/issues/398)) ([690760e](https://github.com/uploadcare/blocks/commit/690760e47903ee693b456c398dab4c165cec3fed))
+
 # [0.18.0](https://github.com/uploadcare/blocks/compare/v0.17.1...v0.18.0) (2023-02-17)
 
 ### Bug Fixes
