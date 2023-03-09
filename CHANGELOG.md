@@ -1,3 +1,10 @@
+## [0.18.1](https://github.com/uploadcare/blocks/compare/v0.18.0...v0.18.1) (2023-03-09)
+
+### Bug Fixes
+
+- **docs:** set cloud-editor examples body height ([#398](https://github.com/uploadcare/blocks/issues/398)) ([690760e](https://github.com/uploadcare/blocks/commit/690760e47903ee693b456c398dab4c165cec3fed))
+- **lr-data-output:** create dynamic inputs container even if `input-required` is not defined ([#401](https://github.com/uploadcare/blocks/issues/401)) ([cdfce56](https://github.com/uploadcare/blocks/commit/cdfce567e888ecedec08d8c3d1dec13e07b7a671))
+
 # [0.18.0](https://github.com/uploadcare/blocks/compare/v0.17.1...v0.18.0) (2023-02-17)
 
 ### Bug Fixes
