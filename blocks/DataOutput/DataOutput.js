@@ -20,23 +20,25 @@ export class DataOutput extends UploaderBlock {
     return DataOutput.dict;
   }
 
-  get input() {
-    return this._inputElement;
+  get validationInput() {
+    return this._validationInputElement;
   }
 
   initCallback() {
     super.initCallback();
 
-    if (this.hasAttribute(this.dict.FORM_INPUT_ATTR) && this.hasAttribute(this.dict.INPUT_REQUIRED)) {
-      let input = document.createElement('input');
-      input.type = 'text';
-      input.name = '__UPLOADCARE_VALIDATION_INPUT__';
-      input.required = true;
-      this.appendChild(input);
-      this._inputElement = input;
-
+    if (this.hasAttribute(this.dict.FORM_INPUT_ATTR)) {
       this._dynamicInputsContainer = document.createElement('div');
       this.appendChild(this._dynamicInputsContainer);
+
+      if (this.hasAttribute(this.dict.INPUT_REQUIRED)) {
+        let input = document.createElement('input');
+        input.type = 'text';
+        input.name = '__UPLOADCARE_VALIDATION_INPUT__';
+        input.required = true;
+        this.appendChild(input);
+        this._validationInputElement = input;
+      }
     }
 
     this.sub(
@@ -70,7 +72,7 @@ export class DataOutput extends UploaderBlock {
             this._dynamicInputsContainer.appendChild(input);
           }
           if (this.hasAttribute(this.dict.INPUT_REQUIRED)) {
-            this._inputElement.value = values.length ? '__VALUE__' : '';
+            this._validationInputElement.value = values.length ? '__VALUE__' : '';
           }
         }
 
