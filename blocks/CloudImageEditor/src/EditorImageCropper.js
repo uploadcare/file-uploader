@@ -5,7 +5,6 @@ import { classNames } from './lib/classNames.js';
 import { debounce } from './lib/debounce.js';
 import { pick } from './lib/pick.js';
 import { preloadImage } from './lib/preloadImage.js';
-import { ResizeObserver } from './lib/ResizeObserver.js';
 import { viewerImageSrc } from './util.js';
 
 /**
@@ -94,10 +93,8 @@ export class EditorImageCropper extends Block {
     if (!this.isConnected) {
       return;
     }
-    this._initCanvas();
-    this._alignImage();
-    this._alignCrop();
-    this._draw();
+    this.deactivate();
+    this.activate(this._imageSize, { fromViewer: false });
   }
 
   /** @private */
@@ -494,8 +491,9 @@ export class EditorImageCropper extends Block {
   initCallback() {
     super.initCallback();
 
-    this._observer = new ResizeObserver(() => {
-      if (this._isActive && this.$.image) {
+    this._observer = new ResizeObserver(([entry]) => {
+      const nonZeroSize = entry.contentRect.width > 0 && entry.contentRect.height > 0;
+      if (nonZeroSize && this._isActive && this.$.image) {
         this._handleResizeDebounced();
       }
     });
