@@ -5,7 +5,6 @@ import { classNames } from './lib/classNames.js';
 import { debounce } from './lib/debounce.js';
 import { pick } from './lib/pick.js';
 import { preloadImage } from './lib/preloadImage.js';
-import { ResizeObserver } from './lib/ResizeObserver.js';
 import { viewerImageSrc } from './util.js';
 
 /**
