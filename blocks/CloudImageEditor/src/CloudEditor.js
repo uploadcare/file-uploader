@@ -40,31 +40,19 @@ export class CloudEditor extends Block {
    * @returns {Promise<void>}
    */
   _waitForSize() {
+    const TIMEOUT = 3000;
     return new Promise((resolve, reject) => {
-      let timeout = 1000;
-      let start = Date.now();
-
-      let callback = () => {
-        // there could be problem when element disconnected and connected again between ticks
-        if (!this.isConnected) {
-          clearInterval(interval);
-          reject();
-          return;
-        }
-        if (Date.now() - start > timeout) {
-          clearInterval(interval);
-          reject(new Error('[cloud-image-editor] timout waiting for non-zero container size'));
-          return;
-        }
-        let { width, height } = this.getBoundingClientRect();
-
-        if (width > 0 && height > 0) {
-          clearInterval(interval);
+      const timeoutId = setTimeout(() => {
+        reject(new Error('[cloud-image-editor] timout waiting for non-zero container size'));
+      }, TIMEOUT);
+      const resizeObserver = new ResizeObserver(([element]) => {
+        if (element.contentRect.width > 0 && element.contentRect.height > 0) {
           resolve();
+          clearTimeout(timeoutId);
+          resizeObserver.disconnect();
         }
-      };
-      let interval = setInterval(callback, 50);
-      callback();
+      });
+      resizeObserver.observe(this);
     });
   }
 
@@ -74,7 +62,14 @@ export class CloudEditor extends Block {
 
   async connectedCallback() {
     super.connectedCallback();
-    await this._waitForSize();
+    try {
+      await this._waitForSize();
+    } catch (err) {
+      if (this.isConnected) {
+        console.error(err.message);
+      }
+      return;
+    }
     this.render();
 
     this.$['*faderEl'] = this.ref['fader-el'];

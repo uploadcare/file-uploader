@@ -1,5 +1,4 @@
 import { Block } from '../../../../../abstract/Block.js';
-import { ResizeObserver } from '../../lib/ResizeObserver.js';
 
 export class SliderUi extends Block {
   init$ = {
