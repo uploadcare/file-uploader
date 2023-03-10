@@ -1,3 +1,13 @@
+# [0.19.0](https://github.com/uploadcare/blocks/compare/v0.18.1...v0.19.0) (2023-03-10)
+
+### Bug Fixes
+
+- **cloud-editor:** refetch image on container resize ([67ea66f](https://github.com/uploadcare/blocks/commit/67ea66f394cdbf43831e0410b9fc36e3406d1a4f))
+
+### Features
+
+- **cloud-editor:** use resize observer to wait for non-zero container size ([5686965](https://github.com/uploadcare/blocks/commit/56869653037dc0a6f7a140df34b5e0a56e347585))
+
 ## [0.18.1](https://github.com/uploadcare/blocks/compare/v0.18.0...v0.18.1) (2023-03-09)
 
 ### Bug Fixes
