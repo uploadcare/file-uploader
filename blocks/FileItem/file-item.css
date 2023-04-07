@@ -4,7 +4,7 @@ lr-file-item {
 lr-file-item > .inner {
   position: relative;
   display: grid;
-  grid-template-columns: min-content auto min-content min-content;
+  grid-template-columns: 32px 1fr max-content;
   gap: var(--gap-min);
   align-items: center;
   margin-bottom: var(--gap-small);
@@ -124,4 +124,11 @@ lr-file-item .badge lr-icon svg {
 lr-file-item .progress-bar {
   top: calc(100% - 2px);
   height: 2px;
+}
+
+lr-file-item .file-actions {
+  display: flex;
+  gap: var(--gap-min);
+  align-items: center;
+  justify-content: center;
 }
