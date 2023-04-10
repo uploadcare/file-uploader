@@ -343,15 +343,6 @@ export class UploaderBlock extends ActivityBlock {
 }
 
 /** @enum {String} */
-UploaderBlock.sourceTypes = Object.freeze({
-  LOCAL: 'local',
-  URL: 'url',
-  CAMERA: 'camera',
-  DRAW: 'draw',
-  ...UploaderBlock.extSrcList,
-});
-
-/** @enum {String} */
 UploaderBlock.extSrcList = Object.freeze({
   FACEBOOK: 'facebook',
   DROPBOX: 'dropbox',
@@ -364,6 +355,15 @@ UploaderBlock.extSrcList = Object.freeze({
   BOX: 'box',
   ONEDRIVE: 'onedrive',
   HUDDLE: 'huddle',
+});
+
+/** @enum {String} */
+UploaderBlock.sourceTypes = Object.freeze({
+  LOCAL: 'local',
+  URL: 'url',
+  CAMERA: 'camera',
+  DRAW: 'draw',
+  ...UploaderBlock.extSrcList,
 });
 
 Object.values(EVENT_TYPES).forEach((eType) => {

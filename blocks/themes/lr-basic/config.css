@@ -16,6 +16,7 @@
   --cfg-show-empty-list: 0;
   --cfg-use-local-image-editor: 0;
   --cfg-use-cloud-image-editor: 1;
+  --cfg-remove-copyright: 0;
 
   --cfg-modal-scroll-lock: 1;
   --cfg-modal-backdrop-strokes: 0;
