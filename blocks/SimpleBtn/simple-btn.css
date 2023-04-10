@@ -39,6 +39,7 @@ lr-simple-btn .visual-drop-area {
   padding: var(--gap-min);
   border: var(--border-dashed);
   border-radius: inherit;
+  opacity: 0;
   transition: border-color var(--transition-duration) ease, background-color var(--transition-duration) ease,
     opacity var(--transition-duration) ease;
 }

@@ -146,7 +146,7 @@ Any configuration value can be defined and redefined at any DOM-tree level regar
 | `--cfg-store`                     | Store files                                                                                                                            |       `1` or `0`       |                -                |
 | `--cfg-camera-mirror`             | Flip camera image                                                                                                                      |       `1` or `0`       |               `0`               |
 | `--cfg-source-list`               | Comma-separated list of file sources. See available sources [below](#source-list)                                                      | `'local, url, camera'` |              none               |
-| `--cfg-max-local-file-size-bytes` | Maximum file size in bytes                                                                                                             |           -            |              none               |
+| `--cfg-max-local-file-size-bytes` | Maximum file size in bytes                                                                                                             |         number         |              none               |
 | `--cfg-thumb-size`                | Image thumbnail size                                                                                                                   |          `76`          |              `76`               |
 | `--cfg-show-empty-list`           | Show uploads list when it's empty                                                                                                      |       `1` or `0`       |               `0`               |
 | `--cfg-use-local-image-editor`    | Enable local image editing                                                                                                             |       `1` or `0`       |               `0`               |
@@ -157,7 +157,8 @@ Any configuration value can be defined and redefined at any DOM-tree level regar
 | `--cfg-secure-signature`          | Set `signature` for Secure Uploads. See [docs](https://uploadcare.com/docs/security/secure-uploads/#expire-explained) for details      |         string         |              none               |
 | `--cfg-secure-expire`             | Set `expire` for Secure Uploads. See [docs](https://uploadcare.com/docs/security/secure-uploads/#expire-explained) for details         |         string         |              none               |
 | `--cfg-secure-delivery-proxy`     | Set proxy URL template for Secure Delivery. See [here](#secure-delivery-proxy) for details                                             |         string         |              none               |
-| `--cfg-group-output`              | Enables files group creation                                                                                                           |          `0`           |               `0`               |
+| `--cfg-group-output`              | Enables files group creation                                                                                                           |       `1` or `0`       |               `0`               |
+| `--cfg-remove-copyright`          | Remove copyright                                                                                                                       |       `1` or `0`       |               `0`               |
 
 ## <a name="source-list"></a> --cfg-source-list
 
