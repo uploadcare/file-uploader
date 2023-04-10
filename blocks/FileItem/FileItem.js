@@ -9,12 +9,12 @@ import { EVENT_TYPES, EventData, EventManager } from '../../abstract/EventManage
 import { debounce } from '../utils/debounce.js';
 import { IMAGE_ACCEPT_LIST, mergeFileTypes, matchFileType } from '../../utils/fileTypes.js';
 
-const FileItemState = {
+const FileItemState = Object.freeze({
   FINISHED: Symbol(0),
   FAILED: Symbol(1),
   UPLOADING: Symbol(2),
   IDLE: Symbol(3),
-};
+});
 
 export class FileItem extends UploaderBlock {
   pauseRender = true;
@@ -288,28 +288,11 @@ export class FileItem extends UploaderBlock {
     });
 
     this.sub('state', (state) => {
-      this.set$({
-        isFailed: state === FileItemState.FAILED,
-        isUploading: state === FileItemState.UPLOADING,
-        isFinished: state === FileItemState.FINISHED,
-        progressVisible: state === FileItemState.UPLOADING,
-        isEditable:
-          this.$['--cfg-use-cloud-image-editor'] &&
-          state === FileItemState.FINISHED &&
-          this._entry?.getValue('isImage'),
-      });
+      this._handleState(state);
+    });
 
-      if (state === FileItemState.FAILED) {
-        this.$.badgeIcon = 'badge-error';
-      } else if (state === FileItemState.FINISHED) {
-        this.$.badgeIcon = 'badge-success';
-      }
-
-      if (state === FileItemState.UPLOADING) {
-        this.$.isFocused = false;
-      } else {
-        this.$.progressValue = 0;
-      }
+    this.sub('--cfg-use-cloud-image-editor', () => {
+      this._handleState(this.$.state);
     });
 
     this.onclick = () => {
@@ -331,6 +314,30 @@ export class FileItem extends UploaderBlock {
       this.upload();
     });
     FileItem.activeInstances.add(this);
+  }
+
+  /** @param {typeof FileItemState[keyof typeof FileItemState]} state */
+  _handleState(state) {
+    this.set$({
+      isFailed: state === FileItemState.FAILED,
+      isUploading: state === FileItemState.UPLOADING,
+      isFinished: state === FileItemState.FINISHED,
+      progressVisible: state === FileItemState.UPLOADING,
+      isEditable:
+        this.$['--cfg-use-cloud-image-editor'] && state === FileItemState.FINISHED && this._entry?.getValue('isImage'),
+    });
+
+    if (state === FileItemState.FAILED) {
+      this.$.badgeIcon = 'badge-error';
+    } else if (state === FileItemState.FINISHED) {
+      this.$.badgeIcon = 'badge-success';
+    }
+
+    if (state === FileItemState.UPLOADING) {
+      this.$.isFocused = false;
+    } else {
+      this.$.progressValue = 0;
+    }
   }
 
   destroyCallback() {
@@ -443,15 +450,17 @@ FileItem.template = /* HTML */ `
       <span class="file-name" set="@title: itemName">{{itemName}}</span>
       <span class="file-error" set="@hidden: !errorText">{{errorText}}</span>
     </div>
-    <button type="button" class="edit-btn mini-btn" set="onclick: onEdit; @hidden: !isEditable">
-      <lr-icon name="edit-file"></lr-icon>
-    </button>
-    <button type="button" class="remove-btn mini-btn" set="onclick: onRemove;">
-      <lr-icon name="remove-file"></lr-icon>
-    </button>
-    <button type="button" class="upload-btn mini-btn" set="onclick: onUpload;">
-      <lr-icon name="upload"></lr-icon>
-    </button>
+    <div class="file-actions">
+      <button type="button" class="edit-btn mini-btn" set="onclick: onEdit; @hidden: !isEditable">
+        <lr-icon name="edit-file"></lr-icon>
+      </button>
+      <button type="button" class="remove-btn mini-btn" set="onclick: onRemove;">
+        <lr-icon name="remove-file"></lr-icon>
+      </button>
+      <button type="button" class="upload-btn mini-btn" set="onclick: onUpload;">
+        <lr-icon name="upload"></lr-icon>
+      </button>
+    </div>
     <lr-progress-bar
       class="progress-bar"
       set="value: progressValue; visible: progressVisible; unknown: progressUnknown"

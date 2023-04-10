@@ -181,6 +181,14 @@ export class Block extends BaseComponent {
     );
   }
 
+  updateCtxCssData = () => {
+    /** @type {Set<Block>} */
+    let blocks = this.$['*blocksRegistry'];
+    for (let block of blocks) {
+      block.updateCssData();
+    }
+  };
+
   /** @param {String} [name] */
   static reg(name) {
     if (!name) {

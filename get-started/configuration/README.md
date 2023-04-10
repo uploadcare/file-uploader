@@ -75,6 +75,7 @@ For example, this is the list of pre-defined parameters used by default in our [
   --cfg-show-empty-list: 0;
   --cfg-use-local-image-editor: 0;
   --cfg-use-cloud-image-editor: 1;
+  --cfg-remove-copyright: 0;
 
   --cfg-modal-scroll-lock: 1;
   --cfg-modal-backdrop-strokes: 0;
@@ -176,7 +177,7 @@ uploader.updateCssData();
 
 To set configuration properties with complex data types, you can use JS API on any block.
 
-| Name                              | Description                                                                                   |
+| Name                              | Description                                                           |
 | --------------------------------- | --------------------------------------------------------------------- |
 | `setUploadMetadata(metadata: {})` | File Metadata. See [docs](https://uploadcare.com/docs/file-metadata/) |
 
