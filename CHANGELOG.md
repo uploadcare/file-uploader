@@ -1,3 +1,18 @@
+# [0.20.0](https://github.com/uploadcare/blocks/compare/v0.19.0...v0.20.0) (2023-04-10)
+
+
+### Bug Fixes
+
+- **file-item:** make ui reactive to css data ([5d64a05](https://github.com/uploadcare/blocks/commit/5d64a05a3ba5beb1919b98e9c1009cae27b5e616))
+- **simple-btn:** prevent dropzone flickering on initial render ([82d9c1d](https://github.com/uploadcare/blocks/commit/82d9c1d6af67f115e276775d751ead280d211740))
+- **types:** add type stub for `lr-upload-ctx-provider` ([560502f](https://github.com/uploadcare/blocks/commit/560502f82adb8604d1d61958046533bc5ec4f362))
+- **uploader-block:** add missing external source types to the UploaderBlock's `sourceTypes` static property ([0a7c2fc](https://github.com/uploadcare/blocks/commit/0a7c2fcc573943a85dc875d51dfa79302ccc0ea0))
+
+### Features
+
+- add `--cfg-remove-copyright` option ([e128953](https://github.com/uploadcare/blocks/commit/e128953bf042b52cf5727f73f7321f4b23f6c60e))
+- **block:** add method `updateCtxCssData` to update css data for all the blocks in the context ([5a89749](https://github.com/uploadcare/blocks/commit/5a8974972de401ca35873fb4f44b6e12768520f1))
+
 # [0.19.0](https://github.com/uploadcare/blocks/compare/v0.18.1...v0.19.0) (2023-03-10)
 
 ### Bug Fixes
