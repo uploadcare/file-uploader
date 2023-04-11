@@ -1,5 +1,10 @@
-# [0.20.0](https://github.com/uploadcare/blocks/compare/v0.19.0...v0.20.0) (2023-04-10)
+## [0.20.1](https://github.com/uploadcare/blocks/compare/v0.20.0...v0.20.1) (2023-04-11)
 
+### Bug Fixes
+
+- bundle stubbed jsx types to npm package ([#414](https://github.com/uploadcare/blocks/issues/414)) ([98de315](https://github.com/uploadcare/blocks/commit/98de3150181556b8ade97d948ae4aa345adae8ee))
+
+# [0.20.0](https://github.com/uploadcare/blocks/compare/v0.19.0...v0.20.0) (2023-04-10)
 
 ### Bug Fixes
 
