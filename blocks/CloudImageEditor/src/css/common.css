@@ -102,16 +102,16 @@
 }
 
 lr-cloud-editor {
-  display: block;
-  width: 100%;
-  height: 100%;
-  max-height: 100%;
-
   --modal-header-opacity: 1;
   --modal-header-height: var(--size-panel-heading);
   --modal-toolbar-height: var(--size-panel-heading);
 
   --transparent-pixel: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=');
+
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-height: 100%;
 }
 
 lr-cloud-editor.editor_ON {
@@ -127,6 +127,11 @@ lr-cloud-editor.editor_OFF {
 }
 
 lr-cloud-editor > .wrapper {
+  --l-min-img-height: var(--modal-toolbar-height);
+  --l-max-img-height: 100%;
+  --l-edit-button-width: 120px;
+  --l-toolbar-horizontal-padding: var(--cldtr-gap-mid-1);
+
   position: relative;
   display: grid;
   grid-template-rows: minmax(var(--l-min-img-height), var(--l-max-img-height)) minmax(var(--modal-toolbar-height), auto);
@@ -134,11 +139,6 @@ lr-cloud-editor > .wrapper {
   overflow: hidden;
   overflow-y: auto;
   transition: 0.3s;
-
-  --l-min-img-height: var(--modal-toolbar-height);
-  --l-max-img-height: 100%;
-  --l-edit-button-width: 120px;
-  --l-toolbar-horizontal-padding: var(--cldtr-gap-mid-1);
 }
 
 @media only screen and (max-width: 800px) {
@@ -179,18 +179,20 @@ lr-cloud-editor > .wrapper > .viewport > .image_container > .image.image_visible
 }
 
 lr-cloud-editor > .wrapper > .viewport > .image_container > .image.image_hidden_to_cropper {
+  --viewer-image-opacity: 0;
+
   background-image: var(--transparent-pixel);
   transform: scale(1);
   transition: transform var(--transition-duration-4), opacity var(--transition-duration-3) steps(1, jump-end);
   pointer-events: none;
-  --viewer-image-opacity: 0;
 }
 
 lr-cloud-editor > .wrapper > .viewport > .image_container > .image.image_hidden_effects {
+  --viewer-image-opacity: 0;
+
   transform: scale(1);
   transition: opacity var(--transition-duration-3) cubic-bezier(0.5, 0, 1, 1), transform var(--transition-duration-4);
   pointer-events: none;
-  --viewer-image-opacity: 0;
 }
 
 lr-cloud-editor > .wrapper > .viewport > .image_container {

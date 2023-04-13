@@ -316,7 +316,7 @@ export class FileItem extends UploaderBlock {
     FileItem.activeInstances.add(this);
   }
 
-  /** @param {typeof FileItemState[keyof typeof FileItemState]} state */
+  /** @param {(typeof FileItemState)[keyof typeof FileItemState]} state */
   _handleState(state) {
     this.set$({
       isFailed: state === FileItemState.FAILED,
