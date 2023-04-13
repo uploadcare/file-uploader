@@ -105,7 +105,6 @@
     "rimraf": "^5.0.0",
     "shipjs": "^0.26.3",
     "stylelint": "^15.4.0",
-    "stylelint-config-rational-order": "^0.0.4",
     "stylelint-config-standard": "^32.0.0",
     "stylelint-declaration-block-no-ignored-properties": "^2.7.0",
     "stylelint-order": "^6.0.3",
