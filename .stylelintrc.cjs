@@ -1,5 +1,5 @@
 module.exports = {
-  extends: ['stylelint-config-rational-order', 'stylelint-config-standard', 'stylelint-config-prettier'],
+  extends: ['stylelint-config-rational-order', 'stylelint-config-standard'],
   plugins: ['stylelint-declaration-block-no-ignored-properties'],
   rules: {
     'plugin/declaration-block-no-ignored-properties': true,
