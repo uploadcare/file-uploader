@@ -20,15 +20,9 @@ function jsBanner() {
   );
 }
 
-function build(buildItem, watch) {
+function build(buildItem) {
   esbuild
     .build({
-      watch: watch && {
-        onRebuild(error, result) {
-          if (error) console.error(`${name}: watch build failed: `, error);
-          else console.log(`${name}: watch build succeeded: `, result);
-        },
-      },
       entryPoints: [buildItem.in],
       format: 'esm',
       bundle: true,

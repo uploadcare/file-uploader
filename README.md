@@ -47,7 +47,7 @@ Internet Explorer is outdated and not supported [anymore](https://uploadcare.com
 
 ## Frameworks support
 
-Blocks are a framework-agnostic solution, so you can use it with any runtime you like. We have prepared *examples* for the most popular frameworks.
+Blocks are a framework-agnostic solution, so you can use it with any runtime you like. We have prepared _examples_ for the most popular frameworks.
 <br/>
 
 - [React](https://github.com/uploadcare/uc-blocks-examples/tree/main/examples/react-uploader)
