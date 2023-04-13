@@ -33,6 +33,7 @@ module.exports = {
         ignoreProperties: ['container-type', 'container-name'],
       },
     ],
+    'media-feature-range-notation': null,
   },
   overrides: [
     {
