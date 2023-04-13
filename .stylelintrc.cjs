@@ -1,6 +1,6 @@
 module.exports = {
-  extends: ['stylelint-config-rational-order', 'stylelint-config-standard', 'stylelint-config-prettier'],
-  plugins: ['stylelint-declaration-block-no-ignored-properties'],
+  extends: ['stylelint-config-standard'],
+  plugins: ['stylelint-order', 'stylelint-declaration-block-no-ignored-properties'],
   rules: {
     'plugin/declaration-block-no-ignored-properties': true,
     'function-calc-no-unspaced-operator': true, // can cause out of memory in some cases
@@ -18,7 +18,8 @@ module.exports = {
       },
     ],
     'color-function-notation': null,
-    'order/properties-order': null,
+    'order/order': ['custom-properties', 'declarations'],
+    'order/properties-order': ['width', 'height'],
     'rule-empty-line-before': null,
     'at-rule-no-unknown': [
       true,
@@ -32,6 +33,7 @@ module.exports = {
         ignoreProperties: ['container-type', 'container-name'],
       },
     ],
+    'media-feature-range-notation': null,
   },
   overrides: [
     {
