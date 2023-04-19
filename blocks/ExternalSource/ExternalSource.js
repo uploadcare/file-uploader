@@ -4,7 +4,8 @@ import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 import { registerMessage, unregisterMessage } from './messages.js';
 import { buildStyles } from './buildStyles.js';
 import { queryString } from './query-string.js';
-
+import { wildcardRegexp } from '../../utils/wildcardRegexp.js';
+import { stringToArray } from '../../utils/stringToArray.js';
 /**
  * @typedef {Object} ActivityParams
  * @property {String} externalSourceType
@@ -58,11 +59,25 @@ export class ExternalSource extends UploaderBlock {
   async handleFileSelected(message) {
     this.$.counter = this.$.counter + 1;
 
-    // TODO: check for alternatives, see https://github.com/uploadcare/uploadcare-widget/blob/f5d3e8c9f67781bed2eb69814c8f86a4cc035473/src/widget/tabs/remote-tab.js#L102
-    let { url, filename } = message;
+    const url = (() => {
+      if (message.alternatives) {
+        const preferredTypes = stringToArray(this.getCssData('--cfg-external-sources-preferred-types'));
+        for (const preferredType of preferredTypes) {
+          const regexp = wildcardRegexp(preferredType);
+          for (const [type, typeUrl] of Object.entries(message.alternatives)) {
+            if (regexp.test(type)) {
+              return typeUrl;
+            }
+          }
+        }
+      }
+      return message.url;
+    })();
+
+    let { filename } = message;
     this.uploadCollection.add({
       externalUrl: url,
-      fileName: filename,
+      fileName: filename ?? null,
     });
   }
 

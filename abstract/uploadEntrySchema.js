@@ -33,6 +33,7 @@ export const uploadEntrySchema = Object.freeze({
   fileName: {
     type: String,
     value: null,
+    nullable: true,
   },
   fileSize: {
     type: Number,
