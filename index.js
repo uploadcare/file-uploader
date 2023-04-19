@@ -1,3 +1,4 @@
+// @ts-check
 // Symbiote.js
 export { BaseComponent, Data } from '@symbiotejs/symbiote';
 

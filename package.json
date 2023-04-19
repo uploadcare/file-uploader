@@ -60,7 +60,7 @@
     "build:static": "node --experimental-fetch ./static-gen/build.js",
     "build:static:watch": "node watch.js",
     "build": "run-s build:web build:types build:jsx:types",
-    "tsc": "tsc --skipLibCheck --allowJs --noEmit",
+    "tsc": "tsc --project tsconfig.json",
     "lint:js": "eslint ./",
     "lint:js:fix": "eslint ./ --fix",
     "lint:css": "stylelint './**/*.css'",
