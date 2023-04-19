@@ -1,3 +1,9 @@
+# [0.21.0](https://github.com/uploadcare/blocks/compare/v0.20.1...v0.21.0) (2023-04-19)
+
+### Features
+
+- add `--cfg-external-sources-preferred-types` option to configure preferred mime types for the external sources ([1d4e645](https://github.com/uploadcare/blocks/commit/1d4e64583e7ab58670f2f094f691ad54175749d7))
+
 ## [0.20.1](https://github.com/uploadcare/blocks/compare/v0.20.0...v0.20.1) (2023-04-11)
 
 ### Bug Fixes
