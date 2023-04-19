@@ -8,6 +8,7 @@ import { TypedCollection } from './TypedCollection.js';
 import { uploaderBlockCtx } from './CTX.js';
 import { EVENT_TYPES, EventData, EventManager } from './EventManager.js';
 import { Modal } from '../blocks/Modal/Modal.js';
+import { stringToArray } from '../utils/stringToArray.js';
 
 export class UploaderBlock extends ActivityBlock {
   ctxInit = uploaderBlockCtx(this);
@@ -101,11 +102,7 @@ export class UploaderBlock extends ActivityBlock {
   get sourceList() {
     let list = null;
     if (this.getCssData('--cfg-source-list')) {
-      list = this.getCssData('--cfg-source-list')
-        .split(',')
-        .map((/** @type {String} */ item) => {
-          return item.trim();
-        });
+      list = stringToArray(this.getCssData('--cfg-source-list'));
     }
     return list;
   }

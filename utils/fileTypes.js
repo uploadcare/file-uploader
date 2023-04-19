@@ -1,3 +1,5 @@
+import { stringToArray } from './stringToArray.js';
+
 export const IMAGE_ACCEPT_LIST = [
   'image/*',
   'image/heif',
@@ -15,18 +17,17 @@ export const IMAGE_ACCEPT_LIST = [
 ];
 
 /**
- * @param {String[]} [fileTypes]
- * @returns {String[]}
+ * @param {string[]} [fileTypes]
+ * @returns {string[]}
  */
 export const mergeFileTypes = (fileTypes) => {
   if (!fileTypes) {
     return [];
   }
   return fileTypes
-    .map((item) => item?.split(','))
-    .flat()
-    .filter((item) => typeof item === 'string' && item)
-    .map((item) => item.trim());
+    .filter((item) => typeof item === 'string')
+    .map((str) => stringToArray(str))
+    .flat();
 };
 
 /**

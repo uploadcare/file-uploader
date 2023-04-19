@@ -1,4 +1,5 @@
 import { Block } from '../../abstract/Block.js';
+import { stringToArray } from '../../utils/stringToArray.js';
 
 export class SourceList extends Block {
   cssInit$ = {
@@ -11,9 +12,7 @@ export class SourceList extends Block {
       if (!val) {
         return;
       }
-      let list = val.split(',').map((srcName) => {
-        return srcName.trim();
-      });
+      let list = stringToArray(val);
       let html = '';
       list.forEach((srcName) => {
         html += /* HTML */ `<lr-source-btn type="${srcName}"></lr-source-btn>`;

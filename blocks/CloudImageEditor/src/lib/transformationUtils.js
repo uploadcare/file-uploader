@@ -1,4 +1,5 @@
 import { joinCdnOperations } from '../../../../utils/cdn-utils.js';
+import { stringToArray } from '../../../../utils/stringToArray.js';
 
 export const OPERATIONS_ZEROS = {
   brightness: 0,
@@ -94,7 +95,7 @@ const asFilter = ([name, amount]) => ({
 // Because it's unclear how to handle them in the Editor UI
 // TODO: add support for percentages and aligment presets
 const asCrop = ([dimensions, coords]) => {
-  return { dimensions: dimensions.split('x').map(Number), coords: coords.split(',').map(Number) };
+  return { dimensions: stringToArray(dimensions, 'x').map(Number), coords: stringToArray(coords).map(Number) };
 };
 
 const OPERATION_PROCESSORS = {

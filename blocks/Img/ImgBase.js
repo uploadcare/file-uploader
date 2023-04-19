@@ -2,6 +2,8 @@ import { BaseComponent } from '@symbiotejs/symbiote';
 import { applyTemplateData } from '../../utils/template-utils.js';
 import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../utils/cdn-utils.js';
 import { PROPS_MAP } from './props-map.js';
+import { stringToArray } from '../../utils/stringToArray.js';
+import { uniqueArray } from '../../utils/uniqueArray.js';
 
 const CSS_PREF = '--lr-img-';
 const UNRESOLVED_ATTR = 'unresolved';
@@ -220,13 +222,7 @@ export class ImgBase extends BaseComponent {
 
   get breakpoints() {
     if (this.$$('breakpoints')) {
-      let bpSet = new Set();
-      this.$$('breakpoints')
-        .split(',')
-        .forEach((bpStr) => {
-          bpSet.add(parseFloat(bpStr.trim()));
-        });
-      return bpSet;
+      return uniqueArray(stringToArray(this.$$('breakpoints')).map((str) => Number(str)));
     } else {
       return null;
     }
