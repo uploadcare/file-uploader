@@ -206,7 +206,13 @@
 <tr>
 <td><code>--cfg-accept</code></td>
 <td>Native file input accept attribute value</td>
-<td align="center"><code>&#39;image/*&#39;</code></td>
+<td align="center">comma separated string</td>
+<td align="center">none</td>
+</tr>
+<tr>
+<td><code>--cfg-external-sources-preferred-types</code></td>
+<td>Defines the list of preferred MIME types for external sources. See <a target='_blank'  href="https://uploadcare.com/docs/uploads/file-uploader-options/#option-preferred-types">docs</a> for details</td>
+<td align="center">comma separated string</td>
 <td align="center">none</td>
 </tr>
 <tr>
@@ -224,8 +230,8 @@
 <tr>
 <td><code>--cfg-source-list</code></td>
 <td>Comma-separated list of file sources. See available sources <a href="#source-list">below</a></td>
-<td align="center"><code>&#39;local, url, camera&#39;</code></td>
-<td align="center">none</td>
+<td align="center">comma separated string`</td>
+<td align="center"><code>&#39;local, url, camera, dropbox, gdrive&#39;</code></td>
 </tr>
 <tr>
 <td><code>--cfg-max-local-file-size-bytes</code></td>
@@ -267,13 +273,13 @@
 <td><code>--cfg-cdn-cname</code></td>
 <td>Set Custom CNAME. See <a target='_blank'  href="https://uploadcare.com/docs/delivery/cdn/#custom-cdn-cname">docs</a> for details</td>
 <td align="center">string</td>
-<td align="center"><code>https://ucarecdn.com</code></td>
+<td align="center"><code>&#39;https://ucarecdn.com&#39;</code></td>
 </tr>
 <tr>
 <td><code>--cfg-base-url</code></td>
 <td>Set custom upload URL</td>
 <td align="center">string</td>
-<td align="center"><code>https://upload.uploadcare.com</code></td>
+<td align="center"><code>&#39;https://upload.uploadcare.com&#39;</code></td>
 </tr>
 <tr>
 <td><code>--cfg-secure-signature</code></td>
