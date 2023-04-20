@@ -97,6 +97,9 @@ export function addDropzone(desc) {
   };
 
   let onElementDrop = async (e) => {
+    if (desc.shouldIgnore()) {
+      return;
+    }
     e.preventDefault();
     let items = await getDropItems(e.dataTransfer);
     desc.onItems(items);

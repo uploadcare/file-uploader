@@ -3,6 +3,7 @@ import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 import { DropzoneState, addDropzone } from './addDropzone.js';
 import { fileIsImage } from '../../utils/fileTypes.js';
 import { Modal } from '../Modal/Modal.js';
+import { stringToArray } from '../../utils/stringToArray.js';
 
 export class DropArea extends UploaderBlock {
   init$ = {
@@ -11,10 +12,20 @@ export class DropArea extends UploaderBlock {
     withIcon: false,
     isClickable: false,
     isFullscreen: false,
+    isDisabled: false,
+    isHidden: false,
     text: this.l10n('drop-files-here'),
     'lr-drop-area/targets': null,
   };
+
+  cssInit$ = {
+    '--cfg-source-list': '',
+  };
+
   isActive() {
+    if (!this.$.isDisabled) {
+      return false;
+    }
     const bounds = this.getBoundingClientRect();
     const hasSize = bounds.width > 0 && bounds.height > 0;
     const isInViewport =
@@ -30,11 +41,15 @@ export class DropArea extends UploaderBlock {
   }
   initCallback() {
     super.initCallback();
+
     if (!this.$['lr-drop-area/targets']) {
       this.$['lr-drop-area/targets'] = new Set();
     }
     this.$['lr-drop-area/targets'].add(this);
 
+    this.defineAccessor('disabled', (value) => {
+      this.set$({ isDisabled: typeof value === 'string' });
+    });
     this.defineAccessor('clickable', (value) => {
       this.set$({ isClickable: typeof value === 'string' });
     });
@@ -56,12 +71,13 @@ export class DropArea extends UploaderBlock {
     /** @private */
     this._destroyDropzone = addDropzone({
       element: this,
-      shouldIgnore: () => this._isDisabled(),
+      shouldIgnore: () => this._shouldIgnore(),
       onChange: (state) => {
         this.$.state = state;
       },
       /** @param {(File | String)[]} items */
       onItems: (items) => {
+        debugger;
         if (!items.length) {
           return;
         }
@@ -109,7 +125,7 @@ export class DropArea extends UploaderBlock {
           stateText && contentWrapperEl.setAttribute('drag-state', stateText);
         },
         onItems: () => {},
-        shouldIgnore: () => this._isDisabled(),
+        shouldIgnore: () => this._shouldIgnore(),
       });
     }
 
@@ -120,6 +136,18 @@ export class DropArea extends UploaderBlock {
       if (stateText) {
         this.setAttribute('drag-state', stateText);
       }
+    });
+
+    this.sub('--cfg-source-list', (value) => {
+      const list = stringToArray(value);
+      // Disable drop area if local files are not allowed
+      this.$.isDisabled = !list.includes(UploaderBlock.sourceTypes.LOCAL);
+      // Hide drop area if there is no default slot overrided
+      this.$.isHidden = this.$.isDisabled && !!this.querySelector('[data-default-slot]');
+    });
+
+    this.sub('isHidden', (value) => {
+      this.toggleAttribute('hidden', value);
     });
 
     if (this.$.isClickable) {
@@ -134,9 +162,13 @@ export class DropArea extends UploaderBlock {
   /**
    * Ignore drop events if there are other visible drop areas on the page
    *
+   * @private
    * @returns {Boolean}
    */
-  _isDisabled() {
+  _shouldIgnore() {
+    if (this.$.isDisabled) {
+      return true;
+    }
     if (!this._couldHandleFiles()) {
       return true;
     }
@@ -150,6 +182,7 @@ export class DropArea extends UploaderBlock {
     return activeTargets.length > 0;
   }
 
+  /** @private */
   _couldHandleFiles() {
     let isMultiple = this.getCssData('--cfg-multiple');
     let multipleMax = this.getCssData('--cfg-multiple-max');
@@ -181,7 +214,8 @@ export class DropArea extends UploaderBlock {
 
 DropArea.template = /* HTML */ `
   <slot>
-    <div ref="content-wrapper" class="content-wrapper">
+    <div data-default-slot hidden></div>
+    <div ref="content-wrapper" class="content-wrapper" set="@hidden: isHidden">
       <div class="icon-container" set="@hidden: !withIcon">
         <lr-icon name="default"></lr-icon>
         <lr-icon name="arrow-down"></lr-icon>
@@ -196,4 +230,5 @@ DropArea.bindAttributes({
   clickable: null,
   text: null,
   fullscreen: null,
+  disabled: null,
 });
