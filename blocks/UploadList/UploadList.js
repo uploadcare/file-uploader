@@ -53,6 +53,9 @@ export class UploadList extends UploaderBlock {
   };
 
   _debouncedHandleCollectionUpdate = debounce(() => {
+    if (!this.isConnected) {
+      return;
+    }
     this._updateUploadsState();
     this._updateCountLimitMessage();
   }, 0);
