@@ -44,12 +44,9 @@ export class UploadList extends UploaderBlock {
   };
 
   cssInit$ = {
-    '--cfg-show-empty-list': 0,
     '--cfg-multiple': 1,
     '--cfg-multiple-min': 0,
     '--cfg-multiple-max': 0,
-    '--cfg-confirm-upload': 1,
-    '--cfg-source-list': '',
   };
 
   _debouncedHandleCollectionUpdate = debounce(() => {
