@@ -20,13 +20,13 @@ export class ActivityBlock extends Block {
       });
     }
 
+    // TODO: rename activityType to activityId
     if (this.activityType) {
       if (!this.hasAttribute('activity')) {
         this.setAttribute('activity', this.activityType);
       }
       this.sub('*currentActivity', (/** @type {String} */ val) => {
-        let activityKey = this.ctxName + this.activityType;
-        let actDesc = ActivityBlock._activityRegistry[activityKey];
+        let actDesc = ActivityBlock._activityRegistry[this.activityKey];
 
         if (this.activityType !== val && this[ACTIVE_PROP]) {
           /** @private */
@@ -52,6 +52,7 @@ export class ActivityBlock extends Block {
     }
   }
 
+  /** @private */
   _historyFlush() {
     let history = this.$['*history'];
     if (history) {
@@ -76,6 +77,8 @@ export class ActivityBlock extends Block {
   }
 
   /**
+   * TODO: remove name argument
+   *
    * @param {String} name
    * @param {Object} [options]
    * @param {() => void} [options.onActivate]
@@ -86,11 +89,31 @@ export class ActivityBlock extends Block {
     if (!ActivityBlock._activityRegistry) {
       ActivityBlock._activityRegistry = Object.create(null);
     }
-    let actKey = this.ctxName + name;
-    ActivityBlock._activityRegistry[actKey] = {
+    ActivityBlock._activityRegistry[this.activityKey] = {
       activateCallback: onActivate,
       deactivateCallback: onDeactivate,
     };
+  }
+
+  unregisterActivity() {
+    if (this.isActivityActive) {
+      ActivityBlock._activityRegistry[this.activityKey]?.deactivateCallback?.();
+    }
+    delete ActivityBlock._activityRegistry[this.activityKey];
+  }
+
+  destroyCallback() {
+    super.destroyCallback();
+    this.unregisterActivity();
+
+    if (Object.keys(ActivityBlock._activityRegistry).length === 0) {
+      // TODO: we should track activities more precise and reset current activity only if there is no such registered activity
+      this.$['*currentActivity'] = null;
+    }
+  }
+
+  get activityKey() {
+    return this.ctxName + this.activityType;
   }
 
   get activityParams() {
