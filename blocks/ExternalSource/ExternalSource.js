@@ -81,9 +81,17 @@ export class ExternalSource extends UploaderBlock {
     });
   }
 
-  handleIframeLoad(e) {
+  handleIframeLoad() {
     this.applyStyles();
   }
+
+  _inheritedUpdateCssData = this.updateCssData;
+  updateCssData = () => {
+    if (this.isActivityActive) {
+      this._inheritedUpdateCssData();
+      this.applyStyles();
+    }
+  };
 
   getCssValue(propName) {
     let style = window.getComputedStyle(this);

@@ -35,12 +35,22 @@
     "MIT"
   ],
   "type": "module",
-  "module": "index.js",
   "sideEffects": ["*.css"],
+  "module": "./index.js",
+  "exports": {
+    ".": {
+      "node": "./index.ssr.js",
+      "browser": "./index.js"
+    },
+    "./abstract/connectBlocksFrom.js": "./abstract/connectBlocksFrom.js",
+    "./env": "./env.js",
+    "./web/*": "./web/*"
+  },
   "repository": "https://github.com/uploadcare/blocks/",
   "files": [
     "{abstract,blocks,solutions,web,utils,types}/**/*.{js,css,d.ts,d.ts.map}",
     "index.{js,d.ts,d.ts.map}",
+    "index.ssr.{js,d.ts,d.ts.map}",
     "env.{js,d.ts,d.ts.map}",
     "README.md",
     "LICENSE"
@@ -55,11 +65,12 @@
     "wds": "wds --open",
     "dev": "npm run build:static && run-p build:static:watch wds",
     "build:web": "npm run clean:web && node ./build.js",
+    "build:ssr-stubs": "node ./build-ssr-stubs.js",
     "build:jsx:types": "node build-jsx-types.js",
     "build:types": "npm run clean:types && tsc --build tsconfig.types.json",
     "build:static": "node --experimental-fetch ./static-gen/build.js",
     "build:static:watch": "node watch.js",
-    "build": "run-s build:web build:types build:jsx:types",
+    "build": "run-s build:ssr-stubs build:web build:types build:jsx:types",
     "tsc": "tsc --project tsconfig.json",
     "lint:js": "eslint ./",
     "lint:js:fix": "eslint ./ --fix",
@@ -82,6 +93,7 @@
     "@babel/eslint-parser": "^7.21.3",
     "@babel/preset-env": "^7.21.4",
     "@esm-bundle/chai": "^4.3.4-fix.0",
+    "@happy-dom/global-registrator": "^9.8.4",
     "@jam-do/jam-tools": "^0.0.4",
     "@types/chai": "^4.3.4",
     "@types/mocha": "^10.0.1",
