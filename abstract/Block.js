@@ -185,7 +185,9 @@ export class Block extends BaseComponent {
     /** @type {Set<Block>} */
     let blocks = this.$['*blocksRegistry'];
     for (let block of blocks) {
-      block.updateCssData();
+      if (block.isConnected) {
+        block.updateCssData();
+      }
     }
   };
 

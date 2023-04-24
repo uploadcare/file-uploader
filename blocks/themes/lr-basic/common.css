@@ -98,6 +98,7 @@
   border: none;
   cursor: pointer;
   transition: var(--transition-duration) ease;
+  color: var(--clr-txt);
 }
 
 :where(.lr-wgt-theme, .lr-wgt-common) button.mini-btn:hover,

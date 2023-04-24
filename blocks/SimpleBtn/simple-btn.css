@@ -11,8 +11,7 @@ lr-simple-btn button {
 }
 
 lr-simple-btn button lr-icon svg {
-  width: calc(var(--ui-size) * 0.4);
-  height: calc(var(--ui-size) * 0.4);
+  transform: scale(0.8);
 }
 
 lr-simple-btn button:hover {

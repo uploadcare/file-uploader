@@ -9,9 +9,6 @@ export class SourceList extends Block {
   initCallback() {
     super.initCallback();
     this.sub('--cfg-source-list', (/** @type {String} */ val) => {
-      if (!val) {
-        return;
-      }
       let list = stringToArray(val);
       let html = '';
       list.forEach((srcName) => {
