@@ -1,3 +1,8 @@
+// @ts-check
+
+/** @typedef {{ in: string; out: string; minify: boolean; minifyHtml?: boolean }} BuildItem */
+
+/** @type {BuildItem[]} */
 export const buildItems = [
   // lr-blocks
   {

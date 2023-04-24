@@ -6,10 +6,7 @@
     "moduleResolution": "bundler",
     "lib": ["es2017", "ESNext", "ESNext.Array", "DOM", "DOM.Iterable", "WebWorker"],
     "allowJs": true,
-    "checkJs": true,
-    "strict": false,
-    "alwaysStrict": true,
-    "esModuleInterop": true,
+    "strict": true,
     "skipLibCheck": true,
     "types": ["node", "chai", "mocha"],
     "noEmit": true
