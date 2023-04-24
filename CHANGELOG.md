@@ -1,3 +1,20 @@
+## [0.21.1](https://github.com/uploadcare/blocks/compare/v0.21.0...v0.21.1) (2023-04-24)
+
+### Bug Fixes
+
+- **activity-block:** reset current activity ([e72f15c](https://github.com/uploadcare/blocks/commit/e72f15cfdd49d439e95644999cb160b3629c1009))
+- **activity-header:** button colors in the darkmode ([6c29b47](https://github.com/uploadcare/blocks/commit/6c29b47bc515783927b1421ecbac1d04a1bb3d74))
+- **block:** update css data when block is connected to the DOM only ([23a99e2](https://github.com/uploadcare/blocks/commit/23a99e220706ddd7fa5cdd2a48332ec3cb649c45))
+- **drop-area:** disable and hide drop area if local sources are not allowed ([cf6bc8a](https://github.com/uploadcare/blocks/commit/cf6bc8a3c5ec1cea4dfd405d7d80c8d678c43d09))
+- **external-source:** reactive style updates ([bb6838b](https://github.com/uploadcare/blocks/commit/bb6838b2f057fcfa5336ee8be1eaae8eb01d6a3a))
+- **message-box:** reduce background lightness in the darkmode ([221bd05](https://github.com/uploadcare/blocks/commit/221bd05e86c62d8a75f7eb4f802f7fbbf58eaef5))
+- **shadow-wrapper:** prepend css-src style instead of append to make easier to override styles via `shadowStyles` ([7941e40](https://github.com/uploadcare/blocks/commit/7941e4077a0ad15fed4af5acf8229257eba971d0))
+- **simple-btn:** safari icon fractional scaling ([4400acd](https://github.com/uploadcare/blocks/commit/4400acd75d500df16b7f6067416f596e074e0114))
+- **solutions:** export LR from web bundles ([d5e718c](https://github.com/uploadcare/blocks/commit/d5e718c935b5d238fb5a642444c46565b890e874))
+- **source-list:** update children when source list is empty ([75cbbd4](https://github.com/uploadcare/blocks/commit/75cbbd414bc7d5e95125da9a77e6515aaba2c8c3))
+- stub package exports for SSR ([d528184](https://github.com/uploadcare/blocks/commit/d528184093366efef61468b3342fdce5a18327f5))
+- **upload-list:** do not try to handle file collection update while being disconnected from DOM ([ef6f101](https://github.com/uploadcare/blocks/commit/ef6f101eede0c9fffe9be52f31a04b1521eefad6))
+
 # [0.21.0](https://github.com/uploadcare/blocks/compare/v0.20.1...v0.21.0) (2023-04-19)
 
 ### Features
