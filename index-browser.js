@@ -1,3 +1,4 @@
+// @ts-check
 import * as blocks from './index.js';
 import { LR_WINDOW_KEY } from './abstract/connectBlocksFrom.js';
 

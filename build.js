@@ -1,3 +1,4 @@
+// @ts-check
 import esbuild from 'esbuild';
 import fs from 'fs';
 import path, { dirname } from 'path';
@@ -20,6 +21,7 @@ function jsBanner() {
   );
 }
 
+/** @param {import('./build-items.js').BuildItem} buildItem */
 function build(buildItem) {
   esbuild
     .build({
@@ -39,9 +41,11 @@ function build(buildItem) {
         return;
       }
       let js = fs.readFileSync(buildItem.out).toString();
+      /** @param {string} str */
       let checkIfHtml = (str) => {
         return str.includes('<') && (str.includes('</') || str.includes('/>'));
       };
+      /** @param {string} ch */
       let processChunk = (ch) => {
         if (checkIfHtml(ch)) {
           let htmlMin = ch.split('\n').join(' ');
