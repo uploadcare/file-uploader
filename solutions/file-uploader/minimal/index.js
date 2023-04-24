@@ -22,3 +22,17 @@ registerBlocks({
   Copyright,
   DataOutput,
 });
+
+export {
+  registerBlocks,
+  FileUploaderMinimal,
+  StartFrom,
+  DropArea,
+  UploadList,
+  FileItem,
+  Icon,
+  ProgressBar,
+  MessageBox,
+  Copyright,
+  DataOutput,
+};

@@ -31,7 +31,7 @@ export class ShadowWrapper extends Block {
           });
         });
       };
-      this.shadowRoot.appendChild(link);
+      this.shadowRoot.prepend(link);
     } else {
       this.render();
       this.removeAttribute('hidden');
