@@ -28,7 +28,7 @@ export class FileItem extends UploaderBlock {
   /** @private */
   _debouncedGenerateThumb = debounce(this._generateThumbnail.bind(this), 100);
   /** @private */
-  _debouncedCalculateState = debounce(this._calculateState.bind(this), 0);
+  _debouncedCalculateState = debounce(this._calculateState.bind(this), 100); // TODO: better throttle
   /** @private */
   _renderedOnce = false;
 
@@ -114,6 +114,9 @@ export class FileItem extends UploaderBlock {
 
   /** @private */
   _calculateState() {
+    if (!this._entry) {
+      return;
+    }
     let entry = this._entry;
     let state = FileItemState.IDLE;
 
@@ -132,6 +135,9 @@ export class FileItem extends UploaderBlock {
 
   /** @private */
   async _generateThumbnail() {
+    if (!this._entry) {
+      return;
+    }
     let entry = this._entry;
 
     if (entry.getValue('uuid') && entry.getValue('isImage')) {
@@ -142,9 +148,11 @@ export class FileItem extends UploaderBlock {
           createCdnUrlModifiers(entry.getValue('cdnUrlModifiers'), `scale_crop/${size}x${size}/center`)
         )
       );
-      let blobSrc = entry.getValue('thumbUrl');
-      entry.setValue('thumbUrl', thumbUrl);
-      URL.revokeObjectURL(blobSrc);
+      let currentThumbUrl = entry.getValue('thumbUrl');
+      if (currentThumbUrl !== thumbUrl) {
+        entry.setValue('thumbUrl', thumbUrl);
+        currentThumbUrl.startsWith('blob:') && URL.revokeObjectURL(currentThumbUrl);
+      }
       return;
     }
 
@@ -183,12 +191,24 @@ export class FileItem extends UploaderBlock {
     });
   }
 
+  /**
+   * @private
+   * @param {string} prop
+   * @param {(value: any) => void} handler
+   */
   _subEntry(prop, handler) {
-    let sub = this._entry.subscribe(prop, handler);
+    let sub = this._entry.subscribe(prop, (value) => {
+      if (this.isConnected) {
+        handler(value);
+      }
+    });
     this._entrySubs.add(sub);
   }
 
-  /** @param {String} id */
+  /**
+   * @private
+   * @param {String} id
+   */
   _handleEntryId(id) {
     this._reset();
 
@@ -258,13 +278,15 @@ export class FileItem extends UploaderBlock {
 
     this._subEntry('uuid', (uuid) => {
       this._debouncedCalculateState();
-      if (uuid) {
+      if (uuid && this._isIntersecting) {
         this._debouncedGenerateThumb();
       }
     });
 
     this._subEntry('cdnUrlModifiers', () => {
-      this._debouncedGenerateThumb();
+      if (this._isIntersecting) {
+        this._debouncedGenerateThumb();
+      }
     });
 
     this._subEntry('thumbUrl', (thumbUrl) => {
