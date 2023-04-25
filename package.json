@@ -40,7 +40,8 @@
   "exports": {
     ".": {
       "node": "./index.ssr.js",
-      "browser": "./index.js"
+      "browser": "./index.js",
+      "default": "./index.js"
     },
     "./abstract/connectBlocksFrom.js": "./abstract/connectBlocksFrom.js",
     "./env": "./env.js",
