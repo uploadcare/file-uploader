@@ -1,3 +1,5 @@
+import { Queue } from '@uploadcare/upload-client';
+
 export const blockCtx = () => ({
   /** @type {Set<import('./Block').Block>} */
   '*blocksRegistry': new Set(),
@@ -24,4 +26,5 @@ export const uploaderBlockCtx = (fnCtx) => ({
   '*outputData': null,
   '*focusedEntry': null,
   '*uploadMetadata': null,
+  '*uploadQueue': new Queue(1),
 });

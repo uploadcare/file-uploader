@@ -418,18 +418,21 @@ export class FileItem extends UploaderBlock {
       let abortController = new AbortController();
       entry.setValue('abortController', abortController);
 
-      let fileInfo = await uploadFile(entry.getValue('file') || entry.getValue('externalUrl'), {
-        ...this.getUploadClientOptions(),
-        fileName: entry.getValue('fileName'),
-        onProgress: (progress) => {
-          if (progress.isComputable) {
-            let percentage = progress.value * 100;
-            entry.setValue('uploadProgress', percentage);
-          }
-          this.$.progressUnknown = !progress.isComputable;
-        },
-        signal: abortController.signal,
-      });
+      const uploadTask = () =>
+        uploadFile(entry.getValue('file') || entry.getValue('externalUrl'), {
+          ...this.getUploadClientOptions(),
+          fileName: entry.getValue('fileName'),
+          onProgress: (progress) => {
+            if (progress.isComputable) {
+              let percentage = progress.value * 100;
+              entry.setValue('uploadProgress', percentage);
+            }
+            this.$.progressUnknown = !progress.isComputable;
+          },
+          signal: abortController.signal,
+        });
+
+      let fileInfo = await this.$['*uploadQueue'].add(uploadTask);
       entry.setMultipleValues({
         fileInfo,
         isUploading: false,
