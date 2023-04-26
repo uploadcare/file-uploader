@@ -29,6 +29,7 @@ export class Modal extends Block {
   };
 
   cssInit$ = {
+    ...this.cssInit$,
     '--cfg-modal-backdrop-strokes': 0,
   };
 

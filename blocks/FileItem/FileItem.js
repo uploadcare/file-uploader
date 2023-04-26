@@ -33,6 +33,7 @@ export class FileItem extends UploaderBlock {
   _renderedOnce = false;
 
   cssInit$ = {
+    ...this.cssInit$,
     '--cfg-use-cloud-image-editor': 0,
   };
 

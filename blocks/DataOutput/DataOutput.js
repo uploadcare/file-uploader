@@ -13,6 +13,7 @@ export class DataOutput extends UploaderBlock {
   };
 
   cssInit$ = {
+    ...this.cssInit$,
     '--cfg-group-output': 0,
   };
 

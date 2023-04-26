@@ -44,6 +44,7 @@ export class UploadList extends UploaderBlock {
   };
 
   cssInit$ = {
+    ...this.cssInit$,
     '--cfg-multiple': 1,
     '--cfg-multiple-min': 0,
     '--cfg-multiple-max': 0,

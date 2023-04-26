@@ -34,6 +34,7 @@ export class UploadDetails extends UploaderBlock {
   };
 
   cssInit$ = {
+    ...this.cssInit$,
     '--cfg-use-cloud-image-editor': 0,
     '--cfg-use-local-image-editor': 0,
   };
