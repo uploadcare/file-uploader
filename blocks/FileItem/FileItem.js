@@ -151,7 +151,7 @@ export class FileItem extends UploaderBlock {
       let currentThumbUrl = entry.getValue('thumbUrl');
       if (currentThumbUrl !== thumbUrl) {
         entry.setValue('thumbUrl', thumbUrl);
-        currentThumbUrl.startsWith('blob:') && URL.revokeObjectURL(currentThumbUrl);
+        currentThumbUrl?.startsWith('blob:') && URL.revokeObjectURL(currentThumbUrl);
       }
       return;
     }
