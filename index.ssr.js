@@ -337,7 +337,8 @@ export const DataOutput = class {
 export const DropArea = class {
   static template = `
   <slot>
-    <div ref="content-wrapper" class="content-wrapper">
+    <div data-default-slot hidden></div>
+    <div ref="content-wrapper" class="content-wrapper" set="@hidden: isHidden">
       <div class="icon-container" set="@hidden: !withIcon">
         <lr-icon name="default"></lr-icon>
         <lr-icon name="arrow-down"></lr-icon>
@@ -346,7 +347,7 @@ export const DropArea = class {
     </div>
   </slot>
 `;
-  static observedAttributes = ['with-icon', 'clickable', 'text', 'fullscreen'];
+  static observedAttributes = ['with-icon', 'clickable', 'text', 'fullscreen', 'disabled'];
   static extSrcList = {
     FACEBOOK: 'facebook',
     DROPBOX: 'dropbox',
@@ -791,7 +792,7 @@ export const Modal = class {
   static bindAttributes = () => {};
 };
 export const PACKAGE_NAME = `blocks`;
-export const PACKAGE_VERSION = `0.21.0`;
+export const PACKAGE_VERSION = `0.21.1`;
 export const PresenceToggle = class {
   static template = ` <slot></slot> `;
   static reg = () => {};
