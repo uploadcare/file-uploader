@@ -6,8 +6,6 @@
     .config {
       --ctx-name: 'my-uploader';
       --cfg-pubkey: 'demopublickey';
-      --cfg-multiple-min: 0;
-      --cfg-multiple-max: 3;
       --darkmode: 0;
     }
   </style>
@@ -19,7 +17,7 @@
     {
       "imports": {
         "@symbiotejs/symbiote": "./node_modules/@symbiotejs/symbiote/build/symbiote.js",
-        "@uploadcare/upload-client": "./node_modules/@uploadcare/upload-client/dist/index.browser.js"
+        "@uploadcare/upload-client": "./node_modules/@uploadcare/upload-client/dist/esm/index.browser.mjs"
       }
     }
   </script>
