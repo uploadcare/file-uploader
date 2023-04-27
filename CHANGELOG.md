@@ -1,3 +1,9 @@
+## [0.21.3](https://github.com/uploadcare/blocks/compare/v0.21.2...v0.21.3) (2023-04-27)
+
+### Bug Fixes
+
+- **modal:** restore scroll lock on modal destroy ([#433](https://github.com/uploadcare/blocks/issues/433)) ([70fad11](https://github.com/uploadcare/blocks/commit/70fad116fe1845b1ff590e765748a770d4f8ee12))
+
 ## [0.21.2](https://github.com/uploadcare/blocks/compare/v0.21.1...v0.21.2) (2023-04-27)
 
 ### Bug Fixes
