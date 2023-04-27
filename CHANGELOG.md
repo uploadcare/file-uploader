@@ -1,3 +1,9 @@
+## [0.21.4](https://github.com/uploadcare/blocks/compare/v0.21.3...v0.21.4) (2023-04-27)
+
+### Bug Fixes
+
+- **file-uploader-inline:** do not try to hide drop area because it's hides itself ([#435](https://github.com/uploadcare/blocks/issues/435)) ([4f11007](https://github.com/uploadcare/blocks/commit/4f110071ba8b7709fcf6fe0f8f727224d5d3763f))
+
 ## [0.21.3](https://github.com/uploadcare/blocks/compare/v0.21.2...v0.21.3) (2023-04-27)
 
 ### Bug Fixes
