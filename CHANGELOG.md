@@ -1,3 +1,9 @@
+## [0.21.5](https://github.com/uploadcare/blocks/compare/v0.21.4...v0.21.5) (2023-04-27)
+
+### Bug Fixes
+
+- **file-uploader-inline:** set init context ([#437](https://github.com/uploadcare/blocks/issues/437)) ([81031a7](https://github.com/uploadcare/blocks/commit/81031a7212b17ffe588d8d4e829734c59055aec8))
+
 ## [0.21.4](https://github.com/uploadcare/blocks/compare/v0.21.3...v0.21.4) (2023-04-27)
 
 ### Bug Fixes
