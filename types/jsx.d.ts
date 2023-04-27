@@ -40,6 +40,7 @@ declare namespace JSX {
     'lr-activity-heading': any;
     'lr-file-uploader-regular': any;
     'lr-file-uploader-minimal': any;
+    'lr-file-uploader-inline': any;
     'lr-upload-ctx-provider': any;
   }
 }
