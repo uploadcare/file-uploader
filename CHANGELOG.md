@@ -1,3 +1,9 @@
+## [0.21.2](https://github.com/uploadcare/blocks/compare/v0.21.1...v0.21.2) (2023-04-27)
+
+### Bug Fixes
+
+- **jsx:** add missing lr-file-uploader-inline tag ([#431](https://github.com/uploadcare/blocks/issues/431)) ([a15cc28](https://github.com/uploadcare/blocks/commit/a15cc286fa0f09fb21248d425a0223b31ad77154))
+
 ## [0.21.1](https://github.com/uploadcare/blocks/compare/v0.21.0...v0.21.1) (2023-04-25)
 
 ### Bug Fixes
