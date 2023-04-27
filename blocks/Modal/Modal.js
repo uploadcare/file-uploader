@@ -92,6 +92,7 @@ export class Modal extends Block {
 
   destroyCallback() {
     super.destroyCallback();
+    document.body.style.overflow = null;
     this.ref.dialog.removeEventListener('close', this._handleDialogClose);
     this.ref.dialog.removeEventListener('click', this._handleDialogClick);
   }
