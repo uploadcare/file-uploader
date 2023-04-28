@@ -1,3 +1,10 @@
+## [0.21.6](https://github.com/uploadcare/blocks/compare/v0.21.5...v0.21.6) (2023-04-28)
+
+### Bug Fixes
+
+- **file-uploader-inline:** add `flex: 1` css property to fill all available space inside flex column container ([#439](https://github.com/uploadcare/blocks/issues/439)) ([a781d20](https://github.com/uploadcare/blocks/commit/a781d20217a923b02cd58bc5b093379a5e3b21a4))
+- **package.json:** add types to exports field ([#440](https://github.com/uploadcare/blocks/issues/440)) ([718f432](https://github.com/uploadcare/blocks/commit/718f43214105f2b15c36b8d8344c5b723115295c))
+
 ## [0.21.5](https://github.com/uploadcare/blocks/compare/v0.21.4...v0.21.5) (2023-04-27)
 
 ### Bug Fixes
