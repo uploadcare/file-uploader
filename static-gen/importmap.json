@@ -1,6 +1,6 @@
 {
   "imports": {
-    "@symbiotejs/symbiote": "https://cdn.skypack.dev/pin/@symbiotejs/symbiote@v1.11.5-xok0d4yq3JnqOTheB68R/mode=imports,min/optimized/@symbiotejs/symbiote.js",
-    "@uploadcare/upload-client": "https://cdn.skypack.dev/-/@uploadcare/upload-client@v6.5.1-PuGlnZ4CQ48CYa5b3vGa/dist=es2020,mode=raw,min/dist/esm/index.browser.mjs"
+    "@symbiotejs/symbiote": "https://esm.sh/@symbiotejs/symbiote@1.11.7",
+    "@uploadcare/upload-client": "https://esm.sh/@uploadcare/upload-client@v6.6.0?bundle"
   }
 }
