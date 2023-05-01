@@ -1,3 +1,34 @@
+## [0.21.6](https://github.com/uploadcare/blocks/compare/v0.21.5...v0.21.6) (2023-04-28)
+
+### Bug Fixes
+
+- **file-uploader-inline:** add `flex: 1` css property to fill all available space inside flex column container ([#439](https://github.com/uploadcare/blocks/issues/439)) ([a781d20](https://github.com/uploadcare/blocks/commit/a781d20217a923b02cd58bc5b093379a5e3b21a4))
+- **package.json:** add types to exports field ([#440](https://github.com/uploadcare/blocks/issues/440)) ([718f432](https://github.com/uploadcare/blocks/commit/718f43214105f2b15c36b8d8344c5b723115295c))
+
+## [0.21.5](https://github.com/uploadcare/blocks/compare/v0.21.4...v0.21.5) (2023-04-27)
+
+### Bug Fixes
+
+- **file-uploader-inline:** set init context ([#437](https://github.com/uploadcare/blocks/issues/437)) ([81031a7](https://github.com/uploadcare/blocks/commit/81031a7212b17ffe588d8d4e829734c59055aec8))
+
+## [0.21.4](https://github.com/uploadcare/blocks/compare/v0.21.3...v0.21.4) (2023-04-27)
+
+### Bug Fixes
+
+- **file-uploader-inline:** do not try to hide drop area because it's hides itself ([#435](https://github.com/uploadcare/blocks/issues/435)) ([4f11007](https://github.com/uploadcare/blocks/commit/4f110071ba8b7709fcf6fe0f8f727224d5d3763f))
+
+## [0.21.3](https://github.com/uploadcare/blocks/compare/v0.21.2...v0.21.3) (2023-04-27)
+
+### Bug Fixes
+
+- **modal:** restore scroll lock on modal destroy ([#433](https://github.com/uploadcare/blocks/issues/433)) ([70fad11](https://github.com/uploadcare/blocks/commit/70fad116fe1845b1ff590e765748a770d4f8ee12))
+
+## [0.21.2](https://github.com/uploadcare/blocks/compare/v0.21.1...v0.21.2) (2023-04-27)
+
+### Bug Fixes
+
+- **jsx:** add missing lr-file-uploader-inline tag ([#431](https://github.com/uploadcare/blocks/issues/431)) ([a15cc28](https://github.com/uploadcare/blocks/commit/a15cc286fa0f09fb21248d425a0223b31ad77154))
+
 ## [0.21.1](https://github.com/uploadcare/blocks/compare/v0.21.0...v0.21.1) (2023-04-25)
 
 ### Bug Fixes

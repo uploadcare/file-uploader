@@ -1,12 +1,8 @@
 import { SolutionBlock } from '../../../abstract/SolutionBlock.js';
 import { ActivityBlock } from '../../../abstract/ActivityBlock.js';
-import { UploaderBlock } from '../../../abstract/UploaderBlock.js';
 
 export class FileUploaderInline extends SolutionBlock {
-  init$ = {
-    ...this.ctxInit,
-    dropAreaHidden: false,
-  };
+  init$ = this.ctxInit;
 
   shadowReadyCallback() {
     /** @type {import('../../../abstract/UploaderBlock.js').UploaderBlock} */
@@ -16,16 +12,11 @@ export class FileUploaderInline extends SolutionBlock {
         this.$['*currentActivity'] = uBlock.initActivity || ActivityBlock.activities.START_FROM;
       }
     });
-    window.customElements.whenDefined(uBlock.tagName.toLowerCase()).then(() => {
-      if (uBlock.sourceList.length === 1 && !uBlock.sourceList.includes(UploaderBlock.sourceTypes.LOCAL)) {
-        this.$.dropAreaHidden = true;
-      }
-    });
   }
 }
 
 FileUploaderInline.template = /* HTML */ ` <lr-start-from>
-    <lr-drop-area set="@hidden: dropAreaHidden" with-icon clickable></lr-drop-area>
+    <lr-drop-area with-icon clickable></lr-drop-area>
     <lr-source-list wrap></lr-source-list>
     <lr-copyright></lr-copyright>
   </lr-start-from>
