@@ -2,7 +2,7 @@
 
 ### Bug Fixes
 
-- bump upload-client ([#442](https://github.com/uploadcare/blocks/issues/442)) ([afd1d7d](https://github.com/uploadcare/blocks/commit/afd1d7dcd48005c77a4487057fcb4c96133098a9))
+- bump @uploadcare/upload-client to fix issues with Buffer polyfilling by CDNs (esm.sh, skypack) ([#442](https://github.com/uploadcare/blocks/issues/442)) ([afd1d7d](https://github.com/uploadcare/blocks/commit/afd1d7dcd48005c77a4487057fcb4c96133098a9))
 
 ## [0.21.6](https://github.com/uploadcare/blocks/compare/v0.21.5...v0.21.6) (2023-04-28)
 
