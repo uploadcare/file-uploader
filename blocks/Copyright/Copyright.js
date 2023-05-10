@@ -2,6 +2,7 @@ import { Block } from '../../abstract/Block.js';
 
 export class Copyright extends Block {
   cssInit$ = {
+    ...this.cssInit$,
     '--cfg-remove-copyright': 0,
   };
 

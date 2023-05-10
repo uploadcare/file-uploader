@@ -19,6 +19,7 @@ export class DropArea extends UploaderBlock {
   };
 
   cssInit$ = {
+    ...this.cssInit$,
     '--cfg-source-list': '',
   };
 

@@ -33,6 +33,7 @@ export class FileItem extends UploaderBlock {
   _renderedOnce = false;
 
   cssInit$ = {
+    ...this.cssInit$,
     '--cfg-use-cloud-image-editor': 0,
   };
 
@@ -151,7 +152,7 @@ export class FileItem extends UploaderBlock {
       let currentThumbUrl = entry.getValue('thumbUrl');
       if (currentThumbUrl !== thumbUrl) {
         entry.setValue('thumbUrl', thumbUrl);
-        currentThumbUrl.startsWith('blob:') && URL.revokeObjectURL(currentThumbUrl);
+        currentThumbUrl?.startsWith('blob:') && URL.revokeObjectURL(currentThumbUrl);
       }
       return;
     }
@@ -417,18 +418,21 @@ export class FileItem extends UploaderBlock {
       let abortController = new AbortController();
       entry.setValue('abortController', abortController);
 
-      let fileInfo = await uploadFile(entry.getValue('file') || entry.getValue('externalUrl'), {
-        ...this.getUploadClientOptions(),
-        fileName: entry.getValue('fileName'),
-        onProgress: (progress) => {
-          if (progress.isComputable) {
-            let percentage = progress.value * 100;
-            entry.setValue('uploadProgress', percentage);
-          }
-          this.$.progressUnknown = !progress.isComputable;
-        },
-        signal: abortController.signal,
-      });
+      const uploadTask = () =>
+        uploadFile(entry.getValue('file') || entry.getValue('externalUrl'), {
+          ...this.getUploadClientOptions(),
+          fileName: entry.getValue('fileName'),
+          onProgress: (progress) => {
+            if (progress.isComputable) {
+              let percentage = progress.value * 100;
+              entry.setValue('uploadProgress', percentage);
+            }
+            this.$.progressUnknown = !progress.isComputable;
+          },
+          signal: abortController.signal,
+        });
+
+      let fileInfo = await this.$['*uploadQueue'].add(uploadTask);
       entry.setMultipleValues({
         fileInfo,
         isUploading: false,

@@ -39,6 +39,7 @@ export class CameraSource extends UploaderBlock {
   };
 
   cssInit$ = {
+    ...this.cssInit$,
     '--cfg-camera-mirror': 1,
   };
 

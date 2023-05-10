@@ -3,6 +3,7 @@ import { stringToArray } from '../../utils/stringToArray.js';
 
 export class SourceList extends Block {
   cssInit$ = {
+    ...this.cssInit$,
     '--cfg-source-list': '',
   };
 
