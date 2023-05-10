@@ -1,3 +1,13 @@
+# [0.22.0](https://github.com/uploadcare/blocks/compare/v0.21.7...v0.22.0) (2023-05-10)
+
+### Bug Fixes
+
+- **file-item:** error while rewoke thumb ([9dc73ff](https://github.com/uploadcare/blocks/commit/9dc73ff956c7ac39b2cfc2ee97c686e3c33847b1))
+
+### Features
+
+- queue every upload request ([ed9d6de](https://github.com/uploadcare/blocks/commit/ed9d6de5c098b9433c9a4ad4c6c8d48bb1617737))
+
 ## [0.21.7](https://github.com/uploadcare/blocks/compare/v0.21.6...v0.21.7) (2023-05-03)
 
 ### Bug Fixes
