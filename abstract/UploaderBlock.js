@@ -12,6 +12,10 @@ import { stringToArray } from '../utils/stringToArray.js';
 
 export class UploaderBlock extends ActivityBlock {
   ctxInit = uploaderBlockCtx(this);
+  cssInit$ = {
+    ...this.cssInit$,
+    '--cfg-max-concurrent-requests': 1,
+  };
 
   /** @private */
   __initialUploadMetadata = null;
@@ -36,9 +40,14 @@ export class UploaderBlock extends ActivityBlock {
 
   initCallback() {
     super.initCallback();
+
     if (this.__initialUploadMetadata) {
       this.$['*uploadMetadata'] = this.__initialUploadMetadata;
     }
+
+    this.sub('--cfg-max-concurrent-requests', (value) => {
+      this.$['*uploadQueue'].concurrency = Number(value) || 1;
+    });
   }
 
   destroyCallback() {
@@ -303,7 +312,7 @@ export class UploaderBlock extends ActivityBlock {
       retryThrottledRequestMaxTimes: this.getCssData('--cfg-retry-throttled-request-max-times'),
       multipartMinFileSize: this.getCssData('--cfg-multipart-min-file-size'),
       multipartChunkSize: this.getCssData('--cfg-multipart-chunk-size'),
-      maxConcurrentRequests: this.getCssData('--cfg-max-concurrent-requests'),
+      maxConcurrentRequests: this.getCssData('--cfg-multipart-max-concurrent-requests'),
       multipartMaxAttempts: this.getCssData('--cfg-multipart-max-attempts'),
       checkForUrlDuplicates: !!this.getCssData('--cfg-check-for-url-duplicates'),
       saveUrlForRecurrentUploads: !!this.getCssData('--cfg-save-url-for-recurrent-uploads'),

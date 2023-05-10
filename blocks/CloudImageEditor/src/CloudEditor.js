@@ -57,6 +57,7 @@ export class CloudEditor extends Block {
   }
 
   cssInit$ = {
+    ...this.cssInit$,
     '--cfg-cdn-cname': 'https://ucarecdn.com',
   };
 
