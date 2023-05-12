@@ -12,4 +12,5 @@ lr-progress-bar-common {
 
 lr-progress-bar-common:not([active]) {
   opacity: 0;
+  pointer-events: none;
 }
