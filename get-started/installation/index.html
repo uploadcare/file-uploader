@@ -82,12 +82,12 @@ before updating.</p>
 </ul>
 </blockquote>
 <p>Connect script to your document:</p>
-<pre><code class="language-html"><span class="hljs-tag">&lt;<span class="hljs-name">script</span> <span class="hljs-attr">src</span>=<span class="hljs-string">&quot;https://unpkg.com/@uploadcare/blocks@0.22.0/web/blocks-browser.min.js&quot;</span> <span class="hljs-attr">type</span>=<span class="hljs-string">&quot;module&quot;</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">script</span>&gt;</span>
+<pre><code class="language-html"><span class="hljs-tag">&lt;<span class="hljs-name">script</span> <span class="hljs-attr">src</span>=<span class="hljs-string">&quot;https://unpkg.com/@uploadcare/blocks@0.22.1/web/blocks-browser.min.js&quot;</span> <span class="hljs-attr">type</span>=<span class="hljs-string">&quot;module&quot;</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">script</span>&gt;</span>
 </code></pre>
 <p>Then you can use blocks in your application markup.</p>
 <p>File uploader example:</p>
 <pre><code class="language-html"><span class="hljs-tag">&lt;<span class="hljs-name">lr-file-uploader-regular</span>
-  <span class="hljs-attr">css-src</span>=<span class="hljs-string">&quot;https://unpkg.com/@uploadcare/blocks@0.22.0/web/file-uploader-regular.min.css&quot;</span>
+  <span class="hljs-attr">css-src</span>=<span class="hljs-string">&quot;https://unpkg.com/@uploadcare/blocks@0.22.1/web/file-uploader-regular.min.css&quot;</span>
 &gt;</span>
 <span class="hljs-tag">&lt;/<span class="hljs-name">lr-file-uploader-regular</span>&gt;</span>
 </code></pre>
@@ -98,20 +98,20 @@ before updating.</p>
 <p>Then use <code>connectBlocksFrom</code> function to connect blocks:</p>
 <pre><code class="language-js"><span class="hljs-keyword">import</span> { connectBlocksFrom } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;@uploadcare/blocks/abstract/connectBlocksFrom.js&#x27;</span>;
 
-<span class="hljs-title function_">connectBlocksFrom</span>(<span class="hljs-string">&#x27;https://unpkg.com/@uploadcare/blocks@0.22.0/web/blocks-browser.min.js&#x27;</span>);
+<span class="hljs-title function_">connectBlocksFrom</span>(<span class="hljs-string">&#x27;https://unpkg.com/@uploadcare/blocks@0.22.1/web/blocks-browser.min.js&#x27;</span>);
 </code></pre>
 <p>That&#39;s it! Now you can use components for placing into html, like this:</p>
 <pre><code class="language-html"><span class="hljs-tag">&lt;<span class="hljs-name">lr-file-uploader-inline</span>
-  <span class="hljs-attr">css-src</span>=<span class="hljs-string">&quot;https://unpkg.com/@uploadcare/blocks@0.22.0/web/file-uploader-inline.min.css&quot;</span>
+  <span class="hljs-attr">css-src</span>=<span class="hljs-string">&quot;https://unpkg.com/@uploadcare/blocks@0.22.1/web/file-uploader-inline.min.css&quot;</span>
   <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;my-config-class&quot;</span>
 &gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">lr-file-uploader-inline</span>&gt;</span>
 </code></pre>
 <p>You may need to implement some logic, which depends on connected blocks or get access directly to the imported components. Since <code>connectBlocksFrom</code> returns <code>Promise</code>, place all you need using <code>.then()</code></p>
 <pre><code class="language-js"><span class="hljs-keyword">import</span> { connectBlocksFrom } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;@uploadcare/blocks/abstract/connectBlocksFrom.js&#x27;</span>;
 
-<span class="hljs-keyword">const</span> <span class="hljs-variable constant_">STYLES</span> = <span class="hljs-string">&#x27;https://unpkg.com/@uploadcare/blocks@0.22.0/web/file-uploader-regular.min.css&#x27;</span>;
+<span class="hljs-keyword">const</span> <span class="hljs-variable constant_">STYLES</span> = <span class="hljs-string">&#x27;https://unpkg.com/@uploadcare/blocks@0.22.1/web/file-uploader-regular.min.css&#x27;</span>;
 
-<span class="hljs-title function_">connectBlocksFrom</span>(<span class="hljs-string">&#x27;https://unpkg.com/@uploadcare/blocks@0.22.0/web/blocks-browser.min.js&#x27;</span>).<span class="hljs-title function_">then</span>(
+<span class="hljs-title function_">connectBlocksFrom</span>(<span class="hljs-string">&#x27;https://unpkg.com/@uploadcare/blocks@0.22.1/web/blocks-browser.min.js&#x27;</span>).<span class="hljs-title function_">then</span>(
   <span class="hljs-function">(<span class="hljs-params">blocks</span>) =&gt;</span> {
     <span class="hljs-keyword">if</span> (!blocks) {
       <span class="hljs-keyword">return</span>; <span class="hljs-comment">// To avoid errors in SSR case</span>
