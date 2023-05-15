@@ -8,7 +8,7 @@
 
 ### Features
 
-- queue every upload request ([ed9d6de](https://github.com/uploadcare/blocks/commit/ed9d6de5c098b9433c9a4ad4c6c8d48bb1617737))
+- Run upload requests in the queue ([ed9d6de](https://github.com/uploadcare/blocks/commit/ed9d6de5c098b9433c9a4ad4c6c8d48bb1617737))
 
 ## [0.21.7](https://github.com/uploadcare/blocks/compare/v0.21.6...v0.21.7) (2023-05-03)
 
