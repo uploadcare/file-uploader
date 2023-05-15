@@ -1,5 +1,6 @@
 /* stylelint-disable string-no-newline */
-:where(.lr-cldtr-common) lr-icon {
+:where(.lr-cldtr-common) lr-icon,
+:host-context(.lr-cldtr-common) lr-icon {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -7,12 +8,14 @@
   height: 100%;
 }
 
-:where(.lr-cldtr-common) lr-icon svg {
+:where(.lr-cldtr-common) lr-icon svg,
+:host-context(.lr-cldtr-common) lr-icon svg {
   width: unset;
   height: unset;
 }
 
-:where(.lr-cldtr-common) lr-icon:not([raw]) path {
+:where(.lr-cldtr-common) lr-icon:not([raw]) path,
+:host-context(.lr-cldtr-common) lr-icon:not([raw]) path {
   stroke-linejoin: round;
   fill: none;
   stroke: currentColor;
