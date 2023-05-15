@@ -155,7 +155,7 @@ export class LiveHtml extends Block {
   }
 
   init$ = {
-    ...this.ctxInit,
+    ...this.init$,
     src: '',
     code: INIT_HTML,
     spellcheck: false,

@@ -8,7 +8,7 @@ export class SourceBtn extends UploaderBlock {
   _registeredTypes = {};
 
   init$ = {
-    ...this.ctxInit,
+    ...this.init$,
     iconName: 'default',
   };
 

@@ -38,7 +38,7 @@ export class FileItem extends UploaderBlock {
   };
 
   init$ = {
-    ...this.ctxInit,
+    ...this.init$,
     uid: '',
     itemName: '',
     errorText: '',

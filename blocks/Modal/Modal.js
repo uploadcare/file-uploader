@@ -22,7 +22,7 @@ export class Modal extends Block {
   };
 
   init$ = {
-    ...this.ctxInit,
+    ...this.init$,
     '*modalActive': false,
     isOpen: false,
     closeClicked: this._handleDialogClose,

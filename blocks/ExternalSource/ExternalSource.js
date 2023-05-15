@@ -15,7 +15,7 @@ export class ExternalSource extends UploaderBlock {
   activityType = ActivityBlock.activities.EXTERNAL;
 
   init$ = {
-    ...this.ctxInit,
+    ...this.init$,
     activityIcon: '',
     activityCaption: '',
     counter: 0,

@@ -2,7 +2,7 @@ import { Block } from '../../../../../abstract/Block.js';
 
 export class SliderUi extends Block {
   init$ = {
-    ...this.ctxInit,
+    ...this.init$,
     disabled: false,
     min: 0,
     max: 100,

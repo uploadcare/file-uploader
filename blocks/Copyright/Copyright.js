@@ -6,11 +6,6 @@ export class Copyright extends Block {
     '--cfg-remove-copyright': 0,
   };
 
-  init$ = {
-    ...this.ctxInit,
-    removeCopyright: false,
-  };
-
   initCallback() {
     super.initCallback();
 
@@ -18,7 +13,7 @@ export class Copyright extends Block {
       '--cfg-remove-copyright',
       /** @param {number} value */
       (value) => {
-        this.$.removeCopyright = !!value;
+        this.classList.toggle('hidden', !!value);
       }
     );
   }
@@ -28,7 +23,6 @@ export class Copyright extends Block {
       href="https://uploadcare.com/?utm_source=copyright&utm_medium=referral&utm_campaign=v4"
       target="_blank noopener"
       class="credits"
-      set="@hidden: removeCopyright"
       >Powered by Uploadcare</a
     >
   `;

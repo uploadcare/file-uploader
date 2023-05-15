@@ -2,7 +2,7 @@ import { Block } from '../../abstract/Block.js';
 
 export class Icon extends Block {
   init$ = {
-    ...this.ctxInit,
+    ...this.init$,
     name: '',
     path: '',
     size: '24',

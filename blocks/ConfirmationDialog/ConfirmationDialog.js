@@ -20,7 +20,7 @@ export class ConfirmationDialog extends ActivityBlock {
   _defaults = new UiConfirmation();
 
   init$ = {
-    ...this.ctxInit,
+    ...this.init$,
     activityCaption: '',
     messageTxt: '',
     confirmBtnTxt: '',

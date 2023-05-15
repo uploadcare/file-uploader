@@ -8,7 +8,7 @@ const ACTIVE_PROP = '___ACTIVITY_IS_ACTIVE___';
 
 export class ActivityBlock extends Block {
   historyTracked = false;
-  ctxInit = activityBlockCtx(this);
+  init$ = activityBlockCtx(this);
 
   _debouncedHistoryFlush = debounce(this._historyFlush.bind(this), 10);
 

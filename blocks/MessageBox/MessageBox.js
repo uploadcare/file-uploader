@@ -9,7 +9,7 @@ export class UiMessage {
 
 export class MessageBox extends Block {
   init$ = {
-    ...this.ctxInit,
+    ...this.init$,
     iconName: 'info',
     captionTxt: 'Message caption',
     msgTxt: 'Message...',

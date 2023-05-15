@@ -1,8 +1,8 @@
-import { BaseComponent, Data } from '@symbiotejs/symbiote';
-import { applyTemplateData, getPluralObjects } from '../utils/template-utils.js';
-import { l10nProcessor } from './l10nProcessor.js';
-import { blockCtx } from './CTX.js';
+import { BaseComponent } from '@symbiotejs/symbiote';
 import { createWindowHeightTracker, getIsWindowHeightTracked } from '../utils/createWindowHeightTracker.js';
+import { applyTemplateData, getPluralObjects } from '../utils/template-utils.js';
+import { blockCtx } from './CTX.js';
+import { l10nProcessor } from './l10nProcessor.js';
 
 const TAG_PREFIX = 'lr-';
 
@@ -10,8 +10,7 @@ export class Block extends BaseComponent {
   static StateConsumerScope = null;
   allowCustomTemplate = true;
 
-  ctxInit = blockCtx();
-  init$ = this.ctxInit;
+  init$ = blockCtx();
 
   /**
    * @param {String} str
@@ -118,12 +117,6 @@ export class Block extends BaseComponent {
     if (this.hasAttribute('retpl')) {
       this.constructor['template'] = null;
       this.processInnerHtml = true;
-    }
-    if (this.isConnected && this['__ctxOwner']) {
-      let data = Data.getCtx(this.ctxName, false);
-      if (data) {
-        data.store = { ...this.ctxInit };
-      }
     }
     super.connectedCallback();
   }
