@@ -4,6 +4,7 @@
 
 - **file-item:** error while rewoke thumb ([9dc73ff](https://github.com/uploadcare/blocks/commit/9dc73ff956c7ac39b2cfc2ee97c686e3c33847b1))
 - **progress-bar-common:** ignore pointer events when not active ([e6ddbf6](https://github.com/uploadcare/blocks/commit/e6ddbf611f9cc418f414d7489564cadf56097df1))
+- Don't show block re-registration warnings for the same block components
 
 ### Features
 
