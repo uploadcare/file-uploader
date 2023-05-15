@@ -4,7 +4,7 @@ import { TRANSPARENT_PIXEL_SRC } from '../../utils/transparentPixelSrc.js';
 
 export class FilePreview extends Block {
   init$ = {
-    ...this.ctxInit,
+    ...this.init$,
     checkerboard: false,
     src: TRANSPARENT_PIXEL_SRC,
   };

@@ -5,7 +5,7 @@ export class FileUploaderMinimal extends SolutionBlock {
   pauseRender = true;
 
   init$ = {
-    ...this.ctxInit,
+    ...this.init$,
     selectClicked: () => {
       this.ref.uBlock.openSystemDialog();
     },

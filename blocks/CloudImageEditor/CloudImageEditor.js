@@ -6,7 +6,7 @@ export class CloudImageEditor extends UploaderBlock {
   activityType = ActivityBlock.activities.CLOUD_IMG_EDIT;
 
   init$ = {
-    ...this.ctxInit,
+    ...this.init$,
     cdnUrl: null,
   };
 

@@ -4,7 +4,7 @@ import { SliderUi } from './SliderUi.js';
 
 class CtxProvider extends Block {
   init$ = {
-    ...this.ctxInit,
+    ...this.init$,
     min: 0,
     max: 100,
     defaultValue: 50,

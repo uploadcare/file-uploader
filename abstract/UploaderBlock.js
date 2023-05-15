@@ -11,7 +11,7 @@ import { Modal } from '../blocks/Modal/Modal.js';
 import { stringToArray } from '../utils/stringToArray.js';
 
 export class UploaderBlock extends ActivityBlock {
-  ctxInit = uploaderBlockCtx(this);
+  init$ = uploaderBlockCtx(this);
   cssInit$ = {
     ...this.cssInit$,
     '--cfg-max-concurrent-requests': 1,
