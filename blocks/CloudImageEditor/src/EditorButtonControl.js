@@ -3,7 +3,7 @@ import { classNames } from './lib/classNames.js';
 
 export class EditorButtonControl extends Block {
   init$ = {
-    ...this.ctxInit,
+    ...this.init$,
     active: false,
     title: '',
     icon: '',

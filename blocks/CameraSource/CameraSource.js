@@ -10,7 +10,7 @@ export class CameraSource extends UploaderBlock {
   _unsubPermissions = null;
 
   init$ = {
-    ...this.ctxInit,
+    ...this.init$,
     video: null,
     videoTransformCss: null,
     shotBtnDisabled: true,

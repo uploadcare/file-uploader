@@ -83,7 +83,7 @@ export class Video extends Block {
   }
 
   init$ = {
-    ...this.ctxInit,
+    ...this.init$,
     src: '',
     ppIcon: ICO_MAP.PLAY,
     fsIcon: ICO_MAP.FS_ON,

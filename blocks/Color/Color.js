@@ -2,7 +2,7 @@ import { Block } from '../../abstract/Block.js';
 
 export class Color extends Block {
   init$ = {
-    ...this.ctxInit,
+    ...this.init$,
     inputOpacity: 0,
     '*selectedColor': '#f00',
     onChange: () => {

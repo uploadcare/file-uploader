@@ -14,7 +14,7 @@ import { checkerboardCssBg } from '../svg-backgrounds/svg-backgrounds.js';
 
 export class EditableCanvas extends Block {
   init$ = {
-    ...this.ctxInit,
+    ...this.init$,
     refMap: null,
     disabled: true,
     toolbarHidden: true,

@@ -2,7 +2,7 @@ import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 
 export class SimpleBtn extends UploaderBlock {
   init$ = {
-    ...this.ctxInit,
+    ...this.init$,
     '*simpleButtonText': '',
     onClick: () => {
       this.initFlow();

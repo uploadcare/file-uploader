@@ -2,7 +2,7 @@ import { Block } from '../../abstract/Block.js';
 
 export class Select extends Block {
   init$ = {
-    ...this.ctxInit,
+    ...this.init$,
     currentText: '',
     options: [],
     selectHtml: '',

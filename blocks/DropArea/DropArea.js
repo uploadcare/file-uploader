@@ -7,7 +7,7 @@ import { stringToArray } from '../../utils/stringToArray.js';
 
 export class DropArea extends UploaderBlock {
   init$ = {
-    ...this.ctxInit,
+    ...this.init$,
     state: DropzoneState.INACTIVE,
     withIcon: false,
     isClickable: false,
@@ -78,7 +78,6 @@ export class DropArea extends UploaderBlock {
       },
       /** @param {(File | String)[]} items */
       onItems: (items) => {
-        debugger;
         if (!items.length) {
           return;
         }

@@ -22,7 +22,7 @@ export class CloudEditor extends Block {
   }
 
   init$ = {
-    ...this.ctxInit,
+    ...this.init$,
     ...initState(this),
   };
 

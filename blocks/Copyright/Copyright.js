@@ -7,7 +7,7 @@ export class Copyright extends Block {
   };
 
   init$ = {
-    ...this.ctxInit,
+    ...this.init$,
     removeCopyright: false,
   };
 

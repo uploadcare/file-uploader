@@ -9,7 +9,7 @@ export class UploadList extends UploaderBlock {
   activityType = ActivityBlock.activities.UPLOAD_LIST;
 
   init$ = {
-    ...this.ctxInit,
+    ...this.init$,
     doneBtnVisible: false,
     doneBtnEnabled: false,
     uploadBtnVisible: false,
