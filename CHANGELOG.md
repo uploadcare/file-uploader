@@ -1,3 +1,10 @@
+## [0.22.1](https://github.com/uploadcare/blocks/compare/v0.22.0...v0.22.1) (2023-05-15)
+
+### Bug Fixes
+
+- **copyright:** hide whole `lr-copyright` block if it's disabled ([2550d20](https://github.com/uploadcare/blocks/commit/2550d2009d2bf8819e9b7c0d4d2f8bdd7665d9a6))
+- get rid of `ctxOwner` flag due to it's buggy behaviour ([6c5f374](https://github.com/uploadcare/blocks/commit/6c5f37442cec5b23f0f532854e28948e81129c51))
+
 # [0.22.0](https://github.com/uploadcare/blocks/compare/v0.21.7...v0.22.0) (2023-05-12)
 
 ### Bug Fixes
