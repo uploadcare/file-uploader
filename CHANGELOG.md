@@ -1,3 +1,10 @@
+## [0.22.2](https://github.com/uploadcare/blocks/compare/v0.22.1...v0.22.2) (2023-05-16)
+
+### Bug Fixes
+
+- **cloud-editor:** extend from ShadowWrapper ([3c518a5](https://github.com/uploadcare/blocks/commit/3c518a55c3006efc8dba9a8c7e6d0aec1ee1649b))
+- **cloud-editor:** solution bundle ([89ad5af](https://github.com/uploadcare/blocks/commit/89ad5afd2be4291f5abf85f179ec2d044136e2ef))
+
 ## [0.22.1](https://github.com/uploadcare/blocks/compare/v0.22.0...v0.22.1) (2023-05-15)
 
 ### Bug Fixes
