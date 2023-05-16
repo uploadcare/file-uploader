@@ -1,4 +1,3 @@
-import { Block } from '../../../abstract/Block.js';
 import {
   createCdnUrl,
   createCdnUrlModifiers,
@@ -7,6 +6,7 @@ import {
   extractUuid,
 } from '../../../utils/cdn-utils.js';
 import { TRANSPARENT_PIXEL_SRC } from '../../../utils/transparentPixelSrc.js';
+import { ShadowWrapper } from '../../ShadowWrapper/ShadowWrapper.js';
 import { classNames } from './lib/classNames.js';
 import { debounce } from './lib/debounce.js';
 import { operationsToTransformations, transformationsToOperations } from './lib/transformationUtils.js';
@@ -14,7 +14,7 @@ import { initState } from './state.js';
 import { TEMPLATE } from './template.js';
 import { TabId } from './toolbar-constants.js';
 
-export class CloudEditor extends Block {
+export class CloudEditor extends ShadowWrapper {
   pauseRender = true;
 
   get ctxName() {
@@ -61,8 +61,18 @@ export class CloudEditor extends Block {
     '--cfg-cdn-cname': 'https://ucarecdn.com',
   };
 
-  async connectedCallback() {
+  shadowReadyCallback() {
+    this.initEditor();
+  }
+
+  connectedCallback() {
     super.connectedCallback();
+    if (!this.renderShadow) {
+      this.initEditor();
+    }
+  }
+
+  async initEditor() {
     try {
       await this._waitForSize();
     } catch (err) {
@@ -71,7 +81,6 @@ export class CloudEditor extends Block {
       }
       return;
     }
-    this.render();
 
     this.$['*faderEl'] = this.ref['fader-el'];
     this.$['*cropperEl'] = this.ref['cropper-el'];

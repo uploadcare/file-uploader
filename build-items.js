@@ -25,13 +25,13 @@ export const buildItems = [
 
   // lr-cloud-image-editor
   {
-    in: './blocks/CloudImageEditor/index.js',
+    in: './solutions/cloud-image-editor/index.js',
     out: './web/lr-cloud-image-editor.min.js',
     minify: true,
     minifyHtml: true,
   },
   {
-    in: './blocks/CloudImageEditor/src/css/index.css',
+    in: './solutions/cloud-image-editor/index.css',
     out: './web/lr-cloud-image-editor.min.css',
     minify: true,
   },
