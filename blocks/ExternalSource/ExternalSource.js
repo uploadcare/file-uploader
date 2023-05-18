@@ -127,7 +127,10 @@ export class ExternalSource extends UploaderBlock {
       pass_window_open: false,
       session_key: this.getCssData('--cfg-remote-tab-session-key'),
     };
-    return `https://social.uploadcare.com/window3/${externalSourceType}?${queryString(params)}`;
+    let url = new URL(this.getCssData('--cfg-social-base-url'));
+    url.pathname = `/window3/${externalSourceType}`;
+    url.search = queryString(params);
+    return url.toString();
   }
 
   mountIframe() {
