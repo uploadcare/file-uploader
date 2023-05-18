@@ -30,6 +30,7 @@
   --cfg-remote-tab-session-key: '';
   --cfg-cdn-cname: 'https://ucarecdn.com';
   --cfg-base-url: 'https://upload.uploadcare.com';
+  --cfg-social-base-url: 'https://social.uploadcare.com';
   --cfg-secure-signature: '';
   --cfg-secure-expire: '';
   --cfg-secure-delivery-proxy: '';
