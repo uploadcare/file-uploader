@@ -24,7 +24,7 @@ export class DropArea extends UploaderBlock {
   };
 
   isActive() {
-    if (!this.$.isDisabled) {
+    if (this.$.isDisabled) {
       return false;
     }
     const bounds = this.getBoundingClientRect();
