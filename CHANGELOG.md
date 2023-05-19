@@ -1,5 +1,10 @@
 ## [0.22.3](https://github.com/uploadcare/blocks/compare/v0.22.2...v0.22.3) (2023-05-19)
 
+
+### Features
+
+- **external-source**: configurable social base url ([0cd7f94](https://github.com/uploadcare/blocks/commit/0cd7f94f1eef24b3ce0e346eb1ed5773e82c090e))
+
 ### Bug Fixes
 
 - **drop-area:** fix detection of the active dropzone ([97dbb32](https://github.com/uploadcare/blocks/commit/97dbb3272a36e4ae97441a044ac5c260c2018829))
