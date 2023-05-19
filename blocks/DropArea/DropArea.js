@@ -12,8 +12,8 @@ export class DropArea extends UploaderBlock {
     withIcon: false,
     isClickable: false,
     isFullscreen: false,
-    isDisabled: false,
-    isHidden: false,
+    isEnabled: true,
+    isVisible: true,
     text: this.l10n('drop-files-here'),
     'lr-drop-area/targets': null,
   };
@@ -24,7 +24,7 @@ export class DropArea extends UploaderBlock {
   };
 
   isActive() {
-    if (!this.$.isDisabled) {
+    if (!this.$.isEnabled) {
       return false;
     }
     const bounds = this.getBoundingClientRect();
@@ -49,7 +49,7 @@ export class DropArea extends UploaderBlock {
     this.$['lr-drop-area/targets'].add(this);
 
     this.defineAccessor('disabled', (value) => {
-      this.set$({ isDisabled: typeof value === 'string' });
+      this.set$({ isEnabled: !value });
     });
     this.defineAccessor('clickable', (value) => {
       this.set$({ isClickable: typeof value === 'string' });
@@ -140,14 +140,14 @@ export class DropArea extends UploaderBlock {
 
     this.sub('--cfg-source-list', (value) => {
       const list = stringToArray(value);
-      // Disable drop area if local files are not allowed
-      this.$.isDisabled = !list.includes(UploaderBlock.sourceTypes.LOCAL);
-      // Hide drop area if there is no default slot overrided
-      this.$.isHidden = this.$.isDisabled && !!this.querySelector('[data-default-slot]');
+      // Enable drop area if local files are allowed
+      this.$.isEnabled = list.includes(UploaderBlock.sourceTypes.LOCAL);
+      // Show drop area if it's enabled or default slot is overrided
+      this.$.isVisible = this.$.isEnabled || !this.querySelector('[data-default-slot]');
     });
 
-    this.sub('isHidden', (value) => {
-      this.toggleAttribute('hidden', value);
+    this.sub('isVisible', (value) => {
+      this.toggleAttribute('hidden', !value);
     });
 
     if (this.$.isClickable) {
@@ -166,7 +166,7 @@ export class DropArea extends UploaderBlock {
    * @returns {Boolean}
    */
   _shouldIgnore() {
-    if (this.$.isDisabled) {
+    if (!this.$.isEnabled) {
       return true;
     }
     if (!this._couldHandleFiles()) {
@@ -215,7 +215,7 @@ export class DropArea extends UploaderBlock {
 DropArea.template = /* HTML */ `
   <slot>
     <div data-default-slot hidden></div>
-    <div ref="content-wrapper" class="content-wrapper" set="@hidden: isHidden">
+    <div ref="content-wrapper" class="content-wrapper" set="@hidden: !isVisible">
       <div class="icon-container" set="@hidden: !withIcon">
         <lr-icon name="default"></lr-icon>
         <lr-icon name="arrow-down"></lr-icon>

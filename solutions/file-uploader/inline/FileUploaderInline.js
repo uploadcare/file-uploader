@@ -2,8 +2,6 @@ import { SolutionBlock } from '../../../abstract/SolutionBlock.js';
 import { ActivityBlock } from '../../../abstract/ActivityBlock.js';
 
 export class FileUploaderInline extends SolutionBlock {
-  init$ = this.ctxInit;
-
   shadowReadyCallback() {
     /** @type {import('../../../abstract/UploaderBlock.js').UploaderBlock} */
     const uBlock = this.ref.uBlock;
