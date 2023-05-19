@@ -49,6 +49,8 @@ export function addDropzone(desc) {
     state = newState;
   };
 
+  let isDragging = () => eventCounter > 0;
+
   handleSwitch((newState) => desc.onChange(newState));
 
   let onResetEvent = () => {
@@ -63,8 +65,7 @@ export function addDropzone(desc) {
   };
   let onDragLeave = () => {
     eventCounter -= 1;
-    let draggingInPage = eventCounter > 0;
-    if (!draggingInPage) {
+    if (!isDragging()) {
       setState(DropzoneState.INACTIVE);
     }
   };
@@ -75,6 +76,9 @@ export function addDropzone(desc) {
   };
 
   let onDragOver = (e) => {
+    if (!isDragging()) {
+      eventCounter += 1;
+    }
     e.preventDefault();
 
     /** @type {[Number, Number]} */
