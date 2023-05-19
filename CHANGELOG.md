@@ -1,3 +1,16 @@
+## [0.22.3](https://github.com/uploadcare/blocks/compare/v0.22.2...v0.22.3) (2023-05-19)
+
+
+### Features
+
+- **external-source**: configurable social base url ([0cd7f94](https://github.com/uploadcare/blocks/commit/0cd7f94f1eef24b3ce0e346eb1ed5773e82c090e))
+
+### Bug Fixes
+
+- **drop-area:** fix detection of the active dropzone ([97dbb32](https://github.com/uploadcare/blocks/commit/97dbb3272a36e4ae97441a044ac5c260c2018829))
+- **drop-area:** prevent flickering on file being dragged before init ([72b76a7](https://github.com/uploadcare/blocks/commit/72b76a7959881613866850f4cf56758624b93741))
+- **file-uploader-inline:** update missing `init$` usage that was leading to crash ([51a7b10](https://github.com/uploadcare/blocks/commit/51a7b109df66e4fe654c46078a03b24474589d71))
+
 ## [0.22.2](https://github.com/uploadcare/blocks/compare/v0.22.1...v0.22.2) (2023-05-17)
 
 ### Bug Fixes
