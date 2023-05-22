@@ -263,14 +263,19 @@ export class FileItem extends UploaderBlock {
     });
 
     this._subEntry('isImage', (isImage) => {
-      let imagesOnly = this.getCssData('--cfg-img-only');
-      if (entry.getValue('externalUrl') && !entry.getValue('uuid') && imagesOnly && !isImage) {
-        // don't validate not uploaded files with external url, cause we don't know if they're images or not
+      const imagesOnly = this.getCssData('--cfg-img-only');
+      if (!imagesOnly || isImage) {
         return;
       }
-      if (imagesOnly && !isImage) {
-        entry.setValue('validationErrorMsg', this.l10n('images-only-accepted'));
+      if (!entry.getValue('uuid') && entry.getValue('externalUrl')) {
+        // skip validation for not uploaded files with external url, cause we don't know if they're images or not
+        return;
       }
+      if (!entry.getValue('uuid') && !entry.getValue('mimeType')) {
+        // skip validation for not uploaded files without mime-type, cause we don't know if they're images or not
+        return;
+      }
+      entry.setValue('validationErrorMsg', this.l10n('images-only-accepted'));
     });
 
     this._subEntry('externalUrl', (externalUrl) => {
