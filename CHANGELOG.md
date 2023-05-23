@@ -1,5 +1,11 @@
-## [0.22.3](https://github.com/uploadcare/blocks/compare/v0.22.2...v0.22.3) (2023-05-19)
+## [0.22.4](https://github.com/uploadcare/blocks/compare/v0.22.3...v0.22.4) (2023-05-23)
 
+### Bug Fixes
+
+- **file-item:** do not validate local files if no mime type provided (this is the case for drag'n'dropped HEICs) ([e47497e](https://github.com/uploadcare/blocks/commit/e47497e3cfa72a415c24d9d28362b6a0b3c50738))
+- **file-item:** validate file extensions along with the mime types ([b89ea0e](https://github.com/uploadcare/blocks/commit/b89ea0ed7ce81ab0f0f6071934f8fb3d4af71c0c))
+
+## [0.22.3](https://github.com/uploadcare/blocks/compare/v0.22.2...v0.22.3) (2023-05-19)
 
 ### Features
 
