@@ -1,5 +1,5 @@
 import { expect } from '@esm-bundle/chai';
-import { mergeFileTypes, matchFileType, fileIsImage } from './fileTypes';
+import { mergeFileTypes, matchMimeType, fileIsImage, matchExtension } from './fileTypes';
 
 describe('mergeFileTypes', () => {
   it('should join input strings with comma', () => {
@@ -28,15 +28,26 @@ describe('mergeFileTypes', () => {
   });
 });
 
-describe('matchFileType', () => {
+describe('matchMimeType', () => {
   it('should return true if file type is exactly matched', () => {
-    expect(matchFileType('image/jpeg', ['image/jpeg'])).to.be.true;
+    expect(matchMimeType('image/jpeg', ['image/jpeg'])).to.be.true;
   });
   it('should return true if file type is wildcard matched', () => {
-    expect(matchFileType('image/jpeg', ['image/*'])).to.be.true;
+    expect(matchMimeType('image/jpeg', ['image/*'])).to.be.true;
   });
   it('should return false if file type is not matched', () => {
-    expect(matchFileType('text/plain', ['image/*'])).to.be.false;
+    expect(matchMimeType('text/plain', ['image/*'])).to.be.false;
+  });
+});
+
+describe('matchExtension', () => {
+  it('should return true if file extension is exactly matched', () => {
+    expect(matchExtension('image.jpeg', ['.jpeg'])).to.be.true;
+    expect(matchExtension('image.avif', ['.avif'])).to.be.true;
+  });
+  it('should return false if file extension is not matched', () => {
+    expect(matchExtension('image.jpeg', ['.png'])).to.be.false;
+    expect(matchExtension('image.avifs', ['.avif'])).to.be.false;
   });
 });
 

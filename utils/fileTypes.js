@@ -31,18 +31,33 @@ export const mergeFileTypes = (fileTypes) => {
 };
 
 /**
- * @param {String} fileType
+ * @param {String} mimeType
  * @param {String[]} allowedFileTypes
  * @returns {Boolean}
  */
-export const matchFileType = (fileType, allowedFileTypes) => {
+export const matchMimeType = (mimeType, allowedFileTypes) => {
   return allowedFileTypes.some((type) => {
     if (type.endsWith('*')) {
       type = type.replace('*', '');
-      return fileType.startsWith(type);
+      return mimeType.startsWith(type);
     }
 
-    return fileType === type;
+    return mimeType === type;
+  });
+};
+
+/**
+ * @param {String} fileName
+ * @param {String[]} allowedFileTypes
+ * @returns {Boolean}
+ */
+export const matchExtension = (fileName, allowedFileTypes) => {
+  return allowedFileTypes.some((type) => {
+    if (!type.startsWith('.')) {
+      return false;
+    }
+
+    return fileName.endsWith(type);
   });
 };
 
@@ -55,5 +70,5 @@ export const fileIsImage = (file) => {
   if (!type) {
     return false;
   }
-  return matchFileType(type, IMAGE_ACCEPT_LIST);
+  return matchMimeType(type, IMAGE_ACCEPT_LIST);
 };
