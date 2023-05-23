@@ -7,7 +7,7 @@ import { fileCssBg } from '../svg-backgrounds/svg-backgrounds.js';
 import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../utils/cdn-utils.js';
 import { EVENT_TYPES, EventData, EventManager } from '../../abstract/EventManager.js';
 import { debounce } from '../utils/debounce.js';
-import { IMAGE_ACCEPT_LIST, mergeFileTypes, matchFileType } from '../../utils/fileTypes.js';
+import { IMAGE_ACCEPT_LIST, mergeFileTypes, matchMimeType, matchExtension } from '../../utils/fileTypes.js';
 
 const FileItemState = Object.freeze({
   FINISHED: Symbol(0),
@@ -208,6 +208,23 @@ export class FileItem extends UploaderBlock {
 
   /**
    * @private
+   * @param {import('../../abstract/TypedData.js').TypedData} entry
+   */
+  _validateFileType(entry) {
+    let imagesOnly = this.getCssData('--cfg-img-only');
+    let accept = this.getCssData('--cfg-accept');
+    let allowedFileTypes = mergeFileTypes([...(imagesOnly ? IMAGE_ACCEPT_LIST : []), accept]);
+    if (
+      allowedFileTypes.length > 0 &&
+      !matchMimeType(entry.getValue('mimeType'), allowedFileTypes) &&
+      !matchExtension(entry.getValue('fileName'), allowedFileTypes)
+    ) {
+      entry.setValue('validationErrorMsg', this.l10n('file-type-not-allowed'));
+    }
+  }
+
+  /**
+   * @private
    * @param {String} id
    */
   _handleEntryId(id) {
@@ -241,6 +258,9 @@ export class FileItem extends UploaderBlock {
 
     this._subEntry('fileName', (name) => {
       this.$.itemName = name || entry.getValue('externalUrl') || this.l10n('file-no-name');
+      if (name) {
+        this._validateFileType(entry);
+      }
     });
 
     this._subEntry('fileSize', (fileSize) => {
@@ -251,14 +271,8 @@ export class FileItem extends UploaderBlock {
     });
 
     this._subEntry('mimeType', (mimeType) => {
-      if (!mimeType) {
-        return;
-      }
-      let imagesOnly = this.getCssData('--cfg-img-only');
-      let accept = this.getCssData('--cfg-accept');
-      let allowedFileTypes = mergeFileTypes([...(imagesOnly ? IMAGE_ACCEPT_LIST : []), accept]);
-      if (allowedFileTypes.length > 0 && !matchFileType(mimeType, allowedFileTypes)) {
-        entry.setValue('validationErrorMsg', this.l10n('file-type-not-allowed'));
+      if (mimeType) {
+        this._validateFileType(entry);
       }
     });
 
