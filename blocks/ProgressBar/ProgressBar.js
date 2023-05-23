@@ -7,7 +7,7 @@ export class ProgressBar extends Block {
   _unknownMode = false;
 
   init$ = {
-    ...this.ctxInit,
+    ...this.init$,
     width: 0,
     opacity: 0,
   };
@@ -34,9 +34,4 @@ export class ProgressBar extends Block {
   }
 }
 
-ProgressBar.template = /*html*/ `
-<div
-  ref="line"
-  class="progress">
-</div>
-`;
+ProgressBar.template = /* HTML */ ` <div ref="line" class="progress"></div> `;

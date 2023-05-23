@@ -1,21 +1,42 @@
 @import url('../../../blocks/themes/lr-basic/index.css');
 
-/* stylelint-disable-next-line plugin/stylelint-force-app-name-prefix */
-body {
-  box-sizing: border-box;
-  width: 100vw;
-  height: 100vh;
-  margin: 0;
-  padding: 8px;
+:host {
+  flex: 1;
 }
 
-lr-uploader {
-  display: block;
-  border: 2px solid
-    hsla(
-      var(--h-foreground),
-      var(--s-foreground),
-      var(--l-foreground),
-      calc((0.1 - 0.05 * var(--darkmode)) * var(--borders))
-    );
+lr-start-from {
+  height: 100%;
+}
+
+.lr-wgt-common,
+:host {
+  --cfg-done-activity: 'start-from';
+  --cfg-init-activity: 'start-from';
+
+  container-type: inline-size;
+}
+
+lr-activity-header::after {
+  width: var(--ui-size);
+  height: var(--ui-size);
+  content: '';
+}
+
+lr-activity-header .close-btn {
+  display: none;
+}
+
+@container (min-width: 500px) {
+  lr-start-from {
+    grid-template-rows: 1fr max-content;
+    grid-template-columns: 1fr max-content;
+  }
+
+  lr-start-from lr-copyright {
+    grid-column: 2;
+  }
+
+  lr-start-from lr-drop-area {
+    grid-row: span 2;
+  }
 }

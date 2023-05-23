@@ -1,34 +1,36 @@
-<h2>Live example:</h2>
+<h2>Button with modal window</h2>
 
 <lr-live-html>
   <!-- Uploader script connection: -->
-  <script src="./index.js" type="module"></script>
+  <script src="./regular/index.js" type="module"></script>
 
   <!-- CSS context properties: -->
   <style>
     lr-file-uploader-regular {
       --cfg-pubkey: 'demopublickey';
+      --darkmode: 0;
     }
   </style>
 
   <!-- Uploader widget element: -->
-  <lr-file-uploader-regular css-src="./index.css">
+  <lr-file-uploader-regular css-src="./regular/index.css">
   </lr-file-uploader-regular>
 </lr-live-html>
-<h2>Single source:</h2>
+<h2>Single source</h2>
 <lr-live-html>
   <!-- Uploader script connection: -->
-  <script src="./index.js" type="module"></script>
+  <script src="./regular/index.js" type="module"></script>
 
   <!-- CSS context properties: -->
   <style>
     lr-file-uploader-regular {
       --cfg-pubkey: 'demopublickey';
       --cfg-source-list: 'local';
+      --darkmode: 0;
     }
   </style>
 
   <!-- Uploader widget element: -->
-  <lr-file-uploader-regular css-src="./index.css">
+  <lr-file-uploader-regular css-src="./regular/index.css">
   </lr-file-uploader-regular>
 </lr-live-html>

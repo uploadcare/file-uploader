@@ -69,6 +69,41 @@ export function extractFilename(cdnUrl) {
 }
 
 /**
+ * Extract UUID from CDN URL
+ *
+ * @param {string} cdnUrl
+ * @returns {string}
+ */
+export function extractUuid(cdnUrl) {
+  let url = new URL(cdnUrl);
+  let { pathname } = url;
+  const slashIndex = pathname.indexOf('/');
+  const secondSlashIndex = pathname.indexOf('/', slashIndex + 1);
+  return pathname.substring(slashIndex + 1, secondSlashIndex);
+}
+
+/**
+ * Extract UUID from CDN URL
+ *
+ * @param {string} cdnUrl
+ * @returns {string[]}
+ */
+export function extractOperations(cdnUrl) {
+  let withoutFilename = trimFilename(cdnUrl);
+  let url = new URL(withoutFilename);
+  let operationsMarker = url.pathname.indexOf('/-/');
+  if (operationsMarker === -1) {
+    return [];
+  }
+  let operationsStr = url.pathname.substring(operationsMarker);
+
+  return operationsStr
+    .split('/-/')
+    .filter(Boolean)
+    .map((operation) => normalizeCdnOperation(operation));
+}
+
+/**
  * Trim filename or file URL
  *
  * @param {String} cdnUrl

@@ -7,5 +7,5 @@
     "declarationMap": true
   },
   "include": ["**/*.js", "types"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "test"]
 }

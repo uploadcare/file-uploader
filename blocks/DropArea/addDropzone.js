@@ -1,7 +1,4 @@
-import { getDropFiles } from './getDropFiles.js';
-
-/** @type {String} */
-let dragImageSrc = null;
+import { getDropItems } from './getDropItems.js';
 
 /** @enum {Number} */
 export const DropzoneState = {
@@ -11,7 +8,7 @@ export const DropzoneState = {
   OVER: 3,
 };
 
-let FINAL_EVENTS = ['dragleave', 'dragexit', 'dragend', 'drop', 'mouseleave', 'mouseout'];
+let RESET_EVENTS = ['focus'];
 let NEAR_OFFSET = 100;
 let nearnessRegistry = new Map();
 
@@ -31,58 +28,58 @@ function distance(p, r) {
  * @param {Object} desc
  * @param {HTMLElement} desc.element
  * @param {Function} desc.onChange
- * @param {Function} desc.onFiles
- * @param {(src: String) => void} desc.onImgElement
+ * @param {Function} desc.onItems
+ * @param {() => Boolean} desc.shouldIgnore
  */
 export function addDropzone(desc) {
+  let eventCounter = 0;
+
+  let body = document.body;
   let switchHandlers = new Set();
   let handleSwitch = (fn) => switchHandlers.add(fn);
   let state = DropzoneState.INACTIVE;
 
   let setState = (newState) => {
+    if (desc.shouldIgnore() && newState !== DropzoneState.INACTIVE) {
+      return;
+    }
     if (state !== newState) {
       switchHandlers.forEach((fn) => fn(newState));
     }
     state = newState;
   };
 
-  let onFinalEvent = (e) => {
-    let { clientX, clientY } = e;
-    let bodyBounds = document.body.getBoundingClientRect();
-    let isDrop = e.type === 'drop';
-    let isOuterDrag = ['dragleave', 'dragexit', 'dragend'].includes(e.type) && clientX === 0 && clientY === 0;
-    let isOuterMouse =
-      ['mouseleave', 'mouseout'].includes(e.type) &&
-      (clientX < 0 || clientX > bodyBounds.width || clientY < 0 || clientY > bodyBounds.height);
-    if (isDrop || isOuterDrag || isOuterMouse) {
-      setState(DropzoneState.INACTIVE);
-    }
-    e.preventDefault();
-  };
+  let isDragging = () => eventCounter > 0;
 
   handleSwitch((newState) => desc.onChange(newState));
-  handleSwitch((newState) => {
-    if (newState === DropzoneState.ACTIVE) {
-      FINAL_EVENTS.forEach((eventName) => {
-        window.addEventListener(eventName, onFinalEvent, false);
-      });
-    }
-  });
-  handleSwitch((newState) => {
-    if (newState === DropzoneState.INACTIVE) {
-      FINAL_EVENTS.forEach((eventName) => {
-        window.removeEventListener(eventName, onFinalEvent, false);
-      });
-    }
-  });
 
-  let onDragOver = (e) => {
-    // console.log(e)
-    // Not sure that it won't conflict with other dnd elements on the page
-    e.preventDefault();
+  let onResetEvent = () => {
+    eventCounter = 0;
+    setState(DropzoneState.INACTIVE);
+  };
+  let onDragEnter = () => {
+    eventCounter += 1;
     if (state === DropzoneState.INACTIVE) {
       setState(DropzoneState.ACTIVE);
     }
+  };
+  let onDragLeave = () => {
+    eventCounter -= 1;
+    if (!isDragging()) {
+      setState(DropzoneState.INACTIVE);
+    }
+  };
+  let onDrop = (e) => {
+    e.preventDefault();
+    eventCounter = 0;
+    setState(DropzoneState.INACTIVE);
+  };
+
+  let onDragOver = (e) => {
+    if (!isDragging()) {
+      eventCounter += 1;
+    }
+    e.preventDefault();
 
     /** @type {[Number, Number]} */
     let dragPoint = [e.x, e.y];
@@ -102,34 +99,35 @@ export function addDropzone(desc) {
       setState(DropzoneState.ACTIVE);
     }
   };
-  window.addEventListener('dragover', onDragOver, false);
 
-  let onDrop = async (e) => {
-    e.preventDefault();
-    if (dragImageSrc) {
-      desc.onImgElement.bind(desc.element)(dragImageSrc);
-      dragImageSrc = null;
-      setState(DropzoneState.INACTIVE);
+  let onElementDrop = async (e) => {
+    if (desc.shouldIgnore()) {
       return;
     }
-    let files = await getDropFiles(e.dataTransfer);
-    desc.onFiles(files);
+    e.preventDefault();
+    let items = await getDropItems(e.dataTransfer);
+    desc.onItems(items);
     setState(DropzoneState.INACTIVE);
   };
-  desc.element.addEventListener('drop', onDrop);
 
-  window.addEventListener('dragstart', (e) => {
-    // @ts-ignore
-    dragImageSrc = e.target.constructor === HTMLImageElement ? e.target.src : null;
+  body.addEventListener('drop', onDrop);
+  body.addEventListener('dragleave', onDragLeave);
+  body.addEventListener('dragenter', onDragEnter);
+  body.addEventListener('dragover', onDragOver);
+  desc.element.addEventListener('drop', onElementDrop);
+  RESET_EVENTS.forEach((eventName) => {
+    window.addEventListener(eventName, onResetEvent);
   });
 
   return () => {
     nearnessRegistry.delete(desc.element);
-    window.removeEventListener('dragover', onDragOver, false);
-    desc.element.removeEventListener('drop', onDrop);
-    FINAL_EVENTS.forEach((eventName) => {
-      window.removeEventListener(eventName, onFinalEvent, false);
-      dragImageSrc = null;
+    body.removeEventListener('drop', onDrop);
+    body.removeEventListener('dragleave', onDragLeave);
+    body.removeEventListener('dragenter', onDragEnter);
+    body.removeEventListener('dragover', onDragOver);
+    desc.element.removeEventListener('drop', onElementDrop);
+    RESET_EVENTS.forEach((eventName) => {
+      window.removeEventListener(eventName, onResetEvent);
     });
   };
 }

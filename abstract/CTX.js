@@ -1,21 +1,30 @@
+import { Queue } from '@uploadcare/upload-client';
+
 export const blockCtx = () => ({
-  '*ctxTargetsRegistry': new Set(),
+  /** @type {Set<import('./Block').Block>} */
+  '*blocksRegistry': new Set(),
 });
 
-export const activityBlockCtx = () => ({
+export const activityBlockCtx = (fnCtx) => ({
   ...blockCtx(),
   '*currentActivity': '',
   '*currentActivityParams': {},
   '*history': [],
-  '*activityCaption': '',
-  '*activityIcon': '',
+  '*historyBack': null,
+  '*closeModal': () => {
+    fnCtx.set$({
+      '*modalActive': false,
+      '*currentActivity': '',
+    });
+  },
 });
 
-export const uploaderBlockCtx = () => ({
-  ...activityBlockCtx(),
+export const uploaderBlockCtx = (fnCtx) => ({
+  ...activityBlockCtx(fnCtx),
   '*commonProgress': 0,
   '*uploadList': [],
   '*outputData': null,
   '*focusedEntry': null,
   '*uploadMetadata': null,
+  '*uploadQueue': new Queue(1),
 });

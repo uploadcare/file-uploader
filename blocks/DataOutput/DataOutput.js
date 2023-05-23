@@ -7,12 +7,13 @@ export class DataOutput extends UploaderBlock {
   processInnerHtml = true;
 
   init$ = {
-    ...this.ctxInit,
+    ...this.init$,
     output: null,
     filesData: null,
   };
 
   cssInit$ = {
+    ...this.cssInit$,
     '--cfg-group-output': 0,
   };
 
@@ -20,15 +21,33 @@ export class DataOutput extends UploaderBlock {
     return DataOutput.dict;
   }
 
+  get validationInput() {
+    return this._validationInputElement;
+  }
+
   initCallback() {
     super.initCallback();
+
+    if (this.hasAttribute(this.dict.FORM_INPUT_ATTR)) {
+      this._dynamicInputsContainer = document.createElement('div');
+      this.appendChild(this._dynamicInputsContainer);
+
+      if (this.hasAttribute(this.dict.INPUT_REQUIRED)) {
+        let input = document.createElement('input');
+        input.type = 'text';
+        input.name = '__UPLOADCARE_VALIDATION_INPUT__';
+        input.required = true;
+        this.appendChild(input);
+        this._validationInputElement = input;
+      }
+    }
+
     this.sub(
       'output',
       (data) => {
         if (!data) {
           return;
         }
-
         if (this.hasAttribute(this.dict.FIRE_EVENT_ATTR)) {
           this.dispatchEvent(
             new CustomEvent(this.dict.EVENT_NAME, {
@@ -43,15 +62,19 @@ export class DataOutput extends UploaderBlock {
           );
         }
 
-        if (this.hasAttribute(this.dict.FORM_VALUE_ATTR)) {
-          if (!this._input) {
-            /** @private */
-            this._input = document.createElement('input');
-            this._input.type = 'text';
-            this._input.hidden = true;
-            this.appendChild(this._input);
+        if (this.hasAttribute(this.dict.FORM_INPUT_ATTR)) {
+          this._dynamicInputsContainer.innerHTML = '';
+          let values = data.groupData ? [data.groupData.cdnUrl] : data.map((file) => file.cdnUrl);
+          for (let value of values) {
+            let input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = this.getAttribute(this.dict.INPUT_NAME_ATTR) || this.ctxName;
+            input.value = value;
+            this._dynamicInputsContainer.appendChild(input);
           }
-          this._input.value = JSON.stringify(data);
+          if (this.hasAttribute(this.dict.INPUT_REQUIRED)) {
+            this._validationInputElement.value = values.length ? '__VALUE__' : '';
+          }
         }
 
         if (this.hasAttribute(this.dict.CONSOLE_ATTR)) {
@@ -97,5 +120,7 @@ DataOutput.dict = {
   FIRE_EVENT_ATTR: 'use-event',
   CONSOLE_ATTR: 'use-console',
   GROUP_ATTR: 'use-group',
-  FORM_VALUE_ATTR: 'form-value',
+  FORM_INPUT_ATTR: 'use-input',
+  INPUT_NAME_ATTR: 'input-name',
+  INPUT_REQUIRED: 'input-required',
 };

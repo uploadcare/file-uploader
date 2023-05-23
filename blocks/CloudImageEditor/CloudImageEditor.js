@@ -6,20 +6,17 @@ export class CloudImageEditor extends UploaderBlock {
   activityType = ActivityBlock.activities.CLOUD_IMG_EDIT;
 
   init$ = {
-    ...this.ctxInit,
-    uuid: null,
+    ...this.init$,
+    cdnUrl: null,
   };
 
   initCallback() {
     super.initCallback();
     this.bindCssData('--cfg-pubkey');
 
-    this.sub('*currentActivity', (val) => {
-      if (val === ActivityBlock.activities.CLOUD_IMG_EDIT) {
-        this.mountEditor();
-      } else {
-        this.unmountEditor();
-      }
+    this.registerActivity(this.activityType, {
+      onActivate: () => this.mountEditor(),
+      onDeactivate: () => this.unmountEditor(),
     });
 
     this.sub('*focusedEntry', (/** @type {import('../../abstract/TypedData.js').TypedData} */ entry) => {
@@ -28,9 +25,9 @@ export class CloudImageEditor extends UploaderBlock {
       }
       this.entry = entry;
 
-      this.entry.subscribe('uuid', (uuid) => {
-        if (uuid) {
-          this.$.uuid = uuid;
+      this.entry.subscribe('cdnUrl', (cdnUrl) => {
+        if (cdnUrl) {
+          this.$.cdnUrl = cdnUrl;
         }
       });
     });
@@ -53,8 +50,8 @@ export class CloudImageEditor extends UploaderBlock {
   mountEditor() {
     let instance = new CloudEditor();
     instance.classList.add('lr-cldtr-common');
-    let uuid = this.$.uuid;
-    instance.setAttribute('uuid', uuid);
+    let cdnUrl = this.$.cdnUrl;
+    instance.setAttribute('cdn-url', cdnUrl);
 
     instance.addEventListener('apply', (result) => this.handleApply(result));
     instance.addEventListener('cancel', () => this.handleCancel());

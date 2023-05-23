@@ -1,6 +1,6 @@
 import { Block } from '../../abstract/Block.js';
 
-const INIT_HTML = /*html*/ `
+const INIT_HTML = /* HTML */ `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -102,6 +102,21 @@ class Caret {
   }
 }
 
+const headerHtml = /* HTML */ `
+  <script>
+    window.__IS_REF__ = true;
+    window.addEventListener('DOMContentLoaded', () => {
+      const pageHtml = document.head.innerHTML + document.body.innerHTML;
+      //
+      if (['--darkmode:' + ' 1', '--darkmode:' + '1'].some((substr) => pageHtml.includes(substr))) {
+        document.body.style.background = 'white';
+        document.body.style.transition = 'background .3s ease-in-out';
+        document.body.style.background = 'black';
+      }
+    });
+  </script>
+`;
+
 export class LiveHtml extends Block {
   async hl() {
     let offset = Caret.getPosition(this.ref.editor);
@@ -127,7 +142,7 @@ export class LiveHtml extends Block {
     }
     this._updTimeout = window.setTimeout(() => {
       // @ts-ignore
-      this.ref.vp.srcdoc = (this.importmapHtml || '') + this.ref.editor.textContent;
+      this.ref.vp.srcdoc = headerHtml + (this.importmapHtml || '') + this.ref.editor.textContent;
       if (this.hasAttribute('console-output')) {
         /** @type {Window} */
         // @ts-ignore
@@ -140,7 +155,7 @@ export class LiveHtml extends Block {
   }
 
   init$ = {
-    ...this.ctxInit,
+    ...this.init$,
     src: '',
     code: INIT_HTML,
     spellcheck: false,
@@ -155,6 +170,22 @@ export class LiveHtml extends Block {
         e.preventDefault();
         document.execCommand('insertHTML', false, '  ');
       }
+    },
+    onNewTabClick: () => {
+      const url = new URL(document.location.toString());
+      url.hash = '';
+      const baseUrl = url.toString();
+
+      const code = `
+      <!DOCTYPE html>
+<html lang="en">
+<base href="${baseUrl}" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+${this.ref.vp.srcdoc}
+</html>
+      `;
+      const winUrl = URL.createObjectURL(new Blob([code], { type: 'text/html' }));
+      window.open(winUrl);
     },
     // onPaste: (e) => {
     //   e.preventDefault();
@@ -231,11 +262,12 @@ LiveHtml.bindAttributes({
   src: 'src',
 });
 
-LiveHtml.template = /*html*/ `
-<div
-  ref="editor"
-  contenteditable="true"
-  set="textContent:code; oninput:onInput; onkeydown:onKeydown; spellcheck:spellcheck">
-</div>
-<iframe ref="vp"></iframe>
+LiveHtml.template = /* HTML */ `
+  <div
+    ref="editor"
+    contenteditable="true"
+    set="textContent:code; oninput:onInput; onkeydown:onKeydown; spellcheck:spellcheck"
+  ></div>
+  <iframe ref="vp"></iframe>
+  <button class="open-new-tab-btn" set="onclick: onNewTabClick">Open in the new tab</button>
 `;

@@ -8,14 +8,13 @@ export class SourceBtn extends UploaderBlock {
   _registeredTypes = {};
 
   init$ = {
-    ...this.ctxInit,
+    ...this.init$,
     iconName: 'default',
   };
 
   initTypes() {
     this.registerType({
       type: UploaderBlock.sourceTypes.LOCAL,
-      // activity: '',
       onClick: () => {
         this.openSystemDialog();
       },
@@ -28,6 +27,14 @@ export class SourceBtn extends UploaderBlock {
     this.registerType({
       type: UploaderBlock.sourceTypes.CAMERA,
       activity: ActivityBlock.activities.CAMERA,
+      onClick: () => {
+        let el = document.createElement('input');
+        var supportsCapture = el.capture !== undefined;
+        if (supportsCapture) {
+          this.openSystemDialog({ captureCamera: true });
+        }
+        return !supportsCapture;
+      },
     });
     this.registerType({
       type: 'draw',
@@ -78,18 +85,18 @@ export class SourceBtn extends UploaderBlock {
     this.applyL10nKey('src-type', `${L10N_PREFIX}${textKey}`);
     this.$.iconName = icon;
     this.onclick = (e) => {
-      activity &&
+      const showActivity = onClick ? onClick(e) : !!activity;
+      showActivity &&
         this.set$({
           '*currentActivityParams': activityParams,
           '*currentActivity': activity,
         });
-      onClick && onClick(e);
     };
   }
 }
-SourceBtn.template = /*html*/ `
-<lr-icon set="@name: iconName"></lr-icon>
-<div class="txt" l10n="src-type"></div>
+SourceBtn.template = /* HTML */ `
+  <lr-icon set="@name: iconName"></lr-icon>
+  <div class="txt" l10n="src-type"></div>
 `;
 SourceBtn.bindAttributes({
   type: null,

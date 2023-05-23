@@ -18,6 +18,4 @@ export class EditorScroller extends Block {
   }
 }
 
-EditorScroller.template = /*html*/ `
-<slot></slot>
-`;
+EditorScroller.template = /* HTML */ ` <slot></slot> `;

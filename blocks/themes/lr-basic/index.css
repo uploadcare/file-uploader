@@ -31,12 +31,14 @@
 @import url('../../StartFrom/start-from.css');
 @import url('../../FileItem/file-item.css');
 @import url('../../UploadDetails/upload-details.css');
-@import url('../../EditableCanvas/editable-canvas.css');
+
+/* @import url('../../EditableCanvas/editable-canvas.css'); */
+@import url('../../FilePreview/file-preview.css');
 @import url('../../MessageBox/message-box.css');
 @import url('../../ConfirmationDialog/confirmation.css');
 @import url('../../ProgressBarCommon/progress-bar-common.css');
 @import url('../../ProgressBar/progress-bar.css');
-@import url('../../ActivityCaption/activity-caption.css');
-@import url('../../ActivityIcon/activity-icon.css');
+@import url('../../ActivityHeader/activity-header.css');
+@import url('../../Copyright/copyright.css');
 @import url('../../CloudImageEditor/index.css');
 @import url('../../Select/select.css');

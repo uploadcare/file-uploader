@@ -9,6 +9,7 @@ export class ShadowWrapper extends Block {
 
   initCallback() {
     super.initCallback();
+    this.setAttribute('hidden', '');
     let href = this.getAttribute(CSS_ATTRIBUTE);
     if (href) {
       this.renderShadow = true;
@@ -25,13 +26,15 @@ export class ShadowWrapper extends Block {
         window.requestAnimationFrame(() => {
           this.render();
           window.setTimeout(() => {
+            this.removeAttribute('hidden');
             this.shadowReadyCallback();
           });
         });
       };
-      this.shadowRoot.appendChild(link);
+      this.shadowRoot.prepend(link);
     } else {
       this.render();
+      this.removeAttribute('hidden');
       this.shadowReadyCallback();
     }
   }

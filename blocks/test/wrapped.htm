@@ -1,25 +1,22 @@
 <base href="../../" />
 
 <script type="module">
-  import { LR } from './upload-blocks/index.js';
+  import { LR } from './blocks/index.js';
 
   class WGT extends LR.BlockComponent {}
-  WGT.template = /*html*/ `
+  WGT.template = /* HTML */ `
 <lr-simple-btn></lr-simple-btn>
 
 <lr-modal strokes>
-  <lr-activity-icon slot="heading"></lr-activity-icon>
-  <lr-activity-caption slot="heading"></lr-activity-caption>
   <lr-start-from>
+    <lr-drop-area with-icon clickable></lr-drop-area>
     <lr-source-list wrap></lr-source-list>
-    <lr-drop-area></lr-drop-area>
+    <lr-copyright></lr-copyright>
   </lr-start-from>
   <lr-upload-list></lr-upload-list>
   <lr-camera-source></lr-camera-source>
   <lr-url-source></lr-url-source>
   <lr-external-source></lr-external-source>
-  <lr-upload-details></lr-upload-details>
-  <lr-confirmation-dialog></lr-confirmation-dialog>
   <lr-cloud-image-editor></lr-cloud-image-editor>
 </lr-modal>
 
@@ -35,4 +32,4 @@
   WGT.reg('upload-wgt');
 </script>
 
-<lr-upload-wgt css-src="./upload-blocks/themes/lr-basic/index.css"> </lr-upload-wgt>
+<lr-upload-wgt css-src="./blocks/themes/lr-basic/index.css"> </lr-upload-wgt>

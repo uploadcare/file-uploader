@@ -1,3 +1,4 @@
+// @ts-check
 // Symbiote.js
 export { BaseComponent, Data } from '@symbiotejs/symbiote';
 
@@ -25,15 +26,17 @@ export { MessageBox } from './blocks/MessageBox/MessageBox.js';
 export { ConfirmationDialog } from './blocks/ConfirmationDialog/ConfirmationDialog.js';
 export { ProgressBarCommon } from './blocks/ProgressBarCommon/ProgressBarCommon.js';
 export { ProgressBar } from './blocks/ProgressBar/ProgressBar.js';
-export { EditableCanvas } from './blocks/EditableCanvas/EditableCanvas.js';
+// export { EditableCanvas } from './blocks/EditableCanvas/EditableCanvas.js';
+export { FilePreview } from './blocks/FilePreview/FilePreview.js';
 export { CloudImageEditor } from './blocks/CloudImageEditor/CloudImageEditor.js';
 export { ExternalSource } from './blocks/ExternalSource/ExternalSource.js';
 export { Tabs } from './blocks/Tabs/Tabs.js';
 export { DataOutput } from './blocks/DataOutput/DataOutput.js';
-export { ActivityCaption } from './blocks/ActivityCaption/ActivityCaption.js';
-export { ActivityIcon } from './blocks/ActivityIcon/ActivityIcon.js';
+export { ActivityHeader } from './blocks/ActivityHeader/ActivityHeader.js';
 export { Select } from './blocks/Select/Select.js';
 export { Video } from './blocks/Video/Video.js';
+export { ShadowWrapper } from './blocks/ShadowWrapper/ShadowWrapper.js';
+export { Copyright } from './blocks/Copyright/Copyright.js';
 
 // Solutions:
 export { FileUploaderRegular } from './solutions/file-uploader/regular/FileUploaderRegular.js';
@@ -44,3 +47,5 @@ export * from './solutions/cloud-image-editor/CloudEditor.js';
 // Utils:
 export { registerBlocks } from './abstract/registerBlocks.js';
 export { connectBlocksFrom } from './abstract/connectBlocksFrom.js';
+
+export * from './env.js';

@@ -1,7 +1,11 @@
 :where(.lr-wgt-l10n_en-US, .lr-wgt-common),
 :host {
+  --l10n-locale-name: 'en-US';
+
   --l10n-upload-file: 'Upload file';
   --l10n-upload-files: 'Upload files';
+  --l10n-choose-file: 'Choose file';
+  --l10n-choose-files: 'Choose files';
   --l10n-drop-files-here: 'Drop files here';
   --l10n-select-file-source: 'Select file source';
   --l10n-selected: 'Selected';
@@ -11,6 +15,7 @@
   --l10n-clear: 'Clear';
   --l10n-camera-shot: 'Shot';
   --l10n-upload-url: 'Import';
+  --l10n-upload-url-placeholder: 'Paste link here';
   --l10n-edit-image: 'Edit image';
   --l10n-edit-detail: 'Details';
   --l10n-back: 'Back';
@@ -27,15 +32,23 @@
   --l10n-no-files: 'No files selected';
   --l10n-browse: 'Browse';
   --l10n-not-uploaded-yet: 'Not uploaded yet...';
+  --l10n-file__one: 'file';
+  --l10n-file__other: 'files';
+  --l10n-error__one: 'error';
+  --l10n-error__other: 'errors';
+  --l10n-header-uploading: 'Uploading {{count}} {{plural:file(count)}}';
+  --l10n-header-failed: '{{count}} {{plural:error(count)}}';
+  --l10n-header-succeed: '{{count}} {{plural:file(count)}} uploaded';
+  --l10n-header-total: '{{count}} {{plural:file(count)}} selected';
 
-  --l10n-src-type-local: 'Local file';
-  --l10n-src-type-from-url: 'From URL';
+  --l10n-src-type-local: 'From device';
+  --l10n-src-type-from-url: 'From link';
   --l10n-src-type-camera: 'Camera';
   --l10n-src-type-draw: 'Draw';
   --l10n-src-type-facebook: 'Facebook';
   --l10n-src-type-dropbox: 'Dropbox';
-  --l10n-src-type-gdrive: 'Gdrive';
-  --l10n-src-type-gphotos: 'Gphotos';
+  --l10n-src-type-gdrive: 'Google Drive';
+  --l10n-src-type-gphotos: 'Google Photos';
   --l10n-src-type-instagram: 'Instagram';
   --l10n-src-type-flickr: 'Flickr';
   --l10n-src-type-vk: 'VK';
@@ -47,7 +60,7 @@
 
   --l10n-src-type: var(--l10n-src-type-local);
 
-  --l10n-caption-from-url: 'Import from external URL';
+  --l10n-caption-from-url: 'Import from link';
   --l10n-caption-camera: 'Camera';
   --l10n-caption-draw: 'Draw';
   --l10n-caption-edit-file: 'Edit file';
@@ -78,8 +91,8 @@
   --l10n-file-size-unknown: 'Unknown';
 
   --l10n-camera-permissions-denied: 'Camera access denied';
-  --l10n-camera-permissions-prompt: 'Camera access prompted';
-  --l10n-camera-permissions-request: 'Request permissions';
+  --l10n-camera-permissions-prompt: 'Please allow access to the camera';
+  --l10n-camera-permissions-request: 'Request access';
 
   --l10n-files-count-limit-error-title: 'Files count limit overflow';
   --l10n-files-count-limit-error-too-few: 'You’ve chosen {{total}}. At least {{min}} required.';
@@ -87,4 +100,6 @@
 
   --l10n-files-max-size-limit-error: 'File is too big. Max file size is {{maxFileSize}} bytes.';
   --l10n-has-validation-errors: 'File validation error ocurred. Please, check your files before upload.';
+  --l10n-images-only-accepted: 'Only image files are accepted.';
+  --l10n-file-type-not-allowed: 'Uploading of these file types is not allowed.';
 }

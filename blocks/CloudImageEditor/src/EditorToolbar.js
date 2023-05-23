@@ -6,27 +6,40 @@ import { FAKE_ORIGINAL_FILTER } from './EditorSlider.js';
 import { classNames } from './lib/classNames.js';
 import { debounce } from './lib/debounce.js';
 import { batchPreloadImages } from './lib/preloadImage.js';
-import { ALL_COLOR_OPERATIONS, ALL_CROP_OPERATIONS, ALL_FILTERS, TabId, TABS } from './toolbar-constants.js';
+import {
+  ALL_COLOR_OPERATIONS,
+  ALL_CROP_OPERATIONS,
+  ALL_FILTERS,
+  COLOR_OPERATIONS_CONFIG,
+  TabId,
+  TABS,
+} from './toolbar-constants.js';
 import { viewerImageSrc } from './util.js';
 
 /** @param {String} id */
 function renderTabToggle(id) {
-  return /*html*/ `
-    <lr-btn-ui theme="boring" ref="tab-toggle-${id}" data-id="${id}" icon="${id}" tabindex="0" set="onclick: on.clickTab;">
+  return /* HTML */ `
+    <lr-btn-ui
+      theme="boring"
+      ref="tab-toggle-${id}"
+      data-id="${id}"
+      icon="${id}"
+      tabindex="0"
+      set="onclick: on.clickTab;"
+    >
     </lr-btn-ui>
   `;
 }
 
 /** @param {String} id */
 function renderTabContent(id) {
-  return /*html*/ `
+  return /* HTML */ `
     <lr-presence-toggle class="tab-content" set="visible: presence.tabContent.${id}; styles: presence.tabContentStyles">
-        <lr-editor-scroller hidden-scrollbar>
-          <div class="controls-list_align">
-            <div class="controls-list_inner" ref="controls-list-${id}">
-            </div>
-          </div>
-        </lr-editor-scroller>
+      <lr-editor-scroller hidden-scrollbar>
+        <div class="controls-list_align">
+          <div class="controls-list_inner" ref="controls-list-${id}"></div>
+        </div>
+      </lr-editor-scroller>
     </lr-presence-toggle>
   `;
 }
@@ -36,17 +49,15 @@ export class EditorToolbar extends Block {
     super();
 
     this.init$ = {
-      ...this.ctxInit,
+      ...this.init$,
       '*sliderEl': null,
       /** @type {import('./types.js').LoadingOperations} */
       '*loadingOperations': new Map(),
       '*showSlider': false,
-      /** @type {import('./types.js').Transformations} */
-      '*editorTransformations': {},
       '*currentFilter': FAKE_ORIGINAL_FILTER,
       '*currentOperation': null,
+      '*tabId': TabId.CROP,
       showLoader: false,
-      tabId: TabId.CROP,
       filters: ALL_FILTERS,
       colorOperations: ALL_COLOR_OPERATIONS,
       cropOperations: ALL_CROP_OPERATIONS,
@@ -98,18 +109,11 @@ export class EditorToolbar extends Block {
     this._debouncedShowLoader = debounce(this._showLoader.bind(this), 500);
   }
 
-  get tabId() {
-    return this.$.tabId;
-  }
-
   /** @private */
   _onSliderClose() {
     this.$['*showSlider'] = false;
-    if (this.$.tabId === TabId.SLIDERS) {
-      this.ref['tooltip-el'].className = classNames('filter-tooltip', {
-        'filter-tooltip_visible': false,
-        'filter-tooltip_hidden': true,
-      });
+    if (this.$['*tabId'] === TabId.SLIDERS) {
+      this.ref['tooltip-el'].classList.toggle('info-tooltip_visible', false);
     }
   }
 
@@ -187,7 +191,7 @@ export class EditorToolbar extends Block {
    * @param {{ fromViewer?: Boolean }} options
    */
   _activateTab(id, { fromViewer }) {
-    this.$.tabId = id;
+    this.$['*tabId'] = id;
 
     if (id === TabId.CROP) {
       this.$['*faderEl'].deactivate();
@@ -226,7 +230,7 @@ export class EditorToolbar extends Block {
 
   /** @private */
   _syncTabIndicator() {
-    let tabToggleEl = this.ref[`tab-toggle-${this.$.tabId}`];
+    let tabToggleEl = this.ref[`tab-toggle-${this.$['*tabId']}`];
     let indicatorEl = this.ref['tabs-indicator'];
     indicatorEl.style.transform = `translateX(${tabToggleEl.offsetLeft}px)`;
   }
@@ -250,6 +254,31 @@ export class EditorToolbar extends Block {
     this.$.showLoader = show;
   }
 
+  _updateInfoTooltip = debounce(() => {
+    let transformations = this.$['*editorTransformations'];
+    let text = '';
+    let visible = false;
+
+    if (this.$['*tabId'] === TabId.FILTERS) {
+      visible = true;
+      if (this.$['*currentFilter'] && transformations?.filter?.name === this.$['*currentFilter']) {
+        let value = transformations?.filter?.amount || 100;
+        text = this.l10n(this.$['*currentFilter']) + ' ' + value;
+      } else {
+        text = this.l10n(FAKE_ORIGINAL_FILTER);
+      }
+    } else if (this.$['*tabId'] === TabId.SLIDERS && this.$['*currentOperation']) {
+      visible = true;
+      let value =
+        transformations?.[this.$['*currentOperation']] || COLOR_OPERATIONS_CONFIG[this.$['*currentOperation']].zero;
+      text = this.$['*currentOperation'] + ' ' + value;
+    }
+    if (visible) {
+      this.$['*operationTooltip'] = text;
+    }
+    this.ref['tooltip-el'].classList.toggle('info-tooltip_visible', visible);
+  }, 0);
+
   initCallback() {
     super.initCallback();
 
@@ -258,38 +287,28 @@ export class EditorToolbar extends Block {
     this.sub('*imageSize', (imageSize) => {
       if (imageSize) {
         setTimeout(() => {
-          this._activateTab(this.$.tabId, { fromViewer: true });
+          this._activateTab(this.$['*tabId'], { fromViewer: true });
         }, 0);
       }
     });
 
-    this.sub('*currentFilter', (currentFilter) => {
-      this.$['*operationTooltip'] = this.l10n(currentFilter || FAKE_ORIGINAL_FILTER);
-      this.ref['tooltip-el'].className = classNames('filter-tooltip', {
-        'filter-tooltip_visible': currentFilter,
-        'filter-tooltip_hidden': !currentFilter,
-      });
+    this.sub('*editorTransformations', (editorTransformations) => {
+      let appliedFilter = editorTransformations?.filter?.name;
+      if (this.$['*currentFilter'] !== appliedFilter) {
+        this.$['*currentFilter'] = appliedFilter;
+      }
     });
 
-    this.sub('*currentOperation', (currentOperation) => {
-      if (this.$.tabId !== TabId.SLIDERS) {
-        return;
-      }
-      this.$['*operationTooltip'] = currentOperation;
-      this.ref['tooltip-el'].className = classNames('filter-tooltip', {
-        'filter-tooltip_visible': currentOperation,
-        'filter-tooltip_hidden': !currentOperation,
-      });
+    this.sub('*currentFilter', () => {
+      this._updateInfoTooltip();
     });
 
-    this.sub('*tabId', (tabId) => {
-      if (tabId === TabId.FILTERS) {
-        this.$['*operationTooltip'] = this.$['*currentFilter'];
-      }
-      this.ref['tooltip-el'].className = classNames('filter-tooltip', {
-        'filter-tooltip_visible': tabId === TabId.FILTERS,
-        'filter-tooltip_hidden': tabId !== TabId.FILTERS,
-      });
+    this.sub('*currentOperation', () => {
+      this._updateInfoTooltip();
+    });
+
+    this.sub('*tabId', () => {
+      this._updateInfoTooltip();
     });
 
     this.sub('*originalUrl', (originalUrl) => {
@@ -323,44 +342,38 @@ export class EditorToolbar extends Block {
       this.$['presence.subToolbar'] = showSlider;
       this.$['presence.mainToolbar'] = !showSlider;
     });
+
+    this._updateInfoTooltip();
   }
 }
 
-EditorToolbar.template = /*html*/ `
-<lr-line-loader-ui set="active: showLoader"></lr-line-loader-ui>
-<div class="filter-tooltip_container">
-  <div class="filter-tooltip_wrapper">
-    <div ref="tooltip-el" class="filter-tooltip filter-tooltip_visible">
-      {{*operationTooltip}}
+EditorToolbar.template = /* HTML */ `
+  <lr-line-loader-ui set="active: showLoader"></lr-line-loader-ui>
+  <div class="info-tooltip_container">
+    <div class="info-tooltip_wrapper">
+      <div ref="tooltip-el" class="info-tooltip info-tooltip_hidden">{{*operationTooltip}}</div>
     </div>
   </div>
-</div>
-<div class="toolbar-container">
-  <lr-presence-toggle class="sub-toolbar" set="visible: presence.mainToolbar; styles: presence.subTopToolbarStyles">
-      <div class="tab-content-row">
-      ${TABS.map(renderTabContent).join('')}
-      </div>
+  <div class="toolbar-container">
+    <lr-presence-toggle class="sub-toolbar" set="visible: presence.mainToolbar; styles: presence.subTopToolbarStyles">
+      <div class="tab-content-row">${TABS.map(renderTabContent).join('')}</div>
       <div class="controls-row">
-        <lr-btn-ui theme="boring" icon="closeMax" set="onclick: on.cancel">
-        </lr-btn-ui>
+        <lr-btn-ui theme="boring" icon="closeMax" set="onclick: on.cancel"> </lr-btn-ui>
         <div class="tab-toggles">
           <div ref="tabs-indicator" class="tab-toggles_indicator"></div>
           ${TABS.map(renderTabToggle).join('')}
         </div>
-        <lr-btn-ui theme="primary" icon="done" set="onclick: on.apply">
-        </lr-btn-ui>
+        <lr-btn-ui theme="primary" icon="done" set="onclick: on.apply"> </lr-btn-ui>
       </div>
-  </lr-presence-toggle>
-  <lr-presence-toggle class="sub-toolbar" set="visible: presence.subToolbar; styles: presence.subBottomToolbarStyles">
+    </lr-presence-toggle>
+    <lr-presence-toggle class="sub-toolbar" set="visible: presence.subToolbar; styles: presence.subBottomToolbarStyles">
       <div class="slider">
         <lr-editor-slider ref="slider-el"></lr-editor-slider>
       </div>
       <div class="controls-row">
-        <lr-btn-ui theme="boring" set="@text: l10n.cancel; onclick: on.cancelSlider;">
-        </lr-btn-ui>
-        <lr-btn-ui theme="primary" set="@text: l10n.apply; onclick: on.applySlider;">
-        </lr-btn-ui>
+        <lr-btn-ui theme="boring" set="@text: l10n.cancel; onclick: on.cancelSlider;"> </lr-btn-ui>
+        <lr-btn-ui theme="primary" set="@text: l10n.apply; onclick: on.applySlider;"> </lr-btn-ui>
       </div>
-  </lr-presence-toggle>
-</div>
+    </lr-presence-toggle>
+  </div>
 `;

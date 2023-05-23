@@ -1,5 +1,6 @@
 import { Block } from '../../abstract/Block.js';
 import { create } from '@symbiotejs/symbiote';
+import { stringToArray } from '../../utils/stringToArray.js';
 
 export class Tabs extends Block {
   /** @param {String} tabL10nStr */
@@ -35,9 +36,7 @@ export class Tabs extends Block {
       if (!val) {
         return;
       }
-      let tabList = val.split(',').map((tabName) => {
-        return tabName.trim();
-      });
+      let tabList = stringToArray(val);
       tabList.forEach((tabL10nStr) => {
         let tabEl = create({
           tag: 'div',
@@ -71,9 +70,9 @@ Tabs.bindAttributes({
   default: null,
 });
 
-Tabs.template = /*html*/ `
-<div ref="row" class="tabs-row"></div>
-<div ref="context" class="tabs-context">
-  <slot></slot>
-</div>
+Tabs.template = /* HTML */ `
+  <div ref="row" class="tabs-row"></div>
+  <div ref="context" class="tabs-context">
+    <slot></slot>
+  </div>
 `;

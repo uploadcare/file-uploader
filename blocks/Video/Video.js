@@ -83,7 +83,7 @@ export class Video extends Block {
   }
 
   init$ = {
-    ...this.ctxInit,
+    ...this.init$,
     src: '',
     ppIcon: ICO_MAP.PLAY,
     fsIcon: ICO_MAP.FS_ON,
@@ -222,12 +222,12 @@ export class Video extends Block {
 
       let html = '';
       desc?.sources.forEach((srcDesc) => {
-        html += /*html*/ `<source ${this._desc2attrs(srcDesc)}>`;
+        html += /* HTML */ `<source ${this._desc2attrs(srcDesc)} />`;
       });
 
       if (desc.tracks) {
         desc.tracks.forEach((trackDesc) => {
-          html += /*html*/ `<track ${this._desc2attrs(trackDesc)}>`;
+          html += /* HTML */ `<track ${this._desc2attrs(trackDesc)} />`;
         });
         this.$.hasSubtitles = true;
       }
@@ -258,66 +258,39 @@ export class Video extends Block {
   }
 }
 
-Video.template = /*html*/ `
-<div class="video-wrapper">
-  <video 
-    ref="video" 
-    preload="metadata"
-    crossorigin="anonymous">
-  </video>
-</div>
-
-<div class="toolbar">
-
-  <div 
-    class="progress"
-    ref="progress"
-    set
-    -onclick="progressClicked">
-    <div 
-      class="bar" 
-      set 
-      -style.width="progressCssWidth"></div>
+Video.template = /* HTML */ `
+  <div class="video-wrapper">
+    <video ref="video" preload="metadata" crossorigin="anonymous"></video>
   </div>
 
-  <div class="tb-block">
-    <button
-      set
-      -onclick="onPP">
-      <lr-icon set -@name="ppIcon"></lr-icon>
-    </button>
-    <div class="timer">{{currentTime}} / {{totalTime}}</div>
+  <div class="toolbar">
+    <div class="progress" ref="progress" set -onclick="progressClicked">
+      <div class="bar" set -style.width="progressCssWidth"></div>
+    </div>
+
+    <div class="tb-block">
+      <button set -onclick="onPP">
+        <lr-icon set -@name="ppIcon"></lr-icon>
+      </button>
+      <div class="timer">{{currentTime}} / {{totalTime}}</div>
+    </div>
+
+    <div class="tb-block">
+      <button set -onclick="onCap" -@hidden="!hasSubtitles">
+        <lr-icon set -@name="capIcon"></lr-icon>
+      </button>
+
+      <button set -onclick="onMute">
+        <lr-icon set -@name="volIcon"></lr-icon>
+      </button>
+
+      <lr-range type="range" set -onchange="onVolChange" -@disabled="volumeDisabled" -value="volumeValue"> </lr-range>
+
+      <button set -onclick="onFs">
+        <lr-icon set -@name="fsIcon"></lr-icon>
+      </button>
+    </div>
   </div>
-
-  <div class="tb-block">
-    <button
-      set
-      -onclick="onCap"
-      -@hidden="!hasSubtitles">
-      <lr-icon set -@name="capIcon"></lr-icon>
-    </button>
-
-    <button
-      set
-      -onclick="onMute">
-      <lr-icon set -@name="volIcon"></lr-icon>
-    </button>
-
-    <lr-range 
-      type="range" 
-      set
-      -onchange="onVolChange"
-      -@disabled="volumeDisabled"
-      -value="volumeValue">
-    </lr-range>
-
-    <button
-      set
-      -onclick="onFs">
-      <lr-icon set -@name="fsIcon"></lr-icon>
-    </button>
-  </div>
-</div>
 `;
 
 Video.bindAttributes({

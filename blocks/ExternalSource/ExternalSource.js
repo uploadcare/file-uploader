@@ -4,7 +4,8 @@ import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 import { registerMessage, unregisterMessage } from './messages.js';
 import { buildStyles } from './buildStyles.js';
 import { queryString } from './query-string.js';
-
+import { wildcardRegexp } from '../../utils/wildcardRegexp.js';
+import { stringToArray } from '../../utils/stringToArray.js';
 /**
  * @typedef {Object} ActivityParams
  * @property {String} externalSourceType
@@ -14,13 +15,15 @@ export class ExternalSource extends UploaderBlock {
   activityType = ActivityBlock.activities.EXTERNAL;
 
   init$ = {
-    ...this.ctxInit,
+    ...this.init$,
+    activityIcon: '',
+    activityCaption: '',
     counter: 0,
     onDone: () => {
       this.$['*currentActivity'] = ActivityBlock.activities.UPLOAD_LIST;
     },
     onCancel: () => {
-      this.cancelFlow();
+      this.historyBack();
     },
   };
 
@@ -29,16 +32,18 @@ export class ExternalSource extends UploaderBlock {
 
   initCallback() {
     super.initCallback();
-    this.registerActivity(this.activityType, () => {
-      let { externalSourceType } = /** @type {ActivityParams} */ (this.activityParams);
+    this.registerActivity(this.activityType, {
+      onActivate: () => {
+        let { externalSourceType } = /** @type {ActivityParams} */ (this.activityParams);
 
-      this.set$({
-        '*activityCaption': `${externalSourceType?.[0].toUpperCase()}${externalSourceType?.slice(1)}`,
-        '*activityIcon': externalSourceType,
-      });
+        this.set$({
+          activityCaption: `${externalSourceType?.[0].toUpperCase()}${externalSourceType?.slice(1)}`,
+          activityIcon: externalSourceType,
+        });
 
-      this.$.counter = 0;
-      this.mountIframe();
+        this.$.counter = 0;
+        this.mountIframe();
+      },
     });
     this.sub('*currentActivity', (val) => {
       if (val !== this.activityType) {
@@ -54,17 +59,39 @@ export class ExternalSource extends UploaderBlock {
   async handleFileSelected(message) {
     this.$.counter = this.$.counter + 1;
 
-    // TODO: check for alternatives, see https://github.com/uploadcare/uploadcare-widget/blob/f5d3e8c9f67781bed2eb69814c8f86a4cc035473/src/widget/tabs/remote-tab.js#L102
-    let { url, filename } = message;
+    const url = (() => {
+      if (message.alternatives) {
+        const preferredTypes = stringToArray(this.getCssData('--cfg-external-sources-preferred-types'));
+        for (const preferredType of preferredTypes) {
+          const regexp = wildcardRegexp(preferredType);
+          for (const [type, typeUrl] of Object.entries(message.alternatives)) {
+            if (regexp.test(type)) {
+              return typeUrl;
+            }
+          }
+        }
+      }
+      return message.url;
+    })();
+
+    let { filename } = message;
     this.uploadCollection.add({
       externalUrl: url,
-      fileName: filename,
+      fileName: filename ?? null,
     });
   }
 
-  handleIframeLoad(e) {
+  handleIframeLoad() {
     this.applyStyles();
   }
+
+  _inheritedUpdateCssData = this.updateCssData;
+  updateCssData = () => {
+    if (this.isActivityActive) {
+      this._inheritedUpdateCssData();
+      this.applyStyles();
+    }
+  };
 
   getCssValue(propName) {
     let style = window.getComputedStyle(this);
@@ -100,7 +127,10 @@ export class ExternalSource extends UploaderBlock {
       pass_window_open: false,
       session_key: this.getCssData('--cfg-remote-tab-session-key'),
     };
-    return `https://social.uploadcare.com/window3/${externalSourceType}?${queryString(params)}`;
+    let url = new URL(this.getCssData('--cfg-social-base-url'));
+    url.pathname = `/window3/${externalSourceType}`;
+    url.search = queryString(params);
+    return url.toString();
   }
 
   mountIframe() {
@@ -133,22 +163,28 @@ export class ExternalSource extends UploaderBlock {
   }
 }
 
-ExternalSource.template = /*html*/ `
-<div
-  ref="iframeWrapper"
-  class="iframe-wrapper">
-</div>
-<div class="toolbar">
-  <button type="button"
-    class="cancel-btn secondary-btn"
-    set="onclick: onCancel"
-    l10n="cancel">
-  </button>
-  <div></div>
-  <div class="selected-counter">
-    <span l10n="selected-count"></span>{{counter}}</div>
-  <button type="button" class="done-btn primary-btn" set="onclick: onDone">
-    <lr-icon name="check"></lr-icon>
-  </button>
-</div>
+ExternalSource.template = /* HTML */ `
+  <lr-activity-header>
+    <button type="button" class="mini-btn" set="onclick: *historyBack">
+      <lr-icon name="back"></lr-icon>
+    </button>
+    <div>
+      <lr-icon set="@name: activityIcon"></lr-icon>
+      <span>{{activityCaption}}</span>
+    </div>
+    <button type="button" class="mini-btn close-btn" set="onclick: *historyBack">
+      <lr-icon name="close"></lr-icon>
+    </button>
+  </lr-activity-header>
+  <div class="content">
+    <div ref="iframeWrapper" class="iframe-wrapper"></div>
+    <div class="toolbar">
+      <button type="button" class="cancel-btn secondary-btn" set="onclick: onCancel" l10n="cancel"></button>
+      <div></div>
+      <div class="selected-counter"><span l10n="selected-count"></span>{{counter}}</div>
+      <button type="button" class="done-btn primary-btn" set="onclick: onDone; @disabled: !counter">
+        <lr-icon name="check"></lr-icon>
+      </button>
+    </div>
+  </div>
 `;

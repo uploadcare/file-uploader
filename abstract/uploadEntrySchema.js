@@ -12,7 +12,6 @@ import { UploadcareFile } from '@uploadcare/upload-client';
  * @property {Boolean} isImage
  * @property {String} mimeType
  * @property {Error} uploadError
- * @property {String} uploadErrorMsg
  * @property {String} validationErrorMsg
  * @property {String} ctxName
  * @property {String} cdnUrl
@@ -34,6 +33,7 @@ export const uploadEntrySchema = Object.freeze({
   fileName: {
     type: String,
     value: null,
+    nullable: true,
   },
   fileSize: {
     type: Number,
@@ -65,11 +65,6 @@ export const uploadEntrySchema = Object.freeze({
     value: null,
     nullable: true,
   },
-  uploadErrorMsg: {
-    type: String,
-    value: null,
-    nullable: true,
-  },
   validationErrorMsg: {
     type: String,
     value: null,
@@ -94,5 +89,15 @@ export const uploadEntrySchema = Object.freeze({
   isUploading: {
     type: Boolean,
     value: false,
+  },
+  abortController: {
+    type: AbortController,
+    value: null,
+    nullable: true,
+  },
+  thumbUrl: {
+    type: String,
+    value: null,
+    nullable: true,
   },
 });

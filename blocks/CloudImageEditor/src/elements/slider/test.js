@@ -4,7 +4,7 @@ import { SliderUi } from './SliderUi.js';
 
 class CtxProvider extends Block {
   init$ = {
-    ...this.ctxInit,
+    ...this.init$,
     min: 0,
     max: 100,
     defaultValue: 50,
@@ -15,7 +15,7 @@ class CtxProvider extends Block {
   };
 }
 
-CtxProvider.template = /*html*/ `
+CtxProvider.template = /* HTML */ `
   <lr-slider-ui set="min: min; max: max: defaultValue: defaultValue; onInput: on.input"></lr-slider-ui>
   <div>{{value}}</div>
 `;

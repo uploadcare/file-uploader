@@ -1,3 +1,5 @@
+const DEFAULT_CDN_BASE = 'https://ucarecdn.com';
+
 export const PROPS_MAP = Object.freeze({
   'dev-mode': {},
   pubkey: {},
@@ -12,7 +14,9 @@ export const PROPS_MAP = Object.freeze({
   breakpoints: {
     // '200, 300, 400'
   },
-  'cdn-cname': {},
+  'cdn-cname': {
+    default: DEFAULT_CDN_BASE,
+  },
   'proxy-cname': {},
   'secure-delivery-proxy': {},
   'hi-res-support': {

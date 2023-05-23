@@ -1,74 +1,62 @@
-import { Data } from '@symbiotejs/symbiote';
 import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
-import { UiConfirmation } from '../ConfirmationDialog/ConfirmationDialog.js';
 import { UiMessage } from '../MessageBox/MessageBox.js';
 import { EVENT_TYPES, EventData, EventManager } from '../../abstract/EventManager.js';
+import { debounce } from '../utils/debounce.js';
 
 export class UploadList extends UploaderBlock {
+  historyTracked = true;
   activityType = ActivityBlock.activities.UPLOAD_LIST;
 
   init$ = {
-    ...this.ctxInit,
-    doneBtnHidden: false,
-    doneBtnDisabled: false,
-    uploadBtnHidden: false,
-    uploadBtnDisabled: false,
-    addMoreBtnHidden: false,
-    addMoreBtnDisabled: false,
+    ...this.init$,
+    doneBtnVisible: false,
+    doneBtnEnabled: false,
+    uploadBtnVisible: false,
+    addMoreBtnVisible: false,
+    addMoreBtnEnabled: false,
+    headerText: '',
 
     hasFiles: false,
     onAdd: () => {
       this.initFlow(true);
     },
     onUpload: () => {
-      this.set$({
-        uploadBtnHidden: false,
-        doneBtnHidden: true,
-        uploadBtnDisabled: true,
-        '*uploadTrigger': {},
-      });
+      this.$['*uploadTrigger'] = {};
+      this._updateUploadsState();
     },
     onDone: () => {
-      this.set$({
-        '*currentActivity': this.doneActivity || '',
-      });
-      this.setForCtxTarget('lr-modal', '*modalActive', false);
+      this.doneFlow();
     },
     onCancel: () => {
-      let cfn = new UiConfirmation();
-      cfn.confirmAction = () => {
-        let data = this.getOutputData((dataItem) => {
-          return !!dataItem.getValue('uuid');
-        });
-        EventManager.emit(
-          new EventData({
-            type: EVENT_TYPES.REMOVE,
-            ctx: this.ctxName,
-            data,
-          })
-        );
-        this.cancelFlow();
-        this.uploadCollection.clearAll();
-      };
-      cfn.denyAction = () => {
-        this.historyBack();
-      };
-      this.$['*confirmation'] = cfn;
+      let data = this.getOutputData((dataItem) => {
+        return !!dataItem.getValue('uuid');
+      });
+      EventManager.emit(
+        new EventData({
+          type: EVENT_TYPES.REMOVE,
+          ctx: this.ctxName,
+          data,
+        })
+      );
+      this.uploadCollection.clearAll();
     },
   };
 
   cssInit$ = {
-    '--cfg-show-empty-list': 0,
+    ...this.cssInit$,
     '--cfg-multiple': 1,
     '--cfg-multiple-min': 0,
     '--cfg-multiple-max': 0,
-    '--cfg-confirm-upload': 1,
-    '--cfg-source-list': '',
   };
 
-  /** @private */
-  _renderMap = Object.create(null);
+  _debouncedHandleCollectionUpdate = debounce(() => {
+    if (!this.isConnected) {
+      return;
+    }
+    this._updateUploadsState();
+    this._updateCountLimitMessage();
+  }, 0);
 
   /**
    * @private
@@ -118,120 +106,148 @@ export class UploadList extends UploaderBlock {
   }
 
   /** @private */
-  _handleCollectionUpdate() {
-    this._updateUploadsState();
-    this._updateCountLimitMessage();
-  }
-
-  /** @private */
   _updateUploadsState() {
     let itemIds = this.uploadCollection.items();
     let filesCount = itemIds.length;
     let summary = {
       total: filesCount,
-      uploaded: 0,
+      succeed: 0,
       uploading: 0,
-      validationFailed: 0,
+      failed: 0,
     };
     for (let id of itemIds) {
       let item = this.uploadCollection.read(id);
-      if (item.getValue('uuid')) {
-        summary.uploaded += 1;
-      } else if (item.getValue('isUploading')) {
+      if (item.getValue('uuid') && !item.getValue('validationErrorMsg')) {
+        summary.succeed += 1;
+      }
+      if (item.getValue('isUploading')) {
         summary.uploading += 1;
       }
-      if (item.getValue('validationErrorMsg')) {
-        summary.validationFailed += 1;
+      if (item.getValue('validationErrorMsg') || item.getValue('uploadError')) {
+        summary.failed += 1;
       }
     }
-    let allUploaded = summary.total === summary.uploaded;
+    let allDone = summary.total === summary.succeed + summary.failed;
     let { passed: fitCountRestrictions, tooMany, exact } = this._validateFilesCount();
-    let fitValidation = summary.validationFailed === 0;
+    let fitValidation = summary.failed === 0;
+
+    let doneBtnEnabled = summary.total > 0 && fitCountRestrictions && fitValidation;
+    let uploadBtnVisible =
+      !allDone && summary.total - summary.succeed - summary.uploading - summary.failed > 0 && fitCountRestrictions;
 
     this.set$({
-      doneBtnHidden: !allUploaded,
-      doneBtnDisabled: !fitCountRestrictions || !fitValidation,
+      doneBtnVisible: allDone,
+      doneBtnEnabled: doneBtnEnabled,
 
-      uploadBtnHidden: allUploaded,
-      uploadBtnDisabled: summary.uploading > 0 || !fitCountRestrictions || !fitValidation,
+      uploadBtnVisible,
 
-      addMoreBtnDisabled: tooMany || exact,
-      addMoreBtnHidden: exact && !this.getCssData('--cfg-multiple'),
+      addMoreBtnEnabled: summary.total === 0 || (!tooMany && !exact),
+      addMoreBtnVisible: !exact || this.getCssData('--cfg-multiple'),
+
+      headerText: this._getHeaderText(summary),
     });
+  }
 
-    if (filesCount > 0 && !this.getCssData('--cfg-confirm-upload') && fitCountRestrictions && allUploaded) {
-      this.$.onDone();
+  /** @private */
+  _getHeaderText(summary) {
+    const localizedText = (status) => {
+      const count = summary[status];
+      return this.l10n(`header-${status}`, {
+        count: count,
+      });
+    };
+    if (summary.uploading > 0) {
+      return localizedText('uploading');
     }
+    if (summary.failed > 0) {
+      return localizedText('failed');
+    }
+    if (summary.succeed > 0) {
+      return localizedText('succeed');
+    }
+
+    return localizedText('total');
   }
 
   initCallback() {
     super.initCallback();
 
-    this.registerActivity(this.activityType, () => {
-      this.set$({
-        '*activityCaption': this.l10n('selected'),
-        '*activityIcon': 'local',
-      });
-    });
+    this.registerActivity(this.activityType);
 
-    this.sub('--cfg-multiple', () => this._handleCollectionUpdate());
-    this.sub('--cfg-multiple-min', () => this._handleCollectionUpdate());
-    this.sub('--cfg-multiple-max', () => this._handleCollectionUpdate());
+    this.sub('--cfg-multiple', this._debouncedHandleCollectionUpdate);
+    this.sub('--cfg-multiple-min', this._debouncedHandleCollectionUpdate);
+    this.sub('--cfg-multiple-max', this._debouncedHandleCollectionUpdate);
+
+    this.sub('*currentActivity', (currentActivity) => {
+      if (
+        this.uploadCollection?.size === 0 &&
+        !this.getCssData('--cfg-show-empty-list') &&
+        currentActivity === this.activityType
+      ) {
+        this.$['*currentActivity'] = this.initActivity;
+      }
+    });
 
     // TODO: could be performance issue on many files
     // there is no need to update buttons state on every progress tick
-    this.uploadCollection.observe(() => {
-      this._handleCollectionUpdate();
-    });
+    this.uploadCollection.observe(this._debouncedHandleCollectionUpdate);
 
     this.sub('*uploadList', (list) => {
-      if (list?.length === 0 && !this.getCssData('--cfg-show-empty-list')) {
-        this.cancelFlow();
-        return;
-      }
-
-      this._handleCollectionUpdate();
+      this._debouncedHandleCollectionUpdate();
 
       this.set$({
         hasFiles: list.length > 0,
       });
 
-      this.setForCtxTarget('lr-modal', '*modalActive', true);
+      if (list?.length === 0 && !this.getCssData('--cfg-show-empty-list')) {
+        this.historyBack();
+      }
     });
+  }
+
+  destroyCallback() {
+    super.destroyCallback();
+    this.uploadCollection.unobserve(this._debouncedHandleCollectionUpdate);
   }
 }
 
-UploadList.template = /*html*/ `
-<div class="no-files" set="@hidden: hasFiles">
-  <slot name="empty"><span l10n="no-files"></span></slot>
-</div>
+UploadList.template = /* HTML */ `
+  <lr-activity-header>
+    <span class="header-text">{{headerText}}</span>
+    <button type="button" class="mini-btn close-btn" set="onclick: *closeModal">
+      <lr-icon name="close"></lr-icon>
+    </button>
+  </lr-activity-header>
 
-<div
-  class="files"
-  repeat="*uploadList"
-  repeat-item-tag="lr-file-item"></div>
+  <div class="no-files" set="@hidden: hasFiles">
+    <slot name="empty"><span l10n="no-files"></span></slot>
+  </div>
 
-<div class="toolbar">
-  <button
-    type="button"
-    class="cancel-btn secondary-btn"
-    set="onclick: onCancel;"
-    l10n="clear"></button>
-  <div class="toolbar-spacer"></div>
-  <button
-    type="button"
-    class="add-more-btn secondary-btn"
-    set="onclick: onAdd; @disabled: addMoreBtnDisabled; @hidden: addMoreBtnHidden"
-    l10n="add-more"></button>
-  <button
-    type="button"
-    class="upload-btn primary-btn"
-    set="@hidden: uploadBtnHidden; onclick: onUpload; @disabled: uploadBtnDisabled"
-    l10n="upload"></button>
-  <button
-    type="button"
-    class="done-btn primary-btn"
-    set="@hidden: doneBtnHidden; onclick: onDone;  @disabled: doneBtnDisabled"
-    l10n="done"></button>
-</div>
+  <div class="files" repeat="*uploadList" repeat-item-tag="lr-file-item"></div>
+
+  <div class="toolbar">
+    <button type="button" class="cancel-btn secondary-btn" set="onclick: onCancel;" l10n="clear"></button>
+    <div class="toolbar-spacer"></div>
+    <button
+      type="button"
+      class="add-more-btn secondary-btn"
+      set="onclick: onAdd; @disabled: !addMoreBtnEnabled; @hidden: !addMoreBtnVisible"
+    >
+      <lr-icon name="add"></lr-icon><span l10n="add-more"></span>
+    </button>
+    <button
+      type="button"
+      class="upload-btn primary-btn"
+      set="@hidden: !uploadBtnVisible; onclick: onUpload;"
+      l10n="upload"
+    ></button>
+    <button
+      type="button"
+      class="done-btn primary-btn"
+      set="@hidden: !doneBtnVisible; onclick: onDone;  @disabled: !doneBtnEnabled"
+      l10n="done"
+    ></button>
+  </div>
+
+  <lr-drop-area ghost></lr-drop-area>
 `;

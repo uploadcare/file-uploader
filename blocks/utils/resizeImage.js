@@ -2,7 +2,10 @@
  * @param {File} imgFile
  * @param {Number} [size]
  */
-export function resizeImage(imgFile, size = 40) {
+export function generateThumb(imgFile, size = 40) {
+  if (imgFile.type === 'image/svg+xml') {
+    return URL.createObjectURL(imgFile);
+  }
   let canvas = document.createElement('canvas');
   let ctx = canvas.getContext('2d');
   let img = new Image();
@@ -20,12 +23,15 @@ export function resizeImage(imgFile, size = 40) {
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       canvas.toBlob((blob) => {
+        if (!blob) {
+          reject();
+          return;
+        }
         let url = URL.createObjectURL(blob);
         resolve(url);
-      }, 'image/png');
+      });
     };
     img.onerror = (err) => {
-      console.warn('Resize error...');
       reject(err);
     };
   });

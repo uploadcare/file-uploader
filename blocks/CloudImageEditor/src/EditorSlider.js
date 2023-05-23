@@ -10,7 +10,7 @@ export const FAKE_ORIGINAL_FILTER = 'original';
 
 export class EditorSlider extends Block {
   init$ = {
-    ...this.ctxInit,
+    ...this.init$,
     disabled: false,
     min: 0,
     max: 100,
@@ -110,6 +110,9 @@ export class EditorSlider extends Block {
   }
 }
 
-EditorSlider.template = /*html*/ `
-<lr-slider-ui ref="slider-el" set="disabled: disabled; min: min; max: max; defaultValue: defaultValue; zero: zero; onInput: on.input;"></lr-slider-ui>
+EditorSlider.template = /* HTML */ `
+  <lr-slider-ui
+    ref="slider-el"
+    set="disabled: disabled; min: min; max: max; defaultValue: defaultValue; zero: zero; onInput: on.input;"
+  ></lr-slider-ui>
 `;

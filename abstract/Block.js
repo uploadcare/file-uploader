@@ -1,15 +1,16 @@
-import { BaseComponent, Data } from '@symbiotejs/symbiote';
-import { applyTemplateData } from '../utils/applyTemplateData.js';
-import { l10nProcessor } from './l10nProcessor.js';
+import { BaseComponent } from '@symbiotejs/symbiote';
+import { createWindowHeightTracker, getIsWindowHeightTracked } from '../utils/createWindowHeightTracker.js';
+import { applyTemplateData, getPluralObjects } from '../utils/template-utils.js';
 import { blockCtx } from './CTX.js';
+import { l10nProcessor } from './l10nProcessor.js';
 
 const TAG_PREFIX = 'lr-';
 
 export class Block extends BaseComponent {
+  static StateConsumerScope = null;
   allowCustomTemplate = true;
 
-  ctxInit = blockCtx();
-  init$ = this.ctxInit;
+  init$ = blockCtx();
 
   /**
    * @param {String} str
@@ -17,9 +18,30 @@ export class Block extends BaseComponent {
    * @returns {String}
    */
   l10n(str, variables = {}) {
+    if (!str) {
+      return '';
+    }
     let template = this.getCssData('--l10n-' + str, true) || str;
+    let pluralObjects = getPluralObjects(template);
+    for (let pluralObject of pluralObjects) {
+      variables[pluralObject.variable] = this.pluralize(
+        pluralObject.pluralKey,
+        Number(variables[pluralObject.countVariable])
+      );
+    }
     let result = applyTemplateData(template, variables);
     return result;
+  }
+
+  /**
+   * @param {string} key
+   * @param {number} count
+   * @returns {string}
+   */
+  pluralize(key, count) {
+    const locale = this.l10n('locale-name') || 'en-US';
+    const pluralForm = new Intl.PluralRules(locale).select(count);
+    return this.l10n(`${key}__${pluralForm}`);
   }
 
   constructor() {
@@ -54,42 +76,64 @@ export class Block extends BaseComponent {
   }
 
   /**
-   * @param {String} targetTagName
+   * @param {(block: Block) => boolean} callback
    * @returns {Boolean}
    */
-  checkCtxTarget(targetTagName) {
+  findBlockInCtx(callback) {
     /** @type {Set} */
-    let registry = this.$['*ctxTargetsRegistry'];
-    return registry?.has(targetTagName);
+    let blocksRegistry = this.$['*blocksRegistry'];
+    for (let block of blocksRegistry) {
+      if (callback(block)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
-   * @param {String} targetTagName
+   * @param {String} consumerScope
    * @param {String} prop
    * @param {any} newVal
    */
-  setForCtxTarget(targetTagName, prop, newVal) {
-    if (this.checkCtxTarget(targetTagName)) {
+  setForCtxTarget(consumerScope, prop, newVal) {
+    if (this.findBlockInCtx((b) => /** @type {typeof Block} */ (b.constructor).StateConsumerScope === consumerScope)) {
       this.$[prop] = newVal;
     }
   }
 
+  /** @param {String} activityType */
+  setActivity(activityType) {
+    if (this.findBlockInCtx((b) => b.activityType === activityType)) {
+      this.$['*currentActivity'] = activityType;
+      return;
+    }
+    console.warn(`Activity type "${activityType}" not found in the context`);
+  }
+
   connectedCallback() {
+    if (!getIsWindowHeightTracked()) {
+      this._destroyInnerHeightTracker = createWindowHeightTracker();
+    }
     if (this.hasAttribute('retpl')) {
       this.constructor['template'] = null;
       this.processInnerHtml = true;
     }
-    if (this.isConnected && this['__ctxOwner']) {
-      let data = Data.getCtx(this.ctxName, false);
-      if (data) {
-        data.store = { ...this.ctxInit };
-      }
-    }
     super.connectedCallback();
   }
 
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    this._destroyInnerHeightTracker?.();
+  }
+
   initCallback() {
-    this.$['*ctxTargetsRegistry']?.add(this.constructor['is']);
+    let blocksRegistry = this.$['*blocksRegistry'];
+    blocksRegistry.add(this);
+  }
+
+  destroyCallback() {
+    let blocksRegistry = this.$['*blocksRegistry'];
+    blocksRegistry.delete(this);
   }
 
   /**
@@ -129,6 +173,16 @@ export class Block extends BaseComponent {
       { transform: (value) => window.encodeURIComponent(value) }
     );
   }
+
+  updateCtxCssData = () => {
+    /** @type {Set<Block>} */
+    let blocks = this.$['*blocksRegistry'];
+    for (let block of blocks) {
+      if (block.isConnected) {
+        block.updateCssData();
+      }
+    }
+  };
 
   /** @param {String} [name] */
   static reg(name) {

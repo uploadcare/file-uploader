@@ -33,28 +33,12 @@ export class Range extends BaseComponent {
   }
 }
 
-Range.template = /*html*/ `
-<div class="track-wrapper">
-  <div
-    class="track">
+Range.template = /* HTML */ `
+  <div class="track-wrapper">
+    <div class="track"></div>
+    <div class="bar" set -style.width="cssLeft" -@active="barActive"></div>
+    <div class="slider" set -style.left="cssLeft"></div>
   </div>
-  <div 
-    class="bar" 
-    set
-    -style.width="cssLeft"
-    -@active="barActive">
-  </div>
-  <div 
-    class="slider" 
-    set
-    -style.left="cssLeft">
-  </div>
-</div>
 
-<input
-  type="range"
-  ref="range"
-  set
-  -@value="value"
-  -oninput="onChange" />
+  <input type="range" ref="range" set -@value="value" -oninput="onChange" />
 `;

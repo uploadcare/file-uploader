@@ -1,5 +1,6 @@
 /**
- * Helper function for legacy browsers and iframes which sometimes focus on elements like document, body, and non-interactive SVG.
+ * Helper function for legacy browsers and iframes which sometimes focus on elements like document, body, and
+ * non-interactive SVG.
  *
  * @param {EventTarget} el
  */
@@ -111,7 +112,8 @@ export function applyFocusVisiblePolyfill(scope, callback) {
 
   /**
    * On `focus`, add the `focus-visible` class to the target if: - the target received focus as a result of keyboard
-   * navigation or - the event target is an element that will likely require interaction via the keyboard (e.g., a text box).
+   * navigation or - the event target is an element that will likely require interaction via the keyboard (e.g., a text
+   * box).
    *
    * @param {Event} e
    */

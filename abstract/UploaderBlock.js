@@ -1,16 +1,21 @@
 import { ActivityBlock } from './ActivityBlock.js';
 
 import { Data } from '@symbiotejs/symbiote';
-import { mergeMimeTypes } from '../utils/mergeMimeTypes.js';
-import { imageMimeTypes } from '../utils/imageMimeTypes.js';
+import { IMAGE_ACCEPT_LIST, mergeFileTypes, fileIsImage } from '../utils/fileTypes.js';
 import { uploadEntrySchema } from './uploadEntrySchema.js';
 import { customUserAgent } from '../blocks/utils/userAgent.js';
 import { TypedCollection } from './TypedCollection.js';
 import { uploaderBlockCtx } from './CTX.js';
 import { EVENT_TYPES, EventData, EventManager } from './EventManager.js';
+import { Modal } from '../blocks/Modal/Modal.js';
+import { stringToArray } from '../utils/stringToArray.js';
 
 export class UploaderBlock extends ActivityBlock {
-  ctxInit = uploaderBlockCtx();
+  init$ = uploaderBlockCtx(this);
+  cssInit$ = {
+    ...this.cssInit$,
+    '--cfg-max-concurrent-requests': 1,
+  };
 
   /** @private */
   __initialUploadMetadata = null;
@@ -35,8 +40,23 @@ export class UploaderBlock extends ActivityBlock {
 
   initCallback() {
     super.initCallback();
+
     if (this.__initialUploadMetadata) {
       this.$['*uploadMetadata'] = this.__initialUploadMetadata;
+    }
+
+    this.sub('--cfg-max-concurrent-requests', (value) => {
+      this.$['*uploadQueue'].concurrency = Number(value) || 1;
+    });
+  }
+
+  destroyCallback() {
+    super.destroyCallback();
+
+    let blocksRegistry = this.$['*blocksRegistry'];
+    if (blocksRegistry.has(this)) {
+      this.uploadCollection.unobserve(this._handleCollectionUpdate);
+      blocksRegistry.delete(this);
     }
   }
 
@@ -45,7 +65,7 @@ export class UploaderBlock extends ActivityBlock {
     files.forEach((/** @type {File} */ file) => {
       this.uploadCollection.add({
         file,
-        isImage: file.type.includes('image'),
+        isImage: fileIsImage(file),
         mimeType: file.type,
         fileName: file.name,
         fileSize: file.size,
@@ -53,11 +73,13 @@ export class UploaderBlock extends ActivityBlock {
     });
   }
 
-  openSystemDialog() {
-    let accept = mergeMimeTypes(
-      this.getCssData('--cfg-img-only') && imageMimeTypes.join(','),
-      this.getCssData('--cfg-accept')
-    );
+  /** @param {{ captureCamera?: boolean }} options */
+  openSystemDialog(options = {}) {
+    let accept = mergeFileTypes([
+      this.getCssData('--cfg-accept'),
+      ...(this.getCssData('--cfg-img-only') ? IMAGE_ACCEPT_LIST : []),
+    ]).join(',');
+
     if (this.getCssData('--cfg-accept') && !!this.getCssData('--cfg-img-only')) {
       console.warn(
         'There could be a mistake.\n' +
@@ -68,12 +90,18 @@ export class UploaderBlock extends ActivityBlock {
     this.fileInput = document.createElement('input');
     this.fileInput.type = 'file';
     this.fileInput.multiple = !!this.getCssData('--cfg-multiple');
-    this.fileInput.accept = accept;
+    if (options.captureCamera) {
+      this.fileInput.capture = '';
+      this.fileInput.accept = IMAGE_ACCEPT_LIST.join(',');
+    } else {
+      this.fileInput.accept = accept;
+    }
     this.fileInput.dispatchEvent(new MouseEvent('click'));
     this.fileInput.onchange = () => {
       this.addFiles([...this.fileInput['files']]);
       // To call uploadTrigger UploadList should draw file items first:
       this.$['*currentActivity'] = ActivityBlock.activities.UPLOAD_LIST;
+      this.setForCtxTarget(Modal.StateConsumerScope, '*modalActive', true);
       this.fileInput['value'] = '';
       this.fileInput = null;
     };
@@ -83,11 +111,7 @@ export class UploaderBlock extends ActivityBlock {
   get sourceList() {
     let list = null;
     if (this.getCssData('--cfg-source-list')) {
-      list = this.getCssData('--cfg-source-list')
-        .split(',')
-        .map((/** @type {String} */ item) => {
-          return item.trim();
-        });
+      list = stringToArray(this.getCssData('--cfg-source-list'));
     }
     return list;
   }
@@ -98,7 +122,7 @@ export class UploaderBlock extends ActivityBlock {
       this.set$({
         '*currentActivity': ActivityBlock.activities.UPLOAD_LIST,
       });
-      this.setForCtxTarget('lr-modal', '*modalActive', true);
+      this.setForCtxTarget(Modal.StateConsumerScope, '*modalActive', true);
     } else {
       if (this.sourceList?.length === 1) {
         let srcKey = this.sourceList[0];
@@ -107,8 +131,7 @@ export class UploaderBlock extends ActivityBlock {
           this.$['*currentActivity'] = ActivityBlock.activities.UPLOAD_LIST;
           this?.['openSystemDialog']();
         } else {
-          /** @ts-ignore */
-          if (Object.values(Block.extSrcList).includes(srcKey)) {
+          if (Object.values(UploaderBlock.extSrcList).includes(/** @type {any} */ (srcKey))) {
             this.set$({
               '*currentActivityParams': {
                 externalSourceType: srcKey,
@@ -118,28 +141,42 @@ export class UploaderBlock extends ActivityBlock {
           } else {
             this.$['*currentActivity'] = srcKey;
           }
-          this.setForCtxTarget('lr-modal', '*modalActive', true);
+          this.setForCtxTarget(Modal.StateConsumerScope, '*modalActive', true);
         }
       } else {
         // Multiple sources case:
         this.set$({
           '*currentActivity': ActivityBlock.activities.START_FROM,
         });
-        this.setForCtxTarget('lr-modal', '*modalActive', true);
+        this.setForCtxTarget(Modal.StateConsumerScope, '*modalActive', true);
       }
     }
+    EventManager.emit(
+      new EventData({
+        type: EVENT_TYPES.INIT_FLOW,
+        ctx: this.ctxName,
+      }),
+      undefined,
+      false
+    );
   }
 
-  cancelFlow() {
-    if (this.sourceList?.length === 1) {
-      this.$['*currentActivity'] = null;
-      this.setForCtxTarget('lr-modal', '*modalActive', false);
-    } else {
-      this.historyBack();
-      if (!this.$['*currentActivity']) {
-        this.setForCtxTarget('lr-modal', '*modalActive', false);
-      }
+  doneFlow() {
+    this.set$({
+      '*currentActivity': this.doneActivity,
+      '*history': this.doneActivity ? [this.doneActivity] : [],
+    });
+    if (!this.$['*currentActivity']) {
+      this.setForCtxTarget(Modal.StateConsumerScope, '*modalActive', false);
     }
+    EventManager.emit(
+      new EventData({
+        type: EVENT_TYPES.DONE_FLOW,
+        ctx: this.ctxName,
+      }),
+      undefined,
+      false
+    );
   }
 
   /** @returns {TypedCollection} */
@@ -147,119 +184,124 @@ export class UploaderBlock extends ActivityBlock {
     if (!this.has('*uploadCollection')) {
       let uploadCollection = new TypedCollection({
         typedSchema: uploadEntrySchema,
-        watchList: ['uploadProgress', 'uuid', 'uploadErrorMsg', 'validationErrorMsg', 'cdnUrlModifiers'],
-        handler: (entries) => {
+        watchList: ['uploadProgress', 'uuid', 'uploadError', 'validationErrorMsg', 'cdnUrlModifiers'],
+        handler: (entries, added, removed) => {
+          for (let entry of removed) {
+            entry?.getValue('abortController')?.abort();
+            entry?.setValue('abortController', null);
+            URL.revokeObjectURL(entry?.getValue('thumbUrl'));
+          }
           this.$['*uploadList'] = entries.map((uid) => {
             return { uid };
           });
         },
       });
-      uploadCollection.observe((changeMap) => {
-        if (changeMap.uploadProgress) {
-          let commonProgress = 0;
-          /** @type {String[]} */
-          let items = uploadCollection.findItems((entry) => {
-            return !entry.getValue('uploadError');
-          });
-          items.forEach((id) => {
-            commonProgress += uploadCollection.readProp(id, 'uploadProgress');
-          });
-          let progress = Math.round(commonProgress / items.length);
-          this.$['*commonProgress'] = progress;
-          EventManager.emit(
-            new EventData({
-              type: EVENT_TYPES.UPLOAD_PROGRESS,
-              ctx: this.ctxName,
-              data: progress,
-            }),
-            undefined,
-            progress === 100
-          );
-        }
-        if (changeMap.uuid) {
-          let loadedItems = uploadCollection.findItems((entry) => {
-            return !!entry.getValue('uuid');
-          });
-          let errorItems = uploadCollection.findItems((entry) => {
-            return !!entry.getValue('uploadErrorMsg') || !!entry.getValue('validationErrorMsg');
-          });
-          if (uploadCollection.size - errorItems.length === loadedItems.length) {
-            let data = this.getOutputData((dataItem) => {
-              return !!dataItem.getValue('uuid');
-            });
-            EventManager.emit(
-              new EventData({
-                type: EVENT_TYPES.UPLOAD_FINISH,
-                ctx: this.ctxName,
-                data,
-              })
-            );
-          }
-        }
-        if (changeMap.uploadErrorMsg) {
-          let items = uploadCollection.findItems((entry) => {
-            return !!entry.getValue('uploadErrorMsg');
-          });
-          items.forEach((id) => {
-            EventManager.emit(
-              new EventData({
-                type: EVENT_TYPES.UPLOAD_ERROR,
-                ctx: this.ctxName,
-                data: uploadCollection.readProp(id, 'uploadErrorMsg'),
-              }),
-              undefined,
-              false
-            );
-          });
-        }
-        if (changeMap.validationErrorMsg) {
-          let items = uploadCollection.findItems((entry) => {
-            return !!entry.getValue('validationErrorMsg');
-          });
-          items.forEach((id) => {
-            EventManager.emit(
-              new EventData({
-                type: EVENT_TYPES.VALIDATION_ERROR,
-                ctx: this.ctxName,
-                data: uploadCollection.readProp(id, 'validationErrorMsg'),
-              }),
-              undefined,
-              false
-            );
-          });
-        }
-        if (changeMap.cdnUrlModifiers) {
-          let items = uploadCollection.findItems((entry) => {
-            return !!entry.getValue('cdnUrlModifiers');
-          });
-          items.forEach((id) => {
-            EventManager.emit(
-              new EventData({
-                type: EVENT_TYPES.CDN_MODIFICATION,
-                ctx: this.ctxName,
-                data: uploadCollection.readProp(id, 'cdnUrlModifiers'),
-              }),
-              undefined,
-              false
-            );
-          });
-        }
-      });
+      uploadCollection.observe(this._handleCollectionUpdate);
       this.add('*uploadCollection', uploadCollection);
     }
     return this.$['*uploadCollection'];
   }
 
+  /** @private */
+  _handleCollectionUpdate = (changeMap) => {
+    let uploadCollection = this.uploadCollection;
+    if (changeMap.uploadProgress) {
+      let commonProgress = 0;
+      /** @type {String[]} */
+      let items = uploadCollection.findItems((entry) => {
+        return !entry.getValue('uploadError');
+      });
+      items.forEach((id) => {
+        commonProgress += uploadCollection.readProp(id, 'uploadProgress');
+      });
+      let progress = Math.round(commonProgress / items.length);
+      this.$['*commonProgress'] = progress;
+      EventManager.emit(
+        new EventData({
+          type: EVENT_TYPES.UPLOAD_PROGRESS,
+          ctx: this.ctxName,
+          data: progress,
+        }),
+        undefined,
+        progress === 100
+      );
+    }
+    if (changeMap.uuid) {
+      let loadedItems = uploadCollection.findItems((entry) => {
+        return !!entry.getValue('uuid');
+      });
+      let errorItems = uploadCollection.findItems((entry) => {
+        return !!entry.getValue('uploadError') || !!entry.getValue('validationErrorMsg');
+      });
+      if (uploadCollection.size - errorItems.length === loadedItems.length) {
+        let data = this.getOutputData((dataItem) => {
+          return !!dataItem.getValue('uuid');
+        });
+        EventManager.emit(
+          new EventData({
+            type: EVENT_TYPES.UPLOAD_FINISH,
+            ctx: this.ctxName,
+            data,
+          })
+        );
+      }
+    }
+    if (changeMap.uploadError) {
+      let items = uploadCollection.findItems((entry) => {
+        return !!entry.getValue('uploadError');
+      });
+      items.forEach((id) => {
+        EventManager.emit(
+          new EventData({
+            type: EVENT_TYPES.UPLOAD_ERROR,
+            ctx: this.ctxName,
+            data: uploadCollection.readProp(id, 'uploadError'),
+          }),
+          undefined,
+          false
+        );
+      });
+    }
+    if (changeMap.validationErrorMsg) {
+      let items = uploadCollection.findItems((entry) => {
+        return !!entry.getValue('validationErrorMsg');
+      });
+      items.forEach((id) => {
+        EventManager.emit(
+          new EventData({
+            type: EVENT_TYPES.VALIDATION_ERROR,
+            ctx: this.ctxName,
+            data: uploadCollection.readProp(id, 'validationErrorMsg'),
+          }),
+          undefined,
+          false
+        );
+      });
+    }
+    if (changeMap.cdnUrlModifiers) {
+      let items = uploadCollection.findItems((entry) => {
+        return !!entry.getValue('cdnUrlModifiers');
+      });
+      items.forEach((id) => {
+        EventManager.emit(
+          new EventData({
+            type: EVENT_TYPES.CDN_MODIFICATION,
+            ctx: this.ctxName,
+            data: Data.getCtx(id).store,
+          }),
+          undefined,
+          false
+        );
+      });
+    }
+  };
+
   /** @returns {import('@uploadcare/upload-client').FileFromOptions} */
   getUploadClientOptions() {
-    let storeSetting = {};
-    let store = this.getCssData('--cfg-store');
-    if (store !== null) {
-      storeSetting.store = !!store;
-    }
-
+    let store = this.getCssData('--cfg-store', true);
     let options = {
-      ...storeSetting,
+      // undefined 'store' means 'auto'
+      store: store === null ? undefined : !!store,
       publicKey: this.getCssData('--cfg-pubkey'),
       baseCDN: this.getCssData('--cfg-cdn-cname'),
       baseURL: this.getCssData('--cfg-base-url'),
@@ -270,7 +312,7 @@ export class UploaderBlock extends ActivityBlock {
       retryThrottledRequestMaxTimes: this.getCssData('--cfg-retry-throttled-request-max-times'),
       multipartMinFileSize: this.getCssData('--cfg-multipart-min-file-size'),
       multipartChunkSize: this.getCssData('--cfg-multipart-chunk-size'),
-      maxConcurrentRequests: this.getCssData('--cfg-max-concurrent-requests'),
+      maxConcurrentRequests: this.getCssData('--cfg-multipart-max-concurrent-requests'),
       multipartMaxAttempts: this.getCssData('--cfg-multipart-max-attempts'),
       checkForUrlDuplicates: !!this.getCssData('--cfg-check-for-url-duplicates'),
       saveUrlForRecurrentUploads: !!this.getCssData('--cfg-save-url-for-recurrent-uploads'),
@@ -307,15 +349,6 @@ export class UploaderBlock extends ActivityBlock {
 }
 
 /** @enum {String} */
-UploaderBlock.sourceTypes = Object.freeze({
-  LOCAL: 'local',
-  URL: 'url',
-  CAMERA: 'camera',
-  DRAW: 'draw',
-  ...UploaderBlock.extSrcList,
-});
-
-/** @enum {String} */
 UploaderBlock.extSrcList = Object.freeze({
   FACEBOOK: 'facebook',
   DROPBOX: 'dropbox',
@@ -330,10 +363,19 @@ UploaderBlock.extSrcList = Object.freeze({
   HUDDLE: 'huddle',
 });
 
-Object.keys(EVENT_TYPES).forEach((eType) => {
+/** @enum {String} */
+UploaderBlock.sourceTypes = Object.freeze({
+  LOCAL: 'local',
+  URL: 'url',
+  CAMERA: 'camera',
+  DRAW: 'draw',
+  ...UploaderBlock.extSrcList,
+});
+
+Object.values(EVENT_TYPES).forEach((eType) => {
   let eName = EventManager.eName(eType);
   window.addEventListener(eName, (e) => {
-    let outputTypes = [EVENT_TYPES.UPLOAD_FINISH, EVENT_TYPES.REMOVE];
+    let outputTypes = [EVENT_TYPES.UPLOAD_FINISH, EVENT_TYPES.REMOVE, EVENT_TYPES.CDN_MODIFICATION];
     if (outputTypes.includes(e.detail.type)) {
       let dataCtx = Data.getCtx(e.detail.ctx);
       /** @type {TypedCollection} */

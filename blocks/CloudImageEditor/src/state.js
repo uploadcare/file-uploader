@@ -1,18 +1,19 @@
 import { createCdnUrl, createCdnUrlModifiers } from '../../../utils/cdn-utils.js';
 import { transformationsToOperations } from './lib/transformationUtils.js';
-import { TRANSPARENT_PIXEL_SRC } from './lib/transparentPixelSrc.js';
+import { TRANSPARENT_PIXEL_SRC } from '../../../utils/transparentPixelSrc.js';
 
 /** @param {import('./CloudEditor.js').CloudEditor} fnCtx */
 export function initState(fnCtx) {
   return {
     '*originalUrl': null,
-    '*tabId': null,
     '*faderEl': null,
     '*cropperEl': null,
     '*imgEl': null,
     '*imgContainerEl': null,
     '*networkProblems': false,
     '*imageSize': null,
+    /** @type {import('./types.js').Transformations} */
+    '*editorTransformations': {},
 
     entry: null,
     extension: null,
@@ -24,6 +25,7 @@ export function initState(fnCtx) {
     fileType: '',
     showLoader: false,
     uuid: null,
+    cdnUrl: null,
 
     'presence.networkProblems': false,
     'presence.modalCaption': true,
@@ -57,6 +59,8 @@ export function initState(fnCtx) {
       fnCtx.dispatchEvent(
         new CustomEvent('apply', {
           detail: eventData,
+          bubbles: true,
+          composed: true,
         })
       );
       fnCtx.remove();
@@ -64,7 +68,12 @@ export function initState(fnCtx) {
     '*on.cancel': () => {
       fnCtx.remove();
 
-      fnCtx.dispatchEvent(new CustomEvent('cancel'));
+      fnCtx.dispatchEvent(
+        new CustomEvent('cancel', {
+          bubbles: true,
+          composed: true,
+        })
+      );
     },
   };
 }

@@ -1,7 +1,8 @@
 import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
-import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../utils/cdn-utils.js';
+import { createCdnUrl, createCdnUrlModifiers } from '../../utils/cdn-utils.js';
 import { fileCssBg } from '../svg-backgrounds/svg-backgrounds.js';
+import { fileIsImage } from '../../utils/fileTypes.js';
 
 export class UploadDetails extends UploaderBlock {
   activityType = ActivityBlock.activities.DETAILS;
@@ -9,7 +10,7 @@ export class UploadDetails extends UploaderBlock {
   pauseRender = true;
 
   init$ = {
-    ...this.ctxInit,
+    ...this.init$,
     checkerboard: false,
     fileSize: null,
     fileName: '',
@@ -33,6 +34,7 @@ export class UploadDetails extends UploaderBlock {
   };
 
   cssInit$ = {
+    ...this.cssInit$,
     '--cfg-use-cloud-image-editor': 0,
     '--cfg-use-local-image-editor': 0,
   };
@@ -40,7 +42,7 @@ export class UploadDetails extends UploaderBlock {
   showNonImageThumb() {
     let color = window.getComputedStyle(this).getPropertyValue('--clr-generic-file-icon');
     let url = fileCssBg(color, 108, 108);
-    this.eCanvas.setImageUrl(url);
+    this.ref.filePreview.setImageUrl(url);
     this.set$({
       checkerboard: false,
     });
@@ -51,14 +53,12 @@ export class UploadDetails extends UploaderBlock {
     // Rendering is postponed for the CSS-context-properties usage in template:
     this.render();
     this.$.fileSize = this.l10n('file-size-unknown');
-    this.registerActivity(this.activityType, () => {
-      this.set$({
-        '*activityCaption': this.l10n('caption-edit-file'),
-      });
+    this.registerActivity(this.activityType, {
+      onDeactivate: () => {
+        this.ref.filePreview.clear();
+      },
     });
-    /** @type {import('../EditableCanvas/EditableCanvas.js').EditableCanvas} */
-    // @ts-ignore
-    this.eCanvas = this.ref.canvas;
+    /** @type {import('../FilePreview/FilePreview.js').FilePreview} */
     this.sub('*focusedEntry', (/** @type {import('../../abstract/TypedData.js').TypedData} */ entry) => {
       if (!entry) {
         return;
@@ -75,16 +75,15 @@ export class UploadDetails extends UploaderBlock {
       this.entry = entry;
       /** @type {File} */
       let file = entry.getValue('file');
-      this.eCanvas.clear();
       if (file) {
         /**
          * @private
          * @type {File}
          */
         this._file = file;
-        let isImage = this._file.type.includes('image');
+        let isImage = fileIsImage(this._file);
         if (isImage && !entry.getValue('cdnUrl')) {
-          this.eCanvas.setImageFile(this._file);
+          this.ref.filePreview.setImageFile(this._file);
           this.set$({
             checkerboard: true,
           });
@@ -124,8 +123,7 @@ export class UploadDetails extends UploaderBlock {
       });
       tmpSub('cdnUrl', (cdnUrl) => {
         const canUseCloudEditor = this.$['--cfg-use-cloud-image-editor'] && cdnUrl && this.entry.getValue('isImage');
-
-        this.eCanvas.clear();
+        cdnUrl && this.ref.filePreview.clear();
         this.set$({
           cdnUrl,
           cloudEditBtnHidden: !canUseCloudEditor,
@@ -133,75 +131,65 @@ export class UploadDetails extends UploaderBlock {
         if (cdnUrl && this.entry.getValue('isImage')) {
           // TODO: need to resize image to fit the canvas size
           let imageUrl = createCdnUrl(cdnUrl, createCdnUrlModifiers('format/auto', 'preview'));
-          this.eCanvas.setImageUrl(this.proxyUrl(imageUrl));
+          this.ref.filePreview.setImageUrl(this.proxyUrl(imageUrl));
         }
       });
     });
   }
 }
 
-UploadDetails.template = /*html*/ `
-<lr-tabs
-  tab-list="tab-view, tab-details">
+UploadDetails.template = /* HTML */ `
+  <lr-activity-header>
+    <button type="button" class="mini-btn" set="onclick: *historyBack">
+      <lr-icon name="back"></lr-icon>
+    </button>
+    <span l10n="caption-edit-file"></span>
+    <button type="button" class="mini-btn close-btn" set="onclick: *closeModal">
+      <lr-icon name="close"></lr-icon>
+    </button>
+  </lr-activity-header>
+  <div class="content">
+    <lr-tabs tab-list="tab-view, tab-details">
+      <div tab-ctx="tab-details" class="details">
+        <div class="info-block">
+          <div class="info-block_name" l10n="file-name"></div>
+          <input
+            name="name-input"
+            ref="file_name_input"
+            set="value: fileName; oninput: onNameInput; @disabled: !!cdnUrl"
+            type="text"
+          />
+        </div>
 
-  <div
-    tab-ctx="tab-details"
-    class="details">
+        <div class="info-block">
+          <div class="info-block_name" l10n="file-size"></div>
+          <div>{{fileSize}}</div>
+        </div>
 
-    <div class="info-block">
-      <div class="info-block_name" l10n="file-name"></div>
-      <input
-        name="name-input"
-        ref="file_name_input"
-        set="value: fileName; oninput: onNameInput; @disabled: !!cdnUrl"
-        type="text" />
+        <div class="info-block">
+          <div class="info-block_name" l10n="cdn-url"></div>
+          <a class="cdn-link" target="_blank" set="@href: cdnUrl; @disabled: !cdnUrl">{{cdnUrl}}</a>
+        </div>
+
+        <div>{{errorTxt}}</div>
+      </div>
+
+      <lr-file-preview tab-ctx="tab-view" set="@checkerboard: checkerboard;" ref="filePreview"> </lr-file-preview>
+    </lr-tabs>
+
+    <div class="toolbar" set="@edit-disabled: cloudEditBtnHidden">
+      <button type="button" class="edit-btn secondary-btn" set="onclick: onCloudEdit; @hidden: cloudEditBtnHidden;">
+        <lr-icon name="edit"></lr-icon>
+        <span l10n="edit-image"></span>
+      </button>
+      <button type="button" class="remove-btn secondary-btn" set="onclick: onRemove">
+        <lr-icon name="remove"></lr-icon>
+        <span l10n="remove-from-list"></span>
+      </button>
+      <div></div>
+      <button type="button" class="back-btn primary-btn" set="onclick: onBack">
+        <span l10n="ok"></span>
+      </button>
     </div>
-
-    <div class="info-block">
-      <div class="info-block_name" l10n="file-size"></div>
-      <div>{{fileSize}}</div>
-    </div>
-
-    <div class="info-block">
-      <div class="info-block_name" l10n="cdn-url"></div>
-      <a
-        class="cdn-link"
-        target="_blank"
-        set="@href: cdnUrl; @disabled: !cdnUrl">{{cdnUrl}}</a>
-    </div>
-
-    <div>{{errorTxt}}</div>
-
   </div>
-
-  <lr-editable-canvas
-    tab-ctx="tab-view"
-    set="@disabled: !--cfg-use-local-image-editor; @checkerboard: checkerboard;"
-    ref="canvas">
-  </lr-editable-canvas>
-</lr-tabs>
-
-<div class="toolbar" set="@edit-disabled: cloudEditBtnHidden">
-  <button
-    type="button"
-    class="edit-btn secondary-btn"
-    set="onclick: onCloudEdit; @hidden: cloudEditBtnHidden;">
-    <lr-icon name="edit"></lr-icon>
-    <span l10n="edit-image"></span>
-  </button>
-  <button
-    type="button"
-    class="remove-btn secondary-btn"
-    set="onclick: onRemove">
-    <lr-icon name="remove"></lr-icon>
-    <span l10n="remove-from-list"></span>
-  </button>
-  <div></div>
-  <button
-    type="button"
-    class="back-btn primary-btn"
-    set="onclick: onBack">
-    <span l10n="ok"></span>
-  </button>
-</div>
 `;

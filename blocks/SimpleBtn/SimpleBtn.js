@@ -2,7 +2,7 @@ import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 
 export class SimpleBtn extends UploaderBlock {
   init$ = {
-    ...this.ctxInit,
+    ...this.init$,
     '*simpleButtonText': '',
     onClick: () => {
       this.initFlow();
@@ -18,12 +18,13 @@ export class SimpleBtn extends UploaderBlock {
   }
 }
 
-SimpleBtn.template = /*html*/ `
-<lr-drop-area>
-  <button type="button" set="onclick: onClick">
-    <lr-icon name="upload"></lr-icon>
-    <span>{{*simpleButtonText}}</span>
-    <slot></slot>
-  </button>
-</lr-drop-area>
+SimpleBtn.template = /* HTML */ `
+  <lr-drop-area>
+    <button type="button" set="onclick: onClick">
+      <lr-icon name="upload"></lr-icon>
+      <span>{{*simpleButtonText}}</span>
+      <slot></slot>
+      <div class="visual-drop-area"></div>
+    </button>
+  </lr-drop-area>
 `;

@@ -7,7 +7,8 @@ import { FileItem } from '../../../blocks/FileItem/FileItem.js';
 import { Icon } from '../../../blocks/Icon/Icon.js';
 import { ProgressBar } from '../../../blocks/ProgressBar/ProgressBar.js';
 import { MessageBox } from '../../../blocks/MessageBox/MessageBox.js';
-import { LR_WINDOW_KEY } from '../../../abstract/connectBlocksFrom.js';
+import { Copyright } from '../../../blocks/Copyright/Copyright.js';
+import { DataOutput } from '../../../blocks/DataOutput/DataOutput.js';
 
 registerBlocks({
   FileUploaderMinimal,
@@ -18,4 +19,20 @@ registerBlocks({
   Icon,
   ProgressBar,
   MessageBox,
+  Copyright,
+  DataOutput,
 });
+
+export {
+  registerBlocks,
+  FileUploaderMinimal,
+  StartFrom,
+  DropArea,
+  UploadList,
+  FileItem,
+  Icon,
+  ProgressBar,
+  MessageBox,
+  Copyright,
+  DataOutput,
+};

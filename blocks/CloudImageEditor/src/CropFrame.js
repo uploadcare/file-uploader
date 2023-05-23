@@ -24,7 +24,7 @@ import { classNames } from './lib/classNames.js';
 
 export class CropFrame extends Block {
   init$ = {
-    ...this.ctxInit,
+    ...this.init$,
     dragging: false,
   };
 
@@ -423,7 +423,4 @@ export class CropFrame extends Block {
   }
 }
 
-CropFrame.template = /*html*/ `
-  <svg class='svg' ref='svg-el' xmlns="http://www.w3.org/2000/svg">
-  </svg>
-`;
+CropFrame.template = /* HTML */ ` <svg class="svg" ref="svg-el" xmlns="http://www.w3.org/2000/svg"></svg> `;

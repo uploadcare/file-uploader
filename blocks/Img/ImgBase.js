@@ -1,10 +1,10 @@
 import { BaseComponent } from '@symbiotejs/symbiote';
-import { applyTemplateData } from '../../utils/applyTemplateData.js';
+import { applyTemplateData } from '../../utils/template-utils.js';
 import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../utils/cdn-utils.js';
 import { PROPS_MAP } from './props-map.js';
+import { stringToArray } from '../../utils/stringToArray.js';
+import { uniqueArray } from '../../utils/uniqueArray.js';
 
-// TODO: move default config values somewhere outside
-const DEFAULT_CDN_BASE = 'https://ucarecdn.com';
 const CSS_PREF = '--lr-img-';
 const UNRESOLVED_ATTR = 'unresolved';
 const HI_RES_K = 2;
@@ -83,7 +83,9 @@ export class ImgBase extends BaseComponent {
    * @returns {any}
    */
   _getUrlBase(size = '') {
-    // console.log(this.localCtx);
+    if (this.$$('src').startsWith('data:') || this.$$('src').startsWith('blob:')) {
+      return this.$$('src');
+    }
 
     // Localhost + relative image path (DO NOTHING):
     if (DEV_MODE && this.$$('src') && !this.$$('src').includes('//')) {
@@ -91,6 +93,10 @@ export class ImgBase extends BaseComponent {
     }
 
     let cdnModifiers = this._getCdnModifiers(size);
+
+    if (this.$$('src').startsWith(this.$$('cdn-cname'))) {
+      return createCdnUrl(this.$$('src'), cdnModifiers);
+    }
 
     // Alternative CDN name:
     if (this.$$('cdn-cname') && this.$$('uuid')) {
@@ -108,7 +114,7 @@ export class ImgBase extends BaseComponent {
       return this._proxyUrl(
         createCdnUrl(
           //
-          createOriginalUrl(this.$$['cdn-cname'] || DEFAULT_CDN_BASE, this.$$('uuid')),
+          createOriginalUrl(this.$$('cdn-cname'), this.$$('uuid')),
           cdnModifiers
         )
       );
@@ -216,13 +222,7 @@ export class ImgBase extends BaseComponent {
 
   get breakpoints() {
     if (this.$$('breakpoints')) {
-      let bpSet = new Set();
-      this.$$('breakpoints')
-        .split(',')
-        .forEach((bpStr) => {
-          bpSet.add(parseFloat(bpStr.trim()));
-        });
-      return bpSet;
+      return uniqueArray(stringToArray(this.$$('breakpoints')).map((str) => Number(str)));
     } else {
       return null;
     }

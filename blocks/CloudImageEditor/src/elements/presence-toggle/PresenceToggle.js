@@ -65,6 +65,4 @@ export class PresenceToggle extends Block {
     setTimeout(() => this.removeAttribute('hidden'), 0);
   }
 }
-PresenceToggle.template = /*html*/ `
-<slot></slot>
-`;
+PresenceToggle.template = /* HTML */ ` <slot></slot> `;

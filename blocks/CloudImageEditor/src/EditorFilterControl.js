@@ -6,7 +6,7 @@ import { preloadImage } from './lib/preloadImage.js';
 
 export class EditorFilterControl extends EditorButtonControl {
   init$ = {
-    ...this.ctxInit,
+    ...this.init$,
     active: false,
     title: '',
     icon: '',
@@ -61,9 +61,7 @@ export class EditorFilterControl extends EditorButtonControl {
         })
         .finally(() => {
           previewEl.style.backgroundImage = `url(${src})`;
-          setTimeout(() => {
-            previewEl.style.opacity = '1';
-          });
+          previewEl.setAttribute('loaded', '');
 
           observer.unobserve(this);
         });
@@ -149,7 +147,7 @@ export class EditorFilterControl extends EditorButtonControl {
   }
 }
 
-EditorFilterControl.template = /*html*/ `
+EditorFilterControl.template = /* HTML */ `
   <div class="before"></div>
   <div class="preview" ref="preview-el"></div>
   <lr-icon size="40" ref="icon-el" set="@name: icon; @size: iconSize;"></lr-icon>

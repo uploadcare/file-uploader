@@ -1,3 +1,411 @@
+## [0.22.4](https://github.com/uploadcare/blocks/compare/v0.22.3...v0.22.4) (2023-05-23)
+
+### Bug Fixes
+
+- **file-item:** do not validate local files if no mime type provided (this is the case for drag'n'dropped HEICs) ([e47497e](https://github.com/uploadcare/blocks/commit/e47497e3cfa72a415c24d9d28362b6a0b3c50738))
+- **file-item:** validate file extensions along with the mime types ([b89ea0e](https://github.com/uploadcare/blocks/commit/b89ea0ed7ce81ab0f0f6071934f8fb3d4af71c0c))
+
+## [0.22.3](https://github.com/uploadcare/blocks/compare/v0.22.2...v0.22.3) (2023-05-19)
+
+### Features
+
+- **external-source**: configurable social base url ([0cd7f94](https://github.com/uploadcare/blocks/commit/0cd7f94f1eef24b3ce0e346eb1ed5773e82c090e))
+
+### Bug Fixes
+
+- **drop-area:** fix detection of the active dropzone ([97dbb32](https://github.com/uploadcare/blocks/commit/97dbb3272a36e4ae97441a044ac5c260c2018829))
+- **drop-area:** prevent flickering on file being dragged before init ([72b76a7](https://github.com/uploadcare/blocks/commit/72b76a7959881613866850f4cf56758624b93741))
+- **file-uploader-inline:** update missing `init$` usage that was leading to crash ([51a7b10](https://github.com/uploadcare/blocks/commit/51a7b109df66e4fe654c46078a03b24474589d71))
+
+## [0.22.2](https://github.com/uploadcare/blocks/compare/v0.22.1...v0.22.2) (2023-05-17)
+
+### Bug Fixes
+
+- add empty export to the blocks-browser bundle to fix working under isolatedModules ([#451](https://github.com/uploadcare/blocks/issues/451)) ([683fb2b](https://github.com/uploadcare/blocks/commit/683fb2b359d96550eee1c6e0ccf8873278c207ea))
+- **cloud-editor:** extend from ShadowWrapper ([3c518a5](https://github.com/uploadcare/blocks/commit/3c518a55c3006efc8dba9a8c7e6d0aec1ee1649b))
+- **cloud-editor:** solution bundle ([89ad5af](https://github.com/uploadcare/blocks/commit/89ad5afd2be4291f5abf85f179ec2d044136e2ef))
+
+## [0.22.1](https://github.com/uploadcare/blocks/compare/v0.22.0...v0.22.1) (2023-05-15)
+
+### Bug Fixes
+
+- **copyright:** hide whole `lr-copyright` block if it's disabled ([2550d20](https://github.com/uploadcare/blocks/commit/2550d2009d2bf8819e9b7c0d4d2f8bdd7665d9a6))
+- get rid of `ctxOwner` flag due to it's buggy behaviour ([6c5f374](https://github.com/uploadcare/blocks/commit/6c5f37442cec5b23f0f532854e28948e81129c51))
+
+# [0.22.0](https://github.com/uploadcare/blocks/compare/v0.21.7...v0.22.0) (2023-05-12)
+
+### Bug Fixes
+
+- **file-item:** error while rewoke thumb ([9dc73ff](https://github.com/uploadcare/blocks/commit/9dc73ff956c7ac39b2cfc2ee97c686e3c33847b1))
+- **progress-bar-common:** ignore pointer events when not active ([e6ddbf6](https://github.com/uploadcare/blocks/commit/e6ddbf611f9cc418f414d7489564cadf56097df1))
+- Don't show block re-registration warnings for the same block components
+
+### Features
+
+- Run upload requests in the queue ([ed9d6de](https://github.com/uploadcare/blocks/commit/ed9d6de5c098b9433c9a4ad4c6c8d48bb1617737))
+
+## [0.21.7](https://github.com/uploadcare/blocks/compare/v0.21.6...v0.21.7) (2023-05-03)
+
+### Bug Fixes
+
+- bump @uploadcare/upload-client to fix issues with Buffer polyfilling by CDNs (esm.sh, skypack) ([#442](https://github.com/uploadcare/blocks/issues/442)) ([afd1d7d](https://github.com/uploadcare/blocks/commit/afd1d7dcd48005c77a4487057fcb4c96133098a9))
+
+## [0.21.6](https://github.com/uploadcare/blocks/compare/v0.21.5...v0.21.6) (2023-04-28)
+
+### Bug Fixes
+
+- **file-uploader-inline:** add `flex: 1` css property to fill all available space inside flex column container ([#439](https://github.com/uploadcare/blocks/issues/439)) ([a781d20](https://github.com/uploadcare/blocks/commit/a781d20217a923b02cd58bc5b093379a5e3b21a4))
+- **package.json:** add types to exports field ([#440](https://github.com/uploadcare/blocks/issues/440)) ([718f432](https://github.com/uploadcare/blocks/commit/718f43214105f2b15c36b8d8344c5b723115295c))
+
+## [0.21.5](https://github.com/uploadcare/blocks/compare/v0.21.4...v0.21.5) (2023-04-27)
+
+### Bug Fixes
+
+- **file-uploader-inline:** set init context ([#437](https://github.com/uploadcare/blocks/issues/437)) ([81031a7](https://github.com/uploadcare/blocks/commit/81031a7212b17ffe588d8d4e829734c59055aec8))
+
+## [0.21.4](https://github.com/uploadcare/blocks/compare/v0.21.3...v0.21.4) (2023-04-27)
+
+### Bug Fixes
+
+- **file-uploader-inline:** do not try to hide drop area because it's hides itself ([#435](https://github.com/uploadcare/blocks/issues/435)) ([4f11007](https://github.com/uploadcare/blocks/commit/4f110071ba8b7709fcf6fe0f8f727224d5d3763f))
+
+## [0.21.3](https://github.com/uploadcare/blocks/compare/v0.21.2...v0.21.3) (2023-04-27)
+
+### Bug Fixes
+
+- **modal:** restore scroll lock on modal destroy ([#433](https://github.com/uploadcare/blocks/issues/433)) ([70fad11](https://github.com/uploadcare/blocks/commit/70fad116fe1845b1ff590e765748a770d4f8ee12))
+
+## [0.21.2](https://github.com/uploadcare/blocks/compare/v0.21.1...v0.21.2) (2023-04-27)
+
+### Bug Fixes
+
+- **jsx:** add missing lr-file-uploader-inline tag ([#431](https://github.com/uploadcare/blocks/issues/431)) ([a15cc28](https://github.com/uploadcare/blocks/commit/a15cc286fa0f09fb21248d425a0223b31ad77154))
+
+## [0.21.1](https://github.com/uploadcare/blocks/compare/v0.21.0...v0.21.1) (2023-04-25)
+
+### Bug Fixes
+
+- **activity-block:** reset current activity ([e72f15c](https://github.com/uploadcare/blocks/commit/e72f15cfdd49d439e95644999cb160b3629c1009))
+- **activity-header:** button colors in the darkmode ([6c29b47](https://github.com/uploadcare/blocks/commit/6c29b47bc515783927b1421ecbac1d04a1bb3d74))
+- **block:** update css data when block is connected to the DOM only ([23a99e2](https://github.com/uploadcare/blocks/commit/23a99e220706ddd7fa5cdd2a48332ec3cb649c45))
+- **drop-area:** disable and hide drop area if local sources are not allowed ([cf6bc8a](https://github.com/uploadcare/blocks/commit/cf6bc8a3c5ec1cea4dfd405d7d80c8d678c43d09))
+- **external-source:** reactive style updates ([bb6838b](https://github.com/uploadcare/blocks/commit/bb6838b2f057fcfa5336ee8be1eaae8eb01d6a3a))
+- **message-box:** reduce background lightness in the darkmode ([221bd05](https://github.com/uploadcare/blocks/commit/221bd05e86c62d8a75f7eb4f802f7fbbf58eaef5))
+- **shadow-wrapper:** prepend css-src style instead of append to make easier to override styles via `shadowStyles` ([7941e40](https://github.com/uploadcare/blocks/commit/7941e4077a0ad15fed4af5acf8229257eba971d0))
+- **simple-btn:** safari icon fractional scaling ([4400acd](https://github.com/uploadcare/blocks/commit/4400acd75d500df16b7f6067416f596e074e0114))
+- **solutions:** export LR from web bundles ([d5e718c](https://github.com/uploadcare/blocks/commit/d5e718c935b5d238fb5a642444c46565b890e874))
+- **source-list:** update children when source list is empty ([75cbbd4](https://github.com/uploadcare/blocks/commit/75cbbd414bc7d5e95125da9a77e6515aaba2c8c3))
+- stub package exports for SSR ([d528184](https://github.com/uploadcare/blocks/commit/d528184093366efef61468b3342fdce5a18327f5))
+- **upload-list:** do not try to handle file collection update while being disconnected from DOM ([ef6f101](https://github.com/uploadcare/blocks/commit/ef6f101eede0c9fffe9be52f31a04b1521eefad6))
+
+# [0.21.0](https://github.com/uploadcare/blocks/compare/v0.20.1...v0.21.0) (2023-04-19)
+
+### Features
+
+- add `--cfg-external-sources-preferred-types` option to configure preferred mime types for the external sources ([1d4e645](https://github.com/uploadcare/blocks/commit/1d4e64583e7ab58670f2f094f691ad54175749d7))
+
+## [0.20.1](https://github.com/uploadcare/blocks/compare/v0.20.0...v0.20.1) (2023-04-11)
+
+### Bug Fixes
+
+- bundle stubbed jsx types to npm package ([#414](https://github.com/uploadcare/blocks/issues/414)) ([98de315](https://github.com/uploadcare/blocks/commit/98de3150181556b8ade97d948ae4aa345adae8ee))
+
+# [0.20.0](https://github.com/uploadcare/blocks/compare/v0.19.0...v0.20.0) (2023-04-10)
+
+### Bug Fixes
+
+- **file-item:** make ui reactive to css data ([5d64a05](https://github.com/uploadcare/blocks/commit/5d64a05a3ba5beb1919b98e9c1009cae27b5e616))
+- **simple-btn:** prevent dropzone flickering on initial render ([82d9c1d](https://github.com/uploadcare/blocks/commit/82d9c1d6af67f115e276775d751ead280d211740))
+- **types:** add type stub for `lr-upload-ctx-provider` ([560502f](https://github.com/uploadcare/blocks/commit/560502f82adb8604d1d61958046533bc5ec4f362))
+- **uploader-block:** add missing external source types to the UploaderBlock's `sourceTypes` static property ([0a7c2fc](https://github.com/uploadcare/blocks/commit/0a7c2fcc573943a85dc875d51dfa79302ccc0ea0))
+
+### Features
+
+- add `--cfg-remove-copyright` option ([e128953](https://github.com/uploadcare/blocks/commit/e128953bf042b52cf5727f73f7321f4b23f6c60e))
+- **block:** add method `updateCtxCssData` to update css data for all the blocks in the context ([5a89749](https://github.com/uploadcare/blocks/commit/5a8974972de401ca35873fb4f44b6e12768520f1))
+
+# [0.19.0](https://github.com/uploadcare/blocks/compare/v0.18.1...v0.19.0) (2023-03-10)
+
+### Bug Fixes
+
+- **cloud-editor:** refetch image on container resize ([67ea66f](https://github.com/uploadcare/blocks/commit/67ea66f394cdbf43831e0410b9fc36e3406d1a4f))
+
+### Features
+
+- **cloud-editor:** use resize observer to wait for non-zero container size ([5686965](https://github.com/uploadcare/blocks/commit/56869653037dc0a6f7a140df34b5e0a56e347585))
+
+## [0.18.1](https://github.com/uploadcare/blocks/compare/v0.18.0...v0.18.1) (2023-03-09)
+
+### Bug Fixes
+
+- **docs:** set cloud-editor examples body height ([#398](https://github.com/uploadcare/blocks/issues/398)) ([690760e](https://github.com/uploadcare/blocks/commit/690760e47903ee693b456c398dab4c165cec3fed))
+- **lr-data-output:** create dynamic inputs container even if `input-required` is not defined ([#401](https://github.com/uploadcare/blocks/issues/401)) ([cdfce56](https://github.com/uploadcare/blocks/commit/cdfce567e888ecedec08d8c3d1dec13e07b7a671))
+
+# [0.18.0](https://github.com/uploadcare/blocks/compare/v0.17.1...v0.18.0) (2023-02-17)
+
+### Bug Fixes
+
+- **modal:** backdrop color definition ([d8fcf51](https://github.com/uploadcare/blocks/commit/d8fcf51a93aef72250b1e3e0149f6557c34ad149))
+- **modal:** do not manipulate `open` attr if dialog is supported ([4a286b9](https://github.com/uploadcare/blocks/commit/4a286b9e72236300a0f00d82ac53ce2db4619f81))
+
+### Features
+
+- **data-output:** add `input-required` attribute ([0fb1370](https://github.com/uploadcare/blocks/commit/0fb13702143dffd1f7cc4c6eeb4249cccba14721))
+- **file-uploader-minimal:** include `lr-data-output` to the bundle ([a6e7802](https://github.com/uploadcare/blocks/commit/a6e78028e2369bf6e6c4ccf197f02a938b50a7a3))
+
+## [0.17.1](https://github.com/uploadcare/blocks/compare/v0.17.0...v0.17.1) (2023-02-14)
+
+### Bug Fixes
+
+- **cloud-image-editor:** get rid of `change` event double initial calling ([#386](https://github.com/uploadcare/blocks/issues/386)) ([0cc0b00](https://github.com/uploadcare/blocks/commit/0cc0b0089c8f897c0ba3e4e951dd20188b21cf86))
+
+# [0.17.0](https://github.com/uploadcare/blocks/compare/v0.16.1...v0.17.0) (2023-02-08)
+
+### Bug Fixes
+
+- **cloud-image-editor:** dispatch events with `bubble` and `composed` flags ([58733c4](https://github.com/uploadcare/blocks/commit/58733c49505d623dee0ac4aed53fb31df251f530))
+- **cloud-image-editor:** fix extraction of `filter` operation with undefined value ([351b080](https://github.com/uploadcare/blocks/commit/351b0801a7356550ebfde5e2ee5b6b89851cdbf9))
+- **cloud-image-editor:** pause render until container get non-zero size ([1e5a4a8](https://github.com/uploadcare/blocks/commit/1e5a4a8210f73c8a163ae363b6f7e7c993c83061))
+
+### Features
+
+- **cloud-image-editor:** Add `change` event ([1fff5fb](https://github.com/uploadcare/blocks/commit/1fff5fb95ca6bcd4661844fab956888e974531b6))
+
+## [0.16.1](https://github.com/uploadcare/blocks/compare/v0.16.0...v0.16.1) (2023-02-06)
+
+### Bug Fixes
+
+- do not call init flow without user interaction ([#380](https://github.com/uploadcare/blocks/issues/380)) ([be100a5](https://github.com/uploadcare/blocks/commit/be100a5ef0bc254d62f89ad776482b07bda27d3f))
+- **file-uploader-inline:** show back button ([#381](https://github.com/uploadcare/blocks/issues/381)) ([cb83ebe](https://github.com/uploadcare/blocks/commit/cb83ebe7b399cee80af00489b0b1a7c4b4aa77bb))
+
+# [0.16.0](https://github.com/uploadcare/blocks/compare/v0.15.2...v0.16.0) (2023-02-03)
+
+### Bug Fixes
+
+- **file-uploader-inline:** hide close button ([4026508](https://github.com/uploadcare/blocks/commit/4026508265e9202dd10ecca9441e2ce7dd0d19e9))
+
+### Features
+
+- add `LR_DONE_FLOW` and `LR_INIT_FLOW` events ([b5828ad](https://github.com/uploadcare/blocks/commit/b5828ad1f9b0c9222afb48fb9f440aa303d31ddb))
+
+## [0.15.2](https://github.com/uploadcare/blocks/compare/v0.15.1...v0.15.2) (2023-02-03)
+
+### Bug Fixes
+
+- **upload-list:** undefined files count in the header ([#376](https://github.com/uploadcare/blocks/issues/376)) ([c897986](https://github.com/uploadcare/blocks/commit/c8979864c6fe1a3ac1231caff1538263356ecf66))
+
+## [0.15.1](https://github.com/uploadcare/blocks/compare/v0.15.0...v0.15.1) (2023-02-02)
+
+### Bug Fixes
+
+- **file-item:** dont show edit button if `--cfg-use-cloud-image-editor` flag is false ([#374](https://github.com/uploadcare/blocks/issues/374)) ([85d79bb](https://github.com/uploadcare/blocks/commit/85d79bb30cfbd751471e9186ec65cedd468fcd75))
+
+# [0.15.0](https://github.com/uploadcare/blocks/compare/v0.14.3...v0.15.0) (2023-01-31)
+
+We are excited to announce the launch of a brand-new design. This new design offers a more modern look and feels, making it easier and faster to use. We have also made several other UI improvements, such as improved navigation and a better overall user experience. We hope you enjoy the new design and experience.
+
+### Breaking changes
+
+If you haven't used custom templates, then there shouldn't be any breaking changes for you.
+
+If you're using custom templates, you will need to update them to comply with the new version's default template.
+
+- Content of `<lr-start-from />` component was modified
+- `<lr-confirmation-dialog />` was removed
+
+Here is the basic template for the `<lr-file-uploader-regular />` component:
+
+```html
+<lr-simple-btn></lr-simple-btn>
+
+<lr-modal strokes block-body-scrolling>
+  <lr-start-from>
+    <lr-drop-area with-icon clickable></lr-drop-area>
+    <lr-source-list wrap></lr-source-list>
+    <lr-copyright></lr-copyright>
+  </lr-start-from>
+  <lr-upload-list></lr-upload-list>
+  <lr-camera-source></lr-camera-source>
+  <lr-url-source></lr-url-source>
+  <lr-external-source></lr-external-source>
+  <lr-cloud-image-editor></lr-cloud-image-editor>
+</lr-modal>
+
+<lr-message-box></lr-message-box>
+<lr-progress-bar-common></lr-progress-bar-common>
+```
+
+### Bug Fixes
+
+- **image-editor:** restore transformations state from the cdn url ([32b1858](https://github.com/uploadcare/blocks/commit/32b18580e780bd55b18cfa2f0d31aa4d0b5b8742))
+- **shadow-wrapper:** hide container until css load ([ef9c552](https://github.com/uploadcare/blocks/commit/ef9c552c925a2c35689a4cdfe4bbd83e46e741db))
+- specify image types for file input capture accept, fixes Firefox on Android ([99b5f4f](https://github.com/uploadcare/blocks/commit/99b5f4f20bad0573cc7ee81a567c52cd88ca3f7c))
+
+### Features
+
+- allow custom pluralizers ([62ecffb](https://github.com/uploadcare/blocks/commit/62ecffb387b2b912b061f43b3e9f7cd7903aee13))
+- do not confirm upload list clearing ([c90c57a](https://github.com/uploadcare/blocks/commit/c90c57a9d1d4ab3e335fbd7a6486195d02b15de8))
+- show `cloud editor` instead of `upload details` ([036be6c](https://github.com/uploadcare/blocks/commit/036be6c9ede40d81414c4aafa0a7c5ce244ced2f))
+- **drop-area**: fullscreen mode
+- **upload-list**: show upload errors inside file item
+
+## [0.14.3](https://github.com/uploadcare/blocks/compare/v0.14.2...v0.14.3) (2022-12-20)
+
+### Bug Fixes
+
+- **data-output:** pass files or group URL to the hidden input ([160b08f](https://github.com/uploadcare/blocks/commit/160b08f174d605d3b499784c26793b3bebdfcf62))
+- **events:** emit `LR_DATA_OUTPUT` on image edit ([fa30140](https://github.com/uploadcare/blocks/commit/fa30140c34dd6d46842d569c2654e7b330358bab))
+- **events:** pass the whole file info object to to the `LR_CLOUD_MODIFICATION` event ([38440bd](https://github.com/uploadcare/blocks/commit/38440bdcd12ff64163662d0b4ae4ffa05f775d20))
+- single source behaviour ([#343](https://github.com/uploadcare/blocks/issues/343)) ([d2929de](https://github.com/uploadcare/blocks/commit/d2929de53e4352fee815f95124796cd20f930838))
+
+## [0.14.2](https://github.com/uploadcare/blocks/compare/v0.14.1...v0.14.2) (2022-11-22)
+
+### Bug Fixes
+
+- wrap `::backdrop` with `:is` to prevent ignoring from unsupported browsers ([#332](https://github.com/uploadcare/blocks/issues/332)) ([e3ef691](https://github.com/uploadcare/blocks/commit/e3ef6919f3154c7d0017df73c1a5ba63c0a0e996))
+
+## [0.14.1](https://github.com/uploadcare/blocks/compare/v0.14.0...v0.14.1) (2022-10-26)
+
+### Bug Fixes
+
+- fix processing escaped css property values in Firefox
+
+# [0.14.0](https://github.com/uploadcare/blocks/compare/v0.13.0...v0.14.0) (2022-10-26)
+
+### Bug Fixes
+
+- **external-source:** prevent iframe height overflow ([4fc669b](https://github.com/uploadcare/blocks/commit/4fc669b0d4f132c73a5cf533f01f06e2ac129bbc))
+- **store:** set store to `auto` by default ([464a5ce](https://github.com/uploadcare/blocks/commit/464a5ce0273cdac55dc7f9457ce60d234dcc2c56))
+
+### Features
+
+- **Block:** use real window height instead of 100vh ([577981e](https://github.com/uploadcare/blocks/commit/577981e8ddeb5a55729dcae16a0f198a312c5f16))
+- **camera-source:** show user media denied error to the user ([b4d167d](https://github.com/uploadcare/blocks/commit/b4d167d76fc80d213beb376c6e7a5b99685c4c30))
+- **modal:** use native `dialog` element & close modal on outside click ([5ec02e0](https://github.com/uploadcare/blocks/commit/5ec02e0a948de90370e838f2ee107bc1a7ede8e1))
+
+# [0.13.0](https://github.com/uploadcare/blocks/compare/v0.12.4...v0.13.0) (2022-10-17)
+
+### Bug Fixes
+
+- **drop-area:** open modal on files drop ([6c112a8](https://github.com/uploadcare/blocks/commit/6c112a88f02bbb5278e223f6f13f2d8b649c777d))
+
+### Features
+
+- **simple-button:** show drop area on files drag ([25fa023](https://github.com/uploadcare/blocks/commit/25fa023a997dca0c940bda55d3202cebf29db8b8))
+
+## [0.12.4](https://github.com/uploadcare/blocks/compare/v0.12.3...v0.12.4) (2022-10-11)
+
+### Bug Fixes
+
+- **modal:** disable stroked backdrop by default ([970b590](https://github.com/uploadcare/blocks/commit/970b590a2b08e62713034d05082c81be9b699d11))
+
+## [0.12.3](https://github.com/uploadcare/blocks/compare/v0.12.2...v0.12.3) (2022-10-10)
+
+### Bug Fixes
+
+- **register-blocks:** remove optional chaining usage ([935c8f3](https://github.com/uploadcare/blocks/commit/935c8f3e7d656d51b7b8fd0940c23d14c872491e))
+
+## [0.12.2](https://github.com/uploadcare/blocks/compare/v0.12.1...v0.12.2) (2022-10-08)
+
+### Bug Fixes
+
+- **connect-blocks-from:** remove optional chaining usage ([f93ab07](https://github.com/uploadcare/blocks/commit/f93ab07cc376a1201735163bdfa100f6cba7203b))
+
+## [0.12.1](https://github.com/uploadcare/blocks/compare/v0.12.0...v0.12.1) (2022-10-05)
+
+### Bug Fixes
+
+- **file-item:** cancel debounced thumb generation on element disconnect ([#294](https://github.com/uploadcare/blocks/issues/294)) ([7371335](https://github.com/uploadcare/blocks/commit/7371335b1df55a5b4fdd1ca3e4880986d7b159cf))
+
+# [0.12.0](https://github.com/uploadcare/blocks/compare/v0.11.1...v0.12.0) (2022-10-03)
+
+### Bug Fixes
+
+- count blocks number in the registry and unobserve upload collection when there are no any registred blocks ([9134f9b](https://github.com/uploadcare/blocks/commit/9134f9b261f09d2090230bf7c082befe28af94e3))
+- **file-uploader-minimal:** add missing translations ([#291](https://github.com/uploadcare/blocks/issues/291)) ([2ee8964](https://github.com/uploadcare/blocks/commit/2ee8964f62343d4460640e29cefa0ba74de24695))
+
+### Features
+
+- add export of `ShadowWrapper` ([6fedc7c](https://github.com/uploadcare/blocks/commit/6fedc7c6035d50171d06f1956a32de38b81becaa))
+
+## [0.11.1](https://github.com/uploadcare/blocks/compare/v0.11.0...v0.11.1) (2022-09-28)
+
+### Bug Fixes
+
+- **file-item:** check file mime type before upload ([0ced1ef](https://github.com/uploadcare/blocks/commit/0ced1ef6b082b6bb3f2089f20dbe59de3db5f680))
+- **file-item:** check for allowed mime types list length before match ([16cabec](https://github.com/uploadcare/blocks/commit/16cabec53d3cb5b8bde059b8ee739709118cd354))
+- **file-item:** do not handle empty mime types ([3ce3e95](https://github.com/uploadcare/blocks/commit/3ce3e9575742936433eefb1cb7338544f7ae0d0e))
+- **file-item:** skip `isImage` check for the external files before upload ([7f19457](https://github.com/uploadcare/blocks/commit/7f19457173e004e52882362cd3d75dd967f29fce))
+- **uploader-block:** fix array destructuring mistake ([09d57f6](https://github.com/uploadcare/blocks/commit/09d57f664b6be4bb42a992486c26fbca248f9b0c))
+
+# [0.11.0](https://github.com/uploadcare/blocks/compare/v0.10.3...v0.11.0) (2022-09-26)
+
+### Bug Fixes
+
+- **lr-image:** return data: and blob: sources as is ([e83518b](https://github.com/uploadcare/blocks/commit/e83518bfbbfd69bdf259ca0f5b8b3473cff5c7ae))
+- **lr-image:** set provided custom `cdn-cname` when uuid attr passed ([ff04d93](https://github.com/uploadcare/blocks/commit/ff04d93ff8f4a9e71d8ee3fe8e54678e1316db73))
+- svg image preview rendering in firefox ([1231951](https://github.com/uploadcare/blocks/commit/12319512296afc2576326094fad3a7a59b3cdcca))
+
+### Features
+
+- **lr-image:** don't proxify already uploaded images ([4d0dc0d](https://github.com/uploadcare/blocks/commit/4d0dc0da5d0a4e4a919911791f845913a23377d8))
+
+## [0.10.3](https://github.com/uploadcare/blocks/compare/v0.10.2...v0.10.3) (2022-09-23)
+
+### Bug Fixes
+
+- **file-item:** uploading from external url (typo) ([#281](https://github.com/uploadcare/blocks/issues/281)) ([ed5c741](https://github.com/uploadcare/blocks/commit/ed5c741e0dc1f37fa6a58b073cd3df9e05a3168c))
+- unobserve upload collection on destroy ([#282](https://github.com/uploadcare/blocks/issues/282)) ([2c871e1](https://github.com/uploadcare/blocks/commit/2c871e1a1f77d82731b48374cef2713be90f3d64))
+
+## [0.10.2](https://github.com/uploadcare/blocks/compare/v0.10.1...v0.10.2) (2022-09-22)
+
+### Bug Fixes
+
+- **external-source:** disable `done` button when no files selected ([#278](https://github.com/uploadcare/blocks/issues/278)) ([7ae584f](https://github.com/uploadcare/blocks/commit/7ae584fc5dc1cab7e9718ea0ae2f4340b331a2dd))
+
+## [0.10.1](https://github.com/uploadcare/blocks/compare/v0.10.0...v0.10.1) (2022-09-20)
+
+### Bug Fixes
+
+- **file-item:** prevent flickering ([d04ec9d](https://github.com/uploadcare/blocks/commit/d04ec9d8ddf893410025adb49c262c24399d7fa3))
+- **file-item:** regenerate thumb on image edit ([15e567d](https://github.com/uploadcare/blocks/commit/15e567dddd5af05ffc7b3d76f02db25d31067516))
+- rework history ([f7e39f9](https://github.com/uploadcare/blocks/commit/f7e39f9234f384f40f50cb211268f319d3a5b3d5))
+- **upload-list:** do not close modal automatically if `--cfg-confirm-upload` enabled ([68f3e93](https://github.com/uploadcare/blocks/commit/68f3e931ffd37a37b2622653fb3a65ee78530a48))
+
+# [0.10.0](https://github.com/uploadcare/blocks/compare/v0.9.4...v0.10.0) (2022-09-19)
+
+### Bug Fixes
+
+- **file-item:** calculate state in the single place ([8eb5f6e](https://github.com/uploadcare/blocks/commit/8eb5f6e1b53b4c1e03d39a7c8bda792110a11dc6))
+- **file-item:** proper request abort, restore state on new entry, optimize thumb generation ([60038f2](https://github.com/uploadcare/blocks/commit/60038f2afabe37723f263cda506ffc846b13118f))
+- **upload-list:** enable `Upload` button if any file isn't started uploading ([9b980c4](https://github.com/uploadcare/blocks/commit/9b980c4600b7dbedf73a31c6f4294a63cea216ee))
+- **uploader-block:** do not history back if no any files in the collection ([34bbb7e](https://github.com/uploadcare/blocks/commit/34bbb7eac0e3ccfd1ec20bb768fc0649897e733c))
+
+### Features
+
+- **typed-collection:** check type with instanceof ([409feec](https://github.com/uploadcare/blocks/commit/409feec27c775ae235270cb47fec0d735712da4f))
+- **typed-collection:** notify subscribers about added and removed items ([624c282](https://github.com/uploadcare/blocks/commit/624c282839ecf7c621e01aafd2107f9f10d3cbf4))
+
+## [0.9.4](https://github.com/uploadcare/blocks/compare/v0.9.3...v0.9.4) (2022-09-13)
+
+### Bug Fixes
+
+- do not use `structuredClone` due to unsupport in safari <= 15.3 ([#257](https://github.com/uploadcare/blocks/issues/257)) ([8708b08](https://github.com/uploadcare/blocks/commit/8708b08483b220e69d8a58be3b9ebad68664fc75))
+- **message-box:** specify text-align for message ([#254](https://github.com/uploadcare/blocks/issues/254)) ([2561eb6](https://github.com/uploadcare/blocks/commit/2561eb6b2441082826082ac7353892dd1b81130d))
+
+## [0.9.3](https://github.com/uploadcare/blocks/compare/v0.9.2...v0.9.3) (2022-09-09)
+
+### Bug Fixes
+
+- abort uploading on item remove ([c53d730](https://github.com/uploadcare/blocks/commit/c53d73008297c6645d997fa869ecf8ac85317495))
+- **core:** deep clone shared initial state before use it ([f48e7f3](https://github.com/uploadcare/blocks/commit/f48e7f3e61722eb5b4d3206565d7d8c9e49971a0))
+- **file-uploader-minimal:** add missing icons ([91f08b4](https://github.com/uploadcare/blocks/commit/91f08b40a79717a490a961c46a8e145fc6526c97))
+- **file-uploader-minimal:** do not show empty list ([15c1fb4](https://github.com/uploadcare/blocks/commit/15c1fb4c9396725519100b3a4fb23feb4f034c1a))
+- **upload-list:** do not call upload done callback on empty list ([522a8cb](https://github.com/uploadcare/blocks/commit/522a8cb682f30a7a095872cb7cb490a69a49aef7))
+- **upload-list:** wrong scrollable content height on safari 15.3 ([#248](https://github.com/uploadcare/blocks/issues/248)) ([60573d8](https://github.com/uploadcare/blocks/commit/60573d8e6c452e7cb295c0b4cf019c181fe42eb5))
+
+## [0.9.2](https://github.com/uploadcare/blocks/compare/v0.9.1...v0.9.2) (2022-09-02)
+
 ## [0.9.1](https://github.com/uploadcare/uc-blocks/compare/v0.9.0...v0.9.1) (2022-08-31)
 
 ### Bug Fixes
