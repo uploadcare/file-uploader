@@ -1,0 +1,13 @@
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: var(--uploadcare-blocks-window-height, 100vh);
+}
+modal-css {
+  position: relative;
+  display: block;
+  height: 600px;
+  width: 800px;
+  background-color: var(--clr-2);
+}

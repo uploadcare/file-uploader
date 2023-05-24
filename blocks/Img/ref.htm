@@ -1,0 +1,176 @@
+<h2>Absolute path src</h2>
+
+<lr-live-html>
+  <script src="./test.js" type="module"></script>
+
+  <style>
+    lr-img {
+      --lr-img-pubkey: '364c0864158c27472ffe';
+      display: contents;
+    }
+
+    lr-img > img {
+      transition: 1s;
+    }
+
+    lr-img > img[unresolved] {
+      opacity: 0;
+      transform: scale(0.8);
+    }
+  </style>
+
+  <lr-img width="100%" src="https://uploadcare.github.io/blocks/assets/media/kitten.jpg?absolute"> </lr-img>
+</lr-live-html>
+
+<h2>Absolute src + noscript + image transformation</h2>
+<lr-live-html>
+  <script src="./test.js" type="module"></script>
+
+  <style>
+    @import url('./test.css');
+
+    .invert {
+      --lr-img-cdn-operations: 'invert/-/grayscale';
+    }
+  </style>
+
+  <lr-img
+    width="100%"
+    src="https://uploadcare.github.io/blocks/assets/media/kitten.jpg?absolute_transform"
+    class="invert"
+  >
+    <noscript>
+      <img src="https://uploadcare.github.io/blocks/assets/media/kitten.jpg" alt="ALT_TEXT" />
+    </noscript>
+  </lr-img>
+</lr-live-html>
+
+<h2>Breakpoints</h2>
+<lr-live-html>
+  <script src="./test.js" type="module"></script>
+
+  <style>
+    @import url('./test.css');
+
+    lr-img {
+      --lr-img-breakpoints: '400, 800, 1200';
+    }
+  </style>
+
+  <lr-img width="100%" src="https://uploadcare.github.io/blocks/assets/media/kitten.jpg?breakpoints"> </lr-img>
+</lr-live-html>
+
+<h2>Background mode</h2>
+<lr-live-html>
+  <script src="./test.js" type="module"></script>
+
+  <style>
+    @import url('./test.css');
+
+    #target {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 200px;
+      background-color: #000;
+      color: #fff;
+      background-size: cover;
+    }
+  </style>
+
+  <div id="target">Some text...</div>
+
+  <lr-img
+    is-background-for="#target"
+    src="https://uploadcare.github.io/blocks/assets/media/kitten.jpg?bg_mode"
+  >
+  </lr-img>
+</lr-live-html>
+
+<h2>Relative path src (dev mode)</h2>
+<lr-live-html>
+  <script src="./test.js" type="module"></script>
+
+  <style>
+    @import url('./test.css');
+  </style>
+
+  <lr-img src="../../assets/media/kitten.jpg?dev_mode" width="500"></lr-img>
+</lr-live-html>
+
+<h2>UUID source</h2>
+<lr-live-html>
+  <script src="./test.js" type="module"></script>
+
+  <style>
+    @import url('./test.css');
+
+    .invert {
+      --lr-img-cdn-operations: 'invert';
+    }
+
+    .blur {
+      --lr-img-cdn-operations: 'blur/50';
+    }
+  </style>
+
+  <lr-img width="150" uuid="0aa081d8-8571-4b16-9e3e-e7837d6d3bc3"> </lr-img>
+
+  <lr-img width="150" class="invert" uuid="0aa081d8-8571-4b16-9e3e-e7837d6d3bc3"> </lr-img>
+
+  <lr-img width="150" class="blur" uuid="0aa081d8-8571-4b16-9e3e-e7837d6d3bc3"> </lr-img>
+</lr-live-html>
+
+<h2>Lazy disabled (attribute)</h2>
+<lr-live-html>
+  <script src="./test.js" type="module"></script>
+
+  <style>
+    @import url('./test.css');
+
+    lr-img {
+      --lr-img-lazy: 0;
+    }
+  </style>
+
+  <lr-img width="100%" src="https://uploadcare.github.io/blocks/assets/media/kitten.jpg?lazy_attr"> </lr-img>
+</lr-live-html>
+
+<h2>Lazy (observer)</h2>
+<lr-live-html>
+  <script src="./test.js" type="module"></script>
+
+  <style>
+    @import url('./test.css');
+
+    lr-img {
+      --lr-img-intersection: 1;
+    }
+  </style>
+
+  <lr-img width="100%" src="https://uploadcare.github.io/blocks/assets/media/kitten.jpg?lazy_observer">
+  </lr-img>
+</lr-live-html>
+
+<h2>Event proxy</h2>
+<lr-live-html>
+  <script src="./test.js" type="module"></script>
+
+  <style>
+    @import url('./test.css');
+  </style>
+
+  <lr-img width="100%" src="https://uploadcare.github.io/blocks/assets/media/kitten.jpg?absolute">
+  </lr-img>
+
+  <script>
+    const el = document.querySelector('lr-img')
+    el.addEventListener('load', (e) => {
+      console.log('load event triggered', e)
+    })
+
+    el.onload = (e) => {
+      console.log('onload callback triggered', e)
+    }
+  </script>
+</lr-live-html>

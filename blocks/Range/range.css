@@ -1,0 +1,65 @@
+lr-range {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--ui-size);
+}
+
+lr-range datalist {
+  display: none;
+}
+
+lr-range input {
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+}
+
+lr-range .track-wrapper {
+  position: absolute;
+  right: 10px;
+  left: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 2px;
+  user-select: none;
+  pointer-events: none;
+}
+
+lr-range .track {
+  position: absolute;
+  right: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 2px;
+  background-color: currentColor;
+  border-radius: 2px;
+  opacity: 0.5;
+}
+
+lr-range .slider {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  background-color: currentColor;
+  border-radius: 100%;
+  transform: translateX(-50%);
+}
+
+lr-range .bar {
+  position: absolute;
+  left: 0;
+  height: 100%;
+  background-color: currentColor;
+  border-radius: 2px;
+}
+
+lr-range .caption {
+  position: absolute;
+  display: inline-flex;
+  justify-content: center;
+}

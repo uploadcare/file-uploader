@@ -1,0 +1,24 @@
+lr-url-source {
+  display: block;
+  background-color: var(--clr-background-light);
+}
+
+lr-modal lr-url-source {
+  width: min(calc(var(--modal-normal-w) - var(--gap-mid) * 2), calc(100vw - var(--gap-mid) * 2));
+}
+
+lr-url-source > .content {
+  display: grid;
+  grid-gap: var(--gap-small);
+  grid-template-columns: 1fr min-content;
+  padding: var(--gap-mid);
+  padding-top: 0;
+}
+
+lr-url-source .url-input {
+  display: flex;
+}
+
+lr-url-source .url-upload-btn::after {
+  content: var(--l10n-upload-url);
+}

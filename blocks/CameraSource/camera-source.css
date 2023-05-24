@@ -1,0 +1,106 @@
+lr-camera-source {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
+  background-color: var(--clr-background-light);
+  border-radius: var(--border-radius-element);
+}
+
+lr-modal lr-camera-source {
+  width: min(calc(var(--modal-max-w) - var(--gap-mid) * 2), calc(100vw - var(--gap-mid) * 2));
+  height: 100vh;
+  max-height: var(--modal-max-content-height);
+}
+
+lr-camera-source.initialized {
+  height: max-content;
+}
+
+@media only screen and (max-width: 430px) {
+  lr-camera-source {
+    width: calc(100vw - var(--gap-mid) * 2);
+    height: var(--modal-content-height-fill, 100%);
+  }
+}
+
+lr-camera-source video {
+  display: block;
+  width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  object-position: center center;
+  background-color: var(--clr-background-dark);
+  border-radius: var(--border-radius-element);
+}
+
+lr-camera-source .toolbar {
+  position: absolute;
+  bottom: 0;
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  padding: var(--gap-mid);
+  background-color: var(--clr-background-light);
+}
+
+lr-camera-source .content {
+  display: flex;
+  flex: 1;
+  justify-content: center;
+  width: 100%;
+  padding: var(--gap-mid);
+  padding-top: 0;
+  overflow: hidden;
+}
+
+lr-camera-source .message-box {
+  --padding: calc(var(--gap-max) * 2);
+
+  display: flex;
+  flex-direction: column;
+  grid-gap: var(--gap-max);
+  align-items: center;
+  justify-content: center;
+  padding: var(--padding) var(--padding) 0 var(--padding);
+  color: var(--clr-txt);
+}
+
+lr-camera-source .message-box button {
+  color: var(--clr-btn-txt-primary);
+  background-color: var(--clr-btn-bgr-primary);
+}
+
+lr-camera-source .shot-btn {
+  position: absolute;
+  bottom: var(--gap-max);
+  width: calc(var(--ui-size) * 1.8);
+  height: calc(var(--ui-size) * 1.8);
+  color: var(--clr-background-light);
+  background-color: var(--clr-txt);
+  border-radius: 50%;
+  opacity: 0.85;
+  transition: var(--transition-duration) ease;
+}
+
+lr-camera-source .shot-btn:hover {
+  transform: scale(1.05);
+  opacity: 1;
+}
+
+lr-camera-source .shot-btn:active {
+  background-color: var(--clr-txt-mid);
+  opacity: 1;
+}
+
+lr-camera-source .shot-btn[disabled] {
+  bottom: calc(var(--gap-max) * -1 - var(--gap-mid) - var(--ui-size) * 2);
+}
+
+lr-camera-source .shot-btn lr-icon svg {
+  width: calc(var(--ui-size) / 1.5);
+  height: calc(var(--ui-size) / 1.5);
+}

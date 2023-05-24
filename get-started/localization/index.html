@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+  <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>Blocks by Uploadcare</title>
+      <script
+        async
+        src="https://cdn.skypack.dev/-/es-module-shims@v1.5.8-O0uWfhbenfjMbv6D3d8E/dist=es2020,mode=raw,min/dist/es-module-shims.js"
+      ></script>
+      <script type="importmap">
+        {
+  "imports": {
+    "@symbiotejs/symbiote": "https://esm.sh/@symbiotejs/symbiote@1.11.7",
+    "@uploadcare/upload-client": "https://esm.sh/@uploadcare/upload-client@6.6.1"
+  }
+}
+
+      </script>
+      <script
+        type="module"
+        src="https://cdn.skypack.dev/pin/@re4ma/re4ma@v0.1.7-2fpA2FBNkO473Jd06xxO/mode=imports,min/unoptimized/build/re4ma.js"
+      ></script>
+      <script type="module">
+        import { LiveHtml } from '../../blocks/LiveHtml/LiveHtml.js';
+        LiveHtml.reg('lr-live-html');
+      </script>
+      <style>
+         @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;700&display=swap');:root{--clr-bg:rgb(31 29 29);--clr-font:rgb(224 253 255);--clr-link:rgb(253 255 139);--clr-panel:rgb(255 255 255 / 10%);--clr-accent:rgb(233 159 255);--clr-accent-shade:rgb(233 159 255 / 6%);--clr-code:#fff;--clr-code-hl:rgb(255 112 112);--gap-min:2px;--gap-mid:10px;--gap-max:20px;--gap-huge:60px;}html,body{margin:0;padding:0;color:var(--clr-font);font-family:Roboto,sans-serif;background-color:var(--clr-bg);}body{display:grid;grid-template-rows:min-content min-content auto min-content;min-height:100vh;}header{padding:20px;background-color:rgba(0,0,0,.4);}nav{--l-bg-clr:rgba(60,60,60,.9);--blur:6px;display:flex;justify-content:center;position:sticky;z-index:10000;top:0;background-color:var(--l-bg-clr);height:100%;}@supports ((-webkit-backdrop-filter:blur(var(--blur))) or (backdrop-filter:blur(var(--blur)))){nav{--l-bg-clr:rgba(255,255,255,.1);backdrop-filter:blur(var(--blur));-webkit-backdrop-filter:blur(var(--blur));}}nav > div{display:flex;justify-content:end;align-items:center;width:100%;max-width:1300px;}nav a{display:block;color:var(--clr-font);margin:20px;text-decoration:none;text-shadow:1px 1px 2px rgba(0,0,0,.6);}main{display:flex;justify-content:center;padding:20px;}col-css{display:block;max-width:1080px;width:100%;}footer{padding:20px;background-color:rgba(0,0,0,.2);}lr-live-html{min-height:400px;}main a{color:var(--clr-link);}code{display:block;background-color:#000;color:var(--clr-code);padding:var(--gap-max);overflow-x:auto;}code .hl{color:var(--clr-code-hl);}code:not([class]){display:inline-block;padding:var(--gap-min);padding-left:.5em;padding-right:.5em;}blockquote{display:block;color:var(--clr-accent);background-color:var(--clr-accent-shade);padding:var(--gap-mid);margin:0;margin-top:var(--gap-max);border-left:var(--gap-min) solid currentColor;}h1{color:var(--clr-accent);}h2{margin-top:calc(var(--gap-max) * 3);}li{margin-bottom:var(--gap-mid);}table{width:100%;}th{padding:10px;background:rgba(0,0,0,.4);}td{padding:10px;background:rgba(255,255,255,.1);}tr:hover{background:rgba(255,255,255,.1);}.sidebar-wrapper{width:14rem;padding-right:1rem;}.sidebar{padding:1rem;display:flex;flex-direction:column;position:sticky;align-self:flex-start;top:79px;}.sidebar a{color:rgb(224 253 255);text-decoration:none;}.menu-section{margin-bottom:1rem;}.menu-item{padding:.5rem 0;}.menu-item:hover{color:rgba(186,186,186,.9);}.current{color:aquamarine;}.level-1{padding-left:.5rem;font-weight:600;cursor:pointer;}.level-2{padding-left:1.5rem;font-weight:300;cursor:pointer;}.level-2 .current{list-style-type:disc;}.arrow-top{cursor:pointer;position:fixed;bottom:15px;right:15px;}.no-link{cursor:auto;color:rgb(224 253 255) !important;}a[target="_blank"]:after{content:url(../../assets/media/external-link-icon.svg);margin-left:.1em;position:relative;bottom:2px;}.github:before{content:url(../../assets/media/github-icon.svg);margin-right:.1em;position:relative;top:1px;vertical-align:sub;}lr-live-html{position:relative;display:grid;grid-template-columns:50% 50%;box-shadow:0 5px 16px rgb(0 0 0 / 60%);}lr-live-html [contenteditable]{padding:20px;overflow:auto;color:rgb(255 255 255);font-size:14px;font-family:monospace;white-space:pre;background-color:#000;outline:none;}lr-live-html [contenteditable] .hljs-string{color:rgb(251,182,79);}lr-live-html [contenteditable] .hljs-comment{color:rgb(149,149,149);font-style:italic;}lr-live-html [contenteditable] .hljs-attr{color:rgb(138,218,172);}lr-live-html [contenteditable] .hljs-function{color:rgb(239,235,149);}lr-live-html [contenteditable] .hljs-variable{color:rgb(121,183,255);}lr-live-html [contenteditable] .hljs-title{color:rgb(180,243,255);}lr-live-html [contenteditable] .hljs-property{color:rgb(238,131,252);}lr-live-html [contenteditable] .hljs-keyword{color:rgb(254,165,176);}lr-live-html [contenteditable] .hljs-tag{color:rgb(254,165,176);}lr-live-html [contenteditable] .hljs-name{color:rgb(165,245,254);}lr-live-html iframe{display:block;width:100%;height:100%;background-color:#fff;border:0;}lr-live-html > .open-new-tab-btn{position:absolute;top:6px;left:6px;display:none;}lr-live-html:hover > .open-new-tab-btn{display:block;}lr-live-html{position:relative;display:grid;grid-template-columns:50% 50%;box-shadow:0 5px 16px rgb(0 0 0 / 60%);}code{padding:20px;overflow:auto;color:rgb(255 255 255);font-size:14px;font-family:monospace;white-space:pre;background-color:#000;outline:none;}code .hljs-string{color:rgb(251,182,79);}code .hljs-comment{color:rgb(149,149,149);font-style:italic;}code .hljs-attr{color:rgb(138,218,172);}code .hljs-function{color:rgb(239,235,149);}code .hljs-variable{color:rgb(121,183,255);}code .hljs-title{color:rgb(180,243,255);}code .hljs-property{color:rgb(238,131,252);}code .hljs-keyword{color:rgb(254,165,176);}code .hljs-tag{color:rgb(254,165,176);}code .hljs-name{color:rgb(165,245,254);}lr-live-html iframe{display:block;width:100%;height:100%;background-color:#fff;border:0;}lr-live-html > .open-new-tab-btn{position:absolute;top:6px;left:6px;display:none;}lr-live-html:hover > .open-new-tab-btn{display:block;}
+      </style>
+    </head>
+    <body>
+      <nav>
+        <div>
+          <span>🟡 Uploadcare | blocks</span>
+          <a style="margin-left: auto" href="//uploadcare.com" target="_blank">Uploadcare</a>
+          <a href="//github.com/uploadcare/blocks/discussions" target="_blank">Discussions</a>
+          <a href="//github.com/uploadcare/blocks" class="github" target="_blank">GitHub</a>
+        </div>
+      </nav>
+      <main>
+        <div class="sidebar-wrapper">
+          <div class="sidebar">
+            <div class="menu-section">
+              <a href="../../"><div class="menu-item level-1">Get started</div></a>
+              <a href="../../get-started/installation/"><div class="menu-item level-2">Installation</div></a>
+              <a href="../../get-started/configuration/"><div class="menu-item level-2">Configuration</div></a>
+              <a href="../../get-started/localization/"><div class="menu-item level-2">Localization</div></a>
+            </div>
+            <div class="menu-section">
+              <div class="menu-item level-1 no-link">Components</div>
+              <a href="../../solutions/file-uploader/"><div class="menu-item level-2">File Uploader</div></a>
+              <a href="../../solutions/adaptive-image/"><div class="menu-item level-2">Adaptive image</div></a>
+              <a href="../../solutions/cloud-image-editor/"><div class="menu-item level-2">Image editor</div></a>
+            </div>
+            <div class="menu-section">
+              <a href="../../blocks/"><div class="menu-item level-1">Customization</div></a>
+            </div>
+          </div>
+        </div>
+        <col-css><h1 id="localization">Localization</h1>
+<p>All keys and values for the UI texts and translations are placed in CSS:</p>
+<pre><code class="language-css"><span class="hljs-selector-class">.lr-wgt-l10n_en-US</span>,
+<span class="hljs-selector-class">.lr-wgt-common</span>,
+<span class="hljs-selector-pseudo">:host</span> {
+  <span class="hljs-attr">--l10n-upload-file</span>: <span class="hljs-string">&#x27;Upload file&#x27;</span>;
+  <span class="hljs-attr">--l10n-upload-files</span>: <span class="hljs-string">&#x27;Upload files&#x27;</span>;
+  <span class="hljs-attr">--l10n-drop-files-here</span>: <span class="hljs-string">&#x27;Drop files here...&#x27;</span>;
+  <span class="hljs-attr">--l10n-select-file-source</span>: <span class="hljs-string">&#x27;Select file source&#x27;</span>;
+  <span class="hljs-attr">--l10n-selected</span>: <span class="hljs-string">&#x27;Selected&#x27;</span>;
+  <span class="hljs-attr">--l10n-upload</span>: <span class="hljs-string">&#x27;Upload&#x27;</span>;
+  <span class="hljs-attr">--l10n-add-more</span>: <span class="hljs-string">&#x27;Add more&#x27;</span>;
+  <span class="hljs-attr">--l10n-cancel</span>: <span class="hljs-string">&#x27;Cancel&#x27;</span>;
+  <span class="hljs-attr">--l10n-clear</span>: <span class="hljs-string">&#x27;Clear&#x27;</span>;
+  <span class="hljs-attr">--l10n-camera-shot</span>: <span class="hljs-string">&#x27;Shot&#x27;</span>;
+  <span class="hljs-attr">--l10n-upload-url</span>: <span class="hljs-string">&#x27;Import&#x27;</span>;
+  <span class="hljs-attr">--l10n-edit-image</span>: <span class="hljs-string">&#x27;Edit image&#x27;</span>;
+  <span class="hljs-attr">--l10n-edit-detail</span>: <span class="hljs-string">&#x27;Details&#x27;</span>;
+  <span class="hljs-attr">--l10n-back</span>: <span class="hljs-string">&#x27;Back&#x27;</span>;
+  <span class="hljs-attr">--l10n-done</span>: <span class="hljs-string">&#x27;Done&#x27;</span>;
+  <span class="hljs-attr">--l10n-remove-from-list</span>: <span class="hljs-string">&#x27;Remove&#x27;</span>;
+  <span class="hljs-attr">--l10n-no</span>: <span class="hljs-string">&#x27;No&#x27;</span>;
+  <span class="hljs-attr">--l10n-yes</span>: <span class="hljs-string">&#x27;Yes&#x27;</span>;
+  <span class="hljs-attr">--l10n-confirm-your-action</span>: <span class="hljs-string">&#x27;Confirm your action&#x27;</span>;
+  <span class="hljs-attr">--l10n-are-you-sure</span>: <span class="hljs-string">&#x27;Are you sure?&#x27;</span>;
+  <span class="hljs-attr">--l10n-selected-count</span>: <span class="hljs-string">&#x27;Selected:&#x27;</span>;
+  <span class="hljs-attr">--l10n-upload-error</span>: <span class="hljs-string">&#x27;Upload error&#x27;</span>;
+  <span class="hljs-attr">--l10n-no-files</span>: <span class="hljs-string">&#x27;No files selected&#x27;</span>;
+
+  <span class="hljs-attr">--l10n-src-type-local</span>: <span class="hljs-string">&#x27;Local file&#x27;</span>;
+  <span class="hljs-attr">--l10n-src-type-from-url</span>: <span class="hljs-string">&#x27;From URL&#x27;</span>;
+  <span class="hljs-attr">--l10n-src-type-camera</span>: <span class="hljs-string">&#x27;Camera&#x27;</span>;
+  <span class="hljs-attr">--l10n-src-type-draw</span>: <span class="hljs-string">&#x27;Draw&#x27;</span>;
+  <span class="hljs-attr">--l10n-src-type-facebook</span>: <span class="hljs-string">&#x27;Facebook&#x27;</span>;
+  <span class="hljs-attr">--l10n-src-type-dropbox</span>: <span class="hljs-string">&#x27;Dropbox&#x27;</span>;
+  <span class="hljs-attr">--l10n-src-type-gdrive</span>: <span class="hljs-string">&#x27;Gdrive&#x27;</span>;
+  <span class="hljs-attr">--l10n-src-type-gphotos</span>: <span class="hljs-string">&#x27;Gphotos&#x27;</span>;
+  <span class="hljs-attr">--l10n-src-type-instagram</span>: <span class="hljs-string">&#x27;Instagram&#x27;</span>;
+  <span class="hljs-attr">--l10n-src-type-flickr</span>: <span class="hljs-string">&#x27;Flickr&#x27;</span>;
+  <span class="hljs-attr">--l10n-src-type-vk</span>: <span class="hljs-string">&#x27;VK&#x27;</span>;
+  <span class="hljs-attr">--l10n-src-type-evernote</span>: <span class="hljs-string">&#x27;Evernote&#x27;</span>;
+  <span class="hljs-attr">--l10n-src-type-box</span>: <span class="hljs-string">&#x27;Box&#x27;</span>;
+  <span class="hljs-attr">--l10n-src-type-onedrive</span>: <span class="hljs-string">&#x27;Onedrive&#x27;</span>;
+  <span class="hljs-attr">--l10n-src-type-huddle</span>: <span class="hljs-string">&#x27;Huddle&#x27;</span>;
+  <span class="hljs-attr">--l10n-src-type-other</span>: <span class="hljs-string">&#x27;Other&#x27;</span>;
+
+  <span class="hljs-attr">--l10n-src-type</span>: <span class="hljs-built_in">var</span>(--l10n-src-type-local);
+
+  <span class="hljs-attr">--l10n-caption-from-url</span>: <span class="hljs-string">&#x27;Import from external URL&#x27;</span>;
+  <span class="hljs-attr">--l10n-caption-camera</span>: <span class="hljs-string">&#x27;Camera&#x27;</span>;
+  <span class="hljs-attr">--l10n-caption-draw</span>: <span class="hljs-string">&#x27;Draw&#x27;</span>;
+  <span class="hljs-attr">--l10n-caption-edit-file</span>: <span class="hljs-string">&#x27;Edit file&#x27;</span>;
+
+  <span class="hljs-attr">--l10n-file-no-name</span>: <span class="hljs-string">&#x27;No name...&#x27;</span>;
+
+  <span class="hljs-attr">--l10n-toggle-fullscreen</span>: <span class="hljs-string">&#x27;Toggle fullscreen&#x27;</span>;
+  <span class="hljs-attr">--l10n-toggle-guides</span>: <span class="hljs-string">&#x27;Toggle guides&#x27;</span>;
+  <span class="hljs-attr">--l10n-rotate</span>: <span class="hljs-string">&#x27;Rotate&#x27;</span>;
+  <span class="hljs-attr">--l10n-flip-vertical</span>: <span class="hljs-string">&#x27;Flip vertical&#x27;</span>;
+  <span class="hljs-attr">--l10n-flip-horizontal</span>: <span class="hljs-string">&#x27;Flip horizontal&#x27;</span>;
+  <span class="hljs-attr">--l10n-brightness</span>: <span class="hljs-string">&#x27;Brightness&#x27;</span>;
+  <span class="hljs-attr">--l10n-contrast</span>: <span class="hljs-string">&#x27;Contrast&#x27;</span>;
+  <span class="hljs-attr">--l10n-saturation</span>: <span class="hljs-string">&#x27;Saturation&#x27;</span>;
+  <span class="hljs-attr">--l10n-resize</span>: <span class="hljs-string">&#x27;Resize image&#x27;</span>;
+  <span class="hljs-attr">--l10n-crop</span>: <span class="hljs-string">&#x27;Crop&#x27;</span>;
+  <span class="hljs-attr">--l10n-select-color</span>: <span class="hljs-string">&#x27;Select color&#x27;</span>;
+  <span class="hljs-attr">--l10n-text</span>: <span class="hljs-string">&#x27;Text&#x27;</span>;
+  <span class="hljs-attr">--l10n-draw</span>: <span class="hljs-string">&#x27;Draw&#x27;</span>;
+  <span class="hljs-attr">--l10n-cancel-edit</span>: <span class="hljs-string">&#x27;Cancel edit&#x27;</span>;
+
+  <span class="hljs-attr">--l10n-tab-view</span>: <span class="hljs-string">&#x27;Preview&#x27;</span>;
+  <span class="hljs-attr">--l10n-tab-details</span>: <span class="hljs-string">&#x27;Details&#x27;</span>;
+
+  <span class="hljs-attr">--l10n-file-name</span>: <span class="hljs-string">&#x27;Name&#x27;</span>;
+  <span class="hljs-attr">--l10n-file-size</span>: <span class="hljs-string">&#x27;Size&#x27;</span>;
+  <span class="hljs-attr">--l10n-cdn-url</span>: <span class="hljs-string">&#x27;CDN URL&#x27;</span>;
+  <span class="hljs-attr">--l10n-file-size-unknown</span>: <span class="hljs-string">&#x27;Unknown&#x27;</span>;
+}
+</code></pre>
+<p>You can create your own variant of any UI text or add any new text to your custom block.</p>
+<p>CSS:</p>
+<pre><code class="language-css"><span class="hljs-selector-class">.my-txt-v1</span> {
+  <span class="hljs-attr">--l10n-my-custom-txt</span>: <span class="hljs-string">&#x27;SOME TEXT 1&#x27;</span>;
+  <span class="hljs-attr">--l10n-my-custom-title</span>: <span class="hljs-string">&#x27;some title 1&#x27;</span>;
+}
+<span class="hljs-selector-class">.my-txt-v2</span> {
+  <span class="hljs-attr">--l10n-my-custom-txt</span>: <span class="hljs-string">&#x27;SOME TEXT 2&#x27;</span>;
+  <span class="hljs-attr">--l10n-my-custom-title</span>: <span class="hljs-string">&#x27;some title 2&#x27;</span>;
+}
+</code></pre>
+<p>JavaScript:</p>
+<pre><code class="language-javascript"><span class="hljs-keyword">import</span> { <span class="hljs-variable constant_">LR</span> } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;@uploadcare/blocks&#x27;</span>;
+
+<span class="hljs-keyword">class</span> <span class="hljs-title class_">MyBlock</span> <span class="hljs-keyword">extends</span> <span class="hljs-title class_ inherited__">LR.BlockComponent</span> {}
+
+<span class="hljs-title class_">MyBlock</span>.<span class="hljs-property">template</span> = <span class="hljs-comment">/* HTML */</span> <span class="hljs-string">`
+  &lt;div l10n=&quot;title:my-custom-title&quot;&gt;
+    &lt;span l10n=&quot;my-custom-txt&quot;&gt;&lt;/span&gt;
+  &lt;/div&gt;
+`</span>;
+
+<span class="hljs-title class_">MyBlock</span>.<span class="hljs-title function_">reg</span>(<span class="hljs-string">&#x27;my-block&#x27;</span>);
+</code></pre>
+<p>HTML:</p>
+<pre><code class="language-html">...
+<span class="hljs-tag">&lt;<span class="hljs-name">lr-my-block</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;my-txt-v1&quot;</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">lr-my-block</span>&gt;</span>
+...
+<span class="hljs-tag">&lt;<span class="hljs-name">lr-my-block</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;my-txt-v2&quot;</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">lr-my-block</span>&gt;</span>
+...
+</code></pre>
+<p>To connect some text to the HTML-element property in your block template, instead of <code>textContent</code>, use <code>:</code> symbol separating element property name and the text key: <code>&lt;div l10n=&quot;title:my-custom-title&quot;&gt;</code>.</p>
+</col-css>
+      </main>
+      <footer>© 2022 🦆</footer>
+      <div class="arrow-top" onclick="scrollToTop()">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="icon icon-tabler icon-tabler-arrow-up-circle"
+          width="60"
+          height="60"
+          viewBox="0 0 24 24"
+          stroke-width="1.5"
+          stroke="#9e9e9e"
+          fill="none"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+          <circle cx="12" cy="12" r="9" />
+          <line x1="12" y1="8" x2="8" y2="12" />
+          <line x1="12" y1="8" x2="12" y2="16" />
+          <line x1="16" y1="12" x2="12" y2="8" />
+        </svg>
+      </div>
+    </body>
+  </html>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const sidebarItems = document.querySelectorAll('.menu-item');
+      sidebarItems.forEach((i) => {
+        if (i.parentElement.pathname === window.location.pathname) {
+          i.classList.add('current');
+        }
+      });
+    });
+
+    function scrollToTop() {
+      window.scrollTo(0, 0);
+    }
+  </script> 

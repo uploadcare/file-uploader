@@ -1,0 +1,44 @@
+/* BASE CONFIGURATION: */
+@import url('config.css');
+
+/* ICONS: */
+@import url('icons.css');
+
+/* L10N: */
+@import url('l10n.css');
+
+/* THEME */
+@import url('theme.css');
+
+/* COMMON STYLES */
+@import url('common.css');
+
+/* UI COMPONENTS: */
+@import url('../../Icon/icon.css');
+@import url('../../Tabs/tabs.css');
+@import url('../../Range/range.css');
+@import url('../../Color/color.css');
+
+/* BLOCKS: */
+@import url('../../SimpleBtn/simple-btn.css');
+@import url('../../SourceBtn/source-btn.css');
+@import url('../../DropArea/drop-area.css');
+@import url('../../Modal/modal.css');
+@import url('../../UrlSource/url-source.css');
+@import url('../../CameraSource/camera-source.css');
+@import url('../../ExternalSource/external-source.css');
+@import url('../../UploadList/upload-list.css');
+@import url('../../StartFrom/start-from.css');
+@import url('../../FileItem/file-item.css');
+@import url('../../UploadDetails/upload-details.css');
+
+/* @import url('../../EditableCanvas/editable-canvas.css'); */
+@import url('../../FilePreview/file-preview.css');
+@import url('../../MessageBox/message-box.css');
+@import url('../../ConfirmationDialog/confirmation.css');
+@import url('../../ProgressBarCommon/progress-bar-common.css');
+@import url('../../ProgressBar/progress-bar.css');
+@import url('../../ActivityHeader/activity-header.css');
+@import url('../../Copyright/copyright.css');
+@import url('../../CloudImageEditor/index.css');
+@import url('../../Select/select.css');

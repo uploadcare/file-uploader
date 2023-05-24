@@ -1,0 +1,16 @@
+{
+  "singleQuote": true,
+  "tabWidth": 2,
+  "semi": true,
+  "arrowParens": "always",
+  "printWidth": 120,
+  "overrides": [
+    {
+      "files": "*.js",
+      "options": {
+        "parser": "babel",
+        "plugins": ["prettier-plugin-jsdoc"]
+      }
+    }
+  ]
+}

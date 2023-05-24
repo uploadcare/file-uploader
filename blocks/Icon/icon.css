@@ -1,0 +1,16 @@
+lr-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--ui-size);
+  height: var(--ui-size);
+}
+
+lr-icon svg {
+  width: calc(var(--ui-size) / 2);
+  height: calc(var(--ui-size) / 2);
+}
+
+lr-icon:not([raw]) path {
+  fill: currentColor;
+}

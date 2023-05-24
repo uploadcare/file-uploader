@@ -1,0 +1,68 @@
+lr-live-html {
+  position: relative;
+  display: grid;
+  grid-template-columns: 50% 50%;
+  box-shadow: 0 5px 16px rgb(0 0 0 / 60%);
+}
+
+lr-live-html [contenteditable] {
+  padding: 20px;
+  overflow: auto;
+  color: rgb(255 255 255);
+  font-size: 14px;
+  font-family: monospace;
+  white-space: pre;
+  background-color: #000;
+  outline: none;
+}
+
+lr-live-html [contenteditable] .hljs-string {
+  color: rgb(251, 182, 79);
+}
+lr-live-html [contenteditable] .hljs-comment {
+  color: rgb(149, 149, 149);
+  font-style: italic;
+}
+lr-live-html [contenteditable] .hljs-attr {
+  color: rgb(138, 218, 172);
+}
+lr-live-html [contenteditable] .hljs-function {
+  color: rgb(239, 235, 149);
+}
+lr-live-html [contenteditable] .hljs-variable {
+  color: rgb(121, 183, 255);
+}
+lr-live-html [contenteditable] .hljs-title {
+  color: rgb(180, 243, 255);
+}
+lr-live-html [contenteditable] .hljs-property {
+  color: rgb(238, 131, 252);
+}
+lr-live-html [contenteditable] .hljs-keyword {
+  color: rgb(254, 165, 176);
+}
+lr-live-html [contenteditable] .hljs-tag {
+  color: rgb(254, 165, 176);
+}
+lr-live-html [contenteditable] .hljs-name {
+  color: rgb(165, 245, 254);
+}
+
+lr-live-html iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background-color: #fff;
+  border: 0;
+}
+
+lr-live-html > .open-new-tab-btn {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  display: none;
+}
+
+lr-live-html:hover > .open-new-tab-btn {
+  display: block;
+}

@@ -1,0 +1,34 @@
+lr-activity-header {
+  display: flex;
+  gap: var(--gap-mid);
+  justify-content: space-between;
+  padding: var(--gap-mid);
+  color: var(--clr-txt);
+  font-weight: 500;
+  font-size: 1em;
+  line-height: var(--ui-size);
+}
+
+lr-activity-header lr-icon {
+  height: var(--ui-size);
+}
+
+lr-activity-header > * {
+  display: flex;
+  align-items: center;
+}
+
+lr-activity-header button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--clr-txt-mid);
+}
+
+lr-activity-header button:hover {
+  background-color: var(--clr-background);
+}
+
+lr-activity-header button:active {
+  background-color: var(--clr-background-dark);
+}

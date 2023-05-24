@@ -1,0 +1,58 @@
+lr-source-btn {
+  display: flex;
+  align-items: center;
+  margin-bottom: var(--gap-min);
+  padding: var(--gap-min) var(--gap-mid);
+  color: var(--clr-txt-mid);
+  border-radius: var(--border-radius-element);
+  cursor: pointer;
+  transition-duration: var(--transition-duration);
+  transition-property: background-color, color;
+  user-select: none;
+}
+
+lr-source-btn:hover {
+  color: var(--clr-accent);
+  background-color: var(--clr-accent-lightest);
+}
+
+lr-source-btn:active {
+  color: var(--clr-accent);
+  background-color: var(--clr-accent-light);
+}
+
+lr-source-btn lr-icon {
+  display: inline-flex;
+  flex-grow: 1;
+  justify-content: center;
+  min-width: var(--ui-size);
+  margin-right: var(--gap-mid);
+  opacity: 0.8;
+}
+
+lr-source-btn[type='local'] > .txt::after {
+  content: var(--l10n-local-files);
+}
+
+lr-source-btn[type='camera'] > .txt::after {
+  content: var(--l10n-camera);
+}
+
+lr-source-btn[type='url'] > .txt::after {
+  content: var(--l10n-from-url);
+}
+
+lr-source-btn[type='other'] > .txt::after {
+  content: var(--l10n-other);
+}
+
+lr-source-btn .txt {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  width: 100%;
+  height: var(--ui-size);
+  padding: 0;
+  white-space: nowrap;
+  border: none;
+}

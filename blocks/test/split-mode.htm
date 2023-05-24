@@ -1,0 +1,81 @@
+<base href="../../" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  @import url(./blocks/themes/lr-basic/index.css);
+  .lr-wgt-common {
+    --ctx-name: 'my-uploader';
+    --cfg-pubkey: 'demopublickey';
+    --darkmode: 0;
+  }
+</style>
+<script src="./blocks/index.js" type="module"></script>
+
+<style>
+  .uploader {
+    display: grid;
+    grid-template-rows: min-content 400px min-content;
+    grid-template-columns: 1fr 1fr;
+    margin: 40px;
+    grid-gap: 20px;
+    width: 1200px;
+  }
+
+  .header {
+    border: 1px solid black;
+    padding: 20px;
+    display: grid;
+    grid-gap: 20px;
+    grid-template-columns: min-content max-content;
+    align-items: center;
+    grid-area: 1 / span 2;
+  }
+
+  lr-inline {
+    border: 1px solid black;
+  }
+  .lr-wgt-common [activity='upload-list'] {
+    display: grid;
+    border: 1px solid black;
+  }
+  [activity][active] {
+    border: 2px solid green;
+  }
+  .output {
+    border: 1px solid black;
+    grid-area: 3 / span 2;
+  }
+</style>
+
+<div class="uploader lr-wgt-common">
+  <!-- want to show confirmation in the modal -->
+  <!-- <lr-modal class="lr-wgt-common">
+    <lr-confirmation-dialog></lr-confirmation-dialog>
+  </lr-modal> -->
+  <div class="lr-wgt-common">
+    <!-- source list should be active by default inside inline wrapper -->
+    <lr-source-select active>
+      <lr-source-list wrap></lr-source-list>
+      <lr-drop-area></lr-drop-area>
+    </lr-source-select>
+    <lr-camera-source></lr-camera-source>
+    <lr-url-source></lr-url-source>
+    <lr-external-source></lr-external-source>
+    <lr-cloud-image-editor></lr-cloud-image-editor>
+  </div>
+
+  <lr-upload-list active></lr-upload-list>
+
+  <div class="output">
+    Output:
+    <lr-data-output
+      fire-event
+      from="*outputData"
+      item-template="<img height='200' src='https://ucarecdn.com/{{uuid}}/-/preview/' />"
+      class="lr-wgt-common"
+    ></lr-data-output>
+  </div>
+</div>
+
+<lr-message-box class="lr-wgt-common"></lr-message-box>
+<lr-progress-bar-common class="lr-wgt-common"></lr-progress-bar-common>

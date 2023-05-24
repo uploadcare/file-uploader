@@ -1,0 +1,25 @@
+<base href="../../" />
+
+<link rel="stylesheet" href="../build/blocks_dev.css" />
+<link rel="stylesheet" href="./blocks/test/custom-source-btn/custom-source-btn.css" />
+
+<script src="./blocks/UploadWidget/UploadWidget.js" type="module"></script>
+<script src="./blocks/test/custom-source-btn/CustomSourceBtn.js" type="module"></script>
+
+<lr-simple-btn class="lr-wgt-common"></lr-simple-btn>
+
+<lr-modal class="lr-wgt-common" strokes>
+  <lr-activity-wrapper activity="source-select">
+    <lr-custom-source-btn type="local"></lr-custom-source-btn>
+    <lr-custom-source-btn type="custom"></lr-custom-source-btn>
+    <lr-drop-area></lr-drop-area>
+  </lr-activity-wrapper>
+  <lr-upload-list></lr-upload-list>
+  <lr-camera-source></lr-camera-source>
+  <lr-url-source></lr-url-source>
+  <lr-external-source></lr-external-source>
+  <lr-cloud-image-editor></lr-cloud-image-editor>
+</lr-modal>
+
+<lr-message-box class="lr-wgt-common"></lr-message-box>
+<lr-progress-bar-common class="lr-wgt-common"></lr-progress-bar-common>

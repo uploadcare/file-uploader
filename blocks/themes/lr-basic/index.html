@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+  <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>Blocks by Uploadcare</title>
+      <script
+        async
+        src="https://cdn.skypack.dev/-/es-module-shims@v1.5.8-O0uWfhbenfjMbv6D3d8E/dist=es2020,mode=raw,min/dist/es-module-shims.js"
+      ></script>
+      <script type="importmap">
+        {
+  "imports": {
+    "@symbiotejs/symbiote": "https://esm.sh/@symbiotejs/symbiote@1.11.7",
+    "@uploadcare/upload-client": "https://esm.sh/@uploadcare/upload-client@6.6.1"
+  }
+}
+
+      </script>
+      <script
+        type="module"
+        src="https://cdn.skypack.dev/pin/@re4ma/re4ma@v0.1.7-2fpA2FBNkO473Jd06xxO/mode=imports,min/unoptimized/build/re4ma.js"
+      ></script>
+      <script type="module">
+        import { LiveHtml } from '../../../blocks/LiveHtml/LiveHtml.js';
+        LiveHtml.reg('lr-live-html');
+      </script>
+      <style>
+         @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;700&display=swap');:root{--clr-bg:rgb(31 29 29);--clr-font:rgb(224 253 255);--clr-link:rgb(253 255 139);--clr-panel:rgb(255 255 255 / 10%);--clr-accent:rgb(233 159 255);--clr-accent-shade:rgb(233 159 255 / 6%);--clr-code:#fff;--clr-code-hl:rgb(255 112 112);--gap-min:2px;--gap-mid:10px;--gap-max:20px;--gap-huge:60px;}html,body{margin:0;padding:0;color:var(--clr-font);font-family:Roboto,sans-serif;background-color:var(--clr-bg);}body{display:grid;grid-template-rows:min-content min-content auto min-content;min-height:100vh;}header{padding:20px;background-color:rgba(0,0,0,.4);}nav{--l-bg-clr:rgba(60,60,60,.9);--blur:6px;display:flex;justify-content:center;position:sticky;z-index:10000;top:0;background-color:var(--l-bg-clr);height:100%;}@supports ((-webkit-backdrop-filter:blur(var(--blur))) or (backdrop-filter:blur(var(--blur)))){nav{--l-bg-clr:rgba(255,255,255,.1);backdrop-filter:blur(var(--blur));-webkit-backdrop-filter:blur(var(--blur));}}nav > div{display:flex;justify-content:end;align-items:center;width:100%;max-width:1300px;}nav a{display:block;color:var(--clr-font);margin:20px;text-decoration:none;text-shadow:1px 1px 2px rgba(0,0,0,.6);}main{display:flex;justify-content:center;padding:20px;}col-css{display:block;max-width:1080px;width:100%;}footer{padding:20px;background-color:rgba(0,0,0,.2);}lr-live-html{min-height:400px;}main a{color:var(--clr-link);}code{display:block;background-color:#000;color:var(--clr-code);padding:var(--gap-max);overflow-x:auto;}code .hl{color:var(--clr-code-hl);}code:not([class]){display:inline-block;padding:var(--gap-min);padding-left:.5em;padding-right:.5em;}blockquote{display:block;color:var(--clr-accent);background-color:var(--clr-accent-shade);padding:var(--gap-mid);margin:0;margin-top:var(--gap-max);border-left:var(--gap-min) solid currentColor;}h1{color:var(--clr-accent);}h2{margin-top:calc(var(--gap-max) * 3);}li{margin-bottom:var(--gap-mid);}table{width:100%;}th{padding:10px;background:rgba(0,0,0,.4);}td{padding:10px;background:rgba(255,255,255,.1);}tr:hover{background:rgba(255,255,255,.1);}.sidebar-wrapper{width:14rem;padding-right:1rem;}.sidebar{padding:1rem;display:flex;flex-direction:column;position:sticky;align-self:flex-start;top:79px;}.sidebar a{color:rgb(224 253 255);text-decoration:none;}.menu-section{margin-bottom:1rem;}.menu-item{padding:.5rem 0;}.menu-item:hover{color:rgba(186,186,186,.9);}.current{color:aquamarine;}.level-1{padding-left:.5rem;font-weight:600;cursor:pointer;}.level-2{padding-left:1.5rem;font-weight:300;cursor:pointer;}.level-2 .current{list-style-type:disc;}.arrow-top{cursor:pointer;position:fixed;bottom:15px;right:15px;}.no-link{cursor:auto;color:rgb(224 253 255) !important;}a[target="_blank"]:after{content:url(../../../assets/media/external-link-icon.svg);margin-left:.1em;position:relative;bottom:2px;}.github:before{content:url(../../../assets/media/github-icon.svg);margin-right:.1em;position:relative;top:1px;vertical-align:sub;}lr-live-html{position:relative;display:grid;grid-template-columns:50% 50%;box-shadow:0 5px 16px rgb(0 0 0 / 60%);}lr-live-html [contenteditable]{padding:20px;overflow:auto;color:rgb(255 255 255);font-size:14px;font-family:monospace;white-space:pre;background-color:#000;outline:none;}lr-live-html [contenteditable] .hljs-string{color:rgb(251,182,79);}lr-live-html [contenteditable] .hljs-comment{color:rgb(149,149,149);font-style:italic;}lr-live-html [contenteditable] .hljs-attr{color:rgb(138,218,172);}lr-live-html [contenteditable] .hljs-function{color:rgb(239,235,149);}lr-live-html [contenteditable] .hljs-variable{color:rgb(121,183,255);}lr-live-html [contenteditable] .hljs-title{color:rgb(180,243,255);}lr-live-html [contenteditable] .hljs-property{color:rgb(238,131,252);}lr-live-html [contenteditable] .hljs-keyword{color:rgb(254,165,176);}lr-live-html [contenteditable] .hljs-tag{color:rgb(254,165,176);}lr-live-html [contenteditable] .hljs-name{color:rgb(165,245,254);}lr-live-html iframe{display:block;width:100%;height:100%;background-color:#fff;border:0;}lr-live-html > .open-new-tab-btn{position:absolute;top:6px;left:6px;display:none;}lr-live-html:hover > .open-new-tab-btn{display:block;}lr-live-html{position:relative;display:grid;grid-template-columns:50% 50%;box-shadow:0 5px 16px rgb(0 0 0 / 60%);}code{padding:20px;overflow:auto;color:rgb(255 255 255);font-size:14px;font-family:monospace;white-space:pre;background-color:#000;outline:none;}code .hljs-string{color:rgb(251,182,79);}code .hljs-comment{color:rgb(149,149,149);font-style:italic;}code .hljs-attr{color:rgb(138,218,172);}code .hljs-function{color:rgb(239,235,149);}code .hljs-variable{color:rgb(121,183,255);}code .hljs-title{color:rgb(180,243,255);}code .hljs-property{color:rgb(238,131,252);}code .hljs-keyword{color:rgb(254,165,176);}code .hljs-tag{color:rgb(254,165,176);}code .hljs-name{color:rgb(165,245,254);}lr-live-html iframe{display:block;width:100%;height:100%;background-color:#fff;border:0;}lr-live-html > .open-new-tab-btn{position:absolute;top:6px;left:6px;display:none;}lr-live-html:hover > .open-new-tab-btn{display:block;}
+      </style>
+    </head>
+    <body>
+      <nav>
+        <div>
+          <span>🟡 Uploadcare | blocks</span>
+          <a style="margin-left: auto" href="//uploadcare.com" target="_blank">Uploadcare</a>
+          <a href="//github.com/uploadcare/blocks/discussions" target="_blank">Discussions</a>
+          <a href="//github.com/uploadcare/blocks" class="github" target="_blank">GitHub</a>
+        </div>
+      </nav>
+      <main>
+        <div class="sidebar-wrapper">
+          <div class="sidebar">
+            <div class="menu-section">
+              <a href="../../../"><div class="menu-item level-1">Get started</div></a>
+              <a href="../../../get-started/installation/"><div class="menu-item level-2">Installation</div></a>
+              <a href="../../../get-started/configuration/"><div class="menu-item level-2">Configuration</div></a>
+              <a href="../../../get-started/localization/"><div class="menu-item level-2">Localization</div></a>
+            </div>
+            <div class="menu-section">
+              <div class="menu-item level-1 no-link">Components</div>
+              <a href="../../../solutions/file-uploader/"><div class="menu-item level-2">File Uploader</div></a>
+              <a href="../../../solutions/adaptive-image/"><div class="menu-item level-2">Adaptive image</div></a>
+              <a href="../../../solutions/cloud-image-editor/"><div class="menu-item level-2">Image editor</div></a>
+            </div>
+            <div class="menu-section">
+              <a href="../../../blocks/"><div class="menu-item level-1">Customization</div></a>
+            </div>
+          </div>
+        </div>
+        <col-css><h1 id="basic-theme-for-blocks">Basic theme for blocks</h1>
+<p>There are 4 levels of abstraction:</p>
+<ul>
+<li><a href="#base-values">Base values</a></li>
+<li><a href="#derivative-values%5D">Derivative values</a></li>
+<li><a href="#common-styles">Common styles</a></li>
+<li><a href="#component-styles">Component styles</a></li>
+</ul>
+<h3 id="hsl-color-space">HSL color space</h3>
+<p>We use HSL color space because it allows us to easily calculate derivative colors. That&#39;s what prefixes <code>--h-</code>, <code>--s-</code>, and <code>--l-</code> are stand for.</p>
+<h3 id="quick-styling">Quick styling</h3>
+<p>In most cases switching the dark mode on or off and changing the accent color is enough to make blocks match your design.</p>
+<!-- If you want to do a deeper styling, see this guide
+TODO: write a guide. -->
+
+<pre><code class="language-css"><span class="hljs-attr">--darkmode</span>: <span class="hljs-number">1</span>;
+</code></pre>
+<pre><code class="language-css"><span class="hljs-attr">--h-accent</span>: <span class="hljs-number">211</span>;
+<span class="hljs-attr">--s-accent</span>: <span class="hljs-number">100%</span>;
+<span class="hljs-attr">--l-accent</span>: <span class="hljs-built_in">calc</span>(<span class="hljs-number">50%</span> - <span class="hljs-number">5%</span> * <span class="hljs-built_in">var</span>(--darkmode));
+</code></pre>
+<h2 id="base-values">Base values</h2>
+<ul>
+<li><code>--darkmode</code> — <code>1</code>: dark mode enabled, <code>0</code>: disabled;</li>
+<li><code>--*-foreground</code> — text color, borders, and shaders. It should be in contrast to the background;</li>
+<li><code>--*-background</code> — background color and its variations;</li>
+<li><code>--*-accent</code> — colors of buttons, links, and text input borders (hover and focus). It should be in contrast to the background;</li>
+<li><code>--*-confirm</code> — the color of confirmation notifications and badges;</li>
+<li><code>--*-error</code> — the color of error notifications and badges;</li>
+<li><code>--opacity-*</code> — opacity of different states of small icon buttons;</li>
+<li><code>--ui-size</code> — minimum size of a clickable element. Also used to calculate the size of the elements, which should be proportional to it;</li>
+<li><code>--gap-*</code> — paddings and margins;</li>
+<li><code>--gap-table</code> — the gap between elements in lists (for example, in upload-list);</li>
+<li><code>--borders</code> — <code>1</code>: borders enabled, <code>0</code>: disabled. Can be fractional, for example, 0.5 will make borders half as opaque;</li>
+<li><code>--border-radius-element</code> — border radius of buttons and inputs;</li>
+<li><code>--border-radius-frame</code> — border radius of modal windows and drop area;</li>
+<li><code>--border-radius-thumb</code> — border radius of thumbnails;</li>
+<li><code>--transition-duration</code> — duration of all animated transitions;</li>
+<li><code>--shadows</code> — <code>1</code>: shadows enabled, <code>0</code>: disabled. Can be fractional, for example 0.5, will make shadows half as opaque;</li>
+<li><code>--*-shadow</code> — the color of box shadows;</li>
+<li><code>--modal-max-w</code>, <code>--modal-max-h</code> — the maximum size of the modal window.</li>
+</ul>
+<h2 id="derivative-values">Derivative values</h2>
+<p>Derivative values are calculated from the base values.</p>
+<ul>
+<li><code>--darkmode-minus</code> — used for dark mode color calculations. Gives <code>-1</code> when dark mode is enabled, <code>1</code> when disabled;</li>
+<li><code>--clr-background*</code> — lightness variations of the background color;</li>
+<li><code>--clr-accent*</code> — opacity variations of the accent color;</li>
+<li><code>--clr-confirm</code> — confirmation notifications color;</li>
+<li><code>--clr-error</code> — opacity and lighness variations of the error notifications color;</li>
+<li><code>--clr-txt*</code> — lightness variations of the text color;</li>
+<li><code>--clr-shade-lv*</code> — shading colors (foreground color with a low opacity variations);</li>
+<li><code>--border-*</code> — border variations;</li>
+<li><code>--clr-curtain</code> — color of the background behind the modal window;</li>
+<li><code>--clr-btn-bgr-primary*</code>, <code>--clr-btn-txt-primary</code>, <code>--shadow-btn-primary</code> — primary action button values;</li>
+<li><code>--clr-btn-bgr-secondary*</code>, <code>--clr-btn-txt-secondary</code>, <code>--shadow-btn-secondary</code> — secondary action button values;</li>
+<li><code>--clr-btn-bgr-disabled</code>, <code>--clr-btn-txt-disabled</code>, <code>--shadow-btn-disabled</code> — disabled button values.</li>
+</ul>
+<h2 id="common-styles">Common styles</h2>
+<p>Common styles define similar UI elements across different blocks: buttons, inputs, and links.</p>
+<h2 id="component-styles">Component styles</h2>
+<p>Component styles are the most specific.</p>
+<!-- TODO: decide about recommendations here -->
+</col-css>
+      </main>
+      <footer>© 2022 🦆</footer>
+      <div class="arrow-top" onclick="scrollToTop()">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="icon icon-tabler icon-tabler-arrow-up-circle"
+          width="60"
+          height="60"
+          viewBox="0 0 24 24"
+          stroke-width="1.5"
+          stroke="#9e9e9e"
+          fill="none"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+          <circle cx="12" cy="12" r="9" />
+          <line x1="12" y1="8" x2="8" y2="12" />
+          <line x1="12" y1="8" x2="12" y2="16" />
+          <line x1="16" y1="12" x2="12" y2="8" />
+        </svg>
+      </div>
+    </body>
+  </html>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const sidebarItems = document.querySelectorAll('.menu-item');
+      sidebarItems.forEach((i) => {
+        if (i.parentElement.pathname === window.location.pathname) {
+          i.classList.add('current');
+        }
+      });
+    });
+
+    function scrollToTop() {
+      window.scrollTo(0, 0);
+    }
+  </script> 

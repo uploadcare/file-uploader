@@ -1,0 +1,24 @@
+<h2>Live example</h2>
+
+<lr-live-html>
+  <!-- Uploader script connection: -->
+  <script src="./minimal/index.js" type="module"></script>
+
+  <!-- CSS context properties: -->
+  <style>
+    lr-file-uploader-minimal {
+      --cfg-pubkey: 'demopublickey';
+      --ctx-name: 'uploader-ctx';
+      --darkmode: 0;
+    }
+  </style>
+
+  <!-- Uploader widget element: -->
+  <lr-file-uploader-minimal
+    css-src="./minimal/index.css"></lr-file-uploader-minimal>
+
+  <lr-data-output
+    use-console
+    ctx-name="uploader-ctx">
+  </lr-data-output>
+</lr-live-html>

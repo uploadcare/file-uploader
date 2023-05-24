@@ -1,0 +1,16 @@
+lr-img {
+  --lr-img-pubkey: '364c0864158c27472ffe';
+  --lr-img-test: 'TEST';
+
+  display: contents;
+}
+
+lr-img > img {
+  transition: 1s;
+}
+
+lr-img > img[unresolved] {
+  transform: scale(0.8);
+  opacity: 0;
+  transition: 1s;
+}
