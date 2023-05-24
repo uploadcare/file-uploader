@@ -1,6 +1,0 @@
-{
-  "imports": {
-    "@symbiotejs/symbiote": "https://esm.sh/@symbiotejs/symbiote@1.11.7",
-    "@uploadcare/upload-client": "https://esm.sh/@uploadcare/upload-client@6.6.1"
-  }
-}

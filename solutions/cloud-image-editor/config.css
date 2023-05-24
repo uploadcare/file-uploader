@@ -1,4 +1,0 @@
-:where(.uc-cldtr-common),
-:host {
-  --cfg-cdn-cname: 'https://ucarecdn.com';
-}
