@@ -43,7 +43,7 @@ export class CloudEditor extends ShadowWrapper {
     const TIMEOUT = 3000;
     return new Promise((resolve, reject) => {
       const timeoutId = setTimeout(() => {
-        reject(new Error('[cloud-image-editor] timout waiting for non-zero container size'));
+        reject(new Error('[cloud-image-editor] timeout waiting for non-zero container size'));
       }, TIMEOUT);
       const resizeObserver = new ResizeObserver(([element]) => {
         if (element.contentRect.width > 0 && element.contentRect.height > 0) {
