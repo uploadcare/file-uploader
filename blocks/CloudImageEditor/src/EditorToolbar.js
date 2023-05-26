@@ -3,7 +3,6 @@ import { EditorCropButtonControl } from './EditorCropButtonControl.js';
 import { EditorFilterControl } from './EditorFilterControl.js';
 import { EditorOperationControl } from './EditorOperationControl.js';
 import { FAKE_ORIGINAL_FILTER } from './EditorSlider.js';
-import { classNames } from './lib/classNames.js';
 import { debounce } from './lib/debounce.js';
 import { batchPreloadImages } from './lib/preloadImage.js';
 import {

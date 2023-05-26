@@ -22,6 +22,10 @@ export class CloudEditor extends ShadowWrapper {
     ...initState(this),
   };
 
+  get ctxName() {
+    return this.autoCtxName;
+  }
+
   /** @private */
   _debouncedShowLoader = debounce(this._showLoader.bind(this), 300);
 
@@ -119,7 +123,7 @@ export class CloudEditor extends ShadowWrapper {
       let transformations = operationsToTransformations(operations);
       this.$['*editorTransformations'] = transformations;
     } else if (this.$.uuid) {
-      this.$['*originalUrl'] = createOriginalUrl(this.cfg.cdnCname, this.$.uuid);
+      this.$['*originalUrl'] = createOriginalUrl(this.$.cdnCname, this.$.uuid);
     } else {
       throw new Error('No UUID nor CDN URL provided');
     }
@@ -174,4 +178,5 @@ CloudEditor.template = TEMPLATE;
 CloudEditor.bindAttributes({
   uuid: 'uuid',
   'cdn-url': 'cdnUrl',
+  'cdn-cname': 'cdnCname',
 });

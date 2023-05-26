@@ -44,6 +44,10 @@
  * }} Config
  */
 
+export const DEFAULT_CDN_CNAME = 'https://ucarecdn.com';
+export const DEFAULT_BASE_URL = 'https://upload.uploadcare.com';
+export const DEFAULT_SOCIAN_BASE_URL = 'https://social.uploadcare.com';
+
 /** @type {Config} */
 export const initialConfig = {
   pubkey: '',
@@ -74,9 +78,9 @@ export const initialConfig = {
   doneActivity: '',
 
   remoteTabSessionKey: '',
-  cdnCname: 'https://ucarecdn.com',
-  baseUrl: 'https://upload.uploadcare.com',
-  socialBaseUrl: 'https://social.uploadcare.com',
+  cdnCname: DEFAULT_CDN_CNAME,
+  baseUrl: DEFAULT_BASE_URL,
+  socialBaseUrl: DEFAULT_SOCIAN_BASE_URL,
   secureSignature: '',
   secureExpire: '',
   secureDeliveryProxy: '',
