@@ -1,3 +1,9 @@
+## [0.22.6](https://github.com/uploadcare/blocks/compare/v0.22.5...v0.22.6) (2023-05-26)
+
+### Bug Fixes
+
+- **cloud-editor:** init editor on initCallback instead of connectedCallback to prevent cases when editor init is going before the block init ([#467](https://github.com/uploadcare/blocks/issues/467)) ([f6d92fd](https://github.com/uploadcare/blocks/commit/f6d92fda5fc3c495111526b97f283b63a5cd3117))
+
 ## [0.22.5](https://github.com/uploadcare/blocks/compare/v0.22.4...v0.22.5) (2023-05-26)
 
 ### Bug Fixes
