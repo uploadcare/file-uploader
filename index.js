@@ -6,7 +6,7 @@ export { BaseComponent, Data } from '@symbiotejs/symbiote';
 export { Block } from './abstract/Block.js';
 export { ActivityBlock } from './abstract/ActivityBlock.js';
 export { UploaderBlock } from './abstract/UploaderBlock.js';
-export { Config } from './abstract/Config.js';
+export { Config } from './blocks/Config/Config.js';
 
 // Blocks:
 export { Icon } from './blocks/Icon/Icon.js';

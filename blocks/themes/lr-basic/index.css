@@ -20,6 +20,7 @@
 @import url('../../Color/color.css');
 
 /* BLOCKS: */
+@import url('../../Config/config.css');
 @import url('../../SimpleBtn/simple-btn.css');
 @import url('../../SourceBtn/source-btn.css');
 @import url('../../DropArea/drop-area.css');
