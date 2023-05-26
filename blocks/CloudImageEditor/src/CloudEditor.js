@@ -65,8 +65,8 @@ export class CloudEditor extends ShadowWrapper {
     this.initEditor();
   }
 
-  connectedCallback() {
-    super.connectedCallback();
+  initCallback() {
+    super.initCallback();
     if (!this.renderShadow) {
       this.initEditor();
     }
