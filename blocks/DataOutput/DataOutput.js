@@ -12,11 +12,6 @@ export class DataOutput extends UploaderBlock {
     filesData: null,
   };
 
-  cssInit$ = {
-    ...this.cssInit$,
-    '--cfg-group-output': 0,
-  };
-
   get dict() {
     return DataOutput.dict;
   }
@@ -93,7 +88,7 @@ export class DataOutput extends UploaderBlock {
           return;
         }
         this.$.filesData = data;
-        if (this.getCssData('--cfg-group-output') || this.hasAttribute(this.dict.GROUP_ATTR)) {
+        if (this.cfg.groupOutput || this.hasAttribute(this.dict.GROUP_ATTR)) {
           let uuidList = data.map((fileDesc) => {
             return fileDesc.uuid;
           });

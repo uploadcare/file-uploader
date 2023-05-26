@@ -12,7 +12,6 @@ export class CloudImageEditor extends UploaderBlock {
 
   initCallback() {
     super.initCallback();
-    this.bindCssData('--cfg-pubkey');
 
     this.registerActivity(this.activityType, {
       onActivate: () => this.mountEditor(),
@@ -52,6 +51,7 @@ export class CloudImageEditor extends UploaderBlock {
     instance.classList.add('lr-cldtr-common');
     let cdnUrl = this.$.cdnUrl;
     instance.setAttribute('cdn-url', cdnUrl);
+    instance.setAttribute('ctx-name', this.ctxName);
 
     instance.addEventListener('apply', (result) => this.handleApply(result));
     instance.addEventListener('cancel', () => this.handleCancel());

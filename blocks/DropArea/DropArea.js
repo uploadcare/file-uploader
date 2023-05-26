@@ -18,11 +18,6 @@ export class DropArea extends UploaderBlock {
     'lr-drop-area/targets': null,
   };
 
-  cssInit$ = {
-    ...this.cssInit$,
-    '--cfg-source-list': '',
-  };
-
   isActive() {
     if (!this.$.isEnabled) {
       return false;
@@ -81,8 +76,8 @@ export class DropArea extends UploaderBlock {
         if (!items.length) {
           return;
         }
-        let isMultiple = this.getCssData('--cfg-multiple');
-        let multipleMax = this.getCssData('--cfg-multiple-max');
+        let isMultiple = this.cfg.multiple;
+        let multipleMax = this.cfg.multipleMax;
         let currentFilesCount = this.uploadCollection.size;
         if (isMultiple && multipleMax) {
           items = items.slice(0, multipleMax - currentFilesCount - 1);
@@ -138,7 +133,7 @@ export class DropArea extends UploaderBlock {
       }
     });
 
-    this.sub('--cfg-source-list', (value) => {
+    this.subConfigValue('sourceList', (value) => {
       const list = stringToArray(value);
       // Enable drop area if local files are allowed
       this.$.isEnabled = list.includes(UploaderBlock.sourceTypes.LOCAL);
@@ -184,8 +179,8 @@ export class DropArea extends UploaderBlock {
 
   /** @private */
   _couldHandleFiles() {
-    let isMultiple = this.getCssData('--cfg-multiple');
-    let multipleMax = this.getCssData('--cfg-multiple-max');
+    let isMultiple = this.cfg.multiple;
+    let multipleMax = this.cfg.multipleMax;
     let currentFilesCount = this.uploadCollection.size;
 
     if (isMultiple && multipleMax && currentFilesCount >= multipleMax) {

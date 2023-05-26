@@ -61,7 +61,7 @@ export class ExternalSource extends UploaderBlock {
 
     const url = (() => {
       if (message.alternatives) {
-        const preferredTypes = stringToArray(this.getCssData('--cfg-external-sources-preferred-types'));
+        const preferredTypes = stringToArray(this.cfg.externalSourcesPreferredTypes);
         for (const preferredType of preferredTypes) {
           const regexp = wildcardRegexp(preferredType);
           for (const [type, typeUrl] of Object.entries(message.alternatives)) {
@@ -114,7 +114,7 @@ export class ExternalSource extends UploaderBlock {
   }
 
   remoteUrl() {
-    let pubkey = this.getCssData('--cfg-pubkey');
+    let pubkey = this.cfg.pubkey;
     let imagesOnly = false.toString();
     let { externalSourceType } = this.activityParams;
     let params = {
@@ -125,9 +125,9 @@ export class ExternalSource extends UploaderBlock {
       public_key: pubkey,
       images_only: imagesOnly,
       pass_window_open: false,
-      session_key: this.getCssData('--cfg-remote-tab-session-key'),
+      session_key: this.cfg.remoteTabSessionKey,
     };
-    let url = new URL(this.getCssData('--cfg-social-base-url'));
+    let url = new URL(this.cfg.socialBaseUrl);
     url.pathname = `/window3/${externalSourceType}`;
     url.search = queryString(params);
     return url.toString();

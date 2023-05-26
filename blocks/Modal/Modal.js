@@ -28,11 +28,6 @@ export class Modal extends Block {
     closeClicked: this._handleDialogClose,
   };
 
-  cssInit$ = {
-    ...this.cssInit$,
-    '--cfg-modal-backdrop-strokes': 0,
-  };
-
   show() {
     if (this.ref.dialog.showModal) {
       this.ref.dialog.showModal();
@@ -67,14 +62,14 @@ export class Modal extends Block {
         this.$.isOpen = modalActive;
       }
 
-      if (modalActive && this.getCssData('--cfg-modal-scroll-lock')) {
+      if (modalActive && this.cfg.modalScrollLock) {
         document.body.style.overflow = 'hidden';
       } else {
         document.body.style.overflow = null;
       }
     });
 
-    this.sub('--cfg-modal-backdrop-strokes', (val) => {
+    this.subConfigValue('modalBackdropStrokes', (val) => {
       if (val) {
         this.setAttribute('strokes', '');
       } else {

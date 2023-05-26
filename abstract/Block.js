@@ -1,11 +1,16 @@
+// @ts-check
 import { BaseComponent } from '@symbiotejs/symbiote';
 import { createWindowHeightTracker, getIsWindowHeightTracked } from '../utils/createWindowHeightTracker.js';
 import { applyTemplateData, getPluralObjects } from '../utils/template-utils.js';
 import { blockCtx } from './CTX.js';
 import { l10nProcessor } from './l10nProcessor.js';
+import { sharedConfigKey } from './sharedConfigKey.js';
+import { toKebabCase } from '../utils/toKebabCase.js';
+import { warnOnce } from '../utils/warnOnce.js';
 
 const TAG_PREFIX = 'lr-';
 
+// @ts-ignore TODO: fix this
 export class Block extends BaseComponent {
   static StateConsumerScope = null;
   allowCustomTemplate = true;
@@ -47,7 +52,9 @@ export class Block extends BaseComponent {
   constructor() {
     super();
     /** @type {String} */
+    // @ts-ignore TODO: fix this
     this.activityType = null;
+    // @ts-ignore TODO: fix this
     this.addTemplateProcessor(l10nProcessor);
     // TODO: inspect template on lr-* elements
     // this.addTemplateProcessor((fr) => {
@@ -80,6 +87,7 @@ export class Block extends BaseComponent {
    * @returns {Boolean}
    */
   findBlockInCtx(callback) {
+    // @ts-ignore TODO: fix this
     /** @type {Set} */
     let blocksRegistry = this.$['*blocksRegistry'];
     for (let block of blocksRegistry) {
@@ -115,6 +123,7 @@ export class Block extends BaseComponent {
       this._destroyInnerHeightTracker = createWindowHeightTracker();
     }
     if (this.hasAttribute('retpl')) {
+      // @ts-ignore TODO: fix this
       this.constructor['template'] = null;
       this.processInnerHtml = true;
     }
@@ -163,7 +172,7 @@ export class Block extends BaseComponent {
    * @returns {String}
    */
   proxyUrl(url) {
-    let previewProxy = this.getCssData('--cfg-secure-delivery-proxy', true);
+    let previewProxy = this.cfg.secureDeliveryProxy;
     if (!previewProxy) {
       return url;
     }
@@ -172,6 +181,48 @@ export class Block extends BaseComponent {
       { previewUrl: url },
       { transform: (value) => window.encodeURIComponent(value) }
     );
+  }
+
+  /** @type {import('./initialConfig.js').Config} } */
+  get cfg() {
+    if (!this.__cfgProxy) {
+      let o = Object.create(null);
+      /** @private */
+      this.__cfgProxy = new Proxy(o, {
+        /**
+         * @param {never} obj
+         * @param {string} key
+         */
+        get: (obj, key) => {
+          const sharedKey = sharedConfigKey(key);
+          // @ts-ignore TODO: fix this
+          const parsed = BaseComponent.__parseProp(sharedKey, this);
+          if (parsed.ctx.has(parsed.name)) {
+            return this.$[sharedKey];
+          } else {
+            warnOnce('Using CSS variables for configuration is deprecated. Please use `lr-config` instead. See LINK');
+            return this.getCssData(`--cfg-${toKebabCase(key)}`);
+          }
+        },
+      });
+    }
+    return this.__cfgProxy;
+  }
+
+  /**
+   * @template {keyof import('./initialConfig.js').Config} T
+   * @param {T} key
+   * @param {(value: import('./initialConfig.js').Config[T]) => void} callback
+   */
+  subConfigValue(key, callback) {
+    // @ts-ignore TODO: fix this
+    const parsed = BaseComponent.__parseProp(sharedConfigKey(key), this);
+    if (parsed.ctx.has(parsed.name)) {
+      this.sub(sharedConfigKey(key), callback);
+    } else {
+      this.bindCssData(`--cfg-${toKebabCase(key)}`);
+      this.sub(`--cfg-${toKebabCase(key)}`, callback);
+    }
   }
 
   updateCtxCssData = () => {

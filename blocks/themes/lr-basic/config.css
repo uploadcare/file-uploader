@@ -9,7 +9,7 @@
   --cfg-img-only: 0;
   --cfg-accept: '';
   --cfg-external-sources-preferred-types: '';
-  --cfg-store: unset;
+  --cfg-store: 'auto';
   --cfg-camera-mirror: 1;
   --cfg-source-list: 'local, url, camera, dropbox, gdrive';
   --cfg-max-local-file-size-bytes: 0;

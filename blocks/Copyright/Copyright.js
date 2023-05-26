@@ -1,16 +1,11 @@
 import { Block } from '../../abstract/Block.js';
 
 export class Copyright extends Block {
-  cssInit$ = {
-    ...this.cssInit$,
-    '--cfg-remove-copyright': 0,
-  };
-
   initCallback() {
     super.initCallback();
 
-    this.sub(
-      '--cfg-remove-copyright',
+    this.subConfigValue(
+      'removeCopyright',
       /** @param {number} value */
       (value) => {
         this.classList.toggle('hidden', !!value);

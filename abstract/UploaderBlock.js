@@ -1,3 +1,4 @@
+// @ts-check
 import { ActivityBlock } from './ActivityBlock.js';
 
 import { Data } from '@symbiotejs/symbiote';
@@ -12,10 +13,6 @@ import { stringToArray } from '../utils/stringToArray.js';
 
 export class UploaderBlock extends ActivityBlock {
   init$ = uploaderBlockCtx(this);
-  cssInit$ = {
-    ...this.cssInit$,
-    '--cfg-max-concurrent-requests': 1,
-  };
 
   /** @private */
   __initialUploadMetadata = null;
@@ -32,6 +29,7 @@ export class UploaderBlock extends ActivityBlock {
    */
   setUploadMetadata(metadata) {
     if (!this.connectedOnce) {
+      // @ts-ignore TODO: fix this
       this.__initialUploadMetadata = metadata;
     } else {
       this.$['*uploadMetadata'] = metadata;
@@ -45,7 +43,7 @@ export class UploaderBlock extends ActivityBlock {
       this.$['*uploadMetadata'] = this.__initialUploadMetadata;
     }
 
-    this.sub('--cfg-max-concurrent-requests', (value) => {
+    this.subConfigValue('maxConcurrentRequests', (value) => {
       this.$['*uploadQueue'].concurrency = Number(value) || 1;
     });
   }
@@ -75,21 +73,18 @@ export class UploaderBlock extends ActivityBlock {
 
   /** @param {{ captureCamera?: boolean }} options */
   openSystemDialog(options = {}) {
-    let accept = mergeFileTypes([
-      this.getCssData('--cfg-accept'),
-      ...(this.getCssData('--cfg-img-only') ? IMAGE_ACCEPT_LIST : []),
-    ]).join(',');
+    let accept = mergeFileTypes([this.cfg.accept ?? '', ...(this.cfg.imgOnly ? IMAGE_ACCEPT_LIST : [])]).join(',');
 
-    if (this.getCssData('--cfg-accept') && !!this.getCssData('--cfg-img-only')) {
+    if (this.cfg.accept && !!this.cfg.imgOnly) {
       console.warn(
         'There could be a mistake.\n' +
-          'Both `--cfg-accept` and `--cfg-img-only` parameters are set.\n' +
-          'The value of `--cfg-accept` will be concatenated with the internal image mime types list.'
+          'Both `accept` and `imgOnly` parameters are set.\n' +
+          'The value of `accept` will be concatenated with the internal image mime types list.'
       );
     }
     this.fileInput = document.createElement('input');
     this.fileInput.type = 'file';
-    this.fileInput.multiple = !!this.getCssData('--cfg-multiple');
+    this.fileInput.multiple = this.cfg.multiple;
     if (options.captureCamera) {
       this.fileInput.capture = '';
       this.fileInput.accept = IMAGE_ACCEPT_LIST.join(',');
@@ -98,10 +93,12 @@ export class UploaderBlock extends ActivityBlock {
     }
     this.fileInput.dispatchEvent(new MouseEvent('click'));
     this.fileInput.onchange = () => {
+      // @ts-ignore TODO: fix this
       this.addFiles([...this.fileInput['files']]);
       // To call uploadTrigger UploadList should draw file items first:
       this.$['*currentActivity'] = ActivityBlock.activities.UPLOAD_LIST;
       this.setForCtxTarget(Modal.StateConsumerScope, '*modalActive', true);
+      // @ts-ignore TODO: fix this
       this.fileInput['value'] = '';
       this.fileInput = null;
     };
@@ -110,9 +107,10 @@ export class UploaderBlock extends ActivityBlock {
   /** @type {String[]} */
   get sourceList() {
     let list = null;
-    if (this.getCssData('--cfg-source-list')) {
-      list = stringToArray(this.getCssData('--cfg-source-list'));
+    if (this.cfg.sourceList) {
+      list = stringToArray(this.cfg.sourceList);
     }
+    // @ts-ignore TODO: fix this
     return list;
   }
 
@@ -202,7 +200,10 @@ export class UploaderBlock extends ActivityBlock {
     return this.$['*uploadCollection'];
   }
 
-  /** @private */
+  /**
+   * @private
+   * @param {Record<string, string>} changeMap
+   */
   _handleCollectionUpdate = (changeMap) => {
     let uploadCollection = this.uploadCollection;
     if (changeMap.uploadProgress) {
@@ -298,24 +299,22 @@ export class UploaderBlock extends ActivityBlock {
 
   /** @returns {import('@uploadcare/upload-client').FileFromOptions} */
   getUploadClientOptions() {
-    let store = this.getCssData('--cfg-store', true);
     let options = {
-      // undefined 'store' means 'auto'
-      store: store === null ? undefined : !!store,
-      publicKey: this.getCssData('--cfg-pubkey'),
-      baseCDN: this.getCssData('--cfg-cdn-cname'),
-      baseURL: this.getCssData('--cfg-base-url'),
+      store: this.cfg.store,
+      publicKey: this.cfg.pubkey,
+      baseCDN: this.cfg.cdnCname,
+      baseURL: this.cfg.baseUrl,
       userAgent: customUserAgent,
-      integration: this.getCssData('--cfg-user-agent-integration'),
-      secureSignature: this.getCssData('--cfg-secure-signature'),
-      secureExpire: this.getCssData('--cfg-secure-expire'),
-      retryThrottledRequestMaxTimes: this.getCssData('--cfg-retry-throttled-request-max-times'),
-      multipartMinFileSize: this.getCssData('--cfg-multipart-min-file-size'),
-      multipartChunkSize: this.getCssData('--cfg-multipart-chunk-size'),
-      maxConcurrentRequests: this.getCssData('--cfg-multipart-max-concurrent-requests'),
-      multipartMaxAttempts: this.getCssData('--cfg-multipart-max-attempts'),
-      checkForUrlDuplicates: !!this.getCssData('--cfg-check-for-url-duplicates'),
-      saveUrlForRecurrentUploads: !!this.getCssData('--cfg-save-url-for-recurrent-uploads'),
+      integration: this.cfg.userAgentIntegration,
+      secureSignature: this.cfg.secureSignature,
+      secureExpire: this.cfg.secureExpire,
+      retryThrottledRequestMaxTimes: this.cfg.retryThrottledRequestMaxTimes,
+      multipartMinFileSize: this.cfg.multipartMinFileSize,
+      multipartChunkSize: this.cfg.multipartChunkSize,
+      maxConcurrentRequests: this.cfg.multipartMaxConcurrentRequests,
+      multipartMaxAttempts: this.cfg.multipartMaxAttempts,
+      checkForUrlDuplicates: !!this.cfg.checkForUrlDuplicates,
+      saveUrlForRecurrentUploads: !!this.cfg.saveUrlForRecurrentUploads,
       metadata: this.$['*uploadMetadata'],
     };
 
@@ -326,6 +325,7 @@ export class UploaderBlock extends ActivityBlock {
 
   /** @param {(item: import('./TypedData.js').TypedData) => Boolean} checkFn */
   getOutputData(checkFn) {
+    // @ts-ignore TODO: fix this
     let data = [];
     let items = this.uploadCollection.findItems(checkFn);
     items.forEach((itemId) => {
@@ -344,6 +344,7 @@ export class UploaderBlock extends ActivityBlock {
       };
       data.push(outputItem);
     });
+    // @ts-ignore TODO: fix this
     return data;
   }
 }
@@ -376,10 +377,13 @@ Object.values(EVENT_TYPES).forEach((eType) => {
   let eName = EventManager.eName(eType);
   window.addEventListener(eName, (e) => {
     let outputTypes = [EVENT_TYPES.UPLOAD_FINISH, EVENT_TYPES.REMOVE, EVENT_TYPES.CDN_MODIFICATION];
+    // @ts-ignore TODO: fix this
     if (outputTypes.includes(e.detail.type)) {
+      // @ts-ignore TODO: fix this
       let dataCtx = Data.getCtx(e.detail.ctx);
       /** @type {TypedCollection} */
       let uploadCollection = dataCtx.read('uploadCollection');
+      // @ts-ignore TODO: fix this
       let data = [];
       uploadCollection.items().forEach((id) => {
         let uploadEntryData = Data.getCtx(id).store;
@@ -397,10 +401,13 @@ Object.values(EVENT_TYPES).forEach((eType) => {
       EventManager.emit(
         new EventData({
           type: EVENT_TYPES.DATA_OUTPUT,
+          // @ts-ignore TODO: fix this
           ctx: e.detail.ctx,
+          // @ts-ignore TODO: fix this
           data,
         })
       );
+      // @ts-ignore TODO: fix this
       dataCtx.pub('outputData', data);
     }
   });

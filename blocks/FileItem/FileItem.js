@@ -32,11 +32,6 @@ export class FileItem extends UploaderBlock {
   /** @private */
   _renderedOnce = false;
 
-  cssInit$ = {
-    ...this.cssInit$,
-    '--cfg-use-cloud-image-editor': 0,
-  };
-
   init$ = {
     ...this.init$,
     uid: '',
@@ -142,10 +137,10 @@ export class FileItem extends UploaderBlock {
     let entry = this._entry;
 
     if (entry.getValue('uuid') && entry.getValue('isImage')) {
-      let size = this.getCssData('--cfg-thumb-size') || 76;
+      let size = this.cfg.thumbSize;
       let thumbUrl = this.proxyUrl(
         createCdnUrl(
-          createOriginalUrl(this.getCssData('--cfg-cdn-cname'), this._entry.getValue('uuid')),
+          createOriginalUrl(this.cfg.cdnCname, this._entry.getValue('uuid')),
           createCdnUrlModifiers(entry.getValue('cdnUrlModifiers'), `scale_crop/${size}x${size}/center`)
         )
       );
@@ -163,7 +158,7 @@ export class FileItem extends UploaderBlock {
 
     if (entry.getValue('file')?.type.includes('image')) {
       try {
-        let thumbUrl = await generateThumb(entry.getValue('file'), this.getCssData('--cfg-thumb-size') || 76);
+        let thumbUrl = await generateThumb(entry.getValue('file'), this.cfg.thumbSize);
         entry.setValue('thumbUrl', thumbUrl);
       } catch (err) {
         let color = window.getComputedStyle(this).getPropertyValue('--clr-generic-file-icon');
@@ -211,8 +206,8 @@ export class FileItem extends UploaderBlock {
    * @param {import('../../abstract/TypedData.js').TypedData} entry
    */
   _validateFileType(entry) {
-    let imagesOnly = this.getCssData('--cfg-img-only');
-    let accept = this.getCssData('--cfg-accept');
+    let imagesOnly = this.cfg.imgOnly;
+    let accept = this.cfg.accept;
     let allowedFileTypes = mergeFileTypes([...(imagesOnly ? IMAGE_ACCEPT_LIST : []), accept]);
     if (
       allowedFileTypes.length > 0 &&
@@ -264,20 +259,26 @@ export class FileItem extends UploaderBlock {
     });
 
     this._subEntry('fileSize', (fileSize) => {
-      let maxFileSize = this.getCssData('--cfg-max-local-file-size-bytes');
+      let maxFileSize = this.cfg.maxLocalFileSizeBytes;
       if (maxFileSize && fileSize && fileSize > maxFileSize) {
         entry.setValue('validationErrorMsg', this.l10n('files-max-size-limit-error', { maxFileSize }));
       }
     });
 
     this._subEntry('mimeType', (mimeType) => {
-      if (mimeType) {
-        this._validateFileType(entry);
+      if (!mimeType) {
+        return;
+      }
+      let imagesOnly = this.cfg.imgOnly;
+      let accept = this.cfg.accept;
+      let allowedFileTypes = mergeFileTypes([...(imagesOnly ? IMAGE_ACCEPT_LIST : []), accept]);
+      if (allowedFileTypes.length > 0 && !matchFileType(mimeType, allowedFileTypes)) {
+        entry.setValue('validationErrorMsg', this.l10n('file-type-not-allowed'));
       }
     });
 
     this._subEntry('isImage', (isImage) => {
-      const imagesOnly = this.getCssData('--cfg-img-only');
+      let imagesOnly = this.cfg.imgOnly;
       if (!imagesOnly || isImage) {
         return;
       }
@@ -313,7 +314,7 @@ export class FileItem extends UploaderBlock {
       this.$.thumbUrl = thumbUrl ? `url(${thumbUrl})` : '';
     });
 
-    if (!this.getCssData('--cfg-confirm-upload')) {
+    if (!this.cfg.confirmUpload) {
       this.upload();
     }
 
@@ -333,7 +334,7 @@ export class FileItem extends UploaderBlock {
       this._handleState(state);
     });
 
-    this.sub('--cfg-use-cloud-image-editor', () => {
+    this.subConfigValue('useCloudImageEditor', () => {
       this._handleState(this.$.state);
     });
 
@@ -365,8 +366,7 @@ export class FileItem extends UploaderBlock {
       isUploading: state === FileItemState.UPLOADING,
       isFinished: state === FileItemState.FINISHED,
       progressVisible: state === FileItemState.UPLOADING,
-      isEditable:
-        this.$['--cfg-use-cloud-image-editor'] && state === FileItemState.FINISHED && this._entry?.getValue('isImage'),
+      isEditable: this.cfg.useCloudImageEditor && state === FileItemState.FINISHED && this._entry?.getValue('isImage'),
     });
 
     if (state === FileItemState.FAILED) {

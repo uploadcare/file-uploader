@@ -17,10 +17,6 @@ import { TabId } from './toolbar-constants.js';
 export class CloudEditor extends ShadowWrapper {
   pauseRender = true;
 
-  get ctxName() {
-    return this.autoCtxName;
-  }
-
   init$ = {
     ...this.init$,
     ...initState(this),
@@ -55,11 +51,6 @@ export class CloudEditor extends ShadowWrapper {
       resizeObserver.observe(this);
     });
   }
-
-  cssInit$ = {
-    ...this.cssInit$,
-    '--cfg-cdn-cname': 'https://ucarecdn.com',
-  };
 
   shadowReadyCallback() {
     this.initEditor();
@@ -128,7 +119,7 @@ export class CloudEditor extends ShadowWrapper {
       let transformations = operationsToTransformations(operations);
       this.$['*editorTransformations'] = transformations;
     } else if (this.$.uuid) {
-      this.$['*originalUrl'] = createOriginalUrl(this.localCtx.read('--cfg-cdn-cname'), this.$.uuid);
+      this.$['*originalUrl'] = createOriginalUrl(this.cfg.cdnCname, this.$.uuid);
     } else {
       throw new Error('No UUID nor CDN URL provided');
     }

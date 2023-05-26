@@ -33,12 +33,6 @@ export class UploadDetails extends UploaderBlock {
     },
   };
 
-  cssInit$ = {
-    ...this.cssInit$,
-    '--cfg-use-cloud-image-editor': 0,
-    '--cfg-use-local-image-editor': 0,
-  };
-
   showNonImageThumb() {
     let color = window.getComputedStyle(this).getPropertyValue('--clr-generic-file-icon');
     let url = fileCssBg(color, 108, 108);
@@ -122,7 +116,7 @@ export class UploadDetails extends UploaderBlock {
         }
       });
       tmpSub('cdnUrl', (cdnUrl) => {
-        const canUseCloudEditor = this.$['--cfg-use-cloud-image-editor'] && cdnUrl && this.entry.getValue('isImage');
+        const canUseCloudEditor = this.cfg.useCloudImageEditor && cdnUrl && this.entry.getValue('isImage');
         cdnUrl && this.ref.filePreview.clear();
         this.set$({
           cdnUrl,

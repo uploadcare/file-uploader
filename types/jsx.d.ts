@@ -42,5 +42,6 @@ declare namespace JSX {
     'lr-file-uploader-minimal': any;
     'lr-file-uploader-inline': any;
     'lr-upload-ctx-provider': any;
+    'lr-config': any;
   }
 }

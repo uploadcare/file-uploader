@@ -1,3 +1,4 @@
+// @ts-check
 import { Modal } from '../blocks/Modal/Modal.js';
 import { debounce } from '../blocks/utils/debounce.js';
 import { Block } from './Block.js';
@@ -14,6 +15,7 @@ export class ActivityBlock extends Block {
 
   /** @private */
   _deactivate() {
+    // @ts-ignore TODO: fix this
     let actDesc = ActivityBlock._activityRegistry[this.activityKey];
     this[ACTIVE_PROP] = false;
     this.removeAttribute(ACTIVE_ATTR);
@@ -23,6 +25,7 @@ export class ActivityBlock extends Block {
 
   /** @private */
   _activate() {
+    // @ts-ignore TODO: fix this
     let actDesc = ActivityBlock._activityRegistry[this.activityKey];
     this.$['*historyBack'] = this.historyBack.bind(this);
     /** @private */
@@ -77,6 +80,7 @@ export class ActivityBlock extends Block {
 
   /** @private */
   _isActivityRegistered() {
+    // @ts-ignore TODO: fix this
     return this.activityType && !!ActivityBlock._activityRegistry[this.activityKey];
   }
 
@@ -103,6 +107,7 @@ export class ActivityBlock extends Block {
     if (!ActivityBlock._activityRegistry) {
       ActivityBlock._activityRegistry = Object.create(null);
     }
+    // @ts-ignore TODO: fix this
     ActivityBlock._activityRegistry[this.activityKey] = {
       activateCallback: onActivate,
       deactivateCallback: onDeactivate,
@@ -113,6 +118,7 @@ export class ActivityBlock extends Block {
     if (this.isActivityActive) {
       this._deactivate();
     }
+    // @ts-ignore TODO: fix this
     ActivityBlock._activityRegistry[this.activityKey] = undefined;
   }
 
@@ -134,14 +140,12 @@ export class ActivityBlock extends Block {
     return this.$['*currentActivityParams'];
   }
 
-  /** @type {String} */
   get initActivity() {
-    return this.getCssData('--cfg-init-activity');
+    return this.cfg.initActivity;
   }
 
-  /** @type {String} */
   get doneActivity() {
-    return this.getCssData('--cfg-done-activity');
+    return this.cfg.doneActivity;
   }
 
   historyBack() {

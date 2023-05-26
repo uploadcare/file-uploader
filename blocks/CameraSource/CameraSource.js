@@ -38,11 +38,6 @@ export class CameraSource extends UploaderBlock {
     },
   };
 
-  cssInit$ = {
-    ...this.cssInit$,
-    '--cfg-camera-mirror': 1,
-  };
-
   /** @private */
   _onActivate = () => {
     if (canUsePermissionsApi()) {
@@ -195,7 +190,7 @@ export class CameraSource extends UploaderBlock {
       onDeactivate: this._onDeactivate,
     });
 
-    this.sub('--cfg-camera-mirror', (val) => {
+    this.subConfigValue('cameraMirror', (val) => {
       this.$.videoTransformCss = val ? 'scaleX(-1)' : null;
     });
 
