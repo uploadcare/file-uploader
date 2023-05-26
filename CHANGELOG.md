@@ -1,3 +1,9 @@
+## [0.22.5](https://github.com/uploadcare/blocks/compare/v0.22.4...v0.22.5) (2023-05-26)
+
+### Bug Fixes
+
+- do not use host-context unsupported in firefox and safari ([7ab7a98](https://github.com/uploadcare/blocks/commit/7ab7a985e17d6f3becff5c67c0ae7bb3e5bdb8ae))
+
 ## [0.22.4](https://github.com/uploadcare/blocks/compare/v0.22.3...v0.22.4) (2023-05-23)
 
 ### Bug Fixes
