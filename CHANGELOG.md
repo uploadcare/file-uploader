@@ -1,3 +1,9 @@
+## [0.22.7](https://github.com/uploadcare/blocks/compare/v0.22.6...v0.22.7) (2023-05-29)
+
+### Bug Fixes
+
+- **cloud-editor:** double init ([#469](https://github.com/uploadcare/blocks/issues/469)) ([aae43ee](https://github.com/uploadcare/blocks/commit/aae43ee8b04e5a9c8a49d1eb49bc949c3af26080))
+
 ## [0.22.6](https://github.com/uploadcare/blocks/compare/v0.22.5...v0.22.6) (2023-05-26)
 
 ### Bug Fixes
