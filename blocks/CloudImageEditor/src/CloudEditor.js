@@ -62,11 +62,18 @@ export class CloudEditor extends ShadowWrapper {
   };
 
   shadowReadyCallback() {
-    this.initEditor();
+    if (this.renderShadow) {
+      this.initEditor();
+    }
   }
 
   initCallback() {
     super.initCallback();
+
+    this.$['*faderEl'] = this.ref['fader-el'];
+    this.$['*cropperEl'] = this.ref['cropper-el'];
+    this.$['*imgContainerEl'] = this.ref['img-container-el'];
+
     if (!this.renderShadow) {
       this.initEditor();
     }
@@ -81,10 +88,6 @@ export class CloudEditor extends ShadowWrapper {
       }
       return;
     }
-
-    this.$['*faderEl'] = this.ref['fader-el'];
-    this.$['*cropperEl'] = this.ref['cropper-el'];
-    this.$['*imgContainerEl'] = this.ref['img-container-el'];
 
     this.ref['img-el'].addEventListener('load', (e) => {
       this._imgLoading = false;
@@ -116,10 +119,6 @@ export class CloudEditor extends ShadowWrapper {
         image_hidden_effects: tabId !== TabId.CROP,
       });
     });
-  }
-
-  initCallback() {
-    super.initCallback();
 
     if (this.$.cdnUrl) {
       let uuid = extractUuid(this.$.cdnUrl);
