@@ -57,7 +57,7 @@ export const matchExtension = (fileName, allowedFileTypes) => {
       return false;
     }
 
-    return fileName.endsWith(type);
+    return fileName.toLowerCase().endsWith(type.toLowerCase());
   });
 };
 
