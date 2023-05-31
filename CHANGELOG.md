@@ -1,3 +1,9 @@
+## [0.22.8](https://github.com/uploadcare/blocks/compare/v0.22.7...v0.22.8) (2023-05-31)
+
+### Bug Fixes
+
+- make file extension validation case-insensitive ([#471](https://github.com/uploadcare/blocks/issues/471)) ([ae87b6b](https://github.com/uploadcare/blocks/commit/ae87b6be883de9e95e9afe0592b4a14a9f3d873c))
+
 ## [0.22.7](https://github.com/uploadcare/blocks/compare/v0.22.6...v0.22.7) (2023-05-29)
 
 ### Bug Fixes
