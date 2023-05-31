@@ -1,3 +1,4 @@
+// @ts-check
 import { Block } from '../../abstract/Block.js';
 
 const CSS_ATTRIBUTE = 'css-src';
@@ -31,6 +32,7 @@ export class ShadowWrapper extends Block {
           });
         });
       };
+      // @ts-ignore TODO: fix this
       this.shadowRoot.prepend(link);
     } else {
       this.render();

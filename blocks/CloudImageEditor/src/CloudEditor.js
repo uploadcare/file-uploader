@@ -1,3 +1,4 @@
+// @ts-check
 import {
   createCdnUrl,
   createCdnUrlModifiers,
@@ -17,8 +18,10 @@ import { TabId } from './toolbar-constants.js';
 export class CloudEditor extends ShadowWrapper {
   pauseRender = true;
 
+  // @ts-ignore TODO: fix this
   init$ = {
     ...this.init$,
+    // @ts-ignore TODO: fix this
     ...initState(this),
   };
 
@@ -26,9 +29,28 @@ export class CloudEditor extends ShadowWrapper {
     return this.autoCtxName;
   }
 
+  /**
+   * @param {String} prop
+   * @returns {any}
+   * @protected
+   */
+  parseCfgProp(prop) {
+    // @ts-ignore TODO: fix this
+    const ctx = Data.getCtx(this._outerCtxName);
+    const name = prop.replace('*', '');
+
+    return { ctx, name };
+  }
+
+  /** @private */
+  _outerCtxName = super.ctxName;
   /** @private */
   _debouncedShowLoader = debounce(this._showLoader.bind(this), 300);
 
+  /**
+   * @private
+   * @param {boolean} show
+   */
   _showLoader(show) {
     this.$.showLoader = show;
   }
@@ -72,6 +94,7 @@ export class CloudEditor extends ShadowWrapper {
       await this._waitForSize();
     } catch (err) {
       if (this.isConnected) {
+        // @ts-ignore TODO: fix this
         console.error(err.message);
       }
       return;
@@ -81,7 +104,7 @@ export class CloudEditor extends ShadowWrapper {
     this.$['*cropperEl'] = this.ref['cropper-el'];
     this.$['*imgContainerEl'] = this.ref['img-container-el'];
 
-    this.ref['img-el'].addEventListener('load', (e) => {
+    this.ref['img-el'].addEventListener('load', () => {
       this._imgLoading = false;
       this._debouncedShowLoader(false);
 
@@ -90,7 +113,7 @@ export class CloudEditor extends ShadowWrapper {
       }
     });
 
-    this.ref['img-el'].addEventListener('error', (e) => {
+    this.ref['img-el'].addEventListener('error', () => {
       this._imgLoading = false;
       this._debouncedShowLoader(false);
 
@@ -123,7 +146,7 @@ export class CloudEditor extends ShadowWrapper {
       let transformations = operationsToTransformations(operations);
       this.$['*editorTransformations'] = transformations;
     } else if (this.$.uuid) {
-      this.$['*originalUrl'] = createOriginalUrl(this.$.cdnCname, this.$.uuid);
+      this.$['*originalUrl'] = createOriginalUrl(this.cfg.cdnCname, this.$.uuid);
     } else {
       throw new Error('No UUID nor CDN URL provided');
     }
@@ -178,5 +201,4 @@ CloudEditor.template = TEMPLATE;
 CloudEditor.bindAttributes({
   uuid: 'uuid',
   'cdn-url': 'cdnUrl',
-  'cdn-cname': 'cdnCname',
 });

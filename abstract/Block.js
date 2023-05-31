@@ -183,7 +183,17 @@ export class Block extends BaseComponent {
     );
   }
 
-  /** @type {import('./initialConfig.js').Config} } */
+  /**
+   * @param {String} prop
+   * @protected
+   */
+  parseCfgProp(prop) {
+    // @ts-ignore TODO: fix this
+    const parsed = BaseComponent.__parseProp(prop, this);
+    return parsed;
+  }
+
+  /** @returns {import('../types/exported.js').ConfigType} } */
   get cfg() {
     if (!this.__cfgProxy) {
       let o = Object.create(null);
@@ -191,14 +201,13 @@ export class Block extends BaseComponent {
       this.__cfgProxy = new Proxy(o, {
         /**
          * @param {never} obj
-         * @param {string} key
+         * @param {keyof import('../types/exported').ConfigType} key
          */
         get: (obj, key) => {
           const sharedKey = sharedConfigKey(key);
-          // @ts-ignore TODO: fix this
-          const parsed = BaseComponent.__parseProp(sharedKey, this);
+          const parsed = this.parseCfgProp(sharedKey);
           if (parsed.ctx.has(parsed.name)) {
-            return this.$[sharedKey];
+            return parsed.ctx.read(parsed.name);
           } else {
             warnOnce('Using CSS variables for configuration is deprecated. Please use `lr-config` instead. See LINK');
             return this.getCssData(`--cfg-${toKebabCase(key)}`);
@@ -210,13 +219,12 @@ export class Block extends BaseComponent {
   }
 
   /**
-   * @template {keyof import('./initialConfig.js').Config} T
+   * @template {keyof import('../types/exported.js').ConfigType} T
    * @param {T} key
-   * @param {(value: import('./initialConfig.js').Config[T]) => void} callback
+   * @param {(value: import('../types/exported.js').ConfigType[T]) => void} callback
    */
   subConfigValue(key, callback) {
-    // @ts-ignore TODO: fix this
-    const parsed = BaseComponent.__parseProp(sharedConfigKey(key), this);
+    const parsed = this.parseCfgProp(sharedConfigKey(key));
     if (parsed.ctx.has(parsed.name)) {
       this.sub(sharedConfigKey(key), callback);
     } else {

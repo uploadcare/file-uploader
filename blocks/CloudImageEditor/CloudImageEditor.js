@@ -51,7 +51,6 @@ export class CloudImageEditor extends UploaderBlock {
     instance.classList.add('lr-cldtr-common');
     let cdnUrl = this.$.cdnUrl;
     instance.setAttribute('cdn-url', cdnUrl);
-    instance.setAttribute('cdn-cname', this.cfg.cdnCname);
 
     instance.addEventListener('apply', (result) => this.handleApply(result));
     instance.addEventListener('cancel', () => this.handleCancel());

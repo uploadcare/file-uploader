@@ -1,4 +1,3 @@
-import { DEFAULT_CDN_CNAME } from '../../../abstract/initialConfig.js';
 import { createCdnUrl, createCdnUrlModifiers } from '../../../utils/cdn-utils.js';
 import { TRANSPARENT_PIXEL_SRC } from '../../../utils/transparentPixelSrc.js';
 import { transformationsToOperations } from './lib/transformationUtils.js';
@@ -27,7 +26,6 @@ export function initState(fnCtx) {
     showLoader: false,
     uuid: null,
     cdnUrl: null,
-    cdnCname: DEFAULT_CDN_CNAME,
 
     'presence.networkProblems': false,
     'presence.modalCaption': true,
