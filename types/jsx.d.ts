@@ -1,3 +1,6 @@
+import { ConfigType } from '..';
+import { KebabCase } from '../utils/toKebabCase';
+
 // TODO: not sure that this fill will be loaded automatically
 declare namespace JSX {
   interface IntrinsicElements {
@@ -42,6 +45,6 @@ declare namespace JSX {
     'lr-file-uploader-minimal': any;
     'lr-file-uploader-inline': any;
     'lr-upload-ctx-provider': any;
-    'lr-config': any;
+    'lr-config': (props: ConfigType & KebabCase<ConfigType>) => JSX.Element;
   }
 }

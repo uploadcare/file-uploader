@@ -1,6 +1,12 @@
 /**
- * @param {string} str
- * @returns {string}
+ * @template {string} T
+ * @typedef {T extends `${infer Head} ${infer Tail}` ? `${Lowercase<Head>}-${KebabCase<Tail>}` : Lowercase<T>} KebabCase
+ */
+
+/**
+ * @template {string} T
+ * @param {T} str
+ * @returns {KebabCase<T>}
  */
 export const toKebabCase = (str) =>
   str
