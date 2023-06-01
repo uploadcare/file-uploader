@@ -1,3 +1,27 @@
+## [0.22.8](https://github.com/uploadcare/blocks/compare/v0.22.7...v0.22.8) (2023-05-31)
+
+### Bug Fixes
+
+- make file extension validation case-insensitive ([#471](https://github.com/uploadcare/blocks/issues/471)) ([ae87b6b](https://github.com/uploadcare/blocks/commit/ae87b6be883de9e95e9afe0592b4a14a9f3d873c))
+
+## [0.22.7](https://github.com/uploadcare/blocks/compare/v0.22.6...v0.22.7) (2023-05-29)
+
+### Bug Fixes
+
+- **cloud-editor:** double init ([#469](https://github.com/uploadcare/blocks/issues/469)) ([aae43ee](https://github.com/uploadcare/blocks/commit/aae43ee8b04e5a9c8a49d1eb49bc949c3af26080))
+
+## [0.22.6](https://github.com/uploadcare/blocks/compare/v0.22.5...v0.22.6) (2023-05-26)
+
+### Bug Fixes
+
+- **cloud-editor:** init editor on initCallback instead of connectedCallback to prevent cases when editor init is going before the block init ([#467](https://github.com/uploadcare/blocks/issues/467)) ([f6d92fd](https://github.com/uploadcare/blocks/commit/f6d92fda5fc3c495111526b97f283b63a5cd3117))
+
+## [0.22.5](https://github.com/uploadcare/blocks/compare/v0.22.4...v0.22.5) (2023-05-26)
+
+### Bug Fixes
+
+- do not use host-context unsupported in firefox and safari ([7ab7a98](https://github.com/uploadcare/blocks/commit/7ab7a985e17d6f3becff5c67c0ae7bb3e5bdb8ae))
+
 ## [0.22.4](https://github.com/uploadcare/blocks/compare/v0.22.3...v0.22.4) (2023-05-23)
 
 ### Bug Fixes

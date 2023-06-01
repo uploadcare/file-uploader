@@ -70,7 +70,7 @@ export class CloudEditor extends ShadowWrapper {
     const TIMEOUT = 3000;
     return new Promise((resolve, reject) => {
       const timeoutId = setTimeout(() => {
-        reject(new Error('[cloud-image-editor] timout waiting for non-zero container size'));
+        reject(new Error('[cloud-image-editor] timeout waiting for non-zero container size'));
       }, TIMEOUT);
       const resizeObserver = new ResizeObserver(([element]) => {
         if (element.contentRect.width > 0 && element.contentRect.height > 0) {
@@ -84,11 +84,18 @@ export class CloudEditor extends ShadowWrapper {
   }
 
   shadowReadyCallback() {
-    this.initEditor();
+    if (this.renderShadow) {
+      this.initEditor();
+    }
   }
 
-  connectedCallback() {
-    super.connectedCallback();
+  initCallback() {
+    super.initCallback();
+
+    this.$['*faderEl'] = this.ref['fader-el'];
+    this.$['*cropperEl'] = this.ref['cropper-el'];
+    this.$['*imgContainerEl'] = this.ref['img-container-el'];
+
     if (!this.renderShadow) {
       this.initEditor();
     }
@@ -104,10 +111,6 @@ export class CloudEditor extends ShadowWrapper {
       }
       return;
     }
-
-    this.$['*faderEl'] = this.ref['fader-el'];
-    this.$['*cropperEl'] = this.ref['cropper-el'];
-    this.$['*imgContainerEl'] = this.ref['img-container-el'];
 
     this.ref['img-el'].addEventListener('load', () => {
       this._imgLoading = false;
@@ -139,10 +142,6 @@ export class CloudEditor extends ShadowWrapper {
         image_hidden_effects: tabId !== TabId.CROP,
       });
     });
-  }
-
-  initCallback() {
-    super.initCallback();
 
     if (this.$.cdnUrl) {
       let uuid = extractUuid(this.$.cdnUrl);

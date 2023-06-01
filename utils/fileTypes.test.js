@@ -49,6 +49,9 @@ describe('matchExtension', () => {
     expect(matchExtension('image.jpeg', ['.png'])).to.be.false;
     expect(matchExtension('image.avifs', ['.avif'])).to.be.false;
   });
+  it('should be case insensitive', () => {
+    expect(matchExtension('image.PNG', ['.png'])).to.be.true;
+  });
 });
 
 describe('fileIsImage', () => {
