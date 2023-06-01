@@ -188,9 +188,10 @@ export class Block extends BaseComponent {
    * @protected
    */
   parseCfgProp(prop) {
-    // @ts-ignore TODO: fix this
-    const parsed = BaseComponent.__parseProp(prop, this);
-    return parsed;
+    return {
+      ctx: this.nodeCtx,
+      name: prop.replace('*', ''),
+    };
   }
 
   /** @returns {import('../types/exported.js').ConfigType} } */

@@ -1,4 +1,5 @@
 // @ts-check
+import { Data } from '@symbiotejs/symbiote';
 import {
   createCdnUrl,
   createCdnUrlModifiers,
@@ -25,25 +26,29 @@ export class CloudEditor extends ShadowWrapper {
     ...initState(this),
   };
 
+  /** Force cloud editor to always use own context */
   get ctxName() {
     return this.autoCtxName;
   }
 
+  /** @private */
+  _cfgCtxName = this.getAttribute('ctx-name')?.trim();
+
   /**
+   * Resolve cfg from context passed with ctx-name attribute
+   *
    * @param {String} prop
    * @returns {any}
    * @protected
    */
   parseCfgProp(prop) {
-    // @ts-ignore TODO: fix this
-    const ctx = Data.getCtx(this._outerCtxName);
-    const name = prop.replace('*', '');
-
-    return { ctx, name };
+    const parsed = {
+      ...super.parseCfgProp(prop),
+      ctx: Data.getCtx(this._cfgCtxName),
+    };
+    return parsed;
   }
 
-  /** @private */
-  _outerCtxName = super.ctxName;
   /** @private */
   _debouncedShowLoader = debounce(this._showLoader.bind(this), 300);
 
