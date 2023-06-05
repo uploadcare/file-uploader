@@ -13,7 +13,7 @@ export class Copyright extends Block {
       '--cfg-remove-copyright',
       /** @param {number} value */
       (value) => {
-        this.classList.toggle('hidden', !!value);
+        this.toggleAttribute('hidden', !!value);
       }
     );
   }
