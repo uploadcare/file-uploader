@@ -1,3 +1,9 @@
+## [0.22.9](https://github.com/uploadcare/blocks/compare/v0.22.8...v0.22.9) (2023-06-05)
+
+### Bug Fixes
+
+- **copyright:** not working --cfg-remove-copyright config option ([#473](https://github.com/uploadcare/blocks/issues/473)) ([e925c7b](https://github.com/uploadcare/blocks/commit/e925c7b2e03c9833c12f7e2a54baa0b23f11fe2e))
+
 ## [0.22.8](https://github.com/uploadcare/blocks/compare/v0.22.7...v0.22.8) (2023-05-31)
 
 ### Bug Fixes

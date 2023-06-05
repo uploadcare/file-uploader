@@ -28,7 +28,7 @@ lr-activity-header .close-btn {
 
 @container (min-width: 500px) {
   lr-start-from {
-    grid-template-rows: 1fr max-content;
+    grid-auto-rows: 1fr max-content;
     grid-template-columns: 1fr max-content;
   }
 

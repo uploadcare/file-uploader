@@ -8,7 +8,7 @@ export class Copyright extends Block {
       'removeCopyright',
       /** @param {number} value */
       (value) => {
-        this.classList.toggle('hidden', !!value);
+        this.toggleAttribute('hidden', !!value);
       }
     );
   }
