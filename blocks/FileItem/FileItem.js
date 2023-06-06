@@ -211,14 +211,18 @@ export class FileItem extends UploaderBlock {
    * @param {import('../../abstract/TypedData.js').TypedData} entry
    */
   _validateFileType(entry) {
-    let imagesOnly = this.getCssData('--cfg-img-only');
-    let accept = this.getCssData('--cfg-accept');
-    let allowedFileTypes = mergeFileTypes([...(imagesOnly ? IMAGE_ACCEPT_LIST : []), accept]);
-    if (
-      allowedFileTypes.length > 0 &&
-      !matchMimeType(entry.getValue('mimeType'), allowedFileTypes) &&
-      !matchExtension(entry.getValue('fileName'), allowedFileTypes)
-    ) {
+    const imagesOnly = this.getCssData('--cfg-img-only');
+    const accept = this.getCssData('--cfg-accept');
+    const allowedFileTypes = mergeFileTypes([...(imagesOnly ? IMAGE_ACCEPT_LIST : []), accept]);
+    const mimeType = entry.getValue('mimeType');
+    const fileName = entry.getValue('fileName');
+
+    const needMimeCheck = !!mimeType;
+    const needExtCheck = !!fileName;
+    const mimeOk = needMimeCheck ? matchMimeType(mimeType, allowedFileTypes) : true;
+    const extOk = needExtCheck ? matchExtension(fileName, allowedFileTypes) : true;
+    if (!mimeOk && !extOk) {
+      // Assume file type is not allowed if both mime and ext checks fail
       entry.setValue('validationErrorMsg', this.l10n('file-type-not-allowed'));
     }
   }
