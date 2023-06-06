@@ -20,8 +20,6 @@
  *   modalScrollLock: boolean;
  *   modalBackdropStrokes: boolean;
  *   sourceListWrap: boolean;
- *   initActivity: string;
- *   doneActivity: string;
  *   remoteTabSessionKey: string;
  *   cdnCname: string;
  *   baseUrl: string;

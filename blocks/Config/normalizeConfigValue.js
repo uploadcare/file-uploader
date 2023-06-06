@@ -50,9 +50,6 @@ const mapping = {
 
   sourceListWrap: asBoolean,
 
-  initActivity: asString,
-  doneActivity: asString,
-
   remoteTabSessionKey: asString,
   cdnCname: asString,
   baseUrl: asString,

@@ -140,12 +140,14 @@ export class ActivityBlock extends Block {
     return this.$['*currentActivityParams'];
   }
 
+  /** @type {String} */
   get initActivity() {
-    return this.cfg.initActivity;
+    return this.getCssData('--cfg-init-activity');
   }
 
+  /** @type {String} */
   get doneActivity() {
-    return this.cfg.doneActivity;
+    return this.getCssData('--cfg-done-activity');
   }
 
   historyBack() {

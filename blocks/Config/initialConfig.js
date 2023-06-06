@@ -30,9 +30,6 @@ export const initialConfig = Object.freeze({
 
   sourceListWrap: true,
 
-  initActivity: 'startFrom',
-  doneActivity: '',
-
   remoteTabSessionKey: '',
   cdnCname: DEFAULT_CDN_CNAME,
   baseUrl: DEFAULT_BASE_URL,
