@@ -1,3 +1,9 @@
+## [0.22.11](https://github.com/uploadcare/blocks/compare/v0.22.10...v0.22.11) (2023-06-08)
+
+### Bug Fixes
+
+- skip validation if no allowed file types provided ([#477](https://github.com/uploadcare/blocks/issues/477)) ([e241993](https://github.com/uploadcare/blocks/commit/e241993f46d57840abf287eb47314cace1ba1058))
+
 ## [0.22.10](https://github.com/uploadcare/blocks/compare/v0.22.9...v0.22.10) (2023-06-08)
 
 ### Bug Fixes
