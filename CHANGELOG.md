@@ -1,3 +1,9 @@
+## [0.22.10](https://github.com/uploadcare/blocks/compare/v0.22.9...v0.22.10) (2023-06-08)
+
+### Bug Fixes
+
+- **file-item:** `--cfg-img-only` for external sources causing error ([#475](https://github.com/uploadcare/blocks/issues/475)) ([479db7b](https://github.com/uploadcare/blocks/commit/479db7b5ea7bf467a4a29819628347a31992acdc))
+
 ## [0.22.9](https://github.com/uploadcare/blocks/compare/v0.22.8...v0.22.9) (2023-06-05)
 
 ### Bug Fixes
