@@ -214,6 +214,8 @@ export class FileItem extends UploaderBlock {
     const imagesOnly = this.getCssData('--cfg-img-only');
     const accept = this.getCssData('--cfg-accept');
     const allowedFileTypes = mergeFileTypes([...(imagesOnly ? IMAGE_ACCEPT_LIST : []), accept]);
+    if (!allowedFileTypes.length) return;
+
     const mimeType = entry.getValue('mimeType');
     const fileName = entry.getValue('fileName');
 
@@ -221,6 +223,7 @@ export class FileItem extends UploaderBlock {
     const needExtCheck = !!fileName;
     const mimeOk = needMimeCheck ? matchMimeType(mimeType, allowedFileTypes) : true;
     const extOk = needExtCheck ? matchExtension(fileName, allowedFileTypes) : true;
+
     if (!mimeOk && !extOk) {
       // Assume file type is not allowed if both mime and ext checks fail
       entry.setValue('validationErrorMsg', this.l10n('file-type-not-allowed'));
