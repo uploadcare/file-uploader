@@ -1,3 +1,4 @@
+// @ts-check
 import { stringToArray } from './stringToArray.js';
 
 export const IMAGE_ACCEPT_LIST = [
