@@ -1,6 +1,6 @@
 // @ts-check
 
-/** @typedef {{ in: string; out: string; minify: boolean; minifyHtml?: boolean }} BuildItem */
+/** @typedef {{ in: string; out: string; minify: boolean; minifyHtml?: boolean; iife?: boolean }} BuildItem */
 
 /** @type {BuildItem[]} */
 export const buildItems = [
@@ -10,6 +10,13 @@ export const buildItems = [
     out: './web/blocks.min.js',
     minify: true,
     minifyHtml: true,
+  },
+  {
+    in: './index.js',
+    out: './web/blocks.iife.js',
+    minify: true,
+    minifyHtml: true,
+    iife: true,
   },
   {
     in: './blocks/themes/lr-basic/index.css',
