@@ -1,3 +1,5 @@
+## [0.22.12](https://github.com/uploadcare/blocks/compare/v0.22.11...v0.22.12) (2023-06-09)
+
 ## [0.22.11](https://github.com/uploadcare/blocks/compare/v0.22.10...v0.22.11) (2023-06-08)
 
 ### Bug Fixes
