@@ -4,6 +4,7 @@ lr-external-source {
   width: 100%;
   height: 100%;
   background-color: var(--clr-background-light);
+  overflow: hidden;
 }
 
 lr-modal lr-external-source {
