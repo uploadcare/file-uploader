@@ -1,3 +1,9 @@
+## [0.22.13](https://github.com/uploadcare/blocks/compare/v0.22.12...v0.22.13) (2023-06-13)
+
+### Bug Fixes
+
+- **external-source:** safari iframe height ([#479](https://github.com/uploadcare/blocks/issues/479)) ([88b54d8](https://github.com/uploadcare/blocks/commit/88b54d8eaacc4f4ff40f6d8a89ed2c3b71ece48e))
+
 ## [0.22.12](https://github.com/uploadcare/blocks/compare/v0.22.11...v0.22.12) (2023-06-09)
 
 ### Features
