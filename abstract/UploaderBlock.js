@@ -103,6 +103,10 @@ export class UploaderBlock extends ActivityBlock {
     });
   }
 
+  uploadAll() {
+    this.$['*uploadTrigger'] = {};
+  }
+
   /** @param {{ captureCamera?: boolean }} options */
   openSystemDialog(options = {}) {
     let accept = mergeFileTypes([

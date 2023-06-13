@@ -22,7 +22,7 @@ export class UploadList extends UploaderBlock {
       this.initFlow(true);
     },
     onUpload: () => {
-      this.$['*uploadTrigger'] = {};
+      this.uploadAll();
       this._updateUploadsState();
     },
     onDone: () => {
