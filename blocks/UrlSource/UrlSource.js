@@ -9,9 +9,7 @@ export class UrlSource extends UploaderBlock {
     importDisabled: true,
     onUpload: () => {
       let url = this.ref.input['value'];
-      this.uploadCollection.add({
-        externalUrl: url,
-      });
+      this.addFileFromUrl(url);
       this.$['*currentActivity'] = ActivityBlock.activities.UPLOAD_LIST;
     },
     onCancel: () => {

@@ -64,3 +64,26 @@ describe('fileIsImage', () => {
     expect(fileIsImage(file)).to.be.false;
   });
 });
+
+describe('isBlob', () => {
+  it('should return true if Blob is passed', () => {
+    expect(isBlob(new Blob(['']))).to.be.true;
+  });
+  it('should return true if File is passed', () => {
+    expect(isBlob(new File([''], 'test.txt'))).to.be.true;
+  });
+  it('should return false if something else passed', () => {
+    expect(isBlob('test')).to.be.false;
+    expect(isBlob({ uri: 'test' })).to.be.false;
+  });
+});
+describe('isFile', () => {
+  it('should return true if File is passed', () => {
+    expect(isFilee(new File([''], 'test.txt'))).to.be.true;
+  });
+  it('should return false if something else passed', () => {
+    expect(isFile(new Blob(['']))).to.be.false;
+    expect(isFile('test')).to.be.false;
+    expect(isFile({ uri: 'test' })).to.be.false;
+  });
+});

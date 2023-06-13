@@ -1,7 +1,8 @@
+// @ts-check
 import { ActivityBlock } from './ActivityBlock.js';
 
 import { Data } from '@symbiotejs/symbiote';
-import { IMAGE_ACCEPT_LIST, mergeFileTypes, fileIsImage } from '../utils/fileTypes.js';
+import { IMAGE_ACCEPT_LIST, mergeFileTypes, fileIsImage, isFile } from '../utils/fileTypes.js';
 import { uploadEntrySchema } from './uploadEntrySchema.js';
 import { customUserAgent } from '../blocks/utils/userAgent.js';
 import { TypedCollection } from './TypedCollection.js';
@@ -12,6 +13,7 @@ import { stringToArray } from '../utils/stringToArray.js';
 
 export class UploaderBlock extends ActivityBlock {
   init$ = uploaderBlockCtx(this);
+  // @ts-ignore TODO: fix this
   cssInit$ = {
     ...this.cssInit$,
     '--cfg-max-concurrent-requests': 1,
@@ -32,6 +34,8 @@ export class UploaderBlock extends ActivityBlock {
    */
   setUploadMetadata(metadata) {
     if (!this.connectedOnce) {
+      // TODO: move to config block
+      // @ts-ignore TODO: fix this
       this.__initialUploadMetadata = metadata;
     } else {
       this.$['*uploadMetadata'] = metadata;
@@ -60,16 +64,42 @@ export class UploaderBlock extends ActivityBlock {
     }
   }
 
-  /** @param {File[]} files */
-  addFiles(files) {
-    files.forEach((/** @type {File} */ file) => {
-      this.uploadCollection.add({
-        file,
-        isImage: fileIsImage(file),
-        mimeType: file.type,
-        fileName: file.name,
-        fileSize: file.size,
-      });
+  /**
+   * @param {string} url
+   * @param {string} [fileName]
+   * @param {{ silent?: boolean }} [options]
+   */
+  addFileFromUrl(url, fileName, { silent } = {}) {
+    this.uploadCollection.add({
+      externalUrl: url,
+      fileName: fileName ?? null,
+      silentUpload: silent ?? false,
+    });
+  }
+
+  /**
+   * @param {string} uuid
+   * @param {{ silent?: boolean }} [options]
+   */
+  addFileFromUuid(uuid, { silent } = {}) {
+    this.uploadCollection.add({
+      uuid,
+      silentUpload: silent ?? false,
+    });
+  }
+
+  /**
+   * @param {File} file
+   * @param {{ silent?: boolean }} [options]
+   */
+  addFileFromObject(file, { silent } = {}) {
+    this.uploadCollection.add({
+      file,
+      isImage: fileIsImage(file),
+      mimeType: file.type,
+      fileName: file.name,
+      fileSize: file.size,
+      silentUpload: silent ?? false,
     });
   }
 
@@ -98,18 +128,21 @@ export class UploaderBlock extends ActivityBlock {
     }
     this.fileInput.dispatchEvent(new MouseEvent('click'));
     this.fileInput.onchange = () => {
-      this.addFiles([...this.fileInput['files']]);
+      // @ts-ignore TODO: fix this
+      [...this.fileInput['files']].forEach((file) => this.addFileFromObject(file));
       // To call uploadTrigger UploadList should draw file items first:
       this.$['*currentActivity'] = ActivityBlock.activities.UPLOAD_LIST;
       this.setForCtxTarget(Modal.StateConsumerScope, '*modalActive', true);
+      // @ts-ignore TODO: fix this
       this.fileInput['value'] = '';
       this.fileInput = null;
     };
   }
 
-  /** @type {String[]} */
+  /** @type {string[]} */
   get sourceList() {
-    let list = null;
+    /** @type {string[]} */
+    let list = [];
     if (this.getCssData('--cfg-source-list')) {
       list = stringToArray(this.getCssData('--cfg-source-list'));
     }
@@ -184,7 +217,7 @@ export class UploaderBlock extends ActivityBlock {
     if (!this.has('*uploadCollection')) {
       let uploadCollection = new TypedCollection({
         typedSchema: uploadEntrySchema,
-        watchList: ['uploadProgress', 'uuid', 'uploadError', 'validationErrorMsg', 'cdnUrlModifiers'],
+        watchList: ['uploadProgress', 'fileInfo', 'uploadError', 'validationErrorMsg', 'cdnUrlModifiers'],
         handler: (entries, added, removed) => {
           for (let entry of removed) {
             entry?.getValue('abortController')?.abort();
@@ -203,6 +236,7 @@ export class UploaderBlock extends ActivityBlock {
   }
 
   /** @private */
+  // @ts-ignore TODO: fix this
   _handleCollectionUpdate = (changeMap) => {
     let uploadCollection = this.uploadCollection;
     if (changeMap.uploadProgress) {
@@ -226,24 +260,25 @@ export class UploaderBlock extends ActivityBlock {
         progress === 100
       );
     }
-    if (changeMap.uuid) {
+    if (changeMap.fileInfo) {
       let loadedItems = uploadCollection.findItems((entry) => {
-        return !!entry.getValue('uuid');
+        return !!entry.getValue('fileInfo');
       });
       let errorItems = uploadCollection.findItems((entry) => {
         return !!entry.getValue('uploadError') || !!entry.getValue('validationErrorMsg');
       });
       if (uploadCollection.size - errorItems.length === loadedItems.length) {
         let data = this.getOutputData((dataItem) => {
-          return !!dataItem.getValue('uuid');
+          return !!dataItem.getValue('fileInfo') && !dataItem.getValue('silentUpload');
         });
-        EventManager.emit(
-          new EventData({
-            type: EVENT_TYPES.UPLOAD_FINISH,
-            ctx: this.ctxName,
-            data,
-          })
-        );
+        data.length > 0 &&
+          EventManager.emit(
+            new EventData({
+              type: EVENT_TYPES.UPLOAD_FINISH,
+              ctx: this.ctxName,
+              data,
+            })
+          );
       }
     }
     if (changeMap.uploadError) {
@@ -326,6 +361,7 @@ export class UploaderBlock extends ActivityBlock {
 
   /** @param {(item: import('./TypedData.js').TypedData) => Boolean} checkFn */
   getOutputData(checkFn) {
+    // @ts-ignore TODO: fix this
     let data = [];
     let items = this.uploadCollection.findItems(checkFn);
     items.forEach((itemId) => {
@@ -344,6 +380,7 @@ export class UploaderBlock extends ActivityBlock {
       };
       data.push(outputItem);
     });
+    // @ts-ignore TODO: fix this
     return data;
   }
 }
@@ -376,10 +413,13 @@ Object.values(EVENT_TYPES).forEach((eType) => {
   let eName = EventManager.eName(eType);
   window.addEventListener(eName, (e) => {
     let outputTypes = [EVENT_TYPES.UPLOAD_FINISH, EVENT_TYPES.REMOVE, EVENT_TYPES.CDN_MODIFICATION];
+    // @ts-ignore TODO: fix this
     if (outputTypes.includes(e.detail.type)) {
+      // @ts-ignore TODO: fix this
       let dataCtx = Data.getCtx(e.detail.ctx);
       /** @type {TypedCollection} */
       let uploadCollection = dataCtx.read('uploadCollection');
+      // @ts-ignore TODO: fix this
       let data = [];
       uploadCollection.items().forEach((id) => {
         let uploadEntryData = Data.getCtx(id).store;
@@ -397,10 +437,13 @@ Object.values(EVENT_TYPES).forEach((eType) => {
       EventManager.emit(
         new EventData({
           type: EVENT_TYPES.DATA_OUTPUT,
+          // @ts-ignore TODO: fix this
           ctx: e.detail.ctx,
+          // @ts-ignore TODO: fix this
           data,
         })
       );
+      // @ts-ignore TODO: fix this
       dataCtx.pub('outputData', data);
     }
   });

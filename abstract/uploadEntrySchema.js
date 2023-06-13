@@ -38,6 +38,7 @@ export const uploadEntrySchema = Object.freeze({
   fileSize: {
     type: Number,
     value: null,
+    nullable: true,
   },
   lastModified: {
     type: Number,
@@ -58,6 +59,7 @@ export const uploadEntrySchema = Object.freeze({
   mimeType: {
     type: String,
     value: null,
+    nullable: true,
   },
   uploadError: {
     // TODO: there could be Error or UploadcareClientError
@@ -99,5 +101,9 @@ export const uploadEntrySchema = Object.freeze({
     type: String,
     value: null,
     nullable: true,
+  },
+  silentUpload: {
+    type: Boolean,
+    value: false,
   },
 });

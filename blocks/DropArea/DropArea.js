@@ -91,19 +91,10 @@ export class DropArea extends UploaderBlock {
         }
         items.forEach((/** @type {File | String} */ item) => {
           if (typeof item === 'string') {
-            this.uploadCollection.add({
-              externalUrl: item,
-            });
+            this.addFileFromUrl(item);
             return;
           }
-          let isImage = fileIsImage(item);
-          this.uploadCollection.add({
-            file: item,
-            isImage: isImage,
-            mimeType: item.type,
-            fileName: item.name,
-            fileSize: item.size,
-          });
+          this.addFileFromObject(item);
         });
         if (this.uploadCollection.size) {
           this.set$({
