@@ -1,5 +1,5 @@
 import { expect } from '@esm-bundle/chai';
-import { mergeFileTypes, matchMimeType, fileIsImage, matchExtension } from './fileTypes';
+import { mergeFileTypes, matchMimeType, fileIsImage, matchExtension, isBlob, isFile } from './fileTypes';
 
 describe('mergeFileTypes', () => {
   it('should join input strings with comma', () => {
@@ -79,7 +79,7 @@ describe('isBlob', () => {
 });
 describe('isFile', () => {
   it('should return true if File is passed', () => {
-    expect(isFilee(new File([''], 'test.txt'))).to.be.true;
+    expect(isFile(new File([''], 'test.txt'))).to.be.true;
   });
   it('should return false if something else passed', () => {
     expect(isFile(new Blob(['']))).to.be.false;
