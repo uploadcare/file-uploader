@@ -2,7 +2,7 @@
 import { ActivityBlock } from './ActivityBlock.js';
 
 import { Data } from '@symbiotejs/symbiote';
-import { IMAGE_ACCEPT_LIST, mergeFileTypes, fileIsImage, isFile } from '../utils/fileTypes.js';
+import { IMAGE_ACCEPT_LIST, mergeFileTypes, fileIsImage } from '../utils/fileTypes.js';
 import { uploadEntrySchema } from './uploadEntrySchema.js';
 import { customUserAgent } from '../blocks/utils/userAgent.js';
 import { TypedCollection } from './TypedCollection.js';
