@@ -66,10 +66,9 @@ export class UploaderBlock extends ActivityBlock {
 
   /**
    * @param {string} url
-   * @param {string} [fileName]
-   * @param {{ silent?: boolean }} [options={ silent: false }] Default is `{ silent: false }`
+   * @param {{ silent?: boolean; fileName?: string }} [options]
    */
-  addFileFromUrl(url, fileName, { silent } = {}) {
+  addFileFromUrl(url, { silent, fileName } = {}) {
     this.uploadCollection.add({
       externalUrl: url,
       fileName: fileName ?? null,
@@ -79,25 +78,26 @@ export class UploaderBlock extends ActivityBlock {
 
   /**
    * @param {string} uuid
-   * @param {{ silent?: boolean }} [options={ silent: false }] Default is `{ silent: false }`
+   * @param {{ silent?: boolean; fileName?: string }} [options]
    */
-  addFileFromUuid(uuid, { silent } = {}) {
+  addFileFromUuid(uuid, { silent, fileName } = {}) {
     this.uploadCollection.add({
       uuid,
+      fileName: fileName ?? null,
       silentUpload: silent ?? false,
     });
   }
 
   /**
    * @param {File} file
-   * @param {{ silent?: boolean }} [options={ silent: false }] Default is `{ silent: false }`
+   * @param {{ silent?: boolean; fileName?: string }} [options]
    */
-  addFileFromObject(file, { silent } = {}) {
+  addFileFromObject(file, { silent, fileName } = {}) {
     this.uploadCollection.add({
       file,
       isImage: fileIsImage(file),
       mimeType: file.type,
-      fileName: file.name,
+      fileName: fileName ?? file.name,
       fileSize: file.size,
       silentUpload: silent ?? false,
     });
