@@ -1,3 +1,4 @@
+// @ts-check
 import { UploadcareFile } from '@uploadcare/upload-client';
 
 /**
@@ -18,9 +19,14 @@ import { UploadcareFile } from '@uploadcare/upload-client';
  * @property {String} cdnUrlModifiers
  * @property {UploadcareFile} fileInfo
  * @property {Boolean} isUploading
+ * @property {String} thumbUrl
+ * @property {Boolean} silentUpload
  */
 
-/** @type {{ [key in keyof UploadEntry]: { type; value; nullable?: Boolean } }} */
+/**
+ * @template {keyof UploadEntry} K
+ * @type {Record<K, { type: Function; value: any; nullable?: Boolean }>}
+ */
 export const uploadEntrySchema = Object.freeze({
   file: {
     type: File,
