@@ -10,6 +10,7 @@ import { uploaderBlockCtx } from './CTX.js';
 import { EVENT_TYPES, EventData, EventManager } from './EventManager.js';
 import { Modal } from '../blocks/Modal/Modal.js';
 import { stringToArray } from '../utils/stringToArray.js';
+import { warnOnce } from '../utils/warnOnce.js';
 
 export class UploaderBlock extends ActivityBlock {
   init$ = uploaderBlockCtx(this);
@@ -24,10 +25,12 @@ export class UploaderBlock extends ActivityBlock {
    * TODO: If we add more public methods, it is better to use the single queue instead of tons of private fields per
    * each method. See https://github.com/uploadcare/blocks/pull/162/
    *
+   * @deprecated Use `metadata` instance property on `lr-config` block instead.
    * @param {import('@uploadcare/upload-client').Metadata} metadata
    * @public
    */
   setUploadMetadata(metadata) {
+    warnOnce('setUploadMetadata is deprecated. Use `metadata` instance property on `lr-config` block instead.');
     if (!this.connectedOnce) {
       // @ts-ignore TODO: fix this
       this.__initialUploadMetadata = metadata;
@@ -297,8 +300,18 @@ export class UploaderBlock extends ActivityBlock {
     }
   };
 
-  /** @returns {import('@uploadcare/upload-client').FileFromOptions} */
-  getUploadClientOptions() {
+  /** @private */
+  async getMetadata() {
+    const configValue = this.cfg.metadata ?? /** @type {import('../index.js').Metadata} */ (this.$['*uploadMetadata']);
+    if (typeof configValue === 'function') {
+      const metadata = await configValue();
+      return metadata;
+    }
+    return configValue;
+  }
+
+  /** @returns {Promise<import('@uploadcare/upload-client').FileFromOptions>} */
+  async getUploadClientOptions() {
     let options = {
       store: this.cfg.store,
       publicKey: this.cfg.pubkey,
@@ -315,7 +328,7 @@ export class UploaderBlock extends ActivityBlock {
       multipartMaxAttempts: this.cfg.multipartMaxAttempts,
       checkForUrlDuplicates: !!this.cfg.checkForUrlDuplicates,
       saveUrlForRecurrentUploads: !!this.cfg.saveUrlForRecurrentUploads,
-      metadata: this.$['*uploadMetadata'],
+      metadata: await this.getMetadata(),
     };
 
     console.log('Upload client options:', options);

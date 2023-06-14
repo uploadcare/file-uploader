@@ -48,4 +48,6 @@ export const initialConfig = Object.freeze({
 
   groupOutput: false,
   userAgentIntegration: '',
+
+  metadata: null,
 });

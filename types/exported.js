@@ -1,3 +1,7 @@
+// @ts-check
+/** @typedef {import('@uploadcare/upload-client').Metadata} Metadata */
+/** @typedef {() => Promise<Metadata>} MetadataCallback */
+
 /**
  * @typedef {{
  *   pubkey: string;
@@ -37,11 +41,16 @@
  *   saveUrlForRecurrentUploads: boolean;
  *   groupOutput: boolean;
  *   userAgentIntegration: string;
+ *   metadata: Metadata | MetadataCallback | null;
  * }} ConfigType
  */
 
+/** @typedef {Pick<ConfigType, 'metadata'>} ComplexConfigType */
+
+/** @typedef {Omit<ConfigType, keyof ComplexConfigType>} PlainConfigType */
+
 /**
- * @template S
+ * @template {string} S
  * @typedef {S extends `${infer C}${infer T}`
  *   ? T extends Uncapitalize<T>
  *     ? `${Uncapitalize<C>}${KebabCase<T>}`
@@ -50,12 +59,22 @@
  */
 
 /**
- * @template T
+ * @template {Record<string, unknown>} T
  * @typedef {{
- *   [Key in keyof T as KebabCase<Key>]: T[Key];
+ *   [Key in keyof T as KebabCase<Key & string>]: T[Key];
  * }} KebabCaseKeys
  */
 
-/** @typedef {KebabCaseKeys<ConfigType>} ConfigTypeAttributes */
+/**
+ * @template {string} S
+ * @typedef {Lowercase<S>} LowerCase<S>
+ */
+
+/**
+ * @template {Record<string, unknown>} T
+ * @typedef {{
+ *   [Key in keyof T as Lowercase<Key & string>]: T[Key];
+ * }} LowerCaseKeys
+ */
 
 export {};

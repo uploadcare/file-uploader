@@ -10,25 +10,50 @@ const allConfigKeys = /** @type {(keyof import('../../types/exported.js').Config
 );
 
 /**
- * Mapping of attribute names to config keys Kebab-case and lowercase are supported. lowercase could be used by
- * frameworks like vue and react.
+ * Config keys that can't be passed as atrtibute (because they are object or function)
  *
- * @type {Record<string, keyof import('../../types/exported.js').ConfigType>}
+ * @type {(keyof import('../../index.js').ComplexConfigType)[]}
  */
-const attrKeyMapping = {
-  ...Object.fromEntries(allConfigKeys.map((key) => [toKebabCase(key), key])),
-  ...Object.fromEntries(allConfigKeys.map((key) => [key.toLowerCase(), key])),
-};
+const complexConfigKeys = ['metadata'];
 
 /**
- * Mapping of attribute names to state
- *
- * @type {Record<string, string>}
+ * @type {(
+ *   key: keyof import('../../types/exported.js').ConfigType
+ * ) => key is keyof import('../../index.js').ComplexConfigType}
  */
-const attrStateMapping = {
+const isComplexKey = (key) => complexConfigKeys.includes(key);
+
+/** Config keys that can be passed as atrtibute */
+const plainConfigKeys = /** @type {(keyof import('../../index.js').PlainConfigType)[]} */ (
+  allConfigKeys.filter((key) => !isComplexKey(key))
+);
+
+/**
+ * Mapping of attribute names to config keys Kebab-case and lowercase are supported. lowercase could be used by
+ * frameworks like vue and react.
+ */
+const attrKeyMapping = /**
+ * @type {Record<
+ *   keyof import('../../index.js').KebabCaseKeys<import('../../types/exported.js').ConfigType> &
+ *     keyof import('../../index.js').LowerCaseKeys<import('../../types/exported.js').ConfigType>,
+ *   keyof import('../../index.js').PlainConfigType
+ * >}
+ */ ({
+  ...Object.fromEntries(plainConfigKeys.map((key) => [toKebabCase(key), key])),
+  ...Object.fromEntries(plainConfigKeys.map((key) => [key.toLowerCase(), key])),
+});
+
+/** Mapping of attribute names to state */
+const attrStateMapping = /**
+ * @type {Record<
+ *   keyof import('../../index.js').KebabCaseKeys<import('../../types/exported.js').ConfigType> &
+ *     keyof import('../../index.js').LowerCaseKeys<import('../../types/exported.js').ConfigType>,
+ *   string
+ * >}
+ */ ({
   ...Object.fromEntries(allConfigKeys.map((key) => [toKebabCase(key), sharedConfigKey(key)])),
   ...Object.fromEntries(allConfigKeys.map((key) => [key.toLowerCase(), sharedConfigKey(key)])),
-};
+});
 
 export class Config extends Block {
   /** @type {Block['init$'] & import('../../types/exported.js').ConfigType} */
@@ -40,7 +65,7 @@ export class Config extends Block {
   constructor() {
     super();
 
-    Object.keys(initialConfig).forEach((key) => {
+    allConfigKeys.forEach((key) => {
       Object.defineProperty(this, key, {
         /** @param {unknown} value */
         set: (value) => {
@@ -59,7 +84,7 @@ export class Config extends Block {
   }
 
   /**
-   * @param {string} name
+   * @param {keyof typeof attrStateMapping} name
    * @param {string} oldVal
    * @param {string} newVal
    */

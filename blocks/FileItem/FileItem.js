@@ -431,9 +431,10 @@ export class FileItem extends UploaderBlock {
       let abortController = new AbortController();
       entry.setValue('abortController', abortController);
 
-      const uploadTask = () =>
-        uploadFile(entry.getValue('file') || entry.getValue('externalUrl'), {
-          ...this.getUploadClientOptions(),
+      const uploadTask = async () => {
+        const uploadClientOptions = await this.getUploadClientOptions();
+        return uploadFile(entry.getValue('file') || entry.getValue('externalUrl'), {
+          ...uploadClientOptions,
           fileName: entry.getValue('fileName'),
           onProgress: (progress) => {
             if (progress.isComputable) {
@@ -444,6 +445,7 @@ export class FileItem extends UploaderBlock {
           },
           signal: abortController.signal,
         });
+      };
 
       let fileInfo = await this.$['*uploadQueue'].add(uploadTask);
       entry.setMultipleValues({
@@ -461,6 +463,8 @@ export class FileItem extends UploaderBlock {
         this._debouncedCalculateState();
       }
     } catch (error) {
+      console.warn('Upload error', error);
+
       entry.setMultipleValues({
         abortController: null,
         isUploading: false,
