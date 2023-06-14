@@ -3,7 +3,24 @@
 ### Features
 
 - add `uploadAll` method to trigger upload ([db69508](https://github.com/uploadcare/blocks/commit/db69508d84838937440d3fb119ff20d0dc6575f6))
-- method `addFiles` replaced with separate `addFileFromUrl`, `addFileFromUuid` and `addFileFromObject` ([b5a89c4](https://github.com/uploadcare/blocks/commit/b5a89c4d51d68527c61a69cd55d96dcba892ee70))
+- add separate `addFileFromUrl`, `addFileFromUuid` and `addFileFromObject` ([b5a89c4](https://github.com/uploadcare/blocks/commit/b5a89c4d51d68527c61a69cd55d96dcba892ee70))
+
+### Deprecations
+
+- method `addFiles` is deprecated in favour of `addFileFromUrl`, `addFileFromUuid` and `addFileFromObject` above
+
+### API
+
+```js
+uploaderCtx.addFileFromUrl(url, fileName, { silent } = {});
+uploaderCtx.addFileFromUuid(uuid, { silent } = {});
+uploaderCtx.addFileFromObject(file, { silent } = {});
+uploaderCtx.uploadAll();
+```
+
+`silent` option supresses `LR_UPLOAD_FINISH` event
+
+`uploadAll` method is useful with `--cfg-confirm-upload: 1;` to force uploading predefined files
 
 ## [0.22.13](https://github.com/uploadcare/blocks/compare/v0.22.12...v0.22.13) (2023-06-14)
 
