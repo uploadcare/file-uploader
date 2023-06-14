@@ -67,7 +67,7 @@ export class UploaderBlock extends ActivityBlock {
   /**
    * @param {string} url
    * @param {string} [fileName]
-   * @param {{ silent?: boolean }} [options]
+   * @param {{ silent?: boolean }} [options={ silent: false }] Default is `{ silent: false }`
    */
   addFileFromUrl(url, fileName, { silent } = {}) {
     this.uploadCollection.add({
@@ -79,7 +79,7 @@ export class UploaderBlock extends ActivityBlock {
 
   /**
    * @param {string} uuid
-   * @param {{ silent?: boolean }} [options]
+   * @param {{ silent?: boolean }} [options={ silent: false }] Default is `{ silent: false }`
    */
   addFileFromUuid(uuid, { silent } = {}) {
     this.uploadCollection.add({
@@ -90,7 +90,7 @@ export class UploaderBlock extends ActivityBlock {
 
   /**
    * @param {File} file
-   * @param {{ silent?: boolean }} [options]
+   * @param {{ silent?: boolean }} [options={ silent: false }] Default is `{ silent: false }`
    */
   addFileFromObject(file, { silent } = {}) {
     this.uploadCollection.add({
@@ -100,6 +100,26 @@ export class UploaderBlock extends ActivityBlock {
       fileName: file.name,
       fileSize: file.size,
       silentUpload: silent ?? false,
+    });
+  }
+
+  /**
+   * @deprecated Will be removed in the near future. Please use `addFileFromObject`, `addFileFromUrl` or
+   *   `addFileFromUuid` instead.
+   * @param {File[]} files
+   */
+  addFiles(files) {
+    console.warn(
+      '`addFiles` method is deprecated. Please use `addFileFromObject`, `addFileFromUrl` or `addFileFromUuid` instead.'
+    );
+    files.forEach((/** @type {File} */ file) => {
+      this.uploadCollection.add({
+        file,
+        isImage: fileIsImage(file),
+        mimeType: file.type,
+        fileName: file.name,
+        fileSize: file.size,
+      });
     });
   }
 
