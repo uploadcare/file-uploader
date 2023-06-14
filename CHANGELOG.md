@@ -1,3 +1,11 @@
+# [0.23.0](https://github.com/uploadcare/blocks/compare/v0.22.13...v0.23.0) (2023-06-14)
+
+### Features
+
+- add `uploadAll` method to trigger upload ([db69508](https://github.com/uploadcare/blocks/commit/db69508d84838937440d3fb119ff20d0dc6575f6))
+- method `addFiles` replaced with separate `addFileFromUrl`, `addFileFromUuid` and `addFileFromObject` ([b5a89c4](https://github.com/uploadcare/blocks/commit/b5a89c4d51d68527c61a69cd55d96dcba892ee70))
+- update `addFileFromUrl`, `addFileFromUuid` and `addFileFromObject` interfaces ([be6300b](https://github.com/uploadcare/blocks/commit/be6300b9bb01f9152b7a7b81d6e4958b9f598251))
+
 ## [0.22.13](https://github.com/uploadcare/blocks/compare/v0.22.12...v0.22.13) (2023-06-14)
 
 ### Bug Fixes
