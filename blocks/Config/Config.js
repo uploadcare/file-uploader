@@ -9,12 +9,22 @@ const allConfigKeys = /** @type {(keyof import('../../types/exported.js').Config
   Object.keys(initialConfig)
 );
 
-/** @type {Record<string, keyof import('../../types/exported.js').ConfigType>} */
+/**
+ * Mapping of attribute names to config keys Kebab-case and lowercase are supported. lowercase could be used by
+ * frameworks like vue and react.
+ *
+ * @type {Record<string, keyof import('../../types/exported.js').ConfigType>}
+ */
 const attrKeyMapping = {
   ...Object.fromEntries(allConfigKeys.map((key) => [toKebabCase(key), key])),
   ...Object.fromEntries(allConfigKeys.map((key) => [key.toLowerCase(), key])),
 };
 
+/**
+ * Mapping of attribute names to state
+ *
+ * @type {Record<string, string>}
+ */
 const attrStateMapping = {
   ...Object.fromEntries(allConfigKeys.map((key) => [toKebabCase(key), sharedConfigKey(key)])),
   ...Object.fromEntries(allConfigKeys.map((key) => [key.toLowerCase(), sharedConfigKey(key)])),
@@ -34,7 +44,12 @@ export class Config extends Block {
       Object.defineProperty(this, key, {
         /** @param {unknown} value */
         set: (value) => {
-          this.$[sharedConfigKey(key)] = value;
+          // wait for state to be initialized
+          setTimeout(() => {
+            if (this.$[sharedConfigKey(key)] !== value) {
+              this.$[sharedConfigKey(key)] = value;
+            }
+          });
         },
         get: () => {
           return this.$[sharedConfigKey(key)];
