@@ -190,7 +190,8 @@ export class CloudEditor extends ShadowWrapper {
     try {
       fetch(createCdnUrl(this.$['*originalUrl'], createCdnUrlModifiers('json')))
         .then((response) => response.json())
-        .then(({ width, height }) => {
+        .then((json) => {
+          const { width, height } = /** @type {{ width: number; height: number }} */ (json);
           this.$['*imageSize'] = { width, height };
         });
     } catch (err) {
