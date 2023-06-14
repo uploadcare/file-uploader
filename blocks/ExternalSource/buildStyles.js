@@ -55,7 +55,7 @@ export function buildStyles({ textColor, backgroundColor, linkColor, linkColorHo
       'background-size': '25px 25px',
     },
     '.list-icons-item': {
-      background: `center no-repeat ${shadeColor}`,
+      'background-color': shadeColor,
     },
     '.source-gdrive .side-bar-menu a, .source-gphotos .side-bar-menu a': {
       color: linkColor,
