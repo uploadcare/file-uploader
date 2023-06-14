@@ -22,7 +22,7 @@ export class UploadList extends UploaderBlock {
       this.initFlow(true);
     },
     onUpload: () => {
-      this.$['*uploadTrigger'] = {};
+      this.uploadAll();
       this._updateUploadsState();
     },
     onDone: () => {
@@ -30,7 +30,7 @@ export class UploadList extends UploaderBlock {
     },
     onCancel: () => {
       let data = this.getOutputData((dataItem) => {
-        return !!dataItem.getValue('uuid');
+        return !!dataItem.getValue('fileInfo');
       });
       EventManager.emit(
         new EventData({
@@ -117,7 +117,7 @@ export class UploadList extends UploaderBlock {
     };
     for (let id of itemIds) {
       let item = this.uploadCollection.read(id);
-      if (item.getValue('uuid') && !item.getValue('validationErrorMsg')) {
+      if (item.getValue('fileInfo') && !item.getValue('validationErrorMsg')) {
         summary.succeed += 1;
       }
       if (item.getValue('isUploading')) {

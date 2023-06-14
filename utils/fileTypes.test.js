@@ -1,5 +1,5 @@
 import { expect } from '@esm-bundle/chai';
-import { mergeFileTypes, matchMimeType, fileIsImage, matchExtension } from './fileTypes';
+import { mergeFileTypes, matchMimeType, fileIsImage, matchExtension, isBlob, isFile } from './fileTypes';
 
 describe('mergeFileTypes', () => {
   it('should join input strings with comma', () => {
@@ -62,5 +62,28 @@ describe('fileIsImage', () => {
   it('should return false if file is not image', () => {
     const file = new File([''], 'name', { type: 'text/plain' });
     expect(fileIsImage(file)).to.be.false;
+  });
+});
+
+describe('isBlob', () => {
+  it('should return true if Blob is passed', () => {
+    expect(isBlob(new Blob(['']))).to.be.true;
+  });
+  it('should return true if File is passed', () => {
+    expect(isBlob(new File([''], 'test.txt'))).to.be.true;
+  });
+  it('should return false if something else passed', () => {
+    expect(isBlob('test')).to.be.false;
+    expect(isBlob({ uri: 'test' })).to.be.false;
+  });
+});
+describe('isFile', () => {
+  it('should return true if File is passed', () => {
+    expect(isFile(new File([''], 'test.txt'))).to.be.true;
+  });
+  it('should return false if something else passed', () => {
+    expect(isFile(new Blob(['']))).to.be.false;
+    expect(isFile('test')).to.be.false;
+    expect(isFile({ uri: 'test' })).to.be.false;
   });
 });

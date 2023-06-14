@@ -75,10 +75,7 @@ export class ExternalSource extends UploaderBlock {
     })();
 
     let { filename } = message;
-    this.uploadCollection.add({
-      externalUrl: url,
-      fileName: filename ?? null,
-    });
+    this.addFileFromUrl(url, filename);
   }
 
   handleIframeLoad() {
