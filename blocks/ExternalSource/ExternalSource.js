@@ -6,6 +6,7 @@ import { buildStyles } from './buildStyles.js';
 import { queryString } from './query-string.js';
 import { wildcardRegexp } from '../../utils/wildcardRegexp.js';
 import { stringToArray } from '../../utils/stringToArray.js';
+import { PACKAGE_NAME, PACKAGE_VERSION } from '../../env.js';
 /**
  * @typedef {Object} ActivityParams
  * @property {String} externalSourceType
@@ -117,9 +118,7 @@ export class ExternalSource extends UploaderBlock {
     let { externalSourceType } = this.activityParams;
     let params = {
       lang: this.getCssData('--l10n-locale-name')?.split('-')?.[0] || 'en',
-      // TODO: we should add a new property to the social sources application
-      // to collect lr-blocks data separately from legacy widget
-      widget_version: '3.11.3',
+      widget_version: `${PACKAGE_NAME}@${PACKAGE_VERSION}`,
       public_key: pubkey,
       images_only: imagesOnly,
       pass_window_open: false,
