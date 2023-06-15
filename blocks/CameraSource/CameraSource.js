@@ -2,6 +2,7 @@ import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 import { canUsePermissionsApi } from '../utils/abilities.js';
 import { debounce } from '../utils/debounce.js';
+import { UploadSource } from '../utils/UploadSource.js';
 
 export class CameraSource extends UploaderBlock {
   activityType = ActivityBlock.activities.CAMERA;
@@ -175,7 +176,7 @@ export class CameraSource extends UploaderBlock {
         lastModified: date,
         type: 'image/png',
       });
-      this.addFileFromObject(file);
+      this.addFileFromObject(file, { source: UploadSource.CAMERA });
       this.set$({
         '*currentActivity': ActivityBlock.activities.UPLOAD_LIST,
       });

@@ -75,7 +75,8 @@ export class ExternalSource extends UploaderBlock {
     })();
 
     let { filename } = message;
-    this.addFileFromUrl(url, filename);
+    let { externalSourceType } = this.activityParams;
+    this.addFileFromUrl(url, { fileName: filename, source: `${UploadSource.EXTERNAL}-${externalSourceType}` });
   }
 
   handleIframeLoad() {
@@ -115,7 +116,7 @@ export class ExternalSource extends UploaderBlock {
     let imagesOnly = false.toString();
     let { externalSourceType } = this.activityParams;
     let params = {
-      lang: 'en', // TOOD: pass correct lang
+      lang: this.getCssData('--l10n-locale-name')?.split('-')?.[0] || 'en',
       // TODO: we should add a new property to the social sources application
       // to collect lr-blocks data separately from legacy widget
       widget_version: '3.11.3',

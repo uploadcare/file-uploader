@@ -448,6 +448,7 @@ export class FileItem extends UploaderBlock {
         uploadFile(entry.getValue('file') || entry.getValue('externalUrl') || entry.getValue('uuid'), {
           ...this.getUploadClientOptions(),
           fileName: entry.getValue('fileName'),
+          source: entry.getValue('source'),
           onProgress: (progress) => {
             if (progress.isComputable) {
               let percentage = progress.value * 100;
