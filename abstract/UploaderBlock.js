@@ -65,6 +65,8 @@ export class UploaderBlock extends ActivityBlock {
     }
   }
 
+  // TODO: Probably we should not allow user to override `source` property
+
   /**
    * @param {string} url
    * @param {{ silent?: boolean; fileName?: string; source?: string }} [options]
