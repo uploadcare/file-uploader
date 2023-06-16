@@ -1,10 +1,27 @@
-import { ConfigType } from '..';
-import { KebabCase } from '../utils/toKebabCase';
+type ConfigType = import('./exported').ConfigType;
+type UploadCtxProvider = import('..').UploadCtxProvider;
+type Config = import('..').Config;
+type FileUploaderInline = import('..').FileUploaderInline;
+type FileUploaderRegular = import('..').FileUploaderRegular;
+type FileUploaderMinimal = import('..').FileUploaderMinimal;
+type DataOutput = import('..').DataOutput;
+type CloudEditor = import('..').CloudEditor;
 
-// TODO: not sure that this fill will be loaded automatically
+type BaseAttributes = {
+  'ctx-name': string;
+};
+type ShadowWrapperAttributes = { 'css-src': string };
+
+type CustomEvents<K extends Record<string, unknown>> = { [key in keyof K as `on${key}`]: K[key] };
+type CustomElement<
+  C extends HTMLElement,
+  A extends Record<string, unknown> = {},
+  P extends Record<string, unknown> = {},
+  E extends Record<string, unknown> = {}
+> = Partial<{ ref: MutableRefObject<C> } & A & P & CustomEvents<E>>;
+
 declare namespace JSX {
   interface IntrinsicElements {
-    'lr-cloud-editor': any;
     'lr-crop-frame': any;
     'lr-editor-crop-button-control': any;
     'lr-editor-filter-control': any;
@@ -39,12 +56,23 @@ declare namespace JSX {
     'lr-cloud-image-editor': any;
     'lr-external-source': any;
     'lr-tabs': any;
-    'lr-data-output': any;
-    'lr-activity-heading': any;
-    'lr-file-uploader-regular': any;
-    'lr-file-uploader-minimal': any;
-    'lr-file-uploader-inline': any;
-    'lr-upload-ctx-provider': any;
-    'lr-config': (props: ConfigType & KebabCase<ConfigType>) => JSX.Element;
+    'lr-cloud-editor': CustomElement<
+      CloudEditor,
+      BaseAttributes & ShadowWrapperAttributes & { uuid: string; 'cdn-url': string }
+    >;
+    'lr-data-output': CustomElement<
+      DataOutput,
+      BaseAttributes,
+      {},
+      {
+        // TODO: Add types for this event
+        'lr-data-output': (e: CustomEvent<{ data: any[] | { groupData: Record<string, any>; files: any[] } }>) => void;
+      }
+    >;
+    'lr-file-uploader-regular': CustomElement<FileUploaderRegular, BaseAttributes & ShadowWrapperAttributes>;
+    'lr-file-uploader-minimal': CustomElement<FileUploaderMinimal, BaseAttributes & ShadowWrapperAttributes>;
+    'lr-file-uploader-inline': CustomElement<FileUploaderInline, BaseAttributes & ShadowWrapperAttributes>;
+    'lr-upload-ctx-provider': CustomElement<UploadCtxProvider, BaseAttributes>;
+    'lr-config': CustomElement<Config, BaseAttributes, ConfigType>;
   }
 }

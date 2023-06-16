@@ -354,7 +354,7 @@ export class UploaderBlock extends ActivityBlock {
 
   /** @private */
   async getMetadata() {
-    const configValue = this.cfg.metadata ?? /** @type {import('../index.js').Metadata} */ (this.$['*uploadMetadata']);
+    const configValue = this.cfg.metadata ?? /** @type {import('~/types').Metadata} */ (this.$['*uploadMetadata']);
     if (typeof configValue === 'function') {
       const metadata = await configValue();
       return metadata;

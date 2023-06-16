@@ -52,4 +52,4 @@ export { connectBlocksFrom } from './abstract/connectBlocksFrom.js';
 export * from './env.js';
 
 // eslint-disable-next-line import/export
-export * from './types/exported.js';
+export * from './types/index.js';

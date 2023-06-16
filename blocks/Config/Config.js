@@ -5,26 +5,20 @@ import { sharedConfigKey } from '../../abstract/sharedConfigKey.js';
 import { toKebabCase } from '../../utils/toKebabCase.js';
 import { normalizeConfigValue } from './normalizeConfigValue.js';
 
-const allConfigKeys = /** @type {(keyof import('../../types/exported.js').ConfigType)[]} */ (
-  Object.keys(initialConfig)
-);
+const allConfigKeys = /** @type {(keyof import('~/types').ConfigType)[]} */ (Object.keys(initialConfig));
 
 /**
  * Config keys that can't be passed as atrtibute (because they are object or function)
  *
- * @type {(keyof import('../../index.js').ComplexConfigType)[]}
+ * @type {(keyof import('~/types').ComplexConfigType)[]}
  */
 const complexConfigKeys = ['metadata'];
 
-/**
- * @type {(
- *   key: keyof import('../../types/exported.js').ConfigType
- * ) => key is keyof import('../../index.js').ComplexConfigType}
- */
+/** @type {(key: keyof import('~/types').ConfigType) => key is keyof import('~/types').ComplexConfigType} */
 const isComplexKey = (key) => complexConfigKeys.includes(key);
 
 /** Config keys that can be passed as atrtibute */
-const plainConfigKeys = /** @type {(keyof import('../../index.js').PlainConfigType)[]} */ (
+const plainConfigKeys = /** @type {(keyof import('~/types').PlainConfigType)[]} */ (
   allConfigKeys.filter((key) => !isComplexKey(key))
 );
 
@@ -34,9 +28,9 @@ const plainConfigKeys = /** @type {(keyof import('../../index.js').PlainConfigTy
  */
 const attrKeyMapping = /**
  * @type {Record<
- *   keyof import('../../index.js').KebabCaseKeys<import('../../types/exported.js').ConfigType> &
- *     keyof import('../../index.js').LowerCaseKeys<import('../../types/exported.js').ConfigType>,
- *   keyof import('../../index.js').PlainConfigType
+ *   keyof import('~/types').KebabCaseKeys<import('~/types').ConfigType> &
+ *     keyof import('~/types').LowerCaseKeys<import('~/types').ConfigType>,
+ *   keyof import('~/types').PlainConfigType
  * >}
  */ ({
   ...Object.fromEntries(plainConfigKeys.map((key) => [toKebabCase(key), key])),
@@ -46,8 +40,8 @@ const attrKeyMapping = /**
 /** Mapping of attribute names to state */
 const attrStateMapping = /**
  * @type {Record<
- *   keyof import('../../index.js').KebabCaseKeys<import('../../types/exported.js').ConfigType> &
- *     keyof import('../../index.js').LowerCaseKeys<import('../../types/exported.js').ConfigType>,
+ *   keyof import('~/types').KebabCaseKeys<import('~/types').ConfigType> &
+ *     keyof import('~/types').LowerCaseKeys<import('~/types').ConfigType>,
  *   string
  * >}
  */ ({
@@ -56,7 +50,7 @@ const attrStateMapping = /**
 });
 
 export class Config extends Block {
-  /** @type {Block['init$'] & import('../../types/exported.js').ConfigType} */
+  /** @type {Block['init$'] & import('~/types').ConfigType} */
   init$ = {
     ...this.init$,
     ...Object.fromEntries(Object.entries(initialConfig).map(([key, value]) => [sharedConfigKey(key), value])),

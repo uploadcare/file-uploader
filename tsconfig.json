@@ -9,7 +9,10 @@
     "strict": true,
     "skipLibCheck": true,
     "types": ["node", "chai", "mocha", "@total-typescript/ts-reset"],
-    "noEmit": true
+    "noEmit": true,
+    "paths": {
+      "~/*": ["./*"]
+    }
   },
   "include": ["**/*.js", "types"],
   "exclude": ["node_modules"]

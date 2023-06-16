@@ -44,9 +44,7 @@ export type ComplexConfigType = Pick<ConfigType, 'metadata'>;
 export type PlainConfigType = Omit<ConfigType, keyof ComplexConfigType>;
 export type KebabCase<S extends string> = S extends `${infer C}${infer T}` ? T extends Uncapitalize<T> ? `${Uncapitalize<C>}${KebabCase<T>}` : `${Uncapitalize<C>}-${KebabCase<T>}` : S;
 export type KebabCaseKeys<T extends Record<string, unknown>> = { [Key in keyof T as KebabCase<Key & string>]: T[Key]; };
-/**
- * <S>
- */
 export type LowerCase<S extends string> = Lowercase<S>;
 export type LowerCaseKeys<T extends Record<string, unknown>> = { [Key in keyof T as Lowercase<Key & string>]: T[Key]; };
-//# sourceMappingURL=exported.d.ts.map
+
+export {}

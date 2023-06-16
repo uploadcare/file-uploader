@@ -81,7 +81,7 @@
     "lint": "run-s lint:js lint:css",
     "clean:web": "rimraf -g './web/**/*.{js,css}'",
     "clean:html": "rimraf -g './**/*.html'",
-    "clean:types": "rimraf -g './{abstract,blocks,solutions,web,utils,static-gen,test}/**/*.{d.ts,d.ts.map}' && rimraf -g './*.{d.ts,d.ts.map}' && rimraf -g './types/exported.{d.ts,d.ts.map}'",
+    "clean:types": "rimraf -g './{abstract,blocks,solutions,web,utils,static-gen,test}/**/*.{d.ts,d.ts.map}' && rimraf -g './*.{d.ts,d.ts.map}'",
     "clean": "run-s clean:*",
     "format:js": "prettier --write './**/*.{js,cjs}'",
     "format:css": "prettier --write --parser css './**/*.css'",

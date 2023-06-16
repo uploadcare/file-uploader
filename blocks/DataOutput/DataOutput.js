@@ -109,8 +109,7 @@ export class DataOutput extends UploaderBlock {
   }
 }
 
-/** @enum {Object<[x: string], string>} */
-DataOutput.dict = {
+DataOutput.dict = Object.freeze({
   SRC_CTX_KEY: '*outputData',
   EVENT_NAME: 'lr-data-output',
   FIRE_EVENT_ATTR: 'use-event',
@@ -119,4 +118,4 @@ DataOutput.dict = {
   FORM_INPUT_ATTR: 'use-input',
   INPUT_NAME_ATTR: 'input-name',
   INPUT_REQUIRED: 'input-required',
-};
+});
