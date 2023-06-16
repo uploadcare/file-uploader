@@ -1,12 +1,11 @@
 import { create } from '@symbiotejs/symbiote';
-import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
-import { registerMessage, unregisterMessage } from './messages.js';
-import { buildStyles } from './buildStyles.js';
-import { queryString } from './query-string.js';
-import { wildcardRegexp } from '../../utils/wildcardRegexp.js';
+import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { stringToArray } from '../../utils/stringToArray.js';
-import { PACKAGE_NAME, PACKAGE_VERSION } from '../../env.js';
+import { wildcardRegexp } from '../../utils/wildcardRegexp.js';
+import { buildStyles } from './buildStyles.js';
+import { registerMessage, unregisterMessage } from './messages.js';
+import { queryString } from './query-string.js';
 /**
  * @typedef {Object} ActivityParams
  * @property {String} externalSourceType
@@ -118,7 +117,6 @@ export class ExternalSource extends UploaderBlock {
     let { externalSourceType } = this.activityParams;
     let params = {
       lang: this.getCssData('--l10n-locale-name')?.split('-')?.[0] || 'en',
-      widget_version: `${PACKAGE_NAME}@${PACKAGE_VERSION}`,
       public_key: pubkey,
       images_only: imagesOnly,
       pass_window_open: false,
