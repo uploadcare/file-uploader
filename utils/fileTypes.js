@@ -1,3 +1,4 @@
+// @ts-check
 import { stringToArray } from './stringToArray.js';
 
 export const IMAGE_ACCEPT_LIST = [
@@ -62,7 +63,7 @@ export const matchExtension = (fileName, allowedFileTypes) => {
 };
 
 /**
- * @param {File} file
+ * @param {File | Blob} file
  * @returns {Boolean}
  */
 export const fileIsImage = (file) => {
@@ -71,4 +72,24 @@ export const fileIsImage = (file) => {
     return false;
   }
   return matchMimeType(type, IMAGE_ACCEPT_LIST);
+};
+
+/**
+ * Checks if the given data is a Blob.
+ *
+ * @param {unknown} data - The data to check.
+ * @returns {boolean} - True if the data is a Blob, false otherwise.
+ */
+export const isBlob = (data) => {
+  return typeof Blob !== 'undefined' && data instanceof Blob;
+};
+
+/**
+ * Checks if the given data is a File.
+ *
+ * @param {unknown} data - The data to check.
+ * @returns {boolean} - True if the data is a File, false otherwise.
+ */
+export const isFile = (data) => {
+  return typeof File !== 'undefined' && data instanceof File;
 };

@@ -170,13 +170,7 @@ export class CameraSource extends UploaderBlock {
         lastModified: date,
         type: 'image/png',
       });
-      this.uploadCollection.add({
-        file,
-        fileName: name,
-        fileSize: file.size,
-        isImage: true,
-        mimeType: file.type,
-      });
+      this.addFileFromObject(file);
       this.set$({
         '*currentActivity': ActivityBlock.activities.UPLOAD_LIST,
       });

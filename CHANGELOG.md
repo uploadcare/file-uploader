@@ -1,3 +1,52 @@
+# [0.23.0](https://github.com/uploadcare/blocks/compare/v0.22.13...v0.23.0) (2023-06-14)
+
+### Features
+
+- add `uploadAll` method to trigger upload ([db69508](https://github.com/uploadcare/blocks/commit/db69508d84838937440d3fb119ff20d0dc6575f6))
+- add separate `addFileFromUrl`, `addFileFromUuid` and `addFileFromObject` ([b5a89c4](https://github.com/uploadcare/blocks/commit/b5a89c4d51d68527c61a69cd55d96dcba892ee70))
+
+### Deprecations
+
+- method `addFiles` is deprecated in favour of `addFileFromUrl`, `addFileFromUuid` and `addFileFromObject` above
+
+### API
+
+```js
+// `silent` option supresses `LR_UPLOAD_FINISH` event
+// `fileName` options specifies file name
+uploaderCtx.addFileFromUrl(url: string, { silent?: boolean, fileName?: string } = {});
+uploaderCtx.addFileFromUuid(uuid: string, { silent?: boolean, fileName?: string } = {});
+uploaderCtx.addFileFromObject(file: File, { silent?: boolean, fileName?: string } = {});
+
+// Trigger uploading. Useful with `--cfg-confirm-upload: 1;` to force uploading predefined files.
+uploaderCtx.uploadAll();
+```
+
+## [0.22.13](https://github.com/uploadcare/blocks/compare/v0.22.12...v0.22.13) (2023-06-14)
+
+### Bug Fixes
+
+- **external-source:** safari iframe height ([#479](https://github.com/uploadcare/blocks/issues/479)) ([88b54d8](https://github.com/uploadcare/blocks/commit/88b54d8eaacc4f4ff40f6d8a89ed2c3b71ece48e))
+- **instagram:** scaled & cropped photos ([#484](https://github.com/uploadcare/blocks/issues/484)) ([9f71221](https://github.com/uploadcare/blocks/commit/9f712217983e4a25dffbd2740e80a92fb2132fdd))
+
+## [0.22.12](https://github.com/uploadcare/blocks/compare/v0.22.11...v0.22.12) (2023-06-09)
+
+### Features
+
+- add IIFE bundle `web/blocks.iife.js` ([#480](https://github.com/uploadcare/blocks/pull/480))
+
+## [0.22.11](https://github.com/uploadcare/blocks/compare/v0.22.10...v0.22.11) (2023-06-08)
+
+### Bug Fixes
+
+- skip validation if no allowed file types provided ([#477](https://github.com/uploadcare/blocks/issues/477)) ([e241993](https://github.com/uploadcare/blocks/commit/e241993f46d57840abf287eb47314cace1ba1058))
+
+## [0.22.10](https://github.com/uploadcare/blocks/compare/v0.22.9...v0.22.10) (2023-06-08)
+
+### Bug Fixes
+
+- **file-item:** `--cfg-img-only` for external sources causing error ([#475](https://github.com/uploadcare/blocks/issues/475)) ([479db7b](https://github.com/uploadcare/blocks/commit/479db7b5ea7bf467a4a29819628347a31992acdc))
+
 ## [0.22.9](https://github.com/uploadcare/blocks/compare/v0.22.8...v0.22.9) (2023-06-05)
 
 ### Bug Fixes

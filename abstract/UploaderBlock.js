@@ -61,8 +61,54 @@ export class UploaderBlock extends ActivityBlock {
     }
   }
 
-  /** @param {File[]} files */
+  /**
+   * @param {string} url
+   * @param {{ silent?: boolean; fileName?: string }} [options]
+   */
+  addFileFromUrl(url, { silent, fileName } = {}) {
+    this.uploadCollection.add({
+      externalUrl: url,
+      fileName: fileName ?? null,
+      silentUpload: silent ?? false,
+    });
+  }
+
+  /**
+   * @param {string} uuid
+   * @param {{ silent?: boolean; fileName?: string }} [options]
+   */
+  addFileFromUuid(uuid, { silent, fileName } = {}) {
+    this.uploadCollection.add({
+      uuid,
+      fileName: fileName ?? null,
+      silentUpload: silent ?? false,
+    });
+  }
+
+  /**
+   * @param {File} file
+   * @param {{ silent?: boolean; fileName?: string }} [options]
+   */
+  addFileFromObject(file, { silent, fileName } = {}) {
+    this.uploadCollection.add({
+      file,
+      isImage: fileIsImage(file),
+      mimeType: file.type,
+      fileName: fileName ?? file.name,
+      fileSize: file.size,
+      silentUpload: silent ?? false,
+    });
+  }
+
+  /**
+   * @deprecated Will be removed in the near future. Please use `addFileFromObject`, `addFileFromUrl` or
+   *   `addFileFromUuid` instead.
+   * @param {File[]} files
+   */
   addFiles(files) {
+    console.warn(
+      '`addFiles` method is deprecated. Please use `addFileFromObject`, `addFileFromUrl` or `addFileFromUuid` instead.'
+    );
     files.forEach((/** @type {File} */ file) => {
       this.uploadCollection.add({
         file,
@@ -72,6 +118,10 @@ export class UploaderBlock extends ActivityBlock {
         fileSize: file.size,
       });
     });
+  }
+
+  uploadAll() {
+    this.$['*uploadTrigger'] = {};
   }
 
   /** @param {{ captureCamera?: boolean }} options */
@@ -97,7 +147,7 @@ export class UploaderBlock extends ActivityBlock {
     this.fileInput.dispatchEvent(new MouseEvent('click'));
     this.fileInput.onchange = () => {
       // @ts-ignore TODO: fix this
-      this.addFiles([...this.fileInput['files']]);
+      [...this.fileInput['files']].forEach((file) => this.addFileFromObject(file));
       // To call uploadTrigger UploadList should draw file items first:
       this.$['*currentActivity'] = ActivityBlock.activities.UPLOAD_LIST;
       this.setForCtxTarget(Modal.StateConsumerScope, '*modalActive', true);
@@ -107,9 +157,10 @@ export class UploaderBlock extends ActivityBlock {
     };
   }
 
-  /** @type {String[]} */
+  /** @type {string[]} */
   get sourceList() {
-    let list = null;
+    /** @type {string[]} */
+    let list = [];
     if (this.cfg.sourceList) {
       list = stringToArray(this.cfg.sourceList);
     }
@@ -185,7 +236,7 @@ export class UploaderBlock extends ActivityBlock {
     if (!this.has('*uploadCollection')) {
       let uploadCollection = new TypedCollection({
         typedSchema: uploadEntrySchema,
-        watchList: ['uploadProgress', 'uuid', 'uploadError', 'validationErrorMsg', 'cdnUrlModifiers'],
+        watchList: ['uploadProgress', 'fileInfo', 'uploadError', 'validationErrorMsg', 'cdnUrlModifiers'],
         handler: (entries, added, removed) => {
           for (let entry of removed) {
             entry?.getValue('abortController')?.abort();
@@ -230,24 +281,25 @@ export class UploaderBlock extends ActivityBlock {
         progress === 100
       );
     }
-    if (changeMap.uuid) {
+    if (changeMap.fileInfo) {
       let loadedItems = uploadCollection.findItems((entry) => {
-        return !!entry.getValue('uuid');
+        return !!entry.getValue('fileInfo');
       });
       let errorItems = uploadCollection.findItems((entry) => {
         return !!entry.getValue('uploadError') || !!entry.getValue('validationErrorMsg');
       });
       if (uploadCollection.size - errorItems.length === loadedItems.length) {
         let data = this.getOutputData((dataItem) => {
-          return !!dataItem.getValue('uuid');
+          return !!dataItem.getValue('fileInfo') && !dataItem.getValue('silentUpload');
         });
-        EventManager.emit(
-          new EventData({
-            type: EVENT_TYPES.UPLOAD_FINISH,
-            ctx: this.ctxName,
-            data,
-          })
-        );
+        data.length > 0 &&
+          EventManager.emit(
+            new EventData({
+              type: EVENT_TYPES.UPLOAD_FINISH,
+              ctx: this.ctxName,
+              data,
+            })
+          );
       }
     }
     if (changeMap.uploadError) {

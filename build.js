@@ -26,7 +26,9 @@ function build(buildItem) {
   esbuild
     .build({
       entryPoints: [buildItem.in],
-      format: 'esm',
+      format: buildItem.iife ? 'iife' : 'esm',
+      globalName: buildItem.iife ? 'LR' : undefined,
+      keepNames: buildItem.iife ? true : undefined,
       bundle: true,
       minify: buildItem.minify,
       sourcemap: false,

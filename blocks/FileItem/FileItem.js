@@ -120,7 +120,7 @@ export class FileItem extends UploaderBlock {
       state = FileItemState.FAILED;
     } else if (entry.getValue('isUploading')) {
       state = FileItemState.UPLOADING;
-    } else if (entry.getValue('uuid')) {
+    } else if (entry.getValue('fileInfo')) {
       state = FileItemState.FINISHED;
     }
 
@@ -136,7 +136,7 @@ export class FileItem extends UploaderBlock {
     }
     let entry = this._entry;
 
-    if (entry.getValue('uuid') && entry.getValue('isImage')) {
+    if (entry.getValue('fileInfo') && entry.getValue('isImage')) {
       let size = this.cfg.thumbSize;
       let thumbUrl = this.proxyUrl(
         createCdnUrl(
@@ -206,14 +206,21 @@ export class FileItem extends UploaderBlock {
    * @param {import('../../abstract/TypedData.js').TypedData} entry
    */
   _validateFileType(entry) {
-    let imagesOnly = this.cfg.imgOnly;
-    let accept = this.cfg.accept;
-    let allowedFileTypes = mergeFileTypes([...(imagesOnly ? IMAGE_ACCEPT_LIST : []), accept]);
-    if (
-      allowedFileTypes.length > 0 &&
-      !matchMimeType(entry.getValue('mimeType'), allowedFileTypes) &&
-      !matchExtension(entry.getValue('fileName'), allowedFileTypes)
-    ) {
+    const imagesOnly = this.cfg.imgOnly;
+    const accept = this.cfg.accept;
+    const allowedFileTypes = mergeFileTypes([...(imagesOnly ? IMAGE_ACCEPT_LIST : []), accept]);
+    if (!allowedFileTypes.length) return;
+
+    const mimeType = entry.getValue('mimeType');
+    const fileName = entry.getValue('fileName');
+
+    const needMimeCheck = !!mimeType;
+    const needExtCheck = !!fileName;
+    const mimeOk = needMimeCheck ? matchMimeType(mimeType, allowedFileTypes) : true;
+    const extOk = needExtCheck ? matchExtension(fileName, allowedFileTypes) : true;
+
+    if (!mimeOk && !extOk) {
+      // Assume file type is not allowed if both mime and ext checks fail
       entry.setValue('validationErrorMsg', this.l10n('file-type-not-allowed'));
     }
   }
@@ -276,11 +283,11 @@ export class FileItem extends UploaderBlock {
       if (!imagesOnly || isImage) {
         return;
       }
-      if (!entry.getValue('uuid') && entry.getValue('externalUrl')) {
+      if (!entry.getValue('fileInfo') && entry.getValue('externalUrl')) {
         // skip validation for not uploaded files with external url, cause we don't know if they're images or not
         return;
       }
-      if (!entry.getValue('uuid') && !entry.getValue('mimeType')) {
+      if (!entry.getValue('fileInfo') && !entry.getValue('mimeType')) {
         // skip validation for not uploaded files without mime-type, cause we don't know if they're images or not
         return;
       }
@@ -405,11 +412,11 @@ export class FileItem extends UploaderBlock {
 
   async upload() {
     let entry = this._entry;
-    if (entry.getValue('uuid') || entry.getValue('isUploading') || entry.getValue('validationErrorMsg')) {
+    if (entry.getValue('fileInfo') || entry.getValue('isUploading') || entry.getValue('validationErrorMsg')) {
       return;
     }
     let data = this.getOutputData((dataItem) => {
-      return !dataItem.getValue('uuid');
+      return !dataItem.getValue('fileInfo');
     });
     EventManager.emit(
       new EventData({
@@ -433,7 +440,7 @@ export class FileItem extends UploaderBlock {
 
       const uploadTask = async () => {
         const uploadClientOptions = await this.getUploadClientOptions();
-        return uploadFile(entry.getValue('file') || entry.getValue('externalUrl'), {
+        return uploadFile(entry.getValue('file') || entry.getValue('externalUrl') || entry.getValue('uuid'), {
           ...uploadClientOptions,
           fileName: entry.getValue('fileName'),
           onProgress: (progress) => {
@@ -451,7 +458,7 @@ export class FileItem extends UploaderBlock {
       entry.setMultipleValues({
         fileInfo,
         isUploading: false,
-        fileName: fileInfo.name,
+        fileName: fileInfo.originalFilename,
         fileSize: fileInfo.size,
         isImage: fileInfo.isImage,
         mimeType: fileInfo.mimeType,
