@@ -112,4 +112,9 @@ export const uploadEntrySchema = Object.freeze({
     type: Boolean,
     value: false,
   },
+  source: {
+    type: String,
+    value: false,
+    nullable: true,
+  },
 });
