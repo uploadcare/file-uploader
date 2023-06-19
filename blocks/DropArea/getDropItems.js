@@ -29,7 +29,7 @@ function checkIsDirectory(file) {
   });
 }
 
-function readEntryContentAsync(webkitEntry) {
+function readEntryContentAsync(webkitEntry, dataTransferItemType) {
   return new Promise((resolve) => {
     let reading = 0;
     let contents = [];
@@ -43,7 +43,9 @@ function readEntryContentAsync(webkitEntry) {
         reading++;
         entry.file((file) => {
           reading--;
-          contents.push(file);
+          // webkitGetAsEntry don't provide type for HEIC images at least, so we use type value from dataTransferItem
+          const clonedFile = new File([file], file.name, { type: file.type || dataTransferItemType });
+          contents.push(clonedFile);
 
           if (reading === 0) {
             resolve(contents);
@@ -88,13 +90,14 @@ export function getDropItems(dataTransfer) {
       continue;
     }
     if (item.kind === 'file') {
+      const itemType = item.type;
       if (typeof item.webkitGetAsEntry === 'function' || typeof (/** @type {any} */ (item).getAsEntry) === 'function') {
         let entry =
           typeof item.webkitGetAsEntry === 'function'
             ? item.webkitGetAsEntry()
             : /** @type {any} */ (item).getAsEntry();
         promises.push(
-          readEntryContentAsync(entry).then((entryContent) => {
+          readEntryContentAsync(entry, itemType).then((entryContent) => {
             files.push(...entryContent);
           })
         );
