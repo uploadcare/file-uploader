@@ -194,7 +194,7 @@ export class Block extends BaseComponent {
     };
   }
 
-  /** @returns {import('~/types').ConfigType} } */
+  /** @returns {import('../types').ConfigType} } */
   get cfg() {
     if (!this.__cfgProxy) {
       let o = Object.create(null);
@@ -202,7 +202,7 @@ export class Block extends BaseComponent {
       this.__cfgProxy = new Proxy(o, {
         /**
          * @param {never} obj
-         * @param {keyof import('../types/exported').ConfigType} key
+         * @param {keyof import('../types').ConfigType} key
          */
         get: (obj, key) => {
           const sharedKey = sharedConfigKey(key);
@@ -220,9 +220,9 @@ export class Block extends BaseComponent {
   }
 
   /**
-   * @template {keyof import('~/types').ConfigType} T
+   * @template {keyof import('../types').ConfigType} T
    * @param {T} key
-   * @param {(value: import('~/types').ConfigType[T]) => void} callback
+   * @param {(value: import('../types').ConfigType[T]) => void} callback
    */
   subConfigValue(key, callback) {
     const parsed = this.parseCfgProp(sharedConfigKey(key));

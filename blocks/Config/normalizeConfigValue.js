@@ -20,7 +20,7 @@ const asStore = (value) => (value === 'auto' ? value : asBoolean(value));
 
 /**
  * @type {{
- *   [Key in keyof import('~/types').PlainConfigType]: (value: unknown) => import('~/types/exported').ConfigType[Key];
+ *   [Key in keyof import('../../types').ConfigPlainType]: (value: unknown) => import('../../types').ConfigType[Key];
  * }}
  */
 const mapping = {
@@ -69,10 +69,10 @@ const mapping = {
 };
 
 /**
- * @template {keyof import('~/types').PlainConfigType} T
+ * @template {keyof import('../../types').ConfigPlainType} T
  * @param {T} key
  * @param {unknown} value
- * @returns {import('~/types').ConfigType[T]}
+ * @returns {import('../../types').ConfigType[T]}
  */
 export const normalizeConfigValue = (key, value) => {
   return mapping[key](value);
