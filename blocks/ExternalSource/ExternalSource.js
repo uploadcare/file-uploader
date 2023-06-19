@@ -1,3 +1,5 @@
+// @ts-check
+
 import { create } from '@symbiotejs/symbiote';
 import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
@@ -6,14 +8,32 @@ import { buildStyles } from './buildStyles.js';
 import { queryString } from './query-string.js';
 import { wildcardRegexp } from '../../utils/wildcardRegexp.js';
 import { stringToArray } from '../../utils/stringToArray.js';
+
+/** @typedef {{ externalSourceType: string }} ActivityParams */
+
 /**
- * @typedef {Object} ActivityParams
- * @property {String} externalSourceType
+ * @typedef {{
+ *   type: 'file-selected';
+ *   obj_type: 'selected_file';
+ *   filename: string;
+ *   url: string;
+ *   alternatives?: Record<string, string>;
+ * }} SelectedFileMessage
  */
+
+/**
+ * @typedef {{
+ *   type: 'embed-css';
+ *   style: string;
+ * }} EmbedCssMessage
+ */
+
+/** @typedef {SelectedFileMessage | EmbedCssMessage} Message */
 
 export class ExternalSource extends UploaderBlock {
   activityType = ActivityBlock.activities.EXTERNAL;
 
+  // @ts-ignore TODO: fix this
   init$ = {
     ...this.init$,
     activityIcon: '',
@@ -27,7 +47,10 @@ export class ExternalSource extends UploaderBlock {
     },
   };
 
-  /** @private */
+  /**
+   * @private
+   * @type {HTMLIFrameElement | null}
+   */
   _iframe = null;
 
   initCallback() {
@@ -52,11 +75,20 @@ export class ExternalSource extends UploaderBlock {
     });
   }
 
+  /**
+   * @private
+   * @param {Message} message
+   */
   sendMessage(message) {
-    this._iframe.contentWindow.postMessage(JSON.stringify(message), '*');
+    this._iframe?.contentWindow?.postMessage(JSON.stringify(message), '*');
   }
 
+  /**
+   * @private
+   * @param {SelectedFileMessage} message
+   */
   async handleFileSelected(message) {
+    console.log(message);
     this.$.counter = this.$.counter + 1;
 
     const url = (() => {
@@ -75,13 +107,15 @@ export class ExternalSource extends UploaderBlock {
     })();
 
     let { filename } = message;
-    this.addFileFromUrl(url, filename);
+    this.addFileFromUrl(url, { fileName: filename });
   }
 
+  /** @private */
   handleIframeLoad() {
     this.applyStyles();
   }
 
+  /** @private */
   _inheritedUpdateCssData = this.updateCssData;
   updateCssData = () => {
     if (this.isActivityActive) {
@@ -90,11 +124,16 @@ export class ExternalSource extends UploaderBlock {
     }
   };
 
+  /**
+   * @private
+   * @param {string} propName
+   */
   getCssValue(propName) {
     let style = window.getComputedStyle(this);
     return style.getPropertyValue(propName).trim();
   }
 
+  /** @private */
   applyStyles() {
     let colors = {
       backgroundColor: this.getCssValue('--clr-background-light'),
@@ -110,6 +149,7 @@ export class ExternalSource extends UploaderBlock {
     });
   }
 
+  /** @private */
   remoteUrl() {
     let pubkey = this.cfg.pubkey;
     let imagesOnly = false.toString();
@@ -130,6 +170,7 @@ export class ExternalSource extends UploaderBlock {
     return url.toString();
   }
 
+  /** @private */
   mountIframe() {
     /** @type {HTMLIFrameElement} */
     // @ts-ignore
@@ -153,10 +194,11 @@ export class ExternalSource extends UploaderBlock {
     this._iframe = iframe;
   }
 
+  /** @private */
   unmountIframe() {
     this._iframe && unregisterMessage('file-selected', this._iframe.contentWindow);
     this.ref.iframeWrapper.innerHTML = '';
-    this._iframe = undefined;
+    this._iframe = null;
   }
 }
 
