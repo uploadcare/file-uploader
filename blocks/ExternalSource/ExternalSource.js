@@ -3,12 +3,11 @@
 import { create } from '@symbiotejs/symbiote';
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 import { UploaderBlock } from '../../abstract/UploaderBlock.js';
-import { registerMessage, unregisterMessage } from './messages.js';
-import { buildStyles } from './buildStyles.js';
-import { queryString } from './query-string.js';
-import { wildcardRegexp } from '../../utils/wildcardRegexp.js';
 import { stringToArray } from '../../utils/stringToArray.js';
-import { UploadSource } from '../utils/UploadSource.js';
+import { wildcardRegexp } from '../../utils/wildcardRegexp.js';
+import { buildStyles } from './buildStyles.js';
+import { registerMessage, unregisterMessage } from './messages.js';
+import { queryString } from './query-string.js';
 
 /** @typedef {{ externalSourceType: string }} ActivityParams */
 
@@ -109,7 +108,7 @@ export class ExternalSource extends UploaderBlock {
 
     let { filename } = message;
     let { externalSourceType } = this.activityParams;
-    this.addFileFromUrl(url, { fileName: filename, source: `${UploadSource.EXTERNAL}-${externalSourceType}` });
+    this.addFileFromUrl(url, { fileName: filename, source: externalSourceType });
   }
 
   /** @private */
