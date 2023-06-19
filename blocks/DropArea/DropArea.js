@@ -1,9 +1,9 @@
 import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 import { DropzoneState, addDropzone } from './addDropzone.js';
-import { fileIsImage } from '../../utils/fileTypes.js';
 import { Modal } from '../Modal/Modal.js';
 import { stringToArray } from '../../utils/stringToArray.js';
+import { UploadSource } from '../utils/UploadSource.js';
 
 export class DropArea extends UploaderBlock {
   init$ = {
@@ -86,10 +86,10 @@ export class DropArea extends UploaderBlock {
         }
         items.forEach((/** @type {File | String} */ item) => {
           if (typeof item === 'string') {
-            this.addFileFromUrl(item);
+            this.addFileFromUrl(item, { source: UploadSource.DROP_AREA });
             return;
           }
-          this.addFileFromObject(item);
+          this.addFileFromObject(item, { source: UploadSource.DROP_AREA });
         });
         if (this.uploadCollection.size) {
           this.set$({

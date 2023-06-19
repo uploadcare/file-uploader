@@ -443,6 +443,7 @@ export class FileItem extends UploaderBlock {
         return uploadFile(entry.getValue('file') || entry.getValue('externalUrl') || entry.getValue('uuid'), {
           ...uploadClientOptions,
           fileName: entry.getValue('fileName'),
+          source: entry.getValue('source'),
           onProgress: (progress) => {
             if (progress.isComputable) {
               let percentage = progress.value * 100;

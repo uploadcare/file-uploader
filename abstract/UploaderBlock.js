@@ -11,6 +11,7 @@ import { EVENT_TYPES, EventData, EventManager } from './EventManager.js';
 import { Modal } from '../blocks/Modal/Modal.js';
 import { stringToArray } from '../utils/stringToArray.js';
 import { warnOnce } from '../utils/warnOnce.js';
+import { UploadSource } from '../blocks/utils/UploadSource.js';
 
 export class UploaderBlock extends ActivityBlock {
   init$ = uploaderBlockCtx(this);
@@ -61,35 +62,39 @@ export class UploaderBlock extends ActivityBlock {
     }
   }
 
+  // TODO: Probably we should not allow user to override `source` property
+
   /**
    * @param {string} url
-   * @param {{ silent?: boolean; fileName?: string }} [options]
+   * @param {{ silent?: boolean; fileName?: string; source?: string }} [options]
    */
-  addFileFromUrl(url, { silent, fileName } = {}) {
+  addFileFromUrl(url, { silent, fileName, source } = {}) {
     this.uploadCollection.add({
       externalUrl: url,
       fileName: fileName ?? null,
       silentUpload: silent ?? false,
+      source: source ?? UploadSource.API,
     });
   }
 
   /**
    * @param {string} uuid
-   * @param {{ silent?: boolean; fileName?: string }} [options]
+   * @param {{ silent?: boolean; fileName?: string; source?: string }} [options]
    */
-  addFileFromUuid(uuid, { silent, fileName } = {}) {
+  addFileFromUuid(uuid, { silent, fileName, source } = {}) {
     this.uploadCollection.add({
       uuid,
       fileName: fileName ?? null,
       silentUpload: silent ?? false,
+      source: source ?? UploadSource.API,
     });
   }
 
   /**
    * @param {File} file
-   * @param {{ silent?: boolean; fileName?: string }} [options]
+   * @param {{ silent?: boolean; fileName?: string; source?: string }} [options]
    */
-  addFileFromObject(file, { silent, fileName } = {}) {
+  addFileFromObject(file, { silent, fileName, source } = {}) {
     this.uploadCollection.add({
       file,
       isImage: fileIsImage(file),
@@ -97,6 +102,7 @@ export class UploaderBlock extends ActivityBlock {
       fileName: fileName ?? file.name,
       fileSize: file.size,
       silentUpload: silent ?? false,
+      source: source ?? UploadSource.API,
     });
   }
 
@@ -147,7 +153,7 @@ export class UploaderBlock extends ActivityBlock {
     this.fileInput.dispatchEvent(new MouseEvent('click'));
     this.fileInput.onchange = () => {
       // @ts-ignore TODO: fix this
-      [...this.fileInput['files']].forEach((file) => this.addFileFromObject(file));
+      [...this.fileInput['files']].forEach((file) => this.addFileFromObject(file, { source: UploadSource.LOCAL }));
       // To call uploadTrigger UploadList should draw file items first:
       this.$['*currentActivity'] = ActivityBlock.activities.UPLOAD_LIST;
       this.setForCtxTarget(Modal.StateConsumerScope, '*modalActive', true);

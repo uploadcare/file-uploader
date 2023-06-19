@@ -1,5 +1,6 @@
 import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
+import { UploadSource } from '../utils/UploadSource.js';
 
 export class UrlSource extends UploaderBlock {
   activityType = ActivityBlock.activities.URL;
@@ -9,7 +10,7 @@ export class UrlSource extends UploaderBlock {
     importDisabled: true,
     onUpload: () => {
       let url = this.ref.input['value'];
-      this.addFileFromUrl(url);
+      this.addFileFromUrl(url, { source: UploadSource.URL_TAB });
       this.$['*currentActivity'] = ActivityBlock.activities.UPLOAD_LIST;
     },
     onCancel: () => {

@@ -1,13 +1,14 @@
 // @ts-check
 
 import { create } from '@symbiotejs/symbiote';
-import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
+import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { registerMessage, unregisterMessage } from './messages.js';
 import { buildStyles } from './buildStyles.js';
 import { queryString } from './query-string.js';
 import { wildcardRegexp } from '../../utils/wildcardRegexp.js';
 import { stringToArray } from '../../utils/stringToArray.js';
+import { UploadSource } from '../utils/UploadSource.js';
 
 /** @typedef {{ externalSourceType: string }} ActivityParams */
 
@@ -107,7 +108,8 @@ export class ExternalSource extends UploaderBlock {
     })();
 
     let { filename } = message;
-    this.addFileFromUrl(url, { fileName: filename });
+    let { externalSourceType } = this.activityParams;
+    this.addFileFromUrl(url, { fileName: filename, source: `${UploadSource.EXTERNAL}-${externalSourceType}` });
   }
 
   /** @private */
@@ -155,10 +157,7 @@ export class ExternalSource extends UploaderBlock {
     let imagesOnly = false.toString();
     let { externalSourceType } = this.activityParams;
     let params = {
-      lang: 'en', // TOOD: pass correct lang
-      // TODO: we should add a new property to the social sources application
-      // to collect lr-blocks data separately from legacy widget
-      widget_version: '3.11.3',
+      lang: this.getCssData('--l10n-locale-name')?.split('-')?.[0] || 'en',
       public_key: pubkey,
       images_only: imagesOnly,
       pass_window_open: false,
