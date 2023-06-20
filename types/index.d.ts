@@ -1,4 +1,4 @@
 /// <reference types="./jsx.d.ts" />
+/// <reference types="./events.d.ts" />
 
 export * from "./exported.js";
-//# sourceMappingURL=index.d.ts.map

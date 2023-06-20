@@ -9,7 +9,7 @@ type CloudEditor = import('..').CloudEditor;
 
 type BaseAttributes = {
   'ctx-name': string;
-  hidden: 'string';
+  hidden: boolean;
 };
 type ShadowWrapperAttributes = { 'css-src': string };
 
