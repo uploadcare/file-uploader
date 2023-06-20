@@ -72,7 +72,7 @@ lr-file-item .file-error {
 
 lr-file-item button.remove-btn,
 lr-file-item button.edit-btn {
-  color: var(--clr-txt-lightest);
+  color: var(--clr-txt-lightest) !important; /* todo: remove after refactoring of common.css */
 }
 
 lr-file-item button.upload-btn {

@@ -6,11 +6,11 @@
 
   --h-foreground: 208;
   --s-foreground: 4%;
-  --l-foreground: calc(10% + 70% * var(--darkmode));
+  --l-foreground: calc(10% + 78% * var(--darkmode));
 
   --h-background: 208;
   --s-background: 4%;
-  --l-background: calc(97% - 87% * var(--darkmode));
+  --l-background: calc(97% - 85% * var(--darkmode));
 
   --h-accent: 211;
   --s-accent: 100%;
@@ -70,7 +70,7 @@
     calc(var(--l-background) + 3% * var(--darkmode-minus))
   );
 
-  --clr-accent: hsl(var(--h-accent), var(--s-accent), var(--l-accent));
+  --clr-accent: hsl(var(--h-accent), var(--s-accent), calc(var(--l-accent) + 15% * var(--darkmode)));
   --clr-accent-light: hsla(var(--h-accent), var(--s-accent), var(--l-accent), 30%);
   --clr-accent-lightest: hsla(var(--h-accent), var(--s-accent), var(--l-accent), 10%);
   --clr-accent-light-opaque: hsl(var(--h-accent), var(--s-accent), calc(var(--l-accent) + 45% * var(--darkmode-minus)));
