@@ -466,7 +466,7 @@ export class FileItem extends UploaderBlock {
         fileName: fileInfo.originalFilename,
         fileSize: fileInfo.size,
         isImage: fileInfo.isImage,
-        mimeType: fileInfo.mimeType,
+        mimeType: fileInfo.contentInfo?.mime?.mime ?? fileInfo.mimeType,
         uuid: fileInfo.uuid,
         cdnUrl: fileInfo.cdnUrl,
       });
