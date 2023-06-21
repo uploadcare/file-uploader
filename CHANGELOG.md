@@ -1,4 +1,17 @@
+# [0.24.0](https://github.com/uploadcare/blocks/compare/v0.23.0...v0.24.0) (2023-06-21)
+
+### Bug Fixes
+
+- **drag-n-drop:** copy `type` value from `DataTransferItem` to `FileSystemFileEntry` when doing drag'n'drop because `FileSystemFileEntry` don't resolve type for HEIC ([832ed55](https://github.com/uploadcare/blocks/commit/832ed55814b58bf133a6881caef223f1a0d7a446))
+- get `mimeType` from upload API from both `contentInfo` and provided type ([33cf2f7](https://github.com/uploadcare/blocks/commit/33cf2f77291c70cd065fd7b9c3c9f174688590d0))
+- **validation:** skip client validation if mime type or file name aren't available ([0d7a96f](https://github.com/uploadcare/blocks/commit/0d7a96ff27535f4f24449796d73b1b3acd9fde34))
+
+### Features
+
+- add icons for flickr, evernote, box, onedrive, huddle ([#490](https://github.com/uploadcare/blocks/issues/490)) ([30ae37d](https://github.com/uploadcare/blocks/commit/30ae37db5823f509764b019e0bdc3c8c254ffbea))
+
 # [0.23.0](https://github.com/uploadcare/blocks/compare/v0.22.13...v0.23.0) (2023-06-14)
+
 ### Features
 
 - add `uploadAll` method to trigger upload ([db69508](https://github.com/uploadcare/blocks/commit/db69508d84838937440d3fb119ff20d0dc6575f6))
@@ -12,7 +25,7 @@
 
 ```js
 // `silent` option supresses `LR_UPLOAD_FINISH` event
-// `fileName` options specifies file name 
+// `fileName` options specifies file name
 uploaderCtx.addFileFromUrl(url: string, { silent?: boolean, fileName?: string } = {});
 uploaderCtx.addFileFromUuid(uuid: string, { silent?: boolean, fileName?: string } = {});
 uploaderCtx.addFileFromObject(file: File, { silent?: boolean, fileName?: string } = {});
