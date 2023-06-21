@@ -219,10 +219,13 @@ export class FileItem extends UploaderBlock {
     const mimeType = entry.getValue('mimeType');
     const fileName = entry.getValue('fileName');
 
-    const needMimeCheck = !!mimeType;
-    const needExtCheck = !!fileName;
-    const mimeOk = needMimeCheck ? matchMimeType(mimeType, allowedFileTypes) : true;
-    const extOk = needExtCheck ? matchExtension(fileName, allowedFileTypes) : true;
+    if (!mimeType || !fileName) {
+      // Skip client validation if mime type or file name are not available for some reasons
+      return;
+    }
+
+    const mimeOk = matchMimeType(mimeType, allowedFileTypes);
+    const extOk = matchExtension(fileName, allowedFileTypes);
 
     if (!mimeOk && !extOk) {
       // Assume file type is not allowed if both mime and ext checks fail
