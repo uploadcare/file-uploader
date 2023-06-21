@@ -39,6 +39,8 @@ const attrStateMapping = /** @type {Record<keyof import('../../types').ConfigAtt
 });
 
 export class Config extends Block {
+  ctxOwner = true;
+
   /** @type {Block['init$'] & import('../../types').ConfigType} */
   init$ = {
     ...this.init$,
