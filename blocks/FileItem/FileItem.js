@@ -418,6 +418,16 @@ export class FileItem extends UploaderBlock {
     if (entry.getValue('fileInfo') || entry.getValue('isUploading') || entry.getValue('validationErrorMsg')) {
       return;
     }
+    const entryIdx = this.uploadCollection.items().indexOf(entry.uid);
+    const filesLimit = this.cfg.multiple ? this.cfg.multipleMax : 1;
+
+    if (filesLimit && this.uploadCollection.size >= filesLimit && entryIdx > filesLimit - 1) {
+      const message = this.l10n('files-count-allowed', {
+        count: filesLimit,
+      });
+      entry.setValue('validationErrorMsg', message);
+      return;
+    }
     let data = this.getOutputData((dataItem) => {
       return !dataItem.getValue('fileInfo');
     });

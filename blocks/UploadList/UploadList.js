@@ -95,6 +95,10 @@ export class UploadList extends UploaderBlock {
       this.set$({
         '*message': msg,
       });
+    } else {
+      this.set$({
+        '*message': null,
+      });
     }
   }
 

@@ -76,14 +76,7 @@ export class DropArea extends UploaderBlock {
         if (!items.length) {
           return;
         }
-        let isMultiple = this.cfg.multiple;
-        let multipleMax = this.cfg.multipleMax;
-        let currentFilesCount = this.uploadCollection.size;
-        if (isMultiple && multipleMax) {
-          items = items.slice(0, multipleMax - currentFilesCount - 1);
-        } else if (!isMultiple) {
-          items = items.slice(0, currentFilesCount > 0 ? 0 : 1);
-        }
+
         items.forEach((/** @type {File | String} */ item) => {
           if (typeof item === 'string') {
             this.addFileFromUrl(item, { source: UploadSource.DROP_AREA });
