@@ -72,7 +72,7 @@ export class UploadList extends UploaderBlock {
       const entryIdx = entryIds.indexOf(entryId);
       const multipleMax = this.cfg.multiple ? this.cfg.multipleMax : 1;
 
-      if (entryIdx >= multipleMax) {
+      if (multipleMax && entryIdx >= multipleMax) {
         const message = this.l10n('files-count-allowed', {
           count: multipleMax,
         });
@@ -161,13 +161,19 @@ export class UploadList extends UploaderBlock {
         summary.limitOverflow += 1;
       }
     }
-    let allDone = summary.total === summary.succeed + summary.failed + summary.limitOverflow;
-    let { passed: fitCountRestrictions, tooMany, exact } = this._validateFilesCount();
-    let fitValidation = summary.failed === 0 && summary.limitOverflow === 0;
+    const { passed: fitCountRestrictions, tooMany, exact } = this._validateFilesCount();
+    const validationOk = summary.failed === 0 && summary.limitOverflow === 0;
+    let uploadBtnVisible = false;
+    let allDone = false;
+    let doneBtnEnabled = false;
 
-    let doneBtnEnabled = summary.total > 0 && fitCountRestrictions && fitValidation;
-    let uploadBtnVisible =
-      !allDone && summary.total - summary.succeed - summary.uploading - summary.failed > 0 && fitCountRestrictions;
+    const readyToUpload = summary.total - summary.succeed - summary.uploading - summary.failed;
+    if (readyToUpload > 0 && fitCountRestrictions) {
+      uploadBtnVisible = true;
+    } else {
+      allDone = true;
+      doneBtnEnabled = summary.total === summary.succeed && fitCountRestrictions && validationOk;
+    }
 
     this.set$({
       doneBtnVisible: allDone,

@@ -35,6 +35,14 @@ export class FileItem extends UploaderBlock {
   /** @private */
   _debouncedCalculateState = debounce(this._calculateState.bind(this), 100); // TODO: better throttle
   /** @private */
+  _debouncedRunValidators = debounce(this._runValidators.bind(this), 100);
+  /** @private */
+  _validators = [
+    this._validateFileType.bind(this),
+    this._validateIsImage.bind(this),
+    this._validateMaxSizeLimit.bind(this),
+  ];
+  /** @private */
   _renderedOnce = false;
 
   // @ts-ignore TODO: fix this
@@ -183,23 +191,6 @@ export class FileItem extends UploaderBlock {
 
   /**
    * @private
-   * @param {'success' | 'error'} type
-   * @param {String} caption
-   * @param {String} text
-   */
-  _showMessage(type, caption, text) {
-    let msg = new UiMessage();
-    msg.caption = caption;
-    msg.text = text;
-    msg.isError = type === 'error';
-    this.set$({
-      badgeIcon: `badge-${type}`,
-      '*message': msg,
-    });
-  }
-
-  /**
-   * @private
    * @param {string} prop
    * @param {(value: any) => void} handler
    */
@@ -238,8 +229,56 @@ export class FileItem extends UploaderBlock {
 
     if (!mimeOk && !extOk) {
       // Assume file type is not allowed if both mime and ext checks fail
-      entry.setValue('validationErrorMsg', this.l10n('file-type-not-allowed'));
+      return this.l10n('file-type-not-allowed');
     }
+  }
+
+  /**
+   * @private
+   * @param {import('../../abstract/TypedData.js').TypedData} entry
+   */
+  _validateMaxSizeLimit(entry) {
+    const maxFileSize = this.cfg.maxLocalFileSizeBytes;
+    const fileSize = entry.getValue('fileSize');
+    if (maxFileSize && fileSize && fileSize > maxFileSize) {
+      return this.l10n('files-max-size-limit-error', { maxFileSize });
+    }
+  }
+
+  /**
+   * @private
+   * @param {import('../../abstract/TypedData.js').TypedData} entry
+   */
+  _validateIsImage(entry) {
+    const imagesOnly = this.cfg.imgOnly;
+    const isImage = entry.getValue('isImage');
+    if (!imagesOnly || isImage) {
+      return;
+    }
+    if (!entry.getValue('fileInfo') && entry.getValue('externalUrl')) {
+      // skip validation for not uploaded files with external url, cause we don't know if they're images or not
+      return;
+    }
+    if (!entry.getValue('fileInfo') && !entry.getValue('mimeType')) {
+      // skip validation for not uploaded files without mime-type, cause we don't know if they're images or not
+      return;
+    }
+    return this.l10n('images-only-accepted');
+  }
+
+  /**
+   * @private
+   * @param {import('../../abstract/TypedData.js').TypedData} entry
+   */
+  _runValidators(entry) {
+    for (const validator of this._validators) {
+      const errorMsg = validator(entry);
+      if (errorMsg) {
+        this._entry.setValue('validationErrorMsg', errorMsg);
+        return;
+      }
+    }
+    this._entry.setValue('validationErrorMsg', null);
   }
 
   /**
@@ -279,38 +318,19 @@ export class FileItem extends UploaderBlock {
 
     this._subEntry('fileName', (name) => {
       this.$.itemName = name || entry.getValue('externalUrl') || this.l10n('file-no-name');
-      if (name) {
-        this._validateFileType(entry);
-      }
+      this._debouncedRunValidators(entry);
     });
 
-    this._subEntry('fileSize', (fileSize) => {
-      let maxFileSize = this.cfg.maxLocalFileSizeBytes;
-      if (maxFileSize && fileSize && fileSize > maxFileSize) {
-        entry.setValue('validationErrorMsg', this.l10n('files-max-size-limit-error', { maxFileSize }));
-      }
+    this._subEntry('fileSize', () => {
+      this._debouncedRunValidators(entry);
     });
 
-    this._subEntry('mimeType', (mimeType) => {
-      if (mimeType) {
-        this._validateFileType(entry);
-      }
+    this._subEntry('mimeType', () => {
+      this._debouncedRunValidators(entry);
     });
 
-    this._subEntry('isImage', (isImage) => {
-      let imagesOnly = this.cfg.imgOnly;
-      if (!imagesOnly || isImage) {
-        return;
-      }
-      if (!entry.getValue('fileInfo') && entry.getValue('externalUrl')) {
-        // skip validation for not uploaded files with external url, cause we don't know if they're images or not
-        return;
-      }
-      if (!entry.getValue('fileInfo') && !entry.getValue('mimeType')) {
-        // skip validation for not uploaded files without mime-type, cause we don't know if they're images or not
-        return;
-      }
-      entry.setValue('validationErrorMsg', this.l10n('images-only-accepted'));
+    this._subEntry('isImage', () => {
+      this._debouncedRunValidators(entry);
     });
 
     this._subEntry('externalUrl', (externalUrl) => {
@@ -336,6 +356,7 @@ export class FileItem extends UploaderBlock {
 
     this._subEntry('validationMultipleLimitMsg', () => {
       this._uploadIfPossible(entry);
+      this._handleState(this.$.state);
     });
 
     this._uploadIfPossible(entry);
@@ -373,6 +394,14 @@ export class FileItem extends UploaderBlock {
 
     this.subConfigValue('useCloudImageEditor', () => {
       this._handleState(this.$.state);
+    });
+
+    this.subConfigValue('maxLocalFileSizeBytes', () => {
+      this._debouncedRunValidators(this._entry);
+    });
+
+    this.subConfigValue('imgOnly', () => {
+      this._debouncedRunValidators(this._entry);
     });
 
     this.onclick = () => {
@@ -457,7 +486,7 @@ export class FileItem extends UploaderBlock {
       return;
     }
     const multipleMax = this.cfg.multiple ? this.cfg.multipleMax : 1;
-    if (this.uploadCollection.size > multipleMax) {
+    if (multipleMax && this.uploadCollection.size > multipleMax) {
       return;
     }
     let data = this.getOutputData((dataItem) => {
