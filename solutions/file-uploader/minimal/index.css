@@ -15,6 +15,7 @@
 @import url('../../../blocks/ProgressBar/progress-bar.css');
 @import url('../../../blocks/MessageBox/message-box.css');
 @import url('../../../blocks/Copyright/copyright.css');
+@import url('../../../blocks/themes/lr-basic/l10n.css');
 
 /* ICONS: */
 :where(.lr-wgt-icons, .lr-wgt-common),
@@ -36,44 +37,12 @@
   --icon-add: 'M12.75 21C12.75 21.4142 12.4142 21.75 12 21.75C11.5858 21.75 11.25 21.4142 11.25 21V12.7499H3C2.58579 12.7499 2.25 12.4141 2.25 11.9999C2.25 11.5857 2.58579 11.2499 3 11.2499H11.25V3C11.25 2.58579 11.5858 2.25 12 2.25C12.4142 2.25 12.75 2.58579 12.75 3V11.2499H21C21.4142 11.2499 21.75 11.5857 21.75 11.9999C21.75 12.4141 21.4142 12.7499 21 12.7499H12.75V21Z';
 }
 
-/* L10N: */
-:where(.lr-wgt-l10n_en-US, .lr-wgt-common),
-:host {
-  --l10n-drop-files-here: 'Drop file here';
-
-  --l10n-choose-file: 'Choose file...';
-  --l10n-choose-files: 'Choose files...';
-
-  --l10n-add-more: 'Add more';
-
-  --l10n-upload-error: 'Upload error';
-  --l10n-validation-error: 'Validation error';
-  --l10n-no-files: 'No files selected';
-  --l10n-browse: 'Browse';
-  --l10n-not-uploaded-yet: 'Not uploaded yet...';
-
-  --l10n-file-name: 'Name';
-  --l10n-file-size: 'Size';
-  --l10n-cdn-url: 'CDN URL';
-  --l10n-file-size-unknown: 'Unknown';
-
-  --l10n-files-count-limit-error-title: 'Files count limit overflow';
-  --l10n-files-count-limit-error-too-few: 'You’ve chosen {{total}}. At least {{min}} required.';
-  --l10n-files-count-limit-error-too-many: 'You’ve chosen too many files. {{max}} is maximum.';
-
-  --l10n-files-max-size-limit-error: 'File is too big. Max file size is {{maxFileSize}} bytes.';
-  --l10n-has-validation-errors: 'File validation error ocurred. Please, check your files before upload.';
-  --l10n-images-only-accepted: 'Only image files are accepted.';
-  --l10n-file-type-not-allowed: 'Uploading of these file types is not allowed.';
-}
-
 :where(.lr-wgt-common),
 :host {
   --cfg-multiple: 1;
   --cfg-confirm-upload: 0;
   --cfg-init-activity: 'start-from';
   --cfg-done-activity: 'upload-list';
-  --cfg-source-list: 'local';
 
   position: relative;
   display: block;
@@ -140,6 +109,10 @@ lr-upload-list .toolbar .add-more-btn {
   height: calc(var(--ui-size) + var(--gap-mid) * 2);
   margin-top: var(--gap-small);
   background-color: var(--clr-background);
+}
+
+lr-upload-list .toolbar .add-more-btn[disabled] {
+  display: none;
 }
 
 lr-upload-list .toolbar .add-more-btn:hover {

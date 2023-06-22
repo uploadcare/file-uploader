@@ -72,8 +72,11 @@ const mapping = {
  * @template {keyof import('../../types').ConfigPlainType} T
  * @param {T} key
  * @param {unknown} value
- * @returns {import('../../types').ConfigType[T]}
+ * @returns {import('../../types').ConfigType[T] | undefined}
  */
 export const normalizeConfigValue = (key, value) => {
+  if (typeof value === 'undefined' || value === null) {
+    return undefined;
+  }
   return mapping[key](value);
 };

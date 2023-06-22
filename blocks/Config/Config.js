@@ -44,11 +44,20 @@ export class Config extends Block {
   /** @type {Block['init$'] & import('../../types').ConfigType} */
   init$ = {
     ...this.init$,
-    ...Object.fromEntries(Object.entries(initialConfig).map(([key, value]) => [sharedConfigKey(key), value])),
+    ...Object.fromEntries(
+      Object.entries(initialConfig).map(([key, value]) => [
+        sharedConfigKey(/** @type {keyof ConfigType} */ (key)),
+        value,
+      ])
+    ),
   };
 
   constructor() {
     super();
+
+    if (this.hasAttribute('override')) {
+      this.ctxOwner = false;
+    }
 
     allConfigKeys.forEach((key) => {
       Object.defineProperty(this, key, {
@@ -57,7 +66,11 @@ export class Config extends Block {
           // wait for state to be initialized
           setTimeout(() => {
             if (this.$[sharedConfigKey(key)] !== value) {
-              this.$[sharedConfigKey(key)] = value;
+              if (typeof value === 'undefined' || value === null) {
+                this.$[sharedConfigKey(key)] = initialConfig[key];
+              } else {
+                this.$[sharedConfigKey(key)] = value;
+              }
             }
           });
         },
@@ -75,7 +88,7 @@ export class Config extends Block {
    */
   attributeChangedCallback(name, oldVal, newVal) {
     const normalizedVal = normalizeConfigValue(attrKeyMapping[name], newVal);
-    super.attributeChangedCallback(name, oldVal, normalizedVal);
+    super.attributeChangedCallback(name, oldVal, normalizedVal ?? initialConfig[attrKeyMapping[name]]);
   }
 }
 

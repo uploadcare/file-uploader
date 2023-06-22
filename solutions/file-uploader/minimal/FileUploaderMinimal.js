@@ -1,15 +1,9 @@
 import { SolutionBlock } from '../../../abstract/SolutionBlock.js';
 import { ActivityBlock } from '../../../abstract/ActivityBlock.js';
+import { sharedConfigKey } from '../../../abstract/sharedConfigKey.js';
 
 export class FileUploaderMinimal extends SolutionBlock {
   pauseRender = true;
-
-  init$ = {
-    ...this.init$,
-    selectClicked: () => {
-      this.ref.uBlock.openSystemDialog();
-    },
-  };
 
   shadowReadyCallback() {
     /** @type {import('../../../abstract/UploaderBlock.js').UploaderBlock} */
@@ -25,10 +19,23 @@ export class FileUploaderMinimal extends SolutionBlock {
         this.$['*currentActivity'] = uBlock.initActivity || ActivityBlock.activities.START_FROM;
       }
     });
+
+    this.sub(sharedConfigKey('sourceList'), (sourceList) => {
+      if (sourceList !== 'local') {
+        this.$[sharedConfigKey('sourceList')] = 'local';
+      }
+    });
+
+    this.sub(sharedConfigKey('confirmUpload'), (confirmUpload) => {
+      if (confirmUpload !== false) {
+        this.$[sharedConfigKey('confirmUpload')] = false;
+      }
+    });
   }
 }
 
 FileUploaderMinimal.template = /* HTML */ `
+  <lr-config override source-list="local"></lr-config>
   <lr-start-from>
     <lr-drop-area clickable l10n="choose-file"></lr-drop-area>
     <lr-copyright></lr-copyright>
