@@ -99,7 +99,7 @@
   --l10n-files-count-limit-error-too-many: 'You’ve chosen too many files. {{max}} is maximum.';
   --l10n-files-count-allowed: 'Only {{count}} files are allowed';
 
-  --l10n-files-max-size-limit-error: 'File is too big. Max file size is {{maxFileSize}} bytes.';
+  --l10n-files-max-size-limit-error: 'File is too big. Max file size is {{maxFileSize}}.';
   --l10n-has-validation-errors: 'File validation error ocurred. Please, check your files before upload.';
   --l10n-images-only-accepted: 'Only image files are accepted.';
   --l10n-file-type-not-allowed: 'Uploading of these file types is not allowed.';

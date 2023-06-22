@@ -30,6 +30,7 @@ export const prettyBytes = (bytes, unit = ByteUnitEnum.AUTO) => {
   const isAutoMode = unit === ByteUnitEnum.AUTO;
 
   if (unit === ByteUnitEnum.BYTE || (isAutoMode && bytes < 1024 ** 1)) {
+    // TODO: handle blocks locale
     const pluralForm = /** @type {Extract<import('./getPluralForm').PluralForm, 'one' | 'other'>} */ (
       getPluralForm('en-US', bytes)
     );
