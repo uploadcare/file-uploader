@@ -7,6 +7,7 @@ import { l10nProcessor } from './l10nProcessor.js';
 import { sharedConfigKey } from './sharedConfigKey.js';
 import { toKebabCase } from '../utils/toKebabCase.js';
 import { warnOnce } from '../utils/warnOnce.js';
+import { getPluralForm } from '../utils/getPluralForm.js';
 
 const TAG_PREFIX = 'lr-';
 
@@ -45,7 +46,7 @@ export class Block extends BaseComponent {
    */
   pluralize(key, count) {
     const locale = this.l10n('locale-name') || 'en-US';
-    const pluralForm = new Intl.PluralRules(locale).select(count);
+    const pluralForm = getPluralForm(locale, count);
     return this.l10n(`${key}__${pluralForm}`);
   }
 
