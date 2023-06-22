@@ -78,6 +78,11 @@ export const uploadEntrySchema = Object.freeze({
     value: null,
     nullable: true,
   },
+  validationMultipleLimitMsg: {
+    type: String,
+    value: null,
+    nullable: true,
+  },
   ctxName: {
     type: String,
     value: null,

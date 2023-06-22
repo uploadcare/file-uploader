@@ -1,13 +1,25 @@
+// @ts-check
 import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 import { UiMessage } from '../MessageBox/MessageBox.js';
 import { EVENT_TYPES, EventData, EventManager } from '../../abstract/EventManager.js';
 import { debounce } from '../utils/debounce.js';
 
+/**
+ * @typedef {{
+ *   total: number;
+ *   succeed: number;
+ *   uploading: number;
+ *   failed: number;
+ *   limitOverflow: number;
+ * }} Summary
+ */
+
 export class UploadList extends UploaderBlock {
   historyTracked = true;
   activityType = ActivityBlock.activities.UPLOAD_LIST;
 
+  // @ts-ignore TODO: fix this
   init$ = {
     ...this.init$,
     doneBtnVisible: false,
@@ -49,7 +61,27 @@ export class UploadList extends UploaderBlock {
     }
     this._updateUploadsState();
     this._updateCountLimitMessage();
+    this._validateMultipleLimit();
   }, 0);
+
+  /** @private */
+  _validateMultipleLimit() {
+    const entryIds = this.uploadCollection.items();
+    for (const entryId of entryIds) {
+      const entry = this.uploadCollection.read(entryId);
+      const entryIdx = entryIds.indexOf(entryId);
+      const multipleMax = this.cfg.multiple ? this.cfg.multipleMax : 1;
+
+      if (entryIdx >= multipleMax) {
+        const message = this.l10n('files-count-allowed', {
+          count: multipleMax,
+        });
+        entry.setValue('validationMultipleLimitMsg', message);
+      } else {
+        entry.setValue('validationMultipleLimitMsg', null);
+      }
+    }
+  }
 
   /**
    * @private
@@ -106,11 +138,13 @@ export class UploadList extends UploaderBlock {
   _updateUploadsState() {
     let itemIds = this.uploadCollection.items();
     let filesCount = itemIds.length;
+    /** @type {Summary} */
     let summary = {
       total: filesCount,
       succeed: 0,
       uploading: 0,
       failed: 0,
+      limitOverflow: 0,
     };
     for (let id of itemIds) {
       let item = this.uploadCollection.read(id);
@@ -123,10 +157,13 @@ export class UploadList extends UploaderBlock {
       if (item.getValue('validationErrorMsg') || item.getValue('uploadError')) {
         summary.failed += 1;
       }
+      if (item.getValue('validationMultipleLimitMsg')) {
+        summary.limitOverflow += 1;
+      }
     }
-    let allDone = summary.total === summary.succeed + summary.failed;
+    let allDone = summary.total === summary.succeed + summary.failed + summary.limitOverflow;
     let { passed: fitCountRestrictions, tooMany, exact } = this._validateFilesCount();
-    let fitValidation = summary.failed === 0;
+    let fitValidation = summary.failed === 0 && summary.limitOverflow === 0;
 
     let doneBtnEnabled = summary.total > 0 && fitCountRestrictions && fitValidation;
     let uploadBtnVisible =
@@ -145,8 +182,12 @@ export class UploadList extends UploaderBlock {
     });
   }
 
-  /** @private */
+  /**
+   * @private
+   * @param {Summary} summary
+   */
   _getHeaderText(summary) {
+    /** @param {keyof Summary} status */
     const localizedText = (status) => {
       const count = summary[status];
       return this.l10n(`header-${status}`, {
