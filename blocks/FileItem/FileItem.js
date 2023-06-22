@@ -9,6 +9,7 @@ import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../ut
 import { EVENT_TYPES, EventData, EventManager } from '../../abstract/EventManager.js';
 import { debounce } from '../utils/debounce.js';
 import { IMAGE_ACCEPT_LIST, mergeFileTypes, matchMimeType, matchExtension } from '../../utils/fileTypes.js';
+import { prettyBytes } from '../../utils/prettyBytes.js';
 
 const FileItemState = Object.freeze({
   FINISHED: Symbol(0),
@@ -241,7 +242,7 @@ export class FileItem extends UploaderBlock {
     const maxFileSize = this.cfg.maxLocalFileSizeBytes;
     const fileSize = entry.getValue('fileSize');
     if (maxFileSize && fileSize && fileSize > maxFileSize) {
-      return this.l10n('files-max-size-limit-error', { maxFileSize });
+      return this.l10n('files-max-size-limit-error', { maxFileSize: prettyBytes(maxFileSize) });
     }
   }
 
