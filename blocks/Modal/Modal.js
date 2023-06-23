@@ -67,6 +67,8 @@ export class Modal extends Block {
         this.$.isOpen = modalActive;
       }
 
+      document.body.toggleAttribute('inert', modalActive);
+
       if (modalActive && this.getCssData('--cfg-modal-scroll-lock')) {
         document.body.style.overflow = 'hidden';
       } else {
