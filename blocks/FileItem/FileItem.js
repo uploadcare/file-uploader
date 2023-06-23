@@ -483,6 +483,8 @@ export class FileItem extends UploaderBlock {
 
   async upload() {
     let entry = this._entry;
+    this._runValidators(entry);
+
     if (entry.getValue('fileInfo') || entry.getValue('isUploading') || entry.getValue('validationErrorMsg')) {
       return;
     }
