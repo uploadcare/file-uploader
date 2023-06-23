@@ -8,7 +8,9 @@ export class UrlSource extends UploaderBlock {
   init$ = {
     ...this.init$,
     importDisabled: true,
-    onUpload: () => {
+    onUpload: (e) => {
+      e.preventDefault();
+
       let url = this.ref.input['value'];
       this.addFileFromUrl(url, { source: UploadSource.URL_TAB });
       this.$['*currentActivity'] = ActivityBlock.activities.UPLOAD_LIST;
@@ -24,7 +26,12 @@ export class UrlSource extends UploaderBlock {
 
   initCallback() {
     super.initCallback();
-    this.registerActivity(this.activityType);
+    this.registerActivity(this.activityType, {
+      onActivate: () => {
+        this.ref.input['value'] = '';
+        this.ref.input.focus();
+      },
+    });
   }
 }
 
@@ -41,12 +48,12 @@ UrlSource.template = /* HTML */ `
       <lr-icon name="close"></lr-icon>
     </button>
   </lr-activity-header>
-  <div class="content">
+  <form class="content">
     <input placeholder="https://" class="url-input" type="text" ref="input" set="oninput: onInput" />
     <button
-      type="button"
+      type="submit"
       class="url-upload-btn primary-btn"
       set="onclick: onUpload; @disabled: importDisabled"
     ></button>
-  </div>
+  </form>
 `;
