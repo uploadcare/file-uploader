@@ -35,7 +35,6 @@ export class FileUploaderMinimal extends SolutionBlock {
 }
 
 FileUploaderMinimal.template = /* HTML */ `
-  <lr-config override source-list="local"></lr-config>
   <lr-start-from>
     <lr-drop-area clickable l10n="choose-file"></lr-drop-area>
     <lr-copyright></lr-copyright>

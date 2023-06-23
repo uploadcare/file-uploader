@@ -52,33 +52,45 @@ export class Config extends Block {
     ),
   };
 
-  constructor() {
-    super();
+  initCallback() {
+    super.initCallback();
 
-    if (this.hasAttribute('override')) {
-      this.ctxOwner = false;
-    }
+    for (const key of allConfigKeys) {
+      const anyThis = /** @type {typeof this & any} */ (this);
+      let localPropName = '__' + key;
+      anyThis[localPropName] = anyThis[key];
 
-    allConfigKeys.forEach((key) => {
       Object.defineProperty(this, key, {
         /** @param {unknown} value */
         set: (value) => {
-          // wait for state to be initialized
-          setTimeout(() => {
-            if (this.$[sharedConfigKey(key)] !== value) {
+          anyThis[localPropName] = value;
+          if (plainConfigKeys.includes(key)) {
+            const attrs = [...new Set([toKebabCase(key), key.toLowerCase()])];
+            for (const attr of attrs) {
               if (typeof value === 'undefined' || value === null) {
-                this.$[sharedConfigKey(key)] = initialConfig[key];
+                this.removeAttribute(attr);
               } else {
-                this.$[sharedConfigKey(key)] = value;
+                this.setAttribute(attr, value.toString());
               }
             }
-          });
+          }
+          if (this.$[sharedConfigKey(key)] !== value) {
+            if (typeof value === 'undefined' || value === null) {
+              this.$[sharedConfigKey(key)] = initialConfig[key];
+            } else {
+              this.$[sharedConfigKey(key)] = value;
+            }
+          }
         },
         get: () => {
           return this.$[sharedConfigKey(key)];
         },
       });
-    });
+
+      if (typeof anyThis[key] !== 'undefined' && anyThis[key] !== null) {
+        anyThis[key] = anyThis[localPropName];
+      }
+    }
   }
 
   /**
@@ -87,8 +99,14 @@ export class Config extends Block {
    * @param {string} newVal
    */
   attributeChangedCallback(name, oldVal, newVal) {
-    const normalizedVal = normalizeConfigValue(attrKeyMapping[name], newVal);
-    super.attributeChangedCallback(name, oldVal, normalizedVal ?? initialConfig[attrKeyMapping[name]]);
+    if (oldVal === newVal) return;
+
+    const key = attrKeyMapping[name];
+    const normalizedVal = normalizeConfigValue(key, newVal);
+    const val = normalizedVal ?? initialConfig[key];
+
+    const anyThis = /** @type {typeof this & any} */ (this);
+    anyThis[key] = val;
   }
 }
 
