@@ -2,7 +2,7 @@
 import { ActivityBlock } from './ActivityBlock.js';
 
 import { Data } from '@symbiotejs/symbiote';
-import { IMAGE_ACCEPT_LIST, mergeFileTypes, fileIsImage } from '../utils/fileTypes.js';
+import { IMAGE_ACCEPT_LIST, mergeFileTypes, fileIsImage, matchMimeType, matchExtension } from '../utils/fileTypes.js';
 import { uploadEntrySchema } from './uploadEntrySchema.js';
 import { customUserAgent } from '../blocks/utils/userAgent.js';
 import { TypedCollection } from './TypedCollection.js';
@@ -12,12 +12,22 @@ import { Modal } from '../blocks/Modal/Modal.js';
 import { stringToArray } from '../utils/stringToArray.js';
 import { warnOnce } from '../utils/warnOnce.js';
 import { UploadSource } from '../blocks/utils/UploadSource.js';
+import { prettyBytes } from '../utils/prettyBytes.js';
+import { debounce } from '../blocks/utils/debounce.js';
 
 export class UploaderBlock extends ActivityBlock {
   init$ = uploaderBlockCtx(this);
 
   /** @private */
   __initialUploadMetadata = null;
+
+  /** @private */
+  _validators = [
+    this._validateMultipleLimit.bind(this),
+    this._validateIsImage.bind(this),
+    this._validateFileType.bind(this),
+    this._validateMaxSizeLimit.bind(this),
+  ];
 
   /**
    * This is Public JS API method. Could be called before block initialization, so we need to delay state interactions
@@ -242,7 +252,14 @@ export class UploaderBlock extends ActivityBlock {
     if (!this.has('*uploadCollection')) {
       let uploadCollection = new TypedCollection({
         typedSchema: uploadEntrySchema,
-        watchList: ['uploadProgress', 'fileInfo', 'uploadError', 'validationErrorMsg', 'cdnUrlModifiers'],
+        watchList: [
+          'uploadProgress',
+          'fileInfo',
+          'uploadError',
+          'validationErrorMsg',
+          'validationMultipleLimitMsg',
+          'cdnUrlModifiers',
+        ],
         handler: (entries, added, removed) => {
           for (let entry of removed) {
             entry?.getValue('abortController')?.abort();
@@ -256,16 +273,139 @@ export class UploaderBlock extends ActivityBlock {
       });
       uploadCollection.observe(this._handleCollectionUpdate);
       this.add('*uploadCollection', uploadCollection);
+
+      this.subConfigValue('maxLocalFileSizeBytes', () => this._debouncedRunValidators());
+      this.subConfigValue('multipleMin', () => this._debouncedRunValidators());
+      this.subConfigValue('multipleMax', () => this._debouncedRunValidators());
+      this.subConfigValue('multiple', () => this._debouncedRunValidators());
+      this.subConfigValue('imgOnly', () => this._debouncedRunValidators());
+      this.subConfigValue('accept', () => this._debouncedRunValidators());
     }
     return this.$['*uploadCollection'];
   }
 
   /**
    * @private
-   * @param {Record<string, string>} changeMap
+   * @param {import('./TypedData.js').TypedData} entry
+   */
+  _validateFileType(entry) {
+    const imagesOnly = this.cfg.imgOnly;
+    const accept = this.cfg.accept;
+    const allowedFileTypes = mergeFileTypes([...(imagesOnly ? IMAGE_ACCEPT_LIST : []), accept]);
+    if (!allowedFileTypes.length) return;
+
+    const mimeType = entry.getValue('mimeType');
+    const fileName = entry.getValue('fileName');
+
+    if (!mimeType || !fileName) {
+      // Skip client validation if mime type or file name are not available for some reasons
+      return;
+    }
+
+    const mimeOk = matchMimeType(mimeType, allowedFileTypes);
+    const extOk = matchExtension(fileName, allowedFileTypes);
+
+    if (!mimeOk && !extOk) {
+      // Assume file type is not allowed if both mime and ext checks fail
+      return this.l10n('file-type-not-allowed');
+    }
+  }
+
+  /**
+   * @private
+   * @param {import('./TypedData.js').TypedData} entry
+   */
+  _validateMaxSizeLimit(entry) {
+    const maxFileSize = this.cfg.maxLocalFileSizeBytes;
+    const fileSize = entry.getValue('fileSize');
+    if (maxFileSize && fileSize && fileSize > maxFileSize) {
+      return this.l10n('files-max-size-limit-error', { maxFileSize: prettyBytes(maxFileSize) });
+    }
+  }
+
+  /**
+   * @private
+   * @param {import('./TypedData.js').TypedData} entry
+   */
+  _validateMultipleLimit(entry) {
+    const entryIds = this.uploadCollection.items();
+    const entryIdx = entryIds.indexOf(entry.uid);
+    const multipleMax = this.cfg.multiple ? this.cfg.multipleMax : 1;
+
+    if (multipleMax && entryIdx >= multipleMax) {
+      const message = this.l10n('files-count-allowed', {
+        count: multipleMax,
+      });
+      return message;
+    }
+  }
+
+  /**
+   * @private
+   * @param {import('./TypedData.js').TypedData} entry
+   */
+  _validateIsImage(entry) {
+    const imagesOnly = this.cfg.imgOnly;
+    const isImage = entry.getValue('isImage');
+    if (!imagesOnly || isImage) {
+      return;
+    }
+    if (!entry.getValue('fileInfo') && entry.getValue('externalUrl')) {
+      // skip validation for not uploaded files with external url, cause we don't know if they're images or not
+      return;
+    }
+    if (!entry.getValue('fileInfo') && !entry.getValue('mimeType')) {
+      // skip validation for not uploaded files without mime-type, cause we don't know if they're images or not
+      return;
+    }
+    return this.l10n('images-only-accepted');
+  }
+
+  /**
+   * @private
+   * @param {import('./TypedData.js').TypedData} entry
+   */
+  _runValidatorsForEntry(entry) {
+    for (const validator of this._validators) {
+      const errorMsg = validator(entry);
+      if (errorMsg) {
+        entry.setValue('validationErrorMsg', errorMsg);
+        return;
+      }
+    }
+    entry.setValue('validationErrorMsg', null);
+  }
+
+  /** @private */
+  _debouncedRunValidators = debounce(this._runValidators.bind(this), 100);
+
+  /** @private */
+  _runValidators() {
+    const entries = this.uploadCollection.items().map((id) => this.uploadCollection.read(id));
+    for (const entry of entries) {
+      setTimeout(() => this._runValidatorsForEntry(entry));
+    }
+  }
+
+  /**
+   * @private
+   * @param {Record<string, any>} changeMap
    */
   _handleCollectionUpdate = (changeMap) => {
-    let uploadCollection = this.uploadCollection;
+    const uploadCollection = this.uploadCollection;
+    const updatedEntries = [
+      ...new Set(
+        Object.values(changeMap)
+          .map((ids) => [...ids])
+          .flat()
+      ),
+    ]
+      .map((id) => uploadCollection.read(id))
+      .filter(Boolean);
+
+    for (const entry of updatedEntries) {
+      this._runValidatorsForEntry(entry);
+    }
     if (changeMap.uploadProgress) {
       let commonProgress = 0;
       /** @type {String[]} */

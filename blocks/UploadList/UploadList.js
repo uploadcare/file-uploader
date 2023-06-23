@@ -61,27 +61,7 @@ export class UploadList extends UploaderBlock {
     }
     this._updateUploadsState();
     this._updateCountLimitMessage();
-    this._validateMultipleLimit();
   }, 0);
-
-  /** @private */
-  _validateMultipleLimit() {
-    const entryIds = this.uploadCollection.items();
-    for (const entryId of entryIds) {
-      const entry = this.uploadCollection.read(entryId);
-      const entryIdx = entryIds.indexOf(entryId);
-      const multipleMax = this.cfg.multiple ? this.cfg.multipleMax : 1;
-
-      if (multipleMax && entryIdx >= multipleMax) {
-        const message = this.l10n('files-count-allowed', {
-          count: multipleMax,
-        });
-        entry.setValue('validationMultipleLimitMsg', message);
-      } else {
-        entry.setValue('validationMultipleLimitMsg', null);
-      }
-    }
-  }
 
   /**
    * @private
@@ -241,6 +221,15 @@ export class UploadList extends UploaderBlock {
 
       if (list?.length === 0 && !this.cfg.showEmptyList) {
         this.historyBack();
+      }
+
+      if (!this.cfg.confirmUpload) {
+        this.add$(
+          {
+            '*uploadTrigger': {},
+          },
+          true
+        );
       }
     });
   }
