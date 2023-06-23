@@ -1,7 +1,7 @@
 import { prettyBytes, ByteUnitEnum } from './prettyBytes';
 import { expect } from '@esm-bundle/chai';
 
-const EXPECTED_BASE = 1024;
+const EXPECTED_BASE = 1000;
 
 describe('prettyBytes', () => {
   describe('auto unit mode', () => {

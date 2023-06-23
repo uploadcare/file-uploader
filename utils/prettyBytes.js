@@ -1,6 +1,8 @@
 // @ts-check
 import { getPluralForm } from './getPluralForm.js';
 
+const BASE = 1000;
+
 export const ByteUnitEnum = Object.freeze({
   AUTO: 'auto',
   BYTE: 'byte',
@@ -29,7 +31,7 @@ const round = (number) => Math.ceil(number * 100) / 100;
 export const prettyBytes = (bytes, unit = ByteUnitEnum.AUTO) => {
   const isAutoMode = unit === ByteUnitEnum.AUTO;
 
-  if (unit === ByteUnitEnum.BYTE || (isAutoMode && bytes < 1024 ** 1)) {
+  if (unit === ByteUnitEnum.BYTE || (isAutoMode && bytes < BASE ** 1)) {
     // TODO: handle blocks locale
     const pluralForm = /** @type {Extract<import('./getPluralForm').PluralForm, 'one' | 'other'>} */ (
       getPluralForm('en-US', bytes)
@@ -42,21 +44,21 @@ export const prettyBytes = (bytes, unit = ByteUnitEnum.AUTO) => {
     return `${bytes} ${pluralized}`;
   }
 
-  if (unit === ByteUnitEnum.KB || (isAutoMode && bytes < 1024 ** 2)) {
-    return `${round(bytes / 1024 ** 1)} KB`;
+  if (unit === ByteUnitEnum.KB || (isAutoMode && bytes < BASE ** 2)) {
+    return `${round(bytes / BASE ** 1)} KB`;
   }
 
-  if (unit === ByteUnitEnum.MB || (isAutoMode && bytes < 1024 ** 3)) {
-    return `${round(bytes / 1024 ** 2)} MB`;
+  if (unit === ByteUnitEnum.MB || (isAutoMode && bytes < BASE ** 3)) {
+    return `${round(bytes / BASE ** 2)} MB`;
   }
 
-  if (unit === ByteUnitEnum.GB || (isAutoMode && bytes < 1024 ** 4)) {
-    return `${round(bytes / 1024 ** 3)} GB`;
+  if (unit === ByteUnitEnum.GB || (isAutoMode && bytes < BASE ** 4)) {
+    return `${round(bytes / BASE ** 3)} GB`;
   }
 
-  if (unit === ByteUnitEnum.TB || (isAutoMode && bytes < 1024 ** 5)) {
-    return `${round(bytes / 1024 ** 4)} TB`;
+  if (unit === ByteUnitEnum.TB || (isAutoMode && bytes < BASE ** 5)) {
+    return `${round(bytes / BASE ** 4)} TB`;
   }
 
-  return `${round(bytes / 1024 ** 5)} PB`;
+  return `${round(bytes / BASE ** 5)} PB`;
 };
