@@ -1,3 +1,9 @@
+## [0.24.1](https://github.com/uploadcare/blocks/compare/v0.24.0...v0.24.1) (2023-06-27)
+
+### Bug Fixes
+
+- **url-source:** enable input autofocus, form submit, value clear on submit ([#495](https://github.com/uploadcare/blocks/issues/495)) ([552cad3](https://github.com/uploadcare/blocks/commit/552cad3ed9470c904e5f0d3c123aad3e8cb932d6))
+
 # [0.24.0](https://github.com/uploadcare/blocks/compare/v0.23.0...v0.24.0) (2023-06-21)
 
 ### Bug Fixes
