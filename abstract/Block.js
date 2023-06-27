@@ -7,6 +7,7 @@ import { l10nProcessor } from './l10nProcessor.js';
 const TAG_PREFIX = 'lr-';
 
 export class Block extends BaseComponent {
+  /** @type {string | null} */
   static StateConsumerScope = null;
   allowCustomTemplate = true;
 

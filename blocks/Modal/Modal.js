@@ -1,3 +1,4 @@
+// @ts-check
 import { Block } from '../../abstract/Block.js';
 
 export class Modal extends Block {
@@ -15,12 +16,14 @@ export class Modal extends Block {
     this._closeDialog();
   };
 
+  /** @param {Event} e */
   _handleDialogClick = (e) => {
     if (e.target === this.ref.dialog) {
       this._closeDialog();
     }
   };
 
+  // @ts-ignore TODO: fix this
   init$ = {
     ...this.init$,
     '*modalActive': false,
@@ -28,6 +31,7 @@ export class Modal extends Block {
     closeClicked: this._handleDialogClose,
   };
 
+  // @ts-ignore TODO: fix this
   cssInit$ = {
     ...this.cssInit$,
     '--cfg-modal-backdrop-strokes': 0,
@@ -70,7 +74,7 @@ export class Modal extends Block {
       if (modalActive && this.getCssData('--cfg-modal-scroll-lock')) {
         document.body.style.overflow = 'hidden';
       } else {
-        document.body.style.overflow = null;
+        document.body.style.overflow = '';
       }
     });
 
@@ -93,7 +97,7 @@ export class Modal extends Block {
 
   destroyCallback() {
     super.destroyCallback();
-    document.body.style.overflow = null;
+    document.body.style.overflow = '';
     this.ref.dialog.removeEventListener('close', this._handleDialogClose);
     this.ref.dialog.removeEventListener('click', this._handleDialogClick);
   }
