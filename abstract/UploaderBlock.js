@@ -16,6 +16,9 @@ import { prettyBytes } from '../utils/prettyBytes.js';
 import { debounce } from '../blocks/utils/debounce.js';
 
 export class UploaderBlock extends ActivityBlock {
+  couldBeUploadCollectionOwner = false;
+  isUploadCollectionOwner = false;
+
   init$ = uploaderBlockCtx(this);
 
   /** @private */
@@ -53,6 +56,55 @@ export class UploaderBlock extends ActivityBlock {
   initCallback() {
     super.initCallback();
 
+    if (!this.has('*uploadCollection')) {
+      let uploadCollection = new TypedCollection({
+        typedSchema: uploadEntrySchema,
+        watchList: [
+          'uploadProgress',
+          'fileInfo',
+          'uploadError',
+          'validationErrorMsg',
+          'validationMultipleLimitMsg',
+          'cdnUrlModifiers',
+        ],
+      });
+      this.add('*uploadCollection', uploadCollection);
+    }
+
+    const hasUploadCollectionOwner = () =>
+      this.hasBlockInCtx((block) => {
+        if (block instanceof UploaderBlock) {
+          return block.isUploadCollectionOwner;
+        }
+        return false;
+      });
+
+    if (this.couldBeUploadCollectionOwner && !hasUploadCollectionOwner()) {
+      this.isUploadCollectionOwner = true;
+
+      this.uploadCollection.setHandler((entries, added, removed) => {
+        this._runValidators();
+
+        for (let entry of removed) {
+          entry?.getValue('abortController')?.abort();
+          entry?.setValue('abortController', null);
+          URL.revokeObjectURL(entry?.getValue('thumbUrl'));
+        }
+        this.$['*uploadList'] = entries.map((uid) => {
+          return { uid };
+        });
+      });
+
+      this.uploadCollection.observe(this._handleCollectionUpdate);
+
+      this.subConfigValue('maxLocalFileSizeBytes', () => this._debouncedRunValidators());
+      this.subConfigValue('multipleMin', () => this._debouncedRunValidators());
+      this.subConfigValue('multipleMax', () => this._debouncedRunValidators());
+      this.subConfigValue('multiple', () => this._debouncedRunValidators());
+      this.subConfigValue('imgOnly', () => this._debouncedRunValidators());
+      this.subConfigValue('accept', () => this._debouncedRunValidators());
+    }
+
     if (this.__initialUploadMetadata) {
       this.$['*uploadMetadata'] = this.__initialUploadMetadata;
     }
@@ -64,11 +116,9 @@ export class UploaderBlock extends ActivityBlock {
 
   destroyCallback() {
     super.destroyCallback();
-
-    let blocksRegistry = this.$['*blocksRegistry'];
-    if (blocksRegistry.has(this)) {
+    if (this.isUploadCollectionOwner) {
       this.uploadCollection.unobserve(this._handleCollectionUpdate);
-      blocksRegistry.delete(this);
+      this.uploadCollection.removeHandler();
     }
   }
 
@@ -249,38 +299,6 @@ export class UploaderBlock extends ActivityBlock {
 
   /** @returns {TypedCollection} */
   get uploadCollection() {
-    if (!this.has('*uploadCollection')) {
-      let uploadCollection = new TypedCollection({
-        typedSchema: uploadEntrySchema,
-        watchList: [
-          'uploadProgress',
-          'fileInfo',
-          'uploadError',
-          'validationErrorMsg',
-          'validationMultipleLimitMsg',
-          'cdnUrlModifiers',
-        ],
-        handler: (entries, added, removed) => {
-          for (let entry of removed) {
-            entry?.getValue('abortController')?.abort();
-            entry?.setValue('abortController', null);
-            URL.revokeObjectURL(entry?.getValue('thumbUrl'));
-          }
-          this.$['*uploadList'] = entries.map((uid) => {
-            return { uid };
-          });
-        },
-      });
-      uploadCollection.observe(this._handleCollectionUpdate);
-      this.add('*uploadCollection', uploadCollection);
-
-      this.subConfigValue('maxLocalFileSizeBytes', () => this._debouncedRunValidators());
-      this.subConfigValue('multipleMin', () => this._debouncedRunValidators());
-      this.subConfigValue('multipleMax', () => this._debouncedRunValidators());
-      this.subConfigValue('multiple', () => this._debouncedRunValidators());
-      this.subConfigValue('imgOnly', () => this._debouncedRunValidators());
-      this.subConfigValue('accept', () => this._debouncedRunValidators());
-    }
     return this.$['*uploadCollection'];
   }
 
@@ -381,9 +399,11 @@ export class UploaderBlock extends ActivityBlock {
 
   /** @private */
   _runValidators() {
-    const entries = this.uploadCollection.items().map((id) => this.uploadCollection.read(id));
-    for (const entry of entries) {
-      setTimeout(() => this._runValidatorsForEntry(entry));
+    for (const id of this.uploadCollection.items()) {
+      setTimeout(() => {
+        const entry = this.uploadCollection.read(id);
+        entry && this._runValidatorsForEntry(entry);
+      });
     }
   }
 

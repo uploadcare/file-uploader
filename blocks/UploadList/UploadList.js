@@ -16,6 +16,7 @@ import { debounce } from '../utils/debounce.js';
  */
 
 export class UploadList extends UploaderBlock {
+  couldBeUploadCollectionOwner = true;
   historyTracked = true;
   activityType = ActivityBlock.activities.UPLOAD_LIST;
 

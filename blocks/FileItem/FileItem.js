@@ -280,10 +280,10 @@ export class FileItem extends UploaderBlock {
     this.$['*uploadTrigger'] = null;
 
     this.sub('*uploadTrigger', (val) => {
-      if (!val || !this.isConnected) {
+      if (!val) {
         return;
       }
-      this.upload();
+      setTimeout(() => this.isConnected && this.upload());
     });
     FileItem.activeInstances.add(this);
   }
@@ -345,6 +345,10 @@ export class FileItem extends UploaderBlock {
 
   async upload() {
     let entry = this._entry;
+
+    if (!this.uploadCollection.read(entry.uid)) {
+      return;
+    }
 
     if (
       entry.getValue('fileInfo') ||
