@@ -10,16 +10,20 @@ type CloudEditor = import('..').CloudEditor;
 type BaseAttributes = {
   'ctx-name': string;
   hidden: boolean;
-};
+  class: string;
+  id: string;
+} & HTMLElement;
 type ShadowWrapperAttributes = { 'css-src': string };
 
-type CustomEvents<K extends Record<string, unknown>> = { [key in keyof K as `on${key}`]: K[key] };
+type CustomEvents<K extends Record<string, unknown>> = { [key in keyof K as `on${key}`]: K[key] } & {
+  onEvent: (e: CustomEvent) => void;
+};
 type CustomElement<
   C extends HTMLElement,
   A extends Record<string, unknown> = {},
   P extends Record<string, unknown> = {},
   E extends Record<string, unknown> = {}
-> = Partial<{ ref: MutableRefObject<C> } & A & P & CustomEvents<E>>;
+> = Partial<{ ref: MutableRefObject<C> } & { children: any } & A & P & CustomEvents<E>>;
 
 declare namespace JSX {
   interface IntrinsicElements {

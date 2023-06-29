@@ -11,7 +11,7 @@ interface CustomEventMap {
   DONE_FLOW: CustomEvent<any>;
   INIT_FLOW: CustomEvent<any>;
 }
-export declare global {
+declare global {
   interface Window {
     addEventListener<K extends keyof CustomEventMap>(type: `LR_${K}`, listener: (e: CustomEventMap[K]) => void): void;
     removeEventListener<K extends keyof CustomEventMap>(
@@ -20,3 +20,5 @@ export declare global {
     ): void;
   }
 }
+
+export {};
