@@ -60,7 +60,7 @@ export class FileItem extends UploaderBlock {
       this.set$({
         '*focusedEntry': this._entry,
       });
-      if (this.findBlockInCtx((b) => b.activityType === ActivityBlock.activities.DETAILS)) {
+      if (this.hasBlockInCtx((b) => b.activityType === ActivityBlock.activities.DETAILS)) {
         this.$['*currentActivity'] = ActivityBlock.activities.DETAILS;
       } else {
         this.$['*currentActivity'] = ActivityBlock.activities.CLOUD_IMG_EDIT;

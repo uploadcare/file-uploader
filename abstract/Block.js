@@ -87,7 +87,7 @@ export class Block extends BaseComponent {
    * @param {(block: Block) => boolean} callback
    * @returns {Boolean}
    */
-  findBlockInCtx(callback) {
+  hasBlockInCtx(callback) {
     // @ts-ignore TODO: fix this
     /** @type {Set} */
     let blocksRegistry = this.$['*blocksRegistry'];
@@ -105,14 +105,14 @@ export class Block extends BaseComponent {
    * @param {any} newVal
    */
   setForCtxTarget(consumerScope, prop, newVal) {
-    if (this.findBlockInCtx((b) => /** @type {typeof Block} */ (b.constructor).StateConsumerScope === consumerScope)) {
+    if (this.hasBlockInCtx((b) => /** @type {typeof Block} */ (b.constructor).StateConsumerScope === consumerScope)) {
       this.$[prop] = newVal;
     }
   }
 
   /** @param {String} activityType */
   setActivity(activityType) {
-    if (this.findBlockInCtx((b) => b.activityType === activityType)) {
+    if (this.hasBlockInCtx((b) => b.activityType === activityType)) {
       this.$['*currentActivity'] = activityType;
       return;
     }
