@@ -1,5 +1,4 @@
 // @ts-check
-import { Data } from '@symbiotejs/symbiote';
 import {
   createCdnUrl,
   createCdnUrlModifiers,
@@ -8,7 +7,7 @@ import {
   extractUuid,
 } from '../../../utils/cdn-utils.js';
 import { TRANSPARENT_PIXEL_SRC } from '../../../utils/transparentPixelSrc.js';
-import { ShadowWrapper } from '../../ShadowWrapper/ShadowWrapper.js';
+import { CloudEditorBase } from './CloudEditorBase.js';
 import { classNames } from './lib/classNames.js';
 import { debounce } from './lib/debounce.js';
 import { operationsToTransformations, transformationsToOperations } from './lib/transformationUtils.js';
@@ -16,9 +15,7 @@ import { initState } from './state.js';
 import { TEMPLATE } from './template.js';
 import { TabId } from './toolbar-constants.js';
 
-export class CloudEditor extends ShadowWrapper {
-  pauseRender = true;
-
+export class CloudEditor extends CloudEditorBase {
   // @ts-ignore TODO: fix this
   init$ = {
     ...this.init$,
@@ -29,24 +26,6 @@ export class CloudEditor extends ShadowWrapper {
   /** Force cloud editor to always use own context */
   get ctxName() {
     return this.autoCtxName;
-  }
-
-  /** @private */
-  _cfgCtxName = this.getAttribute('ctx-name')?.trim();
-
-  /**
-   * Resolve cfg from context passed with ctx-name attribute
-   *
-   * @param {String} prop
-   * @returns {any}
-   * @protected
-   */
-  parseCfgProp(prop) {
-    const parsed = {
-      ...super.parseCfgProp(prop),
-      ctx: Data.getCtx(this._cfgCtxName),
-    };
-    return parsed;
   }
 
   /** @private */
@@ -83,12 +62,6 @@ export class CloudEditor extends ShadowWrapper {
     });
   }
 
-  shadowReadyCallback() {
-    if (this.renderShadow) {
-      this.initEditor();
-    }
-  }
-
   initCallback() {
     super.initCallback();
 
@@ -96,9 +69,7 @@ export class CloudEditor extends ShadowWrapper {
     this.$['*cropperEl'] = this.ref['cropper-el'];
     this.$['*imgContainerEl'] = this.ref['img-container-el'];
 
-    if (!this.renderShadow) {
-      this.initEditor();
-    }
+    this.initEditor();
   }
 
   async initEditor() {

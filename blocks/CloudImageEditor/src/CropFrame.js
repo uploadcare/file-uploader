@@ -1,4 +1,4 @@
-import { Block } from '../../../abstract/Block.js';
+import { CloudEditorBase } from './CloudEditorBase.js';
 import {
   constraintRect,
   cornerPath,
@@ -22,7 +22,7 @@ import {
 } from './cropper-constants.js';
 import { classNames } from './lib/classNames.js';
 
-export class CropFrame extends Block {
+export class CropFrame extends CloudEditorBase {
   init$ = {
     ...this.init$,
     dragging: false,

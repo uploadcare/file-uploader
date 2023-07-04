@@ -1,4 +1,4 @@
-import { Block } from '../../../abstract/Block.js';
+import { CloudEditorBase } from './CloudEditorBase.js';
 import { classNames } from './lib/classNames.js';
 import { debounce } from './lib/debounce.js';
 import { linspace } from './lib/linspace.js';
@@ -69,7 +69,7 @@ function keypointsRange(operation, value) {
  * @property {Number} value
  */
 
-export class EditorImageFader extends Block {
+export class EditorImageFader extends CloudEditorBase {
   constructor() {
     super();
 

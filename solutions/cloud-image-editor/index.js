@@ -7,5 +7,6 @@ If not, register it from default ones or just log the warning */
 
 import { Icon } from '../../blocks/Icon/Icon.js';
 import { registerBlocks } from '../../abstract/registerBlocks.js';
+import { Config } from '../../blocks/Config/Config.js';
 
-registerBlocks({ ...CloudEditorBlocks, Icon });
+registerBlocks({ ...CloudEditorBlocks, Config, Icon });

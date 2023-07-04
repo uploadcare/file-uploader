@@ -1,4 +1,4 @@
-import { Block } from '../../../abstract/Block.js';
+import { CloudEditorBase } from './CloudEditorBase.js';
 import { COLOR_OPERATIONS_CONFIG } from './toolbar-constants.js';
 
 const ControlType = {
@@ -8,7 +8,7 @@ const ControlType = {
 
 export const FAKE_ORIGINAL_FILTER = 'original';
 
-export class EditorSlider extends Block {
+export class EditorSlider extends CloudEditorBase {
   init$ = {
     ...this.init$,
     disabled: false,

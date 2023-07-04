@@ -1,4 +1,4 @@
-import { Block } from '../../../abstract/Block.js';
+import { CloudEditorBase } from './CloudEditorBase.js';
 import { EditorCropButtonControl } from './EditorCropButtonControl.js';
 import { EditorFilterControl } from './EditorFilterControl.js';
 import { EditorOperationControl } from './EditorOperationControl.js';
@@ -43,7 +43,7 @@ function renderTabContent(id) {
   `;
 }
 
-export class EditorToolbar extends Block {
+export class EditorToolbar extends CloudEditorBase {
   constructor() {
     super();
 

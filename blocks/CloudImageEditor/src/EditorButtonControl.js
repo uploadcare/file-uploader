@@ -1,7 +1,7 @@
-import { Block } from '../../../abstract/Block.js';
+import { CloudEditorBase } from './CloudEditorBase.js';
 import { classNames } from './lib/classNames.js';
 
-export class EditorButtonControl extends Block {
+export class EditorButtonControl extends CloudEditorBase {
   init$ = {
     ...this.init$,
     active: false,
