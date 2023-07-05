@@ -113,14 +113,14 @@
   scrollbar-width: none;
 }
 
-:host(.lr-cloud-image-editor).editor_ON,
+:host(.lr-cloud-image-editor.editor_ON),
 .lr-cloud-image-editor.editor_ON {
   --modal-header-opacity: 0;
   --modal-header-height: 0px;
   --modal-toolbar-height: calc(var(--size-panel-heading) * 2);
 }
 
-:host(.lr-cloud-image-editor).editor_OFF,
+:host(.lr-cloud-image-editor.editor_OFF),
 .lr-cloud-image-editor.editor_OFF {
   --modal-header-opacity: 1;
   --modal-header-height: var(--size-panel-heading);
