@@ -3,45 +3,57 @@ import { Block } from '../../abstract/Block.js';
 
 const CSS_ATTRIBUTE = 'css-src';
 
-export class ShadowWrapper extends Block {
-  pauseRender = true;
+/**
+ * @template T
+ * @typedef {new (...args: any[]) => T} GConstructor
+ */
 
-  shadowReadyCallback() {}
+/**
+ * @template {GConstructor<import('../../abstract/Block.js').Block>} T
+ * @param {T} Base
+ * @returns {T}
+ */
+export const shadowed = (Base) => {
+  return class extends Base {
+    renderShadow = true;
+    pauseRender = true;
 
-  initCallback() {
-    super.initCallback();
-    this.setAttribute('hidden', '');
+    shadowReadyCallback() {}
 
-    // wait for attribute async
-    setTimeout(() => {
-      let href = this.getAttribute(CSS_ATTRIBUTE);
-      if (href) {
-        this.renderShadow = true;
-        this.attachShadow({
-          mode: 'open',
-        });
-        let link = document.createElement('link');
-        link.rel = 'stylesheet';
-        link.type = 'text/css';
-        link.href = href;
-        link.onload = () => {
-          // CSS modules can be not loaded at this moment
-          // TODO: investigate better solution
-          window.requestAnimationFrame(() => {
-            this.render();
-            window.setTimeout(() => {
-              this.removeAttribute('hidden');
-              this.shadowReadyCallback();
-            });
+    initCallback() {
+      super.initCallback();
+      this.setAttribute('hidden', '');
+
+      // async wait for attributes to be set, needed for Angular because it sets attributes after constructor
+      setTimeout(() => {
+        let href = this.getAttribute(CSS_ATTRIBUTE);
+        if (href) {
+          this.attachShadow({
+            mode: 'open',
           });
-        };
-        // @ts-ignore TODO: fix this
-        this.shadowRoot.prepend(link);
-      } else {
-        this.render();
-        this.removeAttribute('hidden');
-        this.shadowReadyCallback();
-      }
-    }, 0);
-  }
-}
+          let link = document.createElement('link');
+          link.rel = 'stylesheet';
+          link.type = 'text/css';
+          link.href = href;
+          link.onload = () => {
+            // CSS modules can be not loaded at this moment
+            // TODO: investigate better solution
+            window.requestAnimationFrame(() => {
+              this.render();
+              window.setTimeout(() => {
+                this.removeAttribute('hidden');
+                this.shadowReadyCallback();
+              });
+            });
+          };
+          // @ts-ignore TODO: fix this
+          this.shadowRoot.prepend(link);
+        } else {
+          throw new Error('css-src attribute is required');
+        }
+      });
+    }
+  };
+};
+
+export const ShadowWrapper = shadowed(Block);
