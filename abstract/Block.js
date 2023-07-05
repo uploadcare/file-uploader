@@ -72,11 +72,6 @@ export class Block extends BaseComponent {
      * @type {String[]}
      */
     this.__l10nKeys = [];
-
-    const className = /** @type {typeof Block} */ (this.constructor).className;
-    if (className) {
-      this.classList.toggle(`${TAG_PREFIX}${className}`, true);
-    }
   }
 
   /**
@@ -126,6 +121,11 @@ export class Block extends BaseComponent {
   }
 
   connectedCallback() {
+    const className = /** @type {typeof Block} */ (this.constructor).className;
+    if (className) {
+      this.classList.toggle(`${TAG_PREFIX}${className}`, true);
+    }
+
     if (!getIsWindowHeightTracked()) {
       this._destroyInnerHeightTracker = createWindowHeightTracker();
     }
