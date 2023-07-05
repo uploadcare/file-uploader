@@ -11,9 +11,14 @@ const CSS_ATTRIBUTE = 'css-src';
 /**
  * @template {GConstructor<import('../../abstract/Block.js').Block>} T
  * @param {T} Base
- * @returns {T}
+ * @returns {{
+ *   new (...args: ConstructorParameters<T>): InstanceType<T> & {
+ *     shadowReadyCallback(): void;
+ *   };
+ * }}
  */
-export const shadowed = (Base) => {
+export function shadowed(Base) {
+  // @ts-ignore
   return class extends Base {
     renderShadow = true;
     pauseRender = true;
@@ -54,6 +59,6 @@ export const shadowed = (Base) => {
       });
     }
   };
-};
+}
 
-export const ShadowWrapper = shadowed(Block);
+export class ShadowWrapper extends shadowed(Block) {}

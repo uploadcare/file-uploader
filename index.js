@@ -37,7 +37,7 @@ export { DataOutput } from './blocks/DataOutput/DataOutput.js';
 export { ActivityHeader } from './blocks/ActivityHeader/ActivityHeader.js';
 export { Select } from './blocks/Select/Select.js';
 export { Video } from './blocks/Video/Video.js';
-export { ShadowWrapper } from './blocks/ShadowWrapper/ShadowWrapper.js';
+export { ShadowWrapper, shadowed } from './blocks/ShadowWrapper/ShadowWrapper.js';
 export { Copyright } from './blocks/Copyright/Copyright.js';
 
 // Solutions:
