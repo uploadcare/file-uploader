@@ -1,4 +1,4 @@
-import { CloudEditorBase } from './CloudEditorBase.js';
+import { CloudImageEditorBase } from './CloudImageEditorBase.js';
 import { EditorCropButtonControl } from './EditorCropButtonControl.js';
 import { EditorFilterControl } from './EditorFilterControl.js';
 import { EditorOperationControl } from './EditorOperationControl.js';
@@ -43,7 +43,7 @@ function renderTabContent(id) {
   `;
 }
 
-export class EditorToolbar extends CloudEditorBase {
+export class EditorToolbar extends CloudImageEditorBase {
   constructor() {
     super();
 

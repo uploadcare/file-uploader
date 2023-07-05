@@ -1,4 +1,4 @@
-import * as CloudEditorBlocks from './CloudEditor.js';
+import * as CloudEditorBlocks from './CloudImageEditor.js';
 
 /* TODO: We need to make some dependency injection/checking magic
 I see it as a declared list of tags on which the block depends

@@ -1,4 +1,4 @@
-import { CloudEditorBase } from './CloudEditorBase.js';
+import { CloudImageEditorBase } from './CloudImageEditorBase.js';
 import { constraintRect, minRectSize } from './crop-utils.js';
 import { CROP_PADDING, MIN_CROP_SIZE } from './cropper-constants.js';
 import { classNames } from './lib/classNames.js';
@@ -51,7 +51,7 @@ function validateCrop(crop) {
   return shouldMatch.every((matcher) => matcher(crop));
 }
 
-export class EditorImageCropper extends CloudEditorBase {
+export class EditorImageCropper extends CloudImageEditorBase {
   init$ = {
     ...this.init$,
     image: null,

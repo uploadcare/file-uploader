@@ -1,8 +1,8 @@
-import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
-import { CloudEditor } from './index.js';
+import { UploaderBlock } from '../../abstract/UploaderBlock.js';
+import { CloudImageEditorBlock } from '../CloudImageEditor/index.js';
 
-export class CloudImageEditor extends UploaderBlock {
+export class CloudImageEditorActivity extends UploaderBlock {
   activityType = ActivityBlock.activities.CLOUD_IMG_EDIT;
 
   init$ = {
@@ -47,7 +47,7 @@ export class CloudImageEditor extends UploaderBlock {
   }
 
   mountEditor() {
-    let instance = new CloudEditor();
+    let instance = new CloudImageEditorBlock();
     instance.classList.add('lr-cldtr-common');
     let cdnUrl = this.$.cdnUrl;
     instance.setAttribute('cdn-url', cdnUrl);

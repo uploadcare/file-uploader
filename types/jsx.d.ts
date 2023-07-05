@@ -5,7 +5,7 @@ type FileUploaderInline = import('..').FileUploaderInline;
 type FileUploaderRegular = import('..').FileUploaderRegular;
 type FileUploaderMinimal = import('..').FileUploaderMinimal;
 type DataOutput = import('..').DataOutput;
-type CloudEditor = import('..').CloudEditor;
+type CloudImageEditorBlock = import('..').CloudImageEditorBlock;
 
 type BaseAttributes = {
   'ctx-name': string;
@@ -61,8 +61,13 @@ declare namespace JSX {
     'lr-cloud-image-editor': any;
     'lr-external-source': any;
     'lr-tabs': any;
-    'lr-cloud-editor': CustomElement<
-      CloudEditor,
+    'lr-cloud-image-editor-activity': any;
+    'lr-cloud-image-editor-block': CustomElement<
+    CloudImageEditorBlock,
+    BaseAttributes & { uuid: string; 'cdn-url': string }
+  >;
+    'lr-cloud-image-editor': CustomElement<
+      CloudImageEditorBlock,
       BaseAttributes & ShadowWrapperAttributes & { uuid: string; 'cdn-url': string }
     >;
     'lr-data-output': CustomElement<

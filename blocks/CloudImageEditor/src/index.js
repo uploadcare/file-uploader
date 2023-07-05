@@ -1,4 +1,4 @@
-export { CloudEditor } from './CloudEditor.js';
+export { CloudImageEditorBlock } from './CloudImageEditorBlock.js';
 export { CropFrame } from './CropFrame.js';
 export { EditorCropButtonControl } from './EditorCropButtonControl.js';
 export { EditorFilterControl } from './EditorFilterControl.js';

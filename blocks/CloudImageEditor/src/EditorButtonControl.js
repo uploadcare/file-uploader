@@ -1,7 +1,7 @@
-import { CloudEditorBase } from './CloudEditorBase.js';
+import { CloudImageEditorBase } from './CloudImageEditorBase.js';
 import { classNames } from './lib/classNames.js';
 
-export class EditorButtonControl extends CloudEditorBase {
+export class EditorButtonControl extends CloudImageEditorBase {
   init$ = {
     ...this.init$,
     active: false,

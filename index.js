@@ -29,7 +29,8 @@ export { ProgressBarCommon } from './blocks/ProgressBarCommon/ProgressBarCommon.
 export { ProgressBar } from './blocks/ProgressBar/ProgressBar.js';
 // export { EditableCanvas } from './blocks/EditableCanvas/EditableCanvas.js';
 export { FilePreview } from './blocks/FilePreview/FilePreview.js';
-export { CloudImageEditor } from './blocks/CloudImageEditor/CloudImageEditor.js';
+export * from './blocks/CloudImageEditor/index.js';
+export { CloudImageEditorActivity } from './blocks/CloudImageEditorActivity/CloudImageEditorActivity.js';
 export { ExternalSource } from './blocks/ExternalSource/ExternalSource.js';
 export { Tabs } from './blocks/Tabs/Tabs.js';
 export { DataOutput } from './blocks/DataOutput/DataOutput.js';
@@ -43,7 +44,7 @@ export { Copyright } from './blocks/Copyright/Copyright.js';
 export { FileUploaderRegular } from './solutions/file-uploader/regular/FileUploaderRegular.js';
 export { FileUploaderMinimal } from './solutions/file-uploader/minimal/FileUploaderMinimal.js';
 export { FileUploaderInline } from './solutions/file-uploader/inline/FileUploaderInline.js';
-export * from './solutions/cloud-image-editor/CloudEditor.js';
+export { CloudImageEditor } from './solutions/cloud-image-editor/CloudImageEditor.js';
 
 // Utils:
 export { registerBlocks } from './abstract/registerBlocks.js';

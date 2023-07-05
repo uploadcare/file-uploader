@@ -7,7 +7,7 @@ import {
   extractUuid,
 } from '../../../utils/cdn-utils.js';
 import { TRANSPARENT_PIXEL_SRC } from '../../../utils/transparentPixelSrc.js';
-import { CloudEditorBase } from './CloudEditorBase.js';
+import { CloudImageEditorBase } from './CloudImageEditorBase.js';
 import { classNames } from './lib/classNames.js';
 import { debounce } from './lib/debounce.js';
 import { operationsToTransformations, transformationsToOperations } from './lib/transformationUtils.js';
@@ -15,7 +15,9 @@ import { initState } from './state.js';
 import { TEMPLATE } from './template.js';
 import { TabId } from './toolbar-constants.js';
 
-export class CloudEditor extends CloudEditorBase {
+export class CloudImageEditorBlock extends CloudImageEditorBase {
+  static className = 'cloud-image-editor';
+
   // @ts-ignore TODO: fix this
   init$ = {
     ...this.init$,
@@ -173,8 +175,8 @@ export class CloudEditor extends CloudEditorBase {
   }
 }
 
-CloudEditor.template = TEMPLATE;
-CloudEditor.bindAttributes({
+CloudImageEditorBlock.template = TEMPLATE;
+CloudImageEditorBlock.bindAttributes({
   uuid: 'uuid',
   'cdn-url': 'cdnUrl',
 });

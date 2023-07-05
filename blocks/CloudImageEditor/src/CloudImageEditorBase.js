@@ -4,7 +4,7 @@ import { Block } from '../../../abstract/Block.js';
 
 const CSS_CFG_CTX_NAME = '--cfg-ctx-name';
 
-export class CloudEditorBase extends Block {
+export class CloudImageEditorBase extends Block {
   /**
    * @private
    * @returns {string}

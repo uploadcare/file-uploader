@@ -1,5 +1,5 @@
-:where(.lr-cldtr-l10n_en-US, .lr-cldtr-common),
-:host {
+:host(.lr-cloud-image-editor),
+.lr-cloud-image-editor {
   --l10n-cancel: 'Cancel';
   --l10n-apply: 'Apply';
   --l10n-brightness: 'Brightness';
