@@ -14,6 +14,7 @@ const TAG_PREFIX = 'lr-';
 // @ts-ignore TODO: fix this
 export class Block extends BaseComponent {
   static StateConsumerScope = '';
+  static className = '';
   allowCustomTemplate = true;
 
   init$ = blockCtx();
@@ -71,6 +72,11 @@ export class Block extends BaseComponent {
      * @type {String[]}
      */
     this.__l10nKeys = [];
+
+    const className = /** @type {typeof Block} */ (this.constructor).className;
+    if (className) {
+      this.classList.toggle(`${TAG_PREFIX}${className}`, true);
+    }
   }
 
   /**
