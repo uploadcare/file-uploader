@@ -105,6 +105,10 @@ export class TypedCollection {
     this.__handler = handler;
   }
 
+  getHandler() {
+    return this.__handler;
+  }
+
   removeHandler() {
     this.__handler = null;
   }

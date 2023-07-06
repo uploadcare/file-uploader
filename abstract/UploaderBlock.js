@@ -74,7 +74,7 @@ export class UploaderBlock extends ActivityBlock {
     const hasUploadCollectionOwner = () =>
       this.hasBlockInCtx((block) => {
         if (block instanceof UploaderBlock) {
-          return block.isUploadCollectionOwner;
+          return block.isUploadCollectionOwner && block.isConnected && block !== this;
         }
         return false;
       });
@@ -82,7 +82,11 @@ export class UploaderBlock extends ActivityBlock {
     if (this.couldBeUploadCollectionOwner && !hasUploadCollectionOwner()) {
       this.isUploadCollectionOwner = true;
 
-      this.uploadCollection.setHandler((entries, added, removed) => {
+      /**
+       * @private
+       * @type {Parameters<import('./TypedCollection.js').TypedCollection['setHandler']>[0]}
+       */
+      this.__uploadCollectionHandler = (entries, added, removed) => {
         this._runValidators();
 
         for (let entry of removed) {
@@ -93,7 +97,8 @@ export class UploaderBlock extends ActivityBlock {
         this.$['*uploadList'] = entries.map((uid) => {
           return { uid };
         });
-      });
+      };
+      this.uploadCollection.setHandler(this.__uploadCollectionHandler);
 
       this.uploadCollection.observe(this._handleCollectionUpdate);
 
@@ -118,7 +123,9 @@ export class UploaderBlock extends ActivityBlock {
     super.destroyCallback();
     if (this.isUploadCollectionOwner) {
       this.uploadCollection.unobserve(this._handleCollectionUpdate);
-      this.uploadCollection.removeHandler();
+      if (this.uploadCollection.getHandler() === this.__uploadCollectionHandler) {
+        this.uploadCollection.removeHandler();
+      }
     }
   }
 
