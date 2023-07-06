@@ -48,8 +48,8 @@ export class CloudImageEditorActivity extends UploaderBlock {
 
   mountEditor() {
     let instance = new CloudImageEditorBlock();
-    instance.classList.add('lr-cldtr-common');
     let cdnUrl = this.$.cdnUrl;
+    instance.setAttribute('ctx-name', this.ctxName);
     instance.setAttribute('cdn-url', cdnUrl);
 
     instance.addEventListener('apply', (result) => this.handleApply(result));
