@@ -46,39 +46,39 @@ export const buildItems = [
   // file-uploader-regular
   {
     in: './solutions/file-uploader/regular/index.js',
-    out: './web/file-uploader-regular.min.js',
+    out: './web/lr-file-uploader-regular.min.js',
     minify: true,
     minifyHtml: true,
   },
   {
     in: './solutions/file-uploader/regular/index.css',
-    out: './web/file-uploader-regular.min.css',
+    out: './web/lr-file-uploader-regular.min.css',
     minify: true,
   },
 
   // file-uploader-inline
   {
     in: './solutions/file-uploader/inline/index.js',
-    out: './web/file-uploader-inline.min.js',
+    out: './web/lr-file-uploader-inline.min.js',
     minify: true,
     minifyHtml: true,
   },
   {
     in: './solutions/file-uploader/inline/index.css',
-    out: './web/file-uploader-inline.min.css',
+    out: './web/lr-file-uploader-inline.min.css',
     minify: true,
   },
 
   // file-uploader-minimal
   {
     in: './solutions/file-uploader/minimal/index.js',
-    out: './web/file-uploader-minimal.min.js',
+    out: './web/lr-file-uploader-minimal.min.js',
     minify: true,
     minifyHtml: true,
   },
   {
     in: './solutions/file-uploader/minimal/index.css',
-    out: './web/file-uploader-minimal.min.css',
+    out: './web/lr-file-uploader-minimal.min.css',
     minify: true,
   },
 
