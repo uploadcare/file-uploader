@@ -54,6 +54,7 @@ export function shadowed(Base) {
           // @ts-ignore TODO: fix this
           this.shadowRoot.prepend(link);
         } else {
+          // TODO: Add link to the docs
           throw new Error('css-src attribute is required');
         }
       });
