@@ -1,8 +1,8 @@
 <p align="center">
   <a href="https://uploadcare.com/?ref=github-readme">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="./assets/media/logo-safespace-transparent.svg">
-      <source media="(prefers-color-scheme: light)" srcset="./assets/media/logo-safespace-black.svg">
+      <source media="(prefers-color-scheme: light)" srcset="./assets/media/logo-safespace-transparent.svg">
+      <source media="(prefers-color-scheme: dark)" srcset="./assets/media/logo-safespace-black.svg">
       <img alt="Uploadcare logo" src="./assets/media/logo-safespace-transparent.svg">
     </picture>
   </a>
@@ -34,7 +34,7 @@
 ## Why Blocks?
 **Rapid Integration**
 
-`Uploadcare Blocks` provide a ready-to-use set of UI components for file handling. It saves you valuable development time and effort, allowing you to focus on other core aspects of your application. You even don't need to build a stage while developing — just run the code directly from the browser or Node.js.
+`Uploadcare Blocks` provide a ready-to-use set of UI components for file handling. It saves you valuable development time and effort, allowing you to focus on other core aspects of your application. You even don't need to build a stage while developing — just run the code directly from the browser.
 
 **Cross-Platform Compatibility**
 
@@ -42,63 +42,76 @@
 
 **Developer-Friendly**
 
-`Uploadcare Blocks` come with modern technologies at your fingertips, like [Web Components](https://developer.mozilla.org/en-US/docs/Web/API/Web_components), [Service Workers](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API), [WASM](https://webassembly.org/), [ESM-level](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules) code sharing, and other cutting-edge web standards. `Uploadcare Blocks` is a native web platform with minimum external dependencies and a lightweight library providing a cheap security audit.
+`Uploadcare Blocks` come with modern technologies at your fingertips, like [Web Components](https://developer.mozilla.org/en-US/docs/Web/API/Web_components), [ESM-level](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules) code sharing, and other cutting-edge web standards. `Uploadcare Blocks` is a native web platform with minimum external dependencies and a lightweight library providing a cheap security audit.
 
 **Typescript support**
 
-We use [JSDoc type annotations](https://www.typescriptlang.org/docs/handbook/intro-to-js-ts.html) for TypeScript static analysis support during development.  Additionally, we provide type definitions ([\*.d.ts files](https://www.typescriptlang.org/docs/handbook/declaration-files/dts-from-js.html)) for the TypeScript projects in our packages. Check the [JSDoc Reference](https://www.typescriptlang.org/docs/handbook/jsdoc-supported-types.html) page in TypeScript official documentation.
+We use [JSDoc type annotations](https://www.typescriptlang.org/docs/handbook/intro-to-js-ts.html) for TypeScript static analysis support during development.  Additionally, we provide type definitions ([\*.d.ts files](https://www.typescriptlang.org/docs/handbook/declaration-files/dts-from-js.html)) for the TypeScript projects in our packages.
 
 ## 🚀 Getting Started
 
 ### HTML `<script>` Tag
 
-* Connect `Blocks` directly from your document:
+* Connect `Blocks` directly from your document replacing `@{{PACKAGE_VERSION}}` with the [latest version](https://github.com/uploadcare/blocks/releases) of the package:
 
 ```html
-<script src="https://unpkg.com/@uploadcare/blocks@{{PACKAGE_VERSION}}/web/blocks-browser.min.js" type="module"></script>
+<script type="module">
+  import * as LR from 'https://cdn.jsdelivr.net/npm/@uploadcare/blocks@{{PACKAGE_VERSION}}/web/blocks.min.js';
+  
+  LR.registerBlocks(LR);
+</script>
 ```
 
-* Start using `Blocks` in your application markup:
+* Start using `Blocks` in your application markup (don't forget to specify `@{{PACKAGE_VERSION}}` with the [latest one](https://github.com/uploadcare/blocks/releases)):
 
 ```html
 <lr-file-uploader-regular
-  css-src="https://unpkg.com/@uploadcare/blocks@{{PACKAGE_VERSION}}/web/file-uploader-regular.min.css"
+  css-src="https://cdn.jsdelivr.net/npm/@uploadcare/blocks@{{PACKAGE_VERSION}}/web/file-uploader-regular.min.css"
+  class="my-uploader"
 >
 </lr-file-uploader-regular>
 ```
 
-### Using CLI
+* All configurations and customization in `Blocks` are managed from CSS code. Sign up to [Uploadcare](https://app.uploadcare.com/accounts/signup/) and get a Public API key in [Uploadcare project's dashboard](https://app.uploadcare.com/projects/-/api-keys/). Then add a style sheet to your project and replace `'YOUR_PUBLIC_KEY'` with your own public key:
 
-You’ll need [Node.js](https://nodejs.org/) installed on your computer.
+```css
+.my-uploader {
+  --ctx-name: 'my-uploader';
+  --cfg-pubkey: 'YOUR_PUBLIC_KEY';
+}
+```
+
+### Using NPM
 
 * Install Blocks package: `npm i --save-exact @uploadcare/blocks`
-* Use `connectBlocksFrom` function to connect blocks:
-```js
-import { connectBlocksFrom } from '@uploadcare/blocks/abstract/connectBlocksFrom.js';
-
-connectBlocksFrom('https://unpkg.com/@uploadcare/blocks@{{PACKAGE_VERSION}}/web/blocks-browser.min.js');
-```
-* Start using `Blocks` in your application markup:
-```html
-<lr-file-uploader-inline
-  css-src="https://unpkg.com/@uploadcare/blocks@{{PACKAGE_VERSION}}/web/file-uploader-inline.min.css"
-  class="my-config-class"
-></lr-file-uploader-inline>
-```
-
-### Advanced mode
-
-* Install Blocks package: `npm i @uploadcare/blocks`
-* Start using blocks and build your own solutions from the source code:
+* Connect `Blocks` from your script file:
 ```js
 import * as LR from '@uploadcare/blocks';
 
 LR.registerBlocks(LR);
 ```
+* Start using `Blocks` in your application markup and replace `@{{PACKAGE_VERSION}}` with the [latest version](https://github.com/uploadcare/blocks/releases) of the package:
+```html
+<lr-file-uploader-inline
+        css-src="https://cdn.jsdelivr.net/npm/@uploadcare/blocks@{{PACKAGE_VERSION}}/web/file-uploader-regular.min.css"
+        class="my-uploader"
+>
+</lr-file-uploader-inline>
+```
 
 ### Using File Uploading Features
 
-By default, `Blocks` use `demopublickey`, which you can save for demo purposes. To replace it with your own public key, sign up to [Uploadcare](https://app.uploadcare.com/accounts/signup/) and get a Public API key in [Uploadcare project's dashboard](https://app.uploadcare.com/projects/-/api-keys/). 
+All configurations in `Blocks` are managed from CSS code. 
+* Sign up to [Uploadcare](https://app.uploadcare.com/accounts/signup/).
+* Get a Public API key in [Uploadcare project's dashboard](https://app.uploadcare.com/projects/-/api-keys/). 
+* Add a style sheet to your project and replace `'YOUR_PUBLIC_KEY'` with your own public key:
+
+```css
+.my-uploader {
+  --ctx-name: 'my-uploader';
+  --cfg-pubkey: 'YOUR_PUBLIC_KEY';
+}
+```
 
 ---
 Follow our [step-by-step installation guide](/get-started/installation/) to launch `Uploadcare Blocks` just in a few minutes.
@@ -124,7 +137,7 @@ All the source code is accessible and works in raw mode. Use `developer tools` t
 ## Contribution
 
 You’re always welcome to contribute:
-* Create issues every time you feel something is missing or goes wrong.
+* Create [issues](https://github.com/uploadcare/blocks/issues) every time you feel something is missing or goes wrong.
 * Provide your feedback or drop us a support request at <a href="mailto:hello@uploadcare.com">hello@uploadcare.com</a>.
 * Ask questions on [Stack Overflow](https://stackoverflow.com/questions/tagged/uploadcare) with `uploadcare` tag if others can have these questions as well.
 * Fork project, make changes and send it as pull request. For launching the developing mode follow these commands:
