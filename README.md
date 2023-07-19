@@ -3,7 +3,7 @@
     <picture>
       <source media="(prefers-color-scheme: light)" srcset="./assets/media/logo-safespace-transparent.svg">
       <source media="(prefers-color-scheme: dark)" srcset="./assets/media/logo-safespace-black.svg">
-      <img alt="Uploadcare logo" src="./assets/media/logo-safespace-transparent.svg">
+      <img width=250 alt="Uploadcare logo" src="./assets/media/logo-safespace-transparent.svg">
     </picture>
   </a>
 </p>
@@ -11,12 +11,14 @@
 [Website](https://uploadcare.com?ref=github-readme) • [Getting Started](https://uploadcare.com/docs/start/quickstart?ref=github-readme) • [Docs](https://uploadcare.com/docs?ref=github-readme) • [Blog](https://uploadcare.com/blog?ref=github-readme) • [Discord](https://discord.gg/mKWRgRsVz8?ref=github-readme) • [Twitter](https://twitter.com/Uploadcare?ref=github-readme)
 
 [![npm version](https://badge.fury.io/js/@uploadcare%2Fblocks.svg)](https://www.npmjs.com/package/@uploadcare/blocks)
-[![GitHub Actions](https://github.com/uploadcare/blocks/workflows/checks/badge.svg)](https://github.com/cube-js/cube/actions?query=workflow%3ABuild+branch%3Amaster)
+[![GitHub Actions](https://github.com/uploadcare/blocks/workflows/checks/badge.svg)](https://github.com/uploadcare/blocks/actions?query=workflow%3ABuild+branch%3Amaster)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 # 📦  Uploadcare Blocks: Stack-Agnostic Library for Uploading, Processing, and Editing Images On-the-Fly
 
 `Uploadcare Blocks` is a powerful JavaScript library for creating custom file-handling services. `Blocks` include various interactive and customizable UI components to enhance users' file uploading and processing experience. As a bonus, you receive all the [Uploadcare's](https://uploadcare.com/) versatile file-handling capabilities, including [smart CDN](https://uploadcare.com/docs/delivery/cdn/#content-delivery-network), [MIME-type filtering](https://uploadcare.com/docs/moderation/#file-types), [signed uploads](https://uploadcare.com/docs/security/secure-uploads/), and [even more]((https://uploadcare.com/features/)). 
+
+See `Blocks` [in action](blob:https://uploadcare.github.io/2bbef1a6-79b9-46cc-8d2e-1c64e78ce1c9)!
 
 <img alt="Uploadcare Blocks examples" src="https://ucarecdn.com/8035cdc7-f0b9-4ea9-8c15-05816f315481/">
 
