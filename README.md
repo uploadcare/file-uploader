@@ -7,14 +7,21 @@
     </picture>
   </a>
 </p>
+<p align="center">
+  <a href="https://uploadcare.com?ref=github-readme">Website</a> • 
+  <a href="https://uploadcare.com/docs/start/quickstart?ref=github-readme">Quick Start</a> • 
+  <a href="https://uploadcare.com/docs?ref=github-readme">Docs</a> • 
+  <a href="https://uploadcare.com/blog?ref=github-readme">Blog</a> • 
+  <a href="https://discord.gg/mKWRgRsVz8?ref=github-readme">Discord</a> •
+  <a href="https://twitter.com/Uploadcare?ref=github-readme">Twitter</a>
+</p>
 
-[Website](https://uploadcare.com?ref=github-readme) • [Quick Start](https://uploadcare.com/docs/start/quickstart?ref=github-readme) • [Docs](https://uploadcare.com/docs?ref=github-readme) • [Blog](https://uploadcare.com/blog?ref=github-readme) • [Discord](https://discord.gg/mKWRgRsVz8?ref=github-readme) • [Twitter](https://twitter.com/Uploadcare?ref=github-readme)
+# 📦 Uploadcare Blocks: Stack-Agnostic Library for Uploading, Processing, and Editing Images On-the-Fly
+
 
 [![npm version](https://badge.fury.io/js/@uploadcare%2Fblocks.svg)](https://www.npmjs.com/package/@uploadcare/blocks)
 [![GitHub Actions](https://github.com/uploadcare/blocks/workflows/checks/badge.svg)](https://github.com/uploadcare/blocks/actions?query=workflow%3ABuild+branch%3Amaster)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-
-# 📦  Uploadcare Blocks: Stack-Agnostic Library for Uploading, Processing, and Editing Images On-the-Fly
 
 `Uploadcare Blocks` is a powerful JavaScript library for creating custom file-handling services. `Blocks` include various interactive and customizable UI components to enhance users' file uploading and processing experience. As a bonus, you receive all the [Uploadcare's](https://uploadcare.com/) versatile file-handling capabilities, including [smart CDN](https://uploadcare.com/docs/delivery/cdn/#content-delivery-network), [MIME-type filtering](https://uploadcare.com/docs/moderation/#file-types), [signed uploads](https://uploadcare.com/docs/security/secure-uploads/), and [even more]((https://uploadcare.com/features/)). 
 
