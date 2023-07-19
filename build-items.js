@@ -13,7 +13,7 @@ export const buildItems = [
   },
   {
     in: './index.js',
-    out: './web/blocks.iife.js',
+    out: './web/blocks.iife.min.js',
     minify: true,
     minifyHtml: true,
     iife: true,
@@ -23,13 +23,6 @@ export const buildItems = [
     out: './web/lr-basic.min.css',
     minify: true,
   },
-  {
-    in: './index-browser.js',
-    out: './web/blocks-browser.min.js',
-    minify: true,
-    minifyHtml: true,
-  },
-
   // lr-cloud-image-editor
   {
     in: './solutions/cloud-image-editor/index.js',
