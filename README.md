@@ -152,3 +152,4 @@ You’re always welcome to contribute:
 * Fork project, make changes and send it as pull request. For launching the developing mode follow these commands:
   * Install dependencies: `npm install`.
   * Start local dev-server: `npm run dev`.
+* Star this repo if you like it ⭐️
