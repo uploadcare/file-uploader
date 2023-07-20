@@ -100,8 +100,8 @@ LR.registerBlocks(LR);
 3. Start using `Blocks` in your application markup and replace `{{PACKAGE_VERSION}}` with the [latest version](https://github.com/uploadcare/blocks/releases) of the package:
 ```html
 <lr-file-uploader-inline
-        css-src="https://cdn.jsdelivr.net/npm/@uploadcare/blocks@{{PACKAGE_VERSION}}/web/file-uploader-regular.min.css"
-        class="my-uploader"
+  css-src="https://cdn.jsdelivr.net/npm/@uploadcare/blocks@{{PACKAGE_VERSION}}/web/file-uploader-inline.min.css"
+  class="my-uploader"
 >
 </lr-file-uploader-inline>
 ```
@@ -111,7 +111,7 @@ LR.registerBlocks(LR);
 All configurations in `Blocks` are managed from CSS code. 
 1. Sign up to [Uploadcare](https://app.uploadcare.com/accounts/signup/).
 2. Get a Public API key in [Uploadcare project's dashboard](https://app.uploadcare.com/projects/-/api-keys/). 
-3. Add a style sheet to your project and replace `'YOUR_PUBLIC_KEY'` with your own public key:
+3. Add a style sheet to your project and replace `YOUR_PUBLIC_KEY` with your own public key:
 
 ```css
 .my-uploader {
