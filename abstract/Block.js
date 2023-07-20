@@ -13,7 +13,8 @@ const TAG_PREFIX = 'lr-';
 
 // @ts-ignore TODO: fix this
 export class Block extends BaseComponent {
-  static StateConsumerScope = '';
+  /** @type {string | null} */
+  static StateConsumerScope = null;
   static className = '';
   allowCustomTemplate = true;
 
