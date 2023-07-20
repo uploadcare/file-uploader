@@ -1,3 +1,9 @@
+## [0.24.2](https://github.com/uploadcare/blocks/compare/v0.24.1...v0.24.2) (2023-07-20)
+
+### Changes
+
+* update readme
+
 ## [0.24.1](https://github.com/uploadcare/blocks/compare/v0.24.0...v0.24.1) (2023-06-27)
 
 ### Bug Fixes
