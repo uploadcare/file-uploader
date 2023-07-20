@@ -46,7 +46,7 @@ export class Config extends Block {
     ...this.init$,
     ...Object.fromEntries(
       Object.entries(initialConfig).map(([key, value]) => [
-        sharedConfigKey(/** @type {keyof ConfigType} */ (key)),
+        sharedConfigKey(/** @type {keyof import('../../types').ConfigType} */ (key)),
         value,
       ])
     ),

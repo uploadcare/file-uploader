@@ -46,7 +46,8 @@
     "./abstract/connectBlocksFrom.js": "./abstract/connectBlocksFrom.js",
     "./env": "./env.js",
     "./web/*": "./web/*",
-    "./types/*": "./types/*"
+    "./types/*": "./types/*",
+    "./types/jsx": "./types/jsx.d.ts"
   },
   "repository": "https://github.com/uploadcare/blocks/",
   "files": [
