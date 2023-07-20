@@ -59,7 +59,7 @@ We use [JSDoc type annotations](https://www.typescriptlang.org/docs/handbook/int
 
 ### HTML `<script>` Tag
 
-* Connect `Blocks` directly from your document replacing `{{PACKAGE_VERSION}}` with the [latest version](https://github.com/uploadcare/blocks/releases) of the package:
+1. Connect `Blocks` directly from your document replacing `{{PACKAGE_VERSION}}` with the [latest version](https://github.com/uploadcare/blocks/releases) of the package:
 
 ```html
 <script type="module">
@@ -69,7 +69,7 @@ We use [JSDoc type annotations](https://www.typescriptlang.org/docs/handbook/int
 </script>
 ```
 
-* Start using `Blocks` in your application markup (don't forget to specify `{{PACKAGE_VERSION}}` with the [latest one](https://github.com/uploadcare/blocks/releases)):
+2. Start using `Blocks` in your application markup (don't forget to specify `{{PACKAGE_VERSION}}` with the [latest one](https://github.com/uploadcare/blocks/releases)):
 
 ```html
 <lr-file-uploader-regular
@@ -79,7 +79,7 @@ We use [JSDoc type annotations](https://www.typescriptlang.org/docs/handbook/int
 </lr-file-uploader-regular>
 ```
 
-* All configurations and customization in `Blocks` are managed from CSS code. Create a style sheet with the following code and replace `YOUR_PUBLIC_KEY` with your personal one (discover [how to obtain public keys](#using-file-uploading-features)):
+3. All configurations and customization in `Blocks` are managed from CSS code. Create a style sheet with the following code and replace `YOUR_PUBLIC_KEY` with your personal one (discover [how to obtain public keys](#using-file-uploading-features)):
 
 ```css
 .my-uploader {
@@ -90,14 +90,14 @@ We use [JSDoc type annotations](https://www.typescriptlang.org/docs/handbook/int
 
 ### Using NPM
 
-* Install Blocks package: `npm i --save-exact @uploadcare/blocks`
-* Connect `Blocks` from your script file:
+1. Install Blocks package: `npm i --save-exact @uploadcare/blocks`
+2. Connect `Blocks` from your script file:
 ```js
 import * as LR from '@uploadcare/blocks';
 
 LR.registerBlocks(LR);
 ```
-* Start using `Blocks` in your application markup and replace `{{PACKAGE_VERSION}}` with the [latest version](https://github.com/uploadcare/blocks/releases) of the package:
+3. Start using `Blocks` in your application markup and replace `{{PACKAGE_VERSION}}` with the [latest version](https://github.com/uploadcare/blocks/releases) of the package:
 ```html
 <lr-file-uploader-inline
         css-src="https://cdn.jsdelivr.net/npm/@uploadcare/blocks@{{PACKAGE_VERSION}}/web/file-uploader-regular.min.css"
@@ -109,9 +109,9 @@ LR.registerBlocks(LR);
 ### Configuration
 
 All configurations in `Blocks` are managed from CSS code. 
-* Sign up to [Uploadcare](https://app.uploadcare.com/accounts/signup/).
-* Get a Public API key in [Uploadcare project's dashboard](https://app.uploadcare.com/projects/-/api-keys/). 
-* Add a style sheet to your project and replace `'YOUR_PUBLIC_KEY'` with your own public key:
+1. Sign up to [Uploadcare](https://app.uploadcare.com/accounts/signup/).
+2. Get a Public API key in [Uploadcare project's dashboard](https://app.uploadcare.com/projects/-/api-keys/). 
+3. Add a style sheet to your project and replace `'YOUR_PUBLIC_KEY'` with your own public key:
 
 ```css
 .my-uploader {
