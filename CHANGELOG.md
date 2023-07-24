@@ -1,4 +1,10 @@
-# [0.25.0](https://github.com/uploadcare/blocks/compare/v0.24.2...v0.25.0) (2023-07-24)
+## [0.25.1](https://github.com/uploadcare/blocks/compare/v0.25.0...v0.25.1) (2023-07-24)
+
+### Bug Fixes
+
+- **cloud-image-editor:** fix `initEditor` type ([#502](https://github.com/uploadcare/blocks/issues/502)) ([6c222d5](https://github.com/uploadcare/blocks/commit/6c222d595e9a0e578473af616a45ba1d5fda9884))
+
+## [0.25.0](https://github.com/uploadcare/blocks/compare/v0.24.2...v0.25.0) (2023-07-24)
 
 ### BREAKING CHANGES
 
@@ -33,15 +39,15 @@
    You will need to manually register them:
 
 ```js
-import * as LR from 'https://cdn.jsdelivr.net/npm/@uploadcare/blocks/web/lr-file-uploader-regular.min.js'
+import * as LR from 'https://cdn.jsdelivr.net/npm/@uploadcare/blocks/web/lr-file-uploader-regular.min.js';
 
-LR.registerBlocks(LR)
+LR.registerBlocks(LR);
 ```
 
 9. Bundle `blocks.iife.js` is renamed to `blocks.iife.min.js`.
 
 10. Bundle `blocks-browser.min.js` is deprecated. Use `blocks.iife.min.js`
-   instead.
+    instead.
 
 ### How to migrate
 
@@ -64,12 +70,7 @@ For instance, if you have the following CSS:
 Move it to the `lr-config` block:
 
 ```html
-<lr-config
-  ctx-name="my-uploader"
-  pubkey="YOUR_PUBLIC_KEY"
-  multiple-min="0"
-  multiple-max="3"
-></lr-config>
+<lr-config ctx-name="my-uploader" pubkey="YOUR_PUBLIC_KEY" multiple-min="0" multiple-max="3"></lr-config>
 ```
 
 Subsequently, you should link your solution block to the `lr-config` block using the `ctx-name` attribute:
@@ -91,19 +92,19 @@ See the [configuration reference][file-uploader-configuration] for more details.
 If you have dynamically updated CSS configuration like this:
 
 ```js
-const uploader = document.querySelector('lr-file-uploader-regular')
-uploader.style.setProperty('--cfg-pubkey', 'YOUR_PUBLIC_KEY')
+const uploader = document.querySelector('lr-file-uploader-regular');
+uploader.style.setProperty('--cfg-pubkey', 'YOUR_PUBLIC_KEY');
 
-const uploaderCtx = document.querySelector('lr-upload-ctx-provider')
-uploaderCtx.updateCtxCssData()
+const uploaderCtx = document.querySelector('lr-upload-ctx-provider');
+uploaderCtx.updateCtxCssData();
 ```
 
 You need to update it to the following:
 
 ```js
-const config = document.querySelector('lr-config')
-config.setAttribute('pubkey', 'YOUR_PUBLIC_KEY') // using attribute
-config.pubkey = 'YOUR_PUBLIC_KEY' // or using DOM property
+const config = document.querySelector('lr-config');
+config.setAttribute('pubkey', 'YOUR_PUBLIC_KEY'); // using attribute
+config.pubkey = 'YOUR_PUBLIC_KEY'; // or using DOM property
 ```
 
 Both attributes and DOM properties are reactive so you don't need to call
@@ -152,16 +153,16 @@ example:
 If you was using `setUploadMetadata` method like this:
 
 ```js
-uploaderCtxProvider.setUploadMetadata({ foo: 'bar' })
+uploaderCtxProvider.setUploadMetadata({ foo: 'bar' });
 ```
 
 You need to replace it with `metadata` DOM property on the `lr-config` block:
 
 ```js
-const config = document.querySelector('lr-config')
-config.metadata = { foo: 'bar' }
+const config = document.querySelector('lr-config');
+config.metadata = { foo: 'bar' };
 // or
-config.metadata = () => Promise.resolve({ foo: 'bar' })
+config.metadata = () => Promise.resolve({ foo: 'bar' });
 ```
 
 See the [configuration reference][file-uploader-option-metadata] for more details.
@@ -205,7 +206,7 @@ FileUploaderRegular.template = /* HTML */ `
 
   <lr-message-box></lr-message-box>
   <lr-progress-bar-common></lr-progress-bar-common>
-`
+`;
 ```
 
 #### Rename imported JS and CSS bundles
@@ -225,7 +226,7 @@ For example:
 
 ```html
 <script type="module">
-  import * as LR from "https://cdn.jsdelivr.net/npm/@uploadcare/blocks/web/file-uploader-regular.min.js";
+  import * as LR from 'https://cdn.jsdelivr.net/npm/@uploadcare/blocks/web/file-uploader-regular.min.js';
   LR.registerBlocks(LR);
 </script>
 
@@ -241,8 +242,8 @@ Became:
 
 ```html
 <script type="module">
-    import * as LR from "https://cdn.jsdelivr.net/npm/@uploadcare/blocks/web/lr-file-uploader-regular.min.js";
-    LR.registerBlocks(LR);
+  import * as LR from 'https://cdn.jsdelivr.net/npm/@uploadcare/blocks/web/lr-file-uploader-regular.min.js';
+  LR.registerBlocks(LR);
 </script>
 
 <lr-config ctx-name="my-uploader" pubkey="YOUR_PUBLIC_KEY"></lr-config>
@@ -260,7 +261,7 @@ If you have installed blocks using `min.js` bundles, you need to call
 
 ```html
 <script type="module">
-  import * as LR from "https://cdn.jsdelivr.net/npm/@uploadcare/blocks/web/lr-file-uploader-regular.min.js";
+  import * as LR from 'https://cdn.jsdelivr.net/npm/@uploadcare/blocks/web/lr-file-uploader-regular.min.js';
   LR.registerBlocks(LR);
 </script>
 ```
@@ -281,12 +282,10 @@ If you were using the `connectBlocksFrom` method in conjunction with the
 as shown below:
 
 ```js
-connectBlocksFrom('https://cdn.jsdelivr.net/npm/@uploadcare/blocks/web/blocks.iife.min.js').then(
-  (LR) => {
-    LR.registerBlocks(LR);
-    //  ...
-  }
-);
+connectBlocksFrom('https://cdn.jsdelivr.net/npm/@uploadcare/blocks/web/blocks.iife.min.js').then((LR) => {
+  LR.registerBlocks(LR);
+  //  ...
+});
 ```
 
 If you were using `blocks-browser.min.js` via a `script` tag with `type="module"`,
