@@ -1,8 +1,21 @@
+# [0.25.0](https://github.com/uploadcare/blocks/compare/v0.24.2...v0.25.0) (2023-07-24)
+
+### Bug Fixes
+
+- allow to files of any count to the upload list, but restrict uploading to the limit ([2e32f12](https://github.com/uploadcare/blocks/commit/2e32f1257b6be970435a7fdf5ed8574f1fcce2cc))
+- better validation for multiple min/max cases ([cd70c9f](https://github.com/uploadcare/blocks/commit/cd70c9f17a9b4db55212e605e633e5547eca43cd))
+- realtime client validation for isImage, fileSize and file types ([9e9fbe9](https://github.com/uploadcare/blocks/commit/9e9fbe966493f65e7332c057885cdb984bb7050c))
+
+### Features
+
+- `metadata` property on `lr-config` block as a replacement for `setUploadMetadata` ([7180d05](https://github.com/uploadcare/blocks/commit/7180d05987f3d380fa592473ba99810578a38e40))
+- pretty bytes value for file size validation ([acfc62c](https://github.com/uploadcare/blocks/commit/acfc62c99358560fa33ec8994a3cd7af22aa4f41))
+
 ## [0.24.2](https://github.com/uploadcare/blocks/compare/v0.24.1...v0.24.2) (2023-07-20)
 
 ### Changes
 
-* update readme
+- update readme
 
 ## [0.24.1](https://github.com/uploadcare/blocks/compare/v0.24.0...v0.24.1) (2023-06-27)
 
