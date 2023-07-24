@@ -4,7 +4,7 @@
 
 - **cloud-image-editor:** fix `initEditor` type ([#502](https://github.com/uploadcare/blocks/issues/502)) ([6c222d5](https://github.com/uploadcare/blocks/commit/6c222d595e9a0e578473af616a45ba1d5fda9884))
 
-# [0.25.0](https://github.com/uploadcare/blocks/compare/v0.24.2...v0.25.0) (2023-07-24)
+## [0.25.0](https://github.com/uploadcare/blocks/compare/v0.24.2...v0.25.0) (2023-07-24)
 
 ### BREAKING CHANGES
 
