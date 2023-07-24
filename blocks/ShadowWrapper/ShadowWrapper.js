@@ -54,8 +54,9 @@ export function shadowed(Base) {
           // @ts-ignore TODO: fix this
           this.shadowRoot.prepend(link);
         } else {
-          // TODO: Add link to the docs
-          throw new Error('css-src attribute is required');
+          console.error(
+            'Attribute `css-src` is required and it is not set. See migration guide: https://uploadcare.com/docs/file-uploader/migration-to-0.25.0/'
+          );
         }
       });
     }
