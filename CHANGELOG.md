@@ -32,7 +32,7 @@
 8. Solution bundles do not automatically register blocks.
    You will need to manually register them:
 
-```js{noAutoLinker}
+```js
 import * as LR from 'https://cdn.jsdelivr.net/npm/@uploadcare/blocks/web/lr-file-uploader-regular.min.js'
 
 LR.registerBlocks(LR)
@@ -74,7 +74,7 @@ Move it to the `lr-config` block:
 
 Subsequently, you should link your solution block to the `lr-config` block using the `ctx-name` attribute:
 
-```html{noAutoLinker}
+```html
 <lr-file-uploader-regular
   ctx-name="my-uploader"
   css-src="https://cdn.jsdelivr.net/npm/@uploadcare/blocks/web/lr-file-uploader-regular.min.css"
@@ -116,7 +116,7 @@ to use `css-src` attribute to attach CSS to the block.
 
 If you previously attached CSS to the global like this:
 
-```html{noAutoLinker}
+```html
 <link href="https://cdn.jsdelivr.net/npm/@uploadcare/blocks/web/lr-file-uploader-regular.min.css" rel="stylesheet" />
 
 <lr-file-uploader-regular class="lr-wgt-common"></lr-file-uploader-regular>
@@ -124,7 +124,7 @@ If you previously attached CSS to the global like this:
 
 You need to use `css-src` attribute instead:
 
-```html{noAutoLinker}
+```html
 <lr-file-uploader-regular
   css-src="https://cdn.jsdelivr.net/npm/@uploadcare/blocks/web/lr-file-uploader-regular.min.css"
 ></lr-file-uploader-regular>
@@ -171,7 +171,7 @@ See the [configuration reference][file-uploader-option-metadata] for more detail
 If you was using standalone `lr-cloud-editor` solution block, you need to rename
 it to `lr-cloud-image-editor` like this:
 
-```html{noAutoLinker}
+```html
 <lr-cloud-image-editor
   uuid="7c167b79-9f27-4489-8032-3f3be1840605"
   css-src="https://cdn.jsdelivr.net/npm/@uploadcare/blocks/web/lr-cloud-image-editor.min.css"
@@ -223,7 +223,7 @@ Just rename all the imports according to the following table:
 
 For example:
 
-```html{noAutoLinker}
+```html
 <script type="module">
   import * as LR from "https://cdn.jsdelivr.net/npm/@uploadcare/blocks/web/file-uploader-regular.min.js";
   LR.registerBlocks(LR);
@@ -239,7 +239,7 @@ For example:
 
 Became:
 
-```html{noAutoLinker}
+```html
 <script type="module">
     import * as LR from "https://cdn.jsdelivr.net/npm/@uploadcare/blocks/web/lr-file-uploader-regular.min.js";
     LR.registerBlocks(LR);
@@ -258,7 +258,7 @@ Became:
 If you have installed blocks using `min.js` bundles, you need to call
 `registerBlocks` manually:
 
-```html{noAutoLinker}
+```html
 <script type="module">
   import * as LR from "https://cdn.jsdelivr.net/npm/@uploadcare/blocks/web/lr-file-uploader-regular.min.js";
   LR.registerBlocks(LR);
@@ -270,7 +270,7 @@ If you have installed blocks using `min.js` bundles, you need to call
 If you previously used the `blocks.iife.js` bundle, you need to rename it to
 `blocks.iife.min.js` as follows:
 
-```html{noAutoLinker}
+```html
 <script src="https://cdn.jsdelivr.net/npm/@uploadcare/blocks/web/blocks.iife.min.js" async />
 ```
 
@@ -280,7 +280,7 @@ If you were using the `connectBlocksFrom` method in conjunction with the
 `blocks-browser.min.js` bundle, you need to rename it to `blocks.iife.min.js`,
 as shown below:
 
-```js{noAutoLinker}
+```js
 connectBlocksFrom('https://cdn.jsdelivr.net/npm/@uploadcare/blocks/web/blocks.iife.min.js').then(
   (LR) => {
     LR.registerBlocks(LR);
@@ -292,7 +292,7 @@ connectBlocksFrom('https://cdn.jsdelivr.net/npm/@uploadcare/blocks/web/blocks.ii
 If you were using `blocks-browser.min.js` via a `script` tag with `type="module"`,
 you need to rename it to `blocks.min.js`, as shown below:
 
-```html{noAutoLinker}
+```html
 <script type="module">
   import * as LR from 'https://cdn.jsdelivr.net/npm/@uploadcare/blocks/web/blocks.min.js';
 
@@ -303,7 +303,7 @@ you need to rename it to `blocks.min.js`, as shown below:
 If you were using `blocks-browser.min.js` via a `script` tag without
 `type="module"`, you need to rename it to `blocks.iife.min.js`, as shown below:
 
-```html{noAutoLinker}
+```html
 <script src="https://cdn.jsdelivr.net/npm/@uploadcare/blocks/web/blocks.iife.min.js" async />
 ```
 
