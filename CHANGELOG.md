@@ -1,8 +1,317 @@
+# [0.25.0](https://github.com/uploadcare/blocks/compare/v0.24.2...v0.25.0) (2023-07-24)
+
+### BREAKING CHANGES
+
+1. Configuration in CSS is now deprecated.
+   Although it currently works, it will be removed shortly.
+   In lieu of this, we are introducing a new lr-config block for configuration definitions.
+
+2. The `css-src` attribute is now required on solution blocks.
+   This implies that the use of Shadow DOM is enforced.
+
+3. The `ctx-name` attribute is required for the each block on the page.
+
+4. Method `setUploadMetadata` is deprecated in favour of `metadata` DOM property
+   on the `lr-config` block.
+
+5. `CloudEditor` (`lr-cloud-editor`) solution block is renamed to
+   `CloudImageEditor` (`lr-cloud-image-editor`).
+
+6. `CloudImageEditor` (`lr-cloud-image-editor`) activity is was renamed to
+   `CloudImageEditorActivity` (`lr-cloud-image-editor-activity`).
+
+7. All solution bundles are prefixed with `lr-` prefix:
+
+- `file-uploader-regular.min.js` -> `lr-file-uploader-regular.min.js`
+- `file-uploader-regular.min.css` -> `lr-file-uploader-regular.min.css`
+- `file-uploader-inline.min.js` -> `lr-file-uploader-inline.min.js`
+- `file-uploader-inline.min.css` -> `lr-file-uploader-inline.min.css`
+- `file-uploader-minimal.min.js` -> `lr-file-uploader-minimal.min.js`
+- `file-uploader-minimal.min.css` -> `lr-file-uploader-minimal.min.css`
+
+8. Solution bundles do not automatically register blocks.
+   You will need to manually register them:
+
+```js
+import * as LR from 'https://cdn.jsdelivr.net/npm/@uploadcare/blocks/web/lr-file-uploader-regular.min.js'
+
+LR.registerBlocks(LR)
+```
+
+9. Bundle `blocks.iife.js` is renamed to `blocks.iife.min.js`.
+
+10. Bundle `blocks-browser.min.js` is deprecated. Use `blocks.iife.min.js`
+   instead.
+
+### How to migrate
+
+This migration guide is also available at: https://uploadcare.com/docs/file-uploader/migration-to-0.25.0/
+
+#### Configuration
+
+First and foremost, you need to shift all the configuration from CSS to the `lr-config` block.
+For instance, if you have the following CSS:
+
+```css
+.config {
+  --ctx-name: 'my-uploader';
+  --cfg-pubkey: 'YOUR_PUBLIC_KEY';
+  --cfg-multiple-min: 0;
+  --cfg-multiple-max: 3;
+}
+```
+
+Move it to the `lr-config` block:
+
+```html
+<lr-config
+  ctx-name="my-uploader"
+  pubkey="YOUR_PUBLIC_KEY"
+  multiple-min="0"
+  multiple-max="3"
+></lr-config>
+```
+
+Subsequently, you should link your solution block to the `lr-config` block using the `ctx-name` attribute:
+
+```html
+<lr-file-uploader-regular
+  ctx-name="my-uploader"
+  css-src="https://cdn.jsdelivr.net/npm/@uploadcare/blocks/web/lr-file-uploader-regular.min.css"
+></lr-file-uploader-regular>
+```
+
+The property names remain the same but without the `--cfg` prefix. For example,
+`--cfg-pubkey` becomes simply `pubkey`.
+
+See the [configuration reference][file-uploader-configuration] for more details.
+
+#### Dynamic configuration updates
+
+If you have dynamically updated CSS configuration like this:
+
+```js
+const uploader = document.querySelector('lr-file-uploader-regular')
+uploader.style.setProperty('--cfg-pubkey', 'YOUR_PUBLIC_KEY')
+
+const uploaderCtx = document.querySelector('lr-upload-ctx-provider')
+uploaderCtx.updateCtxCssData()
+```
+
+You need to update it to the following:
+
+```js
+const config = document.querySelector('lr-config')
+config.setAttribute('pubkey', 'YOUR_PUBLIC_KEY') // using attribute
+config.pubkey = 'YOUR_PUBLIC_KEY' // or using DOM property
+```
+
+Both attributes and DOM properties are reactive so you don't need to call
+`updateCtxCssData` anymore.
+
+#### Shadow DOM and `css-src`
+
+Shadow DOM is now enforced for all the solution blocks. It means that you need
+to use `css-src` attribute to attach CSS to the block.
+
+If you previously attached CSS to the global like this:
+
+```html
+<link href="https://cdn.jsdelivr.net/npm/@uploadcare/blocks/web/lr-file-uploader-regular.min.css" rel="stylesheet" />
+
+<lr-file-uploader-regular class="lr-wgt-common"></lr-file-uploader-regular>
+```
+
+You need to use `css-src` attribute instead:
+
+```html
+<lr-file-uploader-regular
+  css-src="https://cdn.jsdelivr.net/npm/@uploadcare/blocks/web/lr-file-uploader-regular.min.css"
+></lr-file-uploader-regular>
+```
+
+(Other attributes are omitted for brevity)
+
+#### `ctx-name` attribute
+
+`ctx-name` attribute is required for all the blocks now even if you have only
+one block on the page. It's used to wire blocks to the `lr-config` block. For
+example:
+
+```html
+<lr-config ctx-name="my-uploader"></lr-config>
+<lr-file-uploader-regular ctx-name="my-uploader"></lr-file-uploader-regular>
+<lr-upload-ctx-provider ctx-name="my-uploader"></lr-upload-ctx-provider>
+<lr-data-output ctx-name="my-uploader"></lr-data-output>
+```
+
+(Other attributes are omitted for brevity)
+
+#### Replace `setUploadMetadata` with `metadata` DOM property
+
+If you was using `setUploadMetadata` method like this:
+
+```js
+uploaderCtxProvider.setUploadMetadata({ foo: 'bar' })
+```
+
+You need to replace it with `metadata` DOM property on the `lr-config` block:
+
+```js
+const config = document.querySelector('lr-config')
+config.metadata = { foo: 'bar' }
+// or
+config.metadata = () => Promise.resolve({ foo: 'bar' })
+```
+
+See the [configuration reference][file-uploader-option-metadata] for more details.
+
+#### Rename `CloudEditor` -> `CloudImageEditor`
+
+If you was using standalone `lr-cloud-editor` solution block, you need to rename
+it to `lr-cloud-image-editor` like this:
+
+```html
+<lr-cloud-image-editor
+  uuid="7c167b79-9f27-4489-8032-3f3be1840605"
+  css-src="https://cdn.jsdelivr.net/npm/@uploadcare/blocks/web/lr-cloud-image-editor.min.css"
+  ctx-name="my-editor"
+></lr-cloud-image-editor>
+```
+
+#### Rename `CloudImageEditor` -> `CloudImageEditorActivity`
+
+If you was using `lr-cloud-image-editor` activity block inside your custom
+Symbiote.js templates, you need to rename it to `lr-cloud-image-editor-activity`
+like this:
+
+```js
+FileUploaderRegular.template = /* HTML */ `
+  <lr-simple-btn></lr-simple-btn>
+
+  <lr-modal strokes block-body-scrolling>
+    <lr-start-from>
+      <lr-drop-area with-icon clickable></lr-drop-area>
+      <lr-source-list wrap></lr-source-list>
+      <lr-copyright></lr-copyright>
+    </lr-start-from>
+    <lr-upload-list></lr-upload-list>
+    <lr-camera-source></lr-camera-source>
+    <lr-url-source></lr-url-source>
+    <lr-external-source></lr-external-source>
+    <lr-cloud-image-editor-activity></lr-cloud-image-editor-activity>
+    <!-- here it is -->
+  </lr-modal>
+
+  <lr-message-box></lr-message-box>
+  <lr-progress-bar-common></lr-progress-bar-common>
+`
+```
+
+#### Rename imported JS and CSS bundles
+
+Just rename all the imports according to the following table:
+
+| Old name                        | New name                           |
+| ------------------------------- | ---------------------------------- |
+| `file-uploader-regular.min.js`  | `lr-file-uploader-regular.min.js`  |
+| `file-uploader-regular.min.css` | `lr-file-uploader-regular.min.css` |
+| `file-uploader-inline.min.js`   | `lr-file-uploader-inline.min.js`   |
+| `file-uploader-inline.min.css`  | `lr-file-uploader-inline.min.css`  |
+| `file-uploader-minimal.min.js`  | `lr-file-uploader-minimal.min.js`  |
+| `file-uploader-minimal.min.css` | `lr-file-uploader-minimal.min.css` |
+
+For example:
+
+```html
+<script type="module">
+  import * as LR from "https://cdn.jsdelivr.net/npm/@uploadcare/blocks/web/file-uploader-regular.min.js";
+  LR.registerBlocks(LR);
+</script>
+
+<lr-config ctx-name="my-uploader" pubkey="YOUR_PUBLIC_KEY"></lr-config>
+
+<lr-file-uploader-regular
+  ctx-name="my-uploader"
+  css-src="https://cdn.jsdelivr.net/npm/@uploadcare/blocks/web/file-uploader-regular.min.css"
+></lr-file-uploader-regular>
+```
+
+Became:
+
+```html
+<script type="module">
+    import * as LR from "https://cdn.jsdelivr.net/npm/@uploadcare/blocks/web/lr-file-uploader-regular.min.js";
+    LR.registerBlocks(LR);
+</script>
+
+<lr-config ctx-name="my-uploader" pubkey="YOUR_PUBLIC_KEY"></lr-config>
+
+<lr-file-uploader-regular
+  ctx-name="my-uploader"
+  css-src="https://cdn.jsdelivr.net/npm/@uploadcare/blocks/web/lr-file-uploader-regular.min.css"
+></lr-file-uploader-regular>
+```
+
+#### Call `registerBlocks` manually
+
+If you have installed blocks using `min.js` bundles, you need to call
+`registerBlocks` manually:
+
+```html
+<script type="module">
+  import * as LR from "https://cdn.jsdelivr.net/npm/@uploadcare/blocks/web/lr-file-uploader-regular.min.js";
+  LR.registerBlocks(LR);
+</script>
+```
+
+#### Rename `blocks.iife.js` to `blocks.iife.min.js`
+
+If you previously used the `blocks.iife.js` bundle, you need to rename it to
+`blocks.iife.min.js` as follows:
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/@uploadcare/blocks/web/blocks.iife.min.js" async />
+```
+
+#### Rename `blocks-browser.min.js` to `blocks.iife.min.js`
+
+If you were using the `connectBlocksFrom` method in conjunction with the
+`blocks-browser.min.js` bundle, you need to rename it to `blocks.iife.min.js`,
+as shown below:
+
+```js
+connectBlocksFrom('https://cdn.jsdelivr.net/npm/@uploadcare/blocks/web/blocks.iife.min.js').then(
+  (LR) => {
+    LR.registerBlocks(LR);
+    //  ...
+  }
+);
+```
+
+If you were using `blocks-browser.min.js` via a `script` tag with `type="module"`,
+you need to rename it to `blocks.min.js`, as shown below:
+
+```html
+<script type="module">
+  import * as LR from 'https://cdn.jsdelivr.net/npm/@uploadcare/blocks/web/blocks.min.js';
+
+  LR.registerBlocks(LR);
+</script>
+```
+
+If you were using `blocks-browser.min.js` via a `script` tag without
+`type="module"`, you need to rename it to `blocks.iife.min.js`, as shown below:
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/@uploadcare/blocks/web/blocks.iife.min.js" async />
+```
+
 ## [0.24.2](https://github.com/uploadcare/blocks/compare/v0.24.1...v0.24.2) (2023-07-20)
 
 ### Changes
 
-* update readme
+- update readme
 
 ## [0.24.1](https://github.com/uploadcare/blocks/compare/v0.24.0...v0.24.1) (2023-06-27)
 
