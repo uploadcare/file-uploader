@@ -92,12 +92,25 @@ export class TypedCollection {
     }
     /** @private */
     this.__notifyTimeout = window.setTimeout(() => {
-      let added = this.__added;
-      let removed = this.__removed;
+      let added = new Set(this.__added);
+      let removed = new Set(this.__removed);
       this.__added.clear();
       this.__removed.clear();
       this.__handler?.([...this.__items], added, removed);
     });
+  }
+
+  /** @param {(list: string[], added: Set<any>, removed: Set<any>) => void} handler */
+  setHandler(handler) {
+    this.__handler = handler;
+  }
+
+  getHandler() {
+    return this.__handler;
+  }
+
+  removeHandler() {
+    this.__handler = null;
   }
 
   /**
@@ -206,6 +219,7 @@ export class TypedCollection {
   destroy() {
     Data.deleteCtx(this.__data);
     this.__observers = null;
+    this.__handler = null;
     for (let id in this.__subsMap) {
       this.__subsMap[id].forEach((sub) => {
         sub.remove();

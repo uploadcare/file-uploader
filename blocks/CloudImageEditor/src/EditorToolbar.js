@@ -1,9 +1,8 @@
-import { Block } from '../../../abstract/Block.js';
+import { CloudImageEditorBase } from './CloudImageEditorBase.js';
 import { EditorCropButtonControl } from './EditorCropButtonControl.js';
 import { EditorFilterControl } from './EditorFilterControl.js';
 import { EditorOperationControl } from './EditorOperationControl.js';
 import { FAKE_ORIGINAL_FILTER } from './EditorSlider.js';
-import { classNames } from './lib/classNames.js';
 import { debounce } from './lib/debounce.js';
 import { batchPreloadImages } from './lib/preloadImage.js';
 import {
@@ -44,7 +43,7 @@ function renderTabContent(id) {
   `;
 }
 
-export class EditorToolbar extends Block {
+export class EditorToolbar extends CloudImageEditorBase {
   constructor() {
     super();
 

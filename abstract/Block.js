@@ -1,14 +1,21 @@
+// @ts-check
 import { BaseComponent } from '@symbiotejs/symbiote';
 import { createWindowHeightTracker, getIsWindowHeightTracked } from '../utils/createWindowHeightTracker.js';
 import { applyTemplateData, getPluralObjects } from '../utils/template-utils.js';
 import { blockCtx } from './CTX.js';
 import { l10nProcessor } from './l10nProcessor.js';
+import { sharedConfigKey } from './sharedConfigKey.js';
+import { toKebabCase } from '../utils/toKebabCase.js';
+import { warnOnce } from '../utils/warnOnce.js';
+import { getPluralForm } from '../utils/getPluralForm.js';
 
 const TAG_PREFIX = 'lr-';
 
+// @ts-ignore TODO: fix this
 export class Block extends BaseComponent {
   /** @type {string | null} */
   static StateConsumerScope = null;
+  static className = '';
   allowCustomTemplate = true;
 
   init$ = blockCtx();
@@ -41,14 +48,16 @@ export class Block extends BaseComponent {
    */
   pluralize(key, count) {
     const locale = this.l10n('locale-name') || 'en-US';
-    const pluralForm = new Intl.PluralRules(locale).select(count);
+    const pluralForm = getPluralForm(locale, count);
     return this.l10n(`${key}__${pluralForm}`);
   }
 
   constructor() {
     super();
     /** @type {String} */
+    // @ts-ignore TODO: fix this
     this.activityType = null;
+    // @ts-ignore TODO: fix this
     this.addTemplateProcessor(l10nProcessor);
     // TODO: inspect template on lr-* elements
     // this.addTemplateProcessor((fr) => {
@@ -80,7 +89,8 @@ export class Block extends BaseComponent {
    * @param {(block: Block) => boolean} callback
    * @returns {Boolean}
    */
-  findBlockInCtx(callback) {
+  hasBlockInCtx(callback) {
+    // @ts-ignore TODO: fix this
     /** @type {Set} */
     let blocksRegistry = this.$['*blocksRegistry'];
     for (let block of blocksRegistry) {
@@ -97,14 +107,14 @@ export class Block extends BaseComponent {
    * @param {any} newVal
    */
   setForCtxTarget(consumerScope, prop, newVal) {
-    if (this.findBlockInCtx((b) => /** @type {typeof Block} */ (b.constructor).StateConsumerScope === consumerScope)) {
+    if (this.hasBlockInCtx((b) => /** @type {typeof Block} */ (b.constructor).StateConsumerScope === consumerScope)) {
       this.$[prop] = newVal;
     }
   }
 
   /** @param {String} activityType */
   setActivity(activityType) {
-    if (this.findBlockInCtx((b) => b.activityType === activityType)) {
+    if (this.hasBlockInCtx((b) => b.activityType === activityType)) {
       this.$['*currentActivity'] = activityType;
       return;
     }
@@ -112,10 +122,16 @@ export class Block extends BaseComponent {
   }
 
   connectedCallback() {
+    const className = /** @type {typeof Block} */ (this.constructor).className;
+    if (className) {
+      this.classList.toggle(`${TAG_PREFIX}${className}`, true);
+    }
+
     if (!getIsWindowHeightTracked()) {
       this._destroyInnerHeightTracker = createWindowHeightTracker();
     }
     if (this.hasAttribute('retpl')) {
+      // @ts-ignore TODO: fix this
       this.constructor['template'] = null;
       this.processInnerHtml = true;
     }
@@ -164,7 +180,7 @@ export class Block extends BaseComponent {
    * @returns {String}
    */
   proxyUrl(url) {
-    let previewProxy = this.getCssData('--cfg-secure-delivery-proxy', true);
+    let previewProxy = this.cfg.secureDeliveryProxy;
     if (!previewProxy) {
       return url;
     }
@@ -173,6 +189,59 @@ export class Block extends BaseComponent {
       { previewUrl: url },
       { transform: (value) => window.encodeURIComponent(value) }
     );
+  }
+
+  /**
+   * @param {String} prop
+   * @protected
+   */
+  parseCfgProp(prop) {
+    return {
+      ctx: this.nodeCtx,
+      name: prop.replace('*', ''),
+    };
+  }
+
+  /** @returns {import('../types').ConfigType} } */
+  get cfg() {
+    if (!this.__cfgProxy) {
+      let o = Object.create(null);
+      /** @private */
+      this.__cfgProxy = new Proxy(o, {
+        /**
+         * @param {never} obj
+         * @param {keyof import('../types').ConfigType} key
+         */
+        get: (obj, key) => {
+          const sharedKey = sharedConfigKey(key);
+          const parsed = this.parseCfgProp(sharedKey);
+          if (parsed.ctx.has(parsed.name)) {
+            return parsed.ctx.read(parsed.name);
+          } else {
+            warnOnce(
+              'Using CSS variables for configuration is deprecated. Please use `lr-config` instead. See migration guide: https://uploadcare.com/docs/file-uploader/migration-to-0.25.0/'
+            );
+            return this.getCssData(`--cfg-${toKebabCase(key)}`);
+          }
+        },
+      });
+    }
+    return this.__cfgProxy;
+  }
+
+  /**
+   * @template {keyof import('../types').ConfigType} T
+   * @param {T} key
+   * @param {(value: import('../types').ConfigType[T]) => void} callback
+   */
+  subConfigValue(key, callback) {
+    const parsed = this.parseCfgProp(sharedConfigKey(key));
+    if (parsed.ctx.has(parsed.name)) {
+      this.sub(sharedConfigKey(key), callback);
+    } else {
+      this.bindCssData(`--cfg-${toKebabCase(key)}`);
+      this.sub(`--cfg-${toKebabCase(key)}`, callback);
+    }
   }
 
   updateCtxCssData = () => {

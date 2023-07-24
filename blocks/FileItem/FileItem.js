@@ -1,19 +1,19 @@
-import { UploaderBlock } from '../../abstract/UploaderBlock.js';
+// @ts-check
+import { UploadClientError, uploadFile } from '@uploadcare/upload-client';
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
-import { generateThumb } from '../utils/resizeImage.js';
-import { uploadFile } from '@uploadcare/upload-client';
-import { UiMessage } from '../MessageBox/MessageBox.js';
-import { fileCssBg } from '../svg-backgrounds/svg-backgrounds.js';
-import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../utils/cdn-utils.js';
 import { EVENT_TYPES, EventData, EventManager } from '../../abstract/EventManager.js';
+import { UploaderBlock } from '../../abstract/UploaderBlock.js';
+import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../utils/cdn-utils.js';
+import { fileCssBg } from '../svg-backgrounds/svg-backgrounds.js';
 import { debounce } from '../utils/debounce.js';
-import { IMAGE_ACCEPT_LIST, mergeFileTypes, matchMimeType, matchExtension } from '../../utils/fileTypes.js';
+import { generateThumb } from '../utils/resizeImage.js';
 
 const FileItemState = Object.freeze({
   FINISHED: Symbol(0),
   FAILED: Symbol(1),
   UPLOADING: Symbol(2),
   IDLE: Symbol(3),
+  LIMIT_OVERFLOW: Symbol(4),
 });
 
 export class FileItem extends UploaderBlock {
@@ -21,7 +21,10 @@ export class FileItem extends UploaderBlock {
 
   /** @private */
   _entrySubs = new Set();
-  /** @private */
+  /**
+   * @private
+   * @type {any} TODO: Add types for upload entry
+   */
   _entry = null;
   /** @private */
   _isIntersecting = false;
@@ -29,14 +32,11 @@ export class FileItem extends UploaderBlock {
   _debouncedGenerateThumb = debounce(this._generateThumbnail.bind(this), 100);
   /** @private */
   _debouncedCalculateState = debounce(this._calculateState.bind(this), 100); // TODO: better throttle
+
   /** @private */
   _renderedOnce = false;
 
-  cssInit$ = {
-    ...this.cssInit$,
-    '--cfg-use-cloud-image-editor': 0,
-  };
-
+  // @ts-ignore TODO: fix this
   init$ = {
     ...this.init$,
     uid: '',
@@ -52,6 +52,7 @@ export class FileItem extends UploaderBlock {
     isUploading: false,
     isFocused: false,
     isEditable: false,
+    isLimitOverflow: false,
     state: FileItemState.IDLE,
     '*uploadTrigger': null,
 
@@ -59,7 +60,7 @@ export class FileItem extends UploaderBlock {
       this.set$({
         '*focusedEntry': this._entry,
       });
-      if (this.findBlockInCtx((b) => b.activityType === ActivityBlock.activities.DETAILS)) {
+      if (this.hasBlockInCtx((b) => b.activityType === ActivityBlock.activities.DETAILS)) {
         this.$['*currentActivity'] = ActivityBlock.activities.DETAILS;
       } else {
         this.$['*currentActivity'] = ActivityBlock.activities.CLOUD_IMG_EDIT;
@@ -92,12 +93,15 @@ export class FileItem extends UploaderBlock {
     }
 
     this._debouncedGenerateThumb.cancel();
+    this._debouncedCalculateState.cancel();
     this._entrySubs = new Set();
     this._entry = null;
-    this._isIntersecting = false;
   }
 
-  /** @private */
+  /**
+   * @private
+   * @param {IntersectionObserverEntry[]} entries
+   */
   _observerCallback(entries) {
     let [entry] = entries;
     this._isIntersecting = entry.isIntersecting;
@@ -123,15 +127,15 @@ export class FileItem extends UploaderBlock {
 
     if (entry.getValue('uploadError') || entry.getValue('validationErrorMsg')) {
       state = FileItemState.FAILED;
+    } else if (entry.getValue('validationMultipleLimitMsg')) {
+      state = FileItemState.LIMIT_OVERFLOW;
     } else if (entry.getValue('isUploading')) {
       state = FileItemState.UPLOADING;
     } else if (entry.getValue('fileInfo')) {
       state = FileItemState.FINISHED;
     }
 
-    if (this.$.state !== state) {
-      this.$.state = state;
-    }
+    this.$.state = state;
   }
 
   /** @private */
@@ -142,10 +146,10 @@ export class FileItem extends UploaderBlock {
     let entry = this._entry;
 
     if (entry.getValue('fileInfo') && entry.getValue('isImage')) {
-      let size = this.getCssData('--cfg-thumb-size') || 76;
+      let size = this.cfg.thumbSize;
       let thumbUrl = this.proxyUrl(
         createCdnUrl(
-          createOriginalUrl(this.getCssData('--cfg-cdn-cname'), this._entry.getValue('uuid')),
+          createOriginalUrl(this.cfg.cdnCname, this._entry.getValue('uuid')),
           createCdnUrlModifiers(entry.getValue('cdnUrlModifiers'), `scale_crop/${size}x${size}/center`)
         )
       );
@@ -163,7 +167,7 @@ export class FileItem extends UploaderBlock {
 
     if (entry.getValue('file')?.type.includes('image')) {
       try {
-        let thumbUrl = await generateThumb(entry.getValue('file'), this.getCssData('--cfg-thumb-size') || 76);
+        let thumbUrl = await generateThumb(entry.getValue('file'), this.cfg.thumbSize);
         entry.setValue('thumbUrl', thumbUrl);
       } catch (err) {
         let color = window.getComputedStyle(this).getPropertyValue('--clr-generic-file-icon');
@@ -177,60 +181,19 @@ export class FileItem extends UploaderBlock {
 
   /**
    * @private
-   * @param {'success' | 'error'} type
-   * @param {String} caption
-   * @param {String} text
-   */
-  _showMessage(type, caption, text) {
-    let msg = new UiMessage();
-    msg.caption = caption;
-    msg.text = text;
-    msg.isError = type === 'error';
-    this.set$({
-      badgeIcon: `badge-${type}`,
-      '*message': msg,
-    });
-  }
-
-  /**
-   * @private
    * @param {string} prop
    * @param {(value: any) => void} handler
    */
   _subEntry(prop, handler) {
-    let sub = this._entry.subscribe(prop, (value) => {
-      if (this.isConnected) {
-        handler(value);
+    let sub = this._entry.subscribe(
+      prop,
+      /** @param {any} value */ (value) => {
+        if (this.isConnected) {
+          handler(value);
+        }
       }
-    });
+    );
     this._entrySubs.add(sub);
-  }
-
-  /**
-   * @private
-   * @param {import('../../abstract/TypedData.js').TypedData} entry
-   */
-  _validateFileType(entry) {
-    const imagesOnly = this.getCssData('--cfg-img-only');
-    const accept = this.getCssData('--cfg-accept');
-    const allowedFileTypes = mergeFileTypes([...(imagesOnly ? IMAGE_ACCEPT_LIST : []), accept]);
-    if (!allowedFileTypes.length) return;
-
-    const mimeType = entry.getValue('mimeType');
-    const fileName = entry.getValue('fileName');
-
-    if (!mimeType || !fileName) {
-      // Skip client validation if mime type or file name are not available for some reasons
-      return;
-    }
-
-    const mimeOk = matchMimeType(mimeType, allowedFileTypes);
-    const extOk = matchExtension(fileName, allowedFileTypes);
-
-    if (!mimeOk && !extOk) {
-      // Assume file type is not allowed if both mime and ext checks fail
-      entry.setValue('validationErrorMsg', this.l10n('file-type-not-allowed'));
-    }
   }
 
   /**
@@ -248,58 +211,13 @@ export class FileItem extends UploaderBlock {
       return;
     }
 
-    this._subEntry('validationErrorMsg', (validationErrorMsg) => {
-      this._debouncedCalculateState();
-      this.$.errorText = validationErrorMsg;
-    });
-
-    this._subEntry('uploadError', (uploadError) => {
-      this._debouncedCalculateState();
-      this.$.errorText = uploadError?.message;
-    });
-
-    this._subEntry('isUploading', () => {
-      this._debouncedCalculateState();
-    });
-
     this._subEntry('uploadProgress', (uploadProgress) => {
       this.$.progressValue = uploadProgress;
     });
 
     this._subEntry('fileName', (name) => {
       this.$.itemName = name || entry.getValue('externalUrl') || this.l10n('file-no-name');
-      if (name) {
-        this._validateFileType(entry);
-      }
-    });
-
-    this._subEntry('fileSize', (fileSize) => {
-      let maxFileSize = this.getCssData('--cfg-max-local-file-size-bytes');
-      if (maxFileSize && fileSize && fileSize > maxFileSize) {
-        entry.setValue('validationErrorMsg', this.l10n('files-max-size-limit-error', { maxFileSize }));
-      }
-    });
-
-    this._subEntry('mimeType', (mimeType) => {
-      if (mimeType) {
-        this._validateFileType(entry);
-      }
-    });
-
-    this._subEntry('isImage', (isImage) => {
-      const imagesOnly = this.getCssData('--cfg-img-only');
-      if (!imagesOnly || isImage) {
-        return;
-      }
-      if (!entry.getValue('fileInfo') && entry.getValue('externalUrl')) {
-        // skip validation for not uploaded files with external url, cause we don't know if they're images or not
-        return;
-      }
-      if (!entry.getValue('fileInfo') && !entry.getValue('mimeType')) {
-        // skip validation for not uploaded files without mime-type, cause we don't know if they're images or not
-        return;
-      }
-      entry.setValue('validationErrorMsg', this.l10n('images-only-accepted'));
+      this._debouncedCalculateState();
     });
 
     this._subEntry('externalUrl', (externalUrl) => {
@@ -323,9 +241,13 @@ export class FileItem extends UploaderBlock {
       this.$.thumbUrl = thumbUrl ? `url(${thumbUrl})` : '';
     });
 
-    if (!this.getCssData('--cfg-confirm-upload')) {
-      this.upload();
-    }
+    this._subEntry('validationMultipleLimitMsg', () => this._debouncedCalculateState());
+    this._subEntry('validationErrorMsg', () => this._debouncedCalculateState());
+    this._subEntry('uploadError', () => this._debouncedCalculateState());
+    this._subEntry('isUploading', () => this._debouncedCalculateState());
+    this._subEntry('fileSize', () => this._debouncedCalculateState());
+    this._subEntry('mimeType', () => this._debouncedCalculateState());
+    this._subEntry('isImage', () => this._debouncedCalculateState());
 
     if (this._isIntersecting) {
       this._debouncedGenerateThumb();
@@ -343,9 +265,7 @@ export class FileItem extends UploaderBlock {
       this._handleState(state);
     });
 
-    this.sub('--cfg-use-cloud-image-editor', () => {
-      this._handleState(this.$.state);
-    });
+    this.subConfigValue('useCloudImageEditor', () => this._debouncedCalculateState());
 
     this.onclick = () => {
       FileItem.activeInstances.forEach((inst) => {
@@ -360,10 +280,10 @@ export class FileItem extends UploaderBlock {
     this.$['*uploadTrigger'] = null;
 
     this.sub('*uploadTrigger', (val) => {
-      if (!val || !this.isConnected) {
+      if (!val) {
         return;
       }
-      this.upload();
+      setTimeout(() => this.isConnected && this.upload());
     });
     FileItem.activeInstances.add(this);
   }
@@ -372,14 +292,18 @@ export class FileItem extends UploaderBlock {
   _handleState(state) {
     this.set$({
       isFailed: state === FileItemState.FAILED,
+      isLimitOverflow: state === FileItemState.LIMIT_OVERFLOW,
       isUploading: state === FileItemState.UPLOADING,
       isFinished: state === FileItemState.FINISHED,
       progressVisible: state === FileItemState.UPLOADING,
-      isEditable:
-        this.$['--cfg-use-cloud-image-editor'] && state === FileItemState.FINISHED && this._entry?.getValue('isImage'),
+      isEditable: this.cfg.useCloudImageEditor && state === FileItemState.FINISHED && this._entry?.getValue('isImage'),
+      errorText:
+        this._entry.getValue('uploadError')?.message ||
+        this._entry.getValue('validationErrorMsg') ||
+        this._entry.getValue('validationMultipleLimitMsg'),
     });
 
-    if (state === FileItemState.FAILED) {
+    if (state === FileItemState.FAILED || state === FileItemState.LIMIT_OVERFLOW) {
       this.$.badgeIcon = 'badge-error';
     } else if (state === FileItemState.FINISHED) {
       this.$.badgeIcon = 'badge-success';
@@ -421,12 +345,28 @@ export class FileItem extends UploaderBlock {
 
   async upload() {
     let entry = this._entry;
-    if (entry.getValue('fileInfo') || entry.getValue('isUploading') || entry.getValue('validationErrorMsg')) {
+
+    if (!this.uploadCollection.read(entry.uid)) {
+      return;
+    }
+
+    if (
+      entry.getValue('fileInfo') ||
+      entry.getValue('isUploading') ||
+      entry.getValue('uploadError') ||
+      entry.getValue('validationErrorMsg') ||
+      entry.getValue('validationMultipleLimitMsg')
+    ) {
+      return;
+    }
+    const multipleMax = this.cfg.multiple ? this.cfg.multipleMax : 1;
+    if (multipleMax && this.uploadCollection.size > multipleMax) {
       return;
     }
     let data = this.getOutputData((dataItem) => {
       return !dataItem.getValue('fileInfo');
     });
+
     EventManager.emit(
       new EventData({
         type: EVENT_TYPES.UPLOAD_START,
@@ -439,6 +379,7 @@ export class FileItem extends UploaderBlock {
     entry.setValue('isUploading', true);
     entry.setValue('uploadError', null);
     entry.setValue('validationErrorMsg', null);
+    entry.setValue('validationMultipleLimitMsg', null);
 
     if (!entry.getValue('file') && entry.getValue('externalUrl')) {
       this.$.progressUnknown = true;
@@ -447,9 +388,10 @@ export class FileItem extends UploaderBlock {
       let abortController = new AbortController();
       entry.setValue('abortController', abortController);
 
-      const uploadTask = () =>
-        uploadFile(entry.getValue('file') || entry.getValue('externalUrl') || entry.getValue('uuid'), {
-          ...this.getUploadClientOptions(),
+      const uploadTask = async () => {
+        const uploadClientOptions = await this.getUploadClientOptions();
+        return uploadFile(entry.getValue('file') || entry.getValue('externalUrl') || entry.getValue('uuid'), {
+          ...uploadClientOptions,
           fileName: entry.getValue('fileName'),
           source: entry.getValue('source'),
           onProgress: (progress) => {
@@ -461,6 +403,7 @@ export class FileItem extends UploaderBlock {
           },
           signal: abortController.signal,
         });
+      };
 
       let fileInfo = await this.$['*uploadQueue'].add(uploadTask);
       entry.setMultipleValues({
@@ -478,6 +421,8 @@ export class FileItem extends UploaderBlock {
         this._debouncedCalculateState();
       }
     } catch (error) {
+      console.warn('Upload error', error);
+
       entry.setMultipleValues({
         abortController: null,
         isUploading: false,
@@ -488,15 +433,22 @@ export class FileItem extends UploaderBlock {
         this._debouncedCalculateState();
       }
 
-      if (!error?.isCancel) {
-        entry.setValue('uploadError', error);
+      if (error instanceof UploadClientError) {
+        if (!error.isCancel) {
+          entry.setValue('uploadError', error);
+        }
+      } else {
+        entry.setValue('uploadError', new Error('Unexpected error'));
       }
     }
   }
 }
 
 FileItem.template = /* HTML */ `
-  <div class="inner" set="@finished: isFinished; @uploading: isUploading; @failed: isFailed; @focused: isFocused">
+  <div
+    class="inner"
+    set="@finished: isFinished; @uploading: isUploading; @failed: isFailed; @limit-overflow: isLimitOverflow; @focused: isFocused"
+  >
     <div class="thumb" set="style.backgroundImage: thumbUrl">
       <div class="badge">
         <lr-icon set="@name: badgeIcon"></lr-icon>

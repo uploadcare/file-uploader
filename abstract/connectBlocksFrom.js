@@ -1,6 +1,6 @@
 import { registerBlocks } from './registerBlocks.js';
 
-export const LR_WINDOW_KEY = '__lr-blocks__';
+export const LR_WINDOW_KEY = 'LR';
 
 /**
  * @param {String} url Blocks pack url
@@ -18,7 +18,7 @@ export async function connectBlocksFrom(url, register = false) {
       return;
     }
     let script = document.createElement('script');
-    script.type = 'module';
+    script.async = true;
     script.src = url;
     script.onerror = () => {
       reject();

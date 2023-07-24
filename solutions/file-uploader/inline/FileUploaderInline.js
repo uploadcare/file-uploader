@@ -24,4 +24,4 @@ FileUploaderInline.template = /* HTML */ ` <lr-start-from>
   <lr-external-source></lr-external-source>
   <lr-message-box></lr-message-box>
   <lr-progress-bar></lr-progress-bar>
-  <lr-cloud-image-editor></lr-cloud-image-editor>`;
+  <lr-cloud-image-editor-activity></lr-cloud-image-editor-activity>`;

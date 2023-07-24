@@ -10,19 +10,6 @@ import { MessageBox } from '../../../blocks/MessageBox/MessageBox.js';
 import { Copyright } from '../../../blocks/Copyright/Copyright.js';
 import { DataOutput } from '../../../blocks/DataOutput/DataOutput.js';
 
-registerBlocks({
-  FileUploaderMinimal,
-  StartFrom,
-  DropArea,
-  UploadList,
-  FileItem,
-  Icon,
-  ProgressBar,
-  MessageBox,
-  Copyright,
-  DataOutput,
-});
-
 export {
   registerBlocks,
   FileUploaderMinimal,

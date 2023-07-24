@@ -133,7 +133,7 @@ Block components can be used separately or in combinations. You can combine them
   <lr-camera-source></lr-camera-source>
   <lr-url-source></lr-url-source>
   <lr-external-source></lr-external-source>
-  <lr-cloud-image-editor></lr-cloud-image-editor>
+  <lr-cloud-image-editor-activity></lr-cloud-image-editor-activity>
 </lr-modal>
 
 <lr-message-box></lr-message-box>

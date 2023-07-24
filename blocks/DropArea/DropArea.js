@@ -1,7 +1,6 @@
 import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 import { DropzoneState, addDropzone } from './addDropzone.js';
-import { fileIsImage } from '../../utils/fileTypes.js';
 import { Modal } from '../Modal/Modal.js';
 import { stringToArray } from '../../utils/stringToArray.js';
 import { UploadSource } from '../utils/UploadSource.js';
@@ -17,11 +16,6 @@ export class DropArea extends UploaderBlock {
     isVisible: true,
     text: this.l10n('drop-files-here'),
     'lr-drop-area/targets': null,
-  };
-
-  cssInit$ = {
-    ...this.cssInit$,
-    '--cfg-source-list': '',
   };
 
   isActive() {
@@ -82,14 +76,7 @@ export class DropArea extends UploaderBlock {
         if (!items.length) {
           return;
         }
-        let isMultiple = this.getCssData('--cfg-multiple');
-        let multipleMax = this.getCssData('--cfg-multiple-max');
-        let currentFilesCount = this.uploadCollection.size;
-        if (isMultiple && multipleMax) {
-          items = items.slice(0, multipleMax - currentFilesCount - 1);
-        } else if (!isMultiple) {
-          items = items.slice(0, currentFilesCount > 0 ? 0 : 1);
-        }
+
         items.forEach((/** @type {File | String} */ item) => {
           if (typeof item === 'string') {
             this.addFileFromUrl(item, { source: UploadSource.DROP_AREA });
@@ -130,7 +117,7 @@ export class DropArea extends UploaderBlock {
       }
     });
 
-    this.sub('--cfg-source-list', (value) => {
+    this.subConfigValue('sourceList', (value) => {
       const list = stringToArray(value);
       // Enable drop area if local files are allowed
       this.$.isEnabled = list.includes(UploaderBlock.sourceTypes.LOCAL);
@@ -176,8 +163,8 @@ export class DropArea extends UploaderBlock {
 
   /** @private */
   _couldHandleFiles() {
-    let isMultiple = this.getCssData('--cfg-multiple');
-    let multipleMax = this.getCssData('--cfg-multiple-max');
+    let isMultiple = this.cfg.multiple;
+    let multipleMax = this.cfg.multipleMax;
     let currentFilesCount = this.uploadCollection.size;
 
     if (isMultiple && multipleMax && currentFilesCount >= multipleMax) {

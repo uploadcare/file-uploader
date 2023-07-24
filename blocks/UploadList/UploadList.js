@@ -1,13 +1,26 @@
+// @ts-check
 import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 import { UiMessage } from '../MessageBox/MessageBox.js';
 import { EVENT_TYPES, EventData, EventManager } from '../../abstract/EventManager.js';
 import { debounce } from '../utils/debounce.js';
 
+/**
+ * @typedef {{
+ *   total: number;
+ *   succeed: number;
+ *   uploading: number;
+ *   failed: number;
+ *   limitOverflow: number;
+ * }} Summary
+ */
+
 export class UploadList extends UploaderBlock {
+  couldBeUploadCollectionOwner = true;
   historyTracked = true;
   activityType = ActivityBlock.activities.UPLOAD_LIST;
 
+  // @ts-ignore TODO: fix this
   init$ = {
     ...this.init$,
     doneBtnVisible: false,
@@ -43,13 +56,6 @@ export class UploadList extends UploaderBlock {
     },
   };
 
-  cssInit$ = {
-    ...this.cssInit$,
-    '--cfg-multiple': 1,
-    '--cfg-multiple-min': 0,
-    '--cfg-multiple-max': 0,
-  };
-
   _debouncedHandleCollectionUpdate = debounce(() => {
     if (!this.isConnected) {
       return;
@@ -63,9 +69,9 @@ export class UploadList extends UploaderBlock {
    * @returns {{ passed: Boolean; tooFew: Boolean; tooMany: Boolean; exact: Boolean; min: Number; max: Number }}
    */
   _validateFilesCount() {
-    let multiple = !!this.getCssData('--cfg-multiple');
-    let min = multiple ? this.getCssData('--cfg-multiple-min') ?? 0 : 1;
-    let max = multiple ? this.getCssData('--cfg-multiple-max') ?? 0 : 1;
+    let multiple = !!this.cfg.multiple;
+    let min = multiple ? this.cfg.multipleMin ?? 0 : 1;
+    let max = multiple ? this.cfg.multipleMax ?? 0 : 1;
     let count = this.uploadCollection.size;
 
     let tooFew = min ? count < min : false;
@@ -102,6 +108,10 @@ export class UploadList extends UploaderBlock {
       this.set$({
         '*message': msg,
       });
+    } else {
+      this.set$({
+        '*message': null,
+      });
     }
   }
 
@@ -109,11 +119,13 @@ export class UploadList extends UploaderBlock {
   _updateUploadsState() {
     let itemIds = this.uploadCollection.items();
     let filesCount = itemIds.length;
+    /** @type {Summary} */
     let summary = {
       total: filesCount,
       succeed: 0,
       uploading: 0,
       failed: 0,
+      limitOverflow: 0,
     };
     for (let id of itemIds) {
       let item = this.uploadCollection.read(id);
@@ -126,14 +138,23 @@ export class UploadList extends UploaderBlock {
       if (item.getValue('validationErrorMsg') || item.getValue('uploadError')) {
         summary.failed += 1;
       }
+      if (item.getValue('validationMultipleLimitMsg')) {
+        summary.limitOverflow += 1;
+      }
     }
-    let allDone = summary.total === summary.succeed + summary.failed;
-    let { passed: fitCountRestrictions, tooMany, exact } = this._validateFilesCount();
-    let fitValidation = summary.failed === 0;
+    const { passed: fitCountRestrictions, tooMany, exact } = this._validateFilesCount();
+    const validationOk = summary.failed === 0 && summary.limitOverflow === 0;
+    let uploadBtnVisible = false;
+    let allDone = false;
+    let doneBtnEnabled = false;
 
-    let doneBtnEnabled = summary.total > 0 && fitCountRestrictions && fitValidation;
-    let uploadBtnVisible =
-      !allDone && summary.total - summary.succeed - summary.uploading - summary.failed > 0 && fitCountRestrictions;
+    const readyToUpload = summary.total - summary.succeed - summary.uploading - summary.failed;
+    if (readyToUpload > 0 && fitCountRestrictions) {
+      uploadBtnVisible = true;
+    } else {
+      allDone = true;
+      doneBtnEnabled = summary.total === summary.succeed && fitCountRestrictions && validationOk;
+    }
 
     this.set$({
       doneBtnVisible: allDone,
@@ -142,14 +163,18 @@ export class UploadList extends UploaderBlock {
       uploadBtnVisible,
 
       addMoreBtnEnabled: summary.total === 0 || (!tooMany && !exact),
-      addMoreBtnVisible: !exact || this.getCssData('--cfg-multiple'),
+      addMoreBtnVisible: !exact || this.cfg.multiple,
 
       headerText: this._getHeaderText(summary),
     });
   }
 
-  /** @private */
+  /**
+   * @private
+   * @param {Summary} summary
+   */
   _getHeaderText(summary) {
+    /** @param {keyof Summary} status */
     const localizedText = (status) => {
       const count = summary[status];
       return this.l10n(`header-${status}`, {
@@ -174,16 +199,12 @@ export class UploadList extends UploaderBlock {
 
     this.registerActivity(this.activityType);
 
-    this.sub('--cfg-multiple', this._debouncedHandleCollectionUpdate);
-    this.sub('--cfg-multiple-min', this._debouncedHandleCollectionUpdate);
-    this.sub('--cfg-multiple-max', this._debouncedHandleCollectionUpdate);
+    this.subConfigValue('multiple', this._debouncedHandleCollectionUpdate);
+    this.subConfigValue('multipleMin', this._debouncedHandleCollectionUpdate);
+    this.subConfigValue('multipleMax', this._debouncedHandleCollectionUpdate);
 
     this.sub('*currentActivity', (currentActivity) => {
-      if (
-        this.uploadCollection?.size === 0 &&
-        !this.getCssData('--cfg-show-empty-list') &&
-        currentActivity === this.activityType
-      ) {
+      if (this.uploadCollection?.size === 0 && !this.cfg.showEmptyList && currentActivity === this.activityType) {
         this.$['*currentActivity'] = this.initActivity;
       }
     });
@@ -199,8 +220,17 @@ export class UploadList extends UploaderBlock {
         hasFiles: list.length > 0,
       });
 
-      if (list?.length === 0 && !this.getCssData('--cfg-show-empty-list')) {
+      if (list?.length === 0 && !this.cfg.showEmptyList) {
         this.historyBack();
+      }
+
+      if (!this.cfg.confirmUpload) {
+        this.add$(
+          {
+            '*uploadTrigger': {},
+          },
+          true
+        );
       }
     });
   }

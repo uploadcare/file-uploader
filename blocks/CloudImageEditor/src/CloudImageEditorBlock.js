@@ -1,3 +1,4 @@
+// @ts-check
 import {
   createCdnUrl,
   createCdnUrlModifiers,
@@ -6,7 +7,7 @@ import {
   extractUuid,
 } from '../../../utils/cdn-utils.js';
 import { TRANSPARENT_PIXEL_SRC } from '../../../utils/transparentPixelSrc.js';
-import { ShadowWrapper } from '../../ShadowWrapper/ShadowWrapper.js';
+import { CloudImageEditorBase } from './CloudImageEditorBase.js';
 import { classNames } from './lib/classNames.js';
 import { debounce } from './lib/debounce.js';
 import { operationsToTransformations, transformationsToOperations } from './lib/transformationUtils.js';
@@ -14,21 +15,28 @@ import { initState } from './state.js';
 import { TEMPLATE } from './template.js';
 import { TabId } from './toolbar-constants.js';
 
-export class CloudEditor extends ShadowWrapper {
-  pauseRender = true;
+export class CloudImageEditorBlock extends CloudImageEditorBase {
+  static className = 'cloud-image-editor';
 
+  // @ts-ignore TODO: fix this
+  init$ = {
+    ...this.init$,
+    // @ts-ignore TODO: fix this
+    ...initState(this),
+  };
+
+  /** Force cloud editor to always use own context */
   get ctxName() {
     return this.autoCtxName;
   }
 
-  init$ = {
-    ...this.init$,
-    ...initState(this),
-  };
-
   /** @private */
   _debouncedShowLoader = debounce(this._showLoader.bind(this), 300);
 
+  /**
+   * @private
+   * @param {boolean} show
+   */
   _showLoader(show) {
     this.$.showLoader = show;
   }
@@ -56,17 +64,6 @@ export class CloudEditor extends ShadowWrapper {
     });
   }
 
-  cssInit$ = {
-    ...this.cssInit$,
-    '--cfg-cdn-cname': 'https://ucarecdn.com',
-  };
-
-  shadowReadyCallback() {
-    if (this.renderShadow) {
-      this.initEditor();
-    }
-  }
-
   initCallback() {
     super.initCallback();
 
@@ -74,9 +71,7 @@ export class CloudEditor extends ShadowWrapper {
     this.$['*cropperEl'] = this.ref['cropper-el'];
     this.$['*imgContainerEl'] = this.ref['img-container-el'];
 
-    if (!this.renderShadow) {
-      this.initEditor();
-    }
+    this.initEditor();
   }
 
   async initEditor() {
@@ -84,12 +79,13 @@ export class CloudEditor extends ShadowWrapper {
       await this._waitForSize();
     } catch (err) {
       if (this.isConnected) {
+        // @ts-ignore TODO: fix this
         console.error(err.message);
       }
       return;
     }
 
-    this.ref['img-el'].addEventListener('load', (e) => {
+    this.ref['img-el'].addEventListener('load', () => {
       this._imgLoading = false;
       this._debouncedShowLoader(false);
 
@@ -98,7 +94,7 @@ export class CloudEditor extends ShadowWrapper {
       }
     });
 
-    this.ref['img-el'].addEventListener('error', (e) => {
+    this.ref['img-el'].addEventListener('error', () => {
       this._imgLoading = false;
       this._debouncedShowLoader(false);
 
@@ -127,7 +123,7 @@ export class CloudEditor extends ShadowWrapper {
       let transformations = operationsToTransformations(operations);
       this.$['*editorTransformations'] = transformations;
     } else if (this.$.uuid) {
-      this.$['*originalUrl'] = createOriginalUrl(this.localCtx.read('--cfg-cdn-cname'), this.$.uuid);
+      this.$['*originalUrl'] = createOriginalUrl(this.cfg.cdnCname, this.$.uuid);
     } else {
       throw new Error('No UUID nor CDN URL provided');
     }
@@ -167,7 +163,8 @@ export class CloudEditor extends ShadowWrapper {
     try {
       fetch(createCdnUrl(this.$['*originalUrl'], createCdnUrlModifiers('json')))
         .then((response) => response.json())
-        .then(({ width, height }) => {
+        .then((json) => {
+          const { width, height } = /** @type {{ width: number; height: number }} */ (json);
           this.$['*imageSize'] = { width, height };
         });
     } catch (err) {
@@ -178,8 +175,8 @@ export class CloudEditor extends ShadowWrapper {
   }
 }
 
-CloudEditor.template = TEMPLATE;
-CloudEditor.bindAttributes({
+CloudImageEditorBlock.template = TEMPLATE;
+CloudImageEditorBlock.bindAttributes({
   uuid: 'uuid',
   'cdn-url': 'cdnUrl',
 });

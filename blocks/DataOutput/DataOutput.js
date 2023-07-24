@@ -12,11 +12,6 @@ export class DataOutput extends UploaderBlock {
     filesData: null,
   };
 
-  cssInit$ = {
-    ...this.cssInit$,
-    '--cfg-group-output': 0,
-  };
-
   get dict() {
     return DataOutput.dict;
   }
@@ -93,12 +88,13 @@ export class DataOutput extends UploaderBlock {
           return;
         }
         this.$.filesData = data;
-        if (this.getCssData('--cfg-group-output') || this.hasAttribute(this.dict.GROUP_ATTR)) {
+        if (this.cfg.groupOutput || this.hasAttribute(this.dict.GROUP_ATTR)) {
           let uuidList = data.map((fileDesc) => {
             return fileDesc.uuid;
           });
+          const uploadClientOptions = await this.getUploadClientOptions();
           let resp = await uploadFileGroup(uuidList, {
-            ...this.getUploadClientOptions(),
+            ...uploadClientOptions,
           });
           this.$.output = {
             groupData: resp,
@@ -113,8 +109,7 @@ export class DataOutput extends UploaderBlock {
   }
 }
 
-/** @enum {Object<[x: string], string>} */
-DataOutput.dict = {
+DataOutput.dict = Object.freeze({
   SRC_CTX_KEY: '*outputData',
   EVENT_NAME: 'lr-data-output',
   FIRE_EVENT_ATTR: 'use-event',
@@ -123,4 +118,4 @@ DataOutput.dict = {
   FORM_INPUT_ATTR: 'use-input',
   INPUT_NAME_ATTR: 'input-name',
   INPUT_REQUIRED: 'input-required',
-};
+});

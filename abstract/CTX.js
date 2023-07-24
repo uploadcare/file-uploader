@@ -1,3 +1,4 @@
+// @ts-check
 import { Queue } from '@uploadcare/upload-client';
 
 export const blockCtx = () => ({
@@ -5,6 +6,7 @@ export const blockCtx = () => ({
   '*blocksRegistry': new Set(),
 });
 
+/** @param {import('./Block').Block} fnCtx */
 export const activityBlockCtx = (fnCtx) => ({
   ...blockCtx(),
   '*currentActivity': '',
@@ -19,6 +21,7 @@ export const activityBlockCtx = (fnCtx) => ({
   },
 });
 
+/** @param {import('./Block').Block} fnCtx */
 export const uploaderBlockCtx = (fnCtx) => ({
   ...activityBlockCtx(fnCtx),
   '*commonProgress': 0,

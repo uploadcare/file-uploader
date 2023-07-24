@@ -28,7 +28,7 @@ lr-file-item > .inner[uploading] .edit-btn {
   display: none;
 }
 
-lr-file-item > .inner[failed] {
+lr-file-item > :where(.inner[failed], .inner[limit-overflow]) {
   background-color: var(--clr-error-lightest);
 }
 
@@ -97,8 +97,7 @@ lr-file-item .badge {
   transition: var(--transition-duration) ease;
 }
 
-lr-file-item > .inner[failed] .badge,
-lr-file-item > .inner[finished] .badge {
+lr-file-item > .inner:where([failed], [limit-overflow], [finished]) .badge {
   transform: scale(1);
   opacity: 1;
 }
@@ -107,11 +106,11 @@ lr-file-item > .inner[finished] .badge {
   background-color: var(--clr-confirm);
 }
 
-lr-file-item > .inner[failed] .badge {
+lr-file-item > .inner:where([failed], [limit-overflow]) .badge {
   background-color: var(--clr-error);
 }
 
-lr-file-item > .inner[failed] .file-error {
+lr-file-item > .inner:where([failed], [limit-overflow]) .file-error {
   display: block;
 }
 

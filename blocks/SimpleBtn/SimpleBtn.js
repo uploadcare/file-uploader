@@ -1,6 +1,8 @@
+// @ts-check
 import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 
 export class SimpleBtn extends UploaderBlock {
+  // @ts-ignore TODO: fix this
   init$ = {
     ...this.init$,
     '*simpleButtonText': '',
@@ -11,8 +13,7 @@ export class SimpleBtn extends UploaderBlock {
 
   initCallback() {
     super.initCallback();
-    this.bindCssData('--cfg-multiple');
-    this.sub('--cfg-multiple', (val) => {
+    this.subConfigValue('multiple', (val) => {
       this.$['*simpleButtonText'] = val ? this.l10n('upload-files') : this.l10n('upload-file');
     });
   }

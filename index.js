@@ -6,6 +6,7 @@ export { BaseComponent, Data } from '@symbiotejs/symbiote';
 export { Block } from './abstract/Block.js';
 export { ActivityBlock } from './abstract/ActivityBlock.js';
 export { UploaderBlock } from './abstract/UploaderBlock.js';
+export { Config } from './blocks/Config/Config.js';
 
 // Blocks:
 export { Icon } from './blocks/Icon/Icon.js';
@@ -28,24 +29,29 @@ export { ProgressBarCommon } from './blocks/ProgressBarCommon/ProgressBarCommon.
 export { ProgressBar } from './blocks/ProgressBar/ProgressBar.js';
 // export { EditableCanvas } from './blocks/EditableCanvas/EditableCanvas.js';
 export { FilePreview } from './blocks/FilePreview/FilePreview.js';
-export { CloudImageEditor } from './blocks/CloudImageEditor/CloudImageEditor.js';
+export * from './blocks/CloudImageEditor/index.js';
+export { CloudImageEditorActivity } from './blocks/CloudImageEditorActivity/CloudImageEditorActivity.js';
 export { ExternalSource } from './blocks/ExternalSource/ExternalSource.js';
 export { Tabs } from './blocks/Tabs/Tabs.js';
 export { DataOutput } from './blocks/DataOutput/DataOutput.js';
 export { ActivityHeader } from './blocks/ActivityHeader/ActivityHeader.js';
 export { Select } from './blocks/Select/Select.js';
 export { Video } from './blocks/Video/Video.js';
-export { ShadowWrapper } from './blocks/ShadowWrapper/ShadowWrapper.js';
+export { ShadowWrapper, shadowed } from './blocks/ShadowWrapper/ShadowWrapper.js';
 export { Copyright } from './blocks/Copyright/Copyright.js';
 
 // Solutions:
 export { FileUploaderRegular } from './solutions/file-uploader/regular/FileUploaderRegular.js';
 export { FileUploaderMinimal } from './solutions/file-uploader/minimal/FileUploaderMinimal.js';
 export { FileUploaderInline } from './solutions/file-uploader/inline/FileUploaderInline.js';
-export * from './solutions/cloud-image-editor/CloudEditor.js';
+export { CloudImageEditor } from './solutions/cloud-image-editor/CloudImageEditor.js';
 
 // Utils:
 export { registerBlocks } from './abstract/registerBlocks.js';
 export { connectBlocksFrom } from './abstract/connectBlocksFrom.js';
+export { toKebabCase } from './utils/toKebabCase.js';
 
 export * from './env.js';
+
+// eslint-disable-next-line import/export
+export * from './types/index.js';

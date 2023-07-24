@@ -1,8 +1,8 @@
-import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
-import { CloudEditor } from './index.js';
+import { UploaderBlock } from '../../abstract/UploaderBlock.js';
+import { CloudImageEditorBlock } from '../CloudImageEditor/index.js';
 
-export class CloudImageEditor extends UploaderBlock {
+export class CloudImageEditorActivity extends UploaderBlock {
   activityType = ActivityBlock.activities.CLOUD_IMG_EDIT;
 
   init$ = {
@@ -12,7 +12,6 @@ export class CloudImageEditor extends UploaderBlock {
 
   initCallback() {
     super.initCallback();
-    this.bindCssData('--cfg-pubkey');
 
     this.registerActivity(this.activityType, {
       onActivate: () => this.mountEditor(),
@@ -48,9 +47,9 @@ export class CloudImageEditor extends UploaderBlock {
   }
 
   mountEditor() {
-    let instance = new CloudEditor();
-    instance.classList.add('lr-cldtr-common');
+    let instance = new CloudImageEditorBlock();
     let cdnUrl = this.$.cdnUrl;
+    instance.setAttribute('ctx-name', this.ctxName);
     instance.setAttribute('cdn-url', cdnUrl);
 
     instance.addEventListener('apply', (result) => this.handleApply(result));

@@ -2,7 +2,7 @@
 import { ActivityBlock } from './ActivityBlock.js';
 
 import { Data } from '@symbiotejs/symbiote';
-import { IMAGE_ACCEPT_LIST, mergeFileTypes, fileIsImage } from '../utils/fileTypes.js';
+import { IMAGE_ACCEPT_LIST, mergeFileTypes, fileIsImage, matchMimeType, matchExtension } from '../utils/fileTypes.js';
 import { uploadEntrySchema } from './uploadEntrySchema.js';
 import { customUserAgent } from '../blocks/utils/userAgent.js';
 import { TypedCollection } from './TypedCollection.js';
@@ -10,18 +10,27 @@ import { uploaderBlockCtx } from './CTX.js';
 import { EVENT_TYPES, EventData, EventManager } from './EventManager.js';
 import { Modal } from '../blocks/Modal/Modal.js';
 import { stringToArray } from '../utils/stringToArray.js';
+import { warnOnce } from '../utils/warnOnce.js';
 import { UploadSource } from '../blocks/utils/UploadSource.js';
+import { prettyBytes } from '../utils/prettyBytes.js';
+import { debounce } from '../blocks/utils/debounce.js';
 
 export class UploaderBlock extends ActivityBlock {
+  couldBeUploadCollectionOwner = false;
+  isUploadCollectionOwner = false;
+
   init$ = uploaderBlockCtx(this);
-  // @ts-ignore TODO: fix this
-  cssInit$ = {
-    ...this.cssInit$,
-    '--cfg-max-concurrent-requests': 1,
-  };
 
   /** @private */
   __initialUploadMetadata = null;
+
+  /** @private */
+  _validators = [
+    this._validateMultipleLimit.bind(this),
+    this._validateIsImage.bind(this),
+    this._validateFileType.bind(this),
+    this._validateMaxSizeLimit.bind(this),
+  ];
 
   /**
    * This is Public JS API method. Could be called before block initialization, so we need to delay state interactions
@@ -30,12 +39,15 @@ export class UploaderBlock extends ActivityBlock {
    * TODO: If we add more public methods, it is better to use the single queue instead of tons of private fields per
    * each method. See https://github.com/uploadcare/blocks/pull/162/
    *
+   * @deprecated Use `metadata` instance property on `lr-config` block instead.
    * @param {import('@uploadcare/upload-client').Metadata} metadata
    * @public
    */
   setUploadMetadata(metadata) {
+    warnOnce(
+      'setUploadMetadata is deprecated. Use `metadata` instance property on `lr-config` block instead. See migration guide: https://uploadcare.com/docs/file-uploader/migration-to-0.25.0/'
+    );
     if (!this.connectedOnce) {
-      // TODO: move to config block
       // @ts-ignore TODO: fix this
       this.__initialUploadMetadata = metadata;
     } else {
@@ -46,22 +58,76 @@ export class UploaderBlock extends ActivityBlock {
   initCallback() {
     super.initCallback();
 
+    if (!this.has('*uploadCollection')) {
+      let uploadCollection = new TypedCollection({
+        typedSchema: uploadEntrySchema,
+        watchList: [
+          'uploadProgress',
+          'fileInfo',
+          'uploadError',
+          'validationErrorMsg',
+          'validationMultipleLimitMsg',
+          'cdnUrlModifiers',
+        ],
+      });
+      this.add('*uploadCollection', uploadCollection);
+    }
+
+    const hasUploadCollectionOwner = () =>
+      this.hasBlockInCtx((block) => {
+        if (block instanceof UploaderBlock) {
+          return block.isUploadCollectionOwner && block.isConnected && block !== this;
+        }
+        return false;
+      });
+
+    if (this.couldBeUploadCollectionOwner && !hasUploadCollectionOwner()) {
+      this.isUploadCollectionOwner = true;
+
+      /**
+       * @private
+       * @type {Parameters<import('./TypedCollection.js').TypedCollection['setHandler']>[0]}
+       */
+      this.__uploadCollectionHandler = (entries, added, removed) => {
+        this._runValidators();
+
+        for (let entry of removed) {
+          entry?.getValue('abortController')?.abort();
+          entry?.setValue('abortController', null);
+          URL.revokeObjectURL(entry?.getValue('thumbUrl'));
+        }
+        this.$['*uploadList'] = entries.map((uid) => {
+          return { uid };
+        });
+      };
+      this.uploadCollection.setHandler(this.__uploadCollectionHandler);
+
+      this.uploadCollection.observe(this._handleCollectionUpdate);
+
+      this.subConfigValue('maxLocalFileSizeBytes', () => this._debouncedRunValidators());
+      this.subConfigValue('multipleMin', () => this._debouncedRunValidators());
+      this.subConfigValue('multipleMax', () => this._debouncedRunValidators());
+      this.subConfigValue('multiple', () => this._debouncedRunValidators());
+      this.subConfigValue('imgOnly', () => this._debouncedRunValidators());
+      this.subConfigValue('accept', () => this._debouncedRunValidators());
+    }
+
     if (this.__initialUploadMetadata) {
       this.$['*uploadMetadata'] = this.__initialUploadMetadata;
     }
 
-    this.sub('--cfg-max-concurrent-requests', (value) => {
+    this.subConfigValue('maxConcurrentRequests', (value) => {
       this.$['*uploadQueue'].concurrency = Number(value) || 1;
     });
   }
 
   destroyCallback() {
     super.destroyCallback();
-
-    let blocksRegistry = this.$['*blocksRegistry'];
-    if (blocksRegistry.has(this)) {
+    if (this.isUploadCollectionOwner) {
       this.uploadCollection.unobserve(this._handleCollectionUpdate);
-      blocksRegistry.delete(this);
+      if (this.uploadCollection.getHandler() === this.__uploadCollectionHandler) {
+        this.uploadCollection.removeHandler();
+      }
     }
   }
 
@@ -135,21 +201,18 @@ export class UploaderBlock extends ActivityBlock {
 
   /** @param {{ captureCamera?: boolean }} options */
   openSystemDialog(options = {}) {
-    let accept = mergeFileTypes([
-      this.getCssData('--cfg-accept'),
-      ...(this.getCssData('--cfg-img-only') ? IMAGE_ACCEPT_LIST : []),
-    ]).join(',');
+    let accept = mergeFileTypes([this.cfg.accept ?? '', ...(this.cfg.imgOnly ? IMAGE_ACCEPT_LIST : [])]).join(',');
 
-    if (this.getCssData('--cfg-accept') && !!this.getCssData('--cfg-img-only')) {
+    if (this.cfg.accept && !!this.cfg.imgOnly) {
       console.warn(
         'There could be a mistake.\n' +
-          'Both `--cfg-accept` and `--cfg-img-only` parameters are set.\n' +
-          'The value of `--cfg-accept` will be concatenated with the internal image mime types list.'
+          'Both `accept` and `imgOnly` parameters are set.\n' +
+          'The value of `accept` will be concatenated with the internal image mime types list.'
       );
     }
     this.fileInput = document.createElement('input');
     this.fileInput.type = 'file';
-    this.fileInput.multiple = !!this.getCssData('--cfg-multiple');
+    this.fileInput.multiple = this.cfg.multiple;
     if (options.captureCamera) {
       this.fileInput.capture = '';
       this.fileInput.accept = IMAGE_ACCEPT_LIST.join(',');
@@ -173,9 +236,10 @@ export class UploaderBlock extends ActivityBlock {
   get sourceList() {
     /** @type {string[]} */
     let list = [];
-    if (this.getCssData('--cfg-source-list')) {
-      list = stringToArray(this.getCssData('--cfg-source-list'));
+    if (this.cfg.sourceList) {
+      list = stringToArray(this.cfg.sourceList);
     }
+    // @ts-ignore TODO: fix this
     return list;
   }
 
@@ -244,31 +308,133 @@ export class UploaderBlock extends ActivityBlock {
 
   /** @returns {TypedCollection} */
   get uploadCollection() {
-    if (!this.has('*uploadCollection')) {
-      let uploadCollection = new TypedCollection({
-        typedSchema: uploadEntrySchema,
-        watchList: ['uploadProgress', 'fileInfo', 'uploadError', 'validationErrorMsg', 'cdnUrlModifiers'],
-        handler: (entries, added, removed) => {
-          for (let entry of removed) {
-            entry?.getValue('abortController')?.abort();
-            entry?.setValue('abortController', null);
-            URL.revokeObjectURL(entry?.getValue('thumbUrl'));
-          }
-          this.$['*uploadList'] = entries.map((uid) => {
-            return { uid };
-          });
-        },
-      });
-      uploadCollection.observe(this._handleCollectionUpdate);
-      this.add('*uploadCollection', uploadCollection);
-    }
     return this.$['*uploadCollection'];
   }
 
+  /**
+   * @private
+   * @param {import('./TypedData.js').TypedData} entry
+   */
+  _validateFileType(entry) {
+    const imagesOnly = this.cfg.imgOnly;
+    const accept = this.cfg.accept;
+    const allowedFileTypes = mergeFileTypes([...(imagesOnly ? IMAGE_ACCEPT_LIST : []), accept]);
+    if (!allowedFileTypes.length) return;
+
+    const mimeType = entry.getValue('mimeType');
+    const fileName = entry.getValue('fileName');
+
+    if (!mimeType || !fileName) {
+      // Skip client validation if mime type or file name are not available for some reasons
+      return;
+    }
+
+    const mimeOk = matchMimeType(mimeType, allowedFileTypes);
+    const extOk = matchExtension(fileName, allowedFileTypes);
+
+    if (!mimeOk && !extOk) {
+      // Assume file type is not allowed if both mime and ext checks fail
+      return this.l10n('file-type-not-allowed');
+    }
+  }
+
+  /**
+   * @private
+   * @param {import('./TypedData.js').TypedData} entry
+   */
+  _validateMaxSizeLimit(entry) {
+    const maxFileSize = this.cfg.maxLocalFileSizeBytes;
+    const fileSize = entry.getValue('fileSize');
+    if (maxFileSize && fileSize && fileSize > maxFileSize) {
+      return this.l10n('files-max-size-limit-error', { maxFileSize: prettyBytes(maxFileSize) });
+    }
+  }
+
+  /**
+   * @private
+   * @param {import('./TypedData.js').TypedData} entry
+   */
+  _validateMultipleLimit(entry) {
+    const entryIds = this.uploadCollection.items();
+    const entryIdx = entryIds.indexOf(entry.uid);
+    const multipleMax = this.cfg.multiple ? this.cfg.multipleMax : 1;
+
+    if (multipleMax && entryIdx >= multipleMax) {
+      const message = this.l10n('files-count-allowed', {
+        count: multipleMax,
+      });
+      return message;
+    }
+  }
+
+  /**
+   * @private
+   * @param {import('./TypedData.js').TypedData} entry
+   */
+  _validateIsImage(entry) {
+    const imagesOnly = this.cfg.imgOnly;
+    const isImage = entry.getValue('isImage');
+    if (!imagesOnly || isImage) {
+      return;
+    }
+    if (!entry.getValue('fileInfo') && entry.getValue('externalUrl')) {
+      // skip validation for not uploaded files with external url, cause we don't know if they're images or not
+      return;
+    }
+    if (!entry.getValue('fileInfo') && !entry.getValue('mimeType')) {
+      // skip validation for not uploaded files without mime-type, cause we don't know if they're images or not
+      return;
+    }
+    return this.l10n('images-only-accepted');
+  }
+
+  /**
+   * @private
+   * @param {import('./TypedData.js').TypedData} entry
+   */
+  _runValidatorsForEntry(entry) {
+    for (const validator of this._validators) {
+      const errorMsg = validator(entry);
+      if (errorMsg) {
+        entry.setValue('validationErrorMsg', errorMsg);
+        return;
+      }
+    }
+    entry.setValue('validationErrorMsg', null);
+  }
+
   /** @private */
-  // @ts-ignore TODO: fix this
+  _debouncedRunValidators = debounce(this._runValidators.bind(this), 100);
+
+  /** @private */
+  _runValidators() {
+    for (const id of this.uploadCollection.items()) {
+      setTimeout(() => {
+        const entry = this.uploadCollection.read(id);
+        entry && this._runValidatorsForEntry(entry);
+      });
+    }
+  }
+
+  /**
+   * @private
+   * @param {Record<string, any>} changeMap
+   */
   _handleCollectionUpdate = (changeMap) => {
-    let uploadCollection = this.uploadCollection;
+    const uploadCollection = this.uploadCollection;
+    const updatedEntries = [
+      ...new Set(
+        Object.values(changeMap)
+          .map((ids) => [...ids])
+          .flat()
+      ),
+    ]
+      .map((id) => uploadCollection.read(id))
+      .filter(Boolean);
+
+    for (const entry of updatedEntries) {
+      this._runValidatorsForEntry(entry);
+    }
     if (changeMap.uploadProgress) {
       let commonProgress = 0;
       /** @type {String[]} */
@@ -361,27 +527,35 @@ export class UploaderBlock extends ActivityBlock {
     }
   };
 
-  /** @returns {import('@uploadcare/upload-client').FileFromOptions} */
-  getUploadClientOptions() {
-    let store = this.getCssData('--cfg-store', true);
+  /** @private */
+  async getMetadata() {
+    const configValue = this.cfg.metadata ?? /** @type {import('../types').Metadata} */ (this.$['*uploadMetadata']);
+    if (typeof configValue === 'function') {
+      const metadata = await configValue();
+      return metadata;
+    }
+    return configValue;
+  }
+
+  /** @returns {Promise<import('@uploadcare/upload-client').FileFromOptions>} */
+  async getUploadClientOptions() {
     let options = {
-      // undefined 'store' means 'auto'
-      store: store === null ? undefined : !!store,
-      publicKey: this.getCssData('--cfg-pubkey'),
-      baseCDN: this.getCssData('--cfg-cdn-cname'),
-      baseURL: this.getCssData('--cfg-base-url'),
+      store: this.cfg.store,
+      publicKey: this.cfg.pubkey,
+      baseCDN: this.cfg.cdnCname,
+      baseURL: this.cfg.baseUrl,
       userAgent: customUserAgent,
-      integration: this.getCssData('--cfg-user-agent-integration'),
-      secureSignature: this.getCssData('--cfg-secure-signature'),
-      secureExpire: this.getCssData('--cfg-secure-expire'),
-      retryThrottledRequestMaxTimes: this.getCssData('--cfg-retry-throttled-request-max-times'),
-      multipartMinFileSize: this.getCssData('--cfg-multipart-min-file-size'),
-      multipartChunkSize: this.getCssData('--cfg-multipart-chunk-size'),
-      maxConcurrentRequests: this.getCssData('--cfg-multipart-max-concurrent-requests'),
-      multipartMaxAttempts: this.getCssData('--cfg-multipart-max-attempts'),
-      checkForUrlDuplicates: !!this.getCssData('--cfg-check-for-url-duplicates'),
-      saveUrlForRecurrentUploads: !!this.getCssData('--cfg-save-url-for-recurrent-uploads'),
-      metadata: this.$['*uploadMetadata'],
+      integration: this.cfg.userAgentIntegration,
+      secureSignature: this.cfg.secureSignature,
+      secureExpire: this.cfg.secureExpire,
+      retryThrottledRequestMaxTimes: this.cfg.retryThrottledRequestMaxTimes,
+      multipartMinFileSize: this.cfg.multipartMinFileSize,
+      multipartChunkSize: this.cfg.multipartChunkSize,
+      maxConcurrentRequests: this.cfg.multipartMaxConcurrentRequests,
+      multipartMaxAttempts: this.cfg.multipartMaxAttempts,
+      checkForUrlDuplicates: !!this.cfg.checkForUrlDuplicates,
+      saveUrlForRecurrentUploads: !!this.cfg.saveUrlForRecurrentUploads,
+      metadata: await this.getMetadata(),
     };
 
     console.log('Upload client options:', options);
