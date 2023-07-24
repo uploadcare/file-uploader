@@ -44,7 +44,9 @@ export class UploaderBlock extends ActivityBlock {
    * @public
    */
   setUploadMetadata(metadata) {
-    warnOnce('setUploadMetadata is deprecated. Use `metadata` instance property on `lr-config` block instead.');
+    warnOnce(
+      'setUploadMetadata is deprecated. Use `metadata` instance property on `lr-config` block instead. See migration guide: https://uploadcare.com/docs/file-uploader/migration-to-0.25.0/'
+    );
     if (!this.connectedOnce) {
       // @ts-ignore TODO: fix this
       this.__initialUploadMetadata = metadata;

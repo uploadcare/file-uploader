@@ -218,7 +218,9 @@ export class Block extends BaseComponent {
           if (parsed.ctx.has(parsed.name)) {
             return parsed.ctx.read(parsed.name);
           } else {
-            warnOnce('Using CSS variables for configuration is deprecated. Please use `lr-config` instead. See LINK');
+            warnOnce(
+              'Using CSS variables for configuration is deprecated. Please use `lr-config` instead. See migration guide: https://uploadcare.com/docs/file-uploader/migration-to-0.25.0/'
+            );
             return this.getCssData(`--cfg-${toKebabCase(key)}`);
           }
         },
