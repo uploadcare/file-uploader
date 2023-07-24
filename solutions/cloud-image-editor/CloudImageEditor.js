@@ -1,3 +1,4 @@
+// @ts-check
 import { CloudImageEditorBlock } from '../../blocks/CloudImageEditor/src/CloudImageEditorBlock.js';
 import { shadowed } from '../../blocks/ShadowWrapper/ShadowWrapper.js';
 export class CloudImageEditor extends shadowed(CloudImageEditorBlock) {
@@ -12,9 +13,9 @@ export class CloudImageEditor extends shadowed(CloudImageEditorBlock) {
     this.initEditor();
   }
 
-  initEditor() {
+  async initEditor() {
     if (this.__shadowReady) {
-      super.initEditor();
+      await super.initEditor();
     }
   }
 }
