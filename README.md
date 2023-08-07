@@ -71,7 +71,7 @@ We use [JSDoc type annotations](https://www.typescriptlang.org/docs/handbook/int
 2. Start using Uploadcare Blocks in your application markup (don't forget to specify `{{PACKAGE_VERSION}}` with the [latest one](https://github.com/uploadcare/blocks/releases)):
 ```html
 <lr-file-uploader-regular
-  css-src="https://cdn.jsdelivr.net/npm/@uploadcare/blocks@{{PACKAGE_VERSION}}/web/file-uploader-regular.min.css"
+  css-src="https://cdn.jsdelivr.net/npm/@uploadcare/blocks@{{PACKAGE_VERSION}}/web/lr-file-uploader-regular.min.css"
   ctx-name="my-uploader"
 >
 </lr-file-uploader-regular>
@@ -92,7 +92,7 @@ LR.registerBlocks(LR);
 3. Start using Uploadcare Blocks in your application markup and replace `{{PACKAGE_VERSION}}` with the [latest version](https://github.com/uploadcare/blocks/releases) of the package:
 ```html
 <lr-file-uploader-inline
-  css-src="https://cdn.jsdelivr.net/npm/@uploadcare/blocks@{{PACKAGE_VERSION}}/web/file-uploader-inline.min.css"
+  css-src="https://cdn.jsdelivr.net/npm/@uploadcare/blocks@{{PACKAGE_VERSION}}/web/lr-file-uploader-inline.min.css"
   ctx-name="my-uploader"
 >
 </lr-file-uploader-inline>
@@ -109,7 +109,7 @@ All configurations in Uploadcare Blocks are managed from `lr-config` block.
 ```html
 <lr-config
   ctx-name="my-uploader"
-  pubkey=@{{YOUR_PUBLIC_KEY}}
+  pubkey="YOUR_PUBLIC_KEY"
 ></lr-config>
 ```
 
