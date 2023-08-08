@@ -103,6 +103,7 @@ export class TypedCollection {
   /** @param {(list: string[], added: Set<any>, removed: Set<any>) => void} handler */
   setHandler(handler) {
     this.__handler = handler;
+    this.notify();
   }
 
   getHandler() {
