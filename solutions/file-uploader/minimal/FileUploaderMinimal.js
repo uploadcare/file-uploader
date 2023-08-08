@@ -15,7 +15,9 @@ export class FileUploaderMinimal extends SolutionBlock {
     });
 
     this.sub('*uploadList', (list) => {
-      if (list?.length === 0) {
+      if (list?.length > 0) {
+        this.$['*currentActivity'] = ActivityBlock.activities.UPLOAD_LIST;
+      } else {
         this.$['*currentActivity'] = uBlock.initActivity || ActivityBlock.activities.START_FROM;
       }
     });
