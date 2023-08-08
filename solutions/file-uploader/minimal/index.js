@@ -9,6 +9,8 @@ import { ProgressBar } from '../../../blocks/ProgressBar/ProgressBar.js';
 import { MessageBox } from '../../../blocks/MessageBox/MessageBox.js';
 import { Copyright } from '../../../blocks/Copyright/Copyright.js';
 import { DataOutput } from '../../../blocks/DataOutput/DataOutput.js';
+import { Config } from '../../../blocks/Config/Config.js';
+import { UploadCtxProvider } from '../../../blocks/UploadCtxProvider/UploadCtxProvider.js';
 
 export {
   registerBlocks,
@@ -22,4 +24,6 @@ export {
   MessageBox,
   Copyright,
   DataOutput,
+  Config,
+  UploadCtxProvider,
 };
