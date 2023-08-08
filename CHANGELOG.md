@@ -1,3 +1,9 @@
+## [0.25.3](https://github.com/uploadcare/blocks/compare/v0.25.2...v0.25.3) (2023-08-08)
+
+### Bug Fixes
+
+- **minimal:** add exports of `lr-config` and `upload-ctx-provider` ([#506](https://github.com/uploadcare/blocks/issues/506)) ([8049e6f](https://github.com/uploadcare/blocks/commit/8049e6fdee1abb7f1fdae2c81acb413b8bfb02db))
+
 ## [0.25.2](https://github.com/uploadcare/blocks/compare/v0.25.1...v0.25.2) (2023-08-07)
 
 ## [0.25.1](https://github.com/uploadcare/blocks/compare/v0.25.0...v0.25.1) (2023-07-24)
