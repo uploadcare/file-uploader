@@ -1,3 +1,11 @@
+## [0.25.4](https://github.com/uploadcare/blocks/compare/v0.25.3...v0.25.4) (2023-08-08)
+
+### Bug Fixes
+
+- **add-file-from:** handle upload collection initial state when called before initialization ([6f932d3](https://github.com/uploadcare/blocks/commit/6f932d32327bffd9622e3a6e41cf383efe00d355))
+- **inline:** show upload list if there are any file in the list ([96e44e6](https://github.com/uploadcare/blocks/commit/96e44e6dc7cbf10328eabd66c1a8bbb1032a007d))
+- **minimal:** show upload list if there are any file in the list ([174c4a7](https://github.com/uploadcare/blocks/commit/174c4a77f0acd297add06e6e01de1a7db100ac64))
+
 ## [0.25.3](https://github.com/uploadcare/blocks/compare/v0.25.2...v0.25.3) (2023-08-08)
 
 ### Bug Fixes
