@@ -1,16 +1,15 @@
 node_modules
 .DS_Store
 TMP
-web
 **/*.d.ts
 !types/**
 **/*.d.ts.map
 !global.d.ts
 ./index.ssr.*
+index.ssr.js
 
 # html files are treated as generated with build:static
 # this line will be removed on pages deploy at `.github/workflows/pages.yml`
 # __REMOVE_BELOW_LINE__
+web
 **/*.html
-
-index.ssr.js
