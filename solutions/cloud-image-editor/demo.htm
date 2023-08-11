@@ -10,7 +10,10 @@
 
 <lr-live-html>
   <!-- Script connection: -->
-  <script src="./index.js" type="module"></script>
+  <script type="module">
+    import * as LR from "./index.js";
+    LR.registerBlocks(LR);
+  </script>
 
   <!-- CSS context properties: -->
   <style>
@@ -28,7 +31,6 @@
     css-src="/web/lr-cloud-image-editor.min.css"
     ctx-name="editor"
     id="editor"
-    class="lr-cldtr-common"
     uuid="7c167b79-9f27-4489-8032-3f3be1840605"
   >
   </lr-cloud-image-editor>
