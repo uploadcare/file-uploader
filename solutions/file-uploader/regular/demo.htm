@@ -2,7 +2,10 @@
 
 <lr-live-html>
   <!-- Uploader script connection: -->
-  <script src="./regular/index.js" type="module"></script>
+  <script type="module">
+    import * as LR from "./regular/index.js";
+    LR.registerBlocks(LR);
+  </script>
 
   <!-- CSS context properties: -->
   <style>
@@ -19,7 +22,10 @@
 <h2>Single source</h2>
 <lr-live-html>
   <!-- Uploader script connection: -->
-  <script src="./regular/index.js" type="module"></script>
+  <script type="module">
+    import * as LR from "./regular/index.js";
+    LR.registerBlocks(LR);
+  </script>
 
   <!-- CSS context properties: -->
   <style>
