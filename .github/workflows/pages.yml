@@ -22,6 +22,8 @@ jobs:
         run: sed -ie '/__REMOVE_BELOW_LINE__/,+1 d' .gitignore
 
       - name: Build
+        run: npm run build
+      - name: Build static
         run: npm run build:static
       - name: Deploy 🚀
         uses: JamesIves/github-pages-deploy-action@v4.3.3
