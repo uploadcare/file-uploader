@@ -1,12 +1,13 @@
 <h2>Multiple sources</h2>
 <lr-live-html>
   <!-- Uploader script connection: -->
-  <script src="./inline/index.js" type="module"></script>
+  <script type="module">
+    import * as LR from "./inline/index.js";
+    LR.registerBlocks(LR);
+  </script>
 
   <!-- CSS context properties: -->
   <style>
-    @import url(./inline/index.css);
-
     body {
       width: 100vw;
       height: 100vh;
@@ -26,18 +27,19 @@
   </style>
 
   <!-- Uploader widget element: -->
-  <lr-file-uploader-inline class="lr-wgt-common"> </lr-file-uploader-inline>
+  <lr-file-uploader-inline css-src="./inline/index.css"> </lr-file-uploader-inline>
 </lr-live-html>
 
 <h2>Single source</h2>
 <lr-live-html>
   <!-- Uploader script connection: -->
-  <script src="./inline/index.js" type="module"></script>
+  <script type="module">
+    import * as LR from "./inline/index.js";
+    LR.registerBlocks(LR);
+  </script>
 
   <!-- CSS context properties: -->
   <style>
-    @import url(./inline/index.css);
-
     body {
       width: 100vw;
       height: 100vh;
@@ -58,5 +60,5 @@
   </style>
 
   <!-- Uploader widget element: -->
-  <lr-file-uploader-inline current-activity class="lr-wgt-common"> </lr-file-uploader-inline>
+  <lr-file-uploader-inline current-activity css-src="./inline/index.css"> </lr-file-uploader-inline>
 </lr-live-html>
