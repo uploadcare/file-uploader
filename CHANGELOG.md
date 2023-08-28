@@ -1,3 +1,9 @@
+## [0.25.5](https://github.com/uploadcare/blocks/compare/v0.25.4...v0.25.5) (2023-08-28)
+
+### Bug Fixes
+
+- **types:** events types export for angular projects ([#518](https://github.com/uploadcare/blocks/issues/518)) ([daf3c2c](https://github.com/uploadcare/blocks/commit/daf3c2c822bf90d0981efab1636bf8457d0fd417))
+
 ## [0.25.4](https://github.com/uploadcare/blocks/compare/v0.25.3...v0.25.4) (2023-08-08)
 
 ### Bug Fixes
