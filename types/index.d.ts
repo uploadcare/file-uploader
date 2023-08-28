@@ -1,3 +1,2 @@
-/// <reference types="./events.d.ts" />
-
+export * from "./events.js";
 export * from "./exported.js";
