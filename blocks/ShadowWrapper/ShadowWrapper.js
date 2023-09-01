@@ -15,7 +15,7 @@ const CSS_ATTRIBUTE = 'css-src';
  *   new (...args: ConstructorParameters<T>): InstanceType<T> & {
  *     shadowReadyCallback(): void;
  *   };
- * }}
+ * } & Omit<T, 'new'>}
  */
 export function shadowed(Base) {
   // @ts-ignore
