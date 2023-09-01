@@ -1,3 +1,9 @@
+## [0.25.6](https://github.com/uploadcare/blocks/compare/v0.25.5...v0.25.6) (2023-09-01)
+
+### Bug Fixes
+
+- **types:** shadow wrapper static fields mixin ([#522](https://github.com/uploadcare/blocks/issues/522)) ([a65435c](https://github.com/uploadcare/blocks/commit/a65435cd1fc1ecc109a23af306b50d10323693d9))
+
 ## [0.25.5](https://github.com/uploadcare/blocks/compare/v0.25.4...v0.25.5) (2023-08-28)
 
 ### Bug Fixes
