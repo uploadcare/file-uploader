@@ -18,12 +18,14 @@ import { TabId } from './toolbar-constants.js';
 export class CloudImageEditorBlock extends CloudImageEditorBase {
   static className = 'cloud-image-editor';
 
-  // @ts-ignore TODO: fix this
-  init$ = {
-    ...this.init$,
-    // @ts-ignore TODO: fix this
-    ...initState(this),
-  };
+  constructor() {
+    super();
+
+    this.init$ = {
+      ...this.init$,
+      ...initState(this),
+    };
+  }
 
   /** Force cloud editor to always use own context */
   get ctxName() {
@@ -74,6 +76,49 @@ export class CloudImageEditorBlock extends CloudImageEditorBase {
     this.initEditor();
   }
 
+  async updateImage() {
+    await this._waitForSize();
+
+    if (this.$['*tabId'] === TabId.CROP) {
+      this.$['*cropperEl'].deactivate({ reset: true });
+    } else {
+      this.$['*faderEl'].deactivate();
+    }
+
+    this.$['*editorTransformations'] = {};
+
+    if (this.$.cdnUrl) {
+      let uuid = extractUuid(this.$.cdnUrl);
+      this.$['*originalUrl'] = createOriginalUrl(this.$.cdnUrl, uuid);
+      let operations = extractOperations(this.$.cdnUrl);
+      let transformations = operationsToTransformations(operations);
+      this.$['*editorTransformations'] = transformations;
+    } else if (this.$.uuid) {
+      this.$['*originalUrl'] = createOriginalUrl(this.cfg.cdnCname, this.$.uuid);
+    } else {
+      throw new Error('No UUID nor CDN URL provided');
+    }
+
+    try {
+      fetch(createCdnUrl(this.$['*originalUrl'], createCdnUrlModifiers('json')))
+        .then((response) => response.json())
+        .then((json) => {
+          const { width, height } = /** @type {{ width: number; height: number }} */ (json);
+          this.$['*imageSize'] = { width, height };
+
+          if (this.$['*tabId'] === TabId.CROP) {
+            this.$['*cropperEl'].activate(this.$['*imageSize']);
+          } else {
+            this.$['*faderEl'].activate({ url: this.$['*originalUrl'] });
+          }
+        });
+    } catch (err) {
+      if (err) {
+        console.error('Failed to load image info', err);
+      }
+    }
+  }
+
   async initEditor() {
     try {
       await this._waitForSize();
@@ -109,24 +154,24 @@ export class CloudImageEditorBlock extends CloudImageEditorBase {
       }
     });
 
+    this.sub('cropPreset', (val) => {
+      if (!val) return;
+      const [w, h] = val.split(':').map(Number);
+      if (!Number.isFinite(w) || !Number.isFinite(h)) {
+        console.error(`Invalid crop preset: ${val}`);
+        return;
+      }
+      /** @type {import('./types.js').CropAspectRatio} */
+      const aspectRatio = { type: 'aspect-ratio', width: w, height: h };
+      this.$['*cropPresetList'] = [aspectRatio];
+    });
+
     this.sub('*tabId', (tabId) => {
       this.ref['img-el'].className = classNames('image', {
         image_hidden_to_cropper: tabId === TabId.CROP,
         image_hidden_effects: tabId !== TabId.CROP,
       });
     });
-
-    if (this.$.cdnUrl) {
-      let uuid = extractUuid(this.$.cdnUrl);
-      this.$['*originalUrl'] = createOriginalUrl(this.$.cdnUrl, uuid);
-      let operations = extractOperations(this.$.cdnUrl);
-      let transformations = operationsToTransformations(operations);
-      this.$['*editorTransformations'] = transformations;
-    } else if (this.$.uuid) {
-      this.$['*originalUrl'] = createOriginalUrl(this.cfg.cdnCname, this.$.uuid);
-    } else {
-      throw new Error('No UUID nor CDN URL provided');
-    }
 
     this.classList.add('editor_ON');
 
@@ -138,6 +183,9 @@ export class CloudImageEditorBlock extends CloudImageEditorBase {
     this.sub(
       '*editorTransformations',
       (transformations) => {
+        if (Object.keys(transformations).length === 0) {
+          return;
+        }
         let originalUrl = this.$['*originalUrl'];
         let cdnUrlModifiers = createCdnUrlModifiers(transformationsToOperations(transformations));
         let cdnUrl = createCdnUrl(originalUrl, createCdnUrlModifiers(cdnUrlModifiers, 'preview'));
@@ -160,18 +208,8 @@ export class CloudImageEditorBlock extends CloudImageEditorBase {
       false
     );
 
-    try {
-      fetch(createCdnUrl(this.$['*originalUrl'], createCdnUrlModifiers('json')))
-        .then((response) => response.json())
-        .then((json) => {
-          const { width, height } = /** @type {{ width: number; height: number }} */ (json);
-          this.$['*imageSize'] = { width, height };
-        });
-    } catch (err) {
-      if (err) {
-        console.error('Failed to load image info', err);
-      }
-    }
+    this.sub('uuid', (val) => val && this.updateImage());
+    this.sub('cdnUrl', (val) => val && this.updateImage());
   }
 }
 
@@ -179,4 +217,5 @@ CloudImageEditorBlock.template = TEMPLATE;
 CloudImageEditorBlock.bindAttributes({
   uuid: 'uuid',
   'cdn-url': 'cdnUrl',
+  'crop-preset': 'cropPreset',
 });

@@ -3,13 +3,6 @@
 
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    .config {
-      --ctx-name: 'my-uploader';
-      --cfg-pubkey: 'demopublickey';
-      --darkmode: 0;
-    }
-  </style>
   <script
     async=""
     src="https://cdn.skypack.dev/-/es-module-shims@v1.5.8-O0uWfhbenfjMbv6D3d8E/dist=es2020,mode=raw,min/dist/es-module-shims.js"
@@ -22,12 +15,17 @@
       }
     }
   </script>
-  <script src="./index.js" type="module"></script>
   <script type="module">
     import * as LR from './index.js';
     LR.registerBlocks(LR);
   </script>
+  <style>
+    lr-cloud-image-editor {
+      width: 100vw;
+      height: 100vh;
+    }
+  </style>
 </head>
 
-<lr-file-uploader-regular ctx-name="my-uploader" css-src="./blocks/themes/lr-basic/index.css"></lr-file-uploader-regular>
-<lr-config ctx-name="my-uploader" pubkey="demopublickey" crop-preset="1:1"></lr-config>
+<lr-cloud-image-editor uuid="7d394c18-b560-4a28-a13d-59a5a192273c" ctx-name="my-editor" css-src="./solutions/cloud-image-editor/index.css" crop-preset="10:1"></lr-cloud-image-editor>
+<lr-config ctx-name="my-editor" pubkey="demopublickey"></lr-config>

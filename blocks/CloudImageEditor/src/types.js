@@ -51,4 +51,10 @@
  * @property {Transformations} transformations
  */
 
+/** @typedef {{ type: 'aspect-ratio'; width: number; height: number }} CropAspectRatio */
+
+/** @typedef {CropAspectRatio[]} CropPresetList */
+
+/** @typedef {'' | 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw'} Direction */
+
 export {};

@@ -47,10 +47,16 @@ export class CloudImageEditorActivity extends UploaderBlock {
   }
 
   mountEditor() {
-    let instance = new CloudImageEditorBlock();
-    let cdnUrl = this.$.cdnUrl;
+    const instance = new CloudImageEditorBlock();
+    const cdnUrl = this.$.cdnUrl;
+    const cropPreset = this.cfg.cropPreset;
+
     instance.setAttribute('ctx-name', this.ctxName);
     instance.setAttribute('cdn-url', cdnUrl);
+
+    if (cropPreset) {
+      instance.setAttribute('crop-preset', cropPreset);
+    }
 
     instance.addEventListener('apply', (result) => this.handleApply(result));
     instance.addEventListener('cancel', () => this.handleCancel());

@@ -24,6 +24,7 @@ export const initialConfig = Object.freeze({
   useLocalImageEditor: false,
   useCloudImageEditor: true,
   removeCopyright: false,
+  cropPreset: '',
 
   modalScrollLock: true,
   modalBackdropStrokes: false,

@@ -18,6 +18,7 @@ export type ConfigType = {
   useLocalImageEditor: boolean;
   useCloudImageEditor: boolean;
   removeCopyright: boolean;
+  cropPreset: string;
   modalScrollLock: boolean;
   modalBackdropStrokes: boolean;
   sourceListWrap: boolean;
