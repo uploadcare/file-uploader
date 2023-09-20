@@ -2,14 +2,17 @@
 import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 
 export class SimpleBtn extends UploaderBlock {
-  // @ts-ignore TODO: fix this
-  init$ = {
-    ...this.init$,
-    '*simpleButtonText': '',
-    onClick: () => {
-      this.initFlow();
-    },
-  };
+  constructor() {
+    super();
+
+    this.init$ = {
+      ...this.init$,
+      '*simpleButtonText': '',
+      onClick: () => {
+        this.initFlow();
+      },
+    };
+  }
 
   initCallback() {
     super.initCallback();

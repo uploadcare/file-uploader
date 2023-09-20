@@ -33,19 +33,22 @@ import { queryString } from './query-string.js';
 export class ExternalSource extends UploaderBlock {
   activityType = ActivityBlock.activities.EXTERNAL;
 
-  // @ts-ignore TODO: fix this
-  init$ = {
-    ...this.init$,
-    activityIcon: '',
-    activityCaption: '',
-    counter: 0,
-    onDone: () => {
-      this.$['*currentActivity'] = ActivityBlock.activities.UPLOAD_LIST;
-    },
-    onCancel: () => {
-      this.historyBack();
-    },
-  };
+  constructor() {
+    super();
+
+    this.init$ = {
+      ...this.init$,
+      activityIcon: '',
+      activityCaption: '',
+      counter: 0,
+      onDone: () => {
+        this.$['*currentActivity'] = ActivityBlock.activities.UPLOAD_LIST;
+      },
+      onCancel: () => {
+        this.historyBack();
+      },
+    };
+  }
 
   /**
    * @private
@@ -116,14 +119,14 @@ export class ExternalSource extends UploaderBlock {
     this.applyStyles();
   }
 
-  /** @private */
-  _inheritedUpdateCssData = this.updateCssData;
   updateCssData = () => {
     if (this.isActivityActive) {
       this._inheritedUpdateCssData();
       this.applyStyles();
     }
   };
+  /** @private */
+  _inheritedUpdateCssData = this.updateCssData;
 
   /**
    * @private

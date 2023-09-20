@@ -4,6 +4,16 @@ import { Block } from '../../abstract/Block.js';
 export class Modal extends Block {
   static StateConsumerScope = 'modal';
 
+  constructor() {
+    super();
+    this.init$ = {
+      ...this.init$,
+      '*modalActive': false,
+      isOpen: false,
+      closeClicked: this._handleDialogClose,
+    };
+  }
+
   _handleBackdropClick = () => {
     this._closeDialog();
   };
@@ -21,14 +31,6 @@ export class Modal extends Block {
     if (e.target === this.ref.dialog) {
       this._closeDialog();
     }
-  };
-
-  // @ts-ignore TODO: fix this
-  init$ = {
-    ...this.init$,
-    '*modalActive': false,
-    isOpen: false,
-    closeClicked: this._handleDialogClose,
   };
 
   show() {

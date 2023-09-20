@@ -20,41 +20,44 @@ export class UploadList extends UploaderBlock {
   historyTracked = true;
   activityType = ActivityBlock.activities.UPLOAD_LIST;
 
-  // @ts-ignore TODO: fix this
-  init$ = {
-    ...this.init$,
-    doneBtnVisible: false,
-    doneBtnEnabled: false,
-    uploadBtnVisible: false,
-    addMoreBtnVisible: false,
-    addMoreBtnEnabled: false,
-    headerText: '',
+  constructor() {
+    super();
 
-    hasFiles: false,
-    onAdd: () => {
-      this.initFlow(true);
-    },
-    onUpload: () => {
-      this.uploadAll();
-      this._updateUploadsState();
-    },
-    onDone: () => {
-      this.doneFlow();
-    },
-    onCancel: () => {
-      let data = this.getOutputData((dataItem) => {
-        return !!dataItem.getValue('fileInfo');
-      });
-      EventManager.emit(
-        new EventData({
-          type: EVENT_TYPES.REMOVE,
-          ctx: this.ctxName,
-          data,
-        })
-      );
-      this.uploadCollection.clearAll();
-    },
-  };
+    this.init$ = {
+      ...this.init$,
+      doneBtnVisible: false,
+      doneBtnEnabled: false,
+      uploadBtnVisible: false,
+      addMoreBtnVisible: false,
+      addMoreBtnEnabled: false,
+      headerText: '',
+
+      hasFiles: false,
+      onAdd: () => {
+        this.initFlow(true);
+      },
+      onUpload: () => {
+        this.uploadAll();
+        this._updateUploadsState();
+      },
+      onDone: () => {
+        this.doneFlow();
+      },
+      onCancel: () => {
+        let data = this.getOutputData((dataItem) => {
+          return !!dataItem.getValue('fileInfo');
+        });
+        EventManager.emit(
+          new EventData({
+            type: EVENT_TYPES.REMOVE,
+            ctx: this.ctxName,
+            data,
+          })
+        );
+        this.uploadCollection.clearAll();
+      },
+    };
+  }
 
   _debouncedHandleCollectionUpdate = debounce(() => {
     if (!this.isConnected) {
