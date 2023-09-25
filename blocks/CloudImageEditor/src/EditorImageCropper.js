@@ -2,7 +2,7 @@
 
 import { CloudImageEditorBase } from './CloudImageEditorBase.js';
 import { isRectInsideRect, rotateSize } from './crop-utils.js';
-import { CROP_PADDING } from './cropper-constants.js';
+import { CROP_PADDING, MIN_CROP_SIZE } from './cropper-constants.js';
 import { classNames } from './lib/classNames.js';
 import { debounce } from './lib/debounce.js';
 import { pick } from './lib/pick.js';
@@ -180,8 +180,12 @@ export class EditorImageCropper extends CloudImageEditorBase {
         height: height * ratio,
       };
     }
-
-    if (!cropTransformation || !isRectInsideRect(cropBox, imageBox)) {
+    if (
+      !cropTransformation ||
+      !isRectInsideRect(cropBox, imageBox) ||
+      cropBox.width < MIN_CROP_SIZE ||
+      cropBox.height < MIN_CROP_SIZE
+    ) {
       /** @type {import('./types.js').CropPresetList[0]} */
       const cropPreset = this.$['*cropPresetList']?.[0];
       const cropRatio = cropPreset ? cropPreset.width / cropPreset.height : undefined;

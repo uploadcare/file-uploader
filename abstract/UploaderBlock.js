@@ -2,18 +2,21 @@
 import { ActivityBlock } from './ActivityBlock.js';
 
 import { Data } from '@symbiotejs/symbiote';
-import { IMAGE_ACCEPT_LIST, mergeFileTypes, fileIsImage, matchMimeType, matchExtension } from '../utils/fileTypes.js';
-import { uploadEntrySchema } from './uploadEntrySchema.js';
-import { customUserAgent } from '../blocks/utils/userAgent.js';
-import { TypedCollection } from './TypedCollection.js';
-import { uploaderBlockCtx } from './CTX.js';
-import { EVENT_TYPES, EventData, EventManager } from './EventManager.js';
+import { calculateMaxCenteredCropFrame } from '../blocks/CloudImageEditor/src/crop-utils.js';
+import { parseCropPreset } from '../blocks/CloudImageEditor/src/lib/parseCropPreset.js';
 import { Modal } from '../blocks/Modal/Modal.js';
+import { UploadSource } from '../blocks/utils/UploadSource.js';
+import { debounce } from '../blocks/utils/debounce.js';
+import { customUserAgent } from '../blocks/utils/userAgent.js';
+import { createCdnUrl, createCdnUrlModifiers } from '../utils/cdn-utils.js';
+import { IMAGE_ACCEPT_LIST, fileIsImage, matchExtension, matchMimeType, mergeFileTypes } from '../utils/fileTypes.js';
+import { prettyBytes } from '../utils/prettyBytes.js';
 import { stringToArray } from '../utils/stringToArray.js';
 import { warnOnce } from '../utils/warnOnce.js';
-import { UploadSource } from '../blocks/utils/UploadSource.js';
-import { prettyBytes } from '../utils/prettyBytes.js';
-import { debounce } from '../blocks/utils/debounce.js';
+import { uploaderBlockCtx } from './CTX.js';
+import { EVENT_TYPES, EventData, EventManager } from './EventManager.js';
+import { TypedCollection } from './TypedCollection.js';
+import { uploadEntrySchema } from './uploadEntrySchema.js';
 
 export class UploaderBlock extends ActivityBlock {
   couldBeUploadCollectionOwner = false;
@@ -457,6 +460,37 @@ export class UploaderBlock extends ActivityBlock {
       );
     }
     if (changeMap.fileInfo) {
+      if (this.cfg.cropPreset) {
+        const cropPreset = parseCropPreset(this.cfg.cropPreset);
+        if (cropPreset) {
+          const [aspectRatioPreset] = cropPreset;
+
+          const entries = this.uploadCollection
+            .findItems(
+              (entry) =>
+                entry.getValue('fileInfo') &&
+                entry.getValue('isImage') &&
+                !entry.getValue('cdnUrlModifiers')?.includes('/crop/')
+            )
+            .map((id) => this.uploadCollection.read(id));
+
+          for (const entry of entries) {
+            const fileInfo = entry.getValue('fileInfo');
+            const { width, height } = fileInfo.imageInfo;
+            const expectedAspectRatio = aspectRatioPreset.width / aspectRatioPreset.height;
+            const crop = calculateMaxCenteredCropFrame(width, height, expectedAspectRatio);
+            const cdnUrlModifiers = createCdnUrlModifiers(`crop/${crop.width}x${crop.height}/${crop.x},${crop.y}`);
+            entry.setMultipleValues({
+              cdnUrlModifiers,
+              cdnUrl: createCdnUrl(entry.getValue('cdnUrl'), cdnUrlModifiers),
+            });
+            if (uploadCollection.size === 1 && this.cfg.useCloudImageEditor) {
+              this.$['*focusedEntry'] = entry;
+              this.$['*currentActivity'] = ActivityBlock.activities.CLOUD_IMG_EDIT;
+            }
+          }
+        }
+      }
       let loadedItems = uploadCollection.findItems((entry) => {
         return !!entry.getValue('fileInfo');
       });
@@ -614,41 +648,47 @@ UploaderBlock.sourceTypes = Object.freeze({
 });
 
 Object.values(EVENT_TYPES).forEach((eType) => {
-  let eName = EventManager.eName(eType);
-  window.addEventListener(eName, (e) => {
-    let outputTypes = [EVENT_TYPES.UPLOAD_FINISH, EVENT_TYPES.REMOVE, EVENT_TYPES.CDN_MODIFICATION];
-    // @ts-ignore TODO: fix this
-    if (outputTypes.includes(e.detail.type)) {
+  const eName = EventManager.eName(eType);
+  const cb = debounce(
+    /** @param {CustomEvent} e */
+    (e) => {
+      let outputTypes = [EVENT_TYPES.UPLOAD_FINISH, EVENT_TYPES.REMOVE, EVENT_TYPES.CDN_MODIFICATION];
       // @ts-ignore TODO: fix this
-      let dataCtx = Data.getCtx(e.detail.ctx);
-      /** @type {TypedCollection} */
-      let uploadCollection = dataCtx.read('uploadCollection');
-      // @ts-ignore TODO: fix this
-      let data = [];
-      uploadCollection.items().forEach((id) => {
-        let uploadEntryData = Data.getCtx(id).store;
-        /** @type {import('@uploadcare/upload-client').UploadcareFile} */
-        let fileInfo = uploadEntryData.fileInfo;
-        if (fileInfo) {
-          let outputItem = {
-            ...fileInfo,
-            cdnUrlModifiers: uploadEntryData.cdnUrlModifiers,
-            cdnUrl: uploadEntryData.cdnUrl || fileInfo.cdnUrl,
-          };
-          data.push(outputItem);
-        }
-      });
-      EventManager.emit(
-        new EventData({
-          type: EVENT_TYPES.DATA_OUTPUT,
-          // @ts-ignore TODO: fix this
-          ctx: e.detail.ctx,
-          // @ts-ignore TODO: fix this
-          data,
-        })
-      );
-      // @ts-ignore TODO: fix this
-      dataCtx.pub('outputData', data);
-    }
-  });
+      if (outputTypes.includes(e.detail.type)) {
+        // @ts-ignore TODO: fix this
+        let dataCtx = Data.getCtx(e.detail.ctx);
+        /** @type {TypedCollection} */
+        let uploadCollection = dataCtx.read('uploadCollection');
+        // @ts-ignore TODO: fix this
+        let data = [];
+        uploadCollection.items().forEach((id) => {
+          let uploadEntryData = Data.getCtx(id).store;
+          /** @type {import('@uploadcare/upload-client').UploadcareFile} */
+          let fileInfo = uploadEntryData.fileInfo;
+          if (fileInfo) {
+            let outputItem = {
+              ...fileInfo,
+              cdnUrlModifiers: uploadEntryData.cdnUrlModifiers,
+              cdnUrl: uploadEntryData.cdnUrl || fileInfo.cdnUrl,
+            };
+            data.push(outputItem);
+          }
+        });
+        EventManager.emit(
+          new EventData({
+            type: EVENT_TYPES.DATA_OUTPUT,
+            // @ts-ignore TODO: fix this
+            ctx: e.detail.ctx,
+            // @ts-ignore TODO: fix this
+            data,
+          })
+        );
+        // @ts-ignore TODO: fix this
+        dataCtx.pub('outputData', data);
+      }
+    },
+    0
+  );
+  // @ts-ignore TODO: fix this
+  window.addEventListener(eName, cb);
 });

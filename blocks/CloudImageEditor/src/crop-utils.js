@@ -663,3 +663,39 @@ export function rotateSize({ width, height }, angle) {
   let swap = (angle / 90) % 2 !== 0;
   return { width: swap ? height : width, height: swap ? width : height };
 }
+
+/**
+ * @param {number} width
+ * @param {number} height
+ * @param {number} aspectRatio
+ */
+export function calculateMaxCenteredCropFrame(width, height, aspectRatio) {
+  const imageAspectRatio = width / height;
+  let cropWidth, cropHeight;
+
+  if (imageAspectRatio > aspectRatio) {
+    cropWidth = height * aspectRatio;
+    cropHeight = height;
+  } else {
+    cropWidth = width;
+    cropHeight = width / aspectRatio;
+  }
+
+  const x = (width - cropWidth) / 2;
+  const y = (height - cropHeight) / 2;
+
+  return roundRect({ x, y, width: cropWidth, height: cropHeight });
+}
+
+/**
+ * @param {import('./types.js').Rectangle} rect
+ * @returns {import('./types.js').Rectangle}
+ */
+export function roundRect(rect) {
+  return {
+    x: Math.round(rect.x),
+    y: Math.round(rect.y),
+    width: Math.round(rect.width),
+    height: Math.round(rect.height),
+  };
+}

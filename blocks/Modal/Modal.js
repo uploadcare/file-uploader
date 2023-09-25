@@ -27,7 +27,7 @@ export class Modal extends Block {
   };
 
   /** @param {Event} e */
-  _handleDialogClick = (e) => {
+  _handleDialogPointerUp = (e) => {
     if (e.target === this.ref.dialog) {
       this._closeDialog();
     }
@@ -53,7 +53,7 @@ export class Modal extends Block {
     super.initCallback();
     if (typeof HTMLDialogElement === 'function') {
       this.ref.dialog.addEventListener('close', this._handleDialogClose);
-      this.ref.dialog.addEventListener('click', this._handleDialogClick);
+      this.ref.dialog.addEventListener('pointerup', this._handleDialogPointerUp);
     } else {
       this.setAttribute('dialog-fallback', '');
       let backdrop = document.createElement('div');
@@ -95,7 +95,7 @@ export class Modal extends Block {
     super.destroyCallback();
     document.body.style.overflow = '';
     this.ref.dialog.removeEventListener('close', this._handleDialogClose);
-    this.ref.dialog.removeEventListener('click', this._handleDialogClick);
+    this.ref.dialog.removeEventListener('click', this._handleDialogPointerUp);
   }
 }
 

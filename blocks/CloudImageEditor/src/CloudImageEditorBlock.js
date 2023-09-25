@@ -10,6 +10,7 @@ import { TRANSPARENT_PIXEL_SRC } from '../../../utils/transparentPixelSrc.js';
 import { CloudImageEditorBase } from './CloudImageEditorBase.js';
 import { classNames } from './lib/classNames.js';
 import { debounce } from './lib/debounce.js';
+import { parseCropPreset } from './lib/parseCropPreset.js';
 import { operationsToTransformations, transformationsToOperations } from './lib/transformationUtils.js';
 import { initState } from './state.js';
 import { TEMPLATE } from './template.js';
@@ -155,15 +156,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBase {
     });
 
     this.sub('cropPreset', (val) => {
-      if (!val) return;
-      const [w, h] = val.split(':').map(Number);
-      if (!Number.isFinite(w) || !Number.isFinite(h)) {
-        console.error(`Invalid crop preset: ${val}`);
-        return;
-      }
-      /** @type {import('./types.js').CropAspectRatio} */
-      const aspectRatio = { type: 'aspect-ratio', width: w, height: h };
-      this.$['*cropPresetList'] = [aspectRatio];
+      this.$['*cropPresetList'] = parseCropPreset(val);
     });
 
     this.sub('*tabId', (tabId) => {

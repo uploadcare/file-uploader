@@ -3,9 +3,9 @@ import { CloudImageEditorBase } from './CloudImageEditorBase.js';
 import {
   cornerPath,
   createSvgNode,
-  resizeRect,
   moveRect,
   rectContainsPoint,
+  resizeRect,
   setSvgNodeAttrs,
   sidePath,
   thumbCursor,
@@ -349,7 +349,10 @@ export class CropFrame extends CloudImageEditorBase {
     let dy = y - this._dragStartPoint[1];
     let { direction } = this._draggingThumb;
 
-    this.$['*cropBox'] = this._calcCropBox(direction, [dx, dy]);
+    const movedCropBox = this._calcCropBox(direction, [dx, dy]);
+    if (movedCropBox) {
+      this.$['*cropBox'] = movedCropBox;
+    }
   }
 
   /**
