@@ -1,6 +1,5 @@
-import { SolutionBlock } from '../../../abstract/SolutionBlock.js';
 import { ActivityBlock } from '../../../abstract/ActivityBlock.js';
-import { sharedConfigKey } from '../../../abstract/sharedConfigKey.js';
+import { SolutionBlock } from '../../../abstract/SolutionBlock.js';
 
 export class FileUploaderMinimal extends SolutionBlock {
   pauseRender = true;
@@ -22,15 +21,15 @@ export class FileUploaderMinimal extends SolutionBlock {
       }
     });
 
-    this.sub(sharedConfigKey('sourceList'), (sourceList) => {
+    this.subConfigValue('sourceList', (sourceList) => {
       if (sourceList !== 'local') {
-        this.$[sharedConfigKey('sourceList')] = 'local';
+        this.cfg.sourceList = 'local';
       }
     });
 
-    this.sub(sharedConfigKey('confirmUpload'), (confirmUpload) => {
+    this.subConfigValue('confirmUpload', (confirmUpload) => {
       if (confirmUpload !== false) {
-        this.$[sharedConfigKey('confirmUpload')] = false;
+        this.cfg.confirmUpload = false;
       }
     });
   }

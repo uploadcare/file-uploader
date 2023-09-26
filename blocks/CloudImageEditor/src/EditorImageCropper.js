@@ -1,10 +1,11 @@
 // @ts-check
 
+import { debounce } from '../../utils/debounce.js';
+import { throttle } from '../../utils/throttle.js';
 import { CloudImageEditorBase } from './CloudImageEditorBase.js';
-import { isRectInsideRect, rotateSize } from './crop-utils.js';
+import { clamp, constraintRect, isRectInsideRect, rotateSize, roundRect } from './crop-utils.js';
 import { CROP_PADDING } from './cropper-constants.js';
 import { classNames } from './lib/classNames.js';
-import { debounce } from './lib/debounce.js';
 import { pick } from './lib/pick.js';
 import { preloadImage } from './lib/preloadImage.js';
 import { viewerImageSrc } from './util.js';
@@ -15,16 +16,6 @@ import { viewerImageSrc } from './util.js';
  * @property {boolean} mirror
  * @property {Number} rotate
  */
-
-/**
- * @param {Number} value
- * @param {Number} min
- * @param {Number} max
- * @returns {Number}
- */
-function clamp(value, min, max) {
-  return Math.min(Math.max(value, min), max);
-}
 
 /**
  * @param {import('./types.js').Transformations['crop']} crop
@@ -77,18 +68,21 @@ export class EditorImageCropper extends CloudImageEditorBase {
     this._commitDebounced = debounce(this._commit.bind(this), 300);
 
     /** @private */
-    this._handleResizeDebounced = debounce(this._handleResize.bind(this), 10);
+    this._handleResizeThrottled = throttle(this._handleResize.bind(this), 100);
 
     this._imageSize = { width: 0, height: 0 };
   }
 
   /** @private */
   _handleResize() {
-    if (!this.isConnected) {
+    if (!this.isConnected || !this._isActive) {
       return;
     }
-    this.deactivate();
-    this.activate(this._imageSize, { fromViewer: false });
+    this._initCanvas();
+    this._syncTransformations();
+    this._alignImage();
+    this._alignCrop();
+    this._draw();
   }
 
   /** @private */
@@ -131,6 +125,7 @@ export class EditorImageCropper extends CloudImageEditorBase {
 
     let bounds = { width: this.offsetWidth, height: this.offsetHeight };
     let naturalSize = rotateSize({ width: image.naturalWidth, height: image.naturalHeight }, rotate);
+    let imageBox;
 
     if (naturalSize.width > bounds.width - padding * 2 || naturalSize.height > bounds.height - padding * 2) {
       let imageAspectRatio = naturalSize.width / naturalSize.height;
@@ -141,20 +136,22 @@ export class EditorImageCropper extends CloudImageEditorBase {
         let height = width / imageAspectRatio;
         let x = 0 + padding;
         let y = padding + (bounds.height - padding * 2) / 2 - height / 2;
-        this.$['*imageBox'] = { x, y, width, height };
+        imageBox = { x, y, width, height };
       } else {
         let height = bounds.height - padding * 2;
         let width = height * imageAspectRatio;
         let x = padding + (bounds.width - padding * 2) / 2 - width / 2;
         let y = 0 + padding;
-        this.$['*imageBox'] = { x, y, width, height };
+        imageBox = { x, y, width, height };
       }
     } else {
       let { width, height } = naturalSize;
       let x = padding + (bounds.width - padding * 2) / 2 - width / 2;
       let y = padding + (bounds.height - padding * 2) / 2 - height / 2;
-      this.$['*imageBox'] = { x, y, width, height };
+      imageBox = { x, y, width, height };
     }
+
+    this.$['*imageBox'] = roundRect(imageBox);
   }
 
   /** @private */
@@ -173,12 +170,15 @@ export class EditorImageCropper extends CloudImageEditorBase {
       } = cropTransformation;
       let { width: sourceWidth } = rotateSize(this._imageSize, rotate);
       let ratio = previewWidth / sourceWidth;
-      cropBox = {
-        x: previewX + x * ratio,
-        y: previewY + y * ratio,
-        width: width * ratio,
-        height: height * ratio,
-      };
+      cropBox = constraintRect(
+        roundRect({
+          x: previewX + x * ratio,
+          y: previewY + y * ratio,
+          width: width * ratio,
+          height: height * ratio,
+        }),
+        this.$['*imageBox']
+      );
     }
 
     if (!cropTransformation || !isRectInsideRect(cropBox, imageBox)) {
@@ -203,7 +203,7 @@ export class EditorImageCropper extends CloudImageEditorBase {
       };
     }
 
-    this.$['*cropBox'] = cropBox;
+    this.$['*cropBox'] = constraintRect(roundRect(cropBox), this.$['*imageBox']);
   }
 
   /** @private */
@@ -375,18 +375,22 @@ export class EditorImageCropper extends CloudImageEditorBase {
     this._isActive = true;
     this._imageSize = imageSize;
     this.removeEventListener('transitionend', this._reset);
-    this._initCanvas();
 
     try {
       this.$.image = await this._waitForImage(this.$['*originalUrl'], this.$['*editorTransformations']);
       this._syncTransformations();
-      this._alignImage();
-      this._alignCrop();
-      this._draw();
       this._animateIn({ fromViewer });
     } catch (err) {
       console.error('Failed to activate cropper', { error: err });
     }
+
+    this._observer = new ResizeObserver(([entry]) => {
+      const nonZeroSize = entry.contentRect.width > 0 && entry.contentRect.height > 0;
+      if (nonZeroSize && this._isActive && this.$.image) {
+        this._handleResizeThrottled();
+      }
+    });
+    this._observer.observe(this);
   }
   deactivate({ reset = false } = {}) {
     if (!this._isActive) {
@@ -405,6 +409,7 @@ export class EditorImageCropper extends CloudImageEditorBase {
 
     this.ref['frame-el'].toggleThumbs(false);
     this.addEventListener('transitionend', this._reset, { once: true });
+    this._observer?.disconnect();
   }
 
   /** @private */
@@ -499,14 +504,6 @@ export class EditorImageCropper extends CloudImageEditorBase {
 
   initCallback() {
     super.initCallback();
-
-    this._observer = new ResizeObserver(([entry]) => {
-      const nonZeroSize = entry.contentRect.width > 0 && entry.contentRect.height > 0;
-      if (nonZeroSize && this._isActive && this.$.image) {
-        this._handleResizeDebounced();
-      }
-    });
-    this._observer.observe(this);
 
     this.sub('*imageBox', () => {
       this._draw();

@@ -1,9 +1,9 @@
+import { debounce } from '../../utils/debounce.js';
 import { CloudImageEditorBase } from './CloudImageEditorBase.js';
 import { EditorCropButtonControl } from './EditorCropButtonControl.js';
 import { EditorFilterControl } from './EditorFilterControl.js';
 import { EditorOperationControl } from './EditorOperationControl.js';
 import { FAKE_ORIGINAL_FILTER } from './EditorSlider.js';
-import { debounce } from './lib/debounce.js';
 import { batchPreloadImages } from './lib/preloadImage.js';
 import {
   ALL_COLOR_OPERATIONS,

@@ -299,7 +299,7 @@ export class FileItem extends UploaderBlock {
       isUploading: state === FileItemState.UPLOADING,
       isFinished: state === FileItemState.FINISHED,
       progressVisible: state === FileItemState.UPLOADING,
-      isEditable: this.cfg.useCloudImageEditor && state === FileItemState.FINISHED && this._entry?.getValue('isImage'),
+      isEditable: this.cfg.useCloudImageEditor && this._entry?.getValue('isImage') && this._entry?.getValue('cdnUrl'),
       errorText:
         this._entry.getValue('uploadError')?.message ||
         this._entry.getValue('validationErrorMsg') ||

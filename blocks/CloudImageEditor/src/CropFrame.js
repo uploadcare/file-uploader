@@ -1,11 +1,14 @@
 // @ts-check
 import { CloudImageEditorBase } from './CloudImageEditorBase.js';
 import {
+  clamp,
+  constraintRect,
   cornerPath,
   createSvgNode,
-  resizeRect,
   moveRect,
   rectContainsPoint,
+  resizeRect,
+  roundRect,
   setSvgNodeAttrs,
   sidePath,
   thumbCursor,
@@ -13,9 +16,12 @@ import {
 import {
   GUIDE_STROKE_WIDTH,
   GUIDE_THIRD,
+  MAX_INTERACTION_SIZE,
   MIN_CROP_SIZE,
+  MIN_INTERACTION_SIZE,
   THUMB_CORNER_SIZE,
   THUMB_OFFSET,
+  THUMB_SIDE_SIZE,
   THUMB_STROKE_WIDTH,
 } from './cropper-constants.js';
 import { classNames } from './lib/classNames.js';
@@ -142,23 +148,40 @@ export class CropFrame extends CloudImageEditorBase {
       let { direction, pathNode, interactionNode, groupNode } = thumb;
       let isCenter = direction === '';
       let isCorner = direction.length === 2;
+      let { x, y, width, height } = cropBox;
 
       if (isCenter) {
-        let { x, y, width, height } = cropBox;
-        let center = [x + width / 2, y + height / 2];
-        setSvgNodeAttrs(interactionNode, {
-          r: Math.min(width, height) / 3,
-          cx: center[0],
-          cy: center[1],
-        });
+        const moveThumbRect = {
+          x: x + width / 3,
+          y: y + height / 3,
+          width: width / 3,
+          height: height / 3,
+        };
+        setSvgNodeAttrs(interactionNode, moveThumbRect);
       } else {
+        const thumbSizeMultiplier = clamp(
+          Math.min(width, height) / (THUMB_CORNER_SIZE * 2 + THUMB_SIDE_SIZE) / 2,
+          0,
+          1
+        );
+
         let { d, center } = isCorner
-          ? cornerPath(cropBox, direction)
+          ? cornerPath(cropBox, direction, thumbSizeMultiplier)
           : sidePath(
               cropBox,
-              /** @type {Extract<import('./types.js').Direction, 'n' | 's' | 'w' | 'e'>} */ (direction)
+              /** @type {Extract<import('./types.js').Direction, 'n' | 's' | 'w' | 'e'>} */ (direction),
+              thumbSizeMultiplier
             );
-        setSvgNodeAttrs(interactionNode, { cx: center[0], cy: center[1] });
+        const size = Math.max(
+          MAX_INTERACTION_SIZE * clamp(Math.min(width, height) / MAX_INTERACTION_SIZE / 3, 0, 1),
+          MIN_INTERACTION_SIZE
+        );
+        setSvgNodeAttrs(interactionNode, {
+          x: center[0] - size,
+          y: center[1] - size,
+          width: size * 2,
+          height: size * 2,
+        });
         setSvgNodeAttrs(pathNode, { d });
       }
 
@@ -200,8 +223,7 @@ export class CropFrame extends CloudImageEditorBase {
         let groupNode = createSvgNode('g');
         groupNode.classList.add('thumb');
         groupNode.setAttribute('with-effects', '');
-        let interactionNode = createSvgNode('circle', {
-          r: THUMB_CORNER_SIZE + THUMB_OFFSET,
+        let interactionNode = createSvgNode('rect', {
           fill: 'transparent',
         });
         let pathNode = createSvgNode('path', {
@@ -349,7 +371,10 @@ export class CropFrame extends CloudImageEditorBase {
     let dy = y - this._dragStartPoint[1];
     let { direction } = this._draggingThumb;
 
-    this.$['*cropBox'] = this._calcCropBox(direction, [dx, dy]);
+    const movedCropBox = this._calcCropBox(direction, [dx, dy]);
+    if (movedCropBox) {
+      this.$['*cropBox'] = movedCropBox;
+    }
   }
 
   /**
@@ -378,7 +403,7 @@ export class CropFrame extends CloudImageEditorBase {
       });
       return;
     }
-    return rect;
+    return constraintRect(roundRect(rect), this.$['*imageBox']);
   }
 
   /**
@@ -392,7 +417,7 @@ export class CropFrame extends CloudImageEditorBase {
       if (this._shouldThumbBeDisabled(thumb.direction)) {
         return false;
       }
-      let node = thumb.groupNode;
+      let node = thumb.interactionNode;
       let bounds = node.getBoundingClientRect();
       let rect = {
         x: bounds.x,

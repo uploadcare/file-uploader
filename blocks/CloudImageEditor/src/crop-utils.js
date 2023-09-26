@@ -23,8 +23,9 @@ export function createSvgNode(name, attrs = {}) {
 /**
  * @param {import('./types.js').Rectangle} rect
  * @param {import('./types.js').Direction} direction
+ * @param {number} sizeMultiplier
  */
-export function cornerPath(rect, direction) {
+export function cornerPath(rect, direction, sizeMultiplier) {
   let { x, y, width, height } = rect;
 
   let wMul = direction.includes('w') ? 0 : 1;
@@ -34,11 +35,11 @@ export function cornerPath(rect, direction) {
 
   let p1 = [
     x + wMul * width + THUMB_OFFSET * xSide,
-    y + hMul * height + THUMB_OFFSET * ySide - THUMB_CORNER_SIZE * ySide,
+    y + hMul * height + THUMB_OFFSET * ySide - THUMB_CORNER_SIZE * sizeMultiplier * ySide,
   ];
   let p2 = [x + wMul * width + THUMB_OFFSET * xSide, y + hMul * height + THUMB_OFFSET * ySide];
   let p3 = [
-    x + wMul * width - THUMB_CORNER_SIZE * xSide + THUMB_OFFSET * xSide,
+    x + wMul * width - THUMB_CORNER_SIZE * sizeMultiplier * xSide + THUMB_OFFSET * xSide,
     y + hMul * height + THUMB_OFFSET * ySide,
   ];
 
@@ -54,8 +55,9 @@ export function cornerPath(rect, direction) {
 /**
  * @param {import('./types.js').Rectangle} rect
  * @param {Extract<import('./types.js').Direction, 'n' | 's' | 'w' | 'e'>} direction
+ * @param {number} sizeMultiplier
  */
-export function sidePath(rect, direction) {
+export function sidePath(rect, direction, sizeMultiplier) {
   let { x, y, width, height } = rect;
 
   let wMul = ['n', 's'].includes(direction)
@@ -69,11 +71,11 @@ export function sidePath(rect, direction) {
 
   let p1, p2;
   if (['n', 's'].includes(direction)) {
-    p1 = [x + wMul * width - THUMB_SIDE_SIZE / 2, y + hMul * height + THUMB_OFFSET * ySide];
-    p2 = [x + wMul * width + THUMB_SIDE_SIZE / 2, y + hMul * height + THUMB_OFFSET * ySide];
+    p1 = [x + wMul * width - (THUMB_SIDE_SIZE * sizeMultiplier) / 2, y + hMul * height + THUMB_OFFSET * ySide];
+    p2 = [x + wMul * width + (THUMB_SIDE_SIZE * sizeMultiplier) / 2, y + hMul * height + THUMB_OFFSET * ySide];
   } else {
-    p1 = [x + wMul * width + THUMB_OFFSET * xSide, y + hMul * height - THUMB_SIDE_SIZE / 2];
-    p2 = [x + wMul * width + THUMB_OFFSET * xSide, y + hMul * height + THUMB_SIDE_SIZE / 2];
+    p1 = [x + wMul * width + THUMB_OFFSET * xSide, y + hMul * height - (THUMB_SIDE_SIZE * sizeMultiplier) / 2];
+    p2 = [x + wMul * width + THUMB_OFFSET * xSide, y + hMul * height + (THUMB_SIDE_SIZE * sizeMultiplier) / 2];
   }
   let path = `M ${p1[0]} ${p1[1]} L ${p2[0]} ${p2[1]}`;
   let center = [p2[0] - (p2[0] - p1[0]) / 2, p2[1] - (p2[1] - p1[1]) / 2];
@@ -662,4 +664,57 @@ export function isRectInsideRect(rect1, rect2) {
 export function rotateSize({ width, height }, angle) {
   let swap = (angle / 90) % 2 !== 0;
   return { width: swap ? height : width, height: swap ? width : height };
+}
+
+/**
+ * @param {number} width
+ * @param {number} height
+ * @param {number} aspectRatio
+ */
+export function calculateMaxCenteredCropFrame(width, height, aspectRatio) {
+  const imageAspectRatio = width / height;
+  let cropWidth, cropHeight;
+
+  if (imageAspectRatio > aspectRatio) {
+    cropWidth = Math.round(height * aspectRatio);
+    cropHeight = height;
+  } else {
+    cropWidth = width;
+    cropHeight = Math.round(width / aspectRatio);
+  }
+
+  const cropX = Math.round((width - cropWidth) / 2);
+  const cropY = Math.round((height - cropHeight) / 2);
+
+  if (cropX + cropWidth > width) {
+    cropWidth = width - cropX;
+  }
+  if (cropY + cropHeight > height) {
+    cropHeight = height - cropY;
+  }
+
+  return { x: cropX, y: cropY, width: cropWidth, height: cropHeight };
+}
+
+/**
+ * @param {import('./types.js').Rectangle} rect
+ * @returns {import('./types.js').Rectangle}
+ */
+export function roundRect(rect) {
+  return {
+    x: Math.round(rect.x),
+    y: Math.round(rect.y),
+    width: Math.round(rect.width),
+    height: Math.round(rect.height),
+  };
+}
+
+/**
+ * @param {Number} value
+ * @param {Number} min
+ * @param {Number} max
+ * @returns {Number}
+ */
+export function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max);
 }
