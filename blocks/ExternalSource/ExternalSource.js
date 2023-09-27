@@ -40,8 +40,30 @@ export class ExternalSource extends UploaderBlock {
       ...this.init$,
       activityIcon: '',
       activityCaption: '',
+      selectedList: [],
       counter: 0,
       onDone: () => {
+        for (const message of this.$.selectedList) {
+          const url = (() => {
+            if (message.alternatives) {
+              const preferredTypes = stringToArray(this.cfg.externalSourcesPreferredTypes);
+              for (const preferredType of preferredTypes) {
+                const regexp = wildcardRegexp(preferredType);
+                for (const [type, typeUrl] of Object.entries(message.alternatives)) {
+                  if (regexp.test(type)) {
+                    return typeUrl;
+                  }
+                }
+              }
+            }
+            return message.url;
+          })();
+
+          const { filename } = message;
+          const { externalSourceType } = this.activityParams;
+          this.addFileFromUrl(url, { fileName: filename, source: externalSourceType });
+        }
+
         this.$['*currentActivity'] = ActivityBlock.activities.UPLOAD_LIST;
       },
       onCancel: () => {
@@ -67,7 +89,6 @@ export class ExternalSource extends UploaderBlock {
           activityIcon: externalSourceType,
         });
 
-        this.$.counter = 0;
         this.mountIframe();
       },
     });
@@ -75,6 +96,9 @@ export class ExternalSource extends UploaderBlock {
       if (val !== this.activityType) {
         this.unmountIframe();
       }
+    });
+    this.sub('selectedList', (list) => {
+      this.$.counter = list.length;
     });
   }
 
@@ -91,27 +115,7 @@ export class ExternalSource extends UploaderBlock {
    * @param {SelectedFileMessage} message
    */
   async handleFileSelected(message) {
-    console.log(message);
-    this.$.counter = this.$.counter + 1;
-
-    const url = (() => {
-      if (message.alternatives) {
-        const preferredTypes = stringToArray(this.cfg.externalSourcesPreferredTypes);
-        for (const preferredType of preferredTypes) {
-          const regexp = wildcardRegexp(preferredType);
-          for (const [type, typeUrl] of Object.entries(message.alternatives)) {
-            if (regexp.test(type)) {
-              return typeUrl;
-            }
-          }
-        }
-      }
-      return message.url;
-    })();
-
-    let { filename } = message;
-    let { externalSourceType } = this.activityParams;
-    this.addFileFromUrl(url, { fileName: filename, source: externalSourceType });
+    this.$.selectedList = [...this.$.selectedList, message];
   }
 
   /** @private */
@@ -193,6 +197,7 @@ export class ExternalSource extends UploaderBlock {
     registerMessage('file-selected', iframe.contentWindow, this.handleFileSelected.bind(this));
 
     this._iframe = iframe;
+    this.$.selectedList = [];
   }
 
   /** @private */
@@ -200,6 +205,8 @@ export class ExternalSource extends UploaderBlock {
     this._iframe && unregisterMessage('file-selected', this._iframe.contentWindow);
     this.ref.iframeWrapper.innerHTML = '';
     this._iframe = null;
+    this.$.selectedList = [];
+    this.$.counter = 0;
   }
 }
 
