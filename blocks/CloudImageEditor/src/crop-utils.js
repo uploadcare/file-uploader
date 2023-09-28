@@ -153,14 +153,14 @@ export function constraintRect(rect1, rect2) {
  */
 function resizeNorth({ rect, delta, aspectRatio, imageBox }) {
   const [, dy] = delta;
-  let { x, y, width, height } = rect;
+  let { y, width, height } = rect;
 
   y += dy;
   height -= dy;
   if (aspectRatio) {
     width = height * aspectRatio;
   }
-  x = rect.x + rect.width / 2 - width / 2;
+  let x = rect.x + rect.width / 2 - width / 2;
   if (y <= imageBox.y) {
     y = imageBox.y;
     height = rect.y + rect.height - y;
@@ -211,14 +211,14 @@ function resizeNorth({ rect, delta, aspectRatio, imageBox }) {
  */
 function resizeWest({ rect, delta, aspectRatio, imageBox }) {
   const [dx] = delta;
-  let { x, y, width, height } = rect;
+  let { x, width, height } = rect;
 
   x += dx;
   width -= dx;
   if (aspectRatio) {
     height = width / aspectRatio;
   }
-  y = rect.y + rect.height / 2 - height / 2;
+  let y = rect.y + rect.height / 2 - height / 2;
   if (x <= imageBox.x) {
     x = imageBox.x;
     width = rect.x + rect.width - x;
@@ -269,13 +269,13 @@ function resizeWest({ rect, delta, aspectRatio, imageBox }) {
  */
 function resizeSouth({ rect, delta, aspectRatio, imageBox }) {
   const [, dy] = delta;
-  let { x, y, width, height } = rect;
+  let { y, width, height } = rect;
 
   height += dy;
   if (aspectRatio) {
     width = height * aspectRatio;
   }
-  x = rect.x + rect.width / 2 - width / 2;
+  let x = rect.x + rect.width / 2 - width / 2;
   if (y + height >= imageBox.y + imageBox.height) {
     height = imageBox.y + imageBox.height - y;
     if (aspectRatio) {
@@ -323,13 +323,13 @@ function resizeSouth({ rect, delta, aspectRatio, imageBox }) {
  */
 function resizeEast({ rect, delta, aspectRatio, imageBox }) {
   const [dx] = delta;
-  let { x, y, width, height } = rect;
+  let { x, width, height } = rect;
 
   width += dx;
   if (aspectRatio) {
     height = width / aspectRatio;
   }
-  y = rect.y + rect.height / 2 - height / 2;
+  let y = rect.y + rect.height / 2 - height / 2;
   if (x + width >= imageBox.x + imageBox.width) {
     width = imageBox.x + imageBox.width - x;
     if (aspectRatio) {
