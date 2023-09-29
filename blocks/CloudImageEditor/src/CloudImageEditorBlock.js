@@ -12,6 +12,7 @@ import { CloudImageEditorBase } from './CloudImageEditorBase.js';
 import { classNames } from './lib/classNames.js';
 import { parseCropPreset } from './lib/parseCropPreset.js';
 import { operationsToTransformations, transformationsToOperations } from './lib/transformationUtils.js';
+import { parseTabs } from './lib/parseTabs.js';
 import { initState } from './state.js';
 import { TEMPLATE } from './template.js';
 import { TabId } from './toolbar-constants.js';
@@ -159,6 +160,13 @@ export class CloudImageEditorBlock extends CloudImageEditorBase {
       this.$['*cropPresetList'] = parseCropPreset(val);
     });
 
+    this.sub(
+      'tabs',
+      /** @param {string} val */ (val) => {
+        this.$['*tabList'] = parseTabs(val);
+      }
+    );
+
     this.sub('*tabId', (tabId) => {
       this.ref['img-el'].className = classNames('image', {
         image_hidden_to_cropper: tabId === TabId.CROP,
@@ -211,4 +219,5 @@ CloudImageEditorBlock.bindAttributes({
   uuid: 'uuid',
   'cdn-url': 'cdnUrl',
   'crop-preset': 'cropPreset',
+  tabs: 'tabs',
 });

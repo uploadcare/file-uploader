@@ -17,6 +17,7 @@ import { uploaderBlockCtx } from './CTX.js';
 import { EVENT_TYPES, EventData, EventManager } from './EventManager.js';
 import { TypedCollection } from './TypedCollection.js';
 import { uploadEntrySchema } from './uploadEntrySchema.js';
+import { serializeCsv } from '../blocks/utils/comma-separated.js';
 
 export class UploaderBlock extends ActivityBlock {
   couldBeUploadCollectionOwner = false;
@@ -204,7 +205,7 @@ export class UploaderBlock extends ActivityBlock {
 
   /** @param {{ captureCamera?: boolean }} options */
   openSystemDialog(options = {}) {
-    let accept = mergeFileTypes([this.cfg.accept ?? '', ...(this.cfg.imgOnly ? IMAGE_ACCEPT_LIST : [])]).join(',');
+    let accept = serializeCsv(mergeFileTypes([this.cfg.accept ?? '', ...(this.cfg.imgOnly ? IMAGE_ACCEPT_LIST : [])]));
 
     if (this.cfg.accept && !!this.cfg.imgOnly) {
       console.warn(
@@ -218,7 +219,7 @@ export class UploaderBlock extends ActivityBlock {
     this.fileInput.multiple = this.cfg.multiple;
     if (options.captureCamera) {
       this.fileInput.capture = '';
-      this.fileInput.accept = IMAGE_ACCEPT_LIST.join(',');
+      this.fileInput.accept = serializeCsv(IMAGE_ACCEPT_LIST);
     } else {
       this.fileInput.accept = accept;
     }

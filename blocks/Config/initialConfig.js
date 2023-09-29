@@ -1,11 +1,14 @@
 // @ts-check
 
+import { ALL_TABS } from '../CloudImageEditor/src/toolbar-constants.js';
+import { serializeCsv } from '../utils/comma-separated.js';
+
 export const DEFAULT_CDN_CNAME = 'https://ucarecdn.com';
 export const DEFAULT_BASE_URL = 'https://upload.uploadcare.com';
 export const DEFAULT_SOCIAN_BASE_URL = 'https://social.uploadcare.com';
 
 /** @type {import('../../types/exported').ConfigType} */
-export const initialConfig = Object.freeze({
+export const initialConfig = {
   pubkey: '',
   multiple: true,
   multipleMin: 0,
@@ -18,6 +21,7 @@ export const initialConfig = Object.freeze({
   store: 'auto',
   cameraMirror: false,
   sourceList: 'local, url, camera, dropbox, gdrive',
+  cloudImageEditorTabs: serializeCsv(ALL_TABS),
   maxLocalFileSizeBytes: 0,
   thumbSize: 76,
   showEmptyList: false,
@@ -51,4 +55,4 @@ export const initialConfig = Object.freeze({
   userAgentIntegration: '',
 
   metadata: null,
-});
+};

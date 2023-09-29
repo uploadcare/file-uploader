@@ -41,6 +41,7 @@ const mapping = {
   showEmptyList: asBoolean,
   useLocalImageEditor: asBoolean,
   useCloudImageEditor: asBoolean,
+  cloudImageEditorTabs: asString,
   removeCopyright: asBoolean,
   cropPreset: asString,
 

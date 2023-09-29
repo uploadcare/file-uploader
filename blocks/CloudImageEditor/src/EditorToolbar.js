@@ -1,3 +1,4 @@
+// @ts-check
 import { debounce } from '../../utils/debounce.js';
 import { CloudImageEditorBase } from './CloudImageEditorBase.js';
 import { EditorCropButtonControl } from './EditorCropButtonControl.js';
@@ -9,24 +10,26 @@ import {
   ALL_COLOR_OPERATIONS,
   ALL_CROP_OPERATIONS,
   ALL_FILTERS,
+  ALL_TABS,
   COLOR_OPERATIONS_CONFIG,
   TabId,
-  TABS,
 } from './toolbar-constants.js';
 import { viewerImageSrc } from './util.js';
 
 /** @param {String} id */
 function renderTabToggle(id) {
   return /* HTML */ `
-    <lr-btn-ui
-      theme="boring"
-      ref="tab-toggle-${id}"
-      data-id="${id}"
-      icon="${id}"
-      tabindex="0"
-      set="onclick: on.clickTab;"
-    >
-    </lr-btn-ui>
+    <lr-presence-toggle class="tab-toggle" set="visible: presence.tabToggle.${id}; styles: presence.tabToggleStyles;">
+      <lr-btn-ui
+        theme="boring"
+        ref="tab-toggle-${id}"
+        data-id="${id}"
+        icon="${id}"
+        tabindex="0"
+        set="onclick: on.clickTab;"
+      >
+      </lr-btn-ui>
+    </lr-presence-toggle>
   `;
 }
 
@@ -67,9 +70,13 @@ export class EditorToolbar extends CloudImageEditorBase {
 
       'presence.mainToolbar': true,
       'presence.subToolbar': false,
+      'presence.tabToggles': true,
       'presence.tabContent.crop': false,
-      'presence.tabContent.sliders': false,
+      'presence.tabContent.tuning': false,
       'presence.tabContent.filters': false,
+      'presence.tabToggle.crop': true,
+      'presence.tabToggle.tuning': true,
+      'presence.tabToggle.filters': true,
       'presence.subTopToolbarStyles': {
         hidden: 'sub-toolbar--top-hidden',
         visible: 'sub-toolbar--visible',
@@ -82,24 +89,35 @@ export class EditorToolbar extends CloudImageEditorBase {
         hidden: 'tab-content--hidden',
         visible: 'tab-content--visible',
       },
-      'on.cancel': (e) => {
+      'presence.tabToggleStyles': {
+        hidden: 'tab-toggle--hidden',
+        visible: 'tab-toggle--visible',
+      },
+      'presence.tabTogglesStyles': {
+        hidden: 'tab-toggles--hidden',
+        visible: 'tab-toggles--visible',
+      },
+      'on.cancel': () => {
         this._cancelPreload && this._cancelPreload();
         this.$['*on.cancel']();
       },
-      'on.apply': (e) => {
+      'on.apply': () => {
         this.$['*on.apply'](this.$['*editorTransformations']);
       },
-      'on.applySlider': (e) => {
+      'on.applySlider': () => {
         this.ref['slider-el'].apply();
         this._onSliderClose();
       },
-      'on.cancelSlider': (e) => {
+      'on.cancelSlider': () => {
         this.ref['slider-el'].cancel();
         this._onSliderClose();
       },
+      /** @param {MouseEvent} e */
       'on.clickTab': (e) => {
-        let id = e.currentTarget.getAttribute('data-id');
-        this._activateTab(id, { fromViewer: false });
+        const id = /** @type {HTMLElement} */ (e.currentTarget).getAttribute('data-id');
+        if (id) {
+          this._activateTab(id, { fromViewer: false });
+        }
       },
     };
 
@@ -111,7 +129,7 @@ export class EditorToolbar extends CloudImageEditorBase {
   /** @private */
   _onSliderClose() {
     this.$['*showSlider'] = false;
-    if (this.$['*tabId'] === TabId.SLIDERS) {
+    if (this.$['*tabId'] === TabId.TUNING) {
       this.ref['tooltip-el'].classList.toggle('info-tooltip_visible', false);
     }
   }
@@ -121,8 +139,9 @@ export class EditorToolbar extends CloudImageEditorBase {
    * @param {String} operation
    */
   _createOperationControl(operation) {
-    let el = EditorOperationControl.is && new EditorOperationControl();
-    el['operation'] = operation;
+    let el = new EditorOperationControl();
+    // @ts-expect-error TODO: fix
+    el.operation = operation;
     return el;
   }
 
@@ -131,8 +150,9 @@ export class EditorToolbar extends CloudImageEditorBase {
    * @param {String} filter
    */
   _createFilterControl(filter) {
-    let el = EditorFilterControl.is && new EditorFilterControl();
-    el['filter'] = filter;
+    let el = new EditorFilterControl();
+    // @ts-expect-error TODO: fix
+    el.filter = filter;
     return el;
   }
 
@@ -141,8 +161,9 @@ export class EditorToolbar extends CloudImageEditorBase {
    * @param {String} operation
    */
   _createToggleControl(operation) {
-    let el = EditorCropButtonControl.is && new EditorCropButtonControl();
-    el['operation'] = operation;
+    let el = new EditorCropButtonControl();
+    // @ts-expect-error TODO: fix
+    el.operation = operation;
     return el;
   }
 
@@ -155,26 +176,30 @@ export class EditorToolbar extends CloudImageEditorBase {
     let fr = document.createDocumentFragment();
 
     if (tabId === TabId.CROP) {
-      this.$.cropOperations.forEach((operation) => {
-        let el = this._createToggleControl(operation);
-        // @ts-ignore
-        fr.appendChild(el);
-      });
+      this.$.cropOperations.forEach(
+        /** @param {string} operation */ (operation) => {
+          let el = this._createToggleControl(operation);
+          // @ts-ignore
+          fr.appendChild(el);
+        }
+      );
     } else if (tabId === TabId.FILTERS) {
       [FAKE_ORIGINAL_FILTER, ...this.$.filters].forEach((filterId) => {
         let el = this._createFilterControl(filterId);
         // @ts-ignore
         fr.appendChild(el);
       });
-    } else if (tabId === TabId.SLIDERS) {
-      this.$.colorOperations.forEach((operation) => {
-        let el = this._createOperationControl(operation);
-        // @ts-ignore
-        fr.appendChild(el);
-      });
+    } else if (tabId === TabId.TUNING) {
+      this.$.colorOperations.forEach(
+        /** @param {string} operation */ (operation) => {
+          let el = this._createOperationControl(operation);
+          // @ts-ignore
+          fr.appendChild(el);
+        }
+      );
     }
 
-    fr.childNodes.forEach((/** @type {HTMLElement} */ el, idx) => {
+    [...fr.children].forEach((el, idx) => {
       if (idx === fr.childNodes.length - 1) {
         el.classList.add('controls-list_last-item');
       }
@@ -200,7 +225,7 @@ export class EditorToolbar extends CloudImageEditorBase {
       this.$['*cropperEl'].deactivate();
     }
 
-    for (let tabId of TABS) {
+    for (let tabId of ALL_TABS) {
       let isCurrentTab = tabId === id;
 
       let tabToggleEl = this.ref[`tab-toggle-${tabId}`];
@@ -248,13 +273,18 @@ export class EditorToolbar extends CloudImageEditorBase {
     }
   }
 
-  /** @private */
+  /**
+   * @private
+   * @param {boolean} show
+   */
   _showLoader(show) {
     this.$.showLoader = show;
   }
 
   _updateInfoTooltip = debounce(() => {
-    let transformations = this.$['*editorTransformations'];
+    const transformations = this.$['*editorTransformations'];
+    /** @type {keyof COLOR_OPERATIONS_CONFIG} */
+    const currentOperation = this.$['*currentOperation'];
     let text = '';
     let visible = false;
 
@@ -266,11 +296,10 @@ export class EditorToolbar extends CloudImageEditorBase {
       } else {
         text = this.l10n(FAKE_ORIGINAL_FILTER);
       }
-    } else if (this.$['*tabId'] === TabId.SLIDERS && this.$['*currentOperation']) {
+    } else if (this.$['*tabId'] === TabId.TUNING && currentOperation) {
       visible = true;
-      let value =
-        transformations?.[this.$['*currentOperation']] || COLOR_OPERATIONS_CONFIG[this.$['*currentOperation']].zero;
-      text = this.$['*currentOperation'] + ' ' + value;
+      let value = transformations?.[currentOperation] || COLOR_OPERATIONS_CONFIG[currentOperation].zero;
+      text = currentOperation + ' ' + value;
     }
     if (visible) {
       this.$['*operationTooltip'] = text;
@@ -310,7 +339,7 @@ export class EditorToolbar extends CloudImageEditorBase {
       this._updateInfoTooltip();
     });
 
-    this.sub('*originalUrl', (originalUrl) => {
+    this.sub('*originalUrl', () => {
       this.$['*faderEl'] && this.$['*faderEl'].deactivate();
     });
 
@@ -342,6 +371,16 @@ export class EditorToolbar extends CloudImageEditorBase {
       this.$['presence.mainToolbar'] = !showSlider;
     });
 
+    this.sub('*tabList', (tabList) => {
+      this.$['presence.tabToggles'] = tabList.length > 1;
+      this.$['*tabId'] = tabList[0];
+      for (const tabId of ALL_TABS) {
+        this.$[`presence.tabToggle.${tabId}`] = tabList.includes(tabId);
+        const toggleEl = this.ref[`tab-toggle-${tabId}`];
+        toggleEl.style.gridColumn = tabList.indexOf(tabId) + 1;
+      }
+    });
+
     this._updateInfoTooltip();
   }
 }
@@ -355,13 +394,13 @@ EditorToolbar.template = /* HTML */ `
   </div>
   <div class="toolbar-container">
     <lr-presence-toggle class="sub-toolbar" set="visible: presence.mainToolbar; styles: presence.subTopToolbarStyles">
-      <div class="tab-content-row">${TABS.map(renderTabContent).join('')}</div>
+      <div class="tab-content-row">${ALL_TABS.map(renderTabContent).join('')}</div>
       <div class="controls-row">
         <lr-btn-ui theme="boring" icon="closeMax" set="onclick: on.cancel"> </lr-btn-ui>
-        <div class="tab-toggles">
+        <lr-presence-toggle class="tab-toggles" set="visible: presence.tabToggles; styles: presence.tabTogglesStyles">
           <div ref="tabs-indicator" class="tab-toggles_indicator"></div>
-          ${TABS.map(renderTabToggle).join('')}
-        </div>
+          ${ALL_TABS.map(renderTabToggle).join('')}
+        </lr-presence-toggle>
         <lr-btn-ui theme="primary" icon="done" set="onclick: on.apply"> </lr-btn-ui>
       </div>
     </lr-presence-toggle>
