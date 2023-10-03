@@ -261,7 +261,7 @@ export class EditorToolbar extends CloudImageEditorBase {
     if (this.$['*tabId'] === TabId.FILTERS) {
       visible = true;
       if (this.$['*currentFilter'] && transformations?.filter?.name === this.$['*currentFilter']) {
-        let value = transformations?.filter?.amount || 100;
+        let value = transformations?.filter?.amount ?? 100;
         text = this.l10n(this.$['*currentFilter']) + ' ' + value;
       } else {
         text = this.l10n(FAKE_ORIGINAL_FILTER);
@@ -269,7 +269,7 @@ export class EditorToolbar extends CloudImageEditorBase {
     } else if (this.$['*tabId'] === TabId.SLIDERS && this.$['*currentOperation']) {
       visible = true;
       let value =
-        transformations?.[this.$['*currentOperation']] || COLOR_OPERATIONS_CONFIG[this.$['*currentOperation']].zero;
+        transformations?.[this.$['*currentOperation']] ?? COLOR_OPERATIONS_CONFIG[this.$['*currentOperation']].zero;
       text = this.$['*currentOperation'] + ' ' + value;
     }
     if (visible) {
