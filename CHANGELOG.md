@@ -1,3 +1,12 @@
+# [0.26.0](https://github.com/uploadcare/blocks/compare/v0.25.6...v0.26.0) (2023-10-03)
+
+### Features
+
+- **cloud-image-editor:** add ability to hide unnecessary editor tabs (crop, tuning or filters) ([af15f51](https://github.com/uploadcare/blocks/commit/af15f514f8eb787d25409efbd392e8c17deae0db))
+- **cloud-image-editor:** add crop preset setting ([923f4ca](https://github.com/uploadcare/blocks/commit/923f4ca975c6829fc5ca02271c053b2c427ba72c))
+- **external-sources:** add files to the upload list after done button click ([0089370](https://github.com/uploadcare/blocks/commit/00893706332ab1a9de4d62e1fc9c51fba952ae08))
+- **uploader:** force defined aspect ration for the output images ([26eda66](https://github.com/uploadcare/blocks/commit/26eda66729e230e2197a8c6a2d879cc9220e850b))
+
 ## [0.25.6](https://github.com/uploadcare/blocks/compare/v0.25.5...v0.25.6) (2023-09-01)
 
 ### Bug Fixes
