@@ -1,18 +1,22 @@
+// @ts-check
+
 /**
- * @template {Function} T
+ * @template {{ (...args: any[]): any }} T
  * @param {T} callback
  * @param {number} wait
- * @returns {T & { cancel: function }}
+ * @returns {T & { cancel: () => void }} }
  */
 export function debounce(callback, wait) {
+  /** @type {NodeJS.Timeout} */
   let timer;
-  /** @type {any} */
-  let debounced = (...args) => {
-    clearTimeout(timer);
-    timer = setTimeout(() => callback(...args), wait);
-  };
+  const debounced =
+    /** @param {...any} args */
+    (...args) => {
+      clearTimeout(timer);
+      timer = setTimeout(() => callback(...args), wait);
+    };
   debounced.cancel = () => {
     clearTimeout(timer);
   };
-  return debounced;
+  return /** @type {T & { cancel: () => void }} } */ (debounced);
 }

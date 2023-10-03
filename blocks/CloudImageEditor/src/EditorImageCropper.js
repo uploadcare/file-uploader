@@ -1,8 +1,11 @@
+// @ts-check
+
+import { debounce } from '../../utils/debounce.js';
+import { throttle } from '../../utils/throttle.js';
 import { CloudImageEditorBase } from './CloudImageEditorBase.js';
-import { constraintRect, minRectSize } from './crop-utils.js';
-import { CROP_PADDING, MIN_CROP_SIZE } from './cropper-constants.js';
+import { clamp, constraintRect, isRectInsideRect, rotateSize, roundRect } from './crop-utils.js';
+import { CROP_PADDING } from './cropper-constants.js';
 import { classNames } from './lib/classNames.js';
-import { debounce } from './lib/debounce.js';
 import { pick } from './lib/pick.js';
 import { preloadImage } from './lib/preloadImage.js';
 import { viewerImageSrc } from './util.js';
@@ -15,26 +18,6 @@ import { viewerImageSrc } from './util.js';
  */
 
 /**
- * @param {Number} value
- * @param {Number} min
- * @param {Number} max
- * @returns {Number}
- */
-function clamp(value, min, max) {
-  return Math.min(Math.max(value, min), max);
-}
-
-/**
- * @param {import('./types.js').ImageSize} imageSize
- * @param {Number} angle
- * @returns {import('./types.js').ImageSize}
- */
-function rotateSize({ width, height }, angle) {
-  let swap = (angle / 90) % 2 !== 0;
-  return { width: swap ? height : width, height: swap ? width : height };
-}
-
-/**
  * @param {import('./types.js').Transformations['crop']} crop
  * @returns {boolean}
  */
@@ -42,7 +25,7 @@ function validateCrop(crop) {
   if (!crop) {
     return true;
   }
-  /** @type {((arg: typeof crop) => boolean)[]} */
+  /** @type {((arg: NonNullable<typeof crop>) => boolean)[]} */
   let shouldMatch = [
     ({ dimensions, coords }) =>
       [...dimensions, ...coords].every((number) => Number.isInteger(number) && Number.isFinite(number)),
@@ -52,49 +35,54 @@ function validateCrop(crop) {
 }
 
 export class EditorImageCropper extends CloudImageEditorBase {
-  init$ = {
-    ...this.init$,
-    image: null,
-    '*padding': CROP_PADDING,
-    /** @type {Operations} */
-    '*operations': {
-      rotate: 0,
-      mirror: false,
-      flip: false,
-    },
-    /** @type {import('./types.js').Rectangle} */
-    '*imageBox': {
-      x: 0,
-      y: 0,
-      width: 0,
-      height: 0,
-    },
-    /** @type {import('./types.js').Rectangle} */
-    '*cropBox': {
-      x: 0,
-      y: 0,
-      width: 0,
-      height: 0,
-    },
-  };
-
   constructor() {
     super();
+
+    this.init$ = {
+      ...this.init$,
+      image: null,
+      '*padding': CROP_PADDING,
+      /** @type {Operations} */
+      '*operations': {
+        rotate: 0,
+        mirror: false,
+        flip: false,
+      },
+      /** @type {import('./types.js').Rectangle} */
+      '*imageBox': {
+        x: 0,
+        y: 0,
+        width: 0,
+        height: 0,
+      },
+      /** @type {import('./types.js').Rectangle} */
+      '*cropBox': {
+        x: 0,
+        y: 0,
+        width: 0,
+        height: 0,
+      },
+    };
 
     /** @private */
     this._commitDebounced = debounce(this._commit.bind(this), 300);
 
     /** @private */
-    this._handleResizeDebounced = debounce(this._handleResize.bind(this), 10);
+    this._handleResizeThrottled = throttle(this._handleResize.bind(this), 100);
+
+    this._imageSize = { width: 0, height: 0 };
   }
 
   /** @private */
   _handleResize() {
-    if (!this.isConnected) {
+    if (!this.isConnected || !this._isActive) {
       return;
     }
-    this.deactivate();
-    this.activate(this._imageSize, { fromViewer: false });
+    this._initCanvas();
+    this._syncTransformations();
+    this._alignImage();
+    this._alignCrop();
+    this._draw();
   }
 
   /** @private */
@@ -118,7 +106,7 @@ export class EditorImageCropper extends CloudImageEditorBase {
     canvas.style.height = `${height}px`;
     canvas.width = width * dpr;
     canvas.height = height * dpr;
-    ctx.scale(dpr, dpr);
+    ctx?.scale(dpr, dpr);
 
     this._canvas = canvas;
     this._ctx = ctx;
@@ -137,6 +125,7 @@ export class EditorImageCropper extends CloudImageEditorBase {
 
     let bounds = { width: this.offsetWidth, height: this.offsetHeight };
     let naturalSize = rotateSize({ width: image.naturalWidth, height: image.naturalHeight }, rotate);
+    let imageBox;
 
     if (naturalSize.width > bounds.width - padding * 2 || naturalSize.height > bounds.height - padding * 2) {
       let imageAspectRatio = naturalSize.width / naturalSize.height;
@@ -147,20 +136,22 @@ export class EditorImageCropper extends CloudImageEditorBase {
         let height = width / imageAspectRatio;
         let x = 0 + padding;
         let y = padding + (bounds.height - padding * 2) / 2 - height / 2;
-        this.$['*imageBox'] = { x, y, width, height };
+        imageBox = { x, y, width, height };
       } else {
         let height = bounds.height - padding * 2;
         let width = height * imageAspectRatio;
         let x = padding + (bounds.width - padding * 2) / 2 - width / 2;
         let y = 0 + padding;
-        this.$['*imageBox'] = { x, y, width, height };
+        imageBox = { x, y, width, height };
       }
     } else {
       let { width, height } = naturalSize;
       let x = padding + (bounds.width - padding * 2) / 2 - width / 2;
       let y = padding + (bounds.height - padding * 2) / 2 - height / 2;
-      this.$['*imageBox'] = { x, y, width, height };
+      imageBox = { x, y, width, height };
     }
+
+    this.$['*imageBox'] = roundRect(imageBox);
   }
 
   /** @private */
@@ -169,45 +160,60 @@ export class EditorImageCropper extends CloudImageEditorBase {
     let imageBox = this.$['*imageBox'];
     let operations = this.$['*operations'];
     let { rotate } = operations;
-    let transformation = this.$['*editorTransformations']['crop'];
+    let cropTransformation = this.$['*editorTransformations']['crop'];
+    let { width: previewWidth, x: previewX, y: previewY } = this.$['*imageBox'];
 
-    if (transformation) {
+    if (cropTransformation) {
       let {
         dimensions: [width, height],
         coords: [x, y],
-      } = transformation;
-      let { width: previewWidth, x: previewX, y: previewY } = this.$['*imageBox'];
+      } = cropTransformation;
       let { width: sourceWidth } = rotateSize(this._imageSize, rotate);
       let ratio = previewWidth / sourceWidth;
+      cropBox = constraintRect(
+        roundRect({
+          x: previewX + x * ratio,
+          y: previewY + y * ratio,
+          width: width * ratio,
+          height: height * ratio,
+        }),
+        this.$['*imageBox']
+      );
+    }
+
+    if (!cropTransformation || !isRectInsideRect(cropBox, imageBox)) {
+      /** @type {import('./types.js').CropPresetList[0]} */
+      const cropPreset = this.$['*cropPresetList']?.[0];
+      const cropRatio = cropPreset ? cropPreset.width / cropPreset.height : undefined;
+      const ratio = imageBox.width / imageBox.height;
+      let width = imageBox.width;
+      let height = imageBox.height;
+      if (cropRatio) {
+        if (ratio > cropRatio) {
+          width = Math.min(imageBox.height * cropRatio, imageBox.width);
+        } else {
+          height = Math.min(imageBox.width / cropRatio, imageBox.height);
+        }
+      }
       cropBox = {
-        x: previewX + x * ratio,
-        y: previewY + y * ratio,
-        width: width * ratio,
-        height: height * ratio,
-      };
-    } else {
-      cropBox = {
-        x: imageBox.x,
-        y: imageBox.y,
-        width: imageBox.width,
-        height: imageBox.height,
+        x: imageBox.x + imageBox.width / 2 - width / 2,
+        y: imageBox.y + imageBox.height / 2 - height / 2,
+        width,
+        height,
       };
     }
-    /** @type {[Number, Number]} */
-    let minCropRect = [Math.min(imageBox.width, MIN_CROP_SIZE), Math.min(imageBox.height, MIN_CROP_SIZE)];
-    cropBox = minRectSize(cropBox, minCropRect, 'se');
-    cropBox = constraintRect(cropBox, imageBox);
 
-    this.$['*cropBox'] = cropBox;
+    this.$['*cropBox'] = constraintRect(roundRect(cropBox), this.$['*imageBox']);
   }
 
   /** @private */
   _drawImage() {
+    let ctx = this._ctx;
+    if (!ctx) return;
     let image = this.$.image;
     let imageBox = this.$['*imageBox'];
     let operations = this.$['*operations'];
     let { mirror, flip, rotate } = operations;
-    let ctx = this._ctx;
     let rotated = rotateSize({ width: imageBox.width, height: imageBox.height }, rotate);
     ctx.save();
     ctx.translate(imageBox.x + imageBox.width / 2, imageBox.y + imageBox.height / 2);
@@ -219,7 +225,7 @@ export class EditorImageCropper extends CloudImageEditorBase {
 
   /** @private */
   _draw() {
-    if (!this._isActive || !this.$.image) {
+    if (!this._isActive || !this.$.image || !this._canvas || !this._ctx) {
       return;
     }
     let canvas = this._canvas;
@@ -230,7 +236,10 @@ export class EditorImageCropper extends CloudImageEditorBase {
     this._drawImage();
   }
 
-  /** @private */
+  /**
+   * @private
+   * @param {{ fromViewer?: boolean }} options
+   */
   _animateIn({ fromViewer }) {
     if (this.$.image) {
       this.ref['frame-el'].toggleThumbs(true);
@@ -247,9 +256,9 @@ export class EditorImageCropper extends CloudImageEditorBase {
 
   /**
    * @private
-   * @returns {import('./types.js').Transformations['crop']['dimensions']}
+   * @returns {NonNullable<import('./types.js').Transformations['crop']>['dimensions']}
    */
-  _calculateDimensions() {
+  _getCropDimensions() {
     let cropBox = this.$['*cropBox'];
     let imageBox = this.$['*imageBox'];
     let operations = this.$['*operations'];
@@ -273,7 +282,7 @@ export class EditorImageCropper extends CloudImageEditorBase {
    * @private
    * @returns {import('./types.js').Transformations['crop']}
    */
-  _calculateCrop() {
+  _getCropTransformation() {
     let cropBox = this.$['*cropBox'];
     let imageBox = this.$['*imageBox'];
     let operations = this.$['*operations'];
@@ -284,7 +293,7 @@ export class EditorImageCropper extends CloudImageEditorBase {
     let ratioW = previewWidth / sourceWidth;
     let ratioH = previewHeight / sourceHeight;
 
-    let dimensions = this._calculateDimensions();
+    let dimensions = this._getCropDimensions();
     let crop = {
       dimensions,
       coords: /** @type {[Number, Number]} */ ([
@@ -312,7 +321,7 @@ export class EditorImageCropper extends CloudImageEditorBase {
     }
     let operations = this.$['*operations'];
     let { rotate, mirror, flip } = operations;
-    let crop = this._calculateCrop();
+    let crop = this._getCropTransformation();
     /** @type {import('./types.js').Transformations} */
     let editorTransformations = this.$['*editorTransformations'];
     let transformations = {
@@ -359,31 +368,35 @@ export class EditorImageCropper extends CloudImageEditorBase {
    * @param {import('./types.js').ImageSize} imageSize
    * @param {{ fromViewer?: boolean }} options
    */
-  async activate(imageSize, { fromViewer }) {
+  async activate(imageSize, { fromViewer } = {}) {
     if (this._isActive) {
       return;
     }
     this._isActive = true;
     this._imageSize = imageSize;
     this.removeEventListener('transitionend', this._reset);
-    this._initCanvas();
 
     try {
       this.$.image = await this._waitForImage(this.$['*originalUrl'], this.$['*editorTransformations']);
       this._syncTransformations();
-      this._alignImage();
-      this._alignCrop();
-      this._draw();
       this._animateIn({ fromViewer });
     } catch (err) {
       console.error('Failed to activate cropper', { error: err });
     }
+
+    this._observer = new ResizeObserver(([entry]) => {
+      const nonZeroSize = entry.contentRect.width > 0 && entry.contentRect.height > 0;
+      if (nonZeroSize && this._isActive && this.$.image) {
+        this._handleResizeThrottled();
+      }
+    });
+    this._observer.observe(this);
   }
-  deactivate() {
+  deactivate({ reset = false } = {}) {
     if (!this._isActive) {
       return;
     }
-    this._commit();
+    !reset && this._commit();
     this._isActive = false;
 
     this._transitionToCrop();
@@ -396,11 +409,12 @@ export class EditorImageCropper extends CloudImageEditorBase {
 
     this.ref['frame-el'].toggleThumbs(false);
     this.addEventListener('transitionend', this._reset, { once: true });
+    this._observer?.disconnect();
   }
 
   /** @private */
   _transitionToCrop() {
-    let dimensions = this._calculateDimensions();
+    let dimensions = this._getCropDimensions();
     let scaleX = Math.min(this.offsetWidth, dimensions[0]) / this.$['*cropBox'].width;
     let scaleY = Math.min(this.offsetHeight, dimensions[1]) / this.$['*cropBox'].height;
     let scale = Math.min(scaleX, scaleY);
@@ -491,22 +505,18 @@ export class EditorImageCropper extends CloudImageEditorBase {
   initCallback() {
     super.initCallback();
 
-    this._observer = new ResizeObserver(([entry]) => {
-      const nonZeroSize = entry.contentRect.width > 0 && entry.contentRect.height > 0;
-      if (nonZeroSize && this._isActive && this.$.image) {
-        this._handleResizeDebounced();
-      }
-    });
-    this._observer.observe(this);
-
     this.sub('*imageBox', () => {
       this._draw();
     });
 
-    this.sub('*cropBox', (cropBox) => {
+    this.sub('*cropBox', () => {
       if (this.$.image) {
         this._commitDebounced();
       }
+    });
+
+    this.sub('*cropPresetList', () => {
+      this._alignCrop();
     });
 
     setTimeout(() => {

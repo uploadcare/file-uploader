@@ -1,3 +1,5 @@
+// @ts-check
+
 import { createCdnUrl, createCdnUrlModifiers } from '../../../utils/cdn-utils.js';
 import { TRANSPARENT_PIXEL_SRC } from '../../../utils/transparentPixelSrc.js';
 import { transformationsToOperations } from './lib/transformationUtils.js';
@@ -14,6 +16,8 @@ export function initState(fnCtx) {
     '*imageSize': null,
     /** @type {import('./types.js').Transformations} */
     '*editorTransformations': {},
+    /** @type {import('./types.js').CropPresetList} */
+    '*cropPresetList': [],
 
     entry: null,
     extension: null,
@@ -24,8 +28,11 @@ export function initState(fnCtx) {
     src: TRANSPARENT_PIXEL_SRC,
     fileType: '',
     showLoader: false,
+
+    // options
     uuid: null,
     cdnUrl: null,
+    cropPreset: '',
 
     'presence.networkProblems': false,
     'presence.modalCaption': true,
@@ -41,6 +48,7 @@ export function initState(fnCtx) {
       }
       fnCtx.$['*networkProblems'] = false;
     },
+    /** @param {import('./types.js').Transformations} transformations */
     '*on.apply': (transformations) => {
       if (!transformations) {
         return;

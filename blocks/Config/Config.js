@@ -41,16 +41,20 @@ const attrStateMapping = /** @type {Record<keyof import('../../types').ConfigAtt
 export class Config extends Block {
   ctxOwner = true;
 
-  /** @type {Block['init$'] & import('../../types').ConfigType} */
-  init$ = {
-    ...this.init$,
-    ...Object.fromEntries(
-      Object.entries(initialConfig).map(([key, value]) => [
-        sharedConfigKey(/** @type {keyof import('../../types').ConfigType} */ (key)),
-        value,
-      ])
-    ),
-  };
+  constructor() {
+    super();
+
+    /** @type {Block['init$'] & import('../../types').ConfigType} */
+    this.init$ = {
+      ...this.init$,
+      ...Object.fromEntries(
+        Object.entries(initialConfig).map(([key, value]) => [
+          sharedConfigKey(/** @type {keyof import('../../types').ConfigType} */ (key)),
+          value,
+        ])
+      ),
+    };
+  }
 
   initCallback() {
     super.initCallback();

@@ -36,56 +36,59 @@ export class FileItem extends UploaderBlock {
   /** @private */
   _renderedOnce = false;
 
-  // @ts-ignore TODO: fix this
-  init$ = {
-    ...this.init$,
-    uid: '',
-    itemName: '',
-    errorText: '',
-    thumbUrl: '',
-    progressValue: 0,
-    progressVisible: false,
-    progressUnknown: false,
-    badgeIcon: '',
-    isFinished: false,
-    isFailed: false,
-    isUploading: false,
-    isFocused: false,
-    isEditable: false,
-    isLimitOverflow: false,
-    state: FileItemState.IDLE,
-    '*uploadTrigger': null,
+  constructor() {
+    super();
 
-    onEdit: () => {
-      this.set$({
-        '*focusedEntry': this._entry,
-      });
-      if (this.hasBlockInCtx((b) => b.activityType === ActivityBlock.activities.DETAILS)) {
-        this.$['*currentActivity'] = ActivityBlock.activities.DETAILS;
-      } else {
-        this.$['*currentActivity'] = ActivityBlock.activities.CLOUD_IMG_EDIT;
-      }
-    },
-    onRemove: () => {
-      let entryUuid = this._entry.getValue('uuid');
-      if (entryUuid) {
-        let data = this.getOutputData((dataItem) => {
-          return dataItem.getValue('uuid') === entryUuid;
+    this.init$ = {
+      ...this.init$,
+      uid: '',
+      itemName: '',
+      errorText: '',
+      thumbUrl: '',
+      progressValue: 0,
+      progressVisible: false,
+      progressUnknown: false,
+      badgeIcon: '',
+      isFinished: false,
+      isFailed: false,
+      isUploading: false,
+      isFocused: false,
+      isEditable: false,
+      isLimitOverflow: false,
+      state: FileItemState.IDLE,
+      '*uploadTrigger': null,
+
+      onEdit: () => {
+        this.set$({
+          '*focusedEntry': this._entry,
         });
-        EventManager.emit(
-          new EventData({
-            type: EVENT_TYPES.REMOVE,
-            ctx: this.ctxName,
-            data,
-          })
-        );
-      }
-      this.uploadCollection.remove(this.$.uid);
-    },
-    onUpload: () => {
-      this.upload();
-    },
-  };
+        if (this.hasBlockInCtx((b) => b.activityType === ActivityBlock.activities.DETAILS)) {
+          this.$['*currentActivity'] = ActivityBlock.activities.DETAILS;
+        } else {
+          this.$['*currentActivity'] = ActivityBlock.activities.CLOUD_IMG_EDIT;
+        }
+      },
+      onRemove: () => {
+        let entryUuid = this._entry.getValue('uuid');
+        if (entryUuid) {
+          let data = this.getOutputData((dataItem) => {
+            return dataItem.getValue('uuid') === entryUuid;
+          });
+          EventManager.emit(
+            new EventData({
+              type: EVENT_TYPES.REMOVE,
+              ctx: this.ctxName,
+              data,
+            })
+          );
+        }
+        this.uploadCollection.remove(this.$.uid);
+      },
+      onUpload: () => {
+        this.upload();
+      },
+    };
+  }
 
   _reset() {
     for (let sub of this._entrySubs) {
@@ -296,7 +299,7 @@ export class FileItem extends UploaderBlock {
       isUploading: state === FileItemState.UPLOADING,
       isFinished: state === FileItemState.FINISHED,
       progressVisible: state === FileItemState.UPLOADING,
-      isEditable: this.cfg.useCloudImageEditor && state === FileItemState.FINISHED && this._entry?.getValue('isImage'),
+      isEditable: this.cfg.useCloudImageEditor && this._entry?.getValue('isImage') && this._entry?.getValue('cdnUrl'),
       errorText:
         this._entry.getValue('uploadError')?.message ||
         this._entry.getValue('validationErrorMsg') ||

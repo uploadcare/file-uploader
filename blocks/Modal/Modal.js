@@ -4,6 +4,16 @@ import { Block } from '../../abstract/Block.js';
 export class Modal extends Block {
   static StateConsumerScope = 'modal';
 
+  constructor() {
+    super();
+    this.init$ = {
+      ...this.init$,
+      '*modalActive': false,
+      isOpen: false,
+      closeClicked: this._handleDialogClose,
+    };
+  }
+
   _handleBackdropClick = () => {
     this._closeDialog();
   };
@@ -17,18 +27,10 @@ export class Modal extends Block {
   };
 
   /** @param {Event} e */
-  _handleDialogClick = (e) => {
+  _handleDialogPointerUp = (e) => {
     if (e.target === this.ref.dialog) {
       this._closeDialog();
     }
-  };
-
-  // @ts-ignore TODO: fix this
-  init$ = {
-    ...this.init$,
-    '*modalActive': false,
-    isOpen: false,
-    closeClicked: this._handleDialogClose,
   };
 
   show() {
@@ -51,7 +53,7 @@ export class Modal extends Block {
     super.initCallback();
     if (typeof HTMLDialogElement === 'function') {
       this.ref.dialog.addEventListener('close', this._handleDialogClose);
-      this.ref.dialog.addEventListener('click', this._handleDialogClick);
+      this.ref.dialog.addEventListener('pointerup', this._handleDialogPointerUp);
     } else {
       this.setAttribute('dialog-fallback', '');
       let backdrop = document.createElement('div');
@@ -93,7 +95,7 @@ export class Modal extends Block {
     super.destroyCallback();
     document.body.style.overflow = '';
     this.ref.dialog.removeEventListener('close', this._handleDialogClose);
-    this.ref.dialog.removeEventListener('click', this._handleDialogClick);
+    this.ref.dialog.removeEventListener('click', this._handleDialogPointerUp);
   }
 }
 

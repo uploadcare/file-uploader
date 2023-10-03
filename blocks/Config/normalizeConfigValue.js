@@ -42,6 +42,7 @@ const mapping = {
   useLocalImageEditor: asBoolean,
   useCloudImageEditor: asBoolean,
   removeCopyright: asBoolean,
+  cropPreset: asString,
 
   modalScrollLock: asBoolean,
   modalBackdropStrokes: asBoolean,
