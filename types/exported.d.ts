@@ -17,6 +17,7 @@ export type ConfigType = {
   showEmptyList: boolean;
   useLocalImageEditor: boolean;
   useCloudImageEditor: boolean;
+  cloudImageEditorTabs: string;
   removeCopyright: boolean;
   cropPreset: string;
   modalScrollLock: boolean;

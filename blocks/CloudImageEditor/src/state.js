@@ -2,7 +2,9 @@
 
 import { createCdnUrl, createCdnUrlModifiers } from '../../../utils/cdn-utils.js';
 import { TRANSPARENT_PIXEL_SRC } from '../../../utils/transparentPixelSrc.js';
+import { serializeCsv } from '../../utils/comma-separated.js';
 import { transformationsToOperations } from './lib/transformationUtils.js';
+import { ALL_TABS } from './toolbar-constants.js';
 
 /** @param {import('./CloudImageEditorBlock.js').CloudImageEditorBlock} fnCtx */
 export function initState(fnCtx) {
@@ -18,6 +20,7 @@ export function initState(fnCtx) {
     '*editorTransformations': {},
     /** @type {import('./types.js').CropPresetList} */
     '*cropPresetList': [],
+    '*tabList': ALL_TABS,
 
     entry: null,
     extension: null,
@@ -33,6 +36,7 @@ export function initState(fnCtx) {
     uuid: null,
     cdnUrl: null,
     cropPreset: '',
+    tabs: serializeCsv(ALL_TABS),
 
     'presence.networkProblems': false,
     'presence.modalCaption': true,

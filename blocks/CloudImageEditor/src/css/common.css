@@ -697,6 +697,18 @@ lr-editor-toolbar > .toolbar-container > .sub-toolbar > .tab-content-row > .tab-
   pointer-events: none;
 }
 
+lr-editor-toolbar > .toolbar-container > .sub-toolbar > .controls-row > .tab-toggles > .tab-toggle.tab-toggle--visible {
+  display: contents;
+}
+
+lr-editor-toolbar > .toolbar-container > .sub-toolbar > .controls-row > .tab-toggles > .tab-toggle.tab-toggle--hidden {
+  display: none;
+}
+
+lr-editor-toolbar > .toolbar-container > .sub-toolbar > .controls-row > .tab-toggles.tab-toggles--hidden {
+  display: none;
+}
+
 lr-editor-toolbar > .toolbar-container > .sub-toolbar > .tab-content-row > .tab-content .controls-list_align {
   display: grid;
   grid-template-areas: '. inner .';

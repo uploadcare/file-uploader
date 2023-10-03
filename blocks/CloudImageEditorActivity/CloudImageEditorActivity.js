@@ -50,12 +50,16 @@ export class CloudImageEditorActivity extends UploaderBlock {
     const instance = new CloudImageEditorBlock();
     const cdnUrl = this.$.cdnUrl;
     const cropPreset = this.cfg.cropPreset;
+    const tabs = this.cfg.cloudImageEditorTabs;
 
     instance.setAttribute('ctx-name', this.ctxName);
     instance.setAttribute('cdn-url', cdnUrl);
 
     if (cropPreset) {
       instance.setAttribute('crop-preset', cropPreset);
+    }
+    if (tabs) {
+      instance.setAttribute('tabs', tabs);
     }
 
     instance.addEventListener('apply', (result) => this.handleApply(result));

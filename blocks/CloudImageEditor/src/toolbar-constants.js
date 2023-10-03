@@ -1,12 +1,12 @@
+// @ts-check
 import { OPERATIONS_ZEROS } from './lib/transformationUtils.js';
 
-/** @type {{ CROP: 'crop'; SLIDERS: 'sliders'; FILTERS: 'filters' }} */
-export const TabId = {
+export const TabId = Object.freeze({
   CROP: 'crop',
-  SLIDERS: 'sliders',
+  TUNING: 'tuning',
   FILTERS: 'filters',
-};
-export const TABS = [TabId.CROP, TabId.SLIDERS, TabId.FILTERS];
+});
+export const ALL_TABS = [TabId.CROP, TabId.TUNING, TabId.FILTERS];
 
 export const ALL_COLOR_OPERATIONS = [
   'brightness',
@@ -65,7 +65,7 @@ export const ALL_FILTERS = [
 export const ALL_CROP_OPERATIONS = ['rotate', 'mirror', 'flip'];
 
 /** KeypointsNumber is the number of keypoints loaded from each side of zero, not total number */
-export const COLOR_OPERATIONS_CONFIG = {
+export const COLOR_OPERATIONS_CONFIG = Object.freeze({
   brightness: {
     zero: OPERATIONS_ZEROS.brightness,
     range: [-100, 100],
@@ -111,4 +111,4 @@ export const COLOR_OPERATIONS_CONFIG = {
     range: [0, 100],
     keypointsNumber: 1,
   },
-};
+});
