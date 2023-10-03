@@ -461,39 +461,7 @@ export class UploaderBlock extends ActivityBlock {
     }
     if (changeMap.fileInfo) {
       if (this.cfg.cropPreset) {
-        const cropPreset = parseCropPreset(this.cfg.cropPreset);
-        if (cropPreset) {
-          const [aspectRatioPreset] = cropPreset;
-
-          const entries = this.uploadCollection
-            .findItems(
-              (entry) =>
-                entry.getValue('fileInfo') &&
-                entry.getValue('isImage') &&
-                !entry.getValue('cdnUrlModifiers')?.includes('/crop/')
-            )
-            .map((id) => this.uploadCollection.read(id));
-
-          for (const entry of entries) {
-            const fileInfo = entry.getValue('fileInfo');
-            const { width, height } = fileInfo.imageInfo;
-            const expectedAspectRatio = aspectRatioPreset.width / aspectRatioPreset.height;
-            const crop = calculateMaxCenteredCropFrame(width, height, expectedAspectRatio);
-            const cdnUrlModifiers = createCdnUrlModifiers(`crop/${crop.width}x${crop.height}/${crop.x},${crop.y}`);
-            entry.setMultipleValues({
-              cdnUrlModifiers,
-              cdnUrl: createCdnUrl(entry.getValue('cdnUrl'), cdnUrlModifiers),
-            });
-            if (
-              uploadCollection.size === 1 &&
-              this.cfg.useCloudImageEditor &&
-              this.hasBlockInCtx((block) => block.activityType === ActivityBlock.activities.CLOUD_IMG_EDIT)
-            ) {
-              this.$['*focusedEntry'] = entry;
-              this.$['*currentActivity'] = ActivityBlock.activities.CLOUD_IMG_EDIT;
-            }
-          }
-        }
+        this.setInitialCrop();
       }
       let loadedItems = uploadCollection.findItems((entry) => {
         return !!entry.getValue('fileInfo');
@@ -564,6 +532,43 @@ export class UploaderBlock extends ActivityBlock {
       });
     }
   };
+
+  /** @private */
+  setInitialCrop() {
+    const cropPreset = parseCropPreset(this.cfg.cropPreset);
+    if (cropPreset) {
+      const [aspectRatioPreset] = cropPreset;
+
+      const entries = this.uploadCollection
+        .findItems(
+          (entry) =>
+            entry.getValue('fileInfo') &&
+            entry.getValue('isImage') &&
+            !entry.getValue('cdnUrlModifiers')?.includes('/crop/')
+        )
+        .map((id) => this.uploadCollection.read(id));
+
+      for (const entry of entries) {
+        const fileInfo = entry.getValue('fileInfo');
+        const { width, height } = fileInfo.imageInfo;
+        const expectedAspectRatio = aspectRatioPreset.width / aspectRatioPreset.height;
+        const crop = calculateMaxCenteredCropFrame(width, height, expectedAspectRatio);
+        const cdnUrlModifiers = createCdnUrlModifiers(`crop/${crop.width}x${crop.height}/${crop.x},${crop.y}`);
+        entry.setMultipleValues({
+          cdnUrlModifiers,
+          cdnUrl: createCdnUrl(entry.getValue('cdnUrl'), cdnUrlModifiers),
+        });
+        if (
+          this.uploadCollection.size === 1 &&
+          this.cfg.useCloudImageEditor &&
+          this.hasBlockInCtx((block) => block.activityType === ActivityBlock.activities.CLOUD_IMG_EDIT)
+        ) {
+          this.$['*focusedEntry'] = entry;
+          this.$['*currentActivity'] = ActivityBlock.activities.CLOUD_IMG_EDIT;
+        }
+      }
+    }
+  }
 
   /** @private */
   async getMetadata() {

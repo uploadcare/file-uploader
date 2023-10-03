@@ -101,18 +101,17 @@ export class CloudImageEditorBlock extends CloudImageEditorBase {
     }
 
     try {
-      fetch(createCdnUrl(this.$['*originalUrl'], createCdnUrlModifiers('json')))
-        .then((response) => response.json())
-        .then((json) => {
-          const { width, height } = /** @type {{ width: number; height: number }} */ (json);
-          this.$['*imageSize'] = { width, height };
+      const cdnUrl = createCdnUrl(this.$['*originalUrl'], createCdnUrlModifiers('json'));
+      const json = await fetch(cdnUrl).then((response) => response.json());
 
-          if (this.$['*tabId'] === TabId.CROP) {
-            this.$['*cropperEl'].activate(this.$['*imageSize']);
-          } else {
-            this.$['*faderEl'].activate({ url: this.$['*originalUrl'] });
-          }
-        });
+      const { width, height } = /** @type {{ width: number; height: number }} */ (json);
+      this.$['*imageSize'] = { width, height };
+
+      if (this.$['*tabId'] === TabId.CROP) {
+        this.$['*cropperEl'].activate(this.$['*imageSize']);
+      } else {
+        this.$['*faderEl'].activate({ url: this.$['*originalUrl'] });
+      }
     } catch (err) {
       if (err) {
         console.error('Failed to load image info', err);

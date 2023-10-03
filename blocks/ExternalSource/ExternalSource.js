@@ -44,21 +44,7 @@ export class ExternalSource extends UploaderBlock {
       counter: 0,
       onDone: () => {
         for (const message of this.$.selectedList) {
-          const url = (() => {
-            if (message.alternatives) {
-              const preferredTypes = stringToArray(this.cfg.externalSourcesPreferredTypes);
-              for (const preferredType of preferredTypes) {
-                const regexp = wildcardRegexp(preferredType);
-                for (const [type, typeUrl] of Object.entries(message.alternatives)) {
-                  if (regexp.test(type)) {
-                    return typeUrl;
-                  }
-                }
-              }
-            }
-            return message.url;
-          })();
-
+          const url = this.extractUrlFromMessage(message);
           const { filename } = message;
           const { externalSourceType } = this.activityParams;
           this.addFileFromUrl(url, { fileName: filename, source: externalSourceType });
@@ -100,6 +86,26 @@ export class ExternalSource extends UploaderBlock {
     this.sub('selectedList', (list) => {
       this.$.counter = list.length;
     });
+  }
+
+  /**
+   * @private
+   * @param {SelectedFileMessage} message
+   */
+  extractUrlFromMessage(message) {
+    if (message.alternatives) {
+      const preferredTypes = stringToArray(this.cfg.externalSourcesPreferredTypes);
+      for (const preferredType of preferredTypes) {
+        const regexp = wildcardRegexp(preferredType);
+        for (const [type, typeUrl] of Object.entries(message.alternatives)) {
+          if (regexp.test(type)) {
+            return typeUrl;
+          }
+        }
+      }
+    }
+
+    return message.url;
   }
 
   /**
