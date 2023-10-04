@@ -2,13 +2,13 @@
 
 ### Features
 
-#### Add option `cloudImageEditorTabs`
+#### New option `cloudImageEditorTabs`
 
 Defines the list of tabs in the cloud image editor. See the [configuration reference](https://uploadcare.com/docs/file-uploader/options/#cloud-image-editor-tabs) for more details.
 
 - **cloud-image-editor:** add ability to hide unnecessary editor tabs (crop, tuning or filters) ([af15f51](https://github.com/uploadcare/blocks/commit/af15f514f8eb787d25409efbd392e8c17deae0db))
 
-#### Add option `cropPreset`
+#### New option `cropPreset`
 
 Defines the crop behavior. When uploading images, your users can select a crop area with defined aspect ratio. See the [configuration reference](https://uploadcare.com/docs/file-uploader/options/#crop-preset) for more details.
 
