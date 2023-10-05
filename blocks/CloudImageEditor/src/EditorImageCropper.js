@@ -3,7 +3,14 @@
 import { debounce } from '../../utils/debounce.js';
 import { throttle } from '../../utils/throttle.js';
 import { CloudImageEditorBase } from './CloudImageEditorBase.js';
-import { clamp, constraintRect, isRectInsideRect, rotateSize, roundRect } from './crop-utils.js';
+import {
+  clamp,
+  constraintRect,
+  isRectInsideRect,
+  isRectMatchesAspectRatio,
+  rotateSize,
+  roundRect,
+} from './crop-utils.js';
 import { CROP_PADDING } from './cropper-constants.js';
 import { classNames } from './lib/classNames.js';
 import { pick } from './lib/pick.js';
@@ -181,18 +188,22 @@ export class EditorImageCropper extends CloudImageEditorBase {
       );
     }
 
-    if (!cropTransformation || !isRectInsideRect(cropBox, imageBox)) {
-      /** @type {import('./types.js').CropPresetList[0]} */
-      const cropPreset = this.$['*cropPresetList']?.[0];
-      const cropRatio = cropPreset ? cropPreset.width / cropPreset.height : undefined;
-      const ratio = imageBox.width / imageBox.height;
+    /** @type {import('./types.js').CropPresetList[0] | undefined} */
+    const cropPreset = this.$['*cropPresetList']?.[0];
+    const cropAspectRatio = cropPreset ? cropPreset.width / cropPreset.height : undefined;
+
+    if (
+      !isRectInsideRect(cropBox, imageBox) ||
+      (cropAspectRatio && !isRectMatchesAspectRatio(cropBox, cropAspectRatio))
+    ) {
+      const imageAspectRatio = imageBox.width / imageBox.height;
       let width = imageBox.width;
       let height = imageBox.height;
-      if (cropRatio) {
-        if (ratio > cropRatio) {
-          width = Math.min(imageBox.height * cropRatio, imageBox.width);
+      if (cropAspectRatio) {
+        if (imageAspectRatio > cropAspectRatio) {
+          width = Math.min(imageBox.height * cropAspectRatio, imageBox.width);
         } else {
-          height = Math.min(imageBox.width / cropRatio, imageBox.height);
+          height = Math.min(imageBox.width / cropAspectRatio, imageBox.height);
         }
       }
       cropBox = {
