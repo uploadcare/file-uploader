@@ -65,6 +65,14 @@ export class UploadList extends UploaderBlock {
     }
     this._updateUploadsState();
     this._updateCountLimitMessage();
+
+    if (
+      this.$['*uploadList']?.length === 0 &&
+      !this.cfg.showEmptyList &&
+      this.$['*currentActivity'] === this.activityType
+    ) {
+      this.historyBack();
+    }
   }, 0);
 
   /**
@@ -222,10 +230,6 @@ export class UploadList extends UploaderBlock {
       this.set$({
         hasFiles: list.length > 0,
       });
-
-      if (list?.length === 0 && !this.cfg.showEmptyList) {
-        this.historyBack();
-      }
 
       if (!this.cfg.confirmUpload) {
         this.add$(

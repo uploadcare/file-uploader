@@ -19,7 +19,7 @@ export class Modal extends Block {
   };
 
   _closeDialog = () => {
-    this.setForCtxTarget(Modal.StateConsumerScope, '*modalActive', false);
+    this.setOrAddState('*modalActive', false);
   };
 
   _handleDialogClose = () => {

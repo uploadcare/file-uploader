@@ -229,7 +229,7 @@ export class UploaderBlock extends ActivityBlock {
       [...this.fileInput['files']].forEach((file) => this.addFileFromObject(file, { source: UploadSource.LOCAL }));
       // To call uploadTrigger UploadList should draw file items first:
       this.$['*currentActivity'] = ActivityBlock.activities.UPLOAD_LIST;
-      this.setForCtxTarget(Modal.StateConsumerScope, '*modalActive', true);
+      this.setOrAddState('*modalActive', true);
       // @ts-ignore TODO: fix this
       this.fileInput['value'] = '';
       this.fileInput = null;
@@ -249,11 +249,11 @@ export class UploaderBlock extends ActivityBlock {
 
   /** @param {Boolean} [force] */
   initFlow(force = false) {
-    if (this.$['*uploadList']?.length && !force) {
+    if (this.uploadCollection.size > 0 && !force) {
       this.set$({
         '*currentActivity': ActivityBlock.activities.UPLOAD_LIST,
       });
-      this.setForCtxTarget(Modal.StateConsumerScope, '*modalActive', true);
+      this.setOrAddState('*modalActive', true);
     } else {
       if (this.sourceList?.length === 1) {
         let srcKey = this.sourceList[0];
@@ -272,14 +272,14 @@ export class UploaderBlock extends ActivityBlock {
           } else {
             this.$['*currentActivity'] = srcKey;
           }
-          this.setForCtxTarget(Modal.StateConsumerScope, '*modalActive', true);
+          this.setOrAddState('*modalActive', true);
         }
       } else {
         // Multiple sources case:
         this.set$({
           '*currentActivity': ActivityBlock.activities.START_FROM,
         });
-        this.setForCtxTarget(Modal.StateConsumerScope, '*modalActive', true);
+        this.setOrAddState('*modalActive', true);
       }
     }
     EventManager.emit(
@@ -298,7 +298,7 @@ export class UploaderBlock extends ActivityBlock {
       '*history': this.doneActivity ? [this.doneActivity] : [],
     });
     if (!this.$['*currentActivity']) {
-      this.setForCtxTarget(Modal.StateConsumerScope, '*modalActive', false);
+      this.setOrAddState('*modalActive', false);
     }
     EventManager.emit(
       new EventData({

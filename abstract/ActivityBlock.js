@@ -161,7 +161,7 @@ export class ActivityBlock extends Block {
       this.$['*currentActivity'] = nextActivity;
       this.$['*history'] = history;
       if (!nextActivity) {
-        this.setForCtxTarget(Modal.StateConsumerScope, '*modalActive', false);
+        this.setOrAddState('*modalActive', false);
       }
     }
   }
