@@ -373,11 +373,14 @@ export class EditorToolbar extends CloudImageEditorBase {
 
     this.sub('*tabList', (tabList) => {
       this.$['presence.tabToggles'] = tabList.length > 1;
-      this.$['*tabId'] = tabList[0];
       for (const tabId of ALL_TABS) {
         this.$[`presence.tabToggle.${tabId}`] = tabList.includes(tabId);
         const toggleEl = this.ref[`tab-toggle-${tabId}`];
         toggleEl.style.gridColumn = tabList.indexOf(tabId) + 1;
+      }
+
+      if (!tabList.includes(this.$['*tabId'])) {
+        this._activateTab(tabList[0], { fromViewer: false });
       }
     });
 

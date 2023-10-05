@@ -554,7 +554,10 @@ export class UploaderBlock extends ActivityBlock {
         const { width, height } = fileInfo.imageInfo;
         const expectedAspectRatio = aspectRatioPreset.width / aspectRatioPreset.height;
         const crop = calculateMaxCenteredCropFrame(width, height, expectedAspectRatio);
-        const cdnUrlModifiers = createCdnUrlModifiers(`crop/${crop.width}x${crop.height}/${crop.x},${crop.y}`);
+        const cdnUrlModifiers = createCdnUrlModifiers(
+          `crop/${crop.width}x${crop.height}/${crop.x},${crop.y}`,
+          'preview'
+        );
         entry.setMultipleValues({
           cdnUrlModifiers,
           cdnUrl: createCdnUrl(entry.getValue('cdnUrl'), cdnUrlModifiers),
