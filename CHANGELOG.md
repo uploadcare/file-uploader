@@ -8,6 +8,22 @@
 
 - **simple-btn:** add flag to toggle drop-zone ([5f4fae2](https://github.com/uploadcare/blocks/commit/5f4fae27738e77dfeb11284ab8f38b4cdf3c57d5))
 
+Example:
+
+```js
+class CustomSimpleBtn extends LR.SimpleBtn {
+  dropzone = false;
+}
+
+LR.registerBlocks({...LR, SimpleBtn: CustomSimpleBtn});
+```
+
+or 
+
+```html
+<lr-simple-btn dropzone="false"></lr-simple-btn>
+```
+
 # [0.26.0](https://github.com/uploadcare/blocks/compare/v0.25.6...v0.26.0) (2023-10-03)
 
 ### Features
