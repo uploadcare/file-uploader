@@ -4,6 +4,7 @@ import { DropzoneState, addDropzone } from './addDropzone.js';
 import { Modal } from '../Modal/Modal.js';
 import { stringToArray } from '../../utils/stringToArray.js';
 import { UploadSource } from '../utils/UploadSource.js';
+import { asBoolean } from '../Config/normalizeConfigValue.js';
 
 export class DropArea extends UploaderBlock {
   init$ = {
@@ -44,16 +45,16 @@ export class DropArea extends UploaderBlock {
     this.$['lr-drop-area/targets'].add(this);
 
     this.defineAccessor('disabled', (value) => {
-      this.set$({ isEnabled: !value });
+      this.set$({ isEnabled: !asBoolean(value) });
     });
     this.defineAccessor('clickable', (value) => {
-      this.set$({ isClickable: typeof value === 'string' });
+      this.set$({ isClickable: asBoolean(value) });
     });
     this.defineAccessor('with-icon', (value) => {
-      this.set$({ withIcon: typeof value === 'string' });
+      this.set$({ withIcon: asBoolean(value) });
     });
     this.defineAccessor('fullscreen', (value) => {
-      this.set$({ isFullscreen: typeof value === 'string' });
+      this.set$({ isFullscreen: asBoolean(value) });
     });
 
     this.defineAccessor('text', (value) => {

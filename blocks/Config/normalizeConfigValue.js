@@ -5,7 +5,7 @@ const asString = (value) => String(value);
 /** @param {unknown} value */
 const asNumber = (value) => Number(value);
 /** @param {unknown} value */
-const asBoolean = (value) => {
+export const asBoolean = (value) => {
   if (typeof value === 'boolean') return value;
   // for attr like multiple="true" (react will pass it as string)
   if (value === 'true') return true;
