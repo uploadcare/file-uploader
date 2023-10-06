@@ -1,3 +1,9 @@
+## [0.27.1](https://github.com/uploadcare/blocks/compare/v0.27.0...v0.27.1) (2023-10-06)
+
+### Bug Fixes
+
+- **init-flow:** fix sync `initFlow` calls right after upload collection ([#532](https://github.com/uploadcare/blocks/issues/532)) ([f4f4dea](https://github.com/uploadcare/blocks/commit/f4f4dea6014275faf7d6e50b6cf8c7dbdad449aa))
+
 # [0.27.0](https://github.com/uploadcare/blocks/compare/v0.26.0...v0.27.0) (2023-10-06)
 
 ### Bug Fixes
@@ -15,10 +21,10 @@ class CustomSimpleBtn extends LR.SimpleBtn {
   dropzone = false;
 }
 
-LR.registerBlocks({...LR, SimpleBtn: CustomSimpleBtn});
+LR.registerBlocks({ ...LR, SimpleBtn: CustomSimpleBtn });
 ```
 
-or 
+or
 
 ```html
 <lr-simple-btn dropzone="false"></lr-simple-btn>
