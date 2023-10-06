@@ -102,14 +102,16 @@ export class Block extends BaseComponent {
   }
 
   /**
-   * @param {String} consumerScope
    * @param {String} prop
    * @param {any} newVal
    */
-  setForCtxTarget(consumerScope, prop, newVal) {
-    if (this.hasBlockInCtx((b) => /** @type {typeof Block} */ (b.constructor).StateConsumerScope === consumerScope)) {
-      this.$[prop] = newVal;
-    }
+  setOrAddState(prop, newVal) {
+    this.add$(
+      {
+        [prop]: newVal,
+      },
+      true
+    );
   }
 
   /** @param {String} activityType */

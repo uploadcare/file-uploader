@@ -89,7 +89,7 @@ export class DropArea extends UploaderBlock {
           this.set$({
             '*currentActivity': ActivityBlock.activities.UPLOAD_LIST,
           });
-          this.setForCtxTarget(Modal.StateConsumerScope, '*modalActive', true);
+          this.setOrAddState('*modalActive', true);
         }
       },
     });
