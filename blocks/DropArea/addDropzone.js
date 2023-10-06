@@ -76,10 +76,13 @@ export function addDropzone(desc) {
   };
 
   let onDragOver = (e) => {
+    if (desc.shouldIgnore()) {
+      return;
+    }
+
     if (!isDragging()) {
       eventCounter += 1;
     }
-    e.preventDefault();
 
     /** @type {[Number, Number]} */
     let dragPoint = [e.x, e.y];
@@ -92,6 +95,7 @@ export function addDropzone(desc) {
     let isNearest = Math.min(...nearnessRegistry.values()) === nearness;
 
     if (isOver && isNearest) {
+      e.preventDefault();
       setState(DropzoneState.OVER);
     } else if (isNear && isNearest) {
       setState(DropzoneState.NEAR);
