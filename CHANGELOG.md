@@ -1,3 +1,13 @@
+# [0.27.0](https://github.com/uploadcare/blocks/compare/v0.26.0...v0.27.0) (2023-10-06)
+
+### Bug Fixes
+
+- **drag-n-drop:** do not show drop cursor when it's not over the drop target ([05a08dc](https://github.com/uploadcare/blocks/commit/05a08dc7206b451e0d4fcd14599d4415f317631b))
+
+### Features
+
+- **simple-btn:** add flag to toggle drop-zone ([5f4fae2](https://github.com/uploadcare/blocks/commit/5f4fae27738e77dfeb11284ab8f38b4cdf3c57d5))
+
 # [0.26.0](https://github.com/uploadcare/blocks/compare/v0.25.6...v0.26.0) (2023-10-03)
 
 ### Features
