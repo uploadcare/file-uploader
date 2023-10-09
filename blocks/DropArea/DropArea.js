@@ -1,23 +1,28 @@
-import { UploaderBlock } from '../../abstract/UploaderBlock.js';
+// @ts-check
+
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
-import { DropzoneState, addDropzone } from './addDropzone.js';
-import { Modal } from '../Modal/Modal.js';
+import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { stringToArray } from '../../utils/stringToArray.js';
-import { UploadSource } from '../utils/UploadSource.js';
 import { asBoolean } from '../Config/normalizeConfigValue.js';
+import { UploadSource } from '../utils/UploadSource.js';
+import { DropzoneState, addDropzone } from './addDropzone.js';
 
 export class DropArea extends UploaderBlock {
-  init$ = {
-    ...this.init$,
-    state: DropzoneState.INACTIVE,
-    withIcon: false,
-    isClickable: false,
-    isFullscreen: false,
-    isEnabled: true,
-    isVisible: true,
-    text: this.l10n('drop-files-here'),
-    'lr-drop-area/targets': null,
-  };
+  constructor() {
+    super();
+
+    this.init$ = {
+      ...this.init$,
+      state: DropzoneState.INACTIVE,
+      withIcon: false,
+      isClickable: false,
+      isFullscreen: false,
+      isEnabled: true,
+      isVisible: true,
+      text: this.l10n('drop-files-here'),
+      'lr-drop-area/targets': null,
+    };
+  }
 
   isActive() {
     if (!this.$.isEnabled) {
@@ -36,6 +41,7 @@ export class DropArea extends UploaderBlock {
 
     return hasSize && visible && isInViewport;
   }
+
   initCallback() {
     super.initCallback();
 
@@ -44,46 +50,62 @@ export class DropArea extends UploaderBlock {
     }
     this.$['lr-drop-area/targets'].add(this);
 
-    this.defineAccessor('disabled', (value) => {
-      this.set$({ isEnabled: !asBoolean(value) });
-    });
-    this.defineAccessor('clickable', (value) => {
-      this.set$({ isClickable: asBoolean(value) });
-    });
-    this.defineAccessor('with-icon', (value) => {
-      this.set$({ withIcon: asBoolean(value) });
-    });
-    this.defineAccessor('fullscreen', (value) => {
-      this.set$({ isFullscreen: asBoolean(value) });
-    });
-
-    this.defineAccessor('text', (value) => {
-      if (value) {
-        this.set$({ text: this.l10n(value) || value });
-      } else {
-        this.set$({ text: this.l10n('drop-files-here') });
+    this.defineAccessor(
+      'disabled',
+      /** @param {unknown} value */ (value) => {
+        this.set$({ isEnabled: !asBoolean(value) });
       }
-    });
+    );
+    this.defineAccessor(
+      'clickable',
+      /** @param {unknown} value */ (value) => {
+        this.set$({ isClickable: asBoolean(value) });
+      }
+    );
+    this.defineAccessor(
+      'with-icon',
+      /** @param {unknown} value */ (value) => {
+        this.set$({ withIcon: asBoolean(value) });
+      }
+    );
+    this.defineAccessor(
+      'fullscreen',
+      /** @param {unknown} value */ (value) => {
+        this.set$({ isFullscreen: asBoolean(value) });
+      }
+    );
+
+    this.defineAccessor(
+      'text',
+      /** @param {unknown} value */ (value) => {
+        if (typeof value === 'string') {
+          this.set$({ text: this.l10n(value) || value });
+        } else {
+          this.set$({ text: this.l10n('drop-files-here') });
+        }
+      }
+    );
 
     /** @private */
     this._destroyDropzone = addDropzone({
       element: this,
       shouldIgnore: () => this._shouldIgnore(),
+      /** @param {DropzoneState} state */
       onChange: (state) => {
         this.$.state = state;
       },
-      /** @param {(File | String)[]} items */
+      /** @param {import('./getDropItems.js').DropItem[]} items */
       onItems: (items) => {
         if (!items.length) {
           return;
         }
 
-        items.forEach((/** @type {File | String} */ item) => {
-          if (typeof item === 'string') {
-            this.addFileFromUrl(item, { source: UploadSource.DROP_AREA });
-            return;
+        items.forEach((/** @type {import('./getDropItems.js').DropItem} */ item) => {
+          if (item.type === 'url') {
+            this.addFileFromUrl(item.url, { source: UploadSource.DROP_AREA });
+          } else if (item.type === 'file') {
+            this.addFileFromObject(item.file, { source: UploadSource.DROP_AREA, fullPath: item.fullPath });
           }
-          this.addFileFromObject(item, { source: UploadSource.DROP_AREA });
         });
         if (this.uploadCollection.size) {
           this.set$({
@@ -98,6 +120,7 @@ export class DropArea extends UploaderBlock {
     if (contentWrapperEl) {
       this._destroyContentWrapperDropzone = addDropzone({
         element: contentWrapperEl,
+        /** @param {DropzoneState} state */
         onChange: (state) => {
           const stateText = Object.entries(DropzoneState)
             .find(([, value]) => value === state)?.[0]
@@ -206,9 +229,14 @@ DropArea.template = /* HTML */ `
 `;
 
 DropArea.bindAttributes({
+  // @ts-expect-error TODO: fix types inside symbiote
   'with-icon': null,
+  // @ts-expect-error TODO: fix types inside symbiote
   clickable: null,
+  // @ts-expect-error TODO: fix types inside symbiote
   text: null,
+  // @ts-expect-error TODO: fix types inside symbiote
   fullscreen: null,
+  // @ts-expect-error TODO: fix types inside symbiote
   disabled: null,
 });

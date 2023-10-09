@@ -165,9 +165,9 @@ export class UploaderBlock extends ActivityBlock {
 
   /**
    * @param {File} file
-   * @param {{ silent?: boolean; fileName?: string; source?: string }} [options]
+   * @param {{ silent?: boolean; fileName?: string; source?: string; fullPath?: string }} [options]
    */
-  addFileFromObject(file, { silent, fileName, source } = {}) {
+  addFileFromObject(file, { silent, fileName, source, fullPath } = {}) {
     this.uploadCollection.add({
       file,
       isImage: fileIsImage(file),
@@ -176,6 +176,7 @@ export class UploaderBlock extends ActivityBlock {
       fileSize: file.size,
       silentUpload: silent ?? false,
       source: source ?? UploadSource.API,
+      fullPath,
     });
   }
 

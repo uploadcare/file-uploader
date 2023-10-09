@@ -122,4 +122,9 @@ export const uploadEntrySchema = Object.freeze({
     value: false,
     nullable: true,
   },
+  fullPath: {
+    type: String,
+    value: null,
+    nullable: true,
+  },
 });
