@@ -1,3 +1,10 @@
+## [0.27.3](https://github.com/uploadcare/blocks/compare/v0.27.2...v0.27.3) (2023-10-10)
+
+### Bug Fixes
+
+- **cloud-image-editor:** make `crop-preset` and `tabs` attributes reactive ([8545c71](https://github.com/uploadcare/blocks/commit/8545c716f4b1e0a6adf55fcdb4c0c921f8cfd852))
+- **uploader:** append `preview` operation when setting initial crop with `crop-preset` defined ([5f1036c](https://github.com/uploadcare/blocks/commit/5f1036c5cafa3b7293f214b51a604a3ea53822e5))
+
 ## [0.27.2](https://github.com/uploadcare/blocks/compare/v0.27.1...v0.27.2) (2023-10-10)
 
 ### Bug Fixes
