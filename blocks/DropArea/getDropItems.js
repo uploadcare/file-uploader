@@ -1,3 +1,17 @@
+// @ts-check
+
+/**
+ * @typedef {| {
+ *       type: 'file';
+ *       file: File;
+ *       fullPath?: string;
+ *     }
+ *   | {
+ *       type: 'url';
+ *       url: string;
+ *     }} DropItem
+ */
+
 /**
  * @param {File} file
  * @returns {Promise<boolean>}
@@ -13,6 +27,7 @@ function checkIsDirectory(file) {
       reader.onerror = () => {
         resolve(true);
       };
+      /** @param {Event} e */
       let onLoad = (e) => {
         if (e.type !== 'loadend') {
           reader.abort();
@@ -29,33 +44,45 @@ function checkIsDirectory(file) {
   });
 }
 
+/**
+ * @param {FileSystemEntry} webkitEntry
+ * @param {string} dataTransferItemType
+ * @returns {Promise<DropItem[] | null>}
+ */
 function readEntryContentAsync(webkitEntry, dataTransferItemType) {
   return new Promise((resolve) => {
     let reading = 0;
-    let contents = [];
+    /** @type {DropItem[]} */
+    const dropItems = [];
 
-    let readEntry = (entry) => {
+    /** @param {FileSystemEntry} entry */
+    const readEntry = (entry) => {
       if (!entry) {
         console.warn('Unexpectedly received empty content entry', { scope: 'drag-and-drop' });
         resolve(null);
       }
       if (entry.isFile) {
         reading++;
-        entry.file((file) => {
+        /** @type {FileSystemFileEntry} */ (entry).file((file) => {
           reading--;
           // webkitGetAsEntry don't provide type for HEIC images at least, so we use type value from dataTransferItem
           const clonedFile = new File([file], file.name, { type: file.type || dataTransferItemType });
-          contents.push(clonedFile);
+          dropItems.push({
+            type: 'file',
+            file: clonedFile,
+            fullPath: entry.fullPath,
+          });
 
           if (reading === 0) {
-            resolve(contents);
+            resolve(dropItems);
           }
         });
       } else if (entry.isDirectory) {
-        readReaderContent(entry.createReader());
+        readReaderContent(/** @type {FileSystemDirectoryEntry} */ (entry).createReader());
       }
     };
 
+    /** @param {FileSystemDirectoryReader} reader */
     let readReaderContent = (reader) => {
       reading++;
 
@@ -66,7 +93,7 @@ function readEntryContentAsync(webkitEntry, dataTransferItemType) {
         }
 
         if (reading === 0) {
-          resolve(contents);
+          resolve(dropItems);
         }
       });
     };
@@ -79,11 +106,12 @@ function readEntryContentAsync(webkitEntry, dataTransferItemType) {
  * Note: dataTransfer will be destroyed outside of the call stack. So, do not try to process it asynchronous.
  *
  * @param {DataTransfer} dataTransfer
- * @returns {Promise<(File | String)[]>}
+ * @returns {Promise<DropItem[]>}
  */
 export function getDropItems(dataTransfer) {
-  let files = [];
-  let promises = [];
+  /** @type {DropItem[]} */
+  const dropItems = [];
+  const promises = [];
   for (let i = 0; i < dataTransfer.items.length; i++) {
     let item = dataTransfer.items[i];
     if (!item) {
@@ -97,34 +125,43 @@ export function getDropItems(dataTransfer) {
             ? item.webkitGetAsEntry()
             : /** @type {any} */ (item).getAsEntry();
         promises.push(
-          readEntryContentAsync(entry, itemType).then((entryContent) => {
-            files.push(...entryContent);
+          readEntryContentAsync(entry, itemType).then((items) => {
+            if (items) {
+              dropItems.push(...items);
+            }
           })
         );
         continue;
       }
 
-      let file = item.getAsFile();
-      promises.push(
-        checkIsDirectory(file).then((isDirectory) => {
-          if (isDirectory) {
-            // we can't get directory files, so we'll skip it
-          } else {
-            files.push(file);
-          }
-        })
-      );
+      const file = item.getAsFile();
+      file &&
+        promises.push(
+          checkIsDirectory(file).then((isDirectory) => {
+            if (isDirectory) {
+              // we can't get directory files, so we'll skip it
+            } else {
+              dropItems.push({
+                type: 'file',
+                file,
+              });
+            }
+          })
+        );
     } else if (item.kind === 'string' && item.type.match('^text/uri-list')) {
       promises.push(
         new Promise((resolve) => {
           item.getAsString((value) => {
-            files.push(value);
-            resolve();
+            dropItems.push({
+              type: 'url',
+              url: value,
+            });
+            resolve(undefined);
           });
         })
       );
     }
   }
 
-  return Promise.all(promises).then(() => files);
+  return Promise.all(promises).then(() => dropItems);
 }
