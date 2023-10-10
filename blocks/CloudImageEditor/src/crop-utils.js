@@ -657,6 +657,15 @@ export function isRectInsideRect(rect1, rect2) {
 }
 
 /**
+ * @param {import('./types.js').Rectangle} rect
+ * @param {number} aspectRatio
+ */
+export function isRectMatchesAspectRatio(rect, aspectRatio) {
+  const THRESHOLD = 0.1;
+  return Math.abs(rect.width / rect.height - aspectRatio) < THRESHOLD;
+}
+
+/**
  * @param {import('./types.js').ImageSize} imageSize
  * @param {Number} angle
  * @returns {import('./types.js').ImageSize}

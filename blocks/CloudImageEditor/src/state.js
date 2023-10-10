@@ -58,8 +58,8 @@ export function initState(fnCtx) {
         return;
       }
       let originalUrl = fnCtx.$['*originalUrl'];
-      let cdnUrlModifiers = createCdnUrlModifiers(transformationsToOperations(transformations));
-      let cdnUrl = createCdnUrl(originalUrl, createCdnUrlModifiers(cdnUrlModifiers, 'preview'));
+      let cdnUrlModifiers = createCdnUrlModifiers(transformationsToOperations(transformations), 'preview');
+      let cdnUrl = createCdnUrl(originalUrl, cdnUrlModifiers);
 
       /** @type {import('./types.js').ApplyResult} */
       let eventData = {

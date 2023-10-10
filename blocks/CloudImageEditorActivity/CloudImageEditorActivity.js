@@ -1,3 +1,4 @@
+// @ts-check
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { CloudImageEditorBlock } from '../CloudImageEditor/index.js';
@@ -5,10 +6,14 @@ import { CloudImageEditorBlock } from '../CloudImageEditor/index.js';
 export class CloudImageEditorActivity extends UploaderBlock {
   activityType = ActivityBlock.activities.CLOUD_IMG_EDIT;
 
-  init$ = {
-    ...this.init$,
-    cdnUrl: null,
-  };
+  constructor() {
+    super();
+
+    this.init$ = {
+      ...this.init$,
+      cdnUrl: null,
+    };
+  }
 
   initCallback() {
     super.initCallback();
@@ -30,10 +35,25 @@ export class CloudImageEditorActivity extends UploaderBlock {
         }
       });
     });
+
+    this.subConfigValue('cropPreset', (cropPreset) => {
+      if (this._instance && this._instance.getAttribute('crop-preset') !== cropPreset) {
+        this._instance.setAttribute('crop-preset', cropPreset);
+      }
+    });
+
+    this.subConfigValue('cloudImageEditorTabs', (tabs) => {
+      if (this._instance && this._instance.getAttribute('tabs') !== tabs) {
+        this._instance.setAttribute('tabs', tabs);
+      }
+    });
   }
 
-  /** @param {CustomEvent<import('./src/types.js').ApplyResult>} e */
+  /** @param {CustomEvent<import('../CloudImageEditor/src/types.js').ApplyResult>} e */
   handleApply(e) {
+    if (!this.entry) {
+      return;
+    }
     let result = e.detail;
     this.entry.setMultipleValues({
       cdnUrl: result.cdnUrl,
@@ -62,14 +82,21 @@ export class CloudImageEditorActivity extends UploaderBlock {
       instance.setAttribute('tabs', tabs);
     }
 
-    instance.addEventListener('apply', (result) => this.handleApply(result));
+    instance.addEventListener('apply', (result) =>
+      this.handleApply(/** @type {CustomEvent<import('../CloudImageEditor/src/types.js').ApplyResult>} */ (result))
+    );
     instance.addEventListener('cancel', () => this.handleCancel());
 
     this.innerHTML = '';
     this.appendChild(instance);
+    this._mounted = true;
+
+    /** @private */
+    this._instance = instance;
   }
 
   unmountEditor() {
+    this._instance = undefined;
     this.innerHTML = '';
   }
 }
