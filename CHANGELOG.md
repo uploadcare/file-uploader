@@ -1,3 +1,9 @@
+## [0.27.2](https://github.com/uploadcare/blocks/compare/v0.27.1...v0.27.2) (2023-10-10)
+
+### Bug Fixes
+
+- capture and store file's full path while getting drag'n'dropped ([#536](https://github.com/uploadcare/blocks/issues/536)) ([3ba168e](https://github.com/uploadcare/blocks/commit/3ba168ee955a3b3231ca42c7112963fa2ff240cb))
+
 ## [0.27.1](https://github.com/uploadcare/blocks/compare/v0.27.0...v0.27.1) (2023-10-06)
 
 ### Bug Fixes
