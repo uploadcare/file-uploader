@@ -1,5 +1,6 @@
 // @ts-check
 import { Block } from '../../abstract/Block.js';
+import { waitForAttribute } from '../../utils/waitForAttribute.js';
 
 const CSS_ATTRIBUTE = 'css-src';
 
@@ -22,6 +23,7 @@ export function shadowed(Base) {
   return class extends Base {
     renderShadow = true;
     pauseRender = true;
+    requireCtxName = true;
 
     shadowReadyCallback() {}
 
@@ -29,10 +31,10 @@ export function shadowed(Base) {
       super.initCallback();
       this.setAttribute('hidden', '');
 
-      // async wait for attributes to be set, needed for Angular because it sets attributes after constructor
-      setTimeout(() => {
-        let href = this.getAttribute(CSS_ATTRIBUTE);
-        if (href) {
+      waitForAttribute({
+        element: this,
+        attribute: CSS_ATTRIBUTE,
+        onSuccess: (href) => {
           this.attachShadow({
             mode: 'open',
           });
@@ -53,11 +55,12 @@ export function shadowed(Base) {
           };
           // @ts-ignore TODO: fix this
           this.shadowRoot.prepend(link);
-        } else {
+        },
+        onTimeout: () => {
           console.error(
             'Attribute `css-src` is required and it is not set. See migration guide: https://uploadcare.com/docs/file-uploader/migration-to-0.25.0/'
           );
-        }
+        },
       });
     }
   };

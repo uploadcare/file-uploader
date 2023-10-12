@@ -4,12 +4,12 @@
  * @param {{
  *   element: HTMLElement;
  *   attribute: string;
- *   onMutate: (value: string) => void;
+ *   onSuccess: (value: string) => void;
  *   onTimeout: () => void;
  *   timeout?: number;
  * }} options
  */
-export const waitForAttribute = ({ element, attribute, onMutate, onTimeout, timeout = 300 }) => {
+export const waitForAttribute = ({ element, attribute, onSuccess, onTimeout, timeout = 300 }) => {
   const timeoutId = setTimeout(() => {
     observer.disconnect();
     onTimeout();
@@ -20,13 +20,13 @@ export const waitForAttribute = ({ element, attribute, onMutate, onTimeout, time
     if (mutation.type === 'attributes' && mutation.attributeName === attribute && attrValue !== null) {
       clearTimeout(timeoutId);
       observer.disconnect();
-      onMutate(attrValue);
+      onSuccess(attrValue);
     }
   };
   const currentAttrValue = element.getAttribute(attribute);
   if (currentAttrValue !== null) {
     clearTimeout(timeoutId);
-    onMutate(currentAttrValue);
+    onSuccess(currentAttrValue);
   }
   const observer = new MutationObserver((mutations) => {
     const mutation = mutations[mutations.length - 1];

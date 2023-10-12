@@ -8,6 +8,7 @@ import { sharedConfigKey } from './sharedConfigKey.js';
 import { toKebabCase } from '../utils/toKebabCase.js';
 import { warnOnce } from '../utils/warnOnce.js';
 import { getPluralForm } from '../utils/getPluralForm.js';
+import { waitForAttribute } from '../utils/waitForAttribute.js';
 
 const TAG_PREFIX = 'lr-';
 
@@ -16,6 +17,7 @@ export class Block extends BaseComponent {
   /** @type {string | null} */
   static StateConsumerScope = null;
   static className = '';
+  requireCtxName = false;
   allowCustomTemplate = true;
 
   init$ = blockCtx();
@@ -137,7 +139,22 @@ export class Block extends BaseComponent {
       this.constructor['template'] = null;
       this.processInnerHtml = true;
     }
-    super.connectedCallback();
+    if (this.requireCtxName) {
+      waitForAttribute({
+        element: this,
+        attribute: 'ctx-name',
+        onSuccess: () => {
+          // async wait for ctx-name attribute to be set, needed for Angular because it sets attributes after mount
+          // TODO: should be moved to the symbiote core
+          super.connectedCallback();
+        },
+        onTimeout: () => {
+          console.error('Attribute `ctx-name` is required and it is not set.');
+        },
+      });
+    } else {
+      super.connectedCallback();
+    }
   }
 
   disconnectedCallback() {
