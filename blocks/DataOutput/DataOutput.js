@@ -5,6 +5,7 @@ import { uploadFileGroup } from '@uploadcare/upload-client';
 
 export class DataOutput extends UploaderBlock {
   processInnerHtml = true;
+  requireCtxName = true;
 
   init$ = {
     ...this.init$,

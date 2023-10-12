@@ -40,6 +40,7 @@ const attrStateMapping = /** @type {Record<keyof import('../../types').ConfigAtt
 
 export class Config extends Block {
   ctxOwner = true;
+  requireCtxName = true;
 
   constructor() {
     super();

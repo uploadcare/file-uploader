@@ -2,6 +2,7 @@ import { ShadowWrapper } from '../blocks/ShadowWrapper/ShadowWrapper.js';
 import { uploaderBlockCtx } from './CTX.js';
 
 export class SolutionBlock extends ShadowWrapper {
+  requireCtxName = true;
   init$ = uploaderBlockCtx(this);
   _template = null;
 

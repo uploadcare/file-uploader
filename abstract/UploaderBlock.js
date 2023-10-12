@@ -176,7 +176,7 @@ export class UploaderBlock extends ActivityBlock {
       fileSize: file.size,
       silentUpload: silent ?? false,
       source: source ?? UploadSource.API,
-      fullPath,
+      fullPath: fullPath ?? null,
     });
   }
 
