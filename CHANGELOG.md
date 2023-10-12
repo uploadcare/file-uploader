@@ -1,3 +1,9 @@
+## [0.27.4](https://github.com/uploadcare/blocks/compare/v0.27.3...v0.27.4) (2023-10-12)
+
+### Bug Fixes
+
+- require `ctx-name` attribute for all the public blocks and wait for it with 300ms timeout ([11d5a94](https://github.com/uploadcare/blocks/commit/11d5a94c9131398138eda27011616745ee4b45fe))
+
 ## [0.27.3](https://github.com/uploadcare/blocks/compare/v0.27.2...v0.27.3) (2023-10-10)
 
 ### Bug Fixes
