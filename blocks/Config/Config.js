@@ -4,7 +4,6 @@ import { initialConfig } from './initialConfig.js';
 import { sharedConfigKey } from '../../abstract/sharedConfigKey.js';
 import { toKebabCase } from '../../utils/toKebabCase.js';
 import { normalizeConfigValue } from './normalizeConfigValue.js';
-import { waitForAttribute } from '../../utils/waitForAttribute.js';
 
 const allConfigKeys = /** @type {(keyof import('../../types').ConfigType)[]} */ (Object.keys(initialConfig));
 
