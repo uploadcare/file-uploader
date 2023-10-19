@@ -1,3 +1,9 @@
+## [0.27.5](https://github.com/uploadcare/blocks/compare/v0.27.4...v0.27.5) (2023-10-19)
+
+### Bug Fixes
+
+- **types:** add missing `LR_CLOUD_MODIFICATION` JSX type ([#542](https://github.com/uploadcare/blocks/issues/542)) ([3307b25](https://github.com/uploadcare/blocks/commit/3307b25ff8948fd87292839664765533df8ed40b))
+
 ## [0.27.4](https://github.com/uploadcare/blocks/compare/v0.27.3...v0.27.4) (2023-10-12)
 
 ### Bug Fixes
