@@ -524,7 +524,7 @@ export class UploaderBlock extends ActivityBlock {
       items.forEach((id) => {
         EventManager.emit(
           new EventData({
-            type: EVENT_TYPES.CDN_MODIFICATION,
+            type: EVENT_TYPES.CLOUD_MODIFICATION,
             ctx: this.ctxName,
             data: Data.getCtx(id).store,
           }),
@@ -666,7 +666,7 @@ Object.values(EVENT_TYPES).forEach((eType) => {
   const cb = debounce(
     /** @param {CustomEvent} e */
     (e) => {
-      let outputTypes = [EVENT_TYPES.UPLOAD_FINISH, EVENT_TYPES.REMOVE, EVENT_TYPES.CDN_MODIFICATION];
+      let outputTypes = [EVENT_TYPES.UPLOAD_FINISH, EVENT_TYPES.REMOVE, EVENT_TYPES.CLOUD_MODIFICATION];
       // @ts-ignore TODO: fix this
       if (outputTypes.includes(e.detail.type)) {
         // @ts-ignore TODO: fix this

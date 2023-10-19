@@ -6,7 +6,7 @@ interface CustomEventMap {
   UPLOAD_FINISH: CustomEvent<any>;
   UPLOAD_ERROR: CustomEvent<any>;
   VALIDATION_ERROR: CustomEvent<any>;
-  CDN_MODIFICATION: CustomEvent<any>;
+  CLOUD_MODIFICATION: CustomEvent<any>;
   DATA_OUTPUT: CustomEvent<any>;
   DONE_FLOW: CustomEvent<any>;
   INIT_FLOW: CustomEvent<any>;
