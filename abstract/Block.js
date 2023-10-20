@@ -227,6 +227,14 @@ export class Block extends BaseComponent {
       let o = Object.create(null);
       /** @private */
       this.__cfgProxy = new Proxy(o, {
+        set: (obj, key, value) => {
+          if (typeof key !== 'string') {
+            return false;
+          }
+          const sharedKey = sharedConfigKey(/** @type {keyof import('../types').ConfigType} */ (key));
+          this.$[sharedKey] = value;
+          return true;
+        },
         /**
          * @param {never} obj
          * @param {keyof import('../types').ConfigType} key
