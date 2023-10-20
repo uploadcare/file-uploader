@@ -1,3 +1,9 @@
+## [0.27.6](https://github.com/uploadcare/blocks/compare/v0.27.5...v0.27.6) (2023-10-20)
+
+### Bug Fixes
+
+- **minimal-mode:** add file button should open system dialog ([#544](https://github.com/uploadcare/blocks/issues/544)) ([366d524](https://github.com/uploadcare/blocks/commit/366d524487d19a7d5b46bc39b023ea904fe6d835))
+
 ## [0.27.5](https://github.com/uploadcare/blocks/compare/v0.27.4...v0.27.5) (2023-10-19)
 
 ### Bug Fixes
