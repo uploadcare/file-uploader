@@ -59,9 +59,21 @@ export class Config extends Block {
 
   initCallback() {
     super.initCallback();
+    const anyThis = /** @type {typeof this & any} */ (this);
+
+    for (const key of plainConfigKeys) {
+      this.sub(
+        sharedConfigKey(key),
+        (value) => {
+          if (value !== initialConfig[key]) {
+            anyThis[key] = value;
+          }
+        },
+        false
+      );
+    }
 
     for (const key of allConfigKeys) {
-      const anyThis = /** @type {typeof this & any} */ (this);
       let localPropName = '__' + key;
       anyThis[localPropName] = anyThis[key];
 
