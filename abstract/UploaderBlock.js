@@ -638,8 +638,6 @@ export class UploaderBlock extends ActivityBlock {
       metadata: await this.getMetadata(),
     };
 
-    console.log('Upload client options:', options);
-
     return options;
   }
 
