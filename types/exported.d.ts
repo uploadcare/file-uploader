@@ -1,3 +1,5 @@
+import { UploadcareFile } from '@uploadcare/upload-client';
+
 export type Metadata = import('@uploadcare/upload-client').Metadata;
 export type MetadataCallback = () => Promise<Metadata>;
 export type ConfigType = {
@@ -54,5 +56,18 @@ export type KebabCase<S extends string> = S extends `${infer C}${infer T}`
 export type KebabCaseKeys<T extends Record<string, unknown>> = { [Key in keyof T as KebabCase<Key & string>]: T[Key] };
 export type LowerCase<S extends string> = Lowercase<S>;
 export type LowerCaseKeys<T extends Record<string, unknown>> = { [Key in keyof T as Lowercase<Key & string>]: T[Key] };
+
+type requiredFileInfoFields = 'name' | 'size' | 'isImage' | 'mimeType';
+
+export type OutputFileEntry = Pick<UploadcareFile, requiredFileInfoFields> &
+  Partial<Omit<UploadcareFile, requiredFileInfoFields>> & {
+    cdnUrlModifiers: string | null;
+    validationErrorMessage: string | null;
+    uploadError: Error | null;
+    file: File | Blob | null;
+    externalUrl: string | null;
+    isValid: boolean;
+    isUploaded: boolean;
+  };
 
 export {};
