@@ -113,20 +113,20 @@ export class DataOutput extends UploaderBlock {
           this.$.output = null;
           return;
         }
-        const allUploaded = data.every((item) => item.isUploaded);
-        if (allUploaded && (this.cfg.groupOutput || this.hasAttribute(this.dict.GROUP_ATTR))) {
-          let uuidList = data.map((fileDesc) => {
-            return fileDesc.uuid + (fileDesc.cdnUrlModifiers ? `/${fileDesc.cdnUrlModifiers}` : '');
-          });
-          const validationOk = data.every((item) => item.isValid);
-          if (!validationOk) {
+        if (this.cfg.groupOutput || this.hasAttribute(this.dict.GROUP_ATTR)) {
+          const isAllUploadedAndValid = data.every((item) => item.isUploaded && item.isValid);
+          if (!isAllUploadedAndValid) {
             this.$.output = {
               groupData: undefined,
               files: data,
             };
             return;
           }
+
           const uploadClientOptions = await this.getUploadClientOptions();
+          const uuidList = data.map((fileDesc) => {
+            return fileDesc.uuid + (fileDesc.cdnUrlModifiers ? `/${fileDesc.cdnUrlModifiers}` : '');
+          });
           const resp = await uploadFileGroup(uuidList, uploadClientOptions);
           this.$.output = {
             groupData: resp,
