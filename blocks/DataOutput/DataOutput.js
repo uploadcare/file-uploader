@@ -126,7 +126,7 @@ export class DataOutput extends UploaderBlock {
             };
             return;
           }
-          const uploadClientOptions = await this.getUploadClientOptions();
+          const uploadClientOptions = this.getUploadClientOptions();
           const resp = await uploadFileGroup(uuidList, uploadClientOptions);
           this.$.output = {
             groupData: resp,

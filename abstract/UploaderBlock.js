@@ -607,18 +607,22 @@ export class UploaderBlock extends ActivityBlock {
     }
   }
 
-  /** @private */
-  async getMetadata() {
+  /**
+   * @param {string} entryId
+   * @protected
+   */
+  async getMetadataFor(entryId) {
     const configValue = this.cfg.metadata ?? /** @type {import('../types').Metadata} */ (this.$['*uploadMetadata']);
     if (typeof configValue === 'function') {
-      const metadata = await configValue();
+      const outputFileEntry = this.getOutputItem(entryId);
+      const metadata = await configValue(outputFileEntry);
       return metadata;
     }
     return configValue;
   }
 
-  /** @returns {Promise<import('@uploadcare/upload-client').FileFromOptions>} */
-  async getUploadClientOptions() {
+  /** @returns {import('@uploadcare/upload-client').FileFromOptions} */
+  getUploadClientOptions() {
     let options = {
       store: this.cfg.store,
       publicKey: this.cfg.pubkey,
@@ -635,7 +639,6 @@ export class UploaderBlock extends ActivityBlock {
       multipartMaxAttempts: this.cfg.multipartMaxAttempts,
       checkForUrlDuplicates: !!this.cfg.checkForUrlDuplicates,
       saveUrlForRecurrentUploads: !!this.cfg.saveUrlForRecurrentUploads,
-      metadata: await this.getMetadata(),
     };
 
     return options;
