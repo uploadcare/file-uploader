@@ -78,6 +78,9 @@ export class TypedCollection {
       changeMap[propName].add(ctxId);
       /** @private */
       this.__observeTimeout = window.setTimeout(() => {
+        if (Object.keys(changeMap).length === 0) {
+          return;
+        }
         this.__propertyObservers.forEach((handler) => {
           handler({ ...changeMap });
         });
