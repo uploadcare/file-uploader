@@ -1,3 +1,16 @@
+# [0.28.0](https://github.com/uploadcare/blocks/compare/v0.27.6...v0.28.0) (2023-10-26)
+
+### Bug Fixes
+
+- **lr-config:** validate passed settings ([6012581](https://github.com/uploadcare/blocks/commit/60125813b6b4d6ff16fbecf96e0b6178c4ef106f))
+- **lr-data-output:** improve native form validation ([c329d4c](https://github.com/uploadcare/blocks/commit/c329d4c89b6735af373e234e6580a80fc830e320))
+- show inline validation message for the `multiple-min` requirement check fail ([8af0fec](https://github.com/uploadcare/blocks/commit/8af0fec7015516a94791f30be48863fa10488a8b))
+
+### Features
+
+- add new properties to the output file entry ([2821bf3](https://github.com/uploadcare/blocks/commit/2821bf381b7ed32c1ffe8908d8c71a86eaef9fde))
+- make `LR_OUTPUT_DATA` event frequent and contain all the files ([69105e4](https://github.com/uploadcare/blocks/commit/69105e4806e9ca2d4254bce297c48e0990663212))
+
 ## [0.27.6](https://github.com/uploadcare/blocks/compare/v0.27.5...v0.27.6) (2023-10-20)
 
 ### Bug Fixes
