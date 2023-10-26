@@ -68,6 +68,7 @@ export type OutputFileEntry = Pick<UploadcareFile, requiredFileInfoFields> &
     externalUrl: string | null;
     isValid: boolean;
     isUploaded: boolean;
+    fullPath: string | null
   };
 
 export {};

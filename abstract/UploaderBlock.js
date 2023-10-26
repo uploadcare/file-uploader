@@ -642,37 +642,42 @@ export class UploaderBlock extends ActivityBlock {
   }
 
   /**
+   * @param {string} entryId
+   * @returns {import('../types/exported.js').OutputFileEntry}
+   */
+  getOutputItem(entryId) {
+    const uploadEntryData = Data.getCtx(entryId).store;
+    /** @type {import('@uploadcare/upload-client').UploadcareFile} */
+    const fileInfo = uploadEntryData.fileInfo || {
+      name: uploadEntryData.fileName,
+      originalFilename: uploadEntryData.fileName,
+      size: uploadEntryData.fileSize,
+      isImage: uploadEntryData.isImage,
+      mimeType: uploadEntryData.mimeType,
+    };
+    /** @type {import('../types/exported.js').OutputFileEntry} */
+    const outputItem = {
+      ...fileInfo,
+      file: uploadEntryData.file,
+      externalUrl: uploadEntryData.externalUrl,
+      cdnUrlModifiers: uploadEntryData.cdnUrlModifiers,
+      cdnUrl: uploadEntryData.cdnUrl ?? fileInfo.cdnUrl ?? null,
+      validationErrorMessage: uploadEntryData.validationErrorMsg,
+      uploadError: uploadEntryData.uploadError,
+      isUploaded: !!uploadEntryData.uuid && !!uploadEntryData.fileInfo,
+      isValid: !uploadEntryData.validationErrorMsg && !uploadEntryData.uploadError,
+      fullPath: uploadEntryData.fullPath,
+    };
+    return outputItem;
+  }
+
+  /**
    * @param {(item: import('./TypedData.js').TypedData) => Boolean} [checkFn]
    * @returns {import('../types/exported.js').OutputFileEntry[]}
    */
   getOutputData(checkFn) {
-    // @ts-ignore TODO: fix this
-    let data = [];
-    let items = checkFn ? this.uploadCollection.findItems(checkFn) : this.uploadCollection.items();
-    items.forEach((itemId) => {
-      let uploadEntryData = Data.getCtx(itemId).store;
-      /** @type {import('@uploadcare/upload-client').UploadcareFile} */
-      let fileInfo = uploadEntryData.fileInfo || {
-        name: uploadEntryData.fileName,
-        originalFilename: uploadEntryData.fileName,
-        size: uploadEntryData.fileSize,
-        isImage: uploadEntryData.isImage,
-        mimeType: uploadEntryData.mimeType,
-      };
-      let outputItem = {
-        ...fileInfo,
-        file: uploadEntryData.file,
-        externalUrl: uploadEntryData.externalUrl,
-        cdnUrlModifiers: uploadEntryData.cdnUrlModifiers,
-        cdnUrl: uploadEntryData.cdnUrl ?? fileInfo.cdnUrl ?? null,
-        validationErrorMessage: uploadEntryData.validationErrorMsg,
-        uploadError: uploadEntryData.uploadError,
-        isUploaded: !!uploadEntryData.uuid && !!uploadEntryData.fileInfo,
-        isValid: !uploadEntryData.validationErrorMsg && !uploadEntryData.uploadError,
-      };
-      data.push(outputItem);
-    });
-    // @ts-ignore TODO: fix this
+    const entriesIds = checkFn ? this.uploadCollection.findItems(checkFn) : this.uploadCollection.items();
+    const data = entriesIds.map((itemId) => this.getOutputItem(itemId));
     return data;
   }
 }
