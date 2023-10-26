@@ -622,7 +622,10 @@ export class UploaderBlock extends ActivityBlock {
     return options;
   }
 
-  /** @param {(item: import('./TypedData.js').TypedData) => Boolean} checkFn */
+  /**
+   * @param {(item: import('./TypedData.js').TypedData) => Boolean} [checkFn]
+   * @returns {import('../types/exported.js').OutputFileEntry[]}
+   */
   getOutputData(checkFn) {
     // @ts-ignore TODO: fix this
     let data = [];
@@ -632,14 +635,21 @@ export class UploaderBlock extends ActivityBlock {
       /** @type {import('@uploadcare/upload-client').UploadcareFile} */
       let fileInfo = uploadEntryData.fileInfo || {
         name: uploadEntryData.fileName,
-        fileSize: uploadEntryData.fileSize,
+        originalFilename: uploadEntryData.fileName,
+        size: uploadEntryData.fileSize,
         isImage: uploadEntryData.isImage,
         mimeType: uploadEntryData.mimeType,
       };
       let outputItem = {
         ...fileInfo,
+        file: uploadEntryData.file,
+        externalUrl: uploadEntryData.externalUrl,
         cdnUrlModifiers: uploadEntryData.cdnUrlModifiers,
-        cdnUrl: uploadEntryData.cdnUrl || fileInfo.cdnUrl,
+        cdnUrl: uploadEntryData.cdnUrl ?? fileInfo.cdnUrl ?? null,
+        validationErrorMessage: uploadEntryData.validationErrorMsg,
+        uploadError: uploadEntryData.uploadError,
+        isUploaded: !!uploadEntryData.uuid && !!uploadEntryData.fileInfo,
+        isValid: !uploadEntryData.validationErrorMsg && !uploadEntryData.uploadError,
       };
       data.push(outputItem);
     });
