@@ -17,7 +17,6 @@ import { uploaderBlockCtx } from './CTX.js';
 import { EVENT_TYPES, EventData, EventManager } from './EventManager.js';
 import { TypedCollection } from './TypedCollection.js';
 import { uploadEntrySchema } from './uploadEntrySchema.js';
-import { throttle } from '../blocks/utils/throttle.js';
 
 export class UploaderBlock extends ActivityBlock {
   couldBeUploadCollectionOwner = false;
