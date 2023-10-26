@@ -32,19 +32,19 @@ export class TypedCollection {
     this.__watchList = options.watchList || [];
     /**
      * @private
-     * @type {(list: string[], added: Set<any>, removed: Set<any>) => void}
-     */
-    this.__handler = options.handler || null;
-    /**
-     * @private
      * @type {Object<string, any>}
      */
     this.__subsMap = Object.create(null);
     /**
      * @private
-     * @type {Set}
+     * @type {Set<Function>}
      */
-    this.__observers = new Set();
+    this.__propertyObservers = new Set();
+    /**
+     * @private
+     * @type {Set<(list: string[], added: Set<any>, removed: Set<any>) => void>}
+     */
+    this.__collectionObservers = new Set();
     /**
      * @private
      * @type {Set<string>}
@@ -78,7 +78,7 @@ export class TypedCollection {
       changeMap[propName].add(ctxId);
       /** @private */
       this.__observeTimeout = window.setTimeout(() => {
-        this.__observers.forEach((handler) => {
+        this.__propertyObservers.forEach((handler) => {
           handler({ ...changeMap });
         });
         changeMap = Object.create(null);
@@ -96,22 +96,25 @@ export class TypedCollection {
       let removed = new Set(this.__removed);
       this.__added.clear();
       this.__removed.clear();
-      this.__handler?.([...this.__items], added, removed);
+      for (const handler of this.__collectionObservers) {
+        handler?.([...this.__items], added, removed);
+      }
     });
   }
 
   /** @param {(list: string[], added: Set<any>, removed: Set<any>) => void} handler */
-  setHandler(handler) {
-    this.__handler = handler;
+  observeCollection(handler) {
+    this.__collectionObservers.add(handler);
     this.notify();
+
+    return () => {
+      this.unobserveCollection(handler);
+    };
   }
 
-  getHandler() {
-    return this.__handler;
-  }
-
-  removeHandler() {
-    this.__handler = null;
+  /** @param {Function} handler */
+  unobserveCollection(handler) {
+    this.__collectionObservers.delete(handler);
   }
 
   /**
@@ -185,13 +188,17 @@ export class TypedCollection {
   }
 
   /** @param {Function} handler */
-  observe(handler) {
-    this.__observers.add(handler);
+  observeProperties(handler) {
+    this.__propertyObservers.add(handler);
+
+    return () => {
+      this.unobserveProperties(handler);
+    };
   }
 
   /** @param {Function} handler */
-  unobserve(handler) {
-    this.__observers.delete(handler);
+  unobserveProperties(handler) {
+    this.__propertyObservers.delete(handler);
   }
 
   /**
@@ -219,8 +226,8 @@ export class TypedCollection {
 
   destroy() {
     Data.deleteCtx(this.__data);
-    this.__observers = null;
-    this.__handler = null;
+    this.__propertyObservers = null;
+    this.__collectionObservers = null;
     for (let id in this.__subsMap) {
       this.__subsMap[id].forEach((sub) => {
         sub.remove();

@@ -222,7 +222,7 @@ export class UploadList extends UploaderBlock {
 
     // TODO: could be performance issue on many files
     // there is no need to update buttons state on every progress tick
-    this.uploadCollection.observe(this._debouncedHandleCollectionUpdate);
+    this.uploadCollection.observeProperties(this._debouncedHandleCollectionUpdate);
 
     this.sub('*uploadList', (list) => {
       this._debouncedHandleCollectionUpdate();
@@ -244,7 +244,7 @@ export class UploadList extends UploaderBlock {
 
   destroyCallback() {
     super.destroyCallback();
-    this.uploadCollection.unobserve(this._debouncedHandleCollectionUpdate);
+    this.uploadCollection.unobserveProperties(this._debouncedHandleCollectionUpdate);
   }
 }
 

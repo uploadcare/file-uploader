@@ -12,7 +12,8 @@ export class ProgressBarCommon extends UploaderBlock {
 
   initCallback() {
     super.initCallback();
-    this.uploadCollection.observe(() => {
+    /** @private */
+    this._unobserveCollection = this.uploadCollection.observeProperties(() => {
       let anyUploading = this.uploadCollection.items().some((id) => {
         let item = this.uploadCollection.read(id);
         return item.getValue('isUploading');
@@ -32,6 +33,12 @@ export class ProgressBarCommon extends UploaderBlock {
     this.sub('*commonProgress', (progress) => {
       this.$.value = progress;
     });
+  }
+
+  destroyCallback() {
+    super.destroyCallback();
+
+    this._unobserveCollection?.();
   }
 }
 

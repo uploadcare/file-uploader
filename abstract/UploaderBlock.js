@@ -88,25 +88,13 @@ export class UploaderBlock extends ActivityBlock {
     if (this.couldBeUploadCollectionOwner && !hasUploadCollectionOwner()) {
       this.isUploadCollectionOwner = true;
 
-      /**
-       * @private
-       * @type {Parameters<import('./TypedCollection.js').TypedCollection['setHandler']>[0]}
-       */
-      this.__uploadCollectionHandler = (entries, added, removed) => {
-        this._runValidators();
+      /** @private */
+      this._unobserveCollection = this.uploadCollection.observeCollection(this._handleCollectonUpdate);
 
-        for (let entry of removed) {
-          entry?.getValue('abortController')?.abort();
-          entry?.setValue('abortController', null);
-          URL.revokeObjectURL(entry?.getValue('thumbUrl'));
-        }
-        this.$['*uploadList'] = entries.map((uid) => {
-          return { uid };
-        });
-      };
-      this.uploadCollection.setHandler(this.__uploadCollectionHandler);
-
-      this.uploadCollection.observe(this._handleCollectionUpdate);
+      /** @private */
+      this._unobserveCollectionProperties = this.uploadCollection.observeProperties(
+        this._handleCollectionPropertiesUpdate
+      );
 
       this.subConfigValue('maxLocalFileSizeBytes', () => this._debouncedRunValidators());
       this.subConfigValue('multipleMin', () => this._debouncedRunValidators());
@@ -128,10 +116,8 @@ export class UploaderBlock extends ActivityBlock {
   destroyCallback() {
     super.destroyCallback();
     if (this.isUploadCollectionOwner) {
-      this.uploadCollection.unobserve(this._handleCollectionUpdate);
-      if (this.uploadCollection.getHandler() === this.__uploadCollectionHandler) {
-        this.uploadCollection.removeHandler();
-      }
+      this._unobserveCollectionProperties?.();
+      this._unobserveCollection?.();
     }
   }
 
@@ -421,11 +407,29 @@ export class UploaderBlock extends ActivityBlock {
     }
   }
 
+ /**
+   * @private
+   * @type {Parameters<import('./TypedCollection.js').TypedCollection['observeCollection']>[0]}
+   */
+  _handleCollectonUpdate = (entries, added, removed) => {
+    this._runValidators();
+
+    for (let entry of removed) {
+      entry?.getValue('abortController')?.abort();
+      entry?.setValue('abortController', null);
+      URL.revokeObjectURL(entry?.getValue('thumbUrl'));
+    }
+    this.$['*uploadList'] = entries.map((uid) => {
+      return { uid };
+    });
+    this._flushOutputItems();
+  };
+
   /**
    * @private
    * @param {Record<string, any>} changeMap
    */
-  _handleCollectionUpdate = (changeMap) => {
+  _handleCollectionPropertiesUpdate = (changeMap) => {
     const uploadCollection = this.uploadCollection;
     const updatedEntries = [
       ...new Set(
