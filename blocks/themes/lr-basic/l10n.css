@@ -97,6 +97,7 @@
   --l10n-files-count-limit-error-title: 'Files count limit overflow';
   --l10n-files-count-limit-error-too-few: 'You’ve chosen {{total}}. At least {{min}} required.';
   --l10n-files-count-limit-error-too-many: 'You’ve chosen too many files. {{max}} is maximum.';
+  --l10n-files-count-minimum: 'At least {{count}} files are required';
   --l10n-files-count-allowed: 'Only {{count}} files are allowed';
 
   --l10n-files-max-size-limit-error: 'File is too big. Max file size is {{maxFileSize}}.';

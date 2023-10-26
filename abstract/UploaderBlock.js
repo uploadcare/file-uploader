@@ -4,8 +4,8 @@ import { ActivityBlock } from './ActivityBlock.js';
 import { Data } from '@symbiotejs/symbiote';
 import { calculateMaxCenteredCropFrame } from '../blocks/CloudImageEditor/src/crop-utils.js';
 import { parseCropPreset } from '../blocks/CloudImageEditor/src/lib/parseCropPreset.js';
-import { Modal } from '../blocks/Modal/Modal.js';
 import { UploadSource } from '../blocks/utils/UploadSource.js';
+import { serializeCsv } from '../blocks/utils/comma-separated.js';
 import { debounce } from '../blocks/utils/debounce.js';
 import { customUserAgent } from '../blocks/utils/userAgent.js';
 import { createCdnUrl, createCdnUrlModifiers } from '../utils/cdn-utils.js';
@@ -17,7 +17,6 @@ import { uploaderBlockCtx } from './CTX.js';
 import { EVENT_TYPES, EventData, EventManager } from './EventManager.js';
 import { TypedCollection } from './TypedCollection.js';
 import { uploadEntrySchema } from './uploadEntrySchema.js';
-import { serializeCsv } from '../blocks/utils/comma-separated.js';
 
 export class UploaderBlock extends ActivityBlock {
   couldBeUploadCollectionOwner = false;
@@ -348,7 +347,15 @@ export class UploaderBlock extends ActivityBlock {
   _validateMultipleLimit(entry) {
     const entryIds = this.uploadCollection.items();
     const entryIdx = entryIds.indexOf(entry.uid);
+    const multipleMin = this.cfg.multiple ? this.cfg.multipleMin : 1;
     const multipleMax = this.cfg.multiple ? this.cfg.multipleMax : 1;
+
+    if (multipleMin && entryIds.length < multipleMin) {
+      const message = this.l10n('files-count-minimum', {
+        count: multipleMin,
+      });
+      return message;
+    }
 
     if (multipleMax && entryIdx >= multipleMax) {
       const message = this.l10n('files-count-allowed', {
