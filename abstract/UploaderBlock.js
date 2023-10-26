@@ -17,6 +17,7 @@ import { uploaderBlockCtx } from './CTX.js';
 import { EVENT_TYPES, EventData, EventManager } from './EventManager.js';
 import { TypedCollection } from './TypedCollection.js';
 import { uploadEntrySchema } from './uploadEntrySchema.js';
+import { throttle } from '../blocks/utils/throttle.js';
 
 export class UploaderBlock extends ActivityBlock {
   couldBeUploadCollectionOwner = false;
@@ -414,7 +415,26 @@ export class UploaderBlock extends ActivityBlock {
     }
   }
 
- /**
+  /** @private */
+  _flushOutputItems = debounce(() => {
+    const data = this.getOutputData();
+    if (data.length !== this.uploadCollection.size) {
+      return;
+    }
+    EventManager.emit(
+      new EventData({
+        type: EVENT_TYPES.DATA_OUTPUT,
+        // @ts-ignore TODO: fix this
+        ctx: this.ctxName,
+        // @ts-ignore TODO: fix this
+        data,
+      })
+    );
+    // @ts-ignore TODO: fix this
+    this.$['*outputData'] = data;
+  }, 100);
+
+  /**
    * @private
    * @type {Parameters<import('./TypedCollection.js').TypedCollection['observeCollection']>[0]}
    */
@@ -437,6 +457,8 @@ export class UploaderBlock extends ActivityBlock {
    * @param {Record<string, any>} changeMap
    */
   _handleCollectionPropertiesUpdate = (changeMap) => {
+    this._flushOutputItems();
+
     const uploadCollection = this.uploadCollection;
     const updatedEntries = [
       ...new Set(
@@ -629,7 +651,7 @@ export class UploaderBlock extends ActivityBlock {
   getOutputData(checkFn) {
     // @ts-ignore TODO: fix this
     let data = [];
-    let items = this.uploadCollection.findItems(checkFn);
+    let items = checkFn ? this.uploadCollection.findItems(checkFn) : this.uploadCollection.items();
     items.forEach((itemId) => {
       let uploadEntryData = Data.getCtx(itemId).store;
       /** @type {import('@uploadcare/upload-client').UploadcareFile} */
@@ -680,50 +702,4 @@ UploaderBlock.sourceTypes = Object.freeze({
   CAMERA: 'camera',
   DRAW: 'draw',
   ...UploaderBlock.extSrcList,
-});
-
-Object.values(EVENT_TYPES).forEach((eType) => {
-  const eName = EventManager.eName(eType);
-  const cb = debounce(
-    /** @param {CustomEvent} e */
-    (e) => {
-      let outputTypes = [EVENT_TYPES.UPLOAD_FINISH, EVENT_TYPES.REMOVE, EVENT_TYPES.CLOUD_MODIFICATION];
-      // @ts-ignore TODO: fix this
-      if (outputTypes.includes(e.detail.type)) {
-        // @ts-ignore TODO: fix this
-        let dataCtx = Data.getCtx(e.detail.ctx);
-        /** @type {TypedCollection} */
-        let uploadCollection = dataCtx.read('uploadCollection');
-        // @ts-ignore TODO: fix this
-        let data = [];
-        uploadCollection.items().forEach((id) => {
-          let uploadEntryData = Data.getCtx(id).store;
-          /** @type {import('@uploadcare/upload-client').UploadcareFile} */
-          let fileInfo = uploadEntryData.fileInfo;
-          if (fileInfo) {
-            let outputItem = {
-              ...fileInfo,
-              cdnUrlModifiers: uploadEntryData.cdnUrlModifiers,
-              cdnUrl: uploadEntryData.cdnUrl || fileInfo.cdnUrl,
-            };
-            data.push(outputItem);
-          }
-        });
-        EventManager.emit(
-          new EventData({
-            type: EVENT_TYPES.DATA_OUTPUT,
-            // @ts-ignore TODO: fix this
-            ctx: e.detail.ctx,
-            // @ts-ignore TODO: fix this
-            data,
-          })
-        );
-        // @ts-ignore TODO: fix this
-        dataCtx.pub('outputData', data);
-      }
-    },
-    0
-  );
-  // @ts-ignore TODO: fix this
-  window.addEventListener(eName, cb);
 });
