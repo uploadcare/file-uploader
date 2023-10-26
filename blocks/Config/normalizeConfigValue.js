@@ -1,11 +1,20 @@
 // @ts-check
 
+import { initialConfig } from './initialConfig.js';
+
 /** @param {unknown} value */
 const asString = (value) => String(value);
 /** @param {unknown} value */
-const asNumber = (value) => Number(value);
+const asNumber = (value) => {
+  const number = Number(value);
+  if (Number.isNaN(number)) {
+    throw new Error(`Invalid number: "${value}"`);
+  }
+  return number;
+};
 /** @param {unknown} value */
 export const asBoolean = (value) => {
+  if (typeof value === 'undefined' || value === null) return false;
   if (typeof value === 'boolean') return value;
   // for attr like multiple="true" (react will pass it as string)
   if (value === 'true') return true;
@@ -13,14 +22,16 @@ export const asBoolean = (value) => {
   if (value === '') return true;
   // for attr like multiple="false" (react will pass it as string)
   if (value === 'false') return false;
-  return Boolean(value);
+  throw new Error(`Invalid boolean: "${value}"`);
 };
 /** @param {unknown} value */
 const asStore = (value) => (value === 'auto' ? value : asBoolean(value));
 
 /**
  * @type {{
- *   [Key in keyof import('../../types').ConfigPlainType]: (value: unknown) => import('../../types').ConfigType[Key];
+ *   [Key in keyof import('../../types').ConfigPlainType]: (
+ *     value: unknown
+ *   ) => import('../../types').ConfigType[Key] | undefined;
  * }}
  */
 const mapping = {
@@ -80,5 +91,11 @@ export const normalizeConfigValue = (key, value) => {
   if (typeof value === 'undefined' || value === null) {
     return undefined;
   }
-  return mapping[key](value);
+
+  try {
+    return mapping[key](value);
+  } catch (reason) {
+    console.error(`Invalid value for config key "${key}".`, reason);
+    return initialConfig[key];
+  }
 };
