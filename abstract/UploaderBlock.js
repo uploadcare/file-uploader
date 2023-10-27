@@ -669,7 +669,7 @@ export class UploaderBlock extends ActivityBlock {
         cdnUrl: uploadEntryData.cdnUrl ?? fileInfo.cdnUrl ?? null,
         validationErrorMessage: uploadEntryData.validationErrorMsg,
         uploadError: uploadEntryData.uploadError,
-        isUploaded: !!uploadEntryData.uuid && !!uploadEntryData.fileInfo,
+        isUploaded: !!uploadEntryData.uuid && !!uploadEntryData.fileInfo && !uploadEntryData.uploadError,
         isValid: !uploadEntryData.validationErrorMsg && !uploadEntryData.uploadError,
       };
       data.push(outputItem);
