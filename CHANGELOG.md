@@ -1,3 +1,18 @@
+# [0.29.0](https://github.com/uploadcare/blocks/compare/v0.28.0...v0.29.0) (2023-10-27)
+
+### Features
+
+- add property `fullPath` to the output entry ([9e4707f](https://github.com/uploadcare/blocks/commit/9e4707fef14df91d29c5172585d23ac912115c71))
+- pass output entry to the metadata callback ([9153826](https://github.com/uploadcare/blocks/commit/915382619280fdadedac474ee4167cd52982685b))
+
+```ts
+config.metadata = (fileEntry) => ({
+  type: 'cat',
+  fileName: fileEntry.name,
+  fullPath: fileEntry.fullPath
+})
+```
+
 # [0.28.0](https://github.com/uploadcare/blocks/compare/v0.27.6...v0.28.0) (2023-10-26)
 
 ### BREAKING CHANGES
