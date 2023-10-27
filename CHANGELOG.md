@@ -7,7 +7,7 @@
 Before: The `LR_DATA_OUTPUT` event only contained uploaded files and fired only when a file was uploaded, deleted, or edited.
 
 Now: The `LR_DATA_OUTPUT` event now includes all the files in the upload list, including those not yet uploaded, and it fires whenever there is any change in the file list.
-The event firing is debounced with a 100ms delay. So, in this event, you receive a complete snapshot of the upload list's state. \*_Please note_ that if the file hasn't been uploaded yet, the data will be incomplete. Properties such as `uuid`, `cdnUrl` and others will not be accessible. Before accessing them, you should check the `isUploaded` flag, that is described below.
+The event firing is debounced with a 100ms delay. So, in this event, you receive a complete snapshot of the upload list's state. \*_Please note_ that if the file hasn't been uploaded yet, the data will be incomplete. Properties such as `uuid`, `cdnUrl` and others will not be accessible. Before accessing them, you should check the `isUploaded` flag, which is described below.
 
 ```js
 window.addEventListener('LR_DATA_OUTPUT', (e) => {
