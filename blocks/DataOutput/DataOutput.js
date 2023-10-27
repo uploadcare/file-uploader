@@ -73,15 +73,17 @@ export class DataOutput extends UploaderBlock {
         if (this.hasAttribute(this.dict.FORM_INPUT_ATTR) && this._dynamicInputsContainer) {
           this._dynamicInputsContainer.innerHTML = '';
           /** @type {string[]} */
-          let values;
+          let cdnUrls = [];
+          /** @type {import('../../index.js').OutputFileEntry[]} */
+          let files = [];
           if (Array.isArray(data)) {
-            values = data.map((file) => /** @type {string} */ (file.cdnUrl));
-          } else if (data?.groupData) {
-            values = [data.groupData.cdnUrl];
-          } else {
-            values = [];
+            cdnUrls = data.map((file) => /** @type {string} */ (file.cdnUrl));
+            files = data;
+          } else if (data?.files) {
+            cdnUrls = data.groupData ? [data.groupData.cdnUrl] : [];
+            files = data.files;
           }
-          for (let value of values) {
+          for (let value of cdnUrls) {
             let input = document.createElement('input');
             input.type = 'hidden';
             input.name = this.getAttribute(this.dict.INPUT_NAME_ATTR) || this.ctxName;
@@ -89,10 +91,15 @@ export class DataOutput extends UploaderBlock {
             this._dynamicInputsContainer.appendChild(input);
           }
           if (this._validationInputElement) {
-            this._validationInputElement.value = values.length ? '__VALUE__' : '';
-            const msg = this.$['*message'];
-            if (msg?.isError) {
-              this._validationInputElement.setCustomValidity(`${msg.caption}. ${msg.text}`);
+            this._validationInputElement.value = cdnUrls.length ? '__VALUE__' : '';
+            const firstInvalidFile = files.find((file) => !file.isValid);
+            const firstInvalidFileMsg =
+              firstInvalidFile?.validationErrorMessage ?? firstInvalidFile?.uploadError?.message;
+            let globalMsg = this.$['*message'];
+            globalMsg = globalMsg?.isError ? `${globalMsg.caption}. ${globalMsg.text}` : undefined;
+            const msg = firstInvalidFileMsg ?? globalMsg;
+            if (msg) {
+              this._validationInputElement.setCustomValidity(msg);
             } else {
               this._validationInputElement.setCustomValidity('');
             }
@@ -113,20 +120,20 @@ export class DataOutput extends UploaderBlock {
           this.$.output = null;
           return;
         }
-        const allUploaded = data.every((item) => item.isUploaded);
-        if (allUploaded && (this.cfg.groupOutput || this.hasAttribute(this.dict.GROUP_ATTR))) {
-          let uuidList = data.map((fileDesc) => {
-            return fileDesc.uuid + (fileDesc.cdnUrlModifiers ? `/${fileDesc.cdnUrlModifiers}` : '');
-          });
-          const validationOk = data.every((item) => item.isValid);
-          if (!validationOk) {
+        if (this.cfg.groupOutput || this.hasAttribute(this.dict.GROUP_ATTR)) {
+          const isAllUploadedAndValid = data.every((item) => item.isUploaded && item.isValid);
+          if (!isAllUploadedAndValid) {
             this.$.output = {
               groupData: undefined,
               files: data,
             };
             return;
           }
+
           const uploadClientOptions = await this.getUploadClientOptions();
+          const uuidList = data.map((fileDesc) => {
+            return fileDesc.uuid + (fileDesc.cdnUrlModifiers ? `/${fileDesc.cdnUrlModifiers}` : '');
+          });
           const resp = await uploadFileGroup(uuidList, uploadClientOptions);
           this.$.output = {
             groupData: resp,
