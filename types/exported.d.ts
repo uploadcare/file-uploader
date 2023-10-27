@@ -1,7 +1,7 @@
 import { UploadcareFile } from '@uploadcare/upload-client';
 
 export type Metadata = import('@uploadcare/upload-client').Metadata;
-export type MetadataCallback = () => Promise<Metadata>;
+export type MetadataCallback = (fileEntry: OutputFileEntry) => Promise<Metadata> | Metadata;
 export type ConfigType = {
   pubkey: string;
   multiple: boolean;
@@ -68,6 +68,7 @@ export type OutputFileEntry = Pick<UploadcareFile, requiredFileInfoFields> &
     externalUrl: string | null;
     isValid: boolean;
     isUploaded: boolean;
+    fullPath: string | null;
     uploadProgress: number;
   };
 

@@ -392,7 +392,7 @@ export class FileItem extends UploaderBlock {
       entry.setValue('abortController', abortController);
 
       const uploadTask = async () => {
-        const uploadClientOptions = await this.getUploadClientOptions();
+        const uploadClientOptions = this.getUploadClientOptions();
         return uploadFile(entry.getValue('file') || entry.getValue('externalUrl') || entry.getValue('uuid'), {
           ...uploadClientOptions,
           fileName: entry.getValue('fileName'),
@@ -405,6 +405,7 @@ export class FileItem extends UploaderBlock {
             this.$.progressUnknown = !progress.isComputable;
           },
           signal: abortController.signal,
+          metadata: await this.getMetadataFor(entry.uid),
         });
       };
 

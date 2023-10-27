@@ -607,18 +607,22 @@ export class UploaderBlock extends ActivityBlock {
     }
   }
 
-  /** @private */
-  async getMetadata() {
+  /**
+   * @param {string} entryId
+   * @protected
+   */
+  async getMetadataFor(entryId) {
     const configValue = this.cfg.metadata ?? /** @type {import('../types').Metadata} */ (this.$['*uploadMetadata']);
     if (typeof configValue === 'function') {
-      const metadata = await configValue();
+      const outputFileEntry = this.getOutputItem(entryId);
+      const metadata = await configValue(outputFileEntry);
       return metadata;
     }
     return configValue;
   }
 
-  /** @returns {Promise<import('@uploadcare/upload-client').FileFromOptions>} */
-  async getUploadClientOptions() {
+  /** @returns {import('@uploadcare/upload-client').FileFromOptions} */
+  getUploadClientOptions() {
     let options = {
       store: this.cfg.store,
       publicKey: this.cfg.pubkey,
@@ -635,12 +639,40 @@ export class UploaderBlock extends ActivityBlock {
       multipartMaxAttempts: this.cfg.multipartMaxAttempts,
       checkForUrlDuplicates: !!this.cfg.checkForUrlDuplicates,
       saveUrlForRecurrentUploads: !!this.cfg.saveUrlForRecurrentUploads,
-      metadata: await this.getMetadata(),
     };
 
-    console.log('Upload client options:', options);
-
     return options;
+  }
+
+  /**
+   * @param {string} entryId
+   * @returns {import('../types/exported.js').OutputFileEntry}
+   */
+  getOutputItem(entryId) {
+    const uploadEntryData = Data.getCtx(entryId).store;
+    /** @type {import('@uploadcare/upload-client').UploadcareFile} */
+    const fileInfo = uploadEntryData.fileInfo || {
+      name: uploadEntryData.fileName,
+      originalFilename: uploadEntryData.fileName,
+      size: uploadEntryData.fileSize,
+      isImage: uploadEntryData.isImage,
+      mimeType: uploadEntryData.mimeType,
+    };
+    /** @type {import('../types/exported.js').OutputFileEntry} */
+    const outputItem = {
+      ...fileInfo,
+      file: uploadEntryData.file,
+      externalUrl: uploadEntryData.externalUrl,
+      cdnUrlModifiers: uploadEntryData.cdnUrlModifiers,
+      cdnUrl: uploadEntryData.cdnUrl ?? fileInfo.cdnUrl ?? null,
+      validationErrorMessage: uploadEntryData.validationErrorMsg,
+      uploadError: uploadEntryData.uploadError,
+      isUploaded: !!uploadEntryData.uuid && !!uploadEntryData.fileInfo,
+      isValid: !uploadEntryData.validationErrorMsg && !uploadEntryData.uploadError,
+      fullPath: uploadEntryData.fullPath,
+      uploadProgress: uploadEntryData.uploadProgress,
+    };
+    return outputItem;
   }
 
   /**
@@ -648,35 +680,8 @@ export class UploaderBlock extends ActivityBlock {
    * @returns {import('../types/exported.js').OutputFileEntry[]}
    */
   getOutputData(checkFn) {
-    // @ts-ignore TODO: fix this
-    let data = [];
-    let items = checkFn ? this.uploadCollection.findItems(checkFn) : this.uploadCollection.items();
-    items.forEach((itemId) => {
-      let uploadEntryData = Data.getCtx(itemId).store;
-      /** @type {import('@uploadcare/upload-client').UploadcareFile} */
-      let fileInfo = uploadEntryData.fileInfo || {
-        name: uploadEntryData.fileName,
-        originalFilename: uploadEntryData.fileName,
-        size: uploadEntryData.fileSize,
-        isImage: uploadEntryData.isImage,
-        mimeType: uploadEntryData.mimeType,
-      };
-      /** @type {import('../types/exported.js').OutputFileEntry} */
-      let outputItem = {
-        ...fileInfo,
-        file: uploadEntryData.file,
-        externalUrl: uploadEntryData.externalUrl,
-        cdnUrlModifiers: uploadEntryData.cdnUrlModifiers,
-        cdnUrl: uploadEntryData.cdnUrl ?? fileInfo.cdnUrl ?? null,
-        uploadProgress: uploadEntryData.uploadProgress,
-        validationErrorMessage: uploadEntryData.validationErrorMsg,
-        uploadError: uploadEntryData.uploadError,
-        isUploaded: !!uploadEntryData.uuid && !!uploadEntryData.fileInfo && !uploadEntryData.uploadError,
-        isValid: !uploadEntryData.validationErrorMsg && !uploadEntryData.uploadError,
-      };
-      data.push(outputItem);
-    });
-    // @ts-ignore TODO: fix this
+    const entriesIds = checkFn ? this.uploadCollection.findItems(checkFn) : this.uploadCollection.items();
+    const data = entriesIds.map((itemId) => this.getOutputItem(itemId));
     return data;
   }
 }

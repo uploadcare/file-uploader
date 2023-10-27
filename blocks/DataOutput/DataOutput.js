@@ -130,7 +130,7 @@ export class DataOutput extends UploaderBlock {
             return;
           }
 
-          const uploadClientOptions = await this.getUploadClientOptions();
+          const uploadClientOptions = this.getUploadClientOptions();
           const uuidList = data.map((fileDesc) => {
             return fileDesc.uuid + (fileDesc.cdnUrlModifiers ? `/${fileDesc.cdnUrlModifiers}` : '');
           });
