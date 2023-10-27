@@ -2,14 +2,27 @@
 
 ### BREAKING CHANGES
 
-#### `LR_OUTPUT_DATA` event on window
+#### `LR_DATA_OUTPUT` event on window
 
-Before: The `LR_OUTPUT_DATA` event only contained uploaded files and fired only when a file was uploaded, deleted, or edited.
+Before: The `LR_DATA_OUTPUT` event only contained uploaded files and fired only when a file was uploaded, deleted, or edited.
 
-Now: The `LR_OUTPUT_DATA` event now includes all the files in the upload list, including those not yet uploaded, and it fires whenever there is any change in the file list.
+Now: The `LR_DATA_OUTPUT` event now includes all the files in the upload list, including those not yet uploaded, and it fires whenever there is any change in the file list.
 The event firing is debounced with a 100ms delay. So, in this event, you receive a complete snapshot of the upload list's state. \*_Please note_ that if the file hasn't been uploaded yet, the data will be incomplete. Properties such as `uuid`, `cdnUrl` and others will not be accessible. Before accessing them, you should check the `isUploaded` flag, that is described below.
 
-- make `LR_OUTPUT_DATA` event frequent and contain all the files ([69105e4](https://github.com/uploadcare/blocks/commit/69105e4806e9ca2d4254bce297c48e0990663212))
+```js
+window.addEventListener('LR_DATA_OUTPUT', (e) => {
+  const entries = e.detail.data;
+  for (const entry of entries) {
+    if (entry.isUploaded) {
+      console.log('Uploaded', entry);
+    } else {
+      console.log('Not uploaded', entry);
+    }
+  }
+});
+```
+
+- make `LR_DATA_OUTPUT` event frequent and contain all the files ([69105e4](https://github.com/uploadcare/blocks/commit/69105e4806e9ca2d4254bce297c48e0990663212))
 
 #### `lr-data-output` event on `lr-data-output` block (tag)
 
@@ -24,7 +37,7 @@ Otherwise, the event contains undefined `groupData` and a list of files.
 
 The following events are affected:
 
-- `LR_OUTPUT_DATA`
+- `LR_DATA_OUTPUT`
 - `LR_UPLOAD_FINISH`
 - `LR_REMOVE`
 - `LR_UPLOAD_START`
@@ -39,6 +52,7 @@ file: File | Blob | null; // file object
 externalUrl: string | null; // external url for the file (when uploading from url or external source)
 isValid: boolean; // is file valid (passed validation checks)
 isUploaded: boolean; // is file uploaded
+uploadProgress: number; // upload progress in percents
 ```
 
 - add new properties to the output file entry ([2821bf3](https://github.com/uploadcare/blocks/commit/2821bf381b7ed32c1ffe8908d8c71a86eaef9fde))
