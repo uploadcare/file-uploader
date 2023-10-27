@@ -43,7 +43,7 @@ The following events are affected:
 - `LR_UPLOAD_START`
 - `lr-data-output`
 
-What file properties has added:
+What file properties have been added:
 
 ```ts
 validationErrorMessage: string | null; // message with the validation error
