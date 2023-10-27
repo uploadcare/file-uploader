@@ -14,9 +14,9 @@ window.addEventListener('LR_DATA_OUTPUT', (e) => {
   const entries = e.detail.data;
   for (const entry of entries) {
     if (entry.isUploaded) {
-      console.log('Uploaded', entry);
+      console.log('Uploaded', entry.uuid);
     } else {
-      console.log('Not uploaded', entry);
+      console.log('Not uploaded', entry.uploadProgress);
     }
   }
 });
