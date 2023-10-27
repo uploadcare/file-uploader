@@ -95,8 +95,9 @@ export class DataOutput extends UploaderBlock {
             const firstInvalidFile = files.find((file) => !file.isValid);
             const firstInvalidFileMsg =
               firstInvalidFile?.validationErrorMessage ?? firstInvalidFile?.uploadError?.message;
-            const globalMsg = this.$['*message'];
-            const msg = globalMsg?.isError ? `${globalMsg.caption}. ${globalMsg.text}` : firstInvalidFileMsg;
+            let globalMsg = this.$['*message'];
+            globalMsg = globalMsg?.isError ? `${globalMsg.caption}. ${globalMsg.text}` : undefined;
+            const msg = firstInvalidFileMsg ?? globalMsg;
             if (msg) {
               this._validationInputElement.setCustomValidity(msg);
             } else {
