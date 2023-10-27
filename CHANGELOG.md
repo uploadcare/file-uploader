@@ -49,7 +49,7 @@ What file properties have been added:
 validationErrorMessage: string | null; // message with the validation error
 uploadError: Error | null; // error object with the upload error
 file: File | Blob | null; // file object
-externalUrl: string | null; // external url for the file (when uploading from url or external source)
+externalUrl: string | null; // external URL for the file (when uploading from URL or external source)
 isValid: boolean; // is file valid (passed validation checks)
 isUploaded: boolean; // is file uploaded
 uploadProgress: number; // upload progress in percents
