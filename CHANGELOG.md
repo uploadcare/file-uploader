@@ -1,3 +1,71 @@
+# [0.28.0](https://github.com/uploadcare/blocks/compare/v0.27.6...v0.28.0) (2023-10-26)
+
+### BREAKING CHANGES
+
+#### `LR_DATA_OUTPUT` event on window
+
+Before: The `LR_DATA_OUTPUT` event only contained uploaded files and fired only when a file was uploaded, deleted, or edited.
+
+Now: The `LR_DATA_OUTPUT` event now includes all the files in the upload list, including those not yet uploaded, and it fires whenever there is any change in the file list.
+The event firing is debounced with a 100ms delay. So, in this event, you receive a complete snapshot of the upload list's state. \*_Please note_ that if the file hasn't been uploaded yet, the data will be incomplete. Properties such as `uuid`, `cdnUrl` and others will not be accessible. Before accessing them, you should check the `isUploaded` flag, which is described below.
+
+```js
+window.addEventListener('LR_DATA_OUTPUT', (e) => {
+  const entries = e.detail.data;
+  for (const entry of entries) {
+    if (entry.isUploaded) {
+      console.log('Uploaded', entry.uuid);
+    } else {
+      console.log('Not uploaded', entry.uploadProgress);
+    }
+  }
+});
+```
+
+- make `LR_DATA_OUTPUT` event frequent and contain all the files ([69105e4](https://github.com/uploadcare/blocks/commit/69105e4806e9ca2d4254bce297c48e0990663212))
+
+#### `lr-data-output` event on `lr-data-output` block (tag)
+
+Before: The `lr-data-output` event mirrors the `LR_DATA_OUTPUT` event. When the `group-output` option is enabled or the `use-group` attribute is present, it always creates a group for the file list.
+
+Now: The `lr-data-output` event mirrors the `LR_DATA_OUTPUT` event. When the `group-output` option is enabled or the `use-group` attribute is present, a group is only created if all files are uploaded, and there are no validation errors.
+Otherwise, the event contains undefined `groupData` and a list of files.
+
+### Features
+
+#### New file properties for the events payload
+
+The following events are affected:
+
+- `LR_DATA_OUTPUT`
+- `LR_UPLOAD_FINISH`
+- `LR_REMOVE`
+- `LR_UPLOAD_START`
+- `lr-data-output`
+
+What file properties have been added:
+
+```ts
+validationErrorMessage: string | null; // message with the validation error
+uploadError: Error | null; // error object with the upload error
+file: File | Blob | null; // file object
+externalUrl: string | null; // external URL for the file (when uploading from URL or external source)
+isValid: boolean; // is file valid (passed validation checks)
+isUploaded: boolean; // is file uploaded
+uploadProgress: number; // upload progress in percents
+```
+
+- add new properties to the output file entry ([2821bf3](https://github.com/uploadcare/blocks/commit/2821bf381b7ed32c1ffe8908d8c71a86eaef9fde))
+
+#### `lr-data-output` now uses native validation to show errors
+
+- **lr-data-output:** improve native form validation ([c329d4c](https://github.com/uploadcare/blocks/commit/c329d4c89b6735af373e234e6580a80fc830e320))
+
+### Bug Fixes
+
+- **lr-config:** validate passed settings ([6012581](https://github.com/uploadcare/blocks/commit/60125813b6b4d6ff16fbecf96e0b6178c4ef106f))
+- show inline validation message for the `multiple-min` requirement check fail ([8af0fec](https://github.com/uploadcare/blocks/commit/8af0fec7015516a94791f30be48863fa10488a8b))
+
 ## [0.27.6](https://github.com/uploadcare/blocks/compare/v0.27.5...v0.27.6) (2023-10-20)
 
 ### Bug Fixes

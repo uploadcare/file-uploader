@@ -670,6 +670,7 @@ export class UploaderBlock extends ActivityBlock {
       isUploaded: !!uploadEntryData.uuid && !!uploadEntryData.fileInfo,
       isValid: !uploadEntryData.validationErrorMsg && !uploadEntryData.uploadError,
       fullPath: uploadEntryData.fullPath,
+      uploadProgress: uploadEntryData.uploadProgress,
     };
     return outputItem;
   }
