@@ -27,8 +27,14 @@ export class Modal extends Block {
   };
 
   /** @param {Event} e */
-  _handleDialogPointerUp = (e) => {
-    if (e.target === this.ref.dialog) {
+  _handleDialogMouseDown = (e) => {
+    /** @private */
+    this._mouseDownTarget = e.target;
+  };
+
+  /** @param {Event} e */
+  _handleDialogMouseUp = (e) => {
+    if (e.target === this.ref.dialog && e.target === this._mouseDownTarget) {
       this._closeDialog();
     }
   };
@@ -53,7 +59,8 @@ export class Modal extends Block {
     super.initCallback();
     if (typeof HTMLDialogElement === 'function') {
       this.ref.dialog.addEventListener('close', this._handleDialogClose);
-      this.ref.dialog.addEventListener('pointerup', this._handleDialogPointerUp);
+      this.ref.dialog.addEventListener('mousedown', this._handleDialogMouseDown);
+      this.ref.dialog.addEventListener('mouseup', this._handleDialogMouseUp);
     } else {
       this.setAttribute('dialog-fallback', '');
       let backdrop = document.createElement('div');
@@ -94,8 +101,10 @@ export class Modal extends Block {
   destroyCallback() {
     super.destroyCallback();
     document.body.style.overflow = '';
+    this._mouseDownTarget = undefined;
     this.ref.dialog.removeEventListener('close', this._handleDialogClose);
-    this.ref.dialog.removeEventListener('click', this._handleDialogPointerUp);
+    this.ref.dialog.removeEventListener('mousedown', this._handleDialogMouseDown);
+    this.ref.dialog.removeEventListener('mouseup', this._handleDialogMouseUp);
   }
 }
 
