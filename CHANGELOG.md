@@ -1,3 +1,10 @@
+## [0.29.1](https://github.com/uploadcare/blocks/compare/v0.29.0...v0.29.1) (2023-10-31)
+
+### Bug Fixes
+
+- **modal:** buggy click handlers to close modal on outside click ([#551](https://github.com/uploadcare/blocks/issues/551)) ([8949948](https://github.com/uploadcare/blocks/commit/8949948cebbe84e9d29d6537321c6520caa567d1))
+- **types:** bump @uploadcare/upload-client with fixed types for `imageInfo.datetimeOriginal` ([#550](https://github.com/uploadcare/blocks/issues/550)) ([8babfab](https://github.com/uploadcare/blocks/commit/8babfab3b2f3ae021ab69340570547f565711e6e))
+
 # [0.29.0](https://github.com/uploadcare/blocks/compare/v0.28.0...v0.29.0) (2023-10-27)
 
 ### Features
@@ -9,8 +16,8 @@
 config.metadata = (fileEntry) => ({
   type: 'cat',
   fileName: fileEntry.name,
-  fullPath: fileEntry.fullPath
-})
+  fullPath: fileEntry.fullPath,
+});
 ```
 
 # [0.28.0](https://github.com/uploadcare/blocks/compare/v0.27.6...v0.28.0) (2023-10-26)
