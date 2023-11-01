@@ -1,8 +1,8 @@
 // @ts-check
-import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
+import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { UiMessage } from '../MessageBox/MessageBox.js';
-import { EVENT_TYPES, EventData, EventManager } from '../../abstract/EventManager.js';
+import { EventType } from '../UploadCtxProvider/EventEmitter.js';
 import { debounce } from '../utils/debounce.js';
 
 /**
@@ -47,13 +47,7 @@ export class UploadList extends UploaderBlock {
         let data = this.getOutputData((dataItem) => {
           return !!dataItem.getValue('fileInfo');
         });
-        EventManager.emit(
-          new EventData({
-            type: EVENT_TYPES.REMOVE,
-            ctx: this.ctxName,
-            data,
-          })
-        );
+        this.emit(EventType.REMOVE, data, { debounce: true });
         this.uploadCollection.clearAll();
       },
     };

@@ -1,14 +1,15 @@
 // @ts-check
 import { BaseComponent } from '@symbiotejs/symbiote';
+import { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter.js';
 import { createWindowHeightTracker, getIsWindowHeightTracked } from '../utils/createWindowHeightTracker.js';
+import { getPluralForm } from '../utils/getPluralForm.js';
 import { applyTemplateData, getPluralObjects } from '../utils/template-utils.js';
+import { toKebabCase } from '../utils/toKebabCase.js';
+import { waitForAttribute } from '../utils/waitForAttribute.js';
+import { warnOnce } from '../utils/warnOnce.js';
 import { blockCtx } from './CTX.js';
 import { l10nProcessor } from './l10nProcessor.js';
 import { sharedConfigKey } from './sharedConfigKey.js';
-import { toKebabCase } from '../utils/toKebabCase.js';
-import { warnOnce } from '../utils/warnOnce.js';
-import { getPluralForm } from '../utils/getPluralForm.js';
-import { waitForAttribute } from '../utils/waitForAttribute.js';
 
 const TAG_PREFIX = 'lr-';
 
@@ -75,6 +76,21 @@ export class Block extends BaseComponent {
      * @type {String[]}
      */
     this.__l10nKeys = [];
+  }
+
+  /**
+   * @template {typeof import('../blocks/UploadCtxProvider/EventEmitter.js').EventType[keyof typeof import('../blocks/UploadCtxProvider/EventEmitter.js').EventType]} T
+   * @param {T} type
+   * @param {import('../blocks/UploadCtxProvider/EventEmitter.js').EventPayload[T]} [payload]
+   * @param {{ debounce?: boolean | number }} [options]
+   */
+  emit(type, payload, options) {
+    /** @type {import('../blocks/UploadCtxProvider/EventEmitter.js').EventEmitter} */
+    const eventEmitter = this.has('*eventEmitter') && this.$['*eventEmitter'];
+    if (!eventEmitter) {
+      return;
+    }
+    eventEmitter.emit(type, payload, options);
   }
 
   /**
@@ -165,6 +181,10 @@ export class Block extends BaseComponent {
   initCallback() {
     let blocksRegistry = this.$['*blocksRegistry'];
     blocksRegistry.add(this);
+
+    if (!this.$['*eventEmitter']) {
+      this.$['*eventEmitter'] = new EventEmitter(() => this.ctxName);
+    }
   }
 
   destroyCallback() {
@@ -271,7 +291,12 @@ export class Block extends BaseComponent {
     }
   }
 
+  /** @deprecated */
   updateCtxCssData = () => {
+    warnOnce(
+      'Using CSS variables for configuration is deprecated. Please use `lr-config` instead. See migration guide: https://uploadcare.com/docs/file-uploader/migration-to-0.25.0/'
+    );
+
     /** @type {Set<Block>} */
     let blocks = this.$['*blocksRegistry'];
     for (let block of blocks) {

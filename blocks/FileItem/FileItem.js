@@ -1,9 +1,9 @@
 // @ts-check
 import { UploadClientError, uploadFile } from '@uploadcare/upload-client';
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
-import { EVENT_TYPES, EventData, EventManager } from '../../abstract/EventManager.js';
 import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../utils/cdn-utils.js';
+import { EventType } from '../UploadCtxProvider/EventEmitter.js';
 import { fileCssBg } from '../svg-backgrounds/svg-backgrounds.js';
 import { debounce } from '../utils/debounce.js';
 import { generateThumb } from '../utils/resizeImage.js';
@@ -74,13 +74,7 @@ export class FileItem extends UploaderBlock {
           let data = this.getOutputData((dataItem) => {
             return dataItem.getValue('uuid') === entryUuid;
           });
-          EventManager.emit(
-            new EventData({
-              type: EVENT_TYPES.REMOVE,
-              ctx: this.ctxName,
-              data,
-            })
-          );
+          this.emit(EventType.REMOVE, data, { debounce: true });
         }
         this.uploadCollection.remove(this.$.uid);
       },
@@ -370,13 +364,7 @@ export class FileItem extends UploaderBlock {
       return !dataItem.getValue('fileInfo');
     });
 
-    EventManager.emit(
-      new EventData({
-        type: EVENT_TYPES.UPLOAD_START,
-        ctx: this.ctxName,
-        data,
-      })
-    );
+    this.emit(EventType.UPLOAD_START, data, { debounce: true });
 
     this._debouncedCalculateState();
     entry.setValue('isUploading', true);

@@ -26,9 +26,19 @@
   <script type="module">
     import * as LR from './index.js';
     LR.registerBlocks(LR);
+
+    const ctx = document.querySelector('lr-upload-ctx-provider');
+    ctx.addEventListener('data-output', (e) => {
+      console.log("BLOCK", e.type, e.detail)
+    })
+
+    window.addEventListener('LR_DATA_OUTPUT', e => {
+      console.log("WINDOW", e.type, e.detail)
+    })
   </script>
 </head>
 
 <lr-file-uploader-regular ctx-name="my-uploader" css-src="./blocks/themes/lr-basic/index.css"></lr-file-uploader-regular>
 <lr-config ctx-name="my-uploader" pubkey="demopublickey" crop-preset="1:1" cloudImageEditorTabs="crop" cloud-image-editor-tabs="crop"></lr-config>
 <lr-data-output ctx-name="my-uploader" use-console></lr-data-output>
+<lr-upload-ctx-provider ctx-name="my-uploader"></lr-upload-ctx-provider>

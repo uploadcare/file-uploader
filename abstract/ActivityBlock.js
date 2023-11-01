@@ -1,5 +1,4 @@
 // @ts-check
-import { Modal } from '../blocks/Modal/Modal.js';
 import { debounce } from '../blocks/utils/debounce.js';
 import { Block } from './Block.js';
 import { activityBlockCtx } from './CTX.js';

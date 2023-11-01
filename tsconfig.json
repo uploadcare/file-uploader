@@ -5,6 +5,7 @@
     "module": "esnext",
     "moduleResolution": "bundler",
     "lib": ["es2017", "ESNext", "ESNext.Array", "DOM", "DOM.Iterable", "WebWorker"],
+    "jsx": "preserve",
     "allowJs": true,
     "strict": true,
     "skipLibCheck": true,

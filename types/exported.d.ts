@@ -72,4 +72,6 @@ export type OutputFileEntry = Pick<UploadcareFile, requiredFileInfoFields> &
     uploadProgress: number;
   };
 
+export { EventType, GlobalEventType, GlobalEventPayload, EventPayload } from '../blocks/UploadCtxProvider/EventEmitter';
+
 export {};
