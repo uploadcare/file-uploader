@@ -9,3 +9,5 @@ export class StartFrom extends ActivityBlock {
     this.registerActivity(this.activityType);
   }
 }
+
+StartFrom.template = /* HTML */ ` <div class="content"><slot></slot></div> `;

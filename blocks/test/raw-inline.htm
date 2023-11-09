@@ -7,8 +7,6 @@
     .config {
       --ctx-name: 'my-uploader';
       --cfg-pubkey: 'demopublickey';
-      --cfg-multiple-min: 0;
-      --cfg-multiple-max: 3;
       --darkmode: 0;
     }
   </style>
@@ -28,10 +26,18 @@
   <script type="module">
     import * as LR from './index.js';
     LR.registerBlocks(LR);
-
-    window.addEventListener('LR_INIT_FLOW', console.log);
-    window.addEventListener('LR_DONE_FLOW', console.log);
   </script>
 </head>
 
-<lr-file-uploader-inline class="config" css-src="./solutions/file-uploader/inline/index.css"></lr-file-uploader-inline>
+<lr-file-uploader-inline
+  ctx-name="my-uploader"
+  css-src="./solutions/file-uploader/inline/index.css"
+></lr-file-uploader-inline>
+<lr-config
+  ctx-name="my-uploader"
+  pubkey="demopublickey"
+  crop-preset="1:1"
+  cloudImageEditorTabs="crop"
+  cloud-image-editor-tabs="crop"
+></lr-config>
+<lr-data-output ctx-name="my-uploader" use-console></lr-data-output>

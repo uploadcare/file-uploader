@@ -6,14 +6,13 @@
 
 lr-start-from {
   height: 100%;
+  container-type: inline-size;
 }
 
 .lr-wgt-common,
 :host {
   --cfg-done-activity: 'start-from';
   --cfg-init-activity: 'start-from';
-
-  container-type: inline-size;
 }
 
 lr-activity-header::after {
@@ -27,8 +26,7 @@ lr-activity-header .close-btn {
 }
 
 @container (min-width: 500px) {
-  lr-start-from {
-    grid-auto-rows: 1fr max-content;
+  lr-start-from .content {
     grid-template-columns: 1fr max-content;
   }
 
@@ -37,6 +35,18 @@ lr-activity-header .close-btn {
   }
 
   lr-start-from lr-drop-area {
+    grid-row: span 3;
+  }
+
+  lr-start-from:has(lr-copyright[hidden]) lr-drop-area {
     grid-row: span 2;
+  }
+
+  lr-start-from:has(.cancel-btn[hidden]) lr-drop-area {
+    grid-row: span 2;
+  }
+
+  lr-start-from:has(lr-copyright[hidden]):has(.cancel-btn[hidden]) lr-drop-area {
+    grid-row: span 1;
   }
 }
