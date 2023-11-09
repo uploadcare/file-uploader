@@ -1,3 +1,9 @@
+# [0.30.0](https://github.com/uploadcare/blocks/compare/v0.29.1...v0.30.0) (2023-11-09)
+
+### Features
+
+- add `cancel` button on the start from activity ([#554](https://github.com/uploadcare/blocks/issues/554)) ([44bd845](https://github.com/uploadcare/blocks/commit/44bd8452a1f720d2c21444f64b5a74c0ffe26880))
+
 ## [0.29.1](https://github.com/uploadcare/blocks/compare/v0.29.0...v0.29.1) (2023-10-31)
 
 ### Bug Fixes
