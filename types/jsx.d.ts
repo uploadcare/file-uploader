@@ -1,29 +1,22 @@
-type ConfigType = import('./exported').ConfigType;
+/// <reference types="react" />
+
+type ConfigPlainType = import('./exported').ConfigPlainType;
 type UploadCtxProvider = import('..').UploadCtxProvider;
-type Config = import('..').Config;
+type Config = import('../index.js').Config;
 type FileUploaderInline = import('..').FileUploaderInline;
 type FileUploaderRegular = import('..').FileUploaderRegular;
 type FileUploaderMinimal = import('..').FileUploaderMinimal;
 type DataOutput = import('..').DataOutput;
 type CloudImageEditorBlock = import('..').CloudImageEditorBlock;
-
-type BaseAttributes = {
+type CtxAttributes = {
   'ctx-name': string;
-  hidden: boolean;
-  class: string;
-  id: string;
-} & HTMLElement;
-type ShadowWrapperAttributes = { 'css-src': string };
-
-type CustomEvents<K extends Record<string, unknown>> = { [key in keyof K as `on${key}`]: K[key] } & {
-  onEvent: (e: CustomEvent) => void;
 };
-type CustomElement<
-  C extends HTMLElement,
-  A extends Record<string, unknown> = {},
-  P extends Record<string, unknown> = {},
-  E extends Record<string, unknown> = {}
-> = Partial<{ ref: MutableRefObject<C> } & { children: any } & A & P & CustomEvents<E>>;
+type ShadowWrapperAttributes = { 'css-src': string };
+type CommonHtmlAttributes<T> = Partial<
+  Pick<React.HTMLAttributes<T>, 'id' | 'children' | 'hidden'> & { class: React.HTMLAttributes<T>['className'] }
+>;
+
+type CustomElement<C, A = {}> = React.DetailedHTMLProps<CommonHtmlAttributes<C>, C> & A;
 
 declare namespace JSX {
   interface IntrinsicElements {
@@ -58,31 +51,22 @@ declare namespace JSX {
     'lr-progress-bar-common': any;
     'lr-progress-bar': any;
     'lr-editable-canvas': any;
-    'lr-cloud-image-editor': any;
     'lr-external-source': any;
     'lr-tabs': any;
     'lr-cloud-image-editor-activity': any;
     'lr-cloud-image-editor-block': CustomElement<
-    CloudImageEditorBlock,
-    BaseAttributes & { uuid: string; 'cdn-url': string }
-  >;
+      CloudImageEditorBlock,
+      CtxAttributes & { uuid: string; 'cdn-url': string }
+    >;
     'lr-cloud-image-editor': CustomElement<
       CloudImageEditorBlock,
-      BaseAttributes & ShadowWrapperAttributes & { uuid: string; 'cdn-url': string }
+      CtxAttributes & ShadowWrapperAttributes & { uuid: string; 'cdn-url': string }
     >;
-    'lr-data-output': CustomElement<
-      DataOutput,
-      BaseAttributes,
-      {},
-      {
-        // TODO: Add types for this event
-        'lr-data-output': (e: CustomEvent<{ data: any[] | { groupData: Record<string, any>; files: any[] } }>) => void;
-      }
-    >;
-    'lr-file-uploader-regular': CustomElement<FileUploaderRegular, BaseAttributes & ShadowWrapperAttributes>;
-    'lr-file-uploader-minimal': CustomElement<FileUploaderMinimal, BaseAttributes & ShadowWrapperAttributes>;
-    'lr-file-uploader-inline': CustomElement<FileUploaderInline, BaseAttributes & ShadowWrapperAttributes>;
-    'lr-upload-ctx-provider': CustomElement<UploadCtxProvider, BaseAttributes>;
-    'lr-config': CustomElement<Config, BaseAttributes, ConfigType>;
+    'lr-data-output': CustomElement<DataOutput, CtxAttributes>;
+    'lr-file-uploader-regular': CustomElement<FileUploaderRegular, CtxAttributes & ShadowWrapperAttributes>;
+    'lr-file-uploader-minimal': CustomElement<FileUploaderMinimal, CtxAttributes & ShadowWrapperAttributes>;
+    'lr-file-uploader-inline': CustomElement<FileUploaderInline, CtxAttributes & ShadowWrapperAttributes>;
+    'lr-upload-ctx-provider': CustomElement<UploadCtxProvider, CtxAttributes>;
+    'lr-config': CustomElement<Config, CtxAttributes & Partial<ConfigPlainType>>;
   }
 }

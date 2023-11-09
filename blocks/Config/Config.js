@@ -38,7 +38,7 @@ const attrStateMapping = /** @type {Record<keyof import('../../types').ConfigAtt
   ...Object.fromEntries(allConfigKeys.map((key) => [key.toLowerCase(), sharedConfigKey(key)])),
 });
 
-export class Config extends Block {
+class ConfigClass extends Block {
   ctxOwner = true;
   requireCtxName = true;
 
@@ -55,6 +55,10 @@ export class Config extends Block {
         ])
       ),
     };
+
+    Object.assign(this, {
+      test: 'test',
+    });
   }
 
   initCallback() {
@@ -127,4 +131,8 @@ export class Config extends Block {
   }
 }
 
-Config.bindAttributes(attrStateMapping);
+ConfigClass.bindAttributes(attrStateMapping);
+
+export const Config = ConfigClass;
+
+/** @typedef {typeof ConfigClass & import('../../types').ConfigType} Config */

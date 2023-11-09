@@ -6,6 +6,6 @@
     "emitDeclarationOnly": true,
     "declarationMap": true
   },
-  "include": ["**/*.js", "types"],
+  "include": ["**/*.js", "types/*"],
   "exclude": ["node_modules", "test"]
 }

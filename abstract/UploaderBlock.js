@@ -4,6 +4,7 @@ import { ActivityBlock } from './ActivityBlock.js';
 import { Data } from '@symbiotejs/symbiote';
 import { calculateMaxCenteredCropFrame } from '../blocks/CloudImageEditor/src/crop-utils.js';
 import { parseCropPreset } from '../blocks/CloudImageEditor/src/lib/parseCropPreset.js';
+import { EventType } from '../blocks/UploadCtxProvider/EventEmitter.js';
 import { UploadSource } from '../blocks/utils/UploadSource.js';
 import { serializeCsv } from '../blocks/utils/comma-separated.js';
 import { debounce } from '../blocks/utils/debounce.js';
@@ -14,7 +15,6 @@ import { prettyBytes } from '../utils/prettyBytes.js';
 import { stringToArray } from '../utils/stringToArray.js';
 import { warnOnce } from '../utils/warnOnce.js';
 import { uploaderBlockCtx } from './CTX.js';
-import { EVENT_TYPES, EventData, EventManager } from './EventManager.js';
 import { TypedCollection } from './TypedCollection.js';
 import { uploadEntrySchema } from './uploadEntrySchema.js';
 
@@ -268,14 +268,7 @@ export class UploaderBlock extends ActivityBlock {
         this.setOrAddState('*modalActive', true);
       }
     }
-    EventManager.emit(
-      new EventData({
-        type: EVENT_TYPES.INIT_FLOW,
-        ctx: this.ctxName,
-      }),
-      undefined,
-      false
-    );
+    this.emit(EventType.INIT_FLOW);
   }
 
   doneFlow() {
@@ -286,14 +279,7 @@ export class UploaderBlock extends ActivityBlock {
     if (!this.$['*currentActivity']) {
       this.setOrAddState('*modalActive', false);
     }
-    EventManager.emit(
-      new EventData({
-        type: EVENT_TYPES.DONE_FLOW,
-        ctx: this.ctxName,
-      }),
-      undefined,
-      false
-    );
+    this.emit(EventType.DONE_FLOW);
   }
 
   /** @returns {TypedCollection} */
@@ -420,15 +406,7 @@ export class UploaderBlock extends ActivityBlock {
     if (data.length !== this.uploadCollection.size) {
       return;
     }
-    EventManager.emit(
-      new EventData({
-        type: EVENT_TYPES.DATA_OUTPUT,
-        // @ts-ignore TODO: fix this
-        ctx: this.ctxName,
-        // @ts-ignore TODO: fix this
-        data,
-      })
-    );
+    this.emit(EventType.DATA_OUTPUT, data);
     // @ts-ignore TODO: fix this
     this.$['*outputData'] = data;
   }, 100);
@@ -483,15 +461,7 @@ export class UploaderBlock extends ActivityBlock {
       });
       let progress = Math.round(commonProgress / items.length);
       this.$['*commonProgress'] = progress;
-      EventManager.emit(
-        new EventData({
-          type: EVENT_TYPES.UPLOAD_PROGRESS,
-          ctx: this.ctxName,
-          data: progress,
-        }),
-        undefined,
-        progress === 100
-      );
+      this.emit(EventType.UPLOAD_PROGRESS, progress, { debounce: true });
     }
     if (changeMap.fileInfo) {
       if (this.cfg.cropPreset) {
@@ -507,14 +477,7 @@ export class UploaderBlock extends ActivityBlock {
         let data = this.getOutputData((dataItem) => {
           return !!dataItem.getValue('fileInfo') && !dataItem.getValue('silentUpload');
         });
-        data.length > 0 &&
-          EventManager.emit(
-            new EventData({
-              type: EVENT_TYPES.UPLOAD_FINISH,
-              ctx: this.ctxName,
-              data,
-            })
-          );
+        data.length > 0 && this.emit(EventType.UPLOAD_FINISH, data, { debounce: true });
       }
     }
     if (changeMap.uploadError) {
@@ -522,15 +485,7 @@ export class UploaderBlock extends ActivityBlock {
         return !!entry.getValue('uploadError');
       });
       items.forEach((id) => {
-        EventManager.emit(
-          new EventData({
-            type: EVENT_TYPES.UPLOAD_ERROR,
-            ctx: this.ctxName,
-            data: uploadCollection.readProp(id, 'uploadError'),
-          }),
-          undefined,
-          false
-        );
+        this.emit(EventType.UPLOAD_ERROR, uploadCollection.readProp(id, 'uploadError'));
       });
     }
     if (changeMap.validationErrorMsg) {
@@ -538,15 +493,7 @@ export class UploaderBlock extends ActivityBlock {
         return !!entry.getValue('validationErrorMsg');
       });
       items.forEach((id) => {
-        EventManager.emit(
-          new EventData({
-            type: EVENT_TYPES.VALIDATION_ERROR,
-            ctx: this.ctxName,
-            data: uploadCollection.readProp(id, 'validationErrorMsg'),
-          }),
-          undefined,
-          false
-        );
+        this.emit(EventType.VALIDATION_ERROR, uploadCollection.readProp(id, 'validationErrorMsg'));
       });
     }
     if (changeMap.cdnUrlModifiers) {
@@ -554,15 +501,7 @@ export class UploaderBlock extends ActivityBlock {
         return !!entry.getValue('cdnUrlModifiers');
       });
       items.forEach((id) => {
-        EventManager.emit(
-          new EventData({
-            type: EVENT_TYPES.CLOUD_MODIFICATION,
-            ctx: this.ctxName,
-            data: Data.getCtx(id).store,
-          }),
-          undefined,
-          false
-        );
+        this.emit(EventType.CLOUD_MODIFICATION, uploadCollection.readProp(id, 'cdnUrlModifiers'));
       });
     }
   };

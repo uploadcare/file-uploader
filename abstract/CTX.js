@@ -4,6 +4,8 @@ import { Queue } from '@uploadcare/upload-client';
 export const blockCtx = () => ({
   /** @type {Set<import('./Block').Block>} */
   '*blocksRegistry': new Set(),
+  /** @type {import('../blocks/UploadCtxProvider/EventEmitter.js').EventEmitter | null} */
+  '*eventEmitter': null,
 });
 
 /** @param {import('./Block').Block} fnCtx */
