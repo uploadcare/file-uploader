@@ -170,3 +170,7 @@ lr-drop-area[with-icon][fullscreen][drag-state='over'] > .content-wrapper {
 :is(lr-drop-area[with-icon][fullscreen]) > .content-wrapper lr-icon:first-child {
   transform: translateY(calc(var(--ui-size) * -1.5));
 }
+
+lr-drop-area[clickable] {
+  cursor: pointer;
+}

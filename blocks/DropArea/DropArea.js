@@ -153,6 +153,10 @@ export class DropArea extends UploaderBlock {
       this.toggleAttribute('hidden', !value);
     });
 
+    this.sub('isClickable', (value) => {
+      this.toggleAttribute('clickable', value);
+    });
+
     if (this.$.isClickable) {
       // @private
       this._onAreaClicked = () => {
