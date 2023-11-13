@@ -12,6 +12,7 @@
   --l10n-upload: 'Upload';
   --l10n-add-more: 'Add more';
   --l10n-cancel: 'Cancel';
+  --l10n-start-from-cancel: var(--l10n-cancel);
   --l10n-clear: 'Clear';
   --l10n-camera-shot: 'Shot';
   --l10n-upload-url: 'Import';

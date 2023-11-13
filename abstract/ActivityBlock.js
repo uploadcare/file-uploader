@@ -70,7 +70,7 @@ export class ActivityBlock extends Block {
       if (history.length > 10) {
         history = history.slice(history.length - 11, history.length - 1);
       }
-      if (this.historyTracked) {
+      if (this.historyTracked && history[history.length - 1] !== this.activityType) {
         history.push(this.activityType);
       }
       this.$['*history'] = history;
@@ -91,6 +91,10 @@ export class ActivityBlock extends Block {
 
   get isActivityActive() {
     return this[ACTIVE_PROP];
+  }
+
+  get couldOpenActivity() {
+    return true;
   }
 
   /**
@@ -157,6 +161,14 @@ export class ActivityBlock extends Block {
       while (nextActivity === this.activityType) {
         nextActivity = history.pop();
       }
+      let couldOpenActivity = !!nextActivity;
+      if (nextActivity) {
+        /** @type {Set<ActivityBlock>} */
+        let blocksRegistry = this.$['*blocksRegistry'];
+        const nextActivityBlock = [...blocksRegistry].find((block) => block.activityType === nextActivity);
+        couldOpenActivity = nextActivityBlock?.couldOpenActivity ?? false;
+      }
+      nextActivity = couldOpenActivity ? nextActivity : undefined;
       this.$['*currentActivity'] = nextActivity;
       this.$['*history'] = history;
       if (!nextActivity) {

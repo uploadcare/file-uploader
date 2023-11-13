@@ -16,7 +16,6 @@ import { debounce } from '../utils/debounce.js';
  */
 
 export class UploadList extends UploaderBlock {
-  couldBeUploadCollectionOwner = true;
   historyTracked = true;
   activityType = ActivityBlock.activities.UPLOAD_LIST;
 
@@ -60,11 +59,7 @@ export class UploadList extends UploaderBlock {
     this._updateUploadsState();
     this._updateCountLimitMessage();
 
-    if (
-      this.$['*uploadList']?.length === 0 &&
-      !this.cfg.showEmptyList &&
-      this.$['*currentActivity'] === this.activityType
-    ) {
+    if (!this.couldOpenActivity && this.$['*currentActivity'] === this.activityType) {
       this.historyBack();
     }
   }, 0);
@@ -199,6 +194,10 @@ export class UploadList extends UploaderBlock {
     return localizedText('total');
   }
 
+  get couldOpenActivity() {
+    return this.cfg.showEmptyList || this.uploadCollection.size > 0;
+  }
+
   initCallback() {
     super.initCallback();
 
@@ -209,7 +208,7 @@ export class UploadList extends UploaderBlock {
     this.subConfigValue('multipleMax', this._debouncedHandleCollectionUpdate);
 
     this.sub('*currentActivity', (currentActivity) => {
-      if (this.uploadCollection?.size === 0 && !this.cfg.showEmptyList && currentActivity === this.activityType) {
+      if (!this.couldOpenActivity && currentActivity === this.activityType) {
         this.$['*currentActivity'] = this.initActivity;
       }
     });
