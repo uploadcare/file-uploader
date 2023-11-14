@@ -19,8 +19,7 @@ import { TypedCollection } from './TypedCollection.js';
 import { uploadEntrySchema } from './uploadEntrySchema.js';
 
 export class UploaderBlock extends ActivityBlock {
-  couldBeUploadCollectionOwner = false;
-  isUploadCollectionOwner = false;
+  isCtxOwner = false;
 
   init$ = uploaderBlockCtx(this);
 
@@ -58,6 +57,15 @@ export class UploaderBlock extends ActivityBlock {
     }
   }
 
+  get hasCtxOwner() {
+    return this.hasBlockInCtx((block) => {
+      if (block instanceof UploaderBlock) {
+        return block.isCtxOwner && block.isConnected && block !== this;
+      }
+      return false;
+    });
+  }
+
   initCallback() {
     super.initCallback();
 
@@ -76,47 +84,42 @@ export class UploaderBlock extends ActivityBlock {
       this.add('*uploadCollection', uploadCollection);
     }
 
-    const hasUploadCollectionOwner = () =>
-      this.hasBlockInCtx((block) => {
-        if (block instanceof UploaderBlock) {
-          return block.isUploadCollectionOwner && block.isConnected && block !== this;
-        }
-        return false;
-      });
-
-    if (this.couldBeUploadCollectionOwner && !hasUploadCollectionOwner()) {
-      this.isUploadCollectionOwner = true;
-
-      /** @private */
-      this._unobserveCollection = this.uploadCollection.observeCollection(this._handleCollectonUpdate);
-
-      /** @private */
-      this._unobserveCollectionProperties = this.uploadCollection.observeProperties(
-        this._handleCollectionPropertiesUpdate
-      );
-
-      this.subConfigValue('maxLocalFileSizeBytes', () => this._debouncedRunValidators());
-      this.subConfigValue('multipleMin', () => this._debouncedRunValidators());
-      this.subConfigValue('multipleMax', () => this._debouncedRunValidators());
-      this.subConfigValue('multiple', () => this._debouncedRunValidators());
-      this.subConfigValue('imgOnly', () => this._debouncedRunValidators());
-      this.subConfigValue('accept', () => this._debouncedRunValidators());
+    if (!this.hasCtxOwner) {
+      this.initCtxOwner();
     }
-
-    if (this.__initialUploadMetadata) {
-      this.$['*uploadMetadata'] = this.__initialUploadMetadata;
-    }
-
-    this.subConfigValue('maxConcurrentRequests', (value) => {
-      this.$['*uploadQueue'].concurrency = Number(value) || 1;
-    });
   }
 
   destroyCallback() {
     super.destroyCallback();
-    if (this.isUploadCollectionOwner) {
+    if (this.isCtxOwner) {
       this._unobserveCollectionProperties?.();
       this._unobserveCollection?.();
+    }
+  }
+
+  initCtxOwner() {
+    this.isCtxOwner = true;
+
+    /** @private */
+    this._unobserveCollection = this.uploadCollection.observeCollection(this._handleCollectonUpdate);
+
+    /** @private */
+    this._unobserveCollectionProperties = this.uploadCollection.observeProperties(
+      this._handleCollectionPropertiesUpdate
+    );
+
+    this.subConfigValue('maxLocalFileSizeBytes', () => this._debouncedRunValidators());
+    this.subConfigValue('multipleMin', () => this._debouncedRunValidators());
+    this.subConfigValue('multipleMax', () => this._debouncedRunValidators());
+    this.subConfigValue('multiple', () => this._debouncedRunValidators());
+    this.subConfigValue('imgOnly', () => this._debouncedRunValidators());
+    this.subConfigValue('accept', () => this._debouncedRunValidators());
+    this.subConfigValue('maxConcurrentRequests', (value) => {
+      this.$['*uploadQueue'].concurrency = Number(value) || 1;
+    });
+
+    if (this.__initialUploadMetadata) {
+      this.$['*uploadMetadata'] = this.__initialUploadMetadata;
     }
   }
 

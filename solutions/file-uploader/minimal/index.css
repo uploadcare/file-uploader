@@ -69,7 +69,6 @@ lr-drop-area {
   text-align: center;
   background-color: var(--clr-background);
   border-radius: var(--border-radius-frame);
-  cursor: pointer;
 }
 
 lr-upload-list lr-activity-header {

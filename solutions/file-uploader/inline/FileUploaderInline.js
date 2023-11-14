@@ -8,9 +8,26 @@ export class FileUploaderInline extends SolutionBlock {
 
     this.init$ = {
       ...this.init$,
-      couldBackHistory: false,
+      couldCancel: false,
+      cancel: () => {
+        if (this.couldHistoryBack) {
+          this.$['*historyBack']();
+        } else if (this.couldShowList) {
+          this.$['*currentActivity'] = ActivityBlock.activities.UPLOAD_LIST;
+        }
+      },
     };
   }
+
+  get couldHistoryBack() {
+    const history = this.$['*history'];
+    return history.length > 1 && history[history.length - 1] !== ActivityBlock.activities.START_FROM;
+  }
+
+  get couldShowList() {
+    return this.cfg.showEmptyList || this.$['*uploadList'].length > 0;
+  }
+
   shadowReadyCallback() {
     /** @type {import('../../../abstract/UploaderBlock.js').UploaderBlock} */
     const uBlock = this.ref.uBlock;
@@ -29,7 +46,9 @@ export class FileUploaderInline extends SolutionBlock {
       }
     });
 
-    this.sub('*history', (history) => (this.$['couldBackHistory'] = history.length > 1));
+    this.sub('*history', () => {
+      this.$['couldCancel'] = this.couldHistoryBack || this.couldShowList;
+    });
   }
 }
 
@@ -38,9 +57,9 @@ FileUploaderInline.template = /* HTML */ ` <lr-start-from>
     <lr-source-list wrap></lr-source-list>
     <button
       type="button"
-      l10n="cancel"
+      l10n="start-from-cancel"
       class="cancel-btn secondary-btn"
-      set="onclick: *historyBack; @hidden: !couldBackHistory"
+      set="onclick: cancel; @hidden: !couldCancel"
     ></button>
     <lr-copyright></lr-copyright>
   </lr-start-from>
