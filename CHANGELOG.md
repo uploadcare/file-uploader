@@ -1,8 +1,5 @@
 # [0.30.0](https://github.com/uploadcare/blocks/compare/v0.29.1...v0.30.0) (2023-11-14)
 
-### Bug Fixes
-
-- cancel button behaviour ([d723e90](https://github.com/uploadcare/blocks/commit/d723e90f952c2c6e0952f923b1e30aac3ec2d091))
 - **drop-area:** show pointer on clickable drop areas ([6990cd4](https://github.com/uploadcare/blocks/commit/6990cd495ac535fcb9586e3148dcf5a4705035ae))
 
 ### Features
