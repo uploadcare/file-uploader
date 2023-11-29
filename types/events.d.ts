@@ -1,18 +1,23 @@
-import type { GlobalEventPayload } from '../blocks/UploadCtxProvider/EventEmitter';
+import type { GlobalEventPayload, EventPayload } from '../blocks/UploadCtxProvider/EventEmitter';
 
-type CustomEventMap = {
+export type GlobalEventMap = {
   [T in keyof GlobalEventPayload]: CustomEvent<GlobalEventPayload[T]>;
 };
+
+export type EventMap = {
+  [T in keyof EventPayload]: CustomEvent<EventPayload[T]>;
+};
+
 declare global {
   interface Window {
-    addEventListener<T extends keyof CustomEventMap>(
+    addEventListener<T extends keyof GlobalEventMap>(
       type: T,
-      listener: (e: CustomEventMap[T]) => void,
+      listener: (e: GlobalEventMap[T]) => void,
       options?: boolean | AddEventListenerOptions
     ): void;
-    removeEventListener<T extends keyof CustomEventMap>(
+    removeEventListener<T extends keyof GlobalEventMap>(
       type: T,
-      listener: (e: CustomEventMap[T]) => void,
+      listener: (e: GlobalEventMap[T]) => void,
       options?: boolean | EventListenerOptions
     ): void;
   }

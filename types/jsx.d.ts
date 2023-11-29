@@ -1,13 +1,13 @@
 /// <reference types="react" />
 
-type ConfigPlainType = import('./exported').ConfigPlainType;
-type UploadCtxProvider = import('..').UploadCtxProvider;
+type ConfigPlainType = import('./exported.js').ConfigPlainType;
+type UploadCtxProvider = import('../index.js').UploadCtxProvider;
 type Config = import('../index.js').Config;
-type FileUploaderInline = import('..').FileUploaderInline;
-type FileUploaderRegular = import('..').FileUploaderRegular;
-type FileUploaderMinimal = import('..').FileUploaderMinimal;
-type DataOutput = import('..').DataOutput;
-type CloudImageEditorBlock = import('..').CloudImageEditorBlock;
+type FileUploaderInline = import('../index.js').FileUploaderInline;
+type FileUploaderRegular = import('../index.js').FileUploaderRegular;
+type FileUploaderMinimal = import('../index.js').FileUploaderMinimal;
+type DataOutput = import('../index.js').DataOutput;
+type CloudImageEditorBlock = import('../index.js').CloudImageEditorBlock;
 type CtxAttributes = {
   'ctx-name': string;
 };
@@ -56,17 +56,17 @@ declare namespace JSX {
     'lr-cloud-image-editor-activity': any;
     'lr-cloud-image-editor-block': CustomElement<
       CloudImageEditorBlock,
-      CtxAttributes & { uuid: string; 'cdn-url': string }
+      CtxAttributes & ({ uuid: string } | { 'cdn-url': string }) & Partial<{ tabs: string; 'crop-preset': string }>
     >;
     'lr-cloud-image-editor': CustomElement<
       CloudImageEditorBlock,
-      CtxAttributes & ShadowWrapperAttributes & { uuid: string; 'cdn-url': string }
+      JSX.IntrinsicElements['lr-cloud-image-editor-block'] & ShadowWrapperAttributes
     >;
-    'lr-data-output': CustomElement<DataOutput, CtxAttributes>;
+    'lr-data-output': CustomElement<InstanceType<DataOutput>, CtxAttributes>;
     'lr-file-uploader-regular': CustomElement<FileUploaderRegular, CtxAttributes & ShadowWrapperAttributes>;
     'lr-file-uploader-minimal': CustomElement<FileUploaderMinimal, CtxAttributes & ShadowWrapperAttributes>;
     'lr-file-uploader-inline': CustomElement<FileUploaderInline, CtxAttributes & ShadowWrapperAttributes>;
-    'lr-upload-ctx-provider': CustomElement<UploadCtxProvider, CtxAttributes>;
-    'lr-config': CustomElement<Config, CtxAttributes & Partial<ConfigPlainType>>;
+    'lr-upload-ctx-provider': CustomElement<InstanceType<UploadCtxProvider>, CtxAttributes>;
+    'lr-config': CustomElement<InstanceType<Config>, CtxAttributes & Partial<ConfigPlainType>>;
   }
 }

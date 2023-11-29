@@ -11,7 +11,7 @@ import { applyStyles } from '@symbiotejs/symbiote';
  *     }} Output}
  */
 
-export class DataOutput extends UploaderBlock {
+class DataOutputClass extends UploaderBlock {
   processInnerHtml = true;
   requireCtxName = true;
 
@@ -148,7 +148,7 @@ export class DataOutput extends UploaderBlock {
   }
 }
 
-DataOutput.dict = Object.freeze({
+DataOutputClass.dict = Object.freeze({
   SRC_CTX_KEY: '*outputData',
   EVENT_NAME: 'lr-data-output',
   FIRE_EVENT_ATTR: 'use-event',
@@ -158,3 +158,36 @@ DataOutput.dict = Object.freeze({
   INPUT_NAME_ATTR: 'input-name',
   INPUT_REQUIRED: 'input-required',
 });
+
+/**
+ * @typedef {import('../../utils/mixinClass.js').MixinClass<
+ *   typeof DataOutputClass,
+ *   {
+ *     addEventListener(
+ *       type: 'lr-data-output',
+ *       listener: (
+ *         e: CustomEvent<{
+ *           timestamp: number;
+ *           ctxName: string;
+ *           data: Output;
+ *         }>
+ *       ) => void,
+ *       options?: boolean | AddEventListenerOptions
+ *     ): void;
+ *     removeEventListener(
+ *       type: 'lr-data-output',
+ *       listener: (
+ *         e: CustomEvent<{
+ *           timestamp: number;
+ *           ctxName: string;
+ *           data: Output;
+ *         }>
+ *       ) => void,
+ *       options?: boolean | EventListenerOptions
+ *     ): void;
+ *   }
+ * >}
+ *   DataOutput
+ */
+
+export const DataOutput = /** @type {DataOutput} */ (/** @type {unknown} */ (DataOutputClass));

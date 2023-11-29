@@ -133,6 +133,7 @@ class ConfigClass extends Block {
 
 ConfigClass.bindAttributes(attrStateMapping);
 
-export const Config = ConfigClass;
+/** @typedef {import('../../utils/mixinClass.js').MixinClass<typeof ConfigClass, import('../../types').ConfigType>} Config */
 
-/** @typedef {typeof ConfigClass & import('../../types').ConfigType} Config */
+// This is workaround for jsdoc that allows us to export extended class type along with the class itself
+export const Config = /** @type {Config} */ (/** @type {unknown} */ (ConfigClass));
