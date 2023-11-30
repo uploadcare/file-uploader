@@ -48,13 +48,13 @@
   display: block;
 }
 
-lr-start-from {
+lr-start-from .content {
   display: flex;
   flex-direction: column;
   gap: var(--gap-min);
   padding: 0;
   overflow: hidden;
-  text-align: center;
+  align-items: center;
   background-color: transparent;
 }
 
