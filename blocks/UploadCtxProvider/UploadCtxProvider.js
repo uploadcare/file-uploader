@@ -5,6 +5,8 @@ class UploadCtxProviderClass extends UploaderBlock {
   requireCtxName = true;
 
   initCallback() {
+    super.initCallback();
+
     this.$['*eventEmitter'].bindTarget(this);
   }
 }
