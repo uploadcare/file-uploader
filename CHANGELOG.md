@@ -1,3 +1,9 @@
+## [0.30.1](https://github.com/uploadcare/blocks/compare/v0.30.0...v0.30.1) (2023-11-30)
+
+### Bug Fixes
+
+- **lr-upload-ctx-provider:** improve event types ([#563](https://github.com/uploadcare/blocks/issues/563)) ([7d4097d](https://github.com/uploadcare/blocks/commit/7d4097db83f2cd4afef6375406e92afb0eba4c09))
+
 # [0.30.0](https://github.com/uploadcare/blocks/compare/v0.29.1...v0.30.0) (2023-11-14)
 
 - **drop-area:** show pointer on clickable drop areas ([6990cd4](https://github.com/uploadcare/blocks/commit/6990cd495ac535fcb9586e3148dcf5a4705035ae))
