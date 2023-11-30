@@ -1,7 +1,7 @@
 import React from 'react';
 import { expectType } from 'tsd';
-import '../jsx';
-import { OutputFileEntry } from '..';
+import '../jsx.js';
+import { OutputFileEntry } from '../index.js';
 
 // @ts-expect-error untyped props
 () => <lr-config ctx-name="1" something="wrong"></lr-config>;
@@ -17,8 +17,8 @@ import { OutputFileEntry } from '..';
 
 // allow useRef hook
 () => {
-  const ref = React.useRef<Config | null>(null);
-  expectType<Config | null>(ref.current);
+  const ref = React.useRef<InstanceType<Config> | null>(null);
+  expectType<InstanceType<Config> | null>(ref.current);
   <lr-config ctx-name="1" ref={ref}></lr-config>;
 };
 
@@ -27,15 +27,15 @@ import { OutputFileEntry } from '..';
   <lr-config
     ctx-name="1"
     ref={(el) => {
-      expectType<Config | null>(el);
+      expectType<InstanceType<Config> | null>(el);
     }}
   ></lr-config>;
 };
 
 // allow createRef
 () => {
-  const ref = React.createRef<Config>();
-  expectType<Config | null>(ref.current);
+  const ref = React.createRef<InstanceType<Config>>();
+  expectType<InstanceType<Config> | null>(ref.current);
   <lr-config ctx-name="1" ref={ref}></lr-config>;
 };
 
@@ -44,26 +44,25 @@ import { OutputFileEntry } from '..';
 
 // allow to use DOM properties
 () => {
-  const ref = React.useRef<Config | null>(null);
+  const ref = React.useRef<InstanceType<Config> | null>(null);
   if (ref.current) {
     const config = ref.current;
-    config.metadata = {foo: 'bar'}
-    config.secureSignature = '1231'
-    config.multiple = true
+    config.metadata = { foo: 'bar' };
+    config.secureSignature = '1231';
+    config.multiple = true;
   }
 };
 
-
 // allow to pass metadata
 () => {
-  const ref = React.useRef<Config | null>(null);
+  const ref = React.useRef<InstanceType<Config> | null>(null);
   if (ref.current) {
     const config = ref.current;
-    config.metadata = {foo: 'bar'}
-    config.metadata = () => ({foo: 'bar'})
+    config.metadata = { foo: 'bar' };
+    config.metadata = () => ({ foo: 'bar' });
     config.metadata = async (entry) => {
-      expectType<OutputFileEntry>(entry)
-      return {foo: 'bar'}
-    }
+      expectType<OutputFileEntry>(entry);
+      return { foo: 'bar' };
+    };
   }
 };
