@@ -1,4 +1,4 @@
-import { BaseComponent } from '@symbiotejs/symbiote';
+import { BaseComponent, Data } from '@symbiotejs/symbiote';
 import { applyTemplateData } from '../../utils/template-utils.js';
 import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../utils/cdn-utils.js';
 import { PROPS_MAP } from './props-map.js';
@@ -339,6 +339,7 @@ export class ImgBase extends BaseComponent {
       });
       this._isnObserver = null;
     }
+    Data.deleteCtx(this);
   }
 
   static get observedAttributes() {
