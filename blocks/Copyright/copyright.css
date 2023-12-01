@@ -1,3 +1,8 @@
+lr-copyright {
+  display: flex;
+  align-items: flex-end;
+}
+
 lr-copyright .credits {
   padding: 0 var(--gap-mid) var(--gap-mid) calc(var(--gap-mid) * 1.5);
   color: var(--clr-txt-lightest);
