@@ -1,3 +1,9 @@
+## [0.30.2](https://github.com/uploadcare/blocks/compare/v0.30.1...v0.30.2) (2023-12-01)
+
+### Bug Fixes
+
+- **upload-ctx-provider:** run parent init callback before accessing event emitter ([#565](https://github.com/uploadcare/blocks/issues/565)) ([a313c5c](https://github.com/uploadcare/blocks/commit/a313c5c3b61f4749c6919a6d078e18e7eaa73419))
+
 ## [0.30.1](https://github.com/uploadcare/blocks/compare/v0.30.0...v0.30.1) (2023-11-30)
 
 ### Bug Fixes
