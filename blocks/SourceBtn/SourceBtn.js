@@ -4,6 +4,7 @@ import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 const L10N_PREFIX = 'src-type-';
 
 export class SourceBtn extends UploaderBlock {
+  couldBeCtxOwner = true;
   /** @private */
   _registeredTypes = {};
 

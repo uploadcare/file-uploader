@@ -11,12 +11,11 @@ import { debounce } from '../../utils/debounce.js';
 import { CloudImageEditorBase } from './CloudImageEditorBase.js';
 import { classNames } from './lib/classNames.js';
 import { parseCropPreset } from './lib/parseCropPreset.js';
-import { operationsToTransformations, transformationsToOperations } from './lib/transformationUtils.js';
 import { parseTabs } from './lib/parseTabs.js';
+import { operationsToTransformations, transformationsToOperations } from './lib/transformationUtils.js';
 import { initState } from './state.js';
 import { TEMPLATE } from './template.js';
 import { TabId } from './toolbar-constants.js';
-import { Data } from '@symbiotejs/symbiote';
 
 export class CloudImageEditorBlock extends CloudImageEditorBase {
   static className = 'cloud-image-editor';
@@ -77,13 +76,6 @@ export class CloudImageEditorBlock extends CloudImageEditorBase {
     this.$['*imgContainerEl'] = this.ref['img-container-el'];
 
     this.initEditor();
-  }
-
-  destroyCallback() {
-    super.destroyCallback();
-
-    // Destroy global editor's context
-    Data.deleteCtx(this.ctxName);
   }
 
   async updateImage() {
