@@ -3,6 +3,7 @@ import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { asBoolean } from '../Config/normalizeConfigValue.js';
 
 export class SimpleBtn extends UploaderBlock {
+  couldBeCtxOwner = true;
   constructor() {
     super();
 

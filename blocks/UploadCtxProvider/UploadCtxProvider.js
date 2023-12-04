@@ -9,6 +9,12 @@ class UploadCtxProviderClass extends UploaderBlock {
 
     this.$['*eventEmitter'].bindTarget(this);
   }
+
+  destroyCallback() {
+    super.destroyCallback();
+
+    this.$['*eventEmitter'].unbindTarget(this);
+  }
 }
 
 /**

@@ -19,6 +19,7 @@ import { TypedCollection } from './TypedCollection.js';
 import { uploadEntrySchema } from './uploadEntrySchema.js';
 
 export class UploaderBlock extends ActivityBlock {
+  couldBeCtxOwner = false;
   isCtxOwner = false;
 
   init$ = uploaderBlockCtx(this);
@@ -84,7 +85,7 @@ export class UploaderBlock extends ActivityBlock {
       this.add('*uploadCollection', uploadCollection);
     }
 
-    if (!this.hasCtxOwner) {
+    if (!this.hasCtxOwner && this.couldBeCtxOwner) {
       this.initCtxOwner();
     }
   }
@@ -94,6 +95,7 @@ export class UploaderBlock extends ActivityBlock {
     if (this.isCtxOwner) {
       this._unobserveCollectionProperties?.();
       this._unobserveCollection?.();
+      this.uploadCollection.destroy();
     }
   }
 

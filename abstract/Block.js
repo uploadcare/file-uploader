@@ -1,5 +1,5 @@
 // @ts-check
-import { BaseComponent } from '@symbiotejs/symbiote';
+import { BaseComponent, Data } from '@symbiotejs/symbiote';
 import { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter.js';
 import { createWindowHeightTracker, getIsWindowHeightTracked } from '../utils/createWindowHeightTracker.js';
 import { getPluralForm } from '../utils/getPluralForm.js';
@@ -188,8 +188,18 @@ export class Block extends BaseComponent {
   }
 
   destroyCallback() {
+    /** @type {Set<Block>} */
     let blocksRegistry = this.$['*blocksRegistry'];
     blocksRegistry.delete(this);
+
+    // Destroy local context
+    // TODO: this should be done inside symbiote
+    Data.deleteCtx(this);
+
+    if (blocksRegistry.size === 0) {
+      // Destroy external context if there is no any blocks left inside it
+      Data.deleteCtx(this.ctxName);
+    }
   }
 
   /**

@@ -3,6 +3,7 @@ import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 import { UploadSource } from '../utils/UploadSource.js';
 
 export class UrlSource extends UploaderBlock {
+  couldBeCtxOwner = true;
   activityType = ActivityBlock.activities.URL;
 
   init$ = {

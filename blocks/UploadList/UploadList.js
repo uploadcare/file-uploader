@@ -16,6 +16,9 @@ import { debounce } from '../utils/debounce.js';
  */
 
 export class UploadList extends UploaderBlock {
+  // Context owner should have access to CSS l10n
+  // TODO: We need to move away l10n from CSS
+  couldBeCtxOwner = true;
   historyTracked = true;
   activityType = ActivityBlock.activities.UPLOAD_LIST;
 

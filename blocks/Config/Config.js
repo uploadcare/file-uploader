@@ -39,7 +39,6 @@ const attrStateMapping = /** @type {Record<keyof import('../../types').ConfigAtt
 });
 
 class ConfigClass extends Block {
-  ctxOwner = true;
   requireCtxName = true;
 
   constructor() {
@@ -55,10 +54,6 @@ class ConfigClass extends Block {
         ])
       ),
     };
-
-    Object.assign(this, {
-      test: 'test',
-    });
   }
 
   initCallback() {

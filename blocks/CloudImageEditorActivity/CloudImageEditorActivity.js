@@ -4,6 +4,7 @@ import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { CloudImageEditorBlock } from '../CloudImageEditor/index.js';
 
 export class CloudImageEditorActivity extends UploaderBlock {
+  couldBeCtxOwner = true;
   activityType = ActivityBlock.activities.CLOUD_IMG_EDIT;
 
   constructor() {
