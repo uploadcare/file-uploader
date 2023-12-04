@@ -1,3 +1,15 @@
+## [0.30.3](https://github.com/uploadcare/blocks/compare/v0.30.2...v0.30.3) (2023-12-04)
+
+### Bug Fixes
+
+- **block:** destroy both local and global contexts ([bdd4a33](https://github.com/uploadcare/blocks/commit/bdd4a330583e57cf9eda798453d4815cfe4f9d84))
+- **cloud-image-editor:** destroy context ([deb9d25](https://github.com/uploadcare/blocks/commit/deb9d25e6ea60e17fa2682a077a1a74e2de77645))
+- **config:** do not overwrite config values inside context ([c1f6a0f](https://github.com/uploadcare/blocks/commit/c1f6a0f1bfe5ec509e66a1a55603fed82f4f3175))
+- **drop-area:** destroy global registry context if there are no items inside ([ad89e56](https://github.com/uploadcare/blocks/commit/ad89e56e0771ae064df9fb00996de69f2fe35323))
+- **img:** destroy context ([05ba451](https://github.com/uploadcare/blocks/commit/05ba451ba139c860e701fe57195883c0f104534a))
+- **typed-collection:** destroy context ([a7c136d](https://github.com/uploadcare/blocks/commit/a7c136d9d5a79eff68874c559276c1a0d84d658b))
+- **upload-collection:** destroy upload collection ([bcc4d46](https://github.com/uploadcare/blocks/commit/bcc4d460fd7724a0d84cd4c40a065c67a6479d18))
+
 ## [0.30.2](https://github.com/uploadcare/blocks/compare/v0.30.1...v0.30.2) (2023-12-01)
 
 ### Bug Fixes
