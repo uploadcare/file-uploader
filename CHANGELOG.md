@@ -1,3 +1,13 @@
+## [0.30.4](https://github.com/uploadcare/blocks/compare/v0.30.3...v0.30.4) (2023-12-06)
+
+### Bug Fixes
+
+- **activity:** run activity deactivation callback when modal became closed ([2e84268](https://github.com/uploadcare/blocks/commit/2e842681cfac68594a5c85ce92969597d9302081))
+- **cloud-image-editor:** do no try to update image when element is disconnected from DOM ([1b417a9](https://github.com/uploadcare/blocks/commit/1b417a93476da224c407ea60e95fa13ba4eefd1d))
+- **cloud-image-editor:** init `*tabId` global state key in the main editor block instead of deeper toolbar block ([511d3e1](https://github.com/uploadcare/blocks/commit/511d3e1301c6fe0b4e0d4fdbf70b2484e38f88d0))
+- **start-from:** add missing scroll area ([680a282](https://github.com/uploadcare/blocks/commit/680a28222f1107523bf3453cc8930bf4a399e8da))
+- **window-height-tracker:** prevent infinite loop ([7576ece](https://github.com/uploadcare/blocks/commit/7576ece24a7254cc6d3985925db4ae56133fa790))
+
 ## [0.30.3](https://github.com/uploadcare/blocks/compare/v0.30.2...v0.30.3) (2023-12-04)
 
 ### Bug Fixes
