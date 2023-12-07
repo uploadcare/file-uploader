@@ -60,11 +60,14 @@ export class ActivityBlock extends Block {
           this.$['*history'] = [];
         }
       });
-      this.sub('*modalActive', (modalActive) => {
-        if (!modalActive && this.activityType === this.$['*currentActivity']) {
-          this.$['*currentActivity'] = null;
-        }
-      });
+
+      if (this.has('*modalActive')) {
+        this.sub('*modalActive', (modalActive) => {
+          if (!modalActive && this.activityType === this.$['*currentActivity']) {
+            this.$['*currentActivity'] = null;
+          }
+        });
+      }
     }
   }
 
