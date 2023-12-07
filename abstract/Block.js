@@ -196,9 +196,17 @@ export class Block extends BaseComponent {
     Data.deleteCtx(this);
 
     if (blocksRegistry.size === 0) {
-      // Destroy external context if there is no any blocks left inside it
-      Data.deleteCtx(this.ctxName);
+      this.destroyCtxCallback();
     }
+  }
+
+  /**
+   * Called when the last block is removed from the context. Note that inheritors must run their callback before that.
+   *
+   * @protected
+   */
+  destroyCtxCallback() {
+    Data.deleteCtx(this.ctxName);
   }
 
   /**
