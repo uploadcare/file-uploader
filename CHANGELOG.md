@@ -1,3 +1,10 @@
+## [0.30.5](https://github.com/uploadcare/blocks/compare/v0.30.4...v0.30.5) (2023-12-07)
+
+### Bug Fixes
+
+- **activity-block:** check for the `*modalActive` key presence in state before subscribing it ([0e50b4f](https://github.com/uploadcare/blocks/commit/0e50b4f6dc2664eea7a7f12742660385a50610fd))
+- destroy upload collection when the last block in context is being destroyed ([42e501a](https://github.com/uploadcare/blocks/commit/42e501a85d089b4863950482fd89d240102aeb7d))
+
 ## [0.30.4](https://github.com/uploadcare/blocks/compare/v0.30.3...v0.30.4) (2023-12-06)
 
 ### Bug Fixes
