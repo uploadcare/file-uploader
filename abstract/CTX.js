@@ -32,4 +32,5 @@ export const uploaderBlockCtx = (fnCtx) => ({
   '*focusedEntry': null,
   '*uploadMetadata': null,
   '*uploadQueue': new Queue(1),
+  '*uploadCollection': null,
 });

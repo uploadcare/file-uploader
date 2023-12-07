@@ -70,7 +70,7 @@ export class UploaderBlock extends ActivityBlock {
   initCallback() {
     super.initCallback();
 
-    if (!this.has('*uploadCollection')) {
+    if (!this.$['*uploadCollection']) {
       let uploadCollection = new TypedCollection({
         typedSchema: uploadEntrySchema,
         watchList: [
@@ -82,7 +82,7 @@ export class UploaderBlock extends ActivityBlock {
           'cdnUrlModifiers',
         ],
       });
-      this.add('*uploadCollection', uploadCollection);
+      this.$['*uploadCollection'] = uploadCollection;
     }
 
     if (!this.hasCtxOwner && this.couldBeCtxOwner) {
@@ -92,11 +92,15 @@ export class UploaderBlock extends ActivityBlock {
 
   destroyCallback() {
     super.destroyCallback();
-    if (this.isCtxOwner) {
-      this._unobserveCollectionProperties?.();
-      this._unobserveCollection?.();
-      this.uploadCollection.destroy();
-    }
+  }
+
+  destroyCtxCallback() {
+    this._unobserveCollectionProperties?.();
+    this._unobserveCollection?.();
+    this.uploadCollection.destroy();
+    this.$['*uploadCollection'] = null;
+
+    super.destroyCtxCallback();
   }
 
   initCtxOwner() {
