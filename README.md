@@ -121,7 +121,10 @@ All configurations in Uploadcare Blocks are managed from `lr-config` block.
 3. Add a `lr-config` block to your markup and replace `YOUR_PUBLIC_KEY` with your own public key:
 
 ```html
-<lr-config ctx-name="my-uploader" pubkey="YOUR_PUBLIC_KEY"></lr-config>
+<lr-config 
+  ctx-name="my-uploader" 
+  pubkey="YOUR_PUBLIC_KEY"
+></lr-config>
 ```
 
 4. Make sure that your config block uses the same `ctx-name` attribute value as your solution block.
