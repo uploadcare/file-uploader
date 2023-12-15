@@ -38,7 +38,7 @@ See Uploadcare Blocks [in action](https://codesandbox.io/s/file-uploader-regular
 ## Core features
 
 - [File Uploader](https://uploadcare.com/docs/file-uploader/?ref=github-readme) — implement file managing functionality with multifunctional or minimal interfaces in just a few minutes.
-- [Advanced Customization](/blocks/) — create unique file-uploading interfaces by reorganizing pre-built components and styles with custom based on your needs.
+<!-- - [Advanced Customization](/blocks/) — create unique file-uploading interfaces by reorganizing pre-built components and styles with custom based on your needs. -->
 - [Adaptive Images](https://uploadcare.com/docs/adaptive-image/?ref=github-readme) — build responsive user interfaces that adapt to various screen sizes and devices, ensuring a performant experience across platforms.
 - [Cloud Image Editor](https://uploadcare.com/docs/file-uploader/image-editor/?ref=github-readme) — edit, transform, and process images right from a browser on-the-fly.
 - [Uploadcare power and features](https://uploadcare.com/features/?ref=github-readme) — upload, process, deliver, and manage images without building custom infrastructure.
@@ -121,10 +121,7 @@ All configurations in Uploadcare Blocks are managed from `lr-config` block.
 3. Add a `lr-config` block to your markup and replace `YOUR_PUBLIC_KEY` with your own public key:
 
 ```html
-<lr-config 
-  ctx-name="my-uploader" 
-  pubkey="YOUR_PUBLIC_KEY"
-></lr-config>
+<lr-config ctx-name="my-uploader" pubkey="YOUR_PUBLIC_KEY"></lr-config>
 ```
 
 4. Make sure that your config block uses the same `ctx-name` attribute value as your solution block.
