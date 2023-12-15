@@ -196,7 +196,10 @@ export class Block extends BaseComponent {
     Data.deleteCtx(this);
 
     if (blocksRegistry.size === 0) {
-      this.destroyCtxCallback();
+      setTimeout(() => {
+        // Destroy global context after all blocks are destroyed and all callbacks are run
+        this.destroyCtxCallback();
+      }, 0);
     }
   }
 
