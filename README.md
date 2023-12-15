@@ -1,9 +1,9 @@
 <p align="center">
   <a href="https://uploadcare.com/?ref=github-readme">
     <picture>
-      <source media="(prefers-color-scheme: light)" srcset="./assets/media/logo-safespace-transparent.svg">
-      <source media="(prefers-color-scheme: dark)" srcset="./assets/media/logo-transparent-inverted.svg">
-      <img width=250 alt="Uploadcare logo" src="./assets/media/logo-safespace-transparent.svg">
+      <source media="(prefers-color-scheme: light)" srcset="https://ucarecdn.com/1b4714cd-53be-447b-bbde-e061f1e5a22f/logosafespacetransparent.svg">
+      <source media="(prefers-color-scheme: dark)" srcset="https://ucarecdn.com/3b610a0a-780c-4750-a8b4-3bf4a8c90389/logotransparentinverted.svg">
+      <img width=250 alt="Uploadcare logo" src="https://ucarecdn.com/1b4714cd-53be-447b-bbde-e061f1e5a22f/logosafespacetransparent.svg">
     </picture>
   </a>
 </p>
