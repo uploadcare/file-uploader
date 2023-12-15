@@ -37,7 +37,7 @@ See Uploadcare Blocks [in action](https://codesandbox.io/s/file-uploader-regular
 
 ## Core features
 
-- [File Uploader](https://uploadcare.com/docs/file-uploader/?ref=github-readme) — implement file managing functionality with multifunctional or minimal interfaces in just a few minutes.
+- [File Uploader](https://uploadcare.com/docs/file-uploader/?ref=github-readme) — implement file-managing functionality with minimal or comprehensive interfaces in just a few minutes.
 <!-- - [Advanced Customization](/blocks/) — create unique file-uploading interfaces by reorganizing pre-built components and styles with custom based on your needs. -->
 - [Adaptive Images](https://uploadcare.com/docs/adaptive-image/?ref=github-readme) — build responsive user interfaces that adapt to various screen sizes and devices, ensuring a performant experience across platforms.
 - [Cloud Image Editor](https://uploadcare.com/docs/file-uploader/image-editor/?ref=github-readme) — edit, transform, and process images right from a browser on-the-fly.
