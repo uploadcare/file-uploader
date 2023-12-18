@@ -1,11 +1,15 @@
 // @ts-check
 
+import { Data } from '@symbiotejs/symbiote';
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { stringToArray } from '../../utils/stringToArray.js';
 import { asBoolean } from '../Config/normalizeConfigValue.js';
 import { UploadSource } from '../utils/UploadSource.js';
 import { DropzoneState, addDropzone } from './addDropzone.js';
+
+const GLOBAL_CTX_NAME = 'lr-drop-area';
+const REGISTRY_KEY = `${GLOBAL_CTX_NAME}/registry`;
 
 export class DropArea extends UploaderBlock {
   constructor() {
@@ -20,7 +24,7 @@ export class DropArea extends UploaderBlock {
       isEnabled: true,
       isVisible: true,
       text: this.l10n('drop-files-here'),
-      'lr-drop-area/targets': null,
+      [REGISTRY_KEY]: null,
     };
   }
 
@@ -45,10 +49,10 @@ export class DropArea extends UploaderBlock {
   initCallback() {
     super.initCallback();
 
-    if (!this.$['lr-drop-area/targets']) {
-      this.$['lr-drop-area/targets'] = new Set();
+    if (!this.$[REGISTRY_KEY]) {
+      this.$[REGISTRY_KEY] = new Set();
     }
-    this.$['lr-drop-area/targets'].add(this);
+    this.$[REGISTRY_KEY].add(this);
 
     this.defineAccessor(
       'disabled',
@@ -182,7 +186,7 @@ export class DropArea extends UploaderBlock {
     if (!this.$.isFullscreen) {
       return false;
     }
-    const otherTargets = [...this.$['lr-drop-area/targets']].filter((el) => el !== this);
+    const otherTargets = [...this.$[REGISTRY_KEY]].filter((el) => el !== this);
     const activeTargets = otherTargets.filter((/** @type {typeof this} */ el) => {
       return el.isActive();
     });
@@ -209,7 +213,14 @@ export class DropArea extends UploaderBlock {
   destroyCallback() {
     super.destroyCallback();
 
-    this.$['lr-drop-area/targets']?.remove?.(this);
+    /** @type {Set<DropArea>} */
+    const registry = this.$[REGISTRY_KEY];
+    if (registry) {
+      registry.delete(this);
+      if (registry.size === 0) {
+        Data.deleteCtx(GLOBAL_CTX_NAME);
+      }
+    }
 
     this._destroyDropzone?.();
     this._destroyContentWrapperDropzone?.();

@@ -61,6 +61,9 @@ export class EventEmitter {
    */
   _timeoutStore = new Map();
 
+  /** @type {Set<import('../../abstract/Block.js').Block>} */
+  _targets = new Set();
+
   /** @param {() => string} getCtxName */
   constructor(getCtxName) {
     /** @private */
@@ -73,8 +76,12 @@ export class EventEmitter {
 
   /** @param {import('../../abstract/Block.js').Block} target */
   bindTarget(target) {
-    /** @private */
-    this._target = target;
+    this._targets.add(target);
+  }
+
+  /** @param {import('../../abstract/Block.js').Block} target */
+  unbindTarget(target) {
+    this._targets.delete(target);
   }
 
   /**
@@ -84,11 +91,13 @@ export class EventEmitter {
    * @param {EventPayload[T]} [payload]
    */
   _dispatch(type, payload) {
-    this._target?.dispatchEvent(
-      new CustomEvent(type, {
-        detail: payload,
-      })
-    );
+    for (const target of this._targets) {
+      target.dispatchEvent(
+        new CustomEvent(type, {
+          detail: payload,
+        })
+      );
+    }
 
     const globalEventType = GlobalEventType[type];
     window.dispatchEvent(

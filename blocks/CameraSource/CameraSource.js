@@ -5,6 +5,7 @@ import { debounce } from '../utils/debounce.js';
 import { UploadSource } from '../utils/UploadSource.js';
 
 export class CameraSource extends UploaderBlock {
+  couldBeCtxOwner = true;
   activityType = ActivityBlock.activities.CAMERA;
 
   /** @private */

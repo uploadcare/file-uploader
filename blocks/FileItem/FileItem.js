@@ -17,6 +17,7 @@ const FileItemState = Object.freeze({
 });
 
 export class FileItem extends UploaderBlock {
+  couldBeCtxOwner = true;
   pauseRender = true;
 
   /** @private */

@@ -31,6 +31,7 @@ import { queryString } from './query-string.js';
 /** @typedef {SelectedFileMessage | EmbedCssMessage} Message */
 
 export class ExternalSource extends UploaderBlock {
+  couldBeCtxOwner = true;
   activityType = ActivityBlock.activities.EXTERNAL;
 
   constructor() {

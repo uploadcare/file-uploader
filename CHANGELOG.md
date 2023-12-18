@@ -1,3 +1,45 @@
+## [0.30.5](https://github.com/uploadcare/blocks/compare/v0.30.4...v0.30.5) (2023-12-07)
+
+### Bug Fixes
+
+- **activity-block:** check for the `*modalActive` key presence in state before subscribing it ([0e50b4f](https://github.com/uploadcare/blocks/commit/0e50b4f6dc2664eea7a7f12742660385a50610fd))
+- destroy upload collection when the last block in context is being destroyed ([42e501a](https://github.com/uploadcare/blocks/commit/42e501a85d089b4863950482fd89d240102aeb7d))
+
+## [0.30.4](https://github.com/uploadcare/blocks/compare/v0.30.3...v0.30.4) (2023-12-06)
+
+### Bug Fixes
+
+- **activity:** run activity deactivation callback when modal became closed ([2e84268](https://github.com/uploadcare/blocks/commit/2e842681cfac68594a5c85ce92969597d9302081))
+- **cloud-image-editor:** do no try to update image when element is disconnected from DOM ([1b417a9](https://github.com/uploadcare/blocks/commit/1b417a93476da224c407ea60e95fa13ba4eefd1d))
+- **cloud-image-editor:** init `*tabId` global state key in the main editor block instead of deeper toolbar block ([511d3e1](https://github.com/uploadcare/blocks/commit/511d3e1301c6fe0b4e0d4fdbf70b2484e38f88d0))
+- **start-from:** add missing scroll area ([680a282](https://github.com/uploadcare/blocks/commit/680a28222f1107523bf3453cc8930bf4a399e8da))
+- **window-height-tracker:** prevent infinite loop ([7576ece](https://github.com/uploadcare/blocks/commit/7576ece24a7254cc6d3985925db4ae56133fa790))
+
+## [0.30.3](https://github.com/uploadcare/blocks/compare/v0.30.2...v0.30.3) (2023-12-04)
+
+### Bug Fixes
+
+- **block:** destroy both local and global contexts ([bdd4a33](https://github.com/uploadcare/blocks/commit/bdd4a330583e57cf9eda798453d4815cfe4f9d84))
+- **cloud-image-editor:** destroy context ([deb9d25](https://github.com/uploadcare/blocks/commit/deb9d25e6ea60e17fa2682a077a1a74e2de77645))
+- **config:** do not overwrite config values inside context ([c1f6a0f](https://github.com/uploadcare/blocks/commit/c1f6a0f1bfe5ec509e66a1a55603fed82f4f3175))
+- **drop-area:** destroy global registry context if there are no items inside ([ad89e56](https://github.com/uploadcare/blocks/commit/ad89e56e0771ae064df9fb00996de69f2fe35323))
+- **img:** destroy context ([05ba451](https://github.com/uploadcare/blocks/commit/05ba451ba139c860e701fe57195883c0f104534a))
+- **typed-collection:** destroy context ([a7c136d](https://github.com/uploadcare/blocks/commit/a7c136d9d5a79eff68874c559276c1a0d84d658b))
+- **upload-collection:** destroy upload collection ([bcc4d46](https://github.com/uploadcare/blocks/commit/bcc4d460fd7724a0d84cd4c40a065c67a6479d18))
+
+## [0.30.2](https://github.com/uploadcare/blocks/compare/v0.30.1...v0.30.2) (2023-12-01)
+
+### Bug Fixes
+
+- **start-from:** styles ([#566](https://github.com/uploadcare/blocks/issues/566)) ([7367b1d](https://github.com/uploadcare/blocks/commit/7367b1d914b044cbce2c4fdb6a15e03cf68a9e61))
+- **upload-ctx-provider:** run parent init callback before accessing event emitter ([#565](https://github.com/uploadcare/blocks/issues/565)) ([a313c5c](https://github.com/uploadcare/blocks/commit/a313c5c3b61f4749c6919a6d078e18e7eaa73419))
+
+## [0.30.1](https://github.com/uploadcare/blocks/compare/v0.30.0...v0.30.1) (2023-11-30)
+
+### Bug Fixes
+
+- improve event types ([#563](https://github.com/uploadcare/blocks/issues/563)) ([7d4097d](https://github.com/uploadcare/blocks/commit/7d4097db83f2cd4afef6375406e92afb0eba4c09))
+
 # [0.30.0](https://github.com/uploadcare/blocks/compare/v0.29.1...v0.30.0) (2023-11-14)
 
 - **drop-area:** show pointer on clickable drop areas ([6990cd4](https://github.com/uploadcare/blocks/commit/6990cd495ac535fcb9586e3148dcf5a4705035ae))

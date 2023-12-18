@@ -5,18 +5,14 @@ import { waitForAttribute } from '../../utils/waitForAttribute.js';
 const CSS_ATTRIBUTE = 'css-src';
 
 /**
- * @template T
- * @typedef {new (...args: any[]) => T} GConstructor
- */
-
-/**
- * @template {GConstructor<import('../../abstract/Block.js').Block>} T
+ * @template {import('../../utils/mixinClass.js').GConstructor<import('../../abstract/Block.js').Block>} T
  * @param {T} Base
- * @returns {{
- *   new (...args: ConstructorParameters<T>): InstanceType<T> & {
+ * @returns {import('../../utils/mixinClass.js').MixinClass<
+ *   T,
+ *   {
  *     shadowReadyCallback(): void;
- *   };
- * } & Omit<T, 'new'>}
+ *   }
+ * >}
  */
 export function shadowed(Base) {
   // @ts-ignore

@@ -1,7 +1,7 @@
 // @ts-check
-import { BaseComponent } from '@symbiotejs/symbiote';
+import { BaseComponent, Data } from '@symbiotejs/symbiote';
 import { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter.js';
-import { createWindowHeightTracker, getIsWindowHeightTracked } from '../utils/createWindowHeightTracker.js';
+import { WindowHeightTracker } from '../utils/WindowHeightTracker.js';
 import { getPluralForm } from '../utils/getPluralForm.js';
 import { applyTemplateData, getPluralObjects } from '../utils/template-utils.js';
 import { toKebabCase } from '../utils/toKebabCase.js';
@@ -147,9 +147,6 @@ export class Block extends BaseComponent {
       this.classList.toggle(`${TAG_PREFIX}${className}`, true);
     }
 
-    if (!getIsWindowHeightTracked()) {
-      this._destroyInnerHeightTracker = createWindowHeightTracker();
-    }
     if (this.hasAttribute('retpl')) {
       // @ts-ignore TODO: fix this
       this.constructor['template'] = null;
@@ -171,11 +168,13 @@ export class Block extends BaseComponent {
     } else {
       super.connectedCallback();
     }
+
+    WindowHeightTracker.registerClient(this);
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
-    this._destroyInnerHeightTracker?.();
+    WindowHeightTracker.unregisterClient(this);
   }
 
   initCallback() {
@@ -188,8 +187,26 @@ export class Block extends BaseComponent {
   }
 
   destroyCallback() {
+    /** @type {Set<Block>} */
     let blocksRegistry = this.$['*blocksRegistry'];
     blocksRegistry.delete(this);
+
+    // Destroy local context
+    // TODO: this should be done inside symbiote
+    Data.deleteCtx(this);
+
+    if (blocksRegistry.size === 0) {
+      this.destroyCtxCallback();
+    }
+  }
+
+  /**
+   * Called when the last block is removed from the context. Note that inheritors must run their callback before that.
+   *
+   * @protected
+   */
+  destroyCtxCallback() {
+    Data.deleteCtx(this.ctxName);
   }
 
   /**

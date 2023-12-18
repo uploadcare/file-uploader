@@ -117,7 +117,7 @@ export class TypedCollection {
 
   /** @param {Function} handler */
   unobserveCollection(handler) {
-    this.__collectionObservers.delete(handler);
+    this.__collectionObservers?.delete(handler);
   }
 
   /**
@@ -201,7 +201,7 @@ export class TypedCollection {
 
   /** @param {Function} handler */
   unobserveProperties(handler) {
-    this.__propertyObservers.delete(handler);
+    this.__propertyObservers?.delete(handler);
   }
 
   /**
@@ -228,7 +228,7 @@ export class TypedCollection {
   }
 
   destroy() {
-    Data.deleteCtx(this.__data);
+    Data.deleteCtx(this.__ctxId);
     this.__propertyObservers = null;
     this.__collectionObservers = null;
     for (let id in this.__subsMap) {

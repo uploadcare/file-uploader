@@ -39,7 +39,6 @@ const attrStateMapping = /** @type {Record<keyof import('../../types').ConfigAtt
 });
 
 class ConfigClass extends Block {
-  ctxOwner = true;
   requireCtxName = true;
 
   constructor() {
@@ -55,10 +54,6 @@ class ConfigClass extends Block {
         ])
       ),
     };
-
-    Object.assign(this, {
-      test: 'test',
-    });
   }
 
   initCallback() {
@@ -133,6 +128,7 @@ class ConfigClass extends Block {
 
 ConfigClass.bindAttributes(attrStateMapping);
 
-export const Config = ConfigClass;
+/** @typedef {import('../../utils/mixinClass.js').MixinClass<typeof ConfigClass, import('../../types').ConfigType>} Config */
 
-/** @typedef {typeof ConfigClass & import('../../types').ConfigType} Config */
+// This is workaround for jsdoc that allows us to export extended class type along with the class itself
+export const Config = /** @type {Config} */ (/** @type {unknown} */ (ConfigClass));

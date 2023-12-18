@@ -58,7 +58,6 @@ export class EditorToolbar extends CloudImageEditorBase {
       '*showSlider': false,
       '*currentFilter': FAKE_ORIGINAL_FILTER,
       '*currentOperation': null,
-      '*tabId': TabId.CROP,
       showLoader: false,
       filters: ALL_FILTERS,
       colorOperations: ALL_COLOR_OPERATIONS,
