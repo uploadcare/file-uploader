@@ -1,12 +1,12 @@
 lr-custom-source-btn {
+  --l10n-src-type-custom: 'CUSTOM TEXT';
+
   display: flex;
   align-items: center;
   padding-right: 1em;
   border-bottom: var(--border-light);
   user-select: none;
   cursor: pointer;
-
-  --l10n-src-type-custom: 'CUSTOM TEXT';
 }
 lr-custom-source-btn:last-of-type {
   border-bottom: none;
@@ -33,11 +33,11 @@ lr-custom-source-btn[type='other'] > .txt::after {
 }
 
 lr-custom-source-btn .txt {
+  width: 100%;
+  height: 100%;
+  height: var(--ui-size);
   display: flex;
   align-items: center;
-  height: 100%;
-  width: 100%;
-  height: var(--ui-size);
   padding: 0;
   border: none;
   box-sizing: border-box;
