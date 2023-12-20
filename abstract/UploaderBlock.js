@@ -90,10 +90,6 @@ export class UploaderBlock extends ActivityBlock {
     }
   }
 
-  destroyCallback() {
-    super.destroyCallback();
-  }
-
   destroyCtxCallback() {
     this._unobserveCollectionProperties?.();
     this._unobserveCollection?.();
