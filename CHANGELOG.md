@@ -1,3 +1,9 @@
+## [0.30.6](https://github.com/uploadcare/blocks/compare/v0.30.5...v0.30.6) (2023-12-20)
+
+### Bug Fixes
+
+- **upload-ctx-provider:** execute destroy context callback async to ensure all sync callbacks are run ([#575](https://github.com/uploadcare/blocks/issues/575)) ([cbb9a21](https://github.com/uploadcare/blocks/commit/cbb9a2136c3079d98cd2db2474cf955cf9b9631e))
+
 ## [0.30.5](https://github.com/uploadcare/blocks/compare/v0.30.4...v0.30.5) (2023-12-07)
 
 ### Bug Fixes
