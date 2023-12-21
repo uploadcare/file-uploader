@@ -32,4 +32,7 @@ export const PROPS_MAP = Object.freeze({
     default: 'smart',
   },
   'is-background-for': {},
+  'is-preview-blur': {
+    default: 1,
+  },
 });

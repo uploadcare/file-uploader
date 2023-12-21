@@ -66,11 +66,13 @@ export class ImgBase extends BaseComponent {
    * Image operations
    *
    * @param {String} [size]
+   * @param {String} [blur]
    */
-  _getCdnModifiers(size = '') {
+  _getCdnModifiers({ size = '', blur = '' }) {
     return createCdnUrlModifiers(
       //
       size && `resize/${size}`,
+      blur && `blur/${blur}`,
       this.$$('cdn-operations') || '',
       `format/${this.$$('format') || PROPS_MAP.format.default}`,
       `quality/${this.$$('quality') || PROPS_MAP.quality.default}`
@@ -80,9 +82,10 @@ export class ImgBase extends BaseComponent {
   /**
    * @private
    * @param {String} size
+   * @param {String} blur
    * @returns {any}
    */
-  _getUrlBase(size = '') {
+  _getUrlBase({ size = '', blur = '' }) {
     if (this.$$('src').startsWith('data:') || this.$$('src').startsWith('blob:')) {
       return this.$$('src');
     }
@@ -92,7 +95,7 @@ export class ImgBase extends BaseComponent {
       return this._proxyUrl(this.$$('src'));
     }
 
-    let cdnModifiers = this._getCdnModifiers(size);
+    let cdnModifiers = this._getCdnModifiers({ size, blur });
 
     if (this.$$('src').startsWith(this.$$('cdn-cname'))) {
       return createCdnUrl(this.$$('src'), cdnModifiers);
@@ -192,40 +195,96 @@ export class ImgBase extends BaseComponent {
     }
   }
 
-  /** @type {HTMLImageElement} */
-  get img() {
-    if (!this._img) {
-      /** @private */
-      this._img = new Image();
-      this._setupEventProxy(this.img);
-      this._img.setAttribute(UNRESOLVED_ATTR, '');
-      this.img.onload = () => {
-        this.img.removeAttribute(UNRESOLVED_ATTR);
-      };
-      this.initAttributes();
-      this.appendChild(this._img);
+  /**
+   * Blurred image preview for <lr-img> during image loading
+   *
+   * @private
+   */
+  _loadImageOfPreview() {
+    if (!this._hasPreviewBlur) {
+      return null;
     }
-    return this._img;
+
+    this._imageBlur = new Image();
+
+    const resultURI = this._getUrlBase({
+      size: '100x',
+      blur: '100',
+    });
+    this._setupEventProxy(this._imageBlur);
+    this.initAttributes(this._imageBlur);
+
+    this._imageBlur.srcset = resultURI;
+    this._imageBlur.src = resultURI;
+
+    this.appendChild(this._imageBlur);
   }
 
-  get bgSelector() {
-    return this.$$('is-background-for');
-  }
+  _loadImage() {
+    return new Promise((resolve, reject) => {
+      this._image = new Image();
 
-  initAttributes() {
-    [...this.attributes].forEach((attr) => {
-      if (!PROPS_MAP[attr.name]) {
-        this.img.setAttribute(attr.name, attr.value);
-      }
+      this._setupEventProxy(this._image);
+      this._image.setAttribute(UNRESOLVED_ATTR, '');
+
+      this.initAttributes(this._image);
+
+      this._image.addEventListener('load', () => {
+        this._image.removeAttribute(UNRESOLVED_ATTR);
+        resolve(this._image);
+      });
+
+      this._image.addEventListener('error', () => {
+        reject(new Error('Error loading image'));
+      });
+
+      this.appendChild(this._image);
     });
   }
 
+  /** @type {HTMLImageElement} */
+  get img() {
+    if (!this._image) {
+      this._loadImage().then(() => {
+        if (this._imageBlur) {
+          this._imageBlur.remove();
+        }
+      });
+    }
+    return this._image;
+  }
+
+  get _hasBgSelector() {
+    return this.$$('is-background-for');
+  }
+
+  get _hasIntersection() {
+    return this.$$('intersection');
+  }
+
+  get _hasBreakpoints() {
+    return this.$$('breakpoints');
+  }
+
+  get _hasPreviewBlur() {
+    return this.$$('is-preview-blur');
+  }
+
   get breakpoints() {
-    if (this.$$('breakpoints')) {
-      return uniqueArray(stringToArray(this.$$('breakpoints')).map((str) => Number(str)));
+    if (this._hasBreakpoints) {
+      return uniqueArray(stringToArray(this._hasBreakpoints).map((str) => Number(str)));
     } else {
       return null;
     }
+  }
+
+  /** @param {HTMLImageElement} elNode */
+  initAttributes(elNode) {
+    [...this.attributes].forEach((attr) => {
+      if (!PROPS_MAP[attr.name]) {
+        elNode.setAttribute(attr.name, attr.value);
+      }
+    });
   }
 
   /** @param {HTMLElement} el */
@@ -233,21 +292,33 @@ export class ImgBase extends BaseComponent {
     let imgSet = new Set();
     if (this.breakpoints) {
       this.breakpoints.forEach((bp) => {
-        imgSet.add(`url("${this._getUrlBase(bp + 'x')}") ${bp}w`);
+        imgSet.add(`url("${this._getUrlBase({ size: bp + 'x' })}") ${bp}w`);
         if (this.$$('hi-res-support')) {
-          imgSet.add(`url("${this._getUrlBase(bp * HI_RES_K + 'x')}") ${bp * HI_RES_K}w`);
+          imgSet.add(`url("${this._getUrlBase({ size: bp * HI_RES_K + 'x' })}") ${bp * HI_RES_K}w`);
         }
         if (this.$$('ultra-res-support')) {
-          imgSet.add(`url("${this._getUrlBase(bp * ULTRA_RES_K + 'x')}") ${bp * ULTRA_RES_K}w`);
+          imgSet.add(`url("${this._getUrlBase({ size: bp * ULTRA_RES_K + 'x' })}") ${bp * ULTRA_RES_K}w`);
         }
       });
     } else {
-      imgSet.add(`url("${this._getUrlBase(this._getElSize(el))}") 1x`);
+      imgSet.add(
+        `url("${this._getUrlBase({
+          size: this._getElSize(el),
+        })}") 1x`
+      );
       if (this.$$('hi-res-support')) {
-        imgSet.add(`url("${this._getUrlBase(this._getElSize(el, HI_RES_K))}") ${HI_RES_K}x`);
+        imgSet.add(
+          `url("${this._getUrlBase({
+            size: this._getElSize(el, HI_RES_K),
+          })}") ${HI_RES_K}x`
+        );
       }
       if (this.$$('ultra-res-support')) {
-        imgSet.add(`url("${this._getUrlBase(this._getElSize(el, ULTRA_RES_K))}") ${ULTRA_RES_K}x`);
+        imgSet.add(
+          `url("${this._getUrlBase({
+            size: this._getElSize(el, ULTRA_RES_K),
+          })}") ${ULTRA_RES_K}x`
+        );
       }
     }
     let iSet = `image-set(${[...imgSet].join(', ')})`;
@@ -259,34 +330,55 @@ export class ImgBase extends BaseComponent {
     let srcset = new Set();
     if (this.breakpoints) {
       this.breakpoints.forEach((bp) => {
-        srcset.add(this._getUrlBase(bp + 'x') + ` ${bp}w`);
+        srcset.add(this._getUrlBase({ size: bp + 'x' }) + ` ${bp}w`);
         if (this.$$('hi-res-support')) {
-          srcset.add(this._getUrlBase(bp * HI_RES_K + 'x') + ` ${bp * HI_RES_K}w`);
+          srcset.add(
+            this._getUrlBase({
+              size: bp * HI_RES_K + 'x',
+            }) + ` ${bp * HI_RES_K}w`
+          );
         }
         if (this.$$('ultra-res-support')) {
-          srcset.add(this._getUrlBase(bp * ULTRA_RES_K + 'x') + ` ${bp * ULTRA_RES_K}w`);
+          srcset.add(this._getUrlBase({ size: bp * ULTRA_RES_K + 'x' }) + ` ${bp * ULTRA_RES_K}w`);
         }
       });
     } else {
-      srcset.add(this._getUrlBase(this._getElSize(this.img)) + ' 1x');
+      srcset.add(
+        this._getUrlBase({
+          size: this._getElSize(this.img),
+        }) + ' 1x'
+      );
       if (this.$$('hi-res-support')) {
-        srcset.add(this._getUrlBase(this._getElSize(this.img, 2)) + ' 2x');
+        srcset.add(
+          this._getUrlBase({
+            size: this._getElSize(this.img, 2),
+          }) + ' 2x'
+        );
       }
       if (this.$$('ultra-res-support')) {
-        srcset.add(this._getUrlBase(this._getElSize(this.img, 3)) + ' 3x');
+        srcset.add(
+          this._getUrlBase({
+            size: this._getElSize(this.img, 3),
+          }) + ' 3x'
+        );
       }
     }
     return [...srcset].join();
   }
 
   getSrc() {
-    return this._getUrlBase();
+    return this._getUrlBase({});
   }
 
-  init() {
-    if (this.bgSelector) {
-      [...document.querySelectorAll(this.bgSelector)].forEach((el) => {
-        if (this.$$('intersection')) {
+  _setupImageSrc() {
+    this.img.src = this.getSrc();
+    this.img.srcset = this.getSrcset();
+  }
+
+  _renderNode() {
+    if (this._hasBgSelector) {
+      [...document.querySelectorAll(this._hasBgSelector)].forEach((el) => {
+        if (this._hasIntersection) {
           this.initIntersection(el, () => {
             this.renderBg(el);
           });
@@ -294,15 +386,23 @@ export class ImgBase extends BaseComponent {
           this.renderBg(el);
         }
       });
-    } else if (this.$$('intersection')) {
+
+      return;
+    }
+
+    this._loadImageOfPreview();
+
+    if (this._hasIntersection) {
       this.initIntersection(this.img, () => {
-        this.img.srcset = this.getSrcset();
-        this.img.src = this.getSrc();
+        this._setupImageSrc();
       });
     } else {
-      this.img.srcset = this.getSrcset();
-      this.img.src = this.getSrc();
+      this._setupImageSrc();
     }
+  }
+
+  init() {
+    this._renderNode();
   }
 
   /**
