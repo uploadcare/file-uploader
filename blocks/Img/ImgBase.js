@@ -222,7 +222,7 @@ export class ImgBase extends BaseComponent {
 
   get breakpoints() {
     if (this.$$('breakpoints')) {
-      return uniqueArray(stringToArray(this.$$('breakpoints')).map((str) => parseInt(str, 10)));
+      return uniqueArray(stringToArray(this.$$('breakpoints')).map((str) => Number(str)));
     } else {
       return null;
     }
