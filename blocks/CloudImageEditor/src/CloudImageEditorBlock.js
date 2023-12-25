@@ -79,6 +79,9 @@ export class CloudImageEditorBlock extends CloudImageEditorBase {
   }
 
   async updateImage() {
+    if (!this.isConnected) {
+      return;
+    }
     await this._waitForSize();
 
     if (this.$['*tabId'] === TabId.CROP) {

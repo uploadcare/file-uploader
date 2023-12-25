@@ -1,3 +1,26 @@
+## [0.30.6](https://github.com/uploadcare/blocks/compare/v0.30.5...v0.30.6) (2023-12-20)
+
+### Bug Fixes
+
+- **upload-ctx-provider:** execute destroy context callback async to ensure all sync callbacks are run ([#575](https://github.com/uploadcare/blocks/issues/575)) ([cbb9a21](https://github.com/uploadcare/blocks/commit/cbb9a2136c3079d98cd2db2474cf955cf9b9631e))
+
+## [0.30.5](https://github.com/uploadcare/blocks/compare/v0.30.4...v0.30.5) (2023-12-07)
+
+### Bug Fixes
+
+- **activity-block:** check for the `*modalActive` key presence in state before subscribing it ([0e50b4f](https://github.com/uploadcare/blocks/commit/0e50b4f6dc2664eea7a7f12742660385a50610fd))
+- destroy upload collection when the last block in context is being destroyed ([42e501a](https://github.com/uploadcare/blocks/commit/42e501a85d089b4863950482fd89d240102aeb7d))
+
+## [0.30.4](https://github.com/uploadcare/blocks/compare/v0.30.3...v0.30.4) (2023-12-06)
+
+### Bug Fixes
+
+- **activity:** run activity deactivation callback when modal became closed ([2e84268](https://github.com/uploadcare/blocks/commit/2e842681cfac68594a5c85ce92969597d9302081))
+- **cloud-image-editor:** do no try to update image when element is disconnected from DOM ([1b417a9](https://github.com/uploadcare/blocks/commit/1b417a93476da224c407ea60e95fa13ba4eefd1d))
+- **cloud-image-editor:** init `*tabId` global state key in the main editor block instead of deeper toolbar block ([511d3e1](https://github.com/uploadcare/blocks/commit/511d3e1301c6fe0b4e0d4fdbf70b2484e38f88d0))
+- **start-from:** add missing scroll area ([680a282](https://github.com/uploadcare/blocks/commit/680a28222f1107523bf3453cc8930bf4a399e8da))
+- **window-height-tracker:** prevent infinite loop ([7576ece](https://github.com/uploadcare/blocks/commit/7576ece24a7254cc6d3985925db4ae56133fa790))
+
 ## [0.30.3](https://github.com/uploadcare/blocks/compare/v0.30.2...v0.30.3) (2023-12-04)
 
 ### Bug Fixes

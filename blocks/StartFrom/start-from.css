@@ -1,5 +1,6 @@
 lr-start-from {
   display: block;
+  overflow-y: auto;
 }
 
 lr-start-from .content {
@@ -9,7 +10,6 @@ lr-start-from .content {
   width: 100%;
   height: 100%;
   padding: var(--gap-max);
-  overflow-y: auto;
   background-color: var(--clr-background-light);
 }
 

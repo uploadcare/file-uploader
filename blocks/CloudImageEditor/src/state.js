@@ -4,7 +4,7 @@ import { createCdnUrl, createCdnUrlModifiers } from '../../../utils/cdn-utils.js
 import { TRANSPARENT_PIXEL_SRC } from '../../../utils/transparentPixelSrc.js';
 import { serializeCsv } from '../../utils/comma-separated.js';
 import { transformationsToOperations } from './lib/transformationUtils.js';
-import { ALL_TABS } from './toolbar-constants.js';
+import { ALL_TABS, TabId } from './toolbar-constants.js';
 
 /** @param {import('./CloudImageEditorBlock.js').CloudImageEditorBlock} fnCtx */
 export function initState(fnCtx) {
@@ -21,6 +21,7 @@ export function initState(fnCtx) {
     /** @type {import('./types.js').CropPresetList} */
     '*cropPresetList': [],
     '*tabList': ALL_TABS,
+    '*tabId': TabId.CROP,
 
     entry: null,
     extension: null,
