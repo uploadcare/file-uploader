@@ -255,7 +255,10 @@ export class UploaderBlock extends ActivityBlock {
     });
 
     if (couldUploadAnything) {
-      this.emit(EventType.COMMON_UPLOAD_START, this.getOutputCollectionState());
+      this.emit(
+        EventType.COMMON_UPLOAD_START,
+        /** @type {import('../types').OutputCollectionState<'uploading'>} */ (this.getOutputCollectionState()),
+      );
     }
   }
 
@@ -408,22 +411,35 @@ export class UploaderBlock extends ActivityBlock {
    * @param {import('./TypedData.js').TypedData} [internalEntry]
    */
   _validateUploadError(outputEntry, internalEntry) {
-    /** @type {Error} */
-    const error = internalEntry?.getValue('uploadError');
-    if (!error) {
+    /** @type {unknown} */
+    const cause = internalEntry?.getValue('uploadError');
+    if (!cause) {
       return;
     }
 
-    /** @type {import('../types').OutputFileErrorType} */
-    const errorType =
-      error instanceof UploadError ? 'UPLOAD_ERROR' : error instanceof NetworkError ? 'NETWORK_ERROR' : 'UNKNOWN_ERROR';
-
-    return buildOutputFileError({
-      type: errorType,
-      entry: outputEntry,
-      message: error.message,
-      error,
-    });
+    if (cause instanceof UploadError) {
+      return buildOutputFileError({
+        type: 'UPLOAD_ERROR',
+        message: cause.message,
+        entry: outputEntry,
+        error: cause,
+      });
+    } else if (cause instanceof NetworkError) {
+      return buildOutputFileError({
+        type: 'NETWORK_ERROR',
+        message: cause.message,
+        entry: outputEntry,
+        error: cause,
+      });
+    } else {
+      const error = cause instanceof Error ? cause : new Error('Unknown error', { cause });
+      return buildOutputFileError({
+        type: 'UNKNOWN_ERROR',
+        message: error.message,
+        entry: outputEntry,
+        error,
+      });
+    }
   }
 
   /**
@@ -519,7 +535,7 @@ export class UploaderBlock extends ActivityBlock {
       return;
     }
     this.$['*groupInfo'] = resp;
-    /** @type {ReturnType<typeof buildOutputCollectionState<'success', true>>} */
+    /** @type {ReturnType<typeof buildOutputCollectionState<'success', 'has-group'>>} */
     const collectionStateWithGroup = buildOutputCollectionState(this);
     this.emit(EventType.GROUP_CREATED, collectionStateWithGroup);
     this.emit(EventType.CHANGE, collectionStateWithGroup, { debounce: true });
@@ -613,7 +629,10 @@ export class UploaderBlock extends ActivityBlock {
         return entry.getValue('errors').length > 0;
       });
       if (errorItems.length === 0 && uploadCollection.size === loadedItems.length) {
-        this.emit(EventType.COMMON_UPLOAD_SUCCESS, this.getOutputCollectionState());
+        this.emit(
+          EventType.COMMON_UPLOAD_SUCCESS,
+          /** @type {import('../types').OutputCollectionState<'success'>} */ (this.getOutputCollectionState()),
+        );
       }
     }
     if (changeMap.errors) {
@@ -627,7 +646,10 @@ export class UploaderBlock extends ActivityBlock {
         return entry.getValue('errors').length > 0;
       });
       if (errorItems.length > 0) {
-        this.emit(EventType.COMMON_UPLOAD_FAILED, this.getOutputCollectionState());
+        this.emit(
+          EventType.COMMON_UPLOAD_FAILED,
+          /** @type {import('../types').OutputCollectionState<'failed'>} */ (this.getOutputCollectionState()),
+        );
       }
     }
     if (changeMap.cdnUrl) {
@@ -660,7 +682,10 @@ export class UploaderBlock extends ActivityBlock {
       });
       let progress = Math.round(commonProgress / items.length);
       this.$['*commonProgress'] = progress;
-      this.emit(EventType.COMMON_UPLOAD_PROGRESS, this.getOutputCollectionState());
+      this.emit(
+        EventType.COMMON_UPLOAD_PROGRESS,
+        /** @type {import('../types').OutputCollectionState<'uploading'>} */ (this.getOutputCollectionState()),
+      );
     }
   };
 

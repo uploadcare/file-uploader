@@ -191,7 +191,6 @@ export class ActivityBlock extends Block {
   }
 }
 
-/** @enum {String} */
 ActivityBlock.activities = Object.freeze({
   START_FROM: 'start-from',
   CAMERA: 'camera',

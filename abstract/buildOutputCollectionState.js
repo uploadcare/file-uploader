@@ -2,9 +2,9 @@
 
 /**
  * @template {import('../index.js').OutputCollectionStatus} TCollectionStatus
- * @template {boolean} TWithGroup
+ * @template {import('../index.js').GroupFlag} [TGroupFlag='maybe-has-group'] Default is `'maybe-has-group'`
  * @param {import('./UploaderBlock.js').UploaderBlock} uploaderBlock
- * @returns {import('../index.js').OutputCollectionState<TCollectionStatus, TWithGroup>}
+ * @returns {import('../index.js').OutputCollectionState<TCollectionStatus, TGroupFlag>}
  */
 export function buildOutputCollectionState(uploaderBlock) {
   /** @type {ReturnType<typeof uploaderBlock.getOutputData> | null} */
@@ -12,7 +12,7 @@ export function buildOutputCollectionState(uploaderBlock) {
 
   const state = {
     progress: uploaderBlock.$['*commonProgress'],
-    errors: [uploaderBlock.$['*collectionErrors']],
+    errors: uploaderBlock.$['*collectionErrors'],
     group: uploaderBlock.$['*groupInfo'],
 
     get totalCount() {
@@ -73,7 +73,7 @@ export function buildOutputCollectionState(uploaderBlock) {
     },
   };
 
-  return /** @type {import('../index.js').OutputCollectionState<TCollectionStatus, TWithGroup>} */ (
+  return /** @type {import('../index.js').OutputCollectionState<TCollectionStatus, TGroupFlag>} */ (
     /** @type {unknown} */ (state)
   );
 }

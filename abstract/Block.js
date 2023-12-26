@@ -20,6 +20,8 @@ export class Block extends BaseComponent {
   static className = '';
   requireCtxName = false;
   allowCustomTemplate = true;
+  /** @type {import('./ActivityBlock.js').ActivityType} */
+  activityType = null;
 
   init$ = blockCtx();
 
@@ -57,8 +59,6 @@ export class Block extends BaseComponent {
 
   constructor() {
     super();
-    /** @type {import('./ActivityBlock.js').ActivityType} */
-    this.activityType = null;
     // @ts-ignore TODO: fix this
     this.addTemplateProcessor(l10nProcessor);
     // TODO: inspect template on lr-* elements

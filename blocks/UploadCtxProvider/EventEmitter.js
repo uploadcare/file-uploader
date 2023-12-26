@@ -33,7 +33,7 @@ export const EventType = Object.freeze({
  *   [EventType.FILE_UPLOAD_PROGRESS]: import('../../index.js').OutputFileEntry<'uploading'>;
  *   [EventType.FILE_UPLOAD_SUCCESS]: import('../../index.js').OutputFileEntry<'success'>;
  *   [EventType.FILE_UPLOAD_FAILED]: import('../../index.js').OutputFileEntry<'failed'>;
- *   [EventType.FILE_URL_CHANGED]: import('../../index.js').OutputFileEntry<'success' | 'failed'>;
+ *   [EventType.FILE_URL_CHANGED]: import('../../index.js').OutputFileEntry<'success'>;
  *   [EventType.MODAL_OPEN]: void;
  *   [EventType.MODAL_CLOSE]: void;
  *   [EventType.ACTIVITY_CHANGE]: {
@@ -45,7 +45,7 @@ export const EventType = Object.freeze({
  *   [EventType.COMMON_UPLOAD_SUCCESS]: import('../../index.js').OutputCollectionState<'success'>;
  *   [EventType.COMMON_UPLOAD_FAILED]: import('../../index.js').OutputCollectionState<'failed'>;
  *   [EventType.CHANGE]: import('../../index.js').OutputCollectionState;
- *   [EventType.GROUP_CREATED]: import('../../index.js').OutputCollectionState<'success', true>;
+ *   [EventType.GROUP_CREATED]: import('../../index.js').OutputCollectionState<'success', 'has-group'>;
  * }} EventPayload
  */
 

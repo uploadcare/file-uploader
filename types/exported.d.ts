@@ -1,5 +1,7 @@
-import { UploadcareFile, UploadClientError, UploadcareNetworkError, UploadcareGroup } from '@uploadcare/upload-client';
-
+export type UploadError = import('@uploadcare/upload-client').UploadError;
+export type UploadcareFile = import('@uploadcare/upload-client').UploadcareFile;
+export type NetworkError = import('@uploadcare/upload-client').NetworkError;
+export type UploadcareGroup = import('@uploadcare/upload-client').UploadcareGroup;
 export type Metadata = import('@uploadcare/upload-client').Metadata;
 export type MetadataCallback = (fileEntry: OutputFileEntry) => Promise<Metadata> | Metadata;
 export type ConfigType = {
@@ -89,10 +91,10 @@ export type OutputErrorTypePayload = {
     total: number;
   };
   UPLOAD_ERROR: OutputFileErrorPayload & {
-    error: UploadClientError;
+    error: UploadError;
   };
   NETWORK_ERROR: OutputFileErrorPayload & {
-    error: UploadcareNetworkError;
+    error: NetworkError;
   };
   UNKNOWN_ERROR: OutputFileErrorPayload & {
     error?: Error;
@@ -186,10 +188,13 @@ export type OutputFileEntry<TStatus extends OutputFileStatus = OutputFileStatus>
 
 export type OutputCollectionStatus = 'idle' | 'uploading' | 'success' | 'failed';
 
+export type GroupFlag = 'has-group' | 'maybe-has-group';
+
 export type OutputCollectionState<
   TStatus extends OutputCollectionStatus = OutputCollectionStatus,
-  TWithGroup extends boolean = boolean,
+  TGroupFlag extends GroupFlag = 'maybe-has-group',
 > = {
+  status: TStatus;
   totalCount: number;
   successCount: number;
   failedCount: number;
@@ -200,7 +205,11 @@ export type OutputCollectionState<
   failedEntries: OutputFileEntry<'failed'>[];
   uploadingEntries: OutputFileEntry<'uploading'>[];
   allEntries: OutputFileEntry[];
-} & (TWithGroup extends true ? { group: UploadcareGroup } : {}) &
+} & (TGroupFlag extends 'has-group'
+  ? { group: UploadcareGroup }
+  : TGroupFlag extends 'maybe-has-group'
+    ? { group: UploadcareGroup | null }
+    : never) &
   (
     | {
         status: 'idle';

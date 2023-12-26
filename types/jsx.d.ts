@@ -61,7 +61,7 @@ declare namespace JSX {
       CloudImageEditorBlock,
       JSX.IntrinsicElements['lr-cloud-image-editor-block'] & ShadowWrapperAttributes
     >;
-    'lr-form-input': CustomElement<InstanceType<DataOutput>, CtxAttributes>;
+    'lr-form-input': CustomElement<FormInput, CtxAttributes>;
     'lr-file-uploader-regular': CustomElement<FileUploaderRegular, CtxAttributes & ShadowWrapperAttributes>;
     'lr-file-uploader-minimal': CustomElement<FileUploaderMinimal, CtxAttributes & ShadowWrapperAttributes>;
     'lr-file-uploader-inline': CustomElement<FileUploaderInline, CtxAttributes & ShadowWrapperAttributes>;
