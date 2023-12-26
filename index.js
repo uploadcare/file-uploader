@@ -32,7 +32,7 @@ export * from './blocks/CloudImageEditor/index.js';
 export { CloudImageEditorActivity } from './blocks/CloudImageEditorActivity/CloudImageEditorActivity.js';
 export { ExternalSource } from './blocks/ExternalSource/ExternalSource.js';
 export { Tabs } from './blocks/Tabs/Tabs.js';
-export { DataOutput } from './blocks/DataOutput/DataOutput.js';
+export { FormInput } from './blocks/FormInput/FormInput.js';
 export { ActivityHeader } from './blocks/ActivityHeader/ActivityHeader.js';
 export { Select } from './blocks/Select/Select.js';
 export { Video } from './blocks/Video/Video.js';

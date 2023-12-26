@@ -7,7 +7,7 @@ import { FileItem } from '../../../blocks/FileItem/FileItem.js';
 import { Icon } from '../../../blocks/Icon/Icon.js';
 import { ProgressBar } from '../../../blocks/ProgressBar/ProgressBar.js';
 import { Copyright } from '../../../blocks/Copyright/Copyright.js';
-import { DataOutput } from '../../../blocks/DataOutput/DataOutput.js';
+import { FormInput } from '../../../blocks/FormInput/FormInput.js';
 import { Config } from '../../../blocks/Config/Config.js';
 import { UploadCtxProvider } from '../../../blocks/UploadCtxProvider/UploadCtxProvider.js';
 
@@ -21,7 +21,7 @@ export {
   Icon,
   ProgressBar,
   Copyright,
-  DataOutput,
+  FormInput,
   Config,
   UploadCtxProvider,
 };

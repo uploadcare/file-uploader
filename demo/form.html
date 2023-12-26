@@ -27,18 +27,14 @@
   </script>
 </head>
 
-<lr-config ctx-name="my-uploader" pubkey="demopublickey" multiple multiple-min="2" multiple-max="3"></lr-config>
+<lr-config ctx-name="my-uploader" pubkey="demopublickey" multiple multiple-min="2" multiple-max="3" img-only group-output></lr-config>
 
 <form>
   <lr-file-uploader-regular style="position: relative; display: inline-block;" ctx-name="my-uploader" css-src="./blocks/themes/lr-basic/index.css">
-    <lr-data-output
+    <lr-form-input
       style="position: absolute; bottom: 0px; left: 50%"
       ctx-name="my-uploader"
-      use-console
-      use-input
-      input-required
-      use-group
-    ></lr-data-output>
+    ></lr-form-input>
   </lr-file-uploader-regular>
   <br />
   <br />
