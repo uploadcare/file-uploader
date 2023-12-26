@@ -108,7 +108,6 @@ export class TypedCollection {
   /** @param {(list: string[], added: Set<any>, removed: Set<any>) => void} handler */
   observeCollection(handler) {
     this.__collectionObservers.add(handler);
-    this.notify();
 
     return () => {
       this.unobserveCollection(handler);
@@ -129,6 +128,9 @@ export class TypedCollection {
     for (let prop in init) {
       item.setValue(prop, init[prop]);
     }
+    this.__items.add(item.uid);
+    this.notify();
+
     this.__data.add(item.uid, item);
     this.__added.add(item);
     this.__watchList.forEach((propName) => {
@@ -138,11 +140,9 @@ export class TypedCollection {
       this.__subsMap[item.uid].push(
         item.subscribe(propName, () => {
           this.__notifyObservers(propName, item.uid);
-        })
+        }),
       );
     });
-    this.__items.add(item.uid);
-    this.notify();
     return item;
   }
 

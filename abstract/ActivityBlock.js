@@ -1,5 +1,6 @@
 // @ts-check
 import { debounce } from '../blocks/utils/debounce.js';
+import { EventType } from '../blocks/UploadCtxProvider/EventEmitter.js';
 import { Block } from './Block.js';
 import { activityBlockCtx } from './CTX.js';
 
@@ -34,6 +35,10 @@ export class ActivityBlock extends Block {
     // console.log(`Activity "${this.activityType}" activated`);
 
     this._debouncedHistoryFlush();
+
+    this.emit(EventType.ACTIVITY_CHANGE, {
+      activity: this.activityType,
+    });
   }
 
   initCallback() {
@@ -198,3 +203,5 @@ ActivityBlock.activities = Object.freeze({
   EXTERNAL: 'external',
   DETAILS: 'details',
 });
+
+/** @typedef {(typeof ActivityBlock)['activities'][keyof (typeof ActivityBlock)['activities']] | null} ActivityType */

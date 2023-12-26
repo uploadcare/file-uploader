@@ -28,9 +28,14 @@ export const uploaderBlockCtx = (fnCtx) => ({
   ...activityBlockCtx(fnCtx),
   '*commonProgress': 0,
   '*uploadList': [],
-  '*outputData': null,
   '*focusedEntry': null,
   '*uploadMetadata': null,
   '*uploadQueue': new Queue(1),
   '*uploadCollection': null,
+  /** @type {ReturnType<import('../utils/buildOutputError.js').buildCollectionFileError>[]} */
+  '*collectionErrors': [],
+  /** @type {import('../types').OutputCollectionState | null} */
+  '*collectionState': null,
+  /** @type {import('@uploadcare/upload-client').UploadcareGroup | null} */
+  '*groupInfo': null,
 });

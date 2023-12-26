@@ -103,8 +103,8 @@ export class UploadDetails extends UploaderBlock {
       tmpSub('fileSize', (size) => {
         this.$.fileSize = Number.isFinite(size) ? this.fileSizeFmt(size) : this.l10n('file-size-unknown');
       });
-      tmpSub('uploadError', (error) => {
-        this.$.errorTxt = error?.message;
+      tmpSub('errors', (errors) => {
+        this.$.errorTxt = errors[0]?.message;
       });
 
       tmpSub('externalUrl', (url) => {

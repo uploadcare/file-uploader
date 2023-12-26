@@ -1,6 +1,25 @@
+// @ts-check
 import { SolutionBlock } from '../../../abstract/SolutionBlock.js';
+import { EventType } from '../../../blocks/UploadCtxProvider/EventEmitter.js';
 
-export class FileUploaderRegular extends SolutionBlock {}
+export class FileUploaderRegular extends SolutionBlock {
+  shadowReadyCallback() {
+    super.shadowReadyCallback();
+
+    this.sub(
+      '*modalActive',
+      (modalActive) => {
+        if (this._lastModalActive !== modalActive) {
+          this.emit(modalActive ? EventType.MODAL_OPEN : EventType.MODAL_CLOSE, undefined, { debounce: true });
+        }
+
+        /** @private */
+        this._lastModalActive = modalActive;
+      },
+      false,
+    );
+  }
+}
 
 FileUploaderRegular.template = /* HTML */ `
   <lr-simple-btn></lr-simple-btn>

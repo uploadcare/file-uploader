@@ -37,7 +37,7 @@ export class Block extends BaseComponent {
     for (let pluralObject of pluralObjects) {
       variables[pluralObject.variable] = this.pluralize(
         pluralObject.pluralKey,
-        Number(variables[pluralObject.countVariable])
+        Number(variables[pluralObject.countVariable]),
       );
     }
     let result = applyTemplateData(template, variables);
@@ -57,8 +57,7 @@ export class Block extends BaseComponent {
 
   constructor() {
     super();
-    /** @type {String} */
-    // @ts-ignore TODO: fix this
+    /** @type {import('./ActivityBlock.js').ActivityType} */
     this.activityType = null;
     // @ts-ignore TODO: fix this
     this.addTemplateProcessor(l10nProcessor);
@@ -79,7 +78,7 @@ export class Block extends BaseComponent {
   }
 
   /**
-   * @template {typeof import('../blocks/UploadCtxProvider/EventEmitter.js').EventType[keyof typeof import('../blocks/UploadCtxProvider/EventEmitter.js').EventType]} T
+   * @template {(typeof import('../blocks/UploadCtxProvider/EventEmitter.js').EventType)[keyof typeof import('../blocks/UploadCtxProvider/EventEmitter.js').EventType]} T
    * @param {T} type
    * @param {import('../blocks/UploadCtxProvider/EventEmitter.js').EventPayload[T]} [payload]
    * @param {{ debounce?: boolean | number }} [options]
@@ -128,11 +127,11 @@ export class Block extends BaseComponent {
       {
         [prop]: newVal,
       },
-      true
+      true,
     );
   }
 
-  /** @param {String} activityType */
+  /** @param {import('./ActivityBlock.js').ActivityType} activityType */
   setActivity(activityType) {
     if (this.hasBlockInCtx((b) => b.activityType === activityType)) {
       this.$['*currentActivity'] = activityType;
@@ -246,7 +245,7 @@ export class Block extends BaseComponent {
     return applyTemplateData(
       previewProxy,
       { previewUrl: url },
-      { transform: (value) => window.encodeURIComponent(value) }
+      { transform: (value) => window.encodeURIComponent(value) },
     );
   }
 
@@ -286,7 +285,7 @@ export class Block extends BaseComponent {
             return parsed.ctx.read(parsed.name);
           } else {
             warnOnce(
-              'Using CSS variables for configuration is deprecated. Please use `lr-config` instead. See migration guide: https://uploadcare.com/docs/file-uploader/migration-to-0.25.0/'
+              'Using CSS variables for configuration is deprecated. Please use `lr-config` instead. See migration guide: https://uploadcare.com/docs/file-uploader/migration-to-0.25.0/',
             );
             return this.getCssData(`--cfg-${toKebabCase(key)}`);
           }
@@ -314,7 +313,7 @@ export class Block extends BaseComponent {
   /** @deprecated */
   updateCtxCssData = () => {
     warnOnce(
-      'Using CSS variables for configuration is deprecated. Please use `lr-config` instead. See migration guide: https://uploadcare.com/docs/file-uploader/migration-to-0.25.0/'
+      'Using CSS variables for configuration is deprecated. Please use `lr-config` instead. See migration guide: https://uploadcare.com/docs/file-uploader/migration-to-0.25.0/',
     );
 
     /** @type {Set<Block>} */

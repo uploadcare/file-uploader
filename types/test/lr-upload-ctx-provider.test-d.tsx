@@ -8,18 +8,26 @@ instance.addFileFromUrl('https://example.com/image.png');
 instance.uploadCollection.size;
 instance.setOrAddState('fileId', 'uploading');
 
-instance.addEventListener('data-output', (e) => {
-  expectType<EventMap['data-output']>(e);
-
-  // @ts-expect-error - wrong event type
-  expectType<EventMap['init-flow']>(e);
+instance.addEventListener('change', (e) => {
+  expectType<EventMap['change']>(e);
 });
 
-const onDataOutput = (e: EventMap['data-output']) => {
-  // noop
+const onChange = (e: EventMap['change']) => {
+  const state = e.detail;
+  if (state.isSuccess) {
+    expectType<'success'>(state.status);
+  }
+
+  if (state.isFailed) {
+    state.errors.forEach((error) => {
+      if (error.type === 'TOO_FEW_FILES') {
+        error.total;
+      }
+    });
+  }
 };
 
-instance.addEventListener('data-output', onDataOutput);
+instance.addEventListener('change', onChange);
 
 () => {
   const ref = useRef<InstanceType<UploadCtxProvider>>(null);

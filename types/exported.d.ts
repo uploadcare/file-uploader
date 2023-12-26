@@ -1,4 +1,4 @@
-import { UploadcareFile } from '@uploadcare/upload-client';
+import { UploadcareFile, UploadClientError, UploadcareNetworkError, UploadcareGroup } from '@uploadcare/upload-client';
 
 export type Metadata = import('@uploadcare/upload-client').Metadata;
 export type MetadataCallback = (fileEntry: OutputFileEntry) => Promise<Metadata> | Metadata;
@@ -57,21 +57,181 @@ export type KebabCaseKeys<T extends Record<string, unknown>> = { [Key in keyof T
 export type LowerCase<S extends string> = Lowercase<S>;
 export type LowerCaseKeys<T extends Record<string, unknown>> = { [Key in keyof T as Lowercase<Key & string>]: T[Key] };
 
-type requiredFileInfoFields = 'name' | 'size' | 'isImage' | 'mimeType';
+export type OutputFileStatus = 'idle' | 'uploading' | 'success' | 'failed' | 'removed';
 
-export type OutputFileEntry = Pick<UploadcareFile, requiredFileInfoFields> &
-  Partial<Omit<UploadcareFile, requiredFileInfoFields>> & {
-    cdnUrlModifiers: string | null;
-    validationErrorMessage: string | null;
-    uploadError: Error | null;
-    file: File | Blob | null;
-    externalUrl: string | null;
-    isValid: boolean;
-    isUploaded: boolean;
-    fullPath: string | null;
-    uploadProgress: number;
+export type OutputFileErrorType =
+  | 'NOT_AN_IMAGE'
+  | 'FORBIDDEN_FILE_TYPE'
+  | 'FILE_SIZE_EXCEEDED'
+  | 'UPLOAD_ERROR'
+  | 'NETWORK_ERROR'
+  | 'UNKNOWN_ERROR';
+export type OutputCollectionErrorType = 'SOME_FILES_HAS_ERRORS' | 'TOO_MANY_FILES' | 'TOO_FEW_FILES';
+
+export type OutputFileErrorPayload = {
+  entry: OutputFileEntry;
+};
+
+export type OutputErrorTypePayload = {
+  NOT_AN_IMAGE: OutputFileErrorPayload;
+  FORBIDDEN_FILE_TYPE: OutputFileErrorPayload;
+  FILE_SIZE_EXCEEDED: OutputFileErrorPayload;
+
+  SOME_FILES_HAS_ERRORS: {};
+  TOO_MANY_FILES: {
+    min: number;
+    max: number;
+    total: number;
   };
+  TOO_FEW_FILES: {
+    min: number;
+    max: number;
+    total: number;
+  };
+  UPLOAD_ERROR: OutputFileErrorPayload & {
+    error: UploadClientError;
+  };
+  NETWORK_ERROR: OutputFileErrorPayload & {
+    error: UploadcareNetworkError;
+  };
+  UNKNOWN_ERROR: OutputFileErrorPayload & {
+    error?: Error;
+  };
+};
 
-export { EventType, GlobalEventType, GlobalEventPayload, EventPayload } from '../blocks/UploadCtxProvider/EventEmitter';
+export type OutputError<T extends OutputFileErrorType | OutputCollectionErrorType> =
+  T extends keyof OutputErrorTypePayload
+    ? {
+        type: T;
+        message: string;
+      } & OutputErrorTypePayload[T]
+    : never;
+
+export type OutputFileEntry<TStatus extends OutputFileStatus = OutputFileStatus> = {
+  status: TStatus;
+  internalId: string;
+
+  name: string;
+  size: number;
+  isImage: boolean;
+  mimeType: string;
+  metadata: Metadata | null;
+
+  file: File | Blob | null;
+  externalUrl: string | null;
+  uploadProgress: number;
+  fullPath: string | null;
+} & (
+  | {
+      status: 'success';
+      fileInfo: UploadcareFile;
+      uuid: string;
+      cdnUrl: string;
+      cdnUrlModifiers: string;
+      isUploading: false;
+      isSuccess: true;
+      isFailed: false;
+      isRemoved: false;
+      errors: [];
+    }
+  | {
+      status: 'failed';
+      fileInfo: UploadcareFile | null;
+      uuid: string | null;
+      cdnUrl: string | null;
+      cdnUrlModifiers: string | null;
+      isUploading: false;
+      isSuccess: false;
+      isFailed: true;
+      isRemoved: false;
+      errors: OutputError<OutputFileErrorType>[];
+    }
+  | {
+      status: 'uploading';
+      fileInfo: null;
+      uuid: null;
+      cdnUrl: null;
+      cdnUrlModifiers: null;
+      isUploading: true;
+      isSuccess: false;
+      isFailed: false;
+      isRemoved: false;
+      errors: [];
+    }
+  | {
+      status: 'removed';
+      fileInfo: UploadcareFile | null;
+      uuid: string | null;
+      cdnUrl: string | null;
+      cdnUrlModifiers: string | null;
+      isUploading: false;
+      isSuccess: false;
+      isFailed: false;
+      isRemoved: true;
+      errors: OutputError<OutputFileErrorType>[];
+    }
+  | {
+      status: 'idle';
+      fileInfo: null;
+      uuid: null;
+      cdnUrl: null;
+      cdnUrlModifiers: null;
+      isUploading: false;
+      isSuccess: false;
+      isFailed: false;
+      isRemoved: false;
+      errors: [];
+    }
+);
+
+export type OutputCollectionStatus = 'idle' | 'uploading' | 'success' | 'failed';
+
+export type OutputCollectionState<
+  TStatus extends OutputCollectionStatus = OutputCollectionStatus,
+  TWithGroup extends boolean = boolean,
+> = {
+  totalCount: number;
+  successCount: number;
+  failedCount: number;
+  uploadingCount: number;
+  progress: number;
+
+  successEntries: OutputFileEntry<'success'>[];
+  failedEntries: OutputFileEntry<'failed'>[];
+  uploadingEntries: OutputFileEntry<'uploading'>[];
+  allEntries: OutputFileEntry[];
+} & (TWithGroup extends true ? { group: UploadcareGroup } : {}) &
+  (
+    | {
+        status: 'idle';
+        isFailed: false;
+        isUploading: false;
+        isSuccess: false;
+        errors: [];
+      }
+    | {
+        status: 'uploading';
+        isFailed: false;
+        isUploading: true;
+        isSuccess: false;
+        errors: [];
+      }
+    | {
+        status: 'success';
+        isFailed: false;
+        isUploading: false;
+        isSuccess: true;
+        errors: [];
+      }
+    | {
+        status: 'failed';
+        isFailed: true;
+        isUploading: false;
+        isSuccess: false;
+        errors: OutputError<OutputCollectionErrorType>[];
+      }
+  );
+
+export { EventType, EventPayload } from '../blocks/UploadCtxProvider/EventEmitter';
 
 export {};
