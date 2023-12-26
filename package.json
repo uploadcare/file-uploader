@@ -90,7 +90,7 @@
     "prepare": "husky install"
   },
   "devDependencies": {
-    "@babel/eslint-parser": "^7.21.3",
+    "@babel/eslint-parser": "^7.23.3",
     "@babel/preset-env": "^7.21.4",
     "@esm-bundle/chai": "^4.3.4-fix.0",
     "@happy-dom/global-registrator": "^9.8.4",
@@ -103,9 +103,9 @@
     "@web/dev-server": "^0.1.38",
     "@web/test-runner": "^0.15.3",
     "esbuild": "^0.19.9",
-    "eslint": "^8.38.0",
-    "eslint-config-prettier": "^8.8.0",
-    "eslint-plugin-import": "^2.27.5",
+    "eslint": "^8.56.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-import": "^2.29.1",
     "highlight.js": "^11.7.0",
     "husky": "^8.0.3",
     "lint-staged": "^13.2.1",
@@ -113,8 +113,8 @@
     "node-watch": "^0.7.3",
     "npm-run-all": "^4.1.5",
     "postcss": "^8.4.21",
-    "prettier": "^2.8.7",
-    "prettier-plugin-jsdoc": "0.4.2",
+    "prettier": "^3.1.1",
+    "prettier-plugin-jsdoc": "1.1.1",
     "puppeteer": "^19.8.5",
     "rimraf": "^5.0.0",
     "shipjs": "^0.26.3",
@@ -130,6 +130,6 @@
   "license": "MIT",
   "dependencies": {
     "@symbiotejs/symbiote": "^1.11.7",
-    "@uploadcare/upload-client": "^6.8.0"
+    "@uploadcare/upload-client": "^6.12.0"
   }
 }
