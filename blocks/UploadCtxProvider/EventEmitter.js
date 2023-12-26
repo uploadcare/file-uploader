@@ -3,55 +3,50 @@
 const DEFAULT_DEBOUNCE_TIMEOUT = 20;
 
 export const EventType = Object.freeze({
-  UPLOAD_START: 'upload-start',
-  REMOVE: 'remove',
-  UPLOAD_PROGRESS: 'upload-progress',
-  UPLOAD_FINISH: 'upload-finish',
-  UPLOAD_ERROR: 'upload-error',
-  VALIDATION_ERROR: 'validation-error',
-  CLOUD_MODIFICATION: 'cloud-modification',
-  DATA_OUTPUT: 'data-output',
-  DONE_FLOW: 'done-flow',
-  INIT_FLOW: 'init-flow',
-});
+  FILE_ADDED: 'file-added',
+  FILE_REMOVED: 'file-removed',
+  FILE_UPLOAD_START: 'file-upload-start',
+  FILE_UPLOAD_PROGRESS: 'file-upload-progress',
+  FILE_UPLOAD_SUCCESS: 'file-upload-success',
+  FILE_UPLOAD_FAILED: 'file-upload-failed',
+  FILE_URL_CHANGED: 'file-url-changed',
 
-/** Those are legacy events that are saved for backward compatibility. Should be removed before v1. */
-export const GlobalEventType = Object.freeze({
-  [EventType.UPLOAD_START]: 'LR_UPLOAD_START',
-  [EventType.REMOVE]: 'LR_REMOVE',
-  [EventType.UPLOAD_PROGRESS]: 'LR_UPLOAD_PROGRESS',
-  [EventType.UPLOAD_FINISH]: 'LR_UPLOAD_FINISH',
-  [EventType.UPLOAD_ERROR]: 'LR_UPLOAD_ERROR',
-  [EventType.VALIDATION_ERROR]: 'LR_VALIDATION_ERROR',
-  [EventType.CLOUD_MODIFICATION]: 'LR_CLOUD_MODIFICATION',
-  [EventType.DATA_OUTPUT]: 'LR_DATA_OUTPUT',
-  [EventType.DONE_FLOW]: 'LR_DONE_FLOW',
-  [EventType.INIT_FLOW]: 'LR_INIT_FLOW',
+  MODAL_OPEN: 'modal-open',
+  MODAL_CLOSE: 'modal-close',
+  DONE_CLICK: 'done-click',
+  ACTIVITY_CHANGE: 'activity-change',
+
+  COMMON_UPLOAD_START: 'common-upload-start',
+  COMMON_UPLOAD_PROGRESS: 'common-upload-progress',
+  COMMON_UPLOAD_SUCCESS: 'common-upload-success',
+  COMMON_UPLOAD_FAILED: 'common-upload-failed',
+
+  CHANGE: 'change',
+  GROUP_CREATED: 'group-created',
 });
 
 /**
  * @typedef {{
- *   [EventType.UPLOAD_START]: import('../../index.js').OutputFileEntry[];
- *   [EventType.REMOVE]: import('../../index.js').OutputFileEntry[];
- *   [EventType.UPLOAD_PROGRESS]: number;
- *   [EventType.UPLOAD_FINISH]: import('../../index.js').OutputFileEntry[];
- *   [EventType.UPLOAD_ERROR]: Error | null;
- *   [EventType.VALIDATION_ERROR]: string | null;
- *   [EventType.CLOUD_MODIFICATION]: string | null;
- *   [EventType.DATA_OUTPUT]: import('../../index.js').OutputFileEntry[];
- *   [EventType.DONE_FLOW]: never;
- *   [EventType.INIT_FLOW]: never;
- * }} EventPayload
- */
-
-/**
- * @typedef {{
- *   [T in (typeof EventType)[keyof typeof EventType] as (typeof GlobalEventType)[T]]: {
- *     type: (typeof GlobalEventType)[T];
- *     ctx: string;
- *     data: EventPayload[T];
+ *   [EventType.FILE_ADDED]: import('../../index.js').OutputFileEntry<'idle'>;
+ *   [EventType.FILE_REMOVED]: import('../../index.js').OutputFileEntry<'removed'>;
+ *   [EventType.FILE_UPLOAD_START]: import('../../index.js').OutputFileEntry<'uploading'>;
+ *   [EventType.FILE_UPLOAD_PROGRESS]: import('../../index.js').OutputFileEntry<'uploading'>;
+ *   [EventType.FILE_UPLOAD_SUCCESS]: import('../../index.js').OutputFileEntry<'success'>;
+ *   [EventType.FILE_UPLOAD_FAILED]: import('../../index.js').OutputFileEntry<'failed'>;
+ *   [EventType.FILE_URL_CHANGED]: import('../../index.js').OutputFileEntry<'success' | 'failed'>;
+ *   [EventType.MODAL_OPEN]: void;
+ *   [EventType.MODAL_CLOSE]: void;
+ *   [EventType.ACTIVITY_CHANGE]: {
+ *     activity: import('../../abstract/ActivityBlock.js').ActivityType;
  *   };
- * }} GlobalEventPayload
+ *   [EventType.DONE_CLICK]: import('../../index.js').OutputCollectionState;
+ *   [EventType.COMMON_UPLOAD_START]: import('../../index.js').OutputCollectionState<'uploading'>;
+ *   [EventType.COMMON_UPLOAD_PROGRESS]: import('../../index.js').OutputCollectionState<'uploading'>;
+ *   [EventType.COMMON_UPLOAD_SUCCESS]: import('../../index.js').OutputCollectionState<'success'>;
+ *   [EventType.COMMON_UPLOAD_FAILED]: import('../../index.js').OutputCollectionState<'failed'>;
+ *   [EventType.CHANGE]: import('../../index.js').OutputCollectionState;
+ *   [EventType.GROUP_CREATED]: import('../../index.js').OutputCollectionState<'success', true>;
+ * }} EventPayload
  */
 
 export class EventEmitter {
@@ -95,20 +90,9 @@ export class EventEmitter {
       target.dispatchEvent(
         new CustomEvent(type, {
           detail: payload,
-        })
+        }),
       );
     }
-
-    const globalEventType = GlobalEventType[type];
-    window.dispatchEvent(
-      new CustomEvent(globalEventType, {
-        detail: {
-          ctx: this._getCtxName(),
-          type: globalEventType,
-          data: payload,
-        },
-      })
-    );
   }
 
   /**
