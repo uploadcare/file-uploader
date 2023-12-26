@@ -1,7 +1,6 @@
 // @ts-check
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 import { UploaderBlock } from '../../abstract/UploaderBlock.js';
-import { UiMessage } from '../MessageBox/MessageBox.js';
 import { EventType } from '../UploadCtxProvider/EventEmitter.js';
 import { throttle } from '../utils/throttle.js';
 
@@ -177,18 +176,12 @@ export class UploadList extends UploaderBlock {
         const firstError = errors.filter((err) => err.type !== 'SOME_FILES_HAS_ERRORS')[0];
         if (!firstError) {
           this.set$({
-            '*message': null,
             commonErrorMessage: null,
           });
           return;
         }
-        const msg = new UiMessage();
-        msg.caption = this.l10n('files-count-limit-error-title');
-        msg.text = firstError.message;
-        msg.isError = true;
         this.set$({
-          '*message': msg,
-          commonErrorMessage: msg.text,
+          commonErrorMessage: firstError.message,
         });
       },
     );

@@ -46,7 +46,6 @@ declare namespace JSX {
     'lr-url-source': any;
     'lr-camera-source': any;
     'lr-upload-details': any;
-    'lr-message-box': any;
     'lr-confirmation-dialog': any;
     'lr-progress-bar-common': any;
     'lr-progress-bar': any;

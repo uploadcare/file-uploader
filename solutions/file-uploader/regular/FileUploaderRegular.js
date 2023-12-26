@@ -19,6 +19,5 @@ FileUploaderRegular.template = /* HTML */ `
     <lr-cloud-image-editor-activity></lr-cloud-image-editor-activity>
   </lr-modal>
 
-  <lr-message-box></lr-message-box>
   <lr-progress-bar-common></lr-progress-bar-common>
 `;

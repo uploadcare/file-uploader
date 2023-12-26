@@ -23,7 +23,6 @@ export { UrlSource } from './blocks/UrlSource/UrlSource.js';
 export { CameraSource } from './blocks/CameraSource/CameraSource.js';
 export { UploadCtxProvider } from './blocks/UploadCtxProvider/UploadCtxProvider.js';
 export { UploadDetails } from './blocks/UploadDetails/UploadDetails.js';
-export { MessageBox } from './blocks/MessageBox/MessageBox.js';
 export { ConfirmationDialog } from './blocks/ConfirmationDialog/ConfirmationDialog.js';
 export { ProgressBarCommon } from './blocks/ProgressBarCommon/ProgressBarCommon.js';
 export { ProgressBar } from './blocks/ProgressBar/ProgressBar.js';
