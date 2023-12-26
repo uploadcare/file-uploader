@@ -12,7 +12,7 @@ export const initialConfig = {
   pubkey: '',
   multiple: true,
   multipleMin: 0,
-  multipleMax: 0,
+  multipleMax: Number.MAX_SAFE_INTEGER,
 
   confirmUpload: false,
   imgOnly: false,
