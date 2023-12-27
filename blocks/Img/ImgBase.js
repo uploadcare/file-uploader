@@ -1,55 +1,13 @@
-import { BaseComponent, Data } from '@symbiotejs/symbiote';
 import { applyTemplateData } from '../../utils/template-utils.js';
 import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../utils/cdn-utils.js';
 import { PROPS_MAP } from './props-map.js';
 import { stringToArray } from '../../utils/stringToArray.js';
 import { uniqueArray } from '../../utils/uniqueArray.js';
+import { parseObjectToString } from './utils/parseObjectToString.js';
+import { ImgConfig } from './ImgConfig.js';
+import { DEV_MODE, HI_RES_K, ULTRA_RES_K, UNRESOLVED_ATTR, MAX_WIDTH, MAX_WIDTH_JPG } from './configurations.js';
 
-const CSS_PREF = '--lr-img-';
-const UNRESOLVED_ATTR = 'unresolved';
-const HI_RES_K = 2;
-const ULTRA_RES_K = 3;
-const DEV_MODE =
-  !window.location.host.trim() || window.location.host.includes(':') || window.location.hostname.includes('localhost');
-
-const CSS_PROPS = Object.create(null);
-for (let prop in PROPS_MAP) {
-  CSS_PROPS[CSS_PREF + prop] = PROPS_MAP[prop]?.default || '';
-}
-
-export class ImgBase extends BaseComponent {
-  cssInit$ = CSS_PROPS;
-
-  /**
-   * @param {String} key
-   * @returns {any}
-   */
-  $$(key) {
-    return this.$[CSS_PREF + key];
-  }
-
-  /** @param {Object<String, String | Number>} kvObj */
-  set$$(kvObj) {
-    for (let key in kvObj) {
-      this.$[CSS_PREF + key] = kvObj[key];
-    }
-  }
-
-  /**
-   * @param {String} key
-   * @param {(val: any) => void} kbFn
-   */
-  sub$$(key, kbFn) {
-    this.sub(CSS_PREF + key, (val) => {
-      // null comes from CSS context property
-      // empty string comes from attribute value
-      if (val === null || val === '') {
-        return;
-      }
-      kbFn(val);
-    });
-  }
-
+export class ImgBase extends ImgConfig {
   /**
    * @private
    * @param {String} src
@@ -63,18 +21,47 @@ export class ImgBase extends BaseComponent {
   }
 
   /**
+   * Validate size
+   *
+   * @param {String} [size]
+   * @returns {String | Number}
+   */
+  _validateSize(size) {
+    if (size.trim() !== '') {
+      // Extract numeric part
+      let numericPart = size.match(/\d+/)[0];
+
+      // Extract alphabetic part
+      let alphabeticPart = size.match(/[a-zA-Z]+/)[0];
+
+      const bp = parseInt(numericPart, 10);
+
+      if (Number(bp) > MAX_WIDTH_JPG && this.hasFormatJPG) {
+        return MAX_WIDTH_JPG + alphabeticPart;
+      } else if (Number(bp) > MAX_WIDTH && !this.hasFormatJPG) {
+        return MAX_WIDTH + alphabeticPart;
+      }
+    }
+
+    return size;
+  }
+
+  /**
    * Image operations
    *
    * @param {String} [size]
+   * @param {String} [blur]
    */
-  _getCdnModifiers(size = '') {
-    return createCdnUrlModifiers(
-      //
-      size && `resize/${size}`,
-      this.$$('cdn-operations') || '',
-      `format/${this.$$('format') || PROPS_MAP.format.default}`,
-      `quality/${this.$$('quality') || PROPS_MAP.quality.default}`
-    );
+  _getCdnModifiers(size, blur) {
+    const params = {
+      format: this.$$('format'),
+      quality: this.$$('quality'),
+      resize: this._validateSize(size),
+      blur,
+      'cdn-operations': this.$$('cdn-operations'),
+    };
+
+    return createCdnUrlModifiers(...parseObjectToString(params));
   }
 
   /**
@@ -222,34 +209,30 @@ export class ImgBase extends BaseComponent {
 
   get breakpoints() {
     if (this.$$('breakpoints')) {
-      return uniqueArray(stringToArray(this.$$('breakpoints')).map((str) => Number(str)));
+      const list = stringToArray(this.$$('breakpoints'));
+      return uniqueArray(list.map((bp) => parseInt(bp, 10)));
     } else {
       return null;
     }
   }
 
+  get hasFormatJPG() {
+    return this.$$('format').toLowerCase() === 'jpeg';
+  }
+
   /** @param {HTMLElement} el */
   renderBg(el) {
     let imgSet = new Set();
-    if (this.breakpoints) {
-      this.breakpoints.forEach((bp) => {
-        imgSet.add(`url("${this._getUrlBase(bp + 'x')}") ${bp}w`);
-        if (this.$$('hi-res-support')) {
-          imgSet.add(`url("${this._getUrlBase(bp * HI_RES_K + 'x')}") ${bp * HI_RES_K}w`);
-        }
-        if (this.$$('ultra-res-support')) {
-          imgSet.add(`url("${this._getUrlBase(bp * ULTRA_RES_K + 'x')}") ${bp * ULTRA_RES_K}w`);
-        }
-      });
-    } else {
-      imgSet.add(`url("${this._getUrlBase(this._getElSize(el))}") 1x`);
-      if (this.$$('hi-res-support')) {
-        imgSet.add(`url("${this._getUrlBase(this._getElSize(el, HI_RES_K))}") ${HI_RES_K}x`);
-      }
-      if (this.$$('ultra-res-support')) {
-        imgSet.add(`url("${this._getUrlBase(this._getElSize(el, ULTRA_RES_K))}") ${ULTRA_RES_K}x`);
-      }
+
+    imgSet.add(`url("${this._getUrlBase(this._getElSize(el))}") 1x`);
+    if (this.$$('hi-res-support')) {
+      imgSet.add(`url("${this._getUrlBase(this._getElSize(el, HI_RES_K))}") ${HI_RES_K}x`);
     }
+
+    if (this.$$('ultra-res-support')) {
+      imgSet.add(`url("${this._getUrlBase(this._getElSize(el, ULTRA_RES_K))}") ${ULTRA_RES_K}x`);
+    }
+
     let iSet = `image-set(${[...imgSet].join(', ')})`;
     el.style.setProperty('background-image', iSet);
     el.style.setProperty('background-image', '-webkit-' + iSet);
@@ -259,12 +242,12 @@ export class ImgBase extends BaseComponent {
     let srcset = new Set();
     if (this.breakpoints) {
       this.breakpoints.forEach((bp) => {
-        srcset.add(this._getUrlBase(bp + 'x') + ` ${bp}w`);
+        srcset.add(this._getUrlBase(bp + 'x') + ` ${this._validateSize(bp + 'w')}`);
         if (this.$$('hi-res-support')) {
-          srcset.add(this._getUrlBase(bp * HI_RES_K + 'x') + ` ${bp * HI_RES_K}w`);
+          srcset.add(this._getUrlBase(bp * HI_RES_K + 'x') + ` ${this._validateSize(bp * HI_RES_K + 'w')}`);
         }
         if (this.$$('ultra-res-support')) {
-          srcset.add(this._getUrlBase(bp * ULTRA_RES_K + 'x') + ` ${bp * ULTRA_RES_K}w`);
+          srcset.add(this._getUrlBase(bp * ULTRA_RES_K + 'x') + ` ${this._validateSize(bp * ULTRA_RES_K + 'w')}`);
         }
       });
     } else {
@@ -303,52 +286,5 @@ export class ImgBase extends BaseComponent {
       this.img.srcset = this.getSrcset();
       this.img.src = this.getSrc();
     }
-  }
-
-  /**
-   * @param {HTMLElement} el
-   * @param {() => void} cbkFn
-   */
-  initIntersection(el, cbkFn) {
-    let opts = {
-      root: null,
-      rootMargin: '0px',
-    };
-    /** @private */
-    this._isnObserver = new IntersectionObserver((entries) => {
-      entries.forEach((ent) => {
-        if (ent.isIntersecting) {
-          cbkFn();
-          this._isnObserver.unobserve(el);
-        }
-      });
-    }, opts);
-    this._isnObserver.observe(el);
-    if (!this._observed) {
-      /** @private */
-      this._observed = new Set();
-    }
-    this._observed.add(el);
-  }
-
-  destroyCallback() {
-    super.destroyCallback();
-    if (this._isnObserver) {
-      this._observed.forEach((el) => {
-        this._isnObserver.unobserve(el);
-      });
-      this._isnObserver = null;
-    }
-    Data.deleteCtx(this);
-  }
-
-  static get observedAttributes() {
-    return Object.keys(PROPS_MAP);
-  }
-
-  attributeChangedCallback(name, oldVal, newVal) {
-    window.setTimeout(() => {
-      this.$[CSS_PREF + name] = newVal;
-    });
   }
 }

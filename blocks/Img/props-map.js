@@ -23,13 +23,9 @@ export const PROPS_MAP = Object.freeze({
     default: 1,
   },
   'ultra-res-support': {}, // ?
-  format: {
-    default: 'auto',
-  },
+  format: {},
   'cdn-operations': {},
   progressive: {},
-  quality: {
-    default: 'smart',
-  },
+  quality: {},
   'is-background-for': {},
 });
