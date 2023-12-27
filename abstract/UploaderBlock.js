@@ -56,7 +56,7 @@ export class UploaderBlock extends ActivityBlock {
   _collectionValidators = [
     (collection) => {
       const total = collection.size;
-      const multipleMin = this.cfg.multiple ? this.cfg.multipleMin : 1;
+      const multipleMin = this.cfg.multiple ? this.cfg.multipleMin : 0;
       const multipleMax = this.cfg.multiple ? this.cfg.multipleMax : 1;
       if (multipleMin && total < multipleMin) {
         const message = this.l10n('files-count-limit-error-too-few', {

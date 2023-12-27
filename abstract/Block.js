@@ -325,6 +325,14 @@ export class Block extends BaseComponent {
     }
   };
 
+  /** @param {unknown[]} args */
+  debugPrint(...args) {
+    if (!this.cfg.debug) {
+      return;
+    }
+    console.log(`[${this.ctxName}]`, ...args);
+  }
+
   /** @param {String} [name] */
   static reg(name) {
     if (!name) {

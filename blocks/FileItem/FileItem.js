@@ -350,9 +350,11 @@ export class FileItem extends UploaderBlock {
       entry.setValue('abortController', abortController);
 
       const uploadTask = async () => {
-        const uploadClientOptions = this.getUploadClientOptions();
-        return uploadFile(entry.getValue('file') || entry.getValue('externalUrl') || entry.getValue('uuid'), {
-          ...uploadClientOptions,
+        const fileInput = entry.getValue('file') || entry.getValue('externalUrl') || entry.getValue('uuid');
+        const baseUploadClientOptions = this.getUploadClientOptions();
+        /** @type {import('@uploadcare/upload-client').FileFromOptions} */
+        const uploadClientOptions = {
+          ...baseUploadClientOptions,
           fileName: entry.getValue('fileName'),
           source: entry.getValue('source'),
           onProgress: (progress) => {
@@ -364,7 +366,9 @@ export class FileItem extends UploaderBlock {
           },
           signal: abortController.signal,
           metadata: await this.getMetadataFor(entry.uid),
-        });
+        };
+        this.debugPrint('upload options', fileInput, uploadClientOptions);
+        return uploadFile(fileInput, uploadClientOptions);
       };
 
       let fileInfo = await this.$['*uploadQueue'].add(uploadTask);

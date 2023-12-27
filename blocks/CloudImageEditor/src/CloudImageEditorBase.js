@@ -50,4 +50,12 @@ export class CloudImageEditorBase extends Block {
     };
     return parsed;
   }
+
+  /** @param {unknown[]} args */
+  debugPrint(...args) {
+    if (!this.cfg.debug) {
+      return;
+    }
+    console.log(`[${this.cfgCtxName}]`, ...args);
+  }
 }

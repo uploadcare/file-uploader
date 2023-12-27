@@ -53,6 +53,7 @@ export const initialConfig = {
 
   groupOutput: false,
   userAgentIntegration: '',
+  debug: false,
 
   metadata: null,
 };

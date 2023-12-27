@@ -44,6 +44,7 @@ export type ConfigType = {
   saveUrlForRecurrentUploads: boolean;
   groupOutput: boolean;
   userAgentIntegration: string;
+  debug: boolean;
   metadata: Metadata | MetadataCallback | null;
 };
 export type ConfigComplexType = Pick<ConfigType, 'metadata'>;

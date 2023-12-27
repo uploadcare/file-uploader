@@ -20,7 +20,6 @@ export class ActivityBlock extends Block {
     this[ACTIVE_PROP] = false;
     this.removeAttribute(ACTIVE_ATTR);
     actDesc?.deactivateCallback?.();
-    // console.log(`Activity "${this.activityType}" deactivated`);
   }
 
   /** @private */
@@ -32,7 +31,6 @@ export class ActivityBlock extends Block {
     this[ACTIVE_PROP] = true;
     this.setAttribute(ACTIVE_ATTR, '');
     actDesc?.activateCallback?.();
-    // console.log(`Activity "${this.activityType}" activated`);
 
     this._debouncedHistoryFlush();
 

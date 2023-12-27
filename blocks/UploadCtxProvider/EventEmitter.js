@@ -93,6 +93,10 @@ export class EventEmitter {
         }),
       );
     }
+
+    /** @type {import('../../abstract/Block.js').Block | undefined} */
+    const firstTarget = this._targets.values().next().value;
+    firstTarget?.debugPrint(`event "${type}"`, payload);
   }
 
   /**
