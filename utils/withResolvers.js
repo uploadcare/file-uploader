@@ -1,6 +1,6 @@
 // @ts-check
 
-/** @template [T=void] Default is `void` */
+/** @template [T=void] Default is `void` . Default is `void` . Default is `void` . Default is `void` */
 export function withResolvers() {
   /** @type {(value: T | PromiseLike<T>) => void} */
   let resolve;

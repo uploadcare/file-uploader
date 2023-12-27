@@ -73,13 +73,13 @@ function transformationToStr(operation, options) {
 export function transformationsToOperations(transformations) {
   return joinCdnOperations(
     ...SUPPORTED_OPERATIONS_ORDERED.filter(
-      (operation) => typeof transformations[operation] !== 'undefined' && transformations[operation] !== null
+      (operation) => typeof transformations[operation] !== 'undefined' && transformations[operation] !== null,
     )
       .map((operation) => {
         let options = transformations[operation];
         return transformationToStr(operation, options);
       })
-      .filter((str) => !!str)
+      .filter((str) => !!str),
   );
 }
 

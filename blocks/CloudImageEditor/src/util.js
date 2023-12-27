@@ -13,7 +13,7 @@ export function viewerImageSrc(originalUrl, width, transformations) {
       COMMON_OPERATIONS,
       transformationsToOperations(transformations),
       `quality/${quality}`,
-      `stretch/off/-/resize/${size}x`
-    )
+      `stretch/off/-/resize/${size}x`,
+    ),
   );
 }

@@ -166,7 +166,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBase {
       'tabs',
       /** @param {string} val */ (val) => {
         this.$['*tabList'] = parseTabs(val);
-      }
+      },
     );
 
     this.sub('*tabId', (tabId) => {
@@ -205,10 +205,10 @@ export class CloudImageEditorBlock extends CloudImageEditorBase {
             detail: eventData,
             bubbles: true,
             composed: true,
-          })
+          }),
         );
       },
-      false
+      false,
     );
 
     this.sub('uuid', (val) => val && this.updateImage());

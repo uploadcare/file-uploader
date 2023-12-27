@@ -159,7 +159,7 @@ export class UploaderBlock extends ActivityBlock {
     this.isCtxOwner = true;
 
     /** @private */
-    this._unobserveCollection = this.uploadCollection.observeCollection(this._handleCollectonUpdate);
+    this._unobserveCollection = this.uploadCollection.observeCollection(this._handleCollectionUpdate);
 
     /** @private */
     this._unobserveCollectionProperties = this.uploadCollection.observeProperties(
@@ -562,7 +562,7 @@ export class UploaderBlock extends ActivityBlock {
    * @type {Parameters<import('./TypedCollection.js').TypedCollection['observeCollection']>[0]}
    * @param {Set<import('./TypedData.js').TypedData>} removed
    */
-  _handleCollectonUpdate = (entries, added, removed) => {
+  _handleCollectionUpdate = (entries, added, removed) => {
     if (added.size || removed.size) {
       this.$['*groupInfo'] = null;
     }

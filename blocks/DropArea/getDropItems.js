@@ -1,7 +1,7 @@
 // @ts-check
 
 /**
- * @typedef {| {
+ * @typedef {{
  *       type: 'file';
  *       file: File;
  *       fullPath?: string;
@@ -129,7 +129,7 @@ export function getDropItems(dataTransfer) {
             if (items) {
               dropItems.push(...items);
             }
-          })
+          }),
         );
         continue;
       }
@@ -146,7 +146,7 @@ export function getDropItems(dataTransfer) {
                 file,
               });
             }
-          })
+          }),
         );
     } else if (item.kind === 'string' && item.type.match('^text/uri-list')) {
       promises.push(
@@ -158,7 +158,7 @@ export function getDropItems(dataTransfer) {
             });
             resolve(undefined);
           });
-        })
+        }),
       );
     }
   }

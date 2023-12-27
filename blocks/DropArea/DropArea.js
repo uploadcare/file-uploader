@@ -58,25 +58,25 @@ export class DropArea extends UploaderBlock {
       'disabled',
       /** @param {unknown} value */ (value) => {
         this.set$({ isEnabled: !asBoolean(value) });
-      }
+      },
     );
     this.defineAccessor(
       'clickable',
       /** @param {unknown} value */ (value) => {
         this.set$({ isClickable: asBoolean(value) });
-      }
+      },
     );
     this.defineAccessor(
       'with-icon',
       /** @param {unknown} value */ (value) => {
         this.set$({ withIcon: asBoolean(value) });
-      }
+      },
     );
     this.defineAccessor(
       'fullscreen',
       /** @param {unknown} value */ (value) => {
         this.set$({ isFullscreen: asBoolean(value) });
-      }
+      },
     );
 
     this.defineAccessor(
@@ -87,7 +87,7 @@ export class DropArea extends UploaderBlock {
         } else {
           this.set$({ text: this.l10n('drop-files-here') });
         }
-      }
+      },
     );
 
     /** @private */

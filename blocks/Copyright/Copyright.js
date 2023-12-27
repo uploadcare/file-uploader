@@ -9,7 +9,7 @@ export class Copyright extends Block {
       /** @param {number} value */
       (value) => {
         this.toggleAttribute('hidden', !!value);
-      }
+      },
     );
   }
 
