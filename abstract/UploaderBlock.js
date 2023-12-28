@@ -651,16 +651,6 @@ export class UploaderBlock extends ActivityBlock {
           this.emit(EventType.FILE_UPLOAD_FAILED, this.getOutputItem(entryId));
         }
       }
-      let errorItems = uploadCollection.findItems((entry) => {
-        return entry.getValue('errors').length > 0;
-      });
-      if (errorItems.length > 0) {
-        this.emit(
-          EventType.COMMON_UPLOAD_FAILED,
-          /** @type {import('../types').OutputCollectionState<'failed'>} */ (this.getOutputCollectionState()),
-          { debounce: true },
-        );
-      }
     }
     if (changeMap.cdnUrl) {
       const uids = [...changeMap.cdnUrl].filter((uid) => {
