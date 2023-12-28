@@ -16,6 +16,9 @@ export class CloudImageEditorBase extends Block {
   /** @private */
   get cfgCtxName() {
     const ctxName = this.getAttribute('ctx-name')?.trim() || this.cfgCssCtxName || this.__cachedCfgCtxName;
+    if (!ctxName) {
+      throw new Error(`ctx-name attribute is required for ${this.constructor.name}`);
+    }
     /**
      * Cache last ctx name to be able to access context when element becames disconnected
      *
@@ -51,11 +54,7 @@ export class CloudImageEditorBase extends Block {
     return parsed;
   }
 
-  /** @param {unknown[]} args */
-  debugPrint(...args) {
-    if (!this.cfg.debug) {
-      return;
-    }
-    console.log(`[${this.cfgCtxName}]`, ...args);
+  get debugCtxName() {
+    return this.cfgCtxName;
   }
 }

@@ -108,12 +108,6 @@ class ConfigClass extends Block {
         anyThis[key] = anyThis[localPropName];
       }
     }
-
-    for (const key of allConfigKeys) {
-      this.sub(sharedConfigKey(key), () => {
-        this.cfg.debug && this._debugPrint();
-      });
-    }
   }
 
   /**

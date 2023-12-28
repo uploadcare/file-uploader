@@ -330,7 +330,16 @@ export class Block extends BaseComponent {
     if (!this.cfg.debug) {
       return;
     }
-    console.log(`[${this.ctxName}]`, ...args);
+    let consoleArgs = args;
+    if (typeof args?.[0] === 'function') {
+      const resolver = args[0];
+      consoleArgs = resolver();
+    }
+    console.log(`[${this.debugCtxName}]`, ...consoleArgs);
+  }
+
+  get debugCtxName() {
+    return this.ctxName;
   }
 
   /** @param {String} [name] */
