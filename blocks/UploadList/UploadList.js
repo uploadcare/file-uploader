@@ -161,12 +161,7 @@ export class UploadList extends UploaderBlock {
       });
 
       if (!this.cfg.confirmUpload) {
-        this.add$(
-          {
-            '*uploadTrigger': {},
-          },
-          true,
-        );
+        this.uploadAll();
       }
     });
 
