@@ -146,3 +146,7 @@ lr-upload-list lr-drop-area {
   margin: 0;
   border-radius: var(--border-radius-frame);
 }
+
+lr-upload-list .common-error {
+  margin: var(--gap-small) 0 0 0;
+}
