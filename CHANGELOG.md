@@ -1,5 +1,13 @@
 ## [0.30.7](https://github.com/uploadcare/blocks/compare/v0.30.6...v0.30.7) (2023-12-27)
 
+### Features
+
+- **lr-img:** Do not append `-/format/auto/` and `-/quality/smart/` by default to the resulting CDN URL.
+
+### Bug fixes 
+
+- **lr-img:**: Ignore breakpoints config when applying `image-set` for the background image using `is-background-for` option.
+
 ## [0.30.6](https://github.com/uploadcare/blocks/compare/v0.30.5...v0.30.6) (2023-12-20)
 
 ### Bug Fixes
