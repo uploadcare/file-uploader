@@ -10,10 +10,27 @@
  * }} options
  */
 export const waitForAttribute = ({ element, attribute, onSuccess, onTimeout, timeout = 300 }) => {
+  const currentAttrValue = element.getAttribute(attribute);
+  if (currentAttrValue !== null) {
+    onSuccess(currentAttrValue);
+    return;
+  }
+
+  const observer = new MutationObserver((mutations) => {
+    const mutation = mutations[mutations.length - 1];
+    handleMutation(mutation);
+  });
+
+  observer.observe(element, {
+    attributes: true,
+    attributeFilter: [attribute],
+  });
+
   const timeoutId = setTimeout(() => {
     observer.disconnect();
     onTimeout();
   }, timeout);
+
   /** @param {MutationRecord} mutation */
   const handleMutation = (mutation) => {
     const attrValue = element.getAttribute(attribute);
@@ -23,17 +40,4 @@ export const waitForAttribute = ({ element, attribute, onSuccess, onTimeout, tim
       onSuccess(attrValue);
     }
   };
-  const currentAttrValue = element.getAttribute(attribute);
-  if (currentAttrValue !== null) {
-    clearTimeout(timeoutId);
-    onSuccess(currentAttrValue);
-  }
-  const observer = new MutationObserver((mutations) => {
-    const mutation = mutations[mutations.length - 1];
-    handleMutation(mutation);
-  });
-  observer.observe(element, {
-    attributes: true,
-    attributeFilter: [attribute],
-  });
 };
