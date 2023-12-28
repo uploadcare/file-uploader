@@ -14,6 +14,7 @@ export const EventType = Object.freeze({
   MODAL_OPEN: 'modal-open',
   MODAL_CLOSE: 'modal-close',
   DONE_CLICK: 'done-click',
+  UPLOAD_CLICK: 'upload-click',
   ACTIVITY_CHANGE: 'activity-change',
 
   COMMON_UPLOAD_START: 'common-upload-start',
@@ -39,6 +40,7 @@ export const EventType = Object.freeze({
  *   [EventType.ACTIVITY_CHANGE]: {
  *     activity: import('../../abstract/ActivityBlock.js').ActivityType;
  *   };
+ *   [EventType.UPLOAD_CLICK]: void;
  *   [EventType.DONE_CLICK]: import('../../index.js').OutputCollectionState;
  *   [EventType.COMMON_UPLOAD_START]: import('../../index.js').OutputCollectionState<'uploading'>;
  *   [EventType.COMMON_UPLOAD_PROGRESS]: import('../../index.js').OutputCollectionState<'uploading'>;
@@ -111,7 +113,6 @@ export class EventEmitter {
       return;
     }
 
-    // TODO: remove debounce after events refactor
     if (this._timeoutStore.has(type)) {
       window.clearTimeout(this._timeoutStore.get(type));
     }

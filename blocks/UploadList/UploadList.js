@@ -40,6 +40,7 @@ export class UploadList extends UploaderBlock {
       onUpload: () => {
         this.uploadAll();
         this._throttledHandleCollectionUpdate();
+        this.emit(EventType.UPLOAD_CLICK);
       },
       onDone: () => {
         this.doneFlow();
