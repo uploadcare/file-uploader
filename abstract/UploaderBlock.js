@@ -560,7 +560,7 @@ export class UploaderBlock extends ActivityBlock {
     this.$['*collectionState'] = collectionState;
     this.emit(EventType.CHANGE, collectionState, { debounce: true });
 
-    if (this.cfg.groupOutput && collectionState.status === 'success') {
+    if (this.cfg.groupOutput && collectionState.totalCount > 0 && collectionState.status === 'success') {
       this._createGroup(collectionState);
     }
   }, 300);
