@@ -2,7 +2,7 @@
 
 ### Features
 
-- **lr-img:** Do not append `-/format/auto/` and `-/quality/smart/` by default to the resulting CDN URL.
+- **lr-img:** Do not append `-/format/auto/` and `-/quality/smart/` by default to the resulting CDN URL. Now, the defaults of these settings are preserved within the project settings on the dashboard. See the release notes for the [Auto formatting](https://uploadcare.com/docs/changelog/#2023-12-21) and [CDN updates](https://uploadcare.com/docs/changelog/#2023-10-09).
 
 ### Bug fixes 
 
