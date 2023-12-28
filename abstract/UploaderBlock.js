@@ -582,7 +582,8 @@ export class UploaderBlock extends ActivityBlock {
     }
 
     for (const entry of removed) {
-      this.emit(EventType.FILE_REMOVED, this.getOutputItem(entry.uid, { isRemoved: true }));
+      entry.setValue('isRemoved', true);
+      this.emit(EventType.FILE_REMOVED, this.getOutputItem(entry.uid));
       entry?.getValue('abortController')?.abort();
       entry?.setValue('abortController', null);
       URL.revokeObjectURL(entry?.getValue('thumbUrl'));
@@ -778,17 +779,16 @@ export class UploaderBlock extends ActivityBlock {
   /**
    * @template {import('../types').OutputFileStatus} TStatus
    * @param {string} entryId
-   * @param {{ isRemoved?: boolean }} [options]
    * @returns {import('../types/exported.js').OutputFileEntry<TStatus>}
    */
-  getOutputItem(entryId, { isRemoved = false } = {}) {
+  getOutputItem(entryId) {
     const uploadEntryData = /** @type {import('./uploadEntrySchema.js').UploadEntry} */ (Data.getCtx(entryId).store);
 
     /** @type {import('@uploadcare/upload-client').UploadcareFile?} */
     const fileInfo = uploadEntryData.fileInfo;
 
     /** @type {import('../types').OutputFileEntry['status']} */
-    let status = isRemoved
+    let status = uploadEntryData.isRemoved
       ? 'removed'
       : uploadEntryData.errors.length > 0
         ? 'failed'

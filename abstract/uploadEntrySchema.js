@@ -26,6 +26,7 @@ import { UploadcareFile } from '@uploadcare/upload-client';
  * @property {Error | null} uploadError
  * @property {string | null} fullPath
  * @property {import('@uploadcare/upload-client').Metadata | null} metadata
+ * @property {boolean} isRemoved
  */
 
 /**
@@ -129,5 +130,9 @@ export const uploadEntrySchema = Object.freeze({
     type: Error,
     value: null,
     nullable: true,
+  },
+  isRemoved: {
+    type: Boolean,
+    value: false,
   },
 });
