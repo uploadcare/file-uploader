@@ -517,6 +517,14 @@ export class UploaderBlock extends ActivityBlock {
     }
 
     this.$['*collectionErrors'] = errors;
+
+    if (errors.length > 0) {
+      this.emit(
+        EventType.COMMON_UPLOAD_FAILED,
+        /** @type {import('../types').OutputCollectionState<'failed'>} */ (this.getOutputCollectionState()),
+        { debounce: true },
+      );
+    }
   }
 
   /**
@@ -649,6 +657,7 @@ export class UploaderBlock extends ActivityBlock {
         this.emit(
           EventType.COMMON_UPLOAD_FAILED,
           /** @type {import('../types').OutputCollectionState<'failed'>} */ (this.getOutputCollectionState()),
+          { debounce: true },
         );
       }
     }
