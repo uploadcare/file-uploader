@@ -650,6 +650,11 @@ export class UploaderBlock extends ActivityBlock {
         const { errors } = Data.getCtx(entryId).store;
         if (errors.length > 0) {
           this.emit(EventType.FILE_UPLOAD_FAILED, this.getOutputItem(entryId));
+          this.emit(
+            EventType.COMMON_UPLOAD_FAILED,
+            () => /** @type {import('../types').OutputCollectionState<'failed'>} */ (this.getOutputCollectionState()),
+            { debounce: true },
+          );
         }
       }
     }
