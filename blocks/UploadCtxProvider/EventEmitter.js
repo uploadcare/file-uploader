@@ -98,8 +98,8 @@ export class EventEmitter {
 
     /** @type {import('../../abstract/Block.js').Block | undefined} */
     const firstTarget = this._targets.values().next().value;
-    // We need to use structuredClone here to evaluate all lazy values at the moment of logging
-    firstTarget?.debugPrint(() => [`event "${type}"`, structuredClone(payload)]);
+    // We need to use spread here to evaluate all lazy values at the moment of logging
+    firstTarget?.debugPrint(() => [`event "${type}"`, { ...payload }]);
   }
 
   /**
