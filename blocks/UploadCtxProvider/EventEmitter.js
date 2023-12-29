@@ -85,7 +85,7 @@ export class EventEmitter {
    * @private
    * @template {(typeof EventType)[keyof typeof EventType]} T
    * @param {T} type
-   * @param {EventPayload[T]} [payload]
+   * @param {unknown} [payload]
    */
   _dispatch(type, payload) {
     for (const target of this._targets) {
@@ -98,19 +98,23 @@ export class EventEmitter {
 
     /** @type {import('../../abstract/Block.js').Block | undefined} */
     const firstTarget = this._targets.values().next().value;
-    // We need to use spread here to evaluate all lazy values at the moment of logging
-    firstTarget?.debugPrint(() => [`event "${type}"`, { ...payload }]);
+    if (firstTarget) {
+      // We need to use spread here to evaluate all lazy values at the moment of logging
+      const copyPayload = !!payload && typeof payload === 'object' ? { ...payload } : payload;
+      firstTarget?.debugPrint(() => [`event "${type}"`, copyPayload]);
+    }
   }
 
   /**
    * @template {(typeof EventType)[keyof typeof EventType]} T
+   * @template {boolean | number | undefined} TDebounce
    * @param {T} type
-   * @param {EventPayload[T]} [payload]
-   * @param {{ debounce?: boolean | number }} [options]
+   * @param {TDebounce extends false | undefined ? unknown : () => unknown} [payload]
+   * @param {{ debounce?: TDebounce }} [options]
    */
   emit(type, payload, { debounce } = {}) {
     if (typeof debounce !== 'number' && !debounce) {
-      this._dispatch(type, payload);
+      this._dispatch(type, typeof payload === 'function' ? payload() : payload);
       return;
     }
 
@@ -119,7 +123,7 @@ export class EventEmitter {
     }
     const timeout = typeof debounce === 'number' ? debounce : DEFAULT_DEBOUNCE_TIMEOUT;
     const timeoutId = window.setTimeout(() => {
-      this._dispatch(type, payload);
+      this._dispatch(type, typeof payload === 'function' ? payload() : payload);
       this._timeoutStore.delete(type);
     }, timeout);
     this._timeoutStore.set(type, timeoutId);

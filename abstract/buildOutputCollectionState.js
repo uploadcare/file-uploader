@@ -1,5 +1,32 @@
 // @ts-check
 
+import { memoize } from '../utils/memoize.js';
+
+/** @param {string} warning */
+function createAsyncAssertWrapper(warning) {
+  let isAsync = false;
+  setTimeout(() => {
+    isAsync = true;
+  }, 0);
+
+  /**
+   * @template {unknown[]} TArgs
+   * @template {unknown} TReturn
+   * @param {(...args: TArgs) => TReturn} fn
+   * @returns {(...args: TArgs) => TReturn}
+   */
+  const withAssert = (fn) => {
+    return (...args) => {
+      if (isAsync) {
+        console.warn(warning);
+      }
+      return fn(...args);
+    };
+  };
+
+  return withAssert;
+}
+
 /**
  * @template {import('../index.js').OutputCollectionStatus} TCollectionStatus
  * @template {import('../index.js').GroupFlag} [TGroupFlag='maybe-has-group'] Default is `'maybe-has-group'`
@@ -7,71 +34,96 @@
  * @returns {import('../index.js').OutputCollectionState<TCollectionStatus, TGroupFlag>}
  */
 export function buildOutputCollectionState(uploaderBlock) {
-  /** @type {ReturnType<typeof uploaderBlock.getOutputData> | null} */
-  let allEntriesCache = null;
+  const getters = {
+    /** @returns {number} */
+    progress: () => {
+      return uploaderBlock.$['*commonProgress'];
+    },
+    /** @returns {ReturnType<import('../utils/buildOutputError.js').buildCollectionFileError>[]} */
+    errors: () => {
+      return uploaderBlock.$['*collectionErrors'];
+    },
 
-  const state = {
-    progress: uploaderBlock.$['*commonProgress'],
-    errors: uploaderBlock.$['*collectionErrors'],
-    group: uploaderBlock.$['*groupInfo'],
+    /** @returns {import('@uploadcare/upload-client').UploadcareGroup | null} */
+    group: () => {
+      return uploaderBlock.$['*groupInfo'];
+    },
 
-    get totalCount() {
+    totalCount: () => {
       return uploaderBlock.uploadCollection.size;
     },
 
-    get failedCount() {
-      return this.failedEntries.length;
+    failedCount: () => {
+      return getters.failedEntries().length;
     },
 
-    get successCount() {
-      return this.successEntries.length;
+    successCount: () => {
+      return getters.successEntries().length;
     },
 
-    get uploadingCount() {
-      return this.uploadingEntries.length;
+    uploadingCount: () => {
+      return getters.uploadingEntries().length;
     },
 
-    get status() {
-      let status = /** @type {TCollectionStatus} */ (
-        /** @type {unknown} */ (
-          this.isFailed ? 'failed' : this.isUploading ? 'uploading' : this.isSuccess ? 'success' : 'idle'
-        )
-      );
-      return status;
+    status: () => {
+      const status = getters.isFailed()
+        ? 'failed'
+        : getters.isUploading()
+          ? 'uploading'
+          : getters.isSuccess()
+            ? 'success'
+            : 'idle';
+      return /** @type {TCollectionStatus} */ (status);
     },
 
-    get isSuccess() {
-      return this.errors.length === 0 && this.successEntries.length === this.allEntries.length;
+    isSuccess: () => {
+      return getters.errors().length === 0 && getters.successEntries().length === getters.allEntries().length;
     },
 
-    get isUploading() {
-      return this.allEntries.some((entry) => entry.status === 'uploading');
+    isUploading: () => {
+      return getters.allEntries().some((entry) => entry.status === 'uploading');
     },
 
-    get isFailed() {
-      return this.errors.length > 0 || this.failedEntries.length > 0;
+    isFailed: () => {
+      return getters.errors().length > 0 || getters.failedEntries().length > 0;
     },
 
-    get allEntries() {
-      if (allEntriesCache) {
-        return allEntriesCache;
-      }
-      allEntriesCache = uploaderBlock.getOutputData();
-      return allEntriesCache;
+    allEntries: () => {
+      return uploaderBlock.getOutputData();
     },
 
-    get successEntries() {
-      return this.allEntries.filter((entry) => entry.status === 'success');
+    successEntries: () => {
+      return getters.allEntries().filter((entry) => entry.status === 'success');
     },
 
-    get failedEntries() {
-      return this.allEntries.filter((entry) => entry.status === 'failed');
+    failedEntries: () => {
+      return getters.allEntries().filter((entry) => entry.status === 'failed');
     },
 
-    get uploadingEntries() {
-      return this.allEntries.filter((entry) => entry.status === 'uploading');
+    uploadingEntries: () => {
+      return getters.allEntries().filter((entry) => entry.status === 'uploading');
     },
   };
+
+  const state = {};
+  const withAssert = createAsyncAssertWrapper(
+    "You're trying to access the OutputCollectionState asynchronously. " +
+      'In this case, the data you retrieve will be newer than it was when the ' +
+      'OutputCollectionState was created or when the event was dispatched. If you want ' +
+      'to retain the state at a specific moment in time, you should use the spread operator ' +
+      'like this: `{...outputCollectionState}` or `{...e.detail}`',
+  );
+
+  for (const [key, value] of Object.entries(getters)) {
+    const name = /** @type {keyof typeof getters} */ (key);
+    const getter = /** @type {(typeof getters)[name]} */ (value);
+    // @ts-expect-error
+    const wrapped = memoize(withAssert(getter));
+    Object.defineProperty(state, name, {
+      get: wrapped,
+      enumerable: true,
+    });
+  }
 
   return /** @type {import('../index.js').OutputCollectionState<TCollectionStatus, TGroupFlag>} */ (
     /** @type {unknown} */ (state)

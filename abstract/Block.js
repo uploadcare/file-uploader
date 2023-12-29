@@ -78,10 +78,9 @@ export class Block extends BaseComponent {
   }
 
   /**
-   * @template {(typeof import('../blocks/UploadCtxProvider/EventEmitter.js').EventType)[keyof typeof import('../blocks/UploadCtxProvider/EventEmitter.js').EventType]} T
-   * @param {T} type
-   * @param {import('../blocks/UploadCtxProvider/EventEmitter.js').EventPayload[T]} [payload]
-   * @param {{ debounce?: boolean | number }} [options]
+   * @param {Parameters<import('../blocks/UploadCtxProvider/EventEmitter.js').EventEmitter['emit']>[0]} type
+   * @param {Parameters<import('../blocks/UploadCtxProvider/EventEmitter.js').EventEmitter['emit']>[1]} [payload]
+   * @param {Parameters<import('../blocks/UploadCtxProvider/EventEmitter.js').EventEmitter['emit']>[2]} [options]
    */
   emit(type, payload, options) {
     /** @type {import('../blocks/UploadCtxProvider/EventEmitter.js').EventEmitter} */

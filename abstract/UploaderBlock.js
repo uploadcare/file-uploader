@@ -521,7 +521,7 @@ export class UploaderBlock extends ActivityBlock {
     if (errors.length > 0) {
       this.emit(
         EventType.COMMON_UPLOAD_FAILED,
-        /** @type {import('../types').OutputCollectionState<'failed'>} */ (this.getOutputCollectionState()),
+        () => /** @type {import('../types').OutputCollectionState<'failed'>} */ (this.getOutputCollectionState()),
         { debounce: true },
       );
     }
@@ -543,10 +543,11 @@ export class UploaderBlock extends ActivityBlock {
       return;
     }
     this.$['*groupInfo'] = resp;
-    /** @type {ReturnType<typeof buildOutputCollectionState<'success', 'has-group'>>} */
-    const collectionStateWithGroup = buildOutputCollectionState(this);
+    const collectionStateWithGroup = /** @type {import('../types').OutputCollectionState<'success', 'has-group'>} */ (
+      this.getOutputCollectionState()
+    );
     this.emit(EventType.GROUP_CREATED, collectionStateWithGroup);
-    this.emit(EventType.CHANGE, collectionStateWithGroup, { debounce: true });
+    this.emit(EventType.CHANGE, () => this.getOutputCollectionState(), { debounce: true });
     this.$['*collectionState'] = collectionStateWithGroup;
   }
 
@@ -556,9 +557,9 @@ export class UploaderBlock extends ActivityBlock {
     if (data.length !== this.uploadCollection.size) {
       return;
     }
-    const collectionState = buildOutputCollectionState(this);
+    const collectionState = this.getOutputCollectionState();
     this.$['*collectionState'] = collectionState;
-    this.emit(EventType.CHANGE, collectionState, { debounce: true });
+    this.emit(EventType.CHANGE, () => this.getOutputCollectionState(), { debounce: true });
 
     if (this.cfg.groupOutput && collectionState.totalCount > 0 && collectionState.status === 'success') {
       this._createGroup(collectionState);
