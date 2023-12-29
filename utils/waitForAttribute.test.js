@@ -55,4 +55,24 @@ describe('waitForAttribute', () => {
     expect(onSuccess.getCall(0).args[0]).to.equal('test');
     expect(onTimeout.called).to.be.false;
   });
+
+  it('should not call onSuccess on the second attribute change', async () => {
+    const element = document.createElement('div');
+    element.setAttribute(TEST_ATTRIBUTE, 'test');
+    const onSuccess = spy();
+    const onTimeout = spy();
+    waitForAttribute({
+      element,
+      attribute: TEST_ATTRIBUTE,
+      onSuccess,
+      onTimeout,
+      timeout: 10,
+    });
+    await delay(100);
+    element.setAttribute(TEST_ATTRIBUTE, 'tes2');
+    await delay(100);
+    expect(onSuccess.calledOnce).to.be.true;
+    expect(onSuccess.getCall(0).args[0]).to.equal('test');
+    expect(onTimeout.called).to.be.false;
+  });
 });
