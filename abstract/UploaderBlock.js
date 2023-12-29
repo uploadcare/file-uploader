@@ -827,7 +827,7 @@ export class UploaderBlock extends ActivityBlock {
 
   /** @template {import('../types').OutputCollectionStatus} TStatus */
   getOutputCollectionState() {
-    return /** @type {ReturnType<buildOutputCollectionState<TStatus>>} */ (buildOutputCollectionState(this));
+    return /** @type {ReturnType<typeof buildOutputCollectionState<TStatus>>} */ (buildOutputCollectionState(this));
   }
 }
 
