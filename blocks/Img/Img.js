@@ -12,10 +12,10 @@ export class Img extends ImgBase {
       this.init();
     });
 
-    this.sub$$('lazy', (val) => {
-      if (!this.$$('is-background-for')) {
-        this.img.loading = val ? 'lazy' : 'eager';
-      }
-    });
+    // this.sub$$('lazy', (val) => {
+    //   if (!this.$$('is-background-for')) {
+    //     this.img.loading = val ? 'lazy' : 'eager';
+    //   }
+    // });
   }
 }

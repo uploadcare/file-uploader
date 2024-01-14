@@ -7,3 +7,8 @@ export const DEV_MODE =
 
 export const MAX_WIDTH = 3000;
 export const MAX_WIDTH_JPG = 5000;
+
+export const ImgTypeEnum = Object.freeze({
+  PREVIEW: 'PREVIEW',
+  MAIN: 'MAIN',
+});

@@ -40,6 +40,14 @@ export class ImgConfig extends BaseComponent {
     });
   }
 
+  initAttributes(el) {
+    [...this.attributes].forEach((attr) => {
+      if (!PROPS_MAP[attr.name]) {
+        el.setAttribute(attr.name, attr.value);
+      }
+    });
+  }
+
   /**
    * @param {HTMLElement} el
    * @param {() => void} cbkFn

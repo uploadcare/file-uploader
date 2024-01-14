@@ -28,4 +28,7 @@ export const PROPS_MAP = Object.freeze({
   progressive: {},
   quality: {},
   'is-background-for': {},
+  'is-preview-blur': {
+    default: 1,
+  },
 });
