@@ -93,7 +93,7 @@ export class ImgBase extends ImgConfig {
     let cdnModifiers = this._getCdnModifiers(size, blur);
 
     if (this.$$('src').startsWith(this.$$('cdn-cname'))) {
-      return createCdnUrl(this.$$('src'), cdnModifiers);
+      return createCdnUrl(this.$$('src'), cdnModifiers, undefined, this.analyticsParams());
     }
 
     // Alternative CDN name:
@@ -102,7 +102,9 @@ export class ImgBase extends ImgConfig {
         createCdnUrl(
           //
           createOriginalUrl(this.$$('cdn-cname'), this.$$('uuid')),
-          cdnModifiers
+          cdnModifiers,
+          undefined,
+          this.analyticsParams()
         )
       );
     }
@@ -113,7 +115,9 @@ export class ImgBase extends ImgConfig {
         createCdnUrl(
           //
           createOriginalUrl(this.$$('cdn-cname'), this.$$('uuid')),
-          cdnModifiers
+          cdnModifiers,
+          undefined,
+          this.analyticsParams()
         )
       );
     }
@@ -125,7 +129,8 @@ export class ImgBase extends ImgConfig {
           //
           this.$$('proxy-cname'),
           cdnModifiers,
-          this._fmtAbs(this.$$('src'))
+          this._fmtAbs(this.$$('src')),
+          this.analyticsParams()
         )
       );
     }
@@ -137,7 +142,8 @@ export class ImgBase extends ImgConfig {
           //
           `https://${this.$$('pubkey')}.ucr.io/`,
           cdnModifiers,
-          this._fmtAbs(this.$$('src'))
+          this._fmtAbs(this.$$('src')),
+          this.analyticsParams()
         )
       );
     }
