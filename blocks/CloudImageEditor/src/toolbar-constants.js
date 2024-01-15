@@ -1,5 +1,5 @@
 // @ts-check
-import { OPERATIONS_ZEROS } from './lib/transformationUtils.js';
+import { OPERATIONS_DEFAULTS } from './lib/transformationUtils.js';
 
 export const TabId = Object.freeze({
   CROP: 'crop',
@@ -67,47 +67,47 @@ export const ALL_CROP_OPERATIONS = ['rotate', 'mirror', 'flip'];
 /** KeypointsNumber is the number of keypoints loaded from each side of zero, not total number */
 export const COLOR_OPERATIONS_CONFIG = Object.freeze({
   brightness: {
-    zero: OPERATIONS_ZEROS.brightness,
+    zero: OPERATIONS_DEFAULTS.brightness,
     range: [-100, 100],
     keypointsNumber: 2,
   },
   exposure: {
-    zero: OPERATIONS_ZEROS.exposure,
+    zero: OPERATIONS_DEFAULTS.exposure,
     range: [-500, 500],
     keypointsNumber: 2,
   },
   gamma: {
-    zero: OPERATIONS_ZEROS.gamma,
+    zero: OPERATIONS_DEFAULTS.gamma,
     range: [0, 1000],
     keypointsNumber: 2,
   },
   contrast: {
-    zero: OPERATIONS_ZEROS.contrast,
+    zero: OPERATIONS_DEFAULTS.contrast,
     range: [-100, 500],
     keypointsNumber: 2,
   },
   saturation: {
-    zero: OPERATIONS_ZEROS.saturation,
+    zero: OPERATIONS_DEFAULTS.saturation,
     range: [-100, 500],
     keypointsNumber: 1,
   },
   vibrance: {
-    zero: OPERATIONS_ZEROS.vibrance,
+    zero: OPERATIONS_DEFAULTS.vibrance,
     range: [-100, 500],
     keypointsNumber: 1,
   },
   warmth: {
-    zero: OPERATIONS_ZEROS.warmth,
+    zero: OPERATIONS_DEFAULTS.warmth,
     range: [-100, 100],
     keypointsNumber: 1,
   },
   enhance: {
-    zero: OPERATIONS_ZEROS.enhance,
+    zero: OPERATIONS_DEFAULTS.enhance,
     range: [0, 100],
     keypointsNumber: 1,
   },
   filter: {
-    zero: OPERATIONS_ZEROS.filter,
+    zero: OPERATIONS_DEFAULTS.filter,
     range: [0, 100],
     keypointsNumber: 1,
   },
