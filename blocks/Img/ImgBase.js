@@ -346,23 +346,23 @@ export class ImgBase extends ImgConfig {
         this.appendChild(this.#imgPreview);
       }
 
-      this.initIntersection(this.currentImg.img, () => {
+      await this.initIntersection(this.currentImg.img, async () => {
         if (this.hasPreviewImage) {
           this.#imgPreview.src = this.srcUrlPreview;
         }
 
-        this.loaderImage({
+        await this.loaderImage({
           src: this.getSrc(),
           srcset: this.getSrcset(),
           elNode: this.#img,
           type: ImgTypeEnum.MAIN,
-        })
-          .then(() => {
-            this.#imgPreview.remove();
-          })
-          .then(() => {
-            this.appendChild(this.#img);
-          });
+        });
+
+        if (this.hasPreviewImage) {
+          this.#imgPreview.remove();
+        }
+
+        this.appendChild(this.#img);
       });
 
       return;
