@@ -166,12 +166,17 @@ export class UploaderBlock extends ActivityBlock {
       this._handleCollectionPropertiesUpdate,
     );
 
-    this.subConfigValue('maxLocalFileSizeBytes', () => this._debouncedRunFileValidators());
-    this.subConfigValue('multipleMin', () => this._debouncedRunFileValidators());
-    this.subConfigValue('multipleMax', () => this._debouncedRunFileValidators());
-    this.subConfigValue('multiple', () => this._debouncedRunFileValidators());
-    this.subConfigValue('imgOnly', () => this._debouncedRunFileValidators());
-    this.subConfigValue('accept', () => this._debouncedRunFileValidators());
+    const runAllValidators = () => {
+      this._runFileValidators();
+      this._runCollectionValidators();
+    };
+
+    this.subConfigValue('maxLocalFileSizeBytes', runAllValidators);
+    this.subConfigValue('multipleMin', runAllValidators);
+    this.subConfigValue('multipleMax', runAllValidators);
+    this.subConfigValue('multiple', runAllValidators);
+    this.subConfigValue('imgOnly', runAllValidators);
+    this.subConfigValue('accept', runAllValidators);
     this.subConfigValue('maxConcurrentRequests', (value) => {
       this.$['*uploadQueue'].concurrency = Number(value) || 1;
     });
