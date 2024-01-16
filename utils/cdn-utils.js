@@ -153,12 +153,11 @@ export function splitFileUrl(fileUrl) {
  * @param {String} baseCdnUrl - Base URL to CDN or Proxy, CDN modifiers and filename accepted
  * @param {String} [cdnModifiers] - CDN modifiers to apply, will be appended to `baseCdnUrl` ones
  * @param {String} [filename] - Filename for CDN or file URL for Proxy, will override one from `baseCdnUrl`
- * @param {String} [analytics] - Analytics params fpr CDN
  * @returns {String}
  */
 
 // TODO eadidenko replace arg to pass the object parameter
-export const createCdnUrl = (baseCdnUrl, cdnModifiers, filename, analytics) => {
+export const createCdnUrl = (baseCdnUrl, cdnModifiers, filename) => {
   let url = new URL(trimFilename(baseCdnUrl));
   filename = filename || extractFilename(baseCdnUrl);
   // TODO: fix double slash pathname bug (--cfg-cdn-cname: 'https://ucarecdn.com/' - trailing slash case)
@@ -167,11 +166,11 @@ export const createCdnUrl = (baseCdnUrl, cdnModifiers, filename, analytics) => {
   }
   if (isFileUrl(filename)) {
     let splitted = splitFileUrl(filename);
-    url.pathname = url.pathname + (cdnModifiers || '') + (analytics || '') + (splitted.pathname || '');
+    url.pathname = url.pathname + (cdnModifiers || '') + (splitted.pathname || '');
     url.search = splitted.search;
     url.hash = splitted.hash;
   } else {
-    url.pathname = url.pathname + (cdnModifiers || '') + (analytics || '') + (filename || '');
+    url.pathname = url.pathname + (cdnModifiers || '') + (filename || '');
   }
   return url.toString();
 };

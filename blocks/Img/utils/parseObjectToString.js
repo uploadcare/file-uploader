@@ -5,6 +5,9 @@ export const parseObjectToString = (params) =>
       if (key === 'cdn-operations') {
         return value;
       }
+      if (key === 'analytics') {
+        return value;
+      }
 
       return `${key}/${value}`;
     });

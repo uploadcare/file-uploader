@@ -15,8 +15,8 @@ import {
 } from './configurations.js';
 
 export class ImgBase extends ImgConfig {
-  #img = new Image();
-  #imgPreview = new Image();
+  _img = new Image();
+  _imgPreview = new Image();
 
   /**
    * @private
@@ -37,7 +37,7 @@ export class ImgBase extends ImgConfig {
    * @returns {String | Number}
    */
   _validateSize(size) {
-    if (size && size?.trim() !== '') {
+    if (size?.trim() !== '') {
       // Extract numeric part
       let numericPart = size.match(/\d+/)[0];
 
@@ -69,6 +69,7 @@ export class ImgBase extends ImgConfig {
       resize: this._validateSize(size),
       blur,
       'cdn-operations': this.$$('cdn-operations'),
+      analytics: this.analyticsParams(),
     };
 
     return createCdnUrlModifiers(...parseObjectToString(params));
@@ -93,7 +94,7 @@ export class ImgBase extends ImgConfig {
     let cdnModifiers = this._getCdnModifiers(size, blur);
 
     if (this.$$('src').startsWith(this.$$('cdn-cname'))) {
-      return createCdnUrl(this.$$('src'), cdnModifiers, undefined, this.analyticsParams());
+      return createCdnUrl(this.$$('src'), cdnModifiers);
     }
 
     // Alternative CDN name:
@@ -102,9 +103,7 @@ export class ImgBase extends ImgConfig {
         createCdnUrl(
           //
           createOriginalUrl(this.$$('cdn-cname'), this.$$('uuid')),
-          cdnModifiers,
-          undefined,
-          this.analyticsParams()
+          cdnModifiers
         )
       );
     }
@@ -115,9 +114,7 @@ export class ImgBase extends ImgConfig {
         createCdnUrl(
           //
           createOriginalUrl(this.$$('cdn-cname'), this.$$('uuid')),
-          cdnModifiers,
-          undefined,
-          this.analyticsParams()
+          cdnModifiers
         )
       );
     }
@@ -129,8 +126,7 @@ export class ImgBase extends ImgConfig {
           //
           this.$$('proxy-cname'),
           cdnModifiers,
-          this._fmtAbs(this.$$('src')),
-          this.analyticsParams()
+          this._fmtAbs(this.$$('src'))
         )
       );
     }
@@ -142,8 +138,7 @@ export class ImgBase extends ImgConfig {
           //
           `https://${this.$$('pubkey')}.ucr.io/`,
           cdnModifiers,
-          this._fmtAbs(this.$$('src')),
-          this.analyticsParams()
+          this._fmtAbs(this.$$('src'))
         )
       );
     }
@@ -200,17 +195,17 @@ export class ImgBase extends ImgConfig {
   /** @type {HTMLImageElement} */
   get img() {
     if (!this.hasPreviewImage) {
-      this._setupConfigForImage({ elNode: this.#img });
-      this.appendChild(this.#img);
+      this._setupConfigForImage({ elNode: this._img });
+      this.appendChild(this._img);
     }
-    return this.#img;
+    return this._img;
   }
 
   get currentImg() {
     return this.hasPreviewImage
       ? {
           type: ImgTypeEnum.PREVIEW,
-          img: this.#imgPreview,
+          img: this._imgPreview,
         }
       : {
           type: ImgTypeEnum.MAIN,
@@ -316,7 +311,7 @@ export class ImgBase extends ImgConfig {
     this.initAttributes(elNode);
   }
 
-  loaderImage({ src, srcset, elNode, type }) {
+  loaderImage({ src, srcset, elNode }) {
     return new Promise((resolve, reject) => {
       this._setupConfigForImage({ elNode });
 
@@ -342,54 +337,65 @@ export class ImgBase extends ImgConfig {
   async renderImage() {
     if (this.$$('intersection')) {
       if (this.hasPreviewImage) {
-        this._setupConfigForImage({ elNode: this.#imgPreview });
-        this.appendChild(this.#imgPreview);
+        this._setupConfigForImage({ elNode: this._imgPreview });
+        this.appendChild(this._imgPreview);
       }
 
-      await this.initIntersection(this.currentImg.img, async () => {
+      this.initIntersection(this.currentImg.img, async () => {
         if (this.hasPreviewImage) {
-          this.#imgPreview.src = this.srcUrlPreview;
+          this._imgPreview.src = this.srcUrlPreview;
         }
 
-        await this.loaderImage({
-          src: this.getSrc(),
-          srcset: this.getSrcset(),
-          elNode: this.#img,
-          type: ImgTypeEnum.MAIN,
-        });
+        try {
+          await this.loaderImage({
+            src: this.getSrc(),
+            srcset: this.getSrcset(),
+            elNode: this._img,
+          });
 
-        if (this.hasPreviewImage) {
-          this.#imgPreview.remove();
+          if (this.hasPreviewImage) {
+            await this._imgPreview.remove();
+          }
+
+          this.appendChild(this._img);
+        } catch (e) {
+          if (this.hasPreviewImage) {
+            await this._imgPreview?.remove();
+          }
+          this.appendChild(this._img);
         }
-
-        this.appendChild(this.#img);
       });
 
       return;
     }
 
-    if (this.hasPreviewImage) {
+    try {
+      if (this.hasPreviewImage) {
+        await this.loaderImage({
+          src: this.srcUrlPreview,
+          elNode: this._imgPreview,
+        });
+
+        this.appendChild(this._imgPreview);
+      }
+
       await this.loaderImage({
-        src: this.srcUrlPreview,
-        elNode: this.#imgPreview,
-        type: ImgTypeEnum.PREVIEW,
+        src: this.getSrc(),
+        srcset: this.getSrcset(),
+        elNode: this._img,
       });
 
-      await this.appendChild(this.#imgPreview);
+      if (this.hasPreviewImage) {
+        await this._imgPreview?.remove();
+      }
+
+      this.appendChild(this._img);
+    } catch (e) {
+      if (this.hasPreviewImage) {
+        await this._imgPreview?.remove();
+      }
+      this.appendChild(this._img);
     }
-
-    await this.loaderImage({
-      src: this.getSrc(),
-      srcset: this.getSrcset(),
-      elNode: this.#img,
-      type: ImgTypeEnum.MAIN,
-    });
-
-    if (this.hasPreviewImage) {
-      await this.#imgPreview?.remove();
-    }
-
-    await this.appendChild(this.#img);
   }
 
   init() {
