@@ -1,5 +1,5 @@
 // @ts-check
-import { uploadFile } from '@uploadcare/upload-client';
+import { CancelError, UploadError, uploadFile } from '@uploadcare/upload-client';
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../utils/cdn-utils.js';
@@ -387,14 +387,18 @@ export class FileItem extends UploaderBlock {
         this._debouncedCalculateState();
       }
     } catch (cause) {
-      console.warn('Upload error', cause);
-
-      entry.setMultipleValues({
-        abortController: null,
-        isUploading: false,
-        uploadProgress: 0,
-        uploadError: cause,
-      });
+      if (cause instanceof CancelError && cause.isCancel) {
+        entry.setMultipleValues({
+          isUploading: false,
+          uploadProgress: 0,
+        });
+      } else {
+        entry.setMultipleValues({
+          isUploading: false,
+          uploadProgress: 0,
+          uploadError: cause,
+        });
+      }
 
       if (entry === this._entry) {
         this._debouncedCalculateState();
