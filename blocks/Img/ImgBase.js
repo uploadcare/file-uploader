@@ -77,8 +77,8 @@ export class ImgBase extends ImgConfig {
 
   /**
    * @private
-   * @param {String} size
-   * @param {String} blur
+   * @param {String} [size]
+   * @param {String} [blur]
    * @returns {any}
    */
   _getUrlBase(size = '', blur = '') {
