@@ -588,15 +588,21 @@ export class UploaderBlock extends ActivityBlock {
     }
 
     for (const entry of removed) {
-      entry.setValue('isRemoved', true);
-      this.emit(EventType.FILE_REMOVED, this.getOutputItem(entry.uid));
-      entry?.getValue('abortController')?.abort();
-      entry?.setValue('abortController', null);
+      entry.getValue('abortController')?.abort();
+      entry.setMultipleValues({
+        isRemoved: true,
+        abortController: null,
+        isUploading: false,
+        uploadProgress: 0,
+      });
       URL.revokeObjectURL(entry?.getValue('thumbUrl'));
+      this.emit(EventType.FILE_REMOVED, this.getOutputItem(entry.uid));
     }
     this.$['*uploadList'] = entries.map((uid) => {
       return { uid };
     });
+
+    this._flushCommonUploadProgress();
     this._flushOutputItems();
   };
 
@@ -680,25 +686,28 @@ export class UploaderBlock extends ActivityBlock {
           this.emit(EventType.FILE_UPLOAD_PROGRESS, this.getOutputItem(entryId));
         }
       }
-      let commonProgress = 0;
-      /** @type {String[]} */
-      let items = uploadCollection.findItems((entry) => {
-        return entry.getValue('isUploading') && entry.getValue('errors').length === 0;
-      });
-      if (items.length === 0) {
-        return;
-      }
-      items.forEach((id) => {
-        commonProgress += uploadCollection.readProp(id, 'uploadProgress');
-      });
-      let progress = Math.round(commonProgress / items.length);
-      this.$['*commonProgress'] = progress;
-      this.emit(
-        EventType.COMMON_UPLOAD_PROGRESS,
-        /** @type {import('../types').OutputCollectionState<'uploading'>} */ (this.getOutputCollectionState()),
-      );
+
+      this._flushCommonUploadProgress();
     }
   };
+
+  /** @private */
+  _flushCommonUploadProgress = debounce(() => {
+    let commonProgress = 0;
+    /** @type {String[]} */
+    const items = this.uploadCollection.findItems((entry) => {
+      return !entry.getValue('isRemoved') && entry.getValue('isUploading') && entry.getValue('errors').length === 0;
+    });
+    items.forEach((id) => {
+      commonProgress += this.uploadCollection.readProp(id, 'uploadProgress');
+    });
+    const progress = items.length ? Math.round(commonProgress / items.length) : 0;
+    this.$['*commonProgress'] = progress;
+    this.emit(
+      EventType.COMMON_UPLOAD_PROGRESS,
+      /** @type {import('../types').OutputCollectionState<'uploading'>} */ (this.getOutputCollectionState()),
+    );
+  }, 300);
 
   /** @private */
   setInitialCrop() {
