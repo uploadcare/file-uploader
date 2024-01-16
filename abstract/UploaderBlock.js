@@ -500,7 +500,7 @@ export class UploaderBlock extends ActivityBlock {
     const ids = entryIds ?? this.uploadCollection.items();
     for (const id of ids) {
       const entry = this.uploadCollection.read(id);
-      this._runFileValidatorsForEntry(entry);
+      entry && this._runFileValidatorsForEntry(entry);
     }
   }
 
