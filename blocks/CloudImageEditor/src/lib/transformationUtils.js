@@ -2,7 +2,7 @@
 import { joinCdnOperations } from '../../../../utils/cdn-utils.js';
 import { stringToArray } from '../../../../utils/stringToArray.js';
 
-export const OPERATIONS_DEFAULTS = Object.freeze({
+export const OPERATIONS_ZEROS = Object.freeze({
   brightness: 0,
   exposure: 0,
   gamma: 100,
@@ -40,21 +40,19 @@ const SUPPORTED_OPERATIONS_ORDERED = /** @type {const} */ ([
 function transformationToStr(operation, options) {
   if (typeof options === 'number') {
     const value = options;
-    return OPERATIONS_DEFAULTS[/** @type {keyof typeof OPERATIONS_DEFAULTS} */ (operation)] !== value
+    return OPERATIONS_ZEROS[/** @type {keyof typeof OPERATIONS_ZEROS} */ (operation)] !== value
       ? `${operation}/${value}`
       : '';
   }
 
   if (typeof options === 'boolean') {
     const value = options;
-    return OPERATIONS_DEFAULTS[/** @type {keyof typeof OPERATIONS_DEFAULTS} */ (operation)] !== value
-      ? `${operation}`
-      : '';
+    return OPERATIONS_ZEROS[/** @type {keyof typeof OPERATIONS_ZEROS} */ (operation)] !== value ? `${operation}` : '';
   }
 
   if (operation === 'filter' && options) {
     const { name, amount } = /** @type {NonNullable<import('../types').Transformations['filter']>} */ (options);
-    if (OPERATIONS_DEFAULTS.filter === amount) {
+    if (OPERATIONS_ZEROS.filter === amount) {
       return '';
     }
     return `${operation}/${name}/${amount}`;
