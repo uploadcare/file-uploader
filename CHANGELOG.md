@@ -1,3 +1,9 @@
+## [0.30.9](https://github.com/uploadcare/blocks/compare/v0.30.8...v0.30.9) (2024-01-18)
+
+### Bug Fixes
+
+- **cloud-image-editor:** ignore unsupported cdn operations and print console warning ([#587](https://github.com/uploadcare/blocks/issues/587)) ([503eaae](https://github.com/uploadcare/blocks/commit/503eaaed216d2f8aa3c84cd5bead2d27136b3a5f))
+
 ## [0.30.8](https://github.com/uploadcare/blocks/compare/v0.30.7...v0.30.8) (2023-12-29)
 
 ### Bug Fixes
