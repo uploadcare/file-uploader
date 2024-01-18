@@ -19,20 +19,21 @@
  */
 
 /**
- * @typedef {Object} Transformations
- * @property {number} [enhance]
- * @property {number} [brightness]
- * @property {number} [exposure]
- * @property {number} [gamma]
- * @property {number} [contrast]
- * @property {number} [saturation]
- * @property {number} [vibrance]
- * @property {number} [warmth]
- * @property {number} [rotate]
- * @property {boolean} [mirror]
- * @property {boolean} [flip]
- * @property {{ name: string; amount: number }} [filter]
- * @property {{ dimensions: [number, number]; coords: [number, number] }} [crop]
+ * @typedef {{
+ *   enhance?: number;
+ *   brightness?: number;
+ *   exposure?: number;
+ *   gamma?: number;
+ *   contrast?: number;
+ *   saturation?: number;
+ *   vibrance?: number;
+ *   warmth?: number;
+ *   rotate?: number;
+ *   mirror?: boolean;
+ *   flip?: boolean;
+ *   filter?: { name: string; amount: number };
+ *   crop?: { dimensions: [number, number]; coords: [number, number] };
+ * }} Transformations
  */
 
 /**
