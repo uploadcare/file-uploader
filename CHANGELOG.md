@@ -1,3 +1,10 @@
+## [0.30.9](https://github.com/uploadcare/blocks/compare/v0.30.8...v0.30.9) (2024-01-18)
+
+### Bug Fixes
+
+- **cloud-image-editor:** ignore unsupported cdn operations and print console warning ([#587](https://github.com/uploadcare/blocks/issues/587)) ([503eaae](https://github.com/uploadcare/blocks/commit/503eaaed216d2f8aa3c84cd5bead2d27136b3a5f))
+- **external-source:** disallow to select multiple files when multiple mode is off ([#589](https://github.com/uploadcare/blocks/issues/589)) ([d5c43cd](https://github.com/uploadcare/blocks/commit/d5c43cd565c7391c998a7ee6941f5fab6fe90c63))
+
 ## [0.30.8](https://github.com/uploadcare/blocks/compare/v0.30.7...v0.30.8) (2023-12-29)
 
 ### Bug Fixes
