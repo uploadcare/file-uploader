@@ -180,7 +180,7 @@ export class Block extends BaseComponent {
     blocksRegistry.add(this);
 
     if (!this.$['*eventEmitter']) {
-      this.$['*eventEmitter'] = new EventEmitter(() => this.ctxName);
+      this.$['*eventEmitter'] = new EventEmitter(this.debugPrint.bind(this));
     }
   }
 

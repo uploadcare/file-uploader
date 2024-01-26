@@ -58,17 +58,21 @@ export class EventEmitter {
    */
   _timeoutStore = new Map();
 
-  /** @type {Set<import('../../abstract/Block.js').Block>} */
+  /**
+   * @private
+   * @type {Set<import('../../abstract/Block.js').Block>}
+   */
   _targets = new Set();
 
-  /** @param {() => string} getCtxName */
-  constructor(getCtxName) {
-    /** @private */
-    this._getCtxName = getCtxName;
-    /**
-     * @private
-     * @type {import('../../abstract/Block.js').Block}
-     */
+  /**
+   * @private
+   * @type {((...args: unknown[]) => void) | null}
+   */
+  _debugPrint = null;
+
+  /** @param {(...args: unknown[]) => void} debugPrint */
+  constructor(debugPrint) {
+    this._debugPrint = debugPrint;
   }
 
   /** @param {import('../../abstract/Block.js').Block} target */
@@ -96,13 +100,10 @@ export class EventEmitter {
       );
     }
 
-    /** @type {import('../../abstract/Block.js').Block | undefined} */
-    const firstTarget = this._targets.values().next().value;
-    if (firstTarget) {
-      // We need to use spread here to evaluate all lazy values at the moment of logging
+    this._debugPrint?.(() => {
       const copyPayload = !!payload && typeof payload === 'object' ? { ...payload } : payload;
-      firstTarget?.debugPrint(() => [`event "${type}"`, copyPayload]);
-    }
+      return [`event "${type}"`, copyPayload];
+    });
   }
 
   /**
