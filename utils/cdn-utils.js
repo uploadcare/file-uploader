@@ -1,3 +1,5 @@
+import { PACKAGE_NAME, PACKAGE_VERSION } from '../env.js';
+
 /**
  * Trim leading `-/`, `/` and trailing `/` from CDN operation
  *
@@ -153,6 +155,8 @@ export function splitFileUrl(fileUrl) {
  * @param {String} [filename] - Filename for CDN or file URL for Proxy, will override one from `baseCdnUrl`
  * @returns {String}
  */
+
+// TODO eadidenko replace arg to pass the object parameter
 export const createCdnUrl = (baseCdnUrl, cdnModifiers, filename) => {
   let url = new URL(trimFilename(baseCdnUrl));
   filename = filename || extractFilename(baseCdnUrl);

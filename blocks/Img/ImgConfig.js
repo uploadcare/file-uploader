@@ -1,6 +1,7 @@
 import { BaseComponent, Data } from '@symbiotejs/symbiote';
 import { PROPS_MAP } from './props-map.js';
 import { CSS_PREF } from './configurations.js';
+import { PACKAGE_NAME, PACKAGE_VERSION } from '../../env.js';
 
 const CSS_PROPS = Object.create(null);
 for (let prop in PROPS_MAP) {
@@ -37,6 +38,18 @@ export class ImgConfig extends BaseComponent {
         return;
       }
       kbFn(val);
+    });
+  }
+
+  analyticsParams() {
+    return `-/@clib/${PACKAGE_NAME}/${PACKAGE_VERSION}/lr-img/`;
+  }
+
+  initAttributes(el) {
+    [...this.attributes].forEach((attr) => {
+      if (!PROPS_MAP[attr.name]) {
+        el.setAttribute(attr.name, attr.value);
+      }
     });
   }
 

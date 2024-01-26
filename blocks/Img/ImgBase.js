@@ -1,13 +1,23 @@
 import { applyTemplateData } from '../../utils/template-utils.js';
 import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../utils/cdn-utils.js';
-import { PROPS_MAP } from './props-map.js';
 import { stringToArray } from '../../utils/stringToArray.js';
 import { uniqueArray } from '../../utils/uniqueArray.js';
 import { parseObjectToString } from './utils/parseObjectToString.js';
 import { ImgConfig } from './ImgConfig.js';
-import { DEV_MODE, HI_RES_K, ULTRA_RES_K, UNRESOLVED_ATTR, MAX_WIDTH, MAX_WIDTH_JPG } from './configurations.js';
+import {
+  DEV_MODE,
+  HI_RES_K,
+  ULTRA_RES_K,
+  UNRESOLVED_ATTR,
+  MAX_WIDTH,
+  MAX_WIDTH_JPG,
+  ImgTypeEnum,
+} from './configurations.js';
 
 export class ImgBase extends ImgConfig {
+  _img = new Image();
+  _imgPreview = new Image();
+
   /**
    * @private
    * @param {String} src
@@ -27,7 +37,7 @@ export class ImgBase extends ImgConfig {
    * @returns {String | Number}
    */
   _validateSize(size) {
-    if (size.trim() !== '') {
+    if (size?.trim() !== '') {
       // Extract numeric part
       let numericPart = size.match(/\d+/)[0];
 
@@ -59,6 +69,7 @@ export class ImgBase extends ImgConfig {
       resize: this._validateSize(size),
       blur,
       'cdn-operations': this.$$('cdn-operations'),
+      analytics: this.analyticsParams(),
     };
 
     return createCdnUrlModifiers(...parseObjectToString(params));
@@ -66,10 +77,11 @@ export class ImgBase extends ImgConfig {
 
   /**
    * @private
-   * @param {String} size
+   * @param {String} [size]
+   * @param {String} [blur]
    * @returns {any}
    */
-  _getUrlBase(size = '') {
+  _getUrlBase(size = '', blur = '') {
     if (this.$$('src').startsWith('data:') || this.$$('src').startsWith('blob:')) {
       return this.$$('src');
     }
@@ -79,7 +91,7 @@ export class ImgBase extends ImgConfig {
       return this._proxyUrl(this.$$('src'));
     }
 
-    let cdnModifiers = this._getCdnModifiers(size);
+    let cdnModifiers = this._getCdnModifiers(size, blur);
 
     if (this.$$('src').startsWith(this.$$('cdn-cname'))) {
       return createCdnUrl(this.$$('src'), cdnModifiers);
@@ -158,6 +170,7 @@ export class ImgBase extends ImgConfig {
     let rect = el.getBoundingClientRect();
     let w = k * Math.round(rect.width);
     let h = wOnly ? '' : k * Math.round(rect.height);
+
     if (w || h) {
       return `${w ? w : ''}x${h ? h : ''}`;
     } else {
@@ -181,30 +194,31 @@ export class ImgBase extends ImgConfig {
 
   /** @type {HTMLImageElement} */
   get img() {
-    if (!this._img) {
-      /** @private */
-      this._img = new Image();
-      this._setupEventProxy(this.img);
-      this._img.setAttribute(UNRESOLVED_ATTR, '');
-      this.img.onload = () => {
-        this.img.removeAttribute(UNRESOLVED_ATTR);
-      };
-      this.initAttributes();
+    if (!this.hasPreviewImage) {
+      this._setupConfigForImage({ elNode: this._img });
       this.appendChild(this._img);
     }
     return this._img;
   }
 
-  get bgSelector() {
-    return this.$$('is-background-for');
+  get currentImg() {
+    return this.hasPreviewImage
+      ? {
+          type: ImgTypeEnum.PREVIEW,
+          img: this._imgPreview,
+        }
+      : {
+          type: ImgTypeEnum.MAIN,
+          img: this.img,
+        };
   }
 
-  initAttributes() {
-    [...this.attributes].forEach((attr) => {
-      if (!PROPS_MAP[attr.name]) {
-        this.img.setAttribute(attr.name, attr.value);
-      }
-    });
+  get hasPreviewImage() {
+    return this.$$('is-preview-blur');
+  }
+
+  get bgSelector() {
+    return this.$$('is-background-for');
   }
 
   get breakpoints() {
@@ -251,12 +265,12 @@ export class ImgBase extends ImgConfig {
         }
       });
     } else {
-      srcset.add(this._getUrlBase(this._getElSize(this.img)) + ' 1x');
+      srcset.add(this._getUrlBase(this._getElSize(this.currentImg.img)) + ' 1x');
       if (this.$$('hi-res-support')) {
-        srcset.add(this._getUrlBase(this._getElSize(this.img, 2)) + ' 2x');
+        srcset.add(this._getUrlBase(this._getElSize(this.currentImg.img, 2)) + ' 2x');
       }
       if (this.$$('ultra-res-support')) {
-        srcset.add(this._getUrlBase(this._getElSize(this.img, 3)) + ' 3x');
+        srcset.add(this._getUrlBase(this._getElSize(this.currentImg.img, 3)) + ' 3x');
       }
     }
     return [...srcset].join();
@@ -266,25 +280,129 @@ export class ImgBase extends ImgConfig {
     return this._getUrlBase();
   }
 
-  init() {
-    if (this.bgSelector) {
-      [...document.querySelectorAll(this.bgSelector)].forEach((el) => {
-        if (this.$$('intersection')) {
-          this.initIntersection(el, () => {
-            this.renderBg(el);
-          });
-        } else {
+  get srcUrlPreview() {
+    return this._getUrlBase('100x', '100');
+  }
+
+  renderBackground() {
+    [...document.querySelectorAll(this.bgSelector)].forEach((el) => {
+      if (this.$$('intersection')) {
+        this.initIntersection(el, () => {
           this.renderBg(el);
+        });
+      } else {
+        this.renderBg(el);
+      }
+    });
+  }
+
+  _appendURL({ elNode, src, srcset }) {
+    if (src) {
+      elNode.src = src;
+    }
+
+    if (srcset) {
+      elNode.srcset = srcset;
+    }
+  }
+
+  _setupConfigForImage({ elNode }) {
+    this._setupEventProxy(elNode);
+    this.initAttributes(elNode);
+  }
+
+  loaderImage({ src, srcset, elNode }) {
+    return new Promise((resolve, reject) => {
+      this._setupConfigForImage({ elNode });
+
+      elNode.setAttribute(UNRESOLVED_ATTR, '');
+
+      elNode.addEventListener('load', () => {
+        elNode.removeAttribute(UNRESOLVED_ATTR);
+        resolve(elNode);
+      });
+
+      elNode.addEventListener('error', () => {
+        reject(false);
+      });
+
+      this._appendURL({
+        elNode,
+        src,
+        srcset,
+      });
+    });
+  }
+
+  async renderImage() {
+    if (this.$$('intersection')) {
+      if (this.hasPreviewImage) {
+        this._setupConfigForImage({ elNode: this._imgPreview });
+        this.appendChild(this._imgPreview);
+      }
+
+      this.initIntersection(this.currentImg.img, async () => {
+        if (this.hasPreviewImage) {
+          this._imgPreview.src = this.srcUrlPreview;
+        }
+
+        try {
+          await this.loaderImage({
+            src: this.getSrc(),
+            srcset: this.getSrcset(),
+            elNode: this._img,
+          });
+
+          if (this.hasPreviewImage) {
+            await this._imgPreview.remove();
+          }
+
+          this.appendChild(this._img);
+        } catch (e) {
+          if (this.hasPreviewImage) {
+            await this._imgPreview?.remove();
+          }
+          this.appendChild(this._img);
         }
       });
-    } else if (this.$$('intersection')) {
-      this.initIntersection(this.img, () => {
-        this.img.srcset = this.getSrcset();
-        this.img.src = this.getSrc();
+
+      return;
+    }
+
+    try {
+      if (this.hasPreviewImage) {
+        await this.loaderImage({
+          src: this.srcUrlPreview,
+          elNode: this._imgPreview,
+        });
+
+        this.appendChild(this._imgPreview);
+      }
+
+      await this.loaderImage({
+        src: this.getSrc(),
+        srcset: this.getSrcset(),
+        elNode: this._img,
       });
+
+      if (this.hasPreviewImage) {
+        await this._imgPreview?.remove();
+      }
+
+      this.appendChild(this._img);
+    } catch (e) {
+      if (this.hasPreviewImage) {
+        await this._imgPreview?.remove();
+      }
+      this.appendChild(this._img);
+    }
+  }
+
+  init() {
+    if (this.bgSelector) {
+      this.renderBackground();
     } else {
-      this.img.srcset = this.getSrcset();
-      this.img.src = this.getSrc();
+      this.renderImage();
     }
   }
 }
