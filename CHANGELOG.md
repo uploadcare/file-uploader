@@ -1,3 +1,9 @@
+# [0.31.0](https://github.com/uploadcare/blocks/compare/v0.30.9...v0.31.0) (2024-01-26)
+
+### Features
+
+- **lr-img:** preview blur ([f42967a](https://github.com/uploadcare/blocks/commit/f42967aec0b77c454750286dae74f4aa00124d3f))
+
 ## [0.30.9](https://github.com/uploadcare/blocks/compare/v0.30.8...v0.30.9) (2024-01-18)
 
 ### Bug Fixes
