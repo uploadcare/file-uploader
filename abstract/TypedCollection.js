@@ -109,6 +109,10 @@ export class TypedCollection {
   observeCollection(handler) {
     this.__collectionObservers.add(handler);
 
+    if (this.__items.size > 0) {
+      this.notify();
+    }
+
     return () => {
       this.unobserveCollection(handler);
     };
@@ -121,7 +125,7 @@ export class TypedCollection {
 
   /**
    * @param {Object<string, any>} init
-   * @returns {any}
+   * @returns {string}
    */
   add(init) {
     let item = new TypedData(this.__typedSchema);
@@ -143,7 +147,7 @@ export class TypedCollection {
         }),
       );
     });
-    return item;
+    return item.uid;
   }
 
   /**

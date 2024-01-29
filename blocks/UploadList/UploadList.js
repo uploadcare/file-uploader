@@ -153,17 +153,21 @@ export class UploadList extends UploaderBlock {
     // there is no need to update buttons state on every progress tick
     this.uploadCollection.observeProperties(this._throttledHandleCollectionUpdate);
 
-    this.sub('*uploadList', (list) => {
-      this._throttledHandleCollectionUpdate();
+    this.sub(
+      '*uploadList',
+      (list) => {
+        this._throttledHandleCollectionUpdate();
 
-      this.set$({
-        hasFiles: list.length > 0,
-      });
+        this.set$({
+          hasFiles: list.length > 0,
+        });
 
-      if (!this.cfg.confirmUpload) {
-        this.uploadAll();
-      }
-    });
+        if (!this.cfg.confirmUpload) {
+          this.uploadAll();
+        }
+      },
+      false,
+    );
 
     this.sub(
       '*collectionErrors',

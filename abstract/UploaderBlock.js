@@ -20,6 +20,7 @@ import { uploaderBlockCtx } from './CTX.js';
 import { TypedCollection } from './TypedCollection.js';
 import { buildOutputCollectionState } from './buildOutputCollectionState.js';
 import { uploadEntrySchema } from './uploadEntrySchema.js';
+import { throttle } from '../blocks/utils/throttle.js';
 
 export class UploaderBlock extends ActivityBlock {
   couldBeCtxOwner = false;
@@ -191,63 +192,71 @@ export class UploaderBlock extends ActivityBlock {
   /**
    * @param {string} url
    * @param {{ silent?: boolean; fileName?: string; source?: string }} [options]
+   * @returns {import('../types').OutputFileEntry<'idle'>}
    */
   addFileFromUrl(url, { silent, fileName, source } = {}) {
-    this.uploadCollection.add({
+    const internalId = this.uploadCollection.add({
       externalUrl: url,
       fileName: fileName ?? null,
-      silentUpload: silent ?? false,
+      silent: silent ?? false,
       source: source ?? UploadSource.API,
     });
+    return this.getOutputItem(internalId);
   }
 
   /**
    * @param {string} uuid
    * @param {{ silent?: boolean; fileName?: string; source?: string }} [options]
+   * @returns {import('../types').OutputFileEntry<'idle'>}
    */
   addFileFromUuid(uuid, { silent, fileName, source } = {}) {
-    this.uploadCollection.add({
+    const internalId = this.uploadCollection.add({
       uuid,
       fileName: fileName ?? null,
-      silentUpload: silent ?? false,
+      silent: silent ?? false,
       source: source ?? UploadSource.API,
     });
+    return this.getOutputItem(internalId);
   }
 
   /**
    * @param {File} file
    * @param {{ silent?: boolean; fileName?: string; source?: string; fullPath?: string }} [options]
+   * @returns {import('../types').OutputFileEntry<'idle'>}
    */
   addFileFromObject(file, { silent, fileName, source, fullPath } = {}) {
-    this.uploadCollection.add({
+    const internalId = this.uploadCollection.add({
       file,
       isImage: fileIsImage(file),
       mimeType: file.type,
       fileName: fileName ?? file.name,
       fileSize: file.size,
-      silentUpload: silent ?? false,
+      silent: silent ?? false,
       source: source ?? UploadSource.API,
       fullPath: fullPath ?? null,
     });
+    return this.getOutputItem(internalId);
   }
 
   /**
    * @deprecated Will be removed in the near future. Please use `addFileFromObject`, `addFileFromUrl` or
    *   `addFileFromUuid` instead.
    * @param {File[]} files
+   * @returns {import('../types').OutputFileEntry<'idle'>[]}
    */
   addFiles(files) {
     console.warn(
       '`addFiles` method is deprecated. Please use `addFileFromObject`, `addFileFromUrl` or `addFileFromUuid` instead.',
     );
-    files.forEach((/** @type {File} */ file) => {
-      this.uploadCollection.add({
+    return files.map((/** @type {File} */ file) => {
+      const internalId = this.uploadCollection.add({
         file,
         isImage: fileIsImage(file),
         mimeType: file.type,
         fileName: file.name,
         fileSize: file.size,
       });
+      return this.getOutputItem(internalId);
     });
   }
 
