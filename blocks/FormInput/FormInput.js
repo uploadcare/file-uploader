@@ -2,24 +2,13 @@
 import { applyStyles } from '@symbiotejs/symbiote';
 import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 
-const VALIDATION_INPUT_NAME = '__UPLOADCARE_VALIDATION_INPUT__';
-
 export class FormInput extends UploaderBlock {
   requireCtxName = true;
 
-  get validationInput() {
-    return this._validationInputElement;
-  }
-
-  initCallback() {
-    super.initCallback();
-
-    this._dynamicInputsContainer = document.createElement('div');
-    this.appendChild(this._dynamicInputsContainer);
-
+  _createValidationInput() {
     const validationInput = document.createElement('input');
     validationInput.type = 'text';
-    validationInput.name = VALIDATION_INPUT_NAME;
+    validationInput.name = this.ctxName;
     validationInput.required = this.cfg.multipleMin > 0;
     validationInput.tabIndex = -1;
     applyStyles(validationInput, {
@@ -27,47 +16,64 @@ export class FormInput extends UploaderBlock {
       height: 0,
       width: 0,
     });
+    return validationInput;
+  }
+
+  initCallback() {
+    super.initCallback();
+
+    const validationInput = this._createValidationInput();
     this.appendChild(validationInput);
     this._validationInputElement = validationInput;
 
     this.sub(
       '*collectionState',
-      async (/** @type {import('../../types/index.js').OutputCollectionState} */ collectionState) => {
+      (/** @type {import('../../types/index.js').OutputCollectionState} */ collectionState) => {
         {
-          if (this._dynamicInputsContainer) {
-            this._dynamicInputsContainer.innerHTML = '';
+          if (!this._dynamicInputsContainer) {
+            this._dynamicInputsContainer = document.createElement('div');
+            this.appendChild(this._dynamicInputsContainer);
+          }
+          if (!this._validationInputElement) {
+            const input = this._createValidationInput();
+            this.appendChild(input);
+            this._validationInputElement = input;
+          }
 
-            if (collectionState.status === 'uploading' || collectionState.status === 'idle') {
-              validationInput.name = VALIDATION_INPUT_NAME;
-              validationInput.value = '';
-              validationInput.setCustomValidity('');
-              return;
-            }
+          this._dynamicInputsContainer.innerHTML = '';
 
-            if (collectionState.status === 'failed') {
-              const errorMsg = collectionState.errors[0]?.message;
-              validationInput.name = VALIDATION_INPUT_NAME;
-              validationInput.value = '';
-              validationInput.setCustomValidity(errorMsg);
-              return;
-            }
+          if (collectionState.status === 'uploading' || collectionState.status === 'idle') {
+            validationInput.value = '';
+            validationInput.setCustomValidity('');
+            return;
+          }
 
-            const group = 'group' in collectionState ? collectionState.group : null;
-            if (group) {
-              validationInput.name = this.ctxName;
-              validationInput.value = group.cdnUrl;
-              validationInput.setCustomValidity('');
-              return;
-            }
+          if (collectionState.status === 'failed') {
+            const errorMsg = collectionState.errors[0]?.message;
+            validationInput.value = '';
+            validationInput.setCustomValidity(errorMsg);
+            return;
+          }
 
-            const cdnUrls = collectionState.allEntries.map((entry) => entry.cdnUrl);
-            for (let value of cdnUrls) {
-              const input = document.createElement('input');
-              input.type = 'hidden';
-              input.name = this.ctxName;
-              input.value = value ?? '';
-              this._dynamicInputsContainer.appendChild(input);
-            }
+          const group = collectionState.group ? collectionState.group : null;
+          if (group) {
+            validationInput.value = group.cdnUrl;
+            validationInput.setCustomValidity('');
+            return;
+          }
+
+          const cdnUrls = collectionState.allEntries.map((entry) => entry.cdnUrl);
+
+          // Remove validation input to prevent it from being submitted
+          validationInput.remove();
+          this._validationInputElement = null;
+
+          for (let value of cdnUrls) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = `${this.ctxName}[]`;
+            input.value = value;
+            this._dynamicInputsContainer.appendChild(input);
           }
         }
       },
