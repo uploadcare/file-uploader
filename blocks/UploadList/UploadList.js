@@ -38,13 +38,13 @@ export class UploadList extends UploaderBlock {
         this.initFlow(true);
       },
       onUpload: () => {
+        this.emit(EventType.UPLOAD_CLICK);
         this.uploadAll();
         this._throttledHandleCollectionUpdate();
-        this.emit(EventType.UPLOAD_CLICK);
       },
       onDone: () => {
-        this.doneFlow();
         this.emit(EventType.DONE_CLICK, this.getOutputCollectionState());
+        this.doneFlow();
       },
       onCancel: () => {
         this.uploadCollection.clearAll();
