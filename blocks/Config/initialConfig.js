@@ -5,7 +5,7 @@ import { serializeCsv } from '../utils/comma-separated.js';
 
 export const DEFAULT_CDN_CNAME = 'https://ucarecdn.com';
 export const DEFAULT_BASE_URL = 'https://upload.uploadcare.com';
-export const DEFAULT_SOCIAN_BASE_URL = 'https://social.uploadcare.com';
+export const DEFAULT_SOCIAL_BASE_URL = 'https://social.uploadcare.com';
 
 /** @type {import('../../types/exported').ConfigType} */
 export const initialConfig = {
@@ -38,7 +38,7 @@ export const initialConfig = {
   remoteTabSessionKey: '',
   cdnCname: DEFAULT_CDN_CNAME,
   baseUrl: DEFAULT_BASE_URL,
-  socialBaseUrl: DEFAULT_SOCIAN_BASE_URL,
+  socialBaseUrl: DEFAULT_SOCIAL_BASE_URL,
   secureSignature: '',
   secureExpire: '',
   secureDeliveryProxy: '',

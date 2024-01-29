@@ -18,7 +18,7 @@ import { UploadcareFile } from '@uploadcare/upload-client';
  * @property {UploadcareFile} fileInfo
  * @property {Boolean} isUploading
  * @property {String} thumbUrl
- * @property {Boolean} silentUpload
+ * @property {Boolean} silent
  * @property {({
  *   type: import('..').OutputFileErrorType | import('..').OutputCollectionErrorType;
  *   message: string;
@@ -103,7 +103,7 @@ export const uploadEntrySchema = Object.freeze({
     value: null,
     nullable: true,
   },
-  silentUpload: {
+  silent: {
     type: Boolean,
     value: false,
   },

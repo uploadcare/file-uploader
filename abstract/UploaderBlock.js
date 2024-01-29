@@ -593,7 +593,9 @@ export class UploaderBlock extends ActivityBlock {
     this._runCollectionValidators();
 
     for (const entry of added) {
-      this.emit(EventType.FILE_ADDED, this.getOutputItem(entry.uid));
+      if (!entry.getValue('silent')) {
+        this.emit(EventType.FILE_ADDED, this.getOutputItem(entry.uid));
+      }
     }
 
     for (const entry of removed) {
@@ -607,6 +609,7 @@ export class UploaderBlock extends ActivityBlock {
       URL.revokeObjectURL(entry?.getValue('thumbUrl'));
       this.emit(EventType.FILE_REMOVED, this.getOutputItem(entry.uid));
     }
+
     this.$['*uploadList'] = entries.map((uid) => {
       return { uid };
     });
@@ -634,18 +637,28 @@ export class UploaderBlock extends ActivityBlock {
 
     this._debouncedRunFileValidators(updatedEntryIds);
 
+    if (changeMap.uploadProgress) {
+      for (const entryId of changeMap.uploadProgress) {
+        const { isUploading, silent } = Data.getCtx(entryId).store;
+        if (isUploading && !silent) {
+          this.emit(EventType.FILE_UPLOAD_PROGRESS, this.getOutputItem(entryId));
+        }
+      }
+
+      this._flushCommonUploadProgress();
+    }
     if (changeMap.isUploading) {
       for (const entryId of changeMap.isUploading) {
-        const { isUploading } = Data.getCtx(entryId).store;
-        if (isUploading) {
+        const { isUploading, silent } = Data.getCtx(entryId).store;
+        if (isUploading && !silent) {
           this.emit(EventType.FILE_UPLOAD_START, this.getOutputItem(entryId));
         }
       }
     }
     if (changeMap.fileInfo) {
       for (const entryId of changeMap.fileInfo) {
-        const { fileInfo } = Data.getCtx(entryId).store;
-        if (fileInfo) {
+        const { fileInfo, silent } = Data.getCtx(entryId).store;
+        if (fileInfo && !silent) {
           this.emit(EventType.FILE_UPLOAD_SUCCESS, this.getOutputItem(entryId));
         }
       }
@@ -687,16 +700,6 @@ export class UploaderBlock extends ActivityBlock {
       });
 
       this.$['*groupInfo'] = null;
-    }
-    if (changeMap.uploadProgress) {
-      for (const entryId of changeMap.uploadProgress) {
-        const { isUploading } = Data.getCtx(entryId).store;
-        if (isUploading) {
-          this.emit(EventType.FILE_UPLOAD_PROGRESS, this.getOutputItem(entryId));
-        }
-      }
-
-      this._flushCommonUploadProgress();
     }
   };
 
@@ -813,7 +816,7 @@ export class UploaderBlock extends ActivityBlock {
       ? 'removed'
       : uploadEntryData.errors.length > 0
         ? 'failed'
-        : !!uploadEntryData.uuid
+        : !!uploadEntryData.fileInfo
           ? 'success'
           : uploadEntryData.isUploading
             ? 'uploading'
@@ -821,7 +824,7 @@ export class UploaderBlock extends ActivityBlock {
 
     /** @type {unknown} */
     const outputItem = {
-      uuid: fileInfo?.uuid ?? null,
+      uuid: fileInfo?.uuid ?? uploadEntryData.uuid ?? null,
       internalId: entryId,
       name: fileInfo?.originalFilename ?? uploadEntryData.fileName,
       size: fileInfo?.size ?? uploadEntryData.fileSize,
