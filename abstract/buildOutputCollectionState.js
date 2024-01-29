@@ -103,6 +103,10 @@ export function buildOutputCollectionState(uploaderBlock) {
     uploadingEntries: () => {
       return getters.allEntries().filter((entry) => entry.status === 'uploading');
     },
+
+    idleEntries: () => {
+      return getters.allEntries().filter((entry) => entry.status === 'idle');
+    },
   };
 
   const state = {};

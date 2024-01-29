@@ -205,7 +205,7 @@ export type OutputCollectionState<
   successEntries: OutputFileEntry<'success'>[];
   failedEntries: OutputFileEntry<'failed'>[];
   uploadingEntries: OutputFileEntry<'uploading'>[];
-  allEntries: OutputFileEntry[];
+  idleEntries: OutputFileEntry<'idle'>[];
 } & (TGroupFlag extends 'has-group'
   ? { group: UploadcareGroup }
   : TGroupFlag extends 'maybe-has-group'
@@ -218,6 +218,7 @@ export type OutputCollectionState<
         isUploading: false;
         isSuccess: false;
         errors: [];
+        allEntries: OutputFileEntry<'idle' | 'success'>[];
       }
     | {
         status: 'uploading';
@@ -225,6 +226,7 @@ export type OutputCollectionState<
         isUploading: true;
         isSuccess: false;
         errors: [];
+        allEntries: OutputFileEntry[];
       }
     | {
         status: 'success';
@@ -232,6 +234,7 @@ export type OutputCollectionState<
         isUploading: false;
         isSuccess: true;
         errors: [];
+        allEntries: OutputFileEntry<'success'>[];
       }
     | {
         status: 'failed';
@@ -239,6 +242,7 @@ export type OutputCollectionState<
         isUploading: false;
         isSuccess: false;
         errors: OutputError<OutputCollectionErrorType>[];
+        allEntries: OutputFileEntry[];
       }
   );
 

@@ -32,6 +32,7 @@ instance.addEventListener('change', (e) => {
   expectType<OutputFileEntry<'failed'>[]>(state.failedEntries);
   expectType<OutputFileEntry<'uploading'>[]>(state.uploadingEntries);
   expectType<OutputFileEntry<'success'>[]>(state.successEntries);
+  expectType<OutputFileEntry<'idle'>[]>(state.idleEntries);
   // group is optional here
   expectType<UploadcareGroup | null>(state.group);
 
@@ -41,6 +42,7 @@ instance.addEventListener('change', (e) => {
     expectType<false>(state.isFailed);
     expectType<false>(state.isUploading);
     expectType<[]>(state.errors);
+    expectType<'success'>(state.allEntries[0].status)
   } else if (state.isFailed) {
     expectType<'failed'>(state.status);
     expectType<false>(state.isSuccess);
@@ -59,6 +61,7 @@ instance.addEventListener('change', (e) => {
     expectType<false>(state.isFailed);
     expectType<false>(state.isUploading);
     expectType<[]>(state.errors);
+    expectType<'success' | 'idle'>(state.allEntries[0].status)
   }
 });
 
