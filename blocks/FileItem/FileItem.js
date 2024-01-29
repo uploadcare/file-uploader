@@ -210,9 +210,9 @@ export class FileItem extends UploaderBlock {
       this.$.itemName = entry.getValue('fileName') || externalUrl || this.l10n('file-no-name');
     });
 
-    this._subEntry('uuid', (uuid) => {
+    this._subEntry('fileInfo', (fileInfo) => {
       this._debouncedCalculateState();
-      if (uuid && this._isIntersecting) {
+      if (fileInfo && this._isIntersecting) {
         this._debouncedGenerateThumb();
       }
     });
@@ -263,8 +263,8 @@ export class FileItem extends UploaderBlock {
 
     this.$['*uploadTrigger'] = null;
 
-    this.sub('*uploadTrigger', (val) => {
-      if (!val) {
+    this.sub('*uploadTrigger', (itemsToUpload) => {
+      if (!itemsToUpload?.includes(this._entry.uid)) {
         return;
       }
       setTimeout(() => this.isConnected && this.upload());
@@ -381,6 +381,7 @@ export class FileItem extends UploaderBlock {
         mimeType: fileInfo.contentInfo?.mime?.mime ?? fileInfo.mimeType,
         uuid: fileInfo.uuid,
         cdnUrl: fileInfo.cdnUrl,
+        uploadProgress: 100,
       });
 
       if (entry === this._entry) {

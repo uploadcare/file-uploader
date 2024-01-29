@@ -251,21 +251,21 @@ export class UploaderBlock extends ActivityBlock {
     });
   }
 
-  uploadAll() {
-    this.$['*uploadTrigger'] = {};
-
-    const couldUploadAnything = !!this.uploadCollection.items().find((id) => {
+  uploadAll = () => {
+    const itemsToUpload = this.uploadCollection.items().filter((id) => {
       const entry = this.uploadCollection.read(id);
-      return !entry.getValue('isUploading') && !entry.getValue('fileInfo');
+      return !entry.getValue('isRemoved') && !entry.getValue('isUploading') && !entry.getValue('fileInfo');
     });
 
-    if (couldUploadAnything) {
+    this.$['*uploadTrigger'] = itemsToUpload;
+
+    if (itemsToUpload.length > 0) {
       this.emit(
         EventType.COMMON_UPLOAD_START,
         /** @type {import('../types').OutputCollectionState<'uploading'>} */ (this.getOutputCollectionState()),
       );
     }
-  }
+  };
 
   /** @param {{ captureCamera?: boolean }} options */
   openSystemDialog(options = {}) {
@@ -692,22 +692,24 @@ export class UploaderBlock extends ActivityBlock {
   };
 
   /** @private */
-  _flushCommonUploadProgress = debounce(() => {
+  _flushCommonUploadProgress = () => {
+    if (!this.$['*uploadTrigger']) {
+      return;
+    }
     let commonProgress = 0;
     /** @type {String[]} */
-    const items = this.uploadCollection.findItems((entry) => {
-      return !entry.getValue('isRemoved') && entry.getValue('isUploading') && entry.getValue('errors').length === 0;
-    });
+    const items = this.$['*uploadTrigger'] ?? [];
     items.forEach((id) => {
       commonProgress += this.uploadCollection.readProp(id, 'uploadProgress');
     });
     const progress = items.length ? Math.round(commonProgress / items.length) : 0;
+
     this.$['*commonProgress'] = progress;
     this.emit(
       EventType.COMMON_UPLOAD_PROGRESS,
       /** @type {import('../types').OutputCollectionState<'uploading'>} */ (this.getOutputCollectionState()),
     );
-  }, 300);
+  };
 
   /** @private */
   setInitialCrop() {
