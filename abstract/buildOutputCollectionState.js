@@ -1,6 +1,7 @@
 // @ts-check
 
 import { memoize } from '../utils/memoize.js';
+import { warnOnce } from '../utils/warnOnce.js';
 
 /** @param {string} warning */
 function createAsyncAssertWrapper(warning) {
@@ -10,18 +11,21 @@ function createAsyncAssertWrapper(warning) {
   }, 0);
 
   /**
-   * @template {unknown[]} TArgs
-   * @template {unknown} TReturn
-   * @param {(...args: TArgs) => TReturn} fn
-   * @returns {(...args: TArgs) => TReturn}
+   * @template {any[]} TArgs
+   * @template {any} TReturn
+   * @template {(...args: TArgs) => TReturn} T
+   * @param {T} fn
+   * @returns {T}
    */
   const withAssert = (fn) => {
-    return (...args) => {
-      if (isAsync) {
-        console.warn(warning);
+    return /** @type {T} */ (
+      (...args) => {
+        if (isAsync) {
+          warnOnce(warning);
+        }
+        return fn(...args);
       }
-      return fn(...args);
-    };
+    );
   };
 
   return withAssert;
@@ -54,38 +58,32 @@ export function buildOutputCollectionState(uploaderBlock) {
     },
 
     failedCount: () => {
-      return getters.failedEntries().length;
+      return state.failedEntries.length;
     },
 
     successCount: () => {
-      return getters.successEntries().length;
+      return state.successEntries.length;
     },
 
     uploadingCount: () => {
-      return getters.uploadingEntries().length;
+      return state.uploadingEntries.length;
     },
 
     status: () => {
-      const status = getters.isFailed()
-        ? 'failed'
-        : getters.isUploading()
-          ? 'uploading'
-          : getters.isSuccess()
-            ? 'success'
-            : 'idle';
+      const status = state.isFailed ? 'failed' : state.isUploading ? 'uploading' : state.isSuccess ? 'success' : 'idle';
       return /** @type {TCollectionStatus} */ (status);
     },
 
     isSuccess: () => {
-      return getters.errors().length === 0 && getters.successEntries().length === getters.allEntries().length;
+      return state.errors.length === 0 && state.successEntries.length === state.allEntries.length;
     },
 
     isUploading: () => {
-      return getters.allEntries().some((entry) => entry.status === 'uploading');
+      return state.allEntries.some((entry) => entry.status === 'uploading');
     },
 
     isFailed: () => {
-      return getters.errors().length > 0 || getters.failedEntries().length > 0;
+      return state.errors.length > 0 || state.failedEntries.length > 0;
     },
 
     allEntries: () => {
@@ -93,23 +91,25 @@ export function buildOutputCollectionState(uploaderBlock) {
     },
 
     successEntries: () => {
-      return getters.allEntries().filter((entry) => entry.status === 'success');
+      return state.allEntries.filter((entry) => entry.status === 'success');
     },
 
     failedEntries: () => {
-      return getters.allEntries().filter((entry) => entry.status === 'failed');
+      return state.allEntries.filter((entry) => entry.status === 'failed');
     },
 
     uploadingEntries: () => {
-      return getters.allEntries().filter((entry) => entry.status === 'uploading');
+      return state.allEntries.filter((entry) => entry.status === 'uploading');
     },
 
     idleEntries: () => {
-      return getters.allEntries().filter((entry) => entry.status === 'idle');
+      return state.allEntries.filter((entry) => entry.status === 'idle');
     },
   };
 
-  const state = {};
+  const state = /** @type {import('../index.js').OutputCollectionState<TCollectionStatus, TGroupFlag>} */ (
+    /** @type {unknown} */ ({})
+  );
   const withAssert = createAsyncAssertWrapper(
     "You're trying to access the OutputCollectionState asynchronously. " +
       'In this case, the data you retrieve will be newer than it was when the ' +
@@ -121,7 +121,6 @@ export function buildOutputCollectionState(uploaderBlock) {
   for (const [key, value] of Object.entries(getters)) {
     const name = /** @type {keyof typeof getters} */ (key);
     const getter = /** @type {(typeof getters)[name]} */ (value);
-    // @ts-expect-error
     const wrapped = memoize(withAssert(getter));
     Object.defineProperty(state, name, {
       get: wrapped,
@@ -129,7 +128,5 @@ export function buildOutputCollectionState(uploaderBlock) {
     });
   }
 
-  return /** @type {import('../index.js').OutputCollectionState<TCollectionStatus, TGroupFlag>} */ (
-    /** @type {unknown} */ (state)
-  );
+  return state;
 }
