@@ -1,3 +1,9 @@
+## [0.31.1](https://github.com/uploadcare/blocks/compare/v0.31.0...v0.31.1) (2024-01-30)
+
+### Bug Fixes
+
+- **image-editor:** fix flip operation serialization ([#595](https://github.com/uploadcare/blocks/issues/595)) ([140df3a](https://github.com/uploadcare/blocks/commit/140df3a71df6008faa363c99767c87c0640d492b))
+
 # [0.31.0](https://github.com/uploadcare/blocks/compare/v0.30.9...v0.31.0) (2024-01-29)
 
 ### Bug Fixes
