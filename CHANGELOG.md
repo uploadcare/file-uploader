@@ -1,3 +1,37 @@
+# [0.32.0](https://github.com/uploadcare/blocks/compare/v0.31.1...v0.32.0) (2024-02-05)
+
+### Bug Fixes
+
+- calculate common progress after collection updates ([72f2bd9](https://github.com/uploadcare/blocks/commit/72f2bd923f5cdbdd1d2c519291793b46ac1d5ff7))
+- call both file & collections validators on config change ([896ca35](https://github.com/uploadcare/blocks/commit/896ca353b7a80dc9c94b65d9f9ad8d232054e257))
+- check for entry existance before run validation ([2c2ab29](https://github.com/uploadcare/blocks/commit/2c2ab29fe0c734788b3fe327a28699729ad15a67))
+- common upload failed fix ([cb28186](https://github.com/uploadcare/blocks/commit/cb28186045d9eac5861f74b16ba2f90cf46e4db5))
+- common-upload-start event ([85136c5](https://github.com/uploadcare/blocks/commit/85136c5b13ffcc6252bc814d2cd550987c04b840))
+- dispatch click events before action ([bc4a2b9](https://github.com/uploadcare/blocks/commit/bc4a2b95236e3226381fcd408c23f047f3d1d30a))
+- do not handle cancel error as error ([f818d4e](https://github.com/uploadcare/blocks/commit/f818d4ee56f2c15b9ab325b38e4fd2dd2add8cbe))
+- don't show `add more` button when multiple is disabled ([0afc127](https://github.com/uploadcare/blocks/commit/0afc127ed17165bd0878d17377517b7e049ee444))
+- dont create group when no files ([edad1a1](https://github.com/uploadcare/blocks/commit/edad1a14c8b60c251f62e449b1ec2ea01cf1ce05))
+- dont fire common upload failed on specific file fail ([2c15eb2](https://github.com/uploadcare/blocks/commit/2c15eb2d2ab48ccfe6f8b3bf1cb5114b474a095e))
+- fire common failed event if no specific files failed ([56c42af](https://github.com/uploadcare/blocks/commit/56c42af80859215afd54912afc9a04fc8156e54d))
+- **global-events:** remove deprecated global window events ([3ae834c](https://github.com/uploadcare/blocks/commit/3ae834c26c679d04774793d388e417a7011725b5))
+- **lr-config:** `multipleMax` is now `Number.MAX_SAFE_INTEGER` by default ([447c10e](https://github.com/uploadcare/blocks/commit/447c10eb1dab890410abd57fc3cf457e672c381b))
+- **lr-file-uploader-minimal:** fix common error styles ([ce6de28](https://github.com/uploadcare/blocks/commit/ce6de288eabef0c531036a31a25125e429193fb7))
+- make `silent` prop work ([7beb4d0](https://github.com/uploadcare/blocks/commit/7beb4d0518eec1a07491e8fe6c9d4ac4fe1734f7))
+- make add\* api calls return internalId ([7eac70d](https://github.com/uploadcare/blocks/commit/7eac70d5cf9db02f6b5eb1b28edbcba0972e0662))
+- OutputCollectionState memoization ([8d38402](https://github.com/uploadcare/blocks/commit/8d38402a8c359d83757bf39116ce8d4f7fa6f963))
+
+### Features
+
+- `lr-data-output` renamed to `lr-form-input` and super simplified ([710622a](https://github.com/uploadcare/blocks/commit/710622ae970643418430acab9e805ce6bf4a80b3))
+- add `idleEntries` property to the OutputCollectionState ([af1f610](https://github.com/uploadcare/blocks/commit/af1f6107aa704306e7453ef1105622a0a2ac56b1))
+- add async collection state access asserts ([d8cfb23](https://github.com/uploadcare/blocks/commit/d8cfb239d9ff2d61871d768fbe0fa94671e40f6b))
+- add button click event ([0db9ea5](https://github.com/uploadcare/blocks/commit/0db9ea59a59e3ffb233c82993c628b61ae293b6c))
+- better events & it's types ([666afc6](https://github.com/uploadcare/blocks/commit/666afc6097d9c133436a57170db6b08d445758f9))
+- debug mode ([e039385](https://github.com/uploadcare/blocks/commit/e039385fb6e49c1851cad6df0118685360ca47c1))
+- remove MessageBox (lr-message-box) block ([0684d2d](https://github.com/uploadcare/blocks/commit/0684d2d2d50e719ca0f79d83e6eed69a095ab956))
+- transactional common progress calculation ([2def199](https://github.com/uploadcare/blocks/commit/2def19941e150f586869dbe7894323dce0553237))
+- **upload-list:** add inline validation error message box instead of global one ([020c652](https://github.com/uploadcare/blocks/commit/020c652dc9a24be5f37241a43c7e15784134f4c4))
+
 ## [unreleased]
 
 ### Breaking changes
