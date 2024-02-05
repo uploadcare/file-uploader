@@ -95,6 +95,9 @@ lr-file-item .badge {
   transform: scale(0.3);
   opacity: 0;
   transition: var(--transition-duration) ease;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 lr-file-item > .inner:where([failed], [limit-overflow], [finished]) .badge {

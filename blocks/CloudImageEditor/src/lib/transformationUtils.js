@@ -2,7 +2,8 @@
 import { joinCdnOperations } from '../../../../utils/cdn-utils.js';
 import { stringToArray } from '../../../../utils/stringToArray.js';
 
-export const OPERATIONS_ZEROS = Object.freeze({
+/** @type {Record<keyof import('../types').Transformations, unknown>} */
+export const OPERATIONS_DEFAULTS = Object.freeze({
   brightness: 0,
   exposure: 0,
   gamma: 100,
@@ -14,8 +15,11 @@ export const OPERATIONS_ZEROS = Object.freeze({
   filter: 0,
   rotate: 0,
   mirror: false,
+  flip: false,
+  crop: undefined,
 });
 
+/** @type {readonly (keyof import('../types').Transformations)[]} */
 const SUPPORTED_OPERATIONS_ORDERED = /** @type {const} */ ([
   'enhance',
   'brightness',
@@ -40,19 +44,17 @@ const SUPPORTED_OPERATIONS_ORDERED = /** @type {const} */ ([
 function transformationToStr(operation, options) {
   if (typeof options === 'number') {
     const value = options;
-    return OPERATIONS_ZEROS[/** @type {keyof typeof OPERATIONS_ZEROS} */ (operation)] !== value
-      ? `${operation}/${value}`
-      : '';
+    return OPERATIONS_DEFAULTS[operation] !== value ? `${operation}/${value}` : '';
   }
 
   if (typeof options === 'boolean') {
     const value = options;
-    return OPERATIONS_ZEROS[/** @type {keyof typeof OPERATIONS_ZEROS} */ (operation)] !== value ? `${operation}` : '';
+    return OPERATIONS_DEFAULTS[operation] !== value ? `${operation}` : '';
   }
 
   if (operation === 'filter' && options) {
     const { name, amount } = /** @type {NonNullable<import('../types').Transformations['filter']>} */ (options);
-    if (OPERATIONS_ZEROS.filter === amount) {
+    if (OPERATIONS_DEFAULTS.filter === amount) {
       return '';
     }
     return `${operation}/${name}/${amount}`;
@@ -156,7 +158,7 @@ export function operationsToTransformations(operations) {
           `Failed to parse URL operation "${operation}". It will be ignored.`,
           err instanceof Error ? `Error message: "${err.message}"` : err,
           'If you need this functionality, please feel free to open an issue at https://github.com/uploadcare/blocks/issues/new',
-        ].join('\n')
+        ].join('\n'),
       );
     }
   }

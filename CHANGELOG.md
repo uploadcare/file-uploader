@@ -10,10 +10,21 @@
   - Console debugging output now enabled with the `debug` attribute on `lr-config`
 - `lr-message-box` block is removed.
 
+## [0.31.1](https://github.com/uploadcare/blocks/compare/v0.31.0...v0.31.1) (2024-01-30)
+
+### Bug Fixes
+
+- **image-editor:** fix flip operation serialization ([#595](https://github.com/uploadcare/blocks/issues/595)) ([140df3a](https://github.com/uploadcare/blocks/commit/140df3a71df6008faa363c99767c87c0640d492b))
+
+# [0.31.0](https://github.com/uploadcare/blocks/compare/v0.30.9...v0.31.0) (2024-01-29)
+
+### Bug Fixes
+
+- **file-item:** file status icon align ([#593](https://github.com/uploadcare/blocks/issues/593)) ([1539abe](https://github.com/uploadcare/blocks/commit/1539abe5a75b2673415e999a8ad63aaff664776f))
+
 ### Features
 
-- New option `debug` that enables debugging output in the console. See the [documentation](#) for more details.
-- New `getOutputCollectionState` API method that returns the current state of the upload collection. See the [documentation](#) for more details.
+- **lr-img:** preview blur ([f42967a](https://github.com/uploadcare/blocks/commit/f42967aec0b77c454750286dae74f4aa00124d3f))
 
 ## [0.30.9](https://github.com/uploadcare/blocks/compare/v0.30.8...v0.30.9) (2024-01-18)
 
