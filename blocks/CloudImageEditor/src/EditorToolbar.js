@@ -180,7 +180,7 @@ export class EditorToolbar extends CloudImageEditorBase {
           let el = this._createToggleControl(operation);
           // @ts-ignore
           fr.appendChild(el);
-        }
+        },
       );
     } else if (tabId === TabId.FILTERS) {
       [FAKE_ORIGINAL_FILTER, ...this.$.filters].forEach((filterId) => {
@@ -194,7 +194,7 @@ export class EditorToolbar extends CloudImageEditorBase {
           let el = this._createOperationControl(operation);
           // @ts-ignore
           fr.appendChild(el);
-        }
+        },
       );
     }
 

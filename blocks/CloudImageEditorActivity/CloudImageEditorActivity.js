@@ -83,10 +83,20 @@ export class CloudImageEditorActivity extends UploaderBlock {
       instance.setAttribute('tabs', tabs);
     }
 
-    instance.addEventListener('apply', (result) =>
-      this.handleApply(/** @type {CustomEvent<import('../CloudImageEditor/src/types.js').ApplyResult>} */ (result))
-    );
-    instance.addEventListener('cancel', () => this.handleCancel());
+    instance.addEventListener('apply', (e) => {
+      const customEvent = /** @type {CustomEvent<import('../CloudImageEditor/src/types.js').ApplyResult>} */ (e);
+      this.handleApply(customEvent);
+      this.debugPrint(`editor event "apply"`, customEvent.detail);
+    });
+    instance.addEventListener('cancel', (e) => {
+      const customEvent = /** @type {CustomEvent<void>} */ (e);
+      this.handleCancel();
+      this.debugPrint(`editor event "cancel"`, customEvent.detail);
+    });
+    instance.addEventListener('change', (e) => {
+      const customEvent = /** @type {CustomEvent<import('../CloudImageEditor/src/types.js').ChangeResult>} */ (e);
+      this.debugPrint(`editor event "change"`, customEvent.detail);
+    });
 
     this.innerHTML = '';
     this.appendChild(instance);

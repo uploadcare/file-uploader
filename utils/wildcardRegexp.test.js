@@ -12,8 +12,8 @@ describe('wildcardRegexp', () => {
     expect(wildcardRegexp('image/*').test('image/jpeg')).to.be.true;
     expect(
       wildcardRegexp('application/vnd.openxmlformats-officedocument.*').test(
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.template'
-      )
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.template',
+      ),
     ).to.be.true;
   });
 });

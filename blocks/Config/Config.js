@@ -4,6 +4,7 @@ import { initialConfig } from './initialConfig.js';
 import { sharedConfigKey } from '../../abstract/sharedConfigKey.js';
 import { toKebabCase } from '../../utils/toKebabCase.js';
 import { normalizeConfigValue } from './normalizeConfigValue.js';
+import { debounce } from '../utils/debounce.js';
 
 const allConfigKeys = /** @type {(keyof import('../../types').ConfigType)[]} */ (Object.keys(initialConfig));
 
@@ -51,7 +52,7 @@ class ConfigClass extends Block {
         Object.entries(initialConfig).map(([key, value]) => [
           sharedConfigKey(/** @type {keyof import('../../types').ConfigType} */ (key)),
           value,
-        ])
+        ]),
       ),
     };
   }
@@ -68,7 +69,7 @@ class ConfigClass extends Block {
             anyThis[key] = value;
           }
         },
-        false
+        false,
       );
     }
 
@@ -124,6 +125,16 @@ class ConfigClass extends Block {
     const anyThis = /** @type {typeof this & any} */ (this);
     anyThis[key] = val;
   }
+
+  /** @private */
+  _debugPrint = debounce(() => {
+    /** @type {Partial<Record<keyof import('../../types').ConfigType, never>>} */
+    const config = Object.create(null);
+    for (const key of allConfigKeys) {
+      config[key] = this.$[sharedConfigKey(key)];
+    }
+    this.debugPrint('config', config);
+  }, 0);
 }
 
 ConfigClass.bindAttributes(attrStateMapping);

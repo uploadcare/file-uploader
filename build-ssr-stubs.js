@@ -76,7 +76,7 @@ const stubbedExports = Object.fromEntries(
       throw new Error(`Unexpected export type: ${typeof value}`);
     }
     return [key, newValue];
-  })
+  }),
 );
 
 const content = Object.entries(stubbedExports)
@@ -89,7 +89,7 @@ const formatted = await prettier.resolveConfig('./').then(
   /** @param {Record<string, unknown>} options */
   (options) => {
     return prettier.format(content, { ...options, parser: 'babel' });
-  }
+  },
 );
 
 writeFileSync('./index.ssr.js', formatted);

@@ -1,3 +1,15 @@
+## [unreleased]
+
+### Breaking changes
+
+- Global events are removed. I.e. `window.addEventListener('LR_UPLOAD_FINISH', ...)` will not work anymore. Now you need to use `lr-upload-ctx-provider` block to subscribe to the events. See the [documentation](#) for more details.
+- All existing events and their payloads are changed. See the [documentation](#) for more details.
+- `lr-data-output` block is removed.
+  - To handle HTML forms you need to use `lr-form-input` block.
+  - Groups output moved to the `lr-upload-ctx-provider` events
+  - Console debugging output now enabled with the `debug` attribute on `lr-config`
+- `lr-message-box` block is removed.
+
 ## [0.31.1](https://github.com/uploadcare/blocks/compare/v0.31.0...v0.31.1) (2024-01-30)
 
 ### Bug Fixes

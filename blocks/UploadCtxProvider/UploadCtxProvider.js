@@ -22,18 +22,18 @@ class UploadCtxProviderClass extends UploaderBlock {
  *   typeof UploadCtxProviderClass,
  *   {
  *     addEventListener<
- *       T extends typeof import('./EventEmitter.js').EventType[keyof typeof import('./EventEmitter.js').EventType]
+ *       T extends (typeof import('./EventEmitter.js').EventType)[keyof typeof import('./EventEmitter.js').EventType],
  *     >(
  *       type: T,
  *       listener: (e: CustomEvent<import('./EventEmitter.js').EventPayload[T]>) => void,
- *       options?: boolean | AddEventListenerOptions
+ *       options?: boolean | AddEventListenerOptions,
  *     ): void;
  *     removeEventListener<
- *       T extends typeof import('./EventEmitter.js').EventType[keyof typeof import('./EventEmitter.js').EventType]
+ *       T extends (typeof import('./EventEmitter.js').EventType)[keyof typeof import('./EventEmitter.js').EventType],
  *     >(
  *       type: T,
  *       listener: (e: CustomEvent<import('./EventEmitter.js').EventPayload[T]>) => void,
- *       options?: boolean | EventListenerOptions
+ *       options?: boolean | EventListenerOptions,
  *     ): void;
  *   }
  * >} UploadCtxProvider

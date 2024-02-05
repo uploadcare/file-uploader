@@ -41,5 +41,4 @@ FileUploaderMinimal.template = /* HTML */ `
     <lr-copyright></lr-copyright>
   </lr-start-from>
   <lr-upload-list ref="uBlock"></lr-upload-list>
-  <lr-message-box></lr-message-box>
 `;

@@ -17,7 +17,7 @@ export class CanMan {
       let url = URL.createObjectURL(
         new Blob([this.svgEl.outerHTML], {
           type: 'image/svg+xml',
-        })
+        }),
       );
       this.vImg.onload = () => {
         this.can.height = this.vImg.height;

@@ -162,7 +162,7 @@ export class CropFrame extends CloudImageEditorBase {
         const thumbSizeMultiplier = clamp(
           Math.min(width, height) / (THUMB_CORNER_SIZE * 2 + THUMB_SIDE_SIZE) / 2,
           0,
-          1
+          1,
         );
 
         let { d, center } = isCorner
@@ -170,11 +170,11 @@ export class CropFrame extends CloudImageEditorBase {
           : sidePath(
               cropBox,
               /** @type {Extract<import('./types.js').Direction, 'n' | 's' | 'w' | 'e'>} */ (direction),
-              thumbSizeMultiplier
+              thumbSizeMultiplier,
             );
         const size = Math.max(
           MAX_INTERACTION_SIZE * clamp(Math.min(width, height) / MAX_INTERACTION_SIZE / 3, 0, 1),
-          MIN_INTERACTION_SIZE
+          MIN_INTERACTION_SIZE,
         );
         setSvgNodeAttrs(interactionNode, {
           x: center[0] - size,
@@ -191,7 +191,7 @@ export class CropFrame extends CloudImageEditorBase {
         classNames('thumb', {
           'thumb--hidden': disableThumb,
           'thumb--visible': !disableThumb,
-        })
+        }),
       );
     }
 
@@ -456,7 +456,7 @@ export class CropFrame extends CloudImageEditorBase {
           classNames('thumb', {
             'thumb--hidden': !visible,
             'thumb--visible': visible,
-          })
+          }),
         );
       });
   }
@@ -492,7 +492,7 @@ export class CropFrame extends CloudImageEditorBase {
           'guides--hidden': this._guidesHidden,
           'guides--visible': !this._guidesHidden && dragging,
           'guides--semi-hidden': !this._guidesHidden && !dragging,
-        })
+        }),
       );
     });
 

@@ -74,7 +74,7 @@ export function initState(fnCtx) {
           detail: eventData,
           bubbles: true,
           composed: true,
-        })
+        }),
       );
       fnCtx.remove();
     },
@@ -85,7 +85,7 @@ export function initState(fnCtx) {
         new CustomEvent('cancel', {
           bubbles: true,
           composed: true,
-        })
+        }),
       );
     },
   };

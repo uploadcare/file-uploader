@@ -15,7 +15,9 @@ lr-progress-bar .progress {
   background-color: var(--clr-accent-light);
   transform: translateX(0);
   opacity: 1;
-  transition: width 0.6s, opacity 0.3s;
+  transition:
+    width 0.6s,
+    opacity 0.3s;
 }
 
 lr-progress-bar .progress--unknown {

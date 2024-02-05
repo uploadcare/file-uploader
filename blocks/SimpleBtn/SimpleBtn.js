@@ -28,7 +28,7 @@ export class SimpleBtn extends UploaderBlock {
           return;
         }
         this.$.withDropZone = asBoolean(val);
-      }
+      },
     );
     this.subConfigValue('multiple', (val) => {
       this.$['*simpleButtonText'] = val ? this.l10n('upload-files') : this.l10n('upload-file');

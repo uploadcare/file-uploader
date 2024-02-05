@@ -35,7 +35,7 @@ describe('template-utils', () => {
       let result = applyTemplateData(
         'My name is {{name}}',
         { name: 'John Doe' },
-        { transform: (value) => value.toUpperCase() }
+        { transform: (value) => value.toUpperCase() },
       );
       expect(result).to.equal('My name is JOHN DOE');
     });
@@ -45,8 +45,8 @@ describe('template-utils', () => {
     it('should return array of plural objects', () => {
       expect(
         getPluralObjects(
-          'Uploading {{filesCount}} {{plural:file(filesCount)}} with {{errorsCount}} {{plural:error(errorsCount)}}'
-        )
+          'Uploading {{filesCount}} {{plural:file(filesCount)}} with {{errorsCount}} {{plural:error(errorsCount)}}',
+        ),
       ).to.deep.equal([
         { variable: 'plural:file(filesCount)', pluralKey: 'file', countVariable: 'filesCount' },
         { variable: 'plural:error(errorsCount)', pluralKey: 'error', countVariable: 'errorsCount' },

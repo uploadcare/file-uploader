@@ -54,7 +54,7 @@ export function shadowed(Base) {
         },
         onTimeout: () => {
           console.error(
-            'Attribute `css-src` is required and it is not set. See migration guide: https://uploadcare.com/docs/file-uploader/migration-to-0.25.0/'
+            'Attribute `css-src` is required and it is not set. See migration guide: https://uploadcare.com/docs/file-uploader/migration-to-0.25.0/',
           );
         },
       });

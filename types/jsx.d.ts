@@ -6,7 +6,7 @@ type Config = import('../index.js').Config;
 type FileUploaderInline = import('../index.js').FileUploaderInline;
 type FileUploaderRegular = import('../index.js').FileUploaderRegular;
 type FileUploaderMinimal = import('../index.js').FileUploaderMinimal;
-type DataOutput = import('../index.js').DataOutput;
+type FormInput = import('../index.js').FormInput;
 type CloudImageEditorBlock = import('../index.js').CloudImageEditorBlock;
 type CtxAttributes = {
   'ctx-name': string;
@@ -46,7 +46,6 @@ declare namespace JSX {
     'lr-url-source': any;
     'lr-camera-source': any;
     'lr-upload-details': any;
-    'lr-message-box': any;
     'lr-confirmation-dialog': any;
     'lr-progress-bar-common': any;
     'lr-progress-bar': any;
@@ -62,7 +61,7 @@ declare namespace JSX {
       CloudImageEditorBlock,
       JSX.IntrinsicElements['lr-cloud-image-editor-block'] & ShadowWrapperAttributes
     >;
-    'lr-data-output': CustomElement<InstanceType<DataOutput>, CtxAttributes>;
+    'lr-form-input': CustomElement<FormInput, CtxAttributes>;
     'lr-file-uploader-regular': CustomElement<FileUploaderRegular, CtxAttributes & ShadowWrapperAttributes>;
     'lr-file-uploader-minimal': CustomElement<FileUploaderMinimal, CtxAttributes & ShadowWrapperAttributes>;
     'lr-file-uploader-inline': CustomElement<FileUploaderInline, CtxAttributes & ShadowWrapperAttributes>;

@@ -56,3 +56,15 @@ lr-upload-list lr-drop-area {
 lr-upload-list lr-activity-header > .header-text {
   padding: 0 var(--gap-mid);
 }
+
+lr-upload-list .common-error {
+  border-radius: var(--border-radius-element);
+  color: var(--clr-error);
+  background-color: var(--clr-error-message-bgr);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--gap-mid);
+  margin: var(--gap-small) var(--gap-mid) 0 var(--gap-mid);
+  font-size: 0.95em;
+}

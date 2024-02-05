@@ -3,55 +3,52 @@
 const DEFAULT_DEBOUNCE_TIMEOUT = 20;
 
 export const EventType = Object.freeze({
-  UPLOAD_START: 'upload-start',
-  REMOVE: 'remove',
-  UPLOAD_PROGRESS: 'upload-progress',
-  UPLOAD_FINISH: 'upload-finish',
-  UPLOAD_ERROR: 'upload-error',
-  VALIDATION_ERROR: 'validation-error',
-  CLOUD_MODIFICATION: 'cloud-modification',
-  DATA_OUTPUT: 'data-output',
-  DONE_FLOW: 'done-flow',
-  INIT_FLOW: 'init-flow',
-});
+  FILE_ADDED: 'file-added',
+  FILE_REMOVED: 'file-removed',
+  FILE_UPLOAD_START: 'file-upload-start',
+  FILE_UPLOAD_PROGRESS: 'file-upload-progress',
+  FILE_UPLOAD_SUCCESS: 'file-upload-success',
+  FILE_UPLOAD_FAILED: 'file-upload-failed',
+  FILE_URL_CHANGED: 'file-url-changed',
 
-/** Those are legacy events that are saved for backward compatibility. Should be removed before v1. */
-export const GlobalEventType = Object.freeze({
-  [EventType.UPLOAD_START]: 'LR_UPLOAD_START',
-  [EventType.REMOVE]: 'LR_REMOVE',
-  [EventType.UPLOAD_PROGRESS]: 'LR_UPLOAD_PROGRESS',
-  [EventType.UPLOAD_FINISH]: 'LR_UPLOAD_FINISH',
-  [EventType.UPLOAD_ERROR]: 'LR_UPLOAD_ERROR',
-  [EventType.VALIDATION_ERROR]: 'LR_VALIDATION_ERROR',
-  [EventType.CLOUD_MODIFICATION]: 'LR_CLOUD_MODIFICATION',
-  [EventType.DATA_OUTPUT]: 'LR_DATA_OUTPUT',
-  [EventType.DONE_FLOW]: 'LR_DONE_FLOW',
-  [EventType.INIT_FLOW]: 'LR_INIT_FLOW',
+  MODAL_OPEN: 'modal-open',
+  MODAL_CLOSE: 'modal-close',
+  DONE_CLICK: 'done-click',
+  UPLOAD_CLICK: 'upload-click',
+  ACTIVITY_CHANGE: 'activity-change',
+
+  COMMON_UPLOAD_START: 'common-upload-start',
+  COMMON_UPLOAD_PROGRESS: 'common-upload-progress',
+  COMMON_UPLOAD_SUCCESS: 'common-upload-success',
+  COMMON_UPLOAD_FAILED: 'common-upload-failed',
+
+  CHANGE: 'change',
+  GROUP_CREATED: 'group-created',
 });
 
 /**
  * @typedef {{
- *   [EventType.UPLOAD_START]: import('../../index.js').OutputFileEntry[];
- *   [EventType.REMOVE]: import('../../index.js').OutputFileEntry[];
- *   [EventType.UPLOAD_PROGRESS]: number;
- *   [EventType.UPLOAD_FINISH]: import('../../index.js').OutputFileEntry[];
- *   [EventType.UPLOAD_ERROR]: Error | null;
- *   [EventType.VALIDATION_ERROR]: string | null;
- *   [EventType.CLOUD_MODIFICATION]: string | null;
- *   [EventType.DATA_OUTPUT]: import('../../index.js').OutputFileEntry[];
- *   [EventType.DONE_FLOW]: never;
- *   [EventType.INIT_FLOW]: never;
- * }} EventPayload
- */
-
-/**
- * @typedef {{
- *   [T in (typeof EventType)[keyof typeof EventType] as (typeof GlobalEventType)[T]]: {
- *     type: (typeof GlobalEventType)[T];
- *     ctx: string;
- *     data: EventPayload[T];
+ *   [EventType.FILE_ADDED]: import('../../index.js').OutputFileEntry<'idle'>;
+ *   [EventType.FILE_REMOVED]: import('../../index.js').OutputFileEntry<'removed'>;
+ *   [EventType.FILE_UPLOAD_START]: import('../../index.js').OutputFileEntry<'uploading'>;
+ *   [EventType.FILE_UPLOAD_PROGRESS]: import('../../index.js').OutputFileEntry<'uploading'>;
+ *   [EventType.FILE_UPLOAD_SUCCESS]: import('../../index.js').OutputFileEntry<'success'>;
+ *   [EventType.FILE_UPLOAD_FAILED]: import('../../index.js').OutputFileEntry<'failed'>;
+ *   [EventType.FILE_URL_CHANGED]: import('../../index.js').OutputFileEntry<'success'>;
+ *   [EventType.MODAL_OPEN]: void;
+ *   [EventType.MODAL_CLOSE]: void;
+ *   [EventType.ACTIVITY_CHANGE]: {
+ *     activity: import('../../abstract/ActivityBlock.js').ActivityType;
  *   };
- * }} GlobalEventPayload
+ *   [EventType.UPLOAD_CLICK]: void;
+ *   [EventType.DONE_CLICK]: import('../../index.js').OutputCollectionState;
+ *   [EventType.COMMON_UPLOAD_START]: import('../../index.js').OutputCollectionState<'uploading'>;
+ *   [EventType.COMMON_UPLOAD_PROGRESS]: import('../../index.js').OutputCollectionState<'uploading'>;
+ *   [EventType.COMMON_UPLOAD_SUCCESS]: import('../../index.js').OutputCollectionState<'success'>;
+ *   [EventType.COMMON_UPLOAD_FAILED]: import('../../index.js').OutputCollectionState<'failed'>;
+ *   [EventType.CHANGE]: import('../../index.js').OutputCollectionState;
+ *   [EventType.GROUP_CREATED]: import('../../index.js').OutputCollectionState<'success', 'has-group'>;
+ * }} EventPayload
  */
 
 export class EventEmitter {
@@ -61,17 +58,21 @@ export class EventEmitter {
    */
   _timeoutStore = new Map();
 
-  /** @type {Set<import('../../abstract/Block.js').Block>} */
+  /**
+   * @private
+   * @type {Set<import('../../abstract/Block.js').Block>}
+   */
   _targets = new Set();
 
-  /** @param {() => string} getCtxName */
-  constructor(getCtxName) {
-    /** @private */
-    this._getCtxName = getCtxName;
-    /**
-     * @private
-     * @type {import('../../abstract/Block.js').Block}
-     */
+  /**
+   * @private
+   * @type {((...args: unknown[]) => void) | null}
+   */
+  _debugPrint = null;
+
+  /** @param {(...args: unknown[]) => void} debugPrint */
+  constructor(debugPrint) {
+    this._debugPrint = debugPrint;
   }
 
   /** @param {import('../../abstract/Block.js').Block} target */
@@ -88,48 +89,42 @@ export class EventEmitter {
    * @private
    * @template {(typeof EventType)[keyof typeof EventType]} T
    * @param {T} type
-   * @param {EventPayload[T]} [payload]
+   * @param {unknown} [payload]
    */
   _dispatch(type, payload) {
     for (const target of this._targets) {
       target.dispatchEvent(
         new CustomEvent(type, {
           detail: payload,
-        })
+        }),
       );
     }
 
-    const globalEventType = GlobalEventType[type];
-    window.dispatchEvent(
-      new CustomEvent(globalEventType, {
-        detail: {
-          ctx: this._getCtxName(),
-          type: globalEventType,
-          data: payload,
-        },
-      })
-    );
+    this._debugPrint?.(() => {
+      const copyPayload = !!payload && typeof payload === 'object' ? { ...payload } : payload;
+      return [`event "${type}"`, copyPayload];
+    });
   }
 
   /**
    * @template {(typeof EventType)[keyof typeof EventType]} T
+   * @template {boolean | number | undefined} TDebounce
    * @param {T} type
-   * @param {EventPayload[T]} [payload]
-   * @param {{ debounce?: boolean | number }} [options]
+   * @param {TDebounce extends false | undefined ? unknown : () => unknown} [payload]
+   * @param {{ debounce?: TDebounce }} [options]
    */
   emit(type, payload, { debounce } = {}) {
     if (typeof debounce !== 'number' && !debounce) {
-      this._dispatch(type, payload);
+      this._dispatch(type, typeof payload === 'function' ? payload() : payload);
       return;
     }
 
-    // TODO: remove debounce after events refactor
     if (this._timeoutStore.has(type)) {
       window.clearTimeout(this._timeoutStore.get(type));
     }
     const timeout = typeof debounce === 'number' ? debounce : DEFAULT_DEBOUNCE_TIMEOUT;
     const timeoutId = window.setTimeout(() => {
-      this._dispatch(type, payload);
+      this._dispatch(type, typeof payload === 'function' ? payload() : payload);
       this._timeoutStore.delete(type);
     }, timeout);
     this._timeoutStore.set(type, timeoutId);

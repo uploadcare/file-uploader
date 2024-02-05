@@ -1,9 +1,8 @@
 // @ts-check
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 import { UploaderBlock } from '../../abstract/UploaderBlock.js';
-import { UiMessage } from '../MessageBox/MessageBox.js';
 import { EventType } from '../UploadCtxProvider/EventEmitter.js';
-import { debounce } from '../utils/debounce.js';
+import { throttle } from '../utils/throttle.js';
 
 /**
  * @typedef {{
@@ -11,7 +10,6 @@ import { debounce } from '../utils/debounce.js';
  *   succeed: number;
  *   uploading: number;
  *   failed: number;
- *   limitOverflow: number;
  * }} Summary
  */
 
@@ -33,120 +31,55 @@ export class UploadList extends UploaderBlock {
       addMoreBtnVisible: false,
       addMoreBtnEnabled: false,
       headerText: '',
+      commonErrorMessage: '',
 
       hasFiles: false,
       onAdd: () => {
         this.initFlow(true);
       },
       onUpload: () => {
+        this.emit(EventType.UPLOAD_CLICK);
         this.uploadAll();
-        this._updateUploadsState();
+        this._throttledHandleCollectionUpdate();
       },
       onDone: () => {
+        this.emit(EventType.DONE_CLICK, this.getOutputCollectionState());
         this.doneFlow();
       },
       onCancel: () => {
-        let data = this.getOutputData((dataItem) => {
-          return !!dataItem.getValue('fileInfo');
-        });
-        this.emit(EventType.REMOVE, data, { debounce: true });
         this.uploadCollection.clearAll();
       },
     };
   }
 
-  _debouncedHandleCollectionUpdate = debounce(() => {
+  /** @private */
+  _throttledHandleCollectionUpdate = throttle(() => {
     if (!this.isConnected) {
       return;
     }
     this._updateUploadsState();
-    this._updateCountLimitMessage();
 
     if (!this.couldOpenActivity && this.$['*currentActivity'] === this.activityType) {
       this.historyBack();
     }
-  }, 0);
-
-  /**
-   * @private
-   * @returns {{ passed: Boolean; tooFew: Boolean; tooMany: Boolean; exact: Boolean; min: Number; max: Number }}
-   */
-  _validateFilesCount() {
-    let multiple = !!this.cfg.multiple;
-    let min = multiple ? this.cfg.multipleMin ?? 0 : 1;
-    let max = multiple ? this.cfg.multipleMax ?? 0 : 1;
-    let count = this.uploadCollection.size;
-
-    let tooFew = min ? count < min : false;
-    let tooMany = max ? count > max : false;
-    let passed = !tooFew && !tooMany;
-    let exact = max === count;
-
-    return {
-      passed,
-      tooFew,
-      tooMany,
-      min,
-      max,
-      exact,
-    };
-  }
-
-  /** @private */
-  _updateCountLimitMessage() {
-    let filesCount = this.uploadCollection.size;
-    let countValidationResult = this._validateFilesCount();
-    if (filesCount && !countValidationResult.passed) {
-      let msg = new UiMessage();
-      let textKey = countValidationResult.tooFew
-        ? 'files-count-limit-error-too-few'
-        : 'files-count-limit-error-too-many';
-      msg.caption = this.l10n('files-count-limit-error-title');
-      msg.text = this.l10n(textKey, {
-        min: countValidationResult.min,
-        max: countValidationResult.max,
-        total: filesCount,
-      });
-      msg.isError = true;
-      this.set$({
-        '*message': msg,
-      });
-    } else {
-      this.set$({
-        '*message': null,
-      });
-    }
-  }
+  }, 300);
 
   /** @private */
   _updateUploadsState() {
-    let itemIds = this.uploadCollection.items();
-    let filesCount = itemIds.length;
+    const collectionState = this.getOutputCollectionState();
     /** @type {Summary} */
-    let summary = {
-      total: filesCount,
-      succeed: 0,
-      uploading: 0,
-      failed: 0,
-      limitOverflow: 0,
+    const summary = {
+      total: collectionState.totalCount,
+      succeed: collectionState.successCount,
+      uploading: collectionState.uploadingCount,
+      failed: collectionState.failedCount,
     };
-    for (let id of itemIds) {
-      let item = this.uploadCollection.read(id);
-      if (item.getValue('fileInfo') && !item.getValue('validationErrorMsg')) {
-        summary.succeed += 1;
-      }
-      if (item.getValue('isUploading')) {
-        summary.uploading += 1;
-      }
-      if (item.getValue('validationErrorMsg') || item.getValue('uploadError')) {
-        summary.failed += 1;
-      }
-      if (item.getValue('validationMultipleLimitMsg')) {
-        summary.limitOverflow += 1;
-      }
-    }
-    const { passed: fitCountRestrictions, tooMany, exact } = this._validateFilesCount();
-    const validationOk = summary.failed === 0 && summary.limitOverflow === 0;
+    const fitCountRestrictions = !collectionState.errors.some(
+      (err) => err.type === 'TOO_MANY_FILES' || err.type === 'TOO_FEW_FILES',
+    );
+    const tooMany = collectionState.errors.some((err) => err.type === 'TOO_MANY_FILES');
+    const exact = collectionState.totalCount === (this.cfg.multiple ? this.cfg.multipleMax : 1);
+    const validationOk = summary.failed === 0;
     let uploadBtnVisible = false;
     let allDone = false;
     let doneBtnEnabled = false;
@@ -206,9 +139,9 @@ export class UploadList extends UploaderBlock {
 
     this.registerActivity(this.activityType);
 
-    this.subConfigValue('multiple', this._debouncedHandleCollectionUpdate);
-    this.subConfigValue('multipleMin', this._debouncedHandleCollectionUpdate);
-    this.subConfigValue('multipleMax', this._debouncedHandleCollectionUpdate);
+    this.subConfigValue('multiple', this._throttledHandleCollectionUpdate);
+    this.subConfigValue('multipleMin', this._throttledHandleCollectionUpdate);
+    this.subConfigValue('multipleMax', this._throttledHandleCollectionUpdate);
 
     this.sub('*currentActivity', (currentActivity) => {
       if (!this.couldOpenActivity && currentActivity === this.activityType) {
@@ -218,29 +151,45 @@ export class UploadList extends UploaderBlock {
 
     // TODO: could be performance issue on many files
     // there is no need to update buttons state on every progress tick
-    this.uploadCollection.observeProperties(this._debouncedHandleCollectionUpdate);
+    this.uploadCollection.observeProperties(this._throttledHandleCollectionUpdate);
 
-    this.sub('*uploadList', (list) => {
-      this._debouncedHandleCollectionUpdate();
+    this.sub(
+      '*uploadList',
+      (list) => {
+        this._throttledHandleCollectionUpdate();
 
-      this.set$({
-        hasFiles: list.length > 0,
-      });
+        this.set$({
+          hasFiles: list.length > 0,
+        });
 
-      if (!this.cfg.confirmUpload) {
-        this.add$(
-          {
-            '*uploadTrigger': {},
-          },
-          true
-        );
-      }
-    });
+        if (!this.cfg.confirmUpload) {
+          this.uploadAll();
+        }
+      },
+      false,
+    );
+
+    this.sub(
+      '*collectionErrors',
+      /** @param {import('../../types').OutputError<import('../../types').OutputCollectionErrorType>[]} errors */
+      (errors) => {
+        const firstError = errors.filter((err) => err.type !== 'SOME_FILES_HAS_ERRORS')[0];
+        if (!firstError) {
+          this.set$({
+            commonErrorMessage: null,
+          });
+          return;
+        }
+        this.set$({
+          commonErrorMessage: firstError.message,
+        });
+      },
+    );
   }
 
   destroyCallback() {
     super.destroyCallback();
-    this.uploadCollection.unobserveProperties(this._debouncedHandleCollectionUpdate);
+    this.uploadCollection.unobserveProperties(this._throttledHandleCollectionUpdate);
   }
 }
 
@@ -257,6 +206,8 @@ UploadList.template = /* HTML */ `
   </div>
 
   <div class="files" repeat="*uploadList" repeat-item-tag="lr-file-item"></div>
+
+  <div class="common-error" set="@hidden: !commonErrorMessage; textContent: commonErrorMessage;"></div>
 
   <div class="toolbar">
     <button type="button" class="cancel-btn secondary-btn" set="onclick: onCancel;" l10n="clear"></button>

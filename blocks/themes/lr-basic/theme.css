@@ -85,7 +85,7 @@
   --clr-error: hsl(var(--h-error), var(--s-error), var(--l-error));
   --clr-error-light: hsla(var(--h-error), var(--s-error), var(--l-error), 15%);
   --clr-error-lightest: hsla(var(--h-error), var(--s-error), var(--l-error), 5%);
-  --clr-error-message-bgr: hsl(var(--h-error), var(--s-error), calc(var(--l-error) + 60% * var(--darkmode-minus)));
+  --clr-error-message-bgr: hsl(var(--h-error), var(--s-error), calc(var(--l-error) + 31% * var(--darkmode-minus)));
 
   --clr-txt: hsl(var(--h-foreground), var(--s-foreground), var(--l-foreground));
   --clr-txt-mid: hsl(var(--h-foreground), var(--s-foreground), calc(var(--l-foreground) + 20% * var(--darkmode-minus)));

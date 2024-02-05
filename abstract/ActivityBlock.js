@@ -1,5 +1,6 @@
 // @ts-check
 import { debounce } from '../blocks/utils/debounce.js';
+import { EventType } from '../blocks/UploadCtxProvider/EventEmitter.js';
 import { Block } from './Block.js';
 import { activityBlockCtx } from './CTX.js';
 
@@ -19,7 +20,6 @@ export class ActivityBlock extends Block {
     this[ACTIVE_PROP] = false;
     this.removeAttribute(ACTIVE_ATTR);
     actDesc?.deactivateCallback?.();
-    // console.log(`Activity "${this.activityType}" deactivated`);
   }
 
   /** @private */
@@ -31,9 +31,12 @@ export class ActivityBlock extends Block {
     this[ACTIVE_PROP] = true;
     this.setAttribute(ACTIVE_ATTR, '');
     actDesc?.activateCallback?.();
-    // console.log(`Activity "${this.activityType}" activated`);
 
     this._debouncedHistoryFlush();
+
+    this.emit(EventType.ACTIVITY_CHANGE, {
+      activity: this.activityType,
+    });
   }
 
   initCallback() {
@@ -186,7 +189,6 @@ export class ActivityBlock extends Block {
   }
 }
 
-/** @enum {String} */
 ActivityBlock.activities = Object.freeze({
   START_FROM: 'start-from',
   CAMERA: 'camera',
@@ -198,3 +200,5 @@ ActivityBlock.activities = Object.freeze({
   EXTERNAL: 'external',
   DETAILS: 'details',
 });
+
+/** @typedef {(typeof ActivityBlock)['activities'][keyof (typeof ActivityBlock)['activities']] | null} ActivityType */

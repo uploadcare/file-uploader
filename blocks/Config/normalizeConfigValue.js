@@ -30,7 +30,7 @@ const asStore = (value) => (value === 'auto' ? value : asBoolean(value));
 /**
  * @type {{
  *   [Key in keyof import('../../types').ConfigPlainType]: (
- *     value: unknown
+ *     value: unknown,
  *   ) => import('../../types').ConfigType[Key] | undefined;
  * }}
  */
@@ -79,6 +79,7 @@ const mapping = {
 
   groupOutput: asBoolean,
   userAgentIntegration: asString,
+  debug: asBoolean,
 };
 
 /**

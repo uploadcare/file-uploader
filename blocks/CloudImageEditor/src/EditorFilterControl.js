@@ -38,8 +38,8 @@ export class EditorFilterControl extends EditorButtonControl {
         COMMON_OPERATIONS,
         transformationsToOperations(transformations),
         `quality/${quality}`,
-        `scale_crop/${size}x${size}/center`
-      )
+        `scale_crop/${size}x${size}/center`,
+      ),
     );
   }
 

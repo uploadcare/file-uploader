@@ -114,7 +114,7 @@ export function moveRect({ rect, delta: [dx, dy], imageBox }) {
       x: rect.x + dx,
       y: rect.y + dy,
     },
-    imageBox
+    imageBox,
   );
 }
 

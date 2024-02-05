@@ -12,15 +12,21 @@ import { UploadcareFile } from '@uploadcare/upload-client';
  * @property {String} uuid
  * @property {Boolean} isImage
  * @property {String} mimeType
- * @property {Error} uploadError
- * @property {String} validationErrorMsg
  * @property {String} ctxName
  * @property {String} cdnUrl
  * @property {String} cdnUrlModifiers
  * @property {UploadcareFile} fileInfo
  * @property {Boolean} isUploading
  * @property {String} thumbUrl
- * @property {Boolean} silentUpload
+ * @property {Boolean} silent
+ * @property {({
+ *   type: import('..').OutputFileErrorType | import('..').OutputCollectionErrorType;
+ *   message: string;
+ * } & Record<string, unknown>)[]} errors
+ * @property {Error | null} uploadError
+ * @property {string | null} fullPath
+ * @property {import('@uploadcare/upload-client').Metadata | null} metadata
+ * @property {boolean} isRemoved
  */
 
 /**
@@ -67,22 +73,6 @@ export const uploadEntrySchema = Object.freeze({
     value: null,
     nullable: true,
   },
-  uploadError: {
-    // TODO: there could be Error or UploadcareClientError
-    type: Error,
-    value: null,
-    nullable: true,
-  },
-  validationErrorMsg: {
-    type: String,
-    value: null,
-    nullable: true,
-  },
-  validationMultipleLimitMsg: {
-    type: String,
-    value: null,
-    nullable: true,
-  },
   ctxName: {
     type: String,
     value: null,
@@ -113,7 +103,7 @@ export const uploadEntrySchema = Object.freeze({
     value: null,
     nullable: true,
   },
-  silentUpload: {
+  silent: {
     type: Boolean,
     value: false,
   },
@@ -126,5 +116,23 @@ export const uploadEntrySchema = Object.freeze({
     type: String,
     value: null,
     nullable: true,
+  },
+  metadata: {
+    type: Object,
+    value: null,
+    nullable: true,
+  },
+  errors: {
+    type: Array,
+    value: [],
+  },
+  uploadError: {
+    type: Error,
+    value: null,
+    nullable: true,
+  },
+  isRemoved: {
+    type: Boolean,
+    value: false,
   },
 });

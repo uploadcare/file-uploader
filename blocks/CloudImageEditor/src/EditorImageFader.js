@@ -13,7 +13,7 @@ import { viewerImageSrc } from './util.js';
 function splitBySections(numbers) {
   return numbers.reduce(
     (acc, point, idx) => (idx < numbers.length - 1 ? [...acc, [point, numbers[idx + 1]]] : acc),
-    []
+    [],
   );
 }
 
@@ -56,7 +56,7 @@ function keypointsRange(operation, value) {
   let { range, zero } = COLOR_OPERATIONS_CONFIG[operation];
 
   return [...new Set([...linspace(range[0], zero, n + 1), ...linspace(zero, range[1], n + 1), zero, value])].sort(
-    (a, b) => a - b
+    (a, b) => a - b,
   );
 }
 
@@ -219,7 +219,7 @@ export class EditorImageFader extends CloudImageEditorBase {
         this._container.insertBefore(image, insertBeforeNode);
         this._update(operation, value);
       },
-      { once: true }
+      { once: true },
     );
 
     image.addEventListener(
@@ -227,7 +227,7 @@ export class EditorImageFader extends CloudImageEditorBase {
       () => {
         this.$['*networkProblems'] = true;
       },
-      { once: true }
+      { once: true },
     );
   }
 
@@ -323,7 +323,7 @@ export class EditorImageFader extends CloudImageEditorBase {
         () => {
           this.$['*networkProblems'] = true;
         },
-        { once: true }
+        { once: true },
       );
     }
   }
@@ -379,14 +379,14 @@ export class EditorImageFader extends CloudImageEditorBase {
           });
         }
       },
-      { once: true }
+      { once: true },
     );
     image.addEventListener(
       'error',
       () => {
         this.$['*networkProblems'] = true;
       },
-      { once: true }
+      { once: true },
     );
   }
 
@@ -442,7 +442,7 @@ export class EditorImageFader extends CloudImageEditorBase {
         () => {
           this._container && this._container.remove();
         },
-        { once: true }
+        { once: true },
       );
     } else {
       this._container && this._container.remove();

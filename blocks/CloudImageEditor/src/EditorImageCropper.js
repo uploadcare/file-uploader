@@ -184,7 +184,7 @@ export class EditorImageCropper extends CloudImageEditorBase {
           width: width * ratio,
           height: height * ratio,
         }),
-        this.$['*imageBox']
+        this.$['*imageBox'],
       );
     }
 
@@ -352,7 +352,6 @@ export class EditorImageCropper extends CloudImageEditorBase {
    * @returns {void}
    */
   setValue(operation, value) {
-    console.log(`Apply cropper operation [${operation}=${value}]`);
     this.$['*operations'] = {
       ...this.$['*operations'],
       [operation]: value,

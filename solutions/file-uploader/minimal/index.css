@@ -13,7 +13,6 @@
 @import url('../../../blocks/FileItem/file-item.css');
 @import url('../../../blocks/Icon/icon.css');
 @import url('../../../blocks/ProgressBar/progress-bar.css');
-@import url('../../../blocks/MessageBox/message-box.css');
 @import url('../../../blocks/Copyright/copyright.css');
 @import url('../../../blocks/themes/lr-basic/l10n.css');
 
@@ -146,4 +145,8 @@ lr-upload-list lr-drop-area {
   height: 100%;
   margin: 0;
   border-radius: var(--border-radius-frame);
+}
+
+lr-upload-list .common-error {
+  margin: var(--gap-small) 0 0 0;
 }

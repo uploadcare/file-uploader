@@ -20,6 +20,8 @@ export class Block extends BaseComponent {
   static className = '';
   requireCtxName = false;
   allowCustomTemplate = true;
+  /** @type {import('./ActivityBlock.js').ActivityType} */
+  activityType = null;
 
   init$ = blockCtx();
 
@@ -37,7 +39,7 @@ export class Block extends BaseComponent {
     for (let pluralObject of pluralObjects) {
       variables[pluralObject.variable] = this.pluralize(
         pluralObject.pluralKey,
-        Number(variables[pluralObject.countVariable])
+        Number(variables[pluralObject.countVariable]),
       );
     }
     let result = applyTemplateData(template, variables);
@@ -57,9 +59,6 @@ export class Block extends BaseComponent {
 
   constructor() {
     super();
-    /** @type {String} */
-    // @ts-ignore TODO: fix this
-    this.activityType = null;
     // @ts-ignore TODO: fix this
     this.addTemplateProcessor(l10nProcessor);
     // TODO: inspect template on lr-* elements
@@ -79,10 +78,9 @@ export class Block extends BaseComponent {
   }
 
   /**
-   * @template {typeof import('../blocks/UploadCtxProvider/EventEmitter.js').EventType[keyof typeof import('../blocks/UploadCtxProvider/EventEmitter.js').EventType]} T
-   * @param {T} type
-   * @param {import('../blocks/UploadCtxProvider/EventEmitter.js').EventPayload[T]} [payload]
-   * @param {{ debounce?: boolean | number }} [options]
+   * @param {Parameters<import('../blocks/UploadCtxProvider/EventEmitter.js').EventEmitter['emit']>[0]} type
+   * @param {Parameters<import('../blocks/UploadCtxProvider/EventEmitter.js').EventEmitter['emit']>[1]} [payload]
+   * @param {Parameters<import('../blocks/UploadCtxProvider/EventEmitter.js').EventEmitter['emit']>[2]} [options]
    */
   emit(type, payload, options) {
     /** @type {import('../blocks/UploadCtxProvider/EventEmitter.js').EventEmitter} */
@@ -128,11 +126,11 @@ export class Block extends BaseComponent {
       {
         [prop]: newVal,
       },
-      true
+      true,
     );
   }
 
-  /** @param {String} activityType */
+  /** @param {import('./ActivityBlock.js').ActivityType} activityType */
   setActivity(activityType) {
     if (this.hasBlockInCtx((b) => b.activityType === activityType)) {
       this.$['*currentActivity'] = activityType;
@@ -182,7 +180,7 @@ export class Block extends BaseComponent {
     blocksRegistry.add(this);
 
     if (!this.$['*eventEmitter']) {
-      this.$['*eventEmitter'] = new EventEmitter(() => this.ctxName);
+      this.$['*eventEmitter'] = new EventEmitter(this.debugPrint.bind(this));
     }
   }
 
@@ -246,7 +244,7 @@ export class Block extends BaseComponent {
     return applyTemplateData(
       previewProxy,
       { previewUrl: url },
-      { transform: (value) => window.encodeURIComponent(value) }
+      { transform: (value) => window.encodeURIComponent(value) },
     );
   }
 
@@ -286,7 +284,7 @@ export class Block extends BaseComponent {
             return parsed.ctx.read(parsed.name);
           } else {
             warnOnce(
-              'Using CSS variables for configuration is deprecated. Please use `lr-config` instead. See migration guide: https://uploadcare.com/docs/file-uploader/migration-to-0.25.0/'
+              'Using CSS variables for configuration is deprecated. Please use `lr-config` instead. See migration guide: https://uploadcare.com/docs/file-uploader/migration-to-0.25.0/',
             );
             return this.getCssData(`--cfg-${toKebabCase(key)}`);
           }
@@ -314,7 +312,7 @@ export class Block extends BaseComponent {
   /** @deprecated */
   updateCtxCssData = () => {
     warnOnce(
-      'Using CSS variables for configuration is deprecated. Please use `lr-config` instead. See migration guide: https://uploadcare.com/docs/file-uploader/migration-to-0.25.0/'
+      'Using CSS variables for configuration is deprecated. Please use `lr-config` instead. See migration guide: https://uploadcare.com/docs/file-uploader/migration-to-0.25.0/',
     );
 
     /** @type {Set<Block>} */
@@ -325,6 +323,23 @@ export class Block extends BaseComponent {
       }
     }
   };
+
+  /** @param {unknown[]} args */
+  debugPrint(...args) {
+    if (!this.cfg.debug) {
+      return;
+    }
+    let consoleArgs = args;
+    if (typeof args?.[0] === 'function') {
+      const resolver = args[0];
+      consoleArgs = resolver();
+    }
+    console.log(`[${this.debugCtxName}]`, ...consoleArgs);
+  }
+
+  get debugCtxName() {
+    return this.ctxName;
+  }
 
   /** @param {String} [name] */
   static reg(name) {

@@ -1,0 +1,11 @@
+lr-form-input {
+  display: grid;
+}
+
+lr-form-input > input {
+  display: none;
+}
+
+lr-form-input > img {
+  height: 100px;
+}

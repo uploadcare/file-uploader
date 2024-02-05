@@ -2,6 +2,7 @@
 import { ActivityBlock } from './ActivityBlock.js';
 
 import { Data } from '@symbiotejs/symbiote';
+import { NetworkError, UploadError, uploadFileGroup } from '@uploadcare/upload-client';
 import { calculateMaxCenteredCropFrame } from '../blocks/CloudImageEditor/src/crop-utils.js';
 import { parseCropPreset } from '../blocks/CloudImageEditor/src/lib/parseCropPreset.js';
 import { EventType } from '../blocks/UploadCtxProvider/EventEmitter.js';
@@ -9,6 +10,7 @@ import { UploadSource } from '../blocks/utils/UploadSource.js';
 import { serializeCsv } from '../blocks/utils/comma-separated.js';
 import { debounce } from '../blocks/utils/debounce.js';
 import { customUserAgent } from '../blocks/utils/userAgent.js';
+import { buildCollectionFileError, buildOutputFileError } from '../utils/buildOutputError.js';
 import { createCdnUrl, createCdnUrlModifiers } from '../utils/cdn-utils.js';
 import { IMAGE_ACCEPT_LIST, fileIsImage, matchExtension, matchMimeType, mergeFileTypes } from '../utils/fileTypes.js';
 import { prettyBytes } from '../utils/prettyBytes.js';
@@ -16,7 +18,9 @@ import { stringToArray } from '../utils/stringToArray.js';
 import { warnOnce } from '../utils/warnOnce.js';
 import { uploaderBlockCtx } from './CTX.js';
 import { TypedCollection } from './TypedCollection.js';
+import { buildOutputCollectionState } from './buildOutputCollectionState.js';
 import { uploadEntrySchema } from './uploadEntrySchema.js';
+import { throttle } from '../blocks/utils/throttle.js';
 
 export class UploaderBlock extends ActivityBlock {
   couldBeCtxOwner = false;
@@ -27,12 +31,72 @@ export class UploaderBlock extends ActivityBlock {
   /** @private */
   __initialUploadMetadata = null;
 
-  /** @private */
-  _validators = [
-    this._validateMultipleLimit.bind(this),
+  /**
+   * @private
+   * @type {((
+   *   outputEntry: import('../types').OutputFileEntry,
+   *   internalEntry?: import('./TypedData.js').TypedData,
+   * ) => undefined | ReturnType<typeof import('../utils/buildOutputError.js').buildOutputFileError>)[]}
+   */
+  _fileValidators = [
     this._validateIsImage.bind(this),
     this._validateFileType.bind(this),
     this._validateMaxSizeLimit.bind(this),
+    this._validateUploadError.bind(this),
+  ];
+
+  /**
+   * @private
+   * @type {((
+   *   collection: TypedCollection,
+   * ) =>
+   *   | undefined
+   *   | ReturnType<typeof import('../utils/buildOutputError.js').buildCollectionFileError>
+   *   | ReturnType<typeof import('../utils/buildOutputError.js').buildCollectionFileError>[])[]}
+   */
+  _collectionValidators = [
+    (collection) => {
+      const total = collection.size;
+      const multipleMin = this.cfg.multiple ? this.cfg.multipleMin : 0;
+      const multipleMax = this.cfg.multiple ? this.cfg.multipleMax : 1;
+      if (multipleMin && total < multipleMin) {
+        const message = this.l10n('files-count-limit-error-too-few', {
+          min: multipleMin,
+          max: multipleMax,
+          total,
+        });
+        return buildCollectionFileError({
+          type: 'TOO_FEW_FILES',
+          message,
+          total,
+          min: multipleMin,
+          max: multipleMax,
+        });
+      }
+
+      if (multipleMax && total > multipleMax) {
+        const message = this.l10n('files-count-limit-error-too-many', {
+          min: multipleMin,
+          max: multipleMax,
+          total,
+        });
+        return buildCollectionFileError({
+          type: 'TOO_MANY_FILES',
+          message,
+          total,
+          min: multipleMin,
+          max: multipleMax,
+        });
+      }
+    },
+    (collection) => {
+      if (collection.items().some((id) => collection.readProp(id, 'errors').length > 0)) {
+        return buildCollectionFileError({
+          type: 'SOME_FILES_HAS_ERRORS',
+          message: this.l10n('some-files-were-not-uploaded'),
+        });
+      }
+    },
   ];
 
   /**
@@ -48,7 +112,7 @@ export class UploaderBlock extends ActivityBlock {
    */
   setUploadMetadata(metadata) {
     warnOnce(
-      'setUploadMetadata is deprecated. Use `metadata` instance property on `lr-config` block instead. See migration guide: https://uploadcare.com/docs/file-uploader/migration-to-0.25.0/'
+      'setUploadMetadata is deprecated. Use `metadata` instance property on `lr-config` block instead. See migration guide: https://uploadcare.com/docs/file-uploader/migration-to-0.25.0/',
     );
     if (!this.connectedOnce) {
       // @ts-ignore TODO: fix this
@@ -73,14 +137,7 @@ export class UploaderBlock extends ActivityBlock {
     if (!this.$['*uploadCollection']) {
       let uploadCollection = new TypedCollection({
         typedSchema: uploadEntrySchema,
-        watchList: [
-          'uploadProgress',
-          'fileInfo',
-          'uploadError',
-          'validationErrorMsg',
-          'validationMultipleLimitMsg',
-          'cdnUrlModifiers',
-        ],
+        watchList: ['uploadProgress', 'fileInfo', 'errors', 'cdnUrl', 'isUploading'],
       });
       this.$['*uploadCollection'] = uploadCollection;
     }
@@ -103,19 +160,24 @@ export class UploaderBlock extends ActivityBlock {
     this.isCtxOwner = true;
 
     /** @private */
-    this._unobserveCollection = this.uploadCollection.observeCollection(this._handleCollectonUpdate);
+    this._unobserveCollection = this.uploadCollection.observeCollection(this._handleCollectionUpdate);
 
     /** @private */
     this._unobserveCollectionProperties = this.uploadCollection.observeProperties(
-      this._handleCollectionPropertiesUpdate
+      this._handleCollectionPropertiesUpdate,
     );
 
-    this.subConfigValue('maxLocalFileSizeBytes', () => this._debouncedRunValidators());
-    this.subConfigValue('multipleMin', () => this._debouncedRunValidators());
-    this.subConfigValue('multipleMax', () => this._debouncedRunValidators());
-    this.subConfigValue('multiple', () => this._debouncedRunValidators());
-    this.subConfigValue('imgOnly', () => this._debouncedRunValidators());
-    this.subConfigValue('accept', () => this._debouncedRunValidators());
+    const runAllValidators = () => {
+      this._runFileValidators();
+      this._runCollectionValidators();
+    };
+
+    this.subConfigValue('maxLocalFileSizeBytes', runAllValidators);
+    this.subConfigValue('multipleMin', runAllValidators);
+    this.subConfigValue('multipleMax', runAllValidators);
+    this.subConfigValue('multiple', runAllValidators);
+    this.subConfigValue('imgOnly', runAllValidators);
+    this.subConfigValue('accept', runAllValidators);
     this.subConfigValue('maxConcurrentRequests', (value) => {
       this.$['*uploadQueue'].concurrency = Number(value) || 1;
     });
@@ -130,69 +192,89 @@ export class UploaderBlock extends ActivityBlock {
   /**
    * @param {string} url
    * @param {{ silent?: boolean; fileName?: string; source?: string }} [options]
+   * @returns {import('../types').OutputFileEntry<'idle'>}
    */
   addFileFromUrl(url, { silent, fileName, source } = {}) {
-    this.uploadCollection.add({
+    const internalId = this.uploadCollection.add({
       externalUrl: url,
       fileName: fileName ?? null,
-      silentUpload: silent ?? false,
+      silent: silent ?? false,
       source: source ?? UploadSource.API,
     });
+    return this.getOutputItem(internalId);
   }
 
   /**
    * @param {string} uuid
    * @param {{ silent?: boolean; fileName?: string; source?: string }} [options]
+   * @returns {import('../types').OutputFileEntry<'idle'>}
    */
   addFileFromUuid(uuid, { silent, fileName, source } = {}) {
-    this.uploadCollection.add({
+    const internalId = this.uploadCollection.add({
       uuid,
       fileName: fileName ?? null,
-      silentUpload: silent ?? false,
+      silent: silent ?? false,
       source: source ?? UploadSource.API,
     });
+    return this.getOutputItem(internalId);
   }
 
   /**
    * @param {File} file
    * @param {{ silent?: boolean; fileName?: string; source?: string; fullPath?: string }} [options]
+   * @returns {import('../types').OutputFileEntry<'idle'>}
    */
   addFileFromObject(file, { silent, fileName, source, fullPath } = {}) {
-    this.uploadCollection.add({
+    const internalId = this.uploadCollection.add({
       file,
       isImage: fileIsImage(file),
       mimeType: file.type,
       fileName: fileName ?? file.name,
       fileSize: file.size,
-      silentUpload: silent ?? false,
+      silent: silent ?? false,
       source: source ?? UploadSource.API,
       fullPath: fullPath ?? null,
     });
+    return this.getOutputItem(internalId);
   }
 
   /**
    * @deprecated Will be removed in the near future. Please use `addFileFromObject`, `addFileFromUrl` or
    *   `addFileFromUuid` instead.
    * @param {File[]} files
+   * @returns {import('../types').OutputFileEntry<'idle'>[]}
    */
   addFiles(files) {
     console.warn(
-      '`addFiles` method is deprecated. Please use `addFileFromObject`, `addFileFromUrl` or `addFileFromUuid` instead.'
+      '`addFiles` method is deprecated. Please use `addFileFromObject`, `addFileFromUrl` or `addFileFromUuid` instead.',
     );
-    files.forEach((/** @type {File} */ file) => {
-      this.uploadCollection.add({
+    return files.map((/** @type {File} */ file) => {
+      const internalId = this.uploadCollection.add({
         file,
         isImage: fileIsImage(file),
         mimeType: file.type,
         fileName: file.name,
         fileSize: file.size,
       });
+      return this.getOutputItem(internalId);
     });
   }
 
-  uploadAll() {
-    this.$['*uploadTrigger'] = {};
-  }
+  uploadAll = () => {
+    const itemsToUpload = this.uploadCollection.items().filter((id) => {
+      const entry = this.uploadCollection.read(id);
+      return !entry.getValue('isRemoved') && !entry.getValue('isUploading') && !entry.getValue('fileInfo');
+    });
+
+    this.$['*uploadTrigger'] = itemsToUpload;
+
+    if (itemsToUpload.length > 0) {
+      this.emit(
+        EventType.COMMON_UPLOAD_START,
+        /** @type {import('../types').OutputCollectionState<'uploading'>} */ (this.getOutputCollectionState()),
+      );
+    }
+  };
 
   /** @param {{ captureCamera?: boolean }} options */
   openSystemDialog(options = {}) {
@@ -202,7 +284,7 @@ export class UploaderBlock extends ActivityBlock {
       console.warn(
         'There could be a mistake.\n' +
           'Both `accept` and `imgOnly` parameters are set.\n' +
-          'The value of `accept` will be concatenated with the internal image mime types list.'
+          'The value of `accept` will be concatenated with the internal image mime types list.',
       );
     }
     this.fileInput = document.createElement('input');
@@ -273,7 +355,6 @@ export class UploaderBlock extends ActivityBlock {
         this.setOrAddState('*modalActive', true);
       }
     }
-    this.emit(EventType.INIT_FLOW);
   }
 
   doneFlow() {
@@ -284,7 +365,6 @@ export class UploaderBlock extends ActivityBlock {
     if (!this.$['*currentActivity']) {
       this.setOrAddState('*modalActive', false);
     }
-    this.emit(EventType.DONE_FLOW);
   }
 
   /** @returns {TypedCollection} */
@@ -294,16 +374,16 @@ export class UploaderBlock extends ActivityBlock {
 
   /**
    * @private
-   * @param {import('./TypedData.js').TypedData} entry
+   * @param {import('../types').OutputFileEntry} outputEntry
    */
-  _validateFileType(entry) {
+  _validateFileType(outputEntry) {
     const imagesOnly = this.cfg.imgOnly;
     const accept = this.cfg.accept;
     const allowedFileTypes = mergeFileTypes([...(imagesOnly ? IMAGE_ACCEPT_LIST : []), accept]);
     if (!allowedFileTypes.length) return;
 
-    const mimeType = entry.getValue('mimeType');
-    const fileName = entry.getValue('fileName');
+    const mimeType = outputEntry.mimeType;
+    const fileName = outputEntry.name;
 
     if (!mimeType || !fileName) {
       // Skip client validation if mime type or file name are not available for some reasons
@@ -315,160 +395,273 @@ export class UploaderBlock extends ActivityBlock {
 
     if (!mimeOk && !extOk) {
       // Assume file type is not allowed if both mime and ext checks fail
-      return this.l10n('file-type-not-allowed');
+      return buildOutputFileError({
+        type: 'FORBIDDEN_FILE_TYPE',
+        message: this.l10n('file-type-not-allowed'),
+        entry: outputEntry,
+      });
     }
   }
 
   /**
    * @private
-   * @param {import('./TypedData.js').TypedData} entry
+   * @param {import('../types').OutputFileEntry} outputEntry
    */
-  _validateMaxSizeLimit(entry) {
+  _validateMaxSizeLimit(outputEntry) {
     const maxFileSize = this.cfg.maxLocalFileSizeBytes;
-    const fileSize = entry.getValue('fileSize');
+    const fileSize = outputEntry.size;
     if (maxFileSize && fileSize && fileSize > maxFileSize) {
-      return this.l10n('files-max-size-limit-error', { maxFileSize: prettyBytes(maxFileSize) });
+      return buildOutputFileError({
+        type: 'FILE_SIZE_EXCEEDED',
+        message: this.l10n('files-max-size-limit-error', { maxFileSize: prettyBytes(maxFileSize) }),
+        entry: outputEntry,
+      });
     }
   }
 
   /**
    * @private
-   * @param {import('./TypedData.js').TypedData} entry
+   * @param {import('../types').OutputFileEntry} outputEntry
+   * @param {import('./TypedData.js').TypedData} [internalEntry]
    */
-  _validateMultipleLimit(entry) {
-    const entryIds = this.uploadCollection.items();
-    const entryIdx = entryIds.indexOf(entry.uid);
-    const multipleMin = this.cfg.multiple ? this.cfg.multipleMin : 1;
-    const multipleMax = this.cfg.multiple ? this.cfg.multipleMax : 1;
-
-    if (multipleMin && entryIds.length < multipleMin) {
-      const message = this.l10n('files-count-minimum', {
-        count: multipleMin,
-      });
-      return message;
+  _validateUploadError(outputEntry, internalEntry) {
+    /** @type {unknown} */
+    const cause = internalEntry?.getValue('uploadError');
+    if (!cause) {
+      return;
     }
 
-    if (multipleMax && entryIdx >= multipleMax) {
-      const message = this.l10n('files-count-allowed', {
-        count: multipleMax,
+    if (cause instanceof UploadError) {
+      return buildOutputFileError({
+        type: 'UPLOAD_ERROR',
+        message: cause.message,
+        entry: outputEntry,
+        error: cause,
       });
-      return message;
+    } else if (cause instanceof NetworkError) {
+      return buildOutputFileError({
+        type: 'NETWORK_ERROR',
+        message: cause.message,
+        entry: outputEntry,
+        error: cause,
+      });
+    } else {
+      const error = cause instanceof Error ? cause : new Error('Unknown error', { cause });
+      return buildOutputFileError({
+        type: 'UNKNOWN_ERROR',
+        message: error.message,
+        entry: outputEntry,
+        error,
+      });
     }
   }
 
   /**
    * @private
-   * @param {import('./TypedData.js').TypedData} entry
+   * @param {import('../types').OutputFileEntry} outputEntry
    */
-  _validateIsImage(entry) {
+  _validateIsImage(outputEntry) {
     const imagesOnly = this.cfg.imgOnly;
-    const isImage = entry.getValue('isImage');
+    const isImage = outputEntry.isImage;
     if (!imagesOnly || isImage) {
       return;
     }
-    if (!entry.getValue('fileInfo') && entry.getValue('externalUrl')) {
+    if (!outputEntry.fileInfo && outputEntry.externalUrl) {
       // skip validation for not uploaded files with external url, cause we don't know if they're images or not
       return;
     }
-    if (!entry.getValue('fileInfo') && !entry.getValue('mimeType')) {
+    if (!outputEntry.fileInfo && !outputEntry.mimeType) {
       // skip validation for not uploaded files without mime-type, cause we don't know if they're images or not
       return;
     }
-    return this.l10n('images-only-accepted');
+    return buildOutputFileError({
+      type: 'NOT_AN_IMAGE',
+      message: this.l10n('images-only-accepted'),
+      entry: outputEntry,
+    });
   }
 
   /**
    * @private
    * @param {import('./TypedData.js').TypedData} entry
    */
-  _runValidatorsForEntry(entry) {
-    for (const validator of this._validators) {
-      const errorMsg = validator(entry);
-      if (errorMsg) {
-        entry.setValue('validationErrorMsg', errorMsg);
-        return;
+  _runFileValidatorsForEntry(entry) {
+    const outputEntry = this.getOutputItem(entry.uid);
+    const errors = [];
+
+    for (const validator of this._fileValidators) {
+      const error = validator(outputEntry, entry);
+      if (error) {
+        errors.push(error);
       }
     }
-    entry.setValue('validationErrorMsg', null);
+    entry.setValue('errors', errors);
   }
 
   /** @private */
-  _debouncedRunValidators = debounce(this._runValidators.bind(this), 100);
+  _debouncedRunFileValidators = debounce(this._runFileValidators.bind(this), 100);
 
-  /** @private */
-  _runValidators() {
-    for (const id of this.uploadCollection.items()) {
-      setTimeout(() => {
-        const entry = this.uploadCollection.read(id);
-        entry && this._runValidatorsForEntry(entry);
-      });
+  /**
+   * @private
+   * @param {string[]} [entryIds]
+   */
+  _runFileValidators(entryIds) {
+    const ids = entryIds ?? this.uploadCollection.items();
+    for (const id of ids) {
+      const entry = this.uploadCollection.read(id);
+      entry && this._runFileValidatorsForEntry(entry);
     }
   }
 
   /** @private */
-  _flushOutputItems = debounce(() => {
+  _runCollectionValidators() {
+    const collection = this.uploadCollection;
+    const errors = [];
+
+    for (const validator of this._collectionValidators) {
+      const errorOrErrors = validator(collection);
+      if (!errorOrErrors) {
+        continue;
+      }
+      if (Array.isArray(errorOrErrors)) {
+        errors.push(...errorOrErrors);
+      } else {
+        errors.push(errorOrErrors);
+      }
+    }
+
+    this.$['*collectionErrors'] = errors;
+
+    if (errors.length > 0) {
+      this.emit(
+        EventType.COMMON_UPLOAD_FAILED,
+        () => /** @type {import('../types').OutputCollectionState<'failed'>} */ (this.getOutputCollectionState()),
+        { debounce: true },
+      );
+    }
+  }
+
+  /**
+   * @private
+   * @param {import('../types').OutputCollectionState} collectionState
+   */
+  async _createGroup(collectionState) {
+    const uploadClientOptions = this.getUploadClientOptions();
+    const uuidList = collectionState.allEntries.map((entry) => {
+      return entry.uuid + (entry.cdnUrlModifiers ? `/${entry.cdnUrlModifiers}` : '');
+    });
+    const abortController = new AbortController();
+    const resp = await uploadFileGroup(uuidList, { ...uploadClientOptions, signal: abortController.signal });
+    if (this.$['*collectionState'] !== collectionState) {
+      abortController.abort();
+      return;
+    }
+    this.$['*groupInfo'] = resp;
+    const collectionStateWithGroup = /** @type {import('../types').OutputCollectionState<'success', 'has-group'>} */ (
+      this.getOutputCollectionState()
+    );
+    this.emit(EventType.GROUP_CREATED, collectionStateWithGroup);
+    this.emit(EventType.CHANGE, () => this.getOutputCollectionState(), { debounce: true });
+    this.$['*collectionState'] = collectionStateWithGroup;
+  }
+
+  /** @private */
+  _flushOutputItems = debounce(async () => {
     const data = this.getOutputData();
     if (data.length !== this.uploadCollection.size) {
       return;
     }
-    this.emit(EventType.DATA_OUTPUT, data);
-    // @ts-ignore TODO: fix this
-    this.$['*outputData'] = data;
-  }, 100);
+    const collectionState = this.getOutputCollectionState();
+    this.$['*collectionState'] = collectionState;
+    this.emit(EventType.CHANGE, () => this.getOutputCollectionState(), { debounce: true });
+
+    if (this.cfg.groupOutput && collectionState.totalCount > 0 && collectionState.status === 'success') {
+      this._createGroup(collectionState);
+    }
+  }, 300);
 
   /**
    * @private
    * @type {Parameters<import('./TypedCollection.js').TypedCollection['observeCollection']>[0]}
+   * @param {Set<import('./TypedData.js').TypedData>} removed
    */
-  _handleCollectonUpdate = (entries, added, removed) => {
-    this._runValidators();
-
-    for (let entry of removed) {
-      entry?.getValue('abortController')?.abort();
-      entry?.setValue('abortController', null);
-      URL.revokeObjectURL(entry?.getValue('thumbUrl'));
+  _handleCollectionUpdate = (entries, added, removed) => {
+    if (added.size || removed.size) {
+      this.$['*groupInfo'] = null;
     }
+    this._runFileValidators();
+    this._runCollectionValidators();
+
+    for (const entry of added) {
+      if (!entry.getValue('silent')) {
+        this.emit(EventType.FILE_ADDED, this.getOutputItem(entry.uid));
+      }
+    }
+
+    for (const entry of removed) {
+      entry.getValue('abortController')?.abort();
+      entry.setMultipleValues({
+        isRemoved: true,
+        abortController: null,
+        isUploading: false,
+        uploadProgress: 0,
+      });
+      URL.revokeObjectURL(entry?.getValue('thumbUrl'));
+      this.emit(EventType.FILE_REMOVED, this.getOutputItem(entry.uid));
+    }
+
     this.$['*uploadList'] = entries.map((uid) => {
       return { uid };
     });
+
+    this._flushCommonUploadProgress();
     this._flushOutputItems();
   };
 
   /**
    * @private
-   * @param {Record<string, any>} changeMap
+   * @param {Record<keyof import('./uploadEntrySchema.js').UploadEntry, Set<string>>} changeMap
    */
   _handleCollectionPropertiesUpdate = (changeMap) => {
     this._flushOutputItems();
 
     const uploadCollection = this.uploadCollection;
-    const updatedEntries = [
+    const updatedEntryIds = [
       ...new Set(
-        Object.values(changeMap)
-          .map((ids) => [...ids])
-          .flat()
+        Object.entries(changeMap)
+          .filter(([key]) => key !== 'errors')
+          .map(([, ids]) => [...ids])
+          .flat(),
       ),
-    ]
-      .map((id) => uploadCollection.read(id))
-      .filter(Boolean);
+    ];
 
-    for (const entry of updatedEntries) {
-      this._runValidatorsForEntry(entry);
-    }
+    this._debouncedRunFileValidators(updatedEntryIds);
+
     if (changeMap.uploadProgress) {
-      let commonProgress = 0;
-      /** @type {String[]} */
-      let items = uploadCollection.findItems((entry) => {
-        return !entry.getValue('uploadError');
-      });
-      items.forEach((id) => {
-        commonProgress += uploadCollection.readProp(id, 'uploadProgress');
-      });
-      let progress = Math.round(commonProgress / items.length);
-      this.$['*commonProgress'] = progress;
-      this.emit(EventType.UPLOAD_PROGRESS, progress, { debounce: true });
+      for (const entryId of changeMap.uploadProgress) {
+        const { isUploading, silent } = Data.getCtx(entryId).store;
+        if (isUploading && !silent) {
+          this.emit(EventType.FILE_UPLOAD_PROGRESS, this.getOutputItem(entryId));
+        }
+      }
+
+      this._flushCommonUploadProgress();
+    }
+    if (changeMap.isUploading) {
+      for (const entryId of changeMap.isUploading) {
+        const { isUploading, silent } = Data.getCtx(entryId).store;
+        if (isUploading && !silent) {
+          this.emit(EventType.FILE_UPLOAD_START, this.getOutputItem(entryId));
+        }
+      }
     }
     if (changeMap.fileInfo) {
+      for (const entryId of changeMap.fileInfo) {
+        const { fileInfo, silent } = Data.getCtx(entryId).store;
+        if (fileInfo && !silent) {
+          this.emit(EventType.FILE_UPLOAD_SUCCESS, this.getOutputItem(entryId));
+        }
+      }
       if (this.cfg.cropPreset) {
         this.setInitialCrop();
       }
@@ -476,39 +669,58 @@ export class UploaderBlock extends ActivityBlock {
         return !!entry.getValue('fileInfo');
       });
       let errorItems = uploadCollection.findItems((entry) => {
-        return !!entry.getValue('uploadError') || !!entry.getValue('validationErrorMsg');
+        return entry.getValue('errors').length > 0;
       });
-      if (uploadCollection.size - errorItems.length === loadedItems.length) {
-        let data = this.getOutputData((dataItem) => {
-          return !!dataItem.getValue('fileInfo') && !dataItem.getValue('silentUpload');
-        });
-        data.length > 0 && this.emit(EventType.UPLOAD_FINISH, data, { debounce: true });
+      if (errorItems.length === 0 && uploadCollection.size === loadedItems.length) {
+        this.emit(
+          EventType.COMMON_UPLOAD_SUCCESS,
+          /** @type {import('../types').OutputCollectionState<'success'>} */ (this.getOutputCollectionState()),
+        );
       }
     }
-    if (changeMap.uploadError) {
-      let items = uploadCollection.findItems((entry) => {
-        return !!entry.getValue('uploadError');
-      });
-      items.forEach((id) => {
-        this.emit(EventType.UPLOAD_ERROR, uploadCollection.readProp(id, 'uploadError'));
-      });
+    if (changeMap.errors) {
+      for (const entryId of changeMap.errors) {
+        const { errors } = Data.getCtx(entryId).store;
+        if (errors.length > 0) {
+          this.emit(EventType.FILE_UPLOAD_FAILED, this.getOutputItem(entryId));
+          this.emit(
+            EventType.COMMON_UPLOAD_FAILED,
+            () => /** @type {import('../types').OutputCollectionState<'failed'>} */ (this.getOutputCollectionState()),
+            { debounce: true },
+          );
+        }
+      }
     }
-    if (changeMap.validationErrorMsg) {
-      let items = uploadCollection.findItems((entry) => {
-        return !!entry.getValue('validationErrorMsg');
+    if (changeMap.cdnUrl) {
+      const uids = [...changeMap.cdnUrl].filter((uid) => {
+        return !!this.uploadCollection.read(uid)?.getValue('cdnUrl');
       });
-      items.forEach((id) => {
-        this.emit(EventType.VALIDATION_ERROR, uploadCollection.readProp(id, 'validationErrorMsg'));
+      uids.forEach((uid) => {
+        this.emit(EventType.FILE_URL_CHANGED, this.getOutputItem(uid));
       });
+
+      this.$['*groupInfo'] = null;
     }
-    if (changeMap.cdnUrlModifiers) {
-      let items = uploadCollection.findItems((entry) => {
-        return !!entry.getValue('cdnUrlModifiers');
-      });
-      items.forEach((id) => {
-        this.emit(EventType.CLOUD_MODIFICATION, uploadCollection.readProp(id, 'cdnUrlModifiers'));
-      });
+  };
+
+  /** @private */
+  _flushCommonUploadProgress = () => {
+    if (!this.$['*uploadTrigger']) {
+      return;
     }
+    let commonProgress = 0;
+    /** @type {String[]} */
+    const items = this.$['*uploadTrigger'] ?? [];
+    items.forEach((id) => {
+      commonProgress += this.uploadCollection.readProp(id, 'uploadProgress');
+    });
+    const progress = items.length ? Math.round(commonProgress / items.length) : 0;
+
+    this.$['*commonProgress'] = progress;
+    this.emit(
+      EventType.COMMON_UPLOAD_PROGRESS,
+      /** @type {import('../types').OutputCollectionState<'uploading'>} */ (this.getOutputCollectionState()),
+    );
   };
 
   /** @private */
@@ -522,7 +734,7 @@ export class UploaderBlock extends ActivityBlock {
           (entry) =>
             entry.getValue('fileInfo') &&
             entry.getValue('isImage') &&
-            !entry.getValue('cdnUrlModifiers')?.includes('/crop/')
+            !entry.getValue('cdnUrlModifiers')?.includes('/crop/'),
         )
         .map((id) => this.uploadCollection.read(id));
 
@@ -533,7 +745,7 @@ export class UploaderBlock extends ActivityBlock {
         const crop = calculateMaxCenteredCropFrame(width, height, expectedAspectRatio);
         const cdnUrlModifiers = createCdnUrlModifiers(
           `crop/${crop.width}x${crop.height}/${crop.x},${crop.y}`,
-          'preview'
+          'preview',
         );
         entry.setMultipleValues({
           cdnUrlModifiers,
@@ -589,34 +801,52 @@ export class UploaderBlock extends ActivityBlock {
   }
 
   /**
+   * @template {import('../types').OutputFileStatus} TStatus
    * @param {string} entryId
-   * @returns {import('../types/exported.js').OutputFileEntry}
+   * @returns {import('../types/exported.js').OutputFileEntry<TStatus>}
    */
   getOutputItem(entryId) {
-    const uploadEntryData = Data.getCtx(entryId).store;
-    /** @type {import('@uploadcare/upload-client').UploadcareFile} */
-    const fileInfo = uploadEntryData.fileInfo || {
-      name: uploadEntryData.fileName,
-      originalFilename: uploadEntryData.fileName,
-      size: uploadEntryData.fileSize,
-      isImage: uploadEntryData.isImage,
-      mimeType: uploadEntryData.mimeType,
-    };
-    /** @type {import('../types/exported.js').OutputFileEntry} */
+    const uploadEntryData = /** @type {import('./uploadEntrySchema.js').UploadEntry} */ (Data.getCtx(entryId).store);
+
+    /** @type {import('@uploadcare/upload-client').UploadcareFile?} */
+    const fileInfo = uploadEntryData.fileInfo;
+
+    /** @type {import('../types').OutputFileEntry['status']} */
+    let status = uploadEntryData.isRemoved
+      ? 'removed'
+      : uploadEntryData.errors.length > 0
+        ? 'failed'
+        : !!uploadEntryData.fileInfo
+          ? 'success'
+          : uploadEntryData.isUploading
+            ? 'uploading'
+            : 'idle';
+
+    /** @type {unknown} */
     const outputItem = {
-      ...fileInfo,
+      uuid: fileInfo?.uuid ?? uploadEntryData.uuid ?? null,
+      internalId: entryId,
+      name: fileInfo?.originalFilename ?? uploadEntryData.fileName,
+      size: fileInfo?.size ?? uploadEntryData.fileSize,
+      isImage: fileInfo?.isImage ?? uploadEntryData.isImage,
+      mimeType: fileInfo?.mimeType ?? uploadEntryData.mimeType,
       file: uploadEntryData.file,
       externalUrl: uploadEntryData.externalUrl,
       cdnUrlModifiers: uploadEntryData.cdnUrlModifiers,
-      cdnUrl: uploadEntryData.cdnUrl ?? fileInfo.cdnUrl ?? null,
-      validationErrorMessage: uploadEntryData.validationErrorMsg,
-      uploadError: uploadEntryData.uploadError,
-      isUploaded: !!uploadEntryData.uuid && !!uploadEntryData.fileInfo,
-      isValid: !uploadEntryData.validationErrorMsg && !uploadEntryData.uploadError,
+      cdnUrl: uploadEntryData.cdnUrl ?? fileInfo?.cdnUrl ?? null,
       fullPath: uploadEntryData.fullPath,
       uploadProgress: uploadEntryData.uploadProgress,
+      fileInfo: fileInfo ?? null,
+      metadata: uploadEntryData.metadata ?? fileInfo?.metadata ?? null,
+      isSuccess: status === 'success',
+      isUploading: status === 'uploading',
+      isFailed: status === 'failed',
+      isRemoved: status === 'removed',
+      errors: /** @type {import('../types/exported.js').OutputFileEntry['errors']} */ (uploadEntryData.errors),
+      status,
     };
-    return outputItem;
+
+    return /** @type {import('../types/exported.js').OutputFileEntry<TStatus>} */ (outputItem);
   }
 
   /**
@@ -627,6 +857,11 @@ export class UploaderBlock extends ActivityBlock {
     const entriesIds = checkFn ? this.uploadCollection.findItems(checkFn) : this.uploadCollection.items();
     const data = entriesIds.map((itemId) => this.getOutputItem(itemId));
     return data;
+  }
+
+  /** @template {import('../types').OutputCollectionStatus} TStatus */
+  getOutputCollectionState() {
+    return /** @type {ReturnType<typeof buildOutputCollectionState<TStatus>>} */ (buildOutputCollectionState(this));
   }
 }
 
