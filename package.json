@@ -130,6 +130,6 @@
   "license": "MIT",
   "dependencies": {
     "@symbiotejs/symbiote": "^1.11.7",
-    "@uploadcare/upload-client": "^6.12.0"
+    "@uploadcare/upload-client": "^6.13.0"
   }
 }
