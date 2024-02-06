@@ -1,3 +1,9 @@
+## [0.32.1](https://github.com/uploadcare/blocks/compare/v0.32.0...v0.32.1) (2024-02-06)
+
+### Bug Fixes
+
+- bump upload-client to fix large groups uploading ([#599](https://github.com/uploadcare/blocks/issues/599)) ([cb61448](https://github.com/uploadcare/blocks/commit/cb61448a2ae85c3076d41bcae85ee1fe7b6d2659))
+
 # [0.32.0](https://github.com/uploadcare/blocks/compare/v0.31.1...v0.32.0) (2024-02-05)
 
 ### Breaking changes
