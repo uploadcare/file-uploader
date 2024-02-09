@@ -22,17 +22,17 @@
     const form = document.querySelector('form');
     form.addEventListener('submit', (e) => {
       e.preventDefault();
-      console.log('SUBMIT', e.target);
+      console.log('SUBMIT', [...new FormData(e.target).entries()]);
     });
   </script>
 </head>
 
-<lr-config ctx-name="my-uploader" pubkey="demopublickey" multiple multiple-min="2" multiple-max="3" img-only group-output></lr-config>
+<lr-config ctx-name="my-uploader" pubkey="demopublickey" multiple-min="1" multiple-max="10" img-only></lr-config>
 
 <form>
   <lr-file-uploader-regular style="position: relative; display: inline-block;" ctx-name="my-uploader" css-src="./blocks/themes/lr-basic/index.css">
     <lr-form-input
-      style="position: absolute; bottom: 0px; left: 50%"
+      style="position: absolute; bottom: 0px; left: 50%; pointer-events: none;"
       ctx-name="my-uploader"
     ></lr-form-input>
   </lr-file-uploader-regular>
