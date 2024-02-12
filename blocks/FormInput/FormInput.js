@@ -22,9 +22,8 @@ export class FormInput extends UploaderBlock {
   initCallback() {
     super.initCallback();
 
-    const validationInput = this._createValidationInput();
-    this.appendChild(validationInput);
-    this._validationInputElement = validationInput;
+    this._validationInputElement = this._createValidationInput();
+    this.appendChild(this._validationInputElement);
 
     this.sub(
       '*collectionState',
@@ -43,38 +42,48 @@ export class FormInput extends UploaderBlock {
           this._dynamicInputsContainer.innerHTML = '';
 
           if (collectionState.status === 'uploading' || collectionState.status === 'idle') {
-            validationInput.value = '';
-            validationInput.setCustomValidity('');
+            this._validationInputElement.value = '';
+            this._validationInputElement.setCustomValidity('');
             return;
           }
 
           if (collectionState.status === 'failed') {
             const errorMsg = collectionState.errors[0]?.message;
-            validationInput.value = '';
-            validationInput.setCustomValidity(errorMsg);
+            this._validationInputElement.value = '';
+            this._validationInputElement.setCustomValidity(errorMsg);
             return;
           }
 
           const group = collectionState.group ? collectionState.group : null;
           if (group) {
-            validationInput.value = group.cdnUrl;
-            validationInput.setCustomValidity('');
+            this._validationInputElement.value = group.cdnUrl;
+            this._validationInputElement.setCustomValidity('');
             return;
           }
 
           const cdnUrls = collectionState.allEntries.map((entry) => entry.cdnUrl);
 
+          if (!this.cfg.multiple && cdnUrls.length === 1) {
+            this._validationInputElement.value = cdnUrls[0];
+            this._validationInputElement.setCustomValidity('');
+            return;
+          }
+
           // Remove validation input to prevent it from being submitted
-          validationInput.remove();
+          this._validationInputElement.remove();
           this._validationInputElement = null;
+
+          const fr = new DocumentFragment();
 
           for (let value of cdnUrls) {
             const input = document.createElement('input');
             input.type = 'hidden';
             input.name = `${this.ctxName}[]`;
             input.value = value;
-            this._dynamicInputsContainer.appendChild(input);
+            fr.appendChild(input);
           }
+
+          this._dynamicInputsContainer.replaceChildren(fr);
         }
       },
       false,
