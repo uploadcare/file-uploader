@@ -1,3 +1,9 @@
+## [0.32.2](https://github.com/uploadcare/blocks/compare/v0.32.1...v0.32.2) (2024-02-12)
+
+### Bug Fixes
+
+- **form-input:** do not append `[]` postfix to input name when `multiple` is falsy ([#602](https://github.com/uploadcare/blocks/issues/602)) ([4722c4d](https://github.com/uploadcare/blocks/commit/4722c4d0eb1890013d6693376ff655dd871798d1))
+
 ## [0.32.1](https://github.com/uploadcare/blocks/compare/v0.32.0...v0.32.1) (2024-02-06)
 
 ### Bug Fixes
