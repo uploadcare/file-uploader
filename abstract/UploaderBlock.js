@@ -266,14 +266,15 @@ export class UploaderBlock extends ActivityBlock {
       return !entry.getValue('isRemoved') && !entry.getValue('isUploading') && !entry.getValue('fileInfo');
     });
 
-    this.$['*uploadTrigger'] = itemsToUpload;
-
-    if (itemsToUpload.length > 0) {
-      this.emit(
-        EventType.COMMON_UPLOAD_START,
-        /** @type {import('../types').OutputCollectionState<'uploading'>} */ (this.getOutputCollectionState()),
-      );
+    if (itemsToUpload.length === 0) {
+      return;
     }
+
+    this.$['*uploadTrigger'] = new Set(itemsToUpload);
+    this.emit(
+      EventType.COMMON_UPLOAD_START,
+      /** @type {import('../types').OutputCollectionState<'uploading'>} */ (this.getOutputCollectionState()),
+    );
   };
 
   /** @param {{ captureCamera?: boolean }} options */
@@ -596,6 +597,8 @@ export class UploaderBlock extends ActivityBlock {
     }
 
     for (const entry of removed) {
+      /** @type {Set<string>} */ (this.$['*uploadTrigger']).delete(entry.uid);
+
       entry.getValue('abortController')?.abort();
       entry.setMultipleValues({
         isRemoved: true,
@@ -706,16 +709,19 @@ export class UploaderBlock extends ActivityBlock {
 
   /** @private */
   _flushCommonUploadProgress = () => {
-    if (!this.$['*uploadTrigger']) {
-      return;
-    }
     let commonProgress = 0;
-    /** @type {String[]} */
-    const items = this.$['*uploadTrigger'] ?? [];
+    /** @type {Set<string>} */
+    const uploadTrigger = this.$['*uploadTrigger'];
+    const items = [...uploadTrigger].filter((id) => !!this.uploadCollection.read(id));
     items.forEach((id) => {
-      commonProgress += this.uploadCollection.readProp(id, 'uploadProgress');
+      const uploadProgress = this.uploadCollection.readProp(id, 'uploadProgress');
+      commonProgress += uploadProgress;
     });
     const progress = items.length ? Math.round(commonProgress / items.length) : 0;
+
+    if (this.$['*commonProgress'] === progress) {
+      return;
+    }
 
     this.$['*commonProgress'] = progress;
     this.emit(

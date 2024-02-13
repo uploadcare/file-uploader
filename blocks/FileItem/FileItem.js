@@ -54,8 +54,6 @@ export class FileItem extends UploaderBlock {
       isFocused: false,
       isEditable: false,
       state: FileItemState.IDLE,
-      '*uploadTrigger': null,
-
       onEdit: () => {
         this.set$({
           '*focusedEntry': this._entry,
@@ -261,14 +259,16 @@ export class FileItem extends UploaderBlock {
       });
     };
 
-    this.$['*uploadTrigger'] = null;
-
-    this.sub('*uploadTrigger', (itemsToUpload) => {
-      if (!itemsToUpload?.includes(this._entry.uid)) {
-        return;
-      }
-      setTimeout(() => this.isConnected && this.upload());
-    });
+    this.sub(
+      '*uploadTrigger',
+      /** @param {Set<string>} itemsToUpload */
+      (itemsToUpload) => {
+        if (!itemsToUpload.has(this._entry.uid)) {
+          return;
+        }
+        setTimeout(() => this.isConnected && this.upload());
+      },
+    );
     FileItem.activeInstances.add(this);
   }
 
