@@ -137,7 +137,7 @@ export class UploaderBlock extends ActivityBlock {
     if (!this.$['*uploadCollection']) {
       let uploadCollection = new TypedCollection({
         typedSchema: uploadEntrySchema,
-        watchList: ['uploadProgress', 'fileInfo', 'errors', 'cdnUrl', 'isUploading'],
+        watchList: ['uploadProgress', 'uploadError', 'fileInfo', 'errors', 'cdnUrl', 'isUploading'],
       });
       this.$['*uploadCollection'] = uploadCollection;
     }
@@ -498,9 +498,6 @@ export class UploaderBlock extends ActivityBlock {
     entry.setValue('errors', errors);
   }
 
-  /** @private */
-  _debouncedRunFileValidators = debounce(this._runFileValidators.bind(this), 100);
-
   /**
    * @private
    * @param {string[]} [entryIds]
@@ -626,16 +623,20 @@ export class UploaderBlock extends ActivityBlock {
     this._flushOutputItems();
 
     const uploadCollection = this.uploadCollection;
-    const updatedEntryIds = [
+    const entriesToRunValidation = [
       ...new Set(
         Object.entries(changeMap)
-          .filter(([key]) => key !== 'errors')
+          .filter(([key]) => ['uploadError', 'fileInfo'].includes(key))
           .map(([, ids]) => [...ids])
           .flat(),
       ),
     ];
 
-    this._debouncedRunFileValidators(updatedEntryIds);
+    entriesToRunValidation.length > 0 &&
+      setTimeout(() => {
+        // We can't modify entry properties in the same tick, so we need to wait a bit
+        this._runFileValidators(entriesToRunValidation);
+      });
 
     if (changeMap.uploadProgress) {
       for (const entryId of changeMap.uploadProgress) {
