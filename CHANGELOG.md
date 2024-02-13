@@ -1,3 +1,9 @@
+## [0.32.3](https://github.com/uploadcare/blocks/compare/v0.32.2...v0.32.3) (2024-02-13)
+
+### Bug Fixes
+
+- server validation error rendering ([#604](https://github.com/uploadcare/blocks/issues/604)) ([3e9835b](https://github.com/uploadcare/blocks/commit/3e9835bafb5ba16c1853a68f395428b31a8093f0))
+
 ## [0.32.2](https://github.com/uploadcare/blocks/compare/v0.32.1...v0.32.2) (2024-02-12)
 
 ### Bug Fixes
