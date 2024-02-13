@@ -84,24 +84,31 @@ export class CloudImageEditorBlock extends CloudImageEditorBase {
     }
     await this._waitForSize();
 
+    if (this.$.cdnUrl) {
+      const uuid = extractUuid(this.$.cdnUrl);
+      const originalUrl = createOriginalUrl(this.$.cdnUrl, uuid);
+      if (originalUrl === this.$['*originalUrl']) {
+        return;
+      }
+      this.$['*originalUrl'] = originalUrl;
+      const operations = extractOperations(this.$.cdnUrl);
+      const transformations = operationsToTransformations(operations);
+      this.$['*editorTransformations'] = transformations;
+    } else if (this.$.uuid) {
+      const originalUrl = createOriginalUrl(this.cfg.cdnCname, this.$.uuid);
+      if (originalUrl === this.$['*originalUrl']) {
+        return;
+      }
+      this.$['*originalUrl'] = originalUrl;
+      this.$['*editorTransformations'] = {};
+    } else {
+      throw new Error('No UUID nor CDN URL provided');
+    }
+
     if (this.$['*tabId'] === TabId.CROP) {
       this.$['*cropperEl'].deactivate({ reset: true });
     } else {
       this.$['*faderEl'].deactivate();
-    }
-
-    this.$['*editorTransformations'] = {};
-
-    if (this.$.cdnUrl) {
-      let uuid = extractUuid(this.$.cdnUrl);
-      this.$['*originalUrl'] = createOriginalUrl(this.$.cdnUrl, uuid);
-      let operations = extractOperations(this.$.cdnUrl);
-      let transformations = operationsToTransformations(operations);
-      this.$['*editorTransformations'] = transformations;
-    } else if (this.$.uuid) {
-      this.$['*originalUrl'] = createOriginalUrl(this.cfg.cdnCname, this.$.uuid);
-    } else {
-      throw new Error('No UUID nor CDN URL provided');
     }
 
     try {
