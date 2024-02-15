@@ -1,3 +1,10 @@
+## [0.32.4](https://github.com/uploadcare/blocks/compare/v0.32.3...v0.32.4) (2024-02-15)
+
+### Bug Fixes
+
+- **cloud-image-editor:** disable image enter transition ([2abe55f](https://github.com/uploadcare/blocks/commit/2abe55f0b6d1ae4f46dc895fdf00646d81a11011))
+- **cloud-image-editor:** weird ui glitches when updating `cdnUrl` on change ([c264c64](https://github.com/uploadcare/blocks/commit/c264c6494f88cb1307ac83f5e811da8ac334a54b))
+
 ## [0.32.3](https://github.com/uploadcare/blocks/compare/v0.32.2...v0.32.3) (2024-02-13)
 
 ### Bug Fixes
