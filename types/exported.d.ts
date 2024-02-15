@@ -24,6 +24,7 @@ export type ConfigType = {
   cloudImageEditorTabs: string;
   removeCopyright: boolean;
   cropPreset: string;
+  imageShrink: string;
   modalScrollLock: boolean;
   modalBackdropStrokes: boolean;
   sourceListWrap: boolean;

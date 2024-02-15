@@ -1,11 +1,13 @@
 // @ts-check
-import { CancelError, UploadError, uploadFile } from '@uploadcare/upload-client';
+import { CancelError, uploadFile } from '@uploadcare/upload-client';
+import { shrinkFile } from '@uploadcare/image-shrink';
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../utils/cdn-utils.js';
 import { fileCssBg } from '../svg-backgrounds/svg-backgrounds.js';
 import { debounce } from '../utils/debounce.js';
 import { generateThumb } from '../utils/resizeImage.js';
+import { parseShrink } from '../../utils/parseShrink.js';
 
 const FileItemState = Object.freeze({
   FINISHED: Symbol(0),
@@ -323,6 +325,18 @@ export class FileItem extends UploaderBlock {
     this._observer?.disconnect();
   }
 
+  _settingsOfShrink() {
+    return parseShrink(this.cfg.imageShrink);
+  }
+
+  /**
+   * @private
+   * @param {File} file
+   */
+  _processShrink(file) {
+    return shrinkFile(file, this._settingsOfShrink());
+  }
+
   async upload() {
     let entry = this._entry;
 
@@ -350,7 +364,12 @@ export class FileItem extends UploaderBlock {
       entry.setValue('abortController', abortController);
 
       const uploadTask = async () => {
-        const fileInput = entry.getValue('file') || entry.getValue('externalUrl') || entry.getValue('uuid');
+        let file = entry.getValue('file');
+        if (file && this.cfg.imageShrink) {
+          file = await this._processShrink(file).catch(() => file);
+        }
+
+        const fileInput = file || entry.getValue('externalUrl') || entry.getValue('uuid');
         const baseUploadClientOptions = this.getUploadClientOptions();
         /** @type {import('@uploadcare/upload-client').FileFromOptions} */
         const uploadClientOptions = {

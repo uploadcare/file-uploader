@@ -55,6 +55,7 @@ const mapping = {
   cloudImageEditorTabs: asString,
   removeCopyright: asBoolean,
   cropPreset: asString,
+  imageShrink: asString,
 
   modalScrollLock: asBoolean,
   modalBackdropStrokes: asBoolean,
