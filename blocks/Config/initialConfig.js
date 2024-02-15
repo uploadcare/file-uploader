@@ -29,6 +29,7 @@ export const initialConfig = {
   useCloudImageEditor: true,
   removeCopyright: false,
   cropPreset: '',
+  imageShrink: '',
 
   modalScrollLock: true,
   modalBackdropStrokes: false,
