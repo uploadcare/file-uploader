@@ -1,3 +1,9 @@
+# [0.33.0](https://github.com/uploadcare/blocks/compare/v0.32.4...v0.33.0) (2024-02-15)
+
+### Features
+
+- Add image shrink to the uploader ([e2b0896](https://github.com/uploadcare/blocks/commit/e2b0896ea02a4f959e02fbcfba84cdb7c8031368))
+
 ## [0.32.4](https://github.com/uploadcare/blocks/compare/v0.32.3...v0.32.4) (2024-02-15)
 
 ### Bug Fixes
