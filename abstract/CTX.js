@@ -38,5 +38,6 @@ export const uploaderBlockCtx = (fnCtx) => ({
   '*collectionState': null,
   /** @type {import('@uploadcare/upload-client').UploadcareGroup | null} */
   '*groupInfo': null,
-  '*uploadTrigger': null,
+  /** @type {Set<string>} */
+  '*uploadTrigger': new Set(),
 });
