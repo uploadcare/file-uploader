@@ -1,3 +1,13 @@
+# [0.33.0](https://github.com/uploadcare/blocks/compare/v0.32.4...v0.33.0) (2024-02-16)
+
+### Bug Fixes
+
+- progress calculation errors when file is removed during uploading ([#606](https://github.com/uploadcare/blocks/issues/606)) ([74769ce](https://github.com/uploadcare/blocks/commit/74769ce3ead25bfbc72b5aecf3448702e417c373))
+
+### Features
+
+- Add image shrink to the uploader ([e2b0896](https://github.com/uploadcare/blocks/commit/e2b0896ea02a4f959e02fbcfba84cdb7c8031368)). See docs [here](https://uploadcare.com/docs/file-uploader/feature-shrink/)
+
 ## [0.32.4](https://github.com/uploadcare/blocks/compare/v0.32.3...v0.32.4) (2024-02-15)
 
 ### Bug Fixes
