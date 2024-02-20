@@ -23,6 +23,33 @@ export function shadowed(Base) {
 
     shadowReadyCallback() {}
 
+    /**
+     * @private
+     *
+     *   This is super tricky workaround to wait for shadow styles to load. When `shadowStyles` is defined, symbiote will
+     *   wait for it to load before rendering the component. So the `render` method becomes async. We need to call
+     *   `shadowReadyCallback` right after the rendering is done. But we can't just call it after `render` because it's
+     *   async. So we need to wait for the shadow styles to load and then call `shadowReadyCallback`.
+     */
+    async _waitForShadowStylesLoad() {
+      if (!this.shadowRoot) {
+        return;
+      }
+      // @ts-expect-error
+      const shadowStylesUrl = this.constructor['__shadowStylesUrl'];
+      /** @type {HTMLLinkElement | null} */
+      const link = this.shadowRoot.querySelector(`link[href="${shadowStylesUrl}"]`);
+
+      if (!link) {
+        return;
+      }
+
+      await new Promise((resolve, reject) => {
+        link.addEventListener('load', resolve);
+        link.addEventListener('error', reject);
+      });
+    }
+
     initCallback() {
       super.initCallback();
       this.setAttribute('hidden', '');
@@ -41,8 +68,9 @@ export function shadowed(Base) {
           link.onload = () => {
             // CSS modules can be not loaded at this moment
             // TODO: investigate better solution
-            window.requestAnimationFrame(() => {
+            window.requestAnimationFrame(async () => {
               this.render();
+              await this._waitForShadowStylesLoad();
               window.setTimeout(() => {
                 this.removeAttribute('hidden');
                 this.shadowReadyCallback();
