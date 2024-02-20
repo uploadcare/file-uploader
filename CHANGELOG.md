@@ -1,3 +1,9 @@
+## [0.33.2](https://github.com/uploadcare/blocks/compare/v0.33.1...v0.33.2) (2024-02-20)
+
+### Bug Fixes
+
+- set `cdnUrlModifers` default to empty string after file upload ([#613](https://github.com/uploadcare/blocks/issues/613)) ([7113058](https://github.com/uploadcare/blocks/commit/7113058d2293760225c032eaf32ee93399a422cf))
+
 ## [0.33.1](https://github.com/uploadcare/blocks/compare/v0.33.0...v0.33.1) (2024-02-20)
 
 ### Bug Fixes
