@@ -390,6 +390,7 @@ export class FileItem extends UploaderBlock {
         return uploadFile(fileInput, uploadClientOptions);
       };
 
+      /** @type {import('@uploadcare/upload-client').UploadcareFile} */
       let fileInfo = await this.$['*uploadQueue'].add(uploadTask);
       entry.setMultipleValues({
         fileInfo,
@@ -400,6 +401,7 @@ export class FileItem extends UploaderBlock {
         mimeType: fileInfo.contentInfo?.mime?.mime ?? fileInfo.mimeType,
         uuid: fileInfo.uuid,
         cdnUrl: fileInfo.cdnUrl,
+        cdnUrlModifiers: '',
         uploadProgress: 100,
       });
 
