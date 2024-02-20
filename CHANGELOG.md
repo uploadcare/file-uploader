@@ -1,3 +1,9 @@
+## [0.33.1](https://github.com/uploadcare/blocks/compare/v0.33.0...v0.33.1) (2024-02-20)
+
+### Bug Fixes
+
+- **shadow-wrapper:** wait for `shadowStyles` load before calling `shadowReadyCallback` ([#611](https://github.com/uploadcare/blocks/issues/611)) ([42b73b7](https://github.com/uploadcare/blocks/commit/42b73b7de129999da9ad61148c0599b5fa81964e))
+
 # [0.33.0](https://github.com/uploadcare/blocks/compare/v0.32.4...v0.33.0) (2024-02-16)
 
 ### Bug Fixes
