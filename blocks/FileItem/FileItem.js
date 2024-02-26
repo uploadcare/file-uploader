@@ -400,8 +400,8 @@ export class FileItem extends UploaderBlock {
         isImage: fileInfo.isImage,
         mimeType: fileInfo.contentInfo?.mime?.mime ?? fileInfo.mimeType,
         uuid: fileInfo.uuid,
-        cdnUrl: fileInfo.cdnUrl,
-        cdnUrlModifiers: '',
+        cdnUrl: entry.getValue('cdnUrl') ?? fileInfo.cdnUrl,
+        cdnUrlModifiers: entry.getValue('cdnUrlModifiers') ?? '',
         uploadProgress: 100,
       });
 

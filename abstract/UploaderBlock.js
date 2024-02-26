@@ -20,7 +20,7 @@ import { uploaderBlockCtx } from './CTX.js';
 import { TypedCollection } from './TypedCollection.js';
 import { buildOutputCollectionState } from './buildOutputCollectionState.js';
 import { uploadEntrySchema } from './uploadEntrySchema.js';
-import { throttle } from '../blocks/utils/throttle.js';
+import { parseCdnUrl } from '../utils/parseCdnUrl.js';
 
 export class UploaderBlock extends ActivityBlock {
   couldBeCtxOwner = false;
@@ -213,6 +213,27 @@ export class UploaderBlock extends ActivityBlock {
     const internalId = this.uploadCollection.add({
       uuid,
       fileName: fileName ?? null,
+      silent: silent ?? false,
+      source: source ?? UploadSource.API,
+    });
+    return this.getOutputItem(internalId);
+  }
+
+  /**
+   * @param {string} cdnUrl
+   * @param {{ silent?: boolean; fileName?: string; source?: string }} [options]
+   * @returns {import('../types').OutputFileEntry<'idle'>}
+   */
+  addFileFromCdnUrl(cdnUrl, { silent, fileName, source } = {}) {
+    const parsedCdnUrl = parseCdnUrl({ url: cdnUrl, cdnBase: this.cfg.cdnCname });
+    if (!parsedCdnUrl) {
+      throw new Error('Invalid CDN URL');
+    }
+    const internalId = this.uploadCollection.add({
+      uuid: parsedCdnUrl.uuid,
+      cdnUrl,
+      cdnUrlModifiers: parsedCdnUrl.cdnUrlModifiers,
+      fileName: fileName ?? parsedCdnUrl.filename ?? null,
       silent: silent ?? false,
       source: source ?? UploadSource.API,
     });
