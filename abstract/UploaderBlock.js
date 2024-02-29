@@ -21,7 +21,6 @@ import { TypedCollection } from './TypedCollection.js';
 import { buildOutputCollectionState } from './buildOutputCollectionState.js';
 import { uploadEntrySchema } from './uploadEntrySchema.js';
 import { throttle } from '../blocks/utils/throttle.js';
-
 export class UploaderBlock extends ActivityBlock {
   couldBeCtxOwner = false;
   isCtxOwner = false;
@@ -300,7 +299,9 @@ export class UploaderBlock extends ActivityBlock {
     this.fileInput.dispatchEvent(new MouseEvent('click'));
     this.fileInput.onchange = () => {
       // @ts-ignore TODO: fix this
-      [...this.fileInput['files']].forEach((file) => this.addFileFromObject(file, { source: UploadSource.LOCAL }));
+      [...this.fileInput['files']].forEach((file) =>
+        this.addFileFromObject(file, { source: options.captureCamera ? UploadSource.CAMERA : UploadSource.LOCAL }),
+      );
       // To call uploadTrigger UploadList should draw file items first:
       this.$['*currentActivity'] = ActivityBlock.activities.UPLOAD_LIST;
       this.setOrAddState('*modalActive', true);
@@ -330,24 +331,18 @@ export class UploaderBlock extends ActivityBlock {
       this.setOrAddState('*modalActive', true);
     } else {
       if (this.sourceList?.length === 1) {
-        let srcKey = this.sourceList[0];
-        // Single source case:
-        if (srcKey === 'local') {
-          this.$['*currentActivity'] = ActivityBlock.activities.UPLOAD_LIST;
-          this?.['openSystemDialog']();
-        } else {
-          if (Object.values(UploaderBlock.extSrcList).includes(/** @type {any} */ (srcKey))) {
-            this.set$({
-              '*currentActivityParams': {
-                externalSourceType: srcKey,
-              },
-              '*currentActivity': ActivityBlock.activities.EXTERNAL,
-            });
-          } else {
-            this.$['*currentActivity'] = srcKey;
-          }
-          this.setOrAddState('*modalActive', true);
-        }
+        const srcKey = this.sourceList[0];
+        /** @type {Set<import('./Block').Block>} */
+        const blocksRegistry = this.$['*blocksRegistry'];
+        /**
+         * @param {import('./Block').Block} block
+         * @returns {block is import('../blocks/SourceBtn/SourceBtn.js').SourceBtn}
+         */
+        const isSourceBtn = (block) => 'type' in block && block.type === srcKey;
+        const sourceBtnBlock = [...blocksRegistry].find(isSourceBtn);
+        // TODO: This is weird that we have this logic inside UI component, we should consider to move it somewhere else
+        sourceBtnBlock?.activate();
+        this.setOrAddState('*modalActive', true);
       } else {
         // Multiple sources case:
         this.set$({
