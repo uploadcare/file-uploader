@@ -10,7 +10,7 @@ const L10N_PREFIX = 'src-type-';
  *   activity?: string;
  *   textKey?: string;
  *   icon?: string;
- *   handle?: () => boolean;
+ *   activate?: () => boolean;
  *   activityParams?: Record<string, unknown>;
  * }} TConfig
  */
@@ -37,7 +37,7 @@ export class SourceBtn extends UploaderBlock {
   initTypes() {
     this.registerType({
       type: UploaderBlock.sourceTypes.LOCAL,
-      handle: () => {
+      activate: () => {
         this.openSystemDialog();
         return false;
       },
@@ -50,7 +50,7 @@ export class SourceBtn extends UploaderBlock {
     this.registerType({
       type: UploaderBlock.sourceTypes.CAMERA,
       activity: ActivityBlock.activities.CAMERA,
-      handle: () => {
+      activate: () => {
         const supportsCapture = 'capture' in document.createElement('input');
         if (supportsCapture) {
           this.openSystemDialog({ captureCamera: true });
@@ -107,8 +107,8 @@ export class SourceBtn extends UploaderBlock {
       return;
     }
     const configType = this._registeredTypes[this.type];
-    const { activity, handle, activityParams = {} } = configType;
-    const showActivity = handle ? handle() : !!activity;
+    const { activity, activate, activityParams = {} } = configType;
+    const showActivity = activate ? activate() : !!activity;
     showActivity &&
       this.set$({
         '*currentActivityParams': activityParams,
