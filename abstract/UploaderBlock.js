@@ -260,6 +260,14 @@ export class UploaderBlock extends ActivityBlock {
     });
   }
 
+  /** @param {string} internalId */
+  removeFileByInternalId(internalId) {
+    if (!this.uploadCollection.read(internalId)) {
+      throw new Error(`File with internalId ${internalId} not found`);
+    }
+    this.uploadCollection.remove(internalId);
+  }
+
   uploadAll = () => {
     const itemsToUpload = this.uploadCollection.items().filter((id) => {
       const entry = this.uploadCollection.read(id);
