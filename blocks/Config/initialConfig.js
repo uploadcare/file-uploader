@@ -20,6 +20,7 @@ export const initialConfig = {
   externalSourcesPreferredTypes: '',
   store: 'auto',
   cameraMirror: false,
+  cameraCapture: '',
   sourceList: 'local, url, camera, dropbox, gdrive',
   cloudImageEditorTabs: serializeCsv(ALL_TABS),
   maxLocalFileSizeBytes: 0,

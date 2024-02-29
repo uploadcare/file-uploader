@@ -292,6 +292,7 @@ export class UploaderBlock extends ActivityBlock {
     this.fileInput.type = 'file';
     this.fileInput.multiple = this.cfg.multiple;
     if (options.captureCamera) {
+      this.fileInput.capture = this.cfg.cameraCapture;
       this.fileInput.capture = '';
       this.fileInput.accept = serializeCsv(IMAGE_ACCEPT_LIST);
     } else {

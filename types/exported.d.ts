@@ -15,6 +15,7 @@ export type ConfigType = {
   externalSourcesPreferredTypes: string;
   store: boolean | 'auto';
   cameraMirror: boolean;
+  cameraCapture: 'user' | 'environment' | '';
   sourceList: string;
   maxLocalFileSizeBytes: number;
   thumbSize: number;
