@@ -165,18 +165,19 @@ export class CameraSource extends UploaderBlock {
     this._canvas.width = this.ref.video['videoWidth'];
     // @ts-ignore
     this._ctx.drawImage(this.ref.video, 0, 0);
-    let date = Date.now();
-    let name = `camera-${date}.png`;
+    const date = Date.now();
+    const name = `camera-${date}.jpeg`;
+    const format = 'image/jpeg';
     this._canvas.toBlob((blob) => {
       let file = new File([blob], name, {
         lastModified: date,
-        type: 'image/png',
+        type: format,
       });
       this.addFileFromObject(file, { source: UploadSource.CAMERA });
       this.set$({
         '*currentActivity': ActivityBlock.activities.UPLOAD_LIST,
       });
-    });
+    }, format);
   }
 
   async initCallback() {
