@@ -31,7 +31,7 @@ including [smart CDN](https://uploadcare.com/docs/delivery/cdn/#content-delivery
 [signed uploads](https://uploadcare.com/docs/security/secure-uploads/?ref=github-readme),
 and [even more](<(https://uploadcare.com/features/?ref=github-readme)>).
 
-See Uploadcare Blocks [in action](https://codesandbox.io/s/file-uploader-regular-demo-mm3znl?file=/index.html)!
+See Uploadcare Blocks [in action](https://codesandbox.io/p/devbox/github/uploadcare/blocks-examples/tree/main/examples/js-uploader)!
 
 <img alt="Uploadcare Blocks examples" src="https://ucarecdn.com/8035cdc7-f0b9-4ea9-8c15-05816f315481/">
 
