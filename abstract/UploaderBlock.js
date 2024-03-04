@@ -20,7 +20,6 @@ import { uploaderBlockCtx } from './CTX.js';
 import { TypedCollection } from './TypedCollection.js';
 import { buildOutputCollectionState } from './buildOutputCollectionState.js';
 import { uploadEntrySchema } from './uploadEntrySchema.js';
-import { throttle } from '../blocks/utils/throttle.js';
 export class UploaderBlock extends ActivityBlock {
   couldBeCtxOwner = false;
   isCtxOwner = false;
