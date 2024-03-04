@@ -1,3 +1,10 @@
+# [0.34.0](https://github.com/uploadcare/blocks/compare/v0.33.2...v0.34.0) (2024-03-04)
+
+### Features
+
+- **lr-upload-ctx-provider:** add method `addFileFromCdnUrl` to add already uploaded files with predefined cdn url modifiers ([#617](https://github.com/uploadcare/blocks/issues/617)) ([8043d08](https://github.com/uploadcare/blocks/commit/8043d085a996086b52f0205f07438d67d5e8acbe))
+- **lr-upload-ctx-provider:** add method `removeFileByInternalId` ([#618](https://github.com/uploadcare/blocks/issues/618)) ([c2492eb](https://github.com/uploadcare/blocks/commit/c2492eb1a15ce36fc4db3352665d05f9674076bc))
+
 ## [0.33.2](https://github.com/uploadcare/blocks/compare/v0.33.1...v0.33.2) (2024-02-20)
 
 ### Bug Fixes
