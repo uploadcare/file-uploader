@@ -2,7 +2,7 @@
 
 ### Bug Fixes
 
-- shnow camera system dialog when camera is the only source ([95f0287](https://github.com/uploadcare/blocks/commit/95f02872f2e4b60bf7e4558b28cceb25d727a346))
+- show camera system dialog when camera is the only source ([95f0287](https://github.com/uploadcare/blocks/commit/95f02872f2e4b60bf7e4558b28cceb25d727a346))
 - specify camera input accept attribute value as simple `image/*` to prevent OS to show unrelated sources (video/audio) ([5ecacba](https://github.com/uploadcare/blocks/commit/5ecacba610143f1336b2fde2b6cf67a7f17c1edb))
 - switch camera source output format to JPEG to make it shrinkable ([6da4212](https://github.com/uploadcare/blocks/commit/6da4212358146c8414443fff9698a53657891f23))
 
