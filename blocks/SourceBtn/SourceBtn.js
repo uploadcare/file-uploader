@@ -1,23 +1,45 @@
+// @ts-check
 import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 
 const L10N_PREFIX = 'src-type-';
 
+/**
+ * @typedef {{
+ *   type: string;
+ *   activity?: string;
+ *   textKey?: string;
+ *   icon?: string;
+ *   activate?: () => boolean;
+ *   activityParams?: Record<string, unknown>;
+ * }} TConfig
+ */
+
 export class SourceBtn extends UploaderBlock {
   couldBeCtxOwner = true;
-  /** @private */
+  /** @type {string | undefined} */
+  type = undefined;
+  /**
+   * @private
+   * @type {Record<string, TConfig>}
+   */
   _registeredTypes = {};
 
-  init$ = {
-    ...this.init$,
-    iconName: 'default',
-  };
+  constructor() {
+    super();
+
+    this.init$ = {
+      ...this.init$,
+      iconName: 'default',
+    };
+  }
 
   initTypes() {
     this.registerType({
       type: UploaderBlock.sourceTypes.LOCAL,
-      onClick: () => {
+      activate: () => {
         this.openSystemDialog();
+        return false;
       },
     });
     this.registerType({
@@ -28,9 +50,8 @@ export class SourceBtn extends UploaderBlock {
     this.registerType({
       type: UploaderBlock.sourceTypes.CAMERA,
       activity: ActivityBlock.activities.CAMERA,
-      onClick: () => {
-        let el = document.createElement('input');
-        var supportsCapture = el.capture !== undefined;
+      activate: () => {
+        const supportsCapture = 'capture' in document.createElement('input');
         if (supportsCapture) {
           this.openSystemDialog({ captureCamera: true });
         }
@@ -59,39 +80,55 @@ export class SourceBtn extends UploaderBlock {
     this.initTypes();
 
     this.setAttribute('role', 'button');
-    this.defineAccessor('type', (val) => {
-      if (!val) {
-        return;
-      }
-      this.applyType(val);
-    });
+    this.defineAccessor(
+      'type',
+      /** @param {string} val */
+      (val) => {
+        if (!val) {
+          return;
+        }
+        this.applyType(val);
+      },
+    );
   }
 
+  /** @param {TConfig} typeConfig */
   registerType(typeConfig) {
     this._registeredTypes[typeConfig.type] = typeConfig;
   }
 
+  /** @param {string} type */
   getType(type) {
     return this._registeredTypes[type];
   }
 
+  activate() {
+    if (!this.type) {
+      return;
+    }
+    const configType = this._registeredTypes[this.type];
+    const { activity, activate, activityParams = {} } = configType;
+    const showActivity = activate ? activate() : !!activity;
+    showActivity &&
+      this.set$({
+        '*currentActivityParams': activityParams,
+        '*currentActivity': activity,
+      });
+  }
+
+  /** @param {string} type */
   applyType(type) {
     const configType = this._registeredTypes[type];
     if (!configType) {
       console.warn('Unsupported source type: ' + type);
       return;
     }
-    const { textKey = type, icon = type, activity, onClick, activityParams = {} } = configType;
+    const { textKey = type, icon = type } = configType;
 
     this.applyL10nKey('src-type', `${L10N_PREFIX}${textKey}`);
     this.$.iconName = icon;
-    this.onclick = (e) => {
-      const showActivity = onClick ? onClick(e) : !!activity;
-      showActivity &&
-        this.set$({
-          '*currentActivityParams': activityParams,
-          '*currentActivity': activity,
-        });
+    this.onclick = () => {
+      this.activate();
     };
   }
 }
@@ -100,5 +137,6 @@ SourceBtn.template = /* HTML */ `
   <div class="txt" l10n="src-type"></div>
 `;
 SourceBtn.bindAttributes({
+  // @ts-expect-error symbiote types bug
   type: null,
 });

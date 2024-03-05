@@ -27,6 +27,15 @@ export const asBoolean = (value) => {
 /** @param {unknown} value */
 const asStore = (value) => (value === 'auto' ? value : asBoolean(value));
 
+/** @param {unknown} value */
+const asCameraCapture = (value) => {
+  const strValue = asString(value);
+  if (strValue !== 'user' && strValue !== 'environment' && strValue !== '') {
+    throw new Error(`Invalid "cameraCapture" value: "${strValue}"`);
+  }
+  return strValue;
+};
+
 /**
  * @type {{
  *   [Key in keyof import('../../types').ConfigPlainType]: (
@@ -46,6 +55,7 @@ const mapping = {
   externalSourcesPreferredTypes: asString,
   store: asStore,
   cameraMirror: asBoolean,
+  cameraCapture: asCameraCapture,
   sourceList: asString,
   maxLocalFileSizeBytes: asNumber,
   thumbSize: asNumber,
