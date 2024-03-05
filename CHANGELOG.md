@@ -1,3 +1,17 @@
+# [0.34.0](https://github.com/uploadcare/blocks/compare/v0.33.2...v0.34.0) (2024-03-05)
+
+### Bug Fixes
+
+- show camera system dialog when camera is the only source ([95f0287](https://github.com/uploadcare/blocks/commit/95f02872f2e4b60bf7e4558b28cceb25d727a346))
+- specify camera input accept attribute value as simple `image/*` to prevent OS to show unrelated sources (video/audio) ([5ecacba](https://github.com/uploadcare/blocks/commit/5ecacba610143f1336b2fde2b6cf67a7f17c1edb))
+- switch camera source output format to JPEG to make it shrinkable ([6da4212](https://github.com/uploadcare/blocks/commit/6da4212358146c8414443fff9698a53657891f23))
+
+### Features
+
+- add `cameraCapture` option to specify inpit capture attribute value ([9a77057](https://github.com/uploadcare/blocks/commit/9a7705701ea60dd407af8284f72b4e57f8272e04))
+- **lr-upload-ctx-provider:** add method `addFileFromCdnUrl` to add already uploaded files with predefined cdn url modifiers ([#617](https://github.com/uploadcare/blocks/issues/617)) ([8043d08](https://github.com/uploadcare/blocks/commit/8043d085a996086b52f0205f07438d67d5e8acbe))
+- **lr-upload-ctx-provider:** add method `removeFileByInternalId` ([#618](https://github.com/uploadcare/blocks/issues/618)) ([c2492eb](https://github.com/uploadcare/blocks/commit/c2492eb1a15ce36fc4db3352665d05f9674076bc))
+
 ## [0.33.2](https://github.com/uploadcare/blocks/compare/v0.33.1...v0.33.2) (2024-02-20)
 
 ### Bug Fixes
