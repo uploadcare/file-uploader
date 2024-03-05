@@ -288,6 +288,10 @@ export class UploaderBlock extends ActivityBlock {
     this.uploadCollection.remove(internalId);
   }
 
+  removeAllFiles() {
+    this.uploadCollection.clearAll();
+  }
+
   uploadAll = () => {
     const itemsToUpload = this.uploadCollection.items().filter((id) => {
       const entry = this.uploadCollection.read(id);
