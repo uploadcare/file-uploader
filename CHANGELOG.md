@@ -1,3 +1,9 @@
+## [0.35.1](https://github.com/uploadcare/blocks/compare/v0.35.0...v0.35.1) (2024-03-07)
+
+### Bug Fixes
+
+- improve uploading progress animation ([#628](https://github.com/uploadcare/blocks/issues/628)) ([a1db063](https://github.com/uploadcare/blocks/commit/a1db063234a8227614d446e32aa2b5edf149d7f4))
+
 # [0.35.0](https://github.com/uploadcare/blocks/compare/v0.34.0...v0.35.0) (2024-03-07)
 
 ### Bug Fixes
