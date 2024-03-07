@@ -361,6 +361,14 @@ export class UploaderBlock extends ActivityBlock {
     } else {
       if (this.sourceList?.length === 1) {
         const srcKey = this.sourceList[0];
+
+        // TODO: We should refactor those handlers
+        if (srcKey === 'local') {
+          this.$['*currentActivity'] = ActivityBlock.activities.UPLOAD_LIST;
+          this?.['openSystemDialog']();
+          return;
+        }
+
         /** @type {Set<import('./Block').Block>} */
         const blocksRegistry = this.$['*blocksRegistry'];
         /**
