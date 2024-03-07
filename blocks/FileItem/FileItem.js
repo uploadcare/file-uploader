@@ -48,7 +48,6 @@ export class FileItem extends UploaderBlock {
       thumbUrl: '',
       progressValue: 0,
       progressVisible: false,
-      progressUnknown: false,
       badgeIcon: '',
       isFinished: false,
       isFailed: false,
@@ -276,15 +275,6 @@ export class FileItem extends UploaderBlock {
 
   /** @param {(typeof FileItemState)[keyof typeof FileItemState]} state */
   _handleState(state) {
-    this.set$({
-      isFailed: state === FileItemState.FAILED,
-      isUploading: state === FileItemState.UPLOADING,
-      isFinished: state === FileItemState.FINISHED,
-      progressVisible: state === FileItemState.UPLOADING,
-      isEditable: this.cfg.useCloudImageEditor && this._entry?.getValue('isImage') && this._entry?.getValue('cdnUrl'),
-      errorText: this._entry.getValue('errors')?.[0]?.message,
-    });
-
     if (state === FileItemState.FAILED) {
       this.$.badgeIcon = 'badge-error';
     } else if (state === FileItemState.FINISHED) {
@@ -296,6 +286,15 @@ export class FileItem extends UploaderBlock {
     } else {
       this.$.progressValue = 0;
     }
+
+    this.set$({
+      isFailed: state === FileItemState.FAILED,
+      isUploading: state === FileItemState.UPLOADING,
+      isFinished: state === FileItemState.FINISHED,
+      progressVisible: state === FileItemState.UPLOADING,
+      isEditable: this.cfg.useCloudImageEditor && this._entry?.getValue('isImage') && this._entry?.getValue('cdnUrl'),
+      errorText: this._entry.getValue('errors')?.[0]?.message,
+    });
   }
 
   destroyCallback() {
@@ -356,9 +355,6 @@ export class FileItem extends UploaderBlock {
     entry.setValue('isUploading', true);
     entry.setValue('errors', []);
 
-    if (!entry.getValue('file') && entry.getValue('externalUrl')) {
-      this.$.progressUnknown = true;
-    }
     try {
       let abortController = new AbortController();
       entry.setValue('abortController', abortController);
@@ -381,7 +377,6 @@ export class FileItem extends UploaderBlock {
               let percentage = progress.value * 100;
               entry.setValue('uploadProgress', percentage);
             }
-            this.$.progressUnknown = !progress.isComputable;
           },
           signal: abortController.signal,
           metadata: await this.getMetadataFor(entry.uid),
@@ -451,11 +446,7 @@ FileItem.template = /* HTML */ `
         <lr-icon name="upload"></lr-icon>
       </button>
     </div>
-    <lr-progress-bar
-      class="progress-bar"
-      set="value: progressValue; visible: progressVisible; unknown: progressUnknown"
-    >
-    </lr-progress-bar>
+    <lr-progress-bar class="progress-bar" set="value: progressValue; visible: progressVisible;"> </lr-progress-bar>
   </div>
 `;
 FileItem.activeInstances = new Set();

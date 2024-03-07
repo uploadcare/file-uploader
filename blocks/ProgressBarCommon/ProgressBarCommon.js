@@ -4,7 +4,6 @@ export class ProgressBarCommon extends UploaderBlock {
   init$ = {
     ...this.init$,
     visible: false,
-    unknown: false,
     value: 0,
 
     '*commonProgress': 0,
@@ -42,6 +41,4 @@ export class ProgressBarCommon extends UploaderBlock {
   }
 }
 
-ProgressBarCommon.template = /* HTML */ `
-  <lr-progress-bar set="visible: visible; unknown: unknown; value: value"></lr-progress-bar>
-`;
+ProgressBarCommon.template = /* HTML */ ` <lr-progress-bar set="visible: visible; value: value"></lr-progress-bar> `;

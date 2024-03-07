@@ -3,8 +3,6 @@ import { Block } from '../../abstract/Block.js';
 export class ProgressBar extends Block {
   /** @type {Number} */
   _value = 0;
-  /** @type {Boolean} */
-  _unknownMode = false;
 
   init$ = {
     ...this.init$,
@@ -18,18 +16,21 @@ export class ProgressBar extends Block {
       if (value === undefined) {
         return;
       }
+      const prevValue = this._value;
       this._value = value;
 
-      if (!this._unknownMode) {
-        this.style.setProperty('--l-width', this._value.toString());
+      if (value === 0 && prevValue > 0) {
+        this.ref.line.addEventListener('transitionend', () => {
+          this.style.setProperty('--l-width', this._value.toString());
+        });
+        return;
       }
+
+      this.style.setProperty('--l-width', this._value.toString());
     });
+
     this.defineAccessor('visible', (visible) => {
       this.ref.line.classList.toggle('progress--hidden', !visible);
-    });
-    this.defineAccessor('unknown', (unknown) => {
-      this._unknownMode = unknown;
-      this.ref.line.classList.toggle('progress--unknown', unknown);
     });
   }
 }
