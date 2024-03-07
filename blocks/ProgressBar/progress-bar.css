@@ -20,26 +20,6 @@ lr-progress-bar .progress {
     opacity 0.3s;
 }
 
-lr-progress-bar .progress--unknown {
-  width: 100%;
-  transform-origin: 0% 50%;
-  animation: lr-indeterminateAnimation 1s infinite linear;
-}
-
 lr-progress-bar .progress--hidden {
   opacity: 0;
-}
-
-@keyframes lr-indeterminateAnimation {
-  0% {
-    transform: translateX(0) scaleX(0);
-  }
-
-  40% {
-    transform: translateX(0) scaleX(0.4);
-  }
-
-  100% {
-    transform: translateX(100%) scaleX(0.5);
-  }
 }
