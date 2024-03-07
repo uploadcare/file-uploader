@@ -1,3 +1,13 @@
+# [0.35.0](https://github.com/uploadcare/blocks/compare/v0.34.0...v0.35.0) (2024-03-07)
+
+### Bug Fixes
+
+- **minimal:** open system dialog on `add more` button ([#626](https://github.com/uploadcare/blocks/issues/626)) ([0098600](https://github.com/uploadcare/blocks/commit/00986000d61b9550ce2bfba3368bf523e91fdcfd))
+
+### Features
+
+- add `removeAllFiles` API method ([#624](https://github.com/uploadcare/blocks/issues/624)) ([85ef970](https://github.com/uploadcare/blocks/commit/85ef97018548ff13ec49f3aa76bf5cf3019f6c79))
+
 # [0.34.0](https://github.com/uploadcare/blocks/compare/v0.33.2...v0.34.0) (2024-03-05)
 
 ### Bug Fixes
