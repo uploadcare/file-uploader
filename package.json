@@ -130,7 +130,7 @@
   "license": "MIT",
   "dependencies": {
     "@symbiotejs/symbiote": "^1.11.7",
-    "@uploadcare/image-shrink": "^6.14.0",
-    "@uploadcare/upload-client": "^6.13.0"
+    "@uploadcare/image-shrink": "^6.14.1",
+    "@uploadcare/upload-client": "^6.14.1"
   }
 }
