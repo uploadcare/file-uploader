@@ -1,3 +1,9 @@
+## [0.35.2](https://github.com/uploadcare/blocks/compare/v0.35.1...v0.35.2) (2024-03-08)
+
+### Bug Fixes
+
+- **image-shrink:** fallback algo on Firefox and iOS ([#630](https://github.com/uploadcare/blocks/issues/630)) ([066cfca](https://github.com/uploadcare/blocks/commit/066cfca3306c65f0c4e67332311763a2bf2ea4ef))
+
 ## [0.35.1](https://github.com/uploadcare/blocks/compare/v0.35.0...v0.35.1) (2024-03-07)
 
 ### Bug Fixes
