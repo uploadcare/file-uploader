@@ -1,6 +1,7 @@
 // @ts-check
 
 import { UploaderBlock } from '../../abstract/UploaderBlock.js';
+import { EventType } from './EventEmitter.js';
 class UploadCtxProviderClass extends UploaderBlock {
   requireCtxName = true;
 
@@ -16,6 +17,8 @@ class UploadCtxProviderClass extends UploaderBlock {
     this.$['*eventEmitter'].unbindTarget(this);
   }
 }
+
+UploadCtxProviderClass.EventType = EventType;
 
 /**
  * @typedef {import('../../utils/mixinClass.js').MixinClass<
