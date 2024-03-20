@@ -1,3 +1,9 @@
+# [0.36.0](https://github.com/uploadcare/blocks/compare/v0.35.2...v0.36.0) (2024-03-20)
+
+### Features
+
+- added export event type ([#632](https://github.com/uploadcare/blocks/issues/632)) ([c292d16](https://github.com/uploadcare/blocks/commit/c292d16b4e4accde65af853e21f9804981e8a4ac))
+
 ## [0.35.2](https://github.com/uploadcare/blocks/compare/v0.35.1...v0.35.2) (2024-03-08)
 
 ### Bug Fixes
