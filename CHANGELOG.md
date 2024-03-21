@@ -1,3 +1,13 @@
+# [0.36.0](https://github.com/uploadcare/blocks/compare/v0.35.2...v0.36.0) (2024-03-21)
+
+### Bug Fixes
+
+- don't try to open empty modal on mobile when camera is the only source ([#634](https://github.com/uploadcare/blocks/issues/634)) ([1bc4f5d](https://github.com/uploadcare/blocks/commit/1bc4f5dde831f69f7dc86c2ed7a60aa2c1537506))
+
+### Features
+
+- added export event type ([#632](https://github.com/uploadcare/blocks/issues/632)) ([c292d16](https://github.com/uploadcare/blocks/commit/c292d16b4e4accde65af853e21f9804981e8a4ac))
+
 ## [0.35.2](https://github.com/uploadcare/blocks/compare/v0.35.1...v0.35.2) (2024-03-08)
 
 ### Bug Fixes
