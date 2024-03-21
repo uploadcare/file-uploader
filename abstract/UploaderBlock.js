@@ -383,7 +383,9 @@ export class UploaderBlock extends ActivityBlock {
         const sourceBtnBlock = [...blocksRegistry].find(isSourceBtn);
         // TODO: This is weird that we have this logic inside UI component, we should consider to move it somewhere else
         sourceBtnBlock?.activate();
-        this.setOrAddState('*modalActive', true);
+        if (this.$['*currentActivity']) {
+          this.setOrAddState('*modalActive', true);
+        }
       } else {
         // Multiple sources case:
         this.set$({
