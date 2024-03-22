@@ -1,3 +1,9 @@
+# [0.37.0](https://github.com/uploadcare/blocks/compare/v0.36.0...v0.37.0) (2024-03-22)
+
+### Features
+
+- added export UID from @symbiotejs/symbiote ([#636](https://github.com/uploadcare/blocks/issues/636)) ([9666f21](https://github.com/uploadcare/blocks/commit/9666f21ce2b97f283839ec39b5d480dd298f3415))
+
 # [0.36.0](https://github.com/uploadcare/blocks/compare/v0.35.2...v0.36.0) (2024-03-21)
 
 ### Bug Fixes
