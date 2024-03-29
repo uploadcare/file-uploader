@@ -139,6 +139,23 @@ class ConfigClass extends Block {
 
 ConfigClass.bindAttributes(attrStateMapping);
 
+/**
+ * Define getters and setters for all config keys on the Custom Element class prototype to make them checkable using
+ * `key in element` syntax. This is required for the frameworks DOM property bindings to work.
+ */
+for (const key of allConfigKeys) {
+  const localPropName = '__' + key;
+  Object.defineProperty(ConfigClass.prototype, key, {
+    /** @param {unknown} value */
+    set: function (value) {
+      this[localPropName] = value;
+    },
+    get: function () {
+      return this[localPropName];
+    },
+  });
+}
+
 /** @typedef {import('../../utils/mixinClass.js').MixinClass<typeof ConfigClass, import('../../types').ConfigType>} Config */
 
 // This is workaround for jsdoc that allows us to export extended class type along with the class itself
