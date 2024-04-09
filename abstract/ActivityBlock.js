@@ -15,8 +15,7 @@ export class ActivityBlock extends Block {
 
   /** @private */
   _deactivate() {
-    // @ts-ignore TODO: fix this
-    let actDesc = ActivityBlock._activityRegistry[this.activityKey];
+    let actDesc = ActivityBlock._activityCallbacks.get(this);
     this[ACTIVE_PROP] = false;
     this.removeAttribute(ACTIVE_ATTR);
     actDesc?.deactivateCallback?.();
@@ -24,8 +23,7 @@ export class ActivityBlock extends Block {
 
   /** @private */
   _activate() {
-    // @ts-ignore TODO: fix this
-    let actDesc = ActivityBlock._activityRegistry[this.activityKey];
+    let actDesc = ActivityBlock._activityCallbacks.get(this);
     this.$['*historyBack'] = this.historyBack.bind(this);
     /** @private */
     this[ACTIVE_PROP] = true;
@@ -90,15 +88,17 @@ export class ActivityBlock extends Block {
 
   /** @private */
   _isActivityRegistered() {
-    // @ts-ignore TODO: fix this
-    return this.activityType && !!ActivityBlock._activityRegistry[this.activityKey];
+    return this.activityType && ActivityBlock._activityCallbacks.has(this);
   }
 
   /**
    * @private
-   * @type {{ String: { activateCallback: Function; deactivateCallback: Function } }}
+   * @type {Map<
+   *   ActivityBlock,
+   *   { activateCallback: (() => void) | undefined; deactivateCallback: (() => void) | undefined }
+   * >}
    */
-  static _activityRegistry = Object.create(null);
+  static _activityCallbacks = new Map();
 
   get isActivityActive() {
     return this[ACTIVE_PROP];
@@ -118,30 +118,33 @@ export class ActivityBlock extends Block {
    */
   registerActivity(name, options = {}) {
     const { onActivate, onDeactivate } = options;
-    if (!ActivityBlock._activityRegistry) {
-      ActivityBlock._activityRegistry = Object.create(null);
-    }
-    // @ts-ignore TODO: fix this
-    ActivityBlock._activityRegistry[this.activityKey] = {
+    ActivityBlock._activityCallbacks.set(this, {
       activateCallback: onActivate,
       deactivateCallback: onDeactivate,
-    };
+    });
   }
 
   unregisterActivity() {
     if (this.isActivityActive) {
       this._deactivate();
     }
-    // @ts-ignore TODO: fix this
-    ActivityBlock._activityRegistry[this.activityKey] = undefined;
+    ActivityBlock._activityCallbacks.delete(this);
   }
 
   destroyCallback() {
     super.destroyCallback();
     this._isActivityRegistered() && this.unregisterActivity();
 
-    if (Object.keys(ActivityBlock._activityRegistry).length === 0) {
-      // TODO: we should track activities more precise and reset current activity only if there is no such registered activity
+    /** @type {string | null} */
+    const currentActivity = this.$['*currentActivity'];
+
+    /** @type {Set<import('./Block').Block>} */
+    let blocksRegistry = this.$['*blocksRegistry'];
+    const hasCurrentActivityInCtx = !![...blocksRegistry].find(
+      (block) => block instanceof ActivityBlock && block.activityType === currentActivity,
+    );
+
+    if (!hasCurrentActivityInCtx) {
       this.$['*currentActivity'] = null;
     }
   }
