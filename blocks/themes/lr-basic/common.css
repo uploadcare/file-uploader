@@ -1,4 +1,4 @@
-:where(.lr-wgt-theme, .lr-wgt-common),
+:where(.lr-wgt-theme, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular),
 :host {
   color: var(--clr-txt);
 
@@ -8,27 +8,30 @@
     'Helvetica Neue', sans-serif;
 }
 
-:where(.lr-wgt-theme, .lr-wgt-common) *,
+:where(.lr-wgt-theme, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular) *,
 :host * {
   box-sizing: border-box;
 }
 
-:where(.lr-wgt-theme, .lr-wgt-common) [hidden],
+:where(.lr-wgt-theme, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular) [hidden],
 :host [hidden] {
   display: none !important;
 }
 
-:where(.lr-wgt-theme, .lr-wgt-common) [activity]:not([active]),
+:where(.lr-wgt-theme, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular)
+  [activity]:not([active]),
 :host [activity]:not([active]) {
   display: none;
 }
 
-:where(.lr-wgt-theme, .lr-wgt-common) dialog:not([open]) [activity],
+:where(.lr-wgt-theme, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular)
+  dialog:not([open])
+  [activity],
 :host dialog:not([open]) [activity] {
   display: none;
 }
 
-:where(.lr-wgt-theme, .lr-wgt-common) button,
+:where(.lr-wgt-theme, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular) button,
 :host button {
   display: flex;
   align-items: center;
@@ -46,14 +49,14 @@
 }
 
 @media only screen and (max-width: 800px) {
-  :where(.lr-wgt-theme, .lr-wgt-common) button,
+  :where(.lr-wgt-theme, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular) button,
   :host button {
     padding-right: 1em;
     padding-left: 1em;
   }
 }
 
-:where(.lr-wgt-theme, .lr-wgt-common) button.primary-btn,
+:where(.lr-wgt-theme, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular) button.primary-btn,
 :host button.primary-btn {
   color: var(--clr-btn-txt-primary);
   background-color: var(--clr-btn-bgr-primary);
@@ -61,17 +64,19 @@
   transition: background-color var(--transition-duration);
 }
 
-:where(.lr-wgt-theme, .lr-wgt-common) button.primary-btn:hover,
+:where(.lr-wgt-theme, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular)
+  button.primary-btn:hover,
 :host button.primary-btn:hover {
   background-color: var(--clr-btn-bgr-primary-hover);
 }
 
-:where(.lr-wgt-theme, .lr-wgt-common) button.primary-btn:active,
+:where(.lr-wgt-theme, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular)
+  button.primary-btn:active,
 :host button.primary-btn:active {
   background-color: var(--clr-btn-bgr-primary-active);
 }
 
-:where(.lr-wgt-theme, .lr-wgt-common) button.secondary-btn,
+:where(.lr-wgt-theme, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular) button.secondary-btn,
 :host button.secondary-btn {
   color: var(--clr-btn-txt-secondary);
   background-color: var(--clr-btn-bgr-secondary);
@@ -79,17 +84,19 @@
   transition: background-color var(--transition-duration);
 }
 
-:where(.lr-wgt-theme, .lr-wgt-common) button.secondary-btn:hover,
+:where(.lr-wgt-theme, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular)
+  button.secondary-btn:hover,
 :host button.secondary-btn:hover {
   background-color: var(--clr-btn-bgr-secondary-hover);
 }
 
-:where(.lr-wgt-theme, .lr-wgt-common) button.secondary-btn:active,
+:where(.lr-wgt-theme, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular)
+  button.secondary-btn:active,
 :host button.secondary-btn:active {
   background-color: var(--clr-btn-bgr-secondary-active);
 }
 
-:where(.lr-wgt-theme, .lr-wgt-common) button.mini-btn,
+:where(.lr-wgt-theme, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular) button.mini-btn,
 :host button.mini-btn {
   width: var(--ui-size);
   height: var(--ui-size);
@@ -101,17 +108,19 @@
   color: var(--clr-txt);
 }
 
-:where(.lr-wgt-theme, .lr-wgt-common) button.mini-btn:hover,
+:where(.lr-wgt-theme, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular)
+  button.mini-btn:hover,
 :host button.mini-btn:hover {
   background-color: var(--clr-shade-lv1);
 }
 
-:where(.lr-wgt-theme, .lr-wgt-common) button.mini-btn:active,
+:where(.lr-wgt-theme, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular)
+  button.mini-btn:active,
 :host button.mini-btn:active {
   background-color: var(--clr-shade-lv2);
 }
 
-:where(.lr-wgt-theme, .lr-wgt-common)
+:where(.lr-wgt-theme, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular)
   :is(button[disabled], button.primary-btn[disabled], button.secondary-btn[disabled]),
 :host :is(button[disabled], button.primary-btn[disabled], button.secondary-btn[disabled]) {
   color: var(--clr-btn-txt-disabled);
@@ -120,18 +129,18 @@
   pointer-events: none;
 }
 
-:where(.lr-wgt-theme, .lr-wgt-common) a,
+:where(.lr-wgt-theme, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular) a,
 :host a {
   color: var(--clr-accent);
   text-decoration: none;
 }
 
-:where(.lr-wgt-theme, .lr-wgt-common) a[disabled],
+:where(.lr-wgt-theme, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular) a[disabled],
 :host a[disabled] {
   pointer-events: none;
 }
 
-:where(.lr-wgt-theme, .lr-wgt-common) input[type='text'],
+:where(.lr-wgt-theme, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular) input[type='text'],
 :host input[type='text'] {
   display: flex;
   width: 100%;
@@ -147,23 +156,25 @@
   transition: var(--transition-duration);
 }
 
-:where(.lr-wgt-theme, .lr-wgt-common) input[type='text'],
+:where(.lr-wgt-theme, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular) input[type='text'],
 :host input[type='text']::placeholder {
   color: var(--clr-txt-lightest);
 }
 
-:where(.lr-wgt-theme, .lr-wgt-common) input[type='text']:hover,
+:where(.lr-wgt-theme, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular)
+  input[type='text']:hover,
 :host input[type='text']:hover {
   border-color: var(--clr-accent-light);
 }
 
-:where(.lr-wgt-theme, .lr-wgt-common) input[type='text']:focus,
+:where(.lr-wgt-theme, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular)
+  input[type='text']:focus,
 :host input[type='text']:focus {
   border-color: var(--clr-accent);
   outline: none;
 }
 
-:where(.lr-wgt-theme, .lr-wgt-common) input[disabled],
+:where(.lr-wgt-theme, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular) input[disabled],
 :host input[disabled] {
   opacity: 0.6;
   pointer-events: none;

@@ -1,8 +1,9 @@
-<!doctype html>
+<!DOCTYPE html>
 <base href="../../" />
 
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="./solutions/file-uploader/regular/index.css">
   <style>
     .config {
       --ctx-name: 'my-uploader';
@@ -26,14 +27,13 @@
   <script src="./index.js" type="module"></script>
   <script type="module">
     import * as LR from './index.js';
-    
+
     LR.registerBlocks(LR);
   </script>
 </head>
 
 <lr-file-uploader-regular
   ctx-name="my-uploader"
-  css-src="./solutions/file-uploader/regular/index.css"
 ></lr-file-uploader-regular>
 <lr-config ctx-name="my-uploader" pubkey="demopublickey"></lr-config>
 <lr-upload-ctx-provider ctx-name="my-uploader"></lr-upload-ctx-provider>

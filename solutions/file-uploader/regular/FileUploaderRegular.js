@@ -3,9 +3,9 @@ import { SolutionBlock } from '../../../abstract/SolutionBlock.js';
 import { EventType } from '../../../blocks/UploadCtxProvider/EventEmitter.js';
 
 export class FileUploaderRegular extends SolutionBlock {
-  shadowReadyCallback() {
-    super.shadowReadyCallback();
+  pauseRender = true;
 
+  shadowReadyCallback() {
     this.sub(
       '*modalActive',
       (modalActive) => {

@@ -9,7 +9,7 @@ lr-start-from {
   container-type: inline-size;
 }
 
-.lr-wgt-common,
+lr-file-uploader-inline,
 :host {
   --cfg-done-activity: 'start-from';
   --cfg-init-activity: 'start-from';

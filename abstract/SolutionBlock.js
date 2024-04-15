@@ -1,7 +1,7 @@
-import { ShadowWrapper } from '../blocks/ShadowWrapper/ShadowWrapper.js';
 import { uploaderBlockCtx } from './CTX.js';
+import { Block } from './Block.js';
 
-export class SolutionBlock extends ShadowWrapper {
+export class SolutionBlock extends Block {
   requireCtxName = true;
   init$ = uploaderBlockCtx(this);
   _template = null;
@@ -12,5 +12,14 @@ export class SolutionBlock extends ShadowWrapper {
 
   static get template() {
     return this._template;
+  }
+
+  shadowReadyCallback() {}
+
+  initCallback() {
+    super.initCallback();
+
+    this.render();
+    this.shadowReadyCallback();
   }
 }

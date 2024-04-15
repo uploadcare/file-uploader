@@ -1,7 +1,9 @@
 // @ts-check
 import { CloudImageEditorBlock } from '../../blocks/CloudImageEditor/src/CloudImageEditorBlock.js';
-import { shadowed } from '../../blocks/ShadowWrapper/ShadowWrapper.js';
-export class CloudImageEditor extends shadowed(CloudImageEditorBlock) {
+
+export class CloudImageEditor extends CloudImageEditorBlock {
+  pauseRender = true;
+
   shadowReadyCallback() {
     /** @private */
     this.__shadowReady = true;
@@ -17,5 +19,11 @@ export class CloudImageEditor extends shadowed(CloudImageEditorBlock) {
     if (this.__shadowReady) {
       await super.initEditor();
     }
+  }
+
+  initCallback() {
+    super.initCallback();
+    this.render();
+    this.shadowReadyCallback();
   }
 }

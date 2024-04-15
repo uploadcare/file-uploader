@@ -3,6 +3,7 @@
 
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="./solutions/file-uploader/inline/index.css">
   <style>
     .config {
       --ctx-name: 'my-uploader';
@@ -26,13 +27,13 @@
   <script src="./index.js" type="module"></script>
   <script type="module">
     import * as LR from './index.js';
+
     LR.registerBlocks(LR);
   </script>
 </head>
 
 <lr-file-uploader-inline
   ctx-name="my-uploader"
-  css-src="./solutions/file-uploader/inline/index.css"
 ></lr-file-uploader-inline>
 <lr-config
   ctx-name="my-uploader"
