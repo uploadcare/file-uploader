@@ -1,3 +1,14 @@
+# [0.37.0](https://github.com/uploadcare/blocks/compare/v0.36.0...v0.37.0) (2024-04-15)
+
+### Bug Fixes
+
+- activity switch races ([#643](https://github.com/uploadcare/blocks/issues/643)) ([fe365da](https://github.com/uploadcare/blocks/commit/fe365dadea7a720b1f349de336aacc0d515f39cf))
+- define config DOM property accessors on the class prototype to make it compatible with framework bindings ([#638](https://github.com/uploadcare/blocks/issues/638)) ([d47baf0](https://github.com/uploadcare/blocks/commit/d47baf0bb91355cd30411b5f2a8910606d5a1fe0))
+
+### Features
+
+- added export UID from @symbiotejs/symbiote ([#636](https://github.com/uploadcare/blocks/issues/636)) ([9666f21](https://github.com/uploadcare/blocks/commit/9666f21ce2b97f283839ec39b5d480dd298f3415))
+
 # [0.36.0](https://github.com/uploadcare/blocks/compare/v0.35.2...v0.36.0) (2024-03-21)
 
 ### Bug Fixes
