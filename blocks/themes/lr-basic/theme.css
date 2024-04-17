@@ -1,5 +1,4 @@
-:where(.lr-wgt-theme, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular),
-:host {
+:where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular) {
   /* Base values */
 
   --darkmode: 0;
@@ -169,15 +168,13 @@
 }
 
 @media only screen and (max-height: 600px) {
-  :where(.lr-wgt-theme, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular),
-  :host {
+  :where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular) {
     --modal-max-h: 100%;
   }
 }
 
 @media only screen and (max-width: 430px) {
-  :where(.lr-wgt-theme, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular),
-  :host {
+  :where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular) {
     --modal-max-w: 100vw;
     --modal-max-h: var(--uploadcare-blocks-window-height);
   }

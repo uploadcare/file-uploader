@@ -1,18 +1,16 @@
 @import url('../../../blocks/themes/lr-basic/index.css');
 
-:host {
-  flex: 1;
-}
-
 lr-start-from {
   height: 100%;
   container-type: inline-size;
 }
 
-lr-file-uploader-inline,
-:host {
+.lr-wgt-common,
+lr-file-uploader-inline {
   --cfg-done-activity: 'start-from';
   --cfg-init-activity: 'start-from';
+
+  flex: 1;
 }
 
 lr-activity-header::after {

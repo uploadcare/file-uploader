@@ -1,5 +1,4 @@
-:where(.lr-wgt-cfg, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular),
-:host {
+:where(.lr-wgt-cfg, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular) {
   --cfg-pubkey: 'YOUR_PUBLIC_KEY';
   --cfg-multiple: 1;
   --cfg-multiple-min: 0;
