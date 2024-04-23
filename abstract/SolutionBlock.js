@@ -13,13 +13,4 @@ export class SolutionBlock extends Block {
   static get template() {
     return this._template;
   }
-
-  shadowReadyCallback() {}
-
-  initCallback() {
-    super.initCallback();
-
-    this.render();
-    this.shadowReadyCallback();
-  }
 }

@@ -4,7 +4,10 @@ import { CloudImageEditorBlock } from '../../blocks/CloudImageEditor/src/CloudIm
 export class CloudImageEditor extends CloudImageEditorBlock {
   pauseRender = true;
 
-  shadowReadyCallback() {
+  initCallback() {
+    super.initCallback();
+    this.render();
+
     /** @private */
     this.__shadowReady = true;
 
@@ -19,11 +22,5 @@ export class CloudImageEditor extends CloudImageEditorBlock {
     if (this.__shadowReady) {
       await super.initEditor();
     }
-  }
-
-  initCallback() {
-    super.initCallback();
-    this.render();
-    this.shadowReadyCallback();
   }
 }

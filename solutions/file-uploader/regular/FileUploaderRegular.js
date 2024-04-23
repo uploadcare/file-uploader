@@ -5,10 +5,14 @@ import { EventType } from '../../../blocks/UploadCtxProvider/EventEmitter.js';
 export class FileUploaderRegular extends SolutionBlock {
   pauseRender = true;
 
-  shadowReadyCallback() {
+  initCallback() {
+    super.initCallback();
+    this.render();
+
     this.sub(
       '*modalActive',
       (modalActive) => {
+        console.log({ modalActive });
         if (this._lastModalActive !== modalActive) {
           this.emit(modalActive ? EventType.MODAL_OPEN : EventType.MODAL_CLOSE, undefined, { debounce: true });
         }

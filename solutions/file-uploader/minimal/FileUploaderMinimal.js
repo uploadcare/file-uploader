@@ -4,7 +4,10 @@ import { SolutionBlock } from '../../../abstract/SolutionBlock.js';
 export class FileUploaderMinimal extends SolutionBlock {
   pauseRender = true;
 
-  shadowReadyCallback() {
+  initCallback() {
+    super.initCallback();
+    this.render();
+
     /** @type {import('../../../abstract/UploaderBlock.js').UploaderBlock} */
     const uBlock = this.ref.uBlock;
     this.sub('*currentActivity', (val) => {
