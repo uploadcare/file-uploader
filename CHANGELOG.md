@@ -1,3 +1,9 @@
+# [0.38.0](https://github.com/uploadcare/blocks/compare/v0.37.0...v0.38.0) (2024-04-25)
+
+### Features
+
+- new l10n API ([#639](https://github.com/uploadcare/blocks/issues/639)) ([e3ac261](https://github.com/uploadcare/blocks/commit/e3ac26133687b312a0895f620d1d71887276193a))
+
 # [0.37.0](https://github.com/uploadcare/blocks/compare/v0.36.0...v0.37.0) (2024-04-15)
 
 ### Bug Fixes
