@@ -1,3 +1,13 @@
+# [0.38.0](https://github.com/uploadcare/blocks/compare/v0.37.0...v0.38.0) (2024-04-25)
+
+## BREAKING CHANGES
+
+* CSS configuration deprecated in v0.25.0 is removed. See the [migration guide for v0.25.0][uc-uploader-docs-migration-0-25-0] for more details.
+* Localizations are removed from CSS. <br/>Now we have a special API `defineLocale`, and `locale-name` and `locale-definition-override` options. See the [migration guide][uc-uploader-docs-migration-0-38-0] for more details.
+
+[uc-uploader-docs-migration-0-25-0]: https://uploadcare.com/docs/file-uploader/migration-to-0.25.0/
+[uc-uploader-docs-migration-0-38-0]: https://uploadcare.com/docs/file-uploader/migration-to-0.38.0/
+
 # [0.37.0](https://github.com/uploadcare/blocks/compare/v0.36.0...v0.37.0) (2024-04-15)
 
 ### Bug Fixes
