@@ -12,7 +12,6 @@ export class FileUploaderRegular extends SolutionBlock {
     this.sub(
       '*modalActive',
       (modalActive) => {
-        console.log({ modalActive });
         if (this._lastModalActive !== modalActive) {
           this.emit(modalActive ? EventType.MODAL_OPEN : EventType.MODAL_CLOSE, undefined, { debounce: true });
         }

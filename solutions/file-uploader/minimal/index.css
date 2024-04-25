@@ -44,7 +44,8 @@
   display: block;
 }
 
-:where(.lr-wgt-common.minimal, lr-file-uploader-minimal) lr-start-from .content {
+.lr-wgt-common.minimal lr-start-from .content,
+lr-file-uploader-minimal lr-start-from .content {
   display: flex;
   flex-direction: column;
   gap: var(--gap-min);
@@ -54,7 +55,8 @@
   background-color: transparent;
 }
 
-:where(.lr-wgt-common.minimal, lr-file-uploader-minimal) lr-drop-area {
+.lr-wgt-common.minimal lr-drop-area,
+lr-file-uploader-minimal lr-drop-area {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -67,15 +69,18 @@
   border-radius: var(--border-radius-frame);
 }
 
-:where(.lr-wgt-common.minimal, lr-file-uploader-minimal) lr-upload-list lr-activity-header {
+.lr-wgt-common.minimal lr-upload-list lr-activity-header,
+lr-file-uploader-minimal lr-upload-list lr-activity-header {
   display: none;
 }
 
-:where(.lr-wgt-common.minimal, lr-file-uploader-minimal) lr-upload-list > .toolbar {
+.lr-wgt-common.minimal lr-upload-list > .toolbar,
+lr-file-uploader-minimal lr-upload-list > .toolbar {
   background-color: transparent;
 }
 
-:where(.lr-wgt-common.minimal, lr-file-uploader-minimal) lr-upload-list {
+.lr-wgt-common.minimal lr-upload-list,
+lr-file-uploader-minimal lr-upload-list {
   width: 100%;
   height: unset;
   padding: var(--gap-small);
@@ -84,66 +89,81 @@
   border-radius: var(--border-radius-frame);
 }
 
-:where(.lr-wgt-common.minimal, lr-file-uploader-minimal) lr-upload-list .files {
+.lr-wgt-common.minimal lr-upload-list .files,
+lr-file-uploader-minimal lr-upload-list .files {
   padding: 0;
 }
 
-:where(.lr-wgt-common.minimal, lr-file-uploader-minimal) lr-upload-list .toolbar {
+.lr-wgt-common.minimal lr-upload-list .toolbar,
+lr-file-uploader-minimal lr-upload-list .toolbar {
   display: block;
   padding: 0;
 }
 
-:where(.lr-wgt-common.minimal, lr-file-uploader-minimal) lr-upload-list .toolbar .cancel-btn,
-:where(.lr-wgt-common.minimal, lr-file-uploader-minimal) lr-upload-list .toolbar .upload-btn,
-:where(.lr-wgt-common.minimal, lr-file-uploader-minimal) lr-upload-list .toolbar .done-btn {
+.lr-wgt-common.minimal lr-upload-list .toolbar .cancel-btn,
+lr-file-uploader-minimal lr-upload-list .toolbar .cancel-btn,
+.lr-wgt-common.minimal lr-upload-list .toolbar .upload-btn,
+lr-file-uploader-minimal lr-upload-list .toolbar .upload-btn,
+.lr-wgt-common.minimal lr-upload-list .toolbar .done-btn,
+lr-file-uploader-minimal lr-upload-list .toolbar .done-btn {
   display: none;
 }
 
-:where(.lr-wgt-common.minimal, lr-file-uploader-minimal) lr-upload-list .toolbar .add-more-btn {
+.lr-wgt-common.minimal lr-upload-list .toolbar .add-more-btn,
+lr-file-uploader-minimal lr-upload-list .toolbar .add-more-btn {
   width: 100%;
   height: calc(var(--ui-size) + var(--gap-mid) * 2);
   margin-top: var(--gap-small);
   background-color: var(--clr-background);
 }
 
-:where(.lr-wgt-common.minimal, lr-file-uploader-minimal) lr-upload-list .toolbar .add-more-btn[disabled] {
+.lr-wgt-common.minimal lr-upload-list .toolbar .add-more-btn[disabled],
+lr-file-uploader-minimal lr-upload-list .toolbar .add-more-btn[disabled] {
   display: none;
 }
 
-:where(.lr-wgt-common.minimal, lr-file-uploader-minimal) lr-upload-list .toolbar .add-more-btn:hover {
+.lr-wgt-common.minimal lr-upload-list .toolbar .add-more-btn:hover,
+lr-file-uploader-minimal lr-upload-list .toolbar .add-more-btn:hover {
   background-color: var(--clr-background-dark);
 }
 
-:where(.lr-wgt-common.minimal, lr-file-uploader-minimal) lr-upload-list .toolbar .add-more-btn > span {
+.lr-wgt-common.minimal lr-upload-list .toolbar .add-more-btn > span,
+lr-file-uploader-minimal lr-upload-list .toolbar .add-more-btn > span {
   display: none;
 }
 
-:where(.lr-wgt-common.minimal, lr-file-uploader-minimal) lr-file-item {
+.lr-wgt-common.minimal lr-file-item,
+lr-file-uploader-minimal lr-file-item {
   background-color: var(--clr-background);
   border-radius: var(--border-radius-element);
 }
 
-:where(.lr-wgt-common.minimal, lr-file-uploader-minimal) lr-file-item .edit-btn {
+.lr-wgt-common.minimal lr-file-item .edit-btn,
+lr-file-uploader-minimal lr-file-item .edit-btn {
   display: none;
 }
 
-:where(.lr-wgt-common.minimal, lr-file-uploader-minimal) lr-file-item lr-progress-bar {
+.lr-wgt-common.minimal lr-file-item lr-progress-bar,
+lr-file-uploader-minimal lr-file-item lr-progress-bar {
   top: 0 !important;
   height: 100% !important;
 }
 
-:where(.lr-wgt-common.minimal, lr-file-uploader-minimal) lr-file-item lr-progress-bar .progress {
+.lr-wgt-common.minimal lr-file-item lr-progress-bar .progress,
+lr-file-uploader-minimal lr-file-item lr-progress-bar .progress {
   background-color: var(--clr-accent-lightest);
   border-radius: var(--border-radius-element);
 }
 
-:where(.lr-wgt-common.minimal, lr-file-uploader-minimal) lr-upload-list lr-drop-area {
+.lr-wgt-common.minimal lr-upload-list lr-drop-area,
+lr-file-uploader-minimal lr-upload-list lr-drop-area {
   width: 100%;
   height: 100%;
   margin: 0;
   border-radius: var(--border-radius-frame);
 }
 
-:where(.lr-wgt-common.minimal, lr-file-uploader-minimal) lr-upload-list .common-error {
+.lr-wgt-common.minimal lr-upload-list .common-error,
+lr-file-uploader-minimal lr-upload-list .common-error {
   margin: var(--gap-small) 0 0 0;
 }
