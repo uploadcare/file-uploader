@@ -4,9 +4,6 @@
 /* ICONS: */
 @import url('icons.css');
 
-/* L10N: */
-@import url('l10n.css');
-
 /* THEME */
 @import url('theme.css');
 
@@ -31,7 +28,6 @@
 @import url('../../UploadList/upload-list.css');
 @import url('../../StartFrom/start-from.css');
 @import url('../../FileItem/file-item.css');
-@import url('../../UploadDetails/upload-details.css');
 
 /* @import url('../../EditableCanvas/editable-canvas.css'); */
 @import url('../../FilePreview/file-preview.css');

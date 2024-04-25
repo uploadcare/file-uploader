@@ -142,15 +142,6 @@ export class ExternalSource extends UploaderBlock {
     this.applyStyles();
   }
 
-  updateCssData = () => {
-    if (this.isActivityActive) {
-      this._inheritedUpdateCssData();
-      this.applyStyles();
-    }
-  };
-  /** @private */
-  _inheritedUpdateCssData = this.updateCssData;
-
   /**
    * @private
    * @param {string} propName
@@ -178,18 +169,17 @@ export class ExternalSource extends UploaderBlock {
 
   /** @private */
   remoteUrl() {
-    let pubkey = this.cfg.pubkey;
-    let imagesOnly = false.toString();
-    let { externalSourceType } = this.activityParams;
-    let params = {
-      lang: this.getCssData('--l10n-locale-name')?.split('-')?.[0] || 'en',
+    const { pubkey, remoteTabSessionKey, socialBaseUrl } = this.cfg;
+    const { externalSourceType } = this.activityParams;
+    const lang = this.l10n('social-source-lang')?.split('-')?.[0] || 'en';
+    const params = {
+      lang,
       public_key: pubkey,
-      images_only: imagesOnly,
+      images_only: false.toString(),
       pass_window_open: false,
-      session_key: this.cfg.remoteTabSessionKey,
+      session_key: remoteTabSessionKey,
     };
-    let url = new URL(this.cfg.socialBaseUrl);
-    url.pathname = `/window3/${externalSourceType}`;
+    const url = new URL(`/window3/${externalSourceType}`, socialBaseUrl);
     url.search = queryString(params);
     return url.toString();
   }

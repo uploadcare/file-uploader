@@ -47,11 +47,12 @@
     "./env": "./env.js",
     "./web/*": "./web/*",
     "./types/*": "./types/*",
-    "./types/jsx": "./types/jsx.d.ts"
+    "./types/jsx": "./types/jsx.d.ts",
+    "./locales/*": "./locales/*"
   },
   "repository": "https://github.com/uploadcare/blocks/",
   "files": [
-    "{abstract,blocks,solutions,web,utils,types}/**/*.{js,css,d.ts,d.ts.map}",
+    "{abstract,blocks,solutions,web,utils,types,locales}/**/*.{js,css,d.ts,d.ts.map}",
     "index.{js,d.ts,d.ts.map}",
     "index.ssr.{js,d.ts,d.ts.map}",
     "env.{js,d.ts,d.ts.map}",
@@ -63,9 +64,10 @@
   },
   "scripts": {
     "dev": "esbuild --servedir=.",
-    "test": "npm run test:types && npm run test:specs",
+    "test": "npm run test:types && npm run test:specs && npm run test:locales",
     "test:types": "tsd -t types/index.d.ts -f types/test/",
     "test:specs": "web-test-runner \"./{abstract,blocks,solutions,web,utils}/**/*.test.js\" --node-resolve",
+    "test:locales": "npx playwright install && npx playwright install-deps chromium && node ./test-locales.js",
     "release": "shipjs prepare",
     "build:web": "npm run clean:web && node ./build.js",
     "build:ssr-stubs": "node ./build-ssr-stubs.js",
@@ -79,7 +81,7 @@
     "lint:css:fix": "stylelint './**/*.css' --fix",
     "lint": "run-s lint:js lint:css",
     "clean:web": "rimraf -g './web/**/*.{js,css}'",
-    "clean:types": "rimraf -g './{abstract,blocks,solutions,web,utils,test}/**/*.{d.ts,d.ts.map}' && rimraf -g './*.{d.ts,d.ts.map}'",
+    "clean:types": "rimraf -g './{abstract,blocks,solutions,web,utils,test,locales}/**/*.{d.ts,d.ts.map}' && rimraf -g './*.{d.ts,d.ts.map}'",
     "clean": "run-s clean:*",
     "format:js": "prettier --write './**/*.{js,cjs}'",
     "format:css": "prettier --write --parser css './**/*.css'",
@@ -112,6 +114,7 @@
     "marked": "^4.3.0",
     "node-watch": "^0.7.3",
     "npm-run-all": "^4.1.5",
+    "playwright": "^1.42.1",
     "postcss": "^8.4.21",
     "prettier": "^3.2.4",
     "prettier-plugin-jsdoc": "1.3.0",

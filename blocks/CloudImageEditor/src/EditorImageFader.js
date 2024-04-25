@@ -1,5 +1,5 @@
 import { debounce } from '../../utils/debounce.js';
-import { CloudImageEditorBase } from './CloudImageEditorBase.js';
+import { Block } from '../../../abstract/Block.js';
 import { classNames } from './lib/classNames.js';
 import { linspace } from './lib/linspace.js';
 import { batchPreloadImages } from './lib/preloadImage.js';
@@ -69,7 +69,7 @@ function keypointsRange(operation, value) {
  * @property {Number} value
  */
 
-export class EditorImageFader extends CloudImageEditorBase {
+export class EditorImageFader extends Block {
   constructor() {
     super();
 

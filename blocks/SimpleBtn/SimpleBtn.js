@@ -9,11 +9,11 @@ export class SimpleBtn extends UploaderBlock {
 
     this.init$ = {
       ...this.init$,
-      '*simpleButtonText': '',
       withDropZone: true,
       onClick: () => {
         this.initFlow();
       },
+      'button-text': '',
     };
   }
 
@@ -31,7 +31,7 @@ export class SimpleBtn extends UploaderBlock {
       },
     );
     this.subConfigValue('multiple', (val) => {
-      this.$['*simpleButtonText'] = val ? this.l10n('upload-files') : this.l10n('upload-file');
+      this.$['button-text'] = val ? 'upload-files' : 'upload-file';
     });
   }
 }
@@ -40,9 +40,9 @@ SimpleBtn.template = /* HTML */ `
   <lr-drop-area set="@disabled: !withDropZone">
     <button type="button" set="onclick: onClick">
       <lr-icon name="upload"></lr-icon>
-      <span>{{*simpleButtonText}}</span>
+      <span l10n="button-text"></span>
       <slot></slot>
-      <div class="visual-drop-area"></div>
+      <div class="visual-drop-area" l10n="drop-files-here"></div>
     </button>
   </lr-drop-area>
 `;

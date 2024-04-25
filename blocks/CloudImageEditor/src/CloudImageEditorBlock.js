@@ -1,4 +1,5 @@
 // @ts-check
+import { Block } from '../../../abstract/Block.js';
 import {
   createCdnUrl,
   createCdnUrlModifiers,
@@ -8,7 +9,6 @@ import {
 } from '../../../utils/cdn-utils.js';
 import { TRANSPARENT_PIXEL_SRC } from '../../../utils/transparentPixelSrc.js';
 import { debounce } from '../../utils/debounce.js';
-import { CloudImageEditorBase } from './CloudImageEditorBase.js';
 import { classNames } from './lib/classNames.js';
 import { parseCropPreset } from './lib/parseCropPreset.js';
 import { parseTabs } from './lib/parseTabs.js';
@@ -17,7 +17,8 @@ import { initState } from './state.js';
 import { TEMPLATE } from './template.js';
 import { TabId } from './toolbar-constants.js';
 
-export class CloudImageEditorBlock extends CloudImageEditorBase {
+export class CloudImageEditorBlock extends Block {
+  ctxOwner = true;
   static className = 'cloud-image-editor';
 
   constructor() {
@@ -27,11 +28,6 @@ export class CloudImageEditorBlock extends CloudImageEditorBase {
       ...this.init$,
       ...initState(this),
     };
-  }
-
-  /** Force cloud editor to always use own context */
-  get ctxName() {
-    return this.autoCtxName;
   }
 
   /** @private */

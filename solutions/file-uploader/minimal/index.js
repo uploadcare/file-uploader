@@ -1,4 +1,5 @@
 import { registerBlocks } from '../../../abstract/registerBlocks.js';
+import { defineLocale } from '../../../abstract/localeRegistry.js';
 import { FileUploaderMinimal } from './FileUploaderMinimal.js';
 import { StartFrom } from '../../../blocks/StartFrom/StartFrom.js';
 import { DropArea } from '../../../blocks/DropArea/DropArea.js';
@@ -13,6 +14,7 @@ import { UploadCtxProvider } from '../../../blocks/UploadCtxProvider/UploadCtxPr
 
 export {
   registerBlocks,
+  defineLocale,
   FileUploaderMinimal,
   StartFrom,
   DropArea,

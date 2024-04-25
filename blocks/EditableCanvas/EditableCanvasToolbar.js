@@ -39,22 +39,22 @@ export class EditorToolbar extends Block {
         this.rangeCtx = 'brightness';
         this.set$({
           rangeActive: true,
-          rangeCaption: this.l10n('brightness'),
         });
+        this.bindL10n('rangeCaption', () => this.l10n('brightness'));
       },
       contrast: () => {
         this.rangeCtx = 'contrast';
         this.set$({
           rangeActive: true,
-          rangeCaption: this.l10n('contrast'),
         });
+        this.bindL10n('rangeCaption', () => this.l10n('contrast'));
       },
       saturation: () => {
         this.rangeCtx = 'saturate';
         this.set$({
           rangeActive: true,
-          rangeCaption: this.l10n('saturation'),
         });
+        this.bindL10n('rangeCaption', () => this.l10n('saturation'));
       },
       resize: () => {
         this.canMan.resize();

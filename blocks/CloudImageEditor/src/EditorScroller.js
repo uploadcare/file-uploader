@@ -1,8 +1,8 @@
-import { CloudImageEditorBase } from './CloudImageEditorBase.js';
+import { Block } from '../../../abstract/Block.js';
 
 const X_THRESHOLD = 1;
 
-export class EditorScroller extends CloudImageEditorBase {
+export class EditorScroller extends Block {
   initCallback() {
     super.initCallback();
 

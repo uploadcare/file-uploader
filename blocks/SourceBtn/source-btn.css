@@ -30,22 +30,6 @@ lr-source-btn lr-icon {
   opacity: 0.8;
 }
 
-lr-source-btn[type='local'] > .txt::after {
-  content: var(--l10n-local-files);
-}
-
-lr-source-btn[type='camera'] > .txt::after {
-  content: var(--l10n-camera);
-}
-
-lr-source-btn[type='url'] > .txt::after {
-  content: var(--l10n-from-url);
-}
-
-lr-source-btn[type='other'] > .txt::after {
-  content: var(--l10n-other);
-}
-
 lr-source-btn .txt {
   display: flex;
   align-items: center;

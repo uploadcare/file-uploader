@@ -57,7 +57,6 @@ lr-simple-btn .visual-drop-area::before {
   color: var(--clr-txt-light);
   background-color: var(--clr-background);
   border-radius: inherit;
-  content: var(--l10n-drop-files-here);
 }
 
 lr-simple-btn > lr-drop-area[drag-state='active'] .visual-drop-area {

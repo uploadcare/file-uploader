@@ -52,10 +52,6 @@ lr-external-source .back-btn {
   padding-left: 0;
 }
 
-lr-external-source .back-btn::after {
-  content: var(--l10n-back);
-}
-
 lr-external-source .selected-counter {
   display: flex;
   grid-gap: var(--gap-mid);

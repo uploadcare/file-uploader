@@ -1,6 +1,6 @@
 // @ts-check
 import { debounce } from '../../utils/debounce.js';
-import { CloudImageEditorBase } from './CloudImageEditorBase.js';
+import { Block } from '../../../abstract/Block.js';
 import { EditorCropButtonControl } from './EditorCropButtonControl.js';
 import { EditorFilterControl } from './EditorFilterControl.js';
 import { EditorOperationControl } from './EditorOperationControl.js';
@@ -46,7 +46,7 @@ function renderTabContent(id) {
   `;
 }
 
-export class EditorToolbar extends CloudImageEditorBase {
+export class EditorToolbar extends Block {
   constructor() {
     super();
 
@@ -63,9 +63,6 @@ export class EditorToolbar extends CloudImageEditorBase {
       colorOperations: ALL_COLOR_OPERATIONS,
       cropOperations: ALL_CROP_OPERATIONS,
       '*operationTooltip': null,
-
-      'l10n.cancel': this.l10n('cancel'),
-      'l10n.apply': this.l10n('apply'),
 
       'presence.mainToolbar': true,
       'presence.subToolbar': false,
@@ -291,14 +288,14 @@ export class EditorToolbar extends CloudImageEditorBase {
       visible = true;
       if (this.$['*currentFilter'] && transformations?.filter?.name === this.$['*currentFilter']) {
         let value = transformations?.filter?.amount || 100;
-        text = this.l10n(this.$['*currentFilter']) + ' ' + value;
+        text = this.$['*currentFilter'] + ' ' + value;
       } else {
         text = this.l10n(FAKE_ORIGINAL_FILTER);
       }
     } else if (this.$['*tabId'] === TabId.TUNING && currentOperation) {
       visible = true;
       let value = transformations?.[currentOperation] || COLOR_OPERATIONS_CONFIG[currentOperation].zero;
-      text = currentOperation + ' ' + value;
+      text = this.l10n(currentOperation) + ' ' + value;
     }
     if (visible) {
       this.$['*operationTooltip'] = text;
@@ -411,8 +408,8 @@ EditorToolbar.template = /* HTML */ `
         <lr-editor-slider ref="slider-el"></lr-editor-slider>
       </div>
       <div class="controls-row">
-        <lr-btn-ui theme="boring" set="@text: l10n.cancel; onclick: on.cancelSlider;"> </lr-btn-ui>
-        <lr-btn-ui theme="primary" set="@text: l10n.apply; onclick: on.applySlider;"> </lr-btn-ui>
+        <lr-btn-ui theme="boring" set="onclick: on.cancelSlider;" l10n="@text:cancel"> </lr-btn-ui>
+        <lr-btn-ui theme="primary" set="onclick: on.applySlider;" l10n="@text:apply"> </lr-btn-ui>
       </div>
     </lr-presence-toggle>
   </div>

@@ -91,6 +91,8 @@ const mapping = {
   groupOutput: asBoolean,
   userAgentIntegration: asString,
   debug: asBoolean,
+
+  localeName: asString,
 };
 
 /**

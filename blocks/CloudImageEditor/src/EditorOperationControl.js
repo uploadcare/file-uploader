@@ -21,7 +21,7 @@ export class EditorOperationControl extends EditorButtonControl {
       if (operation) {
         this._operation = operation;
         this.$['icon'] = operation;
-        this.$.title = this.l10n(operation);
+        this.bindL10n('title', () => this.l10n(operation));
       }
     });
 

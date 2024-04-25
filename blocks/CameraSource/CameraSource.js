@@ -19,10 +19,9 @@ export class CameraSource extends UploaderBlock {
     videoHidden: true,
     messageHidden: true,
     requestBtnHidden: canUsePermissionsApi(),
-    l10nMessage: null,
-    originalErrorMessage: null,
     cameraSelectOptions: null,
     cameraSelectHidden: true,
+    l10nMessage: '',
 
     onCameraSelectChange: (e) => {
       /** @type {String} */
@@ -67,7 +66,6 @@ export class CameraSource extends UploaderBlock {
    * @param {'granted' | 'denied' | 'prompt'} state
    */
   _setPermissionsState = debounce((state) => {
-    this.$.originalErrorMessage = null;
     this.classList.toggle('initialized', state === 'granted');
 
     if (state === 'granted') {
@@ -77,7 +75,7 @@ export class CameraSource extends UploaderBlock {
         messageHidden: true,
       });
     } else if (state === 'prompt') {
-      this.$.l10nMessage = this.l10n('camera-permissions-prompt');
+      this.$.l10nMessage = 'camera-permissions-prompt';
       this.set$({
         videoHidden: true,
         shotBtnDisabled: true,
@@ -85,7 +83,7 @@ export class CameraSource extends UploaderBlock {
       });
       this._stopCapture();
     } else {
-      this.$.l10nMessage = this.l10n('camera-permissions-denied');
+      this.$.l10nMessage = 'camera-permissions-denied';
 
       this.set$({
         videoHidden: true,
@@ -146,7 +144,7 @@ export class CameraSource extends UploaderBlock {
       this._setPermissionsState('granted');
     } catch (err) {
       this._setPermissionsState('denied');
-      this.$.originalErrorMessage = err.message;
+      console.error('Failed to capture camera', err);
     }
   }
 
@@ -207,6 +205,7 @@ export class CameraSource extends UploaderBlock {
         this.$.cameraSelectOptions = cameraSelectOptions;
         this.$.cameraSelectHidden = false;
       }
+      this._selectedCameraId = cameraSelectOptions[0]?.value;
     } catch (err) {
       // mediaDevices isn't available for HTTP
       // TODO: handle this case
@@ -240,8 +239,7 @@ CameraSource.template = /* HTML */ `
       ref="video"
     ></video>
     <div class="message-box" set="@hidden: messageHidden">
-      <span>{{l10nMessage}}</span>
-      <span>{{originalErrorMessage}}</span>
+      <span l10n="l10nMessage"></span>
       <button
         type="button"
         set="onclick: onRequestPermissions; @hidden: requestBtnHidden"

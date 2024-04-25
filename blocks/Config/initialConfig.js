@@ -58,4 +58,6 @@ export const initialConfig = {
   debug: false,
 
   metadata: null,
+  localeName: 'en',
+  localeDefinitionOverride: null,
 };

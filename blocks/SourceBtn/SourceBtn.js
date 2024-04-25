@@ -31,6 +31,7 @@ export class SourceBtn extends UploaderBlock {
     this.init$ = {
       ...this.init$,
       iconName: 'default',
+      'src-type': '',
     };
   }
 
@@ -125,7 +126,7 @@ export class SourceBtn extends UploaderBlock {
     }
     const { textKey = type, icon = type } = configType;
 
-    this.applyL10nKey('src-type', `${L10N_PREFIX}${textKey}`);
+    this.$['src-type'] = `${L10N_PREFIX}${textKey}`;
     this.$.iconName = icon;
     this.onclick = () => {
       this.activate();
