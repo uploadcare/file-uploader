@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <base href="../../" />
 
 <head>
@@ -26,10 +26,14 @@
   <script src="./index.js" type="module"></script>
   <script type="module">
     import * as LR from './index.js';
+    
     LR.registerBlocks(LR);
   </script>
 </head>
 
-<lr-file-uploader-regular ctx-name="my-uploader" css-src="./solutions/file-uploader/regular/index.css"></lr-file-uploader-regular>
-<lr-config ctx-name="my-uploader" pubkey="demopublickey" img-only group-output debug></lr-config>
+<lr-file-uploader-regular
+  ctx-name="my-uploader"
+  css-src="./solutions/file-uploader/regular/index.css"
+></lr-file-uploader-regular>
+<lr-config ctx-name="my-uploader" pubkey="demopublickey"></lr-config>
 <lr-upload-ctx-provider ctx-name="my-uploader"></lr-upload-ctx-provider>

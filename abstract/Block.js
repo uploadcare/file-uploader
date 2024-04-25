@@ -2,12 +2,12 @@
 import { BaseComponent, Data } from '@symbiotejs/symbiote';
 import { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter.js';
 import { WindowHeightTracker } from '../utils/WindowHeightTracker.js';
+import { getLocaleDirection } from '../utils/getLocaleDirection.js';
 import { getPluralForm } from '../utils/getPluralForm.js';
 import { applyTemplateData, getPluralObjects } from '../utils/template-utils.js';
-import { toKebabCase } from '../utils/toKebabCase.js';
 import { waitForAttribute } from '../utils/waitForAttribute.js';
-import { warnOnce } from '../utils/warnOnce.js';
 import { blockCtx } from './CTX.js';
+import { LocaleManager, localeStateKey } from './LocaleManager.js';
 import { l10nProcessor } from './l10nProcessor.js';
 import { sharedConfigKey } from './sharedConfigKey.js';
 
@@ -34,7 +34,7 @@ export class Block extends BaseComponent {
     if (!str) {
       return '';
     }
-    let template = this.getCssData('--l10n-' + str, true) || str;
+    let template = this.$[localeStateKey(str)] || str;
     let pluralObjects = getPluralObjects(template);
     for (let pluralObject of pluralObjects) {
       variables[pluralObject.variable] = this.pluralize(
@@ -52,29 +52,25 @@ export class Block extends BaseComponent {
    * @returns {string}
    */
   pluralize(key, count) {
-    const locale = this.l10n('locale-name') || 'en-US';
+    const locale = this.l10n('locale-id') || 'en';
     const pluralForm = getPluralForm(locale, count);
     return this.l10n(`${key}__${pluralForm}`);
   }
 
+  /**
+   * @param {string} key
+   * @param {() => void} resolver
+   */
+  bindL10n(key, resolver) {
+    this.localeManager?.bindL10n(this, key, resolver);
+  }
+
   constructor() {
     super();
+    /** @type {Map<string, Set<{ remove: () => void }>>} */
+    this.l10nProcessorSubs = new Map();
     // @ts-ignore TODO: fix this
     this.addTemplateProcessor(l10nProcessor);
-    // TODO: inspect template on lr-* elements
-    // this.addTemplateProcessor((fr) => {
-    //   [...fr.querySelectorAll('*')].forEach((el) => {
-    //     if (el.tagName.includes('LR-')) {
-    //       let tag = el.tagName.toLowerCase();
-    //       console.log(window.customElements.get(tag)?.name);
-    //     }
-    //   });
-    // });
-    /**
-     * @private
-     * @type {String[]}
-     */
-    this.__l10nKeys = [];
   }
 
   /**
@@ -89,16 +85,6 @@ export class Block extends BaseComponent {
       return;
     }
     eventEmitter.emit(type, payload, options);
-  }
-
-  /**
-   * @param {String} localPropKey
-   * @param {String} l10nKey
-   */
-  applyL10nKey(localPropKey, l10nKey) {
-    let prop = 'l10n:' + localPropKey;
-    this.$[prop] = /** @type {any} */ (l10nKey);
-    this.__l10nKeys.push(localPropKey);
   }
 
   /**
@@ -176,18 +162,38 @@ export class Block extends BaseComponent {
   }
 
   initCallback() {
+    if (!this.has('*blocksRegistry')) {
+      this.add('*blocksRegistry', new Set());
+    }
+
     let blocksRegistry = this.$['*blocksRegistry'];
     blocksRegistry.add(this);
 
-    if (!this.$['*eventEmitter']) {
-      this.$['*eventEmitter'] = new EventEmitter(this.debugPrint.bind(this));
+    if (!this.has('*eventEmitter')) {
+      this.add('*eventEmitter', new EventEmitter(this.debugPrint.bind(this)));
     }
+
+    if (!this.has('*localeManager')) {
+      this.add('*localeManager', new LocaleManager(this));
+    }
+
+    this.sub(localeStateKey('locale-id'), (localeId) => {
+      this.style.direction = getLocaleDirection(localeId);
+    });
+  }
+
+  /** @returns {LocaleManager | null} */
+  get localeManager() {
+    return this.has('*localeManager') ? this.$['*localeManager'] : null;
   }
 
   destroyCallback() {
     /** @type {Set<Block>} */
     let blocksRegistry = this.$['*blocksRegistry'];
     blocksRegistry.delete(this);
+
+    this.localeManager?.destroyL10nBindings(this);
+    this.l10nProcessorSubs = new Map();
 
     // Destroy local context
     // TODO: this should be done inside symbiote
@@ -208,6 +214,8 @@ export class Block extends BaseComponent {
    */
   destroyCtxCallback() {
     Data.deleteCtx(this.ctxName);
+
+    this.localeManager?.destroy();
   }
 
   /**
@@ -220,16 +228,13 @@ export class Block extends BaseComponent {
      * @param {String} str
      * @returns {String}
      */
-    let getUnit = (str) => {
-      return this.getCssData('--l10n-unit-' + str.toLowerCase(), true) || str;
-    };
     if (bytes === 0) {
-      return `0 ${getUnit(units[0])}`;
+      return `0 ${units[0]}`;
     }
     let k = 1024;
     let dm = decimals < 0 ? 0 : decimals;
     let i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / k ** i).toFixed(dm)) + ' ' + getUnit(units[i]);
+    return parseFloat((bytes / k ** i).toFixed(dm)) + ' ' + units[i];
   }
 
   /**
@@ -246,17 +251,6 @@ export class Block extends BaseComponent {
       { previewUrl: url },
       { transform: (value) => window.encodeURIComponent(value) },
     );
-  }
-
-  /**
-   * @param {String} prop
-   * @protected
-   */
-  parseCfgProp(prop) {
-    return {
-      ctx: this.nodeCtx,
-      name: prop.replace('*', ''),
-    };
   }
 
   /** @returns {import('../types').ConfigType} } */
@@ -278,16 +272,7 @@ export class Block extends BaseComponent {
          * @param {keyof import('../types').ConfigType} key
          */
         get: (obj, key) => {
-          const sharedKey = sharedConfigKey(key);
-          const parsed = this.parseCfgProp(sharedKey);
-          if (parsed.ctx.has(parsed.name)) {
-            return parsed.ctx.read(parsed.name);
-          } else {
-            warnOnce(
-              'Using CSS variables for configuration is deprecated. Please use `lr-config` instead. See migration guide: https://uploadcare.com/docs/file-uploader/migration-to-0.25.0/',
-            );
-            return this.getCssData(`--cfg-${toKebabCase(key)}`);
-          }
+          return this.$[sharedConfigKey(key)];
         },
       });
     }
@@ -300,29 +285,8 @@ export class Block extends BaseComponent {
    * @param {(value: import('../types').ConfigType[T]) => void} callback
    */
   subConfigValue(key, callback) {
-    const parsed = this.parseCfgProp(sharedConfigKey(key));
-    if (parsed.ctx.has(parsed.name)) {
-      this.sub(sharedConfigKey(key), callback);
-    } else {
-      this.bindCssData(`--cfg-${toKebabCase(key)}`);
-      this.sub(`--cfg-${toKebabCase(key)}`, callback);
-    }
+    this.sub(sharedConfigKey(key), callback);
   }
-
-  /** @deprecated */
-  updateCtxCssData = () => {
-    warnOnce(
-      'Using CSS variables for configuration is deprecated. Please use `lr-config` instead. See migration guide: https://uploadcare.com/docs/file-uploader/migration-to-0.25.0/',
-    );
-
-    /** @type {Set<Block>} */
-    let blocks = this.$['*blocksRegistry'];
-    for (let block of blocks) {
-      if (block.isConnected) {
-        block.updateCssData();
-      }
-    }
-  };
 
   /** @param {unknown[]} args */
   debugPrint(...args) {
@@ -334,11 +298,7 @@ export class Block extends BaseComponent {
       const resolver = args[0];
       consoleArgs = resolver();
     }
-    console.log(`[${this.debugCtxName}]`, ...consoleArgs);
-  }
-
-  get debugCtxName() {
-    return this.ctxName;
+    console.log(`[${this.ctxName}]`, ...consoleArgs);
   }
 
   /** @param {String} [name] */

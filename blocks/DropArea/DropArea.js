@@ -23,7 +23,7 @@ export class DropArea extends UploaderBlock {
       isFullscreen: false,
       isEnabled: true,
       isVisible: true,
-      text: this.l10n('drop-files-here'),
+      text: '',
       [REGISTRY_KEY]: null,
     };
   }
@@ -48,6 +48,8 @@ export class DropArea extends UploaderBlock {
 
   initCallback() {
     super.initCallback();
+
+    this.bindL10n('text', () => this.l10n('drop-files-here'));
 
     if (!this.$[REGISTRY_KEY]) {
       this.$[REGISTRY_KEY] = new Set();
@@ -83,9 +85,9 @@ export class DropArea extends UploaderBlock {
       'text',
       /** @param {unknown} value */ (value) => {
         if (typeof value === 'string') {
-          this.set$({ text: this.l10n(value) || value });
+          this.bindL10n('text', () => this.l10n(value) || value);
         } else {
-          this.set$({ text: this.l10n('drop-files-here') });
+          this.bindL10n('text', () => this.l10n('drop-files-here'));
         }
       },
     );

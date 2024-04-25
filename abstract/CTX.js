@@ -1,12 +1,7 @@
 // @ts-check
 import { Queue } from '@uploadcare/upload-client';
 
-export const blockCtx = () => ({
-  /** @type {Set<import('./Block').Block>} */
-  '*blocksRegistry': new Set(),
-  /** @type {import('../blocks/UploadCtxProvider/EventEmitter.js').EventEmitter | null} */
-  '*eventEmitter': null,
-});
+export const blockCtx = () => ({});
 
 /** @param {import('./Block').Block} fnCtx */
 export const activityBlockCtx = (fnCtx) => ({

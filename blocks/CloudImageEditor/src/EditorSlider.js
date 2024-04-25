@@ -1,4 +1,4 @@
-import { CloudImageEditorBase } from './CloudImageEditorBase.js';
+import { Block } from '../../../abstract/Block.js';
 import { COLOR_OPERATIONS_CONFIG } from './toolbar-constants.js';
 
 const ControlType = {
@@ -8,7 +8,7 @@ const ControlType = {
 
 export const FAKE_ORIGINAL_FILTER = 'original';
 
-export class EditorSlider extends CloudImageEditorBase {
+export class EditorSlider extends Block {
   init$ = {
     ...this.init$,
     disabled: false,

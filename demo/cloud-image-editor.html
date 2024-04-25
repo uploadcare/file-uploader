@@ -19,6 +19,8 @@
   <script type="module">
     import * as LR from './index.js';
     LR.registerBlocks(LR);
+
+    LR.defineLocale('ru', () => import('./locales/file-uploader/ru.js').then((m) => m.default));
   </script>
   <style>
     lr-cloud-image-editor {
@@ -28,5 +30,5 @@
   </style>
 </head>
 
+<lr-config ctx-name="my-editor" pubkey="demopublickey" locale-name="ru"></lr-config>
 <lr-cloud-image-editor uuid="f4dc9ebc-ed6d-4b4d-83d1-863bf1e4bb7f" ctx-name="my-editor" css-src="./solutions/cloud-image-editor/index.css" tabs="tuning,filters,crop"></lr-cloud-image-editor>
-<lr-config ctx-name="my-editor" pubkey="demopublickey"></lr-config>

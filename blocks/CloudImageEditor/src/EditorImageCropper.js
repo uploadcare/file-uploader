@@ -1,8 +1,8 @@
 // @ts-check
 
+import { Block } from '../../../abstract/Block.js';
 import { debounce } from '../../utils/debounce.js';
 import { throttle } from '../../utils/throttle.js';
-import { CloudImageEditorBase } from './CloudImageEditorBase.js';
 import {
   clamp,
   constraintRect,
@@ -41,7 +41,7 @@ function validateCrop(crop) {
   return shouldMatch.every((matcher) => matcher(crop));
 }
 
-export class EditorImageCropper extends CloudImageEditorBase {
+export class EditorImageCropper extends Block {
   constructor() {
     super();
 

@@ -100,9 +100,9 @@ export class UploadList extends UploaderBlock {
 
       addMoreBtnEnabled: summary.total === 0 || (!tooMany && !exact),
       addMoreBtnVisible: !exact || this.cfg.multiple,
-
-      headerText: this._getHeaderText(summary),
     });
+
+    this.bindL10n('headerText', () => this._getHeaderText(summary));
   }
 
   /**

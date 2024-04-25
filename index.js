@@ -22,7 +22,6 @@ export { UploadList } from './blocks/UploadList/UploadList.js';
 export { UrlSource } from './blocks/UrlSource/UrlSource.js';
 export { CameraSource } from './blocks/CameraSource/CameraSource.js';
 export { UploadCtxProvider } from './blocks/UploadCtxProvider/UploadCtxProvider.js';
-export { UploadDetails } from './blocks/UploadDetails/UploadDetails.js';
 export { ConfirmationDialog } from './blocks/ConfirmationDialog/ConfirmationDialog.js';
 export { ProgressBarCommon } from './blocks/ProgressBarCommon/ProgressBarCommon.js';
 export { ProgressBar } from './blocks/ProgressBar/ProgressBar.js';
@@ -47,6 +46,7 @@ export { CloudImageEditor } from './solutions/cloud-image-editor/CloudImageEdito
 
 // Utils:
 export { registerBlocks } from './abstract/registerBlocks.js';
+export { defineLocale } from './abstract/localeRegistry.js';
 export { connectBlocksFrom } from './abstract/connectBlocksFrom.js';
 export { toKebabCase } from './utils/toKebabCase.js';
 

@@ -1,5 +1,5 @@
 // @ts-check
-import { CloudImageEditorBase } from './CloudImageEditorBase.js';
+import { Block } from '../../../abstract/Block.js';
 import {
   clamp,
   constraintRect,
@@ -20,13 +20,12 @@ import {
   MIN_CROP_SIZE,
   MIN_INTERACTION_SIZE,
   THUMB_CORNER_SIZE,
-  THUMB_OFFSET,
   THUMB_SIDE_SIZE,
   THUMB_STROKE_WIDTH,
 } from './cropper-constants.js';
 import { classNames } from './lib/classNames.js';
 
-export class CropFrame extends CloudImageEditorBase {
+export class CropFrame extends Block {
   constructor() {
     super();
 

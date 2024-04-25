@@ -55,6 +55,7 @@ UrlSource.template = /* HTML */ `
       type="submit"
       class="url-upload-btn primary-btn"
       set="onclick: onUpload; @disabled: importDisabled"
+      l10n="upload-url"
     ></button>
   </form>
 `;

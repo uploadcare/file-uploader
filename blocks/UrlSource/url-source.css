@@ -18,7 +18,3 @@ lr-url-source > .content {
 lr-url-source .url-input {
   display: flex;
 }
-
-lr-url-source .url-upload-btn::after {
-  content: var(--l10n-upload-url);
-}
