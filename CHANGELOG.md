@@ -1,3 +1,9 @@
+## [0.38.2](https://github.com/uploadcare/blocks/compare/v0.38.1...v0.38.2) (2024-04-29)
+
+### Bug Fixes
+
+- **config:** dont bind complex config options to the attributes ([#650](https://github.com/uploadcare/blocks/issues/650)) ([310c728](https://github.com/uploadcare/blocks/commit/310c728e60ee3560fb751e8e75233d67c498f3c4))
+
 ## [0.38.1](https://github.com/uploadcare/blocks/compare/v0.38.0...v0.38.1) (2024-04-29)
 
 ### Bug Fixes
