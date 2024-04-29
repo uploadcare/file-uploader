@@ -1,11 +1,12 @@
 @import url('../../../blocks/themes/lr-basic/index.css');
 
-lr-start-from {
+.lr-wgt-common.inline,
+lr-file-uploader-inline lr-start-from {
   height: 100%;
   container-type: inline-size;
 }
 
-.lr-wgt-common,
+.lr-wgt-common.inline,
 lr-file-uploader-inline {
   --cfg-done-activity: 'start-from';
   --cfg-init-activity: 'start-from';
@@ -13,39 +14,47 @@ lr-file-uploader-inline {
   flex: 1;
 }
 
-lr-activity-header::after {
+.lr-wgt-common.inline lr-activity-header::after,
+lr-file-uploader-inline lr-activity-header::after {
   width: var(--ui-size);
   height: var(--ui-size);
   content: '';
 }
 
-lr-activity-header .close-btn {
+.lr-wgt-common.inline close-btn,
+lr-file-uploader-inline lr-activity-header .close-btn {
   display: none;
 }
 
 @container (min-width: 500px) {
-  lr-start-from .content {
+  .lr-wgt-common.inline lr-start-from .content,
+  lr-file-uploader-inline lr-start-from .content {
     grid-template-columns: 1fr max-content;
     height: 100%;
   }
 
-  lr-start-from lr-copyright {
+  .lr-wgt-common.inline lr-start-from lr-copyright,
+  lr-file-uploader-inline lr-start-from lr-copyright {
     grid-column: 2;
   }
 
-  lr-start-from lr-drop-area {
+  .lr-wgt-common.inline lr-start-from lr-drop-area,
+  lr-file-uploader-inline lr-start-from lr-drop-area {
     grid-row: span 3;
   }
 
-  lr-start-from:has(lr-copyright[hidden]) lr-drop-area {
+  .lr-wgt-common.inline lr-start-from:has(lr-copyright[hidden]) lr-drop-area,
+  lr-file-uploader-inline lr-start-from:has(lr-copyright[hidden]) lr-drop-area {
     grid-row: span 2;
   }
 
-  lr-start-from:has(.cancel-btn[hidden]) lr-drop-area {
+  .lr-wgt-common.inline lr-start-from:has(.cancel-btn[hidden]) lr-drop-area,
+  lr-file-uploader-inline lr-start-from:has(.cancel-btn[hidden]) lr-drop-area {
     grid-row: span 2;
   }
 
-  lr-start-from:has(lr-copyright[hidden]):has(.cancel-btn[hidden]) lr-drop-area {
+  .lr-wgt-common.inline lr-start-from:has(lr-copyright[hidden]):has(.cancel-btn[hidden]) lr-drop-area,
+  lr-file-uploader-inline lr-start-from:has(lr-copyright[hidden]):has(.cancel-btn[hidden]) lr-drop-area {
     grid-row: span 1;
   }
 }
