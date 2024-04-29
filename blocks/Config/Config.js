@@ -34,8 +34,8 @@ const attrKeyMapping =
 
 /** Mapping of attribute names to state */
 const attrStateMapping = /** @type {Record<keyof import('../../types').ConfigAttributesType, string>} */ ({
-  ...Object.fromEntries(allConfigKeys.map((key) => [toKebabCase(key), sharedConfigKey(key)])),
-  ...Object.fromEntries(allConfigKeys.map((key) => [key.toLowerCase(), sharedConfigKey(key)])),
+  ...Object.fromEntries(plainConfigKeys.map((key) => [toKebabCase(key), sharedConfigKey(key)])),
+  ...Object.fromEntries(plainConfigKeys.map((key) => [key.toLowerCase(), sharedConfigKey(key)])),
 });
 
 class ConfigClass extends Block {
