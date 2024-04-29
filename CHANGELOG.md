@@ -1,9 +1,15 @@
+## [0.38.1](https://github.com/uploadcare/blocks/compare/v0.38.0...v0.38.1) (2024-04-29)
+
+### Bug Fixes
+
+- **upload-list:** set fixed modal container width to avoid bouncy width (could lead to some l10n ui width glitches but we're ok with them) ([#648](https://github.com/uploadcare/blocks/issues/648)) ([167af55](https://github.com/uploadcare/blocks/commit/167af555d6bf44f59e1c63323d7f9dc55ba43b47))
+
 # [0.38.0](https://github.com/uploadcare/blocks/compare/v0.37.0...v0.38.0) (2024-04-25)
 
 ## BREAKING CHANGES
 
-* CSS configuration deprecated in v0.25.0 is removed. See the [migration guide for v0.25.0][uc-uploader-docs-migration-0-25-0] for more details.
-* Localizations are removed from CSS. <br/>Now we have a special API `defineLocale`, and `locale-name` and `locale-definition-override` options. See the [migration guide][uc-uploader-docs-migration-0-38-0] for more details.
+- CSS configuration deprecated in v0.25.0 is removed. See the [migration guide for v0.25.0][uc-uploader-docs-migration-0-25-0] for more details.
+- Localizations are removed from CSS. <br/>Now we have a special API `defineLocale`, and `locale-name` and `locale-definition-override` options. See the [migration guide][uc-uploader-docs-migration-0-38-0] for more details.
 
 [uc-uploader-docs-migration-0-25-0]: https://uploadcare.com/docs/file-uploader/migration-to-0.25.0/
 [uc-uploader-docs-migration-0-38-0]: https://uploadcare.com/docs/file-uploader/migration-to-0.38.0/
