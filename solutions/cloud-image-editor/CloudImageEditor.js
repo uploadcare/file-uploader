@@ -2,11 +2,8 @@
 import { CloudImageEditorBlock } from '../../blocks/CloudImageEditor/src/CloudImageEditorBlock.js';
 
 export class CloudImageEditor extends CloudImageEditorBlock {
-  pauseRender = true;
-
   initCallback() {
     super.initCallback();
-    this.render();
 
     /** @private */
     this.__shadowReady = true;

@@ -3,8 +3,6 @@ import { ActivityBlock } from '../../../abstract/ActivityBlock.js';
 import { SolutionBlock } from '../../../abstract/SolutionBlock.js';
 
 export class FileUploaderInline extends SolutionBlock {
-  pauseRender = true;
-
   constructor() {
     super();
 
@@ -32,7 +30,6 @@ export class FileUploaderInline extends SolutionBlock {
 
   initCallback() {
     super.initCallback();
-    this.render();
 
     /** @type {import('../../../abstract/UploaderBlock.js').UploaderBlock} */
     const uBlock = this.ref.uBlock;

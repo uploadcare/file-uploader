@@ -3,11 +3,8 @@ import { SolutionBlock } from '../../../abstract/SolutionBlock.js';
 import { EventType } from '../../../blocks/UploadCtxProvider/EventEmitter.js';
 
 export class FileUploaderRegular extends SolutionBlock {
-  pauseRender = true;
-
   initCallback() {
     super.initCallback();
-    this.render();
 
     this.sub(
       '*modalActive',
