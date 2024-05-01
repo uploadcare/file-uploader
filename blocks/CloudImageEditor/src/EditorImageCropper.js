@@ -42,6 +42,7 @@ function validateCrop(crop) {
 }
 
 export class EditorImageCropper extends Block {
+  ctxOwner = true;
   constructor() {
     super();
 
