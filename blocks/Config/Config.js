@@ -63,6 +63,7 @@ class ConfigClass extends Block {
   }
 
   /**
+   * @private
    * @param {keyof import('../../types').ConfigType} key
    * @param {unknown} value
    */
@@ -81,6 +82,7 @@ class ConfigClass extends Block {
   }
 
   /**
+   * @private
    * @param {keyof import('../../types').ConfigType} key
    * @param {unknown} value
    */
