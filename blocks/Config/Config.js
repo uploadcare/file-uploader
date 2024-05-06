@@ -5,10 +5,13 @@ import { sharedConfigKey } from '../../abstract/sharedConfigKey.js';
 import { toKebabCase } from '../../utils/toKebabCase.js';
 import { normalizeConfigValue } from './normalizeConfigValue.js';
 
-const allConfigKeys = /** @type {(keyof import('../../types').ConfigType)[]} */ (Object.keys(initialConfig));
+const allConfigKeys = /** @type {(keyof import('../../types').ConfigType)[]} */ ([
+  // "debug" option should go first to be able to print debug messages from the very beginning
+  ...new Set(['debug', ...Object.keys(initialConfig)]),
+]);
 
 /**
- * Config keys that can't be passed as atrtibute (because they are object or function)
+ * Config keys that can't be passed as attribute (because they are object or function)
  *
  * @type {(keyof import('../../types').ConfigComplexType)[]}
  */
@@ -17,7 +20,7 @@ const complexConfigKeys = ['metadata', 'localeDefinitionOverride'];
 /** @type {(key: keyof import('../../types').ConfigType) => key is keyof import('../../types').ConfigComplexType} */
 const isComplexKey = (key) => complexConfigKeys.includes(key);
 
-/** Config keys that can be passed as atrtibute */
+/** Config keys that can be passed as attribute */
 const plainConfigKeys = /** @type {(keyof import('../../types').ConfigPlainType)[]} */ (
   allConfigKeys.filter((key) => !isComplexKey(key))
 );
@@ -38,6 +41,9 @@ const attrStateMapping = /** @type {Record<keyof import('../../types').ConfigAtt
   ...Object.fromEntries(plainConfigKeys.map((key) => [key.toLowerCase(), sharedConfigKey(key)])),
 });
 
+/** @param {string} key */
+const getLocalPropName = (key) => '__' + key;
+
 class ConfigClass extends Block {
   requireCtxName = true;
 
@@ -56,56 +62,121 @@ class ConfigClass extends Block {
     };
   }
 
+  /**
+   * @param {keyof import('../../types').ConfigType} key
+   * @param {unknown} value
+   */
+  _flushValueToAttribute(key, value) {
+    if (plainConfigKeys.includes(key)) {
+      // Flush the value to the DOM attributes
+      const attrs = [...new Set([toKebabCase(key), key.toLowerCase()])];
+      for (const attr of attrs) {
+        if (typeof value === 'undefined' || value === null) {
+          this.removeAttribute(attr);
+        } else if (this.getAttribute(attr) !== value.toString()) {
+          this.setAttribute(attr, value.toString());
+        }
+      }
+    }
+  }
+
+  /**
+   * @param {keyof import('../../types').ConfigType} key
+   * @param {unknown} value
+   */
+  _flushValueToState(key, value) {
+    if (this.$[sharedConfigKey(key)] !== value) {
+      if (typeof value === 'undefined' || value === null) {
+        this.$[sharedConfigKey(key)] = initialConfig[key];
+      } else {
+        this.$[sharedConfigKey(key)] = value;
+      }
+    }
+  }
+
+  /**
+   * @private
+   * @param {keyof import('../../types').ConfigType} key
+   * @param {unknown} value
+   */
+  _setValue(key, value) {
+    const anyThis = /** @type {typeof this & any} */ (this);
+
+    const normalizedValue = normalizeConfigValue(key, value);
+
+    const localPropName = getLocalPropName(key);
+    if (anyThis[localPropName] === normalizedValue) return;
+
+    if (this.cfg.debug) {
+      const previousValue = anyThis[localPropName];
+      if (JSON.stringify(normalizedValue) === JSON.stringify(previousValue)) {
+        console.warn(
+          `[lr-config] Option "${key}" value is the same as the previous one but the reference is different`,
+        );
+        console.warn(
+          `[lr-config] You should avoid changing the reference of the object to prevent unnecessary calculations`,
+        );
+        console.warn(`[lr-config] "${key}" previous value:`, previousValue);
+        console.warn(`[lr-config] "${key}" new value:`, normalizedValue);
+      }
+    }
+
+    anyThis[localPropName] = normalizedValue;
+
+    // Flush the value to the state
+    this._flushValueToAttribute(key, normalizedValue);
+    this._flushValueToState(key, normalizedValue);
+
+    this.debugPrint(`[lr-config] "${key}"`, normalizedValue);
+  }
+
+  /**
+   * @private
+   * @param {keyof import('../../types').ConfigType} key
+   */
+  _getValue(key) {
+    const anyThis = /** @type {typeof this & any} */ (this);
+    const localPropName = getLocalPropName(key);
+    return anyThis[localPropName];
+  }
+
   initCallback() {
     super.initCallback();
     const anyThis = /** @type {typeof this & any} */ (this);
 
+    // Subscribe to the state changes and update the local properties and attributes.
+    // Initial callback call is disabled to prevent the initial value to be set here.
+    // Initial value will be set below, skipping the default values.
     for (const key of plainConfigKeys) {
       this.sub(
         sharedConfigKey(key),
         (value) => {
-          if (value !== initialConfig[key]) {
-            anyThis[key] = value;
-          }
+          this._setValue(key, value);
         },
         false,
       );
     }
 
     for (const key of allConfigKeys) {
-      let localPropName = '__' + key;
-      anyThis[localPropName] = anyThis[key];
+      // Flush the initial value to the state.
+      // Initial value is taken from the DOM property if it was set before the element was initialized.
+      // If no DOM property was set, the initial value is taken from the initialConfig.
+      const initialValue = anyThis[key] ?? this.$[sharedConfigKey(key)];
+      if (initialValue !== initialConfig[key]) {
+        this._setValue(key, initialValue);
+      }
 
+      // Define DOM property setters and getters
+      // They will be used in the userland directly or by the frameworks
       Object.defineProperty(this, key, {
         /** @param {unknown} value */
         set: (value) => {
-          anyThis[localPropName] = value;
-          if (plainConfigKeys.includes(key)) {
-            const attrs = [...new Set([toKebabCase(key), key.toLowerCase()])];
-            for (const attr of attrs) {
-              if (typeof value === 'undefined' || value === null) {
-                this.removeAttribute(attr);
-              } else {
-                this.setAttribute(attr, value.toString());
-              }
-            }
-          }
-          if (this.$[sharedConfigKey(key)] !== value) {
-            if (typeof value === 'undefined' || value === null) {
-              this.$[sharedConfigKey(key)] = initialConfig[key];
-            } else {
-              this.$[sharedConfigKey(key)] = value;
-            }
-          }
+          this._setValue(key, value);
         },
         get: () => {
-          return this.$[sharedConfigKey(key)];
+          return this._getValue(key);
         },
       });
-
-      if (typeof anyThis[key] !== 'undefined' && anyThis[key] !== null) {
-        anyThis[key] = anyThis[localPropName];
-      }
     }
   }
 
@@ -117,32 +188,25 @@ class ConfigClass extends Block {
   attributeChangedCallback(name, oldVal, newVal) {
     if (oldVal === newVal) return;
 
-    const key = attrKeyMapping[name];
-    const normalizedVal = normalizeConfigValue(key, newVal);
-    const val = normalizedVal ?? initialConfig[key];
-
     const anyThis = /** @type {typeof this & any} */ (this);
-    anyThis[key] = val;
+    const key = attrKeyMapping[name];
+    // attributeChangedCallback could be called before the initCallback
+    // so we set the DOM property instead of calling this._setValue.
+    // If the block was initialized, the value will be handled by the setter.
+    // If the block was not initialized, the value will be set to the DOM property
+    // and handled on initialization.
+    anyThis[key] = newVal;
   }
 }
 
 ConfigClass.bindAttributes(attrStateMapping);
 
 /**
- * Define getters and setters for all config keys on the Custom Element class prototype to make them checkable using
+ * Define empty DOM properties for all config keys on the Custom Element class prototype to make them checkable using
  * `key in element` syntax. This is required for the frameworks DOM property bindings to work.
  */
 for (const key of allConfigKeys) {
-  const localPropName = '__' + key;
-  Object.defineProperty(ConfigClass.prototype, key, {
-    /** @param {unknown} value */
-    set: function (value) {
-      this[localPropName] = value;
-    },
-    get: function () {
-      return this[localPropName];
-    },
-  });
+  /** @type {any} */ (ConfigClass.prototype)[key] = undefined;
 }
 
 /** @typedef {import('../../utils/mixinClass.js').MixinClass<typeof ConfigClass, import('../../types').ConfigType>} Config */
