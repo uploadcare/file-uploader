@@ -109,19 +109,7 @@ class ConfigClass extends Block {
     const localPropName = getLocalPropName(key);
     if (anyThis[localPropName] === normalizedValue) return;
 
-    if (this.cfg.debug) {
-      const previousValue = anyThis[localPropName];
-      if (JSON.stringify(normalizedValue) === JSON.stringify(previousValue)) {
-        console.warn(
-          `[lr-config] Option "${key}" value is the same as the previous one but the reference is different`,
-        );
-        console.warn(
-          `[lr-config] You should avoid changing the reference of the object to prevent unnecessary calculations`,
-        );
-        console.warn(`[lr-config] "${key}" previous value:`, previousValue);
-        console.warn(`[lr-config] "${key}" new value:`, normalizedValue);
-      }
-    }
+    this._assertSameValueDifferentReference(key, anyThis[localPropName], normalizedValue);
 
     anyThis[localPropName] = normalizedValue;
 
@@ -140,6 +128,26 @@ class ConfigClass extends Block {
     const anyThis = /** @type {typeof this & any} */ (this);
     const localPropName = getLocalPropName(key);
     return anyThis[localPropName];
+  }
+
+  /**
+   * @param {string} key
+   * @param {unknown} previousValue
+   * @param {unknown} nextValue
+   */
+  _assertSameValueDifferentReference(key, previousValue, nextValue) {
+    if (this.cfg.debug) {
+      if (JSON.stringify(nextValue) === JSON.stringify(previousValue)) {
+        console.warn(
+          `[lr-config] Option "${key}" value is the same as the previous one but the reference is different`,
+        );
+        console.warn(
+          `[lr-config] You should avoid changing the reference of the object to prevent unnecessary calculations`,
+        );
+        console.warn(`[lr-config] "${key}" previous value:`, previousValue);
+        console.warn(`[lr-config] "${key}" new value:`, nextValue);
+      }
+    }
   }
 
   initCallback() {
