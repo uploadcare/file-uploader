@@ -7,6 +7,7 @@ export type UploadcareGroup = import('@uploadcare/upload-client').UploadcareGrou
 export type Metadata = import('@uploadcare/upload-client').Metadata;
 export type MetadataCallback = (fileEntry: OutputFileEntry) => Promise<Metadata> | Metadata;
 export type localeDefinitionOverride = Record<string, LocaleDefinition>;
+export type IconHrefResolver = (iconName: string) => string;
 export type ConfigType = {
   pubkey: string;
   multiple: boolean;
@@ -53,8 +54,9 @@ export type ConfigType = {
   metadata: Metadata | MetadataCallback | null;
   localeName: string;
   localeDefinitionOverride: localeDefinitionOverride | null;
+  iconHrefResolver: IconHrefResolver | null;
 };
-export type ConfigComplexType = Pick<ConfigType, 'metadata' | 'localeDefinitionOverride'>;
+export type ConfigComplexType = Pick<ConfigType, 'metadata' | 'localeDefinitionOverride' | 'iconHrefResolver'>;
 export type ConfigPlainType = Omit<ConfigType, keyof ConfigComplexType>;
 export type ConfigAttributesType = KebabCaseKeys<ConfigPlainType> & LowerCaseKeys<ConfigPlainType>;
 

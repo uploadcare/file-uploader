@@ -1,5 +1,6 @@
 import { ShadowWrapper } from '../blocks/ShadowWrapper/ShadowWrapper.js';
 import { uploaderBlockCtx } from './CTX.js';
+import svgIconsSprite from '../blocks/themes/lr-basic/svg-sprite.js';
 
 export class SolutionBlock extends ShadowWrapper {
   requireCtxName = true;
@@ -7,7 +8,7 @@ export class SolutionBlock extends ShadowWrapper {
   _template = null;
 
   static set template(value) {
-    this._template = value + /** HTML */ `<slot></slot>`;
+    this._template = svgIconsSprite + value + /** HTML */ `<slot></slot>`;
   }
 
   static get template() {

@@ -12,7 +12,7 @@ const allConfigKeys = /** @type {(keyof import('../../types').ConfigType)[]} */ 
  *
  * @type {(keyof import('../../types').ConfigComplexType)[]}
  */
-const complexConfigKeys = ['metadata', 'localeDefinitionOverride'];
+const complexConfigKeys = ['metadata', 'localeDefinitionOverride', 'iconHrefResolver'];
 
 /** @type {(key: keyof import('../../types').ConfigType) => key is keyof import('../../types').ConfigComplexType} */
 const isComplexKey = (key) => complexConfigKeys.includes(key);

@@ -1,0 +1,3 @@
+<svg ref="svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" width="20" height="20">
+  <path stroke-linejoin="round" fill="none" stroke="currentColor" stroke-width="1.2" fill-rule="evenodd" d="M10 20v-3M2.92946 2.92897l2.12132 2.12132M0 10h3m-.07054 7.071l2.12132-2.1213M10 0v3m7.0705 14.071l-2.1213-2.1213M20 10h-3m.0705-7.07103l-2.1213 2.12132M5 10a5 5 0 1010 0 5 5 0 10-10 0"></path>
+</svg>
