@@ -1,8 +1,10 @@
 // @ts-check
 import { CloudImageEditorBlock } from '../../blocks/CloudImageEditor/src/CloudImageEditorBlock.js';
-import { shadowed } from '../../blocks/ShadowWrapper/ShadowWrapper.js';
-export class CloudImageEditor extends shadowed(CloudImageEditorBlock) {
-  shadowReadyCallback() {
+
+export class CloudImageEditor extends CloudImageEditorBlock {
+  initCallback() {
+    super.initCallback();
+
     /** @private */
     this.__shadowReady = true;
 

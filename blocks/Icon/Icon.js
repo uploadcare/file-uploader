@@ -20,11 +20,13 @@ export class Icon extends Block {
         return;
       }
       let iconHref = `#uc-icon-${val}`;
-      if (this.cfg.iconHrefResolver) {
-        const customIconHref = this.cfg.iconHrefResolver(val);
-        iconHref = customIconHref ?? iconHref;
-      }
-      this.$.href = iconHref;
+      this.subConfigValue('iconHrefResolver', (iconHrefResolver) => {
+        if (iconHrefResolver) {
+          const customIconHref = iconHrefResolver(val);
+          iconHref = customIconHref ?? iconHref;
+        }
+        this.$.href = iconHref;
+      });
     });
   }
 }

@@ -3,6 +3,7 @@
 
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="./blocks/themes/lr-basic/index.css">
   <script
     async=""
     src="https://cdn.skypack.dev/-/es-module-shims@v1.5.8-O0uWfhbenfjMbv6D3d8E/dist=es2020,mode=raw,min/dist/es-module-shims.js"
@@ -18,6 +19,7 @@
   </script>
   <script type="module">
     import * as LR from './index.js';
+
     LR.registerBlocks(LR);
 
     const form = document.querySelector('form');
@@ -31,7 +33,7 @@
 <lr-config ctx-name="my-uploader" pubkey="demopublickey" multiple-min="1" multiple-max="10" img-only></lr-config>
 
 <form>
-  <lr-file-uploader-regular style="position: relative; display: inline-block;" ctx-name="my-uploader" css-src="./blocks/themes/lr-basic/index.css">
+  <lr-file-uploader-regular style="position: relative; display: inline-block;" ctx-name="my-uploader">
     <lr-form-input
       style="position: absolute; bottom: 0px; left: 50%; pointer-events: none;"
       ctx-name="my-uploader"
