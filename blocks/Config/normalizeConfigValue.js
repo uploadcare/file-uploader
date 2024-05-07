@@ -36,9 +36,30 @@ const asCameraCapture = (value) => {
   return strValue;
 };
 
+/** @param {unknown} value */
+const asMetadata = (value) => {
+  if (typeof value === 'object' && !Array.isArray(value)) {
+    return /** @type {import('../../types').Metadata} */ (value);
+  }
+  if (typeof value === 'function') {
+    return /** @type {import('../../types').MetadataCallback} */ (value);
+  }
+
+  throw new Error('Invalid metadata value. Must be an object or function.');
+};
+
+/** @param {unknown} value */
+const asLocaleDefinitionOverride = (value) => {
+  if (typeof value === 'object') {
+    return /** @type {import('../../types').LocaleDefinitionOverride} */ (value);
+  }
+
+  throw new Error('Invalid localeDefinitionOverride value. Must be an object.');
+};
+
 /**
  * @type {{
- *   [Key in keyof import('../../types').ConfigPlainType]: (
+ *   [Key in keyof import('../../types').ConfigType]: (
  *     value: unknown,
  *   ) => import('../../types').ConfigType[Key] | undefined;
  * }}
@@ -93,10 +114,13 @@ const mapping = {
   debug: asBoolean,
 
   localeName: asString,
+
+  metadata: asMetadata,
+  localeDefinitionOverride: asLocaleDefinitionOverride,
 };
 
 /**
- * @template {keyof import('../../types').ConfigPlainType} T
+ * @template {keyof import('../../types').ConfigType} T
  * @param {T} key
  * @param {unknown} value
  * @returns {import('../../types').ConfigType[T] | undefined}
