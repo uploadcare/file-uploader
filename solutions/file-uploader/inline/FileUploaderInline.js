@@ -28,7 +28,9 @@ export class FileUploaderInline extends SolutionBlock {
     return this.cfg.showEmptyList || this.$['*uploadList'].length > 0;
   }
 
-  shadowReadyCallback() {
+  initCallback() {
+    super.initCallback();
+
     /** @type {import('../../../abstract/UploaderBlock.js').UploaderBlock} */
     const uBlock = this.ref.uBlock;
     this.sub('*currentActivity', (val) => {

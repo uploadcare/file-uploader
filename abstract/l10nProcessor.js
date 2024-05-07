@@ -25,51 +25,52 @@ export function l10nProcessor(fr, fnCtx) {
       }
     }
 
-    // If the key is present in the global context, use it
-    const stateKey = localeStateKey(key);
-
-    if (fnCtx.has(stateKey)) {
-      fnCtx.sub(stateKey, () => {
-        key = /** @type {string} */ (key);
-        if (useAttribute) {
-          el.setAttribute(elProp, fnCtx.l10n(key));
-        } else {
-          el[/** @type {'textContent'} */ (elProp)] = fnCtx.l10n(key);
+    // Check if the key is present in the local context
+    const localCtxKey = key;
+    if (fnCtx.has(localCtxKey)) {
+      fnCtx.sub(localCtxKey, (mappedKey) => {
+        if (!mappedKey) {
+          return;
         }
+        // Store the subscription in a temporary map to be able to unsubscribe later
+        if (!fnCtx.l10nProcessorSubs.has(localCtxKey)) {
+          fnCtx.l10nProcessorSubs.set(localCtxKey, new Set());
+        }
+        const keySubs = fnCtx.l10nProcessorSubs.get(localCtxKey);
+        keySubs?.forEach(
+          /** @param {{ remove: () => void }} sub */
+          (sub) => {
+            sub.remove();
+            keySubs.delete(sub);
+            fnCtx.allSubs.delete(sub);
+          },
+        );
+        // We don't need the leading * in the key because we use the key as a local context key relative to the global state
+        const nodeStateKey = localeStateKey(mappedKey).replace('*', '');
+        // Subscribe on the global l10n key change
+        const sub = fnCtx.nodeCtx.sub(nodeStateKey, () => {
+          el[/** @type {'textContent'} */ (elProp)] = fnCtx.l10n(mappedKey);
+        });
+        keySubs?.add(sub);
+        // Store the subscription in the global context to make able Symbiote to unsubscribe it on destroy
+        fnCtx.allSubs.add(sub);
+        el.removeAttribute('l10n');
       });
-      el.removeAttribute('l10n');
-      return;
     }
 
-    // Otherwise, assume the key is present in the local context
-    const localCtxKey = key;
-    fnCtx.sub(localCtxKey, (mappedKey) => {
-      if (!mappedKey) {
-        return;
+    // Otherwise, assume the key is in the global context
+    const stateKey = localeStateKey(key);
+    if (!fnCtx.has(stateKey)) {
+      fnCtx.add(stateKey, '');
+    }
+    fnCtx.sub(stateKey, () => {
+      key = /** @type {string} */ (key);
+      if (useAttribute) {
+        el.setAttribute(elProp, fnCtx.l10n(key));
+      } else {
+        el[/** @type {'textContent'} */ (elProp)] = fnCtx.l10n(key);
       }
-      // Store the subscription in a temporary map to be able to unsubscribe later
-      if (!fnCtx.l10nProcessorSubs.has(localCtxKey)) {
-        fnCtx.l10nProcessorSubs.set(localCtxKey, new Set());
-      }
-      const keySubs = fnCtx.l10nProcessorSubs.get(localCtxKey);
-      keySubs?.forEach(
-        /** @param {{ remove: () => void }} sub */
-        (sub) => {
-          sub.remove();
-          keySubs.delete(sub);
-          fnCtx.allSubs.delete(sub);
-        },
-      );
-      // We don't need the leading * in the key because we use the key as a local context key relative to the global state
-      const nodeStateKey = localeStateKey(mappedKey).replace('*', '');
-      // Subscribe on the global l10n key change
-      const sub = fnCtx.nodeCtx.sub(nodeStateKey, () => {
-        el[/** @type {'textContent'} */ (elProp)] = fnCtx.l10n(mappedKey);
-      });
-      keySubs?.add(sub);
-      // Store the subscription in the global context to make able Symbiote to unsubscribe it on destroy
-      fnCtx.allSubs.add(sub);
-      el.removeAttribute('l10n');
     });
+    el.removeAttribute('l10n');
   });
 }

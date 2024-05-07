@@ -3,6 +3,7 @@
 
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="./solutions/file-uploader/minimal/index.css">
   <script
     async=""
     src="https://cdn.skypack.dev/-/es-module-shims@v1.5.8-O0uWfhbenfjMbv6D3d8E/dist=es2020,mode=raw,min/dist/es-module-shims.js"
@@ -19,9 +20,10 @@
   <script src="./index.js" type="module"></script>
   <script type="module">
     import * as LR from './index.js';
+
     LR.registerBlocks(LR);
   </script>
 </head>
 
-<lr-file-uploader-minimal ctx-name="my-uploader" css-src="./solutions/file-uploader/minimal/index.css"></lr-file-uploader-minimal>
-<lr-config ctx-name="my-uploader" pubkey="demopublickey" crop-preset="1:1" cloudImageEditorTabs="crop" cloud-image-editor-tabs="crop"></lr-config>
+<lr-file-uploader-minimal ctx-name="my-uploader"></lr-file-uploader-minimal>
+<lr-config ctx-name="my-uploader" pubkey="demopublickey" img-only group-output debug></lr-config>

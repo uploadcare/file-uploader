@@ -11,7 +11,6 @@ type CloudImageEditorBlock = import('../index.js').CloudImageEditorBlock;
 type CtxAttributes = {
   'ctx-name': string;
 };
-type ShadowWrapperAttributes = { 'css-src': string };
 type CommonHtmlAttributes<T> = Partial<
   Pick<React.HTMLAttributes<T>, 'id' | 'children' | 'hidden'> & { class: React.HTMLAttributes<T>['className'] }
 >;
@@ -56,14 +55,11 @@ declare namespace JSX {
       CloudImageEditorBlock,
       CtxAttributes & ({ uuid: string } | { 'cdn-url': string }) & Partial<{ tabs: string; 'crop-preset': string }>
     >;
-    'lr-cloud-image-editor': CustomElement<
-      CloudImageEditorBlock,
-      JSX.IntrinsicElements['lr-cloud-image-editor-block'] & ShadowWrapperAttributes
-    >;
+    'lr-cloud-image-editor': CustomElement<CloudImageEditorBlock, JSX.IntrinsicElements['lr-cloud-image-editor-block']>;
     'lr-form-input': CustomElement<FormInput, CtxAttributes>;
-    'lr-file-uploader-regular': CustomElement<FileUploaderRegular, CtxAttributes & ShadowWrapperAttributes>;
-    'lr-file-uploader-minimal': CustomElement<FileUploaderMinimal, CtxAttributes & ShadowWrapperAttributes>;
-    'lr-file-uploader-inline': CustomElement<FileUploaderInline, CtxAttributes & ShadowWrapperAttributes>;
+    'lr-file-uploader-regular': CustomElement<FileUploaderRegular, CtxAttributes>;
+    'lr-file-uploader-minimal': CustomElement<FileUploaderMinimal, CtxAttributes>;
+    'lr-file-uploader-inline': CustomElement<FileUploaderInline, CtxAttributes>;
     'lr-upload-ctx-provider': CustomElement<InstanceType<UploadCtxProvider>, CtxAttributes>;
     'lr-config': CustomElement<InstanceType<Config>, CtxAttributes & Partial<ConfigPlainType>>;
   }

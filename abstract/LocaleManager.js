@@ -1,6 +1,7 @@
 // @ts-check
 import { debounce } from '../blocks/utils/debounce.js';
 import { resolveLocaleDefinition } from './localeRegistry.js';
+import { default as en } from '../locales/file-uploader/en.js';
 
 /** @param {string} key */
 export const localeStateKey = (key) => `*l10n/${key}`;
@@ -32,7 +33,9 @@ export class LocaleManager {
   constructor(blockInstance) {
     this._blockInstance = blockInstance;
 
-    blockInstance.add(localeStateKey('locale-id'), DEFAULT_LOCALE, false);
+    for (let [key, value] of Object.entries(en)) {
+      this._blockInstance.add(localeStateKey(key), value, false);
+    }
 
     setTimeout(() => {
       blockInstance.subConfigValue('localeName', async (localeName) => {
