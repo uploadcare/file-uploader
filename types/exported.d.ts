@@ -6,7 +6,7 @@ export type NetworkError = import('@uploadcare/upload-client').NetworkError;
 export type UploadcareGroup = import('@uploadcare/upload-client').UploadcareGroup;
 export type Metadata = import('@uploadcare/upload-client').Metadata;
 export type MetadataCallback = (fileEntry: OutputFileEntry) => Promise<Metadata> | Metadata;
-export type localeDefinitionOverride = Record<string, LocaleDefinition>;
+export type LocaleDefinitionOverride = Record<string, LocaleDefinition>;
 export type ConfigType = {
   pubkey: string;
   multiple: boolean;
@@ -50,9 +50,11 @@ export type ConfigType = {
   groupOutput: boolean;
   userAgentIntegration: string;
   debug: boolean;
-  metadata: Metadata | MetadataCallback | null;
   localeName: string;
-  localeDefinitionOverride: localeDefinitionOverride | null;
+  
+  // Complex types
+  metadata: Metadata | MetadataCallback | null;
+  localeDefinitionOverride: LocaleDefinitionOverride | null;
 };
 export type ConfigComplexType = Pick<ConfigType, 'metadata' | 'localeDefinitionOverride'>;
 export type ConfigPlainType = Omit<ConfigType, keyof ConfigComplexType>;
