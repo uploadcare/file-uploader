@@ -1,3 +1,9 @@
+## [0.38.3](https://github.com/uploadcare/blocks/compare/v0.38.2...v0.38.3) (2024-05-07)
+
+### Bug Fixes
+
+- **lr-config:** normalize DOM property values ([#653](https://github.com/uploadcare/blocks/issues/653)) ([5aa55c2](https://github.com/uploadcare/blocks/commit/5aa55c2c5e543857813e330251faa83206d2992a))
+
 ## [0.38.2](https://github.com/uploadcare/blocks/compare/v0.38.1...v0.38.2) (2024-04-29)
 
 ### Bug Fixes
