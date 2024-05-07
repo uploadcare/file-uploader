@@ -1,3 +1,9 @@
+# [0.39.0](https://github.com/uploadcare/blocks/compare/v0.38.3...v0.39.0) (2024-05-07)
+
+### Features
+
+- **shadow-styles:** eliminating shadow styles ([#646](https://github.com/uploadcare/blocks/issues/646)) ([984dbda](https://github.com/uploadcare/blocks/commit/984dbda990fb4403b1a0629b5ff8440aff843103))
+
 ## [0.38.3](https://github.com/uploadcare/blocks/compare/v0.38.2...v0.38.3) (2024-05-07)
 
 ### Bug Fixes
