@@ -47,6 +47,10 @@ export function l10nProcessor(fr, fnCtx) {
         );
         // We don't need the leading * in the key because we use the key as a local context key relative to the global state
         const nodeStateKey = localeStateKey(mappedKey).replace('*', '');
+        // If the key is not present in the node context, add it
+        if (!fnCtx.nodeCtx.has(nodeStateKey)) {
+          fnCtx.nodeCtx.add(nodeStateKey, mappedKey);
+        }
         // Subscribe on the global l10n key change
         const sub = fnCtx.nodeCtx.sub(nodeStateKey, () => {
           el[/** @type {'textContent'} */ (elProp)] = fnCtx.l10n(mappedKey);
