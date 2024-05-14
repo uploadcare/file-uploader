@@ -76,6 +76,6 @@ export class LrBtnUi extends Block {
 LrBtnUi.bindAttributes({ text: 'text', icon: 'icon', reverse: 'reverse', theme: 'theme' });
 
 LrBtnUi.template = /* HTML */ `
-  <lr-icon set="className: iconCss; @name: icon;"></lr-icon>
+  <lr-icon set="className: iconCss; @name: icon; @hidden: !icon"></lr-icon>
   <div class="text">{{text}}</div>
 `;
