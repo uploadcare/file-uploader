@@ -1,3 +1,9 @@
+## [0.39.1](https://github.com/uploadcare/blocks/compare/v0.39.0...v0.39.1) (2024-05-15)
+
+### Bug Fixes
+
+- **l10n:** add l10n key to the state if it's not present ([#656](https://github.com/uploadcare/blocks/issues/656)) ([227a88f](https://github.com/uploadcare/blocks/commit/227a88f14571b3945ce6f622b20ee21e4f6f8664))
+
 # [0.39.0](https://github.com/uploadcare/blocks/compare/v0.38.3...v0.39.0) (2024-05-07)
 
 ### Features
