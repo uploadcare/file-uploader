@@ -136,6 +136,9 @@ const mapping = {
   localeDefinitionOverride: /** @type {typeof asObject<import('../../types').LocaleDefinitionOverride>} */ (asObject),
   secureUploadsSignatureResolver:
     /** @type {typeof asFunction<import('../../types').SecureUploadsSignatureResolver>} */ (asFunction),
+    secureDeliveryProxyUrlResolver:
+    /** @type {typeof asFunction<import('../../types').SecureDeliveryProxyUrlResolver>} */ (asFunction),
+
 };
 
 /**

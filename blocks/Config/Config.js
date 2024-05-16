@@ -13,9 +13,14 @@ const allConfigKeys = /** @type {(keyof import('../../types').ConfigType)[]} */ 
 /**
  * Config keys that can't be passed as attribute (because they are object or function)
  *
- * @type {['metadata', 'localeDefinitionOverride', 'secureUploadsSignatureResolver']}
+ * @type {['metadata', 'localeDefinitionOverride', 'secureUploadsSignatureResolver', 'secureDeliveryProxyUrlResolver']}
  */
-export const complexConfigKeys = ['metadata', 'localeDefinitionOverride', 'secureUploadsSignatureResolver'];
+export const complexConfigKeys = [
+  'metadata',
+  'localeDefinitionOverride',
+  'secureUploadsSignatureResolver',
+  'secureDeliveryProxyUrlResolver',
+];
 
 /** @type {(key: keyof import('../../types').ConfigType) => key is keyof import('../../types').ConfigComplexType} */
 const isComplexKey = (key) => complexConfigKeys.includes(key);

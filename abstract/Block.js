@@ -11,6 +11,7 @@ import { LocaleManager, localeStateKey } from './LocaleManager.js';
 import { l10nProcessor } from './l10nProcessor.js';
 import { sharedConfigKey } from './sharedConfigKey.js';
 import { initialConfig } from '../blocks/Config/initialConfig.js';
+import { extractFilename, extractOperations, extractUuid } from '../utils/cdn-utils.js';
 
 const TAG_PREFIX = 'lr-';
 
@@ -242,15 +243,26 @@ export class Block extends BaseComponent {
    * @returns {String}
    */
   proxyUrl(url) {
-    let previewProxy = this.cfg.secureDeliveryProxy;
-    if (!previewProxy) {
-      return url;
+    if (this.cfg.secureDeliveryProxy && this.cfg.secureDeliveryProxyUrlResolver) {
+      console.warn(
+        'Both secureDeliveryProxy and secureDeliveryProxyUrlResolver are set. Using secureDeliveryProxyUrlResolver.',
+      );
     }
-    return applyTemplateData(
-      previewProxy,
-      { previewUrl: url },
-      { transform: (value) => window.encodeURIComponent(value) },
-    );
+    if (this.cfg.secureDeliveryProxyUrlResolver) {
+      return this.cfg.secureDeliveryProxyUrlResolver(url, {
+        uuid: extractUuid(url),
+        cdnUrlModifiers: extractOperations(url),
+        fileName: extractFilename(url),
+      });
+    }
+    if (this.cfg.secureDeliveryProxy) {
+      return applyTemplateData(
+        this.cfg.secureDeliveryProxy,
+        { previewUrl: url },
+        { transform: (value) => window.encodeURIComponent(value) },
+      );
+    }
+    return url;
   }
 
   /** @returns {import('../types').ConfigType} } */

@@ -61,4 +61,5 @@ export const initialConfig = {
   localeName: 'en',
   localeDefinitionOverride: null,
   secureUploadsSignatureResolver: null,
+  secureDeliveryProxyUrlResolver: null,
 };

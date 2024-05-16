@@ -8,6 +8,10 @@ export type UploadcareGroup = import('@uploadcare/upload-client').UploadcareGrou
 export type Metadata = import('@uploadcare/upload-client').Metadata;
 export type MetadataCallback = (fileEntry: OutputFileEntry) => Promise<Metadata> | Metadata;
 export type LocaleDefinitionOverride = Record<string, LocaleDefinition>;
+export type SecureDeliveryProxyUrlResolver = (
+  previewUrl: string,
+  { uuid: string, cdnUrlModifiers: string, fileName: string },
+) => string;
 export type SecureUploadsSignatureAndExpire = { secureSignature: string; secureExpire: string };
 export type SecureUploadsSignatureResolver = () => Promise<SecureUploadsSignatureAndExpire | null>;
 
@@ -60,8 +64,9 @@ export type ConfigType = {
   metadata: Metadata | MetadataCallback | null;
   localeDefinitionOverride: LocaleDefinitionOverride | null;
   secureUploadsSignatureResolver: SecureUploadsSignatureResolver | null;
+  secureDeliveryProxyUrlResolver: SecureDeliveryProxyUrlResolver | null;
 };
-export type ConfigComplexType = Pick<ConfigType, typeof complexConfigKeys[number]>;
+export type ConfigComplexType = Pick<ConfigType, (typeof complexConfigKeys)[number]>;
 export type ConfigPlainType = Omit<ConfigType, keyof ConfigComplexType>;
 export type ConfigAttributesType = KebabCaseKeys<ConfigPlainType> & LowerCaseKeys<ConfigPlainType>;
 
