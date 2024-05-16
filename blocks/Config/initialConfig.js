@@ -60,4 +60,5 @@ export const initialConfig = {
   metadata: null,
   localeName: 'en',
   localeDefinitionOverride: null,
+  secureUploadsSignatureResolver: null,
 };

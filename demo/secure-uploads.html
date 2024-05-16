@@ -1,0 +1,43 @@
+<!doctype html>
+<base href="../../" />
+
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="./solutions/file-uploader/regular/index.css" />
+  <script
+    async=""
+    src="https://cdn.skypack.dev/-/es-module-shims@v1.5.8-O0uWfhbenfjMbv6D3d8E/dist=es2020,mode=raw,min/dist/es-module-shims.js"
+  ></script>
+  <script type="importmap">
+    {
+      "imports": {
+        "@symbiotejs/symbiote": "./node_modules/@symbiotejs/symbiote/build/symbiote.js",
+        "@uploadcare/upload-client": "./node_modules/@uploadcare/upload-client/dist/esm/index.browser.mjs",
+        "@uploadcare/image-shrink": "./node_modules/@uploadcare/image-shrink/dist/esm/index.browser.mjs"
+      }
+    }
+  </script>
+  <script src="./index.js" type="module"></script>
+  <script type="module">
+    import * as LR from './index.js';
+
+    LR.registerBlocks(LR);
+
+    const config = document.querySelector('lr-config');
+    config.secureUploadsSignatureResolver = async () => {
+      return {
+        secureSignature: '41d3c05a1d9bfd4493186a5fd78f02719b6cb4363f55a52e235729a1649737b7',
+        secureExpire: '1715857665',
+      };
+    };
+  </script>
+</head>
+
+<lr-file-uploader-regular ctx-name="my-uploader"></lr-file-uploader-regular>
+<lr-config
+  ctx-name="my-uploader"
+  pubkey="370313830c541a8bb21b"
+  secureSignature=""
+  secureExpire=""
+></lr-config>
+<lr-upload-ctx-provider ctx-name="my-uploader"></lr-upload-ctx-provider>

@@ -48,13 +48,30 @@ const asMetadata = (value) => {
   throw new Error('Invalid metadata value. Must be an object or function.');
 };
 
-/** @param {unknown} value */
-const asLocaleDefinitionOverride = (value) => {
+/**
+ * @template {{}} T
+ * @param {unknown} value
+ * @returns {T}
+ */
+const asObject = (value) => {
   if (typeof value === 'object') {
-    return /** @type {import('../../types').LocaleDefinitionOverride} */ (value);
+    return /** @type {T} */ (value);
   }
 
-  throw new Error('Invalid localeDefinitionOverride value. Must be an object.');
+  throw new Error('Invalid value. Must be an object.');
+};
+
+/**
+ * @template {Function} T
+ * @param {unknown} value
+ * @returns {T}
+ */
+const asFunction = (value) => {
+  if (typeof value === 'function') {
+    return /** @type {T} */ (value);
+  }
+
+  throw new Error('Invalid value. Must be a function.');
 };
 
 /**
@@ -116,7 +133,9 @@ const mapping = {
   localeName: asString,
 
   metadata: asMetadata,
-  localeDefinitionOverride: asLocaleDefinitionOverride,
+  localeDefinitionOverride: /** @type {typeof asObject<import('../../types').LocaleDefinitionOverride>} */ (asObject),
+  secureUploadsSignatureResolver:
+    /** @type {typeof asFunction<import('../../types').SecureUploadsSignatureResolver>} */ (asFunction),
 };
 
 /**
