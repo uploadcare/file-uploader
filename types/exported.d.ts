@@ -14,6 +14,7 @@ export type SecureDeliveryProxyUrlResolver = (
 ) => string;
 export type SecureUploadsSignatureAndExpire = { secureSignature: string; secureExpire: string };
 export type SecureUploadsSignatureResolver = () => Promise<SecureUploadsSignatureAndExpire | null>;
+export type IconHrefResolver = (iconName: string) => string;
 
 export type ConfigType = {
   pubkey: string;
@@ -65,6 +66,7 @@ export type ConfigType = {
   localeDefinitionOverride: LocaleDefinitionOverride | null;
   secureUploadsSignatureResolver: SecureUploadsSignatureResolver | null;
   secureDeliveryProxyUrlResolver: SecureDeliveryProxyUrlResolver | null;
+  iconHrefResolver: IconHrefResolver | null;
 };
 export type ConfigComplexType = Pick<ConfigType, (typeof complexConfigKeys)[number]>;
 export type ConfigPlainType = Omit<ConfigType, keyof ConfigComplexType>;

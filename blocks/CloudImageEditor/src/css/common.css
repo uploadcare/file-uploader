@@ -400,12 +400,25 @@ lr-editor-operation-control {
   position: relative;
   display: grid;
   grid-template-columns: var(--l-base-min-width) auto;
+  grid-template-rows: 100%;
   align-items: center;
   height: var(--l-base-height);
   color: rgba(var(--idle-color-rgb));
   outline: none;
   cursor: pointer;
   transition: var(--l-width-transition);
+}
+
+:where(lr-editor-button-control, lr-editor-crop-button-control, lr-editor-filter-control, lr-editor-operation-control)
+  > lr-icon
+  > svg {
+  width: 20px;
+  height: 20px;
+}
+
+lr-editor-filter-control > lr-icon.original-icon > svg {
+  width: 100%;
+  height: 100%;
 }
 
 lr-editor-button-control.active,
@@ -725,6 +738,23 @@ lr-editor-toolbar > .toolbar-container > .sub-toolbar > .controls-row > .tab-tog
 
 lr-editor-toolbar > .toolbar-container > .sub-toolbar > .controls-row > .tab-toggles.tab-toggles--hidden {
   display: none;
+}
+
+lr-editor-toolbar > .toolbar-container > .sub-toolbar > .controls-row > .tab-toggles > .tab-toggle > lr-btn-ui {
+  width: 40px;
+}
+
+lr-editor-toolbar
+  > .toolbar-container
+  > .sub-toolbar
+  > .controls-row
+  > .tab-toggles
+  > .tab-toggle
+  > lr-btn-ui
+  > lr-icon
+  > svg {
+  width: 100%;
+  height: 100%;
 }
 
 lr-editor-toolbar > .toolbar-container > .sub-toolbar > .tab-content-row > .tab-content .controls-list_align {

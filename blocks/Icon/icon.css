@@ -10,7 +10,3 @@ lr-icon svg {
   width: calc(var(--ui-size) / 2);
   height: calc(var(--ui-size) / 2);
 }
-
-lr-icon:not([raw]) path {
-  fill: currentColor;
-}

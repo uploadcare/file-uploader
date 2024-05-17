@@ -1,6 +1,6 @@
 {
   "name": "@uploadcare/blocks",
-  "version": "0.39.0",
+  "version": "0.40.0",
   "description": "Building blocks for Uploadcare products integration",
   "keywords": [
     "web components",
@@ -73,7 +73,8 @@
     "build:ssr-stubs": "node ./build-ssr-stubs.js",
     "build:jsx:types": "node build-jsx-types.js",
     "build:types": "npm run clean:types && tsc --build tsconfig.types.json",
-    "build": "run-s build:ssr-stubs build:web build:types build:jsx:types",
+    "build:svg-sprites": "node ./build-svg-sprite.js",
+    "build": "run-s build:svg-sprites build:ssr-stubs build:web build:types build:jsx:types",
     "tsc": "tsc --project tsconfig.json",
     "lint:js": "eslint ./",
     "lint:js:fix": "eslint ./ --fix",
@@ -126,6 +127,7 @@
     "stylelint-config-standard": "^32.0.0",
     "stylelint-declaration-block-no-ignored-properties": "^2.7.0",
     "stylelint-order": "^6.0.3",
+    "svg-sprite": "^2.0.4",
     "tsd": "^0.29.0",
     "typescript": "^5.2.2"
   },

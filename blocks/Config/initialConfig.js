@@ -62,4 +62,5 @@ export const initialConfig = {
   localeDefinitionOverride: null,
   secureUploadsSignatureResolver: null,
   secureDeliveryProxyUrlResolver: null,
+  iconHrefResolver: null,
 };

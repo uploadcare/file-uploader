@@ -328,7 +328,7 @@ export class EditorImageCropper extends Block {
 
   /** @private */
   _commit() {
-    if (!this.isConnected) {
+    if (!this.isConnected || !this._imageSize) {
       return;
     }
     let operations = this.$['*operations'];
