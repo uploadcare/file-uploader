@@ -1,3 +1,14 @@
+# [0.40.0](https://github.com/uploadcare/blocks/compare/v0.39.1...v0.40.0) (2024-05-17)
+
+### Bug Fixes
+
+- **image-editor:** check for imageSize before commit ([cdb87b4](https://github.com/uploadcare/blocks/commit/cdb87b47b5580b25696944c864e451881f99bcb6))
+- **image-editor:** define icons size via css ([080439f](https://github.com/uploadcare/blocks/commit/080439f2bad5a602982f94cf5cc0bdfab22d8609))
+
+### Features
+
+- load svg icons as sprite ([9cf4c07](https://github.com/uploadcare/blocks/commit/9cf4c074895b2bfa76f7a2ea8801b85ba1ea48be))
+
 ## [0.39.1](https://github.com/uploadcare/blocks/compare/v0.39.0...v0.39.1) (2024-05-15)
 
 ### Bug Fixes
