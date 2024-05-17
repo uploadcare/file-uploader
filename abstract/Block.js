@@ -244,9 +244,7 @@ export class Block extends BaseComponent {
    */
   proxyUrl(url) {
     if (this.cfg.secureDeliveryProxy && this.cfg.secureDeliveryProxyUrlResolver) {
-      console.warn(
-        'Both secureDeliveryProxy and secureDeliveryProxyUrlResolver are set. Using secureDeliveryProxyUrlResolver.',
-      );
+      console.warn('Both secureDeliveryProxy and secureDeliveryProxyUrlResolver are set. The secureDeliveryProxyUrlResolver will be used.');
     }
     if (this.cfg.secureDeliveryProxyUrlResolver) {
       return this.cfg.secureDeliveryProxyUrlResolver(url, {
