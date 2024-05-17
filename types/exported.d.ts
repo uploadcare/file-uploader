@@ -68,6 +68,8 @@ export type ConfigType = {
   secureUploadsSignatureResolver: SecureUploadsSignatureResolver | null;
   secureDeliveryProxyUrlResolver: SecureDeliveryProxyUrlResolver | null;
   iconHrefResolver: IconHrefResolver | null;
+  validators: unknown;
+
 };
 export type ConfigComplexType = Pick<ConfigType, (typeof complexConfigKeys)[number]>;
 export type ConfigPlainType = Omit<ConfigType, keyof ConfigComplexType>;
