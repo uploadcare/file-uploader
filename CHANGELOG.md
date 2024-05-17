@@ -1,5 +1,10 @@
 # [0.40.0](https://github.com/uploadcare/blocks/compare/v0.39.1...v0.40.0) (2024-05-17)
 
+### BREAKING CHANGES
+
+- Icons are moved from CSS custom properties to SVG sprites. Overriding icons is
+  now done via the `iconHrefResolver` option. See the [migration guide](https://uploadcare.com/docs/file-uploader/migration-to-0.40.0/) for details.
+
 ### Bug Fixes
 
 - **image-editor:** check for imageSize before commit ([cdb87b4](https://github.com/uploadcare/blocks/commit/cdb87b47b5580b25696944c864e451881f99bcb6))
@@ -41,7 +46,7 @@
 
 # [0.38.0](https://github.com/uploadcare/blocks/compare/v0.37.0...v0.38.0) (2024-04-25)
 
-## BREAKING CHANGES
+### BREAKING CHANGES
 
 - CSS configuration deprecated in v0.25.0 is removed. See the [migration guide for v0.25.0][uc-uploader-docs-migration-0-25-0] for more details.
 - Localizations are removed from CSS. <br/>Now we have a special API `defineLocale`, and `locale-name` and `locale-definition-override` options. See the [migration guide][uc-uploader-docs-migration-0-38-0] for more details.
