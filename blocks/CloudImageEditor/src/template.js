@@ -1,11 +1,13 @@
 import { TRANSPARENT_PIXEL_SRC } from '../../../utils/transparentPixelSrc.js';
+import svgIconsSprite from './svg-sprite.js';
 
 export const TEMPLATE = /* HTML */ `
+  ${svgIconsSprite}
   <div class="wrapper wrapper_desktop">
     <lr-presence-toggle class="network_problems_splash" set="visible: presence.networkProblems;">
       <div class="network_problems_content">
         <div class="network_problems_icon">
-          <lr-icon size="20" name="sad"></lr-icon>
+          <lr-icon name="sad"></lr-icon>
         </div>
         <div class="network_problems_text">Network error</div>
       </div>

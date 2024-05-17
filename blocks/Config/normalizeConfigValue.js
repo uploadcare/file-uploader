@@ -24,6 +24,18 @@ export const asBoolean = (value) => {
   if (value === 'false') return false;
   throw new Error(`Invalid boolean: "${value}"`);
 };
+/**
+ * @template {Function} T
+ * @param {unknown} value
+ * @returns {T}
+ */
+export const asFunction = (value) => {
+  if (typeof value === 'function') {
+    return /** @type {T} */ (value);
+  }
+
+  throw new Error('Invalid function value. Must be a function.');
+};
 /** @param {unknown} value */
 const asStore = (value) => (value === 'auto' ? value : asBoolean(value));
 
@@ -117,6 +129,7 @@ const mapping = {
 
   metadata: asMetadata,
   localeDefinitionOverride: asLocaleDefinitionOverride,
+  iconHrefResolver: /** @type {typeof asFunction<import('../../types').IconHrefResolver>} */ (asFunction),
 };
 
 /**

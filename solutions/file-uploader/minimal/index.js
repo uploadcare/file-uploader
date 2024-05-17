@@ -1,29 +1,13 @@
-import { registerBlocks } from '../../../abstract/registerBlocks.js';
-import { defineLocale } from '../../../abstract/localeRegistry.js';
-import { FileUploaderMinimal } from './FileUploaderMinimal.js';
-import { StartFrom } from '../../../blocks/StartFrom/StartFrom.js';
-import { DropArea } from '../../../blocks/DropArea/DropArea.js';
-import { UploadList } from '../../../blocks/UploadList/UploadList.js';
-import { FileItem } from '../../../blocks/FileItem/FileItem.js';
-import { Icon } from '../../../blocks/Icon/Icon.js';
-import { ProgressBar } from '../../../blocks/ProgressBar/ProgressBar.js';
-import { Copyright } from '../../../blocks/Copyright/Copyright.js';
-import { FormInput } from '../../../blocks/FormInput/FormInput.js';
-import { Config } from '../../../blocks/Config/Config.js';
-import { UploadCtxProvider } from '../../../blocks/UploadCtxProvider/UploadCtxProvider.js';
-
-export {
-  registerBlocks,
-  defineLocale,
-  FileUploaderMinimal,
-  StartFrom,
-  DropArea,
-  UploadList,
-  FileItem,
-  Icon,
-  ProgressBar,
-  Copyright,
-  FormInput,
-  Config,
-  UploadCtxProvider,
-};
+export { registerBlocks } from '../../../abstract/registerBlocks.js';
+export { defineLocale } from '../../../abstract/localeRegistry.js';
+export { FileUploaderMinimal } from './FileUploaderMinimal.js';
+export { StartFrom } from '../../../blocks/StartFrom/StartFrom.js';
+export { DropArea } from '../../../blocks/DropArea/DropArea.js';
+export { UploadList } from '../../../blocks/UploadList/UploadList.js';
+export { FileItem } from '../../../blocks/FileItem/FileItem.js';
+export { Icon } from '../../../blocks/Icon/Icon.js';
+export { ProgressBar } from '../../../blocks/ProgressBar/ProgressBar.js';
+export { Copyright } from '../../../blocks/Copyright/Copyright.js';
+export { FormInput } from '../../../blocks/FormInput/FormInput.js';
+export { Config } from '../../../blocks/Config/Config.js';
+export { UploadCtxProvider } from '../../../blocks/UploadCtxProvider/UploadCtxProvider.js';

@@ -15,7 +15,7 @@ const allConfigKeys = /** @type {(keyof import('../../types').ConfigType)[]} */ 
  *
  * @type {(keyof import('../../types').ConfigComplexType)[]}
  */
-const complexConfigKeys = ['metadata', 'localeDefinitionOverride'];
+const complexConfigKeys = ['metadata', 'localeDefinitionOverride', 'iconHrefResolver'];
 
 /** @type {(key: keyof import('../../types').ConfigType) => key is keyof import('../../types').ConfigComplexType} */
 const isComplexKey = (key) => complexConfigKeys.includes(key);
@@ -137,7 +137,12 @@ class ConfigClass extends Block {
    */
   _assertSameValueDifferentReference(key, previousValue, nextValue) {
     if (this.cfg.debug) {
-      if (JSON.stringify(nextValue) === JSON.stringify(previousValue)) {
+      if (
+        nextValue !== previousValue &&
+        typeof nextValue === 'object' &&
+        typeof previousValue === 'object' &&
+        JSON.stringify(nextValue) === JSON.stringify(previousValue)
+      ) {
         console.warn(
           `[lr-config] Option "${key}" value is the same as the previous one but the reference is different`,
         );
