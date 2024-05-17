@@ -1,7 +1,9 @@
 // @ts-check
 import { BaseComponent, Data } from '@symbiotejs/symbiote';
+import { initialConfig } from '../blocks/Config/initialConfig.js';
 import { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter.js';
 import { WindowHeightTracker } from '../utils/WindowHeightTracker.js';
+import { extractFilename, extractCdnUrlModifiers, extractUuid } from '../utils/cdn-utils.js';
 import { getLocaleDirection } from '../utils/getLocaleDirection.js';
 import { getPluralForm } from '../utils/getPluralForm.js';
 import { applyTemplateData, getPluralObjects } from '../utils/template-utils.js';
@@ -10,8 +12,6 @@ import { blockCtx } from './CTX.js';
 import { LocaleManager, localeStateKey } from './LocaleManager.js';
 import { l10nProcessor } from './l10nProcessor.js';
 import { sharedConfigKey } from './sharedConfigKey.js';
-import { initialConfig } from '../blocks/Config/initialConfig.js';
-import { extractFilename, extractOperations, extractUuid } from '../utils/cdn-utils.js';
 
 const TAG_PREFIX = 'lr-';
 
@@ -244,12 +244,14 @@ export class Block extends BaseComponent {
    */
   proxyUrl(url) {
     if (this.cfg.secureDeliveryProxy && this.cfg.secureDeliveryProxyUrlResolver) {
-      console.warn('Both secureDeliveryProxy and secureDeliveryProxyUrlResolver are set. The secureDeliveryProxyUrlResolver will be used.');
+      console.warn(
+        'Both secureDeliveryProxy and secureDeliveryProxyUrlResolver are set. The secureDeliveryProxyUrlResolver will be used.',
+      );
     }
     if (this.cfg.secureDeliveryProxyUrlResolver) {
       return this.cfg.secureDeliveryProxyUrlResolver(url, {
         uuid: extractUuid(url),
-        cdnUrlModifiers: extractOperations(url),
+        cdnUrlModifiers: extractCdnUrlModifiers(url),
         fileName: extractFilename(url),
       });
     }

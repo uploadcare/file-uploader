@@ -23,21 +23,42 @@
 
     LR.registerBlocks(LR);
 
+    const msToUnixTimestamp = (ms) => Math.floor(ms / 1000).toString();
+
+    const getSecureExpire = (options) => {
+      if ('expire' in options) {
+        return msToUnixTimestamp(new Date(options.expire).getTime());
+      }
+
+      return msToUnixTimestamp(Date.now() + options.lifetime);
+    };
+
+    export const generateSecureSignature = async (secret, options) => {
+      const encoder = new TextEncoder();
+      const data = encoder.encode(getSecureExpire(options));
+      const key = await window.crypto.subtle.importKey(
+        'raw',
+        encoder.encode(secret),
+        { name: 'HMAC', hash: { name: 'SHA-256' } },
+        false,
+        ['sign'],
+      );
+      const signature = await window.crypto.subtle.sign('HMAC', key, data);
+      const secureSignature = Array.from(new Uint8Array(signature))
+        .map((byte) => byte.toString(16).padStart(2, '0'))
+        .join('');
+      return { secureSignature, secureExpire: getSecureExpire(options) };
+    };
+
     const config = document.querySelector('lr-config');
     config.secureUploadsSignatureResolver = async () => {
-      return {
-        secureSignature: '41d3c05a1d9bfd4493186a5fd78f02719b6cb4363f55a52e235729a1649737b7',
-        secureExpire: '1715857665',
-      };
+      const token = await generateSecureSignature('', { lifetime: 60 * 1000 });
+      console.log('Generating secure signature...', token);
+      return token
     };
   </script>
 </head>
 
 <lr-file-uploader-regular ctx-name="my-uploader"></lr-file-uploader-regular>
-<lr-config
-  ctx-name="my-uploader"
-  pubkey="370313830c541a8bb21b"
-  secureSignature=""
-  secureExpire=""
-></lr-config>
+<lr-config ctx-name="my-uploader" pubkey="" debug></lr-config>
 <lr-upload-ctx-provider ctx-name="my-uploader"></lr-upload-ctx-provider>

@@ -1,10 +1,6 @@
 // @ts-check
 
-/** @param {import('../types').SecureUploadsSignatureAndExpire} secureToken */
-const isSecureTokenExpired = (secureToken) => {
-  const { secureExpire } = secureToken;
-  return Date.now() > Number(secureExpire);
-};
+import { isSecureTokenExpired } from '../utils/isSecureTokenExpired.js';
 
 export class SecureUploadsManager {
   /**
@@ -23,6 +19,14 @@ export class SecureUploadsManager {
     this._block = block;
   }
 
+  /**
+   * @private
+   * @param {unknown[]} args
+   */
+  _debugPrint(...args) {
+    this._block.debugPrint('[secure-uploads]', ...args);
+  }
+
   /** @returns {Promise<import('../types').SecureUploadsSignatureAndExpire | null>} */
   async getSecureToken() {
     const { secureSignature, secureExpire, secureUploadsSignatureResolver } = this._block.cfg;
@@ -34,20 +38,33 @@ export class SecureUploadsManager {
     }
 
     if (secureUploadsSignatureResolver) {
-      this._block.debugPrint('Secure signature resolver is set. Fetching secure token...');
-
       if (!this._secureToken || isSecureTokenExpired(this._secureToken)) {
-        const result = await secureUploadsSignatureResolver();
-        this._block.debugPrint('Secure token fetched:', result);
-
-        this._secureToken = result ?? null;
+        if (!this._secureToken) {
+          this._debugPrint('Secure signature is not set yet.');
+        } else {
+          this._debugPrint('Secure signature is expired. Resolving a new one...');
+        }
+        try {
+          const result = await secureUploadsSignatureResolver();
+          if (!result) {
+            this._debugPrint('Secure signature resolver returned nothing.');
+            this._secureToken = null;
+          } else if (!result.secureSignature || !result.secureExpire) {
+            console.error('Secure signature resolver returned an invalid result:', result);
+          } else {
+            this._debugPrint('Secure signature resolved:', result);
+            this._secureToken = result;
+          }
+        } catch (err) {
+          console.error('Secure signature resolving failed. Falling back to the previous one.', err);
+        }
       }
 
       return this._secureToken;
     }
 
     if (secureSignature && secureExpire) {
-      this._block.debugPrint('Secure signature and expire are set. Using them...', {
+      this._debugPrint('Secure signature and expire are set. Using them...', {
         secureSignature,
         secureExpire,
       });
