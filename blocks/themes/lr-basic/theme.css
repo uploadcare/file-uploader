@@ -17,6 +17,9 @@
   --uc-destructive: oklch(59% 0.235 28.5 / 0.05);
   --uc-destructive-foreground: oklch(59% 0.235 28.5);
   --uc-border: oklch(92% 0.004 286.3);
+
+  --uc-size: 32px; /* to be removed */
+  --uc-button-size: 32px;
   --uc-radius: 8px;
 
   --uc-transition: 0.2s ease;
@@ -54,8 +57,6 @@
   --opacity-normal: 0.6;
   --opacity-hover: 0.9;
   --opacity-active: 1;
-
-  --uc-size: 32px;
 
   --gap-min: 2px;
   --gap-small: 4px;

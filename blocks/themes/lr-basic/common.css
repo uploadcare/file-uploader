@@ -29,7 +29,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  height: var(--uc-size);
+  height: var(--uc-button-size);
   padding-right: 14px;
   padding-left: 14px;
   font-size: 1em;
@@ -66,39 +66,29 @@
 
 :where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular)
   button.mini-btn {
-  width: var(--uc-size);
-  height: var(--uc-size);
+  height: var(--uc-button-size);
   padding: 0;
   background-color: transparent;
-  border: none;
-  cursor: pointer;
-  transition: var(--transition-duration) ease;
-  color: var(--clr-txt);
+  color: var(--uc-secondary-foreground);
 }
 
 :where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular)
   button.mini-btn:hover {
-  background-color: var(--clr-shade-lv1);
-}
-
-:where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular)
-  button.mini-btn:active {
-  background-color: var(--clr-shade-lv2);
+  background-color: var(--uc-secondary);
 }
 
 :where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular)
   :is(button[disabled], button.primary-btn[disabled], button.secondary-btn[disabled]) {
-  color: var(--clr-btn-txt-disabled);
-  background-color: var(--clr-btn-bgr-disabled);
-  box-shadow: var(--shadow-btn-disabled);
+  opacity: 0.5;
   pointer-events: none;
 }
 
 :where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular) a {
-  color: var(--clr-accent);
+  color: var(--uc-primary);
   text-decoration: none;
 }
 
+/* TODO: if we're using disabled <a> somewhere, we should stop */
 :where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular)
   a[disabled] {
   pointer-events: none;
@@ -108,34 +98,33 @@
   input[type='text'] {
   display: flex;
   width: 100%;
-  height: var(--uc-size);
-  padding-right: 0.6em;
-  padding-left: 0.6em;
-  color: var(--clr-txt);
+  height: var(--uc-button-size);
+  padding-right: 10px;
+  padding-left: 10px;
+  color: var(--uc-foreground);
   font-size: 1em;
   font-family: inherit;
-  background-color: var(--clr-background-light);
-  border: var(--border-light);
-  border-radius: var(--border-radius-element);
-  transition: var(--transition-duration);
+  background-color: var(--uc-background);
+  border: 1px solid var(--uc-border);
+  outline: 1px solid transparent;
+  border-radius: var(--uc-radius);
+  transition:
+    border-color var(--uc-transition),
+    outline-color var(--uc-transition);
 }
 
 :where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular)
   input[type='text']::placeholder {
-  color: var(--clr-txt-lightest);
-}
-
-:where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular)
-  input[type='text']:hover {
-  border-color: var(--clr-accent-light);
+  color: var(--uc-muted-foreground);
 }
 
 :where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular)
   input[type='text']:focus {
-  border-color: var(--clr-accent);
-  outline: none;
+  outline-color: var(--uc-primary-hover);
+  border-color: var(--uc-primary-hover);
 }
 
+/* TODO: check if there's any necessity of disabled input */
 :where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular)
   input[disabled] {
   opacity: 0.6;
