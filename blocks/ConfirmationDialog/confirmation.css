@@ -1,14 +1,12 @@
 lr-confirmation-dialog {
   display: block;
-  padding: var(--gap-mid);
-  padding-top: var(--gap-max);
+  padding: 20px var(--uc-padding) var(--uc-padding);
 }
 
 lr-confirmation-dialog .message {
   display: flex;
   justify-content: center;
-  padding: var(--gap-mid);
-  padding-bottom: var(--gap-max);
+  padding: var(--uc-padding) var(--uc-padding) 20px;
   font-weight: 500;
   font-size: 1.1em;
 }
@@ -16,6 +14,6 @@ lr-confirmation-dialog .message {
 lr-confirmation-dialog .toolbar {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--gap-mid);
-  margin-top: var(--gap-mid);
+  gap: var(--uc-padding);
+  margin-top: var(--uc-padding);
 }
