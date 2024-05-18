@@ -5,15 +5,15 @@ lr-file-item > .inner {
   position: relative;
   display: grid;
   grid-template-columns: 32px 1fr max-content;
-  gap: var(--gap-min);
+  gap: 2px;
   align-items: center;
-  margin-bottom: var(--gap-small);
-  padding: var(--gap-mid);
+  margin-bottom: 4px;
+  padding: var(--uc-padding);
   overflow: hidden;
-  font-size: 0.95em;
-  background-color: var(--clr-background);
-  border-radius: var(--border-radius-element);
-  transition: var(--transition-duration);
+  font-size: 0.925em;
+  background-color: var(--uc-muted);
+  border-radius: var(--uc-radius);
+  transition: all var(--uc-transition);
 }
 
 lr-file-item:last-of-type > .inner {
@@ -29,18 +29,18 @@ lr-file-item > .inner[uploading] .edit-btn {
 }
 
 lr-file-item > :where(.inner[failed], .inner[limit-overflow]) {
-  background-color: var(--clr-error-lightest);
+  background-color: var(--uc-destructive);
 }
 
 lr-file-item .thumb {
   position: relative;
   display: inline-flex;
-  width: var(--uc-size);
-  height: var(--uc-size);
-  background-color: var(--clr-shade-lv1);
+  width: 32px;
+  height: 32px;
+  background-color: var(--uc-secondary);
   background-position: center center;
   background-size: cover;
-  border-radius: var(--border-radius-thumb);
+  border-radius: var(--uc-radius);
 }
 
 lr-file-item .file-name-wrapper {
@@ -49,10 +49,10 @@ lr-file-item .file-name-wrapper {
   align-items: flex-start;
   justify-content: center;
   max-width: 100%;
-  padding-right: var(--gap-mid);
-  padding-left: var(--gap-mid);
+  padding-right: var(--uc-padding);
+  padding-left: var(--uc-padding);
   overflow: hidden;
-  color: var(--clr-txt-light);
+  color: var(--uc-muted-foreground);
   transition: color var(--transition-duration);
 }
 
@@ -65,36 +65,34 @@ lr-file-item .file-name {
 
 lr-file-item .file-error {
   display: none;
-  color: var(--clr-error);
+  color: var(--uc-destructive-foreground);
   font-size: 0.85em;
   line-height: 130%;
 }
 
 lr-file-item button.remove-btn,
 lr-file-item button.edit-btn {
-  color: var(--clr-txt-lightest) !important; /* todo: remove after refactoring of common.css */
+  color: var(--uc-muted-foreground);
 }
 
 lr-file-item button.upload-btn {
   display: none;
 }
 
-lr-file-item button:hover {
-  color: var(--clr-txt-light);
-}
-
 lr-file-item .badge {
   position: absolute;
-  top: calc(var(--uc-size) * -0.13);
-  right: calc(var(--uc-size) * -0.13);
-  width: calc(var(--uc-size) * 0.44);
-  height: calc(var(--uc-size) * 0.44);
-  color: var(--clr-background-light);
-  background-color: var(--clr-txt);
+  bottom: 2px;
+  right: 2px;
+  width: 14px;
+  height: 14px;
+  color: var(--uc-background);
+  background-color: var(--uc-foreground);
   border-radius: 50%;
   transform: scale(0.3);
   opacity: 0;
-  transition: var(--transition-duration) ease;
+  transition:
+    opacity var(--uc-transition),
+    transform var(--uc-transition);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -105,12 +103,8 @@ lr-file-item > .inner:where([failed], [limit-overflow], [finished]) .badge {
   opacity: 1;
 }
 
-lr-file-item > .inner[finished] .badge {
-  background-color: var(--clr-confirm);
-}
-
 lr-file-item > .inner:where([failed], [limit-overflow]) .badge {
-  background-color: var(--clr-error);
+  background-color: var(--uc-destructive-foreground);
 }
 
 lr-file-item > .inner:where([failed], [limit-overflow]) .file-error {
@@ -130,7 +124,7 @@ lr-file-item .progress-bar {
 
 lr-file-item .file-actions {
   display: flex;
-  gap: var(--gap-min);
+  gap: 2px;
   align-items: center;
   justify-content: center;
 }
