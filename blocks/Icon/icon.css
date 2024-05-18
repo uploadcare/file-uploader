@@ -2,11 +2,11 @@ lr-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: var(--uc-size);
-  height: var(--uc-size);
+  width: var(--uc-button-size);
+  height: var(--uc-button-size);
 }
 
 lr-icon svg {
-  width: calc(var(--uc-size) / 2);
-  height: calc(var(--uc-size) / 2);
+  width: calc(var(--uc-button-size) / 2);
+  height: calc(var(--uc-button-size) / 2);
 }
