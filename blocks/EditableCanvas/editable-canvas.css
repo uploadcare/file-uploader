@@ -45,8 +45,8 @@ lr-editable-canvas-toolbar .btns {
 
 lr-editable-canvas-toolbar .btns > button {
   display: inline-flex;
-  width: var(--ui-size);
-  height: var(--ui-size);
+  width: var(--uc-size);
+  height: var(--uc-size);
   color: var(--clr-txt);
   background-color: var(--clr-background);
   border-radius: 0;

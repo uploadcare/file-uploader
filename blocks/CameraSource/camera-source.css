@@ -77,8 +77,8 @@ lr-camera-source .message-box button {
 lr-camera-source .shot-btn {
   position: absolute;
   bottom: var(--gap-max);
-  width: calc(var(--ui-size) * 1.8);
-  height: calc(var(--ui-size) * 1.8);
+  width: calc(var(--uc-size) * 1.8);
+  height: calc(var(--uc-size) * 1.8);
   color: var(--clr-background-light);
   background-color: var(--clr-txt);
   border-radius: 50%;
@@ -97,10 +97,10 @@ lr-camera-source .shot-btn:active {
 }
 
 lr-camera-source .shot-btn[disabled] {
-  bottom: calc(var(--gap-max) * -1 - var(--gap-mid) - var(--ui-size) * 2);
+  bottom: calc(var(--gap-max) * -1 - var(--gap-mid) - var(--uc-size) * 2);
 }
 
 lr-camera-source .shot-btn lr-icon svg {
-  width: calc(var(--ui-size) / 1.5);
-  height: calc(var(--ui-size) / 1.5);
+  width: calc(var(--uc-size) / 1.5);
+  height: calc(var(--uc-size) / 1.5);
 }

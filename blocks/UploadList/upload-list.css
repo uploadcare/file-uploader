@@ -15,14 +15,14 @@ lr-modal lr-upload-list {
 }
 
 lr-upload-list .no-files {
-  height: var(--ui-size);
+  height: var(--uc-size);
   padding: var(--gap-max);
 }
 
 lr-upload-list .files {
   display: block;
   flex: 1;
-  min-height: var(--ui-size);
+  min-height: var(--uc-size);
   padding: 0 var(--gap-mid);
   overflow: auto;
 }

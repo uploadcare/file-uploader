@@ -35,8 +35,8 @@ lr-file-item > :where(.inner[failed], .inner[limit-overflow]) {
 lr-file-item .thumb {
   position: relative;
   display: inline-flex;
-  width: var(--ui-size);
-  height: var(--ui-size);
+  width: var(--uc-size);
+  height: var(--uc-size);
   background-color: var(--clr-shade-lv1);
   background-position: center center;
   background-size: cover;
@@ -85,10 +85,10 @@ lr-file-item button:hover {
 
 lr-file-item .badge {
   position: absolute;
-  top: calc(var(--ui-size) * -0.13);
-  right: calc(var(--ui-size) * -0.13);
-  width: calc(var(--ui-size) * 0.44);
-  height: calc(var(--ui-size) * 0.44);
+  top: calc(var(--uc-size) * -0.13);
+  right: calc(var(--uc-size) * -0.13);
+  width: calc(var(--uc-size) * 0.44);
+  height: calc(var(--uc-size) * 0.44);
   color: var(--clr-background-light);
   background-color: var(--clr-txt);
   border-radius: 50%;

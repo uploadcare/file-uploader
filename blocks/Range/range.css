@@ -3,7 +3,7 @@ lr-range {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: var(--ui-size);
+  height: var(--uc-size);
 }
 
 lr-range datalist {

@@ -1,6 +1,6 @@
 lr-tabs {
   display: grid;
-  grid-template-rows: min-content minmax(var(--ui-size), auto);
+  grid-template-rows: min-content minmax(var(--uc-size), auto);
   height: 100%;
   overflow: hidden;
   color: var(--clr-txt-lightest);
@@ -21,7 +21,7 @@ lr-tabs .tabs-row > .tab {
   flex-grow: 1;
   align-items: center;
   justify-content: center;
-  height: var(--ui-size);
+  height: var(--uc-size);
   border-bottom: var(--border-light);
   cursor: pointer;
   transition: var(--transition-duration);

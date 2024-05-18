@@ -37,7 +37,7 @@ TODO: write a guide. -->
 - `--*-confirm` — the color of confirmation notifications and badges;
 - `--*-error` — the color of error notifications and badges;
 - `--opacity-*` — opacity of different states of small icon buttons;
-- `--ui-size` — minimum size of a clickable element. Also used to calculate the size of the elements, which should be proportional to it;
+- `--uc-size` — minimum size of a clickable element. Also used to calculate the size of the elements, which should be proportional to it;
 - `--gap-*` — paddings and margins;
 - `--gap-table` — the gap between elements in lists (for example, in upload-list);
 - `--borders` — `1`: borders enabled, `0`: disabled. Can be fractional, for example, 0.5 will make borders half as opaque;

@@ -1,5 +1,5 @@
 lr-modal {
-  --modal-max-content-height: calc(var(--uploadcare-blocks-window-height, 100vh) - 4 * var(--gap-mid) - var(--ui-size));
+  --modal-max-content-height: calc(var(--uploadcare-blocks-window-height, 100vh) - 4 * var(--gap-mid) - var(--uc-size));
   --modal-content-height-fill: var(--uploadcare-blocks-window-height, 100vh);
 }
 
@@ -69,7 +69,7 @@ lr-modal > dialog {
   /* there was `fit-content` but it doesn't reduce width after activity change */
   width: max-content;
   max-width: min(calc(100% - var(--gap-mid) * 2), calc(var(--modal-max-w) - var(--gap-mid) * 2));
-  min-height: var(--ui-size);
+  min-height: var(--uc-size);
   max-height: calc(var(--modal-max-h) - var(--gap-mid) * 2);
   margin: auto;
   padding: 0;

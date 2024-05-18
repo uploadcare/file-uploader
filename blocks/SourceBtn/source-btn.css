@@ -25,7 +25,7 @@ lr-source-btn lr-icon {
   display: inline-flex;
   flex-grow: 1;
   justify-content: center;
-  min-width: var(--ui-size);
+  min-width: var(--uc-size);
   margin-right: var(--gap-mid);
   opacity: 0.8;
 }
@@ -35,7 +35,7 @@ lr-source-btn .txt {
   align-items: center;
   box-sizing: border-box;
   width: 100%;
-  height: var(--ui-size);
+  height: var(--uc-size);
   padding: 0;
   white-space: nowrap;
   border: none;

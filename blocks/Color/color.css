@@ -3,8 +3,8 @@ lr-color {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: var(--ui-size);
-  height: var(--ui-size);
+  width: var(--uc-size);
+  height: var(--uc-size);
   overflow: hidden;
   background-color: var(--clr-background);
   cursor: pointer;

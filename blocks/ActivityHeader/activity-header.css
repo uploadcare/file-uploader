@@ -6,11 +6,11 @@ lr-activity-header {
   color: var(--clr-txt);
   font-weight: 500;
   font-size: 1em;
-  line-height: var(--ui-size);
+  line-height: var(--uc-size);
 }
 
 lr-activity-header lr-icon {
-  height: var(--ui-size);
+  height: var(--uc-size);
 }
 
 lr-activity-header > * {

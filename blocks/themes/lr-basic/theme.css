@@ -1,8 +1,13 @@
 :where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular) {
+  --uc-font-family: -apple-system, blinkmacsystemfont, 'Segoe UI', roboto, oxygen, ubuntu, cantarell, 'Open Sans',
+    'Helvetica Neue', sans-serif;
+  --uc-font-size: 14px;
+
   --uc-background: oklch(100% 0 0);
   --uc-foreground: oklch(21% 0.006 285.9);
   --uc-primary: oklch(59% 0.22 264);
   --uc-primary-hover: oklch(59% 0.22 264 / 0.9);
+  --uc-primary-transparent: oklch(59% 0.22 264 / 0.1);
   --uc-primary-foreground: oklch(100% 0 0);
   --uc-secondary: oklch(21% 0.006 285.9 / 0.05);
   --uc-secondary-hover: oklch(21% 0.006 285.9 / 0.08);
@@ -13,6 +18,8 @@
   --uc-destructive-foreground: oklch(59% 0.235 28.5);
   --uc-border: oklch(92% 0.004 286.3);
   --uc-radius: 8px;
+
+  --uc-transition: 0.2s ease;
 
   /* Base values */
 
@@ -48,7 +55,7 @@
   --opacity-hover: 0.9;
   --opacity-active: 1;
 
-  --ui-size: 32px;
+  --uc-size: 32px;
 
   --gap-min: 2px;
   --gap-small: 4px;
