@@ -1,6 +1,7 @@
 lr-file-item {
   display: block;
 }
+
 lr-file-item > .inner {
   position: relative;
   display: grid;
