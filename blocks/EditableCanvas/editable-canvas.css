@@ -38,33 +38,33 @@ lr-editable-canvas-toolbar {
 
 lr-editable-canvas-toolbar .btns {
   position: absolute;
-  left: var(--gap-mid);
+  left: var(--uc-padding);
   display: grid;
   pointer-events: all;
 }
 
 lr-editable-canvas-toolbar .btns > button {
   display: inline-flex;
-  width: var(--uc-size);
-  height: var(--uc-size);
-  color: var(--clr-txt);
-  background-color: var(--clr-background);
+  width: var(--uc-button-size);
+  height: var(--uc-button-size);
+  color: var(--uc-foreground);
+  background-color: var(--uc-background);
   border-radius: 0;
 }
 
 lr-editable-canvas-toolbar .btns > button:first-of-type {
-  border-top-left-radius: var(--border-radius-element);
-  border-top-right-radius: var(--border-radius-element);
+  border-top-left-radius: var(--uc-radius);
+  border-top-right-radius: var(--uc-radius);
 }
 
 lr-editable-canvas-toolbar .btns > button:last-of-type {
-  border-bottom-right-radius: var(--border-radius-element);
-  border-bottom-left-radius: var(--border-radius-element);
+  border-bottom-right-radius: var(--uc-radius);
+  border-bottom-left-radius: var(--uc-radius);
 }
 
 lr-editable-canvas-toolbar .btns > button[current] {
-  color: var(--clr-txt);
-  background-color: var(--clr-background);
+  color: var(--uc-foreground);
+  background-color: var(--uc-background);
 }
 
 lr-editable-canvas-toolbar > lr-range {
