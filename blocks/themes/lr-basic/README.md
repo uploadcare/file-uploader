@@ -47,7 +47,7 @@ TODO: write a guide. -->
 - `--transition-duration` — duration of all animated transitions;
 - `--shadows` — `1`: shadows enabled, `0`: disabled. Can be fractional, for example 0.5, will make shadows half as opaque;
 - `--*-shadow` — the color of box shadows;
-- `--modal-max-w`, `--modal-max-h` — the maximum size of the modal window.
+- `--uc-dialog-max-width`, `--uc-dialog-max-height` — the maximum size of the modal window.
 
 ## Derivative values
 

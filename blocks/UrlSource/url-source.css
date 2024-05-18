@@ -4,7 +4,7 @@ lr-url-source {
 }
 
 lr-modal lr-url-source {
-  width: min(calc(var(--modal-normal-w) - var(--gap-mid) * 2), calc(100vw - var(--gap-mid) * 2));
+  width: min(calc(var(--uc-dialog-width) - var(--gap-mid) * 2), calc(100vw - var(--gap-mid) * 2));
 }
 
 lr-url-source > .content {

@@ -8,6 +8,6 @@ lr-cloud-image-editor-activity {
 }
 
 lr-modal lr-cloud-image-editor-activity {
-  width: min(calc(var(--modal-max-w) - var(--gap-mid) * 2), calc(100vw - var(--gap-mid) * 2));
+  width: min(calc(var(--uc-dialog-max-width) - var(--gap-mid) * 2), calc(100vw - var(--gap-mid) * 2));
   height: var(--modal-content-height-fill, 100%);
 }

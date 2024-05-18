@@ -147,12 +147,12 @@ lr-drop-area[fullscreen] {
 
 lr-drop-area[fullscreen] .content-wrapper {
   width: 100%;
-  max-width: calc(var(--modal-normal-w) * 0.8);
+  max-width: calc(var(--uc-dialog-width) * 0.8);
   height: calc(var(--uc-size) * 6);
   color: var(--clr-txt);
   background-color: var(--clr-background-light);
   border-radius: var(--border-radius-frame);
-  box-shadow: var(--modal-shadow);
+  box-shadow: var(--uc-dialog-shadow);
   transition: var(--transition-duration) ease;
 }
 
