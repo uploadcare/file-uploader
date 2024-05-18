@@ -1,4 +1,19 @@
 :where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular) {
+  --uc-background: oklch(100% 0 0);
+  --uc-foreground: oklch(21% 0.006 285.9);
+  --uc-primary: oklch(59% 0.22 264);
+  --uc-primary-hover: oklch(59% 0.22 264 / 0.9);
+  --uc-primary-foreground: oklch(100% 0 0);
+  --uc-secondary: oklch(21% 0.006 285.9 / 0.05);
+  --uc-secondary-hover: oklch(21% 0.006 285.9 / 0.08);
+  --uc-secondary-foreground: oklch(21% 0.006 285.9);
+  --uc-muted: oklch(97% 0.001 286.4);
+  --uc-muted-foreground: oklch(55% 0.012 286);
+  --uc-destructive: oklch(59% 0.235 28.5 / 0.05);
+  --uc-destructive-foreground: oklch(59% 0.235 28.5);
+  --uc-border: oklch(92% 0.004 286.3);
+  --uc-radius: 8px;
+
   /* Base values */
 
   --darkmode: 0;
