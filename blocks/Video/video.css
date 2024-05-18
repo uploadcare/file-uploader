@@ -62,7 +62,7 @@ lr-video .toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  color: var(--color-accent);
+  color: var(--uc-primary);
   background-color: #000;
   transition: 0.4s;
 }
@@ -84,7 +84,7 @@ lr-video .toolbar .tb-block button {
   justify-content: center;
   min-width: 40px;
   height: 40px;
-  color: var(--color-accent);
+  color: var(--uc-primary);
   background-color: transparent;
   border: none;
   cursor: pointer;
@@ -101,6 +101,6 @@ lr-video .progress {
 }
 lr-video .progress .bar {
   height: 2px;
-  background-color: var(--color-accent);
+  background-color: var(--uc-primary);
   transition: 0.5s;
 }
