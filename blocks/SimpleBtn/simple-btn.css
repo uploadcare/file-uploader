@@ -35,14 +35,14 @@ lr-simple-btn .visual-drop-area {
   justify-content: center;
   width: 100%;
   height: 100%;
-  padding: var(--gap-min);
-  border: var(--border-dashed);
+  padding: var(--uc-padding);
+  border: 1px dashed var(--uc-border);
   border-radius: inherit;
   opacity: 0;
   transition:
-    border-color var(--transition-duration) ease,
-    background-color var(--transition-duration) ease,
-    opacity var(--transition-duration) ease;
+    border-color var(--uc-transition),
+    background-color var(--uc-transition),
+    opacity var(--uc-transition);
 }
 
 lr-simple-btn .visual-drop-area::before {
@@ -54,27 +54,27 @@ lr-simple-btn .visual-drop-area::before {
   justify-content: center;
   width: 100%;
   height: 100%;
-  color: var(--clr-txt-light);
-  background-color: var(--clr-background);
+  color: var(--uc-primary);
+  background-color: var(--uc-muted);
   border-radius: inherit;
 }
 
 lr-simple-btn > lr-drop-area[drag-state='active'] .visual-drop-area {
-  background-color: var(--clr-accent-lightest);
+  background-color: var(--uc-muted);
+  border-color: var(--uc-primary-transparent);
   opacity: 1;
 }
 lr-simple-btn > lr-drop-area[drag-state='inactive'] .visual-drop-area {
-  background-color: var(--clr-shade-lv1);
   opacity: 0;
 }
 lr-simple-btn > lr-drop-area[drag-state='near'] .visual-drop-area {
-  background-color: var(--clr-accent-lightest);
-  border-color: var(--clr-accent-light);
+  background-color: var(--uc-muted);
+  border-color: var(--uc-border);
   opacity: 1;
 }
 lr-simple-btn > lr-drop-area[drag-state='over'] .visual-drop-area {
-  background-color: var(--clr-accent-lightest);
-  border-color: var(--clr-accent);
+  background-color: var(--uc-muted);
+  border-color: var(--uc-muted-foreground);
   opacity: 1;
 }
 
