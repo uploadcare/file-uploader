@@ -1,17 +1,17 @@
 lr-url-source {
   display: block;
-  background-color: var(--clr-background-light);
+  background-color: var(--uc-background);
 }
 
 lr-modal lr-url-source {
-  width: min(calc(var(--uc-dialog-width) - var(--gap-mid) * 2), calc(100vw - var(--gap-mid) * 2));
+  width: min(calc(var(--uc-dialog-width) - var(--uc-padding) * 2), calc(100vw - var(--uc-padding) * 2));
 }
 
 lr-url-source > .content {
   display: grid;
-  grid-gap: var(--gap-small);
+  grid-gap: 4px;
   grid-template-columns: 1fr min-content;
-  padding: var(--gap-mid);
+  padding: var(--uc-padding);
   padding-top: 0;
 }
 
