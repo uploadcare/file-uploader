@@ -21,6 +21,7 @@
   --uc-button-size: 32px;
   --uc-padding: 10px;
   --uc-radius: 8px;
+  --uc-transition: 0.2s ease;
 
   --uc-dialog-width: 430px;
   --uc-dialog-max-width: 800px;
@@ -28,8 +29,6 @@
   --uc-dialog-shadow: 0px 0px 1px oklch(0% 0 0 / 0.3), 0px 6px 20px oklch(0% 0 0 / 0.1);
 
   --uc-size: 32px; /* to be removed */
-
-  --uc-transition: 0.2s ease;
 
   /* Base values */
 
