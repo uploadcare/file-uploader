@@ -6,7 +6,7 @@ lr-color {
   width: var(--uc-button-size);
   height: var(--uc-button-size);
   overflow: hidden;
-  background-color: var(--clr-background);
+  background-color: var(--uc-muted);
   cursor: pointer;
 }
 

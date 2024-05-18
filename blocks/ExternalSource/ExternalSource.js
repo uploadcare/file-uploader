@@ -154,9 +154,9 @@ export class ExternalSource extends UploaderBlock {
   /** @private */
   applyStyles() {
     let colors = {
-      backgroundColor: this.getCssValue('--clr-background-light'),
-      textColor: this.getCssValue('--clr-txt'),
-      shadeColor: this.getCssValue('--clr-shade-lv1'),
+      backgroundColor: this.getCssValue('--uc-background'),
+      textColor: this.getCssValue('--uc-foreground'),
+      shadeColor: this.getCssValue('--uc-secondary'),
       linkColor: '#157cfc',
       linkColorHover: '#3891ff',
     };

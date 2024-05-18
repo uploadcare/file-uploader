@@ -33,7 +33,7 @@ lr-camera-source video {
   max-height: 100%;
   object-fit: contain;
   object-position: center center;
-  background-color: var(--clr-background-dark);
+  background-color: var(--uc-muted);
   border-radius: var(--border-radius-element);
 }
 
@@ -44,7 +44,7 @@ lr-camera-source .toolbar {
   justify-content: space-between;
   width: 100%;
   padding: var(--uc-padding);
-  background-color: var(--clr-background-light);
+  background-color: var(--uc-background);
 }
 
 lr-camera-source .content {
