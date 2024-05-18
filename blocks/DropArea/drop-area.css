@@ -1,9 +1,9 @@
 lr-drop-area {
   padding: var(--gap-min);
   overflow: hidden;
-  border: var(--border-dashed);
-  border-radius: var(--border-radius-frame);
-  transition: var(--transition-duration) ease;
+  border: 1px dashed var(--uc-border);
+  border-radius: calc(var(--uc-radius) * 1.5);
+  transition: all var(--uc-transition);
 }
 
 lr-drop-area,
@@ -69,8 +69,8 @@ lr-drop-area[with-icon] .text {
 
 lr-drop-area[with-icon] .icon-container {
   position: relative;
-  width: calc(var(--uc-size) * 2);
-  height: calc(var(--uc-size) * 2);
+  width: 64px;
+  height: 64px;
   margin: var(--gap-mid);
   overflow: hidden;
   color: var(--clr-txt);
