@@ -1,15 +1,15 @@
 lr-tabs {
   display: grid;
-  grid-template-rows: min-content minmax(var(--uc-size), auto);
+  grid-template-rows: min-content minmax(var(--uc-button-size), auto);
   height: 100%;
   overflow: hidden;
-  color: var(--clr-txt-lightest);
+  color: var(--uc-muted-foreground);
 }
 
 lr-tabs > .tabs-row {
   display: flex;
   grid-template-columns: minmax();
-  background-color: var(--clr-background-light);
+  background-color: var(--uc-background);
 }
 
 lr-tabs > .tabs-context {
@@ -21,13 +21,13 @@ lr-tabs .tabs-row > .tab {
   flex-grow: 1;
   align-items: center;
   justify-content: center;
-  height: var(--uc-size);
-  border-bottom: var(--border-light);
+  height: var(--uc-button-size);
+  border-bottom: 1px solid var(--uc-border);
   cursor: pointer;
-  transition: var(--transition-duration);
+  transition: all var(--uc-transition);
 }
 
 lr-tabs .tabs-row > .tab[current] {
-  color: var(--clr-txt);
-  border-color: var(--clr-txt);
+  color: var(--uc-foreground);
+  border-color: var(--uc-foreground);
 }
