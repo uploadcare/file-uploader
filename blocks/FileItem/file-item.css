@@ -119,6 +119,7 @@ lr-file-item .badge lr-icon svg {
 }
 
 lr-file-item .progress-bar {
+  opacity: 0.5;
   top: calc(100% - 2px);
   height: 2px;
 }
