@@ -28,7 +28,7 @@ lr-drop-area[ghost][drag-state='inactive'] {
 }
 
 lr-drop-area[ghost]:not([fullscreen]):is([drag-state='active'], [drag-state='near'], [drag-state='over']) {
-  background: var(--uc-muted);
+  background: var(--uc-background);
 }
 
 lr-drop-area[with-icon]
