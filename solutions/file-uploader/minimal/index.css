@@ -48,7 +48,7 @@
 lr-file-uploader-minimal lr-start-from .content {
   display: flex;
   flex-direction: column;
-  gap: var(--uc-padding);
+  gap: 4px;
   padding: 0;
   overflow: hidden;
   align-items: center;
@@ -57,6 +57,7 @@ lr-file-uploader-minimal lr-start-from .content {
 
 :where(.lr-file-uploader-minimal lr-drop-area, lr-file-uploader-minimal lr-drop-area) {
   display: flex;
+  position: relative;
   align-items: center;
   justify-content: center;
   width: 100%;
@@ -66,6 +67,16 @@ lr-file-uploader-minimal lr-start-from .content {
   text-align: center;
   background-color: var(--uc-muted);
   border-radius: calc(var(--uc-radius) * 1.75);
+}
+
+/* hack to make transparent :hover colors work in any conditions */
+:where(.lr-file-uploader-minimal lr-drop-area, lr-file-uploader-minimal lr-drop-area)::before {
+  content: '';
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  background-color: var(--uc-background);
 }
 
 .lr-file-uploader-minimal lr-upload-list lr-activity-header,
@@ -83,7 +94,7 @@ lr-file-uploader-minimal lr-upload-list {
   width: 100%;
   height: unset;
   padding: 4px;
-  background-color: transparent;
+  background-color: var(--uc-background);
   border: 1px dashed var(--uc-border);
   border-radius: calc(var(--uc-radius) * 1.75);
 }
@@ -113,17 +124,11 @@ lr-file-uploader-minimal lr-upload-list .toolbar .add-more-btn {
   width: 100%;
   height: calc(var(--uc-preview-size) + var(--uc-padding) * 2);
   margin-top: 4px;
-  background-color: var(--clr-background);
 }
 
 .lr-file-uploader-minimal lr-upload-list .toolbar .add-more-btn[disabled],
 lr-file-uploader-minimal lr-upload-list .toolbar .add-more-btn[disabled] {
   display: none;
-}
-
-.lr-file-uploader-minimal lr-upload-list .toolbar .add-more-btn:hover,
-lr-file-uploader-minimal lr-upload-list .toolbar .add-more-btn:hover {
-  background-color: var(--clr-background-dark);
 }
 
 .lr-file-uploader-minimal lr-upload-list .toolbar .add-more-btn > span,
@@ -155,7 +160,7 @@ lr-file-uploader-minimal lr-file-item lr-progress-bar {
 
 .lr-file-uploader-minimal lr-file-item lr-progress-bar .progress,
 lr-file-uploader-minimal lr-file-item lr-progress-bar .progress {
-  background-color: var(--clr-accent-lightest);
+  background-color: var(--uc-primary-transparent);
   border-radius: var(--uc-radius);
 }
 
