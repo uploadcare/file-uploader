@@ -2,7 +2,7 @@ lr-drop-area {
   padding: 2px;
   overflow: hidden;
   border: 1px dashed var(--uc-border);
-  border-radius: calc(var(--uc-radius) * 1.5);
+  border-radius: calc(var(--uc-radius) * 1.75);
   transition: all var(--uc-transition);
 }
 
@@ -153,7 +153,7 @@ lr-drop-area[fullscreen] .content-wrapper {
   height: 180px;
   color: var(--uc-foreground);
   background-color: var(--uc-background);
-  border-radius: calc(var(--uc-radius) * 1.5);
+  border-radius: calc(var(--uc-radius) * 1.75);
   box-shadow: var(--uc-dialog-shadow);
   transition: all var(--uc-transition);
 }
