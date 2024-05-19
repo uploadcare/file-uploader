@@ -26,6 +26,11 @@ lr-file-uploader-inline lr-activity-header .close-btn {
   display: none;
 }
 
+.lr-file-uploader-inline lr-copyright .credits,
+lr-file-uploader-inline lr-copyright .credits {
+  position: static;
+}
+
 @container (min-width: 500px) {
   .lr-file-uploader-inline lr-start-from .content,
   lr-file-uploader-inline lr-start-from .content {
