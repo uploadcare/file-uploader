@@ -34,7 +34,7 @@ lr-camera-source video {
   object-fit: contain;
   object-position: center center;
   background-color: var(--uc-muted);
-  border-radius: var(--border-radius-element);
+  border-radius: var(--uc-radius);
 }
 
 lr-camera-source .toolbar {

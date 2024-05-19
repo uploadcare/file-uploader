@@ -17,6 +17,7 @@
   --uc-destructive-foreground: oklch(59% 0.235 28.5);
   --uc-border: oklch(92% 0.004 286.3);
   --uc-button-size: 32px;
+  --uc-preview-size: 32px;
   --uc-padding: 10px;
   --uc-radius: 8px;
   --uc-transition: 0.2s ease;

@@ -48,7 +48,7 @@
 lr-file-uploader-minimal lr-start-from .content {
   display: flex;
   flex-direction: column;
-  gap: var(--gap-min);
+  gap: var(--uc-padding);
   padding: 0;
   overflow: hidden;
   align-items: center;
@@ -60,12 +60,12 @@ lr-file-uploader-minimal lr-start-from .content {
   align-items: center;
   justify-content: center;
   width: 100%;
-  min-height: calc(32px + var(--gap-mid) * 2 + var(--gap-min) * 4);
+  min-height: calc(var(--uc-preview-size) + var(--uc-padding) * 2 + 8px);
   padding: 0;
   line-height: 140%;
   text-align: center;
-  background-color: var(--clr-background);
-  border-radius: var(--border-radius-frame);
+  background-color: var(--uc-muted);
+  border-radius: calc(var(--uc-radius) * 1.75);
 }
 
 .lr-file-uploader-minimal lr-upload-list lr-activity-header,
@@ -82,10 +82,10 @@ lr-file-uploader-minimal lr-upload-list > .toolbar {
 lr-file-uploader-minimal lr-upload-list {
   width: 100%;
   height: unset;
-  padding: var(--gap-small);
+  padding: 4px;
   background-color: transparent;
-  border: var(--border-dashed);
-  border-radius: var(--border-radius-frame);
+  border: 1px dashed var(--uc-border);
+  border-radius: calc(var(--uc-radius) * 1.75);
 }
 
 .lr-file-uploader-minimal lr-upload-list .files,
@@ -111,8 +111,8 @@ lr-file-uploader-minimal lr-upload-list .toolbar .done-btn {
 .lr-file-uploader-minimal lr-upload-list .toolbar .add-more-btn,
 lr-file-uploader-minimal lr-upload-list .toolbar .add-more-btn {
   width: 100%;
-  height: calc(var(--uc-button-size) + var(--uc-padding) * 2);
-  margin-top: var(--gap-small);
+  height: calc(var(--uc-preview-size) + var(--uc-padding) * 2);
+  margin-top: 4px;
   background-color: var(--clr-background);
 }
 
@@ -139,7 +139,7 @@ lr-file-uploader-minimal lr-upload-list .toolbar .add-more-btn > lr-icon {
 .lr-file-uploader-minimal lr-file-item,
 lr-file-uploader-minimal lr-file-item {
   background-color: var(--clr-background);
-  border-radius: var(--border-radius-element);
+  border-radius: var(--uc-radius);
 }
 
 .lr-file-uploader-minimal lr-file-item .edit-btn,
@@ -156,7 +156,7 @@ lr-file-uploader-minimal lr-file-item lr-progress-bar {
 .lr-file-uploader-minimal lr-file-item lr-progress-bar .progress,
 lr-file-uploader-minimal lr-file-item lr-progress-bar .progress {
   background-color: var(--clr-accent-lightest);
-  border-radius: var(--border-radius-element);
+  border-radius: var(--uc-radius);
 }
 
 .lr-file-uploader-minimal lr-upload-list lr-drop-area,
