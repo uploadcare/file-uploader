@@ -31,6 +31,7 @@
   --uc-simple-btn-foreground: var(--uc-secondary-foreground);
   --uc-simple-btn-font-size: var(--uc-font-size);
   --uc-simple-btn-font-family: var(--uc-font-family);
+  --uc-simple-btn-padding: 7px 14px;
 
   /* Base values */
 
