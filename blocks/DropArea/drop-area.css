@@ -89,7 +89,7 @@ lr-drop-area[with-icon] lr-icon {
 }
 
 lr-drop-area[with-icon] lr-icon:last-child {
-  transform: translateY(calc(var(--uc-size) * 1.5));
+  transform: translateY(48px);
 }
 
 lr-drop-area[with-icon]:hover .icon-container,

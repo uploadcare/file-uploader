@@ -60,7 +60,7 @@ lr-file-uploader-minimal lr-start-from .content {
   align-items: center;
   justify-content: center;
   width: 100%;
-  min-height: calc(var(--uc-size) + var(--gap-mid) * 2 + var(--gap-min) * 4);
+  min-height: calc(var(--uc-button-size) + var(--gap-mid) * 2 + var(--gap-min) * 4);
   padding: 0;
   line-height: 140%;
   text-align: center;
@@ -111,7 +111,7 @@ lr-file-uploader-minimal lr-upload-list .toolbar .done-btn {
 .lr-file-uploader-minimal lr-upload-list .toolbar .add-more-btn,
 lr-file-uploader-minimal lr-upload-list .toolbar .add-more-btn {
   width: 100%;
-  height: calc(var(--uc-size) + var(--gap-mid) * 2);
+  height: calc(var(--uc-button-size) + var(--uc-padding) * 2);
   margin-top: var(--gap-small);
   background-color: var(--clr-background);
 }
