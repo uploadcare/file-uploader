@@ -214,10 +214,10 @@ UploadList.template = /* HTML */ `
     <div class="toolbar-spacer"></div>
     <button
       type="button"
-      class="secondary-btn"
+      class="add-more-btn secondary-btn"
       set="onclick: onAdd; @disabled: !addMoreBtnEnabled; @hidden: !addMoreBtnVisible"
     >
-      <span l10n="add-more"></span>
+      <lr-icon name="add"></lr-icon><span l10n="add-more"></span>
     </button>
     <button
       type="button"

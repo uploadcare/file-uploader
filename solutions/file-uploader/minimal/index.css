@@ -131,6 +131,11 @@ lr-file-uploader-minimal lr-upload-list .toolbar .add-more-btn > span {
   display: none;
 }
 
+.lr-file-uploader-minimal lr-upload-list .toolbar .add-more-btn > lr-icon,
+lr-file-uploader-minimal lr-upload-list .toolbar .add-more-btn > lr-icon {
+  display: flex;
+}
+
 .lr-file-uploader-minimal lr-file-item,
 lr-file-uploader-minimal lr-file-item {
   background-color: var(--clr-background);

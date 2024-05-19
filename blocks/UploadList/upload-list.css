@@ -64,3 +64,7 @@ lr-upload-list .common-error {
   margin: 4px var(--uc-padding) 0 var(--uc-padding);
   font-size: 0.925em;
 }
+
+lr-upload-list .add-more-btn lr-icon {
+  display: none;
+}
