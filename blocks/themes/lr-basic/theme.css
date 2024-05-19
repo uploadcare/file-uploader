@@ -26,6 +26,12 @@
   --uc-dialog-max-height: 600px;
   --uc-dialog-shadow: 0px 0px 1px oklch(0% 0 0 / 0.3), 0px 6px 20px oklch(0% 0 0 / 0.1);
 
+  --uc-simple-btn: var(--uc-secondary);
+  --uc-simple-btn-hover: var(--uc-secondary-hover);
+  --uc-simple-btn-foreground: var(--uc-secondary-foreground);
+  --uc-simple-btn-font-size: var(--uc-font-size);
+  --uc-simple-btn-font-family: var(--uc-font-family);
+
   /* Base values */
 
   --darkmode: 0;

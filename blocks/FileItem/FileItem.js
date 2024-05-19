@@ -155,11 +155,11 @@ export class FileItem extends UploaderBlock {
         let thumbUrl = await generateThumb(entry.getValue('file'), this.cfg.thumbSize);
         entry.setValue('thumbUrl', thumbUrl);
       } catch (err) {
-        let color = window.getComputedStyle(this).getPropertyValue('--clr-generic-file-icon');
+        let color = window.getComputedStyle(this).getPropertyValue('--uc-muted-foreground');
         entry.setValue('thumbUrl', fileCssBg(color));
       }
     } else {
-      let color = window.getComputedStyle(this).getPropertyValue('--clr-generic-file-icon');
+      let color = window.getComputedStyle(this).getPropertyValue('--uc-muted-foreground');
       entry.setValue('thumbUrl', fileCssBg(color));
     }
   }

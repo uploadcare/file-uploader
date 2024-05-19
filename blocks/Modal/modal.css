@@ -33,7 +33,7 @@ lr-modal[dialog-fallback] dialog[open] + .backdrop {
   justify-content: center;
   width: 100vw;
   height: 100vh;
-  background-color: var(--clr-curtain);
+  background-color: oklch(0 0 0 / 0.1);
   pointer-events: auto;
 }
 

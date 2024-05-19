@@ -5,9 +5,10 @@ lr-simple-btn {
 
 lr-simple-btn button {
   padding-left: 0.2em !important;
-  color: var(--clr-btn-txt-secondary);
-  background-color: var(--clr-btn-bgr-secondary);
-  box-shadow: var(--shadow-btn-secondary);
+  background-color: var(--uc-simple-btn);
+  color: var(--uc-simple-btn-foreground);
+  font-size: var(--uc-simple-btn-font-size);
+  font-family: var(--uc-simple-btn-font-family);
 }
 
 lr-simple-btn button lr-icon svg {
@@ -15,11 +16,7 @@ lr-simple-btn button lr-icon svg {
 }
 
 lr-simple-btn button:hover {
-  background-color: var(--clr-btn-bgr-secondary-hover);
-}
-
-lr-simple-btn button:active {
-  background-color: var(--clr-btn-bgr-secondary-active);
+  background-color: var(--uc-simple-btn-hover);
 }
 
 lr-simple-btn > lr-drop-area {
