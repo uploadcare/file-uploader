@@ -14,7 +14,7 @@
 
   /* <<< Theme settings */
 
-  --color-primary-accent: rgb(var(--rgb-primary-accent));
+  --color-primary-accent: var(--uc-primary);
   --color-text-base: rgb(var(--rgb-text-base));
   --color-text-accent-contrast: rgb(var(--rgb-text-accent-contrast));
   --color-text-soft: rgb(var(--rgb-fill-contrast));
@@ -86,6 +86,7 @@
   --filter-effect: var(--hover-filter) !important;
   --opacity-effect: var(--hover-opacity) !important;
   --color-effect: var(--hover-color-rgb) !important;
+  --background-effect: var(--hover-background) !important;
 }
 
 :host(.lr-cloud-image-editor) :is([tabindex]:active, [with-effects]:active),
@@ -93,6 +94,7 @@
   --filter-effect: var(--down-filter) !important;
   --opacity-effect: var(--down-opacity) !important;
   --color-effect: var(--down-color-rgb) !important;
+  --background-effect: var(--down-background) !important;
 }
 
 :host(.lr-cloud-image-editor) :is([tabindex][active], [with-effects][active]),
@@ -100,6 +102,7 @@
   --filter-effect: var(--active-filter) !important;
   --opacity-effect: var(--active-opacity) !important;
   --color-effect: var(--active-color-rgb) !important;
+  --background-effect: var(--active-background) !important;
 }
 
 :host(.lr-cloud-image-editor) [hidden-scrollbar]::-webkit-scrollbar,
@@ -844,7 +847,10 @@ lr-btn-ui {
   height: var(--css-height, var(--size-touch-area));
   padding-right: var(--css-padding-right, var(--cldtr-gap-mid-1));
   padding-left: var(--css-padding-left, var(--cldtr-gap-mid-1));
-  color: rgba(var(--color-effect), var(--opacity-effect));
+  color: rgb(var(--color-effect));
+  background-color: var(--background-effect);
+  border-radius: var(--uc-radius);
+  opacity: var(--opacity-effect);
   outline: none;
   cursor: pointer;
   filter: brightness(var(--filter-effect));
@@ -860,7 +866,8 @@ lr-btn-ui .icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgba(var(--color-effect), var(--opacity-effect));
+  color: rgba(var(--color-effect));
+  opacity: var(--opacity-effect);
   filter: brightness(var(--filter-effect));
   transition: var(--l-transition-effect);
 }
@@ -889,45 +896,57 @@ lr-btn-ui.primary {
   --idle-color-rgb: var(--rgb-primary-accent);
   --idle-brightness: 1;
   --idle-opacity: 0.6;
+  --idle-background: transparent;
   --hover-color-rgb: var(--idle-color-rgb);
   --hover-brightness: 1;
   --hover-opacity: 1;
+  --hover-background: transparent;
   --down-color-rgb: var(--hover-color-rgb);
   --down-brightness: 0.75;
   --down-opacity: 1;
+  --down-background: transparent;
   --active-color-rgb: var(--rgb-primary-accent);
   --active-brightness: 1;
   --active-opacity: 1;
+  --active-background: transparent;
 }
 
 lr-btn-ui.boring {
   --idle-color-rgb: var(--rgb-text-base);
   --idle-brightness: 1;
   --idle-opacity: 0.6;
+  --idle-background: transparent;
   --hover-color-rgb: var(--rgb-text-base);
   --hover-brightness: 1;
   --hover-opacity: 1;
+  --hover-background: transparent;
   --down-color-rgb: var(--hover-color-rgb);
   --down-brightness: 1;
   --down-opacity: 1;
+  --down-background: transparent;
   --active-color-rgb: var(--rgb-primary-accent);
   --active-brightness: 1;
   --active-opacity: 1;
+  --active-background: transparent;
 }
 
 lr-btn-ui.default {
   --idle-color-rgb: var(--rgb-text-base);
   --idle-brightness: 1;
   --idle-opacity: 0.6;
+  --idle-background: transparent;
   --hover-color-rgb: var(--rgb-primary-accent);
   --hover-brightness: 1;
   --hover-opacity: 1;
+  --hover-background: transparent;
   --down-color-rgb: var(--hover-color-rgb);
   --down-brightness: 0.75;
   --down-opacity: 1;
+  --down-background: transparent;
   --active-color-rgb: var(--rgb-primary-accent);
   --active-brightness: 1;
   --active-opacity: 1;
+  --active-background: transparent;
 }
 
 lr-line-loader-ui {
