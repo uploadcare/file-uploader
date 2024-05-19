@@ -141,12 +141,6 @@ lr-file-uploader-minimal lr-upload-list .toolbar .add-more-btn > lr-icon {
   display: flex;
 }
 
-.lr-file-uploader-minimal lr-file-item,
-lr-file-uploader-minimal lr-file-item {
-  background-color: var(--clr-background);
-  border-radius: var(--uc-radius);
-}
-
 .lr-file-uploader-minimal lr-file-item .edit-btn,
 lr-file-uploader-minimal lr-file-item .edit-btn {
   display: none;
@@ -169,7 +163,7 @@ lr-file-uploader-minimal lr-upload-list lr-drop-area {
   width: 100%;
   height: 100%;
   margin: 0;
-  border-radius: var(--uc-radius);
+  border-radius: calc(var(--uc-radius) * 1.75);
 }
 
 .lr-file-uploader-minimal lr-upload-list .common-error,
