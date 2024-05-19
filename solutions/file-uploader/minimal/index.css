@@ -60,7 +60,7 @@ lr-file-uploader-minimal lr-start-from .content {
   align-items: center;
   justify-content: center;
   width: 100%;
-  min-height: calc(var(--uc-button-size) + var(--gap-mid) * 2 + var(--gap-min) * 4);
+  min-height: calc(32px + var(--gap-mid) * 2 + var(--gap-min) * 4);
   padding: 0;
   line-height: 140%;
   text-align: center;
@@ -159,10 +159,14 @@ lr-file-uploader-minimal lr-upload-list lr-drop-area {
   width: 100%;
   height: 100%;
   margin: 0;
-  border-radius: var(--border-radius-frame);
+  border-radius: var(--uc-radius);
 }
 
 .lr-file-uploader-minimal lr-upload-list .common-error,
 lr-file-uploader-minimal lr-upload-list .common-error {
-  margin: var(--gap-small) 0 0 0;
+  margin: 4px 0 0;
+}
+
+:where(.lr-file-uploader-minimal, lr-file-uploader-minimal) lr-copyright .credits {
+  position: static;
 }
