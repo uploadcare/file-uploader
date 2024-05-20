@@ -15,13 +15,13 @@
   /* <<< Theme settings */
 
   --color-primary-accent: var(--uc-primary);
-  --color-text-base: rgb(var(--rgb-text-base));
-  --color-text-accent-contrast: rgb(var(--rgb-text-accent-contrast));
+  --color-text-base: var(--uc-foreground);
+  --color-text-accent-contrast: var(--uc-background);
   --color-text-soft: rgb(var(--rgb-fill-contrast));
-  --color-text-error: rgb(var(--rgb-error));
-  --color-fill-contrast: rgb(var(--rgb-fill-contrast));
-  --color-modal-backdrop: rgba(var(--rgb-fill-shaded), 0.95);
-  --color-image-background: rgba(var(--rgb-fill-shaded));
+  --color-text-error: var(--uc-destructive-foreground);
+  --color-fill-contrast: var(--uc-background);
+  --color-modal-backdrop: oklch(0 0 0 / 0.1);
+  --color-image-background: var(--uc-muted);
   --color-outline: rgba(var(--rgb-text-base), var(--opacity-shade-mid));
   --color-underline: rgba(var(--rgb-text-base), 0.08);
   --color-shade: rgba(var(--rgb-text-base), 0.02);
@@ -387,19 +387,24 @@ lr-editor-crop-button-control,
 lr-editor-filter-control,
 lr-editor-operation-control {
   --l-base-min-width: var(--uc-button-size);
-  --l-base-height: var(--l-base-min-width);
+  --l-base-height: var(--uc-button-size);
   --opacity-effect: var(--idle-opacity);
   --color-effect: var(--idle-color-rgb);
+  --background-effect: var(--idle-background);
   --filter-effect: var(--idle-filter);
-  --idle-color-rgb: var(--rgb-text-base);
+
+  --idle-color-rgb: var(--uc-secondary-foreground);
   --idle-opacity: 0.05;
   --idle-filter: 1;
-  --hover-color-rgb: var(--idle-color-rgb);
+  --idle-background: var(--uc-secondary);
+  --hover-color-rgb: var(--uc-secondary-foreground);
   --hover-opacity: 0.08;
   --hover-filter: 0.8;
+  --hover-background: var(--uc-secondary-hover);
   --down-color-rgb: var(--hover-color-rgb);
   --down-opacity: 0.12;
   --down-filter: 0.6;
+  --down-background: var(--uc-secondary);
 
   position: relative;
   display: grid;
@@ -407,7 +412,7 @@ lr-editor-operation-control {
   grid-template-rows: 100%;
   align-items: center;
   height: var(--l-base-height);
-  color: rgba(var(--idle-color-rgb));
+  color: var(--color-effect);
   outline: none;
   cursor: pointer;
   transition: var(--l-width-transition);
@@ -429,7 +434,8 @@ lr-editor-button-control.active,
 lr-editor-operation-control.active,
 lr-editor-crop-button-control.active,
 lr-editor-filter-control.active {
-  --idle-color-rgb: var(--rgb-primary-accent);
+  --hover-color-rgb: var(--uc-primary);
+  --hover-background: var(--uc-primary-transparent);
 }
 
 lr-editor-filter-control.not_active .preview[loaded] {
@@ -457,7 +463,7 @@ lr-editor-filter-control > .before {
   z-index: -1;
   width: 100%;
   height: 100%;
-  background-color: rgba(var(--color-effect), var(--opacity-effect));
+  background-color: var(--background-effect);
   border-radius: var(--border-radius-editor);
   transition: var(--transition-duration-3);
 }
@@ -1073,7 +1079,9 @@ lr-slider-ui .thumb {
   border-radius: 50%;
   transform: translateX(0px);
   opacity: 1;
-  transition: opacity var(--transition-duration-2);
+  transition:
+    opacity var(--transition-duration-2),
+    background-color var(--transition-duration-2);
 }
 
 lr-slider-ui .steps {
@@ -1093,7 +1101,7 @@ lr-slider-ui .border-step {
   height: 10px;
   border-right: 1px solid var(--l-color);
   opacity: 0.6;
-  transition: var(--transition-duration-2);
+  transition: border-color var(--transition-duration-2);
 }
 
 lr-slider-ui .minor-step {
@@ -1101,7 +1109,7 @@ lr-slider-ui .minor-step {
   height: 4px;
   border-right: 1px solid var(--l-color);
   opacity: 0.2;
-  transition: var(--transition-duration-2);
+  transition: border-color var(--transition-duration-2);
 }
 
 lr-slider-ui .zero-dot {
