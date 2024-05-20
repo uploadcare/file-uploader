@@ -34,17 +34,18 @@
   --font-weight-title: 500;
   --font-size-soft: 14px;
 
-  --size-touch-area: 40px;
-  --size-panel-heading: 66px;
+  --size-touch-area: var(--uc-button-size);
+  --size-panel-heading: calc(var(--uc-button-size) + var(--uc-padding) * 2);
   --size-ui-min-width: 130px;
   --size-line-width: 1px;
   --size-modal-width: 650px;
+  --size-icon: 16px; /* remove icon size overrides */
 
   --border-radius-connect: 2px;
-  --border-radius-editor: 3px;
-  --border-radius-thumb: 4px;
-  --border-radius-ui: 5px;
-  --border-radius-base: 6px;
+  --border-radius-editor: var(--uc-radius);
+  --border-radius-thumb: var(--uc-radius);
+  --border-radius-ui: var(--uc-radius);
+  --border-radius-base: var(--uc-radius);
 
   --cldtr-gap-min: 5px;
   --cldtr-gap-mid-1: 10px;
@@ -385,7 +386,7 @@ lr-editor-button-control,
 lr-editor-crop-button-control,
 lr-editor-filter-control,
 lr-editor-operation-control {
-  --l-base-min-width: 40px;
+  --l-base-min-width: var(--uc-button-size);
   --l-base-height: var(--l-base-min-width);
   --opacity-effect: var(--idle-opacity);
   --color-effect: var(--idle-color-rgb);
@@ -415,8 +416,8 @@ lr-editor-operation-control {
 :where(lr-editor-button-control, lr-editor-crop-button-control, lr-editor-filter-control, lr-editor-operation-control)
   > lr-icon
   > svg {
-  width: 20px;
-  height: 20px;
+  width: var(--size-icon);
+  height: var(--size-icon);
 }
 
 lr-editor-filter-control > lr-icon.original-icon > svg {
@@ -614,7 +615,7 @@ lr-editor-slider {
   align-items: center;
   justify-content: center;
   width: 100%;
-  height: 66px;
+  height: var(--size-panel-heading);
 }
 
 lr-editor-toolbar {
@@ -626,16 +627,16 @@ lr-editor-toolbar {
 @media only screen and (max-width: 600px) {
   lr-editor-toolbar {
     --l-tab-gap: var(--cldtr-gap-mid-1);
-    --l-slider-padding: var(--cldtr-gap-min);
-    --l-controls-padding: var(--cldtr-gap-min);
+    --l-slider-padding: var(--uc-padding);
+    --l-controls-padding: var(--uc-padding);
   }
 }
 
 @media only screen and (min-width: 601px) {
   lr-editor-toolbar {
-    --l-tab-gap: calc(var(--cldtr-gap-mid-1) + var(--cldtr-gap-max));
-    --l-slider-padding: var(--cldtr-gap-mid-1);
-    --l-controls-padding: var(--cldtr-gap-mid-1);
+    --l-tab-gap: var(--cldtr-gap-max);
+    --l-slider-padding: var(--uc-padding);
+    --l-controls-padding: var(--uc-padding);
   }
 }
 
@@ -700,7 +701,7 @@ lr-editor-toolbar > .toolbar-container > .sub-toolbar > .controls-row > .tab-tog
   left: 0px;
   width: var(--size-touch-area);
   height: 2px;
-  background-color: var(--color-primary-accent);
+  background-color: var(--uc-secondary-foreground);
   transform: translateX(0px);
   transition: transform var(--transition-duration-3);
 }
@@ -744,7 +745,7 @@ lr-editor-toolbar > .toolbar-container > .sub-toolbar > .controls-row > .tab-tog
 }
 
 lr-editor-toolbar > .toolbar-container > .sub-toolbar > .controls-row > .tab-toggles > .tab-toggle > lr-btn-ui {
-  width: 40px;
+  width: var(--uc-button-size);
 }
 
 lr-editor-toolbar
@@ -756,8 +757,8 @@ lr-editor-toolbar
   > lr-btn-ui
   > lr-icon
   > svg {
-  width: 100%;
-  height: 100%;
+  width: var(--size-icon);
+  height: var(--size-icon);
 }
 
 lr-editor-toolbar > .toolbar-container > .sub-toolbar > .tab-content-row > .tab-content .controls-list_align {
@@ -766,14 +767,14 @@ lr-editor-toolbar > .toolbar-container > .sub-toolbar > .tab-content-row > .tab-
   grid-template-columns: 1fr auto 1fr;
   box-sizing: border-box;
   min-width: 100%;
-  padding-left: var(--cldtr-gap-max);
+  padding-left: var(--uc-padding);
 }
 
 lr-editor-toolbar > .toolbar-container > .sub-toolbar > .tab-content-row > .tab-content .controls-list_inner {
   display: grid;
   grid-area: inner;
   grid-auto-flow: column;
-  grid-gap: calc((var(--cldtr-gap-min) - 1px) * 3);
+  gap: 4px;
 }
 
 lr-editor-toolbar
@@ -782,7 +783,7 @@ lr-editor-toolbar
   > .tab-content-row
   > .tab-content
   .controls-list_inner:last-child {
-  padding-right: var(--cldtr-gap-max);
+  padding-right: var(--uc-padding);
 }
 
 lr-editor-toolbar .controls-list_last-item {
@@ -839,15 +840,22 @@ lr-btn-ui {
   --filter-effect: var(--idle-brightness);
   --opacity-effect: var(--idle-opacity);
   --color-effect: var(--idle-color-rgb);
-  --l-transition-effect: var(--css-transition, color var(--transition-duration-2), filter var(--transition-duration-2));
+  --background-effect: var(--idle-background);
+  --l-transition-effect: var(
+    --css-transition,
+    color var(--transition-duration-2),
+    background-color var(--transition-duration-2),
+    filter var(--transition-duration-2)
+  );
 
   display: inline-flex;
   align-items: center;
   box-sizing: var(--css-box-sizing, border-box);
-  height: var(--css-height, var(--size-touch-area));
-  padding-right: var(--css-padding-right, var(--cldtr-gap-mid-1));
-  padding-left: var(--css-padding-left, var(--cldtr-gap-mid-1));
-  color: rgb(var(--color-effect));
+  height: var(--css-height, var(--uc-button-size));
+  padding-right: var(--css-padding-right, 14px);
+  padding-left: var(--css-padding-left, 14px);
+  font-size: 1em;
+  color: var(--color-effect);
   background-color: var(--background-effect);
   border-radius: var(--uc-radius);
   opacity: var(--opacity-effect);
@@ -866,8 +874,7 @@ lr-btn-ui .icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgba(var(--color-effect));
-  opacity: var(--opacity-effect);
+  color: var(--color-effect);
   filter: brightness(var(--filter-effect));
   transition: var(--l-transition-effect);
 }
@@ -893,60 +900,126 @@ lr-btn-ui .icon_hidden {
 }
 
 lr-btn-ui.primary {
-  --idle-color-rgb: var(--rgb-primary-accent);
+  --idle-color-rgb: var(--uc-primary-foreground);
   --idle-brightness: 1;
-  --idle-opacity: 0.6;
-  --idle-background: transparent;
-  --hover-color-rgb: var(--idle-color-rgb);
+  --idle-opacity: 1;
+  --idle-background: var(--uc-primary);
+  --hover-color-rgb: var(--uc-primary-foreground);
   --hover-brightness: 1;
   --hover-opacity: 1;
-  --hover-background: transparent;
-  --down-color-rgb: var(--hover-color-rgb);
+  --hover-background: var(--uc-primary-hover);
+  --down-color-rgb: var(--uc-primary-foreground);
   --down-brightness: 0.75;
   --down-opacity: 1;
-  --down-background: transparent;
-  --active-color-rgb: var(--rgb-primary-accent);
+  --down-background: var(--uc-primary);
+  --active-color-rgb: var(--uc-primary-foreground);
+  --active-brightness: 1;
+  --active-opacity: 1;
+  --active-background: var(--uc-primary);
+}
+
+lr-btn-ui.primary-icon {
+  --idle-color-rgb: var(--uc-primary);
+  --idle-brightness: 1;
+  --idle-opacity: 1;
+  --idle-background: transparent;
+  --hover-color-rgb: var(--uc-primary);
+  --hover-brightness: 1;
+  --hover-opacity: 1;
+  --hover-background: var(--uc-primary-transparent);
+  --down-color-rgb: var(--uc-primary);
+  --down-brightness: 0.75;
+  --down-opacity: 1;
+  --down-background: var(--uc-primary-transparent);
+  --active-color-rgb: var(--uc-primary-foreground);
+  --active-brightness: 1;
+  --active-opacity: 1;
+  --active-background: var(--uc-primary);
+
+  padding: 0;
+  width: var(--uc-button-size);
+}
+
+lr-btn-ui.secondary {
+  --idle-color-rgb: var(--uc-secondary-foreground);
+  --idle-brightness: 1;
+  --idle-opacity: 1;
+  --idle-background: var(--uc-secondary);
+  --hover-color-rgb: var(--uc-secondary-foreground);
+  --hover-brightness: 1;
+  --hover-opacity: 1;
+  --hover-background: var(--uc-secondary-hover);
+  --down-color-rgb: var(--uc-secondary-foreground);
+  --down-brightness: 1;
+  --down-opacity: 1;
+  --down-background: var(--uc-secondary-hover);
+  --active-color-rgb: var(--uc-secondary-foreground);
   --active-brightness: 1;
   --active-opacity: 1;
   --active-background: transparent;
 }
 
-lr-btn-ui.boring {
-  --idle-color-rgb: var(--rgb-text-base);
+lr-btn-ui.secondary-icon {
+  --idle-color-rgb: var(--uc-secondary-foreground);
   --idle-brightness: 1;
-  --idle-opacity: 0.6;
+  --idle-opacity: 1;
   --idle-background: transparent;
-  --hover-color-rgb: var(--rgb-text-base);
+  --hover-color-rgb: var(--uc-secondary-foreground);
   --hover-brightness: 1;
   --hover-opacity: 1;
-  --hover-background: transparent;
-  --down-color-rgb: var(--hover-color-rgb);
+  --hover-background: var(--uc-secondary);
+  --down-color-rgb: var(--uc-secondary-foreground);
   --down-brightness: 1;
   --down-opacity: 1;
-  --down-background: transparent;
-  --active-color-rgb: var(--rgb-primary-accent);
+  --down-background: var(--uc-secondary);
+  --active-color-rgb: var(--uc-secondary-foreground);
   --active-brightness: 1;
   --active-opacity: 1;
   --active-background: transparent;
+
+  padding: 0;
+  width: var(--uc-button-size);
+}
+
+lr-btn-ui.tab {
+  --idle-color-rgb: var(--uc-secondary-foreground);
+  --idle-brightness: 1;
+  --idle-opacity: 1;
+  --idle-background: transparent;
+  --hover-color-rgb: var(--uc-secondary-foreground);
+  --hover-brightness: 1;
+  --hover-opacity: 1;
+  --hover-background: var(--uc-secondary);
+  --down-color-rgb: var(--uc-secondary-foreground);
+  --down-brightness: 1;
+  --down-opacity: 1;
+  --down-background: var(--uc-secondary);
+  --active-color-rgb: var(--uc-secondary-foreground);
+  --active-brightness: 1;
+  --active-opacity: 1;
+  --active-background: transparent;
+
+  padding: 0;
+  width: var(--uc-button-size);
 }
 
 lr-btn-ui.default {
-  --idle-color-rgb: var(--rgb-text-base);
+  --idle-color-rgb: var(--uc-secondary-foreground);
   --idle-brightness: 1;
-  --idle-opacity: 0.6;
-  --idle-background: transparent;
-  --hover-color-rgb: var(--rgb-primary-accent);
+  --idle-opacity: 1;
+  --idle-background: var(--uc-secondary);
+  --hover-color-rgb: var(--uc-secondary-foreground);
   --hover-brightness: 1;
   --hover-opacity: 1;
-  --hover-background: transparent;
-  --down-color-rgb: var(--hover-color-rgb);
+  --hover-background: var(--uc-secondary-hover);
+  --down-color-rgb: var(--uc-secondary-foreground);
   --down-brightness: 0.75;
   --down-opacity: 1;
-  --down-background: transparent;
-  --active-color-rgb: var(--rgb-primary-accent);
+  --down-background: var(--uc-secondary);
+  --active-color-rgb: var(--uc-primary);
   --active-brightness: 1;
   --active-opacity: 1;
-  --active-background: transparent;
+  --active-background: var(--uc-primary-transparent);
 }
 
 lr-line-loader-ui {
