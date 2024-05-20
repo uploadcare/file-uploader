@@ -774,7 +774,7 @@ lr-editor-toolbar > .toolbar-container > .sub-toolbar > .tab-content-row > .tab-
   display: grid;
   grid-area: inner;
   grid-auto-flow: column;
-  gap: 4px;
+  gap: 6px;
 }
 
 lr-editor-toolbar
@@ -1041,7 +1041,7 @@ lr-line-loader-ui .inner {
 lr-line-loader-ui .line {
   width: 100%;
   height: 100%;
-  background-color: var(--color-primary-accent);
+  background-color: var(--uc-primary);
   transform: translateX(-101%);
   transition: transform 1s;
 }
@@ -1050,11 +1050,11 @@ lr-slider-ui {
   --l-thumb-size: 24px;
   --l-zero-dot-size: 5px;
   --l-zero-dot-offset: 2px;
-  --idle-color-rgb: var(--rgb-text-base);
-  --hover-color-rgb: var(--rgb-primary-accent);
-  --down-color-rgb: var(--rgb-primary-accent);
+  --idle-color-rgb: var(--uc-foreground);
+  --hover-color-rgb: var(--uc-primary);
+  --down-color-rgb: var(--uc-primary);
   --color-effect: var(--idle-color-rgb);
-  --l-color: rgb(var(--color-effect));
+  --l-color: var(--color-effect);
 
   position: relative;
   display: flex;
