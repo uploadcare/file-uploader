@@ -1,10 +1,15 @@
 :where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular) {
+  /* Font */
+
   --uc-font-family: inter, -apple-system, blinkmacsystemfont, 'Segoe UI', roboto, oxygen, ubuntu, cantarell, 'Open Sans',
     'Helvetica Neue', sans-serif;
   --uc-font-size: 14px;
 
+  /* Light colors */
+
   --uc-background: oklch(100% 0 0);
   --uc-foreground: oklch(21% 0.006 285.9);
+  --uc-primary-oklch: 59% 0.22 264;
   --uc-primary: oklch(59% 0.22 264);
   --uc-primary-hover: oklch(59% 0.22 264 / 0.9);
   --uc-primary-transparent: oklch(59% 0.22 264 / 0.1);
@@ -17,7 +22,29 @@
   --uc-destructive: oklch(59% 0.235 28.5 / 0.05);
   --uc-destructive-foreground: oklch(59% 0.235 28.5);
   --uc-border: oklch(92% 0.004 286.3);
-  --uc-dialog-shadow: 0px 0px 1px oklch(0% 0 0 / 0.3), 0px 6px 20px oklch(0% 0 0 / 0.1);
+  --uc-dialog-shadow: 0px 6px 20px oklch(0% 0 0 / 0.1);
+
+  /* Dark colors 
+
+  --uc-background: oklch(22% 0.002 197.1);
+  --uc-foreground: oklch(91% 0.002 197.1);
+  --uc-primary: oklch(69% 0.1768 258.4);
+  --uc-primary-hover: oklch(69% 0.1768 258.4 / 0.9);
+  --uc-primary-transparent: oklch(69% 0.1768 258.4 / 0.075);
+  --uc-primary-foreground: oklch(0% 0 0);
+  --uc-secondary: oklch(91% 0.002 197.1 / 0.07);
+  --uc-secondary-hover: oklch(91% 0.002 197.1 / 0.1);
+  --uc-secondary-foreground: oklch(91% 0.002 197.1);
+  --uc-muted: oklch(26% 0.002 197.1);
+  --uc-muted-foreground: oklch(68% 0.002 197.1);
+  --uc-destructive: oklch(67% 0.191 27.5 / 0.05);
+  --uc-destructive-foreground: oklch(67% 0.191 27.5);
+  --uc-border: oklch(36% 0.005 286.1);
+  --uc-dialog-shadow: 0px 6px 20px oklch(0% 0 0 / 0.25);
+   
+  */
+
+  /* Sizes */
 
   --uc-button-size: 32px;
   --uc-preview-size: 32px;
@@ -28,6 +55,8 @@
   --uc-dialog-max-width: 800px;
   --uc-dialog-max-height: 600px;
 
+  /* SimpleBtn */
+
   --uc-simple-btn: var(--uc-secondary);
   --uc-simple-btn-hover: var(--uc-secondary-hover);
   --uc-simple-btn-foreground: var(--uc-secondary-foreground);
@@ -35,7 +64,7 @@
   --uc-simple-btn-font-family: var(--uc-font-family);
   --uc-simple-btn-padding: 7px 14px;
 
-  /* Base values */
+  /* TO BE REMOVED */
 
   --darkmode: 0;
 
