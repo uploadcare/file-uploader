@@ -60,6 +60,7 @@ export const initialConfig = {
   metadata: null,
   localeName: 'en',
   localeDefinitionOverride: null,
+  secureUploadsExpireThreshold: 10 * 60 * 1000,
   secureUploadsSignatureResolver: null,
   secureDeliveryProxyUrlResolver: null,
   iconHrefResolver: null,

@@ -38,7 +38,10 @@ export class SecureUploadsManager {
     }
 
     if (secureUploadsSignatureResolver) {
-      if (!this._secureToken || isSecureTokenExpired(this._secureToken)) {
+      if (
+        !this._secureToken ||
+        isSecureTokenExpired(this._secureToken, { threshold: this._block.cfg.secureUploadsExpireThreshold })
+      ) {
         if (!this._secureToken) {
           this._debugPrint('Secure signature is not set yet.');
         } else {
@@ -53,6 +56,10 @@ export class SecureUploadsManager {
             console.error('Secure signature resolver returned an invalid result:', result);
           } else {
             this._debugPrint('Secure signature resolved:', result);
+            this._debugPrint(
+              'Secure signature will expire in',
+              new Date(Number(result.secureExpire) * 1000).toISOString(),
+            );
             this._secureToken = result;
           }
         } catch (err) {

@@ -831,7 +831,7 @@ export class UploaderBlock extends ActivityBlock {
   async getUploadClientOptions() {
     /** @type {SecureUploadsManager} */
     const secureUploadsManager = this.$['*secureUploadsManager'];
-    const secureToken = await secureUploadsManager.getSecureToken();
+    const secureToken = await secureUploadsManager.getSecureToken().catch(() => null);
 
     let options = {
       store: this.cfg.store,

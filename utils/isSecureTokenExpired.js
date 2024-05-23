@@ -6,9 +6,9 @@ const msToUnixTimestamp = (ms) => Math.floor(ms / 1000);
  * but will expire in the next 10 seconds, it will return false.
  *
  * @param {import('../types').SecureUploadsSignatureAndExpire} secureToken
- * @param {{ threshold?: number }} [options]
+ * @param {{ threshold?: number }} options
  */
-export const isSecureTokenExpired = (secureToken, { threshold } = { threshold: 10 * 1000 }) => {
+export const isSecureTokenExpired = (secureToken, { threshold }) => {
   const { secureExpire } = secureToken;
   const nowUnix = msToUnixTimestamp(Date.now());
   const expireUnix = Number(secureExpire);

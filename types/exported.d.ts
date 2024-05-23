@@ -60,7 +60,8 @@ export type ConfigType = {
   userAgentIntegration: string;
   debug: boolean;
   localeName: string;
-
+  secureUploadsExpireThreshold: number; 
+  
   // Complex types
   metadata: Metadata | MetadataCallback | null;
   localeDefinitionOverride: LocaleDefinitionOverride | null;
