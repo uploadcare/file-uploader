@@ -450,7 +450,7 @@ lr-editor-button-control.not_active,
 lr-editor-operation-control.not_active,
 lr-editor-crop-button-control.not_active,
 lr-editor-filter-control.not_active {
-  --idle-color-rgb: var(--rgb-text-base);
+  --idle-color-rgb: var(--uc-secondary-foreground);
 }
 
 lr-editor-button-control > .before,
@@ -817,10 +817,7 @@ lr-editor-toolbar .info-tooltip_wrapper {
 
 lr-editor-toolbar .info-tooltip {
   z-index: 3;
-  padding-top: calc(var(--cldtr-gap-min) / 2);
-  padding-right: var(--cldtr-gap-min);
-  padding-bottom: calc(var(--cldtr-gap-min) / 2);
-  padding-left: var(--cldtr-gap-min);
+  padding: 3px 6px;
   color: var(--color-text-base);
   font-size: 0.7em;
   letter-spacing: 1px;
