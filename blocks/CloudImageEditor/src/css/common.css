@@ -28,6 +28,7 @@
   --color-focus-ring: var(--color-primary-accent);
   --color-input-placeholder: rgba(var(--rgb-text-base), 0.32);
   --color-error: rgb(var(--rgb-error));
+  --color-crop-guides: var(--uc-foreground);
 
   --font-size-ui: 16px;
   --font-size-title: 18px;
@@ -39,7 +40,7 @@
   --size-ui-min-width: 130px;
   --size-line-width: 1px;
   --size-modal-width: 650px;
-  --size-icon: 16px; /* remove icon size overrides */
+  --size-icon: 16px; /* TODO: remove icon size overrides */
 
   --border-radius-connect: 2px;
   --border-radius-editor: var(--uc-radius);
@@ -509,7 +510,7 @@ lr-editor-image-cropper {
   opacity: 0;
   pointer-events: none;
   touch-action: none;
-  color: var(--uc-foreground);
+  color: var(--color-crop-guides);
 }
 
 lr-editor-image-cropper.active_from_editor {
