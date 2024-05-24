@@ -500,7 +500,7 @@ lr-editor-filter-control > .preview {
 }
 
 lr-editor-filter-control > .original-icon {
-  color: var(--color-text-base);
+  color: var(--color-effect);
   opacity: 0.3;
 }
 
