@@ -1,3 +1,11 @@
+# [0.41.0](https://github.com/uploadcare/blocks/compare/v0.40.0...v0.41.0) (2024-05-24)
+
+### Features
+
+- add `secureDeliveryProxyUrlResolver` option ([c7cfcd0](https://github.com/uploadcare/blocks/commit/c7cfcd00563dc377b0368f1e2adc0ad973bcb20b))
+- add `secureUploadsExpireThreshold` option ([0d9205d](https://github.com/uploadcare/blocks/commit/0d9205d0391f7c703069ac77efd62b0709bde626))
+- add `secureUploadsSignatureResolver` option ([226d36f](https://github.com/uploadcare/blocks/commit/226d36f691803801fcc15aa014aefa9e57959d50))
+
 # [0.40.0](https://github.com/uploadcare/blocks/compare/v0.39.1...v0.40.0) (2024-05-17)
 
 ### BREAKING CHANGES
