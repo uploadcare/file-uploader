@@ -9,6 +9,7 @@ import {
   trimFilename,
   extractUuid,
   extractOperations,
+  extractCdnUrlModifiers,
 } from './cdn-utils.js';
 
 const falsyValues = ['', undefined, null, false, true, 0, 10];
@@ -209,5 +210,18 @@ describe('cdn-utils/extractOperations', () => {
     expect(extractOperations('https://domain.ucr.io:8080/-/resize/100x/https://domain.com/image.jpg?q=1#hash')).to.eql([
       'resize/100x',
     ]);
+  });
+});
+
+describe('cdn-utils/extractCdnUrlModifiers', () => {
+  it('should extract operations string from cdn url', () => {
+    expect(extractCdnUrlModifiers('https://ucarecdn.com/:uuid/')).to.eql('');
+    expect(extractCdnUrlModifiers('https://ucarecdn.com/:uuid/image.jpeg')).to.eql('');
+    expect(
+      extractCdnUrlModifiers('https://ucarecdn.com/c2499162-eb07-4b93-b31e-94a89a47e858/-/resize/100x/image.jpeg'),
+    ).to.eql('-/resize/100x/');
+    expect(
+      extractCdnUrlModifiers('https://domain.ucr.io:8080/-/resize/100x/https://domain.com/image.jpg?q=1#hash'),
+    ).to.eql('-/resize/100x/');
   });
 });

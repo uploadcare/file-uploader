@@ -366,7 +366,7 @@ export class FileItem extends UploaderBlock {
         }
 
         const fileInput = file || entry.getValue('externalUrl') || entry.getValue('uuid');
-        const baseUploadClientOptions = this.getUploadClientOptions();
+        const baseUploadClientOptions = await this.getUploadClientOptions();
         /** @type {import('@uploadcare/upload-client').FileFromOptions} */
         const uploadClientOptions = {
           ...baseUploadClientOptions,

@@ -1,7 +1,9 @@
 // @ts-check
 import { BaseComponent, Data } from '@symbiotejs/symbiote';
+import { initialConfig } from '../blocks/Config/initialConfig.js';
 import { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter.js';
 import { WindowHeightTracker } from '../utils/WindowHeightTracker.js';
+import { extractFilename, extractCdnUrlModifiers, extractUuid } from '../utils/cdn-utils.js';
 import { getLocaleDirection } from '../utils/getLocaleDirection.js';
 import { getPluralForm } from '../utils/getPluralForm.js';
 import { applyTemplateData, getPluralObjects } from '../utils/template-utils.js';
@@ -10,7 +12,6 @@ import { blockCtx } from './CTX.js';
 import { LocaleManager, localeStateKey } from './LocaleManager.js';
 import { l10nProcessor } from './l10nProcessor.js';
 import { sharedConfigKey } from './sharedConfigKey.js';
-import { initialConfig } from '../blocks/Config/initialConfig.js';
 
 const TAG_PREFIX = 'lr-';
 
@@ -242,15 +243,26 @@ export class Block extends BaseComponent {
    * @returns {String}
    */
   proxyUrl(url) {
-    let previewProxy = this.cfg.secureDeliveryProxy;
-    if (!previewProxy) {
-      return url;
+    if (this.cfg.secureDeliveryProxy && this.cfg.secureDeliveryProxyUrlResolver) {
+      console.warn(
+        'Both secureDeliveryProxy and secureDeliveryProxyUrlResolver are set. The secureDeliveryProxyUrlResolver will be used.',
+      );
     }
-    return applyTemplateData(
-      previewProxy,
-      { previewUrl: url },
-      { transform: (value) => window.encodeURIComponent(value) },
-    );
+    if (this.cfg.secureDeliveryProxyUrlResolver) {
+      return this.cfg.secureDeliveryProxyUrlResolver(url, {
+        uuid: extractUuid(url),
+        cdnUrlModifiers: extractCdnUrlModifiers(url),
+        fileName: extractFilename(url),
+      });
+    }
+    if (this.cfg.secureDeliveryProxy) {
+      return applyTemplateData(
+        this.cfg.secureDeliveryProxy,
+        { previewUrl: url },
+        { transform: (value) => window.encodeURIComponent(value) },
+      );
+    }
+    return url;
   }
 
   /** @returns {import('../types').ConfigType} } */
