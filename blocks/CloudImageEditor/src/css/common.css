@@ -509,6 +509,7 @@ lr-editor-image-cropper {
   opacity: 0;
   pointer-events: none;
   touch-action: none;
+  color: var(--uc-foreground);
 }
 
 lr-editor-image-cropper.active_from_editor {

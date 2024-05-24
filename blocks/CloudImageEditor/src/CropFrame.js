@@ -256,7 +256,7 @@ export class CropFrame extends Block {
       width: '100%',
       height: '100%',
       fill: 'none',
-      stroke: '#000000',
+      stroke: 'currentColor',
       'stroke-width': GUIDE_STROKE_WIDTH,
       'stroke-opacity': 0.5,
     });
@@ -268,7 +268,7 @@ export class CropFrame extends Block {
         y1: `0%`,
         x2: `${GUIDE_THIRD * i}%`,
         y2: `100%`,
-        stroke: '#000000',
+        stroke: 'currentColor',
         'stroke-width': GUIDE_STROKE_WIDTH,
         'stroke-opacity': 0.3,
       });
@@ -281,7 +281,7 @@ export class CropFrame extends Block {
         y1: `${GUIDE_THIRD * i}%`,
         x2: `100%`,
         y2: `${GUIDE_THIRD * i}%`,
-        stroke: '#000000',
+        stroke: 'currentColor',
         'stroke-width': GUIDE_STROKE_WIDTH,
         'stroke-opacity': 0.3,
       });
