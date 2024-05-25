@@ -9,7 +9,6 @@
 
   --uc-background: oklch(100% 0 0);
   --uc-foreground: oklch(21% 0.006 285.9);
-  --uc-primary-oklch: 59% 0.22 264;
   --uc-primary: oklch(59% 0.22 264);
   --uc-primary-hover: oklch(59% 0.22 264 / 0.9);
   --uc-primary-transparent: oklch(59% 0.22 264 / 0.1);
@@ -24,25 +23,23 @@
   --uc-border: oklch(92% 0.004 286.3);
   --uc-dialog-shadow: 0px 6px 20px oklch(0% 0 0 / 0.1);
 
-  /* Dark colors 
+  /* Dark colors */
 
-  --uc-background: oklch(22% 0.002 197.1);
-  --uc-foreground: oklch(91% 0.002 197.1);
-  --uc-primary: oklch(69% 0.1768 258.4);
-  --uc-primary-hover: oklch(69% 0.1768 258.4 / 0.9);
-  --uc-primary-transparent: oklch(69% 0.1768 258.4 / 0.075);
-  --uc-primary-foreground: oklch(0% 0 0);
-  --uc-secondary: oklch(91% 0.002 197.1 / 0.07);
-  --uc-secondary-hover: oklch(91% 0.002 197.1 / 0.1);
-  --uc-secondary-foreground: oklch(91% 0.002 197.1);
-  --uc-muted: oklch(26% 0.002 197.1);
-  --uc-muted-foreground: oklch(68% 0.002 197.1);
-  --uc-destructive: oklch(67% 0.191 27.5 / 0.05);
-  --uc-destructive-foreground: oklch(67% 0.191 27.5);
-  --uc-border: oklch(36% 0.005 286.1);
-  --uc-dialog-shadow: 0px 6px 20px oklch(0% 0 0 / 0.25);
-   
-  */
+  --uc-background-dark: oklch(22% 0.002 197.1);
+  --uc-foreground-dark: oklch(91% 0.002 197.1);
+  --uc-primary-dark: oklch(69% 0.1768 258.4);
+  --uc-primary-hover-dark: oklch(69% 0.1768 258.4 / 0.9);
+  --uc-primary-transparent-dark: oklch(69% 0.1768 258.4 / 0.075);
+  --uc-primary-foreground-dark: oklch(0% 0 0);
+  --uc-secondary-dark: oklch(91% 0.002 197.1 / 0.07);
+  --uc-secondary-hover-dark: oklch(91% 0.002 197.1 / 0.1);
+  --uc-secondary-foreground-dark: oklch(91% 0.002 197.1);
+  --uc-muted-dark: oklch(26% 0.002 197.1);
+  --uc-muted-foreground-dark: oklch(68% 0.002 197.1);
+  --uc-destructive-dark: oklch(67% 0.191 27.5 / 0.05);
+  --uc-destructive-foreground-dark: oklch(67% 0.191 27.5);
+  --uc-border-dark: oklch(36% 0.005 286.1);
+  --uc-dialog-shadow-dark: 0px 6px 20px oklch(0% 0 0 / 0.25);
 
   /* Sizes */
 
@@ -79,5 +76,29 @@
   :where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular) {
     --uc-dialog-max-width: 100vw;
     --uc-dialog-max-height: var(--uploadcare-blocks-window-height);
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular) {
+    --uc-background: var(--uc-background-dark);
+    --uc-foreground: var(--uc-foreground-dark);
+    --uc-primary: var(--uc-primary-dark);
+    --uc-primary-hover: var(--uc-primary-hover-dark);
+    --uc-primary-transparent: var(--uc-primary-transparent-dark);
+    --uc-primary-foreground: var(--uc-primary-foreground-dark);
+    --uc-secondary: var(--uc-secondary-dark);
+    --uc-secondary-hover: var(--uc-secondary-hover-dark);
+    --uc-secondary-foreground: var(--uc-secondary-foreground-dark);
+    --uc-muted: var(--uc-muted-dark);
+    --uc-muted-foreground: var(--uc-muted-foreground-dark);
+    --uc-destructive: var(--uc-destructive-dark);
+    --uc-destructive-foreground: var(--uc-destructive-foreground-dark);
+    --uc-border: var(--uc-border-dark);
+    --uc-dialog-shadow: var(--uc-dialog-shadow-dark);
+
+    /* TO BE REMOVED */
+
+    --darkmode: 1;
   }
 }
