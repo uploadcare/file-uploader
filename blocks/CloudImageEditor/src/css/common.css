@@ -26,14 +26,14 @@
   --color-underline: rgba(var(--rgb-text-base), 0.08);
   --color-shade: rgba(var(--rgb-text-base), 0.02);
   --color-focus-ring: var(--color-primary-accent);
-  --color-input-placeholder: rgba(var(--rgb-text-base), 0.32);
-  --color-error: rgb(var(--rgb-error));
+  --color-input-placeholder: var(--uc-muted);
+  --color-error: var(--uc-destructive-foreground);
   --color-crop-guides: var(--uc-foreground);
 
-  --font-size-ui: 16px;
-  --font-size-title: 18px;
+  --font-size-ui: var(--uc-font-size);
+  --font-size-title: 1.15em;
   --font-weight-title: 500;
-  --font-size-soft: 14px;
+  --font-size-soft: var(--uc-font-size);
 
   --size-touch-area: var(--uc-button-size);
   --size-panel-heading: calc(var(--uc-button-size) + var(--uc-padding) * 2);
@@ -308,8 +308,8 @@
   justify-content: center;
   width: 40px;
   height: 40px;
-  color: rgba(var(--rgb-text-base), 0.6);
-  background-color: rgba(var(--rgb-fill-shaded));
+  color: var(--uc-foreground);
+  background-color: var(--uc-muted);
   border-radius: 50%;
 }
 
@@ -321,6 +321,7 @@
 .lr-cloud-image-editor > .wrapper > .network_problems_splash > .network_problems_content > .network_problems_text {
   margin-top: var(--cldtr-gap-max);
   font-size: var(--font-size-ui);
+  color: var(--uc-foreground);
 }
 
 :host(.lr-cloud-image-editor) > .wrapper > .network_problems_splash > .network_problems_footer,
