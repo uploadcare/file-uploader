@@ -2,38 +2,16 @@
 
 :host(.lr-cloud-image-editor),
 .lr-cloud-image-editor {
-  /* Theme settings >>> */
-  --rgb-primary-accent: 6, 2, 196;
-  --rgb-text-base: 0, 0, 0;
-  --rgb-text-accent-contrast: 255, 255, 255;
-  --rgb-fill-contrast: 255, 255, 255;
-  --rgb-fill-shaded: 245, 245, 245;
-  --rgb-shadow: 0, 0, 0;
-  --rgb-error: 209, 81, 81;
-  --opacity-shade-mid: 0.2;
-
-  /* <<< Theme settings */
-
   --color-primary-accent: var(--uc-primary);
   --color-text-base: var(--uc-foreground);
   --color-text-accent-contrast: var(--uc-background);
-  --color-text-soft: rgb(var(--rgb-fill-contrast));
-  --color-text-error: var(--uc-destructive-foreground);
   --color-fill-contrast: var(--uc-background);
   --color-modal-backdrop: oklch(0 0 0 / 0.1);
   --color-image-background: var(--uc-muted);
-  --color-outline: rgba(var(--rgb-text-base), var(--opacity-shade-mid));
-  --color-underline: rgba(var(--rgb-text-base), 0.08);
-  --color-shade: rgba(var(--rgb-text-base), 0.02);
   --color-focus-ring: var(--color-primary-accent);
-  --color-input-placeholder: var(--uc-muted);
-  --color-error: var(--uc-destructive-foreground);
   --color-crop-guides: var(--uc-foreground);
 
   --font-size-ui: var(--uc-font-size);
-  --font-size-title: 1.15em;
-  --font-weight-title: 500;
-  --font-size-soft: var(--uc-font-size);
 
   --size-touch-area: var(--uc-button-size);
   --size-panel-heading: calc(var(--uc-button-size) + var(--uc-padding) * 2);
@@ -42,7 +20,6 @@
   --size-modal-width: 650px;
   --size-icon: calc(var(--uc-button-size) / 2); /* TODO: remove icon size overrides */
 
-  --border-radius-connect: 2px;
   --border-radius-editor: var(--uc-radius);
   --border-radius-thumb: var(--uc-radius);
   --border-radius-ui: var(--uc-radius);
@@ -53,16 +30,10 @@
   --cldtr-gap-mid-2: 15px;
   --cldtr-gap-max: 20px;
 
-  --opacity-min: var(--opacity-shade-mid);
-  --opacity-mid: 0.1;
-  --opacity-max: 0.05;
-
   --transition-duration-2: var(--transition-duration-all, 0.2s);
   --transition-duration-3: var(--transition-duration-all, 0.3s);
   --transition-duration-4: var(--transition-duration-all, 0.4s);
   --transition-duration-5: var(--transition-duration-all, 0.5s);
-
-  --shadow-base: 0px 5px 15px rgba(var(--rgb-shadow), 0.1), 0px 1px 4px rgba(var(--rgb-shadow), 0.15);
 
   --modal-header-opacity: 1;
   --modal-header-height: var(--size-panel-heading);
