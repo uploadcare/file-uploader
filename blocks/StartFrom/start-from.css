@@ -20,3 +20,9 @@ lr-modal lr-start-from {
 lr-modal lr-start-from lr-drop-area {
   border-radius: var(--uc-radius);
 }
+
+@media only screen and (max-width: 430px) {
+  lr-modal lr-start-from lr-drop-area {
+    display: none;
+  }
+}
