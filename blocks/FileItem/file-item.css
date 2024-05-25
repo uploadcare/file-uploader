@@ -54,7 +54,7 @@ lr-file-item .file-name-wrapper {
   padding-left: var(--uc-padding);
   overflow: hidden;
   color: var(--uc-muted-foreground);
-  transition: color var(--transition-duration);
+  transition: color var(--uc-transition);
 }
 
 lr-file-item .file-name {
