@@ -76,15 +76,11 @@ const asFunction = (value) => {
 
 /** @param {unknown} value */
 const asValidators = (value) => {
-  if (typeof value === 'function') {
-    return value;
-  }
-
   if (Array.isArray(value)) {
     return value;
   }
 
-  throw new Error('Invalid validators value. Must be an function.');
+  throw new Error('Invalid validators value. Must be an array.');
 };
 
 /**

@@ -1,90 +1,47 @@
 // @ts-check
-import { NetworkError, UploadError } from '@uploadcare/upload-client';
-import { buildCollectionFileError, buildOutputFileError } from '../utils/buildOutputError.js';
 import { EventType } from '../blocks/UploadCtxProvider/EventEmitter.js';
-import { IMAGE_ACCEPT_LIST, matchExtension, matchMimeType, mergeFileTypes } from '../utils/fileTypes.js';
-import { prettyBytes } from '../utils/prettyBytes.js';
-import { TypedCollection } from './TypedCollection.js';
+import {
+  validateIsImage,
+  validateFileType,
+  validateMaxSizeLimit,
+  validateUploadError,
+} from '../utils/validators/file/index.js';
+import { validateMultiple, validateCollectionUploadError } from '../utils/validators/collection/index.js';
 
 export class ValidationManager {
   /**
    * @private
-   * @type {import('./UploaderBlock.js').UploaderBlock | null}
+   * @type {import('./UploaderBlock.js').UploaderBlock}
    */
-  _blockInstance = null;
+  _blockInstance;
 
   /**
    * @private
    * @type {((
    *   outputEntry: import('../types').OutputFileEntry,
-   *   internalEntry?: import('./TypedData.js').TypedData,
+   *   internalEntry: import('./TypedData.js').TypedData,
+   *   block: import('./UploaderBlock.js').UploaderBlock,
    * ) => undefined | ReturnType<typeof import('../utils/buildOutputError.js').buildOutputFileError>)[]}
    */
-  _fileValidators = [
-    this._validateIsImage.bind(this),
-    this._validateFileType.bind(this),
-    this._validateMaxSizeLimit.bind(this),
-    this._validateUploadError.bind(this),
-  ];
+  _fileValidators = [validateIsImage, validateFileType, validateMaxSizeLimit, validateUploadError];
 
   /**
    * @private
    * @type {((
-   *   collection: TypedCollection,
+   *   collection: import('./TypedCollection.js').TypedCollection,
+   *   block: import('./UploaderBlock.js').UploaderBlock,
    * ) =>
    *   | undefined
    *   | ReturnType<typeof import('../utils/buildOutputError.js').buildCollectionFileError>
    *   | ReturnType<typeof import('../utils/buildOutputError.js').buildCollectionFileError>[])[]}
    */
-  _collectionValidators = [
-    (collection) => {
-      const total = collection.size;
-      const multipleMin = this._blockInstance.cfg.multiple ? this._blockInstance.cfg.multipleMin : 0;
-      const multipleMax = this._blockInstance.cfg.multiple ? this._blockInstance.cfg.multipleMax : 1;
-
-      if (multipleMin && total < multipleMin) {
-        const message = this._blockInstance.l10n('files-count-limit-error-too-few', {
-          min: multipleMin,
-          max: multipleMax,
-          total,
-        });
-        return buildCollectionFileError({
-          type: 'TOO_FEW_FILES',
-          message,
-          total,
-          min: multipleMin,
-          max: multipleMax,
-        });
-      }
-
-      if (multipleMax && total > multipleMax) {
-        const message = this._blockInstance.l10n('files-count-limit-error-too-many', {
-          min: multipleMin,
-          max: multipleMax,
-          total,
-        });
-        return buildCollectionFileError({
-          type: 'TOO_MANY_FILES',
-          message,
-          total,
-          min: multipleMin,
-          max: multipleMax,
-        });
-      }
-    },
-    (collection) => {
-      if (collection.items().some((id) => collection.readProp(id, 'errors').length > 0)) {
-        return buildCollectionFileError({
-          type: 'SOME_FILES_HAS_ERRORS',
-          message: this._blockInstance.l10n('some-files-were-not-uploaded'),
-        });
-      }
-    },
-  ];
+  _collectionValidators = [validateMultiple, validateCollectionUploadError];
 
   /** @param {import('./UploaderBlock.js').UploaderBlock} blockInstance */
   constructor(blockInstance) {
     this._blockInstance = blockInstance;
+
+    this._uploadCollection = this._blockInstance.uploadCollection;
 
     const runAllValidators = () => {
       this._runFileValidators();
@@ -104,20 +61,23 @@ export class ValidationManager {
    * @param {string[]} [entryIds]
    */
   _runFileValidators(entryIds) {
-    const ids = entryIds ?? this._blockInstance.uploadCollection.items();
+    const ids = entryIds ?? this._uploadCollection.items();
     for (const id of ids) {
-      const entry = this._blockInstance.uploadCollection.read(id);
-      entry && this._runFileValidatorsForEntry(entry);
+      const entry = this._uploadCollection.read(id);
+      if (entry) {
+        this._runFileValidatorsForEntry(entry);
+        this._runCustomValidatorsEntry(entry);
+      }
     }
   }
 
   /** @private */
   _runCollectionValidators() {
-    const collection = this._blockInstance.uploadCollection;
+    const collection = this._uploadCollection;
     const errors = [];
 
     for (const validator of this._collectionValidators) {
-      const errorOrErrors = validator(collection);
+      const errorOrErrors = validator(collection, this._blockInstance);
       if (!errorOrErrors) {
         continue;
       }
@@ -147,126 +107,32 @@ export class ValidationManager {
    * @param {import('./TypedData.js').TypedData} entry
    */
   _runFileValidatorsForEntry(entry) {
+    this._commonValidation(entry, this._fileValidators);
+  }
+
+  /**
+   * @private
+   * @param {import('./TypedData.js').TypedData} entry
+   */
+  _runCustomValidatorsEntry(entry) {
+    this._commonValidation(entry, this._blockInstance.cfg.validators);
+  }
+
+  /**
+   * @private
+   * @param {import('./TypedData.js').TypedData} entry
+   * @param {?} validators
+   */
+  _commonValidation(entry, validators) {
     const outputEntry = this._blockInstance.getOutputItem(entry.uid);
     const errors = [];
 
-    for (const validator of this._fileValidators) {
-      const error = validator(outputEntry, entry);
+    for (const validator of validators) {
+      const error = validator(outputEntry, entry, this._blockInstance);
       if (error) {
         errors.push(error);
       }
     }
     entry.setValue('errors', errors);
-  }
-
-  /**
-   * @private
-   * @param {import('../types').OutputFileEntry} outputEntry
-   */
-  _validateIsImage(outputEntry) {
-    const imagesOnly = this._blockInstance.cfg.imgOnly;
-    const isImage = outputEntry.isImage;
-
-    if (!imagesOnly || isImage) {
-      return;
-    }
-    if (!outputEntry.fileInfo && outputEntry.externalUrl) {
-      // skip validation for not uploaded files with external url, cause we don't know if they're images or not
-      return;
-    }
-    if (!outputEntry.fileInfo && !outputEntry.mimeType) {
-      // skip validation for not uploaded files without mime-type, cause we don't know if they're images or not
-      return;
-    }
-
-    return buildOutputFileError({
-      type: 'NOT_AN_IMAGE',
-      message: this._blockInstance.l10n('images-only-accepted'),
-      entry: outputEntry,
-    });
-  }
-
-  /**
-   * @private
-   * @param {import('../types').OutputFileEntry} outputEntry
-   */
-  _validateFileType(outputEntry) {
-    const imagesOnly = this._blockInstance.cfg.imgOnly;
-    const accept = this._blockInstance.cfg.accept;
-    const allowedFileTypes = mergeFileTypes([...(imagesOnly ? IMAGE_ACCEPT_LIST : []), accept]);
-    if (!allowedFileTypes.length) return;
-
-    const mimeType = outputEntry.mimeType;
-    const fileName = outputEntry.name;
-
-    if (!mimeType || !fileName) {
-      // Skip client validation if mime type or file name are not available for some reasons
-      return;
-    }
-
-    const mimeOk = matchMimeType(mimeType, allowedFileTypes);
-    const extOk = matchExtension(fileName, allowedFileTypes);
-
-    if (!mimeOk && !extOk) {
-      // Assume file type is not allowed if both mime and ext checks fail
-      return buildOutputFileError({
-        type: 'FORBIDDEN_FILE_TYPE',
-        message: this._blockInstance.l10n('file-type-not-allowed'),
-        entry: outputEntry,
-      });
-    }
-  }
-
-  /**
-   * @private
-   * @param {import('../types').OutputFileEntry} outputEntry
-   */
-  _validateMaxSizeLimit(outputEntry) {
-    const maxFileSize = this._blockInstance.cfg.maxLocalFileSizeBytes;
-    const fileSize = outputEntry.size;
-    if (maxFileSize && fileSize && fileSize > maxFileSize) {
-      return buildOutputFileError({
-        type: 'FILE_SIZE_EXCEEDED',
-        message: this._blockInstance.l10n('files-max-size-limit-error', { maxFileSize: prettyBytes(maxFileSize) }),
-        entry: outputEntry,
-      });
-    }
-  }
-
-  /**
-   * @private
-   * @param {import('../types').OutputFileEntry} outputEntry
-   * @param {import('./TypedData.js').TypedData} [internalEntry]
-   */
-  _validateUploadError(outputEntry, internalEntry) {
-    /** @type {unknown} */
-    const cause = internalEntry?.getValue('uploadError');
-    if (!cause) {
-      return;
-    }
-
-    if (cause instanceof UploadError) {
-      return buildOutputFileError({
-        type: 'UPLOAD_ERROR',
-        message: cause.message,
-        entry: outputEntry,
-        error: cause,
-      });
-    } else if (cause instanceof NetworkError) {
-      return buildOutputFileError({
-        type: 'NETWORK_ERROR',
-        message: cause.message,
-        entry: outputEntry,
-        error: cause,
-      });
-    } else {
-      const error = cause instanceof Error ? cause : new Error('Unknown error', { cause });
-      return buildOutputFileError({
-        type: 'UNKNOWN_ERROR',
-        message: error.message,
-        entry: outputEntry,
-        error,
-      });
-    }
   }
 }
