@@ -21,6 +21,7 @@ import { TypedCollection } from './TypedCollection.js';
 import { buildOutputCollectionState } from './buildOutputCollectionState.js';
 import { uploadEntrySchema } from './uploadEntrySchema.js';
 import { parseCdnUrl } from '../utils/parseCdnUrl.js';
+import { SecureUploadsManager } from './SecureUploadsManager.js';
 export class UploaderBlock extends ActivityBlock {
   couldBeCtxOwner = false;
   isCtxOwner = false;
@@ -183,6 +184,10 @@ export class UploaderBlock extends ActivityBlock {
 
     if (this.__initialUploadMetadata) {
       this.$['*uploadMetadata'] = this.__initialUploadMetadata;
+    }
+
+    if (!this.$['*secureUploadsManager']) {
+      this.$['*secureUploadsManager'] = new SecureUploadsManager(this);
     }
   }
 
@@ -582,7 +587,7 @@ export class UploaderBlock extends ActivityBlock {
    * @param {import('../types').OutputCollectionState} collectionState
    */
   async _createGroup(collectionState) {
-    const uploadClientOptions = this.getUploadClientOptions();
+    const uploadClientOptions = await this.getUploadClientOptions();
     const uuidList = collectionState.allEntries.map((entry) => {
       return entry.uuid + (entry.cdnUrlModifiers ? `/${entry.cdnUrlModifiers}` : '');
     });
@@ -822,8 +827,12 @@ export class UploaderBlock extends ActivityBlock {
     return configValue;
   }
 
-  /** @returns {import('@uploadcare/upload-client').FileFromOptions} */
-  getUploadClientOptions() {
+  /** @returns {Promise<import('@uploadcare/upload-client').FileFromOptions>} */
+  async getUploadClientOptions() {
+    /** @type {SecureUploadsManager} */
+    const secureUploadsManager = this.$['*secureUploadsManager'];
+    const secureToken = await secureUploadsManager.getSecureToken().catch(() => null);
+
     let options = {
       store: this.cfg.store,
       publicKey: this.cfg.pubkey,
@@ -831,8 +840,8 @@ export class UploaderBlock extends ActivityBlock {
       baseURL: this.cfg.baseUrl,
       userAgent: customUserAgent,
       integration: this.cfg.userAgentIntegration,
-      secureSignature: this.cfg.secureSignature,
-      secureExpire: this.cfg.secureExpire,
+      secureSignature: secureToken?.secureSignature,
+      secureExpire: secureToken?.secureExpire,
       retryThrottledRequestMaxTimes: this.cfg.retryThrottledRequestMaxTimes,
       multipartMinFileSize: this.cfg.multipartMinFileSize,
       multipartChunkSize: this.cfg.multipartChunkSize,

@@ -1,4 +1,5 @@
 import { LocaleDefinition } from '../abstract/localeRegistry';
+import { complexConfigKeys } from '../blocks/Config/Config';
 
 export type UploadError = import('@uploadcare/upload-client').UploadError;
 export type UploadcareFile = import('@uploadcare/upload-client').UploadcareFile;
@@ -7,7 +8,14 @@ export type UploadcareGroup = import('@uploadcare/upload-client').UploadcareGrou
 export type Metadata = import('@uploadcare/upload-client').Metadata;
 export type MetadataCallback = (fileEntry: OutputFileEntry) => Promise<Metadata> | Metadata;
 export type LocaleDefinitionOverride = Record<string, LocaleDefinition>;
+export type SecureDeliveryProxyUrlResolver = (
+  previewUrl: string,
+  urlParts: { uuid: string; cdnUrlModifiers: string; fileName: string },
+) => string;
+export type SecureUploadsSignatureAndExpire = { secureSignature: string; secureExpire: string };
+export type SecureUploadsSignatureResolver = () => Promise<SecureUploadsSignatureAndExpire | null>;
 export type IconHrefResolver = (iconName: string) => string;
+
 export type ConfigType = {
   pubkey: string;
   multiple: boolean;
@@ -52,13 +60,16 @@ export type ConfigType = {
   userAgentIntegration: string;
   debug: boolean;
   localeName: string;
+  secureUploadsExpireThreshold: number; 
   
   // Complex types
   metadata: Metadata | MetadataCallback | null;
   localeDefinitionOverride: LocaleDefinitionOverride | null;
+  secureUploadsSignatureResolver: SecureUploadsSignatureResolver | null;
+  secureDeliveryProxyUrlResolver: SecureDeliveryProxyUrlResolver | null;
   iconHrefResolver: IconHrefResolver | null;
 };
-export type ConfigComplexType = Pick<ConfigType, 'metadata' | 'localeDefinitionOverride' | 'iconHrefResolver'>;
+export type ConfigComplexType = Pick<ConfigType, (typeof complexConfigKeys)[number]>;
 export type ConfigPlainType = Omit<ConfigType, keyof ConfigComplexType>;
 export type ConfigAttributesType = KebabCaseKeys<ConfigPlainType> & LowerCaseKeys<ConfigPlainType>;
 

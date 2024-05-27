@@ -24,18 +24,6 @@ export const asBoolean = (value) => {
   if (value === 'false') return false;
   throw new Error(`Invalid boolean: "${value}"`);
 };
-/**
- * @template {Function} T
- * @param {unknown} value
- * @returns {T}
- */
-export const asFunction = (value) => {
-  if (typeof value === 'function') {
-    return /** @type {T} */ (value);
-  }
-
-  throw new Error('Invalid function value. Must be a function.');
-};
 /** @param {unknown} value */
 const asStore = (value) => (value === 'auto' ? value : asBoolean(value));
 
@@ -60,13 +48,30 @@ const asMetadata = (value) => {
   throw new Error('Invalid metadata value. Must be an object or function.');
 };
 
-/** @param {unknown} value */
-const asLocaleDefinitionOverride = (value) => {
+/**
+ * @template {{}} T
+ * @param {unknown} value
+ * @returns {T}
+ */
+const asObject = (value) => {
   if (typeof value === 'object') {
-    return /** @type {import('../../types').LocaleDefinitionOverride} */ (value);
+    return /** @type {T} */ (value);
   }
 
-  throw new Error('Invalid localeDefinitionOverride value. Must be an object.');
+  throw new Error('Invalid value. Must be an object.');
+};
+
+/**
+ * @template {Function} T
+ * @param {unknown} value
+ * @returns {T}
+ */
+const asFunction = (value) => {
+  if (typeof value === 'function') {
+    return /** @type {T} */ (value);
+  }
+
+  throw new Error('Invalid value. Must be a function.');
 };
 
 /**
@@ -128,7 +133,12 @@ const mapping = {
   localeName: asString,
 
   metadata: asMetadata,
-  localeDefinitionOverride: asLocaleDefinitionOverride,
+  secureUploadsExpireThreshold: asNumber,
+  localeDefinitionOverride: /** @type {typeof asObject<import('../../types').LocaleDefinitionOverride>} */ (asObject),
+  secureUploadsSignatureResolver:
+    /** @type {typeof asFunction<import('../../types').SecureUploadsSignatureResolver>} */ (asFunction),
+  secureDeliveryProxyUrlResolver:
+    /** @type {typeof asFunction<import('../../types').SecureDeliveryProxyUrlResolver>} */ (asFunction),
   iconHrefResolver: /** @type {typeof asFunction<import('../../types').IconHrefResolver>} */ (asFunction),
 };
 

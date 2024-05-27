@@ -85,19 +85,31 @@ export function extractUuid(cdnUrl) {
 }
 
 /**
+ * Extract operations string from CDN URL
+ *
+ * @param {string} cdnUrl
+ * @returns {string}
+ */
+export function extractCdnUrlModifiers(cdnUrl) {
+  let withoutFilename = trimFilename(cdnUrl);
+  let url = new URL(withoutFilename);
+  let operationsMarker = url.pathname.indexOf('/-/');
+  if (operationsMarker === -1) {
+    return '';
+  }
+  let operationsStr = url.pathname.substring(operationsMarker).slice(1);
+
+  return operationsStr;
+}
+
+/**
  * Extract UUID from CDN URL
  *
  * @param {string} cdnUrl
  * @returns {string[]}
  */
 export function extractOperations(cdnUrl) {
-  let withoutFilename = trimFilename(cdnUrl);
-  let url = new URL(withoutFilename);
-  let operationsMarker = url.pathname.indexOf('/-/');
-  if (operationsMarker === -1) {
-    return [];
-  }
-  let operationsStr = url.pathname.substring(operationsMarker);
+  let operationsStr = extractCdnUrlModifiers(cdnUrl);
 
   return operationsStr
     .split('/-/')
