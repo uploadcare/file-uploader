@@ -1,8 +1,7 @@
 :where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular) {
   /* Font */
 
-  --uc-font-family: inter, -apple-system, blinkmacsystemfont, 'Segoe UI', roboto, oxygen, ubuntu, cantarell, 'Open Sans',
-    'Helvetica Neue', sans-serif;
+  --uc-font-family: system-ui;
   --uc-font-size: 14px;
 
   /* Light colors */
