@@ -9,9 +9,10 @@
 
   --uc-background: oklch(100% 0 0);
   --uc-foreground: oklch(21% 0.006 285.9);
-  --uc-primary: oklch(59% 0.22 264);
-  --uc-primary-hover: oklch(59% 0.22 264 / 0.9);
-  --uc-primary-transparent: oklch(59% 0.22 264 / 0.1);
+  --uc-primary-lch: 59% 0.22 264; /* Quick customization: change this value to your brand color */
+  --uc-primary: oklch(var(--uc-primary-lch));
+  --uc-primary-hover: oklch(var(--uc-primary-lch) / 0.9);
+  --uc-primary-transparent: oklch(var(--uc-primary-lch) / 0.1);
   --uc-primary-foreground: oklch(100% 0 0);
   --uc-secondary: oklch(21% 0.006 285.9 / 0.05);
   --uc-secondary-hover: oklch(21% 0.006 285.9 / 0.08);
@@ -27,9 +28,10 @@
 
   --uc-background-dark: oklch(22% 0.002 197.1);
   --uc-foreground-dark: oklch(91% 0.002 197.1);
-  --uc-primary-dark: oklch(69% 0.1768 258.4);
-  --uc-primary-hover-dark: oklch(69% 0.1768 258.4 / 0.9);
-  --uc-primary-transparent-dark: oklch(69% 0.1768 258.4 / 0.075);
+  --uc-primary-lch-dark: 69% 0.1768 258.4; /* Quick customization: change this value to your brand color */
+  --uc-primary-dark: oklch(var(--uc-primary-lch-dark));
+  --uc-primary-hover-dark: oklch(var(--uc-primary-lch-dark) / 0.9);
+  --uc-primary-transparent-dark: oklch(var(--uc-primary-lch-dark) / 0.075);
   --uc-primary-foreground-dark: oklch(0% 0 0);
   --uc-secondary-dark: oklch(91% 0.002 197.1 / 0.07);
   --uc-secondary-hover-dark: oklch(91% 0.002 197.1 / 0.1);
