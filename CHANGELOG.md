@@ -2,9 +2,9 @@
 
 ### Features
 
-- add `secureDeliveryProxyUrlResolver` option ([c7cfcd0](https://github.com/uploadcare/blocks/commit/c7cfcd00563dc377b0368f1e2adc0ad973bcb20b))
-- add `secureUploadsExpireThreshold` option ([0d9205d](https://github.com/uploadcare/blocks/commit/0d9205d0391f7c703069ac77efd62b0709bde626))
-- add `secureUploadsSignatureResolver` option ([226d36f](https://github.com/uploadcare/blocks/commit/226d36f691803801fcc15aa014aefa9e57959d50))
+- add `secureDeliveryProxyUrlResolver` option ([c7cfcd0](https://github.com/uploadcare/blocks/commit/c7cfcd00563dc377b0368f1e2adc0ad973bcb20b)). See docs [here](https://uploadcare.com/docs/file-uploader/options/#secure-delivery-proxy-url-resolver).
+- add `secureUploadsExpireThreshold` option ([0d9205d](https://github.com/uploadcare/blocks/commit/0d9205d0391f7c703069ac77efd62b0709bde626)). See docs [here](https://uploadcare.com/docs/file-uploader/options/#secure-uploads-expire-threshold).
+- add `secureUploadsSignatureResolver` option ([226d36f](https://github.com/uploadcare/blocks/commit/226d36f691803801fcc15aa014aefa9e57959d50)). See docs [here](https://uploadcare.com/docs/file-uploader/options/#secure-uploads-signature-resolver).
 
 # [0.40.0](https://github.com/uploadcare/blocks/compare/v0.39.1...v0.40.0) (2024-05-17)
 
