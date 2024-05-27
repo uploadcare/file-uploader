@@ -80,11 +80,12 @@ We use [JSDoc type annotations](https://www.typescriptlang.org/docs/handbook/int
 2. Start using Uploadcare Blocks in your application markup (don't forget to specify `{{PACKAGE_VERSION}}` with the [latest one](https://github.com/uploadcare/blocks/releases)):
 
 ```html
-<lr-file-uploader-regular
-  css-src="https://cdn.jsdelivr.net/npm/@uploadcare/blocks@{{PACKAGE_VERSION}}/web/lr-file-uploader-regular.min.css"
-  ctx-name="my-uploader"
->
-</lr-file-uploader-regular>
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/@uploadcare/blocks@{{PACKAGE_VERSION}}/web/lr-file-uploader-regular.min.css"
+/>
+
+<lr-file-uploader-regular ctx-name="my-uploader"> </lr-file-uploader-regular>
 ```
 
 3. Configure Uploadcare Blocks and add your personal public key to the project. Discover the instructions in the [following section](#configuration).
@@ -103,11 +104,12 @@ LR.registerBlocks(LR);
 3. Start using Uploadcare Blocks in your application markup and replace `{{PACKAGE_VERSION}}` with the [latest version](https://github.com/uploadcare/blocks/releases) of the package:
 
 ```html
-<lr-file-uploader-inline
-  css-src="https://cdn.jsdelivr.net/npm/@uploadcare/blocks@{{PACKAGE_VERSION}}/web/lr-file-uploader-inline.min.css"
-  ctx-name="my-uploader"
->
-</lr-file-uploader-inline>
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/@uploadcare/blocks@{{PACKAGE_VERSION}}/web/lr-file-uploader-regular.min.css"
+/>
+
+<lr-file-uploader-inline ctx-name="my-uploader"> </lr-file-uploader-inline>
 ```
 
 4. Configure Uploadcare Blocks and add your personal public key to the project. Discover the instructions in the [following section](#configuration).
