@@ -41,9 +41,9 @@ module.exports = {
       ignoreFiles: ['**/test/**/*.css'],
       plugins: ['./stylelint-force-app-name-prefix.cjs'],
       rules: {
-        'plugin/stylelint-force-app-name-prefix': {
-          appName: 'lr',
-        },
+        // 'plugin/stylelint-force-app-name-prefix': {
+        //   appName: 'lr',
+        // },
       },
     },
   ],
