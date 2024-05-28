@@ -1,3 +1,9 @@
+## [0.41.1](https://github.com/uploadcare/blocks/compare/v0.41.0...v0.41.1) (2024-05-27)
+
+### Bug Fixes
+
+- **styles-readme:** updated connect style in the project ([#663](https://github.com/uploadcare/blocks/issues/663)) ([2ee913f](https://github.com/uploadcare/blocks/commit/2ee913f93ee44ffbd440c66f9ab6b0c92276faa2))
+
 # [0.41.0](https://github.com/uploadcare/blocks/compare/v0.40.0...v0.41.0) (2024-05-24)
 
 ### Features
