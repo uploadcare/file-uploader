@@ -17,20 +17,22 @@ export const validateUploadError = (outputEntry, internalEntry, block) => {
       entry: outputEntry,
       error: cause,
     });
-  } else if (cause instanceof NetworkError) {
+  }
+
+  if (cause instanceof NetworkError) {
     return buildOutputFileError({
       type: 'NETWORK_ERROR',
       message: cause.message,
       entry: outputEntry,
       error: cause,
     });
-  } else {
-    const error = cause instanceof Error ? cause : new Error('Unknown error', { cause });
-    return buildOutputFileError({
-      type: 'UNKNOWN_ERROR',
-      message: error.message,
-      entry: outputEntry,
-      error,
-    });
   }
+
+  const error = cause instanceof Error ? cause : new Error('Unknown error', { cause });
+  return buildOutputFileError({
+    type: 'UNKNOWN_ERROR',
+    message: error.message,
+    entry: outputEntry,
+    error,
+  });
 };

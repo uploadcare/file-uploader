@@ -75,7 +75,7 @@ const asFunction = (value) => {
 };
 
 /**
- * @template  {Array<T>}T
+ * @template {Function[]} T
  * @param {unknown} value
  * @returns {T}
  */
@@ -153,8 +153,8 @@ const mapping = {
   secureDeliveryProxyUrlResolver:
     /** @type {typeof asFunction<import('../../types').SecureDeliveryProxyUrlResolver>} */ (asFunction),
   iconHrefResolver: /** @type {typeof asFunction<import('../../types').IconHrefResolver>} */ (asFunction),
-  fileValidators: /** @type {typeof asValidators<import('../../types').FileValidator[]>} */ (asValidators),
-  collectionValidators: /** @type {typeof asValidators<import('../../types').CollectionValidator[]>} */ (asValidators),
+  fileValidators: /** @type {typeof asValidators<import('../../types').FileValidator>} */ (asValidators),
+  collectionValidators: /** @type {typeof asValidators<import('../../types').CollectionValidator>} */ (asValidators),
 };
 
 /**

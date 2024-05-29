@@ -1,6 +1,6 @@
-import { LocaleDefinition } from '../abstract/localeRegistry';
-import { complexConfigKeys } from '../blocks/Config/Config';
-import { FuncFileValidator, FuncCollectionValidator } from '../abstract/ValidationManager';
+import type { LocaleDefinition } from '../abstract/localeRegistry';
+import type { complexConfigKeys } from '../blocks/Config/Config';
+import type { FuncFileValidator, FuncCollectionValidator } from '../abstract/ValidationManager';
 
 export type UploadError = import('@uploadcare/upload-client').UploadError;
 export type UploadcareFile = import('@uploadcare/upload-client').UploadcareFile;
@@ -16,8 +16,8 @@ export type SecureDeliveryProxyUrlResolver = (
 export type SecureUploadsSignatureAndExpire = { secureSignature: string; secureExpire: string };
 export type SecureUploadsSignatureResolver = () => Promise<SecureUploadsSignatureAndExpire | null>;
 export type IconHrefResolver = (iconName: string) => string;
-export type FileValidator = FuncFileValidator | any;
-export type CollectionValidator = FuncCollectionValidator | any;
+export type FileValidator = FuncFileValidator[];
+export type CollectionValidator = FuncCollectionValidator[];
 
 export type ConfigType = {
   pubkey: string;
@@ -72,8 +72,8 @@ export type ConfigType = {
   secureDeliveryProxyUrlResolver: SecureDeliveryProxyUrlResolver | null;
   iconHrefResolver: IconHrefResolver | null;
 
-  fileValidators: FileValidator[] | null;
-  collectionValidators: CollectionValidator[] | null;
+  fileValidators: FileValidator | null;
+  collectionValidators: CollectionValidator | null;
 };
 export type ConfigComplexType = Pick<ConfigType, (typeof complexConfigKeys)[number]>;
 export type ConfigPlainType = Omit<ConfigType, keyof ConfigComplexType>;
