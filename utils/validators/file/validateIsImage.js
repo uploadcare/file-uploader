@@ -2,12 +2,7 @@
 
 import { buildOutputFileError } from '../../buildOutputError.js';
 
-/**
- * @private
- * @param {import('../../../types/index.js').OutputFileEntry} outputEntry
- * @param {import('../../../abstract/TypedData.js').TypedData} internalEntry
- * @param {import('../../../abstract/UploaderBlock.js').UploaderBlock} block
- */
+/** @type import('../../../abstract/ValidationManager.js').FuncFileValidator */
 export const validateIsImage = (outputEntry, internalEntry, block) => {
   const imagesOnly = block.cfg.imgOnly;
   const isImage = outputEntry.isImage;

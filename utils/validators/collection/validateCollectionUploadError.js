@@ -1,5 +1,6 @@
 import { buildCollectionFileError } from '../../buildOutputError.js';
 
+/** @type import('../../../abstract/ValidationManager.js').FuncCollectionValidator */
 export const validateCollectionUploadError = (collection, block) => {
   if (collection.items().some((id) => collection.readProp(id, 'errors').length > 0)) {
     return buildCollectionFileError({

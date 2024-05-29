@@ -64,5 +64,6 @@ export const initialConfig = {
   secureUploadsSignatureResolver: null,
   secureDeliveryProxyUrlResolver: null,
   iconHrefResolver: null,
-  validators: null,
+  fileValidators: [],
+  collectionValidators: [],
 };

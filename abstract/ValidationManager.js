@@ -8,6 +8,24 @@ import {
 } from '../utils/validators/file/index.js';
 import { validateMultiple, validateCollectionUploadError } from '../utils/validators/collection/index.js';
 
+/**
+ * @typedef {(
+ *   outputEntry: import('../types').OutputFileEntry,
+ *   internalEntry: import('./TypedData.js').TypedData,
+ *   block: import('./UploaderBlock.js').UploaderBlock,
+ * ) => undefined | ReturnType<typeof import('../utils/buildOutputError.js').buildOutputFileError>} FuncFileValidator
+ */
+
+/**
+ * @typedef {(
+ *   collection: import('./TypedCollection.js').TypedCollection,
+ *   block: import('./UploaderBlock.js').UploaderBlock,
+ * ) =>
+ *   | undefined
+ *   | ReturnType<typeof import('../utils/buildOutputError.js').buildCollectionFileError>
+ *   | ReturnType<typeof import('../utils/buildOutputError.js').buildCollectionFileError>[]} FuncCollectionValidator
+ */
+
 export class ValidationManager {
   /**
    * @private
@@ -15,26 +33,10 @@ export class ValidationManager {
    */
   _blockInstance;
 
-  /**
-   * @private
-   * @type {((
-   *   outputEntry: import('../types').OutputFileEntry,
-   *   internalEntry: import('./TypedData.js').TypedData,
-   *   block: import('./UploaderBlock.js').UploaderBlock,
-   * ) => undefined | ReturnType<typeof import('../utils/buildOutputError.js').buildOutputFileError>)[]}
-   */
+  /** @type FuncFileValidator[] */
   _fileValidators = [validateIsImage, validateFileType, validateMaxSizeLimit, validateUploadError];
 
-  /**
-   * @private
-   * @type {((
-   *   collection: import('./TypedCollection.js').TypedCollection,
-   *   block: import('./UploaderBlock.js').UploaderBlock,
-   * ) =>
-   *   | undefined
-   *   | ReturnType<typeof import('../utils/buildOutputError.js').buildCollectionFileError>
-   *   | ReturnType<typeof import('../utils/buildOutputError.js').buildCollectionFileError>[])[]}
-   */
+  /** @type FuncCollectionValidator[] */
   _collectionValidators = [validateMultiple, validateCollectionUploadError];
 
   /** @param {import('./UploaderBlock.js').UploaderBlock} blockInstance */
@@ -44,8 +46,8 @@ export class ValidationManager {
     this._uploadCollection = this._blockInstance.uploadCollection;
 
     const runAllValidators = () => {
-      this._runFileValidators();
-      this._runCollectionValidators();
+      this.runFileValidators();
+      this.runCollectionValidators();
     };
 
     this._blockInstance.subConfigValue('maxLocalFileSizeBytes', runAllValidators);
@@ -56,11 +58,8 @@ export class ValidationManager {
     this._blockInstance.subConfigValue('accept', runAllValidators);
   }
 
-  /**
-   * @private
-   * @param {string[]} [entryIds]
-   */
-  _runFileValidators(entryIds) {
+  /** @param {string[]} [entryIds] */
+  runFileValidators(entryIds) {
     const ids = entryIds ?? this._uploadCollection.items();
     for (const id of ids) {
       const entry = this._uploadCollection.read(id);
@@ -71,12 +70,11 @@ export class ValidationManager {
     }
   }
 
-  /** @private */
-  _runCollectionValidators() {
+  runCollectionValidators() {
     const collection = this._uploadCollection;
     const errors = [];
 
-    for (const validator of this._collectionValidators) {
+    for (const validator of [...this._collectionValidators, ...(this._blockInstance.cfg.collectionValidators ?? [])]) {
       const errorOrErrors = validator(collection, this._blockInstance);
       if (!errorOrErrors) {
         continue;
@@ -115,18 +113,17 @@ export class ValidationManager {
    * @param {import('./TypedData.js').TypedData} entry
    */
   _runCustomValidatorsEntry(entry) {
-    this._commonValidation(entry, this._blockInstance.cfg.validators);
+    this._commonValidation(entry, this._blockInstance.cfg.fileValidators ?? []);
   }
 
   /**
    * @private
    * @param {import('./TypedData.js').TypedData} entry
-   * @param {?} validators
+   * @param {FuncFileValidator[]} validators
    */
   _commonValidation(entry, validators) {
     const outputEntry = this._blockInstance.getOutputItem(entry.uid);
     const errors = [];
-
     for (const validator of validators) {
       const error = validator(outputEntry, entry, this._blockInstance);
       if (error) {

@@ -73,7 +73,7 @@ export class UploaderBlock extends ActivityBlock {
       });
       this.$['*uploadCollection'] = uploadCollection;
     }
-
+    //
     if (!this.has('*validationManager')) {
       this.add('*validationManager', new ValidationManager(this));
     }
@@ -394,8 +394,10 @@ export class UploaderBlock extends ActivityBlock {
     if (added.size || removed.size) {
       this.$['*groupInfo'] = null;
     }
-    this.validationManager._runFileValidators();
-    this.validationManager._runCollectionValidators();
+    if (this.validationManager) {
+      this.validationManager.runFileValidators();
+      this.validationManager.runCollectionValidators();
+    }
 
     for (const entry of added) {
       if (!entry.getValue('silent')) {
@@ -445,7 +447,7 @@ export class UploaderBlock extends ActivityBlock {
     entriesToRunValidation.length > 0 &&
       setTimeout(() => {
         // We can't modify entry properties in the same tick, so we need to wait a bit
-        this.validationManager._runFileValidators(entriesToRunValidation);
+        if (this.validationManager) this.validationManager.runFileValidators(entriesToRunValidation);
       });
 
     if (changeMap.uploadProgress) {

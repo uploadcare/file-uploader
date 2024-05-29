@@ -2,12 +2,8 @@
 import { buildOutputFileError } from '../../buildOutputError.js';
 import { NetworkError, UploadError } from '@uploadcare/upload-client';
 
-/**
- * @private
- * @param {import('../../../types/index.js').OutputFileEntry} outputEntry
- * @param {import('../../../abstract/TypedData.js').TypedData} [internalEntry]
- */
-export const validateUploadError = (outputEntry, internalEntry) => {
+/** @type import('../../../abstract/ValidationManager.js').FuncFileValidator */
+export const validateUploadError = (outputEntry, internalEntry, block) => {
   /** @type {unknown} */
   const cause = internalEntry?.getValue('uploadError');
   if (!cause) {

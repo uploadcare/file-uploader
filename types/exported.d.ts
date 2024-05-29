@@ -1,5 +1,6 @@
 import { LocaleDefinition } from '../abstract/localeRegistry';
 import { complexConfigKeys } from '../blocks/Config/Config';
+import { FuncFileValidator, FuncCollectionValidator } from '../abstract/ValidationManager';
 
 export type UploadError = import('@uploadcare/upload-client').UploadError;
 export type UploadcareFile = import('@uploadcare/upload-client').UploadcareFile;
@@ -15,6 +16,8 @@ export type SecureDeliveryProxyUrlResolver = (
 export type SecureUploadsSignatureAndExpire = { secureSignature: string; secureExpire: string };
 export type SecureUploadsSignatureResolver = () => Promise<SecureUploadsSignatureAndExpire | null>;
 export type IconHrefResolver = (iconName: string) => string;
+export type FileValidator = FuncFileValidator | any;
+export type CollectionValidator = FuncCollectionValidator | any;
 
 export type ConfigType = {
   pubkey: string;
@@ -68,8 +71,9 @@ export type ConfigType = {
   secureUploadsSignatureResolver: SecureUploadsSignatureResolver | null;
   secureDeliveryProxyUrlResolver: SecureDeliveryProxyUrlResolver | null;
   iconHrefResolver: IconHrefResolver | null;
-  validators: string | null | [];
 
+  fileValidators: FileValidator[] | null;
+  collectionValidators: CollectionValidator[] | null;
 };
 export type ConfigComplexType = Pick<ConfigType, (typeof complexConfigKeys)[number]>;
 export type ConfigPlainType = Omit<ConfigType, keyof ConfigComplexType>;
@@ -77,8 +81,8 @@ export type ConfigAttributesType = KebabCaseKeys<ConfigPlainType> & LowerCaseKey
 
 export type KebabCase<S extends string> = S extends `${infer C}${infer T}`
   ? T extends Uncapitalize<T>
-  ? `${Uncapitalize<C>}${KebabCase<T>}`
-  : `${Uncapitalize<C>}-${KebabCase<T>}`
+    ? `${Uncapitalize<C>}${KebabCase<T>}`
+    : `${Uncapitalize<C>}-${KebabCase<T>}`
   : S;
 export type KebabCaseKeys<T extends Record<string, unknown>> = { [Key in keyof T as KebabCase<Key & string>]: T[Key] };
 export type LowerCase<S extends string> = Lowercase<S>;
@@ -128,11 +132,11 @@ export type OutputErrorTypePayload = {
 
 export type OutputError<T extends OutputFileErrorType | OutputCollectionErrorType> =
   T extends keyof OutputErrorTypePayload
-  ? {
-    type: T;
-    message: string;
-  } & OutputErrorTypePayload[T]
-  : never;
+    ? {
+        type: T;
+        message: string;
+      } & OutputErrorTypePayload[T]
+    : never;
 
 export type OutputFileEntry<TStatus extends OutputFileStatus = OutputFileStatus> = {
   status: TStatus;
@@ -149,7 +153,7 @@ export type OutputFileEntry<TStatus extends OutputFileStatus = OutputFileStatus>
   uploadProgress: number;
   fullPath: string | null;
 } & (
-    | {
+  | {
       status: 'success';
       fileInfo: UploadcareFile;
       uuid: string;
@@ -161,7 +165,7 @@ export type OutputFileEntry<TStatus extends OutputFileStatus = OutputFileStatus>
       isRemoved: false;
       errors: [];
     }
-    | {
+  | {
       status: 'failed';
       fileInfo: UploadcareFile | null;
       uuid: string | null;
@@ -173,7 +177,7 @@ export type OutputFileEntry<TStatus extends OutputFileStatus = OutputFileStatus>
       isRemoved: false;
       errors: OutputError<OutputFileErrorType>[];
     }
-    | {
+  | {
       status: 'uploading';
       fileInfo: null;
       uuid: null;
@@ -185,7 +189,7 @@ export type OutputFileEntry<TStatus extends OutputFileStatus = OutputFileStatus>
       isRemoved: false;
       errors: [];
     }
-    | {
+  | {
       status: 'removed';
       fileInfo: UploadcareFile | null;
       uuid: string | null;
@@ -197,7 +201,7 @@ export type OutputFileEntry<TStatus extends OutputFileStatus = OutputFileStatus>
       isRemoved: true;
       errors: OutputError<OutputFileErrorType>[];
     }
-    | {
+  | {
       status: 'idle';
       fileInfo: null;
       uuid: null;
@@ -209,7 +213,7 @@ export type OutputFileEntry<TStatus extends OutputFileStatus = OutputFileStatus>
       isRemoved: false;
       errors: [];
     }
-  );
+);
 
 export type OutputCollectionStatus = 'idle' | 'uploading' | 'success' | 'failed';
 
@@ -233,43 +237,43 @@ export type OutputCollectionState<
 } & (TGroupFlag extends 'has-group'
   ? { group: UploadcareGroup }
   : TGroupFlag extends 'maybe-has-group'
-  ? { group: UploadcareGroup | null }
-  : never) &
+    ? { group: UploadcareGroup | null }
+    : never) &
   (
     | {
-      status: 'idle';
-      isFailed: false;
-      isUploading: false;
-      isSuccess: false;
-      errors: [];
-      allEntries: OutputFileEntry<'idle' | 'success'>[];
-    }
+        status: 'idle';
+        isFailed: false;
+        isUploading: false;
+        isSuccess: false;
+        errors: [];
+        allEntries: OutputFileEntry<'idle' | 'success'>[];
+      }
     | {
-      status: 'uploading';
-      isFailed: false;
-      isUploading: true;
-      isSuccess: false;
-      errors: [];
-      allEntries: OutputFileEntry[];
-    }
+        status: 'uploading';
+        isFailed: false;
+        isUploading: true;
+        isSuccess: false;
+        errors: [];
+        allEntries: OutputFileEntry[];
+      }
     | {
-      status: 'success';
-      isFailed: false;
-      isUploading: false;
-      isSuccess: true;
-      errors: [];
-      allEntries: OutputFileEntry<'success'>[];
-    }
+        status: 'success';
+        isFailed: false;
+        isUploading: false;
+        isSuccess: true;
+        errors: [];
+        allEntries: OutputFileEntry<'success'>[];
+      }
     | {
-      status: 'failed';
-      isFailed: true;
-      isUploading: false;
-      isSuccess: false;
-      errors: OutputError<OutputCollectionErrorType>[];
-      allEntries: OutputFileEntry[];
-    }
+        status: 'failed';
+        isFailed: true;
+        isUploading: false;
+        isSuccess: false;
+        errors: OutputError<OutputCollectionErrorType>[];
+        allEntries: OutputFileEntry[];
+      }
   );
 
 export { EventType, EventPayload } from '../blocks/UploadCtxProvider/EventEmitter';
 
-export { };
+export {};

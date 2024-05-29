@@ -1,5 +1,6 @@
 import { buildCollectionFileError } from '../../buildOutputError.js';
 
+/** @type import('../../../abstract/ValidationManager.js').FuncCollectionValidator */
 export const validateMultiple = (collection, block) => {
   const total = collection.size;
   const multipleMin = block.cfg.multiple ? block.cfg.multipleMin : 0;
