@@ -47,9 +47,9 @@
   --uc-background-light: oklch(100% 0 0);
   --uc-foreground-light: oklch(21% 0.006 285.9);
   --uc-primary-lch-light: 59% 0.22 264; /* Quick customization: change this value to your brand color */
-  --uc-primary-light: oklch(var(--uc-primary-lch));
-  --uc-primary-hover-light: oklch(var(--uc-primary-lch) / 0.9);
-  --uc-primary-transparent-light: oklch(var(--uc-primary-lch) / 0.1);
+  --uc-primary-light: oklch(var(--uc-primary-lch-light));
+  --uc-primary-hover-light: oklch(var(--uc-primary-lch-light) / 0.9);
+  --uc-primary-transparent-light: oklch(var(--uc-primary-lch-light) / 0.1);
   --uc-primary-foreground-light: oklch(100% 0 0);
   --uc-secondary-light: oklch(21% 0.006 285.9 / 0.05);
   --uc-secondary-hover-light: oklch(21% 0.006 285.9 / 0.08);
