@@ -5,6 +5,7 @@ lr-copyright {
 }
 
 lr-copyright .credits {
+  all: unset;
   position: absolute;
   bottom: 12px;
   background-color: var(--uc-background);
