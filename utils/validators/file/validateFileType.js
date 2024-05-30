@@ -1,8 +1,7 @@
 // @ts-check
 import { IMAGE_ACCEPT_LIST, matchExtension, matchMimeType, mergeFileTypes } from '../../fileTypes.js';
-import { buildOutputFileError } from '../../buildOutputError.js';
 
-/** @type import('../../../abstract/ValidationManager.js').FuncFileValidator */
+/** @type {import('../../../abstract/ValidationManager.js').FuncFileValidator} */
 export const validateFileType = (outputEntry, internalEntry, block) => {
   const imagesOnly = block.cfg.imgOnly;
   const accept = block.cfg.accept;
@@ -22,10 +21,10 @@ export const validateFileType = (outputEntry, internalEntry, block) => {
 
   if (!mimeOk && !extOk) {
     // Assume file type is not allowed if both mime and ext checks fail
-    return buildOutputFileError({
+    return {
       type: 'FORBIDDEN_FILE_TYPE',
       message: block.l10n('file-type-not-allowed'),
-      entry: outputEntry,
-    });
+      payload: { entry: outputEntry },
+    };
   }
 };

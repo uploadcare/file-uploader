@@ -1,6 +1,6 @@
-import { buildCollectionFileError } from '../../buildOutputError.js';
+//@ts-check
 
-/** @type import('../../../abstract/ValidationManager.js').FuncCollectionValidator */
+/** @type {import('../../../abstract/ValidationManager.js').FuncCollectionValidator} */
 export const validateMultiple = (collection, block) => {
   const total = collection.size;
   const multipleMin = block.cfg.multiple ? block.cfg.multipleMin : 0;
@@ -12,13 +12,16 @@ export const validateMultiple = (collection, block) => {
       max: multipleMax,
       total,
     });
-    return buildCollectionFileError({
+
+    return {
       type: 'TOO_FEW_FILES',
       message,
-      total,
-      min: multipleMin,
-      max: multipleMax,
-    });
+      payload: {
+        total,
+        min: multipleMin,
+        max: multipleMax,
+      },
+    };
   }
 
   if (multipleMax && total > multipleMax) {
@@ -27,12 +30,14 @@ export const validateMultiple = (collection, block) => {
       max: multipleMax,
       total,
     });
-    return buildCollectionFileError({
+    return {
       type: 'TOO_MANY_FILES',
       message,
-      total,
-      min: multipleMin,
-      max: multipleMax,
-    });
+      payload: {
+        total,
+        min: multipleMin,
+        max: multipleMax,
+      },
+    };
   }
 };

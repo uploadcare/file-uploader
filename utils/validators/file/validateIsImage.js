@@ -1,7 +1,5 @@
 // @ts-check
 
-import { buildOutputFileError } from '../../buildOutputError.js';
-
 /** @type import('../../../abstract/ValidationManager.js').FuncFileValidator */
 export const validateIsImage = (outputEntry, internalEntry, block) => {
   const imagesOnly = block.cfg.imgOnly;
@@ -19,9 +17,9 @@ export const validateIsImage = (outputEntry, internalEntry, block) => {
     return;
   }
 
-  return buildOutputFileError({
+  return {
     type: 'NOT_AN_IMAGE',
     message: block.l10n('images-only-accepted'),
-    entry: outputEntry,
-  });
+    payload: { entry: outputEntry },
+  };
 };
