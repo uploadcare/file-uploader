@@ -1086,3 +1086,8 @@ lr-presence-toggle.hidden {
   opacity: 0;
   pointer-events: none;
 }
+
+lr-presence-toggle.initial {
+  display: none !important;
+  transition: none !important;
+}
