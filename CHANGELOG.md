@@ -1,3 +1,9 @@
+## [0.42.1](https://github.com/uploadcare/blocks/compare/v0.42.0...v0.42.1) (2024-05-30)
+
+### Bug Fixes
+
+- **CHANGELOG:** added link to the documentation ([#669](https://github.com/uploadcare/blocks/issues/669)) ([a8e29d7](https://github.com/uploadcare/blocks/commit/a8e29d7a7942a930c0444e9ca8a39d017497c722))
+
 # [0.42.0](https://github.com/uploadcare/blocks/compare/v0.41.1...v0.42.0) (2024-05-30)
 
 ### Features
