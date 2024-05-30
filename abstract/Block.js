@@ -130,7 +130,9 @@ export class Block extends BaseComponent {
   connectedCallback() {
     const className = /** @type {typeof Block} */ (this.constructor).className;
     if (className) {
-      this.classList.toggle(`${TAG_PREFIX}${className}`, true);
+      className.split(' ').forEach((cn) => {
+        this.classList.toggle(cn, true);
+      });
     }
 
     if (this.hasAttribute('retpl')) {
