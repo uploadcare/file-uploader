@@ -100,10 +100,6 @@
   --uc-simple-btn-font-family: var(--uc-font-family);
   --uc-simple-btn-padding: 7px 14px;
 
-  /* TO BE REMOVED */
-
-  --darkmode: 0;
-
   /* Default */
 
   --uc-background: var(--uc-background-light);
@@ -153,9 +149,6 @@
     --uc-destructive-foreground: var(--uc-destructive-foreground-light);
     --uc-border: var(--uc-border-light);
     --uc-dialog-shadow: var(--uc-dialog-shadow-light);
-
-    /* TO BE REMOVED */
-    --darkmode: 0;
   }
 }
 
@@ -176,9 +169,6 @@
     --uc-destructive-foreground: var(--uc-destructive-foreground-dark);
     --uc-border: var(--uc-border-dark);
     --uc-dialog-shadow: var(--uc-dialog-shadow-dark);
-
-    /* TO BE REMOVED */
-    --darkmode: 1;
   }
 }
 
@@ -198,9 +188,6 @@
   --uc-destructive-foreground: var(--uc-destructive-foreground-light);
   --uc-border: var(--uc-border-light);
   --uc-dialog-shadow: var(--uc-dialog-shadow-light);
-
-  /* TO BE REMOVED */
-  --darkmode: 0;
 }
 
 .uc-dark {
@@ -219,7 +206,4 @@
   --uc-destructive-foreground: var(--uc-destructive-foreground-dark);
   --uc-border: var(--uc-border-dark);
   --uc-dialog-shadow: var(--uc-dialog-shadow-dark);
-
-  /* TO BE REMOVED */
-  --darkmode: 1;
 }
