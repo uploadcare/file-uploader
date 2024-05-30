@@ -1,3 +1,5 @@
+## [0.42.1](https://github.com/uploadcare/blocks/compare/v0.42.0...v0.42.1) (2024-05-30)
+
 # [0.42.0](https://github.com/uploadcare/blocks/compare/v0.41.1...v0.42.0) (2024-05-30)
 
 ### Features
