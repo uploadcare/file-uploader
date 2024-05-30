@@ -1,3 +1,9 @@
+# [0.42.0](https://github.com/uploadcare/blocks/compare/v0.41.1...v0.42.0) (2024-05-30)
+
+### Features
+
+- **lr-file-uploader-regular:** added prop headless ([5e58ff4](https://github.com/uploadcare/blocks/commit/5e58ff4c666ff13a69bc69429090f0d691c3af0c))
+
 ## [0.41.1](https://github.com/uploadcare/blocks/compare/v0.41.0...v0.41.1) (2024-05-27)
 
 ### Bug Fixes
