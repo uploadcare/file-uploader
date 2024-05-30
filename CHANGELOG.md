@@ -2,7 +2,7 @@
 
 ### Features
 
-- **lr-file-uploader-regular:** added prop headless ([5e58ff4](https://github.com/uploadcare/blocks/commit/5e58ff4c666ff13a69bc69429090f0d691c3af0c))
+- **lr-file-uploader-regular:** added attribute headless ([5e58ff4](https://github.com/uploadcare/blocks/commit/5e58ff4c666ff13a69bc69429090f0d691c3af0c)). See docs [here](https://uploadcare.com/docs/file-uploader/installation/#choose-a-solution).
 
 ## [0.41.1](https://github.com/uploadcare/blocks/compare/v0.41.0...v0.41.1) (2024-05-27)
 
