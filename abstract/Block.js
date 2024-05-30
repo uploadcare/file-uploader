@@ -179,7 +179,8 @@ export class Block extends BaseComponent {
     }
 
     this.sub(localeStateKey('locale-id'), (localeId) => {
-      this.style.direction = getLocaleDirection(localeId);
+      const direction = getLocaleDirection(localeId);
+      this.style.direction = direction === 'ltr' ? '' : direction;
     });
   }
 
