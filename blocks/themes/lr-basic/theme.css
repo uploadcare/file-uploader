@@ -1,11 +1,49 @@
+/* stylelint-disable declaration-block-no-duplicate-custom-properties */
 :where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular) {
   /* Font */
 
   --uc-font-family: system-ui;
   --uc-font-size: 14px;
 
-  /* Light colors */
+  /* Light colors RGB */
 
+  --uc-background-light: rgb(255, 255, 255);
+  --uc-foreground-light: rgb(54, 54, 54);
+  --uc-primary-lch-light: rgb(114, 111, 173); /* Quick customization: change this value to your brand color */
+  --uc-primary-light: rgb(114, 111, 173);
+  --uc-primary-hover-light: rgba(114, 111, 173, 90%);
+  --uc-primary-transparent-light: rgba(114, 111, 173, 10%);
+  --uc-primary-foreground-light: rgb(255, 255, 255);
+  --uc-secondary-light: rgba(54, 54, 54, 5%);
+  --uc-secondary-hover-light: rgba(54, 54, 54, 8%);
+  --uc-secondary-foreground-light: rgb(54, 54, 54);
+  --uc-muted-light: rgb(247, 247, 247);
+  --uc-muted-foreground-light: rgb(140, 140, 140);
+  --uc-destructive-light: rgba(190, 92, 92, 5%);
+  --uc-destructive-foreground-light: rgb(190, 92, 92);
+  --uc-border-light: rgb(235, 235, 235);
+  --uc-dialog-shadow-light: rgba(0, 0, 0, 10%);
+
+  /* Dark colors RGB */
+
+  --uc-background-dark: rgb(56, 56, 56);
+  --uc-foreground-dark: rgb(231, 231, 231);
+  --uc-primary-lch-dark: rgb(152, 150, 201); /* Quick customization: change this value to your brand color */
+  --uc-primary-dark: rgb(152, 150, 201);
+  --uc-primary-hover-dark: rgba(152, 150, 201, 90%);
+  --uc-primary-transparent-dark: rgba(152, 150, 201, 7.5%);
+  --uc-primary-foreground-dark: rgb(0, 0, 0);
+  --uc-secondary-dark: rgba(231, 231, 231, 7%);
+  --uc-secondary-hover-dark: rgba(231, 231, 231, 10%);
+  --uc-secondary-foreground-dark: rgb(231, 231, 231);
+  --uc-muted-dark: rgb(66, 66, 66);
+  --uc-muted-foreground-dark: rgb(173, 173, 173);
+  --uc-destructive-dark: rgba(187, 92, 92, 5%);
+  --uc-destructive-foreground-dark: rgb(187, 92, 92);
+  --uc-border-dark: rgb(92, 92, 92);
+  --uc-dialog-shadow-dark: rgba(0, 0, 0, 25%);
+
+  /* Light colors OKLCH */
   --uc-background-light: oklch(100% 0 0);
   --uc-foreground-light: oklch(21% 0.006 285.9);
   --uc-primary-lch-light: 59% 0.22 264; /* Quick customization: change this value to your brand color */
@@ -23,7 +61,7 @@
   --uc-border-light: oklch(92% 0.006 285.9);
   --uc-dialog-shadow-light: 0px 6px 20px oklch(0% 0 0 / 0.1);
 
-  /* Dark colors */
+  /* Dark colors OKLCH */
 
   --uc-background-dark: oklch(22% 0.002 197.1);
   --uc-foreground-dark: oklch(91% 0.002 197.1);
