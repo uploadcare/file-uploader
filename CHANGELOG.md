@@ -1,3 +1,24 @@
+# [0.43.0](https://github.com/uploadcare/blocks/compare/v0.42.1...v0.43.0) (2024-06-14)
+
+### Features
+
+- added `collectionValidators` and `fileValidators`: Custom validators are now supported for collections and files. This enhancement allows for the addition of necessary checks for uploaded files and collections, providing flexibility and control over compliance with requirements ([#667](https://github.com/uploadcare/blocks/issues/667)) ([d3260b0](https://github.com/uploadcare/blocks/commit/d3260b0cce5ac6ca7cfd0aeb8aff0c9fc35036ed)). See docs [here](https://uploadcare.com/docs/file-uploader/validators). 
+
+
+## [0.42.1](https://github.com/uploadcare/blocks/compare/v0.42.0...v0.42.1) (2024-05-30)
+
+# [0.42.0](https://github.com/uploadcare/blocks/compare/v0.41.1...v0.42.0) (2024-05-30)
+
+### Features
+
+- **lr-file-uploader-regular:** added attribute headless ([5e58ff4](https://github.com/uploadcare/blocks/commit/5e58ff4c666ff13a69bc69429090f0d691c3af0c)). See docs [here](https://uploadcare.com/docs/file-uploader/installation/#choose-a-solution).
+
+## [0.41.1](https://github.com/uploadcare/blocks/compare/v0.41.0...v0.41.1) (2024-05-27)
+
+### Bug Fixes
+
+- **styles-readme:** updated connect style in the project ([#663](https://github.com/uploadcare/blocks/issues/663)) ([2ee913f](https://github.com/uploadcare/blocks/commit/2ee913f93ee44ffbd440c66f9ab6b0c92276faa2))
+
 # [0.41.0](https://github.com/uploadcare/blocks/compare/v0.40.0...v0.41.0) (2024-05-24)
 
 ### Features

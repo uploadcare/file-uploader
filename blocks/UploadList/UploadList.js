@@ -79,7 +79,7 @@ export class UploadList extends UploaderBlock {
     );
     const tooMany = collectionState.errors.some((err) => err.type === 'TOO_MANY_FILES');
     const exact = collectionState.totalCount === (this.cfg.multiple ? this.cfg.multipleMax : 1);
-    const validationOk = summary.failed === 0;
+    const validationOk = summary.failed === 0 && collectionState.errors.length === 0;
     let uploadBtnVisible = false;
     let allDone = false;
     let doneBtnEnabled = false;

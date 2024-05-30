@@ -1,10 +1,27 @@
 // @ts-check
 import { SolutionBlock } from '../../../abstract/SolutionBlock.js';
 import { EventType } from '../../../blocks/UploadCtxProvider/EventEmitter.js';
+import { asBoolean } from '../../../blocks/Config/normalizeConfigValue.js';
 
 export class FileUploaderRegular extends SolutionBlock {
+  constructor() {
+    super();
+
+    this.init$ = {
+      ...this.init$,
+      isHidden: false,
+    };
+  }
+
   initCallback() {
     super.initCallback();
+
+    this.defineAccessor(
+      'headless',
+      /** @param {unknown} value */ (value) => {
+        this.set$({ isHidden: asBoolean(value) });
+      },
+    );
 
     this.sub(
       '*modalActive',
@@ -22,7 +39,7 @@ export class FileUploaderRegular extends SolutionBlock {
 }
 
 FileUploaderRegular.template = /* HTML */ `
-  <lr-simple-btn></lr-simple-btn>
+  <lr-simple-btn set="@hidden: isHidden"></lr-simple-btn>
 
   <lr-modal strokes block-body-scrolling>
     <lr-start-from>
@@ -40,3 +57,8 @@ FileUploaderRegular.template = /* HTML */ `
 
   <lr-progress-bar-common></lr-progress-bar-common>
 `;
+
+FileUploaderRegular.bindAttributes({
+  // @ts-expect-error TODO: fix types inside symbiote
+  headless: null,
+});

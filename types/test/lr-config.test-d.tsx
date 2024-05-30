@@ -1,7 +1,7 @@
 import React from 'react';
 import { expectType } from 'tsd';
 import '../jsx.js';
-import { OutputFileEntry } from '../index.js';
+import { OutputFileEntry, FuncCollectionValidator, FuncFileValidator } from '../index.js';
 
 // @ts-expect-error untyped props
 () => <lr-config ctx-name="1" something="wrong"></lr-config>;
@@ -64,5 +64,27 @@ import { OutputFileEntry } from '../index.js';
       expectType<OutputFileEntry>(entry);
       return { foo: 'bar' };
     };
+  }
+};
+
+
+
+// allow to pass validators
+() => {
+  const ref = React.useRef<InstanceType<Config> | null>(null);
+  if (ref.current) {
+    const config = ref.current;
+
+    const maxSize: FuncFileValidator = (outputEntry, block) => ({
+      message: block.l10n('images-only-accepted'),
+      payload: { entry: outputEntry },
+    })
+
+    const maxCollection: FuncCollectionValidator = (collection, block) => ({
+      message: block.l10n('some-files-were-not-uploaded'),
+    })
+
+    config.fileValidators = [maxSize]
+    config.collectionValidators = [maxCollection]
   }
 };

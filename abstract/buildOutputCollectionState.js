@@ -43,7 +43,7 @@ export function buildOutputCollectionState(uploaderBlock) {
     progress: () => {
       return uploaderBlock.$['*commonProgress'];
     },
-    /** @returns {ReturnType<import('../utils/buildOutputError.js').buildCollectionFileError>[]} */
+    /** @returns {ReturnType<import('../types').OutputErrorFile>[]} */
     errors: () => {
       return uploaderBlock.$['*collectionErrors'];
     },
