@@ -15,14 +15,14 @@ import { validateMultiple, validateCollectionUploadError } from '../utils/valida
 /**
  * @typedef {(
  *   outputEntry: import('../types').OutputFileEntry,
- *   block: import('./UploaderBlock.js').UploaderBlock,
+ *   ctx: import('./UploaderBlock.js').UploaderBlock,
  * ) => undefined | OutputFileErrorType} FuncFileValidator
  */
 
 /**
  * @typedef {(
  *   collection: import('./TypedCollection.js').TypedCollection,
- *   block: import('./UploaderBlock.js').UploaderBlock,
+ *   ctx: import('./UploaderBlock.js').UploaderBlock,
  * ) => undefined | OutputCollectionErrorType | OutputCollectionErrorType[]} FuncCollectionValidator
  */
 
