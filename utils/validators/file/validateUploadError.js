@@ -2,9 +2,11 @@
 import { NetworkError, UploadError } from '@uploadcare/upload-client';
 
 /** @type {import('../../../abstract/ValidationManager.js').FuncFileValidator} */
-export const validateUploadError = (outputEntry, internalEntry, block) => {
+export const validateUploadError = (outputEntry, block) => {
+  const { internalId } = outputEntry;
+
   /** @type {unknown} */
-  const cause = internalEntry?.getValue('uploadError');
+  const cause = block.uploadCollection.read(internalId)?.getValue('uploadError');
   if (!cause) {
     return;
   }

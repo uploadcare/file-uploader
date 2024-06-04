@@ -15,7 +15,6 @@ import { validateMultiple, validateCollectionUploadError } from '../utils/valida
 /**
  * @typedef {(
  *   outputEntry: import('../types').OutputFileEntry,
- *   internalEntry: import('./TypedData.js').TypedData,
  *   block: import('./UploaderBlock.js').UploaderBlock,
  * ) => undefined | OutputFileErrorType} FuncFileValidator
  */
@@ -109,9 +108,13 @@ export class ValidationManager {
     const errors = [];
 
     for (const validator of [...this._fileValidators, ...(this._blockInstance.cfg.fileValidators ?? [])]) {
-      const error = validator(outputEntry, entry, this._blockInstance);
-      if (error) {
-        errors.push(error);
+      try {
+        const error = validator(outputEntry, this._blockInstance);
+        if (error) {
+          errors.push(error);
+        }
+      } catch (error) {
+        console.log(`You're validator is failed ${error}`);
       }
     }
     entry.setValue('errors', errors);

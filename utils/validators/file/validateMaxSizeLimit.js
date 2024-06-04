@@ -2,7 +2,7 @@
 import { prettyBytes } from '../../prettyBytes.js';
 
 /** @type {import('../../../abstract/ValidationManager.js').FuncFileValidator} */
-export const validateMaxSizeLimit = (outputEntry, internalEntry, block) => {
+export const validateMaxSizeLimit = (outputEntry, block) => {
   const maxFileSize = block.cfg.maxLocalFileSizeBytes;
   const fileSize = outputEntry.size;
   if (maxFileSize && fileSize && fileSize > maxFileSize) {
