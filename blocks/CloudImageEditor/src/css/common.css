@@ -1,6 +1,6 @@
 /* TODO: we shuoud use basic theme there  */
 
-.lr-cloud-image-editor {
+[lr-cloud-image-editor] {
   --color-primary-accent: var(--uc-primary);
   --color-text-base: var(--uc-foreground);
   --color-text-accent-contrast: var(--uc-background);
@@ -46,11 +46,11 @@
   max-height: 100%;
 }
 
-.lr-cloud-image-editor :is([can-handle-paste]:hover, [can-handle-paste]:focus) {
+[lr-cloud-image-editor] :is([can-handle-paste]:hover, [can-handle-paste]:focus) {
   --can-handle-paste: 'true';
 }
 
-.lr-cloud-image-editor
+[lr-cloud-image-editor]
   :is([tabindex][focus-visible], [tabindex]:hover, [with-effects][focus-visible], [with-effects]:hover) {
   --filter-effect: var(--hover-filter) !important;
   --opacity-effect: var(--hover-opacity) !important;
@@ -58,42 +58,42 @@
   --background-effect: var(--hover-background) !important;
 }
 
-.lr-cloud-image-editor :is([tabindex]:active, [with-effects]:active) {
+[lr-cloud-image-editor] :is([tabindex]:active, [with-effects]:active) {
   --filter-effect: var(--down-filter) !important;
   --opacity-effect: var(--down-opacity) !important;
   --color-effect: var(--down-color-rgb) !important;
   --background-effect: var(--down-background) !important;
 }
 
-.lr-cloud-image-editor :is([tabindex][active], [with-effects][active]) {
+[lr-cloud-image-editor] :is([tabindex][active], [with-effects][active]) {
   --filter-effect: var(--active-filter) !important;
   --opacity-effect: var(--active-opacity) !important;
   --color-effect: var(--active-color-rgb) !important;
   --background-effect: var(--active-background) !important;
 }
 
-.lr-cloud-image-editor [hidden-scrollbar]::-webkit-scrollbar {
+[lr-cloud-image-editor] [hidden-scrollbar]::-webkit-scrollbar {
   display: none;
 }
 
-.lr-cloud-image-editor [hidden-scrollbar] {
+[lr-cloud-image-editor] [hidden-scrollbar] {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
 
-.lr-cloud-image-editor.editor_ON {
+[lr-cloud-image-editor].editor_ON {
   --modal-header-opacity: 0;
   --modal-header-height: 0px;
   --modal-toolbar-height: calc(var(--size-panel-heading) * 2);
 }
 
-.lr-cloud-image-editor.editor_OFF {
+[lr-cloud-image-editor].editor_OFF {
   --modal-header-opacity: 1;
   --modal-header-height: var(--size-panel-heading);
   --modal-toolbar-height: var(--size-panel-heading);
 }
 
-.lr-cloud-image-editor > .wrapper {
+[lr-cloud-image-editor] > .wrapper {
   --l-min-img-height: var(--modal-toolbar-height);
   --l-max-img-height: 100%;
   --l-edit-button-width: 120px;
@@ -108,20 +108,20 @@
 }
 
 @media only screen and (max-width: 800px) {
-  .lr-cloud-image-editor > .wrapper {
+  [lr-cloud-image-editor] > .wrapper {
     --l-edit-button-width: 70px;
     --l-toolbar-horizontal-padding: var(--cldtr-gap-min);
   }
 }
 
-.lr-cloud-image-editor > .wrapper > .viewport {
+[lr-cloud-image-editor] > .wrapper > .viewport {
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
 }
 
-.lr-cloud-image-editor > .wrapper > .viewport > .image_container > .image {
+[lr-cloud-image-editor] > .wrapper > .viewport > .image_container > .image {
   --viewer-image-opacity: 1;
 
   position: absolute;
@@ -140,13 +140,13 @@
   pointer-events: auto;
 }
 
-.lr-cloud-image-editor > .wrapper > .viewport > .image_container > .image.image_visible_viewer {
+[lr-cloud-image-editor] > .wrapper > .viewport > .image_container > .image.image_visible_viewer {
   transition:
     opacity var(--transition-duration-3) ease-in-out,
     transform var(--transition-duration-4);
 }
 
-.lr-cloud-image-editor > .wrapper > .viewport > .image_container > .image.image_hidden_to_cropper {
+[lr-cloud-image-editor] > .wrapper > .viewport > .image_container > .image.image_hidden_to_cropper {
   --viewer-image-opacity: 0;
 
   background-image: var(--transparent-pixel);
@@ -157,7 +157,7 @@
   pointer-events: none;
 }
 
-.lr-cloud-image-editor > .wrapper > .viewport > .image_container > .image.image_hidden_effects {
+[lr-cloud-image-editor] > .wrapper > .viewport > .image_container > .image.image_hidden_effects {
   --viewer-image-opacity: 0;
 
   transform: scale(1);
@@ -167,7 +167,7 @@
   pointer-events: none;
 }
 
-.lr-cloud-image-editor > .wrapper > .viewport > .image_container {
+[lr-cloud-image-editor] > .wrapper > .viewport > .image_container {
   position: relative;
   display: block;
   width: 100%;
@@ -176,12 +176,12 @@
   transition: var(--transition-duration-3);
 }
 
-.lr-cloud-image-editor > .wrapper > .toolbar {
+[lr-cloud-image-editor] > .wrapper > .toolbar {
   position: relative;
   transition: 0.3s;
 }
 
-.lr-cloud-image-editor > .wrapper > .toolbar > .toolbar_content {
+[lr-cloud-image-editor] > .wrapper > .toolbar > .toolbar_content {
   position: absolute;
   bottom: 0px;
   left: 0px;
@@ -192,7 +192,7 @@
   background-color: var(--color-fill-contrast);
 }
 
-.lr-cloud-image-editor > .wrapper > .toolbar > .toolbar_content.toolbar_content__viewer {
+[lr-cloud-image-editor] > .wrapper > .toolbar > .toolbar_content.toolbar_content__viewer {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -201,16 +201,16 @@
   padding-left: var(--l-toolbar-horizontal-padding);
 }
 
-.lr-cloud-image-editor > .wrapper > .toolbar > .toolbar_content.toolbar_content__editor {
+[lr-cloud-image-editor] > .wrapper > .toolbar > .toolbar_content.toolbar_content__editor {
   display: flex;
 }
 
-.lr-cloud-image-editor > .wrapper > .viewport > .info_pan {
+[lr-cloud-image-editor] > .wrapper > .viewport > .info_pan {
   position: absolute;
   user-select: none;
 }
 
-.lr-cloud-image-editor > .wrapper > .viewport > .file_type_outer {
+[lr-cloud-image-editor] > .wrapper > .viewport > .file_type_outer {
   position: absolute;
   z-index: 2;
   display: flex;
@@ -219,11 +219,11 @@
   user-select: none;
 }
 
-.lr-cloud-image-editor > .wrapper > .viewport > .file_type_outer > .file_type {
+[lr-cloud-image-editor] > .wrapper > .viewport > .file_type_outer > .file_type {
   padding: 4px 0.8em;
 }
 
-.lr-cloud-image-editor > .wrapper > .network_problems_splash {
+[lr-cloud-image-editor] > .wrapper > .network_problems_splash {
   position: absolute;
   z-index: 4;
   display: flex;
@@ -233,7 +233,7 @@
   background-color: var(--color-fill-contrast);
 }
 
-.lr-cloud-image-editor > .wrapper > .network_problems_splash > .network_problems_content {
+[lr-cloud-image-editor] > .wrapper > .network_problems_splash > .network_problems_content {
   display: flex;
   flex: 1;
   flex-direction: column;
@@ -241,7 +241,7 @@
   justify-content: center;
 }
 
-.lr-cloud-image-editor > .wrapper > .network_problems_splash > .network_problems_content > .network_problems_icon {
+[lr-cloud-image-editor] > .wrapper > .network_problems_splash > .network_problems_content > .network_problems_icon {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -252,13 +252,13 @@
   border-radius: 50%;
 }
 
-.lr-cloud-image-editor > .wrapper > .network_problems_splash > .network_problems_content > .network_problems_text {
+[lr-cloud-image-editor] > .wrapper > .network_problems_splash > .network_problems_content > .network_problems_text {
   margin-top: var(--cldtr-gap-max);
   font-size: var(--font-size-ui);
   color: var(--uc-foreground);
 }
 
-.lr-cloud-image-editor > .wrapper > .network_problems_splash > .network_problems_footer {
+[lr-cloud-image-editor] > .wrapper > .network_problems_splash > .network_problems_footer {
   display: flex;
   align-items: center;
   justify-content: center;

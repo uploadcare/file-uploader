@@ -3,6 +3,7 @@ import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { asBoolean } from '../Config/normalizeConfigValue.js';
 
 export class SimpleBtn extends UploaderBlock {
+  static styleAttrs = [...super.styleAttrs, 'lr-simple-btn'];
   couldBeCtxOwner = true;
   constructor() {
     super();

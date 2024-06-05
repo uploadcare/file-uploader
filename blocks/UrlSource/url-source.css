@@ -3,7 +3,7 @@ lr-url-source {
   background-color: var(--uc-background);
 }
 
-lr-modal lr-url-source {
+[lr-modal] lr-url-source {
   width: min(calc(var(--uc-dialog-width) - var(--uc-padding) * 2), calc(100vw - var(--uc-padding) * 2));
 }
 

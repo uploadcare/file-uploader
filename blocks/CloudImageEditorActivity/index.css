@@ -7,7 +7,7 @@ lr-cloud-image-editor-activity {
   background-color: var(--uc-background);
 }
 
-lr-modal lr-cloud-image-editor-activity {
+[lr-modal] lr-cloud-image-editor-activity {
   width: min(calc(var(--uc-dialog-max-width) - var(--uc-padding) * 2), calc(100vw - var(--uc-padding) * 2));
   height: var(--modal-content-height-fill, 100%);
 }

@@ -3,6 +3,8 @@ import { ActivityBlock } from '../../../abstract/ActivityBlock.js';
 import { SolutionBlock } from '../../../abstract/SolutionBlock.js';
 
 export class FileUploaderInline extends SolutionBlock {
+  static styleAttrs = [...super.styleAttrs, 'lr-file-uploader-inline'];
+
   constructor() {
     super();
 

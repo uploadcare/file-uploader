@@ -10,7 +10,7 @@ lr-camera-source {
   border-radius: var(--uc-radius);
 }
 
-lr-modal lr-camera-source {
+[lr-modal] lr-camera-source {
   width: min(calc(var(--uc-dialog-max-width) - var(--uc-padding) * 2), calc(100vw - var(--uc-padding) * 2));
   height: 100vh;
   max-height: var(--modal-max-content-height);

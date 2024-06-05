@@ -1,11 +1,11 @@
-lr-modal {
+:where([lr-modal]) {
   --modal-max-content-height: calc(
     var(--uploadcare-blocks-window-height, 100vh) - 4 * var(--uc-padding) - var(--uc-button-size)
   );
   --modal-content-height-fill: var(--uploadcare-blocks-window-height, 100vh);
 }
 
-lr-modal[dialog-fallback] {
+:where([lr-modal])[dialog-fallback] {
   --lr-z-max: 2147483647;
 
   position: fixed;
@@ -19,12 +19,12 @@ lr-modal[dialog-fallback] {
   inset: 0;
 }
 
-lr-modal[dialog-fallback] dialog[open] {
+:where([lr-modal])[dialog-fallback] dialog[open] {
   z-index: var(--lr-z-max);
   pointer-events: auto;
 }
 
-lr-modal[dialog-fallback] dialog[open] + .backdrop {
+:where([lr-modal])[dialog-fallback] dialog[open] + .backdrop {
   position: fixed;
   top: 0px;
   left: 0px;
@@ -37,34 +37,34 @@ lr-modal[dialog-fallback] dialog[open] + .backdrop {
   pointer-events: auto;
 }
 
-lr-modal[strokes][dialog-fallback] dialog[open] + .backdrop {
+:where([lr-modal])[strokes][dialog-fallback] dialog[open] + .backdrop {
   background-image: var(--modal-backdrop-background-image);
 }
 
 @supports selector(dialog::backdrop) {
-  lr-modal > dialog::backdrop {
+  :where([lr-modal]) > dialog::backdrop {
     /* backdrop don't inherit theme properties */
     background-color: oklch(0 0 0 / 0.1);
   }
-  lr-modal[strokes] > dialog::backdrop {
+  :where([lr-modal])[strokes] > dialog::backdrop {
     /* TODO: it's not working, fix it */
     background-image: var(--modal-backdrop-background-image);
   }
 }
 
-lr-modal > dialog[open] {
+:where([lr-modal]) > dialog[open] {
   transform: translateY(0px);
   visibility: visible;
   opacity: 1;
 }
 
-lr-modal > dialog:not([open]) {
+:where([lr-modal]) > dialog:not([open]) {
   transform: translateY(20px);
   visibility: hidden;
   opacity: 0;
 }
 
-lr-modal > dialog {
+:where([lr-modal]) > dialog {
   display: flex;
   flex-direction: column;
 
@@ -86,7 +86,7 @@ lr-modal > dialog {
 }
 
 @media only screen and (max-width: 430px), only screen and (max-height: 600px) {
-  lr-modal > dialog > .content {
+  :where([lr-modal]) > dialog > .content {
     height: var(--modal-max-content-height);
   }
 }

@@ -1,65 +1,54 @@
 @import url('../../../blocks/themes/lr-basic/index.css');
 
-.lr-file-uploader-inline lr-start-from,
-lr-file-uploader-inline lr-start-from {
+[lr-file-uploader-inline] lr-start-from {
   height: 100%;
   container-type: inline-size;
 }
 
-.lr-file-uploader-inline,
-lr-file-uploader-inline {
+[lr-file-uploader-inline] {
   --cfg-done-activity: 'start-from';
   --cfg-init-activity: 'start-from';
 
   flex: 1;
 }
 
-.lr-file-uploader-inline lr-activity-header::after,
-lr-file-uploader-inline lr-activity-header::after {
+[lr-file-uploader-inline] lr-activity-header::after {
   width: var(--uc-button-size);
   height: var(--uc-button-size);
   content: '';
 }
 
-.lr-file-uploader-inline close-btn,
-lr-file-uploader-inline lr-activity-header .close-btn {
+[lr-file-uploader-inline] lr-activity-header close-btn {
   display: none;
 }
 
-.lr-file-uploader-inline lr-copyright .credits,
-lr-file-uploader-inline lr-copyright .credits {
+[lr-file-uploader-inline] lr-copyright .credits {
   position: static;
 }
 
 @container (min-width: 500px) {
-  .lr-file-uploader-inline lr-start-from .content,
-  lr-file-uploader-inline lr-start-from .content {
+  [lr-file-uploader-inline] lr-start-from .content {
     grid-template-columns: 1fr max-content;
     height: 100%;
   }
 
-  .lr-file-uploader-inline lr-start-from lr-copyright,
-  lr-file-uploader-inline lr-start-from lr-copyright {
+  [lr-file-uploader-inline] lr-start-from lr-copyright {
     grid-column: 2;
   }
 
-  .lr-file-uploader-inline lr-start-from lr-drop-area,
-  lr-file-uploader-inline lr-start-from lr-drop-area {
+  [lr-file-uploader-inline] lr-start-from lr-drop-area {
     grid-row: span 3;
   }
 
-  .lr-file-uploader-inline lr-start-from:has(lr-copyright[hidden]) lr-drop-area,
-  lr-file-uploader-inline lr-start-from:has(lr-copyright[hidden]) lr-drop-area {
+  [lr-file-uploader-inline] lr-start-from:has(lr-copyright[hidden]) lr-drop-area {
     grid-row: span 2;
   }
 
-  .lr-file-uploader-inline lr-start-from:has(.cancel-btn[hidden]) lr-drop-area,
-  lr-file-uploader-inline lr-start-from:has(.cancel-btn[hidden]) lr-drop-area {
+  [lr-file-uploader-inline] lr-start-from:has(.cancel-btn[hidden]) lr-drop-area {
     grid-row: span 2;
   }
 
-  .lr-file-uploader-inline lr-start-from:has(lr-copyright[hidden]):has(.cancel-btn[hidden]) lr-drop-area,
-  lr-file-uploader-inline lr-start-from:has(lr-copyright[hidden]):has(.cancel-btn[hidden]) lr-drop-area {
+  [lr-file-uploader-inline] lr-start-from:has(lr-copyright[hidden]):has(.cancel-btn[hidden]) lr-drop-area {
     grid-row: span 1;
   }
 }

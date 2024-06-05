@@ -12,6 +12,7 @@ const GLOBAL_CTX_NAME = 'lr-drop-area';
 const REGISTRY_KEY = `${GLOBAL_CTX_NAME}/registry`;
 
 export class DropArea extends UploaderBlock {
+  static styleAttrs = [...super.styleAttrs, 'lr-drop-area'];
   constructor() {
     super();
 

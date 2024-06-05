@@ -4,6 +4,7 @@ export { BaseComponent, Data, UID } from '@symbiotejs/symbiote';
 
 // Abstract:
 export { Block } from './abstract/Block.js';
+export { SolutionBlock } from './abstract/SolutionBlock.js';
 export { ActivityBlock } from './abstract/ActivityBlock.js';
 export { UploaderBlock } from './abstract/UploaderBlock.js';
 export { Config } from './blocks/Config/Config.js';

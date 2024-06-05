@@ -1,31 +1,26 @@
-:where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular) {
+:where([lr-wgt-common]) {
   color: var(--uc-foreground);
   font-size: var(--uc-font-size);
   font-family: var(--uc-font-family);
 }
 
-:where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular) * {
+:where([lr-wgt-common]) * {
   box-sizing: border-box;
 }
 
-:where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular)
-  [hidden] {
+:where([lr-wgt-common]) [hidden] {
   display: none !important;
 }
 
-:where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular)
-  [activity]:not([active]) {
+:where([lr-wgt-common]) [activity]:not([active]) {
   display: none;
 }
 
-:where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular)
-  dialog:not([open])
-  [activity] {
+:where([lr-wgt-common]) dialog:not([open]) [activity] {
   display: none;
 }
 
-:where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular)
-  button {
+:where([lr-wgt-common]) button {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -42,60 +37,51 @@
   transition: background-color var(--uc-transition);
 }
 
-:where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular)
-  button.primary-btn {
+:where([lr-wgt-common]) button.primary-btn {
   color: var(--uc-primary-foreground);
   background-color: var(--uc-primary);
 }
 
-:where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular)
-  button.primary-btn:hover {
+:where([lr-wgt-common]) button.primary-btn:hover {
   background-color: var(--uc-primary-hover);
 }
 
-:where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular)
-  button.secondary-btn {
+:where([lr-wgt-common]) button.secondary-btn {
   color: var(--uc-secondary-foreground);
   background-color: var(--uc-secondary);
 }
 
-:where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular)
-  button.secondary-btn:hover {
+:where([lr-wgt-common]) button.secondary-btn:hover {
   background-color: var(--uc-secondary-hover);
 }
 
-:where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular)
-  button.mini-btn {
+:where([lr-wgt-common]) button.mini-btn {
   height: var(--uc-button-size);
   padding: 0;
   background-color: transparent;
   color: var(--uc-secondary-foreground);
 }
 
-:where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular)
-  button.mini-btn:hover {
+:where([lr-wgt-common]) button.mini-btn:hover {
   background-color: var(--uc-secondary);
 }
 
-:where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular)
-  :is(button[disabled], button.primary-btn[disabled], button.secondary-btn[disabled]) {
+:where([lr-wgt-common]) :is(button[disabled], button.primary-btn[disabled], button.secondary-btn[disabled]) {
   opacity: 0.5;
   pointer-events: none;
 }
 
-:where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular) a {
+:where([lr-wgt-common]) a {
   color: var(--uc-primary);
   text-decoration: none;
 }
 
 /* TODO: if we're using disabled <a> somewhere, we should stop */
-:where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular)
-  a[disabled] {
+:where([lr-wgt-common]) a[disabled] {
   pointer-events: none;
 }
 
-:where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular)
-  input[type='text'] {
+:where([lr-wgt-common]) input[type='text'] {
   display: flex;
   width: 100%;
   height: var(--uc-button-size);
@@ -113,20 +99,17 @@
     outline-color var(--uc-transition);
 }
 
-:where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular)
-  input[type='text']::placeholder {
+:where([lr-wgt-common]) input[type='text']::placeholder {
   color: var(--uc-muted-foreground);
 }
 
-:where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular)
-  input[type='text']:focus {
+:where([lr-wgt-common]) input[type='text']:focus {
   outline-color: var(--uc-primary-hover);
   border-color: var(--uc-primary-hover);
 }
 
 /* TODO: check if there's any necessity of disabled input */
-:where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular)
-  input[disabled] {
+:where([lr-wgt-common]) input[disabled] {
   opacity: 0.6;
   pointer-events: none;
 }

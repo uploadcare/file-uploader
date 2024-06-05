@@ -2,6 +2,7 @@
 import { Block } from '../../abstract/Block.js';
 
 export class Modal extends Block {
+  static styleAttrs = [...super.styleAttrs, 'lr-modal'];
   static StateConsumerScope = 'modal';
 
   constructor() {

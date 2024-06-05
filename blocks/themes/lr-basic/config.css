@@ -1,4 +1,4 @@
-:where(.lr-wgt-cfg, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular) {
+:where([lr-wgt-common]) {
   --cfg-init-activity: 'start-from';
   --cfg-done-activity: '';
 }
