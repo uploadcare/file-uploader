@@ -18,7 +18,7 @@
   content: '';
 }
 
-[lr-file-uploader-inline] lr-activity-header close-btn {
+[lr-file-uploader-inline] lr-activity-header .close-btn {
   display: none;
 }
 
