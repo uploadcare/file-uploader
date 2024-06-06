@@ -1,3 +1,10 @@
+:root {
+  --uc-primary-rgb-light: 54, 112, 253;
+  --uc-primary-oklch-light: 59% 0.22 264;
+  --uc-primary-rgb-dark: 80.5, 153, 255;
+  --uc-primay-oklch-dark: 69% 0.1768 258.4;
+}
+
 :where([lr-wgt-common]) {
   /* Font */
 
@@ -134,9 +141,6 @@
 
 @media (prefers-color-scheme: light) {
   :where([lr-wgt-common]) {
-    --uc-primary-rgb-light: 54, 112, 253; /* Quick customization: change this value to your brand color */
-    --uc-primary-oklch-light: 59% 0.22 264; /* Quick customization: change this value to your brand color */
-
     --uc-background: var(--uc-background-light);
     --uc-foreground: var(--uc-foreground-light);
     --uc-primary: var(--uc-primary-light);
@@ -157,9 +161,6 @@
 
 @media (prefers-color-scheme: dark) {
   :where([lr-wgt-common]) {
-    --uc-primary-rgb-dark: 80.5, 153, 255; /* Quick customization: change this value to your brand color */
-    --uc-primay-oklch-dark: 69% 0.1768 258.4; /* Quick customization: change this value to your brand color */
-
     --uc-background: var(--uc-background-dark);
     --uc-foreground: var(--uc-foreground-dark);
     --uc-primary: var(--uc-primary-dark);

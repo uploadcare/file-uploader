@@ -19,7 +19,7 @@ import { TabId } from './toolbar-constants.js';
 
 export class CloudImageEditorBlock extends Block {
   ctxOwner = true;
-  static styleAttrs = ['lr-cloud-image-editor', 'lr-wgt-common'];
+  static styleAttrs = ['lr-cloud-image-editor'];
 
   constructor() {
     super();
