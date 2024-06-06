@@ -181,7 +181,7 @@
   }
 }
 
-:where(.uc-light, .uc-light [lr-wgt-common]) {
+:where(.uc-light) {
   --uc-background: var(--uc-background-light);
   --uc-foreground: var(--uc-foreground-light);
   --uc-primary: var(--uc-primary-light);
@@ -199,7 +199,7 @@
   --uc-dialog-shadow: var(--uc-dialog-shadow-light);
 }
 
-:where(.uc-dark, .uc-dark [lr-wgt-common]) {
+:where(.uc-dark) {
   --uc-background: var(--uc-background-dark);
   --uc-foreground: var(--uc-foreground-dark);
   --uc-primary: var(--uc-primary-dark);
