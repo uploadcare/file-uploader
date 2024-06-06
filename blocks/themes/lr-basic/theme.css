@@ -1,4 +1,6 @@
+/* Those variables are intended to be overridden by the user.  */
 :root {
+  /* Primary color */
   --uc-primary-rgb-light: 54, 112, 253;
   --uc-primary-oklch-light: 59% 0.22 264;
   --uc-primary-rgb-dark: 80.5, 153, 255;
