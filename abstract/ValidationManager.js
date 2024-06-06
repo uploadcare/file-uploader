@@ -8,23 +8,29 @@ import {
 } from '../utils/validators/file/index.js';
 import { validateMultiple, validateCollectionUploadError } from '../utils/validators/collection/index.js';
 
-/** @typedef {import('../types').OutputError<import('../types').OutputFileErrorType>} OutputFileErrorType */
-
-/** @typedef {import('../types').OutputError<import('../types').OutputCollectionErrorType>} OutputCollectionErrorType */
-
 /**
  * @typedef {(
  *   outputEntry: import('../types').OutputFileEntry,
  *   ctx: import('./UploaderBlock.js').UploaderBlock,
- * ) => undefined | OutputFileErrorType} FuncFileValidator
+ * ) => undefined | import('../types').OutputErrorFile} FuncFileValidator
  */
 
 /**
  * @typedef {(
- *   collection: import('./TypedCollection.js').TypedCollection,
+ *   collection: ReturnType<
+ *     typeof import('./buildOutputCollectionState.js').buildOutputCollectionState<
+ *       import('../types').OutputCollectionStatus
+ *     >
+ *   >,
  *   ctx: import('./UploaderBlock.js').UploaderBlock,
- * ) => undefined | OutputCollectionErrorType | OutputCollectionErrorType[]} FuncCollectionValidator
+ * ) => undefined | import('../types').OutputErrorCollection} FuncCollectionValidator
  */
+
+const LOGGER = {
+  file: 'File validator execution has failed',
+  collection: 'Collection validator execution has failed',
+  message: 'Missing message. We recommend adding message: value.',
+};
 
 export class ValidationManager {
   /**
@@ -70,18 +76,27 @@ export class ValidationManager {
   }
 
   runCollectionValidators() {
-    const collection = this._uploadCollection;
+    const collection = this._blockInstance.getOutputCollectionState();
     const errors = [];
 
-    for (const validator of [...this._collectionValidators, ...(this._blockInstance.cfg.collectionValidators ?? [])]) {
-      const errorOrErrors = validator(collection, this._blockInstance);
-      if (!errorOrErrors) {
-        continue;
-      }
-      if (Array.isArray(errorOrErrors)) {
-        errors.push(...errorOrErrors);
-      } else {
-        errors.push(errorOrErrors);
+    for (const validator of [
+      ...this._collectionValidators,
+      ...(this._addCustomTypeToValidators(this._blockInstance.cfg.collectionValidators) ?? []),
+    ]) {
+      try {
+        const errorOrErrors = validator(collection, this._blockInstance);
+        if (!errorOrErrors) {
+          continue;
+        }
+        if (errorOrErrors) {
+          errors.push(errorOrErrors);
+
+          if (!errorOrErrors.message) {
+            console.warn(LOGGER.message);
+          }
+        }
+      } catch (error) {
+        console.warn(LOGGER.collection, error);
       }
     }
 
@@ -107,16 +122,40 @@ export class ValidationManager {
     const outputEntry = this._blockInstance.getOutputItem(entry.uid);
     const errors = [];
 
-    for (const validator of [...this._fileValidators, ...(this._blockInstance.cfg.fileValidators ?? [])]) {
+    for (const validator of [
+      ...this._fileValidators,
+      ...(this._addCustomTypeToValidators(this._blockInstance.cfg.fileValidators) ?? []),
+    ]) {
       try {
         const error = validator(outputEntry, this._blockInstance);
+        if (!error) {
+          continue;
+        }
         if (error) {
           errors.push(error);
+
+          if (!error.message) {
+            console.warn(LOGGER.message);
+          }
         }
       } catch (error) {
-        console.log(`You're validator is failed ${error}`);
+        console.warn(LOGGER.file, error);
       }
     }
     entry.setValue('errors', errors);
+  }
+  /**
+   * @template T
+   * @param {T[]} validators
+   * @returns {T[]}
+   */
+  _addCustomTypeToValidators(validators) {
+    // @ts-ignore
+    return validators.map((fn) => (...args) => {
+      // @ts-ignore
+      const result = fn(...args);
+
+      return result ? { ...result, ...{ type: 'CUSTOM_ERROR' } } : undefined;
+    });
   }
 }

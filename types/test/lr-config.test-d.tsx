@@ -1,8 +1,7 @@
 import React from 'react';
 import { expectType } from 'tsd';
 import '../jsx.js';
-import { OutputFileEntry } from '../index.js';
-import { FuncCollectionValidator, FuncFileValidator } from '../../abstract/ValidationManager.js';
+import { OutputFileEntry, FuncCollectionValidator, FuncFileValidator } from '../index.js';
 
 // @ts-expect-error untyped props
 () => <lr-config ctx-name="1" something="wrong"></lr-config>;
@@ -77,13 +76,11 @@ import { FuncCollectionValidator, FuncFileValidator } from '../../abstract/Valid
     const config = ref.current;
 
     const maxSize: FuncFileValidator = (outputEntry, block) => ({
-      type: "CUSTOM_ERROR",
       message: block.l10n('images-only-accepted'),
       payload: { entry: outputEntry },
     })
 
     const maxCollection: FuncCollectionValidator = (collection, block) => ({
-      type: "CUSTOM_ERROR",
       message: block.l10n('some-files-were-not-uploaded'),
     })
 

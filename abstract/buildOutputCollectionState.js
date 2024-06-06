@@ -43,7 +43,7 @@ export function buildOutputCollectionState(uploaderBlock) {
     progress: () => {
       return uploaderBlock.$['*commonProgress'];
     },
-    /** @returns {ReturnType<import('../abstract/ValidationManager.js').OutputFileErrorType>[]} */
+    /** @returns {ReturnType<import('../types').OutputErrorFile>[]} */
     errors: () => {
       return uploaderBlock.$['*collectionErrors'];
     },

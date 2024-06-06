@@ -2,7 +2,7 @@
 
 /** @type {import('../../../abstract/ValidationManager.js').FuncCollectionValidator} */
 export const validateMultiple = (collection, block) => {
-  const total = collection.size;
+  const total = collection.totalCount;
   const multipleMin = block.cfg.multiple ? block.cfg.multipleMin : 0;
   const multipleMax = block.cfg.multiple ? block.cfg.multipleMax : 1;
 

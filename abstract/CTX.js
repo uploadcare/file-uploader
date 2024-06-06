@@ -27,7 +27,7 @@ export const uploaderBlockCtx = (fnCtx) => ({
   '*uploadMetadata': null,
   '*uploadQueue': new Queue(1),
   '*uploadCollection': null,
-  /** @type {ReturnType<import('./ValidationManager').OutputCollectionErrorType>[]} */
+  /** @type {ReturnType<import('../types').OutputErrorCollection>[]} */
   '*collectionErrors': [],
   /** @type {import('../types').OutputCollectionState | null} */
   '*collectionState': null,

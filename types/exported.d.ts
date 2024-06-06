@@ -2,6 +2,8 @@ import type { LocaleDefinition } from '../abstract/localeRegistry';
 import type { complexConfigKeys } from '../blocks/Config/Config';
 import type { FuncFileValidator, FuncCollectionValidator } from '../abstract/ValidationManager';
 
+export type { FuncFileValidator, FuncCollectionValidator } from '../abstract/ValidationManager';
+
 export type UploadError = import('@uploadcare/upload-client').UploadError;
 export type UploadcareFile = import('@uploadcare/upload-client').UploadcareFile;
 export type NetworkError = import('@uploadcare/upload-client').NetworkError;
@@ -16,8 +18,8 @@ export type SecureDeliveryProxyUrlResolver = (
 export type SecureUploadsSignatureAndExpire = { secureSignature: string; secureExpire: string };
 export type SecureUploadsSignatureResolver = () => Promise<SecureUploadsSignatureAndExpire | null>;
 export type IconHrefResolver = (iconName: string) => string;
-export type FileValidator = FuncFileValidator[];
-export type CollectionValidator = FuncCollectionValidator[];
+export type FileValidators = FuncFileValidator[];
+export type CollectionValidators = FuncCollectionValidator[];
 
 export type ConfigType = {
   pubkey: string;
@@ -72,8 +74,8 @@ export type ConfigType = {
   secureDeliveryProxyUrlResolver: SecureDeliveryProxyUrlResolver | null;
   iconHrefResolver: IconHrefResolver | null;
 
-  fileValidators: FileValidator | null;
-  collectionValidators: CollectionValidator | null;
+  fileValidators: FileValidators;
+  collectionValidators: CollectionValidators;
 };
 export type ConfigComplexType = Pick<ConfigType, (typeof complexConfigKeys)[number]>;
 export type ConfigPlainType = Omit<ConfigType, keyof ConfigComplexType>;
@@ -92,7 +94,7 @@ export type OutputFileStatus = 'idle' | 'uploading' | 'success' | 'failed' | 're
 
 export type OutputCustomErrorType = 'CUSTOM_ERROR'
 
-export type OutputFileErrorType = OutputCustomErrorType 
+export type OutputFileErrorType = OutputCustomErrorType
   | 'NOT_AN_IMAGE'
   | 'FORBIDDEN_FILE_TYPE'
   | 'FILE_SIZE_EXCEEDED'
@@ -100,7 +102,7 @@ export type OutputFileErrorType = OutputCustomErrorType
   | 'NETWORK_ERROR'
   | 'UNKNOWN_ERROR';
 
-export type OutputCollectionErrorType =  OutputCustomErrorType | 'SOME_FILES_HAS_ERRORS' | 'TOO_MANY_FILES' | 'TOO_FEW_FILES';
+export type OutputCollectionErrorType = OutputCustomErrorType | 'SOME_FILES_HAS_ERRORS' | 'TOO_MANY_FILES' | 'TOO_FEW_FILES';
 
 export type OutputFileErrorPayload = {
   entry: OutputFileEntry;
@@ -135,13 +137,21 @@ export type OutputErrorTypePayload = {
 };
 
 export type OutputError<T extends OutputFileErrorType | OutputCollectionErrorType> =
-  T extends keyof OutputErrorTypePayload
+  T extends OutputCustomErrorType
   ? {
-    type: T;
+    type?: T;
     message: string;
     payload?: OutputErrorTypePayload[T];
   }
-  : never;
+  : T extends keyof OutputErrorTypePayload ? {
+    type: T;
+    message: string;
+    payload?: OutputErrorTypePayload[T];
+  } : never
+
+export type OutputErrorFile = OutputError<OutputFileErrorType>
+
+export type OutputErrorCollection = OutputError<OutputCollectionErrorType>
 
 export type OutputFileEntry<TStatus extends OutputFileStatus = OutputFileStatus> = {
   status: TStatus;

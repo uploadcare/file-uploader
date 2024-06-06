@@ -79,12 +79,12 @@ const asFunction = (value) => {
  * @param {unknown} value
  * @returns {T}
  */
-const asValidators = (value) => {
+const asArray = (value) => {
   if (Array.isArray(value)) {
     return /** @type {T} */ (value);
   }
 
-  throw new Error('Invalid validators value. Must be an array.');
+  throw new Error('Must be an array.');
 };
 
 /**
@@ -153,8 +153,8 @@ const mapping = {
   secureDeliveryProxyUrlResolver:
     /** @type {typeof asFunction<import('../../types').SecureDeliveryProxyUrlResolver>} */ (asFunction),
   iconHrefResolver: /** @type {typeof asFunction<import('../../types').IconHrefResolver>} */ (asFunction),
-  fileValidators: /** @type {typeof asValidators<import('../../types').FileValidator>} */ (asValidators),
-  collectionValidators: /** @type {typeof asValidators<import('../../types').CollectionValidator>} */ (asValidators),
+  fileValidators: /** @type {typeof asArray<import('../../types').FileValidators>} */ (asArray),
+  collectionValidators: /** @type {typeof asArray<import('../../types').CollectionValidators>} */ (asArray),
 };
 
 /**
