@@ -81,7 +81,7 @@ export class ValidationManager {
 
     for (const validator of [
       ...this._collectionValidators,
-      ...(this._addCustomTypeToValidators(this._blockInstance.cfg.collectionValidators) ?? []),
+      ...this._addCustomTypeToValidators(this._blockInstance.cfg.collectionValidators),
     ]) {
       try {
         const errorOrErrors = validator(collection, this._blockInstance);
@@ -124,7 +124,7 @@ export class ValidationManager {
 
     for (const validator of [
       ...this._fileValidators,
-      ...(this._addCustomTypeToValidators(this._blockInstance.cfg.fileValidators) ?? []),
+      ...this._addCustomTypeToValidators(this._blockInstance.cfg.fileValidators),
     ]) {
       try {
         const error = validator(outputEntry, this._blockInstance);
@@ -144,6 +144,7 @@ export class ValidationManager {
     }
     entry.setValue('errors', errors);
   }
+
   /**
    * @template T
    * @param {T[]} validators
