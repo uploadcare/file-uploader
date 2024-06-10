@@ -1,4 +1,4 @@
-:root {
+:where([lr-wgt-common]) {
   /* Font */
 
   --uc-font-family: system-ui;
@@ -41,7 +41,7 @@
 }
 
 @supports not (color: oklch(0% 0 0)) {
-  :root {
+  :where([lr-wgt-common]) {
     /* Light colors RGB */
     --uc-primary-rgb-light: 54, 112, 253; /* Quick customization: change this value to your brand color */
     --uc-primary-light: rgba(var(--uc-primary-rgb-light));
@@ -62,7 +62,6 @@
     --uc-simple-btn-light: rgb(242 242 242);
     --uc-simple-btn-hover-light: rgb(235 235 235);
     --uc-simple-btn-foreground-light: rgb(24 24 24);
-
 
     /* Dark colors RGB */
     --uc-primary-rgb-dark: 87, 154, 255; /* Quick customization: change this value to your brand color */
@@ -88,7 +87,7 @@
 }
 
 @supports (color: oklch(0% 0 0)) {
-  :root {
+  :where([lr-wgt-common]) {
     /* Light colors OKLCH */
     --uc-primary-oklch-light: 59% 0.22 264; /* Quick customization: change this value to your brand color */
     --uc-primary-light: oklch(var(--uc-primary-oklch-light));
@@ -134,20 +133,20 @@
 }
 
 @media only screen and (max-height: 600px) {
-  :root {
+  :where([lr-wgt-common]) {
     --uc-dialog-max-height: 100%;
   }
 }
 
 @media only screen and (max-width: 430px) {
-  :root {
+  :where([lr-wgt-common]) {
     --uc-dialog-max-width: 100vw;
     --uc-dialog-max-height: var(--uploadcare-blocks-window-height);
   }
 }
 
 @media (prefers-color-scheme: light) {
-  :root {
+  :where([lr-wgt-common]) {
     --uc-background: var(--uc-background-light);
     --uc-foreground: var(--uc-foreground-light);
     --uc-primary: var(--uc-primary-light);
@@ -170,7 +169,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  :where([lr-wgt-common]) {
     --uc-background: var(--uc-background-dark);
     --uc-foreground: var(--uc-foreground-dark);
     --uc-primary: var(--uc-primary-dark);
