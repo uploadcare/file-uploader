@@ -9,7 +9,11 @@ lr-upload-list {
 }
 
 [lr-modal] lr-upload-list {
-  width: min(calc(var(--uc-dialog-width) - var(--uc-padding) * 2), calc(100vw - var(--uc-padding) * 2));
+  width: min(
+    calc(var(--uc-dialog-width) - var(--uc-padding) * 2),
+    calc(var(--uc-dialog-max-width) - var(--uc-padding) * 2),
+    calc(100vw - var(--uc-padding) * 2)
+  );
   height: max-content;
   max-height: var(--modal-max-content-height);
 }

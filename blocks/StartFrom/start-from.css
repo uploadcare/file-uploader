@@ -14,7 +14,11 @@ lr-start-from .content {
 }
 
 [lr-modal] lr-start-from {
-  width: min(calc(var(--uc-dialog-width) - var(--uc-padding) * 2), calc(100vw - var(--uc-padding) * 2));
+  width: min(
+    calc(var(--uc-dialog-width) - var(--uc-padding) * 2),
+    calc(var(--uc-dialog-max-width) - var(--uc-padding) * 2),
+    calc(100vw - var(--uc-padding) * 2)
+  );
 }
 
 [lr-modal] lr-start-from lr-drop-area {

@@ -4,7 +4,11 @@ lr-url-source {
 }
 
 [lr-modal] lr-url-source {
-  width: min(calc(var(--uc-dialog-width) - var(--uc-padding) * 2), calc(100vw - var(--uc-padding) * 2));
+  width: min(
+    calc(var(--uc-dialog-width) - var(--uc-padding) * 2),
+    calc(var(--uc-dialog-max-width) - var(--uc-padding) * 2),
+    calc(100vw - var(--uc-padding) * 2)
+  );
 }
 
 lr-url-source > .content {
