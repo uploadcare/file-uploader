@@ -76,7 +76,7 @@
     --uc-secondary-foreground-dark: rgb(225 225 225);
     --uc-muted-dark: rgb(36 36 36);
     --uc-muted-foreground-dark: rgb(152 152 152);
-    --uc-destructive-dark: rgba(244 90 79 / 5%);
+    --uc-destructive-dark: rgba(244 90 79 / 10%);
     --uc-destructive-foreground-dark: rgb(244 90 79);
     --uc-border-dark: rgb(61 61 61);
     --uc-dialog-shadow-dark: 0px 6px 20px rgba(0 0 0 / 25%);
@@ -122,7 +122,7 @@
     --uc-secondary-foreground-dark: oklch(91% 0 0);
     --uc-muted-dark: oklch(26% 0 0);
     --uc-muted-foreground-dark: oklch(68% 0 0);
-    --uc-destructive-dark: oklch(67% 0.191 27.5 / 0.05);
+    --uc-destructive-dark: oklch(67% 0.191 27.5 / 0.1);
     --uc-destructive-foreground-dark: oklch(67% 0.191 27.5);
     --uc-border-dark: oklch(36% 0 0);
     --uc-dialog-shadow-dark: 0px 6px 20px oklch(0% 0 0 / 0.25);
