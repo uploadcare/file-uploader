@@ -18,7 +18,7 @@
   --uc-dialog-max-height: 600px;
   --uc-simple-btn-padding: 7px 14px;
 
-  /* Default */
+  /* Default colors, in case of media query failure */
 
   --uc-background: var(--uc-background-light);
   --uc-foreground: var(--uc-foreground-light);
@@ -42,8 +42,8 @@
 
 @supports not (color: oklch(0% 0 0)) {
   :where([lr-wgt-common]) {
-    /* Light colors RGB */
-    --uc-primary-rgb-light: 54, 112, 253; /* Quick customization: change this value to your brand color */
+    /* Light colors RGB fallback */
+    --uc-primary-rgb-light: 54 112 253; /* Quick customization: change this value to your brand color */
     --uc-primary-light: rgba(var(--uc-primary-rgb-light));
     --uc-primary-hover-light: rgba(var(--uc-primary-rgb-light) / 90%);
     --uc-primary-transparent-light: rgba(var(--uc-primary-rgb-light) / 10%);
@@ -63,11 +63,11 @@
     --uc-simple-btn-hover-light: rgb(228 228 228);
     --uc-simple-btn-foreground-light: rgb(24 24 24);
 
-    /* Dark colors RGB */
-    --uc-primary-rgb-dark: 87, 154, 255; /* Quick customization: change this value to your brand color */
+    /* Dark colors RGB fallback */
+    --uc-primary-rgb-dark: 87 154 255; /* Quick customization: change this value to your brand color */
     --uc-primary-dark: rgba(var(--uc-primary-rgb-dark));
     --uc-primary-hover-dark: rgba(var(--uc-primary-rgb-dark) / 90%);
-    --uc-primary-transparent-dark: rgba(var(--uc-primary-rgb-dark) / 7.5%);
+    --uc-primary-transparent-dark: rgba(var(--uc-primary-rgb-dark) / 7%);
     --uc-background-dark: rgb(27 27 27);
     --uc-foreground-dark: rgb(225 225 225);
     --uc-primary-foreground-dark: rgb(0 0 0);
@@ -113,7 +113,7 @@
     --uc-primary-oklch-dark: 69% 0.1768 258.4; /* Quick customization: change this value to your brand color */
     --uc-primary-dark: oklch(var(--uc-primary-oklch-dark));
     --uc-primary-hover-dark: oklch(var(--uc-primary-oklch-dark) / 90%);
-    --uc-primary-transparent-dark: oklch(var(--uc-primary-oklch-dark) / 7.5%);
+    --uc-primary-transparent-dark: oklch(var(--uc-primary-oklch-dark) / 7%);
     --uc-background-dark: oklch(22% 0 0);
     --uc-foreground-dark: oklch(91% 0 0);
     --uc-primary-foreground-dark: oklch(0% 0 0);
