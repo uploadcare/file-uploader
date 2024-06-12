@@ -40,7 +40,7 @@
 @supports not (color: oklch(0% 0 0)) {
   :where([lr-wgt-common]) {
     /* Light colors RGB fallback */
-    --uc-primary-rgb-light: 54 112 253; /* Quick customization: change this value to your brand color */
+    --uc-primary-rgb-light: 54 112 253;
     --uc-primary-light: rgb(var(--uc-primary-rgb-light));
     --uc-primary-hover-light: rgb(var(--uc-primary-rgb-light) / 90%);
     --uc-primary-transparent-light: rgb(var(--uc-primary-rgb-light) / 10%);
@@ -61,7 +61,7 @@
     --uc-simple-btn-foreground-light: rgb(24 24 24);
 
     /* Dark colors RGB fallback */
-    --uc-primary-rgb-dark: 87 154 255; /* Quick customization: change this value to your brand color */
+    --uc-primary-rgb-dark: 87 154 255;
     --uc-primary-dark: rgb(var(--uc-primary-rgb-dark));
     --uc-primary-hover-dark: rgb(var(--uc-primary-rgb-dark) / 90%);
     --uc-primary-transparent-dark: rgb(var(--uc-primary-rgb-dark) / 7%);
