@@ -41,42 +41,42 @@
   :where([lr-wgt-common]) {
     /* Light colors RGB fallback */
     --uc-primary-rgb-light: 54 112 253; /* Quick customization: change this value to your brand color */
-    --uc-primary-light: rgba(var(--uc-primary-rgb-light));
-    --uc-primary-hover-light: rgba(var(--uc-primary-rgb-light) / 90%);
-    --uc-primary-transparent-light: rgba(var(--uc-primary-rgb-light) / 10%);
-    --uc-background-light: rgba(255 255 255);
+    --uc-primary-light: rgb(var(--uc-primary-rgb-light));
+    --uc-primary-hover-light: rgb(var(--uc-primary-rgb-light) / 90%);
+    --uc-primary-transparent-light: rgb(var(--uc-primary-rgb-light) / 10%);
+    --uc-background-light: rgb(255 255 255);
     --uc-foreground-light: rgb(24 24 24);
     --uc-primary-foreground-light: #fff;
-    --uc-secondary-light: rgba(24 24 24 / 5%);
-    --uc-secondary-hover-light: rgba(24 24 24 / 8%);
+    --uc-secondary-light: rgb(24 24 24 / 5%);
+    --uc-secondary-hover-light: rgb(24 24 24 / 8%);
     --uc-secondary-foreground-light: rgb(24 24 24);
     --uc-muted-light: rgb(245 245 245);
     --uc-muted-foreground-light: rgb(113 113 113);
-    --uc-destructive-light: rgba(232 19 20 / 5%);
+    --uc-destructive-light: rgb(232 19 20 / 5%);
     --uc-destructive-foreground-light: rgb(232 19 20);
     --uc-border-light: rgb(228 228 232);
-    --uc-dialog-shadow-light: 0px 6px 20px rgba(0 0 0 / 10%);
+    --uc-dialog-shadow-light: 0px 6px 20px rgb(0 0 0 / 10%);
     --uc-simple-btn-light: rgb(235 235 235);
     --uc-simple-btn-hover-light: rgb(228 228 228);
     --uc-simple-btn-foreground-light: rgb(24 24 24);
 
     /* Dark colors RGB fallback */
     --uc-primary-rgb-dark: 87 154 255; /* Quick customization: change this value to your brand color */
-    --uc-primary-dark: rgba(var(--uc-primary-rgb-dark));
-    --uc-primary-hover-dark: rgba(var(--uc-primary-rgb-dark) / 90%);
-    --uc-primary-transparent-dark: rgba(var(--uc-primary-rgb-dark) / 7%);
+    --uc-primary-dark: rgb(var(--uc-primary-rgb-dark));
+    --uc-primary-hover-dark: rgb(var(--uc-primary-rgb-dark) / 90%);
+    --uc-primary-transparent-dark: rgb(var(--uc-primary-rgb-dark) / 7%);
     --uc-background-dark: rgb(27 27 27);
     --uc-foreground-dark: rgb(225 225 225);
     --uc-primary-foreground-dark: rgb(0 0 0);
-    --uc-secondary-dark: rgba(225 225 225 / 7%);
-    --uc-secondary-hover-dark: rgba(225 225 225 / 10%);
+    --uc-secondary-dark: rgb(225 225 225 / 7%);
+    --uc-secondary-hover-dark: rgb(225 225 225 / 10%);
     --uc-secondary-foreground-dark: rgb(225 225 225);
     --uc-muted-dark: rgb(36 36 36);
     --uc-muted-foreground-dark: rgb(152 152 152);
-    --uc-destructive-dark: rgba(244 90 79 / 10%);
+    --uc-destructive-dark: rgb(244 90 79 / 10%);
     --uc-destructive-foreground-dark: rgb(244 90 79);
     --uc-border-dark: rgb(61 61 61);
-    --uc-dialog-shadow-dark: 0px 6px 20px rgba(0 0 0 / 25%);
+    --uc-dialog-shadow-dark: 0px 6px 20px rgb(0 0 0 / 25%);
     --uc-simple-btn-dark: rgb(36 36 36);
     --uc-simple-btn-hover-dark: rgb(43 43 43);
     --uc-simple-btn-foreground-dark: rgb(255 255 255);
