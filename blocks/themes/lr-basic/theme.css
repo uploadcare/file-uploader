@@ -1,13 +1,11 @@
 :where([lr-wgt-common]) {
   /* Font */
-
   --uc-font-family: system-ui;
   --uc-font-size: 14px;
-  --uc-simple-btn-font-size: var(--uc-font-size);
-  --uc-simple-btn-font-family: var(--uc-font-family);
+  --uc-simple-btn-font-family: system-ui;
+  --uc-simple-btn-font-size: 14px;
 
   /* Sizes */
-
   --uc-button-size: 32px;
   --uc-preview-size: 32px;
   --uc-padding: 10px;
@@ -19,7 +17,6 @@
   --uc-simple-btn-padding: 7px 14px;
 
   /* Default colors, in case of media query failure */
-
   --uc-background: var(--uc-background-light);
   --uc-foreground: var(--uc-foreground-light);
   --uc-primary: var(--uc-primary-light);
