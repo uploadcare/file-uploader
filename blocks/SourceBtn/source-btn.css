@@ -1,4 +1,4 @@
-lr-source-btn {
+lr-source-btn > button {
   display: flex;
   align-items: center;
   margin-bottom: 2px;
@@ -6,17 +6,16 @@ lr-source-btn {
   color: var(--uc-foreground);
   border-radius: var(--uc-radius);
   cursor: pointer;
-  transition:
-    background-color var(--uc-transition),
-    color var(--uc-transition);
+  transition: background-color var(--uc-transition),
+  color var(--uc-transition);
   user-select: none;
 }
 
-lr-source-btn:last-child {
+lr-source-btn > button:last-child {
   margin-bottom: 0;
 }
 
-lr-source-btn:hover {
+lr-source-btn > button:hover {
   color: var(--uc-primary);
   background-color: var(--uc-primary-transparent);
 }
