@@ -2,7 +2,7 @@
 
 ### Features
 
-- added `fileValidators` and `collectionValidators` ([#667](https://github.com/uploadcare/blocks/issues/667)) ([d3260b0](https://github.com/uploadcare/blocks/commit/d3260b0cce5ac6ca7cfd0aeb8aff0c9fc35036ed)). See docs [here](https://uploadcare.com/docs/file-uploader/validators). 
+- added `collectionValidators` and `fileValidators`: Custom validators are now supported for collections and files. This enhancement allows for the addition of necessary checks for uploaded files and collections, providing flexibility and control over compliance with requirements ([#667](https://github.com/uploadcare/blocks/issues/667)) ([d3260b0](https://github.com/uploadcare/blocks/commit/d3260b0cce5ac6ca7cfd0aeb8aff0c9fc35036ed)). See docs [here](https://uploadcare.com/docs/file-uploader/validators). 
 
 
 ## [0.42.1](https://github.com/uploadcare/blocks/compare/v0.42.0...v0.42.1) (2024-05-30)
