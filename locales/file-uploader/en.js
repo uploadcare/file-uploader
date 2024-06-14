@@ -100,4 +100,7 @@ export default {
   'images-only-accepted': 'Only image files are accepted.',
   'file-type-not-allowed': 'Uploading of these file types is not allowed.',
   'some-files-were-not-uploaded': 'Some files were not uploaded.',
+
+  'file-item-edit-button': 'Edit button',
+  'file-item-remove-button': 'Remove button',
 };
