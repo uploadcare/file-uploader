@@ -162,28 +162,6 @@ export class UploaderBlock extends ActivityBlock {
     return this.getOutputItem(internalId);
   }
 
-  /**
-   * @deprecated Will be removed in the near future. Please use `addFileFromObject`, `addFileFromUrl` or
-   *   `addFileFromUuid` instead.
-   * @param {File[]} files
-   * @returns {import('../types').OutputFileEntry<'idle'>[]}
-   */
-  addFiles(files) {
-    console.warn(
-      '`addFiles` method is deprecated. Please use `addFileFromObject`, `addFileFromUrl` or `addFileFromUuid` instead.',
-    );
-    return files.map((/** @type {File} */ file) => {
-      const internalId = this.uploadCollection.add({
-        file,
-        isImage: fileIsImage(file),
-        mimeType: file.type,
-        fileName: file.name,
-        fileSize: file.size,
-      });
-      return this.getOutputItem(internalId);
-    });
-  }
-
   /** @param {string} internalId */
   removeFileByInternalId(internalId) {
     if (!this.uploadCollection.read(internalId)) {
