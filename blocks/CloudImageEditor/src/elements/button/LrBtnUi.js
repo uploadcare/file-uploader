@@ -19,9 +19,9 @@ export class LrBtnUi extends Block {
 
     this.defineAccessor('active', (active) => {
       if (active) {
-        this.setAttribute('active', '');
+        this.firstElementChild.setAttribute('active', '');
       } else {
-        this.removeAttribute('active');
+        this.firstElementChild?.removeAttribute('active');
       }
     });
   }
@@ -54,10 +54,10 @@ export class LrBtnUi extends Block {
       this._iconSingle = false;
     });
 
-    this.setAttribute('role', 'button');
-    if (this.tabIndex === -1) {
-      this.tabIndex = 0;
-    }
+    // this.setAttribute('role', 'button');
+    // if (this.tabIndex === -1) {
+    //   this.tabIndex = 0;
+    // }
     if (!this.hasAttribute('theme')) {
       this.setAttribute('theme', 'default');
     }
@@ -73,9 +73,12 @@ export class LrBtnUi extends Block {
     }
   }
 }
+
 LrBtnUi.bindAttributes({ text: 'text', icon: 'icon', reverse: 'reverse', theme: 'theme' });
 
 LrBtnUi.template = /* HTML */ `
-  <lr-icon set="className: iconCss; @name: icon; @hidden: !icon"></lr-icon>
-  <div class="text">{{text}}</div>
+  <button tabindex="0">
+    <lr-icon set="className: iconCss; @name: icon; @hidden: !icon"></lr-icon>
+    <div class="text">{{text}}</div>
+  </button>
 `;

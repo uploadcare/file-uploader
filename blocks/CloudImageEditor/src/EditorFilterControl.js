@@ -148,7 +148,8 @@ export class EditorFilterControl extends EditorButtonControl {
 }
 
 EditorFilterControl.template = /* HTML */ `
-  <div class="before"></div>
-  <div class="preview" ref="preview-el"></div>
-  <lr-icon ref="icon-el" set="@name: icon; @size: iconSize;"></lr-icon>
+  <button>
+    <div class="preview" ref="preview-el"></div>
+    <lr-icon ref="icon-el" set="@name: icon; @size: iconSize;"></lr-icon>
+  </button>
 `;

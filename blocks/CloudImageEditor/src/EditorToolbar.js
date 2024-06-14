@@ -25,7 +25,6 @@ function renderTabToggle(id) {
         ref="tab-toggle-${id}"
         data-id="${id}"
         icon="${id}"
-        tabindex="0"
         set="onclick: on.clickTab;"
       >
       </lr-btn-ui>

@@ -1,5 +1,7 @@
 /* TODO: we shuoud use basic theme there  */
 
+@import url('buttons.css');
+
 [lr-cloud-image-editor] {
   --color-primary-accent: var(--uc-primary);
   --color-text-base: var(--uc-foreground);
@@ -342,6 +344,12 @@ lr-editor-operation-control {
   --down-background: var(--uc-secondary);
 
   position: relative;
+}
+
+lr-editor-button-control button,
+lr-editor-crop-button-control button,
+lr-editor-filter-control button,
+lr-editor-operation-control button {
   display: grid;
   grid-template-columns: var(--l-base-min-width) auto;
   grid-template-rows: 100%;
@@ -702,6 +710,7 @@ lr-editor-toolbar
   > .tab-toggles
   > .tab-toggle
   > lr-btn-ui
+  > button
   > lr-icon
   > svg {
   width: var(--size-icon);
@@ -780,7 +789,7 @@ lr-editor-toolbar .slider {
   padding-left: var(--l-slider-padding);
 }
 
-lr-btn-ui {
+lr-btn-ui > button {
   --filter-effect: var(--idle-brightness);
   --opacity-effect: var(--idle-opacity);
   --color-effect: var(--idle-color-rgb);
@@ -810,11 +819,11 @@ lr-btn-ui {
   user-select: none;
 }
 
-lr-btn-ui .text {
+lr-btn-ui > button .text {
   white-space: nowrap;
 }
 
-lr-btn-ui .icon {
+lr-btn-ui > button .icon {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -823,27 +832,28 @@ lr-btn-ui .icon {
   transition: var(--l-transition-effect);
 }
 
-lr-btn-ui .icon_left {
+lr-btn-ui > button .icon_left {
   margin-right: var(--cldtr-gap-mid-1);
   margin-left: 0px;
 }
 
-lr-btn-ui .icon_right {
+lr-btn-ui > button .icon_right {
   margin-right: 0px;
   margin-left: var(--cldtr-gap-mid-1);
 }
 
-lr-btn-ui .icon_single {
+lr-btn-ui > button .icon_single {
   margin-right: 0px;
   margin-left: 0px;
 }
 
-lr-btn-ui .icon_hidden {
+lr-btn-ui > button .icon_hidden,
+lr-btn-ui > button [hidden] {
   display: none;
   margin: 0;
 }
 
-lr-btn-ui.primary {
+lr-btn-ui.primary > button {
   --idle-color-rgb: var(--uc-primary-foreground);
   --idle-brightness: 1;
   --idle-opacity: 1;
@@ -884,7 +894,7 @@ lr-btn-ui.primary-icon {
   width: var(--uc-button-size);
 }
 
-lr-btn-ui.secondary {
+lr-btn-ui.secondary > button {
   --idle-color-rgb: var(--uc-secondary-foreground);
   --idle-brightness: 1;
   --idle-opacity: 1;
@@ -947,7 +957,7 @@ lr-btn-ui.tab {
   width: var(--uc-button-size);
 }
 
-lr-btn-ui.default {
+lr-btn-ui.default > button {
   --idle-color-rgb: var(--uc-secondary-foreground);
   --idle-brightness: 1;
   --idle-opacity: 1;
