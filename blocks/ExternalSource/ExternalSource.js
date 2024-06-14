@@ -154,11 +154,16 @@ export class ExternalSource extends UploaderBlock {
   /** @private */
   applyStyles() {
     let colors = {
+      radius: this.getCssValue('--uc-radius'),
       backgroundColor: this.getCssValue('--uc-background'),
       textColor: this.getCssValue('--uc-foreground'),
-      shadeColor: this.getCssValue('--uc-secondary'),
-      linkColor: '#157cfc',
-      linkColorHover: '#3891ff',
+      secondaryColor: this.getCssValue('--uc-secondary'),
+      secondaryForegroundColor: this.getCssValue('--uc-secondary-foreground'),
+      secondaryHover: this.getCssValue('--uc-secondary-hover'),
+      linkColor: this.getCssValue('--uc-primary'),
+      linkColorHover: this.getCssValue('--uc-primary-hover'),
+      fontFamily: this.getCssValue('--uc-font-family'),
+      fontSize: this.getCssValue('--uc-font-size'),
     };
 
     this.sendMessage({
