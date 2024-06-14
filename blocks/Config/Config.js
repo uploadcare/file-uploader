@@ -19,6 +19,8 @@ const allConfigKeys = /** @type {(keyof import('../../types').ConfigType)[]} */ 
  *   'secureUploadsSignatureResolver',
  *   'secureDeliveryProxyUrlResolver',
  *   'iconHrefResolver',
+ *   'fileValidators',
+ *   'collectionValidators'
  * ]}
  */
 export const complexConfigKeys = [
@@ -27,6 +29,8 @@ export const complexConfigKeys = [
   'secureUploadsSignatureResolver',
   'secureDeliveryProxyUrlResolver',
   'iconHrefResolver',
+  'fileValidators',
+  'collectionValidators'
 ];
 
 /** @type {(key: keyof import('../../types').ConfigType) => key is keyof import('../../types').ConfigComplexType} */

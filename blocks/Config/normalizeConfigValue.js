@@ -75,6 +75,19 @@ const asFunction = (value) => {
 };
 
 /**
+ * @template {Function[]} T
+ * @param {unknown} value
+ * @returns {T}
+ */
+const asArray = (value) => {
+  if (Array.isArray(value)) {
+    return /** @type {T} */ (value);
+  }
+
+  throw new Error('Must be an array.');
+};
+
+/**
  * @type {{
  *   [Key in keyof import('../../types').ConfigType]: (
  *     value: unknown,
@@ -140,6 +153,8 @@ const mapping = {
   secureDeliveryProxyUrlResolver:
     /** @type {typeof asFunction<import('../../types').SecureDeliveryProxyUrlResolver>} */ (asFunction),
   iconHrefResolver: /** @type {typeof asFunction<import('../../types').IconHrefResolver>} */ (asFunction),
+  fileValidators: /** @type {typeof asArray<import('../../types').FileValidators>} */ (asArray),
+  collectionValidators: /** @type {typeof asArray<import('../../types').CollectionValidators>} */ (asArray),
 };
 
 /**
