@@ -49,7 +49,7 @@ export class ExternalSource extends UploaderBlock {
           const url = this.extractUrlFromMessage(message);
           const { filename } = message;
           const { externalSourceType } = this.activityParams;
-          this.addFileFromUrl(url, { fileName: filename, source: externalSourceType });
+          this.api.addFileFromUrl(url, { fileName: filename, source: externalSourceType });
         }
 
         this.$['*currentActivity'] = ActivityBlock.activities.UPLOAD_LIST;

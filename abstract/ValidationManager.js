@@ -11,7 +11,7 @@ import { validateMultiple, validateCollectionUploadError } from '../utils/valida
 /**
  * @typedef {(
  *   outputEntry: import('../types').OutputFileEntry,
- *   ctx: import('./UploaderBlock.js').UploaderBlock,
+ *   api: import('./UploaderPublicApi.js').UploaderPublicApi,
  * ) => undefined | import('../types').OutputErrorFile} FuncFileValidator
  */
 
@@ -22,7 +22,7 @@ import { validateMultiple, validateCollectionUploadError } from '../utils/valida
  *       import('../types').OutputCollectionStatus
  *     >
  *   >,
- *   ctx: import('./UploaderBlock.js').UploaderBlock,
+ *   api: import('./UploaderPublicApi.js').UploaderPublicApi,
  * ) => undefined | import('../types').OutputErrorCollection} FuncCollectionValidator
  */
 
@@ -76,7 +76,7 @@ export class ValidationManager {
   }
 
   runCollectionValidators() {
-    const collection = this._blockInstance.getOutputCollectionState();
+    const collection = this._blockInstance.api.getOutputCollectionState();
     const errors = [];
 
     for (const validator of [
@@ -84,7 +84,7 @@ export class ValidationManager {
       ...this._addCustomTypeToValidators(this._blockInstance.cfg.collectionValidators),
     ]) {
       try {
-        const errorOrErrors = validator(collection, this._blockInstance);
+        const errorOrErrors = validator(collection, this._blockInstance.api);
         if (!errorOrErrors) {
           continue;
         }
@@ -107,7 +107,7 @@ export class ValidationManager {
         EventType.COMMON_UPLOAD_FAILED,
         () =>
           /** @type {import('../types').OutputCollectionState<'failed'>} */ (
-            this._blockInstance.getOutputCollectionState()
+            this._blockInstance.api.getOutputCollectionState()
           ),
         { debounce: true },
       );
@@ -119,7 +119,7 @@ export class ValidationManager {
    * @param {import('./TypedData.js').TypedData} entry
    */
   _runFileValidatorsForEntry(entry) {
-    const outputEntry = this._blockInstance.getOutputItem(entry.uid);
+    const outputEntry = this._blockInstance.api.getOutputItem(entry.uid);
     const errors = [];
 
     for (const validator of [
@@ -127,7 +127,7 @@ export class ValidationManager {
       ...this._addCustomTypeToValidators(this._blockInstance.cfg.fileValidators),
     ]) {
       try {
-        const error = validator(outputEntry, this._blockInstance);
+        const error = validator(outputEntry, this._blockInstance.api);
         if (!error) {
           continue;
         }

@@ -2,9 +2,9 @@
 import { IMAGE_ACCEPT_LIST, matchExtension, matchMimeType, mergeFileTypes } from '../../fileTypes.js';
 
 /** @type {import('../../../abstract/ValidationManager.js').FuncFileValidator} */
-export const validateFileType = (outputEntry, block) => {
-  const imagesOnly = block.cfg.imgOnly;
-  const accept = block.cfg.accept;
+export const validateFileType = (outputEntry, api) => {
+  const imagesOnly = api.cfg.imgOnly;
+  const accept = api.cfg.accept;
   const allowedFileTypes = mergeFileTypes([...(imagesOnly ? IMAGE_ACCEPT_LIST : []), accept]);
   if (!allowedFileTypes.length) return;
 
@@ -23,7 +23,7 @@ export const validateFileType = (outputEntry, block) => {
     // Assume file type is not allowed if both mime and ext checks fail
     return {
       type: 'FORBIDDEN_FILE_TYPE',
-      message: block.l10n('file-type-not-allowed'),
+      message: api.l10n('file-type-not-allowed'),
       payload: { entry: outputEntry },
     };
   }

@@ -171,7 +171,7 @@ export class CameraSource extends UploaderBlock {
         lastModified: date,
         type: format,
       });
-      this.addFileFromObject(file, { source: UploadSource.CAMERA });
+      this.api.addFileFromObject(file, { source: UploadSource.CAMERA });
       this.set$({
         '*currentActivity': ActivityBlock.activities.UPLOAD_LIST,
       });

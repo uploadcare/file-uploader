@@ -12,7 +12,7 @@ export class SimpleBtn extends UploaderBlock {
       ...this.init$,
       withDropZone: true,
       onClick: () => {
-        this.initFlow();
+        this.api.initFlow();
       },
       'button-text': '',
     };

@@ -15,7 +15,7 @@ import { UploadcareFile, UploadcareGroup } from '@uploadcare/upload-client';
 
 const instance = new UploadCtxProvider();
 
-instance.addFileFromUrl('https://example.com/image.png');
+instance.api.addFileFromUrl('https://example.com/image.png');
 instance.uploadCollection.size;
 instance.setOrAddState('fileId', 'uploading');
 

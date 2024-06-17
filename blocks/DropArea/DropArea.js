@@ -109,9 +109,9 @@ export class DropArea extends UploaderBlock {
 
         items.forEach((/** @type {import('./getDropItems.js').DropItem} */ item) => {
           if (item.type === 'url') {
-            this.addFileFromUrl(item.url, { source: UploadSource.DROP_AREA });
+            this.api.addFileFromUrl(item.url, { source: UploadSource.DROP_AREA });
           } else if (item.type === 'file') {
-            this.addFileFromObject(item.file, { source: UploadSource.DROP_AREA, fullPath: item.fullPath });
+            this.api.addFileFromObject(item.file, { source: UploadSource.DROP_AREA, fullPath: item.fullPath });
           }
         });
         if (this.uploadCollection.size) {
@@ -173,10 +173,10 @@ export class DropArea extends UploaderBlock {
         if (event.type === 'keydown') {
           // @ts-ignore
           if (event.code === 'Space' || event.code === 'Enter') {
-            this.openSystemDialog();
+            this.api.openSystemDialog();
           }
         } else if (event.type === 'click') {
-          this.openSystemDialog();
+          this.api.openSystemDialog();
         }
       };
 

@@ -35,16 +35,16 @@ export class UploadList extends UploaderBlock {
 
       hasFiles: false,
       onAdd: () => {
-        this.initFlow(true);
+        this.api.initFlow(true);
       },
       onUpload: () => {
         this.emit(EventType.UPLOAD_CLICK);
-        this.uploadAll();
+        this.api.uploadAll();
         this._throttledHandleCollectionUpdate();
       },
       onDone: () => {
-        this.emit(EventType.DONE_CLICK, this.getOutputCollectionState());
-        this.doneFlow();
+        this.emit(EventType.DONE_CLICK, this.api.getOutputCollectionState());
+        this.api.doneFlow();
       },
       onCancel: () => {
         this.uploadCollection.clearAll();
@@ -66,7 +66,7 @@ export class UploadList extends UploaderBlock {
 
   /** @private */
   _updateUploadsState() {
-    const collectionState = this.getOutputCollectionState();
+    const collectionState = this.api.getOutputCollectionState();
     /** @type {Summary} */
     const summary = {
       total: collectionState.totalCount,
@@ -163,7 +163,7 @@ export class UploadList extends UploaderBlock {
         });
 
         if (!this.cfg.confirmUpload) {
-          this.uploadAll();
+          this.api.uploadAll();
         }
       },
       false,
