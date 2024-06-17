@@ -100,4 +100,6 @@ export default {
   'images-only-accepted': 'Aðeins myndaskrár eru samþykktar.',
   'file-type-not-allowed': 'Ekki er leyft að hlaða upp þessum skráartegundum.',
   'some-files-were-not-uploaded': 'Sumar skrár voru ekki hlaðnar upp.',
+  'file-item-edit-button': 'Breyta hnappur',
+  'file-item-remove-button': 'Fjarlægja hnappur',
 };

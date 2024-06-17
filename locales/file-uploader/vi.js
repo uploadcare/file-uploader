@@ -100,4 +100,6 @@ export default {
   'images-only-accepted': 'Chỉ chấp nhận tệp ảnh.',
   'file-type-not-allowed': 'Không cho phép tải lên loại tệp này.',
   'some-files-were-not-uploaded': 'Một số tệp chưa được tải lên.',
+  'file-item-edit-button': 'Nút chỉnh sửa',
+  'file-item-remove-button': 'Nút xóa',
 };

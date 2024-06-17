@@ -103,4 +103,6 @@ export default {
   'images-only-accepted': 'Doar fișierele de tip imagine sunt acceptate.',
   'file-type-not-allowed': 'Încărcarea acestor tipuri de fișiere nu este permisă.',
   'some-files-were-not-uploaded': 'Unele fișiere nu au fost încărcate.',
+  'file-item-edit-button': 'Buton de editare',
+  'file-item-remove-button': 'Buton de ștergere',
 };

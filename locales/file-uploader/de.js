@@ -102,4 +102,6 @@ export default {
   'images-only-accepted': 'Nur Bilddateien werden akzeptiert.',
   'file-type-not-allowed': 'Das Hochladen dieser Dateitypen ist nicht erlaubt.',
   'some-files-were-not-uploaded': 'Einige Dateien wurden nicht hochgeladen.',
+  'file-item-edit-button': 'Bearbeiten-Taste',
+  'file-item-remove-button': 'Entfernen-Taste',
 };

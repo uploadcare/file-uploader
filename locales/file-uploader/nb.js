@@ -32,9 +32,9 @@ export default {
   'no-files': 'Ingen filer valgt',
   browse: 'Bla gjennom',
   'not-uploaded-yet': 'Ikke lastet opp ennå...',
-  file__one: 'fil', // Norwegian Bokmål uses 'one' for singular
-  file__other: 'filer', // and 'other' for plural
-  error__one: 'feil', // Similarly for errors
+  file__one: 'fil',
+  file__other: 'filer',
+  error__one: 'feil',
   error__other: 'feil',
   'header-uploading': 'Laster opp {{count}} {{plural:file(count)}}',
   'header-failed': '{{count}} {{plural:error(count)}}',
@@ -100,4 +100,6 @@ export default {
   'images-only-accepted': 'Kun bildefiler er akseptert.',
   'file-type-not-allowed': 'Opplasting av disse filtypene er ikke tillatt.',
   'some-files-were-not-uploaded': 'Noen filer ble ikke lastet opp.',
+  'file-item-edit-button': 'Redigeringsknapp',
+  'file-item-remove-button': 'Fjerningsknapp',
 };
