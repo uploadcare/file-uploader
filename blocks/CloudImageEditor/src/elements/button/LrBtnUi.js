@@ -54,10 +54,9 @@ export class LrBtnUi extends Block {
       this._iconSingle = false;
     });
 
-    // this.setAttribute('role', 'button');
-    // if (this.tabIndex === -1) {
-    //   this.tabIndex = 0;
-    // }
+    if (this.firstElementChild.tabIndex === -1) {
+      this.firstElementChild.tabIndex = 0;
+    }
     if (!this.hasAttribute('theme')) {
       this.setAttribute('theme', 'default');
     }

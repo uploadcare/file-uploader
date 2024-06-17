@@ -16,10 +16,9 @@ export class EditorButtonControl extends Block {
     this._titleEl = this.ref['title-el'];
     this._iconEl = this.ref['icon-el'];
 
-    // this.setAttribute('role', 'button');
-    // if (this.tabIndex === -1) {
-    //   this.tabIndex = 0;
-    // }
+    if (this.firstElementChild.tabIndex === -1) {
+      this.firstElementChild.tabIndex = 0;
+    }
 
     this.sub('title', (title) => {
       let titleEl = this._titleEl;
