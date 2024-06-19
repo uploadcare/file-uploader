@@ -146,27 +146,26 @@ export class UploaderPublicApi {
           'The value of `accept` will be concatenated with the internal image mime types list.',
       );
     }
-    this.fileInput = document.createElement('input');
-    this.fileInput.type = 'file';
-    this.fileInput.multiple = this.cfg.multiple;
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.multiple = this.cfg.multiple;
     if (options.captureCamera) {
-      this.fileInput.capture = this.cfg.cameraCapture;
-      this.fileInput.accept = 'image/*';
+      fileInput.capture = this.cfg.cameraCapture;
+      fileInput.accept = 'image/*';
     } else {
-      this.fileInput.accept = accept;
+      fileInput.accept = accept;
     }
-    this.fileInput.dispatchEvent(new MouseEvent('click'));
-    this.fileInput.onchange = () => {
+    fileInput.dispatchEvent(new MouseEvent('click'));
+    fileInput.onchange = () => {
       // @ts-ignore TODO: fix this
-      [...this.fileInput['files']].forEach((file) =>
+      [...fileInput['files']].forEach((file) =>
         this.addFileFromObject(file, { source: options.captureCamera ? UploadSource.CAMERA : UploadSource.LOCAL }),
       );
       // To call uploadTrigger UploadList should draw file items first:
       this._ctx.$['*currentActivity'] = ActivityBlock.activities.UPLOAD_LIST;
       this._ctx.setOrAddState('*modalActive', true);
       // @ts-ignore TODO: fix this
-      this.fileInput['value'] = '';
-      this.fileInput = null;
+      fileInput['value'] = '';
     };
   }
 
