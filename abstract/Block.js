@@ -12,6 +12,7 @@ import { blockCtx } from './CTX.js';
 import { LocaleManager, localeStateKey } from './LocaleManager.js';
 import { l10nProcessor } from './l10nProcessor.js';
 import { sharedConfigKey } from './sharedConfigKey.js';
+import { A11y } from './a11y.js';
 
 const TAG_PREFIX = 'lr-';
 
@@ -178,6 +179,10 @@ export class Block extends BaseComponent {
     }
     if (!this.has('*localeManager')) {
       this.add('*localeManager', new LocaleManager(this));
+    }
+
+    if (!this.has('*a11y')) {
+      this.add('*a11y', new A11y());
     }
 
     this.sub(localeStateKey('locale-id'), (localeId) => {

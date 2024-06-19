@@ -15,6 +15,8 @@ export class LrBtnUi extends Block {
       icon: '',
       iconCss: this._iconCss(),
       theme: null,
+      'aria-role': '',
+      'aria-controls': '',
     };
 
     this.defineAccessor('active', (active) => {
@@ -38,6 +40,14 @@ export class LrBtnUi extends Block {
   initCallback() {
     super.initCallback();
 
+    this.defineAccessor('aria-role', (value) => {
+      this.$['aria-role'] = value || '';
+    });
+
+    this.defineAccessor('aria-controls', (value) => {
+      this.$['aria-controls'] = value || '';
+    });
+
     this.sub('icon', (iconName) => {
       this._iconSingle = !this.$.text;
       this._iconHidden = !iconName;
@@ -54,9 +64,6 @@ export class LrBtnUi extends Block {
       this._iconSingle = false;
     });
 
-    if (this.firstElementChild.tabIndex === -1) {
-      this.firstElementChild.tabIndex = 0;
-    }
     if (!this.hasAttribute('theme')) {
       this.setAttribute('theme', 'default');
     }
@@ -73,10 +80,15 @@ export class LrBtnUi extends Block {
   }
 }
 
-LrBtnUi.bindAttributes({ text: 'text', icon: 'icon', reverse: 'reverse', theme: 'theme' });
+LrBtnUi.bindAttributes({
+  text: 'text',
+  icon: 'icon',
+  reverse: 'reverse',
+  theme: 'theme',
+});
 
 LrBtnUi.template = /* HTML */ `
-  <button tabindex="0">
+  <button set="@role:aria-role; @aria-controls: aria-controls">
     <lr-icon set="className: iconCss; @name: icon; @hidden: !icon"></lr-icon>
     <div class="text">{{text}}</div>
   </button>

@@ -136,6 +136,7 @@
   "dependencies": {
     "@symbiotejs/symbiote": "^1.11.7",
     "@uploadcare/image-shrink": "^6.14.1",
-    "@uploadcare/upload-client": "^6.14.1"
+    "@uploadcare/upload-client": "^6.14.1",
+    "keyux": "^0.7.1"
   }
 }

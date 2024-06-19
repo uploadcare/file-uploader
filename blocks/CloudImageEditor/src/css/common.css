@@ -67,7 +67,7 @@
   --background-effect: var(--down-background) !important;
 }
 
-[lr-cloud-image-editor] :is([tabindex][active], [with-effects][active]) {
+[lr-cloud-image-editor] :is([tabindex][active], [with-effects][active], button[active]) {
   --filter-effect: var(--active-filter) !important;
   --opacity-effect: var(--active-opacity) !important;
   --color-effect: var(--active-color-rgb) !important;
