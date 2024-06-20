@@ -238,22 +238,24 @@ export class Block extends BaseComponent {
     return parseFloat((bytes / k ** i).toFixed(dm)) + ' ' + units[i];
   }
 
-  /**
-   * @param {String} url
-   * @returns {String}
-   */
-  proxyUrl(url) {
+  /** @param {string} url */
+  async proxyUrl(url) {
     if (this.cfg.secureDeliveryProxy && this.cfg.secureDeliveryProxyUrlResolver) {
       console.warn(
         'Both secureDeliveryProxy and secureDeliveryProxyUrlResolver are set. The secureDeliveryProxyUrlResolver will be used.',
       );
     }
     if (this.cfg.secureDeliveryProxyUrlResolver) {
-      return this.cfg.secureDeliveryProxyUrlResolver(url, {
-        uuid: extractUuid(url),
-        cdnUrlModifiers: extractCdnUrlModifiers(url),
-        fileName: extractFilename(url),
-      });
+      try {
+        return await this.cfg.secureDeliveryProxyUrlResolver(url, {
+          uuid: extractUuid(url),
+          cdnUrlModifiers: extractCdnUrlModifiers(url),
+          fileName: extractFilename(url),
+        });
+      } catch (err) {
+        console.error('Failed to resolve secure delivery proxy URL. Falling back to the default URL.', err);
+        return url;
+      }
     }
     if (this.cfg.secureDeliveryProxy) {
       return applyTemplateData(

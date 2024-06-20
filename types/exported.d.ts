@@ -14,7 +14,7 @@ export type LocaleDefinitionOverride = Record<string, LocaleDefinition>;
 export type SecureDeliveryProxyUrlResolver = (
   previewUrl: string,
   urlParts: { uuid: string; cdnUrlModifiers: string; fileName: string },
-) => string;
+) => Promise<string> | string;
 export type SecureUploadsSignatureAndExpire = { secureSignature: string; secureExpire: string };
 export type SecureUploadsSignatureResolver = () => Promise<SecureUploadsSignatureAndExpire | null>;
 export type IconHrefResolver = (iconName: string) => string;
