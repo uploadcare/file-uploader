@@ -62,14 +62,12 @@ lr-file-item .file-name {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  line-height: 1.3em;
 }
 
 lr-file-item .file-error {
   display: none;
   color: var(--uc-destructive-foreground);
   font-size: 0.85em;
-  line-height: 1.3em;
 }
 
 lr-file-item button.remove-btn,

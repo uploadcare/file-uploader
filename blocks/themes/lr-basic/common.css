@@ -1,6 +1,7 @@
 :where([lr-wgt-common]) {
   color: var(--uc-foreground);
   font-size: var(--uc-font-size);
+  line-height: var(--uc-line-height);
   font-family: var(--uc-font-family);
 }
 

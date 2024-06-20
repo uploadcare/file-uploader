@@ -42,7 +42,6 @@
   width: 100%;
   min-height: calc(var(--uc-preview-size) + var(--uc-padding) * 2 + 8px);
   padding: 0;
-  line-height: 140%;
   text-align: center;
   background-color: var(--uc-muted);
   border-radius: calc(var(--uc-radius) * 1.75);
