@@ -1,10 +1,10 @@
 // Canvas Manipulator
-import { applyStyles, applyAttributes } from '@symbiotejs/symbiote';
+import { applyAttributes, applyStyles } from '@symbiotejs/symbiote';
 const SVGNS = 'http://www.w3.org/2000/svg';
 
 export class CanMan {
   _syncSvgSize() {
-    let rect = this.svgGroupEl.getBoundingClientRect();
+    const rect = this.svgGroupEl.getBoundingClientRect();
     applyAttributes(this.svgEl, {
       viewBox: `0, 0, ${rect.width}, ${rect.height}`,
       width: rect.width,
@@ -14,7 +14,7 @@ export class CanMan {
 
   _syncCanvas() {
     return new Promise((resolve, reject) => {
-      let url = URL.createObjectURL(
+      const url = URL.createObjectURL(
         new Blob([this.svgEl.outerHTML], {
           type: 'image/svg+xml',
         }),
@@ -45,9 +45,9 @@ export class CanMan {
       width: this.can.width,
       height: this.can.height,
     });
-    this._addedObjects.forEach((obj) => {
+    for (const obj of this._addedObjects) {
       obj.remove();
-    });
+    }
     return new Promise((resolve, reject) => {
       this.svgImgEl.onload = () => {
         resolve();
@@ -90,7 +90,7 @@ export class CanMan {
   }
 
   getImg() {
-    let img = new Image();
+    const img = new Image();
     img.src = this.can.toDataURL('image/png');
     return new Promise((resolve, reject) => {
       img.onload = () => {
@@ -142,15 +142,16 @@ export class CanMan {
   }
 
   startText() {
-    let onStart = (e) => {
-      let text = document.createElementNS(SVGNS, 'text');
+    const onStart = (e) => {
+      const text = document.createElementNS(SVGNS, 'text');
       // @ts-ignore
       applyAttributes(text, {
         fill: this.currentColor,
         x: e.offsetX,
         y: e.offsetY,
       });
-      (text.textContent = 'TEXT'), this.svgGroupEl.appendChild(text);
+      text.textContent = 'TEXT';
+      this.svgGroupEl.appendChild(text);
       this._addedObjects.add(text);
       text.focus();
       this.svgEl.removeEventListener('mousedown', onStart);
@@ -164,7 +165,7 @@ export class CanMan {
 
   startDraw() {
     this.svgEl.addEventListener('mousedown', (e) => {
-      let pLine = document.createElementNS(SVGNS, 'polyline');
+      const pLine = document.createElementNS(SVGNS, 'polyline');
       // @ts-ignore
       applyAttributes(pLine, {
         fill: 'none',
@@ -173,7 +174,7 @@ export class CanMan {
       });
       this.svgGroupEl.appendChild(pLine);
       this._addedObjects.add(pLine);
-      let points = [];
+      const points = [];
       this.svgEl.onmousemove = (e) => {
         points.push(`${e.offsetX},${e.offsetY}`);
         pLine.setAttribute('points', points.join(' '));

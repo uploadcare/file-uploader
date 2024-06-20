@@ -8,7 +8,7 @@ export class EditorScroller extends Block {
 
     this.addEventListener('wheel', (e) => {
       e.preventDefault();
-      let { deltaY, deltaX } = e;
+      const { deltaY, deltaX } = e;
       if (Math.abs(deltaX) > X_THRESHOLD) {
         this.scrollLeft += deltaX;
       } else {
@@ -18,4 +18,4 @@ export class EditorScroller extends Block {
   }
 }
 
-EditorScroller.template = /* HTML */ ` <slot></slot> `;
+EditorScroller.template = /* HTML */ ' <slot></slot> ';

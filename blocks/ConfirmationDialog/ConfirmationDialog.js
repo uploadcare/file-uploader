@@ -9,7 +9,7 @@ export class UiConfirmation {
     console.log('Confirmed');
   }
   denyAction() {
-    this['historyBack']();
+    this.historyBack();
   }
 }
 

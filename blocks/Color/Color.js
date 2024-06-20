@@ -6,7 +6,7 @@ export class Color extends Block {
     inputOpacity: 0,
     '*selectedColor': '#f00',
     onChange: () => {
-      this.$['*selectedColor'] = this.ref.input['value'];
+      this.$['*selectedColor'] = this.ref.input.value;
     },
   };
 }

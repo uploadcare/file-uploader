@@ -10,27 +10,15 @@
     "attributePosition": "auto",
     "ignore": ["**/web", "**/package-lock.json"]
   },
-  "organizeImports": { "enabled": true },
+  "organizeImports": {
+    "enabled": true
+  },
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": false,
-      "complexity": { "useLiteralKeys": "off" },
-      "correctness": { "noUnusedVariables": "warn" },
-      "style": {
-        "noParameterAssign": "off",
-        "useBlockStatements": "off",
-        "useConst": "off",
-        "useSingleVarDeclarator": "off",
-        "useTemplate": "off"
-      },
-      "suspicious": {
-        "noConsoleLog": "off",
-        "noDuplicateObjectKeys": "error",
-        "noPrototypeBuiltins": "off"
-      }
+      "recommended": true
     },
-    "ignore": ["**/web"]
+    "ignore": ["**/web", "index.ssr.js"]
   },
   "javascript": {
     "formatter": {
@@ -45,5 +33,9 @@
       "attributePosition": "auto"
     }
   },
-  "overrides": [{ "include": ["*.js"] }]
+  "overrides": [
+    {
+      "include": ["*.js"]
+    }
+  ]
 }

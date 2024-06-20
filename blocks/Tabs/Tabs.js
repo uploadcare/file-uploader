@@ -1,5 +1,5 @@
-import { Block } from '../../abstract/Block.js';
 import { create } from '@symbiotejs/symbiote';
+import { Block } from '../../abstract/Block.js';
 import { stringToArray } from '../../utils/stringToArray.js';
 
 export class Tabs extends Block {
@@ -8,15 +8,15 @@ export class Tabs extends Block {
     if (!tabL10nStr) {
       return;
     }
-    let ctxList = [...this.ref.context.querySelectorAll('[tab-ctx]')];
-    ctxList.forEach((ctxEl) => {
+    const ctxList = [...this.ref.context.querySelectorAll('[tab-ctx]')];
+    for (const ctxEl of ctxList) {
       if (ctxEl.getAttribute('tab-ctx') === tabL10nStr) {
         ctxEl.removeAttribute('hidden');
       } else {
         ctxEl.setAttribute('hidden', '');
       }
-    });
-    for (let lStr in this._tabMap) {
+    }
+    for (const lStr in this._tabMap) {
       if (lStr === tabL10nStr) {
         this._tabMap[lStr].setAttribute('current', '');
       } else {
@@ -36,9 +36,9 @@ export class Tabs extends Block {
       if (!val) {
         return;
       }
-      let tabList = stringToArray(val);
-      tabList.forEach((tabL10nStr) => {
-        let tabEl = create({
+      const tabList = stringToArray(val);
+      for (const tabL10nStr of tabList) {
+        const tabEl = create({
           tag: 'div',
           attributes: {
             class: 'tab',
@@ -52,7 +52,7 @@ export class Tabs extends Block {
         tabEl.textContent = this.l10n(tabL10nStr);
         this.ref.row.appendChild(tabEl);
         this._tabMap[tabL10nStr] = tabEl;
-      });
+      }
     });
 
     this.defineAccessor('default', (val) => {

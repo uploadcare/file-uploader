@@ -3,7 +3,7 @@ import { BaseComponent, Data } from '@symbiotejs/symbiote';
 import { initialConfig } from '../blocks/Config/initialConfig.js';
 import { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter.js';
 import { WindowHeightTracker } from '../utils/WindowHeightTracker.js';
-import { extractFilename, extractCdnUrlModifiers, extractUuid } from '../utils/cdn-utils.js';
+import { extractCdnUrlModifiers, extractFilename, extractUuid } from '../utils/cdn-utils.js';
 import { getLocaleDirection } from '../utils/getLocaleDirection.js';
 import { getPluralForm } from '../utils/getPluralForm.js';
 import { applyTemplateData, getPluralObjects } from '../utils/template-utils.js';
@@ -36,15 +36,15 @@ export class Block extends BaseComponent {
     if (!str) {
       return '';
     }
-    let template = this.$[localeStateKey(str)] || str;
-    let pluralObjects = getPluralObjects(template);
-    for (let pluralObject of pluralObjects) {
+    const template = this.$[localeStateKey(str)] || str;
+    const pluralObjects = getPluralObjects(template);
+    for (const pluralObject of pluralObjects) {
       variables[pluralObject.variable] = this.pluralize(
         pluralObject.pluralKey,
         Number(variables[pluralObject.countVariable]),
       );
     }
-    let result = applyTemplateData(template, variables);
+    const result = applyTemplateData(template, variables);
     return result;
   }
 
@@ -96,8 +96,8 @@ export class Block extends BaseComponent {
   hasBlockInCtx(callback) {
     // @ts-ignore TODO: fix this
     /** @type {Set} */
-    let blocksRegistry = this.$['*blocksRegistry'];
-    for (let block of blocksRegistry) {
+    const blocksRegistry = this.$['*blocksRegistry'];
+    for (const block of blocksRegistry) {
       if (callback(block)) {
         return true;
       }
@@ -135,7 +135,7 @@ export class Block extends BaseComponent {
 
     if (this.hasAttribute('retpl')) {
       // @ts-ignore TODO: fix this
-      this.constructor['template'] = null;
+      this.constructor.template = null;
       this.processInnerHtml = true;
     }
     if (this.requireCtxName) {
@@ -168,7 +168,7 @@ export class Block extends BaseComponent {
       this.add('*blocksRegistry', new Set());
     }
 
-    let blocksRegistry = this.$['*blocksRegistry'];
+    const blocksRegistry = this.$['*blocksRegistry'];
     blocksRegistry.add(this);
 
     if (!this.has('*eventEmitter')) {
@@ -190,7 +190,7 @@ export class Block extends BaseComponent {
 
   destroyCallback() {
     /** @type {Set<Block>} */
-    let blocksRegistry = this.$['*blocksRegistry'];
+    const blocksRegistry = this.$['*blocksRegistry'];
     blocksRegistry.delete(this);
 
     this.localeManager?.destroyL10nBindings(this);
@@ -224,7 +224,7 @@ export class Block extends BaseComponent {
    * @param {Number} [decimals]
    */
   fileSizeFmt(bytes, decimals = 2) {
-    let units = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const units = ['B', 'KB', 'MB', 'GB', 'TB'];
     /**
      * @param {String} str
      * @returns {String}
@@ -232,10 +232,10 @@ export class Block extends BaseComponent {
     if (bytes === 0) {
       return `0 ${units[0]}`;
     }
-    let k = 1024;
-    let dm = decimals < 0 ? 0 : decimals;
-    let i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / k ** i).toFixed(dm)) + ' ' + units[i];
+    const k = 1024;
+    const dm = decimals < 0 ? 0 : decimals;
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return `${Number.parseFloat((bytes / k ** i).toFixed(dm))} ${units[i]}`;
   }
 
   /**
@@ -268,7 +268,7 @@ export class Block extends BaseComponent {
   /** @returns {import('../types').ConfigType} } */
   get cfg() {
     if (!this.__cfgProxy) {
-      let o = Object.create(null);
+      const o = Object.create(null);
       /** @private */
       this.__cfgProxy = new Proxy(o, {
         set: (obj, key, value) => {
@@ -327,10 +327,10 @@ export class Block extends BaseComponent {
   /** @param {String} [name] */
   static reg(name) {
     if (!name) {
-      super.reg();
+      Block.reg();
       return;
     }
-    super.reg(name.startsWith(TAG_PREFIX) ? name : TAG_PREFIX + name);
+    Block.reg(name.startsWith(TAG_PREFIX) ? name : TAG_PREFIX + name);
   }
 }
 

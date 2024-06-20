@@ -26,7 +26,7 @@ function isValidFocusTarget(el) {
  * @returns {boolean}
  */
 function focusTriggersKeyboardModality(el) {
-  let { tagName } = /** @type {Element} */ (el);
+  const { tagName } = /** @type {Element} */ (el);
 
   if (tagName === 'INPUT' && !(/** @type {HTMLInputElement} */ (el).readOnly)) {
     return true;

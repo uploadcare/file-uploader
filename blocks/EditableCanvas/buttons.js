@@ -104,6 +104,8 @@ const clrHtml = /* HTML */ `<lr-color
 
 export function getButtons() {
   return buttonsModel.reduce((acc, btn) => {
+    // biome-ignore lint/suspicious/noAssignInExpressions: It will be removed soon
+    // biome-ignore lint/style/noParameterAssign: It will be removed soon
     return (acc += btn.clr ? clrHtml : getBthHtml(btn));
   }, '');
 }

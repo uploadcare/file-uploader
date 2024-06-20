@@ -70,7 +70,7 @@ export class ExternalSource extends UploaderBlock {
     super.initCallback();
     this.registerActivity(this.activityType, {
       onActivate: () => {
-        let { externalSourceType } = /** @type {ActivityParams} */ (this.activityParams);
+        const { externalSourceType } = /** @type {ActivityParams} */ (this.activityParams);
 
         this.set$({
           activityCaption: `${externalSourceType?.[0].toUpperCase()}${externalSourceType?.slice(1)}`,
@@ -147,13 +147,13 @@ export class ExternalSource extends UploaderBlock {
    * @param {string} propName
    */
   getCssValue(propName) {
-    let style = window.getComputedStyle(this);
+    const style = window.getComputedStyle(this);
     return style.getPropertyValue(propName).trim();
   }
 
   /** @private */
   applyStyles() {
-    let colors = {
+    const colors = {
       backgroundColor: this.getCssValue('--clr-background-light'),
       textColor: this.getCssValue('--clr-txt'),
       shadeColor: this.getCssValue('--clr-shade-lv1'),
@@ -188,7 +188,7 @@ export class ExternalSource extends UploaderBlock {
   mountIframe() {
     /** @type {HTMLIFrameElement} */
     // @ts-ignore
-    let iframe = create({
+    const iframe = create({
       tag: 'iframe',
       attributes: {
         src: this.remoteUrl(),

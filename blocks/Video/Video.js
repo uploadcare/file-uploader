@@ -24,8 +24,8 @@ const FSAPI = {
   exitFullscreen: () => {
     if (document.exitFullscreen) {
       document.exitFullscreen();
-    } else if (document['webkitExitFullscreen']) {
-      document['webkitExitFullscreen']();
+    } else if (document.webkitExitFullscreen) {
+      document.webkitExitFullscreen();
     }
   },
 };
@@ -40,7 +40,7 @@ export class Video extends Block {
   }
 
   toggleFullscreen() {
-    if ((document.fullscreenElement || document['webkitFullscreenElement']) === this) {
+    if ((document.fullscreenElement || document.webkitFullscreenElement) === this) {
       FSAPI.exitFullscreen();
     } else {
       FSAPI.requestFullscreen(this);
@@ -51,11 +51,11 @@ export class Video extends Block {
     if (this.$.capIcon === ICO_MAP.CAP_OFF) {
       this.$.capIcon = ICO_MAP.CAP_ON;
       this._video.textTracks[0].mode = 'showing';
-      window.localStorage.setItem(Video.is + ':captions', '1');
+      window.localStorage.setItem(`${Video.is}:captions`, '1');
     } else {
       this.$.capIcon = ICO_MAP.CAP_OFF;
       this._video.textTracks[0].mode = 'hidden';
-      window.localStorage.removeItem(Video.is + ':captions');
+      window.localStorage.removeItem(`${Video.is}:captions`);
     }
   }
 
@@ -72,8 +72,8 @@ export class Video extends Block {
   }
 
   setVolume(val) {
-    window.localStorage.setItem(Video.is + ':volume', val);
-    let volume = val ? val / 100 : 0;
+    window.localStorage.setItem(`${Video.is}:volume`, val);
+    const volume = val ? val / 100 : 0;
     this._video.volume = volume;
   }
 
@@ -109,11 +109,11 @@ export class Video extends Block {
     },
     onVolChange: (e) => {
       // TODO: cast range.value instead of range.$.value
-      let val = parseFloat(e.currentTarget.$.value);
+      const val = Number.parseFloat(e.currentTarget.$.value);
       this.setVolume(val);
     },
     progressClicked: (e) => {
-      let progressRect = this.progress.getBoundingClientRect();
+      const progressRect = this.progress.getBoundingClientRect();
       this._video.currentTime = this._video.duration * (e.offsetX / progressRect.width);
     },
   };
@@ -131,9 +131,9 @@ export class Video extends Block {
    * @param {Object<string, any>} desc
    */
   _desc2attrs(desc) {
-    let attrs = [];
-    for (let attr in desc) {
-      let val = attr === 'src' ? this._getUrl(desc[attr]) : desc[attr];
+    const attrs = [];
+    for (const attr in desc) {
+      const val = attr === 'src' ? this._getUrl(desc[attr]) : desc[attr];
       attrs.push(`${attr}="${val}"`);
     }
     return attrs.join(' ');
@@ -145,32 +145,32 @@ export class Video extends Block {
    */
   _timeFmt(seconds) {
     // TODO: add hours
-    let date = new Date(Math.round(seconds) * 1000);
+    const date = new Date(Math.round(seconds) * 1000);
     return [date.getMinutes(), date.getSeconds()]
       .map((n) => {
-        return n < 10 ? '0' + n : n;
+        return n < 10 ? `0${n}` : n;
       })
       .join(':');
   }
 
   /** @private */
   _initTracks() {
-    [...this._video.textTracks].forEach((track) => {
+    for (const track of this._video.textTracks) {
       track.mode = 'hidden';
-    });
-    if (window.localStorage.getItem(Video.is + ':captions')) {
+    }
+    if (window.localStorage.getItem(`${Video.is}:captions`)) {
       this.toggleCaptions();
     }
   }
 
   /** @private */
   _castAttributes() {
-    let toCast = ['autoplay', 'loop', 'muted'];
-    [...this.attributes].forEach((attr) => {
+    const toCast = ['autoplay', 'loop', 'muted'];
+    for (const attr of this.attributes) {
       if (toCast.includes(attr.name)) {
         this._video.setAttribute(attr.name, attr.value);
       }
-    });
+    }
   }
 
   initCallback() {
@@ -206,7 +206,7 @@ export class Video extends Block {
       if (!src) {
         return;
       }
-      let url = this._getUrl(src);
+      const url = this._getUrl(src);
       this._video.src = url;
     });
 
@@ -214,21 +214,23 @@ export class Video extends Block {
       if (!descPath) {
         return;
       }
-      let desc = await (await window.fetch(this._getUrl(descPath))).json();
+      const desc = await (await window.fetch(this._getUrl(descPath))).json();
 
       if (desc.poster) {
         this._video.poster = this._getUrl(desc.poster);
       }
 
       let html = '';
-      desc?.sources.forEach((srcDesc) => {
-        html += /* HTML */ `<source ${this._desc2attrs(srcDesc)} />`;
-      });
+      if (desc.sources) {
+        for (const srcDesc of desc.sources) {
+          html += /* HTML */ `<source ${this._desc2attrs(srcDesc)} />`;
+        }
+      }
 
       if (desc.tracks) {
-        desc.tracks.forEach((trackDesc) => {
+        for (const trackDesc of desc.tracks) {
           html += /* HTML */ `<track ${this._desc2attrs(trackDesc)} />`;
-        });
+        }
         this.$.hasSubtitles = true;
       }
 
@@ -244,14 +246,14 @@ export class Video extends Block {
     });
 
     this._video.addEventListener('timeupdate', (e) => {
-      let perc = Math.round(100 * (this._video.currentTime / this._video.duration));
-      this.$.progressCssWidth = perc + '%';
+      const perc = Math.round(100 * (this._video.currentTime / this._video.duration));
+      this.$.progressCssWidth = `${perc}%`;
       this.$.currentTime = this._timeFmt(this._video.currentTime);
     });
 
-    let volume = window.localStorage.getItem(Video.is + ':volume');
+    const volume = window.localStorage.getItem(`${Video.is}:volume`);
     if (volume) {
-      let vol = parseFloat(volume);
+      const vol = Number.parseFloat(volume);
       this.setVolume(vol);
       this.$.volumeValue = vol;
     }

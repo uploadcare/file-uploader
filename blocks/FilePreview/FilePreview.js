@@ -1,6 +1,6 @@
 import { Block } from '../../abstract/Block.js';
-import { checkerboardCssBg } from '../svg-backgrounds/svg-backgrounds.js';
 import { TRANSPARENT_PIXEL_SRC } from '../../utils/transparentPixelSrc.js';
+import { checkerboardCssBg } from '../svg-backgrounds/svg-backgrounds.js';
 
 export class FilePreview extends Block {
   init$ = {
@@ -8,10 +8,6 @@ export class FilePreview extends Block {
     checkerboard: false,
     src: TRANSPARENT_PIXEL_SRC,
   };
-
-  constructor() {
-    super();
-  }
 
   initCallback() {
     super.initCallback();
@@ -32,7 +28,7 @@ export class FilePreview extends Block {
 
   /** @param {File} imgFile */
   setImageFile(imgFile) {
-    let url = URL.createObjectURL(imgFile);
+    const url = URL.createObjectURL(imgFile);
     this.$.src = url;
     this._lastObjectUrl = url;
   }

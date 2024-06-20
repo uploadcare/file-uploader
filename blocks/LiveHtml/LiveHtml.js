@@ -15,9 +15,10 @@ const INIT_HTML = /* HTML */ `
 </html>
 `.trim();
 
+// biome-ignore lint/complexity/noStaticOnlyClass: It will be removed soon
 class Caret {
   static getPosition(parentElement) {
-    let selection = window.getSelection();
+    const selection = window.getSelection();
     let charCount = -1;
     let node;
 
@@ -47,9 +48,9 @@ class Caret {
 
   static setPosition(chars, element) {
     if (chars >= 0) {
-      let selection = window.getSelection();
+      const selection = window.getSelection();
 
-      let range = Caret._createRange(element, {
+      const range = Caret._createRange(element, {
         count: chars,
       });
 
@@ -63,6 +64,7 @@ class Caret {
 
   static _createRange(node, chars, range) {
     if (!range) {
+      // biome-ignore lint/style/noParameterAssign: It will be removed soon
       range = document.createRange();
       range.selectNode(node);
       range.setStart(node, 0);
@@ -80,6 +82,7 @@ class Caret {
         }
       } else {
         for (let lp = 0; lp < node.childNodes.length; lp++) {
+          // biome-ignore lint/style/noParameterAssign: It will be removed soon
           range = Caret._createRange(node.childNodes[lp], chars, range);
 
           if (chars.count === 0) {
@@ -96,6 +99,7 @@ class Caret {
       if (node === parentElement) {
         return true;
       }
+      // biome-ignore lint/style/noParameterAssign: It will be removed soon
       node = node.parentNode;
     }
     return false;
@@ -119,12 +123,12 @@ const headerHtml = /* HTML */ `
 
 export class LiveHtml extends Block {
   async hl() {
-    let offset = Caret.getPosition(this.ref.editor);
+    const offset = Caret.getPosition(this.ref.editor);
 
     this.ref.editor.textContent = this.ref.editor.textContent;
 
     let html = this.ref.editor.textContent;
-    let hljs = await import(
+    const hljs = await import(
       'https://cdn.skypack.dev/pin/highlight.js@v11.6.0-4W1e4sNTmpsDP0C1l7xy/mode=imports,min/optimized/highlightjs.js'
     );
     // @ts-ignore
@@ -146,7 +150,7 @@ export class LiveHtml extends Block {
       if (this.hasAttribute('console-output')) {
         /** @type {Window} */
         // @ts-ignore
-        let docWin = this.ref.vp.contentWindow;
+        const docWin = this.ref.vp.contentWindow;
         this.ref.vp.onload = () => {
           console.dirxml(docWin.document.body);
         };
@@ -196,8 +200,9 @@ ${this.ref.vp.srcdoc}
 
   connectedCallback() {
     if (this.innerHTML.trim()) {
-      let lines = this.innerHTML.split('\n');
+      const lines = this.innerHTML.split('\n');
       let commonTabSize = 1000;
+      // biome-ignore lint/complexity/noForEach: It will be removed soon
       lines.forEach((line) => {
         if (!line.trim()) {
           return;
@@ -206,7 +211,7 @@ ${this.ref.vp.srcdoc}
           commonTabSize = 0;
           return;
         }
-        let tabs = line.match(/^ +/);
+        const tabs = line.match(/^ +/);
         if (tabs) {
           commonTabSize = Math.min(commonTabSize, tabs[0].length);
         }
@@ -216,6 +221,7 @@ ${this.ref.vp.srcdoc}
         .map((line) => {
           for (let i = 0; i < commonTabSize; i++) {
             if (line.startsWith(' ')) {
+              // biome-ignore lint/style/noParameterAssign: It will be removed soon
               line = line.replace(' ', '');
             }
           }
@@ -228,10 +234,10 @@ ${this.ref.vp.srcdoc}
   }
 
   initCallback() {
-    let docImportMap = document.querySelector('script[type="importmap"]');
+    const docImportMap = document.querySelector('script[type="importmap"]');
     if (docImportMap) {
       let shimScriptHtml = '';
-      let shimScriptEl = document.querySelector('script[src*="es-module-shims.js"]');
+      const shimScriptEl = document.querySelector('script[src*="es-module-shims.js"]');
       if (shimScriptEl) {
         shimScriptHtml = shimScriptEl.outerHTML;
       }
@@ -241,7 +247,7 @@ ${this.ref.vp.srcdoc}
       this.sub('src', (val) => {
         if (val) {
           window.fetch(val).then(async (resp) => {
-            let code = await resp.text();
+            const code = await resp.text();
             this.$.code = code;
             this.sync();
           });

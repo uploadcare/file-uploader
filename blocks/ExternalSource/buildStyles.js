@@ -1,17 +1,17 @@
-let styleToCss = (style) => {
-  let css = Object.keys(style).reduce((acc, selector) => {
-    let propertiesObj = style[selector];
-    let propertiesStr = Object.keys(propertiesObj).reduce((acc, prop) => {
-      let value = propertiesObj[prop];
-      return acc + `${prop}: ${value};`;
+const styleToCss = (style) => {
+  const css = Object.keys(style).reduce((acc, selector) => {
+    const propertiesObj = style[selector];
+    const propertiesStr = Object.keys(propertiesObj).reduce((acc, prop) => {
+      const value = propertiesObj[prop];
+      return `${acc}${prop}: ${value};`;
     }, '');
-    return acc + `${selector}{${propertiesStr}}`;
+    return `${acc}${selector}{${propertiesStr}}`;
   }, '');
   return css;
 };
 
 export function buildStyles({ textColor, backgroundColor, linkColor, linkColorHover, shadeColor }) {
-  let border = `solid 1px ${shadeColor}`;
+  const border = `solid 1px ${shadeColor}`;
 
   // TODO: we need to update source source styles, add css custom properties to control theme
   return styleToCss({

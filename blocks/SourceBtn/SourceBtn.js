@@ -1,6 +1,6 @@
+import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 // @ts-check
 import { UploaderBlock } from '../../abstract/UploaderBlock.js';
-import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 
 const L10N_PREFIX = 'src-type-';
 
@@ -65,7 +65,7 @@ export class SourceBtn extends UploaderBlock {
       icon: 'edit-draw',
     });
 
-    for (let externalSourceType of Object.values(UploaderBlock.extSrcList)) {
+    for (const externalSourceType of Object.values(UploaderBlock.extSrcList)) {
       this.registerType({
         type: externalSourceType,
         activity: ActivityBlock.activities.EXTERNAL,
@@ -121,7 +121,7 @@ export class SourceBtn extends UploaderBlock {
   applyType(type) {
     const configType = this._registeredTypes[type];
     if (!configType) {
-      console.warn('Unsupported source type: ' + type);
+      console.warn(`Unsupported source type: ${type}`);
       return;
     }
     const { textKey = type, icon = type } = configType;

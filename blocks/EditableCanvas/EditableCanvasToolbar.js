@@ -1,7 +1,7 @@
 import { Block } from '../../abstract/Block.js';
-import { CanMan } from './CanMan.js';
-import { Range } from '../Range/Range.js';
 import { Color } from '../Color/Color.js';
+import { Range } from '../Range/Range.js';
+import { CanMan } from './CanMan.js';
 
 import { getButtons } from './buttons.js';
 
@@ -93,18 +93,19 @@ export class EditorToolbar extends Block {
         '*rangeValue': 100,
       });
       /** @type {HTMLButtonElement} */
-      let btnEl = /** @type {Element} */ (e.target).closest('[action]');
+      const btnEl = /** @type {Element} */ (e.target).closest('[action]');
       if (btnEl) {
         this.buttons.add(btnEl);
-        this.buttons.forEach((btn) => {
+
+        for (const btn of this.buttons) {
           if (btn === btnEl) {
             btn.setAttribute('current', '');
           } else {
             btn.removeAttribute('current', '');
           }
-        });
+        }
       }
-      let action = btnEl.getAttribute('action');
+      const action = btnEl.getAttribute('action');
       console.log(action);
       if (!action) {
         return;

@@ -1,6 +1,6 @@
-import { uploaderBlockCtx } from './CTX.js';
 import svgIconsSprite from '../blocks/themes/lr-basic/svg-sprite.js';
 import { Block } from './Block.js';
+import { uploaderBlockCtx } from './CTX.js';
 
 export class SolutionBlock extends Block {
   requireCtxName = true;
@@ -8,10 +8,10 @@ export class SolutionBlock extends Block {
   _template = null;
 
   static set template(value) {
-    this._template = svgIconsSprite + value + /** HTML */ `<slot></slot>`;
+    SolutionBlock._template = `${svgIconsSprite + value}<slot></slot>`;
   }
 
   static get template() {
-    return this._template;
+    return SolutionBlock._template;
   }
 }

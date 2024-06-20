@@ -1,5 +1,5 @@
-import { Block } from '../../abstract/Block.js';
 import { applyStyles } from '@symbiotejs/symbiote';
+import { Block } from '../../abstract/Block.js';
 import { checkerboardCssBg } from '../svg-backgrounds/svg-backgrounds.js';
 
 /**
@@ -70,15 +70,15 @@ export class EditableCanvas extends Block {
 
   /** @param {File} imgFile */
   setImageFile(imgFile) {
-    let img = new Image();
-    let url = URL.createObjectURL(imgFile);
+    const img = new Image();
+    const url = URL.createObjectURL(imgFile);
     img.src = url;
     this.setImage(img);
   }
 
   /** @param {String} url */
   setImageUrl(url) {
-    let img = new Image();
+    const img = new Image();
     img.src = url;
     this.setImage(img);
   }

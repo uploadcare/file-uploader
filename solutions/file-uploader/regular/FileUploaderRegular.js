@@ -1,7 +1,7 @@
 // @ts-check
 import { SolutionBlock } from '../../../abstract/SolutionBlock.js';
-import { EventType } from '../../../blocks/UploadCtxProvider/EventEmitter.js';
 import { asBoolean } from '../../../blocks/Config/normalizeConfigValue.js';
+import { EventType } from '../../../blocks/UploadCtxProvider/EventEmitter.js';
 
 export class FileUploaderRegular extends SolutionBlock {
   constructor() {
