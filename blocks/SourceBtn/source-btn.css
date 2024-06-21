@@ -6,12 +6,16 @@ lr-source-btn > button {
   color: var(--uc-foreground);
   border-radius: var(--uc-radius);
   cursor: pointer;
-  transition: background-color var(--uc-transition),
-  color var(--uc-transition);
+  transition:
+    background-color var(--uc-transition),
+    color var(--uc-transition);
   user-select: none;
+  width: 100%;
+  background-color: unset;
+  height: unset;
 }
 
-lr-source-btn > button:last-child {
+lr-source-btn:last-child > button {
   margin-bottom: 0;
 }
 
