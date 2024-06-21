@@ -108,7 +108,7 @@ export class CloudImageEditorBlock extends Block {
     }
 
     try {
-      const cdnUrl = createCdnUrl(this.$['*originalUrl'], createCdnUrlModifiers('json'));
+      const cdnUrl = await this.proxyUrl(createCdnUrl(this.$['*originalUrl'], createCdnUrlModifiers('json')));
       const json = await fetch(cdnUrl).then((response) => response.json());
 
       const { width, height } = /** @type {{ width: number; height: number }} */ (json);
