@@ -310,8 +310,6 @@ export class FileItem extends UploaderBlock {
 
     /** @private */
     this._observer = new window.IntersectionObserver(this._observerCallback.bind(this), {
-      root: this.parentElement,
-      rootMargin: '50% 0px 50% 0px',
       threshold: [0, 1],
     });
     this._observer.observe(this);
