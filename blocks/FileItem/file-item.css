@@ -1,5 +1,16 @@
 lr-file-item {
+  --uc-file-item-gap: 4px;
+  --uc-file-item-height: calc(var(--uc-preview-size) + var(--uc-padding) * 2 + var(--uc-file-item-gap));
+
   display: block;
+  content-visibility: auto;
+  height: var(--uc-file-item-height);
+  contain-intrinsic-size: auto var(--uc-file-item-height);
+  overflow: hidden;
+}
+
+lr-file-item:last-of-type {
+  --uc-file-item-gap: 0;
 }
 
 lr-file-item > .inner {
@@ -8,17 +19,13 @@ lr-file-item > .inner {
   grid-template-columns: var(--uc-preview-size) 1fr max-content;
   gap: 2px;
   align-items: center;
-  margin-bottom: 4px;
+  margin-bottom: var(--uc-file-item-gap);
   padding: var(--uc-padding);
   overflow: hidden;
   font-size: 0.925em;
   background-color: var(--uc-muted);
   border-radius: var(--uc-radius);
-  transition: all var(--uc-transition);
-}
-
-lr-file-item:last-of-type > .inner {
-  margin-bottom: 0;
+  transition: background-color var(--uc-transition);
 }
 
 lr-file-item > .inner[focused] {
@@ -54,7 +61,6 @@ lr-file-item .file-name-wrapper {
   padding-left: var(--uc-padding);
   overflow: hidden;
   color: var(--uc-muted-foreground);
-  transition: color var(--uc-transition);
 }
 
 lr-file-item .file-name {

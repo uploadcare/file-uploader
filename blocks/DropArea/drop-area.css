@@ -3,7 +3,9 @@
   overflow: hidden;
   border: 1px dashed var(--uc-border);
   border-radius: calc(var(--uc-radius) * 1.75);
-  transition: all var(--uc-transition);
+  transition:
+    border var(--uc-transition),
+    border-radius var(--uc-transition);
 }
 
 :where([lr-drop-area]),
@@ -19,12 +21,11 @@
   position: relative;
   margin: var(--uc-padding);
   color: var(--uc-muted-foreground);
-  transition: all var(--uc-transition);
+  transition: color var(--uc-transition);
 }
 
 :where([lr-drop-area])[ghost][drag-state='inactive'] {
   display: none;
-  opacity: 0;
 }
 
 :where([lr-drop-area])[ghost]:not([fullscreen]):is([drag-state='active'], [drag-state='near'], [drag-state='over']) {
@@ -76,7 +77,9 @@
   color: var(--uc-foreground);
   background-color: var(--uc-muted);
   border-radius: 50%;
-  transition: all var(--uc-transition);
+  transition:
+    color var(--uc-transition),
+    background-color var(--uc-transition);
 }
 
 :where([lr-drop-area])[with-icon] lr-icon {
@@ -85,7 +88,6 @@
   height: 32px;
   top: calc(50% - 16px);
   left: calc(50% - 16px);
-  transition: all var(--uc-transition);
 }
 
 :where([lr-drop-area])[with-icon] lr-icon:last-child {
@@ -157,7 +159,12 @@
   background-color: var(--uc-background);
   border-radius: calc(var(--uc-radius) * 1.75);
   box-shadow: var(--uc-dialog-shadow);
-  transition: all var(--uc-transition);
+  transition:
+    color var(--uc-transition),
+    background-color var(--uc-transition),
+    box-shadow var(--uc-transition),
+    border-radius var(--uc-transition),
+    transform var(--uc-transition);
 }
 
 :where([lr-drop-area])[with-icon][fullscreen][drag-state='active'] > .content-wrapper,
