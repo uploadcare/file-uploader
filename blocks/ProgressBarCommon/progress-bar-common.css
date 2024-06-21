@@ -5,8 +5,8 @@ lr-progress-bar-common {
   left: 0;
   z-index: 10000;
   display: block;
-  height: var(--gap-mid);
-  background-color: var(--clr-background);
+  height: 10px;
+  background-color: var(--uc-background);
   transition: opacity 0.3s;
 }
 

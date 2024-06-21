@@ -30,15 +30,16 @@
   </script>
 </head>
 
-<lr-config ctx-name="my-uploader" pubkey="demopublickey" multiple-min="1" multiple-max="10" img-only></lr-config>
+<lr-config ctx-name="my-uploader" pubkey="demopublickey" multiple-min="1" multiple-max="10" img-only group-output></lr-config>
+<lr-file-uploader-regular headless class="uc-light" ctx-name="my-uploader">
+  <lr-form-input
+    style="position: absolute; bottom: 0px; left: 50%; pointer-events: none;"
+    ctx-name="my-uploader"
+  ></lr-form-input>
+</lr-file-uploader-regular>
 
 <form>
-  <lr-file-uploader-regular style="position: relative; display: inline-block;" ctx-name="my-uploader">
-    <lr-form-input
-      style="position: absolute; bottom: 0px; left: 50%; pointer-events: none;"
-      ctx-name="my-uploader"
-    ></lr-form-input>
-  </lr-file-uploader-regular>
+  <lr-simple-btn ctx-name="my-uploader" lr-wgt-common class="uc-light"></lr-simple-btn>
   <br />
   <br />
   <button type="submit">Submit</button>

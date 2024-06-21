@@ -154,11 +154,16 @@ export class ExternalSource extends UploaderBlock {
   /** @private */
   applyStyles() {
     let colors = {
-      backgroundColor: this.getCssValue('--clr-background-light'),
-      textColor: this.getCssValue('--clr-txt'),
-      shadeColor: this.getCssValue('--clr-shade-lv1'),
-      linkColor: '#157cfc',
-      linkColorHover: '#3891ff',
+      radius: this.getCssValue('--uc-radius'),
+      backgroundColor: this.getCssValue('--uc-background'),
+      textColor: this.getCssValue('--uc-foreground'),
+      secondaryColor: this.getCssValue('--uc-secondary'),
+      secondaryForegroundColor: this.getCssValue('--uc-secondary-foreground'),
+      secondaryHover: this.getCssValue('--uc-secondary-hover'),
+      linkColor: this.getCssValue('--uc-primary'),
+      linkColorHover: this.getCssValue('--uc-primary-hover'),
+      fontFamily: this.getCssValue('--uc-font-family'),
+      fontSize: this.getCssValue('--uc-font-size'),
     };
 
     this.sendMessage({
@@ -238,9 +243,12 @@ ExternalSource.template = /* HTML */ `
       <button type="button" class="cancel-btn secondary-btn" set="onclick: onCancel" l10n="cancel"></button>
       <div></div>
       <div set="@hidden: !multiple" class="selected-counter"><span l10n="selected-count"></span>{{counter}}</div>
-      <button type="button" class="done-btn primary-btn" set="onclick: onDone; @disabled: !counter">
-        <lr-icon name="check"></lr-icon>
-      </button>
+      <button
+        type="button"
+        class="done-btn primary-btn"
+        set="onclick: onDone; @disabled: !counter"
+        l10n="done"
+      ></button>
     </div>
   </div>
 `;

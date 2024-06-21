@@ -7,9 +7,8 @@ lr-select > button {
   display: inline-flex;
   align-items: center;
   padding-right: 0 !important; /* todo: get rid of important */
-  color: var(--clr-btn-txt-secondary);
-  background-color: var(--clr-btn-bgr-secondary);
-  box-shadow: var(--shadow-btn-secondary);
+  color: var(--uc-secondary-foreground);
+  background-color: var(--uc-secondary);
 }
 
 lr-select > button > select {

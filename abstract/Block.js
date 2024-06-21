@@ -19,7 +19,9 @@ const TAG_PREFIX = 'lr-';
 export class Block extends BaseComponent {
   /** @type {string | null} */
   static StateConsumerScope = null;
-  static className = '';
+
+  /** @type {string[]} */
+  static styleAttrs = [];
   requireCtxName = false;
   allowCustomTemplate = true;
   /** @type {import('./ActivityBlock.js').ActivityType} */
@@ -128,10 +130,10 @@ export class Block extends BaseComponent {
   }
 
   connectedCallback() {
-    const className = /** @type {typeof Block} */ (this.constructor).className;
-    if (className) {
-      this.classList.toggle(`${TAG_PREFIX}${className}`, true);
-    }
+    const styleAttrs = /** @type {typeof Block} */ (this.constructor).styleAttrs;
+    styleAttrs.forEach((attr) => {
+      this.setAttribute(attr, '');
+    });
 
     if (this.hasAttribute('retpl')) {
       // @ts-ignore TODO: fix this
@@ -179,7 +181,8 @@ export class Block extends BaseComponent {
     }
 
     this.sub(localeStateKey('locale-id'), (localeId) => {
-      this.style.direction = getLocaleDirection(localeId);
+      const direction = getLocaleDirection(localeId);
+      this.style.direction = direction === 'ltr' ? '' : direction;
     });
   }
 

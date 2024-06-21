@@ -198,7 +198,6 @@ ActivityBlock.activities = Object.freeze({
   DRAW: 'draw',
   UPLOAD_LIST: 'upload-list',
   URL: 'url',
-  CONFIRMATION: 'confirmation',
   CLOUD_IMG_EDIT: 'cloud-image-edit',
   EXTERNAL: 'external',
   DETAILS: 'details',

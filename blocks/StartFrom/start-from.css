@@ -6,13 +6,27 @@ lr-start-from {
 lr-start-from .content {
   display: grid;
   grid-auto-flow: row;
-  gap: var(--gap-max);
+  gap: calc(var(--uc-padding) * 2);
   width: 100%;
   height: 100%;
-  padding: var(--gap-max);
-  background-color: var(--clr-background-light);
+  padding: calc(var(--uc-padding) * 2);
+  background-color: var(--uc-background);
 }
 
-lr-modal lr-start-from {
-  width: min(calc(var(--modal-normal-w) - var(--gap-mid) * 2), calc(100vw - var(--gap-mid) * 2));
+[lr-modal] lr-start-from {
+  width: min(
+    calc(var(--uc-dialog-width) - var(--uc-padding) * 2),
+    calc(var(--uc-dialog-max-width) - var(--uc-padding) * 2),
+    calc(100vw - var(--uc-padding) * 2)
+  );
+}
+
+[lr-modal] lr-start-from lr-drop-area {
+  border-radius: var(--uc-radius);
+}
+
+@media only screen and (max-width: 430px) {
+  [lr-modal] lr-start-from lr-drop-area {
+    display: none;
+  }
 }
