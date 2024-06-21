@@ -88,6 +88,7 @@
   height: 32px;
   top: calc(50% - 16px);
   left: calc(50% - 16px);
+  transition: transform var(--uc-transition);
 }
 
 :where([lr-drop-area])[with-icon] lr-icon:last-child {
