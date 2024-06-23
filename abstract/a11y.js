@@ -15,7 +15,10 @@ import { startKeyUX, hiddenKeyUX, jumpKeyUX, focusGroupKeyUX, pressKeyUX } from 
  * @implements {MinimalWindow}
  */
 class ScopedMinimalWindow {
-  /** @private */
+  /**
+   * @private
+   * @type {Map<Function, (event: Event) => void>}
+   */
   _listeners = new Map();
 
   /**
@@ -50,6 +53,7 @@ class ScopedMinimalWindow {
     if (wrappedListener) {
       window.removeEventListener(type, wrappedListener);
     }
+    this._listeners.delete(listener);
   }
 
   get document() {
@@ -67,6 +71,11 @@ class ScopedMinimalWindow {
 
   destroy() {
     this._scope = [];
+    this._listeners.forEach((listener, originalListener) => {
+      window.removeEventListener('keydown', listener);
+      window.removeEventListener('keyup', listener);
+      this._listeners.delete(originalListener);
+    });
   }
 }
 
