@@ -3,4 +3,10 @@ import { CloudImageEditorBlock } from '../../blocks/CloudImageEditor/src/CloudIm
 
 export class CloudImageEditor extends CloudImageEditorBlock {
   static styleAttrs = [...super.styleAttrs, 'lr-wgt-common'];
+
+  initCallback() {
+    super.initCallback();
+
+    this.a11y?.registerBlock(this);
+  }
 }

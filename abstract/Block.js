@@ -97,10 +97,7 @@ export class Block extends BaseComponent {
    * @returns {Boolean}
    */
   hasBlockInCtx(callback) {
-    // @ts-ignore TODO: fix this
-    /** @type {Set} */
-    let blocksRegistry = this.$['*blocksRegistry'];
-    for (let block of blocksRegistry) {
+    for (let block of this.blocksRegistry) {
       if (callback(block)) {
         return true;
       }
@@ -201,9 +198,13 @@ export class Block extends BaseComponent {
     return this.has('*a11y') ? this.$['*a11y'] : null;
   }
 
+  /** @type {Set<Block>} */
+  get blocksRegistry() {
+    return this.$['*blocksRegistry'];
+  }
+
   destroyCallback() {
-    /** @type {Set<Block>} */
-    let blocksRegistry = this.$['*blocksRegistry'];
+    let blocksRegistry = this.blocksRegistry;
     blocksRegistry.delete(this);
 
     this.localeManager?.destroyL10nBindings(this);

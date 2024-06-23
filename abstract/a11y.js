@@ -20,14 +20,9 @@ class ScopedMinimalWindow {
 
   /**
    * @private
-   * @type {() => NodeListOf<Node>}
+   * @type {Node[]}
    */
-  _selectScope;
-
-  /** @param {() => NodeListOf<Node>} selectScope */
-  constructor(selectScope) {
-    this._selectScope = selectScope;
-  }
+  _scope = [];
 
   /**
    * @param {'keydown' | 'keyup'} type
@@ -38,8 +33,7 @@ class ScopedMinimalWindow {
     const wrappedListener = (e) => {
       const target = e.target;
       if (!target) return;
-      const scope = [...this._selectScope()];
-      if (scope.some((el) => el === e.target || el.contains(/** @type {Node} */ (target)))) {
+      if (this._scope.some((el) => el === e.target || el.contains(/** @type {Node} */ (target)))) {
         listener(e);
       }
     };
@@ -65,21 +59,47 @@ class ScopedMinimalWindow {
   get navigator() {
     return window.navigator;
   }
+
+  /** @param {Node} scope */
+  registerScope(scope) {
+    this._scope.push(scope);
+  }
+
+  destroy() {
+    this._scope = [];
+  }
 }
 
 export class A11y {
   /**
    * @private
-   * @type {() => void}
+   * @type {(() => void) | undefined}
    */
-  _destroy;
+  _destroyKeyUX;
+
+  /**
+   * @private
+   * @type {ScopedMinimalWindow}
+   */
+  _scopedWindow;
 
   constructor() {
-    const scopedWindow = new ScopedMinimalWindow(() => document.querySelectorAll('[lr-wgt-common]'));
-    this._destroy = startKeyUX(scopedWindow, [focusGroupKeyUX(), pressKeyUX('is-pressed'), jumpKeyUX(), hiddenKeyUX()]);
+    this._scopedWindow = new ScopedMinimalWindow();
+    this._destroyKeyUX = startKeyUX(this._scopedWindow, [
+      focusGroupKeyUX(),
+      pressKeyUX('is-pressed'),
+      jumpKeyUX(),
+      hiddenKeyUX(),
+    ]);
+  }
+
+  /** @param {import('./Block.js').Block} scope */
+  registerBlock(scope) {
+    this._scopedWindow.registerScope(scope);
   }
 
   destroy() {
-    this._destroy();
+    this._destroyKeyUX?.();
+    this._scopedWindow.destroy();
   }
 }

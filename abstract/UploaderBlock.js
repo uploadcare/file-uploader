@@ -308,8 +308,7 @@ export class UploaderBlock extends ActivityBlock {
           return;
         }
 
-        /** @type {Set<import('./Block').Block>} */
-        const blocksRegistry = this.$['*blocksRegistry'];
+        const blocksRegistry = this.blocksRegistry;
         /**
          * @param {import('./Block').Block} block
          * @returns {block is import('../blocks/SourceBtn/SourceBtn.js').SourceBtn}

@@ -8,6 +8,11 @@ export class SolutionBlock extends Block {
   init$ = uploaderBlockCtx(this);
   _template = null;
 
+  initCallback() {
+    super.initCallback();
+    this.a11y?.registerBlock(this);
+  }
+
   static set template(value) {
     this._template = svgIconsSprite + value + /** HTML */ `<slot></slot>`;
   }
