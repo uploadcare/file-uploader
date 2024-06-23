@@ -1,6 +1,6 @@
 # [0.45.0](https://github.com/uploadcare/blocks/compare/v0.44.0...v0.45.0) (2024-06-23)
 
-### Features
+### BEAKING CHANGES
 
 - remove depreacted `addFiles` method ([51f094f](https://github.com/uploadcare/blocks/commit/51f094f312bf1b27d6108a1747cd9ec596cfdfb3))
 - remove deprecated `setUploadMetadata` method ([2ed5781](https://github.com/uploadcare/blocks/commit/2ed578102e24667d4cc9c5e3ab8cf06911fd2524))
