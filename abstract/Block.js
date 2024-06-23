@@ -196,6 +196,11 @@ export class Block extends BaseComponent {
     return this.has('*localeManager') ? this.$['*localeManager'] : null;
   }
 
+  /** @returns {A11y | null} */
+  get a11y() {
+    return this.has('*a11y') ? this.$['*a11y'] : null;
+  }
+
   destroyCallback() {
     /** @type {Set<Block>} */
     let blocksRegistry = this.$['*blocksRegistry'];
@@ -225,6 +230,7 @@ export class Block extends BaseComponent {
     Data.deleteCtx(this.ctxName);
 
     this.localeManager?.destroy();
+    this.a11y?.destroy();
   }
 
   /**
