@@ -100,4 +100,6 @@ export default {
   'images-only-accepted': 'Endast bildfiler accepteras.',
   'file-type-not-allowed': 'Uppladdning av dessa filtyper är inte tillåten.',
   'some-files-were-not-uploaded': 'Vissa filer laddades inte upp.',
+  'file-item-edit-button': 'Redigeringsknapp',
+  'file-item-remove-button': 'Raderingsknapp',
 };

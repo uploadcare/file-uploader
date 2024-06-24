@@ -39,7 +39,7 @@ export class FileUploaderMinimal extends SolutionBlock {
 
 FileUploaderMinimal.template = /* HTML */ `
   <lr-start-from>
-    <lr-drop-area clickable l10n="choose-file"></lr-drop-area>
+    <lr-drop-area tabindex="0" clickable l10n="choose-file"></lr-drop-area>
     <lr-copyright></lr-copyright>
   </lr-start-from>
   <lr-upload-list ref="uBlock"></lr-upload-list>

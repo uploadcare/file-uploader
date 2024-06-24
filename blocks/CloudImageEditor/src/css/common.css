@@ -340,7 +340,13 @@ lr-editor-operation-control {
   --down-opacity: 1;
   --down-filter: 0.6;
   --down-background: var(--uc-secondary);
+}
 
+lr-editor-button-control > button,
+lr-editor-crop-button-control > button,
+lr-editor-filter-control > button,
+lr-editor-operation-control > button {
+  all: unset;
   position: relative;
   display: grid;
   grid-template-columns: var(--l-base-min-width) auto;
@@ -393,13 +399,14 @@ lr-editor-filter-control.not_active {
   --idle-color-rgb: var(--uc-secondary-foreground);
 }
 
-lr-editor-button-control > .before,
-lr-editor-operation-control > .before,
-lr-editor-crop-button-control > .before,
-lr-editor-filter-control > .before {
+lr-editor-button-control > button::before,
+lr-editor-operation-control > button::before,
+lr-editor-crop-button-control > button::before,
+lr-editor-filter-control > button::before {
   position: absolute;
-  right: 0px;
-  left: 0px;
+  content: '';
+  right: 0;
+  left: 0;
   z-index: -1;
   width: 100%;
   height: 100%;
@@ -408,21 +415,21 @@ lr-editor-filter-control > .before {
   transition: var(--transition-duration-3);
 }
 
-lr-editor-button-control > .title,
-lr-editor-operation-control > .title,
-lr-editor-crop-button-control > .title,
-lr-editor-filter-control > .title {
+lr-editor-button-control > button .title,
+lr-editor-operation-control > button .title,
+lr-editor-crop-button-control > button .title,
+lr-editor-filter-control > button .title {
   padding-right: var(--cldtr-gap-mid-1);
   font-size: 0.7em;
   letter-spacing: 1.004px;
   text-transform: uppercase;
 }
 
-lr-editor-filter-control > .preview {
+lr-editor-filter-control > button .preview {
   position: absolute;
-  right: 0px;
-  left: 0px;
-  z-index: 1;
+  right: 0;
+  left: 0;
+  z-index: -1;
   width: 100%;
   height: var(--l-base-height);
   background-repeat: no-repeat;
@@ -780,7 +787,7 @@ lr-editor-toolbar .slider {
   padding-left: var(--l-slider-padding);
 }
 
-lr-btn-ui {
+lr-btn-ui > button {
   --filter-effect: var(--idle-brightness);
   --opacity-effect: var(--idle-opacity);
   --color-effect: var(--idle-color-rgb);
@@ -792,6 +799,7 @@ lr-btn-ui {
     filter var(--transition-duration-2)
   );
 
+  all: unset;
   display: inline-flex;
   align-items: center;
   box-sizing: var(--css-box-sizing, border-box);
@@ -843,7 +851,7 @@ lr-btn-ui .icon_hidden {
   margin: 0;
 }
 
-lr-btn-ui.primary {
+lr-btn-ui.primary > button {
   --idle-color-rgb: var(--uc-primary-foreground);
   --idle-brightness: 1;
   --idle-opacity: 1;
@@ -862,7 +870,7 @@ lr-btn-ui.primary {
   --active-background: var(--uc-primary);
 }
 
-lr-btn-ui.primary-icon {
+lr-btn-ui.primary-icon > button {
   --idle-color-rgb: var(--uc-primary);
   --idle-brightness: 1;
   --idle-opacity: 1;
@@ -884,7 +892,7 @@ lr-btn-ui.primary-icon {
   width: var(--uc-button-size);
 }
 
-lr-btn-ui.secondary {
+lr-btn-ui.secondary > button {
   --idle-color-rgb: var(--uc-secondary-foreground);
   --idle-brightness: 1;
   --idle-opacity: 1;
@@ -903,7 +911,7 @@ lr-btn-ui.secondary {
   --active-background: transparent;
 }
 
-lr-btn-ui.secondary-icon {
+lr-btn-ui.secondary-icon > button {
   --idle-color-rgb: var(--uc-secondary-foreground);
   --idle-brightness: 1;
   --idle-opacity: 1;
@@ -925,7 +933,7 @@ lr-btn-ui.secondary-icon {
   width: var(--uc-button-size);
 }
 
-lr-btn-ui.tab {
+lr-btn-ui.tab > button {
   --idle-color-rgb: var(--uc-secondary-foreground);
   --idle-brightness: 1;
   --idle-opacity: 1;
@@ -947,7 +955,7 @@ lr-btn-ui.tab {
   width: var(--uc-button-size);
 }
 
-lr-btn-ui.default {
+lr-btn-ui.default > button {
   --idle-color-rgb: var(--uc-secondary-foreground);
   --idle-brightness: 1;
   --idle-opacity: 1;
@@ -1090,4 +1098,9 @@ lr-presence-toggle.hidden {
 lr-presence-toggle.initial {
   display: none !important;
   transition: none !important;
+}
+
+[lr-cloud-image-editor] [role='button']:focus-visible,
+[lr-cloud-image-editor] button:focus-visible {
+  outline: 1px auto -webkit-focus-ring-color;
 }

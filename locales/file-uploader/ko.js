@@ -99,4 +99,6 @@ export default {
   'images-only-accepted': '이미지 파일만 허용됩니다.',
   'file-type-not-allowed': '이 파일 유형의 업로드가 허용되지 않습니다.',
   'some-files-were-not-uploaded': '일부 파일이 업로드되지 않았습니다.',
+  'file-item-edit-button': '편집 버튼',
+  'file-item-remove-button': '제거 버튼',
 };

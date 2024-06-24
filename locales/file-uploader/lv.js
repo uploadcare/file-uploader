@@ -102,4 +102,6 @@ export default {
   'images-only-accepted': 'Tiek pieņemti tikai attēlu faili.',
   'file-type-not-allowed': 'Šāda tipa failu augšupielāde nav atļauta.',
   'some-files-were-not-uploaded': 'Daži faili netika augšupielādēti.',
+  'file-item-edit-button': 'Rediģēšanas poga',
+  'file-item-remove-button': 'Noņemšanas poga',
 };

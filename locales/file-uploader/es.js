@@ -103,4 +103,6 @@ export default {
   'images-only-accepted': 'Solo se aceptan archivos de imagen.',
   'file-type-not-allowed': 'No se permite la subida de estos tipos de archivos.',
   'some-files-were-not-uploaded': 'Algunos archivos no fueron subidos.',
+  'file-item-edit-button': 'Botón de edición',
+  'file-item-remove-button': 'Botón de eliminación',
 };

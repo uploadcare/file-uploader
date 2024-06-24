@@ -102,4 +102,6 @@ export default {
   'images-only-accepted': 'Прихваћене су само слике.',
   'file-type-not-allowed': 'Отпремање овог типа датотека није дозвољено.',
   'some-files-were-not-uploaded': 'Неке датотеке нису отпремљене.',
+  'file-item-edit-button': 'Дугме за уређивање',
+  'file-item-remove-button': 'Дугме за уклањање',
 };

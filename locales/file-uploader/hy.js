@@ -100,4 +100,6 @@ export default {
   'images-only-accepted': 'Միայն պատկերային ֆայլերը ընդունվում են։',
   'file-type-not-allowed': 'Այս ֆայլի տեսակների բեռնումը թույլատրված չէ։',
   'some-files-were-not-uploaded': 'Որոշ ֆայլեր բեռնված չեն։',
+  'file-item-edit-button': 'Խմբագրել կոճակը',
+  'file-item-remove-button': 'Հեռացման կոճակը',
 };

@@ -12,6 +12,7 @@ import { blockCtx } from './CTX.js';
 import { LocaleManager, localeStateKey } from './LocaleManager.js';
 import { l10nProcessor } from './l10nProcessor.js';
 import { sharedConfigKey } from './sharedConfigKey.js';
+import { A11y } from './a11y.js';
 
 const TAG_PREFIX = 'lr-';
 
@@ -96,10 +97,7 @@ export class Block extends BaseComponent {
    * @returns {Boolean}
    */
   hasBlockInCtx(callback) {
-    // @ts-ignore TODO: fix this
-    /** @type {Set} */
-    let blocksRegistry = this.$['*blocksRegistry'];
-    for (let block of blocksRegistry) {
+    for (let block of this.blocksRegistry) {
       if (callback(block)) {
         return true;
       }
@@ -180,6 +178,10 @@ export class Block extends BaseComponent {
       this.add('*localeManager', new LocaleManager(this));
     }
 
+    if (!this.has('*a11y')) {
+      this.add('*a11y', new A11y());
+    }
+
     this.sub(localeStateKey('locale-id'), (localeId) => {
       const direction = getLocaleDirection(localeId);
       this.style.direction = direction === 'ltr' ? '' : direction;
@@ -191,9 +193,18 @@ export class Block extends BaseComponent {
     return this.has('*localeManager') ? this.$['*localeManager'] : null;
   }
 
+  /** @returns {A11y | null} */
+  get a11y() {
+    return this.has('*a11y') ? this.$['*a11y'] : null;
+  }
+
+  /** @type {Set<Block>} */
+  get blocksRegistry() {
+    return this.$['*blocksRegistry'];
+  }
+
   destroyCallback() {
-    /** @type {Set<Block>} */
-    let blocksRegistry = this.$['*blocksRegistry'];
+    let blocksRegistry = this.blocksRegistry;
     blocksRegistry.delete(this);
 
     this.localeManager?.destroyL10nBindings(this);
@@ -220,6 +231,7 @@ export class Block extends BaseComponent {
     Data.deleteCtx(this.ctxName);
 
     this.localeManager?.destroy();
+    this.a11y?.destroy();
   }
 
   /**

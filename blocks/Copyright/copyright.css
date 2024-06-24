@@ -21,6 +21,10 @@ lr-copyright .credits {
     background-color var(--uc-transition);
 }
 
+lr-copyright .credits:focus-visible {
+  outline: 1px auto -webkit-focus-ring-color;
+}
+
 lr-copyright .credits:hover {
   opacity: 1;
   background-color: var(--uc-muted);

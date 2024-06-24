@@ -101,4 +101,6 @@ export default {
   'images-only-accepted': 'Kun billedfiler accepteres.',
   'file-type-not-allowed': 'Upload af denne filtype er ikke tilladt.',
   'some-files-were-not-uploaded': 'Nogle filer blev ikke uploadet.',
+  'file-item-edit-button': 'Redigeringsknap',
+  'file-item-remove-button': 'Fjernknap',
 };

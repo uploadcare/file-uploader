@@ -100,4 +100,6 @@ export default {
   'images-only-accepted': 'Yalnızca resim dosyaları kabul edilir.',
   'file-type-not-allowed': 'Bu dosya türlerinin yüklenmesine izin verilmiyor.',
   'some-files-were-not-uploaded': 'Bazı dosyalar yüklenemedi.',
+  'file-item-edit-button': 'Düzenle düğmesi',
+  'file-item-remove-button': 'Silme düğmesi',
 };

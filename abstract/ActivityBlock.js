@@ -138,9 +138,7 @@ export class ActivityBlock extends Block {
     /** @type {string | null} */
     const currentActivity = this.$['*currentActivity'];
 
-    /** @type {Set<import('./Block').Block>} */
-    let blocksRegistry = this.$['*blocksRegistry'];
-    const hasCurrentActivityInCtx = !![...blocksRegistry].find(
+    const hasCurrentActivityInCtx = !![...this.blocksRegistry].find(
       (block) => block instanceof ActivityBlock && block.activityType === currentActivity,
     );
 
@@ -177,10 +175,8 @@ export class ActivityBlock extends Block {
       }
       let couldOpenActivity = !!nextActivity;
       if (nextActivity) {
-        /** @type {Set<ActivityBlock>} */
-        let blocksRegistry = this.$['*blocksRegistry'];
-        const nextActivityBlock = [...blocksRegistry].find((block) => block.activityType === nextActivity);
-        couldOpenActivity = nextActivityBlock?.couldOpenActivity ?? false;
+        const nextActivityBlock = [...this.blocksRegistry].find((block) => block.activityType === nextActivity);
+        couldOpenActivity = /** @type {ActivityBlock} */ (nextActivityBlock)?.couldOpenActivity ?? false;
       }
       nextActivity = couldOpenActivity ? nextActivity : undefined;
       this.$['*currentActivity'] = nextActivity;

@@ -103,4 +103,6 @@ export default {
   'images-only-accepted': 'Sono accettati solo file immagine.',
   'file-type-not-allowed': 'Il caricamento di questo tipo di file non è permesso.',
   'some-files-were-not-uploaded': 'Alcuni file non sono stati caricati.',
+  'file-item-edit-button': 'Pulsante di modifica',
+  'file-item-remove-button': 'Pulsante di rimozione',
 };

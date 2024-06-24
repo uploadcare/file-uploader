@@ -434,10 +434,15 @@ FileItem.template = /* HTML */ `
       <span class="file-error" set="@hidden: !errorText">{{errorText}}</span>
     </div>
     <div class="file-actions">
-      <button type="button" class="edit-btn mini-btn" set="onclick: onEdit; @hidden: !isEditable">
+      <button
+        type="button"
+        l10n="@title:file-item-edit-button"
+        class="edit-btn mini-btn"
+        set="onclick: onEdit; @hidden: !isEditable"
+      >
         <lr-icon name="edit-file"></lr-icon>
       </button>
-      <button type="button" class="remove-btn mini-btn" set="onclick: onRemove;">
+      <button type="button" l10n="@title:file-item-remove-button" class="remove-btn mini-btn" set="onclick: onRemove;">
         <lr-icon name="remove-file"></lr-icon>
       </button>
       <button type="button" class="upload-btn mini-btn" set="onclick: onUpload;">
