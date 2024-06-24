@@ -1,3 +1,12 @@
+# [0.45.0](https://github.com/uploadcare/blocks/compare/v0.44.0...v0.45.0) (2024-06-23)
+
+### BEAKING CHANGES
+
+* The previously deprecated API method `setUploadMetadata` has been removed. Use `metadata` instance property on `lr-config` block instead. See [metadata](https://uploadcare.com/docs/file-uploader/options/#metadata) for more details.
+* The previously deprecated API method `addFiles` has been removed. Use `addFileFromObject`, `addFileFromUrl` or `addFileFromUuid` instead. See [File Uploader API](https://uploadcare.com/docs/file-uploader/api/#add-file-from-object) for more details.
+
+See the [migration guide](https://uploadcare.com/docs/file-uploader/migration-to-0.45.0/) for details.
+
 # [0.44.0](https://github.com/uploadcare/blocks/compare/v0.43.0...v0.44.0) (2024-06-21)
 
 ### BEAKING CHANGES
