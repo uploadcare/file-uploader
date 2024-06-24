@@ -2,7 +2,7 @@
 
 ### Features
 
-- **a11y:** added support a11y in the Uploader ([#671](https://github.com/uploadcare/blocks/issues/671)) ([4acb8a0](https://github.com/uploadcare/blocks/commit/4acb8a0b7ea9c7a95be415627f7d4e1eb748fcf2))
+- Significant improvements to accessibility and keyboard navigation, enhancing user experience and inclusivity ([#671](https://github.com/uploadcare/blocks/issues/671)) ([4acb8a0](https://github.com/uploadcare/blocks/commit/4acb8a0b7ea9c7a95be415627f7d4e1eb748fcf2))
 
 # [0.45.0](https://github.com/uploadcare/blocks/compare/v0.44.0...v0.45.0) (2024-06-23)
 
