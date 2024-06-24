@@ -1,7 +1,7 @@
+// @ts-check
 import fs from 'node:fs';
 import path, { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-// @ts-check
 import esbuild from 'esbuild';
 import { buildItems } from './build-items.js';
 

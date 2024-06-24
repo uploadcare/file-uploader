@@ -1,5 +1,8 @@
 {
   "$schema": "https://biomejs.dev/schemas/1.8.2/schema.json",
+  "files": {
+    "ignore": ["**/web", "./index.ssr.js", "**/svg-sprite.js"]
+  },
   "formatter": {
     "enabled": true,
     "formatWithErrors": false,
@@ -17,8 +20,7 @@
     "enabled": true,
     "rules": {
       "recommended": true
-    },
-    "ignore": ["**/web", "index.ssr.js"]
+    }
   },
   "javascript": {
     "formatter": {

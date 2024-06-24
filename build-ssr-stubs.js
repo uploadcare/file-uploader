@@ -23,7 +23,7 @@ const getClassStaticProperties = (klass) => {
       return;
     }
 
-    for (const name of Object.getOwnPropertySymbols(proto)) {
+    for (const name of Object.getOwnPropertyNames(proto)) {
       const isPublic = !name.startsWith('_');
       const isOwn = !['arguments', 'prototype', 'caller', 'constructor', 'name', 'length'].includes(name);
       const isDefined = isOwn && !!proto[name];

@@ -1,5 +1,5 @@
-import { Block } from '../../../abstract/Block.js';
 // @ts-check
+import { Block } from '../../../abstract/Block.js';
 import { debounce } from '../../utils/debounce.js';
 import { EditorCropButtonControl } from './EditorCropButtonControl.js';
 import { EditorFilterControl } from './EditorFilterControl.js';

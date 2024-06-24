@@ -1,5 +1,5 @@
-import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 // @ts-check
+import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 
 const L10N_PREFIX = 'src-type-';
