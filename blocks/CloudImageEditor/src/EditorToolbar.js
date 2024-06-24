@@ -42,7 +42,7 @@ function renderTabContent(id) {
     >
       <lr-editor-scroller hidden-scrollbar>
         <div class="controls-list_align">
-          <div role="listbox" class="controls-list_inner" ref="controls-list-${id}"></div>
+          <div role="listbox" aria-orientation="horizontal" class="controls-list_inner" ref="controls-list-${id}"></div>
         </div>
       </lr-editor-scroller>
     </lr-presence-toggle>

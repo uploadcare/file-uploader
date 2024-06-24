@@ -56,6 +56,10 @@ class ScopedMinimalWindow {
     this._listeners.delete(listener);
   }
 
+  get CustomEvent() {
+    return window.CustomEvent;
+  }
+
   get document() {
     return window.document;
   }

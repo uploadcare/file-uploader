@@ -1100,7 +1100,7 @@ lr-presence-toggle.initial {
   transition: none !important;
 }
 
-[role='button']:focus-visible,
-button:focus-visible {
+[lr-cloud-image-editor] [role='button']:focus-visible,
+[lr-cloud-image-editor] button:focus-visible {
   outline: 1px auto -webkit-focus-ring-color;
 }
