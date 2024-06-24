@@ -118,15 +118,6 @@ export class Block extends BaseComponent {
     );
   }
 
-  /** @param {import('./ActivityBlock.js').ActivityType} activityType */
-  setActivity(activityType) {
-    if (this.hasBlockInCtx((b) => b.activityType === activityType)) {
-      this.$['*currentActivity'] = activityType;
-      return;
-    }
-    console.warn(`Activity type "${activityType}" not found in the context`);
-  }
-
   connectedCallback() {
     const styleAttrs = /** @type {typeof Block} */ (this.constructor).styleAttrs;
     styleAttrs.forEach((attr) => {

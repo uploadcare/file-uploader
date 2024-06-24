@@ -72,6 +72,13 @@ export class ExternalSource extends UploaderBlock {
       onActivate: () => {
         let { externalSourceType } = /** @type {ActivityParams} */ (this.activityParams);
 
+        if (!externalSourceType) {
+          this.$['*currentActivity'] = null;
+          this.setOrAddState('*modalActive', false);
+          console.error(`Param "externalSourceType" is required for activity "${this.activityType}"`);
+          return;
+        }
+
         this.set$({
           activityCaption: `${externalSourceType?.[0].toUpperCase()}${externalSourceType?.slice(1)}`,
           activityIcon: externalSourceType,
@@ -79,6 +86,13 @@ export class ExternalSource extends UploaderBlock {
 
         this.mountIframe();
       },
+    });
+    this.sub('*currentActivityParams', (val) => {
+      if (!this.isActivityActive) {
+        return;
+      }
+      this.unmountIframe();
+      this.mountIframe();
     });
     this.sub('*currentActivity', (val) => {
       if (val !== this.activityType) {

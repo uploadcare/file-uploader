@@ -107,6 +107,14 @@ export class UploaderBlock extends ActivityBlock {
     if (!this.$['*secureUploadsManager']) {
       this.$['*secureUploadsManager'] = new SecureUploadsManager(this);
     }
+
+    if (this.has('*modalActive')) {
+      this.sub('*modalActive', (modalActive) => {
+        if (modalActive && !this.$['*currentActivity']) {
+          this.$['*modalActive'] = false;
+        }
+      });
+    }
   }
 
   /** @type {string[]} */

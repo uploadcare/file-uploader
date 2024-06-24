@@ -3,6 +3,7 @@ import type { complexConfigKeys } from '../blocks/Config/Config';
 import type { FuncFileValidator, FuncCollectionValidator } from '../abstract/ValidationManager';
 
 export type { FuncFileValidator, FuncCollectionValidator } from '../abstract/ValidationManager';
+export type { UploaderPublicApi } from '../abstract/UploaderPublicApi';
 
 export type UploadError = import('@uploadcare/upload-client').UploadError;
 export type UploadcareFile = import('@uploadcare/upload-client').UploadcareFile;

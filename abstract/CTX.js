@@ -6,14 +6,14 @@ export const blockCtx = () => ({});
 /** @param {import('./Block').Block} fnCtx */
 export const activityBlockCtx = (fnCtx) => ({
   ...blockCtx(),
-  '*currentActivity': '',
+  '*currentActivity': null,
   '*currentActivityParams': {},
   '*history': [],
   '*historyBack': null,
   '*closeModal': () => {
     fnCtx.set$({
+      '*currentActivity': null,
       '*modalActive': false,
-      '*currentActivity': '',
     });
   },
 });

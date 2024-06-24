@@ -275,4 +275,28 @@ export class UploaderPublicApi {
       this._ctx.setOrAddState('*modalActive', false);
     }
   }
+
+  /**
+   * @param {import('./ActivityBlock.js').ActivityType} activityType
+   * @param {import('../blocks/ExternalSource/ExternalSource.js').ActivityParams | {}} [params]
+   */
+  setCurrentActivity(activityType, params = {}) {
+    if (this._ctx.hasBlockInCtx((b) => b.activityType === activityType)) {
+      this._ctx.set$({
+        '*currentActivityParams': params,
+        '*currentActivity': activityType,
+      });
+      return;
+    }
+    console.warn(`Activity type "${activityType}" not found in the context`);
+  }
+
+  /** @param {boolean} active */
+  setModalActive(active) {
+    if (active && !this._ctx.$['*currentActivity']) {
+      console.warn(`Can't open modal without current activity. Please use "setCurrentActivity" method first.`);
+      return;
+    }
+    this._ctx.setOrAddState('*modalActive', active);
+  }
 }

@@ -144,6 +144,7 @@ export class ActivityBlock extends Block {
 
     if (!hasCurrentActivityInCtx) {
       this.$['*currentActivity'] = null;
+      this.setOrAddState('*modalActive', false);
     }
   }
 
@@ -199,4 +200,4 @@ ActivityBlock.activities = Object.freeze({
   DETAILS: 'details',
 });
 
-/** @typedef {(typeof ActivityBlock)['activities'][keyof (typeof ActivityBlock)['activities']] | null} ActivityType */
+/** @typedef {(typeof ActivityBlock)['activities'][keyof (typeof ActivityBlock)['activities']] | (string & {}) | null} ActivityType */
