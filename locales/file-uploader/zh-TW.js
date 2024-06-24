@@ -100,4 +100,6 @@ export default {
   'images-only-accepted': '僅接受圖片檔案。',
   'file-type-not-allowed': '不允許上傳這些檔案類型。',
   'some-files-were-not-uploaded': '部分檔案未上傳。',
+  'file-item-edit-button': '編輯按鈕',
+  'file-item-remove-button': '刪除按鈕',
 };

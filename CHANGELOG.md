@@ -1,3 +1,34 @@
+# [0.46.0](https://github.com/uploadcare/blocks/compare/v0.45.0...v0.46.0) (2024-06-24)
+
+### Features
+
+- Significant improvements to accessibility and keyboard navigation, enhancing user experience and inclusivity ([#671](https://github.com/uploadcare/blocks/issues/671)) ([4acb8a0](https://github.com/uploadcare/blocks/commit/4acb8a0b7ea9c7a95be415627f7d4e1eb748fcf2))
+
+# [0.45.0](https://github.com/uploadcare/blocks/compare/v0.44.0...v0.45.0) (2024-06-23)
+
+### BEAKING CHANGES
+
+- The previously deprecated API method `setUploadMetadata` has been removed. Use `metadata` instance property on `lr-config` block instead. See [metadata](https://uploadcare.com/docs/file-uploader/options/#metadata) for more details.
+- The previously deprecated API method `addFiles` has been removed. Use `addFileFromObject`, `addFileFromUrl` or `addFileFromUuid` instead. See [File Uploader API](https://uploadcare.com/docs/file-uploader/api/#add-file-from-object) for more details.
+
+See the [migration guide](https://uploadcare.com/docs/file-uploader/migration-to-0.45.0/) for details.
+
+# [0.44.0](https://github.com/uploadcare/blocks/compare/v0.43.0...v0.44.0) (2024-06-21)
+
+### BEAKING CHANGES
+
+- All theme variables of the previous version are deprecated and won't affect the look anymore.
+- The default button that opens the uploader dialog (SimpleBtn) component now uses independent variables.
+- By default, the theme now uses OKLCH color space. You can still override it using other color spaces, but we recommend converting your colors to OKLCH.
+
+See the [migration guide](https://uploadcare.com/docs/file-uploader/migration-to-0.44.0/) for details.
+
+Full styling docs are available [here](https://uploadcare.com/docs/file-uploader/styling/).
+
+### Features
+
+- updated theming mechanics with oklch colors and reworked css properties ([#662](https://github.com/uploadcare/blocks/issues/662)) ([ee90e66](https://github.com/uploadcare/blocks/commit/ee90e66c076e21e1ee92b2f4c60f8eb955a7d5bc))
+
 # [0.43.0](https://github.com/uploadcare/blocks/compare/v0.42.1...v0.43.0) (2024-06-14)
 
 ### Features

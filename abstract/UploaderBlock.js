@@ -14,7 +14,6 @@ import { createCdnUrl, createCdnUrlModifiers } from '../utils/cdn-utils.js';
 import { IMAGE_ACCEPT_LIST, fileIsImage, mergeFileTypes } from '../utils/fileTypes.js';
 import { parseCdnUrl } from '../utils/parseCdnUrl.js';
 import { stringToArray } from '../utils/stringToArray.js';
-import { warnOnce } from '../utils/warnOnce.js';
 import { uploaderBlockCtx } from './CTX.js';
 import { SecureUploadsManager } from './SecureUploadsManager.js';
 import { TypedCollection } from './TypedCollection.js';
@@ -27,32 +26,6 @@ export class UploaderBlock extends ActivityBlock {
   isCtxOwner = false;
 
   init$ = uploaderBlockCtx(this);
-
-  /** @private */
-  __initialUploadMetadata = null;
-
-  /**
-   * This is Public JS API method. Could be called before block initialization, so we need to delay state interactions
-   * until block init.
-   *
-   * TODO: If we add more public methods, it is better to use the single queue instead of tons of private fields per
-   * each method. See https://github.com/uploadcare/blocks/pull/162/
-   *
-   * @deprecated Use `metadata` instance property on `lr-config` block instead.
-   * @param {import('@uploadcare/upload-client').Metadata} metadata
-   * @public
-   */
-  setUploadMetadata(metadata) {
-    warnOnce(
-      'setUploadMetadata is deprecated. Use `metadata` instance property on `lr-config` block instead. See migration guide: https://uploadcare.com/docs/file-uploader/migration-to-0.25.0/',
-    );
-    if (!this.connectedOnce) {
-      // @ts-ignore TODO: fix this
-      this.__initialUploadMetadata = metadata;
-    } else {
-      this.$['*uploadMetadata'] = metadata;
-    }
-  }
 
   get hasCtxOwner() {
     return this.hasBlockInCtx((block) => {
@@ -111,10 +84,6 @@ export class UploaderBlock extends ActivityBlock {
     this.subConfigValue('maxConcurrentRequests', (value) => {
       this.$['*uploadQueue'].concurrency = Number(value) || 1;
     });
-
-    if (this.__initialUploadMetadata) {
-      this.$['*uploadMetadata'] = this.__initialUploadMetadata;
-    }
 
     if (!this.$['*secureUploadsManager']) {
       this.$['*secureUploadsManager'] = new SecureUploadsManager(this);
@@ -191,28 +160,6 @@ export class UploaderBlock extends ActivityBlock {
       fullPath: fullPath ?? null,
     });
     return this.getOutputItem(internalId);
-  }
-
-  /**
-   * @deprecated Will be removed in the near future. Please use `addFileFromObject`, `addFileFromUrl` or
-   *   `addFileFromUuid` instead.
-   * @param {File[]} files
-   * @returns {import('../types').OutputFileEntry<'idle'>[]}
-   */
-  addFiles(files) {
-    console.warn(
-      '`addFiles` method is deprecated. Please use `addFileFromObject`, `addFileFromUrl` or `addFileFromUuid` instead.',
-    );
-    return files.map((/** @type {File} */ file) => {
-      const internalId = this.uploadCollection.add({
-        file,
-        isImage: fileIsImage(file),
-        mimeType: file.type,
-        fileName: file.name,
-        fileSize: file.size,
-      });
-      return this.getOutputItem(internalId);
-    });
   }
 
   /** @param {string} internalId */
@@ -311,8 +258,7 @@ export class UploaderBlock extends ActivityBlock {
           return;
         }
 
-        /** @type {Set<import('./Block').Block>} */
-        const blocksRegistry = this.$['*blocksRegistry'];
+        const blocksRegistry = this.blocksRegistry;
         /**
          * @param {import('./Block').Block} block
          * @returns {block is import('../blocks/SourceBtn/SourceBtn.js').SourceBtn}
@@ -586,7 +532,7 @@ export class UploaderBlock extends ActivityBlock {
    * @protected
    */
   async getMetadataFor(entryId) {
-    const configValue = this.cfg.metadata ?? /** @type {import('../types').Metadata} */ (this.$['*uploadMetadata']);
+    const configValue = this.cfg.metadata || undefined;
     if (typeof configValue === 'function') {
       const outputFileEntry = this.getOutputItem(entryId);
       const metadata = await configValue(outputFileEntry);

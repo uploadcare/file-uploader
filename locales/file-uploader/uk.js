@@ -104,4 +104,6 @@ export default {
   'images-only-accepted': 'Приймаються тільки зображення.',
   'file-type-not-allowed': 'Завантаження файлів цього типу заборонено.',
   'some-files-were-not-uploaded': 'Деякі файли не були завантажені.',
+  'file-item-edit-button': 'Кнопка редагування',
+  'file-item-remove-button': 'Кнопка видалення',
 };

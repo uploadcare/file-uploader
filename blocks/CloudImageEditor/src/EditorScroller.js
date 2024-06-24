@@ -6,16 +6,28 @@ export class EditorScroller extends Block {
   initCallback() {
     super.initCallback();
 
-    this.addEventListener('wheel', (e) => {
-      e.preventDefault();
-      const { deltaY, deltaX } = e;
-      if (Math.abs(deltaX) > X_THRESHOLD) {
-        this.scrollLeft += deltaX;
-      } else {
-        this.scrollLeft += deltaY;
-      }
+    this.addEventListener(
+      'wheel',
+      (e) => {
+        e.preventDefault();
+
+        let { deltaY, deltaX } = e;
+        if (Math.abs(deltaX) > X_THRESHOLD) {
+          this.scrollLeft += deltaX;
+        } else {
+          this.scrollLeft += deltaY;
+        }
+      },
+      {
+        passive: false,
+      },
+    );
+
+    // This fixes some strange bug on MacOS - wheel event doesn't fire for physical mouse wheel if no scroll event attached also
+    this.addEventListener('scroll', () => {}, {
+      passive: true,
     });
   }
 }
 
-EditorScroller.template = /* HTML */ ' <slot></slot> ';
+EditorScroller.template = /* HTML */ ` <slot></slot> `;

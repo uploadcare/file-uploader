@@ -3,7 +3,7 @@ import { BaseComponent, Data } from '@symbiotejs/symbiote';
 import { initialConfig } from '../blocks/Config/initialConfig.js';
 import { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter.js';
 import { WindowHeightTracker } from '../utils/WindowHeightTracker.js';
-import { extractCdnUrlModifiers, extractFilename, extractUuid } from '../utils/cdn-utils.js';
+import { extractFilename, extractCdnUrlModifiers, extractUuid } from '../utils/cdn-utils.js';
 import { getLocaleDirection } from '../utils/getLocaleDirection.js';
 import { getPluralForm } from '../utils/getPluralForm.js';
 import { applyTemplateData, getPluralObjects } from '../utils/template-utils.js';
@@ -12,6 +12,7 @@ import { blockCtx } from './CTX.js';
 import { LocaleManager, localeStateKey } from './LocaleManager.js';
 import { l10nProcessor } from './l10nProcessor.js';
 import { sharedConfigKey } from './sharedConfigKey.js';
+import { A11y } from './a11y.js';
 
 const TAG_PREFIX = 'lr-';
 
@@ -19,7 +20,9 @@ const TAG_PREFIX = 'lr-';
 export class Block extends BaseComponent {
   /** @type {string | null} */
   static StateConsumerScope = null;
-  static className = '';
+
+  /** @type {string[]} */
+  static styleAttrs = [];
   requireCtxName = false;
   allowCustomTemplate = true;
   /** @type {import('./ActivityBlock.js').ActivityType} */
@@ -36,15 +39,15 @@ export class Block extends BaseComponent {
     if (!str) {
       return '';
     }
-    const template = this.$[localeStateKey(str)] || str;
-    const pluralObjects = getPluralObjects(template);
-    for (const pluralObject of pluralObjects) {
+    let template = this.$[localeStateKey(str)] || str;
+    let pluralObjects = getPluralObjects(template);
+    for (let pluralObject of pluralObjects) {
       variables[pluralObject.variable] = this.pluralize(
         pluralObject.pluralKey,
         Number(variables[pluralObject.countVariable]),
       );
     }
-    const result = applyTemplateData(template, variables);
+    let result = applyTemplateData(template, variables);
     return result;
   }
 
@@ -94,10 +97,7 @@ export class Block extends BaseComponent {
    * @returns {Boolean}
    */
   hasBlockInCtx(callback) {
-    // @ts-ignore TODO: fix this
-    /** @type {Set} */
-    const blocksRegistry = this.$['*blocksRegistry'];
-    for (const block of blocksRegistry) {
+    for (let block of this.blocksRegistry) {
       if (callback(block)) {
         return true;
       }
@@ -128,14 +128,14 @@ export class Block extends BaseComponent {
   }
 
   connectedCallback() {
-    const className = /** @type {typeof Block} */ (this.constructor).className;
-    if (className) {
-      this.classList.toggle(`${TAG_PREFIX}${className}`, true);
-    }
+    const styleAttrs = /** @type {typeof Block} */ (this.constructor).styleAttrs;
+    styleAttrs.forEach((attr) => {
+      this.setAttribute(attr, '');
+    });
 
     if (this.hasAttribute('retpl')) {
       // @ts-ignore TODO: fix this
-      this.constructor.template = null;
+      this.constructor['template'] = null;
       this.processInnerHtml = true;
     }
     if (this.requireCtxName) {
@@ -168,7 +168,7 @@ export class Block extends BaseComponent {
       this.add('*blocksRegistry', new Set());
     }
 
-    const blocksRegistry = this.$['*blocksRegistry'];
+    let blocksRegistry = this.$['*blocksRegistry'];
     blocksRegistry.add(this);
 
     if (!this.has('*eventEmitter')) {
@@ -178,8 +178,13 @@ export class Block extends BaseComponent {
       this.add('*localeManager', new LocaleManager(this));
     }
 
+    if (!this.has('*a11y')) {
+      this.add('*a11y', new A11y());
+    }
+
     this.sub(localeStateKey('locale-id'), (localeId) => {
-      this.style.direction = getLocaleDirection(localeId);
+      const direction = getLocaleDirection(localeId);
+      this.style.direction = direction === 'ltr' ? '' : direction;
     });
   }
 
@@ -188,9 +193,18 @@ export class Block extends BaseComponent {
     return this.has('*localeManager') ? this.$['*localeManager'] : null;
   }
 
+  /** @returns {A11y | null} */
+  get a11y() {
+    return this.has('*a11y') ? this.$['*a11y'] : null;
+  }
+
+  /** @type {Set<Block>} */
+  get blocksRegistry() {
+    return this.$['*blocksRegistry'];
+  }
+
   destroyCallback() {
-    /** @type {Set<Block>} */
-    const blocksRegistry = this.$['*blocksRegistry'];
+    let blocksRegistry = this.blocksRegistry;
     blocksRegistry.delete(this);
 
     this.localeManager?.destroyL10nBindings(this);
@@ -217,6 +231,7 @@ export class Block extends BaseComponent {
     Data.deleteCtx(this.ctxName);
 
     this.localeManager?.destroy();
+    this.a11y?.destroy();
   }
 
   /**
@@ -224,7 +239,7 @@ export class Block extends BaseComponent {
    * @param {Number} [decimals]
    */
   fileSizeFmt(bytes, decimals = 2) {
-    const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+    let units = ['B', 'KB', 'MB', 'GB', 'TB'];
     /**
      * @param {String} str
      * @returns {String}
@@ -232,10 +247,10 @@ export class Block extends BaseComponent {
     if (bytes === 0) {
       return `0 ${units[0]}`;
     }
-    const k = 1024;
-    const dm = decimals < 0 ? 0 : decimals;
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return `${Number.parseFloat((bytes / k ** i).toFixed(dm))} ${units[i]}`;
+    let k = 1024;
+    let dm = decimals < 0 ? 0 : decimals;
+    let i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / k ** i).toFixed(dm)) + ' ' + units[i];
   }
 
   /**
@@ -268,7 +283,7 @@ export class Block extends BaseComponent {
   /** @returns {import('../types').ConfigType} } */
   get cfg() {
     if (!this.__cfgProxy) {
-      const o = Object.create(null);
+      let o = Object.create(null);
       /** @private */
       this.__cfgProxy = new Proxy(o, {
         set: (obj, key, value) => {
@@ -327,10 +342,10 @@ export class Block extends BaseComponent {
   /** @param {String} [name] */
   static reg(name) {
     if (!name) {
-      Block.reg();
+      super.reg();
       return;
     }
-    Block.reg(name.startsWith(TAG_PREFIX) ? name : TAG_PREFIX + name);
+    super.reg(name.startsWith(TAG_PREFIX) ? name : TAG_PREFIX + name);
   }
 }
 

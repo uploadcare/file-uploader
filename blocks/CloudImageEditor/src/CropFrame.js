@@ -49,7 +49,7 @@ export class CropFrame extends Block {
    * @param {import('./types.js').Direction} direction
    */
   _shouldThumbBeDisabled(direction) {
-    const imageBox = this.$['*imageBox'];
+    let imageBox = this.$['*imageBox'];
     if (!imageBox) {
       return;
     }
@@ -58,30 +58,30 @@ export class CropFrame extends Block {
       return true;
     }
 
-    const tooHigh = imageBox.height <= MIN_CROP_SIZE && (direction.includes('n') || direction.includes('s'));
-    const tooWide = imageBox.width <= MIN_CROP_SIZE && (direction.includes('e') || direction.includes('w'));
+    let tooHigh = imageBox.height <= MIN_CROP_SIZE && (direction.includes('n') || direction.includes('s'));
+    let tooWide = imageBox.width <= MIN_CROP_SIZE && (direction.includes('e') || direction.includes('w'));
     return tooHigh || tooWide;
   }
 
   /** @private */
   _createBackdrop() {
     /** @type {import('./types.js').Rectangle} */
-    const cropBox = this.$['*cropBox'];
+    let cropBox = this.$['*cropBox'];
     if (!cropBox) {
       return;
     }
-    const { x, y, width, height } = cropBox;
-    const svg = this.ref['svg-el'];
+    let { x, y, width, height } = cropBox;
+    let svg = this.ref['svg-el'];
 
-    const mask = createSvgNode('mask', { id: 'backdrop-mask' });
-    const maskRectOuter = createSvgNode('rect', {
+    let mask = createSvgNode('mask', { id: 'backdrop-mask' });
+    let maskRectOuter = createSvgNode('rect', {
       x: 0,
       y: 0,
       width: '100%',
       height: '100%',
       fill: 'white',
     });
-    const maskRectInner = createSvgNode('rect', {
+    let maskRectInner = createSvgNode('rect', {
       x,
       y,
       width,
@@ -91,7 +91,7 @@ export class CropFrame extends Block {
     mask.appendChild(maskRectOuter);
     mask.appendChild(maskRectInner);
 
-    const backdropRect = createSvgNode('rect', {
+    let backdropRect = createSvgNode('rect', {
       x: 0,
       y: 0,
       width: '100%',
@@ -126,11 +126,11 @@ export class CropFrame extends Block {
   /** @private */
   _updateBackdrop() {
     /** @type {import('./types.js').Rectangle} */
-    const cropBox = this.$['*cropBox'];
+    let cropBox = this.$['*cropBox'];
     if (!cropBox) {
       return;
     }
-    const { x, y, width, height } = cropBox;
+    let { x, y, width, height } = cropBox;
 
     this._backdropMaskInner && setSvgNodeAttrs(this._backdropMaskInner, { x, y, width, height });
   }
@@ -138,16 +138,16 @@ export class CropFrame extends Block {
   /** @private */
   _updateFrame() {
     /** @type {import('./types.js').Rectangle} */
-    const cropBox = this.$['*cropBox'];
+    let cropBox = this.$['*cropBox'];
 
     if (!cropBox || !this._frameGuides || !this._frameThumbs) {
       return;
     }
-    for (const thumb of Object.values(this._frameThumbs)) {
-      const { direction, pathNode, interactionNode, groupNode } = thumb;
-      const isCenter = direction === '';
-      const isCorner = direction.length === 2;
-      const { x, y, width, height } = cropBox;
+    for (let thumb of Object.values(this._frameThumbs)) {
+      let { direction, pathNode, interactionNode, groupNode } = thumb;
+      let isCenter = direction === '';
+      let isCorner = direction.length === 2;
+      let { x, y, width, height } = cropBox;
 
       if (isCenter) {
         const moveThumbRect = {
@@ -164,7 +164,7 @@ export class CropFrame extends Block {
           1,
         );
 
-        const { d, center } = isCorner
+        let { d, center } = isCorner
           ? cornerPath(cropBox, direction, thumbSizeMultiplier)
           : sidePath(
               cropBox,
@@ -184,7 +184,7 @@ export class CropFrame extends Block {
         setSvgNodeAttrs(pathNode, { d });
       }
 
-      const disableThumb = this._shouldThumbBeDisabled(direction);
+      let disableThumb = this._shouldThumbBeDisabled(direction);
       groupNode.setAttribute(
         'class',
         classNames('thumb', {
@@ -218,14 +218,14 @@ export class CropFrame extends Block {
 
     for (let i = 0; i < 3; i++) {
       for (let j = 0; j < 3; j++) {
-        const direction = /** @type {import('./types.js').Direction} */ (`${['n', '', 's'][i]}${['w', '', 'e'][j]}`);
-        const groupNode = createSvgNode('g');
+        let direction = /** @type {import('./types.js').Direction} */ (`${['n', '', 's'][i]}${['w', '', 'e'][j]}`);
+        let groupNode = createSvgNode('g');
         groupNode.classList.add('thumb');
         groupNode.setAttribute('with-effects', '');
-        const interactionNode = createSvgNode('rect', {
+        let interactionNode = createSvgNode('rect', {
           fill: 'transparent',
         });
-        const pathNode = createSvgNode('path', {
+        let pathNode = createSvgNode('path', {
           stroke: 'currentColor',
           fill: 'none',
           'stroke-width': THUMB_STROKE_WIDTH,
@@ -248,27 +248,27 @@ export class CropFrame extends Block {
 
   /** @private */
   _createGuides() {
-    const svg = createSvgNode('svg');
+    let svg = createSvgNode('svg');
 
-    const rect = createSvgNode('rect', {
+    let rect = createSvgNode('rect', {
       x: 0,
       y: 0,
       width: '100%',
       height: '100%',
       fill: 'none',
-      stroke: '#000000',
+      stroke: 'currentColor',
       'stroke-width': GUIDE_STROKE_WIDTH,
       'stroke-opacity': 0.5,
     });
     svg.appendChild(rect);
 
     for (let i = 1; i <= 2; i++) {
-      const line = createSvgNode('line', {
+      let line = createSvgNode('line', {
         x1: `${GUIDE_THIRD * i}%`,
-        y1: '0%',
+        y1: `0%`,
         x2: `${GUIDE_THIRD * i}%`,
-        y2: '100%',
-        stroke: '#000000',
+        y2: `100%`,
+        stroke: 'currentColor',
         'stroke-width': GUIDE_STROKE_WIDTH,
         'stroke-opacity': 0.3,
       });
@@ -276,12 +276,12 @@ export class CropFrame extends Block {
     }
 
     for (let i = 1; i <= 2; i++) {
-      const line = createSvgNode('line', {
-        x1: '0%',
+      let line = createSvgNode('line', {
+        x1: `0%`,
         y1: `${GUIDE_THIRD * i}%`,
-        x2: '100%',
+        x2: `100%`,
         y2: `${GUIDE_THIRD * i}%`,
-        stroke: '#000000',
+        stroke: 'currentColor',
         'stroke-width': GUIDE_STROKE_WIDTH,
         'stroke-opacity': 0.3,
       });
@@ -295,14 +295,14 @@ export class CropFrame extends Block {
 
   /** @private */
   _createFrame() {
-    const svg = this.ref['svg-el'];
-    const fr = document.createDocumentFragment();
+    let svg = this.ref['svg-el'];
+    let fr = document.createDocumentFragment();
 
-    const frameGuides = this._createGuides();
+    let frameGuides = this._createGuides();
     fr.appendChild(frameGuides);
 
-    const frameThumbs = this._createThumbs();
-    for (const { groupNode } of Object.values(frameThumbs)) {
+    let frameThumbs = this._createThumbs();
+    for (let { groupNode } of Object.values(frameThumbs)) {
       fr.appendChild(groupNode);
     }
 
@@ -318,15 +318,15 @@ export class CropFrame extends Block {
    */
   _handlePointerDown(direction, e) {
     if (!this._frameThumbs) return;
-    const thumb = this._frameThumbs[direction];
+    let thumb = this._frameThumbs[direction];
     if (this._shouldThumbBeDisabled(direction)) {
       return;
     }
 
-    const cropBox = this.$['*cropBox'];
-    const { x: svgX, y: svgY } = this.ref['svg-el'].getBoundingClientRect();
-    const x = e.x - svgX;
-    const y = e.y - svgY;
+    let cropBox = this.$['*cropBox'];
+    let { x: svgX, y: svgY } = this.ref['svg-el'].getBoundingClientRect();
+    let x = e.x - svgX;
+    let y = e.y - svgY;
 
     this.$.dragging = true;
     this._draggingThumb = thumb;
@@ -362,13 +362,13 @@ export class CropFrame extends Block {
     e.stopPropagation();
     e.preventDefault();
 
-    const svg = this.ref['svg-el'];
-    const { x: svgX, y: svgY } = svg.getBoundingClientRect();
-    const x = e.x - svgX;
-    const y = e.y - svgY;
-    const dx = x - this._dragStartPoint[0];
-    const dy = y - this._dragStartPoint[1];
-    const { direction } = this._draggingThumb;
+    let svg = this.ref['svg-el'];
+    let { x: svgX, y: svgY } = svg.getBoundingClientRect();
+    let x = e.x - svgX;
+    let y = e.y - svgY;
+    let dx = x - this._dragStartPoint[0];
+    let dy = y - this._dragStartPoint[1];
+    let { direction } = this._draggingThumb;
 
     const movedCropBox = this._calcCropBox(direction, [dx, dy]);
     if (movedCropBox) {
@@ -384,7 +384,7 @@ export class CropFrame extends Block {
   _calcCropBox(direction, delta) {
     const [dx, dy] = delta;
     /** @type {import('./types.js').Rectangle} */
-    const imageBox = this.$['*imageBox'];
+    let imageBox = this.$['*imageBox'];
     let rect = /** @type {import('./types.js').Rectangle} */ (this._dragStartCrop) ?? this.$['*cropBox'];
     /** @type {import('./types.js').CropPresetList[0]} */
     const cropPreset = this.$['*cropPresetList']?.[0];
@@ -412,19 +412,19 @@ export class CropFrame extends Block {
   _handleSvgPointerMove_(e) {
     if (!this._frameThumbs) return;
 
-    const hoverThumb = Object.values(this._frameThumbs).find((thumb) => {
+    let hoverThumb = Object.values(this._frameThumbs).find((thumb) => {
       if (this._shouldThumbBeDisabled(thumb.direction)) {
         return false;
       }
-      const node = thumb.interactionNode;
-      const bounds = node.getBoundingClientRect();
-      const rect = {
+      let node = thumb.interactionNode;
+      let bounds = node.getBoundingClientRect();
+      let rect = {
         x: bounds.x,
         y: bounds.y,
         width: bounds.width,
         height: bounds.height,
       };
-      const hover = rectContainsPoint(rect, [e.x, e.y]);
+      let hover = rectContainsPoint(rect, [e.x, e.y]);
       return hover;
     });
 
@@ -434,7 +434,7 @@ export class CropFrame extends Block {
 
   /** @private */
   _updateCursor() {
-    const hoverThumb = this._hoverThumb;
+    let hoverThumb = this._hoverThumb;
     this.ref['svg-el'].style.cursor = hoverThumb ? thumbCursor(hoverThumb.direction) : 'initial';
   }
 
@@ -447,17 +447,17 @@ export class CropFrame extends Block {
   /** @param {boolean} visible */
   toggleThumbs(visible) {
     if (!this._frameThumbs) return;
-
-    for (const thumb of Object.values(this._frameThumbs)) {
-      const { groupNode } = thumb;
-      groupNode.setAttribute(
-        'class',
-        classNames('thumb', {
-          'thumb--hidden': !visible,
-          'thumb--visible': visible,
-        }),
-      );
-    }
+    Object.values(this._frameThumbs)
+      .map(({ groupNode }) => groupNode)
+      .forEach((groupNode) => {
+        groupNode.setAttribute(
+          'class',
+          classNames('thumb', {
+            'thumb--hidden': !visible,
+            'thumb--visible': visible,
+          }),
+        );
+      });
   }
 
   initCallback() {

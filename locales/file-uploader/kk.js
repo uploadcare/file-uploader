@@ -100,4 +100,6 @@ export default {
   'images-only-accepted': 'Тек сурет файлдары қабылданады.',
   'file-type-not-allowed': 'Осы файл түрлерін жүктеуге рұқсат етілмейді.',
   'some-files-were-not-uploaded': 'Кейбір файлдар жүктелген жоқ.',
+  'file-item-edit-button': 'Өңдеу түймесі',
+  'file-item-remove-button': 'Жою түймесі',
 };

@@ -15,6 +15,8 @@ export class LrBtnUi extends Block {
       icon: '',
       iconCss: this._iconCss(),
       theme: null,
+      'aria-role': '',
+      'aria-controls': '',
     };
 
     this.defineAccessor('active', (active) => {
@@ -54,13 +56,17 @@ export class LrBtnUi extends Block {
       this._iconSingle = false;
     });
 
-    this.setAttribute('role', 'button');
-    if (this.tabIndex === -1) {
-      this.tabIndex = 0;
-    }
     if (!this.hasAttribute('theme')) {
       this.setAttribute('theme', 'default');
     }
+
+    this.defineAccessor('aria-role', (value) => {
+      this.$['aria-role'] = value || '';
+    });
+
+    this.defineAccessor('aria-controls', (value) => {
+      this.$['aria-controls'] = value || '';
+    });
   }
 
   set reverse(val) {
@@ -73,9 +79,12 @@ export class LrBtnUi extends Block {
     }
   }
 }
+
 LrBtnUi.bindAttributes({ text: 'text', icon: 'icon', reverse: 'reverse', theme: 'theme' });
 
 LrBtnUi.template = /* HTML */ `
-  <lr-icon set="className: iconCss; @name: icon; @hidden: !icon"></lr-icon>
-  <div class="text">{{text}}</div>
+  <button set="@role:aria-role; @aria-controls: aria-controls">
+    <lr-icon set="className: iconCss; @name: icon; @hidden: !icon"></lr-icon>
+    <div class="text">{{text}}</div>
+  </button>
 `;

@@ -24,7 +24,6 @@ export const uploaderBlockCtx = (fnCtx) => ({
   '*commonProgress': 0,
   '*uploadList': [],
   '*focusedEntry': null,
-  '*uploadMetadata': null,
   '*uploadQueue': new Queue(1),
   '*uploadCollection': null,
   /** @type {ReturnType<import('../types').OutputErrorCollection>[]} */

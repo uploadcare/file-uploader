@@ -12,6 +12,7 @@ const GLOBAL_CTX_NAME = 'lr-drop-area';
 const REGISTRY_KEY = `${GLOBAL_CTX_NAME}/registry`;
 
 export class DropArea extends UploaderBlock {
+  static styleAttrs = [...super.styleAttrs, 'lr-drop-area'];
   constructor() {
     super();
 
@@ -164,10 +165,22 @@ export class DropArea extends UploaderBlock {
     });
 
     if (this.$.isClickable) {
-      // @private
-      this._onAreaClicked = () => {
-        this.openSystemDialog();
+      /**
+       * @private
+       * @param {KeyboardEvent | Event} event
+       */
+      this._onAreaClicked = (event) => {
+        if (event.type === 'keydown') {
+          // @ts-ignore
+          if (event.code === 'Space' || event.code === 'Enter') {
+            this.openSystemDialog();
+          }
+        } else if (event.type === 'click') {
+          this.openSystemDialog();
+        }
       };
+
+      this.addEventListener('keydown', this._onAreaClicked);
       this.addEventListener('click', this._onAreaClicked);
     }
   }
@@ -227,6 +240,7 @@ export class DropArea extends UploaderBlock {
     this._destroyDropzone?.();
     this._destroyContentWrapperDropzone?.();
     if (this._onAreaClicked) {
+      this.removeEventListener('keydown', this._onAreaClicked);
       this.removeEventListener('click', this._onAreaClicked);
     }
   }

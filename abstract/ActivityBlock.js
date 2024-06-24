@@ -1,6 +1,6 @@
-import { EventType } from '../blocks/UploadCtxProvider/EventEmitter.js';
 // @ts-check
 import { debounce } from '../blocks/utils/debounce.js';
+import { EventType } from '../blocks/UploadCtxProvider/EventEmitter.js';
 import { Block } from './Block.js';
 import { activityBlockCtx } from './CTX.js';
 
@@ -15,7 +15,7 @@ export class ActivityBlock extends Block {
 
   /** @private */
   _deactivate() {
-    const actDesc = ActivityBlock._activityCallbacks.get(this);
+    let actDesc = ActivityBlock._activityCallbacks.get(this);
     this[ACTIVE_PROP] = false;
     this.removeAttribute(ACTIVE_ATTR);
     actDesc?.deactivateCallback?.();
@@ -23,7 +23,7 @@ export class ActivityBlock extends Block {
 
   /** @private */
   _activate() {
-    const actDesc = ActivityBlock._activityCallbacks.get(this);
+    let actDesc = ActivityBlock._activityCallbacks.get(this);
     this.$['*historyBack'] = this.historyBack.bind(this);
     /** @private */
     this[ACTIVE_PROP] = true;
@@ -138,9 +138,7 @@ export class ActivityBlock extends Block {
     /** @type {string | null} */
     const currentActivity = this.$['*currentActivity'];
 
-    /** @type {Set<import('./Block').Block>} */
-    const blocksRegistry = this.$['*blocksRegistry'];
-    const hasCurrentActivityInCtx = !![...blocksRegistry].find(
+    const hasCurrentActivityInCtx = !![...this.blocksRegistry].find(
       (block) => block instanceof ActivityBlock && block.activityType === currentActivity,
     );
 
@@ -169,7 +167,7 @@ export class ActivityBlock extends Block {
 
   historyBack() {
     /** @type {String[]} */
-    const history = this.$['*history'];
+    let history = this.$['*history'];
     if (history) {
       let nextActivity = history.pop();
       while (nextActivity === this.activityType) {
@@ -177,10 +175,8 @@ export class ActivityBlock extends Block {
       }
       let couldOpenActivity = !!nextActivity;
       if (nextActivity) {
-        /** @type {Set<ActivityBlock>} */
-        const blocksRegistry = this.$['*blocksRegistry'];
-        const nextActivityBlock = [...blocksRegistry].find((block) => block.activityType === nextActivity);
-        couldOpenActivity = nextActivityBlock?.couldOpenActivity ?? false;
+        const nextActivityBlock = [...this.blocksRegistry].find((block) => block.activityType === nextActivity);
+        couldOpenActivity = /** @type {ActivityBlock} */ (nextActivityBlock)?.couldOpenActivity ?? false;
       }
       nextActivity = couldOpenActivity ? nextActivity : undefined;
       this.$['*currentActivity'] = nextActivity;
@@ -198,7 +194,6 @@ ActivityBlock.activities = Object.freeze({
   DRAW: 'draw',
   UPLOAD_LIST: 'upload-list',
   URL: 'url',
-  CONFIRMATION: 'confirmation',
   CLOUD_IMG_EDIT: 'cloud-image-edit',
   EXTERNAL: 'external',
   DETAILS: 'details',

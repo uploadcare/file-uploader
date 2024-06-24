@@ -16,11 +16,6 @@ export class EditorButtonControl extends Block {
     this._titleEl = this.ref['title-el'];
     this._iconEl = this.ref['icon-el'];
 
-    this.setAttribute('role', 'button');
-    if (this.tabIndex === -1) {
-      this.tabIndex = 0;
-    }
-
     this.sub('title', (title) => {
       const titleEl = this._titleEl;
       if (titleEl) {
@@ -42,7 +37,8 @@ export class EditorButtonControl extends Block {
 }
 
 EditorButtonControl.template = /* HTML */ `
-  <div class="before"></div>
-  <lr-icon set="@name: icon;"></lr-icon>
-  <div class="title" ref="title-el">{{title}}</div>
+  <button role="option">
+    <lr-icon set="@name: icon;"></lr-icon>
+    <div class="title" ref="title-el">{{title}}</div>
+  </button>
 `;

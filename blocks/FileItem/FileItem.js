@@ -1,13 +1,13 @@
-import { shrinkFile } from '@uploadcare/image-shrink';
 // @ts-check
 import { CancelError, uploadFile } from '@uploadcare/upload-client';
+import { shrinkFile } from '@uploadcare/image-shrink';
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../utils/cdn-utils.js';
-import { parseShrink } from '../../utils/parseShrink.js';
 import { fileCssBg } from '../svg-backgrounds/svg-backgrounds.js';
 import { debounce } from '../utils/debounce.js';
 import { generateThumb } from '../utils/resizeImage.js';
+import { parseShrink } from '../../utils/parseShrink.js';
 
 const FileItemState = Object.freeze({
   FINISHED: Symbol(0),
@@ -75,7 +75,7 @@ export class FileItem extends UploaderBlock {
   }
 
   _reset() {
-    for (const sub of this._entrySubs) {
+    for (let sub of this._entrySubs) {
       sub.remove();
     }
 
@@ -90,7 +90,7 @@ export class FileItem extends UploaderBlock {
    * @param {IntersectionObserverEntry[]} entries
    */
   _observerCallback(entries) {
-    const [entry] = entries;
+    let [entry] = entries;
     this._isIntersecting = entry.isIntersecting;
 
     if (entry.isIntersecting && !this._renderedOnce) {
@@ -109,7 +109,7 @@ export class FileItem extends UploaderBlock {
     if (!this._entry) {
       return;
     }
-    const entry = this._entry;
+    let entry = this._entry;
     let state = FileItemState.IDLE;
 
     if (entry.getValue('errors').length > 0) {
@@ -128,17 +128,17 @@ export class FileItem extends UploaderBlock {
     if (!this._entry) {
       return;
     }
-    const entry = this._entry;
+    let entry = this._entry;
 
     if (entry.getValue('fileInfo') && entry.getValue('isImage')) {
-      const size = this.cfg.thumbSize;
-      const thumbUrl = this.proxyUrl(
+      let size = this.cfg.thumbSize;
+      let thumbUrl = this.proxyUrl(
         createCdnUrl(
           createOriginalUrl(this.cfg.cdnCname, this._entry.getValue('uuid')),
           createCdnUrlModifiers(entry.getValue('cdnUrlModifiers'), `scale_crop/${size}x${size}/center`),
         ),
       );
-      const currentThumbUrl = entry.getValue('thumbUrl');
+      let currentThumbUrl = entry.getValue('thumbUrl');
       if (currentThumbUrl !== thumbUrl) {
         entry.setValue('thumbUrl', thumbUrl);
         currentThumbUrl?.startsWith('blob:') && URL.revokeObjectURL(currentThumbUrl);
@@ -152,14 +152,14 @@ export class FileItem extends UploaderBlock {
 
     if (entry.getValue('file')?.type.includes('image')) {
       try {
-        const thumbUrl = await generateThumb(entry.getValue('file'), this.cfg.thumbSize);
+        let thumbUrl = await generateThumb(entry.getValue('file'), this.cfg.thumbSize);
         entry.setValue('thumbUrl', thumbUrl);
       } catch (err) {
-        const color = window.getComputedStyle(this).getPropertyValue('--clr-generic-file-icon');
+        let color = window.getComputedStyle(this).getPropertyValue('--uc-muted-foreground');
         entry.setValue('thumbUrl', fileCssBg(color));
       }
     } else {
-      const color = window.getComputedStyle(this).getPropertyValue('--clr-generic-file-icon');
+      let color = window.getComputedStyle(this).getPropertyValue('--uc-muted-foreground');
       entry.setValue('thumbUrl', fileCssBg(color));
     }
   }
@@ -170,7 +170,7 @@ export class FileItem extends UploaderBlock {
    * @param {(value: any) => void} handler
    */
   _subEntry(prop, handler) {
-    const sub = this._entry.subscribe(
+    let sub = this._entry.subscribe(
       prop,
       /** @param {any} value */ (value) => {
         if (this.isConnected) {
@@ -189,7 +189,7 @@ export class FileItem extends UploaderBlock {
     this._reset();
 
     /** @type {import('../../abstract/TypedData.js').TypedData} */
-    const entry = this.uploadCollection?.read(id);
+    let entry = this.uploadCollection?.read(id);
     this._entry = entry;
 
     if (!entry) {
@@ -251,13 +251,13 @@ export class FileItem extends UploaderBlock {
     this.subConfigValue('useCloudImageEditor', () => this._debouncedCalculateState());
 
     this.onclick = () => {
-      for (const instance of FileItem.activeInstances) {
-        if (instance === this) {
-          instance.setAttribute('focused', '');
+      FileItem.activeInstances.forEach((inst) => {
+        if (inst === this) {
+          inst.setAttribute('focused', '');
         } else {
-          instance.removeAttribute('focused');
+          inst.removeAttribute('focused');
         }
-      }
+      });
     };
 
     this.sub(
@@ -310,8 +310,6 @@ export class FileItem extends UploaderBlock {
 
     /** @private */
     this._observer = new window.IntersectionObserver(this._observerCallback.bind(this), {
-      root: this.parentElement,
-      rootMargin: '50% 0px 50% 0px',
       threshold: [0, 1],
     });
     this._observer.observe(this);
@@ -337,7 +335,7 @@ export class FileItem extends UploaderBlock {
   }
 
   async upload() {
-    const entry = this._entry;
+    let entry = this._entry;
 
     if (!this.uploadCollection.read(entry.uid)) {
       return;
@@ -356,7 +354,7 @@ export class FileItem extends UploaderBlock {
     entry.setValue('errors', []);
 
     try {
-      const abortController = new AbortController();
+      let abortController = new AbortController();
       entry.setValue('abortController', abortController);
 
       const uploadTask = async () => {
@@ -374,7 +372,7 @@ export class FileItem extends UploaderBlock {
           source: entry.getValue('source'),
           onProgress: (progress) => {
             if (progress.isComputable) {
-              const percentage = progress.value * 100;
+              let percentage = progress.value * 100;
               entry.setValue('uploadProgress', percentage);
             }
           },
@@ -386,7 +384,7 @@ export class FileItem extends UploaderBlock {
       };
 
       /** @type {import('@uploadcare/upload-client').UploadcareFile} */
-      const fileInfo = await this.$['*uploadQueue'].add(uploadTask);
+      let fileInfo = await this.$['*uploadQueue'].add(uploadTask);
       entry.setMultipleValues({
         fileInfo,
         isUploading: false,
@@ -436,10 +434,15 @@ FileItem.template = /* HTML */ `
       <span class="file-error" set="@hidden: !errorText">{{errorText}}</span>
     </div>
     <div class="file-actions">
-      <button type="button" class="edit-btn mini-btn" set="onclick: onEdit; @hidden: !isEditable">
+      <button
+        type="button"
+        l10n="@title:file-item-edit-button"
+        class="edit-btn mini-btn"
+        set="onclick: onEdit; @hidden: !isEditable"
+      >
         <lr-icon name="edit-file"></lr-icon>
       </button>
-      <button type="button" class="remove-btn mini-btn" set="onclick: onRemove;">
+      <button type="button" l10n="@title:file-item-remove-button" class="remove-btn mini-btn" set="onclick: onRemove;">
         <lr-icon name="remove-file"></lr-icon>
       </button>
       <button type="button" class="upload-btn mini-btn" set="onclick: onUpload;">

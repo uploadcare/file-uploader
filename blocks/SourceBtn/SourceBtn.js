@@ -80,7 +80,6 @@ export class SourceBtn extends UploaderBlock {
     super.initCallback();
     this.initTypes();
 
-    this.setAttribute('role', 'button');
     this.defineAccessor(
       'type',
       /** @param {string} val */
@@ -133,9 +132,12 @@ export class SourceBtn extends UploaderBlock {
     };
   }
 }
+
 SourceBtn.template = /* HTML */ `
-  <lr-icon set="@name: iconName"></lr-icon>
-  <div class="txt" l10n="src-type"></div>
+  <button>
+    <lr-icon set="@name: iconName"></lr-icon>
+    <div class="txt" l10n="src-type"></div>
+  </button>
 `;
 SourceBtn.bindAttributes({
   // @ts-expect-error symbiote types bug

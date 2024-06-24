@@ -100,4 +100,6 @@ export default {
   'images-only-accepted': '画像ファイルのみ受け付けます。',
   'file-type-not-allowed': 'このファイルタイプのアップロードは許可されていません。',
   'some-files-were-not-uploaded': '一部のファイルはアップロードされませんでした。',
+  'file-item-edit-button': '編集ボタン',
+  'file-item-remove-button': '削除ボタン',
 };

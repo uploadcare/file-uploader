@@ -100,4 +100,6 @@ export default {
   'images-only-accepted': 'მხოლოდ სურათის ფაილები იღება.',
   'file-type-not-allowed': 'ამ ფაილის ტიპების ატვირთვა არ არის დასაშვები.',
   'some-files-were-not-uploaded': 'ზოგიერთი ფაილი არ ატვირთულა.',
+  'file-item-edit-button': 'რედაქტირების ღილაკი',
+  'file-item-remove-button': 'წაშლის ღილაკი',
 };

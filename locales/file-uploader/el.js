@@ -102,4 +102,6 @@ export default {
   'images-only-accepted': 'Επιτρέπονται μόνο αρχεία εικόνων.',
   'file-type-not-allowed': 'Η μεταφόρτωση αυτών των τύπων αρχείων δεν επιτρέπεται.',
   'some-files-were-not-uploaded': 'Κάποια αρχεία δεν μεταφορτώθηκαν.',
+  'file-item-edit-button': 'Κουμπί επεξεργασίας',
+  'file-item-remove-button': 'Κουμπί αφαίρεσης',
 };

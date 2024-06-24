@@ -173,7 +173,6 @@ SliderUi.template = /* HTML */ `
     class="input"
     type="range"
     ref="input-el"
-    tabindex="0"
     set="oninput: on.sliderInput; onchange: on.sliderChange; @min: min; @max: max; @value: defaultValue;"
   />
 `;

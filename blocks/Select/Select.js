@@ -34,10 +34,4 @@ export class Select extends Block {
   }
 }
 
-Select.template = /* HTML */ `
-  <button>
-    {{currentText}}
-    <lr-icon name="select"></lr-icon>
-    <select ref="select" set="innerHTML: selectHtml; onchange: onSelect"></select>
-  </button>
-`;
+Select.template = /* HTML */ ` <select ref="select" set="innerHTML: selectHtml; onchange: onSelect"></select> `;

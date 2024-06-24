@@ -40,11 +40,6 @@ module.exports = {
       files: ['blocks/**/*.css', 'solutions/**/*.css'],
       ignoreFiles: ['**/test/**/*.css'],
       plugins: ['./stylelint-force-app-name-prefix.cjs'],
-      rules: {
-        'plugin/stylelint-force-app-name-prefix': {
-          appName: 'lr',
-        },
-      },
     },
   ],
 };

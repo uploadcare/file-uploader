@@ -3,9 +3,15 @@ import { Block } from './Block.js';
 import { uploaderBlockCtx } from './CTX.js';
 
 export class SolutionBlock extends Block {
+  static styleAttrs = ['lr-wgt-common'];
   requireCtxName = true;
   init$ = uploaderBlockCtx(this);
   _template = null;
+
+  initCallback() {
+    super.initCallback();
+    this.a11y?.registerBlock(this);
+  }
 
   static set template(value) {
     SolutionBlock._template = `${svgIconsSprite + value}<slot></slot>`;

@@ -101,4 +101,6 @@ export default {
   'images-only-accepted': 'Alleen afbeeldingsbestanden worden geaccepteerd.',
   'file-type-not-allowed': 'Dit bestandstype is niet toegestaan.',
   'some-files-were-not-uploaded': 'Sommige bestanden zijn niet geüpload.',
+  'file-item-edit-button': 'Bewerkknop',
+  'file-item-remove-button': 'Verwijderknop',
 };

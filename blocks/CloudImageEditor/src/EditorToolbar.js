@@ -21,12 +21,11 @@ function renderTabToggle(id) {
   return /* HTML */ `
     <lr-presence-toggle class="tab-toggle" set="visible: presence.tabToggle.${id}; styles: presence.tabToggleStyles;">
       <lr-btn-ui
-        theme="boring"
+        theme="tab"
         ref="tab-toggle-${id}"
         data-id="${id}"
         icon="${id}"
-        tabindex="0"
-        set="onclick: on.clickTab;"
+        set="onclick: on.clickTab; aria-role:tab_role; aria-controls:tab_${id}"
       >
       </lr-btn-ui>
     </lr-presence-toggle>
@@ -36,10 +35,14 @@ function renderTabToggle(id) {
 /** @param {String} id */
 function renderTabContent(id) {
   return /* HTML */ `
-    <lr-presence-toggle class="tab-content" set="visible: presence.tabContent.${id}; styles: presence.tabContentStyles">
+    <lr-presence-toggle
+      id="tab_${id}"
+      class="tab-content"
+      set="visible: presence.tabContent.${id}; styles: presence.tabContentStyles"
+    >
       <lr-editor-scroller hidden-scrollbar>
         <div class="controls-list_align">
-          <div class="controls-list_inner" ref="controls-list-${id}"></div>
+          <div role="listbox" aria-orientation="horizontal" class="controls-list_inner" ref="controls-list-${id}"></div>
         </div>
       </lr-editor-scroller>
     </lr-presence-toggle>
@@ -115,6 +118,10 @@ export class EditorToolbar extends Block {
           this._activateTab(id, { fromViewer: false });
         }
       },
+      tab_role: 'tab',
+      [`tab_${TabId.TUNING}`]: `tab_${TabId.TUNING}`,
+      [`tab_${TabId.CROP}`]: `tab_${TabId.CROP}`,
+      [`tab_${TabId.FILTERS}`]: `tab_${TabId.FILTERS}`,
     };
 
     /** @private */
@@ -387,15 +394,19 @@ EditorToolbar.template = /* HTML */ `
     </div>
   </div>
   <div class="toolbar-container">
-    <lr-presence-toggle class="sub-toolbar" set="visible: presence.mainToolbar; styles: presence.subTopToolbarStyles">
+    <lr-presence-toggle
+      role="tablist"
+      class="sub-toolbar"
+      set="visible: presence.mainToolbar; styles: presence.subTopToolbarStyles"
+    >
       <div class="tab-content-row">${ALL_TABS.map(renderTabContent).join('')}</div>
       <div class="controls-row">
-        <lr-btn-ui theme="boring" icon="closeMax" set="onclick: on.cancel"> </lr-btn-ui>
         <lr-presence-toggle class="tab-toggles" set="visible: presence.tabToggles; styles: presence.tabTogglesStyles">
           <div ref="tabs-indicator" class="tab-toggles_indicator"></div>
           ${ALL_TABS.map(renderTabToggle).join('')}
         </lr-presence-toggle>
-        <lr-btn-ui theme="primary" icon="done" set="onclick: on.apply"> </lr-btn-ui>
+        <lr-btn-ui style="order: -1" theme="secondary-icon" icon="closeMax" set="onclick: on.cancel"> </lr-btn-ui>
+        <lr-btn-ui theme="primary-icon" icon="done" set="onclick: on.apply"> </lr-btn-ui>
       </div>
     </lr-presence-toggle>
     <lr-presence-toggle class="sub-toolbar" set="visible: presence.subToolbar; styles: presence.subBottomToolbarStyles">
@@ -403,7 +414,7 @@ EditorToolbar.template = /* HTML */ `
         <lr-editor-slider ref="slider-el"></lr-editor-slider>
       </div>
       <div class="controls-row">
-        <lr-btn-ui theme="boring" set="onclick: on.cancelSlider;" l10n="@text:cancel"> </lr-btn-ui>
+        <lr-btn-ui theme="secondary" set="onclick: on.cancelSlider;" l10n="@text:cancel"> </lr-btn-ui>
         <lr-btn-ui theme="primary" set="onclick: on.applySlider;" l10n="@text:apply"> </lr-btn-ui>
       </div>
     </lr-presence-toggle>

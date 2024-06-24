@@ -1,5 +1,5 @@
-import { Block } from '../../../../../abstract/Block.js';
 import { applyClassNames } from '../../lib/classNames.js';
+import { Block } from '../../../../../abstract/Block.js';
 
 /**
  * @typedef {Object} Style
@@ -55,14 +55,17 @@ export class PresenceToggle extends Block {
 
   initCallback() {
     super.initCallback();
-    this.setAttribute('hidden', '');
+
+    this.classList.toggle('initial', true);
 
     if (!this._externalTransitions) {
       this.classList.add(DEFAULT_STYLE.transition);
     }
 
     this._handleVisible();
-    setTimeout(() => this.removeAttribute('hidden'), 0);
+    setTimeout(() => {
+      this.classList.toggle('initial', false);
+    }, 0);
   }
 }
-PresenceToggle.template = /* HTML */ ' <slot></slot> ';
+PresenceToggle.template = /* HTML */ `<slot></slot> `;

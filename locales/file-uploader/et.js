@@ -100,4 +100,6 @@ export default {
   'images-only-accepted': 'Aktsepteeritud on ainult pildifailid.',
   'file-type-not-allowed': 'Nende failitüüpide üleslaadimine pole lubatud.',
   'some-files-were-not-uploaded': 'Mõned failid ei laetud üles.',
+  'file-item-edit-button': 'Muuda nupp',
+  'file-item-remove-button': 'Eemalda nupp',
 };

@@ -1,167 +1,116 @@
-:where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular) {
-  color: var(--clr-txt);
-
-  /* font-size and family for testing purposes, to be removed */
-  font-size: 14px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans',
-    'Helvetica Neue', sans-serif;
+:where([lr-wgt-common]) {
+  color: var(--uc-foreground);
+  font-size: var(--uc-font-size);
+  line-height: var(--uc-line-height);
+  font-family: var(--uc-font-family);
 }
 
-:where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular) * {
+:where([lr-wgt-common]) * {
   box-sizing: border-box;
 }
 
-:where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular)
-  [hidden] {
+:where([lr-wgt-common]) [hidden] {
   display: none !important;
 }
 
-:where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular)
-  [activity]:not([active]) {
+:where([lr-wgt-common]) [activity]:not([active]) {
   display: none;
 }
 
-:where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular)
-  dialog:not([open])
-  [activity] {
+:where([lr-wgt-common]) dialog:not([open]) [activity] {
   display: none;
 }
 
-:where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular)
-  button {
+:where([lr-wgt-common]) button {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: var(--ui-size);
-  padding-right: 1.4em;
-  padding-left: 1.4em;
+  height: var(--uc-button-size);
+  padding-right: 14px;
+  padding-left: 14px;
   font-size: 1em;
   font-family: inherit;
   white-space: nowrap;
   border: none;
-  border-radius: var(--border-radius-element);
+  border-radius: var(--uc-radius);
   cursor: pointer;
   user-select: none;
+  transition: background-color var(--uc-transition);
 }
 
-@media only screen and (max-width: 800px) {
-  :where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular)
-    button {
-    padding-right: 1em;
-    padding-left: 1em;
-  }
+:where([lr-wgt-common]) button.primary-btn {
+  color: var(--uc-primary-foreground);
+  background-color: var(--uc-primary);
 }
 
-:where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular)
-  button.primary-btn {
-  color: var(--clr-btn-txt-primary);
-  background-color: var(--clr-btn-bgr-primary);
-  box-shadow: var(--shadow-btn-primary);
-  transition: background-color var(--transition-duration);
+:where([lr-wgt-common]) button.primary-btn:hover {
+  background-color: var(--uc-primary-hover);
 }
 
-:where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular)
-  button.primary-btn:hover {
-  background-color: var(--clr-btn-bgr-primary-hover);
+:where([lr-wgt-common]) button.secondary-btn {
+  color: var(--uc-secondary-foreground);
+  background-color: var(--uc-secondary);
 }
 
-:where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular)
-  button.primary-btn:active {
-  background-color: var(--clr-btn-bgr-primary-active);
+:where([lr-wgt-common]) button.secondary-btn:hover {
+  background-color: var(--uc-secondary-hover);
 }
 
-:where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular)
-  button.secondary-btn {
-  color: var(--clr-btn-txt-secondary);
-  background-color: var(--clr-btn-bgr-secondary);
-  box-shadow: var(--shadow-btn-secondary);
-  transition: background-color var(--transition-duration);
-}
-
-:where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular)
-  button.secondary-btn:hover {
-  background-color: var(--clr-btn-bgr-secondary-hover);
-}
-
-:where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular)
-  button.secondary-btn:active {
-  background-color: var(--clr-btn-bgr-secondary-active);
-}
-
-:where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular)
-  button.mini-btn {
-  width: var(--ui-size);
-  height: var(--ui-size);
+:where([lr-wgt-common]) button.mini-btn {
+  height: var(--uc-button-size);
   padding: 0;
   background-color: transparent;
-  border: none;
-  cursor: pointer;
-  transition: var(--transition-duration) ease;
-  color: var(--clr-txt);
+  color: var(--uc-secondary-foreground);
 }
 
-:where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular)
-  button.mini-btn:hover {
-  background-color: var(--clr-shade-lv1);
+:where([lr-wgt-common]) button.mini-btn:hover {
+  background-color: var(--uc-secondary);
 }
 
-:where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular)
-  button.mini-btn:active {
-  background-color: var(--clr-shade-lv2);
-}
-
-:where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular)
-  :is(button[disabled], button.primary-btn[disabled], button.secondary-btn[disabled]) {
-  color: var(--clr-btn-txt-disabled);
-  background-color: var(--clr-btn-bgr-disabled);
-  box-shadow: var(--shadow-btn-disabled);
+:where([lr-wgt-common]) :is(button[disabled], button.primary-btn[disabled], button.secondary-btn[disabled]) {
+  opacity: 0.5;
   pointer-events: none;
 }
 
-:where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular) a {
-  color: var(--clr-accent);
+:where([lr-wgt-common]) a {
+  color: var(--uc-primary);
   text-decoration: none;
 }
 
-:where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular)
-  a[disabled] {
+/* TODO: if we're using disabled <a> somewhere, we should stop */
+:where([lr-wgt-common]) a[disabled] {
   pointer-events: none;
 }
 
-:where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular)
-  input[type='text'] {
+:where([lr-wgt-common]) input[type='text'] {
   display: flex;
   width: 100%;
-  height: var(--ui-size);
-  padding-right: 0.6em;
-  padding-left: 0.6em;
-  color: var(--clr-txt);
+  height: var(--uc-button-size);
+  padding-right: 10px;
+  padding-left: 10px;
+  color: var(--uc-foreground);
   font-size: 1em;
   font-family: inherit;
-  background-color: var(--clr-background-light);
-  border: var(--border-light);
-  border-radius: var(--border-radius-element);
-  transition: var(--transition-duration);
+  background-color: var(--uc-background);
+  border: 1px solid var(--uc-border);
+  outline: 1px solid transparent;
+  border-radius: var(--uc-radius);
+  transition:
+    border-color var(--uc-transition),
+    outline-color var(--uc-transition);
 }
 
-:where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular)
-  input[type='text']::placeholder {
-  color: var(--clr-txt-lightest);
+:where([lr-wgt-common]) input[type='text']::placeholder {
+  color: var(--uc-muted-foreground);
 }
 
-:where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular)
-  input[type='text']:hover {
-  border-color: var(--clr-accent-light);
+:where([lr-wgt-common]) input[type='text']:focus {
+  outline-color: var(--uc-primary-hover);
+  border-color: var(--uc-primary-hover);
 }
 
-:where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular)
-  input[type='text']:focus {
-  border-color: var(--clr-accent);
-  outline: none;
-}
-
-:where(.lr-wgt-theme, .lr-wgt-common, lr-file-uploader-minimal, lr-file-uploader-inline, lr-file-uploader-regular)
-  input[disabled] {
+/* TODO: check if there's any necessity of disabled input */
+:where([lr-wgt-common]) input[disabled] {
   opacity: 0.6;
   pointer-events: none;
 }
