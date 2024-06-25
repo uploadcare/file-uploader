@@ -8,7 +8,9 @@ const ACTIVE_ATTR = 'active';
 const ACTIVE_PROP = '___ACTIVITY_IS_ACTIVE___';
 
 export class ActivityBlock extends Block {
+  /** @protected */
   historyTracked = false;
+
   init$ = activityBlockCtx(this);
 
   _debouncedHistoryFlush = debounce(this._historyFlush.bind(this), 10);
@@ -37,6 +39,7 @@ export class ActivityBlock extends Block {
     });
   }
 
+  /** @protected */
   initCallback() {
     super.initCallback();
     if (this.hasAttribute('current-activity')) {
@@ -131,6 +134,7 @@ export class ActivityBlock extends Block {
     ActivityBlock._activityCallbacks.delete(this);
   }
 
+  /** @protected */
   destroyCallback() {
     super.destroyCallback();
     this._isActivityRegistered() && this.unregisterActivity();

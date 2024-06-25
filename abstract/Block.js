@@ -23,8 +23,10 @@ export class Block extends BaseComponent {
 
   /** @type {string[]} */
   static styleAttrs = [];
+
+  /** @protected */
   requireCtxName = false;
-  allowCustomTemplate = true;
+
   /** @type {import('./ActivityBlock.js').ActivityType} */
   activityType = null;
 
@@ -52,6 +54,7 @@ export class Block extends BaseComponent {
   }
 
   /**
+   * @private
    * @param {string} key
    * @param {number} count
    * @returns {string}
@@ -65,6 +68,7 @@ export class Block extends BaseComponent {
   /**
    * @param {string} key
    * @param {() => void} resolver
+   * @protected
    */
   bindL10n(key, resolver) {
     this.localeManager?.bindL10n(this, key, resolver);
@@ -118,6 +122,7 @@ export class Block extends BaseComponent {
     );
   }
 
+  /** @protected */
   connectedCallback() {
     const styleAttrs = /** @type {typeof Block} */ (this.constructor).styleAttrs;
     styleAttrs.forEach((attr) => {
@@ -149,11 +154,13 @@ export class Block extends BaseComponent {
     WindowHeightTracker.registerClient(this);
   }
 
+  /** @protected */
   disconnectedCallback() {
     super.disconnectedCallback();
     WindowHeightTracker.unregisterClient(this);
   }
 
+  /** @protected */
   initCallback() {
     if (!this.has('*blocksRegistry')) {
       this.add('*blocksRegistry', new Set());
@@ -179,12 +186,18 @@ export class Block extends BaseComponent {
     });
   }
 
-  /** @returns {LocaleManager | null} */
+  /**
+   * @private
+   * @returns {LocaleManager | null}
+   */
   get localeManager() {
     return this.has('*localeManager') ? this.$['*localeManager'] : null;
   }
 
-  /** @returns {A11y | null} */
+  /**
+   * @returns {A11y | null}
+   * @protected
+   */
   get a11y() {
     return this.has('*a11y') ? this.$['*a11y'] : null;
   }
@@ -194,6 +207,7 @@ export class Block extends BaseComponent {
     return this.$['*blocksRegistry'];
   }
 
+  /** @protected */
   destroyCallback() {
     let blocksRegistry = this.blocksRegistry;
     blocksRegistry.delete(this);
@@ -226,27 +240,9 @@ export class Block extends BaseComponent {
   }
 
   /**
-   * @param {Number} bytes
-   * @param {Number} [decimals]
-   */
-  fileSizeFmt(bytes, decimals = 2) {
-    let units = ['B', 'KB', 'MB', 'GB', 'TB'];
-    /**
-     * @param {String} str
-     * @returns {String}
-     */
-    if (bytes === 0) {
-      return `0 ${units[0]}`;
-    }
-    let k = 1024;
-    let dm = decimals < 0 ? 0 : decimals;
-    let i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / k ** i).toFixed(dm)) + ' ' + units[i];
-  }
-
-  /**
    * @param {String} url
    * @returns {String}
+   * @protected
    */
   proxyUrl(url) {
     if (this.cfg.secureDeliveryProxy && this.cfg.secureDeliveryProxyUrlResolver) {

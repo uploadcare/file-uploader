@@ -9,7 +9,6 @@ import { EventType } from '../blocks/UploadCtxProvider/EventEmitter.js';
 import { debounce } from '../blocks/utils/debounce.js';
 import { customUserAgent } from '../blocks/utils/userAgent.js';
 import { createCdnUrl, createCdnUrlModifiers } from '../utils/cdn-utils.js';
-import { stringToArray } from '../utils/stringToArray.js';
 import { uploaderBlockCtx } from './CTX.js';
 import { SecureUploadsManager } from './SecureUploadsManager.js';
 import { TypedCollection } from './TypedCollection.js';
@@ -18,11 +17,15 @@ import { ValidationManager } from './ValidationManager.js';
 import { uploadEntrySchema } from './uploadEntrySchema.js';
 
 export class UploaderBlock extends ActivityBlock {
+  /** @protected */
   couldBeCtxOwner = false;
+
+  /** @private */
   isCtxOwner = false;
 
   init$ = uploaderBlockCtx(this);
 
+  /** @private */
   get hasCtxOwner() {
     return this.hasBlockInCtx((block) => {
       if (block instanceof UploaderBlock) {
@@ -32,6 +35,7 @@ export class UploaderBlock extends ActivityBlock {
     });
   }
 
+  /** @protected */
   initCallback() {
     super.initCallback();
 
@@ -56,7 +60,10 @@ export class UploaderBlock extends ActivityBlock {
     }
   }
 
-  /** @returns {ValidationManager} */
+  /**
+   * @returns {ValidationManager}
+   * @protected
+   */
   get validationManager() {
     if (!this.has('*validationManager')) {
       throw new Error('Unexpected error: ValidationManager is not initialized');
@@ -72,6 +79,10 @@ export class UploaderBlock extends ActivityBlock {
     return this.$['*publicApi'];
   }
 
+  get getAPI() {
+    return this.api;
+  }
+
   /** @returns {TypedCollection} */
   get uploadCollection() {
     if (!this.has('*uploadCollection')) {
@@ -80,6 +91,7 @@ export class UploaderBlock extends ActivityBlock {
     return this.$['*uploadCollection'];
   }
 
+  /** @protected */
   destroyCtxCallback() {
     this._unobserveCollectionProperties?.();
     this._unobserveCollection?.();
@@ -89,6 +101,7 @@ export class UploaderBlock extends ActivityBlock {
     super.destroyCtxCallback();
   }
 
+  /** @private */
   initCtxOwner() {
     this.isCtxOwner = true;
 
@@ -115,17 +128,6 @@ export class UploaderBlock extends ActivityBlock {
         }
       });
     }
-  }
-
-  /** @type {string[]} */
-  get sourceList() {
-    /** @type {string[]} */
-    let list = [];
-    if (this.cfg.sourceList) {
-      list = stringToArray(this.cfg.sourceList);
-    }
-    // @ts-ignore TODO: fix this
-    return list;
   }
 
   /**
@@ -374,7 +376,10 @@ export class UploaderBlock extends ActivityBlock {
     return configValue;
   }
 
-  /** @returns {Promise<import('@uploadcare/upload-client').FileFromOptions>} */
+  /**
+   * @returns {Promise<import('@uploadcare/upload-client').FileFromOptions>}
+   * @protected
+   */
   async getUploadClientOptions() {
     /** @type {SecureUploadsManager} */
     const secureUploadsManager = this.$['*secureUploadsManager'];

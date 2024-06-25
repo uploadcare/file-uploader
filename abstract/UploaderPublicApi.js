@@ -8,6 +8,7 @@ import { serializeCsv } from '../blocks/utils/comma-separated.js';
 import { IMAGE_ACCEPT_LIST, fileIsImage, mergeFileTypes } from '../utils/fileTypes.js';
 import { parseCdnUrl } from '../utils/parseCdnUrl.js';
 import { buildOutputCollectionState } from './buildOutputCollectionState.js';
+import { stringToArray } from '../utils/stringToArray.js';
 
 export class UploaderPublicApi {
   /**
@@ -41,7 +42,7 @@ export class UploaderPublicApi {
    * @param {{ silent?: boolean; fileName?: string; source?: string }} [options]
    * @returns {import('../types').OutputFileEntry<'idle'>}
    */
-  addFileFromUrl(url, { silent, fileName, source } = {}) {
+  addFileFromUrl = (url, { silent, fileName, source } = {}) => {
     const internalId = this._uploadCollection.add({
       externalUrl: url,
       fileName: fileName ?? null,
@@ -49,14 +50,14 @@ export class UploaderPublicApi {
       source: source ?? UploadSource.API,
     });
     return this.getOutputItem(internalId);
-  }
+  };
 
   /**
    * @param {string} uuid
    * @param {{ silent?: boolean; fileName?: string; source?: string }} [options]
    * @returns {import('../types').OutputFileEntry<'idle'>}
    */
-  addFileFromUuid(uuid, { silent, fileName, source } = {}) {
+  addFileFromUuid = (uuid, { silent, fileName, source } = {}) => {
     const internalId = this._uploadCollection.add({
       uuid,
       fileName: fileName ?? null,
@@ -64,14 +65,14 @@ export class UploaderPublicApi {
       source: source ?? UploadSource.API,
     });
     return this.getOutputItem(internalId);
-  }
+  };
 
   /**
    * @param {string} cdnUrl
    * @param {{ silent?: boolean; fileName?: string; source?: string }} [options]
    * @returns {import('../types').OutputFileEntry<'idle'>}
    */
-  addFileFromCdnUrl(cdnUrl, { silent, fileName, source } = {}) {
+  addFileFromCdnUrl = (cdnUrl, { silent, fileName, source } = {}) => {
     const parsedCdnUrl = parseCdnUrl({ url: cdnUrl, cdnBase: this.cfg.cdnCname });
     if (!parsedCdnUrl) {
       throw new Error('Invalid CDN URL');
@@ -85,14 +86,14 @@ export class UploaderPublicApi {
       source: source ?? UploadSource.API,
     });
     return this.getOutputItem(internalId);
-  }
+  };
 
   /**
    * @param {File} file
    * @param {{ silent?: boolean; fileName?: string; source?: string; fullPath?: string }} [options]
    * @returns {import('../types').OutputFileEntry<'idle'>}
    */
-  addFileFromObject(file, { silent, fileName, source, fullPath } = {}) {
+  addFileFromObject = (file, { silent, fileName, source, fullPath } = {}) => {
     const internalId = this._uploadCollection.add({
       file,
       isImage: fileIsImage(file),
@@ -104,15 +105,15 @@ export class UploaderPublicApi {
       fullPath: fullPath ?? null,
     });
     return this.getOutputItem(internalId);
-  }
+  };
 
   /** @param {string} internalId */
-  removeFileByInternalId(internalId) {
+  removeFileByInternalId = (internalId) => {
     if (!this._uploadCollection.read(internalId)) {
       throw new Error(`File with internalId ${internalId} not found`);
     }
     this._uploadCollection.remove(internalId);
-  }
+  };
 
   removeAllFiles() {
     this._uploadCollection.clearAll();
@@ -136,7 +137,7 @@ export class UploaderPublicApi {
   };
 
   /** @param {{ captureCamera?: boolean }} options */
-  openSystemDialog(options = {}) {
+  openSystemDialog = (options = {}) => {
     let accept = serializeCsv(mergeFileTypes([this.cfg.accept ?? '', ...(this.cfg.imgOnly ? IMAGE_ACCEPT_LIST : [])]));
 
     if (this.cfg.accept && !!this.cfg.imgOnly) {
@@ -167,14 +168,14 @@ export class UploaderPublicApi {
       // @ts-ignore TODO: fix this
       fileInput['value'] = '';
     };
-  }
+  };
 
   /**
    * @template {import('../types').OutputFileStatus} TStatus
    * @param {string} entryId
    * @returns {import('../types/exported.js').OutputFileEntry<TStatus>}
    */
-  getOutputItem(entryId) {
+  getOutputItem = (entryId) => {
     const uploadEntryData = /** @type {import('./uploadEntrySchema.js').UploadEntry} */ (Data.getCtx(entryId).store);
 
     /** @type {import('@uploadcare/upload-client').UploadcareFile?} */
@@ -216,25 +217,25 @@ export class UploaderPublicApi {
     };
 
     return /** @type {import('../types/exported.js').OutputFileEntry<TStatus>} */ (outputItem);
-  }
+  };
 
   /** @template {import('../types').OutputCollectionStatus} TStatus */
-  getOutputCollectionState() {
+  getOutputCollectionState = () => {
     return /** @type {ReturnType<typeof buildOutputCollectionState<TStatus>>} */ (
       buildOutputCollectionState(this._ctx)
     );
-  }
+  };
 
   /** @param {Boolean} [force] */
-  initFlow(force = false) {
+  initFlow = (force = false) => {
     if (this._uploadCollection.size > 0 && !force) {
       this._ctx.set$({
         '*currentActivity': ActivityBlock.activities.UPLOAD_LIST,
       });
       this._ctx.setOrAddState('*modalActive', true);
     } else {
-      if (this._ctx.sourceList?.length === 1) {
-        const srcKey = this._ctx.sourceList[0];
+      if (this._sourceList?.length === 1) {
+        const srcKey = this._sourceList[0];
 
         // TODO: We should refactor those handlers
         if (srcKey === 'local') {
@@ -264,9 +265,9 @@ export class UploaderPublicApi {
         this._ctx.setOrAddState('*modalActive', true);
       }
     }
-  }
+  };
 
-  doneFlow() {
+  doneFlow = () => {
     this._ctx.set$({
       '*currentActivity': this._ctx.doneActivity,
       '*history': this._ctx.doneActivity ? [this._ctx.doneActivity] : [],
@@ -274,13 +275,13 @@ export class UploaderPublicApi {
     if (!this._ctx.$['*currentActivity']) {
       this._ctx.setOrAddState('*modalActive', false);
     }
-  }
+  };
 
   /**
    * @param {import('./ActivityBlock.js').ActivityType} activityType
    * @param {import('../blocks/ExternalSource/ExternalSource.js').ActivityParams | {}} [params]
    */
-  setCurrentActivity(activityType, params = {}) {
+  setCurrentActivity = (activityType, params = {}) => {
     if (this._ctx.hasBlockInCtx((b) => b.activityType === activityType)) {
       this._ctx.set$({
         '*currentActivityParams': params,
@@ -289,14 +290,27 @@ export class UploaderPublicApi {
       return;
     }
     console.warn(`Activity type "${activityType}" not found in the context`);
-  }
+  };
 
-  /** @param {boolean} active */
-  setModalActive(active) {
-    if (active && !this._ctx.$['*currentActivity']) {
+  /** @param {boolean} opened */
+  setModalState = (opened) => {
+    if (opened && !this._ctx.$['*currentActivity']) {
       console.warn(`Can't open modal without current activity. Please use "setCurrentActivity" method first.`);
       return;
     }
-    this._ctx.setOrAddState('*modalActive', active);
+    this._ctx.setOrAddState('*modalActive', opened);
+  };
+
+  /**
+   * @private
+   * @type {string[]}
+   */
+  get _sourceList() {
+    /** @type {string[]} */
+    let list = [];
+    if (this.cfg.sourceList) {
+      list = stringToArray(this.cfg.sourceList);
+    }
+    return list;
   }
 }
