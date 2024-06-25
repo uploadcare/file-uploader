@@ -4,7 +4,7 @@ lr-copyright {
   justify-content: center;
 }
 
-lr-copyright .credits {
+lr-copyright .uc-credits {
   all: unset;
   position: absolute;
   bottom: 12px;
@@ -21,11 +21,11 @@ lr-copyright .credits {
     background-color var(--uc-transition);
 }
 
-lr-copyright .credits:focus-visible {
+lr-copyright .uc-credits:focus-visible {
   outline: 1px auto -webkit-focus-ring-color;
 }
 
-lr-copyright .credits:hover {
+lr-copyright .uc-credits:hover {
   opacity: 1;
   background-color: var(--uc-muted);
 }

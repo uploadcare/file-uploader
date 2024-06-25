@@ -88,7 +88,7 @@ export class EditorImageFader extends Block {
     /** @private */
     this._addKeypointDebounced = debounce(this._addKeypoint.bind(this), 600);
 
-    this.classList.add('inactive_to_cropper');
+    this.classList.add('uc-inactive_to_cropper');
   }
 
   /**
@@ -201,7 +201,7 @@ export class EditorImageFader extends Block {
     image.addEventListener('load', stop, { once: true });
     image.addEventListener('error', stop, { once: true });
     keypoint.image = image;
-    image.classList.add('fader-image');
+    image.classList.add('uc-fader-image');
 
     image.addEventListener(
       'load',
@@ -264,7 +264,7 @@ export class EditorImageFader extends Block {
   /** @private */
   _createPreviewImage() {
     let image = new Image();
-    image.classList.add('fader-image', 'fader-image--preview');
+    image.classList.add('uc-fader-image', 'uc-fader-image--preview');
     image.style.opacity = '0';
     return image;
   }
@@ -298,7 +298,7 @@ export class EditorImageFader extends Block {
       this._container = container;
       this._keypoints.forEach((kp, idx) => {
         let kpImage = images[idx];
-        kpImage.classList.add('fader-image');
+        kpImage.classList.add('uc-fader-image');
         kp.image = kpImage;
         this._container.appendChild(kpImage);
       });
@@ -354,10 +354,11 @@ export class EditorImageFader extends Block {
     if (image.src === src) {
       image.style.opacity = '1';
       image.style.transform = 'scale(1)';
+
       this.className = classNames({
-        active_from_viewer: this._fromViewer,
-        active_from_cropper: !this._fromViewer,
-        inactive_to_cropper: false,
+        'uc-active_from_viewer': this._fromViewer,
+        'uc-active_from_cropper': !this._fromViewer,
+        'uc-inactive_to_cropper': false,
       });
       return;
     }
@@ -372,10 +373,11 @@ export class EditorImageFader extends Block {
         if (image) {
           image.style.opacity = '1';
           image.style.transform = 'scale(1)';
+
           this.className = classNames({
-            active_from_viewer: this._fromViewer,
-            active_from_cropper: !this._fromViewer,
-            inactive_to_cropper: false,
+            'uc-active_from_viewer': this._fromViewer,
+            'uc-active_from_cropper': !this._fromViewer,
+            'uc-inactive_to_cropper': false,
           });
         }
       },
@@ -432,10 +434,11 @@ export class EditorImageFader extends Block {
       if (this._previewImage) {
         this._previewImage.style.transform = 'scale(1)';
       }
+
       this.className = classNames({
-        active_from_viewer: false,
-        active_from_cropper: false,
-        inactive_to_cropper: true,
+        'uc-active_from_viewer': false,
+        'uc-active_from_cropper': false,
+        'uc-inactive_to_cropper': true,
       });
       this.addEventListener(
         'transitionend',

@@ -18,12 +18,12 @@ lr-upload-list {
   max-height: var(--modal-max-content-height);
 }
 
-lr-upload-list .no-files {
+lr-upload-list .uc-no-files {
   height: 32px;
   padding: 20px;
 }
 
-lr-upload-list .files {
+lr-upload-list .uc-files {
   display: block;
   flex: 1;
   min-height: 32px;
@@ -31,7 +31,7 @@ lr-upload-list .files {
   overflow: auto;
 }
 
-lr-upload-list .toolbar {
+lr-upload-list .uc-toolbar {
   display: flex;
   gap: 4px;
   justify-content: space-between;
@@ -39,7 +39,7 @@ lr-upload-list .toolbar {
   background-color: var(--uc-background);
 }
 
-lr-upload-list .toolbar-spacer {
+lr-upload-list .uc-toolbar-spacer {
   flex: 1;
 }
 
@@ -53,11 +53,11 @@ lr-upload-list lr-drop-area {
   border-radius: var(--uc-radius);
 }
 
-lr-upload-list lr-activity-header > .header-text {
+lr-upload-list lr-activity-header > .uc-header-text {
   padding: 0 var(--uc-padding);
 }
 
-lr-upload-list .common-error {
+lr-upload-list .uc-common-error {
   border-radius: var(--uc-radius);
   color: var(--uc-destructive-foreground);
   background-color: var(--uc-destructive);
@@ -69,6 +69,6 @@ lr-upload-list .common-error {
   font-size: 0.925em;
 }
 
-lr-upload-list .add-more-btn lr-icon {
+lr-upload-list .uc-add-more-btn lr-icon {
   display: none;
 }

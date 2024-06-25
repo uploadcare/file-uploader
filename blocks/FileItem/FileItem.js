@@ -423,33 +423,38 @@ export class FileItem extends UploaderBlock {
 }
 
 FileItem.template = /* HTML */ `
-  <div class="inner" set="@finished: isFinished; @uploading: isUploading; @failed: isFailed; @focused: isFocused">
-    <div class="thumb" set="style.backgroundImage: thumbUrl">
-      <div class="badge">
+  <div class="uc-inner" set="@finished: isFinished; @uploading: isUploading; @failed: isFailed; @focused: isFocused">
+    <div class="uc-thumb" set="style.backgroundImage: thumbUrl">
+      <div class="uc-badge">
         <lr-icon set="@name: badgeIcon"></lr-icon>
       </div>
     </div>
-    <div class="file-name-wrapper">
-      <span class="file-name" set="@title: itemName">{{itemName}}</span>
-      <span class="file-error" set="@hidden: !errorText">{{errorText}}</span>
+    <div class="uc-file-name-wrapper">
+      <span class="uc-file-name" set="@title: itemName">{{itemName}}</span>
+      <span class="uc-file-error" set="@hidden: !errorText">{{errorText}}</span>
     </div>
-    <div class="file-actions">
+    <div class="uc-file-actions">
       <button
         type="button"
         l10n="@title:file-item-edit-button"
-        class="edit-btn mini-btn"
+        class="uc-edit-btn uc-mini-btn"
         set="onclick: onEdit; @hidden: !isEditable"
       >
         <lr-icon name="edit-file"></lr-icon>
       </button>
-      <button type="button" l10n="@title:file-item-remove-button" class="remove-btn mini-btn" set="onclick: onRemove;">
+      <button
+        type="button"
+        l10n="@title:file-item-remove-button"
+        class="uc-remove-btn uc-mini-btn"
+        set="onclick: onRemove;"
+      >
         <lr-icon name="remove-file"></lr-icon>
       </button>
-      <button type="button" class="upload-btn mini-btn" set="onclick: onUpload;">
+      <button type="button" class="uc-upload-btn uc-mini-btn" set="onclick: onUpload;">
         <lr-icon name="upload"></lr-icon>
       </button>
     </div>
-    <lr-progress-bar class="progress-bar" set="value: progressValue; visible: progressVisible;"> </lr-progress-bar>
+    <lr-progress-bar class="uc-progress-bar" set="value: progressValue; visible: progressVisible;"> </lr-progress-bar>
   </div>
 `;
 FileItem.activeInstances = new Set();

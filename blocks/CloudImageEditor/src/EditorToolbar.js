@@ -19,7 +19,10 @@ import { viewerImageSrc } from './util.js';
 /** @param {String} id */
 function renderTabToggle(id) {
   return /* HTML */ `
-    <lr-presence-toggle class="tab-toggle" set="visible: presence.tabToggle.${id}; styles: presence.tabToggleStyles;">
+    <lr-presence-toggle
+      class="uc-tab-toggle"
+      set="visible: presence.tabToggle.${id}; styles: presence.tabToggleStyles;"
+    >
       <lr-btn-ui
         theme="tab"
         ref="tab-toggle-${id}"
@@ -37,12 +40,17 @@ function renderTabContent(id) {
   return /* HTML */ `
     <lr-presence-toggle
       id="tab_${id}"
-      class="tab-content"
+      class="uc-tab-content"
       set="visible: presence.tabContent.${id}; styles: presence.tabContentStyles"
     >
       <lr-editor-scroller hidden-scrollbar>
-        <div class="controls-list_align">
-          <div role="listbox" aria-orientation="horizontal" class="controls-list_inner" ref="controls-list-${id}"></div>
+        <div class="uc-controls-list_align">
+          <div
+            role="listbox"
+            aria-orientation="horizontal"
+            class="uc-controls-list_inner"
+            ref="controls-list-${id}"
+          ></div>
         </div>
       </lr-editor-scroller>
     </lr-presence-toggle>
@@ -77,24 +85,24 @@ export class EditorToolbar extends Block {
       'presence.tabToggle.tuning': true,
       'presence.tabToggle.filters': true,
       'presence.subTopToolbarStyles': {
-        hidden: 'sub-toolbar--top-hidden',
-        visible: 'sub-toolbar--visible',
+        hidden: 'uc-sub-toolbar--top-hidden',
+        visible: 'uc-sub-toolbar--visible',
       },
       'presence.subBottomToolbarStyles': {
-        hidden: 'sub-toolbar--bottom-hidden',
-        visible: 'sub-toolbar--visible',
+        hidden: 'uc-sub-toolbar--bottom-hidden',
+        visible: 'uc-sub-toolbar--visible',
       },
       'presence.tabContentStyles': {
-        hidden: 'tab-content--hidden',
-        visible: 'tab-content--visible',
+        hidden: 'uc-tab-content--hidden',
+        visible: 'uc-tab-content--visible',
       },
       'presence.tabToggleStyles': {
-        hidden: 'tab-toggle--hidden',
-        visible: 'tab-toggle--visible',
+        hidden: 'uc-tab-toggle--hidden',
+        visible: 'uc-tab-toggle--visible',
       },
       'presence.tabTogglesStyles': {
-        hidden: 'tab-toggles--hidden',
-        visible: 'tab-toggles--visible',
+        hidden: 'uc-tab-toggles--hidden',
+        visible: 'uc-tab-toggles--visible',
       },
       'on.cancel': () => {
         this._cancelPreload && this._cancelPreload();
@@ -133,7 +141,7 @@ export class EditorToolbar extends Block {
   _onSliderClose() {
     this.$['*showSlider'] = false;
     if (this.$['*tabId'] === TabId.TUNING) {
-      this.ref['tooltip-el'].classList.toggle('info-tooltip_visible', false);
+      this.ref['tooltip-el'].classList.toggle('uc-info-tooltip_visible', false);
     }
   }
 
@@ -204,7 +212,7 @@ export class EditorToolbar extends Block {
 
     [...fr.children].forEach((el, idx) => {
       if (idx === fr.childNodes.length - 1) {
-        el.classList.add('controls-list_last-item');
+        el.classList.add('uc-controls-list_last-item');
       }
     });
 
@@ -307,7 +315,7 @@ export class EditorToolbar extends Block {
     if (visible) {
       this.$['*operationTooltip'] = text;
     }
-    this.ref['tooltip-el'].classList.toggle('info-tooltip_visible', visible);
+    this.ref['tooltip-el'].classList.toggle('uc-info-tooltip_visible', visible);
   }, 0);
 
   initCallback() {
@@ -393,32 +401,38 @@ export class EditorToolbar extends Block {
 
 EditorToolbar.template = /* HTML */ `
   <lr-line-loader-ui set="active: showLoader"></lr-line-loader-ui>
-  <div class="info-tooltip_container">
-    <div class="info-tooltip_wrapper">
-      <div ref="tooltip-el" class="info-tooltip info-tooltip_hidden">{{*operationTooltip}}</div>
+  <div class="uc-info-tooltip_container">
+    <div class="uc-info-tooltip_wrapper">
+      <div ref="tooltip-el" class="uc-info-tooltip uc-info-tooltip_hidden">{{*operationTooltip}}</div>
     </div>
   </div>
-  <div class="toolbar-container">
+  <div class="uc-toolbar-container">
     <lr-presence-toggle
       role="tablist"
-      class="sub-toolbar"
+      class="uc-sub-toolbar"
       set="visible: presence.mainToolbar; styles: presence.subTopToolbarStyles"
     >
-      <div class="tab-content-row">${ALL_TABS.map(renderTabContent).join('')}</div>
-      <div class="controls-row">
-        <lr-presence-toggle class="tab-toggles" set="visible: presence.tabToggles; styles: presence.tabTogglesStyles">
-          <div ref="tabs-indicator" class="tab-toggles_indicator"></div>
+      <div class="uc-tab-content-row">${ALL_TABS.map(renderTabContent).join('')}</div>
+      <div class="uc-controls-row">
+        <lr-presence-toggle
+          class="uc-tab-toggles"
+          set="visible: presence.tabToggles; styles: presence.tabTogglesStyles"
+        >
+          <div ref="tabs-indicator" class="uc-tab-toggles_indicator"></div>
           ${ALL_TABS.map(renderTabToggle).join('')}
         </lr-presence-toggle>
         <lr-btn-ui style="order: -1" theme="secondary-icon" icon="closeMax" set="onclick: on.cancel"> </lr-btn-ui>
         <lr-btn-ui theme="primary-icon" icon="done" set="onclick: on.apply"> </lr-btn-ui>
       </div>
     </lr-presence-toggle>
-    <lr-presence-toggle class="sub-toolbar" set="visible: presence.subToolbar; styles: presence.subBottomToolbarStyles">
-      <div class="slider">
+    <lr-presence-toggle
+      class="uc-sub-toolbar"
+      set="visible: presence.subToolbar; styles: presence.subBottomToolbarStyles"
+    >
+      <div class="uc-slider">
         <lr-editor-slider ref="slider-el"></lr-editor-slider>
       </div>
-      <div class="controls-row">
+      <div class="uc-controls-row">
         <lr-btn-ui theme="secondary" set="onclick: on.cancelSlider;" l10n="@text:cancel"> </lr-btn-ui>
         <lr-btn-ui theme="primary" set="onclick: on.applySlider;" l10n="@text:apply"> </lr-btn-ui>
       </div>

@@ -24,7 +24,7 @@
   pointer-events: auto;
 }
 
-:where([lr-modal])[dialog-fallback] dialog[open] + .backdrop {
+:where([lr-modal])[dialog-fallback] dialog[open] + .uc-backdrop {
   position: fixed;
   top: 0px;
   left: 0px;
@@ -37,7 +37,7 @@
   pointer-events: auto;
 }
 
-:where([lr-modal])[strokes][dialog-fallback] dialog[open] + .backdrop {
+:where([lr-modal])[strokes][dialog-fallback] dialog[open] + .uc-backdrop {
   background-image: var(--modal-backdrop-background-image);
 }
 
@@ -86,7 +86,7 @@
 }
 
 @media only screen and (max-width: 430px), only screen and (max-height: 600px) {
-  :where([lr-modal]) > dialog > .content {
+  :where([lr-modal]) > dialog > .uc-content {
     height: var(--modal-max-content-height);
   }
 }

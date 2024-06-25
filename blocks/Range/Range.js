@@ -34,10 +34,10 @@ export class Range extends BaseComponent {
 }
 
 Range.template = /* HTML */ `
-  <div class="track-wrapper">
-    <div class="track"></div>
-    <div class="bar" set -style.width="cssLeft" -@active="barActive"></div>
-    <div class="slider" set -style.left="cssLeft"></div>
+  <div class="uc-track-wrapper">
+    <div class="uc-track"></div>
+    <div class="uc-bar" set -style.width="cssLeft" -@active="barActive"></div>
+    <div class="uc-slider" set -style.left="cssLeft"></div>
   </div>
 
   <input type="range" ref="range" set -@value="value" -oninput="onChange" />

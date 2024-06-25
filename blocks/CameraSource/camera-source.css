@@ -16,7 +16,7 @@ lr-camera-source {
   max-height: var(--modal-max-content-height);
 }
 
-lr-camera-source.initialized {
+lr-camera-source.uc-initialized {
   height: max-content;
 }
 
@@ -37,7 +37,7 @@ lr-camera-source video {
   border-radius: var(--uc-radius);
 }
 
-lr-camera-source .toolbar {
+lr-camera-source .uc-toolbar {
   position: absolute;
   bottom: 0;
   display: flex;
@@ -47,7 +47,7 @@ lr-camera-source .toolbar {
   background-color: var(--uc-background);
 }
 
-lr-camera-source .content {
+lr-camera-source .uc-content {
   display: flex;
   flex: 1;
   justify-content: center;
@@ -57,7 +57,7 @@ lr-camera-source .content {
   overflow: hidden;
 }
 
-lr-camera-source .message-box {
+lr-camera-source .uc-message-box {
   display: flex;
   flex-direction: column;
   grid-gap: 40px;
@@ -67,12 +67,12 @@ lr-camera-source .message-box {
   color: var(--uc-foreground);
 }
 
-lr-camera-source .message-box button {
+lr-camera-source .uc-message-box button {
   color: var(--uc-primary-foreground);
   background-color: var(--uc-primary);
 }
 
-lr-camera-source .shot-btn {
+lr-camera-source .uc-shot-btn {
   position: absolute;
   bottom: 20px;
   width: 58px;
@@ -87,21 +87,21 @@ lr-camera-source .shot-btn {
     transform var(--uc-transition);
 }
 
-lr-camera-source .shot-btn:hover {
+lr-camera-source .uc-shot-btn:hover {
   transform: scale(1.05);
   opacity: 1;
 }
 
-lr-camera-source .shot-btn:active {
+lr-camera-source .uc-shot-btn:active {
   transform: scale(1);
   opacity: 1;
 }
 
-lr-camera-source .shot-btn[disabled] {
+lr-camera-source .uc-shot-btn[disabled] {
   bottom: -80px;
 }
 
-lr-camera-source .shot-btn lr-icon svg {
+lr-camera-source .uc-shot-btn lr-icon svg {
   width: 20px;
   height: 20px;
 }

@@ -11,4 +11,4 @@ export class StartFrom extends ActivityBlock {
   }
 }
 
-StartFrom.template = /* HTML */ ` <div class="content"><slot></slot></div> `;
+StartFrom.template = /* HTML */ ` <div class="uc-content"><slot></slot></div> `;

@@ -47,7 +47,7 @@ FileUploaderRegular.template = /* HTML */ `
     <lr-start-from>
       <lr-drop-area with-icon clickable></lr-drop-area>
       <lr-source-list wrap></lr-source-list>
-      <button type="button" l10n="start-from-cancel" class="secondary-btn" set="onclick: *historyBack"></button>
+      <button type="button" l10n="start-from-cancel" class="uc-secondary-btn" set="onclick: *historyBack"></button>
       <lr-copyright></lr-copyright>
     </lr-start-from>
     <lr-upload-list></lr-upload-list>
