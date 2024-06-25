@@ -476,7 +476,7 @@ export class EditorImageCropper extends Block {
     let stop = this._handleImageLoading(src);
     image.addEventListener('load', stop, { once: true });
     image.addEventListener('error', stop, { once: true });
-    this._cancelPreload && this._cancelPreload();
+    this._cancelPreload?.();
     this._cancelPreload = cancel;
 
     return promise

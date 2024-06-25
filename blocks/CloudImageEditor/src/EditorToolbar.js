@@ -94,7 +94,7 @@ export class EditorToolbar extends Block {
         visible: 'tab-toggles--visible',
       },
       'on.cancel': () => {
-        this._cancelPreload && this._cancelPreload();
+        this._cancelPreload?.();
         this.$['*on.cancel']();
       },
       'on.apply': () => {
@@ -260,7 +260,7 @@ export class EditorToolbar extends Block {
     if (this.$['*imgContainerEl'] && this.$['*originalUrl']) {
       let width = this.$['*imgContainerEl'].offsetWidth;
       let src = await this.proxyUrl(viewerImageSrc(this.$['*originalUrl'], width, this.$['*editorTransformations']));
-      this._cancelPreload && this._cancelPreload();
+      this._cancelPreload?.();
       let { cancel } = batchPreloadImages([src]);
       this._cancelPreload = () => {
         cancel();

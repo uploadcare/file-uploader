@@ -72,7 +72,7 @@ export class EditorFilterControl extends EditorButtonControl {
           observer.unobserve(this);
         });
     } else {
-      this._cancelPreload && this._cancelPreload();
+      this._cancelPreload?.();
     }
   }
 
@@ -153,7 +153,7 @@ export class EditorFilterControl extends EditorButtonControl {
   destroyCallback() {
     super.destroyCallback();
     this._observer?.disconnect();
-    this._cancelPreload && this._cancelPreload();
+    this._cancelPreload?.();
   }
 }
 
