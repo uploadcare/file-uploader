@@ -260,18 +260,6 @@ export class UploaderBlock extends ActivityBlock {
       if (this.cfg.cropPreset) {
         this.setInitialCrop();
       }
-      let loadedItems = uploadCollection.findItems((entry) => {
-        return !!entry.getValue('fileInfo');
-      });
-      let errorItems = uploadCollection.findItems((entry) => {
-        return entry.getValue('errors').length > 0;
-      });
-      if (uploadCollection.size > 0 && errorItems.length === 0 && uploadCollection.size === loadedItems.length) {
-        this.emit(
-          EventType.COMMON_UPLOAD_SUCCESS,
-          /** @type {import('../types').OutputCollectionState<'success'>} */ (this.api.getOutputCollectionState()),
-        );
-      }
     }
     if (changeMap.errors) {
       for (const entryId of changeMap.errors) {
@@ -285,6 +273,18 @@ export class UploaderBlock extends ActivityBlock {
             { debounce: true },
           );
         }
+      }
+      const loadedItems = uploadCollection.findItems((entry) => {
+        return !!entry.getValue('fileInfo');
+      });
+      const errorItems = uploadCollection.findItems((entry) => {
+        return entry.getValue('errors').length > 0;
+      });
+      if (uploadCollection.size > 0 && errorItems.length === 0 && uploadCollection.size === loadedItems.length) {
+        this.emit(
+          EventType.COMMON_UPLOAD_SUCCESS,
+          /** @type {import('../types').OutputCollectionState<'success'>} */ (this.api.getOutputCollectionState()),
+        );
       }
     }
     if (changeMap.cdnUrl) {
