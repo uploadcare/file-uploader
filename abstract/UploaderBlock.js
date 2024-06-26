@@ -79,7 +79,7 @@ export class UploaderBlock extends ActivityBlock {
     return this.$['*publicApi'];
   }
 
-  get getAPI() {
+  getAPI() {
     return this.api;
   }
 

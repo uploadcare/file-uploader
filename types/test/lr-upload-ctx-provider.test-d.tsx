@@ -17,7 +17,7 @@ const instance = new UploadCtxProvider();
 instance.uploadCollection.size;
 instance.setOrAddState('fileId', 'uploading');
 
-const api = instance.api;
+const api = instance.getAPI();
 api.addFileFromUrl('https://example.com/image.png');
 
 instance.addEventListener('change', (e) => {
