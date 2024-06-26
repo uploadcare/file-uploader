@@ -32,7 +32,7 @@ export class UploaderPublicApi {
   }
 
   get l10n() {
-    return this._ctx.l10n;
+    return this._ctx.l10n.bind(this._ctx);
   }
 
   /**
