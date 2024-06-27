@@ -4,17 +4,7 @@ lr-file-item {
 
   display: block;
   overflow: hidden;
-  content-visibility: auto;
-  contain-intrinsic-size: auto var(--uc-file-item-height);
-
-  /* 
-  * This is workaround for chrome-based browsers.
-  *
-  * In some cases `content-visibility: auto` property works incorrectly together with IntersectionObserver API.
-  * It causes the browser to render the element with a height of 0px instead `var(--uc-file-item-height)` value.
-  * So we need to set 1px fallback to force the browser to render the element with the non-zero height.
-  */
-  min-height: var(--uc-file-item-height, 1px);
+  min-height: var(--uc-file-item-height);
 }
 
 lr-file-item:last-of-type {
@@ -60,6 +50,7 @@ lr-file-item .thumb {
 }
 
 lr-file-item .file-name-wrapper {
+  text-align: left;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
