@@ -210,7 +210,7 @@ export class Block extends BaseComponent {
   /** @protected */
   destroyCallback() {
     let blocksRegistry = this.blocksRegistry;
-    blocksRegistry.delete(this);
+    blocksRegistry?.delete(this);
 
     this.localeManager?.destroyL10nBindings(this);
     this.l10nProcessorSubs = new Map();
@@ -219,7 +219,7 @@ export class Block extends BaseComponent {
     // TODO: this should be done inside symbiote
     Data.deleteCtx(this);
 
-    if (blocksRegistry.size === 0) {
+    if (blocksRegistry?.size === 0) {
       setTimeout(() => {
         // Destroy global context after all blocks are destroyed and all callbacks are run
         this.destroyCtxCallback();
