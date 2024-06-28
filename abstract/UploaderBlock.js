@@ -430,7 +430,7 @@ export class UploaderBlock extends ActivityBlock {
       let errorItems = uploadCollection.findItems((entry) => {
         return entry.getValue('errors').length > 0;
       });
-      if (errorItems.length === 0 && uploadCollection.size === loadedItems.length) {
+      if (uploadCollection.size > 0 && errorItems.length === 0 && uploadCollection.size === loadedItems.length) {
         this.emit(
           EventType.COMMON_UPLOAD_SUCCESS,
           /** @type {import('../types').OutputCollectionState<'success'>} */ (this.getOutputCollectionState()),

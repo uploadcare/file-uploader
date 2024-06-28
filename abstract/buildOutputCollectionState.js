@@ -75,7 +75,11 @@ export function buildOutputCollectionState(uploaderBlock) {
     },
 
     isSuccess: () => {
-      return state.errors.length === 0 && state.successEntries.length === state.allEntries.length;
+      return (
+        state.allEntries.length > 0 &&
+        state.errors.length === 0 &&
+        state.successEntries.length === state.allEntries.length
+      );
     },
 
     isUploading: () => {
