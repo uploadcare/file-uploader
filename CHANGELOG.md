@@ -1,3 +1,9 @@
+## [0.46.1](https://github.com/uploadcare/blocks/compare/v0.46.0...v0.46.1) (2024-06-28)
+
+### Bug Fixes
+
+- **events:** Added status after deleting files in idle ([#684](https://github.com/uploadcare/blocks/issues/684)) ([0e07ee3](https://github.com/uploadcare/blocks/commit/0e07ee3d82a326e56cab343dafdf7472f2d73216))
+
 # [0.46.0](https://github.com/uploadcare/blocks/compare/v0.45.0...v0.46.0) (2024-06-24)
 
 ### Features
