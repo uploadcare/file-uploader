@@ -1,3 +1,9 @@
+## [0.46.3](https://github.com/uploadcare/blocks/compare/v0.46.2...v0.46.3) (2024-07-01)
+
+### Bug Fixes
+
+- **icons:** Added currentColor to icon edit-file ([#689](https://github.com/uploadcare/blocks/issues/689)) ([617d3cd](https://github.com/uploadcare/blocks/commit/617d3cd8e0cde8ecadd6024ce321b7ba507009f1))
+
 ## [0.46.2](https://github.com/uploadcare/blocks/compare/v0.46.1...v0.46.2) (2024-07-01)
 
 ### Bug Fixes
