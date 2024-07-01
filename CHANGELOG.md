@@ -1,3 +1,9 @@
+## [0.46.2](https://github.com/uploadcare/blocks/compare/v0.46.1...v0.46.2) (2024-07-01)
+
+### Bug Fixes
+
+- **icons:** added icon edit file ([#687](https://github.com/uploadcare/blocks/issues/687)) ([2a869ab](https://github.com/uploadcare/blocks/commit/2a869abfdbe571aff52ccc5687a8c66e0d829cb5))
+
 ## [0.46.1](https://github.com/uploadcare/blocks/compare/v0.46.0...v0.46.1) (2024-06-28)
 
 ### Bug Fixes
