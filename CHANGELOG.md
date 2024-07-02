@@ -2,7 +2,7 @@
 
 ### BEAKING CHANGES
 
-- extract public api to the composition class ([#676](https://github.com/uploadcare/blocks/issues/676)) ([ea29dd2](https://github.com/uploadcare/blocks/commit/ea29dd2ebfc5b5897c7db8f6dbda608604eea86c)).
+- Extract public api to the composition class at the Uploader API instance that you can get using `getAPI()` method of the `lr-upload-ctx-provider` block. ([#676](https://github.com/uploadcare/blocks/issues/676)) ([ea29dd2](https://github.com/uploadcare/blocks/commit/ea29dd2ebfc5b5897c7db8f6dbda608604eea86c)).
 
 See the [migration guide](https://uploadcare.com/docs/file-uploader/migration-to-0.47.0/) for details.
 
