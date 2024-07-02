@@ -1,3 +1,9 @@
+## [0.48.1](https://github.com/uploadcare/blocks/compare/v0.48.0...v0.48.1) (2024-07-02)
+
+### Bug Fixes
+
+- **a11y:** Added a type for the button ([#695](https://github.com/uploadcare/blocks/issues/695)) ([af1d6b6](https://github.com/uploadcare/blocks/commit/af1d6b63112cc383bcad52d099d84460da937ffa))
+
 ## [0.48.0](https://github.com/uploadcare/blocks/compare/v0.47.0...v0.48.0) (2024-07-02)
 
 # [0.47.0](https://github.com/uploadcare/blocks/compare/v0.46.3...v0.47.0) (2024-07-02)
