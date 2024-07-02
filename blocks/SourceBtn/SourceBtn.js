@@ -134,7 +134,7 @@ export class SourceBtn extends UploaderBlock {
 }
 
 SourceBtn.template = /* HTML */ `
-  <button>
+  <button type="button">
     <lr-icon set="@name: iconName"></lr-icon>
     <div class="txt" l10n="src-type"></div>
   </button>
