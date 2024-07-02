@@ -75,13 +75,13 @@ import { OutputFileEntry, FuncCollectionValidator, FuncFileValidator } from '../
   if (ref.current) {
     const config = ref.current;
 
-    const maxSize: FuncFileValidator = (outputEntry, block) => ({
-      message: block.l10n('images-only-accepted'),
+    const maxSize: FuncFileValidator = (outputEntry, api) => ({
+      message: api.l10n('images-only-accepted'),
       payload: { entry: outputEntry },
     })
 
-    const maxCollection: FuncCollectionValidator = (collection, block) => ({
-      message: block.l10n('some-files-were-not-uploaded'),
+    const maxCollection: FuncCollectionValidator = (collection, api) => ({
+      message: api.l10n('some-files-were-not-uploaded'),
     })
 
     config.fileValidators = [maxSize]

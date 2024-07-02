@@ -14,10 +14,11 @@ import { useRef } from 'react';
 import { UploadcareFile, UploadcareGroup } from '@uploadcare/upload-client';
 
 const instance = new UploadCtxProvider();
-
-instance.addFileFromUrl('https://example.com/image.png');
 instance.uploadCollection.size;
 instance.setOrAddState('fileId', 'uploading');
+
+const api = instance.getAPI();
+api.addFileFromUrl('https://example.com/image.png');
 
 instance.addEventListener('change', (e) => {
   expectType<EventMap['change']>(e);
@@ -42,7 +43,7 @@ instance.addEventListener('change', (e) => {
     expectType<false>(state.isFailed);
     expectType<false>(state.isUploading);
     expectType<[]>(state.errors);
-    expectType<'success'>(state.allEntries[0].status)
+    expectType<'success'>(state.allEntries[0].status);
   } else if (state.isFailed) {
     expectType<'failed'>(state.status);
     expectType<false>(state.isSuccess);
@@ -61,7 +62,7 @@ instance.addEventListener('change', (e) => {
     expectType<false>(state.isFailed);
     expectType<false>(state.isUploading);
     expectType<[]>(state.errors);
-    expectType<'success' | 'idle'>(state.allEntries[0].status)
+    expectType<'success' | 'idle'>(state.allEntries[0].status);
   }
 });
 
@@ -204,7 +205,9 @@ instance.addEventListener('modal-open', (e) => {
 
 instance.addEventListener('activity-change', (e) => {
   const payload = e.detail;
-  expectType<(typeof ActivityBlock)['activities'][keyof (typeof ActivityBlock)['activities']] | null>(payload.activity);
+  expectType<(typeof ActivityBlock)['activities'][keyof (typeof ActivityBlock)['activities']] | null | (string & {})>(
+    payload.activity,
+  );
 });
 
 () => {

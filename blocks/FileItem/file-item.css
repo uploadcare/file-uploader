@@ -3,10 +3,8 @@ lr-file-item {
   --uc-file-item-height: calc(var(--uc-preview-size) + var(--uc-padding) * 2 + var(--uc-file-item-gap));
 
   display: block;
-  content-visibility: auto;
-  height: var(--uc-file-item-height);
-  contain-intrinsic-size: auto var(--uc-file-item-height);
   overflow: hidden;
+  min-height: var(--uc-file-item-height);
 }
 
 lr-file-item:last-of-type {
@@ -52,6 +50,7 @@ lr-file-item .thumb {
 }
 
 lr-file-item .file-name-wrapper {
+  text-align: left;
   display: flex;
   flex-direction: column;
   align-items: flex-start;

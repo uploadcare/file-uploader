@@ -39,7 +39,7 @@ export class SourceBtn extends UploaderBlock {
     this.registerType({
       type: UploaderBlock.sourceTypes.LOCAL,
       activate: () => {
-        this.openSystemDialog();
+        this.api.openSystemDialog();
         return false;
       },
     });
@@ -54,7 +54,7 @@ export class SourceBtn extends UploaderBlock {
       activate: () => {
         const supportsCapture = 'capture' in document.createElement('input');
         if (supportsCapture) {
-          this.openSystemDialog({ captureCamera: true });
+          this.api.openSystemDialog({ captureCamera: true });
         }
         return !supportsCapture;
       },

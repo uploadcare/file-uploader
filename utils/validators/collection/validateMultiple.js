@@ -1,13 +1,13 @@
 //@ts-check
 
 /** @type {import('../../../abstract/ValidationManager.js').FuncCollectionValidator} */
-export const validateMultiple = (collection, block) => {
+export const validateMultiple = (collection, api) => {
   const total = collection.totalCount;
-  const multipleMin = block.cfg.multiple ? block.cfg.multipleMin : 0;
-  const multipleMax = block.cfg.multiple ? block.cfg.multipleMax : 1;
+  const multipleMin = api.cfg.multiple ? api.cfg.multipleMin : 0;
+  const multipleMax = api.cfg.multiple ? api.cfg.multipleMax : 1;
 
   if (multipleMin && total < multipleMin) {
-    const message = block.l10n('files-count-limit-error-too-few', {
+    const message = api.l10n('files-count-limit-error-too-few', {
       min: multipleMin,
       max: multipleMax,
       total,
@@ -25,7 +25,7 @@ export const validateMultiple = (collection, block) => {
   }
 
   if (multipleMax && total > multipleMax) {
-    const message = block.l10n('files-count-limit-error-too-many', {
+    const message = api.l10n('files-count-limit-error-too-many', {
       min: multipleMin,
       max: multipleMax,
       total,
