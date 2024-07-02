@@ -83,7 +83,7 @@ export class LrBtnUi extends Block {
 LrBtnUi.bindAttributes({ text: 'text', icon: 'icon', reverse: 'reverse', theme: 'theme' });
 
 LrBtnUi.template = /* HTML */ `
-  <button set="@role:aria-role; @aria-controls: aria-controls">
+  <button type="button" set="@role:aria-role; @aria-controls: aria-controls">
     <lr-icon set="className: iconCss; @name: icon; @hidden: !icon"></lr-icon>
     <div class="text">{{text}}</div>
   </button>
