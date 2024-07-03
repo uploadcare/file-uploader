@@ -16,7 +16,7 @@ lr-range input {
   opacity: 0;
 }
 
-lr-range .track-wrapper {
+lr-range .uc-track-wrapper {
   position: absolute;
   right: 10px;
   left: 10px;
@@ -28,7 +28,7 @@ lr-range .track-wrapper {
   pointer-events: none;
 }
 
-lr-range .track {
+lr-range .uc-track {
   position: absolute;
   right: 0;
   left: 0;
@@ -41,7 +41,7 @@ lr-range .track {
   opacity: 0.5;
 }
 
-lr-range .slider {
+lr-range .uc-slider {
   position: absolute;
   width: 16px;
   height: 16px;
@@ -50,7 +50,7 @@ lr-range .slider {
   transform: translateX(-50%);
 }
 
-lr-range .bar {
+lr-range .uc-bar {
   position: absolute;
   left: 0;
   height: 100%;
@@ -58,7 +58,7 @@ lr-range .bar {
   border-radius: 2px;
 }
 
-lr-range .caption {
+lr-range .uc-caption {
   position: absolute;
   display: inline-flex;
   justify-content: center;

@@ -38,36 +38,36 @@
   transition: background-color var(--uc-transition);
 }
 
-:where([lr-wgt-common]) button.primary-btn {
+:where([lr-wgt-common]) button.uc-primary-btn {
   color: var(--uc-primary-foreground);
   background-color: var(--uc-primary);
 }
 
-:where([lr-wgt-common]) button.primary-btn:hover {
+:where([lr-wgt-common]) button.uc-primary-btn:hover {
   background-color: var(--uc-primary-hover);
 }
 
-:where([lr-wgt-common]) button.secondary-btn {
+:where([lr-wgt-common]) button.uc-secondary-btn {
   color: var(--uc-secondary-foreground);
   background-color: var(--uc-secondary);
 }
 
-:where([lr-wgt-common]) button.secondary-btn:hover {
+:where([lr-wgt-common]) button.uc-secondary-btn:hover {
   background-color: var(--uc-secondary-hover);
 }
 
-:where([lr-wgt-common]) button.mini-btn {
+:where([lr-wgt-common]) button.uc-mini-btn {
   height: var(--uc-button-size);
   padding: 0;
   background-color: transparent;
   color: var(--uc-secondary-foreground);
 }
 
-:where([lr-wgt-common]) button.mini-btn:hover {
+:where([lr-wgt-common]) button.uc-mini-btn:hover {
   background-color: var(--uc-secondary);
 }
 
-:where([lr-wgt-common]) :is(button[disabled], button.primary-btn[disabled], button.secondary-btn[disabled]) {
+:where([lr-wgt-common]) :is(button[disabled], button.uc-primary-btn[disabled], button.uc-secondary-btn[disabled]) {
   opacity: 0.5;
   pointer-events: none;
 }

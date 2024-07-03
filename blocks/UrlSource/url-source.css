@@ -11,7 +11,7 @@ lr-url-source {
   );
 }
 
-lr-url-source > .content {
+lr-url-source > .uc-content {
   display: grid;
   grid-gap: 4px;
   grid-template-columns: 1fr min-content;
@@ -19,6 +19,6 @@ lr-url-source > .content {
   padding-top: 0;
 }
 
-lr-url-source .url-input {
+lr-url-source .uc-url-input {
   display: flex;
 }

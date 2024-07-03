@@ -10,9 +10,9 @@ import { Block } from '../../../../../abstract/Block.js';
 
 /** @type {Style} */
 const DEFAULT_STYLE = {
-  transition: 'transition',
-  visible: 'visible',
-  hidden: 'hidden',
+  transition: 'uc-transition',
+  visible: 'uc-visible',
+  hidden: 'uc-hidden',
 };
 
 export class PresenceToggle extends Block {
@@ -56,7 +56,7 @@ export class PresenceToggle extends Block {
   initCallback() {
     super.initCallback();
 
-    this.classList.toggle('initial', true);
+    this.classList.toggle('uc-initial', true);
 
     if (!this._externalTransitions) {
       this.classList.add(DEFAULT_STYLE.transition);
@@ -64,7 +64,7 @@ export class PresenceToggle extends Block {
 
     this._handleVisible();
     setTimeout(() => {
-      this.classList.toggle('initial', false);
+      this.classList.toggle('uc-initial', false);
     }, 0);
   }
 }

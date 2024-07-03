@@ -25,8 +25,8 @@ export class EditorButtonControl extends Block {
 
     this.sub('active', (active) => {
       this.className = classNames({
-        active: active,
-        not_active: !active,
+        'uc-active': active,
+        'uc-not_active': !active,
       });
     });
 
@@ -39,6 +39,6 @@ export class EditorButtonControl extends Block {
 EditorButtonControl.template = /* HTML */ `
   <button type="button" role="option">
     <lr-icon set="@name: icon;"></lr-icon>
-    <div class="title" ref="title-el">{{title}}</div>
+    <div class="uc-title" ref="title-el">{{title}}</div>
   </button>
 `;

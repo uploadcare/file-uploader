@@ -29,11 +29,11 @@ export class LrBtnUi extends Block {
   }
 
   _iconCss() {
-    return classNames('icon', {
-      icon_left: !this._iconReversed,
-      icon_right: this._iconReversed,
-      icon_hidden: this._iconHidden,
-      icon_single: this._iconSingle,
+    return classNames('uc-icon', {
+      'uc-icon_left': !this._iconReversed,
+      'uc-icon_right': this._iconReversed,
+      'uc-icon_hidden': this._iconHidden,
+      'uc-icon_single': this._iconSingle,
     });
   }
 
@@ -48,7 +48,7 @@ export class LrBtnUi extends Block {
 
     this.sub('theme', (theme) => {
       if (theme !== 'custom') {
-        this.className = theme;
+        this.className = `uc-${theme}`;
       }
     });
 
@@ -85,6 +85,6 @@ LrBtnUi.bindAttributes({ text: 'text', icon: 'icon', reverse: 'reverse', theme: 
 LrBtnUi.template = /* HTML */ `
   <button type="button" set="@role:aria-role; @aria-controls: aria-controls">
     <lr-icon set="className: iconCss; @name: icon; @hidden: !icon"></lr-icon>
-    <div class="text">{{text}}</div>
+    <div class="uc-text">{{text}}</div>
   </button>
 `;

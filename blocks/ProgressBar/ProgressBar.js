@@ -30,9 +30,9 @@ export class ProgressBar extends Block {
     });
 
     this.defineAccessor('visible', (visible) => {
-      this.ref.line.classList.toggle('progress--hidden', !visible);
+      this.ref.line.classList.toggle('uc-progress--hidden', !visible);
     });
   }
 }
 
-ProgressBar.template = /* HTML */ ` <div ref="line" class="progress"></div> `;
+ProgressBar.template = /* HTML */ ` <div ref="line" class="uc-progress"></div> `;

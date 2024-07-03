@@ -38,22 +38,22 @@ export class UrlSource extends UploaderBlock {
 
 UrlSource.template = /* HTML */ `
   <lr-activity-header>
-    <button type="button" class="mini-btn" set="onclick: *historyBack">
+    <button type="button" class="uc-mini-btn" set="onclick: *historyBack">
       <lr-icon name="back"></lr-icon>
     </button>
     <div>
       <lr-icon name="url"></lr-icon>
       <span l10n="caption-from-url"></span>
     </div>
-    <button type="button" class="mini-btn close-btn" set="onclick: *closeModal">
+    <button type="button" class="uc-mini-btn uc-close-btn" set="onclick: *closeModal">
       <lr-icon name="close"></lr-icon>
     </button>
   </lr-activity-header>
-  <form class="content">
-    <input placeholder="https://" class="url-input" type="text" ref="input" set="oninput: onInput" />
+  <form class="uc-content">
+    <input placeholder="https://" class="uc-url-input" type="text" ref="input" set="oninput: onInput" />
     <button
       type="submit"
-      class="url-upload-btn primary-btn"
+      class="uc-url-upload-btn uc-primary-btn"
       set="onclick: onUpload; @disabled: importDisabled"
       l10n="upload-url"
     ></button>

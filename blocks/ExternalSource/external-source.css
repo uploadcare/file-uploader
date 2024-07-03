@@ -16,7 +16,7 @@ lr-external-source {
   max-height: var(--modal-max-content-height);
 }
 
-lr-external-source > .content {
+lr-external-source > .uc-content {
   position: relative;
   display: grid;
   flex: 1;
@@ -37,11 +37,11 @@ lr-external-source iframe {
   border: none;
 }
 
-lr-external-source .iframe-wrapper {
+lr-external-source .uc-iframe-wrapper {
   overflow: hidden;
 }
 
-lr-external-source .toolbar {
+lr-external-source .uc-toolbar {
   display: grid;
   grid-gap: var(--uc-padding);
   grid-template-columns: max-content 1fr max-content max-content;
@@ -51,11 +51,11 @@ lr-external-source .toolbar {
   border-top: 1px solid var(--uc-border);
 }
 
-lr-external-source .back-btn {
+lr-external-source .uc-back-btn {
   padding-left: 0;
 }
 
-lr-external-source .selected-counter {
+lr-external-source .uc-selected-counter {
   display: flex;
   grid-gap: var(--uc-padding);
   align-items: center;

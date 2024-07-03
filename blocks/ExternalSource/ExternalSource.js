@@ -240,26 +240,26 @@ export class ExternalSource extends UploaderBlock {
 
 ExternalSource.template = /* HTML */ `
   <lr-activity-header>
-    <button type="button" class="mini-btn" set="onclick: *historyBack">
+    <button type="button" class="uc-mini-btn" set="onclick: *historyBack">
       <lr-icon name="back"></lr-icon>
     </button>
     <div>
       <lr-icon set="@name: activityIcon"></lr-icon>
       <span>{{activityCaption}}</span>
     </div>
-    <button type="button" class="mini-btn close-btn" set="onclick: *historyBack">
+    <button type="button" class="uc-mini-btn uc-close-btn" set="onclick: *historyBack">
       <lr-icon name="close"></lr-icon>
     </button>
   </lr-activity-header>
-  <div class="content">
-    <div ref="iframeWrapper" class="iframe-wrapper"></div>
-    <div class="toolbar">
-      <button type="button" class="cancel-btn secondary-btn" set="onclick: onCancel" l10n="cancel"></button>
+  <div class="uc-content">
+    <div ref="iframeWrapper" class="uc-iframe-wrapper"></div>
+    <div class="uc-toolbar">
+      <button type="button" class="uc-cancel-btn uc-secondary-btn" set="onclick: onCancel" l10n="cancel"></button>
       <div></div>
-      <div set="@hidden: !multiple" class="selected-counter"><span l10n="selected-count"></span>{{counter}}</div>
+      <div set="@hidden: !multiple" class="uc-selected-counter"><span l10n="selected-count"></span>{{counter}}</div>
       <button
         type="button"
-        class="done-btn primary-btn"
+        class="uc-done-btn uc-primary-btn"
         set="onclick: onDone; @disabled: !counter"
         l10n="done"
       ></button>

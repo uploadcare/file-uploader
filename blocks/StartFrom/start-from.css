@@ -3,7 +3,7 @@ lr-start-from {
   overflow-y: auto;
 }
 
-lr-start-from .content {
+lr-start-from .uc-content {
   display: grid;
   grid-auto-flow: row;
   gap: calc(var(--uc-padding) * 2);

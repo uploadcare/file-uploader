@@ -43,7 +43,7 @@ SimpleBtn.template = /* HTML */ `
       <lr-icon name="upload"></lr-icon>
       <span l10n="button-text"></span>
       <slot></slot>
-      <div class="visual-drop-area" l10n="drop-files-here"></div>
+      <div class="uc-visual-drop-area" l10n="drop-files-here"></div>
     </button>
   </lr-drop-area>
 `;

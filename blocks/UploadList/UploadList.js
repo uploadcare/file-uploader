@@ -195,39 +195,39 @@ export class UploadList extends UploaderBlock {
 
 UploadList.template = /* HTML */ `
   <lr-activity-header>
-    <span class="header-text">{{headerText}}</span>
-    <button type="button" class="mini-btn close-btn" set="onclick: *closeModal">
+    <span class="uc-header-text">{{headerText}}</span>
+    <button type="button" class="uc-mini-btn uc-close-btn" set="onclick: *closeModal">
       <lr-icon name="close"></lr-icon>
     </button>
   </lr-activity-header>
 
-  <div class="no-files" set="@hidden: hasFiles">
+  <div class="uc-no-files" set="@hidden: hasFiles">
     <slot name="empty"><span l10n="no-files"></span></slot>
   </div>
 
-  <div class="files" repeat="*uploadList" repeat-item-tag="lr-file-item"></div>
+  <div class="uc-files" repeat="*uploadList" repeat-item-tag="lr-file-item"></div>
 
-  <div class="common-error" set="@hidden: !commonErrorMessage; textContent: commonErrorMessage;"></div>
+  <div class="uc-common-error" set="@hidden: !commonErrorMessage; textContent: commonErrorMessage;"></div>
 
-  <div class="toolbar">
-    <button type="button" class="cancel-btn secondary-btn" set="onclick: onCancel;" l10n="clear"></button>
-    <div class="toolbar-spacer"></div>
+  <div class="uc-toolbar">
+    <button type="button" class="uc-cancel-btn uc-secondary-btn" set="onclick: onCancel;" l10n="clear"></button>
+    <div class="uc-toolbar-spacer"></div>
     <button
       type="button"
-      class="add-more-btn secondary-btn"
+      class="uc-add-more-btn uc-secondary-btn"
       set="onclick: onAdd; @disabled: !addMoreBtnEnabled; @hidden: !addMoreBtnVisible"
     >
       <lr-icon name="add"></lr-icon><span l10n="add-more"></span>
     </button>
     <button
       type="button"
-      class="upload-btn primary-btn"
+      class="uc-upload-btn uc-primary-btn"
       set="@hidden: !uploadBtnVisible; onclick: onUpload;"
       l10n="upload"
     ></button>
     <button
       type="button"
-      class="done-btn primary-btn"
+      class="uc-done-btn uc-primary-btn"
       set="@hidden: !doneBtnVisible; onclick: onDone;  @disabled: !doneBtnEnabled"
       l10n="done"
     ></button>

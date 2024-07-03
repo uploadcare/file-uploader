@@ -62,7 +62,7 @@ FileUploaderInline.template = /* HTML */ ` <lr-start-from>
     <button
       type="button"
       l10n="start-from-cancel"
-      class="cancel-btn secondary-btn"
+      class="uc-cancel-btn uc-secondary-btn"
       set="onclick: cancel; @hidden: !couldCancel"
     ></button>
     <lr-copyright></lr-copyright>

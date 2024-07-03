@@ -167,10 +167,10 @@ export class SliderUi extends Block {
   }
 }
 SliderUi.template = /* HTML */ `
-  <div class="steps" ref="steps-el"></div>
-  <div ref="thumb-el" class="thumb"></div>
+  <div class="uc-steps" ref="steps-el"></div>
+  <div ref="thumb-el" class="uc-thumb"></div>
   <input
-    class="input"
+    class="uc-input"
     type="range"
     ref="input-el"
     set="oninput: on.sliderInput; onchange: on.sliderChange; @min: min; @max: max; @value: defaultValue;"

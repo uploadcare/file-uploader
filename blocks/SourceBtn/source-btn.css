@@ -33,7 +33,7 @@ lr-source-btn lr-icon {
   opacity: 0.8;
 }
 
-lr-source-btn .txt {
+lr-source-btn .uc-txt {
   display: flex;
   align-items: center;
   box-sizing: border-box;
