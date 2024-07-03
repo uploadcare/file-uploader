@@ -1,3 +1,9 @@
+# [0.49.0](https://github.com/uploadcare/blocks/compare/v0.48.1...v0.49.0) (2024-07-03)
+
+### Features
+
+- **styles:** added prefix uc- ([#683](https://github.com/uploadcare/blocks/issues/683)) ([a3929d5](https://github.com/uploadcare/blocks/commit/a3929d599e23e221b2fe88b2d2489a35c8ee7899))
+
 ## [0.48.1](https://github.com/uploadcare/blocks/compare/v0.48.0...v0.48.1) (2024-07-02)
 
 ### Bug Fixes
