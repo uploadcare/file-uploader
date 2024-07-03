@@ -1,8 +1,10 @@
 # [0.49.0](https://github.com/uploadcare/blocks/compare/v0.48.1...v0.49.0) (2024-07-03)
 
-### Features
+### BEAKING CHANGES
 
-- **styles:** added prefix uc- ([#683](https://github.com/uploadcare/blocks/issues/683)) ([a3929d5](https://github.com/uploadcare/blocks/commit/a3929d599e23e221b2fe88b2d2489a35c8ee7899))
+- **styles:** Added the `uc-` prefix to all class selectors ([#683](https://github.com/uploadcare/blocks/issues/683)) ([a3929d5](https://github.com/uploadcare/blocks/commit/a3929d599e23e221b2fe88b2d2489a35c8ee7899)).
+
+See the [migration guide](https://uploadcare.com/docs/file-uploader/migration-to-0.49.0/) for details.
 
 ## [0.48.1](https://github.com/uploadcare/blocks/compare/v0.48.0...v0.48.1) (2024-07-02)
 
