@@ -1,4 +1,4 @@
-lr-file-item {
+uc-file-item {
   --uc-file-item-gap: 4px;
   --uc-file-item-height: calc(var(--uc-preview-size) + var(--uc-padding) * 2 + var(--uc-file-item-gap));
 
@@ -7,11 +7,11 @@ lr-file-item {
   min-height: var(--uc-file-item-height);
 }
 
-lr-file-item:last-of-type {
+uc-file-item:last-of-type {
   --uc-file-item-gap: 0;
 }
 
-lr-file-item > .uc-inner {
+uc-file-item > .uc-inner {
   position: relative;
   display: grid;
   grid-template-columns: var(--uc-preview-size) 1fr max-content;
@@ -26,19 +26,19 @@ lr-file-item > .uc-inner {
   transition: background-color var(--uc-transition);
 }
 
-lr-file-item > .uc-inner[focused] {
+uc-file-item > .uc-inner[focused] {
   background-color: transparent;
 }
 
-lr-file-item > .uc-inner[uploading] .uc-edit-btn {
+uc-file-item > .uc-inner[uploading] .uc-edit-btn {
   display: none;
 }
 
-lr-file-item > :where(.uc-inner[failed], .uc-inner[limit-overflow]) {
+uc-file-item > :where(.uc-inner[failed], .uc-inner[limit-overflow]) {
   background-color: var(--uc-destructive);
 }
 
-lr-file-item .uc-thumb {
+uc-file-item .uc-thumb {
   position: relative;
   display: inline-flex;
   width: var(--uc-preview-size);
@@ -49,7 +49,7 @@ lr-file-item .uc-thumb {
   border-radius: var(--uc-radius);
 }
 
-lr-file-item .uc-file-name-wrapper {
+uc-file-item .uc-file-name-wrapper {
   text-align: left;
   display: flex;
   flex-direction: column;
@@ -62,33 +62,33 @@ lr-file-item .uc-file-name-wrapper {
   color: var(--uc-muted-foreground);
 }
 
-lr-file-item .uc-file-name {
+uc-file-item .uc-file-name {
   max-width: 100%;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
 
-lr-file-item .uc-file-error {
+uc-file-item .uc-file-error {
   display: none;
   color: var(--uc-destructive-foreground);
   font-size: 0.85em;
 }
 
-lr-file-item button.uc-remove-btn,
-lr-file-item button.uc-edit-btn {
+uc-file-item button.uc-remove-btn,
+uc-file-item button.uc-edit-btn {
   color: var(--uc-muted-foreground);
 }
 
-lr-file-item button svg {
+uc-file-item button svg {
   pointer-events: none;
 }
 
-lr-file-item button.uc-upload-btn {
+uc-file-item button.uc-upload-btn {
   display: none;
 }
 
-lr-file-item .uc-badge {
+uc-file-item .uc-badge {
   position: absolute;
   bottom: 2px;
   right: 2px;
@@ -107,32 +107,32 @@ lr-file-item .uc-badge {
   align-items: center;
 }
 
-lr-file-item > .uc-inner:where([failed], [limit-overflow], [finished]) .uc-badge {
+uc-file-item > .uc-inner:where([failed], [limit-overflow], [finished]) .uc-badge {
   transform: scale(1);
   opacity: 1;
 }
 
-lr-file-item > .uc-inner:where([failed], [limit-overflow]) .uc-badge {
+uc-file-item > .uc-inner:where([failed], [limit-overflow]) .uc-badge {
   background-color: var(--uc-destructive-foreground);
 }
 
-lr-file-item > .uc-inner:where([failed], [limit-overflow]) .uc-file-error {
+uc-file-item > .uc-inner:where([failed], [limit-overflow]) .uc-file-error {
   display: block;
 }
 
-lr-file-item .uc-badge lr-icon,
-lr-file-item .uc-badge lr-icon svg {
+uc-file-item .uc-badge uc-icon,
+uc-file-item .uc-badge uc-icon svg {
   width: 100%;
   height: 100%;
 }
 
-lr-file-item .uc-progress-bar {
+uc-file-item .uc-progress-bar {
   opacity: 0.5;
   top: calc(100% - 2px);
   height: 2px;
 }
 
-lr-file-item .uc-file-actions {
+uc-file-item .uc-file-actions {
   display: flex;
   gap: 2px;
   align-items: center;

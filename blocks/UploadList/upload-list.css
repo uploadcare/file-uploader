@@ -1,4 +1,4 @@
-lr-upload-list {
+uc-upload-list {
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -8,7 +8,7 @@ lr-upload-list {
   transition: opacity var(--uc-transition);
 }
 
-[lr-modal] lr-upload-list {
+[uc-modal] uc-upload-list {
   width: min(
     calc(var(--uc-dialog-width) - var(--uc-padding) * 2),
     calc(var(--uc-dialog-max-width) - var(--uc-padding) * 2),
@@ -18,12 +18,12 @@ lr-upload-list {
   max-height: var(--modal-max-content-height);
 }
 
-lr-upload-list .uc-no-files {
+uc-upload-list .uc-no-files {
   height: 32px;
   padding: 20px;
 }
 
-lr-upload-list .uc-files {
+uc-upload-list .uc-files {
   display: block;
   flex: 1;
   min-height: 32px;
@@ -31,7 +31,7 @@ lr-upload-list .uc-files {
   overflow: auto;
 }
 
-lr-upload-list .uc-toolbar {
+uc-upload-list .uc-toolbar {
   display: flex;
   gap: 4px;
   justify-content: space-between;
@@ -39,11 +39,11 @@ lr-upload-list .uc-toolbar {
   background-color: var(--uc-background);
 }
 
-lr-upload-list .uc-toolbar-spacer {
+uc-upload-list .uc-toolbar-spacer {
   flex: 1;
 }
 
-lr-upload-list lr-drop-area {
+uc-upload-list uc-drop-area {
   position: absolute;
   top: 0;
   left: 0;
@@ -53,11 +53,11 @@ lr-upload-list lr-drop-area {
   border-radius: var(--uc-radius);
 }
 
-lr-upload-list lr-activity-header > .uc-header-text {
+uc-upload-list uc-activity-header > .uc-header-text {
   padding: 0 var(--uc-padding);
 }
 
-lr-upload-list .uc-common-error {
+uc-upload-list .uc-common-error {
   border-radius: var(--uc-radius);
   color: var(--uc-destructive-foreground);
   background-color: var(--uc-destructive);
@@ -69,6 +69,6 @@ lr-upload-list .uc-common-error {
   font-size: 0.925em;
 }
 
-lr-upload-list .uc-add-more-btn lr-icon {
+uc-upload-list .uc-add-more-btn uc-icon {
   display: none;
 }

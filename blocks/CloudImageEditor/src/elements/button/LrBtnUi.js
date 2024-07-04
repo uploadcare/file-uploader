@@ -84,7 +84,7 @@ LrBtnUi.bindAttributes({ text: 'text', icon: 'icon', reverse: 'reverse', theme: 
 
 LrBtnUi.template = /* HTML */ `
   <button type="button" set="@role:aria-role; @aria-controls: aria-controls">
-    <lr-icon set="className: iconCss; @name: icon; @hidden: !icon"></lr-icon>
+    <uc-icon set="className: iconCss; @name: icon; @hidden: !icon"></uc-icon>
     <div class="uc-text">{{text}}</div>
   </button>
 `;

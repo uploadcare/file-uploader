@@ -3,7 +3,7 @@ import { ActivityBlock } from '../../../abstract/ActivityBlock.js';
 import { SolutionBlock } from '../../../abstract/SolutionBlock.js';
 
 export class FileUploaderInline extends SolutionBlock {
-  static styleAttrs = [...super.styleAttrs, 'lr-file-uploader-inline'];
+  static styleAttrs = [...super.styleAttrs, 'uc-file-uploader-inline'];
 
   constructor() {
     super();
@@ -56,20 +56,20 @@ export class FileUploaderInline extends SolutionBlock {
   }
 }
 
-FileUploaderInline.template = /* HTML */ ` <lr-start-from>
-    <lr-drop-area with-icon clickable></lr-drop-area>
-    <lr-source-list wrap></lr-source-list>
+FileUploaderInline.template = /* HTML */ ` <uc-start-from>
+    <uc-drop-area with-icon clickable></uc-drop-area>
+    <uc-source-list wrap></uc-source-list>
     <button
       type="button"
       l10n="start-from-cancel"
       class="uc-cancel-btn uc-secondary-btn"
       set="onclick: cancel; @hidden: !couldCancel"
     ></button>
-    <lr-copyright></lr-copyright>
-  </lr-start-from>
-  <lr-upload-list ref="uBlock"></lr-upload-list>
-  <lr-camera-source></lr-camera-source>
-  <lr-url-source></lr-url-source>
-  <lr-external-source></lr-external-source>
-  <lr-progress-bar></lr-progress-bar>
-  <lr-cloud-image-editor-activity></lr-cloud-image-editor-activity>`;
+    <uc-copyright></uc-copyright>
+  </uc-start-from>
+  <uc-upload-list ref="uBlock"></uc-upload-list>
+  <uc-camera-source></uc-camera-source>
+  <uc-url-source></uc-url-source>
+  <uc-external-source></uc-external-source>
+  <uc-progress-bar></uc-progress-bar>
+  <uc-cloud-image-editor-activity></uc-cloud-image-editor-activity>`;

@@ -1,4 +1,4 @@
-lr-range {
+uc-range {
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -6,17 +6,17 @@ lr-range {
   height: var(--uc-button-size);
 }
 
-lr-range datalist {
+uc-range datalist {
   display: none;
 }
 
-lr-range input {
+uc-range input {
   width: 100%;
   height: 100%;
   opacity: 0;
 }
 
-lr-range .uc-track-wrapper {
+uc-range .uc-track-wrapper {
   position: absolute;
   right: 10px;
   left: 10px;
@@ -28,7 +28,7 @@ lr-range .uc-track-wrapper {
   pointer-events: none;
 }
 
-lr-range .uc-track {
+uc-range .uc-track {
   position: absolute;
   right: 0;
   left: 0;
@@ -41,7 +41,7 @@ lr-range .uc-track {
   opacity: 0.5;
 }
 
-lr-range .uc-slider {
+uc-range .uc-slider {
   position: absolute;
   width: 16px;
   height: 16px;
@@ -50,7 +50,7 @@ lr-range .uc-slider {
   transform: translateX(-50%);
 }
 
-lr-range .uc-bar {
+uc-range .uc-bar {
   position: absolute;
   left: 0;
   height: 100%;
@@ -58,7 +58,7 @@ lr-range .uc-bar {
   border-radius: 2px;
 }
 
-lr-range .uc-caption {
+uc-range .uc-caption {
   position: absolute;
   display: inline-flex;
   justify-content: center;

@@ -14,7 +14,7 @@ import { l10nProcessor } from './l10nProcessor.js';
 import { sharedConfigKey } from './sharedConfigKey.js';
 import { A11y } from './a11y.js';
 
-const TAG_PREFIX = 'lr-';
+const TAG_PREFIX = 'uc-';
 
 // @ts-ignore TODO: fix this
 export class Block extends BaseComponent {

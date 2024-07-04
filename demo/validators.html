@@ -35,12 +35,12 @@
 	</script>
 </head>
 
-<lr-file-uploader-regular ctx-name="my-uploader"></lr-file-uploader-regular>
-<lr-config multipleMax="2" ctx-name="my-uploader" pubkey="c41dcdfa79a81e265549"></lr-config>
-<lr-upload-ctx-provider ctx-name="my-uploader"></lr-upload-ctx-provider>
+<uc-file-uploader-regular ctx-name="my-uploader"></uc-file-uploader-regular>
+<uc-config multipleMax="2" ctx-name="my-uploader" pubkey="c41dcdfa79a81e265549"></uc-config>
+<uc-upload-ctx-provider ctx-name="my-uploader"></uc-upload-ctx-provider>
 
 <script type="module">
-	const config = document.querySelector("lr-config")
+	const config = document.querySelector("uc-config")
 	const imagesOnly = (fileInfo, ctx) => {
 		if (fileInfo.isImage) {
 			return {

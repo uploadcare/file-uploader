@@ -1,4 +1,4 @@
-export const CSS_PREF = '--lr-img-';
+export const CSS_PREF = '--uc-img-';
 export const UNRESOLVED_ATTR = 'unresolved';
 export const HI_RES_K = 2;
 export const ULTRA_RES_K = 3;

@@ -102,7 +102,7 @@
 
       LR.registerBlocks(LR);
 
-      const config = document.querySelector('lr-config');
+      const config = document.querySelector('uc-config');
 
       document.querySelector('#locale-radio').innerHTML = `
             <br />
@@ -131,10 +131,10 @@
 
       const setMode = (mode) => {
         document.querySelector('#container').innerHTML = `
-            <lr-file-uploader-${mode}
+            <uc-file-uploader-${mode}
       ctx-name="my-uploader"
       css-src="./solutions/file-uploader/${mode}/index.css"
-    ></lr-file-uploader-${mode}>
+    ></uc-file-uploader-${mode}>
             `;
       };
 
@@ -163,7 +163,7 @@
       setMode('regular');
     </script>
 
-    <lr-config ctx-name="my-uploader" pubkey="demopublickey"></lr-config>
+    <uc-config ctx-name="my-uploader" pubkey="demopublickey"></uc-config>
 
     <div id="container"></div>
     <div id="mode-radio"></div>

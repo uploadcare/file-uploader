@@ -22,7 +22,7 @@
 
     LR.registerBlocks(LR);
 
-    const config = document.querySelector('lr-config');
+    const config = document.querySelector('uc-config');
     config.iconHrefResolver = (iconId) => {
       if (iconId === 'upload') {
         return './demo/test.svg#circle-heat-svgrepo-com';
@@ -31,9 +31,9 @@
   </script>
 </head>
 
-<lr-file-uploader-regular
+<uc-file-uploader-regular
   ctx-name="my-uploader"
   css-src="./solutions/file-uploader/regular/index.css"
-></lr-file-uploader-regular>
-<lr-config ctx-name="my-uploader" pubkey="demopublickey" debug></lr-config>
-<lr-upload-ctx-provider ctx-name="my-uploader"></lr-upload-ctx-provider>
+></uc-file-uploader-regular>
+<uc-config ctx-name="my-uploader" pubkey="demopublickey" debug></uc-config>
+<uc-upload-ctx-provider ctx-name="my-uploader"></uc-upload-ctx-provider>

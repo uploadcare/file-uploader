@@ -214,23 +214,23 @@ export class CameraSource extends UploaderBlock {
 }
 
 CameraSource.template = /* HTML */ `
-  <lr-activity-header>
+  <uc-activity-header>
     <button type="button" class="uc-mini-btn" set="onclick: *historyBack">
-      <lr-icon name="back"></lr-icon>
+      <uc-icon name="back"></uc-icon>
     </button>
     <div set="@hidden: !cameraSelectHidden">
-      <lr-icon name="camera"></lr-icon>
+      <uc-icon name="camera"></uc-icon>
       <span l10n="caption-camera"></span>
     </div>
-    <lr-select
+    <uc-select
       class="uc-camera-select"
       set="$.options: cameraSelectOptions; @hidden: cameraSelectHidden; onchange: onCameraSelectChange"
     >
-    </lr-select>
+    </uc-select>
     <button type="button" class="uc-mini-btn uc-close-btn" set="onclick: *closeModal">
-      <lr-icon name="close"></lr-icon>
+      <uc-icon name="close"></uc-icon>
     </button>
-  </lr-activity-header>
+  </uc-activity-header>
   <div class="uc-content">
     <video
       autoplay
@@ -247,7 +247,7 @@ CameraSource.template = /* HTML */ `
       ></button>
     </div>
     <button type="button" class="uc-shot-btn" set="onclick: onShot; @disabled: shotBtnDisabled">
-      <lr-icon name="camera"></lr-icon>
+      <uc-icon name="camera"></uc-icon>
     </button>
   </div>
 `;

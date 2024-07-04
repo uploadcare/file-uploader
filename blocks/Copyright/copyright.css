@@ -1,10 +1,10 @@
-lr-copyright {
+uc-copyright {
   display: flex;
   width: 100%;
   justify-content: center;
 }
 
-lr-copyright .uc-credits {
+uc-copyright .uc-credits {
   all: unset;
   position: absolute;
   bottom: 12px;
@@ -21,11 +21,11 @@ lr-copyright .uc-credits {
     background-color var(--uc-transition);
 }
 
-lr-copyright .uc-credits:focus-visible {
+uc-copyright .uc-credits:focus-visible {
   outline: 1px auto -webkit-focus-ring-color;
 }
 
-lr-copyright .uc-credits:hover {
+uc-copyright .uc-credits:hover {
   opacity: 1;
   background-color: var(--uc-muted);
 }

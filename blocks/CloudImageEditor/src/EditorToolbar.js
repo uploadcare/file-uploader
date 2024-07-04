@@ -19,31 +19,31 @@ import { viewerImageSrc } from './util.js';
 /** @param {String} id */
 function renderTabToggle(id) {
   return /* HTML */ `
-    <lr-presence-toggle
+    <uc-presence-toggle
       class="uc-tab-toggle"
       set="visible: presence.tabToggle.${id}; styles: presence.tabToggleStyles;"
     >
-      <lr-btn-ui
+      <uc-btn-ui
         theme="tab"
         ref="tab-toggle-${id}"
         data-id="${id}"
         icon="${id}"
         set="onclick: on.clickTab; aria-role:tab_role; aria-controls:tab_${id}"
       >
-      </lr-btn-ui>
-    </lr-presence-toggle>
+      </uc-btn-ui>
+    </uc-presence-toggle>
   `;
 }
 
 /** @param {String} id */
 function renderTabContent(id) {
   return /* HTML */ `
-    <lr-presence-toggle
+    <uc-presence-toggle
       id="tab_${id}"
       class="uc-tab-content"
       set="visible: presence.tabContent.${id}; styles: presence.tabContentStyles"
     >
-      <lr-editor-scroller hidden-scrollbar>
+      <uc-editor-scroller hidden-scrollbar>
         <div class="uc-controls-list_align">
           <div
             role="listbox"
@@ -52,8 +52,8 @@ function renderTabContent(id) {
             ref="controls-list-${id}"
           ></div>
         </div>
-      </lr-editor-scroller>
-    </lr-presence-toggle>
+      </uc-editor-scroller>
+    </uc-presence-toggle>
   `;
 }
 
@@ -400,42 +400,42 @@ export class EditorToolbar extends Block {
 }
 
 EditorToolbar.template = /* HTML */ `
-  <lr-line-loader-ui set="active: showLoader"></lr-line-loader-ui>
+  <uc-line-loader-ui set="active: showLoader"></uc-line-loader-ui>
   <div class="uc-info-tooltip_container">
     <div class="uc-info-tooltip_wrapper">
       <div ref="tooltip-el" class="uc-info-tooltip uc-info-tooltip_hidden">{{*operationTooltip}}</div>
     </div>
   </div>
   <div class="uc-toolbar-container">
-    <lr-presence-toggle
+    <uc-presence-toggle
       role="tablist"
       class="uc-sub-toolbar"
       set="visible: presence.mainToolbar; styles: presence.subTopToolbarStyles"
     >
       <div class="uc-tab-content-row">${ALL_TABS.map(renderTabContent).join('')}</div>
       <div class="uc-controls-row">
-        <lr-presence-toggle
+        <uc-presence-toggle
           class="uc-tab-toggles"
           set="visible: presence.tabToggles; styles: presence.tabTogglesStyles"
         >
           <div ref="tabs-indicator" class="uc-tab-toggles_indicator"></div>
           ${ALL_TABS.map(renderTabToggle).join('')}
-        </lr-presence-toggle>
-        <lr-btn-ui style="order: -1" theme="secondary-icon" icon="closeMax" set="onclick: on.cancel"> </lr-btn-ui>
-        <lr-btn-ui theme="primary-icon" icon="done" set="onclick: on.apply"> </lr-btn-ui>
+        </uc-presence-toggle>
+        <uc-btn-ui style="order: -1" theme="secondary-icon" icon="closeMax" set="onclick: on.cancel"> </uc-btn-ui>
+        <uc-btn-ui theme="primary-icon" icon="done" set="onclick: on.apply"> </uc-btn-ui>
       </div>
-    </lr-presence-toggle>
-    <lr-presence-toggle
+    </uc-presence-toggle>
+    <uc-presence-toggle
       class="uc-sub-toolbar"
       set="visible: presence.subToolbar; styles: presence.subBottomToolbarStyles"
     >
       <div class="uc-slider">
-        <lr-editor-slider ref="slider-el"></lr-editor-slider>
+        <uc-editor-slider ref="slider-el"></uc-editor-slider>
       </div>
       <div class="uc-controls-row">
-        <lr-btn-ui theme="secondary" set="onclick: on.cancelSlider;" l10n="@text:cancel"> </lr-btn-ui>
-        <lr-btn-ui theme="primary" set="onclick: on.applySlider;" l10n="@text:apply"> </lr-btn-ui>
+        <uc-btn-ui theme="secondary" set="onclick: on.cancelSlider;" l10n="@text:cancel"> </uc-btn-ui>
+        <uc-btn-ui theme="primary" set="onclick: on.applySlider;" l10n="@text:apply"> </uc-btn-ui>
       </div>
-    </lr-presence-toggle>
+    </uc-presence-toggle>
   </div>
 `;

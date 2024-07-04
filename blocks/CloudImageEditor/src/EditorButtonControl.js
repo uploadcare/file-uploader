@@ -38,7 +38,7 @@ export class EditorButtonControl extends Block {
 
 EditorButtonControl.template = /* HTML */ `
   <button type="button" role="option">
-    <lr-icon set="@name: icon;"></lr-icon>
+    <uc-icon set="@name: icon;"></uc-icon>
     <div class="uc-title" ref="title-el">{{title}}</div>
   </button>
 `;

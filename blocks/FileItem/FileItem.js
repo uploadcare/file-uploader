@@ -426,7 +426,7 @@ FileItem.template = /* HTML */ `
   <div class="uc-inner" set="@finished: isFinished; @uploading: isUploading; @failed: isFailed; @focused: isFocused">
     <div class="uc-thumb" set="style.backgroundImage: thumbUrl">
       <div class="uc-badge">
-        <lr-icon set="@name: badgeIcon"></lr-icon>
+        <uc-icon set="@name: badgeIcon"></uc-icon>
       </div>
     </div>
     <div class="uc-file-name-wrapper">
@@ -440,7 +440,7 @@ FileItem.template = /* HTML */ `
         class="uc-edit-btn uc-mini-btn"
         set="onclick: onEdit; @hidden: !isEditable"
       >
-        <lr-icon name="edit-file"></lr-icon>
+        <uc-icon name="edit-file"></uc-icon>
       </button>
       <button
         type="button"
@@ -448,13 +448,13 @@ FileItem.template = /* HTML */ `
         class="uc-remove-btn uc-mini-btn"
         set="onclick: onRemove;"
       >
-        <lr-icon name="remove-file"></lr-icon>
+        <uc-icon name="remove-file"></uc-icon>
       </button>
       <button type="button" class="uc-upload-btn uc-mini-btn" set="onclick: onUpload;">
-        <lr-icon name="upload"></lr-icon>
+        <uc-icon name="upload"></uc-icon>
       </button>
     </div>
-    <lr-progress-bar class="uc-progress-bar" set="value: progressValue; visible: progressVisible;"> </lr-progress-bar>
+    <uc-progress-bar class="uc-progress-bar" set="value: progressValue; visible: progressVisible;"> </uc-progress-bar>
   </div>
 `;
 FileItem.activeInstances = new Set();

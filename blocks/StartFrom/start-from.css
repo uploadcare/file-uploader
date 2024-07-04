@@ -1,9 +1,9 @@
-lr-start-from {
+uc-start-from {
   display: block;
   overflow-y: auto;
 }
 
-lr-start-from .uc-content {
+uc-start-from .uc-content {
   display: grid;
   grid-auto-flow: row;
   gap: calc(var(--uc-padding) * 2);
@@ -13,7 +13,7 @@ lr-start-from .uc-content {
   background-color: var(--uc-background);
 }
 
-[lr-modal] lr-start-from {
+[uc-modal] uc-start-from {
   width: min(
     calc(var(--uc-dialog-width) - var(--uc-padding) * 2),
     calc(var(--uc-dialog-max-width) - var(--uc-padding) * 2),
@@ -21,12 +21,12 @@ lr-start-from .uc-content {
   );
 }
 
-[lr-modal] lr-start-from lr-drop-area {
+[uc-modal] uc-start-from uc-drop-area {
   border-radius: var(--uc-radius);
 }
 
 @media only screen and (max-width: 430px) {
-  [lr-modal] lr-start-from lr-drop-area {
+  [uc-modal] uc-start-from uc-drop-area {
     display: none;
   }
 }

@@ -50,7 +50,7 @@
       return { secureSignature, secureExpire: getSecureExpire(options) };
     };
 
-    const config = document.querySelector('lr-config');
+    const config = document.querySelector('uc-config');
     config.secureUploadsSignatureResolver = async () => {
       const token = await generateSecureSignature('', { lifetime: 60 * 1000 });
       console.log('Generating secure signature...', token);
@@ -59,6 +59,6 @@
   </script>
 </head>
 
-<lr-file-uploader-regular ctx-name="my-uploader"></lr-file-uploader-regular>
-<lr-config ctx-name="my-uploader" pubkey="" debug></lr-config>
-<lr-upload-ctx-provider ctx-name="my-uploader"></lr-upload-ctx-provider>
+<uc-file-uploader-regular ctx-name="my-uploader"></uc-file-uploader-regular>
+<uc-config ctx-name="my-uploader" pubkey="" debug></uc-config>
+<uc-upload-ctx-provider ctx-name="my-uploader"></uc-upload-ctx-provider>

@@ -23,13 +23,13 @@
 
     LR.registerBlocks(LR);
 
-    const config = document.querySelector('lr-config');
+    const config = document.querySelector('uc-config');
     config.secureDeliveryProxyUrlResolver = (previewUrl) => {
       return `http://localhost:3000/preview?url=${encodeURIComponent(previewUrl)}`
     };
   </script>
 </head>
 
-<lr-file-uploader-regular ctx-name="my-uploader"></lr-file-uploader-regular>
-<lr-config ctx-name="my-uploader" pubkey="demopublickey"></lr-config>
-<lr-upload-ctx-provider ctx-name="my-uploader"></lr-upload-ctx-provider>
+<uc-file-uploader-regular ctx-name="my-uploader"></uc-file-uploader-regular>
+<uc-config ctx-name="my-uploader" pubkey="demopublickey"></uc-config>
+<uc-upload-ctx-provider ctx-name="my-uploader"></uc-upload-ctx-provider>
