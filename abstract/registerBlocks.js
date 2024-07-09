@@ -10,11 +10,22 @@ export function registerBlocks(blockExports) {
     if (tagName.startsWith('-')) {
       tagName = tagName.replace('-', '');
     }
+
+    let currentTagName = '';
     if (!tagName.startsWith('uc-')) {
-      tagName = 'uc-' + tagName;
+      currentTagName = addPrefix('uc-', tagName);
     }
+
+    let legacyTagName = '';
+    if (!tagName.startsWith('lr-')) {
+      legacyTagName = addPrefix('lr-', tagName);
+    }
+
     if (blockExports[blockName].reg) {
-      blockExports[blockName].reg(tagName);
+      blockExports[blockName].reg(currentTagName);
+      blockExports[blockName].reg(legacyTagName, true);
     }
   }
 }
+
+const addPrefix = (prefix, name) => prefix + name;
