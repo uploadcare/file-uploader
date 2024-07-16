@@ -19,7 +19,7 @@ import { TabId } from './toolbar-constants.js';
 
 export class CloudImageEditorBlock extends Block {
   ctxOwner = true;
-  static className = 'cloud-image-editor';
+  static styleAttrs = ['lr-cloud-image-editor'];
 
   constructor() {
     super();
@@ -173,13 +173,13 @@ export class CloudImageEditorBlock extends Block {
     );
 
     this.sub('*tabId', (tabId) => {
-      this.ref['img-el'].className = classNames('image', {
-        image_hidden_to_cropper: tabId === TabId.CROP,
-        image_hidden_effects: tabId !== TabId.CROP,
+      this.ref['img-el'].className = classNames('uc-image', {
+        'uc-image_hidden_to_cropper': tabId === TabId.CROP,
+        'uc-image_hidden_effects': tabId !== TabId.CROP,
       });
     });
 
-    this.classList.add('editor_ON');
+    this.classList.add('uc-editor_ON');
 
     this.sub('*networkProblems', (networkProblems) => {
       this.$['presence.networkProblems'] = networkProblems;

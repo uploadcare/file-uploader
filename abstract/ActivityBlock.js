@@ -8,7 +8,9 @@ const ACTIVE_ATTR = 'active';
 const ACTIVE_PROP = '___ACTIVITY_IS_ACTIVE___';
 
 export class ActivityBlock extends Block {
+  /** @protected */
   historyTracked = false;
+
   init$ = activityBlockCtx(this);
 
   _debouncedHistoryFlush = debounce(this._historyFlush.bind(this), 10);
@@ -37,6 +39,7 @@ export class ActivityBlock extends Block {
     });
   }
 
+  /** @protected */
   initCallback() {
     super.initCallback();
     if (this.hasAttribute('current-activity')) {
@@ -131,6 +134,7 @@ export class ActivityBlock extends Block {
     ActivityBlock._activityCallbacks.delete(this);
   }
 
+  /** @protected */
   destroyCallback() {
     super.destroyCallback();
     this._isActivityRegistered() && this.unregisterActivity();
@@ -138,14 +142,13 @@ export class ActivityBlock extends Block {
     /** @type {string | null} */
     const currentActivity = this.$['*currentActivity'];
 
-    /** @type {Set<import('./Block').Block>} */
-    let blocksRegistry = this.$['*blocksRegistry'];
-    const hasCurrentActivityInCtx = !![...blocksRegistry].find(
+    const hasCurrentActivityInCtx = !![...this.blocksRegistry].find(
       (block) => block instanceof ActivityBlock && block.activityType === currentActivity,
     );
 
     if (!hasCurrentActivityInCtx) {
       this.$['*currentActivity'] = null;
+      this.setOrAddState('*modalActive', false);
     }
   }
 
@@ -177,10 +180,8 @@ export class ActivityBlock extends Block {
       }
       let couldOpenActivity = !!nextActivity;
       if (nextActivity) {
-        /** @type {Set<ActivityBlock>} */
-        let blocksRegistry = this.$['*blocksRegistry'];
-        const nextActivityBlock = [...blocksRegistry].find((block) => block.activityType === nextActivity);
-        couldOpenActivity = nextActivityBlock?.couldOpenActivity ?? false;
+        const nextActivityBlock = [...this.blocksRegistry].find((block) => block.activityType === nextActivity);
+        couldOpenActivity = /** @type {ActivityBlock} */ (nextActivityBlock)?.couldOpenActivity ?? false;
       }
       nextActivity = couldOpenActivity ? nextActivity : undefined;
       this.$['*currentActivity'] = nextActivity;
@@ -198,10 +199,9 @@ ActivityBlock.activities = Object.freeze({
   DRAW: 'draw',
   UPLOAD_LIST: 'upload-list',
   URL: 'url',
-  CONFIRMATION: 'confirmation',
   CLOUD_IMG_EDIT: 'cloud-image-edit',
   EXTERNAL: 'external',
   DETAILS: 'details',
 });
 
-/** @typedef {(typeof ActivityBlock)['activities'][keyof (typeof ActivityBlock)['activities']] | null} ActivityType */
+/** @typedef {(typeof ActivityBlock)['activities'][keyof (typeof ActivityBlock)['activities']] | (string & {}) | null} ActivityType */

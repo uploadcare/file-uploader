@@ -17,7 +17,7 @@ export class Copyright extends Block {
     <a
       href="https://uploadcare.com/?utm_source=copyright&utm_medium=referral&utm_campaign=v4"
       target="_blank noopener"
-      class="credits"
+      class="uc-credits"
       >Powered by Uploadcare</a
     >
   `;

@@ -102,4 +102,6 @@ export default {
   'images-only-accepted': 'מתקבלים רק קבצי תמונות.',
   'file-type-not-allowed': 'העלאת סוגי קבצים אלו אינה מורשית.',
   'some-files-were-not-uploaded': 'חלק מהקבצים לא הועלו.',
+  'file-item-edit-button': 'כפתור עריכה',
+  'file-item-remove-button': 'כפתור הסרה',
 };

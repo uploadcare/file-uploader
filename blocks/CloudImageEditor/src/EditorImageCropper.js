@@ -258,9 +258,9 @@ export class EditorImageCropper extends Block {
       this._transitionToImage();
       setTimeout(() => {
         this.className = classNames({
-          active_from_viewer: fromViewer,
-          active_from_editor: !fromViewer,
-          inactive_to_editor: false,
+          'uc-active_from_viewer': fromViewer,
+          'uc-active_from_editor': !fromViewer,
+          'uc-inactive_to_editor': false,
         });
       });
     }
@@ -413,9 +413,9 @@ export class EditorImageCropper extends Block {
     this._transitionToCrop();
 
     this.className = classNames({
-      active_from_viewer: false,
-      active_from_editor: false,
-      inactive_to_editor: true,
+      'uc-active_from_viewer': false,
+      'uc-active_from_editor': false,
+      'uc-inactive_to_editor': true,
     });
 
     this.ref['frame-el'].toggleThumbs(false);
@@ -546,6 +546,6 @@ export class EditorImageCropper extends Block {
 }
 
 EditorImageCropper.template = /* HTML */ `
-  <canvas class="canvas" ref="canvas-el"></canvas>
+  <canvas class="uc-canvas" ref="canvas-el"></canvas>
   <lr-crop-frame ref="frame-el"></lr-crop-frame>
 `;

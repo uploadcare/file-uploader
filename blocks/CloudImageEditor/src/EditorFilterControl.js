@@ -110,7 +110,7 @@ export class EditorFilterControl extends EditorButtonControl {
     this._originalUrl = originalUrl;
 
     if (this.$.isOriginal) {
-      this.ref['icon-el'].classList.add('original-icon');
+      this.ref['icon-el'].classList.add('uc-original-icon');
     } else {
       this._observer.observe(this);
     }
@@ -158,7 +158,8 @@ export class EditorFilterControl extends EditorButtonControl {
 }
 
 EditorFilterControl.template = /* HTML */ `
-  <div class="before"></div>
-  <div class="preview" ref="preview-el"></div>
-  <lr-icon ref="icon-el" set="@name: icon; @size: iconSize;"></lr-icon>
+  <button type="button" role="option">
+    <div class="uc-preview" ref="preview-el"></div>
+    <lr-icon ref="icon-el" set="@name: icon; @size: iconSize;"></lr-icon>
+  </button>
 `;

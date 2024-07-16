@@ -1,32 +1,37 @@
-lr-simple-btn {
+:where([lr-simple-btn]) {
   position: relative;
   display: inline-flex;
 }
 
-lr-simple-btn button {
-  padding-left: 0.2em !important;
-  color: var(--clr-btn-txt-secondary);
-  background-color: var(--clr-btn-bgr-secondary);
-  box-shadow: var(--shadow-btn-secondary);
+:where([lr-simple-btn]) button {
+  height: auto;
+  gap: 0.5em;
+  padding: var(--uc-simple-btn-padding);
+  background-color: var(--uc-simple-btn);
+  color: var(--uc-simple-btn-foreground);
+  font-size: var(--uc-simple-btn-font-size);
+  font-family: var(--uc-simple-btn-font-family);
 }
 
-lr-simple-btn button lr-icon svg {
-  transform: scale(0.8);
+:where([lr-simple-btn]) button lr-icon {
+  width: auto;
+  height: auto;
 }
 
-lr-simple-btn button:hover {
-  background-color: var(--clr-btn-bgr-secondary-hover);
+:where([lr-simple-btn]) button lr-icon svg {
+  width: 0.9em;
+  height: 0.9em;
 }
 
-lr-simple-btn button:active {
-  background-color: var(--clr-btn-bgr-secondary-active);
+:where([lr-simple-btn]) button:hover {
+  background-color: var(--uc-simple-btn-hover);
 }
 
-lr-simple-btn > lr-drop-area {
+:where([lr-simple-btn]) > lr-drop-area {
   display: contents;
 }
 
-lr-simple-btn .visual-drop-area {
+:where([lr-simple-btn]) .uc-visual-drop-area {
   position: absolute;
   top: 0px;
   left: 0px;
@@ -35,55 +40,25 @@ lr-simple-btn .visual-drop-area {
   justify-content: center;
   width: 100%;
   height: 100%;
-  padding: var(--gap-min);
-  border: var(--border-dashed);
+  padding: var(--uc-simple-btn-padding);
+  background-color: transparent;
+  color: transparent;
+  font-size: var(--uc-simple-btn-font-size);
+  border: 1px dashed var(--uc-simple-btn-foreground);
   border-radius: inherit;
   opacity: 0;
-  transition:
-    border-color var(--transition-duration) ease,
-    background-color var(--transition-duration) ease,
-    opacity var(--transition-duration) ease;
+  transition: opacity var(--uc-transition);
 }
 
-lr-simple-btn .visual-drop-area::before {
-  position: absolute;
-  top: 0px;
-  left: 0px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-  color: var(--clr-txt-light);
-  background-color: var(--clr-background);
-  border-radius: inherit;
-}
-
-lr-simple-btn > lr-drop-area[drag-state='active'] .visual-drop-area {
-  background-color: var(--clr-accent-lightest);
+:where([lr-simple-btn]) > lr-drop-area[drag-state='active'] .uc-visual-drop-area {
   opacity: 1;
 }
-lr-simple-btn > lr-drop-area[drag-state='inactive'] .visual-drop-area {
-  background-color: var(--clr-shade-lv1);
+:where([lr-simple-btn]) > lr-drop-area[drag-state='inactive'] .uc-visual-drop-area {
   opacity: 0;
 }
-lr-simple-btn > lr-drop-area[drag-state='near'] .visual-drop-area {
-  background-color: var(--clr-accent-lightest);
-  border-color: var(--clr-accent-light);
+:where([lr-simple-btn]) > lr-drop-area[drag-state='near'] .uc-visual-drop-area {
   opacity: 1;
 }
-lr-simple-btn > lr-drop-area[drag-state='over'] .visual-drop-area {
-  background-color: var(--clr-accent-lightest);
-  border-color: var(--clr-accent);
+:where([lr-simple-btn]) > lr-drop-area[drag-state='over'] .uc-visual-drop-area {
   opacity: 1;
-}
-
-lr-simple-btn
-  > :where(lr-drop-area[drag-state='active'], lr-drop-area[drag-state='near'], lr-drop-area[drag-state='over'])
-  button {
-  box-shadow: none;
-}
-
-lr-simple-btn > lr-drop-area::after {
-  content: '';
 }

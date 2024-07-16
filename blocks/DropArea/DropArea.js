@@ -12,6 +12,7 @@ const GLOBAL_CTX_NAME = 'lr-drop-area';
 const REGISTRY_KEY = `${GLOBAL_CTX_NAME}/registry`;
 
 export class DropArea extends UploaderBlock {
+  static styleAttrs = [...super.styleAttrs, 'lr-drop-area'];
   constructor() {
     super();
 
@@ -108,9 +109,9 @@ export class DropArea extends UploaderBlock {
 
         items.forEach((/** @type {import('./getDropItems.js').DropItem} */ item) => {
           if (item.type === 'url') {
-            this.addFileFromUrl(item.url, { source: UploadSource.DROP_AREA });
+            this.api.addFileFromUrl(item.url, { source: UploadSource.DROP_AREA });
           } else if (item.type === 'file') {
-            this.addFileFromObject(item.file, { source: UploadSource.DROP_AREA, fullPath: item.fullPath });
+            this.api.addFileFromObject(item.file, { source: UploadSource.DROP_AREA, fullPath: item.fullPath });
           }
         });
         if (this.uploadCollection.size) {
@@ -164,10 +165,22 @@ export class DropArea extends UploaderBlock {
     });
 
     if (this.$.isClickable) {
-      // @private
-      this._onAreaClicked = () => {
-        this.openSystemDialog();
+      /**
+       * @private
+       * @param {KeyboardEvent | Event} event
+       */
+      this._onAreaClicked = (event) => {
+        if (event.type === 'keydown') {
+          // @ts-ignore
+          if (event.code === 'Space' || event.code === 'Enter') {
+            this.api.openSystemDialog();
+          }
+        } else if (event.type === 'click') {
+          this.api.openSystemDialog();
+        }
       };
+
+      this.addEventListener('keydown', this._onAreaClicked);
       this.addEventListener('click', this._onAreaClicked);
     }
   }
@@ -227,6 +240,7 @@ export class DropArea extends UploaderBlock {
     this._destroyDropzone?.();
     this._destroyContentWrapperDropzone?.();
     if (this._onAreaClicked) {
+      this.removeEventListener('keydown', this._onAreaClicked);
       this.removeEventListener('click', this._onAreaClicked);
     }
   }
@@ -235,12 +249,12 @@ export class DropArea extends UploaderBlock {
 DropArea.template = /* HTML */ `
   <slot>
     <div data-default-slot hidden></div>
-    <div ref="content-wrapper" class="content-wrapper" set="@hidden: !isVisible">
-      <div class="icon-container" set="@hidden: !withIcon">
+    <div ref="content-wrapper" class="uc-content-wrapper" set="@hidden: !isVisible">
+      <div class="uc-icon-container" set="@hidden: !withIcon">
         <lr-icon name="default"></lr-icon>
         <lr-icon name="arrow-down"></lr-icon>
       </div>
-      <span class="text">{{text}}</span>
+      <span class="uc-text">{{text}}</span>
     </div>
   </slot>
 `;

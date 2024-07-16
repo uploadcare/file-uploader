@@ -1,41 +1,44 @@
-lr-source-btn {
+lr-source-btn > button {
   display: flex;
   align-items: center;
-  margin-bottom: var(--gap-min);
-  padding: var(--gap-min) var(--gap-mid);
-  color: var(--clr-txt-mid);
-  border-radius: var(--border-radius-element);
+  margin-bottom: 2px;
+  padding: 2px var(--uc-padding);
+  color: var(--uc-foreground);
+  border-radius: var(--uc-radius);
   cursor: pointer;
-  transition-duration: var(--transition-duration);
-  transition-property: background-color, color;
+  transition:
+    background-color var(--uc-transition),
+    color var(--uc-transition);
   user-select: none;
+  width: 100%;
+  background-color: unset;
+  height: unset;
 }
 
-lr-source-btn:hover {
-  color: var(--clr-accent);
-  background-color: var(--clr-accent-lightest);
+lr-source-btn:last-child > button {
+  margin-bottom: 0;
 }
 
-lr-source-btn:active {
-  color: var(--clr-accent);
-  background-color: var(--clr-accent-light);
+lr-source-btn > button:hover {
+  color: var(--uc-primary);
+  background-color: var(--uc-primary-transparent);
 }
 
 lr-source-btn lr-icon {
   display: inline-flex;
   flex-grow: 1;
   justify-content: center;
-  min-width: var(--ui-size);
-  margin-right: var(--gap-mid);
+  min-width: var(--uc-button-size);
+  margin-right: var(--uc-padding);
   opacity: 0.8;
 }
 
-lr-source-btn .txt {
+lr-source-btn .uc-txt {
   display: flex;
   align-items: center;
   box-sizing: border-box;
   width: 100%;
-  height: var(--ui-size);
+  height: var(--uc-button-size);
   padding: 0;
   white-space: nowrap;
   border: none;

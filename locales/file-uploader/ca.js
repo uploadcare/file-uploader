@@ -103,4 +103,6 @@ export default {
   'images-only-accepted': "Només s'accepten fitxers d'imatge.",
   'file-type-not-allowed': "No està permès pujar fitxers d'aquest tipus.",
   'some-files-were-not-uploaded': "Alguns fitxers no s'han pujat.",
+  'file-item-edit-button': "Botó d'edició",
+  'file-item-remove-button': 'Botó de supressió',
 };

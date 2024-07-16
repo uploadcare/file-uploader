@@ -100,4 +100,6 @@ export default {
   'images-only-accepted': 'Yalnız şəkil faylları qəbul edilir.',
   'file-type-not-allowed': 'Bu fayl növlərinin yüklənməsinə icazə verilmir.',
   'some-files-were-not-uploaded': 'Bəzi fayllar yüklənmədi.',
+  'file-item-edit-button': 'Düzəliş düyməsi',
+  'file-item-remove-button': 'Sil düyməsi',
 };

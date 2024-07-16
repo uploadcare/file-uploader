@@ -3,6 +3,7 @@ import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { asBoolean } from '../Config/normalizeConfigValue.js';
 
 export class SimpleBtn extends UploaderBlock {
+  static styleAttrs = [...super.styleAttrs, 'lr-simple-btn'];
   couldBeCtxOwner = true;
   constructor() {
     super();
@@ -11,7 +12,7 @@ export class SimpleBtn extends UploaderBlock {
       ...this.init$,
       withDropZone: true,
       onClick: () => {
-        this.initFlow();
+        this.api.initFlow();
       },
       'button-text': '',
     };
@@ -42,7 +43,7 @@ SimpleBtn.template = /* HTML */ `
       <lr-icon name="upload"></lr-icon>
       <span l10n="button-text"></span>
       <slot></slot>
-      <div class="visual-drop-area" l10n="drop-files-here"></div>
+      <div class="uc-visual-drop-area" l10n="drop-files-here"></div>
     </button>
   </lr-drop-area>
 `;

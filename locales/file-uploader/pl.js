@@ -104,4 +104,6 @@ export default {
   'images-only-accepted': 'Akceptowane są tylko pliki obrazów.',
   'file-type-not-allowed': 'Przesyłanie tego typu plików jest niedozwolone.',
   'some-files-were-not-uploaded': 'Niektóre pliki nie zostały przesłane.',
+  'file-item-edit-button': 'Przycisk edycji',
+  'file-item-remove-button': 'Przycisk usuwania',
 };

@@ -1,9 +1,81 @@
+# [0.49.0](https://github.com/uploadcare/blocks/compare/v0.48.1...v0.49.0) (2024-07-03)
+
+### BEAKING CHANGES
+
+- **styles:** Added the `uc-` prefix to all class selectors ([#683](https://github.com/uploadcare/blocks/issues/683)) ([a3929d5](https://github.com/uploadcare/blocks/commit/a3929d599e23e221b2fe88b2d2489a35c8ee7899)).
+
+See the [migration guide](https://uploadcare.com/docs/file-uploader/migration-to-0.49.0/) for details.
+
+## [0.48.1](https://github.com/uploadcare/blocks/compare/v0.48.0...v0.48.1) (2024-07-02)
+
+### Bug Fixes
+
+- **a11y:** Added a type for the button ([#695](https://github.com/uploadcare/blocks/issues/695)) ([af1d6b6](https://github.com/uploadcare/blocks/commit/af1d6b63112cc383bcad52d099d84460da937ffa))
+
+## [0.48.0](https://github.com/uploadcare/blocks/compare/v0.47.0...v0.48.0) (2024-07-02)
+
+# [0.47.0](https://github.com/uploadcare/blocks/compare/v0.46.3...v0.47.0) (2024-07-02)
+
+### BEAKING CHANGES
+
+- Extract public api to the composition class at the Uploader API instance that you can get using `getAPI()` method of the `lr-upload-ctx-provider` block. ([#676](https://github.com/uploadcare/blocks/issues/676)) ([ea29dd2](https://github.com/uploadcare/blocks/commit/ea29dd2ebfc5b5897c7db8f6dbda608604eea86c)).
+
+See the [migration guide](https://uploadcare.com/docs/file-uploader/migration-to-0.47.0/) for details.
+
+## [0.46.3](https://github.com/uploadcare/blocks/compare/v0.46.2...v0.46.3) (2024-07-01)
+
+### Bug Fixes
+
+- **icons:** Added currentColor to icon edit-file ([#689](https://github.com/uploadcare/blocks/issues/689)) ([617d3cd](https://github.com/uploadcare/blocks/commit/617d3cd8e0cde8ecadd6024ce321b7ba507009f1))
+
+## [0.46.2](https://github.com/uploadcare/blocks/compare/v0.46.1...v0.46.2) (2024-07-01)
+
+### Bug Fixes
+
+- **icons:** added icon edit file ([#687](https://github.com/uploadcare/blocks/issues/687)) ([2a869ab](https://github.com/uploadcare/blocks/commit/2a869abfdbe571aff52ccc5687a8c66e0d829cb5))
+
+## [0.46.1](https://github.com/uploadcare/blocks/compare/v0.46.0...v0.46.1) (2024-06-28)
+
+### Bug Fixes
+
+- **events:** Added status after deleting files in idle ([#684](https://github.com/uploadcare/blocks/issues/684)) ([0e07ee3](https://github.com/uploadcare/blocks/commit/0e07ee3d82a326e56cab343dafdf7472f2d73216))
+
+# [0.46.0](https://github.com/uploadcare/blocks/compare/v0.45.0...v0.46.0) (2024-06-24)
+
+### Features
+
+- Significant improvements to accessibility and keyboard navigation, enhancing user experience and inclusivity ([#671](https://github.com/uploadcare/blocks/issues/671)) ([4acb8a0](https://github.com/uploadcare/blocks/commit/4acb8a0b7ea9c7a95be415627f7d4e1eb748fcf2))
+
+# [0.45.0](https://github.com/uploadcare/blocks/compare/v0.44.0...v0.45.0) (2024-06-23)
+
+### BEAKING CHANGES
+
+- The previously deprecated API method `setUploadMetadata` has been removed. Use `metadata` instance property on `lr-config` block instead. See [metadata](https://uploadcare.com/docs/file-uploader/options/#metadata) for more details.
+- The previously deprecated API method `addFiles` has been removed. Use `addFileFromObject`, `addFileFromUrl` or `addFileFromUuid` instead. See [File Uploader API](https://uploadcare.com/docs/file-uploader/api/#add-file-from-object) for more details.
+
+See the [migration guide](https://uploadcare.com/docs/file-uploader/migration-to-0.45.0/) for details.
+
+# [0.44.0](https://github.com/uploadcare/blocks/compare/v0.43.0...v0.44.0) (2024-06-21)
+
+### BEAKING CHANGES
+
+- All theme variables of the previous version are deprecated and won't affect the look anymore.
+- The default button that opens the uploader dialog (SimpleBtn) component now uses independent variables.
+- By default, the theme now uses OKLCH color space. You can still override it using other color spaces, but we recommend converting your colors to OKLCH.
+
+See the [migration guide](https://uploadcare.com/docs/file-uploader/migration-to-0.44.0/) for details.
+
+Full styling docs are available [here](https://uploadcare.com/docs/file-uploader/styling/).
+
+### Features
+
+- updated theming mechanics with oklch colors and reworked css properties ([#662](https://github.com/uploadcare/blocks/issues/662)) ([ee90e66](https://github.com/uploadcare/blocks/commit/ee90e66c076e21e1ee92b2f4c60f8eb955a7d5bc))
+
 # [0.43.0](https://github.com/uploadcare/blocks/compare/v0.42.1...v0.43.0) (2024-06-14)
 
 ### Features
 
-- added `collectionValidators` and `fileValidators`: Custom validators are now supported for collections and files. This enhancement allows for the addition of necessary checks for uploaded files and collections, providing flexibility and control over compliance with requirements ([#667](https://github.com/uploadcare/blocks/issues/667)) ([d3260b0](https://github.com/uploadcare/blocks/commit/d3260b0cce5ac6ca7cfd0aeb8aff0c9fc35036ed)). See docs [here](https://uploadcare.com/docs/file-uploader/validators). 
-
+- added `collectionValidators` and `fileValidators`: Custom validators are now supported for collections and files. This enhancement allows for the addition of necessary checks for uploaded files and collections, providing flexibility and control over compliance with requirements ([#667](https://github.com/uploadcare/blocks/issues/667)) ([d3260b0](https://github.com/uploadcare/blocks/commit/d3260b0cce5ac6ca7cfd0aeb8aff0c9fc35036ed)). See docs [here](https://uploadcare.com/docs/file-uploader/validators).
 
 ## [0.42.1](https://github.com/uploadcare/blocks/compare/v0.42.0...v0.42.1) (2024-05-30)
 

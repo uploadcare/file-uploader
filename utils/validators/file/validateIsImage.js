@@ -1,8 +1,8 @@
 // @ts-check
 
-/** @type import('../../../abstract/ValidationManager.js').FuncFileValidator */
-export const validateIsImage = (outputEntry, block) => {
-  const imagesOnly = block.cfg.imgOnly;
+/** @type {import('../../../abstract/ValidationManager.js').FuncFileValidator} */
+export const validateIsImage = (outputEntry, api) => {
+  const imagesOnly = api.cfg.imgOnly;
   const isImage = outputEntry.isImage;
 
   if (!imagesOnly || isImage) {
@@ -19,7 +19,7 @@ export const validateIsImage = (outputEntry, block) => {
 
   return {
     type: 'NOT_AN_IMAGE',
-    message: block.l10n('images-only-accepted'),
+    message: api.l10n('images-only-accepted'),
     payload: { entry: outputEntry },
   };
 };

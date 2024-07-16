@@ -44,12 +44,9 @@ declare namespace JSX {
     'lr-upload-list': any;
     'lr-url-source': any;
     'lr-camera-source': any;
-    'lr-confirmation-dialog': any;
     'lr-progress-bar-common': any;
     'lr-progress-bar': any;
-    'lr-editable-canvas': any;
     'lr-external-source': any;
-    'lr-tabs': any;
     'lr-cloud-image-editor-activity': any;
     'lr-cloud-image-editor-block': CustomElement<
       CloudImageEditorBlock,

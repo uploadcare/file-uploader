@@ -3,6 +3,8 @@ import { ActivityBlock } from '../../../abstract/ActivityBlock.js';
 import { SolutionBlock } from '../../../abstract/SolutionBlock.js';
 
 export class FileUploaderInline extends SolutionBlock {
+  static styleAttrs = [...super.styleAttrs, 'lr-file-uploader-inline'];
+
   constructor() {
     super();
 
@@ -60,7 +62,7 @@ FileUploaderInline.template = /* HTML */ ` <lr-start-from>
     <button
       type="button"
       l10n="start-from-cancel"
-      class="cancel-btn secondary-btn"
+      class="uc-cancel-btn uc-secondary-btn"
       set="onclick: cancel; @hidden: !couldCancel"
     ></button>
     <lr-copyright></lr-copyright>

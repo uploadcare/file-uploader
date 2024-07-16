@@ -4,6 +4,13 @@
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="./solutions/file-uploader/regular/index.css">
+  <style>
+    @media (prefers-color-scheme: dark) {
+      body {
+        background-color: #121213;
+      }
+    }
+  </style>
   <script
     async=""
     src="https://cdn.skypack.dev/-/es-module-shims@v1.5.8-O0uWfhbenfjMbv6D3d8E/dist=es2020,mode=raw,min/dist/es-module-shims.js"
@@ -13,7 +20,8 @@
       "imports": {
         "@symbiotejs/symbiote": "./node_modules/@symbiotejs/symbiote/build/symbiote.js",
         "@uploadcare/upload-client": "./node_modules/@uploadcare/upload-client/dist/esm/index.browser.mjs",
-        "@uploadcare/image-shrink": "./node_modules/@uploadcare/image-shrink/dist/esm/index.browser.mjs"
+        "@uploadcare/image-shrink": "./node_modules/@uploadcare/image-shrink/dist/esm/index.browser.mjs",
+        "keyux": "./node_modules/keyux/index.js"
       }
     }
   </script>

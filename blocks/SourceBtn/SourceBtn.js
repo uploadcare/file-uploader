@@ -39,7 +39,7 @@ export class SourceBtn extends UploaderBlock {
     this.registerType({
       type: UploaderBlock.sourceTypes.LOCAL,
       activate: () => {
-        this.openSystemDialog();
+        this.api.openSystemDialog();
         return false;
       },
     });
@@ -54,7 +54,7 @@ export class SourceBtn extends UploaderBlock {
       activate: () => {
         const supportsCapture = 'capture' in document.createElement('input');
         if (supportsCapture) {
-          this.openSystemDialog({ captureCamera: true });
+          this.api.openSystemDialog({ captureCamera: true });
         }
         return !supportsCapture;
       },
@@ -80,7 +80,6 @@ export class SourceBtn extends UploaderBlock {
     super.initCallback();
     this.initTypes();
 
-    this.setAttribute('role', 'button');
     this.defineAccessor(
       'type',
       /** @param {string} val */
@@ -133,9 +132,12 @@ export class SourceBtn extends UploaderBlock {
     };
   }
 }
+
 SourceBtn.template = /* HTML */ `
-  <lr-icon set="@name: iconName"></lr-icon>
-  <div class="txt" l10n="src-type"></div>
+  <button type="button">
+    <lr-icon set="@name: iconName"></lr-icon>
+    <div class="uc-txt" l10n="src-type"></div>
+  </button>
 `;
 SourceBtn.bindAttributes({
   // @ts-expect-error symbiote types bug

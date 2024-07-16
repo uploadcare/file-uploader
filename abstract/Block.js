@@ -12,6 +12,7 @@ import { blockCtx } from './CTX.js';
 import { LocaleManager, localeStateKey } from './LocaleManager.js';
 import { l10nProcessor } from './l10nProcessor.js';
 import { sharedConfigKey } from './sharedConfigKey.js';
+import { A11y } from './a11y.js';
 
 const TAG_PREFIX = 'lr-';
 
@@ -19,9 +20,13 @@ const TAG_PREFIX = 'lr-';
 export class Block extends BaseComponent {
   /** @type {string | null} */
   static StateConsumerScope = null;
-  static className = '';
+
+  /** @type {string[]} */
+  static styleAttrs = [];
+
+  /** @protected */
   requireCtxName = false;
-  allowCustomTemplate = true;
+
   /** @type {import('./ActivityBlock.js').ActivityType} */
   activityType = null;
 
@@ -49,6 +54,7 @@ export class Block extends BaseComponent {
   }
 
   /**
+   * @private
    * @param {string} key
    * @param {number} count
    * @returns {string}
@@ -62,6 +68,7 @@ export class Block extends BaseComponent {
   /**
    * @param {string} key
    * @param {() => void} resolver
+   * @protected
    */
   bindL10n(key, resolver) {
     this.localeManager?.bindL10n(this, key, resolver);
@@ -94,10 +101,7 @@ export class Block extends BaseComponent {
    * @returns {Boolean}
    */
   hasBlockInCtx(callback) {
-    // @ts-ignore TODO: fix this
-    /** @type {Set} */
-    let blocksRegistry = this.$['*blocksRegistry'];
-    for (let block of blocksRegistry) {
+    for (let block of this.blocksRegistry) {
       if (callback(block)) {
         return true;
       }
@@ -118,20 +122,12 @@ export class Block extends BaseComponent {
     );
   }
 
-  /** @param {import('./ActivityBlock.js').ActivityType} activityType */
-  setActivity(activityType) {
-    if (this.hasBlockInCtx((b) => b.activityType === activityType)) {
-      this.$['*currentActivity'] = activityType;
-      return;
-    }
-    console.warn(`Activity type "${activityType}" not found in the context`);
-  }
-
+  /** @protected */
   connectedCallback() {
-    const className = /** @type {typeof Block} */ (this.constructor).className;
-    if (className) {
-      this.classList.toggle(`${TAG_PREFIX}${className}`, true);
-    }
+    const styleAttrs = /** @type {typeof Block} */ (this.constructor).styleAttrs;
+    styleAttrs.forEach((attr) => {
+      this.setAttribute(attr, '');
+    });
 
     if (this.hasAttribute('retpl')) {
       // @ts-ignore TODO: fix this
@@ -158,11 +154,13 @@ export class Block extends BaseComponent {
     WindowHeightTracker.registerClient(this);
   }
 
+  /** @protected */
   disconnectedCallback() {
     super.disconnectedCallback();
     WindowHeightTracker.unregisterClient(this);
   }
 
+  /** @protected */
   initCallback() {
     if (!this.has('*blocksRegistry')) {
       this.add('*blocksRegistry', new Set());
@@ -178,20 +176,41 @@ export class Block extends BaseComponent {
       this.add('*localeManager', new LocaleManager(this));
     }
 
+    if (!this.has('*a11y')) {
+      this.add('*a11y', new A11y());
+    }
+
     this.sub(localeStateKey('locale-id'), (localeId) => {
-      this.style.direction = getLocaleDirection(localeId);
+      const direction = getLocaleDirection(localeId);
+      this.style.direction = direction === 'ltr' ? '' : direction;
     });
   }
 
-  /** @returns {LocaleManager | null} */
+  /**
+   * @private
+   * @returns {LocaleManager | null}
+   */
   get localeManager() {
     return this.has('*localeManager') ? this.$['*localeManager'] : null;
   }
 
+  /**
+   * @returns {A11y | null}
+   * @protected
+   */
+  get a11y() {
+    return this.has('*a11y') ? this.$['*a11y'] : null;
+  }
+
+  /** @type {Set<Block>} */
+  get blocksRegistry() {
+    return this.$['*blocksRegistry'];
+  }
+
+  /** @protected */
   destroyCallback() {
-    /** @type {Set<Block>} */
-    let blocksRegistry = this.$['*blocksRegistry'];
-    blocksRegistry.delete(this);
+    let blocksRegistry = this.blocksRegistry;
+    blocksRegistry?.delete(this);
 
     this.localeManager?.destroyL10nBindings(this);
     this.l10nProcessorSubs = new Map();
@@ -200,7 +219,7 @@ export class Block extends BaseComponent {
     // TODO: this should be done inside symbiote
     Data.deleteCtx(this);
 
-    if (blocksRegistry.size === 0) {
+    if (blocksRegistry?.size === 0) {
       setTimeout(() => {
         // Destroy global context after all blocks are destroyed and all callbacks are run
         this.destroyCtxCallback();
@@ -220,25 +239,10 @@ export class Block extends BaseComponent {
   }
 
   /**
-   * @param {Number} bytes
-   * @param {Number} [decimals]
+   * @param {String} url
+   * @returns {Promise<String>}
+   * @protected
    */
-  fileSizeFmt(bytes, decimals = 2) {
-    let units = ['B', 'KB', 'MB', 'GB', 'TB'];
-    /**
-     * @param {String} str
-     * @returns {String}
-     */
-    if (bytes === 0) {
-      return `0 ${units[0]}`;
-    }
-    let k = 1024;
-    let dm = decimals < 0 ? 0 : decimals;
-    let i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / k ** i).toFixed(dm)) + ' ' + units[i];
-  }
-
-  /** @param {string} url */
   async proxyUrl(url) {
     if (this.cfg.secureDeliveryProxy && this.cfg.secureDeliveryProxyUrlResolver) {
       console.warn(

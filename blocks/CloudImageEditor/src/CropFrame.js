@@ -187,9 +187,9 @@ export class CropFrame extends Block {
       let disableThumb = this._shouldThumbBeDisabled(direction);
       groupNode.setAttribute(
         'class',
-        classNames('thumb', {
-          'thumb--hidden': disableThumb,
-          'thumb--visible': !disableThumb,
+        classNames('uc-thumb', {
+          'uc-thumb--hidden': disableThumb,
+          'uc-thumb--visible': !disableThumb,
         }),
       );
     }
@@ -220,7 +220,7 @@ export class CropFrame extends Block {
       for (let j = 0; j < 3; j++) {
         let direction = /** @type {import('./types.js').Direction} */ (`${['n', '', 's'][i]}${['w', '', 'e'][j]}`);
         let groupNode = createSvgNode('g');
-        groupNode.classList.add('thumb');
+        groupNode.classList.add('uc-thumb');
         groupNode.setAttribute('with-effects', '');
         let interactionNode = createSvgNode('rect', {
           fill: 'transparent',
@@ -256,7 +256,7 @@ export class CropFrame extends Block {
       width: '100%',
       height: '100%',
       fill: 'none',
-      stroke: '#000000',
+      stroke: 'currentColor',
       'stroke-width': GUIDE_STROKE_WIDTH,
       'stroke-opacity': 0.5,
     });
@@ -268,7 +268,7 @@ export class CropFrame extends Block {
         y1: `0%`,
         x2: `${GUIDE_THIRD * i}%`,
         y2: `100%`,
-        stroke: '#000000',
+        stroke: 'currentColor',
         'stroke-width': GUIDE_STROKE_WIDTH,
         'stroke-opacity': 0.3,
       });
@@ -281,14 +281,14 @@ export class CropFrame extends Block {
         y1: `${GUIDE_THIRD * i}%`,
         x2: `100%`,
         y2: `${GUIDE_THIRD * i}%`,
-        stroke: '#000000',
+        stroke: 'currentColor',
         'stroke-width': GUIDE_STROKE_WIDTH,
         'stroke-opacity': 0.3,
       });
       svg.appendChild(line);
     }
 
-    svg.classList.add('guides', 'guides--semi-hidden');
+    svg.classList.add('uc-guides', 'uc-guides--semi-hidden');
 
     return svg;
   }
@@ -452,9 +452,9 @@ export class CropFrame extends Block {
       .forEach((groupNode) => {
         groupNode.setAttribute(
           'class',
-          classNames('thumb', {
-            'thumb--hidden': !visible,
-            'thumb--visible': visible,
+          classNames('uc-thumb', {
+            'uc-thumb--hidden': !visible,
+            'uc-thumb--visible': visible,
           }),
         );
       });
@@ -488,9 +488,9 @@ export class CropFrame extends Block {
       this._frameGuides.setAttribute(
         'class',
         classNames({
-          'guides--hidden': this._guidesHidden,
-          'guides--visible': !this._guidesHidden && dragging,
-          'guides--semi-hidden': !this._guidesHidden && !dragging,
+          'uc-guides--hidden': this._guidesHidden,
+          'uc-guides--visible': !this._guidesHidden && dragging,
+          'uc-guides--semi-hidden': !this._guidesHidden && !dragging,
         }),
       );
     });
@@ -508,4 +508,4 @@ export class CropFrame extends Block {
   }
 }
 
-CropFrame.template = /* HTML */ ` <svg class="svg" ref="svg-el" xmlns="http://www.w3.org/2000/svg"></svg> `;
+CropFrame.template = /* HTML */ ` <svg class="uc-svg" ref="svg-el" xmlns="http://www.w3.org/2000/svg"></svg> `;

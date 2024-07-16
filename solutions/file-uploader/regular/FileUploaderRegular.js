@@ -1,9 +1,11 @@
 // @ts-check
 import { SolutionBlock } from '../../../abstract/SolutionBlock.js';
-import { EventType } from '../../../blocks/UploadCtxProvider/EventEmitter.js';
 import { asBoolean } from '../../../blocks/Config/normalizeConfigValue.js';
+import { EventType } from '../../../blocks/UploadCtxProvider/EventEmitter.js';
 
 export class FileUploaderRegular extends SolutionBlock {
+  static styleAttrs = [...super.styleAttrs, 'lr-file-uploader-regular'];
+
   constructor() {
     super();
 
@@ -45,7 +47,7 @@ FileUploaderRegular.template = /* HTML */ `
     <lr-start-from>
       <lr-drop-area with-icon clickable></lr-drop-area>
       <lr-source-list wrap></lr-source-list>
-      <button type="button" l10n="start-from-cancel" class="secondary-btn" set="onclick: *historyBack"></button>
+      <button type="button" l10n="start-from-cancel" class="uc-secondary-btn" set="onclick: *historyBack"></button>
       <lr-copyright></lr-copyright>
     </lr-start-from>
     <lr-upload-list></lr-upload-list>

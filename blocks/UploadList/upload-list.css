@@ -4,42 +4,42 @@ lr-upload-list {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background-color: var(--clr-background-light);
-  transition: opacity var(--transition-duration);
+  background-color: var(--uc-background);
+  transition: opacity var(--uc-transition);
 }
 
-lr-modal lr-upload-list {
-  width: min(calc(var(--modal-normal-w) - var(--gap-mid) * 2), calc(100vw - var(--gap-mid) * 2));
+[lr-modal] lr-upload-list {
+  width: min(
+    calc(var(--uc-dialog-width) - var(--uc-padding) * 2),
+    calc(var(--uc-dialog-max-width) - var(--uc-padding) * 2),
+    calc(100vw - var(--uc-padding) * 2)
+  );
   height: max-content;
   max-height: var(--modal-max-content-height);
 }
 
-lr-upload-list .no-files {
-  height: var(--ui-size);
-  padding: var(--gap-max);
+lr-upload-list .uc-no-files {
+  height: 32px;
+  padding: 20px;
 }
 
-lr-upload-list .files {
+lr-upload-list .uc-files {
   display: block;
   flex: 1;
-  min-height: var(--ui-size);
-  padding: 0 var(--gap-mid);
+  min-height: 32px;
+  padding: 0 var(--uc-padding);
   overflow: auto;
 }
 
-lr-upload-list .toolbar {
+lr-upload-list .uc-toolbar {
   display: flex;
-  gap: var(--gap-small);
+  gap: 4px;
   justify-content: space-between;
-  padding: var(--gap-mid);
-  background-color: var(--clr-background-light);
+  padding: var(--uc-padding);
+  background-color: var(--uc-background);
 }
 
-lr-upload-list .toolbar .add-more-btn {
-  padding-left: 0.2em;
-}
-
-lr-upload-list .toolbar-spacer {
+lr-upload-list .uc-toolbar-spacer {
   flex: 1;
 }
 
@@ -47,24 +47,28 @@ lr-upload-list lr-drop-area {
   position: absolute;
   top: 0;
   left: 0;
-  width: calc(100% - var(--gap-mid) * 2);
-  height: calc(100% - var(--gap-mid) * 2);
-  margin: var(--gap-mid);
-  border-radius: var(--border-radius-element);
+  width: calc(100% - var(--uc-padding) * 2);
+  height: calc(100% - var(--uc-padding) * 2);
+  margin: var(--uc-padding);
+  border-radius: var(--uc-radius);
 }
 
-lr-upload-list lr-activity-header > .header-text {
-  padding: 0 var(--gap-mid);
+lr-upload-list lr-activity-header > .uc-header-text {
+  padding: 0 var(--uc-padding);
 }
 
-lr-upload-list .common-error {
-  border-radius: var(--border-radius-element);
-  color: var(--clr-error);
-  background-color: var(--clr-error-message-bgr);
+lr-upload-list .uc-common-error {
+  border-radius: var(--uc-radius);
+  color: var(--uc-destructive-foreground);
+  background-color: var(--uc-destructive);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--gap-mid);
-  margin: var(--gap-small) var(--gap-mid) 0 var(--gap-mid);
-  font-size: 0.95em;
+  padding: var(--uc-padding);
+  margin: 4px var(--uc-padding) 0 var(--uc-padding);
+  font-size: 0.925em;
+}
+
+lr-upload-list .uc-add-more-btn lr-icon {
+  display: none;
 }

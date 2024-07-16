@@ -49,7 +49,7 @@ export class ExternalSource extends UploaderBlock {
           const url = this.extractUrlFromMessage(message);
           const { filename } = message;
           const { externalSourceType } = this.activityParams;
-          this.addFileFromUrl(url, { fileName: filename, source: externalSourceType });
+          this.api.addFileFromUrl(url, { fileName: filename, source: externalSourceType });
         }
 
         this.$['*currentActivity'] = ActivityBlock.activities.UPLOAD_LIST;
@@ -72,6 +72,13 @@ export class ExternalSource extends UploaderBlock {
       onActivate: () => {
         let { externalSourceType } = /** @type {ActivityParams} */ (this.activityParams);
 
+        if (!externalSourceType) {
+          this.$['*currentActivity'] = null;
+          this.setOrAddState('*modalActive', false);
+          console.error(`Param "externalSourceType" is required for activity "${this.activityType}"`);
+          return;
+        }
+
         this.set$({
           activityCaption: `${externalSourceType?.[0].toUpperCase()}${externalSourceType?.slice(1)}`,
           activityIcon: externalSourceType,
@@ -79,6 +86,13 @@ export class ExternalSource extends UploaderBlock {
 
         this.mountIframe();
       },
+    });
+    this.sub('*currentActivityParams', (val) => {
+      if (!this.isActivityActive) {
+        return;
+      }
+      this.unmountIframe();
+      this.mountIframe();
     });
     this.sub('*currentActivity', (val) => {
       if (val !== this.activityType) {
@@ -154,11 +168,16 @@ export class ExternalSource extends UploaderBlock {
   /** @private */
   applyStyles() {
     let colors = {
-      backgroundColor: this.getCssValue('--clr-background-light'),
-      textColor: this.getCssValue('--clr-txt'),
-      shadeColor: this.getCssValue('--clr-shade-lv1'),
-      linkColor: '#157cfc',
-      linkColorHover: '#3891ff',
+      radius: this.getCssValue('--uc-radius'),
+      backgroundColor: this.getCssValue('--uc-background'),
+      textColor: this.getCssValue('--uc-foreground'),
+      secondaryColor: this.getCssValue('--uc-secondary'),
+      secondaryForegroundColor: this.getCssValue('--uc-secondary-foreground'),
+      secondaryHover: this.getCssValue('--uc-secondary-hover'),
+      linkColor: this.getCssValue('--uc-primary'),
+      linkColorHover: this.getCssValue('--uc-primary-hover'),
+      fontFamily: this.getCssValue('--uc-font-family'),
+      fontSize: this.getCssValue('--uc-font-size'),
     };
 
     this.sendMessage({
@@ -221,26 +240,29 @@ export class ExternalSource extends UploaderBlock {
 
 ExternalSource.template = /* HTML */ `
   <lr-activity-header>
-    <button type="button" class="mini-btn" set="onclick: *historyBack">
+    <button type="button" class="uc-mini-btn" set="onclick: *historyBack">
       <lr-icon name="back"></lr-icon>
     </button>
     <div>
       <lr-icon set="@name: activityIcon"></lr-icon>
       <span>{{activityCaption}}</span>
     </div>
-    <button type="button" class="mini-btn close-btn" set="onclick: *historyBack">
+    <button type="button" class="uc-mini-btn uc-close-btn" set="onclick: *historyBack">
       <lr-icon name="close"></lr-icon>
     </button>
   </lr-activity-header>
-  <div class="content">
-    <div ref="iframeWrapper" class="iframe-wrapper"></div>
-    <div class="toolbar">
-      <button type="button" class="cancel-btn secondary-btn" set="onclick: onCancel" l10n="cancel"></button>
+  <div class="uc-content">
+    <div ref="iframeWrapper" class="uc-iframe-wrapper"></div>
+    <div class="uc-toolbar">
+      <button type="button" class="uc-cancel-btn uc-secondary-btn" set="onclick: onCancel" l10n="cancel"></button>
       <div></div>
-      <div set="@hidden: !multiple" class="selected-counter"><span l10n="selected-count"></span>{{counter}}</div>
-      <button type="button" class="done-btn primary-btn" set="onclick: onDone; @disabled: !counter">
-        <lr-icon name="check"></lr-icon>
-      </button>
+      <div set="@hidden: !multiple" class="uc-selected-counter"><span l10n="selected-count"></span>{{counter}}</div>
+      <button
+        type="button"
+        class="uc-done-btn uc-primary-btn"
+        set="onclick: onDone; @disabled: !counter"
+        l10n="done"
+      ></button>
     </div>
   </div>
 `;

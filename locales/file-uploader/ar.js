@@ -108,4 +108,6 @@ export default {
   'images-only-accepted': 'يتم قبول ملفات الصور فقط.',
   'file-type-not-allowed': 'رفع هذه أنواع الملفات غير مسموح به.',
   'some-files-were-not-uploaded': 'لم يتم رفع بعض الملفات.',
+  'file-item-edit-button': 'زر التحرير',
+  'file-item-remove-button': 'زر الإزالة',
 };

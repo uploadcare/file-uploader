@@ -105,4 +105,6 @@ export default {
   'images-only-accepted': 'Přijímány jsou pouze obrázkové soubory.',
   'file-type-not-allowed': 'Nahrávání těchto typů souborů není povoleno.',
   'some-files-were-not-uploaded': 'Některé soubory nebyly nahrány.',
+  'file-item-edit-button': 'Tlačítko upravit',
+  'file-item-remove-button': 'Tlačítko odstranit',
 };

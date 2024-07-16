@@ -66,7 +66,7 @@ export class CameraSource extends UploaderBlock {
    * @param {'granted' | 'denied' | 'prompt'} state
    */
   _setPermissionsState = debounce((state) => {
-    this.classList.toggle('initialized', state === 'granted');
+    this.classList.toggle('uc-initialized', state === 'granted');
 
     if (state === 'granted') {
       this.set$({
@@ -171,7 +171,7 @@ export class CameraSource extends UploaderBlock {
         lastModified: date,
         type: format,
       });
-      this.addFileFromObject(file, { source: UploadSource.CAMERA });
+      this.api.addFileFromObject(file, { source: UploadSource.CAMERA });
       this.set$({
         '*currentActivity': ActivityBlock.activities.UPLOAD_LIST,
       });
@@ -215,7 +215,7 @@ export class CameraSource extends UploaderBlock {
 
 CameraSource.template = /* HTML */ `
   <lr-activity-header>
-    <button type="button" class="mini-btn" set="onclick: *historyBack">
+    <button type="button" class="uc-mini-btn" set="onclick: *historyBack">
       <lr-icon name="back"></lr-icon>
     </button>
     <div set="@hidden: !cameraSelectHidden">
@@ -223,22 +223,22 @@ CameraSource.template = /* HTML */ `
       <span l10n="caption-camera"></span>
     </div>
     <lr-select
-      class="camera-select"
+      class="uc-camera-select"
       set="$.options: cameraSelectOptions; @hidden: cameraSelectHidden; onchange: onCameraSelectChange"
     >
     </lr-select>
-    <button type="button" class="mini-btn close-btn" set="onclick: *closeModal">
+    <button type="button" class="uc-mini-btn uc-close-btn" set="onclick: *closeModal">
       <lr-icon name="close"></lr-icon>
     </button>
   </lr-activity-header>
-  <div class="content">
+  <div class="uc-content">
     <video
       autoplay
       playsinline
       set="srcObject: video; style.transform: videoTransformCss; @hidden: videoHidden"
       ref="video"
     ></video>
-    <div class="message-box" set="@hidden: messageHidden">
+    <div class="uc-message-box" set="@hidden: messageHidden">
       <span l10n="l10nMessage"></span>
       <button
         type="button"
@@ -246,7 +246,7 @@ CameraSource.template = /* HTML */ `
         l10n="camera-permissions-request"
       ></button>
     </div>
-    <button type="button" class="shot-btn" set="onclick: onShot; @disabled: shotBtnDisabled">
+    <button type="button" class="uc-shot-btn" set="onclick: onShot; @disabled: shotBtnDisabled">
       <lr-icon name="camera"></lr-icon>
     </button>
   </div>

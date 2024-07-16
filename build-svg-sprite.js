@@ -69,7 +69,9 @@ DATA.forEach((item) => {
         throw error;
       }
 
-      const jsTemplate = `export default "${result.symbol.sprite.contents.toString().replace(/\"/g, "'")}";`;
+      const jsTemplate = `export default "${result.symbol.sprite.contents.toString().replace(/\"/g, "'")}";`
+        .trim()
+        .concat('\n');
 
       fs.writeFileSync(item.output, jsTemplate);
     });
