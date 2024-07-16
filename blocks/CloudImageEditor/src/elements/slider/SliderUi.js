@@ -140,8 +140,8 @@ export class SliderUi extends Block {
     let fr = document.createDocumentFragment();
     let minorStepEl = document.createElement('div');
     let borderStepEl = document.createElement('div');
-    minorStepEl.className = 'minor-step';
-    borderStepEl.className = 'border-step';
+    minorStepEl.className = 'uc-minor-step';
+    borderStepEl.className = 'uc-border-step';
     fr.appendChild(borderStepEl);
     for (let i = 0; i < count; i++) {
       fr.appendChild(minorStepEl.cloneNode());
@@ -153,7 +153,7 @@ export class SliderUi extends Block {
     fr.appendChild(borderStepEl.cloneNode());
 
     let zeroDotEl = document.createElement('div');
-    zeroDotEl.className = 'zero-dot';
+    zeroDotEl.className = 'uc-zero-dot';
     fr.appendChild(zeroDotEl);
     this._zeroDotEl = zeroDotEl;
 
