@@ -132,7 +132,7 @@ export class FileItem extends UploaderBlock {
 
     if (entry.getValue('fileInfo') && entry.getValue('isImage')) {
       let size = this.cfg.thumbSize;
-      let thumbUrl = this.proxyUrl(
+      let thumbUrl = await this.proxyUrl(
         createCdnUrl(
           createOriginalUrl(this.cfg.cdnCname, this._entry.getValue('uuid')),
           createCdnUrlModifiers(entry.getValue('cdnUrlModifiers'), `scale_crop/${size}x${size}/center`),

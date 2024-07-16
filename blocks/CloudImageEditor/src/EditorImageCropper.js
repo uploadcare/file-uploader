@@ -461,7 +461,7 @@ export class EditorImageCropper extends Block {
    * @param {import('./types.js').Transformations} transformations
    * @returns {Promise<HTMLImageElement>}
    */
-  _waitForImage(originalUrl, transformations) {
+  async _waitForImage(originalUrl, transformations) {
     let width = this.offsetWidth;
     transformations = {
       ...transformations,
@@ -470,13 +470,13 @@ export class EditorImageCropper extends Block {
       flip: undefined,
       mirror: undefined,
     };
-    let src = this.proxyUrl(viewerImageSrc(originalUrl, width, transformations));
+    let src = await this.proxyUrl(viewerImageSrc(originalUrl, width, transformations));
     let { promise, cancel, image } = preloadImage(src);
 
     let stop = this._handleImageLoading(src);
     image.addEventListener('load', stop, { once: true });
     image.addEventListener('error', stop, { once: true });
-    this._cancelPreload && this._cancelPreload();
+    this._cancelPreload?.();
     this._cancelPreload = cancel;
 
     return promise
