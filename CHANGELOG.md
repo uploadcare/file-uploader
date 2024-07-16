@@ -1,3 +1,9 @@
+## [0.50.1](https://github.com/uploadcare/blocks/compare/v0.50.0...v0.50.1) (2024-07-16)
+
+### Bug Fixes
+
+- **styles:** added prefix uc- to className in the js ([#700](https://github.com/uploadcare/blocks/issues/700)) ([672c5c3](https://github.com/uploadcare/blocks/commit/672c5c3f15ce7bb54027ae2ba77217c3aa622824))
+
 # [0.50.0](https://github.com/uploadcare/blocks/compare/v0.49.0...v0.50.0) (2024-07-16)
 
 ### Features
