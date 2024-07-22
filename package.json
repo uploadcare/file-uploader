@@ -1,5 +1,5 @@
 {
-  "name": "@uploadcare/blocks",
+  "name": "@uploadcare/file-uploader",
   "version": "0.50.1",
   "description": "Building blocks for Uploadcare products integration",
   "keywords": [
