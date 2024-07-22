@@ -22,7 +22,7 @@
   </head>
   <body>
     <script type="module">
-      import * as LR from './index.js';
+      import * as UC from './index.js';
 
       import { default as ar } from './locales/file-uploader/ar.js';
       import { default as az } from './locales/file-uploader/az.js';
@@ -97,10 +97,10 @@
       };
 
       for (const [key, definition] of Object.entries(allLocales)) {
-        LR.defineLocale(key, definition);
+        UC.defineLocale(key, definition);
       }
 
-      LR.registerBlocks(LR);
+      UC.registerBlocks(UC);
 
       const config = document.querySelector('uc-config');
 

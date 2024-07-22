@@ -19,10 +19,10 @@
     }
   </script>
   <script type="module">
-    import * as LR from './index.js';
-    LR.registerBlocks(LR);
+    import * as UC from './index.js';
+    UC.registerBlocks(UC);
 
-    LR.defineLocale('ru', () => import('./locales/file-uploader/ru.js').then((m) => m.default));
+    UC.defineLocale('ru', () => import('./locales/file-uploader/ru.js').then((m) => m.default));
   </script>
   <style>
     .uc-cloud-image-editor {

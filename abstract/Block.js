@@ -337,11 +337,11 @@ export class Block extends BaseComponent {
       return;
     }
     if (name.startsWith(TAG_PREFIX)) {
-      super.reg(name.startsWith(TAG_PREFIX) ? name : TAG_PREFIX + name, isAlias);
+      super.reg(name, isAlias);
     }
 
     if (name.startsWith(LEGACY_TAG_PREFIX)) {
-      super.reg(name.startsWith(LEGACY_TAG_PREFIX) ? name : LEGACY_TAG_PREFIX + name, isAlias);
+      super.reg(name, isAlias);
     }
   }
 }

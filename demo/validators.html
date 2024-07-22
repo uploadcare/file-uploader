@@ -16,22 +16,22 @@
     }
   </script>
 	<script type="module">
-		import * as LR from './index.js';
+		import * as UC from './index.js';
 		import { default as en } from './locales/file-uploader/en.js';
 		import { default as fr } from './locales/file-uploader/fr.js';
 
-		LR.defineLocale('en', {
+		UC.defineLocale('en', {
 			...en, ...{
 				'file-is-not-an-image-type': 'File is not an image type'
 			}
 		})
-		LR.defineLocale('fr', {
+		UC.defineLocale('fr', {
 			...fr, ...{
 				'file-is-not-an-image-type': "Le fichier n'est pas une image",
 			}
 		})
 
-		LR.registerBlocks(LR);
+		UC.registerBlocks(UC);
 	</script>
 </head>
 

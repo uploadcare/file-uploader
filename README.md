@@ -71,9 +71,9 @@ We use [JSDoc type annotations](https://www.typescriptlang.org/docs/handbook/int
 
 ```html
 <script type="module">
-  import * as LR from 'https://cdn.jsdelivr.net/npm/@uploadcare/blocks@{{PACKAGE_VERSION}}/web/blocks.min.js';
+  import * as UC from 'https://cdn.jsdelivr.net/npm/@uploadcare/blocks@{{PACKAGE_VERSION}}/web/blocks.min.js';
 
-  LR.registerBlocks(LR);
+  UC.registerBlocks(UC);
 </script>
 ```
 
@@ -96,9 +96,9 @@ We use [JSDoc type annotations](https://www.typescriptlang.org/docs/handbook/int
 2. Connect `Blocks` from your script file:
 
 ```js
-import * as LR from '@uploadcare/blocks';
+import * as UC from '@uploadcare/blocks';
 
-LR.registerBlocks(LR);
+UC.registerBlocks(UC);
 ```
 
 3. Start using Uploadcare Blocks in your application markup and replace `{{PACKAGE_VERSION}}` with the [latest version](https://github.com/uploadcare/blocks/releases) of the package:
