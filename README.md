@@ -16,13 +16,13 @@
   <a href="https://twitter.com/Uploadcare?ref=github-readme">Twitter</a>
 </p>
 
-# 📦 Uploadcare Blocks: stack-agnostic library for uploading, processing, and editing images on-the-fly
+# 📦 Uploadcare File Uploader: stack-agnostic library for uploading, processing, and editing images on-the-fly
 
-[![npm version](https://badge.fury.io/js/@uploadcare%2Fblocks.svg)](https://www.npmjs.com/package/@uploadcare/blocks)
+[![npm version](https://badge.fury.io/js/@uploadcare%2Fblocks.svg)](https://www.npmjs.com/package/@uploadcare/file-uploader)
 [![GitHub Actions](https://github.com/uploadcare/blocks/workflows/checks/badge.svg)](https://github.com/uploadcare/blocks/actions?query=workflow%3ABuild+branch%3Amaster)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
-_Uploadcare Blocks_ is a powerful JavaScript library for creating custom file-handling services.
+_Uploadcare File Uploader_ is a powerful JavaScript library for creating custom file-handling services.
 It includes various interactive and customizable UI components to enhance users' file uploading
 and processing experience. As a bonus, you receive all the
 [Uploadcare's](https://uploadcare.com/?ref=github-readme) versatile file-handling capabilities,
@@ -31,9 +31,9 @@ including [smart CDN](https://uploadcare.com/docs/delivery/cdn/#content-delivery
 [signed uploads](https://uploadcare.com/docs/security/secure-uploads/?ref=github-readme),
 and [even more](<(https://uploadcare.com/features/?ref=github-readme)>).
 
-See Uploadcare Blocks [in action](https://codesandbox.io/p/devbox/github/uploadcare/blocks-examples/tree/main/examples/js-uploader)!
+See Uploadcare File Uploader [in action](https://codesandbox.io/p/devbox/github/uploadcare/blocks-examples/tree/main/examples/js-uploader)!
 
-<img alt="Uploadcare Blocks examples" src="https://ucarecdn.com/2883da9f-6962-49db-9947-f91a3e25be2f/-/preview/">
+<img alt="Uploadcare File Uploader examples" src="https://ucarecdn.com/2883da9f-6962-49db-9947-f91a3e25be2f/-/preview/">
 
 ## Core features
 
@@ -45,7 +45,7 @@ See Uploadcare Blocks [in action](https://codesandbox.io/p/devbox/github/uploadc
 
 * **Coming soon!** Web Components for any media content management like audio, video, image galleries, and more.
 
-## Why Uploadcare Blocks?
+## Why Uploadcare File Uploader?
 
 ### Rapid integration
 
@@ -53,11 +53,11 @@ We provide a ready-to-use set of UI components for file handling. It saves you v
 
 ### Cross-platform compatibility
 
-Uploadcare Blocks are designed to work seamlessly across various platforms and frameworks. Whether you're building a web application using React, Vue.js, Angular, Svelte, or other frameworks, you get [integrations and support](https://uploadcare.com/docs/integrations/?ref=github-readme) for various development environments.
+Uploadcare File Uploader are designed to work seamlessly across various platforms and frameworks. Whether you're building a web application using React, Vue.js, Angular, Svelte, or other frameworks, you get [integrations and support](https://uploadcare.com/docs/integrations/?ref=github-readme) for various development environments.
 
 ### Developer-friendly
 
-The library comes with modern technologies at your fingertips, like [Web Components](https://developer.mozilla.org/en-US/docs/Web/API/Web_components), [ESM-level](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules) code sharing, and other cutting-edge web standards. _Uploadcare Blocks_ is designed lightweight with minimum external dependencies for a cheap security audit.
+The library comes with modern technologies at your fingertips, like [Web Components](https://developer.mozilla.org/en-US/docs/Web/API/Web_components), [ESM-level](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules) code sharing, and other cutting-edge web standards. _Uploadcare File Uploader_ is designed lightweight with minimum external dependencies for a cheap security audit.
 
 ### Typescript support
 
@@ -67,56 +67,56 @@ We use [JSDoc type annotations](https://www.typescriptlang.org/docs/handbook/int
 
 ### From CDN
 
-1. Connect Uploadcare Blocks directly from your document replacing `{{PACKAGE_VERSION}}` with the [latest version](https://github.com/uploadcare/blocks/releases) of the package:
+1. Connect Uploadcare File Uploader directly from your document replacing `{{PACKAGE_VERSION}}` with the [latest version](https://github.com/uploadcare/blocks/releases) of the package:
 
 ```html
 <script type="module">
-  import * as LR from 'https://cdn.jsdelivr.net/npm/@uploadcare/blocks@{{PACKAGE_VERSION}}/web/blocks.min.js';
+  import * as LR from 'https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@{{PACKAGE_VERSION}}/web/blocks.min.js';
 
   LR.registerBlocks(LR);
 </script>
 ```
 
-2. Start using Uploadcare Blocks in your application markup (don't forget to specify `{{PACKAGE_VERSION}}` with the [latest one](https://github.com/uploadcare/blocks/releases)):
+2. Start using Uploadcare File Uploader in your application markup (don't forget to specify `{{PACKAGE_VERSION}}` with the [latest one](https://github.com/uploadcare/blocks/releases)):
 
 ```html
 <link
   rel="stylesheet"
-  href="https://cdn.jsdelivr.net/npm/@uploadcare/blocks@{{PACKAGE_VERSION}}/web/lr-file-uploader-regular.min.css"
+  href="https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@{{PACKAGE_VERSION}}/web/lr-file-uploader-regular.min.css"
 />
 
 <lr-file-uploader-regular ctx-name="my-uploader"> </lr-file-uploader-regular>
 ```
 
-3. Configure Uploadcare Blocks and add your personal public key to the project. Discover the instructions in the [following section](#configuration).
+3. Configure Uploadcare File Uploader and add your personal public key to the project. Discover the instructions in the [following section](#configuration).
 
 ### From NPM
 
-1. Install Uploadcare Blocks package: `npm i --save-exact @uploadcare/blocks`
+1. Install Uploadcare File Uploader package: `npm i --save-exact @uploadcare/file-uploader`
 2. Connect `Blocks` from your script file:
 
 ```js
-import * as LR from '@uploadcare/blocks';
+import * as LR from '@uploadcare/file-uploader';
 
 LR.registerBlocks(LR);
 ```
 
-3. Start using Uploadcare Blocks in your application markup and replace `{{PACKAGE_VERSION}}` with the [latest version](https://github.com/uploadcare/blocks/releases) of the package:
+3. Start using Uploadcare File Uploader in your application markup and replace `{{PACKAGE_VERSION}}` with the [latest version](https://github.com/uploadcare/blocks/releases) of the package:
 
 ```html
 <link
   rel="stylesheet"
-  href="https://cdn.jsdelivr.net/npm/@uploadcare/blocks@{{PACKAGE_VERSION}}/web/lr-file-uploader-regular.min.css"
+  href="https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@{{PACKAGE_VERSION}}/web/lr-file-uploader-regular.min.css"
 />
 
 <lr-file-uploader-inline ctx-name="my-uploader"> </lr-file-uploader-inline>
 ```
 
-4. Configure Uploadcare Blocks and add your personal public key to the project. Discover the instructions in the [following section](#configuration).
+4. Configure Uploadcare File Uploader and add your personal public key to the project. Discover the instructions in the [following section](#configuration).
 
 ### Configuration
 
-All configurations in Uploadcare Blocks are managed from `lr-config` block.
+All configurations in Uploadcare File Uploader are managed from `lr-config` block.
 
 1. Sign up to [Uploadcare](https://app.uploadcare.com/accounts/signup/?ref=github-readme).
 2. Get a Public API key in [Uploadcare project's dashboard](https://app.uploadcare.com/projects/-/api-keys/?ref=github-readme).
@@ -128,11 +128,11 @@ All configurations in Uploadcare Blocks are managed from `lr-config` block.
 
 4. Make sure that your config block uses the same `ctx-name` attribute value as your solution block.
 
-Discover more about Uploadcare Blocks configuration in [our documentation](https://uploadcare.com/docs/file-uploader/configuration/?ref=github-readme).
+Discover more about Uploadcare File Uploader configuration in [our documentation](https://uploadcare.com/docs/file-uploader/configuration/?ref=github-readme).
 
-### Deep dive in Uploadcare Blocks 🛠
+### Deep dive in Uploadcare File Uploader 🛠
 
-Follow our [step-by-step installation guide](https://uploadcare.com/docs/file-uploader/installation/?ref=github-readme) to launch Uploadcare Blocks in a few minutes and set it up based on your needs.
+Follow our [step-by-step installation guide](https://uploadcare.com/docs/file-uploader/installation/?ref=github-readme) to launch Uploadcare File Uploader in a few minutes and set it up based on your needs.
 
 ## Browser support
 
@@ -142,7 +142,7 @@ Internet Explorer is outdated and [not supported anymore](https://uploadcare.com
 
 ## Framework support
 
-_Uploadcare Blocks_ is a framework-agnostic solution, so you can use it with **any** runtime you like. Discover the integration examples:
+_Uploadcare File Uploader_ is a framework-agnostic solution, so you can use it with **any** runtime you like. Discover the integration examples:
 <br/>
 
 - [React](https://github.com/uploadcare/uc-blocks-examples/tree/main/examples/react-uploader)
