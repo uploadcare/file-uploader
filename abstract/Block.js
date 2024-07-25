@@ -15,7 +15,6 @@ import { sharedConfigKey } from './sharedConfigKey.js';
 import { A11y } from './a11y.js';
 
 const TAG_PREFIX = 'uc-';
-const LEGACY_TAG_PREFIX = 'lr-';
 
 // @ts-ignore TODO: fix this
 export class Block extends BaseComponent {
@@ -327,21 +326,14 @@ export class Block extends BaseComponent {
     console.log(`[${this.ctxName}]`, ...consoleArgs);
   }
 
-  /**
-   * @param {String} [name]
-   * @param {Boolean} [isAlias]
-   */
-  static reg(name, isAlias = false) {
+  /** @param {String} [name] */
+  static reg(name) {
     if (!name) {
       super.reg();
       return;
     }
     if (name.startsWith(TAG_PREFIX)) {
-      super.reg(name, isAlias);
-    }
-
-    if (name.startsWith(LEGACY_TAG_PREFIX)) {
-      super.reg(name, isAlias);
+      super.reg(name);
     }
   }
 }

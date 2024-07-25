@@ -71,7 +71,7 @@ We use [JSDoc type annotations](https://www.typescriptlang.org/docs/handbook/int
 
 ```html
 <script type="module">
-  import * as UC from 'https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@{{PACKAGE_VERSION}}/web/blocks.min.js';
+  import * as UC from 'https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@1/web/blocks.min.js';
 
   UC.registerBlocks(UC);
 </script>
@@ -82,7 +82,7 @@ We use [JSDoc type annotations](https://www.typescriptlang.org/docs/handbook/int
 ```html
 <link
   rel="stylesheet"
-  href="https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@{{PACKAGE_VERSION}}/web/uc-file-uploader-regular.min.css"
+  href="https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@1/web/uc-file-uploader-regular.min.css"
 />
 
 <uc-file-uploader-regular ctx-name="my-uploader"> </uc-file-uploader-regular>
@@ -92,7 +92,7 @@ We use [JSDoc type annotations](https://www.typescriptlang.org/docs/handbook/int
 
 ### From NPM
 
-1. Install Uploadcare Blocks package: `npm i --save-exact @uploadcare/file-uploader`
+1. Install Uploadcare Blocks package: `npm i @uploadcare/file-uploader`
 2. Connect `Blocks` from your script file:
 
 ```js
@@ -106,7 +106,7 @@ UC.registerBlocks(UC);
 ```html
 <link
   rel="stylesheet"
-  href="https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@{{PACKAGE_VERSION}}/web/uc-file-uploader-regular.min.css"
+  href="https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@1/web/uc-file-uploader-regular.min.css"
 />
 
 <uc-file-uploader-inline ctx-name="my-uploader"> </uc-file-uploader-inline>
