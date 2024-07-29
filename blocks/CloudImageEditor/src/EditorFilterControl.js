@@ -1,3 +1,4 @@
+// @ts-check
 import { createCdnUrl, createCdnUrlModifiers } from '../../../utils/cdn-utils.js';
 import { EditorButtonControl } from './EditorButtonControl.js';
 import { FAKE_ORIGINAL_FILTER } from './EditorSlider.js';
@@ -5,15 +6,19 @@ import { COMMON_OPERATIONS, transformationsToOperations } from './lib/transforma
 import { preloadImage } from './lib/preloadImage.js';
 
 export class EditorFilterControl extends EditorButtonControl {
-  init$ = {
-    ...this.init$,
-    active: false,
-    title: '',
-    icon: '',
-    isOriginal: false,
-    iconSize: '20',
-    'on.click': null,
-  };
+  constructor() {
+    super();
+
+    this.init$ = {
+      ...this.init$,
+      active: false,
+      title: '',
+      icon: '',
+      isOriginal: false,
+      iconSize: '20',
+      'on.click': null,
+    };
+  }
 
   _previewSrc() {
     let previewSize = parseInt(window.getComputedStyle(this).getPropertyValue('--l-base-min-width'), 10);
@@ -24,6 +29,7 @@ export class EditorFilterControl extends EditorButtonControl {
 
     /** @type {import('./types.js').Transformations} */
     let transformations = { ...this.$['*editorTransformations'] };
+    // @ts-expect-error FIXME: fix this
     transformations[this._operation] =
       this._filter !== FAKE_ORIGINAL_FILTER
         ? {
@@ -47,10 +53,10 @@ export class EditorFilterControl extends EditorButtonControl {
    * @param {IntersectionObserverEntry[]} entries
    * @param {IntersectionObserver} observer
    */
-  _observerCallback(entries, observer) {
+  async _observerCallback(entries, observer) {
     let intersectionEntry = entries[0];
     if (intersectionEntry.isIntersecting) {
-      let src = this.proxyUrl(this._previewSrc());
+      let src = await this.proxyUrl(this._previewSrc());
       let previewEl = this.ref['preview-el'];
       let { promise, cancel } = preloadImage(src);
       this._cancelPreload = cancel;
@@ -66,14 +72,14 @@ export class EditorFilterControl extends EditorButtonControl {
           observer.unobserve(this);
         });
     } else {
-      this._cancelPreload && this._cancelPreload();
+      this._cancelPreload?.();
     }
   }
 
   initCallback() {
     super.initCallback();
 
-    this.$['on.click'] = (e) => {
+    this.$['on.click'] = () => {
       if (!this.$.active) {
         this.$['*sliderEl'].setOperation(this._operation, this._filter);
         this.$['*sliderEl'].apply();
@@ -85,12 +91,16 @@ export class EditorFilterControl extends EditorButtonControl {
       this.$['*currentFilter'] = this._filter;
     };
 
-    this.defineAccessor('filter', (filter) => {
-      this._operation = 'filter';
-      this._filter = filter;
-      this.$.isOriginal = filter === FAKE_ORIGINAL_FILTER;
-      this.$.icon = this.$.isOriginal ? 'original' : 'slider';
-    });
+    this.defineAccessor(
+      'filter',
+      /** @param {string} filter */
+      (filter) => {
+        this._operation = 'filter';
+        this._filter = filter;
+        this.$.isOriginal = filter === FAKE_ORIGINAL_FILTER;
+        this.$.icon = this.$.isOriginal ? 'original' : 'slider';
+      },
+    );
 
     this._observer = new window.IntersectionObserver(this._observerCallback.bind(this), {
       threshold: [0, 1],
@@ -128,9 +138,9 @@ export class EditorFilterControl extends EditorButtonControl {
       }
     });
 
-    this.sub('*networkProblems', (networkProblems) => {
+    this.sub('*networkProblems', async (networkProblems) => {
       if (!networkProblems) {
-        let src = this.proxyUrl(this._previewSrc());
+        let src = await this.proxyUrl(this._previewSrc());
         let previewEl = this.ref['preview-el'];
         if (previewEl.style.backgroundImage) {
           previewEl.style.backgroundImage = 'none';
@@ -143,7 +153,7 @@ export class EditorFilterControl extends EditorButtonControl {
   destroyCallback() {
     super.destroyCallback();
     this._observer?.disconnect();
-    this._cancelPreload && this._cancelPreload();
+    this._cancelPreload?.();
   }
 }
 

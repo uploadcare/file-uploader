@@ -138,9 +138,9 @@ export class EditorImageFader extends Block {
    * @param {String} [options.filter]
    * @param {String} [options.operation]
    * @param {Number} [options.value]
-   * @returns {String}
+   * @returns {Promise<String>}
    */
-  _imageSrc({ url = this._url, filter = this._filter, operation, value } = {}) {
+  async _imageSrc({ url = this._url, filter = this._filter, operation, value } = {}) {
     let transformations = { ...this._transformations };
 
     if (operation) {
@@ -149,17 +149,17 @@ export class EditorImageFader extends Block {
 
     // do not use getBoundingClientRect because scale transform affects it
     let width = this.offsetWidth;
-    return this.proxyUrl(viewerImageSrc(url, width, transformations));
+    return await this.proxyUrl(viewerImageSrc(url, width, transformations));
   }
 
   /**
    * @private
    * @param {String} operation
    * @param {Number} value
-   * @returns {Keypoint}
+   * @returns {Promise<Keypoint>}
    */
-  _constructKeypoint(operation, value) {
-    let src = this._imageSrc({ operation, value });
+  async _constructKeypoint(operation, value) {
+    let src = await this._imageSrc({ operation, value });
     return {
       src,
       image: null,
@@ -187,14 +187,14 @@ export class EditorImageFader extends Block {
    * @param {String | null} filter
    * @param {Number} value
    */
-  _addKeypoint(operation, filter, value) {
+  async _addKeypoint(operation, filter, value) {
     let shouldSkip = () =>
       !this._isSame(operation, filter) || this._value !== value || !!this._keypoints.find((kp) => kp.value === value);
 
     if (shouldSkip()) {
       return;
     }
-    let keypoint = this._constructKeypoint(operation, value);
+    let keypoint = await this._constructKeypoint(operation, value);
     let image = new Image();
     image.src = keypoint.src;
     let stop = this._handleImageLoading(keypoint.src);
@@ -308,10 +308,10 @@ export class EditorImageFader extends Block {
   }
 
   /** @param {import('./types.js').Transformations} transformations */
-  setTransformations(transformations) {
+  async setTransformations(transformations) {
     this._transformations = transformations;
     if (this._previewImage) {
-      let src = this._imageSrc();
+      let src = await this._imageSrc();
       let stop = this._handleImageLoading(src);
       this._previewImage.src = src;
       this._previewImage.addEventListener('load', stop, { once: true });
@@ -335,11 +335,11 @@ export class EditorImageFader extends Block {
    * @param {Number} options.value
    * @param {String} [options.filter]
    */
-  preload({ url, filter, operation, value }) {
+  async preload({ url, filter, operation, value }) {
     this._cancelBatchPreload && this._cancelBatchPreload();
 
     let keypoints = keypointsRange(operation, value);
-    let srcList = keypoints.map((kp) => this._imageSrc({ url, filter, operation, value: kp }));
+    let srcList = await Promise.all(keypoints.map((kp) => this._imageSrc({ url, filter, operation, value: kp })));
     let { cancel } = batchPreloadImages(srcList);
 
     this._cancelBatchPreload = cancel;
@@ -400,7 +400,7 @@ export class EditorImageFader extends Block {
    * @param {String} [options.filter]
    * @param {Boolean} [options.fromViewer]
    */
-  activate({ url, operation, value, filter, fromViewer }) {
+  async activate({ url, operation, value, filter, fromViewer }) {
     this._isActive = true;
     this._hidden = false;
     this._url = url;
@@ -411,12 +411,14 @@ export class EditorImageFader extends Block {
 
     let isOriginal = typeof value !== 'number' && !filter;
     if (isOriginal) {
-      let src = this._imageSrc({ operation, value });
+      let src = await this._imageSrc({ operation, value });
       this._setOriginalSrc(src);
       this._container && this._container.remove();
       return;
     }
-    this._keypoints = keypointsRange(operation, value).map((keyValue) => this._constructKeypoint(operation, keyValue));
+    this._keypoints = await Promise.all(
+      keypointsRange(operation, value).map((keyValue) => this._constructKeypoint(operation, keyValue)),
+    );
 
     this._update(operation, value);
     this._initNodes();

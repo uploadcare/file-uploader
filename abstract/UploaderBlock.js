@@ -281,10 +281,10 @@ export class UploaderBlock extends ActivityBlock {
         return entry.getValue('errors').length > 0;
       });
       if (
-          uploadCollection.size > 0 &&
-          errorItems.length === 0 &&
-          uploadCollection.size === loadedItems.length &&
-          this.$['*collectionErrors'].length === 0
+        uploadCollection.size > 0 &&
+        errorItems.length === 0 &&
+        uploadCollection.size === loadedItems.length &&
+        this.$['*collectionErrors'].length === 0
       ) {
         this.emit(
           EventType.COMMON_UPLOAD_SUCCESS,

@@ -1,3 +1,17 @@
+## [0.50.1](https://github.com/uploadcare/blocks/compare/v0.50.0...v0.50.1) (2024-07-16)
+
+### Bug Fixes
+
+- **styles:** added prefix uc- to className in the js ([#700](https://github.com/uploadcare/blocks/issues/700)) ([672c5c3](https://github.com/uploadcare/blocks/commit/672c5c3f15ce7bb54027ae2ba77217c3aa622824))
+
+# [0.50.0](https://github.com/uploadcare/blocks/compare/v0.49.0...v0.50.0) (2024-07-16)
+
+### Features
+
+- async `secureDeliveryProxyUrlResolver` ([#677](https://github.com/uploadcare/blocks/issues/677)) ([60f06be](https://github.com/uploadcare/blocks/commit/60f06be2ac903d3901eded42cc6ccaaaff41a97a))
+
+See the [`secureDeliveryProxyUrlResolver` docs](https://uploadcare.com/docs/file-uploader/options/#secure-delivery-proxy-url-resolver) for details.
+
 # [0.49.0](https://github.com/uploadcare/blocks/compare/v0.48.1...v0.49.0) (2024-07-03)
 
 ### BEAKING CHANGES

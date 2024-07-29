@@ -236,26 +236,30 @@ export class Block extends BaseComponent {
     Data.deleteCtx(this.ctxName);
 
     this.localeManager?.destroy();
-    this.a11y?.destroy();
   }
 
   /**
    * @param {String} url
-   * @returns {String}
+   * @returns {Promise<String>}
    * @protected
    */
-  proxyUrl(url) {
+  async proxyUrl(url) {
     if (this.cfg.secureDeliveryProxy && this.cfg.secureDeliveryProxyUrlResolver) {
       console.warn(
         'Both secureDeliveryProxy and secureDeliveryProxyUrlResolver are set. The secureDeliveryProxyUrlResolver will be used.',
       );
     }
     if (this.cfg.secureDeliveryProxyUrlResolver) {
-      return this.cfg.secureDeliveryProxyUrlResolver(url, {
-        uuid: extractUuid(url),
-        cdnUrlModifiers: extractCdnUrlModifiers(url),
-        fileName: extractFilename(url),
-      });
+      try {
+        return await this.cfg.secureDeliveryProxyUrlResolver(url, {
+          uuid: extractUuid(url),
+          cdnUrlModifiers: extractCdnUrlModifiers(url),
+          fileName: extractFilename(url),
+        });
+      } catch (err) {
+        console.error('Failed to resolve secure delivery proxy URL. Falling back to the default URL.', err);
+        return url;
+      }
     }
     if (this.cfg.secureDeliveryProxy) {
       return applyTemplateData(
