@@ -1,3 +1,9 @@
+# [0.51.0](https://github.com/uploadcare/blocks/compare/v0.50.1...v0.51.0) (2024-07-29)
+
+### Features
+
+- rename blocks from lr to uc ([#698](https://github.com/uploadcare/blocks/issues/698)) ([e28f2af](https://github.com/uploadcare/blocks/commit/e28f2af9c48704c49fb115769c01c9e82b300f39))
+
 ## [0.50.1](https://github.com/uploadcare/blocks/compare/v0.50.0...v0.50.1) (2024-07-16)
 
 ### Bug Fixes
