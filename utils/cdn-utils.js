@@ -1,5 +1,3 @@
-import { PACKAGE_NAME, PACKAGE_VERSION } from '../env.js';
-
 /**
  * Trim leading `-/`, `/` and trailing `/` from CDN operation
  *

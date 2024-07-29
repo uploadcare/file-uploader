@@ -1,3 +1,4 @@
+import { PACKAGE_NAME, PACKAGE_VERSION } from '../../../env.js';
 import { createCdnUrl, createCdnUrlModifiers } from '../../../utils/cdn-utils.js';
 import { COMMON_OPERATIONS, transformationsToOperations } from './lib/transformationUtils.js';
 
@@ -14,6 +15,7 @@ export function viewerImageSrc(originalUrl, width, transformations) {
       transformationsToOperations(transformations),
       `quality/${quality}`,
       `stretch/off/-/resize/${size}x`,
+      `@clib/${PACKAGE_NAME}/${PACKAGE_VERSION}/uc-cloud-image-editor/`,
     ),
   );
 }
