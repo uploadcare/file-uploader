@@ -2,7 +2,7 @@ import { ActivityBlock } from '../../../abstract/ActivityBlock.js';
 import { SolutionBlock } from '../../../abstract/SolutionBlock.js';
 
 export class FileUploaderMinimal extends SolutionBlock {
-  static styleAttrs = [...super.styleAttrs, 'lr-file-uploader-minimal'];
+  static styleAttrs = [...super.styleAttrs, 'uc-file-uploader-minimal'];
 
   initCallback() {
     super.initCallback();
@@ -38,9 +38,9 @@ export class FileUploaderMinimal extends SolutionBlock {
 }
 
 FileUploaderMinimal.template = /* HTML */ `
-  <lr-start-from>
-    <lr-drop-area tabindex="0" clickable l10n="choose-file"></lr-drop-area>
-    <lr-copyright></lr-copyright>
-  </lr-start-from>
-  <lr-upload-list ref="uBlock"></lr-upload-list>
+  <uc-start-from>
+    <uc-drop-area tabindex="0" clickable l10n="choose-file"></uc-drop-area>
+    <uc-copyright></uc-copyright>
+  </uc-start-from>
+  <uc-upload-list ref="uBlock"></uc-upload-list>
 `;

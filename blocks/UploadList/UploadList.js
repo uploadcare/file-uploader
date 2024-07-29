@@ -194,18 +194,18 @@ export class UploadList extends UploaderBlock {
 }
 
 UploadList.template = /* HTML */ `
-  <lr-activity-header>
+  <uc-activity-header>
     <span class="uc-header-text">{{headerText}}</span>
     <button type="button" class="uc-mini-btn uc-close-btn" set="onclick: *closeModal">
-      <lr-icon name="close"></lr-icon>
+      <uc-icon name="close"></uc-icon>
     </button>
-  </lr-activity-header>
+  </uc-activity-header>
 
   <div class="uc-no-files" set="@hidden: hasFiles">
     <slot name="empty"><span l10n="no-files"></span></slot>
   </div>
 
-  <div class="uc-files" repeat="*uploadList" repeat-item-tag="lr-file-item"></div>
+  <div class="uc-files" repeat="*uploadList" repeat-item-tag="uc-file-item"></div>
 
   <div class="uc-common-error" set="@hidden: !commonErrorMessage; textContent: commonErrorMessage;"></div>
 
@@ -217,7 +217,7 @@ UploadList.template = /* HTML */ `
       class="uc-add-more-btn uc-secondary-btn"
       set="onclick: onAdd; @disabled: !addMoreBtnEnabled; @hidden: !addMoreBtnVisible"
     >
-      <lr-icon name="add"></lr-icon><span l10n="add-more"></span>
+      <uc-icon name="add"></uc-icon><span l10n="add-more"></span>
     </button>
     <button
       type="button"
@@ -233,5 +233,5 @@ UploadList.template = /* HTML */ `
     ></button>
   </div>
 
-  <lr-drop-area ghost></lr-drop-area>
+  <uc-drop-area ghost></uc-drop-area>
 `;

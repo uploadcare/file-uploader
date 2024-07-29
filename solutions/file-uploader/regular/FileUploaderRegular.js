@@ -4,7 +4,7 @@ import { asBoolean } from '../../../blocks/Config/normalizeConfigValue.js';
 import { EventType } from '../../../blocks/UploadCtxProvider/EventEmitter.js';
 
 export class FileUploaderRegular extends SolutionBlock {
-  static styleAttrs = [...super.styleAttrs, 'lr-file-uploader-regular'];
+  static styleAttrs = [...super.styleAttrs, 'uc-file-uploader-regular'];
 
   constructor() {
     super();
@@ -41,23 +41,23 @@ export class FileUploaderRegular extends SolutionBlock {
 }
 
 FileUploaderRegular.template = /* HTML */ `
-  <lr-simple-btn set="@hidden: isHidden"></lr-simple-btn>
+  <uc-simple-btn set="@hidden: isHidden"></uc-simple-btn>
 
-  <lr-modal strokes block-body-scrolling>
-    <lr-start-from>
-      <lr-drop-area with-icon clickable></lr-drop-area>
-      <lr-source-list wrap></lr-source-list>
+  <uc-modal strokes block-body-scrolling>
+    <uc-start-from>
+      <uc-drop-area with-icon clickable></uc-drop-area>
+      <uc-source-list wrap></uc-source-list>
       <button type="button" l10n="start-from-cancel" class="uc-secondary-btn" set="onclick: *historyBack"></button>
-      <lr-copyright></lr-copyright>
-    </lr-start-from>
-    <lr-upload-list></lr-upload-list>
-    <lr-camera-source></lr-camera-source>
-    <lr-url-source></lr-url-source>
-    <lr-external-source></lr-external-source>
-    <lr-cloud-image-editor-activity></lr-cloud-image-editor-activity>
-  </lr-modal>
+      <uc-copyright></uc-copyright>
+    </uc-start-from>
+    <uc-upload-list></uc-upload-list>
+    <uc-camera-source></uc-camera-source>
+    <uc-url-source></uc-url-source>
+    <uc-external-source></uc-external-source>
+    <uc-cloud-image-editor-activity></uc-cloud-image-editor-activity>
+  </uc-modal>
 
-  <lr-progress-bar-common></lr-progress-bar-common>
+  <uc-progress-bar-common></uc-progress-bar-common>
 `;
 
 FileUploaderRegular.bindAttributes({

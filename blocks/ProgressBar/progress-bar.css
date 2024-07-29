@@ -1,4 +1,4 @@
-lr-progress-bar {
+uc-progress-bar {
   position: absolute;
   top: 0;
   bottom: 0;
@@ -9,7 +9,7 @@ lr-progress-bar {
   pointer-events: none;
 }
 
-lr-progress-bar .uc-progress {
+uc-progress-bar .uc-progress {
   width: calc(var(--l-width) * 1%);
   height: 100%;
   background-color: var(--uc-primary);
@@ -20,6 +20,6 @@ lr-progress-bar .uc-progress {
     opacity 0.3s;
 }
 
-lr-progress-bar .uc-progress--hidden {
+uc-progress-bar .uc-progress--hidden {
   opacity: 0;
 }

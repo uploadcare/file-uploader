@@ -20,7 +20,7 @@ const allConfigKeys = /** @type {(keyof import('../../types').ConfigType)[]} */ 
  *   'secureDeliveryProxyUrlResolver',
  *   'iconHrefResolver',
  *   'fileValidators',
- *   'collectionValidators'
+ *   'collectionValidators',
  * ]}
  */
 export const complexConfigKeys = [
@@ -30,7 +30,7 @@ export const complexConfigKeys = [
   'secureDeliveryProxyUrlResolver',
   'iconHrefResolver',
   'fileValidators',
-  'collectionValidators'
+  'collectionValidators',
 ];
 
 /** @type {(key: keyof import('../../types').ConfigType) => key is keyof import('../../types').ConfigComplexType} */
@@ -133,7 +133,7 @@ class ConfigClass extends Block {
     this._flushValueToAttribute(key, normalizedValue);
     this._flushValueToState(key, normalizedValue);
 
-    this.debugPrint(`[lr-config] "${key}"`, normalizedValue);
+    this.debugPrint(`[uc-config] "${key}"`, normalizedValue);
   }
 
   /**
@@ -160,13 +160,13 @@ class ConfigClass extends Block {
         JSON.stringify(nextValue) === JSON.stringify(previousValue)
       ) {
         console.warn(
-          `[lr-config] Option "${key}" value is the same as the previous one but the reference is different`,
+          `[uc-config] Option "${key}" value is the same as the previous one but the reference is different`,
         );
         console.warn(
-          `[lr-config] You should avoid changing the reference of the object to prevent unnecessary calculations`,
+          `[uc-config] You should avoid changing the reference of the object to prevent unnecessary calculations`,
         );
-        console.warn(`[lr-config] "${key}" previous value:`, previousValue);
-        console.warn(`[lr-config] "${key}" new value:`, nextValue);
+        console.warn(`[uc-config] "${key}" previous value:`, previousValue);
+        console.warn(`[uc-config] "${key}" new value:`, nextValue);
       }
     }
   }

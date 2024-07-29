@@ -1,4 +1,4 @@
-:where([lr-cloud-image-editor]) lr-icon {
+:where([uc-cloud-image-editor]) uc-icon {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -6,7 +6,7 @@
   height: 100%;
 }
 
-:where([lr-cloud-image-editor]) lr-icon svg {
+:where([uc-cloud-image-editor]) uc-icon svg {
   width: calc(var(--uc-button-size) / 2);
   height: calc(var(--uc-button-size) / 2);
 }

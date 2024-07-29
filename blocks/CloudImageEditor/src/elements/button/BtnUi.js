@@ -1,7 +1,7 @@
 import { Block } from '../../../../../abstract/Block.js';
 import { classNames } from '../../lib/classNames.js';
 
-export class LrBtnUi extends Block {
+export class BtnUi extends Block {
   constructor() {
     super();
 
@@ -80,11 +80,11 @@ export class LrBtnUi extends Block {
   }
 }
 
-LrBtnUi.bindAttributes({ text: 'text', icon: 'icon', reverse: 'reverse', theme: 'theme' });
+BtnUi.bindAttributes({ text: 'text', icon: 'icon', reverse: 'reverse', theme: 'theme' });
 
-LrBtnUi.template = /* HTML */ `
+BtnUi.template = /* HTML */ `
   <button type="button" set="@role:aria-role; @aria-controls: aria-controls">
-    <lr-icon set="className: iconCss; @name: icon; @hidden: !icon"></lr-icon>
+    <uc-icon set="className: iconCss; @name: icon; @hidden: !icon"></uc-icon>
     <div class="uc-text">{{text}}</div>
   </button>
 `;

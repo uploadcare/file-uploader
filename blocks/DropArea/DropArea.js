@@ -8,11 +8,11 @@ import { asBoolean } from '../Config/normalizeConfigValue.js';
 import { UploadSource } from '../utils/UploadSource.js';
 import { DropzoneState, addDropzone } from './addDropzone.js';
 
-const GLOBAL_CTX_NAME = 'lr-drop-area';
+const GLOBAL_CTX_NAME = 'uc-drop-area';
 const REGISTRY_KEY = `${GLOBAL_CTX_NAME}/registry`;
 
 export class DropArea extends UploaderBlock {
-  static styleAttrs = [...super.styleAttrs, 'lr-drop-area'];
+  static styleAttrs = [...super.styleAttrs, 'uc-drop-area'];
   constructor() {
     super();
 
@@ -251,8 +251,8 @@ DropArea.template = /* HTML */ `
     <div data-default-slot hidden></div>
     <div ref="content-wrapper" class="uc-content-wrapper" set="@hidden: !isVisible">
       <div class="uc-icon-container" set="@hidden: !withIcon">
-        <lr-icon name="default"></lr-icon>
-        <lr-icon name="arrow-down"></lr-icon>
+        <uc-icon name="default"></uc-icon>
+        <uc-icon name="arrow-down"></uc-icon>
       </div>
       <span class="uc-text">{{text}}</span>
     </div>

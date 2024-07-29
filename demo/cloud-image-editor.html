@@ -19,13 +19,13 @@
     }
   </script>
   <script type="module">
-    import * as LR from './index.js';
-    LR.registerBlocks(LR);
+    import * as UC from './index.js';
+    UC.registerBlocks(UC);
 
-    LR.defineLocale('ru', () => import('./locales/file-uploader/ru.js').then((m) => m.default));
+    UC.defineLocale('ru', () => import('./locales/file-uploader/ru.js').then((m) => m.default));
   </script>
   <style>
-    .lr-cloud-image-editor {
+    .uc-cloud-image-editor {
       width: 100vw;
       height: 100vh;
     }
@@ -35,10 +35,10 @@
   </style>
 </head>
 
-<lr-config ctx-name="my-editor" pubkey="demopublickey" locale-name="ru"></lr-config>
-<lr-cloud-image-editor
+<uc-config ctx-name="my-editor" pubkey="demopublickey" locale-name="ru"></uc-config>
+<uc-cloud-image-editor
   uuid="f4dc9ebc-ed6d-4b4d-83d1-863bf1e4bb7f"
   ctx-name="my-editor"
   tabs="tuning,filters,crop"
   class="uc-light"
-></lr-cloud-image-editor>
+></uc-cloud-image-editor>

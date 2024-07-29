@@ -1,6 +1,6 @@
 import { registerBlocks } from './registerBlocks.js';
 
-export const LR_WINDOW_KEY = 'LR';
+export const UC_WINDOW_KEY = 'UC';
 
 /**
  * @param {String} url Blocks pack url
@@ -13,8 +13,8 @@ export async function connectBlocksFrom(url, register = false) {
       resolve(null);
       return;
     }
-    if (typeof window === 'object' && window[LR_WINDOW_KEY]) {
-      resolve(window[LR_WINDOW_KEY]);
+    if (typeof window === 'object' && window[UC_WINDOW_KEY]) {
+      resolve(window[UC_WINDOW_KEY]);
       return;
     }
     let script = document.createElement('script');
@@ -25,7 +25,7 @@ export async function connectBlocksFrom(url, register = false) {
     };
     script.onload = () => {
       /** @type {import('../index.js')} */
-      let blocks = window[LR_WINDOW_KEY];
+      let blocks = window[UC_WINDOW_KEY];
       register && registerBlocks(blocks);
       resolve(blocks);
     };

@@ -42,7 +42,7 @@ export class ImgConfig extends BaseComponent {
   }
 
   analyticsParams() {
-    return `-/@clib/${PACKAGE_NAME}/${PACKAGE_VERSION}/lr-img/`;
+    return `-/@clib/${PACKAGE_NAME}/${PACKAGE_VERSION}/uc-img/`;
   }
 
   initAttributes(el) {

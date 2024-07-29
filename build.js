@@ -27,7 +27,7 @@ function build(buildItem) {
     .build({
       entryPoints: [buildItem.in],
       format: buildItem.iife ? 'iife' : 'esm',
-      globalName: buildItem.iife ? 'LR' : undefined,
+      globalName: buildItem.iife ? 'UC' : undefined,
       keepNames: buildItem.iife ? true : undefined,
       bundle: true,
       minify: buildItem.minify,

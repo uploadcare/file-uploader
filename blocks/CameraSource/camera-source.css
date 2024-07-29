@@ -1,4 +1,4 @@
-lr-camera-source {
+uc-camera-source {
   position: relative;
   display: flex;
   flex-direction: column;
@@ -10,24 +10,24 @@ lr-camera-source {
   border-radius: var(--uc-radius);
 }
 
-[lr-modal] lr-camera-source {
+[uc-modal] uc-camera-source {
   width: min(calc(var(--uc-dialog-max-width) - var(--uc-padding) * 2), calc(100vw - var(--uc-padding) * 2));
   height: 100vh;
   max-height: var(--modal-max-content-height);
 }
 
-lr-camera-source.uc-initialized {
+uc-camera-source.uc-initialized {
   height: max-content;
 }
 
 @media only screen and (max-width: 430px) {
-  lr-camera-source {
+  uc-camera-source {
     width: calc(100vw - var(--uc-padding) * 2);
     height: var(--modal-content-height-fill, 100%);
   }
 }
 
-lr-camera-source video {
+uc-camera-source video {
   display: block;
   width: 100%;
   max-height: 100%;
@@ -37,7 +37,7 @@ lr-camera-source video {
   border-radius: var(--uc-radius);
 }
 
-lr-camera-source .uc-toolbar {
+uc-camera-source .uc-toolbar {
   position: absolute;
   bottom: 0;
   display: flex;
@@ -47,7 +47,7 @@ lr-camera-source .uc-toolbar {
   background-color: var(--uc-background);
 }
 
-lr-camera-source .uc-content {
+uc-camera-source .uc-content {
   display: flex;
   flex: 1;
   justify-content: center;
@@ -57,7 +57,7 @@ lr-camera-source .uc-content {
   overflow: hidden;
 }
 
-lr-camera-source .uc-message-box {
+uc-camera-source .uc-message-box {
   display: flex;
   flex-direction: column;
   grid-gap: 40px;
@@ -67,12 +67,12 @@ lr-camera-source .uc-message-box {
   color: var(--uc-foreground);
 }
 
-lr-camera-source .uc-message-box button {
+uc-camera-source .uc-message-box button {
   color: var(--uc-primary-foreground);
   background-color: var(--uc-primary);
 }
 
-lr-camera-source .uc-shot-btn {
+uc-camera-source .uc-shot-btn {
   position: absolute;
   bottom: 20px;
   width: 58px;
@@ -87,21 +87,21 @@ lr-camera-source .uc-shot-btn {
     transform var(--uc-transition);
 }
 
-lr-camera-source .uc-shot-btn:hover {
+uc-camera-source .uc-shot-btn:hover {
   transform: scale(1.05);
   opacity: 1;
 }
 
-lr-camera-source .uc-shot-btn:active {
+uc-camera-source .uc-shot-btn:active {
   transform: scale(1);
   opacity: 1;
 }
 
-lr-camera-source .uc-shot-btn[disabled] {
+uc-camera-source .uc-shot-btn[disabled] {
   bottom: -80px;
 }
 
-lr-camera-source .uc-shot-btn lr-icon svg {
+uc-camera-source .uc-shot-btn uc-icon svg {
   width: 20px;
   height: 20px;
 }

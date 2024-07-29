@@ -1,8 +1,8 @@
-lr-select {
+uc-select {
   display: inline-flex;
 }
 
-lr-select select {
+uc-select select {
   position: relative;
   display: inline-flex;
   align-items: center;

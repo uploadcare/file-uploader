@@ -11,8 +11,8 @@ const DATA = [
     output: path.resolve(__dirname, './blocks/CloudImageEditor/src/svg-sprite.js'),
   },
   {
-    input: path.resolve(__dirname, './blocks/themes/lr-basic/icons/'),
-    output: path.resolve(__dirname, './blocks/themes/lr-basic/svg-sprite.js'),
+    input: path.resolve(__dirname, './blocks/themes/uc-basic/icons/'),
+    output: path.resolve(__dirname, './blocks/themes/uc-basic/svg-sprite.js'),
   },
 ];
 

@@ -1,4 +1,4 @@
-:where([lr-wgt-common]) {
+:where([uc-wgt-common]) {
   --cfg-init-activity: 'start-from';
   --cfg-done-activity: '';
 }

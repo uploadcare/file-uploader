@@ -1,4 +1,4 @@
-lr-icon {
+uc-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -6,7 +6,7 @@ lr-icon {
   height: var(--uc-button-size);
 }
 
-lr-icon svg {
+uc-icon svg {
   width: calc(var(--uc-button-size) / 2);
   height: calc(var(--uc-button-size) / 2);
 }

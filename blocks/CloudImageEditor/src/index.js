@@ -8,7 +8,7 @@ export { EditorImageFader } from './EditorImageFader.js';
 export { EditorScroller } from './EditorScroller.js';
 export { EditorSlider } from './EditorSlider.js';
 export { EditorToolbar } from './EditorToolbar.js';
-export { LrBtnUi } from './elements/button/LrBtnUi.js';
+export { BtnUi } from './elements/button/BtnUi.js';
 export { LineLoaderUi } from './elements/line-loader/LineLoaderUi.js';
 export { PresenceToggle } from './elements/presence-toggle/PresenceToggle.js';
 export { SliderUi } from './elements/slider/SliderUi.js';

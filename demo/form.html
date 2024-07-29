@@ -3,7 +3,7 @@
 
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="./blocks/themes/lr-basic/index.css">
+  <link rel="stylesheet" href="./blocks/themes/uc-basic/index.css">
   <script
     async=""
     src="https://cdn.skypack.dev/-/es-module-shims@v1.5.8-O0uWfhbenfjMbv6D3d8E/dist=es2020,mode=raw,min/dist/es-module-shims.js"
@@ -18,9 +18,9 @@
     }
   </script>
   <script type="module">
-    import * as LR from './index.js';
+    import * as UC from './index.js';
 
-    LR.registerBlocks(LR);
+    UC.registerBlocks(UC);
 
     const form = document.querySelector('form');
     form.addEventListener('submit', (e) => {
@@ -30,16 +30,16 @@
   </script>
 </head>
 
-<lr-config ctx-name="my-uploader" pubkey="demopublickey" multiple-min="1" multiple-max="10" img-only group-output></lr-config>
-<lr-file-uploader-regular headless class="uc-light" ctx-name="my-uploader">
-  <lr-form-input
+<uc-config ctx-name="my-uploader" pubkey="demopublickey" multiple-min="1" multiple-max="10" img-only group-output></uc-config>
+<uc-file-uploader-regular headless class="uc-light" ctx-name="my-uploader">
+  <uc-form-input
     style="position: absolute; bottom: 0px; left: 50%; pointer-events: none;"
     ctx-name="my-uploader"
-  ></lr-form-input>
-</lr-file-uploader-regular>
+  ></uc-form-input>
+</uc-file-uploader-regular>
 
 <form>
-  <lr-simple-btn ctx-name="my-uploader" lr-wgt-common class="uc-light"></lr-simple-btn>
+  <uc-simple-btn ctx-name="my-uploader" uc-wgt-common class="uc-light"></uc-simple-btn>
   <br />
   <br />
   <button type="submit">Submit</button>

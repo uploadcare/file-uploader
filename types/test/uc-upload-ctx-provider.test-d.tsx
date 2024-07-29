@@ -212,5 +212,5 @@ instance.addEventListener('activity-change', (e) => {
 
 () => {
   const ref = useRef<InstanceType<UploadCtxProvider>>(null);
-  return <lr-upload-ctx-provider ctx-name="ctx" ref={ref}></lr-upload-ctx-provider>;
+  return <uc-upload-ctx-provider ctx-name="ctx" ref={ref}></uc-upload-ctx-provider>;
 };

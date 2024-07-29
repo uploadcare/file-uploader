@@ -1,15 +1,15 @@
-lr-img {
-  --lr-img-pubkey: '364c0864158c27472ffe';
-  --lr-img-test: 'TEST';
+uc-img {
+  --uc-img-pubkey: '364c0864158c27472ffe';
+  --uc-img-test: 'TEST';
 
   display: contents;
 }
 
-lr-img > img {
+uc-img > img {
   transition: 1s;
 }
 
-lr-img > img[unresolved] {
+uc-img > img[unresolved] {
   transform: scale(0.8);
   opacity: 0;
   transition: 1s;

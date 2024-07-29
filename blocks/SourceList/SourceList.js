@@ -8,7 +8,7 @@ export class SourceList extends Block {
       let list = stringToArray(val);
       let html = '';
       list.forEach((srcName) => {
-        html += /* HTML */ `<lr-source-btn type="${srcName}"></lr-source-btn>`;
+        html += /* HTML */ `<uc-source-btn type="${srcName}"></uc-source-btn>`;
       });
       if (this.cfg.sourceListWrap) {
         this.innerHTML = html;

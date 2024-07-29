@@ -1,10 +1,10 @@
-@import url('../../../blocks/themes/lr-basic/config.css');
+@import url('../../../blocks/themes/uc-basic/config.css');
 
 /* COMMON STYLES */
-@import url('../../../blocks/themes/lr-basic/common.css');
+@import url('../../../blocks/themes/uc-basic/common.css');
 
 /* THEME */
-@import url('../../../blocks/themes/lr-basic/theme.css');
+@import url('../../../blocks/themes/uc-basic/theme.css');
 
 /* BLOCKS: */
 @import url('../../../blocks/StartFrom/start-from.css');
@@ -16,7 +16,7 @@
 @import url('../../../blocks/Copyright/copyright.css');
 
 /* ICONS: */
-:where([lr-file-uploader-minimal]) {
+:where([uc-file-uploader-minimal]) {
   --cfg-init-activity: 'start-from';
   --cfg-done-activity: 'upload-list';
 
@@ -24,7 +24,7 @@
   display: block;
 }
 
-[lr-file-uploader-minimal] lr-start-from .uc-content {
+[uc-file-uploader-minimal] uc-start-from .uc-content {
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -34,7 +34,7 @@
   background-color: transparent;
 }
 
-:where([lr-file-uploader-minimal] lr-drop-area) {
+:where([uc-file-uploader-minimal] uc-drop-area) {
   display: flex;
   position: relative;
   align-items: center;
@@ -48,7 +48,7 @@
 }
 
 /* hack to make transparent :hover colors work in any conditions */
-:where([lr-file-uploader-minimal] lr-drop-area)::before {
+:where([uc-file-uploader-minimal] uc-drop-area)::before {
   content: '';
   z-index: -1;
   width: 100%;
@@ -57,15 +57,15 @@
   background-color: var(--uc-background);
 }
 
-[lr-file-uploader-minimal] lr-upload-list lr-activity-header {
+[uc-file-uploader-minimal] uc-upload-list uc-activity-header {
   display: none;
 }
 
-[lr-file-uploader-minimal] lr-upload-list > .uc-toolbar {
+[uc-file-uploader-minimal] uc-upload-list > .uc-toolbar {
   background-color: transparent;
 }
 
-[lr-file-uploader-minimal] lr-upload-list {
+[uc-file-uploader-minimal] uc-upload-list {
   width: 100%;
   height: unset;
   padding: 4px;
@@ -74,64 +74,64 @@
   border-radius: calc(var(--uc-radius) * 1.75);
 }
 
-[lr-file-uploader-minimal] lr-upload-list .uc-files {
+[uc-file-uploader-minimal] uc-upload-list .uc-files {
   padding: 0;
 }
 
-[lr-file-uploader-minimal] lr-upload-list .uc-toolbar {
+[uc-file-uploader-minimal] uc-upload-list .uc-toolbar {
   display: block;
   padding: 0;
 }
 
-[lr-file-uploader-minimal] lr-upload-list .uc-toolbar .uc-cancel-btn,
-[lr-file-uploader-minimal] lr-upload-list .uc-toolbar .uc-upload-btn,
-[lr-file-uploader-minimal] lr-upload-list .uc-toolbar .uc-done-btn {
+[uc-file-uploader-minimal] uc-upload-list .uc-toolbar .uc-cancel-btn,
+[uc-file-uploader-minimal] uc-upload-list .uc-toolbar .uc-upload-btn,
+[uc-file-uploader-minimal] uc-upload-list .uc-toolbar .uc-done-btn {
   display: none;
 }
 
-[lr-file-uploader-minimal] lr-upload-list .uc-toolbar .uc-add-more-btn {
+[uc-file-uploader-minimal] uc-upload-list .uc-toolbar .uc-add-more-btn {
   width: 100%;
   height: calc(var(--uc-preview-size) + var(--uc-padding) * 2);
   margin-top: 4px;
 }
 
-[lr-file-uploader-minimal] lr-upload-list .uc-toolbar .uc-add-more-btn[disabled] {
+[uc-file-uploader-minimal] uc-upload-list .uc-toolbar .uc-add-more-btn[disabled] {
   display: none;
 }
 
-[lr-file-uploader-minimal] lr-upload-list .uc-toolbar .uc-add-more-btn > span {
+[uc-file-uploader-minimal] uc-upload-list .uc-toolbar .uc-add-more-btn > span {
   display: none;
 }
 
-[lr-file-uploader-minimal] lr-upload-list .uc-toolbar .uc-add-more-btn > lr-icon {
+[uc-file-uploader-minimal] uc-upload-list .uc-toolbar .uc-add-more-btn > uc-icon {
   display: flex;
 }
 
-[lr-file-uploader-minimal] lr-file-item .uc-edit-btn {
+[uc-file-uploader-minimal] uc-file-item .uc-edit-btn {
   display: none;
 }
 
-[lr-file-uploader-minimal] lr-file-item lr-progress-bar {
+[uc-file-uploader-minimal] uc-file-item uc-progress-bar {
   top: 0 !important;
   height: 100% !important;
 }
 
-[lr-file-uploader-minimal] lr-file-item lr-progress-bar .uc-progress {
+[uc-file-uploader-minimal] uc-file-item uc-progress-bar .uc-progress {
   background-color: var(--uc-primary-transparent);
   border-radius: var(--uc-radius);
 }
 
-[lr-file-uploader-minimal] lr-upload-list lr-drop-area {
+[uc-file-uploader-minimal] uc-upload-list uc-drop-area {
   width: 100%;
   height: 100%;
   margin: 0;
   border-radius: calc(var(--uc-radius) * 1.75);
 }
 
-[lr-file-uploader-minimal] lr-upload-list .uc-common-error {
+[uc-file-uploader-minimal] uc-upload-list .uc-common-error {
   margin: 4px 0 0;
 }
 
-[lr-file-uploader-minimal] lr-copyright .uc-credits {
+[uc-file-uploader-minimal] uc-copyright .uc-credits {
   position: static;
 }

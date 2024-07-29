@@ -71,9 +71,9 @@ We use [JSDoc type annotations](https://www.typescriptlang.org/docs/handbook/int
 
 ```html
 <script type="module">
-  import * as LR from 'https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@1/web/blocks.min.js';
+  import * as UC from 'https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@1/web/blocks.min.js';
 
-  LR.registerBlocks(LR);
+  UC.registerBlocks(UC);
 </script>
 ```
 
@@ -82,10 +82,10 @@ We use [JSDoc type annotations](https://www.typescriptlang.org/docs/handbook/int
 ```html
 <link
   rel="stylesheet"
-  href="https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@1/web/lr-file-uploader-regular.min.css"
+  href="https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@1/web/uc-file-uploader-regular.min.css"
 />
 
-<lr-file-uploader-regular ctx-name="my-uploader"> </lr-file-uploader-regular>
+<uc-file-uploader-regular ctx-name="my-uploader"> </uc-file-uploader-regular>
 ```
 
 3. Configure Uploadcare File Uploader and add your personal public key to the project. Discover the instructions in the [following section](#configuration).
@@ -96,9 +96,9 @@ We use [JSDoc type annotations](https://www.typescriptlang.org/docs/handbook/int
 2. Connect `Blocks` from your script file:
 
 ```js
-import * as LR from '@uploadcare/file-uploader';
+import * as UC from '@uploadcare/file-uploader';
 
-LR.registerBlocks(LR);
+UC.registerBlocks(UC);
 ```
 
 3. Start using Uploadcare File Uploader in your application markup:
@@ -106,24 +106,24 @@ LR.registerBlocks(LR);
 ```html
 <link
   rel="stylesheet"
-  href="https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@1/web/lr-file-uploader-regular.min.css"
+  href="https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@1/web/uc-file-uploader-regular.min.css"
 />
 
-<lr-file-uploader-inline ctx-name="my-uploader"> </lr-file-uploader-inline>
+<uc-file-uploader-inline ctx-name="my-uploader"> </uc-file-uploader-inline>
 ```
 
 4. Configure Uploadcare File Uploader and add your personal public key to the project. Discover the instructions in the [following section](#configuration).
 
 ### Configuration
 
-All configurations in Uploadcare File Uploader are managed from `lr-config` block.
+All configurations in Uploadcare File Uploader are managed from `uc-config` block.
 
 1. Sign up to [Uploadcare](https://app.uploadcare.com/accounts/signup/?ref=github-readme).
 2. Get a Public API key in [Uploadcare project's dashboard](https://app.uploadcare.com/projects/-/api-keys/?ref=github-readme).
-3. Add a `lr-config` block to your markup and replace `YOUR_PUBLIC_KEY` with your own public key:
+3. Add a `uc-config` block to your markup and replace `YOUR_PUBLIC_KEY` with your own public key:
 
 ```html
-<lr-config ctx-name="my-uploader" pubkey="YOUR_PUBLIC_KEY"></lr-config>
+<uc-config ctx-name="my-uploader" pubkey="YOUR_PUBLIC_KEY"></uc-config>
 ```
 
 4. Make sure that your config block uses the same `ctx-name` attribute value as your solution block.
@@ -156,7 +156,7 @@ All the source code is accessible and works in raw mode. Use _developer tools_ t
 
 You’re always welcome to contribute:
 
-- Create [issues](https://github.com/uploadcare/blocks/issues) every time you feel something is missing or goes wrong.
+- Create [issues](https://github.com/uploadcare/file-uploader/issues) every time you feel something is missing or goes wrong.
 - Provide your feedback or drop us a support request at <a href="mailto:hello@uploadcare.com">hello@uploadcare.com</a>.
 - Ask questions on [Stack Overflow](https://stackoverflow.com/questions/tagged/uploadcare) with "uploadcare" tag if others can have these questions as well.
 - Fork project, make changes and send it as pull request. For launching the developing mode follow these commands:

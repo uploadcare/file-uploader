@@ -41,4 +41,4 @@ export class ProgressBarCommon extends UploaderBlock {
   }
 }
 
-ProgressBarCommon.template = /* HTML */ ` <lr-progress-bar set="visible: visible; value: value"></lr-progress-bar> `;
+ProgressBarCommon.template = /* HTML */ ` <uc-progress-bar set="visible: visible; value: value"></uc-progress-bar> `;

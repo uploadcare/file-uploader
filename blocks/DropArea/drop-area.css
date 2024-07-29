@@ -1,4 +1,4 @@
-:where([lr-drop-area]) {
+:where([uc-drop-area]) {
   padding: 2px;
   overflow: hidden;
   border: 1px dashed var(--uc-border);
@@ -8,8 +8,8 @@
     border-radius var(--uc-transition);
 }
 
-:where([lr-drop-area]),
-:where([lr-drop-area]) .uc-content-wrapper {
+:where([uc-drop-area]),
+:where([uc-drop-area]) .uc-content-wrapper {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -17,58 +17,58 @@
   height: 100%;
 }
 
-:where([lr-drop-area]) .uc-text {
+:where([uc-drop-area]) .uc-text {
   position: relative;
   margin: var(--uc-padding);
   color: var(--uc-muted-foreground);
   transition: color var(--uc-transition);
 }
 
-:where([lr-drop-area])[ghost][drag-state='inactive'] {
+:where([uc-drop-area])[ghost][drag-state='inactive'] {
   display: none;
 }
 
-:where([lr-drop-area])[ghost]:not([fullscreen]):is([drag-state='active'], [drag-state='near'], [drag-state='over']) {
+:where([uc-drop-area])[ghost]:not([fullscreen]):is([drag-state='active'], [drag-state='near'], [drag-state='over']) {
   background: var(--uc-background);
 }
 
-:where([lr-drop-area])[with-icon]
+:where([uc-drop-area])[with-icon]
   > .uc-content-wrapper:is([drag-state='active'], [drag-state='near'], [drag-state='over'])
   :is(.uc-text, .uc-icon-container) {
   color: var(--uc-primary);
 }
 
-:where([lr-drop-area]):is([drag-state='active'], [drag-state='near'], [drag-state='over'], :hover) {
+:where([uc-drop-area]):is([drag-state='active'], [drag-state='near'], [drag-state='over'], :hover) {
   color: var(--uc-primary);
   background: var(--uc-primary-transparent);
   border-color: var(--uc-primary-transparent);
 }
 
-:where([lr-drop-area]):is([drag-state='active'], [drag-state='near']) {
+:where([uc-drop-area]):is([drag-state='active'], [drag-state='near']) {
   opacity: 1;
 }
 
-:where([lr-drop-area])[drag-state='over'] {
+:where([uc-drop-area])[drag-state='over'] {
   border-color: var(--uc-primary);
   opacity: 1;
 }
 
-:where([lr-drop-area])[with-icon] {
+:where([uc-drop-area])[with-icon] {
   min-height: 180px;
 }
 
-:where([lr-drop-area])[with-icon] .uc-content-wrapper {
+:where([uc-drop-area])[with-icon] .uc-content-wrapper {
   display: flex;
   flex-direction: column;
 }
 
-:where([lr-drop-area])[with-icon] .uc-text {
+:where([uc-drop-area])[with-icon] .uc-text {
   color: var(--uc-foreground);
   font-weight: 500;
   font-size: 1.1em;
 }
 
-:where([lr-drop-area])[with-icon] .uc-icon-container {
+:where([uc-drop-area])[with-icon] .uc-icon-container {
   position: relative;
   width: 64px;
   height: 64px;
@@ -82,7 +82,7 @@
     background-color var(--uc-transition);
 }
 
-:where([lr-drop-area])[with-icon] lr-icon {
+:where([uc-drop-area])[with-icon] uc-icon {
   position: absolute;
   width: 32px;
   height: 32px;
@@ -91,53 +91,53 @@
   transition: transform var(--uc-transition);
 }
 
-:where([lr-drop-area])[with-icon] lr-icon:last-child {
+:where([uc-drop-area])[with-icon] uc-icon:last-child {
   transform: translateY(48px);
 }
 
-:where([lr-drop-area])[with-icon]:hover .uc-icon-container,
-:where([lr-drop-area])[with-icon]:hover .uc-text {
+:where([uc-drop-area])[with-icon]:hover .uc-icon-container,
+:where([uc-drop-area])[with-icon]:hover .uc-text {
   color: var(--uc-primary);
 }
 
-:where([lr-drop-area])[with-icon]:hover .uc-icon-container {
+:where([uc-drop-area])[with-icon]:hover .uc-icon-container {
   background-color: var(--uc-primary-transparent);
 }
 
-:where([lr-drop-area])[with-icon]
+:where([uc-drop-area])[with-icon]
   > .uc-content-wrapper:is([drag-state='active'], [drag-state='near'], [drag-state='over'])
   .uc-icon-container {
   color: var(--uc-primary-foreground);
   background-color: var(--uc-primary);
 }
 
-:where([lr-drop-area])[with-icon]
+:where([uc-drop-area])[with-icon]
   > .uc-content-wrapper:is([drag-state='active'], [drag-state='near'], [drag-state='over'])
   .uc-text {
   color: var(--uc-primary);
 }
 
-:where([lr-drop-area])[with-icon]
+:where([uc-drop-area])[with-icon]
   > .uc-content-wrapper:is([drag-state='active'], [drag-state='near'], [drag-state='over'])
-  lr-icon:first-child {
+  uc-icon:first-child {
   transform: translateY(-48px);
 }
 
-:where([lr-drop-area])[with-icon]
+:where([uc-drop-area])[with-icon]
   > .uc-content-wrapper:is([drag-state='active'], [drag-state='near'], [drag-state='over'])
-  lr-icon:last-child {
+  uc-icon:last-child {
   transform: translateY(0);
 }
 
-:where([lr-drop-area])[with-icon] > .uc-content-wrapper[drag-state='near'] lr-icon:last-child {
+:where([uc-drop-area])[with-icon] > .uc-content-wrapper[drag-state='near'] uc-icon:last-child {
   transform: scale(1.3);
 }
 
-:where([lr-drop-area])[with-icon] > .uc-content-wrapper[drag-state='over'] lr-icon:last-child {
+:where([uc-drop-area])[with-icon] > .uc-content-wrapper[drag-state='over'] uc-icon:last-child {
   transform: scale(1.5);
 }
 
-:where([lr-drop-area])[fullscreen] {
+:where([uc-drop-area])[fullscreen] {
   position: fixed;
   top: 0;
   right: 0;
@@ -152,7 +152,7 @@
   margin: var(--uc-padding);
 }
 
-:where([lr-drop-area])[fullscreen] .uc-content-wrapper {
+:where([uc-drop-area])[fullscreen] .uc-content-wrapper {
   width: 100%;
   max-width: calc(var(--uc-dialog-width) * 0.8);
   height: 180px;
@@ -168,21 +168,21 @@
     transform var(--uc-transition);
 }
 
-:where([lr-drop-area])[with-icon][fullscreen][drag-state='active'] > .uc-content-wrapper,
-:where([lr-drop-area])[with-icon][fullscreen][drag-state='near'] > .uc-content-wrapper {
+:where([uc-drop-area])[with-icon][fullscreen][drag-state='active'] > .uc-content-wrapper,
+:where([uc-drop-area])[with-icon][fullscreen][drag-state='near'] > .uc-content-wrapper {
   transform: translateY(10px);
   opacity: 0;
 }
 
-:where([lr-drop-area])[with-icon][fullscreen][drag-state='over'] > .uc-content-wrapper {
+:where([uc-drop-area])[with-icon][fullscreen][drag-state='over'] > .uc-content-wrapper {
   transform: translateY(0px);
   opacity: 1;
 }
 
-:is(:where([lr-drop-area])[with-icon][fullscreen]) > .uc-content-wrapper lr-icon:first-child {
+:is(:where([uc-drop-area])[with-icon][fullscreen]) > .uc-content-wrapper uc-icon:first-child {
   transform: translateY(-48px);
 }
 
-:where([lr-drop-area])[clickable] {
+:where([uc-drop-area])[clickable] {
   cursor: pointer;
 }
