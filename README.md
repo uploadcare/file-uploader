@@ -67,22 +67,22 @@ We use [JSDoc type annotations](https://www.typescriptlang.org/docs/handbook/int
 
 ### From CDN
 
-1. Connect Uploadcare File Uploader directly from your document replacing `{{PACKAGE_VERSION}}` with the [latest version](https://github.com/uploadcare/blocks/releases) of the package:
+1. Connect Uploadcare File Uploader directly from your document:
 
 ```html
 <script type="module">
-  import * as LR from 'https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@{{PACKAGE_VERSION}}/web/blocks.min.js';
+  import * as LR from 'https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@1/web/blocks.min.js';
 
   LR.registerBlocks(LR);
 </script>
 ```
 
-2. Start using Uploadcare File Uploader in your application markup (don't forget to specify `{{PACKAGE_VERSION}}` with the [latest one](https://github.com/uploadcare/blocks/releases)):
+2. Start using Uploadcare File Uploader in your application markup:
 
 ```html
 <link
   rel="stylesheet"
-  href="https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@{{PACKAGE_VERSION}}/web/lr-file-uploader-regular.min.css"
+  href="https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@1/web/lr-file-uploader-regular.min.css"
 />
 
 <lr-file-uploader-regular ctx-name="my-uploader"> </lr-file-uploader-regular>
@@ -92,7 +92,7 @@ We use [JSDoc type annotations](https://www.typescriptlang.org/docs/handbook/int
 
 ### From NPM
 
-1. Install Uploadcare File Uploader package: `npm i --save-exact @uploadcare/file-uploader`
+1. Install Uploadcare File Uploader package: `npm i @uploadcare/file-uploader`
 2. Connect `Blocks` from your script file:
 
 ```js
@@ -101,12 +101,12 @@ import * as LR from '@uploadcare/file-uploader';
 LR.registerBlocks(LR);
 ```
 
-3. Start using Uploadcare File Uploader in your application markup and replace `{{PACKAGE_VERSION}}` with the [latest version](https://github.com/uploadcare/blocks/releases) of the package:
+3. Start using Uploadcare File Uploader in your application markup:
 
 ```html
 <link
   rel="stylesheet"
-  href="https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@{{PACKAGE_VERSION}}/web/lr-file-uploader-regular.min.css"
+  href="https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@1/web/lr-file-uploader-regular.min.css"
 />
 
 <lr-file-uploader-inline ctx-name="my-uploader"> </lr-file-uploader-inline>
