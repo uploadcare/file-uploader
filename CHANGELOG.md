@@ -1,9 +1,5 @@
 # [1.1.0](https://github.com/uploadcare/blocks/compare/v1.0.0...v1.1.0) (2024-07-30)
 
-### Bug Fixes
-
-- removed items from build ([#707](https://github.com/uploadcare/blocks/issues/707)) ([5a6b894](https://github.com/uploadcare/blocks/commit/5a6b894175a418745b0b6e4b5513b9975068e520))
-
 ### Features
 
 - add cloud-image-editor telemetry ([#703](https://github.com/uploadcare/blocks/issues/703)) ([cbd69b8](https://github.com/uploadcare/blocks/commit/cbd69b852e85b73c21cdbaea228f19529c23183c))
