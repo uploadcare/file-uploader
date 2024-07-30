@@ -1,8 +1,14 @@
+# [1.1.0](https://github.com/uploadcare/blocks/compare/v1.0.0...v1.1.0) (2024-07-30)
+
+### Features
+
+- add cloud-image-editor telemetry ([#703](https://github.com/uploadcare/blocks/issues/703)) ([cbd69b8](https://github.com/uploadcare/blocks/commit/cbd69b852e85b73c21cdbaea228f19529c23183c))
+
 # [1.0.0](https://github.com/uploadcare/blocks/compare/v0.50.1...v1.0.0) (2024-07-29)
 
 ### BREAKING CHANGES:
 
-- rename package `@uploadcare/blocks` to `@uploadcare/file-uploader` 
+- rename package `@uploadcare/blocks` to `@uploadcare/file-uploader`
 - rename all prefixes from `lr` to `uc` ([#698](https://github.com/uploadcare/blocks/issues/698)) ([e28f2af](https://github.com/uploadcare/blocks/commit/e28f2af9c48704c49fb115769c01c9e82b300f39))
 
 See the [migration guide](https://uploadcare.com/docs/file-uploader/migration-to-1/) for details.
