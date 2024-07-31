@@ -1,3 +1,9 @@
+## [1.1.1](https://github.com/uploadcare/blocks/compare/v1.1.0...v1.1.1) (2024-07-31)
+
+### Bug Fixes
+
+- **regular-mode:** disable done button until group created ([#710](https://github.com/uploadcare/blocks/issues/710)) ([3e30f63](https://github.com/uploadcare/blocks/commit/3e30f638804062e80e683097f3dd0813e14eca15))
+
 # [1.1.0](https://github.com/uploadcare/blocks/compare/v1.0.0...v1.1.0) (2024-07-30)
 
 ### Features
