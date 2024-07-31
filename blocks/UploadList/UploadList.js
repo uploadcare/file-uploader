@@ -89,7 +89,8 @@ export class UploadList extends UploaderBlock {
       uploadBtnVisible = true;
     } else {
       allDone = true;
-      doneBtnEnabled = summary.total === summary.succeed && fitCountRestrictions && validationOk;
+      const groupOk = this.cfg.groupOutput ? !!collectionState.group : true;
+      doneBtnEnabled = summary.total === summary.succeed && fitCountRestrictions && validationOk && groupOk;
     }
 
     this.set$({
@@ -142,6 +143,11 @@ export class UploadList extends UploaderBlock {
     this.subConfigValue('multiple', this._throttledHandleCollectionUpdate);
     this.subConfigValue('multipleMin', this._throttledHandleCollectionUpdate);
     this.subConfigValue('multipleMax', this._throttledHandleCollectionUpdate);
+    this.sub('*groupInfo', (groupInfo) => {
+      if (groupInfo) {
+        this._throttledHandleCollectionUpdate();
+      }
+    });
 
     this.sub('*currentActivity', (currentActivity) => {
       if (!this.couldOpenActivity && currentActivity === this.activityType) {
