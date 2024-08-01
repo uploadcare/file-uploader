@@ -1,4 +1,4 @@
-export { registerBlocks } from '../../../abstract/registerBlocks.js';
+export { defineComponents } from '../../../abstract/defineComponents.js';
 export { defineLocale } from '../../../abstract/localeRegistry.js';
 export { FileUploaderMinimal } from './FileUploaderMinimal.js';
 export { StartFrom } from '../../../blocks/StartFrom/StartFrom.js';

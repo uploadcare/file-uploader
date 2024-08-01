@@ -40,9 +40,9 @@ export { FileUploaderInline } from './solutions/file-uploader/inline/FileUploade
 export { CloudImageEditor } from './solutions/cloud-image-editor/CloudImageEditor.js';
 
 // Utils:
-export { registerBlocks } from './abstract/registerBlocks.js';
+export { defineComponents } from './abstract/defineComponents.js';
 export { defineLocale } from './abstract/localeRegistry.js';
-export { connectBlocksFrom } from './abstract/connectBlocksFrom.js';
+export { loadFileUploaderFrom } from './abstract/loadFileUploaderFrom.js';
 export { toKebabCase } from './utils/toKebabCase.js';
 
 export * from './env.js';

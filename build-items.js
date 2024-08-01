@@ -7,13 +7,13 @@ export const buildItems = [
   // uc-blocks
   {
     in: './index.js',
-    out: './web/blocks.min.js',
+    out: './web/file-uploader.min.js',
     minify: true,
     minifyHtml: true,
   },
   {
     in: './index.js',
-    out: './web/blocks.iife.min.js',
+    out: './web/file-uploader.iife.min.js',
     minify: true,
     minifyHtml: true,
     iife: true,

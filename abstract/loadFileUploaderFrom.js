@@ -1,13 +1,13 @@
-import { registerBlocks } from './registerBlocks.js';
+import { defineComponents } from './defineComponents.js';
 
 export const UC_WINDOW_KEY = 'UC';
 
 /**
- * @param {String} url Blocks pack url
+ * @param {String} url File Uploader pack url
  * @param {Boolean} [register] Register connected package, if it not registered yet
  * @returns {Promise<import('../index.js')>}
  */
-export async function connectBlocksFrom(url, register = false) {
+export async function loadFileUploaderFrom(url, register = false) {
   return new Promise((resolve, reject) => {
     if (typeof document !== 'object') {
       resolve(null);
@@ -26,7 +26,7 @@ export async function connectBlocksFrom(url, register = false) {
     script.onload = () => {
       /** @type {import('../index.js')} */
       let blocks = window[UC_WINDOW_KEY];
-      register && registerBlocks(blocks);
+      register && defineComponents(blocks);
       resolve(blocks);
     };
     document.head.appendChild(script);
