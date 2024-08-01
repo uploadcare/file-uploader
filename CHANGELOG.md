@@ -1,3 +1,11 @@
+# [1.2.0](https://github.com/uploadcare/blocks/compare/v1.1.1...v1.2.0) (2024-08-01)
+
+### Features
+
+- renamed method connectBlocksFrom to loadFileUploaderFrom ([d083cb7](https://github.com/uploadcare/blocks/commit/d083cb7bac5fd223ef322c851a9629e38eb4541f))
+- renamed method registerBlocks to registerFileUploader ([3039eb3](https://github.com/uploadcare/blocks/commit/3039eb33d92bc321a27e6bb64d84b698ac872b88))
+- renamed method registerFileUploader to defineComponents ([606f8fc](https://github.com/uploadcare/blocks/commit/606f8fc1bf8b8f8242515c1da12ab9f3ec396b0b))
+
 ## [1.1.1](https://github.com/uploadcare/blocks/compare/v1.1.0...v1.1.1) (2024-07-31)
 
 ### Bug Fixes
