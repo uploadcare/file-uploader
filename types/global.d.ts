@@ -1,4 +1,4 @@
-import { UC_WINDOW_KEY } from '../abstract/connectBlocksFrom.js';
+import { UC_WINDOW_KEY } from '../abstract/loadFileUploaderFrom.js';
 import * as blocks from '../index.js';
 
 declare global {

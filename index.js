@@ -42,7 +42,7 @@ export { CloudImageEditor } from './solutions/cloud-image-editor/CloudImageEdito
 // Utils:
 export { registerFileUploader } from './abstract/registerFileUploader.js';
 export { defineLocale } from './abstract/localeRegistry.js';
-export { connectBlocksFrom } from './abstract/connectBlocksFrom.js';
+export { loadFileUploaderFrom } from './abstract/loadFileUploaderFrom.js';
 export { toKebabCase } from './utils/toKebabCase.js';
 
 export * from './env.js';

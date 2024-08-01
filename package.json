@@ -43,7 +43,7 @@
       "browser": "./index.js",
       "default": "./index.js"
     },
-    "./abstract/connectBlocksFrom.js": "./abstract/connectBlocksFrom.js",
+    "./abstract/loadFileUploaderFrom.js": "./abstract/loadFileUploaderFrom.js",
     "./env": "./env.js",
     "./web/*": "./web/*",
     "./types/*": "./types/*",

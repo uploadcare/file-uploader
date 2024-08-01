@@ -3,11 +3,11 @@ import { registerFileUploader } from './registerFileUploader.js';
 export const UC_WINDOW_KEY = 'UC';
 
 /**
- * @param {String} url Blocks pack url
+ * @param {String} url File Uploader pack url
  * @param {Boolean} [register] Register connected package, if it not registered yet
  * @returns {Promise<import('../index.js')>}
  */
-export async function connectBlocksFrom(url, register = false) {
+export async function loadFileUploaderFrom(url, register = false) {
   return new Promise((resolve, reject) => {
     if (typeof document !== 'object') {
       resolve(null);
