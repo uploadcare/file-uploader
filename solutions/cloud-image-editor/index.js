@@ -7,5 +7,5 @@ Then we can check whether the dependent tag is registered in the CustomElementRe
 If not, register it from default ones or just log the warning */
 
 export { Icon } from '../../blocks/Icon/Icon.js';
-export { registerBlocks } from '../../abstract/registerBlocks.js';
+export { registerFileUploader } from '../../abstract/registerFileUploader.js';
 export { Config } from '../../blocks/Config/Config.js';

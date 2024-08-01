@@ -20,7 +20,7 @@
   </script>
   <script type="module">
     import * as UC from './index.js';
-    UC.registerBlocks(UC);
+    UC.registerFileUploader(UC);
 
     UC.defineLocale('ru', () => import('./locales/file-uploader/ru.js').then((m) => m.default));
   </script>

@@ -1,5 +1,5 @@
 /** @param {Object<string, any>} blockExports */
-export function registerBlocks(blockExports) {
+export function registerFileUploader(blockExports) {
   for (let blockName in blockExports) {
     let tagName = [...blockName].reduce((name, char) => {
       if (char.toUpperCase() === char) {

@@ -1,4 +1,4 @@
-import { registerBlocks } from './registerBlocks.js';
+import { registerFileUploader } from './registerFileUploader.js';
 
 export const UC_WINDOW_KEY = 'UC';
 
@@ -26,7 +26,7 @@ export async function connectBlocksFrom(url, register = false) {
     script.onload = () => {
       /** @type {import('../index.js')} */
       let blocks = window[UC_WINDOW_KEY];
-      register && registerBlocks(blocks);
+      register && registerFileUploader(blocks);
       resolve(blocks);
     };
     document.head.appendChild(script);
