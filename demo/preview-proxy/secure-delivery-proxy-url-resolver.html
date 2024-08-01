@@ -21,7 +21,7 @@
   <script type="module">
     import * as UC from './index.js';
 
-    UC.registerFileUploader(UC);
+    UC.defineComponents(UC);
 
     const config = document.querySelector('uc-config');
     config.secureDeliveryProxyUrlResolver = (previewUrl) => {

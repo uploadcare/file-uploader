@@ -1,4 +1,4 @@
-import { registerFileUploader } from './registerFileUploader.js';
+import { defineComponents } from './defineComponents.js';
 
 export const UC_WINDOW_KEY = 'UC';
 
@@ -26,7 +26,7 @@ export async function loadFileUploaderFrom(url, register = false) {
     script.onload = () => {
       /** @type {import('../index.js')} */
       let blocks = window[UC_WINDOW_KEY];
-      register && registerFileUploader(blocks);
+      register && defineComponents(blocks);
       resolve(blocks);
     };
     document.head.appendChild(script);

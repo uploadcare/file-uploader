@@ -73,7 +73,7 @@ We use [JSDoc type annotations](https://www.typescriptlang.org/docs/handbook/int
 <script type="module">
   import * as UC from 'https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@1/web/file-uploader.min.js';
 
-  UC.registerFileUploader(UC);
+  UC.defineComponents(UC);
 </script>
 ```
 
@@ -98,7 +98,7 @@ We use [JSDoc type annotations](https://www.typescriptlang.org/docs/handbook/int
 ```js
 import * as UC from '@uploadcare/file-uploader';
 
-UC.registerFileUploader(UC);
+UC.defineComponents(UC);
 ```
 
 3. Start using Uploadcare File Uploader in your application markup:
