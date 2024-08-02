@@ -1,4 +1,5 @@
 // @ts-check
+import { html } from '@symbiotejs/symbiote';
 import { SolutionBlock } from '../../../abstract/SolutionBlock.js';
 import { asBoolean } from '../../../blocks/Config/normalizeConfigValue.js';
 import { EventType } from '../../../blocks/UploadCtxProvider/EventEmitter.js';
@@ -40,14 +41,14 @@ export class FileUploaderRegular extends SolutionBlock {
   }
 }
 
-FileUploaderRegular.template = /* HTML */ `
-  <uc-simple-btn set="@hidden: isHidden"></uc-simple-btn>
+FileUploaderRegular.template = html`
+  <uc-simple-btn bind="@hidden: isHidden"></uc-simple-btn>
 
   <uc-modal strokes block-body-scrolling>
     <uc-start-from>
       <uc-drop-area with-icon clickable></uc-drop-area>
       <uc-source-list wrap></uc-source-list>
-      <button type="button" l10n="start-from-cancel" class="uc-secondary-btn" set="onclick: *historyBack"></button>
+      <button type="button" l10n="start-from-cancel" class="uc-secondary-btn" bind="onclick: *historyBack"></button>
       <uc-copyright></uc-copyright>
     </uc-start-from>
     <uc-upload-list></uc-upload-list>

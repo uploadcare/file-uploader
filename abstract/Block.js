@@ -1,23 +1,27 @@
 // @ts-check
-import { BaseComponent, Data } from '@symbiotejs/symbiote';
+import { DICT, PubSub, Symbiote } from '@symbiotejs/symbiote';
+// @ts-ignore - something wrong with the tsd
+import { slotProcessor } from '@symbiotejs/symbiote/core/slotProcessor.js';
 import { initialConfig } from '../blocks/Config/initialConfig.js';
 import { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter.js';
 import { WindowHeightTracker } from '../utils/WindowHeightTracker.js';
-import { extractFilename, extractCdnUrlModifiers, extractUuid } from '../utils/cdn-utils.js';
+import { extractCdnUrlModifiers, extractFilename, extractUuid } from '../utils/cdn-utils.js';
 import { getLocaleDirection } from '../utils/getLocaleDirection.js';
 import { getPluralForm } from '../utils/getPluralForm.js';
 import { applyTemplateData, getPluralObjects } from '../utils/template-utils.js';
 import { waitForAttribute } from '../utils/waitForAttribute.js';
 import { blockCtx } from './CTX.js';
 import { LocaleManager, localeStateKey } from './LocaleManager.js';
+import { A11y } from './a11y.js';
 import { l10nProcessor } from './l10nProcessor.js';
 import { sharedConfigKey } from './sharedConfigKey.js';
-import { A11y } from './a11y.js';
+import { bindCompatibilityFallbackProcessor } from './bindCompatibilityFallbackProcessor.js';
 
 const TAG_PREFIX = 'uc-';
+const CTX_NAME_FALLBACK_ATTR = 'ctx-name';
 
 // @ts-ignore TODO: fix this
-export class Block extends BaseComponent {
+export class Block extends Symbiote {
   /** @type {string | null} */
   static StateConsumerScope = null;
 
@@ -78,8 +82,12 @@ export class Block extends BaseComponent {
     super();
     /** @type {Map<string, Set<{ remove: () => void }>>} */
     this.l10nProcessorSubs = new Map();
-    // @ts-ignore TODO: fix this
+    // @ts-expect-error TODO: fix this
     this.addTemplateProcessor(l10nProcessor);
+    this.addTemplateProcessor(slotProcessor);
+
+    // Prepend tpl processors with bind compatibility fallback processor
+    this.tplProcessors = new Set([bindCompatibilityFallbackProcessor, ...this.tplProcessors]);
   }
 
   /**
@@ -135,17 +143,29 @@ export class Block extends BaseComponent {
       this.processInnerHtml = true;
     }
     if (this.requireCtxName) {
-      waitForAttribute({
-        element: this,
-        attribute: 'ctx-name',
-        onSuccess: () => {
-          // async wait for ctx-name attribute to be set, needed for Angular because it sets attributes after mount
+      Promise.race([
+        waitForAttribute({
+          element: this,
+          attribute: DICT.CTX_NAME_ATTR,
+        }),
+        waitForAttribute({
+          element: this,
+          attribute: CTX_NAME_FALLBACK_ATTR,
+        }),
+      ]).then((result) => {
+        if (result.success) {
+          if (result.attribute === CTX_NAME_FALLBACK_ATTR) {
+            const ctxName = result.value;
+            this.style.setProperty(DICT.CSS_CTX_PROP, `'${ctxName}'`);
+          }
+          // async wait for ctx attribute to be set, needed for Angular because it sets attributes after mount
           // TODO: should be moved to the symbiote core
           super.connectedCallback();
-        },
-        onTimeout: () => {
-          console.error('Attribute `ctx-name` is required and it is not set.');
-        },
+        } else {
+          console.error(
+            `Attribute "${DICT.CTX_NAME_ATTR}" or "${CTX_NAME_FALLBACK_ATTR}" is required and it is not set.`,
+          );
+        }
       });
     } else {
       super.connectedCallback();
@@ -217,7 +237,7 @@ export class Block extends BaseComponent {
 
     // Destroy local context
     // TODO: this should be done inside symbiote
-    Data.deleteCtx(this);
+    PubSub.deleteCtx(this.localCtx.uid);
 
     if (blocksRegistry?.size === 0) {
       setTimeout(() => {
@@ -233,7 +253,7 @@ export class Block extends BaseComponent {
    * @protected
    */
   destroyCtxCallback() {
-    Data.deleteCtx(this.ctxName);
+    PubSub.deleteCtx(this.ctxName);
 
     this.localeManager?.destroy();
   }
@@ -327,6 +347,7 @@ export class Block extends BaseComponent {
       const resolver = args[0];
       consoleArgs = resolver();
     }
+
     console.log(`[${this.ctxName}]`, ...consoleArgs);
   }
 
@@ -341,5 +362,3 @@ export class Block extends BaseComponent {
     }
   }
 }
-
-export { BaseComponent };

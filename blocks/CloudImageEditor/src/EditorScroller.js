@@ -1,3 +1,4 @@
+import { html } from '@symbiotejs/symbiote';
 import { Block } from '../../../abstract/Block.js';
 
 const X_THRESHOLD = 1;
@@ -30,4 +31,4 @@ export class EditorScroller extends Block {
   }
 }
 
-EditorScroller.template = /* HTML */ ` <slot></slot> `;
+EditorScroller.template = html` <slot></slot> `;

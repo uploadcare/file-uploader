@@ -1,3 +1,4 @@
+import { html } from '@symbiotejs/symbiote';
 import { Block } from '../../../../../abstract/Block.js';
 
 export class LineLoaderUi extends Block {
@@ -45,7 +46,7 @@ export class LineLoaderUi extends Block {
   }
 }
 
-LineLoaderUi.template = /* HTML */ `
+LineLoaderUi.template = html`
   <div class="uc-inner">
     <div class="uc-line" ref="line-el"></div>
   </div>

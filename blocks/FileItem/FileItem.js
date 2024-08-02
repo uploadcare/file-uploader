@@ -1,4 +1,5 @@
 // @ts-check
+import { html } from '@symbiotejs/symbiote';
 import { CancelError, uploadFile } from '@uploadcare/upload-client';
 import { shrinkFile } from '@uploadcare/image-shrink';
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
@@ -293,7 +294,7 @@ export class FileItem extends UploaderBlock {
       isFinished: state === FileItemState.FINISHED,
       progressVisible: state === FileItemState.UPLOADING,
       isEditable: this.cfg.useCloudImageEditor && this._entry?.getValue('isImage') && this._entry?.getValue('cdnUrl'),
-      errorText: this._entry.getValue('errors')?.[0]?.message,
+      errorText: this._entry.getValue('errors')?.[0]?.message ?? '',
     });
   }
 
@@ -422,23 +423,23 @@ export class FileItem extends UploaderBlock {
   }
 }
 
-FileItem.template = /* HTML */ `
-  <div class="uc-inner" set="@finished: isFinished; @uploading: isUploading; @failed: isFailed; @focused: isFocused">
-    <div class="uc-thumb" set="style.backgroundImage: thumbUrl">
+FileItem.template = html`
+  <div class="uc-inner" bind="@finished: isFinished; @uploading: isUploading; @failed: isFailed; @focused: isFocused">
+    <div class="uc-thumb" bind="style.backgroundImage: thumbUrl">
       <div class="uc-badge">
-        <uc-icon set="@name: badgeIcon"></uc-icon>
+        <uc-icon bind="@name: badgeIcon"></uc-icon>
       </div>
     </div>
     <div class="uc-file-name-wrapper">
-      <span class="uc-file-name" set="@title: itemName">{{itemName}}</span>
-      <span class="uc-file-error" set="@hidden: !errorText">{{errorText}}</span>
+      <span class="uc-file-name" bind="@title: itemName">{{itemName}}</span>
+      <span class="uc-file-error" bind="@hidden: !errorText">{{errorText}}</span>
     </div>
     <div class="uc-file-actions">
       <button
         type="button"
         l10n="@title:file-item-edit-button"
         class="uc-edit-btn uc-mini-btn"
-        set="onclick: onEdit; @hidden: !isEditable"
+        bind="onclick: onEdit; @hidden: !isEditable"
       >
         <uc-icon name="edit-file"></uc-icon>
       </button>
@@ -446,15 +447,15 @@ FileItem.template = /* HTML */ `
         type="button"
         l10n="@title:file-item-remove-button"
         class="uc-remove-btn uc-mini-btn"
-        set="onclick: onRemove;"
+        bind="onclick: onRemove;"
       >
         <uc-icon name="remove-file"></uc-icon>
       </button>
-      <button type="button" class="uc-upload-btn uc-mini-btn" set="onclick: onUpload;">
+      <button type="button" class="uc-upload-btn uc-mini-btn" bind="onclick: onUpload;">
         <uc-icon name="upload"></uc-icon>
       </button>
     </div>
-    <uc-progress-bar class="uc-progress-bar" set="value: progressValue; visible: progressVisible;"> </uc-progress-bar>
+    <uc-progress-bar class="uc-progress-bar" bind="value: progressValue; visible: progressVisible;"> </uc-progress-bar>
   </div>
 `;
 FileItem.activeInstances = new Set();

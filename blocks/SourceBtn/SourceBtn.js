@@ -1,6 +1,7 @@
 // @ts-check
-import { UploaderBlock } from '../../abstract/UploaderBlock.js';
+import { html } from '@symbiotejs/symbiote';
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
+import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 
 const L10N_PREFIX = 'src-type-';
 
@@ -132,10 +133,9 @@ export class SourceBtn extends UploaderBlock {
     };
   }
 }
-
-SourceBtn.template = /* HTML */ `
+SourceBtn.template = html`
   <button type="button">
-    <uc-icon set="@name: iconName"></uc-icon>
+    <uc-icon bind="@name: iconName"></uc-icon>
     <div class="uc-txt" l10n="src-type"></div>
   </button>
 `;
