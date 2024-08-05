@@ -50,7 +50,7 @@
     "./types/jsx": "./types/jsx.d.ts",
     "./locales/*": "./locales/*"
   },
-  "repository": "https://github.com/uploadcare/blocks/",
+  "repository": "https://github.com/uploadcare/file-uploader/",
   "files": [
     "{abstract,blocks,solutions,web,utils,types,locales}/**/*.{js,css,d.ts,d.ts.map}",
     "index.{js,d.ts,d.ts.map}",
