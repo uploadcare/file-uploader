@@ -1,31 +1,21 @@
-# [1.2.0](https://github.com/uploadcare/blocks/compare/v1.1.1...v1.2.0) (2024-08-01)
-
-### Features
-
-- renamed method connectBlocksFrom to loadFileUploaderFrom ([d083cb7](https://github.com/uploadcare/blocks/commit/d083cb7bac5fd223ef322c851a9629e38eb4541f))
-- renamed method registerBlocks to registerFileUploader ([3039eb3](https://github.com/uploadcare/blocks/commit/3039eb33d92bc321a27e6bb64d84b698ac872b88))
-- renamed method registerFileUploader to defineComponents ([606f8fc](https://github.com/uploadcare/blocks/commit/606f8fc1bf8b8f8242515c1da12ab9f3ec396b0b))
-
-## [1.1.1](https://github.com/uploadcare/blocks/compare/v1.1.0...v1.1.1) (2024-07-31)
+# [1.2.0](https://github.com/uploadcare/blocks/compare/v1.0.0...v1.2.0) (2024-08-01)
 
 ### Bug Fixes
 
 - **regular-mode:** disable done button until group created ([#710](https://github.com/uploadcare/blocks/issues/710)) ([3e30f63](https://github.com/uploadcare/blocks/commit/3e30f638804062e80e683097f3dd0813e14eca15))
 
-# [1.1.0](https://github.com/uploadcare/blocks/compare/v1.0.0...v1.1.0) (2024-07-30)
-
 ### Features
 
 - add cloud-image-editor telemetry ([#703](https://github.com/uploadcare/blocks/issues/703)) ([cbd69b8](https://github.com/uploadcare/blocks/commit/cbd69b852e85b73c21cdbaea228f19529c23183c))
 
-# [1.0.0](https://github.com/uploadcare/blocks/compare/v0.50.1...v1.0.0) (2024-07-29)
-
 ### BREAKING CHANGES:
 
 - rename package `@uploadcare/blocks` to `@uploadcare/file-uploader`
-- rename all prefixes from `lr` to `uc` ([#698](https://github.com/uploadcare/blocks/issues/698)) ([e28f2af](https://github.com/uploadcare/blocks/commit/e28f2af9c48704c49fb115769c01c9e82b300f39))
+- method `connectBlocksFrom` renamed to `loadFileUploaderFrom` ([d083cb7](https://github.com/uploadcare/blocks/commit/d083cb7bac5fd223ef322c851a9629e38eb4541f))
+- method `registerBlocks` renamed to `defineComponents` ([606f8fc](https://github.com/uploadcare/blocks/commit/606f8fc1bf8b8f8242515c1da12ab9f3ec396b0b))
+- rename all prefixes from `lr` to `uc` (https://github.com/uploadcare/blocks/issues/698) ([e28f2af](https://github.com/uploadcare/blocks/commit/e28f2af9c48704c49fb115769c01c9e82b300f39))
 
-See the [migration guide](https://uploadcare.com/docs/file-uploader/migration-to-1/) for details.
+See the [migration guide](https://uploadcare.com/docs/file-uploader/migration-to-1.x/) for details.
 
 ## [0.50.1](https://github.com/uploadcare/blocks/compare/v0.50.0...v0.50.1) (2024-07-16)
 
