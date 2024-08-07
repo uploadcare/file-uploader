@@ -209,6 +209,8 @@ export class Block extends BaseComponent {
 
   /** @protected */
   destroyCallback() {
+    super.destroyCallback();
+
     let blocksRegistry = this.blocksRegistry;
     blocksRegistry?.delete(this);
 
