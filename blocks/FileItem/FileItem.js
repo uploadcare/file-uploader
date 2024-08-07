@@ -56,14 +56,10 @@ export class FileItem extends UploaderBlock {
       isEditable: false,
       state: FileItemState.IDLE,
       onEdit: () => {
-        this.set$({
-          '*focusedEntry': this._entry,
-        });
-        if (this.hasBlockInCtx((b) => b.activityType === ActivityBlock.activities.DETAILS)) {
-          this.$['*currentActivity'] = ActivityBlock.activities.DETAILS;
-        } else {
-          this.$['*currentActivity'] = ActivityBlock.activities.CLOUD_IMG_EDIT;
-        }
+        this.$['*currentActivityParams'] = {
+          internalId: this._entry.uid,
+        };
+        this.$['*currentActivity'] = ActivityBlock.activities.CLOUD_IMG_EDIT;
       },
       onRemove: () => {
         this.uploadCollection.remove(this.$.uid);

@@ -1,17 +1,16 @@
-import { expectNotType, expectType } from 'tsd';
+import { UploadcareFile, UploadcareGroup } from '@uploadcare/upload-client';
+import { useRef } from 'react';
+import { expectType } from 'tsd';
 import {
   ActivityBlock,
   EventMap,
   OutputCollectionErrorType,
-  OutputCollectionState,
   OutputCollectionStatus,
   OutputError,
   OutputFileEntry,
   OutputFileErrorType,
-  UploadCtxProvider,
+  UploadCtxProvider
 } from '../../index.js';
-import { useRef } from 'react';
-import { UploadcareFile, UploadcareGroup } from '@uploadcare/upload-client';
 
 const instance = new UploadCtxProvider();
 instance.uploadCollection.size;
