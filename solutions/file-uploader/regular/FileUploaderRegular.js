@@ -56,8 +56,6 @@ FileUploaderRegular.template = /* HTML */ `
     <uc-external-source></uc-external-source>
     <uc-cloud-image-editor-activity></uc-cloud-image-editor-activity>
   </uc-modal>
-
-  <uc-progress-bar-common></uc-progress-bar-common>
 `;
 
 FileUploaderRegular.bindAttributes({
