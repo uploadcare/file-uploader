@@ -1,3 +1,9 @@
+# [1.3.0](https://github.com/uploadcare/file-uploader/compare/v1.2.0...v1.3.0) (2024-08-08)
+
+### Features
+
+- remove common progress bar from the regular and inline modes ([#721](https://github.com/uploadcare/file-uploader/issues/721)) ([f7b8fa7](https://github.com/uploadcare/file-uploader/commit/f7b8fa756d93c99b1541c874a8bc87a9b1b85b5f))
+
 # [1.2.0](https://github.com/uploadcare/blocks/compare/v1.0.0...v1.2.0) (2024-08-01)
 
 ### Bug Fixes
