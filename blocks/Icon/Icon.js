@@ -33,7 +33,7 @@ export class Icon extends Block {
 
 Icon.template = html`
   <svg ref="svg" xmlns="http://www.w3.org/2000/svg">
-    <use bind="@href: href;"></use>
+    <use set="@href: href;"></use>
   </svg>
 `;
 

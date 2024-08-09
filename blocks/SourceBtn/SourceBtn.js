@@ -135,7 +135,7 @@ export class SourceBtn extends UploaderBlock {
 }
 SourceBtn.template = html`
   <button type="button">
-    <uc-icon bind="@name: iconName"></uc-icon>
+    <uc-icon set="@name: iconName"></uc-icon>
     <div class="uc-txt" l10n="src-type"></div>
   </button>
 `;

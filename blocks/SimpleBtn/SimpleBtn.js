@@ -39,8 +39,8 @@ export class SimpleBtn extends UploaderBlock {
 }
 
 SimpleBtn.template = html`
-  <uc-drop-area bind="@disabled: !withDropZone">
-    <button type="button" bind="onclick: onClick">
+  <uc-drop-area set="@disabled: !withDropZone">
+    <button type="button" set="onclick: onClick">
       <uc-icon name="upload"></uc-icon>
       <span l10n="button-text"></span>
       <slot></slot>

@@ -42,4 +42,4 @@ export class ProgressBarCommon extends UploaderBlock {
   }
 }
 
-ProgressBarCommon.template = html` <uc-progress-bar bind="visible: visible; value: value"></uc-progress-bar> `;
+ProgressBarCommon.template = html` <uc-progress-bar set="visible: visible; value: value"></uc-progress-bar> `;

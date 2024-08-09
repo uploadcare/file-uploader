@@ -216,19 +216,19 @@ export class CameraSource extends UploaderBlock {
 
 CameraSource.template = html`
   <uc-activity-header>
-    <button type="button" class="uc-mini-btn" bind="onclick: *historyBack">
+    <button type="button" class="uc-mini-btn" set="onclick: *historyBack">
       <uc-icon name="back"></uc-icon>
     </button>
-    <div bind="@hidden: !cameraSelectHidden">
+    <div set="@hidden: !cameraSelectHidden">
       <uc-icon name="camera"></uc-icon>
       <span l10n="caption-camera"></span>
     </div>
     <uc-select
       class="uc-camera-select"
-      bind="options: cameraSelectOptions; @hidden: cameraSelectHidden; onchange: onCameraSelectChange"
+      set="options: cameraSelectOptions; @hidden: cameraSelectHidden; onchange: onCameraSelectChange"
     >
     </uc-select>
-    <button type="button" class="uc-mini-btn uc-close-btn" bind="onclick: *closeModal">
+    <button type="button" class="uc-mini-btn uc-close-btn" set="onclick: *closeModal">
       <uc-icon name="close"></uc-icon>
     </button>
   </uc-activity-header>
@@ -236,18 +236,18 @@ CameraSource.template = html`
     <video
       autoplay
       playsinline
-      bind="srcObject: video; style.transform: videoTransformCss; @hidden: videoHidden"
+      set="srcObject: video; style.transform: videoTransformCss; @hidden: videoHidden"
       ref="video"
     ></video>
-    <div class="uc-message-box" bind="@hidden: messageHidden">
+    <div class="uc-message-box" set="@hidden: messageHidden">
       <span l10n="l10nMessage"></span>
       <button
         type="button"
-        bind="onclick: onRequestPermissions; @hidden: requestBtnHidden"
+        set="onclick: onRequestPermissions; @hidden: requestBtnHidden"
         l10n="camera-permissions-request"
       ></button>
     </div>
-    <button type="button" class="uc-shot-btn" bind="onclick: onShot; @disabled: shotBtnDisabled">
+    <button type="button" class="uc-shot-btn" set="onclick: onShot; @disabled: shotBtnDisabled">
       <uc-icon name="camera"></uc-icon>
     </button>
   </div>

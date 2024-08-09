@@ -174,6 +174,6 @@ SliderUi.template = html`
     class="uc-input"
     type="range"
     ref="input-el"
-    bind="oninput: on.sliderInput; onchange: on.sliderChange; @min: min; @max: max; @value: defaultValue;"
+    set="oninput: on.sliderInput; onchange: on.sliderChange; @min: min; @max: max; @value: defaultValue;"
   />
 `;

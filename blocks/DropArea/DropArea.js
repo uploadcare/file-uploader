@@ -249,8 +249,8 @@ export class DropArea extends UploaderBlock {
 DropArea.template = html`
   <slot>
     <div data-default-slot hidden></div>
-    <div ref="content-wrapper" class="uc-content-wrapper" bind="@hidden: !isVisible">
-      <div class="uc-icon-container" bind="@hidden: !withIcon">
+    <div ref="content-wrapper" class="uc-content-wrapper" set="@hidden: !isVisible">
+      <div class="uc-icon-container" set="@hidden: !withIcon">
         <uc-icon name="default"></uc-icon>
         <uc-icon name="arrow-down"></uc-icon>
       </div>

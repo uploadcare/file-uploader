@@ -201,39 +201,39 @@ export class UploadList extends UploaderBlock {
 UploadList.template = html`
   <uc-activity-header>
     <span class="uc-header-text">{{headerText}}</span>
-    <button type="button" class="uc-mini-btn uc-close-btn" bind="onclick: *closeModal">
+    <button type="button" class="uc-mini-btn uc-close-btn" set="onclick: *closeModal">
       <uc-icon name="close"></uc-icon>
     </button>
   </uc-activity-header>
 
-  <div class="uc-no-files" bind="@hidden: hasFiles">
+  <div class="uc-no-files" set="@hidden: hasFiles">
     <slot name="empty"><span l10n="no-files"></span></slot>
   </div>
 
   <div class="uc-files" itemize="*uploadList" item-tag="uc-file-item"></div>
 
-  <div class="uc-common-error" bind="@hidden: !commonErrorMessage; textContent: commonErrorMessage;"></div>
+  <div class="uc-common-error" set="@hidden: !commonErrorMessage; textContent: commonErrorMessage;"></div>
 
   <div class="uc-toolbar">
-    <button type="button" class="uc-cancel-btn uc-secondary-btn" bind="onclick: onCancel;" l10n="clear"></button>
+    <button type="button" class="uc-cancel-btn uc-secondary-btn" set="onclick: onCancel;" l10n="clear"></button>
     <div class="uc-toolbar-spacer"></div>
     <button
       type="button"
       class="uc-add-more-btn uc-secondary-btn"
-      bind="onclick: onAdd; @disabled: !addMoreBtnEnabled; @hidden: !addMoreBtnVisible"
+      set="onclick: onAdd; @disabled: !addMoreBtnEnabled; @hidden: !addMoreBtnVisible"
     >
       <uc-icon name="add"></uc-icon><span l10n="add-more"></span>
     </button>
     <button
       type="button"
       class="uc-upload-btn uc-primary-btn"
-      bind="@hidden: !uploadBtnVisible; onclick: onUpload;"
+      set="@hidden: !uploadBtnVisible; onclick: onUpload;"
       l10n="upload"
     ></button>
     <button
       type="button"
       class="uc-done-btn uc-primary-btn"
-      bind="@hidden: !doneBtnVisible; onclick: onDone;  @disabled: !doneBtnEnabled"
+      set="@hidden: !doneBtnVisible; onclick: onDone;  @disabled: !doneBtnEnabled"
       l10n="done"
     ></button>
   </div>

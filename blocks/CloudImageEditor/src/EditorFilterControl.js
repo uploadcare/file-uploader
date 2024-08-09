@@ -156,6 +156,6 @@ export class EditorFilterControl extends EditorButtonControl {
 EditorFilterControl.template = html`
   <button type="button" role="option">
     <div class="uc-preview" ref="preview-el"></div>
-    <uc-icon ref="icon-el" bind="@name: icon;"></uc-icon>
+    <uc-icon ref="icon-el" set="@name: icon;"></uc-icon>
   </button>
 `;

@@ -114,6 +114,6 @@ export class EditorSlider extends Block {
 EditorSlider.template = html`
   <uc-slider-ui
     ref="slider-el"
-    bind="disabled: disabled; min: min; max: max; defaultValue: defaultValue; zero: zero; onInput: on.input;"
+    set="disabled: disabled; min: min; max: max; defaultValue: defaultValue; zero: zero; onInput: on.input;"
   ></uc-slider-ui>
 `;

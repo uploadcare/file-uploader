@@ -13,6 +13,7 @@ export { slotProcessor } from '@symbiotejs/symbiote/core/slotProcessor.js';
 
 Object.assign(DICT, {
   CTX_NAME_ATTR: 'ctx-name',
+  BIND_ATTR: 'set',
 });
 
 export { DICT };

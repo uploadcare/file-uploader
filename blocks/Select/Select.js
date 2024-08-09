@@ -37,4 +37,4 @@ export class Select extends Block {
   }
 }
 
-Select.template = html` <select ref="select" bind="innerHTML: selectHtml; onchange: onSelect"></select> `;
+Select.template = html` <select ref="select" set="innerHTML: selectHtml; onchange: onSelect"></select> `;

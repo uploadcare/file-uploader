@@ -83,8 +83,8 @@ export class BtnUi extends Block {
 BtnUi.bindAttributes({ text: 'text', icon: 'icon', reverse: 'reverse', theme: 'theme' });
 
 BtnUi.template = html`
-  <button type="button" bind="@role:aria-role; @aria-controls: aria-controls">
-    <uc-icon bind="className: iconCss; @name: icon; @hidden: !icon"></uc-icon>
+  <button type="button" set="@role:aria-role; @aria-controls: aria-controls">
+    <uc-icon set="className: iconCss; @name: icon; @hidden: !icon"></uc-icon>
     <div class="uc-text">{{text}}</div>
   </button>
 `;
