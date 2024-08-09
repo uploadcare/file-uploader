@@ -1,4 +1,4 @@
-import { html } from '@symbiotejs/symbiote';
+import { html } from '../../../symbiote.js';
 import { TRANSPARENT_PIXEL_SRC } from '../../../utils/transparentPixelSrc.js';
 import svgIconsSprite from './svg-sprite.js';
 

@@ -1,5 +1,5 @@
 // @ts-check
-import { DICT } from '@symbiotejs/symbiote';
+import { DICT } from '../../symbiote.js';
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { CloudImageEditorBlock } from '../CloudImageEditor/index.js';

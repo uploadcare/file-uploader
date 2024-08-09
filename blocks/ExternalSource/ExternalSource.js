@@ -1,6 +1,6 @@
 // @ts-check
 
-import { create, html } from '@symbiotejs/symbiote';
+import { create, html } from '../../symbiote.js';
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { stringToArray } from '../../utils/stringToArray.js';

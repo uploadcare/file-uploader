@@ -1,4 +1,4 @@
-import { html } from '@symbiotejs/symbiote';
+import { html } from '../../symbiote.js';
 import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 
 export class ProgressBarCommon extends UploaderBlock {

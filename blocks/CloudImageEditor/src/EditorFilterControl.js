@@ -1,5 +1,5 @@
 // @ts-check
-import { html } from '@symbiotejs/symbiote';
+import { html } from '../../../symbiote.js';
 import { createCdnUrl, createCdnUrlModifiers } from '../../../utils/cdn-utils.js';
 import { EditorButtonControl } from './EditorButtonControl.js';
 import { FAKE_ORIGINAL_FILTER } from './EditorSlider.js';

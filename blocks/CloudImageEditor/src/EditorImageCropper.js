@@ -1,5 +1,5 @@
 // @ts-check
-import { html } from '@symbiotejs/symbiote';
+import { html } from '../../../symbiote.js';
 import { Block } from '../../../abstract/Block.js';
 import { debounce } from '../../utils/debounce.js';
 import { throttle } from '../../utils/throttle.js';

@@ -1,7 +1,7 @@
 // @ts-check
 import { ActivityBlock } from './ActivityBlock.js';
 
-import { PubSub } from '@symbiotejs/symbiote';
+import { PubSub } from '../symbiote.js';
 import { EventType } from '../blocks/UploadCtxProvider/EventEmitter.js';
 import { UploadSource } from '../blocks/utils/UploadSource.js';
 import { serializeCsv } from '../blocks/utils/comma-separated.js';

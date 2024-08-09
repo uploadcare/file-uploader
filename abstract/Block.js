@@ -1,7 +1,5 @@
 // @ts-check
-import { DICT, PubSub, Symbiote } from '@symbiotejs/symbiote';
-// @ts-ignore - something wrong with the tsd
-import { slotProcessor } from '@symbiotejs/symbiote/core/slotProcessor.js';
+import { DICT, PubSub, Symbiote, slotProcessor } from '../symbiote.js';
 import { initialConfig } from '../blocks/Config/initialConfig.js';
 import { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter.js';
 import { WindowHeightTracker } from '../utils/WindowHeightTracker.js';
@@ -15,7 +13,6 @@ import { LocaleManager, localeStateKey } from './LocaleManager.js';
 import { A11y } from './a11y.js';
 import { l10nProcessor } from './l10nProcessor.js';
 import { sharedConfigKey } from './sharedConfigKey.js';
-import { bindCompatibilityFallbackProcessor } from './bindCompatibilityFallbackProcessor.js';
 
 const TAG_PREFIX = 'uc-';
 const CTX_NAME_FALLBACK_ATTR = 'ctx-name';
@@ -85,9 +82,6 @@ export class Block extends Symbiote {
     // @ts-expect-error TODO: fix this
     this.addTemplateProcessor(l10nProcessor);
     this.addTemplateProcessor(slotProcessor);
-
-    // Prepend tpl processors with bind compatibility fallback processor
-    this.tplProcessors = new Set([bindCompatibilityFallbackProcessor, ...this.tplProcessors]);
   }
 
   /**

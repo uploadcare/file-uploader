@@ -1,5 +1,5 @@
 // @ts-check
-import { html } from '@symbiotejs/symbiote';
+import { html } from '../../symbiote.js';
 import { CancelError, uploadFile } from '@uploadcare/upload-client';
 import { shrinkFile } from '@uploadcare/image-shrink';
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';

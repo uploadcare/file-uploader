@@ -53,6 +53,7 @@
   "repository": "https://github.com/uploadcare/blocks/",
   "files": [
     "{abstract,blocks,solutions,web,utils,types,locales}/**/*.{js,css,d.ts,d.ts.map}",
+    "symbiote.js",
     "index.{js,d.ts,d.ts.map}",
     "index.ssr.{js,d.ts,d.ts.map}",
     "env.{js,d.ts,d.ts.map}",
@@ -134,7 +135,7 @@
   "author": "Uploadcare Inc.",
   "license": "MIT",
   "dependencies": {
-    "@symbiotejs/symbiote": "^2.3.0",
+    "@symbiotejs/symbiote": "^2.3.1",
     "@types/sinon": "^17.0.3",
     "@uploadcare/image-shrink": "^6.14.1",
     "@uploadcare/upload-client": "^6.14.1",

@@ -1,4 +1,4 @@
-import { PubSub, UID } from '@symbiotejs/symbiote';
+import { PubSub, UID } from '../symbiote.js';
 import { TypedData } from './TypedData.js';
 
 export class TypedCollection {

@@ -1,4 +1,4 @@
-import { Symbiote, PubSub } from '@symbiotejs/symbiote';
+import { Symbiote, PubSub } from '../../symbiote.js';
 import { PROPS_MAP } from './props-map.js';
 import { CSS_PREF } from './configurations.js';
 import { PACKAGE_NAME, PACKAGE_VERSION } from '../../env.js';

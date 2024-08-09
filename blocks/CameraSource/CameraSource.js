@@ -1,4 +1,4 @@
-import { html } from '@symbiotejs/symbiote';
+import { html } from '../../symbiote.js';
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { UploadSource } from '../utils/UploadSource.js';

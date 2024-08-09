@@ -1,4 +1,4 @@
-import { html } from '@symbiotejs/symbiote';
+import { html } from '../../../symbiote.js';
 import { classNames } from './lib/classNames.js';
 import { Block } from '../../../abstract/Block.js';
 

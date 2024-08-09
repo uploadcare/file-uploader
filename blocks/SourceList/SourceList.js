@@ -1,6 +1,6 @@
 import { Block } from '../../abstract/Block.js';
 import { stringToArray } from '../../utils/stringToArray.js';
-import { html } from '@symbiotejs/symbiote';
+import { html } from '../../symbiote.js';
 
 export class SourceList extends Block {
   initCallback() {

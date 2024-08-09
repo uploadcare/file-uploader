@@ -1,7 +1,7 @@
 // @ts-check
 import { ActivityBlock } from './ActivityBlock.js';
 
-import { PubSub } from '@symbiotejs/symbiote';
+import { PubSub } from '../symbiote.js';
 import { uploadFileGroup } from '@uploadcare/upload-client';
 import { calculateMaxCenteredCropFrame } from '../blocks/CloudImageEditor/src/crop-utils.js';
 import { parseCropPreset } from '../blocks/CloudImageEditor/src/lib/parseCropPreset.js';

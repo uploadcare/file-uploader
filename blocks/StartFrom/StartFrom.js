@@ -1,4 +1,4 @@
-import { html } from '@symbiotejs/symbiote';
+import { html } from '../../symbiote.js';
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 
 export class StartFrom extends ActivityBlock {

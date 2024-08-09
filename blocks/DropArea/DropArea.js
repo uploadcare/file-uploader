@@ -1,6 +1,6 @@
 // @ts-check
 
-import { PubSub, html } from '@symbiotejs/symbiote';
+import { PubSub, html } from '../../symbiote.js';
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { stringToArray } from '../../utils/stringToArray.js';
