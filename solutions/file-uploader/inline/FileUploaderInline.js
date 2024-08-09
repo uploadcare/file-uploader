@@ -72,5 +72,4 @@ FileUploaderInline.template = html` <uc-start-from>
   <uc-camera-source></uc-camera-source>
   <uc-url-source></uc-url-source>
   <uc-external-source></uc-external-source>
-  <uc-progress-bar></uc-progress-bar>
   <uc-cloud-image-editor-activity></uc-cloud-image-editor-activity>`;
