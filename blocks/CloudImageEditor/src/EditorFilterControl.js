@@ -5,6 +5,8 @@ import { FAKE_ORIGINAL_FILTER } from './EditorSlider.js';
 import { COMMON_OPERATIONS, transformationsToOperations } from './lib/transformationUtils.js';
 import { preloadImage } from './lib/preloadImage.js';
 
+const L10N_PREFIX = 'a11y-editor-filter-control-';
+
 export class EditorFilterControl extends EditorButtonControl {
   constructor() {
     super();
@@ -99,6 +101,7 @@ export class EditorFilterControl extends EditorButtonControl {
         this._filter = filter;
         this.$.isOriginal = filter === FAKE_ORIGINAL_FILTER;
         this.$.icon = this.$.isOriginal ? 'original' : 'slider';
+        this.$['title-prop'] = `${L10N_PREFIX}${filter}`;
       },
     );
 
@@ -158,7 +161,7 @@ export class EditorFilterControl extends EditorButtonControl {
 }
 
 EditorFilterControl.template = /* HTML */ `
-  <button type="button" role="option">
+  <button type="button" role="option" l10n="@title:title-prop">
     <div class="uc-preview" ref="preview-el"></div>
     <uc-icon ref="icon-el" set="@name: icon; @size: iconSize;"></uc-icon>
   </button>

@@ -16,6 +16,8 @@ function nextValue(operation, prev) {
   return null;
 }
 
+const L10N_PREFIX = 'a11y-editor-crop-button-control-';
+
 export class EditorCropButtonControl extends EditorButtonControl {
   initCallback() {
     super.initCallback();
@@ -28,6 +30,7 @@ export class EditorCropButtonControl extends EditorButtonControl {
       /** @private */
       this._operation = operation;
       this.$['icon'] = operation;
+      this.$['title-prop'] = `${L10N_PREFIX}${operation}`;
     });
 
     this.$['on.click'] = (e) => {

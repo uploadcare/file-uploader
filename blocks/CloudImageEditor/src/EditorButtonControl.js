@@ -8,6 +8,7 @@ export class EditorButtonControl extends Block {
     title: '',
     icon: '',
     'on.click': null,
+    'title-prop': '',
   };
 
   initCallback() {
@@ -37,7 +38,7 @@ export class EditorButtonControl extends Block {
 }
 
 EditorButtonControl.template = /* HTML */ `
-  <button type="button" role="option">
+  <button type="button" role="option" l10n="@title:title-prop">
     <uc-icon set="@name: icon;"></uc-icon>
     <div class="uc-title" ref="title-el">{{title}}</div>
   </button>

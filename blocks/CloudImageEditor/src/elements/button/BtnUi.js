@@ -17,6 +17,7 @@ export class BtnUi extends Block {
       theme: null,
       'aria-role': '',
       'aria-controls': '',
+      'title-prop': '',
     };
 
     this.defineAccessor('active', (active) => {
@@ -67,6 +68,10 @@ export class BtnUi extends Block {
     this.defineAccessor('aria-controls', (value) => {
       this.$['aria-controls'] = value || '';
     });
+
+    this.defineAccessor('title-prop', (value) => {
+      this.$['title-prop'] = value || '';
+    });
   }
 
   set reverse(val) {
@@ -83,7 +88,7 @@ export class BtnUi extends Block {
 BtnUi.bindAttributes({ text: 'text', icon: 'icon', reverse: 'reverse', theme: 'theme' });
 
 BtnUi.template = /* HTML */ `
-  <button type="button" set="@role:aria-role; @aria-controls: aria-controls">
+  <button type="button" set="@role:aria-role; @aria-controls: aria-controls;" l10n="@title:title-prop">
     <uc-icon set="className: iconCss; @name: icon; @hidden: !icon"></uc-icon>
     <div class="uc-text">{{text}}</div>
   </button>
