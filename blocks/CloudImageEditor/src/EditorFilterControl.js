@@ -5,8 +5,6 @@ import { FAKE_ORIGINAL_FILTER } from './EditorSlider.js';
 import { COMMON_OPERATIONS, transformationsToOperations } from './lib/transformationUtils.js';
 import { preloadImage } from './lib/preloadImage.js';
 
-const L10N_PREFIX = 'a11y-editor-filter-control-';
-
 export class EditorFilterControl extends EditorButtonControl {
   constructor() {
     super();
@@ -101,7 +99,12 @@ export class EditorFilterControl extends EditorButtonControl {
         this._filter = filter;
         this.$.isOriginal = filter === FAKE_ORIGINAL_FILTER;
         this.$.icon = this.$.isOriginal ? 'original' : 'slider';
-        this.$['title-prop'] = `${L10N_PREFIX}${filter}`;
+
+        this.bindL10n('title-prop', () =>
+          this.l10n('a11y-cloud-editor-apply-filter', {
+            filterName: filter.toLowerCase(),
+          }),
+        );
       },
     );
 

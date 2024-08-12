@@ -1,8 +1,6 @@
 import { EditorButtonControl } from './EditorButtonControl.js';
 import { COLOR_OPERATIONS_CONFIG } from './toolbar-constants.js';
 
-const L10N_PREFIX = 'a11y-editor-operation-control-';
-
 export class EditorOperationControl extends EditorButtonControl {
   /**
    * @private
@@ -23,7 +21,11 @@ export class EditorOperationControl extends EditorButtonControl {
       if (operation) {
         this._operation = operation;
         this.$['icon'] = operation;
-        this.$['title-prop'] = `${L10N_PREFIX}${operation}`;
+        this.bindL10n('title-prop', () =>
+          this.l10n('a11y-cloud-editor-apply-tuning', {
+            filterName: this.l10n(operation).toLowerCase(),
+          }),
+        );
         this.bindL10n('title', () => this.l10n(operation));
       }
     });

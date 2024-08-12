@@ -16,8 +16,6 @@ function nextValue(operation, prev) {
   return null;
 }
 
-const L10N_PREFIX = 'a11y-editor-crop-button-control-';
-
 export class EditorCropButtonControl extends EditorButtonControl {
   initCallback() {
     super.initCallback();
@@ -30,10 +28,14 @@ export class EditorCropButtonControl extends EditorButtonControl {
       /** @private */
       this._operation = operation;
       this.$['icon'] = operation;
-      this.$['title-prop'] = `${L10N_PREFIX}${operation}`;
+      this.bindL10n('title-prop', () =>
+        this.l10n('a11y-cloud-editor-apply-crop', {
+          filterName: this.l10n(operation).toLowerCase(),
+        }),
+      );
     });
 
-    this.$['on.click'] = (e) => {
+    this.$['on.click'] = () => {
       let prev = this.$['*cropperEl'].getValue(this._operation);
       let next = nextValue(this._operation, prev);
       this.$['*cropperEl'].setValue(this._operation, next);
