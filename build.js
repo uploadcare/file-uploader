@@ -4,14 +4,16 @@ import fs from 'fs';
 import path, { dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { buildItems } from './build-items.js';
+import { PACKAGE_VERSION } from './env.js';
 
 let __dirname = dirname(fileURLToPath(import.meta.url));
 let packageRootPath = __dirname;
 
 function jsBanner() {
-  let license = fs.readFileSync(path.join(packageRootPath, './LICENSE')).toString();
+  const license = fs.readFileSync(path.join(packageRootPath, './LICENSE')).toString();
   return (
     '/**\n' +
+    ` * @version v${PACKAGE_VERSION}\n` +
     ' * @license\n' +
     license
       .split('\n')

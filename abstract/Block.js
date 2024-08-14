@@ -15,7 +15,6 @@ import { l10nProcessor } from './l10nProcessor.js';
 import { sharedConfigKey } from './sharedConfigKey.js';
 
 const TAG_PREFIX = 'uc-';
-const CTX_NAME_FALLBACK_ATTR = 'ctx-name';
 
 // @ts-ignore TODO: fix this
 export class Block extends Symbiote {
@@ -137,28 +136,16 @@ export class Block extends Symbiote {
       this.processInnerHtml = true;
     }
     if (this.requireCtxName) {
-      Promise.race([
-        waitForAttribute({
-          element: this,
-          attribute: DICT.CTX_NAME_ATTR,
-        }),
-        waitForAttribute({
-          element: this,
-          attribute: CTX_NAME_FALLBACK_ATTR,
-        }),
-      ]).then((result) => {
+      waitForAttribute({
+        element: this,
+        attribute: DICT.CTX_NAME_ATTR,
+      }).then((result) => {
         if (result.success) {
-          if (result.attribute === CTX_NAME_FALLBACK_ATTR) {
-            const ctxName = result.value;
-            this.style.setProperty(DICT.CSS_CTX_PROP, `'${ctxName}'`);
-          }
           // async wait for ctx attribute to be set, needed for Angular because it sets attributes after mount
           // TODO: should be moved to the symbiote core
           super.connectedCallback();
         } else {
-          console.error(
-            `Attribute "${DICT.CTX_NAME_ATTR}" or "${CTX_NAME_FALLBACK_ATTR}" is required and it is not set.`,
-          );
+          console.error(`Attribute "${DICT.CTX_NAME_ATTR}" is required and it is not set.`);
         }
       });
     } else {
