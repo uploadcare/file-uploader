@@ -230,3 +230,33 @@
   --uc-simple-btn-hover: var(--uc-simple-btn-hover-dark);
   --uc-simple-btn-foreground: var(--uc-simple-btn-foreground-dark);
 }
+
+:where(.uc-purple) {
+  --uc-primary-oklch-light: 59% 0.22 300;
+  --uc-primary-oklch-dark: 69% 0.1768 300;
+}
+
+:where(.uc-red) {
+  --uc-primary-oklch-light: 59% 0.22 21;
+  --uc-primary-oklch-dark: 69% 0.1768 21;
+}
+
+:where(.uc-orange) {
+  --uc-primary-oklch-light: 59% 0.1724 51.88;
+  --uc-primary-oklch-dark: 69% 0.1768 51.88;
+}
+
+:where(.uc-green) {
+  --uc-primary-oklch-light: 59% 0.1724 130;
+  --uc-primary-oklch-dark: 69% 0.1768 130;
+}
+
+:where(.uc-turquoise) {
+  --uc-primary-oklch-light: 59% 0.1523 174;
+  --uc-primary-oklch-dark: 69% 0.1768 174;
+}
+
+:where(.uc-gray) {
+  --uc-primary-oklch-light: 10% 0 0;
+  --uc-primary-oklch-dark: 97% 0 0;
+}
