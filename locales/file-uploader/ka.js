@@ -108,7 +108,7 @@ export default {
   'a11y-editor-tab-crop': 'მოჭრა',
   flip: 'შებრუნება',
   mirror: 'სარკე',
-  'a11y-cloud-editor-apply-filter': '{{filterName}} ფილტრის გამოყენება',
-  'a11y-cloud-editor-apply-crop': '{{filterName}} ოპერაციის გამოყენება',
-  'a11y-cloud-editor-apply-tuning': '{{filterName}} რეგულირების გამოყენება',
+  'a11y-cloud-editor-apply-filter': '{{name}} ფილტრის გამოყენება',
+  'a11y-cloud-editor-apply-crop': '{{name}} ოპერაციის გამოყენება',
+  'a11y-cloud-editor-apply-tuning': '{{name}} რეგულირების გამოყენება',
 };

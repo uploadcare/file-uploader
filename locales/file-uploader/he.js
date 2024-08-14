@@ -110,7 +110,7 @@ export default {
   'a11y-editor-tab-crop': 'חיתוך',
   flip: 'היפוך',
   mirror: 'מראה',
-  'a11y-cloud-editor-apply-filter': 'החל מסנן {{filterName}}',
-  'a11y-cloud-editor-apply-crop': 'החל פעולה {{filterName}}',
-  'a11y-cloud-editor-apply-tuning': 'החל כיוון {{filterName}}',
+  'a11y-cloud-editor-apply-filter': 'החל מסנן {{name}}',
+  'a11y-cloud-editor-apply-crop': 'החל פעולה {{name}}',
+  'a11y-cloud-editor-apply-tuning': 'החל כיוון {{name}}',
 };

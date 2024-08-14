@@ -110,7 +110,7 @@ export default {
   'a11y-editor-tab-crop': 'Zuschneiden',
   flip: 'Drehen',
   mirror: 'Spiegeln',
-  'a11y-cloud-editor-apply-filter': '{{filterName}}-Filter anwenden',
-  'a11y-cloud-editor-apply-crop': '{{filterName}}-Operation anwenden',
-  'a11y-cloud-editor-apply-tuning': '{{filterName}}-Abstimmung anwenden',
+  'a11y-cloud-editor-apply-filter': '{{name}}-Filter anwenden',
+  'a11y-cloud-editor-apply-crop': '{{name}}-Operation anwenden',
+  'a11y-cloud-editor-apply-tuning': '{{name}}-Abstimmung anwenden',
 };

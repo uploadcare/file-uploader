@@ -110,7 +110,7 @@ export default {
   'a11y-editor-tab-crop': 'Περικοπή',
   flip: 'Αναστροφή',
   mirror: 'Καθρέφτης',
-  'a11y-cloud-editor-apply-filter': 'Εφαρμογή φίλτρου {{filterName}}',
-  'a11y-cloud-editor-apply-crop': 'Εφαρμογή της λειτουργίας {{filterName}}',
-  'a11y-cloud-editor-apply-tuning': 'Εφαρμογή της ρύθμισης {{filterName}}',
+  'a11y-cloud-editor-apply-filter': 'Εφαρμογή φίλτρου {{name}}',
+  'a11y-cloud-editor-apply-crop': 'Εφαρμογή της λειτουργίας {{name}}',
+  'a11y-cloud-editor-apply-tuning': 'Εφαρμογή της ρύθμισης {{name}}',
 };

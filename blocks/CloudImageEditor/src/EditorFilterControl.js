@@ -102,7 +102,7 @@ export class EditorFilterControl extends EditorButtonControl {
 
         this.bindL10n('title-prop', () =>
           this.l10n('a11y-cloud-editor-apply-filter', {
-            filterName: filter.toLowerCase(),
+            name: filter.toLowerCase(),
           }),
         );
       },

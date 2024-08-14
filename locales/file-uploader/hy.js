@@ -108,7 +108,7 @@ export default {
   'a11y-editor-tab-crop': 'Կտրել',
   flip: 'Շրջել',
   mirror: 'Հայել',
-  'a11y-cloud-editor-apply-filter': 'Կիրառել {{filterName}} զտիչը',
-  'a11y-cloud-editor-apply-crop': 'Կիրառել {{filterName}} գործողությունը',
-  'a11y-cloud-editor-apply-tuning': 'Կիրառել {{filterName}} կարգավորումը',
+  'a11y-cloud-editor-apply-filter': 'Կիրառել {{name}} զտիչը',
+  'a11y-cloud-editor-apply-crop': 'Կիրառել {{name}} գործողությունը',
+  'a11y-cloud-editor-apply-tuning': 'Կիրառել {{name}} կարգավորումը',
 };

@@ -108,7 +108,7 @@ export default {
   'a11y-editor-tab-crop': '裁剪',
   flip: '翻转',
   mirror: '镜像',
-  'a11y-cloud-editor-apply-filter': '应用 {{filterName}} 过滤器',
-  'a11y-cloud-editor-apply-crop': '应用 {{filterName}} 操作',
-  'a11y-cloud-editor-apply-tuning': '应用 {{filterName}} 调整',
+  'a11y-cloud-editor-apply-filter': '应用 {{name}} 过滤器',
+  'a11y-cloud-editor-apply-crop': '应用 {{name}} 操作',
+  'a11y-cloud-editor-apply-tuning': '应用 {{name}} 调整',
 };

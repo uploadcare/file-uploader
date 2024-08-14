@@ -108,7 +108,7 @@ export default {
   'a11y-editor-tab-crop': 'Klippa',
   flip: 'Sníða',
   mirror: 'Spegill',
-  'a11y-cloud-editor-apply-filter': 'Nota {{filterName}} sía',
-  'a11y-cloud-editor-apply-crop': 'Nota {{filterName}} aðgerð',
-  'a11y-cloud-editor-apply-tuning': 'Nota {{filterName}} stillingu',
+  'a11y-cloud-editor-apply-filter': 'Nota {{name}} sía',
+  'a11y-cloud-editor-apply-crop': 'Nota {{name}} aðgerð',
+  'a11y-cloud-editor-apply-tuning': 'Nota {{name}} stillingu',
 };

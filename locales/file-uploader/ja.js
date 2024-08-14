@@ -108,7 +108,7 @@ export default {
   'a11y-editor-tab-crop': '切り抜き',
   flip: '反転',
   mirror: 'ミラー',
-  'a11y-cloud-editor-apply-filter': '{{filterName}} フィルターを適用',
-  'a11y-cloud-editor-apply-crop': '{{filterName}} 操作を適用',
-  'a11y-cloud-editor-apply-tuning': '{{filterName}} 調整を適用',
+  'a11y-cloud-editor-apply-filter': '{{name}} フィルターを適用',
+  'a11y-cloud-editor-apply-crop': '{{name}} 操作を適用',
+  'a11y-cloud-editor-apply-tuning': '{{name}} 調整を適用',
 };

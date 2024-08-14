@@ -108,7 +108,7 @@ export default {
   'a11y-editor-tab-crop': 'Beskär',
   flip: 'Vänd',
   mirror: 'Spegla',
-  'a11y-cloud-editor-apply-filter': 'Applicera filter {{filterName}}',
-  'a11y-cloud-editor-apply-crop': 'Applicera {{filterName}} operation',
-  'a11y-cloud-editor-apply-tuning': 'Applicera {{filterName}} inställning',
+  'a11y-cloud-editor-apply-filter': 'Applicera filter {{name}}',
+  'a11y-cloud-editor-apply-crop': 'Applicera {{name}} operation',
+  'a11y-cloud-editor-apply-tuning': 'Applicera {{name}} inställning',
 };

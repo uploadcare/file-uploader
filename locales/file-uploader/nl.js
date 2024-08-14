@@ -109,7 +109,7 @@ export default {
   'a11y-editor-tab-crop': 'Bijsnijden',
   flip: 'Omdraaien',
   mirror: 'Spiegel',
-  'a11y-cloud-editor-apply-filter': '{{filterName}} filter toepassen',
-  'a11y-cloud-editor-apply-crop': '{{filterName}} operatie toepassen',
-  'a11y-cloud-editor-apply-tuning': '{{filterName}} afstemming toepassen',
+  'a11y-cloud-editor-apply-filter': '{{name}} filter toepassen',
+  'a11y-cloud-editor-apply-crop': '{{name}} operatie toepassen',
+  'a11y-cloud-editor-apply-tuning': '{{name}} afstemming toepassen',
 };

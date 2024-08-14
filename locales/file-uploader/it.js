@@ -111,7 +111,7 @@ export default {
   'a11y-editor-tab-crop': 'Ritaglia',
   flip: 'Capovolgi',
   mirror: 'Specchio',
-  'a11y-cloud-editor-apply-filter': 'Applica filtro {{filterName}}',
-  'a11y-cloud-editor-apply-crop': 'Applica operazione {{filterName}}',
-  'a11y-cloud-editor-apply-tuning': 'Applica regolazione {{filterName}}',
+  'a11y-cloud-editor-apply-filter': 'Applica filtro {{name}}',
+  'a11y-cloud-editor-apply-crop': 'Applica operazione {{name}}',
+  'a11y-cloud-editor-apply-tuning': 'Applica regolazione {{name}}',
 };

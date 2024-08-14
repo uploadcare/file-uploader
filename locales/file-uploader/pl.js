@@ -112,7 +112,7 @@ export default {
   'a11y-editor-tab-crop': 'Przytnij',
   flip: 'Obróć',
   mirror: 'Lustro',
-  'a11y-cloud-editor-apply-filter': 'Zastosuj filtr {{filterName}}',
-  'a11y-cloud-editor-apply-crop': 'Zastosuj operację {{filterName}}',
-  'a11y-cloud-editor-apply-tuning': 'Zastosuj dostrajanie {{filterName}}',
+  'a11y-cloud-editor-apply-filter': 'Zastosuj filtr {{name}}',
+  'a11y-cloud-editor-apply-crop': 'Zastosuj operację {{name}}',
+  'a11y-cloud-editor-apply-tuning': 'Zastosuj dostrajanie {{name}}',
 };

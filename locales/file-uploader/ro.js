@@ -111,7 +111,7 @@ export default {
   'a11y-editor-tab-crop': 'Decupare',
   flip: 'Întoarce',
   mirror: 'Oglindă',
-  'a11y-cloud-editor-apply-filter': 'Aplică filtrul {{filterName}}',
-  'a11y-cloud-editor-apply-crop': 'Aplică operațiunea {{filterName}}',
-  'a11y-cloud-editor-apply-tuning': 'Aplică ajustarea {{filterName}}',
+  'a11y-cloud-editor-apply-filter': 'Aplică filtrul {{name}}',
+  'a11y-cloud-editor-apply-crop': 'Aplică operațiunea {{name}}',
+  'a11y-cloud-editor-apply-tuning': 'Aplică ajustarea {{name}}',
 };

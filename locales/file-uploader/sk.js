@@ -112,7 +112,7 @@ export default {
   'a11y-editor-tab-crop': 'Orezanie',
   flip: 'Otočiť',
   mirror: 'Zrkadlo',
-  'a11y-cloud-editor-apply-filter': 'Použiť filter {{filterName}}',
-  'a11y-cloud-editor-apply-crop': 'Použiť operáciu {{filterName}}',
-  'a11y-cloud-editor-apply-tuning': 'Použiť ladenie {{filterName}}',
+  'a11y-cloud-editor-apply-filter': 'Použiť filter {{name}}',
+  'a11y-cloud-editor-apply-crop': 'Použiť operáciu {{name}}',
+  'a11y-cloud-editor-apply-tuning': 'Použiť ladenie {{name}}',
 };

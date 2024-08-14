@@ -30,7 +30,7 @@ export class EditorCropButtonControl extends EditorButtonControl {
       this.$['icon'] = operation;
       this.bindL10n('title-prop', () =>
         this.l10n('a11y-cloud-editor-apply-crop', {
-          filterName: this.l10n(operation).toLowerCase(),
+          name: this.l10n(operation).toLowerCase(),
         }),
       );
     });

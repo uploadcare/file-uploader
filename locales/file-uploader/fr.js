@@ -111,7 +111,7 @@ export default {
   'a11y-editor-tab-crop': 'Recadrer',
   flip: 'Retourner',
   mirror: 'Miroir',
-  'a11y-cloud-editor-apply-filter': 'Appliquer le filtre {{filterName}}',
-  'a11y-cloud-editor-apply-crop': "Appliquer l'opération {{filterName}}",
-  'a11y-cloud-editor-apply-tuning': 'Appliquer le réglage {{filterName}}',
+  'a11y-cloud-editor-apply-filter': 'Appliquer le filtre {{name}}',
+  'a11y-cloud-editor-apply-crop': "Appliquer l'opération {{name}}",
+  'a11y-cloud-editor-apply-tuning': 'Appliquer le réglage {{name}}',
 };

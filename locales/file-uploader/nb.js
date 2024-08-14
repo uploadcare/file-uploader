@@ -108,7 +108,7 @@ export default {
   'a11y-editor-tab-crop': 'Beskjær',
   flip: 'Vend',
   mirror: 'Speil',
-  'a11y-cloud-editor-apply-filter': 'Bruk filter {{filterName}}',
-  'a11y-cloud-editor-apply-crop': 'Bruk operasjon {{filterName}}',
-  'a11y-cloud-editor-apply-tuning': 'Bruk innstilling {{filterName}}',
+  'a11y-cloud-editor-apply-filter': 'Bruk filter {{name}}',
+  'a11y-cloud-editor-apply-crop': 'Bruk operasjon {{name}}',
+  'a11y-cloud-editor-apply-tuning': 'Bruk innstilling {{name}}',
 };

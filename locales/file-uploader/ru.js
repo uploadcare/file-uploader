@@ -112,7 +112,7 @@ export default {
   'a11y-editor-tab-crop': 'Обрезка',
   flip: 'Поворот',
   mirror: 'Зеркало',
-  'a11y-cloud-editor-apply-filter': 'Применить фильтр {{filterName}}',
-  'a11y-cloud-editor-apply-crop': 'Применить операцию {{filterName}}',
-  'a11y-cloud-editor-apply-tuning': 'Применить настройку {{filterName}}',
+  'a11y-cloud-editor-apply-filter': 'Применить фильтр {{name}}',
+  'a11y-cloud-editor-apply-crop': 'Применить операцию {{name}}',
+  'a11y-cloud-editor-apply-tuning': 'Применить настройку {{name}}',
 };

@@ -110,7 +110,7 @@ export default {
   'a11y-editor-tab-crop': 'Iseci',
   flip: 'Preokreni',
   mirror: 'Ogledalo',
-  'a11y-cloud-editor-apply-filter': 'Primeni filter {{filterName}}',
-  'a11y-cloud-editor-apply-crop': 'Primeni operaciju {{filterName}}',
-  'a11y-cloud-editor-apply-tuning': 'Primeni podešavanje {{filterName}}',
+  'a11y-cloud-editor-apply-filter': 'Primeni filter {{name}}',
+  'a11y-cloud-editor-apply-crop': 'Primeni operaciju {{name}}',
+  'a11y-cloud-editor-apply-tuning': 'Primeni podešavanje {{name}}',
 };

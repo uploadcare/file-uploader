@@ -108,7 +108,7 @@ export default {
   'a11y-editor-tab-crop': 'Қырқу',
   flip: 'Аудару',
   mirror: 'Айна',
-  'a11y-cloud-editor-apply-filter': '{{filterName}} фильтрін қолдану',
-  'a11y-cloud-editor-apply-crop': '{{filterName}} операциясын қолдану',
-  'a11y-cloud-editor-apply-tuning': '{{filterName}} тюнингін қолдану',
+  'a11y-cloud-editor-apply-filter': '{{name}} фильтрін қолдану',
+  'a11y-cloud-editor-apply-crop': '{{name}} операциясын қолдану',
+  'a11y-cloud-editor-apply-tuning': '{{name}} тюнингін қолдану',
 };

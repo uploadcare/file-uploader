@@ -109,7 +109,7 @@ export default {
   'a11y-editor-tab-crop': 'Beskær',
   flip: 'Vend',
   mirror: 'Spejl',
-  'a11y-cloud-editor-apply-filter': 'Anvend {{filterName}} filter',
-  'a11y-cloud-editor-apply-crop': 'Anvend {{filterName}} handling',
-  'a11y-cloud-editor-apply-tuning': 'Anvend {{filterName}} justering',
+  'a11y-cloud-editor-apply-filter': 'Anvend {{name}} filter',
+  'a11y-cloud-editor-apply-crop': 'Anvend {{name}} handling',
+  'a11y-cloud-editor-apply-tuning': 'Anvend {{name}} justering',
 };

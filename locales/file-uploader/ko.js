@@ -107,7 +107,7 @@ export default {
   'a11y-editor-tab-crop': '자르기',
   flip: '뒤집기',
   mirror: '거울',
-  'a11y-cloud-editor-apply-filter': '{{filterName}} 필터 적용',
-  'a11y-cloud-editor-apply-crop': '{{filterName}} 작업 적용',
-  'a11y-cloud-editor-apply-tuning': '{{filterName}} 튜닝 적용',
+  'a11y-cloud-editor-apply-filter': '{{name}} 필터 적용',
+  'a11y-cloud-editor-apply-crop': '{{name}} 작업 적용',
+  'a11y-cloud-editor-apply-tuning': '{{name}} 튜닝 적용',
 };

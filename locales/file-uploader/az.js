@@ -108,7 +108,7 @@ export default {
   'a11y-editor-tab-crop': 'Kəsmə',
   flip: 'Tərsinə çevir',
   mirror: 'Ayna',
-  'a11y-cloud-editor-apply-filter': '{{filterName}} filtrini tətbiq et',
-  'a11y-cloud-editor-apply-crop': '{{filterName}} əməliyyatını tətbiq et',
-  'a11y-cloud-editor-apply-tuning': '{{filterName}} tənzimləməsini tətbiq et',
+  'a11y-cloud-editor-apply-filter': '{{name}} filtrini tətbiq et',
+  'a11y-cloud-editor-apply-crop': '{{name}} əməliyyatını tətbiq et',
+  'a11y-cloud-editor-apply-tuning': '{{name}} tənzimləməsini tətbiq et',
 };

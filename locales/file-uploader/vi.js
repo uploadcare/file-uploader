@@ -108,7 +108,7 @@ export default {
   'a11y-editor-tab-crop': 'Cắt',
   flip: 'Lật',
   mirror: 'Gương',
-  'a11y-cloud-editor-apply-filter': 'Áp dụng bộ lọc {{filterName}}',
-  'a11y-cloud-editor-apply-crop': 'Áp dụng thao tác {{filterName}}',
-  'a11y-cloud-editor-apply-tuning': 'Áp dụng điều chỉnh {{filterName}}',
+  'a11y-cloud-editor-apply-filter': 'Áp dụng bộ lọc {{name}}',
+  'a11y-cloud-editor-apply-crop': 'Áp dụng thao tác {{name}}',
+  'a11y-cloud-editor-apply-tuning': 'Áp dụng điều chỉnh {{name}}',
 };

@@ -110,7 +110,7 @@ export default {
   'a11y-editor-tab-crop': 'Apgriezt',
   flip: 'Pagriezt',
   mirror: 'Spogulis',
-  'a11y-cloud-editor-apply-filter': 'Lietot filtru {{filterName}}',
-  'a11y-cloud-editor-apply-crop': 'Lietot operāciju {{filterName}}',
-  'a11y-cloud-editor-apply-tuning': 'Lietot pielāgošanu {{filterName}}',
+  'a11y-cloud-editor-apply-filter': 'Lietot filtru {{name}}',
+  'a11y-cloud-editor-apply-crop': 'Lietot operāciju {{name}}',
+  'a11y-cloud-editor-apply-tuning': 'Lietot pielāgošanu {{name}}',
 };

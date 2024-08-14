@@ -108,7 +108,7 @@ export default {
   'a11y-editor-tab-crop': 'Kärbi',
   flip: 'Pööra',
   mirror: 'Peegelda',
-  'a11y-cloud-editor-apply-filter': 'Rakenda filter {{filterName}}',
-  'a11y-cloud-editor-apply-crop': 'Rakenda toiming {{filterName}}',
-  'a11y-cloud-editor-apply-tuning': 'Rakenda häälestus {{filterName}}',
+  'a11y-cloud-editor-apply-filter': 'Rakenda filter {{name}}',
+  'a11y-cloud-editor-apply-crop': 'Rakenda toiming {{name}}',
+  'a11y-cloud-editor-apply-tuning': 'Rakenda häälestus {{name}}',
 };

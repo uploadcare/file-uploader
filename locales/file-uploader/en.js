@@ -108,7 +108,7 @@ export default {
   'a11y-activity-header-button-close': 'Close',
   flip: 'Flip',
   mirror: 'Mirror',
-  'a11y-cloud-editor-apply-filter': 'Apply {{filterName}} filter',
-  'a11y-cloud-editor-apply-crop': 'Apply {{filterName}} operation',
-  'a11y-cloud-editor-apply-tuning': 'Apply {{filterName}} tuning',
+  'a11y-cloud-editor-apply-filter': 'Apply {{name}} filter',
+  'a11y-cloud-editor-apply-crop': 'Apply {{name}} operation',
+  'a11y-cloud-editor-apply-tuning': 'Apply {{name}} tuning',
 };

@@ -116,7 +116,7 @@ export default {
   'a11y-editor-tab-crop': 'قص',
   flip: 'قلب',
   mirror: 'مرآة',
-  'a11y-cloud-editor-apply-filter': 'تطبيق فلتر {{filterName}}',
-  'a11y-cloud-editor-apply-crop': 'تطبيق عملية {{filterName}}',
-  'a11y-cloud-editor-apply-tuning': 'تطبيق ضبط {{filterName}}',
+  'a11y-cloud-editor-apply-filter': 'تطبيق فلتر {{name}}',
+  'a11y-cloud-editor-apply-crop': 'تطبيق عملية {{name}}',
+  'a11y-cloud-editor-apply-tuning': 'تطبيق ضبط {{name}}',
 };
