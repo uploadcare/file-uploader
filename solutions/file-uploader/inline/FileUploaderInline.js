@@ -56,7 +56,8 @@ export class FileUploaderInline extends SolutionBlock {
   }
 }
 
-FileUploaderInline.template = /* HTML */ ` <uc-start-from>
+FileUploaderInline.template = /* HTML */ `
+  <uc-start-from>
     <uc-drop-area with-icon clickable></uc-drop-area>
     <uc-source-list wrap></uc-source-list>
     <button
@@ -71,5 +72,5 @@ FileUploaderInline.template = /* HTML */ ` <uc-start-from>
   <uc-camera-source></uc-camera-source>
   <uc-url-source></uc-url-source>
   <uc-external-source></uc-external-source>
-  <uc-progress-bar></uc-progress-bar>
-  <uc-cloud-image-editor-activity></uc-cloud-image-editor-activity>`;
+  <uc-cloud-image-editor-activity></uc-cloud-image-editor-activity>
+`;
