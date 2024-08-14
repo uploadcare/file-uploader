@@ -1,3 +1,9 @@
+# [1.4.0](https://github.com/uploadcare/file-uploader/compare/v1.3.0...v1.4.0) (2024-08-14)
+
+### Features
+
+- **theme:** add predefined color presets classes ([#715](https://github.com/uploadcare/file-uploader/issues/715)) ([3dc0b46](https://github.com/uploadcare/file-uploader/commit/3dc0b467c3738cc4284b7ca35fb2944eb51b6ad8))
+
 # [1.3.0](https://github.com/uploadcare/file-uploader/compare/v1.2.0...v1.3.0) (2024-08-08)
 
 ### Features
