@@ -1,7 +1,7 @@
 // @ts-check
 import { ActivityBlock } from './ActivityBlock.js';
 
-import { Data } from '@symbiotejs/symbiote';
+import { applyStyles, Data } from '@symbiotejs/symbiote';
 import { EventType } from '../blocks/UploadCtxProvider/EventEmitter.js';
 import { UploadSource } from '../blocks/utils/UploadSource.js';
 import { serializeCsv } from '../blocks/utils/comma-separated.js';
@@ -138,7 +138,9 @@ export class UploaderPublicApi {
 
   /** @param {{ captureCamera?: boolean }} options */
   openSystemDialog = (options = {}) => {
-    let accept = serializeCsv(mergeFileTypes([this.cfg.accept ?? '', ...(this.cfg.imgOnly ? IMAGE_ACCEPT_LIST : [])]));
+    const accept = serializeCsv(
+      mergeFileTypes([this.cfg.accept ?? '', ...(this.cfg.imgOnly ? IMAGE_ACCEPT_LIST : [])]),
+    );
 
     if (this.cfg.accept && !!this.cfg.imgOnly) {
       console.warn(
@@ -147,7 +149,16 @@ export class UploaderPublicApi {
           'The value of `accept` will be concatenated with the internal image mime types list.',
       );
     }
+
+    const INPUT_ATTR_NAME = 'uploadcare-file-input';
     const fileInput = document.createElement('input');
+    fileInput.setAttribute(INPUT_ATTR_NAME, '');
+    applyStyles(fileInput, {
+      opacity: 0,
+      height: 0,
+      width: 0,
+      visibility: 'hidden',
+    });
     fileInput.type = 'file';
     fileInput.multiple = this.cfg.multiple;
     if (options.captureCamera) {
@@ -156,18 +167,33 @@ export class UploaderPublicApi {
     } else {
       fileInput.accept = accept;
     }
+    fileInput.addEventListener(
+      'change',
+      () => {
+        if (!fileInput.files) {
+          return;
+        }
+        [...fileInput.files].forEach((file) =>
+          this.addFileFromObject(file, { source: options.captureCamera ? UploadSource.CAMERA : UploadSource.LOCAL }),
+        );
+        // To call uploadTrigger UploadList should draw file items first:
+        this._ctx.$['*currentActivity'] = ActivityBlock.activities.UPLOAD_LIST;
+        this._ctx.setOrAddState('*modalActive', true);
+        fileInput.remove();
+      },
+      {
+        once: true,
+      },
+    );
+
+    document.querySelectorAll(`[${INPUT_ATTR_NAME}]`).forEach((el) => el.remove());
+
+    /**
+     * Some browsers (e.g. Safari) require the file input to be in the DOM to work properly. Without it the file input
+     * will open system dialog but won't trigger the change event sometimes.
+     */
+    document.body.appendChild(fileInput);
     fileInput.dispatchEvent(new MouseEvent('click'));
-    fileInput.onchange = () => {
-      // @ts-ignore TODO: fix this
-      [...fileInput['files']].forEach((file) =>
-        this.addFileFromObject(file, { source: options.captureCamera ? UploadSource.CAMERA : UploadSource.LOCAL }),
-      );
-      // To call uploadTrigger UploadList should draw file items first:
-      this._ctx.$['*currentActivity'] = ActivityBlock.activities.UPLOAD_LIST;
-      this._ctx.setOrAddState('*modalActive', true);
-      // @ts-ignore TODO: fix this
-      fileInput['value'] = '';
-    };
   };
 
   /**
