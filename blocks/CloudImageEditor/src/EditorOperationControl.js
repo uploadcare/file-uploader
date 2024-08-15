@@ -21,6 +21,11 @@ export class EditorOperationControl extends EditorButtonControl {
       if (operation) {
         this._operation = operation;
         this.$['icon'] = operation;
+        this.bindL10n('title-prop', () =>
+          this.l10n('a11y-cloud-editor-apply-tuning', {
+            name: this.l10n(operation).toLowerCase(),
+          }),
+        );
         this.bindL10n('title', () => this.l10n(operation));
       }
     });
