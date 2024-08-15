@@ -298,6 +298,11 @@ export class UploaderPublicApi {
     console.warn(`Activity type "${activityType}" not found in the context`);
   };
 
+  /** @returns {import('./ActivityBlock.js').ActivityType} */
+  getCurrentActivity = () => {
+    return this._ctx.$['*currentActivity'];
+  };
+
   /** @param {boolean} opened */
   setModalState = (opened) => {
     if (opened && !this._ctx.$['*currentActivity']) {
