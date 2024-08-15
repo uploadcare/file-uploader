@@ -3,17 +3,31 @@ import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { CloudImageEditorBlock } from '../CloudImageEditor/index.js';
 
+/** @typedef {{ internalId: string }} ActivityParams */
+
 export class CloudImageEditorActivity extends UploaderBlock {
   couldBeCtxOwner = true;
   activityType = ActivityBlock.activities.CLOUD_IMG_EDIT;
 
-  constructor() {
-    super();
+  /**
+   * @private
+   * @type {import('../../abstract/TypedData.js').TypedData | undefined}
+   */
+  _entry;
 
-    this.init$ = {
-      ...this.init$,
-      cdnUrl: null,
-    };
+  /**
+   * @private
+   * @type {CloudImageEditorBlock | undefined}
+   */
+  _instance;
+
+  /** @type {ActivityParams} */
+  get activityParams() {
+    const params = super.activityParams;
+    if ('internalId' in params) {
+      return params;
+    }
+    throw new Error(`Cloud Image Editor activity params not found`);
   }
 
   initCallback() {
@@ -22,19 +36,6 @@ export class CloudImageEditorActivity extends UploaderBlock {
     this.registerActivity(this.activityType, {
       onActivate: () => this.mountEditor(),
       onDeactivate: () => this.unmountEditor(),
-    });
-
-    this.sub('*focusedEntry', (/** @type {import('../../abstract/TypedData.js').TypedData} */ entry) => {
-      if (!entry) {
-        return;
-      }
-      this.entry = entry;
-
-      this.entry.subscribe('cdnUrl', (cdnUrl) => {
-        if (cdnUrl) {
-          this.$.cdnUrl = cdnUrl;
-        }
-      });
     });
 
     this.subConfigValue('cropPreset', (cropPreset) => {
@@ -52,11 +53,11 @@ export class CloudImageEditorActivity extends UploaderBlock {
 
   /** @param {CustomEvent<import('../CloudImageEditor/src/types.js').ApplyResult>} e */
   handleApply(e) {
-    if (!this.entry) {
+    if (!this._entry) {
       return;
     }
     let result = e.detail;
-    this.entry.setMultipleValues({
+    this._entry.setMultipleValues({
       cdnUrl: result.cdnUrl,
       cdnUrlModifiers: result.cdnUrlModifiers,
     });
@@ -68,8 +69,17 @@ export class CloudImageEditorActivity extends UploaderBlock {
   }
 
   mountEditor() {
+    const { internalId } = this.activityParams;
+    this._entry = this.uploadCollection.read(internalId);
+    if (!this._entry) {
+      throw new Error(`Entry with internalId "${internalId}" not found`);
+    }
+    const cdnUrl = this._entry.getValue('cdnUrl');
+    if (!cdnUrl) {
+      throw new Error(`Entry with internalId "${internalId}" hasn't uploaded yet`);
+    }
+
     const instance = new CloudImageEditorBlock();
-    const cdnUrl = this.$.cdnUrl;
     const cropPreset = this.cfg.cropPreset;
     const tabs = this.cfg.cloudImageEditorTabs;
 
@@ -100,14 +110,13 @@ export class CloudImageEditorActivity extends UploaderBlock {
 
     this.innerHTML = '';
     this.appendChild(instance);
-    this._mounted = true;
 
-    /** @private */
     this._instance = instance;
   }
 
   unmountEditor() {
     this._instance = undefined;
+    this._entry = undefined;
     this.innerHTML = '';
   }
 }

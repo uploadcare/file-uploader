@@ -278,18 +278,29 @@ export class UploaderPublicApi {
   };
 
   /**
-   * @param {import('./ActivityBlock.js').ActivityType} activityType
-   * @param {import('../blocks/ExternalSource/ExternalSource.js').ActivityParams | {}} [params]
+   * @type {<T extends import('./ActivityBlock.js').ActivityType>(
+   *   activityType: T,
+   *   ...params: T extends keyof import('./ActivityBlock.js').ActivityParamsMap
+   *     ? [import('./ActivityBlock.js').ActivityParamsMap[T]]
+   *     : T extends import('./ActivityBlock.js').RegisteredActivityType
+   *       ? [undefined?]
+   *       : [any?]
+   * ) => void}
    */
-  setCurrentActivity = (activityType, params = {}) => {
+  setCurrentActivity = (activityType, params = undefined) => {
     if (this._ctx.hasBlockInCtx((b) => b.activityType === activityType)) {
       this._ctx.set$({
-        '*currentActivityParams': params,
+        '*currentActivityParams': params ?? {},
         '*currentActivity': activityType,
       });
       return;
     }
     console.warn(`Activity type "${activityType}" not found in the context`);
+  };
+
+  /** @returns {import('./ActivityBlock.js').ActivityType} */
+  getCurrentActivity = () => {
+    return this._ctx.$['*currentActivity'];
   };
 
   /** @param {boolean} opened */
