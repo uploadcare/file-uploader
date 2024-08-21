@@ -1,3 +1,9 @@
+## [1.5.1](https://github.com/uploadcare/file-uploader/compare/v1.5.0...v1.5.1) (2024-08-21)
+
+### Bug Fixes
+
+- **styles:** compatibility issues with tailwindcss/forms ([#728](https://github.com/uploadcare/file-uploader/issues/728)) ([2fb5ca0](https://github.com/uploadcare/file-uploader/commit/2fb5ca0eacaba4b430c08e0b8bcac4946bec2eea))
+
 # [1.5.0](https://github.com/uploadcare/file-uploader/compare/v1.4.0...v1.5.0) (2024-08-15)
 
 ### Bug Fixes
