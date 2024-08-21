@@ -30,3 +30,6 @@
 @import url('../../CloudImageEditor/index.css');
 @import url('../../CloudImageEditorActivity/index.css');
 @import url('../../Select/select.css');
+
+/* POST RESET */
+@import url('post-reset.css');
