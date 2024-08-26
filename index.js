@@ -33,6 +33,8 @@ export { ActivityHeader } from './blocks/ActivityHeader/ActivityHeader.js';
 export { Select } from './blocks/Select/Select.js';
 export { Copyright } from './blocks/Copyright/Copyright.js';
 
+export { EditorTui } from './blocks/EditorTui/EditorTui.js';
+
 // Solutions:
 export { FileUploaderRegular } from './solutions/file-uploader/regular/FileUploaderRegular.js';
 export { FileUploaderMinimal } from './solutions/file-uploader/minimal/FileUploaderMinimal.js';

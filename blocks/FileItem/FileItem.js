@@ -59,7 +59,8 @@ export class FileItem extends UploaderBlock {
         this.$['*currentActivityParams'] = {
           internalId: this._entry.uid,
         };
-        this.$['*currentActivity'] = ActivityBlock.activities.CLOUD_IMG_EDIT;
+        this.$['*currentActivity'] = ActivityBlock.activities.EDITOR_TUI;
+        // this.$['*currentActivity'] = ActivityBlock.activities.CLOUD_IMG_EDIT;
       },
       onRemove: () => {
         this.uploadCollection.remove(this.$.uid);

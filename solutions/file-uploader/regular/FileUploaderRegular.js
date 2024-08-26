@@ -54,9 +54,13 @@ FileUploaderRegular.template = /* HTML */ `
     <uc-camera-source></uc-camera-source>
     <uc-url-source></uc-url-source>
     <uc-external-source></uc-external-source>
-    <uc-cloud-image-editor-activity></uc-cloud-image-editor-activity>
+    <uc-editor-tui></uc-editor-tui>
   </uc-modal>
 `;
+
+{
+  /* <uc-cloud-image-editor-activity></uc-cloud-image-editor-activity> */
+}
 
 FileUploaderRegular.bindAttributes({
   // @ts-expect-error TODO: fix types inside symbiote

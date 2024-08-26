@@ -70,7 +70,8 @@
 
   /* there was `fit-content` but it doesn't reduce width after activity change */
   width: max-content;
-  max-width: min(calc(100% - var(--uc-padding) * 2), calc(var(--uc-dialog-max-width) - var(--uc-padding) * 2));
+
+  /* max-width: min(calc(100% - var(--uc-padding) * 2), calc(var(--uc-dialog-max-width) - var(--uc-padding) * 2)); */
   min-height: var(--uc-button-size);
   max-height: calc(var(--uc-dialog-max-height) - var(--uc-padding) * 2);
   margin: auto;

@@ -214,6 +214,7 @@ ActivityBlock.activities = Object.freeze({
   URL: 'url',
   CLOUD_IMG_EDIT: 'cloud-image-edit',
   EXTERNAL: 'external',
+  EDITOR_TUI: 'editor-tui',
 });
 
 /** @typedef {(typeof ActivityBlock)['activities'][keyof (typeof ActivityBlock)['activities']]} RegisteredActivityType */

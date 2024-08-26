@@ -30,6 +30,6 @@
     "no-prototype-builtins": "off",
     "prefer-template": "off",
     "lit/no-invalid-html": "off",
-    "no-dupe-keys": "error",
+    "no-dupe-keys": "error"
   }
 }
