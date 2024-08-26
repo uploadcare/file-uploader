@@ -1,3 +1,9 @@
+## [1.5.2](https://github.com/uploadcare/file-uploader/compare/v1.5.1...v1.5.2) (2024-08-26)
+
+### Bug Fixes
+
+- system file dialog on safari ([#730](https://github.com/uploadcare/file-uploader/issues/730)) ([cfdd43a](https://github.com/uploadcare/file-uploader/commit/cfdd43a5306b1e492b673665d52fc1dfc6d52d41))
+
 ## [1.5.1](https://github.com/uploadcare/file-uploader/compare/v1.5.0...v1.5.1) (2024-08-21)
 
 ### Bug Fixes
