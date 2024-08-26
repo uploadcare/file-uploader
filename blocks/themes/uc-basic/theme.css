@@ -260,13 +260,3 @@
   --uc-primary-oklch-light: 10% 0 0;
   --uc-primary-oklch-dark: 97% 0 0;
 }
-
-:where(.uc-a11y-large) {
-  --uc-font-size: 20px;
-  --uc-simple-btn-font-size: 20px;
-}
-
-:where(.uc-a11y-medium) {
-  --uc-font-size: 18px;
-  --uc-simple-btn-font-size: 18px;
-}
