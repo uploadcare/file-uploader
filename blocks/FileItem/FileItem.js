@@ -289,7 +289,9 @@ export class FileItem extends UploaderBlock {
       isUploading: state === FileItemState.UPLOADING,
       isFinished: state === FileItemState.FINISHED,
       progressVisible: state === FileItemState.UPLOADING,
-      isEditable: this.cfg.useCloudImageEditor && this._entry?.getValue('isImage') && this._entry?.getValue('cdnUrl'),
+      isEditable:
+        this.cfg.useLocalImageEditor ||
+        (this.cfg.useCloudImageEditor && this._entry?.getValue('isImage') && this._entry?.getValue('cdnUrl')),
       errorText: this._entry.getValue('errors')?.[0]?.message,
     });
   }

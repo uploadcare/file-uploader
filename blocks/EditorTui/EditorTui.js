@@ -1,4 +1,5 @@
 // @ts-check
+import { uploadFile } from '@uploadcare/upload-client';
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import 'tui-color-picker';
@@ -14,10 +15,9 @@ var blackTheme = {
   'common.border': '0px',
 
   // header
-  // 'header.backgroundImage': 'none',
+  'header.backgroundImage': 'none',
   'header.backgroundColor': 'transparent',
   'header.border': '0px',
-  'header.display': 'none',
 
   // load button
   'loadButton.backgroundColor': '#fff',
@@ -83,6 +83,31 @@ var blackTheme = {
   'colorpicker.title.color': '#fff',
 };
 
+var rImageType = /data:(image\/.+);base64,/;
+
+// @ts-ignore
+function base64ToBlob(data) {
+  var mimeString = '';
+  var raw, uInt8Array, i, rawLength;
+
+  // @ts-ignore
+  raw = data.replace(rImageType, function (header, imageType) {
+    mimeString = imageType;
+
+    return '';
+  });
+
+  raw = atob(raw);
+  rawLength = raw.length;
+  uInt8Array = new Uint8Array(rawLength); // eslint-disable-line
+
+  for (i = 0; i < rawLength; i += 1) {
+    uInt8Array[i] = raw.charCodeAt(i);
+  }
+
+  return new Blob([uInt8Array], { type: mimeString });
+}
+
 export class EditorTui extends UploaderBlock {
   couldBeCtxOwner = true;
   activityType = ActivityBlock.activities.EDITOR_TUI;
@@ -121,7 +146,10 @@ export class EditorTui extends UploaderBlock {
       includeUI: {
         loadImage: {
           path: URL.createObjectURL(file),
-          name: 'SampleImage',
+          name: file.name,
+        },
+        locale: {
+          Download: 'Save',
         },
         theme: blackTheme,
         initMenu: 'filter',
@@ -136,6 +164,29 @@ export class EditorTui extends UploaderBlock {
     });
 
     this._instance = instance;
+
+    this._appendSaveButton();
+  }
+
+  _appendSaveButton() {
+    const button = document.createElement('button');
+    button.setAttribute('class', 'tui-image-editor-download-btn custom-render');
+    button.textContent = 'Upload';
+
+    document.querySelector('.tui-image-editor-header-buttons')?.appendChild(button);
+
+    button.addEventListener('click', async (event) => {
+      console.log({ event });
+
+      const baseUploadClientOptions = await this.getUploadClientOptions();
+
+      const dataURL = this._instance.toDataURL();
+
+      const blob = base64ToBlob(dataURL);
+      await uploadFile(blob, baseUploadClientOptions);
+
+      this.historyBack();
+    });
   }
 
   unmounted() {

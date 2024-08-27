@@ -6,3 +6,9 @@ uc-editor-tui {
   width: 1000px !important;
   height: 800px !important;
 }
+
+:where([uc-editor-tui]) .tui-image-editor-header-buttons > div,
+:where([uc-editor-tui]) .tui-image-editor-header-logo,
+:where([uc-editor-tui]) .tui-image-editor-download-btn:not(.custom-render) {
+  display: none !important;
+}
