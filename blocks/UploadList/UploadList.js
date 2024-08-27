@@ -201,7 +201,7 @@ export class UploadList extends UploaderBlock {
 
 UploadList.template = /* HTML */ `
   <uc-activity-header>
-    <span class="uc-header-text">{{headerText}}</span>
+    <span aria-live="polite" class="uc-header-text">{{headerText}}</span>
     <button
       type="button"
       class="uc-mini-btn uc-close-btn"
