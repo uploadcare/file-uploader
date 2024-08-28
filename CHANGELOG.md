@@ -1,3 +1,9 @@
+## [1.5.3](https://github.com/uploadcare/file-uploader/compare/v1.5.2...v1.5.3) (2024-08-28)
+
+### Bug Fixes
+
+- **readme.md:** changed npm version link ([#734](https://github.com/uploadcare/file-uploader/issues/734)) ([b410122](https://github.com/uploadcare/file-uploader/commit/b4101229da4e62b348dee1eb69ba1d860dfa4f17))
+
 ## [1.5.2](https://github.com/uploadcare/file-uploader/compare/v1.5.1...v1.5.2) (2024-08-26)
 
 ### Bug Fixes
