@@ -240,6 +240,7 @@ export class UploaderPublicApi {
       isRemoved: status === 'removed',
       errors: /** @type {import('../types/exported.js').OutputFileEntry['errors']} */ (uploadEntryData.errors),
       status,
+      source: uploadEntryData?.source,
     };
 
     return /** @type {import('../types/exported.js').OutputFileEntry<TStatus>} */ (outputItem);

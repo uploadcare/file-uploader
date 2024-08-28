@@ -392,6 +392,7 @@ export class FileItem extends UploaderBlock {
         cdnUrl: entry.getValue('cdnUrl') ?? fileInfo.cdnUrl,
         cdnUrlModifiers: entry.getValue('cdnUrlModifiers') ?? '',
         uploadProgress: 100,
+        source: entry.getValue('source') ?? '',
       });
 
       if (entry === this._entry) {

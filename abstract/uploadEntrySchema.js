@@ -27,6 +27,7 @@ import { UploadcareFile } from '@uploadcare/upload-client';
  * @property {string | null} fullPath
  * @property {import('@uploadcare/upload-client').Metadata | null} metadata
  * @property {boolean} isRemoved
+ * @property {String} source
  */
 
 /**
