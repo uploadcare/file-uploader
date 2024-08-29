@@ -111,4 +111,9 @@ export default {
   'a11y-cloud-editor-apply-filter': 'Nota {{name}} sía',
   'a11y-cloud-editor-apply-crop': 'Nota {{name}} aðgerð',
   'a11y-cloud-editor-apply-tuning': 'Nota {{name}} stillingu',
+  finished: 'Lokið',
+  failed: 'Mistókst',
+  uploading: 'Hleður upp',
+  idle: 'Aðgerðalaus',
+  'a11y-file-item-status': 'Skráin {{fileName}} er í stöðu {{status}}',
 };

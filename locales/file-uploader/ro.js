@@ -114,4 +114,9 @@ export default {
   'a11y-cloud-editor-apply-filter': 'Aplică filtrul {{name}}',
   'a11y-cloud-editor-apply-crop': 'Aplică operațiunea {{name}}',
   'a11y-cloud-editor-apply-tuning': 'Aplică ajustarea {{name}}',
+  finished: 'Finalizat',
+  failed: 'Eșuat',
+  uploading: 'Se încarcă',
+  idle: 'Inactiv',
+  'a11y-file-item-status': 'Fișierul {{fileName}} este în starea {{status}}',
 };

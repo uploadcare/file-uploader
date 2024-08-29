@@ -113,4 +113,9 @@ export default {
   'a11y-cloud-editor-apply-filter': 'Lietot filtru {{name}}',
   'a11y-cloud-editor-apply-crop': 'Lietot operāciju {{name}}',
   'a11y-cloud-editor-apply-tuning': 'Lietot pielāgošanu {{name}}',
+  finished: 'Pabeigts',
+  failed: 'Neizdevās',
+  uploading: 'Augšupielādē',
+  idle: 'Gaida',
+  'a11y-file-item-status': 'Fails {{fileName}} ir stāvoklī {{status}}',
 };

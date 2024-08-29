@@ -116,4 +116,9 @@ export default {
   'a11y-cloud-editor-apply-filter': 'Použít filtr {{name}}',
   'a11y-cloud-editor-apply-crop': 'Použít operaci {{name}}',
   'a11y-cloud-editor-apply-tuning': 'Použít ladění {{name}}',
+  finished: 'Dokončeno',
+  failed: 'Selhalo',
+  uploading: 'Nahrává se',
+  idle: 'Nečinný',
+  'a11y-file-item-status': 'Soubor {{fileName}} je ve stavu {{status}}',
 };

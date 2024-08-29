@@ -111,4 +111,9 @@ export default {
   'a11y-cloud-editor-apply-filter': 'Áp dụng bộ lọc {{name}}',
   'a11y-cloud-editor-apply-crop': 'Áp dụng thao tác {{name}}',
   'a11y-cloud-editor-apply-tuning': 'Áp dụng điều chỉnh {{name}}',
+  finished: 'Hoàn thành',
+  failed: 'Thất bại',
+  uploading: 'Đang tải lên',
+  idle: 'Nhàn rỗi',
+  'a11y-file-item-status': 'Tệp {{fileName}} ở trạng thái {{status}}',
 };

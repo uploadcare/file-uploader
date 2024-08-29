@@ -113,4 +113,9 @@ export default {
   'a11y-cloud-editor-apply-filter': 'החל מסנן {{name}}',
   'a11y-cloud-editor-apply-crop': 'החל פעולה {{name}}',
   'a11y-cloud-editor-apply-tuning': 'החל כיוון {{name}}',
+  finished: 'הושלם',
+  failed: 'נכשל',
+  uploading: 'מעלה',
+  idle: 'בטלה',
+  'a11y-file-item-status': 'הקובץ {{fileName}} במצב {{status}}',
 };

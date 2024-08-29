@@ -111,4 +111,9 @@ export default {
   'a11y-cloud-editor-apply-filter': 'Applicera filter {{name}}',
   'a11y-cloud-editor-apply-crop': 'Applicera {{name}} operation',
   'a11y-cloud-editor-apply-tuning': 'Applicera {{name}} inställning',
+  finished: 'Slutfört',
+  failed: 'Misslyckades',
+  uploading: 'Laddar upp',
+  idle: 'Overksam',
+  'a11y-file-item-status': 'Filen {{fileName}} är i status {{status}}',
 };

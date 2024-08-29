@@ -111,4 +111,9 @@ export default {
   'a11y-cloud-editor-apply-filter': 'Կիրառել {{name}} զտիչը',
   'a11y-cloud-editor-apply-crop': 'Կիրառել {{name}} գործողությունը',
   'a11y-cloud-editor-apply-tuning': 'Կիրառել {{name}} կարգավորումը',
+  finished: 'Ավարտված',
+  failed: 'Չհաջողվեց',
+  uploading: 'Բեռնվում է',
+  idle: 'Անգործ',
+  'a11y-file-item-status': 'Ֆայլը {{fileName}} {{status}} կարգավիճակում է',
 };

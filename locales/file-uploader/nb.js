@@ -111,4 +111,9 @@ export default {
   'a11y-cloud-editor-apply-filter': 'Bruk filter {{name}}',
   'a11y-cloud-editor-apply-crop': 'Bruk operasjon {{name}}',
   'a11y-cloud-editor-apply-tuning': 'Bruk innstilling {{name}}',
+  finished: 'Fullført',
+  failed: 'Mislyktes',
+  uploading: 'Laster opp',
+  idle: 'Inaktiv',
+  'a11y-file-item-status': 'Fil {{fileName}} i status {{status}}',
 };

@@ -119,4 +119,9 @@ export default {
   'a11y-cloud-editor-apply-filter': 'تطبيق فلتر {{name}}',
   'a11y-cloud-editor-apply-crop': 'تطبيق عملية {{name}}',
   'a11y-cloud-editor-apply-tuning': 'تطبيق ضبط {{name}}',
+  finished: 'تم الانتهاء',
+  failed: 'فشل',
+  uploading: 'جارٍ التحميل',
+  idle: 'خامل',
+  'a11y-file-item-status': 'الملف {{fileName}} في حالة {{status}}',
 };

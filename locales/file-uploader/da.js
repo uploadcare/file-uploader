@@ -112,4 +112,9 @@ export default {
   'a11y-cloud-editor-apply-filter': 'Anvend {{name}} filter',
   'a11y-cloud-editor-apply-crop': 'Anvend {{name}} handling',
   'a11y-cloud-editor-apply-tuning': 'Anvend {{name}} justering',
+  finished: 'Afsluttet',
+  failed: 'Mislykkedes',
+  uploading: 'Uploader',
+  idle: 'Inaktiv',
+  'a11y-file-item-status': 'Filen {{fileName}} er i status {{status}}',
 };
