@@ -111,4 +111,9 @@ export default {
   'a11y-cloud-editor-apply-filter': 'Rakenda filter {{name}}',
   'a11y-cloud-editor-apply-crop': 'Rakenda toiming {{name}}',
   'a11y-cloud-editor-apply-tuning': 'Rakenda häälestus {{name}}',
+  finished: 'Valmis',
+  failed: 'Ebaõnnestunud',
+  uploading: 'Üleslaadimine',
+  idle: 'Ootel',
+  'a11y-file-item-status': 'Fail {{fileName}} on seisundis {{status}}',
 };

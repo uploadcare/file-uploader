@@ -110,4 +110,9 @@ export default {
   'a11y-cloud-editor-apply-filter': '{{name}} 필터 적용',
   'a11y-cloud-editor-apply-crop': '{{name}} 작업 적용',
   'a11y-cloud-editor-apply-tuning': '{{name}} 튜닝 적용',
+  finished: '완료됨',
+  failed: '실패함',
+  uploading: '업로드 중',
+  idle: '대기 중',
+  'a11y-file-item-status': '{{fileName}} 파일이 {{status}} 상태입니다',
 };

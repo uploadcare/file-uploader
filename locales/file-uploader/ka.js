@@ -111,4 +111,9 @@ export default {
   'a11y-cloud-editor-apply-filter': '{{name}} ფილტრის გამოყენება',
   'a11y-cloud-editor-apply-crop': '{{name}} ოპერაციის გამოყენება',
   'a11y-cloud-editor-apply-tuning': '{{name}} რეგულირების გამოყენება',
+  finished: 'დასრულებული',
+  failed: 'შეცდომა',
+  uploading: 'იტვირთება',
+  idle: 'მოქმედების გარეშე',
+  'a11y-file-item-status': 'ფაილი {{fileName}} არის მდგომარეობაში {{status}}',
 };

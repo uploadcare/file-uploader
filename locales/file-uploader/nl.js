@@ -112,4 +112,9 @@ export default {
   'a11y-cloud-editor-apply-filter': '{{name}} filter toepassen',
   'a11y-cloud-editor-apply-crop': '{{name}} operatie toepassen',
   'a11y-cloud-editor-apply-tuning': '{{name}} afstemming toepassen',
+  finished: 'Voltooid',
+  failed: 'Mislukt',
+  uploading: 'Uploaden',
+  idle: 'Inactief',
+  'a11y-file-item-status': 'Bestand {{fileName}} in status {{status}}',
 };

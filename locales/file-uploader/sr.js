@@ -113,4 +113,9 @@ export default {
   'a11y-cloud-editor-apply-filter': 'Primeni filter {{name}}',
   'a11y-cloud-editor-apply-crop': 'Primeni operaciju {{name}}',
   'a11y-cloud-editor-apply-tuning': 'Primeni podešavanje {{name}}',
+  finished: 'Završeno',
+  failed: 'Neuspešno',
+  uploading: 'Otpremanje',
+  idle: 'Neaktivan',
+  'a11y-file-item-status': 'Datoteka {{fileName}} je u statusu {{status}}',
 };

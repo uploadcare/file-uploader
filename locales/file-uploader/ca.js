@@ -114,4 +114,9 @@ export default {
   'a11y-cloud-editor-apply-filter': 'Aplicar el filtre {{name}}',
   'a11y-cloud-editor-apply-crop': "Aplicar l'operació {{name}}",
   'a11y-cloud-editor-apply-tuning': "Aplicar l'ajust {{name}}",
+  finished: 'Acabat',
+  failed: 'Fallat',
+  uploading: 'Carregant',
+  idle: 'Inactiu',
+  'a11y-file-item-status': 'El fitxer {{fileName}} està en estat {{status}}',
 };

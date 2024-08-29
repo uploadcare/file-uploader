@@ -115,4 +115,9 @@ export default {
   'a11y-cloud-editor-apply-filter': 'Zastosuj filtr {{name}}',
   'a11y-cloud-editor-apply-crop': 'Zastosuj operację {{name}}',
   'a11y-cloud-editor-apply-tuning': 'Zastosuj dostrajanie {{name}}',
+  finished: 'Zakończono',
+  failed: 'Nie powiodło się',
+  uploading: 'Przesyłanie',
+  idle: 'Bezczynny',
+  'a11y-file-item-status': 'Plik {{fileName}} ma status {{status}}',
 };

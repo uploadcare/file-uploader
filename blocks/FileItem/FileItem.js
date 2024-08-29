@@ -291,7 +291,10 @@ export class FileItem extends UploaderBlock {
       progressVisible: state === FileItemState.UPLOADING,
       isEditable: this.cfg.useCloudImageEditor && this._entry?.getValue('isImage') && this._entry?.getValue('cdnUrl'),
       errorText: this._entry.getValue('errors')?.[0]?.message,
-      ariaLabelStatusFile: `${this._entry?.getValue('fileName')} ${state.description}`,
+      ariaLabelStatusFile: this.l10n('a11y-file-item-status', {
+        fileName: this._entry?.getValue('fileName'),
+        status: this.l10n(state?.description?.toLocaleLowerCase() ?? '').toLocaleLowerCase(),
+      }),
     });
   }
 

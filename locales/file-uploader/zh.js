@@ -111,4 +111,9 @@ export default {
   'a11y-cloud-editor-apply-filter': '应用 {{name}} 过滤器',
   'a11y-cloud-editor-apply-crop': '应用 {{name}} 操作',
   'a11y-cloud-editor-apply-tuning': '应用 {{name}} 调整',
+  finished: '已完成',
+  failed: '失败',
+  uploading: '上传中',
+  idle: '空闲',
+  'a11y-file-item-status': '文件 {{fileName}} 的状态是 {{status}}',
 };
