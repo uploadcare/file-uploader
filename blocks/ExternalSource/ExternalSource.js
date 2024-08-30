@@ -60,6 +60,15 @@ export class ExternalSource extends UploaderBlock {
     };
   }
 
+  /** @type {ActivityParams} */
+  get activityParams() {
+    const params = super.activityParams;
+    if ('externalSourceType' in params) {
+      return params;
+    }
+    throw new Error(`External Source activity params not found`);
+  }
+
   /**
    * @private
    * @type {HTMLIFrameElement | null}

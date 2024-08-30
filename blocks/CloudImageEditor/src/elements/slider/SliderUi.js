@@ -164,6 +164,7 @@ export class SliderUi extends Block {
   }
 
   destroyCallback() {
+    super.destroyCallback();
     this._observer?.disconnect();
   }
 }

@@ -360,7 +360,9 @@ export class UploaderBlock extends ActivityBlock {
           this.cfg.useCloudImageEditor &&
           this.hasBlockInCtx((block) => block.activityType === ActivityBlock.activities.CLOUD_IMG_EDIT)
         ) {
-          this.$['*focusedEntry'] = entry;
+          this.$['*currentActivityParams'] = {
+            internalId: entry.uid,
+          };
           this.$['*currentActivity'] = ActivityBlock.activities.CLOUD_IMG_EDIT;
         }
       }

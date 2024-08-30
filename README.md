@@ -18,7 +18,7 @@
 
 # 📦 Uploadcare File Uploader: stack-agnostic library for uploading, processing, and editing images on-the-fly
 
-[![npm version](https://badge.fury.io/js/@uploadcare%2Fblocks.svg)](https://www.npmjs.com/package/@uploadcare/file-uploader)
+[![npm version](https://badge.fury.io/js/@uploadcare%2Ffile-uploader.svg)](https://www.npmjs.com/package/@uploadcare/file-uploader)
 [![GitHub Actions](https://github.com/uploadcare/blocks/workflows/checks/badge.svg)](https://github.com/uploadcare/blocks/actions?query=workflow%3ABuild+branch%3Amaster)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 

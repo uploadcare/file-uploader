@@ -1,3 +1,33 @@
+## [1.5.2](https://github.com/uploadcare/file-uploader/compare/v1.5.1...v1.5.2) (2024-08-26)
+
+### Bug Fixes
+
+- system file dialog on safari ([#730](https://github.com/uploadcare/file-uploader/issues/730)) ([cfdd43a](https://github.com/uploadcare/file-uploader/commit/cfdd43a5306b1e492b673665d52fc1dfc6d52d41))
+
+## [1.5.1](https://github.com/uploadcare/file-uploader/compare/v1.5.0...v1.5.1) (2024-08-21)
+
+### Bug Fixes
+
+- **styles:** compatibility issues with tailwindcss/forms ([#728](https://github.com/uploadcare/file-uploader/issues/728)) ([2fb5ca0](https://github.com/uploadcare/file-uploader/commit/2fb5ca0eacaba4b430c08e0b8bcac4946bec2eea))
+
+# [1.5.0](https://github.com/uploadcare/file-uploader/compare/v1.4.0...v1.5.0) (2024-08-15)
+
+### Bug Fixes
+
+- **cloud-image-editor:** little memory leak where cloud image editor was holding some references that prevents from context destroying ([70a9b2b](https://github.com/uploadcare/file-uploader/commit/70a9b2b1e2ee3c7de9b9c4ffe46bb7da7d7c8d7c))
+
+### Features
+
+- **a11y:** Added title to button ([#723](https://github.com/uploadcare/file-uploader/issues/723)) ([3090304](https://github.com/uploadcare/file-uploader/commit/30903047df63f39b5e199c404cc10e6ac6439504))
+- **public-upload-api:** add method `getCurrentActivity` ([3f5b127](https://github.com/uploadcare/file-uploader/commit/3f5b1279c49ffc9efd58486e0fb1f160e64389b3))
+- **public-upload-api:** allow to switch activity to the cloud image editor with predefined file opened ([ef663fa](https://github.com/uploadcare/file-uploader/commit/ef663fae8ea7af06dfc66eecd1c0f6a19e5b7e3b))
+
+# [1.4.0](https://github.com/uploadcare/file-uploader/compare/v1.3.0...v1.4.0) (2024-08-14)
+
+### Features
+
+- **theme:** add predefined color presets classes ([#715](https://github.com/uploadcare/file-uploader/issues/715)) ([3dc0b46](https://github.com/uploadcare/file-uploader/commit/3dc0b467c3738cc4284b7ca35fb2944eb51b6ad8))
+
 # [1.3.0](https://github.com/uploadcare/file-uploader/compare/v1.2.0...v1.3.0) (2024-08-08)
 
 ### Features

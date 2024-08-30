@@ -210,6 +210,8 @@ export class Block extends Symbiote {
 
   /** @protected */
   destroyCallback() {
+    super.destroyCallback();
+
     let blocksRegistry = this.blocksRegistry;
     blocksRegistry?.delete(this);
 

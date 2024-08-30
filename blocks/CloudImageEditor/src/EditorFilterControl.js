@@ -99,6 +99,12 @@ export class EditorFilterControl extends EditorButtonControl {
         this._filter = filter;
         this.$.isOriginal = filter === FAKE_ORIGINAL_FILTER;
         this.$.icon = this.$.isOriginal ? 'original' : 'slider';
+
+        this.bindL10n('title-prop', () =>
+          this.l10n('a11y-cloud-editor-apply-filter', {
+            name: filter.toLowerCase(),
+          }),
+        );
       },
     );
 
@@ -154,8 +160,8 @@ export class EditorFilterControl extends EditorButtonControl {
 }
 
 EditorFilterControl.template = html`
-  <button type="button" role="option">
+  <button type="button" role="option" l10n="@title:title-prop">
     <div class="uc-preview" ref="preview-el"></div>
-    <uc-icon ref="icon-el" set="@name: icon;"></uc-icon>
+    <uc-icon ref="icon-el" set="@name: icon; @size: iconSize;"></uc-icon>
   </button>
 `;

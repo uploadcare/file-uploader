@@ -28,6 +28,11 @@ export class EditorCropButtonControl extends EditorButtonControl {
       /** @private */
       this._operation = operation;
       this.$['icon'] = operation;
+      this.bindL10n('title-prop', () =>
+        this.l10n('a11y-cloud-editor-apply-crop', {
+          name: this.l10n(operation).toLowerCase(),
+        }),
+      );
     });
 
     this.$['on.click'] = () => {

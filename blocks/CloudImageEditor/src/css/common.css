@@ -433,6 +433,13 @@ uc-editor-filter-control > button .uc-title {
   text-transform: uppercase;
 }
 
+uc-editor-button-control > button uc-icon,
+uc-editor-operation-control > button uc-icon,
+uc-editor-crop-button-control > button uc-icon,
+uc-editor-filter-control > button uc-icon {
+  pointer-events: none;
+}
+
 uc-editor-filter-control > button .uc-preview {
   position: absolute;
   right: 0;
@@ -867,6 +874,10 @@ uc-btn-ui > button {
   filter: brightness(var(--filter-effect));
   transition: var(--l-transition-effect);
   user-select: none;
+}
+
+uc-btn-ui > button > uc-icon {
+  pointer-events: none;
 }
 
 uc-btn-ui .uc-text {

@@ -29,7 +29,7 @@ function renderTabToggle(id) {
         ref="tab-toggle-${id}"
         data-id="${id}"
         icon="${id}"
-        set="onclick: on.clickTab; aria-role:tab_role; aria-controls:tab_${id}"
+        set="onclick: on.clickTab; aria-role:tab_role; aria-controls:tab_${id}; title-prop: a11y-editor-tab-${id}"
       >
       </uc-btn-ui>
     </uc-presence-toggle>
@@ -131,6 +131,11 @@ export class EditorToolbar extends Block {
       [`tab_${TabId.TUNING}`]: `tab_${TabId.TUNING}`,
       [`tab_${TabId.CROP}`]: `tab_${TabId.CROP}`,
       [`tab_${TabId.FILTERS}`]: `tab_${TabId.FILTERS}`,
+      cancel: 'cancel',
+      apply: 'apply',
+      'a11y-editor-tab-filters': 'a11y-editor-tab-filters',
+      'a11y-editor-tab-tuning': 'a11y-editor-tab-tuning',
+      'a11y-editor-tab-crop': 'a11y-editor-tab-crop',
     };
 
     /** @private */
@@ -422,8 +427,9 @@ EditorToolbar.template = html`
           <div ref="tabs-indicator" class="uc-tab-toggles_indicator"></div>
           ${ALL_TABS.map(renderTabToggle).join('')}
         </uc-presence-toggle>
-        <uc-btn-ui style="order: -1" theme="secondary-icon" icon="closeMax" set="onclick: on.cancel"> </uc-btn-ui>
-        <uc-btn-ui theme="primary-icon" icon="done" set="onclick: on.apply"> </uc-btn-ui>
+        <uc-btn-ui style="order: -1" theme="secondary-icon" icon="closeMax" set="onclick: on.cancel; title-prop:cancel">
+        </uc-btn-ui>
+        <uc-btn-ui theme="primary-icon" icon="done" set="onclick: on.apply; title-prop:apply"> </uc-btn-ui>
       </div>
     </uc-presence-toggle>
     <uc-presence-toggle
@@ -434,8 +440,8 @@ EditorToolbar.template = html`
         <uc-editor-slider ref="slider-el"></uc-editor-slider>
       </div>
       <div class="uc-controls-row">
-        <uc-btn-ui theme="secondary" set="onclick: on.cancelSlider;" l10n="@text:cancel"> </uc-btn-ui>
-        <uc-btn-ui theme="primary" set="onclick: on.applySlider;" l10n="@text:apply"> </uc-btn-ui>
+        <uc-btn-ui theme="secondary" set="onclick: on.cancelSlider" l10n="@text:cancel"> </uc-btn-ui>
+        <uc-btn-ui theme="primary" set="onclick: on.applySlider" l10n="@text:apply"> </uc-btn-ui>
       </div>
     </uc-presence-toggle>
   </div>

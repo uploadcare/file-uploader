@@ -11,10 +11,10 @@ import { generateThumb } from '../utils/resizeImage.js';
 import { parseShrink } from '../../utils/parseShrink.js';
 
 const FileItemState = Object.freeze({
-  FINISHED: Symbol(0),
-  FAILED: Symbol(1),
-  UPLOADING: Symbol(2),
-  IDLE: Symbol(3),
+  FINISHED: Symbol('FINISHED'),
+  FAILED: Symbol('FAILED'),
+  UPLOADING: Symbol('UPLOADING'),
+  IDLE: Symbol('IDLE'),
 });
 
 export class FileItem extends UploaderBlock {
@@ -56,15 +56,12 @@ export class FileItem extends UploaderBlock {
       isFocused: false,
       isEditable: false,
       state: FileItemState.IDLE,
+      ariaLabelStatusFile: '',
       onEdit: () => {
-        this.set$({
-          '*focusedEntry': this._entry,
-        });
-        if (this.hasBlockInCtx((b) => b.activityType === ActivityBlock.activities.DETAILS)) {
-          this.$['*currentActivity'] = ActivityBlock.activities.DETAILS;
-        } else {
-          this.$['*currentActivity'] = ActivityBlock.activities.CLOUD_IMG_EDIT;
-        }
+        this.$['*currentActivityParams'] = {
+          internalId: this._entry.uid,
+        };
+        this.$['*currentActivity'] = ActivityBlock.activities.CLOUD_IMG_EDIT;
       },
       onRemove: () => {
         this.uploadCollection.remove(this.$.uid);
@@ -294,7 +291,11 @@ export class FileItem extends UploaderBlock {
       isFinished: state === FileItemState.FINISHED,
       progressVisible: state === FileItemState.UPLOADING,
       isEditable: this.cfg.useCloudImageEditor && this._entry?.getValue('isImage') && this._entry?.getValue('cdnUrl'),
-      errorText: this._entry.getValue('errors')?.[0]?.message ?? '',
+      errorText: this._entry.getValue('errors')?.[0]?.message,
+      ariaLabelStatusFile: this.l10n('a11y-file-item-status', {
+        fileName: this._entry?.getValue('fileName'),
+        status: this.l10n(state?.description?.toLocaleLowerCase() ?? '').toLocaleLowerCase(),
+      }),
     });
   }
 
@@ -430,7 +431,7 @@ FileItem.template = html`
         <uc-icon set="@name: badgeIcon"></uc-icon>
       </div>
     </div>
-    <div class="uc-file-name-wrapper">
+    <div aria-live="polite" class="uc-file-name-wrapper" set="@aria-label:ariaLabelStatusFile;">
       <span class="uc-file-name" set="@title: itemName">{{itemName}}</span>
       <span class="uc-file-error" set="@hidden: !errorText">{{errorText}}</span>
     </div>

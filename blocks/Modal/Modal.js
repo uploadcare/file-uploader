@@ -94,8 +94,10 @@ export class Modal extends Block {
     this.sub('isOpen', (isOpen) => {
       if (isOpen) {
         this.show();
+        this.setAttribute('aria-modal', 'true');
       } else {
         this.hide();
+        this.setAttribute('aria-modal', 'false');
       }
     });
   }

@@ -7,6 +7,13 @@ import { activityBlockCtx } from './CTX.js';
 const ACTIVE_ATTR = 'active';
 const ACTIVE_PROP = '___ACTIVITY_IS_ACTIVE___';
 
+/**
+ * @typedef {{
+ *   'cloud-image-edit': import('../blocks/CloudImageEditorActivity/CloudImageEditorActivity.js').ActivityParams;
+ *   external: import('../blocks/ExternalSource/ExternalSource.js').ActivityParams;
+ * }} ActivityParamsMap
+ */
+
 export class ActivityBlock extends Block {
   /** @protected */
   historyTracked = false;
@@ -54,12 +61,15 @@ export class ActivityBlock extends Block {
         this.setAttribute('activity', this.activityType);
       }
       this.sub('*currentActivity', (/** @type {String} */ val) => {
-        if (this.activityType === 'url') {
-        }
-        if (this.activityType !== val && this[ACTIVE_PROP]) {
-          this._deactivate();
-        } else if (this.activityType === val && !this[ACTIVE_PROP]) {
-          this._activate();
+        try {
+          if (this.activityType !== val && this[ACTIVE_PROP]) {
+            this._deactivate();
+          } else if (this.activityType === val && !this[ACTIVE_PROP]) {
+            this._activate();
+          }
+        } catch (err) {
+          console.error(`Error in activity "${this.activityType}". `, err);
+          this.$['*currentActivity'] = this.$['*history'][this.$['*history'].length - 1] ?? null;
         }
 
         if (!val) {
@@ -158,6 +168,7 @@ export class ActivityBlock extends Block {
     return this.ctxName + this.activityType;
   }
 
+  /** @type {ActivityParamsMap[keyof ActivityParamsMap]} */
   get activityParams() {
     return this.$['*currentActivityParams'];
   }
@@ -203,7 +214,7 @@ ActivityBlock.activities = Object.freeze({
   URL: 'url',
   CLOUD_IMG_EDIT: 'cloud-image-edit',
   EXTERNAL: 'external',
-  DETAILS: 'details',
 });
 
-/** @typedef {(typeof ActivityBlock)['activities'][keyof (typeof ActivityBlock)['activities']] | (string & {}) | null} ActivityType */
+/** @typedef {(typeof ActivityBlock)['activities'][keyof (typeof ActivityBlock)['activities']]} RegisteredActivityType */
+/** @typedef {RegisteredActivityType | (string & {}) | null} ActivityType */
