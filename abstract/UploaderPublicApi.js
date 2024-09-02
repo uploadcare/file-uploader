@@ -330,6 +330,11 @@ export class UploaderPublicApi {
     return this._ctx.$['*currentActivity'];
   };
 
+  /** @returns {Readonly<import('./UploaderBlock.js').SourceTypes>} */
+  getSourceTypes = () => {
+    return this._ctx.getList();
+  };
+
   /** @param {boolean} opened */
   setModalState = (opened) => {
     if (opened && !this._ctx.$['*currentActivity']) {

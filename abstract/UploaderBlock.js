@@ -419,6 +419,10 @@ export class UploaderBlock extends ActivityBlock {
     const data = entriesIds.map((itemId) => this.api.getOutputItem(itemId));
     return data;
   }
+
+  getList() {
+    return UploaderBlock.sourceTypes;
+  }
 }
 
 /** @enum {String} */
@@ -444,3 +448,5 @@ UploaderBlock.sourceTypes = Object.freeze({
   DRAW: 'draw',
   ...UploaderBlock.extSrcList,
 });
+
+/** @typedef {(typeof UploaderBlock)['sourceTypes']} SourceTypes */
