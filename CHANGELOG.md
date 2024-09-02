@@ -1,13 +1,9 @@
 # [1.6.0](https://github.com/uploadcare/file-uploader/compare/v1.5.2...v1.6.0) (2024-09-02)
 
-### Bug Fixes
-
-- **readme.md:** Changed the link to display the release in README.md ([#734](https://github.com/uploadcare/file-uploader/issues/734)) ([b410122](https://github.com/uploadcare/file-uploader/commit/b4101229da4e62b348dee1eb69ba1d860dfa4f17))
-
 ### Features
 
-- **a11y:** added file upload status notification for screen readers, voice over and so on ([#733](https://github.com/uploadcare/file-uploader/issues/733)) ([649db3b](https://github.com/uploadcare/file-uploader/commit/649db3bcdbc81e5fc2dfea1fcb34b4051bbd7e3b))
-- **entry-file:** in enrty file added a field from where the file was downloaded. Source field in OutputFileEntry ([#736](https://github.com/uploadcare/file-uploader/issues/736)) ([6fe5bcd](https://github.com/uploadcare/file-uploader/commit/6fe5bcd8c95894c26b0e747db5817a2247347dfe))
+- **a11y:** add `aria-live` attribute to the file item elements to make the uploading status observable by the screen readers ([#733](https://github.com/uploadcare/file-uploader/issues/733)) ([649db3b](https://github.com/uploadcare/file-uploader/commit/649db3bcdbc81e5fc2dfea1fcb34b4051bbd7e3b))
+- **entry-file:** add `source` property to the `OutputFileEntry` object. This property indicated from which upload source the file was added: local, camera, dropbox etc. ([#736](https://github.com/uploadcare/file-uploader/issues/736)) ([6fe5bcd](https://github.com/uploadcare/file-uploader/commit/6fe5bcd8c95894c26b0e747db5817a2247347dfe))
 
 ## [1.5.2](https://github.com/uploadcare/file-uploader/compare/v1.5.1...v1.5.2) (2024-08-26)
 
