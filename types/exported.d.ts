@@ -5,6 +5,8 @@ import type { FuncFileValidator, FuncCollectionValidator } from '../abstract/Val
 export type { FuncFileValidator, FuncCollectionValidator } from '../abstract/ValidationManager';
 export type { UploaderPublicApi } from '../abstract/UploaderPublicApi';
 
+export type { SourceTypes } from '../blocks/utils/UploadSource'
+
 export type UploadError = import('@uploadcare/upload-client').UploadError;
 export type UploadcareFile = import('@uploadcare/upload-client').UploadcareFile;
 export type NetworkError = import('@uploadcare/upload-client').NetworkError;
@@ -168,6 +170,7 @@ export type OutputFileEntry<TStatus extends OutputFileStatus = OutputFileStatus>
   externalUrl: string | null;
   uploadProgress: number;
   fullPath: string | null;
+  source: SourceTypes;
 } & (
     | {
       status: 'success';

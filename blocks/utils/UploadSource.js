@@ -24,4 +24,4 @@ export const UploadSource = Object.freeze({
   ...ExternalUploadSource,
 });
 
-/** @typedef {typeof UploadSource} SourceTypes */
+/** @typedef {(typeof UploadSource)[keyof typeof UploadSource]} SourceTypes */
