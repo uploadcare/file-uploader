@@ -169,7 +169,7 @@ export type OutputFileEntry<TStatus extends OutputFileStatus = OutputFileStatus>
   externalUrl: string | null;
   uploadProgress: number;
   fullPath: string | null;
-  source: SourceTypes;
+  source: SourceTypes | null;
 } & (
     | {
       status: 'success';

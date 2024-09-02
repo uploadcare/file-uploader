@@ -11,6 +11,7 @@ import {
   OutputFileErrorType,
   UploadCtxProvider
 } from '../../index.js';
+import { SourceTypes } from '../../blocks/utils/UploadSource.js';
 
 const instance = new UploadCtxProvider();
 instance.uploadCollection.size;
@@ -96,6 +97,7 @@ instance.addEventListener('file-added', (e) => {
   expectType<null>(state.cdnUrlModifiers);
   expectType<null>(state.uuid);
   expectType<null>(state.fileInfo);
+  expectType<SourceTypes | null>(state.source);
 });
 
 instance.addEventListener('file-removed', (e) => {
