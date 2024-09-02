@@ -151,7 +151,7 @@ export class DropArea extends UploaderBlock {
     this.subConfigValue('sourceList', (value) => {
       const list = stringToArray(value);
       // Enable drop area if local files are allowed
-      this.$.isEnabled = list.includes(UploaderBlock.sourceTypes.LOCAL);
+      this.$.isEnabled = list.includes(UploadSource.LOCAL);
       // Show drop area if it's enabled or default slot is overrided
       this.$.isVisible = this.$.isEnabled || !this.querySelector('[data-default-slot]');
     });

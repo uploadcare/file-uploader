@@ -44,6 +44,7 @@ export { defineComponents } from './abstract/defineComponents.js';
 export { defineLocale } from './abstract/localeRegistry.js';
 export { loadFileUploaderFrom } from './abstract/loadFileUploaderFrom.js';
 export { toKebabCase } from './utils/toKebabCase.js';
+export { UploadSource, ExternalUploadSource } from './blocks/utils/UploadSource.js';
 
 export * from './env.js';
 

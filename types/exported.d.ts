@@ -21,6 +21,7 @@ export type SecureUploadsSignatureResolver = () => Promise<SecureUploadsSignatur
 export type IconHrefResolver = (iconName: string) => string;
 export type FileValidators = FuncFileValidator[];
 export type CollectionValidators = FuncCollectionValidator[];
+export type SourceTypes = import('../blocks/utils/UploadSource').SourceTypes
 
 export type ConfigType = {
   pubkey: string;
@@ -168,6 +169,7 @@ export type OutputFileEntry<TStatus extends OutputFileStatus = OutputFileStatus>
   externalUrl: string | null;
   uploadProgress: number;
   fullPath: string | null;
+  source: SourceTypes | null;
 } & (
     | {
       status: 'success';

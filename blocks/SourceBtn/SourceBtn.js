@@ -1,6 +1,7 @@
 // @ts-check
 import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
+import { ExternalUploadSource, UploadSource } from '../utils/UploadSource.js';
 
 const L10N_PREFIX = 'src-type-';
 
@@ -37,19 +38,19 @@ export class SourceBtn extends UploaderBlock {
 
   initTypes() {
     this.registerType({
-      type: UploaderBlock.sourceTypes.LOCAL,
+      type: UploadSource.LOCAL,
       activate: () => {
         this.api.openSystemDialog();
         return false;
       },
     });
     this.registerType({
-      type: UploaderBlock.sourceTypes.URL,
+      type: UploadSource.URL,
       activity: ActivityBlock.activities.URL,
       textKey: 'from-url',
     });
     this.registerType({
-      type: UploaderBlock.sourceTypes.CAMERA,
+      type: UploadSource.CAMERA,
       activity: ActivityBlock.activities.CAMERA,
       activate: () => {
         const supportsCapture = 'capture' in document.createElement('input');
@@ -65,7 +66,7 @@ export class SourceBtn extends UploaderBlock {
       icon: 'edit-draw',
     });
 
-    for (let externalSourceType of Object.values(UploaderBlock.extSrcList)) {
+    for (let externalSourceType of Object.values(ExternalUploadSource)) {
       this.registerType({
         type: externalSourceType,
         activity: ActivityBlock.activities.EXTERNAL,

@@ -15,6 +15,7 @@ import { TypedCollection } from './TypedCollection.js';
 import { UploaderPublicApi } from './UploaderPublicApi.js';
 import { ValidationManager } from './ValidationManager.js';
 import { uploadEntrySchema } from './uploadEntrySchema.js';
+import { ExternalUploadSource, UploadSource } from '../blocks/utils/UploadSource.js';
 
 export class UploaderBlock extends ActivityBlock {
   /** @protected */
@@ -421,26 +422,18 @@ export class UploaderBlock extends ActivityBlock {
   }
 }
 
-/** @enum {String} */
+/**
+ * @deprecated Use list sources ExternalUploadSource from from blocks/utils/UploadSource.js
+ * @enum {String}
+ */
 UploaderBlock.extSrcList = Object.freeze({
-  FACEBOOK: 'facebook',
-  DROPBOX: 'dropbox',
-  GDRIVE: 'gdrive',
-  GPHOTOS: 'gphotos',
-  INSTAGRAM: 'instagram',
-  FLICKR: 'flickr',
-  VK: 'vk',
-  EVERNOTE: 'evernote',
-  BOX: 'box',
-  ONEDRIVE: 'onedrive',
-  HUDDLE: 'huddle',
+  ...ExternalUploadSource,
 });
 
-/** @enum {String} */
+/**
+ * @deprecated Use list sources UploadSource from from blocks/utils/UploadSource.js
+ * @enum {String}
+ */
 UploaderBlock.sourceTypes = Object.freeze({
-  LOCAL: 'local',
-  URL: 'url',
-  CAMERA: 'camera',
-  DRAW: 'draw',
-  ...UploaderBlock.extSrcList,
+  ...UploadSource,
 });
