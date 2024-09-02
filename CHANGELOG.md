@@ -3,7 +3,7 @@
 ### Features
 
 - **a11y:** add `aria-live` attribute to the file item elements to make the uploading status observable by the screen readers ([#733](https://github.com/uploadcare/file-uploader/issues/733)) ([649db3b](https://github.com/uploadcare/file-uploader/commit/649db3bcdbc81e5fc2dfea1fcb34b4051bbd7e3b))
-- **entry-file:** add `source` property to the `OutputFileEntry` object. This property indicated from which upload source the file was added: local, camera, dropbox etc. ([#736](https://github.com/uploadcare/file-uploader/issues/736)) ([6fe5bcd](https://github.com/uploadcare/file-uploader/commit/6fe5bcd8c95894c26b0e747db5817a2247347dfe))
+- **output-file-entry:** add `source` property to the `OutputFileEntry` object. This property indicated from which upload source the file was added: local, camera, dropbox etc. ([#736](https://github.com/uploadcare/file-uploader/issues/736)) ([6fe5bcd](https://github.com/uploadcare/file-uploader/commit/6fe5bcd8c95894c26b0e747db5817a2247347dfe))
 
 ## [1.5.2](https://github.com/uploadcare/file-uploader/compare/v1.5.1...v1.5.2) (2024-08-26)
 
