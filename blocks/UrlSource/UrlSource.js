@@ -13,7 +13,7 @@ export class UrlSource extends UploaderBlock {
       e.preventDefault();
 
       let url = this.ref.input['value'];
-      this.api.addFileFromUrl(url, { source: UploadSource.URL_TAB });
+      this.api.addFileFromUrl(url, { source: UploadSource.URL });
       this.$['*currentActivity'] = ActivityBlock.activities.UPLOAD_LIST;
     },
     onCancel: () => {

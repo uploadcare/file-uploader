@@ -419,13 +419,12 @@ export class UploaderBlock extends ActivityBlock {
     const data = entriesIds.map((itemId) => this.api.getOutputItem(itemId));
     return data;
   }
-
-  getList() {
-    return UploaderBlock.sourceTypes;
-  }
 }
 
-/** @enum {String} */
+/**
+ * @deprecated Use list sources ExternalUploadSource from from blocks/utils/UploadSource.js
+ * @enum {String}
+ */
 UploaderBlock.extSrcList = Object.freeze({
   FACEBOOK: 'facebook',
   DROPBOX: 'dropbox',
@@ -440,7 +439,10 @@ UploaderBlock.extSrcList = Object.freeze({
   HUDDLE: 'huddle',
 });
 
-/** @enum {String} */
+/**
+ * @deprecated Use list sources UploadSource from from blocks/utils/UploadSource.js
+ * @enum {String}
+ */
 UploaderBlock.sourceTypes = Object.freeze({
   LOCAL: 'local',
   URL: 'url',
@@ -448,5 +450,3 @@ UploaderBlock.sourceTypes = Object.freeze({
   DRAW: 'draw',
   ...UploaderBlock.extSrcList,
 });
-
-/** @typedef {(typeof UploaderBlock)['sourceTypes']} SourceTypes */
