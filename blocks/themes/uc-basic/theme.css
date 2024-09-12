@@ -260,3 +260,9 @@
   --uc-primary-oklch-light: 10% 0 0;
   --uc-primary-oklch-dark: 97% 0 0;
 }
+
+:where(.uc-contrast) {
+  --uc-border-light: oklch(10% 0 0);
+  --uc-border-dark: oklch(90% 0 0);
+
+}
