@@ -26,6 +26,12 @@ uc-file-item > .uc-inner {
   transition: background-color var(--uc-transition);
 }
 
+:where(.uc-contrast) uc-file-item > .uc-inner {
+  background-color: transparent;
+  outline: 1px solid var(--uc-border);
+  outline-offset: -1px;
+}
+
 uc-file-item > .uc-inner[focused] {
   background-color: transparent;
 }
@@ -130,6 +136,13 @@ uc-file-item .uc-progress-bar {
   opacity: 0.5;
   top: calc(100% - 2px);
   height: 2px;
+}
+
+:where(.uc-contrast) uc-file-item .uc-progress-bar {
+  opacity: 1;
+  top: calc(100% - 5px);
+  width: calc(100% - 8px);
+  left: 4px;
 }
 
 uc-file-item .uc-file-actions {
