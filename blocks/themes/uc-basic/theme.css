@@ -262,7 +262,12 @@
 }
 
 :where(.uc-contrast) {
-  --uc-border-light: oklch(10% 0 0);
-  --uc-border-dark: oklch(90% 0 0);
+  --uc-border-light: oklch(15% 0 0);
+  --uc-border-dark: oklch(70% 0 0);
 
+  --uc-muted-light: oklch(98% 0 0);
+  --uc-muted-dark: oklch(24% 0 0);
+
+  --uc-muted-foreground-light: oklch(20% 0 0);
+  --uc-muted-foreground-dark: oklch(80% 0 0);
 }
