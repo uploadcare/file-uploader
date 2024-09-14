@@ -98,7 +98,7 @@
     --uc-secondary-hover-light: oklch(21% 0 0 / 0.08);
     --uc-secondary-foreground-light: oklch(21% 0 0);
     --uc-muted-light: oklch(97% 0 0);
-    --uc-muted-foreground-light: oklch(55% 0 0);
+    --uc-muted-foreground-light: oklch(40% 0 0);
     --uc-destructive-light: oklch(59% 0.235 28.5 / 0.05);
     --uc-destructive-foreground-light: oklch(59% 0.235 28.5);
     --uc-border-light: oklch(92% 0 0);

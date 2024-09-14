@@ -20,7 +20,6 @@ uc-source-btn:last-child > button {
 }
 
 uc-source-btn > button:hover {
-  color: var(--uc-primary);
   background-color: var(--uc-primary-transparent);
 }
 
