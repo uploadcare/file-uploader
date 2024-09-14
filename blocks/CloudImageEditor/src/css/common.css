@@ -348,6 +348,8 @@ uc-editor-operation-control {
   --down-opacity: 1;
   --down-filter: 0.6;
   --down-background: var(--uc-secondary);
+
+  border-radius: var(--uc-radius);
 }
 
 uc-editor-button-control > button,
@@ -392,6 +394,18 @@ uc-editor-filter-control.uc-active {
   --hover-opacity: 1;
 }
 
+:where(.uc-contrast) uc-editor-button-control.uc-active,
+:where(.uc-contrast) uc-editor-operation-control.uc-active,
+:where(.uc-contrast) uc-editor-crop-button-control.uc-active,
+:where(.uc-contrast) uc-editor-filter-control.uc-active {
+  --idle-color-rgb: var(--uc-primary-foreground);
+  --idle-background: var(--uc-primary);
+  --idle-opacity: 1;
+  --hover-color-rgb: var(--uc-primary-foreground);
+  --hover-background: var(--uc-primary);
+  --hover-opacity: 1;
+}
+
 uc-editor-filter-control.uc-not_active .uc-preview[loaded] {
   opacity: 1;
 }
@@ -405,6 +419,16 @@ uc-editor-operation-control.uc-not_active,
 uc-editor-crop-button-control.uc-not_active,
 uc-editor-filter-control.uc-not_active {
   --idle-color-rgb: var(--uc-secondary-foreground);
+}
+
+:where(.uc-contrast) uc-editor-button-control.uc-not_active,
+:where(.uc-contrast) uc-editor-operation-control.uc-not_active,
+:where(.uc-contrast) uc-editor-crop-button-control.uc-not_active,
+:where(.uc-contrast) uc-editor-filter-control.uc-not_active {
+  --idle-background: transparent;
+  --hover-background: var(--uc-secondary);
+  outline: 1px solid var(--uc-border);
+  outline-offset: -1px;
 }
 
 uc-editor-button-control > button::before,
@@ -1034,6 +1058,13 @@ uc-btn-ui.uc-default > button {
   --active-brightness: 1;
   --active-opacity: 1;
   --active-background: var(--uc-primary-transparent);
+}
+
+:where(.uc-contrast) uc-btn-ui.uc-default > button {
+  --idle-background: transparent;
+  --hover-background: var(--uc-secondary);
+  --active-background: var(--uc-foreground);
+  --active-color-rgb: var(--uc-background);
 }
 
 uc-line-loader-ui {
