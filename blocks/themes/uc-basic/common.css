@@ -52,19 +52,8 @@
   background-color: var(--uc-secondary);
 }
 
-:where(.uc-contrast) button.uc-secondary-btn {
-  color: var(--uc-secondary-foreground);
-  background-color: transparent;
-  outline: 1px solid var(--uc-secondary-foreground);
-}
-
 :where([uc-wgt-common]) button.uc-secondary-btn:hover {
   background-color: var(--uc-secondary-hover);
-}
-
-:where(.uc-contrast) button.uc-secondary-btn:hover {
-  outline-width: 2px;
-  background-color: transparent;
 }
 
 :where([uc-wgt-common]) button.uc-mini-btn {
@@ -76,11 +65,6 @@
 
 :where([uc-wgt-common]) button.uc-mini-btn:hover {
   background-color: var(--uc-secondary);
-}
-
-:where(.uc-contrast) button.uc-mini-btn:hover {
-  background-color: transparent;
-  outline: 1px solid var(--uc-secondary-foreground);
 }
 
 :where([uc-wgt-common]) :is(button[disabled], button.uc-primary-btn[disabled], button.uc-secondary-btn[disabled]) {

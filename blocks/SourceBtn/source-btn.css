@@ -25,8 +25,7 @@ uc-source-btn > button:hover {
 }
 
 :where(.uc-contrast) uc-source-btn > button:hover {
-  background-color: unset;
-  outline: 1px solid var(--uc-foreground);
+  background-color: var(--uc-secondary);
   color: var(--uc-foreground);
 }
 
