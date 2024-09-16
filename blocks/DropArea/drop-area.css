@@ -119,7 +119,7 @@
 :where([uc-drop-area])[with-icon]
   > .uc-content-wrapper:is([drag-state='active'], [drag-state='near'], [drag-state='over'])
   .uc-text {
-  color: var(--uc-primary);
+  color: var(--uc-foreground);
 }
 
 :where(.uc-contrast) :where([uc-drop-area])[with-icon]
