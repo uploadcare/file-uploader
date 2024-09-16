@@ -985,6 +985,10 @@ uc-btn-ui.uc-secondary > button {
   --active-background: transparent;
 }
 
+:where(.uc-contrast) uc-btn-ui.uc-secondary > button {
+  border: 1px solid var(--uc-border);
+}
+
 uc-btn-ui.uc-secondary-icon > button {
   --idle-color-rgb: var(--uc-secondary-foreground);
   --idle-brightness: 1;

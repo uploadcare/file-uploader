@@ -262,8 +262,8 @@
 }
 
 :where(.uc-contrast) {
-  --uc-border-light: oklch(40% 0 0);
-  --uc-border-dark: oklch(60% 0 0);
+  --uc-border-light: oklch(50% 0 0);
+  --uc-border-dark: oklch(50% 0 0);
 
   --uc-muted-light: oklch(98% 0 0);
   --uc-muted-dark: oklch(16% 0 0);
