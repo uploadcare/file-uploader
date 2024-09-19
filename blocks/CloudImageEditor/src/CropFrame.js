@@ -151,10 +151,10 @@ export class CropFrame extends Block {
 
       if (isCenter) {
         const moveThumbRect = {
-          x: x + width / 3,
-          y: y + height / 3,
-          width: width / 3,
-          height: height / 3,
+          x,
+          y,
+          width,
+          height,
         };
         setSvgNodeAttrs(interactionNode, moveThumbRect);
       } else {
@@ -202,47 +202,55 @@ export class CropFrame extends Block {
     });
   }
 
+  /**
+   * @param {import('./types.js').FrameThumbs} frameThumbs
+   * @param {import('./types.js').Direction} direction
+   */
+  _createThumb(frameThumbs, direction) {
+    let groupNode = createSvgNode('g');
+    groupNode.classList.add('uc-thumb');
+    groupNode.setAttribute('with-effects', '');
+    let interactionNode = createSvgNode('rect', {
+      fill: 'transparent',
+    });
+    let pathNode = createSvgNode('path', {
+      stroke: 'currentColor',
+      fill: 'none',
+      'stroke-width': THUMB_STROKE_WIDTH,
+    });
+    groupNode.appendChild(pathNode);
+    groupNode.appendChild(interactionNode);
+    frameThumbs[direction] = {
+      direction,
+      pathNode,
+      interactionNode,
+      groupNode,
+    };
+
+    if (direction === '') {
+      groupNode.style.cursor = 'move';
+    }
+
+    interactionNode.addEventListener('pointerdown', this._handlePointerDown.bind(this, direction));
+  }
+
   /** @private */
   _createThumbs() {
-    /**
-     * @type {Partial<{
-     *   [K in import('./types.js').Direction]: {
-     *     direction: import('./types.js').Direction;
-     *     pathNode: SVGElement;
-     *     interactionNode: SVGElement;
-     *     groupNode: SVGElement;
-     *   };
-     * }>}
-     */
+    /** @type {import('./types.js').FrameThumbs} */
     const frameThumbs = {};
 
     for (let i = 0; i < 3; i++) {
       for (let j = 0; j < 3; j++) {
         let direction = /** @type {import('./types.js').Direction} */ (`${['n', '', 's'][i]}${['w', '', 'e'][j]}`);
-        let groupNode = createSvgNode('g');
-        groupNode.classList.add('uc-thumb');
-        groupNode.setAttribute('with-effects', '');
-        let interactionNode = createSvgNode('rect', {
-          fill: 'transparent',
-        });
-        let pathNode = createSvgNode('path', {
-          stroke: 'currentColor',
-          fill: 'none',
-          'stroke-width': THUMB_STROKE_WIDTH,
-        });
-        groupNode.appendChild(pathNode);
-        groupNode.appendChild(interactionNode);
-        frameThumbs[direction] = {
-          direction,
-          pathNode,
-          interactionNode,
-          groupNode,
-        };
+        if (direction === '') {
+          continue;
+        }
 
-        interactionNode.addEventListener('pointerdown', this._handlePointerDown.bind(this, direction));
+        this._createThumb(frameThumbs, direction);
       }
     }
 
+    this._createThumb(frameThumbs, '');
     return frameThumbs;
   }
 
