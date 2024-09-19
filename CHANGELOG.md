@@ -2,7 +2,7 @@
 
 ### Features
 
-- WCAG AAA contrast and high-contrast theme ([#739](https://github.com/uploadcare/file-uploader/issues/739)) ([82c29e1](https://github.com/uploadcare/file-uploader/commit/82c29e17cd84fb23f71a3e43e259ba5edd82173d))
+- **a11y:** added WCAG AAA contrast and high-contrast theme ([#739](https://github.com/uploadcare/file-uploader/issues/739)) ([82c29e1](https://github.com/uploadcare/file-uploader/commit/82c29e17cd84fb23f71a3e43e259ba5edd82173d))
 
 # [1.6.0](https://github.com/uploadcare/file-uploader/compare/v1.5.2...v1.6.0) (2024-09-02)
 
