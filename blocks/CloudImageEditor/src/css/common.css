@@ -415,6 +415,7 @@ uc-editor-filter-control.uc-not_active {
 :where(.uc-contrast) uc-editor-filter-control.uc-not_active {
   --idle-background: transparent;
   --hover-background: var(--uc-secondary);
+
   outline: 1px solid var(--uc-border);
   outline-offset: -1px;
 }
