@@ -47,6 +47,10 @@
   border-radius: calc(var(--uc-radius) * 1.75);
 }
 
+:where(.uc-contrast) :where([uc-file-uploader-minimal] uc-drop-area) {
+  background-color: transparent;
+}
+
 /* hack to make transparent :hover colors work in any conditions */
 :where([uc-file-uploader-minimal] uc-drop-area)::before {
   content: '';

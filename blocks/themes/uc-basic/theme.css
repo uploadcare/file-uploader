@@ -41,7 +41,7 @@
 @supports not (color: oklch(0% 0 0)) {
   :where([uc-wgt-common]) {
     /* Light colors RGB fallback */
-    --uc-primary-rgb-light: 54 112 253;
+    --uc-primary-rgb-light: 23 75 215;
     --uc-primary-light: rgb(var(--uc-primary-rgb-light));
     --uc-primary-hover-light: rgb(var(--uc-primary-rgb-light) / 90%);
     --uc-primary-transparent-light: rgb(var(--uc-primary-rgb-light) / 10%);
@@ -87,10 +87,10 @@
 @supports (color: oklch(0% 0 0)) {
   :where([uc-wgt-common]) {
     /* Light colors OKLCH */
-    --uc-primary-oklch-light: 59% 0.22 264; /* Quick customization: change this value to your brand color */
+    --uc-primary-oklch-light: 47% 0.22 264; /* Quick customization: change this value to your brand color */
     --uc-primary-light: oklch(var(--uc-primary-oklch-light));
     --uc-primary-hover-light: oklch(var(--uc-primary-oklch-light) / 90%);
-    --uc-primary-transparent-light: oklch(var(--uc-primary-oklch-light) / 10%);
+    --uc-primary-transparent-light: oklch(var(--uc-primary-oklch-light) / 7%);
     --uc-background-light: oklch(100% 0 0);
     --uc-foreground-light: oklch(21% 0 0);
     --uc-primary-foreground-light: oklch(100% 0 0);
@@ -98,7 +98,7 @@
     --uc-secondary-hover-light: oklch(21% 0 0 / 0.08);
     --uc-secondary-foreground-light: oklch(21% 0 0);
     --uc-muted-light: oklch(97% 0 0);
-    --uc-muted-foreground-light: oklch(55% 0 0);
+    --uc-muted-foreground-light: oklch(40% 0 0);
     --uc-destructive-light: oklch(59% 0.235 28.5 / 0.05);
     --uc-destructive-foreground-light: oklch(59% 0.235 28.5);
     --uc-border-light: oklch(92% 0 0);
@@ -232,31 +232,48 @@
 }
 
 :where(.uc-purple) {
-  --uc-primary-oklch-light: 59% 0.22 300;
+  --uc-primary-oklch-light: 47% 0.22 300;
   --uc-primary-oklch-dark: 69% 0.1768 300;
 }
 
 :where(.uc-red) {
-  --uc-primary-oklch-light: 59% 0.22 21;
-  --uc-primary-oklch-dark: 69% 0.1768 21;
+  --uc-primary-oklch-light: 47% 0.21 21;
+  --uc-primary-oklch-dark: 71% 0.1768 21;
 }
 
 :where(.uc-orange) {
-  --uc-primary-oklch-light: 59% 0.1724 51.88;
+  --uc-primary-oklch-light: 47% 0.1376 51.88;
   --uc-primary-oklch-dark: 69% 0.1768 51.88;
 }
 
 :where(.uc-green) {
-  --uc-primary-oklch-light: 59% 0.1724 130;
+  --uc-primary-oklch-light: 45% 0.14 130;
   --uc-primary-oklch-dark: 69% 0.1768 130;
 }
 
 :where(.uc-turquoise) {
-  --uc-primary-oklch-light: 59% 0.1523 174;
+  --uc-primary-oklch-light: 45% 0.0854 174;
   --uc-primary-oklch-dark: 69% 0.1768 174;
 }
 
 :where(.uc-gray) {
   --uc-primary-oklch-light: 10% 0 0;
   --uc-primary-oklch-dark: 97% 0 0;
+}
+
+:where(.uc-contrast) {
+  --uc-border-light: oklch(50% 0 0);
+  --uc-border-dark: oklch(50% 0 0);
+
+  --uc-muted-light: oklch(98% 0 0);
+  --uc-muted-dark: oklch(16% 0 0);
+
+  --uc-muted-foreground-light: oklch(20% 0 0);
+  --uc-muted-foreground-dark: oklch(80% 0 0);
+
+  --uc-background-light: oklch(100% 0 0);
+  --uc-foreground-light: oklch(0% 0 0);
+
+  --uc-background-dark: oklch(10% 0 0);
+  --uc-foreground-dark: oklch(100% 0 0);
 }

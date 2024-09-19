@@ -348,6 +348,8 @@ uc-editor-operation-control {
   --down-opacity: 1;
   --down-filter: 0.6;
   --down-background: var(--uc-secondary);
+
+  border-radius: var(--uc-radius);
 }
 
 uc-editor-button-control > button,
@@ -384,11 +386,11 @@ uc-editor-button-control.uc-active,
 uc-editor-operation-control.uc-active,
 uc-editor-crop-button-control.uc-active,
 uc-editor-filter-control.uc-active {
-  --idle-color-rgb: var(--uc-primary);
-  --idle-background: var(--uc-primary-transparent);
-  --idle-opacity: 0.9;
-  --hover-color-rgb: var(--uc-primary);
-  --hover-background: var(--uc-primary-transparent);
+  --idle-color-rgb: var(--uc-primary-foreground);
+  --idle-background: var(--uc-primary);
+  --idle-opacity: 1;
+  --hover-color-rgb: var(--uc-primary-foreground);
+  --hover-background: var(--uc-primary);
   --hover-opacity: 1;
 }
 
@@ -405,6 +407,17 @@ uc-editor-operation-control.uc-not_active,
 uc-editor-crop-button-control.uc-not_active,
 uc-editor-filter-control.uc-not_active {
   --idle-color-rgb: var(--uc-secondary-foreground);
+}
+
+:where(.uc-contrast) uc-editor-button-control.uc-not_active,
+:where(.uc-contrast) uc-editor-operation-control.uc-not_active,
+:where(.uc-contrast) uc-editor-crop-button-control.uc-not_active,
+:where(.uc-contrast) uc-editor-filter-control.uc-not_active {
+  --idle-background: transparent;
+  --hover-background: var(--uc-secondary);
+
+  outline: 1px solid var(--uc-border);
+  outline-offset: -1px;
 }
 
 uc-editor-button-control > button::before,
@@ -973,6 +986,10 @@ uc-btn-ui.uc-secondary > button {
   --active-background: transparent;
 }
 
+:where(.uc-contrast) uc-btn-ui.uc-secondary > button {
+  border: 1px solid var(--uc-border);
+}
+
 uc-btn-ui.uc-secondary-icon > button {
   --idle-color-rgb: var(--uc-secondary-foreground);
   --idle-brightness: 1;
@@ -1034,6 +1051,13 @@ uc-btn-ui.uc-default > button {
   --active-brightness: 1;
   --active-opacity: 1;
   --active-background: var(--uc-primary-transparent);
+}
+
+:where(.uc-contrast) uc-btn-ui.uc-default > button {
+  --idle-background: transparent;
+  --hover-background: var(--uc-secondary);
+  --active-background: var(--uc-foreground);
+  --active-color-rgb: var(--uc-background);
 }
 
 uc-line-loader-ui {
@@ -1107,16 +1131,16 @@ uc-slider-ui .uc-steps {
 uc-slider-ui .uc-border-step {
   width: 0px;
   height: 10px;
-  border-right: 1px solid var(--l-color);
-  opacity: 0.6;
+  border-right: 1px solid var(--uc-foreground);
+  opacity: 1;
   transition: border-color var(--transition-duration-2);
 }
 
 uc-slider-ui .uc-minor-step {
   width: 0px;
   height: 4px;
-  border-right: 1px solid var(--l-color);
-  opacity: 0.2;
+  border-right: 1px solid var(--uc-foreground);
+  opacity: 0.6;
   transition: border-color var(--transition-duration-2);
 }
 

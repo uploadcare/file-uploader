@@ -127,9 +127,13 @@ uc-file-item .uc-badge uc-icon svg {
 }
 
 uc-file-item .uc-progress-bar {
-  opacity: 0.5;
+  opacity: 0.7;
   top: calc(100% - 2px);
   height: 2px;
+}
+
+:where(.uc-contrast) uc-file-item .uc-progress-bar {
+  opacity: 1;
 }
 
 uc-file-item .uc-file-actions {

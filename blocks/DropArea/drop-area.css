@@ -32,16 +32,17 @@
   background: var(--uc-background);
 }
 
-:where([uc-drop-area])[with-icon]
-  > .uc-content-wrapper:is([drag-state='active'], [drag-state='near'], [drag-state='over'])
-  :is(.uc-text, .uc-icon-container) {
-  color: var(--uc-primary);
-}
-
 :where([uc-drop-area]):is([drag-state='active'], [drag-state='near'], [drag-state='over'], :hover) {
-  color: var(--uc-primary);
   background: var(--uc-primary-transparent);
   border-color: var(--uc-primary-transparent);
+}
+
+:where(.uc-contrast) :where([uc-drop-area]):is([drag-state='active'], [drag-state='near'], [drag-state='over'], :hover) {
+  color: var(--uc-foreground);
+  background: transparent;
+  border-color: var(--uc-foreground);
+  border-width: 2px;
+  border-style: solid;
 }
 
 :where([uc-drop-area]):is([drag-state='active'], [drag-state='near']) {
@@ -95,13 +96,17 @@
   transform: translateY(48px);
 }
 
-:where([uc-drop-area])[with-icon]:hover .uc-icon-container,
-:where([uc-drop-area])[with-icon]:hover .uc-text {
-  color: var(--uc-primary);
+:where(.uc-contrast) :where([uc-drop-area])[with-icon]:hover .uc-icon-container,
+:where(.uc-contrast) :where([uc-drop-area])[with-icon]:hover .uc-text {
+  color: var(--uc-foreground);
 }
 
 :where([uc-drop-area])[with-icon]:hover .uc-icon-container {
   background-color: var(--uc-primary-transparent);
+}
+
+:where(.uc-contrast) :where([uc-drop-area])[with-icon]:hover .uc-icon-container {
+  background-color: var(--uc-muted);
 }
 
 :where([uc-drop-area])[with-icon]
@@ -114,7 +119,13 @@
 :where([uc-drop-area])[with-icon]
   > .uc-content-wrapper:is([drag-state='active'], [drag-state='near'], [drag-state='over'])
   .uc-text {
-  color: var(--uc-primary);
+  color: var(--uc-foreground);
+}
+
+:where(.uc-contrast) :where([uc-drop-area])[with-icon]
+  > .uc-content-wrapper:is([drag-state='active'], [drag-state='near'], [drag-state='over'])
+  .uc-text {
+  color: var(--uc-foreground);
 }
 
 :where([uc-drop-area])[with-icon]

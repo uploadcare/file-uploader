@@ -85,6 +85,10 @@
     opacity 0.4s ease;
 }
 
+:where(.uc-contrast) :where([uc-modal]) > dialog {
+  outline: 1px solid var(--uc-border);
+}
+
 @media only screen and (max-width: 430px), only screen and (max-height: 600px) {
   :where([uc-modal]) > dialog > .uc-content {
     height: var(--modal-max-content-height);

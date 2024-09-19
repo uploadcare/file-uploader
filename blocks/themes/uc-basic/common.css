@@ -56,6 +56,10 @@
   background-color: var(--uc-secondary-hover);
 }
 
+:where([uc-wgt-common].uc-contrast) button.uc-secondary-btn {
+  border: 1px solid var(--uc-border);
+}
+
 :where([uc-wgt-common]) button.uc-mini-btn {
   height: var(--uc-button-size);
   padding: 0;

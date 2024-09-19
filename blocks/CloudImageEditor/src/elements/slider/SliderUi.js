@@ -114,7 +114,7 @@ export class SliderUi extends Block {
     if (value === this._zero) {
       this._zeroDotEl.style.opacity = '0';
     } else {
-      this._zeroDotEl.style.opacity = '0.2';
+      this._zeroDotEl.style.opacity = '1';
     }
     let { width } = this.getBoundingClientRect();
     let slope = 100 / (this.$.max - this.$.min);
