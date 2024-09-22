@@ -51,6 +51,7 @@
     "./locales/*": "./locales/*"
   },
   "repository": "https://github.com/uploadcare/file-uploader/",
+  "homepage": "https://uploadcare.com/",
   "files": [
     "{abstract,blocks,solutions,web,utils,types,locales}/**/*.{js,css,d.ts,d.ts.map}",
     "index.{js,d.ts,d.ts.map}",
