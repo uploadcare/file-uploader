@@ -1,3 +1,5 @@
+## [1.7.1](https://github.com/uploadcare/file-uploader/compare/v1.7.0...v1.7.1) (2024-09-23)
+
 # [1.7.0](https://github.com/uploadcare/file-uploader/compare/v1.6.0...v1.7.0) (2024-09-19)
 
 ### Features
