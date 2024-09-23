@@ -8,7 +8,7 @@
   </a>
 </p>
 <p align="center">
-  <a href="https://uploadcare.com?ref=github-readme">Website</a> •
+  <a href="https://uploadcare.com/?ref=github-readme">Website</a> •
   <a href="https://uploadcare.com/docs/file-uploader?ref=github-readme">Docs</a> • 
   <a href="https://uploadcare.com/blog?ref=github-readme">Blog</a> • 
   <a href="https://discord.gg/mKWRgRsVz8?ref=github-readme">Discord</a> •
