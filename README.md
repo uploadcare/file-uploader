@@ -20,7 +20,7 @@
 [![npm version](https://badge.fury.io/js/@uploadcare%2Ffile-uploader.svg)](https://www.npmjs.com/package/@uploadcare/file-uploader)
 [![GitHub Actions](https://github.com/uploadcare/blocks/workflows/checks/badge.svg)](https://github.com/uploadcare/blocks/actions?query=workflow%3ABuild+branch%3Amaster)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![minzipped size](https://img.shields.io/bundlephobia/minzip/@uploadcare/file-uploader@1.7.0)](https://bundlephobia.com/package/@uploadcare/file-uploader@1.7.0)
+[![minzipped size](https://img.shields.io/bundlephobia/minzip/@uploadcare/file-uploader@latest)](https://bundlephobia.com/package/@uploadcare/file-uploader@latest)
 
 Add file uploads to your app and configure behavior and appearance as needed. Process and transform files before and after uploading. Compatible with any framework or environment.
 
@@ -42,6 +42,7 @@ Add file uploads to your app and configure behavior and appearance as needed. Pr
 Uploadcare File Uploader is built with [Web Components](https://developer.mozilla.org/en-US/docs/Web/API/Web_components), meaning you can integrate it into any environment—no adapters required.
 
 For hands-on examples, visit our live sandboxes:
+
 - [React](https://github.com/uploadcare/file-uploader-examples/tree/main/examples/react-uploader)
 - [Next.js](https://github.com/uploadcare/file-uploader-examples/tree/main/examples/next-uploader)
 - [JavaScript](https://github.com/uploadcare/file-uploader-examples/tree/main/examples/js-uploader)
@@ -49,7 +50,7 @@ For hands-on examples, visit our live sandboxes:
 - [Vue](https://github.com/uploadcare/file-uploader-examples/tree/main/examples/vue-uploader)
 - [Svelte](https://github.com/uploadcare/file-uploader-examples/tree/main/examples/svelte-uploader)
 
-Check out the [documentation](https://uploadcare.com/docs/integrations/?ref=github-readme) for quickstart guides tailored to your framework or tool. 
+Check out the [documentation](https://uploadcare.com/docs/integrations/?ref=github-readme) for quickstart guides tailored to your framework or tool.
 
 Explore more tutorials in our [blog](https://uploadcare.com/blog/category/uploading/?ref=github-readme).
 
