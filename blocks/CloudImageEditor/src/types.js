@@ -56,6 +56,17 @@
 
 /** @typedef {CropAspectRatio[]} CropPresetList */
 
+/**
+ * @typedef {Partial<{
+ *   [K in Direction]: {
+ *     direction: Direction;
+ *     pathNode: SVGElement;
+ *     interactionNode: SVGElement;
+ *     groupNode: SVGElement;
+ *   };
+ * }>} FrameThumbs
+ */
+
 /** @typedef {'' | 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw'} Direction */
 
 export {};
