@@ -2,7 +2,7 @@
 
 ### Features
 
-- increased the capture area for dragging ([#741](https://github.com/uploadcare/file-uploader/issues/741)) ([47cc087](https://github.com/uploadcare/file-uploader/commit/47cc0871fc503a8a74ec598651053a92a2f54e49))
+- **cloud-editor** increased the capture area for dragging ([#741](https://github.com/uploadcare/file-uploader/issues/741)) ([47cc087](https://github.com/uploadcare/file-uploader/commit/47cc0871fc503a8a74ec598651053a92a2f54e49))
 
 # [1.7.0](https://github.com/uploadcare/file-uploader/compare/v1.6.0...v1.7.0) (2024-09-19)
 
