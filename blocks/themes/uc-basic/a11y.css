@@ -1,0 +1,40 @@
+:where(.uc-a11y-large) {
+  --uc-font-size: 20px;
+  --uc-simple-btn-font-size: 20px;
+}
+
+:where(.uc-a11y-medium) {
+  --uc-font-size: 18px;
+  --uc-simple-btn-font-size: 18px;
+}
+
+:where(.uc-monochrome) {
+  --uc-background-light: oklch(100% 0 0);
+  --uc-background-dark: oklch(0% 0 0);
+  --uc-foreground-light: oklch(0% 0 0);
+  --uc-foreground-dark: oklch(100% 0 0);
+  --uc-primary-light: oklch(10% 0 0);
+  --uc-primary-dark: oklch(90% 0 0);
+  --uc-border-light: oklch(0% 0 0);
+  --uc-border-dark: oklch(100% 0 0);
+}
+
+:where(.uc-high-contrast-cinnamon-light) {
+  --uc-background-light: oklch(40% 0.1 30);
+  --uc-foreground-light: oklch(100% 0 0);
+  --uc-primary-light: oklch(59% 0.4 264);
+  --uc-primary-hover-light: oklch(59% 0.4 264 / 90%);
+  --uc-secondary-light: oklch(100% 0 0 / 0.1);
+  --uc-muted-light: oklch(90% 0 0);
+  --uc-border-light: oklch(100% 0 0);
+}
+
+:where(.uc-high-contrast-green-light) {
+  --uc-background-light: oklch(60% 0.25 130);
+  --uc-foreground-light: oklch(0% 0 0);
+  --uc-primary-light: oklch(59% 0.4 30);
+  --uc-primary-hover-light: oklch(59% 0.4 30 / 90%);
+  --uc-secondary-light: oklch(0% 0 0 / 0.05);
+  --uc-muted-light: oklch(95% 0 0);
+  --uc-border-light: oklch(0% 0 0);
+}
