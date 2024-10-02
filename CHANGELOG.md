@@ -1,3 +1,9 @@
+## [1.8.1](https://github.com/uploadcare/file-uploader/compare/v1.8.0...v1.8.1) (2024-10-02)
+
+### Bug Fixes
+
+- **svg-sprite:** unneeded icons leak to the uc-basic sprite ([#746](https://github.com/uploadcare/file-uploader/issues/746)) ([f4decff](https://github.com/uploadcare/file-uploader/commit/f4decff895e174b70f9f394d7d67c59f14d9cf76))
+
 # [1.8.0](https://github.com/uploadcare/file-uploader/compare/v1.7.0...v1.8.0) (2024-09-24)
 
 ### Features
