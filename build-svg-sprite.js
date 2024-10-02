@@ -46,11 +46,11 @@ const config = {
   },
 };
 
-const spriter = new SVGSpriter(config);
-
 console.log('Generating SVG sprite...');
 
 DATA.forEach((item) => {
+  const spriter = new SVGSpriter(config);
+
   fs.readdir(item.input, (err, files) => {
     if (err) {
       throw err;
