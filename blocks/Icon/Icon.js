@@ -9,7 +9,6 @@ export class Icon extends Block {
       ...this.init$,
       name: '',
       href: '',
-      title: '',
     };
   }
 
@@ -33,12 +32,10 @@ export class Icon extends Block {
 
 Icon.template = /* HTML */ `
   <svg ref="svg" xmlns="http://www.w3.org/2000/svg">
-    <title>{{title}}</title>
     <use set="@href: href;"></use>
   </svg>
 `;
 
 Icon.bindAttributes({
   name: 'name',
-  title: 'title',
 });
