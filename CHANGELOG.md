@@ -1,3 +1,9 @@
+# [1.9.0](https://github.com/uploadcare/file-uploader/compare/v1.8.1...v1.9.0) (2024-10-04)
+
+### Features
+
+- added titles a11y in buttons of uc-activity-header ([#748](https://github.com/uploadcare/file-uploader/issues/748)) ([97f13e3](https://github.com/uploadcare/file-uploader/commit/97f13e32442bbc33080365f6febf7e0d031cd68e))
+
 ## [1.8.1](https://github.com/uploadcare/file-uploader/compare/v1.8.0...v1.8.1) (2024-10-02)
 
 ### Bug Fixes
