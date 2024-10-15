@@ -210,7 +210,7 @@ export class ExternalSource extends UploaderBlock {
     this._messageBridge = new MessageBridge(iframe.contentWindow);
     this._messageBridge.on('selected-files-change', this.handleSelectedFilesChange.bind(this));
 
-    this.$.selectedList = [];
+    this.resetSelectionStatus();
   }
 
   /** @private */
@@ -218,7 +218,20 @@ export class ExternalSource extends UploaderBlock {
     this._messageBridge?.destroy();
     this._messageBridge = undefined;
     this.ref.iframeWrapper.innerHTML = '';
-    this.$.selectedList = [];
+
+    this.resetSelectionStatus();
+  }
+
+  /** @private */
+  resetSelectionStatus() {
+    this.set$({
+      selectedList: [],
+      total: 0,
+      isSelectionReady: false,
+      couldSelectAll: false,
+      couldDeselectAll: false,
+      showSelectionStatus: false,
+    });
   }
 }
 
