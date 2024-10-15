@@ -23,7 +23,7 @@ export class ExternalSource extends UploaderBlock {
       activityIcon: '',
       activityCaption: '',
 
-      /** @type {import('./MessageBridge.js').InputMessageMap['selected-files-change']['selectedFiles']} */
+      /** @type {import('./types.js').InputMessageMap['selected-files-change']['selectedFiles']} */
       selectedList: [],
       total: 0,
 
@@ -106,9 +106,7 @@ export class ExternalSource extends UploaderBlock {
 
   /**
    * @private
-   * @param {NonNullable<
-   *   import('./MessageBridge.js').InputMessageMap['selected-files-change']['selectedFiles']
-   * >[number]} selectedFile
+   * @param {NonNullable<import('./types.js').InputMessageMap['selected-files-change']['selectedFiles']>[number]} selectedFile
    */
   extractUrlFromSelectedFile(selectedFile) {
     if (selectedFile.alternatives) {
@@ -128,7 +126,7 @@ export class ExternalSource extends UploaderBlock {
 
   /**
    * @private
-   * @param {import('./MessageBridge.js').InputMessageMap['selected-files-change']} message
+   * @param {import('./types.js').InputMessageMap['selected-files-change']} message
    */
   async handleSelectedFilesChange(message) {
     if (this.cfg.multiple !== message.isMultipleMode) {
