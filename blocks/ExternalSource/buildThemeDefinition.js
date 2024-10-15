@@ -9,7 +9,7 @@ function getCssValue(element, propName) {
   return style.getPropertyValue(propName).trim();
 }
 
-const ucCustomProperties = /** @type {(keyof import('./MessageBridge.js').ThemeDefinition)[]} */ ([
+const ucCustomProperties = /** @type {(keyof import('./types.js').ThemeDefinition)[]} */ ([
   '--uc-font-family',
   '--uc-font-size',
   '--uc-line-height',
@@ -75,5 +75,5 @@ export function buildThemeDefinition(element) {
       acc[prop] = value;
     }
     return acc;
-  }, /** @type {Record<keyof import('./MessageBridge.js').ThemeDefinition, string>} */ ({}));
+  }, /** @type {Record<keyof import('./types.js').ThemeDefinition, string>} */ ({}));
 }
