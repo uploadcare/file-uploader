@@ -5,6 +5,7 @@ uc-external-source {
   height: 100%;
   background-color: var(--uc-background);
   overflow: hidden;
+  position: relative;
 }
 
 [uc-modal] uc-external-source {
@@ -42,11 +43,11 @@ uc-external-source .uc-iframe-wrapper {
 }
 
 uc-external-source .uc-toolbar {
-  display: grid;
-  grid-gap: var(--uc-padding);
-  grid-template-columns: max-content 1fr max-content max-content;
-  align-items: center;
+  display: flex;
   width: 100%;
+  grid-gap: var(--uc-padding);
+  align-items: center;
+  justify-content: space-between;
   padding: var(--uc-padding);
   border-top: 1px solid var(--uc-border);
 }
@@ -55,11 +56,36 @@ uc-external-source .uc-back-btn {
   padding-left: 0;
 }
 
-uc-external-source .uc-selected-counter {
+uc-external-source .uc-selection-status-box {
+  color: var(--uc-foreground);
   display: flex;
-  grid-gap: var(--uc-padding);
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  padding: var(--uc-padding);
-  color: var(--uc-muted-foreground);
+  justify-content: center;
+}
+
+uc-external-source .uc-selection-status-box button {
+  color: var(--uc-primary);
+  height: auto;
+  padding: 0;
+  background: none;
+}
+
+uc-external-source .uc-selection-status-box button:hover {
+  text-decoration: underline;
+}
+
+uc-external-source uc-activity-header {
+  position: absolute;
+  width: 100%;
+  justify-content: flex-end;
+  z-index: 1;
+  left: 0;
+  top: 0;
+  right: 0;
+  pointer-events: none;
+}
+
+uc-external-source uc-activity-header .uc-close-btn {
+  pointer-events: auto;
 }
