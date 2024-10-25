@@ -2,14 +2,10 @@ uc-upload-list {
   display: flex;
   flex-direction: column;
   width: 100%;
-  height: 100%;
+  height: max-content;
   overflow: hidden;
   background-color: var(--uc-background);
   transition: opacity var(--uc-transition);
-}
-
-[uc-modal] > dialog:has(uc-upload-list[active]) {
-  height: max-content;
 }
 
 uc-upload-list .uc-no-files {
