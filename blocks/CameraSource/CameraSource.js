@@ -66,8 +66,6 @@ export class CameraSource extends UploaderBlock {
    * @param {'granted' | 'denied' | 'prompt'} state
    */
   _setPermissionsState = debounce((state) => {
-    this.classList.toggle('uc-initialized', state === 'granted');
-
     if (state === 'granted') {
       this.set$({
         videoHidden: false,

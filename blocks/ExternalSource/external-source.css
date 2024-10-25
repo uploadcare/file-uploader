@@ -8,10 +8,9 @@ uc-external-source {
   position: relative;
 }
 
-[uc-modal] uc-external-source {
-  width: min(calc(var(--uc-dialog-max-width) - var(--uc-padding) * 2), calc(100vw - var(--uc-padding) * 2));
-  height: var(--modal-content-height-fill, 100%);
-  max-height: var(--modal-max-content-height);
+[uc-modal] > dialog:has(uc-external-source[active]) {
+  width: 100%;
+  height: 100%;
 }
 
 uc-external-source > .uc-content {
@@ -19,13 +18,6 @@ uc-external-source > .uc-content {
   display: grid;
   flex: 1;
   grid-template-rows: 1fr min-content;
-}
-
-@media only screen and (max-width: 430px) {
-  uc-external-source {
-    width: calc(100vw - var(--uc-padding) * 2);
-    height: var(--modal-content-height-fill, 100%);
-  }
 }
 
 uc-external-source iframe {

@@ -58,17 +58,10 @@ export class Modal extends Block {
 
   initCallback() {
     super.initCallback();
-    if (typeof HTMLDialogElement === 'function') {
-      this.ref.dialog.addEventListener('close', this._handleDialogClose);
-      this.ref.dialog.addEventListener('mousedown', this._handleDialogMouseDown);
-      this.ref.dialog.addEventListener('mouseup', this._handleDialogMouseUp);
-    } else {
-      this.setAttribute('dialog-fallback', '');
-      let backdrop = document.createElement('div');
-      backdrop.className = 'uc-backdrop';
-      this.appendChild(backdrop);
-      backdrop.addEventListener('click', this._handleBackdropClick);
-    }
+
+    this.ref.dialog.addEventListener('close', this._handleDialogClose);
+    this.ref.dialog.addEventListener('mousedown', this._handleDialogMouseDown);
+    this.ref.dialog.addEventListener('mouseup', this._handleDialogMouseUp);
 
     this.sub('*modalActive', (modalActive) => {
       if (this.$.isOpen !== modalActive) {

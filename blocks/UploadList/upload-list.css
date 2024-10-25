@@ -8,14 +8,8 @@ uc-upload-list {
   transition: opacity var(--uc-transition);
 }
 
-[uc-modal] uc-upload-list {
-  width: min(
-    calc(var(--uc-dialog-width) - var(--uc-padding) * 2),
-    calc(var(--uc-dialog-max-width) - var(--uc-padding) * 2),
-    calc(100vw - var(--uc-padding) * 2)
-  );
+[uc-modal] > dialog:has(uc-upload-list[active]) {
   height: max-content;
-  max-height: var(--modal-max-content-height);
 }
 
 uc-upload-list .uc-no-files {

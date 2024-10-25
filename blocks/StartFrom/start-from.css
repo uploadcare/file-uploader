@@ -13,12 +13,8 @@ uc-start-from .uc-content {
   background-color: var(--uc-background);
 }
 
-[uc-modal] uc-start-from {
-  width: min(
-    calc(var(--uc-dialog-width) - var(--uc-padding) * 2),
-    calc(var(--uc-dialog-max-width) - var(--uc-padding) * 2),
-    calc(100vw - var(--uc-padding) * 2)
-  );
+[uc-modal] > dialog:has(uc-start-from[active]) {
+  width: var(--uc-dialog-width);
 }
 
 [uc-modal] uc-start-from uc-drop-area {
