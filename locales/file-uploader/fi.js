@@ -11,7 +11,7 @@ export default {
     upload: 'Lataa',
     'add-more': 'Lisää',
     cancel: 'Peruuta',
-    'start-from-cancel': 'Peruuta',
+    'start-from-cancel': 'Peruuta alkuun',
     clear: 'Tyhjennä',
     'camera-shot': 'Kuva',
     'upload-url': 'Tuo',
@@ -93,7 +93,7 @@ export default {
     'camera-permissions-request': 'Pyydä käyttöoikeutta',
     'files-count-limit-error-title': 'Tiedostojen lukumäärän ylitys',
     'files-count-limit-error-too-few':
-      'Olet valinnut {{total}} {{plural:file(total)}}. Vähintään {{min}} {{plural:file(min)}} vaaditaan.',
+    'Olet valinnut {{total}} {{plural:file(total)}}. Vähintään {{min}} {{plural:file(min)}} vaaditaan.',
     'files-count-limit-error-too-many': 'Olet valinnut liian monta tiedostoa. {{max}} {{plural:file(max)}} on enimmäismäärä.',
     'files-max-size-limit-error': 'Tiedosto on liian suuri. Maksimi tiedostokoko on {{maxFileSize}}.',
     'has-validation-errors': 'Tiedostojen validointivirhe. Tarkista tiedostosi ennen latausta.',
@@ -117,3 +117,4 @@ export default {
     idle: 'Toimeton',
     'a11y-file-item-status': 'Tiedosto {{fileName}} tilassa {{status}}',
   };
+  
