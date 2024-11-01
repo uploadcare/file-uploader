@@ -3,7 +3,7 @@ import fs from 'fs/promises';
 import path from 'path';
 
 const REFERENCE_LOCALE = 'en';
-const SOCIAL_SOURCE_LANGS = ['de', 'en', 'es', 'fr', 'he', 'it', 'nl', 'pl', 'pt', 'ru', 'tr', 'uk', 'zh-TW', 'zh'];
+const SOCIAL_SOURCE_LANGS = ['de', 'en', 'es', 'fr', 'fi', 'he', 'it', 'nl', 'pl', 'pt', 'ru', 'tr', 'uk', 'zh-TW', 'zh'];
 
 const rootPath = path.resolve('./');
 const localeGroups = await fs.readdir(path.join(rootPath, './locales'));
