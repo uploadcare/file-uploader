@@ -1,3 +1,9 @@
+# [1.10.0](https://github.com/uploadcare/file-uploader/compare/v1.9.0...v1.10.0) (2024-11-02)
+
+### Features
+
+- **locale** added support for Finnish locale, enabling full application functionality in Finnish. ([#753](https://github.com/uploadcare/file-uploader/issues/753)) ([d6aecca](https://github.com/uploadcare/file-uploader/commit/d6aecca66ebb68ddaf2d1a69d0bf8c97d7de6e28))
+
 # [1.9.0](https://github.com/uploadcare/file-uploader/compare/v1.8.1...v1.9.0) (2024-10-04)
 
 ### Features
