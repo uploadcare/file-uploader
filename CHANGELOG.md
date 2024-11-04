@@ -2,7 +2,7 @@
 
 ### Features
 
-- added Finnish Localization for UI ([#753](https://github.com/uploadcare/file-uploader/issues/753)) ([d6aecca](https://github.com/uploadcare/file-uploader/commit/d6aecca66ebb68ddaf2d1a69d0bf8c97d7de6e28))
+- **locale** added support for Finnish locale, enabling full application functionality in Finnish. ([#753](https://github.com/uploadcare/file-uploader/issues/753)) ([d6aecca](https://github.com/uploadcare/file-uploader/commit/d6aecca66ebb68ddaf2d1a69d0bf8c97d7de6e28))
 
 # [1.9.0](https://github.com/uploadcare/file-uploader/compare/v1.8.1...v1.9.0) (2024-10-04)
 
