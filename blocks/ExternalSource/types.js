@@ -131,6 +131,10 @@
  *       theme: Record<string, string>;
  *     }
  *   | {
+ *       type: 'set-locale-definition';
+ *       localeDefinition: string;
+ *     }
+ *   | {
  *       type: 'set-embed-css';
  *       css: Partial<ThemeDefinition>;
  *     }} OutputMessage

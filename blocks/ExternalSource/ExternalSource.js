@@ -102,6 +102,10 @@ export class ExternalSource extends UploaderBlock {
     this.subConfigValue('multiple', (multiple) => {
       this.$.showSelectionStatus = multiple;
     });
+
+    this.subConfigValue('localeName', (val) => {
+      this.setupL10n();
+    });
   }
 
   /**
@@ -153,6 +157,7 @@ export class ExternalSource extends UploaderBlock {
   /** @private */
   handleIframeLoad() {
     this.applyStyles();
+    this.setupL10n();
   }
 
   /** @private */
@@ -160,6 +165,14 @@ export class ExternalSource extends UploaderBlock {
     this._messageBridge?.send({
       type: 'set-theme-definition',
       theme: buildThemeDefinition(this),
+    });
+  }
+
+  /** @private */
+  setupL10n() {
+    this._messageBridge?.send({
+      type: 'set-locale-definition',
+      localeDefinition: this.cfg.localeName,
     });
   }
 
