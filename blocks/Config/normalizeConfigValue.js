@@ -37,6 +37,15 @@ const asCameraCapture = (value) => {
 };
 
 /** @param {unknown} value */
+const asCameraTab = (value) => {
+  const strValue = asString(value);
+  if (strValue !== 'photo' && strValue !== 'video') {
+    throw new Error(`Invalid "CameraTab" value: "${strValue}"`);
+  }
+  return strValue;
+};
+
+/** @param {unknown} value */
 const asMetadata = (value) => {
   if (typeof value === 'object' && !Array.isArray(value)) {
     return /** @type {import('../../types').Metadata} */ (value);
@@ -75,7 +84,7 @@ const asFunction = (value) => {
 };
 
 /**
- * @template {Function[]} T
+ * @template {Function[] | string | {}} T
  * @param {unknown} value
  * @returns {T}
  */
@@ -155,6 +164,13 @@ const mapping = {
   iconHrefResolver: /** @type {typeof asFunction<import('../../types').IconHrefResolver>} */ (asFunction),
   fileValidators: /** @type {typeof asArray<import('../../types').FileValidators>} */ (asArray),
   collectionValidators: /** @type {typeof asArray<import('../../types').CollectionValidators>} */ (asArray),
+
+  defaultCameraTab: asCameraTab,
+  enableAudioRecording: asBoolean,
+  enableVideoRecording: asBoolean,
+  optionsMediaRecorder: asObject,
+
+  maxDurationVideoRecord: asNumber,
 };
 
 /**

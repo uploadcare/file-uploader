@@ -78,6 +78,27 @@ export type ConfigType = {
 
   fileValidators: FileValidators;
   collectionValidators: CollectionValidators;
+
+  /**
+   * The default tab to open in the camera modal, 
+   * it is possible to select video or photo capture
+   * @default 'photo'
+   */
+  defaultCameraTab: 'photo' | 'video';
+  enableAudioRecording: boolean;
+  enableVideoRecording: boolean;
+
+  /**
+   * The maximum duration of the video recording in seconds
+   * @default null
+   */
+  maxDurationVideoRecord: number | null
+
+  /**
+   * A dictionary object that can contain 
+   * the following properties from MediaRecorderOptions
+   */
+  optionsMediaRecorder: MediaRecorderOptions | null
 };
 export type ConfigComplexType = Pick<ConfigType, (typeof complexConfigKeys)[number]>;
 export type ConfigPlainType = Omit<ConfigType, keyof ConfigComplexType>;

@@ -163,7 +163,7 @@ export class UploaderPublicApi {
     fileInput.multiple = this.cfg.multiple;
     if (options.captureCamera) {
       fileInput.capture = this.cfg.cameraCapture;
-      fileInput.accept = 'image/*';
+      fileInput.accept = this.cfg.enableVideoRecording ? ['image/*', 'video/*'].join(',') : 'image/*';
     } else {
       fileInput.accept = accept;
     }

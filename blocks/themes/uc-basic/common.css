@@ -118,3 +118,8 @@
   opacity: 0.6;
   pointer-events: none;
 }
+:where([uc-wgt-common]) uc-select[disabled],
+:where([uc-wgt-common]) select[disabled] {
+  opacity: 0.6;
+  pointer-events: none;
+}
