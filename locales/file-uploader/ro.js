@@ -1,6 +1,6 @@
 export default {
   'locale-id': 'ro',
-  'social-source-lang': 'en',
+  'social-source-lang': 'ro',
   'upload-file': 'Încărcați fișier',
   'upload-files': 'Încărcați fișiere',
   'choose-file': 'Alegeți fișierul',
@@ -119,4 +119,6 @@ export default {
   uploading: 'Se încarcă',
   idle: 'Inactiv',
   'a11y-file-item-status': 'Fișierul {{fileName}} este în starea {{status}}',
+  'select-all': 'Selectează tot',
+  'deselect-all': 'Deselectează tot',
 };

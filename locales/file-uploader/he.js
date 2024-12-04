@@ -118,4 +118,6 @@ export default {
   uploading: 'מעלה',
   idle: 'בטלה',
   'a11y-file-item-status': 'הקובץ {{fileName}} במצב {{status}}',
+  'select-all': 'בחר הכל',
+  'deselect-all': 'בטל בחירת הכל',
 };

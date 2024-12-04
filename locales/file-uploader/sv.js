@@ -1,6 +1,6 @@
 export default {
   'locale-id': 'sv',
-  'social-source-lang': 'en',
+  'social-source-lang': 'sv',
   'upload-file': 'Ladda upp fil',
   'upload-files': 'Ladda upp filer',
   'choose-file': 'Välj fil',
@@ -116,4 +116,6 @@ export default {
   uploading: 'Laddar upp',
   idle: 'Overksam',
   'a11y-file-item-status': 'Filen {{fileName}} är i status {{status}}',
+  'select-all': 'Välj alla',
+  'deselect-all': 'Avmarkera alla',
 };

@@ -116,4 +116,6 @@ export default {
   uploading: 'Yükleniyor',
   idle: 'Boşta',
   'a11y-file-item-status': '{{fileName}} dosyası {{status}} durumunda',
+  'select-all': 'Hepsini seç',
+  'deselect-all': 'Hiçbirini seçme',
 };

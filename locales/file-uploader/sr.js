@@ -1,6 +1,6 @@
 export default {
   'locale-id': 'sr',
-  'social-source-lang': 'en',
+  'social-source-lang': 'sr',
   'upload-file': 'Отпреми датотеку',
   'upload-files': 'Отпреми датoтеке',
   'choose-file': 'Изабери датотеку',
@@ -118,4 +118,6 @@ export default {
   uploading: 'Otpremanje',
   idle: 'Neaktivan',
   'a11y-file-item-status': 'Datoteka {{fileName}} je u statusu {{status}}',
+  'select-all': 'Изабери све',
+  'deselect-all': 'Поништи избор свих',
 };

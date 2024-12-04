@@ -1,6 +1,6 @@
 export default {
   'locale-id': 'hy',
-  'social-source-lang': 'en',
+  'social-source-lang': 'hy',
   'upload-file': 'Ֆայլ բեռնել',
   'upload-files': 'Ֆայլեր բեռնել',
   'choose-file': 'Ընտրեք ֆայլը',
@@ -116,4 +116,6 @@ export default {
   uploading: 'Բեռնվում է',
   idle: 'Անգործ',
   'a11y-file-item-status': 'Ֆայլը {{fileName}} {{status}} կարգավիճակում է',
+  'select-all': 'Ընտրել բոլորը',
+  'deselect-all': 'Հրաժարվել բոլորից',
 };

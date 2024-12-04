@@ -1,6 +1,6 @@
 export default {
   'locale-id': 'pl',
-  'social-source-lang': 'en',
+  'social-source-lang': 'pl',
   'upload-file': 'Prześlij plik',
   'upload-files': 'Prześlij pliki',
   'choose-file': 'Wybierz plik',
@@ -120,4 +120,6 @@ export default {
   uploading: 'Przesyłanie',
   idle: 'Bezczynny',
   'a11y-file-item-status': 'Plik {{fileName}} ma status {{status}}',
+  'select-all': 'Zaznacz wszystko',
+  'deselect-all': 'Odznacz wszystko',
 };

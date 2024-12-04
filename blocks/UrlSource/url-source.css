@@ -3,14 +3,6 @@ uc-url-source {
   background-color: var(--uc-background);
 }
 
-[uc-modal] uc-url-source {
-  width: min(
-    calc(var(--uc-dialog-width) - var(--uc-padding) * 2),
-    calc(var(--uc-dialog-max-width) - var(--uc-padding) * 2),
-    calc(100vw - var(--uc-padding) * 2)
-  );
-}
-
 uc-url-source > .uc-content {
   display: grid;
   grid-gap: 4px;

@@ -1,6 +1,6 @@
 export default {
   'locale-id': 'et',
-  'social-source-lang': 'en',
+  'social-source-lang': 'et',
   'upload-file': 'Lae fail üles',
   'upload-files': 'Lae failid üles',
   'choose-file': 'Vali fail',
@@ -27,6 +27,8 @@ export default {
   'confirm-your-action': 'Kinnita toiming',
   'are-you-sure': 'Oled sa kindel?',
   'selected-count': 'Valitud:',
+  'select-all': 'Vali kõik',
+  'deselect-all': 'Tühista kõikide valik',
   'upload-error': 'Üleslaadimise viga',
   'validation-error': 'Valideerimise viga',
   'no-files': 'Faile ei ole valitud',

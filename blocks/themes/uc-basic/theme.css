@@ -13,8 +13,8 @@
   --uc-radius: 8px;
   --uc-transition: 0.2s ease;
   --uc-dialog-width: 430px;
-  --uc-dialog-max-width: 800px;
-  --uc-dialog-max-height: 600px;
+  --uc-dialog-max-width: 920px;
+  --uc-dialog-max-height: 675px;
   --uc-simple-btn-padding: 7px 14px;
 
   /* Default colors, in case of media query failure */

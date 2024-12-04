@@ -1,6 +1,6 @@
 export default {
   'locale-id': 'is',
-  'social-source-lang': 'en',
+  'social-source-lang': 'is',
   'upload-file': 'Hlaða upp skrá',
   'upload-files': 'Hlaða upp skrám',
   'choose-file': 'Veldu skrá',
@@ -116,4 +116,6 @@ export default {
   uploading: 'Hleður upp',
   idle: 'Aðgerðalaus',
   'a11y-file-item-status': 'Skráin {{fileName}} er í stöðu {{status}}',
+  'select-all': 'Velja allt',
+  'deselect-all': 'Afvelja allt',
 };

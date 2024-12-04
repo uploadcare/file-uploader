@@ -1,6 +1,6 @@
 export default {
   'locale-id': 'ja',
-  'social-source-lang': 'en',
+  'social-source-lang': 'ja',
   'upload-file': 'ファイルをアップロード',
   'upload-files': 'ファイルをアップロードする',
   'choose-file': 'ファイルを選択',
@@ -116,4 +116,6 @@ export default {
   uploading: 'アップロード中',
   idle: 'アイドル',
   'a11y-file-item-status': 'ファイル {{fileName}} のステータスは {{status}} です',
+  'select-all': 'すべて選択',
+  'deselect-all': 'すべて選択解除',
 };

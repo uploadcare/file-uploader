@@ -7,7 +7,7 @@ uc-cloud-image-editor-activity {
   background-color: var(--uc-background);
 }
 
-[uc-modal] uc-cloud-image-editor-activity {
-  width: min(calc(var(--uc-dialog-max-width) - var(--uc-padding) * 2), calc(100vw - var(--uc-padding) * 2));
-  height: var(--modal-content-height-fill, 100%);
+[uc-modal] > dialog:has(uc-cloud-image-editor-activity[active]) {
+  width: 100%;
+  height: 100%;
 }

@@ -1,6 +1,6 @@
 export default {
   'locale-id': 'ar',
-  'social-source-lang': 'en',
+  'social-source-lang': 'ar',
   'upload-file': 'رفع ملف',
   'upload-files': 'رفع ملفات',
   'choose-file': 'اختر ملف',
@@ -27,6 +27,8 @@ export default {
   'confirm-your-action': 'تأكيد الإجراء',
   'are-you-sure': 'هل أنت متأكد؟',
   'selected-count': 'المختارة:',
+  'select-all': 'اختر الكل',
+  'deselect-all': 'إلغاء اختيار الكل',
   'upload-error': 'خطأ في الرفع',
   'validation-error': 'خطأ في التحقق',
   'no-files': 'لم يتم اختيار ملفات',

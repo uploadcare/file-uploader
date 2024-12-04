@@ -1,6 +1,6 @@
 export default {
   'locale-id': 'da',
-  'social-source-lang': 'en',
+  'social-source-lang': 'da',
   'upload-file': 'Upload fil',
   'upload-files': 'Upload filer',
   'choose-file': 'Vælg fil',
@@ -27,6 +27,8 @@ export default {
   'confirm-your-action': 'Bekræft din handling',
   'are-you-sure': 'Er du sikker?',
   'selected-count': 'Valgt:',
+  'select-all': 'Vælg alle',
+  'deselect-all': 'Fravælg alle',
   'upload-error': 'Fejl ved upload',
   'validation-error': 'Valideringsfejl',
   'no-files': 'Ingen filer valgt',

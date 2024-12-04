@@ -1,6 +1,6 @@
 export default {
   'locale-id': 'pt',
-  'social-source-lang': 'en',
+  'social-source-lang': 'pt',
   'upload-file': 'Carregar arquivo',
   'upload-files': 'Carregar arquivos',
   'choose-file': 'Escolher arquivo',
@@ -119,4 +119,6 @@ export default {
   uploading: 'Carregando',
   idle: 'Ocioso',
   'a11y-file-item-status': 'O arquivo {{fileName}} está no status {{status}}',
+  'select-all': 'Selecionar tudo',
+  'deselect-all': 'Desmarcar tudo',
 };

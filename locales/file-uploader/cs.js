@@ -1,6 +1,6 @@
 export default {
   'locale-id': 'cs',
-  'social-source-lang': 'en',
+  'social-source-lang': 'cs',
   'upload-file': 'Nahrát soubor',
   'upload-files': 'Nahrát soubory',
   'choose-file': 'Vybrat soubor',
@@ -27,6 +27,8 @@ export default {
   'confirm-your-action': 'Potvrdit akci',
   'are-you-sure': 'Jste si jistí?',
   'selected-count': 'Vybráno:',
+  'select-all': 'Vybrat vše',
+  'deselect-all': 'Zrušit výběr všeho',
   'upload-error': 'Chyba nahrávání',
   'validation-error': 'Chyba validace',
   'no-files': 'Nebyly vybrány žádné soubory',

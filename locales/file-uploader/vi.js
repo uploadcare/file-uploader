@@ -1,6 +1,6 @@
 export default {
   'locale-id': 'vi',
-  'social-source-lang': 'en',
+  'social-source-lang': 'vi',
   'upload-file': 'Tải lên tệp',
   'upload-files': 'Tải lên các tệp',
   'choose-file': 'Chọn tệp',
@@ -116,4 +116,6 @@ export default {
   uploading: 'Đang tải lên',
   idle: 'Nhàn rỗi',
   'a11y-file-item-status': 'Tệp {{fileName}} ở trạng thái {{status}}',
+  'select-all': 'Chọn tất cả',
+  'deselect-all': 'Bỏ chọn tất cả',
 };

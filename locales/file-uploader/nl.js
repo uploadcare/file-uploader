@@ -1,6 +1,6 @@
 export default {
   'locale-id': 'nl',
-  'social-source-lang': 'en',
+  'social-source-lang': 'nl',
   'upload-file': 'Bestand uploaden',
   'upload-files': 'Bestanden uploaden',
   'choose-file': 'Kies bestand',
@@ -117,4 +117,6 @@ export default {
   uploading: 'Uploaden',
   idle: 'Inactief',
   'a11y-file-item-status': 'Bestand {{fileName}} in status {{status}}',
+  'select-all': 'Selecteer alles',
+  'deselect-all': 'Deselecteer alles',
 };

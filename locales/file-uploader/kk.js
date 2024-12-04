@@ -1,6 +1,6 @@
 export default {
   'locale-id': 'kk',
-  'social-source-lang': 'en',
+  'social-source-lang': 'kk',
   'upload-file': 'Файл жүктеу',
   'upload-files': 'Файлдарды жүктеу',
   'choose-file': 'Файл таңдаңыз',
@@ -116,4 +116,6 @@ export default {
   uploading: 'Жүктелуде',
   idle: 'Бос',
   'a11y-file-item-status': '{{fileName}} файлы {{status}} күйінде',
+  'select-all': 'Барлығын таңдау',
+  'deselect-all': 'Барлығын таңдаудан шығару',
 };

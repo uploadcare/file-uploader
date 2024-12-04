@@ -1,6 +1,6 @@
 export default {
   'locale-id': 'lv',
-  'social-source-lang': 'en',
+  'social-source-lang': 'lv',
   'upload-file': 'Augšupielādēt failu',
   'upload-files': 'Augšupielādēt failus',
   'choose-file': 'Izvēlēties failu',
@@ -118,4 +118,6 @@ export default {
   uploading: 'Augšupielādē',
   idle: 'Gaida',
   'a11y-file-item-status': 'Fails {{fileName}} ir stāvoklī {{status}}',
+  'select-all': 'Izvēlēties visus',
+  'deselect-all': 'Noņemt izvēli visiem',
 };

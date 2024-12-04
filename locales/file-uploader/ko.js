@@ -1,6 +1,6 @@
 export default {
   'locale-id': 'ko',
-  'social-source-lang': 'en',
+  'social-source-lang': 'ko',
   'upload-file': '파일 업로드',
   'upload-files': '파일 업로드',
   'choose-file': '파일 선택',
@@ -115,4 +115,6 @@ export default {
   uploading: '업로드 중',
   idle: '대기 중',
   'a11y-file-item-status': '{{fileName}} 파일이 {{status}} 상태입니다',
+  'select-all': '모두 선택',
+  'deselect-all': '모두 선택 해제',
 };

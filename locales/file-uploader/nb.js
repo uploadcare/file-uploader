@@ -1,6 +1,6 @@
 export default {
   'locale-id': 'nb',
-  'social-source-lang': 'en',
+  'social-source-lang': 'nb',
   'upload-file': 'Last opp fil',
   'upload-files': 'Last opp filer',
   'choose-file': 'Velg fil',
@@ -116,4 +116,6 @@ export default {
   uploading: 'Laster opp',
   idle: 'Inaktiv',
   'a11y-file-item-status': 'Fil {{fileName}} i status {{status}}',
+  'select-all': 'Velg alle',
+  'deselect-all': 'Fjern alle',
 };
