@@ -1,6 +1,6 @@
 export default {
   'locale-id': 'sv',
-  'social-source-lang': 'en',
+  'social-source-lang': 'sv',
   'upload-file': 'Ladda upp fil',
   'upload-files': 'Ladda upp filer',
   'choose-file': 'Välj fil',

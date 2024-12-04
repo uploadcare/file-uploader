@@ -1,6 +1,6 @@
 export default {
   'locale-id': 'lv',
-  'social-source-lang': 'en',
+  'social-source-lang': 'lv',
   'upload-file': 'Augšupielādēt failu',
   'upload-files': 'Augšupielādēt failus',
   'choose-file': 'Izvēlēties failu',

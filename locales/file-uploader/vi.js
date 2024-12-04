@@ -1,6 +1,6 @@
 export default {
   'locale-id': 'vi',
-  'social-source-lang': 'en',
+  'social-source-lang': 'vi',
   'upload-file': 'Tải lên tệp',
   'upload-files': 'Tải lên các tệp',
   'choose-file': 'Chọn tệp',

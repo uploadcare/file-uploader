@@ -1,6 +1,6 @@
 export default {
   'locale-id': 'ja',
-  'social-source-lang': 'en',
+  'social-source-lang': 'ja',
   'upload-file': 'ファイルをアップロード',
   'upload-files': 'ファイルをアップロードする',
   'choose-file': 'ファイルを選択',

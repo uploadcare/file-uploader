@@ -1,6 +1,6 @@
 export default {
   'locale-id': 'ar',
-  'social-source-lang': 'en',
+  'social-source-lang': 'ar',
   'upload-file': 'رفع ملف',
   'upload-files': 'رفع ملفات',
   'choose-file': 'اختر ملف',

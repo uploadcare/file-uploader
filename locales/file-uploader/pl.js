@@ -1,6 +1,6 @@
 export default {
   'locale-id': 'pl',
-  'social-source-lang': 'en',
+  'social-source-lang': 'pl',
   'upload-file': 'Prześlij plik',
   'upload-files': 'Prześlij pliki',
   'choose-file': 'Wybierz plik',
