@@ -215,24 +215,12 @@ export class CameraSource extends UploaderBlock {
         ...this.cfg.mediaRecorerOptions,
       };
 
-      const isFirefox = navigator.userAgent.toLowerCase().indexOf('firefox') > -1;
-
       if (
         this.cfg.mediaRecorerOptions?.mimeType &&
         MediaRecorder.isTypeSupported(this.cfg.mediaRecorerOptions.mimeType)
       ) {
         this._options.mimeType = this.cfg.mediaRecorerOptions.mimeType;
-      } else if (
-        isFirefox &&
-        this.cfg.mediaRecorerOptions?.mimeType &&
-        MediaRecorder.isTypeSupported(this.cfg.mediaRecorerOptions.mimeType)
-      ) {
-        const mimeType = this.cfg.mediaRecorerOptions?.mimeType;
-
-        if (mimeType && !MediaRecorder.isTypeSupported(mimeType)) {
-          throw new Error(`MIME type ${mimeType} is not supported`);
-        }
-
+      } else {
         this._options.mimeType = DEFAULT_VIDEO_FORMAT;
       }
 
