@@ -1,4 +1,4 @@
-# [1.11.0](https://github.com/uploadcare/file-uploader/compare/v1.10.0...v1.11.0) (2024-12-04)
+# [1.11.0](https://github.com/uploadcare/file-uploader/compare/v1.10.0...v1.11.1) (2024-12-04)
 
 ### Features
 
