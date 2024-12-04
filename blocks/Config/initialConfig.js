@@ -66,4 +66,10 @@ export const initialConfig = {
   iconHrefResolver: null,
   fileValidators: [],
   collectionValidators: [],
+
+  defaultCameraMode: 'photo',
+  enableAudioRecording: true,
+  enableVideoRecording: true,
+  maxVideoRecordingDuration: null,
+  mediaRecorerOptions: null,
 };
