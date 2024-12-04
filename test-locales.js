@@ -3,7 +3,6 @@ import fs from 'fs/promises';
 import path from 'path';
 
 const REFERENCE_LOCALE = 'en';
-const SOCIAL_SOURCE_LANGS = ['de', 'en', 'es', 'fr', 'fi', 'he', 'it', 'nl', 'pl', 'pt', 'ru', 'tr', 'uk', 'zh-TW', 'zh'];
 
 const rootPath = path.resolve('./');
 const localeGroups = await fs.readdir(path.join(rootPath, './locales'));
@@ -59,9 +58,9 @@ const getMissingKeys = (reference, definition) => {
         anyError = true;
       }
 
-      if (!socialSourceLang || !SOCIAL_SOURCE_LANGS.includes(socialSourceLang)) {
+      if (!socialSourceLang) {
         console.error(
-          `Invalid social-source-lang "${socialSourceLang}" for locale "${localeName}" in group "${group}"`,
+          `Missing social-source-lang for locale "${localeName}" in group "${group}" (locale-id: "${localeId}")`,
         );
         anyError = true;
       }
