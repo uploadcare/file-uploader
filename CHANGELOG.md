@@ -1,3 +1,9 @@
+# [1.11.0](https://github.com/uploadcare/file-uploader/compare/v1.10.0...v1.11.0) (2024-12-04)
+
+### Features
+
+- social sources redesign ([#750](https://github.com/uploadcare/file-uploader/issues/750)) ([db836e0](https://github.com/uploadcare/file-uploader/commit/db836e0060ac29af67987288f1d488d1df711111))
+
 # [1.10.0](https://github.com/uploadcare/file-uploader/compare/v1.9.0...v1.10.0) (2024-11-02)
 
 ### Features
