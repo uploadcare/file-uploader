@@ -624,6 +624,7 @@ export class CameraSource extends UploaderBlock {
       this.$.video = null;
 
       this._makeStreamInactive();
+      this._stopTimer();
 
       this._capturing = false;
     }
