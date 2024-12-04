@@ -1,6 +1,6 @@
 export default {
   'locale-id': 'ca',
-  'social-source-lang': 'en',
+  'social-source-lang': 'ca',
   'upload-file': 'Pujar fitxer',
   'upload-files': 'Pujar fitxers',
   'choose-file': 'Tria fitxer',

@@ -1,6 +1,6 @@
 export default {
   'locale-id': 'hy',
-  'social-source-lang': 'en',
+  'social-source-lang': 'hy',
   'upload-file': 'Ֆայլ բեռնել',
   'upload-files': 'Ֆայլեր բեռնել',
   'choose-file': 'Ընտրեք ֆայլը',

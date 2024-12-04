@@ -1,6 +1,6 @@
 export default {
   'locale-id': 'et',
-  'social-source-lang': 'en',
+  'social-source-lang': 'et',
   'upload-file': 'Lae fail üles',
   'upload-files': 'Lae failid üles',
   'choose-file': 'Vali fail',

@@ -1,6 +1,6 @@
 export default {
   'locale-id': 'ka',
-  'social-source-lang': 'en',
+  'social-source-lang': 'ka',
   'upload-file': 'ფაილის ატვირთვა',
   'upload-files': 'ფაილების ატვირთვა',
   'choose-file': 'აირჩიეთ ფაილი',

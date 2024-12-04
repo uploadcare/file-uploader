@@ -1,6 +1,6 @@
 export default {
   'locale-id': 'az',
-  'social-source-lang': 'en',
+  'social-source-lang': 'az',
   'upload-file': 'Fayl yüklə',
   'upload-files': 'Faylları yüklə',
   'choose-file': 'Fayl seç',

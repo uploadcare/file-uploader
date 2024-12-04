@@ -1,6 +1,6 @@
 export default {
   'locale-id': 'ro',
-  'social-source-lang': 'en',
+  'social-source-lang': 'ro',
   'upload-file': 'Încărcați fișier',
   'upload-files': 'Încărcați fișiere',
   'choose-file': 'Alegeți fișierul',

@@ -1,6 +1,6 @@
 export default {
   'locale-id': 'sr',
-  'social-source-lang': 'en',
+  'social-source-lang': 'sr',
   'upload-file': 'Отпреми датотеку',
   'upload-files': 'Отпреми датoтеке',
   'choose-file': 'Изабери датотеку',

@@ -1,6 +1,6 @@
 export default {
   'locale-id': 'el',
-  'social-source-lang': 'en',
+  'social-source-lang': 'el',
   'upload-file': 'Μεταφόρτωση αρχείου',
   'upload-files': 'Μεταφόρτωση αρχείων',
   'choose-file': 'Επιλογή αρχείου',

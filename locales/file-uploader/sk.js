@@ -1,6 +1,6 @@
 export default {
   'locale-id': 'sk',
-  'social-source-lang': 'en',
+  'social-source-lang': 'sk',
   'upload-file': 'Nahrať súbor',
   'upload-files': 'Nahrať súbory',
   'choose-file': 'Vybrať súbor',

@@ -1,6 +1,6 @@
 export default {
   'locale-id': 'is',
-  'social-source-lang': 'en',
+  'social-source-lang': 'is',
   'upload-file': 'Hlaða upp skrá',
   'upload-files': 'Hlaða upp skrám',
   'choose-file': 'Veldu skrá',

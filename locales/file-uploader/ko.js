@@ -1,6 +1,6 @@
 export default {
   'locale-id': 'ko',
-  'social-source-lang': 'en',
+  'social-source-lang': 'ko',
   'upload-file': '파일 업로드',
   'upload-files': '파일 업로드',
   'choose-file': '파일 선택',

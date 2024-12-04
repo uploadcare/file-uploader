@@ -1,6 +1,6 @@
 export default {
   'locale-id': 'cs',
-  'social-source-lang': 'en',
+  'social-source-lang': 'cs',
   'upload-file': 'Nahrát soubor',
   'upload-files': 'Nahrát soubory',
   'choose-file': 'Vybrat soubor',

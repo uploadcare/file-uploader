@@ -1,6 +1,6 @@
 export default {
   'locale-id': 'nl',
-  'social-source-lang': 'en',
+  'social-source-lang': 'nl',
   'upload-file': 'Bestand uploaden',
   'upload-files': 'Bestanden uploaden',
   'choose-file': 'Kies bestand',
