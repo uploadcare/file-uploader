@@ -84,7 +84,7 @@ export type ConfigType = {
    * it is possible to select video or photo capture
    * @default 'photo'
    */
-  defaultCameraTab: 'photo' | 'video';
+  defaultCameraMode: 'photo' | 'video';
   enableAudioRecording: boolean;
   enableVideoRecording: boolean;
 
@@ -92,13 +92,13 @@ export type ConfigType = {
    * The maximum duration of the video recording in seconds
    * @default null
    */
-  maxDurationVideoRecord: number | null
+  maxVideoRecordingDuration: number | null
 
   /**
    * A dictionary object that can contain 
    * the following properties from MediaRecorderOptions
    */
-  optionsMediaRecorder: MediaRecorderOptions | null
+  mediaRecorerOptions: MediaRecorderOptions | null
 };
 export type ConfigComplexType = Pick<ConfigType, (typeof complexConfigKeys)[number]>;
 export type ConfigPlainType = Omit<ConfigType, keyof ConfigComplexType>;

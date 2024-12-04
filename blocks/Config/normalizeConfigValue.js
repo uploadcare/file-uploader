@@ -165,12 +165,12 @@ const mapping = {
   fileValidators: /** @type {typeof asArray<import('../../types').FileValidators>} */ (asArray),
   collectionValidators: /** @type {typeof asArray<import('../../types').CollectionValidators>} */ (asArray),
 
-  defaultCameraTab: asCameraTab,
+  defaultCameraMode: asCameraTab,
   enableAudioRecording: asBoolean,
   enableVideoRecording: asBoolean,
-  optionsMediaRecorder: asObject,
+  mediaRecorerOptions: asObject,
 
-  maxDurationVideoRecord: asNumber,
+  maxVideoRecordingDuration: asNumber,
 };
 
 /**

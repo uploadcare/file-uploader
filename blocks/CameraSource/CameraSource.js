@@ -167,8 +167,8 @@ export class CameraSource extends UploaderBlock {
   _updateTimer = () => {
     const currentTime = Math.floor((performance.now() - this.$._startTime + this.$._elapsedTime) / 1000);
 
-    if (typeof this.cfg.maxDurationVideoRecord === 'number' && this.cfg.maxDurationVideoRecord > 0) {
-      const remainingTime = this.cfg.maxDurationVideoRecord - currentTime;
+    if (typeof this.cfg.maxVideoRecordingDuration === 'number' && this.cfg.maxVideoRecordingDuration > 0) {
+      const remainingTime = this.cfg.maxVideoRecordingDuration - currentTime;
 
       if (remainingTime <= 0) {
         this.ref.timer.textContent = formatTime(remainingTime);
@@ -212,22 +212,22 @@ export class CameraSource extends UploaderBlock {
     try {
       this._chunks = [];
       this._options = {
-        ...this.cfg.optionsMediaRecorder,
+        ...this.cfg.mediaRecorerOptions,
       };
 
       const isFirefox = navigator.userAgent.toLowerCase().indexOf('firefox') > -1;
 
       if (
-        this.cfg.optionsMediaRecorder?.mimeType &&
-        MediaRecorder.isTypeSupported(this.cfg.optionsMediaRecorder.mimeType)
+        this.cfg.mediaRecorerOptions?.mimeType &&
+        MediaRecorder.isTypeSupported(this.cfg.mediaRecorerOptions.mimeType)
       ) {
-        this._options.mimeType = this.cfg.optionsMediaRecorder.mimeType;
+        this._options.mimeType = this.cfg.mediaRecorerOptions.mimeType;
       } else if (
         isFirefox &&
-        this.cfg.optionsMediaRecorder?.mimeType &&
-        MediaRecorder.isTypeSupported(this.cfg.optionsMediaRecorder.mimeType)
+        this.cfg.mediaRecorerOptions?.mimeType &&
+        MediaRecorder.isTypeSupported(this.cfg.mediaRecorerOptions.mimeType)
       ) {
-        const mimeType = this.cfg.optionsMediaRecorder?.mimeType;
+        const mimeType = this.cfg.mediaRecorerOptions?.mimeType;
 
         if (mimeType && !MediaRecorder.isTypeSupported(mimeType)) {
           throw new Error(`MIME type ${mimeType} is not supported`);
@@ -795,7 +795,7 @@ export class CameraSource extends UploaderBlock {
       this.$.tabVideoHidden = !val;
     });
 
-    this.subConfigValue('defaultCameraTab', (val) => {
+    this.subConfigValue('defaultCameraMode', (val) => {
       if (this.cfg.enableVideoRecording) {
         this._handleActiveTab(val);
         return;
