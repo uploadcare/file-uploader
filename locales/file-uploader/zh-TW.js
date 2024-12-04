@@ -116,4 +116,6 @@ export default {
   uploading: '上傳中',
   idle: '閒置',
   'a11y-file-item-status': '檔案 {{fileName}} 的狀態是 {{status}}',
+  'select-all': '全選',
+  'deselect-all': '取消全選',
 };

@@ -120,4 +120,6 @@ export default {
   uploading: 'Загрузка',
   idle: 'Ожидание',
   'a11y-file-item-status': 'Файл {{fileName}} находится в статусе {{status}}',
+  'select-all': 'Выбрать все',
+  'deselect-all': 'Отменить выбор всех',
 };

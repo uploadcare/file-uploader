@@ -5,30 +5,11 @@ import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { stringToArray } from '../../utils/stringToArray.js';
 import { wildcardRegexp } from '../../utils/wildcardRegexp.js';
-import { buildStyles } from './buildStyles.js';
-import { registerMessage, unregisterMessage } from './messages.js';
+import { buildThemeDefinition } from './buildThemeDefinition.js';
+import { MessageBridge } from './MessageBridge.js';
 import { queryString } from './query-string.js';
 
 /** @typedef {{ externalSourceType: string }} ActivityParams */
-
-/**
- * @typedef {{
- *   type: 'file-selected';
- *   obj_type: 'selected_file';
- *   filename: string;
- *   url: string;
- *   alternatives?: Record<string, string>;
- * }} SelectedFileMessage
- */
-
-/**
- * @typedef {{
- *   type: 'embed-css';
- *   style: string;
- * }} EmbedCssMessage
- */
-
-/** @typedef {SelectedFileMessage | EmbedCssMessage} Message */
 
 export class ExternalSource extends UploaderBlock {
   couldBeCtxOwner = true;
@@ -41,12 +22,20 @@ export class ExternalSource extends UploaderBlock {
       ...this.init$,
       activityIcon: '',
       activityCaption: '',
+
+      /** @type {import('./types.js').InputMessageMap['selected-files-change']['selectedFiles']} */
       selectedList: [],
-      counter: 0,
-      multiple: false,
+      total: 0,
+
+      isSelectionReady: false,
+      couldSelectAll: false,
+      couldDeselectAll: false,
+      showSelectionStatus: false,
+      counterText: '',
+
       onDone: () => {
         for (const message of this.$.selectedList) {
-          const url = this.extractUrlFromMessage(message);
+          const url = this.extractUrlFromSelectedFile(message);
           const { filename } = message;
           const { externalSourceType } = this.activityParams;
           this.api.addFileFromUrl(url, { fileName: filename, source: externalSourceType });
@@ -56,6 +45,14 @@ export class ExternalSource extends UploaderBlock {
       },
       onCancel: () => {
         this.historyBack();
+      },
+
+      onSelectAll: () => {
+        this._messageBridge?.send({ type: 'select-all' });
+      },
+
+      onDeselectAll: () => {
+        this._messageBridge?.send({ type: 'deselect-all' });
       },
     };
   }
@@ -68,12 +65,6 @@ export class ExternalSource extends UploaderBlock {
     }
     throw new Error(`External Source activity params not found`);
   }
-
-  /**
-   * @private
-   * @type {HTMLIFrameElement | null}
-   */
-  _iframe = null;
 
   initCallback() {
     super.initCallback();
@@ -108,24 +99,25 @@ export class ExternalSource extends UploaderBlock {
         this.unmountIframe();
       }
     });
-    this.sub('selectedList', (list) => {
-      this.$.counter = list.length;
-    });
     this.subConfigValue('multiple', (multiple) => {
-      this.$.multiple = multiple;
+      this.$.showSelectionStatus = multiple;
+    });
+
+    this.subConfigValue('localeName', (val) => {
+      this.setupL10n();
     });
   }
 
   /**
    * @private
-   * @param {SelectedFileMessage} message
+   * @param {NonNullable<import('./types.js').InputMessageMap['selected-files-change']['selectedFiles']>[number]} selectedFile
    */
-  extractUrlFromMessage(message) {
-    if (message.alternatives) {
+  extractUrlFromSelectedFile(selectedFile) {
+    if (selectedFile.alternatives) {
       const preferredTypes = stringToArray(this.cfg.externalSourcesPreferredTypes);
       for (const preferredType of preferredTypes) {
         const regexp = wildcardRegexp(preferredType);
-        for (const [type, typeUrl] of Object.entries(message.alternatives)) {
+        for (const [type, typeUrl] of Object.entries(selectedFile.alternatives)) {
           if (regexp.test(type)) {
             return typeUrl;
           }
@@ -133,81 +125,71 @@ export class ExternalSource extends UploaderBlock {
       }
     }
 
-    return message.url;
+    return selectedFile.url;
   }
 
   /**
    * @private
-   * @param {Message} message
+   * @param {import('./types.js').InputMessageMap['selected-files-change']} message
    */
-  sendMessage(message) {
-    this._iframe?.contentWindow?.postMessage(JSON.stringify(message), '*');
-  }
-
-  /**
-   * @private
-   * @param {SelectedFileMessage} message
-   */
-  async handleFileSelected(message) {
-    if (!this.$.multiple && this.$.selectedList.length) {
+  async handleSelectedFilesChange(message) {
+    if (this.cfg.multiple !== message.isMultipleMode) {
+      console.error('Multiple mode mismatch');
       return;
     }
 
-    this.$.selectedList = [...this.$.selectedList, message];
+    this.bindL10n('counterText', () =>
+      this.l10n('selected-count', {
+        count: message.selectedCount,
+        total: message.total,
+      }),
+    );
 
-    if (!this.$.multiple) {
-      this.$.onDone();
-    }
+    this.set$({
+      isSelectionReady: message.isReady,
+      showSelectionStatus: message.isMultipleMode && message.total > 0,
+      couldSelectAll: message.selectedCount < message.total,
+      couldDeselectAll: message.selectedCount === message.total,
+      selectedList: message.selectedFiles,
+    });
   }
 
   /** @private */
   handleIframeLoad() {
     this.applyStyles();
-  }
-
-  /**
-   * @private
-   * @param {string} propName
-   */
-  getCssValue(propName) {
-    let style = window.getComputedStyle(this);
-    return style.getPropertyValue(propName).trim();
+    this.setupL10n();
   }
 
   /** @private */
   applyStyles() {
-    let colors = {
-      radius: this.getCssValue('--uc-radius'),
-      backgroundColor: this.getCssValue('--uc-background'),
-      textColor: this.getCssValue('--uc-foreground'),
-      secondaryColor: this.getCssValue('--uc-secondary'),
-      secondaryForegroundColor: this.getCssValue('--uc-secondary-foreground'),
-      secondaryHover: this.getCssValue('--uc-secondary-hover'),
-      linkColor: this.getCssValue('--uc-primary'),
-      linkColorHover: this.getCssValue('--uc-primary-hover'),
-      fontFamily: this.getCssValue('--uc-font-family'),
-      fontSize: this.getCssValue('--uc-font-size'),
-    };
+    this._messageBridge?.send({
+      type: 'set-theme-definition',
+      theme: buildThemeDefinition(this),
+    });
+  }
 
-    this.sendMessage({
-      type: 'embed-css',
-      style: buildStyles(colors),
+  /** @private */
+  setupL10n() {
+    this._messageBridge?.send({
+      type: 'set-locale-definition',
+      localeDefinition: this.cfg.localeName,
     });
   }
 
   /** @private */
   remoteUrl() {
-    const { pubkey, remoteTabSessionKey, socialBaseUrl } = this.cfg;
+    const { pubkey, remoteTabSessionKey, socialBaseUrl, multiple } = this.cfg;
     const { externalSourceType } = this.activityParams;
     const lang = this.l10n('social-source-lang')?.split('-')?.[0] || 'en';
     const params = {
       lang,
       public_key: pubkey,
       images_only: false.toString(),
-      pass_window_open: false,
       session_key: remoteTabSessionKey,
+      wait_for_theme: true,
+      multiple: multiple.toString(),
     };
-    const url = new URL(`/window3/${externalSourceType}`, socialBaseUrl);
+    const url = new URL(`/window4/${externalSourceType}`, socialBaseUrl);
     url.search = queryString(params);
     return url.toString();
   }
@@ -231,31 +213,43 @@ export class ExternalSource extends UploaderBlock {
     this.ref.iframeWrapper.innerHTML = '';
     this.ref.iframeWrapper.appendChild(iframe);
 
-    registerMessage('file-selected', iframe.contentWindow, this.handleFileSelected.bind(this));
+    if (!iframe.contentWindow) {
+      return;
+    }
 
-    this._iframe = iframe;
-    this.$.selectedList = [];
+    this._messageBridge?.destroy();
+
+    /** @private */
+    this._messageBridge = new MessageBridge(iframe.contentWindow);
+    this._messageBridge.on('selected-files-change', this.handleSelectedFilesChange.bind(this));
+
+    this.resetSelectionStatus();
   }
 
   /** @private */
   unmountIframe() {
-    this._iframe && unregisterMessage('file-selected', this._iframe.contentWindow);
+    this._messageBridge?.destroy();
+    this._messageBridge = undefined;
     this.ref.iframeWrapper.innerHTML = '';
-    this._iframe = null;
-    this.$.selectedList = [];
-    this.$.counter = 0;
+
+    this.resetSelectionStatus();
+  }
+
+  /** @private */
+  resetSelectionStatus() {
+    this.set$({
+      selectedList: [],
+      total: 0,
+      isSelectionReady: false,
+      couldSelectAll: false,
+      couldDeselectAll: false,
+      showSelectionStatus: false,
+    });
   }
 }
 
 ExternalSource.template = /* HTML */ `
   <uc-activity-header>
-    <button type="button" class="uc-mini-btn" set="onclick: *historyBack" l10n="@title:back">
-      <uc-icon name="back"></uc-icon>
-    </button>
-    <div>
-      <uc-icon set="@name: activityIcon"></uc-icon>
-      <span>{{activityCaption}}</span>
-    </div>
     <button
       type="button"
       class="uc-mini-btn uc-close-btn"
@@ -269,12 +263,15 @@ ExternalSource.template = /* HTML */ `
     <div ref="iframeWrapper" class="uc-iframe-wrapper"></div>
     <div class="uc-toolbar">
       <button type="button" class="uc-cancel-btn uc-secondary-btn" set="onclick: onCancel" l10n="cancel"></button>
-      <div></div>
-      <div set="@hidden: !multiple" class="uc-selected-counter"><span l10n="selected-count"></span>{{counter}}</div>
+      <div set="@hidden: !showSelectionStatus" class="uc-selection-status-box">
+        <span>{{counterText}}</span>
+        <button type="button" set="onclick: onSelectAll; @hidden: !couldSelectAll" l10n="select-all"></button>
+        <button type="button" set="onclick: onDeselectAll; @hidden: !couldDeselectAll" l10n="deselect-all"></button>
+      </div>
       <button
         type="button"
         class="uc-done-btn uc-primary-btn"
-        set="onclick: onDone; @disabled: !counter"
+        set="onclick: onDone; @disabled: !isSelectionReady"
         l10n="done"
       ></button>
     </div>

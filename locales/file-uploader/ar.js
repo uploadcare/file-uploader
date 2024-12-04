@@ -27,6 +27,8 @@ export default {
   'confirm-your-action': 'تأكيد الإجراء',
   'are-you-sure': 'هل أنت متأكد؟',
   'selected-count': 'المختارة:',
+  'select-all': 'اختر الكل',
+  'deselect-all': 'إلغاء اختيار الكل',
   'upload-error': 'خطأ في الرفع',
   'validation-error': 'خطأ في التحقق',
   'no-files': 'لم يتم اختيار ملفات',

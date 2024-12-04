@@ -27,6 +27,8 @@ export default {
   'confirm-your-action': 'Επιβεβαίωση της ενέργειάς σας',
   'are-you-sure': 'Είστε σίγουροι;',
   'selected-count': 'Επιλεγμένο:',
+  'select-all': 'Επιλογή όλων',
+  'deselect-all': 'Αποεπιλογή όλων',
   'upload-error': 'Σφάλμα μεταφόρτωσης',
   'validation-error': 'Σφάλμα επικύρωσης',
   'no-files': 'Δεν έχουν επιλεχθεί αρχεία',

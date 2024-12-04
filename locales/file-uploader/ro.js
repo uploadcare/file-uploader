@@ -119,4 +119,6 @@ export default {
   uploading: 'Se încarcă',
   idle: 'Inactiv',
   'a11y-file-item-status': 'Fișierul {{fileName}} este în starea {{status}}',
+  'select-all': 'Selectează tot',
+  'deselect-all': 'Deselectează tot',
 };

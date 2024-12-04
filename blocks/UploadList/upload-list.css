@@ -2,20 +2,10 @@ uc-upload-list {
   display: flex;
   flex-direction: column;
   width: 100%;
-  height: 100%;
+  height: max-content;
   overflow: hidden;
   background-color: var(--uc-background);
   transition: opacity var(--uc-transition);
-}
-
-[uc-modal] uc-upload-list {
-  width: min(
-    calc(var(--uc-dialog-width) - var(--uc-padding) * 2),
-    calc(var(--uc-dialog-max-width) - var(--uc-padding) * 2),
-    calc(100vw - var(--uc-padding) * 2)
-  );
-  height: max-content;
-  max-height: var(--modal-max-content-height);
 }
 
 uc-upload-list .uc-no-files {

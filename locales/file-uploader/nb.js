@@ -116,4 +116,6 @@ export default {
   uploading: 'Laster opp',
   idle: 'Inaktiv',
   'a11y-file-item-status': 'Fil {{fileName}} i status {{status}}',
+  'select-all': 'Velg alle',
+  'deselect-all': 'Fjern alle',
 };

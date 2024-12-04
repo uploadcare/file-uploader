@@ -119,4 +119,6 @@ export default {
   uploading: 'Téléchargement',
   idle: 'Inactif',
   'a11y-file-item-status': 'Le fichier {{fileName}} est en statut {{status}}',
+  'select-all': 'Tout sélectionner',
+  'deselect-all': 'Tout désélectionner',
 };

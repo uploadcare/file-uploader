@@ -118,4 +118,6 @@ export default {
   uploading: 'Otpremanje',
   idle: 'Neaktivan',
   'a11y-file-item-status': 'Datoteka {{fileName}} je u statusu {{status}}',
+  'select-all': 'Изабери све',
+  'deselect-all': 'Поништи избор свих',
 };

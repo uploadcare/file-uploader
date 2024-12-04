@@ -1,46 +1,3 @@
-:where([uc-modal]) {
-  --modal-max-content-height: calc(
-    var(--uploadcare-blocks-window-height, 100vh) - 4 * var(--uc-padding) - var(--uc-button-size)
-  );
-  --modal-content-height-fill: var(--uploadcare-blocks-window-height, 100vh);
-}
-
-:where([uc-modal])[dialog-fallback] {
-  --uc-z-max: 2147483647;
-
-  position: fixed;
-  z-index: var(--uc-z-max);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100vw;
-  height: 100vh;
-  pointer-events: none;
-  inset: 0;
-}
-
-:where([uc-modal])[dialog-fallback] dialog[open] {
-  z-index: var(--uc-z-max);
-  pointer-events: auto;
-}
-
-:where([uc-modal])[dialog-fallback] dialog[open] + .uc-backdrop {
-  position: fixed;
-  top: 0px;
-  left: 0px;
-  z-index: calc(var(--uc-z-max) - 1);
-  align-items: center;
-  justify-content: center;
-  width: 100vw;
-  height: 100vh;
-  background-color: oklch(0 0 0 / 0.1);
-  pointer-events: auto;
-}
-
-:where([uc-modal])[strokes][dialog-fallback] dialog[open] + .uc-backdrop {
-  background-image: var(--modal-backdrop-background-image);
-}
-
 @supports selector(dialog::backdrop) {
   :where([uc-modal]) > dialog::backdrop {
     /* backdrop don't inherit theme properties */
@@ -67,12 +24,10 @@
 :where([uc-modal]) > dialog {
   display: flex;
   flex-direction: column;
-
-  /* there was `fit-content` but it doesn't reduce width after activity change */
-  width: max-content;
-  max-width: min(calc(100% - var(--uc-padding) * 2), calc(var(--uc-dialog-max-width) - var(--uc-padding) * 2));
+  width: min(var(--uc-dialog-width), 100%);
+  max-width: min(calc(100% - var(--uc-padding) * 2), var(--uc-dialog-max-width));
   min-height: var(--uc-button-size);
-  max-height: calc(var(--uc-dialog-max-height) - var(--uc-padding) * 2);
+  max-height: min(calc(100% - var(--uc-padding) * 2), var(--uc-dialog-max-height));
   margin: auto;
   padding: 0;
   overflow: hidden;
@@ -87,10 +42,4 @@
 
 :where(.uc-contrast) :where([uc-modal]) > dialog {
   outline: 1px solid var(--uc-border);
-}
-
-@media only screen and (max-width: 430px), only screen and (max-height: 600px) {
-  :where([uc-modal]) > dialog > .uc-content {
-    height: var(--modal-max-content-height);
-  }
 }
