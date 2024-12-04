@@ -116,4 +116,6 @@ export default {
   uploading: '上传中',
   idle: '空闲',
   'a11y-file-item-status': '文件 {{fileName}} 的状态是 {{status}}',
+  'select-all': '全选',
+  'deselect-all': '取消全选',
 };

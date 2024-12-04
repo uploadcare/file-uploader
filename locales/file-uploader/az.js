@@ -27,6 +27,8 @@ export default {
   'confirm-your-action': 'Əməliyyatınızı təsdiqləyin',
   'are-you-sure': 'Əminsinizmi?',
   'selected-count': 'Seçildi:',
+  'select-all': 'Hamısını seç',
+  'deselect-all': 'Hamısını ləğv et',
   'upload-error': 'Yükləmə xətası',
   'validation-error': 'Doğrulama xətası',
   'no-files': 'Fayl seçilməyib',

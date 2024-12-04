@@ -116,4 +116,6 @@ export default {
   uploading: 'Բեռնվում է',
   idle: 'Անգործ',
   'a11y-file-item-status': 'Ֆայլը {{fileName}} {{status}} կարգավիճակում է',
+  'select-all': 'Ընտրել բոլորը',
+  'deselect-all': 'Հրաժարվել բոլորից',
 };

@@ -116,4 +116,6 @@ export default {
   uploading: 'Hleður upp',
   idle: 'Aðgerðalaus',
   'a11y-file-item-status': 'Skráin {{fileName}} er í stöðu {{status}}',
+  'select-all': 'Velja allt',
+  'deselect-all': 'Afvelja allt',
 };

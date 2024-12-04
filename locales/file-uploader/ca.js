@@ -27,6 +27,8 @@ export default {
   'confirm-your-action': "Confirma l'acció",
   'are-you-sure': 'Estàs segur?',
   'selected-count': 'Seleccionat:',
+  'select-all': 'Seleccionar tot',
+  'deselect-all': 'Deseleccionar tot',
   'upload-error': 'Error de càrrega',
   'validation-error': 'Error de validació',
   'no-files': 'Cap fitxer seleccionat',

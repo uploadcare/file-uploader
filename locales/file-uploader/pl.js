@@ -120,4 +120,6 @@ export default {
   uploading: 'Przesyłanie',
   idle: 'Bezczynny',
   'a11y-file-item-status': 'Plik {{fileName}} ma status {{status}}',
+  'select-all': 'Zaznacz wszystko',
+  'deselect-all': 'Odznacz wszystko',
 };

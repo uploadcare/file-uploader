@@ -27,6 +27,8 @@ export default {
   'confirm-your-action': 'Bekræft din handling',
   'are-you-sure': 'Er du sikker?',
   'selected-count': 'Valgt:',
+  'select-all': 'Vælg alle',
+  'deselect-all': 'Fravælg alle',
   'upload-error': 'Fejl ved upload',
   'validation-error': 'Valideringsfejl',
   'no-files': 'Ingen filer valgt',

@@ -118,4 +118,6 @@ export default {
   uploading: 'Augšupielādē',
   idle: 'Gaida',
   'a11y-file-item-status': 'Fails {{fileName}} ir stāvoklī {{status}}',
+  'select-all': 'Izvēlēties visus',
+  'deselect-all': 'Noņemt izvēli visiem',
 };

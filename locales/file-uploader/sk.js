@@ -120,4 +120,6 @@ export default {
   uploading: 'Nahrávanie',
   idle: 'Nečinný',
   'a11y-file-item-status': 'Súbor {{fileName}} je v stave {{status}}',
+  'select-all': 'Vybrať všetko',
+  'deselect-all': 'Zrušiť výber všetkého',
 };

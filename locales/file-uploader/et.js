@@ -27,6 +27,8 @@ export default {
   'confirm-your-action': 'Kinnita toiming',
   'are-you-sure': 'Oled sa kindel?',
   'selected-count': 'Valitud:',
+  'select-all': 'Vali kõik',
+  'deselect-all': 'Tühista kõikide valik',
   'upload-error': 'Üleslaadimise viga',
   'validation-error': 'Valideerimise viga',
   'no-files': 'Faile ei ole valitud',

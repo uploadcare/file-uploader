@@ -27,6 +27,8 @@ export default {
   'confirm-your-action': 'Confirmar tu acción',
   'are-you-sure': '¿Estás seguro?',
   'selected-count': 'Seleccionado:',
+  'select-all': 'Seleccionar todo',
+  'deselect-all': 'Deseleccionar todo',
   'upload-error': 'Error de subida',
   'validation-error': 'Error de validación',
   'no-files': 'No se han seleccionado archivos',
