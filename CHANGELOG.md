@@ -3,7 +3,7 @@
 ### Features
 
 - **camera-tab:** video recording ([#755](https://github.com/uploadcare/file-uploader/issues/755)) ([8173852](https://github.com/uploadcare/file-uploader/commit/81738528adc76d19cb3ad24030dec96dcba9dc1d))
-- social sources redesign ([#750](https://github.com/uploadcare/file-uploader/issues/750)) ([db836e0](https://github.com/uploadcare/file-uploader/commit/db836e0060ac29af67987288f1d488d1df711111))
+- **social-sourcesЖ** redesign & batch file selection ([#750](https://github.com/uploadcare/file-uploader/issues/750)) ([db836e0](https://github.com/uploadcare/file-uploader/commit/db836e0060ac29af67987288f1d488d1df711111))
 
 # [1.10.0](https://github.com/uploadcare/file-uploader/compare/v1.9.0...v1.10.0) (2024-11-02)
 
