@@ -407,7 +407,7 @@ export class CameraSource extends UploaderBlock {
         currentIcon: 'video-camera-full',
         mutableClassButton: 'uc-shot-btn uc-camera-action',
 
-        audioSelectHidden: !this.cfg.enableAudioRecording,
+        audioSelectHidden: !this.cfg.enableAudioRecording || this.audioDevices.length <= 1,
         cameraSelectHidden: this.cameraDevices.length <= 1,
       });
     }
@@ -483,7 +483,7 @@ export class CameraSource extends UploaderBlock {
         currentTimelineIcon: 'play',
         currentIcon: 'video-camera-full',
 
-        audioSelectHidden: !this.cfg.enableAudioRecording,
+        audioSelectHidden: !this.cfg.enableAudioRecording || this.audioDevices.length <= 1,
         audioToggleMicorphoneHidden: !this.cfg.enableAudioRecording,
       });
     }
