@@ -216,15 +216,13 @@ export class CameraSource extends UploaderBlock {
       };
 
       const { mimeType } = this.cfg.mediaRecorerOptions || {};
-      const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
       if (mimeType && MediaRecorder.isTypeSupported(mimeType)) {
         this._options.mimeType = mimeType;
-      } else if (isSafari || isIOS) {
-        this._options.mimeType = 'video/mp4';
-      } else {
+      } else if (MediaRecorder.isTypeSupported(DEFAULT_VIDEO_FORMAT)) {
         this._options.mimeType = DEFAULT_VIDEO_FORMAT;
+      } else {
+        this._options.mimeType = 'video/mp4';
       }
 
       if (this._stream) {
