@@ -1,3 +1,9 @@
+## [1.11.3](https://github.com/uploadcare/file-uploader/compare/v1.11.2...v1.11.3) (2024-12-12)
+
+### Bug Fixes
+
+- **camera-tab:** added check removeEventListener ([#765](https://github.com/uploadcare/file-uploader/issues/765)) ([31cb01a](https://github.com/uploadcare/file-uploader/commit/31cb01a6ba9f5c56601f0858ab13e4cfeefe64a3))
+
 ## [1.11.2](https://github.com/uploadcare/file-uploader/compare/v1.11.1...v1.11.2) (2024-12-12)
 
 ### Bug Fixes
