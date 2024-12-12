@@ -215,13 +215,14 @@ export class CameraSource extends UploaderBlock {
         ...this.cfg.mediaRecorerOptions,
       };
 
-      if (
-        this.cfg.mediaRecorerOptions?.mimeType &&
-        MediaRecorder.isTypeSupported(this.cfg.mediaRecorerOptions.mimeType)
-      ) {
-        this._options.mimeType = this.cfg.mediaRecorerOptions.mimeType;
-      } else {
+      const { mimeType } = this.cfg.mediaRecorerOptions || {};
+
+      if (mimeType && MediaRecorder.isTypeSupported(mimeType)) {
+        this._options.mimeType = mimeType;
+      } else if (MediaRecorder.isTypeSupported(DEFAULT_VIDEO_FORMAT)) {
         this._options.mimeType = DEFAULT_VIDEO_FORMAT;
+      } else {
+        this._options.mimeType = 'video/mp4';
       }
 
       if (this._stream) {
@@ -404,7 +405,7 @@ export class CameraSource extends UploaderBlock {
         currentIcon: 'video-camera-full',
         mutableClassButton: 'uc-shot-btn uc-camera-action',
 
-        audioSelectHidden: !this.cfg.enableAudioRecording,
+        audioSelectHidden: !this.cfg.enableAudioRecording || this.audioDevices.length <= 1,
         cameraSelectHidden: this.cameraDevices.length <= 1,
       });
     }
@@ -480,7 +481,7 @@ export class CameraSource extends UploaderBlock {
         currentTimelineIcon: 'play',
         currentIcon: 'video-camera-full',
 
-        audioSelectHidden: !this.cfg.enableAudioRecording,
+        audioSelectHidden: !this.cfg.enableAudioRecording || this.audioDevices.length <= 1,
         audioToggleMicorphoneHidden: !this.cfg.enableAudioRecording,
       });
     }
