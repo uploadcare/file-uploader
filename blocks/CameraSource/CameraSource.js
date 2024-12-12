@@ -797,10 +797,10 @@ export class CameraSource extends UploaderBlock {
 
   _destroy() {
     for (const permission of DEFAULT_PERMISSIONS) {
-      this[`${permission}Response`].removeEventListener('change', this._handlePermissionsChange);
+      this[`${permission}Response`]?.removeEventListener('change', this._handlePermissionsChange);
     }
 
-    navigator.mediaDevices.removeEventListener('devicechange', this._getDevices);
+    navigator.mediaDevices?.removeEventListener('devicechange', this._getDevices);
   }
 
   async destroyCallback() {
