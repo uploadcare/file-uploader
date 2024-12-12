@@ -1,3 +1,9 @@
+## [1.11.2](https://github.com/uploadcare/file-uploader/compare/v1.11.1...v1.11.2) (2024-12-12)
+
+### Bug Fixes
+
+- **camera-tab:** added mimeType fallback for safari ([#763](https://github.com/uploadcare/file-uploader/issues/763)) ([bd45833](https://github.com/uploadcare/file-uploader/commit/bd45833805c4e0b71067dca41ae013d0534dc07e))
+
 # [1.11.0](https://github.com/uploadcare/file-uploader/compare/v1.10.0...v1.11.1) (2024-12-04)
 
 ### Features
