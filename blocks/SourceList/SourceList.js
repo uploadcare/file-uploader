@@ -1,6 +1,5 @@
 import { Block } from '../../abstract/Block.js';
 import { stringToArray } from '../../utils/stringToArray.js';
-import { UploadSource } from '../utils/UploadSource.js';
 
 export class SourceList extends Block {
   initCallback() {
@@ -8,9 +7,14 @@ export class SourceList extends Block {
     this.subConfigValue('sourceList', (/** @type {String} */ val) => {
       let list = stringToArray(val);
       let html = '';
+
       list.forEach((srcName) => {
-        if (!Object.values(UploadSource).includes(srcName)) {
-          console.error(`Source "${srcName}" not found in UploadSource`);
+        if (srcName === 'instagram') {
+          console.error(
+            "Instagram source was removed because the Instagram Basic Display API hasn't been available since December 4, 2024. " +
+              'Official statement, see here:' +
+              'https://developers.facebook.com/blog/post/2024/09/04/update-on-instagram-basic-display-api/?locale=en_US',
+          );
           return;
         }
 
