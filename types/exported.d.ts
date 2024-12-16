@@ -25,7 +25,7 @@ export type SourceTypes = import('../blocks/utils/UploadSource').SourceTypes
 
 export type ConfigType = {
   /**
-   * Public API key.
+   * Your project’s Public Key.
    */
   pubkey: string;
   /**
@@ -49,15 +49,16 @@ export type ConfigType = {
    */
   imgOnly: boolean;
   /**
-   * Accepted file types.
+   * Native file input accept attribute value. Also affects client validation settings.
    */
   accept: string;
   /**
    * Preferred types for external sources.
+   * See [here](https://uploadcare.com/docs/file-uploader/options/#external-sources-preferred-types)
    */
   externalSourcesPreferredTypes: string;
   /**
-   * Store files automatically.
+   * Store uploaded files.
    */
   store: boolean | 'auto';
   /**
@@ -81,7 +82,7 @@ export type ConfigType = {
    */
   thumbSize: number;
   /**
-   * Show an empty list if no files are selected.
+   * Show the upload list even if it is empty.
    */
   showEmptyList: boolean;
   /**
@@ -89,11 +90,13 @@ export type ConfigType = {
    */
   useLocalImageEditor: boolean;
   /**
-   * Use cloud image editor.
+   * Enable cloud image editing.
    */
   useCloudImageEditor: boolean;
   /**
    * Tabs to show in the cloud image editor.
+   *
+   *  @default 'crop, tuning, filters'
    */
   cloudImageEditorTabs: string;
   /**
@@ -101,7 +104,7 @@ export type ConfigType = {
    */
   removeCopyright: boolean;
   /**
-   * Crop preset for images.
+   * Defines the crop behavior. When uploading images, your users can select a crop area with a defined aspect ratio.
    */
   cropPreset: string;
   /**
@@ -121,19 +124,19 @@ export type ConfigType = {
    */
   sourceListWrap: boolean;
   /**
-   * Session key for remote tab.
+   * Key to revoke Custom OAuth access. See [OAuth docs](https://uploadcare.com/docs/upload-sources/#oauth) for details.
    */
   remoteTabSessionKey: string;
   /**
-   * Custom CDN CNAME.
+   * Set custom CNAME.
    */
   cdnCname: string;
   /**
-   * Base URL for the uploader.
+   * Set a custom upload URL.
    */
   baseUrl: string;
   /**
-   * Base URL for social sources.
+   * Set a custom social sources URL.
    */
   socialBaseUrl: string;
   /**
