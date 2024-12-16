@@ -24,59 +24,212 @@ export type CollectionValidators = FuncCollectionValidator[];
 export type SourceTypes = import('../blocks/utils/UploadSource').SourceTypes
 
 export type ConfigType = {
+  /**
+   * Public API key.
+   */
   pubkey: string;
+  /**
+   * Allow multiple file uploads.
+   */
   multiple: boolean;
+  /**
+   * Minimum number of files to upload.
+   */
   multipleMin: number;
+  /**
+   * Maximum number of files to upload.
+   */
   multipleMax: number;
+  /**
+   * Require user confirmation before uploading.
+   */
   confirmUpload: boolean;
+  /**
+   * Allow only image files.
+   */
   imgOnly: boolean;
+  /**
+   * Accepted file types.
+   */
   accept: string;
+  /**
+   * Preferred types for external sources.
+   */
   externalSourcesPreferredTypes: string;
+  /**
+   * Store files automatically.
+   */
   store: boolean | 'auto';
+  /**
+   * Mirror the camera view.
+   */
   cameraMirror: boolean;
+  /**
+   * Default camera capture mode.
+   */
   cameraCapture: 'user' | 'environment' | '';
+  /**
+   * List of sources for file uploads.
+   */
   sourceList: string;
+  /**
+   * Maximum size of local files in bytes.
+   */
   maxLocalFileSizeBytes: number;
+  /**
+   * Thumbnail size.
+   */
   thumbSize: number;
+  /**
+   * Show an empty list if no files are selected.
+   */
   showEmptyList: boolean;
+  /**
+   * Use local image editor.
+   */
   useLocalImageEditor: boolean;
+  /**
+   * Use cloud image editor.
+   */
   useCloudImageEditor: boolean;
+  /**
+   * Tabs to show in the cloud image editor.
+   */
   cloudImageEditorTabs: string;
+  /**
+   * Remove copyright information.
+   */
   removeCopyright: boolean;
+  /**
+   * Crop preset for images.
+   */
   cropPreset: string;
+  /**
+   * Image shrink options.
+   */
   imageShrink: string;
+  /**
+   * Lock scroll when modal is open.
+   */
   modalScrollLock: boolean;
+  /**
+   * Show strokes on modal backdrop.
+   */
   modalBackdropStrokes: boolean;
+  /**
+   * Wrap the source list.
+   */
   sourceListWrap: boolean;
+  /**
+   * Session key for remote tab.
+   */
   remoteTabSessionKey: string;
+  /**
+   * Custom CDN CNAME.
+   */
   cdnCname: string;
+  /**
+   * Base URL for the uploader.
+   */
   baseUrl: string;
+  /**
+   * Base URL for social sources.
+   */
   socialBaseUrl: string;
+  /**
+   * Secure signature for uploads.
+   */
   secureSignature: string;
+  /**
+   * Expiry time for secure uploads.
+   */
   secureExpire: string;
+  /**
+   * Proxy URL for secure delivery.
+   */
   secureDeliveryProxy: string;
+  /**
+   * Maximum number of retry attempts for throttled requests.
+   */
   retryThrottledRequestMaxTimes: number;
+  /**
+   * Minimum file size for multipart uploads.
+   */
   multipartMinFileSize: number;
+  /**
+   * Chunk size for multipart uploads.
+   */
   multipartChunkSize: number;
+  /**
+   * Maximum number of concurrent requests.
+   */
   maxConcurrentRequests: number;
+  /**
+   * Maximum number of concurrent multipart requests.
+   */
   multipartMaxConcurrentRequests: number;
+  /**
+   * Maximum number of attempts for multipart uploads.
+   */
   multipartMaxAttempts: number;
+  /**
+   * Check for URL duplicates.
+   */
   checkForUrlDuplicates: boolean;
+  /**
+   * Save URL for recurrent uploads.
+   */
   saveUrlForRecurrentUploads: boolean;
+  /**
+   * Group output files.
+   */
   groupOutput: boolean;
+  /**
+   * User agent integration string.
+   */
   userAgentIntegration: string;
+  /**
+   * Enable debug mode.
+   */
   debug: boolean;
+  /**
+   * Locale name for the uploader.
+   */
   localeName: string;
+  /**
+   * Expiry threshold for secure uploads.
+   */
   secureUploadsExpireThreshold: number;
 
   // Complex types
+  /**
+   * Metadata for the file.
+   */
   metadata: Metadata | MetadataCallback | null;
+  /**
+   * Override locale definitions.
+   */
   localeDefinitionOverride: LocaleDefinitionOverride | null;
+  /**
+   * Resolver for secure uploads signature.
+   */
   secureUploadsSignatureResolver: SecureUploadsSignatureResolver | null;
+  /**
+   * Resolver for secure delivery proxy URL.
+   */
   secureDeliveryProxyUrlResolver: SecureDeliveryProxyUrlResolver | null;
+  /**
+   * Resolver for icon href.
+   */
   iconHrefResolver: IconHrefResolver | null;
 
+  /**
+   * Validators for individual files.
+   */
   fileValidators: FileValidators;
+  /**
+   * Validators for file collections.
+   */
   collectionValidators: CollectionValidators;
 
   /**
@@ -85,7 +238,15 @@ export type ConfigType = {
    * @default 'photo'
    */
   defaultCameraMode: 'photo' | 'video';
+  /**
+   * Enable audio recording.
+   * @default true
+   */
   enableAudioRecording: boolean;
+  /**
+   * Enable video recording.
+   * @default true
+   */
   enableVideoRecording: boolean;
 
   /**
