@@ -106,6 +106,10 @@ export class ExternalSource extends UploaderBlock {
     this.subConfigValue('localeName', (val) => {
       this.setupL10n();
     });
+
+    this.subConfigValue('externalSourcesEmbedCss', (embedCss) => {
+      this.applyEmbedCss(embedCss);
+    });
   }
 
   /**
@@ -156,15 +160,27 @@ export class ExternalSource extends UploaderBlock {
 
   /** @private */
   handleIframeLoad() {
-    this.applyStyles();
+    this.applyEmbedCss(this.cfg.externalSourcesEmbedCss);
+    this.applyTheme();
     this.setupL10n();
   }
 
   /** @private */
-  applyStyles() {
+  applyTheme() {
     this._messageBridge?.send({
       type: 'set-theme-definition',
       theme: buildThemeDefinition(this),
+    });
+  }
+
+  /**
+   * @private
+   * @param {string} css
+   */
+  applyEmbedCss(css) {
+    this._messageBridge?.send({
+      type: 'set-embed-css',
+      css,
     });
   }
 

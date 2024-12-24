@@ -32,6 +32,7 @@ export type ConfigType = {
   imgOnly: boolean;
   accept: string;
   externalSourcesPreferredTypes: string;
+  externalSourcesEmbedCss: string;
   store: boolean | 'auto';
   cameraMirror: boolean;
   cameraCapture: 'user' | 'environment' | '';

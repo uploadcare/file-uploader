@@ -136,7 +136,7 @@
  *     }
  *   | {
  *       type: 'set-embed-css';
- *       css: Partial<ThemeDefinition>;
+ *       css: string;
  *     }} OutputMessage
  */
 
