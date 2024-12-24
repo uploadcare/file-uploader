@@ -28,10 +28,12 @@ export class ExternalSource extends UploaderBlock {
       total: 0,
 
       isSelectionReady: false,
+      isDoneBtnEnabled: false,
       couldSelectAll: false,
       couldDeselectAll: false,
       showSelectionStatus: false,
       counterText: '',
+      doneBtnTextClass: 'uc-hidden',
 
       onDone: () => {
         for (const message of this.$.selectedList) {
@@ -146,7 +148,9 @@ export class ExternalSource extends UploaderBlock {
     );
 
     this.set$({
+      doneBtnTextClass: message.isReady ? '' : 'uc-hidden',
       isSelectionReady: message.isReady,
+      isDoneBtnEnabled: message.isReady && message.selectedFiles.length > 0,
       showSelectionStatus: message.isMultipleMode && message.total > 0,
       couldSelectAll: message.selectedCount < message.total,
       couldDeselectAll: message.selectedCount === message.total,
@@ -240,7 +244,7 @@ export class ExternalSource extends UploaderBlock {
     this.set$({
       selectedList: [],
       total: 0,
-      isSelectionReady: false,
+      isDoneBtnEnabled: false,
       couldSelectAll: false,
       couldDeselectAll: false,
       showSelectionStatus: false,
@@ -268,12 +272,10 @@ ExternalSource.template = /* HTML */ `
         <button type="button" set="onclick: onSelectAll; @hidden: !couldSelectAll" l10n="select-all"></button>
         <button type="button" set="onclick: onDeselectAll; @hidden: !couldDeselectAll" l10n="deselect-all"></button>
       </div>
-      <button
-        type="button"
-        class="uc-done-btn uc-primary-btn"
-        set="onclick: onDone; @disabled: !isSelectionReady"
-        l10n="done"
-      ></button>
+      <button type="button" class="uc-done-btn uc-primary-btn" set="onclick: onDone; @disabled: !isDoneBtnEnabled;">
+        <uc-spinner set="@hidden: isSelectionReady"></uc-spinner>
+        <span l10n="done" set="@class: doneBtnTextClass"></span>
+      </button>
     </div>
   </div>
 `;
