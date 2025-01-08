@@ -1,3 +1,9 @@
+# [1.12.0](https://github.com/uploadcare/file-uploader/compare/v1.11.3...v1.12.0) (2025-01-08)
+
+### Features
+
+- **social-source:** deprecate instagram source ([#767](https://github.com/uploadcare/file-uploader/issues/767)) ([ed239a0](https://github.com/uploadcare/file-uploader/commit/ed239a00cfc9bc63d1ecb470e57dd2103e0f6b6a))
+
 ## [1.11.3](https://github.com/uploadcare/file-uploader/compare/v1.11.2...v1.11.3) (2024-12-12)
 
 ### Bug Fixes
