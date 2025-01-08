@@ -2,21 +2,7 @@
 
 /**
  * @typedef {{
- *   caption?: string | null;
- *   created: number;
- *   id: string;
- *   public_page?: string;
- *   username: string;
- *   size?: number;
- *   name?: string;
- *   modified?: number;
- * }} InstagramInfo
- */
-
-/**
- * @typedef {{
  *   error?: undefined;
- *   info?: InstagramInfo;
  *   alternatives?: Record<string, string>;
  *   is_image?: boolean | null;
  *   filename?: string;
