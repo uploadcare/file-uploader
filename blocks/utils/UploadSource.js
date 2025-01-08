@@ -4,7 +4,6 @@ export const ExternalUploadSource = Object.freeze({
   DROPBOX: 'dropbox',
   GDRIVE: 'gdrive',
   GPHOTOS: 'gphotos',
-  INSTAGRAM: 'instagram',
   FLICKR: 'flickr',
   VK: 'vk',
   EVERNOTE: 'evernote',

@@ -52,7 +52,6 @@ export default {
   'src-type-dropbox': 'Dropbox',
   'src-type-gdrive': 'Google Drive',
   'src-type-gphotos': 'Google Photos',
-  'src-type-instagram': 'Instagram',
   'src-type-flickr': 'Flickr',
   'src-type-vk': 'VK',
   'src-type-evernote': 'Evernote',
