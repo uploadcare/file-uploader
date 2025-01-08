@@ -1,3 +1,10 @@
+# [1.12.0](https://github.com/uploadcare/file-uploader/compare/v1.11.3...v1.12.0) (2025-01-08)
+
+### Features
+
+- **external-sources:** add `externalSourcesEmbedCss` config option to set embed css on external sources iframe ([#769](https://github.com/uploadcare/file-uploader/issues/769)) ([8cbbdb3](https://github.com/uploadcare/file-uploader/commit/8cbbdb3db3e111f49927bd2afe9df34a9d12cac8))
+- **social-source:** deprecate instagram source ([#767](https://github.com/uploadcare/file-uploader/issues/767)) ([ed239a0](https://github.com/uploadcare/file-uploader/commit/ed239a00cfc9bc63d1ecb470e57dd2103e0f6b6a))
+
 ## [1.11.3](https://github.com/uploadcare/file-uploader/compare/v1.11.2...v1.11.3) (2024-12-12)
 
 ### Bug Fixes
