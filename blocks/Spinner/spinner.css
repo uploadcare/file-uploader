@@ -1,0 +1,18 @@
+@keyframes uc-spinner-keyframes {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.uc-spinner {
+  width: 1em;
+  height: 1em;
+  border: solid 2px transparent;
+  border-top-color: currentColor;
+  border-left-color: currentColor;
+  border-radius: 50%;
+  animation: uc-spinner-keyframes 400ms linear infinite;
+}

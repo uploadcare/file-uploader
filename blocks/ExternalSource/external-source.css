@@ -78,3 +78,17 @@ uc-external-source uc-activity-header {
 uc-external-source uc-activity-header .uc-close-btn {
   pointer-events: auto;
 }
+
+uc-external-source .uc-done-btn > span.uc-hidden {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+uc-external-source .uc-done-btn > uc-spinner {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

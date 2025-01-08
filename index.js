@@ -32,6 +32,7 @@ export { FormInput } from './blocks/FormInput/FormInput.js';
 export { ActivityHeader } from './blocks/ActivityHeader/ActivityHeader.js';
 export { Select } from './blocks/Select/Select.js';
 export { Copyright } from './blocks/Copyright/Copyright.js';
+export { Spinner } from './blocks/Spinner/Spinner.js';
 
 // Solutions:
 export { FileUploaderRegular } from './solutions/file-uploader/regular/FileUploaderRegular.js';
