@@ -18,6 +18,7 @@ export const initialConfig = {
   imgOnly: false,
   accept: '',
   externalSourcesPreferredTypes: '',
+  externalSourcesEmbedCss: '',
   store: 'auto',
   cameraMirror: false,
   cameraCapture: '',

@@ -58,6 +58,10 @@ export type ConfigType = {
    */
   externalSourcesPreferredTypes: string;
   /**
+   * Provide custom CSS to the social sources iframe
+   */
+  externalSourcesEmbedCss: string;
+  /**
    * Store uploaded files.
    */
   store: boolean | 'auto';

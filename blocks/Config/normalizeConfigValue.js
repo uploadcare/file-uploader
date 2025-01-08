@@ -113,6 +113,7 @@ const mapping = {
   imgOnly: asBoolean,
   accept: asString,
   externalSourcesPreferredTypes: asString,
+  externalSourcesEmbedCss: asString,
   store: asStore,
   cameraMirror: asBoolean,
   cameraCapture: asCameraCapture,
