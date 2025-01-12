@@ -212,10 +212,10 @@ export class CameraSource extends UploaderBlock {
     try {
       this._chunks = [];
       this._options = {
-        ...this.cfg.mediaRecorerOptions,
+        ...this.cfg.mediaRecorderOptions,
       };
 
-      const { mimeType } = this.cfg.mediaRecorerOptions || {};
+      const { mimeType } = this.cfg.mediaRecorderOptions || {};
 
       if (mimeType && MediaRecorder.isTypeSupported(mimeType)) {
         this._options.mimeType = mimeType;

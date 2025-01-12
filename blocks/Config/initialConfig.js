@@ -72,5 +72,5 @@ export const initialConfig = {
   enableAudioRecording: true,
   enableVideoRecording: true,
   maxVideoRecordingDuration: null,
-  mediaRecorerOptions: null,
+  mediaRecorderOptions: null,
 };
