@@ -266,7 +266,7 @@ export type ConfigType = {
    * A dictionary object that can contain 
    * the following properties from MediaRecorderOptions
    */
-  mediaRecorerOptions: MediaRecorderOptions | null
+  mediaRecorderOptions: MediaRecorderOptions | null
 };
 export type ConfigComplexType = Pick<ConfigType, (typeof complexConfigKeys)[number]>;
 export type ConfigPlainType = Omit<ConfigType, keyof ConfigComplexType>;

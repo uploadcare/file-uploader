@@ -169,7 +169,7 @@ const mapping = {
   defaultCameraMode: asCameraTab,
   enableAudioRecording: asBoolean,
   enableVideoRecording: asBoolean,
-  mediaRecorerOptions: asObject,
+  mediaRecorderOptions: asObject,
 
   maxVideoRecordingDuration: asNumber,
 };
