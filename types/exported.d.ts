@@ -268,7 +268,7 @@ export type ConfigType = {
    */
   mediaRecorerOptions: MediaRecorderOptions | null
 
-  maskHrefCloudEditor: string | null;
+  cloudImageEditorMaskHref: string | null;
 };
 export type ConfigComplexType = Pick<ConfigType, (typeof complexConfigKeys)[number]>;
 export type ConfigPlainType = Omit<ConfigType, keyof ConfigComplexType>;

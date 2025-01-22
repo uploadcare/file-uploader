@@ -535,7 +535,7 @@ export class CropFrame extends Block {
       });
     });
 
-    this.subConfigValue('maskHrefCloudEditor', (maskHref) => {
+    this.subConfigValue('cloudImageEditorMaskHref', (maskHref) => {
       if (maskHref) {
         this._createMask(maskHref);
       }
