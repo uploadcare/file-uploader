@@ -52,7 +52,7 @@ const asCameraModes = (value) => {
   const str = asString(value);
   const array = deserializeCsv(str);
   if (array.some((item) => !Object.values(CameraSourceTypes).includes(item))) {
-    throw new Error(`Invalid value: "${array}"`);
+    throw new Error(`Invalid value: "${JSON.stringify(array)}"`);
   }
   return str;
 };
