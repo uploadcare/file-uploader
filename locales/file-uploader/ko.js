@@ -116,4 +116,5 @@ export default {
   'a11y-file-item-status': '{{fileName}} 파일이 {{status}} 상태입니다',
   'select-all': '모두 선택',
   'deselect-all': '모두 선택 해제',
+  'waiting-for': '{{source}} 대기 중',
 };

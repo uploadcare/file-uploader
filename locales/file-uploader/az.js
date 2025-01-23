@@ -117,4 +117,5 @@ export default {
   uploading: 'Yüklənir',
   idle: 'Boş',
   'a11y-file-item-status': '{{fileName}} faylı {{status}} statusundadır',
+  'waiting-for': '{{source}} gözlənilir',
 };

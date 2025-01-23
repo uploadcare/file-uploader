@@ -8,6 +8,8 @@ import { fileCssBg } from '../svg-backgrounds/svg-backgrounds.js';
 import { debounce } from '../utils/debounce.js';
 import { generateThumb } from '../utils/resizeImage.js';
 import { parseShrink } from '../../utils/parseShrink.js';
+import { UploadSource } from '../utils/UploadSource.js';
+import { throttle } from '../utils/throttle.js';
 
 const FileItemState = Object.freeze({
   FINISHED: Symbol('FINISHED'),
@@ -45,6 +47,7 @@ export class FileItem extends UploaderBlock {
       uid: '',
       itemName: '',
       errorText: '',
+      hint: '',
       thumbUrl: '',
       progressValue: 0,
       progressVisible: false,
@@ -178,6 +181,21 @@ export class FileItem extends UploaderBlock {
     this._entrySubs.add(sub);
   }
 
+  _updateHint = throttle(() => {
+    const showHint =
+      this.$.state === FileItemState.UPLOADING &&
+      this._entry.getValue('externalUrl') &&
+      this._entry.getValue('source') !== UploadSource.URL &&
+      this._entry.getValue('errors').length === 0 &&
+      this.$.progressValue === 0;
+
+    const hint = showHint
+      ? this.l10n('waiting-for', { source: this.l10n(`src-type-${this._entry.getValue('source')}`) })
+      : '';
+
+    this.$.hint = hint;
+  }, 100);
+
   /**
    * @private
    * @param {String} id
@@ -195,6 +213,7 @@ export class FileItem extends UploaderBlock {
 
     this._subEntry('uploadProgress', (uploadProgress) => {
       this.$.progressValue = uploadProgress;
+      this._updateHint();
     });
 
     this._subEntry('fileName', (name) => {
@@ -280,8 +299,6 @@ export class FileItem extends UploaderBlock {
 
     if (state === FileItemState.UPLOADING) {
       this.$.isFocused = false;
-    } else {
-      this.$.progressValue = 0;
     }
 
     this.set$({
@@ -296,6 +313,8 @@ export class FileItem extends UploaderBlock {
         status: this.l10n(state?.description?.toLocaleLowerCase() ?? '').toLocaleLowerCase(),
       }),
     });
+
+    this._updateHint();
   }
 
   destroyCallback() {
@@ -434,6 +453,7 @@ FileItem.template = /* HTML */ `
     <div aria-live="polite" class="uc-file-name-wrapper" set="@aria-label:ariaLabelStatusFile;">
       <span class="uc-file-name" set="@title: itemName">{{itemName}}</span>
       <span class="uc-file-error" set="@hidden: !errorText">{{errorText}}</span>
+      <span class="uc-file-hint" set="@hidden: !hint">{{hint}}</span>
     </div>
     <div class="uc-file-actions">
       <button

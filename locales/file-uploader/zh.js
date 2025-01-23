@@ -117,4 +117,5 @@ export default {
   'a11y-file-item-status': '文件 {{fileName}} 的状态是 {{status}}',
   'select-all': '全选',
   'deselect-all': '取消全选',
+  'waiting-for': '等待 {{source}}',
 };

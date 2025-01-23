@@ -118,4 +118,5 @@ export default {
   'a11y-file-item-status': 'Bestand {{fileName}} in status {{status}}',
   'select-all': 'Selecteer alles',
   'deselect-all': 'Deselecteer alles',
+  'waiting-for': 'Wachten op {{source}}',
 };
