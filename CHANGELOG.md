@@ -1,3 +1,5 @@
+## [1.12.1](https://github.com/uploadcare/file-uploader/compare/v1.12.0...v1.12.1) (2025-01-23)
+
 # [1.12.0](https://github.com/uploadcare/file-uploader/compare/v1.11.3...v1.12.0) (2025-01-08)
 
 ### Bug Fixes
