@@ -9,14 +9,14 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.pull_request.merged == true && startsWith(github.head_ref, 'releases/v')
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           ref: main
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v4
         with:
           registry-url: "https://registry.npmjs.org"
-          node-version: '16'
+          node-version: '18'
       - run: npm ci
       - run: |
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
