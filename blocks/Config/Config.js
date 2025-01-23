@@ -22,7 +22,6 @@ const allConfigKeys = /** @type {(keyof import('../../types').ConfigType)[]} */ 
  *   'fileValidators',
  *   'collectionValidators',
  *   'mediaRecorerOptions',
- *   'cloudImageEditorMaskHref',
  * ]}
  */
 export const complexConfigKeys = [
@@ -34,7 +33,6 @@ export const complexConfigKeys = [
   'fileValidators',
   'collectionValidators',
   'mediaRecorerOptions',
-  'cloudImageEditorMaskHref',
 ];
 
 /** @type {(key: keyof import('../../types').ConfigType) => key is keyof import('../../types').ConfigComplexType} */
