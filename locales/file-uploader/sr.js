@@ -119,4 +119,5 @@ export default {
   'a11y-file-item-status': 'Datoteka {{fileName}} je u statusu {{status}}',
   'select-all': 'Изабери све',
   'deselect-all': 'Поништи избор свих',
+  'waiting-for': 'Чека се {{source}}',
 };

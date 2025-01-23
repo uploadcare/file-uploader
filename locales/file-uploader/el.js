@@ -119,4 +119,5 @@ export default {
   uploading: 'Μεταφόρτωση',
   idle: 'Αδράνεια',
   'a11y-file-item-status': 'Το αρχείο {{fileName}} βρίσκεται στην κατάσταση {{status}}',
+  'waiting-for': 'Αναμονή για {{source}}',
 };

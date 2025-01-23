@@ -120,4 +120,5 @@ export default {
   uploading: 'Subiendo',
   idle: 'Inactivo',
   'a11y-file-item-status': 'El archivo {{fileName}} está en estado {{status}}',
+  'waiting-for': 'Esperando por {{source}}',
 };

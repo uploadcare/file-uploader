@@ -120,4 +120,5 @@ export default {
   'a11y-file-item-status': 'Il file {{fileName}} è nello stato {{status}}',
   'select-all': 'Seleziona tutto',
   'deselect-all': 'Deseleziona tutto',
+  'waiting-for': 'In attesa di {{source}}',
 };

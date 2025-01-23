@@ -120,4 +120,5 @@ export default {
   'a11y-file-item-status': 'Fișierul {{fileName}} este în starea {{status}}',
   'select-all': 'Selectează tot',
   'deselect-all': 'Deselectează tot',
+  'waiting-for': 'Așteptare pentru {{source}}',
 };
