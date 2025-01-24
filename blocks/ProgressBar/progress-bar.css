@@ -1,4 +1,6 @@
 uc-progress-bar {
+  --l-progress-value: 0;
+
   position: absolute;
   top: 0;
   bottom: 0;
@@ -10,7 +12,8 @@ uc-progress-bar {
 }
 
 uc-progress-bar .uc-progress {
-  width: calc(var(--l-width) * 1%);
+  position: absolute;
+  width: calc(var(--l-progress-value) * 1%);
   height: 100%;
   background-color: var(--uc-primary);
   transform: translateX(0);
@@ -22,4 +25,35 @@ uc-progress-bar .uc-progress {
 
 uc-progress-bar .uc-progress--hidden {
   opacity: 0;
+}
+
+uc-progress-bar .uc-fake-progress {
+  --l-fake-progress-width: 30;
+
+  position: absolute;
+  width: calc(var(--l-fake-progress-width) * 1%);
+  height: 100%;
+  background-color: var(--uc-primary);
+  animation: fake-progress-animation 1s ease-in-out infinite;
+  opacity: 1;
+  transition:
+    opacity 0.3s,
+    display 1s;
+  /* stylelint-disable-next-line property-no-unknown */
+  transition-behavior: allow-discrete;
+}
+
+uc-progress-bar .uc-fake-progress--hidden {
+  opacity: 0;
+  display: none;
+}
+
+@keyframes fake-progress-animation {
+  from {
+    transform: translateX(-100%);
+  }
+
+  to {
+    transform: translateX(calc(100 / var(--l-fake-progress-width) * 100 * 1%));
+  }
 }

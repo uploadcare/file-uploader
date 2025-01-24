@@ -118,4 +118,5 @@ export default {
   uploading: 'Uploader',
   idle: 'Inaktiv',
   'a11y-file-item-status': 'Filen {{fileName}} er i status {{status}}',
+  'waiting-for': 'Venter på {{source}}',
 };

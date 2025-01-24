@@ -97,7 +97,7 @@ export default {
     'You’ve chosen {{total}} {{plural:file(total)}}. At least {{min}} {{plural:file(min)}} required.',
   'files-count-limit-error-too-many': 'You’ve chosen too many files. {{max}} {{plural:file(max)}} is maximum.',
   'files-max-size-limit-error': 'File is too big. Max file size is {{maxFileSize}}.',
-  'has-validation-errors': 'File validation error ocurred. Please, check your files before upload.',
+  'has-validation-errors': 'File validation error occurred. Please, check your files before upload.',
   'images-only-accepted': 'Only image files are accepted.',
   'file-type-not-allowed': 'Uploading of these file types is not allowed.',
   'some-files-were-not-uploaded': 'Some files were not uploaded.',
@@ -117,4 +117,5 @@ export default {
   uploading: 'Uploading',
   idle: 'Idle',
   'a11y-file-item-status': 'File {{fileName}} in status {{status}}',
+  'waiting-for': 'Waiting for {{source}}',
 };

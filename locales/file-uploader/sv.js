@@ -117,4 +117,5 @@ export default {
   'a11y-file-item-status': 'Filen {{fileName}} är i status {{status}}',
   'select-all': 'Välj alla',
   'deselect-all': 'Avmarkera alla',
+  'waiting-for': 'Väntar på {{source}}',
 };

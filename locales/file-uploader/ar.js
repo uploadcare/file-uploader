@@ -125,4 +125,5 @@ export default {
   uploading: 'جارٍ التحميل',
   idle: 'خامل',
   'a11y-file-item-status': 'الملف {{fileName}} في حالة {{status}}',
+  'waiting-for': 'في انتظار {{source}}',
 };

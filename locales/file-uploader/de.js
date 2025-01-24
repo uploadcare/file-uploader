@@ -119,4 +119,5 @@ export default {
   uploading: 'Hochladen',
   idle: 'Leerlauf',
   'a11y-file-item-status': 'Datei {{fileName}} im Status {{status}}',
+  'waiting-for': 'Warten auf {{source}}',
 };
