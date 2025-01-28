@@ -1,3 +1,9 @@
+## [1.12.1](https://github.com/uploadcare/file-uploader/compare/v1.12.0...v1.12.1) (2025-01-28)
+
+### Bug Fixes
+
+- **drop-area:** added position:relative for upload-list ([#782](https://github.com/uploadcare/file-uploader/issues/782)) ([8c7fa63](https://github.com/uploadcare/file-uploader/commit/8c7fa6345c4cdcc992c96e61155fc822ad551cb7))
+
 # [1.12.0](https://github.com/uploadcare/file-uploader/compare/v1.11.3...v1.12.0) (2025-01-08)
 
 ### Bug Fixes
