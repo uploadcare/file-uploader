@@ -1,3 +1,9 @@
+# [1.13.0](https://github.com/uploadcare/file-uploader/compare/v1.12.1...v1.13.0) (2025-01-30)
+
+### Features
+
+- add `cameraModes` option, deprecate `enableVideoRecording` and `defaultCameraMode` options ([#781](https://github.com/uploadcare/file-uploader/issues/781)) ([7fbe522](https://github.com/uploadcare/file-uploader/commit/7fbe5227081da7a4515a93b61e122ea1d7e850f9))
+
 ## [1.12.1](https://github.com/uploadcare/file-uploader/compare/v1.12.0...v1.12.1) (2025-01-28)
 
 ### Bug Fixes
