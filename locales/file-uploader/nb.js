@@ -117,4 +117,5 @@ export default {
   'a11y-file-item-status': 'Fil {{fileName}} i status {{status}}',
   'select-all': 'Velg alle',
   'deselect-all': 'Fjern alle',
+  'waiting-for': 'Venter på {{source}}',
 };

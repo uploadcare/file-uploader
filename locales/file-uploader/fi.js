@@ -118,4 +118,5 @@ export default {
   'a11y-file-item-status': 'Tiedosto {{fileName}} tilassa {{status}}',
   'select-all': 'Valitse kaikki',
   'deselect-all': 'Poista valinnat',
+  'waiting-for': 'Odotetaan {{source}}',
 };

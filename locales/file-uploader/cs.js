@@ -122,4 +122,5 @@ export default {
   uploading: 'Nahrává se',
   idle: 'Nečinný',
   'a11y-file-item-status': 'Soubor {{fileName}} je ve stavu {{status}}',
+  'waiting-for': 'Čekání na {{source}}',
 };

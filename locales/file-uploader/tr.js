@@ -117,4 +117,5 @@ export default {
   'a11y-file-item-status': '{{fileName}} dosyası {{status}} durumunda',
   'select-all': 'Hepsini seç',
   'deselect-all': 'Hiçbirini seçme',
+  'waiting-for': '{{source}} bekleniyor',
 };
