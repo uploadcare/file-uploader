@@ -16,11 +16,10 @@ export class ProgressBar extends Block {
   initCallback() {
     super.initCallback();
     this.defineAccessor('value', (value) => {
-      if (!value) return;
+      if (value === undefined || value === null) return;
       const prevValue = this._value;
       this._value = value;
       if (!this._visible) return;
-
       if (value === 100) {
         this.ref.realProgressLine.addEventListener(
           'transitionend',
