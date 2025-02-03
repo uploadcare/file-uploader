@@ -1,3 +1,9 @@
+## [1.13.1](https://github.com/uploadcare/file-uploader/compare/v1.13.0...v1.13.1) (2025-02-03)
+
+### Bug Fixes
+
+- **file-item:** improve progressbar ui when uploading from external URLs ([#784](https://github.com/uploadcare/file-uploader/issues/784)) ([86dfbb1](https://github.com/uploadcare/file-uploader/commit/86dfbb13daed4d244658b1097160eeecfa2eae08))
+
 # [1.13.0](https://github.com/uploadcare/file-uploader/compare/v1.12.1...v1.13.0) (2025-01-30)
 
 ### Features
