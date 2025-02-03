@@ -18,7 +18,7 @@ export class SourceList extends Block {
           return;
         }
 
-        html += /* HTML */ `<uc-source-btn type="${srcName}"></uc-source-btn>`;
+        html += /* HTML */ `<uc-source-btn role="listitem" type="${srcName}"></uc-source-btn>`;
       });
 
       if (this.cfg.sourceListWrap) {

@@ -38,7 +38,7 @@ export class UrlSource extends UploaderBlock {
 
 UrlSource.template = /* HTML */ `
   <uc-activity-header>
-    <button type="button" class="uc-mini-btn" set="onclick: *historyBack" l10n="@title:back">
+    <button type="button" class="uc-mini-btn" set="onclick: *historyBack" l10n="@title:back;@aria-label:back">
       <uc-icon name="back"></uc-icon>
     </button>
     <div>
@@ -49,7 +49,7 @@ UrlSource.template = /* HTML */ `
       type="button"
       class="uc-mini-btn uc-close-btn"
       set="onclick: *closeModal"
-      l10n="@title:a11y-activity-header-button-close"
+      l10n="@title:a11y-activity-header-button-close;@aria-label:a11y-activity-header-button-close"
     >
       <uc-icon name="close"></uc-icon>
     </button>

@@ -432,13 +432,13 @@ FileItem.template = /* HTML */ `
       </div>
     </div>
     <div aria-live="polite" class="uc-file-name-wrapper" set="@aria-label:ariaLabelStatusFile;">
-      <span class="uc-file-name" set="@title: itemName">{{itemName}}</span>
+      <span class="uc-file-name">{{itemName}}</span>
       <span class="uc-file-error" set="@hidden: !errorText">{{errorText}}</span>
     </div>
     <div class="uc-file-actions">
       <button
         type="button"
-        l10n="@title:file-item-edit-button"
+        l10n="@title:file-item-edit-button;@aria-label:file-item-edit-button"
         class="uc-edit-btn uc-mini-btn"
         set="onclick: onEdit; @hidden: !isEditable"
       >
@@ -446,7 +446,7 @@ FileItem.template = /* HTML */ `
       </button>
       <button
         type="button"
-        l10n="@title:file-item-remove-button"
+        l10n="@title:file-item-remove-button;@aria-label:file-item-remove-button"
         class="uc-remove-btn uc-mini-btn"
         set="onclick: onRemove;"
       >
