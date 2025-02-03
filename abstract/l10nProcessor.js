@@ -16,7 +16,7 @@ export function l10nProcessor(fr, fnCtx) {
     const list = key.split(';');
 
     for (const item of list) {
-      locale(el, item, fnCtx);
+      if (item) locale(el, item, fnCtx);
     }
   });
 }
