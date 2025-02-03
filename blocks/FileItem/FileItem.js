@@ -431,7 +431,7 @@ FileItem.template = /* HTML */ `
         <uc-icon set="@name: badgeIcon"></uc-icon>
       </div>
     </div>
-    <div aria-live="polite" class="uc-file-name-wrapper" set="@aria-label:ariaLabelStatusFile;">
+    <div aria-atomic="true" aria-live="polite" class="uc-file-name-wrapper" set="@aria-label:ariaLabelStatusFile;">
       <span class="uc-file-name">{{itemName}}</span>
       <span class="uc-file-error" set="@hidden: !errorText">{{errorText}}</span>
     </div>
