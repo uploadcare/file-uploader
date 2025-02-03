@@ -117,4 +117,5 @@ export default {
   uploading: 'Üleslaadimine',
   idle: 'Ootel',
   'a11y-file-item-status': 'Fail {{fileName}} on seisundis {{status}}',
+  'waiting-for': 'Ootel {{source}}',
 };

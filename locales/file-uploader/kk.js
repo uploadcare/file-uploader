@@ -117,4 +117,5 @@ export default {
   'a11y-file-item-status': '{{fileName}} файлы {{status}} күйінде',
   'select-all': 'Барлығын таңдау',
   'deselect-all': 'Барлығын таңдаудан шығару',
+  'waiting-for': 'Күтіп тұр {{source}}',
 };

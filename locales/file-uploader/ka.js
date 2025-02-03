@@ -117,4 +117,5 @@ export default {
   'a11y-file-item-status': 'ფაილი {{fileName}} არის მდგომარეობაში {{status}}',
   'select-all': 'ყველას არჩევა',
   'deselect-all': 'ყველას არჩევის გაუქმება',
+  'waiting-for': 'ველოდები {{source}}',
 };

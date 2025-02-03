@@ -117,4 +117,5 @@ export default {
   'a11y-file-item-status': 'Tệp {{fileName}} ở trạng thái {{status}}',
   'select-all': 'Chọn tất cả',
   'deselect-all': 'Bỏ chọn tất cả',
+  'waiting-for': 'Đang chờ {{source}}',
 };

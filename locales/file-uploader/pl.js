@@ -121,4 +121,5 @@ export default {
   'a11y-file-item-status': 'Plik {{fileName}} ma status {{status}}',
   'select-all': 'Zaznacz wszystko',
   'deselect-all': 'Odznacz wszystko',
+  'waiting-for': 'Oczekiwanie na {{source}}',
 };
