@@ -17,7 +17,9 @@
   --size-ui-min-width: 130px;
   --size-line-width: 1px;
   --size-modal-width: 650px;
-  --size-icon: calc(var(--uc-button-size) / 2); /* TODO: remove icon size overrides */
+  --size-icon: calc(var(--uc-button-size) / 2);
+
+  /* TODO: remove icon size overrides */
 
   --border-radius-editor: var(--uc-radius);
   --border-radius-thumb: var(--uc-radius);
@@ -365,7 +367,6 @@ uc-editor-operation-control > button {
   height: var(--l-base-height);
   color: var(--color-effect);
   opacity: var(--opacity-effect);
-  outline: none;
   cursor: pointer;
   transition: var(--l-width-transition);
 }
@@ -882,7 +883,6 @@ uc-btn-ui > button {
   background-color: var(--background-effect);
   border-radius: var(--uc-radius);
   opacity: var(--opacity-effect);
-  outline: none;
   cursor: pointer;
   filter: brightness(var(--filter-effect));
   transition: var(--l-transition-effect);
@@ -1188,5 +1188,6 @@ uc-presence-toggle.uc-initial {
 
 [uc-cloud-image-editor] [role='button']:focus-visible,
 [uc-cloud-image-editor] button:focus-visible {
+  outline: 1px auto Highlight;
   outline: 1px auto -webkit-focus-ring-color;
 }

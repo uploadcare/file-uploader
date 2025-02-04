@@ -27,6 +27,8 @@ export class Icon extends Block {
         this.$.href = iconHref;
       });
     });
+
+    this.setAttribute('aria-hidden', 'true');
   }
 }
 

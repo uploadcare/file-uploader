@@ -46,7 +46,7 @@ FileUploaderRegular.template = /* HTML */ `
   <uc-modal strokes block-body-scrolling>
     <uc-start-from>
       <uc-drop-area with-icon clickable></uc-drop-area>
-      <uc-source-list wrap></uc-source-list>
+      <uc-source-list role="list" wrap></uc-source-list>
       <button type="button" l10n="start-from-cancel" class="uc-secondary-btn" set="onclick: *historyBack"></button>
       <uc-copyright></uc-copyright>
     </uc-start-from>
