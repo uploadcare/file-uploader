@@ -22,6 +22,7 @@ uc-copyright .uc-credits {
 }
 
 uc-copyright .uc-credits:focus-visible {
+  outline: 1px auto Highlight;
   outline: 1px auto -webkit-focus-ring-color;
 }
 

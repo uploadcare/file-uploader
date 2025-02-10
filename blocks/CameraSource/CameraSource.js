@@ -844,7 +844,7 @@ CameraSource.template = /* HTML */ `
       type="button"
       class="uc-mini-btn uc-close-btn"
       set="onclick: *closeModal"
-      l10n="@title:a11y-activity-header-button-close"
+      l10n="@title:a11y-activity-header-button-close;@aria-label:a11y-activity-header-button-close"
     >
       <uc-icon name="close"></uc-icon>
     </button>

@@ -164,7 +164,7 @@ export class EditorFilterControl extends EditorButtonControl {
 }
 
 EditorFilterControl.template = /* HTML */ `
-  <button type="button" role="option" l10n="@title:title-prop">
+  <button type="button" role="option" l10n="@title:title-prop;@aria-label:title-prop">
     <div class="uc-preview" ref="preview-el"></div>
     <uc-icon ref="icon-el" set="@name: icon; @size: iconSize;"></uc-icon>
   </button>
