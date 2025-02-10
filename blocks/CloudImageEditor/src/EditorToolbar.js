@@ -402,6 +402,10 @@ export class EditorToolbar extends Block {
 
     this._updateInfoTooltip();
   }
+
+  destroyCallback() {
+    this.$['*showSlider'] = false;
+  }
 }
 
 EditorToolbar.template = /* HTML */ `
