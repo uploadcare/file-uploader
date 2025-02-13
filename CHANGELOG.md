@@ -1,3 +1,9 @@
+## [1.13.2](https://github.com/uploadcare/file-uploader/compare/v1.13.1...v1.13.2) (2025-02-13)
+
+### Bug Fixes
+
+- close ui slider when click on the editor toolbar ([#790](https://github.com/uploadcare/file-uploader/issues/790)) ([6d59f25](https://github.com/uploadcare/file-uploader/commit/6d59f254b94b5389d1c990e7641b80972646665c))
+
 ## [1.13.1](https://github.com/uploadcare/file-uploader/compare/v1.13.0...v1.13.1) (2025-02-03)
 
 ### Bug Fixes
