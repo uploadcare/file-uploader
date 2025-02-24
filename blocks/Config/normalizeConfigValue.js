@@ -97,6 +97,7 @@ const mapping = {
   filesViewMode: asFilesViewMode,
   gridShowFileNames: asBoolean,
   cloudImageEditorAutoOpen: asBoolean,
+  cloudImageEditorMaskHref: asString,
 };
 
 /**
