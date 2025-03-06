@@ -15,3 +15,5 @@ export const CameraSourceEvents = Object.freeze({
   RETAKE: 'retake',
   ACCEPT: 'accept',
 });
+
+/** @typedef {(typeof CameraSourceTypes)[keyof typeof CameraSourceTypes]} ModeCameraType */

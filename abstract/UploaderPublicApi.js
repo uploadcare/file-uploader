@@ -4,13 +4,16 @@ import { ActivityBlock } from './ActivityBlock.js';
 import { applyStyles, Data } from '@symbiotejs/symbiote';
 import { EventType } from '../blocks/UploadCtxProvider/EventEmitter.js';
 import { UploadSource } from '../blocks/utils/UploadSource.js';
-import { deserializeCsv, serializeCsv } from '../blocks/utils/comma-separated.js';
+import { serializeCsv } from '../blocks/utils/comma-separated.js';
 import { IMAGE_ACCEPT_LIST, fileIsImage, mergeFileTypes } from '../utils/fileTypes.js';
 import { parseCdnUrl } from '../utils/parseCdnUrl.js';
 import { buildOutputCollectionState } from './buildOutputCollectionState.js';
 import { stringToArray } from '../utils/stringToArray.js';
+import { calcCameraModes } from '../blocks/CameraSource/calcCameraModes.js';
 import { CameraSourceTypes } from '../blocks/CameraSource/constants.js';
+import { isMobileDevice } from '../blocks/utils/checkDevice.js';
 
+const getMobileStatus = () => isMobileDevice();
 export class UploaderPublicApi {
   /**
    * @private
@@ -137,7 +140,7 @@ export class UploaderPublicApi {
     );
   };
 
-  /** @param {{ captureCamera?: boolean }} options */
+  /** @param {{ captureCamera?: boolean; modeCamera?: import('../blocks/CameraSource/constants.js').ModeCameraType }} options */
   openSystemDialog = (options = {}) => {
     const accept = serializeCsv(
       mergeFileTypes([this.cfg.accept ?? '', ...(this.cfg.imgOnly ? IMAGE_ACCEPT_LIST : [])]),
@@ -155,8 +158,15 @@ export class UploaderPublicApi {
     fileInput.multiple = this.cfg.multiple;
     if (options.captureCamera) {
       fileInput.capture = this.cfg.cameraCapture;
-      const isVideoRecordingEnabled = deserializeCsv(this.cfg.cameraModes).includes(CameraSourceTypes.VIDEO);
-      fileInput.accept = ['image/*', isVideoRecordingEnabled && 'video/*'].filter(Boolean).join(',');
+      const { isPhotoEnabled, isVideoRecordingEnabled } = calcCameraModes(this.cfg);
+
+      if (options.modeCamera === CameraSourceTypes.PHOTO && isPhotoEnabled) {
+        fileInput.accept = 'image/*';
+      } else if (options.modeCamera === CameraSourceTypes.VIDEO && isVideoRecordingEnabled) {
+        fileInput.accept = 'video/*';
+      } else {
+        fileInput.accept = ['image/*', isVideoRecordingEnabled && 'video/*'].filter(Boolean).join(',');
+      }
     } else {
       fileInput.accept = accept;
     }
@@ -262,6 +272,29 @@ export class UploaderPublicApi {
           this._ctx.$['*currentActivity'] = ActivityBlock.activities.UPLOAD_LIST;
           this.openSystemDialog();
           return;
+        }
+
+        if (srcKey === 'camera' && getMobileStatus()) {
+          const { isPhotoEnabled, isVideoRecordingEnabled } = calcCameraModes(this.cfg);
+
+          if (isPhotoEnabled && isVideoRecordingEnabled) {
+            this._ctx.set$({
+              '*currentActivity': ActivityBlock.activities.START_FROM,
+            });
+            this._ctx.setOrAddState('*modalActive', true);
+            return;
+          } else if (isPhotoEnabled || isVideoRecordingEnabled) {
+            this.openSystemDialog({
+              captureCamera: true,
+              modeCamera: isPhotoEnabled ? CameraSourceTypes.PHOTO : CameraSourceTypes.VIDEO,
+            });
+            return;
+          } else {
+            this.openSystemDialog({
+              captureCamera: true,
+              modeCamera: CameraSourceTypes.PHOTO,
+            });
+          }
         }
 
         /** @type {Set<import('./Block').Block>} */

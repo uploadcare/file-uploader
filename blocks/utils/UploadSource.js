@@ -12,6 +12,11 @@ export const ExternalUploadSource = Object.freeze({
   HUDDLE: 'huddle',
 });
 
+export const UploadSourceMobile = Object.freeze({
+  MOBILE_VIDEO_CAMERA: 'mobile-video-camera',
+  MOBILE_PHOTO_CAMERA: 'mobile-photo-camera',
+});
+
 export const UploadSource = Object.freeze({
   LOCAL: 'local',
   DROP_AREA: 'drop-area',
@@ -20,6 +25,8 @@ export const UploadSource = Object.freeze({
   API: 'js-api',
   URL: 'url',
   DRAW: 'draw',
+
+  ...UploadSourceMobile,
   ...ExternalUploadSource,
 });
 
