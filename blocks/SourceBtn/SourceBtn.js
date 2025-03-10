@@ -3,10 +3,9 @@ import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 import { ExternalUploadSource, UploadSource, UploadSourceMobile } from '../utils/UploadSource.js';
 import { CameraSourceTypes } from '../CameraSource/constants.js';
+import { isSupportCapture } from '../utils/supportCapture.js';
 
 const L10N_PREFIX = 'src-type-';
-
-const MOBILE_CAMERA_REGEX = /^mobile-(\w+)-camera$/;
 
 /**
  * @typedef {{
@@ -56,7 +55,8 @@ export class SourceBtn extends UploaderBlock {
       type: UploadSource.CAMERA,
       activity: ActivityBlock.activities.CAMERA,
       activate: () => {
-        const supportsCapture = 'capture' in document.createElement('input');
+        const supportsCapture = isSupportCapture();
+
         if (supportsCapture) {
           this.api.openSystemDialog({ captureCamera: true });
         }
@@ -71,26 +71,21 @@ export class SourceBtn extends UploaderBlock {
     });
 
     for (let mobileSourceType of Object.values(UploadSourceMobile)) {
-      const match = mobileSourceType.match(MOBILE_CAMERA_REGEX);
-
-      if (match) {
-        const cameraType = /** @type {import('../CameraSource/constants.js').ModeCameraType} */ (match[1]);
-
-        this.registerType({
-          type: mobileSourceType,
-          activity: ActivityBlock.activities.CAMERA,
-          activate: () => {
-            const supportsCapture = 'capture' in document.createElement('input');
-            if (supportsCapture) {
-              this.api.openSystemDialog({
-                captureCamera: true,
-                modeCamera: cameraType === 'photo' ? CameraSourceTypes.PHOTO : CameraSourceTypes.VIDEO,
-              });
-            }
-            return !supportsCapture;
-          },
-        });
-      }
+      this.registerType({
+        type: mobileSourceType,
+        activity: ActivityBlock.activities.CAMERA,
+        activate: () => {
+          const supportsCapture = isSupportCapture();
+          if (supportsCapture) {
+            this.api.openSystemDialog({
+              captureCamera: true,
+              modeCamera:
+                mobileSourceType === 'mobile-photo-camera' ? CameraSourceTypes.PHOTO : CameraSourceTypes.VIDEO,
+            });
+          }
+          return !supportsCapture;
+        },
+      });
     }
 
     for (let externalSourceType of Object.values(ExternalUploadSource)) {

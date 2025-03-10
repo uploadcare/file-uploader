@@ -11,9 +11,8 @@ import { buildOutputCollectionState } from './buildOutputCollectionState.js';
 import { stringToArray } from '../utils/stringToArray.js';
 import { calcCameraModes } from '../blocks/CameraSource/calcCameraModes.js';
 import { CameraSourceTypes } from '../blocks/CameraSource/constants.js';
-import { isMobileDevice } from '../blocks/utils/checkDevice.js';
+import { isSupportCapture } from '../blocks/utils/supportCapture.js';
 
-const getMobileStatus = () => isMobileDevice();
 export class UploaderPublicApi {
   /**
    * @private
@@ -274,7 +273,7 @@ export class UploaderPublicApi {
           return;
         }
 
-        if (srcKey === 'camera' && getMobileStatus()) {
+        if (srcKey === 'camera' && isSupportCapture()) {
           const { isPhotoEnabled, isVideoRecordingEnabled } = calcCameraModes(this.cfg);
 
           if (isPhotoEnabled && isVideoRecordingEnabled) {

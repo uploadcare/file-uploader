@@ -2,9 +2,7 @@
 import { Block } from '../../abstract/Block.js';
 import { stringToArray } from '../../utils/stringToArray.js';
 import { calcCameraModes } from '../CameraSource/calcCameraModes.js';
-import { isMobileDevice } from '../utils/checkDevice.js';
-
-const getMobileStatus = () => isMobileDevice();
+import { isSupportCapture } from '../utils/supportCapture.js';
 
 export class SourceList extends Block {
   initCallback() {
@@ -24,7 +22,7 @@ export class SourceList extends Block {
           return;
         }
 
-        if (srcName === 'camera' && getMobileStatus()) {
+        if (srcName === 'camera' && isSupportCapture()) {
           const { isPhotoEnabled, isVideoRecordingEnabled } = calcCameraModes(this.cfg);
 
           if (isPhotoEnabled)
