@@ -1,7 +1,7 @@
 // @ts-check
 import { Block } from '../../abstract/Block.js';
 import { stringToArray } from '../../utils/stringToArray.js';
-import { calcCameraModes } from '../CameraSource/calcCameraModes.js';
+import { deserializeCsv } from '../utils/comma-separated.js';
 import { isSupportCapture } from '../utils/supportCapture.js';
 
 export class SourceList extends Block {
@@ -23,13 +23,12 @@ export class SourceList extends Block {
         }
 
         if (srcName === 'camera' && isSupportCapture()) {
-          const { isPhotoEnabled, isVideoRecordingEnabled } = calcCameraModes(this.cfg);
-
-          if (isPhotoEnabled)
-            html += /* HTML */ `<uc-source-btn role="listitem" type="mobile-photo-camera"></uc-source-btn>`;
-
-          if (isVideoRecordingEnabled)
-            html += /* HTML */ `<uc-source-btn role="listitem" type="mobile-video-camera"></uc-source-btn>`;
+          this.subConfigValue('cameraModes', (/** @type {String} */ val) => {
+            const cameraModes = deserializeCsv(val);
+            cameraModes.forEach((mode) => {
+              html += /* HTML */ `<uc-source-btn role="listitem" type="mobile-${mode}-camera"></uc-source-btn>`;
+            });
+          });
 
           return;
         }
