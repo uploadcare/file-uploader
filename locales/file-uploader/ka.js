@@ -55,6 +55,8 @@ export default {
   'src-type-onedrive': 'Onedrive',
   'src-type-huddle': 'Huddle',
   'src-type-other': 'სხვა',
+  'src-type-mobile-video-camera': 'ვიდეო',
+  'src-type-mobile-photo-camera': 'ფოტო',
   'caption-from-url': 'იმპორტი ლინკიდან',
   'caption-camera': 'კამერა',
   'caption-draw': 'ხატვა',

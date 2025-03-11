@@ -55,6 +55,8 @@ export default {
   'src-type-onedrive': 'Onedrive',
   'src-type-huddle': 'Huddle',
   'src-type-other': 'Annat',
+  'src-type-mobile-video-camera': 'Video',
+  'src-type-mobile-photo-camera': 'Foto',
   'caption-from-url': 'Importera från länk',
   'caption-camera': 'Kamera',
   'caption-draw': 'Rita',

@@ -57,6 +57,8 @@ export default {
   'src-type-onedrive': 'Onedrive',
   'src-type-huddle': 'Huddle',
   'src-type-other': 'Cits',
+  'src-type-mobile-video-camera': 'Video',
+  'src-type-mobile-photo-camera': 'Foto',
   'caption-from-url': 'Importēt no saites',
   'caption-camera': 'Kamera',
   'caption-draw': 'Zīmēt',

@@ -25,9 +25,14 @@ export class SourceList extends Block {
         if (srcName === 'camera' && isSupportCapture()) {
           this.subConfigValue('cameraModes', (/** @type {String} */ val) => {
             const cameraModes = deserializeCsv(val);
+
             cameraModes.forEach((mode) => {
               html += /* HTML */ `<uc-source-btn role="listitem" type="mobile-${mode}-camera"></uc-source-btn>`;
             });
+
+            if (cameraModes.length === 0) {
+              html += /* HTML */ `<uc-source-btn role="listitem" type="mobile-photo-camera"></uc-source-btn>`;
+            }
           });
 
           return;

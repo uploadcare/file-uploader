@@ -55,6 +55,8 @@ export default {
   'src-type-onedrive': 'Onedrive',
   'src-type-huddle': 'Huddle',
   'src-type-other': 'Басқа',
+  'src-type-mobile-video-camera': 'Бейне',
+  'src-type-mobile-photo-camera': 'Фото',
   'caption-from-url': 'Сілтемеден импорттау',
   'caption-camera': 'Камера',
   'caption-draw': 'Сызу',

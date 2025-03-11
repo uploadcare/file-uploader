@@ -57,6 +57,8 @@ export default {
   'src-type-onedrive': 'Onedrive',
   'src-type-huddle': 'Huddle',
   'src-type-other': 'אחר',
+  'src-type-mobile-video-camera': 'וידאו',
+  'src-type-mobile-photo-camera': 'תמונה',
   'caption-from-url': 'ייבוא מקישור',
   'caption-camera': 'מצלמה',
   'caption-draw': 'ציור',

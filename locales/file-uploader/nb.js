@@ -55,6 +55,8 @@ export default {
   'src-type-onedrive': 'Onedrive',
   'src-type-huddle': 'Huddle',
   'src-type-other': 'Annet',
+  'src-type-mobile-video-camera': 'Video',
+  'src-type-mobile-photo-camera': 'Foto',
   'caption-from-url': 'Importer fra lenke',
   'caption-camera': 'Kamera',
   'caption-draw': 'Tegn',

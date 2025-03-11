@@ -61,6 +61,8 @@ export default {
   'src-type-onedrive': 'Onedrive',
   'src-type-huddle': 'Huddle',
   'src-type-other': 'Jiné',
+  'src-type-mobile-video-camera': 'Video',
+  'src-type-mobile-photo-camera': 'Foto',
   'caption-from-url': 'Importovat z odkazu',
   'caption-camera': 'Kamera',
   'caption-draw': 'Kreslit',

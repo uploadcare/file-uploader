@@ -59,6 +59,8 @@ export default {
   'src-type-onedrive': 'Onedrive',
   'src-type-huddle': 'Huddle',
   'src-type-other': 'Inne',
+  'src-type-mobile-video-camera': 'Wideo',
+  'src-type-mobile-photo-camera': 'Zdjęcie',
   'caption-from-url': 'Import z linku',
   'caption-camera': 'Aparat',
   'caption-draw': 'Rysuj',

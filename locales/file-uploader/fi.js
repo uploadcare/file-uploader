@@ -55,6 +55,8 @@ export default {
   'src-type-onedrive': 'Onedrive',
   'src-type-huddle': 'Huddle',
   'src-type-other': 'Muu',
+  'src-type-mobile-video-camera': 'Video',
+  'src-type-mobile-photo-camera': 'Valokuva',
   'caption-from-url': 'Tuo linkistä',
   'caption-camera': 'Kamera',
   'caption-draw': 'Piirrä',

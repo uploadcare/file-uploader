@@ -55,6 +55,8 @@ export default {
   'src-type-onedrive': 'Onedrive',
   'src-type-huddle': 'Huddle',
   'src-type-other': 'Khác',
+  'src-type-mobile-video-camera': 'Video',
+  'src-type-mobile-photo-camera': 'Ảnh',
   'caption-from-url': 'Nhập khẩu từ liên kết',
   'caption-camera': 'Máy ảnh',
   'caption-draw': 'Vẽ',

@@ -57,6 +57,8 @@ export default {
   'src-type-onedrive': 'Onedrive',
   'src-type-huddle': 'Huddle',
   'src-type-other': 'Остало',
+  'src-type-mobile-video-camera': 'Видео',
+  'src-type-mobile-photo-camera': 'Фотографија',
   'caption-from-url': 'Увези са везе',
   'caption-camera': 'Камера',
   'caption-draw': 'Цртај',
