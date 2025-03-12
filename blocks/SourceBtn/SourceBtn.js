@@ -1,7 +1,9 @@
 // @ts-check
 import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
-import { ExternalUploadSource, UploadSource } from '../utils/UploadSource.js';
+import { ExternalUploadSource, UploadSource, UploadSourceMobile } from '../utils/UploadSource.js';
+import { CameraSourceTypes } from '../CameraSource/constants.js';
+import { isSupportCapture } from '../utils/supportCapture.js';
 
 const L10N_PREFIX = 'src-type-';
 
@@ -53,18 +55,38 @@ export class SourceBtn extends UploaderBlock {
       type: UploadSource.CAMERA,
       activity: ActivityBlock.activities.CAMERA,
       activate: () => {
-        const supportsCapture = 'capture' in document.createElement('input');
+        const supportsCapture = isSupportCapture();
+
         if (supportsCapture) {
           this.api.openSystemDialog({ captureCamera: true });
         }
         return !supportsCapture;
       },
     });
+
     this.registerType({
       type: 'draw',
       activity: ActivityBlock.activities.DRAW,
       icon: 'edit-draw',
     });
+
+    for (let mobileSourceType of Object.values(UploadSourceMobile)) {
+      this.registerType({
+        type: mobileSourceType,
+        activity: ActivityBlock.activities.CAMERA,
+        activate: () => {
+          const supportsCapture = isSupportCapture();
+          if (supportsCapture) {
+            this.api.openSystemDialog({
+              captureCamera: true,
+              modeCamera:
+                mobileSourceType === 'mobile-photo-camera' ? CameraSourceTypes.PHOTO : CameraSourceTypes.VIDEO,
+            });
+          }
+          return !supportsCapture;
+        },
+      });
+    }
 
     for (let externalSourceType of Object.values(ExternalUploadSource)) {
       this.registerType({

@@ -45,6 +45,8 @@ export default {
   'src-type-local': 'From device',
   'src-type-from-url': 'From link',
   'src-type-camera': 'Camera',
+  'src-type-mobile-video-camera': 'Video',
+  'src-type-mobile-photo-camera': 'Photo',
   'src-type-draw': 'Draw',
   'src-type-facebook': 'Facebook',
   'src-type-dropbox': 'Dropbox',

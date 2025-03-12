@@ -55,6 +55,8 @@ export default {
   'src-type-onedrive': 'Onedrive',
   'src-type-huddle': 'Huddle',
   'src-type-other': 'Annað',
+  'src-type-mobile-video-camera': 'Myndband',
+  'src-type-mobile-photo-camera': 'Ljósmynd',
   'caption-from-url': 'Flytja inn frá slóð',
   'caption-camera': 'Myndavél',
   'caption-draw': 'Teikna',

@@ -55,6 +55,8 @@ export default {
   'src-type-onedrive': 'Onedrive',
   'src-type-huddle': 'Huddle',
   'src-type-other': 'Այլ',
+  'src-type-mobile-video-camera': 'Տեսանյութ',
+  'src-type-mobile-photo-camera': 'Լուսանկար',
   'caption-from-url': 'Իմպորտել հղումով',
   'caption-camera': 'Կամերա',
   'caption-draw': 'Նկարել',

@@ -55,6 +55,8 @@ export default {
   'src-type-onedrive': 'Onedrive',
   'src-type-huddle': 'Huddle',
   'src-type-other': '其他',
+  'src-type-mobile-video-camera': '视频',
+  'src-type-mobile-photo-camera': '照片',
   'caption-from-url': '从链接导入',
   'caption-camera': '相机',
   'caption-draw': '绘制',

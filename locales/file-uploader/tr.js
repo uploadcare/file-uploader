@@ -55,6 +55,8 @@ export default {
   'src-type-onedrive': 'Onedrive',
   'src-type-huddle': 'Huddle',
   'src-type-other': 'Diğer',
+  'src-type-mobile-video-camera': 'Video',
+  'src-type-mobile-photo-camera': 'Fotoğraf',
   'caption-from-url': 'Bağlantıdan İçe Aktar',
   'caption-camera': 'Kamera',
   'caption-draw': 'Çiz',

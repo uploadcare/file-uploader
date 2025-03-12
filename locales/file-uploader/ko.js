@@ -55,6 +55,8 @@ export default {
   'src-type-onedrive': 'Onedrive',
   'src-type-huddle': 'Huddle',
   'src-type-other': '기타',
+  'src-type-mobile-video-camera': '비디오',
+  'src-type-mobile-photo-camera': '사진',
   'caption-from-url': '링크에서 가져오기',
   'caption-camera': '카메라',
   'caption-draw': '그리기',
