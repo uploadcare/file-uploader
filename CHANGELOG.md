@@ -2,7 +2,7 @@
 
 ### Features
 
-- **camera** divided the camera into types on the mobiles ([#795](https://github.com/uploadcare/file-uploader/issues/795)) ([0e7383c](https://github.com/uploadcare/file-uploader/commit/0e7383cc222a99c6bc3eec778ffca6228383926a))
+- **camera** added a check for mobile devices when capturing media. Now, instead of using a single camera source, separate cameras are rendered for photo and video capture. ([#795](https://github.com/uploadcare/file-uploader/issues/795)) ([0e7383c](https://github.com/uploadcare/file-uploader/commit/0e7383cc222a99c6bc3eec778ffca6228383926a))
 
 ## [1.13.2](https://github.com/uploadcare/file-uploader/compare/v1.13.1...v1.13.2) (2025-02-13)
 
