@@ -1,6 +1,13 @@
+# [1.14.0](https://github.com/uploadcare/file-uploader/compare/v1.13.2...v1.14.0) (2025-03-12)
+
+### Features
+
+- divided the camera into types on the mobiles ([#795](https://github.com/uploadcare/file-uploader/issues/795)) ([0e7383c](https://github.com/uploadcare/file-uploader/commit/0e7383cc222a99c6bc3eec778ffca6228383926a))
+
 ## [1.13.2](https://github.com/uploadcare/file-uploader/compare/v1.13.1...v1.13.2) (2025-02-13)
 
 ### Bug Fixes
+
 - **a11y** added `role` and `aria-label` for screen readers ([#788](https://github.com/uploadcare/file-uploader/issues/788)) ([5a5c28a](https://github.com/uploadcare/file-uploader/commit/5a5c28a33fd1fc2e5f08b8d84cc725fcc7ff162b))
 - **cloud-editor** close ui slider when click on the editor toolbar ([#790](https://github.com/uploadcare/file-uploader/issues/790)) ([6d59f25](https://github.com/uploadcare/file-uploader/commit/6d59f254b94b5389d1c990e7641b80972646665c))
 
