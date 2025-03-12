@@ -2,7 +2,7 @@
 
 ### Features
 
-- divided the camera into types on the mobiles ([#795](https://github.com/uploadcare/file-uploader/issues/795)) ([0e7383c](https://github.com/uploadcare/file-uploader/commit/0e7383cc222a99c6bc3eec778ffca6228383926a))
+- **camera** divided the camera into types on the mobiles ([#795](https://github.com/uploadcare/file-uploader/issues/795)) ([0e7383c](https://github.com/uploadcare/file-uploader/commit/0e7383cc222a99c6bc3eec778ffca6228383926a))
 
 ## [1.13.2](https://github.com/uploadcare/file-uploader/compare/v1.13.1...v1.13.2) (2025-02-13)
 
