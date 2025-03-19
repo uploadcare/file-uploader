@@ -1,13 +1,1 @@
-export { defineComponents } from '../../../abstract/defineComponents.js';
-export { defineLocale } from '../../../abstract/localeRegistry.js';
-export { FileUploaderMinimal } from './FileUploaderMinimal.js';
-export { StartFrom } from '../../../blocks/StartFrom/StartFrom.js';
-export { DropArea } from '../../../blocks/DropArea/DropArea.js';
-export { UploadList } from '../../../blocks/UploadList/UploadList.js';
-export { FileItem } from '../../../blocks/FileItem/FileItem.js';
-export { Icon } from '../../../blocks/Icon/Icon.js';
-export { ProgressBar } from '../../../blocks/ProgressBar/ProgressBar.js';
-export { Copyright } from '../../../blocks/Copyright/Copyright.js';
-export { FormInput } from '../../../blocks/FormInput/FormInput.js';
-export { Config } from '../../../blocks/Config/Config.js';
-export { UploadCtxProvider } from '../../../blocks/UploadCtxProvider/UploadCtxProvider.js';
+export * from '../../../index.js';

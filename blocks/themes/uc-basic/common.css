@@ -13,7 +13,7 @@
   display: none !important;
 }
 
-:where([uc-wgt-common]) [activity]:not([active]) {
+:where([uc-wgt-common]) [activity]:not([active], .active) {
   display: none;
 }
 

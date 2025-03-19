@@ -33,6 +33,7 @@ export { ActivityHeader } from './blocks/ActivityHeader/ActivityHeader.js';
 export { Select } from './blocks/Select/Select.js';
 export { Copyright } from './blocks/Copyright/Copyright.js';
 export { Spinner } from './blocks/Spinner/Spinner.js';
+export { Thumb } from './blocks/Thumb/Thumb.js';
 
 // Solutions:
 export { FileUploaderRegular } from './solutions/file-uploader/regular/FileUploaderRegular.js';
@@ -46,6 +47,7 @@ export { defineLocale } from './abstract/localeRegistry.js';
 export { loadFileUploaderFrom } from './abstract/loadFileUploaderFrom.js';
 export { toKebabCase } from './utils/toKebabCase.js';
 export { UploadSource, ExternalUploadSource } from './blocks/utils/UploadSource.js';
+export { ModalEvents } from './abstract/ModalManager.js';
 
 export * from './env.js';
 

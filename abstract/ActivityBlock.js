@@ -49,11 +49,6 @@ export class ActivityBlock extends Block {
   /** @protected */
   initCallback() {
     super.initCallback();
-    if (this.hasAttribute('current-activity')) {
-      this.sub('*currentActivity', (/** @type {String} */ val) => {
-        this.setAttribute('current-activity', val);
-      });
-    }
 
     // TODO: rename activityType to activityId
     if (this.activityType) {
@@ -76,14 +71,6 @@ export class ActivityBlock extends Block {
           this.$['*history'] = [];
         }
       });
-
-      if (this.has('*modalActive')) {
-        this.sub('*modalActive', (modalActive) => {
-          if (!modalActive && this.activityType === this.$['*currentActivity']) {
-            this.$['*currentActivity'] = null;
-          }
-        });
-      }
     }
   }
 
@@ -160,7 +147,7 @@ export class ActivityBlock extends Block {
 
     if (!hasCurrentActivityInCtx) {
       this.$['*currentActivity'] = null;
-      this.setOrAddState('*modalActive', false);
+      this.modalManager.closeAll();
     }
   }
 
@@ -186,21 +173,29 @@ export class ActivityBlock extends Block {
   historyBack() {
     /** @type {String[]} */
     let history = this.$['*history'];
+
     if (history) {
       let nextActivity = history.pop();
+
       while (nextActivity === this.activityType) {
         nextActivity = history.pop();
       }
+
       let couldOpenActivity = !!nextActivity;
       if (nextActivity) {
         const nextActivityBlock = [...this.blocksRegistry].find((block) => block.activityType === nextActivity);
         couldOpenActivity = /** @type {ActivityBlock} */ (nextActivityBlock)?.couldOpenActivity ?? false;
       }
+
       nextActivity = couldOpenActivity ? nextActivity : undefined;
+
+      if (nextActivity) this.modalManager.open(nextActivity);
+
       this.$['*currentActivity'] = nextActivity;
       this.$['*history'] = history;
+
       if (!nextActivity) {
-        this.setOrAddState('*modalActive', false);
+        this.modalManager.closeAll();
       }
     }
   }

@@ -41,6 +41,7 @@ uc-progress-bar .uc-fake-progress {
     display 1s;
   /* stylelint-disable-next-line property-no-unknown */
   transition-behavior: allow-discrete;
+  z-index: 1;
 }
 
 uc-progress-bar .uc-fake-progress--hidden {

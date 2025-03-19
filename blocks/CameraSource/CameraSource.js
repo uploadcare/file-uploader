@@ -558,6 +558,7 @@ export class CameraSource extends UploaderBlock {
     this.set$({
       '*currentActivity': ActivityBlock.activities.UPLOAD_LIST,
     });
+    this.modalManager.open(ActivityBlock.activities.UPLOAD_LIST);
   };
 
   /** @private */

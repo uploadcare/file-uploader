@@ -45,6 +45,7 @@ uc-file-item .uc-thumb {
   height: var(--uc-preview-size);
   background-color: var(--uc-secondary);
   background-position: center center;
+  background-repeat: no-repeat;
   background-size: cover;
   border-radius: var(--uc-radius);
 }
@@ -73,6 +74,7 @@ uc-file-item .uc-file-error {
   display: none;
   color: var(--uc-destructive-foreground);
   font-size: 0.85em;
+  z-index: 2;
 }
 
 uc-file-item button.uc-remove-btn,
@@ -141,4 +143,115 @@ uc-file-item .uc-file-actions {
   gap: 2px;
   align-items: center;
   justify-content: center;
+}
+
+/* File item in the grid */
+uc-file-item[mode='grid'] {
+  overflow: visible;
+  min-height: initial;
+}
+
+uc-file-item[mode='grid'] .uc-inner {
+  height: 100%;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr max-content;
+  padding: 0;
+  background-color: transparent;
+  margin-bottom: 0;
+  border-radius: 0;
+}
+
+uc-file-item[mode='grid'] .uc-inner[failed] .uc-badge {
+  display: none;
+}
+
+uc-file-item[mode='grid'] .uc-thumb {
+  width: 100%;
+  height: 100%;
+}
+
+uc-file-item[mode='grid'] .uc-badge {
+  right: var(--uc-padding);
+  bottom: var(--uc-padding);
+}
+
+uc-file-item[mode='grid'] .uc-file-name-wrapper {
+  padding: 0;
+}
+
+uc-file-item[mode='grid'] .uc-file-name:not([hidden]) + .uc-file-error {
+  bottom: calc(var(--uc-padding) + var(--uc-font-size));
+}
+
+uc-file-item[mode='grid'] .uc-file-error {
+  position: absolute;
+  background-color: var(--uc-destructive-foreground);
+  border-radius: var(--uc-radius);
+  color: var(--uc-background);
+  bottom: var(--uc-padding);
+  left: var(--uc-padding);
+  right: var(--uc-padding);
+  padding: calc(var(--uc-padding) / 2) var(--uc-padding);
+}
+
+uc-file-item[mode='grid'] .uc-file-hint {
+  position: absolute;
+  background-color: var(--uc-background);
+  border-radius: var(--uc-radius);
+  color: var(--uc-foreground);
+  bottom: calc(var(--uc-padding) * 2);
+  left: var(--uc-padding);
+  right: var(--uc-padding);
+  padding: calc(var(--uc-padding) / 2) var(--uc-padding);
+}
+
+uc-file-item[mode='grid'] .uc-file-actions {
+  position: absolute;
+  top: var(--uc-padding);
+  right: var(--uc-padding);
+}
+
+uc-file-item[mode='grid'] button {
+  background-color: var(--uc-background);
+}
+
+uc-file-item[mode='grid'] button:hover {
+  background-color: var(--uc-muted);
+}
+
+uc-file-item[mode='grid'] .uc-progress-bar {
+  width: initial;
+  height: 4px !important;
+  opacity: 1;
+  top: initial !important;
+  bottom: var(--uc-padding);
+  left: var(--uc-padding);
+  right: var(--uc-padding);
+  border-radius: var(--uc-radius);
+  z-index: 1;
+  transition: background-color 0.3s;
+  background-color: transparent;
+}
+
+uc-file-item[mode='grid'] .uc-progress-bar:not(:has(.uc-progress--hidden, .uc-fake-progress--hidden)) {
+  background-color: var(--uc-background);
+}
+
+uc-file-item[mode='grid'] .uc-progress-bar .uc-progress {
+  z-index: 3;
+}
+
+uc-file-item[mode='grid'] .uc-progress-bar .uc-fake-progress {
+  z-index: 2;
+}
+
+uc-file-item[mode='grid']
+  .uc-progress-bar
+  :is(.uc-fake-progress:not(.uc-fake-progress--hidden), .uc-progress:not(.uc-progress--hidden)) {
+  background-color: var(--uc-primary);
+  opacity: 0.7;
+}
+
+uc-file-item[mode='grid'] .uc-progress-bar[hasfilename] {
+  bottom: calc(var(--uc-padding) + var(--uc-font-size));
 }

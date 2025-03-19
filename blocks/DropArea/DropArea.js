@@ -4,7 +4,7 @@ import { Data } from '@symbiotejs/symbiote';
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { stringToArray } from '../../utils/stringToArray.js';
-import { asBoolean } from '../Config/normalizeConfigValue.js';
+import { asBoolean } from '../Config/validatorsType.js';
 import { UploadSource } from '../utils/UploadSource.js';
 import { DropzoneState, addDropzone } from './addDropzone.js';
 
@@ -24,6 +24,7 @@ export class DropArea extends UploaderBlock {
       isFullscreen: false,
       isEnabled: true,
       isVisible: true,
+      isInitFlow: false,
       text: '',
       [REGISTRY_KEY]: null,
     };
@@ -67,6 +68,12 @@ export class DropArea extends UploaderBlock {
       'clickable',
       /** @param {unknown} value */ (value) => {
         this.set$({ isClickable: asBoolean(value) });
+      },
+    );
+    this.defineAccessor(
+      'initflow',
+      /** @param {unknown} value */ (value) => {
+        this.set$({ isInitFlow: asBoolean(value) });
       },
     );
     this.defineAccessor(
@@ -115,10 +122,10 @@ export class DropArea extends UploaderBlock {
           }
         });
         if (this.uploadCollection.size) {
+          this.modalManager.open(ActivityBlock.activities.UPLOAD_LIST);
           this.set$({
             '*currentActivity': ActivityBlock.activities.UPLOAD_LIST,
           });
-          this.setOrAddState('*modalActive', true);
         }
       },
     });
@@ -173,9 +180,19 @@ export class DropArea extends UploaderBlock {
         if (event.type === 'keydown') {
           // @ts-ignore
           if (event.code === 'Space' || event.code === 'Enter') {
+            if (this.$.isInitFlow) {
+              this.api.initFlow();
+              return;
+            }
+
             this.api.openSystemDialog();
           }
         } else if (event.type === 'click') {
+          if (this.$.isInitFlow) {
+            this.api.initFlow();
+            return;
+          }
+
           this.api.openSystemDialog();
         }
       };
@@ -270,4 +287,6 @@ DropArea.bindAttributes({
   fullscreen: null,
   // @ts-expect-error TODO: fix types inside symbiote
   disabled: null,
+  // @ts-expect-error TODO: fix types inside symbiote
+  initflow: null,
 });

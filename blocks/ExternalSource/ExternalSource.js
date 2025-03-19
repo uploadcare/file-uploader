@@ -44,6 +44,7 @@ export class ExternalSource extends UploaderBlock {
         }
 
         this.$['*currentActivity'] = ActivityBlock.activities.UPLOAD_LIST;
+        this.modalManager.open(ActivityBlock.activities.UPLOAD_LIST);
       },
       onCancel: () => {
         this.historyBack();
@@ -75,8 +76,8 @@ export class ExternalSource extends UploaderBlock {
         let { externalSourceType } = /** @type {ActivityParams} */ (this.activityParams);
 
         if (!externalSourceType) {
+          this.modalManager.close(this.$['*currentActivity']);
           this.$['*currentActivity'] = null;
-          this.setOrAddState('*modalActive', false);
           console.error(`Param "externalSourceType" is required for activity "${this.activityType}"`);
           return;
         }

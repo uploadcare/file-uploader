@@ -132,11 +132,15 @@ export class SourceBtn extends UploaderBlock {
     const configType = this._registeredTypes[this.type];
     const { activity, activate, activityParams = {} } = configType;
     const showActivity = activate ? activate() : !!activity;
-    showActivity &&
+
+    if (showActivity) {
+      this.modalManager.open(/** @type {string} */ (activity));
+
       this.set$({
         '*currentActivityParams': activityParams,
         '*currentActivity': activity,
       });
+    }
   }
 
   /** @param {string} type */
