@@ -104,7 +104,7 @@
     "@types/node": "^18.15.11",
     "@types/react": "^18.2.34",
     "@web/test-runner": "^0.19.0",
-    "esbuild": "^0.19.9",
+    "esbuild": "^0.25.1",
     "eslint": "^8.56.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-import": "^2.29.1",
