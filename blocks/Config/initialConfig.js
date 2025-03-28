@@ -45,7 +45,7 @@ export const initialConfig = {
   secureSignature: '',
   secureExpire: '',
   secureDeliveryProxy: '',
-  retryThrottledRequestMaxTimes: 1,
+  retryThrottledRequestMaxTimes: 10,
   multipartMinFileSize: 26214400,
   multipartChunkSize: 5242880,
   maxConcurrentRequests: 10,
