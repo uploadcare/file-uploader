@@ -1,14 +1,14 @@
 // @ts-check
-import { CancelError, uploadFile } from '@uploadcare/upload-client';
 import { shrinkFile } from '@uploadcare/image-shrink';
+import { CancelError, UploadcareError, uploadFile } from '@uploadcare/upload-client';
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../utils/cdn-utils.js';
+import { parseShrink } from '../../utils/parseShrink.js';
 import { fileCssBg } from '../svg-backgrounds/svg-backgrounds.js';
+import { UploadSource } from '../utils/UploadSource.js';
 import { debounce } from '../utils/debounce.js';
 import { generateThumb } from '../utils/resizeImage.js';
-import { parseShrink } from '../../utils/parseShrink.js';
-import { UploadSource } from '../utils/UploadSource.js';
 import { throttle } from '../utils/throttle.js';
 
 const FileItemState = Object.freeze({
@@ -26,18 +26,35 @@ export class FileItem extends UploaderBlock {
   _entrySubs = new Set();
   /**
    * @private
-   * @type {any} TODO: Add types for upload entry
+   * @type {import('../../abstract/uploadEntrySchema.js').UploadEntryTypedData | null}
    */
   _entry = null;
   /** @private */
   _isIntersecting = false;
-  /** @private */
-  _debouncedGenerateThumb = debounce(this._generateThumbnail.bind(this), 100);
-  /** @private */
-  _debouncedCalculateState = debounce(this._calculateState.bind(this), 100);
 
   /** @private */
   _renderedOnce = false;
+
+  /**
+   * @private
+   * @template {any[]} A
+   * @template {(entry: import('../../abstract/uploadEntrySchema.js').UploadEntryTypedData, ...args: A) => any} T
+   * @param {T} fn
+   * @returns {(...args: A) => ReturnType<T>}
+   */
+  _withEntry(fn) {
+    const wrapperFn = /** @type {(...args: A) => ReturnType<T>} */ (
+      (...args) => {
+        const entry = this._entry;
+        if (!entry) {
+          console.warn('No entry found');
+          return;
+        }
+        return fn(entry, ...args);
+      }
+    );
+    return wrapperFn;
+  }
 
   constructor() {
     super();
@@ -59,12 +76,12 @@ export class FileItem extends UploaderBlock {
       isEditable: false,
       state: FileItemState.IDLE,
       ariaLabelStatusFile: '',
-      onEdit: () => {
+      onEdit: this._withEntry((entry) => {
         this.$['*currentActivityParams'] = {
-          internalId: this._entry.uid,
+          internalId: entry.uid,
         };
         this.$['*currentActivity'] = ActivityBlock.activities.CLOUD_IMG_EDIT;
-      },
+      }),
       onRemove: () => {
         this.uploadCollection.remove(this.$.uid);
       },
@@ -105,11 +122,7 @@ export class FileItem extends UploaderBlock {
   }
 
   /** @private */
-  _calculateState() {
-    if (!this._entry) {
-      return;
-    }
-    let entry = this._entry;
+  _calculateState = this._withEntry((entry) => {
     let state = FileItemState.IDLE;
 
     if (entry.getValue('errors').length > 0) {
@@ -121,20 +134,21 @@ export class FileItem extends UploaderBlock {
     }
 
     this.$.state = state;
-  }
+  });
 
   /** @private */
-  async _generateThumbnail() {
-    if (!this._entry) {
-      return;
-    }
-    let entry = this._entry;
+  _debouncedCalculateState = debounce(this._calculateState.bind(this), 100);
 
-    if (entry.getValue('fileInfo') && entry.getValue('isImage')) {
+  /** @private */
+  _generateThumbnail = this._withEntry(async (entry) => {
+    const fileInfo = entry.getValue('fileInfo');
+    const isImage = entry.getValue('isImage');
+    const uuid = entry.getValue('uuid');
+    if (fileInfo && isImage && uuid) {
       let size = this.cfg.thumbSize;
       let thumbUrl = await this.proxyUrl(
         createCdnUrl(
-          createOriginalUrl(this.cfg.cdnCname, this._entry.getValue('uuid')),
+          createOriginalUrl(this.cfg.cdnCname, uuid),
           createCdnUrlModifiers(entry.getValue('cdnUrlModifiers'), `scale_crop/${size}x${size}/center`),
         ),
       );
@@ -150,9 +164,11 @@ export class FileItem extends UploaderBlock {
       return;
     }
 
-    if (entry.getValue('file')?.type.includes('image')) {
+    const file = entry.getValue('file');
+
+    if (file?.type.includes('image')) {
       try {
-        let thumbUrl = await generateThumb(entry.getValue('file'), this.cfg.thumbSize);
+        let thumbUrl = await generateThumb(file, this.cfg.thumbSize);
         entry.setValue('thumbUrl', thumbUrl);
       } catch (err) {
         let color = window.getComputedStyle(this).getPropertyValue('--uc-muted-foreground');
@@ -162,39 +178,50 @@ export class FileItem extends UploaderBlock {
       let color = window.getComputedStyle(this).getPropertyValue('--uc-muted-foreground');
       entry.setValue('thumbUrl', fileCssBg(color));
     }
-  }
+  });
+
+  /** @private */
+  _debouncedGenerateThumb = debounce(this._generateThumbnail, 100);
 
   /**
-   * @private
-   * @param {string} prop
-   * @param {(value: any) => void} handler
+   * @template {import('../../abstract/uploadEntrySchema.js').UploadEntryKeys} K
+   * @param {K} prop_
+   * @param {(value: import('../../abstract/uploadEntrySchema.js').UploadEntryData[K]) => void} handler_
    */
-  _subEntry(prop, handler) {
-    let sub = this._entry.subscribe(
-      prop,
-      /** @param {any} value */ (value) => {
-        if (this.isConnected) {
-          handler(value);
-        }
+  _subEntry = (prop_, handler_) =>
+    this._withEntry(
+      /**
+       * @template {import('../../abstract/uploadEntrySchema.js').UploadEntryKeys} K
+       * @param {import('../../abstract/uploadEntrySchema.js').UploadEntryTypedData} entry
+       * @param {K} prop
+       * @param {(value: import('../../abstract/uploadEntrySchema.js').UploadEntryData[K]) => void} handler
+       */
+      (entry, prop, handler) => {
+        let sub = entry.subscribe(prop, (value) => {
+          if (this.isConnected) {
+            handler(value);
+          }
+        });
+        this._entrySubs.add(sub);
       },
-    );
-    this._entrySubs.add(sub);
-  }
+    )(prop_, handler_);
 
-  _updateHint = throttle(() => {
-    const showHint =
-      this.$.state === FileItemState.UPLOADING &&
-      this._entry.getValue('externalUrl') &&
-      this._entry.getValue('source') !== UploadSource.URL &&
-      this._entry.getValue('errors').length === 0 &&
-      this.$.progressValue === 0;
+  _updateHint = this._withEntry(
+    throttle((entry) => {
+      const source = entry.getValue('source');
+      const showHint =
+        this.$.state === FileItemState.UPLOADING &&
+        entry.getValue('externalUrl') &&
+        source &&
+        source !== UploadSource.URL &&
+        entry.getValue('errors').length === 0 &&
+        this.$.progressValue === 0;
 
-    const hint = showHint
-      ? this.l10n('waiting-for', { source: this.l10n(`src-type-${this._entry.getValue('source')}`) })
-      : '';
+      const hint = showHint ? this.l10n('waiting-for', { source: this.l10n(`src-type-${source}`) }) : '';
 
-    this.$.hint = hint;
-  }, 100);
+      this.$.hint = hint;
+    }, 100),
+  );
 
   /**
    * @private
@@ -203,7 +230,6 @@ export class FileItem extends UploaderBlock {
   _handleEntryId(id) {
     this._reset();
 
-    /** @type {import('../../abstract/TypedData.js').TypedData} */
     let entry = this.uploadCollection?.read(id);
     this._entry = entry;
 
@@ -280,7 +306,7 @@ export class FileItem extends UploaderBlock {
       '*uploadTrigger',
       /** @param {Set<string>} itemsToUpload */
       (itemsToUpload) => {
-        if (!itemsToUpload.has(this._entry.uid)) {
+        if (this._entry && !itemsToUpload.has(this._entry.uid)) {
           return;
         }
         setTimeout(() => this.isConnected && this.upload());
@@ -289,33 +315,38 @@ export class FileItem extends UploaderBlock {
     FileItem.activeInstances.add(this);
   }
 
-  /** @param {(typeof FileItemState)[keyof typeof FileItemState]} state */
-  _handleState(state) {
-    if (state === FileItemState.FAILED) {
-      this.$.badgeIcon = 'badge-error';
-    } else if (state === FileItemState.FINISHED) {
-      this.$.badgeIcon = 'badge-success';
-    }
+  _handleState = this._withEntry(
+    /** @param {(typeof FileItemState)[keyof typeof FileItemState]} state */
+    (entry, state) => {
+      if (state === FileItemState.FAILED) {
+        this.$.badgeIcon = 'badge-error';
+      } else if (state === FileItemState.FINISHED) {
+        this.$.badgeIcon = 'badge-success';
+      }
 
-    if (state === FileItemState.UPLOADING) {
-      this.$.isFocused = false;
-    }
+      if (state === FileItemState.UPLOADING) {
+        this.$.isFocused = false;
+      }
+      const fileName = entry.getValue('fileName');
 
-    this.set$({
-      isFailed: state === FileItemState.FAILED,
-      isUploading: state === FileItemState.UPLOADING,
-      isFinished: state === FileItemState.FINISHED,
-      progressVisible: state === FileItemState.UPLOADING,
-      isEditable: this.cfg.useCloudImageEditor && this._entry?.getValue('isImage') && this._entry?.getValue('cdnUrl'),
-      errorText: this._entry.getValue('errors')?.[0]?.message,
-      ariaLabelStatusFile: this.l10n('a11y-file-item-status', {
-        fileName: this._entry?.getValue('fileName'),
-        status: this.l10n(state?.description?.toLocaleLowerCase() ?? '').toLocaleLowerCase(),
-      }),
-    });
+      this.set$({
+        isFailed: state === FileItemState.FAILED,
+        isUploading: state === FileItemState.UPLOADING,
+        isFinished: state === FileItemState.FINISHED,
+        progressVisible: state === FileItemState.UPLOADING,
+        isEditable: this.cfg.useCloudImageEditor && this._entry?.getValue('isImage') && this._entry?.getValue('cdnUrl'),
+        errorText: entry.getValue('errors')?.[0]?.message,
+        ariaLabelStatusFile:
+          fileName &&
+          this.l10n('a11y-file-item-status', {
+            fileName,
+            status: this.l10n(state?.description?.toLocaleLowerCase() ?? '').toLocaleLowerCase(),
+          }),
+      });
 
-    this._updateHint();
-  }
+      this._updateHint();
+    },
+  );
 
   destroyCallback() {
     super.destroyCallback();
@@ -354,9 +385,7 @@ export class FileItem extends UploaderBlock {
     return shrinkFile(file, this._settingsOfShrink());
   }
 
-  async upload() {
-    let entry = this._entry;
-
+  upload = this._withEntry(async (entry) => {
     if (!this.uploadCollection.read(entry.uid)) {
       return;
     }
@@ -370,26 +399,33 @@ export class FileItem extends UploaderBlock {
     }
 
     this._debouncedCalculateState();
-    entry.setValue('isUploading', true);
-    entry.setValue('errors', []);
+
+    entry.setMultipleValues({
+      isUploading: true,
+      errors: [],
+    });
 
     try {
       let abortController = new AbortController();
       entry.setValue('abortController', abortController);
 
       const uploadTask = async () => {
+        /** @type {Blob | File | null} */
         let file = entry.getValue('file');
         if (file && this.cfg.imageShrink) {
-          file = await this._processShrink(file).catch(() => file);
+          file = await this._processShrink(/** @type {File} */ (file)).catch(() => file);
         }
 
         const fileInput = file || entry.getValue('externalUrl') || entry.getValue('uuid');
+        if (!fileInput) {
+          throw new Error('No file input');
+        }
         const baseUploadClientOptions = await this.getUploadClientOptions();
         /** @type {import('@uploadcare/upload-client').FileFromOptions} */
         const uploadClientOptions = {
           ...baseUploadClientOptions,
-          fileName: entry.getValue('fileName'),
-          source: entry.getValue('source'),
+          fileName: entry.getValue('fileName') ?? undefined,
+          source: entry.getValue('source') ?? undefined,
           onProgress: (progress) => {
             if (progress.isComputable) {
               let percentage = progress.value * 100;
@@ -410,7 +446,7 @@ export class FileItem extends UploaderBlock {
         isUploading: false,
         fileName: fileInfo.originalFilename,
         fileSize: fileInfo.size,
-        isImage: fileInfo.isImage,
+        isImage: fileInfo.isImage ?? false,
         mimeType: fileInfo.contentInfo?.mime?.mime ?? fileInfo.mimeType,
         uuid: fileInfo.uuid,
         cdnUrl: entry.getValue('cdnUrl') ?? fileInfo.cdnUrl,
@@ -428,11 +464,19 @@ export class FileItem extends UploaderBlock {
           isUploading: false,
           uploadProgress: 0,
         });
-      } else {
+      } else if (cause instanceof Error) {
         entry.setMultipleValues({
           isUploading: false,
           uploadProgress: 0,
           uploadError: cause,
+        });
+      } else {
+        entry.setMultipleValues({
+          isUploading: false,
+          uploadProgress: 0,
+          uploadError: new Error('Something went wrong', {
+            cause,
+          }),
         });
       }
 
@@ -440,7 +484,7 @@ export class FileItem extends UploaderBlock {
         this._debouncedCalculateState();
       }
     }
-  }
+  });
 }
 
 FileItem.template = /* HTML */ `

@@ -98,7 +98,7 @@
     "@babel/preset-env": "^7.21.4",
     "@esm-bundle/chai": "^4.3.4-fix.0",
     "@happy-dom/global-registrator": "^16.8.1",
-    "@total-typescript/ts-reset": "^0.5.1",
+    "@total-typescript/ts-reset": "^0.6.1",
     "@types/chai": "^4.3.4",
     "@types/mocha": "^10.0.1",
     "@types/node": "^18.15.11",
@@ -124,8 +124,8 @@
     "stylelint-declaration-block-no-ignored-properties": "^2.7.0",
     "stylelint-order": "^6.0.3",
     "svg-sprite": "^2.0.4",
-    "tsd": "^0.29.0",
-    "typescript": "^5.2.2"
+    "tsd": "^0.31.2",
+    "typescript": "^5.8.2"
   },
   "author": "Uploadcare Inc.",
   "license": "MIT",

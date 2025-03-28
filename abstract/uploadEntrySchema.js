@@ -1,139 +1,120 @@
 // @ts-check
 import { UploadcareFile } from '@uploadcare/upload-client';
 
-/**
- * @typedef {Object} UploadEntry
- * @property {File} file
- * @property {String} externalUrl
- * @property {String} fileName
- * @property {number} fileSize
- * @property {number} lastModified
- * @property {number} uploadProgress
- * @property {String} uuid
- * @property {Boolean} isImage
- * @property {String} mimeType
- * @property {String} ctxName
- * @property {String} cdnUrl
- * @property {String} cdnUrlModifiers
- * @property {UploadcareFile} fileInfo
- * @property {Boolean} isUploading
- * @property {String} thumbUrl
- * @property {Boolean} silent
- * @property {({
- *   type: import('..').OutputFileErrorType | import('..').OutputCollectionErrorType;
- *   message: string;
- * } & Record<string, unknown>)[]} errors
- * @property {Error | null} uploadError
- * @property {string | null} fullPath
- * @property {import('@uploadcare/upload-client').Metadata | null} metadata
- * @property {boolean} isRemoved
- * @property {String} source
- */
-
-/**
- * @template {keyof UploadEntry} K
- * @type {Record<K, { type: Function; value: any; nullable?: Boolean }>}
- */
+/** @constant */
 export const uploadEntrySchema = Object.freeze({
-  file: {
+  file: Object.freeze({
     type: File,
     value: null,
-  },
-  externalUrl: {
-    type: String,
-    value: null,
-  },
-  fileName: {
+    nullable: true,
+  }),
+  externalUrl: Object.freeze({
     type: String,
     value: null,
     nullable: true,
-  },
-  fileSize: {
+  }),
+  fileName: Object.freeze({
+    type: String,
+    value: null,
+    nullable: true,
+  }),
+  fileSize: Object.freeze({
     type: Number,
     value: null,
     nullable: true,
-  },
-  lastModified: {
+  }),
+  lastModified: Object.freeze({
     type: Number,
     value: Date.now(),
-  },
-  uploadProgress: {
+  }),
+  uploadProgress: Object.freeze({
     type: Number,
     value: 0,
-  },
-  uuid: {
-    type: String,
-    value: null,
-  },
-  isImage: {
-    type: Boolean,
-    value: false,
-  },
-  mimeType: {
+  }),
+  uuid: Object.freeze({
     type: String,
     value: null,
     nullable: true,
-  },
-  ctxName: {
-    type: String,
-    value: null,
-  },
-  cdnUrl: {
-    type: String,
-    value: null,
-  },
-  cdnUrlModifiers: {
-    type: String,
-    value: null,
-  },
-  fileInfo: {
-    type: UploadcareFile,
-    value: null,
-  },
-  isUploading: {
+  }),
+  isImage: Object.freeze({
     type: Boolean,
     value: false,
-  },
-  abortController: {
+  }),
+  mimeType: Object.freeze({
+    type: String,
+    value: null,
+    nullable: true,
+  }),
+  ctxName: Object.freeze({
+    type: String,
+    value: null,
+    nullable: true,
+  }),
+  cdnUrl: Object.freeze({
+    type: String,
+    value: null,
+    nullable: true,
+  }),
+  cdnUrlModifiers: Object.freeze({
+    type: String,
+    value: null,
+    nullable: true,
+  }),
+  fileInfo: Object.freeze({
+    type: UploadcareFile,
+    value: null,
+    nullable: true,
+  }),
+  isUploading: Object.freeze({
+    type: Boolean,
+    value: false,
+  }),
+  abortController: Object.freeze({
     type: AbortController,
     value: null,
     nullable: true,
-  },
-  thumbUrl: {
+  }),
+  thumbUrl: Object.freeze({
     type: String,
     value: null,
     nullable: true,
-  },
-  silent: {
+  }),
+  silent: Object.freeze({
     type: Boolean,
     value: false,
-  },
-  source: {
-    type: String,
-    value: false,
-    nullable: true,
-  },
-  fullPath: {
+  }),
+  source: Object.freeze({
     type: String,
     value: null,
     nullable: true,
-  },
-  metadata: {
+  }),
+  fullPath: Object.freeze({
+    type: String,
+    value: null,
+    nullable: true,
+  }),
+  metadata: Object.freeze({
     type: Object,
     value: null,
     nullable: true,
-  },
-  errors: {
+  }),
+  errors: Object.freeze({
     type: Array,
-    value: [],
-  },
-  uploadError: {
+    value: /** @type {Error[]} */ ([]),
+  }),
+  uploadError: Object.freeze({
     type: Error,
     value: null,
     nullable: true,
-  },
-  isRemoved: {
+  }),
+  isRemoved: Object.freeze({
     type: Boolean,
     value: false,
-  },
+  }),
 });
+
+/** @typedef {import('./TypedData').ExtractDataFromSchema<typeof uploadEntrySchema>} UploadEntryData */
+
+/** @typedef {import('./TypedData.js').TypedData<typeof uploadEntrySchema>} UploadEntryTypedData */
+
+/** @typedef {import('./TypedData.js').ExtractKeysFromSchema<typeof uploadEntrySchema>} UploadEntryKeys */

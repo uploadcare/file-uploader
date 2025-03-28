@@ -1,23 +1,30 @@
+// @ts-check
 import { Data, UID } from '@symbiotejs/symbiote';
 import { TypedData } from './TypedData.js';
 
+/**
+ * @template {import('./TypedData.js').TypedSchema} T
+ * @typedef {(list: string[], added: Set<import('./TypedData.js').TypedData<T>>, removed: Set<TypedData<T>>) => void} TypedCollectionObserverHandler
+ */
+
+/** @template {import('./TypedData.js').TypedSchema} T */
 export class TypedCollection {
   /**
    * @param {Object} options
-   * @param {Object<string, { type: any; value: any }>} options.typedSchema
-   * @param {String[]} [options.watchList]
-   * @param {(list: string[], added: Set<any>, removed: Set<any>) => void} [options.handler]
-   * @param {String} [options.ctxName]
+   * @param {T} options.typedSchema
+   * @param {import('./TypedData.js').ExtractKeysFromSchema<T>[]} [options.watchList]
+   * @param {TypedCollectionObserverHandler<T>} [options.handler]
+   * @param {string} [options.ctxName]
    */
   constructor(options) {
     /**
      * @private
-     * @type {Object<string, { type: any; value: any }>}
+     * @type {T}
      */
     this.__typedSchema = options.typedSchema;
     /**
      * @private
-     * @type {String}
+     * @type {string}
      */
     this.__ctxId = options.ctxName || UID.generate();
     /**
@@ -27,12 +34,12 @@ export class TypedCollection {
     this.__data = Data.registerCtx({}, this.__ctxId);
     /**
      * @private
-     * @type {string[]}
+     * @type {import('./TypedData.js').ExtractKeysFromSchema<T>[]}
      */
     this.__watchList = options.watchList || [];
     /**
      * @private
-     * @type {Object<string, any>}
+     * @type {Object<string, ReturnType<TypedData<T>['subscribe']>[]>}
      */
     this.__subsMap = Object.create(null);
     /**
@@ -42,7 +49,7 @@ export class TypedCollection {
     this.__propertyObservers = new Set();
     /**
      * @private
-     * @type {Set<(list: string[], added: Set<any>, removed: Set<any>) => void>}
+     * @type {Set<TypedCollectionObserverHandler<T>>}
      */
     this.__collectionObservers = new Set();
     /**
@@ -52,12 +59,12 @@ export class TypedCollection {
     this.__items = new Set();
     /**
      * @private
-     * @type {Set<any>}
+     * @type {Set<import('./TypedData.js').TypedData<T>>}
      */
     this.__removed = new Set();
     /**
      * @private
-     * @type {Set<any>}
+     * @type {Set<import('./TypedData.js').TypedData<T>>}
      */
     this.__added = new Set();
 
@@ -105,7 +112,7 @@ export class TypedCollection {
     });
   }
 
-  /** @param {(list: string[], added: Set<any>, removed: Set<any>) => void} handler */
+  /** @param {TypedCollectionObserverHandler<T>} handler */
   observeCollection(handler) {
     this.__collectionObservers.add(handler);
 
@@ -118,19 +125,19 @@ export class TypedCollection {
     };
   }
 
-  /** @param {Function} handler */
+  /** @param {TypedCollectionObserverHandler<T>} handler */
   unobserveCollection(handler) {
     this.__collectionObservers?.delete(handler);
   }
 
   /**
-   * @param {Object<string, any>} init
+   * @param {Partial<import('./TypedData.js').ExtractDataFromSchema<T>>} init
    * @returns {string}
    */
   add(init) {
     let item = new TypedData(this.__typedSchema);
-    for (let prop in init) {
-      item.setValue(prop, init[prop]);
+    for (let [prop, value] of Object.entries(init)) {
+      item.setValue(/** @type {import('./TypedData.js').ExtractKeysFromSchema<T>} */ (prop), value);
     }
     this.__items.add(item.uid);
     this.notify();
@@ -139,7 +146,7 @@ export class TypedCollection {
     this.__added.add(item);
     this.__watchList.forEach((propName) => {
       if (!this.__subsMap[item.uid]) {
-        this.__subsMap[item.uid] = [];
+        this.__subsMap[item.uid] = /** @type {ReturnType<TypedData<T>['subscribe']>[]} */ ([]);
       }
       this.__subsMap[item.uid].push(
         item.subscribe(propName, () => {
@@ -151,37 +158,49 @@ export class TypedCollection {
   }
 
   /**
-   * @param {String} id
-   * @returns {TypedData}
+   * @param {string} id
+   * @returns {TypedData<T> | null}
    */
   read(id) {
     return this.__data.read(id);
   }
 
   /**
-   * @param {String} id
-   * @param {String} propName
-   * @returns {any}
+   * @template {import('./TypedData.js').ExtractKeysFromSchema<T>} K
+   * @param {string} id
+   * @param {K} propName
+   * @returns {import('./TypedData.js').ExtractDataFromSchema<T>[propName] | null}
    */
   readProp(id, propName) {
     let item = this.read(id);
+    if (!item) {
+      console.warn(`Item with id ${id} not found`);
+      return null;
+    }
     return item.getValue(propName);
   }
 
   /**
-   * @template T
-   * @param {String} id
-   * @param {String} propName
-   * @param {T} value
+   * @template {import('./TypedData.js').ExtractKeysFromSchema<T>} K
+   * @param {string} id
+   * @param {K} propName
+   * @param {import('./TypedData.js').ExtractDataFromSchema<T>[K]} value
    */
   publishProp(id, propName, value) {
     let item = this.read(id);
+    if (!item) {
+      console.warn(`Item with id ${id} not found`);
+      return;
+    }
     item.setValue(propName, value);
   }
 
-  /** @param {String} id */
+  /** @param {string} id */
   remove(id) {
-    this.__removed.add(this.__data.read(id));
+    let item = this.read(id);
+    if (item) {
+      this.__removed.add(item);
+    }
     this.__items.delete(id);
     this.notify();
     this.__data.pub(id, null);
@@ -209,14 +228,15 @@ export class TypedCollection {
   }
 
   /**
-   * @param {(item: TypedData) => Boolean} checkFn
-   * @returns {String[]}
+   * @param {(item: TypedData<T>) => Boolean} checkFn
+   * @returns {string[]}
    */
   findItems(checkFn) {
+    /** @type {string[]} */
     let result = [];
     this.__items.forEach((id) => {
       let item = this.read(id);
-      if (checkFn(item)) {
+      if (item && checkFn(item)) {
         result.push(id);
       }
     });
@@ -233,8 +253,8 @@ export class TypedCollection {
 
   destroy() {
     Data.deleteCtx(this.__ctxId);
-    this.__propertyObservers = null;
-    this.__collectionObservers = null;
+    this.__propertyObservers = new Set();
+    this.__collectionObservers = new Set();
     for (let id in this.__subsMap) {
       this.__subsMap[id].forEach((sub) => {
         sub.remove();
