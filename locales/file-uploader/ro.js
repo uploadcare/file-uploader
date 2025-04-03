@@ -119,6 +119,7 @@ export default {
   failed: 'Eșuat',
   uploading: 'Se încarcă',
   idle: 'Inactiv',
+  queued: 'În așteptare',
   'a11y-file-item-status': 'Fișierul {{fileName}} este în starea {{status}}',
   'select-all': 'Selectează tot',
   'deselect-all': 'Deselectează tot',

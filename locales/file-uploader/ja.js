@@ -116,6 +116,7 @@ export default {
   failed: '失敗',
   uploading: 'アップロード中',
   idle: 'アイドル',
+  queued: 'キューに追加',
   'a11y-file-item-status': 'ファイル {{fileName}} のステータスは {{status}} です',
   'select-all': 'すべて選択',
   'deselect-all': 'すべて選択解除',

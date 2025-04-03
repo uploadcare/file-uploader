@@ -116,6 +116,7 @@ export default {
   failed: 'Չհաջողվեց',
   uploading: 'Բեռնվում է',
   idle: 'Անգործ',
+  queued: 'Հերթում',
   'a11y-file-item-status': 'Ֆայլը {{fileName}} {{status}} կարգավիճակում է',
   'select-all': 'Ընտրել բոլորը',
   'deselect-all': 'Հրաժարվել բոլորից',

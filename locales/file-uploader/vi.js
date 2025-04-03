@@ -116,6 +116,7 @@ export default {
   failed: 'Thất bại',
   uploading: 'Đang tải lên',
   idle: 'Nhàn rỗi',
+  queued: 'Đang xếp hàng',
   'a11y-file-item-status': 'Tệp {{fileName}} ở trạng thái {{status}}',
   'select-all': 'Chọn tất cả',
   'deselect-all': 'Bỏ chọn tất cả',

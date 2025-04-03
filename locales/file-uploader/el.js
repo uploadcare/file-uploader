@@ -120,6 +120,7 @@ export default {
   failed: 'Απέτυχε',
   uploading: 'Μεταφόρτωση',
   idle: 'Αδράνεια',
+  queued: 'Σε ουρά',
   'a11y-file-item-status': 'Το αρχείο {{fileName}} βρίσκεται στην κατάσταση {{status}}',
   'waiting-for': 'Αναμονή για {{source}}',
 };

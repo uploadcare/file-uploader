@@ -118,6 +118,7 @@ export default {
   failed: 'נכשל',
   uploading: 'מעלה',
   idle: 'בטלה',
+  queued: 'בתור',
   'a11y-file-item-status': 'הקובץ {{fileName}} במצב {{status}}',
   'select-all': 'בחר הכל',
   'deselect-all': 'בטל בחירת הכל',

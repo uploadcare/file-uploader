@@ -116,6 +116,7 @@ export default {
   failed: 'Сәтсіз аяқталды',
   uploading: 'Жүктелуде',
   idle: 'Бос',
+  queued: 'Кезекте',
   'a11y-file-item-status': '{{fileName}} файлы {{status}} күйінде',
   'select-all': 'Барлығын таңдау',
   'deselect-all': 'Барлығын таңдаудан шығару',

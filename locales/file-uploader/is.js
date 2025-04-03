@@ -116,6 +116,7 @@ export default {
   failed: 'Mistókst',
   uploading: 'Hleður upp',
   idle: 'Aðgerðalaus',
+  queued: 'Í biðröð',
   'a11y-file-item-status': 'Skráin {{fileName}} er í stöðu {{status}}',
   'select-all': 'Velja allt',
   'deselect-all': 'Afvelja allt',

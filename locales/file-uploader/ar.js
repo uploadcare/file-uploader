@@ -126,6 +126,7 @@ export default {
   failed: 'فشل',
   uploading: 'جارٍ التحميل',
   idle: 'خامل',
+  queued: 'في الانتظار',
   'a11y-file-item-status': 'الملف {{fileName}} في حالة {{status}}',
   'waiting-for': 'في انتظار {{source}}',
 };

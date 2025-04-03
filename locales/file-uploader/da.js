@@ -119,6 +119,7 @@ export default {
   failed: 'Mislykkedes',
   uploading: 'Uploader',
   idle: 'Inaktiv',
+  queued: 'I kø',
   'a11y-file-item-status': 'Filen {{fileName}} er i status {{status}}',
   'waiting-for': 'Venter på {{source}}',
 };

@@ -119,6 +119,7 @@ export default {
   failed: 'Falhou',
   uploading: 'Carregando',
   idle: 'Ocioso',
+  queued: 'Na fila',
   'a11y-file-item-status': 'O arquivo {{fileName}} está no status {{status}}',
   'select-all': 'Selecionar tudo',
   'deselect-all': 'Desmarcar tudo',

@@ -117,6 +117,7 @@ export default {
   failed: 'Epäonnistui',
   uploading: 'Ladataan',
   idle: 'Toimeton',
+  queued: 'Jonossa',
   'a11y-file-item-status': 'Tiedosto {{fileName}} tilassa {{status}}',
   'select-all': 'Valitse kaikki',
   'deselect-all': 'Poista valinnat',

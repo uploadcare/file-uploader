@@ -116,6 +116,7 @@ export default {
   failed: 'Başarısız',
   uploading: 'Yükleniyor',
   idle: 'Boşta',
+  queued: 'Sırada',
   'a11y-file-item-status': '{{fileName}} dosyası {{status}} durumunda',
   'select-all': 'Hepsini seç',
   'deselect-all': 'Hiçbirini seçme',
