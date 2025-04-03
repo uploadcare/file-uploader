@@ -209,17 +209,30 @@ export class FileItem extends UploaderBlock {
   _updateHint = this._withEntry(
     throttle((entry) => {
       const source = entry.getValue('source');
-      const showHint =
-        this.$.state === FileItemState.UPLOADING &&
-        entry.getValue('externalUrl') &&
-        source &&
-        source !== UploadSource.URL &&
-        entry.getValue('errors').length === 0 &&
-        this.$.progressValue === 0;
+      const externalUrl = entry.getValue('externalUrl');
+      const noErrors = entry.getValue('errors').length === 0;
+      const noProgress = this.$.progressValue === 0;
+      const isUploading = this.$.state === FileItemState.UPLOADING;
+      const isQueued = entry.getValue('isQueued');
 
-      const hint = showHint ? this.l10n('waiting-for', { source: this.l10n(`src-type-${source}`) }) : '';
+      if (!noErrors || !isUploading || !noProgress) {
+        this.$.hint = '';
+        return;
+      }
 
-      this.$.hint = hint;
+      if (isQueued) {
+        const hint = this.l10n('queued');
+        this.$.hint = hint;
+        return;
+      }
+
+      if (externalUrl && source && source !== UploadSource.URL) {
+        const hint = this.l10n('waiting-for', { source: this.l10n(`src-type-${source}`) });
+        this.$.hint = hint;
+        return;
+      }
+
+      this.$.hint = '';
     }, 100),
   );
 
@@ -239,6 +252,10 @@ export class FileItem extends UploaderBlock {
 
     this._subEntry('uploadProgress', (uploadProgress) => {
       this.$.progressValue = uploadProgress;
+      this._updateHint();
+    });
+
+    this._subEntry('isQueued', () => {
       this._updateHint();
     });
 
@@ -403,6 +420,7 @@ export class FileItem extends UploaderBlock {
     entry.setMultipleValues({
       isUploading: true,
       errors: [],
+      isQueued: true,
     });
 
     try {
@@ -410,6 +428,7 @@ export class FileItem extends UploaderBlock {
       entry.setValue('abortController', abortController);
 
       const uploadTask = async () => {
+        entry.setValue('isQueued', false);
         /** @type {Blob | File | null} */
         let file = entry.getValue('file');
         if (file && this.cfg.imageShrink) {
@@ -443,6 +462,7 @@ export class FileItem extends UploaderBlock {
       let fileInfo = await this.$['*uploadQueue'].add(uploadTask);
       entry.setMultipleValues({
         fileInfo,
+        isQueued: false,
         isUploading: false,
         fileName: fileInfo.originalFilename,
         fileSize: fileInfo.size,
