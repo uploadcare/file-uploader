@@ -10,7 +10,7 @@
 
     const config = document.querySelector('uc-config');
     config.secureDeliveryProxyUrlResolver = (previewUrl) => {
-      return `http://localhost:3000/preview?url=${encodeURIComponent(previewUrl)}`
+      return `http://localhost:3000/preview?url=${encodeURIComponent(previewUrl)}`;
     };
   </script>
 </head>

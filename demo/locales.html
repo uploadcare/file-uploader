@@ -17,19 +17,19 @@
   </head>
   <body>
     <script type="module">
-      import "@/solutions/file-uploader/inline/index.css";
-      import "@/solutions/file-uploader/regular/index.css";
-      import "@/solutions/file-uploader/minimal/index.css";
+      import '@/solutions/file-uploader/inline/index.css';
+      import '@/solutions/file-uploader/regular/index.css';
+      import '@/solutions/file-uploader/minimal/index.css';
       import * as UC from '@/index.js';
 
       const locales = import.meta.glob('@/locales/file-uploader/*.js', {
         eager: true,
-      })
+      });
 
       const allLocales = Object.fromEntries(
-        Object.entries(locales).map( ([path, m]) => {
+        Object.entries(locales).map(([path, m]) => {
           return [path.split('/').pop().split('.')[0], m.default];
-        })
+        }),
       );
 
       for (const [key, definition] of Object.entries(allLocales)) {
