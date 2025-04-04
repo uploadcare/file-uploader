@@ -1,0 +1,26 @@
+<script type="module">
+  const templates = import.meta.glob('./**/*.html');
+
+  const templateList = document.createElement('div');
+  templateList.innerHTML = /* html */ `
+    <h2 style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; text-align: center;">Demo</h2>
+    <ul style="list-style: none; padding: 0; max-width: 600px; margin: 0 auto;">
+      ${Object.keys(templates)
+        .map((path) => {
+          return /* html */ `<li style="margin: 10px 0;">
+            <a href="${path}" style="text-decoration: none; color: #007BFF; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-weight: bold;">
+                      ${path.replace('./', '')}
+                    </a>
+                  </li>`;
+        })
+        .join('')}
+    </ul>
+  `;
+  templateList.style.border = '1px solid #ddd';
+  templateList.style.borderRadius = '8px';
+  templateList.style.padding = '20px';
+  templateList.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
+  templateList.style.margin = '20px auto';
+  templateList.style.maxWidth = '600px';
+  document.body.appendChild(templateList);
+</script>

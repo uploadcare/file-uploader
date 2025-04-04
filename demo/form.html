@@ -1,46 +1,44 @@
-<!DOCTYPE html>
-<base href="../../" />
+<!doctype html>
 
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="./blocks/themes/uc-basic/index.css">
-  <script
-    async=""
-    src="https://cdn.skypack.dev/-/es-module-shims@v1.5.8-O0uWfhbenfjMbv6D3d8E/dist=es2020,mode=raw,min/dist/es-module-shims.js"
-  ></script>
-  <script type="importmap">
-    {
-      "imports": {
-        "@symbiotejs/symbiote": "./node_modules/@symbiotejs/symbiote/build/symbiote.js",
-        "@uploadcare/upload-client": "./node_modules/@uploadcare/upload-client/dist/esm/index.browser.mjs",
-        "@uploadcare/image-shrink": "./node_modules/@uploadcare/image-shrink/dist/esm/index.browser.mjs"
-      }
-    }
-  </script>
   <script type="module">
-    import * as UC from './index.js';
+    import '@/solutions/file-uploader/regular/index.css';
+    import * as UC from '@/index.js';
 
     UC.defineComponents(UC);
 
     const form = document.querySelector('form');
+    console.log(form);
     form.addEventListener('submit', (e) => {
       e.preventDefault();
-      console.log('SUBMIT', [...new FormData(e.target).entries()]);
+      const data = [...new FormData(e.target).entries()];
+      const results = document.getElementById('results');
+      results.innerHTML = /* html */ `
+        <h3>Form Data</h3>
+        <pre>${JSON.stringify(data, null, 2)}</pre>
+      `;
     });
   </script>
 </head>
 
-<uc-config ctx-name="my-uploader" pubkey="demopublickey" multiple-min="1" multiple-max="10" img-only group-output></uc-config>
-<uc-file-uploader-regular headless class="uc-light" ctx-name="my-uploader">
-  <uc-form-input
-    style="position: absolute; bottom: 0px; left: 50%; pointer-events: none;"
-    ctx-name="my-uploader"
-  ></uc-form-input>
-</uc-file-uploader-regular>
+<uc-config
+  ctx-name="my-uploader"
+  pubkey="demopublickey"
+  multiple-min="1"
+  multiple-max="10"
+  img-only
+  group-output
+></uc-config>
 
 <form>
-  <uc-simple-btn ctx-name="my-uploader" uc-wgt-common class="uc-light"></uc-simple-btn>
+  <uc-file-uploader-regular class="uc-light" ctx-name="my-uploader">
+    <uc-form-input ctx-name="my-uploader"></uc-form-input>
+  </uc-file-uploader-regular>
   <br />
   <br />
   <button type="submit">Submit</button>
+  <br />
+  <br />
+  <div id="results"></div>
 </form>

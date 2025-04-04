@@ -35,7 +35,9 @@
     "MIT"
   ],
   "type": "module",
-  "sideEffects": ["*.css"],
+  "sideEffects": [
+    "*.css"
+  ],
   "module": "./index.js",
   "exports": {
     ".": {
@@ -64,7 +66,7 @@
     "access": "public"
   },
   "scripts": {
-    "dev": "esbuild --servedir=.",
+    "dev": "vite dev",
     "test": "npm run test:types && npm run test:specs && npm run test:locales",
     "test:types": "tsd -t types/index.d.ts -f types/test/",
     "test:specs": "web-test-runner \"./{abstract,blocks,solutions,web,utils}/**/*.test.js\" --node-resolve",
@@ -126,7 +128,8 @@
     "stylelint-order": "^6.0.3",
     "svg-sprite": "^2.0.4",
     "tsd": "^0.31.2",
-    "typescript": "^5.8.2"
+    "typescript": "^5.8.2",
+    "vite": "^6.2.5"
   },
   "author": "Uploadcare Inc.",
   "license": "MIT",

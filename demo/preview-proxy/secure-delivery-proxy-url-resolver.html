@@ -1,25 +1,10 @@
 <!doctype html>
-<base href="../../" />
 
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="./solutions/file-uploader/regular/index.css" />
-  <script
-    async=""
-    src="https://cdn.skypack.dev/-/es-module-shims@v1.5.8-O0uWfhbenfjMbv6D3d8E/dist=es2020,mode=raw,min/dist/es-module-shims.js"
-  ></script>
-  <script type="importmap">
-    {
-      "imports": {
-        "@symbiotejs/symbiote": "./node_modules/@symbiotejs/symbiote/build/symbiote.js",
-        "@uploadcare/upload-client": "./node_modules/@uploadcare/upload-client/dist/esm/index.browser.mjs",
-        "@uploadcare/image-shrink": "./node_modules/@uploadcare/image-shrink/dist/esm/index.browser.mjs"
-      }
-    }
-  </script>
-  <script src="./index.js" type="module"></script>
   <script type="module">
-    import * as UC from './index.js';
+    import '@/solutions/file-uploader/regular/index.css';
+    import * as UC from '@/index.js';
 
     UC.defineComponents(UC);
 
