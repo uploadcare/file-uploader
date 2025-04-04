@@ -67,7 +67,7 @@
   },
   "scripts": {
     "dev": "vite dev",
-    "test": "npm run test:types && npm run test:specs && npm run test:locales && test:e2e",
+    "test": "npm run test:types && npm run test:specs && npm run test:locales && npm run test:e2e",
     "test:types": "tsd -t types/index.d.ts -f types/test/",
     "test:specs": "web-test-runner \"./{abstract,blocks,solutions,web,utils}/**/*.test.js\" --node-resolve",
     "test:e2e": "npx playwright install && npx playwright install-deps chromium && vitest",
