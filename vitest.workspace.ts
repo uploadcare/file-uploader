@@ -1,4 +1,5 @@
 import { defineWorkspace } from 'vitest/config';
+import { commands } from './tests/utils/commands';
 
 export default defineWorkspace([
   {
@@ -9,6 +10,7 @@ export default defineWorkspace([
         enabled: true,
         provider: 'playwright',
         instances: [{ browser: 'chromium' }],
+        commands
       },
     },
   },

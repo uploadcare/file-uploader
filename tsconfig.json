@@ -24,6 +24,6 @@
       "@/*": ["./*"]
     }
   },
-  "include": ["**/*.js", "types", "tests", "test-renderer.tsx"],
+  "include": ["**/*.js", "types", "tests", "tests/utils/test-renderer.tsx"],
   "exclude": ["node_modules"]
 }

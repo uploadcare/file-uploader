@@ -1,4 +1,4 @@
-import { renderer } from '../../test-renderer.js';
+import { renderer } from '../../tests/utils/test-renderer.js';
 import '../jsx';
 
 // @ts-expect-error - no props

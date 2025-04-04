@@ -1,6 +1,6 @@
 import { expectType } from 'tsd';
 import { OutputFileEntry, FuncCollectionValidator, FuncFileValidator } from '../index.js';
-import { renderer } from '../../test-renderer.js';
+import { renderer } from '../../tests/utils/test-renderer.js';
 import React from 'react';
 import '../jsx';
 

@@ -13,7 +13,7 @@ import {
 } from '../../index.js';
 import { SourceTypes } from '../../blocks/utils/UploadSource.js';
 import { type ModalId } from '../../abstract/ModalManager.js';
-import { renderer } from '../../test-renderer.js';
+import { renderer } from '../../tests/utils/test-renderer.js';
 
 const instance = new UploadCtxProvider();
 instance.uploadCollection.size;
