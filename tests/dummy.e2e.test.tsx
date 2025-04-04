@@ -1,8 +1,7 @@
+import { page } from '@vitest/browser/context';
 import { expect, test } from 'vitest';
-import { getByText } from '@testing-library/dom';
 import { render, renderer } from '../test-renderer';
 import '../types/jsx';
-import { page } from '@vitest/browser/context';
 
 test('dummy', async () => {
   import('@/solutions/file-uploader/regular/index.css');
