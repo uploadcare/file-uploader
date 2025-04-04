@@ -22,4 +22,6 @@ jobs:
         run: npm run build
       - name: Run tsc
         run: npm run clean:types && npm run tsc
+      - name: Run build
+        run: npm run build
 
