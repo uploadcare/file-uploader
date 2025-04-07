@@ -13,18 +13,12 @@ export const waitFileChooserAndUpload: BrowserCommand<[string[]]> = async ({ pag
   }
 };
 
-const customSelector: BrowserCommand<[string]> = async ({ page, context, iframe }, selector) => {
-  return iframe.locator(selector)
-};
-
 export const commands = {
   waitFileChooserAndUpload,
-  customSelector
 };
 
 declare module '@vitest/browser/context' {
   interface BrowserCommands {
     waitFileChooserAndUpload: (relativePaths: string[]) => Promise<void>;
-    customSelector: (selector: string) => Promise<Locator>;
   }
 }

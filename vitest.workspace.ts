@@ -9,8 +9,17 @@ export default defineWorkspace([
       browser: {
         enabled: true,
         provider: 'playwright',
-        instances: [{ browser: 'chromium' }],
-        commands
+        instances: [
+          {
+            browser: 'chromium',
+            launch: {
+              args: ['--disable-web-security', '--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream'],
+            },
+          },
+        ],
+        commands: {
+          ...commands,
+        },
       },
     },
   },

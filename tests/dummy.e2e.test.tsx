@@ -9,11 +9,12 @@ beforeAll(async () => {
   UC.defineComponents(UC);
 });
 
-beforeEach(async () => {
+beforeEach(() => {
+  const ctxName = `test-${Math.random().toString(36).slice(2)}`;
   page.render(
     <>
-      <uc-file-uploader-regular ctx-name="my-uploader"></uc-file-uploader-regular>
-      <uc-config ctx-name="my-uploader" pubkey="demopublickey"></uc-config>
+      <uc-file-uploader-regular ctx-name={ctxName}></uc-file-uploader-regular>
+      <uc-config ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
     </>,
   );
 });
@@ -28,12 +29,13 @@ describe('File uploader regular', () => {
   describe('Modal: start from', async () => {
     it('should be opened on upload button click', async () => {
       await page.getByText('Upload files', { exact: true }).click();
-      const startFrom = page.elementLocator(document.querySelector('uc-start-from')!);
+      const startFrom = page.getByTestId('uc-start-from');
       await expect.element(startFrom).toBeVisible();
     });
 
     it('should have default sources', async () => {
-      const startFrom = page.elementLocator(document.querySelector('uc-start-from')!);
+      await page.getByText('Upload files', { exact: true }).click();
+      const startFrom = page.getByTestId('uc-start-from');
 
       await expect.element(startFrom.getByText('From device', { exact: true })).toBeVisible();
       await expect.element(startFrom.getByText('From link', { exact: true })).toBeVisible();
@@ -43,24 +45,30 @@ describe('File uploader regular', () => {
     });
 
     it('should have copyright', async () => {
-      const startFrom = page.elementLocator(document.querySelector('uc-start-from')!);
+      await page.getByText('Upload files', { exact: true }).click();
+
+      const startFrom = page.getByTestId('uc-start-from');
       await expect.element(startFrom.getByText('Powered by Uploadcare', { exact: true })).toBeVisible();
     });
 
     it('should have cancel button', async () => {
-      const startFrom = page.elementLocator(document.querySelector('uc-start-from')!);
+      await page.getByText('Upload files', { exact: true }).click();
+
+      const startFrom = page.getByTestId('uc-start-from');
       await expect.element(startFrom.getByText('Cancel', { exact: true })).toBeVisible();
     });
 
     it('should close modal on cancel button click', async () => {
-      const startFrom = page.elementLocator(document.querySelector('uc-start-from')!);
+      await page.getByText('Upload files', { exact: true }).click();
+
+      const startFrom = page.getByTestId('uc-start-from');
       await startFrom.getByText('Cancel', { exact: true }).click();
       await expect.element(startFrom).not.toBeVisible();
     });
 
     it('should close modal on overlay click', async () => {
       await page.getByText('Upload files', { exact: true }).click();
-      const startFrom = page.elementLocator(document.querySelector('uc-start-from')!);
+      const startFrom = page.getByTestId('uc-start-from');
       await userEvent.click(document.body, {
         position: {
           x: 10,
@@ -74,16 +82,60 @@ describe('File uploader regular', () => {
   describe('Add files to the upload list', () => {
     test('from device', async () => {
       await page.getByText('Upload files', { exact: true }).click();
-      const startFrom = page.elementLocator(document.querySelector('uc-start-from')!);
+      const startFrom = page.getByTestId('uc-start-from');
+      const uploadList = page.getByTestId('uc-upload-list');
+
       commands.waitFileChooserAndUpload(['./fixtures/test_image.jpeg']);
 
       await startFrom.getByText('From device', { exact: true }).click();
-      await expect.element(startFrom).not.toBeVisible();
 
-      const uploadList = document.querySelector('uc-upload-list')!;
+      await expect.element(startFrom).not.toBeVisible();
       await expect.element(uploadList).toBeVisible();
 
       await expect.element(page.getByText('test_image.jpeg')).toBeVisible();
+      await expect.element(page.getByText('1 file uploaded')).toBeVisible();
+    });
+
+    test('from link', async () => {
+      await page.getByText('Upload files', { exact: true }).click();
+      const startFrom = page.getByTestId('uc-start-from');
+      const uploadList = page.getByTestId('uc-upload-list');
+      const urlSource = page.getByTestId('uc-url-source');
+
+      await expect.element(startFrom).toBeVisible();
+      await startFrom.getByText('From link').click();
+      await expect.element(startFrom).not.toBeVisible();
+      await expect.element(urlSource).toBeVisible();
+
+      const urlInput = urlSource.getByPlaceholder('https://');
+      await userEvent.fill(
+        urlInput,
+        'https://images.unsplash.com/photo-1699102241946-45c5e1937d69?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&dl=prithiviraj-a-fa7Stge3YXs-unsplash.jpg&w=640',
+      );
+      await userEvent.keyboard('{Enter}');
+
+      await expect.element(uploadList).toBeVisible();
+      await expect.element(page.getByText('prithiviraj-a-fa7Stge3YXs-unsplash.jpg')).toBeVisible();
+      await expect.element(page.getByText('1 file uploaded')).toBeVisible();
+    });
+
+    test('from camera', async () => {
+      await page.getByText('Upload files', { exact: true }).click();
+      const startFrom = page.getByTestId('uc-start-from');
+      const uploadList = page.getByTestId('uc-upload-list');
+      const cameraSource = page.getByTestId('uc-camera-source');
+
+      await expect.element(startFrom).toBeVisible();
+      await startFrom.getByText('Camera').click();
+      await expect.element(startFrom).not.toBeVisible();
+      await expect.element(cameraSource).toBeVisible();
+
+      const cameraButton = cameraSource.query()?.querySelector('button.uc-shot-btn')!;
+      await page.elementLocator(cameraButton).click();
+      await cameraSource.getByText('Accept').click();
+
+      await expect.element(uploadList).toBeVisible();
+      await expect.element(page.getByText(/camera-\d+\.jpeg/)).toBeVisible();
       await expect.element(page.getByText('1 file uploaded')).toBeVisible();
     });
   });
