@@ -98,6 +98,8 @@ const mapping = {
   gridShowFileNames: asBoolean,
   cloudImageEditorAutoOpen: asBoolean,
   cloudImageEditorMaskHref: asString,
+
+  testMode: asBoolean,
 };
 
 /**
@@ -118,4 +120,3 @@ export const normalizeConfigValue = (key, value) => {
     return initialConfig[key];
   }
 };
-export { asBoolean };

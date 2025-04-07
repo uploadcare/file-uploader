@@ -80,4 +80,6 @@ export const initialConfig = {
   cloudImageEditorAutoOpen: false,
 
   cloudImageEditorMaskHref: null,
+
+  testMode: false,
 };

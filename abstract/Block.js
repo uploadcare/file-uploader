@@ -189,6 +189,15 @@ export class Block extends BaseComponent {
       const direction = getLocaleDirection(localeId);
       this.style.direction = direction === 'ltr' ? '' : direction;
     });
+
+    this.subConfigValue('testMode', (testMode) => {
+      const tagName = window.customElements.getName(/** @type {CustomElementConstructor} */ (this.constructor));
+      if (!testMode || !tagName) {
+        this.dataset.testid = undefined;
+        return;
+      }
+      this.dataset.testid = tagName;
+    });
   }
 
   /**

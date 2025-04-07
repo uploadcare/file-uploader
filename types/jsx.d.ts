@@ -10,6 +10,7 @@ type FormInput = import('../index.js').FormInput;
 type CloudImageEditorBlock = import('../index.js').CloudImageEditorBlock;
 type CtxAttributes = {
   'ctx-name': string;
+  testMode?: boolean;
 };
 type CommonHtmlAttributes<T> = Partial<
   Pick<React.HTMLAttributes<T>, 'id' | 'children' | 'hidden'> & { class: React.HTMLAttributes<T>['className'] }
