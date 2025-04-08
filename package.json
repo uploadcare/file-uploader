@@ -67,11 +67,11 @@
   },
   "scripts": {
     "dev": "vite dev",
-    "test": "npm run test:types && npm run test:specs && npm run test:locales",
+    "test": "npm run test:types && npm run test:specs && npm run test:locales && npm run test:e2e",
     "test:types": "tsd -t types/index.d.ts -f types/test/",
     "test:specs": "web-test-runner \"./{abstract,blocks,solutions,web,utils}/**/*.test.js\" --node-resolve",
-    "test:e2e": "npx playwright install && npx playwright install-deps chromium && vitest",
-    "test:locales": "npx playwright install && npx playwright install-deps chromium && node ./test-locales.js",
+    "test:e2e": "vitest",
+    "test:locales": "node ./test-locales.js",
     "release": "shipjs prepare",
     "build:web": "npm run clean:web && node ./build.js",
     "build:ssr-stubs": "node ./build-ssr-stubs.js",
@@ -95,7 +95,7 @@
     "format:md": "prettier --write --parser markdown './**/*.md'",
     "format": "run-s lint:js:fix lint:css:fix format:js format:css format:json format:md",
     "prepare": "husky install",
-    "test:browser": "vitest --workspace=vitest.workspace.ts"
+    "playwright:install": "npx playwright install && npx playwright install --with-deps chromium"
   },
   "devDependencies": {
     "@babel/eslint-parser": "^7.23.3",
