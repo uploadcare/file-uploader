@@ -1,6 +1,6 @@
 // @ts-check
 import { shrinkFile } from '@uploadcare/image-shrink';
-import { CancelError, uploadFile } from '@uploadcare/upload-client';
+import { CancelError, UploadcareError, uploadFile } from '@uploadcare/upload-client';
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../utils/cdn-utils.js';
@@ -464,16 +464,18 @@ export class FileItem extends UploaderBlock {
           isUploading: false,
           uploadProgress: 0,
         });
-      } else if (cause instanceof Error) {
+      } else if (cause instanceof UploadcareError) {
         entry.setMultipleValues({
           isUploading: false,
           uploadProgress: 0,
           uploadError: cause,
         });
       } else {
+        console.error('Unknown upload error', cause);
         entry.setMultipleValues({
           isUploading: false,
           uploadProgress: 0,
+          // TODO: Add translation?
           uploadError: new Error('Something went wrong', {
             cause,
           }),
