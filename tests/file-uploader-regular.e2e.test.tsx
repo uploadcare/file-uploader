@@ -2,6 +2,7 @@ import { commands, page, userEvent } from '@vitest/browser/context';
 import { beforeAll, beforeEach, describe, expect, it, test } from 'vitest';
 import { renderer } from './utils/test-renderer';
 import '../types/jsx';
+import { vi } from 'vitest';
 
 beforeAll(async () => {
   await import('@/solutions/file-uploader/regular/index.css');
@@ -131,6 +132,7 @@ describe('File uploader regular', () => {
       await expect.element(cameraSource).toBeVisible();
 
       const cameraButton = cameraSource.query()?.querySelector('button.uc-shot-btn')!;
+      await expect.element(cameraButton).toBeVisible();
       await page.elementLocator(cameraButton).click();
       await cameraSource.getByText('Accept').click();
 

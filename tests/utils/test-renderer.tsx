@@ -1,4 +1,3 @@
-import { delay } from '@/utils/delay';
 import { page } from '@vitest/browser/context';
 import { CommonDOMRenderer } from 'render-jsx/dom';
 import { beforeEach } from 'vitest';
@@ -28,9 +27,6 @@ page.extend({
 
 beforeEach(async () => {
   cleanup();
-  // Without delay, we receive Error: Unexpected error: TypedCollection is not initialized sometimes
-  // TODO: Investigate why this happens
-  await delay(1000);
 });
 
 declare module '@vitest/browser/context' {
