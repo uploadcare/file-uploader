@@ -133,10 +133,8 @@ describe('File uploader regular', () => {
 
       const cameraButton = cameraSource.query()?.querySelector('button.uc-shot-btn')!;
       await expect.element(cameraButton).toBeVisible();
-      await page.elementLocator(cameraButton).click({
-        // It's not working without it on CI for some reason. Got `element is outside of the viewport` error
-        force: true,
-      });
+      // It's not working with locator  on CI for some reason. Got `element is outside of the viewport` error
+      cameraButton.dispatchEvent(new Event('click'));
       await cameraSource.getByText('Accept').click();
 
       await expect.element(uploadList).toBeVisible();
