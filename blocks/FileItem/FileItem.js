@@ -1,6 +1,6 @@
 // @ts-check
 import { shrinkFile } from '@uploadcare/image-shrink';
-import { CancelError, UploadcareError, uploadFile } from '@uploadcare/upload-client';
+import { CancelError, uploadFile } from '@uploadcare/upload-client';
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../utils/cdn-utils.js';
