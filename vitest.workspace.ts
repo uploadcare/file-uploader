@@ -1,6 +1,5 @@
 import { defineWorkspace } from 'vitest/config';
 import { commands } from './tests/utils/commands';
-import { comma } from 'postcss/lib/list';
 
 export default defineWorkspace([
   () => {

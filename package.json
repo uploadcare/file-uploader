@@ -71,6 +71,7 @@
     "test:types": "tsd -t types/index.d.ts -f types/test/",
     "test:specs": "web-test-runner \"./{abstract,blocks,solutions,web,utils}/**/*.test.js\" --node-resolve",
     "test:e2e": "vitest",
+    "test:e2e:dev": "vitest --browser.headless=false",
     "test:locales": "node ./test-locales.js",
     "release": "shipjs prepare",
     "build:web": "npm run clean:web && node ./build.js",

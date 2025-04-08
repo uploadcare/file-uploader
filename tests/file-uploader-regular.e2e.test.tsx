@@ -1,8 +1,7 @@
 import { commands, page, userEvent } from '@vitest/browser/context';
 import { beforeAll, beforeEach, describe, expect, it, test } from 'vitest';
-import { renderer } from './utils/test-renderer';
 import '../types/jsx';
-import { vi } from 'vitest';
+import { renderer } from './utils/test-renderer';
 
 beforeAll(async () => {
   await import('@/solutions/file-uploader/regular/index.css');
@@ -131,12 +130,11 @@ describe('File uploader regular', () => {
       await expect.element(startFrom).not.toBeVisible();
       await expect.element(cameraSource).toBeVisible();
 
-      const cameraButton = cameraSource.query()?.querySelector('button.uc-shot-btn')!;
-      await expect.element(cameraButton).toBeVisible();
-      // It's not working with locator on CI for some reason. Got `element is outside of the viewport` error
-      // Runtime click dispatch fixes this issue
-      cameraButton.dispatchEvent(new Event('click'));
-      cameraSource.getByText('Accept').query()!.dispatchEvent(new Event('click'));
+      const cameraButton = cameraSource.getByTestId('uc-camera-source--shot')
+      await userEvent.click(cameraButton);
+
+      const acceptButton = cameraSource.getByTestId('uc-camera-source--accept')
+      await userEvent.click(acceptButton);
 
       await expect.element(uploadList).toBeVisible();
       await expect.element(page.getByText(/camera-\d+\.jpeg/)).toBeVisible();
