@@ -24,4 +24,10 @@ jobs:
         run: npm run clean:types && npm run tsc
       - name: Run build
         run: npm run build
+      - name: Archive artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-tests
+          path: |
+            tests/__screenshots__/**
 
