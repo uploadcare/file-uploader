@@ -1,9 +1,9 @@
 // @ts-check
-import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
-import { ExternalUploadSource, UploadSource, UploadSourceMobile } from '../utils/UploadSource.js';
+import { UploaderBlock } from '../../abstract/UploaderBlock.js';
+import { browserFeatures } from '../../utils/browser-info.js';
 import { CameraSourceTypes } from '../CameraSource/constants.js';
-import { isSupportCapture } from '../utils/supportCapture.js';
+import { ExternalUploadSource, UploadSource, UploadSourceMobile } from '../utils/UploadSource.js';
 
 const L10N_PREFIX = 'src-type-';
 
@@ -55,7 +55,7 @@ export class SourceBtn extends UploaderBlock {
       type: UploadSource.CAMERA,
       activity: ActivityBlock.activities.CAMERA,
       activate: () => {
-        const supportsCapture = isSupportCapture();
+        const supportsCapture = browserFeatures.htmlMediaCapture;
 
         if (supportsCapture) {
           this.api.openSystemDialog({ captureCamera: true });
@@ -75,7 +75,7 @@ export class SourceBtn extends UploaderBlock {
         type: mobileSourceType,
         activity: ActivityBlock.activities.CAMERA,
         activate: () => {
-          const supportsCapture = isSupportCapture();
+          const supportsCapture = browserFeatures.htmlMediaCapture;
           if (supportsCapture) {
             this.api.openSystemDialog({
               captureCamera: true,
