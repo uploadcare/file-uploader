@@ -54,7 +54,7 @@ declare namespace JSX {
     >;
     'uc-cloud-image-editor': CustomElement<CloudImageEditorBlock, JSX.IntrinsicElements['uc-cloud-image-editor-block']>;
     'uc-form-input': CustomElement<FormInput, CtxAttributes>;
-    'uc-file-uploader-regular': CustomElement<FileUploaderRegular, CtxAttributes>;
+    'uc-file-uploader-regular': CustomElement<FileUploaderRegular, CtxAttributes & { headless: boolean }>;
     'uc-file-uploader-minimal': CustomElement<FileUploaderMinimal, CtxAttributes>;
     'uc-file-uploader-inline': CustomElement<FileUploaderInline, CtxAttributes>;
     'uc-upload-ctx-provider': CustomElement<InstanceType<UploadCtxProvider>, CtxAttributes>;
