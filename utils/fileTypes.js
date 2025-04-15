@@ -1,8 +1,10 @@
 // @ts-check
+import { browserInfo } from './browser-info.js';
 import { stringToArray } from './stringToArray.js';
 
-export const IMAGE_ACCEPT_LIST = [
-  'image/*',
+export const BASIC_IMAGE_WILDCARD = 'image/*';
+export const BASIC_VIDEO_WILDCARD = 'video/*';
+export const HEIC_IMAGE_MIME_LIST = [
   'image/heif',
   'image/heif-sequence',
   'image/heic',
@@ -16,6 +18,20 @@ export const IMAGE_ACCEPT_LIST = [
   '.avif',
   '.avifs',
 ];
+
+export const calcImageAcceptList = () => {
+  // Desktop Safari allows selecting HEIC images with simple image/* wildcard
+  // But if we provide a more specific HEIC types - safari starts to convert any images to HEIC
+  if (browserInfo.safariDesktop) {
+    return [BASIC_IMAGE_WILDCARD];
+  }
+  // Other browsers allows to select HEIC images with more specific HEIC types only
+  // Mobile Safari will allow to select HEIC images even with simple image/* wildcard and it will convert them to JPEG by default (behaviour could be changed in file picker UI)
+  // Hope it will be fixed in the future so we'll add specific types so that Mobile Safari will know that we're supporting HEIC images
+  return [BASIC_IMAGE_WILDCARD, ...HEIC_IMAGE_MIME_LIST];
+};
+
+export const IMAGE_ACCEPT_LIST = calcImageAcceptList();
 
 /**
  * @param {string[]} [fileTypes]

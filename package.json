@@ -103,6 +103,7 @@
     "@types/mocha": "^10.0.1",
     "@types/node": "^18.15.11",
     "@types/react": "^18.2.34",
+    "@types/sinon": "^17.0.4",
     "@web/test-runner": "^0.19.0",
     "esbuild": "^0.25.1",
     "eslint": "^8.56.0",

@@ -2,16 +2,22 @@
 import { ActivityBlock } from './ActivityBlock.js';
 
 import { applyStyles, Data } from '@symbiotejs/symbiote';
+import { calcCameraModes } from '../blocks/CameraSource/calcCameraModes.js';
+import { CameraSourceTypes } from '../blocks/CameraSource/constants.js';
 import { EventType } from '../blocks/UploadCtxProvider/EventEmitter.js';
 import { UploadSource } from '../blocks/utils/UploadSource.js';
 import { serializeCsv } from '../blocks/utils/comma-separated.js';
-import { IMAGE_ACCEPT_LIST, fileIsImage, mergeFileTypes } from '../utils/fileTypes.js';
+import { browserFeatures } from '../utils/browser-info.js';
+import {
+  BASIC_IMAGE_WILDCARD,
+  BASIC_VIDEO_WILDCARD,
+  fileIsImage,
+  IMAGE_ACCEPT_LIST,
+  mergeFileTypes,
+} from '../utils/fileTypes.js';
 import { parseCdnUrl } from '../utils/parseCdnUrl.js';
-import { buildOutputCollectionState } from './buildOutputCollectionState.js';
 import { stringToArray } from '../utils/stringToArray.js';
-import { calcCameraModes } from '../blocks/CameraSource/calcCameraModes.js';
-import { CameraSourceTypes } from '../blocks/CameraSource/constants.js';
-import { isSupportCapture } from '../blocks/utils/supportCapture.js';
+import { buildOutputCollectionState } from './buildOutputCollectionState.js';
 
 export class UploaderPublicApi {
   /**
@@ -161,11 +167,13 @@ export class UploaderPublicApi {
       const { isPhotoEnabled, isVideoRecordingEnabled } = calcCameraModes(this.cfg);
 
       if (options.modeCamera === CameraSourceTypes.PHOTO && isPhotoEnabled) {
-        fileInput.accept = 'image/*';
+        fileInput.accept = BASIC_IMAGE_WILDCARD;
       } else if (options.modeCamera === CameraSourceTypes.VIDEO && isVideoRecordingEnabled) {
-        fileInput.accept = 'video/*';
+        fileInput.accept = BASIC_VIDEO_WILDCARD;
       } else {
-        fileInput.accept = ['image/*', isVideoRecordingEnabled && 'video/*'].filter(Boolean).join(',');
+        fileInput.accept = [BASIC_IMAGE_WILDCARD, isVideoRecordingEnabled && BASIC_VIDEO_WILDCARD]
+          .filter(Boolean)
+          .join(',');
       }
     } else {
       fileInput.accept = accept;
@@ -276,7 +284,7 @@ export class UploaderPublicApi {
           return;
         }
 
-        if (srcKey === 'camera' && isSupportCapture()) {
+        if (srcKey === 'camera' && browserFeatures.htmlMediaCapture) {
           const { isPhotoEnabled, isVideoRecordingEnabled } = calcCameraModes(this.cfg);
 
           if (isPhotoEnabled && isVideoRecordingEnabled) {

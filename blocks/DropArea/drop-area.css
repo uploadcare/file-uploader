@@ -37,7 +37,8 @@
   border-color: var(--uc-primary-transparent);
 }
 
-:where(.uc-contrast) :where([uc-drop-area]):is([drag-state='active'], [drag-state='near'], [drag-state='over'], :hover) {
+:where(.uc-contrast)
+  :where([uc-drop-area]):is([drag-state='active'], [drag-state='near'], [drag-state='over'], :hover) {
   color: var(--uc-foreground);
   background: transparent;
   border-color: var(--uc-foreground);
@@ -122,7 +123,8 @@
   color: var(--uc-foreground);
 }
 
-:where(.uc-contrast) :where([uc-drop-area])[with-icon]
+:where(.uc-contrast)
+  :where([uc-drop-area])[with-icon]
   > .uc-content-wrapper:is([drag-state='active'], [drag-state='near'], [drag-state='over'])
   .uc-text {
   color: var(--uc-foreground);

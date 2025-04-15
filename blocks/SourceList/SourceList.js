@@ -1,8 +1,8 @@
 // @ts-check
 import { Block } from '../../abstract/Block.js';
+import { browserFeatures } from '../../utils/browser-info.js';
 import { stringToArray } from '../../utils/stringToArray.js';
 import { deserializeCsv } from '../utils/comma-separated.js';
-import { isSupportCapture } from '../utils/supportCapture.js';
 
 export class SourceList extends Block {
   initCallback() {
@@ -22,7 +22,7 @@ export class SourceList extends Block {
           return;
         }
 
-        if (srcName === 'camera' && isSupportCapture()) {
+        if (srcName === 'camera' && browserFeatures.htmlMediaCapture) {
           this.subConfigValue('cameraModes', (/** @type {String} */ val) => {
             const cameraModes = deserializeCsv(val);
 
