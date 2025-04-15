@@ -11,7 +11,10 @@ export class CloudImageEditorActivity extends UploaderBlock {
 
   /**
    * @private
-   * @type {import('../../abstract/TypedData.js').TypedData | undefined}
+   * @type {import('../../abstract/TypedData.js').TypedData<
+   *       import('../../abstract/uploadEntrySchema.js').uploadEntrySchema
+   *     >
+   *   | undefined}
    */
   _entry;
 
@@ -70,10 +73,11 @@ export class CloudImageEditorActivity extends UploaderBlock {
 
   mountEditor() {
     const { internalId } = this.activityParams;
-    this._entry = this.uploadCollection.read(internalId);
-    if (!this._entry) {
+    const entry = this.uploadCollection.read(internalId);
+    if (!entry) {
       throw new Error(`Entry with internalId "${internalId}" not found`);
     }
+    this._entry = entry;
     const cdnUrl = this._entry.getValue('cdnUrl');
     if (!cdnUrl) {
       throw new Error(`Entry with internalId "${internalId}" hasn't uploaded yet`);

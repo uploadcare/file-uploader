@@ -116,7 +116,7 @@ export class ValidationManager {
 
   /**
    * @private
-   * @param {import('./TypedData.js').TypedData} entry
+   * @param {import('./TypedData.js').TypedData<typeof import('./uploadEntrySchema.js').uploadEntrySchema>} entry
    */
   _runFileValidatorsForEntry(entry) {
     const outputEntry = this._blockInstance.api.getOutputItem(entry.uid);

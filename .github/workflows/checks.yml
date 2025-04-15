@@ -14,12 +14,12 @@ jobs:
       - name: Install dependencies
         working-directory: ./
         run: npm ci
-      - name: Run build
-        run: npm run build
       - name: Run lint
         run: npm run lint
       - name: Run test
         run: npm run test
+      - name: Run build
+        run: npm run build
       - name: Run tsc
         run: npm run clean:types && npm run tsc
 

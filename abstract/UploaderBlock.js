@@ -84,7 +84,7 @@ export class UploaderBlock extends ActivityBlock {
     return this.api;
   }
 
-  /** @returns {TypedCollection} */
+  /** @returns {TypedCollection<typeof uploadEntrySchema>} */
   get uploadCollection() {
     if (!this.has('*uploadCollection')) {
       throw new Error('Unexpected error: TypedCollection is not initialized');
@@ -172,8 +172,7 @@ export class UploaderBlock extends ActivityBlock {
 
   /**
    * @private
-   * @type {Parameters<import('./TypedCollection.js').TypedCollection['observeCollection']>[0]}
-   * @param {Set<import('./TypedData.js').TypedData>} removed
+   * @type {import('./TypedCollection.js').TypedCollectionObserverHandler<typeof uploadEntrySchema>}
    */
   _handleCollectionUpdate = (entries, added, removed) => {
     if (added.size || removed.size) {
@@ -198,7 +197,8 @@ export class UploaderBlock extends ActivityBlock {
         isUploading: false,
         uploadProgress: 0,
       });
-      URL.revokeObjectURL(entry?.getValue('thumbUrl'));
+      const thumbUrl = entry?.getValue('thumbUrl');
+      thumbUrl && URL.revokeObjectURL(thumbUrl);
       this.emit(EventType.FILE_REMOVED, this.api.getOutputItem(entry.uid));
     }
 
@@ -212,7 +212,7 @@ export class UploaderBlock extends ActivityBlock {
 
   /**
    * @private
-   * @param {Record<keyof import('./uploadEntrySchema.js').UploadEntry, Set<string>>} changeMap
+   * @param {Record<keyof import('./uploadEntrySchema.js').UploadEntryData, Set<string>>} changeMap
    */
   _handleCollectionPropertiesUpdate = (changeMap) => {
     this._flushOutputItems();
@@ -313,7 +313,9 @@ export class UploaderBlock extends ActivityBlock {
     const items = [...uploadTrigger].filter((id) => !!this.uploadCollection.read(id));
     items.forEach((id) => {
       const uploadProgress = this.uploadCollection.readProp(id, 'uploadProgress');
-      commonProgress += uploadProgress;
+      if (typeof uploadProgress === 'number') {
+        commonProgress += uploadProgress;
+      }
     });
     const progress = items.length ? Math.round(commonProgress / items.length) : 0;
 
@@ -337,14 +339,19 @@ export class UploaderBlock extends ActivityBlock {
       const entries = this.uploadCollection
         .findItems(
           (entry) =>
-            entry.getValue('fileInfo') &&
+            !!entry.getValue('fileInfo') &&
             entry.getValue('isImage') &&
             !entry.getValue('cdnUrlModifiers')?.includes('/crop/'),
         )
-        .map((id) => this.uploadCollection.read(id));
+        .map((id) => this.uploadCollection.read(id))
+        .filter(Boolean);
 
       for (const entry of entries) {
         const fileInfo = entry.getValue('fileInfo');
+        if (!fileInfo || !fileInfo.imageInfo) {
+          console.warn('Failed to get image info for entry', entry.uid);
+          continue;
+        }
         const { width, height } = fileInfo.imageInfo;
         const expectedAspectRatio = aspectRatioPreset.width / aspectRatioPreset.height;
         const crop = calculateMaxCenteredCropFrame(width, height, expectedAspectRatio);
@@ -352,9 +359,14 @@ export class UploaderBlock extends ActivityBlock {
           `crop/${crop.width}x${crop.height}/${crop.x},${crop.y}`,
           'preview',
         );
+        const cdnUrl = entry.getValue('cdnUrl');
+        if (!cdnUrl) {
+          console.warn('Failed to get cdnUrl for entry', entry.uid);
+          continue;
+        }
         entry.setMultipleValues({
           cdnUrlModifiers,
-          cdnUrl: createCdnUrl(entry.getValue('cdnUrl'), cdnUrlModifiers),
+          cdnUrl: createCdnUrl(cdnUrl, cdnUrlModifiers),
         });
         if (
           this.uploadCollection.size === 1 &&

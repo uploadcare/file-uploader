@@ -125,6 +125,7 @@ export class UploaderPublicApi {
   uploadAll = () => {
     const itemsToUpload = this._uploadCollection.items().filter((id) => {
       const entry = this._uploadCollection.read(id);
+      if (!entry) return false;
       return !entry.getValue('isRemoved') && !entry.getValue('isUploading') && !entry.getValue('fileInfo');
     });
 
@@ -204,7 +205,9 @@ export class UploaderPublicApi {
    * @returns {import('../types/exported.js').OutputFileEntry<TStatus>}
    */
   getOutputItem = (entryId) => {
-    const uploadEntryData = /** @type {import('./uploadEntrySchema.js').UploadEntry} */ (Data.getCtx(entryId).store);
+    const uploadEntryData = /** @type {import('./uploadEntrySchema.js').UploadEntryData} */ (
+      Data.getCtx(entryId).store
+    );
 
     /** @type {import('@uploadcare/upload-client').UploadcareFile?} */
     const fileInfo = uploadEntryData.fileInfo;
