@@ -10,6 +10,9 @@ export class Thumb extends UploaderBlock {
   /** @private */
   _entrySubs = new Set();
 
+  /** @private */
+  _once = false;
+
   /**
    * @private
    * @type {import('../../abstract/uploadEntrySchema.js').UploadEntryTypedData | null}
@@ -79,7 +82,29 @@ export class Thumb extends UploaderBlock {
     };
   }
 
-  _calculateThumbSize() {
+  /** @param {string} imageUrl */
+  loadImage(imageUrl) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        this.set$({ thumbUrl: `url(${imageUrl})` });
+        resolve(true);
+        img.remove();
+      };
+      img.onerror = () => {
+        console.error('Failed to load image:', imageUrl);
+        reject(new Error(`Failed to load image: ${imageUrl}`));
+        img.remove();
+      };
+      img.src = imageUrl;
+    });
+  }
+
+  _calculateThumbSize(force = false) {
+    if (force) {
+      this._thumbRect = this.getBoundingClientRect();
+    }
+
     let size = Math.max(
       parseInt(String(this?._thumbRect?.height || 0)),
       parseInt(String(this?._thumbRect?.width || 0)),
@@ -94,11 +119,11 @@ export class Thumb extends UploaderBlock {
   }
 
   /** @private */
-  _generateThumbnail = this._withEntry(async (entry) => {
+  _generateThumbnail = this._withEntry(async (entry, force = false) => {
     const fileInfo = entry.getValue('fileInfo');
     const isImage = entry.getValue('isImage');
     const uuid = entry.getValue('uuid');
-    let size = this._calculateThumbSize();
+    let size = this._calculateThumbSize(force);
 
     if (fileInfo && isImage && uuid) {
       let thumbUrl = await this.proxyUrl(
@@ -107,11 +132,15 @@ export class Thumb extends UploaderBlock {
           createCdnUrlModifiers(entry.getValue('cdnUrlModifiers'), `scale_crop/${size}x${size}/center`),
         ),
       );
-      let currentThumbUrl = entry.getValue('thumbUrl');
-      if (currentThumbUrl !== thumbUrl) {
-        entry.setValue('thumbUrl', thumbUrl);
-        currentThumbUrl?.startsWith('blob:') && URL.revokeObjectURL(currentThumbUrl);
-      }
+
+      this.loadImage(thumbUrl).then(() => {
+        let currentThumbUrl = entry.getValue('thumbUrl');
+        if (currentThumbUrl !== thumbUrl) {
+          entry.setValue('thumbUrl', thumbUrl);
+          currentThumbUrl?.startsWith('blob:') && URL.revokeObjectURL(currentThumbUrl);
+        }
+      });
+
       return;
     }
 
@@ -182,6 +211,13 @@ export class Thumb extends UploaderBlock {
     this._subEntry('cdnUrlModifiers', () => {
       if (this._isIntersecting) {
         this._debouncedGenerateThumb();
+      }
+    });
+
+    this.subConfigValue('filesViewMode', (viewMode) => {
+      if (!this._once && viewMode === 'grid') {
+        this._debouncedGenerateThumb(true);
+        this._once = true;
       }
     });
 
