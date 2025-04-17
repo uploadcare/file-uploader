@@ -171,6 +171,17 @@ export class FileItem extends FileItemConfig {
     this._subEntry('isImage', () => this._debouncedCalculateState());
   }
 
+  /** @param {boolean} value */
+  _updateShowFileNames(value) {
+    const isListMode = this.cfg.filesViewMode === 'list';
+    if (isListMode) {
+      this.$.showFileNames = true;
+      return;
+    }
+
+    this.$.showFileNames = value;
+  }
+
   initCallback() {
     super.initCallback();
 
@@ -183,24 +194,15 @@ export class FileItem extends FileItemConfig {
     });
 
     this.subConfigValue('useCloudImageEditor', () => this._debouncedCalculateState());
+
     this.subConfigValue('filesViewMode', (mode) => {
-      if (this.cfg.filesViewMode === 'list') {
-        this.$.showFileNames = true;
-      }
-      if (this.cfg.filesViewMode === 'grid') {
-        this.$.showFileNames = this.cfg.gridShowFileNames;
-      }
+      this._updateShowFileNames(this.cfg.gridShowFileNames);
 
       this.setAttribute('mode', mode);
     });
 
     this.subConfigValue('gridShowFileNames', (value) => {
-      if (this.cfg.filesViewMode === 'grid') {
-        this.$.showFileNames = value;
-      }
-      if (this.cfg.filesViewMode === 'list') {
-        this.$.showFileNames = true;
-      }
+      this._updateShowFileNames(value);
     });
 
     this.onclick = () => {

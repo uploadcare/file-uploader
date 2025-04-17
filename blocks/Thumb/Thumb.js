@@ -73,7 +73,7 @@ export class Thumb extends FileItemConfig {
       promise
         .then(() => this.set$({ thumbUrl: `url(${thumbUrl})` }))
         .then(() => {
-          if (this._entry?.getValue('uuid') !== uuid) {
+          if (this._entry?.getValue('uuid') !== entry.getValue('uuid')) {
             entry.setValue('thumbUrl', thumbUrl);
             currentThumbUrl?.startsWith('blob:') && URL.revokeObjectURL(currentThumbUrl);
           }
