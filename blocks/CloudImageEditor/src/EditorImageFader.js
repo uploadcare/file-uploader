@@ -2,7 +2,7 @@ import { debounce } from '../../utils/debounce.js';
 import { Block } from '../../../abstract/Block.js';
 import { classNames } from './lib/classNames.js';
 import { linspace } from './lib/linspace.js';
-import { batchPreloadImages } from './lib/preloadImage.js';
+import { batchPreloadImages } from '../../utils/preloadImage.js';
 import { COLOR_OPERATIONS_CONFIG } from './toolbar-constants.js';
 import { viewerImageSrc } from './util.js';
 

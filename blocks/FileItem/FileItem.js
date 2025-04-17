@@ -60,13 +60,8 @@ export class FileItem extends FileItemConfig {
   }
 
   _reset() {
-    for (let sub of this._entrySubs) {
-      sub.remove();
-    }
-
+    super._reset();
     this._debouncedCalculateState.cancel();
-    this._entrySubs = new Set();
-    this._entry = null;
   }
 
   /**

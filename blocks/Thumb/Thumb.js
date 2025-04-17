@@ -1,6 +1,7 @@
 //@ts-check
 
 import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../utils/cdn-utils.js';
+import { preloadImage } from '../utils/preloadImage.js';
 import { FileItemConfig } from '../FileItem/FileItemConfig.js';
 import { fileCssBg } from '../svg-backgrounds/svg-backgrounds.js';
 import { debounce } from '../utils/debounce.js';
@@ -31,24 +32,6 @@ export class Thumb extends FileItemConfig {
     };
   }
 
-  /** @param {string} imageUrl */
-  loadImage(imageUrl) {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.onload = () => {
-        this.set$({ thumbUrl: `url(${imageUrl})` });
-        resolve(true);
-        img.remove();
-      };
-      img.onerror = () => {
-        console.error('Failed to load image:', imageUrl);
-        reject(new Error(`Failed to load image: ${imageUrl}`));
-        img.remove();
-      };
-      img.src = imageUrl;
-    });
-  }
-
   _calculateThumbSize(force = false) {
     if (force) {
       this._thumbRect = this.getBoundingClientRect();
@@ -72,6 +55,7 @@ export class Thumb extends FileItemConfig {
     const fileInfo = entry.getValue('fileInfo');
     const isImage = entry.getValue('isImage');
     const uuid = entry.getValue('uuid');
+
     let size = this._calculateThumbSize(force);
 
     if (fileInfo && isImage && uuid) {
@@ -82,13 +66,21 @@ export class Thumb extends FileItemConfig {
         ),
       );
 
-      this.loadImage(thumbUrl).then(() => {
-        let currentThumbUrl = entry.getValue('thumbUrl');
-        if (currentThumbUrl !== thumbUrl) {
-          entry.setValue('thumbUrl', thumbUrl);
-          currentThumbUrl?.startsWith('blob:') && URL.revokeObjectURL(currentThumbUrl);
-        }
-      });
+      let currentThumbUrl = entry.getValue('thumbUrl');
+
+      const { promise } = preloadImage(thumbUrl);
+
+      promise
+        .then(() => this.set$({ thumbUrl: `url(${thumbUrl})` }))
+        .then(() => {
+          if (this._entry?.getValue('uuid') !== uuid) {
+            entry.setValue('thumbUrl', thumbUrl);
+            currentThumbUrl?.startsWith('blob:') && URL.revokeObjectURL(currentThumbUrl);
+          }
+        })
+        .catch(() => {
+          console.error('Failed to load image', thumbUrl);
+        });
 
       return;
     }
@@ -98,7 +90,6 @@ export class Thumb extends FileItemConfig {
     }
 
     const file = entry.getValue('file');
-
     if (file?.type.includes('image')) {
       try {
         let thumbUrl = await generateThumb(file, size);
@@ -134,13 +125,21 @@ export class Thumb extends FileItemConfig {
     }
   }
 
+  _reset() {
+    super._reset();
+    this._debouncedGenerateThumb.cancel();
+  }
+
   /**
    * @private
    * @param {String} id
    */
   _handleEntryId(id) {
+    this._reset();
+
     let entry = this.uploadCollection?.read(id);
     this._entry = entry;
+
     if (!entry) {
       return;
     }

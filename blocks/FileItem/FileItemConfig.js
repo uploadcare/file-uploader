@@ -57,6 +57,16 @@ export class FileItemConfig extends UploaderBlock {
       },
     )(prop_, handler_);
 
+  /** @protected */
+  _reset() {
+    for (let sub of this._entrySubs) {
+      sub.remove();
+    }
+
+    this._entrySubs = new Set();
+    this._entry = null;
+  }
+
   disconnectedCallback() {
     super.disconnectedCallback();
     this._entrySubs = new Set();

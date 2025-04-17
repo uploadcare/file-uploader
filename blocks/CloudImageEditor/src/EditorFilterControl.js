@@ -3,7 +3,7 @@ import { createCdnUrl, createCdnUrlModifiers } from '../../../utils/cdn-utils.js
 import { EditorButtonControl } from './EditorButtonControl.js';
 import { FAKE_ORIGINAL_FILTER } from './EditorSlider.js';
 import { COMMON_OPERATIONS, transformationsToOperations } from './lib/transformationUtils.js';
-import { preloadImage } from './lib/preloadImage.js';
+import { preloadImage } from '../../utils/preloadImage.js';
 
 export class EditorFilterControl extends EditorButtonControl {
   constructor() {

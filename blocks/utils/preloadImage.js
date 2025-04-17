@@ -1,4 +1,4 @@
-import { TRANSPARENT_PIXEL_SRC } from '../../../../utils/transparentPixelSrc.js';
+import { TRANSPARENT_PIXEL_SRC } from '../../utils/transparentPixelSrc.js';
 
 export function preloadImage(src) {
   let image = new Image();
