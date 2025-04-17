@@ -56,6 +56,13 @@ export class Thumb extends FileItemConfig {
     const isImage = entry.getValue('isImage');
     const uuid = entry.getValue('uuid');
 
+    const isEntryChanged = () => {
+      return this._entry?.uid !== currentEntryUid;
+    };
+
+    const currentEntryUid = entry.uid;
+    const currentThumbUrl = entry.getValue('thumbUrl');
+
     let size = this._calculateThumbSize(force);
 
     if (fileInfo && isImage && uuid) {
@@ -66,17 +73,16 @@ export class Thumb extends FileItemConfig {
         ),
       );
 
-      let currentThumbUrl = entry.getValue('thumbUrl');
+      if (isEntryChanged()) return;
 
       const { promise } = preloadImage(thumbUrl);
 
       promise
-        .then(() => this.set$({ thumbUrl: `url(${thumbUrl})` }))
         .then(() => {
-          if (this._entry?.getValue('uuid') !== entry.getValue('uuid')) {
-            entry.setValue('thumbUrl', thumbUrl);
-            currentThumbUrl?.startsWith('blob:') && URL.revokeObjectURL(currentThumbUrl);
-          }
+          if (isEntryChanged()) return;
+          this.set$({ thumbUrl: `url(${thumbUrl})` });
+          entry.setValue('thumbUrl', thumbUrl);
+          currentThumbUrl?.startsWith('blob:') && URL.revokeObjectURL(currentThumbUrl);
         })
         .catch(() => {
           console.error('Failed to load image', thumbUrl);
@@ -93,8 +99,10 @@ export class Thumb extends FileItemConfig {
     if (file?.type.includes('image')) {
       try {
         let thumbUrl = await generateThumb(file, size);
+        if (isEntryChanged()) return;
         entry.setValue('thumbUrl', thumbUrl);
       } catch (err) {
+        if (isEntryChanged()) return;
         let color = window.getComputedStyle(this).getPropertyValue('--uc-muted-foreground');
         entry.setValue('thumbUrl', fileCssBg(color));
       }
