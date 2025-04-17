@@ -1,23 +1,14 @@
 //@ts-check
 
-import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../utils/cdn-utils.js';
+import { FileItemConfig } from '../FileItem/FileItemConfig.js';
 import { fileCssBg } from '../svg-backgrounds/svg-backgrounds.js';
 import { debounce } from '../utils/debounce.js';
 import { generateThumb } from '../utils/resizeImage.js';
 
-export class Thumb extends UploaderBlock {
+export class Thumb extends FileItemConfig {
   /** @private */
-  _entrySubs = new Set();
-
-  /** @private */
-  _once = false;
-
-  /**
-   * @private
-   * @type {import('../../abstract/uploadEntrySchema.js').UploadEntryTypedData | null}
-   */
-  _entry = null;
+  _renderedGridOnce = false;
 
   /**
    * @private
@@ -27,49 +18,7 @@ export class Thumb extends UploaderBlock {
 
   _isIntersecting = false;
 
-  /**
-   * @private
-   * @template {any[]} A
-   * @template {(entry: import('../../abstract/uploadEntrySchema.js').UploadEntryTypedData, ...args: A) => any} T
-   * @param {T} fn
-   * @returns {(...args: A) => ReturnType<T>}
-   */
-  _withEntry(fn) {
-    const wrapperFn = /** @type {(...args: A) => ReturnType<T>} */ (
-      (...args) => {
-        const entry = this._entry;
-        if (!entry) {
-          console.warn('No entry found');
-          return;
-        }
-        return fn(entry, ...args);
-      }
-    );
-    return wrapperFn;
-  }
-
-  /**
-   * @template {import('../../abstract/uploadEntrySchema.js').UploadEntryKeys} K
-   * @param {K} prop_
-   * @param {(value: import('../../abstract/uploadEntrySchema.js').UploadEntryData[K]) => void} handler_
-   */
-  _subEntry = (prop_, handler_) =>
-    this._withEntry(
-      /**
-       * @template {import('../../abstract/uploadEntrySchema.js').UploadEntryKeys} K
-       * @param {import('../../abstract/uploadEntrySchema.js').UploadEntryTypedData} entry
-       * @param {K} prop
-       * @param {(value: import('../../abstract/uploadEntrySchema.js').UploadEntryData[K]) => void} handler
-       */
-      (entry, prop, handler) => {
-        let sub = entry.subscribe(prop, (value) => {
-          if (this.isConnected) {
-            handler(value);
-          }
-        });
-        this._entrySubs.add(sub);
-      },
-    )(prop_, handler_);
+  _firstViewMode = this.cfg.filesViewMode;
 
   constructor() {
     super();
@@ -185,18 +134,16 @@ export class Thumb extends UploaderBlock {
     }
   }
 
-  initCallback() {
-    super.initCallback();
-
-    this.defineAccessor('badgeIcon', (/** @type {string} */ val) => (this.$.badgeIcon = val));
-
-    this.defineAccessor('uid', (/** @type {string} */ value) => {
-      this.set$({ uid: value });
-    });
-
-    this.sub('uid', (value) => {
-      this._entry = this.uploadCollection.read(value);
-    });
+  /**
+   * @private
+   * @param {String} id
+   */
+  _handleEntryId(id) {
+    let entry = this.uploadCollection?.read(id);
+    this._entry = entry;
+    if (!entry) {
+      return;
+    }
 
     this._subEntry('fileInfo', (fileInfo) => {
       if (fileInfo?.isImage && this._isIntersecting) {
@@ -214,10 +161,30 @@ export class Thumb extends UploaderBlock {
       }
     });
 
+    if (this._isIntersecting) {
+      this._debouncedGenerateThumb();
+    }
+  }
+
+  initCallback() {
+    super.initCallback();
+
+    this.defineAccessor('badgeIcon', (/** @type {string} */ val) => (this.$.badgeIcon = val));
+
+    this.defineAccessor('uid', (/** @type {string} */ value) => {
+      this.set$({ uid: value });
+    });
+
+    this.sub('uid', (uid) => {
+      this._handleEntryId(uid);
+    });
+
     this.subConfigValue('filesViewMode', (viewMode) => {
-      if (!this._once && viewMode === 'grid') {
-        this._debouncedGenerateThumb(true);
-        this._once = true;
+      if (viewMode === 'grid' && !this._renderedGridOnce) {
+        if (this._firstViewMode === 'list') {
+          this._debouncedGenerateThumb(true);
+        }
+        this._renderedGridOnce = true;
       }
     });
 

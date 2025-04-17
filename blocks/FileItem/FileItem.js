@@ -2,11 +2,11 @@
 import { shrinkFile } from '@uploadcare/image-shrink';
 import { CancelError, UploadcareError, uploadFile } from '@uploadcare/upload-client';
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
-import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { debounce } from '../utils/debounce.js';
 import { parseShrink } from '../../utils/parseShrink.js';
 import { UploadSource } from '../utils/UploadSource.js';
 import { throttle } from '../utils/throttle.js';
+import { FileItemConfig } from './FileItemConfig.js';
 
 const FileItemState = Object.freeze({
   FINISHED: Symbol('FINISHED'),
@@ -15,41 +15,12 @@ const FileItemState = Object.freeze({
   IDLE: Symbol('IDLE'),
 });
 
-export class FileItem extends UploaderBlock {
+export class FileItem extends FileItemConfig {
   couldBeCtxOwner = true;
   pauseRender = true;
 
   /** @private */
-  _entrySubs = new Set();
-  /**
-   * @private
-   * @type {import('../../abstract/uploadEntrySchema.js').UploadEntryTypedData | null}
-   */
-  _entry = null;
-
-  /** @private */
   _renderedOnce = false;
-
-  /**
-   * @private
-   * @template {any[]} A
-   * @template {(entry: import('../../abstract/uploadEntrySchema.js').UploadEntryTypedData, ...args: A) => any} T
-   * @param {T} fn
-   * @returns {(...args: A) => ReturnType<T>}
-   */
-  _withEntry(fn) {
-    const wrapperFn = /** @type {(...args: A) => ReturnType<T>} */ (
-      (...args) => {
-        const entry = this._entry;
-        if (!entry) {
-          console.warn('No entry found');
-          return;
-        }
-        return fn(entry, ...args);
-      }
-    );
-    return wrapperFn;
-  }
 
   constructor() {
     super();
@@ -131,29 +102,6 @@ export class FileItem extends UploaderBlock {
 
   /** @private */
   _debouncedCalculateState = debounce(this._calculateState.bind(this), 100);
-
-  /**
-   * @template {import('../../abstract/uploadEntrySchema.js').UploadEntryKeys} K
-   * @param {K} prop_
-   * @param {(value: import('../../abstract/uploadEntrySchema.js').UploadEntryData[K]) => void} handler_
-   */
-  _subEntry = (prop_, handler_) =>
-    this._withEntry(
-      /**
-       * @template {import('../../abstract/uploadEntrySchema.js').UploadEntryKeys} K
-       * @param {import('../../abstract/uploadEntrySchema.js').UploadEntryTypedData} entry
-       * @param {K} prop
-       * @param {(value: import('../../abstract/uploadEntrySchema.js').UploadEntryData[K]) => void} handler
-       */
-      (entry, prop, handler) => {
-        let sub = entry.subscribe(prop, (value) => {
-          if (this.isConnected) {
-            handler(value);
-          }
-        });
-        this._entrySubs.add(sub);
-      },
-    )(prop_, handler_);
 
   _updateHint = this._withEntry(
     throttle((entry) => {
