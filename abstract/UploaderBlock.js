@@ -121,14 +121,6 @@ export class UploaderBlock extends ActivityBlock {
     if (!this.$['*secureUploadsManager']) {
       this.$['*secureUploadsManager'] = new SecureUploadsManager(this);
     }
-
-    if (this.has('*modalActive')) {
-      this.sub('*modalActive', (modalActive) => {
-        if (modalActive && !this.$['*currentActivity']) {
-          this.$['*modalActive'] = false;
-        }
-      });
-    }
   }
 
   /**
@@ -261,6 +253,10 @@ export class UploaderBlock extends ActivityBlock {
       if (this.cfg.cropPreset) {
         this.setInitialCrop();
       }
+
+      if (this.cfg.cloudImageEditorAutoOpen) {
+        this.openCloudImageEditor();
+      }
     }
     if (changeMap.errors) {
       for (const entryId of changeMap.errors) {
@@ -330,6 +326,25 @@ export class UploaderBlock extends ActivityBlock {
     );
   };
 
+  openCloudImageEditor() {
+    const [entry] = this.uploadCollection
+      .findItems((entry) => !!entry.getValue('fileInfo') && entry.getValue('isImage'))
+      .map((id) => this.uploadCollection.read(id));
+
+    if (
+      entry &&
+      this.uploadCollection.size === 1 &&
+      this.cfg.useCloudImageEditor &&
+      this.hasBlockInCtx((block) => block.activityType === ActivityBlock.activities.CLOUD_IMG_EDIT)
+    ) {
+      this.$['*currentActivityParams'] = {
+        internalId: entry.uid,
+      };
+      this.$['*currentActivity'] = ActivityBlock.activities.CLOUD_IMG_EDIT;
+      this.modalManager.open(ActivityBlock.activities.CLOUD_IMG_EDIT);
+    }
+  }
+
   /** @private */
   setInitialCrop() {
     const cropPreset = parseCropPreset(this.cfg.cropPreset);
@@ -377,6 +392,7 @@ export class UploaderBlock extends ActivityBlock {
             internalId: entry.uid,
           };
           this.$['*currentActivity'] = ActivityBlock.activities.CLOUD_IMG_EDIT;
+          this.modalManager.open(ActivityBlock.activities.CLOUD_IMG_EDIT);
         }
       }
     }

@@ -4,6 +4,8 @@ import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { EventType } from '../UploadCtxProvider/EventEmitter.js';
 import { throttle } from '../utils/throttle.js';
 
+/** @typedef {'grid' | 'list'} FilesViewMode */
+
 /**
  * @typedef {{
  *   total: number;
@@ -149,6 +151,10 @@ export class UploadList extends UploaderBlock {
       }
     });
 
+    this.subConfigValue('filesViewMode', (mode) => {
+      this.setAttribute('mode', mode);
+    });
+
     this.sub('*currentActivity', (currentActivity) => {
       if (!this.couldOpenActivity && currentActivity === this.activityType) {
         this.$['*currentActivity'] = this.initActivity;
@@ -216,7 +222,16 @@ UploadList.template = /* HTML */ `
     <slot name="empty"><span l10n="no-files"></span></slot>
   </div>
 
-  <div class="uc-files" repeat="*uploadList" repeat-item-tag="uc-file-item"></div>
+  <div class="uc-files">
+    <div class="uc-files-wrapper" repeat="*uploadList" repeat-item-tag="uc-file-item"></div>
+    <button
+      type="button"
+      class="uc-add-more-btn uc-secondary-btn"
+      set="onclick: onAdd; @disabled: !addMoreBtnEnabled; @hidden: !addMoreBtnVisible"
+    >
+      <uc-icon name="add"></uc-icon><span l10n="add-more"></span>
+    </button>
+  </div>
 
   <div class="uc-common-error" set="@hidden: !commonErrorMessage; textContent: commonErrorMessage;"></div>
 

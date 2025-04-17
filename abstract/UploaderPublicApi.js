@@ -188,8 +188,8 @@ export class UploaderPublicApi {
           this.addFileFromObject(file, { source: options.captureCamera ? UploadSource.CAMERA : UploadSource.LOCAL }),
         );
         // To call uploadTrigger UploadList should draw file items first:
+        this._ctx.modalManager.open(ActivityBlock.activities.UPLOAD_LIST);
         this._ctx.$['*currentActivity'] = ActivityBlock.activities.UPLOAD_LIST;
-        this._ctx.setOrAddState('*modalActive', true);
         fileInput.remove();
       },
       {
@@ -269,10 +269,10 @@ export class UploaderPublicApi {
   /** @param {Boolean} [force] */
   initFlow = (force = false) => {
     if (this._uploadCollection.size > 0 && !force) {
+      this._ctx.modalManager?.open(ActivityBlock.activities.UPLOAD_LIST);
       this._ctx.set$({
         '*currentActivity': ActivityBlock.activities.UPLOAD_LIST,
       });
-      this._ctx.setOrAddState('*modalActive', true);
     } else {
       if (this._sourceList?.length === 1) {
         const srcKey = this._sourceList[0];
@@ -291,7 +291,6 @@ export class UploaderPublicApi {
             this._ctx.set$({
               '*currentActivity': ActivityBlock.activities.START_FROM,
             });
-            this._ctx.setOrAddState('*modalActive', true);
             return;
           } else if (isPhotoEnabled || isVideoRecordingEnabled) {
             this.openSystemDialog({
@@ -317,15 +316,16 @@ export class UploaderPublicApi {
         const sourceBtnBlock = [...blocksRegistry].find(isSourceBtn);
         // TODO: This is weird that we have this logic inside UI component, we should consider to move it somewhere else
         sourceBtnBlock?.activate();
+
         if (this._ctx.$['*currentActivity']) {
-          this._ctx.setOrAddState('*modalActive', true);
+          this._ctx.modalManager?.open(this._ctx.$['*currentActivity']);
         }
       } else {
         // Multiple sources case:
+        this._ctx.modalManager?.open(ActivityBlock.activities.START_FROM);
         this._ctx.set$({
           '*currentActivity': ActivityBlock.activities.START_FROM,
         });
-        this._ctx.setOrAddState('*modalActive', true);
       }
     }
   };
@@ -336,7 +336,7 @@ export class UploaderPublicApi {
       '*history': this._ctx.doneActivity ? [this._ctx.doneActivity] : [],
     });
     if (!this._ctx.$['*currentActivity']) {
-      this._ctx.setOrAddState('*modalActive', false);
+      this._ctx.modalManager.closeAll();
     }
   };
 
@@ -372,7 +372,13 @@ export class UploaderPublicApi {
       console.warn(`Can't open modal without current activity. Please use "setCurrentActivity" method first.`);
       return;
     }
-    this._ctx.setOrAddState('*modalActive', opened);
+
+    if (opened) {
+      this._ctx.modalManager?.open(this._ctx.$['*currentActivity']);
+    } else {
+      this._ctx.modalManager?.close(this._ctx.$['*currentActivity']);
+      this._ctx.$['*currentActivity'] = null;
+    }
   };
 
   /**

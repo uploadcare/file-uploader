@@ -64,10 +64,12 @@ export class CloudImageEditorActivity extends UploaderBlock {
       cdnUrl: result.cdnUrl,
       cdnUrlModifiers: result.cdnUrlModifiers,
     });
+    this.modalManager.close(ActivityBlock.activities.CLOUD_IMG_EDIT);
     this.historyBack();
   }
 
   handleCancel() {
+    this.modalManager.close(ActivityBlock.activities.CLOUD_IMG_EDIT);
     this.historyBack();
   }
 

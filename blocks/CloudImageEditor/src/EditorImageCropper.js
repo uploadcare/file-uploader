@@ -14,7 +14,7 @@ import {
 import { CROP_PADDING } from './cropper-constants.js';
 import { classNames } from './lib/classNames.js';
 import { pick } from './lib/pick.js';
-import { preloadImage } from './lib/preloadImage.js';
+import { preloadImage } from '../../utils/preloadImage.js';
 import { viewerImageSrc } from './util.js';
 
 /**

@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+<!doctype html>
 <base href="../../" />
 
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="./solutions/file-uploader/minimal/index.css">
+  <link rel="stylesheet" href="./solutions/file-uploader/minimal/index.css" />
   <style>
     @media (prefers-color-scheme: dark) {
       body {
@@ -34,4 +34,5 @@
 </head>
 
 <uc-file-uploader-minimal ctx-name="my-uploader"></uc-file-uploader-minimal>
-<uc-config ctx-name="my-uploader" pubkey="demopublickey" img-only group-output debug></uc-config>
+<uc-config ctx-name="my-uploader" pubkey="demopublickey" img-only group-output></uc-config>
+<uc-upload-ctx-provider ctx-name="my-uploader"></uc-upload-ctx-provider>

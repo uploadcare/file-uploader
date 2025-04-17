@@ -2,6 +2,7 @@ import type { LocaleDefinition } from '../abstract/localeRegistry';
 import type { complexConfigKeys } from '../blocks/Config/Config';
 import type { FuncFileValidator, FuncCollectionValidator } from '../abstract/ValidationManager';
 import type { CameraMode } from '../blocks/CameraSource/CameraSource';
+import type { FilesViewMode } from '../blocks/UploadList/UploadList';
 
 export type { FuncFileValidator, FuncCollectionValidator } from '../abstract/ValidationManager';
 export type { UploaderPublicApi } from '../abstract/UploaderPublicApi';
@@ -278,6 +279,12 @@ export type ConfigType = {
    * the following properties from MediaRecorderOptions
    */
   mediaRecorderOptions: MediaRecorderOptions | null;
+
+  filesViewMode: FilesViewMode;
+
+  gridShowFileNames: boolean;
+
+  cloudImageEditorAutoOpen: boolean;
 };
 export type ConfigComplexType = Pick<ConfigType, (typeof complexConfigKeys)[number]>;
 export type ConfigPlainType = Omit<ConfigType, keyof ConfigComplexType>;

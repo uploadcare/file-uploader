@@ -8,12 +8,14 @@ export const activityBlockCtx = (fnCtx) => ({
   ...blockCtx(),
   '*currentActivity': null,
   '*currentActivityParams': {},
+
   '*history': [],
   '*historyBack': null,
   '*closeModal': () => {
+    fnCtx.modalManager.closeAll();
+
     fnCtx.set$({
       '*currentActivity': null,
-      '*modalActive': false,
     });
   },
 });

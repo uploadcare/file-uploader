@@ -1,6 +1,6 @@
 // @ts-check
 import { UploaderBlock } from '../../abstract/UploaderBlock.js';
-import { asBoolean } from '../Config/normalizeConfigValue.js';
+import { asBoolean } from '../Config/validatorsType.js';
 
 export class SimpleBtn extends UploaderBlock {
   static styleAttrs = [...super.styleAttrs, 'uc-simple-btn'];

@@ -17,6 +17,11 @@
   --uc-dialog-max-height: 675px;
   --uc-simple-btn-padding: 7px 14px;
 
+  --uc-grid-col: 3;
+  --uc-grid-preview-image-height: auto;
+  --uc-grid-gap: calc(var(--uc-padding) / 2);
+  --uc-grid-aspect-ratio: 1 / 1;
+
   /* Default colors, in case of media query failure */
   --uc-background: var(--uc-background-light);
   --uc-foreground: var(--uc-foreground-light);
@@ -136,10 +141,17 @@
   }
 }
 
+@media only screen and (max-width: 680px) {
+  :where([uc-wgt-common]) {
+    --uc-grid-col: 2;
+  }
+}
+
 @media only screen and (max-width: 430px) {
   :where([uc-wgt-common]) {
     --uc-dialog-max-width: 100vw;
     --uc-dialog-max-height: var(--uploadcare-blocks-window-height);
+    --uc-grid-col: 1;
   }
 }
 

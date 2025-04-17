@@ -9,6 +9,12 @@ uc-progress-bar {
   height: 100%;
   overflow: hidden;
   pointer-events: none;
+  transition: opacity 0.3s;
+  opacity: 1;
+}
+
+uc-progress-bar.uc-progress-bar--hidden {
+  opacity: 0;
 }
 
 uc-progress-bar .uc-progress {
@@ -36,16 +42,13 @@ uc-progress-bar .uc-fake-progress {
   background-color: var(--uc-primary);
   animation: fake-progress-animation 1s ease-in-out infinite;
   opacity: 1;
-  transition:
-    opacity 0.3s,
-    display 1s;
-  /* stylelint-disable-next-line property-no-unknown */
-  transition-behavior: allow-discrete;
+  transition: opacity 0.3s;
+  z-index: 1;
 }
 
 uc-progress-bar .uc-fake-progress--hidden {
   opacity: 0;
-  display: none;
+  animation: none;
 }
 
 @keyframes fake-progress-animation {

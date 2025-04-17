@@ -3,7 +3,7 @@ import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 export class StartFrom extends ActivityBlock {
   historyTracked = true;
   /** @type {import('../../abstract/ActivityBlock.js').ActivityType} */
-  activityType = 'start-from';
+  activityType = ActivityBlock.activities.START_FROM;
 
   initCallback() {
     super.initCallback();

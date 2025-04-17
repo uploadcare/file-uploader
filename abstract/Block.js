@@ -13,6 +13,7 @@ import { LocaleManager, localeStateKey } from './LocaleManager.js';
 import { l10nProcessor } from './l10nProcessor.js';
 import { sharedConfigKey } from './sharedConfigKey.js';
 import { A11y } from './a11y.js';
+import { ModalManager } from './ModalManager.js';
 
 const TAG_PREFIX = 'uc-';
 
@@ -180,10 +181,22 @@ export class Block extends BaseComponent {
       this.add('*a11y', new A11y());
     }
 
+    if (!this.has('*modalManager')) {
+      this.add('*modalManager', new ModalManager(this));
+    }
+
     this.sub(localeStateKey('locale-id'), (localeId) => {
       const direction = getLocaleDirection(localeId);
       this.style.direction = direction === 'ltr' ? '' : direction;
     });
+  }
+
+  /**
+   * @returns {ModalManager}
+   * @public
+   */
+  get modalManager() {
+    return this.has('*modalManager') && this.$['*modalManager'];
   }
 
   /**
@@ -238,6 +251,8 @@ export class Block extends BaseComponent {
     Data.deleteCtx(this.ctxName);
 
     this.localeManager?.destroy();
+
+    this.modalManager && this.modalManager?.destroy();
   }
 
   /**

@@ -14,6 +14,7 @@ export class UrlSource extends UploaderBlock {
 
       let url = this.ref.input['value'];
       this.api.addFileFromUrl(url, { source: UploadSource.URL });
+      this.modalManager.open(ActivityBlock.activities.UPLOAD_LIST);
       this.$['*currentActivity'] = ActivityBlock.activities.UPLOAD_LIST;
     },
     onCancel: () => {

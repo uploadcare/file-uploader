@@ -1,5 +1,6 @@
 // @ts-check
 import { Block } from '../../abstract/Block.js';
+import { ModalEvents } from '../../abstract/ModalManager.js';
 
 export class Modal extends Block {
   static styleAttrs = [...super.styleAttrs, 'uc-modal'];
@@ -9,8 +10,6 @@ export class Modal extends Block {
     super();
     this.init$ = {
       ...this.init$,
-      '*modalActive': false,
-      isOpen: false,
       closeClicked: this._handleDialogClose,
     };
   }
@@ -20,7 +19,11 @@ export class Modal extends Block {
   };
 
   _closeDialog = () => {
-    this.setOrAddState('*modalActive', false);
+    this.modalManager?.close(this.id);
+
+    if (!this.modalManager.hasActiveModals) {
+      document.body.style.overflow = '';
+    }
   };
 
   _handleDialogClose = () => {
@@ -42,38 +45,61 @@ export class Modal extends Block {
 
   show() {
     if (this.ref.dialog.showModal) {
+      this.setAttribute('aria-modal', 'true');
       this.ref.dialog.showModal();
     } else {
       this.ref.dialog.setAttribute('open', '');
+    }
+
+    if (this.cfg.modalScrollLock) {
+      document.body.style.overflow = 'hidden';
     }
   }
 
   hide() {
     if (this.ref.dialog.close) {
+      this.setAttribute('aria-modal', 'false');
       this.ref.dialog.close();
     } else {
       this.ref.dialog.removeAttribute('open');
     }
   }
 
+  /**
+   * @private
+   * @type {import('../../abstract/ModalManager.js').ModalCb}
+   */
+  _handleModalOpen({ id }) {
+    if (id === this.id) {
+      this.show();
+    } else {
+      this.hide();
+    }
+  }
+
+  /**
+   * @private
+   * @type {import('../../abstract/ModalManager.js').ModalCb}
+   */
+  _handleModalClose({ id }) {
+    if (id === this.id) {
+      this.hide();
+    }
+  }
+
+  /** @private */
+  _handleModalCloseAll() {
+    this.hide();
+  }
+
   initCallback() {
     super.initCallback();
+
+    this.modalManager?.registerModal(this.id, this);
 
     this.ref.dialog.addEventListener('close', this._handleDialogClose);
     this.ref.dialog.addEventListener('mousedown', this._handleDialogMouseDown);
     this.ref.dialog.addEventListener('mouseup', this._handleDialogMouseUp);
-
-    this.sub('*modalActive', (modalActive) => {
-      if (this.$.isOpen !== modalActive) {
-        this.$.isOpen = modalActive;
-      }
-
-      if (modalActive && this.cfg.modalScrollLock) {
-        document.body.style.overflow = 'hidden';
-      } else {
-        document.body.style.overflow = '';
-      }
-    });
 
     this.subConfigValue('modalBackdropStrokes', (val) => {
       if (val) {
@@ -83,15 +109,13 @@ export class Modal extends Block {
       }
     });
 
-    this.sub('isOpen', (isOpen) => {
-      if (isOpen) {
-        this.show();
-        this.setAttribute('aria-modal', 'true');
-      } else {
-        this.hide();
-        this.setAttribute('aria-modal', 'false');
-      }
-    });
+    this.handleModalOpen = this._handleModalOpen.bind(this);
+    this.handleModalClose = this._handleModalClose.bind(this);
+    this.handleModalCloseAll = this._handleModalCloseAll.bind(this);
+
+    this.modalManager.subscribe(ModalEvents.OPEN, this.handleModalOpen);
+    this.modalManager.subscribe(ModalEvents.CLOSE, this.handleModalClose);
+    this.modalManager.subscribe(ModalEvents.CLOSE_ALL, this.handleModalCloseAll);
   }
 
   destroyCallback() {
@@ -101,6 +125,10 @@ export class Modal extends Block {
     this.ref.dialog.removeEventListener('close', this._handleDialogClose);
     this.ref.dialog.removeEventListener('mousedown', this._handleDialogMouseDown);
     this.ref.dialog.removeEventListener('mouseup', this._handleDialogMouseUp);
+
+    this.modalManager.unsubscribe(ModalEvents.OPEN, this.handleModalOpen);
+    this.modalManager.unsubscribe(ModalEvents.CLOSE, this.handleModalClose);
+    this.modalManager.unsubscribe(ModalEvents.CLOSE_ALL, this.handleModalCloseAll);
   }
 }
 

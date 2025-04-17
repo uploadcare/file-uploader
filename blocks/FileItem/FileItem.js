@@ -2,14 +2,11 @@
 import { shrinkFile } from '@uploadcare/image-shrink';
 import { CancelError, UploadcareError, uploadFile } from '@uploadcare/upload-client';
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
-import { UploaderBlock } from '../../abstract/UploaderBlock.js';
-import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../utils/cdn-utils.js';
-import { parseShrink } from '../../utils/parseShrink.js';
-import { fileCssBg } from '../svg-backgrounds/svg-backgrounds.js';
-import { UploadSource } from '../utils/UploadSource.js';
 import { debounce } from '../utils/debounce.js';
-import { generateThumb } from '../utils/resizeImage.js';
+import { parseShrink } from '../../utils/parseShrink.js';
+import { UploadSource } from '../utils/UploadSource.js';
 import { throttle } from '../utils/throttle.js';
+import { FileItemConfig } from './FileItemConfig.js';
 
 const FileItemState = Object.freeze({
   FINISHED: Symbol('FINISHED'),
@@ -18,43 +15,12 @@ const FileItemState = Object.freeze({
   IDLE: Symbol('IDLE'),
 });
 
-export class FileItem extends UploaderBlock {
+export class FileItem extends FileItemConfig {
   couldBeCtxOwner = true;
   pauseRender = true;
 
   /** @private */
-  _entrySubs = new Set();
-  /**
-   * @private
-   * @type {import('../../abstract/uploadEntrySchema.js').UploadEntryTypedData | null}
-   */
-  _entry = null;
-  /** @private */
-  _isIntersecting = false;
-
-  /** @private */
   _renderedOnce = false;
-
-  /**
-   * @private
-   * @template {any[]} A
-   * @template {(entry: import('../../abstract/uploadEntrySchema.js').UploadEntryTypedData, ...args: A) => any} T
-   * @param {T} fn
-   * @returns {(...args: A) => ReturnType<T>}
-   */
-  _withEntry(fn) {
-    const wrapperFn = /** @type {(...args: A) => ReturnType<T>} */ (
-      (...args) => {
-        const entry = this._entry;
-        if (!entry) {
-          console.warn('No entry found');
-          return;
-        }
-        return fn(entry, ...args);
-      }
-    );
-    return wrapperFn;
-  }
 
   constructor() {
     super();
@@ -74,12 +40,14 @@ export class FileItem extends UploaderBlock {
       isUploading: false,
       isFocused: false,
       isEditable: false,
+      showFileNames: false,
       state: FileItemState.IDLE,
       ariaLabelStatusFile: '',
       onEdit: this._withEntry((entry) => {
         this.$['*currentActivityParams'] = {
           internalId: entry.uid,
         };
+        this.modalManager.open(ActivityBlock.activities.CLOUD_IMG_EDIT);
         this.$['*currentActivity'] = ActivityBlock.activities.CLOUD_IMG_EDIT;
       }),
       onRemove: () => {
@@ -92,14 +60,8 @@ export class FileItem extends UploaderBlock {
   }
 
   _reset() {
-    for (let sub of this._entrySubs) {
-      sub.remove();
-    }
-
-    this._debouncedGenerateThumb.cancel();
+    super._reset();
     this._debouncedCalculateState.cancel();
-    this._entrySubs = new Set();
-    this._entry = null;
   }
 
   /**
@@ -108,16 +70,13 @@ export class FileItem extends UploaderBlock {
    */
   _observerCallback(entries) {
     let [entry] = entries;
+
     this._isIntersecting = entry.isIntersecting;
+    this._thumbRect = entry.boundingClientRect;
 
     if (entry.isIntersecting && !this._renderedOnce) {
       this.render();
       this._renderedOnce = true;
-    }
-    if (entry.intersectionRatio === 0) {
-      this._debouncedGenerateThumb.cancel();
-    } else {
-      this._debouncedGenerateThumb();
     }
   }
 
@@ -138,73 +97,6 @@ export class FileItem extends UploaderBlock {
 
   /** @private */
   _debouncedCalculateState = debounce(this._calculateState.bind(this), 100);
-
-  /** @private */
-  _generateThumbnail = this._withEntry(async (entry) => {
-    const fileInfo = entry.getValue('fileInfo');
-    const isImage = entry.getValue('isImage');
-    const uuid = entry.getValue('uuid');
-    if (fileInfo && isImage && uuid) {
-      let size = this.cfg.thumbSize;
-      let thumbUrl = await this.proxyUrl(
-        createCdnUrl(
-          createOriginalUrl(this.cfg.cdnCname, uuid),
-          createCdnUrlModifiers(entry.getValue('cdnUrlModifiers'), `scale_crop/${size}x${size}/center`),
-        ),
-      );
-      let currentThumbUrl = entry.getValue('thumbUrl');
-      if (currentThumbUrl !== thumbUrl) {
-        entry.setValue('thumbUrl', thumbUrl);
-        currentThumbUrl?.startsWith('blob:') && URL.revokeObjectURL(currentThumbUrl);
-      }
-      return;
-    }
-
-    if (entry.getValue('thumbUrl')) {
-      return;
-    }
-
-    const file = entry.getValue('file');
-
-    if (file?.type.includes('image')) {
-      try {
-        let thumbUrl = await generateThumb(file, this.cfg.thumbSize);
-        entry.setValue('thumbUrl', thumbUrl);
-      } catch (err) {
-        let color = window.getComputedStyle(this).getPropertyValue('--uc-muted-foreground');
-        entry.setValue('thumbUrl', fileCssBg(color));
-      }
-    } else {
-      let color = window.getComputedStyle(this).getPropertyValue('--uc-muted-foreground');
-      entry.setValue('thumbUrl', fileCssBg(color));
-    }
-  });
-
-  /** @private */
-  _debouncedGenerateThumb = debounce(this._generateThumbnail, 100);
-
-  /**
-   * @template {import('../../abstract/uploadEntrySchema.js').UploadEntryKeys} K
-   * @param {K} prop_
-   * @param {(value: import('../../abstract/uploadEntrySchema.js').UploadEntryData[K]) => void} handler_
-   */
-  _subEntry = (prop_, handler_) =>
-    this._withEntry(
-      /**
-       * @template {import('../../abstract/uploadEntrySchema.js').UploadEntryKeys} K
-       * @param {import('../../abstract/uploadEntrySchema.js').UploadEntryTypedData} entry
-       * @param {K} prop
-       * @param {(value: import('../../abstract/uploadEntrySchema.js').UploadEntryData[K]) => void} handler
-       */
-      (entry, prop, handler) => {
-        let sub = entry.subscribe(prop, (value) => {
-          if (this.isConnected) {
-            handler(value);
-          }
-        });
-        this._entrySubs.add(sub);
-      },
-    )(prop_, handler_);
 
   _updateHint = this._withEntry(
     throttle((entry) => {
@@ -268,21 +160,8 @@ export class FileItem extends UploaderBlock {
       this.$.itemName = entry.getValue('fileName') || externalUrl || this.l10n('file-no-name');
     });
 
-    this._subEntry('fileInfo', (fileInfo) => {
+    this._subEntry('fileInfo', () => {
       this._debouncedCalculateState();
-      if (fileInfo && this._isIntersecting) {
-        this._debouncedGenerateThumb();
-      }
-    });
-
-    this._subEntry('cdnUrlModifiers', () => {
-      if (this._isIntersecting) {
-        this._debouncedGenerateThumb();
-      }
-    });
-
-    this._subEntry('thumbUrl', (thumbUrl) => {
-      this.$.thumbUrl = thumbUrl ? `url(${thumbUrl})` : '';
     });
 
     this._subEntry('errors', () => this._debouncedCalculateState());
@@ -290,10 +169,17 @@ export class FileItem extends UploaderBlock {
     this._subEntry('fileSize', () => this._debouncedCalculateState());
     this._subEntry('mimeType', () => this._debouncedCalculateState());
     this._subEntry('isImage', () => this._debouncedCalculateState());
+  }
 
-    if (this._isIntersecting) {
-      this._debouncedGenerateThumb();
+  /** @param {boolean} value */
+  _updateShowFileNames(value) {
+    const isListMode = this.cfg.filesViewMode === 'list';
+    if (isListMode) {
+      this.$.showFileNames = true;
+      return;
     }
+
+    this.$.showFileNames = value;
   }
 
   initCallback() {
@@ -308,6 +194,16 @@ export class FileItem extends UploaderBlock {
     });
 
     this.subConfigValue('useCloudImageEditor', () => this._debouncedCalculateState());
+
+    this.subConfigValue('filesViewMode', (mode) => {
+      this._updateShowFileNames(this.cfg.gridShowFileNames);
+
+      this.setAttribute('mode', mode);
+    });
+
+    this.subConfigValue('gridShowFileNames', (value) => {
+      this._updateShowFileNames(value);
+    });
 
     this.onclick = () => {
       FileItem.activeInstances.forEach((inst) => {
@@ -386,7 +282,6 @@ export class FileItem extends UploaderBlock {
   disconnectedCallback() {
     super.disconnectedCallback();
 
-    this._debouncedGenerateThumb.cancel();
     this._observer?.disconnect();
   }
 
@@ -511,14 +406,11 @@ export class FileItem extends UploaderBlock {
 
 FileItem.template = /* HTML */ `
   <div class="uc-inner" set="@finished: isFinished; @uploading: isUploading; @failed: isFailed; @focused: isFocused">
-    <div class="uc-thumb" set="style.backgroundImage: thumbUrl">
-      <div class="uc-badge">
-        <uc-icon set="@name: badgeIcon"></uc-icon>
-      </div>
-    </div>
+    <uc-thumb set="uid:uid;badgeIcon:badgeIcon"></uc-thumb>
+
     <div aria-atomic="true" aria-live="polite" class="uc-file-name-wrapper" set="@aria-label:ariaLabelStatusFile;">
-      <span class="uc-file-name">{{itemName}}</span>
-      <span class="uc-file-error" set="@hidden: !errorText">{{errorText}}</span>
+      <span class="uc-file-name" set="@hidden: !showFileNames">{{itemName}}</span>
+      <span class="uc-file-error" set="@hidden: !errorText;">{{errorText}}</span>
       <span class="uc-file-hint" set="@hidden: !hint">{{hint}}</span>
     </div>
     <div class="uc-file-actions">
@@ -542,7 +434,11 @@ FileItem.template = /* HTML */ `
         <uc-icon name="upload"></uc-icon>
       </button>
     </div>
-    <uc-progress-bar class="uc-progress-bar" set="value: progressValue; visible: progressVisible;"> </uc-progress-bar>
+    <uc-progress-bar
+      class="uc-progress-bar"
+      set="value: progressValue; visible: progressVisible; @hasFileName: showFileNames;"
+    >
+    </uc-progress-bar>
   </div>
 `;
 FileItem.activeInstances = new Set();

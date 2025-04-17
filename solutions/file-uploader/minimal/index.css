@@ -1,19 +1,4 @@
-@import url('../../../blocks/themes/uc-basic/config.css');
-
-/* COMMON STYLES */
-@import url('../../../blocks/themes/uc-basic/common.css');
-
-/* THEME */
-@import url('../../../blocks/themes/uc-basic/theme.css');
-
-/* BLOCKS: */
-@import url('../../../blocks/StartFrom/start-from.css');
-@import url('../../../blocks/DropArea/drop-area.css');
-@import url('../../../blocks/UploadList/upload-list.css');
-@import url('../../../blocks/FileItem/file-item.css');
-@import url('../../../blocks/Icon/icon.css');
-@import url('../../../blocks/ProgressBar/progress-bar.css');
-@import url('../../../blocks/Copyright/copyright.css');
+@import url('../../../blocks/themes/uc-basic/index.css');
 
 /* ICONS: */
 :where([uc-file-uploader-minimal]) {
@@ -24,7 +9,7 @@
   display: block;
 }
 
-[uc-file-uploader-minimal] uc-start-from .uc-content {
+[uc-file-uploader-minimal] > uc-start-from .uc-content {
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -34,7 +19,7 @@
   background-color: transparent;
 }
 
-:where([uc-file-uploader-minimal] uc-drop-area) {
+:where([uc-file-uploader-minimal] > uc-start-from uc-drop-area) {
   display: flex;
   position: relative;
   align-items: center;
@@ -47,18 +32,22 @@
   border-radius: calc(var(--uc-radius) * 1.75);
 }
 
-:where(.uc-contrast) :where([uc-file-uploader-minimal] uc-drop-area) {
+:where(.uc-contrast) :where([uc-file-uploader-minimal] > uc-start-from uc-drop-area) {
   background-color: transparent;
 }
 
 /* hack to make transparent :hover colors work in any conditions */
-:where([uc-file-uploader-minimal] uc-drop-area)::before {
+:where([uc-file-uploader-minimal] > uc-start-from uc-drop-area)::before {
   content: '';
   z-index: -1;
   width: 100%;
   height: 100%;
   position: absolute;
   background-color: var(--uc-background);
+}
+
+:where([uc-file-uploader-minimal]:has([single]) > uc-start-from uc-drop-area) {
+  aspect-ratio: var(--uc-grid-aspect-ratio);
 }
 
 [uc-file-uploader-minimal] uc-upload-list uc-activity-header {
@@ -111,16 +100,17 @@
   display: flex;
 }
 
-[uc-file-uploader-minimal] uc-file-item .uc-edit-btn {
-  display: none;
-}
-
 [uc-file-uploader-minimal] uc-file-item uc-progress-bar {
   top: 0 !important;
   height: 100% !important;
 }
 
 [uc-file-uploader-minimal] uc-file-item uc-progress-bar .uc-progress {
+  background-color: var(--uc-primary-transparent);
+  border-radius: var(--uc-radius);
+}
+
+[uc-file-uploader-minimal] uc-file-item uc-progress-bar .uc-fake-progress {
   background-color: var(--uc-primary-transparent);
   border-radius: var(--uc-radius);
 }
@@ -138,4 +128,20 @@
 
 [uc-file-uploader-minimal] uc-copyright .uc-credits {
   position: static;
+}
+
+[uc-file-uploader-minimal][mode='grid'] uc-upload-list .uc-toolbar .uc-add-more-btn {
+  display: none;
+}
+
+[uc-file-uploader-minimal][mode='grid'] uc-upload-list .uc-files .uc-add-more-btn {
+  display: flex;
+}
+
+[uc-file-uploader-minimal][mode='grid'] uc-upload-list .uc-files .uc-add-more-btn > span {
+  display: none;
+}
+
+[uc-file-uploader-minimal][mode='grid'] uc-upload-list .uc-files .uc-add-more-btn > uc-icon {
+  display: flex;
 }

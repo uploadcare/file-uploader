@@ -5,7 +5,7 @@ import { EditorCropButtonControl } from './EditorCropButtonControl.js';
 import { EditorFilterControl } from './EditorFilterControl.js';
 import { EditorOperationControl } from './EditorOperationControl.js';
 import { FAKE_ORIGINAL_FILTER } from './EditorSlider.js';
-import { batchPreloadImages } from './lib/preloadImage.js';
+import { batchPreloadImages } from '../../utils/preloadImage.js';
 import {
   ALL_COLOR_OPERATIONS,
   ALL_CROP_OPERATIONS,
