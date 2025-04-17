@@ -22,21 +22,18 @@ export class ProgressBar extends Block {
 
   initCallback() {
     super.initCallback();
-
-    this.ref.fakeProgressLine.addEventListener('animationiteration', () => {
-      if (this._value === 0) return;
-      this.ref.fakeProgressLine.classList.toggle('uc-fake-progress--hidden', true);
-    });
-
-    this.ref.realProgressLine.addEventListener('transitionend', () => {
-      if (this._value === 100) {
-        this.classList.add('uc-progress-bar--hidden');
-        this.ref.realProgressLine.classList.toggle('uc-progress--hidden', true);
+    const handleFakeProgressAnimation = () => {
+      const fakeProgressLine = this.ref.fakeProgressLine;
+      if (!this._visible) {
+        fakeProgressLine.classList.add('uc-fake-progress--hidden');
+        return;
       }
-      if (this._value === 0 && this._prevValue > 0) {
-        this.style.setProperty('--l-progress-value', this._value.toString());
+      if (this._value > 0) {
+        fakeProgressLine.classList.add('uc-fake-progress--hidden');
       }
-    });
+    };
+
+    this.ref.fakeProgressLine.addEventListener('animationiteration', handleFakeProgressAnimation);
 
     this.defineAccessor(
       'value',
@@ -44,7 +41,6 @@ export class ProgressBar extends Block {
         if (value === undefined || value === null) return;
         this._prevValue = this._value;
         this._value = value;
-
         if (!this._visible) return;
         this.style.setProperty('--l-progress-value', this._value.toString());
       },
@@ -54,10 +50,7 @@ export class ProgressBar extends Block {
       'visible',
       /** @param {boolean} visible */ (visible) => {
         this._visible = visible;
-
         this.classList.toggle('uc-progress-bar--hidden', !visible);
-        this.ref.realProgressLine.classList.toggle('uc-progress--hidden', !visible);
-        this.ref.fakeProgressLine.classList.toggle('uc-fake-progress--hidden', !visible);
       },
     );
   }
