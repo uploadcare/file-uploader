@@ -7,6 +7,7 @@ import { fileCssBg } from '../svg-backgrounds/svg-backgrounds.js';
 import { debounce } from '../utils/debounce.js';
 import { generateThumb } from '../utils/resizeImage.js';
 
+const CDN_MAX_OUTPUT_DIMENSION = 3000;
 export class Thumb extends FileItemConfig {
   /** @private */
   _renderedGridOnce = false;
@@ -47,10 +48,7 @@ export class Thumb extends FileItemConfig {
       size *= window.devicePixelRatio;
     }
 
-    const CDN_MAX_OUTPUT_DIMENSION = 3000;
-    size = Math.min(size, CDN_MAX_OUTPUT_DIMENSION);
-
-    return size;
+    return Math.min(size, CDN_MAX_OUTPUT_DIMENSION);
   }
 
   /** @private */
