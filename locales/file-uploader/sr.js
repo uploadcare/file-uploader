@@ -122,4 +122,5 @@ export default {
   'select-all': 'Изабери све',
   'deselect-all': 'Поништи избор свих',
   'waiting-for': 'Чека се {{source}}',
+  queued: 'У реду',
 };

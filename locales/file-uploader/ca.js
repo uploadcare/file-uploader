@@ -121,6 +121,7 @@ export default {
   failed: 'Fallat',
   uploading: 'Carregant',
   idle: 'Inactiu',
+  queued: 'En cua',
   'a11y-file-item-status': 'El fitxer {{fileName}} està en estat {{status}}',
   'waiting-for': 'Esperant per {{source}}',
 };

@@ -120,4 +120,5 @@ export default {
   idle: 'Idle',
   'a11y-file-item-status': 'File {{fileName}} in status {{status}}',
   'waiting-for': 'Waiting for {{source}}',
+  queued: 'Queued',
 };

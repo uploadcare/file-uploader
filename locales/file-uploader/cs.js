@@ -123,6 +123,7 @@ export default {
   failed: 'Selhalo',
   uploading: 'Nahrává se',
   idle: 'Nečinný',
+  queued: 'Ve frontě',
   'a11y-file-item-status': 'Soubor {{fileName}} je ve stavu {{status}}',
   'waiting-for': 'Čekání na {{source}}',
 };

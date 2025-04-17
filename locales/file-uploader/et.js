@@ -118,6 +118,7 @@ export default {
   failed: 'Ebaõnnestunud',
   uploading: 'Üleslaadimine',
   idle: 'Ootel',
+  queued: 'Järjekorras',
   'a11y-file-item-status': 'Fail {{fileName}} on seisundis {{status}}',
   'waiting-for': 'Ootel {{source}}',
 };

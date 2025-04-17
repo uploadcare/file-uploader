@@ -111,6 +111,10 @@ export const uploadEntrySchema = Object.freeze({
     type: Boolean,
     value: false,
   }),
+  isQueued: Object.freeze({
+    type: Boolean,
+    value: false,
+  }),
 });
 
 /** @typedef {import('./TypedData').ExtractDataFromSchema<typeof uploadEntrySchema>} UploadEntryData */

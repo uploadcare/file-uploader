@@ -120,6 +120,7 @@ export default {
   failed: 'Fehlgeschlagen',
   uploading: 'Hochladen',
   idle: 'Leerlauf',
+  queued: 'In der Warteschlange',
   'a11y-file-item-status': 'Datei {{fileName}} im Status {{status}}',
   'waiting-for': 'Warten auf {{source}}',
 };

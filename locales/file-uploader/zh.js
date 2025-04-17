@@ -116,6 +116,7 @@ export default {
   failed: '失败',
   uploading: '上传中',
   idle: '空闲',
+  queued: '排队中',
   'a11y-file-item-status': '文件 {{fileName}} 的状态是 {{status}}',
   'select-all': '全选',
   'deselect-all': '取消全选',

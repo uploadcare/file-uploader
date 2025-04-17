@@ -124,4 +124,5 @@ export default {
   'select-all': 'Vybrať všetko',
   'deselect-all': 'Zrušiť výber všetkého',
   'waiting-for': 'Čaká sa na {{source}}',
+  queued: 'Vo fronte',
 };

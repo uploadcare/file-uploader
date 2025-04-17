@@ -115,6 +115,7 @@ export default {
   failed: '실패함',
   uploading: '업로드 중',
   idle: '대기 중',
+  queued: '대기 중',
   'a11y-file-item-status': '{{fileName}} 파일이 {{status}} 상태입니다',
   'select-all': '모두 선택',
   'deselect-all': '모두 선택 해제',

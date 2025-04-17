@@ -119,6 +119,7 @@ export default {
   failed: 'Fallito',
   uploading: 'Caricamento',
   idle: 'Inattivo',
+  queued: 'In coda',
   'a11y-file-item-status': 'Il file {{fileName}} è nello stato {{status}}',
   'select-all': 'Seleziona tutto',
   'deselect-all': 'Deseleziona tutto',

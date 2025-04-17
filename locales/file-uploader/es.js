@@ -121,6 +121,7 @@ export default {
   failed: 'Fallido',
   uploading: 'Subiendo',
   idle: 'Inactivo',
+  queued: 'En cola',
   'a11y-file-item-status': 'El archivo {{fileName}} está en estado {{status}}',
   'waiting-for': 'Esperando por {{source}}',
 };

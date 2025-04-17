@@ -120,6 +120,7 @@ export default {
   failed: 'Nie powiodło się',
   uploading: 'Przesyłanie',
   idle: 'Bezczynny',
+  queued: 'W kolejce',
   'a11y-file-item-status': 'Plik {{fileName}} ma status {{status}}',
   'select-all': 'Zaznacz wszystko',
   'deselect-all': 'Odznacz wszystko',

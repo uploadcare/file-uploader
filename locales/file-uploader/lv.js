@@ -122,4 +122,5 @@ export default {
   'select-all': 'Izvēlēties visus',
   'deselect-all': 'Noņemt izvēli visiem',
   'waiting-for': 'Gaida {{source}}',
+  queued: 'Rindā',
 };

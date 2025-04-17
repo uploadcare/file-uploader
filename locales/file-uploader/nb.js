@@ -116,6 +116,7 @@ export default {
   failed: 'Mislyktes',
   uploading: 'Laster opp',
   idle: 'Inaktiv',
+  queued: 'I kø',
   'a11y-file-item-status': 'Fil {{fileName}} i status {{status}}',
   'select-all': 'Velg alle',
   'deselect-all': 'Fjern alle',

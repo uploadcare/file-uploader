@@ -120,6 +120,7 @@ export default {
   failed: 'Не вдалося',
   uploading: 'Завантаження',
   idle: 'Очікування',
+  queued: 'У черзі',
   'a11y-file-item-status': 'Файл {{fileName}} у стані {{status}}',
   'select-all': 'Вибрати всі',
   'deselect-all': 'Скасувати вибір всіх',
