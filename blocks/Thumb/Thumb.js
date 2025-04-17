@@ -68,6 +68,10 @@ export class Thumb extends FileItemConfig {
         ),
       );
 
+      if (currentThumbUrl === thumbUrl) {
+        return;
+      }
+
       const { promise } = preloadImage(thumbUrl);
 
       promise
@@ -75,8 +79,17 @@ export class Thumb extends FileItemConfig {
           entry.setValue('thumbUrl', thumbUrl);
           currentThumbUrl?.startsWith('blob:') && URL.revokeObjectURL(currentThumbUrl);
         })
-        .catch(() => {
-          console.error('Failed to load image', thumbUrl);
+        .catch(async () => {
+          if (currentThumbUrl?.startsWith('blob:')) return;
+          try {
+            const file = entry.getValue('file');
+            if (!file) return;
+            const blobThumbUrl = await generateThumb(file, size);
+            entry.setValue('thumbUrl', blobThumbUrl);
+          } catch (err) {
+            const color = window.getComputedStyle(this).getPropertyValue('--uc-muted-foreground');
+            entry.setValue('thumbUrl', fileCssBg(color));
+          }
         });
 
       return;
