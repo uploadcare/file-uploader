@@ -47,6 +47,9 @@ export class Thumb extends FileItemConfig {
       size *= window.devicePixelRatio;
     }
 
+    const CDN_MAX_OUTPUT_DIMENSION = 3000;
+    size = Math.min(size, CDN_MAX_OUTPUT_DIMENSION);
+
     return size;
   }
 
@@ -63,7 +66,7 @@ export class Thumb extends FileItemConfig {
       let thumbUrl = await this.proxyUrl(
         createCdnUrl(
           createOriginalUrl(this.cfg.cdnCname, uuid),
-          createCdnUrlModifiers(entry.getValue('cdnUrlModifiers'), `scale_crop/${size}x${size}/center`),
+          createCdnUrlModifiers(entry.getValue('cdnUrlModifiers'), `stretch/off`, `scale_crop/${size}x${size}/center`),
         ),
       );
 
