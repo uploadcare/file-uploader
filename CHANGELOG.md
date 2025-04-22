@@ -4,12 +4,14 @@
 
 - increase throttled requests retry count to 10 ([#800](https://github.com/uploadcare/file-uploader/issues/800)) ([1f039b1](https://github.com/uploadcare/file-uploader/commit/1f039b10d11d7eb8511e8ae501c0da3ba0929d49))
 - prevent desktop safari from heic to jpeg conversion ([#805](https://github.com/uploadcare/file-uploader/issues/805)) ([cf3b713](https://github.com/uploadcare/file-uploader/commit/cf3b7133ef5231998bc667703bd22e8ac509797f))
-- **types:** add `headless` property type for `uc-file-uploader-regular` ([#806](https://github.com/uploadcare/file-uploader/issues/806)) ([94d7801](https://github.com/uploadcare/file-uploader/commit/94d7801218f30387c82b7973a01d9a7607c49b96))
 - **types:** optional `headless` attr ([#807](https://github.com/uploadcare/file-uploader/issues/807)) ([579e88d](https://github.com/uploadcare/file-uploader/commit/579e88de2f50153d064a63880ce6a292448b23fe))
 
 ### Features
 
-- queued hint ([#803](https://github.com/uploadcare/file-uploader/issues/803)) ([3b08242](https://github.com/uploadcare/file-uploader/commit/3b08242df64f00d672aacb6b337db7094728af4b))
+- **file item** added queued hint ([#803](https://github.com/uploadcare/file-uploader/issues/803)) ([3b08242](https://github.com/uploadcare/file-uploader/commit/3b08242df64f00d672aacb6b337db7094728af4b))
+- **upload list** added grid mode in upload list ([#797](https://github.com/uploadcare/file-uploader/pull/797)) ([a302461](https://github.com/uploadcare/file-uploader/commit/a30246114b7c170140787eeec2d0bc9f21495e8f)). See the [documentation](https://uploadcare.com/docs/file-uploader/options/#files-view-mode) for details.
+- **minimal mode** added cloudImageEditor and sources in minimal mode ([#797](https://github.com/uploadcare/file-uploader/pull/797)) ([a302461](https://github.com/uploadcare/file-uploader/commit/a30246114b7c170140787eeec2d0bc9f21495e8f))
+- **cloud editor** added cloudImageEditorAutoOpen props ([#797](https://github.com/uploadcare/file-uploader/pull/797)) ([a302461](https://github.com/uploadcare/file-uploader/commit/a30246114b7c170140787eeec2d0bc9f21495e8f)). See the [documentation](https://uploadcare.com/docs/file-uploader/options/#cloud-image-editor-auto-open) for details.
 
 # [1.14.0](https://github.com/uploadcare/file-uploader/compare/v1.13.2...v1.14.0) (2025-03-12)
 
