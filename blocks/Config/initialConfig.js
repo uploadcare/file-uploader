@@ -78,4 +78,6 @@ export const initialConfig = {
   filesViewMode: 'list',
   gridShowFileNames: false,
   cloudImageEditorAutoOpen: false,
+
+  cloudImageEditorMaskHref: null,
 };
