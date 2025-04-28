@@ -79,7 +79,8 @@ export class EditorFilterControl extends EditorButtonControl {
   initCallback() {
     super.initCallback();
 
-    this.$['on.click'] = () => {
+    /** @param {MouseEvent} e */
+    this.$['on.click'] = (e) => {
       if (!this.$.active) {
         this.$['*sliderEl'].setOperation(this._operation, this._filter);
         this.$['*sliderEl'].apply();
@@ -87,6 +88,10 @@ export class EditorFilterControl extends EditorButtonControl {
         this.$['*sliderEl'].setOperation(this._operation, this._filter);
         this.$['*showSlider'] = true;
       }
+
+      this.$['*on.sendTelemetryEvent'](e, {
+        operation: this.$['*operationTooltip'],
+      });
 
       this.$['*currentFilter'] = this._filter;
     };

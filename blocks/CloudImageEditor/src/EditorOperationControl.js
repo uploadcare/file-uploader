@@ -15,6 +15,9 @@ export class EditorOperationControl extends EditorButtonControl {
       this.$['*sliderEl'].setOperation(this._operation);
       this.$['*showSlider'] = true;
       this.$['*currentOperation'] = this._operation;
+      this.$['*on.sendTelemetryEvent'](e, {
+        operation: this.$['*operationTooltip'],
+      });
     };
 
     this.defineAccessor('operation', (operation) => {

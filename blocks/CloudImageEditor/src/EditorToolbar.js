@@ -104,18 +104,35 @@ export class EditorToolbar extends Block {
         hidden: 'uc-tab-toggles--hidden',
         visible: 'uc-tab-toggles--visible',
       },
-      'on.cancel': () => {
+      /** @param {MouseEvent} e */
+      'on.cancel': (e) => {
+        this.$['*on.sendTelemetryEvent'](e, {
+          action: 'cancel',
+        });
         this._cancelPreload?.();
         this.$['*on.cancel']();
       },
-      'on.apply': () => {
+      /** @param {MouseEvent} e */
+      'on.apply': (e) => {
+        this.$['*on.sendTelemetryEvent'](e, {
+          action: 'apply',
+        });
         this.$['*on.apply'](this.$['*editorTransformations']);
       },
-      'on.applySlider': () => {
+      /** @param {MouseEvent} e */
+      'on.applySlider': (e) => {
+        this.$['*on.sendTelemetryEvent'](e, {
+          action: 'apply-slider',
+          operation: this.$['*operationTooltip'],
+        });
         this.ref['slider-el'].apply();
         this._onSliderClose();
       },
-      'on.cancelSlider': () => {
+      /** @param {MouseEvent} e */
+      'on.cancelSlider': (e) => {
+        this.$['*on.sendTelemetryEvent'](e, {
+          action: 'cancel-slider',
+        });
         this.ref['slider-el'].cancel();
         this._onSliderClose();
       },
@@ -123,6 +140,9 @@ export class EditorToolbar extends Block {
       'on.clickTab': (e) => {
         const id = /** @type {HTMLElement} */ (e.currentTarget).getAttribute('data-id');
         if (id) {
+          this.$['*on.sendTelemetryEvent'](e, {
+            tabId: id,
+          });
           this._activateTab(id, { fromViewer: false });
         }
       },

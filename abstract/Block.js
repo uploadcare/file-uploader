@@ -9,12 +9,13 @@ import { getPluralForm } from '../utils/getPluralForm.js';
 import { applyTemplateData, getPluralObjects } from '../utils/template-utils.js';
 import { waitForAttribute } from '../utils/waitForAttribute.js';
 import { blockCtx } from './CTX.js';
-import { LocaleManager, localeStateKey } from './LocaleManager.js';
+import { LocaleManager, localeStateKey } from './managers/LocaleManager.js';
 import { l10nProcessor } from './l10nProcessor.js';
 import { sharedConfigKey } from './sharedConfigKey.js';
-import { A11y } from './a11y.js';
-import { ModalManager } from './ModalManager.js';
 import { testModeProcessor } from './testModeProcessor.js';
+import { A11y } from './managers/a11y.js';
+import { ModalManager } from './managers/ModalManager.js';
+import { TelemetryManager } from './managers/TelemetryManager.js';
 
 const TAG_PREFIX = 'uc-';
 
@@ -97,6 +98,12 @@ export class Block extends BaseComponent {
     if (!eventEmitter) {
       return;
     }
+
+    this.telemetryManager.sendEvent({
+      eventType: type,
+      json: typeof payload === 'object' ? { ...payload } : null,
+    });
+
     eventEmitter.emit(type, payload, options);
   }
 
@@ -180,6 +187,10 @@ export class Block extends BaseComponent {
       this.add('*localeManager', new LocaleManager(this));
     }
 
+    if (this.cfg.telemetry && !this.has('*telemetryManager')) {
+      this.add('*telemetryManager', new TelemetryManager(this));
+    }
+
     if (!this.has('*a11y')) {
       this.add('*a11y', new A11y());
     }
@@ -213,6 +224,20 @@ export class Block extends BaseComponent {
    */
   get modalManager() {
     return this.has('*modalManager') && this.$['*modalManager'];
+  }
+
+  /**
+   * @returns {TelemetryManager | { sendEvent: () => void }}
+   * @public
+   */
+  get telemetryManager() {
+    if (!this.cfg.telemetry) {
+      return {
+        sendEvent: () => {},
+      };
+    }
+
+    return this.has('*telemetryManager') && this.$['*telemetryManager'];
   }
 
   /**

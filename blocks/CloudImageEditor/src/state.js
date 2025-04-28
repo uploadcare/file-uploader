@@ -88,5 +88,22 @@ export function initState(fnCtx) {
         }),
       );
     },
+
+    /**
+     * @param {MouseEvent} e
+     * @param {Record<string, unknown>} options
+     */
+    '*on.sendTelemetryEvent': (e, options = {}) => {
+      fnCtx.telemetryManager.sendEvent({
+        json: {
+          metadata: {
+            tabId: fnCtx.$['*tabId'],
+            node: /** @type {HTMLElement} */ (e.currentTarget)?.tagName,
+            event: e.type,
+            ...options,
+          },
+        },
+      });
+    },
   };
 }

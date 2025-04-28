@@ -1,7 +1,7 @@
 // @ts-check
 import { IMAGE_ACCEPT_LIST, matchExtension, matchMimeType, mergeFileTypes } from '../../fileTypes.js';
 
-/** @type {import('../../../abstract/ValidationManager.js').FuncFileValidator} */
+/** @type {import('../../../abstract/managers/ValidationManager.js').FuncFileValidator} */
 export const validateFileType = (outputEntry, api) => {
   const imagesOnly = api.cfg.imgOnly;
   const accept = api.cfg.accept;

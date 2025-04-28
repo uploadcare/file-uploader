@@ -12,7 +12,7 @@ import {
   UploadCtxProvider,
 } from '../../index.js';
 import { SourceTypes } from '../../blocks/utils/UploadSource.js';
-import { type ModalId } from '../../abstract/ModalManager.js';
+import { type ModalId } from '../../abstract/managers/ModalManager.js';
 import { renderer } from '../../tests/utils/test-renderer.js';
 
 const instance = new UploadCtxProvider();

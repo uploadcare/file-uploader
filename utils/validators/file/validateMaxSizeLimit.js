@@ -1,7 +1,7 @@
 // @ts-check
 import { prettyBytes } from '../../prettyBytes.js';
 
-/** @type {import('../../../abstract/ValidationManager.js').FuncFileValidator} */
+/** @type {import('../../../abstract/managers/ValidationManager.js').FuncFileValidator} */
 export const validateMaxSizeLimit = (outputEntry, api) => {
   const maxFileSize = api.cfg.maxLocalFileSizeBytes;
   const fileSize = outputEntry.size;

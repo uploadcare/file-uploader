@@ -11,6 +11,7 @@ export class FileUploaderInline extends SolutionBlock {
     this.init$ = {
       ...this.init$,
       couldCancel: false,
+      '*solution': this.tagName,
       cancel: () => {
         if (this.couldHistoryBack) {
           this.$['*historyBack']();

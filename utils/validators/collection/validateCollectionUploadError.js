@@ -1,6 +1,6 @@
 // @ts-check
 
-/** @type {import('../../../abstract/ValidationManager.js').FuncCollectionValidator} */
+/** @type {import('../../../abstract/managers/ValidationManager.js').FuncCollectionValidator} */
 export const validateCollectionUploadError = (collection, api) => {
   if (collection.failedCount > 0) {
     return {

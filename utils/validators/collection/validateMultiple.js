@@ -1,6 +1,6 @@
 //@ts-check
 
-/** @type {import('../../../abstract/ValidationManager.js').FuncCollectionValidator} */
+/** @type {import('../../../abstract/managers/ValidationManager.js').FuncCollectionValidator} */
 export const validateMultiple = (collection, api) => {
   const total = collection.totalCount;
   const multipleMin = api.cfg.multiple ? api.cfg.multipleMin : 0;

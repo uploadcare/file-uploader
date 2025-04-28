@@ -1,6 +1,6 @@
 // @ts-check
 
-import { localeStateKey } from './LocaleManager.js';
+import { localeStateKey } from './managers/LocaleManager.js';
 
 /**
  * @template {import('./Block.js').Block} T

@@ -9,9 +9,9 @@ export const ModalEvents = Object.freeze({
   DESTROY: 'modal:destroy',
 });
 
-/** @typedef {import('../abstract/ActivityBlock').ActivityType} ModalId */
+/** @typedef {import('../ActivityBlock').ActivityType} ModalId */
 
-/** @typedef {import('../blocks/Modal/Modal.js').Modal} ModalNode */
+/** @typedef {import('../../blocks/Modal/Modal.js').Modal} ModalNode */
 
 /** @typedef {(data: { id: ModalId; modal: ModalNode }) => void} ModalCb */
 
@@ -36,7 +36,7 @@ export class ModalManager {
    */
   _subscribers = new Map();
 
-  /** @param {import('./Block.js').Block} block */
+  /** @param {import('../Block.js').Block} block */
   constructor(block) {
     this._block = block;
   }

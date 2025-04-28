@@ -1,7 +1,7 @@
 // @ts-check
 import { NetworkError, UploadError } from '@uploadcare/upload-client';
 
-/** @type {import('../../../abstract/ValidationManager.js').FuncFileValidator} */
+/** @type {import('../../../abstract/managers/ValidationManager.js').FuncFileValidator} */
 export const validateUploadError = (outputEntry, api) => {
   const { internalId } = outputEntry;
 

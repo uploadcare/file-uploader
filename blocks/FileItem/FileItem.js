@@ -44,6 +44,14 @@ export class FileItem extends FileItemConfig {
       state: FileItemState.IDLE,
       ariaLabelStatusFile: '',
       onEdit: this._withEntry((entry) => {
+        this.telemetryManager.sendEvent({
+          json: {
+            metadata: {
+              event: 'edit-file',
+              node: this.tagName,
+            },
+          },
+        });
         this.$['*currentActivityParams'] = {
           internalId: entry.uid,
         };
@@ -51,6 +59,20 @@ export class FileItem extends FileItemConfig {
         this.$['*currentActivity'] = ActivityBlock.activities.CLOUD_IMG_EDIT;
       }),
       onRemove: () => {
+        /**
+         * @todo
+         *
+         *   1. Нужно ли нам передавать файл который удаляем?
+         *   2. А что если файл еще не загружен?
+         */
+        this.telemetryManager.sendEvent({
+          json: {
+            metadata: {
+              event: 'remove-file',
+              node: this.tagName,
+            },
+          },
+        });
         this.uploadCollection.remove(this.$.uid);
       },
       onUpload: () => {

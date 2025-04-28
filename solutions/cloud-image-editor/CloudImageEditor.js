@@ -4,6 +4,15 @@ import { CloudImageEditorBlock } from '../../blocks/CloudImageEditor/src/CloudIm
 export class CloudImageEditor extends CloudImageEditorBlock {
   static styleAttrs = [...super.styleAttrs, 'uc-wgt-common'];
 
+  constructor() {
+    super();
+
+    this.init$ = {
+      ...this.init$,
+      '*solution': this.tagName,
+    };
+  }
+
   initCallback() {
     super.initCallback();
 

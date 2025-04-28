@@ -1,6 +1,6 @@
 // @ts-check
 
-/** @type {import('../../../abstract/ValidationManager.js').FuncFileValidator} */
+/** @type {import('../../../abstract/managers/ValidationManager.js').FuncFileValidator} */
 export const validateIsImage = (outputEntry, api) => {
   const imagesOnly = api.cfg.imgOnly;
   const isImage = outputEntry.isImage;
