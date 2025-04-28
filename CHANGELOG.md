@@ -2,7 +2,7 @@
 
 ### Features
 
-- **cloud-editor:** added image mask ([#779](https://github.com/uploadcare/file-uploader/issues/779)) ([1863a5d](https://github.com/uploadcare/file-uploader/commit/1863a5d729956cc93ac5e66a1d13c8a41815124b))
+- **cloud-editor:** added image mask ([#779](https://github.com/uploadcare/file-uploader/issues/779)) ([1863a5d](https://github.com/uploadcare/file-uploader/commit/1863a5d729956cc93ac5e66a1d13c8a41815124b)). See the [documentation](https://uploadcare.com/docs/file-uploader/options/#cloud-image-editor-mask-href) for details.
 
 # [1.15.0](https://github.com/uploadcare/file-uploader/compare/v1.14.0...v1.15.0) (2025-04-22)
 
