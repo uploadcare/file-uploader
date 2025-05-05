@@ -35,9 +35,7 @@
     "MIT"
   ],
   "type": "module",
-  "sideEffects": [
-    "*.css"
-  ],
+  "sideEffects": ["*.css"],
   "module": "./index.js",
   "exports": {
     ".": {
@@ -109,8 +107,8 @@
     "@types/node": "^18.15.11",
     "@types/react": "^18.2.34",
     "@types/sinon": "^17.0.4",
-    "@vitest/browser": "^3.1.1",
-    "@web/test-runner": "^0.19.0",
+    "@vitest/browser": "^3.1.2",
+    "@web/test-runner": "^0.20.1",
     "esbuild": "^0.25.1",
     "eslint": "^8.56.0",
     "eslint-config-prettier": "^9.1.0",
@@ -135,8 +133,8 @@
     "svg-sprite": "^2.0.4",
     "tsd": "^0.31.2",
     "typescript": "^5.8.2",
-    "vite": "^6.2.5",
-    "vitest": "^3.1.1"
+    "vite": "^6.3.4",
+    "vitest": "^3.1.2"
   },
   "author": "Uploadcare Inc.",
   "license": "MIT",
