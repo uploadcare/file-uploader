@@ -12,7 +12,7 @@ export const activityBlockCtx = (fnCtx) => ({
   '*history': [],
   '*historyBack': null,
   '*closeModal': () => {
-    fnCtx.modalManager.closeAll();
+    fnCtx.modalManager.close(fnCtx.$['*currentActivity']);
 
     fnCtx.set$({
       '*currentActivity': null,

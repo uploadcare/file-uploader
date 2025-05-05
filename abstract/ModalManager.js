@@ -9,7 +9,7 @@ export const ModalEvents = Object.freeze({
   DESTROY: 'modal:destroy',
 });
 
-/** @typedef {string} ModalId */
+/** @typedef {import('../abstract/ActivityBlock').ActivityType} ModalId */
 
 /** @typedef {import('../blocks/Modal/Modal.js').Modal} ModalNode */
 

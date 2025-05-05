@@ -9,9 +9,10 @@ import {
   OutputError,
   OutputFileEntry,
   OutputFileErrorType,
-  UploadCtxProvider
+  UploadCtxProvider,
 } from '../../index.js';
 import { SourceTypes } from '../../blocks/utils/UploadSource.js';
+import { type ModalId } from '../../abstract/ModalManager.js';
 
 const instance = new UploadCtxProvider();
 instance.uploadCollection.size;
@@ -196,12 +197,16 @@ instance.addEventListener('common-upload-success', (e) => {
 
 instance.addEventListener('modal-close', (e) => {
   const payload = e.detail;
-  expectType<void>(payload);
+  expectType<{
+    modalId: ModalId;
+  }>(payload);
 });
 
 instance.addEventListener('modal-open', (e) => {
   const payload = e.detail;
-  expectType<void>(payload);
+  expectType<{
+    modalId: ModalId;
+  }>(payload);
 });
 
 instance.addEventListener('activity-change', (e) => {
