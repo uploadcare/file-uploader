@@ -1,5 +1,6 @@
 import { writeFileSync } from 'fs';
 import { GlobalRegistrator } from '@happy-dom/global-registrator';
+// eslint-disable-next-line import/default
 import prettier from 'prettier';
 
 GlobalRegistrator.register();
