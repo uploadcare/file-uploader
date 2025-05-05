@@ -1,3 +1,9 @@
+## [1.16.1](https://github.com/uploadcare/file-uploader/compare/v1.16.0...v1.16.1) (2025-05-05)
+
+### Bug Fixes
+
+- added emit events for open/close modal ([#811](https://github.com/uploadcare/file-uploader/issues/811)) ([d1ef03a](https://github.com/uploadcare/file-uploader/commit/d1ef03a32af1645a18f90e8e0a871fe5218cd031))
+
 # [1.16.0](https://github.com/uploadcare/file-uploader/compare/v1.15.0...v1.16.0) (2025-04-28)
 
 ### Features
