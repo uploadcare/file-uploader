@@ -1,6 +1,10 @@
 // @ts-check
 import { Block } from '../../abstract/Block.js';
 import { ModalEvents } from '../../abstract/ModalManager.js';
+import { EventType } from '../UploadCtxProvider/EventEmitter.js';
+
+/** @type {import('../../abstract/ModalManager.js').ModalId | null} */
+let LAST_ACTIVE_MODAL_ID = null;
 
 export class Modal extends Block {
   static styleAttrs = [...super.styleAttrs, 'uc-modal'];
@@ -71,10 +75,13 @@ export class Modal extends Block {
    */
   _handleModalOpen({ id }) {
     if (id === this.id) {
+      LAST_ACTIVE_MODAL_ID = id;
       this.show();
     } else {
       this.hide();
     }
+
+    this.emit(EventType.MODAL_OPEN, { modalId: id }, { debounce: true });
   }
 
   /**
@@ -85,11 +92,17 @@ export class Modal extends Block {
     if (id === this.id) {
       this.hide();
     }
+
+    this.emit(EventType.MODAL_CLOSE, { modalId: id }, { debounce: true });
   }
 
   /** @private */
   _handleModalCloseAll() {
     this.hide();
+
+    if (LAST_ACTIVE_MODAL_ID === this.id) {
+      this.emit(EventType.MODAL_CLOSE, { modalId: LAST_ACTIVE_MODAL_ID }, { debounce: true });
+    }
   }
 
   initCallback() {
