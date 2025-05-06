@@ -41,3 +41,4 @@ jobs:
           name: e2e-tests
           path: |
             tests/__screenshots__/**
+            tests/__coverage__/**

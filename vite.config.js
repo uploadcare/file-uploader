@@ -10,6 +10,13 @@ export default defineConfig(({ command }) => {
       build: {
         target: 'es2019',
       },
+      test: {
+        coverage: {
+          provider: 'v8',
+          reporter: ['text', 'html'],
+          reportsDirectory: './tests/__coverage__',
+        },
+      },
       resolve: {
         alias: {
           '@': __dirname,
