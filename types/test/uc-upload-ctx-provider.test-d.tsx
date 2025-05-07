@@ -200,6 +200,7 @@ instance.addEventListener('modal-close', (e) => {
   const payload = e.detail;
   expectType<{
     modalId: ModalId;
+    hasActiveModals: boolean;
   }>(payload);
 });
 

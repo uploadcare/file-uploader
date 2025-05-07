@@ -36,7 +36,7 @@ export const EventType = Object.freeze({
  *   [EventType.FILE_UPLOAD_FAILED]: import('../../index.js').OutputFileEntry<'failed'>;
  *   [EventType.FILE_URL_CHANGED]: import('../../index.js').OutputFileEntry<'success'>;
  *   [EventType.MODAL_OPEN]: { modalId: import('../../abstract/ModalManager.js').ModalId };
- *   [EventType.MODAL_CLOSE]: { modalId: import('../../abstract/ModalManager.js').ModalId };
+ *   [EventType.MODAL_CLOSE]: { modalId: import('../../abstract/ModalManager.js').ModalId; hasActiveModals: boolean };
  *   [EventType.ACTIVITY_CHANGE]: {
  *     activity: import('../../abstract/ActivityBlock.js').ActivityType;
  *   };
