@@ -1,52 +1,47 @@
 <!doctype html>
-<base href="../../" />
 
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="./solutions/file-uploader/regular/index.css" />
-  <script
-    async=""
-    src="https://cdn.skypack.dev/-/es-module-shims@v1.5.8-O0uWfhbenfjMbv6D3d8E/dist=es2020,mode=raw,min/dist/es-module-shims.js"
-  ></script>
-  <script type="importmap">
-    {
-      "imports": {
-        "@symbiotejs/symbiote": "./node_modules/@symbiotejs/symbiote/build/symbiote.js",
-        "@uploadcare/upload-client": "./node_modules/@uploadcare/upload-client/dist/esm/index.browser.mjs",
-        "@uploadcare/image-shrink": "./node_modules/@uploadcare/image-shrink/dist/esm/index.browser.mjs",
-        "keyux": "./node_modules/keyux/index.js"
-      }
-    }
-  </script>
-  <script src="./index.js" type="module"></script>
   <script type="module">
-    import * as UC from './index.js';
+    import '@/solutions/file-uploader/regular/index.css';
+    import * as UC from '@/index.js';
 
     UC.defineComponents(UC);
 
     const config = document.querySelector('uc-');
     const ctx = document.querySelector('uc-upload-ctx-provider');
     const api = ctx.getAPI();
-    const radio = document.querySelector('input[name="choice"]');
+    const radios = document.querySelectorAll('input[name="choice"]');
+
+    const editorAutoOpenListener = (e) => {
+      const { internalId } = e.detail;
+      if (api.getCurrentActivity() !== 'cloud-image-edit') {
+        api.setCurrentActivity('cloud-image-edit', { internalId });
+      }
+    };
+
+    const listeners = [editorAutoOpenListener];
 
     const handleRadioChange = (choice) => {
       switch (choice) {
         case 'auto-editor-open':
-          ctx.addEventListener('file-upload-success', (e) => {
-            const { internalId } = e.detail;
-            if (api.getCurrentActivity() !== 'cloud-image-edit') {
-              api.setCurrentActivity('cloud-image-edit', { internalId });
-            }
-          });
+          ctx.addEventListener('file-upload-success', editorAutoOpenListener);
           break;
         default:
+          listeners.forEach((listener) => {
+            ctx.removeEventListener('file-upload-success', listener);
+          });
           break;
       }
     };
 
-    radio.addEventListener('change', (e) => {
-      handleRadioChange(e.target.value);
+    radios.forEach((radio) => {
+      radio.addEventListener('change', (e) => {
+        handleRadioChange(e.target.value);
+      });
     });
+
+    handleRadioChange([...radios].filter((radio) => radio.checked)[0].value);
   </script>
 </head>
 
@@ -57,6 +52,9 @@
 <fieldset>
   <legend>Please select behaviour:</legend>
   <div>
+    <input type="radio" id="choice2" name="choice" value="none" checked="checked" />
+    <label for="choice2">None</label>
+
     <input type="radio" id="choice1" name="choice" value="auto-editor-open" />
     <label for="choice1">Auto editor open</label>
   </div>

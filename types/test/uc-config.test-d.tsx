@@ -1,7 +1,8 @@
-import React from 'react';
 import { expectType } from 'tsd';
-import '../jsx.js';
 import { OutputFileEntry, FuncCollectionValidator, FuncFileValidator } from '../index.js';
+import { renderer } from '../../tests/utils/test-renderer.js';
+import React from 'react';
+import '../jsx';
 
 // @ts-expect-error untyped props
 () => <uc-config ctx-name="1" something="wrong"></uc-config>;

@@ -2,6 +2,8 @@ module.exports = {
   extends: ['stylelint-config-standard'],
   plugins: ['stylelint-order', 'stylelint-declaration-block-no-ignored-properties'],
   rules: {
+    'hue-degree-notation': null,
+    'alpha-value-notation': null,
     'plugin/declaration-block-no-ignored-properties': true,
     'function-calc-no-unspaced-operator': true, // can cause out of memory in some cases
     'keyframes-name-pattern': null,

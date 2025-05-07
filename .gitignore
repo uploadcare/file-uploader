@@ -8,3 +8,4 @@ TMP
 ./index.ssr.*
 index.ssr.js
 web
+tests/__coverage__

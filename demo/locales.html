@@ -1,100 +1,36 @@
 <!doctype html>
-<base href="../../" />
+
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <title>File Uploader locales</title>
-    <script
-      async=""
-      src="https://cdn.skypack.dev/-/es-module-shims@v1.5.8-O0uWfhbenfjMbv6D3d8E/dist=es2020,mode=raw,min/dist/es-module-shims.js"
-    ></script>
-    <script type="importmap">
-      {
-        "imports": {
-          "@symbiotejs/symbiote": "./node_modules/@symbiotejs/symbiote/build/symbiote.js",
-          "@uploadcare/upload-client": "./node_modules/@uploadcare/upload-client/dist/esm/index.browser.mjs",
-          "@uploadcare/image-shrink": "./node_modules/@uploadcare/image-shrink/dist/esm/index.browser.mjs"
+    <style>
+      @media (prefers-color-scheme: dark) {
+        body {
+          background-color: #121213;
+          color: #fff;
         }
       }
-    </script>
+    </style>
   </head>
   <body>
     <script type="module">
-      import * as UC from './index.js';
+      import '@/solutions/file-uploader/inline/index.css';
+      import '@/solutions/file-uploader/regular/index.css';
+      import '@/solutions/file-uploader/minimal/index.css';
+      import * as UC from '@/index.js';
 
-      import { default as ar } from './locales/file-uploader/ar.js';
-      import { default as az } from './locales/file-uploader/az.js';
-      import { default as ca } from './locales/file-uploader/ca.js';
-      import { default as cs } from './locales/file-uploader/cs.js';
-      import { default as da } from './locales/file-uploader/da.js';
-      import { default as de } from './locales/file-uploader/de.js';
-      import { default as el } from './locales/file-uploader/el.js';
-      import { default as en } from './locales/file-uploader/en.js';
-      import { default as es } from './locales/file-uploader/es.js';
-      import { default as et } from './locales/file-uploader/et.js';
-      import { default as fr } from './locales/file-uploader/fr.js';
-      import { default as he } from './locales/file-uploader/he.js';
-      import { default as hy } from './locales/file-uploader/hy.js';
-      import { default as is } from './locales/file-uploader/is.js';
-      import { default as it } from './locales/file-uploader/it.js';
-      import { default as ja } from './locales/file-uploader/ja.js';
-      import { default as ka } from './locales/file-uploader/ka.js';
-      import { default as kk } from './locales/file-uploader/kk.js';
-      import { default as ko } from './locales/file-uploader/ko.js';
-      import { default as lv } from './locales/file-uploader/lv.js';
-      import { default as nb } from './locales/file-uploader/nb.js';
-      import { default as nl } from './locales/file-uploader/nl.js';
-      import { default as pl } from './locales/file-uploader/pl.js';
-      import { default as pt } from './locales/file-uploader/pt.js';
-      import { default as ro } from './locales/file-uploader/ro.js';
-      import { default as ru } from './locales/file-uploader/ru.js';
-      import { default as sk } from './locales/file-uploader/sk.js';
-      import { default as sr } from './locales/file-uploader/sr.js';
-      import { default as sv } from './locales/file-uploader/sv.js';
-      import { default as tr } from './locales/file-uploader/tr.js';
-      import { default as uk } from './locales/file-uploader/uk.js';
-      import { default as vi } from './locales/file-uploader/vi.js';
-      import { default as zhTW } from './locales/file-uploader/zh-TW.js';
-      import { default as zh } from './locales/file-uploader/zh.js';
+      const locales = import.meta.glob('@/locales/file-uploader/*.js', {
+        eager: true,
+      });
 
-      const allLocales = {
-        ar: ar,
-        az: az,
-        ca: ca,
-        cs: cs,
-        da: da,
-        de: de,
-        el: el,
-        en: en,
-        es: es,
-        et: et,
-        fr: fr,
-        he: he,
-        hy: hy,
-        is: is,
-        it: it,
-        ja: ja,
-        ka: ka,
-        kk: kk,
-        ko: ko,
-        lv: lv,
-        nb: nb,
-        nl: nl,
-        pl: pl,
-        pt: pt,
-        ro: ro,
-        ru: ru,
-        sk: sk,
-        sr: sr,
-        sv: sv,
-        tr: tr,
-        uk: uk,
-        vi: vi,
-        'zh-TW': zhTW,
-        zh: zh,
-      };
+      const allLocales = Object.fromEntries(
+        Object.entries(locales).map(([path, m]) => {
+          return [path.split('/').pop().split('.')[0], m.default];
+        }),
+      );
 
       for (const [key, definition] of Object.entries(allLocales)) {
         UC.defineLocale(key, definition);
@@ -104,7 +40,7 @@
 
       const config = document.querySelector('uc-config');
 
-      document.querySelector('#locale-radio').innerHTML = `
+      document.querySelector('#locale-radio').innerHTML = /* html */ `
             <br />
             <fieldset>
               ${Object.keys(allLocales)
@@ -130,20 +66,19 @@
       });
 
       const setMode = (mode) => {
-        document.querySelector('#container').innerHTML = `
+        document.querySelector('#container').innerHTML = /* html */ `
             <uc-file-uploader-${mode}
       ctx-name="my-uploader"
-      css-src="./solutions/file-uploader/${mode}/index.css"
     ></uc-file-uploader-${mode}>
             `;
       };
 
-      document.querySelector('#mode-radio').innerHTML = `
+      document.querySelector('#mode-radio').innerHTML = /* html */ `
             <br />
             <fieldset>
               ${['regular', 'inline', 'minimal']
                 .map((mode) => {
-                  return `<div>
+                  return /* html */ `<div>
           <input type="radio" id="${mode}" name="mode" value="${mode}" />
           <label for="${mode}">${mode}</label>
         </div>`;

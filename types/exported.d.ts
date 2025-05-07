@@ -287,6 +287,12 @@ export type ConfigType = {
   cloudImageEditorAutoOpen: boolean;
 
   cloudImageEditorMaskHref: string | null;
+
+   /**
+   * Adds data-testid attributes to the each block. Needed for testing purposes.
+   * @default false
+   */
+  testMode: boolean;
 };
 export type ConfigComplexType = Pick<ConfigType, (typeof complexConfigKeys)[number]>;
 export type ConfigPlainType = Omit<ConfigType, keyof ConfigComplexType>;

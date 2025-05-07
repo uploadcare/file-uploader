@@ -34,7 +34,10 @@ export class LocaleManager {
     this._blockInstance = blockInstance;
 
     for (let [key, value] of Object.entries(en)) {
-      this._blockInstance.add(localeStateKey(key), value, false);
+      const noTranslation = this._blockInstance.has(localeStateKey(key))
+        ? !this._blockInstance.$[localeStateKey(key)]
+        : true;
+      this._blockInstance.add(localeStateKey(key), value, noTranslation);
     }
 
     setTimeout(() => {

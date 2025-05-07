@@ -14,6 +14,7 @@ import { l10nProcessor } from './l10nProcessor.js';
 import { sharedConfigKey } from './sharedConfigKey.js';
 import { A11y } from './a11y.js';
 import { ModalManager } from './ModalManager.js';
+import { testModeProcessor } from './testModeProcessor.js';
 
 const TAG_PREFIX = 'uc-';
 
@@ -81,6 +82,8 @@ export class Block extends BaseComponent {
     this.l10nProcessorSubs = new Map();
     // @ts-ignore TODO: fix this
     this.addTemplateProcessor(l10nProcessor);
+    // @ts-ignore TODO: fix this
+    this.addTemplateProcessor(testModeProcessor);
   }
 
   /**
@@ -189,6 +192,19 @@ export class Block extends BaseComponent {
       const direction = getLocaleDirection(localeId);
       this.style.direction = direction === 'ltr' ? '' : direction;
     });
+
+    this.subConfigValue('testMode', (testMode) => {
+      if (!testMode || !this.testId) {
+        this.removeAttribute('data-testid');
+        return;
+      }
+      this.setAttribute('data-testid', this.testId);
+    });
+  }
+
+  get testId() {
+    const testId = window.customElements.getName(/** @type {CustomElementConstructor} */ (this.constructor));
+    return testId;
   }
 
   /**

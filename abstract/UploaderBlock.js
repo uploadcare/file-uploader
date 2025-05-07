@@ -102,6 +102,12 @@ export class UploaderBlock extends ActivityBlock {
     super.destroyCtxCallback();
   }
 
+  destroyCallback() {
+    super.destroyCallback();
+
+    this._flushOutputItems.cancel();
+  }
+
   /** @private */
   initCtxOwner() {
     this.isCtxOwner = true;

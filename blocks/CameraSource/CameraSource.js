@@ -896,12 +896,13 @@ CameraSource.template = /* HTML */ `
 
     <div class="uc-camera-actions uc-camera-action" set="@hidden: cameraActionsHidden">
       <button type="button" class="uc-secondary-btn" set="onclick: onRetake">Retake</button>
-      <button type="button" class="uc-primary-btn" set="onclick: onAccept">Accept</button>
+      <button type="button" class="uc-primary-btn" set="onclick: onAccept" data-testid="accept">Accept</button>
     </div>
 
     <button
       type="button"
       class="uc-shot-btn uc-camera-action"
+      data-testid="shot"
       set="onclick: onStartCamera; @class: mutableClassButton; @hidden: cameraHidden;"
     >
       <uc-icon set="@name: currentIcon"></uc-icon>
