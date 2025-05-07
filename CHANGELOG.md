@@ -1,3 +1,9 @@
+## [1.16.2](https://github.com/uploadcare/file-uploader/compare/v1.16.1...v1.16.2) (2025-05-07)
+
+### Bug Fixes
+
+- **modal:** added hasActiveModals in emit for close modal ([#813](https://github.com/uploadcare/file-uploader/issues/813)) ([808b74e](https://github.com/uploadcare/file-uploader/commit/808b74e92b3db0e5cece5bb0c46eb130178d430a))
+
 ## [1.16.1](https://github.com/uploadcare/file-uploader/compare/v1.16.0...v1.16.1) (2025-05-05)
 
 ### Bug Fixes
