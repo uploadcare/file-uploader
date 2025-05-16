@@ -95,7 +95,7 @@ export function initState(fnCtx) {
      */
     '*on.sendTelemetryEvent': (e, options = {}) => {
       fnCtx.telemetryManager.sendEvent({
-        json: {
+        payload: {
           metadata: {
             tabId: fnCtx.$['*tabId'],
             node: /** @type {HTMLElement} */ (e.currentTarget)?.tagName,

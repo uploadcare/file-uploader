@@ -2,7 +2,7 @@
 import { ActivityBlock } from '../../../abstract/ActivityBlock.js';
 import { SolutionBlock } from '../../../abstract/SolutionBlock.js';
 import { ModalEvents } from '../../../abstract/managers/ModalManager.js';
-import { EventType } from '../../../blocks/UploadCtxProvider/EventEmitter.js';
+import { InternalEventType } from '../../../blocks/UploadCtxProvider/EventEmitter.js';
 
 const ACTIVE_CLASS = 'active';
 const EMPTY_CLASS = '';
@@ -61,6 +61,8 @@ export class FileUploaderMinimal extends SolutionBlock {
 
   initCallback() {
     super.initCallback();
+
+    this.emit(InternalEventType.INIT_SOLUTION, undefined);
 
     /** @type {import('../../../abstract/UploaderBlock.js').UploaderBlock} */
     const uBlock = this.ref.uBlock;

@@ -2,6 +2,10 @@
 
 const DEFAULT_DEBOUNCE_TIMEOUT = 20;
 
+export const InternalEventType = Object.freeze({
+  INIT_SOLUTION: 'init-solution',
+});
+
 export const EventType = Object.freeze({
   FILE_ADDED: 'file-added',
   FILE_REMOVED: 'file-removed',
@@ -24,9 +28,9 @@ export const EventType = Object.freeze({
 
   CHANGE: 'change',
   GROUP_CREATED: 'group-created',
-});
 
-/** @typedef {(typeof EventType)[keyof typeof EventType]} EventTypes */
+  ...InternalEventType,
+});
 
 /**
  * @typedef {{
@@ -53,6 +57,7 @@ export const EventType = Object.freeze({
  *   [EventType.COMMON_UPLOAD_FAILED]: import('../../index.js').OutputCollectionState<'failed'>;
  *   [EventType.CHANGE]: import('../../index.js').OutputCollectionState;
  *   [EventType.GROUP_CREATED]: import('../../index.js').OutputCollectionState<'success', 'has-group'>;
+ *   [EventType.INIT_SOLUTION]: void;
  * }} EventPayload
  */
 

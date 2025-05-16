@@ -77,13 +77,10 @@ export class Modal extends Block {
     if (id === this.id) {
       LAST_ACTIVE_MODAL_ID = id;
       this.show();
+      this.emit(EventType.MODAL_OPEN, { modalId: id }, { debounce: true });
     } else {
       this.hide();
     }
-
-    this.emit(EventType.MODAL_OPEN, { modalId: id }, { debounce: true });
-
-    this.emit(EventType.MODAL_OPEN, { modalId: id }, { debounce: true });
   }
 
   /**
@@ -93,13 +90,12 @@ export class Modal extends Block {
   _handleModalClose({ id }) {
     if (id === this.id) {
       this.hide();
+      this.emit(
+        EventType.MODAL_CLOSE,
+        { modalId: id, hasActiveModals: this.modalManager.hasActiveModals },
+        { debounce: true },
+      );
     }
-
-    this.emit(
-      EventType.MODAL_CLOSE,
-      { modalId: id, hasActiveModals: this.modalManager.hasActiveModals },
-      { debounce: true },
-    );
   }
 
   /** @private */

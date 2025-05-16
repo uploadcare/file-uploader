@@ -45,7 +45,7 @@ export class FileItem extends FileItemConfig {
       ariaLabelStatusFile: '',
       onEdit: this._withEntry((entry) => {
         this.telemetryManager.sendEvent({
-          json: {
+          payload: {
             metadata: {
               event: 'edit-file',
               node: this.tagName,
@@ -66,7 +66,7 @@ export class FileItem extends FileItemConfig {
          *   2. А что если файл еще не загружен?
          */
         this.telemetryManager.sendEvent({
-          json: {
+          payload: {
             metadata: {
               event: 'remove-file',
               node: this.tagName,

@@ -1,4 +1,5 @@
 // @ts-check
+import { InternalEventType } from '../../blocks/UploadCtxProvider/EventEmitter.js';
 import { CloudImageEditorBlock } from '../../blocks/CloudImageEditor/src/CloudImageEditorBlock.js';
 
 export class CloudImageEditor extends CloudImageEditorBlock {
@@ -6,6 +7,8 @@ export class CloudImageEditor extends CloudImageEditorBlock {
 
   constructor() {
     super();
+
+    this.emit(InternalEventType.INIT_SOLUTION, undefined);
 
     this.init$ = {
       ...this.init$,

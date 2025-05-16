@@ -15,7 +15,7 @@ import { throttle } from '../../blocks/utils/throttle.js';
  *   component: 'uc-img' | 'uc-file-uploader-regular' | 'uc-file-uploader-minimal' | 'uc-file-uploader-inline';
  *   userAgent: string;
  *   config: import('../../types/index.js').ConfigType;
- *   json: Record<string, unknown> | null;
+ *   payload: Record<string, unknown> | null;
  * }} TelemetryState
  */
 
@@ -81,11 +81,11 @@ export class TelemetryManager {
   }
 
   /**
-   * - @param {Pick<TelemetryState, 'eventType' | 'json'> } body
+   * - @param {Pick<TelemetryState, 'eventType' | 'payload'> } body
    * - @returns {TelemetryState}
    */
   #formatingPayload(body) {
-    if (body.json?.activity) delete body['json']['activity'];
+    if (body.payload?.activity) delete body['payload']['activity'];
 
     return {
       appVersion: PACKAGE_VERSION,
@@ -97,25 +97,25 @@ export class TelemetryManager {
       userAgent: navigator.userAgent,
       eventType: body.eventType ?? null,
       config: this.#config,
-      json: {
-        ...body.json,
+      payload: {
+        ...body.payload,
       },
     };
   }
 
   /**
-   * @param {Pick<TelemetryState, 'eventType' | 'json'> & {
+   * @param {Pick<TelemetryState, 'eventType' | 'payload'> & {
    *   modalId?: string;
    *   eventType?: Parameters<import('../../blocks/UploadCtxProvider/EventEmitter.js').EventEmitter['emit']>[0];
    * }} body
    */
   sendEvent(body) {
     const payload = this.#formatingPayload(body);
-    const isDifferent = this.#checkSendingSameProperties(this.#lastPayload, payload);
+    // const isDifferent = this.#checkSendingSameProperties(this.#lastPayload, payload);
 
-    if (!isDifferent) {
-      return;
-    }
+    // if (!isDifferent) {
+    //   return;
+    // }
 
     this.#lastPayload = payload;
     this.#telemetryInstance?.sendEvent(payload);

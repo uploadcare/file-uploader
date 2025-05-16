@@ -1,4 +1,5 @@
 // @ts-check
+import { InternalEventType } from '../../../blocks/UploadCtxProvider/EventEmitter.js';
 import { ActivityBlock } from '../../../abstract/ActivityBlock.js';
 import { SolutionBlock } from '../../../abstract/SolutionBlock.js';
 
@@ -33,6 +34,8 @@ export class FileUploaderInline extends SolutionBlock {
 
   initCallback() {
     super.initCallback();
+
+    this.emit(InternalEventType.INIT_SOLUTION, undefined);
 
     /** @type {import('../../../abstract/UploaderBlock.js').UploaderBlock} */
     const uBlock = this.ref.uBlock;

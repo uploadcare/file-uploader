@@ -99,12 +99,12 @@ export class Block extends BaseComponent {
       return;
     }
 
+    eventEmitter.emit(type, payload, options);
+
     this.telemetryManager.sendEvent({
       eventType: type,
-      json: typeof payload === 'object' ? { ...payload } : null,
+      payload: typeof payload === 'function' ? payload() : payload,
     });
-
-    eventEmitter.emit(type, payload, options);
   }
 
   /**
