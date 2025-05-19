@@ -123,6 +123,10 @@
  *   | {
  *       type: 'set-embed-css';
  *       css: string;
+ *     }
+ *   | {
+ *       type: 'set-top-level-origin';
+ *       origin: string;
  *     }} OutputMessage
  */
 

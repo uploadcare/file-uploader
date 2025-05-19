@@ -8,6 +8,7 @@ import { wildcardRegexp } from '../../utils/wildcardRegexp.js';
 import { buildThemeDefinition } from './buildThemeDefinition.js';
 import { MessageBridge } from './MessageBridge.js';
 import { queryString } from './query-string.js';
+import { getTopLevelOrigin } from '../../utils/get-top-level-origin.js';
 
 /** @typedef {{ externalSourceType: string }} ActivityParams */
 
@@ -165,9 +166,18 @@ export class ExternalSource extends UploaderBlock {
 
   /** @private */
   handleIframeLoad() {
+    this.applyTopLevelOrigin();
     this.applyEmbedCss(this.cfg.externalSourcesEmbedCss);
     this.applyTheme();
     this.setupL10n();
+  }
+
+  /** @private */
+  applyTopLevelOrigin() {
+    this._messageBridge?.send({
+      type: 'set-top-level-origin',
+      origin: getTopLevelOrigin(),
+    });
   }
 
   /** @private */
