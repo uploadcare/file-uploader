@@ -1,26 +1,29 @@
+//@ts-check
 import { EditorButtonControl } from './EditorButtonControl.js';
 import { COLOR_OPERATIONS_CONFIG } from './toolbar-constants.js';
+import { parseFilterValue } from './utils/parseFilterValue.js';
 
 export class EditorOperationControl extends EditorButtonControl {
   /**
    * @private
-   * @type {String}
+   * @type {import('./toolbar-constants.js').ColorOperation | ''}
    */
   _operation = '';
 
   initCallback() {
     super.initCallback();
 
-    this.$['on.click'] = (e) => {
+    this.$['on.click'] = (/** @type {MouseEvent} */ e) => {
       this.$['*sliderEl'].setOperation(this._operation);
       this.$['*showSlider'] = true;
       this.$['*currentOperation'] = this._operation;
-      this.$['*on.sendTelemetryEvent'](e, {
-        operation: this.$['*operationTooltip'],
+
+      this.telemetryManager.sendEventCloudImageEditor(e, this.$['*tabId'], {
+        operation: parseFilterValue(this.$['*operationTooltip']),
       });
     };
 
-    this.defineAccessor('operation', (operation) => {
+    this.defineAccessor('operation', (/** @type {import('./toolbar-constants.js').ColorOperation} */ operation) => {
       if (operation) {
         this._operation = operation;
         this.$['icon'] = operation;

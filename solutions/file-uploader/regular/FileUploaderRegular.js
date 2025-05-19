@@ -1,8 +1,7 @@
 // @ts-check
-import { ModalEvents } from '../../../abstract/managers/ModalManager.js';
 import { SolutionBlock } from '../../../abstract/SolutionBlock.js';
 import { asBoolean } from '../../../blocks/Config/validatorsType.js';
-import { EventType, InternalEventType } from '../../../blocks/UploadCtxProvider/EventEmitter.js';
+import { InternalEventType } from '../../../blocks/UploadCtxProvider/EventEmitter.js';
 
 export class FileUploaderRegular extends SolutionBlock {
   static styleAttrs = [...super.styleAttrs, 'uc-file-uploader-regular'];

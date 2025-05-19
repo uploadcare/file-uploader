@@ -112,3 +112,5 @@ export const COLOR_OPERATIONS_CONFIG = Object.freeze({
     keypointsNumber: 1,
   },
 });
+
+/** @typedef {keyof typeof COLOR_OPERATIONS_CONFIG} ColorOperation */

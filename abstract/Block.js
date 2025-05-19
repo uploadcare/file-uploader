@@ -187,7 +187,7 @@ export class Block extends BaseComponent {
       this.add('*localeManager', new LocaleManager(this));
     }
 
-    if (this.cfg.telemetry && !this.has('*telemetryManager')) {
+    if (this.cfg.qualityInsights && !this.has('*telemetryManager')) {
       this.add('*telemetryManager', new TelemetryManager(this));
     }
 
@@ -227,13 +227,14 @@ export class Block extends BaseComponent {
   }
 
   /**
-   * @returns {TelemetryManager | { sendEvent: () => void }}
+   * @returns {TelemetryManager | { sendEvent: () => void; sendEventCloudImageEditor: () => void }}
    * @public
    */
   get telemetryManager() {
-    if (!this.cfg.telemetry) {
+    if (!this.cfg.qualityInsights) {
       return {
         sendEvent: () => {},
+        sendEventCloudImageEditor: () => {},
       };
     }
 

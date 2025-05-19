@@ -87,5 +87,5 @@ export const initialConfig = {
 
   testMode: false,
 
-  telemetry: true,
+  qualityInsights: true,
 };

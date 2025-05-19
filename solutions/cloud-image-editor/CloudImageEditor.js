@@ -8,8 +8,6 @@ export class CloudImageEditor extends CloudImageEditorBlock {
   constructor() {
     super();
 
-    this.emit(InternalEventType.INIT_SOLUTION, undefined);
-
     this.init$ = {
       ...this.init$,
       '*solution': this.tagName,
@@ -18,6 +16,8 @@ export class CloudImageEditor extends CloudImageEditorBlock {
 
   initCallback() {
     super.initCallback();
+
+    this.emit(InternalEventType.INIT_SOLUTION, undefined);
 
     this.a11y?.registerBlock(this);
   }

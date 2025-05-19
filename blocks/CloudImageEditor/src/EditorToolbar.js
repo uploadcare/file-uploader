@@ -15,6 +15,7 @@ import {
   TabId,
 } from './toolbar-constants.js';
 import { viewerImageSrc } from './util.js';
+import { parseFilterValue } from './utils/parseFilterValue.js';
 
 /** @param {String} id */
 function renderTabToggle(id) {
@@ -106,31 +107,32 @@ export class EditorToolbar extends Block {
       },
       /** @param {MouseEvent} e */
       'on.cancel': (e) => {
-        this.$['*on.sendTelemetryEvent'](e, {
+        this.telemetryManager.sendEventCloudImageEditor(e, this.$['*tabId'], {
           action: 'cancel',
         });
+
         this._cancelPreload?.();
         this.$['*on.cancel']();
       },
       /** @param {MouseEvent} e */
       'on.apply': (e) => {
-        this.$['*on.sendTelemetryEvent'](e, {
+        this.telemetryManager.sendEventCloudImageEditor(e, this.$['*tabId'], {
           action: 'apply',
         });
         this.$['*on.apply'](this.$['*editorTransformations']);
       },
       /** @param {MouseEvent} e */
       'on.applySlider': (e) => {
-        this.$['*on.sendTelemetryEvent'](e, {
+        this.telemetryManager.sendEventCloudImageEditor(e, this.$['*tabId'], {
           action: 'apply-slider',
-          operation: this.$['*operationTooltip'],
+          operation: parseFilterValue(this.$['*operationTooltip']),
         });
         this.ref['slider-el'].apply();
         this._onSliderClose();
       },
       /** @param {MouseEvent} e */
       'on.cancelSlider': (e) => {
-        this.$['*on.sendTelemetryEvent'](e, {
+        this.telemetryManager.sendEventCloudImageEditor(e, this.$['*tabId'], {
           action: 'cancel-slider',
         });
         this.ref['slider-el'].cancel();
@@ -140,9 +142,7 @@ export class EditorToolbar extends Block {
       'on.clickTab': (e) => {
         const id = /** @type {HTMLElement} */ (e.currentTarget).getAttribute('data-id');
         if (id) {
-          this.$['*on.sendTelemetryEvent'](e, {
-            tabId: id,
-          });
+          this.telemetryManager.sendEventCloudImageEditor(e, id);
           this._activateTab(id, { fromViewer: false });
         }
       },

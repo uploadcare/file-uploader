@@ -4,6 +4,7 @@ const DEFAULT_DEBOUNCE_TIMEOUT = 20;
 
 export const InternalEventType = Object.freeze({
   INIT_SOLUTION: 'init-solution',
+  CHANGE_CONFIG: 'change-config',
 });
 
 export const EventType = Object.freeze({
@@ -58,6 +59,7 @@ export const EventType = Object.freeze({
  *   [EventType.CHANGE]: import('../../index.js').OutputCollectionState;
  *   [EventType.GROUP_CREATED]: import('../../index.js').OutputCollectionState<'success', 'has-group'>;
  *   [EventType.INIT_SOLUTION]: void;
+ *   [EventType.CHANGE_CONFIG]: void;
  * }} EventPayload
  */
 

@@ -1,69 +1,57 @@
-//@ts-check
+// @ts-check
 import { TelemetryAPIService } from '@uploadcare/quality-insights';
+
+import { Queue } from '@uploadcare/upload-client';
 import { PACKAGE_VERSION, PACKAGE_NAME } from '../../env.js';
 import { initialConfig } from '../../blocks/Config/initialConfig.js';
-import { throttle } from '../../blocks/utils/throttle.js';
+import { EventType } from '../../blocks/UploadCtxProvider/EventEmitter.js';
 
-/**
- * @typedef {{
- *   eventType?: Parameters<import('../../blocks/UploadCtxProvider/EventEmitter.js').EventEmitter['emit']>[0] | null;
- *   activity: import('../ActivityBlock.js').ActivityType;
- *   projectPubkey: import('../../types/index.js').ConfigType['pubkey'];
- *   appVersion: string;
- *   appName: string;
- *   sessionId: ReturnType<Crypto['randomUUID']>;
- *   component: 'uc-img' | 'uc-file-uploader-regular' | 'uc-file-uploader-minimal' | 'uc-file-uploader-inline';
- *   userAgent: string;
- *   config: import('../../types/index.js').ConfigType;
- *   payload: Record<string, unknown> | null;
- * }} TelemetryState
- */
+/** @typedef {import('@uploadcare/quality-insights').TelemetryRequest & { eventTimestamp: number }} TelemetryState */
 
 export class TelemetryManager {
   /** @type {ReturnType<Crypto['randomUUID']>} */
-  #sessionId = crypto.randomUUID();
+  _sessionId = crypto.randomUUID();
 
   /** @type {TelemetryAPIService | null} */
-  #telemetryInstance = null;
+  _telemetryInstance = null;
 
   /** @type {import('../Block.js').Block | null} */
-  #block = null;
+  _block = null;
+
+  _config = initialConfig;
+
+  /** @type {boolean} */
+  _initialized = false;
 
   /** @type {TelemetryState | null} */
-  #lastPayload = null;
+  _lastPayload = null;
 
-  #config = initialConfig;
+  /** @type {import('@uploadcare/upload-client').Queue | null} */
+  _queue = null;
 
   /** @param {import('../Block.js').Block} block */
   constructor(block) {
-    this.#block = block;
+    this._block = block;
 
-    this.#telemetryInstance = new TelemetryAPIService();
+    this._telemetryInstance = new TelemetryAPIService();
+
+    this._queue = new Queue(10);
 
     for (const key of /** @type {(keyof import('../../types/exported').ConfigType)[]} */ (Object.keys(initialConfig))) {
       block.subConfigValue(key, (value) => {
-        this.#setConfig(key, value);
+        if (this._initialized && this._config[key] !== value) {
+          this._block?.emit(EventType.CHANGE_CONFIG, undefined);
+        }
+
+        this._setConfig(key, value);
       });
     }
   }
 
-  /**
-   * @param {TelemetryState | null} prev
-   * @param {TelemetryState} current
-   * @returns {boolean}
-   */
-  #checkSendingSameProperties(prev, current) {
-    if (!prev || !current) {
-      return true;
-    }
-
-    try {
-      const prevString = JSON.stringify(prev);
-      const currentString = JSON.stringify(current);
-      return prevString !== currentString;
-    } catch (error) {
-      console.error('Error comparing telemetry properties:', error);
-      return true;
+  /** @param {keyof import('../../blocks/UploadCtxProvider/EventEmitter.js').EventPayload | undefined} type */
+  _init(type) {
+    if (type === EventType.INIT_SOLUTION && !this._initialized) {
+      this._initialized = true;
     }
   }
 
@@ -72,60 +60,143 @@ export class TelemetryManager {
    * @param {T} key
    * @param {import('../../types').ConfigType[T]} value
    */
-  #setConfig(key, value) {
-    if (this.#config[key] === value) {
+  _setConfig(key, value) {
+    if (this._config[key] === value) {
       return;
     }
 
-    this.#config[key] = value;
+    this._config[key] = value;
   }
 
   /**
-   * - @param {Pick<TelemetryState, 'eventType' | 'payload'> } body
-   * - @returns {TelemetryState}
+   * @param {Pick<TelemetryState, 'eventType' | 'payload' | 'config'>} body
+   * @returns {TelemetryState}
    */
-  #formatingPayload(body) {
-    if (body.payload?.activity) delete body['payload']['activity'];
+  _formattingPayload(body) {
+    const payload = body.payload ? { ...body.payload } : {};
+    if (payload.activity) payload.activity = undefined;
+
+    const result = { ...body };
+    if (body.eventType === EventType.INIT_SOLUTION || body.eventType === EventType.CHANGE_CONFIG) {
+      result.config = this._config;
+    }
 
     return {
+      ...result,
+
       appVersion: PACKAGE_VERSION,
       appName: PACKAGE_NAME,
-      sessionId: this.#sessionId,
-      component: this.#solution,
-      activity: this.#activity,
-      projectPubkey: this.#config?.pubkey,
+      sessionId: this._sessionId,
+      component: this._solution,
+      activity: this._activity,
+      projectPubkey: this._config?.pubkey,
       userAgent: navigator.userAgent,
-      eventType: body.eventType ?? null,
-      config: this.#config,
+      eventType: result.eventType ?? '',
+      eventTimestamp: this._timestamp,
+
       payload: {
-        ...body.payload,
+        ...payload,
       },
     };
   }
 
+  /** @param {keyof import('../../blocks/UploadCtxProvider/EventEmitter.js').EventPayload | undefined} type */
+  _excludedEvents(type) {
+    if (
+      type &&
+      [
+        EventType.CHANGE,
+        EventType.COMMON_UPLOAD_PROGRESS,
+        EventType.FILE_ADDED,
+        EventType.FILE_REMOVED,
+        EventType.FILE_UPLOAD_START,
+        EventType.FILE_UPLOAD_PROGRESS,
+        EventType.FILE_UPLOAD_SUCCESS,
+        EventType.FILE_UPLOAD_FAILED,
+        EventType.FILE_URL_CHANGED,
+        EventType.GROUP_CREATED,
+      ].includes(type)
+    ) {
+      return true;
+    }
+
+    return false;
+  }
+
   /**
-   * @param {Pick<TelemetryState, 'eventType' | 'payload'> & {
+   * @param {Partial<Pick<TelemetryState, 'eventType' | 'payload'>> & {
    *   modalId?: string;
-   *   eventType?: Parameters<import('../../blocks/UploadCtxProvider/EventEmitter.js').EventEmitter['emit']>[0];
+   *   eventType?: keyof import('../../blocks/UploadCtxProvider/EventEmitter.js').EventPayload;
    * }} body
    */
   sendEvent(body) {
-    const payload = this.#formatingPayload(body);
-    // const isDifferent = this.#checkSendingSameProperties(this.#lastPayload, payload);
+    const payload = this._formattingPayload(
+      /** @type {Pick<TelemetryState, 'eventType' | 'payload' | 'config'>} */ (body),
+    );
 
-    // if (!isDifferent) {
-    //   return;
-    // }
+    this._init(body.eventType);
 
-    this.#lastPayload = payload;
-    this.#telemetryInstance?.sendEvent(payload);
+    const hasExcludedEvents = this._excludedEvents(body.eventType);
+    if (hasExcludedEvents) return null;
+
+    const hasDataSame = this._lastPayload && this._checkObj(this._lastPayload, payload);
+    if (hasDataSame) return null;
+
+    this._queue?.add(async () => {
+      this._lastPayload = payload;
+      await this._telemetryInstance?.sendEvent(/** @type {TelemetryState} */ (payload));
+    });
   }
 
-  get #solution() {
-    return this.#block?.has('*solution') ? this.#block?.$['*solution'].toLowerCase() : null;
+  /**
+   * Method to send telemetry event for Cloud Image Editor.
+   *
+   * @param {MouseEvent} e
+   * @param {string} tabId
+   * @param {Record<string, unknown>} options
+   */
+  sendEventCloudImageEditor(e, tabId, options = {}) {
+    this.sendEvent({
+      payload: {
+        metadata: {
+          tabId,
+          node: /** @type {HTMLElement} */ (e.currentTarget)?.tagName,
+          event: e.type,
+          ...options,
+        },
+      },
+    });
   }
 
-  get #activity() {
-    return this.#block?.has('*currentActivity') ? this.#block?.$['*currentActivity'] : null;
+  /**
+   * Deeply compares two objects and returns true if they are equal, false otherwise.
+   *
+   * @param {any} last
+   * @param {any} current
+   */
+  _checkObj(last, current) {
+    if (JSON.stringify(last) === JSON.stringify(current)) return true;
+    if (typeof last !== 'object' || typeof current !== 'object' || last == null || current == null) return false;
+    const lastKeys = Object.keys(last);
+    const currentKeys = Object.keys(current);
+    if (lastKeys.length !== currentKeys.length) return false;
+    for (const key of lastKeys) {
+      if (!Object.prototype.hasOwnProperty.call(current, key)) return false;
+      if (!this._checkObj(last[key], current[key])) return false;
+    }
+
+    return true;
+  }
+
+  get _timestamp() {
+    return Date.now();
+  }
+
+  get _solution() {
+    return this._block?.has('*solution') ? this._block?.$['*solution'].toLowerCase() : null;
+  }
+
+  get _activity() {
+    return this._block?.has('*currentActivity') ? this._block?.$['*currentActivity'] : null;
   }
 }

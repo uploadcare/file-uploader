@@ -1,12 +1,6 @@
 import { ImgBase } from './ImgBase.js';
 
 export class Img extends ImgBase {
-  constructor() {
-    this.init$ = {
-      ...this.init$,
-      '*solution': 'uc-img',
-    };
-  }
   initCallback() {
     super.initCallback();
 

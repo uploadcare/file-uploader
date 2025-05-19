@@ -300,7 +300,7 @@ export type ConfigType = {
 
   cloudImageEditorAutoOpen: boolean;
 
-  telemetry: boolean;
+  qualityInsights: boolean;
 
   cloudImageEditorMaskHref: string | null;
 

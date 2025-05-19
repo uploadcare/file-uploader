@@ -59,12 +59,6 @@ export class FileItem extends FileItemConfig {
         this.$['*currentActivity'] = ActivityBlock.activities.CLOUD_IMG_EDIT;
       }),
       onRemove: () => {
-        /**
-         * @todo
-         *
-         *   1. Нужно ли нам передавать файл который удаляем?
-         *   2. А что если файл еще не загружен?
-         */
         this.telemetryManager.sendEvent({
           payload: {
             metadata: {

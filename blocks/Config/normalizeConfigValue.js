@@ -104,7 +104,7 @@ const mapping = {
 
   testMode: asBoolean,
 
-  telemetry: asBoolean,
+  qualityInsights: asBoolean,
 };
 
 /**

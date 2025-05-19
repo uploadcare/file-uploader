@@ -143,6 +143,7 @@
     "@symbiotejs/symbiote": "^1.11.7",
     "@uploadcare/cname-prefix": "^6.17.0",
     "@uploadcare/image-shrink": "^6.17.0",
+    "@uploadcare/quality-insights": "^6.17.0",
     "@uploadcare/upload-client": "^6.17.0",
     "keyux": "^0.7.1"
   }

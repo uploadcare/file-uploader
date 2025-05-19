@@ -4,6 +4,7 @@ import { EditorButtonControl } from './EditorButtonControl.js';
 import { FAKE_ORIGINAL_FILTER } from './EditorSlider.js';
 import { COMMON_OPERATIONS, transformationsToOperations } from './lib/transformationUtils.js';
 import { preloadImage } from '../../utils/preloadImage.js';
+import { parseFilterValue } from './utils/parseFilterValue.js';
 
 export class EditorFilterControl extends EditorButtonControl {
   constructor() {
@@ -89,8 +90,8 @@ export class EditorFilterControl extends EditorButtonControl {
         this.$['*showSlider'] = true;
       }
 
-      this.$['*on.sendTelemetryEvent'](e, {
-        operation: this.$['*operationTooltip'],
+      this.telemetryManager.sendEventCloudImageEditor(e, this.$['*tabId'], {
+        operation: parseFilterValue(this.$['*operationTooltip']),
       });
 
       this.$['*currentFilter'] = this._filter;

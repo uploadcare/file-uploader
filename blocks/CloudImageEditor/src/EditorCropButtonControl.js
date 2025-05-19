@@ -39,7 +39,7 @@ export class EditorCropButtonControl extends EditorButtonControl {
       let prev = this.$['*cropperEl'].getValue(this._operation);
       let next = nextValue(this._operation, prev);
 
-      this.$['*on.sendTelemetryEvent'](e, {
+      this.telemetryManager.sendEventCloudImageEditor(e, this.$['*tabId'], {
         operation: this._operation,
         next,
         prev,
