@@ -1,5 +1,7 @@
+// @ts-check
+
 /** @type {import('./types').InputMessageType[]} */
-const MESSAGE_TYPE_WHITELIST = ['selected-files-change'];
+const MESSAGE_TYPE_WHITELIST = ['selected-files-change', 'toolbar-state-change'];
 
 /**
  * @param {unknown} message

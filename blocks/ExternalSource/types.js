@@ -34,6 +34,10 @@
  *         selectedFiles: [DoneSuccessResponse] | [];
  *       }
  *   );
+ *   'toolbar-state-change': {
+ *     type: 'toolbar-state-change';
+ *     isVisible: boolean;
+ *   };
  * }} InputMessageMap
  */
 
@@ -123,10 +127,6 @@
  *   | {
  *       type: 'set-embed-css';
  *       css: string;
- *     }
- *   | {
- *       type: 'set-top-level-origin';
- *       origin: string;
  *     }} OutputMessage
  */
 

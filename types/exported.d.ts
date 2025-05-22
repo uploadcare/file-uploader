@@ -80,6 +80,11 @@ export type ConfigType = {
    */
   sourceList: string;
   /**
+   * Top-level origin for the uploader. 
+   * This is used for Google Drive Picker if there is no access to the origin due to the cross-origin policy.
+   */
+  topLevelOrigin: string;
+  /**
    * Maximum size of local files in bytes.
    */
   maxLocalFileSizeBytes: number;

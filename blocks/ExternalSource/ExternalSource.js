@@ -9,6 +9,12 @@ import { buildThemeDefinition } from './buildThemeDefinition.js';
 import { MessageBridge } from './MessageBridge.js';
 import { queryString } from './query-string.js';
 import { getTopLevelOrigin } from '../../utils/get-top-level-origin.js';
+import { ExternalUploadSource } from '../utils/UploadSource.js';
+
+/** @type {Record<string, string>} */
+const SOCIAL_SOURCE_MAPPING = {
+  [ExternalUploadSource.GDRIVE]: 'ngdrive',
+};
 
 /** @typedef {{ externalSourceType: string }} ActivityParams */
 
@@ -35,6 +41,7 @@ export class ExternalSource extends UploaderBlock {
       showSelectionStatus: false,
       counterText: '',
       doneBtnTextClass: 'uc-hidden',
+      toolbarVisible: true,
 
       onDone: () => {
         for (const message of this.$.selectedList) {
@@ -138,6 +145,16 @@ export class ExternalSource extends UploaderBlock {
 
   /**
    * @private
+   * @param {import('./types.js').InputMessageMap['toolbar-state-change']} message
+   */
+  handleToolbarStateChange(message) {
+    this.set$({
+      toolbarVisible: message.isVisible,
+    });
+  }
+
+  /**
+   * @private
    * @param {import('./types.js').InputMessageMap['selected-files-change']} message
    */
   async handleSelectedFilesChange(message) {
@@ -166,18 +183,9 @@ export class ExternalSource extends UploaderBlock {
 
   /** @private */
   handleIframeLoad() {
-    this.applyTopLevelOrigin();
     this.applyEmbedCss(this.cfg.externalSourcesEmbedCss);
     this.applyTheme();
     this.setupL10n();
-  }
-
-  /** @private */
-  applyTopLevelOrigin() {
-    this._messageBridge?.send({
-      type: 'set-top-level-origin',
-      origin: getTopLevelOrigin(),
-    });
   }
 
   /** @private */
@@ -211,6 +219,7 @@ export class ExternalSource extends UploaderBlock {
   remoteUrl() {
     const { pubkey, remoteTabSessionKey, socialBaseUrl, multiple } = this.cfg;
     const { externalSourceType } = this.activityParams;
+    const sourceName = SOCIAL_SOURCE_MAPPING[externalSourceType] ?? externalSourceType;
     const lang = this.l10n('social-source-lang')?.split('-')?.[0] || 'en';
     const params = {
       lang,
@@ -219,8 +228,10 @@ export class ExternalSource extends UploaderBlock {
       session_key: remoteTabSessionKey,
       wait_for_theme: true,
       multiple: multiple.toString(),
+      origin: this.cfg.topLevelOrigin || getTopLevelOrigin(),
+      debug: this.cfg.debug,
     };
-    const url = new URL(`/window4/${externalSourceType}`, socialBaseUrl);
+    const url = new URL(`/window4/${sourceName}`, socialBaseUrl);
     url.search = queryString(params);
     return url.toString();
   }
@@ -253,6 +264,7 @@ export class ExternalSource extends UploaderBlock {
     /** @private */
     this._messageBridge = new MessageBridge(iframe.contentWindow);
     this._messageBridge.on('selected-files-change', this.handleSelectedFilesChange.bind(this));
+    this._messageBridge.on('toolbar-state-change', this.handleToolbarStateChange.bind(this));
 
     this.resetSelectionStatus();
   }
@@ -292,7 +304,7 @@ ExternalSource.template = /* HTML */ `
   </uc-activity-header>
   <div class="uc-content">
     <div ref="iframeWrapper" class="uc-iframe-wrapper"></div>
-    <div class="uc-toolbar">
+    <div class="uc-toolbar" set="@hidden: !toolbarVisible">
       <button type="button" class="uc-cancel-btn uc-secondary-btn" set="onclick: onCancel" l10n="cancel"></button>
       <div set="@hidden: !showSelectionStatus" class="uc-selection-status-box">
         <span>{{counterText}}</span>
