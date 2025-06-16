@@ -1,3 +1,9 @@
+# [1.17.0](https://github.com/uploadcare/file-uploader/compare/v1.16.2...v1.17.0) (2025-06-16)
+
+### Features
+
+- **external-sources:** use Google Drive Picker for Google Drive social source ([#818](https://github.com/uploadcare/file-uploader/issues/818)) ([5ac0479](https://github.com/uploadcare/file-uploader/commit/5ac0479f93a91b58b8d72bfb763bc74bb00eb2d2))
+
 ## [1.16.2](https://github.com/uploadcare/file-uploader/compare/v1.16.1...v1.16.2) (2025-05-07)
 
 ### Bug Fixes
