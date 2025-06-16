@@ -3,6 +3,7 @@
 import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 import { EventType } from './EventEmitter.js';
 class UploadCtxProviderClass extends UploaderBlock {
+  static styleAttrs = ['uc-wgt-common'];
   requireCtxName = true;
 
   initCallback() {
