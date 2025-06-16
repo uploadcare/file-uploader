@@ -49,6 +49,7 @@ export default {
   'src-type-facebook': 'Facebook',
   'src-type-dropbox': 'Dropbox',
   'src-type-gdrive': 'Google Drive',
+  'src-type-ngdrive': 'Google Drive',
   'src-type-gphotos': 'Google Photos',
   'src-type-flickr': 'Flickr',
   'src-type-vk': 'VK',

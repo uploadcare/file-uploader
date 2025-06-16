@@ -23,6 +23,7 @@ export const initialConfig = {
   cameraMirror: false,
   cameraCapture: '',
   sourceList: 'local, url, camera, dropbox, gdrive',
+  topLevelOrigin: '',
   cloudImageEditorTabs: serializeCsv(ALL_TABS),
   maxLocalFileSizeBytes: 0,
   thumbSize: 76,

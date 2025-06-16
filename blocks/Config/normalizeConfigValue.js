@@ -38,6 +38,7 @@ const mapping = {
   cameraMirror: asBoolean,
   cameraCapture: asCameraCapture,
   sourceList: asString,
+  topLevelOrigin: asString,
   maxLocalFileSizeBytes: asNumber,
   thumbSize: asNumber,
   showEmptyList: asBoolean,
