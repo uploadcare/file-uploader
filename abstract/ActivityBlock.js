@@ -187,8 +187,10 @@ export class ActivityBlock extends Block {
         couldOpenActivity = /** @type {ActivityBlock} */ (nextActivityBlock)?.couldOpenActivity ?? false;
       }
 
-      nextActivity = couldOpenActivity ? nextActivity : undefined;
+      const currentActivity = this.$['*currentActivity'];
+      if (currentActivity) this.modalManager.close(currentActivity);
 
+      nextActivity = couldOpenActivity ? nextActivity : undefined;
       if (nextActivity) this.modalManager.open(nextActivity);
 
       this.$['*currentActivity'] = nextActivity;
