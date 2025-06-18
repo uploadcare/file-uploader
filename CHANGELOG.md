@@ -1,3 +1,9 @@
+## [1.17.2](https://github.com/uploadcare/file-uploader/compare/v1.17.1...v1.17.2) (2025-06-18)
+
+### Bug Fixes
+
+- set position absolute on hidden file input to prevent host page layout issues ([#823](https://github.com/uploadcare/file-uploader/issues/823)) ([fd7fb11](https://github.com/uploadcare/file-uploader/commit/fd7fb117445709c73b81f62171814a18a2182789))
+
 ## [1.17.1](https://github.com/uploadcare/file-uploader/compare/v1.17.0...v1.17.1) (2025-06-18)
 
 ### Bug Fixes
