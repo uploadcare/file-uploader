@@ -159,6 +159,9 @@ export class UploaderPublicApi {
       height: 0,
       width: 0,
       visibility: 'hidden',
+      position: 'absolute',
+      top: 0,
+      left: 0,
     });
     fileInput.type = 'file';
     fileInput.multiple = this.cfg.multiple;
