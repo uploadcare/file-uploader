@@ -1,3 +1,9 @@
+## [1.17.1](https://github.com/uploadcare/file-uploader/compare/v1.17.0...v1.17.1) (2025-06-18)
+
+### Bug Fixes
+
+- missing css custom properties config on uc-upload-ctx-provider ([#819](https://github.com/uploadcare/file-uploader/issues/819)) ([911d9c6](https://github.com/uploadcare/file-uploader/commit/911d9c6b4cb5eacbbcb50b7c522895ff765c8161))
+
 # [1.17.0](https://github.com/uploadcare/file-uploader/compare/v1.16.2...v1.17.0) (2025-06-16)
 
 ### Features
