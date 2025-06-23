@@ -167,6 +167,10 @@ export type ConfigType = {
    */
   retryThrottledRequestMaxTimes: number;
   /**
+   * Maximum number of retry attempts for network errors.
+   */
+  retryNetworkErrorMaxTimes: number;
+  /**
    * Minimum file size for multipart uploads.
    */
   multipartMinFileSize: number;
