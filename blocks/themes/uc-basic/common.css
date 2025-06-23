@@ -38,6 +38,10 @@
   transition: background-color var(--uc-transition);
 }
 
+:where([uc-wgt-common]) button:focus-visible {
+  outline-offset: 2px;
+}
+
 :where([uc-wgt-common]) button.uc-primary-btn {
   color: var(--uc-primary-foreground);
   background-color: var(--uc-primary);
