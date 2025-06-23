@@ -47,6 +47,7 @@ export const initialConfig = {
   secureExpire: '',
   secureDeliveryProxy: '',
   retryThrottledRequestMaxTimes: 10,
+  retryNetworkErrorMaxTimes: 3,
   multipartMinFileSize: 26214400,
   multipartChunkSize: 5242880,
   maxConcurrentRequests: 10,

@@ -62,6 +62,7 @@ const mapping = {
   secureExpire: asString,
   secureDeliveryProxy: asString,
   retryThrottledRequestMaxTimes: asNumber,
+  retryNetworkErrorMaxTimes: asNumber,
   multipartMinFileSize: asNumber,
   multipartChunkSize: asNumber,
   maxConcurrentRequests: asNumber,

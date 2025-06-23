@@ -437,6 +437,7 @@ export class UploaderBlock extends ActivityBlock {
       secureSignature: secureToken?.secureSignature,
       secureExpire: secureToken?.secureExpire,
       retryThrottledRequestMaxTimes: this.cfg.retryThrottledRequestMaxTimes,
+      retryNetworkErrorMaxTimes: this.cfg.retryNetworkErrorMaxTimes,
       multipartMinFileSize: this.cfg.multipartMinFileSize,
       multipartChunkSize: this.cfg.multipartChunkSize,
       maxConcurrentRequests: this.cfg.multipartMaxConcurrentRequests,
