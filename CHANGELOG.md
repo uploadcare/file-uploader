@@ -1,3 +1,9 @@
+# [1.18.0](https://github.com/uploadcare/file-uploader/compare/v1.17.2...v1.18.0) (2025-06-23)
+
+### Features
+
+- add `retryNetworkErrorMaxTimes` option ([#827](https://github.com/uploadcare/file-uploader/issues/827)) ([20dfdea](https://github.com/uploadcare/file-uploader/commit/20dfdea1200fd3f50c2f7dc4df9d56596039c6d2))
+
 ## [1.17.2](https://github.com/uploadcare/file-uploader/compare/v1.17.1...v1.17.2) (2025-06-18)
 
 ### Bug Fixes
