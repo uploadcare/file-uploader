@@ -1,32 +1,118 @@
+// @ts-check
+
+import { getPrefixedCdnBase } from '@uploadcare/cname-prefix';
 import { deserializeCsv, serializeCsv } from '../utils/comma-separated.js';
+import { DEFAULT_CDN_CNAME, DEFAULT_PREFIXED_CDN_BASE_DOMAIN } from './initialConfig.js';
+
+/**
+ * @template {keyof import('../../types').ConfigType} TKey
+ * @template {Exclude<keyof import('../../types').ConfigType, TKey>[]} TDeps
+ * @typedef {Object} ComputedPropertyDeclaration
+ * @property {TKey} key
+ * @property {TDeps} deps
+ * @property {(
+ *   args: Record<TKey, import('../../types').ConfigType[TKey]> & {
+ *     [K in TDeps[number]]: import('../../types').ConfigType[K];
+ *   },
+ * ) => import('../../types').ConfigType[TKey] | Promise<import('../../types').ConfigType[TKey]>} fn
+ */
+
+/**
+ * @template {keyof import('../../types').ConfigType} TKey
+ * @template {Exclude<keyof import('../../types').ConfigType, TKey>[]} TDeps
+ * @param {ComputedPropertyDeclaration<TKey, TDeps>} declaration
+ */
+function defineComputedProperty(declaration) {
+  return declaration;
+}
+
+const COMPUTED_PROPERTIES = [
+  defineComputedProperty({
+    key: 'cameraModes',
+    deps: ['enableVideoRecording'],
+    fn: ({ cameraModes, enableVideoRecording }) => {
+      if (enableVideoRecording === null) {
+        return cameraModes;
+      }
+      let cameraModesCsv = deserializeCsv(cameraModes);
+      if (enableVideoRecording && !cameraModesCsv.includes('video')) {
+        cameraModesCsv = cameraModesCsv.concat('video');
+      } else if (!enableVideoRecording) {
+        cameraModesCsv = cameraModesCsv.filter((mode) => mode !== 'video');
+      }
+      return serializeCsv(cameraModesCsv);
+    },
+  }),
+  defineComputedProperty({
+    key: 'cameraModes',
+    deps: ['defaultCameraMode'],
+    fn: ({ cameraModes, defaultCameraMode }) => {
+      if (defaultCameraMode === null) {
+        return cameraModes;
+      }
+      let cameraModesCsv = deserializeCsv(cameraModes);
+      cameraModesCsv = cameraModesCsv.sort((a, b) => {
+        if (a === defaultCameraMode) return -1;
+        if (b === defaultCameraMode) return 1;
+        return 0;
+      });
+      return serializeCsv(cameraModesCsv);
+    },
+  }),
+  defineComputedProperty({
+    key: 'cdnCname',
+    deps: ['pubkey'],
+    fn: ({ pubkey, cdnCname }) => {
+      if (cdnCname !== DEFAULT_CDN_CNAME) {
+        return cdnCname;
+      }
+      return getPrefixedCdnBase(pubkey, DEFAULT_PREFIXED_CDN_BASE_DOMAIN);
+    },
+  }),
+];
 
 /**
  * @template {keyof import('../../types').ConfigType} T
  * @param {{
  *   key: T;
- *   value: import('../../types').ConfigType[T];
- *   setValue: (key: T, value: import('../../types').ConfigType[T]) => void;
- *   getValue: (key: T) => import('../../types').ConfigType[T];
+ *   setValue: <TSetValue extends keyof import('../../types').ConfigType>(
+ *     key: TSetValue,
+ *     value: import('../../types').ConfigType[TSetValue],
+ *   ) => void;
+ *   getValue: <TGetValue extends keyof import('../../types').ConfigType>(
+ *     key: TGetValue,
+ *   ) => import('../../types').ConfigType[TGetValue];
  * }} options
  */
-export const runSideEffects = ({ key, value, setValue, getValue }) => {
-  if (key === 'enableVideoRecording' && value !== null) {
-    let cameraModes = deserializeCsv(getValue('cameraModes'));
-    if (value && !cameraModes.includes('video')) {
-      cameraModes = cameraModes.concat('video');
-    } else if (!value) {
-      cameraModes = cameraModes.filter((mode) => mode !== 'video');
+export const runSideEffects = ({ key, setValue, getValue }) => {
+  for (const computed of COMPUTED_PROPERTIES) {
+    if (computed.deps.includes(key)) {
+      const args = {
+        [computed.key]: getValue(computed.key),
+        ...computed.deps.reduce(
+          (acc, dep) => ({
+            ...acc,
+            [dep]: getValue(dep),
+          }),
+          /**
+           * @type {Record<typeof computed.key, import('../../types').ConfigType[typeof computed.key]> & {
+           *   [K in (typeof computed.deps)[number]]: import('../../types').ConfigType[K];
+           * }}
+           */ ({}),
+        ),
+      };
+      const result = computed.fn(args);
+      if (result instanceof Promise) {
+        // There could be a race condition here if the value is changed too frequently,
+        // but we assume that the async computed properties are not expected to change often
+        result
+          .then((resolvedValue) => setValue(computed.key, resolvedValue))
+          .catch((error) => {
+            console.error(`Failed to compute value for "${computed.key}"`, error);
+          });
+      } else {
+        setValue(computed.key, result);
+      }
     }
-    setValue('cameraModes', serializeCsv(cameraModes));
-  }
-
-  if (key === 'defaultCameraMode' && value !== null) {
-    let cameraModes = deserializeCsv(getValue('cameraModes'));
-    cameraModes = cameraModes.sort((a, b) => {
-      if (a === value) return -1;
-      if (b === value) return 1;
-      return 0;
-    });
-    setValue('cameraModes', serializeCsv(cameraModes));
   }
 };
