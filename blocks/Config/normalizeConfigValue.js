@@ -56,6 +56,7 @@ const mapping = {
 
   remoteTabSessionKey: asString,
   cdnCname: asString,
+  cdnCnamePrefixed: asString,
   baseUrl: asString,
   socialBaseUrl: asString,
   secureSignature: asString,

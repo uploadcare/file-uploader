@@ -2,7 +2,7 @@
 
 import { getPrefixedCdnBase } from '@uploadcare/cname-prefix';
 import { deserializeCsv, serializeCsv } from '../utils/comma-separated.js';
-import { DEFAULT_CDN_CNAME, DEFAULT_PREFIXED_CDN_BASE_DOMAIN } from './initialConfig.js';
+import { DEFAULT_CDN_CNAME } from './initialConfig.js';
 
 /**
  * @template {keyof import('../../types').ConfigType} TKey
@@ -61,12 +61,12 @@ const COMPUTED_PROPERTIES = [
   }),
   defineComputedProperty({
     key: 'cdnCname',
-    deps: ['pubkey'],
-    fn: ({ pubkey, cdnCname }) => {
+    deps: ['pubkey', 'cdnCnamePrefixed'],
+    fn: ({ pubkey, cdnCname, cdnCnamePrefixed }) => {
       if (cdnCname !== DEFAULT_CDN_CNAME) {
         return cdnCname;
       }
-      return getPrefixedCdnBase(pubkey, DEFAULT_PREFIXED_CDN_BASE_DOMAIN);
+      return getPrefixedCdnBase(pubkey, cdnCnamePrefixed);
     },
   }),
 ];
@@ -103,10 +103,14 @@ export const runSideEffects = ({ key, setValue, getValue }) => {
       };
       const result = computed.fn(args);
       if (result instanceof Promise) {
-        // There could be a race condition here if the value is changed too frequently,
-        // but we assume that the async computed properties are not expected to change often
+        const prevValue = getValue(computed.key);
         result
-          .then((resolvedValue) => setValue(computed.key, resolvedValue))
+          .then((resolvedValue) => {
+            const currentValue = getValue(computed.key);
+            if (currentValue === prevValue) {
+              setValue(computed.key, resolvedValue);
+            }
+          })
           .catch((error) => {
             console.error(`Failed to compute value for "${computed.key}"`, error);
           });

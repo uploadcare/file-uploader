@@ -42,6 +42,7 @@ export const initialConfig = {
 
   remoteTabSessionKey: '',
   cdnCname: DEFAULT_CDN_CNAME,
+  cdnCnamePrefixed: DEFAULT_PREFIXED_CDN_BASE_DOMAIN,
   baseUrl: DEFAULT_BASE_URL,
   socialBaseUrl: DEFAULT_SOCIAL_BASE_URL,
   secureSignature: '',

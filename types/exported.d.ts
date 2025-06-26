@@ -142,6 +142,11 @@ export type ConfigType = {
    * Set custom CNAME.
    */
   cdnCname: string;
+
+  /**
+   * Set CNAME base domain for prefixed CDN URLs.
+   */
+  cdnCnamePrefixed: string;
   /**
    * Set a custom upload URL.
    */
