@@ -142,7 +142,6 @@ class ConfigClass extends Block {
     runAssertions(this.cfg);
     runSideEffects({
       key,
-      value: normalizedValue ?? null,
       setValue: this._setValue.bind(this),
       getValue: this._getValue.bind(this),
     });
@@ -219,6 +218,12 @@ class ConfigClass extends Block {
         get: () => {
           return this._getValue(key);
         },
+      });
+
+      runSideEffects({
+        key,
+        setValue: this._setValue.bind(this),
+        getValue: this._getValue.bind(this),
       });
     }
   }
