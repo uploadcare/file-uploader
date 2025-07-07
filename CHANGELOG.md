@@ -1,9 +1,5 @@
 # [1.19.0](https://github.com/uploadcare/file-uploader/compare/v1.18.0...v1.19.0) (2025-07-07)
 
-### Bug Fixes
-
-- bump `cname-prefix` package version ([#831](https://github.com/uploadcare/file-uploader/issues/831)) ([5514b96](https://github.com/uploadcare/file-uploader/commit/5514b96ed41c0a3a828c2a76cb15c27de2e4729f))
-
 ### Features
 
 - **a11y:** added outline-offeset and label for input ([#832](https://github.com/uploadcare/file-uploader/issues/832)) ([463a7cc](https://github.com/uploadcare/file-uploader/commit/463a7cc8769305dd8b5b452c72b9db7b91c5df06))
