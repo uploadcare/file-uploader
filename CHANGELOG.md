@@ -1,3 +1,9 @@
+# [1.19.0](https://github.com/uploadcare/file-uploader/compare/v1.18.0...v1.19.0) (2025-07-07)
+
+### Features
+
+- add support for prefixed cdn subdomains ([#826](https://github.com/uploadcare/file-uploader/issues/826)) ([63a687f](https://github.com/uploadcare/file-uploader/commit/63a687f7426ff5d78818fe1c163d2925f5bf254f))
+
 # [1.18.0](https://github.com/uploadcare/file-uploader/compare/v1.17.2...v1.18.0) (2025-06-23)
 
 ### Features
