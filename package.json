@@ -132,7 +132,7 @@
     "stylelint-declaration-block-no-ignored-properties": "^2.7.0",
     "stylelint-order": "^6.0.3",
     "svg-sprite": "^2.0.4",
-    "tsd": "^0.31.2",
+    "tsd": "^0.32.0",
     "typescript": "^5.8.2",
     "vite": "^6.3.4",
     "vitest": "^3.1.2"
@@ -141,9 +141,9 @@
   "license": "MIT",
   "dependencies": {
     "@symbiotejs/symbiote": "^1.11.7",
-    "@uploadcare/cname-prefix": "^6.15.2",
-    "@uploadcare/image-shrink": "^6.14.1",
-    "@uploadcare/upload-client": "^6.14.1",
+    "@uploadcare/cname-prefix": "^6.16.1",
+    "@uploadcare/image-shrink": "^6.16.1",
+    "@uploadcare/upload-client": "^6.16.1",
     "keyux": "^0.7.1"
   }
 }
