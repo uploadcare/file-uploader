@@ -56,7 +56,9 @@ UrlSource.template = /* HTML */ `
     </button>
   </uc-activity-header>
   <form class="uc-content">
-    <input placeholder="https://" class="uc-url-input" type="text" ref="input" set="oninput: onInput" />
+    <label>
+      <input placeholder="https://" class="uc-url-input" type="text" ref="input" set="oninput: onInput" />
+    </label>
     <button
       type="submit"
       class="uc-url-upload-btn uc-primary-btn"
