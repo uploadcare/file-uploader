@@ -141,7 +141,7 @@
   "license": "MIT",
   "dependencies": {
     "@symbiotejs/symbiote": "^1.11.7",
-    "@uploadcare/cname-prefix": "^6.16.1",
+    "@uploadcare/cname-prefix": "^6.16.2",
     "@uploadcare/image-shrink": "^6.16.1",
     "@uploadcare/upload-client": "^6.16.1",
     "keyux": "^0.7.1"
