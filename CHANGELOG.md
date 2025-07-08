@@ -1,3 +1,9 @@
+## [1.19.1](https://github.com/uploadcare/file-uploader/compare/v1.19.0...v1.19.1) (2025-07-08)
+
+### Bug Fixes
+
+- subdomain prefix wrong calculation ([#834](https://github.com/uploadcare/file-uploader/issues/834)) ([964da65](https://github.com/uploadcare/file-uploader/commit/964da6541163367f59083a819be3b38a9b50bff3))
+
 # [1.19.0](https://github.com/uploadcare/file-uploader/compare/v1.18.0...v1.19.0) (2025-07-07)
 
 ### Features
