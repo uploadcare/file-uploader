@@ -2,7 +2,7 @@
 
 // TODO: Here is troubles with tsd: it can't resolve types from `@uploadcare/cname-prefix/async` due to unsupported bundler moduleResolution.
 // @ts-ignore
-import { getPrefixedCdnBaseAsync } from '@uploadcare/cname-prefix/async';
+import { getPrefixedCdnBaseAsync, isPrefixedCdnBase } from '@uploadcare/cname-prefix/async';
 import { deserializeCsv, serializeCsv } from '../utils/comma-separated.js';
 import { DEFAULT_CDN_CNAME } from './initialConfig.js';
 
@@ -65,10 +65,11 @@ const COMPUTED_PROPERTIES = [
     key: 'cdnCname',
     deps: ['pubkey', 'cdnCnamePrefixed'],
     fn: ({ pubkey, cdnCname, cdnCnamePrefixed }) => {
-      if (cdnCname !== DEFAULT_CDN_CNAME) {
-        return cdnCname;
+      if (pubkey && (cdnCname === DEFAULT_CDN_CNAME || isPrefixedCdnBase(cdnCname, cdnCnamePrefixed))) {
+        return getPrefixedCdnBaseAsync(pubkey, cdnCnamePrefixed);
       }
-      return getPrefixedCdnBaseAsync(pubkey, cdnCnamePrefixed);
+
+      return cdnCname;
     },
   }),
 ];
