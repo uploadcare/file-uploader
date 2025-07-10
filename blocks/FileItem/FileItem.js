@@ -2,9 +2,9 @@
 import { shrinkFile } from '@uploadcare/image-shrink';
 import { CancelError, UploadcareError, uploadFile } from '@uploadcare/upload-client';
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
-import { debounce } from '../utils/debounce.js';
 import { parseShrink } from '../../utils/parseShrink.js';
-import { UploadSource } from '../utils/UploadSource.js';
+import { ExternalUploadSource } from '../utils/UploadSource.js';
+import { debounce } from '../utils/debounce.js';
 import { throttle } from '../utils/throttle.js';
 import { FileItemConfig } from './FileItemConfig.js';
 
@@ -118,7 +118,7 @@ export class FileItem extends FileItemConfig {
         return;
       }
 
-      if (externalUrl && source && source !== UploadSource.URL) {
+      if (externalUrl && source && Object.values(ExternalUploadSource).includes(source)) {
         const hint = this.l10n('waiting-for', { source: this.l10n(`src-type-${source}`) });
         this.$.hint = hint;
         return;
