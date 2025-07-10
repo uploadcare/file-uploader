@@ -1,3 +1,10 @@
+## [1.19.2](https://github.com/uploadcare/file-uploader/compare/v1.19.1...v1.19.2) (2025-07-10)
+
+### Bug Fixes
+
+- **config:** update prefixed cname on every pubkey change & skip empty pubkeys ([9e5c4b0](https://github.com/uploadcare/file-uploader/commit/9e5c4b0d6df16ddc2be30e22928030e1bf9cc79e))
+- **file-item:** show `waiting for` hints for social sources only ([34ae28a](https://github.com/uploadcare/file-uploader/commit/34ae28a3bd4bef93a9fff86c9775df1f3be6a892))
+
 ## [1.19.1](https://github.com/uploadcare/file-uploader/compare/v1.19.0...v1.19.1) (2025-07-08)
 
 ### Bug Fixes
