@@ -1,8 +1,8 @@
-import { commands, page, userEvent } from '@vitest/browser/context';
-import { beforeAll, beforeEach, describe, expect, it, test, vi } from 'vitest';
-import { renderer } from './utils/test-renderer';
-import '../types/jsx';
 import { EventPayload } from '@/types';
+import { page } from '@vitest/browser/context';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import '../types/jsx';
+import { renderer } from './utils/test-renderer';
 
 beforeAll(async () => {
   await import('@/solutions/file-uploader/regular/index.css');
