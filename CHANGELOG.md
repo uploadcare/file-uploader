@@ -1,3 +1,9 @@
+## [1.19.3](https://github.com/uploadcare/file-uploader/compare/v1.19.2...v1.19.3) (2025-07-15)
+
+### Bug Fixes
+
+- check promises with duck-typing ([#838](https://github.com/uploadcare/file-uploader/issues/838)) ([6ba891e](https://github.com/uploadcare/file-uploader/commit/6ba891e89b83eb4640c46557cb83e30ff17cdbff))
+
 ## [1.19.2](https://github.com/uploadcare/file-uploader/compare/v1.19.1...v1.19.2) (2025-07-10)
 
 ### Bug Fixes
