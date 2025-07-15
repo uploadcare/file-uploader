@@ -5,6 +5,7 @@
 import { getPrefixedCdnBaseAsync, isPrefixedCdnBase } from '@uploadcare/cname-prefix/async';
 import { deserializeCsv, serializeCsv } from '../utils/comma-separated.js';
 import { DEFAULT_CDN_CNAME } from './initialConfig.js';
+import { isPromiseLike } from '../../utils/isPromiseLike.js';
 
 /**
  * @template {keyof import('../../types').ConfigType} TKey
@@ -105,7 +106,7 @@ export const runSideEffects = ({ key, setValue, getValue }) => {
         ),
       };
       const result = computed.fn(args);
-      if (result instanceof Promise) {
+      if (isPromiseLike(result)) {
         const prevValue = getValue(computed.key);
         result
           .then((resolvedValue) => {
