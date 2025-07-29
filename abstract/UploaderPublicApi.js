@@ -215,7 +215,7 @@ export class UploaderPublicApi {
    * @param {string} entryId
    * @returns {import('../types/exported.js').OutputFileEntry<TStatus>}
    */
-  getOutputItem = (entryId) => {
+  getOutputItem(entryId) {
     const uploadEntryData = /** @type {import('./uploadEntrySchema.js').UploadEntryData} */ (
       Data.getCtx(entryId).store
     );
@@ -260,14 +260,14 @@ export class UploaderPublicApi {
     };
 
     return /** @type {import('../types/exported.js').OutputFileEntry<TStatus>} */ (outputItem);
-  };
+  }
 
   /** @template {import('../types').OutputCollectionStatus} TStatus */
-  getOutputCollectionState = () => {
+  getOutputCollectionState() {
     return /** @type {ReturnType<typeof buildOutputCollectionState<TStatus>>} */ (
       buildOutputCollectionState(this._ctx)
     );
-  };
+  }
 
   /** @param {Boolean} [force] */
   initFlow = (force = false) => {
