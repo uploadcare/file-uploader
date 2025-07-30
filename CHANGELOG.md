@@ -1,3 +1,9 @@
+## [1.19.4](https://github.com/uploadcare/file-uploader/compare/v1.19.3...v1.19.4) (2025-07-30)
+
+### Bug Fixes
+
+- resolve TypeScript compilation error in Angular app ([#841](https://github.com/uploadcare/file-uploader/issues/841)) ([1c09279](https://github.com/uploadcare/file-uploader/commit/1c0927994b0af7e7f896ed62ea1de348004e27e7))
+
 ## [1.19.3](https://github.com/uploadcare/file-uploader/compare/v1.19.2...v1.19.3) (2025-07-15)
 
 ### Bug Fixes
