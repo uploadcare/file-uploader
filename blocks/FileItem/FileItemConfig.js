@@ -1,5 +1,4 @@
 //@ts-check
-
 import { UploaderBlock } from '../../abstract/UploaderBlock.js';
 
 export class FileItemConfig extends UploaderBlock {
@@ -39,8 +38,8 @@ export class FileItemConfig extends UploaderBlock {
    * @param {(value: import('../../abstract/uploadEntrySchema.js').UploadEntryData[K]) => void} handler_
    * @protected
    */
-  _subEntry = (prop_, handler_) =>
-    this._withEntry(
+  _subEntry(prop_, handler_) {
+    return this._withEntry(
       /**
        * @template {import('../../abstract/uploadEntrySchema.js').UploadEntryKeys} K
        * @param {import('../../abstract/uploadEntrySchema.js').UploadEntryTypedData} entry
@@ -56,6 +55,7 @@ export class FileItemConfig extends UploaderBlock {
         this._entrySubs.add(sub);
       },
     )(prop_, handler_);
+  }
 
   /** @protected */
   _reset() {
