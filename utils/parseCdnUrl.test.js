@@ -75,4 +75,17 @@ describe('parseCdnUrl', () => {
       filename: null,
     });
   });
+
+  it('should fallback to ucarecdn.com if cdnBase is not matched', () => {
+    expect(
+      parseCdnUrl({
+        url: 'https://ucarecdn.com/12345678-1234-5678-1234-567812345678/',
+        cdnBase: 'https://cdn.example.com',
+      }),
+    ).to.deep.equal({
+      uuid: '12345678-1234-5678-1234-567812345678',
+      cdnUrlModifiers: '',
+      filename: null,
+    });
+  });
 });
