@@ -52,7 +52,16 @@
  * @property {Transformations} transformations
  */
 
-/** @typedef {{ type: 'aspect-ratio'; width: number; height: number }} CropAspectRatio */
+/**
+ * @typedef {{
+ *   type: 'aspect-ratio';
+ *   width: number;
+ *   height: number;
+ *   id: string;
+ *   _active?: boolean;
+ *   hasFreeform?: boolean;
+ * }} CropAspectRatio
+ */
 
 /** @typedef {CropAspectRatio[]} CropPresetList */
 

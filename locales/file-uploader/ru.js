@@ -117,6 +117,8 @@ export default {
   'a11y-cloud-editor-apply-filter': 'Применить фильтр {{name}}',
   'a11y-cloud-editor-apply-crop': 'Применить операцию {{name}}',
   'a11y-cloud-editor-apply-tuning': 'Применить настройку {{name}}',
+  'a11y-cloud-editor-apply-aspect-ratio': 'Применить операцию {{name}} {{value}}',
+  'aspect-ratio': 'Cоотношение сторон',
   finished: 'Завершено',
   failed: 'Не удалось',
   uploading: 'Загрузка',

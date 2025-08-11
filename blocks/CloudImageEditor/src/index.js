@@ -1,6 +1,7 @@
 export { CloudImageEditorBlock } from './CloudImageEditorBlock.js';
 export { CropFrame } from './CropFrame.js';
 export { EditorCropButtonControl } from './EditorCropButtonControl.js';
+export { EditorAspectRatioButtonControl } from './EditorAspectRatioButtonControl.js';
 export { EditorFilterControl } from './EditorFilterControl.js';
 export { EditorOperationControl } from './EditorOperationControl.js';
 export { EditorImageCropper } from './EditorImageCropper.js';

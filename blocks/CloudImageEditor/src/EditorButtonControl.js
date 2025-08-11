@@ -39,7 +39,7 @@ export class EditorButtonControl extends Block {
 
 EditorButtonControl.template = /* HTML */ `
   <button role="option" type="button" set="@aria-label:title-prop;" l10n="@title:title-prop;">
-    <uc-icon set="@name: icon;"></uc-icon>
+    <uc-icon ref="icon-el" set="@name: icon;"></uc-icon>
     <div class="uc-title" ref="title-el">{{title}}</div>
   </button>
 `;

@@ -18,5 +18,14 @@
 </head>
 
 <uc-file-uploader-regular ctx-name="my-uploader"></uc-file-uploader-regular>
-<uc-config ctx-name="my-uploader" pubkey="demopublickey" debug></uc-config>
+<uc-config crop-preset="1:1, 16:9" ctx-name="my-uploader" pubkey="aadfab151dfea016a1b0"></uc-config>
 <uc-upload-ctx-provider ctx-name="my-uploader"></uc-upload-ctx-provider>
+
+<script type="module">
+  const ctx = document.querySelector('uc-upload-ctx-provider');
+  const uuid = '1ce925e6-917c-463f-8b9f-b1d00e84adba';
+
+  const api = ctx.getAPI();
+
+  api.addFileFromUuid(uuid);
+</script>

@@ -374,6 +374,7 @@ export class UploaderBlock extends ActivityBlock {
           continue;
         }
         const { width, height } = fileInfo.imageInfo;
+        //@ts-ignore
         const expectedAspectRatio = aspectRatioPreset.width / aspectRatioPreset.height;
         const crop = calculateMaxCenteredCropFrame(width, height, expectedAspectRatio);
         const cdnUrlModifiers = createCdnUrlModifiers(

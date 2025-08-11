@@ -18,8 +18,7 @@ export function initState(fnCtx) {
     '*imageSize': null,
     /** @type {import('./types.js').Transformations} */
     '*editorTransformations': {},
-    /** @type {import('./types.js').CropPresetList} */
-    '*cropPresetList': [],
+    '*cropPresetList': /** @type {import('./types.js').CropPresetList} */ ([]),
     '*tabList': ALL_TABS,
     '*tabId': TabId.CROP,
 
