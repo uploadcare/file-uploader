@@ -124,4 +124,6 @@ export default {
   'deselect-all': 'Поништи избор свих',
   'waiting-for': 'Чека се {{source}}',
   queued: 'У реду',
+  'a11y-cloud-editor-apply-aspect-ratio': 'Примени операцију {{name}} {{value}}',
+  'aspect-ratio': 'Однос страница',
 };

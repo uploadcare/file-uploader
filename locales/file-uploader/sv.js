@@ -122,4 +122,6 @@ export default {
   'select-all': 'Välj alla',
   'deselect-all': 'Avmarkera alla',
   'waiting-for': 'Väntar på {{source}}',
+  'a11y-cloud-editor-apply-aspect-ratio': 'Använd åtgärd {{name}} {{value}}',
+  'aspect-ratio': 'Bildförhållande',
 };

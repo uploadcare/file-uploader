@@ -122,4 +122,6 @@ export default {
   'select-all': 'すべて選択',
   'deselect-all': 'すべて選択解除',
   'waiting-for': '{{source}} を待っています',
+  'a11y-cloud-editor-apply-aspect-ratio': '操作 {{name}} {{value}} を適用',
+  'aspect-ratio': 'アスペクト比',
 };

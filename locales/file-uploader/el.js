@@ -124,4 +124,6 @@ export default {
   queued: 'Σε ουρά',
   'a11y-file-item-status': 'Το αρχείο {{fileName}} βρίσκεται στην κατάσταση {{status}}',
   'waiting-for': 'Αναμονή για {{source}}',
+  'a11y-cloud-editor-apply-aspect-ratio': 'Εφαρμογή λειτουργίας {{name}} {{value}}',
+  'aspect-ratio': 'Λόγος διαστάσεων',
 };

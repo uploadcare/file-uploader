@@ -123,4 +123,6 @@ export default {
   'select-all': 'Selecteer alles',
   'deselect-all': 'Deselecteer alles',
   'waiting-for': 'Wachten op {{source}}',
+  'a11y-cloud-editor-apply-aspect-ratio': 'Bewerking {{name}} {{value}} toepassen',
+  'aspect-ratio': 'Beeldverhouding',
 };

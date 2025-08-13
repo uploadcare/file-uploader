@@ -115,8 +115,6 @@ export default {
   'a11y-cloud-editor-apply-filter': 'Apply {{name}} filter',
   'a11y-cloud-editor-apply-crop': 'Apply {{name}} operation',
   'a11y-cloud-editor-apply-tuning': 'Apply {{name}} tuning',
-  'a11y-cloud-editor-apply-aspect-ratio': 'Применить операцию {{name}} {{value}}',
-  'aspect-ratio': 'Aspect ratio',
   freeform: 'Freeform',
   finished: 'Finished',
   failed: 'Failed',
@@ -125,4 +123,6 @@ export default {
   'a11y-file-item-status': 'File {{fileName}} in status {{status}}',
   'waiting-for': 'Waiting for {{source}}',
   queued: 'Queued',
+  'a11y-cloud-editor-apply-aspect-ratio': 'Apply operation {{name}} {{value}}',
+  'aspect-ratio': 'Aspect ratio',
 };

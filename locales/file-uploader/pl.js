@@ -126,4 +126,6 @@ export default {
   'select-all': 'Zaznacz wszystko',
   'deselect-all': 'Odznacz wszystko',
   'waiting-for': 'Oczekiwanie na {{source}}',
+  'a11y-cloud-editor-apply-aspect-ratio': 'Zastosuj operację {{name}} {{value}}',
+  'aspect-ratio': 'Proporcje',
 };

@@ -122,4 +122,6 @@ export default {
   'select-all': 'Velja allt',
   'deselect-all': 'Afvelja allt',
   'waiting-for': 'Bíð eftir {{source}}',
+  'a11y-cloud-editor-apply-aspect-ratio': 'Beita aðgerð {{name}} {{value}}',
+  'aspect-ratio': 'Hlutfall hliða',
 };

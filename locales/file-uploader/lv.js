@@ -124,4 +124,6 @@ export default {
   'deselect-all': 'Noņemt izvēli visiem',
   'waiting-for': 'Gaida {{source}}',
   queued: 'Rindā',
+  'a11y-cloud-editor-apply-aspect-ratio': 'Lietot darbību {{name}} {{value}}',
+  'aspect-ratio': 'Malu attiecība',
 };

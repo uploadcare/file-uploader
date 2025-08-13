@@ -121,4 +121,6 @@ export default {
   'select-all': '모두 선택',
   'deselect-all': '모두 선택 해제',
   'waiting-for': '{{source}} 대기 중',
+  'a11y-cloud-editor-apply-aspect-ratio': '작업 {{name}} {{value}} 적용',
+  'aspect-ratio': '종횡비',
 };

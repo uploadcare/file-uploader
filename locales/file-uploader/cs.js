@@ -127,4 +127,6 @@ export default {
   queued: 'Ve frontě',
   'a11y-file-item-status': 'Soubor {{fileName}} je ve stavu {{status}}',
   'waiting-for': 'Čekání na {{source}}',
+  'a11y-cloud-editor-apply-aspect-ratio': 'Použít operaci {{name}} {{value}}',
+  'aspect-ratio': 'Poměr stran',
 };
