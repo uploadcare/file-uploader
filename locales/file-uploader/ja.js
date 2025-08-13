@@ -124,4 +124,5 @@ export default {
   'waiting-for': '{{source}} を待っています',
   'a11y-cloud-editor-apply-aspect-ratio': '操作 {{name}} {{value}} を適用',
   'aspect-ratio': 'アスペクト比',
+  freeform: 'フリーフォーム',
 };

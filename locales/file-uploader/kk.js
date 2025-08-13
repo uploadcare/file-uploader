@@ -124,4 +124,5 @@ export default {
   'waiting-for': 'Күтіп тұр {{source}}',
   'a11y-cloud-editor-apply-aspect-ratio': '{{name}} {{value}} операциясын қолданыңыз',
   'aspect-ratio': 'Қабырғалар қатынасы',
+  freeform: 'Еркін',
 };

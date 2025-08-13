@@ -126,4 +126,5 @@ export default {
   queued: 'У реду',
   'a11y-cloud-editor-apply-aspect-ratio': 'Примени операцију {{name}} {{value}}',
   'aspect-ratio': 'Однос страница',
+  freeform: 'Слободан',
 };

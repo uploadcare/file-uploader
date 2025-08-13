@@ -124,4 +124,5 @@ export default {
   'waiting-for': 'ველოდები {{source}}',
   'a11y-cloud-editor-apply-aspect-ratio': 'გამოიყენეთ ოპერაცია {{name}} {{value}}',
   'aspect-ratio': 'გვერდების თანაფარდობა',
+  freeform: 'თავისუფალი',
 };

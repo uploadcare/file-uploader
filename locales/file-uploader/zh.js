@@ -124,4 +124,5 @@ export default {
   'waiting-for': '等待 {{source}}',
   'a11y-cloud-editor-apply-aspect-ratio': '应用操作 {{name}} {{value}}',
   'aspect-ratio': '宽高比',
+  freeform: '自由',
 };

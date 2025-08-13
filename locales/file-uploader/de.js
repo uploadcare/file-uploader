@@ -126,4 +126,5 @@ export default {
   'waiting-for': 'Warten auf {{source}}',
   'a11y-cloud-editor-apply-aspect-ratio': 'Vorgang {{name}} {{value}} anwenden',
   'aspect-ratio': 'Seitenverhältnis',
+  freeform: 'Freiform',
 };

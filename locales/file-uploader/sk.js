@@ -128,4 +128,5 @@ export default {
   queued: 'Vo fronte',
   'a11y-cloud-editor-apply-aspect-ratio': 'Použiť operáciu {{name}} {{value}}',
   'aspect-ratio': 'Pomer strán',
+  freeform: 'Voľný',
 };

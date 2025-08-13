@@ -128,4 +128,5 @@ export default {
   'waiting-for': 'Ожидание {{source}}',
   'a11y-cloud-editor-apply-aspect-ratio': 'Применить операцию {{name}} {{value}}',
   'aspect-ratio': 'Соотношение сторон',
+  freeform: 'Произвольный',
 };

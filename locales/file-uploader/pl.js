@@ -128,4 +128,5 @@ export default {
   'waiting-for': 'Oczekiwanie na {{source}}',
   'a11y-cloud-editor-apply-aspect-ratio': 'Zastosuj operację {{name}} {{value}}',
   'aspect-ratio': 'Proporcje',
+  freeform: 'Dowolny',
 };

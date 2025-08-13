@@ -125,4 +125,5 @@ export default {
   'waiting-for': 'Odotetaan {{source}}',
   'a11y-cloud-editor-apply-aspect-ratio': 'Käytä toimintoa {{name}} {{value}}',
   'aspect-ratio': 'Kuvasuhde',
+  freeform: 'Vapaa',
 };

@@ -125,4 +125,5 @@ export default {
   'waiting-for': 'Wachten op {{source}}',
   'a11y-cloud-editor-apply-aspect-ratio': 'Bewerking {{name}} {{value}} toepassen',
   'aspect-ratio': 'Beeldverhouding',
+  freeform: 'Vrijhand',
 };

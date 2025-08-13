@@ -124,4 +124,5 @@ export default {
   'waiting-for': 'Venter på {{source}}',
   'a11y-cloud-editor-apply-aspect-ratio': 'Bruk handling {{name}} {{value}}',
   'aspect-ratio': 'Bredde-høydeforhold',
+  freeform: 'Frihånd',
 };

@@ -126,4 +126,5 @@ export default {
   'waiting-for': 'Αναμονή για {{source}}',
   'a11y-cloud-editor-apply-aspect-ratio': 'Εφαρμογή λειτουργίας {{name}} {{value}}',
   'aspect-ratio': 'Λόγος διαστάσεων',
+  freeform: 'Ελεύθερο',
 };

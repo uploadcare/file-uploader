@@ -124,4 +124,5 @@ export default {
   'waiting-for': 'Ootel {{source}}',
   'a11y-cloud-editor-apply-aspect-ratio': 'Rakenda toiming {{name}} {{value}}',
   'aspect-ratio': 'Külgede suhe',
+  freeform: 'Vaba',
 };
