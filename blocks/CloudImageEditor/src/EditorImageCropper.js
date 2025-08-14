@@ -189,9 +189,9 @@ export class EditorImageCropper extends Block {
       );
     }
 
-    const cropPreset = /** @type {import('./types.js').CropPresetList} */ (this.$['*cropPresetList'])?.filter(
+    const cropPreset = /** @type {import('./types.js').CropPresetList} */ (this.$['*cropPresetList'])?.find(
       (it) => it._active,
-    )[0];
+    );
     const cropAspectRatio = cropPreset ? cropPreset.width / cropPreset.height : undefined;
 
     if (

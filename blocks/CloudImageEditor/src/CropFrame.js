@@ -395,9 +395,9 @@ export class CropFrame extends Block {
     let imageBox = this.$['*imageBox'];
     let rect = /** @type {import('./types.js').Rectangle} */ (this._dragStartCrop) ?? this.$['*cropBox'];
 
-    const cropPreset = /** @type {import('./types.js').CropPresetList} */ (this.$['*cropPresetList'])?.filter(
+    const cropPreset = /** @type {import('./types.js').CropPresetList} */ (this.$['*cropPresetList'])?.find(
       (it) => it._active,
-    )[0];
+    );
     const aspectRatio = cropPreset ? cropPreset.width / cropPreset.height : undefined;
 
     if (direction === '') {

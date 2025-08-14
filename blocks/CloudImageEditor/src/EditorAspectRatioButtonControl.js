@@ -15,7 +15,7 @@ export class EditorAspectRatioButtonControl extends EditorButtonControl {
         if (!value) return;
 
         if (value.hasFreeform) {
-          this.$['title'] = FREEFORM_ID;
+          this.$['title'] = this.l10n('freeform');
           this.$['icon'] = FREEFORM_ID;
         } else {
           this.$['icon'] = value.type;
@@ -27,12 +27,13 @@ export class EditorAspectRatioButtonControl extends EditorButtonControl {
 
         this._aspectRatio = value;
 
-        this.bindL10n('title-prop', () =>
-          this.l10n('a11y-cloud-editor-apply-aspect-ratio', {
-            name: this.l10n(value.type).toLowerCase(),
-            value: `${value.width}:${value.height}`,
-          }),
-        );
+        this.bindL10n('title-prop', () => {
+          const isFreeform = !!value.hasFreeform;
+          const name = this.l10n(isFreeform ? 'freeform' : value.type).toLowerCase();
+
+          const val = isFreeform ? '' : `${value.width}:${value.height}`;
+          return this.l10n('a11y-cloud-editor-apply-aspect-ratio', { name, value: val });
+        });
       },
     );
 
@@ -49,7 +50,10 @@ export class EditorAspectRatioButtonControl extends EditorButtonControl {
       return;
     }
 
-    this.$['*cropPresetList'] = this.$['*cropPresetList'].map(
+    const list = /** @type {import('./types.js').CropPresetList} */ (this.$['*cropPresetList']);
+    if (!Array.isArray(list)) return;
+
+    this.$['*cropPresetList'] = list.map(
       /** @param {import('./types.js').CropAspectRatio} it */ (it) => ({
         ...it,
         _active: it.id === this._aspectRatio?.id,
@@ -85,7 +89,10 @@ export class EditorAspectRatioButtonControl extends EditorButtonControl {
       height,
     });
 
-    this.ref['icon-el'].ref['svg'].innerHTML = '';
-    this.ref['icon-el'].ref['svg'].appendChild(rect);
+    const svgEl = this.ref['icon-el']?.ref?.svg;
+
+    if (!svgEl) return;
+    svgEl.innerHTML = '';
+    svgEl.appendChild(rect);
   }
 }

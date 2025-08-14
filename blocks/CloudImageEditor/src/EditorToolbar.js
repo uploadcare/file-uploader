@@ -120,7 +120,6 @@ export class EditorToolbar extends Block {
         this._onSliderClose();
       },
       'on.cancelSlider': () => {
-        console.log(this.$['*showListAspectRatio']);
         this.ref['slider-el'].cancel();
         this._onSliderClose();
       },
