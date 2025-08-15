@@ -2,6 +2,8 @@
 import { UID } from '@symbiotejs/symbiote';
 import { stringToArray } from '../../../../utils/stringToArray.js';
 
+const EXCLUDED_TYPES = ['free'];
+
 /** @param {import('../../../../types/exported.d.ts').ConfigType['cropPreset']} cropPreset */
 export const parseCropPreset = (cropPreset) => {
   const items = stringToArray(cropPreset);
@@ -12,6 +14,21 @@ export const parseCropPreset = (cropPreset) => {
   for (let i = 0; i < items.length; i++) {
     const raw = items[i].trim();
     if (!raw) continue;
+
+    if (EXCLUDED_TYPES.includes(raw)) {
+      result.push({
+        id: UID.generate(),
+        type: 'aspect-ratio',
+        hasFreeform: true,
+        _active: i === 0,
+
+        //@ts-ignore
+        width: null,
+        //@ts-ignore
+        height: null,
+      });
+      continue;
+    }
 
     const sep = raw.indexOf(':');
     if (sep === -1) {

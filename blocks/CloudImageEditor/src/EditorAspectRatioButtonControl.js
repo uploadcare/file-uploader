@@ -45,7 +45,7 @@ export class EditorAspectRatioButtonControl extends EditorButtonControl {
   }
 
   handleClick() {
-    if (this._aspectRatio?.hasFreeform) {
+    if (this._aspectRatio?.hasFreeform && this._aspectRatio.width === 0 && this._aspectRatio.height === 0) {
       this.handleFreedom();
       return;
     }
