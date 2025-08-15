@@ -301,35 +301,36 @@ uc-crop-frame > .uc-thumb {
     opacity var(--transition-duration-3);
 }
 
-uc-crop-frame > .uc-thumb--visible {
+uc-crop-frame .uc-thumb--visible {
   opacity: 1;
   pointer-events: auto;
 }
 
-uc-crop-frame > .uc-thumb--hidden {
+uc-crop-frame .uc-thumb--hidden {
   opacity: 0;
   pointer-events: none;
 }
 
-uc-crop-frame > .uc-guides {
+uc-crop-frame .uc-guides {
   transition: var(--transition-duration-3);
 }
 
-uc-crop-frame > .uc-guides--hidden {
+uc-crop-frame .uc-guides--hidden {
   opacity: 0;
 }
 
-uc-crop-frame > .uc-guides--semi-hidden {
+uc-crop-frame .uc-guides--semi-hidden {
   opacity: 0.2;
 }
 
-uc-crop-frame > .uc-guides--visible {
+uc-crop-frame .uc-guides--visible {
   opacity: 1;
 }
 
 uc-editor-button-control,
 uc-editor-crop-button-control,
 uc-editor-aspect-ratio-button-control,
+uc-editor-freeform-button-control,
 uc-editor-filter-control,
 uc-editor-operation-control {
   --l-base-min-width: var(--uc-button-size);
@@ -358,6 +359,7 @@ uc-editor-operation-control {
 uc-editor-button-control > button,
 uc-editor-crop-button-control > button,
 uc-editor-aspect-ratio-button-control > button,
+uc-editor-freeform-button-control > button,
 uc-editor-filter-control > button,
 uc-editor-operation-control > button {
   all: unset;
@@ -377,6 +379,7 @@ uc-editor-operation-control > button {
     uc-editor-button-control,
     uc-editor-crop-button-control,
     uc-editor-aspect-ratio-button-control,
+    uc-editor-freeform-button-control,
     uc-editor-filter-control,
     uc-editor-operation-control
   )
@@ -395,6 +398,7 @@ uc-editor-button-control.uc-active,
 uc-editor-operation-control.uc-active,
 uc-editor-crop-button-control.uc-active,
 uc-editor-aspect-ratio-button-control.uc-active,
+uc-editor-freeform-button-control.uc-active,
 uc-editor-filter-control.uc-active {
   --idle-color-rgb: var(--uc-primary-foreground);
   --idle-background: var(--uc-primary);
@@ -416,6 +420,7 @@ uc-editor-button-control.uc-not_active,
 uc-editor-operation-control.uc-not_active,
 uc-editor-crop-button-control.uc-not_active,
 uc-editor-aspect-ratio-button-control.uc-not_active,
+uc-editor-freeform-button-control.uc-not_active,
 uc-editor-filter-control.uc-not_active {
   --idle-color-rgb: var(--uc-secondary-foreground);
 }
@@ -423,6 +428,7 @@ uc-editor-filter-control.uc-not_active {
 :where(.uc-contrast) uc-editor-button-control.uc-not_active,
 :where(.uc-contrast) uc-editor-operation-control.uc-not_active,
 :where(.uc-contrast) uc-editor-crop-button-control.uc-not_active,
+:where(.uc-contrast) uc-editor-freeform-button-control.uc-not_active,
 :where(.uc-contrast) uc-editor-aspect-ratio-button-control.uc-not_active,
 :where(.uc-contrast) uc-editor-filter-control.uc-not_active {
   --idle-background: transparent;
@@ -435,6 +441,7 @@ uc-editor-filter-control.uc-not_active {
 uc-editor-button-control > button::before,
 uc-editor-operation-control > button::before,
 uc-editor-crop-button-control > button::before,
+uc-editor-freeform-button-control > button::before,
 uc-editor-aspect-ratio-button-control > button::before,
 uc-editor-filter-control > button::before {
   position: absolute;
@@ -453,6 +460,7 @@ uc-editor-button-control > button .uc-title,
 uc-editor-operation-control > button .uc-title,
 uc-editor-crop-button-control > button .uc-title,
 uc-editor-aspect-ratio-button-control > button .uc-title,
+uc-editor-freeform-button-control > button .uc-title,
 uc-editor-filter-control > button .uc-title {
   padding-right: var(--cldtr-gap-mid-1);
   font-size: 0.7em;
@@ -464,6 +472,7 @@ uc-editor-button-control > button uc-icon,
 uc-editor-operation-control > button uc-icon,
 uc-editor-crop-button-control > button uc-icon,
 uc-editor-aspect-ratio-button-control > button uc-icon,
+uc-editor-freeform-button-control > button uc-icon,
 uc-editor-filter-control > button uc-icon {
   pointer-events: none;
 }

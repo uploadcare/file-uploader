@@ -132,5 +132,6 @@ export default {
   'waiting-for': 'في انتظار {{source}}',
   'a11y-cloud-editor-apply-aspect-ratio': 'تطبيق عملية {{name}} {{value}}',
   'aspect-ratio': 'نسبة العرض إلى الارتفاع',
-  freeform: 'حر',
+  custom: 'مخصص',
+  'crop-shape': 'شكل القص',
 };

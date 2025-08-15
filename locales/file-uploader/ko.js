@@ -123,5 +123,7 @@ export default {
   'waiting-for': '{{source}} 대기 중',
   'a11y-cloud-editor-apply-aspect-ratio': '작업 {{name}} {{value}} 적용',
   'aspect-ratio': '종횡비',
-  freeform: '자유형',
+
+  'crop-shape': '자르기 모양',
+  custom: '사용자 정의',
 };

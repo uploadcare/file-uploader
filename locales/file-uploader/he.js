@@ -126,5 +126,7 @@ export default {
   'waiting-for': 'ממתין ל{{source}}',
   'a11y-cloud-editor-apply-aspect-ratio': 'החל פעולה {{name}} {{value}}',
   'aspect-ratio': 'יחס גובה-רוחב',
-  freeform: 'חופשי',
+
+  'crop-shape': 'צורת חיתוך',
+  custom: 'מותאם אישית',
 };

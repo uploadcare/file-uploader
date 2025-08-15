@@ -124,5 +124,7 @@ export default {
   'waiting-for': 'Väntar på {{source}}',
   'a11y-cloud-editor-apply-aspect-ratio': 'Använd åtgärd {{name}} {{value}}',
   'aspect-ratio': 'Bildförhållande',
-  freeform: 'Frihand',
+
+  'crop-shape': 'Beskärningsform',
+  custom: 'Anpassad',
 };

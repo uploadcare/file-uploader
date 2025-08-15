@@ -124,5 +124,7 @@ export default {
   'waiting-for': 'Đang chờ {{source}}',
   'a11y-cloud-editor-apply-aspect-ratio': 'Áp dụng thao tác {{name}} {{value}}',
   'aspect-ratio': 'Tỷ lệ khung hình',
-  freeform: 'Tự do',
+
+  'crop-shape': 'Hình dạng cắt xén',
+  custom: 'Tùy chỉnh',
 };

@@ -189,9 +189,7 @@ export class EditorImageCropper extends Block {
       );
     }
 
-    const cropPreset = /** @type {import('./types.js').CropPresetList} */ (this.$['*cropPresetList'])?.find(
-      (it) => it._active,
-    );
+    const cropPreset = this.$['*currentAspectRatio'];
     const cropAspectRatio = cropPreset ? cropPreset.width / cropPreset.height : undefined;
 
     if (
@@ -527,7 +525,7 @@ export class EditorImageCropper extends Block {
       }
     });
 
-    this.sub('*cropPresetList', () => {
+    this.sub('*currentAspectRatio', () => {
       this._alignCrop();
     });
 

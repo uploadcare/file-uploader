@@ -124,5 +124,7 @@ export default {
   'waiting-for': 'Bíð eftir {{source}}',
   'a11y-cloud-editor-apply-aspect-ratio': 'Beita aðgerð {{name}} {{value}}',
   'aspect-ratio': 'Hlutfall hliða',
-  freeform: 'Fríhand',
+
+  'crop-shape': 'Skurðlögun',
+  custom: 'Sérsniðið',
 };

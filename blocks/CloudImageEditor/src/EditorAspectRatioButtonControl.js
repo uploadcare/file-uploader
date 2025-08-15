@@ -1,11 +1,62 @@
 //@ts-check
 
+import { extractUuid } from '../../../utils/cdn-utils.js';
 import { createSvgNode } from './crop-utils.js';
 import { EditorButtonControl } from './EditorButtonControl.js';
 
-const FREEFORM_ID = 'freeform';
+const SIZE_RECT_FIXED = 12;
+const SIZE_SVG_WRAPPER = 16;
+
+/** @param {import('./types.js').CropAspectRatio} value */
+const getAdjustResolutions = (value) => {
+  let width = 12;
+  let height = 12;
+  const adjustResolutions = value.width / value.height;
+
+  if (adjustResolutions >= 1) {
+    width = SIZE_RECT_FIXED;
+    height = Math.round((SIZE_RECT_FIXED * value.height) / value.width);
+  } else {
+    height = SIZE_RECT_FIXED;
+    width = Math.round((SIZE_RECT_FIXED * value.width) / value.height);
+  }
+
+  return { width, height };
+};
+
+export class EditorFreeformButtonControl extends EditorButtonControl {
+  constructor() {
+    super();
+  }
+
+  initCallback() {
+    super.initCallback();
+
+    this.$['title'] = this.l10n('crop-shape');
+    this.$['icon'] = 'freeform';
+
+    this.bindL10n('title-prop', () => {
+      return this.l10n('crop-shape');
+    });
+
+    this.$['on.click'] = this.handleClick.bind(this);
+  }
+
+  handleClick() {
+    this.$['*showListAspectRatio'] = true;
+  }
+}
 
 export class EditorAspectRatioButtonControl extends EditorButtonControl {
+  constructor() {
+    super();
+
+    this.init$ = {
+      ...this.init$,
+      active: false,
+      once: false,
+    };
+  }
   initCallback() {
     super.initCallback();
 
@@ -14,68 +65,65 @@ export class EditorAspectRatioButtonControl extends EditorButtonControl {
       /** @param {import('./types.js').CropAspectRatio} value */ (value) => {
         if (!value) return;
 
-        if (value.hasFreeform) {
-          this.$['title'] = this.l10n('freeform');
-          this.$['icon'] = FREEFORM_ID;
-        } else {
-          this.$['icon'] = value.type;
-          if (value.width && value.height) {
-            this.$['title'] = `${value.width}:${value.height}`;
-          }
+        const isFreeform = !!value.hasFreeform;
+        const name = this.l10n(isFreeform ? 'custom' : value.type).toLowerCase();
+
+        this.$['icon'] = isFreeform ? 'freeform' : value.type;
+        this.$['title'] = isFreeform ? this.l10n('custom') : `${value.width}:${value.height}`;
+
+        if (!isFreeform) {
           this._renderRectBasedOnAspectRatio(value);
         }
 
         this._aspectRatio = value;
 
         this.bindL10n('title-prop', () => {
-          const isFreeform = !!value.hasFreeform;
-          const name = this.l10n(isFreeform ? 'freeform' : value.type).toLowerCase();
-
           const val = isFreeform ? '' : `${value.width}:${value.height}`;
-          return this.l10n('a11y-cloud-editor-apply-aspect-ratio', { name, value: val });
+          return this.l10n('a11y-cloud-editor-apply-aspect-ratio', {
+            name,
+            value: val,
+          });
         });
       },
     );
 
+    this.sub('*currentAspectRatio', (opt) => {
+      this.$.active =
+        (opt && opt.id === this._aspectRatio?.id) ||
+        (opt?.width === this._aspectRatio?.width && opt?.height === this._aspectRatio?.height);
+    });
+
     this.$['on.click'] = this.handleClick.bind(this);
   }
 
-  handleFreedom() {
-    this.$['*showListAspectRatio'] = true;
-  }
-
   handleClick() {
-    if (this._aspectRatio?.hasFreeform && this._aspectRatio.width === 0 && this._aspectRatio.height === 0) {
-      this.handleFreedom();
+    if (this.$['*currentAspectRatio']?.id === this._aspectRatio?.id) {
       return;
     }
 
-    const list = /** @type {import('./types.js').CropPresetList} */ (this.$['*cropPresetList']);
-    if (!Array.isArray(list)) return;
+    this.$['*currentAspectRatio'] = this._aspectRatio;
 
-    this.$['*cropPresetList'] = list.map(
-      /** @param {import('./types.js').CropAspectRatio} it */ (it) => ({
-        ...it,
-        _active: it.id === this._aspectRatio?.id,
-      }),
-    );
+    try {
+      const storageKey = 'editor.aspectRatios';
+      const hash = extractUuid(this.$['*originalUrl']);
+
+      let map;
+      try {
+        //@ts-ignore
+        map = JSON.parse(sessionStorage.getItem(storageKey)) || {};
+      } catch {
+        map = {};
+      }
+
+      map[hash] = this._aspectRatio;
+
+      sessionStorage.setItem(storageKey, JSON.stringify(map));
+    } catch {}
   }
 
   /** @param {import('./types.js').CropAspectRatio} value */
   _renderRectBasedOnAspectRatio(value) {
-    const SIZE_RECT_FIXED = 12;
-    const SIZE_SVG_WRAPPER = 16;
-    let width = 12;
-    let height = 12;
-    const adjustResolutions = value.width / value.height;
-
-    if (adjustResolutions >= 1) {
-      width = SIZE_RECT_FIXED;
-      height = Math.round((SIZE_RECT_FIXED * value.height) / value.width);
-    } else {
-      height = SIZE_RECT_FIXED;
-      width = Math.round((SIZE_RECT_FIXED * value.width) / value.height);
-    }
+    const { width, height } = getAdjustResolutions(value);
 
     const rect = createSvgNode('rect', {
       'stroke-linejoin': 'round',

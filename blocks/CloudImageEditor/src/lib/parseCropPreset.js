@@ -15,42 +15,28 @@ export const parseCropPreset = (cropPreset) => {
     const raw = items[i].trim();
     if (!raw) continue;
 
-    if (EXCLUDED_TYPES.includes(raw)) {
-      result.push({
-        id: UID.generate(),
-        type: 'aspect-ratio',
-        hasFreeform: true,
-        _active: i === 0,
-
-        //@ts-ignore
-        width: null,
-        //@ts-ignore
-        height: null,
-      });
-      continue;
-    }
-
     const sep = raw.indexOf(':');
-    if (sep === -1) {
-      console.error(`Invalid crop preset: ${raw}`);
+    if (sep === -1 && !EXCLUDED_TYPES.includes(raw)) {
+      console.warn(`Invalid crop preset: ${raw}`);
       continue;
     }
 
     const w = Number(raw.slice(0, sep));
     const h = Number(raw.slice(sep + 1));
 
-    if (!Number.isFinite(w) || !Number.isFinite(h) || w <= 0 || h <= 0) {
-      console.error(`Invalid crop preset: ${raw}`);
+    if ((!Number.isFinite(w) || !Number.isFinite(h) || w <= 0 || h <= 0) && !EXCLUDED_TYPES.includes(raw)) {
+      console.warn(`Invalid crop preset: ${raw}`);
       continue;
     }
 
     result.push({
       id: UID.generate(),
       type: 'aspect-ratio',
-      width: w,
-      height: h,
-      _active: i === 0,
+      width: EXCLUDED_TYPES.includes(raw) ? 0 : w,
+      height: EXCLUDED_TYPES.includes(raw) ? 0 : h,
+      hasFreeform: EXCLUDED_TYPES.includes(raw),
     });
   }
+
   return result;
 };

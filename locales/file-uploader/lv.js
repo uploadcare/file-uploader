@@ -126,5 +126,7 @@ export default {
   queued: 'Rindā',
   'a11y-cloud-editor-apply-aspect-ratio': 'Lietot darbību {{name}} {{value}}',
   'aspect-ratio': 'Malu attiecība',
-  freeform: 'Brīvs',
+
+  'crop-shape': 'Apgriešanas forma',
+  custom: 'Pielāgots',
 };

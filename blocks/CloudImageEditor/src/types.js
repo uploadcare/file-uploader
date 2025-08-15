@@ -58,7 +58,6 @@
  *   width: number;
  *   height: number;
  *   id: string;
- *   _active?: boolean;
  *   hasFreeform?: boolean;
  * }} CropAspectRatio
  */

@@ -2,7 +2,7 @@
 import { debounce } from '../../utils/debounce.js';
 import { Block } from '../../../abstract/Block.js';
 import { EditorCropButtonControl } from './EditorCropButtonControl.js';
-import { EditorAspectRatioButtonControl } from './EditorAspectRatioButtonControl.js';
+import { EditorAspectRatioButtonControl, EditorFreeformButtonControl } from './EditorAspectRatioButtonControl.js';
 import { EditorFilterControl } from './EditorFilterControl.js';
 import { EditorOperationControl } from './EditorOperationControl.js';
 import { FAKE_ORIGINAL_FILTER } from './EditorSlider.js';
@@ -149,7 +149,10 @@ export class EditorToolbar extends Block {
   /** @private */
   _onSliderClose() {
     this.$['*showSlider'] = false;
-    this.$['*showListAspectRatio'] = false;
+
+    if (this.$['*tabId'] === TabId.CROP) {
+      this.$['*showListAspectRatio'] = false;
+    }
 
     if (this.$['*tabId'] === TabId.TUNING) {
       this.ref['tooltip-el'].classList.toggle('uc-info-tooltip_visible', false);
@@ -200,6 +203,11 @@ export class EditorToolbar extends Block {
     return el;
   }
 
+  _createFreeformConrol() {
+    const el = new EditorFreeformButtonControl();
+    return el;
+  }
+
   _clearListAspectRatio() {
     this.$['*listAspectRatioEl'].innerHTML = '';
   }
@@ -218,13 +226,7 @@ export class EditorToolbar extends Block {
       const hasFreeformAspectRatio = this.$['*cropPresetList'].length >= 3;
 
       if (hasFreeformAspectRatio) {
-        let el = this._createAspectRatioConrol({
-          id: 'freeform-aspect-ratio',
-          type: 'aspect-ratio',
-          width: 0,
-          height: 0,
-          hasFreeform: true,
-        });
+        const el = this._createFreeformConrol();
         fr.appendChild(el);
       }
 

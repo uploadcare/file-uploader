@@ -127,5 +127,7 @@ export default {
   'waiting-for': 'Așteptare pentru {{source}}',
   'a11y-cloud-editor-apply-aspect-ratio': 'Aplică operația {{name}} {{value}}',
   'aspect-ratio': 'Raport de aspect',
-  freeform: 'Liber',
+
+  'crop-shape': 'Formă de decupare',
+  custom: 'Personalizat',
 };

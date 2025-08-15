@@ -127,5 +127,7 @@ export default {
   'waiting-for': 'En attente de {{source}}',
   'a11y-cloud-editor-apply-aspect-ratio': "Appliquer l'opération {{name}} {{value}}",
   'aspect-ratio': "Rapport d'aspect",
-  freeform: 'Libre',
+
+  'crop-shape': 'Forme de rognage',
+  custom: 'Personnalisé',
 };

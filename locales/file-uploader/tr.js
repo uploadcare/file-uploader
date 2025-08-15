@@ -124,5 +124,7 @@ export default {
   'waiting-for': '{{source}} bekleniyor',
   'a11y-cloud-editor-apply-aspect-ratio': '{{name}} {{value}} işlemini uygula',
   'aspect-ratio': 'En boy oranı',
-  freeform: 'Serbest',
+
+  'crop-shape': 'Kırpma şekli',
+  custom: 'Özel',
 };

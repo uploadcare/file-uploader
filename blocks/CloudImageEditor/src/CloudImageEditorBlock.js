@@ -161,10 +161,6 @@ export class CloudImageEditorBlock extends Block {
       }
     });
 
-    this.sub('cropPreset', (val) => {
-      this.$['*cropPresetList'] = parseCropPreset(val);
-    });
-
     this.sub(
       'tabs',
       /** @param {string} val */ (val) => {
@@ -216,6 +212,19 @@ export class CloudImageEditorBlock extends Block {
 
     this.sub('uuid', (val) => val && this.updateImage());
     this.sub('cdnUrl', (val) => val && this.updateImage());
+
+    this.sub('cropPreset', (val) => {
+      const list = parseCropPreset(val);
+
+      const storageKey = 'editor.aspectRatios';
+      //@ts-ignore
+      const map = JSON.parse(sessionStorage.getItem(storageKey)) ?? {};
+
+      const uuid = this.$.uuid ?? extractUuid(this.$.cdnUrl);
+
+      this.$['*cropPresetList'] = list;
+      this.$['*currentAspectRatio'] = map?.[uuid] ?? list?.[0] ?? null;
+    });
   }
 }
 
