@@ -374,7 +374,6 @@ export class UploaderBlock extends ActivityBlock {
           continue;
         }
         const { width, height } = fileInfo.imageInfo;
-        console.log({ aspectRatioPreset });
         const expectedAspectRatio =
           typeof aspectRatioPreset?.width === 'number' && typeof aspectRatioPreset?.height === 'number'
             ? aspectRatioPreset.width / aspectRatioPreset.height

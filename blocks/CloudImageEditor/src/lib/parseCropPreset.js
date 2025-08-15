@@ -1,21 +1,39 @@
 // @ts-check
-
 import { UID } from '@symbiotejs/symbiote';
 import { stringToArray } from '../../../../utils/stringToArray.js';
 
 /** @param {import('../../../../types/exported.d.ts').ConfigType['cropPreset']} cropPreset */
 export const parseCropPreset = (cropPreset) => {
-  const list = stringToArray(cropPreset);
+  const items = stringToArray(cropPreset);
+  if (!items?.length) return [];
 
-  if (!list) return [];
+  /** @type {import('../types.js').CropAspectRatio[]} */
+  const result = [];
+  for (let i = 0; i < items.length; i++) {
+    const raw = items[i].trim();
+    if (!raw) continue;
 
-  return list.map((it, index) => {
-    const [w, h] = it.split(':').map(Number);
-    if (!Number.isFinite(w) || !Number.isFinite(h)) {
-      console.error(`Invalid crop preset: ${it}`);
-      return;
+    const sep = raw.indexOf(':');
+    if (sep === -1) {
+      console.error(`Invalid crop preset: ${raw}`);
+      continue;
     }
-    /** @type {import('../types.js').CropAspectRatio} */
-    return { id: UID.generate(), _active: index === 0, type: 'aspect-ratio', width: w, height: h };
-  });
+
+    const w = Number(raw.slice(0, sep));
+    const h = Number(raw.slice(sep + 1));
+
+    if (!Number.isFinite(w) || !Number.isFinite(h) || w <= 0 || h <= 0) {
+      console.error(`Invalid crop preset: ${raw}`);
+      continue;
+    }
+
+    result.push({
+      id: UID.generate(),
+      type: 'aspect-ratio',
+      width: w,
+      height: h,
+      _active: i === 0,
+    });
+  }
+  return result;
 };
