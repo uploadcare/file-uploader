@@ -16,6 +16,7 @@ import { operationsToTransformations, transformationsToOperations } from './lib/
 import { initState } from './state.js';
 import { TEMPLATE } from './template.js';
 import { TabId } from './toolbar-constants.js';
+import { storageAspectRatio } from './utils/SessionStorage.js';
 
 export class CloudImageEditorBlock extends Block {
   ctxOwner = true;
@@ -216,14 +217,11 @@ export class CloudImageEditorBlock extends Block {
     this.sub('cropPreset', (val) => {
       const list = parseCropPreset(val);
 
-      const storageKey = 'editor.aspectRatios';
-      //@ts-ignore
-      const map = JSON.parse(sessionStorage.getItem(storageKey)) ?? {};
-
       const uuid = this.$.uuid ?? extractUuid(this.$.cdnUrl);
+      const current = storageAspectRatio.check(uuid);
 
       this.$['*cropPresetList'] = list;
-      this.$['*currentAspectRatio'] = map?.[uuid] ?? list?.[0] ?? null;
+      this.$['*currentAspectRatio'] = current ?? list?.[0] ?? null;
     });
   }
 }
