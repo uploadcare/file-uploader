@@ -1,3 +1,9 @@
+## [1.19.5](https://github.com/uploadcare/file-uploader/compare/v1.19.4...v1.19.5) (2025-08-21)
+
+### Bug Fixes
+
+- **api:** allow to use both configured cdnBase and ucarecdn.com as host when calling `addFileFromCdnUrl` ([#844](https://github.com/uploadcare/file-uploader/issues/844)) ([7cac4c3](https://github.com/uploadcare/file-uploader/commit/7cac4c3b7cd2b1e8339c7fe69f7e460de7064fb2))
+
 ## [1.19.4](https://github.com/uploadcare/file-uploader/compare/v1.19.3...v1.19.4) (2025-07-30)
 
 ### Bug Fixes
