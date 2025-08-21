@@ -10,13 +10,12 @@ import {
 import { TRANSPARENT_PIXEL_SRC } from '../../../utils/transparentPixelSrc.js';
 import { debounce } from '../../utils/debounce.js';
 import { classNames } from './lib/classNames.js';
-import { parseCropPreset } from './lib/parseCropPreset.js';
+import { getClosestAspectRatio, parseCropPreset } from './lib/parseCropPreset.js';
 import { parseTabs } from './lib/parseTabs.js';
 import { operationsToTransformations, transformationsToOperations } from './lib/transformationUtils.js';
 import { initState } from './state.js';
 import { TEMPLATE } from './template.js';
 import { TabId } from './toolbar-constants.js';
-import { storageAspectRatio } from './utils/SessionStorage.js';
 
 export class CloudImageEditorBlock extends Block {
   ctxOwner = true;
@@ -216,12 +215,20 @@ export class CloudImageEditorBlock extends Block {
 
     this.sub('cropPreset', (val) => {
       const list = parseCropPreset(val);
+      let closest = null;
 
-      const uuid = this.$.uuid ?? extractUuid(this.$.cdnUrl);
-      const current = storageAspectRatio.check(uuid);
+      if (this.$.cdnUrl) {
+        const operations = extractOperations(this.$.cdnUrl);
+        const transformations = operationsToTransformations(operations);
+
+        if (Array.isArray(transformations?.crop?.dimensions)) {
+          const [w, h] = transformations?.crop?.dimensions;
+          closest = getClosestAspectRatio(w, h, list, 0.1);
+        }
+      }
 
       this.$['*cropPresetList'] = list;
-      this.$['*currentAspectRatio'] = current ?? list?.[0] ?? null;
+      this.$['*currentAspectRatio'] = closest ?? list?.[0] ?? null;
     });
   }
 }

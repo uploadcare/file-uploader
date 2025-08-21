@@ -40,3 +40,41 @@ export const parseCropPreset = (cropPreset) => {
 
   return result;
 };
+
+/**
+ * @param {number} width
+ * @param {number} height
+ * @param {import('../types.js').CropPresetList} ratios
+ * @param {number} tolerance
+ * @returns {import('../types.js').CropAspectRatio | null}
+ */
+export const getClosestAspectRatio = (width, height, ratios, tolerance = 0.1) => {
+  const inputRatio = width / height;
+
+  let closest = null;
+  let minDiff = Infinity;
+
+  for (const r of ratios) {
+    const [w, h] = [r.width, r.height];
+    const ratio = w / h;
+
+    const diff = Math.abs(inputRatio - ratio);
+
+    if (diff < minDiff) {
+      minDiff = diff;
+      closest = r;
+    }
+  }
+
+  if (closest) {
+    const [cw, ch] = [closest.width, closest.height];
+    const closestRatio = cw / ch;
+
+    const relDiff = Math.abs(inputRatio - closestRatio) / closestRatio;
+    if (relDiff > tolerance) {
+      return null;
+    }
+  }
+
+  return closest;
+};

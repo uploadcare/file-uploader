@@ -1,9 +1,7 @@
 //@ts-check
 
-import { extractUuid } from '../../../utils/cdn-utils.js';
 import { createSvgNode } from './crop-utils.js';
 import { EditorButtonControl } from './EditorButtonControl.js';
-import { storageAspectRatio } from './utils/SessionStorage.js';
 
 const SIZE_RECT_FIXED = 12;
 const SIZE_SVG_WRAPPER = 16;
@@ -103,9 +101,6 @@ export class EditorAspectRatioButtonControl extends EditorButtonControl {
     }
 
     this.$['*currentAspectRatio'] = this._aspectRatio;
-
-    const hash = extractUuid(this.$['*originalUrl']);
-    storageAspectRatio.add(hash, this._aspectRatio);
   }
 
   /** @param {import('./types.js').CropAspectRatio} value */
