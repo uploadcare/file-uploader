@@ -6,10 +6,16 @@ export const renderer = new CommonDOMRenderer();
 
 const containers = new Set<HTMLElement>();
 
-export const render = (jsx: any) => {
+export const render = (arg: any) => {
   const container = document.createElement('div');
   containers.add(container);
-  renderer.render(jsx).on(container);
+
+  if (arg instanceof Element) {
+    container.appendChild(arg);
+  } else {
+    renderer.render(arg).on(container);
+  }
+
   document.body.appendChild(container);
 };
 

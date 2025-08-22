@@ -1,6 +1,6 @@
 import { EventPayload } from '@/types';
 import { page } from '@vitest/browser/context';
-import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import '../types/jsx';
 import { renderer } from './utils/test-renderer';
 
@@ -22,7 +22,7 @@ beforeEach(() => {
 });
 
 describe('API', () => {
-  it('should somehow work', async () => {
+  it('should emit events', async () => {
     const uploadCtxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as InstanceType<UploadCtxProvider>;
     const api = uploadCtxProvider.api;
 
@@ -36,6 +36,59 @@ describe('API', () => {
 
     const eventPayload = await vi.waitFor(() => {
       expect(eventHandler).toHaveBeenCalled();
+      return eventHandler.mock.calls[0][0].detail;
+    });
+
+    expect(eventPayload).toMatchObject(expect.objectContaining({ status: 'idle', externalUrl: url }));
+  });
+
+  it('should not duplicate events after uploader add/removal', async () => {
+    for (let i = 0; i < 5; i++) {
+      const uploader = page.getByTestId('uc-file-uploader-regular').query()!;
+      uploader.remove();
+
+      page.render(<uc-file-uploader-regular ctx-name={uploader.getAttribute('ctx-name')!}></uc-file-uploader-regular>);
+    }
+
+    const uploadCtxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as InstanceType<UploadCtxProvider>;
+    const api = uploadCtxProvider.api;
+
+    const eventHandler = vi.fn<(e: CustomEvent<EventPayload['file-added']>) => void>();
+
+    uploadCtxProvider.addEventListener('file-added', eventHandler);
+
+    const url =
+      'https://images.unsplash.com/photo-1699102241946-45c5e1937d69?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&dl=prithiviraj-a-fa7Stge3YXs-unsplash.jpg&w=640';
+    api.addFileFromUrl(url);
+
+    const eventPayload = await vi.waitFor(() => {
+      expect(eventHandler).toHaveBeenCalledOnce();
+      return eventHandler.mock.calls[0][0].detail;
+    });
+
+    expect(eventPayload).toMatchObject(expect.objectContaining({ status: 'idle', externalUrl: url }));
+  });
+
+  it('should emit events after uploader re-mount', async () => {
+    const uploader = page.getByTestId('uc-file-uploader-regular').query()!;
+    for (let i = 0; i < 5; i++) {
+      uploader.remove();
+      page.render(uploader);
+    }
+
+    const uploadCtxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as InstanceType<UploadCtxProvider>;
+    const api = uploadCtxProvider.api;
+
+    const eventHandler = vi.fn<(e: CustomEvent<EventPayload['file-added']>) => void>();
+
+    uploadCtxProvider.addEventListener('file-added', eventHandler);
+
+    const url =
+      'https://images.unsplash.com/photo-1699102241946-45c5e1937d69?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&dl=prithiviraj-a-fa7Stge3YXs-unsplash.jpg&w=640';
+    api.addFileFromUrl(url);
+
+    const eventPayload = await vi.waitFor(() => {
+      expect(eventHandler).toHaveBeenCalledOnce();
       return eventHandler.mock.calls[0][0].detail;
     });
 
