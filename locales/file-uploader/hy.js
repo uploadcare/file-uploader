@@ -122,4 +122,9 @@ export default {
   'select-all': 'Ընտրել բոլորը',
   'deselect-all': 'Հրաժարվել բոլորից',
   'waiting-for': 'Սպասում եմ {{source}}',
+  'a11y-cloud-editor-apply-aspect-ratio': 'Կիրառել գործողություն {{name}} {{value}}',
+  'aspect-ratio': 'Կողմերի հարաբերություն',
+  'crop-to-shape': 'Կտրել մինչև {{value}}',
+
+  custom: 'Հարմարեցված',
 };

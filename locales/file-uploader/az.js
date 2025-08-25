@@ -122,4 +122,9 @@ export default {
   queued: 'Növbədə',
   'a11y-file-item-status': '{{fileName}} faylı {{status}} statusundadır',
   'waiting-for': '{{source}} gözlənilir',
+  'a11y-cloud-editor-apply-aspect-ratio': '{{name}} {{value}} əməliyyatını tətbiq et',
+  'aspect-ratio': 'En-boy nisbəti',
+  'crop-to-shape': '{{value}} ölçüsünə kəs',
+
+  custom: 'Xüsusi',
 };

@@ -125,4 +125,10 @@ export default {
   'select-all': 'Seleziona tutto',
   'deselect-all': 'Deseleziona tutto',
   'waiting-for': 'In attesa di {{source}}',
+  'a11y-cloud-editor-apply-aspect-ratio': 'Applica operazione {{name}} {{value}}',
+  'aspect-ratio': "Rapporto d'aspetto",
+
+  'crop-to-shape': 'Ritaglia a {{value}}',
+
+  custom: 'Personalizzato',
 };

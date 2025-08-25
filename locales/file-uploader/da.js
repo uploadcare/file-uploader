@@ -123,4 +123,10 @@ export default {
   queued: 'I kø',
   'a11y-file-item-status': 'Filen {{fileName}} er i status {{status}}',
   'waiting-for': 'Venter på {{source}}',
+  'a11y-cloud-editor-apply-aspect-ratio': 'Anvend handling {{name}} {{value}}',
+  'aspect-ratio': 'Bredde-højdeforhold',
+
+  'crop-to-shape': 'Beskær til {{value}}',
+
+  custom: 'Tilpasset',
 };

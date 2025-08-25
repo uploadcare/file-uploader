@@ -125,4 +125,10 @@ export default {
   'select-all': 'Selectează tot',
   'deselect-all': 'Deselectează tot',
   'waiting-for': 'Așteptare pentru {{source}}',
+  'a11y-cloud-editor-apply-aspect-ratio': 'Aplică operația {{name}} {{value}}',
+  'aspect-ratio': 'Raport de aspect',
+
+  'crop-to-shape': 'Decupează la {{value}}',
+
+  custom: 'Personalizat',
 };

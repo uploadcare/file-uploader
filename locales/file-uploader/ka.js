@@ -122,4 +122,10 @@ export default {
   'select-all': 'ყველას არჩევა',
   'deselect-all': 'ყველას არჩევის გაუქმება',
   'waiting-for': 'ველოდები {{source}}',
+  'a11y-cloud-editor-apply-aspect-ratio': 'გამოიყენეთ ოპერაცია {{name}} {{value}}',
+  'aspect-ratio': 'გვერდების თანაფარდობა',
+
+  'crop-to-shape': 'შემოკლება {{value}}-მდე',
+
+  custom: 'მორგებული',
 };

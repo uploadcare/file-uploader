@@ -125,4 +125,10 @@ export default {
   queued: 'En cua',
   'a11y-file-item-status': 'El fitxer {{fileName}} està en estat {{status}}',
   'waiting-for': 'Esperant per {{source}}',
+  'a11y-cloud-editor-apply-aspect-ratio': 'Aplicar operació {{name}} {{value}}',
+  'aspect-ratio': "Relació d'aspecte",
+
+  'crop-to-shape': 'Retalla a {{value}}',
+
+  custom: 'Personalitzat',
 };

@@ -126,4 +126,10 @@ export default {
   'deselect-all': 'Zrušiť výber všetkého',
   'waiting-for': 'Čaká sa na {{source}}',
   queued: 'Vo fronte',
+  'a11y-cloud-editor-apply-aspect-ratio': 'Použiť operáciu {{name}} {{value}}',
+  'aspect-ratio': 'Pomer strán',
+
+  'crop-to-shape': 'Orezať na {{value}}',
+
+  custom: 'Vlastný',
 };

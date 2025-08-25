@@ -124,4 +124,10 @@ export default {
   'select-all': 'בחר הכל',
   'deselect-all': 'בטל בחירת הכל',
   'waiting-for': 'ממתין ל{{source}}',
+  'a11y-cloud-editor-apply-aspect-ratio': 'החל פעולה {{name}} {{value}}',
+  'aspect-ratio': 'יחס גובה-רוחב',
+
+  'crop-to-shape': 'חיתוך ל{{value}}',
+
+  custom: 'מותאם אישית',
 };

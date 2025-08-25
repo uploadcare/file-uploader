@@ -122,4 +122,10 @@ export default {
   'select-all': 'Velg alle',
   'deselect-all': 'Fjern alle',
   'waiting-for': 'Venter på {{source}}',
+  'a11y-cloud-editor-apply-aspect-ratio': 'Bruk handling {{name}} {{value}}',
+  'aspect-ratio': 'Bredde-høydeforhold',
+
+  'crop-to-shape': 'Beskjær til {{value}}',
+
+  custom: 'Tilpasset',
 };

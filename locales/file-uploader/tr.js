@@ -122,4 +122,10 @@ export default {
   'select-all': 'Hepsini seç',
   'deselect-all': 'Hiçbirini seçme',
   'waiting-for': '{{source}} bekleniyor',
+  'a11y-cloud-editor-apply-aspect-ratio': '{{name}} {{value}} işlemini uygula',
+  'aspect-ratio': 'En boy oranı',
+
+  'crop-to-shape': '{{value}} boyutuna kırp',
+
+  custom: 'Özel',
 };

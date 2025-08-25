@@ -122,4 +122,10 @@ export default {
   'select-all': '全选',
   'deselect-all': '取消全选',
   'waiting-for': '等待 {{source}}',
+  'a11y-cloud-editor-apply-aspect-ratio': '应用操作 {{name}} {{value}}',
+  'aspect-ratio': '宽高比',
+
+  'crop-to-shape': '裁剪为 {{value}}',
+
+  custom: '自定义',
 };

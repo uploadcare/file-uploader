@@ -126,4 +126,10 @@ export default {
   'select-all': 'Вибрати всі',
   'deselect-all': 'Скасувати вибір всіх',
   'waiting-for': 'Очікування {{source}}',
+  'a11y-cloud-editor-apply-aspect-ratio': 'Застосувати операцію {{name}} {{value}}',
+  'aspect-ratio': 'Співвідношення сторін',
+
+  'crop-to-shape': 'Обрізати до {{value}}',
+
+  custom: 'Користувацький',
 };

@@ -22,6 +22,8 @@ declare namespace JSX {
   interface IntrinsicElements {
     'uc-crop-frame': any;
     'uc-editor-crop-button-control': any;
+    'uc-editor-aspect-ratio-button-control': any;
+    'uc-editor-freeform-button-control': any;
     'uc-editor-filter-control': any;
     'uc-editor-operation-control': any;
     'uc-editor-image-cropper': any;

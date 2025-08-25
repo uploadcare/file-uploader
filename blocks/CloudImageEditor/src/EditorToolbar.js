@@ -2,6 +2,7 @@
 import { debounce } from '../../utils/debounce.js';
 import { Block } from '../../../abstract/Block.js';
 import { EditorCropButtonControl } from './EditorCropButtonControl.js';
+import { EditorAspectRatioButtonControl, EditorFreeformButtonControl } from './EditorAspectRatioButtonControl.js';
 import { EditorFilterControl } from './EditorFilterControl.js';
 import { EditorOperationControl } from './EditorOperationControl.js';
 import { FAKE_ORIGINAL_FILTER } from './EditorSlider.js';
@@ -64,9 +65,12 @@ export class EditorToolbar extends Block {
     this.init$ = {
       ...this.init$,
       '*sliderEl': null,
+      '*listAspectRatioEl': null,
       /** @type {import('./types.js').LoadingOperations} */
       '*loadingOperations': new Map(),
       '*showSlider': false,
+      '*showListAspectRatio': false,
+      hideSliderOrList: false,
       '*currentFilter': FAKE_ORIGINAL_FILTER,
       '*currentOperation': null,
       showLoader: false,
@@ -145,6 +149,11 @@ export class EditorToolbar extends Block {
   /** @private */
   _onSliderClose() {
     this.$['*showSlider'] = false;
+
+    if (this.$['*tabId'] === TabId.CROP) {
+      this.$['*showListAspectRatio'] = false;
+    }
+
     if (this.$['*tabId'] === TabId.TUNING) {
       this.ref['tooltip-el'].classList.toggle('uc-info-tooltip_visible', false);
     }
@@ -185,13 +194,53 @@ export class EditorToolbar extends Block {
 
   /**
    * @private
+   * @param {import('./types.js').CropAspectRatio} config
+   */
+  _createAspectRatioConrol(config) {
+    const el = new EditorAspectRatioButtonControl();
+    // @ts-expect-error TODO: fix
+    el.aspectRatio = config;
+    return el;
+  }
+
+  _createFreeformConrol() {
+    const el = new EditorFreeformButtonControl();
+    return el;
+  }
+
+  _clearListAspectRatio() {
+    this.$['*listAspectRatioEl'].innerHTML = '';
+  }
+
+  /**
+   * @private
    * @param {String} tabId
    */
   _renderControlsList(tabId) {
     let listEl = this.ref[`controls-list-${tabId}`];
     let fr = document.createDocumentFragment();
 
+    this._clearListAspectRatio();
+
     if (tabId === TabId.CROP) {
+      const hasFreeformAspectRatio = this.$['*cropPresetList'].length >= 3;
+
+      if (hasFreeformAspectRatio) {
+        const el = this._createFreeformConrol();
+        fr.appendChild(el);
+      }
+
+      this.$['*cropPresetList'].forEach(
+        /** @param {import('./types.js').CropAspectRatio} it */ (it) => {
+          let el = this._createAspectRatioConrol(it);
+          fr.appendChild(el);
+
+          if (hasFreeformAspectRatio) {
+            this.$['*listAspectRatioEl'].appendChild(el);
+          }
+        },
+      );
+
       this.$.cropOperations.forEach(
         /** @param {string} operation */ (operation) => {
           let el = this._createToggleControl(operation);
@@ -327,6 +376,7 @@ export class EditorToolbar extends Block {
     super.initCallback();
 
     this.$['*sliderEl'] = this.ref['slider-el'];
+    this.$['*listAspectRatioEl'] = this.ref['list-el'];
 
     this.sub('*imageSize', (imageSize) => {
       if (imageSize) {
@@ -385,6 +435,14 @@ export class EditorToolbar extends Block {
     this.sub('*showSlider', (showSlider) => {
       this.$['presence.subToolbar'] = showSlider;
       this.$['presence.mainToolbar'] = !showSlider;
+
+      this.$.hideSliderOrList = true;
+    });
+
+    this.sub('*showListAspectRatio', (show) => {
+      this.$['presence.subToolbar'] = show;
+      this.$['presence.mainToolbar'] = !show;
+      this.$.hideSliderOrList = false;
     });
 
     this.sub('*tabList', (tabList) => {
@@ -405,6 +463,7 @@ export class EditorToolbar extends Block {
 
   destroyCallback() {
     this.$['*showSlider'] = false;
+    this.$['*showListAspectRatio'] = false;
   }
 }
 
@@ -439,8 +498,12 @@ EditorToolbar.template = /* HTML */ `
       class="uc-sub-toolbar"
       set="visible: presence.subToolbar; styles: presence.subBottomToolbarStyles"
     >
-      <div class="uc-slider">
+      <div class="uc-slider" set="@hidden:!hideSliderOrList">
         <uc-editor-slider ref="slider-el"></uc-editor-slider>
+      </div>
+
+      <div set="@hidden:hideSliderOrList" class="uc-list-aspect-ratio-container">
+        <div class="uc-list-aspect-ratio" ref="list-el"></div>
       </div>
       <div class="uc-controls-row">
         <uc-btn-ui theme="secondary" set="onclick: on.cancelSlider" l10n="@text:cancel"> </uc-btn-ui>

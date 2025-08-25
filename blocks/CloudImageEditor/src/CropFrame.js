@@ -394,8 +394,8 @@ export class CropFrame extends Block {
     /** @type {import('./types.js').Rectangle} */
     let imageBox = this.$['*imageBox'];
     let rect = /** @type {import('./types.js').Rectangle} */ (this._dragStartCrop) ?? this.$['*cropBox'];
-    /** @type {import('./types.js').CropPresetList[0]} */
-    const cropPreset = this.$['*cropPresetList']?.[0];
+
+    const cropPreset = this.$['*currentAspectRatio'];
     const aspectRatio = cropPreset ? cropPreset.width / cropPreset.height : undefined;
 
     if (direction === '') {
@@ -518,7 +518,7 @@ export class CropFrame extends Block {
     this._createBackdrop();
     this._createFrame();
 
-    this.sub('*imageBox', () => {
+    this.sub('*imageBox', (value) => {
       this._resizeBackdrop();
       window.requestAnimationFrame(() => {
         this._render();

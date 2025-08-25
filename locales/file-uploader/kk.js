@@ -122,4 +122,10 @@ export default {
   'select-all': 'Барлығын таңдау',
   'deselect-all': 'Барлығын таңдаудан шығару',
   'waiting-for': 'Күтіп тұр {{source}}',
+  'a11y-cloud-editor-apply-aspect-ratio': '{{name}} {{value}} операциясын қолданыңыз',
+  'aspect-ratio': 'Қабырғалар қатынасы',
+
+  'crop-to-shape': '{{value}} өлшеміне қиып алу',
+
+  custom: 'Теңшеулі',
 };

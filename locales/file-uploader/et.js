@@ -122,4 +122,10 @@ export default {
   queued: 'Järjekorras',
   'a11y-file-item-status': 'Fail {{fileName}} on seisundis {{status}}',
   'waiting-for': 'Ootel {{source}}',
+  'a11y-cloud-editor-apply-aspect-ratio': 'Rakenda toiming {{name}} {{value}}',
+  'aspect-ratio': 'Külgede suhe',
+
+  'crop-to-shape': 'Kärbi suuruseks {{value}}',
+
+  custom: 'Kohandatud',
 };
