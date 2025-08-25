@@ -128,6 +128,7 @@ export default {
   'a11y-cloud-editor-apply-aspect-ratio': 'Applica operazione {{name}} {{value}}',
   'aspect-ratio': "Rapporto d'aspetto",
 
-  'crop-shape': 'Forma di ritaglio',
+  'crop-to-shape': 'Ritaglia a {{value}}',
+
   custom: 'Personalizzato',
 };

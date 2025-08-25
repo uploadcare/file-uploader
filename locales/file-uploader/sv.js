@@ -125,6 +125,7 @@ export default {
   'a11y-cloud-editor-apply-aspect-ratio': 'Använd åtgärd {{name}} {{value}}',
   'aspect-ratio': 'Bildförhållande',
 
-  'crop-shape': 'Beskärningsform',
+  'crop-to-shape': 'Beskär till {{value}}',
+
   custom: 'Anpassad',
 };

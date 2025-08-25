@@ -125,6 +125,7 @@ export default {
   'a11y-cloud-editor-apply-aspect-ratio': 'Áp dụng thao tác {{name}} {{value}}',
   'aspect-ratio': 'Tỷ lệ khung hình',
 
-  'crop-shape': 'Hình dạng cắt xén',
+  'crop-to-shape': 'Cắt theo {{value}}',
+
   custom: 'Tùy chỉnh',
 };

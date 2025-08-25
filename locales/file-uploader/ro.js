@@ -128,6 +128,7 @@ export default {
   'a11y-cloud-editor-apply-aspect-ratio': 'Aplică operația {{name}} {{value}}',
   'aspect-ratio': 'Raport de aspect',
 
-  'crop-shape': 'Formă de decupare',
+  'crop-to-shape': 'Decupează la {{value}}',
+
   custom: 'Personalizat',
 };

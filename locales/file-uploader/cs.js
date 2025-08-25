@@ -130,6 +130,7 @@ export default {
   'a11y-cloud-editor-apply-aspect-ratio': 'Použít operaci {{name}} {{value}}',
   'aspect-ratio': 'Poměr stran',
 
-  'crop-shape': 'Tvar ořezu',
+  'crop-to-shape': 'Oříznout na {{value}}',
+
   custom: 'Vlastní',
 };

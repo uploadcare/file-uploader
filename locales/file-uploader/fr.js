@@ -128,6 +128,7 @@ export default {
   'a11y-cloud-editor-apply-aspect-ratio': "Appliquer l'opération {{name}} {{value}}",
   'aspect-ratio': "Rapport d'aspect",
 
-  'crop-shape': 'Forme de rognage',
+  'crop-to-shape': 'Rogner en {{value}}',
+
   custom: 'Personnalisé',
 };

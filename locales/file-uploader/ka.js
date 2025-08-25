@@ -125,6 +125,7 @@ export default {
   'a11y-cloud-editor-apply-aspect-ratio': 'გამოიყენეთ ოპერაცია {{name}} {{value}}',
   'aspect-ratio': 'გვერდების თანაფარდობა',
 
-  'crop-shape': 'ჭრის ფორმა',
+  'crop-to-shape': 'შემოკლება {{value}}-მდე',
+
   custom: 'მორგებული',
 };

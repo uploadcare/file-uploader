@@ -125,6 +125,7 @@ export default {
   'a11y-cloud-editor-apply-aspect-ratio': 'Beita aðgerð {{name}} {{value}}',
   'aspect-ratio': 'Hlutfall hliða',
 
-  'crop-shape': 'Skurðlögun',
+  'crop-to-shape': 'Sníða í {{value}}',
+
   custom: 'Sérsniðið',
 };

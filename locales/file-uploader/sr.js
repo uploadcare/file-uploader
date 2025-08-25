@@ -127,6 +127,7 @@ export default {
   'a11y-cloud-editor-apply-aspect-ratio': 'Примени операцију {{name}} {{value}}',
   'aspect-ratio': 'Однос страница',
 
-  'crop-shape': 'Облик исецања',
+  'crop-to-shape': 'Исеци на {{value}}',
+
   custom: 'Прилагођен',
 };

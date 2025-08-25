@@ -124,6 +124,7 @@ export default {
   'waiting-for': 'Սպասում եմ {{source}}',
   'a11y-cloud-editor-apply-aspect-ratio': 'Կիրառել գործողություն {{name}} {{value}}',
   'aspect-ratio': 'Կողմերի հարաբերություն',
-  'crop-shape': 'Կտրելու ձև',
+  'crop-to-shape': 'Կտրել մինչև {{value}}',
+
   custom: 'Հարմարեցված',
 };

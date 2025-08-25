@@ -125,6 +125,7 @@ export default {
   'a11y-cloud-editor-apply-aspect-ratio': 'Bruk handling {{name}} {{value}}',
   'aspect-ratio': 'Bredde-høydeforhold',
 
-  'crop-shape': 'Beskjæringsform',
+  'crop-to-shape': 'Beskjær til {{value}}',
+
   custom: 'Tilpasset',
 };

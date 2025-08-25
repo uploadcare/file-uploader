@@ -125,6 +125,7 @@ export default {
   'a11y-cloud-editor-apply-aspect-ratio': '应用操作 {{name}} {{value}}',
   'aspect-ratio': '宽高比',
 
-  'crop-shape': '裁剪形状',
+  'crop-to-shape': '裁剪为 {{value}}',
+
   custom: '自定义',
 };

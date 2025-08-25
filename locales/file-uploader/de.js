@@ -127,6 +127,7 @@ export default {
   'a11y-cloud-editor-apply-aspect-ratio': 'Vorgang {{name}} {{value}} anwenden',
   'aspect-ratio': 'Seitenverhältnis',
 
-  'crop-shape': 'Zuschneideform',
+  'crop-to-shape': 'Zuschneiden auf {{value}}',
+
   custom: 'Benutzerdefiniert',
 };

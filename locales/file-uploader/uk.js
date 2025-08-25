@@ -129,6 +129,7 @@ export default {
   'a11y-cloud-editor-apply-aspect-ratio': 'Застосувати операцію {{name}} {{value}}',
   'aspect-ratio': 'Співвідношення сторін',
 
-  'crop-shape': 'Форма обрізки',
+  'crop-to-shape': 'Обрізати до {{value}}',
+
   custom: 'Користувацький',
 };

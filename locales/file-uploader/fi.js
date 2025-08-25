@@ -126,6 +126,7 @@ export default {
   'a11y-cloud-editor-apply-aspect-ratio': 'Käytä toimintoa {{name}} {{value}}',
   'aspect-ratio': 'Kuvasuhde',
 
-  'crop-shape': 'Rajauksen muoto',
+  'crop-to-shape': 'Rajaa arvoon {{value}}',
+
   custom: 'Mukautettu',
 };

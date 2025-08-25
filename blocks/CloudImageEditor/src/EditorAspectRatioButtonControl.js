@@ -31,14 +31,16 @@ export class EditorFreeformButtonControl extends EditorButtonControl {
   initCallback() {
     super.initCallback();
 
-    this.$['title'] = this.l10n('crop-shape');
     this.$['icon'] = 'freeform';
-
-    this.bindL10n('title-prop', () => {
-      return this.l10n('crop-shape');
-    });
-
     this.$['on.click'] = this.handleClick.bind(this);
+    this.$.active = !!this.$['*currentAspectRatio'];
+
+    this.sub('*currentAspectRatio', (opt) => {
+      const value = opt.hasFreeform ? this.l10n('custom') : `${opt.width}:${opt.height}`;
+      this.$['title'] = this.l10n('crop-to-shape', { value });
+
+      this.bindL10n('title-prop', () => this.$['title']);
+    });
   }
 
   handleClick() {

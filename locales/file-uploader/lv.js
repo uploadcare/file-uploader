@@ -127,6 +127,7 @@ export default {
   'a11y-cloud-editor-apply-aspect-ratio': 'Lietot darbību {{name}} {{value}}',
   'aspect-ratio': 'Malu attiecība',
 
-  'crop-shape': 'Apgriešanas forma',
+  'crop-to-shape': 'Apgriezt līdz {{value}}',
+
   custom: 'Pielāgots',
 };

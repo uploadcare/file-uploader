@@ -127,6 +127,7 @@ export default {
   'a11y-cloud-editor-apply-aspect-ratio': 'Εφαρμογή λειτουργίας {{name}} {{value}}',
   'aspect-ratio': 'Λόγος διαστάσεων',
 
-  'crop-shape': 'Σχήμα περικοπής',
+  'crop-to-shape': 'Περικοπή σε {{value}}',
+
   custom: 'Προσαρμοσμένο',
 };

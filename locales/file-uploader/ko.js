@@ -124,6 +124,7 @@ export default {
   'a11y-cloud-editor-apply-aspect-ratio': '작업 {{name}} {{value}} 적용',
   'aspect-ratio': '종횡비',
 
-  'crop-shape': '자르기 모양',
+  'crop-to-shape': '{{value}}로 자르기',
+
   custom: '사용자 정의',
 };

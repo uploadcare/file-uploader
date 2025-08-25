@@ -127,6 +127,7 @@ export default {
   'a11y-cloud-editor-apply-aspect-ratio': 'החל פעולה {{name}} {{value}}',
   'aspect-ratio': 'יחס גובה-רוחב',
 
-  'crop-shape': 'צורת חיתוך',
+  'crop-to-shape': 'חיתוך ל{{value}}',
+
   custom: 'מותאם אישית',
 };

@@ -124,6 +124,7 @@ export default {
   'waiting-for': 'Waiting for {{source}}',
   queued: 'Queued',
   'aspect-ratio': 'Aspect ratio',
-  'crop-shape': 'Crop shape',
+  'crop-to-shape': 'Crop to {{value}}',
+
   custom: 'Custom',
 };

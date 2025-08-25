@@ -125,6 +125,7 @@ export default {
   'a11y-cloud-editor-apply-aspect-ratio': '{{name}} {{value}} операциясын қолданыңыз',
   'aspect-ratio': 'Қабырғалар қатынасы',
 
-  'crop-shape': 'Қию пішіні',
+  'crop-to-shape': '{{value}} өлшеміне қиып алу',
+
   custom: 'Теңшеулі',
 };

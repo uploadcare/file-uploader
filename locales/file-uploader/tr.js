@@ -125,6 +125,7 @@ export default {
   'a11y-cloud-editor-apply-aspect-ratio': '{{name}} {{value}} işlemini uygula',
   'aspect-ratio': 'En boy oranı',
 
-  'crop-shape': 'Kırpma şekli',
+  'crop-to-shape': '{{value}} boyutuna kırp',
+
   custom: 'Özel',
 };

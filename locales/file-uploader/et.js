@@ -125,6 +125,7 @@ export default {
   'a11y-cloud-editor-apply-aspect-ratio': 'Rakenda toiming {{name}} {{value}}',
   'aspect-ratio': 'Külgede suhe',
 
-  'crop-shape': 'Kärpimise kuju',
+  'crop-to-shape': 'Kärbi suuruseks {{value}}',
+
   custom: 'Kohandatud',
 };
