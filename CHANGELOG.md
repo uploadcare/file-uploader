@@ -1,3 +1,9 @@
+# [1.20.0](https://github.com/uploadcare/file-uploader/compare/v1.19.5...v1.20.0) (2025-08-25)
+
+### Features
+
+- **cloud-editor:** added multiple crop presets ([#845](https://github.com/uploadcare/file-uploader/issues/845)) ([720c2e3](https://github.com/uploadcare/file-uploader/commit/720c2e3004d2e574b5eff3c59fb0039584f704b8)). See the [documentation](https://uploadcare.com/docs/file-uploader/options/#crop-preset) for details.
+
 ## [1.19.5](https://github.com/uploadcare/file-uploader/compare/v1.19.4...v1.19.5) (2025-08-21)
 
 ### Bug Fixes
