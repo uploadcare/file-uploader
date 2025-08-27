@@ -57,7 +57,7 @@ export class UploaderBlock extends ActivityBlock {
     }
 
     if (!this.hasCtxOwner && this.couldBeCtxOwner) {
-      this.initCtxOwner();
+      this._initCtxOwner();
     }
   }
 
@@ -94,12 +94,26 @@ export class UploaderBlock extends ActivityBlock {
 
   /** @protected */
   destroyCtxCallback() {
-    this._unobserveCollectionProperties?.();
-    this._unobserveCollection?.();
     this.uploadCollection.destroy();
     this.$['*uploadCollection'] = null;
 
     super.destroyCtxCallback();
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+
+    if (this.isCtxOwner) {
+      this._unobserveUploadCollection();
+    }
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+
+    if (this.isCtxOwner) {
+      this._observeUploadCollection();
+    }
   }
 
   destroyCallback() {
@@ -109,16 +123,10 @@ export class UploaderBlock extends ActivityBlock {
   }
 
   /** @private */
-  initCtxOwner() {
+  _initCtxOwner() {
     this.isCtxOwner = true;
 
-    /** @private */
-    this._unobserveCollection = this.uploadCollection.observeCollection(this._handleCollectionUpdate);
-
-    /** @private */
-    this._unobserveCollectionProperties = this.uploadCollection.observeProperties(
-      this._handleCollectionPropertiesUpdate,
-    );
+    this._observeUploadCollection();
 
     this.subConfigValue('maxConcurrentRequests', (value) => {
       this.$['*uploadQueue'].concurrency = Number(value) || 1;
@@ -127,6 +135,28 @@ export class UploaderBlock extends ActivityBlock {
     if (!this.$['*secureUploadsManager']) {
       this.$['*secureUploadsManager'] = new SecureUploadsManager(this);
     }
+  }
+
+  /** @private */
+  _observeUploadCollection() {
+    this._unobserveUploadCollection();
+
+    /** @private */
+    this._unobserveCollection = this.uploadCollection.observeCollection(this._handleCollectionUpdate);
+
+    /** @private */
+    this._unobserveCollectionProperties = this.uploadCollection.observeProperties(
+      this._handleCollectionPropertiesUpdate,
+    );
+  }
+
+  /** @private */
+  _unobserveUploadCollection() {
+    this._unobserveCollectionProperties?.();
+    this._unobserveCollection?.();
+
+    this._unobserveCollectionProperties = undefined;
+    this._unobserveCollection = undefined;
   }
 
   /**
