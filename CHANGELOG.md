@@ -1,3 +1,9 @@
+## [1.20.1](https://github.com/uploadcare/file-uploader/compare/v1.20.0...v1.20.1) (2025-08-27)
+
+### Bug Fixes
+
+- prevent event duplication when uploader is remounted multiple times ([#849](https://github.com/uploadcare/file-uploader/issues/849)) ([dde4566](https://github.com/uploadcare/file-uploader/commit/dde4566f88f51aacd80d8a559ebcfe0f2f71bfc8))
+
 # [1.20.0](https://github.com/uploadcare/file-uploader/compare/v1.19.5...v1.20.0) (2025-08-25)
 
 ### Features
