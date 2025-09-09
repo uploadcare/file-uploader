@@ -9,8 +9,8 @@
 </p>
 <p align="center">
   <a href="https://uploadcare.com/?ref=github-readme">Website</a> •
-  <a href="https://uploadcare.com/docs/file-uploader?ref=github-readme">Docs</a> • 
-  <a href="https://uploadcare.com/blog?ref=github-readme">Blog</a> • 
+  <a href="https://uploadcare.com/docs/file-uploader?ref=github-readme">Docs</a> •
+  <a href="https://uploadcare.com/blog?ref=github-readme">Blog</a> •
   <a href="https://discord.gg/mKWRgRsVz8?ref=github-readme">Discord</a> •
   <a href="https://twitter.com/Uploadcare?ref=github-readme">Twitter</a>
 </p>
@@ -126,6 +126,12 @@ Discover more about configuration options in [our documentation](https://uploadc
 Latest desktop and mobile stable versions of Chrome, Edge, Firefox, Opera, and Safari are supported.
 
 Internet Explorer is outdated and [not supported anymore](https://uploadcare.com/blog/uploadcare-stops-internet-explorer-support/?ref=github-readme).
+
+## Quality Insights
+
+Quality Insights is a plugin for File Uploader that helps us better understand how the uploader is used: which features are enabled, which scenarios occur most frequently, and how the upload process works overall.
+
+Special attention is given to collecting error data — this allows us to quickly identify and resolve issues, improving the stability and reliability of the uploader. All collected data is non-personal, does not identify individual users, and is never shared with external services. The information is used only within the product to set development priorities and enhance user convenience
 
 ## Contribution
 
