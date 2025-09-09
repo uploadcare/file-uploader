@@ -86,4 +86,6 @@ export const initialConfig = {
   cloudImageEditorMaskHref: null,
 
   testMode: false,
+
+  qualityInsights: true,
 };

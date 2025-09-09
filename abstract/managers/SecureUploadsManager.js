@@ -1,20 +1,20 @@
 // @ts-check
 
-import { isSecureTokenExpired } from '../utils/isSecureTokenExpired.js';
+import { isSecureTokenExpired } from '../../utils/isSecureTokenExpired.js';
 
 export class SecureUploadsManager {
   /**
    * @private
-   * @type {import('./UploaderBlock.js').UploaderBlock}
+   * @type {import('../UploaderBlock.js').UploaderBlock}
    */
   _block;
   /**
    * @private
-   * @type {import('../types').SecureUploadsSignatureAndExpire | null}
+   * @type {import('../../types/index.js').SecureUploadsSignatureAndExpire | null}
    */
   _secureToken = null;
 
-  /** @param {import('./UploaderBlock.js').UploaderBlock} block */
+  /** @param {import('../UploaderBlock.js').UploaderBlock} block */
   constructor(block) {
     this._block = block;
   }
@@ -27,7 +27,7 @@ export class SecureUploadsManager {
     this._block.debugPrint('[secure-uploads]', ...args);
   }
 
-  /** @returns {Promise<import('../types').SecureUploadsSignatureAndExpire | null>} */
+  /** @returns {Promise<import('../../types/index.js').SecureUploadsSignatureAndExpire | null>} */
   async getSecureToken() {
     const { secureSignature, secureExpire, secureUploadsSignatureResolver } = this._block.cfg;
 

@@ -1,7 +1,7 @@
 // @ts-check
-import { debounce } from '../blocks/utils/debounce.js';
-import { resolveLocaleDefinition } from './localeRegistry.js';
-import { default as en } from '../locales/file-uploader/en.js';
+import { debounce } from '../../blocks/utils/debounce.js';
+import { resolveLocaleDefinition } from '../localeRegistry.js';
+import { default as en } from '../../locales/file-uploader/en.js';
 
 /** @param {string} key */
 export const localeStateKey = (key) => `*l10n/${key}`;
@@ -10,7 +10,7 @@ export const DEFAULT_LOCALE = 'en';
 export class LocaleManager {
   /**
    * @private
-   * @type {import('./Block.js').Block | null}
+   * @type {import('../Block.js').Block | null}
    */
   _blockInstance = null;
 
@@ -25,11 +25,11 @@ export class LocaleManager {
 
   /**
    * @private
-   * @type {Map<import('./Block.js').Block, Map<string, () => void>>}
+   * @type {Map<import('../Block.js').Block, Map<string, () => void>>}
    */
   _boundBlocks = new Map();
 
-  /** @param {import('./Block.js').Block} blockInstance */
+  /** @param {import('../Block.js').Block} blockInstance */
   constructor(blockInstance) {
     this._blockInstance = blockInstance;
 
@@ -92,7 +92,7 @@ export class LocaleManager {
   }
 
   /**
-   * @param {import('./Block.js').Block} block
+   * @param {import('../Block.js').Block} block
    * @param {string} key
    * @param {() => void} resolver
    */
@@ -112,7 +112,7 @@ export class LocaleManager {
     this._boundBlocks.get(block)?.set(key, destroyCallback);
   }
 
-  /** @param {import('./Block.js').Block} block */
+  /** @param {import('../Block.js').Block} block */
   destroyL10nBindings(block) {
     const callbacks = this._boundBlocks.get(block);
     if (!callbacks) {

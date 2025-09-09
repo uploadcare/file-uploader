@@ -1,9 +1,9 @@
 // @ts-check
 import { Block } from '../../abstract/Block.js';
-import { ModalEvents } from '../../abstract/ModalManager.js';
+import { ModalEvents } from '../../abstract/managers/ModalManager.js';
 import { EventType } from '../UploadCtxProvider/EventEmitter.js';
 
-/** @type {import('../../abstract/ModalManager.js').ModalId | null} */
+/** @type {import('../../abstract/managers/ModalManager.js').ModalId | null} */
 let LAST_ACTIVE_MODAL_ID = null;
 
 export class Modal extends Block {
@@ -71,33 +71,31 @@ export class Modal extends Block {
 
   /**
    * @private
-   * @type {import('../../abstract/ModalManager.js').ModalCb}
+   * @type {import('../../abstract/managers/ModalManager.js').ModalCb}
    */
   _handleModalOpen({ id }) {
     if (id === this.id) {
       LAST_ACTIVE_MODAL_ID = id;
       this.show();
+      this.emit(EventType.MODAL_OPEN, { modalId: id }, { debounce: true });
     } else {
       this.hide();
     }
-
-    this.emit(EventType.MODAL_OPEN, { modalId: id }, { debounce: true });
   }
 
   /**
    * @private
-   * @type {import('../../abstract/ModalManager.js').ModalCb}
+   * @type {import('../../abstract/managers/ModalManager.js').ModalCb}
    */
   _handleModalClose({ id }) {
     if (id === this.id) {
       this.hide();
+      this.emit(
+        EventType.MODAL_CLOSE,
+        { modalId: id, hasActiveModals: this.modalManager.hasActiveModals },
+        { debounce: true },
+      );
     }
-
-    this.emit(
-      EventType.MODAL_CLOSE,
-      { modalId: id, hasActiveModals: this.modalManager.hasActiveModals },
-      { debounce: true },
-    );
   }
 
   /** @private */

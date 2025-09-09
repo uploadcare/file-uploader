@@ -103,6 +103,8 @@ const mapping = {
   cloudImageEditorMaskHref: asString,
 
   testMode: asBoolean,
+
+  qualityInsights: asBoolean,
 };
 
 /**

@@ -34,6 +34,6 @@ export const uploaderBlockCtx = (fnCtx) => ({
   '*groupInfo': null,
   /** @type {Set<string>} */
   '*uploadTrigger': new Set(),
-  /** @type {import('./SecureUploadsManager.js').SecureUploadsManager | null} */
+  /** @type {import('./managers/SecureUploadsManager.js').SecureUploadsManager | null} */
   '*secureUploadsManager': null,
 });

@@ -1,29 +1,29 @@
 // @ts-check
-import { EventType } from '../blocks/UploadCtxProvider/EventEmitter.js';
+import { EventType } from '../../blocks/UploadCtxProvider/EventEmitter.js';
 import {
   validateIsImage,
   validateFileType,
   validateMaxSizeLimit,
   validateUploadError,
-} from '../utils/validators/file/index.js';
-import { validateMultiple, validateCollectionUploadError } from '../utils/validators/collection/index.js';
+} from '../../utils/validators/file/index.js';
+import { validateMultiple, validateCollectionUploadError } from '../../utils/validators/collection/index.js';
 
 /**
  * @typedef {(
- *   outputEntry: import('../types').OutputFileEntry,
- *   api: import('./UploaderPublicApi.js').UploaderPublicApi,
- * ) => undefined | import('../types').OutputErrorFile} FuncFileValidator
+ *   outputEntry: import('../../types/index.js').OutputFileEntry,
+ *   api: import('../UploaderPublicApi.js').UploaderPublicApi,
+ * ) => undefined | import('../../types/index.js').OutputErrorFile} FuncFileValidator
  */
 
 /**
  * @typedef {(
  *   collection: ReturnType<
- *     typeof import('./buildOutputCollectionState.js').buildOutputCollectionState<
- *       import('../types').OutputCollectionStatus
+ *     typeof import('../buildOutputCollectionState.js').buildOutputCollectionState<
+ *       import('../../types/index.js').OutputCollectionStatus
  *     >
  *   >,
- *   api: import('./UploaderPublicApi.js').UploaderPublicApi,
- * ) => undefined | import('../types').OutputErrorCollection} FuncCollectionValidator
+ *   api: import('../UploaderPublicApi.js').UploaderPublicApi,
+ * ) => undefined | import('../../types/index.js').OutputErrorCollection} FuncCollectionValidator
  */
 
 const LOGGER = {
@@ -35,7 +35,7 @@ const LOGGER = {
 export class ValidationManager {
   /**
    * @private
-   * @type {import('./UploaderBlock.js').UploaderBlock}
+   * @type {import('../UploaderBlock.js').UploaderBlock}
    */
   _blockInstance;
 
@@ -45,7 +45,7 @@ export class ValidationManager {
   /** @type {FuncCollectionValidator[]} */
   _collectionValidators = [validateMultiple, validateCollectionUploadError];
 
-  /** @param {import('./UploaderBlock.js').UploaderBlock} blockInstance */
+  /** @param {import('../UploaderBlock.js').UploaderBlock} blockInstance */
   constructor(blockInstance) {
     this._blockInstance = blockInstance;
 
@@ -106,7 +106,7 @@ export class ValidationManager {
       this._blockInstance.emit(
         EventType.COMMON_UPLOAD_FAILED,
         () =>
-          /** @type {import('../types').OutputCollectionState<'failed'>} */ (
+          /** @type {import('../../types/index.js').OutputCollectionState<'failed'>} */ (
             this._blockInstance.api.getOutputCollectionState()
           ),
         { debounce: true },
@@ -116,7 +116,7 @@ export class ValidationManager {
 
   /**
    * @private
-   * @param {import('./TypedData.js').TypedData<typeof import('./uploadEntrySchema.js').uploadEntrySchema>} entry
+   * @param {import('../TypedData.js').TypedData<typeof import('../uploadEntrySchema.js').uploadEntrySchema>} entry
    */
   _runFileValidatorsForEntry(entry) {
     const outputEntry = this._blockInstance.api.getOutputItem(entry.uid);

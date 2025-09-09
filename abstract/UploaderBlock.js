@@ -10,10 +10,10 @@ import { debounce } from '../blocks/utils/debounce.js';
 import { customUserAgent } from '../blocks/utils/userAgent.js';
 import { createCdnUrl, createCdnUrlModifiers } from '../utils/cdn-utils.js';
 import { uploaderBlockCtx } from './CTX.js';
-import { SecureUploadsManager } from './SecureUploadsManager.js';
+import { SecureUploadsManager } from './managers/SecureUploadsManager.js';
 import { TypedCollection } from './TypedCollection.js';
 import { UploaderPublicApi } from './UploaderPublicApi.js';
-import { ValidationManager } from './ValidationManager.js';
+import { ValidationManager } from './managers/ValidationManager.js';
 import { uploadEntrySchema } from './uploadEntrySchema.js';
 import { ExternalUploadSource, UploadSource } from '../blocks/utils/UploadSource.js';
 

@@ -106,7 +106,7 @@ export class A11y {
     ]);
   }
 
-  /** @param {import('./Block.js').Block} scope */
+  /** @param {import('../Block.js').Block} scope */
   registerBlock(scope) {
     this._scopedWindow.registerScope(scope);
   }

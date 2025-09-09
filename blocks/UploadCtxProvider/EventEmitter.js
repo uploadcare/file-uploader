@@ -2,6 +2,11 @@
 
 const DEFAULT_DEBOUNCE_TIMEOUT = 20;
 
+export const InternalEventType = Object.freeze({
+  INIT_SOLUTION: 'init-solution',
+  CHANGE_CONFIG: 'change-config',
+});
+
 export const EventType = Object.freeze({
   FILE_ADDED: 'file-added',
   FILE_REMOVED: 'file-removed',
@@ -24,6 +29,8 @@ export const EventType = Object.freeze({
 
   CHANGE: 'change',
   GROUP_CREATED: 'group-created',
+
+  ...InternalEventType,
 });
 
 /**
@@ -35,8 +42,11 @@ export const EventType = Object.freeze({
  *   [EventType.FILE_UPLOAD_SUCCESS]: import('../../index.js').OutputFileEntry<'success'>;
  *   [EventType.FILE_UPLOAD_FAILED]: import('../../index.js').OutputFileEntry<'failed'>;
  *   [EventType.FILE_URL_CHANGED]: import('../../index.js').OutputFileEntry<'success'>;
- *   [EventType.MODAL_OPEN]: { modalId: import('../../abstract/ModalManager.js').ModalId };
- *   [EventType.MODAL_CLOSE]: { modalId: import('../../abstract/ModalManager.js').ModalId; hasActiveModals: boolean };
+ *   [EventType.MODAL_OPEN]: { modalId: import('../../abstract/managers/ModalManager.js').ModalId };
+ *   [EventType.MODAL_CLOSE]: {
+ *     modalId: import('../../abstract/managers/ModalManager.js').ModalId;
+ *     hasActiveModals: boolean;
+ *   };
  *   [EventType.ACTIVITY_CHANGE]: {
  *     activity: import('../../abstract/ActivityBlock.js').ActivityType;
  *   };
@@ -48,6 +58,8 @@ export const EventType = Object.freeze({
  *   [EventType.COMMON_UPLOAD_FAILED]: import('../../index.js').OutputCollectionState<'failed'>;
  *   [EventType.CHANGE]: import('../../index.js').OutputCollectionState;
  *   [EventType.GROUP_CREATED]: import('../../index.js').OutputCollectionState<'success', 'has-group'>;
+ *   [EventType.INIT_SOLUTION]: void;
+ *   [EventType.CHANGE_CONFIG]: void;
  * }} EventPayload
  */
 

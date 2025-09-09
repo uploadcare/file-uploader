@@ -47,7 +47,7 @@ export { defineLocale } from './abstract/localeRegistry.js';
 export { loadFileUploaderFrom } from './abstract/loadFileUploaderFrom.js';
 export { toKebabCase } from './utils/toKebabCase.js';
 export { UploadSource, ExternalUploadSource } from './blocks/utils/UploadSource.js';
-export { ModalEvents } from './abstract/ModalManager.js';
+export { ModalEvents } from './abstract/managers/ModalManager.js';
 
 export * from './env.js';
 

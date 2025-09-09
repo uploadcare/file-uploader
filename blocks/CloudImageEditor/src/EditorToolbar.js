@@ -16,6 +16,7 @@ import {
   TabId,
 } from './toolbar-constants.js';
 import { viewerImageSrc } from './util.js';
+import { parseFilterValue } from './utils/parseFilterValue.js';
 
 /** @param {String} id */
 function renderTabToggle(id) {
@@ -108,18 +109,36 @@ export class EditorToolbar extends Block {
         hidden: 'uc-tab-toggles--hidden',
         visible: 'uc-tab-toggles--visible',
       },
-      'on.cancel': () => {
+      /** @param {MouseEvent} e */
+      'on.cancel': (e) => {
+        this.telemetryManager.sendEventCloudImageEditor(e, this.$['*tabId'], {
+          action: 'cancel',
+        });
+
         this._cancelPreload?.();
         this.$['*on.cancel']();
       },
-      'on.apply': () => {
+      /** @param {MouseEvent} e */
+      'on.apply': (e) => {
+        this.telemetryManager.sendEventCloudImageEditor(e, this.$['*tabId'], {
+          action: 'apply',
+        });
         this.$['*on.apply'](this.$['*editorTransformations']);
       },
-      'on.applySlider': () => {
+      /** @param {MouseEvent} e */
+      'on.applySlider': (e) => {
+        this.telemetryManager.sendEventCloudImageEditor(e, this.$['*tabId'], {
+          action: 'apply-slider',
+          operation: parseFilterValue(this.$['*operationTooltip']),
+        });
         this.ref['slider-el'].apply();
         this._onSliderClose();
       },
-      'on.cancelSlider': () => {
+      /** @param {MouseEvent} e */
+      'on.cancelSlider': (e) => {
+        this.telemetryManager.sendEventCloudImageEditor(e, this.$['*tabId'], {
+          action: 'cancel-slider',
+        });
         this.ref['slider-el'].cancel();
         this._onSliderClose();
       },
@@ -127,6 +146,7 @@ export class EditorToolbar extends Block {
       'on.clickTab': (e) => {
         const id = /** @type {HTMLElement} */ (e.currentTarget).getAttribute('data-id');
         if (id) {
+          this.telemetryManager.sendEventCloudImageEditor(e, id);
           this._activateTab(id, { fromViewer: false });
         }
       },

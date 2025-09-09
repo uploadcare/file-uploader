@@ -36,9 +36,16 @@ export class EditorCropButtonControl extends EditorButtonControl {
       );
     });
 
-    this.$['on.click'] = () => {
+    this.$['on.click'] = (e) => {
       let prev = this.$['*cropperEl'].getValue(this._operation);
       let next = nextValue(this._operation, prev);
+
+      this.telemetryManager.sendEventCloudImageEditor(e, this.$['*tabId'], {
+        operation: this._operation,
+        next,
+        prev,
+      });
+
       this.$['*cropperEl'].setValue(this._operation, next);
     };
   }

@@ -44,6 +44,14 @@ export class FileItem extends FileItemConfig {
       state: FileItemState.IDLE,
       ariaLabelStatusFile: '',
       onEdit: this._withEntry((entry) => {
+        this.telemetryManager.sendEvent({
+          payload: {
+            metadata: {
+              event: 'edit-file',
+              node: this.tagName,
+            },
+          },
+        });
         this.$['*currentActivityParams'] = {
           internalId: entry.uid,
         };
@@ -51,6 +59,14 @@ export class FileItem extends FileItemConfig {
         this.$['*currentActivity'] = ActivityBlock.activities.CLOUD_IMG_EDIT;
       }),
       onRemove: () => {
+        this.telemetryManager.sendEvent({
+          payload: {
+            metadata: {
+              event: 'remove-file',
+              node: this.tagName,
+            },
+          },
+        });
         this.uploadCollection.remove(this.$.uid);
       },
       onUpload: () => {

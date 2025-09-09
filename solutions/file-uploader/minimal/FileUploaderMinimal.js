@@ -1,7 +1,8 @@
 //@ts-check
 import { ActivityBlock } from '../../../abstract/ActivityBlock.js';
 import { SolutionBlock } from '../../../abstract/SolutionBlock.js';
-import { ModalEvents } from '../../../abstract/ModalManager.js';
+import { ModalEvents } from '../../../abstract/managers/ModalManager.js';
+import { InternalEventType } from '../../../blocks/UploadCtxProvider/EventEmitter.js';
 
 const ACTIVE_CLASS = 'active';
 const EMPTY_CLASS = '';
@@ -18,10 +19,11 @@ export class FileUploaderMinimal extends SolutionBlock {
       isHiddenStartFrom: false,
       classUploadList: EMPTY_CLASS,
       classStartFrom: EMPTY_CLASS,
+      '*solution': this.tagName,
     };
   }
 
-  /** @type {import('../../../abstract/ModalManager.js').ModalCb} */
+  /** @type {import('../../../abstract/managers/ModalManager.js').ModalCb} */
   _handleModalOpen(e) {
     if (e.id === ActivityBlock.activities.CLOUD_IMG_EDIT) {
       this.set$({
@@ -43,7 +45,7 @@ export class FileUploaderMinimal extends SolutionBlock {
     }
   }
 
-  /** @type {import('../../../abstract/ModalManager.js').ModalCb} */
+  /** @type {import('../../../abstract/managers/ModalManager.js').ModalCb} */
   _handleModalClose(e) {
     if (e.id === this.$['*currentActivity']) {
       this.$['*currentActivity'] = ActivityBlock.activities.UPLOAD_LIST;
@@ -59,6 +61,8 @@ export class FileUploaderMinimal extends SolutionBlock {
 
   initCallback() {
     super.initCallback();
+
+    this.emit(InternalEventType.INIT_SOLUTION, undefined);
 
     /** @type {import('../../../abstract/UploaderBlock.js').UploaderBlock} */
     const uBlock = this.ref.uBlock;
