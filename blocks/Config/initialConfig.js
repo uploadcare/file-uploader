@@ -9,7 +9,7 @@ export const DEFAULT_SOCIAL_BASE_URL = 'https://social.uploadcare.com';
 export const DEFAULT_PREFIXED_CDN_BASE_DOMAIN = 'https://ucarecd.net';
 
 /** @type {import('../../types/exported').ConfigType} */
-export const initialConfig = {
+export const initialConfig = Object.freeze({
   pubkey: '',
   multiple: true,
   multipleMin: 0,
@@ -88,4 +88,4 @@ export const initialConfig = {
   testMode: false,
 
   qualityInsights: true,
-};
+});
