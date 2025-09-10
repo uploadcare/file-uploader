@@ -18,7 +18,7 @@ export class TelemetryManager {
   /** @type {import('../Block.js').Block | null} */
   _block = null;
 
-  _config = initialConfig;
+  _config = structuredClone(initialConfig);
 
   /** @type {boolean} */
   _initialized = false;
@@ -37,8 +37,8 @@ export class TelemetryManager {
 
     this._queue = new Queue(10);
 
-    for (const key of /** @type {(keyof import('../../types/exported').ConfigType)[]} */ (Object.keys(initialConfig))) {
-      block.subConfigValue(key, (value) => {
+    for (const key of /** @type {(keyof import('../../types/exported').ConfigType)[]} */ (Object.keys(this._config))) {
+      this._block.subConfigValue(key, (value) => {
         if (this._initialized && this._config[key] !== value) {
           this._block?.emit(EventType.CHANGE_CONFIG, undefined);
         }
