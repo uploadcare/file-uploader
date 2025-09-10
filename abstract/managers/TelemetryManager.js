@@ -149,6 +149,22 @@ export class TelemetryManager {
   }
 
   /**
+   * @param {Error | unknown} error
+   * @param {string} context
+   */
+  sendEventError(error, context = 'unknown') {
+    this.sendEvent({
+      payload: {
+        metadata: {
+          event: 'error',
+          text: `Error in ${context}`,
+          error: /** @type {Error} */ (error).message,
+        },
+      },
+    });
+  }
+
+  /**
    * Method to send telemetry event for Cloud Image Editor.
    *
    * @param {MouseEvent} e

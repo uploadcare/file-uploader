@@ -243,6 +243,7 @@ export class CameraSource extends UploaderBlock {
       }
     } catch (error) {
       console.error('Failed to start recording', error);
+      this.telemetryManager.sendEventError(error, 'camera recording. Failed to start recording');
     }
   };
 
@@ -313,6 +314,7 @@ export class CameraSource extends UploaderBlock {
       });
     } catch (error) {
       console.error('Failed to preview video', error);
+      this.telemetryManager.sendEventError(error, 'camera previewing. Failed to preview video');
     }
   };
 
@@ -682,6 +684,7 @@ export class CameraSource extends UploaderBlock {
     } catch (error) {
       this._setPermissionsState('denied');
       console.log('Failed to capture camera', error);
+      this.telemetryManager.sendEventError(error, 'camera capturing. Failed to capture camera');
     }
   };
 
@@ -699,6 +702,7 @@ export class CameraSource extends UploaderBlock {
       }
     } catch (error) {
       console.log('Failed to use permissions API. Fallback to manual request mode.', error);
+      this.telemetryManager.sendEventError(error, 'camera permissions. Failed to use permissions API');
       this._capture();
     }
   };
@@ -712,6 +716,7 @@ export class CameraSource extends UploaderBlock {
 
       navigator.mediaDevices.addEventListener('devicechange', this._getDevices);
     } catch (error) {
+      this.telemetryManager.sendEventError(error, 'camera devices. Failed to get user media');
       console.log('Failed to get user media', error);
     }
   };
@@ -752,6 +757,7 @@ export class CameraSource extends UploaderBlock {
       }
       this._selectedAudioId = this._audioDevices[0]?.value;
     } catch (error) {
+      this.telemetryManager.sendEventError(error, 'camera devices. Failed to get devices');
       console.log('Failed to get devices', error);
     }
   };

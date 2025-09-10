@@ -218,6 +218,7 @@ export class ModalManager {
              */ (data),
           );
         } catch (error) {
+          this._block.telemetryManager.sendEventError(error, 'modal subscriber');
           this._debugPrint('Error in modal subscriber:', error);
         }
       }

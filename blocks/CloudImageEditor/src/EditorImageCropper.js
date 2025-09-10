@@ -392,6 +392,7 @@ export class EditorImageCropper extends Block {
       this._animateIn({ fromViewer });
     } catch (err) {
       console.error('Failed to activate cropper', { error: err });
+      this.telemetryManager.sendEventError(err, 'cloud editor image. Failed to activate cropper');
     }
 
     this._observer = new ResizeObserver(([entry]) => {
