@@ -131,7 +131,7 @@ Internet Explorer is outdated and [not supported anymore](https://uploadcare.com
 
 Quality Insights is a plugin for File Uploader that helps us better understand how the uploader is used: which features are enabled, which scenarios occur most frequently, and how the upload process works overall.
 
-Special attention is given to collecting error data — this allows us to quickly identify and resolve issues, improving the stability and reliability of the uploader. All collected data is non-personal, does not identify individual users, and is never shared with external services. The information is used only within the product to set development priorities and enhance user convenience
+Special attention is given to collecting error data - this allows us to quickly identify and resolve issues, improving the stability and reliability of the uploader. All collected data is non-personal, does not identify individual users, and is never shared with external services. The information is used only within the product to set development priorities and enhance user convenience.
 
 ## Contribution
 
