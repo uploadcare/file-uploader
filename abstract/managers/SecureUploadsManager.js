@@ -64,6 +64,10 @@ export class SecureUploadsManager {
           }
         } catch (err) {
           console.error('Secure signature resolving failed. Falling back to the previous one.', err);
+          this._block.telemetryManager.sendEventError(
+            err,
+            'secureUploadsSignatureResolver. Secure signature resolving failed. Falling back to the previous one.',
+          );
         }
       }
 

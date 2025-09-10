@@ -390,6 +390,7 @@ export class FileItem extends FileItemConfig {
         this._debouncedCalculateState();
       }
     } catch (cause) {
+      this.telemetryManager.sendEventError(cause, 'file upload. Failed to upload file');
       if (cause instanceof CancelError && cause.isCancel) {
         entry.setMultipleValues({
           isUploading: false,

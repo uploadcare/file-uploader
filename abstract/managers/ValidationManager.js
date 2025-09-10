@@ -97,6 +97,7 @@ export class ValidationManager {
         }
       } catch (error) {
         console.warn(LOGGER.collection, error);
+        this._blockInstance.telemetryManager.sendEventError(error, `collection validator. ${LOGGER.collection}`);
       }
     }
 
@@ -140,6 +141,7 @@ export class ValidationManager {
         }
       } catch (error) {
         console.warn(LOGGER.file, error);
+        this._blockInstance.telemetryManager.sendEventError(error, `file validator. ${LOGGER.file}`);
       }
     }
     entry.setValue('errors', errors);

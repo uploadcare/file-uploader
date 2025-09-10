@@ -227,7 +227,8 @@ export class Block extends BaseComponent {
   }
 
   /**
-   * @returns {TelemetryManager | { sendEvent: () => void; sendEventCloudImageEditor: () => void }}
+   * @returns {TelemetryManager
+   *   | { sendEvent: () => void; sendEventCloudImageEditor: () => void; sendEventError: () => void }}
    * @public
    */
   get telemetryManager() {
@@ -235,6 +236,7 @@ export class Block extends BaseComponent {
       return {
         sendEvent: () => {},
         sendEventCloudImageEditor: () => {},
+        sendEventError: () => {},
       };
     }
 
@@ -317,6 +319,10 @@ export class Block extends BaseComponent {
         });
       } catch (err) {
         console.error('Failed to resolve secure delivery proxy URL. Falling back to the default URL.', err);
+        this.telemetryManager.sendEventError(
+          err,
+          'secureDeliveryProxyUrlResolver. Failed to resolve secure delivery proxy URL. Falling back to the default URL.',
+        );
         return url;
       }
     }

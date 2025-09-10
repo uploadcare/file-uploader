@@ -121,6 +121,7 @@ export class CloudImageEditorBlock extends Block {
       }
     } catch (err) {
       if (err) {
+        this.telemetryManager.sendEventError(err, 'cloud editor image. Failed to load image info');
         console.error('Failed to load image info', err);
       }
     }

@@ -63,6 +63,7 @@ export class ActivityBlock extends Block {
             this._activate();
           }
         } catch (err) {
+          this.telemetryManager.sendEventError(err, `activity "${this.activityType}"`);
           console.error(`Error in activity "${this.activityType}". `, err);
           this.$['*currentActivity'] = this.$['*history'][this.$['*history'].length - 1] ?? null;
         }

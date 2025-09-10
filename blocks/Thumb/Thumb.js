@@ -87,6 +87,7 @@ export class Thumb extends FileItemConfig {
             const blobThumbUrl = await generateThumb(file, size);
             entry.setValue('thumbUrl', blobThumbUrl);
           } catch (err) {
+            this.telemetryManager.sendEventError(err, 'thumbnail generation. Failed to generate thumb from file');
             const color = window.getComputedStyle(this).getPropertyValue('--uc-muted-foreground');
             entry.setValue('thumbUrl', fileCssBg(color));
           }
@@ -105,6 +106,7 @@ export class Thumb extends FileItemConfig {
         let thumbUrl = await generateThumb(file, size);
         entry.setValue('thumbUrl', thumbUrl);
       } catch (err) {
+        this.telemetryManager.sendEventError(err, 'thumbnail generation. Failed to generate thumb from file');
         let color = window.getComputedStyle(this).getPropertyValue('--uc-muted-foreground');
         entry.setValue('thumbUrl', fileCssBg(color));
       }
