@@ -1,3 +1,9 @@
+# [1.21.0](https://github.com/uploadcare/file-uploader/compare/v1.20.1...v1.21.0) (2025-09-10)
+
+### Features
+
+- **quality-insights:** implemented manager for quality-insights ([c8e1941](https://github.com/uploadcare/file-uploader/commit/c8e1941c018b0529f76b5401019a8281f7e7980f)). See the [documentation](https://uploadcare.com/docs/file-uploader/options/#quality-insights) for details.
+
 ## [1.20.1](https://github.com/uploadcare/file-uploader/compare/v1.20.0...v1.20.1) (2025-08-27)
 
 ### Bug Fixes
