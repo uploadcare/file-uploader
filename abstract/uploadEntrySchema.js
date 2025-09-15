@@ -100,7 +100,7 @@ export const uploadEntrySchema = Object.freeze({
   }),
   errors: Object.freeze({
     type: Array,
-    value: /** @type {Error[]} */ ([]),
+    value: /** @type {import('../types').OutputErrorFile[]} */ ([]),
   }),
   uploadError: Object.freeze({
     type: Error,
