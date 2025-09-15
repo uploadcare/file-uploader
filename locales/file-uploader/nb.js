@@ -117,11 +117,14 @@ export default {
   failed: 'Mislyktes',
   uploading: 'Laster opp',
   idle: 'Inaktiv',
-  queued: 'I kø',
+
   'a11y-file-item-status': 'Fil {{fileName}} i status {{status}}',
   'select-all': 'Velg alle',
   'deselect-all': 'Fjern alle',
   'waiting-for': 'Venter på {{source}}',
+  'queued-uploading': 'I kø for opplasting',
+  'queued-validation': 'I kø for validering',
+  validation: 'Validerer',
   'a11y-cloud-editor-apply-aspect-ratio': 'Bruk handling {{name}} {{value}}',
 
   'crop-to-shape': 'Beskjær til {{value}}',

@@ -1,10 +1,10 @@
+import { FuncFileValidator, OutputErrorCollection, type OutputErrorFile, type UploadCtxProvider } from '@/index';
+import { delay } from '@/utils/delay';
 import { page } from '@vitest/browser/context';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import '../types/jsx';
-import { renderer } from './utils/test-renderer';
-import type { UploadCtxProvider } from '@/index';
 import { IMAGE } from './fixtures/files';
-import { delay } from '@/utils/delay';
+import { renderer } from './utils/test-renderer';
 
 beforeAll(async () => {
   await import('@/solutions/file-uploader/regular/index.css');
@@ -23,7 +23,7 @@ beforeEach(() => {
   );
 });
 
-describe('Common validation', () => {
+describe('Common file validation', () => {
   describe('imgOnly', () => {
     it('should show UI error if non-image file is uploaded', async () => {
       const config = page.getByTestId('uc-config').query()! as InstanceType<Config>;
@@ -72,7 +72,9 @@ describe('Common validation', () => {
       await expect.element(page.getByText('Host does not exist')).toBeVisible();
     });
   });
+});
 
+describe('Common upload collection validation', () => {
   describe('multiple', () => {
     it('should show UI error if multiple files are added when multiple is false', async () => {
       const config = page.getByTestId('uc-config').query()! as InstanceType<Config>;
@@ -109,8 +111,287 @@ describe('Common validation', () => {
   });
 });
 
-describe('Custom validation', () => {
-  describe('fileValidators/sync', () => {
+describe('Custom file validation', () => {
+  describe('Validator descriptors', () => {
+    it('should be able to set custom validator descriptor', async () => {
+      const config = page.getByTestId('uc-config').query()! as InstanceType<Config>;
+      const customValidator = vi.fn(() => {
+        return {
+          message: 'Bad image',
+        };
+      });
+      config.fileValidators = [
+        {
+          validator: customValidator,
+          runOn: 'change',
+        },
+      ];
+      const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as InstanceType<typeof UploadCtxProvider>;
+      const api = ctxProvider.getAPI();
+      const badFile = new File(['(⌐□_□)'], 'badfile.jpg', { type: 'image/jpeg' });
+      api.addFileFromObject(badFile);
+      api.initFlow();
+      await expect.element(page.getByText('Bad image')).toBeVisible();
+      expect(customValidator).toHaveBeenCalled();
+    });
+
+    it('should run "change" validator even if previous "add" validator failed', async () => {
+      const config = page.getByTestId('uc-config').query()! as InstanceType<Config>;
+      const customChangeValidator = vi.fn(() => {
+        return {
+          message: 'Change error',
+        };
+      });
+      const customAddValidator = vi.fn(() => {
+        return {
+          message: 'Add error',
+        };
+      });
+      config.fileValidators = [
+        {
+          validator: customAddValidator,
+          runOn: 'add',
+        },
+        {
+          validator: customChangeValidator,
+          runOn: 'change',
+        },
+      ];
+      const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as InstanceType<typeof UploadCtxProvider>;
+      const api = ctxProvider.getAPI();
+      const badFile = new File(['(⌐□_□)'], 'badfile.jpg', { type: 'image/jpeg' });
+      api.addFileFromObject(badFile);
+      api.initFlow();
+      await expect.poll(() => customAddValidator).toHaveBeenCalled();
+      await expect.poll(() => customChangeValidator).toHaveBeenCalled();
+    });
+
+    describe('runOn option is "add"', () => {
+      it('should run validator once on file add during whole upload', async () => {
+        const config = page.getByTestId('uc-config').query()! as InstanceType<Config>;
+        const customValidator = vi.fn(() => undefined);
+        config.fileValidators = [
+          {
+            validator: customValidator,
+            runOn: 'add',
+          },
+        ];
+        const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as InstanceType<
+          typeof UploadCtxProvider
+        >;
+        const api = ctxProvider.getAPI();
+        api.addFileFromObject(IMAGE.PIXEL);
+        api.initFlow();
+        await expect
+          .poll(() => api.getOutputCollectionState().status, {
+            timeout: 3000,
+          })
+          .toBe('success');
+        expect(customValidator).toHaveBeenCalledTimes(1);
+      });
+
+      it('should not re-run validator on cdnUrl change (e.g. image edit)', async () => {
+        const config = page.getByTestId('uc-config').query()! as InstanceType<Config>;
+        const customValidator = vi.fn(() => undefined);
+        config.fileValidators = [
+          {
+            validator: customValidator,
+            runOn: 'add',
+          },
+        ];
+        const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as InstanceType<
+          typeof UploadCtxProvider
+        >;
+        const api = ctxProvider.getAPI();
+        api.addFileFromObject(IMAGE.SQUARE);
+        api.initFlow();
+        await page.getByLabelText('Edit', { exact: true }).click();
+        await page.getByLabelText('Apply mirror operation', { exact: true }).click();
+        await delay(300);
+        await page.getByLabelText('apply', { exact: true }).click();
+
+        expect(customValidator).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    describe("runOn option is 'upload'", () => {
+      it('should run validator once on file upload when runOn is "upload" during whole upload', async () => {
+        const config = page.getByTestId('uc-config').query()! as InstanceType<Config>;
+        const customValidator = vi.fn(() => undefined);
+        config.fileValidators = [
+          {
+            validator: customValidator,
+            runOn: 'upload',
+          },
+        ];
+        const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as InstanceType<
+          typeof UploadCtxProvider
+        >;
+        const api = ctxProvider.getAPI();
+        api.addFileFromObject(IMAGE.PIXEL);
+        api.initFlow();
+        await expect
+          .poll(() => api.getOutputCollectionState().status, {
+            timeout: 3000,
+          })
+          .toBe('success');
+        expect(customValidator).toHaveBeenCalledTimes(1);
+      });
+
+      it('should not re-run validator on cdnUrl change (e.g. image edit)', async () => {
+        const config = page.getByTestId('uc-config').query()! as InstanceType<Config>;
+        const customValidator = vi.fn(() => undefined);
+        config.fileValidators = [
+          {
+            validator: customValidator,
+            runOn: 'add',
+          },
+        ];
+        const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as InstanceType<
+          typeof UploadCtxProvider
+        >;
+        const api = ctxProvider.getAPI();
+        api.addFileFromObject(IMAGE.SQUARE);
+        api.initFlow();
+        await page.getByLabelText('Edit', { exact: true }).click();
+        await page.getByLabelText('Apply mirror operation', { exact: true }).click();
+        await delay(300);
+        await page.getByLabelText('apply', { exact: true }).click();
+
+        expect(customValidator).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    describe("runOn option is 'change'", () => {
+      it('should run validator on every file change when runOn is "change"', async () => {
+        const config = page.getByTestId('uc-config').query()! as InstanceType<Config>;
+        const customValidator = vi.fn(() => undefined);
+        config.fileValidators = [
+          {
+            validator: customValidator,
+            runOn: 'change',
+          },
+        ];
+        const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as InstanceType<
+          typeof UploadCtxProvider
+        >;
+        const api = ctxProvider.getAPI();
+        api.addFileFromObject(IMAGE.PIXEL);
+        api.initFlow();
+        await expect
+          .poll(() => api.getOutputCollectionState().status, {
+            timeout: 3000,
+          })
+          .toBe('success');
+        expect(customValidator.mock.calls.length).toBeGreaterThan(1);
+      });
+
+      it('should re-run validator on cdnUrl change (e.g. image edit)', async () => {
+        const config = page.getByTestId('uc-config').query()! as InstanceType<Config>;
+        const customValidator = vi.fn(() => undefined);
+        config.fileValidators = [
+          {
+            validator: customValidator,
+            runOn: 'change',
+          },
+        ];
+        const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as InstanceType<
+          typeof UploadCtxProvider
+        >;
+        const api = ctxProvider.getAPI();
+        api.addFileFromObject(IMAGE.SQUARE);
+        api.initFlow();
+        await page.getByLabelText('Edit', { exact: true }).click();
+        await page.getByLabelText('Apply mirror operation', { exact: true }).click();
+        await delay(300);
+        const callsBeforeEdit = customValidator.mock.calls.length;
+        await page.getByLabelText('apply', { exact: true }).click();
+        await delay(100);
+        expect(customValidator.mock.calls.length).toBe(callsBeforeEdit + 1);
+      });
+    });
+  });
+
+  describe('Async file validators', () => {
+    it('should show UI error if validator fails', async () => {
+      const config = page.getByTestId('uc-config').query()! as InstanceType<Config>;
+      config.fileValidators = [
+        async (file) => {
+          await delay(500);
+          if (file.name === 'badfile.jpg') {
+            return {
+              message: 'Bad image',
+            };
+          }
+        },
+      ];
+      const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as InstanceType<typeof UploadCtxProvider>;
+      const api = ctxProvider.getAPI();
+      const badFile = new File(['(⌐□_□)'], 'badfile.jpg', { type: 'image/jpeg' });
+      api.addFileFromObject(badFile);
+      api.initFlow();
+      await expect.element(page.getByText('Bad image')).toBeVisible();
+      await expect.element(page.getByText('1 error')).toBeVisible();
+    });
+
+    it('should skip async validation on timeout', async () => {
+      const config = page.getByTestId('uc-config').query()! as InstanceType<Config>;
+      config.validationTimeout = 100;
+      config.fileValidators = [
+        async () => {
+          await delay(1000);
+          return {
+            message: 'Bad image',
+          };
+        },
+      ];
+      const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as InstanceType<typeof UploadCtxProvider>;
+      const api = ctxProvider.getAPI();
+      api.addFileFromObject(IMAGE.PIXEL);
+      api.initFlow();
+      await expect.element(page.getByText('1 file uploaded')).toBeVisible();
+    });
+
+    it('should skip async validation if it throws an error', async () => {
+      const config = page.getByTestId('uc-config').query()! as InstanceType<Config>;
+      config.fileValidators = [
+        async () => {
+          await delay(1000);
+          throw new Error('Some error');
+        },
+      ];
+      const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as InstanceType<typeof UploadCtxProvider>;
+      const api = ctxProvider.getAPI();
+      api.addFileFromObject(IMAGE.PIXEL);
+      api.initFlow();
+      await expect.element(page.getByText('1 file uploaded')).toBeVisible();
+    });
+
+    it('should abort async validation if file is removed', async () => {
+      const config = page.getByTestId('uc-config').query()! as InstanceType<Config>;
+      const validator = vi.fn(async (...args) => {
+        await delay(500);
+        return {
+          message: 'Bad image',
+        };
+      });
+      config.fileValidators = [validator];
+      const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as InstanceType<typeof UploadCtxProvider>;
+      const api = ctxProvider.getAPI();
+      const entry = api.addFileFromObject(IMAGE.PIXEL);
+      api.initFlow();
+      await delay(100);
+      api.removeFileByInternalId(entry.internalId);
+      await delay(0);
+      expect(validator).toHaveBeenLastCalledWith(
+        expect.objectContaining({ errors: [] }),
+        expect.anything(),
+        expect.objectContaining({ signal: expect.toSatisfy((s) => s.aborted) }),
+      );
+    });
+  });
+
+  describe('Sync file validators', () => {
     it('should show UI error if validator fails', async () => {
       const config = page.getByTestId('uc-config').query()! as InstanceType<Config>;
       config.fileValidators = [
@@ -142,35 +423,16 @@ describe('Custom validation', () => {
       api.addFileFromObject(IMAGE.PIXEL);
       api.initFlow();
       await expect
+        .poll(() => validator)
+        .toHaveBeenCalledWith(expect.objectContaining({ status: 'idle' }), expect.anything(), expect.anything());
+      await expect
         .poll(() => validator, {
           timeout: 3000,
         })
-        .toHaveBeenCalledTimes(3);
-
-      expect(validator).toHaveBeenNthCalledWith(1, expect.objectContaining({ status: 'idle' }), expect.anything());
-      expect(validator).toHaveBeenNthCalledWith(2, expect.objectContaining({ status: 'uploading' }), expect.anything());
-      expect(validator).toHaveBeenNthCalledWith(3, expect.objectContaining({ status: 'success' }), expect.anything());
+        .toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }), expect.anything(), expect.anything());
     });
 
-    it('should not be called if previous validation iteration is failed', async () => {
-      const config = page.getByTestId('uc-config').query()! as InstanceType<Config>;
-      config.fileValidators = [
-        (fileInfo) => {
-          if (fileInfo.status === 'idle') {
-            return {
-              message: 'Bad file',
-            };
-          }
-        },
-      ];
-      const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as InstanceType<typeof UploadCtxProvider>;
-      const api = ctxProvider.getAPI();
-      api.addFileFromObject(IMAGE.PIXEL);
-      api.initFlow();
-      await expect.element(page.getByText('Bad file')).toBeVisible();
-    });
-
-    it.only('should be called when cdnUrl or cdnUrlModifiers changed', async () => {
+    it('should be called when cdnUrl or cdnUrlModifiers changed', async () => {
       const config = page.getByTestId('uc-config').query()! as InstanceType<Config>;
       const validator = vi.fn(() => undefined);
       config.fileValidators = [validator];
@@ -179,12 +441,15 @@ describe('Custom validation', () => {
       api.addFileFromObject(IMAGE.SQUARE);
       api.initFlow();
 
-      console.log(validator.mock.calls);
       await expect
         .poll(() => validator, {
           timeout: 3000,
         })
-        .toHaveBeenLastCalledWith(expect.objectContaining({ cdnUrlModifiers: '' }), expect.anything());
+        .toHaveBeenLastCalledWith(
+          expect.objectContaining({ cdnUrlModifiers: '' }),
+          expect.anything(),
+          expect.anything(),
+        );
 
       await page.getByLabelText('Edit', { exact: true }).click();
       await page.getByLabelText('Apply mirror operation', { exact: true }).click();
@@ -192,20 +457,23 @@ describe('Custom validation', () => {
       await page.getByLabelText('apply', { exact: true }).click();
 
       await expect
-        .poll(() => validator)
+        .poll(() => validator, {
+          timeout: 3000,
+        })
         .toHaveBeenLastCalledWith(
           expect.objectContaining({
             cdnUrlModifiers: '-/mirror/-/preview/',
             cdnUrl: expect.stringContaining('-/mirror/-/preview/'),
           }),
           expect.anything(),
+          expect.anything(),
         );
     });
   });
 });
 
-describe('Upload list validation', () => {
-  it('should show UI error if list validator fails', async () => {
+describe('Custom upload collection validation', () => {
+  it('should show UI error if collection validator fails', async () => {
     const config = page.getByTestId('uc-config').query()! as InstanceType<Config>;
     config.collectionValidators = [
       () => {
@@ -221,7 +489,7 @@ describe('Upload list validation', () => {
     await expect.element(page.getByText('Bad collection')).toBeVisible();
   });
 
-  it('should toggle UI error while list changes and re-validation executes', async () => {
+  it('should toggle UI error while collection changes and re-validation executes', async () => {
     const config = page.getByTestId('uc-config').query()! as InstanceType<Config>;
     config.collectionValidators = [
       (collection) => {
@@ -238,5 +506,171 @@ describe('Upload list validation', () => {
     await expect.element(page.getByText('Bad collection')).toBeVisible();
     api.addFileFromObject(IMAGE.PIXEL);
     await expect.element(page.getByText('Bad collection')).not.toBeInTheDocument();
+  });
+});
+
+describe('File errors API', () => {
+  it('should collect all validation errors in the `errors` property of the file', async () => {
+    const config = page.getByTestId('uc-config').query()! as InstanceType<Config>;
+    config.imgOnly = true;
+    config.accept = 'image/png';
+    config.maxLocalFileSizeBytes = 1;
+    config.fileValidators = [
+      () => ({
+        message: 'Bad file',
+      }),
+    ];
+
+    const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as InstanceType<typeof UploadCtxProvider>;
+    const api = ctxProvider.getAPI();
+    const badFile = new File(['(⌐□_□)'], 'badfile.txt', { type: 'text/plain' });
+    const entry = api.addFileFromObject(badFile);
+    api.initFlow();
+
+    await expect
+      .poll(() => {
+        const currentEntry = api.getOutputItem(entry.internalId);
+        return currentEntry.errors;
+      })
+      .toEqual(
+        expect.arrayContaining([
+          expect.objectContaining<Partial<OutputErrorFile>>({ type: 'NOT_AN_IMAGE' }),
+          expect.objectContaining<Partial<OutputErrorFile>>({
+            type: 'FORBIDDEN_FILE_TYPE',
+          }),
+          expect.objectContaining<Partial<OutputErrorFile>>({ type: 'FILE_SIZE_EXCEEDED' }),
+          expect.objectContaining<Partial<OutputErrorFile>>({ type: 'CUSTOM_ERROR' }),
+        ]),
+      );
+  });
+
+  it('should provide upload errors', async () => {
+    const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as InstanceType<typeof UploadCtxProvider>;
+    const api = ctxProvider.getAPI();
+    const entry = api.addFileFromUrl(`https://fake-domain-that-will-404.com/image.jpg`);
+    api.initFlow();
+    await expect
+      .poll(() => {
+        const currentEntry = api.getOutputItem(entry.internalId);
+        return currentEntry.errors;
+      })
+      .toEqual(expect.arrayContaining([expect.objectContaining<Partial<OutputErrorFile>>({ type: 'UPLOAD_ERROR' })]));
+  });
+
+  it('should toggle errors in the `errors` property of the file on file change', async () => {
+    const config = page.getByTestId('uc-config').query()! as InstanceType<Config>;
+    const customValidator = vi.fn<FuncFileValidator>((entry) => {
+      if (entry.cdnUrlModifiers?.includes('mirror')) {
+        return {
+          message: 'Bad image',
+        };
+      }
+    });
+    config.fileValidators = [
+      {
+        validator: customValidator,
+        runOn: 'change',
+      },
+    ];
+    const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as InstanceType<typeof UploadCtxProvider>;
+    const api = ctxProvider.getAPI();
+    const entry = api.addFileFromObject(IMAGE.SQUARE);
+    api.initFlow();
+
+    // Apply mirror and check for error
+    await page.getByLabelText('Edit', { exact: true }).click();
+    await page.getByLabelText('Apply mirror operation', { exact: true }).click();
+    await delay(300);
+    await page.getByLabelText('apply', { exact: true }).click();
+
+    await expect
+      .poll(() => {
+        const currentEntry = api.getOutputItem(entry.internalId);
+        return currentEntry.errors;
+      })
+      .toEqual(expect.arrayContaining([expect.objectContaining<Partial<OutputErrorFile>>({ type: 'CUSTOM_ERROR' })]));
+
+    // Remove mirror and check for error gone
+    await page.getByLabelText('Edit', { exact: true }).click();
+    await page.getByLabelText('Apply mirror operation', { exact: true }).click();
+    await delay(300);
+    await page.getByLabelText('apply', { exact: true }).click();
+
+    await expect
+      .poll(() => {
+        const currentEntry = api.getOutputItem(entry.internalId);
+        return currentEntry.errors;
+      })
+      .toEqual([]);
+
+    // Apply mirror and check for error again
+    await page.getByLabelText('Edit', { exact: true }).click();
+    await page.getByLabelText('Apply mirror operation', { exact: true }).click();
+    await delay(300);
+    await page.getByLabelText('apply', { exact: true }).click();
+
+    await expect
+      .poll(() => {
+        const currentEntry = api.getOutputItem(entry.internalId);
+        return currentEntry.errors;
+      })
+      .toEqual(expect.arrayContaining([expect.objectContaining<Partial<OutputErrorFile>>({ type: 'CUSTOM_ERROR' })]));
+  });
+
+  it('should provide errors for "add" and "change" validators', async () => {
+    const config = page.getByTestId('uc-config').query()! as InstanceType<Config>;
+    config.fileValidators = [
+      {
+        runOn: 'add',
+        validator: () => ({
+          message: 'Add error',
+        }),
+      },
+      {
+        runOn: 'change',
+        validator: () => ({
+          message: 'Change error',
+        }),
+      },
+    ];
+    const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as InstanceType<typeof UploadCtxProvider>;
+    const api = ctxProvider.getAPI();
+    const entry = api.addFileFromObject(IMAGE.SQUARE);
+    api.initFlow();
+
+    await expect
+      .poll(() => {
+        const currentEntry = api.getOutputItem(entry.internalId);
+        return currentEntry.errors;
+      })
+      .toEqual(
+        expect.arrayContaining([
+          expect.objectContaining<Partial<OutputErrorFile>>({ message: 'Add error' }),
+          expect.objectContaining<Partial<OutputErrorFile>>({ message: 'Change error' }),
+        ]),
+      );
+  });
+});
+
+describe('Upload collection errors API', () => {
+  it('should populate upload collection errors with the the common file validation error', async () => {
+    const config = page.getByTestId('uc-config').query()! as InstanceType<Config>;
+    config.fileValidators = [
+      () => ({
+        message: 'Bad file',
+      }),
+    ];
+    const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as InstanceType<typeof UploadCtxProvider>;
+    const api = ctxProvider.getAPI();
+    api.addFileFromObject(IMAGE.PIXEL);
+    api.initFlow();
+
+    await expect
+      .poll(() => api.getOutputCollectionState().errors)
+      .toEqual(
+        expect.arrayContaining([
+          expect.objectContaining<Partial<OutputErrorCollection>>({ type: 'SOME_FILES_HAS_ERRORS' }),
+        ]),
+      );
   });
 });

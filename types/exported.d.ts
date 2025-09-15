@@ -1,10 +1,20 @@
 import type { LocaleDefinition } from '../abstract/localeRegistry';
 import type { complexConfigKeys } from '../blocks/Config/Config';
-import type { FuncFileValidator, FuncCollectionValidator } from '../abstract/managers/ValidationManager';
+import type {
+  FuncFileValidator,
+  FuncCollectionValidator,
+  FileValidator,
+  FileValidatorDescriptor,
+} from '../abstract/managers/ValidationManager';
 import type { CameraMode } from '../blocks/CameraSource/CameraSource';
 import type { FilesViewMode } from '../blocks/UploadList/UploadList';
 
-export type { FuncFileValidator, FuncCollectionValidator } from '../abstract/managers/ValidationManager';
+export type {
+  FuncFileValidator,
+  FuncCollectionValidator,
+  FileValidator,
+  FileValidatorDescriptor,
+} from '../abstract/managers/ValidationManager';
 export type { UploaderPublicApi } from '../abstract/UploaderPublicApi';
 
 export type UploadError = import('@uploadcare/upload-client').UploadError;
@@ -21,7 +31,7 @@ export type SecureDeliveryProxyUrlResolver = (
 export type SecureUploadsSignatureAndExpire = { secureSignature: string; secureExpire: string };
 export type SecureUploadsSignatureResolver = () => Promise<SecureUploadsSignatureAndExpire | null>;
 export type IconHrefResolver = (iconName: string) => string;
-export type FileValidators = FuncFileValidator[];
+export type FileValidators = FileValidator[];
 export type CollectionValidators = FuncCollectionValidator[];
 export type SourceTypes = import('../blocks/utils/UploadSource').SourceTypes;
 
@@ -80,7 +90,7 @@ export type ConfigType = {
    */
   sourceList: string;
   /**
-   * Top-level origin for the uploader. 
+   * Top-level origin for the uploader.
    * This is used for Google Drive Picker if there is no access to the origin due to the cross-origin policy.
    */
   topLevelOrigin: string;
@@ -256,6 +266,16 @@ export type ConfigType = {
   collectionValidators: CollectionValidators;
 
   /**
+   * Timeout for async validation functions, in milliseconds.
+   */
+  validationTimeout: number;
+
+  /**
+   * The number of files to validate concurrently.
+   */
+  validationConcurrency: number;
+
+  /**
    * The camera modes to enable in the camera modal,
    * it is possible to select photo or video capture.
    * The first mode is the default mode.
@@ -407,6 +427,8 @@ export type OutputFileEntry<TStatus extends OutputFileStatus = OutputFileStatus>
   uploadProgress: number;
   fullPath: string | null;
   source: SourceTypes | null;
+
+  isValidationPending: boolean;
 } & (
   | {
       status: 'success';

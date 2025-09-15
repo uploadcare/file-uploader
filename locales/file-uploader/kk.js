@@ -117,11 +117,14 @@ export default {
   failed: 'Сәтсіз аяқталды',
   uploading: 'Жүктелуде',
   idle: 'Бос',
-  queued: 'Кезекте',
+
   'a11y-file-item-status': '{{fileName}} файлы {{status}} күйінде',
   'select-all': 'Барлығын таңдау',
   'deselect-all': 'Барлығын таңдаудан шығару',
   'waiting-for': 'Күтіп тұр {{source}}',
+  'queued-uploading': 'Кезекте жүктеу үшін',
+  'queued-validation': 'Кезекте растау үшін',
+  validation: 'Растау жүріп жатыр',
   'a11y-cloud-editor-apply-aspect-ratio': '{{name}} {{value}} операциясын қолданыңыз',
 
   'crop-to-shape': '{{value}} өлшеміне қиып алу',

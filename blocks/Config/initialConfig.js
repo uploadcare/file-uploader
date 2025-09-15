@@ -71,6 +71,8 @@ export const initialConfig = Object.freeze({
   iconHrefResolver: null,
   fileValidators: [],
   collectionValidators: [],
+  validationTimeout: 15 * 1000,
+  validationConcurrency: 100,
 
   cameraModes: 'photo, video',
   defaultCameraMode: null,

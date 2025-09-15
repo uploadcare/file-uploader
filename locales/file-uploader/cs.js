@@ -124,9 +124,12 @@ export default {
   failed: 'Selhalo',
   uploading: 'Nahrává se',
   idle: 'Nečinný',
-  queued: 'Ve frontě',
+
   'a11y-file-item-status': 'Soubor {{fileName}} je ve stavu {{status}}',
   'waiting-for': 'Čekání na {{source}}',
+  'queued-uploading': 'Ve frontě na nahrání',
+  'queued-validation': 'Ve frontě na validaci',
+  validation: 'Probíhá validace',
   'a11y-cloud-editor-apply-aspect-ratio': 'Použít operaci {{name}} {{value}}',
 
   'crop-to-shape': 'Oříznout na {{value}}',

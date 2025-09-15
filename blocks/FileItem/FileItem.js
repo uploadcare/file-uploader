@@ -12,6 +12,9 @@ const FileItemState = Object.freeze({
   FINISHED: Symbol('FINISHED'),
   FAILED: Symbol('FAILED'),
   UPLOADING: Symbol('UPLOADING'),
+  VALIDATION: Symbol('VALIDATION'),
+  QUEUED_UPLOADING: Symbol('QUEUED-UPLOADING'),
+  QUEUED_VALIDATION: Symbol('QUEUED-VALIDATION'),
   IDLE: Symbol('IDLE'),
 });
 
@@ -102,6 +105,12 @@ export class FileItem extends FileItemConfig {
 
     if (entry.getValue('errors').length > 0) {
       state = FileItemState.FAILED;
+    } else if (entry.getValue('isQueuedForUploading')) {
+      state = FileItemState.QUEUED_UPLOADING;
+    } else if (entry.getValue('isQueuedForValidation')) {
+      state = FileItemState.QUEUED_VALIDATION;
+    } else if (entry.getValue('isValidationPending')) {
+      state = FileItemState.VALIDATION;
     } else if (entry.getValue('isUploading')) {
       state = FileItemState.UPLOADING;
     } else if (entry.getValue('fileInfo')) {
@@ -114,34 +123,41 @@ export class FileItem extends FileItemConfig {
   /** @private */
   _debouncedCalculateState = debounce(this._calculateState.bind(this), 100);
 
-  _updateHint = this._withEntry(
-    throttle((entry) => {
-      const source = entry.getValue('source');
-      const externalUrl = entry.getValue('externalUrl');
-      const noErrors = entry.getValue('errors').length === 0;
-      const noProgress = this.$.progressValue === 0;
-      const isUploading = this.$.state === FileItemState.UPLOADING;
-      const isQueued = entry.getValue('isQueued');
+  _updateHintAndProgress = this._withEntry(
+    throttle(
+      /** @param {(typeof FileItemState)[keyof typeof FileItemState]} state */
+      (entry, state) => {
+        const errorText = entry.getValue('errors')?.[0]?.message;
+        const source = entry.getValue('source');
+        const externalUrl = entry.getValue('externalUrl');
+        const isUploading = state === FileItemState.UPLOADING;
+        const isQueuedForUploading = state === FileItemState.QUEUED_UPLOADING;
+        const isQueuedForValidation = state === FileItemState.QUEUED_VALIDATION;
+        const isValidationPending = state === FileItemState.VALIDATION;
+        const fileName = entry.getValue('fileName');
+        let hint = '';
 
-      if (!noErrors || !isUploading || !noProgress) {
-        this.$.hint = '';
-        return;
-      }
+        if (errorText) {
+          hint = '';
+        } else if (externalUrl && source && Object.values(ExternalUploadSource).includes(source)) {
+          hint = this.l10n('waiting-for', { source: this.l10n(`src-type-${source}`) });
+        }
 
-      if (isQueued) {
-        const hint = this.l10n('queued');
-        this.$.hint = hint;
-        return;
-      }
-
-      if (externalUrl && source && Object.values(ExternalUploadSource).includes(source)) {
-        const hint = this.l10n('waiting-for', { source: this.l10n(`src-type-${source}`) });
-        this.$.hint = hint;
-        return;
-      }
-
-      this.$.hint = '';
-    }, 100),
+        this.set$({
+          hint,
+          errorText: errorText,
+          progressVisible: isUploading || isQueuedForUploading || isQueuedForValidation || isValidationPending,
+          progressValue: isQueuedForValidation || isValidationPending ? 0 : entry.getValue('uploadProgress'),
+          ariaLabelStatusFile:
+            fileName &&
+            this.l10n('a11y-file-item-status', {
+              fileName,
+              status: this.l10n(state?.description?.toLocaleLowerCase() ?? '').toLocaleLowerCase(),
+            }),
+        });
+      },
+      100,
+    ),
   );
 
   /**
@@ -158,13 +174,20 @@ export class FileItem extends FileItemConfig {
       return;
     }
 
-    this._subEntry('uploadProgress', (uploadProgress) => {
-      this.$.progressValue = uploadProgress;
-      this._updateHint();
+    this._subEntry('isQueuedForValidation', () => {
+      this._debouncedCalculateState();
     });
 
-    this._subEntry('isQueued', () => {
-      this._updateHint();
+    this._subEntry('isValidationPending', () => {
+      this._debouncedCalculateState();
+    });
+
+    this._subEntry('uploadProgress', () => {
+      this._debouncedCalculateState();
+    });
+
+    this._subEntry('isQueuedForUploading', () => {
+      this._debouncedCalculateState();
     });
 
     this._subEntry('fileName', (name) => {
@@ -256,24 +279,15 @@ export class FileItem extends FileItemConfig {
       if (state === FileItemState.UPLOADING) {
         this.$.isFocused = false;
       }
-      const fileName = entry.getValue('fileName');
 
       this.set$({
         isFailed: state === FileItemState.FAILED,
         isUploading: state === FileItemState.UPLOADING,
         isFinished: state === FileItemState.FINISHED,
-        progressVisible: state === FileItemState.UPLOADING,
-        isEditable: this.cfg.useCloudImageEditor && this._entry?.getValue('isImage') && this._entry?.getValue('cdnUrl'),
-        errorText: entry.getValue('errors')?.[0]?.message,
-        ariaLabelStatusFile:
-          fileName &&
-          this.l10n('a11y-file-item-status', {
-            fileName,
-            status: this.l10n(state?.description?.toLocaleLowerCase() ?? '').toLocaleLowerCase(),
-          }),
+        isEditable: this.cfg.useCloudImageEditor && entry.getValue('isImage') && entry.getValue('cdnUrl'),
       });
 
-      this._updateHint();
+      this._updateHintAndProgress(state);
     },
   );
 
@@ -318,7 +332,12 @@ export class FileItem extends FileItemConfig {
       return;
     }
 
-    if (entry.getValue('fileInfo') || entry.getValue('isUploading') || entry.getValue('errors').length > 0) {
+    if (
+      entry.getValue('fileInfo') ||
+      entry.getValue('isUploading') ||
+      entry.getValue('errors').length > 0 ||
+      entry.getValue('isValidationPending')
+    ) {
       return;
     }
     const multipleMax = this.cfg.multiple ? this.cfg.multipleMax : 1;
@@ -326,20 +345,20 @@ export class FileItem extends FileItemConfig {
       return;
     }
 
-    this._debouncedCalculateState();
-
     entry.setMultipleValues({
       isUploading: true,
       errors: [],
-      isQueued: true,
+      isQueuedForUploading: true,
     });
+
+    this._debouncedCalculateState();
 
     try {
       let abortController = new AbortController();
       entry.setValue('abortController', abortController);
 
       const uploadTask = async () => {
-        entry.setValue('isQueued', false);
+        entry.setValue('isQueuedForUploading', false);
         /** @type {Blob | File | null} */
         let file = entry.getValue('file');
         if (file && this.cfg.imageShrink) {
@@ -373,7 +392,7 @@ export class FileItem extends FileItemConfig {
       let fileInfo = await this.$['*uploadQueue'].add(uploadTask);
       entry.setMultipleValues({
         fileInfo,
-        isQueued: false,
+        isQueuedForUploading: false,
         isUploading: false,
         fileName: fileInfo.originalFilename,
         fileSize: fileInfo.size,

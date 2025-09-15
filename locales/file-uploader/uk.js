@@ -121,11 +121,14 @@ export default {
   failed: 'Не вдалося',
   uploading: 'Завантаження',
   idle: 'Очікування',
-  queued: 'У черзі',
+
   'a11y-file-item-status': 'Файл {{fileName}} у стані {{status}}',
   'select-all': 'Вибрати всі',
   'deselect-all': 'Скасувати вибір всіх',
   'waiting-for': 'Очікування {{source}}',
+  'queued-uploading': 'У черзі на завантаження',
+  'queued-validation': 'У черзі на перевірку',
+  validation: 'Триває перевірка',
   'a11y-cloud-editor-apply-aspect-ratio': 'Застосувати операцію {{name}} {{value}}',
 
   'crop-to-shape': 'Обрізати до {{value}}',

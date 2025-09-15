@@ -117,11 +117,14 @@ export default {
   failed: 'Misslyckades',
   uploading: 'Laddar upp',
   idle: 'Overksam',
-  queued: 'I kö',
+
   'a11y-file-item-status': 'Filen {{fileName}} är i status {{status}}',
   'select-all': 'Välj alla',
   'deselect-all': 'Avmarkera alla',
   'waiting-for': 'Väntar på {{source}}',
+  'queued-uploading': 'I kö för uppladdning',
+  'queued-validation': 'I kö för validering',
+  validation: 'Validerar',
   'a11y-cloud-editor-apply-aspect-ratio': 'Använd åtgärd {{name}} {{value}}',
 
   'crop-to-shape': 'Beskär till {{value}}',

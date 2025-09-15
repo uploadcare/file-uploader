@@ -121,9 +121,12 @@ export default {
   failed: 'Fehlgeschlagen',
   uploading: 'Hochladen',
   idle: 'Leerlauf',
-  queued: 'In der Warteschlange',
+
   'a11y-file-item-status': 'Datei {{fileName}} im Status {{status}}',
   'waiting-for': 'Warten auf {{source}}',
+  'queued-uploading': 'In Warteschlange zum Hochladen',
+  'queued-validation': 'In Warteschlange zur Validierung',
+  validation: 'Validierung läuft',
   'a11y-cloud-editor-apply-aspect-ratio': 'Vorgang {{name}} {{value}} anwenden',
 
   'crop-to-shape': 'Zuschneiden auf {{value}}',

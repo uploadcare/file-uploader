@@ -118,11 +118,14 @@ export default {
   failed: 'Epäonnistui',
   uploading: 'Ladataan',
   idle: 'Toimeton',
-  queued: 'Jonossa',
+
   'a11y-file-item-status': 'Tiedosto {{fileName}} tilassa {{status}}',
   'select-all': 'Valitse kaikki',
   'deselect-all': 'Poista valinnat',
   'waiting-for': 'Odotetaan {{source}}',
+  'queued-uploading': 'Jonossa latausta varten',
+  'queued-validation': 'Jonossa validointia varten',
+  validation: 'Validoidaan',
   'a11y-cloud-editor-apply-aspect-ratio': 'Käytä toimintoa {{name}} {{value}}',
 
   'crop-to-shape': 'Rajaa arvoon {{value}}',

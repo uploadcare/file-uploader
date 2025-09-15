@@ -119,9 +119,12 @@ export default {
   failed: 'Uğursuz',
   uploading: 'Yüklənir',
   idle: 'Boş',
-  queued: 'Növbədə',
+
   'a11y-file-item-status': '{{fileName}} faylı {{status}} statusundadır',
   'waiting-for': '{{source}} gözlənilir',
+  'queued-uploading': 'Yükləmə üçün növbədə',
+  'queued-validation': 'Doğrulama üçün növbədə',
+  validation: 'Doğrulanır',
   'a11y-cloud-editor-apply-aspect-ratio': '{{name}} {{value}} əməliyyatını tətbiq et',
   'crop-to-shape': '{{value}} ölçüsünə kəs',
 

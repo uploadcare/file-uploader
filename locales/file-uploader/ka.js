@@ -117,11 +117,14 @@ export default {
   failed: 'შეცდომა',
   uploading: 'იტვირთება',
   idle: 'მოქმედების გარეშე',
-  queued: 'რიგში',
+
   'a11y-file-item-status': 'ფაილი {{fileName}} არის მდგომარეობაში {{status}}',
   'select-all': 'ყველას არჩევა',
   'deselect-all': 'ყველას არჩევის გაუქმება',
   'waiting-for': 'ველოდები {{source}}',
+  'queued-uploading': 'რიგში ატვირთვისთვის',
+  'queued-validation': 'რიგში ვალიდაციისთვის',
+  validation: 'ვალიდაცია მიმდინარეობს',
   'a11y-cloud-editor-apply-aspect-ratio': 'გამოიყენეთ ოპერაცია {{name}} {{value}}',
 
   'crop-to-shape': 'შემოკლება {{value}}-მდე',

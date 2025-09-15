@@ -119,11 +119,14 @@ export default {
   failed: 'Neuspešno',
   uploading: 'Otpremanje',
   idle: 'Neaktivan',
+
   'a11y-file-item-status': 'Datoteka {{fileName}} je u statusu {{status}}',
   'select-all': 'Изабери све',
   'deselect-all': 'Поништи избор свих',
   'waiting-for': 'Чека се {{source}}',
-  queued: 'У реду',
+  'queued-uploading': 'У реду за отпремање',
+  'queued-validation': 'У реду за валидацију',
+  validation: 'Валидација у току',
   'a11y-cloud-editor-apply-aspect-ratio': 'Примени операцију {{name}} {{value}}',
 
   'crop-to-shape': 'Исеци на {{value}}',

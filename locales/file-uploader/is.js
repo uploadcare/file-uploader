@@ -117,11 +117,14 @@ export default {
   failed: 'Mistókst',
   uploading: 'Hleður upp',
   idle: 'Aðgerðalaus',
-  queued: 'Í biðröð',
+
   'a11y-file-item-status': 'Skráin {{fileName}} er í stöðu {{status}}',
   'select-all': 'Velja allt',
   'deselect-all': 'Afvelja allt',
   'waiting-for': 'Bíð eftir {{source}}',
+  'queued-uploading': 'Í biðröð fyrir upphleðslu',
+  'queued-validation': 'Í biðröð fyrir staðfestingu',
+  validation: 'Staðfesting í gangi',
   'a11y-cloud-editor-apply-aspect-ratio': 'Beita aðgerð {{name}} {{value}}',
 
   'crop-to-shape': 'Sníða í {{value}}',

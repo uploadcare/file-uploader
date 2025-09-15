@@ -120,11 +120,14 @@ export default {
   failed: 'Falhou',
   uploading: 'Carregando',
   idle: 'Ocioso',
-  queued: 'Na fila',
+
   'a11y-file-item-status': 'O arquivo {{fileName}} está no status {{status}}',
   'select-all': 'Selecionar tudo',
   'deselect-all': 'Desmarcar tudo',
   'waiting-for': 'Aguardando {{source}}',
+  'queued-uploading': 'Na fila para envio',
+  'queued-validation': 'Na fila para validação',
+  validation: 'Validando',
   'a11y-cloud-editor-apply-aspect-ratio': 'Aplicar operação {{name}} {{value}}',
 
   'crop-to-shape': 'Recortar para {{value}}',

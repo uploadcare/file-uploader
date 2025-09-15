@@ -120,9 +120,12 @@ export default {
   failed: 'Mislykkedes',
   uploading: 'Uploader',
   idle: 'Inaktiv',
-  queued: 'I kø',
+
   'a11y-file-item-status': 'Filen {{fileName}} er i status {{status}}',
   'waiting-for': 'Venter på {{source}}',
+  'queued-uploading': 'I kø til upload',
+  'queued-validation': 'I kø til validering',
+  validation: 'Validerer',
   'a11y-cloud-editor-apply-aspect-ratio': 'Anvend handling {{name}} {{value}}',
 
   'crop-to-shape': 'Beskær til {{value}}',

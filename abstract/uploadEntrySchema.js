@@ -111,7 +111,15 @@ export const uploadEntrySchema = Object.freeze({
     type: Boolean,
     value: false,
   }),
-  isQueued: Object.freeze({
+  isQueuedForUploading: Object.freeze({
+    type: Boolean,
+    value: false,
+  }),
+  isValidationPending: Object.freeze({
+    type: Boolean,
+    value: false,
+  }),
+  isQueuedForValidation: Object.freeze({
     type: Boolean,
     value: false,
   }),

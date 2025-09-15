@@ -132,12 +132,21 @@ export class UploaderPublicApi {
     const itemsToUpload = this._uploadCollection.items().filter((id) => {
       const entry = this._uploadCollection.read(id);
       if (!entry) return false;
-      return !entry.getValue('isRemoved') && !entry.getValue('isUploading') && !entry.getValue('fileInfo');
+      return (
+        !entry.getValue('isRemoved') &&
+        !entry.getValue('isUploading') &&
+        !entry.getValue('fileInfo') &&
+        entry.getValue('errors').length === 0 &&
+        !entry.getValue('isValidationPending') &&
+        !entry.getValue('isQueuedForValidation')
+      );
     });
 
     if (itemsToUpload.length === 0) {
       return;
     }
+
+    console.log('Fuck', itemsToUpload);
 
     this._ctx.$['*uploadTrigger'] = new Set(itemsToUpload);
     this._ctx.emit(
@@ -254,6 +263,7 @@ export class UploaderPublicApi {
       isUploading: status === 'uploading',
       isFailed: status === 'failed',
       isRemoved: status === 'removed',
+      isValidationPending: uploadEntryData.isValidationPending,
       errors: /** @type {import('../types/exported.js').OutputFileEntry['errors']} */ (uploadEntryData.errors),
       status,
       source: uploadEntryData?.source,

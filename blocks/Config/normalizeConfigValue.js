@@ -88,6 +88,8 @@ const mapping = {
   iconHrefResolver: /** @type {typeof asFunction<import('../../types').IconHrefResolver>} */ (asFunction),
   fileValidators: /** @type {typeof asArray<import('../../types').FileValidators>} */ (asArray),
   collectionValidators: /** @type {typeof asArray<import('../../types').CollectionValidators>} */ (asArray),
+  validationTimeout: asNumber,
+  validationConcurrency: asNumber,
 
   cameraModes: asCameraModes,
   defaultCameraMode: asCameraMode,

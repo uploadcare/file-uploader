@@ -121,11 +121,14 @@ export default {
   failed: 'Neúspešné',
   uploading: 'Nahrávanie',
   idle: 'Nečinný',
+
   'a11y-file-item-status': 'Súbor {{fileName}} je v stave {{status}}',
   'select-all': 'Vybrať všetko',
   'deselect-all': 'Zrušiť výber všetkého',
   'waiting-for': 'Čaká sa na {{source}}',
-  queued: 'Vo fronte',
+  'queued-uploading': 'Vo fronte na nahranie',
+  'queued-validation': 'Vo fronte na validáciu',
+  validation: 'Prebieha validácia',
   'a11y-cloud-editor-apply-aspect-ratio': 'Použiť operáciu {{name}} {{value}}',
 
   'crop-to-shape': 'Orezať na {{value}}',

@@ -12,6 +12,7 @@ import { throttle } from '../utils/throttle.js';
  *   succeed: number;
  *   uploading: number;
  *   failed: number;
+ *   validatingBeforeUploading: number;
  * }} Summary
  */
 
@@ -64,6 +65,10 @@ export class UploadList extends UploaderBlock {
     if (!this.couldOpenActivity && this.$['*currentActivity'] === this.activityType) {
       this.historyBack();
     }
+
+    if (!this.cfg.confirmUpload) {
+      this.api.uploadAll();
+    }
   }, 300);
 
   /** @private */
@@ -75,19 +80,21 @@ export class UploadList extends UploaderBlock {
       succeed: collectionState.successCount,
       uploading: collectionState.uploadingCount,
       failed: collectionState.failedCount,
+      validatingBeforeUploading: collectionState.idleEntries.filter((e) => e.isValidationPending).length,
     };
     const fitCountRestrictions = !collectionState.errors.some(
       (err) => err.type === 'TOO_MANY_FILES' || err.type === 'TOO_FEW_FILES',
     );
     const tooMany = collectionState.errors.some((err) => err.type === 'TOO_MANY_FILES');
     const exact = collectionState.totalCount === (this.cfg.multiple ? this.cfg.multipleMax : 1);
-    const validationOk = summary.failed === 0 && collectionState.errors.length === 0;
+    const isValidationPending = collectionState.allEntries.some((entry) => entry.isValidationPending);
+    const validationOk = summary.failed === 0 && collectionState.errors.length === 0 && !isValidationPending;
     let uploadBtnVisible = false;
     let allDone = false;
     let doneBtnEnabled = false;
 
     const readyToUpload = summary.total - summary.succeed - summary.uploading - summary.failed;
-    if (readyToUpload > 0 && fitCountRestrictions) {
+    if (readyToUpload > 0 && fitCountRestrictions && validationOk) {
       uploadBtnVisible = true;
     } else {
       allDone = true;
@@ -103,6 +110,8 @@ export class UploadList extends UploaderBlock {
 
       addMoreBtnEnabled: summary.total === 0 || (!tooMany && !exact),
       addMoreBtnVisible: !exact || this.cfg.multiple,
+
+      hasFiles: summary.total > 0,
     });
 
     this.bindL10n('headerText', () => this._getHeaderText(summary));
@@ -115,12 +124,15 @@ export class UploadList extends UploaderBlock {
   _getHeaderText(summary) {
     /** @param {keyof Summary} status */
     const localizedText = (status) => {
-      const count = summary[status];
+      let count = summary[status];
+      if (status === 'uploading') {
+        count += summary.validatingBeforeUploading;
+      }
       return this.l10n(`header-${status}`, {
         count: count,
       });
     };
-    if (summary.uploading > 0) {
+    if (summary.uploading > 0 || summary.validatingBeforeUploading > 0) {
       return localizedText('uploading');
     }
     if (summary.failed > 0) {
@@ -164,22 +176,7 @@ export class UploadList extends UploaderBlock {
     // TODO: could be performance issue on many files
     // there is no need to update buttons state on every progress tick
     this.uploadCollection.observeProperties(this._throttledHandleCollectionUpdate);
-
-    this.sub(
-      '*uploadList',
-      (list) => {
-        this._throttledHandleCollectionUpdate();
-
-        this.set$({
-          hasFiles: list.length > 0,
-        });
-
-        if (!this.cfg.confirmUpload) {
-          this.api.uploadAll();
-        }
-      },
-      false,
-    );
+    this.uploadCollection.observeCollection(this._throttledHandleCollectionUpdate);
 
     this.sub(
       '*collectionErrors',
@@ -202,6 +199,7 @@ export class UploadList extends UploaderBlock {
   destroyCallback() {
     super.destroyCallback();
     this.uploadCollection.unobserveProperties(this._throttledHandleCollectionUpdate);
+    this.uploadCollection.unobserveCollection(this._throttledHandleCollectionUpdate);
   }
 }
 
