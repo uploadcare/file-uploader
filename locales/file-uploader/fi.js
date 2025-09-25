@@ -124,9 +124,9 @@ export default {
   'deselect-all': 'Poista valinnat',
   'waiting-for': 'Odotetaan {{source}}',
   'a11y-cloud-editor-apply-aspect-ratio': 'Käytä toimintoa {{name}} {{value}}',
-  'aspect-ratio': 'Kuvasuhde',
 
   'crop-to-shape': 'Rajaa arvoon {{value}}',
 
-  custom: 'Mukautettu',
+  custom: 'Vapaa muoto',
+  'freeform-crop': 'Vapaa rajaus',
 };

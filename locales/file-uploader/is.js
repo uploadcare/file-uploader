@@ -123,9 +123,9 @@ export default {
   'deselect-all': 'Afvelja allt',
   'waiting-for': 'Bíð eftir {{source}}',
   'a11y-cloud-editor-apply-aspect-ratio': 'Beita aðgerð {{name}} {{value}}',
-  'aspect-ratio': 'Hlutfall hliða',
 
   'crop-to-shape': 'Sníða í {{value}}',
 
-  custom: 'Sérsniðið',
+  custom: 'Frjáls form',
+  'freeform-crop': 'Frjáls klipping',
 };

@@ -126,9 +126,9 @@ export default {
   'a11y-file-item-status': 'El archivo {{fileName}} está en estado {{status}}',
   'waiting-for': 'Esperando por {{source}}',
   'a11y-cloud-editor-apply-aspect-ratio': 'Aplicar operación {{name}} {{value}}',
-  'aspect-ratio': 'Relación de aspecto',
 
   'crop-to-shape': 'Recortar a {{value}}',
 
-  custom: 'Personalizado',
+  custom: 'Forma libre',
+  'freeform-crop': 'Recorte libre',
 };

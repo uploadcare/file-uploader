@@ -123,9 +123,9 @@ export default {
   'deselect-all': 'Bỏ chọn tất cả',
   'waiting-for': 'Đang chờ {{source}}',
   'a11y-cloud-editor-apply-aspect-ratio': 'Áp dụng thao tác {{name}} {{value}}',
-  'aspect-ratio': 'Tỷ lệ khung hình',
 
   'crop-to-shape': 'Cắt theo {{value}}',
 
-  custom: 'Tùy chỉnh',
+  custom: 'Dạng tự do',
+  'freeform-crop': 'Cắt tự do',
 };

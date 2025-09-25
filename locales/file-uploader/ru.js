@@ -127,9 +127,7 @@ export default {
   'deselect-all': 'Отменить выбор всех',
   'waiting-for': 'Ожидание {{source}}',
   'a11y-cloud-editor-apply-aspect-ratio': 'Применить операцию {{name}} {{value}}',
-  'aspect-ratio': 'Соотношение сторон',
-
   'crop-to-shape': 'Обрезать до {{value}}',
-
-  custom: 'Пользовательский',
+  custom: 'Свободная форма',
+  'freeform-crop': 'Свободная обрезка',
 };

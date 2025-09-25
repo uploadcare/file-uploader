@@ -125,9 +125,9 @@ export default {
   'waiting-for': 'Чека се {{source}}',
   queued: 'У реду',
   'a11y-cloud-editor-apply-aspect-ratio': 'Примени операцију {{name}} {{value}}',
-  'aspect-ratio': 'Однос страница',
 
   'crop-to-shape': 'Исеци на {{value}}',
 
-  custom: 'Прилагођен',
+  custom: 'Слободна форма',
+  'freeform-crop': 'Слободно исецање',
 };

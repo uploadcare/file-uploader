@@ -125,9 +125,9 @@ export default {
   'waiting-for': 'Gaida {{source}}',
   queued: 'Rindā',
   'a11y-cloud-editor-apply-aspect-ratio': 'Lietot darbību {{name}} {{value}}',
-  'aspect-ratio': 'Malu attiecība',
 
   'crop-to-shape': 'Apgriezt līdz {{value}}',
 
-  custom: 'Pielāgots',
+  custom: 'Brīvā forma',
+  'freeform-crop': 'Brīva apgriešana',
 };

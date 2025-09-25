@@ -125,9 +125,9 @@ export default {
   'a11y-file-item-status': 'Datei {{fileName}} im Status {{status}}',
   'waiting-for': 'Warten auf {{source}}',
   'a11y-cloud-editor-apply-aspect-ratio': 'Vorgang {{name}} {{value}} anwenden',
-  'aspect-ratio': 'Seitenverhältnis',
 
   'crop-to-shape': 'Zuschneiden auf {{value}}',
 
-  custom: 'Benutzerdefiniert',
+  custom: 'Freiform',
+  'freeform-crop': 'Freier Zuschnitt',
 };

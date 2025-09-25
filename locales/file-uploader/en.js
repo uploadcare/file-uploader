@@ -123,8 +123,7 @@ export default {
   'a11y-file-item-status': 'File {{fileName}} in status {{status}}',
   'waiting-for': 'Waiting for {{source}}',
   queued: 'Queued',
-  'aspect-ratio': 'Aspect ratio',
   'crop-to-shape': 'Crop to {{value}}',
-
-  custom: 'Custom',
+  custom: 'Freeform',
+  'freeform-crop': 'Freeform crop',
 };

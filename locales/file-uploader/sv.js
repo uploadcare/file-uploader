@@ -123,9 +123,9 @@ export default {
   'deselect-all': 'Avmarkera alla',
   'waiting-for': 'Väntar på {{source}}',
   'a11y-cloud-editor-apply-aspect-ratio': 'Använd åtgärd {{name}} {{value}}',
-  'aspect-ratio': 'Bildförhållande',
 
   'crop-to-shape': 'Beskär till {{value}}',
 
-  custom: 'Anpassad',
+  custom: 'Fri form',
+  'freeform-crop': 'Fri beskärning',
 };

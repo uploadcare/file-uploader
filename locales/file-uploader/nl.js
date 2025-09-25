@@ -124,9 +124,9 @@ export default {
   'deselect-all': 'Deselecteer alles',
   'waiting-for': 'Wachten op {{source}}',
   'a11y-cloud-editor-apply-aspect-ratio': 'Bewerking {{name}} {{value}} toepassen',
-  'aspect-ratio': 'Beeldverhouding',
 
   'crop-to-shape': 'Bijsnijden naar {{value}}',
 
-  custom: 'Aangepast',
+  custom: 'Vrije vorm',
+  'freeform-crop': 'Vrije uitsnijding',
 };

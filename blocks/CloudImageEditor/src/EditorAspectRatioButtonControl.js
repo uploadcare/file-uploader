@@ -31,13 +31,13 @@ export class EditorFreeformButtonControl extends EditorButtonControl {
   initCallback() {
     super.initCallback();
 
-    this.$['icon'] = 'freeform';
+    this.$['icon'] = 'arrow-dropdown';
     this.$['on.click'] = this.handleClick.bind(this);
-    this.$.active = !!this.$['*currentAspectRatio'];
 
     this.sub('*currentAspectRatio', (opt) => {
-      const value = opt.hasFreeform ? this.l10n('custom') : `${opt.width}:${opt.height}`;
-      this.$['title'] = this.l10n('crop-to-shape', { value });
+      this.$['title'] = opt.hasFreeform
+        ? this.l10n('freeform-crop')
+        : this.l10n('crop-to-shape', { value: `${opt.width}:${opt.height}` });
 
       this.bindL10n('title-prop', () => this.$['title']);
     });
@@ -47,6 +47,13 @@ export class EditorFreeformButtonControl extends EditorButtonControl {
     this.$['*showListAspectRatio'] = true;
   }
 }
+
+EditorFreeformButtonControl.template = /* html */ ` 
+  <button role="option" type="button" set="@aria-label:title-prop;" l10n="@title:title-prop;">
+    <div class="uc-title" ref="title-el">{{title}}</div>
+    <uc-icon ref="icon-el" set="@name: icon;"></uc-icon>
+  </button> 
+`;
 
 export class EditorAspectRatioButtonControl extends EditorButtonControl {
   constructor() {
@@ -67,22 +74,24 @@ export class EditorAspectRatioButtonControl extends EditorButtonControl {
         if (!value) return;
 
         const isFreeform = !!value.hasFreeform;
-        const name = this.l10n(isFreeform ? 'custom' : value.type).toLowerCase();
-
-        this.$['icon'] = isFreeform ? 'freeform' : value.type;
         this.$['title'] = isFreeform ? this.l10n('custom') : `${value.width}:${value.height}`;
 
         if (!isFreeform) {
           this._renderRectBasedOnAspectRatio(value);
         }
 
+        if (isFreeform) {
+          this.setAttribute('uc-aspect-ratio-freeform', '');
+        }
+
         this._aspectRatio = value;
 
         this.bindL10n('title-prop', () => {
-          const val = isFreeform ? '' : `${value.width}:${value.height}`;
           return this.l10n('a11y-cloud-editor-apply-aspect-ratio', {
-            name,
-            value: val,
+            name: isFreeform
+              ? this.l10n('custom').toLocaleLowerCase()
+              : this.l10n('crop-to-shape', { value: `${value.width}:${value.height}` }).toLocaleLowerCase(),
+            value: '',
           });
         });
       },
@@ -117,6 +126,7 @@ export class EditorAspectRatioButtonControl extends EditorButtonControl {
       'fill-rule': 'evenodd',
       x: (SIZE_SVG_WRAPPER - width) / 2,
       y: (SIZE_SVG_WRAPPER - height) / 2,
+      rx: 2,
       width,
       height,
     });

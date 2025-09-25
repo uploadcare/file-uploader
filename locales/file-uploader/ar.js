@@ -131,8 +131,7 @@ export default {
   'a11y-file-item-status': 'الملف {{fileName}} في حالة {{status}}',
   'waiting-for': 'في انتظار {{source}}',
   'a11y-cloud-editor-apply-aspect-ratio': 'تطبيق عملية {{name}} {{value}}',
-  'aspect-ratio': 'نسبة العرض إلى الارتفاع',
   'crop-to-shape': 'اقتصاص إلى {{value}}',
-
-  custom: 'مخصص',
+  custom: 'حر الشكل',
+  'freeform-crop': 'قص حر',
 };
