@@ -379,6 +379,11 @@ uc-editor-freeform-button-control > button {
   grid-template-columns: auto var(--l-base-min-width);
 }
 
+uc-editor-freeform-button-control > button > uc-icon {
+  margin-left: var(--cldtr-gap-mid-1);
+  width: 10px;
+}
+
 :where(
     uc-editor-button-control,
     uc-editor-crop-button-control,

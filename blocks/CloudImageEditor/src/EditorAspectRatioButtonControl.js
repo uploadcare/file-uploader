@@ -89,8 +89,8 @@ export class EditorAspectRatioButtonControl extends EditorButtonControl {
         this.bindL10n('title-prop', () => {
           return this.l10n('a11y-cloud-editor-apply-aspect-ratio', {
             name: isFreeform
-              ? this.l10n('custom').toLocaleLowerCase()
-              : this.l10n('crop-to-shape', { value: `${value.width}:${value.height}` }).toLocaleLowerCase(),
+              ? this.l10n('custom').toLowerCase()
+              : this.l10n('crop-to-shape', { value: `${value.width}:${value.height}` }).toLowerCase(),
             value: '',
           });
         });
