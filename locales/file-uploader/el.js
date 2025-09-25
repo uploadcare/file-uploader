@@ -125,9 +125,9 @@ export default {
   'a11y-file-item-status': 'Το αρχείο {{fileName}} βρίσκεται στην κατάσταση {{status}}',
   'waiting-for': 'Αναμονή για {{source}}',
   'a11y-cloud-editor-apply-aspect-ratio': 'Εφαρμογή λειτουργίας {{name}} {{value}}',
-  'aspect-ratio': 'Λόγος διαστάσεων',
 
   'crop-to-shape': 'Περικοπή σε {{value}}',
 
-  custom: 'Προσαρμοσμένο',
+  custom: 'Ελεύθερη μορφή',
+  'freeform-crop': 'Ελεύθερη περικοπή',
 };

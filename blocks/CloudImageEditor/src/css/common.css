@@ -375,6 +375,15 @@ uc-editor-operation-control > button {
   transition: var(--l-width-transition);
 }
 
+uc-editor-freeform-button-control > button {
+  grid-template-columns: auto var(--l-base-min-width);
+}
+
+uc-editor-freeform-button-control > button > uc-icon {
+  margin-left: var(--cldtr-gap-mid-1);
+  width: 10px;
+}
+
 :where(
     uc-editor-button-control,
     uc-editor-crop-button-control,
@@ -466,6 +475,11 @@ uc-editor-filter-control > button .uc-title {
   font-size: 0.7em;
   letter-spacing: 1.004px;
   text-transform: uppercase;
+}
+
+uc-editor-freeform-button-control > button .uc-title {
+  padding-left: var(--cldtr-gap-mid-1);
+  padding-right: 0;
 }
 
 uc-editor-button-control > button uc-icon,
@@ -1226,4 +1240,20 @@ uc-presence-toggle.uc-initial {
 
 [uc-cloud-image-editor] .uc-cloud-mask {
   pointer-events: none;
+}
+
+[uc-aspect-ratio-freeform] button {
+  display: flex;
+}
+
+[uc-aspect-ratio-freeform] uc-icon {
+  display: none;
+}
+
+[uc-aspect-ratio-freeform] .uc-title {
+  padding-left: var(--cldtr-gap-mid-1);
+}
+
+:where(uc-editor-freeform-button-control, uc-editor-aspect-ratio-button-control:last-of-type) {
+  margin-right: calc(3 * var(--cldtr-gap-mid-1));
 }
