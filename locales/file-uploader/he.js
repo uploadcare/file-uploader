@@ -55,7 +55,7 @@ export default {
   'src-type-vk': 'VK',
   'src-type-evernote': 'Evernote',
   'src-type-box': 'Box',
-  'src-type-onedrive': 'Onedrive',
+  'src-type-onedrive': 'OneDrive',
   'src-type-huddle': 'Huddle',
   'src-type-other': 'אחר',
   'src-type-mobile-video-camera': 'וידאו',
