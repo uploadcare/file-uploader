@@ -1,3 +1,9 @@
+# [1.22.0](https://github.com/uploadcare/file-uploader/compare/v1.21.0...v1.22.0) (2025-09-25)
+
+### Features
+
+- **cloud-editor:** added improved UX for crop presets ([#861](https://github.com/uploadcare/file-uploader/issues/861)) ([b35ef61](https://github.com/uploadcare/file-uploader/commit/b35ef61f38d9af76b5d6a01fb29da5fedc72a6b7))
+
 # [1.21.0](https://github.com/uploadcare/file-uploader/compare/v1.20.1...v1.21.0) (2025-09-10)
 
 ### Features
