@@ -146,8 +146,6 @@ export class UploaderPublicApi {
       return;
     }
 
-    console.log('Fuck', itemsToUpload);
-
     this._ctx.$['*uploadTrigger'] = new Set(itemsToUpload);
     this._ctx.emit(
       EventType.COMMON_UPLOAD_START,
