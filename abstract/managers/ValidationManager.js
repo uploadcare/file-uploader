@@ -201,11 +201,15 @@ export class ValidationManager {
     const timeoutMs = this._blockInstance.cfg.validationTimeout;
     const allDescriptors = this._getValidatorDescriptors();
 
+    const entryValidatorSet = new Set(entryDescriptors.map((d) => d.validator));
     /** @type {import('../../types').OutputErrorFile[]} */
-    const errors = allDescriptors
-      .filter((descriptor) => !entryDescriptors.some((d) => descriptor.validator === d.validator))
-      .map((descriptor) => state.lastErrorThrownByValidator.get(descriptor.validator))
-      .filter(Boolean);
+    const errors = [];
+    for (const descriptor of allDescriptors) {
+      if (!entryValidatorSet.has(descriptor.validator)) {
+        const error = state.lastErrorThrownByValidator.get(descriptor.validator);
+        if (error) errors.push(error);
+      }
+    }
 
     const tasks = entryDescriptors.map((validatorDescriptor) => async () => {
       const timeoutId = setTimeout(() => {
