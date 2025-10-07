@@ -1,5 +1,5 @@
 import { expectType } from 'tsd';
-import { OutputFileEntry, FuncCollectionValidator, FuncFileValidator } from '../index.js';
+import { OutputFileEntry, FuncCollectionValidator, FuncFileValidator, FileValidatorDescriptor } from '../index.js';
 import { renderer } from '../../tests/utils/test-renderer.js';
 import React from 'react';
 import '../jsx';
@@ -74,16 +74,26 @@ import '../jsx';
   if (ref.current) {
     const config = ref.current;
 
-    const maxSize: FuncFileValidator = (outputEntry, api) => ({
+    const syncFileValidator: FuncFileValidator = (outputEntry, api) => ({
       message: api.l10n('images-only-accepted'),
       payload: { entry: outputEntry },
     });
+
+    const asyncFileValidator: FuncFileValidator = async (outputEntry, api) => ({
+      message: api.l10n('images-only-accepted'),
+      payload: { entry: outputEntry },
+    });
+
+    const fileValidatorDescriptor: FileValidatorDescriptor = {
+      runOn: 'change',
+      validator: syncFileValidator,
+    };
 
     const maxCollection: FuncCollectionValidator = (collection, api) => ({
       message: api.l10n('some-files-were-not-uploaded'),
     });
 
-    config.fileValidators = [maxSize];
+    config.fileValidators = [syncFileValidator, asyncFileValidator, fileValidatorDescriptor];
     config.collectionValidators = [maxCollection];
   }
 };
