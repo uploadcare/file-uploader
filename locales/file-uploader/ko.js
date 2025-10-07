@@ -116,11 +116,14 @@ export default {
   failed: '실패함',
   uploading: '업로드 중',
   idle: '대기 중',
-  queued: '대기 중',
+
   'a11y-file-item-status': '{{fileName}} 파일이 {{status}} 상태입니다',
   'select-all': '모두 선택',
   'deselect-all': '모두 선택 해제',
   'waiting-for': '{{source}} 대기 중',
+  'queued-uploading': '업로드 대기 중',
+  'queued-validation': '검증 대기 중',
+  validation: '검증 중',
   'a11y-cloud-editor-apply-aspect-ratio': '작업 {{name}} {{value}} 적용',
 
   'crop-to-shape': '{{value}}로 자르기',

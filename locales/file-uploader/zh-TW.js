@@ -117,11 +117,14 @@ export default {
   failed: '失敗',
   uploading: '上傳中',
   idle: '閒置',
-  queued: '排隊中',
+
   'a11y-file-item-status': '檔案 {{fileName}} 的狀態是 {{status}}',
   'select-all': '全選',
   'deselect-all': '取消全選',
   'waiting-for': '等待 {{source}}',
+  'queued-uploading': '排隊等待上傳',
+  'queued-validation': '排隊等待驗證',
+  validation: '驗證中',
   'a11y-cloud-editor-apply-aspect-ratio': '套用操作 {{name}} {{value}}',
 
   'crop-to-shape': '裁剪為 {{value}}',

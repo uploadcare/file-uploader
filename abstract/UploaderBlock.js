@@ -43,7 +43,15 @@ export class UploaderBlock extends ActivityBlock {
     if (!this.has('*uploadCollection')) {
       let uploadCollection = new TypedCollection({
         typedSchema: uploadEntrySchema,
-        watchList: ['uploadProgress', 'uploadError', 'fileInfo', 'errors', 'cdnUrl', 'isUploading'],
+        watchList: [
+          'uploadProgress',
+          'uploadError',
+          'fileInfo',
+          'errors',
+          'cdnUrl',
+          'isUploading',
+          'isValidationPending',
+        ],
       });
       this.add('*uploadCollection', uploadCollection);
     }
@@ -206,8 +214,11 @@ export class UploaderBlock extends ActivityBlock {
     if (added.size || removed.size) {
       this.$['*groupInfo'] = null;
     }
-    this.validationManager.runFileValidators();
-    this.validationManager.runCollectionValidators();
+
+    this.validationManager.runFileValidators(
+      'add',
+      [...added].map((e) => e.uid),
+    );
 
     for (const entry of added) {
       if (!entry.getValue('silent')) {
@@ -215,9 +226,12 @@ export class UploaderBlock extends ActivityBlock {
       }
     }
 
+    this.validationManager.runCollectionValidators();
+
     for (const entry of removed) {
       /** @type {Set<string>} */ (this.$['*uploadTrigger']).delete(entry.uid);
 
+      this.validationManager.cleanupValidationForEntry(entry);
       entry.getValue('abortController')?.abort();
       entry.setMultipleValues({
         isRemoved: true,
@@ -249,7 +263,7 @@ export class UploaderBlock extends ActivityBlock {
     const entriesToRunValidation = [
       ...new Set(
         Object.entries(changeMap)
-          .filter(([key]) => ['uploadError', 'fileInfo'].includes(key))
+          .filter(([key]) => ['uploadError', 'fileInfo', 'cdnUrl', 'cdnUrlModifiers'].includes(key))
           .map(([, ids]) => [...ids])
           .flat(),
       ),
@@ -258,7 +272,13 @@ export class UploaderBlock extends ActivityBlock {
     entriesToRunValidation.length > 0 &&
       setTimeout(() => {
         // We can't modify entry properties in the same tick, so we need to wait a bit
-        this.validationManager.runFileValidators(entriesToRunValidation);
+        const entriesToRunOnUpload = entriesToRunValidation.filter(
+          (entryId) => changeMap.fileInfo?.has(entryId) && !!Data.getCtx(entryId).store.fileInfo,
+        );
+        if (entriesToRunOnUpload.length > 0) {
+          this.validationManager.runFileValidators('upload', entriesToRunOnUpload);
+        }
+        this.validationManager.runFileValidators('change', entriesToRunValidation);
       });
 
     if (changeMap.uploadProgress) {
@@ -295,6 +315,8 @@ export class UploaderBlock extends ActivityBlock {
       }
     }
     if (changeMap.errors) {
+      this.validationManager.runCollectionValidators();
+
       for (const entryId of changeMap.errors) {
         const { errors } = Data.getCtx(entryId).store;
         if (errors.length > 0) {

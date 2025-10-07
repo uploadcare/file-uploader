@@ -117,11 +117,14 @@ export default {
   failed: '失敗',
   uploading: 'アップロード中',
   idle: 'アイドル',
-  queued: 'キューに追加',
+
   'a11y-file-item-status': 'ファイル {{fileName}} のステータスは {{status}} です',
   'select-all': 'すべて選択',
   'deselect-all': 'すべて選択解除',
   'waiting-for': '{{source}} を待っています',
+  'queued-uploading': 'アップロード待ち',
+  'queued-validation': '検証待ち',
+  validation: '検証中',
   'a11y-cloud-editor-apply-aspect-ratio': '操作 {{name}} {{value}} を適用',
 
   'crop-to-shape': '{{value}} にトリミング',

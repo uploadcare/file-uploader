@@ -119,9 +119,12 @@ export default {
   failed: 'Ebaõnnestunud',
   uploading: 'Üleslaadimine',
   idle: 'Ootel',
-  queued: 'Järjekorras',
+
   'a11y-file-item-status': 'Fail {{fileName}} on seisundis {{status}}',
   'waiting-for': 'Ootel {{source}}',
+  'queued-uploading': 'Järjekorras üleslaadimiseks',
+  'queued-validation': 'Järjekorras valideerimiseks',
+  validation: 'Valideerimine käib',
   'a11y-cloud-editor-apply-aspect-ratio': 'Rakenda toiming {{name}} {{value}}',
 
   'crop-to-shape': 'Kärbi suuruseks {{value}}',

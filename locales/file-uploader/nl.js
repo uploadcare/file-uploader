@@ -118,11 +118,14 @@ export default {
   failed: 'Mislukt',
   uploading: 'Uploaden',
   idle: 'Inactief',
-  queued: 'In de wachtrij',
+
   'a11y-file-item-status': 'Bestand {{fileName}} in status {{status}}',
   'select-all': 'Selecteer alles',
   'deselect-all': 'Deselecteer alles',
   'waiting-for': 'Wachten op {{source}}',
+  'queued-uploading': 'In de wachtrij voor upload',
+  'queued-validation': 'In de wachtrij voor validatie',
+  validation: 'Bezig met valideren',
   'a11y-cloud-editor-apply-aspect-ratio': 'Bewerking {{name}} {{value}} toepassen',
 
   'crop-to-shape': 'Bijsnijden naar {{value}}',

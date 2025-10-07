@@ -122,9 +122,12 @@ export default {
   failed: 'Fallat',
   uploading: 'Carregant',
   idle: 'Inactiu',
-  queued: 'En cua',
+
   'a11y-file-item-status': 'El fitxer {{fileName}} està en estat {{status}}',
   'waiting-for': 'Esperant per {{source}}',
+  'queued-uploading': 'En cua per pujar',
+  'queued-validation': 'En cua per validar',
+  validation: 'Validant',
   'a11y-cloud-editor-apply-aspect-ratio': 'Aplicar operació {{name}} {{value}}',
 
   'crop-to-shape': 'Retalla a {{value}}',

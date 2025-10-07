@@ -119,11 +119,14 @@ export default {
   failed: 'Neizdevās',
   uploading: 'Augšupielādē',
   idle: 'Gaida',
+
   'a11y-file-item-status': 'Fails {{fileName}} ir stāvoklī {{status}}',
   'select-all': 'Izvēlēties visus',
   'deselect-all': 'Noņemt izvēli visiem',
   'waiting-for': 'Gaida {{source}}',
-  queued: 'Rindā',
+  'queued-uploading': 'Rindā augšupielādei',
+  'queued-validation': 'Rindā validācijai',
+  validation: 'Notiek validācija',
   'a11y-cloud-editor-apply-aspect-ratio': 'Lietot darbību {{name}} {{value}}',
 
   'crop-to-shape': 'Apgriezt līdz {{value}}',

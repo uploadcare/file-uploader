@@ -55,9 +55,9 @@ export class CloudImageEditorBlock extends Block {
       }, TIMEOUT);
       const resizeObserver = new ResizeObserver(([element]) => {
         if (element.contentRect.width > 0 && element.contentRect.height > 0) {
-          resolve();
           clearTimeout(timeoutId);
           resizeObserver.disconnect();
+          setTimeout(() => resolve(), 0);
         }
       });
       resizeObserver.observe(this);
