@@ -57,7 +57,7 @@ export default {
   'src-type-vk': 'ВКонтакте',
   'src-type-evernote': 'Evernote',
   'src-type-box': 'Box',
-  'src-type-onedrive': 'Onedrive',
+  'src-type-onedrive': 'OneDrive',
   'src-type-huddle': 'Huddle',
   'src-type-other': 'Другое',
   'src-type-mobile-video-camera': 'Видео',
