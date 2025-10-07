@@ -212,6 +212,9 @@ export class ValidationManager {
     }
 
     const tasks = entryDescriptors.map((validatorDescriptor) => async () => {
+      if (!this._blockInstance.isConnected) {
+        return;
+      }
       const timeoutId = setTimeout(() => {
         state.skippedValidators.add(validatorDescriptor.validator);
         abortController.abort();

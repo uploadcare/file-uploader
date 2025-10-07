@@ -235,7 +235,7 @@ describe('Custom file validation', () => {
             timeout: 3000,
           })
           .toBe('success');
-        expect(customValidator).toHaveBeenCalledTimes(1);
+        await expect.poll(() => customValidator).toHaveBeenCalledTimes(1);
       });
 
       it('should not re-run validator on cdnUrl change (e.g. image edit)', async () => {
@@ -283,7 +283,7 @@ describe('Custom file validation', () => {
             timeout: 3000,
           })
           .toBe('success');
-        expect(customValidator.mock.calls.length).toBeGreaterThan(1);
+        await expect.poll(() => customValidator.mock.calls.length).toBeGreaterThan(1);
       });
 
       it('should re-run validator on cdnUrl change (e.g. image edit)', async () => {
@@ -303,11 +303,9 @@ describe('Custom file validation', () => {
         api.initFlow();
         await page.getByLabelText('Edit', { exact: true }).click();
         await page.getByLabelText('Apply mirror operation', { exact: true }).click();
-        await delay(300);
         const callsBeforeEdit = customValidator.mock.calls.length;
         await page.getByLabelText('apply', { exact: true }).click();
-        await delay(100);
-        expect(customValidator.mock.calls.length).toBe(callsBeforeEdit + 1);
+        await expect.poll(() => customValidator.mock.calls.length).toBe(callsBeforeEdit + 1);
       });
     });
   });
@@ -369,7 +367,7 @@ describe('Custom file validation', () => {
 
     it('should abort async validation if file is removed', async () => {
       const config = page.getByTestId('uc-config').query()! as InstanceType<Config>;
-      const validator = vi.fn(async (...args) => {
+      const validator = vi.fn(async () => {
         await delay(500);
         return {
           message: 'Bad image',
@@ -382,12 +380,13 @@ describe('Custom file validation', () => {
       api.initFlow();
       await delay(100);
       api.removeFileByInternalId(entry.internalId);
-      await delay(0);
-      expect(validator).toHaveBeenLastCalledWith(
-        expect.objectContaining({ errors: [] }),
-        expect.anything(),
-        expect.objectContaining({ signal: expect.toSatisfy((s) => s.aborted) }),
-      );
+      await expect
+        .poll(() => validator)
+        .toHaveBeenLastCalledWith(
+          expect.objectContaining({ errors: [] }),
+          expect.anything(),
+          expect.objectContaining({ signal: expect.toSatisfy((s) => s.aborted) }),
+        );
     });
   });
 
@@ -550,10 +549,15 @@ describe('File errors API', () => {
     const entry = api.addFileFromUrl(`https://fake-domain-that-will-404.com/image.jpg`);
     api.initFlow();
     await expect
-      .poll(() => {
-        const currentEntry = api.getOutputItem(entry.internalId);
-        return currentEntry.errors;
-      })
+      .poll(
+        () => {
+          const currentEntry = api.getOutputItem(entry.internalId);
+          return currentEntry.errors;
+        },
+        {
+          timeout: 5000,
+        },
+      )
       .toEqual(expect.arrayContaining([expect.objectContaining<Partial<OutputErrorFile>>({ type: 'UPLOAD_ERROR' })]));
   });
 
@@ -639,10 +643,15 @@ describe('File errors API', () => {
     api.initFlow();
 
     await expect
-      .poll(() => {
-        const currentEntry = api.getOutputItem(entry.internalId);
-        return currentEntry.errors;
-      })
+      .poll(
+        () => {
+          const currentEntry = api.getOutputItem(entry.internalId);
+          return currentEntry.errors;
+        },
+        {
+          timeout: 3000,
+        },
+      )
       .toEqual(
         expect.arrayContaining([
           expect.objectContaining<Partial<OutputErrorFile>>({ message: 'Add error' }),
