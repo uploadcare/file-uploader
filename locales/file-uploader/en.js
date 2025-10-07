@@ -125,7 +125,6 @@ export default {
   'queued-uploading': 'Queued for upload',
   'queued-validation': 'Queued for validation',
   validation: 'Validating',
-  'aspect-ratio': 'Aspect ratio',
   'crop-to-shape': 'Crop to {{value}}',
   custom: 'Freeform',
   'freeform-crop': 'Freeform crop',
