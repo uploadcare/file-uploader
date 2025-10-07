@@ -7,7 +7,7 @@
 
 ### Features
 
-- **validation:** add support for async file validation ([a184ff1](https://github.com/uploadcare/file-uploader/commit/a184ff167a7072ccbed76e3e9e108e4e980a8f56))
+- **validation:** add support for async file validation ([a184ff1](https://github.com/uploadcare/file-uploader/commit/a184ff167a7072ccbed76e3e9e108e4e980a8f56)). See [File Validation docs](https://uploadcare.com/docs/file-uploader/file-validators/) for details.
 
 # [1.22.0](https://github.com/uploadcare/file-uploader/compare/v1.21.0...v1.22.0) (2025-09-25)
 
