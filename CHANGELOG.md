@@ -1,3 +1,9 @@
+## [1.22.1](https://github.com/uploadcare/file-uploader/compare/v1.22.0...v1.22.1) (2025-10-07)
+
+### Bug Fixes
+
+- **locales:** correct capitalization from "Onedrive" to "OneDrive" ([#863](https://github.com/uploadcare/file-uploader/issues/863)) ([5b22196](https://github.com/uploadcare/file-uploader/commit/5b221969df47b36bc77dbdebce692c0ebafb46ec))
+
 # [1.22.0](https://github.com/uploadcare/file-uploader/compare/v1.21.0...v1.22.0) (2025-09-25)
 
 ### Features
