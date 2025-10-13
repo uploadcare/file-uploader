@@ -65,10 +65,11 @@
   },
   "scripts": {
     "dev": "vite dev",
-    "test": "npm run test:types && npm run test:specs && npm run test:locales && npm run test:e2e",
+    "test": "npm run test:types && npm run test:specs && npm run test:specs-vitest && npm run test:locales && npm run test:e2e",
     "test:types": "tsd -t types/index.d.ts -f types/test/",
     "test:specs": "web-test-runner \"./{abstract,blocks,solutions,web,utils}/**/*.test.js\" --node-resolve",
-    "test:e2e": "vitest --coverage",
+    "test:specs-vitest": "vitest run --project npm",
+    "test:e2e": "vitest --project e2e",
     "test:e2e:dev": "vitest --browser.headless=false",
     "test:locales": "node ./test-locales.js",
     "release": "shipjs prepare",

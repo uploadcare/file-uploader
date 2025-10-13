@@ -82,7 +82,7 @@ const stubbedExports = Object.fromEntries(
   }),
 );
 
-const content = Object.entries(stubbedExports)
+const content = [...Object.entries(stubbedExports), ['IS_SSR_STUBS', 'true']]
   .map(([key, value]) => {
     return `export const ${key} = ${value};`;
   })

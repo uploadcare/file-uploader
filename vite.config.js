@@ -9,7 +9,7 @@ export default defineConfig(({ command }) => {
   if (command === 'serve') {
     return {
       build: {
-        target: 'es2019',
+        target: 'esnext',
       },
       test: {
         coverage: {
@@ -19,12 +19,17 @@ export default defineConfig(({ command }) => {
         },
         projects: [
           {
-            resolve: {
-              alias: {
-                '@': __dirname,
-              },
-            },
+            extends: true,
             test: {
+              name: 'npm',
+              include: ['./specs/npm/*.test.ts'],
+              environment: 'happy-dom',
+            },
+          },
+          {
+            extends: true,
+            test: {
+              name: 'e2e',
               include: ['./**/*.e2e.test.ts', './**/*.e2e.test.tsx'],
               browser: {
                 enabled: true,
