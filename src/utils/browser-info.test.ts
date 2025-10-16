@@ -1,7 +1,5 @@
-// @ts-check
-import { expect } from '@esm-bundle/chai';
+import { describe, expect, it, vi } from 'vitest';
 import { calcBrowserFeatures, calcBrowserInfo } from './browser-info';
-import * as sinon from 'sinon';
 
 const DESKTOP_SAFARI_USER_AGENTS = [
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.1 Safari/605.1.15',
@@ -57,22 +55,28 @@ const OTHER_MOBILE_USER_AGENTS = [
 describe('browser-info', () => {
   describe('safariDesktop flag', () => {
     it('should be true for desktop safari', () => {
-      const sandbox = sinon.createSandbox();
-      for (const ua of DESKTOP_SAFARI_USER_AGENTS) {
-        sandbox.replaceGetter(window.navigator, 'userAgent', () => ua);
-        const browserInfo = calcBrowserInfo();
-        expect(browserInfo.safariDesktop).to.be.true;
-        sandbox.restore();
+      const userAgentGetter = vi.spyOn(window.navigator, 'userAgent', 'get');
+      try {
+        for (const ua of DESKTOP_SAFARI_USER_AGENTS) {
+          userAgentGetter.mockReturnValue(ua);
+          const browserInfo = calcBrowserInfo();
+          expect(browserInfo.safariDesktop).toBe(true);
+        }
+      } finally {
+        userAgentGetter.mockRestore();
       }
     });
 
     it('should be false for other browsers', () => {
-      const sandbox = sinon.createSandbox();
-      for (const ua of [...OTHER_DESKTOP_USER_AGENTS, ...OTHER_MOBILE_USER_AGENTS, ...MOBILE_SAFARI_USER_AGENTS]) {
-        sandbox.replaceGetter(window.navigator, 'userAgent', () => ua);
-        const browserInfo = calcBrowserInfo();
-        expect(browserInfo.safariDesktop).to.be.false;
-        sandbox.restore();
+      const userAgentGetter = vi.spyOn(window.navigator, 'userAgent', 'get');
+      try {
+        for (const ua of [...OTHER_DESKTOP_USER_AGENTS, ...OTHER_MOBILE_USER_AGENTS, ...MOBILE_SAFARI_USER_AGENTS]) {
+          userAgentGetter.mockReturnValue(ua);
+          const browserInfo = calcBrowserInfo();
+          expect(browserInfo.safariDesktop).toBe(false);
+        }
+      } finally {
+        userAgentGetter.mockRestore();
       }
     });
   });
@@ -81,29 +85,33 @@ describe('browser-info', () => {
 describe('browser-features', () => {
   describe('htmlMediaCapture', () => {
     it('should be true if capture is supported', () => {
-      const sandbox = sinon.createSandbox();
       const originalDocumentCreateElement = document.createElement.bind(document);
-      sandbox.replace(document, 'createElement', () => {
+      const createElementSpy = vi.spyOn(document, 'createElement').mockImplementation(() => {
         const input = originalDocumentCreateElement('input');
         input.capture = '';
         return input;
       });
-      const browserFeatures = calcBrowserFeatures();
-      expect(browserFeatures.htmlMediaCapture).to.be.true;
-      sandbox.restore();
+      try {
+        const browserFeatures = calcBrowserFeatures();
+        expect(browserFeatures.htmlMediaCapture).toBe(true);
+      } finally {
+        createElementSpy.mockRestore();
+      }
     });
     it('should be false if capture is not supported', () => {
-      const sandbox = sinon.createSandbox();
       const originalDocumentCreateElement = document.createElement.bind(document);
-      sandbox.replace(document, 'createElement', () => {
+      const createElementSpy = vi.spyOn(document, 'createElement').mockImplementation(() => {
         const input = originalDocumentCreateElement('input');
-        // @ts-ignore
+        // @ts-expect-error
         delete input.capture;
         return input;
       });
-      const browserFeatures = calcBrowserFeatures();
-      expect(browserFeatures.htmlMediaCapture).to.be.false;
-      sandbox.restore();
+      try {
+        const browserFeatures = calcBrowserFeatures();
+        expect(browserFeatures.htmlMediaCapture).toBe(false);
+      } finally {
+        createElementSpy.mockRestore();
+      }
     });
   });
 });
