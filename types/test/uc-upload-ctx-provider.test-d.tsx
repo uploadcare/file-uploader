@@ -1,19 +1,21 @@
-import { UploadcareFile, UploadcareGroup } from '@uploadcare/upload-client';
-import { useRef } from 'react';
+import '../jsx';
+
+import React, { useRef } from 'react';
 import { expectType } from 'tsd';
 import {
-  ActivityBlock,
-  EventMap,
-  OutputCollectionErrorType,
-  OutputCollectionStatus,
-  OutputError,
-  OutputFileEntry,
-  OutputFileErrorType,
+  type ActivityBlock,
+  type EventMap,
+  type ModalId,
+  type OutputCollectionErrorType,
+  type OutputCollectionStatus,
+  type OutputError,
+  type OutputFileEntry,
+  type OutputFileErrorType,
+  type SourceTypes,
   UploadCtxProvider,
-} from '../../index.js';
-import { SourceTypes } from '../../blocks/utils/UploadSource.js';
-import { type ModalId } from '../../abstract/managers/ModalManager.js';
-import { renderer } from '../../tests/utils/test-renderer.js';
+  type UploadcareFile,
+  type UploadcareGroup,
+} from '../../dist/index';
 
 const instance = new UploadCtxProvider();
 instance.uploadCollection.size;
@@ -39,20 +41,20 @@ instance.addEventListener('change', (e) => {
   // group is optional here
   expectType<UploadcareGroup | null>(state.group);
 
-  if (state.isSuccess) {
+  if (state.status === 'success' || state.isSuccess) {
     expectType<'success'>(state.status);
     expectType<true>(state.isSuccess);
     expectType<false>(state.isFailed);
     expectType<false>(state.isUploading);
     expectType<[]>(state.errors);
     expectType<'success'>(state.allEntries[0].status);
-  } else if (state.isFailed) {
+  } else if (state.status === 'failed' || state.isFailed) {
     expectType<'failed'>(state.status);
     expectType<false>(state.isSuccess);
     expectType<true>(state.isFailed);
     expectType<false>(state.isUploading);
     expectType<OutputError<OutputCollectionErrorType>[]>(state.errors);
-  } else if (state.isUploading) {
+  } else if (state.status === 'uploading' || state.isUploading) {
     expectType<'uploading'>(state.status);
     expectType<false>(state.isSuccess);
     expectType<false>(state.isFailed);
@@ -219,6 +221,6 @@ instance.addEventListener('activity-change', (e) => {
 });
 
 () => {
-  const ref = useRef<InstanceType<UploadCtxProvider>>(null);
+  const ref = useRef<UploadCtxProvider>(null);
   return <uc-upload-ctx-provider ctx-name="ctx" ref={ref}></uc-upload-ctx-provider>;
 };

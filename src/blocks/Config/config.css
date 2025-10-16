@@ -1,0 +1,5 @@
+@layer uc.components {
+  uc-config {
+    display: none;
+  }
+}

@@ -1,13 +1,13 @@
 /// <reference types="react" />
 
-type ConfigPlainType = import('./exported.js').ConfigPlainType;
-type UploadCtxProvider = import('../index.js').UploadCtxProvider;
-type Config = import('../index.js').Config;
-type FileUploaderInline = import('../index.js').FileUploaderInline;
-type FileUploaderRegular = import('../index.js').FileUploaderRegular;
-type FileUploaderMinimal = import('../index.js').FileUploaderMinimal;
-type FormInput = import('../index.js').FormInput;
-type CloudImageEditorBlock = import('../index.js').CloudImageEditorBlock;
+type ConfigPlainType = import('../dist/index.ts').ConfigPlainType;
+type UploadCtxProvider = import('../dist/index.ts').UploadCtxProvider;
+type Config = import('../dist/index.ts').Config;
+type FileUploaderInline = import('../dist/index.ts').FileUploaderInline;
+type FileUploaderRegular = import('../dist/index.ts').FileUploaderRegular;
+type FileUploaderMinimal = import('../dist/index.ts').FileUploaderMinimal;
+type FormInput = import('../dist/index.ts').FormInput;
+type CloudImageEditorBlock = import('../dist/index.ts').CloudImageEditorBlock;
 type CtxAttributes = {
   'ctx-name': string;
   testMode?: boolean;
@@ -60,7 +60,7 @@ declare namespace JSX {
     'uc-file-uploader-regular': CustomElement<FileUploaderRegular, CtxAttributes & Partial<{ headless: boolean }>>;
     'uc-file-uploader-minimal': CustomElement<FileUploaderMinimal, CtxAttributes>;
     'uc-file-uploader-inline': CustomElement<FileUploaderInline, CtxAttributes>;
-    'uc-upload-ctx-provider': CustomElement<InstanceType<UploadCtxProvider>, CtxAttributes>;
-    'uc-config': CustomElement<InstanceType<Config>, CtxAttributes & Partial<ConfigPlainType>>;
+    'uc-upload-ctx-provider': CustomElement<UploadCtxProvider, CtxAttributes>;
+    'uc-config': CustomElement<Config, CtxAttributes & Partial<ConfigPlainType>>;
   }
 }

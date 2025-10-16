@@ -31,7 +31,7 @@ jobs:
       - name: Run test
         run: npm run test
       - name: Run tsc
-        run: npm run clean:types && npm run tsc
+        run: npm run tsc
       - name: Archive artifacts
         uses: actions/upload-artifact@v4
         if: always()

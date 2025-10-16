@@ -1,4 +1,6 @@
-import { UploadCtxProvider } from '../../index.js';
+import '../jsx';
+
+import { UploadCtxProvider } from '../../dist/index.js';
 
 const instance = new UploadCtxProvider();
 const api = instance.getAPI();

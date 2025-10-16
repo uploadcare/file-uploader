@@ -1,10 +1,13 @@
-import { EventPayload } from '@/types';
 import { page } from '@vitest/browser/context';
-import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { EventPayload } from '@/index.js';
 import '../types/jsx';
+// biome-ignore lint/correctness/noUnusedImports: Used in JSX
 import { renderer } from './utils/test-renderer';
 
 beforeAll(async () => {
+  // biome-ignore lint/suspicious/noTsIgnore: Ignoring TypeScript error for CSS import
+  // @ts-ignore
   await import('@/solutions/file-uploader/regular/index.css');
   const UC = await import('@/index.js');
   UC.defineComponents(UC);
@@ -23,7 +26,7 @@ beforeEach(() => {
 
 describe('API', () => {
   it('should emit events', async () => {
-    const uploadCtxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as InstanceType<UploadCtxProvider>;
+    const uploadCtxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
     const api = uploadCtxProvider.api;
 
     const eventHandler = vi.fn<(e: CustomEvent<EventPayload['file-added']>) => void>();
@@ -50,7 +53,7 @@ describe('API', () => {
       page.render(<uc-file-uploader-regular ctx-name={uploader.getAttribute('ctx-name')!}></uc-file-uploader-regular>);
     }
 
-    const uploadCtxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as InstanceType<UploadCtxProvider>;
+    const uploadCtxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
     const api = uploadCtxProvider.api;
 
     const eventHandler = vi.fn<(e: CustomEvent<EventPayload['file-added']>) => void>();
@@ -76,7 +79,7 @@ describe('API', () => {
       page.render(uploader);
     }
 
-    const uploadCtxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as InstanceType<UploadCtxProvider>;
+    const uploadCtxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
     const api = uploadCtxProvider.api;
 
     const eventHandler = vi.fn<(e: CustomEvent<EventPayload['file-added']>) => void>();
