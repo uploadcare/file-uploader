@@ -1,4 +1,4 @@
-/* 
+/*
  * Helper function for legacy browsers and iframes which sometimes focus on elements like document, body, and
  * non-interactive SVG.
  */
@@ -22,7 +22,7 @@ function isValidFocusTarget(target: EventTarget | null): target is Element {
   return 'classList' in target && 'contains' in target.classList;
 }
 
-/* 
+/*
  * Computes whether the given element should automatically trigger the `focus-visible` class being added, i.e., whether
  * it should always match `:focus-visible` when focused.
  */
@@ -49,7 +49,7 @@ function focusTriggersKeyboardModality(target: EventTarget | null): boolean {
 let hadKeyboardEvent = true;
 let hadFocusVisibleRecently = false;
 
-/* 
+/*
  * Applies the :focus-visible polyfill at the given scope. A scope, in this case, is either the top-level Document or a
  * Shadow Root.
  */

@@ -16,7 +16,7 @@ export function l10nProcessor<T extends Block>(fr: DocumentFragment, fnCtx: T): 
 }
 
 const locale = (el: Element, key: string, fnCtx: any): void => {
-  let elProp: string = 'textContent';
+  let elProp = 'textContent';
   let useAttribute = false;
   if (key.includes(':')) {
     const arr = key.split(':');

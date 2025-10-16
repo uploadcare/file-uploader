@@ -1,6 +1,5 @@
 import { Queue } from '@uploadcare/upload-client';
 import { EventType } from '../../blocks/UploadCtxProvider/EventEmitter';
-import { debounce } from '../../utils/debounce';
 import type {
   OutputCollectionErrorType,
   OutputCollectionState,
@@ -12,6 +11,7 @@ import type {
   OutputFileErrorType,
   UploaderPublicApi,
 } from '../../types';
+import { debounce } from '../../utils/debounce';
 import { validateCollectionUploadError, validateMultiple } from '../../utils/validators/collection/index';
 import {
   validateFileType,

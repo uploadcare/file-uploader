@@ -1,15 +1,12 @@
-export function generateThumb(
-  imgFile: File,
-  size: number = 40,
-): string | Promise<string> {
-  if (imgFile.type === "image/svg+xml") {
+export function generateThumb(imgFile: File, size = 40): string | Promise<string> {
+  if (imgFile.type === 'image/svg+xml') {
     // TODO: Return destuctor here
     return URL.createObjectURL(imgFile);
   }
-  const canvas: HTMLCanvasElement = document.createElement("canvas");
-  const ctx = canvas.getContext("2d");
+  const canvas: HTMLCanvasElement = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
   if (!ctx) {
-    return Promise.reject(new Error("Canvas context not supported"));
+    return Promise.reject(new Error('Canvas context not supported'));
   }
   const img = new Image();
   const promise: Promise<string> = new Promise<string>((resolve, reject) => {
@@ -22,7 +19,7 @@ export function generateThumb(
         canvas.height = size;
         canvas.width = size / ratio;
       }
-      ctx.fillStyle = "rgb(240, 240, 240)";
+      ctx.fillStyle = 'rgb(240, 240, 240)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       canvas.toBlob((blob: Blob | null) => {

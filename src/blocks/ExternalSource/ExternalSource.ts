@@ -42,7 +42,7 @@ interface ExternalSourceInitState extends BaseInitState {
 }
 
 export class ExternalSource extends UploaderBlock {
-  override couldBeCtxOwner: boolean = true;
+  override couldBeCtxOwner = true;
   override activityType = ActivityBlock.activities.EXTERNAL;
   private _messageBridge?: MessageBridge;
 

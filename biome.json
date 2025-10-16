@@ -23,6 +23,9 @@
       },
       "complexity": {
         "noThisInStatic": "off"
+      },
+      "style": {
+        "noInferrableTypes": "error"
       }
     }
   },

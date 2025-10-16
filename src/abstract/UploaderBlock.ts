@@ -5,11 +5,11 @@ import { type FileFromOptions, uploadFileGroup } from '@uploadcare/upload-client
 import { calculateMaxCenteredCropFrame } from '../blocks/CloudImageEditor/src/crop-utils';
 import { parseCropPreset } from '../blocks/CloudImageEditor/src/lib/parseCropPreset';
 import { EventType } from '../blocks/UploadCtxProvider/EventEmitter';
+import type { OutputCollectionState, OutputFileEntry } from '../types/index';
+import { createCdnUrl, createCdnUrlModifiers } from '../utils/cdn-utils';
 import { debounce } from '../utils/debounce';
 import { ExternalUploadSource, UploadSource } from '../utils/UploadSource';
 import { customUserAgent } from '../utils/userAgent';
-import type { OutputCollectionState, OutputFileEntry } from '../types/index';
-import { createCdnUrl, createCdnUrlModifiers } from '../utils/cdn-utils';
 import { ActivityBlock } from './ActivityBlock';
 import { uploaderBlockCtx } from './CTX';
 import { SecureUploadsManager } from './managers/SecureUploadsManager';
@@ -21,9 +21,9 @@ import { type UploadEntryData, uploadEntrySchema } from './uploadEntrySchema';
 export class UploaderBlock extends ActivityBlock {
   static extSrcList: Readonly<typeof ExternalUploadSource>;
   static sourceTypes: Readonly<typeof UploadSource>;
-  protected couldBeCtxOwner: boolean = false;
+  protected couldBeCtxOwner = false;
 
-  private isCtxOwner: boolean = false;
+  private isCtxOwner = false;
 
   private _unobserveCollection?: () => void;
   private _unobserveCollectionProperties?: () => void;

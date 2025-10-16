@@ -48,6 +48,7 @@ export class Thumb extends FileItemConfig {
     return Math.min(size, CDN_MAX_OUTPUT_DIMENSION);
   }
 
+  // biome-ignore lint/style/noInferrableTypes: Here the type is needed because `_withEntry` could not infer it correctly
   private _generateThumbnail = this._withEntry(async (entry, force: boolean = false) => {
     const fileInfo = entry.getValue('fileInfo');
     const isImage = entry.getValue('isImage');

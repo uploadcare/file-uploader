@@ -1,17 +1,17 @@
-import { ActivityBlock } from "../../abstract/ActivityBlock";
-import { UploaderBlock } from "../../abstract/UploaderBlock";
-import { stringToArray } from "../../utils/stringToArray";
-import { canUsePermissionsApi } from "../../utils/abilities";
-import { deserializeCsv } from "../../utils/comma-separated";
-import { debounce } from "../../utils/debounce";
-import { UploadSource } from "../../utils/UploadSource";
-import "./camera-source.css";
-import { CameraSourceEvents, CameraSourceTypes } from "./constants";
+import { ActivityBlock } from '../../abstract/ActivityBlock';
+import { UploaderBlock } from '../../abstract/UploaderBlock';
+import { canUsePermissionsApi } from '../../utils/abilities';
+import { deserializeCsv } from '../../utils/comma-separated';
+import { debounce } from '../../utils/debounce';
+import { stringToArray } from '../../utils/stringToArray';
+import { UploadSource } from '../../utils/UploadSource';
+import './camera-source.css';
+import { CameraSourceEvents, CameraSourceTypes } from './constants';
 
 type CameraDeviceOption = { text: string; value: string };
 type AudioDeviceOption = { text: string; value: string };
 
-type CameraSourceInitState = InstanceType<typeof UploaderBlock>["init$"] & {
+type CameraSourceInitState = InstanceType<typeof UploaderBlock>['init$'] & {
   video: MediaStream | null;
   videoTransformCss: string | null;
   videoHidden: boolean;
@@ -66,30 +66,23 @@ const DEFAULT_VIDEO_CONFIG = {
   },
 };
 
-const DEFAULT_PERMISSIONS = ["camera", "microphone"];
+const DEFAULT_PERMISSIONS = ['camera', 'microphone'];
 
 function formatTime(time: number): string {
   const minutes = Math.floor(time / 60)
     .toString()
-    .padStart(2, "0");
+    .padStart(2, '0');
   const seconds = Math.floor(time % 60)
     .toString()
-    .padStart(2, "0");
+    .padStart(2, '0');
   return `${minutes}:${seconds}`;
 }
 
-const DEFAULT_PICTURE_FORMAT = "image/jpeg";
-const DEFAULT_VIDEO_FORMAT = "video/webm";
+const DEFAULT_PICTURE_FORMAT = 'image/jpeg';
+const DEFAULT_VIDEO_FORMAT = 'video/webm';
 
-export type CameraMode = "photo" | "video";
-export type CameraStatus =
-  | "shot"
-  | "retake"
-  | "accept"
-  | "play"
-  | "stop"
-  | "pause"
-  | "resume";
+export type CameraMode = 'photo' | 'video';
+export type CameraStatus = 'shot' | 'retake' | 'accept' | 'play' | 'stop' | 'pause' | 'resume';
 
 export class CameraSource extends UploaderBlock {
   override couldBeCtxOwner = true;
@@ -115,9 +108,7 @@ export class CameraSource extends UploaderBlock {
   private _ctx: CanvasRenderingContext2D | null = null;
   private _cameraDevices: CameraDeviceOption[] = [];
   private _audioDevices: AudioDeviceOption[] = [];
-  private _permissionResponses: Partial<
-    Record<(typeof DEFAULT_PERMISSIONS)[number], PermissionStatus>
-  > = {};
+  private _permissionResponses: Partial<Record<(typeof DEFAULT_PERMISSIONS)[number], PermissionStatus>> = {};
 
   constructor() {
     super();
@@ -132,7 +123,7 @@ export class CameraSource extends UploaderBlock {
       requestBtnHidden: canUsePermissionsApi(),
       cameraSelectOptions: null,
       cameraSelectHidden: true,
-      l10nMessage: "",
+      l10nMessage: '',
 
       // This is refs
       switcher: null,
@@ -151,15 +142,15 @@ export class CameraSource extends UploaderBlock {
       tabCameraHidden: true,
       tabVideoHidden: true,
 
-      currentIcon: "camera-full",
-      currentTimelineIcon: "play",
-      toggleMicrophoneIcon: "microphone",
+      currentIcon: 'camera-full',
+      currentTimelineIcon: 'play',
+      toggleMicrophoneIcon: 'microphone',
 
       _startTime: 0,
       _elapsedTime: 0,
       _animationFrameId: null,
 
-      mutableClassButton: "uc-shot-btn uc-camera-action",
+      mutableClassButton: 'uc-shot-btn uc-camera-action',
 
       onCameraSelectChange: (event: Event) => {
         const target = event.target as HTMLSelectElement | null;
@@ -204,7 +195,7 @@ export class CameraSource extends UploaderBlock {
 
       onClickTab: (event: MouseEvent) => {
         const target = event.currentTarget as HTMLElement | null;
-        const id = target?.getAttribute("data-id");
+        const id = target?.getAttribute('data-id');
         if (id) {
           this._handleActiveTab(id as CameraMode);
         }
@@ -218,7 +209,7 @@ export class CameraSource extends UploaderBlock {
     }
 
     if (this._activeTab === CameraSourceTypes.VIDEO) {
-      if (this._mediaRecorder?.state === "recording") {
+      if (this._mediaRecorder?.state === 'recording') {
         this._stopRecording();
         return;
       }
@@ -228,14 +219,9 @@ export class CameraSource extends UploaderBlock {
   };
 
   _updateTimer = (): void => {
-    const currentTime = Math.floor(
-      (performance.now() - this.$._startTime + this.$._elapsedTime) / 1000,
-    );
+    const currentTime = Math.floor((performance.now() - this.$._startTime + this.$._elapsedTime) / 1000);
 
-    if (
-      typeof this.cfg.maxVideoRecordingDuration === "number" &&
-      this.cfg.maxVideoRecordingDuration > 0
-    ) {
+    if (typeof this.cfg.maxVideoRecordingDuration === 'number' && this.cfg.maxVideoRecordingDuration > 0) {
       const remainingTime = this.cfg.maxVideoRecordingDuration - currentTime;
 
       if (remainingTime <= 0) {
@@ -311,36 +297,30 @@ export class CameraSource extends UploaderBlock {
       } else if (MediaRecorder.isTypeSupported(DEFAULT_VIDEO_FORMAT)) {
         this._options.mimeType = DEFAULT_VIDEO_FORMAT;
       } else {
-        this._options.mimeType = "video/mp4";
+        this._options.mimeType = 'video/mp4';
       }
 
       if (this._stream) {
         this._mediaRecorder = new MediaRecorder(this._stream, this._options);
         this._mediaRecorder.start();
 
-        this._mediaRecorder.addEventListener(
-          "dataavailable",
-          (event: BlobEvent) => {
-            this._chunks.push(event.data);
-          },
-        );
+        this._mediaRecorder.addEventListener('dataavailable', (event: BlobEvent) => {
+          this._chunks.push(event.data);
+        });
 
         this._startTimer();
 
-        this.classList.add("uc-recording");
+        this.classList.add('uc-recording');
         this._setCameraState(CameraSourceEvents.PLAY);
       }
     } catch (error) {
-      console.error("Failed to start recording", error);
-      this.telemetryManager.sendEventError(
-        error,
-        "camera recording. Failed to start recording",
-      );
+      console.error('Failed to start recording', error);
+      this.telemetryManager.sendEventError(error, 'camera recording. Failed to start recording');
     }
   };
 
   private _stopRecording = (): void => {
-    this._mediaRecorder?.addEventListener("stop", () => {
+    this._mediaRecorder?.addEventListener('stop', () => {
       this._previewVideo();
 
       this._stopTimer();
@@ -349,18 +329,14 @@ export class CameraSource extends UploaderBlock {
     });
 
     this._mediaRecorder?.stop();
-    this.classList.remove("uc-recording");
+    this.classList.remove('uc-recording');
   };
 
   /** This method is used to toggle recording pause/resume */
   _toggleRecording = (): void => {
-    if (this._mediaRecorder?.state === "recording") return;
+    if (this._mediaRecorder?.state === 'recording') return;
 
-    if (
-      !this.ref.video.paused &&
-      !this.ref.video.ended &&
-      this.ref.video.readyState > 2
-    ) {
+    if (!this.ref.video.paused && !this.ref.video.ended && this.ref.video.readyState > 2) {
       this.ref.video.pause();
     } else if (this.ref.video.paused) {
       this.ref.video.play();
@@ -371,9 +347,7 @@ export class CameraSource extends UploaderBlock {
     this._stream?.getAudioTracks().forEach((track) => {
       track.enabled = !track.enabled;
 
-      this.$.toggleMicrophoneIcon = !track.enabled
-        ? "microphone-mute"
-        : "microphone";
+      this.$.toggleMicrophoneIcon = !track.enabled ? 'microphone-mute' : 'microphone';
       this.$.audioSelectDisabled = !track.enabled;
     });
   };
@@ -399,25 +373,22 @@ export class CameraSource extends UploaderBlock {
       this.$.video = null;
       videoElement.src = videoURL;
 
-      videoElement.addEventListener("play", () => {
+      videoElement.addEventListener('play', () => {
         this._startTimeline();
         this.set$({
-          currentTimelineIcon: "pause",
+          currentTimelineIcon: 'pause',
         });
       });
 
-      videoElement.addEventListener("pause", () => {
+      videoElement.addEventListener('pause', () => {
         this.set$({
-          currentTimelineIcon: "play",
+          currentTimelineIcon: 'play',
         });
         this._stopTimeline();
       });
     } catch (error) {
-      console.error("Failed to preview video", error);
-      this.telemetryManager.sendEventError(
-        error,
-        "camera previewing. Failed to preview video",
-      );
+      console.error('Failed to preview video', error);
+      this.telemetryManager.sendEventError(error, 'camera previewing. Failed to preview video');
     }
   };
 
@@ -444,12 +415,7 @@ export class CameraSource extends UploaderBlock {
         if (!blob) {
           return;
         }
-        const file = this._createFile(
-          "camera",
-          "jpeg",
-          DEFAULT_PICTURE_FORMAT,
-          blob,
-        );
+        const file = this._createFile('camera', 'jpeg', DEFAULT_PICTURE_FORMAT, blob);
         this._toSend(file);
       }, DEFAULT_PICTURE_FORMAT);
       return;
@@ -460,7 +426,7 @@ export class CameraSource extends UploaderBlock {
     });
 
     const ext = this._guessExtensionByMime(this._mediaRecorder?.mimeType);
-    const file = this._createFile("video", ext, `video/${ext}`, blob);
+    const file = this._createFile('video', ext, `video/${ext}`, blob);
 
     this._toSend(file);
     this._chunks = [];
@@ -477,10 +443,7 @@ export class CameraSource extends UploaderBlock {
       });
     }
 
-    if (
-      status === CameraSourceEvents.RETAKE ||
-      status === CameraSourceEvents.ACCEPT
-    ) {
+    if (status === CameraSourceEvents.RETAKE || status === CameraSourceEvents.ACCEPT) {
       this.set$({
         tabVideoHidden: !this._cameraModes.includes(CameraSourceTypes.VIDEO),
         tabCameraHidden: !this._cameraModes.includes(CameraSourceTypes.PHOTO),
@@ -500,9 +463,9 @@ export class CameraSource extends UploaderBlock {
         cameraSelectHidden: true,
         audioSelectHidden: true,
 
-        currentTimelineIcon: "pause",
-        currentIcon: "square",
-        mutableClassButton: "uc-shot-btn uc-camera-action uc-stop-record",
+        currentTimelineIcon: 'pause',
+        currentIcon: 'square',
+        mutableClassButton: 'uc-shot-btn uc-camera-action uc-stop-record',
       });
     }
 
@@ -515,10 +478,7 @@ export class CameraSource extends UploaderBlock {
       });
     }
 
-    if (
-      status === CameraSourceEvents.RETAKE ||
-      status === CameraSourceEvents.ACCEPT
-    ) {
+    if (status === CameraSourceEvents.RETAKE || status === CameraSourceEvents.ACCEPT) {
       this.set$({
         timerHidden: true,
         tabVideoHidden: !this._cameraModes.includes(CameraSourceTypes.VIDEO),
@@ -526,11 +486,10 @@ export class CameraSource extends UploaderBlock {
         cameraHidden: false,
         cameraActionsHidden: true,
         audioToggleMicrophoneHidden: !this.cfg.enableAudioRecording,
-        currentIcon: "video-camera-full",
-        mutableClassButton: "uc-shot-btn uc-camera-action",
+        currentIcon: 'video-camera-full',
+        mutableClassButton: 'uc-shot-btn uc-camera-action',
 
-        audioSelectHidden:
-          !this.cfg.enableAudioRecording || this._audioDevices.length <= 1,
+        audioSelectHidden: !this.cfg.enableAudioRecording || this._audioDevices.length <= 1,
         cameraSelectHidden: this._cameraDevices.length <= 1,
       });
     }
@@ -539,32 +498,32 @@ export class CameraSource extends UploaderBlock {
   private _setCameraState = (status: CameraStatus): void => {
     if (
       this._activeTab === CameraSourceTypes.PHOTO &&
-      (status === "shot" || status === "retake" || status === "accept")
+      (status === 'shot' || status === 'retake' || status === 'accept')
     ) {
       this._handlePhoto(status);
     }
 
     if (
       this._activeTab === CameraSourceTypes.VIDEO &&
-      (status === "play" ||
-        status === "stop" ||
-        status === "retake" ||
-        status === "accept" ||
-        status === "pause" ||
-        status === "resume")
+      (status === 'play' ||
+        status === 'stop' ||
+        status === 'retake' ||
+        status === 'accept' ||
+        status === 'pause' ||
+        status === 'resume')
     ) {
       this._handleVideo(status);
     }
   };
 
   private _shot(): void {
-    this._setCameraState("shot");
+    this._setCameraState('shot');
 
-    this._canvas = document.createElement("canvas");
-    this._ctx = this._canvas.getContext("2d");
+    this._canvas = document.createElement('canvas');
+    this._ctx = this._canvas.getContext('2d');
 
     if (!this._ctx) {
-      throw new Error("Failed to get canvas context");
+      throw new Error('Failed to get canvas context');
     }
 
     this._canvas.height = this.ref.video.videoHeight;
@@ -581,13 +540,13 @@ export class CameraSource extends UploaderBlock {
 
   private _handleActiveTab = (tabId: CameraMode): void => {
     const switcher = this.ref.switcher as HTMLElement | undefined;
-    switcher?.querySelectorAll("button").forEach((btn) => {
-      btn.classList.toggle("uc-active", btn.getAttribute("data-id") === tabId);
+    switcher?.querySelectorAll('button').forEach((btn) => {
+      btn.classList.toggle('uc-active', btn.getAttribute('data-id') === tabId);
     });
 
     if (tabId === CameraSourceTypes.PHOTO) {
       this.set$({
-        currentIcon: "camera-full",
+        currentIcon: 'camera-full',
         audioSelectHidden: true,
         audioToggleMicrophoneHidden: true,
       });
@@ -595,11 +554,10 @@ export class CameraSource extends UploaderBlock {
 
     if (tabId === CameraSourceTypes.VIDEO) {
       this.set$({
-        currentTimelineIcon: "play",
-        currentIcon: "video-camera-full",
+        currentTimelineIcon: 'play',
+        currentIcon: 'video-camera-full',
 
-        audioSelectHidden:
-          !this.cfg.enableAudioRecording || this._audioDevices.length <= 1,
+        audioSelectHidden: !this.cfg.enableAudioRecording || this._audioDevices.length <= 1,
         audioToggleMicrophoneHidden: !this.cfg.enableAudioRecording,
       });
     }
@@ -607,12 +565,7 @@ export class CameraSource extends UploaderBlock {
     this._activeTab = tabId;
   };
 
-  private _createFile = (
-    type: "camera" | "video",
-    ext: string,
-    format: string,
-    blob: Blob,
-  ): File => {
+  private _createFile = (type: 'camera' | 'video', ext: string, format: string, blob: Blob): File => {
     const date = Date.now();
     const name = `${type}-${date}.${ext}`;
 
@@ -626,28 +579,26 @@ export class CameraSource extends UploaderBlock {
 
   _guessExtensionByMime(mime: string | undefined): string {
     const knownContainers = {
-      mp4: "mp4",
-      ogg: "ogg",
-      webm: "webm",
-      quicktime: "mov",
-      "x-matroska": "mkv",
+      mp4: 'mp4',
+      ogg: 'ogg',
+      webm: 'webm',
+      quicktime: 'mov',
+      'x-matroska': 'mkv',
     };
 
     // MediaRecorder.mimeType returns empty string in Firefox.
     // Firefox record video as WebM now by default.
     // @link https://bugzilla.mozilla.org/show_bug.cgi?id=1512175
-    if (mime === "") {
-      return "webm";
+    if (mime === '') {
+      return 'webm';
     }
 
     // e.g. "video/x-matroska;codecs=avc1,opus"
     if (mime) {
-      const parts = mime.split("/");
-      if (parts?.[0] === "video") {
-        const rest = parts.slice(1).join("/");
-        const container = rest?.split(";")[0] as
-          | keyof typeof knownContainers
-          | undefined;
+      const parts = mime.split('/');
+      if (parts?.[0] === 'video') {
+        const rest = parts.slice(1).join('/');
+        const container = rest?.split(';')[0] as keyof typeof knownContainers | undefined;
         // e.g. "mkv"
         if (container && knownContainers[container]) {
           return knownContainers[container];
@@ -656,7 +607,7 @@ export class CameraSource extends UploaderBlock {
     }
 
     // In all other cases just return the base extension for all times
-    return "avi";
+    return 'avi';
   }
 
   /**
@@ -665,74 +616,65 @@ export class CameraSource extends UploaderBlock {
   _toSend = (file: File): void => {
     this.api.addFileFromObject(file, { source: UploadSource.CAMERA });
     this.set$({
-      "*currentActivity": ActivityBlock.activities.UPLOAD_LIST,
+      '*currentActivity': ActivityBlock.activities.UPLOAD_LIST,
     });
     this.modalManager?.open(ActivityBlock.activities.UPLOAD_LIST);
   };
 
   private get _cameraModes(): CameraMode[] {
     return stringToArray(this.cfg.cameraModes).filter(
-      (mode): mode is CameraMode =>
-        mode === CameraSourceTypes.PHOTO || mode === CameraSourceTypes.VIDEO,
+      (mode): mode is CameraMode => mode === CameraSourceTypes.PHOTO || mode === CameraSourceTypes.VIDEO,
     );
   }
 
-  private _setPermissionsState = debounce(
-    (state: "granted" | "denied" | "prompt") => {
-      this.classList.toggle("uc-initialized", state === "granted");
+  private _setPermissionsState = debounce((state: 'granted' | 'denied' | 'prompt') => {
+    this.classList.toggle('uc-initialized', state === 'granted');
 
-      const visibleAudio =
-        this._activeTab === CameraSourceTypes.VIDEO &&
-        this.cfg.enableAudioRecording;
-      const currentIcon =
-        this._activeTab === CameraSourceTypes.PHOTO
-          ? "camera-full"
-          : "video-camera-full";
+    const visibleAudio = this._activeTab === CameraSourceTypes.VIDEO && this.cfg.enableAudioRecording;
+    const currentIcon = this._activeTab === CameraSourceTypes.PHOTO ? 'camera-full' : 'video-camera-full';
 
-      if (state === "granted") {
-        this.set$({
-          videoHidden: false,
-          cameraHidden: false,
-          tabCameraHidden: !this._cameraModes.includes(CameraSourceTypes.PHOTO),
-          tabVideoHidden: !this._cameraModes.includes(CameraSourceTypes.VIDEO),
-          messageHidden: true,
-          timerHidden: true,
+    if (state === 'granted') {
+      this.set$({
+        videoHidden: false,
+        cameraHidden: false,
+        tabCameraHidden: !this._cameraModes.includes(CameraSourceTypes.PHOTO),
+        tabVideoHidden: !this._cameraModes.includes(CameraSourceTypes.VIDEO),
+        messageHidden: true,
+        timerHidden: true,
 
-          currentIcon,
-          audioToggleMicrophoneHidden: !visibleAudio,
-          audioSelectHidden: !visibleAudio,
-        });
-      } else if (state === "prompt") {
-        this.$.l10nMessage = "camera-permissions-prompt";
+        currentIcon,
+        audioToggleMicrophoneHidden: !visibleAudio,
+        audioSelectHidden: !visibleAudio,
+      });
+    } else if (state === 'prompt') {
+      this.$.l10nMessage = 'camera-permissions-prompt';
 
-        this.set$({
-          videoHidden: true,
-          cameraHidden: true,
-          tabCameraHidden: true,
-          messageHidden: false,
-        });
+      this.set$({
+        videoHidden: true,
+        cameraHidden: true,
+        tabCameraHidden: true,
+        messageHidden: false,
+      });
 
-        this._stopCapture();
-      } else {
-        this.$.l10nMessage = "camera-permissions-denied";
+      this._stopCapture();
+    } else {
+      this.$.l10nMessage = 'camera-permissions-denied';
 
-        this.set$({
-          videoHidden: true,
-          messageHidden: false,
+      this.set$({
+        videoHidden: true,
+        messageHidden: false,
 
-          tabCameraHidden: !this._cameraModes.includes(CameraSourceTypes.PHOTO),
-          tabVideoHidden: !this._cameraModes.includes(CameraSourceTypes.VIDEO),
+        tabCameraHidden: !this._cameraModes.includes(CameraSourceTypes.PHOTO),
+        tabVideoHidden: !this._cameraModes.includes(CameraSourceTypes.VIDEO),
 
-          cameraActionsHidden: true,
+        cameraActionsHidden: true,
 
-          mutableClassButton: "uc-shot-btn uc-camera-action",
-        });
+        mutableClassButton: 'uc-shot-btn uc-camera-action',
+      });
 
-        this._stopCapture();
-      }
-    },
-    300,
-  );
+      this._stopCapture();
+    }
+  }, 300);
 
   _makeStreamInactive = (): boolean => {
     if (!this._stream) return false;
@@ -767,9 +709,7 @@ export class CameraSource extends UploaderBlock {
   _capture = async (): Promise<void> => {
     const constraints: MediaStreamConstraints = {
       video: { ...DEFAULT_VIDEO_CONFIG },
-      audio: this.cfg.enableAudioRecording
-        ? ({} as MediaTrackConstraints)
-        : false,
+      audio: this.cfg.enableAudioRecording ? ({} as MediaTrackConstraints) : false,
     };
 
     if (this._selectedCameraId) {
@@ -794,23 +734,20 @@ export class CameraSource extends UploaderBlock {
     }
 
     try {
-      this._setPermissionsState("prompt");
+      this._setPermissionsState('prompt');
       this._stream = await navigator.mediaDevices.getUserMedia(constraints);
 
-      this._stream.addEventListener("inactive", () => {
-        this._setPermissionsState("denied");
+      this._stream.addEventListener('inactive', () => {
+        this._setPermissionsState('denied');
       });
 
       this.$.video = this._stream;
       this._capturing = true;
-      this._setPermissionsState("granted");
+      this._setPermissionsState('granted');
     } catch (error) {
-      this._setPermissionsState("denied");
-      console.log("Failed to capture camera", error);
-      this.telemetryManager.sendEventError(
-        error,
-        "camera capturing. Failed to capture camera",
-      );
+      this._setPermissionsState('denied');
+      console.log('Failed to capture camera', error);
+      this.telemetryManager.sendEventError(error, 'camera capturing. Failed to capture camera');
     }
   };
 
@@ -826,17 +763,11 @@ export class CameraSource extends UploaderBlock {
         });
         this._permissionResponses[permission] = response;
 
-        response.addEventListener("change", this._handlePermissionsChange);
+        response.addEventListener('change', this._handlePermissionsChange);
       }
     } catch (error) {
-      console.log(
-        "Failed to use permissions API. Fallback to manual request mode.",
-        error,
-      );
-      this.telemetryManager.sendEventError(
-        error,
-        "camera permissions. Failed to use permissions API",
-      );
+      console.log('Failed to use permissions API. Fallback to manual request mode.', error);
+      this.telemetryManager.sendEventError(error, 'camera permissions. Failed to use permissions API');
       this._capture();
     }
   };
@@ -851,13 +782,10 @@ export class CameraSource extends UploaderBlock {
       });
       await this._getDevices();
 
-      navigator.mediaDevices.addEventListener("devicechange", this._getDevices);
+      navigator.mediaDevices.addEventListener('devicechange', this._getDevices);
     } catch (error) {
-      this.telemetryManager.sendEventError(
-        error,
-        "camera devices. Failed to get user media",
-      );
-      console.log("Failed to get user media", error);
+      this.telemetryManager.sendEventError(error, 'camera devices. Failed to get user media');
+      console.log('Failed to get user media', error);
     }
   };
 
@@ -866,17 +794,15 @@ export class CameraSource extends UploaderBlock {
       const devices = await navigator.mediaDevices.enumerateDevices();
 
       this._cameraDevices = devices
-        .filter((device) => device.kind === "videoinput")
+        .filter((device) => device.kind === 'videoinput')
         .map((device, index) => ({
-          text:
-            device.label.trim() ||
-            `${this.l10n("caption-camera")} ${index + 1}`,
+          text: device.label.trim() || `${this.l10n('caption-camera')} ${index + 1}`,
           value: device.deviceId,
         }));
 
       this._audioDevices = this.cfg.enableAudioRecording
         ? devices
-            .filter((device) => device.kind === "audioinput")
+            .filter((device) => device.kind === 'audioinput')
             .map((device) => ({
               text: device.label.trim(),
               value: device.deviceId,
@@ -899,11 +825,8 @@ export class CameraSource extends UploaderBlock {
       }
       this._selectedAudioId = this._audioDevices[0]?.value ?? null;
     } catch (error) {
-      this.telemetryManager.sendEventError(
-        error,
-        "camera devices. Failed to get devices",
-      );
-      console.log("Failed to get devices", error);
+      this.telemetryManager.sendEventError(error, 'camera devices. Failed to get devices');
+      console.log('Failed to get devices', error);
     }
   };
 
@@ -921,11 +844,9 @@ export class CameraSource extends UploaderBlock {
     }
 
     /** Calling this method here because safari and firefox don't support the inactive event yet */
-    const isChromium = Boolean(
-      (window as Window & { chrome?: unknown }).chrome,
-    );
+    const isChromium = Boolean((window as Window & { chrome?: unknown }).chrome);
     if (!isChromium) {
-      this._setPermissionsState("denied");
+      this._setPermissionsState('denied');
     }
 
     this._stopCapture();
@@ -936,10 +857,7 @@ export class CameraSource extends UploaderBlock {
     this.$.tabCameraHidden = !cameraModes.includes(CameraSourceTypes.PHOTO);
 
     const defaultTab = cameraModes[0];
-    if (
-      defaultTab &&
-      (!this._activeTab || !cameraModes.includes(this._activeTab))
-    ) {
+    if (defaultTab && (!this._activeTab || !cameraModes.includes(this._activeTab))) {
       this._handleActiveTab(defaultTab);
     }
   };
@@ -951,23 +869,21 @@ export class CameraSource extends UploaderBlock {
       onDeactivate: this._onDeactivate,
     });
 
-    this.subConfigValue("cameraMirror", (val) => {
-      this.$.videoTransformCss = val ? "scaleX(-1)" : null;
+    this.subConfigValue('cameraMirror', (val) => {
+      this.$.videoTransformCss = val ? 'scaleX(-1)' : null;
     });
 
-    this.subConfigValue("enableAudioRecording", (val) => {
+    this.subConfigValue('enableAudioRecording', (val) => {
       this.$.audioToggleMicrophoneHidden = !val;
       this.$.audioSelectDisabled = !val;
     });
 
-    this.subConfigValue("cameraModes", (val) => {
+    this.subConfigValue('cameraModes', (val) => {
       if (!this.isActivityActive) return;
       const cameraModes = deserializeCsv(val);
       this._handleCameraModes(
         cameraModes.filter(
-          (mode): mode is CameraMode =>
-            mode === CameraSourceTypes.PHOTO ||
-            mode === CameraSourceTypes.VIDEO,
+          (mode): mode is CameraMode => mode === CameraSourceTypes.PHOTO || mode === CameraSourceTypes.VIDEO,
         ),
       );
     });
@@ -975,16 +891,10 @@ export class CameraSource extends UploaderBlock {
 
   _destroy(): void {
     for (const permission of DEFAULT_PERMISSIONS) {
-      this._permissionResponses[permission]?.removeEventListener(
-        "change",
-        this._handlePermissionsChange,
-      );
+      this._permissionResponses[permission]?.removeEventListener('change', this._handlePermissionsChange);
     }
 
-    navigator.mediaDevices?.removeEventListener(
-      "devicechange",
-      this._getDevices,
-    );
+    navigator.mediaDevices?.removeEventListener('devicechange', this._getDevices);
   }
 
   override async destroyCallback(): Promise<void> {

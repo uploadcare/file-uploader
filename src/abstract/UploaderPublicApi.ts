@@ -1,42 +1,34 @@
 // @ts-check
 
-import { applyStyles, Data } from "@symbiotejs/symbiote";
-import { calcCameraModes } from "../blocks/CameraSource/calcCameraModes";
-import {
-  CameraSourceTypes,
-  type ModeCameraType,
-} from "../blocks/CameraSource/constants";
-import type { SourceBtn } from "../blocks/SourceBtn/SourceBtn";
-import { EventType } from "../blocks/UploadCtxProvider/EventEmitter";
-import { serializeCsv } from "../utils/comma-separated";
-import { UploadSource } from "../utils/UploadSource";
+import { applyStyles, Data } from '@symbiotejs/symbiote';
+import { calcCameraModes } from '../blocks/CameraSource/calcCameraModes';
+import { CameraSourceTypes, type ModeCameraType } from '../blocks/CameraSource/constants';
+import type { SourceBtn } from '../blocks/SourceBtn/SourceBtn';
+import { EventType } from '../blocks/UploadCtxProvider/EventEmitter';
 import type {
   OutputCollectionState,
   OutputCollectionStatus,
   OutputFileEntry,
   OutputFileStatus,
   UploadcareFile,
-} from "../types/index";
-import { browserFeatures } from "../utils/browser-info";
+} from '../types/index';
+import { browserFeatures } from '../utils/browser-info';
+import { serializeCsv } from '../utils/comma-separated';
 import {
   BASIC_IMAGE_WILDCARD,
   BASIC_VIDEO_WILDCARD,
   fileIsImage,
   IMAGE_ACCEPT_LIST,
   mergeFileTypes,
-} from "../utils/fileTypes";
-import { parseCdnUrl } from "../utils/parseCdnUrl";
-import { stringToArray } from "../utils/stringToArray";
-import {
-  ActivityBlock,
-  type ActivityParamsMap,
-  type ActivityType,
-  type RegisteredActivityType,
-} from "./ActivityBlock";
-import type { Block } from "./Block";
-import { buildOutputCollectionState } from "./buildOutputCollectionState";
-import type { UploaderBlock } from "./UploaderBlock";
-import type { UploadEntryData } from "./uploadEntrySchema";
+} from '../utils/fileTypes';
+import { parseCdnUrl } from '../utils/parseCdnUrl';
+import { stringToArray } from '../utils/stringToArray';
+import { UploadSource } from '../utils/UploadSource';
+import { ActivityBlock, type ActivityParamsMap, type ActivityType, type RegisteredActivityType } from './ActivityBlock';
+import type { Block } from './Block';
+import { buildOutputCollectionState } from './buildOutputCollectionState';
+import type { UploaderBlock } from './UploaderBlock';
+import type { UploadEntryData } from './uploadEntrySchema';
 
 export class UploaderPublicApi {
   private _ctx: UploaderBlock;
@@ -62,12 +54,8 @@ export class UploaderPublicApi {
    */
   addFileFromUrl = (
     url: string,
-    {
-      silent,
-      fileName,
-      source,
-    }: { silent?: boolean; fileName?: string; source?: string } = {},
-  ): OutputFileEntry<"idle"> => {
+    { silent, fileName, source }: { silent?: boolean; fileName?: string; source?: string } = {},
+  ): OutputFileEntry<'idle'> => {
     const internalId = this._uploadCollection.add({
       externalUrl: url,
       fileName: fileName ?? null,
@@ -79,12 +67,8 @@ export class UploaderPublicApi {
 
   addFileFromUuid = (
     uuid: string,
-    {
-      silent,
-      fileName,
-      source,
-    }: { silent?: boolean; fileName?: string; source?: string } = {},
-  ): OutputFileEntry<"idle"> => {
+    { silent, fileName, source }: { silent?: boolean; fileName?: string; source?: string } = {},
+  ): OutputFileEntry<'idle'> => {
     const internalId = this._uploadCollection.add({
       uuid,
       fileName: fileName ?? null,
@@ -96,18 +80,14 @@ export class UploaderPublicApi {
 
   addFileFromCdnUrl = (
     cdnUrl: string,
-    {
-      silent,
-      fileName,
-      source,
-    }: { silent?: boolean; fileName?: string; source?: string } = {},
-  ): OutputFileEntry<"idle"> => {
+    { silent, fileName, source }: { silent?: boolean; fileName?: string; source?: string } = {},
+  ): OutputFileEntry<'idle'> => {
     const parsedCdnUrl = parseCdnUrl({
       url: cdnUrl,
       cdnBase: this.cfg.cdnCname,
     });
     if (!parsedCdnUrl) {
-      throw new Error("Invalid CDN URL");
+      throw new Error('Invalid CDN URL');
     }
     const internalId = this._uploadCollection.add({
       uuid: parsedCdnUrl.uuid,
@@ -133,7 +113,7 @@ export class UploaderPublicApi {
       source?: string;
       fullPath?: string;
     } = {},
-  ): OutputFileEntry<"idle"> => {
+  ): OutputFileEntry<'idle'> => {
     const internalId = this._uploadCollection.add({
       file,
       isImage: fileIsImage(file),
@@ -163,12 +143,12 @@ export class UploaderPublicApi {
       const entry = this._uploadCollection.read(id);
       if (!entry) return false;
       return (
-        !entry.getValue("isRemoved") &&
-        !entry.getValue("isUploading") &&
-        !entry.getValue("fileInfo") &&
-        entry.getValue("errors").length === 0 &&
-        !entry.getValue("isValidationPending") &&
-        !entry.getValue("isQueuedForValidation")
+        !entry.getValue('isRemoved') &&
+        !entry.getValue('isUploading') &&
+        !entry.getValue('fileInfo') &&
+        entry.getValue('errors').length === 0 &&
+        !entry.getValue('isValidationPending') &&
+        !entry.getValue('isQueuedForValidation')
       );
     });
 
@@ -176,76 +156,61 @@ export class UploaderPublicApi {
       return;
     }
 
-    this._ctx.$["*uploadTrigger"] = new Set(itemsToUpload);
+    this._ctx.$['*uploadTrigger'] = new Set(itemsToUpload);
     this._ctx.emit(
       EventType.COMMON_UPLOAD_START,
-      this.getOutputCollectionState() as OutputCollectionState<"uploading">,
+      this.getOutputCollectionState() as OutputCollectionState<'uploading'>,
     );
   };
 
-  openSystemDialog = (
-    options: { captureCamera?: boolean; modeCamera?: ModeCameraType } = {},
-  ): void => {
+  openSystemDialog = (options: { captureCamera?: boolean; modeCamera?: ModeCameraType } = {}): void => {
     const accept = serializeCsv(
-      mergeFileTypes([
-        this.cfg.accept ?? "",
-        ...(this.cfg.imgOnly ? IMAGE_ACCEPT_LIST : []),
-      ]),
+      mergeFileTypes([this.cfg.accept ?? '', ...(this.cfg.imgOnly ? IMAGE_ACCEPT_LIST : [])]),
     );
-    const INPUT_ATTR_NAME = "uploadcare-file-input";
-    const fileInput = document.createElement("input");
-    fileInput.setAttribute(INPUT_ATTR_NAME, "");
+    const INPUT_ATTR_NAME = 'uploadcare-file-input';
+    const fileInput = document.createElement('input');
+    fileInput.setAttribute(INPUT_ATTR_NAME, '');
     applyStyles(fileInput, {
       opacity: 0,
       height: 0,
       width: 0,
-      visibility: "hidden",
-      position: "absolute",
+      visibility: 'hidden',
+      position: 'absolute',
       top: 0,
       left: 0,
     });
-    fileInput.type = "file";
+    fileInput.type = 'file';
     fileInput.multiple = this.cfg.multiple;
     if (options.captureCamera) {
       fileInput.capture = this.cfg.cameraCapture;
-      const { isPhotoEnabled, isVideoRecordingEnabled } = calcCameraModes(
-        this.cfg,
-      );
+      const { isPhotoEnabled, isVideoRecordingEnabled } = calcCameraModes(this.cfg);
 
       if (options.modeCamera === CameraSourceTypes.PHOTO && isPhotoEnabled) {
         fileInput.accept = BASIC_IMAGE_WILDCARD;
-      } else if (
-        options.modeCamera === CameraSourceTypes.VIDEO &&
-        isVideoRecordingEnabled
-      ) {
+      } else if (options.modeCamera === CameraSourceTypes.VIDEO && isVideoRecordingEnabled) {
         fileInput.accept = BASIC_VIDEO_WILDCARD;
       } else {
-        fileInput.accept = [
-          BASIC_IMAGE_WILDCARD,
-          isVideoRecordingEnabled && BASIC_VIDEO_WILDCARD,
-        ]
+        fileInput.accept = [BASIC_IMAGE_WILDCARD, isVideoRecordingEnabled && BASIC_VIDEO_WILDCARD]
           .filter(Boolean)
-          .join(",");
+          .join(',');
       }
     } else {
       fileInput.accept = accept;
     }
     fileInput.addEventListener(
-      "change",
+      'change',
       () => {
         if (!fileInput.files) {
           return;
         }
         [...fileInput.files].forEach((file) => {
           this.addFileFromObject(file, {
-            source: options.captureCamera
-              ? UploadSource.CAMERA
-              : UploadSource.LOCAL,
+            source: options.captureCamera ? UploadSource.CAMERA : UploadSource.LOCAL,
           });
         });
         // To call uploadTrigger UploadList should draw file items first:
         this._ctx.modalManager?.open(ActivityBlock.activities.UPLOAD_LIST);
-        this._ctx.$["*currentActivity"] = ActivityBlock.activities.UPLOAD_LIST;
+        this._ctx.$['*currentActivity'] = ActivityBlock.activities.UPLOAD_LIST;
         fileInput.remove();
       },
       {
@@ -262,25 +227,23 @@ export class UploaderPublicApi {
      * will open system dialog but won't trigger the change event sometimes.
      */
     document.body.appendChild(fileInput);
-    fileInput.dispatchEvent(new MouseEvent("click"));
+    fileInput.dispatchEvent(new MouseEvent('click'));
   };
 
-  getOutputItem<TStatus extends OutputFileStatus>(
-    entryId: string,
-  ): OutputFileEntry<TStatus> {
+  getOutputItem<TStatus extends OutputFileStatus>(entryId: string): OutputFileEntry<TStatus> {
     const uploadEntryData = Data.getCtx(entryId).store as UploadEntryData;
 
     const fileInfo = uploadEntryData.fileInfo as UploadcareFile | null;
 
-    const status: OutputFileEntry["status"] = uploadEntryData.isRemoved
-      ? "removed"
+    const status: OutputFileEntry['status'] = uploadEntryData.isRemoved
+      ? 'removed'
       : uploadEntryData.errors.length > 0
-        ? "failed"
+        ? 'failed'
         : uploadEntryData.fileInfo
-          ? "success"
+          ? 'success'
           : uploadEntryData.isUploading
-            ? "uploading"
-            : "idle";
+            ? 'uploading'
+            : 'idle';
 
     const outputItem = {
       uuid: fileInfo?.uuid ?? uploadEntryData.uuid ?? null,
@@ -297,12 +260,12 @@ export class UploaderPublicApi {
       uploadProgress: uploadEntryData.uploadProgress,
       fileInfo: fileInfo ?? null,
       metadata: uploadEntryData.metadata ?? fileInfo?.metadata ?? null,
-      isSuccess: status === "success",
-      isUploading: status === "uploading",
-      isFailed: status === "failed",
-      isRemoved: status === "removed",
+      isSuccess: status === 'success',
+      isUploading: status === 'uploading',
+      isFailed: status === 'failed',
+      isRemoved: status === 'removed',
       isValidationPending: uploadEntryData.isValidationPending,
-      errors: uploadEntryData.errors as OutputFileEntry["errors"],
+      errors: uploadEntryData.errors as OutputFileEntry['errors'],
       status,
       source: uploadEntryData?.source,
     };
@@ -311,45 +274,38 @@ export class UploaderPublicApi {
   }
 
   getOutputCollectionState<TStatus extends OutputCollectionStatus>() {
-    return buildOutputCollectionState(this._ctx) as ReturnType<
-      typeof buildOutputCollectionState<TStatus>
-    >;
+    return buildOutputCollectionState(this._ctx) as ReturnType<typeof buildOutputCollectionState<TStatus>>;
   }
 
-  initFlow = (force: boolean = false): void => {
+  initFlow = (force = false): void => {
     if (this._uploadCollection.size > 0 && !force) {
       this._ctx.modalManager?.open(ActivityBlock.activities.UPLOAD_LIST);
       this._ctx.set$({
-        "*currentActivity": ActivityBlock.activities.UPLOAD_LIST,
+        '*currentActivity': ActivityBlock.activities.UPLOAD_LIST,
       });
     } else {
       if (this._sourceList?.length === 1) {
         const srcKey = this._sourceList[0];
 
         // TODO: We should refactor those handlers
-        if (srcKey === "local") {
-          this._ctx.$["*currentActivity"] =
-            ActivityBlock.activities.UPLOAD_LIST;
+        if (srcKey === 'local') {
+          this._ctx.$['*currentActivity'] = ActivityBlock.activities.UPLOAD_LIST;
           this.openSystemDialog();
           return;
         }
 
-        if (srcKey === "camera" && browserFeatures.htmlMediaCapture) {
-          const { isPhotoEnabled, isVideoRecordingEnabled } = calcCameraModes(
-            this.cfg,
-          );
+        if (srcKey === 'camera' && browserFeatures.htmlMediaCapture) {
+          const { isPhotoEnabled, isVideoRecordingEnabled } = calcCameraModes(this.cfg);
 
           if (isPhotoEnabled && isVideoRecordingEnabled) {
             this._ctx.set$({
-              "*currentActivity": ActivityBlock.activities.START_FROM,
+              '*currentActivity': ActivityBlock.activities.START_FROM,
             });
             return;
           } else if (isPhotoEnabled || isVideoRecordingEnabled) {
             this.openSystemDialog({
               captureCamera: true,
-              modeCamera: isPhotoEnabled
-                ? CameraSourceTypes.PHOTO
-                : CameraSourceTypes.VIDEO,
+              modeCamera: isPhotoEnabled ? CameraSourceTypes.PHOTO : CameraSourceTypes.VIDEO,
             });
             return;
           } else {
@@ -360,21 +316,21 @@ export class UploaderPublicApi {
           }
         }
 
-        const blocksRegistry = this._ctx.$["*blocksRegistry"] as Set<Block>;
+        const blocksRegistry = this._ctx.$['*blocksRegistry'] as Set<Block>;
         const isSourceBtn = (block: Block): block is SourceBtn =>
-          "type" in (block as any) && (block as any).type === srcKey;
+          'type' in (block as any) && (block as any).type === srcKey;
         const sourceBtnBlock = [...blocksRegistry].find(isSourceBtn);
         // TODO: This is weird that we have this logic inside UI component, we should consider to move it somewhere else
         sourceBtnBlock?.activate();
 
-        if (this._ctx.$["*currentActivity"]) {
-          this._ctx.modalManager?.open(this._ctx.$["*currentActivity"]);
+        if (this._ctx.$['*currentActivity']) {
+          this._ctx.modalManager?.open(this._ctx.$['*currentActivity']);
         }
       } else {
         // Multiple sources case:
         this._ctx.modalManager?.open(ActivityBlock.activities.START_FROM);
         this._ctx.set$({
-          "*currentActivity": ActivityBlock.activities.START_FROM,
+          '*currentActivity': ActivityBlock.activities.START_FROM,
         });
       }
     }
@@ -382,10 +338,10 @@ export class UploaderPublicApi {
 
   doneFlow = (): void => {
     this._ctx.set$({
-      "*currentActivity": this._ctx.doneActivity,
-      "*history": this._ctx.doneActivity ? [this._ctx.doneActivity] : [],
+      '*currentActivity': this._ctx.doneActivity,
+      '*history': this._ctx.doneActivity ? [this._ctx.doneActivity] : [],
     });
-    if (!this._ctx.$["*currentActivity"]) {
+    if (!this._ctx.$['*currentActivity']) {
       this._ctx.modalManager?.closeAll();
     }
   };
@@ -400,8 +356,8 @@ export class UploaderPublicApi {
   ) => {
     if (this._ctx.hasBlockInCtx((b) => b.activityType === activityType)) {
       this._ctx.set$({
-        "*currentActivityParams": params ?? {},
-        "*currentActivity": activityType,
+        '*currentActivityParams': params ?? {},
+        '*currentActivity': activityType,
       });
       return;
     }
@@ -409,22 +365,20 @@ export class UploaderPublicApi {
   };
 
   getCurrentActivity = (): ActivityType => {
-    return this._ctx.$["*currentActivity"];
+    return this._ctx.$['*currentActivity'];
   };
 
   setModalState = (opened: boolean): void => {
-    if (opened && !this._ctx.$["*currentActivity"]) {
-      console.warn(
-        `Can't open modal without current activity. Please use "setCurrentActivity" method first.`,
-      );
+    if (opened && !this._ctx.$['*currentActivity']) {
+      console.warn(`Can't open modal without current activity. Please use "setCurrentActivity" method first.`);
       return;
     }
 
     if (opened) {
-      this._ctx.modalManager?.open(this._ctx.$["*currentActivity"]);
+      this._ctx.modalManager?.open(this._ctx.$['*currentActivity']);
     } else {
-      this._ctx.modalManager?.close(this._ctx.$["*currentActivity"]);
-      this._ctx.$["*currentActivity"] = null;
+      this._ctx.modalManager?.close(this._ctx.$['*currentActivity']);
+      this._ctx.$['*currentActivity'] = null;
     }
   };
 
