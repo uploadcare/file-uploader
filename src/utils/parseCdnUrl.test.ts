@@ -1,5 +1,5 @@
+import { describe, expect, it } from 'vitest';
 import { parseCdnUrl } from './parseCdnUrl';
-import { expect } from '@esm-bundle/chai';
 
 describe('parseCdnUrl', () => {
   it('should should work', () => {
@@ -8,7 +8,7 @@ describe('parseCdnUrl', () => {
         url: 'https://cdn.example.com/12345678-1234-5678-1234-567812345678/',
         cdnBase: 'https://cdn.example.com',
       }),
-    ).to.deep.equal({
+    ).toEqual({
       uuid: '12345678-1234-5678-1234-567812345678',
       cdnUrlModifiers: '',
       filename: null,
@@ -21,7 +21,7 @@ describe('parseCdnUrl', () => {
         url: 'https://cdn.example.com/12345678-1234-5678-1234-567812345678/bar.jpg',
         cdnBase: 'https://cdn.example.com',
       }),
-    ).to.deep.equal({
+    ).toEqual({
       uuid: '12345678-1234-5678-1234-567812345678',
       cdnUrlModifiers: '',
       filename: 'bar.jpg',
@@ -34,7 +34,7 @@ describe('parseCdnUrl', () => {
         url: 'https://cdn.example.com/12345678-1234-5678-1234-567812345678/-/foo/bar/baz.jpg',
         cdnBase: 'https://cdn.example.com',
       }),
-    ).to.deep.equal({
+    ).toEqual({
       uuid: '12345678-1234-5678-1234-567812345678',
       cdnUrlModifiers: '-/foo/bar/',
       filename: 'baz.jpg',
@@ -47,7 +47,7 @@ describe('parseCdnUrl', () => {
         url: 'https://cdn.example.com/12345678-1234-5678-1234-567812345678/',
         cdnBase: 'https://cdn2.example.com',
       }),
-    ).to.equal(null);
+    ).toBe(null);
   });
 
   it('should strip slashes from the end cdn base before comparing', () => {
@@ -56,7 +56,7 @@ describe('parseCdnUrl', () => {
         url: 'https://cdn.example.com/12345678-1234-5678-1234-567812345678/',
         cdnBase: 'https://cdn.example.com/',
       }),
-    ).to.deep.equal({
+    ).toEqual({
       uuid: '12345678-1234-5678-1234-567812345678',
       cdnUrlModifiers: '',
       filename: null,
@@ -69,7 +69,7 @@ describe('parseCdnUrl', () => {
         url: 'https://cdn.example.com/12345678-1234-5678-1234-567812345678/',
         cdnBase: 'http://cdn.example.com',
       }),
-    ).to.deep.equal({
+    ).toEqual({
       uuid: '12345678-1234-5678-1234-567812345678',
       cdnUrlModifiers: '',
       filename: null,
@@ -82,7 +82,7 @@ describe('parseCdnUrl', () => {
         url: 'https://ucarecdn.com/12345678-1234-5678-1234-567812345678/',
         cdnBase: 'https://cdn.example.com',
       }),
-    ).to.deep.equal({
+    ).toEqual({
       uuid: '12345678-1234-5678-1234-567812345678',
       cdnUrlModifiers: '',
       filename: null,
