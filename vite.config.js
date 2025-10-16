@@ -1,9 +1,14 @@
-import { dirname } from 'node:path';
+import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vite';
 import { commands } from './tests/utils/commands';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+
+const alias = {
+  '@': resolve(__dirname, 'src'),
+  '~': __dirname,
+};
 
 export default defineConfig(({ command }) => {
   if (command === 'serve') {
@@ -21,8 +26,8 @@ export default defineConfig(({ command }) => {
           {
             extends: true,
             test: {
-              name: 'npm',
-              include: ['./specs/npm/*.test.ts'],
+              name: 'specs',
+              include: ['./specs/npm/*.test.ts', './**/*.test.{ts,js}'],
               environment: 'happy-dom',
             },
           },
@@ -55,11 +60,10 @@ export default defineConfig(({ command }) => {
         ],
       },
       resolve: {
-        alias: {
-          '@': __dirname,
-        },
+        alias,
       },
     };
   }
+
   throw new Error('Not implemented');
 });

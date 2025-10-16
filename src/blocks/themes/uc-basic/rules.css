@@ -1,0 +1,13 @@
+@layer uc.rules {
+  :where([uc-wgt-common]) [hidden] {
+    display: none;
+  }
+
+  :where([uc-wgt-common]) [activity]:not([active], .active) {
+    display: none;
+  }
+
+  :where([uc-wgt-common]) dialog:not([open]) [activity] {
+    display: none;
+  }
+}

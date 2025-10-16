@@ -1,0 +1,245 @@
+@layer uc.components {
+  uc-file-item {
+    --uc-file-item-gap: 4px;
+    --uc-file-item-height: calc(var(--uc-preview-size) + var(--uc-padding) * 2 + var(--uc-file-item-gap));
+
+    display: block;
+    overflow: hidden;
+    min-height: var(--uc-file-item-height);
+  }
+
+  uc-file-item:last-of-type {
+    --uc-file-item-gap: 0;
+  }
+
+  uc-file-item > .uc-inner {
+    position: relative;
+    display: grid;
+    grid-template-columns: var(--uc-preview-size) 1fr max-content;
+    gap: 2px;
+    align-items: center;
+    margin-bottom: var(--uc-file-item-gap);
+    padding: var(--uc-padding);
+    overflow: hidden;
+    font-size: 0.925em;
+    background-color: var(--uc-muted);
+    border-radius: var(--uc-radius);
+    transition: background-color var(--uc-transition);
+  }
+
+  uc-file-item > .uc-inner[focused] {
+    background-color: transparent;
+  }
+
+  uc-file-item > .uc-inner[uploading] .uc-edit-btn {
+    display: none;
+  }
+
+  uc-file-item > :where(.uc-inner[failed], .uc-inner[limit-overflow]) {
+    background-color: var(--uc-destructive);
+  }
+
+  uc-file-item .uc-thumb {
+    position: relative;
+    display: inline-flex;
+    width: var(--uc-preview-size);
+    height: var(--uc-preview-size);
+    background-color: var(--uc-secondary);
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    border-radius: var(--uc-radius);
+  }
+
+  uc-file-item .uc-file-name-wrapper {
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    max-width: 100%;
+    padding-right: var(--uc-padding);
+    padding-left: var(--uc-padding);
+    overflow: hidden;
+    color: var(--uc-muted-foreground);
+  }
+
+  uc-file-item .uc-file-name {
+    max-width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  uc-file-item .uc-file-error {
+    display: none;
+    color: var(--uc-destructive-foreground);
+    font-size: 0.85em;
+    z-index: 2;
+  }
+
+  uc-file-item button.uc-remove-btn,
+  uc-file-item button.uc-edit-btn {
+    color: var(--uc-muted-foreground);
+  }
+
+  uc-file-item button svg {
+    pointer-events: none;
+  }
+
+  uc-file-item button.uc-upload-btn {
+    display: none;
+  }
+
+  uc-file-item .uc-badge {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 14px;
+    height: 14px;
+    color: var(--uc-background);
+    background-color: var(--uc-foreground);
+    border-radius: 50%;
+    transform: scale(0.3);
+    opacity: 0;
+    transition:
+      opacity var(--uc-transition),
+      transform var(--uc-transition);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  uc-file-item > .uc-inner:where([failed], [limit-overflow], [finished]) .uc-badge {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  uc-file-item > .uc-inner:where([failed], [limit-overflow]) .uc-badge {
+    background-color: var(--uc-destructive-foreground);
+  }
+
+  uc-file-item > .uc-inner:where([failed], [limit-overflow]) .uc-file-error {
+    display: block;
+  }
+
+  uc-file-item .uc-badge uc-icon,
+  uc-file-item .uc-badge uc-icon svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  uc-file-item .uc-progress-bar {
+    opacity: 0.7;
+    top: calc(100% - 2px);
+    height: 2px;
+  }
+
+  :where(.uc-contrast) uc-file-item .uc-progress-bar {
+    opacity: 1;
+  }
+
+  uc-file-item .uc-file-actions {
+    display: flex;
+    gap: 2px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* File item in the grid */
+  uc-file-item[mode="grid"] {
+    overflow: visible;
+    min-height: initial;
+  }
+
+  uc-file-item[mode="grid"] .uc-inner {
+    height: 100%;
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr max-content;
+    padding: 0;
+    background-color: transparent;
+    margin-bottom: 0;
+    border-radius: 0;
+  }
+
+  uc-file-item[mode="grid"] .uc-inner[failed] .uc-badge {
+    display: none;
+  }
+
+  uc-file-item[mode="grid"] .uc-thumb {
+    width: 100%;
+    height: 100%;
+  }
+
+  uc-file-item[mode="grid"] .uc-badge {
+    right: var(--uc-padding);
+    bottom: var(--uc-padding);
+  }
+
+  uc-file-item[mode="grid"] .uc-file-name-wrapper {
+    padding: 0;
+  }
+
+  uc-file-item[mode="grid"] .uc-file-name:not([hidden]) + .uc-file-error {
+    bottom: calc(var(--uc-padding) + var(--uc-font-size));
+  }
+
+  uc-file-item[mode="grid"] .uc-file-error {
+    position: absolute;
+    background-color: var(--uc-destructive-foreground);
+    border-radius: var(--uc-radius);
+    color: var(--uc-background);
+    bottom: var(--uc-padding);
+    left: var(--uc-padding);
+    right: var(--uc-padding);
+    padding: calc(var(--uc-padding) / 2) var(--uc-padding);
+  }
+
+  uc-file-item[mode="grid"] .uc-file-hint {
+    position: absolute;
+    background-color: var(--uc-background);
+    border-radius: var(--uc-radius);
+    color: var(--uc-foreground);
+    bottom: calc(var(--uc-padding) * 2);
+    left: var(--uc-padding);
+    right: var(--uc-padding);
+    padding: calc(var(--uc-padding) / 2) var(--uc-padding);
+  }
+
+  uc-file-item[mode="grid"] .uc-file-actions {
+    position: absolute;
+    top: var(--uc-padding);
+    right: var(--uc-padding);
+  }
+
+  uc-file-item[mode="grid"] button {
+    background-color: var(--uc-background);
+  }
+
+  uc-file-item[mode="grid"] button:hover {
+    background-color: var(--uc-muted);
+  }
+
+  uc-file-item[mode="grid"] .uc-progress-bar {
+    width: initial;
+    height: 4px !important;
+    top: initial !important;
+    bottom: var(--uc-padding);
+    left: var(--uc-padding);
+    right: var(--uc-padding);
+    border-radius: var(--uc-radius);
+    z-index: 1;
+    transition:
+      background-color 0.3s,
+      opacity 0.3s;
+    background-color: var(--uc-background);
+  }
+
+  uc-file-item[mode="grid"] .uc-progress-bar :is(.uc-fake-progress, .uc-progress) {
+    background-color: var(--uc-primary);
+  }
+
+  uc-file-item[mode="grid"] .uc-progress-bar[hasfilename] {
+    bottom: calc(var(--uc-padding) + var(--uc-font-size));
+  }
+}

@@ -1,9 +1,12 @@
 import { commands, page, userEvent } from '@vitest/browser/context';
 import { beforeAll, beforeEach, describe, expect, it, test } from 'vitest';
 import '../types/jsx';
+// biome-ignore lint/correctness/noUnusedImports: Used in JSX
 import { renderer } from './utils/test-renderer';
 
 beforeAll(async () => {
+  // biome-ignore lint/suspicious/noTsIgnore: Ignoring TypeScript error for CSS import
+  // @ts-ignore
   await import('@/solutions/file-uploader/regular/index.css');
   const UC = await import('@/index.js');
   UC.defineComponents(UC);
@@ -130,10 +133,10 @@ describe('File uploader regular', () => {
       await expect.element(startFrom).not.toBeVisible();
       await expect.element(cameraSource).toBeVisible();
 
-      const cameraButton = cameraSource.getByTestId('uc-camera-source--shot')
+      const cameraButton = cameraSource.getByTestId('uc-camera-source--shot');
       await userEvent.click(cameraButton);
 
-      const acceptButton = cameraSource.getByTestId('uc-camera-source--accept')
+      const acceptButton = cameraSource.getByTestId('uc-camera-source--accept');
       await userEvent.click(acceptButton);
 
       await expect.element(uploadList).toBeVisible();

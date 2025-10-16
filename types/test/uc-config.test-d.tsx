@@ -1,8 +1,13 @@
 import { expectType } from 'tsd';
-import { OutputFileEntry, FuncCollectionValidator, FuncFileValidator, FileValidatorDescriptor } from '../index.js';
-import { renderer } from '../../tests/utils/test-renderer.js';
-import React from 'react';
+import type {
+  Config,
+  FileValidatorDescriptor,
+  FuncCollectionValidator,
+  FuncFileValidator,
+  OutputFileEntry,
+} from '../../dist/index';
 import '../jsx';
+import React, { createRef, useRef } from 'react';
 
 // @ts-expect-error untyped props
 () => <uc-config ctx-name="1" something="wrong"></uc-config>;
@@ -18,8 +23,8 @@ import '../jsx';
 
 // allow useRef hook
 () => {
-  const ref = React.useRef<InstanceType<Config> | null>(null);
-  expectType<InstanceType<Config> | null>(ref.current);
+  const ref = useRef<Config | null>(null);
+  expectType<Config | null>(ref.current);
   <uc-config ctx-name="1" ref={ref}></uc-config>;
 };
 
@@ -28,15 +33,15 @@ import '../jsx';
   <uc-config
     ctx-name="1"
     ref={(el) => {
-      expectType<InstanceType<Config> | null>(el);
+      expectType<Config | null>(el);
     }}
   ></uc-config>;
 };
 
 // allow createRef
 () => {
-  const ref = React.createRef<InstanceType<Config>>();
-  expectType<InstanceType<Config> | null>(ref.current);
+  const ref = createRef<Config>();
+  expectType<Config | null>(ref.current);
   <uc-config ctx-name="1" ref={ref}></uc-config>;
 };
 
@@ -45,7 +50,7 @@ import '../jsx';
 
 // allow to use DOM properties
 () => {
-  const ref = React.useRef<InstanceType<Config> | null>(null);
+  const ref = useRef<Config | null>(null);
   if (ref.current) {
     const config = ref.current;
     config.metadata = { foo: 'bar' };
@@ -56,7 +61,7 @@ import '../jsx';
 
 // allow to pass metadata
 () => {
-  const ref = React.useRef<InstanceType<Config> | null>(null);
+  const ref = useRef<Config | null>(null);
   if (ref.current) {
     const config = ref.current;
     config.metadata = { foo: 'bar' };
@@ -70,7 +75,7 @@ import '../jsx';
 
 // allow to pass validators
 () => {
-  const ref = React.useRef<InstanceType<Config> | null>(null);
+  const ref = useRef<Config | null>(null);
   if (ref.current) {
     const config = ref.current;
 
@@ -89,7 +94,7 @@ import '../jsx';
       validator: syncFileValidator,
     };
 
-    const maxCollection: FuncCollectionValidator = (collection, api) => ({
+    const maxCollection: FuncCollectionValidator = (_collection, api) => ({
       message: api.l10n('some-files-were-not-uploaded'),
     });
 

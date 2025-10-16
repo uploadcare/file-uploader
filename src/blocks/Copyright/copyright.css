@@ -1,0 +1,34 @@
+@layer uc.components {
+  uc-copyright {
+    display: flex;
+    width: 100%;
+    justify-content: center;
+  }
+
+  uc-copyright .uc-credits {
+    all: unset;
+    position: absolute;
+    bottom: 12px;
+    background-color: var(--uc-background);
+    padding: 2px 5px;
+    border-radius: 6px;
+    color: var(--uc-muted-foreground);
+    font-weight: normal;
+    font-size: 12px;
+    opacity: 0.9;
+    cursor: pointer;
+    transition:
+      opacity var(--uc-transition),
+      background-color var(--uc-transition);
+  }
+
+  uc-copyright .uc-credits:focus-visible {
+    outline: 1px auto Highlight;
+    outline: 1px auto -webkit-focus-ring-color;
+  }
+
+  uc-copyright .uc-credits:hover {
+    opacity: 1;
+    background-color: var(--uc-muted);
+  }
+}
