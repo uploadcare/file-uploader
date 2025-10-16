@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "jsx": "react",
+    "target": "esnext",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "types": ["@total-typescript/ts-reset", "@vitest/browser/providers/playwright", "vite/client"],
+    "jsxFactory": "renderer.create",
+    "jsxFragmentFactory": "renderer.fragment",
+    "allowJs": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "paths": {
+      "@/*": ["./src/*"],
+      "~/*": ["./*"]
+    }
+  },
+  "include": ["src", "tests"],
+  "exclude": ["node_modules", "**/*.test.js"]
+}

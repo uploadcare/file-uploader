@@ -11,7 +11,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: 'npm'
+          cache: "npm"
       - uses: actions/cache@v4
         id: playwright-cache
         with:
@@ -24,16 +24,14 @@ jobs:
       - name: Install playwright deps
         run: npm run playwright:install
         if: steps.playwright-cache.outputs.cache-hit != 'true'
+      - name: Run build
+        run: npm run build
       - name: Run lint
         run: npm run lint
       - name: Run test
         run: npm run test
-      - name: Run build
-        run: npm run build
       - name: Run tsc
-        run: npm run clean:types && npm run tsc
-      - name: Run build
-        run: npm run build
+        run: npm run tsc
       - name: Archive artifacts
         uses: actions/upload-artifact@v4
         if: always()

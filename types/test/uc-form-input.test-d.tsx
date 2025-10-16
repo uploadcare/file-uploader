@@ -1,5 +1,7 @@
-import { FormInput } from '../../index.js';
-import { renderer } from '../../tests/utils/test-renderer.js';
+import '../jsx';
+import React from 'react';
+
+import { FormInput } from '../../dist/index';
 
 () => <uc-form-input ctx-name="my-uploader" />;
 

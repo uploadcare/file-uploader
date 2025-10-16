@@ -41,74 +41,72 @@ function isInsideAtRule(node) {
   }
 }
 
-module.exports = stylelint.createPlugin(ruleName, function (options) {
-  return function (root, result) {
-    if (!options) return;
-    var validOptions = stylelint.utils.validateOptions(result, ruleName, {
-      actual: options,
-      possible: optionsSchema,
-    });
-    if (!validOptions) return;
+module.exports = stylelint.createPlugin(ruleName, (options) => (root, result) => {
+  if (!options) return;
+  var validOptions = stylelint.utils.validateOptions(result, ruleName, {
+    actual: options,
+    possible: optionsSchema,
+  });
+  if (!validOptions) return;
 
-    const whiteList = ['.' + options.appName, /^:.*/];
+  const whiteList = ['.' + options.appName, /^:.*/];
 
-    root.walkAtRules('keyframes', (rule) => {
-      const keyframesName = rule.params;
+  root.walkAtRules('keyframes', (rule) => {
+    const keyframesName = rule.params;
 
-      if (keyframesName.indexOf(options.appName + '-') === -1) {
-        stylelint.utils.report({
-          ruleName: ruleName,
-          result: result,
-          node: rule,
-          message: messages.invalidKeyFrames(keyframesName, options.appName),
-        });
-      }
-    });
-
-    root.walkAtRules('font-face', (rule) => {
-      rule.walkDecls('font-family', (decl) => {
-        if (decl.value.indexOf(options.appName + '-') === -1) {
-          stylelint.utils.report({
-            ruleName: ruleName,
-            result: result,
-            node: rule,
-            message: messages.invalidFontFace(decl.value, options.appName),
-          });
-        }
+    if (keyframesName.indexOf(options.appName + '-') === -1) {
+      stylelint.utils.report({
+        ruleName: ruleName,
+        result: result,
+        node: rule,
+        message: messages.invalidKeyFrames(keyframesName, options.appName),
       });
-    });
+    }
+  });
 
-    root.walkRules((rule) => {
-      if (isInsideAtRule(rule)) return;
-      const topParentSelector = findTopParentSelector(rule);
-      if (
-        whiteList.find(function (whiteRule) {
-          if (whiteRule instanceof RegExp) {
-            return whiteRule.test(topParentSelector);
-          } else {
-            return whiteRule === topParentSelector;
-          }
-        })
-      ) {
-        // in white list, skipped
-        return;
-      }
-
-      if (
-        topParentSelector.indexOf('.' + options.appName + '-') === 0 ||
-        topParentSelector.indexOf(options.appName + '-') === 0
-      ) {
-        // good
-      } else {
+  root.walkAtRules('font-face', (rule) => {
+    rule.walkDecls('font-family', (decl) => {
+      if (decl.value.indexOf(options.appName + '-') === -1) {
         stylelint.utils.report({
           ruleName: ruleName,
           result: result,
           node: rule,
-          message: messages.invalid(rule.selector, options.appName),
+          message: messages.invalidFontFace(decl.value, options.appName),
         });
       }
     });
-  };
+  });
+
+  root.walkRules((rule) => {
+    if (isInsideAtRule(rule)) return;
+    const topParentSelector = findTopParentSelector(rule);
+    if (
+      whiteList.find((whiteRule) => {
+        if (whiteRule instanceof RegExp) {
+          return whiteRule.test(topParentSelector);
+        } else {
+          return whiteRule === topParentSelector;
+        }
+      })
+    ) {
+      // in white list, skipped
+      return;
+    }
+
+    if (
+      topParentSelector.indexOf('.' + options.appName + '-') === 0 ||
+      topParentSelector.indexOf(options.appName + '-') === 0
+    ) {
+      // good
+    } else {
+      stylelint.utils.report({
+        ruleName: ruleName,
+        result: result,
+        node: rule,
+        message: messages.invalid(rule.selector, options.appName),
+      });
+    }
+  });
 });
 
 module.exports.ruleName = ruleName;

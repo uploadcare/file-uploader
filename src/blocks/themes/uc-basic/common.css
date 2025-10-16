@@ -1,0 +1,119 @@
+@layer uc.base {
+  :where([uc-wgt-common]) {
+    color: var(--uc-foreground);
+    font-size: var(--uc-font-size);
+    line-height: var(--uc-line-height);
+    font-family: var(--uc-font-family);
+  }
+
+  :where([uc-wgt-common]) * {
+    box-sizing: border-box;
+  }
+
+  :where([uc-wgt-common]) button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: var(--uc-button-size);
+    padding-right: 14px;
+    padding-left: 14px;
+    font-size: 1em;
+    font-family: inherit;
+    white-space: nowrap;
+    border: none;
+    border-radius: var(--uc-radius);
+    cursor: pointer;
+    user-select: none;
+    transition: background-color var(--uc-transition);
+  }
+
+  :where([uc-wgt-common]) button:focus-visible {
+    outline-offset: 2px;
+  }
+
+  :where([uc-wgt-common]) button.uc-primary-btn {
+    color: var(--uc-primary-foreground);
+    background-color: var(--uc-primary);
+  }
+
+  :where([uc-wgt-common]) button.uc-primary-btn:hover {
+    background-color: var(--uc-primary-hover);
+  }
+
+  :where([uc-wgt-common]) button.uc-secondary-btn {
+    color: var(--uc-secondary-foreground);
+    background-color: var(--uc-secondary);
+  }
+
+  :where([uc-wgt-common]) button.uc-secondary-btn:hover {
+    background-color: var(--uc-secondary-hover);
+  }
+
+  :where([uc-wgt-common].uc-contrast) button.uc-secondary-btn {
+    border: 1px solid var(--uc-border);
+  }
+
+  :where([uc-wgt-common]) button.uc-mini-btn {
+    height: var(--uc-button-size);
+    padding: 0;
+    background-color: transparent;
+    color: var(--uc-secondary-foreground);
+  }
+
+  :where([uc-wgt-common]) button.uc-mini-btn:hover {
+    background-color: var(--uc-secondary);
+  }
+
+  :where([uc-wgt-common]) :is(button[disabled], button.uc-primary-btn[disabled], button.uc-secondary-btn[disabled]) {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
+  :where([uc-wgt-common]) a {
+    color: var(--uc-primary);
+    text-decoration: none;
+  }
+
+  /* TODO: if we're using disabled <a> somewhere, we should stop */
+  :where([uc-wgt-common]) a[disabled] {
+    pointer-events: none;
+  }
+
+  :where([uc-wgt-common]) input[type="text"] {
+    display: flex;
+    width: 100%;
+    height: var(--uc-button-size);
+    padding-right: 10px;
+    padding-left: 10px;
+    color: var(--uc-foreground);
+    font-size: 1em;
+    font-family: inherit;
+    background-color: var(--uc-background);
+    border: 1px solid var(--uc-border);
+    outline: 1px solid transparent;
+    border-radius: var(--uc-radius);
+    transition:
+      border-color var(--uc-transition),
+      outline-color var(--uc-transition);
+  }
+
+  :where([uc-wgt-common]) input[type="text"]::placeholder {
+    color: var(--uc-muted-foreground);
+  }
+
+  :where([uc-wgt-common]) input[type="text"]:focus {
+    outline-color: var(--uc-primary-hover);
+    border-color: var(--uc-primary-hover);
+  }
+
+  /* TODO: check if there's any necessity of disabled input */
+  :where([uc-wgt-common]) input[disabled] {
+    opacity: 0.6;
+    pointer-events: none;
+  }
+  :where([uc-wgt-common]) uc-select[disabled],
+  :where([uc-wgt-common]) select[disabled] {
+    opacity: 0.6;
+    pointer-events: none;
+  }
+}

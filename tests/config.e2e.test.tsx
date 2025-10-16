@@ -1,9 +1,12 @@
 import { page } from '@vitest/browser/context';
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import '../types/jsx';
+// biome-ignore lint/correctness/noUnusedImports: Used in JSX
 import { renderer } from './utils/test-renderer';
 
 beforeAll(async () => {
+  // biome-ignore lint/suspicious/noTsIgnore: Ignoring TypeScript error for CSS import
+  // @ts-ignore
   await import('@/solutions/file-uploader/regular/index.css');
   const UC = await import('@/index.js');
   UC.defineComponents(UC);
@@ -23,36 +26,36 @@ beforeEach(() => {
 describe('Config', () => {
   describe('cdnCname', () => {
     it('should be ucarecdn.com by default', async () => {
-      const config = page.getByTestId('uc-config').query()! as InstanceType<Config>;
+      const config = page.getByTestId('uc-config').query()! as Config;
       expect(config.cdnCname).toBe('https://ucarecdn.com');
     });
 
     it('should be updated synchronously', async () => {
-      const config = page.getByTestId('uc-config').query()! as InstanceType<Config>;
+      const config = page.getByTestId('uc-config').query()! as Config;
       config.cdnCname = 'https://cdn.example.com';
       expect(config.cdnCname).toBe('https://cdn.example.com');
     });
 
     it('should be async calculated from pubkey if another custom domain is not set', async () => {
-      const config = page.getByTestId('uc-config').query()! as InstanceType<Config>;
+      const config = page.getByTestId('uc-config').query()! as Config;
       config.pubkey = 'demopublickey';
       expect(config.cdnCname).toBe('https://ucarecdn.com');
       await expect.poll(() => config.cdnCname).toBe('https://1s4oyld5dc.ucarecd.net');
     });
 
     it('should not be calculated if another custom domain is set', async () => {
-      const config = page.getByTestId('uc-config').query()! as InstanceType<Config>;
+      const config = page.getByTestId('uc-config').query()! as Config;
       config.cdnCname = 'https://cdn.example.com';
       config.pubkey = 'demopublickey';
       await expect.poll(() => config.cdnCname).toBe('https://cdn.example.com');
     });
 
     it('should be calculated if pubkey is changed', async () => {
-      const config = page.getByTestId('uc-config').query()! as InstanceType<Config>;
+      const config = page.getByTestId('uc-config').query()! as Config;
       config.pubkey = 'demopublickey';
       await expect.poll(() => config.cdnCname).toBe('https://1s4oyld5dc.ucarecd.net');
       config.pubkey = 'anotherpublickey';
       await expect.poll(() => config.cdnCname).toBe('https://t8zl5ek5q1.ucarecd.net');
-    })
+    });
   });
 });

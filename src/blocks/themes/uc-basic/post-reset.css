@@ -1,0 +1,5 @@
+@layer uc.post-reset {
+  :where([uc-wgt-common]) uc-source-btn[type] {
+    all: unset;
+  }
+}
