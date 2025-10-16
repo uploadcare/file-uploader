@@ -94,7 +94,7 @@ export class EditorImageCropper extends Block {
     const transformations = this.$['*editorTransformations'] as Transformations;
     const pickedTransformations = pick(
       transformations,
-      Object.keys(this.$['*operations']) as readonly (keyof Transformations)[]
+      Object.keys(this.$['*operations']) as readonly (keyof Transformations)[],
     ) as Partial<Operations>;
     const operations: Operations = { ...this.$['*operations'], ...pickedTransformations };
     this.$['*operations'] = operations;

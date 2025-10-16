@@ -1,6 +1,4 @@
-type Throttled<T extends (...args: any[]) => void> = ((
-  ...args: Parameters<T>
-) => void) & {
+type Throttled<T extends (...args: any[]) => void> = ((...args: Parameters<T>) => void) & {
   readonly cancel: () => void;
 };
 
@@ -31,7 +29,7 @@ export const throttle = <T extends (...args: any[]) => void>(
     }
   }) as Throttled<T>;
 
-  Object.defineProperty(throttled, "cancel", {
+  Object.defineProperty(throttled, 'cancel', {
     configurable: false,
     writable: false,
     enumerable: false,

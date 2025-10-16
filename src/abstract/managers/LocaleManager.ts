@@ -1,5 +1,5 @@
-import { debounce } from '../../utils/debounce';
 import { default as en } from '../../locales/file-uploader/en';
+import { debounce } from '../../utils/debounce';
 import type { Block } from '../Block';
 import { resolveLocaleDefinition } from '../localeRegistry';
 

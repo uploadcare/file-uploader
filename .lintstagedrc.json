@@ -1,6 +1,6 @@
 {
-  "*.{ts,js,cjs,tsx}": ["biome lint --write", "git add"],
-  "*.css": ["stylelint --fix", "biome lint --write", "git add"],
-  "*.json": ["biome lint --write", "git add"],
-  "*.md": ["biome lint --write", "git add"]
+  "*.{ts,js,cjs,tsx}": ["biome check --write", "git add"],
+  "*.css": ["stylelint --fix", "biome check --write", "git add"],
+  "*.json": ["biome check --write", "git add"],
+  "*.md": ["biome check --write", "git add"]
 }

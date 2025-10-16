@@ -42,7 +42,7 @@ const getMissingKeys = (reference: LocaleDefinition, definition: LocaleDefinitio
 };
 
 (async () => {
-  let anyError: boolean = false;
+  let anyError = false;
 
   const browser = await chromium.launch();
   const context = await browser.newContext();

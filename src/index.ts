@@ -40,7 +40,6 @@ export { Thumb } from './blocks/Thumb/Thumb';
 export { UploadCtxProvider } from './blocks/UploadCtxProvider/UploadCtxProvider';
 export { UploadList } from './blocks/UploadList/UploadList';
 export { UrlSource } from './blocks/UrlSource/UrlSource';
-export { ExternalUploadSource, UploadSource } from './utils/UploadSource';
 // Other
 export * from './env';
 export { CloudImageEditor } from './solutions/cloud-image-editor/CloudImageEditor';
@@ -50,3 +49,4 @@ export { FileUploaderMinimal } from './solutions/file-uploader/minimal/FileUploa
 export { FileUploaderRegular } from './solutions/file-uploader/regular/FileUploaderRegular';
 export * from './types/index';
 export { toKebabCase } from './utils/toKebabCase';
+export { ExternalUploadSource, UploadSource } from './utils/UploadSource';

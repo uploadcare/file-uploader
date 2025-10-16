@@ -110,6 +110,5 @@ export {
   asNumber,
   asObject,
   asStore,
-  asString
+  asString,
 };
-

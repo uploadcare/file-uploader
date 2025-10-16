@@ -7,8 +7,8 @@ import type { Transformations } from './types';
 import { parseFilterValue } from './utils/parseFilterValue.js';
 
 export class EditorFilterControl extends EditorButtonControl {
-  private _operation: string = '';
-  private _filter: string = '';
+  private _operation = '';
+  private _filter = '';
   private _originalUrl = '';
   private _observer?: IntersectionObserver;
   private _cancelPreload?: () => void;

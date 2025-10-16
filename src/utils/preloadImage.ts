@@ -1,4 +1,4 @@
-import { TRANSPARENT_PIXEL_SRC } from "./transparentPixelSrc";
+import { TRANSPARENT_PIXEL_SRC } from './transparentPixelSrc';
 
 export function preloadImage(src: string): {
   promise: Promise<void>;
@@ -35,9 +35,7 @@ export function batchPreloadImages(list: string[]): {
   }
 
   const images = preloaders.map((preload) => preload.image);
-  const promise = Promise.allSettled(
-    preloaders.map((preload) => preload.promise),
-  );
+  const promise = Promise.allSettled(preloaders.map((preload) => preload.promise));
   const cancel = () => {
     preloaders.forEach((preload) => {
       preload.cancel();

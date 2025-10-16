@@ -1,7 +1,4 @@
-export function debounce<T extends (...args: any[]) => any>(
-  callback: T,
-  wait: number,
-): T & { cancel: () => void } {
+export function debounce<T extends (...args: any[]) => any>(callback: T, wait: number): T & { cancel: () => void } {
   let timer: ReturnType<typeof setTimeout> | undefined;
 
   const debounced = ((...args: Parameters<T>) => {

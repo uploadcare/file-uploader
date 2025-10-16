@@ -1,3 +1,3 @@
 export const canUsePermissionsApi = () => {
-  return typeof navigator.permissions !== "undefined";
+  return typeof navigator.permissions !== 'undefined';
 };
