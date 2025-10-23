@@ -3,13 +3,13 @@
 import { create } from '@symbiotejs/symbiote';
 import { ActivityBlock } from '../../abstract/ActivityBlock.js';
 import { UploaderBlock } from '../../abstract/UploaderBlock.js';
+import { getTopLevelOrigin } from '../../utils/get-top-level-origin.js';
 import { stringToArray } from '../../utils/stringToArray.js';
 import { wildcardRegexp } from '../../utils/wildcardRegexp.js';
+import { ExternalUploadSource } from '../utils/UploadSource.js';
 import { buildThemeDefinition } from './buildThemeDefinition.js';
 import { MessageBridge } from './MessageBridge.js';
 import { queryString } from './query-string.js';
-import { getTopLevelOrigin } from '../../utils/get-top-level-origin.js';
-import { ExternalUploadSource } from '../utils/UploadSource.js';
 
 /** @type {Record<string, string>} */
 const SOCIAL_SOURCE_MAPPING = {
@@ -39,6 +39,7 @@ export class ExternalSource extends UploaderBlock {
       couldSelectAll: false,
       couldDeselectAll: false,
       showSelectionStatus: false,
+      showDoneBtn: false,
       counterText: '',
       doneBtnTextClass: 'uc-hidden',
       toolbarVisible: true,
@@ -48,7 +49,10 @@ export class ExternalSource extends UploaderBlock {
           const url = this.extractUrlFromSelectedFile(message);
           const { filename } = message;
           const { externalSourceType } = this.activityParams;
-          this.api.addFileFromUrl(url, { fileName: filename, source: externalSourceType });
+          this.api.addFileFromUrl(url, {
+            fileName: filename,
+            source: externalSourceType,
+          });
         }
 
         this.$['*currentActivity'] = ActivityBlock.activities.UPLOAD_LIST;
@@ -81,7 +85,7 @@ export class ExternalSource extends UploaderBlock {
     super.initCallback();
     this.registerActivity(this.activityType, {
       onActivate: () => {
-        let { externalSourceType } = /** @type {ActivityParams} */ (this.activityParams);
+        const { externalSourceType } = /** @type {ActivityParams} */ (this.activityParams);
 
         if (!externalSourceType) {
           this.modalManager.close(this.$['*currentActivity']);
@@ -179,6 +183,10 @@ export class ExternalSource extends UploaderBlock {
       couldDeselectAll: message.selectedCount === message.total,
       selectedList: message.selectedFiles,
     });
+
+    if (!this.$.showDoneBtn && message.isReady) {
+      this.$.showDoneBtn = true;
+    }
   }
 
   /** @private */
@@ -239,8 +247,7 @@ export class ExternalSource extends UploaderBlock {
   /** @private */
   mountIframe() {
     /** @type {HTMLIFrameElement} */
-    // @ts-ignore
-    let iframe = create({
+    const iframe = create({
       tag: 'iframe',
       attributes: {
         src: this.remoteUrl(),
@@ -287,6 +294,7 @@ export class ExternalSource extends UploaderBlock {
       couldSelectAll: false,
       couldDeselectAll: false,
       showSelectionStatus: false,
+      showDoneBtn: false,
     });
   }
 }
@@ -311,7 +319,11 @@ ExternalSource.template = /* HTML */ `
         <button type="button" set="onclick: onSelectAll; @hidden: !couldSelectAll" l10n="select-all"></button>
         <button type="button" set="onclick: onDeselectAll; @hidden: !couldDeselectAll" l10n="deselect-all"></button>
       </div>
-      <button type="button" class="uc-done-btn uc-primary-btn" set="onclick: onDone; @disabled: !isDoneBtnEnabled;">
+      <button
+        type="button"
+        class="uc-done-btn uc-primary-btn"
+        set="onclick: onDone; @disabled: !isDoneBtnEnabled; @hidden: !showDoneBtn"
+      >
         <uc-spinner set="@hidden: isSelectionReady"></uc-spinner>
         <span l10n="done" set="@class: doneBtnTextClass"></span>
       </button>
