@@ -1,3 +1,9 @@
+## [1.23.1](https://github.com/uploadcare/file-uploader/compare/v1.23.0...v1.23.1) (2025-10-24)
+
+### Bug Fixes
+
+- **external sources:** hide spinner button until external source authentication done ([#869](https://github.com/uploadcare/file-uploader/issues/869)) ([ed0aa7a](https://github.com/uploadcare/file-uploader/commit/ed0aa7a3d18031e806fb22c8b45c6c2ac7a38080))
+
 # [1.23.0](https://github.com/uploadcare/file-uploader/compare/v1.22.0...v1.23.0) (2025-10-07)
 
 ### Bug Fixes
