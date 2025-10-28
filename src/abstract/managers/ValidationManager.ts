@@ -21,6 +21,7 @@ import {
 } from '../../utils/validators/file/index';
 import { withResolvers } from '../../utils/withResolvers';
 import type { buildOutputCollectionState } from '../buildOutputCollectionState';
+import type { TypedCollection } from '../TypedCollection';
 import type { TypedData } from '../TypedData';
 import type { UploaderBlock } from '../UploaderBlock';
 import type { uploadEntrySchema } from '../uploadEntrySchema';
@@ -60,7 +61,7 @@ const getValidatorDescriptor = (validator: FileValidator): FileValidatorDescript
 export class ValidationManager {
   private _blockInstance: UploaderBlock;
 
-  private _uploadCollection: any;
+  private _uploadCollection: TypedCollection<typeof uploadEntrySchema>;
 
   private _commonFileValidators: FuncFileValidator[] = [
     validateIsImage,
