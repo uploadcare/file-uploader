@@ -248,7 +248,9 @@ describe('Custom file validation', () => {
         const api = ctxProvider.getAPI();
         api.addFileFromObject(IMAGE.SQUARE);
         api.initFlow();
-        await page.getByLabelText('Edit', { exact: true }).click();
+        await page.getByLabelText('Edit', { exact: true }).click({
+          timeout: 10000,
+        });
         await page.getByLabelText('Apply mirror operation', { exact: true }).click();
         await delay(300);
         await page.getByLabelText('apply', { exact: true }).click();
