@@ -30,6 +30,12 @@ import { buildOutputCollectionState } from './buildOutputCollectionState';
 import type { UploaderBlock } from './UploaderBlock';
 import type { UploadEntryData } from './uploadEntrySchema';
 
+export type ApiAddFileCommonOptions = {
+  silent?: boolean;
+  fileName?: string;
+  source?: string;
+};
+
 export class UploaderPublicApi {
   private _ctx: UploaderBlock;
 
@@ -54,7 +60,7 @@ export class UploaderPublicApi {
    */
   addFileFromUrl = (
     url: string,
-    { silent, fileName, source }: { silent?: boolean; fileName?: string; source?: string } = {},
+    { silent, fileName, source }: ApiAddFileCommonOptions = {},
   ): OutputFileEntry<'idle'> => {
     const internalId = this._uploadCollection.add({
       externalUrl: url,
@@ -67,7 +73,7 @@ export class UploaderPublicApi {
 
   addFileFromUuid = (
     uuid: string,
-    { silent, fileName, source }: { silent?: boolean; fileName?: string; source?: string } = {},
+    { silent, fileName, source }: ApiAddFileCommonOptions = {},
   ): OutputFileEntry<'idle'> => {
     const internalId = this._uploadCollection.add({
       uuid,
@@ -80,7 +86,7 @@ export class UploaderPublicApi {
 
   addFileFromCdnUrl = (
     cdnUrl: string,
-    { silent, fileName, source }: { silent?: boolean; fileName?: string; source?: string } = {},
+    { silent, fileName, source }: ApiAddFileCommonOptions = {},
   ): OutputFileEntry<'idle'> => {
     const parsedCdnUrl = parseCdnUrl({
       url: cdnUrl,
@@ -107,10 +113,7 @@ export class UploaderPublicApi {
       fileName,
       source,
       fullPath,
-    }: {
-      silent?: boolean;
-      fileName?: string;
-      source?: string;
+    }: ApiAddFileCommonOptions & {
       fullPath?: string;
     } = {},
   ): OutputFileEntry<'idle'> => {

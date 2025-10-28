@@ -22,7 +22,7 @@ import type { Metadata, NetworkError, UploadcareFile, UploadcareGroup, UploadErr
 import type { SourceTypes } from '../utils/UploadSource';
 
 export type { FuncFileValidator, FuncCollectionValidator, FileValidator, FileValidatorDescriptor };
-export type { UploaderPublicApi } from '../abstract/UploaderPublicApi';
+export type { ApiAddFileCommonOptions, UploaderPublicApi } from '../abstract/UploaderPublicApi';
 
 export type { SourceTypes };
 export type MetadataCallback = (fileEntry: OutputFileEntry) => Promise<Metadata> | Metadata;
