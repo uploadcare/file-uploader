@@ -12,10 +12,17 @@ type ComputedPropertyArgs<TKey extends ConfigKey, TDeps extends DepKeys<TKey>> =
   [K in TDeps[number]]: ConfigValue<K>;
 };
 
+type ComputedPropertyOptions = {
+  signal: AbortSignal;
+};
+
 type ComputedPropertyDeclaration<TKey extends ConfigKey, TDeps extends DepKeys<TKey>> = {
   key: TKey;
   deps: TDeps;
-  fn: (args: ComputedPropertyArgs<TKey, TDeps>) => ConfigValue<TKey> | Promise<ConfigValue<TKey>>;
+  fn: (
+    args: ComputedPropertyArgs<TKey, TDeps>,
+    options: ComputedPropertyOptions,
+  ) => ConfigValue<TKey> | Promise<ConfigValue<TKey>>;
 };
 
 const defineComputedProperty = <TKey extends ConfigKey, TDeps extends DepKeys<TKey>>(
@@ -67,6 +74,7 @@ const COMPUTED_PROPERTIES = [
     },
   }),
 ];
+
 type ConfigSetter = <TSetValue extends ConfigKey>(key: TSetValue, value: ConfigValue<TSetValue>) => void;
 type ConfigGetter = <TGetValue extends ConfigKey>(key: TGetValue) => ConfigValue<TGetValue>;
 
@@ -75,6 +83,8 @@ type RunSideEffectsOptions<TKey extends ConfigKey> = {
   setValue: ConfigSetter;
   getValue: ConfigGetter;
 };
+
+const abortControllers = new Map<ConfigKey, AbortController>();
 
 export const runSideEffects = <TKey extends ConfigKey>({ key, setValue, getValue }: RunSideEffectsOptions<TKey>) => {
   for (const computed of COMPUTED_PROPERTIES) {
@@ -86,16 +96,19 @@ export const runSideEffects = <TKey extends ConfigKey>({ key, setValue, getValue
       for (const dep of computed.deps) {
         args[dep] = getValue(dep);
       }
-
-      const result = computed.fn(args as ComputedPropertyArgs<typeof computed.key, typeof computed.deps>);
+      const abortController = new AbortController();
+      abortControllers.get(computed.key)?.abort();
+      abortControllers.set(computed.key, abortController);
+      const result = computed.fn(args as ComputedPropertyArgs<typeof computed.key, typeof computed.deps>, {
+        signal: abortController.signal,
+      });
       if (isPromiseLike(result)) {
-        const prevValue = getValue(computed.key);
         result
           .then((resolvedValue) => {
-            const currentValue = getValue(computed.key);
-            if (currentValue === prevValue) {
-              setValue(computed.key, resolvedValue);
+            if (abortController.signal.aborted) {
+              return;
             }
+            setValue(computed.key, resolvedValue);
           })
           .catch((error) => {
             console.error(`Failed to compute value for "${computed.key}"`, error);
