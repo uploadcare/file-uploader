@@ -1,10 +1,42 @@
 # [1.24.0](https://github.com/uploadcare/file-uploader/compare/v1.23.1...v1.24.0) (2025-10-28)
 
+## Highlights
+* Fully rewritten to TypeScript
+* Added support for CSS Layers (more predictable style overrides)
 
-### Features
+## Potential Breaking Changes (Minor Release)
 
-* typescript migration ([#867](https://github.com/uploadcare/file-uploader/issues/867)) ([6310fca](https://github.com/uploadcare/file-uploader/commit/6310fcaf8fa558ee77f2a4db530f1d28f941c123))
+Some type definitions and imports were cleaned up:
 
+### Type updates
+```diff
+- type MyCfg = InstanceOf<Config>
++ type MyCfg = Config
+```
+
+```diff
+- type MyProvider = InstanceOf<UploadCtxProvider>
++ type MyProvider = UploadCtxProvider
+```
+
+### CSS import change
+
+```diff
+- import '@uploadcare/file-uploader/blocks/themes/uc-basic/index.css'
++ import '@uploadcare/file-uploader/index.css'
+```
+
+We've preserved the NPM package exports API, so most setups should work without changes.
+
+## Migration Checklist
+
+* Replace `InstanceOf<>` usage
+* Update CSS import path
+* If you override styles, verify nothing shifts with CSS layers
+
+## Need help?
+
+If you hit unexpected issues, please open an issue - we'll take a look!
 
 
 ## [1.23.1](https://github.com/uploadcare/file-uploader/compare/v1.23.0...v1.23.1) (2025-10-24)
