@@ -1,3 +1,12 @@
+# [1.24.0](https://github.com/uploadcare/file-uploader/compare/v1.23.1...v1.24.0) (2025-10-28)
+
+
+### Features
+
+* typescript migration ([#867](https://github.com/uploadcare/file-uploader/issues/867)) ([6310fca](https://github.com/uploadcare/file-uploader/commit/6310fcaf8fa558ee77f2a4db530f1d28f941c123))
+
+
+
 ## [1.23.1](https://github.com/uploadcare/file-uploader/compare/v1.23.0...v1.23.1) (2025-10-24)
 
 ### Bug Fixes
