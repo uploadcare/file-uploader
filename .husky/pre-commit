@@ -2,4 +2,4 @@
 . "$(dirname "$0")/_/husky.sh"
 
 ./node_modules/.bin/lint-staged
-npm run tsc
+tsc --project tsconfig.app.json
