@@ -178,7 +178,9 @@ export class Config extends Block {
           return this._getValue(key);
         },
       });
+    }
 
+    for (const key of allConfigKeys) {
       runSideEffects({
         key,
         setValue: this._setValue.bind(this),
