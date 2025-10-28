@@ -26,6 +26,8 @@ export const cleanup = () => {
   containers.clear();
 };
 
+export const getCtxName = () => `test-${Math.random().toString(36).slice(2)}`;
+
 page.extend({
   render,
   [Symbol.for('vitest:component-cleanup')]: cleanup,
