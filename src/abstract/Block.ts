@@ -8,6 +8,7 @@ import { getPluralForm } from '../utils/getPluralForm';
 import { applyTemplateData, getPluralObjects } from '../utils/template-utils';
 import { WindowHeightTracker } from '../utils/WindowHeightTracker';
 import { waitForAttribute } from '../utils/waitForAttribute';
+import type { ActivityType } from './ActivityBlock';
 import { blockCtx } from './CTX';
 import { l10nProcessor } from './l10nProcessor';
 import { A11y } from './managers/a11y';
@@ -28,7 +29,7 @@ export class Block extends BaseComponent<any> {
 
   protected requireCtxName = false;
 
-  activityType: any = null;
+  activityType: ActivityType = null;
 
   override init$ = blockCtx();
 
@@ -182,7 +183,7 @@ export class Block extends BaseComponent<any> {
   }
 
   get testId(): string {
-    const testId = (window.customElements as any).getName(this.constructor as CustomElementConstructor) as string;
+    const testId = window.customElements.getName(this.constructor as CustomElementConstructor) as string;
     return testId;
   }
 
@@ -245,7 +246,7 @@ export class Block extends BaseComponent<any> {
 
     this.localeManager?.destroy();
 
-    this.modalManager && this.modalManager?.destroy();
+    this.modalManager?.destroy();
   }
 
   protected async proxyUrl(url: string): Promise<string> {

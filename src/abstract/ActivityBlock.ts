@@ -86,7 +86,7 @@ export class ActivityBlock extends Block {
   }
 
   private _isActivityRegistered(): boolean {
-    return this.activityType && ActivityBlock._activityCallbacks.has(this);
+    return !!this.activityType && ActivityBlock._activityCallbacks.has(this);
   }
 
   private static _activityCallbacks: Map<
