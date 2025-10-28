@@ -111,9 +111,16 @@ export const runSideEffects = <TKey extends ConfigKey>({ key, setValue, getValue
             setValue(computed.key, resolvedValue);
           })
           .catch((error) => {
+            if (abortController.signal.aborted) {
+              return;
+            }
             console.error(`Failed to compute value for "${computed.key}"`, error);
+          })
+          .finally(() => {
+            abortControllers.delete(computed.key);
           });
       } else {
+        abortControllers.delete(computed.key);
         setValue(computed.key, result);
       }
     }
