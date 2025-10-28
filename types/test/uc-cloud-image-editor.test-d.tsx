@@ -1,5 +1,5 @@
-import { renderer } from '../../tests/utils/test-renderer.js';
 import '../jsx';
+import React from 'react';
 
 // @ts-expect-error - no props
 () => <uc-cloud-image-editor />;

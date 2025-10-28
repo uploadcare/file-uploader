@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { BrowserCommand } from 'vitest/node';
+import type { BrowserCommand } from 'vitest/node';
 
 export const waitFileChooserAndUpload: BrowserCommand<[string[]]> = async ({ page, testPath }, relativePaths) => {
   if (!testPath) {

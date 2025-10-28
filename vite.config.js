@@ -1,15 +1,20 @@
-import { dirname } from 'node:path';
+import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vite';
 import { commands } from './tests/utils/commands';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
+const alias = {
+  '@': resolve(__dirname, 'src'),
+  '~': __dirname,
+};
+
 export default defineConfig(({ command }) => {
   if (command === 'serve') {
     return {
       build: {
-        target: 'es2019',
+        target: 'esnext',
       },
       test: {
         coverage: {
@@ -19,12 +24,17 @@ export default defineConfig(({ command }) => {
         },
         projects: [
           {
-            resolve: {
-              alias: {
-                '@': __dirname,
-              },
-            },
+            extends: true,
             test: {
+              name: 'specs',
+              include: ['./specs/npm/*.test.ts', './**/*.test.{ts,js}'],
+              environment: 'happy-dom',
+            },
+          },
+          {
+            extends: true,
+            test: {
+              name: 'e2e',
               include: ['./**/*.e2e.test.ts', './**/*.e2e.test.tsx'],
               browser: {
                 enabled: true,
@@ -50,11 +60,10 @@ export default defineConfig(({ command }) => {
         ],
       },
       resolve: {
-        alias: {
-          '@': __dirname,
-        },
+        alias,
       },
     };
   }
+
   throw new Error('Not implemented');
 });

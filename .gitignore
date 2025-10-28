@@ -5,8 +5,7 @@ TMP
 !types/**
 **/*.d.ts.map
 !global.d.ts
-./index.ssr.*
-index.ssr.js
 web
 tests/__coverage__
 tsconfig.types.tsbuildinfo
+dist

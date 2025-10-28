@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "jsx": "preserve",
+    "moduleResolution": "bundler",
+    "module": "esnext",
+    "target": "esnext",
+    "lib": ["ESNext", "ESNext.Array", "DOM", "DOM.Iterable"],
+    "types": ["node", "vitest", "@total-typescript/ts-reset", "./types/jsx.d.ts"],
+    "allowJs": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "esModuleInterop": true
+  },
+  "include": ["src", "types/test", "./**/*.test.ts", "./**/*.test-d.tsx"],
+  "exclude": ["node_modules"]
+}
