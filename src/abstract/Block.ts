@@ -188,7 +188,7 @@ export class Block extends BaseComponent<any> {
   }
 
   get modalManager(): ModalManager | undefined {
-    return (this.has('*modalManager') && this.$['*modalManager']) as ModalManager | undefined;
+    return this.has('*modalManager') ? (this.$['*modalManager'] as ModalManager) : undefined;
   }
 
   get telemetryManager():
