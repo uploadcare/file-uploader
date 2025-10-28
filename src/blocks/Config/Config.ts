@@ -109,11 +109,6 @@ export class Config extends Block {
     this.debugPrint(`[uc-config] "${key}"`, normalizedValue);
 
     runAssertions(this.cfg);
-    runSideEffects({
-      key,
-      setValue: this._setValue.bind(this),
-      getValue: this._getValue.bind(this),
-    });
   }
 
   private _getValue(key: keyof ConfigType) {
@@ -181,10 +176,12 @@ export class Config extends Block {
     }
 
     for (const key of allConfigKeys) {
-      runSideEffects({
-        key,
-        setValue: this._setValue.bind(this),
-        getValue: this._getValue.bind(this),
+      this.sub(sharedConfigKey(key), () => {
+        runSideEffects({
+          key,
+          setValue: this._setValue.bind(this),
+          getValue: this._getValue.bind(this),
+        });
       });
     }
   }
