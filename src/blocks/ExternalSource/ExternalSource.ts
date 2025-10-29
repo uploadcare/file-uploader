@@ -191,11 +191,8 @@ export class ExternalSource extends UploaderBlock {
       couldSelectAll: message.selectedCount < message.total,
       couldDeselectAll: message.selectedCount === message.total,
       selectedList: message.selectedFiles,
+      showDoneBtn: message.total > 0,
     });
-
-    if (!this.$.showDoneBtn && message.isReady) {
-      this.$.showDoneBtn = true;
-    }
   }
 
   private handleIframeLoad(): void {
