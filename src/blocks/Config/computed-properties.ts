@@ -78,7 +78,7 @@ const COMPUTED_PROPERTIES = [
 type ConfigSetter = <TSetValue extends ConfigKey>(key: TSetValue, value: ConfigValue<TSetValue>) => void;
 type ConfigGetter = <TGetValue extends ConfigKey>(key: TGetValue) => ConfigValue<TGetValue>;
 
-type RunSideEffectsOptions<TKey extends ConfigKey> = {
+type ComputePropertyOptions<TKey extends ConfigKey> = {
   key: TKey;
   setValue: ConfigSetter;
   getValue: ConfigGetter;
@@ -86,7 +86,7 @@ type RunSideEffectsOptions<TKey extends ConfigKey> = {
 
 const abortControllers = new Map<ConfigKey, AbortController>();
 
-export const runSideEffects = <TKey extends ConfigKey>({ key, setValue, getValue }: RunSideEffectsOptions<TKey>) => {
+export const computeProperty = <TKey extends ConfigKey>({ key, setValue, getValue }: ComputePropertyOptions<TKey>) => {
   for (const computed of COMPUTED_PROPERTIES) {
     if (computed.deps.includes(key)) {
       const args: Partial<Record<ConfigKey, ConfigType[ConfigKey]>> = {

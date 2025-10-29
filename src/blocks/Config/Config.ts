@@ -5,9 +5,9 @@ import type { ConfigComplexType, ConfigPlainType, ConfigType } from '../../types
 import { toKebabCase } from '../../utils/toKebabCase';
 import { runAssertions } from './assertions';
 import './config.css';
+import { computeProperty } from './computed-properties';
 import { initialConfig } from './initialConfig';
 import { normalizeConfigValue } from './normalizeConfigValue';
-import { runSideEffects } from './side-effects';
 
 const allConfigKeys = [
   // "debug" option should go first to be able to print debug messages from the very beginning
@@ -177,7 +177,7 @@ export class Config extends Block {
 
     for (const key of allConfigKeys) {
       this.sub(sharedConfigKey(key), () => {
-        runSideEffects({
+        computeProperty({
           key,
           setValue: this._setValue.bind(this),
           getValue: this._getValue.bind(this),
