@@ -99,9 +99,19 @@ export const computeProperty = <TKey extends ConfigKey>({ key, setValue, getValu
       const abortController = new AbortController();
       abortControllers.get(computed.key)?.abort();
       abortControllers.set(computed.key, abortController);
-      const result = computed.fn(args as ComputedPropertyArgs<typeof computed.key, typeof computed.deps>, {
-        signal: abortController.signal,
-      });
+
+      let result: ConfigValue<typeof computed.key> | Promise<ConfigValue<typeof computed.key>>;
+      try {
+        result = computed.fn(args as ComputedPropertyArgs<typeof computed.key, typeof computed.deps>, {
+          signal: abortController.signal,
+        });
+      } catch (error) {
+        if (abortControllers.get(computed.key) === abortController) {
+          abortControllers.delete(computed.key);
+        }
+        console.error(`Failed to compute value for "${computed.key}"`, error);
+        return;
+      }
       if (isPromiseLike(result)) {
         result
           .then((resolvedValue) => {
@@ -117,10 +127,11 @@ export const computeProperty = <TKey extends ConfigKey>({ key, setValue, getValu
             console.error(`Failed to compute value for "${computed.key}"`, error);
           })
           .finally(() => {
-            abortControllers.delete(computed.key);
+            if (abortControllers.get(computed.key) === abortController) {
+              abortControllers.delete(computed.key);
+            }
           });
       } else {
-        abortControllers.delete(computed.key);
         setValue(computed.key, result);
       }
     }
