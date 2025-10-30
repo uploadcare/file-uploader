@@ -1,3 +1,12 @@
+## [1.24.1](https://github.com/uploadcare/file-uploader/compare/v1.24.0...v1.24.1) (2025-10-30)
+
+### Bug Fixes
+
+- **file-item:** hide "waiting for social source" hint after successful upload ([#876](https://github.com/uploadcare/file-uploader/issues/876))
+- **social-source:** use specified `targetOrigin` for `postMessage` calls ([#876](https://github.com/uploadcare/file-uploader/issues/876))
+- **social-source:** toggle "Done" button visibility together with selection status block ([#876](https://github.com/uploadcare/file-uploader/issues/876))
+- **config:** run initial configuration side effects after all config keys have been processed ([#875](https://github.com/uploadcare/file-uploader/issues/875))
+
 # [1.24.0](https://github.com/uploadcare/file-uploader/compare/v1.23.1...v1.24.0) (2025-10-28)
 
 ## Highlights
