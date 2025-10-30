@@ -191,11 +191,8 @@ export class ExternalSource extends UploaderBlock {
       couldSelectAll: message.selectedCount < message.total,
       couldDeselectAll: message.selectedCount === message.total,
       selectedList: message.selectedFiles,
+      showDoneBtn: message.total > 0,
     });
-
-    if (!this.$.showDoneBtn && message.isReady) {
-      this.$.showDoneBtn = true;
-    }
   }
 
   private handleIframeLoad(): void {
@@ -267,7 +264,7 @@ export class ExternalSource extends UploaderBlock {
 
     this._messageBridge?.destroy();
 
-    this._messageBridge = new MessageBridge(iframe.contentWindow);
+    this._messageBridge = new MessageBridge(iframe.contentWindow, () => this.cfg.socialBaseUrl);
     this._messageBridge.on('selected-files-change', this.handleSelectedFilesChange.bind(this));
     this._messageBridge.on('toolbar-state-change', this.handleToolbarStateChange.bind(this));
 

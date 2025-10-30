@@ -142,6 +142,7 @@ export class FileItem extends FileItemConfig {
       const errorText = entry.getValue('errors')?.[0]?.message;
       const source = entry.getValue('source');
       const externalUrl = entry.getValue('externalUrl');
+      const isFinished = state === FileItemState.FINISHED;
       const isUploading = state === FileItemState.UPLOADING;
       const isQueuedForUploading = state === FileItemState.QUEUED_UPLOADING;
       const isQueuedForValidation = state === FileItemState.QUEUED_VALIDATION;
@@ -151,7 +152,7 @@ export class FileItem extends FileItemConfig {
 
       if (errorText) {
         hint = '';
-      } else if (externalUrl && source && Object.values(ExternalUploadSource).includes(source)) {
+      } else if (!isFinished && externalUrl && source && Object.values(ExternalUploadSource).includes(source)) {
         hint = this.l10n('waiting-for', { source: this.l10n(`src-type-${source}`) });
       }
 

@@ -15,12 +15,15 @@ const isWhitelistedMessage = (message: unknown): message is InputMessageMap[Inpu
 };
 
 export class MessageBridge {
-  _handlerMap = new Map<InputMessageType, Set<InputMessageHandler<InputMessageType>>>();
+  private _handlerMap = new Map<InputMessageType, Set<InputMessageHandler<InputMessageType>>>();
 
-  _context: Window;
+  private _context: Window;
 
-  constructor(context: Window) {
+  private _getTargetOrigin: () => string;
+
+  constructor(context: Window, getTargetOrigin: () => string) {
     this._context = context;
+    this._getTargetOrigin = getTargetOrigin;
 
     window.addEventListener('message', this._handleMessage);
   }
@@ -52,7 +55,8 @@ export class MessageBridge {
   }
 
   send(message: OutputMessage) {
-    this._context.postMessage(message, '*');
+    const targetOrigin = this._getTargetOrigin();
+    this._context.postMessage(message, targetOrigin);
   }
 
   destroy() {
