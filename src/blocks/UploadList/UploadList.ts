@@ -38,6 +38,12 @@ export class UploadList extends UploaderBlock {
 
       hasFiles: false,
       onAdd: () => {
+        this.emit(EventType.ACTION_EVENT, {
+          metadata: {
+            event: 'add-more',
+            node: this.tagName,
+          },
+        });
         this.api.initFlow(true);
       },
       onUpload: () => {
@@ -50,6 +56,12 @@ export class UploadList extends UploaderBlock {
         this.api.doneFlow();
       },
       onCancel: () => {
+        this.emit(EventType.ACTION_EVENT, {
+          metadata: {
+            event: 'clear-all',
+            node: this.tagName,
+          },
+        });
         this.uploadCollection.clearAll();
       },
     } as any;

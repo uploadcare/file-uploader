@@ -95,8 +95,6 @@ export class TelemetryManager {
         EventType.FILE_UPLOAD_PROGRESS,
         EventType.FILE_UPLOAD_SUCCESS,
         EventType.FILE_UPLOAD_FAILED,
-        EventType.FILE_URL_CHANGED,
-        EventType.GROUP_CREATED,
       ].includes(type)
     ) {
       return true;
@@ -146,14 +144,12 @@ export class TelemetryManager {
    * Method to send telemetry event for Cloud Image Editor.
    */
   sendEventCloudImageEditor(e: MouseEvent, tabId: string, options: Record<string, unknown> = {}): void {
-    this.sendEvent({
-      payload: {
-        metadata: {
-          tabId,
-          node: (e.currentTarget as HTMLElement | null)?.tagName,
-          event: e.type,
-          ...options,
-        },
+    this._block.emit(EventType.ACTION_EVENT, {
+      metadata: {
+        tabId,
+        node: (e.currentTarget as HTMLElement | null)?.tagName,
+        event: e.type,
+        ...options,
       },
     });
   }

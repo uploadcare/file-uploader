@@ -5,6 +5,7 @@ import { deserializeCsv } from '../../utils/comma-separated';
 import { debounce } from '../../utils/debounce';
 import { stringToArray } from '../../utils/stringToArray';
 import { UploadSource } from '../../utils/UploadSource';
+import { EventType } from '../UploadCtxProvider/EventEmitter';
 import './camera-source.css';
 import { CameraSourceEvents, CameraSourceTypes } from './constants';
 
@@ -174,12 +175,28 @@ export class CameraSource extends UploaderBlock {
         this.historyBack();
       },
 
-      onShot: () => this._shot(),
+      onShot: () => {
+        this.emit(EventType.ACTION_EVENT, {
+          metadata: {
+            event: 'shot-camera',
+            node: this.tagName,
+          },
+        });
+        this._shot();
+      },
 
       onRequestPermissions: () => this._capture(),
 
       /** General method for photo and video capture */
-      onStartCamera: () => this._chooseActionWithCamera(),
+      onStartCamera: () => {
+        this.emit(EventType.ACTION_EVENT, {
+          metadata: {
+            event: 'start-camera',
+            node: this.tagName,
+          },
+        });
+        this._chooseActionWithCamera();
+      },
 
       onStartRecording: () => this._startRecording(),
 
@@ -189,9 +206,25 @@ export class CameraSource extends UploaderBlock {
 
       onToggleAudio: () => this._toggleEnableAudio(),
 
-      onRetake: () => this._retake(),
+      onRetake: () => {
+        this.emit(EventType.ACTION_EVENT, {
+          metadata: {
+            event: 'retake-camera',
+            node: this.tagName,
+          },
+        });
+        this._retake();
+      },
 
-      onAccept: () => this._accept(),
+      onAccept: () => {
+        this.emit(EventType.ACTION_EVENT, {
+          metadata: {
+            event: 'accept-camera',
+            node: this.tagName,
+          },
+        });
+        this._accept();
+      },
 
       onClickTab: (event: MouseEvent) => {
         const target = event.currentTarget as HTMLElement | null;

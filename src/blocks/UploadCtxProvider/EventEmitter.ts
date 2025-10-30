@@ -8,6 +8,7 @@ const DEFAULT_DEBOUNCE_TIMEOUT = 20;
 export const InternalEventType = Object.freeze({
   INIT_SOLUTION: 'init-solution',
   CHANGE_CONFIG: 'change-config',
+  ACTION_EVENT: 'action-event',
 } as const);
 
 export const EventType = Object.freeze({
@@ -64,6 +65,9 @@ export type EventPayload = {
   [EventType.GROUP_CREATED]: OutputCollectionState<'success', 'has-group'>;
   [EventType.INIT_SOLUTION]: void;
   [EventType.CHANGE_CONFIG]: void;
+  [EventType.ACTION_EVENT]: {
+    metadata: Record<string, unknown>;
+  };
 };
 
 export class EventEmitter {
