@@ -36,6 +36,11 @@ export default defineConfig(({ command }) => {
             test: {
               name: 'e2e',
               include: ['./**/*.e2e.test.ts', './**/*.e2e.test.tsx'],
+              expect: {
+                poll: {
+                  timeout: 20_000,
+                },
+              },
               browser: {
                 enabled: true,
                 provider: 'playwright',

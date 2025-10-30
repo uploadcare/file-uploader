@@ -2,7 +2,7 @@ import { page } from '@vitest/browser/context';
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import '../types/jsx';
 // biome-ignore lint/correctness/noUnusedImports: Used in JSX
-import { renderer } from './utils/test-renderer';
+import { cleanup, getCtxName, renderer } from './utils/test-renderer';
 
 beforeAll(async () => {
   // biome-ignore lint/suspicious/noTsIgnore: Ignoring TypeScript error for CSS import
@@ -13,7 +13,7 @@ beforeAll(async () => {
 });
 
 beforeEach(() => {
-  const ctxName = `test-${Math.random().toString(36).slice(2)}`;
+  const ctxName = getCtxName();
   page.render(
     <>
       <uc-file-uploader-regular ctx-name={ctxName}></uc-file-uploader-regular>
@@ -50,12 +50,26 @@ describe('Config', () => {
       await expect.poll(() => config.cdnCname).toBe('https://cdn.example.com');
     });
 
-    it('should be calculated if pubkey is changed', async () => {
+    it('should be calculated if pubkey is changed and custom domain is not present', async () => {
       const config = page.getByTestId('uc-config').query()! as Config;
       config.pubkey = 'demopublickey';
       await expect.poll(() => config.cdnCname).toBe('https://1s4oyld5dc.ucarecd.net');
       config.pubkey = 'anotherpublickey';
       await expect.poll(() => config.cdnCname).toBe('https://t8zl5ek5q1.ucarecd.net');
+    });
+
+    it('should be initially loaded from attribute without pubkey defined', async () => {
+      cleanup();
+      const ctxName = getCtxName();
+      page.render(
+        <>
+          <uc-file-uploader-regular ctx-name={ctxName}></uc-file-uploader-regular>
+          <uc-config ctx-name={ctxName} cdn-cname="https://cdn.example.com" testMode></uc-config>
+          <uc-upload-ctx-provider ctx-name={ctxName}></uc-upload-ctx-provider>
+        </>,
+      );
+      const config = page.getByTestId('uc-config').query()! as Config;
+      expect(config.cdnCname).toBe('https://cdn.example.com');
     });
   });
 });

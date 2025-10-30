@@ -5,9 +5,9 @@ import type { ConfigComplexType, ConfigPlainType, ConfigType } from '../../types
 import { toKebabCase } from '../../utils/toKebabCase';
 import { runAssertions } from './assertions';
 import './config.css';
+import { computeProperty } from './computed-properties';
 import { initialConfig } from './initialConfig';
 import { normalizeConfigValue } from './normalizeConfigValue';
-import { runSideEffects } from './side-effects';
 
 const allConfigKeys = [
   // "debug" option should go first to be able to print debug messages from the very beginning
@@ -109,11 +109,6 @@ export class Config extends Block {
     this.debugPrint(`[uc-config] "${key}"`, normalizedValue);
 
     runAssertions(this.cfg);
-    runSideEffects({
-      key,
-      setValue: this._setValue.bind(this),
-      getValue: this._getValue.bind(this),
-    });
   }
 
   private _getValue(key: keyof ConfigType) {
@@ -178,11 +173,15 @@ export class Config extends Block {
           return this._getValue(key);
         },
       });
+    }
 
-      runSideEffects({
-        key,
-        setValue: this._setValue.bind(this),
-        getValue: this._getValue.bind(this),
+    for (const key of allConfigKeys) {
+      this.sub(sharedConfigKey(key), () => {
+        computeProperty({
+          key,
+          setValue: this._setValue.bind(this),
+          getValue: this._getValue.bind(this),
+        });
       });
     }
   }

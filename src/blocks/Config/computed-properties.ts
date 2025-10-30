@@ -12,10 +12,17 @@ type ComputedPropertyArgs<TKey extends ConfigKey, TDeps extends DepKeys<TKey>> =
   [K in TDeps[number]]: ConfigValue<K>;
 };
 
+type ComputedPropertyOptions = {
+  signal: AbortSignal;
+};
+
 type ComputedPropertyDeclaration<TKey extends ConfigKey, TDeps extends DepKeys<TKey>> = {
   key: TKey;
   deps: TDeps;
-  fn: (args: ComputedPropertyArgs<TKey, TDeps>) => ConfigValue<TKey> | Promise<ConfigValue<TKey>>;
+  fn: (
+    args: ComputedPropertyArgs<TKey, TDeps>,
+    options: ComputedPropertyOptions,
+  ) => ConfigValue<TKey> | Promise<ConfigValue<TKey>>;
 };
 
 const defineComputedProperty = <TKey extends ConfigKey, TDeps extends DepKeys<TKey>>(
@@ -67,16 +74,19 @@ const COMPUTED_PROPERTIES = [
     },
   }),
 ];
+
 type ConfigSetter = <TSetValue extends ConfigKey>(key: TSetValue, value: ConfigValue<TSetValue>) => void;
 type ConfigGetter = <TGetValue extends ConfigKey>(key: TGetValue) => ConfigValue<TGetValue>;
 
-type RunSideEffectsOptions<TKey extends ConfigKey> = {
+type ComputePropertyOptions<TKey extends ConfigKey> = {
   key: TKey;
   setValue: ConfigSetter;
   getValue: ConfigGetter;
 };
 
-export const runSideEffects = <TKey extends ConfigKey>({ key, setValue, getValue }: RunSideEffectsOptions<TKey>) => {
+const abortControllers = new Map<ConfigKey, AbortController>();
+
+export const computeProperty = <TKey extends ConfigKey>({ key, setValue, getValue }: ComputePropertyOptions<TKey>) => {
   for (const computed of COMPUTED_PROPERTIES) {
     if (computed.deps.includes(key)) {
       const args: Partial<Record<ConfigKey, ConfigType[ConfigKey]>> = {
@@ -86,19 +96,40 @@ export const runSideEffects = <TKey extends ConfigKey>({ key, setValue, getValue
       for (const dep of computed.deps) {
         args[dep] = getValue(dep);
       }
+      const abortController = new AbortController();
+      abortControllers.get(computed.key)?.abort();
+      abortControllers.set(computed.key, abortController);
 
-      const result = computed.fn(args as ComputedPropertyArgs<typeof computed.key, typeof computed.deps>);
+      let result: ConfigValue<typeof computed.key> | Promise<ConfigValue<typeof computed.key>>;
+      try {
+        result = computed.fn(args as ComputedPropertyArgs<typeof computed.key, typeof computed.deps>, {
+          signal: abortController.signal,
+        });
+      } catch (error) {
+        if (abortControllers.get(computed.key) === abortController) {
+          abortControllers.delete(computed.key);
+        }
+        console.error(`Failed to compute value for "${computed.key}"`, error);
+        return;
+      }
       if (isPromiseLike(result)) {
-        const prevValue = getValue(computed.key);
         result
           .then((resolvedValue) => {
-            const currentValue = getValue(computed.key);
-            if (currentValue === prevValue) {
-              setValue(computed.key, resolvedValue);
+            if (abortController.signal.aborted) {
+              return;
             }
+            setValue(computed.key, resolvedValue);
           })
           .catch((error) => {
+            if (abortController.signal.aborted) {
+              return;
+            }
             console.error(`Failed to compute value for "${computed.key}"`, error);
+          })
+          .finally(() => {
+            if (abortControllers.get(computed.key) === abortController) {
+              abortControllers.delete(computed.key);
+            }
           });
       } else {
         setValue(computed.key, result);
