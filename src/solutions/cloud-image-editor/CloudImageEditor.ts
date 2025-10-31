@@ -21,7 +21,9 @@ export class CloudImageEditor extends CloudImageEditorBlock {
   override initCallback(): void {
     super.initCallback();
 
-    this.emit(InternalEventType.INIT_SOLUTION, undefined);
+    this.telemetryManager.sendEvent({
+      eventType: InternalEventType.INIT_SOLUTION,
+    });
 
     this.a11y?.registerBlock(this);
   }

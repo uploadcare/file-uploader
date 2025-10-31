@@ -74,7 +74,9 @@ export class FileUploaderMinimal extends SolutionBlock {
   override initCallback(): void {
     super.initCallback();
 
-    this.emit(InternalEventType.INIT_SOLUTION, undefined);
+    this.telemetryManager.sendEvent({
+      eventType: InternalEventType.INIT_SOLUTION,
+    });
 
     const uBlock = this.ref.uBlock as UploaderBlock | undefined;
     if (!uBlock) {
