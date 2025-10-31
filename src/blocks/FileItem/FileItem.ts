@@ -13,7 +13,7 @@ import { parseShrink } from '../../utils/parseShrink';
 import { throttle } from '../../utils/throttle';
 import { ExternalUploadSource } from '../../utils/UploadSource';
 import './file-item.css';
-import { EventType } from '../UploadCtxProvider/EventEmitter';
+import { EventType, InternalEventType } from '../UploadCtxProvider/EventEmitter';
 import { FileItemConfig } from './FileItemConfig';
 
 const FileItemState = Object.freeze({
@@ -85,10 +85,13 @@ export class FileItem extends FileItemConfig {
       state: FileItemState.IDLE,
       ariaLabelStatusFile: '',
       onEdit: this._withEntry((entry) => {
-        this.emit(EventType.ACTION_EVENT, {
-          metadata: {
-            event: 'edit-file',
-            node: this.tagName,
+        this.telemetryManager.sendEvent({
+          eventType: InternalEventType.ACTION_EVENT,
+          payload: {
+            metadata: {
+              event: 'edit-file',
+              node: this.tagName,
+            },
           },
         });
         this.$['*currentActivityParams'] = {
@@ -98,12 +101,16 @@ export class FileItem extends FileItemConfig {
         this.$['*currentActivity'] = ActivityBlock.activities.CLOUD_IMG_EDIT;
       }),
       onRemove: () => {
-        this.emit(EventType.ACTION_EVENT, {
-          metadata: {
-            event: 'remove-file',
-            node: this.tagName,
+        this.telemetryManager.sendEvent({
+          eventType: InternalEventType.ACTION_EVENT,
+          payload: {
+            metadata: {
+              event: 'remove-file',
+              node: this.tagName,
+            },
           },
         });
+
         this.uploadCollection.remove(this.$.uid);
       },
       onUpload: () => {

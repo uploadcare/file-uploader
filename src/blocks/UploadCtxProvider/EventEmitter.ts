@@ -33,11 +33,11 @@ export const EventType = Object.freeze({
 
   CHANGE: 'change',
   GROUP_CREATED: 'group-created',
-
-  ...InternalEventType,
 } as const);
 
 export type EventKey = (typeof EventType)[keyof typeof EventType];
+
+export type InternalEventKey = (typeof InternalEventType)[keyof typeof InternalEventType];
 
 export type EventPayload = {
   [EventType.FILE_ADDED]: OutputFileEntry<'idle'>;
@@ -63,11 +63,6 @@ export type EventPayload = {
   [EventType.COMMON_UPLOAD_FAILED]: OutputCollectionState<'failed'>;
   [EventType.CHANGE]: OutputCollectionState;
   [EventType.GROUP_CREATED]: OutputCollectionState<'success', 'has-group'>;
-  [EventType.INIT_SOLUTION]: void;
-  [EventType.CHANGE_CONFIG]: void;
-  [EventType.ACTION_EVENT]: {
-    metadata: Record<string, unknown>;
-  };
 };
 
 export class EventEmitter {

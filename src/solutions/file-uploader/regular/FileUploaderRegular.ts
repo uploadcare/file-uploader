@@ -27,7 +27,9 @@ export class FileUploaderRegular extends SolutionBlock {
   override initCallback(): void {
     super.initCallback();
 
-    this.emit(InternalEventType.INIT_SOLUTION, undefined);
+    this.telemetryManager.sendEvent({
+      eventType: InternalEventType.INIT_SOLUTION,
+    });
 
     this.defineAccessor('headless', (value: unknown) => {
       this.set$({ isHidden: asBoolean(value) });

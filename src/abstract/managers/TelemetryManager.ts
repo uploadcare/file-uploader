@@ -2,16 +2,18 @@ import type { TelemetryRequest } from '@uploadcare/quality-insights';
 import { TelemetryAPIService } from '@uploadcare/quality-insights';
 import { Queue } from '@uploadcare/upload-client';
 import { initialConfig } from '../../blocks/Config/initialConfig';
-import type { EventKey } from '../../blocks/UploadCtxProvider/EventEmitter';
-import { EventType } from '../../blocks/UploadCtxProvider/EventEmitter';
+import type { EventKey, InternalEventKey } from '../../blocks/UploadCtxProvider/EventEmitter';
+import { EventType, InternalEventType } from '../../blocks/UploadCtxProvider/EventEmitter';
 import { PACKAGE_NAME, PACKAGE_VERSION } from '../../env';
 import type { ConfigType } from '../../types/index';
 import type { Block } from '../Block';
 
+type CommonEventType = InternalEventKey | EventKey;
+
 type TelemetryState = TelemetryRequest & { eventTimestamp: number };
 type TelemetryEventBody = Partial<Pick<TelemetryState, 'payload' | 'config'>> & {
   modalId?: string;
-  eventType?: EventKey;
+  eventType?: CommonEventType;
 };
 
 export class TelemetryManager {
@@ -31,7 +33,9 @@ export class TelemetryManager {
     for (const key of Object.keys(this._config) as (keyof ConfigType)[]) {
       this._block.subConfigValue(key, (value) => {
         if (this._initialized && this._config[key] !== value) {
-          this._block.emit(EventType.CHANGE_CONFIG, undefined);
+          this.sendEvent({
+            eventType: InternalEventType.CHANGE_CONFIG,
+          });
         }
 
         this._setConfig(key, value);
@@ -39,8 +43,8 @@ export class TelemetryManager {
     }
   }
 
-  private _init(type: EventKey | undefined): void {
-    if (type === EventType.INIT_SOLUTION && !this._initialized) {
+  private _init(type: CommonEventType | undefined): void {
+    if (type === InternalEventType.INIT_SOLUTION && !this._initialized) {
       this._initialized = true;
     }
   }
@@ -60,7 +64,7 @@ export class TelemetryManager {
     }
 
     const result: Partial<Pick<TelemetryState, 'eventType' | 'payload' | 'config'>> = { ...body };
-    if (body.eventType === EventType.INIT_SOLUTION || body.eventType === EventType.CHANGE_CONFIG) {
+    if (body.eventType === InternalEventType.INIT_SOLUTION || body.eventType === InternalEventType.CHANGE_CONFIG) {
       result.config = this._config as TelemetryState['config'];
     }
 
@@ -83,7 +87,7 @@ export class TelemetryManager {
     } as TelemetryState;
   }
 
-  private _excludedEvents(type: EventKey | undefined): boolean {
+  private _excludedEvents(type: CommonEventType | undefined): boolean {
     if (
       type &&
       [
@@ -144,12 +148,15 @@ export class TelemetryManager {
    * Method to send telemetry event for Cloud Image Editor.
    */
   sendEventCloudImageEditor(e: MouseEvent, tabId: string, options: Record<string, unknown> = {}): void {
-    this._block.emit(EventType.ACTION_EVENT, {
-      metadata: {
-        tabId,
-        node: (e.currentTarget as HTMLElement | null)?.tagName,
-        event: e.type,
-        ...options,
+    this.sendEvent({
+      eventType: InternalEventType.ACTION_EVENT,
+      payload: {
+        metadata: {
+          tabId,
+          node: (e.currentTarget as HTMLElement | null)?.tagName,
+          event: e.type,
+          ...options,
+        },
       },
     });
   }
