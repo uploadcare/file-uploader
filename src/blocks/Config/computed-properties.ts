@@ -2,6 +2,7 @@ import { getPrefixedCdnBaseAsync, isPrefixedCdnBase } from '@uploadcare/cname-pr
 import type { ConfigType } from '../../types/index';
 import { deserializeCsv, serializeCsv } from '../../utils/comma-separated';
 import { isPromiseLike } from '../../utils/isPromiseLike';
+import type { Config } from './Config';
 import { DEFAULT_CDN_CNAME } from './initialConfig';
 
 type ConfigKey = keyof ConfigType;
@@ -82,11 +83,15 @@ type ComputePropertyOptions<TKey extends ConfigKey> = {
   key: TKey;
   setValue: ConfigSetter;
   getValue: ConfigGetter;
+  computationControllers: Map<keyof ConfigType, AbortController>;
 };
 
-const abortControllers = new Map<ConfigKey, AbortController>();
-
-export const computeProperty = <TKey extends ConfigKey>({ key, setValue, getValue }: ComputePropertyOptions<TKey>) => {
+export const computeProperty = <TKey extends ConfigKey>({
+  key,
+  setValue,
+  getValue,
+  computationControllers,
+}: ComputePropertyOptions<TKey>) => {
   for (const computed of COMPUTED_PROPERTIES) {
     if (computed.deps.includes(key)) {
       const args: Partial<Record<ConfigKey, ConfigType[ConfigKey]>> = {
@@ -97,8 +102,9 @@ export const computeProperty = <TKey extends ConfigKey>({ key, setValue, getValu
         args[dep] = getValue(dep);
       }
       const abortController = new AbortController();
-      abortControllers.get(computed.key)?.abort();
-      abortControllers.set(computed.key, abortController);
+
+      computationControllers.get(computed.key)?.abort();
+      computationControllers.set(computed.key, abortController);
 
       let result: ConfigValue<typeof computed.key> | Promise<ConfigValue<typeof computed.key>>;
       try {
@@ -106,8 +112,8 @@ export const computeProperty = <TKey extends ConfigKey>({ key, setValue, getValu
           signal: abortController.signal,
         });
       } catch (error) {
-        if (abortControllers.get(computed.key) === abortController) {
-          abortControllers.delete(computed.key);
+        if (computationControllers.get(computed.key) === abortController) {
+          computationControllers.delete(computed.key);
         }
         console.error(`Failed to compute value for "${computed.key}"`, error);
         return;
@@ -127,8 +133,8 @@ export const computeProperty = <TKey extends ConfigKey>({ key, setValue, getValu
             console.error(`Failed to compute value for "${computed.key}"`, error);
           })
           .finally(() => {
-            if (abortControllers.get(computed.key) === abortController) {
-              abortControllers.delete(computed.key);
+            if (computationControllers.get(computed.key) === abortController) {
+              computationControllers.delete(computed.key);
             }
           });
       } else {
