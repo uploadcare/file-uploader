@@ -134,6 +134,7 @@ export class TelemetryManager {
 
   sendEventError(error: unknown, context = 'unknown'): void {
     this.sendEvent({
+      eventType: InternalEventType.ERROR_EVENT,
       payload: {
         metadata: {
           event: 'error',

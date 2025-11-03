@@ -9,6 +9,7 @@ export const InternalEventType = Object.freeze({
   INIT_SOLUTION: 'init-solution',
   CHANGE_CONFIG: 'change-config',
   ACTION_EVENT: 'action-event',
+  ERROR_EVENT: 'error-event',
 } as const);
 
 export const EventType = Object.freeze({
