@@ -182,6 +182,7 @@ export class CameraSource extends UploaderBlock {
             metadata: {
               event: 'shot-camera',
               node: this.tagName,
+              tabId: this._activeTab,
             },
           },
         });
@@ -198,6 +199,7 @@ export class CameraSource extends UploaderBlock {
             metadata: {
               event: 'start-camera',
               node: this.tagName,
+              tabId: this._activeTab,
             },
           },
         });
@@ -219,6 +221,7 @@ export class CameraSource extends UploaderBlock {
             metadata: {
               event: 'retake-camera',
               node: this.tagName,
+              tabId: this._activeTab,
             },
           },
         });
@@ -232,6 +235,7 @@ export class CameraSource extends UploaderBlock {
             metadata: {
               event: 'accept-camera',
               node: this.tagName,
+              tabId: this._activeTab,
             },
           },
         });
@@ -375,6 +379,17 @@ export class CameraSource extends UploaderBlock {
 
     this._mediaRecorder?.stop();
     this.classList.remove('uc-recording');
+
+    this.telemetryManager.sendEvent({
+      eventType: InternalEventType.ACTION_EVENT,
+      payload: {
+        metadata: {
+          event: 'stop-camera',
+          node: this.tagName,
+          tabId: this._activeTab,
+        },
+      },
+    });
   };
 
   /** This method is used to toggle recording pause/resume */
@@ -606,6 +621,17 @@ export class CameraSource extends UploaderBlock {
         audioToggleMicrophoneHidden: !this.cfg.enableAudioRecording,
       });
     }
+
+    this.telemetryManager.sendEvent({
+      eventType: InternalEventType.ACTION_EVENT,
+      payload: {
+        metadata: {
+          event: 'camera-tab-switch',
+          node: this.tagName,
+          tabId,
+        },
+      },
+    });
 
     this._activeTab = tabId;
   };
