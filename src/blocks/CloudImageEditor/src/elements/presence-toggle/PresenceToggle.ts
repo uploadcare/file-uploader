@@ -1,3 +1,4 @@
+import { html } from '@symbiotejs/symbiote';
 import { Block } from '../../../../../abstract/Block';
 import { applyClassNames } from '../../lib/classNames';
 
@@ -66,4 +67,4 @@ export class PresenceToggle extends Block {
     }, 0);
   }
 }
-PresenceToggle.template = /* HTML */ `<slot></slot> `;
+PresenceToggle.template = html`<slot></slot> `;

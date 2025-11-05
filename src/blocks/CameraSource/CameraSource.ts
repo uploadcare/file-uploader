@@ -1,3 +1,4 @@
+import { html } from '@symbiotejs/symbiote';
 import { ActivityBlock } from '../../abstract/ActivityBlock';
 import { UploaderBlock } from '../../abstract/UploaderBlock';
 import { canUsePermissionsApi } from '../../utils/abilities';
@@ -904,29 +905,29 @@ export class CameraSource extends UploaderBlock {
   }
 }
 
-CameraSource.template = /* HTML */ `
+CameraSource.template = html`
   <uc-activity-header>
     <button
       type="button"
       class="uc-mini-btn"
-      set="onclick: *historyBack"
+      bind="onclick: *historyBack"
       l10n="@title:back"
     >
       <uc-icon name="back"></uc-icon>
     </button>
-    <div set="@hidden: !cameraSelectHidden">
+    <div bind="@hidden: !cameraSelectHidden">
       <uc-icon name="camera"></uc-icon>
       <span l10n="caption-camera"></span>
     </div>
     <uc-select
       class="uc-camera-select"
-      set="$.options: cameraSelectOptions; @hidden: cameraSelectHidden; onchange: onCameraSelectChange"
+      bind="$.options: cameraSelectOptions; @hidden: cameraSelectHidden; onchange: onCameraSelectChange"
     >
     </uc-select>
     <button
       type="button"
       class="uc-mini-btn uc-close-btn"
-      set="onclick: *closeModal"
+      bind="onclick: *closeModal"
       l10n="@title:a11y-activity-header-button-close;@aria-label:a11y-activity-header-button-close"
     >
       <uc-icon name="close"></uc-icon>
@@ -937,26 +938,26 @@ CameraSource.template = /* HTML */ `
       muted
       autoplay
       playsinline
-      set="srcObject: video; style.transform: videoTransformCss; @hidden: videoHidden"
+      bind="srcObject: video; style.transform: videoTransformCss; @hidden: videoHidden"
       ref="video"
     ></video>
-    <div class="uc-message-box" set="@hidden: messageHidden">
+    <div class="uc-message-box" bind="@hidden: messageHidden">
       <span l10n="l10nMessage"></span>
       <button
         type="button"
-        set="onclick: onRequestPermissions; @hidden: requestBtnHidden"
+        bind="onclick: onRequestPermissions; @hidden: requestBtnHidden"
         l10n="camera-permissions-request"
       ></button>
     </div>
   </div>
 
   <div class="uc-controls">
-    <div ref="switcher" class="uc-switcher" set="@hidden:!timerHidden">
+    <div ref="switcher" class="uc-switcher" bind="@hidden:!timerHidden">
       <button
         data-id="photo"
         type="button"
         class="uc-switch uc-mini-btn"
-        set="onclick: onClickTab;  @hidden: tabCameraHidden"
+        bind="onclick: onClickTab;  @hidden: tabCameraHidden"
       >
         <uc-icon name="camera"></uc-icon>
       </button>
@@ -964,7 +965,7 @@ CameraSource.template = /* HTML */ `
         data-id="video"
         type="button"
         class="uc-switch uc-mini-btn"
-        set="onclick: onClickTab; @hidden: tabVideoHidden"
+        bind="onclick: onClickTab; @hidden: tabVideoHidden"
       >
         <uc-icon name="video-camera"></uc-icon>
       </button>
@@ -972,24 +973,24 @@ CameraSource.template = /* HTML */ `
 
     <button
       class="uc-secondary-btn uc-recording-timer"
-      set="@hidden:timerHidden; onclick: onToggleRecording"
+      bind="@hidden:timerHidden; onclick: onToggleRecording"
     >
-      <uc-icon set="@name: currentTimelineIcon"></uc-icon>
+      <uc-icon bind="@name: currentTimelineIcon"></uc-icon>
       <span ref="timer"> 00:00 </span>
       <span ref="line" class="uc-line"></span>
     </button>
 
     <div
       class="uc-camera-actions uc-camera-action"
-      set="@hidden: cameraActionsHidden"
+      bind="@hidden: cameraActionsHidden"
     >
-      <button type="button" class="uc-secondary-btn" set="onclick: onRetake">
+      <button type="button" class="uc-secondary-btn" bind="onclick: onRetake">
         Retake
       </button>
       <button
         type="button"
         class="uc-primary-btn"
-        set="onclick: onAccept"
+        bind="onclick: onAccept"
         data-testid="accept"
       >
         Accept
@@ -1000,22 +1001,22 @@ CameraSource.template = /* HTML */ `
       type="button"
       class="uc-shot-btn uc-camera-action"
       data-testid="shot"
-      set="onclick: onStartCamera; @class: mutableClassButton; @hidden: cameraHidden;"
+      bind="onclick: onStartCamera; @class: mutableClassButton; @hidden: cameraHidden;"
     >
-      <uc-icon set="@name: currentIcon"></uc-icon>
+      <uc-icon bind="@name: currentIcon"></uc-icon>
     </button>
 
     <div class="uc-select">
       <button
         class="uc-mini-btn uc-btn-microphone"
-        set="onclick: onToggleAudio; @hidden: audioToggleMicrophoneHidden;"
+        bind="onclick: onToggleAudio; @hidden: audioToggleMicrophoneHidden;"
       >
-        <uc-icon set="@name:toggleMicrophoneIcon"></uc-icon>
+        <uc-icon bind="@name:toggleMicrophoneIcon"></uc-icon>
       </button>
 
       <uc-select
         class="uc-audio-select"
-        set="$.options: audioSelectOptions; onchange: onAudioSelectChange; @hidden: audioSelectHidden; @disabled: audioSelectDisabled"
+        bind="$.options: audioSelectOptions; onchange: onAudioSelectChange; @hidden: audioSelectHidden; @disabled: audioSelectDisabled"
       >
       </uc-select>
     </div>

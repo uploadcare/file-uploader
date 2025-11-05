@@ -1,3 +1,4 @@
+import { html } from '@symbiotejs/symbiote';
 import { Block } from '../../abstract/Block';
 import { browserFeatures } from '../../utils/browser-info';
 import { deserializeCsv } from '../../utils/comma-separated';
@@ -9,7 +10,7 @@ export class SourceList extends Block {
 
     this.subConfigValue('sourceList', (val: string) => {
       const list = stringToArray(val);
-      let html = '';
+      let htmlContent = '';
 
       list.forEach((srcName) => {
         if (srcName === 'instagram') {
@@ -26,24 +27,24 @@ export class SourceList extends Block {
             const cameraModes = deserializeCsv(cameraModesValue);
 
             cameraModes.forEach((mode) => {
-              html += /* HTML */ `<uc-source-btn role="listitem" type="mobile-${mode}-camera"></uc-source-btn>`;
+              htmlContent += html`<uc-source-btn role="listitem" type="mobile-${mode}-camera"></uc-source-btn>`;
             });
 
             if (cameraModes.length === 0) {
-              html += /* HTML */ `<uc-source-btn role="listitem" type="mobile-photo-camera"></uc-source-btn>`;
+              htmlContent += html`<uc-source-btn role="listitem" type="mobile-photo-camera"></uc-source-btn>`;
             }
           });
 
           return;
         }
 
-        html += /* HTML */ `<uc-source-btn role="listitem" type="${srcName}"></uc-source-btn>`;
+        htmlContent += html`<uc-source-btn role="listitem" type="${srcName}"></uc-source-btn>`;
       });
 
       if (this.cfg.sourceListWrap) {
-        this.innerHTML = html;
+        this.innerHTML = htmlContent;
       } else {
-        this.outerHTML = html;
+        this.outerHTML = htmlContent;
       }
     });
   }

@@ -1,3 +1,4 @@
+import { html } from '@symbiotejs/symbiote';
 import type { ActivityType } from '../../abstract/ActivityBlock';
 import { ActivityBlock } from '../../abstract/ActivityBlock';
 import { UploaderBlock } from '../../abstract/UploaderBlock';
@@ -53,9 +54,9 @@ export class UrlSource extends UploaderBlock {
   }
 }
 
-UrlSource.template = /* HTML */ `
+UrlSource.template = html`
   <uc-activity-header>
-    <button type="button" class="uc-mini-btn" set="onclick: *historyBack" l10n="@title:back;@aria-label:back">
+    <button type="button" class="uc-mini-btn" bind="onclick: *historyBack" l10n="@title:back;@aria-label:back">
       <uc-icon name="back"></uc-icon>
     </button>
     <div>
@@ -65,7 +66,7 @@ UrlSource.template = /* HTML */ `
     <button
       type="button"
       class="uc-mini-btn uc-close-btn"
-      set="onclick: *closeModal"
+      bind="onclick: *closeModal"
       l10n="@title:a11y-activity-header-button-close;@aria-label:a11y-activity-header-button-close"
     >
       <uc-icon name="close"></uc-icon>
@@ -73,12 +74,12 @@ UrlSource.template = /* HTML */ `
   </uc-activity-header>
   <form class="uc-content">
     <label>
-      <input placeholder="https://" class="uc-url-input" type="text" ref="input" set="oninput: onInput" />
+      <input placeholder="https://" class="uc-url-input" type="text" ref="input" bind="oninput: onInput" />
     </label>
     <button
       type="submit"
       class="uc-url-upload-btn uc-primary-btn"
-      set="onclick: onUpload; @disabled: importDisabled"
+      bind="onclick: onUpload; @disabled: importDisabled"
       l10n="upload-url"
     ></button>
   </form>

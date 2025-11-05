@@ -1,3 +1,4 @@
+import { html } from '@symbiotejs/symbiote';
 import { Block } from '../../abstract/Block';
 import './copyright.css';
 
@@ -10,7 +11,7 @@ export class Copyright extends Block {
     });
   }
 
-  static override template = /* HTML */ `
+  static override template = html`
     <a
       href="https://uploadcare.com/?utm_source=copyright&utm_medium=referral&utm_campaign=v4"
       target="_blank noopener"

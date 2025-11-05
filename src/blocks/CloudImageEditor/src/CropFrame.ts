@@ -1,3 +1,4 @@
+import { html } from '@symbiotejs/symbiote';
 import { Block } from '../../../abstract/Block';
 import {
   clamp,
@@ -548,4 +549,4 @@ export class CropFrame extends Block {
   }
 }
 
-CropFrame.template = /* HTML */ ` <svg class="uc-svg" ref="svg-el" xmlns="http://www.w3.org/2000/svg"></svg> `;
+CropFrame.template = html` <svg class="uc-svg" ref="svg-el" xmlns="http://www.w3.org/2000/svg"></svg> `;

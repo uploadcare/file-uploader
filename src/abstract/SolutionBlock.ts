@@ -1,3 +1,4 @@
+import { html } from '@symbiotejs/symbiote';
 import svgIconsSprite from '../blocks/themes/uc-basic/svg-sprite';
 import { Block } from './Block';
 import { solutionBlockCtx } from './CTX';
@@ -14,7 +15,7 @@ export class SolutionBlock extends Block {
   }
 
   static override set template(value: string) {
-    this._template = /* html */ `${svgIconsSprite + value}<slot></slot>`;
+    this._template = html`${svgIconsSprite + value}<slot></slot>`;
   }
 
   static override get template(): string {

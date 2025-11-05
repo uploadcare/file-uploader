@@ -1,3 +1,4 @@
+import { html } from '@symbiotejs/symbiote';
 import { shrinkFile } from '@uploadcare/image-shrink';
 import {
   CancelError,
@@ -139,7 +140,7 @@ export class FileItem extends FileItemConfig {
 
   private _updateHintAndProgress = this._withEntry(
     throttle((entry: UploadEntryTypedData, state?: FileItemStateValue) => {
-      const errorText = entry.getValue('errors')?.[0]?.message;
+      const errorText = entry.getValue('errors')?.[0]?.message ?? '';
       const source = entry.getValue('source');
       const externalUrl = entry.getValue('externalUrl');
       const isFinished = state === FileItemState.FINISHED;
@@ -459,21 +460,21 @@ export class FileItem extends FileItemConfig {
     }
   });
 
-  static override template = /* HTML */ `
-  <div class="uc-inner" set="@finished: isFinished; @uploading: isUploading; @failed: isFailed; @focused: isFocused">
-    <uc-thumb set="uid:uid;badgeIcon:badgeIcon"></uc-thumb>
+  static override template = html`
+  <div class="uc-inner" bind="@finished: isFinished; @uploading: isUploading; @failed: isFailed; @focused: isFocused">
+    <uc-thumb bind="uid:uid;badgeIcon:badgeIcon"></uc-thumb>
 
-    <div aria-atomic="true" aria-live="polite" class="uc-file-name-wrapper" set="@aria-label:ariaLabelStatusFile;">
-      <span class="uc-file-name" set="@hidden: !showFileNames">{{itemName}}</span>
-      <span class="uc-file-error" set="@hidden: !errorText;">{{errorText}}</span>
-      <span class="uc-file-hint" set="@hidden: !hint">{{hint}}</span>
+    <div aria-atomic="true" aria-live="polite" class="uc-file-name-wrapper" bind="@aria-label:ariaLabelStatusFile;">
+      <span class="uc-file-name" bind="@hidden: !showFileNames">{{itemName}}</span>
+      <span class="uc-file-error" bind="@hidden: !errorText;">{{errorText}}</span>
+      <span class="uc-file-hint" bind="@hidden: !hint">{{hint}}</span>
     </div>
     <div class="uc-file-actions">
       <button
         type="button"
         l10n="@title:file-item-edit-button;@aria-label:file-item-edit-button"
         class="uc-edit-btn uc-mini-btn"
-        set="onclick: onEdit; @hidden: !isEditable"
+        bind="onclick: onEdit; @hidden: !isEditable"
       >
         <uc-icon name="edit-file"></uc-icon>
       </button>
@@ -481,17 +482,17 @@ export class FileItem extends FileItemConfig {
         type="button"
         l10n="@title:file-item-remove-button;@aria-label:file-item-remove-button"
         class="uc-remove-btn uc-mini-btn"
-        set="onclick: onRemove;"
+        bind="onclick: onRemove;"
       >
         <uc-icon name="remove-file"></uc-icon>
       </button>
-      <button type="button" class="uc-upload-btn uc-mini-btn" set="onclick: onUpload;">
+      <button type="button" class="uc-upload-btn uc-mini-btn" bind="onclick: onUpload;">
         <uc-icon name="upload"></uc-icon>
       </button>
     </div>
     <uc-progress-bar
       class="uc-progress-bar"
-      set="value: progressValue; visible: progressVisible; @hasFileName: showFileNames;"
+      bind="value: progressValue; visible: progressVisible; @hasFileName: showFileNames;"
     >
     </uc-progress-bar>
   </div>
