@@ -1,3 +1,12 @@
+## [1.24.2](https://github.com/uploadcare/file-uploader/compare/v1.24.1...v1.24.2) (2025-11-05)
+
+
+### Bug Fixes
+
+* **config:** moved abortControllers to block scope to prevent cross-cancellation ([#880](https://github.com/uploadcare/file-uploader/issues/880)) ([37cb841](https://github.com/uploadcare/file-uploader/commit/37cb8416929958b616b0643135eccaab83d4d9ad))
+
+
+
 ## [1.24.1](https://github.com/uploadcare/file-uploader/compare/v1.24.0...v1.24.1) (2025-10-30)
 
 ### Bug Fixes
