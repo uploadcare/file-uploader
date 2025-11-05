@@ -49,7 +49,7 @@ export class PresenceToggle extends Block {
       [this._visibleStyle]: this._visible,
       [this._hiddenStyle]: !this._visible,
     });
-    this.setAttribute('aria-hidden', this._visible ? 'false' : 'true');
+    this.toggleAttribute('inert', !this._visible);
   }
 
   override initCallback(): void {
