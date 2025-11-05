@@ -3,7 +3,7 @@ import { ActivityBlock } from '../../abstract/ActivityBlock';
 import { UploaderBlock } from '../../abstract/UploaderBlock';
 import type { OutputCollectionErrorType, OutputError } from '../../types';
 import { throttle } from '../../utils/throttle';
-import { EventType } from '../UploadCtxProvider/EventEmitter';
+import { EventType, InternalEventType } from '../UploadCtxProvider/EventEmitter';
 import './upload-list.css';
 
 export type FilesViewMode = 'grid' | 'list';
@@ -38,6 +38,16 @@ export class UploadList extends UploaderBlock {
 
       hasFiles: false,
       onAdd: () => {
+        this.telemetryManager.sendEvent({
+          eventType: InternalEventType.ACTION_EVENT,
+          payload: {
+            metadata: {
+              event: 'add-more',
+              node: this.tagName,
+            },
+          },
+        });
+
         this.api.initFlow(true);
       },
       onUpload: () => {
@@ -50,6 +60,15 @@ export class UploadList extends UploaderBlock {
         this.api.doneFlow();
       },
       onCancel: () => {
+        this.telemetryManager.sendEvent({
+          eventType: InternalEventType.ACTION_EVENT,
+          payload: {
+            metadata: {
+              event: 'clear-all',
+              node: this.tagName,
+            },
+          },
+        });
         this.uploadCollection.clearAll();
       },
     } as any;

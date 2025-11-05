@@ -13,6 +13,7 @@ import { parseShrink } from '../../utils/parseShrink';
 import { throttle } from '../../utils/throttle';
 import { ExternalUploadSource } from '../../utils/UploadSource';
 import './file-item.css';
+import { EventType, InternalEventType } from '../UploadCtxProvider/EventEmitter';
 import { FileItemConfig } from './FileItemConfig';
 
 const FileItemState = Object.freeze({
@@ -85,6 +86,7 @@ export class FileItem extends FileItemConfig {
       ariaLabelStatusFile: '',
       onEdit: this._withEntry((entry) => {
         this.telemetryManager.sendEvent({
+          eventType: InternalEventType.ACTION_EVENT,
           payload: {
             metadata: {
               event: 'edit-file',
@@ -100,6 +102,7 @@ export class FileItem extends FileItemConfig {
       }),
       onRemove: () => {
         this.telemetryManager.sendEvent({
+          eventType: InternalEventType.ACTION_EVENT,
           payload: {
             metadata: {
               event: 'remove-file',
@@ -107,6 +110,7 @@ export class FileItem extends FileItemConfig {
             },
           },
         });
+
         this.uploadCollection.remove(this.$.uid);
       },
       onUpload: () => {

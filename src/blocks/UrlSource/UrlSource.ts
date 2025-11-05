@@ -2,6 +2,7 @@ import type { ActivityType } from '../../abstract/ActivityBlock';
 import { ActivityBlock } from '../../abstract/ActivityBlock';
 import { UploaderBlock } from '../../abstract/UploaderBlock';
 import { UploadSource } from '../../utils/UploadSource';
+import { EventType, InternalEventType } from '../UploadCtxProvider/EventEmitter';
 import './url-source.css';
 
 type BaseInitState = InstanceType<typeof UploaderBlock>['init$'];
@@ -25,6 +26,15 @@ export class UrlSource extends UploaderBlock {
       importDisabled: true,
       onUpload: (event: Event) => {
         event.preventDefault();
+        this.telemetryManager.sendEvent({
+          eventType: InternalEventType.ACTION_EVENT,
+          payload: {
+            metadata: {
+              event: 'upload-from-url',
+              node: this.tagName,
+            },
+          },
+        });
 
         const url = this.ref.input['value'] as string;
         this.api.addFileFromUrl(url, { source: UploadSource.URL });

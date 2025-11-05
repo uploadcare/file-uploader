@@ -5,6 +5,7 @@ import { deserializeCsv } from '../../utils/comma-separated';
 import { debounce } from '../../utils/debounce';
 import { stringToArray } from '../../utils/stringToArray';
 import { UploadSource } from '../../utils/UploadSource';
+import { InternalEventType } from '../UploadCtxProvider/EventEmitter';
 import './camera-source.css';
 import { CameraSourceEvents, CameraSourceTypes } from './constants';
 
@@ -174,12 +175,36 @@ export class CameraSource extends UploaderBlock {
         this.historyBack();
       },
 
-      onShot: () => this._shot(),
+      onShot: () => {
+        this.telemetryManager.sendEvent({
+          eventType: InternalEventType.ACTION_EVENT,
+          payload: {
+            metadata: {
+              event: 'shot-camera',
+              node: this.tagName,
+              tabId: this._activeTab,
+            },
+          },
+        });
+        this._shot();
+      },
 
       onRequestPermissions: () => this._capture(),
 
       /** General method for photo and video capture */
-      onStartCamera: () => this._chooseActionWithCamera(),
+      onStartCamera: () => {
+        this.telemetryManager.sendEvent({
+          eventType: InternalEventType.ACTION_EVENT,
+          payload: {
+            metadata: {
+              event: 'start-camera',
+              node: this.tagName,
+              tabId: this._activeTab,
+            },
+          },
+        });
+        this._chooseActionWithCamera();
+      },
 
       onStartRecording: () => this._startRecording(),
 
@@ -189,9 +214,33 @@ export class CameraSource extends UploaderBlock {
 
       onToggleAudio: () => this._toggleEnableAudio(),
 
-      onRetake: () => this._retake(),
+      onRetake: () => {
+        this.telemetryManager.sendEvent({
+          eventType: InternalEventType.ACTION_EVENT,
+          payload: {
+            metadata: {
+              event: 'retake-camera',
+              node: this.tagName,
+              tabId: this._activeTab,
+            },
+          },
+        });
+        this._retake();
+      },
 
-      onAccept: () => this._accept(),
+      onAccept: () => {
+        this.telemetryManager.sendEvent({
+          eventType: InternalEventType.ACTION_EVENT,
+          payload: {
+            metadata: {
+              event: 'accept-camera',
+              node: this.tagName,
+              tabId: this._activeTab,
+            },
+          },
+        });
+        this._accept();
+      },
 
       onClickTab: (event: MouseEvent) => {
         const target = event.currentTarget as HTMLElement | null;
@@ -330,6 +379,17 @@ export class CameraSource extends UploaderBlock {
 
     this._mediaRecorder?.stop();
     this.classList.remove('uc-recording');
+
+    this.telemetryManager.sendEvent({
+      eventType: InternalEventType.ACTION_EVENT,
+      payload: {
+        metadata: {
+          event: 'stop-camera',
+          node: this.tagName,
+          tabId: this._activeTab,
+        },
+      },
+    });
   };
 
   /** This method is used to toggle recording pause/resume */
@@ -561,6 +621,17 @@ export class CameraSource extends UploaderBlock {
         audioToggleMicrophoneHidden: !this.cfg.enableAudioRecording,
       });
     }
+
+    this.telemetryManager.sendEvent({
+      eventType: InternalEventType.ACTION_EVENT,
+      payload: {
+        metadata: {
+          event: 'camera-tab-switch',
+          node: this.tagName,
+          tabId,
+        },
+      },
+    });
 
     this._activeTab = tabId;
   };
