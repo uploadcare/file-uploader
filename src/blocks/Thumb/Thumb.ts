@@ -1,3 +1,4 @@
+import { html } from '@symbiotejs/symbiote';
 import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../utils/cdn-utils';
 import { debounce } from '../../utils/debounce';
 import { preloadImage } from '../../utils/preloadImage';
@@ -213,10 +214,10 @@ export class Thumb extends FileItemConfig {
   }
 }
 
-Thumb.template = /* html */ `
-  <div class="uc-thumb" set="style.backgroundImage: thumbUrl">
+Thumb.template = html`
+  <div class="uc-thumb" bind="style.backgroundImage: thumbUrl">
     <div class="uc-badge">
-      <uc-icon set="@name: badgeIcon"></uc-icon>
+      <uc-icon bind="@name: badgeIcon"></uc-icon>
     </div>
   </div>
 `;

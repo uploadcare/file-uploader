@@ -1,3 +1,4 @@
+import { html } from '@symbiotejs/symbiote';
 import type { ActivityType } from '../../abstract/ActivityBlock';
 import { ActivityBlock } from '../../abstract/ActivityBlock';
 import './start-from.css';
@@ -12,4 +13,4 @@ export class StartFrom extends ActivityBlock {
   }
 }
 
-StartFrom.template = /* HTML */ ` <div class="uc-content"><slot></slot></div> `;
+StartFrom.template = html` <div class="uc-content"><slot></slot></div> `;

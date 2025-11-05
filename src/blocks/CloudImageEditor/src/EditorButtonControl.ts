@@ -1,3 +1,4 @@
+import { html } from '@symbiotejs/symbiote';
 import { Block } from '../../../abstract/Block';
 import { classNames } from './lib/classNames.js';
 
@@ -48,9 +49,9 @@ export class EditorButtonControl extends Block {
   }
 }
 
-EditorButtonControl.template = /* HTML */ `
-  <button role="option" type="button" set="@aria-label:title-prop;" l10n="@title:title-prop;">
-    <uc-icon ref="icon-el" set="@name: icon;"></uc-icon>
+EditorButtonControl.template = html`
+  <button role="option" type="button" bind="@aria-label:title-prop;" l10n="@title:title-prop;">
+    <uc-icon ref="icon-el" bind="@name: icon;"></uc-icon>
     <div class="uc-title" ref="title-el">{{title}}</div>
   </button>
 `;

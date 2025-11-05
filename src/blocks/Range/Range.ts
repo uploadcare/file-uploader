@@ -1,4 +1,4 @@
-import { BaseComponent } from '@symbiotejs/symbiote';
+import { html, Symbiote } from '@symbiotejs/symbiote';
 
 interface RangeInitState {
   cssLeft: string;
@@ -7,7 +7,7 @@ interface RangeInitState {
   onChange: (e: Event) => void;
 }
 
-export class Range extends BaseComponent<RangeInitState> {
+export class Range extends Symbiote<RangeInitState> {
   private _range!: HTMLInputElement;
 
   constructor() {
@@ -45,12 +45,12 @@ export class Range extends BaseComponent<RangeInitState> {
   }
 }
 
-Range.template = /* HTML */ `
+Range.template = html`
   <div class="uc-track-wrapper">
     <div class="uc-track"></div>
-    <div class="uc-bar" set -style.width="cssLeft" -@active="barActive"></div>
-    <div class="uc-slider" set -style.left="cssLeft"></div>
+    <div class="uc-bar" bind -style.width="cssLeft" -@active="barActive"></div>
+    <div class="uc-slider" bind -style.left="cssLeft"></div>
   </div>
 
-  <input type="range" ref="range" set -@value="value" -oninput="onChange" />
+  <input type="range" ref="range" bind -@value="value" -oninput="onChange" />
 `;

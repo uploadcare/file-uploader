@@ -1,3 +1,4 @@
+import { html } from '@symbiotejs/symbiote';
 import { createCdnUrl, createCdnUrlModifiers } from '../../../utils/cdn-utils.js';
 import { preloadImage } from '../../../utils/preloadImage.js';
 import { EditorButtonControl } from './EditorButtonControl.js';
@@ -22,7 +23,7 @@ export class EditorFilterControl extends EditorButtonControl {
       title: '',
       icon: '',
       isOriginal: false,
-      iconSize: '20',
+      iconSize: 20,
       'on.click': null,
     };
   }
@@ -127,7 +128,7 @@ export class EditorFilterControl extends EditorButtonControl {
     }
 
     this.sub('*currentFilter', (currentFilter: string) => {
-      this.$.active = currentFilter && currentFilter === this._filter;
+      this.$.active = !!(currentFilter && currentFilter === this._filter);
     });
 
     this.sub('isOriginal', (isOriginal: boolean) => {
@@ -168,9 +169,9 @@ export class EditorFilterControl extends EditorButtonControl {
   }
 }
 
-EditorFilterControl.template = /* HTML */ `
+EditorFilterControl.template = html`
   <button type="button" role="option" l10n="@title:title-prop;@aria-label:title-prop">
     <div class="uc-preview" ref="preview-el"></div>
-    <uc-icon ref="icon-el" set="@name: icon; @size: iconSize;"></uc-icon>
+    <uc-icon ref="icon-el" bind="@name: icon; @size: iconSize;"></uc-icon>
   </button>
 `;

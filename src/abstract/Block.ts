@@ -1,4 +1,5 @@
-import { BaseComponent, Data } from '@symbiotejs/symbiote';
+import { DICT, PubSub, Symbiote } from '@symbiotejs/symbiote';
+import { slotProcessor } from '@symbiotejs/symbiote/core/slotProcessor.js';
 import { initialConfig } from '../blocks/Config/initialConfig';
 import { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter';
 import type { ConfigType } from '../types';
@@ -9,6 +10,7 @@ import { applyTemplateData, getPluralObjects } from '../utils/template-utils';
 import { WindowHeightTracker } from '../utils/WindowHeightTracker';
 import { waitForAttribute } from '../utils/waitForAttribute';
 import type { ActivityType } from './ActivityBlock';
+import { bindCompatibilityFallbackProcessor } from './bindCompatibilityFallbackProcessor';
 import { blockCtx } from './CTX';
 import { l10nProcessor } from './l10nProcessor';
 import { A11y } from './managers/a11y';
@@ -19,8 +21,9 @@ import { sharedConfigKey } from './sharedConfigKey';
 import { testModeProcessor } from './testModeProcessor';
 
 const TAG_PREFIX = 'uc-';
+const CTX_NAME_FALLBACK_ATTR = 'ctx-name';
 
-export class Block extends BaseComponent<any> {
+export class Block extends Symbiote<any> {
   private __cfgProxy?: any;
   protected l10nProcessorSubs: Map<string, Set<{ remove: () => void }>> = new Map();
   static StateConsumerScope: string | null = null;
@@ -61,12 +64,12 @@ export class Block extends BaseComponent<any> {
 
   constructor() {
     super();
+    this.addTemplateProcessor(bindCompatibilityFallbackProcessor);
+    this.addTemplateProcessor(l10nProcessor as (fr: DocumentFragment | Symbiote<any>, fnCtx: Symbiote<any>) => void);
     this.addTemplateProcessor(
-      l10nProcessor as (fr: DocumentFragment | BaseComponent<any>, fnCtx: BaseComponent<any>) => void,
+      testModeProcessor as (fr: DocumentFragment | Symbiote<any>, fnCtx: Symbiote<any>) => void,
     );
-    this.addTemplateProcessor(
-      testModeProcessor as (fr: DocumentFragment | BaseComponent<any>, fnCtx: BaseComponent<any>) => void,
-    );
+    this.addTemplateProcessor(slotProcessor as (fr: DocumentFragment | Symbiote<any>, fnCtx: Symbiote<any>) => void);
   }
 
   emit(
@@ -117,17 +120,29 @@ export class Block extends BaseComponent<any> {
       this.processInnerHtml = true;
     }
     if (this.requireCtxName) {
-      waitForAttribute({
-        element: this as unknown as HTMLElement,
-        attribute: 'ctx-name',
-        onSuccess: () => {
-          // async wait for ctx-name attribute to be set, needed for Angular because it sets attributes after mount
+      Promise.race([
+        waitForAttribute({
+          element: this,
+          attribute: DICT.CTX_NAME_ATTR,
+        }),
+        waitForAttribute({
+          element: this,
+          attribute: CTX_NAME_FALLBACK_ATTR,
+        }),
+      ]).then((result) => {
+        if (result.success) {
+          if (result.attribute === CTX_NAME_FALLBACK_ATTR) {
+            const ctxName = result.value;
+            this.style.setProperty(DICT.CSS_CTX_PROP, `'${ctxName}'`);
+          }
+          // async wait for ctx attribute to be set, needed for Angular because it sets attributes after mount
           // TODO: should be moved to the symbiote core
           super.connectedCallback();
-        },
-        onTimeout: () => {
-          console.error('Attribute `ctx-name` is required and it is not set.');
-        },
+        } else {
+          console.error(
+            `Attribute "${DICT.CTX_NAME_ATTR}" or "${CTX_NAME_FALLBACK_ATTR}" is required and it is not set.`,
+          );
+        }
       });
     } else {
       super.connectedCallback();
@@ -228,7 +243,7 @@ export class Block extends BaseComponent<any> {
 
     // Destroy local context
     // TODO: this should be done inside symbiote
-    Data.deleteCtx(this);
+    PubSub.deleteCtx(this.localCtx.uid);
 
     if (blocksRegistry?.size === 0) {
       setTimeout(() => {
@@ -242,7 +257,7 @@ export class Block extends BaseComponent<any> {
    * Called when the last block is removed from the context. Note that inheritors must run their callback before that.
    */
   protected destroyCtxCallback(): void {
-    Data.deleteCtx(this.ctxName);
+    PubSub.deleteCtx(this.ctxName);
 
     this.localeManager?.destroy();
 
@@ -339,4 +354,4 @@ export class Block extends BaseComponent<any> {
   }
 }
 
-export { BaseComponent };
+export { Symbiote };

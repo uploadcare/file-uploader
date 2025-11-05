@@ -1,3 +1,4 @@
+import { html } from '@symbiotejs/symbiote';
 import type { ActivityType } from '../../abstract/ActivityBlock';
 import { ActivityBlock } from '../../abstract/ActivityBlock';
 import { UploaderBlock } from '../../abstract/UploaderBlock';
@@ -158,9 +159,9 @@ export class SourceBtn extends UploaderBlock {
   }
 }
 
-SourceBtn.template = /* HTML */ `
+SourceBtn.template = html`
   <button type="button">
-    <uc-icon set="@name: iconName"></uc-icon>
+    <uc-icon bind="@name: iconName"></uc-icon>
     <div class="uc-txt" l10n="src-type"></div>
   </button>
 `;

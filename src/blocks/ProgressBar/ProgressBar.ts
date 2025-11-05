@@ -1,4 +1,5 @@
 import './progress-bar.css';
+import { html } from '@symbiotejs/symbiote';
 import { Block } from '../../abstract/Block';
 
 export class ProgressBar extends Block {
@@ -44,7 +45,7 @@ export class ProgressBar extends Block {
   }
 }
 
-ProgressBar.template = /* HTML */ `
+ProgressBar.template = html`
   <div ref="fakeProgressLine" class="uc-fake-progress"></div>
   <div ref="realProgressLine" class="uc-progress"></div>
 `;

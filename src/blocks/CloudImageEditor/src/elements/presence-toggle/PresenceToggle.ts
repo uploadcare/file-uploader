@@ -1,3 +1,4 @@
+import { html } from '@symbiotejs/symbiote';
 import { Block } from '../../../../../abstract/Block';
 import { applyClassNames } from '../../lib/classNames';
 
@@ -48,7 +49,7 @@ export class PresenceToggle extends Block {
       [this._visibleStyle]: this._visible,
       [this._hiddenStyle]: !this._visible,
     });
-    this.setAttribute('aria-hidden', this._visible ? 'false' : 'true');
+    this.toggleAttribute('inert', !this._visible);
   }
 
   override initCallback(): void {
@@ -66,4 +67,4 @@ export class PresenceToggle extends Block {
     }, 0);
   }
 }
-PresenceToggle.template = /* HTML */ `<slot></slot> `;
+PresenceToggle.template = html`<slot></slot> `;

@@ -1,4 +1,4 @@
-import { Data, UID } from '@symbiotejs/symbiote';
+import { PubSub, UID } from '@symbiotejs/symbiote';
 
 const MSG_NAME = '[Typed State] Wrong property name: ';
 const MSG_TYPE = '[Typed State] Wrong property type: ';
@@ -29,7 +29,7 @@ export class TypedData<T extends TypedSchema> {
   private __typedSchema: T;
   private __ctxId: string;
   private __schema: ExtractDataFromSchema<T>;
-  private __data: Data;
+  private __data: PubSub<ExtractDataFromSchema<T>>;
 
   constructor(typedSchema: T, ctxName?: string) {
     this.__typedSchema = typedSchema;
@@ -44,7 +44,7 @@ export class TypedData<T extends TypedSchema> {
       },
       {} as ExtractDataFromSchema<T>,
     );
-    this.__data = Data.registerCtx(this.__schema, this.__ctxId);
+    this.__data = PubSub.registerCtx(this.__schema, this.__ctxId);
   }
 
   get uid(): string {
@@ -83,10 +83,10 @@ export class TypedData<T extends TypedSchema> {
   }
 
   subscribe<K extends ExtractKeysFromSchema<T>>(prop: K, handler: (newVal: ExtractDataFromSchema<T>[K]) => void) {
-    return this.__data.sub(prop, handler);
+    return this.__data.sub(prop, handler as (val: unknown) => void);
   }
 
   remove(): void {
-    Data.deleteCtx(this.__ctxId);
+    PubSub.deleteCtx(this.__ctxId);
   }
 }

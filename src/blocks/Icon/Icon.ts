@@ -1,4 +1,5 @@
 import './icon.css';
+import { html } from '@symbiotejs/symbiote';
 import { Block } from '../../abstract/Block';
 import type { IconHrefResolver } from '../../types/index';
 
@@ -33,9 +34,9 @@ export class Icon extends Block {
   }
 }
 
-Icon.template = /* HTML */ `
+Icon.template = html`
   <svg ref="svg" xmlns="http://www.w3.org/2000/svg">
-    <use set="@href: href;"></use>
+    <use bind="@href: href;"></use>
   </svg>
 `;
 
