@@ -63,6 +63,7 @@ export class Config extends Block {
       ...Object.fromEntries(
         Object.entries(initialConfig).map(([key, value]) => [sharedConfigKey(key as keyof ConfigType), value]),
       ),
+      computationControllers: new Map<keyof ConfigType, AbortController>(),
     } as unknown as Block['init$'] & ConfigType;
   }
 
@@ -181,6 +182,7 @@ export class Config extends Block {
           key,
           setValue: this._setValue.bind(this),
           getValue: this._getValue.bind(this),
+          computationControllers: this.computationControllers,
         });
       });
     }
@@ -199,6 +201,10 @@ export class Config extends Block {
     if (key) {
       anyThis[key] = newVal;
     }
+  }
+
+  get computationControllers() {
+    return this.$.computationControllers;
   }
 }
 
