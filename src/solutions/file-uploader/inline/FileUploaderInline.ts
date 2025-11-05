@@ -1,3 +1,4 @@
+import { html } from '@symbiotejs/symbiote';
 import './index.css';
 
 import { ActivityBlock } from '../../../abstract/ActivityBlock';
@@ -83,7 +84,7 @@ export class FileUploaderInline extends SolutionBlock {
   }
 }
 
-FileUploaderInline.template = /* HTML */ `
+FileUploaderInline.template = html`
   <uc-start-from>
     <uc-drop-area with-icon clickable></uc-drop-area>
     <uc-source-list role="list" wrap></uc-source-list>
@@ -91,7 +92,7 @@ FileUploaderInline.template = /* HTML */ `
       type="button"
       l10n="start-from-cancel"
       class="uc-cancel-btn uc-secondary-btn"
-      set="onclick: cancel; @hidden: !couldCancel"
+      bind="onclick: cancel; @hidden: !couldCancel"
     ></button>
     <uc-copyright></uc-copyright>
   </uc-start-from>

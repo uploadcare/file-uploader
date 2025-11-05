@@ -1,3 +1,4 @@
+import { html } from '@symbiotejs/symbiote';
 import { ActivityBlock } from '../../../abstract/ActivityBlock';
 import type { ModalCb } from '../../../abstract/managers/ModalManager';
 import { ModalEvents } from '../../../abstract/managers/ModalManager';
@@ -151,18 +152,18 @@ export class FileUploaderMinimal extends SolutionBlock {
   }
 }
 
-FileUploaderMinimal.template = /* HTML */ `
-  <uc-start-from set="@hidden: isHiddenStartFrom; @class:classStartFrom">
-    <uc-drop-area set="@single:singleUpload;" initflow clickable tabindex="0" l10n="choose-file"></uc-drop-area>
+FileUploaderMinimal.template = html`
+  <uc-start-from bind="@hidden: isHiddenStartFrom; @class:classStartFrom">
+    <uc-drop-area bind="@single:singleUpload;" initflow clickable tabindex="0" l10n="choose-file"></uc-drop-area>
     <uc-copyright></uc-copyright>
   </uc-start-from>
-  <uc-upload-list set="@class:classUploadList" ref="uBlock"></uc-upload-list>
+  <uc-upload-list bind="@class:classUploadList" ref="uBlock"></uc-upload-list>
 
   <uc-modal id="start-from" strokes block-body-scrolling>
     <uc-start-from>
       <uc-drop-area with-icon clickable></uc-drop-area>
       <uc-source-list role="list" wrap></uc-source-list>
-      <button type="button" l10n="start-from-cancel" class="uc-secondary-btn" set="onclick: *historyBack"></button>
+      <button type="button" l10n="start-from-cancel" class="uc-secondary-btn" bind="onclick: *historyBack"></button>
     </uc-start-from>
   </uc-modal>
 

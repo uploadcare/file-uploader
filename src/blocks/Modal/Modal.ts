@@ -1,3 +1,4 @@
+import { html } from '@symbiotejs/symbiote';
 import { Block } from '../../abstract/Block';
 import type { ModalCb, ModalId } from '../../abstract/managers/ModalManager';
 import { ModalEvents } from '../../abstract/managers/ModalManager';
@@ -154,7 +155,7 @@ export class Modal extends Block {
   }
 }
 
-Modal.template = /* HTML */ `
+Modal.template = html`
   <dialog ref="dialog">
     <slot></slot>
   </dialog>
