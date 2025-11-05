@@ -384,7 +384,7 @@ export class EditorToolbar extends Block {
     this.sub('*editorTransformations', (editorTransformations: Transformations) => {
       const appliedFilter = editorTransformations?.filter?.name;
       if (this.$['*currentFilter'] !== appliedFilter) {
-        this.$['*currentFilter'] = appliedFilter;
+        this.$['*currentFilter'] = appliedFilter ?? '';
       }
     });
 
