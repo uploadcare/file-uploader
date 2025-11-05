@@ -1,3 +1,4 @@
+import { html } from '@symbiotejs/symbiote';
 import { Block } from '../../../abstract/Block';
 import { debounce } from '../../../utils/debounce.js';
 import { preloadImage } from '../../../utils/preloadImage.js';
@@ -509,7 +510,7 @@ export class EditorImageCropper extends Block {
   }
 }
 
-EditorImageCropper.template = /* HTML */ `
+EditorImageCropper.template = html`
   <canvas class="uc-canvas" ref="canvas-el"></canvas>
   <uc-crop-frame ref="frame-el"></uc-crop-frame>
 `;

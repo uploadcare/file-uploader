@@ -1,3 +1,4 @@
+import { html } from '@symbiotejs/symbiote';
 import { Block } from '../../abstract/Block';
 import './select.css';
 
@@ -45,13 +46,13 @@ export class Select extends Block {
 
     this.sub('options', (options: SelectOption[]) => {
       this.$.currentText = options?.[0]?.text || '';
-      let html = '';
+      let htmlContent = '';
       options?.forEach((option) => {
-        html += /* HTML */ `<option value="${option.value}">${option.text}</option>`;
+        htmlContent += html`<option value="${option.value}">${option.text}</option>`;
       });
-      this.$.selectHtml = html;
+      this.$.selectHtml = htmlContent;
     });
   }
 }
 
-Select.template = /* HTML */ ` <select ref="select" set="innerHTML: selectHtml; onchange: onSelect"></select> `;
+Select.template = html` <select ref="select" bind="innerHTML: selectHtml; onchange: onSelect"></select> `;

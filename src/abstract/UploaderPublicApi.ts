@@ -1,6 +1,6 @@
 // @ts-check
 
-import { applyStyles, Data } from '@symbiotejs/symbiote';
+import { applyStyles, PubSub } from '@symbiotejs/symbiote';
 import { calcCameraModes } from '../blocks/CameraSource/calcCameraModes';
 import { CameraSourceTypes, type ModeCameraType } from '../blocks/CameraSource/constants';
 import type { SourceBtn } from '../blocks/SourceBtn/SourceBtn';
@@ -234,7 +234,7 @@ export class UploaderPublicApi {
   };
 
   getOutputItem<TStatus extends OutputFileStatus>(entryId: string): OutputFileEntry<TStatus> {
-    const uploadEntryData = Data.getCtx(entryId).store as UploadEntryData;
+    const uploadEntryData = PubSub.getCtx(entryId).store as UploadEntryData;
 
     const fileInfo = uploadEntryData.fileInfo as UploadcareFile | null;
 

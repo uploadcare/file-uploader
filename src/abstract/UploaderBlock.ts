@@ -1,6 +1,6 @@
 // @ts-check
 
-import { Data } from '@symbiotejs/symbiote';
+import { PubSub } from '@symbiotejs/symbiote';
 import { type FileFromOptions, uploadFileGroup } from '@uploadcare/upload-client';
 import { calculateMaxCenteredCropFrame } from '../blocks/CloudImageEditor/src/crop-utils';
 import { parseCropPreset } from '../blocks/CloudImageEditor/src/lib/parseCropPreset';
@@ -261,7 +261,7 @@ export class UploaderBlock extends ActivityBlock {
       setTimeout(() => {
         // We can't modify entry properties in the same tick, so we need to wait a bit
         const entriesToRunOnUpload = entriesToRunValidation.filter(
-          (entryId) => changeMap.fileInfo?.has(entryId) && !!Data.getCtx(entryId).store.fileInfo,
+          (entryId) => changeMap.fileInfo?.has(entryId) && !!PubSub.getCtx(entryId).store.fileInfo,
         );
         if (entriesToRunOnUpload.length > 0) {
           this.validationManager.runFileValidators('upload', entriesToRunOnUpload);
@@ -271,7 +271,7 @@ export class UploaderBlock extends ActivityBlock {
 
     if (changeMap.uploadProgress) {
       for (const entryId of changeMap.uploadProgress) {
-        const { isUploading, silent } = Data.getCtx(entryId).store;
+        const { isUploading, silent } = PubSub.getCtx(entryId).store;
         if (isUploading && !silent) {
           this.emit(EventType.FILE_UPLOAD_PROGRESS, this.api.getOutputItem(entryId));
         }
@@ -281,7 +281,7 @@ export class UploaderBlock extends ActivityBlock {
     }
     if (changeMap.isUploading) {
       for (const entryId of changeMap.isUploading) {
-        const { isUploading, silent } = Data.getCtx(entryId).store;
+        const { isUploading, silent } = PubSub.getCtx(entryId).store;
         if (isUploading && !silent) {
           this.emit(EventType.FILE_UPLOAD_START, this.api.getOutputItem(entryId));
         }
@@ -289,7 +289,7 @@ export class UploaderBlock extends ActivityBlock {
     }
     if (changeMap.fileInfo) {
       for (const entryId of changeMap.fileInfo) {
-        const { fileInfo, silent } = Data.getCtx(entryId).store;
+        const { fileInfo, silent } = PubSub.getCtx(entryId).store;
         if (fileInfo && !silent) {
           this.emit(EventType.FILE_UPLOAD_SUCCESS, this.api.getOutputItem(entryId));
         }
@@ -306,7 +306,7 @@ export class UploaderBlock extends ActivityBlock {
       this.validationManager.runCollectionValidators();
 
       for (const entryId of changeMap.errors) {
-        const { errors } = Data.getCtx(entryId).store;
+        const { errors } = PubSub.getCtx(entryId).store;
         if (errors.length > 0) {
           this.emit(EventType.FILE_UPLOAD_FAILED, this.api.getOutputItem(entryId));
           this.emit(

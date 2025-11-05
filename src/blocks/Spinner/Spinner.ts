@@ -1,6 +1,6 @@
-import { BaseComponent } from '@symbiotejs/symbiote';
+import { html, Symbiote } from '@symbiotejs/symbiote';
 import './spinner.css';
 
-export class Spinner extends BaseComponent<void> {}
+export class Spinner extends Symbiote<void> {}
 
-Spinner.template = /* HTML */ ` <div class="uc-spinner"></div> `;
+Spinner.template = html` <div class="uc-spinner"></div> `;

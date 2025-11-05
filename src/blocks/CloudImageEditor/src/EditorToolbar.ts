@@ -1,3 +1,4 @@
+import { html } from '@symbiotejs/symbiote';
 import { Block } from '../../../abstract/Block';
 import { debounce } from '../../../utils/debounce';
 import { batchPreloadImages } from '../../../utils/preloadImage';
@@ -24,17 +25,17 @@ import { parseFilterValue } from './utils/parseFilterValue';
 type TabIdValue = (typeof TabId)[keyof typeof TabId];
 
 function renderTabToggle(id: TabIdValue): string {
-  return /* HTML */ `
+  return html`
     <uc-presence-toggle
       class="uc-tab-toggle"
-      set="visible: presence.tabToggle.${id}; styles: presence.tabToggleStyles;"
+      bind="visible: presence.tabToggle.${id}; styles: presence.tabToggleStyles;"
     >
       <uc-btn-ui
         theme="tab"
         ref="tab-toggle-${id}"
         data-id="${id}"
         icon="${id}"
-        set="onclick: on.clickTab; aria-role:tab_role; aria-controls:tab_${id}; title-prop: a11y-editor-tab-${id}"
+        bind="onclick: on.clickTab; aria-role:tab_role; aria-controls:tab_${id}; title-prop: a11y-editor-tab-${id}"
       >
       </uc-btn-ui>
     </uc-presence-toggle>
@@ -42,11 +43,11 @@ function renderTabToggle(id: TabIdValue): string {
 }
 
 function renderTabContent(id: TabIdValue): string {
-  return /* HTML */ `
+  return html`
     <uc-presence-toggle
       id="tab_${id}"
       class="uc-tab-content"
-      set="visible: presence.tabContent.${id}; styles: presence.tabContentStyles"
+      bind="visible: presence.tabContent.${id}; styles: presence.tabContentStyles"
     >
       <uc-editor-scroller hidden-scrollbar>
         <div class="uc-controls-list_align">
@@ -462,8 +463,8 @@ export class EditorToolbar extends Block {
   }
 }
 
-EditorToolbar.template = /* HTML */ `
-  <uc-line-loader-ui set="active: showLoader"></uc-line-loader-ui>
+EditorToolbar.template = html`
+  <uc-line-loader-ui bind="active: showLoader"></uc-line-loader-ui>
   <div class="uc-info-tooltip_container">
     <div class="uc-info-tooltip_wrapper">
       <div ref="tooltip-el" class="uc-info-tooltip uc-info-tooltip_hidden">{{*operationTooltip}}</div>
@@ -473,36 +474,36 @@ EditorToolbar.template = /* HTML */ `
     <uc-presence-toggle
       role="tablist"
       class="uc-sub-toolbar"
-      set="visible: presence.mainToolbar; styles: presence.subTopToolbarStyles"
+      bind="visible: presence.mainToolbar; styles: presence.subTopToolbarStyles"
     >
       <div class="uc-tab-content-row">${ALL_TABS.map(renderTabContent).join('')}</div>
       <div class="uc-controls-row">
         <uc-presence-toggle
           class="uc-tab-toggles"
-          set="visible: presence.tabToggles; styles: presence.tabTogglesStyles"
+          bind="visible: presence.tabToggles; styles: presence.tabTogglesStyles"
         >
           <div ref="tabs-indicator" class="uc-tab-toggles_indicator"></div>
           ${ALL_TABS.map(renderTabToggle).join('')}
         </uc-presence-toggle>
-        <uc-btn-ui style="order: -1" theme="secondary-icon" icon="closeMax" set="onclick: on.cancel; title-prop:cancel">
+        <uc-btn-ui style="order: -1" theme="secondary-icon" icon="closeMax" bind="onclick: on.cancel; title-prop:cancel">
         </uc-btn-ui>
-        <uc-btn-ui theme="primary-icon" icon="done" set="onclick: on.apply; title-prop:apply"> </uc-btn-ui>
+        <uc-btn-ui theme="primary-icon" icon="done" bind="onclick: on.apply; title-prop:apply"> </uc-btn-ui>
       </div>
     </uc-presence-toggle>
     <uc-presence-toggle
       class="uc-sub-toolbar"
-      set="visible: presence.subToolbar; styles: presence.subBottomToolbarStyles"
+      bind="visible: presence.subToolbar; styles: presence.subBottomToolbarStyles"
     >
-      <div class="uc-slider" set="@hidden:!hideSliderOrList">
+      <div class="uc-slider" bind="@hidden:!hideSliderOrList">
         <uc-editor-slider ref="slider-el"></uc-editor-slider>
       </div>
 
-      <div set="@hidden:hideSliderOrList" class="uc-list-aspect-ratio-container">
+      <div bind="@hidden:hideSliderOrList" class="uc-list-aspect-ratio-container">
         <div class="uc-list-aspect-ratio" ref="list-el"></div>
       </div>
       <div class="uc-controls-row">
-        <uc-btn-ui theme="secondary" set="onclick: on.cancelSlider; title-prop:cancel" l10n="@text:cancel"> </uc-btn-ui>
-        <uc-btn-ui theme="primary" set="onclick: on.applySlider; title-prop:apply" l10n="@text:apply"> </uc-btn-ui>
+        <uc-btn-ui theme="secondary" bind="onclick: on.cancelSlider; title-prop:cancel" l10n="@text:cancel"> </uc-btn-ui>
+        <uc-btn-ui theme="primary" bind="onclick: on.applySlider; title-prop:apply" l10n="@text:apply"> </uc-btn-ui>
       </div>
     </uc-presence-toggle>
   </div>
