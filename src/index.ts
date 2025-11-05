@@ -1,7 +1,7 @@
 import './blocks/themes/uc-basic/index.css';
 
 // Symbiote.js
-export { BaseComponent, Data, UID } from '@symbiotejs/symbiote';
+export { PubSub, PubSub as Data, Symbiote, Symbiote as BaseComponent, UID } from '@symbiotejs/symbiote';
 export { ActivityBlock } from './abstract/ActivityBlock';
 
 // Abstract:

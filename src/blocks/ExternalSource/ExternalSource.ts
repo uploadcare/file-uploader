@@ -1,4 +1,4 @@
-import { create } from '@symbiotejs/symbiote';
+import { create, html } from '@symbiotejs/symbiote';
 import { ActivityBlock } from '../../abstract/ActivityBlock';
 import { UploaderBlock } from '../../abstract/UploaderBlock';
 import { getTopLevelOrigin } from '../../utils/get-top-level-origin';
@@ -292,12 +292,12 @@ export class ExternalSource extends UploaderBlock {
   }
 }
 
-ExternalSource.template = /* HTML */ `
+ExternalSource.template = html`
   <uc-activity-header>
     <button
       type="button"
       class="uc-mini-btn uc-close-btn"
-      set="onclick: *historyBack"
+      bind="onclick: *historyBack"
       l10n="@title:a11y-activity-header-button-close;@aria-label:a11y-activity-header-button-close"
     >
       <uc-icon name="close"></uc-icon>
@@ -305,20 +305,20 @@ ExternalSource.template = /* HTML */ `
   </uc-activity-header>
   <div class="uc-content">
     <div ref="iframeWrapper" class="uc-iframe-wrapper"></div>
-    <div class="uc-toolbar" set="@hidden: !toolbarVisible">
-      <button type="button" class="uc-cancel-btn uc-secondary-btn" set="onclick: onCancel" l10n="cancel"></button>
-      <div set="@hidden: !showSelectionStatus" class="uc-selection-status-box">
+    <div class="uc-toolbar" bind="@hidden: !toolbarVisible">
+      <button type="button" class="uc-cancel-btn uc-secondary-btn" bind="onclick: onCancel" l10n="cancel"></button>
+      <div bind="@hidden: !showSelectionStatus" class="uc-selection-status-box">
         <span>{{counterText}}</span>
-        <button type="button" set="onclick: onSelectAll; @hidden: !couldSelectAll" l10n="select-all"></button>
-        <button type="button" set="onclick: onDeselectAll; @hidden: !couldDeselectAll" l10n="deselect-all"></button>
+        <button type="button" bind="onclick: onSelectAll; @hidden: !couldSelectAll" l10n="select-all"></button>
+        <button type="button" bind="onclick: onDeselectAll; @hidden: !couldDeselectAll" l10n="deselect-all"></button>
       </div>
       <button
         type="button"
         class="uc-done-btn uc-primary-btn"
-        set="onclick: onDone; @disabled: !isDoneBtnEnabled; @hidden: !showDoneBtn"
+        bind="onclick: onDone; @disabled: !isDoneBtnEnabled; @hidden: !showDoneBtn"
       >
-        <uc-spinner set="@hidden: isSelectionReady"></uc-spinner>
-        <span l10n="done" set="@class: doneBtnTextClass"></span>
+        <uc-spinner bind="@hidden: isSelectionReady"></uc-spinner>
+        <span l10n="done" bind="@class: doneBtnTextClass"></span>
       </button>
     </div>
   </div>

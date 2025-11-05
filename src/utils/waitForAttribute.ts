@@ -1,22 +1,37 @@
+import { withResolvers } from './withResolvers';
+
 type WaitForAttributeOptions = {
   element: HTMLElement;
   attribute: string;
-  onSuccess: (value: string) => void;
-  onTimeout: () => void;
   timeout?: number;
 };
 
-export const waitForAttribute = ({
+type ResolvedValue =
+  | {
+      success: true;
+      value: string;
+      attribute: string;
+    }
+  | {
+      success: false;
+      attribute: string;
+    };
+
+export const waitForAttribute = async ({
   element,
   attribute,
-  onSuccess,
-  onTimeout,
   timeout = 300,
-}: WaitForAttributeOptions): void => {
+}: WaitForAttributeOptions): Promise<ResolvedValue> => {
+  const { promise, resolve } = withResolvers<ResolvedValue, never>();
+
   const currentAttrValue = element.getAttribute(attribute);
   if (currentAttrValue !== null) {
-    onSuccess(currentAttrValue);
-    return;
+    resolve({
+      success: true,
+      value: currentAttrValue,
+      attribute,
+    });
+    return promise;
   }
 
   const observer = new MutationObserver((mutations) => {
@@ -33,7 +48,10 @@ export const waitForAttribute = ({
 
   const timeoutId = window.setTimeout(() => {
     observer.disconnect();
-    onTimeout();
+    resolve({
+      success: false,
+      attribute,
+    });
   }, timeout);
 
   const handleMutation = (mutation: MutationRecord): void => {
@@ -41,7 +59,13 @@ export const waitForAttribute = ({
     if (mutation.type === 'attributes' && mutation.attributeName === attribute && attrValue !== null) {
       window.clearTimeout(timeoutId);
       observer.disconnect();
-      onSuccess(attrValue);
+      resolve({
+        success: true,
+        value: attrValue,
+        attribute,
+      });
     }
   };
+
+  return promise;
 };

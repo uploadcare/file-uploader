@@ -1,3 +1,4 @@
+import { html } from '@symbiotejs/symbiote';
 import { Block } from '../../../abstract/Block';
 import type { EditorImageFader } from './EditorImageFader';
 import type { ColorOperation, FilterId } from './toolbar-constants';
@@ -117,9 +118,9 @@ export class EditorSlider extends Block {
   }
 }
 
-EditorSlider.template = /* HTML */ `
+EditorSlider.template = html`
   <uc-slider-ui
     ref="slider-el"
-    set="disabled: disabled; min: min; max: max; defaultValue: defaultValue; zero: zero; onInput: on.input;"
+    bind="disabled: disabled; min: min; max: max; defaultValue: defaultValue; zero: zero; onInput: on.input;"
   ></uc-slider-ui>
 `;

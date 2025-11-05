@@ -1,4 +1,4 @@
-import { Data, UID } from '@symbiotejs/symbiote';
+import { PubSub, UID } from '@symbiotejs/symbiote';
 import type { ExtractDataFromSchema, ExtractKeysFromSchema, TypedSchema } from './TypedData';
 import { TypedData } from './TypedData';
 
@@ -22,7 +22,7 @@ type TypedCollectionOptions<T extends TypedSchema> = {
 export class TypedCollection<T extends TypedSchema> {
   private __typedSchema: T;
   private __ctxId: string;
-  private __data: ReturnType<typeof Data.registerCtx>;
+  private __data: ReturnType<typeof PubSub.registerCtx>;
   private __watchList: ExtractKeysFromSchema<T>[];
   private __subsMap: Record<string, Unsubscriber<T>[]> = Object.create(null) as Record<string, Unsubscriber<T>[]>;
   private __propertyObservers = new Set<TypedCollectionPropertyObserver<T>>();
@@ -37,7 +37,7 @@ export class TypedCollection<T extends TypedSchema> {
   constructor(options: TypedCollectionOptions<T>) {
     this.__typedSchema = options.typedSchema;
     this.__ctxId = options.ctxName || UID.generate();
-    this.__data = Data.registerCtx({}, this.__ctxId);
+    this.__data = PubSub.registerCtx({}, this.__ctxId);
     this.__watchList = options.watchList || [];
 
     let changeMap = Object.create(null) as ChangeMap<T>;
@@ -196,7 +196,7 @@ export class TypedCollection<T extends TypedSchema> {
   }
 
   destroy(): void {
-    Data.deleteCtx(this.__ctxId);
+    PubSub.deleteCtx(this.__ctxId);
     this.__propertyObservers = new Set();
     this.__collectionObservers = new Set();
     for (const id in this.__subsMap) {

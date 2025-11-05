@@ -1,3 +1,4 @@
+import { html } from '@symbiotejs/symbiote';
 import { createSvgNode } from './crop-utils.js';
 import { EditorButtonControl } from './EditorButtonControl.js';
 import type { CropAspectRatio } from './types';
@@ -42,10 +43,10 @@ export class EditorFreeformButtonControl extends EditorButtonControl {
   }
 }
 
-EditorFreeformButtonControl.template = /* html */ ` 
-  <button role="option" type="button" set="@aria-label:title-prop;" l10n="@title:title-prop;">
+EditorFreeformButtonControl.template = html` 
+  <button role="option" type="button" bind="@aria-label:title-prop;" l10n="@title:title-prop;">
     <div class="uc-title" ref="title-el">{{title}}</div>
-    <uc-icon ref="icon-el" set="@name: icon;"></uc-icon>
+    <uc-icon ref="icon-el" bind="@name: icon;"></uc-icon>
   </button> 
 `;
 
