@@ -23,7 +23,7 @@ export class EditorFilterControl extends EditorButtonControl {
       title: '',
       icon: '',
       isOriginal: false,
-      iconSize: '20',
+      iconSize: 20,
       'on.click': null,
     };
   }
@@ -128,7 +128,7 @@ export class EditorFilterControl extends EditorButtonControl {
     }
 
     this.sub('*currentFilter', (currentFilter: string) => {
-      this.$.active = currentFilter && currentFilter === this._filter;
+      this.$.active = !!(currentFilter && currentFilter === this._filter);
     });
 
     this.sub('isOriginal', (isOriginal: boolean) => {

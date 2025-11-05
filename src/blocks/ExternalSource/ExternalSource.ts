@@ -190,7 +190,7 @@ export class ExternalSource extends UploaderBlock {
       showSelectionStatus: message.isMultipleMode && message.total > 0,
       couldSelectAll: message.selectedCount < message.total,
       couldDeselectAll: message.selectedCount === message.total,
-      selectedList: message.selectedFiles,
+      selectedList: message.selectedFiles ?? [],
       showDoneBtn: message.total > 0,
     });
   }
