@@ -1,3 +1,12 @@
+## [1.24.3](https://github.com/uploadcare/file-uploader/compare/v1.24.2...v1.24.3) (2025-11-06)
+
+
+### Bug Fixes
+
+* generate unique svg id for the backdrop mask ([#884](https://github.com/uploadcare/file-uploader/issues/884)) ([3b092ff](https://github.com/uploadcare/file-uploader/commit/3b092ff75df10020a65b928d75f4c7fa5c856aba))
+
+
+
 ## [1.24.2](https://github.com/uploadcare/file-uploader/compare/v1.24.1...v1.24.2) (2025-11-05)
 
 
