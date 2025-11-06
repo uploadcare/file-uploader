@@ -1,3 +1,4 @@
+import { UID } from '@symbiotejs/symbiote';
 import { Block } from '../../../abstract/Block';
 import {
   clamp,
@@ -33,6 +34,7 @@ export class CropFrame extends Block {
   private readonly _handlePointerUp: (e: PointerEvent) => void;
   private readonly _handlePointerMove: (e: PointerEvent) => void;
   private readonly _handleSvgPointerMove: (e: PointerEvent) => void;
+  private readonly _backdropMaskId = `backdrop-mask-${UID.generate()}`;
   private _backdropMask?: SVGMaskElement;
   private _backdropMaskInner?: SVGRectElement;
   private _frameThumbs?: FrameThumbs;
@@ -82,7 +84,7 @@ export class CropFrame extends Block {
     const { x, y, width, height } = cropBox;
     const svg = this.ref['svg-el'] as SVGSVGElement;
 
-    const mask = createSvgNode('mask', { id: 'backdrop-mask' }) as SVGMaskElement;
+    const mask = createSvgNode('mask', { id: this._backdropMaskId }) as SVGMaskElement;
     const maskRectOuter = createSvgNode('rect', {
       x: 0,
       y: 0,
@@ -107,7 +109,7 @@ export class CropFrame extends Block {
       height: '100%',
       fill: 'var(--color-image-background)',
       'fill-opacity': 0.85,
-      mask: 'url(#backdrop-mask)',
+      mask: `url(#${this._backdropMaskId})`,
     });
     svg.appendChild(backdropRect);
     svg.appendChild(mask);
