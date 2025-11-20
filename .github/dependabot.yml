@@ -1,0 +1,12 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    allow:
+      - dependency-name: "@uploadcare/cname-prefix"
+      - dependency-name: "@uploadcare/image-shrink"
+      - dependency-name: "@uploadcare/quality-insights"
+      - dependency-name: "@uploadcare/upload-client"
+    open-pull-requests-limit: 5
