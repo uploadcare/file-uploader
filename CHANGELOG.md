@@ -1,3 +1,12 @@
+## [1.24.4](https://github.com/uploadcare/file-uploader/compare/v1.24.3...v1.24.4) (2025-11-21)
+
+
+### Bug Fixes
+
+* **deps:** bump @uploadcare/quality-insights package to fix unneeded dependencies leak ([#889](https://github.com/uploadcare/file-uploader/issues/889)) ([cbba698](https://github.com/uploadcare/file-uploader/commit/cbba69881e8c09f421f452b5701448ea73faf5d6))
+
+
+
 ## [1.24.3](https://github.com/uploadcare/file-uploader/compare/v1.24.2...v1.24.3) (2025-11-06)
 
 
