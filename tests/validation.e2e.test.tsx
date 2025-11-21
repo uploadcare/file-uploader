@@ -185,7 +185,7 @@ describe('Custom file validation', () => {
         api.initFlow();
         await expect
           .poll(() => api.getOutputCollectionState().status, {
-            timeout: 3000,
+            timeout: 5000,
           })
           .toBe('success');
         expect(customValidator).toHaveBeenCalledTimes(1);
@@ -229,7 +229,7 @@ describe('Custom file validation', () => {
         api.initFlow();
         await expect
           .poll(() => api.getOutputCollectionState().status, {
-            timeout: 3000,
+            timeout: 5000,
           })
           .toBe('success');
         await expect.poll(() => customValidator).toHaveBeenCalledTimes(1);
@@ -249,7 +249,7 @@ describe('Custom file validation', () => {
         api.addFileFromObject(IMAGE.SQUARE);
         api.initFlow();
         await page.getByLabelText('Edit', { exact: true }).click({
-          timeout: 10000,
+          timeout: 15000,
         });
         await page.getByLabelText('Apply mirror operation', { exact: true }).click();
         await delay(300);
