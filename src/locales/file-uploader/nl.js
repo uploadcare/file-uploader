@@ -5,7 +5,7 @@ export default {
   'upload-files': 'Bestanden uploaden',
   'choose-file': 'Kies bestand',
   'choose-files': 'Kies bestanden',
-  'drop-files-here': 'Laat bestanden hier vallen',
+  'drop-files-here': 'Bestanden hier neerzetten',
   'select-file-source': 'Selecteer bestandsbron',
   selected: 'Geselecteerd',
   upload: 'Uploaden',
