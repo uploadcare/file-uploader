@@ -1,15 +1,17 @@
 import fs from 'node:fs';
-import { rename } from 'node:fs/promises';
 import path, { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import postcssCascadeLayers from '@csstools/postcss-cascade-layers';
+import postcss from 'postcss';
 import { build as tsupBuild } from 'tsup';
 import { dependencies } from '../package.json';
 import { type BuildItem, buildItems } from './build-items';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const LICENSE_PATH = path.resolve(__dirname, '../LICENSE');
-const TSCONFIG_PATH = path.resolve(__dirname, '../tsconfig.app.json');
+const ROOT_DIR = path.resolve(__dirname, '..');
+const LICENSE_PATH = path.resolve(ROOT_DIR, 'LICENSE');
+const TSCONFIG_PATH = path.resolve(ROOT_DIR, 'tsconfig.app.json');
 
 function jsBanner() {
   const license = fs.readFileSync(LICENSE_PATH).toString();
@@ -93,7 +95,32 @@ async function build(buildItem: BuildItem) {
             if (cssFiles.length > 1) {
               throw new Error('Multiple CSS files generated, cannot rename.');
             }
-            await rename(cssFiles[0], join(buildItem.outDir, buildItem.cssFilename));
+            await fs.promises.rename(cssFiles[0], join(buildItem.outDir, buildItem.cssFilename));
+          }
+        },
+      },
+      {
+        name: 'unlayered-css',
+        async buildEnd(ctx) {
+          for (const file of ctx.writtenFiles) {
+            if (!file.name.endsWith('.css')) {
+              continue;
+            }
+            const absPath = buildItem.cssFilename
+              ? join(buildItem.outDir, buildItem.cssFilename)
+              : path.resolve(file.name);
+            const fileDir = path.dirname(absPath);
+            const baseName = path.basename(absPath);
+            const [namePart, ...restParts] = baseName.split('.');
+            const layeredName = [`${namePart}.layered`, ...restParts].join('.');
+            const layeredPath = path.join(fileDir, layeredName);
+            await fs.promises.copyFile(absPath, layeredPath);
+            const cssContent = await fs.promises.readFile(absPath, 'utf-8');
+            const processed = await postcss([postcssCascadeLayers()]).process(cssContent, {
+              from: file.name,
+              to: file.name,
+            });
+            await fs.promises.writeFile(absPath, processed.css);
           }
         },
       },
