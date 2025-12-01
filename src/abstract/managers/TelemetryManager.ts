@@ -10,7 +10,10 @@ import type { Block } from '../Block';
 
 type CommonEventType = InternalEventKey | EventKey;
 
-type TelemetryState = TelemetryRequest & { eventTimestamp: number };
+type TelemetryState = TelemetryRequest & {
+  eventTimestamp: number;
+  location: string;
+};
 type TelemetryEventBody = Partial<Pick<TelemetryState, 'payload' | 'config'>> & {
   modalId?: string;
   eventType?: CommonEventType;
@@ -82,6 +85,7 @@ export class TelemetryManager {
       eventTimestamp: this._timestamp,
 
       payload: {
+        location: this._location,
         ...payload,
       } as TelemetryState['payload'],
     } as TelemetryState;
@@ -197,5 +201,9 @@ export class TelemetryManager {
       return null;
     }
     return (this._block.$['*currentActivity'] as string | undefined) ?? null;
+  }
+
+  private get _location(): string {
+    return location.origin;
   }
 }
