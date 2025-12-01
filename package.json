@@ -82,7 +82,7 @@
     "test:publint": "publint",
     "test:specs": "vitest run --project specs",
     "test:e2e": "vitest run --coverage --project e2e",
-    "test:e2e:dev": "vitest --browser.headless=false",
+    "test:e2e:dev": "vitest --coverage --browser.headless=false",
     "test:locales": "tsx ./scripts/test-locales.ts",
     "release": "shipjs prepare",
     "build:lib": "npm run clean:web && npm run clean:dist && tsx ./scripts/build.ts",

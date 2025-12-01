@@ -1,4 +1,8 @@
-/*
+/**
+ * This module is deprecated and will be removed in future versions.
+ * @deprecated
+ *
+ *
  * Helper function for legacy browsers and iframes which sometimes focus on elements like document, body, and
  * non-interactive SVG.
  */

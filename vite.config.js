@@ -21,6 +21,14 @@ export default defineConfig(({ command }) => {
           provider: 'v8',
           reporter: ['text', 'html'],
           reportsDirectory: './tests/__coverage__',
+          include: ['src/**/*.ts'],
+          exclude: ['**/*.test.*', '**/vite.config.js', './src/locales/**', './dist/**'],
+          thresholds: {
+            variables: 85,
+            functions: 85,
+            branches: 80,
+            lines: 85,
+          },
         },
         projects: [
           {

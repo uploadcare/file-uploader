@@ -1,3 +1,7 @@
+/**
+ * This module is deprecated and will be removed in future versions.
+ * @deprecated
+ */
 import { applyFocusVisiblePolyfill } from './applyFocusVisiblePolyfill.js';
 
 type FocusVisibleDestructor = () => void;
