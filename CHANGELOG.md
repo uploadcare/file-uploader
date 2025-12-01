@@ -1,3 +1,12 @@
+## [1.24.5](https://github.com/uploadcare/file-uploader/compare/v1.24.4...v1.24.5) (2025-12-01)
+
+
+### Bug Fixes
+
+* **l10n:** fix "drop-files-here" translation ([#891](https://github.com/uploadcare/file-uploader/issues/891)) ([cc990a2](https://github.com/uploadcare/file-uploader/commit/cc990a287320a3c9f4de38a462cb9bba3b9c4e41))
+
+
+
 ## [1.24.4](https://github.com/uploadcare/file-uploader/compare/v1.24.3...v1.24.4) (2025-11-21)
 
 
