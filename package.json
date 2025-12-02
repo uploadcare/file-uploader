@@ -113,6 +113,7 @@
     "@biomejs/biome": "2.3.6",
     "@biomejs/js-api": "^4.0.0",
     "@biomejs/wasm-nodejs": "^2.3.6",
+    "@csstools/postcss-cascade-layers": "^5.0.2",
     "@happy-dom/global-registrator": "^20.0.10",
     "@size-limit/esbuild-why": "^11.2.0",
     "@size-limit/preset-small-lib": "^11.2.0",
