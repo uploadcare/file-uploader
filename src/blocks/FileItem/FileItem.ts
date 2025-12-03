@@ -15,7 +15,6 @@ import { parseShrink } from '../../utils/parseShrink';
 import { throttle } from '../../utils/throttle';
 import { ExternalUploadSource } from '../../utils/UploadSource';
 import './file-item.css';
-import { EventType, InternalEventType } from '../UploadCtxProvider/EventEmitter';
 import { FileItemConfig } from './FileItemConfig';
 
 const FileItemState = Object.freeze({
@@ -34,7 +33,9 @@ type UploadTrigger = Set<string>;
 
 export class FileItem extends FileItemConfig {
   override couldBeCtxOwner = true;
-  pauseRender = true;
+
+  @state()
+  private pauseRender = true;
 
   @property({ type: String, attribute: false })
   uid = '';
