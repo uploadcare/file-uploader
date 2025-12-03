@@ -44,6 +44,7 @@ export class UploadList extends LitUploaderBlock {
   @state()
   private hasFiles = false;
 
+  @state()
   private _latestSummary: Summary | null = null;
   protected get headerText() {
     if (!this._latestSummary) {
