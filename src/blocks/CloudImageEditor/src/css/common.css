@@ -54,7 +54,7 @@
   }
 
   [uc-cloud-image-editor]
-    :is([tabindex][focus-visible], [tabindex]:hover, [with-effects][focus-visible], [with-effects]:hover) {
+    :is([tabindex]:focus-visible, [tabindex]:hover, [with-effects]:focus-visible, [with-effects]:hover) {
     --filter-effect: var(--hover-filter) !important;
     --opacity-effect: var(--hover-opacity) !important;
     --color-effect: var(--hover-color-rgb) !important;
