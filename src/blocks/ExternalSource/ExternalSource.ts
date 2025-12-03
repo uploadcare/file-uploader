@@ -284,6 +284,11 @@ export class ExternalSource extends LitUploaderBlock {
     this._latestSelectionSummary = null;
   }
 
+  override disconnectedCallback(): void {
+    super.disconnectedCallback();
+    this.unmountIframe();
+  }
+
   override render() {
     return html`
       <uc-activity-header>
