@@ -51,6 +51,7 @@ export function SymbioteMixin<T extends Constructor<LitElement>>(ctor: T): T & C
       | undefined = undefined;
     private _warnedAboutLocalState = false;
     private _pendingSharedAdds: Map<string, { value: unknown; rewrite: boolean }> = new Map();
+    private _symbioteSubscriptions: Set<() => void> = new Set();
 
     // Symbiote-style initial values declaration
     protected init$: Record<string, unknown> = {};
@@ -299,7 +300,22 @@ export function SymbioteMixin<T extends Constructor<LitElement>>(ctor: T): T & C
     sub<T = unknown>(key: string, callback: (value: T) => void, init = true): () => void {
       const sharedKey = this._requireSharedKey(key);
       const subscription = this._requireSharedPubSub().sub(sharedKey, callback as (value: unknown) => void, init);
-      return subscription ? subscription.remove : () => {};
+      if (!subscription || typeof subscription.remove !== 'function') {
+        return () => {};
+      }
+
+      const removeFn = subscription.remove.bind(subscription);
+      let removed = false;
+      const trackedRemove = () => {
+        if (removed) {
+          return;
+        }
+        removed = true;
+        removeFn();
+        this._symbioteSubscriptions.delete(trackedRemove);
+      };
+      this._symbioteSubscriptions.add(trackedRemove);
+      return trackedRemove;
     }
 
     pub(key: string, value: unknown): void {
@@ -429,11 +445,21 @@ export function SymbioteMixin<T extends Constructor<LitElement>>(ctor: T): T & C
     }
 
     override disconnectedCallback() {
+      this._cleanupSymbioteSubscriptions();
       super.disconnectedCallback();
       if (this._symbioteFirstUpdated) {
         this._needsReconnectInit = true;
       }
-      // Clean up is handled automatically by PubSub
+    }
+
+    private _cleanupSymbioteSubscriptions(): void {
+      if (this._symbioteSubscriptions.size === 0) {
+        return;
+      }
+      for (const unsubscribe of [...this._symbioteSubscriptions]) {
+        unsubscribe();
+      }
+      this._symbioteSubscriptions.clear();
     }
 
     initCallback() {}
