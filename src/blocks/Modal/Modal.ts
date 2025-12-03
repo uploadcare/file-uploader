@@ -12,7 +12,7 @@ export class Modal extends LitBlock {
   static override styleAttrs = [...super.styleAttrs, 'uc-modal'];
 
   private _mouseDownTarget: EventTarget | null | undefined;
-  private dialogEl = createRef<HTMLDialogElement>();
+  protected dialogEl = createRef<HTMLDialogElement>();
 
   handleModalOpen!: ModalCb;
   handleModalClose!: ModalCb;
