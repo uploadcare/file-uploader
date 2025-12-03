@@ -72,6 +72,7 @@ export class CameraSource extends LitUploaderBlock {
   private _audioDevices: AudioDeviceOption[] = [];
   private _permissionResponses: Partial<Record<(typeof DEFAULT_PERMISSIONS)[number], PermissionStatus>> = {};
   private _permissionCleanupFns: Array<() => void> = [];
+  private _currentVideoSource: MediaStream | null = null;
 
   private readonly _handlePreviewPlay = (): void => {
     this._startTimeline();
@@ -89,9 +90,6 @@ export class CameraSource extends LitUploaderBlock {
   private switcherRef = createRef<HTMLElement>();
   private _startTime = 0;
   private _elapsedTime = 0;
-
-  @state()
-  protected video: MediaStream | null = null;
 
   @state()
   protected videoTransformCss: string | null = null;
@@ -424,7 +422,7 @@ export class CameraSource extends LitUploaderBlock {
 
       videoElement.muted = false;
       videoElement.volume = 1;
-      this.video = null;
+      this._setVideoSource(null);
       videoElement.src = videoURL;
 
       this._attachPreviewListeners(videoElement);
@@ -445,12 +443,35 @@ export class CameraSource extends LitUploaderBlock {
     videoElement?.removeEventListener('pause', this._handlePreviewPause);
   }
 
+  private _setVideoSource(stream: MediaStream | null): void {
+    if (this._currentVideoSource === stream) {
+      return;
+    }
+    this._currentVideoSource = stream;
+    this._applyVideoSource();
+  }
+
+  /**
+   * Do not bind srcObject directly in the template, because it stops video pausing on shot.
+   * I really don'y know why but that's how it is. Assigning srcObject manually fixes the issue.
+   */
+  private _applyVideoSource(): void {
+    const videoElement = this.videoRef.value;
+    if (!videoElement) {
+      return;
+    }
+    const nextSource = this._currentVideoSource ?? null;
+    if (videoElement.srcObject !== nextSource) {
+      videoElement.srcObject = nextSource;
+    }
+  }
+
   _retake = (): void => {
     this._setCameraState(CameraSourceEvents.RETAKE);
 
     /** Reset video */
     if (this._activeTab === CameraSourceTypes.VIDEO) {
-      this.video = this._stream;
+      this._setVideoSource(this._stream);
       const videoElement = this.videoRef.value as HTMLVideoElement | undefined;
       if (videoElement) {
         videoElement.muted = true;
@@ -735,10 +756,10 @@ export class CameraSource extends LitUploaderBlock {
       if (this.videoRef.value) {
         this.videoRef.value.volume = 0;
       }
-      const tracks = this.video?.getTracks?.();
+      const tracks = this._currentVideoSource?.getTracks?.();
       tracks?.[0]?.stop();
       this._detachPreviewListeners(this.videoRef.value);
-      this.video = null;
+      this._setVideoSource(null);
 
       this._makeStreamInactive();
       this._stopTimer();
@@ -782,7 +803,7 @@ export class CameraSource extends LitUploaderBlock {
         this._setPermissionsState('denied');
       });
 
-      this.video = this._stream;
+      this._setVideoSource(this._stream);
       this._capturing = true;
       this._setPermissionsState('granted');
     } catch (error) {
@@ -942,10 +963,21 @@ export class CameraSource extends LitUploaderBlock {
     });
   }
 
+  protected override firstUpdated(_changedProperties: Map<PropertyKey, unknown>): void {
+    super.firstUpdated(_changedProperties);
+    this._applyVideoSource();
+  }
+
+  protected override updated(_changedProperties: Map<PropertyKey, unknown>): void {
+    super.updated(_changedProperties);
+    this._applyVideoSource();
+  }
+
   _destroy(): void {
     this._teardownPermissionListeners();
     navigator.mediaDevices?.removeEventListener('devicechange', this._getDevices);
     this._detachPreviewListeners(this.videoRef.value);
+    this._setVideoSource(null);
   }
 
   override disconnectedCallback(): void {
@@ -991,7 +1023,6 @@ export class CameraSource extends LitUploaderBlock {
       muted
       autoplay
       playsinline
-      .srcObject=${this.video}
       style=${styleMap({
         transform: this.videoTransformCss,
       })}
