@@ -71,6 +71,17 @@ export class CameraSource extends LitUploaderBlock {
   private _cameraDevices: CameraDeviceOption[] = [];
   private _audioDevices: AudioDeviceOption[] = [];
   private _permissionResponses: Partial<Record<(typeof DEFAULT_PERMISSIONS)[number], PermissionStatus>> = {};
+  private _permissionCleanupFns: Array<() => void> = [];
+
+  private readonly _handlePreviewPlay = (): void => {
+    this._startTimeline();
+    this.currentTimelineIcon = 'pause';
+  };
+
+  private readonly _handlePreviewPause = (): void => {
+    this.currentTimelineIcon = 'play';
+    this._stopTimeline();
+  };
 
   private timerRef = createRef<HTMLElement>();
   private lineRef = createRef<HTMLElement>();
@@ -416,20 +427,23 @@ export class CameraSource extends LitUploaderBlock {
       this.video = null;
       videoElement.src = videoURL;
 
-      videoElement.addEventListener('play', () => {
-        this._startTimeline();
-        this.currentTimelineIcon = 'pause';
-      });
-
-      videoElement.addEventListener('pause', () => {
-        this.currentTimelineIcon = 'play';
-        this._stopTimeline();
-      });
+      this._attachPreviewListeners(videoElement);
     } catch (error) {
       console.error('Failed to preview video', error);
       this.telemetryManager.sendEventError(error, 'camera previewing. Failed to preview video');
     }
   };
+
+  private _attachPreviewListeners(videoElement: HTMLVideoElement): void {
+    this._detachPreviewListeners(videoElement);
+    videoElement.addEventListener('play', this._handlePreviewPlay);
+    videoElement.addEventListener('pause', this._handlePreviewPause);
+  }
+
+  private _detachPreviewListeners(videoElement?: HTMLVideoElement | null): void {
+    videoElement?.removeEventListener('play', this._handlePreviewPlay);
+    videoElement?.removeEventListener('pause', this._handlePreviewPause);
+  }
 
   _retake = (): void => {
     this._setCameraState(CameraSourceEvents.RETAKE);
@@ -723,6 +737,7 @@ export class CameraSource extends LitUploaderBlock {
       }
       const tracks = this.video?.getTracks?.();
       tracks?.[0]?.stop();
+      this._detachPreviewListeners(this.videoRef.value);
       this.video = null;
 
       this._makeStreamInactive();
@@ -783,6 +798,7 @@ export class CameraSource extends LitUploaderBlock {
 
   _permissionAccess = async (): Promise<void> => {
     try {
+      this._teardownPermissionListeners();
       for (const permission of DEFAULT_PERMISSIONS) {
         const response = await navigator.permissions.query({
           name: permission as PermissionName,
@@ -790,13 +806,31 @@ export class CameraSource extends LitUploaderBlock {
         this._permissionResponses[permission] = response;
 
         response.addEventListener('change', this._handlePermissionsChange);
+        this._permissionCleanupFns.push(() => {
+          response.removeEventListener('change', this._handlePermissionsChange);
+        });
       }
+      this._unsubPermissions = () => {
+        this._teardownPermissionListeners();
+      };
     } catch (error) {
+      this._teardownPermissionListeners();
       console.log('Failed to use permissions API. Fallback to manual request mode.', error);
       this.telemetryManager.sendEventError(error, 'camera permissions. Failed to use permissions API');
       this._capture();
     }
   };
+
+  private _teardownPermissionListeners(): void {
+    if (this._permissionCleanupFns.length === 0) {
+      return;
+    }
+    for (const cleanup of this._permissionCleanupFns) {
+      cleanup();
+    }
+    this._permissionCleanupFns = [];
+    this._unsubPermissions = null;
+  }
 
   _getPermission = (): void => {};
 
@@ -909,11 +943,9 @@ export class CameraSource extends LitUploaderBlock {
   }
 
   _destroy(): void {
-    for (const permission of DEFAULT_PERMISSIONS) {
-      this._permissionResponses[permission]?.removeEventListener('change', this._handlePermissionsChange);
-    }
-
+    this._teardownPermissionListeners();
     navigator.mediaDevices?.removeEventListener('devicechange', this._getDevices);
+    this._detachPreviewListeners(this.videoRef.value);
   }
 
   override disconnectedCallback(): void {
