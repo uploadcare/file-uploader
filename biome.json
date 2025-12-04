@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.3.6/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.3.8/schema.json",
   "vcs": {
     "enabled": true,
     "clientKind": "git",
@@ -26,6 +26,10 @@
       },
       "style": {
         "noInferrableTypes": "error"
+      },
+      "correctness": {
+        "noUnusedVariables": "error",
+        "noUnusedImports": "error"
       }
     }
   },
@@ -38,8 +42,8 @@
     "enabled": true,
     "actions": {
       "source": {
-        "organizeImports": "on",
-        "recommended": true
+        "recommended": true,
+        "organizeImports": "on"
       }
     }
   },

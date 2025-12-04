@@ -1,8 +1,8 @@
 <script type="module">
-  const templates = import.meta.glob('./**/*.html');
+const templates = import.meta.glob('./**/*.html');
 
-  const templateList = document.createElement('div');
-  templateList.innerHTML = /* html */ `
+const templateList = document.createElement('div');
+templateList.innerHTML = /* html */ `
     <h2 style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; text-align: center;">Demo</h2>
     <ul style="list-style: none; padding: 0; max-width: 600px; margin: 0 auto;">
       ${Object.keys(templates)
@@ -16,11 +16,11 @@
         .join('')}
     </ul>
   `;
-  templateList.style.border = '1px solid #ddd';
-  templateList.style.borderRadius = '8px';
-  templateList.style.padding = '20px';
-  templateList.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
-  templateList.style.margin = '20px auto';
-  templateList.style.maxWidth = '600px';
-  document.body.appendChild(templateList);
+templateList.style.border = '1px solid #ddd';
+templateList.style.borderRadius = '8px';
+templateList.style.padding = '20px';
+templateList.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
+templateList.style.margin = '20px auto';
+templateList.style.maxWidth = '600px';
+document.body.appendChild(templateList);
 </script>

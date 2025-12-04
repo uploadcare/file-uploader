@@ -1,5 +1,5 @@
 import { html } from 'lit';
-import { property, state } from 'lit/decorators.js';
+import { property } from 'lit/decorators.js';
 import { LitBlock } from '../../lit/LitBlock';
 import './select.css';
 

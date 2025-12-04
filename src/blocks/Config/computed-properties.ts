@@ -2,7 +2,6 @@ import { getPrefixedCdnBaseAsync, isPrefixedCdnBase } from '@uploadcare/cname-pr
 import type { ConfigType } from '../../types/index';
 import { deserializeCsv, serializeCsv } from '../../utils/comma-separated';
 import { isPromiseLike } from '../../utils/isPromiseLike';
-import type { Config } from './Config';
 import { DEFAULT_CDN_CNAME } from './initialConfig';
 
 type ConfigKey = keyof ConfigType;

@@ -54,7 +54,7 @@
   uc-camera-source .uc-message-box {
     display: flex;
     flex-direction: column;
-    grid-gap: 40px;
+    gap: 40px;
     align-items: center;
     justify-content: center;
     padding: 40px 40px 0;
