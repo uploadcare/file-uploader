@@ -1,6 +1,6 @@
-import { page } from '@vitest/browser/context';
 import { CommonDOMRenderer } from 'render-jsx/dom';
 import { beforeEach } from 'vitest';
+import { page } from 'vitest/browser';
 
 export const renderer = new CommonDOMRenderer();
 
@@ -37,7 +37,7 @@ beforeEach(async () => {
   cleanup();
 });
 
-declare module '@vitest/browser/context' {
+declare module 'vitest/browser' {
   interface BrowserPage {
     render: typeof render;
   }
