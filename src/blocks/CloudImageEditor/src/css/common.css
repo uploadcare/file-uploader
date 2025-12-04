@@ -6,7 +6,7 @@
     --color-text-base: var(--uc-foreground);
     --color-text-accent-contrast: var(--uc-background);
     --color-fill-contrast: var(--uc-background);
-    --color-modal-backdrop: oklch(0 0 0 / 0.1);
+    --color-modal-backdrop: oklch(0% 0 0 / 0.1);
     --color-image-background: var(--uc-muted);
     --color-focus-ring: var(--color-primary-accent);
     --color-crop-guides: var(--uc-foreground);
@@ -723,7 +723,7 @@
     position: relative;
     display: grid;
     grid-auto-flow: column;
-    grid-gap: 0px var(--l-tab-gap);
+    gap: 0px var(--l-tab-gap);
     align-items: center;
     height: 100%;
   }
@@ -862,10 +862,6 @@
     padding-right: var(--uc-padding);
   }
 
-  uc-editor-toolbar .uc-controls-list_last-item {
-    margin-right: var(--cldtr-gap-max);
-  }
-
   uc-editor-toolbar .uc-info-tooltip_container {
     position: absolute;
     display: flex;
@@ -886,7 +882,7 @@
   }
 
   uc-editor-toolbar .uc-info-tooltip {
-    z-index: 3;
+    z-index: 10;
     padding: 3px 6px;
     color: var(--color-text-base);
     font-size: 0.7em;

@@ -1,52 +1,83 @@
-import { html } from '@symbiotejs/symbiote';
-import { Block } from '../../../../../abstract/Block';
+import type { PropertyValues } from 'lit';
+import { html } from 'lit';
+import { property } from 'lit/decorators.js';
+import { createRef, ref } from 'lit/directives/ref.js';
+import { LitBlock } from '../../../../../lit/LitBlock';
 
-export class LineLoaderUi extends Block {
-  private _active = false;
+export class LineLoaderUi extends LitBlock {
+  @property({ type: Boolean, reflect: true })
+  active = false;
 
-  private readonly _handleTransitionEndRight = (): void => {
-    const lineEl = this.ref['line-el'] as HTMLElement;
-    lineEl.style.transition = 'initial';
-    lineEl.style.opacity = '0';
-    lineEl.style.transform = 'translateX(-101%)';
-    if (this._active) {
-      this._start();
+  private readonly lineRef = createRef<HTMLDivElement>();
+  private _isAnimating = false;
+
+  private readonly handleTransitionEndRight = (): void => {
+    const lineEl = this.lineRef.value;
+    if (!lineEl) {
+      return;
+    }
+    this.resetLine(lineEl);
+    if (this._isAnimating && this.active) {
+      this.start();
     }
   };
 
-  override initCallback(): void {
-    super.initCallback();
-    this.defineAccessor('active', (active: boolean | undefined) => {
-      if (typeof active !== 'boolean') {
-        return;
-      }
-      if (active) {
-        this._start();
-      } else {
-        this._stop();
-      }
-    });
+  protected override firstUpdated(_changedProperties: PropertyValues<this>): void {
+    super.firstUpdated(_changedProperties);
+    if (this.active) {
+      this.start();
+    }
   }
 
-  private _start(): void {
-    this._active = true;
+  protected override updated(changedProperties: PropertyValues<this>): void {
+    super.updated(changedProperties);
+
+    if (changedProperties.has('active')) {
+      if (this.active) {
+        this.start();
+      } else {
+        this.stop();
+      }
+    }
+  }
+
+  private start(): void {
+    const lineEl = this.lineRef.value;
+    if (!lineEl) {
+      return;
+    }
+    this._isAnimating = true;
     const { width } = this.getBoundingClientRect();
-    const lineEl = this.ref['line-el'] as HTMLElement;
+    lineEl.removeEventListener('transitionend', this.handleTransitionEndRight);
     lineEl.style.transition = 'transform 1s';
     lineEl.style.opacity = '1';
     lineEl.style.transform = `translateX(${width}px)`;
-    lineEl.addEventListener('transitionend', this._handleTransitionEndRight, {
+    lineEl.addEventListener('transitionend', this.handleTransitionEndRight, {
       once: true,
     });
   }
 
-  private _stop(): void {
-    this._active = false;
+  private stop(): void {
+    const lineEl = this.lineRef.value;
+    if (!lineEl) {
+      return;
+    }
+    this._isAnimating = false;
+    lineEl.removeEventListener('transitionend', this.handleTransitionEndRight);
+    this.resetLine(lineEl);
+  }
+
+  private resetLine(lineEl: HTMLDivElement): void {
+    lineEl.style.transition = 'initial';
+    lineEl.style.opacity = '0';
+    lineEl.style.transform = 'translateX(-101%)';
+  }
+
+  override render() {
+    return html`
+      <div class="uc-inner">
+        <div class="uc-line" ${ref(this.lineRef)}></div>
+      </div>
+    `;
   }
 }
-
-LineLoaderUi.template = html`
-  <div class="uc-inner">
-    <div class="uc-line" ref="line-el"></div>
-  </div>
-`;

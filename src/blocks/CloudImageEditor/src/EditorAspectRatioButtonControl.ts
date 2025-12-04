@@ -1,5 +1,7 @@
-import { html } from '@symbiotejs/symbiote';
-import { createSvgNode } from './crop-utils.js';
+import { html } from 'lit';
+import { property } from 'lit/decorators.js';
+import { classMap } from 'lit/directives/class-map.js';
+import { ifDefined } from 'lit/directives/if-defined.js';
 import { EditorButtonControl } from './EditorButtonControl.js';
 import type { CropAspectRatio } from './types';
 
@@ -26,85 +28,85 @@ export class EditorFreeformButtonControl extends EditorButtonControl {
   override initCallback(): void {
     super.initCallback();
 
-    this.$.icon = 'arrow-dropdown';
-    this.$['on.click'] = this.handleClick.bind(this);
+    this.icon = 'arrow-dropdown';
 
     this.sub('*currentAspectRatio', (opt: CropAspectRatio) => {
-      this.$.title = opt.hasFreeform
-        ? this.l10n('freeform-crop')
-        : this.l10n('crop-to-shape', { value: `${opt.width}:${opt.height}` });
-
-      this.bindL10n('title-prop', () => this.$.title);
+      const title = this.computeTitle(opt);
+      this.title = title;
+      this.titleProp = title;
     });
   }
 
-  handleClick(): void {
+  override onClick(): void {
     this.$['*showListAspectRatio'] = true;
   }
-}
 
-EditorFreeformButtonControl.template = html` 
-  <button role="option" type="button" bind="@aria-label:title-prop;" l10n="@title:title-prop;">
-    <div class="uc-title" ref="title-el">{{title}}</div>
-    <uc-icon ref="icon-el" bind="@name: icon;"></uc-icon>
-  </button> 
-`;
-
-export interface EditorAspectRatioButtonControl {
-  get aspectRatio(): CropAspectRatio | undefined;
-  set aspectRatio(value: CropAspectRatio | undefined);
-}
-
-// biome-ignore lint/suspicious/noUnsafeDeclarationMerging: This is intentional interface merging, used to add configuration setters/getters
-export class EditorAspectRatioButtonControl extends EditorButtonControl {
-  constructor() {
-    super();
-
-    this.init$ = {
-      ...this.init$,
-      active: false,
-      once: false,
-    };
+  private computeTitle(aspectRatio?: CropAspectRatio): string {
+    if (!aspectRatio) {
+      return '';
+    }
+    return aspectRatio.hasFreeform
+      ? this.l10n('freeform-crop')
+      : this.l10n('crop-to-shape', { value: `${aspectRatio.width}:${aspectRatio.height}` });
   }
+
+  override render() {
+    const clickHandler = this.onClick;
+    const title = this.title;
+    return html`
+      <button
+        role="option"
+        type="button"
+        class=${classMap(this.buttonClasses)}
+        aria-label=${ifDefined(this.titleProp)}
+        title=${ifDefined(this.titleProp)}
+        @click=${clickHandler}
+      >
+        <div class="uc-title" ?hidden=${!title}>${title}</div>
+        <uc-icon name=${this.icon}></uc-icon>
+      </button>
+    `;
+  }
+}
+export class EditorAspectRatioButtonControl extends EditorButtonControl {
+  private _aspectRatio?: CropAspectRatio;
+
+  @property({ attribute: false })
+  get aspectRatio(): CropAspectRatio | undefined {
+    return this._aspectRatio;
+  }
+
+  set aspectRatio(value: CropAspectRatio | undefined) {
+    if (this._aspectRatio === value) {
+      return;
+    }
+    const previous = this._aspectRatio;
+    this._aspectRatio = value;
+    this.requestUpdate('aspectRatio', previous);
+    if (value) {
+      this.updateAspectRatioPresentation(value);
+    } else {
+      this.removeAttribute('uc-aspect-ratio-freeform');
+      this.title = '';
+      this.titleProp = '';
+    }
+  }
+
   override initCallback(): void {
     super.initCallback();
 
-    this.defineAccessor('aspectRatio', (value: CropAspectRatio) => {
-      if (!value) return;
-
-      const isFreeform = !!value.hasFreeform;
-      this.$.title = isFreeform ? this.l10n('custom') : `${value.width}:${value.height}`;
-
-      if (!isFreeform) {
-        this._renderRectBasedOnAspectRatio(value);
-      }
-
-      if (isFreeform) {
-        this.setAttribute('uc-aspect-ratio-freeform', '');
-      }
-
-      this._aspectRatio = value;
-
-      this.bindL10n('title-prop', () => {
-        return this.l10n('a11y-cloud-editor-apply-aspect-ratio', {
-          name: isFreeform
-            ? this.l10n('custom').toLowerCase()
-            : this.l10n('crop-to-shape', { value: `${value.width}:${value.height}` }).toLowerCase(),
-          value: '',
-        });
-      });
-    });
+    if (this._aspectRatio) {
+      this.updateAspectRatioPresentation(this._aspectRatio);
+    }
 
     this.sub('*currentAspectRatio', (opt: CropAspectRatio | undefined) => {
-      this.$.active =
+      this.active =
         (opt && opt.id === this._aspectRatio?.id) ||
         (opt?.width === this._aspectRatio?.width && opt?.height === this._aspectRatio?.height);
     });
-
-    this.$['on.click'] = this.handleClick.bind(this);
   }
 
-  handleClick(): void {
+  override onClick(): void {
     const currentAspectRatio = this.$['*currentAspectRatio'] as CropAspectRatio | undefined;
     if (currentAspectRatio?.id === this._aspectRatio?.id) {
       return;
@@ -113,28 +115,81 @@ export class EditorAspectRatioButtonControl extends EditorButtonControl {
     this.$['*currentAspectRatio'] = this._aspectRatio;
   }
 
-  private _renderRectBasedOnAspectRatio(value: CropAspectRatio): void {
-    const { width, height } = getAdjustResolutions(value);
+  private updateAspectRatioPresentation(value: CropAspectRatio): void {
+    const isFreeform = !!value.hasFreeform;
+    this.toggleAttribute('uc-aspect-ratio-freeform', isFreeform);
 
-    const rect = createSvgNode('rect', {
-      'stroke-linejoin': 'round',
-      fill: 'none',
-      stroke: 'currentColor',
-      'stroke-width': 1.2,
-      'fill-rule': 'evenodd',
-      x: (SIZE_SVG_WRAPPER - width) / 2,
-      y: (SIZE_SVG_WRAPPER - height) / 2,
-      rx: 2,
-      width,
-      height,
-    });
+    const resolveTitle = () => {
+      const titleText = isFreeform ? this.l10n('custom') : `${value.width}:${value.height}`;
+      this.title = titleText;
+      return titleText;
+    };
 
-    const svgEl = this.ref['icon-el']?.ref?.svg;
+    const resolveTitleProp = () => {
+      const label = this.l10n('a11y-cloud-editor-apply-aspect-ratio', {
+        name: isFreeform
+          ? this.l10n('custom').toLowerCase()
+          : this.l10n('crop-to-shape', { value: `${value.width}:${value.height}` }).toLowerCase(),
+        value: '',
+      });
+      this.titleProp = label;
+      return label;
+    };
 
-    if (!svgEl) return;
-    svgEl.innerHTML = '';
-    svgEl.appendChild(rect);
+    resolveTitle();
+    resolveTitleProp();
+
+    if (!isFreeform) {
+      this.requestUpdate();
+    }
   }
 
-  private _aspectRatio?: CropAspectRatio;
+  private renderIcon() {
+    const ratio = this._aspectRatio;
+    if (!ratio || ratio.hasFreeform) {
+      return html`<uc-icon name=${this.icon}></uc-icon>`;
+    }
+
+    const { width, height } = getAdjustResolutions(ratio);
+    const x = (SIZE_SVG_WRAPPER - width) / 2;
+    const y = (SIZE_SVG_WRAPPER - height) / 2;
+
+    return html`
+      <svg
+        viewBox="0 0 ${SIZE_SVG_WRAPPER} ${SIZE_SVG_WRAPPER}"
+        aria-hidden="true"
+        focusable="false"
+      >
+        <rect
+          x=${x}
+          y=${y}
+          width=${width}
+          height=${height}
+          rx="2"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.2"
+          stroke-linejoin="round"
+        ></rect>
+      </svg>
+    `;
+  }
+
+  override render() {
+    const clickHandler = this.onClick;
+    const title = this.title;
+    return html`
+      <button
+        role="option"
+        type="button"
+        class=${classMap(this.buttonClasses)}
+        aria-label=${ifDefined(this.titleProp)}
+        title=${ifDefined(this.titleProp)}
+        @click=${clickHandler}
+      >
+        <uc-icon>${this.renderIcon()}</uc-icon>
+        <div class="uc-title" ?hidden=${!title}>${title}</div>
+      </button>
+    `;
+  }
 }

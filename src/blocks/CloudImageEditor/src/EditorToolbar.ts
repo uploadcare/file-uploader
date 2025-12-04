@@ -1,13 +1,14 @@
-import { html } from '@symbiotejs/symbiote';
-import { Block } from '../../../abstract/Block';
+import type { PropertyValues, TemplateResult } from 'lit';
+import { html, nothing } from 'lit';
+import { state } from 'lit/decorators.js';
+import type { Ref } from 'lit/directives/ref.js';
+import { createRef, ref } from 'lit/directives/ref.js';
+import { styleMap } from 'lit/directives/style-map.js';
+import { LitBlock } from '../../../lit/LitBlock';
 import { debounce } from '../../../utils/debounce';
 import { batchPreloadImages } from '../../../utils/preloadImage';
-import { EditorAspectRatioButtonControl, EditorFreeformButtonControl } from './EditorAspectRatioButtonControl';
-import { EditorCropButtonControl } from './EditorCropButtonControl';
-import { EditorFilterControl } from './EditorFilterControl';
 import type { EditorImageCropper } from './EditorImageCropper';
 import type { EditorImageFader } from './EditorImageFader';
-import { EditorOperationControl } from './EditorOperationControl';
 import { type EditorSlider, FAKE_ORIGINAL_FILTER } from './EditorSlider';
 import {
   ALL_COLOR_OPERATIONS,
@@ -24,154 +25,117 @@ import { parseFilterValue } from './utils/parseFilterValue';
 
 type TabIdValue = (typeof TabId)[keyof typeof TabId];
 
-function renderTabToggle(id: TabIdValue): string {
-  return html`
-    <uc-presence-toggle
-      class="uc-tab-toggle"
-      bind="visible: presence.tabToggle.${id}; styles: presence.tabToggleStyles;"
-    >
-      <uc-btn-ui
-        theme="tab"
-        ref="tab-toggle-${id}"
-        data-id="${id}"
-        icon="${id}"
-        bind="onclick: on.clickTab; aria-role:tab_role; aria-controls:tab_${id}; title-prop: a11y-editor-tab-${id}"
-      >
-      </uc-btn-ui>
-    </uc-presence-toggle>
-  `;
-}
+export class EditorToolbar extends LitBlock {
+  @state()
+  private showLoader = false;
 
-function renderTabContent(id: TabIdValue): string {
-  return html`
-    <uc-presence-toggle
-      id="tab_${id}"
-      class="uc-tab-content"
-      bind="visible: presence.tabContent.${id}; styles: presence.tabContentStyles"
-    >
-      <uc-editor-scroller hidden-scrollbar>
-        <div class="uc-controls-list_align">
-          <div
-            role="listbox"
-            aria-orientation="horizontal"
-            class="uc-controls-list_inner"
-            ref="controls-list-${id}"
-          ></div>
-        </div>
-      </uc-editor-scroller>
-    </uc-presence-toggle>
-  `;
-}
+  @state()
+  private showMainToolbar = true;
 
-export class EditorToolbar extends Block {
-  private _debouncedShowLoader: ReturnType<typeof debounce>;
+  @state()
+  private showSubToolbar = false;
+
+  @state()
+  private showTabToggles = true;
+
+  @state()
+  private tabList: TabIdValue[] = [...ALL_TABS];
+
+  @state()
+  private activeTab: TabIdValue = TabId.CROP;
+
+  @state()
+  private useSliderPanel = true;
+
+  @state()
+  private tooltipVisible = false;
+
+  @state()
+  private operationTooltip: string | null = null;
+
+  private tabIndicatorOffset = 0;
+  private tabIndicatorWidth = 0;
+
+  private readonly sliderRef = createRef<EditorSlider>();
+  private readonly tabIndicatorRef = createRef<HTMLElement>();
+  protected readonly tabToggleRefs: Record<TabIdValue, Ref<HTMLElement>> = {
+    [TabId.CROP]: createRef<HTMLElement>(),
+    [TabId.TUNING]: createRef<HTMLElement>(),
+    [TabId.FILTERS]: createRef<HTMLElement>(),
+  };
+
+  private readonly handleWindowResize = () => {
+    this._syncTabIndicator();
+  };
+
+  @state()
+  private cropPresets: CropAspectRatio[] = [];
+
   private _cancelPreload?: () => void;
-  private _updateInfoTooltip: ReturnType<typeof debounce>;
 
-  constructor() {
-    super();
+  private readonly _debouncedShowLoader = debounce((show: boolean) => {
+    this.showLoader = show;
+  }, 500);
 
-    this.init$ = {
-      ...this.init$,
-      '*sliderEl': null,
-      '*listAspectRatioEl': null,
-      /** @type {import('./types.js').LoadingOperations} */
-      '*loadingOperations': new Map(),
-      '*showSlider': false,
-      '*showListAspectRatio': false,
-      hideSliderOrList: false,
-      '*currentFilter': FAKE_ORIGINAL_FILTER,
-      '*currentOperation': null,
-      showLoader: false,
-      filters: ALL_FILTERS,
-      colorOperations: ALL_COLOR_OPERATIONS,
-      cropOperations: ALL_CROP_OPERATIONS,
-      '*operationTooltip': null,
+  private readonly _updateInfoTooltip = debounce(() => {
+    const transformations = this.$['*editorTransformations'];
+    const currentOperation = this.$['*currentOperation'] as keyof typeof COLOR_OPERATIONS_CONFIG | null;
+    let text = '';
+    let visible = false;
 
-      'presence.mainToolbar': true,
-      'presence.subToolbar': false,
-      'presence.tabToggles': true,
-      'presence.tabContent.crop': false,
-      'presence.tabContent.tuning': false,
-      'presence.tabContent.filters': false,
-      'presence.tabToggle.crop': true,
-      'presence.tabToggle.tuning': true,
-      'presence.tabToggle.filters': true,
-      'presence.subTopToolbarStyles': {
-        hidden: 'uc-sub-toolbar--top-hidden',
-        visible: 'uc-sub-toolbar--visible',
-      },
-      'presence.subBottomToolbarStyles': {
-        hidden: 'uc-sub-toolbar--bottom-hidden',
-        visible: 'uc-sub-toolbar--visible',
-      },
-      'presence.tabContentStyles': {
-        hidden: 'uc-tab-content--hidden',
-        visible: 'uc-tab-content--visible',
-      },
-      'presence.tabToggleStyles': {
-        hidden: 'uc-tab-toggle--hidden',
-        visible: 'uc-tab-toggle--visible',
-      },
-      'presence.tabTogglesStyles': {
-        hidden: 'uc-tab-toggles--hidden',
-        visible: 'uc-tab-toggles--visible',
-      },
-      'on.cancel': (e: MouseEvent) => {
-        this.telemetryManager.sendEventCloudImageEditor(e, this.$['*tabId'], {
-          action: 'cancel',
-        });
+    if (this.$['*tabId'] === TabId.FILTERS) {
+      visible = true;
+      if (this.$['*currentFilter'] && transformations?.filter?.name === this.$['*currentFilter']) {
+        const value = transformations?.filter?.amount || 100;
+        text = `${this.$['*currentFilter']} ${value}`;
+      } else {
+        text = this.l10n(FAKE_ORIGINAL_FILTER);
+      }
+    } else if (this.showSubToolbar && this.$['*tabId'] === TabId.TUNING && currentOperation) {
+      visible = true;
+      const value = transformations?.[currentOperation] || COLOR_OPERATIONS_CONFIG[currentOperation].zero;
+      text = `${this.l10n(currentOperation)} ${value}`;
+    }
+    if (visible) {
+      this.$['*operationTooltip'] = text;
+    }
+    this.tooltipVisible = visible;
+  }, 0);
 
-        this._cancelPreload?.();
-        const onCancel = this.$['*on.cancel'] as () => void;
-        onCancel();
-      },
-      'on.apply': (e: MouseEvent) => {
-        this.telemetryManager.sendEventCloudImageEditor(e, this.$['*tabId'], {
-          action: 'apply',
-        });
-        const onApply = this.$['*on.apply'] as (transformations: Transformations) => void;
-        onApply(this.$['*editorTransformations'] as Transformations);
-      },
-      'on.applySlider': (e: MouseEvent) => {
-        this.telemetryManager.sendEventCloudImageEditor(e, this.$['*tabId'], {
-          action: 'apply-slider',
-          operation: parseFilterValue(this.$['*operationTooltip']),
-        });
-        const slider = this.ref['slider-el'] as EditorSlider;
-        slider.apply();
-        this._onSliderClose();
-      },
-      'on.cancelSlider': (e: MouseEvent) => {
-        this.telemetryManager.sendEventCloudImageEditor(e, this.$['*tabId'], {
-          action: 'cancel-slider',
-        });
-        const slider = this.ref['slider-el'] as EditorSlider;
-        slider.cancel();
-        this._onSliderClose();
-      },
-      'on.clickTab': (e: MouseEvent) => {
-        const target = e.currentTarget as HTMLElement | null;
-        const id = target?.getAttribute('data-id') as TabIdValue | null;
-        if (id) {
-          this.telemetryManager.sendEventCloudImageEditor(e, id);
-          this._activateTab(id, { fromViewer: false });
-        }
-      },
-      tab_role: 'tab',
-      [`tab_${TabId.TUNING}`]: `tab_${TabId.TUNING}`,
-      [`tab_${TabId.CROP}`]: `tab_${TabId.CROP}`,
-      [`tab_${TabId.FILTERS}`]: `tab_${TabId.FILTERS}`,
-      cancel: 'cancel',
-      apply: 'apply',
-      'a11y-editor-tab-filters': 'a11y-editor-tab-filters',
-      'a11y-editor-tab-tuning': 'a11y-editor-tab-tuning',
-      'a11y-editor-tab-crop': 'a11y-editor-tab-crop',
-    };
+  private readonly subTopToolbarStyles = {
+    hidden: 'uc-sub-toolbar--top-hidden',
+    visible: 'uc-sub-toolbar--visible',
+  };
 
-    this._debouncedShowLoader = debounce(this._showLoader.bind(this), 500);
-    this._updateInfoTooltip = debounce(this._updateInfoTooltipHandler.bind(this), 0);
-  }
+  private readonly subBottomToolbarStyles = {
+    hidden: 'uc-sub-toolbar--bottom-hidden',
+    visible: 'uc-sub-toolbar--visible',
+  };
+
+  private readonly tabContentStyles = {
+    hidden: 'uc-tab-content--hidden',
+    visible: 'uc-tab-content--visible',
+  };
+
+  private readonly tabToggleStyles = {
+    hidden: 'uc-tab-toggle--hidden',
+    visible: 'uc-tab-toggle--visible',
+  };
+
+  private readonly tabTogglesStyles = {
+    hidden: 'uc-tab-toggles--hidden',
+    visible: 'uc-tab-toggles--visible',
+  };
+
+  override init$: Record<string, unknown> = {
+    ...this.init$,
+    '*sliderEl': null,
+    '*showSlider': false,
+    '*showListAspectRatio': false,
+    '*currentFilter': FAKE_ORIGINAL_FILTER,
+    '*currentOperation': null,
+    '*operationTooltip': null,
+  };
 
   private _onSliderClose(): void {
     this.$['*showSlider'] = false;
@@ -181,113 +145,37 @@ export class EditorToolbar extends Block {
     }
 
     if (this.$['*tabId'] === TabId.TUNING) {
-      const tooltipEl = this.ref['tooltip-el'] as HTMLElement;
-      tooltipEl.classList.toggle('uc-info-tooltip_visible', false);
+      this.tooltipVisible = false;
     }
   }
 
-  private _createOperationControl(operation: string): EditorOperationControl {
-    const el = new EditorOperationControl();
-    (el as unknown as { operation: string }).operation = operation;
-    return el;
-  }
-
-  private _createFilterControl(filter: string): EditorFilterControl {
-    const el = new EditorFilterControl();
-    (el as unknown as { filter: string }).filter = filter;
-    return el;
-  }
-
-  private _createToggleControl(operation: CropOperation): EditorCropButtonControl {
-    const el = new EditorCropButtonControl();
-    el.operation = operation;
-    return el;
-  }
-
-  private _createAspectRatioControl(config: CropAspectRatio): EditorAspectRatioButtonControl {
-    const el = new EditorAspectRatioButtonControl();
-    el.aspectRatio = config;
-    return el;
-  }
-
-  private _createFreeformControl(): EditorFreeformButtonControl {
-    return new EditorFreeformButtonControl();
-  }
-
-  private _clearListAspectRatio(): void {
-    const listAspectRatioEl = this.$['*listAspectRatioEl'] as HTMLElement | null;
-    if (listAspectRatioEl) {
-      listAspectRatioEl.innerHTML = '';
+  private _activateTab(
+    id: TabIdValue,
+    { fromViewer = false, force = false }: { fromViewer?: boolean; force?: boolean } = {},
+  ): void {
+    if (this.$['*tabId'] !== id) {
+      this.$['*tabId'] = id;
     }
+    this.applyTabState(id, { fromViewer, force });
   }
 
-  private _renderControlsList(tabId: TabIdValue): void {
-    const listEl = this.ref[`controls-list-${tabId}`] as HTMLElement;
-    const fr = document.createDocumentFragment();
-
-    this._clearListAspectRatio();
-
-    if (tabId === TabId.CROP) {
-      const cropPresetList = this.$['*cropPresetList'] as CropAspectRatio[];
-      const hasFreeformAspectRatio = cropPresetList.length >= 3;
-
-      if (hasFreeformAspectRatio) {
-        const el = this._createFreeformControl();
-        fr.appendChild(el);
-      }
-
-      for (const preset of cropPresetList) {
-        const el = this._createAspectRatioControl(preset);
-        fr.appendChild(el);
-
-        if (hasFreeformAspectRatio) {
-          const listAspectRatioEl = this.$['*listAspectRatioEl'] as HTMLElement | null;
-          listAspectRatioEl?.appendChild(el);
-        }
-      }
-
-      for (const operation of this.$.cropOperations as CropOperation[]) {
-        const el = this._createToggleControl(operation);
-        fr.appendChild(el);
-      }
-    } else if (tabId === TabId.FILTERS) {
-      const filters = this.$.filters as string[];
-      [FAKE_ORIGINAL_FILTER, ...filters].forEach((filterId) => {
-        const el = this._createFilterControl(filterId);
-        fr.appendChild(el);
-      });
-    } else if (tabId === TabId.TUNING) {
-      for (const operation of this.$.colorOperations as string[]) {
-        const el = this._createOperationControl(operation);
-        fr.appendChild(el);
-      }
+  private applyTabState(id: TabIdValue, { fromViewer, force = false }: { fromViewer: boolean; force?: boolean }): void {
+    if (!force && this.activeTab === id) {
+      this._syncTabIndicator();
+      return;
     }
 
-    [...fr.children].forEach((el, idx) => {
-      if (idx === fr.childNodes.length - 1) {
-        el.classList.add('uc-controls-list_last-item');
-      }
-    });
-
-    listEl.innerHTML = '';
-    listEl.appendChild(fr);
-  }
-
-  private _activateTab(id: TabIdValue, { fromViewer }: { fromViewer?: boolean } = {}): void {
-    this.$['*tabId'] = id;
+    this.activeTab = id;
 
     const faderEl = this.$['*faderEl'] as EditorImageFader | undefined;
     const cropperEl = this.$['*cropperEl'] as EditorImageCropper | undefined;
 
     if (id === TabId.CROP) {
       faderEl?.deactivate();
-      cropperEl?.activate(
-        this.$['*imageSize'] as {
-          width: number;
-          height: number;
-        },
-        { fromViewer },
-      );
+      const imageSize = this.$['*imageSize'] as { width: number; height: number } | undefined;
+      if (imageSize) {
+        cropperEl?.activate(this.$['*imageSize'] as { width: number; height: number }, { fromViewer });
+      }
     } else {
       faderEl?.activate({
         url: this.$['*originalUrl'] as string,
@@ -298,31 +186,113 @@ export class EditorToolbar extends Block {
 
     for (const tabId of ALL_TABS) {
       const isCurrentTab = tabId === id;
-
-      const tabToggleEl = this.ref[`tab-toggle-${tabId}`] as HTMLElement & { active: boolean };
-      tabToggleEl.active = isCurrentTab;
-
-      if (isCurrentTab) {
-        this._renderControlsList(id);
-        this._syncTabIndicator();
-      } else {
-        this._unmountTabControls(tabId);
+      const toggleRef = this.tabToggleRefs[tabId];
+      const toggleEl = toggleRef?.value as (HTMLElement & { active?: boolean }) | null;
+      if (toggleEl) {
+        toggleEl.active = isCurrentTab;
       }
-      this.$[`presence.tabContent.${tabId}`] = isCurrentTab;
-    }
-  }
-
-  private _unmountTabControls(tabId: TabIdValue): void {
-    const listEl = this.ref[`controls-list-${tabId}`] as HTMLElement | undefined;
-    if (listEl) {
-      listEl.innerHTML = '';
+      if (isCurrentTab) {
+        this._syncTabIndicator();
+      }
     }
   }
 
   private _syncTabIndicator(): void {
-    const tabToggleEl = this.ref[`tab-toggle-${this.$['*tabId']}`] as HTMLElement;
-    const indicatorEl = this.ref['tabs-indicator'] as HTMLElement;
-    indicatorEl.style.transform = `translateX(${tabToggleEl.offsetLeft}px)`;
+    const toggleRef = this.tabToggleRefs[this.activeTab];
+    const toggleEl = toggleRef?.value;
+    const indicatorEl = this.tabIndicatorRef.value;
+    if (!toggleEl || !indicatorEl) {
+      return;
+    }
+    const offset = toggleEl.offsetLeft;
+
+    const width = toggleEl.offsetWidth || Number(getComputedStyle(toggleEl).width.replace('px', ''));
+    if (this.tabIndicatorOffset !== offset || this.tabIndicatorWidth !== width) {
+      this.tabIndicatorOffset = offset;
+      this.tabIndicatorWidth = width;
+      indicatorEl.style.transform = `translateX(${offset}px)`;
+      indicatorEl.style.width = `${width}px`;
+    }
+  }
+
+  private get hasAspectRatioPicker(): boolean {
+    return this.cropPresets.length >= 3;
+  }
+
+  private renderControlsByTab(tabId: TabIdValue): TemplateResult[] {
+    switch (tabId) {
+      case TabId.CROP:
+        return this.renderCropTabControls();
+      case TabId.FILTERS:
+        return this.renderFilterTabControls();
+      case TabId.TUNING:
+        return this.renderTuningTabControls();
+      default:
+        return [];
+    }
+  }
+
+  private renderCropTabControls(): TemplateResult[] {
+    const renderers: Array<() => TemplateResult> = [];
+    if (this.hasAspectRatioPicker) {
+      renderers.push(() => this.renderFreeformControl());
+    } else {
+      for (const preset of this.cropPresets) {
+        renderers.push(() => this.renderAspectRatioControl(preset));
+      }
+    }
+
+    for (const operation of ALL_CROP_OPERATIONS) {
+      renderers.push(() => this.renderCropOperationControl(operation));
+    }
+
+    return this.renderControlGroup(renderers);
+  }
+
+  private renderFilterTabControls(): TemplateResult[] {
+    const filterIds = [FAKE_ORIGINAL_FILTER, ...ALL_FILTERS];
+    const renderers = filterIds.map((filterId) => () => this.renderFilterControl(filterId));
+    return this.renderControlGroup(renderers);
+  }
+
+  private renderTuningTabControls(): TemplateResult[] {
+    const renderers = ALL_COLOR_OPERATIONS.map((operation) => () => this.renderOperationControl(operation));
+    return this.renderControlGroup(renderers);
+  }
+
+  private renderControlGroup(renderers: Array<() => TemplateResult>): TemplateResult[] {
+    const total = renderers.length;
+    if (!total) {
+      return [];
+    }
+    return renderers.map((renderControl) => renderControl());
+  }
+
+  private renderFreeformControl(): TemplateResult {
+    return html`<uc-editor-freeform-button-control></uc-editor-freeform-button-control>`;
+  }
+
+  private renderAspectRatioControl(preset: CropAspectRatio): TemplateResult {
+    return html`<uc-editor-aspect-ratio-button-control .aspectRatio=${preset}></uc-editor-aspect-ratio-button-control>`;
+  }
+
+  private renderCropOperationControl(operation: CropOperation): TemplateResult {
+    return html`<uc-editor-crop-button-control .operation=${operation}></uc-editor-crop-button-control>`;
+  }
+
+  private renderFilterControl(filterId: string): TemplateResult {
+    return html`<uc-editor-filter-control .filter=${filterId}></uc-editor-filter-control>`;
+  }
+
+  private renderOperationControl(operation: string): TemplateResult {
+    return html`<uc-editor-operation-control .operation=${operation}></uc-editor-operation-control>`;
+  }
+
+  private renderAspectRatioList(): TemplateResult[] {
+    if (!this.hasAspectRatioPicker) {
+      return [];
+    }
+    return this.cropPresets.map((preset) => this.renderAspectRatioControl(preset));
   }
 
   private async _preloadEditedImage(): Promise<void> {
@@ -338,40 +308,14 @@ export class EditorToolbar extends Block {
     }
   }
 
-  private _showLoader(show: boolean): void {
-    this.$.showLoader = show;
-  }
-
-  private _updateInfoTooltipHandler(): void {
-    const transformations = this.$['*editorTransformations'];
-    const currentOperation = this.$['*currentOperation'] as keyof typeof COLOR_OPERATIONS_CONFIG | null;
-    let text = '';
-    let visible = false;
-
-    if (this.$['*tabId'] === TabId.FILTERS) {
-      visible = true;
-      if (this.$['*currentFilter'] && transformations?.filter?.name === this.$['*currentFilter']) {
-        const value = transformations?.filter?.amount || 100;
-        text = `${this.$['*currentFilter']} ${value}`;
-      } else {
-        text = this.l10n(FAKE_ORIGINAL_FILTER);
-      }
-    } else if (this.$['*tabId'] === TabId.TUNING && currentOperation) {
-      visible = true;
-      const value = transformations?.[currentOperation] || COLOR_OPERATIONS_CONFIG[currentOperation].zero;
-      text = `${this.l10n(currentOperation)} ${value}`;
-    }
-    if (visible) {
-      this.$['*operationTooltip'] = text;
-    }
-    this.ref['tooltip-el'].classList.toggle('uc-info-tooltip_visible', visible);
-  }
-
   override initCallback(): void {
     super.initCallback();
 
-    this.$['*sliderEl'] = this.ref['slider-el'];
-    this.$['*listAspectRatioEl'] = this.ref['list-el'];
+    const initialCropPresets = (this.$['*cropPresetList'] as CropAspectRatio[]) ?? [];
+    this.cropPresets = [...initialCropPresets];
+    this.sub('*cropPresetList', (cropPresetList: CropAspectRatio[]) => {
+      this.cropPresets = [...(cropPresetList ?? [])];
+    });
 
     this.sub('*imageSize', (imageSize: { width: number; height: number } | null) => {
       if (imageSize) {
@@ -396,7 +340,8 @@ export class EditorToolbar extends Block {
       this._updateInfoTooltip();
     });
 
-    this.sub('*tabId', () => {
+    this.sub('*tabId', (tabId: TabIdValue) => {
+      this.applyTabState(tabId, { fromViewer: false, force: true });
       this._updateInfoTooltip();
     });
 
@@ -426,85 +371,246 @@ export class EditorToolbar extends Block {
     });
 
     this.sub('*showSlider', (showSlider: boolean) => {
-      this.$['presence.subToolbar'] = showSlider;
-      this.$['presence.mainToolbar'] = !showSlider;
-
-      this.$.hideSliderOrList = true;
+      if (showSlider) {
+        this.showSubToolbar = true;
+        this.showMainToolbar = false;
+        this.useSliderPanel = true;
+      } else if (!this.$['*showListAspectRatio']) {
+        this.showSubToolbar = false;
+        this.showMainToolbar = true;
+      }
     });
 
     this.sub('*showListAspectRatio', (show: boolean) => {
-      this.$['presence.subToolbar'] = show;
-      this.$['presence.mainToolbar'] = !show;
-      this.$.hideSliderOrList = false;
+      if (show) {
+        this.showSubToolbar = true;
+        this.showMainToolbar = false;
+        this.useSliderPanel = false;
+      } else if (!this.$['*showSlider']) {
+        this.showSubToolbar = false;
+        this.showMainToolbar = true;
+      }
     });
 
     this.sub('*tabList', (tabList: TabIdValue[]) => {
-      this.$['presence.tabToggles'] = tabList.length > 1;
-      for (const tabId of ALL_TABS) {
-        this.$[`presence.tabToggle.${tabId}`] = tabList.includes(tabId);
-        const toggleEl = this.ref[`tab-toggle-${tabId}`] as HTMLElement;
-        toggleEl.style.gridColumn = `${tabList.indexOf(tabId) + 1}`;
-      }
+      this.tabList = tabList;
+      this.showTabToggles = tabList.length > 1;
 
       if (!tabList.includes(this.$['*tabId']) && tabList.length > 0) {
         const [firstTab] = tabList;
         if (firstTab) {
           this._activateTab(firstTab, { fromViewer: false });
         }
+        return;
       }
+
+      this._syncTabIndicator();
+    });
+
+    this.sub('*operationTooltip', (tooltip: string | null) => {
+      this.operationTooltip = tooltip;
     });
 
     this._updateInfoTooltip();
   }
 
-  override destroyCallback(): void {
+  override connectedCallback(): void {
+    super.connectedCallback();
+    window.addEventListener('resize', this.handleWindowResize);
+  }
+
+  override firstUpdated(_changedProperties: PropertyValues): void {
+    super.firstUpdated(_changedProperties);
+    this.assignSharedElements();
+
+    this._syncTabIndicator();
+  }
+
+  protected override updated(changedProperties: PropertyValues): void {
+    super.updated(changedProperties);
+
+    if (changedProperties.has('activeTab') || changedProperties.has('tabList')) {
+      this.updateComplete.then(() => this._syncTabIndicator());
+    }
+
+    if (changedProperties.has('showSubToolbar') || changedProperties.has('showMainToolbar')) {
+      this.assignSharedElements();
+    }
+  }
+
+  override disconnectedCallback(): void {
+    window.removeEventListener('resize', this.handleWindowResize);
+    super.disconnectedCallback();
+
     this.$['*showSlider'] = false;
     this.$['*showListAspectRatio'] = false;
   }
-}
 
-EditorToolbar.template = html`
-  <uc-line-loader-ui bind="active: showLoader"></uc-line-loader-ui>
-  <div class="uc-info-tooltip_container">
-    <div class="uc-info-tooltip_wrapper">
-      <div ref="tooltip-el" class="uc-info-tooltip uc-info-tooltip_hidden">{{*operationTooltip}}</div>
-    </div>
-  </div>
-  <div class="uc-toolbar-container">
-    <uc-presence-toggle
-      role="tablist"
-      class="uc-sub-toolbar"
-      bind="visible: presence.mainToolbar; styles: presence.subTopToolbarStyles"
-    >
-      <div class="uc-tab-content-row">${ALL_TABS.map(renderTabContent).join('')}</div>
-      <div class="uc-controls-row">
+  private assignSharedElements(): void {
+    const slider = this.sliderRef.value;
+    if (slider) {
+      this.$['*sliderEl'] = slider;
+    }
+  }
+
+  private handleCancel = (e: MouseEvent): void => {
+    this.telemetryManager.sendEventCloudImageEditor(e, this.$['*tabId'], {
+      action: 'cancel',
+    });
+    this._cancelPreload?.();
+    const onCancel = this.$['*on.cancel'] as (() => void) | undefined;
+    onCancel?.();
+  };
+
+  private handleApply = (e: MouseEvent): void => {
+    this.telemetryManager.sendEventCloudImageEditor(e, this.$['*tabId'], {
+      action: 'apply',
+    });
+    const onApply = this.$['*on.apply'] as ((transformations: Transformations) => void) | undefined;
+    onApply?.(this.$['*editorTransformations'] as Transformations);
+  };
+
+  private handleApplySlider = (e: MouseEvent): void => {
+    this.telemetryManager.sendEventCloudImageEditor(e, this.$['*tabId'], {
+      action: 'apply-slider',
+      operation: parseFilterValue(this.$['*operationTooltip']),
+    });
+    const slider = this.sliderRef.value;
+    slider?.apply();
+    this._onSliderClose();
+  };
+
+  private handleCancelSlider = (e: MouseEvent): void => {
+    this.telemetryManager.sendEventCloudImageEditor(e, this.$['*tabId'], {
+      action: 'cancel-slider',
+    });
+    const slider = this.sliderRef.value;
+    slider?.cancel();
+    this._onSliderClose();
+  };
+
+  private handleTabClick = (e: MouseEvent): void => {
+    const target = e.currentTarget as HTMLElement | null;
+    const id = target?.getAttribute('data-id') as TabIdValue | null;
+    if (!id) {
+      return;
+    }
+    this.telemetryManager.sendEventCloudImageEditor(e, id);
+    this._activateTab(id, { fromViewer: false });
+  };
+
+  private renderTabToggle(id: TabIdValue) {
+    const isVisible = this.tabList.includes(id);
+    const isActive = this.activeTab === id;
+    const columnIndex = this.tabList.indexOf(id);
+    const style = columnIndex >= 0 ? styleMap({ gridColumn: `${columnIndex + 1}` }) : nothing;
+
+    return html`
+      <uc-presence-toggle class="uc-tab-toggle" .visible=${isVisible} .styles=${this.tabToggleStyles}>
+        <uc-btn-ui
+          theme="tab"
+          data-id=${id}
+          icon=${id}
+          role="tab"
+          aria-controls=${`tab_${id}`}
+          aria-selected=${isActive ? 'true' : 'false'}
+          title-prop=${`a11y-editor-tab-${id}`}
+          .active=${isActive}
+          style=${style}
+          @click=${this.handleTabClick}
+          ${ref(this.tabToggleRefs[id])}
+        ></uc-btn-ui>
+      </uc-presence-toggle>
+    `;
+  }
+
+  private renderTabContent(id: TabIdValue) {
+    const isVisible = this.activeTab === id;
+    const controls = this.renderControlsByTab(id);
+
+    return html`
+      <uc-presence-toggle
+        id=${`tab_${id}`}
+        class="uc-tab-content"
+        .visible=${isVisible}
+        .styles=${this.tabContentStyles}
+      >
+        <uc-editor-scroller hidden-scrollbar>
+          <div class="uc-controls-list_align">
+            <div role="listbox" aria-orientation="horizontal" class="uc-controls-list_inner">
+              ${controls.length ? controls : nothing}
+            </div>
+          </div>
+        </uc-editor-scroller>
+      </uc-presence-toggle>
+    `;
+  }
+
+  override render() {
+    const tooltipClasses = [
+      'uc-info-tooltip',
+      this.tooltipVisible ? 'uc-info-tooltip_visible' : 'uc-info-tooltip_hidden',
+    ].join(' ');
+    const showAspectRatioList = this.hasAspectRatioPicker;
+
+    return html`
+      <uc-line-loader-ui .active=${this.showLoader}></uc-line-loader-ui>
+      <div class="uc-info-tooltip_container">
+        <div class="uc-info-tooltip_wrapper">
+          <div class=${tooltipClasses}>${this.operationTooltip ?? ''}</div>
+        </div>
+      </div>
+      <div class="uc-toolbar-container">
         <uc-presence-toggle
-          class="uc-tab-toggles"
-          bind="visible: presence.tabToggles; styles: presence.tabTogglesStyles"
+          role="tablist"
+          class="uc-sub-toolbar"
+          .visible=${this.showMainToolbar}
+          .styles=${this.subTopToolbarStyles}
         >
-          <div ref="tabs-indicator" class="uc-tab-toggles_indicator"></div>
-          ${ALL_TABS.map(renderTabToggle).join('')}
+          <div class="uc-tab-content-row">
+            ${ALL_TABS.map((tabId) => this.renderTabContent(tabId))}
+          </div>
+          <div class="uc-controls-row">
+            <uc-presence-toggle
+              class="uc-tab-toggles"
+              .visible=${this.showTabToggles}
+              .styles=${this.tabTogglesStyles}
+              @initial-render=${() => this._syncTabIndicator()}
+            >
+              <div
+                class="uc-tab-toggles_indicator"
+                ${ref(this.tabIndicatorRef)}
+              ></div>
+              ${ALL_TABS.map((tabId) => this.renderTabToggle(tabId))}
+            </uc-presence-toggle>
+            <uc-btn-ui
+              style="order: -1"
+              theme="secondary-icon"
+              icon="closeMax"
+              title-prop="cancel"
+              @click=${this.handleCancel}
+            ></uc-btn-ui>
+            <uc-btn-ui theme="primary-icon" icon="done" title-prop="apply" @click=${this.handleApply}></uc-btn-ui>
+          </div>
         </uc-presence-toggle>
-        <uc-btn-ui style="order: -1" theme="secondary-icon" icon="closeMax" bind="onclick: on.cancel; title-prop:cancel">
-        </uc-btn-ui>
-        <uc-btn-ui theme="primary-icon" icon="done" bind="onclick: on.apply; title-prop:apply"> </uc-btn-ui>
-      </div>
-    </uc-presence-toggle>
-    <uc-presence-toggle
-      class="uc-sub-toolbar"
-      bind="visible: presence.subToolbar; styles: presence.subBottomToolbarStyles"
-    >
-      <div class="uc-slider" bind="@hidden:!hideSliderOrList">
-        <uc-editor-slider ref="slider-el"></uc-editor-slider>
-      </div>
+        <uc-presence-toggle class="uc-sub-toolbar" .visible=${this.showSubToolbar} .styles=${this.subBottomToolbarStyles}>
+          <div class="uc-slider" ?hidden=${!this.useSliderPanel}>
+            <uc-editor-slider ${ref(this.sliderRef)}></uc-editor-slider>
+          </div>
 
-      <div bind="@hidden:hideSliderOrList" class="uc-list-aspect-ratio-container">
-        <div class="uc-list-aspect-ratio" ref="list-el"></div>
+          <div class="uc-list-aspect-ratio-container" ?hidden=${this.useSliderPanel || !showAspectRatioList}>
+            ${
+              showAspectRatioList
+                ? html`<div class="uc-list-aspect-ratio">${this.renderAspectRatioList()}</div>`
+                : nothing
+            }
+          </div>
+          <div class="uc-controls-row">
+            <uc-btn-ui theme="secondary" @click=${this.handleCancelSlider} text=${this.l10n('cancel')}></uc-btn-ui>
+            <uc-btn-ui theme="primary" @click=${this.handleApplySlider} text=${this.l10n('apply')}></uc-btn-ui>
+          </div>
+        </uc-presence-toggle>
       </div>
-      <div class="uc-controls-row">
-        <uc-btn-ui theme="secondary" bind="onclick: on.cancelSlider; title-prop:cancel" l10n="@text:cancel"> </uc-btn-ui>
-        <uc-btn-ui theme="primary" bind="onclick: on.applySlider; title-prop:apply" l10n="@text:apply"> </uc-btn-ui>
-      </div>
-    </uc-presence-toggle>
-  </div>
-`;
+    `;
+  }
+}
