@@ -4,7 +4,6 @@ import type { ConfigComplexType, ConfigPlainType, ConfigType } from '../../types
 import { toKebabCase } from '../../utils/toKebabCase';
 import { runAssertions } from './assertions';
 import './config.css';
-import { LitElement } from 'lit';
 import { LitBlock } from '../../lit/LitBlock';
 import { computeProperty } from './computed-properties';
 import { initialConfig } from './initialConfig';

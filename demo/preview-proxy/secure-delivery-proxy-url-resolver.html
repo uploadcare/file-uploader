@@ -1,17 +1,16 @@
 <!doctype html>
-
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <script type="module">
-    import '@/solutions/file-uploader/regular/index.css';
-    import * as UC from '@/index.js';
+  import '@/solutions/file-uploader/regular/index.css';
+  import * as UC from '@/index.js';
 
-    UC.defineComponents(UC);
+  UC.defineComponents(UC);
 
-    const config = document.querySelector('uc-config');
-    config.secureDeliveryProxyUrlResolver = (previewUrl) => {
-      return `http://localhost:3000/preview?url=${encodeURIComponent(previewUrl)}`;
-    };
+  const config = document.querySelector('uc-config');
+  config.secureDeliveryProxyUrlResolver = (previewUrl) => {
+    return `http://localhost:3000/preview?url=${encodeURIComponent(previewUrl)}`;
+  };
   </script>
 </head>
 
