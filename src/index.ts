@@ -1,19 +1,12 @@
 import './blocks/themes/uc-basic/index.css';
 
 // Symbiote.js
-export { PubSub, PubSub as Data, Symbiote, Symbiote as BaseComponent, UID } from '@symbiotejs/symbiote';
-export { ActivityBlock } from './abstract/ActivityBlock';
-
-// Abstract:
-export { Block } from './abstract/Block';
-
+export { PubSub as Data, PubSub, UID } from '@symbiotejs/symbiote';
 // Utils:
 export { defineComponents } from './abstract/defineComponents';
 export { loadFileUploaderFrom } from './abstract/loadFileUploaderFrom';
 export { defineLocale } from './abstract/localeRegistry';
 export { ModalEvents, type ModalId } from './abstract/managers/ModalManager';
-export { SolutionBlock } from './abstract/SolutionBlock';
-export { UploaderBlock } from './abstract/UploaderBlock';
 export { ActivityHeader } from './blocks/ActivityHeader/ActivityHeader';
 export { CameraSource } from './blocks/CameraSource/CameraSource';
 export * from './blocks/CloudImageEditor/index';
@@ -42,6 +35,11 @@ export { UploadList } from './blocks/UploadList/UploadList';
 export { UrlSource } from './blocks/UrlSource/UrlSource';
 // Other
 export * from './env';
+export { LitActivityBlock as ActivityBlock } from './lit/LitActivityBlock';
+// Abstract:
+export { LitBlock as Block } from './lit/LitBlock';
+export { LitSolutionBlock as SolutionBlock } from './lit/LitSolutionBlock';
+export { LitUploaderBlock as UploaderBlock } from './lit/LitUploaderBlock';
 export { CloudImageEditor } from './solutions/cloud-image-editor/CloudImageEditor';
 export { FileUploaderInline } from './solutions/file-uploader/inline/FileUploaderInline';
 export { FileUploaderMinimal } from './solutions/file-uploader/minimal/FileUploaderMinimal';
