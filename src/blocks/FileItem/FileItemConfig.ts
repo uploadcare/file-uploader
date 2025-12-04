@@ -1,9 +1,9 @@
-import { UploaderBlock } from '../../abstract/UploaderBlock';
 import type { UploadEntryData, UploadEntryKeys, UploadEntryTypedData } from '../../abstract/uploadEntrySchema';
+import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
 
 type EntrySubscription = ReturnType<UploadEntryTypedData['subscribe']>;
 
-export class FileItemConfig extends UploaderBlock {
+export class FileItemConfig extends LitUploaderBlock {
   protected _entrySubs: Set<EntrySubscription> = new Set<EntrySubscription>();
 
   protected _entry: UploadEntryTypedData | null = null;

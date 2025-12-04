@@ -1,25 +1,27 @@
+import { html, type PropertyValues } from 'lit';
+import { state } from 'lit/decorators.js';
+import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
 import './progress-bar-common.css';
-import { html } from '@symbiotejs/symbiote';
-import { UploaderBlock } from '../../abstract/UploaderBlock';
 
-type BaseInitState = InstanceType<typeof UploaderBlock>['init$'];
+type BaseInitState = InstanceType<typeof LitUploaderBlock>['init$'];
 
 interface ProgressBarCommonInitState extends BaseInitState {
-  visible: boolean;
-  value: number;
   '*commonProgress': number;
 }
 
-export class ProgressBarCommon extends UploaderBlock {
+export class ProgressBarCommon extends LitUploaderBlock {
   private _unobserveCollectionCb?: () => void;
+
+  @state()
+  protected visible = false;
+
+  @state()
+  protected value = 0;
 
   constructor() {
     super();
     this.init$ = {
       ...this.init$,
-      visible: false,
-      value: 0,
-
       '*commonProgress': 0,
     } as ProgressBarCommonInitState;
   }
@@ -32,27 +34,33 @@ export class ProgressBarCommon extends UploaderBlock {
         return item?.getValue('isUploading') ?? false;
       });
 
-      this.$.visible = anyUploading;
+      this.visible = anyUploading;
     });
 
-    this.sub('visible', (visible: boolean) => {
-      if (visible) {
+    this.sub('*commonProgress', (progress: number) => {
+      this.value = progress;
+    });
+  }
+
+  protected override updated(changedProperties: PropertyValues<this>): void {
+    super.updated(changedProperties);
+
+    if (changedProperties.has('visible' as keyof ProgressBarCommon)) {
+      if (this.visible) {
         this.setAttribute('active', '');
       } else {
         this.removeAttribute('active');
       }
-    });
-
-    this.sub('*commonProgress', (progress: number) => {
-      this.$.value = progress;
-    });
+    }
   }
 
-  override destroyCallback(): void {
-    super.destroyCallback();
+  override disconnectedCallback(): void {
+    super.disconnectedCallback();
     this._unobserveCollectionCb?.();
     this._unobserveCollectionCb = undefined;
   }
-}
 
-ProgressBarCommon.template = html` <uc-progress-bar bind="visible: visible; value: value"></uc-progress-bar> `;
+  override render() {
+    return html` <uc-progress-bar .value=${this.value} .visible=${this.visible}></uc-progress-bar> `;
+  }
+}
