@@ -1,5 +1,6 @@
-import { html } from '@symbiotejs/symbiote';
-import { Block } from '../../abstract/Block';
+import { html } from 'lit';
+import { property, state } from 'lit/decorators.js';
+import { LitBlock } from '../../lit/LitBlock';
 import './select.css';
 
 type SelectOption = {
@@ -7,52 +8,40 @@ type SelectOption = {
   value: string;
 };
 
-type BaseInitState = InstanceType<typeof Block>['init$'];
+export class Select extends LitBlock {
+  @property({ type: String, attribute: false })
+  value = '';
 
-interface SelectInitState extends BaseInitState {
-  currentText: string;
-  options: SelectOption[];
-  selectHtml: string;
-  onSelect: (event: Event) => void;
-}
+  @property({ type: Boolean, reflect: true })
+  disabled = false;
 
-export class Select extends Block {
-  declare ref: { select: HTMLSelectElement } & Record<string, HTMLElement>;
-  declare value: string;
+  @property({ type: Array, attribute: false })
+  options: SelectOption[] = [];
 
-  constructor() {
-    super();
-    this.init$ = {
-      ...this.init$,
-      currentText: '',
-      options: [],
-      selectHtml: '',
-      onSelect: (event: Event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        const selectElement = this.ref.select;
-        this.value = selectElement.value;
-        this.$.currentText =
-          this.$.options.find((option: SelectOption) => {
-            return option.value === this.value;
-          })?.text || '';
-        this.dispatchEvent(new Event('change'));
-      },
-    } as SelectInitState;
+  override render() {
+    return html`
+      <select @change=${this._handleChange} .value=${this.value} ?disabled=${this.disabled}>
+        ${this.options.map((option) => html`<option value=${option.value}>${option.text}</option>`)}
+      </select>
+    `;
   }
 
-  override initCallback(): void {
-    super.initCallback();
+  private _handleChange = (event: Event): void => {
+    if (this.disabled) {
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
 
-    this.sub('options', (options: SelectOption[]) => {
-      this.$.currentText = options?.[0]?.text || '';
-      let htmlContent = '';
-      options?.forEach((option) => {
-        htmlContent += html`<option value="${option.value}">${option.text}</option>`;
-      });
-      this.$.selectHtml = htmlContent;
-    });
-  }
+    event.preventDefault();
+    event.stopPropagation();
+
+    const selectEl = event.currentTarget as HTMLSelectElement | null;
+    if (!selectEl) {
+      return;
+    }
+
+    this.value = selectEl.value;
+    this.dispatchEvent(new Event('change'));
+  };
 }
-
-Select.template = html` <select ref="select" bind="innerHTML: selectHtml; onchange: onSelect"></select> `;

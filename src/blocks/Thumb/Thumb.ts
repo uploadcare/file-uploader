@@ -1,4 +1,5 @@
-import { html } from '@symbiotejs/symbiote';
+import { html, type PropertyValues } from 'lit';
+import { property, state } from 'lit/decorators.js';
 import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../utils/cdn-utils';
 import { debounce } from '../../utils/debounce';
 import { preloadImage } from '../../utils/preloadImage';
@@ -9,36 +10,42 @@ import './thumb.css';
 
 const CDN_MAX_OUTPUT_DIMENSION = 3000;
 
+type PendingThumbUpdate = {
+  controller: AbortController;
+  rafId?: number;
+  cancel: () => void;
+};
+
 export class Thumb extends FileItemConfig {
-  private _renderedGridOnce = false;
+  @property({ type: String })
+  badgeIcon = '';
 
-  private _thumbRect: IntersectionObserverEntry['boundingClientRect'] | null = null;
+  @property({ type: String })
+  uid = '';
 
-  private _isIntersecting = false;
+  @state()
+  private thumbUrl = '';
 
-  private _firstViewMode = this.cfg.filesViewMode;
+  private renderedGridOnce = false;
 
-  private _observer?: IntersectionObserver;
+  private thumbRect: IntersectionObserverEntry['boundingClientRect'] | null = null;
 
-  constructor() {
-    super();
+  private isIntersecting = false;
 
-    this.init$ = {
-      ...this.init$,
-      thumbUrl: '',
-      badgeIcon: '',
-      uid: '',
-    } as typeof this.init$ & { thumbUrl: string; badgeIcon: string; uid: string };
-  }
+  private firstViewMode = this.cfg.filesViewMode;
 
-  private _calculateThumbSize(force = false): number {
+  private observer?: IntersectionObserver;
+
+  private pendingThumbUpdate?: PendingThumbUpdate;
+
+  private calculateThumbSize(force = false): number {
     if (force) {
-      this._thumbRect = this.getBoundingClientRect();
+      this.thumbRect = this.getBoundingClientRect();
     }
 
     let size = Math.max(
-      parseInt(String(this?._thumbRect?.height || 0), 10),
-      parseInt(String(this?._thumbRect?.width || 0), 10),
+      parseInt(String(this?.thumbRect?.height || 0), 10),
+      parseInt(String(this?.thumbRect?.width || 0), 10),
       this.cfg.thumbSize,
     );
 
@@ -50,13 +57,13 @@ export class Thumb extends FileItemConfig {
   }
 
   // biome-ignore lint/style/noInferrableTypes: Here the type is needed because `_withEntry` could not infer it correctly
-  private _generateThumbnail = this._withEntry(async (entry, force: boolean = false) => {
+  private generateThumbnail = this._withEntry(async (entry, force: boolean = false) => {
     const fileInfo = entry.getValue('fileInfo');
     const isImage = entry.getValue('isImage');
     const uuid = entry.getValue('uuid');
     const currentThumbUrl = entry.getValue('thumbUrl');
 
-    const size = this._calculateThumbSize(force);
+    const size = this.calculateThumbSize(force);
 
     if (fileInfo && isImage && uuid) {
       const thumbUrl = await this.proxyUrl(
@@ -114,83 +121,200 @@ export class Thumb extends FileItemConfig {
     }
   });
 
-  private _debouncedGenerateThumb = debounce(this._generateThumbnail.bind(this), 100);
+  private debouncedGenerateThumb = debounce(this.generateThumbnail.bind(this), 100);
+
+  private decodeImage(src: string, signal?: AbortSignal): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const image = new Image();
+      image.decoding = 'async';
+
+      const cleanup = () => {
+        image.src = '';
+        signal?.removeEventListener('abort', onAbort);
+      };
+
+      const onAbort = () => {
+        cleanup();
+        reject(new DOMException('Aborted', 'AbortError'));
+      };
+
+      if (signal) {
+        if (signal.aborted) {
+          onAbort();
+          return;
+        }
+        signal.addEventListener('abort', onAbort, { once: true });
+      }
+
+      const resolveSafe = () => {
+        cleanup();
+        resolve();
+      };
+
+      const rejectSafe = (error: unknown) => {
+        cleanup();
+        reject(error);
+      };
+
+      if (typeof image.decode === 'function') {
+        image.src = src;
+        image.decode().then(resolveSafe).catch(rejectSafe);
+        return;
+      }
+
+      image.onload = resolveSafe;
+      image.onerror = rejectSafe as OnErrorEventHandler;
+      image.src = src;
+    });
+  }
+
+  private cancelPendingThumbUpdate(): void {
+    this.pendingThumbUpdate?.cancel();
+    this.pendingThumbUpdate = undefined;
+  }
+
+  private scheduleThumbUpdate(nextThumbUrl?: string): void {
+    this.cancelPendingThumbUpdate();
+
+    if (!nextThumbUrl) {
+      if (this.thumbUrl) {
+        this.thumbUrl = '';
+      }
+      return;
+    }
+
+    if (nextThumbUrl === this.thumbUrl) {
+      return;
+    }
+
+    const abortController = new AbortController();
+    const pending: PendingThumbUpdate = {
+      controller: abortController,
+      cancel: () => {
+        abortController.abort();
+        if (pending.rafId !== undefined) {
+          window.cancelAnimationFrame(pending.rafId);
+        }
+      },
+    };
+
+    this.pendingThumbUpdate = pending;
+
+    this.decodeImage(nextThumbUrl, abortController.signal)
+      .catch(() => {})
+      .then(() => {
+        if (abortController.signal.aborted) {
+          return;
+        }
+        pending.rafId = window.requestAnimationFrame(() => {
+          if (!abortController.signal.aborted) {
+            this.thumbUrl = nextThumbUrl;
+          }
+        });
+      });
+  }
+
+  private requestThumbGeneration(force = false): void {
+    if (!this._entry) {
+      return;
+    }
+
+    if (force) {
+      this.generateThumbnail(true);
+      return;
+    }
+
+    if (!this.isIntersecting) {
+      return;
+    }
+
+    this.debouncedGenerateThumb();
+  }
+
+  protected override firstUpdated(changedProperties: PropertyValues<this>): void {
+    super.firstUpdated(changedProperties);
+    this.bindToEntry();
+  }
+
+  protected override updated(changedProperties: PropertyValues<this>): void {
+    super.updated(changedProperties);
+    if (changedProperties.has('uid')) {
+      this.bindToEntry();
+    }
+  }
 
   private _observerCallback(entries: IntersectionObserverEntry[]): void {
     const [entry] = entries;
     if (!entry) {
       return;
     }
-    this._isIntersecting = entry.isIntersecting;
+    this.isIntersecting = entry.isIntersecting;
 
     if (entry.isIntersecting) {
-      this._thumbRect = entry.boundingClientRect;
-      this._debouncedGenerateThumb();
-      this._observer?.disconnect();
+      this.thumbRect = entry.boundingClientRect;
+      this.requestThumbGeneration();
+      this.observer?.disconnect();
     }
 
     if (entry.intersectionRatio === 0) {
-      this._debouncedGenerateThumb.cancel();
+      this.debouncedGenerateThumb.cancel();
     }
   }
 
   protected override _reset(): void {
     super._reset();
-    this._debouncedGenerateThumb.cancel();
+    this.debouncedGenerateThumb.cancel();
+    this.cancelPendingThumbUpdate();
+    if (this.thumbUrl) {
+      this.thumbUrl = '';
+    }
   }
 
-  private _handleEntryId(id: string): void {
-    this._reset();
-
-    const entry = this.uploadCollection?.read(id);
-    this._entry = entry;
-
-    if (!entry) {
+  private bindToEntry(): void {
+    const id = this.uid?.trim();
+    if (!id) {
+      if (this._entry) {
+        this._reset();
+      }
       return;
     }
 
+    const entry = this.uploadCollection?.read(id);
+    if (!entry || entry === this._entry) {
+      return;
+    }
+
+    this._reset();
+    this._entry = entry;
+
+    const requestThumb = () => {
+      this.requestThumbGeneration();
+    };
+
     this._subEntry('fileInfo', (fileInfo) => {
-      if (fileInfo?.isImage && this._isIntersecting) {
-        this._debouncedGenerateThumb();
+      if (fileInfo?.isImage) {
+        requestThumb();
       }
     });
 
     this._subEntry('thumbUrl', (thumbUrl) => {
-      this.$.thumbUrl = thumbUrl ? `url(${thumbUrl})` : '';
+      this.scheduleThumbUpdate(thumbUrl ?? undefined);
     });
 
-    this._subEntry('cdnUrlModifiers', () => {
-      if (this._isIntersecting) {
-        this._debouncedGenerateThumb();
-      }
-    });
+    this._subEntry('cdnUrlModifiers', requestThumb);
 
-    if (this._isIntersecting) {
-      this._debouncedGenerateThumb();
-    }
+    this.requestThumbGeneration(true);
   }
 
   override initCallback(): void {
     super.initCallback();
 
-    this.defineAccessor('badgeIcon', (val: string) => {
-      this.$.badgeIcon = val;
-    });
-
-    this.defineAccessor('uid', (value: string) => {
-      this.set$({ uid: value });
-    });
-
-    this.sub('uid', (uid: string) => {
-      this._handleEntryId(uid);
-    });
-
     this.subConfigValue('filesViewMode', (viewMode) => {
-      if (viewMode === 'grid' && !this._renderedGridOnce) {
-        if (this._firstViewMode === 'list') {
-          this._debouncedGenerateThumb(true);
+      if (viewMode === 'grid' && !this.renderedGridOnce) {
+        if (this.firstViewMode === 'list') {
+          this.requestThumbGeneration(true);
         }
-        this._renderedGridOnce = true;
+        this.renderedGridOnce = true;
       }
     });
 
@@ -200,31 +324,28 @@ export class Thumb extends FileItemConfig {
   override connectedCallback(): void {
     super.connectedCallback();
 
-    this._observer = new window.IntersectionObserver(this._observerCallback.bind(this), { threshold: 0.1 });
+    this.observer?.disconnect();
+    this.observer = new window.IntersectionObserver(this._observerCallback.bind(this), { threshold: 0.1 });
 
-    this._observer.observe(this);
+    this.observer.observe(this);
   }
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
 
-    this._entrySubs = new Set();
-    this._debouncedGenerateThumb.cancel();
-    this._observer?.disconnect();
+    this.debouncedGenerateThumb.cancel();
+    this.cancelPendingThumbUpdate();
+    this.observer?.disconnect();
   }
-}
 
-Thumb.template = html`
-  <div class="uc-thumb" bind="style.backgroundImage: thumbUrl">
+  override render() {
+    return html`
+  <div class="uc-thumb">
+    <img class="uc-thumb__img" src=${this.thumbUrl || ''} alt="" ?hidden=${!this.thumbUrl} draggable="false" />
     <div class="uc-badge">
-      <uc-icon bind="@name: badgeIcon"></uc-icon>
+      <uc-icon name=${this.badgeIcon}></uc-icon>
     </div>
   </div>
 `;
-
-Thumb.bindAttributes({
-  // @ts-expect-error TODO: fix types inside symbiote
-  badgeIcon: null,
-  // @ts-expect-error TODO: fix types inside symbiote
-  uid: null,
-});
+  }
+}

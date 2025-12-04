@@ -1,12 +1,14 @@
-import { create, html } from '@symbiotejs/symbiote';
-import { ActivityBlock } from '../../abstract/ActivityBlock';
-import { UploaderBlock } from '../../abstract/UploaderBlock';
+import { LitActivityBlock } from '../../lit/LitActivityBlock';
 import { getTopLevelOrigin } from '../../utils/get-top-level-origin';
 import { stringToArray } from '../../utils/stringToArray';
 import { ExternalUploadSource } from '../../utils/UploadSource';
 import { wildcardRegexp } from '../../utils/wildcardRegexp';
 import { buildThemeDefinition } from './buildThemeDefinition';
 import './external-source.css';
+import { html } from 'lit';
+import { state } from 'lit/decorators.js';
+import { createRef, ref } from 'lit/directives/ref.js';
+import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
 import { MessageBridge } from './MessageBridge';
 import { queryString } from './query-string';
 import type { InputMessageMap } from './types';
@@ -17,79 +19,51 @@ const SOCIAL_SOURCE_MAPPING: Record<string, string> = {
 
 export type ActivityParams = { externalSourceType: string };
 
-type BaseInitState = InstanceType<typeof UploaderBlock>['init$'];
-interface ExternalSourceInitState extends BaseInitState {
-  activityIcon: string;
-  activityCaption: string;
-
-  selectedList: NonNullable<InputMessageMap['selected-files-change']['selectedFiles']>;
-  total: number;
-
-  isSelectionReady: boolean;
-  isDoneBtnEnabled: boolean;
-  couldSelectAll: boolean;
-  couldDeselectAll: boolean;
-  showSelectionStatus: boolean;
-  counterText: string;
-  doneBtnTextClass: string;
-  toolbarVisible: boolean;
-
-  onDone: () => void;
-  onCancel: () => void;
-
-  onSelectAll: () => void;
-  onDeselectAll: () => void;
-}
-
-export class ExternalSource extends UploaderBlock {
+export class ExternalSource extends LitUploaderBlock {
   override couldBeCtxOwner = true;
-  override activityType = ActivityBlock.activities.EXTERNAL;
+  override activityType = LitActivityBlock.activities.EXTERNAL;
   private _messageBridge?: MessageBridge;
 
-  constructor() {
-    super();
+  private iframeRef = createRef<HTMLIFrameElement>();
+  private _latestSelectionSummary: { selectedCount: number; total: number } | null = null;
 
-    this.init$ = {
-      ...this.init$,
-      activityIcon: '',
-      activityCaption: '',
+  @state()
+  private selectedList: NonNullable<InputMessageMap['selected-files-change']['selectedFiles']> = [];
 
-      selectedList: [],
-      total: 0,
+  @state()
+  private isSelectionReady = false;
 
-      isSelectionReady: false,
-      isDoneBtnEnabled: false,
-      couldSelectAll: false,
-      couldDeselectAll: false,
-      showSelectionStatus: false,
-      showDoneBtn: false,
-      counterText: '',
-      doneBtnTextClass: 'uc-hidden',
-      toolbarVisible: true,
+  @state()
+  private isDoneBtnEnabled = false;
 
-      onDone: () => {
-        for (const message of this.$.selectedList) {
-          const url = this.extractUrlFromSelectedFile(message);
-          const { filename } = message;
-          const { externalSourceType } = this.activityParams;
-          this.api.addFileFromUrl(url, { fileName: filename, source: externalSourceType });
-        }
+  @state()
+  private couldSelectAll = false;
 
-        this.$['*currentActivity'] = ActivityBlock.activities.UPLOAD_LIST;
-        this.modalManager?.open(ActivityBlock.activities.UPLOAD_LIST);
-      },
-      onCancel: () => {
-        this.historyBack();
-      },
+  @state()
+  private couldDeselectAll = false;
 
-      onSelectAll: () => {
-        this._messageBridge?.send({ type: 'select-all' });
-      },
+  @state()
+  private showSelectionStatus = false;
 
-      onDeselectAll: () => {
-        this._messageBridge?.send({ type: 'deselect-all' });
-      },
-    } as ExternalSourceInitState;
+  @state()
+  private showDoneBtn = false;
+
+  @state()
+  private doneBtnTextClass = 'uc-hidden';
+
+  @state()
+  private toolbarVisible = true;
+
+  private get counterText(): string {
+    if (!this._latestSelectionSummary) {
+      return '';
+    }
+
+    const { selectedCount, total } = this._latestSelectionSummary;
+    return this.l10n('selected-count', {
+      count: selectedCount,
+      total,
+    });
   }
 
   override get activityParams(): ActivityParams {
@@ -113,15 +87,10 @@ export class ExternalSource extends UploaderBlock {
           return;
         }
 
-        this.set$({
-          activityCaption: `${externalSourceType[0]?.toUpperCase()}${externalSourceType?.slice(1)}`,
-          activityIcon: externalSourceType,
-        });
-
         this.mountIframe();
       },
     });
-    this.sub('*currentActivityParams', (val) => {
+    this.sub('*currentActivityParams', () => {
       if (!this.isActivityActive) {
         return;
       }
@@ -134,10 +103,10 @@ export class ExternalSource extends UploaderBlock {
       }
     });
     this.subConfigValue('multiple', (multiple) => {
-      this.$.showSelectionStatus = multiple;
+      this.showSelectionStatus = multiple;
     });
 
-    this.subConfigValue('localeName', (val) => {
+    this.subConfigValue('localeName', () => {
       this.setupL10n();
     });
 
@@ -165,9 +134,7 @@ export class ExternalSource extends UploaderBlock {
   }
 
   private handleToolbarStateChange(message: InputMessageMap['toolbar-state-change']): void {
-    this.set$({
-      toolbarVisible: message.isVisible,
-    });
+    this.toolbarVisible = message.isVisible;
   }
 
   private async handleSelectedFilesChange(message: InputMessageMap['selected-files-change']) {
@@ -176,23 +143,16 @@ export class ExternalSource extends UploaderBlock {
       return;
     }
 
-    this.bindL10n('counterText', () =>
-      this.l10n('selected-count', {
-        count: message.selectedCount,
-        total: message.total,
-      }),
-    );
+    this._setSelectionSummary(message.selectedCount, message.total);
 
-    this.set$({
-      doneBtnTextClass: message.isReady ? '' : 'uc-hidden',
-      isSelectionReady: message.isReady,
-      isDoneBtnEnabled: message.isReady && message.selectedFiles.length > 0,
-      showSelectionStatus: message.isMultipleMode && message.total > 0,
-      couldSelectAll: message.selectedCount < message.total,
-      couldDeselectAll: message.selectedCount === message.total,
-      selectedList: message.selectedFiles ?? [],
-      showDoneBtn: message.total > 0,
-    });
+    this.doneBtnTextClass = message.isReady ? '' : 'uc-hidden';
+    this.isSelectionReady = message.isReady;
+    this.isDoneBtnEnabled = message.isReady && message.selectedFiles.length > 0;
+    this.showSelectionStatus = message.isMultipleMode && message.total > 0;
+    this.couldSelectAll = message.selectedCount < message.total;
+    this.couldDeselectAll = message.selectedCount === message.total;
+    this.selectedList = message.selectedFiles ?? [];
+    this.showDoneBtn = message.total > 0;
   }
 
   private handleIframeLoad(): void {
@@ -242,21 +202,52 @@ export class ExternalSource extends UploaderBlock {
     return url.toString();
   }
 
+  private _handleDone = (): void => {
+    for (const message of this.selectedList) {
+      const url = this.extractUrlFromSelectedFile(message);
+      const { filename } = message;
+      const { externalSourceType } = this.activityParams;
+      this.api.addFileFromUrl(url, { fileName: filename, source: externalSourceType });
+    }
+
+    this.$['*currentActivity'] = LitActivityBlock.activities.UPLOAD_LIST;
+    this.modalManager?.open(LitActivityBlock.activities.UPLOAD_LIST);
+  };
+
+  private _handleCancel = (): void => {
+    this.historyBack();
+  };
+
+  private _handleSelectAll = (): void => {
+    this._messageBridge?.send({ type: 'select-all' });
+  };
+
+  private _handleDeselectAll = (): void => {
+    this._messageBridge?.send({ type: 'deselect-all' });
+  };
+
+  private _setSelectionSummary(selectedCount: number, total: number): void {
+    this._latestSelectionSummary = { selectedCount, total };
+  }
+
   private mountIframe(): void {
-    const iframe = create({
-      tag: 'iframe',
-      attributes: {
-        src: this.remoteUrl(),
-        marginheight: 0,
-        marginwidth: 0,
-        frameborder: 0,
-        allowTransparency: true,
-      },
-    }) as unknown as HTMLIFrameElement;
+    const iframe = document.createElement('iframe');
+    iframe.src = this.remoteUrl();
+    // @ts-expect-error
+    iframe.marginHeight = 0;
+    // @ts-expect-error
+    iframe.marginWidth = 0;
+    iframe.frameBorder = '0';
+    // @ts-expect-error
+    iframe.allowTransparency = true;
     iframe.addEventListener('load', this.handleIframeLoad.bind(this));
 
-    this.ref.iframeWrapper.innerHTML = '';
-    this.ref.iframeWrapper.appendChild(iframe);
+    iframe.addEventListener('load', this.handleIframeLoad.bind(this));
+
+    if (this.iframeRef.value) {
+      this.iframeRef.value.innerHTML = '';
+      this.iframeRef.value.appendChild(iframe);
+    }
 
     if (!iframe.contentWindow) {
       return;
@@ -274,52 +265,59 @@ export class ExternalSource extends UploaderBlock {
   private unmountIframe(): void {
     this._messageBridge?.destroy();
     this._messageBridge = undefined;
-    this.ref.iframeWrapper.innerHTML = '';
+    if (this.iframeRef.value) {
+      this.iframeRef.value.innerHTML = '';
+    }
 
     this.resetSelectionStatus();
   }
 
   private resetSelectionStatus(): void {
-    this.set$({
-      selectedList: [],
-      total: 0,
-      isDoneBtnEnabled: false,
-      couldSelectAll: false,
-      couldDeselectAll: false,
-      showSelectionStatus: false,
-      showDoneBtn: false,
-    });
+    this.selectedList = [];
+    this.isSelectionReady = false;
+    this.isDoneBtnEnabled = false;
+    this.couldSelectAll = false;
+    this.couldDeselectAll = false;
+    this.showSelectionStatus = false;
+    this.showDoneBtn = false;
+    this.doneBtnTextClass = 'uc-hidden';
+    this._latestSelectionSummary = null;
+  }
+
+  override render() {
+    return html`
+      <uc-activity-header>
+          <button
+            type="button"
+            class="uc-mini-btn uc-close-btn"
+            @click=${this.$['*historyBack']}
+            title=${this.l10n('a11y-activity-header-button-close')}
+            aria-label=${this.l10n('a11y-activity-header-button-close')}
+          >
+            <uc-icon name="close"></uc-icon>
+          </button>
+        </uc-activity-header>
+        <div class="uc-content">
+          <div ${ref(this.iframeRef)} class="uc-iframe-wrapper"></div>
+          <div class="uc-toolbar" ?hidden=${!this.toolbarVisible}>
+            <button type="button" class="uc-cancel-btn uc-secondary-btn" @click=${this._handleCancel}>${this.l10n('cancel')}</button>
+            <div class="uc-selection-status-box" ?hidden=${!this.showSelectionStatus}>
+              <span>${this.counterText}</span>
+              <button type="button" @click=${this._handleSelectAll} ?hidden=${!this.couldSelectAll}>${this.l10n('select-all')}</button>
+              <button type="button" @click=${this._handleDeselectAll} ?hidden=${!this.couldDeselectAll}>${this.l10n('deselect-all')}</button>
+            </div>
+            <button
+              type="button"
+              class="uc-done-btn uc-primary-btn"
+              @click=${this._handleDone}
+              ?disabled=${!this.isDoneBtnEnabled}
+              ?hidden=${!this.showDoneBtn}
+            >
+              <uc-spinner ?hidden=${this.isSelectionReady} ></uc-spinner>
+              <span class=${this.doneBtnTextClass}>${this.l10n('done')}</span>
+            </button>
+          </div>
+        </div>
+    `;
   }
 }
-
-ExternalSource.template = html`
-  <uc-activity-header>
-    <button
-      type="button"
-      class="uc-mini-btn uc-close-btn"
-      bind="onclick: *historyBack"
-      l10n="@title:a11y-activity-header-button-close;@aria-label:a11y-activity-header-button-close"
-    >
-      <uc-icon name="close"></uc-icon>
-    </button>
-  </uc-activity-header>
-  <div class="uc-content">
-    <div ref="iframeWrapper" class="uc-iframe-wrapper"></div>
-    <div class="uc-toolbar" bind="@hidden: !toolbarVisible">
-      <button type="button" class="uc-cancel-btn uc-secondary-btn" bind="onclick: onCancel" l10n="cancel"></button>
-      <div bind="@hidden: !showSelectionStatus" class="uc-selection-status-box">
-        <span>{{counterText}}</span>
-        <button type="button" bind="onclick: onSelectAll; @hidden: !couldSelectAll" l10n="select-all"></button>
-        <button type="button" bind="onclick: onDeselectAll; @hidden: !couldDeselectAll" l10n="deselect-all"></button>
-      </div>
-      <button
-        type="button"
-        class="uc-done-btn uc-primary-btn"
-        bind="onclick: onDone; @disabled: !isDoneBtnEnabled; @hidden: !showDoneBtn"
-      >
-        <uc-spinner bind="@hidden: isSelectionReady"></uc-spinner>
-        <span l10n="done" bind="@class: doneBtnTextClass"></span>
-      </button>
-    </div>
-  </div>
-`;

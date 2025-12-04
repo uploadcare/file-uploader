@@ -1,7 +1,7 @@
-import { html } from '@symbiotejs/symbiote';
-import type { ActivityType } from '../../abstract/ActivityBlock';
-import { ActivityBlock } from '../../abstract/ActivityBlock';
-import { UploaderBlock } from '../../abstract/UploaderBlock';
+import { html, type PropertyValues } from 'lit';
+import { property, state } from 'lit/decorators.js';
+import { type ActivityType, LitActivityBlock } from '../../lit/LitActivityBlock';
+import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
 import { browserFeatures } from '../../utils/browser-info';
 import { ExternalUploadSource, UploadSource, UploadSourceMobile } from '../../utils/UploadSource';
 import { CameraSourceTypes } from '../CameraSource/constants';
@@ -18,26 +18,18 @@ type SourceTypeConfig = {
   activityParams?: Record<string, unknown>;
 };
 
-type BaseInitState = InstanceType<typeof UploaderBlock>['init$'];
-interface SourceBtnInitState extends BaseInitState {
-  iconName: string;
-  'src-type': string;
-}
-
-export class SourceBtn extends UploaderBlock {
+export class SourceBtn extends LitUploaderBlock {
   override couldBeCtxOwner = true;
-  private type: string | undefined = undefined;
   private _registeredTypes: Record<string, SourceTypeConfig> = {};
 
-  constructor() {
-    super();
+  @property({ type: String })
+  type?: string;
 
-    this.init$ = {
-      ...this.init$,
-      iconName: 'default',
-      'src-type': '',
-    } as SourceBtnInitState;
-  }
+  @state()
+  private iconName = 'default';
+
+  @state()
+  private srcTypeKey = '';
 
   initTypes(): void {
     this.registerType({
@@ -49,12 +41,12 @@ export class SourceBtn extends UploaderBlock {
     });
     this.registerType({
       type: UploadSource.URL,
-      activity: ActivityBlock.activities.URL,
+      activity: LitActivityBlock.activities.URL,
       textKey: 'from-url',
     });
     this.registerType({
       type: UploadSource.CAMERA,
-      activity: ActivityBlock.activities.CAMERA,
+      activity: LitActivityBlock.activities.CAMERA,
       activate: () => {
         const supportsCapture = browserFeatures.htmlMediaCapture;
 
@@ -67,14 +59,14 @@ export class SourceBtn extends UploaderBlock {
 
     this.registerType({
       type: 'draw',
-      activity: ActivityBlock.activities.DRAW,
+      activity: LitActivityBlock.activities.DRAW,
       icon: 'edit-draw',
     });
 
     for (const mobileSourceType of Object.values(UploadSourceMobile)) {
       this.registerType({
         type: mobileSourceType,
-        activity: ActivityBlock.activities.CAMERA,
+        activity: LitActivityBlock.activities.CAMERA,
         activate: () => {
           const supportsCapture = browserFeatures.htmlMediaCapture;
           if (supportsCapture) {
@@ -92,7 +84,7 @@ export class SourceBtn extends UploaderBlock {
     for (const externalSourceType of Object.values(ExternalUploadSource)) {
       this.registerType({
         type: externalSourceType,
-        activity: ActivityBlock.activities.EXTERNAL,
+        activity: LitActivityBlock.activities.EXTERNAL,
         activityParams: {
           externalSourceType: externalSourceType,
         },
@@ -104,12 +96,9 @@ export class SourceBtn extends UploaderBlock {
     super.initCallback();
     this.initTypes();
 
-    this.defineAccessor('type', (val: string) => {
-      if (!val) {
-        return;
-      }
-      this.applyType(val);
-    });
+    if (this.type) {
+      this.applyType(this.type);
+    }
   }
 
   registerType(typeConfig: SourceTypeConfig): void {
@@ -151,21 +140,29 @@ export class SourceBtn extends UploaderBlock {
     }
     const { textKey = type, icon = type } = configType;
 
-    this.$['src-type'] = `${L10N_PREFIX}${textKey}`;
-    this.$.iconName = icon;
-    this.onclick = () => {
-      this.activate();
-    };
+    this.srcTypeKey = `${L10N_PREFIX}${textKey}`;
+    this.iconName = icon;
+  }
+
+  protected override willUpdate(changedProperties: PropertyValues<this>): void {
+    super.willUpdate(changedProperties);
+
+    if (changedProperties.has('type')) {
+      if (this.type) {
+        this.applyType(this.type);
+      } else {
+        this.srcTypeKey = '';
+        this.iconName = 'default';
+      }
+    }
+  }
+
+  override render() {
+    return html`
+    <button type="button" @click=${this.activate}>
+    <uc-icon name=${this.iconName}></uc-icon>
+    <div class="uc-txt">${this.l10n(this.srcTypeKey)}</div>
+  </button>
+    `;
   }
 }
-
-SourceBtn.template = html`
-  <button type="button">
-    <uc-icon bind="@name: iconName"></uc-icon>
-    <div class="uc-txt" l10n="src-type"></div>
-  </button>
-`;
-SourceBtn.bindAttributes({
-  // @ts-expect-error symbiote types bug
-  type: null,
-});
