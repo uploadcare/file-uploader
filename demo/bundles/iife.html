@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>File Uploader - IIFE Bundle Demo</title>
+    <link rel="stylesheet" href="../../web/uc-basic.min.css">
+    <style>
+    @media (prefers-color-scheme: dark) {
+      body {
+        background-color: #121213;
+      }
+    }
+    </style>
+    <!-- IIFE bundle - no module required, UC is available globally -->
+    <script src="../../web/file-uploader.iife.min.js"></script>
+    <script>
+    // UC is available as a global variable
+    UC.defineComponents(UC);
+    </script>
+  </head>
+  <body>
+    <uc-file-uploader-regular ctx-name="my-uploader"></uc-file-uploader-regular>
+    <uc-config ctx-name="my-uploader" pubkey="demopublickey" debug quality-insights="false" test-mode></uc-config>
+    <uc-upload-ctx-provider ctx-name="my-uploader"></uc-upload-ctx-provider>
+  </body>
+</html>
