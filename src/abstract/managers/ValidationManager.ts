@@ -1,5 +1,6 @@
 import { Queue } from '@uploadcare/upload-client';
 import { EventType } from '../../blocks/UploadCtxProvider/EventEmitter';
+import type { LitUploaderBlock } from '../../lit/LitUploaderBlock';
 import type {
   OutputCollectionErrorType,
   OutputCollectionState,
@@ -23,7 +24,6 @@ import { withResolvers } from '../../utils/withResolvers';
 import type { buildOutputCollectionState } from '../buildOutputCollectionState';
 import type { TypedCollection } from '../TypedCollection';
 import type { TypedData } from '../TypedData';
-import type { UploaderBlock } from '../UploaderBlock';
 import type { uploadEntrySchema } from '../uploadEntrySchema';
 
 export type FuncFileValidator = (
@@ -59,7 +59,7 @@ const getValidatorDescriptor = (validator: FileValidator): FileValidatorDescript
 };
 
 export class ValidationManager {
-  private _blockInstance: UploaderBlock;
+  private _blockInstance: LitUploaderBlock;
 
   private _uploadCollection: TypedCollection<typeof uploadEntrySchema>;
 
@@ -87,15 +87,15 @@ export class ValidationManager {
     }
   > = new Map();
 
-  constructor(blockInstance: UploaderBlock) {
+  constructor(blockInstance: LitUploaderBlock) {
     this._blockInstance = blockInstance;
 
     this._uploadCollection = this._blockInstance.uploadCollection;
 
-    const runAllValidators = () => {
+    const runAllValidators = debounce(() => {
       this.runFileValidators('change');
       this.runCollectionValidators();
-    };
+    }, 0);
 
     this._blockInstance.subConfigValue('maxLocalFileSizeBytes', runAllValidators);
     this._blockInstance.subConfigValue('multipleMin', runAllValidators);

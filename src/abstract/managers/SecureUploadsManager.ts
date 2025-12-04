@@ -1,12 +1,12 @@
+import type { LitUploaderBlock } from '../../lit/LitUploaderBlock';
 import type { SecureUploadsSignatureAndExpire } from '../../types/index';
 import { isSecureTokenExpired } from '../../utils/isSecureTokenExpired';
-import type { UploaderBlock } from '../UploaderBlock';
 
 export class SecureUploadsManager {
-  private readonly _block: UploaderBlock;
+  private readonly _block: LitUploaderBlock;
   private _secureToken: SecureUploadsSignatureAndExpire | null = null;
 
-  constructor(block: UploaderBlock) {
+  constructor(block: LitUploaderBlock) {
     this._block = block;
   }
 

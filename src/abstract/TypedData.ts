@@ -58,15 +58,17 @@ export class TypedData<T extends TypedSchema> {
     }
     const pDesc = this.__typedSchema[prop];
 
+    const isChanged = this.__data.read(prop) !== value;
     const isMatchConstructorType = value?.constructor === pDesc.type;
     const isMatchInstanceType = (value as object) instanceof (pDesc.type as Constructor);
     const isMatchNullable = pDesc.nullable && value === null;
 
-    if (isMatchConstructorType || isMatchInstanceType || isMatchNullable) {
+    if (isChanged && (isMatchConstructorType || isMatchInstanceType || isMatchNullable)) {
       this.__data.pub(prop, value);
       return;
+    } else if (isChanged) {
+      console.warn(MSG_TYPE + prop);
     }
-    console.warn(MSG_TYPE + prop);
   }
 
   setMultipleValues(updObj: Partial<ExtractDataFromSchema<T>>): void {
