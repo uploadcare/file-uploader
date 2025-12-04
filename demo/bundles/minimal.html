@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>File Uploader Minimal - Bundle Demo</title>
+    <link rel="stylesheet" href="../../web/uc-file-uploader-minimal.min.css">
+    <style>
+    @media (prefers-color-scheme: dark) {
+      body {
+        background-color: #121213;
+      }
+    }
+    </style>
+    <script type="module">
+    import * as UC from '../../web/uc-file-uploader-minimal.min.js';
+
+    UC.defineComponents(UC);
+    </script>
+  </head>
+  <body>
+    <uc-file-uploader-minimal ctx-name="my-uploader"></uc-file-uploader-minimal>
+    <uc-config ctx-name="my-uploader" pubkey="demopublickey" img-only group-output debug quality-insights="false" test-mode></uc-config>
+  </body>
+</html>
