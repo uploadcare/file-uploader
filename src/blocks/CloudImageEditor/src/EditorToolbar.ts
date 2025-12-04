@@ -501,8 +501,8 @@ EditorToolbar.template = /* HTML */ `
         <div class="uc-list-aspect-ratio" ref="list-el"></div>
       </div>
       <div class="uc-controls-row">
-        <uc-btn-ui theme="secondary" set="onclick: on.cancelSlider" l10n="@text:cancel"> </uc-btn-ui>
-        <uc-btn-ui theme="primary" set="onclick: on.applySlider" l10n="@text:apply"> </uc-btn-ui>
+        <uc-btn-ui theme="secondary" set="onclick: on.cancelSlider; title-prop:cancel" l10n="@text:cancel"> </uc-btn-ui>
+        <uc-btn-ui theme="primary" set="onclick: on.applySlider; title-prop:apply" l10n="@text:apply"> </uc-btn-ui>
       </div>
     </uc-presence-toggle>
   </div>
