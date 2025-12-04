@@ -1,8 +1,8 @@
 import { ImgBase } from './ImgBase.js';
 
 export class Img extends ImgBase {
-  initCallback() {
-    super.initCallback();
+  override connectedCallback(): void {
+    super.connectedCallback();
 
     this.sub$$('src', () => {
       this.init();
@@ -12,7 +12,7 @@ export class Img extends ImgBase {
       this.init();
     });
 
-    this.sub$$('lazy', (val) => {
+    this.sub$$<string | number | boolean>('lazy', (val) => {
       if (!this.$$('is-background-for') && !this.$$('is-preview-blur')) {
         this.img.loading = val ? 'lazy' : 'eager';
       }
