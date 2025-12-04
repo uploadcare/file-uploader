@@ -1,5 +1,5 @@
 import { focusGroupKeyUX, hiddenKeyUX, jumpKeyUX, pressKeyUX, startKeyUX } from 'keyux';
-import type { Block } from '../Block';
+import type { LitBlock } from '../../lit/LitBlock';
 
 /**
  * MinimalWindow interface is not exported by keyux, so we import it here using tricky way.
@@ -78,7 +78,7 @@ export class A11y {
     ]);
   }
 
-  registerBlock(scope: Block): void {
+  registerBlock(scope: LitBlock): void {
     this._scopedWindow.registerScope(scope);
   }
 
