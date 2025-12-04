@@ -1,4 +1,7 @@
-import { Block } from '../../../abstract/Block';
+import type { TemplateResult } from 'lit';
+import { html } from 'lit';
+import { createRef, ref } from 'lit/directives/ref.js';
+import { LitBlock } from '../../../lit/LitBlock';
 import { debounce } from '../../../utils/debounce.js';
 import { batchPreloadImages } from '../../../utils/preloadImage.js';
 import { classNames } from './lib/classNames.js';
@@ -22,6 +25,14 @@ type ImageSrcOptions = {
   filter?: string;
   operation?: OperationKey;
   value?: number;
+};
+
+type DebouncedKeypointHandler = ((
+  operation: OperationKey,
+  filter: string | undefined,
+  value: number,
+) => Promise<void>) & {
+  cancel: () => void;
 };
 
 function isOperationKey(value: unknown): value is OperationKey {
@@ -73,7 +84,7 @@ function keypointsRange(operation: OperationKey, value: number): number[] {
   );
 }
 
-export class EditorImageFader extends Block {
+export class EditorImageFader extends LitBlock {
   private _isActive = false;
   private _hidden = true;
   private _operation: OperationKey | 'initial' = 'initial';
@@ -81,19 +92,72 @@ export class EditorImageFader extends Block {
   private _value?: number;
   private _transformations: Transformations = {};
   private _keypoints: Keypoint[] = [];
-  private _container?: HTMLDivElement;
   private _previewImage?: HTMLImageElement;
   private _cancelLastImages?: () => void;
   private _cancelBatchPreload?: () => void;
   private _url?: string;
   private _fromViewer?: boolean;
   private _raf = 0;
-  private _addKeypointDebounced = debounce(this._addKeypoint.bind(this), 600);
+  private _addKeypointDebounced!: DebouncedKeypointHandler;
+  private readonly _previewHostRef = createRef<HTMLDivElement>();
+  private readonly _layersHostRef = createRef<HTMLDivElement>();
 
   constructor() {
     super();
 
     this.classList.add('uc-inactive_to_cropper');
+    this._addKeypointDebounced = debounce(async (operation, filter, value) => {
+      const shouldSkip = () =>
+        !this._isSame(operation, filter) || this._value !== value || !!this._keypoints.find((kp) => kp.value === value);
+
+      if (shouldSkip()) {
+        return;
+      }
+      const keypoint = await this._constructKeypoint(operation, value);
+      const image = new Image();
+      image.src = keypoint.src;
+      const stop = this._handleImageLoading(keypoint.src);
+      image.addEventListener('load', stop, { once: true });
+      image.addEventListener('error', stop, { once: true });
+      keypoint.image = image;
+      image.classList.add('uc-fader-image');
+
+      image.addEventListener(
+        'load',
+        () => {
+          if (shouldSkip()) {
+            return;
+          }
+          const keypoints = this._keypoints;
+          let insertIndex = keypoints.findIndex((kp) => kp.value > value);
+          if (insertIndex === -1) {
+            insertIndex = keypoints.length;
+          }
+          const nextKeypoint = keypoints[insertIndex];
+          const insertBeforeNode = nextKeypoint?.image;
+          const container = this._layersHostRef.value;
+          if (!container || (insertBeforeNode && !container.contains(insertBeforeNode))) {
+            return;
+          }
+          keypoints.splice(insertIndex, 0, keypoint);
+          if (insertBeforeNode) {
+            container.insertBefore(image, insertBeforeNode);
+          } else {
+            container.appendChild(image);
+          }
+          this._update(operation, value);
+        },
+        { once: true },
+      );
+
+      image.addEventListener(
+        'error',
+        () => {
+          this.$['*networkProblems'] = true;
+        },
+        { once: true },
+      );
+    }, 600);
   }
 
   private _handleImageLoading(src: string): () => void {
@@ -176,55 +240,6 @@ export class EditorImageFader extends Block {
     return this._operation === operation && this._filter === filter;
   }
 
-  private async _addKeypoint(operation: OperationKey, filter: string | undefined, value: number): Promise<void> {
-    const shouldSkip = () =>
-      !this._isSame(operation, filter) || this._value !== value || !!this._keypoints.find((kp) => kp.value === value);
-
-    if (shouldSkip()) {
-      return;
-    }
-    const keypoint = await this._constructKeypoint(operation, value);
-    const image = new Image();
-    image.src = keypoint.src;
-    const stop = this._handleImageLoading(keypoint.src);
-    image.addEventListener('load', stop, { once: true });
-    image.addEventListener('error', stop, { once: true });
-    keypoint.image = image;
-    image.classList.add('uc-fader-image');
-
-    image.addEventListener(
-      'load',
-      () => {
-        if (shouldSkip()) {
-          return;
-        }
-        const keypoints = this._keypoints;
-        let insertIndex = keypoints.findIndex((kp) => kp.value > value);
-        if (insertIndex === -1) {
-          insertIndex = keypoints.length;
-        }
-        const nextKeypoint = keypoints[insertIndex];
-        const insertBeforeNode = nextKeypoint?.image;
-        const container = this._container;
-        if (!container || (insertBeforeNode && !container.contains(insertBeforeNode))) {
-          return;
-        }
-        keypoints.splice(insertIndex, 0, keypoint);
-        insertBeforeNode && container.insertBefore(image, insertBeforeNode);
-        this._update(operation, value);
-      },
-      { once: true },
-    );
-
-    image.addEventListener(
-      'error',
-      () => {
-        this.$['*networkProblems'] = true;
-      },
-      { once: true },
-    );
-  }
-
   set(value: string | number): void {
     const numericValue = typeof value === 'string' ? parseInt(value, 10) : value;
     if (!isOperationKey(this._operation) || !Number.isFinite(numericValue)) {
@@ -266,15 +281,11 @@ export class EditorImageFader extends Block {
   }
 
   private async _initNodes(): Promise<void> {
-    const fr = document.createDocumentFragment();
     this._previewImage = this._previewImage || this._createPreviewImage();
     const previewImage = this._previewImage;
-    if (!this.contains(previewImage)) {
-      fr.appendChild(previewImage);
+    if (previewImage) {
+      this._ensurePreviewAttached(previewImage);
     }
-
-    const container = document.createElement('div');
-    fr.appendChild(container);
 
     const srcList = this._keypoints.map((kp) => kp.src);
 
@@ -292,8 +303,11 @@ export class EditorImageFader extends Block {
     const filter = this._filter;
     await promise;
     if (this._isActive && this._isSame(operation, filter)) {
-      this._container?.remove();
-      this._container = container;
+      const host = this._layersHostRef.value;
+      if (!host) {
+        return;
+      }
+      host.replaceChildren();
       this._keypoints.forEach((kp, idx) => {
         const kpImage = images[idx];
         if (!kpImage) {
@@ -301,9 +315,8 @@ export class EditorImageFader extends Block {
         }
         kpImage.classList.add('uc-fader-image');
         kp.image = kpImage;
-        this._container?.appendChild(kpImage);
+        host.appendChild(kpImage);
       });
-      this.appendChild(fr);
       this._flush();
     }
   }
@@ -353,9 +366,7 @@ export class EditorImageFader extends Block {
 
   private _setOriginalSrc(src: string): void {
     const image = this._previewImage || this._createPreviewImage();
-    if (!this.contains(image)) {
-      this.appendChild(image);
-    }
+    this._ensurePreviewAttached(image);
     this._previewImage = image;
 
     if (image.src === src) {
@@ -414,6 +425,7 @@ export class EditorImageFader extends Block {
   }): Promise<void> {
     this._isActive = true;
     this._hidden = false;
+    await this.updateComplete;
     this._url = url;
     this._operation = operation ?? 'initial';
     this._value = value;
@@ -424,7 +436,7 @@ export class EditorImageFader extends Block {
     if (isOriginal) {
       const src = await this._imageSrc({ operation, value });
       this._setOriginalSrc(src);
-      this._container?.remove();
+      this._clearLayersHost();
       return;
     }
     if (!operation || typeof value !== 'number') {
@@ -458,12 +470,33 @@ export class EditorImageFader extends Block {
       this.addEventListener(
         'transitionend',
         () => {
-          this._container?.remove();
+          this._clearLayersHost();
         },
         { once: true },
       );
     } else {
-      this._container?.remove();
+      this._clearLayersHost();
     }
+  }
+
+  private _ensurePreviewAttached(image: HTMLImageElement): void {
+    const host = this._previewHostRef.value;
+    if (!host) {
+      return;
+    }
+    if (!host.contains(image)) {
+      host.appendChild(image);
+    }
+  }
+
+  private _clearLayersHost(): void {
+    this._layersHostRef.value?.replaceChildren();
+  }
+
+  override render(): TemplateResult {
+    return html`
+      <div class="uc-fader-preview-host" ${ref(this._previewHostRef)}></div>
+      <div class="uc-fader-layers-host" ${ref(this._layersHostRef)}></div>
+    `;
   }
 }

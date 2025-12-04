@@ -1,5 +1,8 @@
-import { html } from '@symbiotejs/symbiote';
-import { Block } from '../../../abstract/Block';
+import type { PropertyValues, TemplateResult } from 'lit';
+import { html } from 'lit';
+import { state } from 'lit/decorators.js';
+import { createRef, ref } from 'lit/directives/ref.js';
+import { LitBlock } from '../../../lit/LitBlock';
 import {
   clamp,
   constraintRect,
@@ -30,11 +33,7 @@ type FrameThumb = NonNullable<FrameThumbs[Direction]>;
 
 type Delta = [number, number];
 
-export class CropFrame extends Block {
-  private readonly _handlePointerUp: (e: PointerEvent) => void;
-  private readonly _handlePointerMove: (e: PointerEvent) => void;
-  private readonly _handleSvgPointerMove: (e: PointerEvent) => void;
-  private readonly _backdropMaskId = `backdrop-mask-${UID.generate()}`;
+export class CropFrame extends LitBlock {
   private _backdropMask?: SVGMaskElement;
   private _backdropMaskInner?: SVGRectElement;
   private _frameThumbs?: FrameThumbs;
@@ -45,20 +44,40 @@ export class CropFrame extends Block {
   private _dragStartCrop?: Rectangle;
   private _frameImage?: SVGImageElement;
   private _guidesHidden = false;
+  @state()
+  private _dragging = false;
+  private readonly svgRef = createRef<SVGSVGElement>();
+  private _svgReady = false;
+  private _pendingMaskHref: string | null = null;
 
-  constructor() {
-    super();
+  private get _svgElement(): SVGSVGElement | null {
+    return this.svgRef.value ?? null;
+  }
 
-    this.init$ = {
-      ...this.init$,
-      dragging: false,
-    };
+  private get dragging(): boolean {
+    return this._dragging;
+  }
 
-    this._handlePointerUp = this._handlePointerUp_.bind(this);
+  private set dragging(value: boolean) {
+    if (this._dragging === value) {
+      return;
+    }
+    this._dragging = value;
+    this._applyGuidesDragState();
+  }
 
-    this._handlePointerMove = this._handlePointerMove_.bind(this);
-
-    this._handleSvgPointerMove = this._handleSvgPointerMove_.bind(this);
+  private _applyGuidesDragState(): void {
+    if (!this._frameGuides) {
+      return;
+    }
+    this._frameGuides.setAttribute(
+      'class',
+      classNames({
+        'uc-guides--hidden': this._guidesHidden,
+        'uc-guides--visible': !this._guidesHidden && this._dragging,
+        'uc-guides--semi-hidden': !this._guidesHidden && !this._dragging,
+      }),
+    );
   }
 
   private _shouldThumbBeDisabled(direction: Direction): boolean {
@@ -82,9 +101,12 @@ export class CropFrame extends Block {
       return;
     }
     const { x, y, width, height } = cropBox;
-    const svg = this.ref['svg-el'] as SVGSVGElement;
+    const svg = this._svgElement;
+    if (!svg) {
+      return;
+    }
 
-    const mask = createSvgNode('mask', { id: this._backdropMaskId }) as SVGMaskElement;
+    const mask = createSvgNode('mask', { id: 'backdrop-mask' }) as SVGMaskElement;
     const maskRectOuter = createSvgNode('rect', {
       x: 0,
       y: 0,
@@ -109,7 +131,7 @@ export class CropFrame extends Block {
       height: '100%',
       fill: 'var(--color-image-background)',
       'fill-opacity': 0.85,
-      mask: `url(#${this._backdropMaskId})`,
+      mask: 'url(#backdrop-mask)',
     });
     svg.appendChild(backdropRect);
     svg.appendChild(mask);
@@ -305,7 +327,10 @@ export class CropFrame extends Block {
   }
 
   private _createFrame(): void {
-    const svg = this.ref['svg-el'] as SVGSVGElement;
+    const svg = this._svgElement;
+    if (!svg) {
+      return;
+    }
     const fr = document.createDocumentFragment();
 
     const frameGuides = this._createGuides();
@@ -319,6 +344,7 @@ export class CropFrame extends Block {
     svg.appendChild(fr);
     this._frameThumbs = frameThumbs;
     this._frameGuides = frameGuides;
+    this._applyGuidesDragState();
   }
 
   private _handlePointerDown(direction: Direction, e: PointerEvent): void {
@@ -332,37 +358,43 @@ export class CropFrame extends Block {
     }
 
     const cropBox = this.$['*cropBox'] as Rectangle;
-    const svgElement = this.ref['svg-el'] as SVGSVGElement;
+    const svgElement = this._svgElement;
+    if (!svgElement) {
+      return;
+    }
     const { x: svgX, y: svgY } = svgElement.getBoundingClientRect();
     const x = e.x - svgX;
     const y = e.y - svgY;
 
-    this.$.dragging = true;
+    this.dragging = true;
     this._draggingThumb = thumb;
     this._dragStartPoint = [x, y];
     this._dragStartCrop = { ...cropBox };
   }
 
-  private _handlePointerUp_(e: PointerEvent): void {
+  private readonly _handlePointerUp = (e: PointerEvent): void => {
     this._updateCursor();
 
-    if (!this.$.dragging) {
+    if (!this.dragging) {
       return;
     }
     e.stopPropagation();
     e.preventDefault();
 
-    this.$.dragging = false;
-  }
+    this.dragging = false;
+  };
 
-  private _handlePointerMove_(e: PointerEvent): void {
-    if (!this.$.dragging || !this._dragStartPoint || !this._draggingThumb) {
+  private readonly _handlePointerMove = (e: PointerEvent): void => {
+    if (!this.dragging || !this._dragStartPoint || !this._draggingThumb) {
       return;
     }
     e.stopPropagation();
     e.preventDefault();
 
-    const svg = this.ref['svg-el'] as SVGSVGElement;
+    const svg = this._svgElement;
+    if (!svg) {
+      return;
+    }
     const { x: svgX, y: svgY } = svg.getBoundingClientRect();
     const x = e.x - svgX;
     const y = e.y - svgY;
@@ -374,7 +406,7 @@ export class CropFrame extends Block {
     if (movedCropBox) {
       this.$['*cropBox'] = movedCropBox;
     }
-  }
+  };
 
   private _calcCropBox(direction: Direction, delta: Delta): Rectangle | undefined {
     const [dx, dy] = delta;
@@ -399,7 +431,7 @@ export class CropFrame extends Block {
     return constraintRect(roundRect(rect), imageBox);
   }
 
-  private _handleSvgPointerMove_(e: PointerEvent): void {
+  private readonly _handleSvgPointerMove = (e: PointerEvent): void => {
     if (!this._frameThumbs) return;
 
     const hoverThumb = Object.values(this._frameThumbs).find((thumb) => {
@@ -423,11 +455,14 @@ export class CropFrame extends Block {
 
     this._hoverThumb = hoverThumb as FrameThumb | undefined;
     this._updateCursor();
-  }
+  };
 
   private _updateCursor(): void {
     const hoverThumb = this._hoverThumb;
-    const svg = this.ref['svg-el'] as SVGSVGElement;
+    const svg = this._svgElement;
+    if (!svg) {
+      return;
+    }
     svg.style.cursor = hoverThumb ? thumbCursor(hoverThumb.direction) : 'initial';
   }
 
@@ -437,7 +472,12 @@ export class CropFrame extends Block {
       return;
     }
 
-    const svg = this.ref['svg-el'] as SVGSVGElement;
+    const svg = this._svgElement;
+    if (!svg) {
+      this._pendingMaskHref = href;
+      return;
+    }
+    this._pendingMaskHref = null;
     const fr = document.createDocumentFragment();
 
     const imageNode = createSvgNode('image', {
@@ -471,6 +511,9 @@ export class CropFrame extends Block {
   }
 
   private _render(): void {
+    if (!this._svgReady) {
+      return;
+    }
     this._updateBackdrop();
     this._updateFrame();
     this._updateMask();
@@ -493,14 +536,14 @@ export class CropFrame extends Block {
     }
   }
 
-  override initCallback() {
+  override initCallback(): void {
     super.initCallback();
-
-    this._createBackdrop();
-    this._createFrame();
 
     this.sub('*imageBox', () => {
       this._resizeBackdrop();
+      if (!this._svgReady) {
+        return;
+      }
       window.requestAnimationFrame(() => {
         this._render();
       });
@@ -511,6 +554,10 @@ export class CropFrame extends Block {
         return;
       }
       this._guidesHidden = cropBox.height <= MIN_CROP_SIZE || cropBox.width <= MIN_CROP_SIZE;
+      this._applyGuidesDragState();
+      if (!this._svgReady) {
+        return;
+      }
       window.requestAnimationFrame(() => {
         this._render();
       });
@@ -522,32 +569,44 @@ export class CropFrame extends Block {
       }
     });
 
-    this.sub('dragging', (dragging: boolean) => {
-      if (!this._frameGuides) return;
-      this._frameGuides.setAttribute(
-        'class',
-        classNames({
-          'uc-guides--hidden': this._guidesHidden,
-          'uc-guides--visible': !this._guidesHidden && dragging,
-          'uc-guides--semi-hidden': !this._guidesHidden && !dragging,
-        }),
-      );
-    });
-
-    const svg = this.ref['svg-el'] as SVGSVGElement;
-    svg.addEventListener('pointermove', this._handleSvgPointerMove, true);
     document.addEventListener('pointermove', this._handlePointerMove, true);
     document.addEventListener('pointerup', this._handlePointerUp, true);
   }
 
-  override destroyCallback() {
-    super.destroyCallback();
+  protected override firstUpdated(_changedProperties: PropertyValues<this>): void {
+    super.firstUpdated(_changedProperties);
+    this._initializeSvg();
+  }
 
-    const svg = this.ref['svg-el'] as SVGSVGElement;
-    svg.removeEventListener('pointermove', this._handleSvgPointerMove, true);
-    document.removeEventListener('pointermove', this._handlePointerMove);
-    document.removeEventListener('pointerup', this._handlePointerUp);
+  private _initializeSvg(): void {
+    const svg = this._svgElement;
+    if (!svg || this._svgReady) {
+      return;
+    }
+    this._createBackdrop();
+    this._createFrame();
+    this._svgReady = true;
+    svg.addEventListener('pointermove', this._handleSvgPointerMove, true);
+
+    if (this._pendingMaskHref) {
+      const pendingMask = this._pendingMaskHref;
+      this._pendingMaskHref = null;
+      this._createMask(pendingMask);
+    }
+
+    this._render();
+  }
+
+  override disconnectedCallback(): void {
+    super.disconnectedCallback();
+
+    const svg = this._svgElement;
+    svg?.removeEventListener('pointermove', this._handleSvgPointerMove, true);
+    document.removeEventListener('pointermove', this._handlePointerMove, true);
+    document.removeEventListener('pointerup', this._handlePointerUp, true);
+  }
+
+  override render(): TemplateResult {
+    return html`<svg class="uc-svg" xmlns="http://www.w3.org/2000/svg" ${ref(this.svgRef)}></svg>`;
   }
 }
-
-CropFrame.template = html` <svg class="uc-svg" ref="svg-el" xmlns="http://www.w3.org/2000/svg"></svg> `;
