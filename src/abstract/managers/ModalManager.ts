@@ -1,6 +1,6 @@
 import type { Modal as ModalNode } from '../../blocks/Modal/Modal';
-import type { ActivityType } from '../ActivityBlock';
-import type { Block } from '../Block';
+import type { ActivityType } from '../../lit/LitActivityBlock';
+import type { LitBlock } from '../../lit/LitBlock';
 
 export const ModalEvents = Object.freeze({
   ADD: 'modal:add',
@@ -19,9 +19,9 @@ export class ModalManager {
   private _modals: Map<ModalId, ModalNode> = new Map();
   private _activeModals: Set<ModalId> = new Set();
   private _subscribers: Map<ModalEventType, Set<ModalCb>> = new Map();
-  private _block: Block;
+  private _block: LitBlock;
 
-  constructor(block: Block) {
+  constructor(block: LitBlock) {
     this._block = block;
   }
 

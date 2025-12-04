@@ -1,3 +1,4 @@
+import type { LitUploaderBlock } from '../lit/LitUploaderBlock';
 import type {
   GroupFlag,
   OutputCollectionState,
@@ -8,7 +9,6 @@ import type {
 } from '../types/index';
 import { memoize } from '../utils/memoize';
 import { warnOnce } from '../utils/warnOnce';
-import type { UploaderBlock } from './UploaderBlock';
 
 function createAsyncAssertWrapper(warning: string) {
   let isAsync = false;
@@ -31,7 +31,7 @@ function createAsyncAssertWrapper(warning: string) {
 export function buildOutputCollectionState<
   TCollectionStatus extends OutputCollectionStatus,
   TGroupFlag extends GroupFlag = 'maybe-has-group',
->(uploaderBlock: UploaderBlock): OutputCollectionState<TCollectionStatus, TGroupFlag> {
+>(uploaderBlock: LitUploaderBlock): OutputCollectionState<TCollectionStatus, TGroupFlag> {
   const state = {} as OutputCollectionState<TCollectionStatus, TGroupFlag>;
 
   const getters = {
