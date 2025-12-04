@@ -5,12 +5,16 @@
     "module": "esnext",
     "target": "esnext",
     "lib": ["ESNext", "ESNext.Array", "DOM", "DOM.Iterable"],
-    "types": ["node", "vitest", "@total-typescript/ts-reset", "./types/jsx.d.ts"],
+    "types": ["node", "vitest", "@total-typescript/ts-reset", "./types/jsx.d.ts", "vite/client"],
     "allowJs": true,
     "strict": true,
     "skipLibCheck": true,
     "noEmit": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "paths": {
+      "@/*": ["./src/*"],
+      "~/*": ["./*"]
+    }
   },
   "include": ["src", "types/test", "./**/*.test.ts", "./**/*.test-d.tsx"],
   "exclude": ["node_modules"]
