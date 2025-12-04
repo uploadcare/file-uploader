@@ -26,20 +26,13 @@
 </head>
 
 <uc-file-uploader-regular ctx-name="my-uploader"></uc-file-uploader-regular>
-<uc-config multipleMax="2" ctx-name="my-uploader" pubkey="c41dcdfa79a81e265549"></uc-config>
+<uc-config multipleMax="2" ctx-name="my-uploader" pubkey="demopublickey"></uc-config>
 <uc-upload-ctx-provider ctx-name="my-uploader"></uc-upload-ctx-provider>
 
 <script type="module">
   const config = document.querySelector('uc-config');
   const imagesOnly = (fileInfo, ctx) => {
-    if (fileInfo.isImage) {
-      return {
-        message: ctx.l10n('file-is-not-an-image-type'),
-        payload: {
-          entry: fileInfo,
-        },
-      };
-    }
+    console.log('vali', fileInfo)
   };
 
   config.fileValidators = [imagesOnly];
