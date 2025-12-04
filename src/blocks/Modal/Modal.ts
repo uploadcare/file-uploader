@@ -1,29 +1,22 @@
-import { html } from '@symbiotejs/symbiote';
-import { Block } from '../../abstract/Block';
+import { html } from 'lit';
 import type { ModalCb, ModalId } from '../../abstract/managers/ModalManager';
 import { ModalEvents } from '../../abstract/managers/ModalManager';
+import { LitBlock } from '../../lit/LitBlock';
 import { EventType } from '../UploadCtxProvider/EventEmitter';
 import './modal.css';
+import { createRef, ref } from 'lit/directives/ref.js';
 
 let LAST_ACTIVE_MODAL_ID: ModalId | null = null;
 
-export class Modal extends Block {
+export class Modal extends LitBlock {
   static override styleAttrs = [...super.styleAttrs, 'uc-modal'];
-  static override StateConsumerScope = 'modal';
 
   private _mouseDownTarget: EventTarget | null | undefined;
+  private dialogEl = createRef<HTMLDialogElement>();
 
   handleModalOpen!: ModalCb;
   handleModalClose!: ModalCb;
   handleModalCloseAll!: ModalCb;
-
-  constructor() {
-    super();
-    this.init$ = {
-      ...this.init$,
-      closeClicked: this._handleDialogClose,
-    };
-  }
 
   _handleBackdropClick = (): void => {
     this._closeDialog();
@@ -47,13 +40,13 @@ export class Modal extends Block {
 
   _handleDialogMouseUp = (e: MouseEvent): void => {
     const target = e.target as EventTarget | null;
-    if (target === this.ref.dialog && target === this._mouseDownTarget) {
+    if (target === this.dialogEl.value && target === this._mouseDownTarget) {
       this._closeDialog();
     }
   };
 
   show(): void {
-    const dialog = this.ref.dialog as HTMLDialogElement & {
+    const dialog = this.dialogEl.value as HTMLDialogElement & {
       showModal?: () => void;
     };
     if (typeof dialog.showModal === 'function') {
@@ -69,7 +62,7 @@ export class Modal extends Block {
   }
 
   hide(): void {
-    const dialog = this.ref.dialog as HTMLDialogElement & {
+    const dialog = this.dialogEl.value as HTMLDialogElement & {
       close?: () => void;
     };
     if (typeof dialog.close === 'function') {
@@ -118,11 +111,6 @@ export class Modal extends Block {
 
     this.modalManager?.registerModal(this.id, this);
 
-    const dialog = this.ref.dialog as HTMLDialogElement;
-    dialog.addEventListener('close', this._handleDialogClose);
-    dialog.addEventListener('mousedown', this._handleDialogMouseDown);
-    dialog.addEventListener('mouseup', this._handleDialogMouseUp);
-
     this.subConfigValue('modalBackdropStrokes', (val: boolean) => {
       if (val) {
         this.setAttribute('strokes', '');
@@ -140,23 +128,29 @@ export class Modal extends Block {
     this.modalManager?.subscribe(ModalEvents.CLOSE_ALL, this.handleModalCloseAll);
   }
 
-  override destroyCallback(): void {
-    super.destroyCallback();
+  override disconnectedCallback(): void {
+    super.disconnectedCallback();
     document.body.style.overflow = '';
     this._mouseDownTarget = undefined;
-    const dialog = this.ref.dialog as HTMLDialogElement;
-    dialog.removeEventListener('close', this._handleDialogClose);
-    dialog.removeEventListener('mousedown', this._handleDialogMouseDown);
-    dialog.removeEventListener('mouseup', this._handleDialogMouseUp);
 
     this.modalManager?.unsubscribe(ModalEvents.OPEN, this.handleModalOpen);
     this.modalManager?.unsubscribe(ModalEvents.CLOSE, this.handleModalClose);
     this.modalManager?.unsubscribe(ModalEvents.CLOSE_ALL, this.handleModalCloseAll);
   }
-}
 
-Modal.template = html`
-  <dialog ref="dialog">
-    <slot></slot>
+  private handleDialogRef(dialog: Element | undefined): void {
+    this.dialogEl = { value: dialog } as typeof this.dialogEl;
+
+    this.dialogEl.value?.addEventListener('close', this._handleDialogClose);
+    this.dialogEl.value?.addEventListener('mousedown', this._handleDialogMouseDown);
+    this.dialogEl.value?.addEventListener('mouseup', this._handleDialogMouseUp);
+  }
+
+  override render() {
+    return html`
+  <dialog ${ref(this.handleDialogRef)}>
+    ${this.yield('')}
   </dialog>
 `;
+  }
+}

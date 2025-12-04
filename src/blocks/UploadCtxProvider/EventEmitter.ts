@@ -1,6 +1,6 @@
-import type { ActivityType } from '../../abstract/ActivityBlock';
-import type { Block } from '../../abstract/Block';
 import type { ModalId } from '../../abstract/managers/ModalManager';
+import type { ActivityType } from '../../lit/LitActivityBlock';
+import type { LitBlock } from '../../lit/LitBlock';
 import type { OutputCollectionState, OutputFileEntry } from '../../types';
 
 const DEFAULT_DEBOUNCE_TIMEOUT = 20;
@@ -68,18 +68,18 @@ export type EventPayload = {
 
 export class EventEmitter {
   private _timeoutStore: Map<string, number> = new Map();
-  private _targets: Set<Block> = new Set();
+  private _targets: Set<LitBlock> = new Set();
   private _debugPrint: ((...args: unknown[]) => void) | null = null;
 
   constructor(debugPrint: (...args: unknown[]) => void) {
     this._debugPrint = debugPrint;
   }
 
-  bindTarget(target: Block): void {
+  bindTarget(target: LitBlock): void {
     this._targets.add(target);
   }
 
-  unbindTarget(target: Block): void {
+  unbindTarget(target: LitBlock): void {
     this._targets.delete(target);
   }
 

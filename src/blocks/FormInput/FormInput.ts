@@ -1,10 +1,8 @@
 import { applyStyles } from '@symbiotejs/symbiote';
-import { UploaderBlock } from '../../abstract/UploaderBlock';
+import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
 import type { OutputCollectionState } from '../../types/index';
 
-export class FormInput extends UploaderBlock {
-  override requireCtxName = true;
-
+export class FormInput extends LitUploaderBlock {
   _validationInputElement: HTMLInputElement | null = null;
   _dynamicInputsContainer: HTMLDivElement | null = null;
 

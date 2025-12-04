@@ -1,45 +1,54 @@
-import './icon.css';
-import { html } from '@symbiotejs/symbiote';
-import { Block } from '../../abstract/Block';
+import { html, type PropertyValues } from 'lit';
+import { property, state } from 'lit/decorators.js';
+import { LitBlock } from '../../lit/LitBlock';
 import type { IconHrefResolver } from '../../types/index';
+import './icon.css';
 
-export class Icon extends Block {
-  constructor() {
-    super();
+export class Icon extends LitBlock {
+  @property({ type: String })
+  name = '';
 
-    this.init$ = {
-      ...this.init$,
-      name: '',
-      href: '',
-    };
-  }
+  @state()
+  private resolvedHref = '';
+
+  private iconHrefResolver: IconHrefResolver | null = null;
 
   override initCallback(): void {
     super.initCallback();
-    this.sub('name', (val: string) => {
-      if (!val) {
-        return;
-      }
-      let iconHref = `#uc-icon-${val}`;
-      this.subConfigValue('iconHrefResolver', (iconHrefResolver: IconHrefResolver | null) => {
-        if (iconHrefResolver) {
-          const customIconHref = iconHrefResolver(val);
-          iconHref = customIconHref ?? iconHref;
-        }
-        this.$.href = iconHref;
-      });
-    });
-
     this.setAttribute('aria-hidden', 'true');
+
+    this.subConfigValue('iconHrefResolver', (resolver: IconHrefResolver | null) => {
+      this.iconHrefResolver = resolver;
+      this.updateResolvedHref();
+    });
+  }
+
+  protected override willUpdate(changedProperties: PropertyValues<this>): void {
+    super.willUpdate(changedProperties);
+    if (changedProperties.has('name')) {
+      this.updateResolvedHref();
+    }
+  }
+
+  private updateResolvedHref(): void {
+    if (!this.name) {
+      this.resolvedHref = '';
+      return;
+    }
+
+    const defaultHref = `#uc-icon-${this.name}`;
+    const customHref = this.iconHrefResolver?.(this.name);
+    this.resolvedHref = customHref ?? defaultHref;
+  }
+
+  override render() {
+    return html`
+      ${this.yield(
+        '',
+        html`<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <use href=${this.resolvedHref}></use>
+      </svg>`,
+      )}
+    `;
   }
 }
-
-Icon.template = html`
-  <svg ref="svg" xmlns="http://www.w3.org/2000/svg">
-    <use bind="@href: href;"></use>
-  </svg>
-`;
-
-Icon.bindAttributes({
-  name: 'name',
-});
