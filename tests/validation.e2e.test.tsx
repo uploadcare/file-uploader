@@ -20,7 +20,7 @@ beforeEach(() => {
   page.render(
     <>
       <uc-file-uploader-regular ctx-name={ctxName}></uc-file-uploader-regular>
-      <uc-config ctx-name={ctxName} testMode pubkey="demopublickey"></uc-config>
+      <uc-config qualityInsights={false} ctx-name={ctxName} testMode pubkey="demopublickey"></uc-config>
       <uc-upload-ctx-provider ctx-name={ctxName}></uc-upload-ctx-provider>
     </>,
   );
@@ -207,7 +207,7 @@ describe('Custom file validation', () => {
         await page.getByLabelText('Edit', { exact: true }).click();
         await page.getByLabelText('Apply mirror operation', { exact: true }).click();
         await delay(300);
-        await page.getByLabelText('apply', { exact: true }).click();
+        await page.getByRole('button', { name: /apply/i }).click();
 
         expect(customValidator).toHaveBeenCalledTimes(1);
       });
@@ -253,7 +253,7 @@ describe('Custom file validation', () => {
         });
         await page.getByLabelText('Apply mirror operation', { exact: true }).click();
         await delay(300);
-        await page.getByLabelText('apply', { exact: true }).click();
+        await page.getByRole('button', { name: /apply/i }).click();
 
         expect(customValidator).toHaveBeenCalledTimes(1);
       });
@@ -297,7 +297,7 @@ describe('Custom file validation', () => {
         await page.getByLabelText('Edit', { exact: true }).click();
         await page.getByLabelText('Apply mirror operation', { exact: true }).click();
         const callsBeforeEdit = customValidator.mock.calls.length;
-        await page.getByLabelText('apply', { exact: true }).click();
+        await page.getByRole('button', { name: /apply/i }).click();
         await expect.poll(() => customValidator.mock.calls.length).toBe(callsBeforeEdit + 1);
       });
     });
@@ -446,7 +446,7 @@ describe('Custom file validation', () => {
       await page.getByLabelText('Edit', { exact: true }).click();
       await page.getByLabelText('Apply mirror operation', { exact: true }).click();
       await delay(300);
-      await page.getByLabelText('apply', { exact: true }).click();
+      await page.getByRole('button', { name: /apply/i }).click();
 
       await expect
         .poll(() => validator, {
@@ -578,7 +578,7 @@ describe('File errors API', () => {
     await page.getByLabelText('Edit', { exact: true }).click();
     await page.getByLabelText('Apply mirror operation', { exact: true }).click();
     await delay(300);
-    await page.getByLabelText('apply', { exact: true }).click();
+    await page.getByRole('button', { name: /apply/i }).click();
 
     await expect
       .poll(() => {
@@ -591,7 +591,7 @@ describe('File errors API', () => {
     await page.getByLabelText('Edit', { exact: true }).click();
     await page.getByLabelText('Apply mirror operation', { exact: true }).click();
     await delay(300);
-    await page.getByLabelText('apply', { exact: true }).click();
+    await page.getByRole('button', { name: /apply/i }).click();
 
     await expect
       .poll(() => {
@@ -604,7 +604,7 @@ describe('File errors API', () => {
     await page.getByLabelText('Edit', { exact: true }).click();
     await page.getByLabelText('Apply mirror operation', { exact: true }).click();
     await delay(300);
-    await page.getByLabelText('apply', { exact: true }).click();
+    await page.getByRole('button', { name: /apply/i }).click();
 
     await expect
       .poll(() => {

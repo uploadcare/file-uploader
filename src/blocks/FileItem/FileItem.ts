@@ -478,6 +478,7 @@ export class FileItem extends FileItemConfig {
         l10n="@title:file-item-edit-button;@aria-label:file-item-edit-button"
         class="uc-edit-btn uc-mini-btn"
         set="onclick: onEdit; @hidden: !isEditable"
+        data-testid="edit"
       >
         <uc-icon name="edit-file"></uc-icon>
       </button>
