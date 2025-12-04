@@ -1,57 +1,66 @@
-import { html } from '@symbiotejs/symbiote';
-import { Block } from '../../../abstract/Block';
-import { classNames } from './lib/classNames.js';
+import type { PropertyValues } from 'lit';
+import { html } from 'lit';
+import { state } from 'lit/decorators.js';
+import { ifDefined } from 'lit/directives/if-defined.js';
+import { LitBlock } from '../../../lit/LitBlock';
 
-interface EditorButtonControlInitState {
-  active: boolean;
-  title: string;
-  icon: string;
-  'on.click': ((event: MouseEvent) => unknown) | null;
-  'title-prop': string;
-}
+export class EditorButtonControl extends LitBlock {
+  @state()
+  active = false;
 
-export class EditorButtonControl extends Block {
-  private _titleEl?: HTMLElement;
+  @state()
+  override title = '';
 
-  constructor() {
-    super();
-    this.init$ = {
-      ...this.init$,
-      active: false,
-      title: '',
-      icon: '',
-      'on.click': null,
-      'title-prop': '',
-    } as EditorButtonControlInitState;
+  @state()
+  icon = '';
+
+  @state()
+  titleProp = '';
+
+  protected get buttonClasses(): Record<string, boolean> {
+    const isActive = this.active;
+    return {
+      'uc-active': isActive,
+      'uc-not_active': !isActive,
+    };
   }
 
-  override initCallback(): void {
-    super.initCallback();
+  private updateHostStateClasses(): void {
+    const classes = this.buttonClasses;
+    for (const [className, enabled] of Object.entries(classes)) {
+      this.classList.toggle(className, enabled);
+    }
+  }
 
-    this._titleEl = this.ref['title-el'] as HTMLElement | undefined;
-    this.sub('title', (title: string) => {
-      const titleEl = this._titleEl;
-      if (titleEl) {
-        titleEl.style.display = title ? 'block' : 'none';
-      }
-    });
+  protected onClick(_event: MouseEvent): void {}
 
-    this.sub('active', (active: boolean) => {
-      this.className = classNames({
-        'uc-active': active,
-        'uc-not_active': !active,
-      });
-    });
+  override connectedCallback(): void {
+    super.connectedCallback();
+    this.updateHostStateClasses();
+  }
 
-    this.sub('on.click', (onClick: ((event: MouseEvent) => unknown) | null) => {
-      this.onclick = onClick ?? null;
-    });
+  protected override updated(changedProperties: PropertyValues): void {
+    super.updated(changedProperties);
+    if (changedProperties.has('active')) {
+      this.updateHostStateClasses();
+    }
+  }
+
+  override render() {
+    const clickHandler = this.onClick;
+    const title = this.title;
+
+    return html`
+      <button
+        role="option"
+        type="button"
+        aria-label=${ifDefined(this.titleProp)}
+        title=${ifDefined(this.titleProp)}
+        @click=${clickHandler}
+      >
+        <uc-icon name=${this.icon}></uc-icon>
+        <div class="uc-title" ?hidden=${!title}>${title}</div>
+      </button>
+    `;
   }
 }
-
-EditorButtonControl.template = html`
-  <button role="option" type="button" bind="@aria-label:title-prop;" l10n="@title:title-prop;">
-    <uc-icon ref="icon-el" bind="@name: icon;"></uc-icon>
-    <div class="uc-title" ref="title-el">{{title}}</div>
-  </button>
-`;
