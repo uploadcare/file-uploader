@@ -1,46 +1,45 @@
 <!doctype html>
-
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>File Uploader locales</title>
     <style>
-      @media (prefers-color-scheme: dark) {
-        body {
-          background-color: #121213;
-          color: #fff;
-        }
+    @media (prefers-color-scheme: dark) {
+      body {
+        background-color: #121213;
+        color: #fff;
       }
+    }
     </style>
   </head>
   <body>
     <script type="module">
-      import '@/solutions/file-uploader/inline/index.css';
-      import '@/solutions/file-uploader/regular/index.css';
-      import '@/solutions/file-uploader/minimal/index.css';
-      import * as UC from '@/index.js';
+    import '@/solutions/file-uploader/inline/index.css';
+    import '@/solutions/file-uploader/regular/index.css';
+    import '@/solutions/file-uploader/minimal/index.css';
+    import * as UC from '@/index.js';
 
-      const locales = import.meta.glob('@/locales/file-uploader/*.ts', {
-        eager: true,
-      });
+    const locales = import.meta.glob('@/locales/file-uploader/*.ts', {
+      eager: true,
+    });
 
-      const allLocales = Object.fromEntries(
-        Object.entries(locales).map(([path, m]) => {
-          return [path.split('/').pop().split('.')[0], m.default];
-        }),
-      );
+    const allLocales = Object.fromEntries(
+      Object.entries(locales).map(([path, m]) => {
+        return [path.split('/').pop().split('.')[0], m.default];
+      }),
+    );
 
-      for (const [key, definition] of Object.entries(allLocales)) {
-        UC.defineLocale(key, definition);
-      }
+    for (const [key, definition] of Object.entries(allLocales)) {
+      UC.defineLocale(key, definition);
+    }
 
-      UC.defineComponents(UC);
+    UC.defineComponents(UC);
 
-      const config = document.querySelector('uc-config');
+    const config = document.querySelector('uc-config');
 
-      document.querySelector('#locale-radio').innerHTML = /* html */ `
+    document.querySelector('#locale-radio').innerHTML = /* html */ `
             <br />
             <fieldset>
               ${Object.keys(allLocales)
@@ -57,23 +56,23 @@
                 .join('\n')}
             </fieldset>
             `;
-      [...document.querySelectorAll('input[name=locale]')].forEach((el) => {
-        el.addEventListener('change', (e) => {
-          if (e.target.checked) {
-            config.localeName = e.target.value;
-          }
-        });
+    [...document.querySelectorAll('input[name=locale]')].forEach((el) => {
+      el.addEventListener('change', (e) => {
+        if (e.target.checked) {
+          config.localeName = e.target.value;
+        }
       });
+    });
 
-      const setMode = (mode) => {
-        document.querySelector('#container').innerHTML = /* html */ `
+    const setMode = (mode) => {
+      document.querySelector('#container').innerHTML = /* html */ `
             <uc-file-uploader-${mode}
       ctx-name="my-uploader"
     ></uc-file-uploader-${mode}>
             `;
-      };
+    };
 
-      document.querySelector('#mode-radio').innerHTML = /* html */ `
+    document.querySelector('#mode-radio').innerHTML = /* html */ `
             <br />
             <fieldset>
               ${['regular', 'inline', 'minimal']
@@ -86,16 +85,16 @@
                 .join('\n')}
             </fieldset>
             `;
-      [...document.querySelectorAll('input[name=mode]')].forEach((el) => {
-        el.addEventListener('change', (e) => {
-          if (e.target.checked) {
-            const mode = e.target.value;
-            setMode(mode);
-          }
-        });
+    [...document.querySelectorAll('input[name=mode]')].forEach((el) => {
+      el.addEventListener('change', (e) => {
+        if (e.target.checked) {
+          const mode = e.target.value;
+          setMode(mode);
+        }
       });
+    });
 
-      setMode('regular');
+    setMode('regular');
     </script>
 
     <uc-config ctx-name="my-uploader" pubkey="demopublickey"></uc-config>

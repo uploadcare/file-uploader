@@ -1,27 +1,26 @@
 <!doctype html>
-
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <script type="module">
-    import '@/solutions/file-uploader/regular/index.css';
-    import * as UC from '@/index.js';
-    import { default as en } from '@/locales/file-uploader/en.js';
-    import { default as fr } from '@/locales/file-uploader/fr.js';
+  import '@/solutions/file-uploader/regular/index.css';
+  import * as UC from '@/index.js';
+  import { default as en } from '@/locales/file-uploader/en.js';
+  import { default as fr } from '@/locales/file-uploader/fr.js';
 
-    UC.defineLocale('en', {
-      ...en,
-      ...{
-        'file-is-not-an-image-type': 'File is not an image type',
-      },
-    });
-    UC.defineLocale('fr', {
-      ...fr,
-      ...{
-        'file-is-not-an-image-type': "Le fichier n'est pas une image",
-      },
-    });
+  UC.defineLocale('en', {
+    ...en,
+    ...{
+      'file-is-not-an-image-type': 'File is not an image type',
+    },
+  });
+  UC.defineLocale('fr', {
+    ...fr,
+    ...{
+      'file-is-not-an-image-type': "Le fichier n'est pas une image",
+    },
+  });
 
-    UC.defineComponents(UC);
+  UC.defineComponents(UC);
   </script>
 </head>
 
@@ -30,12 +29,12 @@
 <uc-upload-ctx-provider ctx-name="my-uploader"></uc-upload-ctx-provider>
 
 <script type="module">
-  const config = document.querySelector('uc-config');
-  const imagesOnly = (fileInfo, ctx) => {
-    console.log('vali', fileInfo)
-  };
+const config = document.querySelector('uc-config');
+const imagesOnly = (fileInfo, ctx) => {
+  console.log('vali', fileInfo);
+};
 
-  config.fileValidators = [imagesOnly];
+config.fileValidators = [imagesOnly];
 
-  config.collectionValidators = [];
+config.collectionValidators = [];
 </script>

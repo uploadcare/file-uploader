@@ -336,7 +336,7 @@ export class ImgBase extends ImgConfig {
           }
 
           this.appendChild(this._img);
-        } catch (e) {
+        } catch {
           if (this.hasPreviewImage) {
             await this._imgPreview?.remove();
           }
@@ -368,7 +368,7 @@ export class ImgBase extends ImgConfig {
       }
 
       this.appendChild(this._img);
-    } catch (e) {
+    } catch {
       if (this.hasPreviewImage) {
         await this._imgPreview?.remove();
       }

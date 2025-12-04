@@ -1,27 +1,26 @@
 <!doctype html>
-
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="../solutions/file-uploader/regular/index.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../solutions/file-uploader/regular/index.css">
   <style>
-    @media (prefers-color-scheme: dark) {
-      body {
-        background-color: #121213;
-        color: #fff;
-      }
+  @media (prefers-color-scheme: dark) {
+    body {
+      background-color: #121213;
+      color: #fff;
     }
+  }
   </style>
   <script type="module">
-    import * as UC from '../index.js';
+  import * as UC from '../index.js';
 
-    UC.defineComponents(UC);
+  UC.defineComponents(UC);
 
-    const config = document.querySelector('uc-config');
-    config.iconHrefResolver = (iconId) => {
-      if (iconId === 'upload') {
-        return './test.svg#circle-heat-svgrepo-com';
-      }
-    };
+  const config = document.querySelector('uc-config');
+  config.iconHrefResolver = (iconId) => {
+    if (iconId === 'upload') {
+      return './test.svg#circle-heat-svgrepo-com';
+    }
+  };
   </script>
 </head>
 
