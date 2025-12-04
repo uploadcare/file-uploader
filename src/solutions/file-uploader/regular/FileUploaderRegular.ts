@@ -1,28 +1,27 @@
-import { html } from '@symbiotejs/symbiote';
-import './index.css';
-import { SolutionBlock } from '../../../abstract/SolutionBlock';
-import { asBoolean } from '../../../blocks/Config/validatorsType';
+import { html } from 'lit';
+import { property } from 'lit/decorators.js';
 import { InternalEventType } from '../../../blocks/UploadCtxProvider/EventEmitter';
+import { LitSolutionBlock } from '../../../lit/LitSolutionBlock';
+import './index.css';
 
-type BaseInitState = InstanceType<typeof SolutionBlock>['init$'];
+type BaseInitState = InstanceType<typeof LitSolutionBlock>['init$'];
 interface FileUploaderRegularInitState extends BaseInitState {
-  isHidden: boolean;
   '*solution': string;
 }
 
-export class FileUploaderRegular extends SolutionBlock {
+export class FileUploaderRegular extends LitSolutionBlock {
   static override styleAttrs = [...super.styleAttrs, 'uc-file-uploader-regular'];
+
+  @property({ type: Boolean })
+  headless = false;
 
   constructor() {
     super();
 
-    const initialState: FileUploaderRegularInitState = {
+    this.init$ = {
       ...this.init$,
-      isHidden: false,
       '*solution': this.tagName,
-    };
-
-    this.init$ = initialState;
+    } as FileUploaderRegularInitState;
   }
 
   override initCallback(): void {
@@ -31,21 +30,18 @@ export class FileUploaderRegular extends SolutionBlock {
     this.telemetryManager.sendEvent({
       eventType: InternalEventType.INIT_SOLUTION,
     });
-
-    this.defineAccessor('headless', (value: unknown) => {
-      this.set$({ isHidden: asBoolean(value) });
-    });
   }
-}
 
-FileUploaderRegular.template = html`
-  <uc-simple-btn bind="@hidden: isHidden"></uc-simple-btn>
+  override render() {
+    return html`
+    ${super.render()}
+  <uc-simple-btn ?hidden=${this.headless}></uc-simple-btn>
 
   <uc-modal id="start-from" strokes block-body-scrolling>
     <uc-start-from>
       <uc-drop-area with-icon clickable></uc-drop-area>
       <uc-source-list role="list" wrap></uc-source-list>
-      <button type="button" l10n="start-from-cancel" class="uc-secondary-btn" bind="onclick: *historyBack"></button>
+      <button type="button" class="uc-secondary-btn" @click=${this.$['*historyBack']}>${this.l10n('start-from-cancel')}</button>
       <uc-copyright></uc-copyright>
     </uc-start-from>
   </uc-modal>
@@ -70,8 +66,5 @@ FileUploaderRegular.template = html`
     <uc-cloud-image-editor-activity></uc-cloud-image-editor-activity>
   </uc-modal>
 `;
-
-FileUploaderRegular.bindAttributes({
-  // @ts-expect-error TODO: fix types inside symbiote
-  headless: null,
-});
+  }
+}
