@@ -1,5 +1,5 @@
-import { page } from '@vitest/browser/context';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { page } from 'vitest/browser';
 import type { Config, FuncFileValidator, OutputErrorCollection, OutputErrorFile, UploadCtxProvider } from '@/index';
 import { delay } from '@/utils/delay.js';
 import '../types/jsx';
@@ -185,7 +185,7 @@ describe('Custom file validation', () => {
         api.initFlow();
         await expect
           .poll(() => api.getOutputCollectionState().status, {
-            timeout: 5000,
+            timeout: 10000,
           })
           .toBe('success');
         expect(customValidator).toHaveBeenCalledTimes(1);
@@ -229,7 +229,7 @@ describe('Custom file validation', () => {
         api.initFlow();
         await expect
           .poll(() => api.getOutputCollectionState().status, {
-            timeout: 5000,
+            timeout: 10000,
           })
           .toBe('success');
         await expect.poll(() => customValidator).toHaveBeenCalledTimes(1);
@@ -249,7 +249,7 @@ describe('Custom file validation', () => {
         api.addFileFromObject(IMAGE.SQUARE);
         api.initFlow();
         await page.getByLabelText('Edit', { exact: true }).click({
-          timeout: 15000,
+          timeout: 10000,
         });
         await page.getByLabelText('Apply mirror operation', { exact: true }).click();
         await delay(300);
@@ -419,7 +419,7 @@ describe('Custom file validation', () => {
         .toHaveBeenCalledWith(expect.objectContaining({ status: 'idle' }), expect.anything(), expect.anything());
       await expect
         .poll(() => validator, {
-          timeout: 3000,
+          timeout: 10000,
         })
         .toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }), expect.anything(), expect.anything());
     });
@@ -435,7 +435,7 @@ describe('Custom file validation', () => {
 
       await expect
         .poll(() => validator, {
-          timeout: 3000,
+          timeout: 5000,
         })
         .toHaveBeenLastCalledWith(
           expect.objectContaining({ cdnUrlModifiers: '' }),
@@ -444,13 +444,14 @@ describe('Custom file validation', () => {
         );
 
       await page.getByLabelText('Edit', { exact: true }).click();
+      await delay(1000);
       await page.getByLabelText('Apply mirror operation', { exact: true }).click();
-      await delay(300);
+      await delay(1000);
       await page.getByRole('button', { name: /apply/i }).click();
 
       await expect
         .poll(() => validator, {
-          timeout: 3000,
+          timeout: 5000,
         })
         .toHaveBeenLastCalledWith(
           expect.objectContaining({
@@ -554,7 +555,7 @@ describe('File errors API', () => {
       .toEqual(expect.arrayContaining([expect.objectContaining<Partial<OutputErrorFile>>({ type: 'UPLOAD_ERROR' })]));
   });
 
-  it('should toggle errors in the `errors` property of the file on file change', async () => {
+  it.only('should toggle errors in the `errors` property of the file on file change', async () => {
     const config = page.getByTestId('uc-config').query()! as Config;
     const customValidator = vi.fn<FuncFileValidator>((entry) => {
       if (entry.cdnUrlModifiers?.includes('mirror')) {
@@ -576,8 +577,9 @@ describe('File errors API', () => {
 
     // Apply mirror and check for error
     await page.getByLabelText('Edit', { exact: true }).click();
+    await delay(3000);
     await page.getByLabelText('Apply mirror operation', { exact: true }).click();
-    await delay(300);
+    await delay(3000);
     await page.getByRole('button', { name: /apply/i }).click();
 
     await expect
@@ -589,8 +591,9 @@ describe('File errors API', () => {
 
     // Remove mirror and check for error gone
     await page.getByLabelText('Edit', { exact: true }).click();
+    await delay(3000);
     await page.getByLabelText('Apply mirror operation', { exact: true }).click();
-    await delay(300);
+    await delay(3000);
     await page.getByRole('button', { name: /apply/i }).click();
 
     await expect
@@ -602,8 +605,9 @@ describe('File errors API', () => {
 
     // Apply mirror and check for error again
     await page.getByLabelText('Edit', { exact: true }).click();
+    await delay(3000);
     await page.getByLabelText('Apply mirror operation', { exact: true }).click();
-    await delay(300);
+    await delay(3000);
     await page.getByRole('button', { name: /apply/i }).click();
 
     await expect

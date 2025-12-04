@@ -15,7 +15,7 @@ export const commands = {
   waitFileChooserAndUpload,
 };
 
-declare module '@vitest/browser/context' {
+declare module 'vitest/browser' {
   interface BrowserCommands {
     waitFileChooserAndUpload: (relativePaths: string[]) => Promise<void>;
   }
