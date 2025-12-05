@@ -1,6 +1,6 @@
 {
   "name": "@uploadcare/file-uploader",
-  "version": "1.25.0-alpha.1",
+  "version": "1.24.5",
   "description": "Building blocks for Uploadcare products integration",
   "keywords": [
     "web components",
