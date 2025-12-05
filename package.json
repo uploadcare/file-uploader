@@ -125,6 +125,7 @@
     "@vitest/browser-playwright": "^4.0.14",
     "@vitest/coverage-v8": "^4.0.14",
     "esbuild": "^0.25.12",
+    "esbuild-minify-templates": "^0.13.1",
     "husky": "^9.1.7",
     "lint-staged": "^16.2.6",
     "node-watch": "^0.7.4",
