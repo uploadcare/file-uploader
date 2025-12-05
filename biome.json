@@ -26,7 +26,13 @@
         "noThisInStatic": "off"
       },
       "style": {
-        "noInferrableTypes": "error"
+        "noInferrableTypes": "error",
+        "useConsistentMemberAccessibility": {
+          "level": "error",
+          "options": {
+            "accessibility": "explicit"
+          }
+        }
       },
       "correctness": {
         "noUnusedVariables": "error",
@@ -50,14 +56,22 @@
   },
   "overrides": [
     {
-      "includes": [
-        "**/*.test-d.tsx"
-      ],
+      "includes": ["**/*.test-d.tsx"],
       "linter": {
         "rules": {
           "correctness": {
             "noUnusedVariables": "off",
             "noUnusedImports": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["demo/**/*.html"],
+      "linter": {
+        "rules": {
+          "style": {
+            "useConsistentMemberAccessibility": "off"
           }
         }
       }
