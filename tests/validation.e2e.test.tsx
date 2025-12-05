@@ -555,7 +555,7 @@ describe('File errors API', () => {
       .toEqual(expect.arrayContaining([expect.objectContaining<Partial<OutputErrorFile>>({ type: 'UPLOAD_ERROR' })]));
   });
 
-  it.only('should toggle errors in the `errors` property of the file on file change', async () => {
+  it('should toggle errors in the `errors` property of the file on file change', async () => {
     const config = page.getByTestId('uc-config').query()! as Config;
     const customValidator = vi.fn<FuncFileValidator>((entry) => {
       if (entry.cdnUrlModifiers?.includes('mirror')) {
