@@ -72,12 +72,15 @@ async function build(buildItem: BuildItem) {
       options.platform = 'browser';
       options.legalComments = 'linked';
     },
-    noExternal: buildItem.bundleExternalDependencies ? Object.keys(dependencies) : undefined,
+    noExternal: buildItem.bundleExternalDependencies ? [...Object.keys(dependencies), /lit/] : undefined,
     globalName: buildItem.format === 'iife' ? 'UC' : undefined,
     keepNames: buildItem.format === 'iife' ? true : undefined,
     splitting: false,
     shims: false,
     dts: true,
+    env: {
+      NODE_ENV: 'production',
+    },
     plugins: [
       {
         name: 'minify-html-templates',
