@@ -1,5 +1,5 @@
 import { html } from 'lit';
-import { unsafeHTML } from 'lit/directives/unsafe-html.js';
+import { unsafeSVG } from 'lit/directives/unsafe-svg.js';
 import { solutionBlockCtx } from '../abstract/CTX';
 import svgIconsSprite from '../blocks/themes/uc-basic/svg-sprite';
 import { LitBlock } from './LitBlock';
@@ -14,6 +14,6 @@ export class LitSolutionBlock extends LitBlock {
   }
 
   override render() {
-    return html`${unsafeHTML(svgIconsSprite)}`;
+    return html`${unsafeSVG(svgIconsSprite)}`;
   }
 }
