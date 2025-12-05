@@ -70,6 +70,7 @@ async function build(buildItem: BuildItem) {
       options.conditions = ['browser'];
       options.mainFields = ['exports'];
       options.platform = 'browser';
+      options.legalComments = 'linked';
     },
     noExternal: buildItem.bundleExternalDependencies ? Object.keys(dependencies) : undefined,
     globalName: buildItem.format === 'iife' ? 'UC' : undefined,
