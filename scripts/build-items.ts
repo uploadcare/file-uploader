@@ -33,7 +33,7 @@ export const buildItems: BuildItem[] = [
     ],
     outDir: outPath('./dist/'),
     format: 'esm',
-    minify: false,
+    minify: true,
     bundleExternalDependencies: false,
   },
   // uc-blocks
