@@ -110,9 +110,9 @@
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.2",
-    "@biomejs/biome": "2.3.6",
+    "@biomejs/biome": "2.3.8",
     "@biomejs/js-api": "^4.0.0",
-    "@biomejs/wasm-nodejs": "^2.3.6",
+    "@biomejs/wasm-nodejs": "^2.3.8",
     "@csstools/postcss-cascade-layers": "^5.0.2",
     "@happy-dom/global-registrator": "^20.0.10",
     "@size-limit/esbuild-why": "^11.2.0",
