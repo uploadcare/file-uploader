@@ -19,7 +19,8 @@
       "recommended": true,
       "suspicious": {
         "noDuplicateProperties": "off",
-        "noExplicitAny": "warn"
+        "noExplicitAny": "warn",
+        "noFocusedTests": "error"
       },
       "complexity": {
         "noThisInStatic": "off"
@@ -49,7 +50,9 @@
   },
   "overrides": [
     {
-      "includes": ["**/*.test-d.tsx"],
+      "includes": [
+        "**/*.test-d.tsx"
+      ],
       "linter": {
         "rules": {
           "correctness": {
