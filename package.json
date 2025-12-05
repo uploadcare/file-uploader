@@ -67,7 +67,7 @@
   },
   "homepage": "https://uploadcare.com/",
   "files": [
-    "{dist,web,types}/**/*.{js,css,d.ts,d.ts.map}",
+    "{dist,web,types}/**/*.{js,css,d.ts,d.ts.map,txt}",
     "README.md",
     "LICENSE"
   ],
