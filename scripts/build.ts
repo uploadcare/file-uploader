@@ -2,9 +2,9 @@ import fs from 'node:fs';
 import path, { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import postcssCascadeLayers from '@csstools/postcss-cascade-layers';
+import { minifyTemplates, writeFiles } from 'esbuild-minify-templates';
 import postcss from 'postcss';
 import { build as tsupBuild } from 'tsup';
-import { dependencies } from '../package.json';
 import { type BuildItem, buildItems } from './build-items';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -24,32 +24,6 @@ function jsBanner() {
       .join('\n') +
     '\n */'
   );
-}
-
-function minifyHtmlTemplates(js: string): string {
-  const checkIfHtml = (str: string) => {
-    return str.includes('<') && (str.includes('</') || str.includes('/>'));
-  };
-  const processChunk = (ch: string) => {
-    if (checkIfHtml(ch)) {
-      let htmlMin = ch.split('\n').join(' ');
-      while (htmlMin.includes('  ')) {
-        htmlMin = htmlMin.split('  ').join(' ');
-      }
-      htmlMin = htmlMin.split('> <').join('><');
-      return htmlMin.trim();
-    }
-    return ch;
-  };
-  const result = js
-    .split('`')
-    .map((chunk) => processChunk(chunk))
-    .join('`')
-    .split(`'`)
-    .map((chunk) => processChunk(chunk))
-    .join(`'`);
-
-  return result;
 }
 
 async function build(buildItem: BuildItem) {
@@ -72,25 +46,18 @@ async function build(buildItem: BuildItem) {
       options.platform = 'browser';
       options.legalComments = 'linked';
     },
-    noExternal: buildItem.bundleExternalDependencies ? [...Object.keys(dependencies), /lit/] : undefined,
+    esbuildPlugins: buildItem.minify ? [minifyTemplates(), writeFiles()] : [],
+    noExternal: buildItem.bundleExternalDependencies ? [/.*/] : undefined,
     globalName: buildItem.format === 'iife' ? 'UC' : undefined,
     keepNames: buildItem.format === 'iife' ? true : undefined,
     splitting: false,
+    treeshake: true,
     shims: false,
     dts: true,
     env: {
       NODE_ENV: 'production',
     },
     plugins: [
-      {
-        name: 'minify-html-templates',
-        renderChunk(code) {
-          return {
-            code: buildItem.minify ? minifyHtmlTemplates(code) : code,
-            map: null,
-          };
-        },
-      },
       {
         name: 'rename-output',
         async buildEnd(ctx) {
