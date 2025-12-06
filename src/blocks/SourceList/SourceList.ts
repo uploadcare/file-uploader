@@ -11,7 +11,7 @@ export class SourceList extends LitBlock {
   private _cameraModes: string[] = [];
   private _resolvedSources: string[] = [];
 
-  override initCallback(): void {
+  public override initCallback(): void {
     super.initCallback();
 
     this.subConfigValue('sourceList', (val: string) => {
@@ -25,7 +25,7 @@ export class SourceList extends LitBlock {
     });
   }
 
-  protected override updated(changedProperties: PropertyValues): void {
+  protected override updated(changedProperties: PropertyValues<this>): void {
     super.updated(changedProperties);
 
     if (this.cfg.sourceListWrap) {
@@ -64,9 +64,9 @@ export class SourceList extends LitBlock {
   }
 
   @state()
-  sources: string[] = [];
+  private sources: string[] = [];
 
-  override render() {
+  public override render() {
     return html`${this.sources.map((type) => html`<uc-source-btn role="listitem" type=${type}></uc-source-btn>`)}`;
   }
 }

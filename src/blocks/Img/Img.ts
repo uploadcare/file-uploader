@@ -1,7 +1,7 @@
 import { ImgBase } from './ImgBase.js';
 
 export class Img extends ImgBase {
-  override connectedCallback(): void {
+  public override connectedCallback(): void {
     super.connectedCallback();
 
     this.sub$$('src', () => {

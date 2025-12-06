@@ -17,15 +17,15 @@ type EditorTemplateConfig = {
 };
 
 export class CloudImageEditorActivity extends LitUploaderBlock {
-  override couldBeCtxOwner = true;
-  override activityType = LitActivityBlock.activities.CLOUD_IMG_EDIT;
+  public override couldBeCtxOwner = true;
+  public override activityType = LitActivityBlock.activities.CLOUD_IMG_EDIT;
 
   private _entry?: TypedData<typeof uploadEntrySchema>;
 
   @state()
   private editorConfig: EditorTemplateConfig | null = null;
 
-  override get activityParams(): ActivityParams {
+  public override get activityParams(): ActivityParams {
     const params = super.activityParams;
 
     if ('internalId' in params) {
@@ -34,12 +34,12 @@ export class CloudImageEditorActivity extends LitUploaderBlock {
     throw new Error(`Cloud Image Editor activity params not found`);
   }
 
-  override initCallback(): void {
+  public override initCallback(): void {
     super.initCallback();
 
     this.registerActivity(this.activityType, {
-      onActivate: () => this.mountEditor(),
-      onDeactivate: () => this.unmountEditor(),
+      onActivate: () => this._mountEditor(),
+      onDeactivate: () => this._unmountEditor(),
     });
 
     this.subConfigValue('cropPreset', (cropPreset) => {
@@ -71,7 +71,7 @@ export class CloudImageEditorActivity extends LitUploaderBlock {
     });
   }
 
-  handleApply(e: CustomEvent<ApplyResult>): void {
+  private _handleApply(e: CustomEvent<ApplyResult>): void {
     if (!this._entry) {
       return;
     }
@@ -85,18 +85,18 @@ export class CloudImageEditorActivity extends LitUploaderBlock {
     this.historyBack();
   }
 
-  handleCancel(event?: Event): void {
+  private _handleCancel(event?: Event): void {
     const detail = event instanceof CustomEvent ? event.detail : undefined;
     this.debugPrint(`editor event "cancel"`, detail);
     this.modalManager?.close(LitActivityBlock.activities.CLOUD_IMG_EDIT);
     this.historyBack();
   }
 
-  handleChange(event: CustomEvent<ChangeResult>): void {
+  public handleChange(event: CustomEvent<ChangeResult>): void {
     this.debugPrint(`editor event "change"`, event.detail);
   }
 
-  mountEditor(): void {
+  private _mountEditor(): void {
     const { internalId } = this.activityParams;
     const entry = this.uploadCollection.read(internalId);
     if (!entry) {
@@ -110,12 +110,12 @@ export class CloudImageEditorActivity extends LitUploaderBlock {
     this.editorConfig = this._createEditorConfig(cdnUrl);
   }
 
-  unmountEditor(): void {
+  private _unmountEditor(): void {
     this._entry = undefined;
     this.editorConfig = null;
   }
 
-  override render() {
+  public override render() {
     if (!this.editorConfig) {
       return nothing;
     }
@@ -127,8 +127,8 @@ export class CloudImageEditorActivity extends LitUploaderBlock {
         cdn-url=${cdnUrl}
         crop-preset=${ifDefined(cropPreset)}
         tabs=${ifDefined(tabs)}
-        @apply=${this.handleApply}
-        @cancel=${this.handleCancel}
+        @apply=${this._handleApply}
+        @cancel=${this._handleCancel}
         @change=${this.handleChange}
       ></uc-cloud-image-editor>
     `;

@@ -87,7 +87,7 @@ export class ValidationManager {
     }
   > = new Map();
 
-  constructor(blockInstance: LitUploaderBlock) {
+  public constructor(blockInstance: LitUploaderBlock) {
     this._blockInstance = blockInstance;
 
     this._uploadCollection = this._blockInstance.uploadCollection;
@@ -109,7 +109,7 @@ export class ValidationManager {
     });
   }
 
-  runFileValidators(runOn: FileValidatorDescriptor['runOn'], entryIds?: string[]): void {
+  public runFileValidators(runOn: FileValidatorDescriptor['runOn'], entryIds?: string[]): void {
     const ids = entryIds ?? this._uploadCollection.items();
     for (const id of ids) {
       const entry = this._uploadCollection.read(id);
@@ -119,7 +119,7 @@ export class ValidationManager {
     }
   }
 
-  runCollectionValidators(): void {
+  public runCollectionValidators(): void {
     const collection = this._blockInstance.api.getOutputCollectionState();
     const errors: Array<OutputErrorCollection> = [];
 
@@ -152,7 +152,7 @@ export class ValidationManager {
     }
   }
 
-  cleanupValidationForEntry(entry: TypedData<typeof uploadEntrySchema>): void {
+  public cleanupValidationForEntry(entry: TypedData<typeof uploadEntrySchema>): void {
     const state = this._entryValidationState.get(entry.uid);
     if (state) {
       state.abortController?.abort();

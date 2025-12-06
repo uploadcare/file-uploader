@@ -23,10 +23,10 @@ function nextValue(operation: CropOperation, prev: number | boolean): number | b
 
 export class EditorCropButtonControl extends EditorButtonControl {
   @property({ type: String })
-  operation: CropOperation | undefined = undefined;
+  public operation: CropOperation | undefined = undefined;
 
-  protected override willUpdate(_changedProperties: PropertyValues): void {
-    super.willUpdate(_changedProperties);
+  protected override willUpdate(changedProperties: PropertyValues<this>): void {
+    super.willUpdate(changedProperties);
 
     if (this.operation) {
       this.titleProp = this.l10n('a11y-cloud-editor-apply-crop', {
@@ -39,7 +39,7 @@ export class EditorCropButtonControl extends EditorButtonControl {
     }
   }
 
-  override onClick(e: MouseEvent) {
+  protected override onClick(e: MouseEvent) {
     if (!this.operation) {
       return;
     }

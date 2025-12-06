@@ -18,7 +18,7 @@ export class ProgressBarCommon extends LitUploaderBlock {
   @state()
   protected value = 0;
 
-  constructor() {
+  public constructor() {
     super();
     this.init$ = {
       ...this.init$,
@@ -26,7 +26,7 @@ export class ProgressBarCommon extends LitUploaderBlock {
     } as ProgressBarCommonInitState;
   }
 
-  override initCallback(): void {
+  public override initCallback(): void {
     super.initCallback();
     this._unobserveCollectionCb = this.uploadCollection.observeProperties(() => {
       const anyUploading = this.uploadCollection.items().some((id) => {
@@ -54,13 +54,13 @@ export class ProgressBarCommon extends LitUploaderBlock {
     }
   }
 
-  override disconnectedCallback(): void {
+  public override disconnectedCallback(): void {
     super.disconnectedCallback();
     this._unobserveCollectionCb?.();
     this._unobserveCollectionCb = undefined;
   }
 
-  override render() {
+  public override render() {
     return html` <uc-progress-bar .value=${this.value} .visible=${this.visible}></uc-progress-bar> `;
   }
 }

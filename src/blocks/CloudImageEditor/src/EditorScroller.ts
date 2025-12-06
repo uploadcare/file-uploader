@@ -14,14 +14,14 @@ export class EditorScroller extends LitBlock {
     this.scrollLeft += deltaY;
   };
 
-  override connectedCallback(): void {
+  public override connectedCallback(): void {
     super.connectedCallback();
     this.addEventListener('wheel', this.handleWheel, { passive: false });
     // This fixes a macOS issue where wheel events skip without an attached scroll listener
     this.addEventListener('scroll', noopScrollListener, { passive: true });
   }
 
-  override disconnectedCallback(): void {
+  public override disconnectedCallback(): void {
     this.removeEventListener('wheel', this.handleWheel);
     this.removeEventListener('scroll', noopScrollListener);
     super.disconnectedCallback();

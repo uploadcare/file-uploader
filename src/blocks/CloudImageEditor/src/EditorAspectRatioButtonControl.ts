@@ -25,7 +25,7 @@ const getAdjustResolutions = (value: CropAspectRatio) => {
 };
 
 export class EditorFreeformButtonControl extends EditorButtonControl {
-  override initCallback(): void {
+  public override initCallback(): void {
     super.initCallback();
 
     this.icon = 'arrow-dropdown';
@@ -37,7 +37,7 @@ export class EditorFreeformButtonControl extends EditorButtonControl {
     });
   }
 
-  override onClick(): void {
+  public override onClick(): void {
     this.$['*showListAspectRatio'] = true;
   }
 
@@ -50,7 +50,7 @@ export class EditorFreeformButtonControl extends EditorButtonControl {
       : this.l10n('crop-to-shape', { value: `${aspectRatio.width}:${aspectRatio.height}` });
   }
 
-  override render() {
+  public override render() {
     const clickHandler = this.onClick;
     const title = this.title;
     return html`
@@ -72,11 +72,11 @@ export class EditorAspectRatioButtonControl extends EditorButtonControl {
   private _aspectRatio?: CropAspectRatio;
 
   @property({ attribute: false })
-  get aspectRatio(): CropAspectRatio | undefined {
+  public get aspectRatio(): CropAspectRatio | undefined {
     return this._aspectRatio;
   }
 
-  set aspectRatio(value: CropAspectRatio | undefined) {
+  public set aspectRatio(value: CropAspectRatio | undefined) {
     if (this._aspectRatio === value) {
       return;
     }
@@ -92,7 +92,7 @@ export class EditorAspectRatioButtonControl extends EditorButtonControl {
     }
   }
 
-  override initCallback(): void {
+  public override initCallback(): void {
     super.initCallback();
 
     if (this._aspectRatio) {
@@ -106,7 +106,7 @@ export class EditorAspectRatioButtonControl extends EditorButtonControl {
     });
   }
 
-  override onClick(): void {
+  protected override onClick(): void {
     const currentAspectRatio = this.$['*currentAspectRatio'] as CropAspectRatio | undefined;
     if (currentAspectRatio?.id === this._aspectRatio?.id) {
       return;
@@ -175,7 +175,7 @@ export class EditorAspectRatioButtonControl extends EditorButtonControl {
     `;
   }
 
-  override render() {
+  public override render() {
     const clickHandler = this.onClick;
     const title = this.title;
     return html`

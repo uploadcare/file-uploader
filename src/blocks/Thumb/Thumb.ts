@@ -18,10 +18,10 @@ type PendingThumbUpdate = {
 
 export class Thumb extends FileItemConfig {
   @property({ type: String })
-  badgeIcon = '';
+  public badgeIcon = '';
 
   @property({ type: String })
-  uid = '';
+  public uid = '';
 
   @state()
   private thumbUrl = '';
@@ -57,7 +57,7 @@ export class Thumb extends FileItemConfig {
   }
 
   // biome-ignore lint/style/noInferrableTypes: Here the type is needed because `_withEntry` could not infer it correctly
-  private generateThumbnail = this._withEntry(async (entry, force: boolean = false) => {
+  private generateThumbnail = this.withEntry(async (entry, force: boolean = false) => {
     const fileInfo = entry.getValue('fileInfo');
     const isImage = entry.getValue('isImage');
     const uuid = entry.getValue('uuid');
@@ -215,7 +215,7 @@ export class Thumb extends FileItemConfig {
   }
 
   private requestThumbGeneration(force = false): void {
-    if (!this._entry) {
+    if (!this.entry) {
       return;
     }
 
@@ -261,8 +261,8 @@ export class Thumb extends FileItemConfig {
     }
   }
 
-  protected override _reset(): void {
-    super._reset();
+  protected override reset(): void {
+    super.reset();
     this.debouncedGenerateThumb.cancel();
     this.cancelPendingThumbUpdate();
     if (this.thumbUrl) {
@@ -273,40 +273,40 @@ export class Thumb extends FileItemConfig {
   private bindToEntry(): void {
     const id = this.uid?.trim();
     if (!id) {
-      if (this._entry) {
-        this._reset();
+      if (this.entry) {
+        this.reset();
       }
       return;
     }
 
     const entry = this.uploadCollection?.read(id);
-    if (!entry || entry === this._entry) {
+    if (!entry || entry === this.entry) {
       return;
     }
 
-    this._reset();
-    this._entry = entry;
+    this.reset();
+    this.entry = entry;
 
     const requestThumb = () => {
       this.requestThumbGeneration();
     };
 
-    this._subEntry('fileInfo', (fileInfo) => {
+    this.subEntry('fileInfo', (fileInfo) => {
       if (fileInfo?.isImage) {
         requestThumb();
       }
     });
 
-    this._subEntry('thumbUrl', (thumbUrl) => {
+    this.subEntry('thumbUrl', (thumbUrl) => {
       this.scheduleThumbUpdate(thumbUrl ?? undefined);
     });
 
-    this._subEntry('cdnUrlModifiers', requestThumb);
+    this.subEntry('cdnUrlModifiers', requestThumb);
 
     this.requestThumbGeneration(true);
   }
 
-  override initCallback(): void {
+  public override initCallback(): void {
     super.initCallback();
 
     this.subConfigValue('filesViewMode', (viewMode) => {
@@ -322,7 +322,7 @@ export class Thumb extends FileItemConfig {
     this.setAttribute('alt', 'Preview of uploaded image');
   }
 
-  override connectedCallback(): void {
+  public override connectedCallback(): void {
     super.connectedCallback();
 
     this.observer?.disconnect();
@@ -331,7 +331,7 @@ export class Thumb extends FileItemConfig {
     this.observer.observe(this);
   }
 
-  override disconnectedCallback(): void {
+  public override disconnectedCallback(): void {
     super.disconnectedCallback();
 
     this.debouncedGenerateThumb.cancel();
@@ -339,7 +339,7 @@ export class Thumb extends FileItemConfig {
     this.observer?.disconnect();
   }
 
-  override render() {
+  public override render() {
     return html`
   <div class="uc-thumb">
     <img class="uc-thumb__img" src=${this.thumbUrl || ''} alt="" ?hidden=${!this.thumbUrl} draggable="false" />

@@ -9,7 +9,7 @@ export function RegisterableElementMixin<T extends Constructor<LitElement>>(
   ctor: T,
 ): T & RegisterableElementMixinClassInterface {
   abstract class RegisterableElementMixinClass extends ctor {
-    static reg(tagName: string) {
+    public static reg(tagName: string) {
       const currentCtor = this as unknown as CustomElementConstructor;
       const registeredClass = window.customElements.get(tagName);
       if (registeredClass) {

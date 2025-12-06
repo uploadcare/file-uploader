@@ -14,18 +14,18 @@ export class TestModeController implements ReactiveController {
   private enabled = false;
   private unsubscribe?: () => void;
 
-  constructor(private host: TestModeHost) {
+  public constructor(private host: TestModeHost) {
     this.host.addController(this);
   }
 
-  hostDisconnected(): void {
+  public hostDisconnected(): void {
     this.unsubscribe?.();
     this.unsubscribe = undefined;
     this.trackedElements.clear();
     this.originalValues.clear();
   }
 
-  hostUpdated(): void {
+  public hostUpdated(): void {
     if (!this.unsubscribe && this.host.has(sharedConfigKey('testMode'))) {
       const unsubscribe = this.host.subConfigValue('testMode', (isEnabled: boolean) => {
         this.enabled = Boolean(isEnabled);

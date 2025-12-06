@@ -53,7 +53,7 @@ const getLocalPropName = (key: string) => `__${key}`;
 
 // biome-ignore lint/suspicious/noUnsafeDeclarationMerging: This is intentional interface merging, used to add configuration setters/getters
 export class Config extends LitBlock {
-  override init$ = {
+  public override init$ = {
     ...this.init$,
     ...Object.fromEntries(
       Object.entries(initialConfig).map(([key, value]) => [sharedConfigKey(key as keyof ConfigType), value]),
@@ -113,7 +113,7 @@ export class Config extends LitBlock {
     return anyThis[localPropName] ?? this.$[sharedConfigKey(key)];
   }
 
-  _assertSameValueDifferentReference(key: string, previousValue: unknown, nextValue: unknown) {
+  private _assertSameValueDifferentReference(key: string, previousValue: unknown, nextValue: unknown) {
     if (this.cfg.debug) {
       if (
         nextValue !== previousValue &&
@@ -133,7 +133,7 @@ export class Config extends LitBlock {
     }
   }
 
-  override initCallback() {
+  public override initCallback(): void {
     super.initCallback();
     const anyThis = this as any;
 
@@ -183,7 +183,7 @@ export class Config extends LitBlock {
     }
   }
 
-  override attributeChangedCallback(name: keyof typeof attrStateMapping, oldVal: string, newVal: string) {
+  public override attributeChangedCallback(name: keyof typeof attrStateMapping, oldVal: string, newVal: string) {
     super.attributeChangedCallback(name, oldVal, newVal);
 
     if (oldVal === newVal) return;
@@ -204,7 +204,7 @@ export class Config extends LitBlock {
     }
   }
 
-  static override get observedAttributes(): string[] {
+  public static override get observedAttributes(): string[] {
     const superObserved = super.observedAttributes;
     return [...superObserved, ...Object.keys(attrKeyMapping)];
   }

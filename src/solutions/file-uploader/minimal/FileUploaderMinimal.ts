@@ -16,7 +16,7 @@ type FileUploaderMinimalInitState = BaseInitState & {
 };
 
 export class FileUploaderMinimal extends LitSolutionBlock {
-  static override styleAttrs = [...super.styleAttrs, 'uc-file-uploader-minimal'];
+  public static override styleAttrs = [...super.styleAttrs, 'uc-file-uploader-minimal'];
 
   @state()
   protected singleUpload = false;
@@ -30,13 +30,11 @@ export class FileUploaderMinimal extends LitSolutionBlock {
   @state()
   protected classStartFrom = EMPTY_CLASS;
 
-  private handleModalOpen?: ModalCb;
-  private handleModalClose?: ModalCb;
   private _getInitActivity(): string {
     return (this.getCssData('--cfg-init-activity') as string | undefined) || LitActivityBlock.activities.START_FROM;
   }
 
-  constructor() {
+  public constructor() {
     super();
 
     this.init$ = {
@@ -45,7 +43,7 @@ export class FileUploaderMinimal extends LitSolutionBlock {
     } as FileUploaderMinimalInitState;
   }
 
-  private _handleModalOpen(data: Parameters<ModalCb>[0]): void {
+  private handleModalOpen = (data: Parameters<ModalCb>[0]): void => {
     if (data.id === LitActivityBlock.activities.CLOUD_IMG_EDIT) {
       this.classUploadList = ACTIVE_CLASS;
     }
@@ -59,9 +57,9 @@ export class FileUploaderMinimal extends LitSolutionBlock {
     if (!uploadList || uploadList.length <= 0) {
       this.classStartFrom = ACTIVE_CLASS;
     }
-  }
+  };
 
-  private _handleModalClose(data: Parameters<ModalCb>[0]): void {
+  private handleModalClose = (data: Parameters<ModalCb>[0]): void => {
     if (data.id === this.$['*currentActivity']) {
       this.$['*currentActivity'] = LitActivityBlock.activities.UPLOAD_LIST;
       this.isHiddenStartFrom = false;
@@ -70,9 +68,9 @@ export class FileUploaderMinimal extends LitSolutionBlock {
     if (data.id === LitActivityBlock.activities.CLOUD_IMG_EDIT) {
       this.$['*currentActivity'] = LitActivityBlock.activities.UPLOAD_LIST;
     }
-  }
+  };
 
-  override initCallback(): void {
+  public override initCallback(): void {
     super.initCallback();
 
     this.telemetryManager.sendEvent({
@@ -127,24 +125,17 @@ export class FileUploaderMinimal extends LitSolutionBlock {
       });
     });
 
-    this.handleModalOpen = (event) => {
-      this._handleModalOpen(event);
-    };
-    this.handleModalClose = (event) => {
-      this._handleModalClose(event);
-    };
-
     this.modalManager?.subscribe(ModalEvents.OPEN, this.handleModalOpen);
     this.modalManager?.subscribe(ModalEvents.CLOSE, this.handleModalClose);
   }
 
-  override disconnectedCallback(): void {
+  public override disconnectedCallback(): void {
     super.disconnectedCallback();
     this.modalManager?.unsubscribe(ModalEvents.OPEN, this.handleModalOpen);
     this.modalManager?.unsubscribe(ModalEvents.CLOSE, this.handleModalClose);
   }
 
-  override render() {
+  public override render() {
     return html`
       ${super.render()}
       <uc-start-from ?hidden=${this.isHiddenStartFrom} class=${this.classStartFrom}>

@@ -26,16 +26,16 @@ export type ExtractDataFromSchema<T extends TypedSchema> = {
 export type ExtractKeysFromSchema<T extends TypedSchema> = Extract<keyof T, string>;
 
 export class TypedData<T extends TypedSchema> {
-  private __typedSchema: T;
-  private __ctxId: string;
-  private __schema: ExtractDataFromSchema<T>;
-  private __data: PubSub<ExtractDataFromSchema<T>>;
+  private typedSchema: T;
+  private ctxId: string;
+  private schema: ExtractDataFromSchema<T>;
+  private data: PubSub<ExtractDataFromSchema<T>>;
 
-  constructor(typedSchema: T, ctxName?: string) {
-    this.__typedSchema = typedSchema;
-    this.__ctxId = ctxName || UID.generate();
+  public constructor(typedSchema: T, ctxName?: string) {
+    this.typedSchema = typedSchema;
+    this.ctxId = ctxName || UID.generate();
 
-    this.__schema = Object.keys(typedSchema).reduce(
+    this.schema = Object.keys(typedSchema).reduce(
       (acc, key) => {
         if (typedSchema[key]) {
           (acc as Record<string, unknown>)[key] = typedSchema[key].value;
@@ -44,51 +44,54 @@ export class TypedData<T extends TypedSchema> {
       },
       {} as ExtractDataFromSchema<T>,
     );
-    this.__data = PubSub.registerCtx(this.__schema, this.__ctxId);
+    this.data = PubSub.registerCtx(this.schema, this.ctxId);
   }
 
-  get uid(): string {
-    return this.__ctxId;
+  public get uid(): string {
+    return this.ctxId;
   }
 
-  setValue<K extends ExtractKeysFromSchema<T>>(prop: K, value: ExtractDataFromSchema<T>[K]): void {
-    if (!Object.hasOwn(this.__typedSchema, prop) || !this.__typedSchema[prop]) {
+  public setValue<K extends ExtractKeysFromSchema<T>>(prop: K, value: ExtractDataFromSchema<T>[K]): void {
+    if (!Object.hasOwn(this.typedSchema, prop) || !this.typedSchema[prop]) {
       console.warn(MSG_NAME + prop);
       return;
     }
-    const pDesc = this.__typedSchema[prop];
+    const pDesc = this.typedSchema[prop];
 
-    const isChanged = this.__data.read(prop) !== value;
+    const isChanged = this.data.read(prop) !== value;
     const isMatchConstructorType = value?.constructor === pDesc.type;
     const isMatchInstanceType = (value as object) instanceof (pDesc.type as Constructor);
     const isMatchNullable = pDesc.nullable && value === null;
 
     if (isChanged && (isMatchConstructorType || isMatchInstanceType || isMatchNullable)) {
-      this.__data.pub(prop, value);
+      this.data.pub(prop, value);
       return;
     } else if (isChanged) {
       console.warn(MSG_TYPE + prop);
     }
   }
 
-  setMultipleValues(updObj: Partial<ExtractDataFromSchema<T>>): void {
+  public setMultipleValues(updObj: Partial<ExtractDataFromSchema<T>>): void {
     for (const [prop, value] of Object.entries(updObj)) {
       this.setValue(prop as ExtractKeysFromSchema<T>, value);
     }
   }
 
-  getValue<K extends ExtractKeysFromSchema<T>>(prop: K): ExtractDataFromSchema<T>[K] {
-    if (!Object.hasOwn(this.__typedSchema, prop)) {
+  public getValue<K extends ExtractKeysFromSchema<T>>(prop: K): ExtractDataFromSchema<T>[K] {
+    if (!Object.hasOwn(this.typedSchema, prop)) {
       console.warn(MSG_NAME + prop);
     }
-    return this.__data.read(prop);
+    return this.data.read(prop);
   }
 
-  subscribe<K extends ExtractKeysFromSchema<T>>(prop: K, handler: (newVal: ExtractDataFromSchema<T>[K]) => void) {
-    return this.__data.sub(prop, handler as (val: unknown) => void);
+  public subscribe<K extends ExtractKeysFromSchema<T>>(
+    prop: K,
+    handler: (newVal: ExtractDataFromSchema<T>[K]) => void,
+  ) {
+    return this.data.sub(prop, handler as (val: unknown) => void);
   }
 
-  remove(): void {
-    PubSub.deleteCtx(this.__ctxId);
+  public remove(): void {
+    PubSub.deleteCtx(this.ctxId);
   }
 }

@@ -5,16 +5,16 @@ import { type EventPayload, EventType } from './EventEmitter';
 
 // biome-ignore lint/suspicious/noUnsafeDeclarationMerging: This is intentional interface merging, used to add event listener types
 export class UploadCtxProvider extends LitUploaderBlock {
-  static override styleAttrs = ['uc-wgt-common'];
-  static EventType = EventType;
+  public static override styleAttrs = ['uc-wgt-common'];
+  public static EventType = EventType;
 
-  override initCallback() {
+  public override initCallback() {
     super.initCallback();
 
     this.$['*eventEmitter'].bindTarget(this);
   }
 
-  override disconnectedCallback(): void {
+  public override disconnectedCallback(): void {
     super.disconnectedCallback();
 
     this.$['*eventEmitter'].unbindTarget(this);

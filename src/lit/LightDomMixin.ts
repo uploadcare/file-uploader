@@ -4,44 +4,44 @@ import type { Constructor } from './Constructor';
 type AdoptedNode = ChildNode & { contentFor?: string };
 
 declare class LightDomElementInterface {
-  yield(slot: string, defaultContent?: unknown): unknown;
+  public willYield: boolean;
+  public yield(slot: string, defaultContent?: unknown): unknown;
 }
 
 export function LightDomMixin<T extends Constructor<LitElement>>(ctor: T): T & Constructor<LightDomElementInterface> {
   abstract class LightDomMixinClass extends ctor {
-    __slots: Record<string, AdoptedNode[] | undefined> = {};
-
     // Set this to true to adopt children before the first update when multiple slots are expected.
-    __willYield = true;
+    public willYield = true;
 
-    __initialLightDomChildren: AdoptedNode[] | null = null;
-    __hasAdoptedChildren = false;
+    private _slotsMap: Record<string, AdoptedNode[] | undefined> = {};
+    private _initialLightDomChildren: AdoptedNode[] | null = null;
+    private _hasAdoptedChildren = false;
 
-    override createRenderRoot(): HTMLElement | ShadowRoot {
+    public override createRenderRoot(): HTMLElement | ShadowRoot {
       return this;
     }
 
-    override connectedCallback(): void {
-      if (!this.__initialLightDomChildren) {
-        this.__initialLightDomChildren = Array.from(this.childNodes) as AdoptedNode[];
+    public override connectedCallback(): void {
+      if (!this._initialLightDomChildren) {
+        this._initialLightDomChildren = Array.from(this.childNodes) as AdoptedNode[];
       }
       super.connectedCallback();
     }
 
-    __adoptChildren(): void {
-      if (this.__hasAdoptedChildren) {
+    private _adoptChildren(): void {
+      if (this._hasAdoptedChildren) {
         return;
       }
 
-      this.__hasAdoptedChildren = true;
-      this.__slots = {};
+      this._hasAdoptedChildren = true;
+      this._slotsMap = {};
 
       const directChildren = Array.from(this.childNodes) as AdoptedNode[];
-      const nodesToProcess = directChildren.length ? directChildren : (this.__initialLightDomChildren ?? []);
+      const nodesToProcess = directChildren.length ? directChildren : (this._initialLightDomChildren ?? []);
 
       for (const child of nodesToProcess) {
-        const slotName = this.__getSlotNameForChild(child);
-        const slotContent = this.__slots[slotName] ?? [];
+        const slotName = this._getSlotNameForChild(child);
+        const slotContent = this._slotsMap[slotName] ?? [];
 
         if (child instanceof Element) {
           child.removeAttribute('slot');
@@ -49,18 +49,18 @@ export function LightDomMixin<T extends Constructor<LitElement>>(ctor: T): T & C
         }
 
         slotContent.push(child);
-        this.__slots[slotName] = slotContent;
+        this._slotsMap[slotName] = slotContent;
       }
 
-      this.__initialLightDomChildren = null;
+      this._initialLightDomChildren = null;
     }
 
-    __getSlotNameForChild(child: AdoptedNode): string {
+    private _getSlotNameForChild(child: AdoptedNode): string {
       // Both Angular and AngularJS will decorate nodes with comments when they
       // compile their template expressions. When we see a comment directly before
       // an element look ahead to find the slot.
       if (child instanceof Comment && child.nextSibling instanceof Element) {
-        return this.__getSlotNameForChild(child.nextSibling);
+        return this._getSlotNameForChild(child.nextSibling);
       }
 
       if ('contentFor' in child) {
@@ -74,7 +74,7 @@ export function LightDomMixin<T extends Constructor<LitElement>>(ctor: T): T & C
       return '';
     }
 
-    __isTextNodeEmpty(node: Text): boolean {
+    private _isTextNodeEmpty(node: Text): boolean {
       return !node.textContent || !node.textContent.trim();
     }
 
@@ -83,13 +83,13 @@ export function LightDomMixin<T extends Constructor<LitElement>>(ctor: T): T & C
     // inclined to think that it is not empty; however, I'm not sure how to deal
     // with the fact that lit-html inserts a bunch of empty text placeholder
     // nodes.
-    __isSlotEmpty(slot: string): boolean {
-      const content = this.__slots[slot];
+    private _isSlotEmpty(slot: string): boolean {
+      const content = this._slotsMap[slot];
 
       return (
         !content ||
         content.every((child) => {
-          return child instanceof Comment || (child instanceof Text && this.__isTextNodeEmpty(child));
+          return child instanceof Comment || (child instanceof Text && this._isTextNodeEmpty(child));
         })
       );
     }
@@ -99,19 +99,19 @@ export function LightDomMixin<T extends Constructor<LitElement>>(ctor: T): T & C
     // beating all frameworks to the childNodes would be the answer but Angular,
     // for example, will pre-compile the templates. So it is impossible to beat
     // Angular to the childNodes.
-    override update(changedProperties: PropertyValues) {
-      if (!this.hasUpdated && this.__willYield) {
-        this.__adoptChildren();
+    public override update(changedProperties: PropertyValues<this>) {
+      if (!this.hasUpdated && this.willYield) {
+        this._adoptChildren();
       }
 
       super.update(changedProperties);
     }
 
-    yield(slot: string, defaultContent?: unknown) {
-      if (slot === '' && !this.__slots[slot] && !this.__hasAdoptedChildren && this.__initialLightDomChildren?.length) {
+    public yield(slot: string, defaultContent?: unknown) {
+      if (slot === '' && !this._slotsMap[slot] && !this._hasAdoptedChildren && this._initialLightDomChildren?.length) {
         const slotContent: AdoptedNode[] = [];
 
-        for (const child of this.__initialLightDomChildren) {
+        for (const child of this._initialLightDomChildren) {
           if (child instanceof Element) {
             child.removeAttribute('slot');
             child.removeAttribute('content-for');
@@ -119,16 +119,16 @@ export function LightDomMixin<T extends Constructor<LitElement>>(ctor: T): T & C
           slotContent.push(child);
         }
 
-        this.__slots[slot] = slotContent;
-        this.__hasAdoptedChildren = true;
-        this.__initialLightDomChildren = null;
+        this._slotsMap[slot] = slotContent;
+        this._hasAdoptedChildren = true;
+        this._initialLightDomChildren = null;
       }
 
-      const slotContent = this.__slots[slot];
+      const slotContent = this._slotsMap[slot];
 
       return html`
       ${slotContent}
-      ${this.__isSlotEmpty(slot) ? defaultContent : undefined}
+      ${this._isSlotEmpty(slot) ? defaultContent : undefined}
     `;
     }
   }

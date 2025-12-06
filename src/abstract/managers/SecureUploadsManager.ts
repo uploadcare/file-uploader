@@ -6,7 +6,7 @@ export class SecureUploadsManager {
   private readonly _block: LitUploaderBlock;
   private _secureToken: SecureUploadsSignatureAndExpire | null = null;
 
-  constructor(block: LitUploaderBlock) {
+  public constructor(block: LitUploaderBlock) {
     this._block = block;
   }
 
@@ -14,7 +14,7 @@ export class SecureUploadsManager {
     this._block.debugPrint('[secure-uploads]', ...args);
   }
 
-  async getSecureToken(): Promise<SecureUploadsSignatureAndExpire | null> {
+  public async getSecureToken(): Promise<SecureUploadsSignatureAndExpire | null> {
     const { secureSignature, secureExpire, secureUploadsSignatureResolver } = this._block.cfg;
 
     if ((secureSignature || secureExpire) && secureUploadsSignatureResolver) {

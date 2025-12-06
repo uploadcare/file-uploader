@@ -19,9 +19,9 @@ export type Summary = {
 };
 
 export class UploadList extends LitUploaderBlock {
-  override couldBeCtxOwner = true;
-  override historyTracked = true;
-  override activityType = LitActivityBlock.activities.UPLOAD_LIST;
+  public override couldBeCtxOwner = true;
+  protected override historyTracked = true;
+  public override activityType = LitActivityBlock.activities.UPLOAD_LIST;
 
   @state()
   private doneBtnVisible = false;
@@ -168,11 +168,11 @@ export class UploadList extends LitUploaderBlock {
     return localizedText('total');
   }
 
-  override get couldOpenActivity(): boolean {
+  public override get couldOpenActivity(): boolean {
     return this.cfg.showEmptyList || this.uploadCollection.size > 0;
   }
 
-  override initCallback() {
+  public override initCallback() {
     super.initCallback();
 
     this.registerActivity(this.activityType);
@@ -211,7 +211,7 @@ export class UploadList extends LitUploaderBlock {
     });
   }
 
-  override disconnectedCallback(): void {
+  public override disconnectedCallback(): void {
     super.disconnectedCallback();
     if (this.has('*uploadCollection')) {
       this.uploadCollection.unobserveProperties(this._throttledHandleCollectionUpdate);
@@ -219,7 +219,7 @@ export class UploadList extends LitUploaderBlock {
     }
   }
 
-  override render() {
+  public override render() {
     return html`
   <uc-activity-header>
     <span aria-live="polite" class="uc-header-text">${this.headerText}</span>
