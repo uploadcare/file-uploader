@@ -99,7 +99,10 @@ export class EditorSlider extends LitBlock {
   }
 
   public override initCallback(): void {
-    this.sub('*originalUrl', (originalUrl: string) => {
+    this.sub('*originalUrl', (originalUrl: string | null) => {
+      if (!originalUrl) {
+        return;
+      }
       this.state = { ...this.state, originalUrl };
     });
   }

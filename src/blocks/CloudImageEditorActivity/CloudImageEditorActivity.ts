@@ -2,11 +2,12 @@ import { html, nothing } from 'lit';
 import { state } from 'lit/decorators.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
 import type { TypedData } from '../../abstract/TypedData';
-import type { uploadEntrySchema } from '../../abstract/uploadEntrySchema';
 import { LitActivityBlock } from '../../lit/LitActivityBlock';
 import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
 import type { ApplyResult, ChangeResult } from '../CloudImageEditor/src/types';
 import './cloud-image-editor-activity.css';
+import type { UploadEntryData } from '../../abstract/uploadEntrySchema';
+import type { Uid } from '../../lit/Uid';
 
 export type ActivityParams = { internalId: string };
 
@@ -20,7 +21,7 @@ export class CloudImageEditorActivity extends LitUploaderBlock {
   public override couldBeCtxOwner = true;
   public override activityType = LitActivityBlock.activities.CLOUD_IMG_EDIT;
 
-  private _entry?: TypedData<typeof uploadEntrySchema>;
+  private _entry?: TypedData<UploadEntryData>;
 
   @state()
   private _editorConfig: EditorTemplateConfig | null = null;
@@ -98,7 +99,7 @@ export class CloudImageEditorActivity extends LitUploaderBlock {
 
   private _mountEditor(): void {
     const { internalId } = this.activityParams;
-    const entry = this.uploadCollection.read(internalId);
+    const entry = this.uploadCollection.read(internalId as Uid);
     if (!entry) {
       throw new Error(`Entry with internalId "${internalId}" not found`);
     }

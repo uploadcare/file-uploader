@@ -42,7 +42,7 @@ export class EditorToolbar extends LitBlock {
 
   // This is public because it's used in the updated lifecycle to assign to the shared state.
   @state()
-  public tabList: TabIdValue[] = [...ALL_TABS];
+  public tabList: readonly TabIdValue[] = [...ALL_TABS];
 
   // This is public because it's used in the updated lifecycle to assign to the shared state.
   @state()
@@ -399,7 +399,7 @@ export class EditorToolbar extends LitBlock {
       }
     });
 
-    this.sub('*tabList', (tabList: TabIdValue[]) => {
+    this.sub('*tabList', (tabList: readonly TabIdValue[]) => {
       this.tabList = tabList;
       this._showTabToggles = tabList.length > 1;
 

@@ -121,7 +121,7 @@ export class EditorFilterControl extends EditorButtonControl {
     const originalUrl = this.$['*originalUrl'] as string;
     this._originalUrl = originalUrl ?? '';
 
-    this.sub('*originalUrl', (nextUrl: string) => {
+    this.sub('*originalUrl', (nextUrl: string | null) => {
       this._originalUrl = nextUrl ?? '';
       if (!this.isOriginal && this._originalUrl && this.isConnected && !this._previewImage) {
         this._observer?.observe(this);

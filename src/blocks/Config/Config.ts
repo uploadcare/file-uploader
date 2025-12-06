@@ -76,11 +76,13 @@ export class Config extends LitBlock {
     }
   }
 
-  private _flushValueToState(key: keyof ConfigType, value: unknown) {
+  private _flushValueToState<TKey extends keyof ConfigType>(key: TKey, value: unknown) {
     if (this.$[sharedConfigKey(key)] !== value) {
       if (typeof value === 'undefined' || value === null) {
+        // @ts-expect-error
         this.$[sharedConfigKey(key)] = initialConfig[key];
       } else {
+        // @ts-expect-error
         this.$[sharedConfigKey(key)] = value;
       }
     }

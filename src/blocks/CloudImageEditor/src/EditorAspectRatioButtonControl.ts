@@ -30,7 +30,7 @@ export class EditorFreeformButtonControl extends EditorButtonControl {
 
     this.icon = 'arrow-dropdown';
 
-    this.sub('*currentAspectRatio', (opt: CropAspectRatio) => {
+    this.sub('*currentAspectRatio', (opt: CropAspectRatio | null) => {
       const title = this._computeTitle(opt);
       this.title = title;
       this.titleProp = title;
@@ -41,7 +41,7 @@ export class EditorFreeformButtonControl extends EditorButtonControl {
     this.$['*showListAspectRatio'] = true;
   }
 
-  private _computeTitle(aspectRatio?: CropAspectRatio): string {
+  private _computeTitle(aspectRatio: CropAspectRatio | null): string {
     if (!aspectRatio) {
       return '';
     }
@@ -69,14 +69,14 @@ export class EditorFreeformButtonControl extends EditorButtonControl {
   }
 }
 export class EditorAspectRatioButtonControl extends EditorButtonControl {
-  private _aspectRatio?: CropAspectRatio;
+  private _aspectRatio: CropAspectRatio | null = null;
 
   @property({ attribute: false })
-  public get aspectRatio(): CropAspectRatio | undefined {
+  public get aspectRatio(): CropAspectRatio | null {
     return this._aspectRatio;
   }
 
-  public set aspectRatio(value: CropAspectRatio | undefined) {
+  public set aspectRatio(value: CropAspectRatio | null) {
     if (this._aspectRatio === value) {
       return;
     }
@@ -99,7 +99,7 @@ export class EditorAspectRatioButtonControl extends EditorButtonControl {
       this._updateAspectRatioPresentation(this._aspectRatio);
     }
 
-    this.sub('*currentAspectRatio', (opt: CropAspectRatio | undefined) => {
+    this.sub('*currentAspectRatio', (opt: CropAspectRatio | null) => {
       this.active =
         (opt && opt.id === this._aspectRatio?.id) ||
         (opt?.width === this._aspectRatio?.width && opt?.height === this._aspectRatio?.height);

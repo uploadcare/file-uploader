@@ -2,7 +2,7 @@ import type { LitBlock } from '../../lit/LitBlock';
 import { default as en } from '../../locales/file-uploader/en';
 import { resolveLocaleDefinition } from '../localeRegistry';
 
-export const localeStateKey = (key: string): string => `*l10n/${key}`;
+export const localeStateKey = <T extends string>(key: T): `*l10n/${T}` => `*l10n/${key}`;
 export const DEFAULT_LOCALE = 'en';
 
 export class LocaleManager {

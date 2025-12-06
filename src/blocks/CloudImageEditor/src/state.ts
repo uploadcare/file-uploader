@@ -35,6 +35,10 @@ export function initState(fnCtx: CloudImageEditorBlock) {
         return;
       }
       const originalUrl = fnCtx.$['*originalUrl'];
+      if (!originalUrl) {
+        console.warn('Original URL is null, cannot apply transformations');
+        return;
+      }
       const cdnUrlModifiers = createCdnUrlModifiers(transformationsToOperations(transformations), 'preview');
       const cdnUrl = createCdnUrl(originalUrl, cdnUrlModifiers);
 
