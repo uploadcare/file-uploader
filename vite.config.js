@@ -1,5 +1,6 @@
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { playwright } from '@vitest/browser-playwright';
 import { defineConfig } from 'vite';
 import { commands } from './tests/utils/commands';
 
@@ -43,7 +44,7 @@ export default defineConfig(({ command }) => {
               },
               browser: {
                 enabled: true,
-                provider: 'playwright',
+                provider: playwright(),
                 instances: [
                   {
                     browser: 'chromium',

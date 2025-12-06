@@ -1,0 +1,48 @@
+<!doctype html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script type="module">
+  import '@/solutions/file-uploader/regular/index.css';
+  import * as UC from '@/index.js';
+
+  UC.defineComponents(UC);
+
+  const msToUnixTimestamp = (ms) => Math.floor(ms / 1000).toString();
+
+  const getSecureExpire = (options) => {
+    if ('expire' in options) {
+      return msToUnixTimestamp(new Date(options.expire).getTime());
+    }
+
+    return msToUnixTimestamp(Date.now() + options.lifetime);
+  };
+
+  export const generateSecureSignature = async (secret, options) => {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(getSecureExpire(options));
+    const key = await window.crypto.subtle.importKey(
+      'raw',
+      encoder.encode(secret),
+      { name: 'HMAC', hash: { name: 'SHA-256' } },
+      false,
+      ['sign'],
+    );
+    const signature = await window.crypto.subtle.sign('HMAC', key, data);
+    const secureSignature = Array.from(new Uint8Array(signature))
+      .map((byte) => byte.toString(16).padStart(2, '0'))
+      .join('');
+    return { secureSignature, secureExpire: getSecureExpire(options) };
+  };
+
+  const config = document.querySelector('uc-config');
+  config.secureUploadsSignatureResolver = async () => {
+    const token = await generateSecureSignature('', { lifetime: 60 * 1000 });
+    console.log('Generating secure signature...', token);
+    return token;
+  };
+  </script>
+</head>
+
+<uc-file-uploader-regular ctx-name="my-uploader"></uc-file-uploader-regular>
+<uc-config ctx-name="my-uploader" pubkey="" debug quality-insights="false" test-mode></uc-config>
+<uc-upload-ctx-provider ctx-name="my-uploader"></uc-upload-ctx-provider>

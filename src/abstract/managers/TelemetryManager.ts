@@ -5,8 +5,8 @@ import { initialConfig } from '../../blocks/Config/initialConfig';
 import type { EventKey, InternalEventKey } from '../../blocks/UploadCtxProvider/EventEmitter';
 import { EventType, InternalEventType } from '../../blocks/UploadCtxProvider/EventEmitter';
 import { PACKAGE_NAME, PACKAGE_VERSION } from '../../env';
+import type { LitBlock } from '../../lit/LitBlock';
 import type { ConfigType } from '../../types/index';
-import type { Block } from '../Block';
 
 type CommonEventType = InternalEventKey | EventKey;
 
@@ -22,13 +22,13 @@ type TelemetryEventBody = Partial<Pick<TelemetryState, 'payload' | 'config'>> & 
 export class TelemetryManager {
   private readonly _sessionId: string = crypto.randomUUID();
   private readonly _telemetryInstance: TelemetryAPIService;
-  private readonly _block: Block;
+  private readonly _block: LitBlock;
   private _config: ConfigType = structuredClone(initialConfig);
   private _initialized = false;
   private _lastPayload: TelemetryState | null = null;
   private readonly _queue: Queue;
 
-  constructor(block: Block) {
+  public constructor(block: LitBlock) {
     this._block = block;
     this._telemetryInstance = new TelemetryAPIService();
     this._queue = new Queue(10);
@@ -111,7 +111,7 @@ export class TelemetryManager {
     return false;
   }
 
-  sendEvent(body: TelemetryEventBody): void {
+  public sendEvent(body: TelemetryEventBody): void {
     const payload = this._formattingPayload({
       eventType: body.eventType,
       payload: body.payload,
@@ -136,7 +136,7 @@ export class TelemetryManager {
     });
   }
 
-  sendEventError(error: unknown, context = 'unknown'): void {
+  public sendEventError(error: unknown, context = 'unknown'): void {
     this.sendEvent({
       eventType: InternalEventType.ERROR_EVENT,
       payload: {
@@ -152,7 +152,7 @@ export class TelemetryManager {
   /**
    * Method to send telemetry event for Cloud Image Editor.
    */
-  sendEventCloudImageEditor(e: MouseEvent, tabId: string, options: Record<string, unknown> = {}): void {
+  public sendEventCloudImageEditor(e: MouseEvent, tabId: string, options: Record<string, unknown> = {}): void {
     this.sendEvent({
       eventType: InternalEventType.ACTION_EVENT,
       payload: {

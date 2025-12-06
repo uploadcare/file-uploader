@@ -1,5 +1,5 @@
-import { page } from '@vitest/browser/context';
 import { describe, expect, test } from 'vitest';
+import { page } from 'vitest/browser';
 import '../types/jsx';
 import { getCtxName } from './utils/getCtxName';
 // biome-ignore lint/correctness/noUnusedImports: Used in JSX

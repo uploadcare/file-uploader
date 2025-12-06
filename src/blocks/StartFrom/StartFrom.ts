@@ -1,15 +1,17 @@
-import type { ActivityType } from '../../abstract/ActivityBlock';
-import { ActivityBlock } from '../../abstract/ActivityBlock';
 import './start-from.css';
+import { html } from 'lit';
+import { type ActivityType, LitActivityBlock } from '../../lit/LitActivityBlock';
 
-export class StartFrom extends ActivityBlock {
-  override historyTracked = true;
-  override activityType: ActivityType = ActivityBlock.activities.START_FROM;
+export class StartFrom extends LitActivityBlock {
+  protected override historyTracked = true;
+  public override activityType: ActivityType = LitActivityBlock.activities.START_FROM;
 
-  override initCallback(): void {
+  public override initCallback(): void {
     super.initCallback();
     this.registerActivity(this.activityType ?? '');
   }
-}
 
-StartFrom.template = /* HTML */ ` <div class="uc-content"><slot></slot></div> `;
+  public override render() {
+    return html` <div class="uc-content">${this.yield('')}</div> `;
+  }
+}

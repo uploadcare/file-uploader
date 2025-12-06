@@ -1,0 +1,29 @@
+<!doctype html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+  @media (prefers-color-scheme: dark) {
+    body {
+      background-color: #121213;
+    }
+  }
+  </style>
+  <script type="module">
+  import '@/solutions/file-uploader/inline/index.css';
+  import * as UC from '@/index.js';
+
+  UC.defineComponents(UC);
+  </script>
+</head>
+
+<uc-file-uploader-inline ctx-name="my-uploader"></uc-file-uploader-inline>
+<uc-config
+  ctx-name="my-uploader"
+  pubkey="demopublickey"
+  crop-preset="1:1"
+  cloudImageEditorTabs="crop"
+  cloud-image-editor-tabs="crop"
+  debug
+  quality-insights="false"
+  test-mode
+></uc-config>

@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Cloud Image Editor - Bundle Demo</title>
+    <link rel="stylesheet" href="../../web/uc-cloud-image-editor.min.css">
+    <style>
+    .uc-cloud-image-editor {
+      width: 100vw;
+      height: 100vh;
+    }
+    body {
+      height: 100vh;
+      margin: 0;
+    }
+    </style>
+    <script type="module">
+    import * as UC from '../../web/uc-cloud-image-editor.min.js';
+
+    UC.defineComponents(UC);
+    </script>
+  </head>
+  <body>
+    <uc-config ctx-name="my-editor" pubkey="demopublickey" debug quality-insights="false" test-mode cdn-cname="https://ucarecdn.com/"></uc-config>
+    <uc-cloud-image-editor
+      uuid="f4dc9ebc-ed6d-4b4d-83d1-863bf1e4bb7f"
+      ctx-name="my-editor"
+      tabs="tuning,filters,crop"
+      crop-preset="1:1, 16:9, 4:3, 4:3, 3:4, 9:16"
+      class="uc-light"
+    ></uc-cloud-image-editor>
+  </body>
+</html>

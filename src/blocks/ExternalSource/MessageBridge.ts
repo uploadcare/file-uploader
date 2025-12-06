@@ -21,14 +21,14 @@ export class MessageBridge {
 
   private _getTargetOrigin: () => string;
 
-  constructor(context: Window, getTargetOrigin: () => string) {
+  public constructor(context: Window, getTargetOrigin: () => string) {
     this._context = context;
     this._getTargetOrigin = getTargetOrigin;
 
     window.addEventListener('message', this._handleMessage);
   }
 
-  _handleMessage = (e: MessageEvent) => {
+  private _handleMessage = (e: MessageEvent) => {
     if (e.source !== this._context) {
       return;
     }
@@ -45,7 +45,7 @@ export class MessageBridge {
     }
   };
 
-  on<T extends InputMessageType>(type: T, handler: InputMessageHandler<T>) {
+  public on<T extends InputMessageType>(type: T, handler: InputMessageHandler<T>) {
     const handlers = this._handlerMap.get(type) ?? new Set<InputMessageHandler<InputMessageType>>();
     if (!this._handlerMap.has(type)) {
       this._handlerMap.set(type, handlers);
@@ -54,12 +54,12 @@ export class MessageBridge {
     handlers.add(handler as InputMessageHandler<InputMessageType>);
   }
 
-  send(message: OutputMessage) {
+  public send(message: OutputMessage) {
     const targetOrigin = this._getTargetOrigin();
     this._context.postMessage(message, targetOrigin);
   }
 
-  destroy() {
+  public destroy() {
     window.removeEventListener('message', this._handleMessage);
   }
 }

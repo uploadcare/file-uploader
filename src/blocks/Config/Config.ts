@@ -1,10 +1,10 @@
 // @ts-check
-import { Block } from '../../abstract/Block';
 import { sharedConfigKey } from '../../abstract/sharedConfigKey';
 import type { ConfigComplexType, ConfigPlainType, ConfigType } from '../../types';
 import { toKebabCase } from '../../utils/toKebabCase';
 import { runAssertions } from './assertions';
 import './config.css';
+import { LitBlock } from '../../lit/LitBlock';
 import { computeProperty } from './computed-properties';
 import { initialConfig } from './initialConfig';
 import { normalizeConfigValue } from './normalizeConfigValue';
@@ -52,20 +52,15 @@ const attrStateMapping: Record<string, string> = {
 const getLocalPropName = (key: string) => `__${key}`;
 
 // biome-ignore lint/suspicious/noUnsafeDeclarationMerging: This is intentional interface merging, used to add configuration setters/getters
-export class Config extends Block {
-  override requireCtxName = true;
+export class Config extends LitBlock {
+  public override init$ = {
+    ...this.init$,
+    ...Object.fromEntries(
+      Object.entries(initialConfig).map(([key, value]) => [sharedConfigKey(key as keyof ConfigType), value]),
+    ),
+  } as unknown as LitBlock['init$'] & ConfigType;
 
-  constructor() {
-    super();
-
-    this.init$ = {
-      ...this.init$,
-      ...Object.fromEntries(
-        Object.entries(initialConfig).map(([key, value]) => [sharedConfigKey(key as keyof ConfigType), value]),
-      ),
-      computationControllers: new Map<keyof ConfigType, AbortController>(),
-    } as unknown as Block['init$'] & ConfigType;
-  }
+  private computationControllers: Map<keyof ConfigType, AbortController> = new Map();
 
   private _flushValueToAttribute(key: keyof ConfigType, value: unknown) {
     if (!isComplexKey(key)) {
@@ -118,7 +113,7 @@ export class Config extends Block {
     return anyThis[localPropName] ?? this.$[sharedConfigKey(key)];
   }
 
-  _assertSameValueDifferentReference(key: string, previousValue: unknown, nextValue: unknown) {
+  private _assertSameValueDifferentReference(key: string, previousValue: unknown, nextValue: unknown) {
     if (this.cfg.debug) {
       if (
         nextValue !== previousValue &&
@@ -138,7 +133,7 @@ export class Config extends Block {
     }
   }
 
-  override initCallback() {
+  public override initCallback(): void {
     super.initCallback();
     const anyThis = this as any;
 
@@ -188,7 +183,9 @@ export class Config extends Block {
     }
   }
 
-  override attributeChangedCallback(name: keyof typeof attrStateMapping, oldVal: string, newVal: string) {
+  public override attributeChangedCallback(name: keyof typeof attrStateMapping, oldVal: string, newVal: string) {
+    super.attributeChangedCallback(name, oldVal, newVal);
+
     if (oldVal === newVal) return;
 
     const anyThis = this as any;
@@ -201,14 +198,17 @@ export class Config extends Block {
     if (key) {
       anyThis[key] = newVal;
     }
+
+    if (attrStateMapping[name]) {
+      (this as any)[name] = newVal;
+    }
   }
 
-  get computationControllers() {
-    return this.$.computationControllers;
+  public static override get observedAttributes(): string[] {
+    const superObserved = super.observedAttributes;
+    return [...superObserved, ...Object.keys(attrKeyMapping)];
   }
 }
-
-Config.bindAttributes(attrStateMapping);
 
 /**
  * Define empty DOM properties for all config keys on the Custom Element class prototype to make them checkable using

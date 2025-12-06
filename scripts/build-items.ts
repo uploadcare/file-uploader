@@ -28,12 +28,11 @@ export const buildItems: BuildItem[] = [
       srcPath('./index.ts'),
       srcPath('./abstract/loadFileUploaderFrom.ts'),
       srcPath('./env.ts'),
-      srcPath('./types/jsx.ts'),
       ...localeFiles.map((f) => srcPath(`./locales/file-uploader/${f}`)),
     ],
     outDir: outPath('./dist/'),
     format: 'esm',
-    minify: false,
+    minify: true,
     bundleExternalDependencies: false,
   },
   // uc-blocks

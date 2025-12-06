@@ -1,4 +1,4 @@
-type ParseableParams = Record<string, string | number | boolean | null | undefined>;
+export type ParseableParams = Record<string, string | number | boolean | null | undefined>;
 
 export const parseObjectToString = (params: ParseableParams): (string | number | boolean | null | undefined)[] =>
   Object.entries(params)

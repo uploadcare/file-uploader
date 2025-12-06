@@ -10,7 +10,9 @@
     "strict": true,
     "skipLibCheck": true,
     "noEmit": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "experimentalDecorators": true,
+    "useDefineForClassFields": false
   },
   "include": ["src", "types/test", "./**/*.test.ts", "./**/*.test-d.tsx"],
   "exclude": ["node_modules"]

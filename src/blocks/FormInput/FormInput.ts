@@ -1,14 +1,12 @@
 import { applyStyles } from '@symbiotejs/symbiote';
-import { UploaderBlock } from '../../abstract/UploaderBlock';
+import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
 import type { OutputCollectionState } from '../../types/index';
 
-export class FormInput extends UploaderBlock {
-  override requireCtxName = true;
+export class FormInput extends LitUploaderBlock {
+  private _validationInputElement: HTMLInputElement | null = null;
+  private _dynamicInputsContainer: HTMLDivElement | null = null;
 
-  _validationInputElement: HTMLInputElement | null = null;
-  _dynamicInputsContainer: HTMLDivElement | null = null;
-
-  _createValidationInput(): HTMLInputElement {
+  private _createValidationInput(): HTMLInputElement {
     const validationInput = document.createElement('input');
     validationInput.type = 'text';
     validationInput.name = this.ctxName;
@@ -22,7 +20,7 @@ export class FormInput extends UploaderBlock {
     return validationInput;
   }
 
-  override initCallback(): void {
+  public override initCallback(): void {
     super.initCallback();
 
     this._validationInputElement = this._createValidationInput();
