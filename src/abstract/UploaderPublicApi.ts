@@ -44,7 +44,7 @@ export type ApiAddFileCommonOptions = {
 export class UploaderPublicApi {
   private _ctx: LitUploaderBlock;
 
-  constructor(ctx: LitUploaderBlock) {
+  public constructor(ctx: LitUploaderBlock) {
     this._ctx = ctx;
   }
 
@@ -52,18 +52,18 @@ export class UploaderPublicApi {
     return this._ctx.uploadCollection;
   }
 
-  get cfg() {
+  public get cfg() {
     return this._ctx.cfg;
   }
 
-  get l10n() {
+  public get l10n() {
     return this._ctx.l10n.bind(this._ctx);
   }
 
   /**
    * TODO: Probably we should not allow user to override `source` property
    */
-  addFileFromUrl = (
+  public addFileFromUrl = (
     url: string,
     { silent, fileName, source }: ApiAddFileCommonOptions = {},
   ): OutputFileEntry<'idle'> => {
@@ -76,7 +76,7 @@ export class UploaderPublicApi {
     return this.getOutputItem(internalId);
   };
 
-  addFileFromUuid = (
+  public addFileFromUuid = (
     uuid: string,
     { silent, fileName, source }: ApiAddFileCommonOptions = {},
   ): OutputFileEntry<'idle'> => {
@@ -89,7 +89,7 @@ export class UploaderPublicApi {
     return this.getOutputItem(internalId);
   };
 
-  addFileFromCdnUrl = (
+  public addFileFromCdnUrl = (
     cdnUrl: string,
     { silent, fileName, source }: ApiAddFileCommonOptions = {},
   ): OutputFileEntry<'idle'> => {
@@ -111,7 +111,7 @@ export class UploaderPublicApi {
     return this.getOutputItem(internalId);
   };
 
-  addFileFromObject = (
+  public addFileFromObject = (
     file: File,
     {
       silent,
@@ -135,18 +135,18 @@ export class UploaderPublicApi {
     return this.getOutputItem(internalId);
   };
 
-  removeFileByInternalId = (internalId: string): void => {
+  public removeFileByInternalId = (internalId: string): void => {
     if (!this._uploadCollection.read(internalId)) {
       throw new Error(`File with internalId ${internalId} not found`);
     }
     this._uploadCollection.remove(internalId);
   };
 
-  removeAllFiles(): void {
+  public removeAllFiles(): void {
     this._uploadCollection.clearAll();
   }
 
-  uploadAll = (): void => {
+  public uploadAll = (): void => {
     const itemsToUpload = this._uploadCollection.items().filter((id) => {
       const entry = this._uploadCollection.read(id);
       if (!entry) return false;
@@ -171,7 +171,7 @@ export class UploaderPublicApi {
     );
   };
 
-  openSystemDialog = (options: { captureCamera?: boolean; modeCamera?: ModeCameraType } = {}): void => {
+  public openSystemDialog = (options: { captureCamera?: boolean; modeCamera?: ModeCameraType } = {}): void => {
     const accept = serializeCsv(
       mergeFileTypes([this.cfg.accept ?? '', ...(this.cfg.imgOnly ? IMAGE_ACCEPT_LIST : [])]),
     );
@@ -238,7 +238,7 @@ export class UploaderPublicApi {
     fileInput.dispatchEvent(new MouseEvent('click'));
   };
 
-  getOutputItem<TStatus extends OutputFileStatus>(entryId: string): OutputFileEntry<TStatus> {
+  public getOutputItem<TStatus extends OutputFileStatus>(entryId: string): OutputFileEntry<TStatus> {
     const uploadEntryData = PubSub.getCtx(entryId).store as UploadEntryData;
     const fileInfo = uploadEntryData.fileInfo as UploadcareFile | null;
 
@@ -280,11 +280,11 @@ export class UploaderPublicApi {
     return outputItem as OutputFileEntry<TStatus>;
   }
 
-  getOutputCollectionState<TStatus extends OutputCollectionStatus>() {
+  public getOutputCollectionState<TStatus extends OutputCollectionStatus>() {
     return buildOutputCollectionState(this._ctx) as ReturnType<typeof buildOutputCollectionState<TStatus>>;
   }
 
-  initFlow = (force = false): void => {
+  public initFlow = (force = false): void => {
     if (this._uploadCollection.size > 0 && !force) {
       this._ctx.modalManager?.open(LitActivityBlock.activities.UPLOAD_LIST);
       this._ctx.set$({
@@ -343,7 +343,7 @@ export class UploaderPublicApi {
     }
   };
 
-  doneFlow = (): void => {
+  public doneFlow = (): void => {
     this._ctx.set$({
       '*currentActivity': this._ctx.doneActivity,
       '*history': this._ctx.doneActivity ? [this._ctx.doneActivity] : [],
@@ -353,7 +353,7 @@ export class UploaderPublicApi {
     }
   };
 
-  setCurrentActivity = <T extends ActivityType>(
+  public setCurrentActivity = <T extends ActivityType>(
     activityType: T,
     ...params: T extends keyof ActivityParamsMap
       ? [ActivityParamsMap[T]]
@@ -371,11 +371,11 @@ export class UploaderPublicApi {
     console.warn(`Activity type "${activityType}" not found in the context`);
   };
 
-  getCurrentActivity = (): ActivityType => {
+  public getCurrentActivity = (): ActivityType => {
     return this._ctx.$['*currentActivity'];
   };
 
-  setModalState = (opened: boolean): void => {
+  public setModalState = (opened: boolean): void => {
     if (opened && !this._ctx.$['*currentActivity']) {
       console.warn(`Can't open modal without current activity. Please use "setCurrentActivity" method first.`);
       return;

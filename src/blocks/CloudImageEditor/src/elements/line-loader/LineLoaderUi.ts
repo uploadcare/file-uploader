@@ -6,7 +6,7 @@ import { LitBlock } from '../../../../../lit/LitBlock';
 
 export class LineLoaderUi extends LitBlock {
   @property({ type: Boolean, reflect: true })
-  active = false;
+  public active = false;
 
   private readonly lineRef = createRef<HTMLDivElement>();
   private _isAnimating = false;
@@ -73,7 +73,7 @@ export class LineLoaderUi extends LitBlock {
     lineEl.style.transform = 'translateX(-101%)';
   }
 
-  override render() {
+  public override render() {
     return html`
       <div class="uc-inner">
         <div class="uc-line" ${ref(this.lineRef)}></div>

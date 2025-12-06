@@ -15,16 +15,16 @@ export const ctxNameContext = createContext<string>('ctx-name-context');
  * Interface for components using SymbioteMixin
  */
 declare class SymbioteComponent {
-  $: SymbioteStateBag;
-  sub<T = unknown>(key: string, callback: (value: T) => void, init?: boolean): () => void;
-  pub(key: string, value: unknown): void;
-  set$(obj: SymbioteStateBag): void;
-  has(key: string): boolean;
-  add(key: string, val: unknown, rewrite?: boolean): void;
-  add$(obj: SymbioteStateBag, rewrite?: boolean): void;
-  initCallback(): void;
-  sharedCtx: PubSub<Record<string, unknown>>;
-  ctxName: string;
+  public $: SymbioteStateBag;
+  public sub<T = unknown>(key: string, callback: (value: T) => void, init?: boolean): () => void;
+  public pub(key: string, value: unknown): void;
+  public set$(obj: SymbioteStateBag): void;
+  public has(key: string): boolean;
+  public add(key: string, val: unknown, rewrite?: boolean): void;
+  public add$(obj: SymbioteStateBag, rewrite?: boolean): void;
+  public initCallback(): void;
+  public ctxName: string;
+  public ctxOwner: boolean;
 }
 
 /**
@@ -55,18 +55,18 @@ export function SymbioteMixin<T extends Constructor<LitElement>>(ctor: T): T & C
 
     // Symbiote-style initial values declaration
     protected init$: Record<string, unknown> = {};
-    protected ctxOwner = false;
+    public ctxOwner = false;
 
     private _ctxNameAttr: string | undefined = undefined;
 
     private _pendingCtxInitOnConnect = false;
 
     @property({ type: String, attribute: 'ctx-name', noAccessor: true })
-    get ctxNameAttr(): string | undefined {
+    private get ctxNameAttr(): string | undefined {
       return this._ctxNameAttr;
     }
 
-    set ctxNameAttr(value: string | undefined) {
+    private set ctxNameAttr(value: string | undefined) {
       const normalizedValue = value ?? undefined;
       const oldValue = this._ctxNameAttr;
       if (oldValue === normalizedValue) {
@@ -77,23 +77,23 @@ export function SymbioteMixin<T extends Constructor<LitElement>>(ctor: T): T & C
     }
 
     @state()
-    _ctxNameFromContext: string | undefined;
+    private _ctxNameFromContext: string | undefined;
 
     @state()
-    ctxName: string | undefined = this.effectiveCtxName;
+    public ctxName: string | undefined = this.effectiveCtxName;
 
     @state()
     private isInitialized = false;
 
-    protected override shouldUpdate(_changedProperties: PropertyValues): boolean {
+    protected override shouldUpdate(changedProperties: PropertyValues<this>): boolean {
       if (!this.isInitialized) {
         return false;
       }
-      return super.shouldUpdate(_changedProperties);
+      return super.shouldUpdate(changedProperties);
     }
 
     // biome-ignore lint/suspicious/noExplicitAny: mixin constructors must accept arbitrary arguments to satisfy Lit types
-    constructor(...args: any[]) {
+    public constructor(...args: any[]) {
       super(...args);
 
       // Consume ctxName from parent context
@@ -133,8 +133,8 @@ export function SymbioteMixin<T extends Constructor<LitElement>>(ctor: T): T & C
       this._pendingCtxInitOnConnect = true;
     }
 
-    protected override willUpdate(_changedProperties: PropertyValues): void {
-      super.willUpdate(_changedProperties);
+    protected override willUpdate(changedProperties: PropertyValues<this>): void {
+      super.willUpdate(changedProperties);
 
       // Update effective ctxName before updates
       this.ctxName = this.effectiveCtxName;
@@ -263,15 +263,11 @@ export function SymbioteMixin<T extends Constructor<LitElement>>(ctor: T): T & C
       }
     }
 
-    get sharedCtx(): PubSub<Record<string, unknown>> {
-      return this._requireSharedPubSub();
-    }
-
     /**
      * Proxy for getting/setting values in the shared Symbiote data store.
      * Keys must start with '*' as local state support has been removed.
      */
-    get $(): SymbioteStateBag {
+    public get $(): SymbioteStateBag {
       if (this.effectiveCtxName) {
         this._initSharedContext();
       }
@@ -297,7 +293,7 @@ export function SymbioteMixin<T extends Constructor<LitElement>>(ctor: T): T & C
       );
     }
 
-    sub<T = unknown>(key: string, callback: (value: T) => void, init = true): () => void {
+    public sub<T = unknown>(key: string, callback: (value: T) => void, init = true): () => void {
       const sharedKey = this._requireSharedKey(key);
       const subscription = this._requireSharedPubSub().sub(sharedKey, callback as (value: unknown) => void, init);
       if (!subscription || typeof subscription.remove !== 'function') {
@@ -318,23 +314,23 @@ export function SymbioteMixin<T extends Constructor<LitElement>>(ctor: T): T & C
       return trackedRemove;
     }
 
-    pub(key: string, value: unknown): void {
+    public pub(key: string, value: unknown): void {
       const sharedKey = this._requireSharedKey(key);
       this._requireSharedPubSub().pub(sharedKey, value);
     }
 
-    set$(obj: SymbioteStateBag): void {
+    public set$(obj: SymbioteStateBag): void {
       for (const [prop, value] of Object.entries(obj)) {
         this.pub(prop, value);
       }
     }
 
-    has(key: string): boolean {
+    public has(key: string): boolean {
       const sharedKey = this._requireSharedKey(key);
       return this._symbioteSharedPubSub?.has(sharedKey) ?? false;
     }
 
-    add(key: string, val: unknown, rewrite = false) {
+    public add(key: string, val: unknown, rewrite = false) {
       const sharedKey = this._requireSharedKey(key);
       const pubsub = this._getSharedPubSub();
       if (!pubsub) {
@@ -348,13 +344,13 @@ export function SymbioteMixin<T extends Constructor<LitElement>>(ctor: T): T & C
       pubsub.add(sharedKey, val, rewrite);
     }
 
-    add$(obj: SymbioteStateBag, rewrite = false) {
+    public add$(obj: SymbioteStateBag, rewrite = false) {
       for (const [prop, value] of Object.entries(obj)) {
         this.add(prop, value, rewrite);
       }
     }
 
-    override connectedCallback() {
+    public override connectedCallback() {
       super.connectedCallback();
 
       if (!this._symbioteFirstUpdated) {
@@ -416,12 +412,12 @@ export function SymbioteMixin<T extends Constructor<LitElement>>(ctor: T): T & C
       this.requestUpdate();
     }
 
-    override firstUpdated(changedProperties: Map<PropertyKey, unknown>) {
+    public override firstUpdated(changedProperties: PropertyValues<this>) {
       super.firstUpdated(changedProperties);
       // Post-render tasks can go here if needed
     }
 
-    override updated(changedProperties: Map<PropertyKey, unknown>) {
+    public override updated(changedProperties: PropertyValues<this>) {
       super.updated(changedProperties);
 
       // Sync changed properties to Symbiote data store
@@ -444,7 +440,7 @@ export function SymbioteMixin<T extends Constructor<LitElement>>(ctor: T): T & C
       }
     }
 
-    override disconnectedCallback() {
+    public override disconnectedCallback() {
       this._cleanupSymbioteSubscriptions();
       super.disconnectedCallback();
       if (this._symbioteFirstUpdated) {
@@ -462,7 +458,7 @@ export function SymbioteMixin<T extends Constructor<LitElement>>(ctor: T): T & C
       this._symbioteSubscriptions.clear();
     }
 
-    initCallback() {}
+    public initCallback() {}
   }
 
   return SymbioteMixinClass as T & Constructor<SymbioteComponent>;

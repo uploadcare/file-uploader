@@ -29,20 +29,24 @@ export class EditorToolbar extends LitBlock {
   @state()
   private showLoader = false;
 
+  // This is public because it's used in the updated lifecycle to assign to the shared state.
   @state()
-  private showMainToolbar = true;
+  public showMainToolbar = true;
 
+  // This is public because it's used in the updated lifecycle to assign to the shared state.
   @state()
-  private showSubToolbar = false;
+  public showSubToolbar = false;
 
   @state()
   private showTabToggles = true;
 
+  // This is public because it's used in the updated lifecycle to assign to the shared state.
   @state()
-  private tabList: TabIdValue[] = [...ALL_TABS];
+  public tabList: TabIdValue[] = [...ALL_TABS];
 
+  // This is public because it's used in the updated lifecycle to assign to the shared state.
   @state()
-  private activeTab: TabIdValue = TabId.CROP;
+  public activeTab: TabIdValue = TabId.CROP;
 
   @state()
   private useSliderPanel = true;
@@ -127,7 +131,7 @@ export class EditorToolbar extends LitBlock {
     visible: 'uc-tab-toggles--visible',
   };
 
-  override init$: Record<string, unknown> = {
+  public override init$: Record<string, unknown> = {
     ...this.init$,
     '*sliderEl': null,
     '*showSlider': false,
@@ -308,7 +312,7 @@ export class EditorToolbar extends LitBlock {
     }
   }
 
-  override initCallback(): void {
+  public override initCallback(): void {
     super.initCallback();
 
     const initialCropPresets = (this.$['*cropPresetList'] as CropAspectRatio[]) ?? [];
@@ -414,19 +418,19 @@ export class EditorToolbar extends LitBlock {
     this._updateInfoTooltip();
   }
 
-  override connectedCallback(): void {
+  public override connectedCallback(): void {
     super.connectedCallback();
     window.addEventListener('resize', this.handleWindowResize);
   }
 
-  override firstUpdated(_changedProperties: PropertyValues): void {
-    super.firstUpdated(_changedProperties);
+  public override firstUpdated(changedProperties: PropertyValues<this>): void {
+    super.firstUpdated(changedProperties);
     this.assignSharedElements();
 
     this._syncTabIndicator();
   }
 
-  protected override updated(changedProperties: PropertyValues): void {
+  protected override updated(changedProperties: PropertyValues<this>): void {
     super.updated(changedProperties);
 
     if (changedProperties.has('activeTab') || changedProperties.has('tabList')) {
@@ -438,7 +442,7 @@ export class EditorToolbar extends LitBlock {
     }
   }
 
-  override disconnectedCallback(): void {
+  public override disconnectedCallback(): void {
     window.removeEventListener('resize', this.handleWindowResize);
     super.disconnectedCallback();
 
@@ -546,7 +550,7 @@ export class EditorToolbar extends LitBlock {
     `;
   }
 
-  override render() {
+  public override render() {
     const tooltipClasses = [
       'uc-info-tooltip',
       this.tooltipVisible ? 'uc-info-tooltip_visible' : 'uc-info-tooltip_hidden',

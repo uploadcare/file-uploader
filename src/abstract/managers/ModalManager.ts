@@ -21,7 +21,7 @@ export class ModalManager {
   private _subscribers: Map<ModalEventType, Set<ModalCb>> = new Map();
   private _block: LitBlock;
 
-  constructor(block: LitBlock) {
+  public constructor(block: LitBlock) {
     this._block = block;
   }
 
@@ -34,13 +34,13 @@ export class ModalManager {
    * @param id Unique identifier for the modal
    * @param modal Modal component instance
    */
-  registerModal(id: ModalId, modal: ModalNode): void {
+  public registerModal(id: ModalId, modal: ModalNode): void {
     this._modals.set(id, modal);
     this._notify(ModalEvents.ADD, { id, modal });
   }
 
   /** Remove a modal by ID. */
-  deleteModal(id: ModalId): boolean {
+  public deleteModal(id: ModalId): boolean {
     if (!this._modals.has(id)) return false;
 
     const modal = this._modals.get(id)!;
@@ -51,7 +51,7 @@ export class ModalManager {
   }
 
   /** Open a modal by its ID. */
-  open(id: ModalId): boolean {
+  public open(id: ModalId): boolean {
     if (!this._modals.has(id)) {
       this._debugPrint(`Modal with ID "${id}" not found`);
       return false;
@@ -65,7 +65,7 @@ export class ModalManager {
   }
 
   /** Close a specific modal by ID. */
-  close(id: ModalId): boolean {
+  public close(id: ModalId): boolean {
     if (!this._modals.has(id) || !this._activeModals.has(id)) {
       this._debugPrint(`Modal with ID "${id}" not found or not active`);
       return false;
@@ -82,7 +82,7 @@ export class ModalManager {
   }
 
   /** Toggle a modal - open if closed, close if open. */
-  toggle(id: ModalId): boolean {
+  public toggle(id: ModalId): boolean {
     if (!this._modals.has(id)) {
       this._debugPrint(`Modal with ID "${id}" not found`);
       return false;
@@ -96,12 +96,12 @@ export class ModalManager {
   }
 
   /** True if there are any active modals. */
-  get hasActiveModals(): boolean {
+  public get hasActiveModals(): boolean {
     return this._activeModals.size > 0;
   }
 
   /** Close the most recently opened modal and return to the previous one. */
-  back(): boolean {
+  public back(): boolean {
     if (this._activeModals.size === 0) {
       this._debugPrint('No active modals to go back from');
       return false;
@@ -113,7 +113,7 @@ export class ModalManager {
   }
 
   /** Close all open modals. */
-  closeAll(): number {
+  public closeAll(): number {
     const count = this._activeModals.size;
 
     this._activeModals.clear();
@@ -125,7 +125,7 @@ export class ModalManager {
    * Subscribe to modal events
    * @returns Unsubscribe function
    */
-  subscribe(event: ModalEventType, callback: ModalCb): () => void {
+  public subscribe(event: ModalEventType, callback: ModalCb): () => void {
     if (!this._subscribers.has(event)) {
       this._subscribers.set(event, new Set());
     }
@@ -135,7 +135,7 @@ export class ModalManager {
   }
 
   /** Unsubscribe from modal events */
-  unsubscribe(event: ModalEventType, callback: ModalCb | undefined): void {
+  public unsubscribe(event: ModalEventType, callback: ModalCb | undefined): void {
     if (this._subscribers.has(event)) {
       this._subscribers.get(event)?.delete(callback as ModalCb);
     }
@@ -164,7 +164,7 @@ export class ModalManager {
   }
 
   /** Destroy the modal manager, clean up resources */
-  destroy(): void {
+  public destroy(): void {
     this.closeAll();
     this._modals.clear();
     this._subscribers.clear();

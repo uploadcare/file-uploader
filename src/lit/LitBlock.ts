@@ -26,18 +26,18 @@ const LitBlockBase = RegisterableElementMixin(SymbioteMixin(CssDataMixin(LightDo
 export class LitBlock extends LitBlockBase {
   private __cfgProxy!: ConfigType;
 
-  static styleAttrs: string[] = [];
+  public static styleAttrs: string[] = [];
 
   public activityType: ActivityType = null;
 
-  init$ = blockCtx();
+  public init$ = blockCtx();
 
-  constructor() {
+  public constructor() {
     super();
     new TestModeController(this);
   }
 
-  l10n(str: string, variables: Record<string, string | number> = {}): string {
+  public l10n(str: string, variables: Record<string, string | number> = {}): string {
     if (!str) {
       return '';
     }
@@ -59,7 +59,7 @@ export class LitBlock extends LitBlockBase {
     return this.l10n(`${key}__${pluralForm}`);
   }
 
-  emit(
+  public emit(
     type: Parameters<EventEmitter['emit']>[0],
     payload?: Parameters<EventEmitter['emit']>[1],
     options?: Parameters<EventEmitter['emit']>[2],
@@ -79,7 +79,7 @@ export class LitBlock extends LitBlockBase {
     });
   }
 
-  hasBlockInCtx(callback: (block: LitBlock) => boolean): boolean {
+  public hasBlockInCtx(callback: (block: LitBlock) => boolean): boolean {
     for (const block of this.blocksRegistry) {
       if (callback(block)) {
         return true;
@@ -88,7 +88,7 @@ export class LitBlock extends LitBlockBase {
     return false;
   }
 
-  setOrAddState(prop: string, newVal: unknown): void {
+  public setOrAddState(prop: string, newVal: unknown): void {
     this.add$(
       {
         [prop]: newVal,
@@ -97,7 +97,7 @@ export class LitBlock extends LitBlockBase {
     );
   }
 
-  override connectedCallback(): void {
+  public override connectedCallback(): void {
     const styleAttrs = (this.constructor as typeof LitBlock).styleAttrs;
     styleAttrs.forEach((attr: string) => {
       this.setAttribute(attr, '');
@@ -108,7 +108,7 @@ export class LitBlock extends LitBlockBase {
     WindowHeightTracker.registerClient(this);
   }
 
-  override initCallback(): void {
+  public override initCallback(): void {
     if (!this.has('*blocksRegistry')) {
       this.add('*blocksRegistry', new Set());
     }
@@ -150,16 +150,16 @@ export class LitBlock extends LitBlockBase {
     });
   }
 
-  get testId(): string {
+  public get testId(): string {
     const testId = window.customElements.getName(this.constructor as CustomElementConstructor) as string;
     return testId;
   }
 
-  get modalManager(): ModalManager | undefined {
+  public get modalManager(): ModalManager | undefined {
     return this.has('*modalManager') ? (this.$['*modalManager'] as ModalManager) : undefined;
   }
 
-  get telemetryManager():
+  public get telemetryManager():
     | TelemetryManager
     | { sendEvent: () => void; sendEventCloudImageEditor: () => void; sendEventError: () => void } {
     if (!this.cfg.qualityInsights) {
@@ -185,7 +185,7 @@ export class LitBlock extends LitBlockBase {
     return this.$['*blocksRegistry'] as Set<LitBlock>;
   }
 
-  override disconnectedCallback(): void {
+  public override disconnectedCallback(): void {
     super.disconnectedCallback();
     WindowHeightTracker.unregisterClient(this);
 
@@ -241,7 +241,7 @@ export class LitBlock extends LitBlockBase {
     return url;
   }
 
-  get cfg(): ConfigType {
+  public get cfg(): ConfigType {
     if (!this.__cfgProxy) {
       const proxyTarget = {} as ConfigType;
       this.__cfgProxy = new Proxy(proxyTarget, {
@@ -269,7 +269,7 @@ export class LitBlock extends LitBlockBase {
     return this.__cfgProxy;
   }
 
-  subConfigValue<T extends keyof ConfigType>(key: T, callback: (value: ConfigType[T]) => void): () => void {
+  public subConfigValue<T extends keyof ConfigType>(key: T, callback: (value: ConfigType[T]) => void): () => void {
     const sharedKey = sharedConfigKey(key);
     if (!this.has(sharedKey)) {
       this.add(sharedKey, initialConfig[key]);
@@ -277,7 +277,7 @@ export class LitBlock extends LitBlockBase {
     return this.sub(sharedKey, callback);
   }
 
-  debugPrint(...args: unknown[]): void {
+  public debugPrint(...args: unknown[]): void {
     if (!this.cfg.debug) {
       return;
     }

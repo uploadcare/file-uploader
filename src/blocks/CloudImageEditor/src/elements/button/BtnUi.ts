@@ -9,28 +9,28 @@ type Theme = string | null;
 
 export class BtnUi extends LitBlock {
   @property({ type: String })
-  text = '';
+  public text = '';
 
   @property({ type: String })
-  icon = '';
+  public icon = '';
 
   @property({ type: Boolean, reflect: true })
-  active = false;
+  public active = false;
 
   @property({ type: Boolean, reflect: true })
-  reverse = false;
+  public reverse = false;
 
   @property({ type: String, reflect: true })
-  theme: Theme = 'default';
+  public theme: Theme = 'default';
 
   @property({ attribute: 'aria-role' })
-  ariaRole = '';
+  public ariaRole = '';
 
   @property({ attribute: 'aria-controls' })
-  ariaControls = '';
+  public ariaControls = '';
 
   @property({ attribute: 'title-prop' })
-  titleProp = '';
+  public titleProp = '';
 
   protected override firstUpdated(_changed: PropertyValues<this>): void {
     super.firstUpdated(_changed);
@@ -79,7 +79,7 @@ export class BtnUi extends LitBlock {
     return !this.text && !this.computedIconHidden;
   }
 
-  override render() {
+  public override render() {
     return html`
       <button
         type="button"

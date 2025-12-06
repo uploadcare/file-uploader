@@ -168,15 +168,15 @@ export class ImgBase extends ImgConfig {
     }
   }
 
-  get img(): HTMLImageElement {
+  protected get img(): HTMLImageElement {
     if (!this.hasPreviewImage) {
-      this._setupConfigForImage({ elNode: this._img });
+      this.setupConfigForImage({ elNode: this._img });
       this.appendChild(this._img);
     }
     return this._img;
   }
 
-  get currentImg(): CurrentImg {
+  private get currentImg(): CurrentImg {
     return this.hasPreviewImage
       ? {
           type: ImgTypeEnum.PREVIEW as ImgType,
@@ -188,15 +188,15 @@ export class ImgBase extends ImgConfig {
         };
   }
 
-  get hasPreviewImage(): string | number | boolean | undefined {
+  private get hasPreviewImage(): string | number | boolean | undefined {
     return this.$$('is-preview-blur') as string | number | boolean | undefined;
   }
 
-  get bgSelector(): string | undefined {
+  private get bgSelector(): string | undefined {
     return this.$$('is-background-for') as string | undefined;
   }
 
-  get breakpoints(): number[] | null {
+  private get breakpoints(): number[] | null {
     const breakpointsValue = this.$$('breakpoints') as string | undefined;
     if (breakpointsValue) {
       const list = stringToArray(breakpointsValue);
@@ -206,11 +206,11 @@ export class ImgBase extends ImgConfig {
     }
   }
 
-  get hasFormatJPG(): boolean {
+  private get hasFormatJPG(): boolean {
     return (this.$$('format') as string).toLowerCase() === 'jpeg';
   }
 
-  renderBg(el: HTMLElement): void {
+  private renderBg(el: HTMLElement): void {
     const imgSet = new Set<string>();
 
     imgSet.add(`url("${this._getUrlBase(this._getElSize(el)) as string}") 1x`);
@@ -227,7 +227,7 @@ export class ImgBase extends ImgConfig {
     el.style.setProperty('background-image', '-webkit-' + iSet);
   }
 
-  getSrcset(): string {
+  private getSrcset(): string {
     const srcset = new Set<string>();
     if (this.breakpoints) {
       this.breakpoints.forEach((bp) => {
@@ -253,15 +253,15 @@ export class ImgBase extends ImgConfig {
     return [...srcset].join();
   }
 
-  getSrc(): string | undefined {
+  private getSrc(): string | undefined {
     return this._getUrlBase();
   }
 
-  get srcUrlPreview(): string | undefined {
+  private get srcUrlPreview(): string | undefined {
     return this._getUrlBase('100x', '100');
   }
 
-  renderBackground(): void {
+  private renderBackground(): void {
     const selector = this.bgSelector as string;
     [...document.querySelectorAll(selector)].forEach((el) => {
       if (this.$$('intersection')) {
@@ -284,14 +284,14 @@ export class ImgBase extends ImgConfig {
     }
   }
 
-  private _setupConfigForImage({ elNode }: ConfigImageParams): void {
+  private setupConfigForImage({ elNode }: ConfigImageParams): void {
     this._setupEventProxy(elNode);
     this.initAttributes(elNode);
   }
 
-  loaderImage({ src, srcset, elNode }: LoaderParams): Promise<HTMLImageElement> {
+  private loaderImage({ src, srcset, elNode }: LoaderParams): Promise<HTMLImageElement> {
     return new Promise((resolve, reject) => {
-      this._setupConfigForImage({ elNode });
+      this.setupConfigForImage({ elNode });
 
       elNode.setAttribute(UNRESOLVED_ATTR, '');
 
@@ -312,10 +312,10 @@ export class ImgBase extends ImgConfig {
     });
   }
 
-  async renderImage(): Promise<void> {
+  private async renderImage(): Promise<void> {
     if (this.$$('intersection')) {
       if (this.hasPreviewImage) {
-        this._setupConfigForImage({ elNode: this._imgPreview });
+        this.setupConfigForImage({ elNode: this._imgPreview });
         this.appendChild(this._imgPreview);
       }
 
@@ -376,7 +376,7 @@ export class ImgBase extends ImgConfig {
     }
   }
 
-  init(): void {
+  protected init(): void {
     if (this.bgSelector) {
       this.renderBackground();
     } else {

@@ -27,18 +27,19 @@ export class EditorFilterControl extends EditorButtonControl {
   @state()
   private previewLoaded = false;
 
-  @property({ type: Boolean, reflect: true })
-  isOriginal = false;
+  // This is public because it's used in the updated lifecycle to assign to the shared state.
+  @state()
+  public isOriginal = false;
 
-  @property({ type: Number })
-  iconSize = 20;
+  @state()
+  private iconSize = 20;
 
   @property({ type: String })
-  get filter(): string {
+  public get filter(): string {
     return this._filter;
   }
 
-  set filter(value: string) {
+  public set filter(value: string) {
     const nextFilter = value ?? '';
     if (this._filter === nextFilter) {
       return;
@@ -53,7 +54,7 @@ export class EditorFilterControl extends EditorButtonControl {
     this.updateFilterLabels(nextFilter);
   }
 
-  override onClick(e: MouseEvent) {
+  public override onClick(e: MouseEvent) {
     if (!this.active) {
       const slider = this.$['*sliderEl'] as { setOperation: (op: string, filter: string) => void; apply: () => void };
       slider.setOperation(this._operation, this._filter);
@@ -108,7 +109,7 @@ export class EditorFilterControl extends EditorButtonControl {
     }
   }
 
-  override initCallback(): void {
+  public override initCallback(): void {
     super.initCallback();
 
     if ('IntersectionObserver' in window) {
@@ -153,7 +154,7 @@ export class EditorFilterControl extends EditorButtonControl {
     });
   }
 
-  override disconnectedCallback(): void {
+  public override disconnectedCallback(): void {
     super.disconnectedCallback();
     this._observer?.disconnect();
     this._cancelPreload?.();
@@ -285,7 +286,7 @@ export class EditorFilterControl extends EditorButtonControl {
     return Boolean(this.previewLoaded && !this.active && !this.isOriginal);
   }
 
-  override render() {
+  public override render() {
     const clickHandler = this.onClick;
     const previewStyles: Record<string, string> = {
       opacity: this.shouldShowPreview ? '1' : '0',

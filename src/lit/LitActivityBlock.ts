@@ -16,12 +16,11 @@ export type ActivityParamsMap = {
 export class LitActivityBlock extends LitBlock {
   protected historyTracked = false;
 
-  // biome-ignore lint/correctness/noUnusedPrivateClassMembers: accessed via computed property symbol
   private [ACTIVE_PROP]?: boolean;
 
-  override init$ = activityBlockCtx(this);
+  public override init$ = activityBlockCtx(this);
 
-  _debouncedHistoryFlush = debounce(this._historyFlush.bind(this), 10);
+  private _debouncedHistoryFlush = debounce(this._historyFlush.bind(this), 10);
 
   private _deactivate(): void {
     const actDesc = LitActivityBlock._activityCallbacks.get(this);
@@ -45,7 +44,7 @@ export class LitActivityBlock extends LitBlock {
   }
 
   // must match visibility of base class
-  override initCallback(): void {
+  public override initCallback(): void {
     super.initCallback();
 
     // TODO: rename activityType to activityId
@@ -73,7 +72,6 @@ export class LitActivityBlock extends LitBlock {
     }
   }
 
-  // biome-ignore lint/correctness/noUnusedPrivateClassMembers: invoked via the debounced history flush helper
   private _historyFlush(): void {
     let history = this.$['*history'];
     if (history) {
@@ -91,7 +89,6 @@ export class LitActivityBlock extends LitBlock {
     return !!this.activityType && LitActivityBlock._activityCallbacks.has(this);
   }
 
-  // biome-ignore lint/correctness/noUnusedPrivateClassMembers: accessed through registerActivity/unregisterActivity
   private static _activityCallbacks: Map<
     LitActivityBlock,
     {
@@ -101,7 +98,7 @@ export class LitActivityBlock extends LitBlock {
   > = new Map();
 
   // declare static activities to satisfy type references below
-  static activities: Readonly<{
+  public static activities: Readonly<{
     START_FROM: 'start-from';
     CAMERA: 'camera';
     DRAW: 'draw';
@@ -111,16 +108,19 @@ export class LitActivityBlock extends LitBlock {
     EXTERNAL: 'external';
   }>;
 
-  get isActivityActive(): boolean {
+  protected get isActivityActive(): boolean {
     return !!this[ACTIVE_PROP];
   }
 
-  get couldOpenActivity(): boolean {
+  public get couldOpenActivity(): boolean {
     return true;
   }
 
   /** TODO: remove name argument */
-  registerActivity(_name: string, options: { onActivate?: () => void; onDeactivate?: () => void } = {}): void {
+  protected registerActivity(
+    _name: string,
+    options: { onActivate?: () => void; onDeactivate?: () => void } = {},
+  ): void {
     const { onActivate, onDeactivate } = options;
     LitActivityBlock._activityCallbacks.set(this, {
       activateCallback: onActivate,
@@ -128,16 +128,16 @@ export class LitActivityBlock extends LitBlock {
     });
   }
 
-  unregisterActivity(): void {
+  private _unregisterActivity(): void {
     if (this.isActivityActive) {
       this._deactivate();
     }
     LitActivityBlock._activityCallbacks.delete(this);
   }
 
-  override disconnectedCallback(): void {
+  public override disconnectedCallback(): void {
     super.disconnectedCallback();
-    this._isActivityRegistered() && this.unregisterActivity();
+    this._isActivityRegistered() && this._unregisterActivity();
 
     const currentActivity = this.$['*currentActivity'] as string | null;
 
@@ -153,23 +153,19 @@ export class LitActivityBlock extends LitBlock {
     }
   }
 
-  get activityKey(): string {
-    return this.ctxName + this.activityType;
-  }
-
-  get activityParams(): ActivityParamsMap[keyof ActivityParamsMap] {
+  public get activityParams(): ActivityParamsMap[keyof ActivityParamsMap] {
     return this.$['*currentActivityParams'] as ActivityParamsMap[keyof ActivityParamsMap];
   }
 
-  get initActivity(): string | null {
+  public get initActivity(): string | null {
     return (this.getCssData('--cfg-init-activity') as string | null) ?? null;
   }
 
-  get doneActivity(): string | null {
+  public get doneActivity(): string | null {
     return (this.getCssData('--cfg-done-activity') as string | null) ?? null;
   }
 
-  historyBack(): void {
+  public historyBack(): void {
     const history = this.$['*history'] as string[];
 
     if (history) {

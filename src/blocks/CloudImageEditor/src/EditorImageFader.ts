@@ -102,7 +102,7 @@ export class EditorImageFader extends LitBlock {
   private readonly _previewHostRef = createRef<HTMLDivElement>();
   private readonly _layersHostRef = createRef<HTMLDivElement>();
 
-  constructor() {
+  public constructor() {
     super();
 
     this.classList.add('uc-inactive_to_cropper');
@@ -240,7 +240,7 @@ export class EditorImageFader extends LitBlock {
     return this._operation === operation && this._filter === filter;
   }
 
-  set(value: string | number): void {
+  public set(value: string | number): void {
     const numericValue = typeof value === 'string' ? parseInt(value, 10) : value;
     if (!isOperationKey(this._operation) || !Number.isFinite(numericValue)) {
       return;
@@ -321,7 +321,7 @@ export class EditorImageFader extends LitBlock {
     }
   }
 
-  async setTransformations(transformations: Transformations): Promise<void> {
+  public async setTransformations(transformations: Transformations): Promise<void> {
     this._transformations = transformations;
     if (this._previewImage) {
       const src = await this._imageSrc();
@@ -341,7 +341,7 @@ export class EditorImageFader extends LitBlock {
     }
   }
 
-  async preload({
+  public async preload({
     url,
     filter,
     operation,
@@ -410,7 +410,7 @@ export class EditorImageFader extends LitBlock {
     );
   }
 
-  async activate({
+  public async activate({
     url,
     operation,
     value,
@@ -450,7 +450,7 @@ export class EditorImageFader extends LitBlock {
     this._initNodes();
   }
 
-  deactivate({ hide = true }: { hide?: boolean } = {}): void {
+  public deactivate({ hide = true }: { hide?: boolean } = {}): void {
     this._isActive = false;
 
     this._cancelLastImages?.();
@@ -493,7 +493,7 @@ export class EditorImageFader extends LitBlock {
     this._layersHostRef.value?.replaceChildren();
   }
 
-  override render(): TemplateResult {
+  public override render(): TemplateResult {
     return html`
       <div class="uc-fader-preview-host" ${ref(this._previewHostRef)}></div>
       <div class="uc-fader-layers-host" ${ref(this._layersHostRef)}></div>

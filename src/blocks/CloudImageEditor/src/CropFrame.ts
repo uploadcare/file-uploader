@@ -519,7 +519,7 @@ export class CropFrame extends LitBlock {
     this._updateMask();
   }
 
-  toggleThumbs(visible: boolean): void {
+  public toggleThumbs(visible: boolean): void {
     if (!this._frameThumbs) return;
     for (const thumb of Object.values(this._frameThumbs)) {
       if (!thumb) {
@@ -536,7 +536,7 @@ export class CropFrame extends LitBlock {
     }
   }
 
-  override initCallback(): void {
+  public override initCallback(): void {
     super.initCallback();
 
     this.sub('*imageBox', () => {
@@ -597,7 +597,7 @@ export class CropFrame extends LitBlock {
     this._render();
   }
 
-  override disconnectedCallback(): void {
+  public override disconnectedCallback(): void {
     super.disconnectedCallback();
 
     const svg = this._svgElement;
@@ -606,7 +606,7 @@ export class CropFrame extends LitBlock {
     document.removeEventListener('pointerup', this._handlePointerUp, true);
   }
 
-  override render(): TemplateResult {
+  public override render(): TemplateResult {
     return html`<svg class="uc-svg" xmlns="http://www.w3.org/2000/svg" ${ref(this.svgRef)}></svg>`;
   }
 }

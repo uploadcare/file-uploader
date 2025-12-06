@@ -9,7 +9,7 @@ export class LocaleManager {
   private _blockInstance: LitBlock | null = null;
   private _localeName = '';
 
-  constructor(blockInstance: LitBlock) {
+  public constructor(blockInstance: LitBlock) {
     this._blockInstance = blockInstance;
 
     for (const [key, value] of Object.entries(en)) {

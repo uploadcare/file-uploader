@@ -19,8 +19,8 @@ import { customUserAgent } from '../utils/userAgent';
 import { LitActivityBlock } from './LitActivityBlock';
 
 export class LitUploaderBlock extends LitActivityBlock {
-  static extSrcList: Readonly<typeof ExternalUploadSource>;
-  static sourceTypes: Readonly<typeof UploadSource>;
+  public static extSrcList: Readonly<typeof ExternalUploadSource>;
+  public static sourceTypes: Readonly<typeof UploadSource>;
   protected couldBeCtxOwner = false;
 
   private isCtxOwner = false;
@@ -28,7 +28,7 @@ export class LitUploaderBlock extends LitActivityBlock {
   private _unobserveCollection?: () => void;
   private _unobserveCollectionProperties?: () => void;
 
-  override init$ = uploaderBlockCtx(this);
+  public override init$ = uploaderBlockCtx(this);
 
   private get hasCtxOwner(): boolean {
     return this.hasBlockInCtx((block) => {
@@ -39,7 +39,7 @@ export class LitUploaderBlock extends LitActivityBlock {
     });
   }
 
-  override initCallback(): void {
+  public override initCallback(): void {
     super.initCallback();
 
     if (!this.has('*uploadCollection')) {
@@ -78,32 +78,32 @@ export class LitUploaderBlock extends LitActivityBlock {
     return this.$['*validationManager'];
   }
 
-  get api(): UploaderPublicApi {
+  public get api(): UploaderPublicApi {
     if (!this.has('*publicApi')) {
       throw new Error('Unexpected error: UploaderPublicApi is not initialized');
     }
     return this.$['*publicApi'];
   }
 
-  getAPI(): UploaderPublicApi {
+  public getAPI(): UploaderPublicApi {
     return this.api;
   }
 
-  get uploadCollection(): TypedCollection<typeof uploadEntrySchema> {
+  public get uploadCollection(): TypedCollection<typeof uploadEntrySchema> {
     if (!this.has('*uploadCollection')) {
       throw new Error('Unexpected error: TypedCollection is not initialized');
     }
     return this.$['*uploadCollection'];
   }
 
-  override destroyCtxCallback(): void {
+  public override destroyCtxCallback(): void {
     this.uploadCollection.destroy();
     this.$['*uploadCollection'] = null;
 
     super.destroyCtxCallback();
   }
 
-  override disconnectedCallback(): void {
+  public override disconnectedCallback(): void {
     super.disconnectedCallback();
 
     if (this.isCtxOwner) {
@@ -113,7 +113,7 @@ export class LitUploaderBlock extends LitActivityBlock {
     this._flushOutputItems.cancel();
   }
 
-  override connectedCallback(): void {
+  public override connectedCallback(): void {
     super.connectedCallback();
 
     if (this.isCtxOwner) {
@@ -366,7 +366,7 @@ export class LitUploaderBlock extends LitActivityBlock {
     );
   };
 
-  openCloudImageEditor(): void {
+  private openCloudImageEditor(): void {
     const [entry] = this.uploadCollection
       .findItems((entry) => !!entry.getValue('fileInfo') && entry.getValue('isImage'))
       .map((id) => this.uploadCollection.read(id));
@@ -480,7 +480,7 @@ export class LitUploaderBlock extends LitActivityBlock {
     return options;
   }
 
-  getOutputData(): OutputFileEntry[] {
+  public getOutputData(): OutputFileEntry[] {
     const entriesIds = this.uploadCollection.items();
     const data = entriesIds.map((itemId) => this.api.getOutputItem(itemId));
     return data;

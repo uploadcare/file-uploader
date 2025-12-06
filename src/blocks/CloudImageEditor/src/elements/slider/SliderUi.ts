@@ -13,24 +13,24 @@ export class SliderUi extends LitBlock {
   private readonly stepsRef = createRef<HTMLDivElement>();
 
   @property({ type: Boolean, reflect: true })
-  disabled = false;
+  public disabled = false;
 
   @property({ type: Number })
-  min = 0;
+  public min = 0;
 
   @property({ type: Number })
-  max = 100;
+  public max = 100;
 
   @property({ type: Number, attribute: false })
-  defaultValue = 0;
+  public defaultValue = 0;
 
   @property({ type: Number })
-  zero = 0;
+  public zero = 0;
 
   @state()
   private _currentValue = 0;
 
-  constructor() {
+  public constructor() {
     super();
     this.setAttribute('with-effects', '');
   }
@@ -73,7 +73,7 @@ export class SliderUi extends LitBlock {
     this.style.setProperty('--color-effect', 'var(--idle-color-rgb)');
   };
 
-  protected override firstUpdated(changedProperties: Map<PropertyKey, unknown>): void {
+  protected override firstUpdated(changedProperties: PropertyValues<this>): void {
     super.firstUpdated(changedProperties);
 
     this._thumbSize = Number.parseInt(window.getComputedStyle(this).getPropertyValue('--l-thumb-size'), 10) || 0;
@@ -193,7 +193,7 @@ export class SliderUi extends LitBlock {
     this._stepsCount = count;
   }
 
-  override disconnectedCallback(): void {
+  public override disconnectedCallback(): void {
     super.disconnectedCallback();
     const inputEl = this.inputRef.value;
     inputEl?.removeEventListener('focus', this.handleInputFocus);
@@ -229,7 +229,7 @@ export class SliderUi extends LitBlock {
     return Number.isFinite(parsedValue) ? parsedValue : null;
   }
 
-  override render() {
+  public override render() {
     return html`
       <div class="uc-steps" ${ref(this.stepsRef)}></div>
       <div class="uc-thumb" ${ref(this.thumbRef)}></div>

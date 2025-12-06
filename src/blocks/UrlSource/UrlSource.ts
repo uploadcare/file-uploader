@@ -12,15 +12,15 @@ interface UrlSourceState {
 }
 
 export class UrlSource extends LitUploaderBlock {
-  override couldBeCtxOwner = true;
-  override activityType: ActivityType = LitActivityBlock.activities.URL;
+  public override couldBeCtxOwner = true;
+  public override activityType: ActivityType = LitActivityBlock.activities.URL;
 
   @state()
   private formState: UrlSourceState = {
     importDisabled: true,
   };
 
-  override initCallback(): void {
+  public override initCallback(): void {
     super.initCallback();
     this.registerActivity(this.activityType ?? '', {
       onActivate: () => {
@@ -62,7 +62,7 @@ export class UrlSource extends LitUploaderBlock {
     this.$['*currentActivity'] = LitActivityBlock.activities.UPLOAD_LIST;
   };
 
-  override render() {
+  public override render() {
     return html`
       <uc-activity-header>
         <button type="button" class="uc-mini-btn" @click=${this.historyBack} title=${this.l10n('back')} aria-label=${this.l10n('back')}>

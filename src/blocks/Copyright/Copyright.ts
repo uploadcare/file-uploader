@@ -3,7 +3,7 @@ import { LitBlock } from '../../lit/LitBlock';
 import './copyright.css';
 
 export class Copyright extends LitBlock {
-  override initCallback(): void {
+  public override initCallback(): void {
     super.initCallback();
 
     this.subConfigValue('removeCopyright', (value) => {
@@ -11,7 +11,7 @@ export class Copyright extends LitBlock {
     });
   }
 
-  override render() {
+  public override render() {
     return html`
       <a
         href="https://uploadcare.com/?utm_source=copyright&utm_medium=referral&utm_campaign=v4"

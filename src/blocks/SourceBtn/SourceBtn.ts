@@ -19,11 +19,11 @@ type SourceTypeConfig = {
 };
 
 export class SourceBtn extends LitUploaderBlock {
-  override couldBeCtxOwner = true;
+  public override couldBeCtxOwner = true;
   private _registeredTypes: Record<string, SourceTypeConfig> = {};
 
   @property({ type: String })
-  type?: string;
+  public type?: string;
 
   @state()
   private iconName = 'default';
@@ -31,7 +31,7 @@ export class SourceBtn extends LitUploaderBlock {
   @state()
   private srcTypeKey = '';
 
-  initTypes(): void {
+  private initTypes(): void {
     this.registerType({
       type: UploadSource.LOCAL,
       activate: () => {
@@ -92,7 +92,7 @@ export class SourceBtn extends LitUploaderBlock {
     }
   }
 
-  override initCallback(): void {
+  public override initCallback(): void {
     super.initCallback();
     this.initTypes();
 
@@ -101,15 +101,11 @@ export class SourceBtn extends LitUploaderBlock {
     }
   }
 
-  registerType(typeConfig: SourceTypeConfig): void {
+  private registerType(typeConfig: SourceTypeConfig): void {
     this._registeredTypes[typeConfig.type] = typeConfig;
   }
 
-  getType(type: string): SourceTypeConfig | undefined {
-    return this._registeredTypes[type];
-  }
-
-  activate(): void {
+  public activate(): void {
     if (!this.type) {
       return;
     }
@@ -132,7 +128,7 @@ export class SourceBtn extends LitUploaderBlock {
     }
   }
 
-  applyType(type: string): void {
+  private applyType(type: string): void {
     const configType = this._registeredTypes[type];
     if (!configType) {
       console.warn(`Unsupported source type: ${type}`);
@@ -157,7 +153,7 @@ export class SourceBtn extends LitUploaderBlock {
     }
   }
 
-  override render() {
+  public override render() {
     return html`
     <button type="button" @click=${this.activate}>
     <uc-icon name=${this.iconName}></uc-icon>

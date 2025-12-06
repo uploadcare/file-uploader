@@ -23,23 +23,23 @@ export class PresenceToggle extends LitBlock {
   private initialRenderComplete = false;
 
   @property({ type: Boolean })
-  set visible(value: boolean) {
+  public set visible(value: boolean) {
     this._visible = value;
     this._handleVisible();
   }
 
-  get visible(): boolean {
+  public get visible(): boolean {
     return this._visible;
   }
 
   @property({ attribute: false })
-  set styles(styles: PresenceToggleStyle) {
+  public set styles(styles: PresenceToggleStyle) {
     this._styles = styles;
     this._externalTransitions = true;
     this._visibleStyle = styles.visible ?? DEFAULT_STYLE.visible;
     this._hiddenStyle = styles.hidden ?? DEFAULT_STYLE.hidden;
   }
-  get styles(): PresenceToggleStyle {
+  public get styles(): PresenceToggleStyle {
     return this._styles;
   }
 
@@ -67,7 +67,7 @@ export class PresenceToggle extends LitBlock {
     );
   }
 
-  override initCallback(): void {
+  public override initCallback(): void {
     super.initCallback();
 
     this.classList.toggle('uc-initial', true);

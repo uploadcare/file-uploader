@@ -13,12 +13,12 @@ type FileUploaderInlineInitState = BaseInitState & {
 };
 
 export class FileUploaderInline extends LitSolutionBlock {
-  static override styleAttrs = [...super.styleAttrs, 'uc-file-uploader-inline'];
+  public static override styleAttrs = [...super.styleAttrs, 'uc-file-uploader-inline'];
 
   @state()
   private couldCancel = false;
 
-  constructor() {
+  public constructor() {
     super();
 
     this.init$ = {
@@ -39,7 +39,7 @@ export class FileUploaderInline extends LitSolutionBlock {
     }
   };
 
-  get couldHistoryBack(): boolean {
+  private get couldHistoryBack(): boolean {
     const history = this.$['*history'] as string[] | undefined;
     if (!history || history.length <= 1) {
       return false;
@@ -47,7 +47,7 @@ export class FileUploaderInline extends LitSolutionBlock {
     return history[history.length - 1] !== LitActivityBlock.activities.START_FROM;
   }
 
-  get couldShowList(): boolean {
+  private get couldShowList(): boolean {
     const uploadList = this.$['*uploadList'] as unknown[] | undefined;
     return this.cfg.showEmptyList || (Array.isArray(uploadList) && uploadList.length > 0);
   }
@@ -56,7 +56,7 @@ export class FileUploaderInline extends LitSolutionBlock {
     return (this.getCssData('--cfg-init-activity') as string | undefined) || LitActivityBlock.activities.START_FROM;
   }
 
-  override initCallback(): void {
+  public override initCallback(): void {
     super.initCallback();
 
     this.telemetryManager.sendEvent({
@@ -82,7 +82,7 @@ export class FileUploaderInline extends LitSolutionBlock {
     });
   }
 
-  override render() {
+  public override render() {
     return html`
       ${super.render()}
       <uc-start-from>

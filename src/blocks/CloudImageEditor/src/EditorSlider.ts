@@ -1,4 +1,4 @@
-import { html } from 'lit';
+import { html, type PropertyValues } from 'lit';
 import { state } from 'lit/decorators.js';
 import { LitBlock } from '../../../lit/LitBlock';
 import type { EditorImageFader } from './EditorImageFader';
@@ -12,8 +12,9 @@ type SliderFilter = FilterId | typeof FAKE_ORIGINAL_FILTER;
 export const FAKE_ORIGINAL_FILTER = 'original';
 
 export class EditorSlider extends LitBlock {
+  // This is public because it's used in the updated lifecycle to assign to the shared state.
   @state()
-  private state = {
+  public state = {
     operation: 'filter' as SliderOperation,
     filter: undefined as SliderFilter | undefined,
     originalUrl: '',
@@ -25,7 +26,7 @@ export class EditorSlider extends LitBlock {
     zero: 0,
   };
 
-  handleInput = (e: CustomEvent<{ value: number }>): void => {
+  private handleInput = (e: CustomEvent<{ value: number }>): void => {
     const { value } = e.detail;
     const fader = this.$['*faderEl'] as EditorImageFader | undefined;
     fader?.set(value);
@@ -75,7 +76,7 @@ export class EditorSlider extends LitBlock {
     this.state = { ...this.state, value, defaultValue: value };
   }
 
-  apply(): void {
+  public apply(): void {
     const editorTransformations = this.$['*editorTransformations'] as Transformations;
     const transformations: Transformations = { ...editorTransformations };
 
@@ -92,18 +93,18 @@ export class EditorSlider extends LitBlock {
     this.$['*editorTransformations'] = transformations;
   }
 
-  cancel(): void {
+  public cancel(): void {
     const fader = this.$['*faderEl'] as EditorImageFader | undefined;
     fader?.deactivate({ hide: false });
   }
 
-  override initCallback(): void {
+  public override initCallback(): void {
     this.sub('*originalUrl', (originalUrl: string) => {
       this.state = { ...this.state, originalUrl };
     });
   }
 
-  protected override updated(changedProperties: Map<PropertyKey, unknown>): void {
+  protected override updated(changedProperties: PropertyValues<this>): void {
     super.updated(changedProperties);
 
     if (changedProperties.has('state')) {
@@ -112,7 +113,7 @@ export class EditorSlider extends LitBlock {
     }
   }
 
-  override render() {
+  public override render() {
     return html`
       <uc-slider-ui
         .disabled=${this.state.disabled}

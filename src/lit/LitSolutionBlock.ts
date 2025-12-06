@@ -5,15 +5,15 @@ import svgIconsSprite from '../blocks/themes/uc-basic/svg-sprite';
 import { LitBlock } from './LitBlock';
 
 export class LitSolutionBlock extends LitBlock {
-  static override styleAttrs = ['uc-wgt-common'];
-  override init$ = solutionBlockCtx(this);
+  public static override styleAttrs = ['uc-wgt-common'];
+  public override init$ = solutionBlockCtx(this);
 
-  override initCallback(): void {
+  public override initCallback(): void {
     super.initCallback();
     this.a11y?.registerBlock(this);
   }
 
-  override render() {
+  public override render() {
     return html`${unsafeSVG(svgIconsSprite)}`;
   }
 }

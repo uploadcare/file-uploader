@@ -6,14 +6,14 @@ import './icon.css';
 
 export class Icon extends LitBlock {
   @property({ type: String })
-  name = '';
+  public name = '';
 
   @state()
   private resolvedHref = '';
 
   private iconHrefResolver: IconHrefResolver | null = null;
 
-  override initCallback(): void {
+  public override initCallback(): void {
     super.initCallback();
     this.setAttribute('aria-hidden', 'true');
 
@@ -41,7 +41,7 @@ export class Icon extends LitBlock {
     this.resolvedHref = customHref ?? defaultHref;
   }
 
-  override render() {
+  public override render() {
     return html`
       ${this.yield(
         '',

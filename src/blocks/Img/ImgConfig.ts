@@ -15,11 +15,11 @@ export class ImgConfig extends CssDataMixin(RegisterableElementMixin(LitElement)
   private _isnObserver: IntersectionObserver | null = null;
   private _observed: Set<Element> | null = null;
 
-  override createRenderRoot(): HTMLElement | ShadowRoot {
+  public override createRenderRoot(): HTMLElement | ShadowRoot {
     return this;
   }
 
-  constructor() {
+  public constructor() {
     super();
     for (const prop in PROPS_MAP) {
       const config = PROPS_MAP[prop as keyof typeof PROPS_MAP] as PropConfig | undefined;
@@ -27,11 +27,11 @@ export class ImgConfig extends CssDataMixin(RegisterableElementMixin(LitElement)
     }
   }
 
-  $$(key: string): unknown {
+  protected $$(key: string): unknown {
     return this._state[CSS_PREF + key];
   }
 
-  set$$(kvObj: Record<string, CssPropValue>): void {
+  protected set$$(kvObj: Record<string, CssPropValue>): void {
     for (const key in kvObj) {
       const fullKey = CSS_PREF + key;
       const val = kvObj[key];
@@ -40,7 +40,7 @@ export class ImgConfig extends CssDataMixin(RegisterableElementMixin(LitElement)
     }
   }
 
-  sub$$<T = unknown>(key: string, kbFn: (val: T) => void): void {
+  protected sub$$<T = unknown>(key: string, kbFn: (val: T) => void): void {
     const fullKey = CSS_PREF + key;
     if (!this._subscribers.has(fullKey)) {
       this._subscribers.set(fullKey, new Set());
@@ -64,11 +64,11 @@ export class ImgConfig extends CssDataMixin(RegisterableElementMixin(LitElement)
     }
   }
 
-  analyticsParams(): string {
+  protected analyticsParams(): string {
     return `-/@clib/${PACKAGE_NAME}/${PACKAGE_VERSION}/uc-img/`;
   }
 
-  initAttributes(el: HTMLElement): void {
+  protected initAttributes(el: HTMLElement): void {
     Array.from(this.attributes).forEach((attr) => {
       const currentAttr = attr as Attr;
       if (!PROPS_MAP[currentAttr.name as keyof typeof PROPS_MAP]) {
@@ -77,7 +77,7 @@ export class ImgConfig extends CssDataMixin(RegisterableElementMixin(LitElement)
     });
   }
 
-  initIntersection(el: HTMLElement, cbkFn: () => void): void {
+  protected initIntersection(el: HTMLElement, cbkFn: () => void): void {
     const opts: IntersectionObserverInit = {
       root: null,
       rootMargin: '0px',
@@ -97,7 +97,7 @@ export class ImgConfig extends CssDataMixin(RegisterableElementMixin(LitElement)
     this._observed.add(el);
   }
 
-  override connectedCallback(): void {
+  public override connectedCallback(): void {
     super.connectedCallback();
     this._initCssProperties();
   }
@@ -112,7 +112,7 @@ export class ImgConfig extends CssDataMixin(RegisterableElementMixin(LitElement)
     }
   }
 
-  override disconnectedCallback(): void {
+  public override disconnectedCallback(): void {
     super.disconnectedCallback();
     if (this._isnObserver) {
       this._observed?.forEach((el) => {
@@ -123,11 +123,11 @@ export class ImgConfig extends CssDataMixin(RegisterableElementMixin(LitElement)
     this._subscribers.clear();
   }
 
-  static override get observedAttributes(): string[] {
+  public static override get observedAttributes(): string[] {
     return Object.keys(PROPS_MAP);
   }
 
-  override attributeChangedCallback(name: string, _oldVal: string | null, newVal: string | null): void {
+  public override attributeChangedCallback(name: string, _oldVal: string | null, newVal: string | null): void {
     window.setTimeout(() => {
       const fullKey = CSS_PREF + name;
       this._state[fullKey] = newVal;

@@ -20,41 +20,41 @@ type TypedCollectionOptions<T extends TypedSchema> = {
 };
 
 export class TypedCollection<T extends TypedSchema> {
-  private __typedSchema: T;
-  private __ctxId: string;
-  private __data: ReturnType<typeof PubSub.registerCtx>;
-  private __watchList: ExtractKeysFromSchema<T>[];
-  private __subsMap: Record<string, Unsubscriber<T>[]> = Object.create(null) as Record<string, Unsubscriber<T>[]>;
-  private __propertyObservers = new Set<TypedCollectionPropertyObserver<T>>();
-  private __collectionObservers = new Set<TypedCollectionObserverHandler<T>>();
-  private __items = new Set<string>();
-  private __removed = new Set<TypedData<T>>();
-  private __added = new Set<TypedData<T>>();
-  private __observeTimeout?: number;
-  private __notifyTimeout?: number;
-  private __notifyObservers: (propName: string, ctxId: string) => void;
+  private _typedSchema: T;
+  private _ctxId: string;
+  private _data: ReturnType<typeof PubSub.registerCtx>;
+  private _watchList: ExtractKeysFromSchema<T>[];
+  private _subsMap: Record<string, Unsubscriber<T>[]> = Object.create(null) as Record<string, Unsubscriber<T>[]>;
+  private _propertyObservers = new Set<TypedCollectionPropertyObserver<T>>();
+  private _collectionObservers = new Set<TypedCollectionObserverHandler<T>>();
+  private _items = new Set<string>();
+  private _removed = new Set<TypedData<T>>();
+  private _added = new Set<TypedData<T>>();
+  private _observeTimeout?: number;
+  private _notifyTimeout?: number;
+  private _notifyObservers: (propName: string, ctxId: string) => void;
 
-  constructor(options: TypedCollectionOptions<T>) {
-    this.__typedSchema = options.typedSchema;
-    this.__ctxId = options.ctxName || UID.generate();
-    this.__data = PubSub.registerCtx({}, this.__ctxId);
-    this.__watchList = options.watchList || [];
+  public constructor(options: TypedCollectionOptions<T>) {
+    this._typedSchema = options.typedSchema;
+    this._ctxId = options.ctxName || UID.generate();
+    this._data = PubSub.registerCtx({}, this._ctxId);
+    this._watchList = options.watchList || [];
 
     let changeMap = Object.create(null) as ChangeMap<T>;
 
-    this.__notifyObservers = (propName: keyof T, ctxId: string) => {
-      if (this.__observeTimeout) {
-        window.clearTimeout(this.__observeTimeout);
+    this._notifyObservers = (propName: keyof T, ctxId: string) => {
+      if (this._observeTimeout) {
+        window.clearTimeout(this._observeTimeout);
       }
       if (!changeMap[propName]) {
         changeMap[propName] = new Set();
       }
       changeMap[propName].add(ctxId);
-      this.__observeTimeout = window.setTimeout(() => {
+      this._observeTimeout = window.setTimeout(() => {
         if (Object.keys(changeMap).length === 0) {
           return;
         }
-        this.__propertyObservers.forEach((handler) => {
+        this._propertyObservers.forEach((handler) => {
           handler({ ...changeMap });
         });
         changeMap = Object.create(null) as ChangeMap<T>;
@@ -66,26 +66,26 @@ export class TypedCollection<T extends TypedSchema> {
     }
   }
 
-  notify(): void {
-    if (this.__notifyTimeout) {
-      window.clearTimeout(this.__notifyTimeout);
+  private _notify(): void {
+    if (this._notifyTimeout) {
+      window.clearTimeout(this._notifyTimeout);
     }
-    this.__notifyTimeout = window.setTimeout(() => {
-      const added = new Set(this.__added);
-      const removed = new Set(this.__removed);
-      this.__added.clear();
-      this.__removed.clear();
-      for (const handler of this.__collectionObservers) {
-        handler?.([...this.__items], added, removed);
+    this._notifyTimeout = window.setTimeout(() => {
+      const added = new Set(this._added);
+      const removed = new Set(this._removed);
+      this._added.clear();
+      this._removed.clear();
+      for (const handler of this._collectionObservers) {
+        handler?.([...this._items], added, removed);
       }
     });
   }
 
-  observeCollection(handler: TypedCollectionObserverHandler<T>): () => void {
-    this.__collectionObservers.add(handler);
+  public observeCollection(handler: TypedCollectionObserverHandler<T>): () => void {
+    this._collectionObservers.add(handler);
 
-    if (this.__items.size > 0) {
-      this.notify();
+    if (this._items.size > 0) {
+      this._notify();
     }
 
     return () => {
@@ -93,12 +93,12 @@ export class TypedCollection<T extends TypedSchema> {
     };
   }
 
-  unobserveCollection(handler: TypedCollectionObserverHandler<T>): void {
-    this.__collectionObservers.delete(handler);
+  public unobserveCollection(handler: TypedCollectionObserverHandler<T>): void {
+    this._collectionObservers.delete(handler);
   }
 
-  add(init: Partial<ExtractDataFromSchema<T>>): string {
-    const item = new TypedData(this.__typedSchema);
+  public add(init: Partial<ExtractDataFromSchema<T>>): string {
+    const item = new TypedData(this._typedSchema);
     for (const [prop, value] of Object.entries(init) as [
       ExtractKeysFromSchema<T>,
       ExtractDataFromSchema<T>[ExtractKeysFromSchema<T>],
@@ -107,29 +107,29 @@ export class TypedCollection<T extends TypedSchema> {
         item.setValue(prop, value);
       }
     }
-    this.__items.add(item.uid);
-    this.notify();
+    this._items.add(item.uid);
+    this._notify();
 
-    this.__data.add(item.uid, item);
-    this.__added.add(item);
-    this.__watchList.forEach((propName) => {
-      if (!this.__subsMap[item.uid]) {
-        this.__subsMap[item.uid] = [];
+    this._data.add(item.uid, item);
+    this._added.add(item);
+    this._watchList.forEach((propName) => {
+      if (!this._subsMap[item.uid]) {
+        this._subsMap[item.uid] = [];
       }
-      this.__subsMap[item.uid]?.push(
+      this._subsMap[item.uid]?.push(
         item.subscribe(propName, () => {
-          this.__notifyObservers(propName, item.uid);
+          this._notifyObservers(propName, item.uid);
         }),
       );
     });
     return item.uid;
   }
 
-  read(id: string): TypedData<T> | null {
-    return this.__data.read(id);
+  public read(id: string): TypedData<T> | null {
+    return this._data.read(id);
   }
 
-  readProp<K extends ExtractKeysFromSchema<T>>(id: string, propName: K): ExtractDataFromSchema<T>[K] | null {
+  public readProp<K extends ExtractKeysFromSchema<T>>(id: string, propName: K): ExtractDataFromSchema<T>[K] | null {
     const item = this.read(id);
     if (!item) {
       console.warn(`Item with id ${id} not found`);
@@ -138,7 +138,11 @@ export class TypedCollection<T extends TypedSchema> {
     return item.getValue(propName);
   }
 
-  publishProp<K extends ExtractKeysFromSchema<T>>(id: string, propName: K, value: ExtractDataFromSchema<T>[K]): void {
+  public publishProp<K extends ExtractKeysFromSchema<T>>(
+    id: string,
+    propName: K,
+    value: ExtractDataFromSchema<T>[K],
+  ): void {
     const item = this.read(id);
     if (!item) {
       console.warn(`Item with id ${id} not found`);
@@ -147,38 +151,38 @@ export class TypedCollection<T extends TypedSchema> {
     item.setValue(propName, value);
   }
 
-  remove(id: string): void {
+  public remove(id: string): void {
     const item = this.read(id);
     if (item) {
-      this.__removed.add(item);
+      this._removed.add(item);
     }
-    this.__items.delete(id);
-    this.notify();
-    this.__data.pub(id, null);
-    delete this.__subsMap[id];
+    this._items.delete(id);
+    this._notify();
+    this._data.pub(id, null);
+    delete this._subsMap[id];
   }
 
-  clearAll(): void {
-    this.__items.forEach((id) => {
+  public clearAll(): void {
+    this._items.forEach((id) => {
       this.remove(id);
     });
   }
 
-  observeProperties(handler: TypedCollectionPropertyObserver<T>): () => void {
-    this.__propertyObservers.add(handler);
+  public observeProperties(handler: TypedCollectionPropertyObserver<T>): () => void {
+    this._propertyObservers.add(handler);
 
     return () => {
       this.unobserveProperties(handler);
     };
   }
 
-  unobserveProperties(handler: TypedCollectionPropertyObserver<T>): void {
-    this.__propertyObservers.delete(handler);
+  public unobserveProperties(handler: TypedCollectionPropertyObserver<T>): void {
+    this._propertyObservers.delete(handler);
   }
 
-  findItems(checkFn: (item: TypedData<T>) => boolean): string[] {
+  public findItems(checkFn: (item: TypedData<T>) => boolean): string[] {
     const result: string[] = [];
-    this.__items.forEach((id) => {
+    this._items.forEach((id) => {
       const item = this.read(id);
       if (item && checkFn(item)) {
         result.push(id);
@@ -187,23 +191,23 @@ export class TypedCollection<T extends TypedSchema> {
     return result;
   }
 
-  items(): string[] {
-    return [...this.__items];
+  public items(): string[] {
+    return [...this._items];
   }
 
-  get size(): number {
-    return this.__items.size;
+  public get size(): number {
+    return this._items.size;
   }
 
-  destroy(): void {
-    PubSub.deleteCtx(this.__ctxId);
-    this.__propertyObservers = new Set();
-    this.__collectionObservers = new Set();
-    for (const id in this.__subsMap) {
-      this.__subsMap[id]?.forEach((sub) => {
+  public destroy(): void {
+    PubSub.deleteCtx(this._ctxId);
+    this._propertyObservers = new Set();
+    this._collectionObservers = new Set();
+    for (const id in this._subsMap) {
+      this._subsMap[id]?.forEach((sub) => {
         sub.remove();
       });
-      delete this.__subsMap[id];
+      delete this._subsMap[id];
     }
   }
 }

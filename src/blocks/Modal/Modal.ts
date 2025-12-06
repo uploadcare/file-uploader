@@ -9,20 +9,12 @@ import { createRef, ref } from 'lit/directives/ref.js';
 let LAST_ACTIVE_MODAL_ID: ModalId | null = null;
 
 export class Modal extends LitBlock {
-  static override styleAttrs = [...super.styleAttrs, 'uc-modal'];
+  public static override styleAttrs = [...super.styleAttrs, 'uc-modal'];
 
-  private _mouseDownTarget: EventTarget | null | undefined;
+  private mouseDownTarget: EventTarget | null | undefined;
   protected dialogEl = createRef<HTMLDialogElement>();
 
-  handleModalOpen!: ModalCb;
-  handleModalClose!: ModalCb;
-  handleModalCloseAll!: ModalCb;
-
-  _handleBackdropClick = (): void => {
-    this._closeDialog();
-  };
-
-  _closeDialog = (): void => {
+  private closeDialog = (): void => {
     this.modalManager?.close(this.id);
 
     if (!this.modalManager?.hasActiveModals) {
@@ -30,22 +22,22 @@ export class Modal extends LitBlock {
     }
   };
 
-  _handleDialogClose = (): void => {
-    this._closeDialog();
+  private handleDialogClose = (): void => {
+    this.closeDialog();
   };
 
-  _handleDialogMouseDown = (e: MouseEvent): void => {
-    this._mouseDownTarget = e.target;
+  private handleDialogMouseDown = (e: MouseEvent): void => {
+    this.mouseDownTarget = e.target;
   };
 
-  _handleDialogMouseUp = (e: MouseEvent): void => {
+  private handleDialogMouseUp = (e: MouseEvent): void => {
     const target = e.target as EventTarget | null;
-    if (target === this.dialogEl.value && target === this._mouseDownTarget) {
-      this._closeDialog();
+    if (target === this.dialogEl.value && target === this.mouseDownTarget) {
+      this.closeDialog();
     }
   };
 
-  show(): void {
+  public show(): void {
     const dialog = this.dialogEl.value as HTMLDialogElement & {
       showModal?: () => void;
     };
@@ -61,7 +53,7 @@ export class Modal extends LitBlock {
     }
   }
 
-  hide(): void {
+  public hide(): void {
     const dialog = this.dialogEl.value as HTMLDialogElement & {
       close?: () => void;
     };
@@ -73,7 +65,7 @@ export class Modal extends LitBlock {
     }
   }
 
-  private _handleModalOpen({ id }: Parameters<ModalCb>[0]): void {
+  private handleModalOpen = ({ id }: Parameters<ModalCb>[0]): void => {
     if (id === this.id) {
       LAST_ACTIVE_MODAL_ID = id;
       this.show();
@@ -81,9 +73,9 @@ export class Modal extends LitBlock {
     } else {
       this.hide();
     }
-  }
+  };
 
-  private _handleModalClose({ id }: Parameters<ModalCb>[0]): void {
+  private handleModalClose = ({ id }: Parameters<ModalCb>[0]): void => {
     if (id === this.id) {
       this.hide();
       this.emit(
@@ -92,9 +84,9 @@ export class Modal extends LitBlock {
         { debounce: true },
       );
     }
-  }
+  };
 
-  private _handleModalCloseAll(_data: Parameters<ModalCb>[0]): void {
+  private handleModalCloseAll = (_data: Parameters<ModalCb>[0]): void => {
     this.hide();
 
     if (LAST_ACTIVE_MODAL_ID === this.id) {
@@ -104,9 +96,9 @@ export class Modal extends LitBlock {
         { debounce: true },
       );
     }
-  }
+  };
 
-  override initCallback(): void {
+  public override initCallback(): void {
     super.initCallback();
 
     this.modalManager?.registerModal(this.id, this);
@@ -119,19 +111,15 @@ export class Modal extends LitBlock {
       }
     });
 
-    this.handleModalOpen = this._handleModalOpen.bind(this);
-    this.handleModalClose = this._handleModalClose.bind(this);
-    this.handleModalCloseAll = this._handleModalCloseAll.bind(this);
-
     this.modalManager?.subscribe(ModalEvents.OPEN, this.handleModalOpen);
     this.modalManager?.subscribe(ModalEvents.CLOSE, this.handleModalClose);
     this.modalManager?.subscribe(ModalEvents.CLOSE_ALL, this.handleModalCloseAll);
   }
 
-  override disconnectedCallback(): void {
+  public override disconnectedCallback(): void {
     super.disconnectedCallback();
     document.body.style.overflow = '';
-    this._mouseDownTarget = undefined;
+    this.mouseDownTarget = undefined;
 
     this.modalManager?.unsubscribe(ModalEvents.OPEN, this.handleModalOpen);
     this.modalManager?.unsubscribe(ModalEvents.CLOSE, this.handleModalClose);
@@ -141,12 +129,12 @@ export class Modal extends LitBlock {
   private handleDialogRef(dialog: Element | undefined): void {
     this.dialogEl = { value: dialog } as typeof this.dialogEl;
 
-    this.dialogEl.value?.addEventListener('close', this._handleDialogClose);
-    this.dialogEl.value?.addEventListener('mousedown', this._handleDialogMouseDown);
-    this.dialogEl.value?.addEventListener('mouseup', this._handleDialogMouseUp);
+    this.dialogEl.value?.addEventListener('close', this.handleDialogClose);
+    this.dialogEl.value?.addEventListener('mousedown', this.handleDialogMouseDown);
+    this.dialogEl.value?.addEventListener('mouseup', this.handleDialogMouseUp);
   }
 
-  override render() {
+  public override render() {
     return html`
   <dialog ${ref(this.handleDialogRef)}>
     ${this.yield('')}

@@ -28,7 +28,7 @@ export class TelemetryManager {
   private _lastPayload: TelemetryState | null = null;
   private readonly _queue: Queue;
 
-  constructor(block: LitBlock) {
+  public constructor(block: LitBlock) {
     this._block = block;
     this._telemetryInstance = new TelemetryAPIService();
     this._queue = new Queue(10);
@@ -111,7 +111,7 @@ export class TelemetryManager {
     return false;
   }
 
-  sendEvent(body: TelemetryEventBody): void {
+  public sendEvent(body: TelemetryEventBody): void {
     const payload = this._formattingPayload({
       eventType: body.eventType,
       payload: body.payload,
@@ -136,7 +136,7 @@ export class TelemetryManager {
     });
   }
 
-  sendEventError(error: unknown, context = 'unknown'): void {
+  public sendEventError(error: unknown, context = 'unknown'): void {
     this.sendEvent({
       eventType: InternalEventType.ERROR_EVENT,
       payload: {
@@ -152,7 +152,7 @@ export class TelemetryManager {
   /**
    * Method to send telemetry event for Cloud Image Editor.
    */
-  sendEventCloudImageEditor(e: MouseEvent, tabId: string, options: Record<string, unknown> = {}): void {
+  public sendEventCloudImageEditor(e: MouseEvent, tabId: string, options: Record<string, unknown> = {}): void {
     this.sendEvent({
       eventType: InternalEventType.ACTION_EVENT,
       payload: {
