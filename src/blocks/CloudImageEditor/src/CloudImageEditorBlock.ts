@@ -30,66 +30,42 @@ type TabIdValue = (typeof TabId)[keyof typeof TabId];
 const DEFAULT_TABS = serializeCsv([...ALL_TABS]);
 
 export class CloudImageEditorBlock extends LitBlock {
-  ctxOwner = true;
-  static override styleAttrs = ['uc-cloud-image-editor'];
+  public override ctxOwner = true;
+  public static override styleAttrs = ['uc-cloud-image-editor'];
 
-  @property({ attribute: false })
-  entry: unknown = null;
+  @state()
+  private statusMessage = '';
 
-  @property({ attribute: false })
-  extension: string | null = null;
+  @state()
+  private imageSrc = TRANSPARENT_PIXEL_SRC;
 
-  @property({ type: Boolean, attribute: false })
-  editorMode = false;
+  @state()
+  private fileType = '';
 
-  @property({ type: String, attribute: false })
-  modalCaption = '';
-
-  @property({ type: Boolean, attribute: false })
-  isImage = false;
-
-  @property({ type: String, attribute: false })
-  msg = '';
-
-  @property({ type: String, attribute: false })
-  src = TRANSPARENT_PIXEL_SRC;
-
-  @property({ type: String, attribute: false })
-  fileType = '';
-
-  @property({ type: Boolean, attribute: false })
-  showLoader = false;
+  @state()
+  private showLoader = false;
 
   @property({ type: String, reflect: true })
-  uuid: string | null = null;
+  public uuid: string | null = null;
 
   @property({ type: String, attribute: 'cdn-url', reflect: true })
-  cdnUrl: string | null = null;
+  public cdnUrl: string | null = null;
 
   @property({ type: String, attribute: 'crop-preset', reflect: true })
-  cropPreset = '';
+  public cropPreset = '';
 
   @property({ type: String, reflect: true })
-  tabs: string | null = DEFAULT_TABS;
+  public tabs: string | null = DEFAULT_TABS;
 
-  @property({ type: Boolean, attribute: false })
-  presenceNetworkProblems = false;
-
-  @property({ type: Boolean, attribute: false })
-  presenceModalCaption = true;
-
-  @property({ type: Boolean, attribute: false })
-  presenceEditorToolbar = false;
-
-  @property({ type: Boolean, attribute: false })
-  presenceViewerToolbar = true;
+  @state()
+  private hasNetworkProblems = false;
 
   @state()
   private isInitialized = false;
 
   private pendingInitUpdate: Promise<void> | null = null;
 
-  private readonly _debouncedShowLoader = debounce((show: boolean) => {
+  private readonly debouncedShowLoader = debounce((show: boolean) => {
     this.showLoader = show;
   }, 300);
 
@@ -99,15 +75,15 @@ export class CloudImageEditorBlock extends LitBlock {
   private readonly imgContainerRef = createRef<HTMLDivElement>();
 
   private readonly handleImageLoad = (): void => {
-    this._debouncedShowLoader(false);
+    this.debouncedShowLoader(false);
 
-    if (this.src !== TRANSPARENT_PIXEL_SRC) {
+    if (this.imageSrc !== TRANSPARENT_PIXEL_SRC) {
       this.$['*networkProblems'] = false;
     }
   };
 
   private readonly handleImageError = (): void => {
-    this._debouncedShowLoader(false);
+    this.debouncedShowLoader(false);
     this.$['*networkProblems'] = true;
   };
 
@@ -126,12 +102,12 @@ export class CloudImageEditorBlock extends LitBlock {
     });
   }
 
-  override init$ = {
+  public override init$ = {
     ...this.init$,
     ...initState(this),
   } as ReturnType<typeof initState>;
 
-  override initCallback(): void {
+  public override initCallback(): void {
     super.initCallback();
 
     this.syncTabListFromProp();
@@ -189,7 +165,7 @@ export class CloudImageEditorBlock extends LitBlock {
   /**
    * To proper work, we need non-zero size the element. So, we'll wait for it.
    */
-  private _waitForSize(): Promise<void> {
+  private waitForSize(): Promise<void> {
     const TIMEOUT = 3000;
     return new Promise<void>((resolve, reject) => {
       const timeoutId = window.setTimeout(() => {
@@ -210,30 +186,30 @@ export class CloudImageEditorBlock extends LitBlock {
     });
   }
 
-  override firstUpdated(_changedProperties: Map<PropertyKey, unknown>): void {
-    super.firstUpdated(_changedProperties);
+  public override firstUpdated(changedProperties: PropertyValues<this>): void {
+    super.firstUpdated(changedProperties);
     this.assignSharedElements();
     this.attachImageListeners();
     void this.initEditor();
 
     const hasInitialSource = Boolean(this.uuid || this.cdnUrl);
-    const alreadyRequested = _changedProperties.has('uuid') || _changedProperties.has('cdnUrl');
+    const alreadyRequested = changedProperties.has('uuid') || changedProperties.has('cdnUrl');
     if (hasInitialSource && !alreadyRequested) {
       void this.updateImage();
     }
   }
 
-  override disconnectedCallback(): void {
+  public override disconnectedCallback(): void {
     this.detachImageListeners();
     super.disconnectedCallback();
   }
 
-  override render() {
+  public override render() {
     const fileType = this.fileType ?? '';
-    const message = this.msg ?? '';
-    const src = this.src || TRANSPARENT_PIXEL_SRC;
+    const message = this.statusMessage ?? '';
+    const src = this.imageSrc || TRANSPARENT_PIXEL_SRC;
     const showLoader = this.showLoader;
-    const showNetworkProblems = this.presenceNetworkProblems;
+    const showNetworkProblems = this.hasNetworkProblems;
 
     return html`
       ${unsafeSVG(svgIconsSprite)}
@@ -313,11 +289,11 @@ export class CloudImageEditorBlock extends LitBlock {
     this.$['*currentAspectRatio'] = closest ?? list?.[0] ?? null;
   }
 
-  async updateImage(): Promise<void> {
+  public async updateImage(): Promise<void> {
     if (!this.isConnected) {
       return;
     }
-    await this._waitForSize();
+    await this.waitForSize();
 
     if (this.cdnUrl) {
       const cdnUrlValue = this.cdnUrl as string;
@@ -370,9 +346,9 @@ export class CloudImageEditorBlock extends LitBlock {
     this.scheduleInitialization();
   }
 
-  async initEditor(): Promise<void> {
+  public async initEditor(): Promise<void> {
     try {
-      await this._waitForSize();
+      await this.waitForSize();
     } catch (err) {
       if (this.isConnected) {
         // @ts-expect-error TODO: fix this
@@ -385,8 +361,7 @@ export class CloudImageEditorBlock extends LitBlock {
 
     this.sub('*networkProblems', (networkProblems) => {
       const hasIssues = Boolean(networkProblems);
-      this.presenceNetworkProblems = hasIssues;
-      this.presenceModalCaption = !hasIssues;
+      this.hasNetworkProblems = hasIssues;
     });
 
     this.sub(

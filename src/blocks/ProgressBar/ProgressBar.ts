@@ -7,10 +7,10 @@ import { LitBlock } from '../../lit/LitBlock';
 
 export class ProgressBar extends LitBlock {
   @property({ type: Number })
-  value = 0;
+  public value = 0;
 
   @property({ type: Boolean, reflect: true })
-  visible = true;
+  public visible = true;
 
   private _progressValue = 0;
 
@@ -67,7 +67,7 @@ export class ProgressBar extends LitBlock {
     }
   }
 
-  override disconnectedCallback(): void {
+  public override disconnectedCallback(): void {
     super.disconnectedCallback();
     this.fakeProgressLineRef.value?.removeEventListener('animationiteration', this.handleFakeProgressAnimation);
   }
@@ -86,7 +86,7 @@ export class ProgressBar extends LitBlock {
     this.style.setProperty('--l-progress-value', this._progressValue.toString());
   }
 
-  override render() {
+  public override render() {
     return html`
       <div ${ref(this.fakeProgressLineRef)} class="uc-fake-progress"></div>
       <div class="uc-progress"></div>

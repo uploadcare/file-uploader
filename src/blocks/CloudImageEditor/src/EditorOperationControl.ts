@@ -9,11 +9,11 @@ export class EditorOperationControl extends EditorButtonControl {
   private _operation: ColorOperation | '' = '';
 
   @property({ type: String })
-  get operation(): ColorOperation | '' {
+  public get operation(): ColorOperation | '' {
     return this._operation;
   }
 
-  set operation(value: ColorOperation | '') {
+  public set operation(value: ColorOperation | '') {
     const normalizedValue = value ?? '';
     if (this._operation === normalizedValue) {
       return;
@@ -47,7 +47,7 @@ export class EditorOperationControl extends EditorButtonControl {
     resolveTitle();
   }
 
-  override initCallback(): void {
+  public override initCallback(): void {
     super.initCallback();
 
     if (this._operation) {
@@ -65,7 +65,7 @@ export class EditorOperationControl extends EditorButtonControl {
       this.active = isActive;
     });
   }
-  override onClick(e: MouseEvent) {
+  protected override onClick(e: MouseEvent) {
     const slider = this.$['*sliderEl'] as { setOperation: (operation: ColorOperation | '') => void } | undefined;
     slider?.setOperation(this._operation);
     this.$['*showSlider'] = true;

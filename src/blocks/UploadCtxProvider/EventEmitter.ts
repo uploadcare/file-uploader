@@ -71,15 +71,15 @@ export class EventEmitter {
   private _targets: Set<LitBlock> = new Set();
   private _debugPrint: ((...args: unknown[]) => void) | null = null;
 
-  constructor(debugPrint: (...args: unknown[]) => void) {
+  public constructor(debugPrint: (...args: unknown[]) => void) {
     this._debugPrint = debugPrint;
   }
 
-  bindTarget(target: LitBlock): void {
+  public bindTarget(target: LitBlock): void {
     this._targets.add(target);
   }
 
-  unbindTarget(target: LitBlock): void {
+  public unbindTarget(target: LitBlock): void {
     this._targets.delete(target);
   }
 
@@ -98,7 +98,7 @@ export class EventEmitter {
     });
   }
 
-  emit<T extends EventKey, TDebounce extends boolean | number | undefined = undefined>(
+  public emit<T extends EventKey, TDebounce extends boolean | number | undefined = undefined>(
     type: T,
     payload?: TDebounce extends false | undefined ? EventPayload[T] : () => EventPayload[T],
     options: { debounce?: TDebounce } = {},

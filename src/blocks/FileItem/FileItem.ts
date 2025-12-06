@@ -32,13 +32,13 @@ type FileItemStateValue = (typeof FileItemState)[keyof typeof FileItemState];
 type UploadTrigger = Set<string>;
 
 export class FileItem extends FileItemConfig {
-  override couldBeCtxOwner = true;
+  protected override couldBeCtxOwner = true;
 
   @state()
   private pauseRender = true;
 
   @property({ type: String, attribute: false })
-  uid = '';
+  public uid = '';
 
   @state()
   protected itemName = '';
@@ -79,12 +79,12 @@ export class FileItem extends FileItemConfig {
   @state()
   protected ariaLabelStatusFile = '';
 
-  private _renderedOnce = false;
-  private _observer?: IntersectionObserver;
-  protected _isIntersecting = false;
-  protected _thumbRect?: DOMRectReadOnly;
+  private renderedOnce = false;
+  private observer?: IntersectionObserver;
+  protected isIntersecting = false;
+  protected thumbRect?: DOMRectReadOnly;
 
-  private _handleEdit = this._withEntry((entry) => {
+  private handleEdit = this.withEntry((entry) => {
     this.telemetryManager.sendEvent({
       payload: {
         metadata: {
@@ -100,7 +100,7 @@ export class FileItem extends FileItemConfig {
     this.$['*currentActivity'] = LitActivityBlock.activities.CLOUD_IMG_EDIT;
   });
 
-  private _handleRemove = (): void => {
+  private handleRemove = (): void => {
     this.telemetryManager.sendEvent({
       payload: {
         metadata: {
@@ -115,12 +115,12 @@ export class FileItem extends FileItemConfig {
     }
   };
 
-  private _handleUploadClick = (): void => {
+  private handleUploadClick = (): void => {
     this.upload();
   };
 
-  private _calculateState(): void {
-    const entry = this._entry;
+  private calculateState(): void {
+    const entry = this.entry;
     if (!entry) {
       return;
     }
@@ -141,12 +141,12 @@ export class FileItem extends FileItemConfig {
       state = FileItemState.FINISHED;
     }
 
-    this._handleState(entry, state);
+    this.handleState(entry, state);
   }
 
-  private _debouncedCalculateState = debounce(() => this._calculateState(), 100);
+  private debouncedCalculateState = debounce(() => this.calculateState(), 100);
 
-  private _updateHintAndProgress = this._withEntry(
+  private updateHintAndProgress = this.withEntry(
     throttle((entry: UploadEntryTypedData, state?: FileItemStateValue) => {
       const errorText = entry.getValue('errors')?.[0]?.message ?? '';
       const source = entry.getValue('source');
@@ -178,7 +178,7 @@ export class FileItem extends FileItemConfig {
     }, 100),
   );
 
-  private _handleState(entry: UploadEntryTypedData, state: FileItemStateValue): void {
+  private handleState(entry: UploadEntryTypedData, state: FileItemStateValue): void {
     if (state === FileItemState.FAILED) {
       this.badgeIcon = 'badge-error';
     } else if (state === FileItemState.FINISHED) {
@@ -195,78 +195,78 @@ export class FileItem extends FileItemConfig {
     this.isFinished = state === FileItemState.FINISHED;
     this.isEditable = Boolean(this.cfg.useCloudImageEditor && entry.getValue('isImage') && entry.getValue('cdnUrl'));
 
-    this._updateHintAndProgress(state);
+    this.updateHintAndProgress(state);
   }
 
-  override _reset(): void {
-    super._reset();
-    this._debouncedCalculateState.cancel();
+  protected override reset(): void {
+    super.reset();
+    this.debouncedCalculateState.cancel();
   }
 
-  private _observerCallback(entries: IntersectionObserverEntry[]): void {
+  private observerCallback(entries: IntersectionObserverEntry[]): void {
     const [entry] = entries;
     if (!entry) {
       return;
     }
 
-    this._isIntersecting = entry.isIntersecting;
-    this._thumbRect = entry.boundingClientRect;
+    this.isIntersecting = entry.isIntersecting;
+    this.thumbRect = entry.boundingClientRect;
 
-    if (entry.isIntersecting && !this._renderedOnce) {
+    if (entry.isIntersecting && !this.renderedOnce) {
       this.pauseRender = false;
-      this._renderedOnce = true;
+      this.renderedOnce = true;
     }
   }
 
-  private _handleEntryId(id: string): void {
-    this._reset();
+  private handleEntryId(id: string): void {
+    this.reset();
 
     const entry = this.uploadCollection?.read(id);
-    this._entry = entry;
+    this.entry = entry;
 
     if (!entry) {
       return;
     }
 
-    this._subEntry('isQueuedForValidation', () => {
-      this._debouncedCalculateState();
+    this.subEntry('isQueuedForValidation', () => {
+      this.debouncedCalculateState();
     });
 
-    this._subEntry('isValidationPending', () => {
-      this._debouncedCalculateState();
+    this.subEntry('isValidationPending', () => {
+      this.debouncedCalculateState();
     });
 
-    this._subEntry('uploadProgress', () => {
-      this._debouncedCalculateState();
+    this.subEntry('uploadProgress', () => {
+      this.debouncedCalculateState();
     });
 
-    this._subEntry('isQueuedForUploading', () => {
-      this._debouncedCalculateState();
+    this.subEntry('isQueuedForUploading', () => {
+      this.debouncedCalculateState();
     });
 
-    this._subEntry('fileName', (name) => {
+    this.subEntry('fileName', (name) => {
       this.itemName = name || entry.getValue('externalUrl') || this.l10n('file-no-name');
-      this._debouncedCalculateState();
+      this.debouncedCalculateState();
     });
 
-    this._subEntry('externalUrl', (externalUrl) => {
+    this.subEntry('externalUrl', (externalUrl) => {
       this.itemName = entry.getValue('fileName') || externalUrl || this.l10n('file-no-name');
     });
 
-    this._subEntry('fileInfo', () => {
-      this._debouncedCalculateState();
+    this.subEntry('fileInfo', () => {
+      this.debouncedCalculateState();
     });
 
-    this._subEntry('errors', () => this._debouncedCalculateState());
-    this._subEntry('isUploading', () => this._debouncedCalculateState());
-    this._subEntry('fileSize', () => this._debouncedCalculateState());
-    this._subEntry('mimeType', () => this._debouncedCalculateState());
-    this._subEntry('isImage', () => this._debouncedCalculateState());
+    this.subEntry('errors', () => this.debouncedCalculateState());
+    this.subEntry('isUploading', () => this.debouncedCalculateState());
+    this.subEntry('fileSize', () => this.debouncedCalculateState());
+    this.subEntry('mimeType', () => this.debouncedCalculateState());
+    this.subEntry('isImage', () => this.debouncedCalculateState());
 
-    this._calculateState();
+    this.calculateState();
   }
 
-  private _updateShowFileNames(value: boolean): void {
+  private updateShowFileNames(value: boolean): void {
     const isListMode = this.cfg.filesViewMode === 'list';
     if (isListMode) {
       this.showFileNames = true;
@@ -280,25 +280,25 @@ export class FileItem extends FileItemConfig {
     super.willUpdate(changedProperties);
 
     if (changedProperties.has('uid')) {
-      this._handleEntryId(this.uid);
+      this.handleEntryId(this.uid);
     }
   }
 
-  override initCallback(): void {
+  public override initCallback(): void {
     super.initCallback();
 
-    this._handleEntryId(this.uid);
+    this.handleEntryId(this.uid);
 
-    this.subConfigValue('useCloudImageEditor', () => this._debouncedCalculateState());
+    this.subConfigValue('useCloudImageEditor', () => this.debouncedCalculateState());
 
     this.subConfigValue('filesViewMode', (mode) => {
-      this._updateShowFileNames(this.cfg.gridShowFileNames);
+      this.updateShowFileNames(this.cfg.gridShowFileNames);
 
       this.setAttribute('mode', mode);
     });
 
     this.subConfigValue('gridShowFileNames', (value) => {
-      this._updateShowFileNames(value);
+      this.updateShowFileNames(value);
     });
 
     this.onclick = () => {
@@ -312,7 +312,7 @@ export class FileItem extends FileItemConfig {
     };
 
     this.sub('*uploadTrigger', (itemsToUpload: UploadTrigger) => {
-      if (this._entry && !itemsToUpload.has(this._entry.uid)) {
+      if (this.entry && !itemsToUpload.has(this.entry.uid)) {
         return;
       }
       setTimeout(() => this.isConnected && this.upload());
@@ -320,26 +320,26 @@ export class FileItem extends FileItemConfig {
     FileItem.activeInstances.add(this);
   }
 
-  override connectedCallback(): void {
+  public override connectedCallback(): void {
     super.connectedCallback();
 
-    this._observer = new window.IntersectionObserver(this._observerCallback.bind(this), {
+    this.observer = new window.IntersectionObserver(this.observerCallback.bind(this), {
       threshold: [0, 1],
     });
-    this._observer.observe(this);
+    this.observer.observe(this);
   }
 
-  override disconnectedCallback(): void {
+  public override disconnectedCallback(): void {
     super.disconnectedCallback();
 
-    this._observer?.disconnect();
+    this.observer?.disconnect();
 
     FileItem.activeInstances.delete(this);
 
-    this._reset();
+    this.reset();
   }
 
-  upload = this._withEntry(async (entry) => {
+  private upload = this.withEntry(async (entry) => {
     if (!this.uploadCollection.read(entry.uid)) {
       return;
     }
@@ -363,7 +363,7 @@ export class FileItem extends FileItemConfig {
       isQueuedForUploading: true,
     });
 
-    this._debouncedCalculateState();
+    this.debouncedCalculateState();
 
     try {
       const abortController = new AbortController();
@@ -423,8 +423,8 @@ export class FileItem extends FileItemConfig {
         source: entry.getValue('source') ?? null,
       });
 
-      if (entry === this._entry) {
-        this._debouncedCalculateState();
+      if (entry === this.entry) {
+        this.debouncedCalculateState();
       }
     } catch (cause) {
       this.telemetryManager.sendEventError(cause, 'file upload. Failed to upload file');
@@ -451,19 +451,22 @@ export class FileItem extends FileItemConfig {
         });
       }
 
-      if (entry === this._entry) {
-        this._debouncedCalculateState();
+      if (entry === this.entry) {
+        this.debouncedCalculateState();
       }
     }
   });
 
-  static activeInstances: Set<FileItem> = new Set<FileItem>();
+  public static activeInstances: Set<FileItem> = new Set<FileItem>();
 
-  protected override shouldUpdate(_changedProperties: PropertyValues): boolean {
-    return this.pauseRender === false;
+  protected override shouldUpdate(changedProperties: PropertyValues<this>): boolean {
+    if (this.pauseRender) {
+      return false;
+    }
+    return super.shouldUpdate(changedProperties);
   }
 
-  override render() {
+  public override render() {
     return html`
       <div class="uc-inner" ?finished=${this.isFinished} ?uploading=${this.isUploading} ?failed=${this.isFailed} ?focused=${this.isFocused}>
         <uc-thumb .uid=${this.uid} .badgeIcon=${this.badgeIcon}></uc-thumb>
@@ -476,7 +479,7 @@ export class FileItem extends FileItemConfig {
         <div class="uc-file-actions">
           <button
             type="button"
-            @click=${this._handleEdit}
+            @click=${this.handleEdit}
             ?hidden=${!this.isEditable}
             title=${this.l10n('file-item-edit-button')}
             aria-label=${this.l10n('file-item-edit-button')}
@@ -487,14 +490,14 @@ export class FileItem extends FileItemConfig {
           </button>
           <button
             type="button"
-            @click=${this._handleRemove}
+            @click=${this.handleRemove}
             title=${this.l10n('file-item-remove-button')}
             aria-label=${this.l10n('file-item-remove-button')}
             class="uc-remove-btn uc-mini-btn"
           >
             <uc-icon name="remove-file"></uc-icon>
           </button>
-          <button type="button" class="uc-upload-btn uc-mini-btn" @click=${this._handleUploadClick}>
+          <button type="button" class="uc-upload-btn uc-mini-btn" @click=${this.handleUploadClick}>
             <uc-icon name="upload"></uc-icon>
           </button>
         </div>

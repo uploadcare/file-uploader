@@ -5,17 +5,19 @@ import { ifDefined } from 'lit/directives/if-defined.js';
 import { LitBlock } from '../../../lit/LitBlock';
 
 export class EditorButtonControl extends LitBlock {
+  // This is public because it's used in the updated lifecycle to assign to the shared state.
   @state()
-  active = false;
+  public active = false;
+
+  // TODO: Rename title since it conflicts with HTMLElement.title
+  @state()
+  public override title = '';
 
   @state()
-  override title = '';
+  protected icon = '';
 
   @state()
-  icon = '';
-
-  @state()
-  titleProp = '';
+  protected titleProp = '';
 
   protected get buttonClasses(): Record<string, boolean> {
     const isActive = this.active;
@@ -34,19 +36,19 @@ export class EditorButtonControl extends LitBlock {
 
   protected onClick(_event: MouseEvent): void {}
 
-  override connectedCallback(): void {
+  public override connectedCallback(): void {
     super.connectedCallback();
     this.updateHostStateClasses();
   }
 
-  protected override updated(changedProperties: PropertyValues): void {
+  protected override updated(changedProperties: PropertyValues<this>): void {
     super.updated(changedProperties);
     if (changedProperties.has('active')) {
       this.updateHostStateClasses();
     }
   }
 
-  override render() {
+  public override render() {
     const clickHandler = this.onClick;
     const title = this.title;
 

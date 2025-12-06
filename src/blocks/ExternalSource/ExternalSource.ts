@@ -20,8 +20,8 @@ const SOCIAL_SOURCE_MAPPING: Record<string, string> = {
 export type ActivityParams = { externalSourceType: string };
 
 export class ExternalSource extends LitUploaderBlock {
-  override couldBeCtxOwner = true;
-  override activityType = LitActivityBlock.activities.EXTERNAL;
+  public override couldBeCtxOwner = true;
+  public override activityType = LitActivityBlock.activities.EXTERNAL;
   private _messageBridge?: MessageBridge;
 
   private iframeRef = createRef<HTMLIFrameElement>();
@@ -66,7 +66,7 @@ export class ExternalSource extends LitUploaderBlock {
     });
   }
 
-  override get activityParams(): ActivityParams {
+  public override get activityParams(): ActivityParams {
     const params = super.activityParams;
     if ('externalSourceType' in params) {
       return params as ActivityParams;
@@ -74,7 +74,7 @@ export class ExternalSource extends LitUploaderBlock {
     throw new Error(`External Source activity params not found`);
   }
 
-  override initCallback(): void {
+  public override initCallback(): void {
     super.initCallback();
     this.registerActivity(this.activityType, {
       onActivate: () => {
@@ -284,12 +284,12 @@ export class ExternalSource extends LitUploaderBlock {
     this._latestSelectionSummary = null;
   }
 
-  override disconnectedCallback(): void {
+  public override disconnectedCallback(): void {
     super.disconnectedCallback();
     this.unmountIframe();
   }
 
-  override render() {
+  public override render() {
     return html`
       <uc-activity-header>
           <button

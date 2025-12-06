@@ -10,15 +10,15 @@ type SelectOption = {
 
 export class Select extends LitBlock {
   @property({ type: String, attribute: false })
-  value = '';
+  public value = '';
 
   @property({ type: Boolean, reflect: true })
-  disabled = false;
+  public disabled = false;
 
   @property({ type: Array, attribute: false })
-  options: SelectOption[] = [];
+  public options: SelectOption[] = [];
 
-  override render() {
+  public override render() {
     return html`
       <select @change=${this._handleChange} .value=${this.value} ?disabled=${this.disabled}>
         ${this.options.map((option) => html`<option value=${option.value}>${option.text}</option>`)}

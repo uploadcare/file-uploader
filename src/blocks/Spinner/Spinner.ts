@@ -3,7 +3,7 @@ import { LitBlock } from '../../lit/LitBlock';
 import './spinner.css';
 
 export class Spinner extends LitBlock {
-  override render() {
+  public override render() {
     return html` <div class="uc-spinner"></div> `;
   }
 }

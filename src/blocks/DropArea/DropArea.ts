@@ -12,25 +12,25 @@ import type { DropItem } from './getDropItems';
 const dropAreaRegistry = new Set<DropArea>();
 
 export class DropArea extends LitUploaderBlock {
-  static override styleAttrs = [...super.styleAttrs, 'uc-drop-area'];
+  public static override styleAttrs = [...super.styleAttrs, 'uc-drop-area'];
 
   @property({ type: Boolean, reflect: true })
-  disabled = false;
+  public disabled = false;
 
   @property({ type: Boolean, reflect: true })
-  clickable = false;
+  public clickable = false;
 
   @property({ type: Boolean, attribute: 'with-icon', reflect: true })
-  withIcon = false;
+  public withIcon = false;
 
   @property({ type: Boolean, reflect: true })
-  fullscreen = false;
+  public fullscreen = false;
 
   @property({ type: Boolean, reflect: true })
-  initflow = false;
+  public initflow = false;
 
   @property({ type: String })
-  text?: string;
+  public text?: string;
 
   @state()
   private isEnabled = true;
@@ -68,7 +68,7 @@ export class DropArea extends LitUploaderBlock {
   private sourceListAllowsLocal = true;
   private clickableListenersAttached = false;
 
-  isActive(): boolean {
+  public isActive(): boolean {
     if (!this.isEnabled) {
       return false;
     }
@@ -86,7 +86,7 @@ export class DropArea extends LitUploaderBlock {
     return hasSize && visible && isInViewport;
   }
 
-  override initCallback() {
+  public override initCallback(): void {
     super.initCallback();
 
     dropAreaRegistry.add(this);
@@ -230,7 +230,7 @@ export class DropArea extends LitUploaderBlock {
     }
   }
 
-  override disconnectedCallback(): void {
+  public override disconnectedCallback(): void {
     super.disconnectedCallback();
 
     dropAreaRegistry.delete(this);
@@ -244,7 +244,7 @@ export class DropArea extends LitUploaderBlock {
     }
   }
 
-  override render() {
+  public override render() {
     return html`
     ${this.yield(
       '',

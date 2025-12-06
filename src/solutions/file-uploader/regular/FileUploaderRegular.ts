@@ -10,12 +10,12 @@ interface FileUploaderRegularInitState extends BaseInitState {
 }
 
 export class FileUploaderRegular extends LitSolutionBlock {
-  static override styleAttrs = [...super.styleAttrs, 'uc-file-uploader-regular'];
+  public static override styleAttrs = [...super.styleAttrs, 'uc-file-uploader-regular'];
 
   @property({ type: Boolean })
-  headless = false;
+  public headless = false;
 
-  constructor() {
+  public constructor() {
     super();
 
     this.init$ = {
@@ -24,7 +24,7 @@ export class FileUploaderRegular extends LitSolutionBlock {
     } as FileUploaderRegularInitState;
   }
 
-  override initCallback(): void {
+  public override initCallback(): void {
     super.initCallback();
 
     this.telemetryManager.sendEvent({
@@ -32,7 +32,7 @@ export class FileUploaderRegular extends LitSolutionBlock {
     });
   }
 
-  override render() {
+  public override render() {
     return html`
     ${super.render()}
   <uc-simple-btn ?hidden=${this.headless}></uc-simple-btn>

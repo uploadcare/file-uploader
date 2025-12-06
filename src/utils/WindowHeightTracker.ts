@@ -11,14 +11,14 @@ export class WindowHeightTracker {
     document.documentElement.style.setProperty(WINDOW_HEIGHT_TRACKER_PROPERTY, `${window.innerHeight}px`);
   }, 100);
 
-  static registerClient(client: LitBlock): void {
+  public static registerClient(client: LitBlock): void {
     if (WindowHeightTracker.clientsRegistry.size === 0) {
       WindowHeightTracker.attachTracker();
     }
     WindowHeightTracker.clientsRegistry.add(client);
   }
 
-  static unregisterClient(client: LitBlock): void {
+  public static unregisterClient(client: LitBlock): void {
     WindowHeightTracker.clientsRegistry.delete(client);
     if (WindowHeightTracker.clientsRegistry.size === 0) {
       WindowHeightTracker.detachTracker();

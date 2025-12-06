@@ -42,7 +42,7 @@ function validateCrop(crop: Transformations['crop']): boolean {
 }
 
 export class EditorImageCropper extends LitBlock {
-  ctxOwner = true;
+  public override ctxOwner = true;
 
   private _commitDebounced: ReturnType<typeof debounce>;
   private _handleResizeThrottled: ReturnType<typeof throttle>;
@@ -57,7 +57,7 @@ export class EditorImageCropper extends LitBlock {
   private readonly canvasRef = createRef<HTMLCanvasElement>();
   private readonly frameRef = createRef<CropFrame>();
 
-  constructor() {
+  public constructor() {
     super();
 
     this.init$ = {
@@ -96,8 +96,8 @@ export class EditorImageCropper extends LitBlock {
     }, 100);
   }
 
-  protected override firstUpdated(_changedProperties: PropertyValues): void {
-    super.firstUpdated(_changedProperties);
+  protected override firstUpdated(changedProperties: PropertyValues<this>): void {
+    super.firstUpdated(changedProperties);
     this._initCanvas();
   }
 
@@ -341,7 +341,7 @@ export class EditorImageCropper extends LitBlock {
     this.$['*editorTransformations'] = transformations;
   }
 
-  setValue<K extends keyof Operations>(operation: K, value: Operations[K]): void {
+  public setValue<K extends keyof Operations>(operation: K, value: Operations[K]): void {
     this.$['*operations'] = {
       ...this.$['*operations'],
       [operation]: value,
@@ -356,11 +356,11 @@ export class EditorImageCropper extends LitBlock {
     this._draw();
   }
 
-  getValue<K extends keyof Operations>(operation: K): Operations[K] {
+  public getValue<K extends keyof Operations>(operation: K): Operations[K] {
     return this.$['*operations'][operation];
   }
 
-  async activate(imageSize: ImageSize, { fromViewer }: { fromViewer?: boolean } = {}): Promise<void> {
+  public async activate(imageSize: ImageSize, { fromViewer }: { fromViewer?: boolean } = {}): Promise<void> {
     if (this._isActive) {
       return;
     }
@@ -394,7 +394,7 @@ export class EditorImageCropper extends LitBlock {
     });
     this._observer.observe(this);
   }
-  deactivate({ reset = false }: { reset?: boolean } = {}): void {
+  public deactivate({ reset = false }: { reset?: boolean } = {}): void {
     if (!this._isActive) {
       return;
     }
@@ -494,7 +494,7 @@ export class EditorImageCropper extends LitBlock {
     };
   }
 
-  override initCallback(): void {
+  public override initCallback(): void {
     super.initCallback();
 
     this.sub('*imageBox', () => {
@@ -522,7 +522,7 @@ export class EditorImageCropper extends LitBlock {
     }, 0);
   }
 
-  override disconnectedCallback(): void {
+  public override disconnectedCallback(): void {
     super.disconnectedCallback();
     this._observer?.disconnect();
     if (this._image) {
@@ -530,7 +530,7 @@ export class EditorImageCropper extends LitBlock {
     }
   }
 
-  override render(): TemplateResult {
+  public override render(): TemplateResult {
     return html`
       <canvas class="uc-canvas" ${ref(this.canvasRef)}></canvas>
       <uc-crop-frame ${ref(this.frameRef)}></uc-crop-frame>

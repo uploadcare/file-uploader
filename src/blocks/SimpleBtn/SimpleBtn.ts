@@ -4,11 +4,11 @@ import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
 import './simple-btn.css';
 
 export class SimpleBtn extends LitUploaderBlock {
-  static override styleAttrs = [...super.styleAttrs, 'uc-simple-btn'];
-  override couldBeCtxOwner = true;
+  public static override styleAttrs = [...super.styleAttrs, 'uc-simple-btn'];
+  public override couldBeCtxOwner = true;
 
   @property({ attribute: 'dropzone', type: Boolean })
-  dropzone = true;
+  public dropzone = true;
 
   @state()
   private buttonTextKey = 'upload-file';
@@ -17,7 +17,7 @@ export class SimpleBtn extends LitUploaderBlock {
     this.api.initFlow();
   };
 
-  override initCallback(): void {
+  public override initCallback(): void {
     super.initCallback();
 
     this.subConfigValue('multiple', (val) => {
@@ -25,7 +25,7 @@ export class SimpleBtn extends LitUploaderBlock {
     });
   }
 
-  override render() {
+  public override render() {
     return html`
     <uc-drop-area .disabled=${!this.dropzone}>
     <button type="button" @click=${this.handleClick}>
