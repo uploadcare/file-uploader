@@ -7,6 +7,7 @@ import { generateThumb } from '../../utils/resizeImage';
 import { FileItemConfig } from '../FileItem/FileItemConfig';
 import { fileCssBg } from '../svg-backgrounds/svg-backgrounds';
 import './thumb.css';
+import type { Uid } from '../../lit/Uid';
 
 const CDN_MAX_OUTPUT_DIMENSION = 3000;
 
@@ -21,7 +22,7 @@ export class Thumb extends FileItemConfig {
   public badgeIcon = '';
 
   @property({ type: String })
-  public uid = '';
+  public uid: Uid = '' as Uid;
 
   @state()
   private _thumbUrl = '';
@@ -271,7 +272,7 @@ export class Thumb extends FileItemConfig {
   }
 
   private _bindToEntry(): void {
-    const id = this.uid?.trim();
+    const id = this.uid?.trim() as Uid;
     if (!id) {
       if (this.entry) {
         this.reset();

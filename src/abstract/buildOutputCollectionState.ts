@@ -3,7 +3,7 @@ import type {
   GroupFlag,
   OutputCollectionState,
   OutputCollectionStatus,
-  OutputErrorFile,
+  OutputErrorCollection,
   OutputFileEntry,
   UploadcareGroup,
 } from '../types/index';
@@ -38,7 +38,7 @@ export function buildOutputCollectionState<
     progress: (): number => {
       return uploaderBlock.$['*commonProgress'];
     },
-    errors: (): OutputErrorFile[] => {
+    errors: (): OutputErrorCollection[] => {
       return uploaderBlock.$['*collectionErrors'];
     },
 

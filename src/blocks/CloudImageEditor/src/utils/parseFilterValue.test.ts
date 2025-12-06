@@ -13,4 +13,12 @@ describe('parseFilterValue', () => {
     expect(parseFilterValue('no number')).toBeNull();
     expect(parseFilterValue('123 456')).toBeNull();
   });
+
+  it('returns null for null input', () => {
+    expect(parseFilterValue(null)).toBeNull();
+  });
+
+  it('returns null for empty string', () => {
+    expect(parseFilterValue('')).toBeNull();
+  });
 });

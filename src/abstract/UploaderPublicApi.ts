@@ -13,6 +13,7 @@ import {
 import type { LitBlock } from '../lit/LitBlock';
 import type { LitUploaderBlock } from '../lit/LitUploaderBlock';
 import { PubSub } from '../lit/PubSubCompat';
+import type { Uid } from '../lit/Uid';
 import type {
   OutputCollectionState,
   OutputCollectionStatus,
@@ -136,10 +137,10 @@ export class UploaderPublicApi {
   };
 
   public removeFileByInternalId = (internalId: string): void => {
-    if (!this._uploadCollection.read(internalId)) {
+    if (!this._uploadCollection.read(internalId as Uid)) {
       throw new Error(`File with internalId ${internalId} not found`);
     }
-    this._uploadCollection.remove(internalId);
+    this._uploadCollection.remove(internalId as Uid);
   };
 
   public removeAllFiles(): void {
@@ -287,9 +288,7 @@ export class UploaderPublicApi {
   public initFlow = (force = false): void => {
     if (this._uploadCollection.size > 0 && !force) {
       this._ctx.modalManager?.open(LitActivityBlock.activities.UPLOAD_LIST);
-      this._ctx.set$({
-        '*currentActivity': LitActivityBlock.activities.UPLOAD_LIST,
-      });
+      this._ctx.pub('*currentActivity', LitActivityBlock.activities.UPLOAD_LIST);
     } else {
       if (this._sourceList?.length === 1) {
         const srcKey = this._sourceList[0];
@@ -305,9 +304,7 @@ export class UploaderPublicApi {
           const { isPhotoEnabled, isVideoRecordingEnabled } = calcCameraModes(this.cfg);
 
           if (isPhotoEnabled && isVideoRecordingEnabled) {
-            this._ctx.set$({
-              '*currentActivity': LitActivityBlock.activities.START_FROM,
-            });
+            this._ctx.pub('*currentActivity', LitActivityBlock.activities.START_FROM);
             return;
           } else if (isPhotoEnabled || isVideoRecordingEnabled) {
             this.openSystemDialog({
@@ -336,9 +333,7 @@ export class UploaderPublicApi {
       } else {
         // Multiple sources case:
         this._ctx.modalManager?.open(LitActivityBlock.activities.START_FROM);
-        this._ctx.set$({
-          '*currentActivity': LitActivityBlock.activities.START_FROM,
-        });
+        this._ctx.pub('*currentActivity', LitActivityBlock.activities.START_FROM);
       }
     }
   };
@@ -353,13 +348,9 @@ export class UploaderPublicApi {
     }
   };
 
-  public setCurrentActivity = <T extends ActivityType>(
+  public setCurrentActivity = <T extends RegisteredActivityType>(
     activityType: T,
-    ...params: T extends keyof ActivityParamsMap
-      ? [ActivityParamsMap[T]]
-      : T extends RegisteredActivityType
-        ? [undefined?]
-        : [any?]
+    params?: T extends keyof ActivityParamsMap ? ActivityParamsMap[T] : undefined,
   ) => {
     if (this._ctx.hasBlockInCtx((b) => b.activityType === activityType)) {
       this._ctx.set$({

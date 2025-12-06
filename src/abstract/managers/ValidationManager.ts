@@ -1,6 +1,7 @@
 import { Queue } from '@uploadcare/upload-client';
 import { EventType } from '../../blocks/UploadCtxProvider/EventEmitter';
 import type { LitUploaderBlock } from '../../lit/LitUploaderBlock';
+import type { Uid } from '../../lit/Uid';
 import type {
   OutputCollectionErrorType,
   OutputCollectionState,
@@ -24,7 +25,7 @@ import { withResolvers } from '../../utils/withResolvers';
 import type { buildOutputCollectionState } from '../buildOutputCollectionState';
 import type { TypedCollection } from '../TypedCollection';
 import type { TypedData } from '../TypedData';
-import type { uploadEntrySchema } from '../uploadEntrySchema';
+import type { UploadEntryData } from '../uploadEntrySchema';
 
 export type FuncFileValidator = (
   outputEntry: OutputFileEntry,
@@ -61,7 +62,7 @@ const getValidatorDescriptor = (validator: FileValidator): FileValidatorDescript
 export class ValidationManager {
   private _blockInstance: LitUploaderBlock;
 
-  private _uploadCollection: TypedCollection<typeof uploadEntrySchema>;
+  private _uploadCollection: TypedCollection<UploadEntryData>;
 
   private _commonFileValidators: FuncFileValidator[] = [
     validateIsImage,
@@ -109,7 +110,7 @@ export class ValidationManager {
     });
   }
 
-  public runFileValidators(runOn: FileValidatorDescriptor['runOn'], entryIds?: string[]): void {
+  public runFileValidators(runOn: FileValidatorDescriptor['runOn'], entryIds?: Uid[]): void {
     const ids = entryIds ?? this._uploadCollection.items();
     for (const id of ids) {
       const entry = this._uploadCollection.read(id);
@@ -152,7 +153,7 @@ export class ValidationManager {
     }
   }
 
-  public cleanupValidationForEntry(entry: TypedData<typeof uploadEntrySchema>): void {
+  public cleanupValidationForEntry(entry: TypedData<UploadEntryData>): void {
     const state = this._entryValidationState.get(entry.uid);
     if (state) {
       state.abortController?.abort();
@@ -161,7 +162,7 @@ export class ValidationManager {
   }
 
   private async _runFileValidatorsForEntry(
-    entry: TypedData<typeof uploadEntrySchema>,
+    entry: TypedData<UploadEntryData>,
     runOn: FileValidatorDescriptor['runOn'],
   ): Promise<void> {
     const entryDescriptors = this._getValidatorDescriptorsForEntry(entry, runOn);
@@ -277,7 +278,7 @@ export class ValidationManager {
       type: (error as any).type ?? 'CUSTOM_ERROR',
     } as T;
   }
-  private _getEntryValidationState(entry: TypedData<typeof uploadEntrySchema>): {
+  private _getEntryValidationState(entry: TypedData<UploadEntryData>): {
     abortController?: AbortController;
     skippedValidators: WeakSet<FuncFileValidator>;
     promise?: Promise<void>;
@@ -301,7 +302,7 @@ export class ValidationManager {
     return [...this._commonFileValidators, ...this._blockInstance.cfg.fileValidators].map(getValidatorDescriptor);
   }
   private _getValidatorDescriptorsForEntry(
-    entry: TypedData<typeof uploadEntrySchema>,
+    entry: TypedData<UploadEntryData>,
     runOn: FileValidatorDescriptor['runOn'],
   ): FileValidatorDescriptor[] {
     const state = this._getEntryValidationState(entry);

@@ -16,9 +16,7 @@ export const activityBlockCtx = (fnCtx: LitBlock) => ({
   '*closeModal': () => {
     fnCtx.modalManager?.close(fnCtx.$['*currentActivity']);
 
-    fnCtx.set$({
-      '*currentActivity': null,
-    });
+    fnCtx.pub('*currentActivity', null);
   },
 });
 

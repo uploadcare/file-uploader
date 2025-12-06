@@ -15,6 +15,7 @@ import { parseShrink } from '../../utils/parseShrink';
 import { throttle } from '../../utils/throttle';
 import { ExternalUploadSource } from '../../utils/UploadSource';
 import './file-item.css';
+import type { Uid } from '../../lit/Uid';
 import { FileItemConfig } from './FileItemConfig';
 
 const FileItemState = Object.freeze({
@@ -38,7 +39,7 @@ export class FileItem extends FileItemConfig {
   private _pauseRender = true;
 
   @property({ type: String, attribute: false })
-  public uid = '';
+  public uid: Uid = '' as Uid;
 
   @state()
   private _itemName = '';
@@ -213,7 +214,7 @@ export class FileItem extends FileItemConfig {
     }
   }
 
-  private _handleEntryId(id: string): void {
+  private _handleEntryId(id: Uid): void {
     this.reset();
 
     const entry = this.uploadCollection?.read(id);

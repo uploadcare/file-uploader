@@ -6,7 +6,7 @@ import { SecureUploadsManager } from '../abstract/managers/SecureUploadsManager'
 import { ValidationManager } from '../abstract/managers/ValidationManager';
 import { TypedCollection, type TypedCollectionObserverHandler } from '../abstract/TypedCollection';
 import { UploaderPublicApi } from '../abstract/UploaderPublicApi';
-import { type UploadEntryData, uploadEntrySchema } from '../abstract/uploadEntrySchema';
+import { initialUploadEntryData, type UploadEntryData } from '../abstract/uploadEntrySchema';
 import { calculateMaxCenteredCropFrame } from '../blocks/CloudImageEditor/src/crop-utils';
 import { parseCropPreset } from '../blocks/CloudImageEditor/src/lib/parseCropPreset';
 import { EventType } from '../blocks/UploadCtxProvider/EventEmitter';
@@ -17,6 +17,7 @@ import { ExternalUploadSource, UploadSource } from '../utils/UploadSource';
 import { customUserAgent } from '../utils/userAgent';
 import { LitActivityBlock } from './LitActivityBlock';
 import { PubSub } from './PubSubCompat';
+import type { Uid } from './Uid';
 
 export class LitUploaderBlock extends LitActivityBlock {
   public static extSrcList: Readonly<typeof ExternalUploadSource>;
@@ -43,8 +44,8 @@ export class LitUploaderBlock extends LitActivityBlock {
     super.initCallback();
 
     if (!this.has('*uploadCollection')) {
-      const uploadCollection = new TypedCollection({
-        typedSchema: uploadEntrySchema,
+      const uploadCollection = new TypedCollection<UploadEntryData>({
+        initialValue: initialUploadEntryData,
         watchList: [
           'uploadProgress',
           'uploadError',
@@ -89,11 +90,18 @@ export class LitUploaderBlock extends LitActivityBlock {
     return this.api;
   }
 
-  public get uploadCollection(): TypedCollection<typeof uploadEntrySchema> {
-    if (!this.has('*uploadCollection')) {
+  public get uploadCollection(): TypedCollection<UploadEntryData> {
+    if (!this.has('*uploadCollection') || !this.$['*uploadCollection']) {
       throw new Error('Unexpected error: TypedCollection is not initialized');
     }
     return this.$['*uploadCollection'];
+  }
+
+  public get secureUploadsManager(): SecureUploadsManager {
+    if (!this.has('*secureUploadsManager') || !this.$['*secureUploadsManager']) {
+      throw new Error('Unexpected error: SecureUploadsManager is not initialized');
+    }
+    return this.$['*secureUploadsManager'];
   }
 
   public override destroyCtxCallback(): void {
@@ -195,11 +203,7 @@ export class LitUploaderBlock extends LitActivityBlock {
     }
   }, 300);
 
-  private _handleCollectionUpdate: TypedCollectionObserverHandler<typeof uploadEntrySchema> = (
-    entries,
-    added,
-    removed,
-  ) => {
+  private _handleCollectionUpdate: TypedCollectionObserverHandler<UploadEntryData> = (entries, added, removed) => {
     if (added.size || removed.size) {
       this.$['*groupInfo'] = null;
     }
@@ -241,7 +245,7 @@ export class LitUploaderBlock extends LitActivityBlock {
     this._flushOutputItems();
   };
 
-  private _handleCollectionPropertiesUpdate = (changeMap: Record<keyof UploadEntryData, Set<string>>): void => {
+  private _handleCollectionPropertiesUpdate = (changeMap: Record<keyof UploadEntryData, Set<Uid>>): void => {
     this._flushOutputItems();
 
     const uploadCollection = this.uploadCollection;
@@ -344,7 +348,7 @@ export class LitUploaderBlock extends LitActivityBlock {
 
   private _flushCommonUploadProgress = (): void => {
     let commonProgress = 0;
-    const uploadTrigger: Set<string> = this.$['*uploadTrigger'];
+    const uploadTrigger: Set<Uid> = this.$['*uploadTrigger'];
     const items = [...uploadTrigger].filter((id) => !!this.uploadCollection.read(id));
     items.forEach((id) => {
       const uploadProgress = this.uploadCollection.readProp(id, 'uploadProgress');
@@ -454,8 +458,7 @@ export class LitUploaderBlock extends LitActivityBlock {
   }
 
   protected async getUploadClientOptions(): Promise<FileFromOptions> {
-    const secureUploadsManager: SecureUploadsManager = this.$['*secureUploadsManager'];
-    const secureToken = await secureUploadsManager.getSecureToken().catch(() => null);
+    const secureToken = await this.secureUploadsManager.getSecureToken().catch(() => null);
 
     const options = {
       store: this.cfg.store,

@@ -18,11 +18,11 @@ import { WindowHeightTracker } from '../utils/WindowHeightTracker';
 import { CssDataMixin } from './CssDataMixin';
 import { LightDomMixin } from './LightDomMixin';
 import { RegisterableElementMixin } from './RegisterableElementMixin';
+import type { SharedState } from './SharedState';
 import { SymbioteMixin } from './SymbioteCompatMixin';
 import { TestModeController } from './TestModeController';
 
-const LitBlockBase = RegisterableElementMixin(SymbioteMixin(CssDataMixin(LightDomMixin(LitElement))));
-
+const LitBlockBase = RegisterableElementMixin(SymbioteMixin<SharedState>()(CssDataMixin(LightDomMixin(LitElement))));
 export class LitBlock extends LitBlockBase {
   private __cfgProxy!: ConfigType;
 
@@ -88,13 +88,8 @@ export class LitBlock extends LitBlockBase {
     return false;
   }
 
-  public setOrAddState(prop: string, newVal: unknown): void {
-    this.add$(
-      {
-        [prop]: newVal,
-      },
-      true,
-    );
+  public setOrAddState<TKey extends keyof SharedState>(prop: TKey, newVal: SharedState[TKey]): void {
+    this.add(prop, newVal, true);
   }
 
   public override connectedCallback(): void {
@@ -113,7 +108,7 @@ export class LitBlock extends LitBlockBase {
       this.add('*blocksRegistry', new Set());
     }
 
-    const blocksRegistry = this.$['*blocksRegistry'];
+    const blocksRegistry = this.$['*blocksRegistry'] as Set<LitBlock>;
     blocksRegistry.add(this);
 
     if (!this.has('*eventEmitter')) {
@@ -272,9 +267,9 @@ export class LitBlock extends LitBlockBase {
   public subConfigValue<T extends keyof ConfigType>(key: T, callback: (value: ConfigType[T]) => void): () => void {
     const sharedKey = sharedConfigKey(key);
     if (!this.has(sharedKey)) {
-      this.add(sharedKey, initialConfig[key]);
+      this.add(sharedKey, initialConfig[key] as unknown as SharedState[typeof sharedKey]);
     }
-    return this.sub(sharedKey, callback);
+    return this.sub(sharedKey as any, callback);
   }
 
   public debugPrint(...args: unknown[]): void {
