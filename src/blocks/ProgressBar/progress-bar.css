@@ -1,5 +1,6 @@
 @layer uc.components {
   uc-progress-bar {
+    --visible-opacity: 1;
     --l-progress-value: 0;
 
     position: absolute;
@@ -24,7 +25,7 @@
     height: 100%;
     background-color: var(--uc-primary);
     transform: translateX(0);
-    opacity: 1;
+    opacity: var(--visible-opacity);
     transition:
       width 0.6s,
       opacity 0.3s;
@@ -43,7 +44,7 @@
     height: 100%;
     background-color: var(--uc-primary);
     animation: fake-progress-animation 1s ease-in-out infinite;
-    opacity: 1;
+    opacity: var(--visible-opacity);
     transition: opacity 0.3s;
     z-index: 1;
   }
