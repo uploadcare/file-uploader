@@ -1,4 +1,3 @@
-import { PubSub } from '@symbiotejs/symbiote';
 import { LitElement } from 'lit';
 import { blockCtx } from '../abstract/CTX';
 import { A11y } from '../abstract/managers/a11y';
@@ -9,6 +8,7 @@ import { sharedConfigKey } from '../abstract/sharedConfigKey';
 import { initialConfig } from '../blocks/Config/initialConfig';
 import { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter';
 import type { ActivityType } from '../lit/LitActivityBlock';
+import { PubSub } from '../lit/PubSubCompat';
 import type { ConfigType } from '../types';
 import { extractCdnUrlModifiers, extractFilename, extractUuid } from '../utils/cdn-utils';
 import { getLocaleDirection } from '../utils/getLocaleDirection';

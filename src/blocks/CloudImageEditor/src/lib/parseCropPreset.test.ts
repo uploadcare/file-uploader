@@ -1,5 +1,5 @@
-import { UID } from '@symbiotejs/symbiote';
 import { describe, expect, it, vi } from 'vitest';
+import { UID } from '../../../../utils/UID';
 import { getClosestAspectRatio, parseCropPreset } from './parseCropPreset';
 
 describe('parseCropPreset', () => {

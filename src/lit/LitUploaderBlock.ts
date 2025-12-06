@@ -1,6 +1,5 @@
 // @ts-check
 
-import { PubSub } from '@symbiotejs/symbiote';
 import { type FileFromOptions, uploadFileGroup } from '@uploadcare/upload-client';
 import { uploaderBlockCtx } from '../abstract/CTX';
 import { SecureUploadsManager } from '../abstract/managers/SecureUploadsManager';
@@ -17,6 +16,7 @@ import { debounce } from '../utils/debounce';
 import { ExternalUploadSource, UploadSource } from '../utils/UploadSource';
 import { customUserAgent } from '../utils/userAgent';
 import { LitActivityBlock } from './LitActivityBlock';
+import { PubSub } from './PubSubCompat';
 
 export class LitUploaderBlock extends LitActivityBlock {
   public static extSrcList: Readonly<typeof ExternalUploadSource>;
@@ -257,7 +257,7 @@ export class LitUploaderBlock extends LitActivityBlock {
       setTimeout(() => {
         // We can't modify entry properties in the same tick, so we need to wait a bit
         const entriesToRunOnUpload = entriesToRunValidation.filter(
-          (entryId) => changeMap.fileInfo?.has(entryId) && !!PubSub.getCtx(entryId).store.fileInfo,
+          (entryId) => changeMap.fileInfo?.has(entryId) && !!PubSub.getCtx(entryId)?.store.fileInfo,
         );
         if (entriesToRunOnUpload.length > 0) {
           this.validationManager.runFileValidators('upload', entriesToRunOnUpload);
@@ -267,7 +267,7 @@ export class LitUploaderBlock extends LitActivityBlock {
 
     if (changeMap.uploadProgress) {
       for (const entryId of changeMap.uploadProgress) {
-        const { isUploading, silent } = PubSub.getCtx(entryId).store;
+        const { isUploading, silent } = PubSub.getCtx<UploadEntryData>(entryId)!.store;
         if (isUploading && !silent) {
           this.emit(EventType.FILE_UPLOAD_PROGRESS, this.api.getOutputItem(entryId));
         }
@@ -277,7 +277,7 @@ export class LitUploaderBlock extends LitActivityBlock {
     }
     if (changeMap.isUploading) {
       for (const entryId of changeMap.isUploading) {
-        const { isUploading, silent } = PubSub.getCtx(entryId).store;
+        const { isUploading, silent } = PubSub.getCtx<UploadEntryData>(entryId)!.store;
         if (isUploading && !silent) {
           this.emit(EventType.FILE_UPLOAD_START, this.api.getOutputItem(entryId));
         }
@@ -285,7 +285,7 @@ export class LitUploaderBlock extends LitActivityBlock {
     }
     if (changeMap.fileInfo) {
       for (const entryId of changeMap.fileInfo) {
-        const { fileInfo, silent } = PubSub.getCtx(entryId).store;
+        const { fileInfo, silent } = PubSub.getCtx<UploadEntryData>(entryId)!.store;
         if (fileInfo && !silent) {
           this.emit(EventType.FILE_UPLOAD_SUCCESS, this.api.getOutputItem(entryId));
         }
@@ -302,7 +302,7 @@ export class LitUploaderBlock extends LitActivityBlock {
       this.validationManager.runCollectionValidators();
 
       for (const entryId of changeMap.errors) {
-        const { errors } = PubSub.getCtx(entryId).store;
+        const { errors } = PubSub.getCtx<UploadEntryData>(entryId)!.store;
         if (errors.length > 0) {
           this.emit(EventType.FILE_UPLOAD_FAILED, this.api.getOutputItem(entryId));
           this.emit(
