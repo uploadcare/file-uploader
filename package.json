@@ -128,6 +128,7 @@
     "esbuild-minify-templates": "^0.13.1",
     "husky": "^9.1.7",
     "lint-staged": "^16.2.6",
+    "nanostores": "^1.1.0",
     "node-watch": "^0.7.4",
     "npm-run-all": "^4.1.5",
     "playwright": "^1.56.1",
@@ -154,7 +155,6 @@
   "license": "MIT",
   "dependencies": {
     "@lit/context": "^1.1.6",
-    "@symbiotejs/symbiote": "^2.3.3",
     "@uploadcare/cname-prefix": "^6.18.2",
     "@uploadcare/image-shrink": "^6.18.2",
     "@uploadcare/quality-insights": "^6.18.2",

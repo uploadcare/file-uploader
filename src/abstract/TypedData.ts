@@ -1,4 +1,5 @@
-import { PubSub, UID } from '@symbiotejs/symbiote';
+import { PubSub } from '../lit/PubSubCompat';
+import { UID } from '../utils/UID';
 
 const MSG_NAME = '[Typed State] Wrong property name: ';
 const MSG_TYPE = '[Typed State] Wrong property type: ';

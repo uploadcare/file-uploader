@@ -1,6 +1,5 @@
 // @ts-check
 
-import { applyStyles, PubSub } from '@symbiotejs/symbiote';
 import { calcCameraModes } from '../blocks/CameraSource/calcCameraModes';
 import { CameraSourceTypes, type ModeCameraType } from '../blocks/CameraSource/constants';
 import type { SourceBtn } from '../blocks/SourceBtn/SourceBtn';
@@ -13,6 +12,7 @@ import {
 } from '../lit/LitActivityBlock';
 import type { LitBlock } from '../lit/LitBlock';
 import type { LitUploaderBlock } from '../lit/LitUploaderBlock';
+import { PubSub } from '../lit/PubSubCompat';
 import type {
   OutputCollectionState,
   OutputCollectionStatus,
@@ -20,6 +20,7 @@ import type {
   OutputFileStatus,
   UploadcareFile,
 } from '../types/index';
+import { applyStyles } from '../utils/applyStyles';
 import { browserFeatures } from '../utils/browser-info';
 import { serializeCsv } from '../utils/comma-separated';
 import {
@@ -34,7 +35,6 @@ import { stringToArray } from '../utils/stringToArray';
 import { UploadSource } from '../utils/UploadSource';
 import { buildOutputCollectionState } from './buildOutputCollectionState';
 import type { UploadEntryData } from './uploadEntrySchema';
-
 export type ApiAddFileCommonOptions = {
   silent?: boolean;
   fileName?: string;
@@ -239,7 +239,7 @@ export class UploaderPublicApi {
   };
 
   public getOutputItem<TStatus extends OutputFileStatus>(entryId: string): OutputFileEntry<TStatus> {
-    const uploadEntryData = PubSub.getCtx(entryId).store as UploadEntryData;
+    const uploadEntryData = PubSub.getCtx<UploadEntryData>(entryId)!.store;
     const fileInfo = uploadEntryData.fileInfo as UploadcareFile | null;
 
     const status: OutputFileEntry['status'] = uploadEntryData.isRemoved

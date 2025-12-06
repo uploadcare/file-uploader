@@ -1,9 +1,9 @@
 import { ContextConsumer, ContextProvider, createContext } from '@lit/context';
-import { PubSub } from '@symbiotejs/symbiote';
 import type { LitElement, PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { debounce } from '../utils/debounce';
 import type { Constructor } from './Constructor';
+import { PubSub } from './PubSubCompat';
 
 // biome-ignore lint/suspicious/noExplicitAny: Shared state bag mirrors Symbiote's dynamic shape and can contain arbitrary user values
 type SymbioteStateBag = Record<string, any>;
@@ -248,12 +248,12 @@ export function SymbioteMixin<T extends Constructor<LitElement>>(ctor: T): T & C
 
       if (!this._symbioteSharedPubSub) {
         // Try to get existing context
-        this._symbioteSharedPubSub = PubSub.getCtx(ctxName, false);
-
-        // If context doesn't exist, create it
-        if (!this._symbioteSharedPubSub) {
+        if (!PubSub.hasCtx(ctxName)) {
           this._symbioteSharedPubSub = PubSub.registerCtx(sharedSchema, ctxName);
         }
+
+        this._symbioteSharedPubSub =
+          PubSub.getCtx<Record<string, unknown>>(ctxName) ?? PubSub.registerCtx(sharedSchema, ctxName);
 
         for (const [key, defaultValue] of Object.entries(sharedSchema)) {
           this._symbioteSharedPubSub.add(key, defaultValue, this.ctxOwner);

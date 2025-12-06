@@ -1,4 +1,5 @@
-import { PubSub, UID } from '@symbiotejs/symbiote';
+import { PubSub } from '../lit/PubSubCompat';
+import { UID } from '../utils/UID';
 import type { ExtractDataFromSchema, ExtractKeysFromSchema, TypedSchema } from './TypedData';
 import { TypedData } from './TypedData';
 
@@ -126,7 +127,7 @@ export class TypedCollection<T extends TypedSchema> {
   }
 
   public read(id: string): TypedData<T> | null {
-    return this._data.read(id);
+    return this._data.read(id) as TypedData<T> | null;
   }
 
   public readProp<K extends ExtractKeysFromSchema<T>>(id: string, propName: K): ExtractDataFromSchema<T>[K] | null {

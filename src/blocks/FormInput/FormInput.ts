@@ -1,6 +1,6 @@
-import { applyStyles } from '@symbiotejs/symbiote';
 import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
 import type { OutputCollectionState } from '../../types/index';
+import { applyStyles } from '../../utils/applyStyles';
 
 export class FormInput extends LitUploaderBlock {
   private _validationInputElement: HTMLInputElement | null = null;

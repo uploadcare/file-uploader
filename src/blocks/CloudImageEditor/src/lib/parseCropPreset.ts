@@ -1,6 +1,6 @@
-import { UID } from '@symbiotejs/symbiote';
 import type { ConfigType } from '../../../../types/exported';
 import { stringToArray } from '../../../../utils/stringToArray';
+import { UID } from '../../../../utils/UID';
 import type { CropAspectRatio, CropPresetList } from '../types';
 
 const EXCLUDED_TYPES = ['free'];
