@@ -11,10 +11,10 @@ let LAST_ACTIVE_MODAL_ID: ModalId | null = null;
 export class Modal extends LitBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-modal'];
 
-  private mouseDownTarget: EventTarget | null | undefined;
-  protected dialogEl = createRef<HTMLDialogElement>();
+  private _mouseDownTarget: EventTarget | null | undefined;
+  private _dialogEl = createRef<HTMLDialogElement>();
 
-  private closeDialog = (): void => {
+  private _closeDialog = (): void => {
     this.modalManager?.close(this.id);
 
     if (!this.modalManager?.hasActiveModals) {
@@ -22,23 +22,23 @@ export class Modal extends LitBlock {
     }
   };
 
-  private handleDialogClose = (): void => {
-    this.closeDialog();
+  private _handleDialogClose = (): void => {
+    this._closeDialog();
   };
 
-  private handleDialogMouseDown = (e: MouseEvent): void => {
-    this.mouseDownTarget = e.target;
+  private _handleDialogMouseDown = (e: MouseEvent): void => {
+    this._mouseDownTarget = e.target;
   };
 
-  private handleDialogMouseUp = (e: MouseEvent): void => {
+  private _handleDialogMouseUp = (e: MouseEvent): void => {
     const target = e.target as EventTarget | null;
-    if (target === this.dialogEl.value && target === this.mouseDownTarget) {
-      this.closeDialog();
+    if (target === this._dialogEl.value && target === this._mouseDownTarget) {
+      this._closeDialog();
     }
   };
 
   public show(): void {
-    const dialog = this.dialogEl.value as HTMLDialogElement & {
+    const dialog = this._dialogEl.value as HTMLDialogElement & {
       showModal?: () => void;
     };
     if (typeof dialog.showModal === 'function') {
@@ -54,7 +54,7 @@ export class Modal extends LitBlock {
   }
 
   public hide(): void {
-    const dialog = this.dialogEl.value as HTMLDialogElement & {
+    const dialog = this._dialogEl.value as HTMLDialogElement & {
       close?: () => void;
     };
     if (typeof dialog.close === 'function') {
@@ -65,7 +65,7 @@ export class Modal extends LitBlock {
     }
   }
 
-  private handleModalOpen = ({ id }: Parameters<ModalCb>[0]): void => {
+  private _handleModalOpen = ({ id }: Parameters<ModalCb>[0]): void => {
     if (id === this.id) {
       LAST_ACTIVE_MODAL_ID = id;
       this.show();
@@ -75,7 +75,7 @@ export class Modal extends LitBlock {
     }
   };
 
-  private handleModalClose = ({ id }: Parameters<ModalCb>[0]): void => {
+  private _handleModalClose = ({ id }: Parameters<ModalCb>[0]): void => {
     if (id === this.id) {
       this.hide();
       this.emit(
@@ -86,7 +86,7 @@ export class Modal extends LitBlock {
     }
   };
 
-  private handleModalCloseAll = (_data: Parameters<ModalCb>[0]): void => {
+  private _handleModalCloseAll = (_data: Parameters<ModalCb>[0]): void => {
     this.hide();
 
     if (LAST_ACTIVE_MODAL_ID === this.id) {
@@ -111,32 +111,32 @@ export class Modal extends LitBlock {
       }
     });
 
-    this.modalManager?.subscribe(ModalEvents.OPEN, this.handleModalOpen);
-    this.modalManager?.subscribe(ModalEvents.CLOSE, this.handleModalClose);
-    this.modalManager?.subscribe(ModalEvents.CLOSE_ALL, this.handleModalCloseAll);
+    this.modalManager?.subscribe(ModalEvents.OPEN, this._handleModalOpen);
+    this.modalManager?.subscribe(ModalEvents.CLOSE, this._handleModalClose);
+    this.modalManager?.subscribe(ModalEvents.CLOSE_ALL, this._handleModalCloseAll);
   }
 
   public override disconnectedCallback(): void {
     super.disconnectedCallback();
     document.body.style.overflow = '';
-    this.mouseDownTarget = undefined;
+    this._mouseDownTarget = undefined;
 
-    this.modalManager?.unsubscribe(ModalEvents.OPEN, this.handleModalOpen);
-    this.modalManager?.unsubscribe(ModalEvents.CLOSE, this.handleModalClose);
-    this.modalManager?.unsubscribe(ModalEvents.CLOSE_ALL, this.handleModalCloseAll);
+    this.modalManager?.unsubscribe(ModalEvents.OPEN, this._handleModalOpen);
+    this.modalManager?.unsubscribe(ModalEvents.CLOSE, this._handleModalClose);
+    this.modalManager?.unsubscribe(ModalEvents.CLOSE_ALL, this._handleModalCloseAll);
   }
 
-  private handleDialogRef(dialog: Element | undefined): void {
-    this.dialogEl = { value: dialog } as typeof this.dialogEl;
+  private _handleDialogRef(dialog: Element | undefined): void {
+    this._dialogEl = { value: dialog } as typeof this._dialogEl;
 
-    this.dialogEl.value?.addEventListener('close', this.handleDialogClose);
-    this.dialogEl.value?.addEventListener('mousedown', this.handleDialogMouseDown);
-    this.dialogEl.value?.addEventListener('mouseup', this.handleDialogMouseUp);
+    this._dialogEl.value?.addEventListener('close', this._handleDialogClose);
+    this._dialogEl.value?.addEventListener('mousedown', this._handleDialogMouseDown);
+    this._dialogEl.value?.addEventListener('mouseup', this._handleDialogMouseUp);
   }
 
   public override render() {
     return html`
-  <dialog ${ref(this.handleDialogRef)}>
+  <dialog ${ref(this._handleDialogRef)}>
     ${this.yield('')}
   </dialog>
 `;

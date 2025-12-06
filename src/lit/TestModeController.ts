@@ -9,43 +9,45 @@ const isCustomElement = (el: Element): boolean => {
 };
 
 export class TestModeController implements ReactiveController {
-  private trackedElements: Set<Element> = new Set();
-  private originalValues: Map<Element, string> = new Map();
-  private enabled = false;
-  private unsubscribe?: () => void;
+  private _trackedElements: Set<Element> = new Set();
+  private _originalValues: Map<Element, string> = new Map();
+  private _enabled = false;
+  private _unsubscribe?: () => void;
+  private _host: TestModeHost;
 
-  public constructor(private host: TestModeHost) {
-    this.host.addController(this);
+  public constructor(host: TestModeHost) {
+    this._host = host;
+    this._host.addController(this);
   }
 
   public hostDisconnected(): void {
-    this.unsubscribe?.();
-    this.unsubscribe = undefined;
-    this.trackedElements.clear();
-    this.originalValues.clear();
+    this._unsubscribe?.();
+    this._unsubscribe = undefined;
+    this._trackedElements.clear();
+    this._originalValues.clear();
   }
 
   public hostUpdated(): void {
-    if (!this.unsubscribe && this.host.has(sharedConfigKey('testMode'))) {
-      const unsubscribe = this.host.subConfigValue('testMode', (isEnabled: boolean) => {
-        this.enabled = Boolean(isEnabled);
-        this.applyTestMode();
+    if (!this._unsubscribe && this._host.has(sharedConfigKey('testMode'))) {
+      const unsubscribe = this._host.subConfigValue('testMode', (isEnabled: boolean) => {
+        this._enabled = Boolean(isEnabled);
+        this._applyTestMode();
       });
-      this.unsubscribe = unsubscribe as (() => void) | undefined;
+      this._unsubscribe = unsubscribe as (() => void) | undefined;
     }
 
-    this.collectElements();
-    this.applyTestMode();
+    this._collectElements();
+    this._applyTestMode();
   }
 
-  private collectElements(): void {
-    const litHost = this.host as unknown as LitElement;
+  private _collectElements(): void {
+    const litHost = this._host as unknown as LitElement;
     const root = (litHost.renderRoot ?? litHost) as Element | DocumentFragment;
     if (!root) {
       return;
     }
 
-    const hostElement = this.host as unknown as Element;
+    const hostElement = this._host as unknown as Element;
     const hostTag = hostElement.tagName?.toLowerCase();
     const candidates = Array.from(root.querySelectorAll('[data-testid]')).filter(
       (el) => !isCustomElement(el),
@@ -56,37 +58,37 @@ export class TestModeController implements ReactiveController {
         continue;
       }
 
-      if (!this.trackedElements.has(el)) {
+      if (!this._trackedElements.has(el)) {
         const attrValue = el.getAttribute('data-testid');
         if (!attrValue) {
           continue;
         }
-        this.trackedElements.add(el);
-        this.originalValues.set(el, attrValue);
+        this._trackedElements.add(el);
+        this._originalValues.set(el, attrValue);
       }
     }
 
-    for (const el of Array.from(this.trackedElements)) {
+    for (const el of Array.from(this._trackedElements)) {
       if (!el.isConnected || (hostTag && el.closest(hostTag) !== hostElement)) {
-        this.trackedElements.delete(el);
-        this.originalValues.delete(el);
+        this._trackedElements.delete(el);
+        this._originalValues.delete(el);
       }
     }
   }
 
-  private applyTestMode(): void {
-    if (!this.trackedElements.size) {
+  private _applyTestMode(): void {
+    if (!this._trackedElements.size) {
       return;
     }
 
-    const prefix = this.host.testId || '';
-    for (const el of this.trackedElements) {
-      const baseValue = this.originalValues.get(el);
+    const prefix = this._host.testId || '';
+    for (const el of this._trackedElements) {
+      const baseValue = this._originalValues.get(el);
       if (!baseValue) {
         continue;
       }
 
-      if (this.enabled) {
+      if (this._enabled) {
         el.setAttribute('data-testid', `${prefix}--${baseValue}`);
       } else {
         el.removeAttribute('data-testid');

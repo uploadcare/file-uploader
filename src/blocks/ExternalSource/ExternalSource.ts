@@ -24,37 +24,37 @@ export class ExternalSource extends LitUploaderBlock {
   public override activityType = LitActivityBlock.activities.EXTERNAL;
   private _messageBridge?: MessageBridge;
 
-  private iframeRef = createRef<HTMLIFrameElement>();
+  private _iframeRef = createRef<HTMLIFrameElement>();
   private _latestSelectionSummary: { selectedCount: number; total: number } | null = null;
 
   @state()
-  private selectedList: NonNullable<InputMessageMap['selected-files-change']['selectedFiles']> = [];
+  private _selectedList: NonNullable<InputMessageMap['selected-files-change']['selectedFiles']> = [];
 
   @state()
-  private isSelectionReady = false;
+  private _isSelectionReady = false;
 
   @state()
-  private isDoneBtnEnabled = false;
+  private _isDoneBtnEnabled = false;
 
   @state()
-  private couldSelectAll = false;
+  private _couldSelectAll = false;
 
   @state()
-  private couldDeselectAll = false;
+  private _couldDeselectAll = false;
 
   @state()
-  private showSelectionStatus = false;
+  private _showSelectionStatus = false;
 
   @state()
-  private showDoneBtn = false;
+  private _showDoneBtn = false;
 
   @state()
-  private doneBtnTextClass = 'uc-hidden';
+  private _doneBtnTextClass = 'uc-hidden';
 
   @state()
-  private toolbarVisible = true;
+  private _toolbarVisible = true;
 
-  private get counterText(): string {
+  private get _counterText(): string {
     if (!this._latestSelectionSummary) {
       return '';
     }
@@ -87,35 +87,35 @@ export class ExternalSource extends LitUploaderBlock {
           return;
         }
 
-        this.mountIframe();
+        this._mountIframe();
       },
     });
     this.sub('*currentActivityParams', () => {
       if (!this.isActivityActive) {
         return;
       }
-      this.unmountIframe();
-      this.mountIframe();
+      this._unmountIframe();
+      this._mountIframe();
     });
     this.sub('*currentActivity', (val) => {
       if (val !== this.activityType) {
-        this.unmountIframe();
+        this._unmountIframe();
       }
     });
     this.subConfigValue('multiple', (multiple) => {
-      this.showSelectionStatus = multiple;
+      this._showSelectionStatus = multiple;
     });
 
     this.subConfigValue('localeName', () => {
-      this.setupL10n();
+      this._setupL10n();
     });
 
     this.subConfigValue('externalSourcesEmbedCss', (embedCss) => {
-      this.applyEmbedCss(embedCss);
+      this._applyEmbedCss(embedCss);
     });
   }
 
-  private extractUrlFromSelectedFile(
+  private _extractUrlFromSelectedFile(
     selectedFile: NonNullable<InputMessageMap['selected-files-change']['selectedFiles']>[number],
   ): string {
     if (selectedFile.alternatives) {
@@ -133,11 +133,11 @@ export class ExternalSource extends LitUploaderBlock {
     return selectedFile.url;
   }
 
-  private handleToolbarStateChange(message: InputMessageMap['toolbar-state-change']): void {
-    this.toolbarVisible = message.isVisible;
+  private _handleToolbarStateChange(message: InputMessageMap['toolbar-state-change']): void {
+    this._toolbarVisible = message.isVisible;
   }
 
-  private async handleSelectedFilesChange(message: InputMessageMap['selected-files-change']) {
+  private async _handleSelectedFilesChange(message: InputMessageMap['selected-files-change']) {
     if (this.cfg.multiple !== message.isMultipleMode) {
       console.error('Multiple mode mismatch');
       return;
@@ -145,44 +145,44 @@ export class ExternalSource extends LitUploaderBlock {
 
     this._setSelectionSummary(message.selectedCount, message.total);
 
-    this.doneBtnTextClass = message.isReady ? '' : 'uc-hidden';
-    this.isSelectionReady = message.isReady;
-    this.isDoneBtnEnabled = message.isReady && message.selectedFiles.length > 0;
-    this.showSelectionStatus = message.isMultipleMode && message.total > 0;
-    this.couldSelectAll = message.selectedCount < message.total;
-    this.couldDeselectAll = message.selectedCount === message.total;
-    this.selectedList = message.selectedFiles ?? [];
-    this.showDoneBtn = message.total > 0;
+    this._doneBtnTextClass = message.isReady ? '' : 'uc-hidden';
+    this._isSelectionReady = message.isReady;
+    this._isDoneBtnEnabled = message.isReady && message.selectedFiles.length > 0;
+    this._showSelectionStatus = message.isMultipleMode && message.total > 0;
+    this._couldSelectAll = message.selectedCount < message.total;
+    this._couldDeselectAll = message.selectedCount === message.total;
+    this._selectedList = message.selectedFiles ?? [];
+    this._showDoneBtn = message.total > 0;
   }
 
-  private handleIframeLoad(): void {
-    this.applyEmbedCss(this.cfg.externalSourcesEmbedCss);
-    this.applyTheme();
-    this.setupL10n();
+  private _handleIframeLoad(): void {
+    this._applyEmbedCss(this.cfg.externalSourcesEmbedCss);
+    this._applyTheme();
+    this._setupL10n();
   }
 
-  private applyTheme(): void {
+  private _applyTheme(): void {
     this._messageBridge?.send({
       type: 'set-theme-definition',
       theme: buildThemeDefinition(this),
     });
   }
 
-  private applyEmbedCss(css: string): void {
+  private _applyEmbedCss(css: string): void {
     this._messageBridge?.send({
       type: 'set-embed-css',
       css,
     });
   }
 
-  private setupL10n(): void {
+  private _setupL10n(): void {
     this._messageBridge?.send({
       type: 'set-locale-definition',
       localeDefinition: this.cfg.localeName,
     });
   }
 
-  private remoteUrl(): string {
+  private _remoteUrl(): string {
     const { pubkey, remoteTabSessionKey, socialBaseUrl, multiple } = this.cfg;
     const { externalSourceType } = this.activityParams;
     const sourceName = SOCIAL_SOURCE_MAPPING[externalSourceType] ?? externalSourceType;
@@ -203,8 +203,8 @@ export class ExternalSource extends LitUploaderBlock {
   }
 
   private _handleDone = (): void => {
-    for (const message of this.selectedList) {
-      const url = this.extractUrlFromSelectedFile(message);
+    for (const message of this._selectedList) {
+      const url = this._extractUrlFromSelectedFile(message);
       const { filename } = message;
       const { externalSourceType } = this.activityParams;
       this.api.addFileFromUrl(url, { fileName: filename, source: externalSourceType });
@@ -230,9 +230,9 @@ export class ExternalSource extends LitUploaderBlock {
     this._latestSelectionSummary = { selectedCount, total };
   }
 
-  private mountIframe(): void {
+  private _mountIframe(): void {
     const iframe = document.createElement('iframe');
-    iframe.src = this.remoteUrl();
+    iframe.src = this._remoteUrl();
     // @ts-expect-error
     iframe.marginHeight = 0;
     // @ts-expect-error
@@ -240,13 +240,13 @@ export class ExternalSource extends LitUploaderBlock {
     iframe.frameBorder = '0';
     // @ts-expect-error
     iframe.allowTransparency = true;
-    iframe.addEventListener('load', this.handleIframeLoad.bind(this));
+    iframe.addEventListener('load', this._handleIframeLoad.bind(this));
 
-    iframe.addEventListener('load', this.handleIframeLoad.bind(this));
+    iframe.addEventListener('load', this._handleIframeLoad.bind(this));
 
-    if (this.iframeRef.value) {
-      this.iframeRef.value.innerHTML = '';
-      this.iframeRef.value.appendChild(iframe);
+    if (this._iframeRef.value) {
+      this._iframeRef.value.innerHTML = '';
+      this._iframeRef.value.appendChild(iframe);
     }
 
     if (!iframe.contentWindow) {
@@ -256,37 +256,37 @@ export class ExternalSource extends LitUploaderBlock {
     this._messageBridge?.destroy();
 
     this._messageBridge = new MessageBridge(iframe.contentWindow, () => this.cfg.socialBaseUrl);
-    this._messageBridge.on('selected-files-change', this.handleSelectedFilesChange.bind(this));
-    this._messageBridge.on('toolbar-state-change', this.handleToolbarStateChange.bind(this));
+    this._messageBridge.on('selected-files-change', this._handleSelectedFilesChange.bind(this));
+    this._messageBridge.on('toolbar-state-change', this._handleToolbarStateChange.bind(this));
 
-    this.resetSelectionStatus();
+    this._resetSelectionStatus();
   }
 
-  private unmountIframe(): void {
+  private _unmountIframe(): void {
     this._messageBridge?.destroy();
     this._messageBridge = undefined;
-    if (this.iframeRef.value) {
-      this.iframeRef.value.innerHTML = '';
+    if (this._iframeRef.value) {
+      this._iframeRef.value.innerHTML = '';
     }
 
-    this.resetSelectionStatus();
+    this._resetSelectionStatus();
   }
 
-  private resetSelectionStatus(): void {
-    this.selectedList = [];
-    this.isSelectionReady = false;
-    this.isDoneBtnEnabled = false;
-    this.couldSelectAll = false;
-    this.couldDeselectAll = false;
-    this.showSelectionStatus = false;
-    this.showDoneBtn = false;
-    this.doneBtnTextClass = 'uc-hidden';
+  private _resetSelectionStatus(): void {
+    this._selectedList = [];
+    this._isSelectionReady = false;
+    this._isDoneBtnEnabled = false;
+    this._couldSelectAll = false;
+    this._couldDeselectAll = false;
+    this._showSelectionStatus = false;
+    this._showDoneBtn = false;
+    this._doneBtnTextClass = 'uc-hidden';
     this._latestSelectionSummary = null;
   }
 
   public override disconnectedCallback(): void {
     super.disconnectedCallback();
-    this.unmountIframe();
+    this._unmountIframe();
   }
 
   public override render() {
@@ -303,23 +303,23 @@ export class ExternalSource extends LitUploaderBlock {
           </button>
         </uc-activity-header>
         <div class="uc-content">
-          <div ${ref(this.iframeRef)} class="uc-iframe-wrapper"></div>
-          <div class="uc-toolbar" ?hidden=${!this.toolbarVisible}>
+          <div ${ref(this._iframeRef)} class="uc-iframe-wrapper"></div>
+          <div class="uc-toolbar" ?hidden=${!this._toolbarVisible}>
             <button type="button" class="uc-cancel-btn uc-secondary-btn" @click=${this._handleCancel}>${this.l10n('cancel')}</button>
-            <div class="uc-selection-status-box" ?hidden=${!this.showSelectionStatus}>
-              <span>${this.counterText}</span>
-              <button type="button" @click=${this._handleSelectAll} ?hidden=${!this.couldSelectAll}>${this.l10n('select-all')}</button>
-              <button type="button" @click=${this._handleDeselectAll} ?hidden=${!this.couldDeselectAll}>${this.l10n('deselect-all')}</button>
+            <div class="uc-selection-status-box" ?hidden=${!this._showSelectionStatus}>
+              <span>${this._counterText}</span>
+              <button type="button" @click=${this._handleSelectAll} ?hidden=${!this._couldSelectAll}>${this.l10n('select-all')}</button>
+              <button type="button" @click=${this._handleDeselectAll} ?hidden=${!this._couldDeselectAll}>${this.l10n('deselect-all')}</button>
             </div>
             <button
               type="button"
               class="uc-done-btn uc-primary-btn"
               @click=${this._handleDone}
-              ?disabled=${!this.isDoneBtnEnabled}
-              ?hidden=${!this.showDoneBtn}
+              ?disabled=${!this._isDoneBtnEnabled}
+              ?hidden=${!this._showDoneBtn}
             >
-              <uc-spinner ?hidden=${this.isSelectionReady} ></uc-spinner>
-              <span class=${this.doneBtnTextClass}>${this.l10n('done')}</span>
+              <uc-spinner ?hidden=${this._isSelectionReady}></uc-spinner>
+              <span class=${this._doneBtnTextClass}>${this.l10n('done')}</span>
             </button>
           </div>
         </div>

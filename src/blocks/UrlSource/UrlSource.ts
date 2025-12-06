@@ -16,7 +16,7 @@ export class UrlSource extends LitUploaderBlock {
   public override activityType: ActivityType = LitActivityBlock.activities.URL;
 
   @state()
-  private formState: UrlSourceState = {
+  private _formState: UrlSourceState = {
     importDisabled: true,
   };
 
@@ -24,24 +24,24 @@ export class UrlSource extends LitUploaderBlock {
     super.initCallback();
     this.registerActivity(this.activityType ?? '', {
       onActivate: () => {
-        const input = this.inputRef.value;
+        const input = this._inputRef.value;
         if (input) {
           input.value = '';
           input.focus();
         }
-        this.formState = { importDisabled: true };
+        this._formState = { importDisabled: true };
       },
     });
   }
 
-  private inputRef = createRef<HTMLInputElement>();
+  private _inputRef = createRef<HTMLInputElement>();
 
-  private handleInput = (event: Event) => {
+  private _handleInput = (event: Event) => {
     const value = (event.target as HTMLInputElement | null)?.value ?? '';
-    this.formState = { importDisabled: !value };
+    this._formState = { importDisabled: !value };
   };
 
-  private handleUpload = (event: Event) => {
+  private _handleUpload = (event: Event) => {
     event.preventDefault();
     this.telemetryManager.sendEvent({
       eventType: InternalEventType.ACTION_EVENT,
@@ -52,7 +52,7 @@ export class UrlSource extends LitUploaderBlock {
         },
       },
     });
-    const input = this.inputRef.value;
+    const input = this._inputRef.value;
     const url = input?.value?.trim();
     if (!url) {
       return;
@@ -82,20 +82,20 @@ export class UrlSource extends LitUploaderBlock {
           <uc-icon name="close"></uc-icon>
         </button>
       </uc-activity-header>
-      <form class="uc-content" @submit=${this.handleUpload}>
+      <form class="uc-content" @submit=${this._handleUpload}>
         <label>
           <input
-            ${ref(this.inputRef)}
+            ${ref(this._inputRef)}
             placeholder="https://"
             class="uc-url-input"
             type="text"
-            @input=${this.handleInput}
+            @input=${this._handleInput}
           />
         </label>
           <button
             type="submit"
             class="uc-url-upload-btn uc-primary-btn"
-            ?disabled=${this.formState.importDisabled}
+            ?disabled=${this._formState.importDisabled}
             >${this.l10n('upload-url')}</button>
       </form>
     `;

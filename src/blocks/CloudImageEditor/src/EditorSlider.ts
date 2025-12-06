@@ -26,7 +26,7 @@ export class EditorSlider extends LitBlock {
     zero: 0,
   };
 
-  private handleInput = (e: CustomEvent<{ value: number }>): void => {
+  private _handleInput = (e: CustomEvent<{ value: number }>): void => {
     const { value } = e.detail;
     const fader = this.$['*faderEl'] as EditorImageFader | undefined;
     fader?.set(value);
@@ -121,7 +121,7 @@ export class EditorSlider extends LitBlock {
         .max=${this.state.max}
         .defaultValue=${this.state.defaultValue}
         .zero=${this.state.zero}
-        @slider-input=${this.handleInput}
+        @slider-input=${this._handleInput}
       ></uc-slider-ui>
     `;
   }

@@ -23,7 +23,7 @@ export class CloudImageEditorActivity extends LitUploaderBlock {
   private _entry?: TypedData<typeof uploadEntrySchema>;
 
   @state()
-  private editorConfig: EditorTemplateConfig | null = null;
+  private _editorConfig: EditorTemplateConfig | null = null;
 
   public override get activityParams(): ActivityParams {
     const params = super.activityParams;
@@ -43,29 +43,29 @@ export class CloudImageEditorActivity extends LitUploaderBlock {
     });
 
     this.subConfigValue('cropPreset', (cropPreset) => {
-      if (!this.editorConfig) {
+      if (!this._editorConfig) {
         return;
       }
       const normalized = cropPreset || undefined;
-      if (this.editorConfig.cropPreset === normalized) {
+      if (this._editorConfig.cropPreset === normalized) {
         return;
       }
-      this.editorConfig = {
-        ...this.editorConfig,
+      this._editorConfig = {
+        ...this._editorConfig,
         cropPreset: normalized,
       };
     });
 
     this.subConfigValue('cloudImageEditorTabs', (tabs) => {
-      if (!this.editorConfig) {
+      if (!this._editorConfig) {
         return;
       }
       const normalized = tabs || undefined;
-      if (this.editorConfig.tabs === normalized) {
+      if (this._editorConfig.tabs === normalized) {
         return;
       }
-      this.editorConfig = {
-        ...this.editorConfig,
+      this._editorConfig = {
+        ...this._editorConfig,
         tabs: normalized,
       };
     });
@@ -107,20 +107,20 @@ export class CloudImageEditorActivity extends LitUploaderBlock {
     if (!cdnUrl) {
       throw new Error(`Entry with internalId "${internalId}" hasn't uploaded yet`);
     }
-    this.editorConfig = this._createEditorConfig(cdnUrl);
+    this._editorConfig = this._createEditorConfig(cdnUrl);
   }
 
   private _unmountEditor(): void {
     this._entry = undefined;
-    this.editorConfig = null;
+    this._editorConfig = null;
   }
 
   public override render() {
-    if (!this.editorConfig) {
+    if (!this._editorConfig) {
       return nothing;
     }
 
-    const { cdnUrl, cropPreset, tabs } = this.editorConfig;
+    const { cdnUrl, cropPreset, tabs } = this._editorConfig;
 
     return html`
       <uc-cloud-image-editor

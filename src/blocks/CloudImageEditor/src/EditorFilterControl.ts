@@ -18,21 +18,21 @@ export class EditorFilterControl extends EditorButtonControl {
   private _observer?: IntersectionObserver;
   private _cancelPreload?: () => void;
   private _lastPreviewRequestId = 0;
-  private previewVisibilityCheckRaf?: number;
-  private previewVisibilityCheckTimeout?: number;
+  private _previewVisibilityCheckRaf?: number;
+  private _previewVisibilityCheckTimeout?: number;
 
   @state()
-  private previewImage: string | null = null;
+  private _previewImage: string | null = null;
 
   @state()
-  private previewLoaded = false;
+  private _previewLoaded = false;
 
   // This is public because it's used in the updated lifecycle to assign to the shared state.
   @state()
   public isOriginal = false;
 
   @state()
-  private iconSize = 20;
+  private _iconSize = 20;
 
   @property({ type: String })
   public get filter(): string {
@@ -49,9 +49,9 @@ export class EditorFilterControl extends EditorButtonControl {
     this._operation = 'filter';
     this.isOriginal = nextFilter === FAKE_ORIGINAL_FILTER;
     this.icon = this.isOriginal ? 'original' : 'slider';
-    this.iconSize = this.isOriginal ? 40 : 20;
+    this._iconSize = this.isOriginal ? 40 : 20;
     this.requestUpdate('filter', previousValue);
-    this.updateFilterLabels(nextFilter);
+    this._updateFilterLabels(nextFilter);
   }
 
   public override onClick(e: MouseEvent) {
@@ -74,7 +74,7 @@ export class EditorFilterControl extends EditorButtonControl {
 
   private _previewSrc(): string {
     const cssSize = parseInt(window.getComputedStyle(this).getPropertyValue('--l-base-min-width'), 10);
-    const previewSize = Number.isFinite(cssSize) && cssSize > 0 ? cssSize : this.iconSize || 32;
+    const previewSize = Number.isFinite(cssSize) && cssSize > 0 ? cssSize : this._iconSize || 32;
     const dpr = window.devicePixelRatio;
     const size = Math.ceil(dpr * previewSize);
     const quality = dpr >= 2 ? 'lightest' : 'normal';
@@ -103,7 +103,7 @@ export class EditorFilterControl extends EditorButtonControl {
   private async _observerCallback(entries: IntersectionObserverEntry[], observer: IntersectionObserver): Promise<void> {
     const intersectionEntry = entries[0];
     if (intersectionEntry?.isIntersecting) {
-      await this.loadPreview(observer);
+      await this._loadPreview(observer);
     } else {
       this._cancelPreload?.();
     }
@@ -123,19 +123,19 @@ export class EditorFilterControl extends EditorButtonControl {
 
     this.sub('*originalUrl', (nextUrl: string) => {
       this._originalUrl = nextUrl ?? '';
-      if (!this.isOriginal && this._originalUrl && this.isConnected && !this.previewImage) {
+      if (!this.isOriginal && this._originalUrl && this.isConnected && !this._previewImage) {
         this._observer?.observe(this);
-        this.schedulePreviewVisibilityCheck();
+        this._schedulePreviewVisibilityCheck();
       }
     });
 
     if (!this.isOriginal) {
       this._observer?.observe(this);
-      this.schedulePreviewVisibilityCheck();
+      this._schedulePreviewVisibilityCheck();
     }
 
     if (this._filter) {
-      this.updateFilterLabels(this._filter);
+      this._updateFilterLabels(this._filter);
     }
 
     this.sub('*currentFilter', (currentFilter: string) => {
@@ -146,10 +146,10 @@ export class EditorFilterControl extends EditorButtonControl {
       if (networkProblems) {
         return;
       }
-      if (this.previewImage) {
-        await this.loadPreview();
+      if (this._previewImage) {
+        await this._loadPreview();
       } else {
-        this.schedulePreviewVisibilityCheck();
+        this._schedulePreviewVisibilityCheck();
       }
     });
   }
@@ -158,7 +158,7 @@ export class EditorFilterControl extends EditorButtonControl {
     super.disconnectedCallback();
     this._observer?.disconnect();
     this._cancelPreload?.();
-    this.clearPreviewVisibilityChecks();
+    this._clearPreviewVisibilityChecks();
   }
 
   protected override updated(changedProperties: PropertyValues<this>): void {
@@ -169,12 +169,12 @@ export class EditorFilterControl extends EditorButtonControl {
         this._observer?.unobserve(this);
       } else {
         this._observer?.observe(this);
-        this.schedulePreviewVisibilityCheck();
+        this._schedulePreviewVisibilityCheck();
       }
     }
   }
 
-  private updateFilterLabels(filterName: string): void {
+  private _updateFilterLabels(filterName: string): void {
     if (!filterName) {
       this.titleProp = '';
       return;
@@ -186,7 +186,7 @@ export class EditorFilterControl extends EditorButtonControl {
     this.titleProp = label;
   }
 
-  private async loadPreview(observer?: IntersectionObserver): Promise<void> {
+  private async _loadPreview(observer?: IntersectionObserver): Promise<void> {
     if (!this.isConnected) {
       observer?.unobserve(this);
       this._cancelPreload?.();
@@ -195,8 +195,8 @@ export class EditorFilterControl extends EditorButtonControl {
     }
 
     if (!this._originalUrl) {
-      if (!this.previewVisibilityCheckTimeout && !this.previewVisibilityCheckRaf) {
-        this.schedulePreviewVisibilityCheck();
+      if (!this._previewVisibilityCheckTimeout && !this._previewVisibilityCheckRaf) {
+        this._schedulePreviewVisibilityCheck();
       }
       return;
     }
@@ -210,7 +210,7 @@ export class EditorFilterControl extends EditorButtonControl {
       return;
     }
 
-    this.previewLoaded = false;
+    this._previewLoaded = false;
     this._cancelPreload?.();
     const { promise, cancel } = preloadImage(src);
     this._cancelPreload = () => {
@@ -225,14 +225,14 @@ export class EditorFilterControl extends EditorButtonControl {
       if (this._lastPreviewRequestId !== requestId || !this.isConnected) {
         return;
       }
-      this.previewImage = src;
-      this.previewLoaded = true;
-      this.clearPreviewVisibilityChecks();
+      this._previewImage = src;
+      this._previewLoaded = true;
+      this._clearPreviewVisibilityChecks();
       (observer ?? this._observer)?.unobserve(this);
     } catch (err) {
       this.$['*networkProblems'] = true;
       console.error('Failed to load image', { error: err });
-      this.schedulePreviewVisibilityCheck();
+      this._schedulePreviewVisibilityCheck();
     } finally {
       if (this._lastPreviewRequestId === requestId) {
         this._cancelPreload = undefined;
@@ -240,18 +240,18 @@ export class EditorFilterControl extends EditorButtonControl {
     }
   }
 
-  private schedulePreviewVisibilityCheck(): void {
-    if (!this.isConnected || this.previewImage || this.previewLoaded || this.isOriginal) {
-      this.clearPreviewVisibilityChecks();
+  private _schedulePreviewVisibilityCheck(): void {
+    if (!this.isConnected || this._previewImage || this._previewLoaded || this.isOriginal) {
+      this._clearPreviewVisibilityChecks();
       return;
     }
-    if (this.previewVisibilityCheckRaf) {
-      cancelAnimationFrame(this.previewVisibilityCheckRaf);
+    if (this._previewVisibilityCheckRaf) {
+      cancelAnimationFrame(this._previewVisibilityCheckRaf);
     }
-    this.previewVisibilityCheckRaf = requestAnimationFrame(() => {
-      this.previewVisibilityCheckRaf = undefined;
-      if (!this.isConnected || this.previewImage || this.previewLoaded || this.isOriginal) {
-        this.clearPreviewVisibilityChecks();
+    this._previewVisibilityCheckRaf = requestAnimationFrame(() => {
+      this._previewVisibilityCheckRaf = undefined;
+      if (!this.isConnected || this._previewImage || this._previewLoaded || this.isOriginal) {
+        this._clearPreviewVisibilityChecks();
         return;
       }
       const rect = this.getBoundingClientRect();
@@ -261,42 +261,42 @@ export class EditorFilterControl extends EditorButtonControl {
       const isVisible =
         hasSize && rect.bottom > 0 && rect.right > 0 && rect.top < viewportHeight && rect.left < viewportWidth;
       if (isVisible) {
-        void this.loadPreview();
+        void this._loadPreview();
         return;
       }
-      this.previewVisibilityCheckTimeout = window.setTimeout(() => {
-        this.previewVisibilityCheckTimeout = undefined;
-        this.schedulePreviewVisibilityCheck();
+      this._previewVisibilityCheckTimeout = window.setTimeout(() => {
+        this._previewVisibilityCheckTimeout = undefined;
+        this._schedulePreviewVisibilityCheck();
       }, 500);
     });
   }
 
-  private clearPreviewVisibilityChecks(): void {
-    if (this.previewVisibilityCheckRaf) {
-      cancelAnimationFrame(this.previewVisibilityCheckRaf);
-      this.previewVisibilityCheckRaf = undefined;
+  private _clearPreviewVisibilityChecks(): void {
+    if (this._previewVisibilityCheckRaf) {
+      cancelAnimationFrame(this._previewVisibilityCheckRaf);
+      this._previewVisibilityCheckRaf = undefined;
     }
-    if (this.previewVisibilityCheckTimeout) {
-      window.clearTimeout(this.previewVisibilityCheckTimeout);
-      this.previewVisibilityCheckTimeout = undefined;
+    if (this._previewVisibilityCheckTimeout) {
+      window.clearTimeout(this._previewVisibilityCheckTimeout);
+      this._previewVisibilityCheckTimeout = undefined;
     }
   }
 
-  private get shouldShowPreview(): boolean {
-    return Boolean(this.previewLoaded && !this.active && !this.isOriginal);
+  private get _shouldShowPreview(): boolean {
+    return Boolean(this._previewLoaded && !this.active && !this.isOriginal);
   }
 
   public override render() {
     const clickHandler = this.onClick;
     const previewStyles: Record<string, string> = {
-      opacity: this.shouldShowPreview ? '1' : '0',
+      opacity: this._shouldShowPreview ? '1' : '0',
     };
-    if (this.previewImage) {
-      previewStyles.backgroundImage = `url(${this.previewImage})`;
+    if (this._previewImage) {
+      previewStyles.backgroundImage = `url(${this._previewImage})`;
     }
 
     const iconStyles = {
-      opacity: this.shouldShowPreview ? '0' : '1',
+      opacity: this._shouldShowPreview ? '0' : '1',
     };
 
     return html`
@@ -308,7 +308,7 @@ export class EditorFilterControl extends EditorButtonControl {
         title=${ifDefined(this.titleProp)}
         @click=${clickHandler}
       >
-        <div class="uc-preview" ?loaded=${this.previewLoaded} style=${styleMap(previewStyles)}></div>
+        <div class="uc-preview" ?loaded=${this._previewLoaded} style=${styleMap(previewStyles)}></div>
         <uc-icon
           class=${classMap({ 'uc-original-icon': this.isOriginal })}
           name=${this.icon}

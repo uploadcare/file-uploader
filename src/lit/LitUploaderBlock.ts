@@ -23,17 +23,17 @@ export class LitUploaderBlock extends LitActivityBlock {
   public static sourceTypes: Readonly<typeof UploadSource>;
   protected couldBeCtxOwner = false;
 
-  private isCtxOwner = false;
+  private _isCtxOwner = false;
 
   private _unobserveCollection?: () => void;
   private _unobserveCollectionProperties?: () => void;
 
   public override init$ = uploaderBlockCtx(this);
 
-  private get hasCtxOwner(): boolean {
+  private get _hasCtxOwner(): boolean {
     return this.hasBlockInCtx((block) => {
       if (block instanceof LitUploaderBlock) {
-        return block.isCtxOwner && block.isConnected && block !== this;
+        return block._isCtxOwner && block.isConnected && block !== this;
       }
       return false;
     });
@@ -66,7 +66,7 @@ export class LitUploaderBlock extends LitActivityBlock {
       this.add('*validationManager', new ValidationManager(this));
     }
 
-    if (!this.hasCtxOwner && this.couldBeCtxOwner) {
+    if (!this._hasCtxOwner && this.couldBeCtxOwner) {
       this._initCtxOwner();
     }
   }
@@ -106,7 +106,7 @@ export class LitUploaderBlock extends LitActivityBlock {
   public override disconnectedCallback(): void {
     super.disconnectedCallback();
 
-    if (this.isCtxOwner) {
+    if (this._isCtxOwner) {
       this._unobserveUploadCollection();
     }
 
@@ -116,13 +116,13 @@ export class LitUploaderBlock extends LitActivityBlock {
   public override connectedCallback(): void {
     super.connectedCallback();
 
-    if (this.isCtxOwner) {
+    if (this._isCtxOwner) {
       this._observeUploadCollection();
     }
   }
 
   private _initCtxOwner(): void {
-    this.isCtxOwner = true;
+    this._isCtxOwner = true;
 
     this._observeUploadCollection();
 
@@ -153,7 +153,6 @@ export class LitUploaderBlock extends LitActivityBlock {
     this._unobserveCollection = undefined;
   }
 
-  // biome-ignore lint/correctness/noUnusedPrivateClassMembers: invoked within _flushOutputItems when grouping outputs
   private async _createGroup(collectionState: OutputCollectionState): Promise<void> {
     const uploadClientOptions = await this.getUploadClientOptions();
     const uuidList = collectionState.allEntries.map((entry) => {
@@ -292,11 +291,11 @@ export class LitUploaderBlock extends LitActivityBlock {
         }
       }
       if (this.cfg.cropPreset) {
-        this.setInitialCrop();
+        this._setInitialCrop();
       }
 
       if (this.cfg.cloudImageEditorAutoOpen) {
-        this.openCloudImageEditor();
+        this._openCloudImageEditor();
       }
     }
     if (changeMap.errors) {
@@ -366,7 +365,7 @@ export class LitUploaderBlock extends LitActivityBlock {
     );
   };
 
-  private openCloudImageEditor(): void {
+  private _openCloudImageEditor(): void {
     const [entry] = this.uploadCollection
       .findItems((entry) => !!entry.getValue('fileInfo') && entry.getValue('isImage'))
       .map((id) => this.uploadCollection.read(id));
@@ -385,7 +384,7 @@ export class LitUploaderBlock extends LitActivityBlock {
     }
   }
 
-  private setInitialCrop(): void {
+  private _setInitialCrop(): void {
     const cropPreset = parseCropPreset(this.cfg.cropPreset);
     if (cropPreset) {
       const [aspectRatioPreset] = cropPreset;

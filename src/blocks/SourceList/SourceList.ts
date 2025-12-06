@@ -60,13 +60,13 @@ export class SourceList extends LitBlock {
       resolvedSources.push(srcName);
     }
 
-    this.sources = resolvedSources;
+    this._sources = resolvedSources;
   }
 
   @state()
-  private sources: string[] = [];
+  private _sources: string[] = [];
 
   public override render() {
-    return html`${this.sources.map((type) => html`<uc-source-btn role="listitem" type=${type}></uc-source-btn>`)}`;
+    return html`${this._sources.map((type) => html`<uc-source-btn role="listitem" type=${type}></uc-source-btn>`)}`;
   }
 }

@@ -22,11 +22,11 @@ export class EditorOperationControl extends EditorButtonControl {
     this._operation = normalizedValue;
     this.requestUpdate('operation', previousValue);
     if (normalizedValue) {
-      this.updateOperationMetadata(normalizedValue as ColorOperation);
+      this._updateOperationMetadata(normalizedValue as ColorOperation);
     }
   }
 
-  private updateOperationMetadata(operation: ColorOperation): void {
+  private _updateOperationMetadata(operation: ColorOperation): void {
     this.icon = operation;
 
     const resolveTitleProp = () => {
@@ -51,7 +51,7 @@ export class EditorOperationControl extends EditorButtonControl {
     super.initCallback();
 
     if (this._operation) {
-      this.updateOperationMetadata(this._operation as ColorOperation);
+      this._updateOperationMetadata(this._operation as ColorOperation);
     }
 
     this.sub('*editorTransformations', (editorTransformations: Transformations) => {

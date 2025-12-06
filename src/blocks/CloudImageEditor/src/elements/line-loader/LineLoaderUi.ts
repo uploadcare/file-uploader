@@ -8,24 +8,24 @@ export class LineLoaderUi extends LitBlock {
   @property({ type: Boolean, reflect: true })
   public active = false;
 
-  private readonly lineRef = createRef<HTMLDivElement>();
+  private readonly _lineRef = createRef<HTMLDivElement>();
   private _isAnimating = false;
 
-  private readonly handleTransitionEndRight = (): void => {
-    const lineEl = this.lineRef.value;
+  private readonly _handleTransitionEndRight = (): void => {
+    const lineEl = this._lineRef.value;
     if (!lineEl) {
       return;
     }
-    this.resetLine(lineEl);
+    this._resetLine(lineEl);
     if (this._isAnimating && this.active) {
-      this.start();
+      this._start();
     }
   };
 
-  protected override firstUpdated(_changedProperties: PropertyValues<this>): void {
-    super.firstUpdated(_changedProperties);
+  protected override firstUpdated(changedProperties: PropertyValues<this>): void {
+    super.firstUpdated(changedProperties);
     if (this.active) {
-      this.start();
+      this._start();
     }
   }
 
@@ -34,40 +34,40 @@ export class LineLoaderUi extends LitBlock {
 
     if (changedProperties.has('active')) {
       if (this.active) {
-        this.start();
+        this._start();
       } else {
-        this.stop();
+        this._stop();
       }
     }
   }
 
-  private start(): void {
-    const lineEl = this.lineRef.value;
+  private _start(): void {
+    const lineEl = this._lineRef.value;
     if (!lineEl) {
       return;
     }
     this._isAnimating = true;
     const { width } = this.getBoundingClientRect();
-    lineEl.removeEventListener('transitionend', this.handleTransitionEndRight);
+    lineEl.removeEventListener('transitionend', this._handleTransitionEndRight);
     lineEl.style.transition = 'transform 1s';
     lineEl.style.opacity = '1';
     lineEl.style.transform = `translateX(${width}px)`;
-    lineEl.addEventListener('transitionend', this.handleTransitionEndRight, {
+    lineEl.addEventListener('transitionend', this._handleTransitionEndRight, {
       once: true,
     });
   }
 
-  private stop(): void {
-    const lineEl = this.lineRef.value;
+  private _stop(): void {
+    const lineEl = this._lineRef.value;
     if (!lineEl) {
       return;
     }
     this._isAnimating = false;
-    lineEl.removeEventListener('transitionend', this.handleTransitionEndRight);
-    this.resetLine(lineEl);
+    lineEl.removeEventListener('transitionend', this._handleTransitionEndRight);
+    this._resetLine(lineEl);
   }
 
-  private resetLine(lineEl: HTMLDivElement): void {
+  private _resetLine(lineEl: HTMLDivElement): void {
     lineEl.style.transition = 'initial';
     lineEl.style.opacity = '0';
     lineEl.style.transform = 'translateX(-101%)';
@@ -76,7 +76,7 @@ export class LineLoaderUi extends LitBlock {
   public override render() {
     return html`
       <div class="uc-inner">
-        <div class="uc-line" ${ref(this.lineRef)}></div>
+        <div class="uc-line" ${ref(this._lineRef)}></div>
       </div>
     `;
   }

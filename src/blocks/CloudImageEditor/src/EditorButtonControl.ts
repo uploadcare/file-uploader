@@ -27,7 +27,7 @@ export class EditorButtonControl extends LitBlock {
     };
   }
 
-  private updateHostStateClasses(): void {
+  private _updateHostStateClasses(): void {
     const classes = this.buttonClasses;
     for (const [className, enabled] of Object.entries(classes)) {
       this.classList.toggle(className, enabled);
@@ -38,13 +38,13 @@ export class EditorButtonControl extends LitBlock {
 
   public override connectedCallback(): void {
     super.connectedCallback();
-    this.updateHostStateClasses();
+    this._updateHostStateClasses();
   }
 
   protected override updated(changedProperties: PropertyValues<this>): void {
     super.updated(changedProperties);
     if (changedProperties.has('active')) {
-      this.updateHostStateClasses();
+      this._updateHostStateClasses();
     }
   }
 

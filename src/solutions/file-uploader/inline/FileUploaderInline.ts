@@ -16,7 +16,7 @@ export class FileUploaderInline extends LitSolutionBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-file-uploader-inline'];
 
   @state()
-  private couldCancel = false;
+  private _couldCancel = false;
 
   public constructor() {
     super();
@@ -28,18 +28,18 @@ export class FileUploaderInline extends LitSolutionBlock {
   }
 
   private _handleCancel = (): void => {
-    if (this.couldHistoryBack) {
+    if (this._couldHistoryBack) {
       const historyBack = this.$['*historyBack'] as (() => void) | undefined;
       historyBack?.();
       return;
     }
 
-    if (this.couldShowList) {
+    if (this._couldShowList) {
       this.$['*currentActivity'] = LitActivityBlock.activities.UPLOAD_LIST;
     }
   };
 
-  private get couldHistoryBack(): boolean {
+  private get _couldHistoryBack(): boolean {
     const history = this.$['*history'] as string[] | undefined;
     if (!history || history.length <= 1) {
       return false;
@@ -47,7 +47,7 @@ export class FileUploaderInline extends LitSolutionBlock {
     return history[history.length - 1] !== LitActivityBlock.activities.START_FROM;
   }
 
-  private get couldShowList(): boolean {
+  private get _couldShowList(): boolean {
     const uploadList = this.$['*uploadList'] as unknown[] | undefined;
     return this.cfg.showEmptyList || (Array.isArray(uploadList) && uploadList.length > 0);
   }
@@ -78,7 +78,7 @@ export class FileUploaderInline extends LitSolutionBlock {
     });
 
     this.sub('*history', () => {
-      this.couldCancel = this.couldHistoryBack || this.couldShowList;
+      this._couldCancel = this._couldHistoryBack || this._couldShowList;
     });
   }
 
@@ -92,7 +92,7 @@ export class FileUploaderInline extends LitSolutionBlock {
           type="button"
           class="uc-cancel-btn uc-secondary-btn"
           @click=${this._handleCancel}
-          ?hidden=${!this.couldCancel}
+          ?hidden=${!this._couldCancel}
         >
         ${this.l10n('start-from-cancel')}
         </button>

@@ -11,9 +11,9 @@ export class SimpleBtn extends LitUploaderBlock {
   public dropzone = true;
 
   @state()
-  private buttonTextKey = 'upload-file';
+  private _buttonTextKey = 'upload-file';
 
-  private readonly handleClick = () => {
+  private readonly _handleClick = () => {
     this.api.initFlow();
   };
 
@@ -21,16 +21,16 @@ export class SimpleBtn extends LitUploaderBlock {
     super.initCallback();
 
     this.subConfigValue('multiple', (val) => {
-      this.buttonTextKey = val ? 'upload-files' : 'upload-file';
+      this._buttonTextKey = val ? 'upload-files' : 'upload-file';
     });
   }
 
   public override render() {
     return html`
     <uc-drop-area .disabled=${!this.dropzone}>
-    <button type="button" @click=${this.handleClick}>
+    <button type="button" @click=${this._handleClick}>
       <uc-icon name="upload"></uc-icon>
-      <span>${this.l10n(this.buttonTextKey)}</span>
+      <span>${this.l10n(this._buttonTextKey)}</span>
       ${this.yield('')}
       <div class="uc-visual-drop-area">${this.l10n('drop-files-here')}</div>
     </button>

@@ -8,16 +8,16 @@ declare class CssDataMixinClassInterface {
 
 export function CssDataMixin<T extends Constructor<LitElement>>(ctor: T): T & Constructor<CssDataMixinClassInterface> {
   abstract class CssDataMixinClass extends ctor {
-    private cssDataCache: Record<string, string | number | boolean | null | undefined> | null = null;
-    private computedStyle: CSSStyleDeclaration | null = null;
+    private _cssDataCache: Record<string, string | number | boolean | null | undefined> | null = null;
+    private _computedStyle: CSSStyleDeclaration | null = null;
 
     public getCssData(propName: string, silentCheck = false): string | number | boolean | null | undefined {
-      const cssDataCache = this.cssDataCache ?? Object.create(null);
+      const cssDataCache = this._cssDataCache ?? Object.create(null);
       if (!Object.keys(cssDataCache).includes(propName) || !cssDataCache[propName]) {
-        if (!this.computedStyle) {
-          this.computedStyle = window.getComputedStyle(this);
+        if (!this._computedStyle) {
+          this._computedStyle = window.getComputedStyle(this);
         }
-        const val = this.computedStyle.getPropertyValue(propName).trim();
+        const val = this._computedStyle.getPropertyValue(propName).trim();
         try {
           cssDataCache[propName] = parseCssPropertyValue(val);
         } catch (error) {
@@ -27,7 +27,7 @@ export function CssDataMixin<T extends Constructor<LitElement>>(ctor: T): T & Co
           cssDataCache[propName] = null;
         }
       }
-      this.cssDataCache = cssDataCache;
+      this._cssDataCache = cssDataCache;
       return cssDataCache[propName];
     }
   }

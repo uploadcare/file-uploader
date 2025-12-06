@@ -4,7 +4,7 @@ import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
 type EntrySubscription = ReturnType<UploadEntryTypedData['subscribe']>;
 
 export class FileItemConfig extends LitUploaderBlock {
-  protected entrySubs: Set<EntrySubscription> = new Set<EntrySubscription>();
+  private _entrySubs: Set<EntrySubscription> = new Set<EntrySubscription>();
 
   protected entry: UploadEntryTypedData | null = null;
 
@@ -28,21 +28,21 @@ export class FileItemConfig extends LitUploaderBlock {
           handlerInner(value);
         }
       });
-      this.entrySubs.add(sub);
+      this._entrySubs.add(sub);
     })(prop, handler);
   }
 
   protected reset(): void {
-    for (const sub of this.entrySubs) {
+    for (const sub of this._entrySubs) {
       sub.remove();
     }
 
-    this.entrySubs = new Set<EntrySubscription>();
+    this._entrySubs = new Set<EntrySubscription>();
     this.entry = null;
   }
 
   public override disconnectedCallback(): void {
     super.disconnectedCallback();
-    this.entrySubs = new Set<EntrySubscription>();
+    this._entrySubs = new Set<EntrySubscription>();
   }
 }

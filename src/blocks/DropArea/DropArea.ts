@@ -33,12 +33,12 @@ export class DropArea extends LitUploaderBlock {
   public text?: string;
 
   @state()
-  private isEnabled = true;
+  private _isEnabled = true;
 
   @state()
-  private isVisible = true;
+  private _isVisible = true;
 
-  private get localizedText() {
+  private get _localizedText() {
     const customText = this.text;
     if (typeof customText === 'string' && customText.length > 0) {
       return this.l10n(customText) || customText;
@@ -48,8 +48,8 @@ export class DropArea extends LitUploaderBlock {
 
   private _destroyDropzone: (() => void) | null = null;
   private _destroyContentWrapperDropzone: (() => void) | null = null;
-  private contentWrapperRef: Ref<HTMLInputElement> = createRef();
-  private readonly handleAreaInteraction = (event: Event) => {
+  private _contentWrapperRef: Ref<HTMLInputElement> = createRef();
+  private readonly _handleAreaInteraction = (event: Event) => {
     if (event instanceof KeyboardEvent) {
       if (event.code !== 'Space' && event.code !== 'Enter') {
         return;
@@ -65,11 +65,11 @@ export class DropArea extends LitUploaderBlock {
 
     this.api.openSystemDialog();
   };
-  private sourceListAllowsLocal = true;
-  private clickableListenersAttached = false;
+  private _sourceListAllowsLocal = true;
+  private _clickableListenersAttached = false;
 
   public isActive(): boolean {
-    if (!this.isEnabled) {
+    if (!this._isEnabled) {
       return false;
     }
     const bounds = this.getBoundingClientRect();
@@ -90,16 +90,16 @@ export class DropArea extends LitUploaderBlock {
     super.initCallback();
 
     dropAreaRegistry.add(this);
-    this.updateIsEnabled();
-    this.updateVisibility();
-    this.updateClickableListeners();
-    this.updateDragStateAttribute(DropzoneState.INACTIVE);
+    this._updateIsEnabled();
+    this._updateVisibility();
+    this._updateClickableListeners();
+    this._updateDragStateAttribute(DropzoneState.INACTIVE);
 
     this._destroyDropzone = addDropzone({
       element: this,
       shouldIgnore: () => this._shouldIgnore(),
       onChange: (state: DropzoneStateValue) => {
-        this.updateDragStateAttribute(state);
+        this._updateDragStateAttribute(state);
       },
       onItems: (items: DropItem[]) => {
         if (!items.length) {
@@ -122,7 +122,7 @@ export class DropArea extends LitUploaderBlock {
       },
     });
 
-    const contentWrapperEl = this.contentWrapperRef.value;
+    const contentWrapperEl = this._contentWrapperRef.value;
     if (contentWrapperEl) {
       this._destroyContentWrapperDropzone = addDropzone({
         element: contentWrapperEl,
@@ -139,9 +139,9 @@ export class DropArea extends LitUploaderBlock {
 
     this.subConfigValue('sourceList', (value: string) => {
       const list = stringToArray(value);
-      this.sourceListAllowsLocal = list.includes(UploadSource.LOCAL);
-      this.updateIsEnabled();
-      this.updateVisibility();
+      this._sourceListAllowsLocal = list.includes(UploadSource.LOCAL);
+      this._updateIsEnabled();
+      this._updateVisibility();
     });
   }
 
@@ -149,8 +149,8 @@ export class DropArea extends LitUploaderBlock {
     super.willUpdate(changedProperties);
 
     if (changedProperties.has('disabled')) {
-      this.updateIsEnabled();
-      this.updateVisibility();
+      this._updateIsEnabled();
+      this._updateVisibility();
     }
   }
 
@@ -158,13 +158,13 @@ export class DropArea extends LitUploaderBlock {
     super.updated(changedProperties);
 
     if (changedProperties.has('clickable')) {
-      this.updateClickableListeners();
+      this._updateClickableListeners();
     }
   }
 
   /** Ignore drop events if there are other visible drop areas on the page. */
   private _shouldIgnore(): boolean {
-    if (!this.isEnabled) {
+    if (!this._isEnabled) {
       return true;
     }
     if (!this._couldHandleFiles()) {
@@ -198,18 +198,18 @@ export class DropArea extends LitUploaderBlock {
     return true;
   }
 
-  private updateIsEnabled(): void {
-    const nextIsEnabled = this.sourceListAllowsLocal && !this.disabled;
-    this.isEnabled = nextIsEnabled;
+  private _updateIsEnabled(): void {
+    const nextIsEnabled = this._sourceListAllowsLocal && !this.disabled;
+    this._isEnabled = nextIsEnabled;
   }
 
-  private updateVisibility(): void {
-    const shouldBeVisible = this.isEnabled || !this.querySelector('[data-default-slot]');
-    this.isVisible = shouldBeVisible;
+  private _updateVisibility(): void {
+    const shouldBeVisible = this._isEnabled || !this.querySelector('[data-default-slot]');
+    this._isVisible = shouldBeVisible;
     this.hidden = !shouldBeVisible;
   }
 
-  private updateDragStateAttribute(state: DropzoneStateValue): void {
+  private _updateDragStateAttribute(state: DropzoneStateValue): void {
     const stateText = Object.entries(DropzoneState)
       .find(([, value]) => value === state)?.[0]
       .toLowerCase();
@@ -218,15 +218,15 @@ export class DropArea extends LitUploaderBlock {
     }
   }
 
-  private updateClickableListeners(): void {
-    if (this.clickable && !this.clickableListenersAttached) {
-      this.addEventListener('keydown', this.handleAreaInteraction);
-      this.addEventListener('click', this.handleAreaInteraction);
-      this.clickableListenersAttached = true;
-    } else if (!this.clickable && this.clickableListenersAttached) {
-      this.removeEventListener('keydown', this.handleAreaInteraction);
-      this.removeEventListener('click', this.handleAreaInteraction);
-      this.clickableListenersAttached = false;
+  private _updateClickableListeners(): void {
+    if (this.clickable && !this._clickableListenersAttached) {
+      this.addEventListener('keydown', this._handleAreaInteraction);
+      this.addEventListener('click', this._handleAreaInteraction);
+      this._clickableListenersAttached = true;
+    } else if (!this.clickable && this._clickableListenersAttached) {
+      this.removeEventListener('keydown', this._handleAreaInteraction);
+      this.removeEventListener('click', this._handleAreaInteraction);
+      this._clickableListenersAttached = false;
     }
   }
 
@@ -237,10 +237,10 @@ export class DropArea extends LitUploaderBlock {
 
     this._destroyDropzone?.();
     this._destroyContentWrapperDropzone?.();
-    if (this.clickableListenersAttached) {
-      this.removeEventListener('keydown', this.handleAreaInteraction);
-      this.removeEventListener('click', this.handleAreaInteraction);
-      this.clickableListenersAttached = false;
+    if (this._clickableListenersAttached) {
+      this.removeEventListener('keydown', this._handleAreaInteraction);
+      this.removeEventListener('click', this._handleAreaInteraction);
+      this._clickableListenersAttached = false;
     }
   }
 
@@ -249,12 +249,12 @@ export class DropArea extends LitUploaderBlock {
     ${this.yield(
       '',
       html`<div data-default-slot hidden></div>
-    <div ${ref(this.contentWrapperRef)} class="uc-content-wrapper" ?hidden=${!this.isVisible}>
+    <div ${ref(this._contentWrapperRef)} class="uc-content-wrapper" ?hidden=${!this._isVisible}>
       <div class="uc-icon-container" ?hidden=${!this.withIcon}>
         <uc-icon name="default"></uc-icon>
         <uc-icon name="arrow-down"></uc-icon>
       </div>
-      <span class="uc-text">${this.localizedText}</span>
+      <span class="uc-text">${this._localizedText}</span>
     </div>`,
     )}
     `;
