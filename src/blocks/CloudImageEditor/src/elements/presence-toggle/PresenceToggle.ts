@@ -20,7 +20,7 @@ export class PresenceToggle extends LitBlock {
   private _visibleStyle: string = DEFAULT_STYLE.visible;
   private _hiddenStyle: string = DEFAULT_STYLE.hidden;
   private _externalTransitions = false;
-  private initialRenderComplete = false;
+  private _initialRenderComplete = false;
 
   @property({ type: Boolean })
   public set visible(value: boolean) {
@@ -53,12 +53,12 @@ export class PresenceToggle extends LitBlock {
     this.toggleAttribute('inert', !this._visible);
   }
 
-  private dispatchInitialRenderEvent(): void {
-    if (this.initialRenderComplete) {
+  private _dispatchInitialRenderEvent(): void {
+    if (this._initialRenderComplete) {
       return;
     }
 
-    this.initialRenderComplete = true;
+    this._initialRenderComplete = true;
     this.dispatchEvent(
       new CustomEvent('initial-render', {
         bubbles: true,
@@ -79,7 +79,7 @@ export class PresenceToggle extends LitBlock {
     this._handleVisible();
     setTimeout(() => {
       this.classList.toggle('uc-initial', false);
-      this.dispatchInitialRenderEvent();
+      this._dispatchInitialRenderEvent();
     }, 0);
   }
 }

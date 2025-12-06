@@ -14,10 +14,10 @@ export class ProgressBar extends LitBlock {
 
   private _progressValue = 0;
 
-  private readonly fakeProgressLineRef = createRef<HTMLDivElement>();
+  private readonly _fakeProgressLineRef = createRef<HTMLDivElement>();
 
-  private readonly handleFakeProgressAnimation = (): void => {
-    const fakeProgressLine = this.fakeProgressLineRef.value;
+  private readonly _handleFakeProgressAnimation = (): void => {
+    const fakeProgressLine = this._fakeProgressLineRef.value;
     if (!fakeProgressLine) {
       return;
     }
@@ -35,16 +35,16 @@ export class ProgressBar extends LitBlock {
   protected override firstUpdated(changedProperties: PropertyValues<this>): void {
     super.firstUpdated(changedProperties);
 
-    this._progressValue = this.normalizeProgressValue(this.value);
-    this.updateProgressValueStyle();
-    this.fakeProgressLineRef.value?.addEventListener('animationiteration', this.handleFakeProgressAnimation);
+    this._progressValue = this._normalizeProgressValue(this.value);
+    this._updateProgressValueStyle();
+    this._fakeProgressLineRef.value?.addEventListener('animationiteration', this._handleFakeProgressAnimation);
   }
 
   protected override updated(changedProperties: PropertyValues<this>): void {
     super.updated(changedProperties);
 
     if (changedProperties.has('value')) {
-      const normalizedValue = this.normalizeProgressValue(this.value);
+      const normalizedValue = this._normalizeProgressValue(this.value);
 
       if (!this.visible) {
         this._progressValue = normalizedValue;
@@ -52,7 +52,7 @@ export class ProgressBar extends LitBlock {
         const nextValue = Math.max(this._progressValue, normalizedValue);
         if (nextValue !== this._progressValue) {
           this._progressValue = nextValue;
-          this.updateProgressValueStyle();
+          this._updateProgressValueStyle();
         }
       }
     }
@@ -60,26 +60,26 @@ export class ProgressBar extends LitBlock {
     if (changedProperties.has('visible')) {
       this.classList.toggle('uc-progress-bar--hidden', !this.visible);
       if (this.visible) {
-        this.updateProgressValueStyle();
+        this._updateProgressValueStyle();
       } else {
-        this._progressValue = this.normalizeProgressValue(this.value);
+        this._progressValue = this._normalizeProgressValue(this.value);
       }
     }
   }
 
   public override disconnectedCallback(): void {
     super.disconnectedCallback();
-    this.fakeProgressLineRef.value?.removeEventListener('animationiteration', this.handleFakeProgressAnimation);
+    this._fakeProgressLineRef.value?.removeEventListener('animationiteration', this._handleFakeProgressAnimation);
   }
 
-  private normalizeProgressValue(value: number): number {
+  private _normalizeProgressValue(value: number): number {
     if (!Number.isFinite(value)) {
       return 0;
     }
     return Math.min(100, Math.max(0, value));
   }
 
-  private updateProgressValueStyle(): void {
+  private _updateProgressValueStyle(): void {
     if (!this.visible) {
       return;
     }
@@ -88,7 +88,7 @@ export class ProgressBar extends LitBlock {
 
   public override render() {
     return html`
-      <div ${ref(this.fakeProgressLineRef)} class="uc-fake-progress"></div>
+      <div ${ref(this._fakeProgressLineRef)} class="uc-fake-progress"></div>
       <div class="uc-progress"></div>
     `;
   }

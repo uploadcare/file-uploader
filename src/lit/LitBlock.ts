@@ -44,7 +44,7 @@ export class LitBlock extends LitBlockBase {
     const template = this.$[localeStateKey(str)] || str;
     const pluralObjects = getPluralObjects(template);
     for (const pluralObject of pluralObjects) {
-      variables[pluralObject.variable] = this.pluralize(
+      variables[pluralObject.variable] = this._pluralize(
         pluralObject.pluralKey,
         Number(variables[pluralObject.countVariable]),
       );
@@ -53,7 +53,7 @@ export class LitBlock extends LitBlockBase {
     return result;
   }
 
-  private pluralize(key: string, count: number): string {
+  private _pluralize(key: string, count: number): string {
     const locale = this.l10n('locale-id') || 'en';
     const pluralForm = getPluralForm(locale, count);
     return this.l10n(`${key}__${pluralForm}`);
@@ -173,11 +173,11 @@ export class LitBlock extends LitBlockBase {
     return (this.has('*telemetryManager') && this.$['*telemetryManager']) as TelemetryManager;
   }
 
-  protected get localeManager(): LocaleManager | null {
+  public get localeManager(): LocaleManager | null {
     return this.has('*localeManager') ? (this.$['*localeManager'] as LocaleManager) : null;
   }
 
-  protected get a11y(): A11y | null {
+  public get a11y(): A11y | null {
     return this.has('*a11y') ? (this.$['*a11y'] as A11y) : null;
   }
 

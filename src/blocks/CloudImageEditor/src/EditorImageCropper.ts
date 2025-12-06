@@ -54,8 +54,8 @@ export class EditorImageCropper extends LitBlock {
   @state()
   private _image: HTMLImageElement | null = null;
   private _cancelPreload?: () => void;
-  private readonly canvasRef = createRef<HTMLCanvasElement>();
-  private readonly frameRef = createRef<CropFrame>();
+  private readonly _canvasRef = createRef<HTMLCanvasElement>();
+  private readonly _frameRef = createRef<CropFrame>();
 
   public constructor() {
     super();
@@ -112,7 +112,7 @@ export class EditorImageCropper extends LitBlock {
   }
 
   private _initCanvas(): void {
-    const canvas = this.canvasRef.value;
+    const canvas = this._canvasRef.value;
     if (!canvas) {
       return;
     }
@@ -259,7 +259,7 @@ export class EditorImageCropper extends LitBlock {
 
   private _animateIn({ fromViewer }: { fromViewer?: boolean }): void {
     if (this._image) {
-      this.frameRef.value?.toggleThumbs(true);
+      this._frameRef.value?.toggleThumbs(true);
       this._transitionToImage();
       setTimeout(() => {
         this.className = classNames({
@@ -409,7 +409,7 @@ export class EditorImageCropper extends LitBlock {
       'uc-inactive_to_editor': true,
     });
 
-    this.frameRef.value?.toggleThumbs(false);
+    this._frameRef.value?.toggleThumbs(false);
     this.addEventListener('transitionend', this._reset, { once: true });
     this._observer?.disconnect();
   }
@@ -532,8 +532,8 @@ export class EditorImageCropper extends LitBlock {
 
   public override render(): TemplateResult {
     return html`
-      <canvas class="uc-canvas" ${ref(this.canvasRef)}></canvas>
-      <uc-crop-frame ${ref(this.frameRef)}></uc-crop-frame>
+      <canvas class="uc-canvas" ${ref(this._canvasRef)}></canvas>
+      <uc-crop-frame ${ref(this._frameRef)}></uc-crop-frame>
     `;
   }
 }

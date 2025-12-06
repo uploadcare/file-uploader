@@ -19,16 +19,16 @@ export class FileUploaderMinimal extends LitSolutionBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-file-uploader-minimal'];
 
   @state()
-  protected singleUpload = false;
+  private _singleUpload = false;
 
   @state()
-  protected isHiddenStartFrom = false;
+  private _isHiddenStartFrom = false;
 
   @state()
-  protected classUploadList = EMPTY_CLASS;
+  private _classUploadList = EMPTY_CLASS;
 
   @state()
-  protected classStartFrom = EMPTY_CLASS;
+  private _classStartFrom = EMPTY_CLASS;
 
   private _getInitActivity(): string {
     return (this.getCssData('--cfg-init-activity') as string | undefined) || LitActivityBlock.activities.START_FROM;
@@ -43,26 +43,26 @@ export class FileUploaderMinimal extends LitSolutionBlock {
     } as FileUploaderMinimalInitState;
   }
 
-  private handleModalOpen = (data: Parameters<ModalCb>[0]): void => {
+  private _handleModalOpen = (data: Parameters<ModalCb>[0]): void => {
     if (data.id === LitActivityBlock.activities.CLOUD_IMG_EDIT) {
-      this.classUploadList = ACTIVE_CLASS;
+      this._classUploadList = ACTIVE_CLASS;
     }
 
     if (this.$['*currentActivity'] === LitActivityBlock.activities.UPLOAD_LIST) {
-      this.classUploadList = ACTIVE_CLASS;
-      this.isHiddenStartFrom = true;
+      this._classUploadList = ACTIVE_CLASS;
+      this._isHiddenStartFrom = true;
     }
 
     const uploadList = this.$['*uploadList'] as unknown[] | undefined;
     if (!uploadList || uploadList.length <= 0) {
-      this.classStartFrom = ACTIVE_CLASS;
+      this._classStartFrom = ACTIVE_CLASS;
     }
   };
 
-  private handleModalClose = (data: Parameters<ModalCb>[0]): void => {
+  private _handleModalClose = (data: Parameters<ModalCb>[0]): void => {
     if (data.id === this.$['*currentActivity']) {
       this.$['*currentActivity'] = LitActivityBlock.activities.UPLOAD_LIST;
-      this.isHiddenStartFrom = false;
+      this._isHiddenStartFrom = false;
     }
 
     if (data.id === LitActivityBlock.activities.CLOUD_IMG_EDIT) {
@@ -92,10 +92,10 @@ export class FileUploaderMinimal extends LitSolutionBlock {
     this.sub('*uploadList', (list: unknown) => {
       if (Array.isArray(list) && list.length > 0) {
         this.$['*currentActivity'] = LitActivityBlock.activities.UPLOAD_LIST;
-        this.classStartFrom = EMPTY_CLASS;
+        this._classStartFrom = EMPTY_CLASS;
       } else {
-        this.classUploadList = EMPTY_CLASS;
-        this.isHiddenStartFrom = false;
+        this._classUploadList = EMPTY_CLASS;
+        this._isHiddenStartFrom = false;
         this.$['*currentActivity'] = initActivity;
       }
     });
@@ -117,37 +117,37 @@ export class FileUploaderMinimal extends LitSolutionBlock {
             this.style.setProperty('--uc-grid-col', '1');
           }
 
-          this.singleUpload = !multiple;
+          this._singleUpload = !multiple;
         } else {
           this.style.removeProperty('--uc-grid-col');
-          this.singleUpload = false;
+          this._singleUpload = false;
         }
       });
     });
 
-    this.modalManager?.subscribe(ModalEvents.OPEN, this.handleModalOpen);
-    this.modalManager?.subscribe(ModalEvents.CLOSE, this.handleModalClose);
+    this.modalManager?.subscribe(ModalEvents.OPEN, this._handleModalOpen);
+    this.modalManager?.subscribe(ModalEvents.CLOSE, this._handleModalClose);
   }
 
   public override disconnectedCallback(): void {
     super.disconnectedCallback();
-    this.modalManager?.unsubscribe(ModalEvents.OPEN, this.handleModalOpen);
-    this.modalManager?.unsubscribe(ModalEvents.CLOSE, this.handleModalClose);
+    this.modalManager?.unsubscribe(ModalEvents.OPEN, this._handleModalOpen);
+    this.modalManager?.unsubscribe(ModalEvents.CLOSE, this._handleModalClose);
   }
 
   public override render() {
     return html`
       ${super.render()}
-      <uc-start-from ?hidden=${this.isHiddenStartFrom} class=${this.classStartFrom}>
+      <uc-start-from ?hidden=${this._isHiddenStartFrom} class=${this._classStartFrom}>
         <uc-drop-area
-          ?single=${this.singleUpload}
+          ?single=${this._singleUpload}
           initflow
           clickable
           tabindex="0"
         >${this.l10n('choose-file')}</uc-drop-area>
         <uc-copyright></uc-copyright>
       </uc-start-from>
-      <uc-upload-list class=${this.classUploadList}></uc-upload-list>
+      <uc-upload-list class=${this._classUploadList}></uc-upload-list>
 
       <uc-modal id="start-from" strokes block-body-scrolling>
         <uc-start-from>

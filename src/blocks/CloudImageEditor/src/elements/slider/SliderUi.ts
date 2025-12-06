@@ -8,9 +8,9 @@ export class SliderUi extends LitBlock {
   private _thumbSize = 0;
   private _zeroDotEl?: HTMLDivElement;
   private _stepsCount?: number;
-  private readonly inputRef = createRef<HTMLInputElement>();
-  private readonly thumbRef = createRef<HTMLDivElement>();
-  private readonly stepsRef = createRef<HTMLDivElement>();
+  private readonly _inputRef = createRef<HTMLInputElement>();
+  private readonly _thumbRef = createRef<HTMLDivElement>();
+  private readonly _stepsRef = createRef<HTMLDivElement>();
 
   @property({ type: Boolean, reflect: true })
   public disabled = false;
@@ -35,7 +35,7 @@ export class SliderUi extends LitBlock {
     this.setAttribute('with-effects', '');
   }
 
-  private emitSliderEvent(type: 'slider-input' | 'slider-change', value: number): void {
+  private _emitSliderEvent(type: 'slider-input' | 'slider-change', value: number): void {
     this.dispatchEvent(
       new CustomEvent(type, {
         detail: { value },
@@ -45,31 +45,31 @@ export class SliderUi extends LitBlock {
     );
   }
 
-  private readonly handleSliderInput = (event: Event): void => {
+  private readonly _handleSliderInput = (event: Event): void => {
     event.stopPropagation();
     const value = this._extractEventValue(event);
     if (value === null) {
       return;
     }
     this._setCurrentValue(value);
-    this.emitSliderEvent('slider-input', value);
+    this._emitSliderEvent('slider-input', value);
   };
 
-  private readonly handleSliderChange = (event: Event): void => {
+  private readonly _handleSliderChange = (event: Event): void => {
     event.stopPropagation();
     const value = this._extractEventValue(event);
     if (value === null) {
       return;
     }
     this._setCurrentValue(value);
-    this.emitSliderEvent('slider-change', value);
+    this._emitSliderEvent('slider-change', value);
   };
 
-  private readonly handleInputFocus = (): void => {
+  private readonly _handleInputFocus = (): void => {
     this.style.setProperty('--color-effect', 'var(--hover-color-rgb)');
   };
 
-  private readonly handleInputBlur = (): void => {
+  private readonly _handleInputBlur = (): void => {
     this.style.setProperty('--color-effect', 'var(--idle-color-rgb)');
   };
 
@@ -86,9 +86,9 @@ export class SliderUi extends LitBlock {
     });
     this._observer.observe(this);
 
-    const inputEl = this.inputRef.value;
-    inputEl?.addEventListener('focus', this.handleInputFocus);
-    inputEl?.addEventListener('blur', this.handleInputBlur);
+    const inputEl = this._inputRef.value;
+    inputEl?.addEventListener('focus', this._handleInputFocus);
+    inputEl?.addEventListener('blur', this._handleInputBlur);
 
     window.setTimeout(() => {
       this._updateValue(this._currentValue);
@@ -126,7 +126,7 @@ export class SliderUi extends LitBlock {
     const offset = (mappedValue * (width - this._thumbSize)) / 100;
 
     window.requestAnimationFrame(() => {
-      const thumbEl = this.thumbRef.value;
+      const thumbEl = this._thumbRef.value;
       if (thumbEl) {
         thumbEl.style.transform = `translateX(${offset}px)`;
       }
@@ -155,7 +155,7 @@ export class SliderUi extends LitBlock {
 
   private _updateSteps(): void {
     const STEP_GAP = 15;
-    const stepsEl = this.stepsRef.value;
+    const stepsEl = this._stepsRef.value;
     if (!stepsEl) {
       return;
     }
@@ -195,9 +195,9 @@ export class SliderUi extends LitBlock {
 
   public override disconnectedCallback(): void {
     super.disconnectedCallback();
-    const inputEl = this.inputRef.value;
-    inputEl?.removeEventListener('focus', this.handleInputFocus);
-    inputEl?.removeEventListener('blur', this.handleInputBlur);
+    const inputEl = this._inputRef.value;
+    inputEl?.removeEventListener('focus', this._handleInputFocus);
+    inputEl?.removeEventListener('blur', this._handleInputBlur);
     this._observer?.disconnect();
     this._observer = undefined;
   }
@@ -214,7 +214,7 @@ export class SliderUi extends LitBlock {
   }
 
   private _syncInputValue(value: number): void {
-    const inputEl = this.inputRef.value;
+    const inputEl = this._inputRef.value;
     if (inputEl) {
       inputEl.value = String(value);
     }
@@ -231,18 +231,18 @@ export class SliderUi extends LitBlock {
 
   public override render() {
     return html`
-      <div class="uc-steps" ${ref(this.stepsRef)}></div>
-      <div class="uc-thumb" ${ref(this.thumbRef)}></div>
+      <div class="uc-steps" ${ref(this._stepsRef)}></div>
+      <div class="uc-thumb" ${ref(this._thumbRef)}></div>
       <input
         class="uc-input"
         type="range"
-        ${ref(this.inputRef)}
+        ${ref(this._inputRef)}
         .min=${String(this.min)}
         .max=${String(this.max)}
         .value=${String(this._currentValue)}
         ?disabled=${this.disabled}
-        @input=${this.handleSliderInput}
-        @change=${this.handleSliderChange}
+        @input=${this._handleSliderInput}
+        @change=${this._handleSliderChange}
       />
     `;
   }

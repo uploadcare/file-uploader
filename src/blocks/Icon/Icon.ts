@@ -9,36 +9,36 @@ export class Icon extends LitBlock {
   public name = '';
 
   @state()
-  private resolvedHref = '';
+  private _resolvedHref = '';
 
-  private iconHrefResolver: IconHrefResolver | null = null;
+  private _iconHrefResolver: IconHrefResolver | null = null;
 
   public override initCallback(): void {
     super.initCallback();
     this.setAttribute('aria-hidden', 'true');
 
     this.subConfigValue('iconHrefResolver', (resolver: IconHrefResolver | null) => {
-      this.iconHrefResolver = resolver;
-      this.updateResolvedHref();
+      this._iconHrefResolver = resolver;
+      this._updateResolvedHref();
     });
   }
 
   protected override willUpdate(changedProperties: PropertyValues<this>): void {
     super.willUpdate(changedProperties);
     if (changedProperties.has('name')) {
-      this.updateResolvedHref();
+      this._updateResolvedHref();
     }
   }
 
-  private updateResolvedHref(): void {
+  private _updateResolvedHref(): void {
     if (!this.name) {
-      this.resolvedHref = '';
+      this._resolvedHref = '';
       return;
     }
 
     const defaultHref = `#uc-icon-${this.name}`;
-    const customHref = this.iconHrefResolver?.(this.name);
-    this.resolvedHref = customHref ?? defaultHref;
+    const customHref = this._iconHrefResolver?.(this.name);
+    this._resolvedHref = customHref ?? defaultHref;
   }
 
   public override render() {
@@ -46,7 +46,7 @@ export class Icon extends LitBlock {
       ${this.yield(
         '',
         html`<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <use href=${this.resolvedHref}></use>
+        <use href=${this._resolvedHref}></use>
       </svg>`,
       )}
     `;

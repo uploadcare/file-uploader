@@ -76,80 +76,80 @@ export class CameraSource extends LitUploaderBlock {
 
   private readonly _handlePreviewPlay = (): void => {
     this._startTimeline();
-    this.currentTimelineIcon = 'pause';
+    this._currentTimelineIcon = 'pause';
   };
 
   private readonly _handlePreviewPause = (): void => {
-    this.currentTimelineIcon = 'play';
+    this._currentTimelineIcon = 'play';
     this._stopTimeline();
   };
 
-  private timerRef = createRef<HTMLElement>();
-  private lineRef = createRef<HTMLElement>();
-  private videoRef = createRef<HTMLVideoElement>();
-  private switcherRef = createRef<HTMLElement>();
+  private _timerRef = createRef<HTMLElement>();
+  private _lineRef = createRef<HTMLElement>();
+  private _videoRef = createRef<HTMLVideoElement>();
+  private _switcherRef = createRef<HTMLElement>();
   private _startTime = 0;
   private _elapsedTime = 0;
 
   @state()
-  private videoTransformCss: string | null = null;
+  private _videoTransformCss: string | null = null;
 
   @state()
-  private videoHidden = true;
+  private _videoHidden = true;
 
   @state()
-  private messageHidden = true;
+  private _messageHidden = true;
 
   @state()
-  private requestBtnHidden = canUsePermissionsApi();
+  private _requestBtnHidden = canUsePermissionsApi();
 
   @state()
-  private cameraSelectOptions: CameraDeviceOption[] = [];
+  private _cameraSelectOptions: CameraDeviceOption[] = [];
 
   @state()
-  private cameraSelectHidden = true;
+  private _cameraSelectHidden = true;
 
   @state()
-  private l10nMessage = '';
+  private _l10nMessage = '';
 
   @state()
-  private timerHidden = true;
+  private _timerHidden = true;
 
   @state()
-  private cameraHidden = true;
+  private _cameraHidden = true;
 
   @state()
-  private cameraActionsHidden = true;
+  private _cameraActionsHidden = true;
 
   @state()
-  private audioSelectOptions: AudioDeviceOption[] = [];
+  private _audioSelectOptions: AudioDeviceOption[] = [];
 
   @state()
-  private audioSelectHidden = true;
+  private _audioSelectHidden = true;
 
   @state()
-  private audioSelectDisabled = true;
+  private _audioSelectDisabled = true;
 
   @state()
-  private audioToggleMicrophoneHidden = true;
+  private _audioToggleMicrophoneHidden = true;
 
   @state()
-  private tabCameraHidden = true;
+  private _tabCameraHidden = true;
 
   @state()
-  private tabVideoHidden = true;
+  private _tabVideoHidden = true;
 
   @state()
-  private currentIcon = 'camera-full';
+  private _currentIcon = 'camera-full';
 
   @state()
-  private currentTimelineIcon = 'play';
+  private _currentTimelineIcon = 'play';
 
   @state()
-  private toggleMicrophoneIcon = 'microphone';
+  private _toggleMicrophoneIcon = 'microphone';
 
   @state()
-  private mutableClassButton = 'uc-shot-btn uc-camera-action';
+  private _mutableClassButton = 'uc-shot-btn uc-camera-action';
 
   private _chooseActionWithCamera = () => {
     this.telemetryManager.sendEvent({
@@ -264,7 +264,7 @@ export class CameraSource extends LitUploaderBlock {
       const remainingTime = this.cfg.maxVideoRecordingDuration - currentTime;
 
       if (remainingTime <= 0) {
-        const timer = this.timerRef.value as HTMLElement | undefined;
+        const timer = this._timerRef.value as HTMLElement | undefined;
         if (timer) {
           timer.textContent = formatTime(remainingTime);
         }
@@ -272,12 +272,12 @@ export class CameraSource extends LitUploaderBlock {
         return;
       }
 
-      const timer = this.timerRef.value as HTMLElement | undefined;
+      const timer = this._timerRef.value as HTMLElement | undefined;
       if (timer) {
         timer.textContent = formatTime(remainingTime);
       }
     } else {
-      const timer = this.timerRef.value as HTMLElement | undefined;
+      const timer = this._timerRef.value as HTMLElement | undefined;
       if (timer) {
         timer.textContent = formatTime(currentTime);
       }
@@ -298,18 +298,18 @@ export class CameraSource extends LitUploaderBlock {
   };
 
   private _startTimeline = (): void => {
-    const video = this.videoRef.value as HTMLVideoElement | undefined;
+    const video = this._videoRef.value as HTMLVideoElement | undefined;
     if (!video) {
       return;
     }
     const currentTime = video.currentTime;
     const duration = video.duration || 1;
 
-    const line = this.lineRef.value as HTMLElement | undefined;
+    const line = this._lineRef.value as HTMLElement | undefined;
     if (line) {
       line.style.transform = `scaleX(${currentTime / duration})`;
     }
-    const timer = this.timerRef.value as HTMLElement | undefined;
+    const timer = this._timerRef.value as HTMLElement | undefined;
     if (timer) {
       timer.textContent = formatTime(currentTime);
     }
@@ -386,7 +386,7 @@ export class CameraSource extends LitUploaderBlock {
   private _toggleRecording = (): void => {
     if (this._mediaRecorder?.state === 'recording') return;
 
-    const videoEl = this.videoRef.value;
+    const videoEl = this._videoRef.value;
     if (!videoEl) return;
     if (!videoEl.paused && !videoEl.ended && videoEl.readyState > 2) {
       videoEl.pause();
@@ -399,8 +399,8 @@ export class CameraSource extends LitUploaderBlock {
     this._stream?.getAudioTracks().forEach((track) => {
       track.enabled = !track.enabled;
 
-      this.toggleMicrophoneIcon = track.enabled ? 'microphone' : 'microphone-mute';
-      this.audioSelectDisabled = !track.enabled;
+      this._toggleMicrophoneIcon = track.enabled ? 'microphone' : 'microphone-mute';
+      this._audioSelectDisabled = !track.enabled;
     });
   };
 
@@ -415,7 +415,7 @@ export class CameraSource extends LitUploaderBlock {
 
       const videoURL = URL.createObjectURL(blob);
 
-      const videoElement = this.videoRef.value as HTMLVideoElement | undefined;
+      const videoElement = this._videoRef.value as HTMLVideoElement | undefined;
       if (!videoElement) {
         return;
       }
@@ -456,7 +456,7 @@ export class CameraSource extends LitUploaderBlock {
    * I really don'y know why but that's how it is. Assigning srcObject manually fixes the issue.
    */
   private _applyVideoSource(): void {
-    const videoElement = this.videoRef.value;
+    const videoElement = this._videoRef.value;
     if (!videoElement) {
       return;
     }
@@ -472,13 +472,13 @@ export class CameraSource extends LitUploaderBlock {
     /** Reset video */
     if (this._activeTab === CameraSourceTypes.VIDEO) {
       this._setVideoSource(this._stream);
-      const videoElement = this.videoRef.value as HTMLVideoElement | undefined;
+      const videoElement = this._videoRef.value as HTMLVideoElement | undefined;
       if (videoElement) {
         videoElement.muted = true;
       }
     }
 
-    void this.videoRef.value?.play?.();
+    void this._videoRef.value?.play?.();
   };
 
   private _accept = (): void => {
@@ -508,51 +508,51 @@ export class CameraSource extends LitUploaderBlock {
 
   private _handlePhoto = (status: CameraStatus): void => {
     if (status === CameraSourceEvents.SHOT) {
-      this.tabVideoHidden = true;
-      this.cameraHidden = true;
-      this.tabCameraHidden = true;
-      this.cameraActionsHidden = false;
-      this.cameraSelectHidden = true;
+      this._tabVideoHidden = true;
+      this._cameraHidden = true;
+      this._tabCameraHidden = true;
+      this._cameraActionsHidden = false;
+      this._cameraSelectHidden = true;
     }
 
     if (status === CameraSourceEvents.RETAKE || status === CameraSourceEvents.ACCEPT) {
-      this.tabVideoHidden = !this._cameraModes.includes(CameraSourceTypes.VIDEO);
-      this.tabCameraHidden = !this._cameraModes.includes(CameraSourceTypes.PHOTO);
-      this.cameraHidden = false;
-      this.cameraActionsHidden = true;
-      this.cameraSelectHidden = this._cameraDevices.length <= 1;
+      this._tabVideoHidden = !this._cameraModes.includes(CameraSourceTypes.VIDEO);
+      this._tabCameraHidden = !this._cameraModes.includes(CameraSourceTypes.PHOTO);
+      this._cameraHidden = false;
+      this._cameraActionsHidden = true;
+      this._cameraSelectHidden = this._cameraDevices.length <= 1;
     }
   };
 
   private _handleVideo = (status: CameraStatus): void => {
     if (status === CameraSourceEvents.PLAY) {
-      this.timerHidden = false;
-      this.tabCameraHidden = true;
-      this.cameraSelectHidden = true;
-      this.audioSelectHidden = true;
-      this.currentTimelineIcon = 'pause';
-      this.currentIcon = 'square';
-      this.mutableClassButton = 'uc-shot-btn uc-camera-action uc-stop-record';
+      this._timerHidden = false;
+      this._tabCameraHidden = true;
+      this._cameraSelectHidden = true;
+      this._audioSelectHidden = true;
+      this._currentTimelineIcon = 'pause';
+      this._currentIcon = 'square';
+      this._mutableClassButton = 'uc-shot-btn uc-camera-action uc-stop-record';
     }
 
     if (status === CameraSourceEvents.STOP) {
-      this.timerHidden = false;
-      this.cameraHidden = true;
-      this.audioToggleMicrophoneHidden = true;
-      this.cameraActionsHidden = false;
+      this._timerHidden = false;
+      this._cameraHidden = true;
+      this._audioToggleMicrophoneHidden = true;
+      this._cameraActionsHidden = false;
     }
 
     if (status === CameraSourceEvents.RETAKE || status === CameraSourceEvents.ACCEPT) {
-      this.timerHidden = true;
-      this.tabVideoHidden = !this._cameraModes.includes(CameraSourceTypes.VIDEO);
-      this.tabCameraHidden = !this._cameraModes.includes(CameraSourceTypes.PHOTO);
-      this.cameraHidden = false;
-      this.cameraActionsHidden = true;
-      this.audioToggleMicrophoneHidden = !this.cfg.enableAudioRecording;
-      this.currentIcon = 'video-camera-full';
-      this.mutableClassButton = 'uc-shot-btn uc-camera-action';
-      this.audioSelectHidden = !this.cfg.enableAudioRecording || this._audioDevices.length <= 1;
-      this.cameraSelectHidden = this._cameraDevices.length <= 1;
+      this._timerHidden = true;
+      this._tabVideoHidden = !this._cameraModes.includes(CameraSourceTypes.VIDEO);
+      this._tabCameraHidden = !this._cameraModes.includes(CameraSourceTypes.PHOTO);
+      this._cameraHidden = false;
+      this._cameraActionsHidden = true;
+      this._audioToggleMicrophoneHidden = !this.cfg.enableAudioRecording;
+      this._currentIcon = 'video-camera-full';
+      this._mutableClassButton = 'uc-shot-btn uc-camera-action';
+      this._audioSelectHidden = !this.cfg.enableAudioRecording || this._audioDevices.length <= 1;
+      this._cameraSelectHidden = this._cameraDevices.length <= 1;
     }
   };
 
@@ -586,7 +586,7 @@ export class CameraSource extends LitUploaderBlock {
     if (!this._ctx) {
       throw new Error('Failed to get canvas context');
     }
-    const videoEl = this.videoRef.value;
+    const videoEl = this._videoRef.value;
     if (!videoEl) {
       throw new Error('Video element not found');
     }
@@ -604,22 +604,22 @@ export class CameraSource extends LitUploaderBlock {
   }
 
   private _handleActiveTab = (tabId: CameraMode): void => {
-    const switcher = this.switcherRef.value as HTMLElement | undefined;
+    const switcher = this._switcherRef.value as HTMLElement | undefined;
     switcher?.querySelectorAll('button').forEach((btn) => {
       btn.classList.toggle('uc-active', btn.getAttribute('data-id') === tabId);
     });
 
     if (tabId === CameraSourceTypes.PHOTO) {
-      this.currentIcon = 'camera-full';
-      this.audioSelectHidden = true;
-      this.audioToggleMicrophoneHidden = true;
+      this._currentIcon = 'camera-full';
+      this._audioSelectHidden = true;
+      this._audioToggleMicrophoneHidden = true;
     }
 
     if (tabId === CameraSourceTypes.VIDEO) {
-      this.currentTimelineIcon = 'play';
-      this.currentIcon = 'video-camera-full';
-      this.audioSelectHidden = !this.cfg.enableAudioRecording || this._audioDevices.length <= 1;
-      this.audioToggleMicrophoneHidden = !this.cfg.enableAudioRecording;
+      this._currentTimelineIcon = 'play';
+      this._currentIcon = 'video-camera-full';
+      this._audioSelectHidden = !this.cfg.enableAudioRecording || this._audioDevices.length <= 1;
+      this._audioToggleMicrophoneHidden = !this.cfg.enableAudioRecording;
     }
 
     this.telemetryManager.sendEvent({
@@ -705,31 +705,31 @@ export class CameraSource extends LitUploaderBlock {
     const currentIcon = this._activeTab === CameraSourceTypes.PHOTO ? 'camera-full' : 'video-camera-full';
 
     if (state === 'granted') {
-      this.videoHidden = false;
-      this.cameraHidden = false;
-      this.tabCameraHidden = !this._cameraModes.includes(CameraSourceTypes.PHOTO);
-      this.tabVideoHidden = !this._cameraModes.includes(CameraSourceTypes.VIDEO);
-      this.messageHidden = true;
-      this.timerHidden = true;
-      this.currentIcon = currentIcon;
-      this.audioToggleMicrophoneHidden = !visibleAudio;
-      this.audioSelectHidden = !visibleAudio;
+      this._videoHidden = false;
+      this._cameraHidden = false;
+      this._tabCameraHidden = !this._cameraModes.includes(CameraSourceTypes.PHOTO);
+      this._tabVideoHidden = !this._cameraModes.includes(CameraSourceTypes.VIDEO);
+      this._messageHidden = true;
+      this._timerHidden = true;
+      this._currentIcon = currentIcon;
+      this._audioToggleMicrophoneHidden = !visibleAudio;
+      this._audioSelectHidden = !visibleAudio;
     } else if (state === 'prompt') {
-      this.l10nMessage = 'camera-permissions-prompt';
-      this.videoHidden = true;
-      this.cameraHidden = true;
-      this.tabCameraHidden = true;
-      this.messageHidden = false;
+      this._l10nMessage = 'camera-permissions-prompt';
+      this._videoHidden = true;
+      this._cameraHidden = true;
+      this._tabCameraHidden = true;
+      this._messageHidden = false;
 
       this._stopCapture();
     } else {
-      this.l10nMessage = 'camera-permissions-denied';
-      this.videoHidden = true;
-      this.messageHidden = false;
-      this.tabCameraHidden = !this._cameraModes.includes(CameraSourceTypes.PHOTO);
-      this.tabVideoHidden = !this._cameraModes.includes(CameraSourceTypes.VIDEO);
-      this.cameraActionsHidden = true;
-      this.mutableClassButton = 'uc-shot-btn uc-camera-action';
+      this._l10nMessage = 'camera-permissions-denied';
+      this._videoHidden = true;
+      this._messageHidden = false;
+      this._tabCameraHidden = !this._cameraModes.includes(CameraSourceTypes.PHOTO);
+      this._tabVideoHidden = !this._cameraModes.includes(CameraSourceTypes.VIDEO);
+      this._cameraActionsHidden = true;
+      this._mutableClassButton = 'uc-shot-btn uc-camera-action';
 
       this._stopCapture();
     }
@@ -753,12 +753,12 @@ export class CameraSource extends LitUploaderBlock {
 
   private _stopCapture = (): void => {
     if (this._capturing) {
-      if (this.videoRef.value) {
-        this.videoRef.value.volume = 0;
+      if (this._videoRef.value) {
+        this._videoRef.value.volume = 0;
       }
       const tracks = this._currentVideoSource?.getTracks?.();
       tracks?.[0]?.stop();
-      this._detachPreviewListeners(this.videoRef.value);
+      this._detachPreviewListeners(this._videoRef.value);
       this._setVideoSource(null);
 
       this._makeStreamInactive();
@@ -791,8 +791,8 @@ export class CameraSource extends LitUploaderBlock {
     }
 
     // Mute the video to prevent feedback for Firefox
-    if (this.videoRef.value) {
-      this.videoRef.value.volume = 0;
+    if (this._videoRef.value) {
+      this._videoRef.value.volume = 0;
     }
 
     try {
@@ -890,12 +890,12 @@ export class CameraSource extends LitUploaderBlock {
             }))
         : [];
 
-      this.cameraSelectOptions = this._cameraDevices;
-      this.cameraSelectHidden = this._cameraDevices.length <= 1;
+      this._cameraSelectOptions = this._cameraDevices;
+      this._cameraSelectHidden = this._cameraDevices.length <= 1;
       this._selectedCameraId = this._cameraDevices[0]?.value ?? null;
 
-      this.audioSelectOptions = this._audioDevices;
-      this.audioSelectHidden = !this.cfg.enableAudioRecording || this._audioDevices.length <= 1;
+      this._audioSelectOptions = this._audioDevices;
+      this._audioSelectHidden = !this.cfg.enableAudioRecording || this._audioDevices.length <= 1;
       this._selectedAudioId = this._audioDevices[0]?.value ?? null;
     } catch (error) {
       this.telemetryManager.sendEventError(error, 'camera devices. Failed to get devices');
@@ -926,8 +926,8 @@ export class CameraSource extends LitUploaderBlock {
   };
 
   private _handleCameraModes = (cameraModes: CameraMode[]): void => {
-    this.tabVideoHidden = !cameraModes.includes(CameraSourceTypes.VIDEO);
-    this.tabCameraHidden = !cameraModes.includes(CameraSourceTypes.PHOTO);
+    this._tabVideoHidden = !cameraModes.includes(CameraSourceTypes.VIDEO);
+    this._tabCameraHidden = !cameraModes.includes(CameraSourceTypes.PHOTO);
 
     const defaultTab = cameraModes[0];
     if (defaultTab && (!this._activeTab || !cameraModes.includes(this._activeTab))) {
@@ -944,12 +944,12 @@ export class CameraSource extends LitUploaderBlock {
     });
 
     this.subConfigValue('cameraMirror', (val) => {
-      this.videoTransformCss = val ? 'scaleX(-1)' : null;
+      this._videoTransformCss = val ? 'scaleX(-1)' : null;
     });
 
     this.subConfigValue('enableAudioRecording', (val) => {
-      this.audioToggleMicrophoneHidden = !val;
-      this.audioSelectDisabled = !val;
+      this._audioToggleMicrophoneHidden = !val;
+      this._audioSelectDisabled = !val;
     });
 
     this.subConfigValue('cameraModes', (val) => {
@@ -963,20 +963,20 @@ export class CameraSource extends LitUploaderBlock {
     });
   }
 
-  public override firstUpdated(_changedProperties: PropertyValues<this>): void {
-    super.firstUpdated(_changedProperties);
+  public override firstUpdated(changedProperties: PropertyValues<this>): void {
+    super.firstUpdated(changedProperties);
     this._applyVideoSource();
   }
 
-  public override updated(_changedProperties: PropertyValues<this>): void {
-    super.updated(_changedProperties);
+  public override updated(changedProperties: PropertyValues<this>): void {
+    super.updated(changedProperties);
     this._applyVideoSource();
   }
 
   private _destroy(): void {
     this._teardownPermissionListeners();
     navigator.mediaDevices?.removeEventListener('devicechange', this._getDevices);
-    this._detachPreviewListeners(this.videoRef.value);
+    this._detachPreviewListeners(this._videoRef.value);
     this._setVideoSource(null);
   }
 
@@ -997,14 +997,14 @@ export class CameraSource extends LitUploaderBlock {
     >
       <uc-icon name="back"></uc-icon>
     </button>
-    <div ?hidden=${!this.cameraSelectHidden}>
+    <div ?hidden=${!this._cameraSelectHidden}>
       <uc-icon name="camera"></uc-icon>
       <span>${this.l10n('caption-camera')}</span>
     </div>
     <uc-select
       class="uc-camera-select"
-      .options=${this.cameraSelectOptions}
-      ?hidden=${this.cameraSelectHidden}
+      .options=${this._cameraSelectOptions}
+      ?hidden=${this._cameraSelectHidden}
       @change=${this._handleCameraSelectChange}
     >
     </uc-select>
@@ -1024,29 +1024,29 @@ export class CameraSource extends LitUploaderBlock {
       autoplay
       playsinline
       style=${styleMap({
-        transform: this.videoTransformCss,
+        transform: this._videoTransformCss,
       })}
-      ?hidden=${this.videoHidden}
-      ${ref(this.videoRef)}
+      ?hidden=${this._videoHidden}
+      ${ref(this._videoRef)}
     ></video>
-    <div class="uc-message-box" ?hidden=${this.messageHidden}>
-      <span>${this.l10n(this.l10nMessage)}</span>
+    <div class="uc-message-box" ?hidden=${this._messageHidden}>
+      <span>${this.l10n(this._l10nMessage)}</span>
       <button
         type="button"
         @click=${this._handleRequestPermissions}
-        ?hidden=${this.requestBtnHidden}
+        ?hidden=${this._requestBtnHidden}
         >${this.l10n('camera-permissions-request')}</button>
     </div>
   </div>
 
   <div class="uc-controls">
-    <div ${ref(this.switcherRef)} class="uc-switcher" ?hidden=${!this.timerHidden}>
+    <div ${ref(this._switcherRef)} class="uc-switcher" ?hidden=${!this._timerHidden}>
       <button
         data-id="photo"
         type="button"
         class="uc-switch uc-mini-btn"
         @click=${this._handleClickTab}
-        ?hidden=${this.tabCameraHidden}
+        ?hidden=${this._tabCameraHidden}
         data-testid="tab-photo"
       >
         <uc-icon name="camera"></uc-icon>
@@ -1056,7 +1056,7 @@ export class CameraSource extends LitUploaderBlock {
         type="button"
         class="uc-switch uc-mini-btn"
         @click=${this._handleClickTab}
-        ?hidden=${this.tabVideoHidden}
+        ?hidden=${this._tabVideoHidden}
         data-testid="tab-video"
       >
         <uc-icon name="video-camera"></uc-icon>
@@ -1066,17 +1066,17 @@ export class CameraSource extends LitUploaderBlock {
     <button
       class="uc-secondary-btn uc-recording-timer"
       @click=${this._handleToggleRecording}
-      ?hidden=${this.timerHidden}
+      ?hidden=${this._timerHidden}
       data-testid="recording-timer"
     >
-      <uc-icon name=${this.currentTimelineIcon}></uc-icon>
-      <span ${ref(this.timerRef)}> 00:00 </span>
-      <span ${ref(this.lineRef)} class="uc-line"></span>
+      <uc-icon name=${this._currentTimelineIcon}></uc-icon>
+      <span ${ref(this._timerRef)}> 00:00 </span>
+      <span ${ref(this._lineRef)} class="uc-line"></span>
     </button>
 
     <div
       class="uc-camera-actions uc-camera-action"
-      ?hidden=${this.cameraActionsHidden}
+      ?hidden=${this._cameraActionsHidden}
     >
       <button type="button" class="uc-secondary-btn" @click=${this._handleRetake}>
         Retake
@@ -1096,10 +1096,10 @@ export class CameraSource extends LitUploaderBlock {
       class="uc-shot-btn uc-camera-action"
       data-testid="shot"
       @click=${this._handleStartCamera}
-      class=${this.mutableClassButton}
-      ?hidden=${this.cameraHidden}
+      class=${this._mutableClassButton}
+      ?hidden=${this._cameraHidden}
     >
-      <uc-icon name=${this.currentIcon}></uc-icon>
+      <uc-icon name=${this._currentIcon}></uc-icon>
     </button>
 
     <div class="uc-select">
@@ -1107,17 +1107,17 @@ export class CameraSource extends LitUploaderBlock {
         type="button"
         class="uc-mini-btn uc-btn-microphone"
         @click=${this._handleToggleAudio}
-        ?hidden=${this.audioToggleMicrophoneHidden}
+        ?hidden=${this._audioToggleMicrophoneHidden}
         data-testid="toggle-microphone"
       >
-        <uc-icon name=${this.toggleMicrophoneIcon}></uc-icon>
+        <uc-icon name=${this._toggleMicrophoneIcon}></uc-icon>
       </button>
 
       <uc-select
         class="uc-audio-select"
-        .options=${this.audioSelectOptions}
-        ?hidden=${this.audioSelectHidden}
-        ?disabled=${this.audioSelectDisabled}
+        .options=${this._audioSelectOptions}
+        ?hidden=${this._audioSelectHidden}
+        ?disabled=${this._audioSelectDisabled}
         @change=${this._handleAudioSelectChange}
         data-testid="audio-select"
       >

@@ -26,25 +26,25 @@ export class SourceBtn extends LitUploaderBlock {
   public type?: string;
 
   @state()
-  private iconName = 'default';
+  private _iconName = 'default';
 
   @state()
-  private srcTypeKey = '';
+  private _srcTypeKey = '';
 
-  private initTypes(): void {
-    this.registerType({
+  private _initTypes(): void {
+    this._registerType({
       type: UploadSource.LOCAL,
       activate: () => {
         this.api.openSystemDialog();
         return false;
       },
     });
-    this.registerType({
+    this._registerType({
       type: UploadSource.URL,
       activity: LitActivityBlock.activities.URL,
       textKey: 'from-url',
     });
-    this.registerType({
+    this._registerType({
       type: UploadSource.CAMERA,
       activity: LitActivityBlock.activities.CAMERA,
       activate: () => {
@@ -57,14 +57,14 @@ export class SourceBtn extends LitUploaderBlock {
       },
     });
 
-    this.registerType({
+    this._registerType({
       type: 'draw',
       activity: LitActivityBlock.activities.DRAW,
       icon: 'edit-draw',
     });
 
     for (const mobileSourceType of Object.values(UploadSourceMobile)) {
-      this.registerType({
+      this._registerType({
         type: mobileSourceType,
         activity: LitActivityBlock.activities.CAMERA,
         activate: () => {
@@ -82,7 +82,7 @@ export class SourceBtn extends LitUploaderBlock {
     }
 
     for (const externalSourceType of Object.values(ExternalUploadSource)) {
-      this.registerType({
+      this._registerType({
         type: externalSourceType,
         activity: LitActivityBlock.activities.EXTERNAL,
         activityParams: {
@@ -94,14 +94,14 @@ export class SourceBtn extends LitUploaderBlock {
 
   public override initCallback(): void {
     super.initCallback();
-    this.initTypes();
+    this._initTypes();
 
     if (this.type) {
-      this.applyType(this.type);
+      this._applyType(this.type);
     }
   }
 
-  private registerType(typeConfig: SourceTypeConfig): void {
+  private _registerType(typeConfig: SourceTypeConfig): void {
     this._registeredTypes[typeConfig.type] = typeConfig;
   }
 
@@ -128,7 +128,7 @@ export class SourceBtn extends LitUploaderBlock {
     }
   }
 
-  private applyType(type: string): void {
+  private _applyType(type: string): void {
     const configType = this._registeredTypes[type];
     if (!configType) {
       console.warn(`Unsupported source type: ${type}`);
@@ -136,8 +136,8 @@ export class SourceBtn extends LitUploaderBlock {
     }
     const { textKey = type, icon = type } = configType;
 
-    this.srcTypeKey = `${L10N_PREFIX}${textKey}`;
-    this.iconName = icon;
+    this._srcTypeKey = `${L10N_PREFIX}${textKey}`;
+    this._iconName = icon;
   }
 
   protected override willUpdate(changedProperties: PropertyValues<this>): void {
@@ -145,10 +145,10 @@ export class SourceBtn extends LitUploaderBlock {
 
     if (changedProperties.has('type')) {
       if (this.type) {
-        this.applyType(this.type);
+        this._applyType(this.type);
       } else {
-        this.srcTypeKey = '';
-        this.iconName = 'default';
+        this._srcTypeKey = '';
+        this._iconName = 'default';
       }
     }
   }
@@ -156,8 +156,8 @@ export class SourceBtn extends LitUploaderBlock {
   public override render() {
     return html`
     <button type="button" @click=${this.activate}>
-    <uc-icon name=${this.iconName}></uc-icon>
-    <div class="uc-txt">${this.l10n(this.srcTypeKey)}</div>
+    <uc-icon name=${this._iconName}></uc-icon>
+    <div class="uc-txt">${this.l10n(this._srcTypeKey)}</div>
   </button>
     `;
   }

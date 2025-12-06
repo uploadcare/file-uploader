@@ -38,8 +38,8 @@ type CurrentImg = {
 };
 
 export class ImgBase extends ImgConfig {
-  protected _img: HTMLImageElement = new Image();
-  protected _imgPreview: HTMLImageElement = new Image();
+  private _img: HTMLImageElement = new Image();
+  private _imgPreview: HTMLImageElement = new Image();
 
   private _fmtAbs(src: string): string {
     const isRel = !src.includes('//');
@@ -57,9 +57,9 @@ export class ImgBase extends ImgConfig {
 
       const bp = parseInt(numericPart, 10);
 
-      if (Number(bp) > MAX_WIDTH_JPG && this.hasFormatJPG) {
+      if (Number(bp) > MAX_WIDTH_JPG && this._hasFormatJPG) {
         return MAX_WIDTH_JPG + alphabeticPart;
-      } else if (Number(bp) > MAX_WIDTH && !this.hasFormatJPG) {
+      } else if (Number(bp) > MAX_WIDTH && !this._hasFormatJPG) {
         return MAX_WIDTH + alphabeticPart;
       }
     }
@@ -169,15 +169,15 @@ export class ImgBase extends ImgConfig {
   }
 
   protected get img(): HTMLImageElement {
-    if (!this.hasPreviewImage) {
-      this.setupConfigForImage({ elNode: this._img });
+    if (!this._hasPreviewImage) {
+      this._setupConfigForImage({ elNode: this._img });
       this.appendChild(this._img);
     }
     return this._img;
   }
 
-  private get currentImg(): CurrentImg {
-    return this.hasPreviewImage
+  private get _currentImg(): CurrentImg {
+    return this._hasPreviewImage
       ? {
           type: ImgTypeEnum.PREVIEW as ImgType,
           img: this._imgPreview,
@@ -188,15 +188,15 @@ export class ImgBase extends ImgConfig {
         };
   }
 
-  private get hasPreviewImage(): string | number | boolean | undefined {
+  private get _hasPreviewImage(): string | number | boolean | undefined {
     return this.$$('is-preview-blur') as string | number | boolean | undefined;
   }
 
-  private get bgSelector(): string | undefined {
+  private get _bgSelector(): string | undefined {
     return this.$$('is-background-for') as string | undefined;
   }
 
-  private get breakpoints(): number[] | null {
+  private get _breakpoints(): number[] | null {
     const breakpointsValue = this.$$('breakpoints') as string | undefined;
     if (breakpointsValue) {
       const list = stringToArray(breakpointsValue);
@@ -206,11 +206,11 @@ export class ImgBase extends ImgConfig {
     }
   }
 
-  private get hasFormatJPG(): boolean {
+  private get _hasFormatJPG(): boolean {
     return (this.$$('format') as string).toLowerCase() === 'jpeg';
   }
 
-  private renderBg(el: HTMLElement): void {
+  private _renderBg(el: HTMLElement): void {
     const imgSet = new Set<string>();
 
     imgSet.add(`url("${this._getUrlBase(this._getElSize(el)) as string}") 1x`);
@@ -227,10 +227,10 @@ export class ImgBase extends ImgConfig {
     el.style.setProperty('background-image', '-webkit-' + iSet);
   }
 
-  private getSrcset(): string {
+  private _getSrcset(): string {
     const srcset = new Set<string>();
-    if (this.breakpoints) {
-      this.breakpoints.forEach((bp) => {
+    if (this._breakpoints) {
+      this._breakpoints.forEach((bp) => {
         srcset.add(`${this._getUrlBase(`${bp}x`) as string} ${this._validateSize(`${bp}w`)}`);
         if (this.$$('hi-res-support')) {
           srcset.add(`${this._getUrlBase(`${bp * HI_RES_K}x`) as string} ${this._validateSize(`${bp * HI_RES_K}w`)}`);
@@ -242,34 +242,34 @@ export class ImgBase extends ImgConfig {
         }
       });
     } else {
-      srcset.add(`${this._getUrlBase(this._getElSize(this.currentImg.img)) as string} 1x`);
+      srcset.add(`${this._getUrlBase(this._getElSize(this._currentImg.img)) as string} 1x`);
       if (this.$$('hi-res-support')) {
-        srcset.add(`${this._getUrlBase(this._getElSize(this.currentImg.img, 2)) as string} 2x`);
+        srcset.add(`${this._getUrlBase(this._getElSize(this._currentImg.img, 2)) as string} 2x`);
       }
       if (this.$$('ultra-res-support')) {
-        srcset.add(`${this._getUrlBase(this._getElSize(this.currentImg.img, 3)) as string} 3x`);
+        srcset.add(`${this._getUrlBase(this._getElSize(this._currentImg.img, 3)) as string} 3x`);
       }
     }
     return [...srcset].join();
   }
 
-  private getSrc(): string | undefined {
+  private _getSrc(): string | undefined {
     return this._getUrlBase();
   }
 
-  private get srcUrlPreview(): string | undefined {
+  private get _srcUrlPreview(): string | undefined {
     return this._getUrlBase('100x', '100');
   }
 
-  private renderBackground(): void {
-    const selector = this.bgSelector as string;
+  private _renderBackground(): void {
+    const selector = this._bgSelector as string;
     [...document.querySelectorAll(selector)].forEach((el) => {
       if (this.$$('intersection')) {
         this.initIntersection(el as HTMLElement, () => {
-          this.renderBg(el as HTMLElement);
+          this._renderBg(el as HTMLElement);
         });
       } else {
-        this.renderBg(el as HTMLElement);
+        this._renderBg(el as HTMLElement);
       }
     });
   }
@@ -284,14 +284,14 @@ export class ImgBase extends ImgConfig {
     }
   }
 
-  private setupConfigForImage({ elNode }: ConfigImageParams): void {
+  private _setupConfigForImage({ elNode }: ConfigImageParams): void {
     this._setupEventProxy(elNode);
     this.initAttributes(elNode);
   }
 
-  private loaderImage({ src, srcset, elNode }: LoaderParams): Promise<HTMLImageElement> {
+  private _loaderImage({ src, srcset, elNode }: LoaderParams): Promise<HTMLImageElement> {
     return new Promise((resolve, reject) => {
-      this.setupConfigForImage({ elNode });
+      this._setupConfigForImage({ elNode });
 
       elNode.setAttribute(UNRESOLVED_ATTR, '');
 
@@ -312,32 +312,32 @@ export class ImgBase extends ImgConfig {
     });
   }
 
-  private async renderImage(): Promise<void> {
+  private async _renderImage(): Promise<void> {
     if (this.$$('intersection')) {
-      if (this.hasPreviewImage) {
-        this.setupConfigForImage({ elNode: this._imgPreview });
+      if (this._hasPreviewImage) {
+        this._setupConfigForImage({ elNode: this._imgPreview });
         this.appendChild(this._imgPreview);
       }
 
-      this.initIntersection(this.currentImg.img, async () => {
-        if (this.hasPreviewImage) {
-          this._imgPreview.src = this.srcUrlPreview as string;
+      this.initIntersection(this._currentImg.img, async () => {
+        if (this._hasPreviewImage) {
+          this._imgPreview.src = this._srcUrlPreview as string;
         }
 
         try {
-          await this.loaderImage({
-            src: this.getSrc(),
-            srcset: this.getSrcset(),
+          await this._loaderImage({
+            src: this._getSrc(),
+            srcset: this._getSrcset(),
             elNode: this._img,
           });
 
-          if (this.hasPreviewImage) {
+          if (this._hasPreviewImage) {
             await this._imgPreview.remove();
           }
 
           this.appendChild(this._img);
         } catch {
-          if (this.hasPreviewImage) {
+          if (this._hasPreviewImage) {
             await this._imgPreview?.remove();
           }
           this.appendChild(this._img);
@@ -348,28 +348,28 @@ export class ImgBase extends ImgConfig {
     }
 
     try {
-      if (this.hasPreviewImage) {
-        await this.loaderImage({
-          src: this.srcUrlPreview,
+      if (this._hasPreviewImage) {
+        await this._loaderImage({
+          src: this._srcUrlPreview,
           elNode: this._imgPreview,
         });
 
         this.appendChild(this._imgPreview);
       }
 
-      await this.loaderImage({
-        src: this.getSrc(),
-        srcset: this.getSrcset(),
+      await this._loaderImage({
+        src: this._getSrc(),
+        srcset: this._getSrcset(),
         elNode: this._img,
       });
 
-      if (this.hasPreviewImage) {
+      if (this._hasPreviewImage) {
         await this._imgPreview?.remove();
       }
 
       this.appendChild(this._img);
     } catch {
-      if (this.hasPreviewImage) {
+      if (this._hasPreviewImage) {
         await this._imgPreview?.remove();
       }
       this.appendChild(this._img);
@@ -377,10 +377,10 @@ export class ImgBase extends ImgConfig {
   }
 
   protected init(): void {
-    if (this.bgSelector) {
-      this.renderBackground();
+    if (this._bgSelector) {
+      this._renderBackground();
     } else {
-      this.renderImage();
+      this._renderImage();
     }
   }
 }

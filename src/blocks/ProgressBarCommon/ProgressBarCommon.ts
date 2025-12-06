@@ -13,10 +13,10 @@ export class ProgressBarCommon extends LitUploaderBlock {
   private _unobserveCollectionCb?: () => void;
 
   @state()
-  protected visible = false;
+  private _visible = false;
 
   @state()
-  protected value = 0;
+  private _value = 0;
 
   public constructor() {
     super();
@@ -34,11 +34,11 @@ export class ProgressBarCommon extends LitUploaderBlock {
         return item?.getValue('isUploading') ?? false;
       });
 
-      this.visible = anyUploading;
+      this._visible = anyUploading;
     });
 
     this.sub('*commonProgress', (progress: number) => {
-      this.value = progress;
+      this._value = progress;
     });
   }
 
@@ -46,7 +46,7 @@ export class ProgressBarCommon extends LitUploaderBlock {
     super.updated(changedProperties);
 
     if (changedProperties.has('visible' as keyof ProgressBarCommon)) {
-      if (this.visible) {
+      if (this._visible) {
         this.setAttribute('active', '');
       } else {
         this.removeAttribute('active');
@@ -61,6 +61,6 @@ export class ProgressBarCommon extends LitUploaderBlock {
   }
 
   public override render() {
-    return html` <uc-progress-bar .value=${this.value} .visible=${this.visible}></uc-progress-bar> `;
+    return html` <uc-progress-bar .value=${this._value} .visible=${this._visible}></uc-progress-bar> `;
   }
 }

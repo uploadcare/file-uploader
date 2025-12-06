@@ -24,29 +24,30 @@ export class UploadList extends LitUploaderBlock {
   public override activityType = LitActivityBlock.activities.UPLOAD_LIST;
 
   @state()
-  private doneBtnVisible = false;
+  private _doneBtnVisible = false;
 
   @state()
-  private doneBtnEnabled = false;
+  private _doneBtnEnabled = false;
 
   @state()
-  private uploadBtnVisible = false;
+  private _uploadBtnVisible = false;
 
   @state()
-  private addMoreBtnVisible = false;
+  private _addMoreBtnVisible = false;
 
   @state()
-  private addMoreBtnEnabled = false;
+  private _addMoreBtnEnabled = false;
 
   @state()
-  private commonErrorMessage: string | null = null;
+  private _commonErrorMessage: string | null = null;
 
   @state()
-  private hasFiles = false;
+  private _hasFiles = false;
 
   @state()
   private _latestSummary: Summary | null = null;
-  protected get headerText() {
+
+  private get _headerText() {
     if (!this._latestSummary) {
       return '';
     }
@@ -106,7 +107,7 @@ export class UploadList extends LitUploaderBlock {
     }
   }, 300);
 
-  protected _updateUploadsState(): void {
+  private _updateUploadsState(): void {
     const collectionState = this.api.getOutputCollectionState();
     const summary: Summary = {
       total: collectionState.totalCount,
@@ -135,12 +136,12 @@ export class UploadList extends LitUploaderBlock {
       doneBtnEnabled = summary.total === summary.succeed && fitCountRestrictions && validationOk && groupOk;
     }
 
-    this.doneBtnVisible = allDone;
-    this.doneBtnEnabled = doneBtnEnabled;
-    this.uploadBtnVisible = uploadBtnVisible;
-    this.addMoreBtnEnabled = summary.total === 0 || (!tooMany && !exact);
-    this.addMoreBtnVisible = !exact || this.cfg.multiple;
-    this.hasFiles = summary.total > 0;
+    this._doneBtnVisible = allDone;
+    this._doneBtnEnabled = doneBtnEnabled;
+    this._uploadBtnVisible = uploadBtnVisible;
+    this._addMoreBtnEnabled = summary.total === 0 || (!tooMany && !exact);
+    this._addMoreBtnVisible = !exact || this.cfg.multiple;
+    this._hasFiles = summary.total > 0;
 
     this._latestSummary = summary;
   }
@@ -204,10 +205,10 @@ export class UploadList extends LitUploaderBlock {
     this.sub('*collectionErrors', (errors: OutputError<OutputCollectionErrorType>[]) => {
       const firstError = errors.filter((err) => err.type !== 'SOME_FILES_HAS_ERRORS')[0];
       if (!firstError) {
-        this.commonErrorMessage = null;
+        this._commonErrorMessage = null;
         return;
       }
-      this.commonErrorMessage = firstError.message;
+      this._commonErrorMessage = firstError.message;
     });
   }
 
@@ -222,7 +223,7 @@ export class UploadList extends LitUploaderBlock {
   public override render() {
     return html`
   <uc-activity-header>
-    <span aria-live="polite" class="uc-header-text">${this.headerText}</span>
+    <span aria-live="polite" class="uc-header-text">${this._headerText}</span>
     <button
       type="button"
       class="uc-mini-btn uc-close-btn"
@@ -234,7 +235,7 @@ export class UploadList extends LitUploaderBlock {
     </button>
   </uc-activity-header>
 
-  <div class="uc-no-files" ?hidden=${this.hasFiles}>
+  <div class="uc-no-files" ?hidden=${this._hasFiles}>
     ${this.yield('empty', html`<span>${this.l10n('no-files')}</span>`)}
   </div>
 
@@ -250,17 +251,17 @@ export class UploadList extends LitUploaderBlock {
       type="button"
       class="uc-add-more-btn uc-secondary-btn"
       @click=${this._handleAdd}
-      ?disabled=${!this.addMoreBtnEnabled}
-      ?hidden=${!this.addMoreBtnVisible}
+      ?disabled=${!this._addMoreBtnEnabled}
+      ?hidden=${!this._addMoreBtnVisible}
     >
       <uc-icon name="add"></uc-icon><span>${this.l10n('add-more')}</span>
     </button>
   </div>
 
   <div class="uc-common-error" 
-  ?hidden=${!this.commonErrorMessage}
+  ?hidden=${!this._commonErrorMessage}
   >
-  ${this.commonErrorMessage ?? ''}
+  ${this._commonErrorMessage ?? ''}
   </div>
 
   <div class="uc-toolbar">
@@ -269,8 +270,8 @@ export class UploadList extends LitUploaderBlock {
     <button
       type="button"
       class="uc-add-more-btn uc-secondary-btn"
-      ?hidden=${!this.addMoreBtnVisible}
-      ?disabled=${!this.addMoreBtnEnabled}
+      ?hidden=${!this._addMoreBtnVisible}
+      ?disabled=${!this._addMoreBtnEnabled}
       @click=${this._handleAdd}
     >
       <uc-icon name="add"></uc-icon><span>${this.l10n('add-more')}</span>
@@ -278,14 +279,14 @@ export class UploadList extends LitUploaderBlock {
     <button
       type="button"
       class="uc-upload-btn uc-primary-btn"
-      ?hidden=${!this.uploadBtnVisible}
+      ?hidden=${!this._uploadBtnVisible}
       @click=${this._handleUpload}
     >${this.l10n('upload')}</button>
     <button
       type="button"
       class="uc-done-btn uc-primary-btn"
-      ?hidden=${!this.doneBtnVisible}
-      ?disabled=${!this.doneBtnEnabled}
+      ?hidden=${!this._doneBtnVisible}
+      ?disabled=${!this._doneBtnEnabled}
       @click=${this._handleDone}
     >
       ${this.l10n('done')}

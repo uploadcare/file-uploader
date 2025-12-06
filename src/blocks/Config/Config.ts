@@ -60,7 +60,7 @@ export class Config extends LitBlock {
     ),
   } as unknown as LitBlock['init$'] & ConfigType;
 
-  private computationControllers: Map<keyof ConfigType, AbortController> = new Map();
+  private _computationControllers: Map<keyof ConfigType, AbortController> = new Map();
 
   private _flushValueToAttribute(key: keyof ConfigType, value: unknown) {
     if (!isComplexKey(key)) {
@@ -177,7 +177,7 @@ export class Config extends LitBlock {
           key,
           setValue: this._setValue.bind(this),
           getValue: this._getValue.bind(this),
-          computationControllers: this.computationControllers,
+          computationControllers: this._computationControllers,
         });
       });
     }

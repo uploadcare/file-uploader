@@ -34,16 +34,16 @@ export class CloudImageEditorBlock extends LitBlock {
   public static override styleAttrs = ['uc-cloud-image-editor'];
 
   @state()
-  private statusMessage = '';
+  private _statusMessage = '';
 
   @state()
-  private imageSrc = TRANSPARENT_PIXEL_SRC;
+  private _imageSrc = TRANSPARENT_PIXEL_SRC;
 
   @state()
-  private fileType = '';
+  private _fileType = '';
 
   @state()
-  private showLoader = false;
+  private _showLoader = false;
 
   @property({ type: String, reflect: true })
   public uuid: string | null = null;
@@ -58,47 +58,47 @@ export class CloudImageEditorBlock extends LitBlock {
   public tabs: string | null = DEFAULT_TABS;
 
   @state()
-  private hasNetworkProblems = false;
+  private _hasNetworkProblems = false;
 
   @state()
-  private isInitialized = false;
+  private _isInitialized = false;
 
-  private pendingInitUpdate: Promise<void> | null = null;
+  private _pendingInitUpdate: Promise<void> | null = null;
 
-  private readonly debouncedShowLoader = debounce((show: boolean) => {
-    this.showLoader = show;
+  private readonly _debouncedShowLoader = debounce((show: boolean) => {
+    this._showLoader = show;
   }, 300);
 
-  private readonly imgRef = createRef<HTMLImageElement>();
-  private readonly cropperRef = createRef<EditorImageCropper>();
-  private readonly faderRef = createRef<EditorImageFader>();
-  private readonly imgContainerRef = createRef<HTMLDivElement>();
+  private readonly _imgRef = createRef<HTMLImageElement>();
+  private readonly _cropperRef = createRef<EditorImageCropper>();
+  private readonly _faderRef = createRef<EditorImageFader>();
+  private readonly _imgContainerRef = createRef<HTMLDivElement>();
 
-  private readonly handleImageLoad = (): void => {
-    this.debouncedShowLoader(false);
+  private readonly _handleImageLoad = (): void => {
+    this._debouncedShowLoader(false);
 
-    if (this.imageSrc !== TRANSPARENT_PIXEL_SRC) {
+    if (this._imageSrc !== TRANSPARENT_PIXEL_SRC) {
       this.$['*networkProblems'] = false;
     }
   };
 
-  private readonly handleImageError = (): void => {
-    this.debouncedShowLoader(false);
+  private readonly _handleImageError = (): void => {
+    this._debouncedShowLoader(false);
     this.$['*networkProblems'] = true;
   };
 
-  private readonly handleRetryNetwork = (): void => {
+  private readonly _handleRetryNetwork = (): void => {
     const retry = this.$['*on.retryNetwork'] as (() => void) | undefined;
     retry?.();
   };
 
-  private scheduleInitialization(): void {
-    if (this.isInitialized || this.pendingInitUpdate) {
+  private _scheduleInitialization(): void {
+    if (this._isInitialized || this._pendingInitUpdate) {
       return;
     }
-    this.pendingInitUpdate = this.updateComplete.then(() => {
-      this.pendingInitUpdate = null;
-      this.isInitialized = true;
+    this._pendingInitUpdate = this.updateComplete.then(() => {
+      this._pendingInitUpdate = null;
+      this._isInitialized = true;
     });
   }
 
@@ -110,51 +110,51 @@ export class CloudImageEditorBlock extends LitBlock {
   public override initCallback(): void {
     super.initCallback();
 
-    this.syncTabListFromProp();
-    this.syncCropPresetState();
+    this._syncTabListFromProp();
+    this._syncCropPresetState();
   }
 
-  private assignSharedElements(): void {
-    const faderEl = this.faderRef.value;
+  private _assignSharedElements(): void {
+    const faderEl = this._faderRef.value;
     if (faderEl) {
       this.$['*faderEl'] = faderEl;
     }
 
-    const cropperEl = this.cropperRef.value;
+    const cropperEl = this._cropperRef.value;
     if (cropperEl) {
       this.$['*cropperEl'] = cropperEl;
     }
 
-    const imgContainerEl = this.imgContainerRef.value;
+    const imgContainerEl = this._imgContainerRef.value;
     if (imgContainerEl) {
       this.$['*imgContainerEl'] = imgContainerEl;
     }
 
-    const imgEl = this.imgRef.value;
+    const imgEl = this._imgRef.value;
     if (imgEl) {
       this.$['*imgEl'] = imgEl;
     }
   }
 
-  private attachImageListeners(): void {
-    const imgEl = this.imgRef.value;
+  private _attachImageListeners(): void {
+    const imgEl = this._imgRef.value;
     if (!imgEl) {
       return;
     }
-    imgEl.addEventListener('load', this.handleImageLoad);
-    imgEl.addEventListener('error', this.handleImageError);
+    imgEl.addEventListener('load', this._handleImageLoad);
+    imgEl.addEventListener('error', this._handleImageError);
   }
 
-  private detachImageListeners(): void {
-    const imgEl = this.imgRef.value;
+  private _detachImageListeners(): void {
+    const imgEl = this._imgRef.value;
     if (!imgEl) {
       return;
     }
-    imgEl.removeEventListener('load', this.handleImageLoad);
-    imgEl.removeEventListener('error', this.handleImageError);
+    imgEl.removeEventListener('load', this._handleImageLoad);
+    imgEl.removeEventListener('error', this._handleImageError);
   }
 
-  private get imageClassName(): string {
+  private get _imageClassName(): string {
     const tabId = this.$['*tabId'] as TabIdValue;
     return classNames('uc-image', {
       'uc-image_hidden_to_cropper': tabId === TabId.CROP,
@@ -165,7 +165,7 @@ export class CloudImageEditorBlock extends LitBlock {
   /**
    * To proper work, we need non-zero size the element. So, we'll wait for it.
    */
-  private waitForSize(): Promise<void> {
+  private _waitForSize(): Promise<void> {
     const TIMEOUT = 3000;
     return new Promise<void>((resolve, reject) => {
       const timeoutId = window.setTimeout(() => {
@@ -188,8 +188,8 @@ export class CloudImageEditorBlock extends LitBlock {
 
   public override firstUpdated(changedProperties: PropertyValues<this>): void {
     super.firstUpdated(changedProperties);
-    this.assignSharedElements();
-    this.attachImageListeners();
+    this._assignSharedElements();
+    this._attachImageListeners();
     void this.initEditor();
 
     const hasInitialSource = Boolean(this.uuid || this.cdnUrl);
@@ -200,16 +200,16 @@ export class CloudImageEditorBlock extends LitBlock {
   }
 
   public override disconnectedCallback(): void {
-    this.detachImageListeners();
+    this._detachImageListeners();
     super.disconnectedCallback();
   }
 
   public override render() {
-    const fileType = this.fileType ?? '';
-    const message = this.statusMessage ?? '';
-    const src = this.imageSrc || TRANSPARENT_PIXEL_SRC;
-    const showLoader = this.showLoader;
-    const showNetworkProblems = this.hasNetworkProblems;
+    const fileType = this._fileType ?? '';
+    const message = this._statusMessage ?? '';
+    const src = this._imageSrc || TRANSPARENT_PIXEL_SRC;
+    const showLoader = this._showLoader;
+    const showNetworkProblems = this._hasNetworkProblems;
 
     return html`
       ${unsafeSVG(svgIconsSprite)}
@@ -222,24 +222,24 @@ export class CloudImageEditorBlock extends LitBlock {
             <div class="uc-network_problems_text">Network error</div>
           </div>
           <div class="uc-network_problems_footer">
-            <uc-btn-ui theme="primary" text="Retry" @click=${this.handleRetryNetwork}></uc-btn-ui>
+            <uc-btn-ui theme="primary" text="Retry" @click=${this._handleRetryNetwork}></uc-btn-ui>
           </div>
         </uc-presence-toggle>
         <div class="uc-viewport">
           <div class="uc-file_type_outer">
             <div class="uc-file_type">${fileType}</div>
           </div>
-          <div class="uc-image_container" ${ref(this.imgContainerRef)}>
-            <img src=${src} class=${this.imageClassName} ${ref(this.imgRef)} />
-            ${when(this.isInitialized, () => html`<uc-editor-image-cropper ${ref(this.cropperRef)}></uc-editor-image-cropper>`)}
-            <uc-editor-image-fader ${ref(this.faderRef)}></uc-editor-image-fader>
+          <div class="uc-image_container" ${ref(this._imgContainerRef)}>
+            <img src=${src} class=${this._imageClassName} ${ref(this._imgRef)} />
+            ${when(this._isInitialized, () => html`<uc-editor-image-cropper ${ref(this._cropperRef)}></uc-editor-image-cropper>`)}
+            <uc-editor-image-fader ${ref(this._faderRef)}></uc-editor-image-fader>
           </div>
           <div class="uc-info_pan">${message}</div>
         </div>
         <div class="uc-toolbar">
           <uc-line-loader-ui .active=${showLoader}></uc-line-loader-ui>
           <div class="uc-toolbar_content uc-toolbar_content__editor">
-            ${when(this.isInitialized, () => html`<uc-editor-toolbar></uc-editor-toolbar>`)}
+            ${when(this._isInitialized, () => html`<uc-editor-toolbar></uc-editor-toolbar>`)}
           </div>
         </div>
       </div>
@@ -258,20 +258,20 @@ export class CloudImageEditorBlock extends LitBlock {
     }
 
     if (changedProperties.has('tabs')) {
-      this.syncTabListFromProp();
+      this._syncTabListFromProp();
     }
 
     if (changedProperties.has('cropPreset') || changedProperties.has('cdnUrl')) {
-      this.syncCropPresetState();
+      this._syncCropPresetState();
     }
   }
 
-  private syncTabListFromProp(): void {
+  private _syncTabListFromProp(): void {
     const tabsValue = this.tabs || DEFAULT_TABS;
     this.$['*tabList'] = parseTabs(tabsValue);
   }
 
-  private syncCropPresetState(): void {
+  private _syncCropPresetState(): void {
     const list = parseCropPreset(this.cropPreset ?? '') as CropPresetList;
     let closest: CropPresetList[number] | null = null;
 
@@ -293,7 +293,7 @@ export class CloudImageEditorBlock extends LitBlock {
     if (!this.isConnected) {
       return;
     }
-    await this.waitForSize();
+    await this._waitForSize();
 
     if (this.cdnUrl) {
       const cdnUrlValue = this.cdnUrl as string;
@@ -343,12 +343,12 @@ export class CloudImageEditorBlock extends LitBlock {
       }
     }
 
-    this.scheduleInitialization();
+    this._scheduleInitialization();
   }
 
   public async initEditor(): Promise<void> {
     try {
-      await this.waitForSize();
+      await this._waitForSize();
     } catch (err) {
       if (this.isConnected) {
         // @ts-expect-error TODO: fix this
@@ -361,7 +361,7 @@ export class CloudImageEditorBlock extends LitBlock {
 
     this.sub('*networkProblems', (networkProblems) => {
       const hasIssues = Boolean(networkProblems);
-      this.hasNetworkProblems = hasIssues;
+      this._hasNetworkProblems = hasIssues;
     });
 
     this.sub(

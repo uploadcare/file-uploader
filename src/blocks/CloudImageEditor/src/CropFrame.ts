@@ -45,24 +45,24 @@ export class CropFrame extends LitBlock {
   private _frameImage?: SVGImageElement;
   private _guidesHidden = false;
   @state()
-  private _dragging = false;
-  private readonly svgRef = createRef<SVGSVGElement>();
+  private _draggingValue = false;
+  private readonly _svgRef = createRef<SVGSVGElement>();
   private _svgReady = false;
   private _pendingMaskHref: string | null = null;
 
   private get _svgElement(): SVGSVGElement | null {
-    return this.svgRef.value ?? null;
+    return this._svgRef.value ?? null;
   }
 
-  private get dragging(): boolean {
-    return this._dragging;
+  private get _dragging(): boolean {
+    return this._draggingValue;
   }
 
-  private set dragging(value: boolean) {
-    if (this._dragging === value) {
+  private set _dragging(value: boolean) {
+    if (this._draggingValue === value) {
       return;
     }
-    this._dragging = value;
+    this._draggingValue = value;
     this._applyGuidesDragState();
   }
 
@@ -74,8 +74,8 @@ export class CropFrame extends LitBlock {
       'class',
       classNames({
         'uc-guides--hidden': this._guidesHidden,
-        'uc-guides--visible': !this._guidesHidden && this._dragging,
-        'uc-guides--semi-hidden': !this._guidesHidden && !this._dragging,
+        'uc-guides--visible': !this._guidesHidden && this._draggingValue,
+        'uc-guides--semi-hidden': !this._guidesHidden && !this._draggingValue,
       }),
     );
   }
@@ -366,7 +366,7 @@ export class CropFrame extends LitBlock {
     const x = e.x - svgX;
     const y = e.y - svgY;
 
-    this.dragging = true;
+    this._dragging = true;
     this._draggingThumb = thumb;
     this._dragStartPoint = [x, y];
     this._dragStartCrop = { ...cropBox };
@@ -375,17 +375,17 @@ export class CropFrame extends LitBlock {
   private readonly _handlePointerUp = (e: PointerEvent): void => {
     this._updateCursor();
 
-    if (!this.dragging) {
+    if (!this._dragging) {
       return;
     }
     e.stopPropagation();
     e.preventDefault();
 
-    this.dragging = false;
+    this._dragging = false;
   };
 
   private readonly _handlePointerMove = (e: PointerEvent): void => {
-    if (!this.dragging || !this._dragStartPoint || !this._draggingThumb) {
+    if (!this._dragging || !this._dragStartPoint || !this._draggingThumb) {
       return;
     }
     e.stopPropagation();
@@ -573,8 +573,8 @@ export class CropFrame extends LitBlock {
     document.addEventListener('pointerup', this._handlePointerUp, true);
   }
 
-  protected override firstUpdated(_changedProperties: PropertyValues<this>): void {
-    super.firstUpdated(_changedProperties);
+  protected override firstUpdated(changedProperties: PropertyValues<this>): void {
+    super.firstUpdated(changedProperties);
     this._initializeSvg();
   }
 
@@ -607,6 +607,6 @@ export class CropFrame extends LitBlock {
   }
 
   public override render(): TemplateResult {
-    return html`<svg class="uc-svg" xmlns="http://www.w3.org/2000/svg" ${ref(this.svgRef)}></svg>`;
+    return html`<svg class="uc-svg" xmlns="http://www.w3.org/2000/svg" ${ref(this._svgRef)}></svg>`;
   }
 }

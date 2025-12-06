@@ -34,49 +34,49 @@ export class BtnUi extends LitBlock {
 
   protected override firstUpdated(_changed: PropertyValues<this>): void {
     super.firstUpdated(_changed);
-    this.applyReverse();
-    this.applyThemeClass();
+    this._applyReverse();
+    this._applyThemeClass();
   }
 
   protected override updated(changed: PropertyValues<this>): void {
     super.updated(changed);
 
     if (changed.has('reverse')) {
-      this.applyReverse();
+      this._applyReverse();
     }
 
     if (changed.has('theme')) {
-      this.applyThemeClass();
+      this._applyThemeClass();
     }
   }
 
-  private applyReverse(): void {
+  private _applyReverse(): void {
     this.style.flexDirection = this.reverse ? 'row-reverse' : '';
   }
 
-  private applyThemeClass(): void {
+  private _applyThemeClass(): void {
     if (this.theme && this.theme !== 'custom') {
       this.className = `uc-${this.theme}`;
     }
   }
 
-  private get iconClassMap(): Record<string, boolean> {
-    const iconHidden = this.computedIconHidden;
+  private get _iconClassMap(): Record<string, boolean> {
+    const iconHidden = this._computedIconHidden;
     return {
       'uc-icon': true,
       'uc-icon_left': !this.reverse,
       'uc-icon_right': this.reverse,
       'uc-icon_hidden': iconHidden,
-      'uc-icon_single': this.computedIconSingle,
+      'uc-icon_single': this._computedIconSingle,
     };
   }
 
-  private get computedIconHidden(): boolean {
+  private get _computedIconHidden(): boolean {
     return !this.icon;
   }
 
-  private get computedIconSingle(): boolean {
-    return !this.text && !this.computedIconHidden;
+  private get _computedIconSingle(): boolean {
+    return !this.text && !this._computedIconHidden;
   }
 
   public override render() {
@@ -89,9 +89,9 @@ export class BtnUi extends LitBlock {
         title=${ifDefined(this.l10n(this.titleProp))}
       >
         <uc-icon
-          class=${classMap(this.iconClassMap)}
+          class=${classMap(this._iconClassMap)}
           name=${ifDefined(this.icon || undefined)}
-          ?hidden=${this.computedIconHidden}
+          ?hidden=${this._computedIconHidden}
         ></uc-icon>
         <div class="uc-text">${this.text}</div>
       </button>

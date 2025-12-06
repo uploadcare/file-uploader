@@ -31,7 +31,7 @@ export class EditorFreeformButtonControl extends EditorButtonControl {
     this.icon = 'arrow-dropdown';
 
     this.sub('*currentAspectRatio', (opt: CropAspectRatio) => {
-      const title = this.computeTitle(opt);
+      const title = this._computeTitle(opt);
       this.title = title;
       this.titleProp = title;
     });
@@ -41,7 +41,7 @@ export class EditorFreeformButtonControl extends EditorButtonControl {
     this.$['*showListAspectRatio'] = true;
   }
 
-  private computeTitle(aspectRatio?: CropAspectRatio): string {
+  private _computeTitle(aspectRatio?: CropAspectRatio): string {
     if (!aspectRatio) {
       return '';
     }
@@ -84,7 +84,7 @@ export class EditorAspectRatioButtonControl extends EditorButtonControl {
     this._aspectRatio = value;
     this.requestUpdate('aspectRatio', previous);
     if (value) {
-      this.updateAspectRatioPresentation(value);
+      this._updateAspectRatioPresentation(value);
     } else {
       this.removeAttribute('uc-aspect-ratio-freeform');
       this.title = '';
@@ -96,7 +96,7 @@ export class EditorAspectRatioButtonControl extends EditorButtonControl {
     super.initCallback();
 
     if (this._aspectRatio) {
-      this.updateAspectRatioPresentation(this._aspectRatio);
+      this._updateAspectRatioPresentation(this._aspectRatio);
     }
 
     this.sub('*currentAspectRatio', (opt: CropAspectRatio | undefined) => {
@@ -115,7 +115,7 @@ export class EditorAspectRatioButtonControl extends EditorButtonControl {
     this.$['*currentAspectRatio'] = this._aspectRatio;
   }
 
-  private updateAspectRatioPresentation(value: CropAspectRatio): void {
+  private _updateAspectRatioPresentation(value: CropAspectRatio): void {
     const isFreeform = !!value.hasFreeform;
     this.toggleAttribute('uc-aspect-ratio-freeform', isFreeform);
 
@@ -144,7 +144,7 @@ export class EditorAspectRatioButtonControl extends EditorButtonControl {
     }
   }
 
-  private renderIcon() {
+  private _renderIcon() {
     const ratio = this._aspectRatio;
     if (!ratio || ratio.hasFreeform) {
       return html`<uc-icon name=${this.icon}></uc-icon>`;
@@ -187,7 +187,7 @@ export class EditorAspectRatioButtonControl extends EditorButtonControl {
         title=${ifDefined(this.titleProp)}
         @click=${clickHandler}
       >
-        <uc-icon>${this.renderIcon()}</uc-icon>
+        <uc-icon>${this._renderIcon()}</uc-icon>
         <div class="uc-title" ?hidden=${!title}>${title}</div>
       </button>
     `;
