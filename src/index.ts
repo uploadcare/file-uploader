@@ -2,7 +2,8 @@
 import './blocks/themes/uc-basic/index.css';
 
 // Symbiote.js
-export { PubSub } from './lit/PubSubCompat';
+export { PubSub as Data } from './lit/PubSubCompat';
+export { BaseComponent } from './lit/BaseComponent';
 export { UID } from './utils/UID';
 
 // Utils:
