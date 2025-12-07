@@ -200,6 +200,10 @@ export function SymbioteMixin<TState extends Record<string, unknown> = Record<st
           this._symbioteSharedPubSub =
             PubSub.getCtx<TState>(ctxName) ?? PubSub.registerCtx<TState>(initialValue, ctxName);
 
+          for (const [key, defaultValue] of Object.entries(this.init$) as [keyof TState, TState[keyof TState]][]) {
+            this._symbioteSharedPubSub.add(key, defaultValue, this.ctxOwner);
+          }
+
           this._applyPendingSharedAdds();
         }
       }
