@@ -48,7 +48,17 @@ describe('NPM package', () => {
     ];
 
     for (const bundle of webBundles) {
-      const m = await import(`@uploadcare/file-uploader/web/${bundle}`);
+      let m: unknown;
+      try {
+        m = await import(`@uploadcare/file-uploader/web/${bundle}`);
+      } catch (error) {
+        // Vite@4 can't dynamically import css files
+        // Here we're just want to ensure that the css file exists and is importable
+        // In that case we receive specific error which we can safely ignore
+        if (error instanceof Error && 'code' in error && error.code === 'ERR_UNKNOWN_FILE_EXTENSION') {
+          m = { default: '' };
+        }
+      }
       expect(stickyPackageVersion(m)).toMatchSnapshot(`web/${bundle}`);
     }
   });
