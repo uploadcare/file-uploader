@@ -1,4 +1,4 @@
-import { type MapStore, map } from 'nanostores';
+import { listenKeys, type MapStore, map } from 'nanostores';
 
 export type Subscription = {
   remove: () => void;
@@ -15,28 +15,22 @@ export class PubSub<T extends Record<string, unknown> = Record<string, unknown>>
 
   public pub<K extends keyof T>(key: K, value: T[K]): void {
     if (!(key in this._store.get())) {
-      console.warn(`PubSub: Key "${String(key)}" not found`);
+      console.warn(`PubSub#pub: Key "${String(key)}" not found`);
     }
     this._store.setKey(key as never, value as never);
   }
 
   public sub<K extends keyof T>(key: K, callback: (value: T[K]) => void, init = true): Subscription {
     if (!(key in this._store.get())) {
-      console.warn(`PubSub: Key "${String(key)}" not found`);
+      console.warn(`PubSub#sub: Key "${String(key)}" not found`);
     }
 
     if (init) {
       callback(this._store.get()[key]);
     }
 
-    let prevValue = this._store.get()[key];
-
-    const unsubscribe = this._store.subscribe((state) => {
-      const newValue = state[key];
-      if (newValue !== prevValue) {
-        prevValue = newValue;
-        callback(newValue);
-      }
+    const unsubscribe = listenKeys(this._store, [key as any], (values: Partial<T>) => {
+      callback(values[key] as T[K]);
     });
 
     return {
@@ -46,7 +40,7 @@ export class PubSub<T extends Record<string, unknown> = Record<string, unknown>>
 
   public read<K extends keyof T>(key: K): T[K] {
     if (!(key in this._store.get())) {
-      console.warn(`PubSub: Key "${String(key)}" not found`);
+      console.warn(`PubSub#read: Key "${String(key)}" not found`);
     }
     return this._store.get()[key];
   }
