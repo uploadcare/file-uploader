@@ -350,11 +350,15 @@ export class UploaderPublicApi {
 
   public setCurrentActivity = <T extends RegisteredActivityType>(
     activityType: T,
-    params?: T extends keyof ActivityParamsMap ? ActivityParamsMap[T] : undefined,
+    ...params: T extends keyof ActivityParamsMap
+      ? [ActivityParamsMap[T]]
+      : T extends RegisteredActivityType
+        ? [undefined?]
+        : [never]
   ) => {
     if (this._ctx.hasBlockInCtx((b) => b.activityType === activityType)) {
       this._ctx.set$({
-        '*currentActivityParams': params ?? {},
+        '*currentActivityParams': params[0] ?? {},
         '*currentActivity': activityType,
       });
       return;

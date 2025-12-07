@@ -19,7 +19,7 @@ import {
 
 const instance = new UploadCtxProvider();
 instance.uploadCollection.size;
-instance.setOrAddState('fileId', 'uploading');
+instance.setOrAddState('*currentActivity', 'camera');
 
 const api = instance.getAPI();
 api.addFileFromUrl('https://example.com/image.png');
