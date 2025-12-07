@@ -53,6 +53,10 @@ const getLocalPropName = (key: string) => `__${key}`;
 
 // biome-ignore lint/suspicious/noUnsafeDeclarationMerging: This is intentional interface merging, used to add configuration setters/getters
 export class Config extends LitBlock {
+  public declare attributesMeta: Partial<ConfigPlainType> & {
+    'ctx-name': string;
+  };
+
   public override init$ = {
     ...this.init$,
     ...Object.fromEntries(

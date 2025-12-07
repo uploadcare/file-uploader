@@ -10,6 +10,10 @@ interface FileUploaderRegularInitState extends BaseInitState {
 }
 
 export class FileUploaderRegular extends LitSolutionBlock {
+  public declare attributesMeta: {
+    headless?: boolean;
+    'ctx-name': string;
+  };
   public static override styleAttrs = [...super.styleAttrs, 'uc-file-uploader-regular'];
 
   @property({ type: Boolean })
