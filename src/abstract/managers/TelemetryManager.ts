@@ -19,7 +19,13 @@ type TelemetryEventBody = Partial<Pick<TelemetryState, 'payload' | 'config'>> & 
   eventType?: CommonEventType;
 };
 
-export class TelemetryManager {
+export interface ITelemetryManager {
+  sendEvent(body: TelemetryEventBody): void;
+  sendEventError(error: unknown, context?: string): void;
+  sendEventCloudImageEditor(e: MouseEvent, tabId: string, options?: Record<string, unknown>): void;
+}
+
+export class TelemetryManager implements ITelemetryManager {
   private readonly _sessionId: string = crypto.randomUUID();
   private readonly _telemetryInstance: TelemetryAPIService;
   private readonly _block: LitBlock;

@@ -4,7 +4,7 @@ import type { A11y } from '../abstract/managers/a11y';
 import type { LocaleManager } from '../abstract/managers/LocaleManager';
 import type { ModalManager } from '../abstract/managers/ModalManager';
 import type { SecureUploadsManager } from '../abstract/managers/SecureUploadsManager';
-import type { TelemetryManager } from '../abstract/managers/TelemetryManager';
+import type { ITelemetryManager } from '../abstract/managers/TelemetryManager';
 import type { ValidationManager } from '../abstract/managers/ValidationManager';
 import type { TypedCollection } from '../abstract/TypedCollection';
 import type { UploaderPublicApi } from '../abstract/UploaderPublicApi';
@@ -43,7 +43,7 @@ type UploaderBlockCtxState = ActivityBlockCtxState & {
   '*collectionState': OutputCollectionState | null;
   '*groupInfo': UploadcareGroup | null;
   '*uploadTrigger': Set<Uid>;
-  '*secureUploadsManager': SecureUploadsManager | null;
+  '*secureUploadsManager': SecureUploadsManager;
 };
 
 type SolutionBlockCtxState = UploaderBlockCtxState & {
@@ -89,9 +89,9 @@ type DynamicBlockState = {
   '*blocksRegistry': Set<LitBlock>;
   '*eventEmitter': EventEmitter;
   '*localeManager': LocaleManager;
-  '*telemetryManager': TelemetryManager;
+  '*telemetryManager': ITelemetryManager;
   '*a11y': A11y;
-  '*modalManager': ModalManager;
+  '*modalManager': ModalManager | null;
 };
 
 type DynamicUploaderBlockState = {

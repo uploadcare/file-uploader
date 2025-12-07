@@ -3,7 +3,7 @@ import { blockCtx } from '../abstract/CTX';
 import { A11y } from '../abstract/managers/a11y';
 import { LocaleManager, localeStateKey } from '../abstract/managers/LocaleManager';
 import { ModalManager } from '../abstract/managers/ModalManager';
-import { TelemetryManager } from '../abstract/managers/TelemetryManager';
+import { type ITelemetryManager, TelemetryManager } from '../abstract/managers/TelemetryManager';
 import { sharedConfigKey } from '../abstract/sharedConfigKey';
 import { initialConfig } from '../blocks/Config/initialConfig';
 import { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter';
@@ -22,9 +22,20 @@ import type { SharedState } from './SharedState';
 import { SymbioteMixin } from './SymbioteCompatMixin';
 import { TestModeController } from './TestModeController';
 
+interface SharedContextInstance {
+  destroy?(): void;
+}
+
 const LitBlockBase = RegisterableElementMixin(SymbioteMixin<SharedState>()(CssDataMixin(LightDomMixin(LitElement))));
 export class LitBlock extends LitBlockBase {
-  private __cfgProxy!: ConfigType;
+  private _cfgProxy!: ConfigType;
+  private _sharedContextInstances: Map<
+    keyof SharedState,
+    {
+      persist: boolean;
+      instance: SharedContextInstance;
+    }
+  > = new Map();
 
   public static styleAttrs: string[] = [];
 
@@ -104,31 +115,25 @@ export class LitBlock extends LitBlockBase {
   }
 
   public override initCallback(): void {
-    if (!this.has('*blocksRegistry')) {
-      this.add('*blocksRegistry', new Set());
-    }
-
-    const blocksRegistry = this.$['*blocksRegistry'] as Set<LitBlock>;
-    blocksRegistry.add(this);
-
-    if (!this.has('*eventEmitter')) {
-      this.add('*eventEmitter', new EventEmitter(this.debugPrint.bind(this)));
-    }
-    if (!this.has('*localeManager')) {
-      this.add('*localeManager', new LocaleManager(this));
-    }
-
-    if (this.cfg.qualityInsights && !this.has('*telemetryManager')) {
-      this.add('*telemetryManager', new TelemetryManager(this));
-    }
-
-    if (!this.has('*a11y')) {
-      this.add('*a11y', new A11y());
-    }
-
-    if (!this.has('*modalManager')) {
-      this.add('*modalManager', new ModalManager(this));
-    }
+    this.addSharedContextInstance('*blocksRegistry', () => new Set(), {
+      persist: true,
+    });
+    this.addSharedContextInstance('*eventEmitter', () => new EventEmitter(this.debugPrint.bind(this)));
+    this.addSharedContextInstance('*localeManager', () => new LocaleManager(this));
+    this.addSharedContextInstance('*modalManager', () => new ModalManager(this));
+    this.addSharedContextInstance('*a11y', () => new A11y(), {
+      persist: true,
+    });
+    this.addSharedContextInstance('*telemetryManager', () => {
+      if (this.cfg.qualityInsights) {
+        return new TelemetryManager(this);
+      }
+      return {
+        sendEvent: () => {},
+        sendEventError: () => {},
+        sendEventCloudImageEditor: () => {},
+      } as ITelemetryManager;
+    });
 
     this.sub(localeStateKey('locale-id'), (localeId: string) => {
       const direction = getLocaleDirection(localeId);
@@ -143,6 +148,8 @@ export class LitBlock extends LitBlockBase {
       }
       this.setAttribute('data-testid', this.testId);
     });
+
+    this.blocksRegistry.add(this);
   }
 
   public get testId(): string {
@@ -150,34 +157,24 @@ export class LitBlock extends LitBlockBase {
     return testId;
   }
 
-  public get modalManager(): ModalManager | undefined {
-    return this.has('*modalManager') ? (this.$['*modalManager'] as ModalManager) : undefined;
+  public get modalManager(): ModalManager | null {
+    return this.getSharedContextInstance('*modalManager', false);
   }
 
-  public get telemetryManager():
-    | TelemetryManager
-    | { sendEvent: () => void; sendEventCloudImageEditor: () => void; sendEventError: () => void } {
-    if (!this.cfg.qualityInsights) {
-      return {
-        sendEvent: () => {},
-        sendEventCloudImageEditor: () => {},
-        sendEventError: () => {},
-      };
-    }
-
-    return (this.has('*telemetryManager') && this.$['*telemetryManager']) as TelemetryManager;
+  public get telemetryManager(): ITelemetryManager {
+    return this.getSharedContextInstance('*telemetryManager');
   }
 
-  public get localeManager(): LocaleManager | null {
-    return this.has('*localeManager') ? (this.$['*localeManager'] as LocaleManager) : null;
+  public get localeManager(): LocaleManager {
+    return this.getSharedContextInstance('*localeManager');
   }
 
-  public get a11y(): A11y | null {
-    return this.has('*a11y') ? (this.$['*a11y'] as A11y) : null;
+  public get a11y(): A11y {
+    return this.getSharedContextInstance('*a11y');
   }
 
-  protected get blocksRegistry(): Set<LitBlock> {
-    return this.$['*blocksRegistry'] as Set<LitBlock>;
+  public get blocksRegistry(): Set<LitBlock> {
+    return this.getSharedContextInstance('*blocksRegistry');
   }
 
   public override disconnectedCallback(): void {
@@ -186,6 +183,8 @@ export class LitBlock extends LitBlockBase {
 
     const blocksRegistry = this.blocksRegistry;
     blocksRegistry?.delete(this);
+
+    this._destroySharedContextInstances();
 
     if (blocksRegistry?.size === 0) {
       setTimeout(() => {
@@ -199,9 +198,63 @@ export class LitBlock extends LitBlockBase {
    * Called when the last block is removed from the context. Note that inheritors must run their callback before that.
    */
   protected destroyCtxCallback(): void {
+    this._destroySharedContextInstances(true);
     PubSub.deleteCtx(this.ctxName);
+  }
 
-    this.modalManager?.destroy();
+  /**
+   * Adds a shared context instance if it does not exist yet.
+   * @param key The shared state key.
+   * @param resolver The resolver function that creates the instance.
+   * @param persist Whether to persist the instance in the context if the bound block is removed. It's usually needed for those instances that depends on the current block. Defaults to false.
+   */
+  protected addSharedContextInstance<TKey extends keyof SharedState>(
+    key: TKey,
+    resolver: () => SharedState[TKey],
+    { persist = false } = {},
+  ): void {
+    if (this._sharedContextInstances.has(key)) {
+      return;
+    }
+    if (!this.has(key)) {
+      const managerInstance = resolver();
+      this.add(key, managerInstance);
+      this._sharedContextInstances.set(key, { persist, instance: managerInstance });
+      return;
+    }
+
+    if (!this.$[key]) {
+      const managerInstance = resolver();
+      this.pub(key, managerInstance);
+      this._sharedContextInstances.set(key, { persist, instance: managerInstance });
+    }
+  }
+
+  private _destroySharedContextInstances(destroyPersisted = false): void {
+    for (const [key, item] of this._sharedContextInstances.entries()) {
+      const { persist, instance } = item;
+      if (persist && !destroyPersisted) {
+        continue;
+      }
+      instance?.destroy?.();
+      this.pub(key as keyof SharedState, null as never);
+      this._sharedContextInstances.delete(key);
+    }
+  }
+
+  protected getSharedContextInstance<TKey extends keyof SharedState, TRequired extends boolean = true>(
+    key: TKey,
+    isRequired: TRequired = true as TRequired,
+  ): TRequired extends true ? NonNullable<SharedState[TKey]> : SharedState[TKey] {
+    if (this.has(key) && !!this.$[key]) {
+      return this.$[key] as NonNullable<SharedState[TKey]>;
+    }
+
+    if (!isRequired) {
+      return this.$[key] as SharedState[TKey];
+    }
+
+    throw new Error(`Unexpected error: context manager for key "${String(key)}" is not available`);
   }
 
   protected async proxyUrl(url: string): Promise<string> {
@@ -237,9 +290,9 @@ export class LitBlock extends LitBlockBase {
   }
 
   public get cfg(): ConfigType {
-    if (!this.__cfgProxy) {
+    if (!this._cfgProxy) {
       const proxyTarget = {} as ConfigType;
-      this.__cfgProxy = new Proxy(proxyTarget, {
+      this._cfgProxy = new Proxy(proxyTarget, {
         set: (_obj: ConfigType, key: string | symbol, value: unknown) => {
           if (typeof key !== 'string' || !(key in initialConfig)) {
             return false;
@@ -261,7 +314,7 @@ export class LitBlock extends LitBlockBase {
         },
       });
     }
-    return this.__cfgProxy;
+    return this._cfgProxy;
   }
 
   public subConfigValue<T extends keyof ConfigType>(key: T, callback: (value: ConfigType[T]) => void): () => void {
