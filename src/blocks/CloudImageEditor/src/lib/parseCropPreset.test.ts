@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import type { Uid } from '../../../../lit/Uid';
 import { UID } from '../../../../utils/UID';
 import { getClosestAspectRatio, parseCropPreset } from './parseCropPreset';
 
@@ -10,7 +11,7 @@ describe('parseCropPreset', () => {
     const generateSpy = vi.spyOn(UID, 'generate').mockImplementation(() => {
       const id = `id-${(uidCallCount % uniqueIds) + 1}`;
       uidCallCount += 1;
-      return id;
+      return id as Uid;
     });
 
     const input = '16:9, 3:4, 4:3, 1:1';

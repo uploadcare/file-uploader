@@ -9,7 +9,7 @@ export class TypedData<T extends Record<string, unknown>> {
   private _data: PubSub<T>;
 
   public constructor(initialValue: T) {
-    this._ctxId = UID.generate() as Uid;
+    this._ctxId = UID.generate();
     this._data = PubSub.registerCtx(initialValue, this._ctxId);
   }
 

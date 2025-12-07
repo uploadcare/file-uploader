@@ -38,7 +38,7 @@ export class TypedCollection<T extends Record<string, unknown>> {
 
   public constructor(options: TypedCollectionOptions<T>) {
     this._initialValue = options.initialValue;
-    this._ctxId = UID.generate() as Uid;
+    this._ctxId = UID.generate();
     this._data = PubSub.registerCtx<TypedDataMap<T>>({}, this._ctxId);
     this._watchList = options.watchList || [];
 
