@@ -12,23 +12,205 @@
         color: #fff;
       }
     }
+
+    uc-locales-demo {
+      display: block;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.08), transparent 30%),
+        radial-gradient(circle at 90% 10%, rgba(16, 185, 129, 0.08), transparent 28%),
+        linear-gradient(180deg, #f7f7fb 0%, #f1f5f9 40%, #eef2ff 100%);
+      color: #0f172a;
+      font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+
+    uc-locales-demo .page {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 32px 20px 48px;
+      display: grid;
+      gap: 20px;
+    }
+
+    uc-locales-demo .hero {
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 15px 35px rgba(15, 23, 42, 0.08);
+      border-radius: 18px;
+      padding: 20px 20px 16px;
+      display: grid;
+      gap: 10px;
+    }
+
+    uc-locales-demo .hero h1 {
+      margin: 0;
+      font-size: 1.35rem;
+      letter-spacing: -0.01em;
+    }
+
+    uc-locales-demo .subtitle {
+      margin: 0;
+      color: #475569;
+      font-size: 0.95rem;
+    }
+
+    uc-locales-demo .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #eef2ff;
+      color: #4338ca;
+      border: 1px solid #c7d2fe;
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-weight: 600;
+      font-size: 0.8rem;
+      width: fit-content;
+    }
+
+    uc-locales-demo .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+    }
+
+    uc-locales-demo .card {
+      background: rgba(255, 255, 255, 0.95);
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 10px 25px rgba(15, 23, 42, 0.06);
+      border-radius: 16px;
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+    }
+
+    uc-locales-demo .card h2 {
+      margin: 0;
+      font-size: 1rem;
+      color: #0f172a;
+    }
+
+    uc-locales-demo fieldset {
+      border: 1px solid #e2e8f0;
+      padding: 10px 12px;
+      border-radius: 12px;
+      margin: 0;
+      background: #f8fafc;
+    }
+
+    uc-locales-demo .controls {
+      display: grid;
+      gap: 8px;
+    }
+
+    uc-locales-demo .row {
+      display: grid;
+      gap: 6px;
+    }
+
+    uc-locales-demo label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      color: #1f2937;
+    }
+
+    uc-locales-demo label:hover {
+      background: #eef2ff;
+    }
+
+    uc-locales-demo input[type="radio"] {
+      accent-color: #4f46e5;
+    }
+
+    uc-locales-demo .preview {
+      background: rgba(255, 255, 255, 0.96);
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+      border-radius: 16px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      gap: 8px;
+    }
+
+    uc-locales-demo .preview h2 {
+      margin: 0 0 10px;
+      font-size: 1rem;
+      flex: 0 0 auto;
+    }
+
+    uc-locales-demo .preview > *:not(h2) {
+      flex: 1 1 auto;
+      min-height: 0;
+    }
+
+    uc-locales-demo .muted {
+      color: #64748b;
+      font-size: 0.9rem;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      uc-locales-demo {
+        background:
+          radial-gradient(circle at 20% 20%, rgba(99, 102, 241, 0.1), transparent 32%),
+          radial-gradient(circle at 80% 10%, rgba(16, 185, 129, 0.1), transparent 28%),
+          linear-gradient(180deg, #0b1221 0%, #0f172a 45%, #0b1221 100%);
+        color: #e2e8f0;
+      }
+
+      uc-locales-demo .hero,
+      uc-locales-demo .card,
+      uc-locales-demo .preview {
+        background: rgba(15, 23, 42, 0.9);
+        border-color: #1f2937;
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+      }
+
+      uc-locales-demo .subtitle,
+      uc-locales-demo .muted {
+        color: #94a3b8;
+      }
+
+      uc-locales-demo fieldset {
+        background: #0f172a;
+        border-color: #1f2937;
+      }
+
+      uc-locales-demo label {
+        color: #e2e8f0;
+      }
+
+      uc-locales-demo label:hover {
+        background: #1e293b;
+      }
+
+      uc-locales-demo input[type="radio"] {
+        accent-color: #a5b4fc;
+      }
+
+      uc-locales-demo .badge {
+        background: #1e293b;
+        border-color: #334155;
+        color: #c7d2fe;
+      }
+    }
     </style>
   </head>
   <body>
     <script type="module">
-    import '@/solutions/file-uploader/inline/index.css';
-    import '@/solutions/file-uploader/regular/index.css';
-    import '@/solutions/file-uploader/minimal/index.css';
+    import { html, LitElement } from 'lit';
+
+    import '@/blocks/themes/uc-basic/index.css';
     import * as UC from '@/index.js';
 
-    const locales = import.meta.glob('@/locales/file-uploader/*.ts', {
-      eager: true,
-    });
-
+    const localeModules = import.meta.glob('@/locales/file-uploader/*.ts', { eager: true });
     const allLocales = Object.fromEntries(
-      Object.entries(locales).map(([path, m]) => {
-        return [path.split('/').pop().split('.')[0], m.default];
-      }),
+      Object.entries(localeModules).map(([path, m]) => [path.split('/').pop().split('.')[0], m.default]),
     );
 
     for (const [key, definition] of Object.entries(allLocales)) {
@@ -37,70 +219,120 @@
 
     UC.defineComponents(UC);
 
-    const config = document.querySelector('uc-config');
+    class LocalesDemo extends LitElement {
+      static properties = {
+        _mode: { state: true },
+        _locale: { state: true },
+      };
 
-    document.querySelector('#locale-radio').innerHTML = /* html */ `
-            <br />
-            <fieldset>
-              ${Object.keys(allLocales)
-                .map((localeId) => {
-                  const languageNames = new Intl.DisplayNames([localeId], {
-                    type: 'language',
-                  });
-                  const name = languageNames.of(localeId);
-                  return `<div>
-          <input type="radio" id="${localeId}" name="locale" value="${localeId}" />
-          <label for="${localeId}">${name} (${localeId})</label>
-        </div>`;
-                })
-                .join('\n')}
-            </fieldset>
+      constructor() {
+        super();
+        this._mode = 'regular';
+        this._locale = 'en';
+      }
+
+      createRenderRoot() {
+        return this;
+      }
+
+      _renderLocaleOptions() {
+        return Object.keys(allLocales).map((localeId) => {
+          const languageNames = new Intl.DisplayNames([localeId], { type: 'language' });
+          const name = languageNames.of(localeId);
+          return html`
+              <label>
+                <input
+                  type="radio"
+                  name="locale"
+                  .value=${localeId}
+                  .checked=${this._locale === localeId}
+                  @change=${() => {
+                    this._locale = localeId;
+                  }}
+                />
+                ${name} (${localeId})
+              </label>
             `;
-    [...document.querySelectorAll('input[name=locale]')].forEach((el) => {
-      el.addEventListener('change', (e) => {
-        if (e.target.checked) {
-          config.localeName = e.target.value;
+        });
+      }
+
+      _renderModeOptions() {
+        const modes = ['regular', 'inline', 'minimal'];
+        return modes.map(
+          (mode) => html`
+            <label>
+              <input
+                type="radio"
+                name="mode"
+                .value=${mode}
+                .checked=${this._mode === mode}
+                @change=${() => {
+                  this._mode = mode;
+                }}
+              />
+              ${mode}
+            </label>
+          `,
+        );
+      }
+
+      _renderUploader() {
+        if (this._mode === 'inline') {
+          return html`<uc-file-uploader-inline ctx-name="my-uploader"></uc-file-uploader-inline>`;
         }
-      });
-    });
-
-    const setMode = (mode) => {
-      document.querySelector('#container').innerHTML = /* html */ `
-            <uc-file-uploader-${mode}
-      ctx-name="my-uploader"
-    ></uc-file-uploader-${mode}>
-            `;
-    };
-
-    document.querySelector('#mode-radio').innerHTML = /* html */ `
-            <br />
-            <fieldset>
-              ${['regular', 'inline', 'minimal']
-                .map((mode) => {
-                  return /* html */ `<div>
-          <input type="radio" id="${mode}" name="mode" value="${mode}" />
-          <label for="${mode}">${mode}</label>
-        </div>`;
-                })
-                .join('\n')}
-            </fieldset>
-            `;
-    [...document.querySelectorAll('input[name=mode]')].forEach((el) => {
-      el.addEventListener('change', (e) => {
-        if (e.target.checked) {
-          const mode = e.target.value;
-          setMode(mode);
+        if (this._mode === 'minimal') {
+          return html`<uc-file-uploader-minimal ctx-name="my-uploader"></uc-file-uploader-minimal>`;
         }
-      });
-    });
+        return html`<uc-file-uploader-regular ctx-name="my-uploader"></uc-file-uploader-regular>`;
+      }
 
-    setMode('regular');
+      render() {
+        return html`
+            <div class="page">
+              <section class="hero">
+                <div class="badge">🌐 Locale playground</div>
+                <h1>File Uploader localization preview</h1>
+                <p class="subtitle">Switch locales and layouts to see translated UI strings instantly.</p>
+              </section>
+
+              <div class="grid">
+                <section class="card">
+                  <h2>Controls</h2>
+                  <div class="controls">
+                    <div class="row">
+                      <strong>Mode</strong>
+                      <fieldset>${this._renderModeOptions()}</fieldset>
+                    </div>
+
+                    <div class="row">
+                      <strong>Locale</strong>
+                      <fieldset>${this._renderLocaleOptions()}</fieldset>
+                    </div>
+                  </div>
+                  <p class="muted">Locales come from <code>locales/file-uploader/*.ts</code>.</p>
+                </section>
+
+                <section class="preview">
+                  <h2>Preview</h2>
+                  ${this._renderUploader()}
+                </section>
+              </div>
+
+              <uc-config
+                ctx-name="my-uploader"
+                pubkey="demopublickey"
+                debug
+                quality-insights="false"
+                test-mode
+                .localeName=${this._locale}
+              ></uc-config>
+            </div>
+          `;
+      }
+    }
+    customElements.define('uc-locales-demo', LocalesDemo);
     </script>
 
-    <uc-config ctx-name="my-uploader" pubkey="demopublickey" debug quality-insights="false" test-mode></uc-config>
-
-    <div id="container"></div>
-    <div id="mode-radio"></div>
-    <div id="locale-radio"></div>
+    <uc-locales-demo></uc-locales-demo>
   </body>
 </html>
