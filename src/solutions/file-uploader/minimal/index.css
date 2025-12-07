@@ -102,8 +102,8 @@
   }
 
   [uc-file-uploader-minimal] uc-file-item uc-progress-bar {
-    top: 0 !important;
-    height: 100% !important;
+    top: 0;
+    height: 100%;
   }
 
   [uc-file-uploader-minimal] uc-file-item uc-progress-bar .uc-progress {

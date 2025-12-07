@@ -1,4 +1,4 @@
-import type { UploadcareFile } from '@uploadcare/upload-client';
+import type { Metadata, UploadcareFile } from '@uploadcare/upload-client';
 import type { OutputErrorFile } from '../types/index';
 import type { TypedData } from './TypedData';
 
@@ -22,7 +22,7 @@ export interface UploadEntryData extends Record<string, unknown> {
   silent: boolean;
   source: string | null;
   fullPath: string | null;
-  metadata: Record<string, unknown> | null;
+  metadata: Metadata | null;
   errors: OutputErrorFile[];
   uploadError: Error | null;
   isRemoved: boolean;

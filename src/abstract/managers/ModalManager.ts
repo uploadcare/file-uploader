@@ -41,9 +41,9 @@ export class ModalManager {
 
   /** Remove a modal by ID. */
   public deleteModal(id: ModalId): boolean {
-    if (!this._modals.has(id)) return false;
+    const modal = this._modals.get(id);
+    if (!modal) return false;
 
-    const modal = this._modals.get(id)!;
     this._modals.delete(id);
     this._activeModals.delete(id);
     this._notify(ModalEvents.DELETE, { id, modal });
@@ -52,12 +52,11 @@ export class ModalManager {
 
   /** Open a modal by its ID. */
   public open(id: ModalId): boolean {
-    if (!this._modals.has(id)) {
+    const modal = this._modals.get(id);
+    if (!modal) {
       this._debugPrint(`Modal with ID "${id}" not found`);
       return false;
     }
-
-    const modal = this._modals.get(id)!;
 
     this._activeModals.add(id);
     this._notify(ModalEvents.OPEN, { modal, id });
@@ -66,12 +65,11 @@ export class ModalManager {
 
   /** Close a specific modal by ID. */
   public close(id: ModalId): boolean {
-    if (!this._modals.has(id) || !this._activeModals.has(id)) {
+    const modal = this._modals.get(id);
+    if (!modal || !this._activeModals.has(id)) {
       this._debugPrint(`Modal with ID "${id}" not found or not active`);
       return false;
     }
-
-    const modal = this._modals.get(id)!;
 
     this._activeModals.delete(id);
     this._notify(ModalEvents.CLOSE, { id, modal });

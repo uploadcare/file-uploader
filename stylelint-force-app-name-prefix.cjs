@@ -16,11 +16,11 @@ var optionsSchema = {
 };
 
 const messages = stylelint.utils.ruleMessages(ruleName, {
-  invalid: (selector, appName) => 'Selector "' + selector + '" is out of control, please wrap within .' + appName,
+  invalid: (selector, appName) => `Selector "${selector}" is out of control, please wrap within .${appName}`,
   invalidKeyFrames: (keyframesName, appName) =>
-    'Keyframes name "' + keyframesName + '" is out of control, please prefix with ' + appName + '-',
+    `Keyframes name "${keyframesName}" is out of control, please prefix with ${appName}-`,
   invalidFontFace: (fontFamily, appName) =>
-    'Custom font-family "' + fontFamily + '" is out of control, please prefix with ' + appName + '-',
+    `Custom font-family "${fontFamily}" is out of control, please prefix with ${appName}-`,
 });
 
 function findTopParentSelector(node) {
@@ -49,12 +49,12 @@ module.exports = stylelint.createPlugin(ruleName, (options) => (root, result) =>
   });
   if (!validOptions) return;
 
-  const whiteList = ['.' + options.appName, /^:.*/];
+  const whiteList = [`.${options.appName}`, /^:.*/];
 
   root.walkAtRules('keyframes', (rule) => {
     const keyframesName = rule.params;
 
-    if (keyframesName.indexOf(options.appName + '-') === -1) {
+    if (keyframesName.indexOf(`${options.appName}-`) === -1) {
       stylelint.utils.report({
         ruleName: ruleName,
         result: result,
@@ -66,7 +66,7 @@ module.exports = stylelint.createPlugin(ruleName, (options) => (root, result) =>
 
   root.walkAtRules('font-face', (rule) => {
     rule.walkDecls('font-family', (decl) => {
-      if (decl.value.indexOf(options.appName + '-') === -1) {
+      if (decl.value.indexOf(`${options.appName}-`) === -1) {
         stylelint.utils.report({
           ruleName: ruleName,
           result: result,
@@ -94,8 +94,8 @@ module.exports = stylelint.createPlugin(ruleName, (options) => (root, result) =>
     }
 
     if (
-      topParentSelector.indexOf('.' + options.appName + '-') === 0 ||
-      topParentSelector.indexOf(options.appName + '-') === 0
+      topParentSelector.indexOf(`.${options.appName}-`) === 0 ||
+      topParentSelector.indexOf(`${options.appName}-`) === 0
     ) {
       // good
     } else {

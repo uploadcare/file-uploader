@@ -373,7 +373,7 @@ export type OutputErrorTypePayload = {
   FORBIDDEN_FILE_TYPE: OutputFileErrorPayload;
   FILE_SIZE_EXCEEDED: OutputFileErrorPayload;
 
-  SOME_FILES_HAS_ERRORS: {};
+  SOME_FILES_HAS_ERRORS: { [k: string]: never };
   TOO_MANY_FILES: {
     min: number;
     max: number;

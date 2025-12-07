@@ -95,7 +95,6 @@ export function SymbioteMixin<TState extends Record<string, unknown> = Record<st
         return super.shouldUpdate(changedProperties);
       }
 
-      // biome-ignore lint/suspicious/noExplicitAny: mixin constructors must accept arbitrary arguments to satisfy Lit types
       public constructor(...args: any[]) {
         super(...args);
 

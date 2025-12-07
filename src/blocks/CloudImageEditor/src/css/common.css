@@ -1,3 +1,5 @@
+/** biome-ignore-all lint/complexity/noImportantStyles: TODO: Refactor styles to get rid of !important rules */
+
 @layer uc.solutions {
   /* TODO: we should use basic theme there  */
 
@@ -421,14 +423,6 @@
     --hover-opacity: 1;
   }
 
-  uc-editor-filter-control.uc-not_active .uc-preview[loaded] {
-    opacity: 1;
-  }
-
-  uc-editor-filter-control.uc-active .uc-preview {
-    opacity: 0;
-  }
-
   uc-editor-button-control.uc-not_active,
   uc-editor-operation-control.uc-not_active,
   uc-editor-crop-button-control.uc-not_active,
@@ -508,6 +502,14 @@
     opacity: 0;
     filter: brightness(var(--filter-effect));
     transition: var(--transition-duration-3);
+  }
+
+  uc-editor-filter-control.uc-not_active .uc-preview[loaded] {
+    opacity: 1;
+  }
+
+  uc-editor-filter-control.uc-active .uc-preview {
+    opacity: 0;
   }
 
   uc-editor-filter-control > .uc-original-icon {

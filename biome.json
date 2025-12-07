@@ -19,7 +19,7 @@
       "recommended": true,
       "suspicious": {
         "noDuplicateProperties": "off",
-        "noExplicitAny": "warn",
+        "noExplicitAny": "info",
         "noFocusedTests": "error"
       },
       "complexity": {
@@ -62,6 +62,16 @@
           "correctness": {
             "noUnusedVariables": "off",
             "noUnusedImports": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["**/*.test.*", "**/*.spec.*", "**/*.e2e.test.*"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noNonNullAssertion": "off"
           }
         }
       }

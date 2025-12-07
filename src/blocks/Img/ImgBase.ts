@@ -50,18 +50,23 @@ export class ImgBase extends ImgConfig {
   }
 
   private _validateSize(size?: string | null): string | null | undefined {
-    if (size?.trim() !== '') {
-      const ensuredSize = size as string;
-      const numericPart = ensuredSize.match(/\d+/)![0];
-      const alphabeticPart = ensuredSize.match(/[a-zA-Z]+/)![0];
+    if (!size) {
+      return undefined;
+    }
+    const ensuredSize = size;
+    const numericPart = ensuredSize.match(/\d+/)?.[0];
+    const alphabeticPart = ensuredSize.match(/[a-zA-Z]+/)?.[0];
 
-      const bp = parseInt(numericPart, 10);
+    if (!numericPart || !alphabeticPart) {
+      return undefined;
+    }
 
-      if (Number(bp) > MAX_WIDTH_JPG && this._hasFormatJPG) {
-        return MAX_WIDTH_JPG + alphabeticPart;
-      } else if (Number(bp) > MAX_WIDTH && !this._hasFormatJPG) {
-        return MAX_WIDTH + alphabeticPart;
-      }
+    const bp = parseInt(numericPart, 10);
+
+    if (Number(bp) > MAX_WIDTH_JPG && this._hasFormatJPG) {
+      return MAX_WIDTH_JPG + alphabeticPart;
+    } else if (Number(bp) > MAX_WIDTH && !this._hasFormatJPG) {
+      return MAX_WIDTH + alphabeticPart;
     }
 
     return size;
@@ -224,7 +229,7 @@ export class ImgBase extends ImgConfig {
 
     const iSet = `image-set(${[...imgSet].join(', ')})`;
     el.style.setProperty('background-image', iSet);
-    el.style.setProperty('background-image', '-webkit-' + iSet);
+    el.style.setProperty('background-image', `-webkit-${iSet}`);
   }
 
   private _getSrcset(): string {

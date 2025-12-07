@@ -240,7 +240,11 @@ export class UploaderPublicApi {
   };
 
   public getOutputItem<TStatus extends OutputFileStatus>(entryId: string): OutputFileEntry<TStatus> {
-    const uploadEntryData = PubSub.getCtx<UploadEntryData>(entryId)!.store;
+    const ctx = PubSub.getCtx<UploadEntryData>(entryId);
+    if (!ctx) {
+      throw new Error(`UploaderPublicApi#getOutputItem: Entry with ID "${entryId}" not found in the upload collection`);
+    }
+    const uploadEntryData = ctx.store;
     const fileInfo = uploadEntryData.fileInfo as UploadcareFile | null;
 
     const status: OutputFileEntry['status'] = uploadEntryData.isRemoved

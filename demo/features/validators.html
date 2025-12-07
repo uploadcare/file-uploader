@@ -37,8 +37,8 @@
 
 <script type="module">
 const config = document.querySelector('uc-config');
-const imagesOnly = (fileInfo, ctx) => {
-  console.log('vali', fileInfo);
+const imagesOnly = (fileInfo, _ctx) => {
+  console.log('validator', fileInfo);
 };
 
 config.fileValidators = [imagesOnly];
