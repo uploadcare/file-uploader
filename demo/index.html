@@ -251,7 +251,11 @@
       constructor() {
         super();
         // All folders open by default
-        this.openFolders = Object.keys(tree).reduce((acc, f) => ({ ...acc, [f]: true }), {});
+        const open = {};
+        for (const f of Object.keys(tree)) {
+          open[f] = true;
+        }
+        this.openFolders = open;
         this.search = '';
       }
 

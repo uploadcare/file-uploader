@@ -1,6 +1,5 @@
 const EXCLUDE_COMPONENTS = ['UploaderBlock', 'ActivityBlock', 'Block', 'SolutionBlock'];
 
-// biome-ignore lint/suspicious/noExplicitAny: Type is used to represent any class
 export function defineComponents(blockExports: Record<string, any>) {
   for (const blockName in blockExports) {
     if (EXCLUDE_COMPONENTS.includes(blockName)) {

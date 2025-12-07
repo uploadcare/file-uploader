@@ -16,10 +16,6 @@
     height: 100%;
   }
 
-  uc-camera-source:not(.uc-initialized) .uc-controls {
-    display: none;
-  }
-
   uc-camera-source video {
     display: block;
     width: 100%;
@@ -106,6 +102,10 @@
     justify-content: space-between;
     padding: 0 var(--uc-padding) var(--uc-padding);
     min-height: 74px;
+  }
+
+  uc-camera-source:not(.uc-initialized) .uc-controls {
+    display: none;
   }
 
   uc-camera-source .uc-switcher {

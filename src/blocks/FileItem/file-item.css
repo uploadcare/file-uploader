@@ -223,8 +223,8 @@
 
   uc-file-item[mode="grid"] .uc-progress-bar {
     width: initial;
-    height: 4px !important;
-    top: initial !important;
+    height: 4px;
+    top: initial;
     bottom: var(--uc-padding);
     left: var(--uc-padding);
     right: var(--uc-padding);

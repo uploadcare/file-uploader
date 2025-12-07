@@ -9,7 +9,6 @@ import { stringToArray } from '../../utils/stringToArray';
 export class SourceList extends LitBlock {
   private _rawSourceList: string[] = [];
   private _cameraModes: string[] = [];
-  private _resolvedSources: string[] = [];
 
   public override initCallback(): void {
     super.initCallback();

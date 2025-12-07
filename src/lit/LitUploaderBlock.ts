@@ -271,7 +271,9 @@ export class LitUploaderBlock extends LitActivityBlock {
 
     if (changeMap.uploadProgress) {
       for (const entryId of changeMap.uploadProgress) {
-        const { isUploading, silent } = PubSub.getCtx<UploadEntryData>(entryId)!.store;
+        const ctx = PubSub.getCtx<UploadEntryData>(entryId);
+        if (!ctx) continue;
+        const { isUploading, silent } = ctx.store;
         if (isUploading && !silent) {
           this.emit(EventType.FILE_UPLOAD_PROGRESS, this.api.getOutputItem(entryId));
         }
@@ -281,7 +283,9 @@ export class LitUploaderBlock extends LitActivityBlock {
     }
     if (changeMap.isUploading) {
       for (const entryId of changeMap.isUploading) {
-        const { isUploading, silent } = PubSub.getCtx<UploadEntryData>(entryId)!.store;
+        const ctx = PubSub.getCtx<UploadEntryData>(entryId);
+        if (!ctx) continue;
+        const { isUploading, silent } = ctx.store;
         if (isUploading && !silent) {
           this.emit(EventType.FILE_UPLOAD_START, this.api.getOutputItem(entryId));
         }
@@ -289,7 +293,9 @@ export class LitUploaderBlock extends LitActivityBlock {
     }
     if (changeMap.fileInfo) {
       for (const entryId of changeMap.fileInfo) {
-        const { fileInfo, silent } = PubSub.getCtx<UploadEntryData>(entryId)!.store;
+        const ctx = PubSub.getCtx<UploadEntryData>(entryId);
+        if (!ctx) continue;
+        const { fileInfo, silent } = ctx.store;
         if (fileInfo && !silent) {
           this.emit(EventType.FILE_UPLOAD_SUCCESS, this.api.getOutputItem(entryId));
         }
@@ -306,7 +312,9 @@ export class LitUploaderBlock extends LitActivityBlock {
       this.validationManager.runCollectionValidators();
 
       for (const entryId of changeMap.errors) {
-        const { errors } = PubSub.getCtx<UploadEntryData>(entryId)!.store;
+        const ctx = PubSub.getCtx<UploadEntryData>(entryId);
+        if (!ctx) continue;
+        const { errors } = ctx.store;
         if (errors.length > 0) {
           this.emit(EventType.FILE_UPLOAD_FAILED, this.api.getOutputItem(entryId));
           this.emit(

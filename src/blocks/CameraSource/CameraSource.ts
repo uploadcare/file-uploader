@@ -853,8 +853,6 @@ export class CameraSource extends LitUploaderBlock {
     this._unsubPermissions = null;
   }
 
-  private _getPermission = (): void => {};
-
   private _requestDeviceAccess = async (): Promise<void> => {
     try {
       await navigator.mediaDevices.getUserMedia({

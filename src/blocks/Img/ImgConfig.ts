@@ -45,7 +45,7 @@ export class ImgConfig extends CssDataMixin(RegisterableElementMixin(LitElement)
     if (!this._subscribers.has(fullKey)) {
       this._subscribers.set(fullKey, new Set());
     }
-    this._subscribers.get(fullKey)!.add(kbFn as any);
+    this._subscribers.get(fullKey)?.add(kbFn as any);
 
     const currentVal = this._state[fullKey];
     if (currentVal !== null && currentVal !== '') {
@@ -55,7 +55,7 @@ export class ImgConfig extends CssDataMixin(RegisterableElementMixin(LitElement)
 
   private _notify(key: string, val: unknown) {
     if (this._subscribers.has(key)) {
-      this._subscribers.get(key)!.forEach((cb) => {
+      this._subscribers.get(key)?.forEach((cb) => {
         if (val === null || val === '') {
           return;
         }
@@ -86,7 +86,7 @@ export class ImgConfig extends CssDataMixin(RegisterableElementMixin(LitElement)
       entries.forEach((ent) => {
         if (ent.isIntersecting) {
           cbkFn();
-          this._isnObserver!.unobserve(el);
+          this._isnObserver?.unobserve(el);
         }
       });
     }, opts);
