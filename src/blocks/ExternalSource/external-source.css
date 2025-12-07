@@ -35,7 +35,7 @@
   uc-external-source .uc-toolbar {
     display: flex;
     width: 100%;
-    grid-gap: var(--uc-padding);
+    gap: var(--uc-padding);
     align-items: center;
     justify-content: space-between;
     padding: var(--uc-padding);
