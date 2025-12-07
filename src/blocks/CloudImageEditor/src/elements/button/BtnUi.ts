@@ -32,8 +32,8 @@ export class BtnUi extends LitBlock {
   @property({ attribute: 'title-prop' })
   public titleProp = '';
 
-  protected override firstUpdated(_changed: PropertyValues<this>): void {
-    super.firstUpdated(_changed);
+  protected override firstUpdated(changed: PropertyValues<this>): void {
+    super.firstUpdated(changed);
     this._applyReverse();
     this._applyThemeClass();
   }

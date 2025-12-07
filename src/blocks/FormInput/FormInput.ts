@@ -3,6 +3,9 @@ import type { OutputCollectionState } from '../../types/index';
 import { applyStyles } from '../../utils/applyStyles';
 
 export class FormInput extends LitUploaderBlock {
+  public declare propertiesMeta: {
+    'ctx-name': string;
+  };
   private _validationInputElement: HTMLInputElement | null = null;
   private _dynamicInputsContainer: HTMLDivElement | null = null;
 

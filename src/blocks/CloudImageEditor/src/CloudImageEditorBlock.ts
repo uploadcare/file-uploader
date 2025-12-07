@@ -30,6 +30,11 @@ type TabIdValue = (typeof TabId)[keyof typeof TabId];
 const DEFAULT_TABS = serializeCsv([...ALL_TABS]);
 
 export class CloudImageEditorBlock extends LitBlock {
+  public declare attributesMeta: ({ uuid: string } | { 'cdn-url': string }) &
+    Partial<{ tabs: string; 'crop-preset': string }> & {
+      'ctx-name': string;
+    };
+
   public override ctxOwner = true;
   public static override styleAttrs = ['uc-cloud-image-editor'];
 
