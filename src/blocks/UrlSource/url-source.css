@@ -6,7 +6,7 @@
 
   uc-url-source > .uc-content {
     display: grid;
-    grid-gap: 4px;
+    gap: 4px;
     grid-template-columns: 1fr min-content;
     padding: var(--uc-padding);
     padding-top: 0;
