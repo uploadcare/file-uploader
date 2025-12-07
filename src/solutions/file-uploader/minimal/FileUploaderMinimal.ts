@@ -147,7 +147,7 @@ export class FileUploaderMinimal extends LitSolutionBlock {
           initflow
           clickable
           tabindex="0"
-        >${this.l10n('choose-file')}</uc-drop-area>
+        ><span>${this.l10n('choose-file')}</span></uc-drop-area>
         <uc-copyright></uc-copyright>
       </uc-start-from>
       <uc-upload-list class=${this._classUploadList}></uc-upload-list>

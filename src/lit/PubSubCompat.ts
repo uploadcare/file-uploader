@@ -49,7 +49,8 @@ export class PubSub<T extends Record<string, unknown> = Record<string, unknown>>
     const exists = key in this._store.get();
 
     if (!exists || rewrite) {
-      this._store.setKey(key as never, value as never);
+      // biome-ignore lint/suspicious/noExplicitAny: nanostores doesn't export AllKeys type that they use to resolve setKey param type
+      this._store.setKey(key as any, value as any);
     }
   }
 

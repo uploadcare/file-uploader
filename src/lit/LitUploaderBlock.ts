@@ -43,29 +43,30 @@ export class LitUploaderBlock extends LitActivityBlock {
   public override initCallback(): void {
     super.initCallback();
 
-    if (!this.has('*uploadCollection')) {
-      const uploadCollection = new TypedCollection<UploadEntryData>({
-        initialValue: initialUploadEntryData,
-        watchList: [
-          'uploadProgress',
-          'uploadError',
-          'fileInfo',
-          'errors',
-          'cdnUrl',
-          'isUploading',
-          'isValidationPending',
-        ],
-      });
-      this.add('*uploadCollection', uploadCollection);
-    }
+    this.addSharedContextInstance(
+      '*uploadCollection',
+      () => {
+        return new TypedCollection<UploadEntryData>({
+          initialValue: initialUploadEntryData,
+          watchList: [
+            'uploadProgress',
+            'uploadError',
+            'fileInfo',
+            'errors',
+            'cdnUrl',
+            'isUploading',
+            'isValidationPending',
+          ],
+        });
+      },
+      {
+        persist: true,
+      },
+    );
 
-    if (!this.has('*publicApi')) {
-      this.add('*publicApi', new UploaderPublicApi(this));
-    }
-
-    if (!this.has('*validationManager')) {
-      this.add('*validationManager', new ValidationManager(this));
-    }
+    this.addSharedContextInstance('*secureUploadsManager', () => new SecureUploadsManager(this));
+    this.addSharedContextInstance('*validationManager', () => new ValidationManager(this));
+    this.addSharedContextInstance('*publicApi', () => new UploaderPublicApi(this));
 
     if (!this._hasCtxOwner && this.couldBeCtxOwner) {
       this._initCtxOwner();
@@ -73,17 +74,11 @@ export class LitUploaderBlock extends LitActivityBlock {
   }
 
   protected get validationManager(): ValidationManager {
-    if (!this.has('*validationManager')) {
-      throw new Error('Unexpected error: ValidationManager is not initialized');
-    }
-    return this.$['*validationManager'];
+    return this.getSharedContextInstance('*validationManager');
   }
 
   public get api(): UploaderPublicApi {
-    if (!this.has('*publicApi')) {
-      throw new Error('Unexpected error: UploaderPublicApi is not initialized');
-    }
-    return this.$['*publicApi'];
+    return this.getSharedContextInstance('*publicApi');
   }
 
   public getAPI(): UploaderPublicApi {
@@ -91,24 +86,11 @@ export class LitUploaderBlock extends LitActivityBlock {
   }
 
   public get uploadCollection(): TypedCollection<UploadEntryData> {
-    if (!this.has('*uploadCollection') || !this.$['*uploadCollection']) {
-      throw new Error('Unexpected error: TypedCollection is not initialized');
-    }
-    return this.$['*uploadCollection'];
+    return this.getSharedContextInstance('*uploadCollection');
   }
 
   public get secureUploadsManager(): SecureUploadsManager {
-    if (!this.has('*secureUploadsManager') || !this.$['*secureUploadsManager']) {
-      throw new Error('Unexpected error: SecureUploadsManager is not initialized');
-    }
-    return this.$['*secureUploadsManager'];
-  }
-
-  public override destroyCtxCallback(): void {
-    this.uploadCollection.destroy();
-    this.$['*uploadCollection'] = null;
-
-    super.destroyCtxCallback();
+    return this.getSharedContextInstance('*secureUploadsManager');
   }
 
   public override disconnectedCallback(): void {
@@ -137,10 +119,6 @@ export class LitUploaderBlock extends LitActivityBlock {
     this.subConfigValue('maxConcurrentRequests', (value) => {
       this.$['*uploadQueue'].concurrency = Number(value) || 1;
     });
-
-    if (!this.$['*secureUploadsManager']) {
-      this.$['*secureUploadsManager'] = new SecureUploadsManager(this);
-    }
   }
 
   private _observeUploadCollection(): void {

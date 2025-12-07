@@ -324,7 +324,7 @@ export class UploaderPublicApi {
           }
         }
 
-        const blocksRegistry = this._ctx.$['*blocksRegistry'] as Set<LitBlock>;
+        const blocksRegistry = this._ctx.blocksRegistry;
         const isSourceBtn = (block: LitBlock): block is SourceBtn =>
           'type' in (block as any) && (block as any).type === srcKey;
         const sourceBtnBlock = [...blocksRegistry].find(isSourceBtn);
