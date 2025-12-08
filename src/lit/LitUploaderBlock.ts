@@ -182,6 +182,7 @@ export class LitUploaderBlock extends LitActivityBlock {
   }, 300);
 
   private _handleCollectionUpdate: TypedCollectionObserverHandler<UploadEntryData> = (entries, added, removed) => {
+    if (!this.isConnected) return;
     if (added.size || removed.size) {
       this.$['*groupInfo'] = null;
     }
@@ -224,6 +225,7 @@ export class LitUploaderBlock extends LitActivityBlock {
   };
 
   private _handleCollectionPropertiesUpdate = (changeMap: Record<keyof UploadEntryData, Set<Uid>>): void => {
+    if (!this.isConnected) return;
     this._flushOutputItems();
 
     const uploadCollection = this.uploadCollection;
@@ -237,6 +239,7 @@ export class LitUploaderBlock extends LitActivityBlock {
 
     entriesToRunValidation.length > 0 &&
       setTimeout(() => {
+        if (!this.isConnected) return;
         // We can't modify entry properties in the same tick, so we need to wait a bit
         const entriesToRunOnUpload = entriesToRunValidation.filter(
           (entryId) => changeMap.fileInfo?.has(entryId) && !!PubSub.getCtx(entryId)?.store.fileInfo,

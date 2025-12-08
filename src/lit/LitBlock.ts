@@ -118,7 +118,9 @@ export class LitBlock extends LitBlockBase {
     this.addSharedContextInstance('*blocksRegistry', () => new Set(), {
       persist: true,
     });
-    this.addSharedContextInstance('*eventEmitter', () => new EventEmitter(this.debugPrint.bind(this)));
+    this.addSharedContextInstance('*eventEmitter', () => new EventEmitter(this.debugPrint.bind(this)), {
+      persist: true,
+    });
     this.addSharedContextInstance('*localeManager', () => new LocaleManager(this));
     this.addSharedContextInstance('*modalManager', () => new ModalManager(this));
     this.addSharedContextInstance('*a11y', () => new A11y(), {
@@ -177,6 +179,10 @@ export class LitBlock extends LitBlockBase {
     return this.getSharedContextInstance('*blocksRegistry');
   }
 
+  public get eventEmitter(): EventEmitter {
+    return this.getSharedContextInstance('*eventEmitter');
+  }
+
   public override disconnectedCallback(): void {
     super.disconnectedCallback();
     WindowHeightTracker.unregisterClient(this);
@@ -206,7 +212,7 @@ export class LitBlock extends LitBlockBase {
    * Adds a shared context instance if it does not exist yet.
    * @param key The shared state key.
    * @param resolver The resolver function that creates the instance.
-   * @param persist Whether to persist the instance in the context if the bound block is removed. It's usually needed for those instances that depends on the current block. Defaults to false.
+   * @param persist Whether to persist the instance in the context if the creator block is removed. It's usually needed for those instances that depends on the current block. Defaults to false.
    */
   protected addSharedContextInstance<TKey extends keyof SharedState>(
     key: TKey,
@@ -216,17 +222,11 @@ export class LitBlock extends LitBlockBase {
     if (this._sharedContextInstances.has(key)) {
       return;
     }
-    if (!this.has(key)) {
+    if (!this.has(key) || !this.$[key]) {
       const managerInstance = resolver();
-      this.add(key, managerInstance);
+      this.add(key, managerInstance, true);
       this._sharedContextInstances.set(key, { persist, instance: managerInstance });
       return;
-    }
-
-    if (!this.$[key]) {
-      const managerInstance = resolver();
-      this.pub(key, managerInstance);
-      this._sharedContextInstances.set(key, { persist, instance: managerInstance });
     }
   }
 

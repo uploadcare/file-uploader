@@ -75,14 +75,12 @@ export class EventEmitter {
     this._debugPrint = debugPrint;
   }
 
-  public bindTarget(target: LitBlock): void {
+  public bindTarget(target: LitBlock) {
     this._targets.add(target);
+    return () => {
+      this._targets.delete(target);
+    };
   }
-
-  public unbindTarget(target: LitBlock): void {
-    this._targets.delete(target);
-  }
-
   private _dispatch<T extends EventKey>(type: T, payload?: EventPayload[T]): void {
     for (const target of this._targets) {
       target.dispatchEvent(
@@ -114,8 +112,13 @@ export class EventEmitter {
     }
     const timeout = typeof debounce === 'number' ? debounce : DEFAULT_DEBOUNCE_TIMEOUT;
     const timeoutId = window.setTimeout(() => {
-      this._dispatch(type, typeof payload === 'function' ? payload() : (payload as EventPayload[T]));
-      this._timeoutStore.delete(type);
+      try {
+        const data = typeof payload === 'function' ? payload() : (payload as EventPayload[T]);
+        this._dispatch(type, data);
+        this._timeoutStore.delete(type);
+      } catch (error) {
+        this._debugPrint?.(() => `Error while getting payload for event "${type}"`, error);
+      }
     }, timeout);
     this._timeoutStore.set(type, timeoutId);
   }
