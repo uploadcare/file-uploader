@@ -66,7 +66,7 @@ declare namespace JSX {
     'uc-presence-toggle': CustomElement<PresenceToggle>;
     'uc-slider-ui': CustomElement<SliderUi>;
     'uc-icon': CustomElement<Icon>;
-    'uc-img': CustomElement<Img>;
+    'uc-img': CustomElement<Img> & React.DetailedHTMLProps<React.ImgHTMLAttributes<HTMLImageElement>, HTMLImageElement>;
     'uc-simple-btn': CustomElement<SimpleBtn>;
     'uc-start-from': CustomElement<StartFrom>;
     'uc-drop-area': CustomElement<DropArea>;
