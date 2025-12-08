@@ -335,6 +335,7 @@ export function SymbioteMixin<TState extends Record<string, unknown> = Record<st
             this.sub(
               key,
               debounce(async () => {
+                if (!this.isConnected) return;
                 await this.updateComplete;
                 this.requestUpdate();
               }, 0),

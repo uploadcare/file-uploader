@@ -11,16 +11,18 @@ export class UploadCtxProvider extends LitUploaderBlock {
   public static override styleAttrs = ['uc-wgt-common'];
   public static EventType = EventType;
 
+  private _unbindEventEmitter: (() => void) | null = null;
+
   public override initCallback() {
     super.initCallback();
 
-    this.$['*eventEmitter'].bindTarget(this);
+    this._unbindEventEmitter = this.eventEmitter.bindTarget(this);
   }
 
   public override disconnectedCallback(): void {
     super.disconnectedCallback();
 
-    this.$['*eventEmitter'].unbindTarget(this);
+    this._unbindEventEmitter?.();
   }
 }
 
