@@ -5,25 +5,30 @@ import postcssCascadeLayers from '@csstools/postcss-cascade-layers';
 import { minifyTemplates, writeFiles } from 'esbuild-minify-templates';
 import postcss from 'postcss';
 import { build as tsupBuild } from 'tsup';
+import pkgJson from '../package.json';
 import { type BuildItem, buildItems } from './build-items';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const ROOT_DIR = path.resolve(__dirname, '..');
-const LICENSE_PATH = path.resolve(ROOT_DIR, 'LICENSE');
 const TSCONFIG_PATH = path.resolve(ROOT_DIR, 'tsconfig.app.json');
 
-function jsBanner() {
-  const license = fs.readFileSync(LICENSE_PATH).toString();
-  return (
-    '/**\n' +
-    ' * @license\n' +
-    license
-      .split('\n')
-      .map((line) => ` * ${line}`)
-      .join('\n') +
-    '\n */'
-  );
+function banner() {
+  const repositoryUrl = pkgJson.repository.url;
+  const licenseUrl = new URL('blob/main/LICENSE', repositoryUrl).toString();
+  const licenseName = pkgJson.license;
+  const pkgName = pkgJson.name;
+  const version = pkgJson.version;
+  const buildTime = new Date().toISOString();
+
+  return [
+    '/**',
+    ' * @license',
+    ` * Package: ${pkgName}@${version} (${licenseName})`,
+    ` * License: ${licenseUrl}`,
+    ` * Built: ${buildTime}`,
+    ' */',
+  ].join('\n');
 }
 
 async function build(buildItem: BuildItem) {
@@ -35,8 +40,8 @@ async function build(buildItem: BuildItem) {
     target: 'esnext',
     minify: buildItem.minify,
     banner: {
-      js: jsBanner(),
-      css: jsBanner(),
+      js: banner(),
+      css: banner(),
     },
     format: buildItem.format,
     skipNodeModulesBundle: true,
