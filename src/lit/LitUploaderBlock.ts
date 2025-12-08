@@ -201,7 +201,7 @@ export class LitUploaderBlock extends LitActivityBlock {
     this.validationManager.runCollectionValidators();
 
     for (const entry of removed) {
-      (this.$['*uploadTrigger'] as Set<string>).delete(entry.uid);
+      this.$['*uploadTrigger'].delete(entry.uid);
 
       this.validationManager.cleanupValidationForEntry(entry);
       entry.getValue('abortController')?.abort();
@@ -337,7 +337,7 @@ export class LitUploaderBlock extends LitActivityBlock {
 
   private _flushCommonUploadProgress = (): void => {
     let commonProgress = 0;
-    const uploadTrigger: Set<Uid> = this.$['*uploadTrigger'];
+    const uploadTrigger = this.$['*uploadTrigger'];
     const items = [...uploadTrigger].filter((id) => !!this.uploadCollection.read(id));
     items.forEach((id) => {
       const uploadProgress = this.uploadCollection.readProp(id, 'uploadProgress');
