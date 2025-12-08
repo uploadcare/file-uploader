@@ -99,10 +99,6 @@ export class LitBlock extends LitBlockBase {
     return false;
   }
 
-  public setOrAddState<TKey extends keyof SharedState>(prop: TKey, newVal: SharedState[TKey]): void {
-    this.add(prop, newVal, true);
-  }
-
   public override connectedCallback(): void {
     const styleAttrs = (this.constructor as typeof LitBlock).styleAttrs;
     styleAttrs.forEach((attr: string) => {
