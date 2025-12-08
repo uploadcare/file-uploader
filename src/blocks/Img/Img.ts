@@ -1,6 +1,13 @@
 import { ImgBase } from './ImgBase.js';
 
 export class Img extends ImgBase {
+  public declare attributesMeta:
+    | {
+        src: string;
+      }
+    | {
+        uuid: string;
+      };
   public override connectedCallback(): void {
     super.connectedCallback();
 
