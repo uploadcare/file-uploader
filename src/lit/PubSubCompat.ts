@@ -4,9 +4,9 @@ export type Subscription = {
   remove: () => void;
 };
 
-const contexts = new Map<string, MapStore<Record<string, unknown>>>();
-
 export class PubSub<T extends Record<string, unknown> = Record<string, unknown>> {
+  private static _contexts = new Map<string, MapStore<Record<string, unknown>>>();
+
   private _store: MapStore<T>;
 
   private constructor(_ctxId: string, store: MapStore<T>) {
@@ -63,22 +63,22 @@ export class PubSub<T extends Record<string, unknown> = Record<string, unknown>>
   }
 
   public static registerCtx<T extends Record<string, unknown>>(initialValue: T, ctxId: string): PubSub<T> {
-    if (contexts.has(ctxId)) {
+    if (PubSub._contexts.has(ctxId)) {
       throw new Error(`PubSub: Context with id "${ctxId}" already exists`);
     }
 
     const store = map<T>(initialValue);
 
-    contexts.set(ctxId, store as MapStore<Record<string, unknown>>);
+    PubSub._contexts.set(ctxId, store as MapStore<Record<string, unknown>>);
     return new PubSub<T>(ctxId, store);
   }
 
   public static deleteCtx(ctxId: string): void {
-    contexts.delete(ctxId);
+    PubSub._contexts.delete(ctxId);
   }
 
   public static getCtx<T extends Record<string, unknown> = Record<string, unknown>>(ctxId: string): PubSub<T> | null {
-    const store = contexts.get(ctxId);
+    const store = PubSub._contexts.get(ctxId);
     if (!store) {
       return null;
     }
@@ -86,6 +86,6 @@ export class PubSub<T extends Record<string, unknown> = Record<string, unknown>>
   }
 
   public static hasCtx(ctxId: string): boolean {
-    return contexts.has(ctxId);
+    return PubSub._contexts.has(ctxId);
   }
 }
