@@ -155,6 +155,7 @@ export class EditorAspectRatioButtonControl extends EditorButtonControl {
     const y = (SIZE_SVG_WRAPPER - height) / 2;
 
     return html`
+      <uc-icon>
       <svg
         viewBox="0 0 ${SIZE_SVG_WRAPPER} ${SIZE_SVG_WRAPPER}"
         aria-hidden="true"
@@ -172,6 +173,7 @@ export class EditorAspectRatioButtonControl extends EditorButtonControl {
           stroke-linejoin="round"
         ></rect>
       </svg>
+      </uc-icon>
     `;
   }
 
@@ -187,7 +189,7 @@ export class EditorAspectRatioButtonControl extends EditorButtonControl {
         title=${ifDefined(this.titleProp)}
         @click=${clickHandler}
       >
-        <uc-icon>${this._renderIcon()}</uc-icon>
+        ${this._renderIcon()}
         <div class="uc-title" ?hidden=${!title}>${title}</div>
       </button>
     `;
