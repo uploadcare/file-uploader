@@ -30,8 +30,6 @@ const FileItemState = Object.freeze({
 
 type FileItemStateValue = (typeof FileItemState)[keyof typeof FileItemState];
 
-type UploadTrigger = Set<string>;
-
 export class FileItem extends FileItemConfig {
   protected override couldBeCtxOwner = true;
 
@@ -307,7 +305,7 @@ export class FileItem extends FileItemConfig {
       });
     };
 
-    this.sub('*uploadTrigger', (itemsToUpload: UploadTrigger) => {
+    this.sub('*uploadTrigger', (itemsToUpload) => {
       if (this.entry && !itemsToUpload.has(this.entry.uid)) {
         return;
       }
