@@ -3,6 +3,7 @@ import { property, state } from 'lit/decorators.js';
 import { classMap } from 'lit/directives/class-map.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
 import { styleMap } from 'lit/directives/style-map.js';
+import { PACKAGE_NAME, PACKAGE_VERSION } from '../../../env';
 import { createCdnUrl, createCdnUrlModifiers } from '../../../utils/cdn-utils.js';
 import { preloadImage } from '../../../utils/preloadImage.js';
 import { EditorButtonControl } from './EditorButtonControl.js';
@@ -96,6 +97,7 @@ export class EditorFilterControl extends EditorButtonControl {
         transformationsToOperations(transformations),
         `quality/${quality}`,
         `scale_crop/${size}x${size}/center`,
+        `@clib/${PACKAGE_NAME}/${PACKAGE_VERSION}/uc-cloud-image-editor/`,
       ),
     );
   }
@@ -241,7 +243,13 @@ export class EditorFilterControl extends EditorButtonControl {
   }
 
   private _schedulePreviewVisibilityCheck(): void {
-    if (!this.isConnected || this._previewImage || this._previewLoaded || this.isOriginal) {
+    if (
+      !this.isConnected ||
+      this._previewImage ||
+      this._previewLoaded ||
+      this.isOriginal ||
+      this.$['*networkProblems']
+    ) {
       this._clearPreviewVisibilityChecks();
       return;
     }
