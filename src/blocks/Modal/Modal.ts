@@ -13,10 +13,10 @@ export class Modal extends LitBlock {
 
   private _mouseDownTarget: EventTarget | null | undefined;
 
-  /** WARNING: Do not this, it's used in dashboard */
+  /** WARNING: Do not rename/change this, it's used in dashboard */
   protected dialogEl = createRef<HTMLDialogElement>();
 
-  /** WARNING: Do not this, it's used in dashboard */
+  /** WARNING: Do not rename/change this, it's used in dashboard */
   protected closeDialog = (): void => {
     this.modalManager?.close(this.id);
 
