@@ -35,7 +35,7 @@ export class SliderUi extends LitBlock {
     this.setAttribute('with-effects', '');
   }
 
-  private _emitSliderEvent(type: 'slider-input' | 'slider-change', value: number): void {
+  private _emitSliderEvent(type: 'slider-input', value: number): void {
     this.dispatchEvent(
       new CustomEvent(type, {
         detail: { value },
@@ -62,7 +62,6 @@ export class SliderUi extends LitBlock {
       return;
     }
     this._setCurrentValue(value);
-    this._emitSliderEvent('slider-change', value);
   };
 
   private readonly _handleInputFocus = (): void => {
