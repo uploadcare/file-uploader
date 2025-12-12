@@ -510,7 +510,10 @@
         .replace(/=+$/g, '');
 
     const decodeBase64Url = (value) => {
-      const padded = value.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(value.length / 4) * 4, '=');
+      const padded = value
+        .replace(/-/g, '+')
+        .replace(/_/g, '/')
+        .padEnd(Math.ceil(value.length / 4) * 4, '=');
       return decodeURIComponent(escape(atob(padded)));
     };
 

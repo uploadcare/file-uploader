@@ -41,7 +41,7 @@ export class SourceList extends LitBlock {
       if (srcName === 'instagram') {
         console.error(
           "Instagram source was removed because the Instagram Basic Display API hasn't been available since December 4, 2024. " +
-            'Official statement, see here:' +
+            'Official statement, see here: ' +
             'https://developers.facebook.com/blog/post/2024/09/04/update-on-instagram-basic-display-api/?locale=en_US',
         );
         continue;
