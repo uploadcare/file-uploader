@@ -13,8 +13,8 @@ export type ActivityParams = { internalId: string };
 
 type EditorTemplateConfig = {
   cdnUrl: string;
-  cropPreset?: string;
-  tabs?: string;
+  cropPreset: string;
+  tabs: string;
 };
 
 export class CloudImageEditorActivity extends LitUploaderBlock {
@@ -46,13 +46,12 @@ export class CloudImageEditorActivity extends LitUploaderBlock {
       if (!this._editorConfig) {
         return;
       }
-      const normalized = cropPreset || undefined;
-      if (this._editorConfig.cropPreset === normalized) {
+      if (this._editorConfig.cropPreset === cropPreset) {
         return;
       }
       this._editorConfig = {
         ...this._editorConfig,
-        cropPreset: normalized,
+        cropPreset,
       };
     });
 
@@ -60,13 +59,12 @@ export class CloudImageEditorActivity extends LitUploaderBlock {
       if (!this._editorConfig) {
         return;
       }
-      const normalized = tabs || undefined;
-      if (this._editorConfig.tabs === normalized) {
+      if (this._editorConfig.tabs === tabs) {
         return;
       }
       this._editorConfig = {
         ...this._editorConfig,
-        tabs: normalized,
+        tabs,
       };
     });
   }
@@ -135,15 +133,11 @@ export class CloudImageEditorActivity extends LitUploaderBlock {
   }
 
   private _createEditorConfig(cdnUrl: string): EditorTemplateConfig {
-    const config: EditorTemplateConfig = { cdnUrl };
-    const cropPreset = this.cfg.cropPreset;
-    if (cropPreset) {
-      config.cropPreset = cropPreset;
-    }
-    const tabs = this.cfg.cloudImageEditorTabs;
-    if (tabs) {
-      config.tabs = tabs;
-    }
+    const config: EditorTemplateConfig = {
+      cdnUrl,
+      cropPreset: this.cfg.cropPreset,
+      tabs: this.cfg.cloudImageEditorTabs,
+    };
     return config;
   }
 }
