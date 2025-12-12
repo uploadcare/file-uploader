@@ -215,7 +215,7 @@ export class LitBlock extends LitBlockBase {
     if (!this.has(key) || !this.$[key]) {
       const managerInstance = resolver();
       this.add(key, managerInstance, true);
-      this._sharedContextInstances.set(key, { persist, instance: managerInstance });
+      this._sharedContextInstances.set(key, { persist, instance: managerInstance as SharedContextInstance });
       return;
     }
   }
@@ -241,7 +241,7 @@ export class LitBlock extends LitBlockBase {
     }
 
     if (!isRequired) {
-      return this.$[key] as SharedState[TKey];
+      return this.$[key] as TRequired extends true ? NonNullable<SharedState[TKey]> : SharedState[TKey];
     }
 
     throw new Error(`Unexpected error: context manager for key "${String(key)}" is not available`);
@@ -312,7 +312,7 @@ export class LitBlock extends LitBlockBase {
     if (!this.has(sharedKey)) {
       this.add(sharedKey, initialConfig[key] as unknown as SharedState[typeof sharedKey]);
     }
-    return this.sub(sharedKey as any, callback);
+    return this.sub(sharedKey as any, callback as any);
   }
 
   public debugPrint(...args: unknown[]): void {

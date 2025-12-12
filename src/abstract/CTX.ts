@@ -2,7 +2,6 @@ import type { UploadcareGroup } from '@uploadcare/upload-client';
 import { Queue } from '@uploadcare/upload-client';
 import type { LitBlock } from '../lit/LitBlock';
 import type { OutputCollectionState, OutputErrorCollection } from '../types/index';
-import type { SecureUploadsManager } from './managers/SecureUploadsManager';
 
 export const blockCtx = () => ({});
 
@@ -29,7 +28,6 @@ export const uploaderBlockCtx = (fnCtx: LitBlock) => ({
   '*collectionState': null as OutputCollectionState | null,
   '*groupInfo': null as UploadcareGroup | null,
   '*uploadTrigger': new Set<string>(),
-  '*secureUploadsManager': null as SecureUploadsManager | null,
 });
 
 export const solutionBlockCtx = (fnCtx: LitBlock) => ({
