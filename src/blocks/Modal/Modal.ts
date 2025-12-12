@@ -12,9 +12,12 @@ export class Modal extends LitBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-modal'];
 
   private _mouseDownTarget: EventTarget | null | undefined;
-  private _dialogEl = createRef<HTMLDialogElement>();
 
-  private _closeDialog = (): void => {
+  /** WARNING: Do not this, it's used in dashboard */
+  protected dialogEl = createRef<HTMLDialogElement>();
+
+  /** WARNING: Do not this, it's used in dashboard */
+  protected closeDialog = (): void => {
     this.modalManager?.close(this.id);
 
     if (!this.modalManager?.hasActiveModals) {
@@ -23,7 +26,7 @@ export class Modal extends LitBlock {
   };
 
   private _handleDialogClose = (): void => {
-    this._closeDialog();
+    this.closeDialog();
   };
 
   private _handleDialogMouseDown = (e: MouseEvent): void => {
@@ -32,13 +35,13 @@ export class Modal extends LitBlock {
 
   private _handleDialogMouseUp = (e: MouseEvent): void => {
     const target = e.target as EventTarget | null;
-    if (target === this._dialogEl.value && target === this._mouseDownTarget) {
-      this._closeDialog();
+    if (target === this.dialogEl.value && target === this._mouseDownTarget) {
+      this.closeDialog();
     }
   };
 
   public show(): void {
-    const dialog = this._dialogEl.value as HTMLDialogElement & {
+    const dialog = this.dialogEl.value as HTMLDialogElement & {
       showModal?: () => void;
     };
     if (typeof dialog.showModal === 'function') {
@@ -54,7 +57,7 @@ export class Modal extends LitBlock {
   }
 
   public hide(): void {
-    const dialog = this._dialogEl.value as HTMLDialogElement & {
+    const dialog = this.dialogEl.value as HTMLDialogElement & {
       close?: () => void;
     };
     if (typeof dialog.close === 'function') {
@@ -127,11 +130,11 @@ export class Modal extends LitBlock {
   }
 
   private _handleDialogRef(dialog: Element | undefined): void {
-    this._dialogEl = { value: dialog } as typeof this._dialogEl;
+    this.dialogEl = { value: dialog } as typeof this.dialogEl;
 
-    this._dialogEl.value?.addEventListener('close', this._handleDialogClose);
-    this._dialogEl.value?.addEventListener('mousedown', this._handleDialogMouseDown);
-    this._dialogEl.value?.addEventListener('mouseup', this._handleDialogMouseUp);
+    this.dialogEl.value?.addEventListener('close', this._handleDialogClose);
+    this.dialogEl.value?.addEventListener('mousedown', this._handleDialogMouseDown);
+    this.dialogEl.value?.addEventListener('mouseup', this._handleDialogMouseUp);
   }
 
   public override render() {
