@@ -8,6 +8,7 @@ import { FileItemConfig } from '../FileItem/FileItemConfig';
 import { fileCssBg } from '../svg-backgrounds/svg-backgrounds';
 import './thumb.css';
 import type { Uid } from '../../lit/Uid';
+import { TRANSPARENT_PIXEL_SRC } from '../../utils/transparentPixelSrc';
 
 const CDN_MAX_OUTPUT_DIMENSION = 3000;
 
@@ -342,7 +343,7 @@ export class Thumb extends FileItemConfig {
   public override render() {
     return html`
   <div class="uc-thumb">
-    <img class="uc-thumb__img" src=${this._thumbUrl || ''} alt="" ?hidden=${!this._thumbUrl} draggable="false" />
+    <img class="uc-thumb__img" src=${this._thumbUrl || TRANSPARENT_PIXEL_SRC} alt="" ?hidden=${!this._thumbUrl} draggable="false" />
     <div class="uc-badge">
       <uc-icon name=${this.badgeIcon}></uc-icon>
     </div>
