@@ -122,16 +122,7 @@ export class LitBlock extends LitBlockBase {
     this.addSharedContextInstance('*a11y', () => new A11y(), {
       persist: true,
     });
-    this.addSharedContextInstance('*telemetryManager', () => {
-      if (this.cfg.qualityInsights) {
-        return new TelemetryManager(this);
-      }
-      return {
-        sendEvent: () => {},
-        sendEventError: () => {},
-        sendEventCloudImageEditor: () => {},
-      } as ITelemetryManager;
-    });
+    this.addSharedContextInstance('*telemetryManager', () => new TelemetryManager(this));
 
     this.sub(localeStateKey('locale-id'), (localeId: string) => {
       const direction = getLocaleDirection(localeId);
