@@ -49,7 +49,7 @@ export class UploaderPublicApi {
     this._ctx = ctx;
   }
 
-  private get _uploadCollection() {
+  public get _uploadCollection() {
     return this._ctx.uploadCollection;
   }
 

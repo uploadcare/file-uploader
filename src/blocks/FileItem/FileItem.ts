@@ -107,7 +107,7 @@ export class FileItem extends FileItemConfig {
       },
     });
 
-    if (this.uid) {
+    if (this.uid && this.uploadCollection.hasItem(this.uid)) {
       this.uploadCollection.remove(this.uid);
     }
   };

@@ -22,6 +22,8 @@ type TypedCollectionOptions<T extends Record<string, unknown>> = {
 type TypedDataMap<T extends Record<string, unknown>> = Record<Uid, TypedData<T> | undefined>;
 
 export class TypedCollection<T extends Record<string, unknown>> {
+  private static readonly _destroyDelayMs = 10_000;
+
   private _ctxId: Uid;
   private _data: PubSub<TypedDataMap<T>>;
   private _watchList: (keyof T)[];
@@ -31,8 +33,10 @@ export class TypedCollection<T extends Record<string, unknown>> {
   private _items = new Set<Uid>();
   private _removed = new Set<TypedData<T>>();
   private _added = new Set<TypedData<T>>();
+  private _markedToDestroy = new Set<TypedData<T>>();
   private _observeTimeout?: number;
   private _notifyTimeout?: number;
+  private _destroyTimeout?: number;
   private _notifyObservers: (propName: keyof T, ctxId: Uid) => void;
   private _initialValue: T;
 
@@ -61,6 +65,7 @@ export class TypedCollection<T extends Record<string, unknown>> {
         });
         changeMap = Object.create(null) as ChangeMap<T>;
       });
+      this._scheduleDestroyMarkedItems();
     };
 
     if (options.handler) {
@@ -80,7 +85,25 @@ export class TypedCollection<T extends Record<string, unknown>> {
       for (const handler of this._collectionObservers) {
         handler?.([...this._items], added, removed);
       }
+
+      this._scheduleDestroyMarkedItems();
     });
+  }
+
+  private _scheduleDestroyMarkedItems(): void {
+    if (this._markedToDestroy.size === 0) {
+      return;
+    }
+    if (this._destroyTimeout) {
+      window.clearTimeout(this._destroyTimeout);
+    }
+    this._destroyTimeout = window.setTimeout(() => {
+      const marked = [...this._markedToDestroy];
+      this._markedToDestroy.clear();
+      for (const item of marked) {
+        item.destroy();
+      }
+    }, TypedCollection._destroyDelayMs);
   }
 
   public observeCollection(handler: TypedCollectionObserverHandler<T>): () => void {
@@ -99,9 +122,9 @@ export class TypedCollection<T extends Record<string, unknown>> {
     this._collectionObservers.delete(handler);
   }
 
-  public add(init: Partial<T>): string {
+  public add(init: Partial<T>): Uid {
     const item = new TypedData<T>(this._initialValue);
-    for (const [prop, value] of Object.entries(init)) {
+    for (const [prop, value] of Object.entries(init) as [keyof T, T[keyof T]][]) {
       item.setValue(prop, value);
     }
     this._items.add(item.uid);
@@ -122,8 +145,12 @@ export class TypedCollection<T extends Record<string, unknown>> {
     return item.uid;
   }
 
+  public hasItem(id: Uid): boolean {
+    return this._items.has(id);
+  }
+
   public read(id: Uid): TypedData<T> | null {
-    return this._data.read(id) as TypedData<T> | null;
+    return this._data.read(id) ?? null;
   }
 
   public readProp<K extends keyof T>(id: Uid, propName: K): T[K] {
@@ -146,10 +173,15 @@ export class TypedCollection<T extends Record<string, unknown>> {
     const item = this.read(id);
     if (item) {
       this._removed.add(item);
+      this._markedToDestroy.add(item);
     }
     this._items.delete(id);
     this._notify();
     this._data.pub(id, undefined);
+
+    this._subsMap[id]?.forEach((sub) => {
+      sub.remove();
+    });
     delete this._subsMap[id];
   }
 
@@ -191,6 +223,21 @@ export class TypedCollection<T extends Record<string, unknown>> {
   }
 
   public destroy(): void {
+    if (this._observeTimeout) {
+      window.clearTimeout(this._observeTimeout);
+    }
+    if (this._notifyTimeout) {
+      window.clearTimeout(this._notifyTimeout);
+    }
+    if (this._destroyTimeout) {
+      window.clearTimeout(this._destroyTimeout);
+    }
+
+    for (const item of this._markedToDestroy) {
+      item.destroy();
+    }
+    this._markedToDestroy.clear();
+
     PubSub.deleteCtx(this._ctxId);
     this._propertyObservers = new Set();
     this._collectionObservers = new Set();
