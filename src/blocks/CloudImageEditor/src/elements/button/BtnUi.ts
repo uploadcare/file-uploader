@@ -15,9 +15,6 @@ export class BtnUi extends LitBlock {
   public icon = '';
 
   @property({ type: Boolean, reflect: true })
-  public active = false;
-
-  @property({ type: Boolean, reflect: true })
   public reverse = false;
 
   @property({ type: String, reflect: true })
