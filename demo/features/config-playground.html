@@ -503,6 +503,25 @@
 
     const COMPLEX_KEYS = new Set(Object.keys(DEMO_COMPLEX_PRESETS));
 
+    const encodeBase64Url = (value) =>
+      btoa(unescape(encodeURIComponent(value)))
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/g, '');
+
+    const decodeBase64Url = (value) => {
+      const padded = value.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(value.length / 4) * 4, '=');
+      return decodeURIComponent(escape(atob(padded)));
+    };
+
+    const getDefaultComplexChoice = () =>
+      Object.fromEntries(Object.entries(DEMO_COMPLEX_PRESETS).map(([key, presets]) => [key, presets[0]?.id ?? 'none']));
+
+    const getPresetById = (key, id) => {
+      const presets = DEMO_COMPLEX_PRESETS[key] ?? [];
+      return presets.find((p) => p.id === id) ?? presets[0] ?? { id: 'none', value: null };
+    };
+
     const inferKind = (key, value) => {
       if (COMPLEX_KEYS.has(key)) return 'complex';
       if (typeof value === 'boolean') return 'boolean';
@@ -527,9 +546,7 @@
         super();
         this._mode = 'regular';
         this._cfg = cloneConfig();
-        this._complexChoice = Object.fromEntries(
-          Object.entries(DEMO_COMPLEX_PRESETS).map(([key, presets]) => [key, presets[0]?.id ?? 'none']),
-        );
+        this._complexChoice = getDefaultComplexChoice();
         this._filter = '';
         this._loadedLocales = new Set(['en']);
       }
@@ -538,14 +555,20 @@
         return this;
       }
 
-      firstUpdated() {
+      async firstUpdated() {
         this._configEl = this.querySelector('uc-config');
+        await this._restoreStateFromUrl();
         this._applyConfig();
+        this._persistStateToUrl();
       }
 
       updated(changedProps) {
         if (changedProps.has('_cfg')) {
           this._applyConfig();
+          this._persistStateToUrl();
+        }
+        if (changedProps.has('_mode') || changedProps.has('_filter') || changedProps.has('_complexChoice')) {
+          this._persistStateToUrl();
         }
       }
 
@@ -558,14 +581,96 @@
 
       _resetConfig() {
         this._cfg = cloneConfig();
-        this._complexChoice = Object.fromEntries(
-          Object.entries(DEMO_COMPLEX_PRESETS).map(([key, presets]) => [key, presets[0]?.id ?? 'none']),
-        );
+        this._complexChoice = getDefaultComplexChoice();
         this._filter = '';
       }
 
       _updateValue(key, value) {
         this._cfg = { ...this._cfg, [key]: value };
+      }
+
+      _persistStateToUrl() {
+        const url = new URL(window.location.href);
+
+        const cfgSerializable = {};
+        for (const [key, value] of Object.entries(this._cfg)) {
+          if (COMPLEX_KEYS.has(key)) {
+            continue;
+          }
+          if (typeof value === 'function') {
+            continue;
+          }
+          try {
+            JSON.stringify(value);
+            cfgSerializable[key] = value;
+          } catch {
+            // skip non-serializable values
+          }
+        }
+
+        const state = {
+          v: 1,
+          mode: this._mode,
+          filter: this._filter,
+          cfg: cfgSerializable,
+          complexChoice: this._complexChoice,
+        };
+
+        url.searchParams.set('s', encodeBase64Url(JSON.stringify(state)));
+        window.history.replaceState(null, '', url);
+      }
+
+      async _restoreStateFromUrl() {
+        const url = new URL(window.location.href);
+        const encoded = url.searchParams.get('s');
+        if (!encoded) {
+          return;
+        }
+
+        let parsed;
+        try {
+          parsed = JSON.parse(decodeBase64Url(encoded));
+        } catch {
+          return;
+        }
+
+        if (!parsed || typeof parsed !== 'object') {
+          return;
+        }
+
+        const nextMode = typeof parsed.mode === 'string' ? parsed.mode : this._mode;
+        const nextFilter = typeof parsed.filter === 'string' ? parsed.filter : this._filter;
+
+        const nextComplexChoice = {
+          ...getDefaultComplexChoice(),
+          ...(parsed.complexChoice && typeof parsed.complexChoice === 'object' ? parsed.complexChoice : {}),
+        };
+
+        const cfg = cloneConfig();
+        if (parsed.cfg && typeof parsed.cfg === 'object') {
+          for (const [key, value] of Object.entries(parsed.cfg)) {
+            cfg[key] = value;
+          }
+        }
+
+        for (const [key, id] of Object.entries(nextComplexChoice)) {
+          if (!COMPLEX_KEYS.has(key)) {
+            continue;
+          }
+          const presetId = typeof id === 'string' ? id : 'none';
+          const preset = getPresetById(key, presetId);
+          cfg[key] = preset?.value ?? null;
+          nextComplexChoice[key] = preset?.id ?? 'none';
+        }
+
+        if (cfg.localeName && typeof cfg.localeName === 'string') {
+          await this._ensureLocale(cfg.localeName);
+        }
+
+        this._mode = nextMode;
+        this._filter = nextFilter;
+        this._complexChoice = nextComplexChoice;
+        this._cfg = cfg;
       }
 
       _renderSimpleField(key, kind) {
