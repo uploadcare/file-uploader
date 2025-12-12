@@ -3,6 +3,7 @@ import { html } from 'lit';
 import { state } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import { LitBlock } from '../../../lit/LitBlock';
+import { UID } from '../../../utils/UID';
 import {
   clamp,
   constraintRect,
@@ -36,6 +37,7 @@ type Delta = [number, number];
 export class CropFrame extends LitBlock {
   private _backdropMask?: SVGMaskElement;
   private _backdropMaskInner?: SVGRectElement;
+  private readonly _backdropMaskId = `uc-backdrop-mask-${UID.generateFastUid()}`;
   private _frameThumbs?: FrameThumbs;
   private _frameGuides?: SVGElement;
   private _draggingThumb?: FrameThumb;
@@ -106,7 +108,7 @@ export class CropFrame extends LitBlock {
       return;
     }
 
-    const mask = createSvgNode('mask', { id: 'backdrop-mask' }) as SVGMaskElement;
+    const mask = createSvgNode('mask', { id: this._backdropMaskId }) as SVGMaskElement;
     const maskRectOuter = createSvgNode('rect', {
       x: 0,
       y: 0,
@@ -131,7 +133,7 @@ export class CropFrame extends LitBlock {
       height: '100%',
       fill: 'var(--color-image-background)',
       'fill-opacity': 0.85,
-      mask: 'url(#backdrop-mask)',
+      mask: `url(#${this._backdropMaskId})`,
     });
     svg.appendChild(backdropRect);
     svg.appendChild(mask);

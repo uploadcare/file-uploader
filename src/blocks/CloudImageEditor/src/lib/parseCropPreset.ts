@@ -29,7 +29,7 @@ export const parseCropPreset = (cropPreset: ConfigType['cropPreset']): CropAspec
     }
 
     result.push({
-      id: UID.generate(),
+      id: UID.generateFastUid(),
       type: 'aspect-ratio',
       width: EXCLUDED_TYPES.includes(raw) ? 0 : w,
       height: EXCLUDED_TYPES.includes(raw) ? 0 : h,
