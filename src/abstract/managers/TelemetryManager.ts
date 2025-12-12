@@ -33,14 +33,22 @@ export class TelemetryManager implements ITelemetryManager {
   private _initialized = false;
   private _lastPayload: TelemetryState | null = null;
   private readonly _queue: Queue;
+  private _isEnabled = true;
 
   public constructor(block: LitBlock) {
     this._block = block;
     this._telemetryInstance = new TelemetryAPIService();
     this._queue = new Queue(10);
 
+    this._block.subConfigValue('qualityInsights', (value) => {
+      this._isEnabled = Boolean(value);
+    });
+
     for (const key of Object.keys(this._config) as (keyof ConfigType)[]) {
       this._block.subConfigValue(key, (value) => {
+        if (!this._isEnabled) {
+          return;
+        }
         if (this._initialized && this._config[key] !== value) {
           this.sendEvent({
             eventType: InternalEventType.CHANGE_CONFIG,
@@ -118,6 +126,9 @@ export class TelemetryManager implements ITelemetryManager {
   }
 
   public sendEvent(body: TelemetryEventBody): void {
+    if (!this._isEnabled) {
+      return;
+    }
     const payload = this._formattingPayload({
       eventType: body.eventType,
       payload: body.payload,
