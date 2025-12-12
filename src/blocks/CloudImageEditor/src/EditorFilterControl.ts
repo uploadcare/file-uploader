@@ -114,11 +114,9 @@ export class EditorFilterControl extends EditorButtonControl {
   public override initCallback(): void {
     super.initCallback();
 
-    if ('IntersectionObserver' in window) {
-      this._observer = new window.IntersectionObserver(this._observerCallback.bind(this), {
-        threshold: [0, 1],
-      });
-    }
+    this._observer = new window.IntersectionObserver(this._observerCallback.bind(this), {
+      threshold: [0, 1],
+    });
 
     const originalUrl = this.$['*originalUrl'] as string;
     this._originalUrl = originalUrl ?? '';
