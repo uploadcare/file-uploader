@@ -7,6 +7,7 @@ import { EventType, InternalEventType } from '../../blocks/UploadCtxProvider/Eve
 import { PACKAGE_NAME, PACKAGE_VERSION } from '../../env';
 import type { LitBlock } from '../../lit/LitBlock';
 import type { ConfigType } from '../../types/index';
+import { UID } from '../../utils/UID';
 
 type CommonEventType = InternalEventKey | EventKey;
 
@@ -26,7 +27,7 @@ export interface ITelemetryManager {
 }
 
 export class TelemetryManager implements ITelemetryManager {
-  private readonly _sessionId: string = crypto.randomUUID();
+  private readonly _sessionId: string = UID.generateRandomUUID();
   private readonly _telemetryInstance: TelemetryAPIService;
   private readonly _block: LitBlock;
   private _config: ConfigType = structuredClone(initialConfig);
@@ -39,6 +40,7 @@ export class TelemetryManager implements ITelemetryManager {
     this._block = block;
     this._telemetryInstance = new TelemetryAPIService();
     this._queue = new Queue(10);
+    this._isEnabled = Boolean(this._block.cfg.qualityInsights);
 
     this._block.subConfigValue('qualityInsights', (value) => {
       this._isEnabled = Boolean(value);

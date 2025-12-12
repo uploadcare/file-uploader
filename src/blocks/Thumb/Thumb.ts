@@ -127,12 +127,21 @@ export class Thumb extends FileItemConfig {
 
   private _decodeImage(src: string, signal?: AbortSignal): Promise<void> {
     return new Promise((resolve, reject) => {
-      const image = new Image();
+      let image: HTMLImageElement | null = new Image();
       image.decoding = 'async';
 
       const cleanup = () => {
-        image.src = '';
+        if (!image) {
+          return;
+        }
+
+        image.onload = null;
+        image.onerror = null;
+        image.src = TRANSPARENT_PIXEL_SRC;
+
         signal?.removeEventListener('abort', onAbort);
+
+        image = null;
       };
 
       const onAbort = () => {
@@ -203,7 +212,6 @@ export class Thumb extends FileItemConfig {
     this._pendingThumbUpdate = pending;
 
     this._decodeImage(nextThumbUrl, abortController.signal)
-      .catch(() => {})
       .then(() => {
         if (abortController.signal.aborted) {
           return;
@@ -213,6 +221,16 @@ export class Thumb extends FileItemConfig {
             this._thumbUrl = nextThumbUrl;
           }
         });
+      })
+      .catch((error) => {
+        // Ignore decode failures (but don't run the success update path).
+        if (abortController.signal.aborted) {
+          return;
+        }
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          return;
+        }
+        console.warn('[Thumb] Failed to decode thumbnail image', error);
       });
   }
 
