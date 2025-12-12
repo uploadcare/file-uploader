@@ -181,7 +181,7 @@ export class LitBlock extends LitBlockBase {
 
     if (blocksRegistry?.size === 0) {
       setTimeout(() => {
-        if (!this.isConnected || blocksRegistry?.size > 0) {
+        if (this.isConnected || blocksRegistry?.size > 0) {
           return;
         }
         // Destroy global context after all blocks are destroyed and all callbacks are run
