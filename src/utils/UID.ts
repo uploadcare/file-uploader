@@ -5,4 +5,11 @@ export class UID {
   public static generate(): Uid {
     return `uid-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 11)}` as Uid;
   }
+  public static generateRandomUUID(): string {
+    const cryptoObj = (globalThis as unknown as { crypto?: Crypto }).crypto;
+    if (cryptoObj && typeof cryptoObj.randomUUID === 'function') {
+      return cryptoObj.randomUUID();
+    }
+    return UID.generate();
+  }
 }
