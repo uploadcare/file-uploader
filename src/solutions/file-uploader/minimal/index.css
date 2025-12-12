@@ -101,17 +101,17 @@
     display: flex;
   }
 
-  [uc-file-uploader-minimal] uc-file-item uc-progress-bar {
+  [uc-file-uploader-minimal][mode="list"] uc-file-item uc-progress-bar {
     top: 0;
     height: 100%;
   }
 
-  [uc-file-uploader-minimal] uc-file-item uc-progress-bar .uc-progress {
+  [uc-file-uploader-minimal][mode="list"] uc-file-item uc-progress-bar .uc-progress {
     background-color: var(--uc-primary-transparent);
     border-radius: var(--uc-radius);
   }
 
-  [uc-file-uploader-minimal] uc-file-item uc-progress-bar .uc-fake-progress {
+  [uc-file-uploader-minimal][mode="list"] uc-file-item uc-progress-bar .uc-fake-progress {
     background-color: var(--uc-primary-transparent);
     border-radius: var(--uc-radius);
   }
