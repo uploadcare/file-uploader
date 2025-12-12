@@ -1,5 +1,6 @@
 import type { Queue, UploadcareGroup } from '@uploadcare/upload-client';
 import type { EditorImageCropper, EditorImageFader, EditorSlider } from '..';
+import type { LocaleDefinition } from '../abstract/localeRegistry';
 import type { A11y } from '../abstract/managers/a11y';
 import type { LocaleManager } from '../abstract/managers/LocaleManager';
 import type { ModalManager } from '../abstract/managers/ModalManager';
@@ -25,9 +26,9 @@ type SharedConfigState = {
   [K in keyof ConfigType as `*cfg/${K}`]: ConfigType[K];
 };
 
-type BlockCtxState = Record<string, never>;
+export type BlocksRegistry = Set<LitBlock>;
 
-type ActivityBlockCtxState = BlockCtxState & {
+type ActivityBlockCtxState = {
   '*currentActivity': string | null;
   '*currentActivityParams': Record<string, unknown>;
   '*history': (string | null)[];
@@ -43,7 +44,6 @@ type UploaderBlockCtxState = ActivityBlockCtxState & {
   '*collectionState': OutputCollectionState | null;
   '*groupInfo': UploadcareGroup | null;
   '*uploadTrigger': Set<Uid>;
-  '*secureUploadsManager': SecureUploadsManager;
 };
 
 type SolutionBlockCtxState = UploaderBlockCtxState & {
@@ -86,7 +86,7 @@ type EditorToolbarState = {
 };
 
 type DynamicBlockState = {
-  '*blocksRegistry': Set<LitBlock>;
+  '*blocksRegistry': BlocksRegistry;
   '*eventEmitter': EventEmitter;
   '*localeManager': LocaleManager;
   '*telemetryManager': ITelemetryManager;
@@ -95,13 +95,14 @@ type DynamicBlockState = {
 };
 
 type DynamicUploaderBlockState = {
-  '*uploadCollection': TypedCollection<UploadEntryData> | null;
+  '*uploadCollection': TypedCollection<UploadEntryData>;
   '*publicApi': UploaderPublicApi;
   '*validationManager': ValidationManager;
+  '*secureUploadsManager': SecureUploadsManager;
 };
 
 type LocaleState = {
-  [key: `*l10n/${string}`]: string;
+  [K in keyof LocaleDefinition as `*l10n/${K}`]: string;
 };
 
 export type SharedState = SolutionBlockCtxState &
