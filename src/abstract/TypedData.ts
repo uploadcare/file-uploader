@@ -46,7 +46,7 @@ export class TypedData<T extends Record<string, unknown>> {
     return this._data.sub(prop, handler);
   }
 
-  public remove(): void {
+  public destroy(): void {
     PubSub.deleteCtx(this._ctxId);
   }
 }
