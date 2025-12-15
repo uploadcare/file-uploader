@@ -64,6 +64,12 @@ export function SymbioteMixin<TState extends Record<string, unknown> = Record<st
 
       private _pendingCtxInitOnConnect = false;
 
+      public static set template(_value: never) {
+        console.error(
+          `Caution: static 'template' property is deprecated and has no effect. See https://github.com/uploadcare/file-uploader/releases/tag/v1.25.0 for details.`,
+        );
+      }
+
       @property({ type: String, attribute: 'ctx-name', noAccessor: true })
       private get _ctxNameAttr(): string | undefined {
         return this._ctxNameAttrValue;
