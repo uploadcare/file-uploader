@@ -1028,6 +1028,7 @@ CameraSource.template = /* HTML */ `
         type="button"
         class="uc-switch uc-mini-btn"
         set="onclick: onClickTab;  @hidden: tabCameraHidden"
+        data-testid="tab-photo"
       >
         <uc-icon name="camera"></uc-icon>
       </button>
@@ -1036,6 +1037,7 @@ CameraSource.template = /* HTML */ `
         type="button"
         class="uc-switch uc-mini-btn"
         set="onclick: onClickTab; @hidden: tabVideoHidden"
+        data-testid="tab-video"
       >
         <uc-icon name="video-camera"></uc-icon>
       </button>
@@ -1044,6 +1046,7 @@ CameraSource.template = /* HTML */ `
     <button
       class="uc-secondary-btn uc-recording-timer"
       set="@hidden:timerHidden; onclick: onToggleRecording"
+      data-testid="recording-timer"
     >
       <uc-icon set="@name: currentTimelineIcon"></uc-icon>
       <span ref="timer"> 00:00 </span>
@@ -1054,7 +1057,7 @@ CameraSource.template = /* HTML */ `
       class="uc-camera-actions uc-camera-action"
       set="@hidden: cameraActionsHidden"
     >
-      <button type="button" class="uc-secondary-btn" set="onclick: onRetake">
+      <button type="button" class="uc-secondary-btn" set="onclick: onRetake" data-testid="retake">
         Retake
       </button>
       <button
@@ -1080,6 +1083,7 @@ CameraSource.template = /* HTML */ `
       <button
         class="uc-mini-btn uc-btn-microphone"
         set="onclick: onToggleAudio; @hidden: audioToggleMicrophoneHidden;"
+        data-testid="toggle-microphone"
       >
         <uc-icon set="@name:toggleMicrophoneIcon"></uc-icon>
       </button>
@@ -1087,6 +1091,7 @@ CameraSource.template = /* HTML */ `
       <uc-select
         class="uc-audio-select"
         set="$.options: audioSelectOptions; onchange: onAudioSelectChange; @hidden: audioSelectHidden; @disabled: audioSelectDisabled"
+        data-testid="audio-select"
       >
       </uc-select>
     </div>
