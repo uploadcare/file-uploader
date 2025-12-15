@@ -1,16 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Modal as ModalNode } from '../../../blocks/Modal/Modal';
-import type { Block } from '../../Block';
+import type { LitBlock } from '../../../lit/LitBlock';
 import type { ModalId } from '../ModalManager';
 import { ModalEvents, ModalManager } from '../ModalManager';
 
-const createMockBlock = (): Block =>
+const createMockBlock = (): LitBlock =>
   ({
     debugPrint: vi.fn(),
     telemetryManager: {
       sendEventError: vi.fn(),
     },
-  }) as unknown as Block;
+  }) as unknown as LitBlock;
 
 const createMockModal = (id: ModalId): ModalNode =>
   ({
@@ -21,7 +21,7 @@ const createMockModal = (id: ModalId): ModalNode =>
 
 describe('ModalManager', () => {
   let manager: ModalManager;
-  let mockBlock: Block;
+  let mockBlock: LitBlock;
 
   beforeEach(() => {
     mockBlock = createMockBlock();
