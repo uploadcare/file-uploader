@@ -302,7 +302,7 @@ export class EditorFilterControl extends EditorButtonControl {
     }
 
     const iconStyles = {
-      opacity: this._shouldShowPreview ? '0' : '1',
+      opacity: this.active || this.isOriginal ? '1' : '0',
     };
 
     return html`
