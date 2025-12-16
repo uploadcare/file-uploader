@@ -758,26 +758,7 @@
     width: 100%;
     height: 100%;
     overflow: hidden;
-    opacity: 0;
     content-visibility: auto;
-  }
-
-  uc-editor-toolbar
-    > .uc-toolbar-container
-    > .uc-sub-toolbar
-    > .uc-tab-content-row
-    > .uc-tab-content.uc-tab-content--visible {
-    opacity: 1;
-    pointer-events: auto;
-  }
-
-  uc-editor-toolbar
-    > .uc-toolbar-container
-    > .uc-sub-toolbar
-    > .uc-tab-content-row
-    > .uc-tab-content.uc-tab-content--hidden {
-    opacity: 0;
-    pointer-events: none;
   }
 
   uc-editor-toolbar

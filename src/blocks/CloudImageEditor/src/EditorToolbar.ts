@@ -4,6 +4,7 @@ import { state } from 'lit/decorators.js';
 import type { Ref } from 'lit/directives/ref.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import { styleMap } from 'lit/directives/style-map.js';
+import { when } from 'lit/directives/when.js';
 import { LitBlock } from '../../../lit/LitBlock';
 import { debounce } from '../../../utils/debounce';
 import { batchPreloadImages } from '../../../utils/preloadImage';
@@ -19,7 +20,7 @@ import {
   type CropOperation,
   TabId,
 } from './toolbar-constants';
-import type { CropAspectRatio, LoadingOperations, Transformations } from './types';
+import type { CropAspectRatio, Transformations } from './types';
 import { viewerImageSrc } from './util';
 import { parseFilterValue } from './utils/parseFilterValue';
 
@@ -114,11 +115,6 @@ export class EditorToolbar extends LitBlock {
   private readonly _subBottomToolbarStyles = {
     hidden: 'uc-sub-toolbar--bottom-hidden',
     visible: 'uc-sub-toolbar--visible',
-  };
-
-  private readonly _tabContentStyles = {
-    hidden: 'uc-tab-content--hidden',
-    visible: 'uc-tab-content--visible',
   };
 
   private readonly _tabToggleStyles = {
@@ -318,13 +314,13 @@ export class EditorToolbar extends LitBlock {
   public override initCallback(): void {
     super.initCallback();
 
-    const initialCropPresets = (this.$['*cropPresetList'] as CropAspectRatio[]) ?? [];
+    const initialCropPresets = this.$['*cropPresetList'] ?? [];
     this._cropPresets = [...initialCropPresets];
-    this.sub('*cropPresetList', (cropPresetList: CropAspectRatio[]) => {
+    this.sub('*cropPresetList', (cropPresetList) => {
       this._cropPresets = [...(cropPresetList ?? [])];
     });
 
-    this.sub('*imageSize', (imageSize: { width: number; height: number } | null) => {
+    this.sub('*imageSize', (imageSize) => {
       if (imageSize) {
         setTimeout(() => {
           this._activateTab(this.$['*tabId'], { fromViewer: true });
@@ -332,7 +328,7 @@ export class EditorToolbar extends LitBlock {
       }
     });
 
-    this.sub('*editorTransformations', (editorTransformations: Transformations) => {
+    this.sub('*editorTransformations', (editorTransformations) => {
       const appliedFilter = editorTransformations?.filter?.name;
       if (this.$['*currentFilter'] !== appliedFilter) {
         this.$['*currentFilter'] = appliedFilter ?? '';
@@ -347,7 +343,7 @@ export class EditorToolbar extends LitBlock {
       this._updateInfoTooltip();
     });
 
-    this.sub('*tabId', (tabId: TabIdValue) => {
+    this.sub('*tabId', (tabId) => {
       this._applyTabState(tabId, { fromViewer: false, force: true });
       this._updateInfoTooltip();
     });
@@ -356,12 +352,12 @@ export class EditorToolbar extends LitBlock {
       (this.$['*faderEl'] as EditorImageFader | undefined)?.deactivate();
     });
 
-    this.sub('*editorTransformations', (transformations: Transformations) => {
+    this.sub('*editorTransformations', (transformations) => {
       this._preloadEditedImage();
       (this.$['*faderEl'] as EditorImageFader | undefined)?.setTransformations(transformations);
     });
 
-    this.sub('*loadingOperations', (loadingOperations: LoadingOperations) => {
+    this.sub('*loadingOperations', (loadingOperations) => {
       let anyLoading = false;
       for (const [, mapping] of loadingOperations.entries()) {
         if (anyLoading) {
@@ -377,7 +373,7 @@ export class EditorToolbar extends LitBlock {
       this._debouncedShowLoader(anyLoading);
     });
 
-    this.sub('*showSlider', (showSlider: boolean) => {
+    this.sub('*showSlider', (showSlider) => {
       if (showSlider) {
         this.showSubToolbar = true;
         this.showMainToolbar = false;
@@ -388,7 +384,7 @@ export class EditorToolbar extends LitBlock {
       }
     });
 
-    this.sub('*showListAspectRatio', (show: boolean) => {
+    this.sub('*showListAspectRatio', (show) => {
       if (show) {
         this.showSubToolbar = true;
         this.showMainToolbar = false;
@@ -399,7 +395,7 @@ export class EditorToolbar extends LitBlock {
       }
     });
 
-    this.sub('*tabList', (tabList: readonly TabIdValue[]) => {
+    this.sub('*tabList', (tabList) => {
       this.tabList = tabList;
       this._showTabToggles = tabList.length > 1;
 
@@ -532,15 +528,12 @@ export class EditorToolbar extends LitBlock {
   }
 
   private _renderTabContent(id: TabIdValue) {
-    const isVisible = this.activeTab === id;
     const controls = this._renderControlsByTab(id);
 
     return html`
-      <uc-presence-toggle
+      <div
         id=${`tab_${id}`}
         class="uc-tab-content"
-        .visible=${isVisible}
-        .styles=${this._tabContentStyles}
       >
         <uc-editor-scroller hidden-scrollbar>
           <div class="uc-controls-list_align">
@@ -549,7 +542,7 @@ export class EditorToolbar extends LitBlock {
             </div>
           </div>
         </uc-editor-scroller>
-      </uc-presence-toggle>
+      </div>
     `;
   }
 
@@ -575,7 +568,7 @@ export class EditorToolbar extends LitBlock {
           .styles=${this._subTopToolbarStyles}
         >
           <div class="uc-tab-content-row">
-            ${ALL_TABS.map((tabId) => this._renderTabContent(tabId))}
+            ${ALL_TABS.map((tabId) => when(this.activeTab === tabId, () => this._renderTabContent(tabId)))}
           </div>
           <div class="uc-controls-row">
             <uc-presence-toggle
