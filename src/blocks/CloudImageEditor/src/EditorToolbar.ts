@@ -304,6 +304,7 @@ export class EditorToolbar extends LitBlock {
       const src = await this.proxyUrl(viewerImageSrc(this.$['*originalUrl'], width, this.$['*editorTransformations']));
       this._cancelPreload?.();
       const { cancel } = batchPreloadImages([src]);
+
       this._cancelPreload = () => {
         cancel();
         this._cancelPreload = undefined;
@@ -349,12 +350,12 @@ export class EditorToolbar extends LitBlock {
     });
 
     this.sub('*originalUrl', () => {
-      (this.$['*faderEl'] as EditorImageFader | undefined)?.deactivate();
+      this.$['*faderEl']?.deactivate();
     });
 
     this.sub('*editorTransformations', (transformations) => {
       this._preloadEditedImage();
-      (this.$['*faderEl'] as EditorImageFader | undefined)?.setTransformations(transformations);
+      this.$['*faderEl']?.setTransformations(transformations);
     });
 
     this.sub('*loadingOperations', (loadingOperations) => {

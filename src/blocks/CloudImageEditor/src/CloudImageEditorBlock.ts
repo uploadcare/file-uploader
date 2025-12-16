@@ -317,7 +317,9 @@ export class CloudImageEditorBlock extends LitBlock {
         return;
       }
       this.$['*originalUrl'] = originalUrl;
-      this.$['*editorTransformations'] = {};
+      if (Object.keys(this.$['*editorTransformations']).length > 0) {
+        this.$['*editorTransformations'] = {};
+      }
     } else {
       throw new Error('No UUID nor CDN URL provided');
     }
