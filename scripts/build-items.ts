@@ -20,6 +20,7 @@ export interface BuildItem {
   filename?: string;
   cssFilename?: string;
   bundleExternalDependencies: boolean;
+  mangleProps?: boolean;
 }
 
 export const buildItems: BuildItem[] = [
@@ -34,6 +35,7 @@ export const buildItems: BuildItem[] = [
     format: 'esm',
     minify: true,
     bundleExternalDependencies: false,
+    mangleProps: false,
   },
   // uc-blocks
   {
@@ -43,6 +45,7 @@ export const buildItems: BuildItem[] = [
     format: 'esm',
     minify: true,
     bundleExternalDependencies: true,
+    mangleProps: true,
   },
   {
     entry: { 'file-uploader.iife.min': srcPath('./index.ts') },
@@ -51,6 +54,7 @@ export const buildItems: BuildItem[] = [
     format: 'iife',
     minify: true,
     bundleExternalDependencies: true,
+    mangleProps: true,
   },
   // uc-cloud-image-editor
   {
@@ -61,6 +65,7 @@ export const buildItems: BuildItem[] = [
     format: 'esm',
     minify: true,
     bundleExternalDependencies: true,
+    mangleProps: true,
   },
   // file-uploader-regular
   {
@@ -71,6 +76,7 @@ export const buildItems: BuildItem[] = [
     format: 'esm',
     minify: true,
     bundleExternalDependencies: true,
+    mangleProps: true,
   },
   // file-uploader-inline
   {
@@ -81,6 +87,7 @@ export const buildItems: BuildItem[] = [
     format: 'esm',
     minify: true,
     bundleExternalDependencies: true,
+    mangleProps: true,
   },
   // file-uploader-minimal
   {
@@ -91,6 +98,7 @@ export const buildItems: BuildItem[] = [
     format: 'esm',
     minify: true,
     bundleExternalDependencies: true,
+    mangleProps: true,
   },
   // uc-img
   {
@@ -99,5 +107,6 @@ export const buildItems: BuildItem[] = [
     format: 'esm',
     minify: true,
     bundleExternalDependencies: true,
+    mangleProps: true,
   },
 ];

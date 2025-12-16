@@ -50,7 +50,9 @@ async function build(buildItem: BuildItem) {
       options.mainFields = ['exports'];
       options.platform = 'browser';
       options.legalComments = 'linked';
-      options.mangleProps = /^_/;
+      if (buildItem.mangleProps) {
+        options.mangleProps = /^_/;
+      }
     },
     esbuildPlugins: buildItem.minify ? [minifyTemplates(), writeFiles()] : [],
     noExternal: buildItem.bundleExternalDependencies ? [/.*/] : undefined,
