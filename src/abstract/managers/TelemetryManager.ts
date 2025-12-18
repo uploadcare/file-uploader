@@ -28,13 +28,12 @@ export class TelemetryManager extends SharedInstance {
   private _initialized = false;
   private _lastPayload: TelemetryState | null = null;
   private readonly _queue: Queue;
-  private _isEnabled = true;
+  private _isEnabled = false;
 
   public constructor(sharedInstancesBag: SharedInstancesBag) {
     super(sharedInstancesBag);
     this._telemetryInstance = new TelemetryAPIService();
     this._queue = new Queue(10);
-    this._isEnabled = Boolean(this._ctx.read(sharedConfigKey('qualityInsights')));
 
     this.addSub(
       this._ctx.sub(sharedConfigKey('qualityInsights'), (value) => {

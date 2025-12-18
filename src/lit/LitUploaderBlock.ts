@@ -2,9 +2,12 @@
 
 import { type FileFromOptions, uploadFileGroup } from '@uploadcare/upload-client';
 import { uploaderBlockCtx } from '../abstract/CTX';
+import { SecureUploadsManager } from '../abstract/managers/SecureUploadsManager';
+import { ValidationManager } from '../abstract/managers/ValidationManager';
 import type { TypedCollectionObserverHandler } from '../abstract/TypedCollection';
-import type { UploaderPublicApi } from '../abstract/UploaderPublicApi';
-import type { UploadEntryData } from '../abstract/uploadEntrySchema';
+import { TypedCollection } from '../abstract/TypedCollection';
+import { UploaderPublicApi } from '../abstract/UploaderPublicApi';
+import { initialUploadEntryData, type UploadEntryData } from '../abstract/uploadEntrySchema';
 import { calculateMaxCenteredCropFrame } from '../blocks/CloudImageEditor/src/crop-utils';
 import { parseCropPreset } from '../blocks/CloudImageEditor/src/lib/parseCropPreset';
 import { EventType } from '../blocks/UploadCtxProvider/EventEmitter';
@@ -42,6 +45,31 @@ export class LitUploaderBlock extends LitActivityBlock {
   public override initCallback(): void {
     super.initCallback();
 
+    this._addSharedContextInstance('*uploadCollection', () => {
+      return new TypedCollection<UploadEntryData>({
+        initialValue: initialUploadEntryData,
+        watchList: [
+          'uploadProgress',
+          'uploadError',
+          'fileInfo',
+          'errors',
+          'cdnUrl',
+          'isUploading',
+          'isValidationPending',
+        ],
+      });
+    });
+
+    this._addSharedContextInstance(
+      '*secureUploadsManager',
+      (sharedInstancesBag) => new SecureUploadsManager(sharedInstancesBag),
+    );
+    this._addSharedContextInstance(
+      '*validationManager',
+      (sharedInstancesBag) => new ValidationManager(sharedInstancesBag),
+    );
+    this._addSharedContextInstance('*publicApi', (sharedInstancesBag) => new UploaderPublicApi(sharedInstancesBag));
+
     if (!this._hasCtxOwner && this.couldBeCtxOwner) {
       this._initCtxOwner();
     }
@@ -49,6 +77,22 @@ export class LitUploaderBlock extends LitActivityBlock {
 
   public getAPI(): UploaderPublicApi {
     return this.api;
+  }
+
+  public get validationManager(): ValidationManager {
+    return this._getSharedContextInstance('*validationManager');
+  }
+
+  public get api(): UploaderPublicApi {
+    return this._getSharedContextInstance('*publicApi');
+  }
+
+  public get uploadCollection(): TypedCollection<UploadEntryData> {
+    return this._getSharedContextInstance('*uploadCollection');
+  }
+
+  public get secureUploadsManager(): SecureUploadsManager {
+    return this._getSharedContextInstance('*secureUploadsManager');
   }
 
   public override disconnectedCallback(): void {
