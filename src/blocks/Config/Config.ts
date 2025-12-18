@@ -108,7 +108,7 @@ export class Config extends LitBlock {
     this._flushValueToAttribute(key, normalizedValue);
     this._flushValueToState(key, normalizedValue);
 
-    this.debugPrint(`[uc-config] "${key}"`, normalizedValue);
+    this.debugPrint(`"${key}"`, normalizedValue);
 
     runAssertions(this.cfg);
   }

@@ -52,7 +52,7 @@ export class LitBlock extends LitBlockBase {
   }
 
   public l10n = createL10n(() => this.sharedCtx);
-  public debugPrint = createDebugPrinter(() => this.sharedCtx);
+  public debugPrint = createDebugPrinter(() => this.sharedCtx, this.constructor.name);
   protected _sharedInstancesBag = createSharedInstancesBag(() => this.sharedCtx);
 
   public emit(
