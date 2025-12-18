@@ -23,7 +23,6 @@ import {
 } from '../../utils/validators/file/index';
 import type { buildOutputCollectionState } from '../buildOutputCollectionState';
 import { sharedConfigKey } from '../sharedConfigKey';
-import type { TypedCollection } from '../TypedCollection';
 import type { TypedData } from '../TypedData';
 import type { UploadEntryData } from '../uploadEntrySchema';
 
@@ -60,7 +59,9 @@ const getValidatorDescriptor = (validator: FileValidator): FileValidatorDescript
 };
 
 export class ValidationManager extends SharedInstance {
-  private _uploadCollection: TypedCollection<UploadEntryData>;
+  private get _uploadCollection() {
+    return this._sharedInstancesBag.uploadCollection;
+  }
 
   private _commonFileValidators: FuncFileValidator[] = [
     validateIsImage,
@@ -72,9 +73,11 @@ export class ValidationManager extends SharedInstance {
   private _commonCollectionValidators: FuncCollectionValidator[] = [validateMultiple, validateCollectionUploadError];
 
   private _queue = new Queue(20);
-  private _runQueueDebounced: () => void = debounce(() => {
+  private _runQueueDebounced = debounce(() => {
     this._queue.run();
   }, 500);
+
+  private _isDestroyed = false;
 
   private _entryValidationState: Map<
     string,
@@ -88,8 +91,6 @@ export class ValidationManager extends SharedInstance {
 
   public constructor(sharedInstancesBag: SharedInstancesBag) {
     super(sharedInstancesBag);
-
-    this._uploadCollection = sharedInstancesBag.uploadCollection;
 
     const runAllValidators = debounce(() => {
       this.runFileValidators('change');
@@ -110,6 +111,8 @@ export class ValidationManager extends SharedInstance {
   }
 
   public runFileValidators(runOn: FileValidatorDescriptor['runOn'], entryIds?: Uid[]): void {
+    if (this._isDestroyed) return;
+
     const ids = entryIds ?? this._uploadCollection.items();
     for (const id of ids) {
       const entry = this._uploadCollection.read(id);
@@ -120,6 +123,8 @@ export class ValidationManager extends SharedInstance {
   }
 
   public runCollectionValidators(): void {
+    if (this._isDestroyed) return;
+
     const api = this._sharedInstancesBag.api;
     const collection = api.getOutputCollectionState();
     const errors: Array<OutputErrorCollection> = [];
@@ -166,12 +171,16 @@ export class ValidationManager extends SharedInstance {
     entry: TypedData<UploadEntryData>,
     runOn: FileValidatorDescriptor['runOn'],
   ): Promise<void> {
+    if (this._isDestroyed) return;
+
     const api = this._sharedInstancesBag.api;
     const state = this._getEntryValidationState(entry);
 
     const previousPromise = state.promise ?? Promise.resolve();
     const runPromise = (async () => {
+      if (this._isDestroyed) return;
       await previousPromise;
+      if (this._isDestroyed) return;
       const entryDescriptors = this._getValidatorDescriptorsForEntry(entry, runOn);
       if (entryDescriptors.length === 0 || !this._uploadCollection.hasItem(entry.uid)) {
         return;
@@ -198,6 +207,8 @@ export class ValidationManager extends SharedInstance {
       }
 
       const tasks = entryDescriptors.map((validatorDescriptor) => async () => {
+        if (this._isDestroyed) return;
+
         const timeoutId = setTimeout(() => {
           state.skippedValidators.add(validatorDescriptor.validator);
           abortController.abort();
@@ -241,6 +252,8 @@ export class ValidationManager extends SharedInstance {
 
       await this._queue.add(
         async () => {
+          if (this._isDestroyed) return;
+
           entry.setValue('isQueuedForValidation', false);
           await Promise.all(tasks.map((task) => task())).catch(() => {});
         },
@@ -315,5 +328,17 @@ export class ValidationManager extends SharedInstance {
     return this._getValidatorDescriptors()
       .filter((descriptor) => !state.skippedValidators.has(descriptor.validator))
       .filter((descriptor) => descriptor.runOn === runOn);
+  }
+
+  public override destroy(): void {
+    this._isDestroyed = true;
+    this._runQueueDebounced.cancel();
+
+    for (const state of this._entryValidationState.values()) {
+      state.abortController?.abort();
+      state.promise = undefined;
+    }
+
+    this._entryValidationState.clear();
   }
 }
