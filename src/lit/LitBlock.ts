@@ -108,7 +108,6 @@ export class LitBlock extends LitBlockBase {
     });
 
     this.subConfigValue('testMode', (testMode) => {
-      console.log('testMode changed:', this, testMode);
       if (!testMode || !this.testId) {
         this.removeAttribute('data-testid');
         return;
