@@ -28,7 +28,7 @@ export class LocaleManager extends SharedInstance {
           return;
         }
 
-        const overrides = this._ctx.read(sharedConfigKey('localeDefinitionOverride'))?.[localeName];
+        const overrides = this._cfg.localeDefinitionOverride?.[localeName];
         for (const [key, value] of Object.entries(definition) as [keyof LocaleDefinition, string][]) {
           const overriddenValue = overrides?.[key];
           this._ctx.add(localeStateKey(key), overriddenValue ?? value, true);
