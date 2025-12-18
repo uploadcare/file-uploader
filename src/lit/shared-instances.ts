@@ -21,10 +21,10 @@ export interface ISharedInstance {
 export class SharedInstance {
   protected _ctx: PubSub<SharedState>;
   protected _sharedInstancesBag: SharedInstancesBag;
-  protected _debugPrint = createDebugPrinter(() => this._sharedInstancesBag.ctx);
 
   private _subscriptions: Set<() => void> = new Set();
   private _cfgProxy: ConfigType | null = null;
+  protected _debugPrint = createDebugPrinter(() => this._sharedInstancesBag.ctx, this.constructor.name);
 
   public constructor(sharedInstancesBag: SharedInstancesBag) {
     this._sharedInstancesBag = sharedInstancesBag;

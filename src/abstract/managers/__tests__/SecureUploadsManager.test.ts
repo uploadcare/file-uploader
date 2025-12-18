@@ -1,30 +1,56 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { LitUploaderBlock } from '../../../lit/LitUploaderBlock';
+import type { TelemetryManager } from '../../../abstract/managers/TelemetryManager';
+import { initialConfig } from '../../../blocks/Config/initialConfig';
+import type { SharedInstancesBag } from '../../../lit/shared-instances';
+import type { ConfigType } from '../../../types';
 import type { SecureUploadsSignatureAndExpire } from '../../../types/index';
 import { SecureUploadsManager } from '../SecureUploadsManager';
 
-const createMockBlock = (config: Partial<LitUploaderBlock['cfg']> = {}): LitUploaderBlock =>
-  ({
-    debugPrint: vi.fn(),
-    telemetryManager: {
-      sendEventError: vi.fn(),
+const createSharedInstancesBag = (cfgOverrides: Partial<ConfigType> = {}): SharedInstancesBag => {
+  const telemetryManager = {
+    sendEventError: vi.fn(),
+  } as unknown as TelemetryManager;
+
+  const cfg: ConfigType = { ...initialConfig, ...cfgOverrides };
+
+  const ctx = {
+    read: vi.fn((key: string) => cfg[key.replace('*cfg/', '') as keyof ConfigType] ?? null),
+    has: vi.fn().mockReturnValue(true),
+  } as unknown as SharedInstancesBag['ctx'];
+
+  return {
+    get ctx() {
+      return ctx;
     },
-    cfg: {
-      secureSignature: undefined,
-      secureExpire: undefined,
-      secureUploadsSignatureResolver: undefined,
-      secureUploadsExpireThreshold: 10000,
-      ...config,
+    get modalManager() {
+      return null;
     },
-  }) as unknown as LitUploaderBlock;
+    get telemetryManager() {
+      return telemetryManager;
+    },
+  } as unknown as SharedInstancesBag;
+};
+
+const assignDebugPrint = (instance: SecureUploadsManager): ReturnType<typeof vi.fn> => {
+  const debugPrint = vi.fn();
+  (instance as unknown as { _debugPrint: typeof debugPrint })._debugPrint = debugPrint;
+  return debugPrint;
+};
 
 describe('SecureUploadsManager', () => {
-  let manager: SecureUploadsManager;
-  let mockBlock: LitUploaderBlock;
+  let manager: SecureUploadsManager & { _debugPrint: ReturnType<typeof vi.fn> };
+  let bag: SharedInstancesBag;
+
+  const createManager = (cfgOverrides: Partial<ConfigType> = {}) => {
+    bag = createSharedInstancesBag(cfgOverrides);
+    const newManager = new SecureUploadsManager(bag);
+    assignDebugPrint(newManager);
+
+    manager = newManager as SecureUploadsManager & { _debugPrint: ReturnType<typeof vi.fn> };
+  };
   beforeEach(() => {
     vi.useFakeTimers();
-    mockBlock = createMockBlock();
-    manager = new SecureUploadsManager(mockBlock);
+    createManager();
   });
 
   afterEach(() => {
@@ -48,11 +74,10 @@ describe('SecureUploadsManager', () => {
 
     describe('with static secureSignature and secureExpire', () => {
       it('should return the static secure token', async () => {
-        mockBlock = createMockBlock({
+        createManager({
           secureSignature: 'test-signature',
           secureExpire: '1234567890',
         });
-        manager = new SecureUploadsManager(mockBlock);
 
         const result = await manager.getSecureToken();
 
@@ -63,22 +88,20 @@ describe('SecureUploadsManager', () => {
       });
 
       it('should debug print when using static signature and expire', async () => {
-        mockBlock = createMockBlock({
+        createManager({
           secureSignature: 'test-signature',
           secureExpire: '1234567890',
         });
-        manager = new SecureUploadsManager(mockBlock);
 
         await manager.getSecureToken();
 
-        expect(mockBlock.debugPrint).toHaveBeenCalled();
+        expect(manager._debugPrint).toHaveBeenCalled();
       });
 
       it('should return null if only secureSignature is set', async () => {
-        mockBlock = createMockBlock({
+        createManager({
           secureSignature: 'test-signature',
         });
-        manager = new SecureUploadsManager(mockBlock);
 
         const result = await manager.getSecureToken();
 
@@ -86,10 +109,9 @@ describe('SecureUploadsManager', () => {
       });
 
       it('should return null if only secureExpire is set', async () => {
-        mockBlock = createMockBlock({
+        createManager({
           secureExpire: '1234567890',
         });
-        manager = new SecureUploadsManager(mockBlock);
 
         const result = await manager.getSecureToken();
 
@@ -105,10 +127,9 @@ describe('SecureUploadsManager', () => {
         };
         const resolver = vi.fn().mockResolvedValue(mockToken);
 
-        mockBlock = createMockBlock({
+        createManager({
           secureUploadsSignatureResolver: resolver,
         });
-        manager = new SecureUploadsManager(mockBlock);
 
         const result = await manager.getSecureToken();
 
@@ -124,10 +145,9 @@ describe('SecureUploadsManager', () => {
         };
         const resolver = vi.fn().mockResolvedValue(mockToken);
 
-        mockBlock = createMockBlock({
+        createManager({
           secureUploadsSignatureResolver: resolver,
         });
-        manager = new SecureUploadsManager(mockBlock);
 
         await manager.getSecureToken();
         await manager.getSecureToken();
@@ -148,11 +168,10 @@ describe('SecureUploadsManager', () => {
         };
         const resolver = vi.fn().mockResolvedValueOnce(expiredToken).mockResolvedValueOnce(newToken);
 
-        mockBlock = createMockBlock({
+        createManager({
           secureUploadsSignatureResolver: resolver,
           secureUploadsExpireThreshold: 10000, // 10 seconds threshold
         });
-        manager = new SecureUploadsManager(mockBlock);
 
         const result1 = await manager.getSecureToken();
         expect(result1).toEqual(expiredToken);
@@ -171,12 +190,11 @@ describe('SecureUploadsManager', () => {
           secureExpire: String(Math.floor(Date.now() / 1000) + 3600),
         };
 
-        mockBlock = createMockBlock({
+        createManager({
           secureSignature: 'static-signature',
           secureExpire: '1234567890',
           secureUploadsSignatureResolver: vi.fn().mockResolvedValue(mockToken),
         });
-        manager = new SecureUploadsManager(mockBlock);
 
         await manager.getSecureToken();
 
@@ -194,12 +212,11 @@ describe('SecureUploadsManager', () => {
         };
         const resolver = vi.fn().mockResolvedValue(mockToken);
 
-        mockBlock = createMockBlock({
+        createManager({
           secureSignature: 'static-signature',
           secureExpire: '1234567890',
           secureUploadsSignatureResolver: resolver,
         });
-        manager = new SecureUploadsManager(mockBlock);
 
         const result = await manager.getSecureToken();
 
@@ -210,15 +227,14 @@ describe('SecureUploadsManager', () => {
       it('should return null when resolver returns nothing', async () => {
         const resolver = vi.fn().mockResolvedValue(undefined);
 
-        mockBlock = createMockBlock({
+        createManager({
           secureUploadsSignatureResolver: resolver,
         });
-        manager = new SecureUploadsManager(mockBlock);
 
         const result = await manager.getSecureToken();
 
         expect(result).toBeNull();
-        expect(mockBlock.debugPrint).toHaveBeenCalled();
+        expect(manager._debugPrint).toHaveBeenCalled();
       });
 
       it('should log error when resolver returns invalid result (missing secureSignature)', async () => {
@@ -226,10 +242,9 @@ describe('SecureUploadsManager', () => {
         const invalidToken = { secureExpire: '1234567890' };
         const resolver = vi.fn().mockResolvedValue(invalidToken);
 
-        mockBlock = createMockBlock({
+        createManager({
           secureUploadsSignatureResolver: resolver,
         });
-        manager = new SecureUploadsManager(mockBlock);
 
         await manager.getSecureToken();
 
@@ -246,10 +261,9 @@ describe('SecureUploadsManager', () => {
         const invalidToken = { secureSignature: 'test-signature' };
         const resolver = vi.fn().mockResolvedValue(invalidToken);
 
-        mockBlock = createMockBlock({
+        createManager({
           secureUploadsSignatureResolver: resolver,
         });
-        manager = new SecureUploadsManager(mockBlock);
 
         await manager.getSecureToken();
 
@@ -271,11 +285,10 @@ describe('SecureUploadsManager', () => {
         const resolverError = new Error('Resolver failed');
         const resolver = vi.fn().mockResolvedValueOnce(validToken).mockRejectedValueOnce(resolverError);
 
-        mockBlock = createMockBlock({
+        createManager({
           secureUploadsSignatureResolver: resolver,
           secureUploadsExpireThreshold: 10000,
         });
-        manager = new SecureUploadsManager(mockBlock);
 
         const result1 = await manager.getSecureToken();
         expect(result1).toEqual(validToken);
@@ -288,7 +301,7 @@ describe('SecureUploadsManager', () => {
           'Secure signature resolving failed. Falling back to the previous one.',
           resolverError,
         );
-        expect(mockBlock.telemetryManager.sendEventError).toHaveBeenCalled();
+        expect(bag.telemetryManager.sendEventError).toHaveBeenCalled();
 
         consoleErrorSpy.mockRestore();
       });
@@ -300,14 +313,13 @@ describe('SecureUploadsManager', () => {
         };
         const resolver = vi.fn().mockResolvedValue(mockToken);
 
-        mockBlock = createMockBlock({
+        createManager({
           secureUploadsSignatureResolver: resolver,
         });
-        manager = new SecureUploadsManager(mockBlock);
 
         await manager.getSecureToken();
 
-        expect(mockBlock.debugPrint).toHaveBeenCalledWith('[secure-uploads]', 'Secure signature is not set yet.');
+        expect(manager._debugPrint).toHaveBeenCalledWith('Secure signature is not set yet.');
       });
 
       it('should debug print when token is expired', async () => {
@@ -322,11 +334,10 @@ describe('SecureUploadsManager', () => {
         };
         const resolver = vi.fn().mockResolvedValueOnce(expiredToken).mockResolvedValueOnce(newToken);
 
-        mockBlock = createMockBlock({
+        createManager({
           secureUploadsSignatureResolver: resolver,
           secureUploadsExpireThreshold: 10000,
         });
-        manager = new SecureUploadsManager(mockBlock);
 
         await manager.getSecureToken();
 
@@ -334,10 +345,7 @@ describe('SecureUploadsManager', () => {
 
         await manager.getSecureToken();
 
-        expect(mockBlock.debugPrint).toHaveBeenCalledWith(
-          '[secure-uploads]',
-          'Secure signature is expired. Resolving a new one...',
-        );
+        expect(manager._debugPrint).toHaveBeenCalledWith('Secure signature is expired. Resolving a new one...');
       });
 
       it('should debug print resolved token details', async () => {
@@ -347,14 +355,13 @@ describe('SecureUploadsManager', () => {
         };
         const resolver = vi.fn().mockResolvedValue(mockToken);
 
-        mockBlock = createMockBlock({
+        createManager({
           secureUploadsSignatureResolver: resolver,
         });
-        manager = new SecureUploadsManager(mockBlock);
 
         await manager.getSecureToken();
 
-        expect(mockBlock.debugPrint).toHaveBeenCalledWith('[secure-uploads]', 'Secure signature resolved:', mockToken);
+        expect(manager._debugPrint).toHaveBeenCalledWith('Secure signature resolved:', mockToken);
       });
     });
   });

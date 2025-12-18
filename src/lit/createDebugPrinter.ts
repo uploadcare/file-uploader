@@ -1,7 +1,7 @@
 import type { PubSub } from './PubSubCompat';
 import type { SharedState } from './SharedState';
 
-export const createDebugPrinter = (getCtx: () => PubSub<SharedState>) => {
+export const createDebugPrinter = (getCtx: () => PubSub<SharedState>, scope?: string) => {
   return (...args: unknown[]) => {
     const ctx = getCtx();
     if (!ctx.read('*cfg/debug')) {
@@ -12,6 +12,7 @@ export const createDebugPrinter = (getCtx: () => PubSub<SharedState>) => {
       const resolver = args[0] as () => unknown[];
       consoleArgs = resolver();
     }
-    console.log(`[${ctx.id}]`, ...consoleArgs);
+    const prefixes = [ctx.id, scope].filter(Boolean);
+    console.log(`[${prefixes.join('][')}]`, ...consoleArgs);
   };
 };
