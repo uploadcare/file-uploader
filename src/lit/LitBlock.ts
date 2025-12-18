@@ -3,13 +3,8 @@ import { blockCtx } from '../abstract/CTX';
 import { A11y } from '../abstract/managers/a11y';
 import { LocaleManager, localeStateKey } from '../abstract/managers/LocaleManager';
 import { ModalManager } from '../abstract/managers/ModalManager';
-import { SecureUploadsManager } from '../abstract/managers/SecureUploadsManager';
 import { TelemetryManager } from '../abstract/managers/TelemetryManager';
-import { ValidationManager } from '../abstract/managers/ValidationManager';
 import { sharedConfigKey } from '../abstract/sharedConfigKey';
-import { TypedCollection } from '../abstract/TypedCollection';
-import { UploaderPublicApi } from '../abstract/UploaderPublicApi';
-import { initialUploadEntryData, type UploadEntryData } from '../abstract/uploadEntrySchema';
 import { initialConfig } from '../blocks/Config/initialConfig';
 import { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter';
 import type { ActivityType } from '../lit/LitActivityBlock';
@@ -105,30 +100,6 @@ export class LitBlock extends LitBlockBase {
       '*telemetryManager',
       (sharedInstancesBag) => new TelemetryManager(sharedInstancesBag),
     );
-    this._addSharedContextInstance('*uploadCollection', () => {
-      return new TypedCollection<UploadEntryData>({
-        initialValue: initialUploadEntryData,
-        watchList: [
-          'uploadProgress',
-          'uploadError',
-          'fileInfo',
-          'errors',
-          'cdnUrl',
-          'isUploading',
-          'isValidationPending',
-        ],
-      });
-    });
-
-    this._addSharedContextInstance(
-      '*secureUploadsManager',
-      (sharedInstancesBag) => new SecureUploadsManager(sharedInstancesBag),
-    );
-    this._addSharedContextInstance(
-      '*validationManager',
-      (sharedInstancesBag) => new ValidationManager(sharedInstancesBag),
-    );
-    this._addSharedContextInstance('*publicApi', (sharedInstancesBag) => new UploaderPublicApi(sharedInstancesBag));
 
     this.sub(localeStateKey('locale-id'), (localeId: string) => {
       const direction = getLocaleDirection(localeId);
@@ -137,6 +108,7 @@ export class LitBlock extends LitBlockBase {
     });
 
     this.subConfigValue('testMode', (testMode) => {
+      console.log('testMode changed:', this, testMode);
       if (!testMode || !this.testId) {
         this.removeAttribute('data-testid');
         return;
@@ -176,22 +148,6 @@ export class LitBlock extends LitBlockBase {
     return this._getSharedContextInstance('*eventEmitter');
   }
 
-  public get validationManager(): ValidationManager {
-    return this._getSharedContextInstance('*validationManager');
-  }
-
-  public get api(): UploaderPublicApi {
-    return this._getSharedContextInstance('*publicApi');
-  }
-
-  public get uploadCollection(): TypedCollection<UploadEntryData> {
-    return this._getSharedContextInstance('*uploadCollection');
-  }
-
-  public get secureUploadsManager(): SecureUploadsManager {
-    return this._getSharedContextInstance('*secureUploadsManager');
-  }
-
   public override disconnectedCallback(): void {
     super.disconnectedCallback();
     WindowHeightTracker.unregisterClient(this);
@@ -223,7 +179,7 @@ export class LitBlock extends LitBlockBase {
    * @param key The shared state key.
    * @param resolver The resolver function that creates the instance.
    */
-  private _addSharedContextInstance<TKey extends keyof SharedInstancesState>(
+  protected _addSharedContextInstance<TKey extends keyof SharedInstancesState>(
     key: TKey,
     resolver: (sharedInstancesBag: SharedInstancesBag) => NonNullable<SharedInstancesState[TKey]>,
   ): void {
@@ -246,7 +202,7 @@ export class LitBlock extends LitBlockBase {
     }
   }
 
-  private _getSharedContextInstance<TKey extends keyof SharedState, TRequired extends boolean = true>(
+  protected _getSharedContextInstance<TKey extends keyof SharedState, TRequired extends boolean = true>(
     key: TKey,
     isRequired: TRequired = true as TRequired,
   ): TRequired extends true ? NonNullable<SharedState[TKey]> : SharedState[TKey] {
