@@ -44,6 +44,9 @@ export class SharedInstance {
         },
         get: (_obj: ConfigType, key: keyof ConfigType) => {
           const sharedKey = sharedConfigKey(key);
+          if (!this._sharedInstancesBag.ctx.has(sharedKey)) {
+            return;
+          }
           return this._sharedInstancesBag.ctx.read(sharedKey);
         },
       });

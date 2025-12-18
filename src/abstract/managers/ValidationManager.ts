@@ -194,7 +194,7 @@ export class ValidationManager extends SharedInstance {
       const abortController = new AbortController();
       state.abortController = abortController;
 
-      const timeoutMs = this._ctx.read(sharedConfigKey('validationTimeout'));
+      const timeoutMs = this._cfg.validationTimeout;
       const allDescriptors = this._getValidatorDescriptors();
 
       const entryValidatorSet = new Set(entryDescriptors.map((d) => d.validator));
@@ -317,7 +317,7 @@ export class ValidationManager extends SharedInstance {
     return newState;
   }
   private _getValidatorDescriptors(): FileValidatorDescriptor[] {
-    const fileValidators = this._ctx.read(sharedConfigKey('fileValidators'));
+    const fileValidators = this._cfg.fileValidators;
     return [...this._commonFileValidators, ...fileValidators].map(getValidatorDescriptor);
   }
   private _getValidatorDescriptorsForEntry(
