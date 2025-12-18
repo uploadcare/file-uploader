@@ -116,6 +116,7 @@ export class EditorAspectRatioButtonControl extends EditorButtonControl {
   }
 
   private _updateAspectRatioPresentation(value: CropAspectRatio): void {
+    if (!this.isConnected) return;
     const isFreeform = !!value.hasFreeform;
     this.toggleAttribute('uc-aspect-ratio-freeform', isFreeform);
 

@@ -1,16 +1,22 @@
-import { listenKeys, type MapStore, map } from 'nanostores';
+import { listenKeys, type MapStore, map, subscribeKeys } from 'nanostores';
 
-export type Subscription = {
-  remove: () => void;
-};
+export type Unsubscriber = () => void;
 
-export class PubSub<T extends Record<string, unknown> = Record<string, unknown>> {
-  private static _contexts = new Map<string, MapStore<Record<string, unknown>>>();
+type PubSubStore<T extends Record<string, unknown>> = MapStore<T>;
 
-  private _store: MapStore<T>;
+export class PubSub<T extends Record<string, unknown>> {
+  private static _contexts = new Map<string, PubSubStore<Record<string, unknown>>>();
 
-  private constructor(_ctxId: string, store: MapStore<T>) {
+  private _store: PubSubStore<T>;
+  private _ctxId: string;
+
+  private constructor(_ctxId: string, store: PubSubStore<T>) {
+    this._ctxId = _ctxId;
     this._store = store;
+  }
+
+  public get id() {
+    return this._ctxId;
   }
 
   public pub<K extends keyof T>(key: K, value: T[K]): void {
@@ -20,22 +26,12 @@ export class PubSub<T extends Record<string, unknown> = Record<string, unknown>>
     this._store.setKey(key as never, value as never);
   }
 
-  public sub<K extends keyof T>(key: K, callback: (value: T[K]) => void, init = true): Subscription {
-    if (!(key in this._store.get())) {
-      console.warn(`PubSub#sub: Key "${String(key)}" not found`);
-    }
-
-    if (init) {
-      callback(this._store.get()[key]);
-    }
-
-    const unsubscribe = listenKeys(this._store, [key as any], (values: Partial<T>) => {
+  public sub<K extends keyof T>(key: K, callback: (value: T[K]) => void, init = true): Unsubscriber {
+    const unsubscribe = (init ? subscribeKeys : listenKeys)(this._store, [key as any], (values: Partial<T>) => {
       callback(values[key] as T[K]);
     });
 
-    return {
-      remove: unsubscribe,
-    };
+    return unsubscribe;
   }
 
   public read<K extends keyof T>(key: K): T[K] {
@@ -69,7 +65,7 @@ export class PubSub<T extends Record<string, unknown> = Record<string, unknown>>
 
     const store = map<T>(initialValue);
 
-    PubSub._contexts.set(ctxId, store as MapStore<Record<string, unknown>>);
+    PubSub._contexts.set(ctxId, store);
     return new PubSub<T>(ctxId, store);
   }
 
@@ -82,7 +78,7 @@ export class PubSub<T extends Record<string, unknown> = Record<string, unknown>>
     if (!store) {
       return null;
     }
-    return new PubSub<T>(ctxId, store as MapStore<T>);
+    return new PubSub<T>(ctxId, store as PubSubStore<T>);
   }
 
   public static hasCtx(ctxId: string): boolean {

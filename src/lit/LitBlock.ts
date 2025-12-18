@@ -3,8 +3,13 @@ import { blockCtx } from '../abstract/CTX';
 import { A11y } from '../abstract/managers/a11y';
 import { LocaleManager, localeStateKey } from '../abstract/managers/LocaleManager';
 import { ModalManager } from '../abstract/managers/ModalManager';
-import { type ITelemetryManager, TelemetryManager } from '../abstract/managers/TelemetryManager';
+import { SecureUploadsManager } from '../abstract/managers/SecureUploadsManager';
+import { TelemetryManager } from '../abstract/managers/TelemetryManager';
+import { ValidationManager } from '../abstract/managers/ValidationManager';
 import { sharedConfigKey } from '../abstract/sharedConfigKey';
+import { TypedCollection } from '../abstract/TypedCollection';
+import { UploaderPublicApi } from '../abstract/UploaderPublicApi';
+import { initialUploadEntryData, type UploadEntryData } from '../abstract/uploadEntrySchema';
 import { initialConfig } from '../blocks/Config/initialConfig';
 import { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter';
 import type { ActivityType } from '../lit/LitActivityBlock';
@@ -12,30 +17,28 @@ import { PubSub } from '../lit/PubSubCompat';
 import type { ConfigType } from '../types';
 import { extractCdnUrlModifiers, extractFilename, extractUuid } from '../utils/cdn-utils';
 import { getLocaleDirection } from '../utils/getLocaleDirection';
-import { getPluralForm } from '../utils/getPluralForm';
-import { applyTemplateData, getPluralObjects } from '../utils/template-utils';
+import { applyTemplateData } from '../utils/template-utils';
 import { WindowHeightTracker } from '../utils/WindowHeightTracker';
 import { CssDataMixin } from './CssDataMixin';
+import { createDebugPrinter } from './createDebugPrinter';
 import { LightDomMixin } from './LightDomMixin';
+import { createL10n } from './l10n';
 import { RegisterableElementMixin } from './RegisterableElementMixin';
 import type { SharedState } from './SharedState';
 import { SymbioteMixin } from './SymbioteCompatMixin';
+import {
+  createSharedInstancesBag,
+  type ISharedInstance,
+  type SharedInstancesBag,
+  type SharedInstancesState,
+} from './shared-instances';
 import { TestModeController } from './TestModeController';
 
-interface SharedContextInstance {
-  destroy?(): void;
-}
-
 const LitBlockBase = RegisterableElementMixin(SymbioteMixin<SharedState>()(CssDataMixin(LightDomMixin(LitElement))));
+
 export class LitBlock extends LitBlockBase {
   private _cfgProxy!: ConfigType;
-  private _sharedContextInstances: Map<
-    keyof SharedState,
-    {
-      persist: boolean;
-      instance: SharedContextInstance;
-    }
-  > = new Map();
+  protected _sharedContextInstances: Map<keyof SharedInstancesState, ISharedInstance> = new Map();
 
   public static styleAttrs: string[] = [];
 
@@ -48,27 +51,9 @@ export class LitBlock extends LitBlockBase {
     new TestModeController(this);
   }
 
-  public l10n(str: string, variables: Record<string, string | number> = {}): string {
-    if (!str) {
-      return '';
-    }
-    const template = this.$[localeStateKey(str)] || str;
-    const pluralObjects = getPluralObjects(template);
-    for (const pluralObject of pluralObjects) {
-      variables[pluralObject.variable] = this._pluralize(
-        pluralObject.pluralKey,
-        Number(variables[pluralObject.countVariable]),
-      );
-    }
-    const result = applyTemplateData(template, variables);
-    return result;
-  }
-
-  private _pluralize(key: string, count: number): string {
-    const locale = this.l10n('locale-id') || 'en';
-    const pluralForm = getPluralForm(locale, count);
-    return this.l10n(`${key}__${pluralForm}`);
-  }
+  public l10n = createL10n(() => this.sharedCtx);
+  public debugPrint = createDebugPrinter(() => this.sharedCtx);
+  protected _sharedInstancesBag = createSharedInstancesBag(() => this.sharedCtx);
 
   public emit(
     type: Parameters<EventEmitter['emit']>[0],
@@ -111,18 +96,39 @@ export class LitBlock extends LitBlockBase {
   }
 
   public override initCallback(): void {
-    this.addSharedContextInstance('*blocksRegistry', () => new Set(), {
-      persist: true,
+    this._addSharedContextInstance('*blocksRegistry', () => new Set());
+    this._addSharedContextInstance('*eventEmitter', (sharedInstancesBag) => new EventEmitter(sharedInstancesBag));
+    this._addSharedContextInstance('*localeManager', (sharedInstancesBag) => new LocaleManager(sharedInstancesBag));
+    this._addSharedContextInstance('*modalManager', (sharedInstancesBag) => new ModalManager(sharedInstancesBag));
+    this._addSharedContextInstance('*a11y', () => new A11y());
+    this._addSharedContextInstance(
+      '*telemetryManager',
+      (sharedInstancesBag) => new TelemetryManager(sharedInstancesBag),
+    );
+    this._addSharedContextInstance('*uploadCollection', () => {
+      return new TypedCollection<UploadEntryData>({
+        initialValue: initialUploadEntryData,
+        watchList: [
+          'uploadProgress',
+          'uploadError',
+          'fileInfo',
+          'errors',
+          'cdnUrl',
+          'isUploading',
+          'isValidationPending',
+        ],
+      });
     });
-    this.addSharedContextInstance('*eventEmitter', () => new EventEmitter(this.debugPrint.bind(this)), {
-      persist: true,
-    });
-    this.addSharedContextInstance('*localeManager', () => new LocaleManager(this));
-    this.addSharedContextInstance('*modalManager', () => new ModalManager(this));
-    this.addSharedContextInstance('*a11y', () => new A11y(), {
-      persist: true,
-    });
-    this.addSharedContextInstance('*telemetryManager', () => new TelemetryManager(this));
+
+    this._addSharedContextInstance(
+      '*secureUploadsManager',
+      (sharedInstancesBag) => new SecureUploadsManager(sharedInstancesBag),
+    );
+    this._addSharedContextInstance(
+      '*validationManager',
+      (sharedInstancesBag) => new ValidationManager(sharedInstancesBag),
+    );
+    this._addSharedContextInstance('*publicApi', (sharedInstancesBag) => new UploaderPublicApi(sharedInstancesBag));
 
     this.sub(localeStateKey('locale-id'), (localeId: string) => {
       const direction = getLocaleDirection(localeId);
@@ -147,27 +153,43 @@ export class LitBlock extends LitBlockBase {
   }
 
   public get modalManager(): ModalManager | null {
-    return this.getSharedContextInstance('*modalManager', false);
+    return this._getSharedContextInstance('*modalManager', false);
   }
 
-  public get telemetryManager(): ITelemetryManager {
-    return this.getSharedContextInstance('*telemetryManager');
+  public get telemetryManager(): TelemetryManager {
+    return this._getSharedContextInstance('*telemetryManager');
   }
 
   public get localeManager(): LocaleManager {
-    return this.getSharedContextInstance('*localeManager');
+    return this._getSharedContextInstance('*localeManager');
   }
 
   public get a11y(): A11y {
-    return this.getSharedContextInstance('*a11y');
+    return this._getSharedContextInstance('*a11y');
   }
 
   public get blocksRegistry(): Set<LitBlock> {
-    return this.getSharedContextInstance('*blocksRegistry');
+    return this._getSharedContextInstance('*blocksRegistry');
   }
 
   public get eventEmitter(): EventEmitter {
-    return this.getSharedContextInstance('*eventEmitter');
+    return this._getSharedContextInstance('*eventEmitter');
+  }
+
+  public get validationManager(): ValidationManager {
+    return this._getSharedContextInstance('*validationManager');
+  }
+
+  public get api(): UploaderPublicApi {
+    return this._getSharedContextInstance('*publicApi');
+  }
+
+  public get uploadCollection(): TypedCollection<UploadEntryData> {
+    return this._getSharedContextInstance('*uploadCollection');
+  }
+
+  public get secureUploadsManager(): SecureUploadsManager {
+    return this._getSharedContextInstance('*secureUploadsManager');
   }
 
   public override disconnectedCallback(): void {
@@ -176,8 +198,6 @@ export class LitBlock extends LitBlockBase {
 
     const blocksRegistry = this.blocksRegistry;
     blocksRegistry?.delete(this);
-
-    this._destroySharedContextInstances();
 
     if (blocksRegistry?.size === 0) {
       setTimeout(() => {
@@ -194,7 +214,7 @@ export class LitBlock extends LitBlockBase {
    * Called when the last block is removed from the context. Note that inheritors must run their callback before that.
    */
   protected destroyCtxCallback(): void {
-    this._destroySharedContextInstances(true);
+    this._destroySharedContextInstances();
     PubSub.deleteCtx(this.ctxName);
   }
 
@@ -202,37 +222,31 @@ export class LitBlock extends LitBlockBase {
    * Adds a shared context instance if it does not exist yet.
    * @param key The shared state key.
    * @param resolver The resolver function that creates the instance.
-   * @param persist Whether to persist the instance in the context if the creator block is removed. It's usually needed for those instances that depends on the current block. Defaults to false.
    */
-  protected addSharedContextInstance<TKey extends keyof SharedState>(
+  private _addSharedContextInstance<TKey extends keyof SharedInstancesState>(
     key: TKey,
-    resolver: () => SharedState[TKey],
-    { persist = false } = {},
+    resolver: (sharedInstancesBag: SharedInstancesBag) => NonNullable<SharedInstancesState[TKey]>,
   ): void {
     if (this._sharedContextInstances.has(key)) {
       return;
     }
     if (!this.has(key) || !this.$[key]) {
-      const managerInstance = resolver();
-      this.add(key, managerInstance, true);
-      this._sharedContextInstances.set(key, { persist, instance: managerInstance as SharedContextInstance });
+      const instance = resolver(this._sharedInstancesBag);
+      this.add(key, instance, true);
+      this._sharedContextInstances.set(key, instance as ISharedInstance);
       return;
     }
   }
 
-  private _destroySharedContextInstances(destroyPersisted = false): void {
-    for (const [key, item] of this._sharedContextInstances.entries()) {
-      const { persist, instance } = item;
-      if (persist && !destroyPersisted) {
-        continue;
-      }
+  private _destroySharedContextInstances(): void {
+    for (const [key, instance] of this._sharedContextInstances.entries()) {
       instance?.destroy?.();
       this.pub(key as keyof SharedState, null as never);
       this._sharedContextInstances.delete(key);
     }
   }
 
-  protected getSharedContextInstance<TKey extends keyof SharedState, TRequired extends boolean = true>(
+  private _getSharedContextInstance<TKey extends keyof SharedState, TRequired extends boolean = true>(
     key: TKey,
     isRequired: TRequired = true as TRequired,
   ): TRequired extends true ? NonNullable<SharedState[TKey]> : SharedState[TKey] {
@@ -313,17 +327,5 @@ export class LitBlock extends LitBlockBase {
       this.add(sharedKey, initialConfig[key] as unknown as SharedState[typeof sharedKey]);
     }
     return this.sub(sharedKey as any, callback as any);
-  }
-
-  public debugPrint(...args: unknown[]): void {
-    if (!this.cfg.debug) {
-      return;
-    }
-    let consoleArgs = args;
-    if (typeof args?.[0] === 'function') {
-      const resolver = args[0] as () => unknown[];
-      consoleArgs = resolver();
-    }
-    console.log(`[${this.ctxName}]`, ...consoleArgs);
   }
 }

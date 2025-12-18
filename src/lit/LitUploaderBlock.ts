@@ -2,11 +2,9 @@
 
 import { type FileFromOptions, uploadFileGroup } from '@uploadcare/upload-client';
 import { uploaderBlockCtx } from '../abstract/CTX';
-import { SecureUploadsManager } from '../abstract/managers/SecureUploadsManager';
-import { ValidationManager } from '../abstract/managers/ValidationManager';
-import { TypedCollection, type TypedCollectionObserverHandler } from '../abstract/TypedCollection';
-import { UploaderPublicApi } from '../abstract/UploaderPublicApi';
-import { initialUploadEntryData, type UploadEntryData } from '../abstract/uploadEntrySchema';
+import type { TypedCollectionObserverHandler } from '../abstract/TypedCollection';
+import type { UploaderPublicApi } from '../abstract/UploaderPublicApi';
+import type { UploadEntryData } from '../abstract/uploadEntrySchema';
 import { calculateMaxCenteredCropFrame } from '../blocks/CloudImageEditor/src/crop-utils';
 import { parseCropPreset } from '../blocks/CloudImageEditor/src/lib/parseCropPreset';
 import { EventType } from '../blocks/UploadCtxProvider/EventEmitter';
@@ -15,6 +13,7 @@ import { createCdnUrl, createCdnUrlModifiers } from '../utils/cdn-utils';
 import { debounce } from '../utils/debounce';
 import { ExternalUploadSource, UploadSource } from '../utils/UploadSource';
 import { customUserAgent } from '../utils/userAgent';
+import { getOutputData } from './getOutputData';
 import { LitActivityBlock } from './LitActivityBlock';
 import { PubSub } from './PubSubCompat';
 import type { Uid } from './Uid';
@@ -43,54 +42,13 @@ export class LitUploaderBlock extends LitActivityBlock {
   public override initCallback(): void {
     super.initCallback();
 
-    this.addSharedContextInstance(
-      '*uploadCollection',
-      () => {
-        return new TypedCollection<UploadEntryData>({
-          initialValue: initialUploadEntryData,
-          watchList: [
-            'uploadProgress',
-            'uploadError',
-            'fileInfo',
-            'errors',
-            'cdnUrl',
-            'isUploading',
-            'isValidationPending',
-          ],
-        });
-      },
-      {
-        persist: true,
-      },
-    );
-
-    this.addSharedContextInstance('*secureUploadsManager', () => new SecureUploadsManager(this));
-    this.addSharedContextInstance('*validationManager', () => new ValidationManager(this));
-    this.addSharedContextInstance('*publicApi', () => new UploaderPublicApi(this));
-
     if (!this._hasCtxOwner && this.couldBeCtxOwner) {
       this._initCtxOwner();
     }
   }
 
-  protected get validationManager(): ValidationManager {
-    return this.getSharedContextInstance('*validationManager');
-  }
-
-  public get api(): UploaderPublicApi {
-    return this.getSharedContextInstance('*publicApi');
-  }
-
   public getAPI(): UploaderPublicApi {
     return this.api;
-  }
-
-  public get uploadCollection(): TypedCollection<UploadEntryData> {
-    return this.getSharedContextInstance('*uploadCollection');
-  }
-
-  public get secureUploadsManager(): SecureUploadsManager {
-    return this.getSharedContextInstance('*secureUploadsManager');
   }
 
   public override disconnectedCallback(): void {
@@ -472,9 +430,7 @@ export class LitUploaderBlock extends LitActivityBlock {
   }
 
   public getOutputData(): OutputFileEntry[] {
-    const entriesIds = this.uploadCollection.items();
-    const data = entriesIds.map((itemId) => this.api.getOutputItem(itemId));
-    return data;
+    return getOutputData(this._sharedInstancesBag);
   }
 }
 

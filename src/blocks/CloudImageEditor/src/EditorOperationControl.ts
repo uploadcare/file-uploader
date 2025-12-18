@@ -21,7 +21,7 @@ export class EditorOperationControl extends EditorButtonControl {
     const previousValue = this._operation;
     this._operation = normalizedValue;
     this.requestUpdate('operation', previousValue);
-    if (normalizedValue) {
+    if (this.isConnected && normalizedValue) {
       this._updateOperationMetadata(normalizedValue as ColorOperation);
     }
   }

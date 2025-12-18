@@ -3,6 +3,7 @@ import type { ActivityParams as CloudImageEditorActivityParams } from '../blocks
 import type { ActivityParams as ExternalSourceActivityParams } from '../blocks/ExternalSource/ExternalSource';
 import { EventType } from '../blocks/UploadCtxProvider/EventEmitter';
 import { debounce } from '../utils/debounce';
+import { ACTIVITY_TYPES, type ActivityType, type RegisteredActivityType } from './activity-constants';
 import { LitBlock } from './LitBlock';
 
 const ACTIVE_ATTR = 'active';
@@ -195,16 +196,6 @@ export class LitActivityBlock extends LitBlock {
   }
 }
 
-LitActivityBlock.activities = Object.freeze({
-  START_FROM: 'start-from',
-  CAMERA: 'camera',
-  DRAW: 'draw',
-  UPLOAD_LIST: 'upload-list',
-  URL: 'url',
-  CLOUD_IMG_EDIT: 'cloud-image-edit',
-  EXTERNAL: 'external',
-});
+LitActivityBlock.activities = ACTIVITY_TYPES;
 
-export type RegisteredActivityType =
-  (typeof LitActivityBlock)['activities'][keyof (typeof LitActivityBlock)['activities']];
-export type ActivityType = RegisteredActivityType | (string & {}) | null;
+export type { RegisteredActivityType, ActivityType };

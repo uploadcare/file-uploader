@@ -1,6 +1,7 @@
 import type { ModalId } from '../../abstract/managers/ModalManager';
 import type { ActivityType } from '../../lit/LitActivityBlock';
 import type { LitBlock } from '../../lit/LitBlock';
+import { SharedInstance } from '../../lit/shared-instances';
 import type { OutputCollectionState, OutputFileEntry } from '../../types';
 
 const DEFAULT_DEBOUNCE_TIMEOUT = 20;
@@ -56,7 +57,7 @@ export type EventPayload = {
   [EventType.ACTIVITY_CHANGE]: {
     activity: ActivityType;
   };
-  [EventType.UPLOAD_CLICK]: void;
+  [EventType.UPLOAD_CLICK]: undefined;
   [EventType.DONE_CLICK]: OutputCollectionState;
   [EventType.COMMON_UPLOAD_START]: OutputCollectionState<'uploading'>;
   [EventType.COMMON_UPLOAD_PROGRESS]: OutputCollectionState<'uploading'>;
@@ -66,14 +67,9 @@ export type EventPayload = {
   [EventType.GROUP_CREATED]: OutputCollectionState<'success', 'has-group'>;
 };
 
-export class EventEmitter {
+export class EventEmitter extends SharedInstance {
   private _timeoutStore: Map<string, number> = new Map();
   private _targets: Set<LitBlock> = new Set();
-  private _debugPrint: ((...args: unknown[]) => void) | null = null;
-
-  public constructor(debugPrint: (...args: unknown[]) => void) {
-    this._debugPrint = debugPrint;
-  }
 
   public bindTarget(target: LitBlock) {
     this._targets.add(target);
@@ -81,6 +77,7 @@ export class EventEmitter {
       this._targets.delete(target);
     };
   }
+
   private _dispatch<T extends EventKey>(type: T, payload?: EventPayload[T]): void {
     for (const target of this._targets) {
       target.dispatchEvent(
@@ -93,6 +90,11 @@ export class EventEmitter {
     this._debugPrint?.(() => {
       const copyPayload = !!payload && typeof payload === 'object' ? { ...payload } : payload;
       return [`event "${type}"`, copyPayload];
+    });
+
+    this._sharedInstancesBag.telemetryManager.sendEvent({
+      eventType: type,
+      payload: payload,
     });
   }
 
@@ -121,5 +123,13 @@ export class EventEmitter {
       }
     }, timeout);
     this._timeoutStore.set(type, timeoutId);
+  }
+
+  public override destroy(): void {
+    for (const timeoutId of this._timeoutStore.values()) {
+      window.clearTimeout(timeoutId);
+    }
+
+    this._targets.clear();
   }
 }
