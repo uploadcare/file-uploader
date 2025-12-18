@@ -1,5 +1,6 @@
 import { focusGroupKeyUX, hiddenKeyUX, jumpKeyUX, pressKeyUX, startKeyUX } from 'keyux';
 import type { LitBlock } from '../../lit/LitBlock';
+import type { ISharedInstance } from '../../lit/shared-instances';
 
 /**
  * MinimalWindow interface is not exported by keyux, so we import it here using tricky way.
@@ -64,7 +65,7 @@ class ScopedMinimalWindow implements MinimalWindow {
   }
 }
 
-export class A11y {
+export class A11y implements ISharedInstance {
   private _destroyKeyUX: ReturnType<typeof startKeyUX> | undefined;
   private readonly _scopedWindow: ScopedMinimalWindow;
 

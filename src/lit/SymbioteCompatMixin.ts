@@ -25,6 +25,7 @@ export declare class SymbioteComponent<TState extends Record<string, unknown> = 
     rewrite?: boolean,
   ): void;
   public initCallback(): void;
+  public sharedCtx: PubSub<TState>;
   public ctxName: string;
   public ctxOwner: boolean;
 }
@@ -247,11 +248,11 @@ export function SymbioteMixin<TState extends Record<string, unknown> = Record<st
         init = true,
       ): () => void {
         const subscription = this._requireSharedPubSub().sub(key, callback as (value: unknown) => void, init);
-        if (!subscription || typeof subscription.remove !== 'function') {
+        if (!subscription || typeof subscription !== 'function') {
           return () => {};
         }
 
-        const removeFn = subscription.remove.bind(subscription);
+        const removeFn = subscription.bind(subscription);
         let removed = false;
         const trackedRemove = () => {
           if (removed) {
@@ -273,6 +274,10 @@ export function SymbioteMixin<TState extends Record<string, unknown> = Record<st
         for (const [prop, value] of Object.entries(obj) as [keyof TState, TState[keyof TState]][]) {
           this.pub(prop, value);
         }
+      }
+
+      public get sharedCtx(): PubSub<TState> {
+        return this._requireSharedPubSub();
       }
 
       public has(key: keyof TState): boolean {

@@ -26,7 +26,7 @@ export type { ApiAddFileCommonOptions, UploaderPublicApi } from '../abstract/Upl
 
 export type { SourceTypes };
 export type MetadataCallback = (fileEntry: OutputFileEntry) => Promise<Metadata> | Metadata;
-export type LocaleDefinitionOverride = Record<string, LocaleDefinition>;
+export type LocaleDefinitionOverride = Record<string, Partial<LocaleDefinition>>;
 export type SecureDeliveryProxyUrlResolver = (
   previewUrl: string,
   urlParts: { uuid: string; cdnUrlModifiers: string; fileName: string },

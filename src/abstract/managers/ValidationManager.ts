@@ -1,6 +1,6 @@
 import { Queue } from '@uploadcare/upload-client';
 import { EventType } from '../../blocks/UploadCtxProvider/EventEmitter';
-import type { LitUploaderBlock } from '../../lit/LitUploaderBlock';
+import { SharedInstance, type SharedInstancesBag } from '../../lit/shared-instances';
 import type { Uid } from '../../lit/Uid';
 import type {
   OutputCollectionErrorType,
@@ -22,6 +22,7 @@ import {
   validateUploadError,
 } from '../../utils/validators/file/index';
 import type { buildOutputCollectionState } from '../buildOutputCollectionState';
+import { sharedConfigKey } from '../sharedConfigKey';
 import type { TypedCollection } from '../TypedCollection';
 import type { TypedData } from '../TypedData';
 import type { UploadEntryData } from '../uploadEntrySchema';
@@ -58,9 +59,7 @@ const getValidatorDescriptor = (validator: FileValidator): FileValidatorDescript
   return validator;
 };
 
-export class ValidationManager {
-  private _blockInstance: LitUploaderBlock;
-
+export class ValidationManager extends SharedInstance {
   private _uploadCollection: TypedCollection<UploadEntryData>;
 
   private _commonFileValidators: FuncFileValidator[] = [
@@ -74,7 +73,6 @@ export class ValidationManager {
 
   private _queue = new Queue(20);
   private _runQueueDebounced: () => void = debounce(() => {
-    if (!this._blockInstance.isConnected) return;
     this._queue.run();
   }, 500);
 
@@ -88,27 +86,27 @@ export class ValidationManager {
     }
   > = new Map();
 
-  public constructor(blockInstance: LitUploaderBlock) {
-    this._blockInstance = blockInstance;
+  public constructor(sharedInstancesBag: SharedInstancesBag) {
+    super(sharedInstancesBag);
 
-    this._uploadCollection = this._blockInstance.uploadCollection;
+    this._uploadCollection = sharedInstancesBag.uploadCollection;
 
     const runAllValidators = debounce(() => {
-      if (!this._blockInstance.isConnected) return;
       this.runFileValidators('change');
       this.runCollectionValidators();
     }, 0);
 
-    this._blockInstance.subConfigValue('maxLocalFileSizeBytes', runAllValidators);
-    this._blockInstance.subConfigValue('multipleMin', runAllValidators);
-    this._blockInstance.subConfigValue('multipleMax', runAllValidators);
-    this._blockInstance.subConfigValue('multiple', runAllValidators);
-    this._blockInstance.subConfigValue('imgOnly', runAllValidators);
-    this._blockInstance.subConfigValue('accept', runAllValidators);
-
-    this._blockInstance.subConfigValue('validationConcurrency', (concurrency) => {
-      this._queue.concurrency = concurrency;
-    });
+    this.addSub(this._ctx.sub(sharedConfigKey('maxLocalFileSizeBytes'), runAllValidators));
+    this.addSub(this._ctx.sub(sharedConfigKey('multipleMin'), runAllValidators));
+    this.addSub(this._ctx.sub(sharedConfigKey('multipleMax'), runAllValidators));
+    this.addSub(this._ctx.sub(sharedConfigKey('multiple'), runAllValidators));
+    this.addSub(this._ctx.sub(sharedConfigKey('imgOnly'), runAllValidators));
+    this.addSub(this._ctx.sub(sharedConfigKey('accept'), runAllValidators));
+    this.addSub(
+      this._ctx.sub(sharedConfigKey('validationConcurrency'), (concurrency) => {
+        this._queue.concurrency = concurrency;
+      }),
+    );
   }
 
   public runFileValidators(runOn: FileValidatorDescriptor['runOn'], entryIds?: Uid[]): void {
@@ -122,12 +120,14 @@ export class ValidationManager {
   }
 
   public runCollectionValidators(): void {
-    const collection = this._blockInstance.api.getOutputCollectionState();
+    const api = this._sharedInstancesBag.api;
+    const collection = api.getOutputCollectionState();
     const errors: Array<OutputErrorCollection> = [];
+    const collectionValidators = this._cfg.collectionValidators;
 
-    for (const validator of [...this._commonCollectionValidators, ...this._blockInstance.cfg.collectionValidators]) {
+    for (const validator of [...this._commonCollectionValidators, ...collectionValidators]) {
       try {
-        const error = validator(collection, this._blockInstance.api);
+        const error = validator(collection, api);
         if (!error) {
           continue;
         }
@@ -143,12 +143,12 @@ export class ValidationManager {
       }
     }
 
-    this._blockInstance.$['*collectionErrors'] = errors as any;
+    this._ctx.pub('*collectionErrors', errors);
 
     if (errors.length > 0) {
-      this._blockInstance.emit(
+      this._sharedInstancesBag.eventEmitter.emit(
         EventType.COMMON_UPLOAD_FAILED,
-        () => this._blockInstance.api.getOutputCollectionState() as OutputCollectionState<'failed'>,
+        () => api.getOutputCollectionState() as OutputCollectionState<'failed'>,
         { debounce: true },
       );
     }
@@ -166,15 +166,12 @@ export class ValidationManager {
     entry: TypedData<UploadEntryData>,
     runOn: FileValidatorDescriptor['runOn'],
   ): Promise<void> {
+    const api = this._sharedInstancesBag.api;
     const state = this._getEntryValidationState(entry);
 
     const previousPromise = state.promise ?? Promise.resolve();
     const runPromise = (async () => {
       await previousPromise;
-      if (!this._blockInstance.isConnected) {
-        return;
-      }
-
       const entryDescriptors = this._getValidatorDescriptorsForEntry(entry, runOn);
       if (entryDescriptors.length === 0) {
         return;
@@ -183,12 +180,12 @@ export class ValidationManager {
         isQueuedForValidation: true,
         isValidationPending: true,
       });
-      const outputEntry = this._blockInstance.api.getOutputItem(entry.uid);
+      const outputEntry = api.getOutputItem(entry.uid);
 
       const abortController = new AbortController();
       state.abortController = abortController;
 
-      const timeoutMs = this._blockInstance.cfg.validationTimeout;
+      const timeoutMs = this._ctx.read(sharedConfigKey('validationTimeout'));
       const allDescriptors = this._getValidatorDescriptors();
 
       const entryValidatorSet = new Set(entryDescriptors.map((d) => d.validator));
@@ -201,9 +198,6 @@ export class ValidationManager {
       }
 
       const tasks = entryDescriptors.map((validatorDescriptor) => async () => {
-        if (!this._blockInstance.isConnected) {
-          return;
-        }
         const timeoutId = setTimeout(() => {
           state.skippedValidators.add(validatorDescriptor.validator);
           abortController.abort();
@@ -211,7 +205,7 @@ export class ValidationManager {
         }, timeoutMs);
 
         try {
-          const error = await validatorDescriptor.validator(outputEntry, this._blockInstance.api, {
+          const error = await validatorDescriptor.validator(outputEntry, api, {
             signal: abortController.signal,
           });
           if (!error || abortController.signal.aborted) {
@@ -230,7 +224,7 @@ export class ValidationManager {
             state.skippedValidators.add(validatorDescriptor.validator);
 
             console.warn(LOG_TEXT.FILE_VALIDATION_FAILED, error);
-            this._blockInstance.telemetryManager.sendEventError(
+            this._sharedInstancesBag.telemetryManager.sendEventError(
               error,
               `file validator. ${LOG_TEXT.FILE_VALIDATION_FAILED}`,
             );
@@ -310,7 +304,8 @@ export class ValidationManager {
     return newState;
   }
   private _getValidatorDescriptors(): FileValidatorDescriptor[] {
-    return [...this._commonFileValidators, ...this._blockInstance.cfg.fileValidators].map(getValidatorDescriptor);
+    const fileValidators = this._ctx.read(sharedConfigKey('fileValidators'));
+    return [...this._commonFileValidators, ...fileValidators].map(getValidatorDescriptor);
   }
   private _getValidatorDescriptorsForEntry(
     entry: TypedData<UploadEntryData>,

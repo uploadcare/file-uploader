@@ -34,7 +34,7 @@ export class FileItemConfig extends LitUploaderBlock {
 
   protected reset(): void {
     for (const sub of this._entrySubs) {
-      sub.remove();
+      sub();
     }
 
     this._entrySubs = new Set<EntrySubscription>();

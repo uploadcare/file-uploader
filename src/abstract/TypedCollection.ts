@@ -180,7 +180,7 @@ export class TypedCollection<T extends Record<string, unknown>> {
     this._data.pub(id, undefined);
 
     this._subsMap[id]?.forEach((sub) => {
-      sub.remove();
+      sub();
     });
     delete this._subsMap[id];
   }
@@ -243,7 +243,7 @@ export class TypedCollection<T extends Record<string, unknown>> {
     this._collectionObservers = new Set();
     for (const id of Object.keys(this._subsMap) as Uid[]) {
       this._subsMap[id]?.forEach((sub) => {
-        sub.remove();
+        sub();
       });
       delete this._subsMap[id];
     }
