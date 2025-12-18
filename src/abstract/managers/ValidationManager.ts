@@ -173,7 +173,7 @@ export class ValidationManager extends SharedInstance {
     const runPromise = (async () => {
       await previousPromise;
       const entryDescriptors = this._getValidatorDescriptorsForEntry(entry, runOn);
-      if (entryDescriptors.length === 0) {
+      if (entryDescriptors.length === 0 || !this._uploadCollection.hasItem(entry.uid)) {
         return;
       }
       entry.setMultipleValues({
