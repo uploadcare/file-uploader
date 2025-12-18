@@ -160,11 +160,16 @@ export class FileItem extends FileItemConfig {
         hint = this.l10n('waiting-for', { source: this.l10n(`src-type-${source}`) });
       }
 
+      const uploadProgress = entry.getValue('uploadProgress');
+      const progressValue =
+        uploadProgress === 100 ? 100 : isQueuedForValidation || isValidationPending ? 0 : uploadProgress;
+      const progressVisible = isUploading || isQueuedForUploading || isQueuedForValidation || isValidationPending;
+
       this.set$({
         hint,
         errorText,
-        progressVisible: isUploading || isQueuedForUploading || isQueuedForValidation || isValidationPending,
-        progressValue: isQueuedForValidation || isValidationPending ? 0 : entry.getValue('uploadProgress'),
+        progressVisible,
+        progressValue,
         ariaLabelStatusFile:
           fileName &&
           this.l10n('a11y-file-item-status', {
