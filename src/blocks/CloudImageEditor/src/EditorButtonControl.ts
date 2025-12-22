@@ -2,9 +2,9 @@ import type { PropertyValues } from 'lit';
 import { html } from 'lit';
 import { state } from 'lit/decorators.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
-import { LitBlock } from '../../../lit/LitBlock';
+import { CloudImageEditorElement } from './context';
 
-export class EditorButtonControl extends LitBlock {
+export class EditorButtonControl extends CloudImageEditorElement {
   // This is public because it's used in the updated lifecycle to assign to the shared state.
   @state()
   public active = false;

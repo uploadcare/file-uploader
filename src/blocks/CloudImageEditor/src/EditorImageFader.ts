@@ -1,9 +1,9 @@
 import type { TemplateResult } from 'lit';
 import { html } from 'lit';
 import { createRef, ref } from 'lit/directives/ref.js';
-import { LitBlock } from '../../../lit/LitBlock';
 import { debounce } from '../../../utils/debounce.js';
 import { batchPreloadImages } from '../../../utils/preloadImage.js';
+import { CloudImageEditorElement } from './context';
 import { classNames } from './lib/classNames.js';
 import { linspace } from './lib/linspace.js';
 import { COLOR_OPERATIONS_CONFIG } from './toolbar-constants.js';
@@ -84,7 +84,7 @@ function keypointsRange(operation: OperationKey, value: number): number[] {
   );
 }
 
-export class EditorImageFader extends LitBlock {
+export class EditorImageFader extends CloudImageEditorElement {
   private _isActive = false;
   private _hidden = true;
   private _operation: OperationKey | 'initial' = 'initial';
@@ -153,7 +153,7 @@ export class EditorImageFader extends LitBlock {
       image.addEventListener(
         'error',
         () => {
-          this.$['*networkProblems'] = true;
+          this.editor$['*networkProblems'] = true;
         },
         { once: true },
       );
@@ -163,7 +163,7 @@ export class EditorImageFader extends LitBlock {
   private _handleImageLoading(src: string): () => void {
     const operation = this._operation;
 
-    const loadingOperations = this.$['*loadingOperations'] as LoadingOperations;
+    const loadingOperations = this.editor$['*loadingOperations'] as LoadingOperations;
     if (!loadingOperations.has(operation)) {
       loadingOperations.set(operation, new Map());
     }
@@ -171,14 +171,14 @@ export class EditorImageFader extends LitBlock {
     const operationMap = loadingOperations.get(operation);
     if (operationMap && !operationMap.get(src)) {
       operationMap.set(src, true);
-      this.$['*loadingOperations'] = loadingOperations;
+      this.editor$['*loadingOperations'] = loadingOperations;
     }
 
     return () => {
       const currentOperationMap = loadingOperations.get(operation);
       if (currentOperationMap?.has(src)) {
         currentOperationMap.delete(src);
-        this.$['*loadingOperations'] = loadingOperations;
+        this.editor$['*loadingOperations'] = loadingOperations;
       }
     };
   }
@@ -334,7 +334,7 @@ export class EditorImageFader extends LitBlock {
       this._previewImage.addEventListener(
         'error',
         () => {
-          this.$['*networkProblems'] = true;
+          this.editor$['*networkProblems'] = true;
         },
         { once: true },
       );
@@ -404,7 +404,7 @@ export class EditorImageFader extends LitBlock {
     image.addEventListener(
       'error',
       () => {
-        this.$['*networkProblems'] = true;
+        this.editor$['*networkProblems'] = true;
       },
       { once: true },
     );

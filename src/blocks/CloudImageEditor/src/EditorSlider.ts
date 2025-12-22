@@ -1,6 +1,6 @@
 import { html, type PropertyValues } from 'lit';
 import { state } from 'lit/decorators.js';
-import { LitBlock } from '../../../lit/LitBlock';
+import { CloudImageEditorElement } from './context';
 import type { EditorImageFader } from './EditorImageFader';
 import type { ColorOperation, FilterId } from './toolbar-constants';
 import { COLOR_OPERATIONS_CONFIG } from './toolbar-constants';
@@ -11,7 +11,7 @@ type SliderFilter = FilterId | typeof FAKE_ORIGINAL_FILTER;
 
 export const FAKE_ORIGINAL_FILTER = 'original';
 
-export class EditorSlider extends LitBlock {
+export class EditorSlider extends CloudImageEditorElement {
   // This is public because it's used in the updated lifecycle to assign to the shared state.
   @state()
   public state = {
@@ -28,7 +28,7 @@ export class EditorSlider extends LitBlock {
 
   private _handleInput = (e: CustomEvent<{ value: number }>): void => {
     const { value } = e.detail;
-    const fader = this.$['*faderEl'] as EditorImageFader | undefined;
+    const fader = this.editor$['*faderEl'] as EditorImageFader | undefined;
     fader?.set(value);
     this.state = { ...this.state, value };
   };
@@ -38,8 +38,8 @@ export class EditorSlider extends LitBlock {
 
     this._initializeValues();
 
-    const fader = this.$['*faderEl'] as EditorImageFader | undefined;
-    const originalUrl = this.state.originalUrl || (this.$['*originalUrl'] as string | undefined);
+    const fader = this.editor$['*faderEl'] as EditorImageFader | undefined;
+    const originalUrl = this.state.originalUrl || (this.editor$['*originalUrl'] as string | undefined);
     if (fader && originalUrl) {
       fader.activate({
         url: originalUrl,
@@ -58,7 +58,7 @@ export class EditorSlider extends LitBlock {
 
     this.state = { ...this.state, min, max, zero };
 
-    const editorTransformations = this.$['*editorTransformations'] as Transformations;
+    const editorTransformations = this.editor$['*editorTransformations'] as Transformations;
     const transformation = editorTransformations[operation];
 
     if (operation === 'filter') {
@@ -77,7 +77,7 @@ export class EditorSlider extends LitBlock {
   }
 
   public apply(): void {
-    const editorTransformations = this.$['*editorTransformations'] as Transformations;
+    const editorTransformations = this.editor$['*editorTransformations'] as Transformations;
     const transformations: Transformations = { ...editorTransformations };
 
     if (this.state.operation === 'filter') {
@@ -90,18 +90,18 @@ export class EditorSlider extends LitBlock {
       transformations[this.state.operation] = this.state.value as Transformations[typeof this.state.operation];
     }
 
-    this.$['*editorTransformations'] = transformations;
+    this.editor$['*editorTransformations'] = transformations;
   }
 
   public cancel(): void {
-    const fader = this.$['*faderEl'] as EditorImageFader | undefined;
+    const fader = this.editor$['*faderEl'] as EditorImageFader | undefined;
     fader?.deactivate({ hide: false });
   }
 
-  public override initCallback(): void {
-    super.initCallback();
+  public override contextConsumedCallback(): void {
+    super.contextConsumedCallback();
 
-    this.sub('*originalUrl', (originalUrl: string | null) => {
+    this.editorSub('*originalUrl', (originalUrl: string | null) => {
       if (!originalUrl) {
         return;
       }
@@ -114,7 +114,7 @@ export class EditorSlider extends LitBlock {
 
     if (changedProperties.has('state')) {
       const tooltip = `${this.state.filter ?? this.state.operation} ${this.state.value}`;
-      this.$['*operationTooltip'] = tooltip;
+      this.editor$['*operationTooltip'] = tooltip;
     }
   }
 

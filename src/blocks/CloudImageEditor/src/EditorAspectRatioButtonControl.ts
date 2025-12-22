@@ -25,12 +25,12 @@ const getAdjustResolutions = (value: CropAspectRatio) => {
 };
 
 export class EditorFreeformButtonControl extends EditorButtonControl {
-  public override initCallback(): void {
-    super.initCallback();
+  public override contextConsumedCallback(): void {
+    super.contextConsumedCallback();
 
     this.icon = 'arrow-dropdown';
 
-    this.sub('*currentAspectRatio', (opt: CropAspectRatio | null) => {
+    this.editorSub('*currentAspectRatio', (opt: CropAspectRatio | null) => {
       const title = this._computeTitle(opt);
       this.title = title;
       this.titleProp = title;
@@ -38,7 +38,7 @@ export class EditorFreeformButtonControl extends EditorButtonControl {
   }
 
   public override onClick(): void {
-    this.$['*showListAspectRatio'] = true;
+    this.editor$['*showListAspectRatio'] = true;
   }
 
   private _computeTitle(aspectRatio: CropAspectRatio | null): string {
@@ -92,14 +92,14 @@ export class EditorAspectRatioButtonControl extends EditorButtonControl {
     }
   }
 
-  public override initCallback(): void {
-    super.initCallback();
+  public override contextConsumedCallback(): void {
+    super.contextConsumedCallback();
 
     if (this._aspectRatio) {
       this._updateAspectRatioPresentation(this._aspectRatio);
     }
 
-    this.sub('*currentAspectRatio', (opt: CropAspectRatio | null) => {
+    this.editorSub('*currentAspectRatio', (opt: CropAspectRatio | null) => {
       this.active =
         (opt && opt.id === this._aspectRatio?.id) ||
         (opt?.width === this._aspectRatio?.width && opt?.height === this._aspectRatio?.height);
@@ -107,12 +107,12 @@ export class EditorAspectRatioButtonControl extends EditorButtonControl {
   }
 
   protected override onClick(): void {
-    const currentAspectRatio = this.$['*currentAspectRatio'] as CropAspectRatio | undefined;
+    const currentAspectRatio = this.editor$['*currentAspectRatio'] as CropAspectRatio | undefined;
     if (currentAspectRatio?.id === this._aspectRatio?.id) {
       return;
     }
 
-    this.$['*currentAspectRatio'] = this._aspectRatio;
+    this.editor$['*currentAspectRatio'] = this._aspectRatio;
   }
 
   private _updateAspectRatioPresentation(value: CropAspectRatio): void {

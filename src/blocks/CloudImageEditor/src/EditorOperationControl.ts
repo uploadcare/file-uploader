@@ -47,14 +47,14 @@ export class EditorOperationControl extends EditorButtonControl {
     resolveTitle();
   }
 
-  public override initCallback(): void {
-    super.initCallback();
+  public override contextConsumedCallback(): void {
+    super.contextConsumedCallback();
 
     if (this._operation) {
       this._updateOperationMetadata(this._operation as ColorOperation);
     }
 
-    this.sub('*editorTransformations', (editorTransformations: Transformations) => {
+    this.editorSub('*editorTransformations', (editorTransformations: Transformations) => {
       if (!this._operation) {
         return;
       }
@@ -66,13 +66,13 @@ export class EditorOperationControl extends EditorButtonControl {
     });
   }
   protected override onClick(e: MouseEvent) {
-    const slider = this.$['*sliderEl'] as { setOperation: (operation: ColorOperation | '') => void } | undefined;
+    const slider = this.editor$['*sliderEl'] as { setOperation: (operation: ColorOperation | '') => void } | undefined;
     slider?.setOperation(this._operation);
-    this.$['*showSlider'] = true;
-    this.$['*currentOperation'] = this._operation;
+    this.editor$['*showSlider'] = true;
+    this.editor$['*currentOperation'] = this._operation || null;
 
-    this.telemetryManager.sendEventCloudImageEditor(e, this.$['*tabId'], {
-      operation: parseFilterValue(this.$['*operationTooltip']),
+    this.telemetryManager.sendEventCloudImageEditor(e, this.editor$['*tabId'], {
+      operation: parseFilterValue(this.editor$['*operationTooltip']),
     });
   }
 }

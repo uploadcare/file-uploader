@@ -1,5 +1,4 @@
 import type { Queue, UploadcareGroup } from '@uploadcare/upload-client';
-import type { EditorImageCropper, EditorImageFader, EditorSlider } from '..';
 import type { LocaleDefinition } from '../abstract/localeRegistry';
 import type { A11y } from '../abstract/managers/a11y';
 import type { LocaleManager } from '../abstract/managers/LocaleManager';
@@ -10,13 +9,6 @@ import type { ValidationManager } from '../abstract/managers/ValidationManager';
 import type { TypedCollection } from '../abstract/TypedCollection';
 import type { UploaderPublicApi } from '../abstract/UploaderPublicApi';
 import type { UploadEntryData } from '../abstract/uploadEntrySchema';
-import type { TabIdValue } from '../blocks/CloudImageEditor/src/toolbar-constants';
-import type {
-  CropAspectRatio,
-  CropPresetList,
-  LoadingOperations,
-  Transformations,
-} from '../blocks/CloudImageEditor/src/types';
 import type { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter';
 import type { ConfigType, OutputCollectionState, OutputErrorCollection } from '../types';
 import type { LitBlock } from './LitBlock';
@@ -50,41 +42,6 @@ type SolutionBlockCtxState = UploaderBlockCtxState & {
   '*solution': string | null;
 };
 
-type CloudImageEditorState = {
-  '*originalUrl': string | null;
-  '*loadingOperations': LoadingOperations;
-  '*faderEl': EditorImageFader | null;
-  '*cropperEl': EditorImageCropper | null;
-  '*imgEl': HTMLImageElement | null;
-  '*imgContainerEl': HTMLElement | null;
-  '*networkProblems': boolean;
-  '*imageSize': { width: number; height: number } | null;
-  '*editorTransformations': Transformations;
-  '*cropPresetList': CropPresetList;
-  '*currentAspectRatio': CropAspectRatio | null;
-  '*tabList': readonly TabIdValue[];
-  '*tabId': TabIdValue;
-  '*on.retryNetwork': () => void;
-  '*on.apply': (transformations: Transformations) => void;
-  '*on.cancel': () => void;
-};
-
-type EditorImageCropperState = {
-  '*padding': number;
-  '*operations': { rotate: number; mirror: boolean; flip: boolean };
-  '*imageBox': { x: number; y: number; width: number; height: number };
-  '*cropBox': { x: number; y: number; width: number; height: number };
-};
-
-type EditorToolbarState = {
-  '*showListAspectRatio': boolean;
-  '*sliderEl': EditorSlider | null;
-  '*showSlider': boolean;
-  '*currentFilter': string;
-  '*currentOperation': string | null;
-  '*operationTooltip': string | null;
-};
-
 type DynamicBlockState = {
   '*blocksRegistry': BlocksRegistry;
   '*eventEmitter': EventEmitter;
@@ -107,9 +64,6 @@ type LocaleState = {
 
 export type SharedState = SolutionBlockCtxState &
   SharedConfigState &
-  CloudImageEditorState &
-  EditorImageCropperState &
-  EditorToolbarState &
   DynamicBlockState &
   DynamicUploaderBlockState &
   LocaleState;

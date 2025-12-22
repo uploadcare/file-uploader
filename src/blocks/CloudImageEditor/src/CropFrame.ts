@@ -2,8 +2,8 @@ import type { PropertyValues, TemplateResult } from 'lit';
 import { html } from 'lit';
 import { state } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
-import { LitBlock } from '../../../lit/LitBlock';
 import { UID } from '../../../utils/UID';
+import { CloudImageEditorElement } from './context';
 import {
   clamp,
   constraintRect,
@@ -34,7 +34,7 @@ type FrameThumb = NonNullable<FrameThumbs[Direction]>;
 
 type Delta = [number, number];
 
-export class CropFrame extends LitBlock {
+export class CropFrame extends CloudImageEditorElement {
   private _backdropMask?: SVGMaskElement;
   private _backdropMaskInner?: SVGRectElement;
   private readonly _backdropMaskId = `uc-backdrop-mask-${UID.generateFastUid()}`;
@@ -83,7 +83,7 @@ export class CropFrame extends LitBlock {
   }
 
   private _shouldThumbBeDisabled(direction: Direction): boolean {
-    const imageBox = this.$['*imageBox'] as Rectangle | undefined;
+    const imageBox = this.editor$['*imageBox'] as Rectangle | undefined;
     if (!imageBox) {
       return false;
     }
@@ -98,7 +98,7 @@ export class CropFrame extends LitBlock {
   }
 
   private _createBackdrop(): void {
-    const cropBox = this.$['*cropBox'] as Rectangle | undefined;
+    const cropBox = this.editor$['*cropBox'] as Rectangle | undefined;
     if (!cropBox) {
       return;
     }
@@ -159,7 +159,7 @@ export class CropFrame extends LitBlock {
   }
 
   private _updateBackdrop(): void {
-    const cropBox = this.$['*cropBox'] as Rectangle | undefined;
+    const cropBox = this.editor$['*cropBox'] as Rectangle | undefined;
     if (!cropBox) {
       return;
     }
@@ -169,7 +169,7 @@ export class CropFrame extends LitBlock {
   }
 
   private _updateFrame(): void {
-    const cropBox = this.$['*cropBox'] as Rectangle | undefined;
+    const cropBox = this.editor$['*cropBox'] as Rectangle | undefined;
 
     if (!cropBox || !this._frameGuides || !this._frameThumbs) {
       return;
@@ -359,7 +359,7 @@ export class CropFrame extends LitBlock {
       return;
     }
 
-    const cropBox = this.$['*cropBox'] as Rectangle;
+    const cropBox = this.editor$['*cropBox'] as Rectangle;
     const svgElement = this._svgElement;
     if (!svgElement) {
       return;
@@ -406,16 +406,16 @@ export class CropFrame extends LitBlock {
 
     const movedCropBox = this._calcCropBox(direction, [dx, dy]);
     if (movedCropBox) {
-      this.$['*cropBox'] = movedCropBox;
+      this.editor$['*cropBox'] = movedCropBox;
     }
   };
 
   private _calcCropBox(direction: Direction, delta: Delta): Rectangle | undefined {
     const [dx, dy] = delta;
-    const imageBox = this.$['*imageBox'] as Rectangle;
-    let rect = this._dragStartCrop ?? (this.$['*cropBox'] as Rectangle);
+    const imageBox = this.editor$['*imageBox'] as Rectangle;
+    let rect = this._dragStartCrop ?? (this.editor$['*cropBox'] as Rectangle);
 
-    const cropPreset = this.$['*currentAspectRatio'] as CropAspectRatio | null;
+    const cropPreset = this.editor$['*currentAspectRatio'] as CropAspectRatio | null;
     const aspectRatio = cropPreset ? cropPreset.width / cropPreset.height : undefined;
 
     if (direction === '') {
@@ -496,7 +496,7 @@ export class CropFrame extends LitBlock {
   }
 
   private _updateMask(): void {
-    const cropBox = this.$['*cropBox'] as Rectangle | undefined;
+    const cropBox = this.editor$['*cropBox'] as Rectangle | undefined;
 
     if (!cropBox || !this._frameImage) {
       return;
@@ -538,10 +538,10 @@ export class CropFrame extends LitBlock {
     }
   }
 
-  public override initCallback(): void {
-    super.initCallback();
+  public override contextConsumedCallback(): void {
+    super.contextConsumedCallback();
 
-    this.sub('*imageBox', () => {
+    this.editorSub('*imageBox', () => {
       this._resizeBackdrop();
       if (!this._svgReady) {
         return;
@@ -551,7 +551,7 @@ export class CropFrame extends LitBlock {
       });
     });
 
-    this.sub('*cropBox', (cropBox: Rectangle | undefined) => {
+    this.editorSub('*cropBox', (cropBox: Rectangle | undefined) => {
       if (!cropBox) {
         return;
       }

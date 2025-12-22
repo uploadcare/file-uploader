@@ -1,9 +1,10 @@
+import { ContextProvider } from '@lit/context';
 import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import { unsafeSVG } from 'lit/directives/unsafe-svg.js';
 import { when } from 'lit/directives/when.js';
-import { LitBlock } from '../../../lit/LitBlock';
+import { PubSub } from '../../../lit/PubSubCompat';
 import {
   createCdnUrl,
   createCdnUrlModifiers,
@@ -14,13 +15,15 @@ import {
 import { serializeCsv } from '../../../utils/comma-separated';
 import { debounce } from '../../../utils/debounce.js';
 import { TRANSPARENT_PIXEL_SRC } from '../../../utils/transparentPixelSrc';
+import { UID } from '../../../utils/UID';
+import { CloudImageEditorElement, cloudImageEditorContext } from './context';
 import type { EditorImageCropper } from './EditorImageCropper';
 import type { EditorImageFader } from './EditorImageFader';
 import { classNames } from './lib/classNames.js';
 import { getClosestAspectRatio, parseCropPreset } from './lib/parseCropPreset.js';
 import { parseTabs } from './lib/parseTabs.js';
 import { operationsToTransformations, transformationsToOperations } from './lib/transformationUtils.js';
-import { initState } from './state.js';
+import { type CloudImageEditorState, createCloudImageEditorState } from './state.js';
 import svgIconsSprite from './svg-sprite';
 import { ALL_TABS, TabId } from './toolbar-constants.js';
 import type { ApplyResult, CropPresetList, ImageSize, Transformations } from './types';
@@ -29,7 +32,7 @@ type TabIdValue = (typeof TabId)[keyof typeof TabId];
 
 const DEFAULT_TABS = serializeCsv([...ALL_TABS]);
 
-export class CloudImageEditorBlock extends LitBlock {
+export class CloudImageEditorBlock extends CloudImageEditorElement {
   public declare attributesMeta: ({ uuid: string } | { 'cdn-url': string }) &
     Partial<{ tabs: string; 'crop-preset': string }> & {
       'ctx-name': string;
@@ -78,22 +81,25 @@ export class CloudImageEditorBlock extends LitBlock {
   private readonly _cropperRef = createRef<EditorImageCropper>();
   private readonly _faderRef = createRef<EditorImageFader>();
   private readonly _imgContainerRef = createRef<HTMLDivElement>();
+  // biome-ignore lint/correctness/noUnusedPrivateClassMembers: <explanation>
+  private _contextProvider?: ContextProvider<typeof cloudImageEditorContext>;
+  private _editorCtxId?: string;
 
   private readonly _handleImageLoad = (): void => {
     this._debouncedShowLoader(false);
 
     if (this._imageSrc !== TRANSPARENT_PIXEL_SRC) {
-      this.$['*networkProblems'] = false;
+      this.editor$['*networkProblems'] = false;
     }
   };
 
   private readonly _handleImageError = (): void => {
     this._debouncedShowLoader(false);
-    this.$['*networkProblems'] = true;
+    this.editor$['*networkProblems'] = true;
   };
 
   private readonly _handleRetryNetwork = (): void => {
-    const retry = this.$['*on.retryNetwork'] as (() => void) | undefined;
+    const retry = this.editor$['*on.retryNetwork'] as (() => void) | undefined;
     retry?.();
   };
 
@@ -107,37 +113,37 @@ export class CloudImageEditorBlock extends LitBlock {
     });
   }
 
-  public override init$ = {
-    ...this.init$,
-    ...initState(this),
-  } as ReturnType<typeof initState>;
-
-  public override initCallback(): void {
-    super.initCallback();
+  public override contextConsumedCallback(): void {
+    super.contextConsumedCallback();
 
     this._syncTabListFromProp();
     this._syncCropPresetState();
   }
 
+  public override connectedCallback(): void {
+    this._ensureEditorContext();
+    super.connectedCallback();
+  }
+
   private _assignSharedElements(): void {
     const faderEl = this._faderRef.value;
     if (faderEl) {
-      this.$['*faderEl'] = faderEl;
+      this.editor$['*faderEl'] = faderEl;
     }
 
     const cropperEl = this._cropperRef.value;
     if (cropperEl) {
-      this.$['*cropperEl'] = cropperEl;
+      this.editor$['*cropperEl'] = cropperEl;
     }
 
     const imgContainerEl = this._imgContainerRef.value;
     if (imgContainerEl) {
-      this.$['*imgContainerEl'] = imgContainerEl;
+      this.editor$['*imgContainerEl'] = imgContainerEl;
     }
 
     const imgEl = this._imgRef.value;
     if (imgEl) {
-      this.$['*imgEl'] = imgEl;
+      this.editor$['*imgEl'] = imgEl;
     }
   }
 
@@ -160,7 +166,7 @@ export class CloudImageEditorBlock extends LitBlock {
   }
 
   private get _imageClassName(): string {
-    const tabId = this.$['*tabId'] as TabIdValue;
+    const tabId = this.editor$['*tabId'] as TabIdValue;
     return classNames('uc-image', {
       'uc-image_hidden_to_cropper': tabId === TabId.CROP,
       'uc-image_hidden_effects': tabId !== TabId.CROP,
@@ -206,6 +212,7 @@ export class CloudImageEditorBlock extends LitBlock {
 
   public override disconnectedCallback(): void {
     this._detachImageListeners();
+    this._destroyEditorContext();
     super.disconnectedCallback();
   }
 
@@ -273,7 +280,7 @@ export class CloudImageEditorBlock extends LitBlock {
 
   private _syncTabListFromProp(): void {
     const tabsValue = this.tabs || DEFAULT_TABS;
-    this.$['*tabList'] = parseTabs(tabsValue);
+    this.editor$['*tabList'] = parseTabs(tabsValue);
   }
 
   private _syncCropPresetState(): void {
@@ -290,8 +297,8 @@ export class CloudImageEditorBlock extends LitBlock {
       }
     }
 
-    this.$['*cropPresetList'] = list;
-    this.$['*currentAspectRatio'] = closest ?? list?.[0] ?? null;
+    this.editor$['*cropPresetList'] = list;
+    this.editor$['*currentAspectRatio'] = closest ?? list?.[0] ?? null;
   }
 
   public async updateImage(): Promise<void> {
@@ -304,44 +311,44 @@ export class CloudImageEditorBlock extends LitBlock {
       const cdnUrlValue = this.cdnUrl as string;
       const uuid = extractUuid(cdnUrlValue);
       const originalUrl = createOriginalUrl(cdnUrlValue, uuid);
-      if (originalUrl === this.$['*originalUrl']) {
+      if (originalUrl === this.editor$['*originalUrl']) {
         return;
       }
-      this.$['*originalUrl'] = originalUrl;
+      this.editor$['*originalUrl'] = originalUrl;
       const operations = extractOperations(cdnUrlValue);
       const transformations = operationsToTransformations(operations) as Transformations;
-      this.$['*editorTransformations'] = transformations;
+      this.editor$['*editorTransformations'] = transformations;
     } else if (this.uuid) {
       const originalUrl = createOriginalUrl(this.cfg.cdnCname, this.uuid as string);
-      if (originalUrl === this.$['*originalUrl']) {
+      if (originalUrl === this.editor$['*originalUrl']) {
         return;
       }
-      this.$['*originalUrl'] = originalUrl;
-      if (Object.keys(this.$['*editorTransformations']).length > 0) {
-        this.$['*editorTransformations'] = {};
+      this.editor$['*originalUrl'] = originalUrl;
+      if (Object.keys(this.editor$['*editorTransformations']).length > 0) {
+        this.editor$['*editorTransformations'] = {};
       }
     } else {
       throw new Error('No UUID nor CDN URL provided');
     }
 
-    if (this.$['*tabId'] === TabId.CROP) {
-      (this.$['*cropperEl'] as EditorImageCropper)?.deactivate({ reset: true });
+    if (this.editor$['*tabId'] === TabId.CROP) {
+      (this.editor$['*cropperEl'] as EditorImageCropper)?.deactivate({ reset: true });
     } else {
-      (this.$['*faderEl'] as EditorImageFader)?.deactivate();
+      (this.editor$['*faderEl'] as EditorImageFader)?.deactivate();
     }
 
     try {
-      const originalUrlValue = this.$['*originalUrl'] as string;
+      const originalUrlValue = this.editor$['*originalUrl'] as string;
       const cdnUrl = await this.proxyUrl(createCdnUrl(originalUrlValue, createCdnUrlModifiers('json')));
       const json = (await fetch(cdnUrl).then((response) => response.json())) as { width: number; height: number };
 
       const { width, height } = json;
-      this.$['*imageSize'] = { width, height };
+      this.editor$['*imageSize'] = { width, height };
 
-      if (this.$['*tabId'] === TabId.CROP) {
-        (this.$['*cropperEl'] as EditorImageCropper)?.activate(this.$['*imageSize'] as ImageSize);
+      if (this.editor$['*tabId'] === TabId.CROP) {
+        (this.editor$['*cropperEl'] as EditorImageCropper)?.activate(this.editor$['*imageSize'] as ImageSize);
       } else {
-        (this.$['*faderEl'] as EditorImageFader)?.activate({ url: originalUrlValue });
+        (this.editor$['*faderEl'] as EditorImageFader)?.activate({ url: originalUrlValue });
       }
     } catch (err) {
       if (err) {
@@ -366,18 +373,18 @@ export class CloudImageEditorBlock extends LitBlock {
 
     this.classList.add('uc-editor_ON');
 
-    this.sub('*networkProblems', (networkProblems) => {
+    this.editorSub('*networkProblems', (networkProblems) => {
       const hasIssues = Boolean(networkProblems);
       this._hasNetworkProblems = hasIssues;
     });
 
-    this.sub(
+    this.editorSub(
       '*editorTransformations',
       (transformations: Transformations) => {
         if (Object.keys(transformations).length === 0) {
           return;
         }
-        const originalUrl = this.$['*originalUrl'] as string;
+        const originalUrl = this.editor$['*originalUrl'] as string;
         const cdnUrlModifiers = createCdnUrlModifiers(transformationsToOperations(transformations), 'preview');
         const cdnUrl = createCdnUrl(originalUrl, cdnUrlModifiers);
 
@@ -397,5 +404,27 @@ export class CloudImageEditorBlock extends LitBlock {
       },
       false,
     );
+  }
+
+  private _ensureEditorContext(): void {
+    if (this._editorCtxId) {
+      return;
+    }
+    this._editorCtxId = `${this.ctxName}-cloud-image-editor-${UID.generateFastUid()}`;
+
+    const initialState = createCloudImageEditorState(this);
+    const editorPubSub = PubSub.registerCtx<CloudImageEditorState>(initialState, this._editorCtxId);
+    this.editorCtxController.setPubSub(editorPubSub);
+    this._contextProvider = new ContextProvider(this, {
+      context: cloudImageEditorContext,
+      initialValue: editorPubSub,
+    });
+  }
+
+  private _destroyEditorContext(): void {
+    if (this._editorCtxId) {
+      PubSub.deleteCtx(this._editorCtxId);
+    }
+    this._contextProvider = undefined;
   }
 }

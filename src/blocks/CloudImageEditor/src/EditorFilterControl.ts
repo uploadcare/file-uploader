@@ -59,20 +59,23 @@ export class EditorFilterControl extends EditorButtonControl {
 
   public override onClick(e: MouseEvent) {
     if (!this.active) {
-      const slider = this.$['*sliderEl'] as { setOperation: (op: string, filter: string) => void; apply: () => void };
+      const slider = this.editor$['*sliderEl'] as {
+        setOperation: (op: string, filter: string) => void;
+        apply: () => void;
+      };
       slider.setOperation(this._operation, this._filter);
       slider.apply();
     } else if (!this.isOriginal) {
-      const slider = this.$['*sliderEl'] as { setOperation: (op: string, filter: string) => void };
+      const slider = this.editor$['*sliderEl'] as { setOperation: (op: string, filter: string) => void };
       slider.setOperation(this._operation, this._filter);
-      this.$['*showSlider'] = true;
+      this.editor$['*showSlider'] = true;
     }
 
-    this.telemetryManager.sendEventCloudImageEditor(e, this.$['*tabId'], {
-      operation: parseFilterValue(this.$['*operationTooltip']),
+    this.telemetryManager.sendEventCloudImageEditor(e, this.editor$['*tabId'], {
+      operation: parseFilterValue(this.editor$['*operationTooltip']),
     });
 
-    this.$['*currentFilter'] = this._filter;
+    this.editor$['*currentFilter'] = this._filter;
   }
 
   private _previewSrc(): string {
@@ -83,7 +86,7 @@ export class EditorFilterControl extends EditorButtonControl {
     const quality = dpr >= 2 ? 'lightest' : 'normal';
     const filterValue = 100;
 
-    const transformations = { ...(this.$['*editorTransformations'] as Transformations) };
+    const transformations = { ...(this.editor$['*editorTransformations'] as Transformations) };
     // @ts-expect-error FIXME: fix this
     transformations[this._operation] =
       this._filter !== FAKE_ORIGINAL_FILTER
@@ -113,17 +116,17 @@ export class EditorFilterControl extends EditorButtonControl {
     }
   }
 
-  public override initCallback(): void {
-    super.initCallback();
+  public override contextConsumedCallback(): void {
+    super.contextConsumedCallback();
 
     this._observer = new window.IntersectionObserver(this._observerCallback.bind(this), {
       threshold: [0, 1],
     });
 
-    const originalUrl = this.$['*originalUrl'] as string;
+    const originalUrl = this.editor$['*originalUrl'] as string;
     this._originalUrl = originalUrl ?? '';
 
-    this.sub('*originalUrl', (nextUrl: string | null) => {
+    this.editorSub('*originalUrl', (nextUrl: string | null) => {
       this._originalUrl = nextUrl ?? '';
       if (!this.isOriginal && this._originalUrl && this.isConnected && !this._previewImage) {
         this._observer?.observe(this);
@@ -140,11 +143,11 @@ export class EditorFilterControl extends EditorButtonControl {
       this._updateFilterLabels(this._filter);
     }
 
-    this.sub('*currentFilter', (currentFilter: string) => {
+    this.editorSub('*currentFilter', (currentFilter: string) => {
       this.active = !!(currentFilter && currentFilter === this._filter);
     });
 
-    this.sub('*networkProblems', async (networkProblems: boolean) => {
+    this.editorSub('*networkProblems', async (networkProblems: boolean) => {
       if (networkProblems) {
         return;
       }
@@ -207,7 +210,7 @@ export class EditorFilterControl extends EditorButtonControl {
     try {
       src = await this.proxyUrl(this._previewSrc());
     } catch (err) {
-      this.$['*networkProblems'] = true;
+      this.editor$['*networkProblems'] = true;
       console.error('Failed to resolve preview URL', { error: err });
       return;
     }
@@ -232,7 +235,7 @@ export class EditorFilterControl extends EditorButtonControl {
       this._clearPreviewVisibilityChecks();
       (observer ?? this._observer)?.unobserve(this);
     } catch (err) {
-      this.$['*networkProblems'] = true;
+      this.editor$['*networkProblems'] = true;
       console.error('Failed to load image', { error: err });
       this._schedulePreviewVisibilityCheck();
     } finally {
@@ -248,7 +251,7 @@ export class EditorFilterControl extends EditorButtonControl {
       this._previewImage ||
       this._previewLoaded ||
       this.isOriginal ||
-      this.$['*networkProblems']
+      this.editor$['*networkProblems']
     ) {
       this._clearPreviewVisibilityChecks();
       return;

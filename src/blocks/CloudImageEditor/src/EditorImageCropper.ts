@@ -2,11 +2,11 @@ import type { PropertyValues, TemplateResult } from 'lit';
 import { html } from 'lit';
 import { state } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
-import { LitBlock } from '../../../lit/LitBlock';
 import { debounce } from '../../../utils/debounce.js';
 import { preloadImage } from '../../../utils/preloadImage.js';
 import { throttle } from '../../../utils/throttle.js';
 import type { CropFrame } from './CropFrame';
+import { CloudImageEditorElement } from './context';
 import {
   clamp,
   constraintRect,
@@ -15,7 +15,6 @@ import {
   rotateSize,
   roundRect,
 } from './crop-utils.js';
-import { CROP_PADDING } from './cropper-constants.js';
 import { classNames } from './lib/classNames.js';
 import { pick } from './lib/pick.js';
 import type { CropAspectRatio, ImageSize, LoadingOperations, Rectangle, Transformations } from './types';
@@ -41,7 +40,7 @@ function validateCrop(crop: Transformations['crop']): boolean {
   return shouldMatch.every((matcher) => matcher(crop));
 }
 
-export class EditorImageCropper extends LitBlock {
+export class EditorImageCropper extends CloudImageEditorElement {
   public override ctxOwner = true;
 
   private _commitDebounced: ReturnType<typeof debounce>;
@@ -59,28 +58,6 @@ export class EditorImageCropper extends LitBlock {
 
   public constructor() {
     super();
-
-    this.init$ = {
-      ...this.init$,
-      '*padding': CROP_PADDING,
-      '*operations': {
-        rotate: 0,
-        mirror: false,
-        flip: false,
-      },
-      '*imageBox': {
-        x: 0,
-        y: 0,
-        width: 0,
-        height: 0,
-      },
-      '*cropBox': {
-        x: 0,
-        y: 0,
-        width: 0,
-        height: 0,
-      },
-    };
 
     this._commitDebounced = debounce(this._commit.bind(this), 300);
 
@@ -102,13 +79,13 @@ export class EditorImageCropper extends LitBlock {
   }
 
   private _syncTransformations(): void {
-    const transformations = this.$['*editorTransformations'] as Transformations;
+    const transformations = this.editor$['*editorTransformations'] as Transformations;
     const pickedTransformations = pick(
       transformations,
-      Object.keys(this.$['*operations']) as readonly (keyof Transformations)[],
+      Object.keys(this.editor$['*operations']) as readonly (keyof Transformations)[],
     ) as Partial<Operations>;
-    const operations: Operations = { ...this.$['*operations'], ...pickedTransformations };
-    this.$['*operations'] = operations;
+    const operations: Operations = { ...this.editor$['*operations'], ...pickedTransformations };
+    this.editor$['*operations'] = operations;
   }
 
   private _initCanvas(): void {
@@ -137,8 +114,8 @@ export class EditorImageCropper extends LitBlock {
     }
 
     const image = this._image;
-    const padding = this.$['*padding'] as number;
-    const operations = this.$['*operations'] as Operations;
+    const padding = this.editor$['*padding'] as number;
+    const operations = this.editor$['*operations'] as Operations;
     const { rotate } = operations;
 
     const bounds = { width: this.offsetWidth, height: this.offsetHeight };
@@ -169,15 +146,15 @@ export class EditorImageCropper extends LitBlock {
       imageBox = { x, y, width, height };
     }
 
-    this.$['*imageBox'] = roundRect(imageBox);
+    this.editor$['*imageBox'] = roundRect(imageBox);
   }
 
   private _alignCrop(): void {
-    let cropBox = this.$['*cropBox'] as Rectangle;
-    const imageBox = this.$['*imageBox'] as Rectangle;
-    const operations = this.$['*operations'] as Operations;
+    let cropBox = this.editor$['*cropBox'] as Rectangle;
+    const imageBox = this.editor$['*imageBox'] as Rectangle;
+    const operations = this.editor$['*operations'] as Operations;
     const { rotate } = operations;
-    const cropTransformation = (this.$['*editorTransformations'] as Transformations).crop;
+    const cropTransformation = (this.editor$['*editorTransformations'] as Transformations).crop;
     const { width: previewWidth, x: previewX, y: previewY } = imageBox;
 
     if (cropTransformation) {
@@ -198,7 +175,7 @@ export class EditorImageCropper extends LitBlock {
       );
     }
 
-    const cropPreset = this.$['*currentAspectRatio'] as CropAspectRatio | null;
+    const cropPreset = this.editor$['*currentAspectRatio'] as CropAspectRatio | null;
     const cropAspectRatio = cropPreset ? cropPreset.width / cropPreset.height : undefined;
 
     if (
@@ -223,7 +200,7 @@ export class EditorImageCropper extends LitBlock {
       };
     }
 
-    this.$['*cropBox'] = constraintRect(roundRect(cropBox), imageBox);
+    this.editor$['*cropBox'] = constraintRect(roundRect(cropBox), imageBox);
   }
 
   private _drawImage(): void {
@@ -233,8 +210,8 @@ export class EditorImageCropper extends LitBlock {
     if (!image) {
       return;
     }
-    const imageBox = this.$['*imageBox'] as Rectangle;
-    const operations = this.$['*operations'] as Operations;
+    const imageBox = this.editor$['*imageBox'] as Rectangle;
+    const operations = this.editor$['*operations'] as Operations;
     const { mirror, flip, rotate } = operations;
     const rotated = rotateSize({ width: imageBox.width, height: imageBox.height }, rotate);
     ctx.save();
@@ -272,9 +249,9 @@ export class EditorImageCropper extends LitBlock {
   }
 
   private _getCropDimensions(): CropTransform['dimensions'] {
-    const cropBox = this.$['*cropBox'] as Rectangle;
-    const imageBox = this.$['*imageBox'] as Rectangle;
-    const operations = this.$['*operations'] as Operations;
+    const cropBox = this.editor$['*cropBox'] as Rectangle;
+    const imageBox = this.editor$['*imageBox'] as Rectangle;
+    const operations = this.editor$['*operations'] as Operations;
     const { rotate } = operations;
     const { width: previewWidth, height: previewHeight } = imageBox;
     const { width: sourceWidth, height: sourceHeight } = rotateSize(this._imageSize, rotate);
@@ -291,9 +268,9 @@ export class EditorImageCropper extends LitBlock {
   }
 
   private _getCropTransformation(): Transformations['crop'] {
-    const cropBox = this.$['*cropBox'] as Rectangle;
-    const imageBox = this.$['*imageBox'] as Rectangle;
-    const operations = this.$['*operations'] as Operations;
+    const cropBox = this.editor$['*cropBox'] as Rectangle;
+    const imageBox = this.editor$['*imageBox'] as Rectangle;
+    const operations = this.editor$['*operations'] as Operations;
     const { rotate } = operations;
     const { width: previewWidth, height: previewHeight, x: previewX, y: previewY } = imageBox;
     const { width: sourceWidth, height: sourceHeight } = rotateSize(this._imageSize, rotate);
@@ -326,10 +303,10 @@ export class EditorImageCropper extends LitBlock {
     if (!this.isConnected || !this._imageSize) {
       return;
     }
-    const operations = this.$['*operations'] as Operations;
+    const operations = this.editor$['*operations'] as Operations;
     const { rotate, mirror, flip } = operations;
     const crop = this._getCropTransformation();
-    const editorTransformations = this.$['*editorTransformations'] as Transformations;
+    const editorTransformations = this.editor$['*editorTransformations'] as Transformations;
     const transformations: Transformations = {
       ...editorTransformations,
       crop,
@@ -338,12 +315,12 @@ export class EditorImageCropper extends LitBlock {
       flip,
     };
 
-    this.$['*editorTransformations'] = transformations;
+    this.editor$['*editorTransformations'] = transformations;
   }
 
   public setValue<K extends keyof Operations>(operation: K, value: Operations[K]): void {
-    this.$['*operations'] = {
-      ...this.$['*operations'],
+    this.editor$['*operations'] = {
+      ...this.editor$['*operations'],
       [operation]: value,
     };
 
@@ -357,7 +334,7 @@ export class EditorImageCropper extends LitBlock {
   }
 
   public getValue<K extends keyof Operations>(operation: K): Operations[K] {
-    return this.$['*operations'][operation];
+    return this.editor$['*operations'][operation];
   }
 
   public async activate(imageSize: ImageSize, { fromViewer }: { fromViewer?: boolean } = {}): Promise<void> {
@@ -371,8 +348,8 @@ export class EditorImageCropper extends LitBlock {
     this.removeEventListener('transitionend', this._reset);
 
     try {
-      const originalUrl = this.$['*originalUrl'] as string;
-      const transformations = this.$['*editorTransformations'] as Transformations;
+      const originalUrl = this.editor$['*originalUrl'] as string;
+      const transformations = this.editor$['*editorTransformations'] as Transformations;
       this._image = await this._waitForImage(originalUrl, transformations);
       this._syncTransformations();
       this._handleResizeThrottled();
@@ -416,7 +393,7 @@ export class EditorImageCropper extends LitBlock {
 
   private _transitionToCrop(): void {
     const dimensions = this._getCropDimensions();
-    const cropBox = this.$['*cropBox'] as Rectangle;
+    const cropBox = this.editor$['*cropBox'] as Rectangle;
     const scaleX = Math.min(this.offsetWidth, dimensions[0]) / cropBox.width;
     const scaleY = Math.min(this.offsetHeight, dimensions[1]) / cropBox.height;
     const scale = Math.min(scaleX, scaleY);
@@ -430,7 +407,7 @@ export class EditorImageCropper extends LitBlock {
   }
 
   private _transitionToImage(): void {
-    const cropBox = this.$['*cropBox'] as Rectangle;
+    const cropBox = this.editor$['*cropBox'] as Rectangle;
     const cropCenterX = cropBox.x + cropBox.width / 2;
     const cropCenterY = cropBox.y + cropBox.height / 2;
 
@@ -466,14 +443,14 @@ export class EditorImageCropper extends LitBlock {
       .then(() => image)
       .catch((err) => {
         console.error('Failed to load image', { error: err });
-        this.$['*networkProblems'] = true;
+        this.editor$['*networkProblems'] = true;
         return image;
       });
   }
 
   private _handleImageLoading(src: string): () => void {
     const operation = 'crop';
-    const loadingOperations = this.$['*loadingOperations'] as LoadingOperations;
+    const loadingOperations = this.editor$['*loadingOperations'] as LoadingOperations;
     let operationMap = loadingOperations.get(operation);
     if (!operationMap) {
       operationMap = new Map<string, boolean>();
@@ -482,37 +459,37 @@ export class EditorImageCropper extends LitBlock {
 
     if (!operationMap.get(src)) {
       operationMap.set(src, true);
-      this.$['*loadingOperations'] = loadingOperations;
+      this.editor$['*loadingOperations'] = loadingOperations;
     }
 
     return () => {
       const map = loadingOperations.get(operation);
       if (map?.has(src)) {
         map.delete(src);
-        this.$['*loadingOperations'] = loadingOperations;
+        this.editor$['*loadingOperations'] = loadingOperations;
       }
     };
   }
 
-  public override initCallback(): void {
-    super.initCallback();
+  public override contextConsumedCallback(): void {
+    super.contextConsumedCallback();
 
-    this.sub('*imageBox', () => {
+    this.editorSub('*imageBox', () => {
       this._draw();
     });
 
-    this.sub('*cropBox', () => {
+    this.editorSub('*cropBox', () => {
       if (this._image) {
         this._commitDebounced();
       }
     });
 
-    this.sub('*currentAspectRatio', () => {
+    this.editorSub('*currentAspectRatio', () => {
       this._alignCrop();
     });
 
     setTimeout(() => {
-      this.sub('*networkProblems', (networkProblems: boolean) => {
+      this.editorSub('*networkProblems', (networkProblems: boolean) => {
         if (!networkProblems) {
           if (this._isActive && this._imageSize) {
             void this.activate(this._imageSize, { fromViewer: false });

@@ -5,9 +5,9 @@ import type { Ref } from 'lit/directives/ref.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import { styleMap } from 'lit/directives/style-map.js';
 import { when } from 'lit/directives/when.js';
-import { LitBlock } from '../../../lit/LitBlock';
 import { debounce } from '../../../utils/debounce';
 import { batchPreloadImages } from '../../../utils/preloadImage';
+import { CloudImageEditorElement } from './context';
 import type { EditorImageCropper } from './EditorImageCropper';
 import type { EditorImageFader } from './EditorImageFader';
 import { type EditorSlider, FAKE_ORIGINAL_FILTER } from './EditorSlider';
@@ -26,7 +26,7 @@ import { parseFilterValue } from './utils/parseFilterValue';
 
 type TabIdValue = (typeof TabId)[keyof typeof TabId];
 
-export class EditorToolbar extends LitBlock {
+export class EditorToolbar extends CloudImageEditorElement {
   @state()
   private _showLoader = false;
 
@@ -83,26 +83,26 @@ export class EditorToolbar extends LitBlock {
   }, 500);
 
   private readonly _updateInfoTooltip = debounce(() => {
-    const transformations = this.$['*editorTransformations'];
-    const currentOperation = this.$['*currentOperation'] as keyof typeof COLOR_OPERATIONS_CONFIG | null;
+    const transformations = this.editor$['*editorTransformations'];
+    const currentOperation = this.editor$['*currentOperation'] as keyof typeof COLOR_OPERATIONS_CONFIG | null;
     let text = '';
     let visible = false;
 
-    if (this.$['*tabId'] === TabId.FILTERS) {
+    if (this.editor$['*tabId'] === TabId.FILTERS) {
       visible = true;
-      if (this.$['*currentFilter'] && transformations?.filter?.name === this.$['*currentFilter']) {
+      if (this.editor$['*currentFilter'] && transformations?.filter?.name === this.editor$['*currentFilter']) {
         const value = transformations?.filter?.amount || 100;
-        text = `${this.$['*currentFilter']} ${value}`;
+        text = `${this.editor$['*currentFilter']} ${value}`;
       } else {
         text = this.l10n(FAKE_ORIGINAL_FILTER);
       }
-    } else if (this.showSubToolbar && this.$['*tabId'] === TabId.TUNING && currentOperation) {
+    } else if (this.showSubToolbar && this.editor$['*tabId'] === TabId.TUNING && currentOperation) {
       visible = true;
       const value = transformations?.[currentOperation] || COLOR_OPERATIONS_CONFIG[currentOperation].zero;
       text = `${this.l10n(currentOperation)} ${value}`;
     }
     if (visible) {
-      this.$['*operationTooltip'] = text;
+      this.editor$['*operationTooltip'] = text;
     }
     this._tooltipVisible = visible;
   }, 0);
@@ -127,24 +127,14 @@ export class EditorToolbar extends LitBlock {
     visible: 'uc-tab-toggles--visible',
   };
 
-  public override init$: Record<string, unknown> = {
-    ...this.init$,
-    '*sliderEl': null,
-    '*showSlider': false,
-    '*showListAspectRatio': false,
-    '*currentFilter': FAKE_ORIGINAL_FILTER,
-    '*currentOperation': null,
-    '*operationTooltip': null,
-  };
-
   private _onSliderClose(): void {
-    this.$['*showSlider'] = false;
+    this.editor$['*showSlider'] = false;
 
-    if (this.$['*tabId'] === TabId.CROP) {
-      this.$['*showListAspectRatio'] = false;
+    if (this.editor$['*tabId'] === TabId.CROP) {
+      this.editor$['*showListAspectRatio'] = false;
     }
 
-    if (this.$['*tabId'] === TabId.TUNING) {
+    if (this.editor$['*tabId'] === TabId.TUNING) {
       this._tooltipVisible = false;
     }
   }
@@ -153,8 +143,8 @@ export class EditorToolbar extends LitBlock {
     id: TabIdValue,
     { fromViewer = false, force = false }: { fromViewer?: boolean; force?: boolean } = {},
   ): void {
-    if (this.$['*tabId'] !== id) {
-      this.$['*tabId'] = id;
+    if (this.editor$['*tabId'] !== id) {
+      this.editor$['*tabId'] = id;
     }
     this._applyTabState(id, { fromViewer, force });
   }
@@ -170,18 +160,18 @@ export class EditorToolbar extends LitBlock {
 
     this.activeTab = id;
 
-    const faderEl = this.$['*faderEl'] as EditorImageFader | undefined;
-    const cropperEl = this.$['*cropperEl'] as EditorImageCropper | undefined;
+    const faderEl = this.editor$['*faderEl'] as EditorImageFader | undefined;
+    const cropperEl = this.editor$['*cropperEl'] as EditorImageCropper | undefined;
 
     if (id === TabId.CROP) {
       faderEl?.deactivate();
-      const imageSize = this.$['*imageSize'] as { width: number; height: number } | undefined;
+      const imageSize = this.editor$['*imageSize'] as { width: number; height: number } | undefined;
       if (imageSize) {
-        cropperEl?.activate(this.$['*imageSize'] as { width: number; height: number }, { fromViewer });
+        cropperEl?.activate(this.editor$['*imageSize'] as { width: number; height: number }, { fromViewer });
       }
     } else {
       faderEl?.activate({
-        url: this.$['*originalUrl'] as string,
+        url: this.editor$['*originalUrl'] as string,
         fromViewer,
       });
       cropperEl?.deactivate();
@@ -299,9 +289,11 @@ export class EditorToolbar extends LitBlock {
   }
 
   private async _preloadEditedImage(): Promise<void> {
-    if (this.$['*imgContainerEl'] && this.$['*originalUrl']) {
-      const width = this.$['*imgContainerEl'].offsetWidth;
-      const src = await this.proxyUrl(viewerImageSrc(this.$['*originalUrl'], width, this.$['*editorTransformations']));
+    if (this.editor$['*imgContainerEl'] && this.editor$['*originalUrl']) {
+      const width = this.editor$['*imgContainerEl'].offsetWidth;
+      const src = await this.proxyUrl(
+        viewerImageSrc(this.editor$['*originalUrl'], width, this.editor$['*editorTransformations']),
+      );
       this._cancelPreload?.();
       const { cancel } = batchPreloadImages([src]);
 
@@ -312,53 +304,53 @@ export class EditorToolbar extends LitBlock {
     }
   }
 
-  public override initCallback(): void {
-    super.initCallback();
+  public override contextConsumedCallback(): void {
+    super.contextConsumedCallback();
 
-    const initialCropPresets = this.$['*cropPresetList'] ?? [];
+    const initialCropPresets = this.editor$['*cropPresetList'] ?? [];
     this._cropPresets = [...initialCropPresets];
-    this.sub('*cropPresetList', (cropPresetList) => {
+    this.editorSub('*cropPresetList', (cropPresetList) => {
       this._cropPresets = [...(cropPresetList ?? [])];
     });
 
-    this.sub('*imageSize', (imageSize) => {
+    this.editorSub('*imageSize', (imageSize) => {
       if (imageSize) {
         setTimeout(() => {
-          this._activateTab(this.$['*tabId'], { fromViewer: true });
+          this._activateTab(this.editor$['*tabId'], { fromViewer: true });
         }, 0);
       }
     });
 
-    this.sub('*editorTransformations', (editorTransformations) => {
+    this.editorSub('*editorTransformations', (editorTransformations) => {
       const appliedFilter = editorTransformations?.filter?.name;
-      if (this.$['*currentFilter'] !== appliedFilter) {
-        this.$['*currentFilter'] = appliedFilter ?? '';
+      if (this.editor$['*currentFilter'] !== appliedFilter) {
+        this.editor$['*currentFilter'] = appliedFilter ?? '';
       }
     });
 
-    this.sub('*currentFilter', () => {
+    this.editorSub('*currentFilter', () => {
       this._updateInfoTooltip();
     });
 
-    this.sub('*currentOperation', () => {
+    this.editorSub('*currentOperation', () => {
       this._updateInfoTooltip();
     });
 
-    this.sub('*tabId', (tabId) => {
+    this.editorSub('*tabId', (tabId) => {
       this._applyTabState(tabId, { fromViewer: false, force: true });
       this._updateInfoTooltip();
     });
 
-    this.sub('*originalUrl', () => {
-      this.$['*faderEl']?.deactivate();
+    this.editorSub('*originalUrl', () => {
+      this.editor$['*faderEl']?.deactivate();
     });
 
-    this.sub('*editorTransformations', (transformations) => {
+    this.editorSub('*editorTransformations', (transformations) => {
       this._preloadEditedImage();
-      this.$['*faderEl']?.setTransformations(transformations);
+      this.editor$['*faderEl']?.setTransformations(transformations);
     });
 
-    this.sub('*loadingOperations', (loadingOperations) => {
+    this.editorSub('*loadingOperations', (loadingOperations) => {
       let anyLoading = false;
       for (const [, mapping] of loadingOperations.entries()) {
         if (anyLoading) {
@@ -374,33 +366,33 @@ export class EditorToolbar extends LitBlock {
       this._debouncedShowLoader(anyLoading);
     });
 
-    this.sub('*showSlider', (showSlider) => {
+    this.editorSub('*showSlider', (showSlider) => {
       if (showSlider) {
         this.showSubToolbar = true;
         this.showMainToolbar = false;
         this._useSliderPanel = true;
-      } else if (!this.$['*showListAspectRatio']) {
+      } else if (!this.editor$['*showListAspectRatio']) {
         this.showSubToolbar = false;
         this.showMainToolbar = true;
       }
     });
 
-    this.sub('*showListAspectRatio', (show) => {
+    this.editorSub('*showListAspectRatio', (show) => {
       if (show) {
         this.showSubToolbar = true;
         this.showMainToolbar = false;
         this._useSliderPanel = false;
-      } else if (!this.$['*showSlider']) {
+      } else if (!this.editor$['*showSlider']) {
         this.showSubToolbar = false;
         this.showMainToolbar = true;
       }
     });
 
-    this.sub('*tabList', (tabList) => {
+    this.editorSub('*tabList', (tabList) => {
       this.tabList = tabList;
       this._showTabToggles = tabList.length > 1;
 
-      if (!tabList.includes(this.$['*tabId']) && tabList.length > 0) {
+      if (!tabList.includes(this.editor$['*tabId']) && tabList.length > 0) {
         const [firstTab] = tabList;
         if (firstTab) {
           this._activateTab(firstTab, { fromViewer: false });
@@ -411,7 +403,7 @@ export class EditorToolbar extends LitBlock {
       this._syncTabIndicator();
     });
 
-    this.sub('*operationTooltip', (tooltip: string | null) => {
+    this.editorSub('*operationTooltip', (tooltip: string | null) => {
       this._operationTooltip = tooltip;
     });
 
@@ -446,38 +438,38 @@ export class EditorToolbar extends LitBlock {
     window.removeEventListener('resize', this._handleWindowResize);
     super.disconnectedCallback();
 
-    this.$['*showSlider'] = false;
-    this.$['*showListAspectRatio'] = false;
+    this.editor$['*showSlider'] = false;
+    this.editor$['*showListAspectRatio'] = false;
   }
 
   private _assignSharedElements(): void {
     const slider = this._sliderRef.value;
     if (slider) {
-      this.$['*sliderEl'] = slider;
+      this.editor$['*sliderEl'] = slider;
     }
   }
 
   private readonly _handleCancel = (e: MouseEvent): void => {
-    this.telemetryManager.sendEventCloudImageEditor(e, this.$['*tabId'], {
+    this.telemetryManager.sendEventCloudImageEditor(e, this.editor$['*tabId'], {
       action: 'cancel',
     });
     this._cancelPreload?.();
-    const onCancel = this.$['*on.cancel'] as (() => void) | undefined;
+    const onCancel = this.editor$['*on.cancel'] as (() => void) | undefined;
     onCancel?.();
   };
 
   private readonly _handleApply = (e: MouseEvent): void => {
-    this.telemetryManager.sendEventCloudImageEditor(e, this.$['*tabId'], {
+    this.telemetryManager.sendEventCloudImageEditor(e, this.editor$['*tabId'], {
       action: 'apply',
     });
-    const onApply = this.$['*on.apply'] as ((transformations: Transformations) => void) | undefined;
-    onApply?.(this.$['*editorTransformations'] as Transformations);
+    const onApply = this.editor$['*on.apply'] as ((transformations: Transformations) => void) | undefined;
+    onApply?.(this.editor$['*editorTransformations'] as Transformations);
   };
 
   private readonly _handleApplySlider = (e: MouseEvent): void => {
-    this.telemetryManager.sendEventCloudImageEditor(e, this.$['*tabId'], {
+    this.telemetryManager.sendEventCloudImageEditor(e, this.editor$['*tabId'], {
       action: 'apply-slider',
-      operation: parseFilterValue(this.$['*operationTooltip']),
+      operation: parseFilterValue(this.editor$['*operationTooltip']),
     });
     const slider = this._sliderRef.value;
     slider?.apply();
@@ -485,7 +477,7 @@ export class EditorToolbar extends LitBlock {
   };
 
   private readonly _handleCancelSlider = (e: MouseEvent): void => {
-    this.telemetryManager.sendEventCloudImageEditor(e, this.$['*tabId'], {
+    this.telemetryManager.sendEventCloudImageEditor(e, this.editor$['*tabId'], {
       action: 'cancel-slider',
     });
     const slider = this._sliderRef.value;
