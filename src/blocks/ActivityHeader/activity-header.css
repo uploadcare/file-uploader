@@ -13,4 +13,12 @@
     display: flex;
     align-items: center;
   }
+
+  uc-activity-header > div > uc-icon {
+    width: auto;
+  }
+
+  uc-activity-header > div {
+    gap: var(--uc-padding);
+  }
 }
