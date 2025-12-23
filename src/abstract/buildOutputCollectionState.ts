@@ -1,4 +1,5 @@
-import type { LitUploaderBlock } from '../lit/LitUploaderBlock';
+import { getOutputData } from '../lit/getOutputData';
+import type { SharedInstancesBag } from '../lit/shared-instances';
 import type {
   GroupFlag,
   OutputCollectionState,
@@ -31,23 +32,24 @@ function createAsyncAssertWrapper(warning: string) {
 export function buildOutputCollectionState<
   TCollectionStatus extends OutputCollectionStatus,
   TGroupFlag extends GroupFlag = 'maybe-has-group',
->(uploaderBlock: LitUploaderBlock): OutputCollectionState<TCollectionStatus, TGroupFlag> {
+>(bag: SharedInstancesBag): OutputCollectionState<TCollectionStatus, TGroupFlag> {
   const state = {} as OutputCollectionState<TCollectionStatus, TGroupFlag>;
+  const ctx = bag.ctx;
 
   const getters = {
     progress: (): number => {
-      return uploaderBlock.$['*commonProgress'];
+      return ctx.read('*commonProgress');
     },
     errors: (): OutputErrorCollection[] => {
-      return uploaderBlock.$['*collectionErrors'];
+      return ctx.read('*collectionErrors');
     },
 
     group: (): UploadcareGroup | null => {
-      return uploaderBlock.$['*groupInfo'];
+      return ctx.read('*groupInfo');
     },
 
     totalCount: (): number => {
-      return uploaderBlock.uploadCollection.size;
+      return bag.uploadCollection.size;
     },
 
     failedCount: (): number => {
@@ -84,7 +86,7 @@ export function buildOutputCollectionState<
     },
 
     allEntries: (): OutputFileEntry[] => {
-      return uploaderBlock.getOutputData();
+      return getOutputData(bag);
     },
 
     successEntries: (): OutputFileEntry<'success'>[] => {

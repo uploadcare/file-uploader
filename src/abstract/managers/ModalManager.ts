@@ -1,6 +1,6 @@
 import type { Modal as ModalNode } from '../../blocks/Modal/Modal';
 import type { ActivityType } from '../../lit/LitActivityBlock';
-import type { LitBlock } from '../../lit/LitBlock';
+import { SharedInstance } from '../../lit/shared-instances';
 
 export const ModalEvents = Object.freeze({
   ADD: 'modal:add',
@@ -15,19 +15,10 @@ export type ModalId = ActivityType;
 export type ModalCb = (data: { id: ModalId; modal: ModalNode }) => void;
 export type ModalEventType = (typeof ModalEvents)[keyof typeof ModalEvents];
 
-export class ModalManager {
+export class ModalManager extends SharedInstance {
   private _modals: Map<ModalId, ModalNode> = new Map();
   private _activeModals: Set<ModalId> = new Set();
   private _subscribers: Map<ModalEventType, Set<ModalCb>> = new Map();
-  private _block: LitBlock;
-
-  public constructor(block: LitBlock) {
-    this._block = block;
-  }
-
-  private _debugPrint(...args: unknown[]): void {
-    this._block.debugPrint('[modal-manager]', ...args);
-  }
 
   /**
    * Register a modal with the manager
@@ -154,7 +145,7 @@ export class ModalManager {
         try {
           callback(data as { id: ModalId; modal: ModalNode });
         } catch (error) {
-          this._block.telemetryManager.sendEventError(error as unknown, 'modal subscriber');
+          this._sharedInstancesBag.telemetryManager.sendEventError(error as unknown, 'modal subscriber');
           this._debugPrint('Error in modal subscriber:', error);
         }
       }
@@ -162,7 +153,9 @@ export class ModalManager {
   }
 
   /** Destroy the modal manager, clean up resources */
-  public destroy(): void {
+  public override destroy(): void {
+    super.destroy();
+
     this.closeAll();
     this._modals.clear();
     this._subscribers.clear();

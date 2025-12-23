@@ -1,27 +1,25 @@
-import type { LitBlock } from '../../lit/LitBlock';
+import { SharedInstance, type SharedInstancesBag } from '../../lit/shared-instances';
 import { default as en } from '../../locales/file-uploader/en';
-import { resolveLocaleDefinition } from '../localeRegistry';
+import { type LocaleDefinition, resolveLocaleDefinition } from '../localeRegistry';
+import { sharedConfigKey } from '../sharedConfigKey';
 
-export const localeStateKey = <T extends string>(key: T): `*l10n/${T}` => `*l10n/${key}`;
+export const localeStateKey = <T extends keyof LocaleDefinition>(key: T): `*l10n/${T}` => `*l10n/${key}`;
 export const DEFAULT_LOCALE = 'en';
 
-export class LocaleManager {
-  private _blockInstance: LitBlock | null = null;
+export class LocaleManager extends SharedInstance {
   private _localeName = '';
 
-  public constructor(blockInstance: LitBlock) {
-    this._blockInstance = blockInstance;
+  public constructor(sharedInstancesBag: SharedInstancesBag) {
+    super(sharedInstancesBag);
 
-    for (const [key, value] of Object.entries(en)) {
-      const noTranslation = this._blockInstance.has(localeStateKey(key))
-        ? !this._blockInstance.$[localeStateKey(key)]
-        : true;
-      this._blockInstance.add(localeStateKey(key), value, noTranslation);
+    for (const [key, value] of Object.entries(en) as [keyof LocaleDefinition, string][]) {
+      const noTranslation = this._ctx.has(localeStateKey(key)) ? !this._ctx.read(localeStateKey(key)) : true;
+      this._ctx.add(localeStateKey(key), value, noTranslation);
     }
 
-    setTimeout(() => {
-      blockInstance.subConfigValue('localeName', async (localeName) => {
-        if (!this._blockInstance || !localeName) {
+    this.addSub(
+      this._ctx.sub(sharedConfigKey('localeName'), async (localeName) => {
+        if (!localeName) {
           return;
         }
         this._localeName = localeName;
@@ -30,14 +28,16 @@ export class LocaleManager {
           return;
         }
 
-        const overrides = this._blockInstance.cfg.localeDefinitionOverride?.[localeName];
-        for (const [key, value] of Object.entries(definition)) {
+        const overrides = this._cfg.localeDefinitionOverride?.[localeName];
+        for (const [key, value] of Object.entries(definition) as [keyof LocaleDefinition, string][]) {
           const overriddenValue = overrides?.[key];
-          this._blockInstance.add(localeStateKey(key), overriddenValue ?? value, true);
+          this._ctx.add(localeStateKey(key), overriddenValue ?? value, true);
         }
-      });
+      }),
+    );
 
-      blockInstance.subConfigValue('localeDefinitionOverride', (localeDefinitionOverride) => {
+    this.addSub(
+      this._ctx.sub(sharedConfigKey('localeDefinitionOverride'), (localeDefinitionOverride) => {
         if (!localeDefinitionOverride) {
           return;
         }
@@ -45,10 +45,10 @@ export class LocaleManager {
         if (!definition) {
           return;
         }
-        for (const [key, value] of Object.entries(definition)) {
-          this._blockInstance?.add(localeStateKey(key), value, true);
+        for (const [key, value] of Object.entries(definition) as [keyof LocaleDefinition, string][]) {
+          this._ctx.add(localeStateKey(key), value, true);
         }
-      });
-    });
+      }),
+    );
   }
 }

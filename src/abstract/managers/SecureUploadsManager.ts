@@ -1,22 +1,12 @@
-import type { LitUploaderBlock } from '../../lit/LitUploaderBlock';
+import { SharedInstance } from '../../lit/shared-instances';
 import type { SecureUploadsSignatureAndExpire } from '../../types/index';
 import { isSecureTokenExpired } from '../../utils/isSecureTokenExpired';
 
-export class SecureUploadsManager {
-  private readonly _block: LitUploaderBlock;
+export class SecureUploadsManager extends SharedInstance {
   private _secureToken: SecureUploadsSignatureAndExpire | null = null;
 
-  public constructor(block: LitUploaderBlock) {
-    this._block = block;
-  }
-
-  private _debugPrint(...args: unknown[]): void {
-    this._block.debugPrint('[secure-uploads]', ...args);
-  }
-
   public async getSecureToken(): Promise<SecureUploadsSignatureAndExpire | null> {
-    const { secureSignature, secureExpire, secureUploadsSignatureResolver } = this._block.cfg;
-
+    const { secureSignature, secureExpire, secureUploadsSignatureResolver, secureUploadsExpireThreshold } = this._cfg;
     if ((secureSignature || secureExpire) && secureUploadsSignatureResolver) {
       console.warn(
         'Both secureSignature/secureExpire and secureUploadsSignatureResolver are set. secureUploadsSignatureResolver will be used.',
@@ -24,10 +14,7 @@ export class SecureUploadsManager {
     }
 
     if (secureUploadsSignatureResolver) {
-      if (
-        !this._secureToken ||
-        isSecureTokenExpired(this._secureToken, { threshold: this._block.cfg.secureUploadsExpireThreshold })
-      ) {
+      if (!this._secureToken || isSecureTokenExpired(this._secureToken, { threshold: secureUploadsExpireThreshold })) {
         if (!this._secureToken) {
           this._debugPrint('Secure signature is not set yet.');
         } else {
@@ -50,7 +37,7 @@ export class SecureUploadsManager {
           }
         } catch (err) {
           console.error('Secure signature resolving failed. Falling back to the previous one.', err);
-          this._block.telemetryManager.sendEventError(
+          this._sharedInstancesBag.telemetryManager.sendEventError(
             err,
             'secureUploadsSignatureResolver. Secure signature resolving failed. Falling back to the previous one.',
           );
@@ -73,5 +60,10 @@ export class SecureUploadsManager {
     }
 
     return null;
+  }
+
+  public override destroy(): void {
+    super.destroy();
+    this._secureToken = null;
   }
 }

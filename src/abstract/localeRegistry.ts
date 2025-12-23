@@ -1,6 +1,6 @@
 import { default as en } from '../locales/file-uploader/en';
 
-export type LocaleDefinition = Record<string, string>;
+export type LocaleDefinition = typeof en;
 export type LocaleDefinitionResolver = () => Promise<LocaleDefinition>;
 
 const localeRegistry: Map<string, LocaleDefinition> = new Map();

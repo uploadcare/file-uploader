@@ -13,6 +13,12 @@ export { defineLocale } from './abstract/localeRegistry';
 export { ModalEvents, type ModalId } from './abstract/managers/ModalManager';
 export { toKebabCase } from './utils/toKebabCase';
 
+// Abstract:
+export { LitBlock as Block } from './lit/LitBlock';
+export { LitSolutionBlock as SolutionBlock } from './lit/LitSolutionBlock';
+export { LitUploaderBlock as UploaderBlock } from './lit/LitUploaderBlock';
+export { LitActivityBlock as ActivityBlock } from './lit/LitActivityBlock';
+
 // Shared:
 export { Icon } from './blocks/Icon/Icon';
 export { Img } from './blocks/Img/Img';
@@ -42,12 +48,6 @@ export { ExternalSource } from './blocks/ExternalSource/ExternalSource';
 export { FileItem } from './blocks/FileItem/FileItem';
 export { ExternalUploadSource, UploadSource } from './utils/UploadSource';
 export { SimpleBtn } from './blocks/SimpleBtn/SimpleBtn';
-
-// Abstract:
-export { LitBlock as Block } from './lit/LitBlock';
-export { LitSolutionBlock as SolutionBlock } from './lit/LitSolutionBlock';
-export { LitUploaderBlock as UploaderBlock } from './lit/LitUploaderBlock';
-export { LitActivityBlock as ActivityBlock } from './lit/LitActivityBlock';
 
 // Solutions:
 export { FileUploaderRegular } from './solutions/file-uploader/regular/FileUploaderRegular';

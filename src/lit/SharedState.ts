@@ -5,7 +5,7 @@ import type { A11y } from '../abstract/managers/a11y';
 import type { LocaleManager } from '../abstract/managers/LocaleManager';
 import type { ModalManager } from '../abstract/managers/ModalManager';
 import type { SecureUploadsManager } from '../abstract/managers/SecureUploadsManager';
-import type { ITelemetryManager } from '../abstract/managers/TelemetryManager';
+import type { TelemetryManager } from '../abstract/managers/TelemetryManager';
 import type { ValidationManager } from '../abstract/managers/ValidationManager';
 import type { TypedCollection } from '../abstract/TypedCollection';
 import type { UploaderPublicApi } from '../abstract/UploaderPublicApi';
@@ -89,7 +89,7 @@ type DynamicBlockState = {
   '*blocksRegistry': BlocksRegistry;
   '*eventEmitter': EventEmitter;
   '*localeManager': LocaleManager;
-  '*telemetryManager': ITelemetryManager;
+  '*telemetryManager': TelemetryManager;
   '*a11y': A11y;
   '*modalManager': ModalManager | null;
 };

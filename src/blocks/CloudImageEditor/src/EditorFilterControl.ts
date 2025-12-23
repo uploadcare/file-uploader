@@ -52,7 +52,9 @@ export class EditorFilterControl extends EditorButtonControl {
     this.icon = this.isOriginal ? 'original' : 'slider';
     this._iconSize = this.isOriginal ? 40 : 20;
     this.requestUpdate('filter', previousValue);
-    this._updateFilterLabels(nextFilter);
+    if (this.isConnected) {
+      this._updateFilterLabels(nextFilter);
+    }
   }
 
   public override onClick(e: MouseEvent) {

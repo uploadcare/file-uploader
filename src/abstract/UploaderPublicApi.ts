@@ -4,15 +4,19 @@ import { calcCameraModes } from '../blocks/CameraSource/calcCameraModes';
 import { CameraSourceTypes, type ModeCameraType } from '../blocks/CameraSource/constants';
 import type { SourceBtn } from '../blocks/SourceBtn/SourceBtn';
 import { EventType } from '../blocks/UploadCtxProvider/EventEmitter';
-import {
-  type ActivityParamsMap,
-  type ActivityType,
+import { ACTIVITY_TYPES } from '../lit/activity-constants';
+import { findBlockInCtx } from '../lit/findBlockInCtx';
+import { hasBlockInCtx } from '../lit/hasBlockInCtx';
+import type {
+  ActivityParamsMap,
+  ActivityType,
   LitActivityBlock,
-  type RegisteredActivityType,
+  RegisteredActivityType,
 } from '../lit/LitActivityBlock';
 import type { LitBlock } from '../lit/LitBlock';
-import type { LitUploaderBlock } from '../lit/LitUploaderBlock';
+import { createL10n } from '../lit/l10n';
 import { PubSub } from '../lit/PubSubCompat';
+import { SharedInstance } from '../lit/shared-instances';
 import type { Uid } from '../lit/Uid';
 import type {
   OutputCollectionState,
@@ -42,23 +46,19 @@ export type ApiAddFileCommonOptions = {
   source?: string;
 };
 
-export class UploaderPublicApi {
-  private _ctx: LitUploaderBlock;
-
-  public constructor(ctx: LitUploaderBlock) {
-    this._ctx = ctx;
-  }
+export class UploaderPublicApi extends SharedInstance {
+  private _l10n = createL10n(() => this._ctx);
 
   public get _uploadCollection() {
-    return this._ctx.uploadCollection;
+    return this._sharedInstancesBag.uploadCollection;
   }
 
   public get cfg() {
-    return this._ctx.cfg;
+    return this._cfg;
   }
 
   public get l10n() {
-    return this._ctx.l10n.bind(this._ctx);
+    return this._l10n;
   }
 
   /**
@@ -165,8 +165,8 @@ export class UploaderPublicApi {
       return;
     }
 
-    this._ctx.$['*uploadTrigger'] = new Set(itemsToUpload);
-    this._ctx.emit(
+    this._ctx.pub('*uploadTrigger', new Set(itemsToUpload));
+    this._sharedInstancesBag.eventEmitter.emit(
       EventType.COMMON_UPLOAD_START,
       this.getOutputCollectionState() as OutputCollectionState<'uploading'>,
     );
@@ -218,8 +218,8 @@ export class UploaderPublicApi {
           });
         });
         // To call uploadTrigger UploadList should draw file items first:
-        this._ctx.modalManager?.open(LitActivityBlock.activities.UPLOAD_LIST);
-        this._ctx.$['*currentActivity'] = LitActivityBlock.activities.UPLOAD_LIST;
+        this._sharedInstancesBag.modalManager?.open(ACTIVITY_TYPES.UPLOAD_LIST);
+        this._ctx.pub('*currentActivity', ACTIVITY_TYPES.UPLOAD_LIST);
         fileInput.remove();
       },
       {
@@ -286,20 +286,22 @@ export class UploaderPublicApi {
   }
 
   public getOutputCollectionState<TStatus extends OutputCollectionStatus>() {
-    return buildOutputCollectionState(this._ctx) as ReturnType<typeof buildOutputCollectionState<TStatus>>;
+    return buildOutputCollectionState(this._sharedInstancesBag) as ReturnType<
+      typeof buildOutputCollectionState<TStatus>
+    >;
   }
 
   public initFlow = (force = false): void => {
     if (this._uploadCollection.size > 0 && !force) {
-      this._ctx.modalManager?.open(LitActivityBlock.activities.UPLOAD_LIST);
-      this._ctx.pub('*currentActivity', LitActivityBlock.activities.UPLOAD_LIST);
+      this._sharedInstancesBag.modalManager?.open(ACTIVITY_TYPES.UPLOAD_LIST);
+      this._ctx.pub('*currentActivity', ACTIVITY_TYPES.UPLOAD_LIST);
     } else {
       if (this._sourceList?.length === 1) {
         const srcKey = this._sourceList[0];
 
         // TODO: We should refactor those handlers
         if (srcKey === 'local') {
-          this._ctx.$['*currentActivity'] = LitActivityBlock.activities.UPLOAD_LIST;
+          this._ctx.pub('*currentActivity', ACTIVITY_TYPES.UPLOAD_LIST);
           this.openSystemDialog();
           return;
         }
@@ -308,7 +310,7 @@ export class UploaderPublicApi {
           const { isPhotoEnabled, isVideoRecordingEnabled } = calcCameraModes(this.cfg);
 
           if (isPhotoEnabled && isVideoRecordingEnabled) {
-            this._ctx.pub('*currentActivity', LitActivityBlock.activities.START_FROM);
+            this._ctx.pub('*currentActivity', ACTIVITY_TYPES.START_FROM);
             return;
           } else if (isPhotoEnabled || isVideoRecordingEnabled) {
             this.openSystemDialog({
@@ -324,31 +326,36 @@ export class UploaderPublicApi {
           }
         }
 
-        const blocksRegistry = this._ctx.blocksRegistry;
+        const blocksRegistry = this._sharedInstancesBag.blocksRegistry;
         const isSourceBtn = (block: LitBlock): block is SourceBtn =>
           'type' in (block as any) && (block as any).type === srcKey;
-        const sourceBtnBlock = [...blocksRegistry].find(isSourceBtn);
+        const sourceBtnBlock = findBlockInCtx(blocksRegistry, isSourceBtn) as SourceBtn | undefined;
         // TODO: This is weird that we have this logic inside UI component, we should consider to move it somewhere else
         sourceBtnBlock?.activate();
 
-        if (this._ctx.$['*currentActivity']) {
-          this._ctx.modalManager?.open(this._ctx.$['*currentActivity']);
+        if (this._ctx.read('*currentActivity')) {
+          this._sharedInstancesBag.modalManager?.open(this._ctx.read('*currentActivity'));
         }
       } else {
         // Multiple sources case:
-        this._ctx.modalManager?.open(LitActivityBlock.activities.START_FROM);
-        this._ctx.pub('*currentActivity', LitActivityBlock.activities.START_FROM);
+        this._sharedInstancesBag.modalManager?.open(ACTIVITY_TYPES.START_FROM);
+        this._ctx.pub('*currentActivity', ACTIVITY_TYPES.START_FROM);
       }
     }
   };
 
   public doneFlow = (): void => {
-    this._ctx.set$({
-      '*currentActivity': this._ctx.doneActivity,
-      '*history': this._ctx.doneActivity ? [this._ctx.doneActivity] : [],
-    });
-    if (!this._ctx.$['*currentActivity']) {
-      this._ctx.modalManager?.closeAll();
+    const activityBlock = findBlockInCtx(this._sharedInstancesBag.blocksRegistry, (b) => 'doneActivity' in b) as
+      | LitActivityBlock
+      | undefined;
+
+    if (!activityBlock) {
+      return;
+    }
+    this._ctx.pub('*currentActivity', activityBlock.doneActivity);
+    this._ctx.pub('*history', activityBlock.doneActivity ? [activityBlock.doneActivity] : []);
+    if (!this._ctx.read('*currentActivity')) {
+      this._sharedInstancesBag.modalManager?.closeAll();
     }
   };
 
@@ -360,31 +367,29 @@ export class UploaderPublicApi {
         ? [undefined?]
         : [never]
   ) => {
-    if (this._ctx.hasBlockInCtx((b) => b.activityType === activityType)) {
-      this._ctx.set$({
-        '*currentActivityParams': params[0] ?? {},
-        '*currentActivity': activityType,
-      });
+    if (hasBlockInCtx(this._sharedInstancesBag.blocksRegistry, (b) => b.activityType === activityType)) {
+      this._ctx.pub('*currentActivityParams', params[0] ?? {});
+      this._ctx.pub('*currentActivity', activityType);
       return;
     }
     console.warn(`Activity type "${activityType}" not found in the context`);
   };
 
   public getCurrentActivity = (): ActivityType => {
-    return this._ctx.$['*currentActivity'];
+    return this._ctx.read('*currentActivity');
   };
 
   public setModalState = (opened: boolean): void => {
-    if (opened && !this._ctx.$['*currentActivity']) {
+    if (opened && !this._ctx.read('*currentActivity')) {
       console.warn(`Can't open modal without current activity. Please use "setCurrentActivity" method first.`);
       return;
     }
 
     if (opened) {
-      this._ctx.modalManager?.open(this._ctx.$['*currentActivity']);
+      this._sharedInstancesBag.modalManager?.open(this._ctx.read('*currentActivity'));
     } else {
-      this._ctx.modalManager?.close(this._ctx.$['*currentActivity']);
-      this._ctx.$['*currentActivity'] = null;
+      this._sharedInstancesBag.modalManager?.close(this._ctx.read('*currentActivity'));
+      this._ctx.pub('*currentActivity', null);
     }
   };
 

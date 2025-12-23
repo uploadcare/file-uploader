@@ -5,9 +5,10 @@ import { initialConfig } from '../../blocks/Config/initialConfig';
 import type { EventKey, InternalEventKey } from '../../blocks/UploadCtxProvider/EventEmitter';
 import { EventType, InternalEventType } from '../../blocks/UploadCtxProvider/EventEmitter';
 import { PACKAGE_NAME, PACKAGE_VERSION } from '../../env';
-import type { LitBlock } from '../../lit/LitBlock';
+import { SharedInstance, type SharedInstancesBag } from '../../lit/shared-instances';
 import type { ConfigType } from '../../types/index';
 import { UID } from '../../utils/UID';
+import { sharedConfigKey } from '../sharedConfigKey';
 
 type CommonEventType = InternalEventKey | EventKey;
 
@@ -20,45 +21,41 @@ type TelemetryEventBody = Partial<Pick<TelemetryState, 'payload' | 'config'>> & 
   eventType?: CommonEventType;
 };
 
-export interface ITelemetryManager {
-  sendEvent(body: TelemetryEventBody): void;
-  sendEventError(error: unknown, context?: string): void;
-  sendEventCloudImageEditor(e: MouseEvent, tabId: string, options?: Record<string, unknown>): void;
-}
-
-export class TelemetryManager implements ITelemetryManager {
+export class TelemetryManager extends SharedInstance {
   private readonly _sessionId: string = UID.generateRandomUUID();
   private readonly _telemetryInstance: TelemetryAPIService;
-  private readonly _block: LitBlock;
   private _config: ConfigType = structuredClone(initialConfig);
   private _initialized = false;
   private _lastPayload: TelemetryState | null = null;
   private readonly _queue: Queue;
-  private _isEnabled = true;
+  private _isEnabled = false;
 
-  public constructor(block: LitBlock) {
-    this._block = block;
+  public constructor(sharedInstancesBag: SharedInstancesBag) {
+    super(sharedInstancesBag);
     this._telemetryInstance = new TelemetryAPIService();
     this._queue = new Queue(10);
-    this._isEnabled = Boolean(this._block.cfg.qualityInsights);
 
-    this._block.subConfigValue('qualityInsights', (value) => {
-      this._isEnabled = Boolean(value);
-    });
+    this.addSub(
+      this._ctx.sub(sharedConfigKey('qualityInsights'), (value) => {
+        this._isEnabled = Boolean(value);
+      }),
+    );
 
     for (const key of Object.keys(this._config) as (keyof ConfigType)[]) {
-      this._block.subConfigValue(key, (value) => {
-        if (!this._isEnabled) {
-          return;
-        }
-        if (this._initialized && this._config[key] !== value) {
-          this.sendEvent({
-            eventType: InternalEventType.CHANGE_CONFIG,
-          });
-        }
+      this.addSub(
+        this._ctx.sub(sharedConfigKey(key), (value) => {
+          if (!this._isEnabled) {
+            return;
+          }
+          if (this._initialized && this._config[key] !== value) {
+            this.sendEvent({
+              eventType: InternalEventType.CHANGE_CONFIG,
+            });
+          }
 
-        this._setConfig(key, value);
-      });
+          this._setConfig(key, value);
+        }),
+      );
     }
   }
 
@@ -208,18 +205,18 @@ export class TelemetryManager implements ITelemetryManager {
   }
 
   private get _solution(): string | null {
-    if (!this._block.has('*solution')) {
+    if (!this._ctx.has('*solution')) {
       return null;
     }
-    const solution = this._block.$['*solution'] as string | undefined;
+    const solution = this._ctx.read('*solution');
     return solution ? solution.toLowerCase() : null;
   }
 
   private get _activity(): string | null {
-    if (!this._block.has('*currentActivity')) {
+    if (!this._ctx.has('*currentActivity')) {
       return null;
     }
-    return (this._block.$['*currentActivity'] as string | undefined) ?? null;
+    return this._ctx.read('*currentActivity');
   }
 
   private get _location(): string {
