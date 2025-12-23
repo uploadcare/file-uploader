@@ -91,11 +91,6 @@ export class EventEmitter extends SharedInstance {
       const copyPayload = !!payload && typeof payload === 'object' ? { ...payload } : payload;
       return [`event "${type}"`, copyPayload];
     });
-
-    this._sharedInstancesBag.telemetryManager.sendEvent({
-      eventType: type,
-      payload: payload,
-    });
   }
 
   public emit<T extends EventKey, TDebounce extends boolean | number | undefined = undefined>(
