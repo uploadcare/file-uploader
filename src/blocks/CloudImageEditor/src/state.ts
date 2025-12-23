@@ -1,14 +1,10 @@
-import { createCdnUrl, createCdnUrlModifiers } from '../../../utils/cdn-utils';
-import { TRANSPARENT_PIXEL_SRC } from '../../../utils/transparentPixelSrc';
-import type { CloudImageEditorBlock } from './CloudImageEditorBlock';
 import { CROP_PADDING } from './cropper-constants';
 import type { EditorImageCropper } from './EditorImageCropper';
 import type { EditorImageFader } from './EditorImageFader';
 import type { EditorSlider } from './EditorSlider';
 import { FAKE_ORIGINAL_FILTER } from './EditorSlider';
-import { transformationsToOperations } from './lib/transformationUtils';
 import { ALL_TABS, type ColorOperation, TabId } from './toolbar-constants';
-import type { ApplyResult, CropPresetList, ImageSize, LoadingOperations, Rectangle, Transformations } from './types';
+import type { CropPresetList, ImageSize, LoadingOperations, Rectangle, Transformations } from './types';
 
 type TabIdValue = (typeof TabId)[keyof typeof TabId];
 
@@ -26,9 +22,6 @@ export type CloudImageEditorState = {
   '*currentAspectRatio': CropPresetList[number] | null;
   '*tabList': readonly TabIdValue[];
   '*tabId': TabIdValue;
-  '*on.retryNetwork': () => void;
-  '*on.apply': (transformations: Transformations) => void;
-  '*on.cancel': () => void;
   '*sliderEl': EditorSlider | null;
   '*showSlider': boolean;
   '*showListAspectRatio': boolean;
@@ -45,7 +38,7 @@ export type CloudImageEditorState = {
   '*cropBox': Rectangle;
 };
 
-export function createCloudImageEditorState(fnCtx: CloudImageEditorBlock): CloudImageEditorState {
+export function createCloudImageEditorState(): CloudImageEditorState {
   return {
     '*originalUrl': null,
     '*loadingOperations': new Map() as LoadingOperations,
@@ -60,52 +53,6 @@ export function createCloudImageEditorState(fnCtx: CloudImageEditorBlock): Cloud
     '*currentAspectRatio': null,
     '*tabList': [...ALL_TABS],
     '*tabId': TabId.CROP,
-    '*on.retryNetwork': () => {
-      const images = fnCtx.querySelectorAll('img');
-      for (const img of images) {
-        const originalSrc = img.src;
-        img.src = TRANSPARENT_PIXEL_SRC;
-        img.src = originalSrc;
-      }
-      fnCtx.editor$['*networkProblems'] = false;
-    },
-    '*on.apply': (transformations: Transformations) => {
-      if (!transformations) {
-        return;
-      }
-      const originalUrl = fnCtx.editor$['*originalUrl'];
-      if (!originalUrl) {
-        console.warn('Original URL is null, cannot apply transformations');
-        return;
-      }
-      const cdnUrlModifiers = createCdnUrlModifiers(transformationsToOperations(transformations), 'preview');
-      const cdnUrl = createCdnUrl(originalUrl, cdnUrlModifiers);
-
-      const eventData: ApplyResult = {
-        originalUrl,
-        cdnUrlModifiers,
-        cdnUrl,
-        transformations,
-      };
-      fnCtx.dispatchEvent(
-        new CustomEvent('apply', {
-          detail: eventData,
-          bubbles: true,
-          composed: true,
-        }),
-      );
-      fnCtx.remove();
-    },
-    '*on.cancel': () => {
-      fnCtx.remove();
-
-      fnCtx.dispatchEvent(
-        new CustomEvent('cancel', {
-          bubbles: true,
-          composed: true,
-        }),
-      );
-    },
     '*sliderEl': null,
     '*showSlider': false,
     '*showListAspectRatio': false,

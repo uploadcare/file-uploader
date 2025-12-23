@@ -1,6 +1,6 @@
 import type { PropertyValues, TemplateResult } from 'lit';
 import { html, nothing } from 'lit';
-import { state } from 'lit/decorators.js';
+import { property, state } from 'lit/decorators.js';
 import type { Ref } from 'lit/directives/ref.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import { styleMap } from 'lit/directives/style-map.js';
@@ -27,6 +27,12 @@ import { parseFilterValue } from './utils/parseFilterValue';
 type TabIdValue = (typeof TabId)[keyof typeof TabId];
 
 export class EditorToolbar extends CloudImageEditorElement {
+  @property({ attribute: false })
+  public onApply?: (transformations: Transformations) => void;
+
+  @property({ attribute: false })
+  public onCancel?: () => void;
+
   @state()
   private _showLoader = false;
 
@@ -454,16 +460,14 @@ export class EditorToolbar extends CloudImageEditorElement {
       action: 'cancel',
     });
     this._cancelPreload?.();
-    const onCancel = this.editor$['*on.cancel'] as (() => void) | undefined;
-    onCancel?.();
+    this.onCancel?.();
   };
 
   private readonly _handleApply = (e: MouseEvent): void => {
     this.telemetryManager.sendEventCloudImageEditor(e, this.editor$['*tabId'], {
       action: 'apply',
     });
-    const onApply = this.editor$['*on.apply'] as ((transformations: Transformations) => void) | undefined;
-    onApply?.(this.editor$['*editorTransformations'] as Transformations);
+    this.onApply?.(this.editor$['*editorTransformations']);
   };
 
   private readonly _handleApplySlider = (e: MouseEvent): void => {

@@ -99,8 +99,52 @@ export class CloudImageEditorBlock extends CloudImageEditorElement {
   };
 
   private readonly _handleRetryNetwork = (): void => {
-    const retry = this.editor$['*on.retryNetwork'] as (() => void) | undefined;
-    retry?.();
+    const images = this.querySelectorAll('img');
+    for (const img of images) {
+      const originalSrc = img.src;
+      img.src = TRANSPARENT_PIXEL_SRC;
+      img.src = originalSrc;
+    }
+    this.editor$['*networkProblems'] = false;
+  };
+
+  private readonly _handleApply = (transformations: Transformations): void => {
+    if (!transformations) {
+      return;
+    }
+    const originalUrl = this.editor$['*originalUrl'] as string | null;
+    if (!originalUrl) {
+      console.warn('Original URL is null, cannot apply transformations');
+      return;
+    }
+    const cdnUrlModifiers = createCdnUrlModifiers(transformationsToOperations(transformations), 'preview');
+    const cdnUrl = createCdnUrl(originalUrl, cdnUrlModifiers);
+
+    const eventData: ApplyResult = {
+      originalUrl,
+      cdnUrlModifiers,
+      cdnUrl,
+      transformations,
+    };
+    this.dispatchEvent(
+      new CustomEvent('apply', {
+        detail: eventData,
+        bubbles: true,
+        composed: true,
+      }),
+    );
+    this.remove();
+  };
+
+  private readonly _handleCancel = (): void => {
+    this.remove();
+
+    this.dispatchEvent(
+      new CustomEvent('cancel', {
+        bubbles: true,
+        composed: true,
+      }),
+    );
   };
 
   private _scheduleInitialization(): void {
@@ -251,7 +295,11 @@ export class CloudImageEditorBlock extends CloudImageEditorElement {
         <div class="uc-toolbar">
           <uc-line-loader-ui .active=${showLoader}></uc-line-loader-ui>
           <div class="uc-toolbar_content uc-toolbar_content__editor">
-            ${when(this._isInitialized, () => html`<uc-editor-toolbar></uc-editor-toolbar>`)}
+            ${when(
+              this._isInitialized,
+              () =>
+                html`<uc-editor-toolbar .onApply=${this._handleApply} .onCancel=${this._handleCancel}></uc-editor-toolbar>`,
+            )}
           </div>
         </div>
       </div>
@@ -412,7 +460,7 @@ export class CloudImageEditorBlock extends CloudImageEditorElement {
     }
     this._editorCtxId = `${this.ctxName}-cloud-image-editor-${UID.generateFastUid()}`;
 
-    const initialState = createCloudImageEditorState(this);
+    const initialState = createCloudImageEditorState();
     const editorPubSub = PubSub.registerCtx<CloudImageEditorState>(initialState, this._editorCtxId);
     this.editorCtxController.setPubSub(editorPubSub);
     this._contextProvider = new ContextProvider(this, {
