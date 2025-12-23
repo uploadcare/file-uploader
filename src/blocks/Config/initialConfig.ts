@@ -46,7 +46,7 @@ const config = {
   secureSignature: '',
   secureExpire: '',
   secureDeliveryProxy: '',
-  retryThrottledRequestMaxTimes: 10,
+  retryThrottledRequestMaxTimes: 3,
   retryNetworkErrorMaxTimes: 3,
   multipartMinFileSize: 26214400,
   multipartChunkSize: 5242880,
