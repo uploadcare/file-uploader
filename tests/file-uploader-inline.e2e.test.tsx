@@ -1,4 +1,4 @@
-import { commands, page, userEvent } from '@vitest/browser/context';
+import { page, userEvent } from '@vitest/browser/context';
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import '../types/jsx';
 import { delay } from '@/utils/delay';

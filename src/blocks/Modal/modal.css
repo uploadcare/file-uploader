@@ -2,7 +2,7 @@
   @supports selector(dialog::backdrop) {
     :where([uc-modal]) > dialog::backdrop {
       /* backdrop don't inherit theme properties */
-      background-color: oklch(0 0 0 / 0.1);
+      background-color: oklch(0% 0 0 / 0.1);
     }
     :where([uc-modal])[strokes] > dialog::backdrop {
       /* TODO: it's not working, fix it */

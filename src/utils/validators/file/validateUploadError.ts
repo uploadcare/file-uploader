@@ -1,11 +1,14 @@
 import { NetworkError, UploadError } from '@uploadcare/upload-client';
 import type { FuncFileValidator } from '../../../abstract/managers/ValidationManager';
+import type { Uid } from '../../../lit/Uid';
 
 export const validateUploadError: FuncFileValidator = (outputEntry, api) => {
   const { internalId } = outputEntry;
 
-  // @ts-expect-error Use private API that is not exposed in the types
-  const internalEntry = api._uploadCollection.read(internalId);
+  if (!api._uploadCollection.hasItem(internalId as Uid)) {
+    return;
+  }
+  const internalEntry = api._uploadCollection.read(internalId as Uid);
 
   const cause: unknown = internalEntry?.getValue('uploadError');
   if (!cause) {

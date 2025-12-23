@@ -30,7 +30,3 @@ api.setCurrentActivity('external', {
   // @ts-expect-error - should not allow to set activity with invalid params
   invalidParam: 'value',
 });
-
-// should allow to set some custom activity
-api.setCurrentActivity('my-custom-activity');
-api.setCurrentActivity('my-custom-activity', { myCustomParam: 'value' });

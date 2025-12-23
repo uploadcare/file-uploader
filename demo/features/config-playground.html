@@ -1,0 +1,989 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>File Uploader config playground</title>
+    <style>
+    @media (prefers-color-scheme: dark) {
+      body {
+        background-color: #0b1221;
+        color: #e2e8f0;
+      }
+    }
+
+    uc-config-playground {
+      display: block;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 12% 18%, rgba(79, 70, 229, 0.08), transparent 28%),
+        radial-gradient(circle at 88% 8%, rgba(16, 185, 129, 0.08), transparent 26%),
+        linear-gradient(180deg, #f6f7fb 0%, #eef2ff 42%, #e2e8f0 100%);
+      color: #0f172a;
+      font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+
+    uc-config-playground .page {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 32px 20px 60px;
+      display: grid;
+      gap: 24px;
+    }
+
+    uc-config-playground .hero {
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 18px 36px rgba(15, 23, 42, 0.08);
+      border-radius: 18px;
+      padding: 20px 20px 16px;
+      display: grid;
+      gap: 10px;
+    }
+
+    uc-config-playground .hero h1 {
+      margin: 0;
+      font-size: 1.35rem;
+      letter-spacing: -0.01em;
+    }
+
+    uc-config-playground .subtitle {
+      margin: 0;
+      color: #475569;
+      font-size: 0.95rem;
+    }
+
+    uc-config-playground .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #eef2ff;
+      color: #4338ca;
+      border: 1px solid #c7d2fe;
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-weight: 600;
+      font-size: 0.8rem;
+      width: fit-content;
+    }
+
+    uc-config-playground .grid {
+      display: grid;
+      grid-template-columns: minmax(320px, 1fr) minmax(360px, 1fr);
+      gap: 18px;
+    }
+
+    uc-config-playground .card {
+      background: rgba(255, 255, 255, 0.94);
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
+      border-radius: 16px;
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+    }
+
+    uc-config-playground .card h2 {
+      margin: 0;
+      font-size: 1rem;
+      color: #0f172a;
+    }
+
+    uc-config-playground fieldset {
+      border: 1px solid #e2e8f0;
+      padding: 10px 12px;
+      border-radius: 12px;
+      margin: 0;
+      background: #f8fafc;
+    }
+
+    uc-config-playground .controls {
+      display: grid;
+      gap: 10px;
+      max-height: 70vh;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    uc-config-playground .row {
+      display: grid;
+      gap: 6px;
+    }
+
+    uc-config-playground label.control {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid #e2e8f0;
+      background: #fff;
+      color: #1f2937;
+    }
+
+    uc-config-playground label.control:hover {
+      border-color: #c7d2fe;
+      box-shadow: 0 6px 14px rgba(79, 70, 229, 0.08);
+    }
+
+    uc-config-playground .label-text {
+      display: grid;
+      gap: 2px;
+    }
+
+    uc-config-playground .label-text small {
+      color: #64748b;
+      font-size: 0.8rem;
+    }
+
+    uc-config-playground input[type="text"],
+    uc-config-playground input[type="number"],
+    uc-config-playground select,
+    uc-config-playground textarea {
+      font: inherit;
+      padding: 6px 8px;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+      background: #f8fafc;
+      min-width: 160px;
+    }
+
+    uc-config-playground textarea {
+      resize: vertical;
+      min-height: 64px;
+    }
+
+    uc-config-playground input[type="checkbox"] {
+      accent-color: #4f46e5;
+      width: 16px;
+      height: 16px;
+    }
+
+    uc-config-playground .sticky-search {
+      position: sticky;
+      top: 0;
+      padding: 8px 0 4px;
+      background: rgba(255, 255, 255, 0.96);
+      z-index: 1;
+    }
+
+    uc-config-playground .sticky-search input[type="text"] {
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    uc-config-playground .preview {
+      background: rgba(255, 255, 255, 0.96);
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 14px 32px rgba(15, 23, 42, 0.08);
+      border-radius: 16px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    uc-config-playground .preview-body {
+      flex: 1;
+      display: flex;
+      align-items: flex-start;
+      width: 100%;
+    }
+
+    uc-config-playground .preview-body.inline-preview {
+      min-height: 500px;
+      height: 100%;
+      align-items: stretch;
+    }
+
+    uc-config-playground .preview-body > * {
+      width: 100%;
+    }
+
+    uc-config-playground .preview-body.inline-preview > * {
+      height: 100%;
+    }
+
+    uc-config-playground .preview h2 {
+      margin: 0 0 6px;
+      font-size: 1rem;
+    }
+
+    uc-config-playground .muted {
+      color: #64748b;
+      font-size: 0.9rem;
+    }
+
+    uc-config-playground .ctx-note {
+      margin-top: auto;
+    }
+
+    uc-config-playground .toolbar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    uc-config-playground .pill {
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid #cbd5e1;
+      background: #fff;
+      font-size: 0.85rem;
+    }
+
+    @media (max-width: 960px) {
+      uc-config-playground .grid {
+        grid-template-columns: 1fr;
+      }
+      uc-config-playground .controls {
+        max-height: none;
+      }
+    }
+
+    @media (prefers-color-scheme: dark) {
+      uc-config-playground {
+        background:
+          radial-gradient(circle at 20% 18%, rgba(79, 70, 229, 0.12), transparent 30%),
+          radial-gradient(circle at 82% 10%, rgba(16, 185, 129, 0.12), transparent 24%),
+          linear-gradient(180deg, #0b1221 0%, #0f172a 45%, #0b1221 100%);
+        color: #e2e8f0;
+      }
+
+      uc-config-playground .hero,
+      uc-config-playground .card,
+      uc-config-playground .preview {
+        background: rgba(15, 23, 42, 0.9);
+        border-color: #1f2937;
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+      }
+
+      uc-config-playground .subtitle,
+      uc-config-playground .muted {
+        color: #94a3b8;
+      }
+
+      uc-config-playground fieldset {
+        background: #0f172a;
+        border-color: #1f2937;
+      }
+
+      uc-config-playground label.control {
+        background: #111827;
+        border-color: #1f2937;
+        color: #e2e8f0;
+      }
+
+      uc-config-playground label.control:hover {
+        border-color: #6366f1;
+        box-shadow: 0 6px 16px rgba(99, 102, 241, 0.16);
+      }
+
+      uc-config-playground input[type="text"],
+      uc-config-playground input[type="number"],
+      uc-config-playground select,
+      uc-config-playground textarea {
+        background: #0f172a;
+        border-color: #1f2937;
+        color: #e2e8f0;
+      }
+
+      uc-config-playground .sticky-search {
+        background: rgba(15, 23, 42, 0.95);
+      }
+
+      uc-config-playground .badge {
+        background: #1e293b;
+        border-color: #334155;
+        color: #c7d2fe;
+      }
+
+      uc-config-playground .pill {
+        background: #0f172a;
+        border-color: #1f2937;
+        color: #e2e8f0;
+      }
+    }
+    </style>
+  </head>
+  <body>
+    <script type="module">
+    import { html, LitElement } from 'lit';
+
+    import '@/blocks/themes/uc-basic/index.css';
+    import { initialConfig } from '@/blocks/Config/initialConfig';
+    import * as UC from '@/index.js';
+
+    const LOCALE_OPTIONS = [
+      { code: 'en', label: 'English' },
+      { code: 'ar', label: 'Arabic' },
+      { code: 'az', label: 'Azerbaijani' },
+      { code: 'ca', label: 'Catalan' },
+      { code: 'cs', label: 'Czech' },
+      { code: 'da', label: 'Danish' },
+      { code: 'de', label: 'German' },
+      { code: 'el', label: 'Greek' },
+      { code: 'es', label: 'Spanish' },
+      { code: 'et', label: 'Estonian' },
+      { code: 'fi', label: 'Finnish' },
+      { code: 'fr', label: 'French' },
+      { code: 'he', label: 'Hebrew' },
+      { code: 'hy', label: 'Armenian' },
+      { code: 'is', label: 'Icelandic' },
+      { code: 'it', label: 'Italian' },
+      { code: 'ja', label: 'Japanese' },
+      { code: 'ka', label: 'Georgian' },
+      { code: 'kk', label: 'Kazakh' },
+      { code: 'ko', label: 'Korean' },
+      { code: 'lv', label: 'Latvian' },
+      { code: 'nb', label: 'Norwegian Bokmal' },
+      { code: 'nl', label: 'Dutch' },
+      { code: 'pl', label: 'Polish' },
+      { code: 'pt', label: 'Portuguese' },
+      { code: 'ro', label: 'Romanian' },
+      { code: 'ru', label: 'Russian' },
+      { code: 'sk', label: 'Slovak' },
+      { code: 'sr', label: 'Serbian' },
+      { code: 'sv', label: 'Swedish' },
+      { code: 'tr', label: 'Turkish' },
+      { code: 'uk', label: 'Ukrainian' },
+      { code: 'vi', label: 'Vietnamese' },
+      { code: 'zh', label: 'Chinese (Simplified)' },
+      { code: 'zh-TW', label: 'Chinese (Traditional)' },
+    ];
+
+    const LOCALE_LOADERS = {
+      ar: () => import('@/locales/file-uploader/ar'),
+      az: () => import('@/locales/file-uploader/az'),
+      ca: () => import('@/locales/file-uploader/ca'),
+      cs: () => import('@/locales/file-uploader/cs'),
+      da: () => import('@/locales/file-uploader/da'),
+      de: () => import('@/locales/file-uploader/de'),
+      el: () => import('@/locales/file-uploader/el'),
+      es: () => import('@/locales/file-uploader/es'),
+      et: () => import('@/locales/file-uploader/et'),
+      fi: () => import('@/locales/file-uploader/fi'),
+      fr: () => import('@/locales/file-uploader/fr'),
+      he: () => import('@/locales/file-uploader/he'),
+      hy: () => import('@/locales/file-uploader/hy'),
+      is: () => import('@/locales/file-uploader/is'),
+      it: () => import('@/locales/file-uploader/it'),
+      ja: () => import('@/locales/file-uploader/ja'),
+      ka: () => import('@/locales/file-uploader/ka'),
+      kk: () => import('@/locales/file-uploader/kk'),
+      ko: () => import('@/locales/file-uploader/ko'),
+      lv: () => import('@/locales/file-uploader/lv'),
+      nb: () => import('@/locales/file-uploader/nb'),
+      nl: () => import('@/locales/file-uploader/nl'),
+      pl: () => import('@/locales/file-uploader/pl'),
+      pt: () => import('@/locales/file-uploader/pt'),
+      ro: () => import('@/locales/file-uploader/ro'),
+      ru: () => import('@/locales/file-uploader/ru'),
+      sk: () => import('@/locales/file-uploader/sk'),
+      sr: () => import('@/locales/file-uploader/sr'),
+      sv: () => import('@/locales/file-uploader/sv'),
+      tr: () => import('@/locales/file-uploader/tr'),
+      uk: () => import('@/locales/file-uploader/uk'),
+      vi: () => import('@/locales/file-uploader/vi'),
+      zh: () => import('@/locales/file-uploader/zh'),
+      'zh-TW': () => import('@/locales/file-uploader/zh-TW'),
+    };
+
+    const SOURCE_LIST_OPTIONS = [
+      'local',
+      'drop-area',
+      'camera',
+      'external',
+      'js-api',
+      'url',
+      'draw',
+      'mobile-video-camera',
+      'mobile-photo-camera',
+      'facebook',
+      'dropbox',
+      'gdrive',
+      'gphotos',
+      'flickr',
+      'vk',
+      'evernote',
+      'box',
+      'onedrive',
+      'huddle',
+    ];
+    const CAMERA_MODE_OPTIONS = ['photo', 'video'];
+    const FILES_VIEW_MODE_OPTIONS = ['list', 'grid'];
+    const CLOUD_IMAGE_EDITOR_TABS = ['crop', 'tuning', 'filters'];
+
+    const readCsv = (value) =>
+      (value || '')
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean);
+
+    const writeCsv = (items) => items.join(', ');
+
+    const DEMO_COMPLEX_PRESETS = {
+      metadata: [
+        { id: 'none', label: 'None', value: null },
+        { id: 'basic', label: 'Basic object', value: { plan: 'pro', tags: ['demo', 'beta'], region: 'us' } },
+      ],
+      localeDefinitionOverride: [
+        { id: 'none', label: 'None', value: null },
+        {
+          id: 'custom-en',
+          label: 'Override: English tweaks',
+          value: {
+            en: {
+              'choose-file': 'Pick a file',
+              'add-more': 'Add another',
+            },
+          },
+        },
+      ],
+      secureUploadsSignatureResolver: [
+        { id: 'none', label: 'None', value: null },
+        {
+          id: 'demo-token',
+          label: 'Demo async token',
+          value: async () => ({
+            secureSignature: 'demo-signature',
+            secureExpire: `${Math.floor(Date.now() / 1000) + 3600}`,
+          }),
+        },
+      ],
+      secureDeliveryProxyUrlResolver: [
+        { id: 'none', label: 'None', value: null },
+        {
+          id: 'proxy',
+          label: 'Proxy prefix',
+          value: async (previewUrl, { uuid }) =>
+            `https://proxy.example.com/${uuid}?url=${encodeURIComponent(previewUrl)}`,
+        },
+      ],
+      iconHrefResolver: [
+        { id: 'none', label: 'Default icons', value: null },
+        { id: 'cdn', label: 'Custom CDN', value: (iconName) => `https://assets.example.com/icons/${iconName}.svg` },
+      ],
+      fileValidators: [
+        { id: 'none', label: 'None', value: [] },
+        {
+          id: 'log',
+          label: 'Log files (no-op)',
+          value: [
+            (entry) => {
+              console.info('[demo validator] file:', entry.name || entry.file?.name);
+              return undefined;
+            },
+          ],
+        },
+      ],
+      collectionValidators: [
+        { id: 'none', label: 'None', value: [] },
+        {
+          id: 'limit-3',
+          label: 'Limit to 3 files',
+          value: [
+            (collection) => {
+              if (collection.items.length > 3) {
+                return { message: 'Too many files (max 3)', status: 'failed', type: 'collection' };
+              }
+              return undefined;
+            },
+          ],
+        },
+      ],
+      mediaRecorderOptions: [
+        { id: 'none', label: 'None', value: null },
+        { id: 'audio-opus', label: 'Audio opus', value: { mimeType: 'audio/webm;codecs=opus', bitsPerSecond: 128000 } },
+      ],
+    };
+
+    const COMPLEX_KEYS = new Set(Object.keys(DEMO_COMPLEX_PRESETS));
+
+    const encodeBase64Url = (value) =>
+      btoa(unescape(encodeURIComponent(value)))
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/g, '');
+
+    const decodeBase64Url = (value) => {
+      const padded = value
+        .replace(/-/g, '+')
+        .replace(/_/g, '/')
+        .padEnd(Math.ceil(value.length / 4) * 4, '=');
+      return decodeURIComponent(escape(atob(padded)));
+    };
+
+    const getDefaultComplexChoice = () =>
+      Object.fromEntries(Object.entries(DEMO_COMPLEX_PRESETS).map(([key, presets]) => [key, presets[0]?.id ?? 'none']));
+
+    const getPresetById = (key, id) => {
+      const presets = DEMO_COMPLEX_PRESETS[key] ?? [];
+      return presets.find((p) => p.id === id) ?? presets[0] ?? { id: 'none', value: null };
+    };
+
+    const inferKind = (key, value) => {
+      if (COMPLEX_KEYS.has(key)) return 'complex';
+      if (typeof value === 'boolean') return 'boolean';
+      if (typeof value === 'number') return 'number';
+      if (typeof value === 'string') return 'string';
+      return 'string';
+    };
+
+    const cloneConfig = () => ({ ...initialConfig, pubkey: 'demopublickey', qualityInsights: false });
+
+    UC.defineComponents(UC);
+
+    class ConfigPlayground extends LitElement {
+      static properties = {
+        _mode: { state: true },
+        _cfg: { state: true },
+        _complexChoice: { state: true },
+        _filter: { state: true },
+      };
+
+      constructor() {
+        super();
+        this._mode = 'regular';
+        this._cfg = cloneConfig();
+        this._complexChoice = getDefaultComplexChoice();
+        this._filter = '';
+        this._loadedLocales = new Set(['en']);
+      }
+
+      createRenderRoot() {
+        return this;
+      }
+
+      async firstUpdated() {
+        this._configEl = this.querySelector('uc-config');
+        await this._restoreStateFromUrl();
+        this._applyConfig();
+        this._persistStateToUrl();
+      }
+
+      updated(changedProps) {
+        if (changedProps.has('_cfg')) {
+          this._applyConfig();
+          this._persistStateToUrl();
+        }
+        if (changedProps.has('_mode') || changedProps.has('_filter') || changedProps.has('_complexChoice')) {
+          this._persistStateToUrl();
+        }
+      }
+
+      _applyConfig() {
+        if (!this._configEl) return;
+        for (const [key, value] of Object.entries(this._cfg)) {
+          this._configEl[key] = value;
+        }
+      }
+
+      _resetConfig() {
+        this._cfg = cloneConfig();
+        this._complexChoice = getDefaultComplexChoice();
+        this._filter = '';
+      }
+
+      _updateValue(key, value) {
+        this._cfg = { ...this._cfg, [key]: value };
+      }
+
+      _persistStateToUrl() {
+        const url = new URL(window.location.href);
+
+        const cfgSerializable = {};
+        for (const [key, value] of Object.entries(this._cfg)) {
+          if (COMPLEX_KEYS.has(key)) {
+            continue;
+          }
+          if (typeof value === 'function') {
+            continue;
+          }
+          try {
+            JSON.stringify(value);
+            cfgSerializable[key] = value;
+          } catch {
+            // skip non-serializable values
+          }
+        }
+
+        const state = {
+          v: 1,
+          mode: this._mode,
+          filter: this._filter,
+          cfg: cfgSerializable,
+          complexChoice: this._complexChoice,
+        };
+
+        url.searchParams.set('s', encodeBase64Url(JSON.stringify(state)));
+        window.history.replaceState(null, '', url);
+      }
+
+      async _restoreStateFromUrl() {
+        const url = new URL(window.location.href);
+        const encoded = url.searchParams.get('s');
+        if (!encoded) {
+          return;
+        }
+
+        let parsed;
+        try {
+          parsed = JSON.parse(decodeBase64Url(encoded));
+        } catch {
+          return;
+        }
+
+        if (!parsed || typeof parsed !== 'object') {
+          return;
+        }
+
+        const nextMode = typeof parsed.mode === 'string' ? parsed.mode : this._mode;
+        const nextFilter = typeof parsed.filter === 'string' ? parsed.filter : this._filter;
+
+        const nextComplexChoice = {
+          ...getDefaultComplexChoice(),
+          ...(parsed.complexChoice && typeof parsed.complexChoice === 'object' ? parsed.complexChoice : {}),
+        };
+
+        const cfg = cloneConfig();
+        if (parsed.cfg && typeof parsed.cfg === 'object') {
+          for (const [key, value] of Object.entries(parsed.cfg)) {
+            cfg[key] = value;
+          }
+        }
+
+        for (const [key, id] of Object.entries(nextComplexChoice)) {
+          if (!COMPLEX_KEYS.has(key)) {
+            continue;
+          }
+          const presetId = typeof id === 'string' ? id : 'none';
+          const preset = getPresetById(key, presetId);
+          cfg[key] = preset?.value ?? null;
+          nextComplexChoice[key] = preset?.id ?? 'none';
+        }
+
+        if (cfg.localeName && typeof cfg.localeName === 'string') {
+          await this._ensureLocale(cfg.localeName);
+        }
+
+        this._mode = nextMode;
+        this._filter = nextFilter;
+        this._complexChoice = nextComplexChoice;
+        this._cfg = cfg;
+      }
+
+      _renderSimpleField(key, kind) {
+        const value = this._cfg[key];
+        const label = key;
+        if (kind === 'boolean') {
+          return html`
+              <label class="control">
+                <span class="label-text">
+                  <strong>${label}</strong>
+                  <small>${String(value)}</small>
+                </span>
+                <input
+                  type="checkbox"
+                  .checked=${Boolean(value)}
+                  @change=${(e) => this._updateValue(key, e.target.checked)}
+                />
+              </label>
+            `;
+        }
+
+        if (kind === 'number') {
+          return html`
+              <label class="control">
+                <span class="label-text">
+                  <strong>${label}</strong>
+                  <small>${value}</small>
+                </span>
+                <input
+                  type="number"
+                  .value=${String(value)}
+                  @input=${(e) => this._updateValue(key, Number(e.target.value))}
+                />
+              </label>
+            `;
+        }
+
+        return html`
+            <label class="control">
+              <span class="label-text">
+                <strong>${label}</strong>
+                <small>${value}</small>
+              </span>
+              <input
+                type="text"
+                .value=${value ?? ''}
+                @input=${(e) => this._updateValue(key, e.target.value)}
+              />
+            </label>
+          `;
+      }
+
+      _renderComplexField(key) {
+        const presets = DEMO_COMPLEX_PRESETS[key] ?? [{ id: 'none', label: 'None', value: null }];
+        const choice = this._complexChoice[key] ?? presets[0].id;
+        return html`
+            <label class="control">
+              <span class="label-text">
+                <strong>${key}</strong>
+                <small>${choice}</small>
+              </span>
+              <select
+                .value=${choice}
+                @change=${(e) => {
+                  const selected = presets.find((p) => p.id === e.target.value) ?? presets[0];
+                  this._complexChoice = { ...this._complexChoice, [key]: selected.id };
+                  this._updateValue(key, selected.value);
+                }}
+              >
+                ${presets.map((preset) => html`<option value=${preset.id}>${preset.label}</option>`)}</select
+              >
+            </label>
+          `;
+      }
+
+      _renderLocaleField() {
+        return html`
+            <label class="control">
+              <span class="label-text">
+                <strong>localeName</strong>
+                <small>${this._cfg.localeName}</small>
+              </span>
+              <select .value=${this._cfg.localeName} @change=${(e) => this._handleLocaleChange(e.target.value)}>
+                ${LOCALE_OPTIONS.map(({ code, label }) => html`<option value=${code}>${label} (${code})</option>`)}
+              </select>
+            </label>
+          `;
+      }
+
+      async _handleLocaleChange(localeCode) {
+        await this._ensureLocale(localeCode);
+        this._updateValue('localeName', localeCode);
+      }
+
+      async _ensureLocale(localeCode) {
+        if (this._loadedLocales.has(localeCode)) {
+          return;
+        }
+
+        const loader = LOCALE_LOADERS[localeCode];
+        if (!loader) {
+          console.warn(`No loader registered for locale ${localeCode}`);
+          return;
+        }
+
+        const module = await loader();
+        const definition = module.default ?? module;
+        UC.defineLocale(localeCode, definition);
+        this._loadedLocales.add(localeCode);
+      }
+
+      _renderMultiSelectCsv(key, options) {
+        const selected = new Set(readCsv(this._cfg[key]));
+        return html`
+            <label class="control">
+              <span class="label-text">
+                <strong>${key}</strong>
+                <small>${writeCsv(Array.from(selected)) || 'none'}</small>
+              </span>
+              <select
+                multiple
+                size="${Math.min(options.length, 6)}"
+                @change=${(e) => {
+                  const values = Array.from(e.target.selectedOptions).map((o) => o.value);
+                  this._updateValue(key, writeCsv(values));
+                }}
+              >
+                ${options.map(
+                  (value) => html`<option value=${value} ?selected=${selected.has(value)}>${value}</option>`,
+                )}
+              </select>
+            </label>
+          `;
+      }
+
+      _renderSingleSelect(key, options) {
+        return html`
+            <label class="control">
+              <span class="label-text">
+                <strong>${key}</strong>
+                <small>${this._cfg[key]}</small>
+              </span>
+              <select
+                .value=${this._cfg[key]}
+                @change=${(e) => {
+                  this._updateValue(key, e.target.value);
+                }}
+              >
+                ${options.map((value) => html`<option value=${value}>${value}</option>`)}
+              </select>
+            </label>
+          `;
+      }
+
+      _renderModeOptions() {
+        const modes = ['regular', 'inline', 'minimal'];
+        return modes.map(
+          (mode) => html`
+              <label class="control">
+                <span class="label-text"><strong>${mode}</strong></span>
+                <input
+                  type="radio"
+                  name="mode"
+                  .value=${mode}
+                  .checked=${this._mode === mode}
+                  @change=${() => {
+                    this._mode = mode;
+                  }}
+                />
+              </label>
+            `,
+        );
+      }
+
+      _renderUploader() {
+        if (this._mode === 'inline') {
+          return html`<uc-file-uploader-inline ctx-name="config-playground"></uc-file-uploader-inline>`;
+        }
+        if (this._mode === 'minimal') {
+          return html`<uc-file-uploader-minimal ctx-name="config-playground"></uc-file-uploader-minimal>`;
+        }
+        return html`<uc-file-uploader-regular ctx-name="config-playground"></uc-file-uploader-regular>`;
+      }
+
+      render() {
+        const entries = Object.entries(initialConfig);
+        const filter = this._filter.trim().toLowerCase();
+        const filtered = filter ? entries.filter(([key]) => key.toLowerCase().includes(filter)) : entries;
+
+        const isSpecial = (key) =>
+          ['localeName', 'sourceList', 'cameraModes', 'filesViewMode', 'cloudImageEditorTabs'].includes(key);
+
+        const simpleFields = filtered.filter(([key, value]) => inferKind(key, value) !== 'complex' && !isSpecial(key));
+        const complexFields = filtered.filter(([key, value]) => inferKind(key, value) === 'complex');
+        const showLocale = filtered.some(([key]) => key === 'localeName');
+        const showSourceList = filtered.some(([key]) => key === 'sourceList');
+        const showCameraModes = filtered.some(([key]) => key === 'cameraModes');
+        const showFilesViewMode = filtered.some(([key]) => key === 'filesViewMode');
+        const showEditorTabs = filtered.some(([key]) => key === 'cloudImageEditorTabs');
+
+        return html`
+            <div class="page">
+              <section class="hero">
+                <div class="badge">⚙️ Config playground</div>
+                <h1>File Uploader configuration explorer</h1>
+                <p class="subtitle">
+                  Flip any option, including complex ones, and see the uploader update instantly.
+                </p>
+                <div class="toolbar">
+                  <button class="pill" @click=${() => this._resetConfig()}>Reset to defaults</button>
+                  <span class="muted">Context: <code>config-playground</code></span>
+                </div>
+              </section>
+
+              <div class="grid">
+                <section class="card">
+                  <h2>Config toggles</h2>
+                  <div class="sticky-search">
+                    <input
+                      type="text"
+                      placeholder="Search options"
+                      .value=${this._filter}
+                      @input=${(e) => {
+                        this._filter = e.target.value;
+                      }}
+                    />
+                  </div>
+                  <div class="controls">
+                    <div class="row">
+                      <strong>Upload mode</strong>
+                      ${this._renderModeOptions()}
+                    </div>
+
+                    ${
+                      showLocale
+                        ? html`<div class="row">
+                          <strong>Locale</strong>
+                          ${this._renderLocaleField()}
+                        </div>`
+                        : null
+                    }
+
+                    ${
+                      showSourceList
+                        ? html`<div class="row">
+                            <strong>Source list</strong>
+                            ${this._renderMultiSelectCsv('sourceList', SOURCE_LIST_OPTIONS)}
+                          </div>`
+                        : null
+                    }
+
+                    ${
+                      showCameraModes
+                        ? html`<div class="row">
+                            <strong>Camera modes</strong>
+                            ${this._renderMultiSelectCsv('cameraModes', CAMERA_MODE_OPTIONS)}
+                          </div>`
+                        : null
+                    }
+
+                    ${
+                      showEditorTabs
+                        ? html`<div class="row">
+                            <strong>Editor tabs</strong>
+                            ${this._renderMultiSelectCsv('cloudImageEditorTabs', CLOUD_IMAGE_EDITOR_TABS)}
+                          </div>`
+                        : null
+                    }
+
+                    ${
+                      showFilesViewMode
+                        ? html`<div class="row">
+                            <strong>Files view mode</strong>
+                            ${this._renderSingleSelect('filesViewMode', FILES_VIEW_MODE_OPTIONS)}
+                          </div>`
+                        : null
+                    }
+
+                    <div class="row">
+                      <strong>Primitive options</strong>
+                      ${simpleFields.map(([key]) => this._renderSimpleField(key, inferKind(key, initialConfig[key])))}
+                    </div>
+
+                    <div class="row">
+                      <strong>Complex options</strong>
+                      ${complexFields.map(([key]) => this._renderComplexField(key))}
+                    </div>
+                  </div>
+                </section>
+
+                <section class="preview">
+                  <h2>Preview</h2>
+                  <div class="preview-body ${this._mode === 'inline' ? 'inline-preview' : ''}">${this._renderUploader()}</div>
+                </section>
+              </div>
+
+              <uc-config
+                ctx-name="config-playground"
+                debug
+                pubkey="demopublickey"
+                .localeName=${this._cfg.localeName}
+              ></uc-config>
+            </div>
+          `;
+      }
+    }
+
+    customElements.define('uc-config-playground', ConfigPlayground);
+    </script>
+
+    <uc-config-playground></uc-config-playground>
+  </body>
+</html>

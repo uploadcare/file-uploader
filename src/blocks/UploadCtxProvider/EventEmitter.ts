@@ -1,6 +1,6 @@
-import type { ActivityType } from '../../abstract/ActivityBlock';
-import type { Block } from '../../abstract/Block';
 import type { ModalId } from '../../abstract/managers/ModalManager';
+import type { ActivityType } from '../../lit/LitActivityBlock';
+import type { LitBlock } from '../../lit/LitBlock';
 import type { OutputCollectionState, OutputFileEntry } from '../../types';
 
 const DEFAULT_DEBOUNCE_TIMEOUT = 20;
@@ -68,21 +68,19 @@ export type EventPayload = {
 
 export class EventEmitter {
   private _timeoutStore: Map<string, number> = new Map();
-  private _targets: Set<Block> = new Set();
+  private _targets: Set<LitBlock> = new Set();
   private _debugPrint: ((...args: unknown[]) => void) | null = null;
 
-  constructor(debugPrint: (...args: unknown[]) => void) {
+  public constructor(debugPrint: (...args: unknown[]) => void) {
     this._debugPrint = debugPrint;
   }
 
-  bindTarget(target: Block): void {
+  public bindTarget(target: LitBlock) {
     this._targets.add(target);
+    return () => {
+      this._targets.delete(target);
+    };
   }
-
-  unbindTarget(target: Block): void {
-    this._targets.delete(target);
-  }
-
   private _dispatch<T extends EventKey>(type: T, payload?: EventPayload[T]): void {
     for (const target of this._targets) {
       target.dispatchEvent(
@@ -98,7 +96,7 @@ export class EventEmitter {
     });
   }
 
-  emit<T extends EventKey, TDebounce extends boolean | number | undefined = undefined>(
+  public emit<T extends EventKey, TDebounce extends boolean | number | undefined = undefined>(
     type: T,
     payload?: TDebounce extends false | undefined ? EventPayload[T] : () => EventPayload[T],
     options: { debounce?: TDebounce } = {},
@@ -114,8 +112,13 @@ export class EventEmitter {
     }
     const timeout = typeof debounce === 'number' ? debounce : DEFAULT_DEBOUNCE_TIMEOUT;
     const timeoutId = window.setTimeout(() => {
-      this._dispatch(type, typeof payload === 'function' ? payload() : (payload as EventPayload[T]));
-      this._timeoutStore.delete(type);
+      try {
+        const data = typeof payload === 'function' ? payload() : (payload as EventPayload[T]);
+        this._dispatch(type, data);
+        this._timeoutStore.delete(type);
+      } catch (error) {
+        this._debugPrint?.(() => `Error while getting payload for event "${type}"`, error);
+      }
     }, timeout);
     this._timeoutStore.set(type, timeoutId);
   }

@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { LitUploaderBlock } from '../../../lit/LitUploaderBlock';
 import type { SecureUploadsSignatureAndExpire } from '../../../types/index';
-import type { UploaderBlock } from '../../UploaderBlock';
 import { SecureUploadsManager } from '../SecureUploadsManager';
 
-const createMockBlock = (config: Partial<UploaderBlock['cfg']> = {}): UploaderBlock =>
+const createMockBlock = (config: Partial<LitUploaderBlock['cfg']> = {}): LitUploaderBlock =>
   ({
     debugPrint: vi.fn(),
     telemetryManager: {
@@ -16,12 +16,11 @@ const createMockBlock = (config: Partial<UploaderBlock['cfg']> = {}): UploaderBl
       secureUploadsExpireThreshold: 10000,
       ...config,
     },
-  }) as unknown as UploaderBlock;
+  }) as unknown as LitUploaderBlock;
 
 describe('SecureUploadsManager', () => {
   let manager: SecureUploadsManager;
-  let mockBlock: UploaderBlock;
-
+  let mockBlock: LitUploaderBlock;
   beforeEach(() => {
     vi.useFakeTimers();
     mockBlock = createMockBlock();

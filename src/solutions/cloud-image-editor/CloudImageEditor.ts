@@ -7,9 +7,9 @@ interface CloudImageEditorInitState extends BaseInitState {
 }
 
 export class CloudImageEditor extends CloudImageEditorBlock {
-  static override styleAttrs = [...super.styleAttrs, 'uc-wgt-common'];
+  public static override styleAttrs = [...super.styleAttrs, 'uc-wgt-common'];
 
-  constructor() {
+  public constructor() {
     super();
 
     this.init$ = {
@@ -18,7 +18,7 @@ export class CloudImageEditor extends CloudImageEditorBlock {
     } as CloudImageEditorInitState;
   }
 
-  override initCallback(): void {
+  public override initCallback(): void {
     super.initCallback();
 
     this.telemetryManager.sendEvent({

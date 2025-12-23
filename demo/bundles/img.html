@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Adaptive Image - Bundle Demo</title>
+    <style>
+    uc-img {
+      --uc-img-pubkey: "demopublickey";
+      --uc-img-breakpoints: "200, 500, 800";
+      display: contents;
+    }
+
+    uc-img > img {
+      transition: 1s;
+    }
+
+    uc-img > img[unresolved] {
+      transform: scale(0.8);
+      opacity: 0;
+      transition: 1s;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      body {
+        background-color: #121213;
+      }
+    }
+    </style>
+    <script type="module">
+    import '../../web/uc-img.min.js';
+    </script>
+  </head>
+  <body>
+    <uc-img uuid="7124ae98-344c-42b2-ae2a-bd9aa79d76d8" width="500px"></uc-img>
+  </body>
+</html>

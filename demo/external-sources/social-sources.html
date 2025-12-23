@@ -1,0 +1,69 @@
+<!doctype html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <style>
+  body.dark {
+    background-color: #121213;
+    color: #fff;
+  }
+  body.light {
+    background-color: #fff;
+    color: #121213;
+  }
+  </style>
+  <script type="module">
+  import '@/solutions/file-uploader/regular/index.css';
+  import * as UC from '@/index.js';
+
+  UC.defineComponents(UC);
+
+  const darkMode = document.getElementById('dark-mode');
+  const multiple = document.getElementById('multiple');
+  const imagesOnly = document.getElementById('images-only');
+
+  darkMode.addEventListener('change', () => {
+    const uploader = document.querySelector('uc-file-uploader-regular');
+    uploader.classList.toggle('uc-dark', darkMode.checked);
+    uploader.classList.toggle('uc-light', !darkMode.checked);
+
+    document.body.classList.toggle('dark', darkMode.checked);
+    document.body.classList.toggle('light', !darkMode.checked);
+  });
+
+  multiple.addEventListener('change', () => {
+    document.querySelector('uc-config').setAttribute('multiple', multiple.checked);
+  });
+
+  imagesOnly.addEventListener('change', () => {
+    document.querySelector('uc-config').setAttribute('img-only', imagesOnly.checked);
+  });
+  </script>
+</head>
+
+<uc-file-uploader-regular ctx-name="my-uploader" class="uc-light"></uc-file-uploader-regular>
+<uc-config
+  ctx-name="my-uploader"
+  pubkey="demopublickey"
+  source-list="dropbox, gphotos, gdrive"
+  multiple="true"
+  debug
+  quality-insights="false"
+  test-mode
+></uc-config>
+<uc-upload-ctx-provider ctx-name="my-uploader"></uc-upload-ctx-provider>
+
+<fieldset>
+  <legend>Options</legend>
+  <label>
+    <input id="dark-mode" type="checkbox">
+    Dark Mode
+  </label>
+  <label>
+    <input id="multiple" type="checkbox" checked>
+    Multiple
+  </label>
+  <label>
+    <input id="images-only" type="checkbox">
+    Images Only
+  </label>
+</fieldset>

@@ -1,103 +1,111 @@
+import { html } from 'lit';
+import { state } from 'lit/decorators.js';
 import './index.css';
 
-import { ActivityBlock } from '../../../abstract/ActivityBlock';
-import { SolutionBlock } from '../../../abstract/SolutionBlock';
-import type { UploaderBlock } from '../../../abstract/UploaderBlock';
 import { InternalEventType } from '../../../blocks/UploadCtxProvider/EventEmitter';
+import { LitActivityBlock } from '../../../lit/LitActivityBlock';
+import { LitSolutionBlock } from '../../../lit/LitSolutionBlock';
 
-type BaseInitState = InstanceType<typeof SolutionBlock>['init$'];
+type BaseInitState = InstanceType<typeof LitSolutionBlock>['init$'];
 
-interface FileUploaderInlineInitState extends BaseInitState {
-  couldCancel: boolean;
-  cancel: () => void;
-}
+type FileUploaderInlineInitState = BaseInitState & {
+  '*solution': string;
+};
 
-export class FileUploaderInline extends SolutionBlock {
-  static override styleAttrs = [...super.styleAttrs, 'uc-file-uploader-inline'];
+export class FileUploaderInline extends LitSolutionBlock {
+  public declare propertiesMeta: {
+    'ctx-name': string;
+  };
+  public static override styleAttrs = [...super.styleAttrs, 'uc-file-uploader-inline'];
 
-  constructor() {
+  @state()
+  private _couldCancel = false;
+
+  public constructor() {
     super();
 
     this.init$ = {
       ...this.init$,
-      couldCancel: false,
       '*solution': this.tagName,
-      cancel: () => {
-        if (this.couldHistoryBack) {
-          const historyBack = this.$['*historyBack'] as (() => void) | undefined;
-          historyBack?.();
-          return;
-        }
-
-        if (this.couldShowList) {
-          this.$['*currentActivity'] = ActivityBlock.activities.UPLOAD_LIST;
-        }
-      },
     } as FileUploaderInlineInitState;
   }
 
-  get couldHistoryBack(): boolean {
+  private _handleCancel = (): void => {
+    if (this._couldHistoryBack) {
+      const historyBack = this.$['*historyBack'] as (() => void) | undefined;
+      historyBack?.();
+      return;
+    }
+
+    if (this._couldShowList) {
+      this.$['*currentActivity'] = LitActivityBlock.activities.UPLOAD_LIST;
+    }
+  };
+
+  private get _couldHistoryBack(): boolean {
     const history = this.$['*history'] as string[] | undefined;
     if (!history || history.length <= 1) {
       return false;
     }
-    return history[history.length - 1] !== ActivityBlock.activities.START_FROM;
+    return history[history.length - 1] !== LitActivityBlock.activities.START_FROM;
   }
 
-  get couldShowList(): boolean {
+  private get _couldShowList(): boolean {
     const uploadList = this.$['*uploadList'] as unknown[] | undefined;
     return this.cfg.showEmptyList || (Array.isArray(uploadList) && uploadList.length > 0);
   }
 
-  override initCallback(): void {
+  private _getInitActivity(): string {
+    return (this.getCssData('--cfg-init-activity') as string | undefined) || LitActivityBlock.activities.START_FROM;
+  }
+
+  public override initCallback(): void {
     super.initCallback();
 
     this.telemetryManager.sendEvent({
       eventType: InternalEventType.INIT_SOLUTION,
     });
 
-    const uBlock = this.ref.uBlock as UploaderBlock | undefined;
-    if (!uBlock) {
-      return;
-    }
+    const initActivity = this._getInitActivity();
 
     this.sub('*currentActivity', (val: string | null) => {
       if (!val) {
-        this.$['*currentActivity'] = uBlock.initActivity || ActivityBlock.activities.START_FROM;
+        this.$['*currentActivity'] = initActivity;
       }
     });
 
     this.sub('*uploadList', (list: unknown) => {
-      if (
-        Array.isArray(list) &&
-        list.length > 0 &&
-        this.$['*currentActivity'] === (uBlock.initActivity || ActivityBlock.activities.START_FROM)
-      ) {
-        this.$['*currentActivity'] = ActivityBlock.activities.UPLOAD_LIST;
+      if (Array.isArray(list) && list.length > 0 && this.$['*currentActivity'] === initActivity) {
+        this.$['*currentActivity'] = LitActivityBlock.activities.UPLOAD_LIST;
       }
     });
 
     this.sub('*history', () => {
-      this.$.couldCancel = this.couldHistoryBack || this.couldShowList;
+      this._couldCancel = this._couldHistoryBack || this._couldShowList;
     });
   }
-}
 
-FileUploaderInline.template = /* HTML */ `
-  <uc-start-from>
-    <uc-drop-area with-icon clickable></uc-drop-area>
-    <uc-source-list role="list" wrap></uc-source-list>
-    <button
-      type="button"
-      l10n="start-from-cancel"
-      class="uc-cancel-btn uc-secondary-btn"
-      set="onclick: cancel; @hidden: !couldCancel"
-    ></button>
-    <uc-copyright></uc-copyright>
-  </uc-start-from>
-  <uc-upload-list ref="uBlock"></uc-upload-list>
-  <uc-camera-source></uc-camera-source>
-  <uc-url-source></uc-url-source>
-  <uc-external-source></uc-external-source>
-  <uc-cloud-image-editor-activity></uc-cloud-image-editor-activity>
-`;
+  public override render() {
+    return html`
+      ${super.render()}
+      <uc-start-from>
+        <uc-drop-area with-icon clickable></uc-drop-area>
+        <uc-source-list role="list" wrap></uc-source-list>
+        <button
+          type="button"
+          class="uc-cancel-btn uc-secondary-btn"
+          @click=${this._handleCancel}
+          ?hidden=${!this._couldCancel}
+        >
+        ${this.l10n('start-from-cancel')}
+        </button>
+        <uc-copyright></uc-copyright>
+      </uc-start-from>
+      <uc-upload-list></uc-upload-list>
+      <uc-camera-source></uc-camera-source>
+      <uc-url-source></uc-url-source>
+      <uc-external-source></uc-external-source>
+      <uc-cloud-image-editor-activity></uc-cloud-image-editor-activity>
+    `;
+  }
+}

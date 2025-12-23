@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.2.5/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.3.8/schema.json",
   "vcs": {
     "enabled": true,
     "clientKind": "git",
@@ -19,13 +19,24 @@
       "recommended": true,
       "suspicious": {
         "noDuplicateProperties": "off",
-        "noExplicitAny": "warn"
+        "noExplicitAny": "info",
+        "noFocusedTests": "error"
       },
       "complexity": {
         "noThisInStatic": "off"
       },
       "style": {
-        "noInferrableTypes": "error"
+        "noInferrableTypes": "error",
+        "useConsistentMemberAccessibility": {
+          "level": "error",
+          "options": {
+            "accessibility": "explicit"
+          }
+        }
+      },
+      "correctness": {
+        "noUnusedVariables": "error",
+        "noUnusedImports": "error"
       }
     }
   },
@@ -38,8 +49,8 @@
     "enabled": true,
     "actions": {
       "source": {
-        "organizeImports": "on",
-        "recommended": true
+        "recommended": true,
+        "organizeImports": "on"
       }
     }
   },
@@ -54,6 +65,32 @@
           }
         }
       }
+    },
+    {
+      "includes": ["**/*.test.*", "**/*.spec.*", "**/*.e2e.test.*"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noNonNullAssertion": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["demo/**/*.html"],
+      "linter": {
+        "rules": {
+          "style": {
+            "useConsistentMemberAccessibility": "off"
+          }
+        }
+      }
     }
-  ]
+  ],
+  "html": {
+    "experimentalFullSupportEnabled": true,
+    "formatter": {
+      "enabled": true
+    }
+  }
 }

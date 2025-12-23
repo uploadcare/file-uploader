@@ -1,44 +1,54 @@
-import './icon.css';
-import { Block } from '../../abstract/Block';
+import { html, type PropertyValues } from 'lit';
+import { property, state } from 'lit/decorators.js';
+import { LitBlock } from '../../lit/LitBlock';
 import type { IconHrefResolver } from '../../types/index';
+import './icon.css';
 
-export class Icon extends Block {
-  constructor() {
-    super();
+export class Icon extends LitBlock {
+  @property({ type: String })
+  public name = '';
 
-    this.init$ = {
-      ...this.init$,
-      name: '',
-      href: '',
-    };
+  @state()
+  private _resolvedHref = '';
+
+  private _iconHrefResolver: IconHrefResolver | null = null;
+
+  public override initCallback(): void {
+    super.initCallback();
+    this.setAttribute('aria-hidden', 'true');
+
+    this.subConfigValue('iconHrefResolver', (resolver: IconHrefResolver | null) => {
+      this._iconHrefResolver = resolver;
+      this._updateResolvedHref();
+    });
   }
 
-  override initCallback(): void {
-    super.initCallback();
-    this.sub('name', (val: string) => {
-      if (!val) {
-        return;
-      }
-      let iconHref = `#uc-icon-${val}`;
-      this.subConfigValue('iconHrefResolver', (iconHrefResolver: IconHrefResolver | null) => {
-        if (iconHrefResolver) {
-          const customIconHref = iconHrefResolver(val);
-          iconHref = customIconHref ?? iconHref;
-        }
-        this.$.href = iconHref;
-      });
-    });
+  protected override willUpdate(changedProperties: PropertyValues<this>): void {
+    super.willUpdate(changedProperties);
+    if (changedProperties.has('name')) {
+      this._updateResolvedHref();
+    }
+  }
 
-    this.setAttribute('aria-hidden', 'true');
+  private _updateResolvedHref(): void {
+    if (!this.name) {
+      this._resolvedHref = '';
+      return;
+    }
+
+    const defaultHref = `#uc-icon-${this.name}`;
+    const customHref = this._iconHrefResolver?.(this.name);
+    this._resolvedHref = customHref ?? defaultHref;
+  }
+
+  public override render() {
+    return html`
+      ${this.yield(
+        '',
+        html`<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <use href=${this._resolvedHref}></use>
+      </svg>`,
+      )}
+    `;
   }
 }
-
-Icon.template = /* HTML */ `
-  <svg ref="svg" xmlns="http://www.w3.org/2000/svg">
-    <use set="@href: href;"></use>
-  </svg>
-`;
-
-Icon.bindAttributes({
-  name: 'name',
-});

@@ -16,10 +16,6 @@
     height: 100%;
   }
 
-  uc-camera-source:not(.uc-initialized) .uc-controls {
-    display: none;
-  }
-
   uc-camera-source video {
     display: block;
     width: 100%;
@@ -54,7 +50,7 @@
   uc-camera-source .uc-message-box {
     display: flex;
     flex-direction: column;
-    grid-gap: 40px;
+    gap: 40px;
     align-items: center;
     justify-content: center;
     padding: 40px 40px 0;
@@ -106,6 +102,10 @@
     justify-content: space-between;
     padding: 0 var(--uc-padding) var(--uc-padding);
     min-height: 74px;
+  }
+
+  uc-camera-source:not(.uc-initialized) .uc-controls {
+    display: none;
   }
 
   uc-camera-source .uc-switcher {

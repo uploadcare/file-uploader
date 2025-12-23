@@ -11,6 +11,8 @@
     "skipLibCheck": true,
     "noEmit": true,
     "esModuleInterop": true,
+    "experimentalDecorators": true,
+    "useDefineForClassFields": false,
     "paths": {
       "@/*": ["./src/*"],
       "~/*": ["./*"]

@@ -1,58 +1,40 @@
+import { html } from 'lit';
+import { property, state } from 'lit/decorators.js';
+import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
 import './simple-btn.css';
-import { UploaderBlock } from '../../abstract/UploaderBlock';
-import { asBoolean } from '../Config/validatorsType';
 
-type BaseInitState = InstanceType<typeof UploaderBlock>['init$'];
-interface SimpleBtnInitState extends BaseInitState {
-  withDropZone: boolean;
-  onClick: () => void;
-  'button-text': string;
-}
+export class SimpleBtn extends LitUploaderBlock {
+  public static override styleAttrs = [...super.styleAttrs, 'uc-simple-btn'];
+  public override couldBeCtxOwner = true;
 
-export class SimpleBtn extends UploaderBlock {
-  static override styleAttrs = [...super.styleAttrs, 'uc-simple-btn'];
-  override couldBeCtxOwner = true;
+  @property({ attribute: 'dropzone', type: Boolean })
+  public dropzone = true;
 
-  constructor() {
-    super();
+  @state()
+  private _buttonTextKey = 'upload-file';
 
-    this.init$ = {
-      ...this.init$,
-      withDropZone: true,
-      onClick: () => {
-        this.api.initFlow();
-      },
-      'button-text': '',
-    } as SimpleBtnInitState;
-  }
+  private readonly _handleClick = () => {
+    this.api.initFlow();
+  };
 
-  override initCallback(): void {
+  public override initCallback(): void {
     super.initCallback();
 
-    this.defineAccessor('dropzone', (val: unknown) => {
-      if (typeof val === 'undefined') {
-        return;
-      }
-      this.$.withDropZone = asBoolean(val);
-    });
     this.subConfigValue('multiple', (val) => {
-      this.$['button-text'] = val ? 'upload-files' : 'upload-file';
+      this._buttonTextKey = val ? 'upload-files' : 'upload-file';
     });
   }
-}
 
-SimpleBtn.template = /* HTML */ `
-  <uc-drop-area set="@disabled: !withDropZone">
-    <button type="button" set="onclick: onClick">
+  public override render() {
+    return html`
+    <uc-drop-area .disabled=${!this.dropzone}>
+    <button type="button" @click=${this._handleClick}>
       <uc-icon name="upload"></uc-icon>
-      <span l10n="button-text"></span>
-      <slot></slot>
-      <div class="uc-visual-drop-area" l10n="drop-files-here"></div>
+      <span>${this.l10n(this._buttonTextKey)}</span>
+      ${this.yield('')}
+      <div class="uc-visual-drop-area">${this.l10n('drop-files-here')}</div>
     </button>
   </uc-drop-area>
-`;
-
-SimpleBtn.bindAttributes({
-  // @ts-expect-error TODO: we need to update symbiote types
-  dropzone: null,
-});
+    `;
+  }
+}

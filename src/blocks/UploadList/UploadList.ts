@@ -1,10 +1,12 @@
-// @ts-check
-import { ActivityBlock } from '../../abstract/ActivityBlock';
-import { UploaderBlock } from '../../abstract/UploaderBlock';
+import { html } from 'lit';
+import { state } from 'lit/decorators.js';
+import { LitActivityBlock } from '../../lit/LitActivityBlock';
+import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
 import type { OutputCollectionErrorType, OutputError } from '../../types';
 import { throttle } from '../../utils/throttle';
 import { EventType, InternalEventType } from '../UploadCtxProvider/EventEmitter';
 import './upload-list.css';
+import { repeat } from 'lit/directives/repeat.js';
 
 export type FilesViewMode = 'grid' | 'list';
 
@@ -16,63 +18,79 @@ export type Summary = {
   validatingBeforeUploading: number;
 };
 
-export class UploadList extends UploaderBlock {
-  // Context owner should have access to CSS l10n
-  // TODO: We need to move away l10n from CSS
-  override couldBeCtxOwner = true;
-  override historyTracked = true;
-  override activityType = ActivityBlock.activities.UPLOAD_LIST;
+export class UploadList extends LitUploaderBlock {
+  public override couldBeCtxOwner = true;
+  protected override historyTracked = true;
+  public override activityType = LitActivityBlock.activities.UPLOAD_LIST;
 
-  constructor() {
-    super();
+  @state()
+  private _doneBtnVisible = false;
 
-    this.init$ = {
-      ...this.init$,
-      doneBtnVisible: false,
-      doneBtnEnabled: false,
-      uploadBtnVisible: false,
-      addMoreBtnVisible: false,
-      addMoreBtnEnabled: false,
-      headerText: '',
-      commonErrorMessage: '',
+  @state()
+  private _doneBtnEnabled = false;
 
-      hasFiles: false,
-      onAdd: () => {
-        this.telemetryManager.sendEvent({
-          eventType: InternalEventType.ACTION_EVENT,
-          payload: {
-            metadata: {
-              event: 'add-more',
-              node: this.tagName,
-            },
-          },
-        });
+  @state()
+  private _uploadBtnVisible = false;
 
-        this.api.initFlow(true);
-      },
-      onUpload: () => {
-        this.emit(EventType.UPLOAD_CLICK);
-        this.api.uploadAll();
-        this._throttledHandleCollectionUpdate();
-      },
-      onDone: () => {
-        this.emit(EventType.DONE_CLICK, this.api.getOutputCollectionState());
-        this.api.doneFlow();
-      },
-      onCancel: () => {
-        this.telemetryManager.sendEvent({
-          eventType: InternalEventType.ACTION_EVENT,
-          payload: {
-            metadata: {
-              event: 'clear-all',
-              node: this.tagName,
-            },
-          },
-        });
-        this.uploadCollection.clearAll();
-      },
-    } as any;
+  @state()
+  private _addMoreBtnVisible = false;
+
+  @state()
+  private _addMoreBtnEnabled = false;
+
+  @state()
+  private _commonErrorMessage: string | null = null;
+
+  @state()
+  private _hasFiles = false;
+
+  @state()
+  private _latestSummary: Summary | null = null;
+
+  private get _headerText() {
+    if (!this._latestSummary) {
+      return '';
+    }
+    return this._getHeaderText(this._latestSummary);
   }
+
+  private _handleAdd = (): void => {
+    this.telemetryManager.sendEvent({
+      eventType: InternalEventType.ACTION_EVENT,
+      payload: {
+        metadata: {
+          event: 'add-more',
+          node: this.tagName,
+        },
+      },
+    });
+    this.api.initFlow(true);
+  };
+
+  private _handleUpload = (): void => {
+    this.emit(EventType.UPLOAD_CLICK);
+    this.api.uploadAll();
+    this._throttledHandleCollectionUpdate();
+  };
+
+  private _handleDone = (): void => {
+    this.emit(EventType.DONE_CLICK, this.api.getOutputCollectionState());
+    this.api.doneFlow();
+  };
+
+  private _handleCancel = (): void => {
+    this.telemetryManager.sendEvent({
+      eventType: InternalEventType.ACTION_EVENT,
+      payload: {
+        metadata: {
+          event: 'clear-all',
+          node: this.tagName,
+        },
+      },
+    });
+
+    this.uploadCollection.clearAll();
+  };
 
   private _throttledHandleCollectionUpdate = throttle(() => {
     if (!this.isConnected) {
@@ -118,19 +136,14 @@ export class UploadList extends UploaderBlock {
       doneBtnEnabled = summary.total === summary.succeed && fitCountRestrictions && validationOk && groupOk;
     }
 
-    this.set$({
-      doneBtnVisible: allDone,
-      doneBtnEnabled: doneBtnEnabled,
+    this._doneBtnVisible = allDone;
+    this._doneBtnEnabled = doneBtnEnabled;
+    this._uploadBtnVisible = uploadBtnVisible;
+    this._addMoreBtnEnabled = summary.total === 0 || (!tooMany && !exact);
+    this._addMoreBtnVisible = !exact || this.cfg.multiple;
+    this._hasFiles = summary.total > 0;
 
-      uploadBtnVisible,
-
-      addMoreBtnEnabled: summary.total === 0 || (!tooMany && !exact),
-      addMoreBtnVisible: !exact || this.cfg.multiple,
-
-      hasFiles: summary.total > 0,
-    });
-
-    this.bindL10n('headerText', () => this._getHeaderText(summary));
+    this._latestSummary = summary;
   }
 
   private _getHeaderText(summary: Summary): string {
@@ -156,11 +169,11 @@ export class UploadList extends UploaderBlock {
     return localizedText('total');
   }
 
-  override get couldOpenActivity(): boolean {
+  public override get couldOpenActivity(): boolean {
     return this.cfg.showEmptyList || this.uploadCollection.size > 0;
   }
 
-  override initCallback() {
+  public override initCallback() {
     super.initCallback();
 
     this.registerActivity(this.activityType);
@@ -192,77 +205,95 @@ export class UploadList extends UploaderBlock {
     this.sub('*collectionErrors', (errors: OutputError<OutputCollectionErrorType>[]) => {
       const firstError = errors.filter((err) => err.type !== 'SOME_FILES_HAS_ERRORS')[0];
       if (!firstError) {
-        this.set$({
-          commonErrorMessage: null,
-        });
+        this._commonErrorMessage = null;
         return;
       }
-      this.set$({
-        commonErrorMessage: firstError.message,
-      });
+      this._commonErrorMessage = firstError.message;
     });
   }
 
-  override destroyCallback() {
-    super.destroyCallback();
-    this.uploadCollection.unobserveProperties(this._throttledHandleCollectionUpdate);
-    this.uploadCollection.unobserveCollection(this._throttledHandleCollectionUpdate);
+  public override disconnectedCallback(): void {
+    super.disconnectedCallback();
+    if (this.has('*uploadCollection')) {
+      this.uploadCollection.unobserveProperties(this._throttledHandleCollectionUpdate);
+      this.uploadCollection.unobserveCollection(this._throttledHandleCollectionUpdate);
+    }
   }
-}
 
-UploadList.template = /* HTML */ `
+  public override render() {
+    return html`
   <uc-activity-header>
-    <span aria-live="polite" class="uc-header-text">{{headerText}}</span>
+    <span aria-live="polite" class="uc-header-text">${this._headerText}</span>
     <button
       type="button"
       class="uc-mini-btn uc-close-btn"
-      set="onclick: *closeModal"
-      l10n="@title:a11y-activity-header-button-close;@aria-label:a11y-activity-header-button-close"
+      @click=${this.$['*closeModal']}
+      title=${this.l10n('a11y-activity-header-button-close')}
+      aria-label=${this.l10n('a11y-activity-header-button-close')}
     >
       <uc-icon name="close"></uc-icon>
     </button>
   </uc-activity-header>
 
-  <div class="uc-no-files" set="@hidden: hasFiles">
-    <slot name="empty"><span l10n="no-files"></span></slot>
+  <div class="uc-no-files" ?hidden=${this._hasFiles}>
+    ${this.yield('empty', html`<span>${this.l10n('no-files')}</span>`)}
   </div>
 
   <div class="uc-files">
-    <div class="uc-files-wrapper" repeat="*uploadList" repeat-item-tag="uc-file-item"></div>
+    <div class="uc-files-wrapper">
+    ${repeat(
+      this.$['*uploadList'] ?? [],
+      ({ uid }) => uid,
+      ({ uid }) => html`<uc-file-item .uid=${uid}></uc-file-item>`,
+    )}
+    </div>
     <button
       type="button"
       class="uc-add-more-btn uc-secondary-btn"
-      set="onclick: onAdd; @disabled: !addMoreBtnEnabled; @hidden: !addMoreBtnVisible"
+      @click=${this._handleAdd}
+      ?disabled=${!this._addMoreBtnEnabled}
+      ?hidden=${!this._addMoreBtnVisible}
     >
-      <uc-icon name="add"></uc-icon><span l10n="add-more"></span>
+      <uc-icon name="add"></uc-icon><span>${this.l10n('add-more')}</span>
     </button>
   </div>
 
-  <div class="uc-common-error" set="@hidden: !commonErrorMessage; textContent: commonErrorMessage;"></div>
+  <div class="uc-common-error" 
+  ?hidden=${!this._commonErrorMessage}
+  >
+  ${this._commonErrorMessage ?? ''}
+  </div>
 
   <div class="uc-toolbar">
-    <button type="button" class="uc-cancel-btn uc-secondary-btn" set="onclick: onCancel;" l10n="clear"></button>
+    <button type="button" class="uc-cancel-btn uc-secondary-btn" @click=${this._handleCancel}>${this.l10n('clear')}</button>
     <div class="uc-toolbar-spacer"></div>
     <button
       type="button"
       class="uc-add-more-btn uc-secondary-btn"
-      set="onclick: onAdd; @disabled: !addMoreBtnEnabled; @hidden: !addMoreBtnVisible"
+      ?hidden=${!this._addMoreBtnVisible}
+      ?disabled=${!this._addMoreBtnEnabled}
+      @click=${this._handleAdd}
     >
-      <uc-icon name="add"></uc-icon><span l10n="add-more"></span>
+      <uc-icon name="add"></uc-icon><span>${this.l10n('add-more')}</span>
     </button>
     <button
       type="button"
       class="uc-upload-btn uc-primary-btn"
-      set="@hidden: !uploadBtnVisible; onclick: onUpload;"
-      l10n="upload"
-    ></button>
+      ?hidden=${!this._uploadBtnVisible}
+      @click=${this._handleUpload}
+    >${this.l10n('upload')}</button>
     <button
       type="button"
       class="uc-done-btn uc-primary-btn"
-      set="@hidden: !doneBtnVisible; onclick: onDone;  @disabled: !doneBtnEnabled"
-      l10n="done"
-    ></button>
+      ?hidden=${!this._doneBtnVisible}
+      ?disabled=${!this._doneBtnEnabled}
+      @click=${this._handleDone}
+    >
+      ${this.l10n('done')}
+    </button>
   </div>
 
   <uc-drop-area ghost></uc-drop-area>
 `;
+  }
+}

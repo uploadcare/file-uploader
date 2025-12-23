@@ -1,50 +1,95 @@
 import './progress-bar.css';
-import { Block } from '../../abstract/Block';
+import type { PropertyValues } from 'lit';
+import { html } from 'lit';
+import { property } from 'lit/decorators.js';
+import { createRef, ref } from 'lit/directives/ref.js';
+import { LitBlock } from '../../lit/LitBlock';
 
-export class ProgressBar extends Block {
-  private _value = 0;
+export class ProgressBar extends LitBlock {
+  @property({ type: Number })
+  public value = 0;
 
-  private _visible = true;
+  @property({ type: Boolean, reflect: true })
+  public visible = true;
 
-  constructor() {
-    super();
-    this.init$ = {
-      ...this.init$,
-      width: 0,
-      opacity: 0,
-    };
+  private _progressValue = 0;
+
+  private readonly _fakeProgressLineRef = createRef<HTMLDivElement>();
+
+  private readonly _handleFakeProgressAnimation = (): void => {
+    const fakeProgressLine = this._fakeProgressLineRef.value;
+    if (!fakeProgressLine) {
+      return;
+    }
+
+    if (!this.visible) {
+      fakeProgressLine.classList.add('uc-fake-progress--hidden');
+      return;
+    }
+
+    if (this._progressValue > 0) {
+      fakeProgressLine.classList.add('uc-fake-progress--hidden');
+    }
+  };
+
+  protected override firstUpdated(changedProperties: PropertyValues<this>): void {
+    super.firstUpdated(changedProperties);
+
+    this._progressValue = this._normalizeProgressValue(this.value);
+    this._updateProgressValueStyle();
+    this._fakeProgressLineRef.value?.addEventListener('animationiteration', this._handleFakeProgressAnimation);
   }
 
-  override initCallback(): void {
-    super.initCallback();
-    const handleFakeProgressAnimation = (): void => {
-      const fakeProgressLine = this.ref.fakeProgressLine as HTMLElement;
-      if (!this._visible) {
-        fakeProgressLine.classList.add('uc-fake-progress--hidden');
-        return;
+  protected override updated(changedProperties: PropertyValues<this>): void {
+    super.updated(changedProperties);
+
+    if (changedProperties.has('value')) {
+      const normalizedValue = this._normalizeProgressValue(this.value);
+
+      if (!this.visible) {
+        this._progressValue = normalizedValue;
+      } else {
+        const nextValue = Math.max(this._progressValue, normalizedValue);
+        if (nextValue !== this._progressValue) {
+          this._progressValue = nextValue;
+          this._updateProgressValueStyle();
+        }
       }
-      if (this._value > 0) {
-        fakeProgressLine.classList.add('uc-fake-progress--hidden');
+    }
+
+    if (changedProperties.has('visible')) {
+      this.classList.toggle('uc-progress-bar--hidden', !this.visible);
+      if (this.visible) {
+        this._updateProgressValueStyle();
+      } else {
+        this._progressValue = this._normalizeProgressValue(this.value);
       }
-    };
+    }
+  }
 
-    (this.ref.fakeProgressLine as HTMLElement).addEventListener('animationiteration', handleFakeProgressAnimation);
+  public override disconnectedCallback(): void {
+    super.disconnectedCallback();
+    this._fakeProgressLineRef.value?.removeEventListener('animationiteration', this._handleFakeProgressAnimation);
+  }
 
-    this.defineAccessor('value', (value: number | null | undefined) => {
-      if (value === undefined || value === null) return;
-      this._value = value;
-      if (!this._visible) return;
-      this.style.setProperty('--l-progress-value', this._value.toString());
-    });
+  private _normalizeProgressValue(value: number): number {
+    if (!Number.isFinite(value)) {
+      return 0;
+    }
+    return Math.min(100, Math.max(0, value));
+  }
 
-    this.defineAccessor('visible', (visible: boolean) => {
-      this._visible = visible;
-      this.classList.toggle('uc-progress-bar--hidden', !visible);
-    });
+  private _updateProgressValueStyle(): void {
+    if (!this.visible) {
+      return;
+    }
+    this.style.setProperty('--l-progress-value', this._progressValue.toString());
+  }
+
+  public override render() {
+    return html`
+      <div ${ref(this._fakeProgressLineRef)} class="uc-fake-progress"></div>
+      <div class="uc-progress"></div>
+    `;
   }
 }
-
-ProgressBar.template = /* HTML */ `
-  <div ref="fakeProgressLine" class="uc-fake-progress"></div>
-  <div ref="realProgressLine" class="uc-progress"></div>
-`;

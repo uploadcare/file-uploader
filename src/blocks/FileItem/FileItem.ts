@@ -6,14 +6,16 @@ import {
   type UploadcareFile,
   uploadFile,
 } from '@uploadcare/upload-client';
-import { ActivityBlock } from '../../abstract/ActivityBlock';
+import { html, type PropertyValues } from 'lit';
+import { property, state } from 'lit/decorators.js';
 import type { UploadEntryTypedData } from '../../abstract/uploadEntrySchema';
+import { LitActivityBlock } from '../../lit/LitActivityBlock';
 import { debounce } from '../../utils/debounce';
 import { parseShrink } from '../../utils/parseShrink';
 import { throttle } from '../../utils/throttle';
 import { ExternalUploadSource } from '../../utils/UploadSource';
 import './file-item.css';
-import { EventType, InternalEventType } from '../UploadCtxProvider/EventEmitter';
+import type { Uid } from '../../lit/Uid';
 import { FileItemConfig } from './FileItemConfig';
 
 const FileItemState = Object.freeze({
@@ -28,98 +30,98 @@ const FileItemState = Object.freeze({
 
 type FileItemStateValue = (typeof FileItemState)[keyof typeof FileItemState];
 
-type UploadTrigger = Set<string>;
-
-type BaseInitState = InstanceType<typeof FileItemConfig>['init$'];
-
-interface FileItemInitState extends BaseInitState {
-  uid: string;
-  itemName: string;
-  errorText: string;
-  hint: string;
-  thumbUrl: string;
-  progressValue: number;
-  progressVisible: boolean;
-  badgeIcon: string;
-  isFinished: boolean;
-  isFailed: boolean;
-  isUploading: boolean;
-  isFocused: boolean;
-  isEditable: boolean;
-  showFileNames: boolean;
-  state: FileItemStateValue;
-  ariaLabelStatusFile: string;
-  onEdit: () => void;
-  onRemove: () => void;
-  onUpload: () => void;
-}
-
 export class FileItem extends FileItemConfig {
-  override couldBeCtxOwner = true;
-  override pauseRender = true;
+  protected override couldBeCtxOwner = true;
+
+  @state()
+  private _pauseRender = true;
+
+  @property({ type: String, attribute: false })
+  public uid: Uid = '' as Uid;
+
+  @state()
+  private _itemName = '';
+
+  @state()
+  private _errorText = '';
+
+  @state()
+  private _hint = '';
+
+  @state()
+  private _progressValue = 0;
+
+  @state()
+  private _progressVisible = false;
+
+  @state()
+  private _badgeIcon = '';
+
+  @state()
+  private _isFinished = false;
+
+  @state()
+  private _isFailed = false;
+
+  @state()
+  private _isUploading = false;
+
+  @state()
+  private _isFocused = false;
+
+  @state()
+  private _isEditable = false;
+
+  @state()
+  private _showFileNames = false;
+
+  @state()
+  private _ariaLabelStatusFile = '';
 
   private _renderedOnce = false;
   private _observer?: IntersectionObserver;
-  protected _isIntersecting = false;
-  protected _thumbRect?: DOMRectReadOnly;
 
-  constructor() {
-    super();
-
-    this.init$ = {
-      ...this.init$,
-      uid: '',
-      itemName: '',
-      errorText: '',
-      hint: '',
-      thumbUrl: '',
-      progressValue: 0,
-      progressVisible: false,
-      badgeIcon: '',
-      isFinished: false,
-      isFailed: false,
-      isUploading: false,
-      isFocused: false,
-      isEditable: false,
-      showFileNames: false,
-      state: FileItemState.IDLE,
-      ariaLabelStatusFile: '',
-      onEdit: this._withEntry((entry) => {
-        this.telemetryManager.sendEvent({
-          eventType: InternalEventType.ACTION_EVENT,
-          payload: {
-            metadata: {
-              event: 'edit-file',
-              node: this.tagName,
-            },
-          },
-        });
-        this.$['*currentActivityParams'] = {
-          internalId: entry.uid,
-        };
-        this.modalManager?.open(ActivityBlock.activities.CLOUD_IMG_EDIT);
-        this.$['*currentActivity'] = ActivityBlock.activities.CLOUD_IMG_EDIT;
-      }),
-      onRemove: () => {
-        this.telemetryManager.sendEvent({
-          eventType: InternalEventType.ACTION_EVENT,
-          payload: {
-            metadata: {
-              event: 'remove-file',
-              node: this.tagName,
-            },
-          },
-        });
-
-        this.uploadCollection.remove(this.$.uid);
+  private _handleEdit = this.withEntry((entry) => {
+    this.telemetryManager.sendEvent({
+      payload: {
+        metadata: {
+          event: 'edit-file',
+          node: this.tagName,
+        },
       },
-      onUpload: () => {
-        this.upload();
-      },
-    } as FileItemInitState;
-  }
+    });
+    this.$['*currentActivityParams'] = {
+      internalId: entry.uid,
+    };
+    this.modalManager?.open(LitActivityBlock.activities.CLOUD_IMG_EDIT);
+    this.$['*currentActivity'] = LitActivityBlock.activities.CLOUD_IMG_EDIT;
+  });
 
-  private _calculateState = this._withEntry((entry) => {
+  private _handleRemove = (): void => {
+    this.telemetryManager.sendEvent({
+      payload: {
+        metadata: {
+          event: 'remove-file',
+          node: this.tagName,
+        },
+      },
+    });
+
+    if (this.uid && this.uploadCollection.hasItem(this.uid)) {
+      this.uploadCollection.remove(this.uid);
+    }
+  };
+
+  private _handleUploadClick = (): void => {
+    this._upload();
+  };
+
+  private _calculateState(): void {
+    const entry = this.entry;
+    if (!entry) {
+      return;
+    }
+
     let state: FileItemStateValue = FileItemState.IDLE;
 
     if (entry.getValue('errors').length > 0) {
@@ -136,14 +138,14 @@ export class FileItem extends FileItemConfig {
       state = FileItemState.FINISHED;
     }
 
-    this.$.state = state;
-  });
+    this._handleState(entry, state);
+  }
 
-  private _debouncedCalculateState = debounce(this._calculateState.bind(this), 100);
+  private _debouncedCalculateState = debounce(() => this._calculateState(), 100);
 
-  private _updateHintAndProgress = this._withEntry(
+  private _updateHintAndProgress = this.withEntry(
     throttle((entry: UploadEntryTypedData, state?: FileItemStateValue) => {
-      const errorText = entry.getValue('errors')?.[0]?.message;
+      const errorText = entry.getValue('errors')?.[0]?.message ?? '';
       const source = entry.getValue('source');
       const externalUrl = entry.getValue('externalUrl');
       const isFinished = state === FileItemState.FINISHED;
@@ -160,44 +162,41 @@ export class FileItem extends FileItemConfig {
         hint = this.l10n('waiting-for', { source: this.l10n(`src-type-${source}`) });
       }
 
-      this.set$({
-        hint,
-        errorText,
-        progressVisible: isUploading || isQueuedForUploading || isQueuedForValidation || isValidationPending,
-        progressValue: isQueuedForValidation || isValidationPending ? 0 : entry.getValue('uploadProgress'),
-        ariaLabelStatusFile:
-          fileName &&
-          this.l10n('a11y-file-item-status', {
+      this._hint = hint;
+      this._errorText = errorText;
+      this._progressVisible = isUploading || isQueuedForUploading || isQueuedForValidation || isValidationPending;
+      this._progressValue = isQueuedForValidation || isValidationPending ? 0 : entry.getValue('uploadProgress');
+      this._ariaLabelStatusFile = fileName
+        ? this.l10n('a11y-file-item-status', {
             fileName,
             status: this.l10n(state?.description?.toLocaleLowerCase() ?? '').toLocaleLowerCase(),
-          }),
-      });
+          })
+        : '';
     }, 100),
   );
 
-  private _handleState = this._withEntry((entry, state: FileItemStateValue) => {
+  private _handleState(entry: UploadEntryTypedData, state: FileItemStateValue): void {
     if (state === FileItemState.FAILED) {
-      this.$.badgeIcon = 'badge-error';
+      this._badgeIcon = 'badge-error';
     } else if (state === FileItemState.FINISHED) {
-      this.$.badgeIcon = 'badge-success';
+      this._badgeIcon = 'badge-success';
     }
 
     if (state === FileItemState.UPLOADING) {
-      this.$.isFocused = false;
+      this._isFocused = false;
+      this.removeAttribute('focused');
     }
 
-    this.set$({
-      isFailed: state === FileItemState.FAILED,
-      isUploading: state === FileItemState.UPLOADING,
-      isFinished: state === FileItemState.FINISHED,
-      isEditable: this.cfg.useCloudImageEditor && entry.getValue('isImage') && entry.getValue('cdnUrl'),
-    });
+    this._isFailed = state === FileItemState.FAILED;
+    this._isUploading = state === FileItemState.UPLOADING;
+    this._isFinished = state === FileItemState.FINISHED;
+    this._isEditable = Boolean(this.cfg.useCloudImageEditor && entry.getValue('isImage') && entry.getValue('cdnUrl'));
 
     this._updateHintAndProgress(state);
-  });
+  }
 
-  override _reset(): void {
-    super._reset();
+  protected override reset(): void {
+    super.reset();
     this._debouncedCalculateState.cancel();
   }
 
@@ -207,81 +206,82 @@ export class FileItem extends FileItemConfig {
       return;
     }
 
-    this._isIntersecting = entry.isIntersecting;
-    this._thumbRect = entry.boundingClientRect;
-
     if (entry.isIntersecting && !this._renderedOnce) {
-      this.render();
+      this._pauseRender = false;
       this._renderedOnce = true;
     }
   }
 
-  private _handleEntryId(id: string): void {
-    this._reset();
+  private _handleEntryId(id: Uid): void {
+    this.reset();
 
     const entry = this.uploadCollection?.read(id);
-    this._entry = entry;
+    this.entry = entry;
 
     if (!entry) {
       return;
     }
 
-    this._subEntry('isQueuedForValidation', () => {
+    this.subEntry('isQueuedForValidation', () => {
       this._debouncedCalculateState();
     });
 
-    this._subEntry('isValidationPending', () => {
+    this.subEntry('isValidationPending', () => {
       this._debouncedCalculateState();
     });
 
-    this._subEntry('uploadProgress', () => {
+    this.subEntry('uploadProgress', () => {
       this._debouncedCalculateState();
     });
 
-    this._subEntry('isQueuedForUploading', () => {
+    this.subEntry('isQueuedForUploading', () => {
       this._debouncedCalculateState();
     });
 
-    this._subEntry('fileName', (name) => {
-      this.$.itemName = name || entry.getValue('externalUrl') || this.l10n('file-no-name');
+    this.subEntry('fileName', (name) => {
+      this._itemName = name || entry.getValue('externalUrl') || this.l10n('file-no-name');
       this._debouncedCalculateState();
     });
 
-    this._subEntry('externalUrl', (externalUrl) => {
-      this.$.itemName = entry.getValue('fileName') || externalUrl || this.l10n('file-no-name');
+    this.subEntry('externalUrl', (externalUrl) => {
+      this._itemName = entry.getValue('fileName') || externalUrl || this.l10n('file-no-name');
     });
 
-    this._subEntry('fileInfo', () => {
+    this.subEntry('fileInfo', () => {
       this._debouncedCalculateState();
     });
 
-    this._subEntry('errors', () => this._debouncedCalculateState());
-    this._subEntry('isUploading', () => this._debouncedCalculateState());
-    this._subEntry('fileSize', () => this._debouncedCalculateState());
-    this._subEntry('mimeType', () => this._debouncedCalculateState());
-    this._subEntry('isImage', () => this._debouncedCalculateState());
+    this.subEntry('errors', () => this._debouncedCalculateState());
+    this.subEntry('isUploading', () => this._debouncedCalculateState());
+    this.subEntry('fileSize', () => this._debouncedCalculateState());
+    this.subEntry('mimeType', () => this._debouncedCalculateState());
+    this.subEntry('isImage', () => this._debouncedCalculateState());
+
+    this._calculateState();
   }
 
   private _updateShowFileNames(value: boolean): void {
     const isListMode = this.cfg.filesViewMode === 'list';
     if (isListMode) {
-      this.$.showFileNames = true;
+      this._showFileNames = true;
       return;
     }
 
-    this.$.showFileNames = value;
+    this._showFileNames = value;
   }
 
-  override initCallback(): void {
+  protected override willUpdate(changedProperties: PropertyValues<this>): void {
+    super.willUpdate(changedProperties);
+
+    if (changedProperties.has('uid')) {
+      this._handleEntryId(this.uid);
+    }
+  }
+
+  public override initCallback(): void {
     super.initCallback();
 
-    this.sub('uid', (uid: string) => {
-      this._handleEntryId(uid);
-    });
-
-    this.sub('state', (state: FileItemStateValue) => {
-      this._handleState(state);
-    });
+    this._handleEntryId(this.uid);
 
     this.subConfigValue('useCloudImageEditor', () => this._debouncedCalculateState());
 
@@ -305,24 +305,16 @@ export class FileItem extends FileItemConfig {
       });
     };
 
-    this.sub('*uploadTrigger', (itemsToUpload: UploadTrigger) => {
-      if (this._entry && !itemsToUpload.has(this._entry.uid)) {
+    this.sub('*uploadTrigger', (itemsToUpload) => {
+      if (this.entry && !itemsToUpload.has(this.entry.uid)) {
         return;
       }
-      setTimeout(() => this.isConnected && this.upload());
+      setTimeout(() => this.isConnected && this._upload());
     });
     FileItem.activeInstances.add(this);
   }
 
-  override destroyCallback(): void {
-    super.destroyCallback();
-
-    FileItem.activeInstances.delete(this);
-
-    this._reset();
-  }
-
-  override connectedCallback(): void {
+  public override connectedCallback(): void {
     super.connectedCallback();
 
     this._observer = new window.IntersectionObserver(this._observerCallback.bind(this), {
@@ -331,26 +323,17 @@ export class FileItem extends FileItemConfig {
     this._observer.observe(this);
   }
 
-  override disconnectedCallback(): void {
+  public override disconnectedCallback(): void {
     super.disconnectedCallback();
 
     this._observer?.disconnect();
+
+    FileItem.activeInstances.delete(this);
+
+    this.reset();
   }
 
-  private _settingsOfShrink(): ReturnType<typeof parseShrink> {
-    return parseShrink(this.cfg.imageShrink);
-  }
-
-  private async _processShrink(file: File): ReturnType<typeof shrinkFile> {
-    const settings = this._settingsOfShrink();
-    if (!settings) {
-      console.warn('Image shrink settings are invalid, skipping shrinking');
-      return file;
-    }
-    return await shrinkFile(file, settings);
-  }
-
-  upload = this._withEntry(async (entry) => {
+  private _upload = this.withEntry(async (entry) => {
     if (!this.uploadCollection.read(entry.uid)) {
       return;
     }
@@ -385,7 +368,12 @@ export class FileItem extends FileItemConfig {
         let file: File | Blob | null = entry.getValue('file');
         if (file instanceof File && this.cfg.imageShrink) {
           try {
-            file = await this._processShrink(file);
+            const settings = parseShrink(this.cfg.imageShrink);
+            if (!settings) {
+              console.warn('Image shrink settings are invalid, skipping shrinking');
+            } else {
+              file = await shrinkFile(file, settings);
+            }
           } catch {
             // keep original file if shrinking fails
           }
@@ -429,7 +417,7 @@ export class FileItem extends FileItemConfig {
         source: entry.getValue('source') ?? null,
       });
 
-      if (entry === this._entry) {
+      if (entry === this.entry) {
         this._debouncedCalculateState();
       }
     } catch (cause) {
@@ -457,50 +445,59 @@ export class FileItem extends FileItemConfig {
         });
       }
 
-      if (entry === this._entry) {
+      if (entry === this.entry) {
         this._debouncedCalculateState();
       }
     }
   });
 
-  static override template = /* HTML */ `
-  <div class="uc-inner" set="@finished: isFinished; @uploading: isUploading; @failed: isFailed; @focused: isFocused">
-    <uc-thumb set="uid:uid;badgeIcon:badgeIcon"></uc-thumb>
+  public static activeInstances: Set<FileItem> = new Set<FileItem>();
 
-    <div aria-atomic="true" aria-live="polite" class="uc-file-name-wrapper" set="@aria-label:ariaLabelStatusFile;">
-      <span class="uc-file-name" set="@hidden: !showFileNames">{{itemName}}</span>
-      <span class="uc-file-error" set="@hidden: !errorText;">{{errorText}}</span>
-      <span class="uc-file-hint" set="@hidden: !hint">{{hint}}</span>
-    </div>
-    <div class="uc-file-actions">
-      <button
-        type="button"
-        l10n="@title:file-item-edit-button;@aria-label:file-item-edit-button"
-        class="uc-edit-btn uc-mini-btn"
-        set="onclick: onEdit; @hidden: !isEditable"
-        data-testid="edit"
-      >
-        <uc-icon name="edit-file"></uc-icon>
-      </button>
-      <button
-        type="button"
-        l10n="@title:file-item-remove-button;@aria-label:file-item-remove-button"
-        class="uc-remove-btn uc-mini-btn"
-        set="onclick: onRemove;"
-      >
-        <uc-icon name="remove-file"></uc-icon>
-      </button>
-      <button type="button" class="uc-upload-btn uc-mini-btn" set="onclick: onUpload;">
-        <uc-icon name="upload"></uc-icon>
-      </button>
-    </div>
-    <uc-progress-bar
-      class="uc-progress-bar"
-      set="value: progressValue; visible: progressVisible; @hasFileName: showFileNames;"
-    >
-    </uc-progress-bar>
-  </div>
-`;
+  protected override shouldUpdate(changedProperties: PropertyValues<this>): boolean {
+    if (this._pauseRender) {
+      return false;
+    }
+    return super.shouldUpdate(changedProperties);
+  }
 
-  static activeInstances: Set<FileItem> = new Set<FileItem>();
+  public override render() {
+    return html`
+      <div class="uc-inner" ?finished=${this._isFinished} ?uploading=${this._isUploading} ?failed=${this._isFailed} ?focused=${this._isFocused}>
+        <uc-thumb .uid=${this.uid} .badgeIcon=${this._badgeIcon}></uc-thumb>
+
+        <div aria-atomic="true" aria-live="polite" class="uc-file-name-wrapper" aria-label=${this._ariaLabelStatusFile}>
+          <span class="uc-file-name" ?hidden=${!this._showFileNames}>${this._itemName}</span>
+          <span class="uc-file-error" ?hidden=${!this._errorText}>${this._errorText}</span>
+          <span class="uc-file-hint" ?hidden=${!this._hint}>${this._hint}</span>
+        </div>
+        <div class="uc-file-actions">
+          <button
+            type="button"
+            @click=${this._handleEdit}
+            ?hidden=${!this._isEditable}
+            title=${this.l10n('file-item-edit-button')}
+            aria-label=${this.l10n('file-item-edit-button')}
+            class="uc-edit-btn uc-mini-btn"
+            data-testid="edit"
+          >
+            <uc-icon name="edit-file"></uc-icon>
+          </button>
+          <button
+            type="button"
+            @click=${this._handleRemove}
+            title=${this.l10n('file-item-remove-button')}
+            aria-label=${this.l10n('file-item-remove-button')}
+            class="uc-remove-btn uc-mini-btn"
+          >
+            <uc-icon name="remove-file"></uc-icon>
+          </button>
+          <button type="button" class="uc-upload-btn uc-mini-btn" @click=${this._handleUploadClick}>
+            <uc-icon name="upload"></uc-icon>
+          </button>
+        </div>
+        <uc-progress-bar class="uc-progress-bar" .value=${this._progressValue} .visible=${this._progressVisible} ?hasFileName=${this._showFileNames}>
+        </uc-progress-bar>
+      </div>
+    `;
+  }
 }

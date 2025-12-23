@@ -8,8 +8,8 @@
     "strict": true,
     "skipLibCheck": true,
     "noEmit": true,
-    "types": ["@total-typescript/ts-reset", "@vitest/browser/providers/playwright"]
+    "types": ["@total-typescript/ts-reset", "@vitest/browser-playwright"]
   },
-  "include": ["vite.config.js", "test-locales.js", "ship.config.mjs", "scripts"],
+  "include": ["vite.config.ts", "test-locales.js", "ship.config.mjs", "scripts"],
   "exclude": ["node_modules", "tests"]
 }

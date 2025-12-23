@@ -1,0 +1,46 @@
+<!doctype html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script type="module">
+  import '@/solutions/file-uploader/regular/index.css';
+  import * as UC from '@/index.js';
+
+  UC.defineComponents(UC);
+
+  const form = document.querySelector('form');
+  console.log(form);
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const data = [...new FormData(e.target).entries()];
+    const results = document.getElementById('results');
+    results.innerHTML = /* html */ `
+        <h3>Form Data</h3>
+        <pre>${JSON.stringify(data, null, 2)}</pre>
+      `;
+  });
+  </script>
+</head>
+
+<uc-config
+  ctx-name="my-uploader"
+  pubkey="demopublickey"
+  multiple-min="1"
+  multiple-max="10"
+  img-only
+  group-output
+  debug
+  quality-insights="false"
+  test-mode
+></uc-config>
+
+<form>
+  <uc-file-uploader-regular class="uc-light" ctx-name="my-uploader">
+    <uc-form-input ctx-name="my-uploader"></uc-form-input>
+  </uc-file-uploader-regular>
+  <br>
+  <br>
+  <button type="submit">Submit</button>
+  <br>
+  <br>
+  <div id="results"></div>
+</form>

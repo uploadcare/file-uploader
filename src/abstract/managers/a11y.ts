@@ -1,5 +1,5 @@
 import { focusGroupKeyUX, hiddenKeyUX, jumpKeyUX, pressKeyUX, startKeyUX } from 'keyux';
-import type { Block } from '../Block';
+import type { LitBlock } from '../../lit/LitBlock';
 
 /**
  * MinimalWindow interface is not exported by keyux, so we import it here using tricky way.
@@ -16,7 +16,7 @@ class ScopedMinimalWindow implements MinimalWindow {
   private readonly _listeners = new Map<KeyEventListener, KeyEventListener>();
   private _scope: Node[] = [];
 
-  addEventListener(type: 'keydown' | 'keyup', listener: KeyEventListener): void {
+  public addEventListener(type: 'keydown' | 'keyup', listener: KeyEventListener): void {
     const wrappedListener: KeyEventListener = (event) => {
       const target = event.target;
       if (!(target instanceof Node)) {
@@ -30,7 +30,7 @@ class ScopedMinimalWindow implements MinimalWindow {
     window.addEventListener(type, wrappedListener);
   }
 
-  removeEventListener(type: 'keydown' | 'keyup', listener: KeyEventListener): void {
+  public removeEventListener(type: 'keydown' | 'keyup', listener: KeyEventListener): void {
     const wrappedListener = this._listeners.get(listener);
     if (wrappedListener) {
       window.removeEventListener(type, wrappedListener);
@@ -38,23 +38,23 @@ class ScopedMinimalWindow implements MinimalWindow {
     this._listeners.delete(listener);
   }
 
-  get CustomEvent(): typeof CustomEvent {
+  public get CustomEvent(): typeof CustomEvent {
     return window.CustomEvent;
   }
 
-  get document(): Document {
+  public get document(): Document {
     return window.document;
   }
 
-  get navigator(): Navigator {
+  public get navigator(): Navigator {
     return window.navigator;
   }
 
-  registerScope(scope: Node): void {
+  public registerScope(scope: Node): void {
     this._scope.push(scope);
   }
 
-  destroy(): void {
+  public destroy(): void {
     this._scope = [];
     for (const wrappedListener of this._listeners.values()) {
       window.removeEventListener('keydown', wrappedListener);
@@ -68,7 +68,7 @@ export class A11y {
   private _destroyKeyUX: ReturnType<typeof startKeyUX> | undefined;
   private readonly _scopedWindow: ScopedMinimalWindow;
 
-  constructor() {
+  public constructor() {
     this._scopedWindow = new ScopedMinimalWindow();
     this._destroyKeyUX = startKeyUX(this._scopedWindow, [
       focusGroupKeyUX(),
@@ -78,11 +78,11 @@ export class A11y {
     ]);
   }
 
-  registerBlock(scope: Block): void {
+  public registerBlock(scope: LitBlock): void {
     this._scopedWindow.registerScope(scope);
   }
 
-  destroy(): void {
+  public destroy(): void {
     this._destroyKeyUX?.();
     this._scopedWindow.destroy();
   }

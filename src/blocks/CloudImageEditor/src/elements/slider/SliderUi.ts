@@ -1,135 +1,134 @@
-import { Block } from '../../../../../abstract/Block';
+import { html, type PropertyValues } from 'lit';
+import { property, state } from 'lit/decorators.js';
+import { createRef, ref } from 'lit/directives/ref.js';
+import { LitBlock } from '../../../../../lit/LitBlock';
 
-type SliderHandler = (value: number) => void;
-
-export class SliderUi extends Block {
+export class SliderUi extends LitBlock {
   private _observer?: ResizeObserver;
   private _thumbSize = 0;
-  private _zero = 0;
   private _zeroDotEl?: HTMLDivElement;
   private _stepsCount?: number;
+  private readonly _inputRef = createRef<HTMLInputElement>();
+  private readonly _thumbRef = createRef<HTMLDivElement>();
+  private readonly _stepsRef = createRef<HTMLDivElement>();
 
-  constructor() {
+  @property({ type: Boolean, reflect: true })
+  public disabled = false;
+
+  @property({ type: Number })
+  public min = 0;
+
+  @property({ type: Number })
+  public max = 100;
+
+  @property({ type: Number, attribute: false })
+  public defaultValue = 0;
+
+  @property({ type: Number })
+  public zero = 0;
+
+  @state()
+  private _currentValue = 0;
+
+  public constructor() {
     super();
-
-    this.init$ = {
-      ...this.init$,
-      disabled: false,
-      min: 0,
-      max: 100,
-      onInput: null as SliderHandler | null,
-      onChange: null as SliderHandler | null,
-      defaultValue: 0,
-      'on.sliderInput': () => {
-        const value = Number.parseInt(this._inputEl().value, 10);
-        this._updateValue(value);
-        this.$.onInput?.(value);
-      },
-      'on.sliderChange': () => {
-        const value = Number.parseInt(this._inputEl().value, 10);
-        this.$.onChange?.(value);
-      },
-    };
-
     this.setAttribute('with-effects', '');
   }
 
-  override initCallback(): void {
-    super.initCallback();
+  private _emitSliderEvent(type: 'slider-input', value: number): void {
+    this.dispatchEvent(
+      new CustomEvent(type, {
+        detail: { value },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  }
 
-    this.defineAccessor('disabled', (disabled: boolean) => {
-      this.$.disabled = disabled;
-    });
+  private readonly _handleSliderInput = (event: Event): void => {
+    event.stopPropagation();
+    const value = this._extractEventValue(event);
+    if (value === null) {
+      return;
+    }
+    this._setCurrentValue(value);
+    this._emitSliderEvent('slider-input', value);
+  };
 
-    this.defineAccessor('min', (min: number) => {
-      this.$.min = min;
-    });
+  private readonly _handleSliderChange = (event: Event): void => {
+    event.stopPropagation();
+    const value = this._extractEventValue(event);
+    if (value === null) {
+      return;
+    }
+    this._setCurrentValue(value);
+  };
 
-    this.defineAccessor('max', (max: number) => {
-      this.$.max = max;
-    });
+  private readonly _handleInputFocus = (): void => {
+    this.style.setProperty('--color-effect', 'var(--hover-color-rgb)');
+  };
 
-    this.defineAccessor('defaultValue', (defaultValue: number) => {
-      this.$.defaultValue = defaultValue;
-      const inputEl = this._inputEl();
-      inputEl.value = String(defaultValue);
-      this._updateValue(defaultValue);
-    });
+  private readonly _handleInputBlur = (): void => {
+    this.style.setProperty('--color-effect', 'var(--idle-color-rgb)');
+  };
 
-    this.defineAccessor('zero', (zero: number) => {
-      this._zero = zero;
-    });
+  protected override firstUpdated(changedProperties: PropertyValues<this>): void {
+    super.firstUpdated(changedProperties);
 
-    this.defineAccessor('onInput', (onInput: SliderHandler | null) => {
-      if (!onInput) {
-        return;
-      }
-      this.$.onInput = onInput;
-    });
-
-    this.defineAccessor('onChange', (onChange: SliderHandler | null) => {
-      if (!onChange) {
-        return;
-      }
-      this.$.onChange = onChange;
-    });
-
+    this._thumbSize = Number.parseInt(window.getComputedStyle(this).getPropertyValue('--l-thumb-size'), 10) || 0;
+    this._syncInputValue(this._currentValue);
     this._updateSteps();
 
     this._observer = new ResizeObserver(() => {
       this._updateSteps();
-      const value = Number.parseInt(this._inputEl().value, 10);
-      this._updateValue(value);
+      this._updateValue(this._currentValue);
     });
     this._observer.observe(this);
 
-    this._thumbSize = Number.parseInt(window.getComputedStyle(this).getPropertyValue('--l-thumb-size'), 10);
+    const inputEl = this._inputRef.value;
+    inputEl?.addEventListener('focus', this._handleInputFocus);
+    inputEl?.addEventListener('blur', this._handleInputBlur);
 
-    setTimeout(() => {
-      const value = Number.parseInt(this._inputEl().value, 10);
-      this._updateValue(value);
+    window.setTimeout(() => {
+      this._updateValue(this._currentValue);
     }, 0);
-
-    this.sub('disabled', (disabled: boolean) => {
-      const el = this._inputEl();
-      if (disabled) {
-        el.setAttribute('disabled', 'disabled');
-      } else {
-        el.removeAttribute('disabled');
-      }
-    });
-
-    const inputEl = this._inputEl();
-    inputEl.addEventListener('focus', () => {
-      this.style.setProperty('--color-effect', 'var(--hover-color-rgb)');
-    });
-    inputEl.addEventListener('blur', () => {
-      this.style.setProperty('--color-effect', 'var(--idle-color-rgb)');
-    });
   }
 
-  private _inputEl(): HTMLInputElement {
-    return this.ref['input-el'] as HTMLInputElement;
-  }
+  protected override willUpdate(changedProperties: PropertyValues<this>): void {
+    super.willUpdate(changedProperties);
 
-  private _thumbEl(): HTMLElement {
-    return this.ref['thumb-el'] as HTMLElement;
-  }
+    if (changedProperties.has('defaultValue') && this.defaultValue !== this._currentValue) {
+      this._setCurrentValue(this.defaultValue);
+    }
 
-  private _stepsEl(): HTMLElement {
-    return this.ref['steps-el'] as HTMLElement;
+    const boundsChanged = changedProperties.has('min') || changedProperties.has('max');
+    if (boundsChanged && this.hasUpdated) {
+      this._updateSteps();
+      this._updateValue(this._currentValue);
+    }
+
+    if (changedProperties.has('zero') && this.hasUpdated) {
+      this._updateZeroDot(this._currentValue);
+    }
   }
 
   private _updateValue(value: number): void {
     this._updateZeroDot(value);
 
+    const range = this.max - this.min;
+    if (range === 0) {
+      return;
+    }
     const { width } = this.getBoundingClientRect();
-    const slope = 100 / (this.$.max - this.$.min);
-    const mappedValue = slope * (value - this.$.min);
+    const slope = 100 / range;
+    const mappedValue = slope * (value - this.min);
     const offset = (mappedValue * (width - this._thumbSize)) / 100;
 
     window.requestAnimationFrame(() => {
-      this._thumbEl().style.transform = `translateX(${offset}px)`;
+      const thumbEl = this._thumbRef.value;
+      if (thumbEl) {
+        thumbEl.style.transform = `translateX(${offset}px)`;
+      }
     });
   }
 
@@ -137,10 +136,14 @@ export class SliderUi extends Block {
     if (!this._zeroDotEl) {
       return;
     }
-    this._zeroDotEl.style.opacity = value === this._zero ? '0' : '1';
+    const range = this.max - this.min;
+    if (range === 0) {
+      return;
+    }
+    this._zeroDotEl.style.opacity = value === this.zero ? '0' : '1';
     const { width } = this.getBoundingClientRect();
-    const slope = 100 / (this.$.max - this.$.min);
-    const mappedValue = slope * (this._zero - this.$.min);
+    const slope = 100 / range;
+    const mappedValue = slope * (this.zero - this.min);
     const offset = (mappedValue * (width - this._thumbSize)) / 100;
     window.requestAnimationFrame(() => {
       if (this._zeroDotEl) {
@@ -151,8 +154,11 @@ export class SliderUi extends Block {
 
   private _updateSteps(): void {
     const STEP_GAP = 15;
+    const stepsEl = this._stepsRef.value;
+    if (!stepsEl) {
+      return;
+    }
 
-    const stepsEl = this._stepsEl();
     const { width } = stepsEl.getBoundingClientRect();
     const half = Math.ceil(width / 2);
     const count = Math.ceil(half / STEP_GAP) - 2;
@@ -186,18 +192,57 @@ export class SliderUi extends Block {
     this._stepsCount = count;
   }
 
-  override destroyCallback(): void {
-    super.destroyCallback();
+  public override disconnectedCallback(): void {
+    super.disconnectedCallback();
+    const inputEl = this._inputRef.value;
+    inputEl?.removeEventListener('focus', this._handleInputFocus);
+    inputEl?.removeEventListener('blur', this._handleInputBlur);
     this._observer?.disconnect();
+    this._observer = undefined;
+  }
+
+  private _setCurrentValue(value: number): void {
+    if (!Number.isFinite(value)) {
+      return;
+    }
+    this._currentValue = value;
+    if (this.hasUpdated) {
+      this._syncInputValue(value);
+      this._updateValue(value);
+    }
+  }
+
+  private _syncInputValue(value: number): void {
+    const inputEl = this._inputRef.value;
+    if (inputEl) {
+      inputEl.value = String(value);
+    }
+  }
+
+  private _extractEventValue(event: Event): number | null {
+    const target = event.currentTarget as HTMLInputElement | null;
+    if (!target) {
+      return null;
+    }
+    const parsedValue = Number.parseInt(target.value, 10);
+    return Number.isFinite(parsedValue) ? parsedValue : null;
+  }
+
+  public override render() {
+    return html`
+      <div class="uc-steps" ${ref(this._stepsRef)}></div>
+      <div class="uc-thumb" ${ref(this._thumbRef)}></div>
+      <input
+        class="uc-input"
+        type="range"
+        ${ref(this._inputRef)}
+        .min=${String(this.min)}
+        .max=${String(this.max)}
+        .value=${String(this._currentValue)}
+        ?disabled=${this.disabled}
+        @input=${this._handleSliderInput}
+        @change=${this._handleSliderChange}
+      />
+    `;
   }
 }
-SliderUi.template = /* HTML */ `
-  <div class="uc-steps" ref="steps-el"></div>
-  <div ref="thumb-el" class="uc-thumb"></div>
-  <input
-    class="uc-input"
-    type="range"
-    ref="input-el"
-    set="oninput: on.sliderInput; onchange: on.sliderChange; @min: min; @max: max; @value: defaultValue;"
-  />
-`;

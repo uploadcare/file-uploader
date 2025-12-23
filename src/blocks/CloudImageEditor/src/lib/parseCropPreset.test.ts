@@ -1,5 +1,6 @@
-import { UID } from '@symbiotejs/symbiote';
 import { describe, expect, it, vi } from 'vitest';
+import type { Uid } from '../../../../lit/Uid';
+import { UID } from '../../../../utils/UID';
 import { getClosestAspectRatio, parseCropPreset } from './parseCropPreset';
 
 describe('parseCropPreset', () => {
@@ -7,14 +8,14 @@ describe('parseCropPreset', () => {
     const uniqueIds = 4;
     let uidCallCount = 0;
 
-    const generateSpy = vi.spyOn(UID, 'generate').mockImplementation(() => {
+    const generateSpy = vi.spyOn(UID, 'generateFastUid').mockImplementation(() => {
       const id = `id-${(uidCallCount % uniqueIds) + 1}`;
       uidCallCount += 1;
-      return id;
+      return id as Uid;
     });
 
     const input = '16:9, 3:4, 4:3, 1:1';
-    const uuid = () => UID.generate();
+    const uuid = () => UID.generateFastUid();
     const expected = [
       { id: uuid(), type: 'aspect-ratio', width: 16, height: 9, hasFreeform: false },
       { id: uuid(), type: 'aspect-ratio', width: 3, height: 4, hasFreeform: false },

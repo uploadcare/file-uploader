@@ -130,13 +130,14 @@
   }
 
   uc-file-item .uc-progress-bar {
-    opacity: 0.7;
+    --visible-opacity: 0.7;
+
     top: calc(100% - 2px);
     height: 2px;
   }
 
   :where(.uc-contrast) uc-file-item .uc-progress-bar {
-    opacity: 1;
+    --visible-opacity: 1;
   }
 
   uc-file-item .uc-file-actions {
@@ -222,8 +223,8 @@
 
   uc-file-item[mode="grid"] .uc-progress-bar {
     width: initial;
-    height: 4px !important;
-    top: initial !important;
+    height: 4px;
+    top: initial;
     bottom: var(--uc-padding);
     left: var(--uc-padding);
     right: var(--uc-padding);
