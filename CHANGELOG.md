@@ -1,3 +1,13 @@
+## [1.24.6](https://github.com/uploadcare/file-uploader/compare/v1.24.5...v1.24.6) (2025-12-23)
+
+
+### Bug Fixes
+
+* prevent progress bar from resetting to 0 during validation ([#900](https://github.com/uploadcare/file-uploader/issues/900)) ([c52ec43](https://github.com/uploadcare/file-uploader/commit/c52ec435214b81bf18be80f391bc7eb60e773cc8))
+* reduced the number of retries ([#902](https://github.com/uploadcare/file-uploader/issues/902)) ([bdece2a](https://github.com/uploadcare/file-uploader/commit/bdece2a9f5eec8511c57563dba980a16aa754fd8))
+
+
+
 ## [1.24.5](https://github.com/uploadcare/file-uploader/compare/v1.24.4...v1.24.5) (2025-12-01)
 
 
