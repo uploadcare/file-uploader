@@ -97,4 +97,26 @@ describe('API', () => {
 
     expect(eventPayload).toMatchObject(expect.objectContaining({ status: 'idle', externalUrl: url }));
   });
+
+  it('should set cloud-image-edit activity with params', async () => {
+    const uploadCtxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
+    const api = uploadCtxProvider.getAPI();
+
+    const url =
+      'https://images.unsplash.com/photo-1699102241946-45c5e1937d69?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&dl=prithiviraj-a-fa7Stge3YXs-unsplash.jpg&w=640';
+    api.addFileFromUrl(url);
+
+    const eventHandler = (event: CustomEvent<EventPayload['file-upload-success']>) => {
+      const detail = event.detail as EventPayload['file-upload-success'];
+      api.setCurrentActivity('cloud-image-edit', { internalId: detail.internalId });
+      api.setModalState(true);
+    };
+
+    uploadCtxProvider.addEventListener('file-upload-success', eventHandler);
+
+    const startFrom = page.getByTestId('uc-start-from');
+    const cloudImageEdit = page.getByTestId('uc-cloud-image-editor-activity');
+    await expect.element(startFrom).not.toBeVisible();
+    await expect.element(cloudImageEdit).toBeVisible();
+  });
 });
