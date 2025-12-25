@@ -17,6 +17,7 @@ export class CloudImageEditorActivity extends UploaderBlock {
 
   override get activityParams(): ActivityParams {
     const params = super.activityParams;
+
     if ('internalId' in params) {
       return params;
     }
