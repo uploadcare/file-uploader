@@ -1,3 +1,12 @@
+## [1.24.7](https://github.com/uploadcare/file-uploader/compare/v1.24.6...v1.24.7) (2025-12-25)
+
+
+### Bug Fixes
+
+* **uploader-public-api:** adjusted activityParams ([#906](https://github.com/uploadcare/file-uploader/issues/906)) ([7e808bd](https://github.com/uploadcare/file-uploader/commit/7e808bd071e31577056ea8843ecfd8274ac83b1f))
+
+
+
 ## [1.24.6](https://github.com/uploadcare/file-uploader/compare/v1.24.5...v1.24.6) (2025-12-23)
 
 
