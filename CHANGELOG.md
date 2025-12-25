@@ -3,7 +3,7 @@
 
 ### Bug Fixes
 
-* **cloud-image-editor:** adjusted activityParams ([#906](https://github.com/uploadcare/file-uploader/issues/906)) ([7e808bd](https://github.com/uploadcare/file-uploader/commit/7e808bd071e31577056ea8843ecfd8274ac83b1f))
+* **uploader-public-api:** adjusted activityParams ([#906](https://github.com/uploadcare/file-uploader/issues/906)) ([7e808bd](https://github.com/uploadcare/file-uploader/commit/7e808bd071e31577056ea8843ecfd8274ac83b1f))
 
 
 
