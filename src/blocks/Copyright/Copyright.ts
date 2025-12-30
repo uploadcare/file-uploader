@@ -14,7 +14,7 @@ export class Copyright extends LitBlock {
   public override render() {
     return html`
       <a
-        href="https://uploadcare.com/?utm_source=copyright&utm_medium=referral&utm_campaign=v4"
+        href="https://uploadcare.com/?utm_source=copyright&amp;utm_medium=referral&amp;utm_campaign=v4"
         target="_blank noopener"
         class="uc-credits"
         >Powered by Uploadcare</a

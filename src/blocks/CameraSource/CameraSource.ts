@@ -1091,7 +1091,6 @@ export class CameraSource extends LitUploaderBlock {
 
     <button
       type="button"
-      class="uc-shot-btn uc-camera-action"
       data-testid="shot"
       @click=${this._handleStartCamera}
       class=${this._mutableClassButton}
