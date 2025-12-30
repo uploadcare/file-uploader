@@ -145,6 +145,7 @@
     "stylelint-declaration-block-no-ignored-properties": "^2.8.0",
     "stylelint-order": "^7.0.0",
     "svg-sprite": "^2.0.4",
+    "ts-lit-plugin": "^2.0.2",
     "tsd": "^0.33.0",
     "tsup": "^8.5.0",
     "tsx": "^4.20.6",

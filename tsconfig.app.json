@@ -18,7 +18,13 @@
     "sourceMap": true,
     "types": ["@total-typescript/ts-reset", "vite/client"],
     "experimentalDecorators": true,
-    "useDefineForClassFields": false
+    "useDefineForClassFields": false,
+    "plugins": [
+      {
+        "name": "ts-lit-plugin",
+        "strict": true
+      }
+    ]
   },
   "include": ["src"],
   "exclude": ["node_modules", "**/*.test.js"]
