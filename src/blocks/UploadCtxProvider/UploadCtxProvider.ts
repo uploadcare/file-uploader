@@ -42,3 +42,9 @@ export interface UploadCtxProvider extends LitUploaderBlock {
     options?: boolean | EventListenerOptions,
   ): void;
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-upload-ctx-provider': UploadCtxProvider;
+  }
+}

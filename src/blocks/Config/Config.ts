@@ -225,3 +225,9 @@ for (const key of allConfigKeys) {
 }
 
 export interface Config extends ConfigType {}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-config': Config;
+  }
+}

@@ -501,3 +501,9 @@ export class FileItem extends FileItemConfig {
     `;
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-file-item': FileItem;
+  }
+}

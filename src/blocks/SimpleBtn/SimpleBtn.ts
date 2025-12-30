@@ -38,3 +38,9 @@ export class SimpleBtn extends LitUploaderBlock {
     `;
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-simple-btn': SimpleBtn;
+  }
+}

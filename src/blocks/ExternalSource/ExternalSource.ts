@@ -326,3 +326,9 @@ export class ExternalSource extends LitUploaderBlock {
     `;
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-external-source': ExternalSource;
+  }
+}

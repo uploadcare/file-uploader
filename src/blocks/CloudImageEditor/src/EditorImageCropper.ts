@@ -537,3 +537,9 @@ export class EditorImageCropper extends LitBlock {
     `;
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-editor-image-cropper': EditorImageCropper;
+  }
+}

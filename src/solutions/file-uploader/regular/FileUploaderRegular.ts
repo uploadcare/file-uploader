@@ -72,3 +72,9 @@ export class FileUploaderRegular extends LitSolutionBlock {
 `;
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-file-uploader-regular': FileUploaderRegular;
+  }
+}

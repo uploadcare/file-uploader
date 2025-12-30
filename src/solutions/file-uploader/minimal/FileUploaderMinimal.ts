@@ -182,3 +182,9 @@ export class FileUploaderMinimal extends LitSolutionBlock {
     `;
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-file-uploader-minimal': FileUploaderMinimal;
+  }
+}

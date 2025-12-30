@@ -326,3 +326,9 @@ export class EditorFilterControl extends EditorButtonControl {
     `;
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-editor-filter-control': EditorFilterControl;
+  }
+}

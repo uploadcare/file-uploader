@@ -64,3 +64,9 @@ export class ProgressBarCommon extends LitUploaderBlock {
     return html` <uc-progress-bar .value=${this._value} .visible=${this._visible}></uc-progress-bar> `;
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-progress-bar-common': ProgressBarCommon;
+  }
+}

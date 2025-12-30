@@ -109,3 +109,9 @@ export class FileUploaderInline extends LitSolutionBlock {
     `;
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-file-uploader-inline': FileUploaderInline;
+  }
+}

@@ -98,3 +98,9 @@ export class FormInput extends LitUploaderBlock {
     );
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-form-input': FormInput;
+  }
+}

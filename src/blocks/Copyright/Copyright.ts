@@ -22,3 +22,9 @@ export class Copyright extends LitBlock {
     `;
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-copyright': Copyright;
+  }
+}

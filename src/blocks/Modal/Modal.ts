@@ -145,3 +145,9 @@ export class Modal extends LitBlock {
 `;
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-modal': Modal;
+  }
+}

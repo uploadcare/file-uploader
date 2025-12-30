@@ -297,3 +297,9 @@ export class UploadList extends LitUploaderBlock {
 `;
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-upload-list': UploadList;
+  }
+}

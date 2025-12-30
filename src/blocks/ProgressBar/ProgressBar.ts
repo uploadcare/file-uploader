@@ -93,3 +93,9 @@ export class ProgressBar extends LitBlock {
     `;
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-progress-bar': ProgressBar;
+  }
+}

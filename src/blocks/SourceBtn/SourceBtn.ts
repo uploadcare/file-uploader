@@ -162,3 +162,9 @@ export class SourceBtn extends LitUploaderBlock {
     `;
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-source-btn': SourceBtn;
+  }
+}

@@ -399,3 +399,9 @@ export class CloudImageEditorBlock extends LitBlock {
     );
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-cloud-image-editor-block': CloudImageEditorBlock;
+  }
+}

@@ -369,3 +369,9 @@ export class Thumb extends FileItemConfig {
 `;
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-thumb': Thumb;
+  }
+}

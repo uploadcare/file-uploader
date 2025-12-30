@@ -101,3 +101,9 @@ export class UrlSource extends LitUploaderBlock {
     `;
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-url-source': UrlSource;
+  }
+}

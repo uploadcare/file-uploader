@@ -95,3 +95,9 @@ export class BtnUi extends LitBlock {
     `;
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-btn-ui': BtnUi;
+  }
+}

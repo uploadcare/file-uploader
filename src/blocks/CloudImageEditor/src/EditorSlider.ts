@@ -131,3 +131,9 @@ export class EditorSlider extends LitBlock {
     `;
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-editor-slider': EditorSlider;
+  }
+}

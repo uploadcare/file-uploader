@@ -1125,3 +1125,9 @@ export class CameraSource extends LitUploaderBlock {
 `;
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-camera-source': CameraSource;
+  }
+}

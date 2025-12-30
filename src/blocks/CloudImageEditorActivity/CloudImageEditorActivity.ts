@@ -141,3 +141,9 @@ export class CloudImageEditorActivity extends LitUploaderBlock {
     return config;
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-cloud-image-editor-activity': CloudImageEditorActivity;
+  }
+}

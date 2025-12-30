@@ -260,3 +260,9 @@ export class DropArea extends LitUploaderBlock {
     `;
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-drop-area': DropArea;
+  }
+}

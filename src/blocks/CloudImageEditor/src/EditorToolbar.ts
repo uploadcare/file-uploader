@@ -615,3 +615,9 @@ export class EditorToolbar extends LitBlock {
     `;
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-editor-toolbar': EditorToolbar;
+  }
+}

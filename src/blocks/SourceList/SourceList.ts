@@ -69,3 +69,9 @@ export class SourceList extends LitBlock {
     return html`${this._sources.map((type) => html`<uc-source-btn role="listitem" type=${type}></uc-source-btn>`)}`;
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-source-list': SourceList;
+  }
+}

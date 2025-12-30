@@ -196,3 +196,10 @@ export class EditorAspectRatioButtonControl extends EditorButtonControl {
     `;
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-editor-freeform-button-control': EditorFreeformButtonControl;
+    'uc-editor-aspect-ratio-button-control': EditorAspectRatioButtonControl;
+  }
+}
