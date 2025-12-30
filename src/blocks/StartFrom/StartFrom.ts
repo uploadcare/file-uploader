@@ -15,3 +15,9 @@ export class StartFrom extends LitActivityBlock {
     return html` <div class="uc-content">${this.yield('')}</div> `;
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-start-from': StartFrom;
+  }
+}

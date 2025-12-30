@@ -4,6 +4,18 @@ import { InternalEventType } from '../../../blocks/UploadCtxProvider/EventEmitte
 import { LitSolutionBlock } from '../../../lit/LitSolutionBlock';
 import './index.css';
 
+import '../../../blocks/Modal/Modal';
+import '../../../blocks/StartFrom/StartFrom';
+import '../../../blocks/DropArea/DropArea';
+import '../../../blocks/SourceList/SourceList';
+import '../../../blocks/Copyright/Copyright';
+import '../../../blocks/UploadList/UploadList';
+import '../../../blocks/CameraSource/CameraSource';
+import '../../../blocks/UrlSource/UrlSource';
+import '../../../blocks/ExternalSource/ExternalSource';
+import '../../../blocks/CloudImageEditorActivity/CloudImageEditorActivity';
+import '../../../blocks/SimpleBtn/SimpleBtn';
+
 type BaseInitState = InstanceType<typeof LitSolutionBlock>['init$'];
 interface FileUploaderRegularInitState extends BaseInitState {
   '*solution': string;
@@ -70,5 +82,11 @@ export class FileUploaderRegular extends LitSolutionBlock {
     <uc-cloud-image-editor-activity></uc-cloud-image-editor-activity>
   </uc-modal>
 `;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-file-uploader-regular': FileUploaderRegular;
   }
 }

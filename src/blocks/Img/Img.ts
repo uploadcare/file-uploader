@@ -26,3 +26,9 @@ export class Img extends ImgBase {
     });
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-img': Img;
+  }
+}

@@ -12,6 +12,8 @@ import { COMMON_OPERATIONS, transformationsToOperations } from './lib/transforma
 import type { Transformations } from './types';
 import { parseFilterValue } from './utils/parseFilterValue.js';
 
+import '../../Icon/Icon';
+
 export class EditorFilterControl extends EditorButtonControl {
   private _operation = '';
   private _filter = '';
@@ -324,5 +326,11 @@ export class EditorFilterControl extends EditorButtonControl {
         ></uc-icon>
       </button>
     `;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-editor-filter-control': EditorFilterControl;
   }
 }

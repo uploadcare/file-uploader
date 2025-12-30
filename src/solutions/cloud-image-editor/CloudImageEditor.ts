@@ -28,3 +28,9 @@ export class CloudImageEditor extends CloudImageEditorBlock {
     this.a11y?.registerBlock(this);
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-cloud-image-editor': CloudImageEditor;
+  }
+}

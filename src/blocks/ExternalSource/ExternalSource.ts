@@ -13,6 +13,10 @@ import { MessageBridge } from './MessageBridge';
 import { queryString } from './query-string';
 import type { InputMessageMap } from './types';
 
+import '../ActivityHeader/ActivityHeader';
+import '../Icon/Icon';
+import '../Spinner/Spinner';
+
 const SOCIAL_SOURCE_MAPPING: Record<string, string> = {
   [ExternalUploadSource.GDRIVE]: 'ngdrive',
 };
@@ -324,5 +328,11 @@ export class ExternalSource extends LitUploaderBlock {
           </div>
         </div>
     `;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-external-source': ExternalSource;
   }
 }

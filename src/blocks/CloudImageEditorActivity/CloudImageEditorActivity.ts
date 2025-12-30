@@ -9,6 +9,8 @@ import './cloud-image-editor-activity.css';
 import type { UploadEntryData } from '../../abstract/uploadEntrySchema';
 import type { Uid } from '../../lit/Uid';
 
+import '../../solutions/cloud-image-editor/CloudImageEditor';
+
 export type ActivityParams = { internalId: string };
 
 type EditorTemplateConfig = {
@@ -139,5 +141,11 @@ export class CloudImageEditorActivity extends LitUploaderBlock {
       tabs: this.cfg.cloudImageEditorTabs,
     };
     return config;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-cloud-image-editor-activity': CloudImageEditorActivity;
   }
 }

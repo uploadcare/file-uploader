@@ -3,6 +3,8 @@ import { state } from 'lit/decorators.js';
 import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
 import './progress-bar-common.css';
 
+import '../ProgressBar/ProgressBar';
+
 type BaseInitState = InstanceType<typeof LitUploaderBlock>['init$'];
 
 interface ProgressBarCommonInitState extends BaseInitState {
@@ -62,5 +64,11 @@ export class ProgressBarCommon extends LitUploaderBlock {
 
   public override render() {
     return html` <uc-progress-bar .value=${this._value} .visible=${this._visible}></uc-progress-bar> `;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-progress-bar-common': ProgressBarCommon;
   }
 }

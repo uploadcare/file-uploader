@@ -6,6 +6,8 @@ import { browserFeatures } from '../../utils/browser-info';
 import { deserializeCsv } from '../../utils/comma-separated';
 import { stringToArray } from '../../utils/stringToArray';
 
+import '../SourceBtn/SourceBtn';
+
 export class SourceList extends LitBlock {
   private _rawSourceList: string[] = [];
   private _cameraModes: string[] = [];
@@ -67,5 +69,11 @@ export class SourceList extends LitBlock {
 
   public override render() {
     return html`${this._sources.map((type) => html`<uc-source-btn role="listitem" type=${type}></uc-source-btn>`)}`;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-source-list': SourceList;
   }
 }

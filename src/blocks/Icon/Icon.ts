@@ -52,3 +52,9 @@ export class Icon extends LitBlock {
     `;
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-icon': Icon;
+  }
+}

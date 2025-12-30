@@ -5,6 +5,8 @@ import { ifDefined } from 'lit/directives/if-defined.js';
 import { EditorButtonControl } from './EditorButtonControl.js';
 import type { CropAspectRatio } from './types';
 
+import '../../Icon/Icon';
+
 const SIZE_RECT_FIXED = 12;
 const SIZE_SVG_WRAPPER = 16;
 
@@ -194,5 +196,12 @@ export class EditorAspectRatioButtonControl extends EditorButtonControl {
         <div class="uc-title" ?hidden=${!title}>${title}</div>
       </button>
     `;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-editor-freeform-button-control': EditorFreeformButtonControl;
+    'uc-editor-aspect-ratio-button-control': EditorAspectRatioButtonControl;
   }
 }

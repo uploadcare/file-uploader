@@ -45,3 +45,9 @@ export class Select extends LitBlock {
     this.dispatchEvent(new Event('change'));
   };
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-select': Select;
+  }
+}

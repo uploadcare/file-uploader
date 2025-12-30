@@ -246,3 +246,9 @@ export class SliderUi extends LitBlock {
     `;
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-slider-ui': SliderUi;
+  }
+}

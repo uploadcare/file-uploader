@@ -57,3 +57,9 @@ export class EditorCropButtonControl extends EditorButtonControl {
     cropper.setValue(this.operation, next);
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-editor-crop-button-control': EditorCropButtonControl;
+  }
+}

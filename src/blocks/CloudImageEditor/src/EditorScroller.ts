@@ -27,3 +27,9 @@ export class EditorScroller extends LitBlock {
     super.disconnectedCallback();
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-editor-scroller': EditorScroller;
+  }
+}

@@ -612,3 +612,9 @@ export class CropFrame extends LitBlock {
     return html`<svg class="uc-svg" xmlns="http://www.w3.org/2000/svg" ${ref(this._svgRef)}></svg>`;
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-crop-frame': CropFrame;
+  }
+}

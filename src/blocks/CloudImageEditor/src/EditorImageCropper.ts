@@ -21,6 +21,8 @@ import { pick } from './lib/pick.js';
 import type { CropAspectRatio, ImageSize, LoadingOperations, Rectangle, Transformations } from './types';
 import { viewerImageSrc } from './util.js';
 
+import './CropFrame';
+
 type CropTransform = NonNullable<Transformations['crop']>;
 
 type Operations = {
@@ -535,5 +537,11 @@ export class EditorImageCropper extends LitBlock {
       <canvas class="uc-canvas" ${ref(this._canvasRef)}></canvas>
       <uc-crop-frame ${ref(this._frameRef)}></uc-crop-frame>
     `;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-editor-image-cropper': EditorImageCropper;
   }
 }

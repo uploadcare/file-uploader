@@ -7,6 +7,9 @@ import { UploadSource } from '../../utils/UploadSource';
 import { InternalEventType } from '../UploadCtxProvider/EventEmitter';
 import './url-source.css';
 
+import '../ActivityHeader/ActivityHeader';
+import '../Icon/Icon';
+
 interface UrlSourceState {
   importDisabled: boolean;
 }
@@ -99,5 +102,11 @@ export class UrlSource extends LitUploaderBlock {
             >${this.l10n('upload-url')}</button>
       </form>
     `;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-url-source': UrlSource;
   }
 }

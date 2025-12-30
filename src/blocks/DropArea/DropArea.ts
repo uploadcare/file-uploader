@@ -9,6 +9,8 @@ import { addDropzone, DropzoneState, type DropzoneStateValue } from './addDropzo
 import './drop-area.css';
 import type { DropItem } from './getDropItems';
 
+import '../Icon/Icon';
+
 const dropAreaRegistry = new Set<DropArea>();
 
 export class DropArea extends LitUploaderBlock {
@@ -258,5 +260,11 @@ export class DropArea extends LitUploaderBlock {
     </div>`,
     )}
     `;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-drop-area': DropArea;
   }
 }
