@@ -12,6 +12,8 @@ import { COMMON_OPERATIONS, transformationsToOperations } from './lib/transforma
 import type { Transformations } from './types';
 import { parseFilterValue } from './utils/parseFilterValue.js';
 
+import '../../Icon/Icon';
+
 export class EditorFilterControl extends EditorButtonControl {
   private _operation = '';
   private _filter = '';

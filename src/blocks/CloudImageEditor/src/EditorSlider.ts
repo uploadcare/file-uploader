@@ -6,6 +6,8 @@ import type { ColorOperation, FilterId } from './toolbar-constants';
 import { COLOR_OPERATIONS_CONFIG } from './toolbar-constants';
 import type { Transformations } from './types';
 
+import './elements/slider/SliderUi';
+
 type SliderOperation = ColorOperation | 'filter';
 type SliderFilter = FilterId | typeof FAKE_ORIGINAL_FILTER;
 

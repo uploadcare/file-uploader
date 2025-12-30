@@ -7,6 +7,9 @@ import { UploadSource } from '../../utils/UploadSource';
 import { InternalEventType } from '../UploadCtxProvider/EventEmitter';
 import './url-source.css';
 
+import '../ActivityHeader/ActivityHeader';
+import '../Icon/Icon';
+
 interface UrlSourceState {
   importDisabled: boolean;
 }

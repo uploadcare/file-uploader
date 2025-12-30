@@ -25,6 +25,14 @@ import svgIconsSprite from './svg-sprite';
 import { ALL_TABS, TabId } from './toolbar-constants.js';
 import type { ApplyResult, CropPresetList, ImageSize, Transformations } from './types';
 
+import './elements/presence-toggle/PresenceToggle';
+import './elements/line-loader/LineLoaderUi';
+import './elements/button/BtnUi';
+import './EditorImageCropper';
+import './EditorImageFader';
+import './EditorToolbar';
+import '../../Icon/Icon';
+
 type TabIdValue = (typeof TabId)[keyof typeof TabId];
 
 const DEFAULT_TABS = serializeCsv([...ALL_TABS]);

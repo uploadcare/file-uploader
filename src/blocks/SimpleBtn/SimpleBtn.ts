@@ -3,6 +3,9 @@ import { property, state } from 'lit/decorators.js';
 import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
 import './simple-btn.css';
 
+import '../DropArea/DropArea';
+import '../Icon/Icon';
+
 export class SimpleBtn extends LitUploaderBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-simple-btn'];
   public override couldBeCtxOwner = true;

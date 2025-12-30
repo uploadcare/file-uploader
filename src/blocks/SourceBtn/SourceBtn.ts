@@ -7,6 +7,8 @@ import { ExternalUploadSource, UploadSource, UploadSourceMobile } from '../../ut
 import { CameraSourceTypes } from '../CameraSource/constants';
 import './source-btn.css';
 
+import '../Icon/Icon';
+
 const L10N_PREFIX = 'src-type-';
 
 type SourceTypeConfig = {

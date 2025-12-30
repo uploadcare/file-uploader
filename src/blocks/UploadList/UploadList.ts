@@ -8,6 +8,11 @@ import { EventType, InternalEventType } from '../UploadCtxProvider/EventEmitter'
 import './upload-list.css';
 import { repeat } from 'lit/directives/repeat.js';
 
+import '../ActivityHeader/ActivityHeader';
+import '../Icon/Icon';
+import '../FileItem/FileItem';
+import '../DropArea/DropArea';
+
 export type FilesViewMode = 'grid' | 'list';
 
 export type Summary = {

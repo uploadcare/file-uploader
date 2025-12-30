@@ -5,6 +5,8 @@ import { classMap } from 'lit/directives/class-map.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
 import { LitBlock } from '../../../../../lit/LitBlock';
 
+import '../../../../Icon/Icon';
+
 type Theme = string | null;
 
 export class BtnUi extends LitBlock {

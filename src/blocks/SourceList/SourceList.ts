@@ -6,6 +6,8 @@ import { browserFeatures } from '../../utils/browser-info';
 import { deserializeCsv } from '../../utils/comma-separated';
 import { stringToArray } from '../../utils/stringToArray';
 
+import '../SourceBtn/SourceBtn';
+
 export class SourceList extends LitBlock {
   private _rawSourceList: string[] = [];
   private _cameraModes: string[] = [];

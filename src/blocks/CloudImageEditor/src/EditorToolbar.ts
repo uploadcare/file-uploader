@@ -24,6 +24,16 @@ import type { CropAspectRatio, Transformations } from './types';
 import { viewerImageSrc } from './util';
 import { parseFilterValue } from './utils/parseFilterValue';
 
+import './EditorAspectRatioButtonControl';
+import './EditorCropButtonControl';
+import './EditorFilterControl';
+import './EditorOperationControl';
+import './elements/presence-toggle/PresenceToggle';
+import './elements/button/BtnUi';
+import './EditorScroller';
+import './elements/line-loader/LineLoaderUi';
+import './EditorSlider';
+
 type TabIdValue = (typeof TabId)[keyof typeof TabId];
 
 export class EditorToolbar extends LitBlock {

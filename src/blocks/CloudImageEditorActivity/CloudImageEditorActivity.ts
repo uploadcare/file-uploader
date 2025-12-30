@@ -9,6 +9,8 @@ import './cloud-image-editor-activity.css';
 import type { UploadEntryData } from '../../abstract/uploadEntrySchema';
 import type { Uid } from '../../lit/Uid';
 
+import '../../solutions/cloud-image-editor/CloudImageEditor';
+
 export type ActivityParams = { internalId: string };
 
 type EditorTemplateConfig = {

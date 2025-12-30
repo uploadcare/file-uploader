@@ -21,6 +21,8 @@ import { pick } from './lib/pick.js';
 import type { CropAspectRatio, ImageSize, LoadingOperations, Rectangle, Transformations } from './types';
 import { viewerImageSrc } from './util.js';
 
+import './CropFrame';
+
 type CropTransform = NonNullable<Transformations['crop']>;
 
 type Operations = {

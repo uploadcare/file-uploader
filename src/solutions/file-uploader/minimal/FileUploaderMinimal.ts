@@ -7,6 +7,17 @@ import { LitActivityBlock } from '../../../lit/LitActivityBlock';
 import { LitSolutionBlock } from '../../../lit/LitSolutionBlock';
 import './index.css';
 
+import '../../../blocks/Modal/Modal';
+import '../../../blocks/StartFrom/StartFrom';
+import '../../../blocks/DropArea/DropArea';
+import '../../../blocks/Copyright/Copyright';
+import '../../../blocks/UploadList/UploadList';
+import '../../../blocks/SourceList/SourceList';
+import '../../../blocks/CameraSource/CameraSource';
+import '../../../blocks/UrlSource/UrlSource';
+import '../../../blocks/ExternalSource/ExternalSource';
+import '../../../blocks/CloudImageEditorActivity/CloudImageEditorActivity';
+
 const ACTIVE_CLASS = 'active';
 const EMPTY_CLASS = '';
 

@@ -10,6 +10,8 @@ import './thumb.css';
 import type { Uid } from '../../lit/Uid';
 import { TRANSPARENT_PIXEL_SRC } from '../../utils/transparentPixelSrc';
 
+import '../Icon/Icon';
+
 const CDN_MAX_OUTPUT_DIMENSION = 3000;
 
 type PendingThumbUpdate = {

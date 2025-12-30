@@ -5,6 +5,8 @@ import { ifDefined } from 'lit/directives/if-defined.js';
 import { EditorButtonControl } from './EditorButtonControl.js';
 import type { CropAspectRatio } from './types';
 
+import '../../Icon/Icon';
+
 const SIZE_RECT_FIXED = 12;
 const SIZE_SVG_WRAPPER = 16;
 

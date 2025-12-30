@@ -3,6 +3,8 @@ import { state } from 'lit/decorators.js';
 import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
 import './progress-bar-common.css';
 
+import '../ProgressBar/ProgressBar';
+
 type BaseInitState = InstanceType<typeof LitUploaderBlock>['init$'];
 
 interface ProgressBarCommonInitState extends BaseInitState {

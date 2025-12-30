@@ -18,6 +18,10 @@ import './file-item.css';
 import type { Uid } from '../../lit/Uid';
 import { FileItemConfig } from './FileItemConfig';
 
+import '../Thumb/Thumb';
+import '../Icon/Icon';
+import '../ProgressBar/ProgressBar';
+
 const FileItemState = Object.freeze({
   FINISHED: Symbol('FINISHED'),
   FAILED: Symbol('FAILED'),
