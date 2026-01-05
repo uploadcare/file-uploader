@@ -3,7 +3,7 @@ import { state } from 'lit/decorators.js';
 import './index.css';
 
 import { InternalEventType } from '../../../blocks/UploadCtxProvider/EventEmitter';
-import { LitActivityBlock } from '../../../lit/LitActivityBlock';
+import { ACTIVITY_TYPES } from '../../../lit/activity-constants';
 import { LitSolutionBlock } from '../../../lit/LitSolutionBlock';
 
 type BaseInitState = InstanceType<typeof LitSolutionBlock>['init$'];
@@ -38,7 +38,7 @@ export class FileUploaderInline extends LitSolutionBlock {
     }
 
     if (this._couldShowList) {
-      this.$['*currentActivity'] = LitActivityBlock.activities.UPLOAD_LIST;
+      this.$['*currentActivity'] = ACTIVITY_TYPES.UPLOAD_LIST;
     }
   };
 
@@ -47,7 +47,7 @@ export class FileUploaderInline extends LitSolutionBlock {
     if (!history || history.length <= 1) {
       return false;
     }
-    return history[history.length - 1] !== LitActivityBlock.activities.START_FROM;
+    return history[history.length - 1] !== ACTIVITY_TYPES.START_FROM;
   }
 
   private get _couldShowList(): boolean {
@@ -56,7 +56,7 @@ export class FileUploaderInline extends LitSolutionBlock {
   }
 
   private _getInitActivity(): string {
-    return (this.getCssData('--cfg-init-activity') as string | undefined) || LitActivityBlock.activities.START_FROM;
+    return (this.getCssData('--cfg-init-activity') as string | undefined) || ACTIVITY_TYPES.START_FROM;
   }
 
   public override initCallback(): void {
@@ -76,7 +76,7 @@ export class FileUploaderInline extends LitSolutionBlock {
 
     this.sub('*uploadList', (list: unknown) => {
       if (Array.isArray(list) && list.length > 0 && this.$['*currentActivity'] === initActivity) {
-        this.$['*currentActivity'] = LitActivityBlock.activities.UPLOAD_LIST;
+        this.$['*currentActivity'] = ACTIVITY_TYPES.UPLOAD_LIST;
       }
     });
 

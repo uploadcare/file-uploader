@@ -7,7 +7,7 @@ import { TelemetryManager } from '../abstract/managers/TelemetryManager';
 import { sharedConfigKey } from '../abstract/sharedConfigKey';
 import { initialConfig } from '../blocks/Config/initialConfig';
 import { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter';
-import type { ActivityType } from '../lit/LitActivityBlock';
+import type { ActivityType } from '../lit/activity-constants';
 import { PubSub } from '../lit/PubSubCompat';
 import type { ConfigType } from '../types';
 import { extractCdnUrlModifiers, extractFilename, extractUuid } from '../utils/cdn-utils';

@@ -1,7 +1,7 @@
 import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { createRef, type Ref, ref } from 'lit/directives/ref.js';
-import { LitActivityBlock } from '../../lit/LitActivityBlock';
+import { ACTIVITY_TYPES } from '../../lit/activity-constants';
 import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
 import { stringToArray } from '../../utils/stringToArray';
 import { UploadSource } from '../../utils/UploadSource';
@@ -114,9 +114,9 @@ export class DropArea extends LitUploaderBlock {
           }
         });
         if (this.uploadCollection.size) {
-          this.modalManager?.open(LitActivityBlock.activities.UPLOAD_LIST);
+          this.modalManager?.open(ACTIVITY_TYPES.UPLOAD_LIST);
           this.set$({
-            '*currentActivity': LitActivityBlock.activities.UPLOAD_LIST,
+            '*currentActivity': ACTIVITY_TYPES.UPLOAD_LIST,
           });
         }
       },

@@ -1,6 +1,6 @@
 import { html } from 'lit';
 import { state } from 'lit/decorators.js';
-import { LitActivityBlock } from '../../lit/LitActivityBlock';
+import { ACTIVITY_TYPES } from '../../lit/activity-constants';
 import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
 import type { OutputCollectionErrorType, OutputError } from '../../types';
 import { throttle } from '../../utils/throttle';
@@ -21,7 +21,7 @@ export type Summary = {
 export class UploadList extends LitUploaderBlock {
   public override couldBeCtxOwner = true;
   protected override historyTracked = true;
-  public override activityType = LitActivityBlock.activities.UPLOAD_LIST;
+  public override activityType = ACTIVITY_TYPES.UPLOAD_LIST;
 
   @state()
   private _doneBtnVisible = false;

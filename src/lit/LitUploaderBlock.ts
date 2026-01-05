@@ -16,6 +16,7 @@ import { createCdnUrl, createCdnUrlModifiers } from '../utils/cdn-utils';
 import { debounce } from '../utils/debounce';
 import { ExternalUploadSource, UploadSource } from '../utils/UploadSource';
 import { customUserAgent } from '../utils/userAgent';
+import { ACTIVITY_TYPES } from './activity-constants';
 import { getOutputData } from './getOutputData';
 import { LitActivityBlock } from './LitActivityBlock';
 import { PubSub } from './PubSubCompat';
@@ -369,13 +370,13 @@ export class LitUploaderBlock extends LitActivityBlock {
       entry &&
       this.uploadCollection.size === 1 &&
       this.cfg.useCloudImageEditor &&
-      this.hasBlockInCtx((block) => block.activityType === LitActivityBlock.activities.CLOUD_IMG_EDIT)
+      this.hasBlockInCtx((block) => block.activityType === ACTIVITY_TYPES.CLOUD_IMG_EDIT)
     ) {
       this.$['*currentActivityParams'] = {
         internalId: entry.uid,
       };
-      this.$['*currentActivity'] = LitActivityBlock.activities.CLOUD_IMG_EDIT;
-      this.modalManager?.open(LitActivityBlock.activities.CLOUD_IMG_EDIT);
+      this.$['*currentActivity'] = ACTIVITY_TYPES.CLOUD_IMG_EDIT;
+      this.modalManager?.open(ACTIVITY_TYPES.CLOUD_IMG_EDIT);
     }
   }
 
@@ -426,13 +427,13 @@ export class LitUploaderBlock extends LitActivityBlock {
         if (
           this.uploadCollection.size === 1 &&
           this.cfg.useCloudImageEditor &&
-          this.hasBlockInCtx((block) => block.activityType === LitActivityBlock.activities.CLOUD_IMG_EDIT)
+          this.hasBlockInCtx((block) => block.activityType === ACTIVITY_TYPES.CLOUD_IMG_EDIT)
         ) {
           this.$['*currentActivityParams'] = {
             internalId: entry.uid,
           };
-          this.$['*currentActivity'] = LitActivityBlock.activities.CLOUD_IMG_EDIT;
-          this.modalManager?.open(LitActivityBlock.activities.CLOUD_IMG_EDIT);
+          this.$['*currentActivity'] = ACTIVITY_TYPES.CLOUD_IMG_EDIT;
+          this.modalManager?.open(ACTIVITY_TYPES.CLOUD_IMG_EDIT);
         }
       }
     }
