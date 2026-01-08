@@ -114,7 +114,7 @@
     "@biomejs/js-api": "^3.0.0",
     "@biomejs/wasm-nodejs": "^2.2.5",
     "@csstools/postcss-cascade-layers": "^5.0.2",
-    "@happy-dom/global-registrator": "^16.8.1",
+    "@happy-dom/global-registrator": "^20.1.0",
     "@size-limit/esbuild-why": "^11.2.0",
     "@size-limit/preset-small-lib": "^11.2.0",
     "@total-typescript/ts-reset": "^0.6.1",
