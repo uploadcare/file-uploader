@@ -59,7 +59,7 @@ export class UrlSource extends LitUploaderBlock {
     }
     this.api.addFileFromUrl(url, { source: UploadSource.URL });
     this.modalManager?.open(ACTIVITY_TYPES.UPLOAD_LIST);
-    this.$['*currentActivity'] = ACTIVITY_TYPES.UPLOAD_LIST;
+    this.sharedCtx.pub('*currentActivity', ACTIVITY_TYPES.UPLOAD_LIST);
   };
 
   public override render() {

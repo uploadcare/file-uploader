@@ -90,11 +90,11 @@ export class FileItem extends FileItemConfig {
         },
       },
     });
-    this.$['*currentActivityParams'] = {
+    this.sharedCtx.pub('*currentActivityParams', {
       internalId: entry.uid,
-    };
+    });
     this.modalManager?.open(ACTIVITY_TYPES.CLOUD_IMG_EDIT);
-    this.$['*currentActivity'] = ACTIVITY_TYPES.CLOUD_IMG_EDIT;
+    this.sharedCtx.pub('*currentActivity', ACTIVITY_TYPES.CLOUD_IMG_EDIT);
   });
 
   private _handleRemove = (): void => {
@@ -401,7 +401,7 @@ export class FileItem extends FileItemConfig {
         return uploadFile(fileInput, uploadClientOptions);
       };
 
-      const fileInfo = await this.$['*uploadQueue'].add(uploadTask);
+      const fileInfo = await this.sharedCtx.read('*uploadQueue').add(uploadTask);
       entry.setMultipleValues({
         fileInfo,
         isQueuedForUploading: false,

@@ -32,18 +32,18 @@ export class FileUploaderInline extends LitSolutionBlock {
 
   private _handleCancel = (): void => {
     if (this._couldHistoryBack) {
-      const historyBack = this.$['*historyBack'] as (() => void) | undefined;
+      const historyBack = this.sharedCtx.read('*historyBack') as (() => void) | undefined;
       historyBack?.();
       return;
     }
 
     if (this._couldShowList) {
-      this.$['*currentActivity'] = ACTIVITY_TYPES.UPLOAD_LIST;
+      this.sharedCtx.pub('*currentActivity', ACTIVITY_TYPES.UPLOAD_LIST);
     }
   };
 
   private get _couldHistoryBack(): boolean {
-    const history = this.$['*history'] as string[] | undefined;
+    const history = this.sharedCtx.read('*history') as string[] | undefined;
     if (!history || history.length <= 1) {
       return false;
     }
@@ -51,7 +51,7 @@ export class FileUploaderInline extends LitSolutionBlock {
   }
 
   private get _couldShowList(): boolean {
-    const uploadList = this.$['*uploadList'] as unknown[] | undefined;
+    const uploadList = this.sharedCtx.read('*uploadList') as unknown[] | undefined;
     return this.cfg.showEmptyList || (Array.isArray(uploadList) && uploadList.length > 0);
   }
 
@@ -70,13 +70,13 @@ export class FileUploaderInline extends LitSolutionBlock {
 
     this.sub('*currentActivity', (val: string | null) => {
       if (!val) {
-        this.$['*currentActivity'] = initActivity;
+        this.sharedCtx.pub('*currentActivity', initActivity);
       }
     });
 
     this.sub('*uploadList', (list: unknown) => {
-      if (Array.isArray(list) && list.length > 0 && this.$['*currentActivity'] === initActivity) {
-        this.$['*currentActivity'] = ACTIVITY_TYPES.UPLOAD_LIST;
+      if (Array.isArray(list) && list.length > 0 && this.sharedCtx.read('*currentActivity') === initActivity) {
+        this.sharedCtx.pub('*currentActivity', ACTIVITY_TYPES.UPLOAD_LIST);
       }
     });
 

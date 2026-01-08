@@ -2,6 +2,7 @@ import type { ReactiveController } from 'lit';
 import { EventType } from '../../blocks/UploadCtxProvider/EventEmitter';
 import { debounce } from '../../utils/debounce';
 import type { LitActivityBlock } from '../LitActivityBlock';
+import { LitBlock } from '../LitBlock';
 
 type ActivityControllerOptions = {
   getHistoryTracked: () => boolean;
@@ -24,8 +25,38 @@ export class ActivityController implements ReactiveController {
 
   public constructor(host: LitActivityBlock, options: ActivityControllerOptions) {
     this.host = host;
-    this.getHistoryTracked = options.getHistoryTracked;
     host.addController(this);
+
+    this.getHistoryTracked = options.getHistoryTracked;
+  }
+
+  public hostConnected(): void {
+    if (!this.host.activityType) {
+      return;
+    }
+
+    if (!this.host.hasAttribute('activity')) {
+      this.host.setAttribute('activity', this.host.activityType);
+    }
+
+    this.host.sharedCtx.sub('*currentActivity', this.handleCurrentActivityChange);
+  }
+
+  public hostDisconnected(): void {
+    this.unregisterActivity();
+
+    const currentActivity = this.host.sharedCtx.read('*currentActivity') as string | null;
+
+    if (this.host.blocksRegistry) {
+      const hasCurrentActivityInCtx = !![...this.host.blocksRegistry].find(
+        (block) => block instanceof LitBlock && block.activityType === currentActivity,
+      );
+
+      if (!hasCurrentActivityInCtx) {
+        this.host.sharedCtx.pub('*currentActivity', null);
+        this.host.modalManager?.closeAll();
+      }
+    }
   }
 
   public initialize(): void {
@@ -62,10 +93,6 @@ export class ActivityController implements ReactiveController {
 
   public historyBack(): void {
     this.navigateHistoryBack();
-  }
-
-  public hostDisconnected(): void {
-    this.unregisterActivity();
   }
 
   private handleCurrentActivityChange = (val: string | null): void => {

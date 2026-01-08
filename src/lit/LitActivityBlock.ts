@@ -25,12 +25,6 @@ export class LitActivityBlock extends LitBlock {
     });
   }
 
-  // must match visibility of base class
-  public override initCallback(): void {
-    super.initCallback();
-    this._activityController.initialize();
-  }
-
   // declare static activities to satisfy type references below
   public static activities: Readonly<{
     START_FROM: 'start-from';
@@ -57,20 +51,6 @@ export class LitActivityBlock extends LitBlock {
 
   public override disconnectedCallback(): void {
     super.disconnectedCallback();
-    this._activityController.unregisterActivity();
-
-    const currentActivity = this.sharedCtx.read('*currentActivity') as string | null;
-
-    if (this.blocksRegistry) {
-      const hasCurrentActivityInCtx = !![...this.blocksRegistry].find(
-        (block) => block instanceof LitActivityBlock && block.activityType === currentActivity,
-      );
-
-      if (!hasCurrentActivityInCtx) {
-        this.sharedCtx.pub('*currentActivity', null);
-        this.modalManager?.closeAll();
-      }
-    }
   }
 
   public get activityParams(): ActivityParamsMap[keyof ActivityParamsMap] {

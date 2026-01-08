@@ -98,7 +98,7 @@ export class UploadList extends LitUploaderBlock {
     }
     this._updateUploadsState();
 
-    if (!this.couldOpenActivity && this.$['*currentActivity'] === this.activityType) {
+    if (!this.couldOpenActivity && this.sharedCtx.read('*currentActivity') === this.activityType) {
       this.historyBack();
     }
 
@@ -191,9 +191,9 @@ export class UploadList extends LitUploaderBlock {
       this.setAttribute('mode', mode);
     });
 
-    this.sub('*currentActivity', (currentActivity) => {
+    this.sharedCtx.sub('*currentActivity', (currentActivity) => {
       if (!this.couldOpenActivity && currentActivity === this.activityType) {
-        this.$['*currentActivity'] = this.initActivity;
+        this.sharedCtx.pub('*currentActivity', this.initActivity);
       }
     });
 
@@ -242,7 +242,7 @@ export class UploadList extends LitUploaderBlock {
   <div class="uc-files">
     <div class="uc-files-wrapper">
     ${repeat(
-      this.$['*uploadList'] ?? [],
+      this.sharedCtx.read('*uploadList') ?? [],
       ({ uid }) => uid,
       ({ uid }) => html`<uc-file-item .uid=${uid}></uc-file-item>`,
     )}

@@ -13,7 +13,7 @@ export const activityBlockCtx = (fnCtx: LitBlock) => ({
   '*history': [],
   '*historyBack': null,
   '*closeModal': () => {
-    fnCtx.modalManager?.close(fnCtx.$['*currentActivity']);
+    fnCtx.modalManager?.close(fnCtx.sharedCtx.read('*currentActivity'));
 
     fnCtx.pub('*currentActivity', null);
   },

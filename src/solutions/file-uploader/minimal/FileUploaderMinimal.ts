@@ -51,25 +51,25 @@ export class FileUploaderMinimal extends LitSolutionBlock {
       this._classUploadList = ACTIVE_CLASS;
     }
 
-    if (this.$['*currentActivity'] === ACTIVITY_TYPES.UPLOAD_LIST) {
+    if (this.sharedCtx.read('*currentActivity') === ACTIVITY_TYPES.UPLOAD_LIST) {
       this._classUploadList = ACTIVE_CLASS;
       this._isHiddenStartFrom = true;
     }
 
-    const uploadList = this.$['*uploadList'] as unknown[] | undefined;
+    const uploadList = this.sharedCtx.read('*uploadList') as unknown[] | undefined;
     if (!uploadList || uploadList.length <= 0) {
       this._classStartFrom = ACTIVE_CLASS;
     }
   };
 
   private _handleModalClose = (data: Parameters<ModalCb>[0]): void => {
-    if (data.id === this.$['*currentActivity']) {
-      this.$['*currentActivity'] = ACTIVITY_TYPES.UPLOAD_LIST;
+    if (data.id === this.sharedCtx.read('*currentActivity')) {
+      this.sharedCtx.pub('*currentActivity', ACTIVITY_TYPES.UPLOAD_LIST);
       this._isHiddenStartFrom = false;
     }
 
     if (data.id === ACTIVITY_TYPES.CLOUD_IMG_EDIT) {
-      this.$['*currentActivity'] = ACTIVITY_TYPES.UPLOAD_LIST;
+      this.sharedCtx.pub('*currentActivity', ACTIVITY_TYPES.UPLOAD_LIST);
     }
   };
 
@@ -88,18 +88,18 @@ export class FileUploaderMinimal extends LitSolutionBlock {
       }
 
       if (!val) {
-        this.$['*currentActivity'] = initActivity;
+        this.sharedCtx.pub('*currentActivity', initActivity);
       }
     });
 
     this.sub('*uploadList', (list: unknown) => {
       if (Array.isArray(list) && list.length > 0) {
-        this.$['*currentActivity'] = ACTIVITY_TYPES.UPLOAD_LIST;
+        this.sharedCtx.pub('*currentActivity', ACTIVITY_TYPES.UPLOAD_LIST);
         this._classStartFrom = EMPTY_CLASS;
       } else {
         this._classUploadList = EMPTY_CLASS;
         this._isHiddenStartFrom = false;
-        this.$['*currentActivity'] = initActivity;
+        this.sharedCtx.pub('*currentActivity', initActivity);
       }
     });
 
@@ -159,7 +159,7 @@ export class FileUploaderMinimal extends LitSolutionBlock {
           <button
             type="button"
             class="uc-secondary-btn"
-            @click=${this.$['*historyBack']}
+            @click=${this.sharedCtx.read('*historyBack')}
           >${this.l10n('start-from-cancel')}</button>
         </uc-start-from>
       </uc-modal>
