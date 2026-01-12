@@ -110,7 +110,7 @@ export class UploadList extends UploaderBlock {
     let doneBtnEnabled = false;
 
     const readyToUpload = summary.total - summary.succeed - summary.uploading - summary.failed;
-    if (readyToUpload > 0 && fitCountRestrictions && validationOk) {
+    if (readyToUpload > 0 && fitCountRestrictions && validationOk && this.cfg.confirmUpload) {
       uploadBtnVisible = true;
     } else {
       allDone = true;
