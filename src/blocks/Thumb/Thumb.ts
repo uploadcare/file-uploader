@@ -194,6 +194,7 @@ export class Thumb extends FileItemConfig {
     });
 
     this.setAttribute('role', 'img');
+    this.setAttribute('alt', 'Preview of uploaded image');
   }
 
   override connectedCallback(): void {
