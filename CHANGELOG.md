@@ -1,3 +1,13 @@
+## [1.24.8](https://github.com/uploadcare/file-uploader/compare/v1.24.7...v1.24.8) (2026-01-13)
+
+
+### Bug Fixes
+
+* **thumb:** alt added to thumb ([#909](https://github.com/uploadcare/file-uploader/issues/909)) ([4aa57bf](https://github.com/uploadcare/file-uploader/commit/4aa57bf7f41885f106580dca96a804e3cac371bf))
+* **upload-list:** adjusted upload button visibility ([#911](https://github.com/uploadcare/file-uploader/issues/911)) ([ca6e213](https://github.com/uploadcare/file-uploader/commit/ca6e213eac05e41d406ae62573cfca7a799798b9))
+
+
+
 ## [1.24.7](https://github.com/uploadcare/file-uploader/compare/v1.24.6...v1.24.7) (2025-12-25)
 
 
