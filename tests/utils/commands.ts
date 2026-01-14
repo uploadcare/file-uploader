@@ -7,10 +7,8 @@ export const waitFileChooserAndUpload: BrowserCommand<[string[]]> = async ({ pag
   }
   const fileChooserPromise = page.waitForEvent('filechooser');
   const fileChooser = await fileChooserPromise;
-  for (const relativePath of relativePaths) {
-    const absolutePath = path.join(path.dirname(testPath), relativePath);
-    await fileChooser.setFiles(absolutePath);
-  }
+  const absolutePaths = relativePaths.map((relativePath) => path.join(path.dirname(testPath), relativePath));
+  await fileChooser.setFiles(absolutePaths);
 };
 
 export const commands = {
