@@ -8,10 +8,14 @@ export class FormInput extends UploaderBlock {
   _validationInputElement: HTMLInputElement | null = null;
   _dynamicInputsContainer: HTMLDivElement | null = null;
 
+  private get _inputName(): string {
+    return this.getAttribute('name') ?? this.ctxName;
+  }
+
   _createValidationInput(): HTMLInputElement {
     const validationInput = document.createElement('input');
     validationInput.type = 'text';
-    validationInput.name = this.ctxName;
+    validationInput.name = this._inputName;
     validationInput.required = this.cfg.multipleMin > 0;
     validationInput.tabIndex = -1;
     applyStyles(validationInput, {
@@ -84,7 +88,7 @@ export class FormInput extends UploaderBlock {
           for (const value of cdnUrls) {
             const input = document.createElement('input');
             input.type = 'hidden';
-            input.name = `${this.ctxName}[]`;
+            input.name = `${this._inputName}[]`;
             input.value = value;
             fr.appendChild(input);
           }

@@ -56,7 +56,7 @@ declare namespace JSX {
       CtxAttributes & ({ uuid: string } | { 'cdn-url': string }) & Partial<{ tabs: string; 'crop-preset': string }>
     >;
     'uc-cloud-image-editor': CustomElement<CloudImageEditorBlock, JSX.IntrinsicElements['uc-cloud-image-editor-block']>;
-    'uc-form-input': CustomElement<FormInput, CtxAttributes>;
+    'uc-form-input': CustomElement<FormInput, CtxAttributes & Partial<{ name: string }>>;
     'uc-file-uploader-regular': CustomElement<FileUploaderRegular, CtxAttributes & Partial<{ headless: boolean }>>;
     'uc-file-uploader-minimal': CustomElement<FileUploaderMinimal, CtxAttributes>;
     'uc-file-uploader-inline': CustomElement<FileUploaderInline, CtxAttributes>;
