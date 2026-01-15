@@ -17,6 +17,7 @@ import {
   ALL_FILTERS,
   ALL_TABS,
   COLOR_OPERATIONS_CONFIG,
+  type ColorOperation,
   type CropOperation,
   TabId,
 } from './toolbar-constants';
@@ -297,7 +298,7 @@ export class EditorToolbar extends LitBlock {
     return html`<uc-editor-filter-control .filter=${filterId}></uc-editor-filter-control>`;
   }
 
-  private _renderOperationControl(operation: string): TemplateResult {
+  private _renderOperationControl(operation: ColorOperation | ''): TemplateResult {
     return html`<uc-editor-operation-control .operation=${operation}></uc-editor-operation-control>`;
   }
 

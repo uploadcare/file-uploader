@@ -40,7 +40,9 @@ export class FileItem extends FileItemConfig {
   @state()
   private _pauseRender = true;
 
-  @property({ type: String, attribute: false })
+  @property({
+    attribute: false,
+  })
   public uid: Uid = '' as Uid;
 
   @state()
@@ -466,7 +468,13 @@ export class FileItem extends FileItemConfig {
 
   public override render() {
     return html`
-      <div class="uc-inner" ?finished=${this._isFinished} ?uploading=${this._isUploading} ?failed=${this._isFailed} ?focused=${this._isFocused}>
+      <div
+        class="uc-inner"
+        ?data-finished=${this._isFinished}
+        ?data-uploading=${this._isUploading}
+        ?data-failed=${this._isFailed}
+        ?data-focused=${this._isFocused}
+      >
         <uc-thumb .uid=${this.uid} .badgeIcon=${this._badgeIcon}></uc-thumb>
 
         <div aria-atomic="true" aria-live="polite" class="uc-file-name-wrapper" aria-label=${this._ariaLabelStatusFile}>

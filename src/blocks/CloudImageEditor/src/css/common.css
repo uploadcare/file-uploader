@@ -504,7 +504,7 @@
     transition: var(--transition-duration-3);
   }
 
-  uc-editor-filter-control.uc-not_active .uc-preview[loaded] {
+  uc-editor-filter-control.uc-not_active .uc-preview[data-loaded] {
     opacity: 1;
   }
 

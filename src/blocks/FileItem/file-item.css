@@ -27,15 +27,15 @@
     transition: background-color var(--uc-transition);
   }
 
-  uc-file-item > .uc-inner[focused] {
+  uc-file-item > .uc-inner[data-focused] {
     background-color: transparent;
   }
 
-  uc-file-item > .uc-inner[uploading] .uc-edit-btn {
+  uc-file-item > .uc-inner[data-uploading] .uc-edit-btn {
     display: none;
   }
 
-  uc-file-item > :where(.uc-inner[failed], .uc-inner[limit-overflow]) {
+  uc-file-item > :where(.uc-inner[data-failed], .uc-inner[data-limit-overflow]) {
     background-color: var(--uc-destructive);
   }
 
@@ -110,16 +110,16 @@
     align-items: center;
   }
 
-  uc-file-item > .uc-inner:where([failed], [limit-overflow], [finished]) .uc-badge {
+  uc-file-item > .uc-inner:where([data-failed], [data-limit-overflow], [data-finished]) .uc-badge {
     transform: scale(1);
     opacity: 1;
   }
 
-  uc-file-item > .uc-inner:where([failed], [limit-overflow]) .uc-badge {
+  uc-file-item > .uc-inner:where([data-failed], [data-limit-overflow]) .uc-badge {
     background-color: var(--uc-destructive-foreground);
   }
 
-  uc-file-item > .uc-inner:where([failed], [limit-overflow]) .uc-file-error {
+  uc-file-item > .uc-inner:where([data-failed], [data-limit-overflow]) .uc-file-error {
     display: block;
   }
 
@@ -163,7 +163,7 @@
     border-radius: 0;
   }
 
-  uc-file-item[mode="grid"] .uc-inner[failed] .uc-badge {
+  uc-file-item[mode="grid"] .uc-inner[data-failed] .uc-badge {
     display: none;
   }
 

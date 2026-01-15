@@ -24,7 +24,9 @@ export class Thumb extends FileItemConfig {
   @property({ type: String })
   public badgeIcon = '';
 
-  @property({ type: String })
+  @property({
+    attribute: false,
+  })
   public uid: Uid = '' as Uid;
 
   @state()

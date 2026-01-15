@@ -6,6 +6,7 @@ import { ifDefined } from 'lit/directives/if-defined.js';
 import { LitBlock } from '../../../../../lit/LitBlock';
 
 import '../../../../Icon/Icon';
+import type { AriaRole } from '../../../../../types/dom';
 
 type Theme = string | null;
 
@@ -23,13 +24,19 @@ export class BtnUi extends LitBlock {
   public theme: Theme = 'default';
 
   @property({ attribute: 'aria-role' })
-  public ariaRole = '';
+  public ariaRole: AriaRole | undefined = undefined;
 
   @property({ attribute: 'aria-controls' })
   public ariaControls = '';
 
   @property({ attribute: 'title-prop' })
   public titleProp = '';
+
+  /**
+   * CSS-only attribute
+   */
+  @property({ type: Boolean, noAccessor: true })
+  public active = false;
 
   protected override firstUpdated(changed: PropertyValues<this>): void {
     super.firstUpdated(changed);
