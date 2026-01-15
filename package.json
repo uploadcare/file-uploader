@@ -101,7 +101,7 @@
     "lint:css": "stylelint './**/*.css'",
     "lint:css:fix": "stylelint './**/*.css' --fix",
     "lint:lit-analyzer": "lit-analyzer './src/**/*.ts' --strict",
-    "lint": "run-s lint:js lint:css",
+    "lint": "run-s lint:js lint:css lint:lit-analyzer",
     "clean:web": "rimraf './web/'",
     "clean:dist": "rimraf './dist/'",
     "clean": "run-s clean:*",
