@@ -1,3 +1,12 @@
+# [1.25.0](https://github.com/uploadcare/file-uploader/compare/v1.24.8...v1.25.0) (2026-01-15)
+
+
+### Features
+
+* **uc-form-input:** allow to override `name` attribute on native inputs ([#913](https://github.com/uploadcare/file-uploader/issues/913)) ([ca4c7fc](https://github.com/uploadcare/file-uploader/commit/ca4c7fc99de4522d47ea97518b60b069671f4347))
+
+
+
 ## [1.24.8](https://github.com/uploadcare/file-uploader/compare/v1.24.7...v1.24.8) (2026-01-13)
 
 
