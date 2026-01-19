@@ -1,3 +1,5 @@
+import type { SliderFilter } from './EditorSlider';
+
 /**
  * Mapping of loading resources per operation
  */
@@ -30,7 +32,7 @@ export interface Transformations {
   rotate?: number;
   mirror?: boolean;
   flip?: boolean;
-  filter?: { name: string; amount: number };
+  filter?: { name: SliderFilter; amount: number };
   crop?: { dimensions: [number, number]; coords: [number, number] };
 }
 

@@ -28,10 +28,22 @@ type TabIdValue = (typeof TabId)[keyof typeof TabId];
 
 export class EditorToolbar extends CloudImageEditorElement {
   @property({ attribute: false })
+  public cropperEl: EditorImageCropper | null = null;
+
+  @property({ attribute: false })
+  public faderEl: EditorImageFader | null = null;
+
+  @property({ attribute: false })
+  public imgContainerEl: HTMLDivElement | null = null;
+
+  @property({ attribute: false })
   public onApply?: (transformations: Transformations) => void;
 
   @property({ attribute: false })
   public onCancel?: () => void;
+
+  @state()
+  private _sliderEl: EditorSlider | null = null;
 
   @state()
   private _showLoader = false;
@@ -166,8 +178,8 @@ export class EditorToolbar extends CloudImageEditorElement {
 
     this.activeTab = id;
 
-    const faderEl = this.editor$['*faderEl'] as EditorImageFader | undefined;
-    const cropperEl = this.editor$['*cropperEl'] as EditorImageCropper | undefined;
+    const faderEl = this.faderEl ?? undefined;
+    const cropperEl = this.cropperEl ?? undefined;
 
     if (id === TabId.CROP) {
       faderEl?.deactivate();
@@ -276,15 +288,15 @@ export class EditorToolbar extends CloudImageEditorElement {
   }
 
   private _renderCropOperationControl(operation: CropOperation): TemplateResult {
-    return html`<uc-editor-crop-button-control .operation=${operation}></uc-editor-crop-button-control>`;
+    return html`<uc-editor-crop-button-control .operation=${operation} .cropperEl=${this.cropperEl}></uc-editor-crop-button-control>`;
   }
 
   private _renderFilterControl(filterId: string): TemplateResult {
-    return html`<uc-editor-filter-control .filter=${filterId}></uc-editor-filter-control>`;
+    return html`<uc-editor-filter-control .filter=${filterId} .sliderEl=${this._sliderEl}></uc-editor-filter-control>`;
   }
 
   private _renderOperationControl(operation: string): TemplateResult {
-    return html`<uc-editor-operation-control .operation=${operation}></uc-editor-operation-control>`;
+    return html`<uc-editor-operation-control .operation=${operation} .sliderEl=${this._sliderEl}></uc-editor-operation-control>`;
   }
 
   private _renderAspectRatioList(): TemplateResult[] {
@@ -295,8 +307,8 @@ export class EditorToolbar extends CloudImageEditorElement {
   }
 
   private async _preloadEditedImage(): Promise<void> {
-    if (this.editor$['*imgContainerEl'] && this.editor$['*originalUrl']) {
-      const width = this.editor$['*imgContainerEl'].offsetWidth;
+    if (this.imgContainerEl && this.editor$['*originalUrl']) {
+      const width = this.imgContainerEl.offsetWidth;
       const src = await this.proxyUrl(
         viewerImageSrc(this.editor$['*originalUrl'], width, this.editor$['*editorTransformations']),
       );
@@ -330,7 +342,7 @@ export class EditorToolbar extends CloudImageEditorElement {
     this.editorSub('*editorTransformations', (editorTransformations) => {
       const appliedFilter = editorTransformations?.filter?.name;
       if (this.editor$['*currentFilter'] !== appliedFilter) {
-        this.editor$['*currentFilter'] = appliedFilter ?? '';
+        this.editor$['*currentFilter'] = appliedFilter ?? null;
       }
     });
 
@@ -348,12 +360,12 @@ export class EditorToolbar extends CloudImageEditorElement {
     });
 
     this.editorSub('*originalUrl', () => {
-      this.editor$['*faderEl']?.deactivate();
+      this.faderEl?.deactivate();
     });
 
     this.editorSub('*editorTransformations', (transformations) => {
       this._preloadEditedImage();
-      this.editor$['*faderEl']?.setTransformations(transformations);
+      this.faderEl?.setTransformations(transformations);
     });
 
     this.editorSub('*loadingOperations', (loadingOperations) => {
@@ -423,9 +435,12 @@ export class EditorToolbar extends CloudImageEditorElement {
 
   public override firstUpdated(changedProperties: PropertyValues<this>): void {
     super.firstUpdated(changedProperties);
-    this._assignSharedElements();
-
     this._syncTabIndicator();
+
+    const slider = this._sliderRef.value;
+    if (slider) {
+      this._sliderEl = slider;
+    }
   }
 
   protected override updated(changedProperties: PropertyValues<this>): void {
@@ -433,10 +448,6 @@ export class EditorToolbar extends CloudImageEditorElement {
 
     if (changedProperties.has('activeTab') || changedProperties.has('tabList')) {
       this.updateComplete.then(() => this._syncTabIndicator());
-    }
-
-    if (changedProperties.has('showSubToolbar') || changedProperties.has('showMainToolbar')) {
-      this._assignSharedElements();
     }
   }
 
@@ -446,13 +457,6 @@ export class EditorToolbar extends CloudImageEditorElement {
 
     this.editor$['*showSlider'] = false;
     this.editor$['*showListAspectRatio'] = false;
-  }
-
-  private _assignSharedElements(): void {
-    const slider = this._sliderRef.value;
-    if (slider) {
-      this.editor$['*sliderEl'] = slider;
-    }
   }
 
   private readonly _handleCancel = (e: MouseEvent): void => {
@@ -592,7 +596,7 @@ export class EditorToolbar extends CloudImageEditorElement {
         </uc-presence-toggle>
         <uc-presence-toggle class="uc-sub-toolbar" .visible=${this.showSubToolbar} .styles=${this._subBottomToolbarStyles}>
           <div class="uc-slider" ?hidden=${!this._useSliderPanel}>
-            <uc-editor-slider ${ref(this._sliderRef)}></uc-editor-slider>
+            <uc-editor-slider .faderEl=${this.faderEl} ${ref(this._sliderRef)}></uc-editor-slider>
           </div>
 
           <div class="uc-list-aspect-ratio-container" ?hidden=${this._useSliderPanel || !showAspectRatioList}>

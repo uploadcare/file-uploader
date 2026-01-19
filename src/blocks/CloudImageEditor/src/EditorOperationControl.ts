@@ -1,5 +1,6 @@
 import { property } from 'lit/decorators.js';
 import { EditorButtonControl } from './EditorButtonControl.js';
+import type { EditorSlider } from './EditorSlider.js';
 import type { ColorOperation } from './toolbar-constants';
 import { COLOR_OPERATIONS_CONFIG } from './toolbar-constants.js';
 import type { Transformations } from './types';
@@ -25,6 +26,9 @@ export class EditorOperationControl extends EditorButtonControl {
       this._updateOperationMetadata(normalizedValue as ColorOperation);
     }
   }
+
+  @property({ attribute: false })
+  public sliderEl: EditorSlider | null = null;
 
   private _updateOperationMetadata(operation: ColorOperation): void {
     this.icon = operation;
@@ -66,8 +70,10 @@ export class EditorOperationControl extends EditorButtonControl {
     });
   }
   protected override onClick(e: MouseEvent) {
-    const slider = this.editor$['*sliderEl'] as { setOperation: (operation: ColorOperation | '') => void } | undefined;
-    slider?.setOperation(this._operation);
+    if (!this.sliderEl) {
+      return;
+    }
+    this.sliderEl.setOperation(this._operation);
     this.editor$['*showSlider'] = true;
     this.editor$['*currentOperation'] = this._operation || null;
 

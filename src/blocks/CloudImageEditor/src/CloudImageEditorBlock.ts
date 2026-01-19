@@ -81,6 +81,13 @@ export class CloudImageEditorBlock extends CloudImageEditorElement {
   private readonly _cropperRef = createRef<EditorImageCropper>();
   private readonly _faderRef = createRef<EditorImageFader>();
   private readonly _imgContainerRef = createRef<HTMLDivElement>();
+  @state()
+  private _imgContainerEl: HTMLDivElement | null = null;
+  @state()
+  private _cropperEl: EditorImageCropper | null = null;
+
+  @state()
+  private _faderEl: EditorImageFader | null = null;
   // biome-ignore lint/correctness/noUnusedPrivateClassMembers: <explanation>
   private _contextProvider?: ContextProvider<typeof cloudImageEditorContext>;
   private _editorCtxId?: string;
@@ -172,22 +179,23 @@ export class CloudImageEditorBlock extends CloudImageEditorElement {
   private _assignSharedElements(): void {
     const faderEl = this._faderRef.value;
     if (faderEl) {
-      this.editor$['*faderEl'] = faderEl;
+      if (this._faderEl !== faderEl) {
+        this._faderEl = faderEl;
+      }
     }
 
     const cropperEl = this._cropperRef.value;
     if (cropperEl) {
-      this.editor$['*cropperEl'] = cropperEl;
+      if (this._cropperEl !== cropperEl) {
+        this._cropperEl = cropperEl;
+      }
     }
 
     const imgContainerEl = this._imgContainerRef.value;
     if (imgContainerEl) {
-      this.editor$['*imgContainerEl'] = imgContainerEl;
-    }
-
-    const imgEl = this._imgRef.value;
-    if (imgEl) {
-      this.editor$['*imgEl'] = imgEl;
+      if (this._imgContainerEl !== imgContainerEl) {
+        this._imgContainerEl = imgContainerEl;
+      }
     }
   }
 
@@ -298,7 +306,13 @@ export class CloudImageEditorBlock extends CloudImageEditorElement {
             ${when(
               this._isInitialized,
               () =>
-                html`<uc-editor-toolbar .onApply=${this._handleApply} .onCancel=${this._handleCancel}></uc-editor-toolbar>`,
+                html`<uc-editor-toolbar
+                  .imgContainerEl=${this._imgContainerEl}
+                  .cropperEl=${this._cropperEl}
+                  .faderEl=${this._faderEl}
+                  .onApply=${this._handleApply}
+                  .onCancel=${this._handleCancel}
+                ></uc-editor-toolbar>`,
             )}
           </div>
         </div>
@@ -380,9 +394,9 @@ export class CloudImageEditorBlock extends CloudImageEditorElement {
     }
 
     if (this.editor$['*tabId'] === TabId.CROP) {
-      (this.editor$['*cropperEl'] as EditorImageCropper)?.deactivate({ reset: true });
+      this._cropperEl?.deactivate({ reset: true });
     } else {
-      (this.editor$['*faderEl'] as EditorImageFader)?.deactivate();
+      this._faderEl?.deactivate();
     }
 
     try {
@@ -394,9 +408,9 @@ export class CloudImageEditorBlock extends CloudImageEditorElement {
       this.editor$['*imageSize'] = { width, height };
 
       if (this.editor$['*tabId'] === TabId.CROP) {
-        (this.editor$['*cropperEl'] as EditorImageCropper)?.activate(this.editor$['*imageSize'] as ImageSize);
+        this._cropperEl?.activate(this.editor$['*imageSize'] as ImageSize);
       } else {
-        (this.editor$['*faderEl'] as EditorImageFader)?.activate({ url: originalUrlValue });
+        this._faderEl?.activate({ url: originalUrlValue });
       }
     } catch (err) {
       if (err) {

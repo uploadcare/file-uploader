@@ -25,6 +25,9 @@ export class EditorCropButtonControl extends EditorButtonControl {
   @property({ type: String })
   public operation: CropOperation | undefined = undefined;
 
+  @property({ attribute: false })
+  public cropperEl: EditorImageCropper | null = null;
+
   protected override willUpdate(changedProperties: PropertyValues<this>): void {
     super.willUpdate(changedProperties);
 
@@ -44,7 +47,10 @@ export class EditorCropButtonControl extends EditorButtonControl {
       return;
     }
 
-    const cropper = this.editor$['*cropperEl'] as EditorImageCropper;
+    const cropper = this.cropperEl;
+    if (!cropper) {
+      return;
+    }
     const prev = cropper.getValue(this.operation);
     const next = nextValue(this.operation, prev);
 

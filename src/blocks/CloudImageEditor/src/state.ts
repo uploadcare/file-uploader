@@ -1,8 +1,5 @@
 import { CROP_PADDING } from './cropper-constants';
-import type { EditorImageCropper } from './EditorImageCropper';
-import type { EditorImageFader } from './EditorImageFader';
-import type { EditorSlider } from './EditorSlider';
-import { FAKE_ORIGINAL_FILTER } from './EditorSlider';
+import { FAKE_ORIGINAL_FILTER, type SliderFilter } from './EditorSlider';
 import { ALL_TABS, type ColorOperation, TabId } from './toolbar-constants';
 import type { CropPresetList, ImageSize, LoadingOperations, Rectangle, Transformations } from './types';
 
@@ -11,10 +8,6 @@ type TabIdValue = (typeof TabId)[keyof typeof TabId];
 export type CloudImageEditorState = {
   '*originalUrl': string | null;
   '*loadingOperations': LoadingOperations;
-  '*faderEl': EditorImageFader | null;
-  '*cropperEl': EditorImageCropper | null;
-  '*imgEl': HTMLImageElement | null;
-  '*imgContainerEl': HTMLDivElement | null;
   '*networkProblems': boolean;
   '*imageSize': ImageSize | null;
   '*editorTransformations': Transformations;
@@ -22,10 +15,9 @@ export type CloudImageEditorState = {
   '*currentAspectRatio': CropPresetList[number] | null;
   '*tabList': readonly TabIdValue[];
   '*tabId': TabIdValue;
-  '*sliderEl': EditorSlider | null;
   '*showSlider': boolean;
   '*showListAspectRatio': boolean;
-  '*currentFilter': string;
+  '*currentFilter': SliderFilter | null;
   '*currentOperation': ColorOperation | null;
   '*operationTooltip': string | null;
   '*operations': {
@@ -42,10 +34,6 @@ export function createCloudImageEditorState(): CloudImageEditorState {
   return {
     '*originalUrl': null,
     '*loadingOperations': new Map() as LoadingOperations,
-    '*faderEl': null,
-    '*cropperEl': null,
-    '*imgEl': null,
-    '*imgContainerEl': null,
     '*networkProblems': false,
     '*imageSize': null,
     '*editorTransformations': {},
@@ -53,7 +41,6 @@ export function createCloudImageEditorState(): CloudImageEditorState {
     '*currentAspectRatio': null,
     '*tabList': [...ALL_TABS],
     '*tabId': TabId.CROP,
-    '*sliderEl': null,
     '*showSlider': false,
     '*showListAspectRatio': false,
     '*currentFilter': FAKE_ORIGINAL_FILTER,

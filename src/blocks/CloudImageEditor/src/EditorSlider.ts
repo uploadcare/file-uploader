@@ -1,17 +1,20 @@
 import { html, type PropertyValues } from 'lit';
-import { state } from 'lit/decorators.js';
+import { property, state } from 'lit/decorators.js';
 import { CloudImageEditorElement } from './context';
 import type { EditorImageFader } from './EditorImageFader';
 import type { ColorOperation, FilterId } from './toolbar-constants';
 import { COLOR_OPERATIONS_CONFIG } from './toolbar-constants';
 import type { Transformations } from './types';
 
-type SliderOperation = ColorOperation | 'filter';
-type SliderFilter = FilterId | typeof FAKE_ORIGINAL_FILTER;
+export type SliderOperation = ColorOperation | 'filter';
+export type SliderFilter = FilterId | typeof FAKE_ORIGINAL_FILTER;
 
 export const FAKE_ORIGINAL_FILTER = 'original';
 
 export class EditorSlider extends CloudImageEditorElement {
+  @property({ attribute: false })
+  public faderEl: EditorImageFader | null = null;
+
   // This is public because it's used in the updated lifecycle to assign to the shared state.
   @state()
   public state = {
@@ -28,7 +31,7 @@ export class EditorSlider extends CloudImageEditorElement {
 
   private _handleInput = (e: CustomEvent<{ value: number }>): void => {
     const { value } = e.detail;
-    const fader = this.editor$['*faderEl'] as EditorImageFader | undefined;
+    const fader = this.faderEl ?? undefined;
     fader?.set(value);
     this.state = { ...this.state, value };
   };
@@ -38,7 +41,7 @@ export class EditorSlider extends CloudImageEditorElement {
 
     this._initializeValues();
 
-    const fader = this.editor$['*faderEl'] as EditorImageFader | undefined;
+    const fader = this.faderEl ?? undefined;
     const originalUrl = this.state.originalUrl || (this.editor$['*originalUrl'] as string | undefined);
     if (fader && originalUrl) {
       fader.activate({
@@ -94,7 +97,7 @@ export class EditorSlider extends CloudImageEditorElement {
   }
 
   public cancel(): void {
-    const fader = this.editor$['*faderEl'] as EditorImageFader | undefined;
+    const fader = this.faderEl ?? undefined;
     fader?.deactivate({ hide: false });
   }
 

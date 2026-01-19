@@ -7,14 +7,15 @@ import { PACKAGE_NAME, PACKAGE_VERSION } from '../../../env';
 import { createCdnUrl, createCdnUrlModifiers } from '../../../utils/cdn-utils.js';
 import { preloadImage } from '../../../utils/preloadImage.js';
 import { EditorButtonControl } from './EditorButtonControl.js';
+import type { EditorSlider, SliderFilter, SliderOperation } from './EditorSlider.js';
 import { FAKE_ORIGINAL_FILTER } from './EditorSlider.js';
 import { COMMON_OPERATIONS, transformationsToOperations } from './lib/transformationUtils.js';
 import type { Transformations } from './types';
 import { parseFilterValue } from './utils/parseFilterValue.js';
 
 export class EditorFilterControl extends EditorButtonControl {
-  private _operation = '';
-  private _filter = '';
+  private _operation: SliderOperation | undefined;
+  private _filter: SliderFilter | undefined;
   private _originalUrl = '';
   private _observer?: IntersectionObserver;
   private _cancelPreload?: () => void;
@@ -35,13 +36,16 @@ export class EditorFilterControl extends EditorButtonControl {
   @state()
   private _iconSize = 20;
 
+  @property({ attribute: false })
+  public sliderEl: EditorSlider | null = null;
+
   @property({ type: String })
-  public get filter(): string {
+  public get filter(): SliderFilter | undefined {
     return this._filter;
   }
 
-  public set filter(value: string) {
-    const nextFilter = value ?? '';
+  public set filter(value: SliderFilter | undefined) {
+    const nextFilter = value;
     if (this._filter === nextFilter) {
       return;
     }
@@ -58,16 +62,15 @@ export class EditorFilterControl extends EditorButtonControl {
   }
 
   public override onClick(e: MouseEvent) {
+    if (!this.sliderEl || !this._operation) {
+      return;
+    }
+
     if (!this.active) {
-      const slider = this.editor$['*sliderEl'] as {
-        setOperation: (op: string, filter: string) => void;
-        apply: () => void;
-      };
-      slider.setOperation(this._operation, this._filter);
-      slider.apply();
+      this.sliderEl.setOperation(this._operation, this._filter);
+      this.sliderEl.apply();
     } else if (!this.isOriginal) {
-      const slider = this.editor$['*sliderEl'] as { setOperation: (op: string, filter: string) => void };
-      slider.setOperation(this._operation, this._filter);
+      this.sliderEl.setOperation(this._operation, this._filter);
       this.editor$['*showSlider'] = true;
     }
 
@@ -75,7 +78,7 @@ export class EditorFilterControl extends EditorButtonControl {
       operation: parseFilterValue(this.editor$['*operationTooltip']),
     });
 
-    this.editor$['*currentFilter'] = this._filter;
+    this.editor$['*currentFilter'] = this._filter ?? null;
   }
 
   private _previewSrc(): string {
@@ -143,7 +146,7 @@ export class EditorFilterControl extends EditorButtonControl {
       this._updateFilterLabels(this._filter);
     }
 
-    this.editorSub('*currentFilter', (currentFilter: string) => {
+    this.editorSub('*currentFilter', (currentFilter) => {
       this.active = !!(currentFilter && currentFilter === this._filter);
     });
 
@@ -179,7 +182,7 @@ export class EditorFilterControl extends EditorButtonControl {
     }
   }
 
-  private _updateFilterLabels(filterName: string): void {
+  private _updateFilterLabels(filterName: SliderFilter | undefined): void {
     if (!filterName) {
       this.titleProp = '';
       return;
