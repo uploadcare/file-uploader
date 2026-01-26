@@ -1,5 +1,5 @@
 import type { Modal as ModalNode } from '../../blocks/Modal/Modal';
-import type { ActivityType } from '../../lit/LitActivityBlock';
+import type { ActivityType } from '../../lit/activity-constants';
 import { SharedInstance } from '../../lit/shared-instances';
 
 export const ModalEvents = Object.freeze({

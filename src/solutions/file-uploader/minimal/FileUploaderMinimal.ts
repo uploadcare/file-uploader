@@ -3,9 +3,9 @@ import { state } from 'lit/decorators.js';
 import type { ModalCb } from '../../../abstract/managers/ModalManager';
 import { ModalEvents } from '../../../abstract/managers/ModalManager';
 import { InternalEventType } from '../../../blocks/UploadCtxProvider/EventEmitter';
-import { LitActivityBlock } from '../../../lit/LitActivityBlock';
 import { LitSolutionBlock } from '../../../lit/LitSolutionBlock';
 import './index.css';
+import { ACTIVITY_TYPES } from '../../../lit/activity-constants';
 
 const ACTIVE_CLASS = 'active';
 const EMPTY_CLASS = '';
@@ -34,7 +34,7 @@ export class FileUploaderMinimal extends LitSolutionBlock {
   private _classStartFrom = EMPTY_CLASS;
 
   private _getInitActivity(): string {
-    return (this.getCssData('--cfg-init-activity') as string | undefined) || LitActivityBlock.activities.START_FROM;
+    return (this.getCssData('--cfg-init-activity') as string | undefined) || ACTIVITY_TYPES.START_FROM;
   }
 
   public constructor() {
@@ -47,29 +47,29 @@ export class FileUploaderMinimal extends LitSolutionBlock {
   }
 
   private _handleModalOpen = (data: Parameters<ModalCb>[0]): void => {
-    if (data.id === LitActivityBlock.activities.CLOUD_IMG_EDIT) {
+    if (data.id === ACTIVITY_TYPES.CLOUD_IMG_EDIT) {
       this._classUploadList = ACTIVE_CLASS;
     }
 
-    if (this.$['*currentActivity'] === LitActivityBlock.activities.UPLOAD_LIST) {
+    if (this.sharedCtx.read('*currentActivity') === ACTIVITY_TYPES.UPLOAD_LIST) {
       this._classUploadList = ACTIVE_CLASS;
       this._isHiddenStartFrom = true;
     }
 
-    const uploadList = this.$['*uploadList'] as unknown[] | undefined;
+    const uploadList = this.sharedCtx.read('*uploadList') as unknown[] | undefined;
     if (!uploadList || uploadList.length <= 0) {
       this._classStartFrom = ACTIVE_CLASS;
     }
   };
 
   private _handleModalClose = (data: Parameters<ModalCb>[0]): void => {
-    if (data.id === this.$['*currentActivity']) {
-      this.$['*currentActivity'] = LitActivityBlock.activities.UPLOAD_LIST;
+    if (data.id === this.sharedCtx.read('*currentActivity')) {
+      this.sharedCtx.pub('*currentActivity', ACTIVITY_TYPES.UPLOAD_LIST);
       this._isHiddenStartFrom = false;
     }
 
-    if (data.id === LitActivityBlock.activities.CLOUD_IMG_EDIT) {
-      this.$['*currentActivity'] = LitActivityBlock.activities.UPLOAD_LIST;
+    if (data.id === ACTIVITY_TYPES.CLOUD_IMG_EDIT) {
+      this.sharedCtx.pub('*currentActivity', ACTIVITY_TYPES.UPLOAD_LIST);
     }
   };
 
@@ -83,23 +83,23 @@ export class FileUploaderMinimal extends LitSolutionBlock {
     const initActivity = this._getInitActivity();
 
     this.sub('*currentActivity', (val: string | null) => {
-      if (val === LitActivityBlock.activities.UPLOAD_LIST) {
+      if (val === ACTIVITY_TYPES.UPLOAD_LIST) {
         this.modalManager?.closeAll();
       }
 
       if (!val) {
-        this.$['*currentActivity'] = initActivity;
+        this.sharedCtx.pub('*currentActivity', initActivity);
       }
     });
 
     this.sub('*uploadList', (list: unknown) => {
       if (Array.isArray(list) && list.length > 0) {
-        this.$['*currentActivity'] = LitActivityBlock.activities.UPLOAD_LIST;
+        this.sharedCtx.pub('*currentActivity', ACTIVITY_TYPES.UPLOAD_LIST);
         this._classStartFrom = EMPTY_CLASS;
       } else {
         this._classUploadList = EMPTY_CLASS;
         this._isHiddenStartFrom = false;
-        this.$['*currentActivity'] = initActivity;
+        this.sharedCtx.pub('*currentActivity', initActivity);
       }
     });
 
@@ -159,7 +159,7 @@ export class FileUploaderMinimal extends LitSolutionBlock {
           <button
             type="button"
             class="uc-secondary-btn"
-            @click=${this.$['*historyBack']}
+            @click=${this.sharedCtx.read('*historyBack')}
           >${this.l10n('start-from-cancel')}</button>
         </uc-start-from>
       </uc-modal>

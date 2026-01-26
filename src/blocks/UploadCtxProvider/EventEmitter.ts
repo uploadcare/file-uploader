@@ -1,5 +1,5 @@
 import type { ModalId } from '../../abstract/managers/ModalManager';
-import type { ActivityType } from '../../lit/LitActivityBlock';
+import type { ActivityType } from '../../lit/activity-constants';
 import type { LitBlock } from '../../lit/LitBlock';
 import { SharedInstance } from '../../lit/shared-instances';
 import type { OutputCollectionState, OutputFileEntry } from '../../types';

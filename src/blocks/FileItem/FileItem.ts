@@ -9,7 +9,7 @@ import {
 import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import type { UploadEntryTypedData } from '../../abstract/uploadEntrySchema';
-import { LitActivityBlock } from '../../lit/LitActivityBlock';
+import { ACTIVITY_TYPES } from '../../lit/activity-constants';
 import { debounce } from '../../utils/debounce';
 import { parseShrink } from '../../utils/parseShrink';
 import { throttle } from '../../utils/throttle';
@@ -90,11 +90,11 @@ export class FileItem extends FileItemConfig {
         },
       },
     });
-    this.$['*currentActivityParams'] = {
+    this.sharedCtx.pub('*currentActivityParams', {
       internalId: entry.uid,
-    };
-    this.modalManager?.open(LitActivityBlock.activities.CLOUD_IMG_EDIT);
-    this.$['*currentActivity'] = LitActivityBlock.activities.CLOUD_IMG_EDIT;
+    });
+    this.modalManager?.open(ACTIVITY_TYPES.CLOUD_IMG_EDIT);
+    this.sharedCtx.pub('*currentActivity', ACTIVITY_TYPES.CLOUD_IMG_EDIT);
   });
 
   private _handleRemove = (): void => {
@@ -401,7 +401,7 @@ export class FileItem extends FileItemConfig {
         return uploadFile(fileInput, uploadClientOptions);
       };
 
-      const fileInfo = await this.$['*uploadQueue'].add(uploadTask);
+      const fileInfo = await this.sharedCtx.read('*uploadQueue').add(uploadTask);
       entry.setMultipleValues({
         fileInfo,
         isQueuedForUploading: false,

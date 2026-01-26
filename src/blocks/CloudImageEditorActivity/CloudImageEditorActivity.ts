@@ -2,7 +2,7 @@ import { html, nothing } from 'lit';
 import { state } from 'lit/decorators.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
 import type { TypedData } from '../../abstract/TypedData';
-import { LitActivityBlock } from '../../lit/LitActivityBlock';
+import { ACTIVITY_TYPES } from '../../lit/activity-constants';
 import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
 import type { ApplyResult, ChangeResult } from '../CloudImageEditor/src/types';
 import './cloud-image-editor-activity.css';
@@ -19,7 +19,7 @@ type EditorTemplateConfig = {
 
 export class CloudImageEditorActivity extends LitUploaderBlock {
   public override couldBeCtxOwner = true;
-  public override activityType = LitActivityBlock.activities.CLOUD_IMG_EDIT;
+  public override activityType = ACTIVITY_TYPES.CLOUD_IMG_EDIT;
 
   private _entry?: TypedData<UploadEntryData>;
 
@@ -79,14 +79,14 @@ export class CloudImageEditorActivity extends LitUploaderBlock {
       cdnUrl: result.cdnUrl,
       cdnUrlModifiers: result.cdnUrlModifiers,
     });
-    this.modalManager?.close(LitActivityBlock.activities.CLOUD_IMG_EDIT);
+    this.modalManager?.close(ACTIVITY_TYPES.CLOUD_IMG_EDIT);
     this.historyBack();
   }
 
   private _handleCancel(event?: Event): void {
     const detail = event instanceof CustomEvent ? event.detail : undefined;
     this.debugPrint(`editor event "cancel"`, detail);
-    this.modalManager?.close(LitActivityBlock.activities.CLOUD_IMG_EDIT);
+    this.modalManager?.close(ACTIVITY_TYPES.CLOUD_IMG_EDIT);
     this.historyBack();
   }
 

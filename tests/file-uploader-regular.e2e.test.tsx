@@ -144,4 +144,25 @@ describe('File uploader regular', () => {
       await expect.element(page.getByText('1 file uploaded')).toBeVisible();
     });
   });
+
+  describe('Upload files', () => {
+    test('should upload added file and cloud image editor auto open', async () => {
+      const config = page.getByTestId('uc-config').query()! as Config;
+      config.cloudImageEditorAutoOpen = true;
+
+      await page.getByText('Upload files', { exact: true }).click();
+      const startFrom = page.getByTestId('uc-start-from');
+      const uploadList = page.getByTestId('uc-upload-list');
+      const cloudImageEditor = page.getByTestId('uc-cloud-image-editor-activity');
+
+      commands.waitFileChooserAndUpload(['./fixtures/test_image.jpeg']);
+
+      await startFrom.getByText('From device', { exact: true }).click();
+
+      await expect.element(startFrom).not.toBeVisible();
+      await expect.element(uploadList).toBeVisible();
+
+      await expect.element(cloudImageEditor).toBeVisible();
+    });
+  });
 });

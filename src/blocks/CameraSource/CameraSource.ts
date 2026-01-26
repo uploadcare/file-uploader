@@ -1,6 +1,6 @@
 import { html, type PropertyValues } from 'lit';
 import { state } from 'lit/decorators.js';
-import { LitActivityBlock } from '../../lit/LitActivityBlock';
+import { ACTIVITY_TYPES } from '../../lit/activity-constants';
 import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
 import { canUsePermissionsApi } from '../../utils/abilities';
 import { deserializeCsv } from '../../utils/comma-separated';
@@ -48,7 +48,7 @@ export type CameraStatus = 'shot' | 'retake' | 'accept' | 'play' | 'stop' | 'pau
 
 export class CameraSource extends LitUploaderBlock {
   public override couldBeCtxOwner = true;
-  public override activityType = LitActivityBlock.activities.CAMERA;
+  public override activityType = ACTIVITY_TYPES.CAMERA;
 
   private _unsubPermissions: (() => void) | null = null;
 
@@ -687,9 +687,9 @@ export class CameraSource extends LitUploaderBlock {
   private _toSend = (file: File): void => {
     this.api.addFileFromObject(file, { source: UploadSource.CAMERA });
     this.set$({
-      '*currentActivity': LitActivityBlock.activities.UPLOAD_LIST,
+      '*currentActivity': ACTIVITY_TYPES.UPLOAD_LIST,
     });
-    this.modalManager?.open(LitActivityBlock.activities.UPLOAD_LIST);
+    this.modalManager?.open(ACTIVITY_TYPES.UPLOAD_LIST);
   };
 
   private get _cameraModes(): CameraMode[] {

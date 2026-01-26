@@ -1,6 +1,6 @@
 import { html } from 'lit';
 import { state } from 'lit/decorators.js';
-import { LitActivityBlock } from '../../lit/LitActivityBlock';
+import { ACTIVITY_TYPES } from '../../lit/activity-constants';
 import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
 import type { OutputCollectionErrorType, OutputError } from '../../types';
 import { throttle } from '../../utils/throttle';
@@ -21,7 +21,7 @@ export type Summary = {
 export class UploadList extends LitUploaderBlock {
   public override couldBeCtxOwner = true;
   protected override historyTracked = true;
-  public override activityType = LitActivityBlock.activities.UPLOAD_LIST;
+  public override activityType = ACTIVITY_TYPES.UPLOAD_LIST;
 
   @state()
   private _doneBtnVisible = false;
@@ -98,7 +98,7 @@ export class UploadList extends LitUploaderBlock {
     }
     this._updateUploadsState();
 
-    if (!this.couldOpenActivity && this.$['*currentActivity'] === this.activityType) {
+    if (!this.couldOpenActivity && this.sharedCtx.read('*currentActivity') === this.activityType) {
       this.historyBack();
     }
 
@@ -191,9 +191,9 @@ export class UploadList extends LitUploaderBlock {
       this.setAttribute('mode', mode);
     });
 
-    this.sub('*currentActivity', (currentActivity) => {
+    this.sharedCtx.sub('*currentActivity', (currentActivity) => {
       if (!this.couldOpenActivity && currentActivity === this.activityType) {
-        this.$['*currentActivity'] = this.initActivity;
+        this.sharedCtx.pub('*currentActivity', this.initActivity);
       }
     });
 
@@ -242,7 +242,7 @@ export class UploadList extends LitUploaderBlock {
   <div class="uc-files">
     <div class="uc-files-wrapper">
     ${repeat(
-      this.$['*uploadList'] ?? [],
+      this.sharedCtx.read('*uploadList') ?? [],
       ({ uid }) => uid,
       ({ uid }) => html`<uc-file-item .uid=${uid}></uc-file-item>`,
     )}

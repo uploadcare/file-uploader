@@ -1,6 +1,6 @@
 import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
-import { type ActivityType, LitActivityBlock } from '../../lit/LitActivityBlock';
+import { ACTIVITY_TYPES, type ActivityType } from '../../lit/activity-constants';
 import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
 import { browserFeatures } from '../../utils/browser-info';
 import { ExternalUploadSource, UploadSource, UploadSourceMobile } from '../../utils/UploadSource';
@@ -41,12 +41,12 @@ export class SourceBtn extends LitUploaderBlock {
     });
     this._registerType({
       type: UploadSource.URL,
-      activity: LitActivityBlock.activities.URL,
+      activity: ACTIVITY_TYPES.URL,
       textKey: 'from-url',
     });
     this._registerType({
       type: UploadSource.CAMERA,
-      activity: LitActivityBlock.activities.CAMERA,
+      activity: ACTIVITY_TYPES.CAMERA,
       activate: () => {
         const supportsCapture = browserFeatures.htmlMediaCapture;
 
@@ -59,14 +59,14 @@ export class SourceBtn extends LitUploaderBlock {
 
     this._registerType({
       type: 'draw',
-      activity: LitActivityBlock.activities.DRAW,
+      activity: ACTIVITY_TYPES.DRAW,
       icon: 'edit-draw',
     });
 
     for (const mobileSourceType of Object.values(UploadSourceMobile)) {
       this._registerType({
         type: mobileSourceType,
-        activity: LitActivityBlock.activities.CAMERA,
+        activity: ACTIVITY_TYPES.CAMERA,
         activate: () => {
           const supportsCapture = browserFeatures.htmlMediaCapture;
           if (supportsCapture) {
@@ -84,7 +84,7 @@ export class SourceBtn extends LitUploaderBlock {
     for (const externalSourceType of Object.values(ExternalUploadSource)) {
       this._registerType({
         type: externalSourceType,
-        activity: LitActivityBlock.activities.EXTERNAL,
+        activity: ACTIVITY_TYPES.EXTERNAL,
         activityParams: {
           externalSourceType: externalSourceType,
         },

@@ -1,7 +1,7 @@
 import { html } from 'lit';
 import { state } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
-import { type ActivityType, LitActivityBlock } from '../../lit/LitActivityBlock';
+import { ACTIVITY_TYPES, type ActivityType } from '../../lit/activity-constants';
 import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
 import { UploadSource } from '../../utils/UploadSource';
 import { InternalEventType } from '../UploadCtxProvider/EventEmitter';
@@ -13,7 +13,7 @@ interface UrlSourceState {
 
 export class UrlSource extends LitUploaderBlock {
   public override couldBeCtxOwner = true;
-  public override activityType: ActivityType = LitActivityBlock.activities.URL;
+  public override activityType: ActivityType = ACTIVITY_TYPES.URL;
 
   @state()
   private _formState: UrlSourceState = {
@@ -58,8 +58,8 @@ export class UrlSource extends LitUploaderBlock {
       return;
     }
     this.api.addFileFromUrl(url, { source: UploadSource.URL });
-    this.modalManager?.open(LitActivityBlock.activities.UPLOAD_LIST);
-    this.$['*currentActivity'] = LitActivityBlock.activities.UPLOAD_LIST;
+    this.modalManager?.open(ACTIVITY_TYPES.UPLOAD_LIST);
+    this.sharedCtx.pub('*currentActivity', ACTIVITY_TYPES.UPLOAD_LIST);
   };
 
   public override render() {

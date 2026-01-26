@@ -1,4 +1,4 @@
-import { LitActivityBlock } from '../../lit/LitActivityBlock';
+import { ACTIVITY_TYPES } from '../../lit/activity-constants';
 import { getTopLevelOrigin } from '../../utils/get-top-level-origin';
 import { stringToArray } from '../../utils/stringToArray';
 import { ExternalUploadSource } from '../../utils/UploadSource';
@@ -21,7 +21,7 @@ export type ActivityParams = { externalSourceType: string };
 
 export class ExternalSource extends LitUploaderBlock {
   public override couldBeCtxOwner = true;
-  public override activityType = LitActivityBlock.activities.EXTERNAL;
+  public override activityType = ACTIVITY_TYPES.EXTERNAL;
   private _messageBridge?: MessageBridge;
 
   private _iframeRef = createRef<HTMLIFrameElement>();
@@ -81,8 +81,8 @@ export class ExternalSource extends LitUploaderBlock {
         const { externalSourceType } = this.activityParams;
 
         if (!externalSourceType) {
-          this.modalManager?.close(this.$['*currentActivity']);
-          this.$['*currentActivity'] = null;
+          this.modalManager?.close(this.sharedCtx.read('*currentActivity'));
+          this.sharedCtx.pub('*currentActivity', null);
           console.error(`Param "externalSourceType" is required for activity "${this.activityType}"`);
           return;
         }
@@ -210,8 +210,8 @@ export class ExternalSource extends LitUploaderBlock {
       this.api.addFileFromUrl(url, { fileName: filename, source: externalSourceType });
     }
 
-    this.$['*currentActivity'] = LitActivityBlock.activities.UPLOAD_LIST;
-    this.modalManager?.open(LitActivityBlock.activities.UPLOAD_LIST);
+    this.sharedCtx.pub('*currentActivity', ACTIVITY_TYPES.UPLOAD_LIST);
+    this.modalManager?.open(ACTIVITY_TYPES.UPLOAD_LIST);
   };
 
   private _handleCancel = (): void => {
