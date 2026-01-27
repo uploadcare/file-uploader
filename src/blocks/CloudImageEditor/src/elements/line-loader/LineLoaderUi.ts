@@ -81,3 +81,9 @@ export class LineLoaderUi extends LitBlock {
     `;
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-line-loader-ui': LineLoaderUi;
+  }
+}

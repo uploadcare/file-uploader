@@ -7,3 +7,9 @@ export class Spinner extends LitBlock {
     return html` <div class="uc-spinner"></div> `;
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-spinner': Spinner;
+  }
+}

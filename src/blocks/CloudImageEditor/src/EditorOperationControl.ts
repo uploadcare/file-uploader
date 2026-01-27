@@ -76,3 +76,9 @@ export class EditorOperationControl extends EditorButtonControl {
     });
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-editor-operation-control': EditorOperationControl;
+  }
+}

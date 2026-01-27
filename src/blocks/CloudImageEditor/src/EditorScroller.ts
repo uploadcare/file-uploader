@@ -1,9 +1,16 @@
+import { property } from 'lit/decorators.js';
 import { LitBlock } from '../../../lit/LitBlock';
 
 const X_THRESHOLD = 1;
 const noopScrollListener = () => {};
 
 export class EditorScroller extends LitBlock {
+  /**
+   * CSS-only attribute
+   */
+  @property({ type: Boolean, noAccessor: true, attribute: 'hidden-scrollbar' })
+  public hiddenScrollbar = false;
+
   private readonly _handleWheel = (event: WheelEvent): void => {
     event.preventDefault();
     const { deltaY, deltaX } = event;
@@ -25,5 +32,11 @@ export class EditorScroller extends LitBlock {
     this.removeEventListener('wheel', this._handleWheel);
     this.removeEventListener('scroll', noopScrollListener);
     super.disconnectedCallback();
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-editor-scroller': EditorScroller;
   }
 }

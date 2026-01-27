@@ -7,6 +7,8 @@ import { ExternalUploadSource, UploadSource, UploadSourceMobile } from '../../ut
 import { CameraSourceTypes } from '../CameraSource/constants';
 import './source-btn.css';
 
+import '../Icon/Icon';
+
 const L10N_PREFIX = 'src-type-';
 
 type SourceTypeConfig = {
@@ -160,5 +162,11 @@ export class SourceBtn extends LitUploaderBlock {
     <div class="uc-txt">${this.l10n(this._srcTypeKey)}</div>
   </button>
     `;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-source-btn': SourceBtn;
   }
 }

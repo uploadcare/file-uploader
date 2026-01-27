@@ -6,6 +6,9 @@ import { createRef, ref } from 'lit/directives/ref.js';
 import { LitBlock } from '../../lit/LitBlock';
 
 export class ProgressBar extends LitBlock {
+  @property({ type: Boolean, noAccessor: true })
+  public hasFileName = false;
+
   @property({ type: Number })
   public value = 0;
 
@@ -91,5 +94,11 @@ export class ProgressBar extends LitBlock {
       <div ${ref(this._fakeProgressLineRef)} class="uc-fake-progress"></div>
       <div class="uc-progress"></div>
     `;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-progress-bar': ProgressBar;
   }
 }

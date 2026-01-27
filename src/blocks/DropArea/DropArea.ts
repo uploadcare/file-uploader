@@ -9,10 +9,24 @@ import { addDropzone, DropzoneState, type DropzoneStateValue } from './addDropzo
 import './drop-area.css';
 import type { DropItem } from './getDropItems';
 
+import '../Icon/Icon';
+
 const dropAreaRegistry = new Set<DropArea>();
 
 export class DropArea extends LitUploaderBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-drop-area'];
+
+  /**
+   * CSS-only attribute
+   */
+  @property({ type: Boolean, noAccessor: true })
+  public single = false;
+
+  /**
+   * CSS-only attribute
+   */
+  @property({ type: Boolean, noAccessor: true })
+  public ghost = false;
 
   @property({ type: Boolean, reflect: true })
   public disabled = false;
@@ -258,5 +272,11 @@ export class DropArea extends LitUploaderBlock {
     </div>`,
     )}
     `;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-drop-area': DropArea;
   }
 }

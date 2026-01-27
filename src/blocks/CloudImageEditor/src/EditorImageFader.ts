@@ -500,3 +500,9 @@ export class EditorImageFader extends LitBlock {
     `;
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-editor-image-fader': EditorImageFader;
+  }
+}

@@ -1,14 +1,22 @@
 import type { PropertyValues } from 'lit';
 import { html } from 'lit';
-import { state } from 'lit/decorators.js';
+import { property, state } from 'lit/decorators.js';
 import { LitBlock } from '../../lit/LitBlock';
 import { browserFeatures } from '../../utils/browser-info';
 import { deserializeCsv } from '../../utils/comma-separated';
 import { stringToArray } from '../../utils/stringToArray';
 
+import '../SourceBtn/SourceBtn';
+
 export class SourceList extends LitBlock {
   private _rawSourceList: string[] = [];
   private _cameraModes: string[] = [];
+
+  /**
+   * CSS-only attribute
+   */
+  @property({ type: Boolean, attribute: 'wrap', noAccessor: true })
+  public wrap = false;
 
   public override initCallback(): void {
     super.initCallback();
@@ -67,5 +75,11 @@ export class SourceList extends LitBlock {
 
   public override render() {
     return html`${this._sources.map((type) => html`<uc-source-btn role="listitem" type=${type}></uc-source-btn>`)}`;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-source-list': SourceList;
   }
 }

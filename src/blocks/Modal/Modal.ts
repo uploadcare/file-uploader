@@ -4,6 +4,7 @@ import { ModalEvents } from '../../abstract/managers/ModalManager';
 import { LitBlock } from '../../lit/LitBlock';
 import { EventType } from '../UploadCtxProvider/EventEmitter';
 import './modal.css';
+import { property } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 
 let LAST_ACTIVE_MODAL_ID: ModalId | null = null;
@@ -15,6 +16,18 @@ export class Modal extends LitBlock {
 
   /** WARNING: Do not rename/change this, it's used in dashboard */
   protected dialogEl = createRef<HTMLDialogElement>();
+
+  /**
+   * CSS-only attribute
+   */
+  @property({ type: Boolean, noAccessor: true })
+  public strokes = false;
+
+  /**
+   * CSS-only attribute
+   */
+  @property({ type: Boolean, attribute: 'block-body-scrolling', noAccessor: true })
+  public blockBodyScrolling = false;
 
   /** WARNING: Do not rename/change this, it's used in dashboard */
   protected closeDialog = (): void => {
@@ -143,5 +156,11 @@ export class Modal extends LitBlock {
     ${this.yield('')}
   </dialog>
 `;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-modal': Modal;
   }
 }

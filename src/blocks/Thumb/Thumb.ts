@@ -10,6 +10,8 @@ import './thumb.css';
 import type { Uid } from '../../lit/Uid';
 import { TRANSPARENT_PIXEL_SRC } from '../../utils/transparentPixelSrc';
 
+import '../Icon/Icon';
+
 const CDN_MAX_OUTPUT_DIMENSION = 3000;
 
 type PendingThumbUpdate = {
@@ -22,7 +24,9 @@ export class Thumb extends FileItemConfig {
   @property({ type: String })
   public badgeIcon = '';
 
-  @property({ type: String })
+  @property({
+    attribute: false,
+  })
   public uid: Uid = '' as Uid;
 
   @state()
@@ -368,5 +372,11 @@ export class Thumb extends FileItemConfig {
     </div>
   </div>
 `;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-thumb': Thumb;
   }
 }

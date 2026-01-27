@@ -577,9 +577,9 @@ describe('File errors API', () => {
 
     // Apply mirror and check for error
     await page.getByLabelText('Edit', { exact: true }).click();
-    await delay(3000);
+    await delay(1000);
     await page.getByLabelText('Apply mirror operation', { exact: true }).click();
-    await delay(3000);
+    await delay(1000);
     await page.getByRole('button', { name: /apply/i }).click();
 
     await expect
@@ -591,9 +591,9 @@ describe('File errors API', () => {
 
     // Remove mirror and check for error gone
     await page.getByLabelText('Edit', { exact: true }).click();
-    await delay(3000);
+    await delay(1000);
     await page.getByLabelText('Apply mirror operation', { exact: true }).click();
-    await delay(3000);
+    await delay(1000);
     await page.getByRole('button', { name: /apply/i }).click();
 
     await expect
@@ -605,9 +605,9 @@ describe('File errors API', () => {
 
     // Apply mirror and check for error again
     await page.getByLabelText('Edit', { exact: true }).click();
-    await delay(3000);
+    await delay(1000);
     await page.getByLabelText('Apply mirror operation', { exact: true }).click();
-    await delay(3000);
+    await delay(1000);
     await page.getByRole('button', { name: /apply/i }).click();
 
     await expect
@@ -616,7 +616,7 @@ describe('File errors API', () => {
         return currentEntry.errors;
       })
       .toEqual(expect.arrayContaining([expect.objectContaining<Partial<OutputErrorFile>>({ type: 'CUSTOM_ERROR' })]));
-  });
+  }, 20000);
 
   it('should provide errors for "add" and "change" validators', async () => {
     const config = page.getByTestId('uc-config').query()! as Config;

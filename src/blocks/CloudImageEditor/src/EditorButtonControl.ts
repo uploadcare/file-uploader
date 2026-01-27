@@ -4,6 +4,8 @@ import { state } from 'lit/decorators.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
 import { LitBlock } from '../../../lit/LitBlock';
 
+import '../../Icon/Icon';
+
 export class EditorButtonControl extends LitBlock {
   // This is public because it's used in the updated lifecycle to assign to the shared state.
   @state()

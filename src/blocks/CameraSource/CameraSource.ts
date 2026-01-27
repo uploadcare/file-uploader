@@ -13,6 +13,10 @@ import { createRef, ref } from 'lit/directives/ref.js';
 import { styleMap } from 'lit/directives/style-map.js';
 import { CameraSourceEvents, CameraSourceTypes } from './constants';
 
+import '../ActivityHeader/ActivityHeader';
+import '../Icon/Icon';
+import '../Select/Select';
+
 type CameraDeviceOption = { text: string; value: string };
 type AudioDeviceOption = { text: string; value: string };
 
@@ -1091,7 +1095,6 @@ export class CameraSource extends LitUploaderBlock {
 
     <button
       type="button"
-      class="uc-shot-btn uc-camera-action"
       data-testid="shot"
       @click=${this._handleStartCamera}
       class=${this._mutableClassButton}
@@ -1123,5 +1126,11 @@ export class CameraSource extends LitUploaderBlock {
     </div>
   </div>
 `;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-camera-source': CameraSource;
   }
 }

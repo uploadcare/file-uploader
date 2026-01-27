@@ -83,3 +83,9 @@ export class PresenceToggle extends LitBlock {
     }, 0);
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-presence-toggle': PresenceToggle;
+  }
+}

@@ -6,6 +6,16 @@ import { InternalEventType } from '../../../blocks/UploadCtxProvider/EventEmitte
 import { LitActivityBlock } from '../../../lit/LitActivityBlock';
 import { LitSolutionBlock } from '../../../lit/LitSolutionBlock';
 
+import '../../../blocks/StartFrom/StartFrom';
+import '../../../blocks/DropArea/DropArea';
+import '../../../blocks/SourceList/SourceList';
+import '../../../blocks/Copyright/Copyright';
+import '../../../blocks/UploadList/UploadList';
+import '../../../blocks/CameraSource/CameraSource';
+import '../../../blocks/UrlSource/UrlSource';
+import '../../../blocks/ExternalSource/ExternalSource';
+import '../../../blocks/CloudImageEditorActivity/CloudImageEditorActivity';
+
 type BaseInitState = InstanceType<typeof LitSolutionBlock>['init$'];
 
 type FileUploaderInlineInitState = BaseInitState & {
@@ -107,5 +117,11 @@ export class FileUploaderInline extends LitSolutionBlock {
       <uc-external-source></uc-external-source>
       <uc-cloud-image-editor-activity></uc-cloud-image-editor-activity>
     `;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-file-uploader-inline': FileUploaderInline;
   }
 }

@@ -17,12 +17,23 @@ import {
   ALL_FILTERS,
   ALL_TABS,
   COLOR_OPERATIONS_CONFIG,
+  type ColorOperation,
   type CropOperation,
   TabId,
 } from './toolbar-constants';
 import type { CropAspectRatio, Transformations } from './types';
 import { viewerImageSrc } from './util';
 import { parseFilterValue } from './utils/parseFilterValue';
+
+import './EditorAspectRatioButtonControl';
+import './EditorCropButtonControl';
+import './EditorFilterControl';
+import './EditorOperationControl';
+import './elements/presence-toggle/PresenceToggle';
+import './elements/button/BtnUi';
+import './EditorScroller';
+import './elements/line-loader/LineLoaderUi';
+import './EditorSlider';
 
 type TabIdValue = (typeof TabId)[keyof typeof TabId];
 
@@ -287,7 +298,7 @@ export class EditorToolbar extends LitBlock {
     return html`<uc-editor-filter-control .filter=${filterId}></uc-editor-filter-control>`;
   }
 
-  private _renderOperationControl(operation: string): TemplateResult {
+  private _renderOperationControl(operation: ColorOperation | ''): TemplateResult {
     return html`<uc-editor-operation-control .operation=${operation}></uc-editor-operation-control>`;
   }
 
@@ -613,5 +624,11 @@ export class EditorToolbar extends LitBlock {
         </uc-presence-toggle>
       </div>
     `;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-editor-toolbar': EditorToolbar;
   }
 }
