@@ -23,7 +23,7 @@ type FileUploaderInlineInitState = BaseInitState & {
 };
 
 export class FileUploaderInline extends LitSolutionBlock {
-  public declare propertiesMeta: {
+  public declare attributesMeta: {
     'ctx-name': string;
   };
   public static override styleAttrs = [...super.styleAttrs, 'uc-file-uploader-inline'];

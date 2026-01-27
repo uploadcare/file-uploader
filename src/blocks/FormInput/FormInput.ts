@@ -1,18 +1,27 @@
+import { property } from 'lit/decorators.js';
 import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
 import type { OutputCollectionState } from '../../types/index';
 import { applyStyles } from '../../utils/applyStyles';
 
 export class FormInput extends LitUploaderBlock {
-  public declare propertiesMeta: {
+  public declare attributesMeta: {
     'ctx-name': string;
+    name?: string;
   };
   private _validationInputElement: HTMLInputElement | null = null;
   private _dynamicInputsContainer: HTMLDivElement | null = null;
 
+  @property({ type: String, noAccessor: true, attribute: 'name' })
+  public nameAttrValue?: string;
+
+  private get _inputName(): string {
+    return this.nameAttrValue ?? this.ctxName;
+  }
+
   private _createValidationInput(): HTMLInputElement {
     const validationInput = document.createElement('input');
     validationInput.type = 'text';
-    validationInput.name = this.ctxName;
+    validationInput.name = this._inputName;
     validationInput.required = this.cfg.multipleMin > 0;
     validationInput.tabIndex = -1;
     applyStyles(validationInput, {
@@ -87,7 +96,7 @@ export class FormInput extends LitUploaderBlock {
         for (const value of cdnUrls) {
           const input = document.createElement('input');
           input.type = 'hidden';
-          input.name = `${this.ctxName}[]`;
+          input.name = `${this._inputName}[]`;
           input.value = value;
           fr.appendChild(input);
         }

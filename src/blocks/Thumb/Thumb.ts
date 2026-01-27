@@ -341,9 +341,6 @@ export class Thumb extends FileItemConfig {
         this._renderedGridOnce = true;
       }
     });
-
-    this.setAttribute('role', 'img');
-    this.setAttribute('alt', 'Preview of uploaded image');
   }
 
   public override connectedCallback(): void {
@@ -366,7 +363,14 @@ export class Thumb extends FileItemConfig {
   public override render() {
     return html`
   <div class="uc-thumb">
-    <img class="uc-thumb__img" src=${this._thumbUrl || TRANSPARENT_PIXEL_SRC} alt="" ?hidden=${!this._thumbUrl} draggable="false" />
+    <img
+      class="uc-thumb__img"
+      src=${this._thumbUrl || TRANSPARENT_PIXEL_SRC}
+      role="img"
+      alt="Preview of uploaded image"
+      ?hidden=${!this._thumbUrl}
+      draggable="false"
+    />
     <div class="uc-badge">
       <uc-icon name=${this.badgeIcon}></uc-icon>
     </div>

@@ -27,7 +27,7 @@ type FileUploaderMinimalInitState = BaseInitState & {
 };
 
 export class FileUploaderMinimal extends LitSolutionBlock {
-  public declare propertiesMeta: {
+  public declare attributesMeta: {
     'ctx-name': string;
   };
   public static override styleAttrs = [...super.styleAttrs, 'uc-file-uploader-minimal'];
