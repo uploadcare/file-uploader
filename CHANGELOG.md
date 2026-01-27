@@ -22,6 +22,45 @@
 
 ### Bug Fixes
 
+* **cloud-image-editor:** adjusted activityParams ([#906](https://github.com/uploadcare/file-uploader/issues/906)) ([7e808bd](https://github.com/uploadcare/file-uploader/commit/7e808bd071e31577056ea8843ecfd8274ac83b1f))
+
+
+
+## [1.24.6](https://github.com/uploadcare/file-uploader/compare/v1.24.5...v1.24.6) (2025-12-23)
+
+
+### Bug Fixes
+
+* **activity-header:** align header with icon by center ([#904](https://github.com/uploadcare/file-uploader/issues/904)) ([c74675a](https://github.com/uploadcare/file-uploader/commit/c74675a03ef4fa67f8c1388ab7f901ad373be7b7))
+* prevent progress bar from resetting to 0 during validation ([#900](https://github.com/uploadcare/file-uploader/issues/900)) ([c52ec43](https://github.com/uploadcare/file-uploader/commit/c52ec435214b81bf18be80f391bc7eb60e773cc8))
+* reduced the number of retries ([#902](https://github.com/uploadcare/file-uploader/issues/902)) ([bdece2a](https://github.com/uploadcare/file-uploader/commit/bdece2a9f5eec8511c57563dba980a16aa754fd8))
+
+
+
+# [1.25.0](https://github.com/uploadcare/file-uploader/compare/v1.24.8...v1.25.0) (2026-01-15)
+
+
+### Features
+
+* **uc-form-input:** allow to override `name` attribute on native inputs ([#913](https://github.com/uploadcare/file-uploader/issues/913)) ([ca4c7fc](https://github.com/uploadcare/file-uploader/commit/ca4c7fc99de4522d47ea97518b60b069671f4347))
+
+
+
+## [1.24.8](https://github.com/uploadcare/file-uploader/compare/v1.24.7...v1.24.8) (2026-01-13)
+
+
+### Bug Fixes
+
+* **thumb:** alt added to thumb ([#909](https://github.com/uploadcare/file-uploader/issues/909)) ([4aa57bf](https://github.com/uploadcare/file-uploader/commit/4aa57bf7f41885f106580dca96a804e3cac371bf))
+* **upload-list:** adjusted upload button visibility ([#911](https://github.com/uploadcare/file-uploader/issues/911)) ([ca6e213](https://github.com/uploadcare/file-uploader/commit/ca6e213eac05e41d406ae62573cfca7a799798b9))
+
+
+
+## [1.24.7](https://github.com/uploadcare/file-uploader/compare/v1.24.6...v1.24.7) (2025-12-25)
+
+
+### Bug Fixes
+
 * **uploader-public-api:** adjusted activityParams ([#906](https://github.com/uploadcare/file-uploader/issues/906)) ([7e808bd](https://github.com/uploadcare/file-uploader/commit/7e808bd071e31577056ea8843ecfd8274ac83b1f))
 
 
