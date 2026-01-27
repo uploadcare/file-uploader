@@ -405,23 +405,31 @@ describe('Custom file validation', () => {
       await expect.element(page.getByText('Bad image')).toBeVisible();
       await expect.element(page.getByLabelText('File pixel.jpg in status finished')).toBeVisible();
     });
-
     it('should be run multiple times during upload', async () => {
       const config = page.getByTestId('uc-config').query()! as Config;
-      const validator = vi.fn(() => undefined);
+      const validator = vi.fn<FuncFileValidator>(() => undefined);
       config.fileValidators = [validator];
       const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
       const api = ctxProvider.getAPI();
       api.addFileFromObject(IMAGE.PIXEL);
       api.initFlow();
       await expect
-        .poll(() => validator)
-        .toHaveBeenCalledWith(expect.objectContaining({ status: 'idle' }), expect.anything(), expect.anything());
-      await expect
-        .poll(() => validator, {
+        .poll(() => validator.mock.calls.at(-1)?.[0].status, {
           timeout: 10000,
         })
-        .toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }), expect.anything(), expect.anything());
+        .toBe('success');
+
+      expect(validator.mock.calls.length).toBeGreaterThan(1);
+      expect(validator.mock.calls[0]).toEqual([
+        expect.objectContaining({ status: 'idle' }),
+        expect.anything(),
+        expect.anything(),
+      ]);
+      expect(validator.mock.calls.at(-1)).toEqual([
+        expect.objectContaining({ status: 'success' }),
+        expect.anything(),
+        expect.anything(),
+      ]);
     }, 20000);
 
     it('should be called when cdnUrl or cdnUrlModifiers changed', async () => {
