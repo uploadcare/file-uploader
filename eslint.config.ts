@@ -31,6 +31,7 @@ export default defineConfig([
     files: [SRC_GLOB],
   },
   {
+    files: [SRC_GLOB],
     settings: {
       wc: {
         elementBaseClasses: BASE_CLASSES,
