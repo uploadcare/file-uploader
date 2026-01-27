@@ -1,3 +1,23 @@
+# [1.26.0](https://github.com/uploadcare/file-uploader/compare/v1.25.0...v1.26.0) (2026-01-27)
+
+## Highlights
+
+* [SymbioteJS](https://symbiotejs.org/) was replaced with [Lit Element](https://lit.dev/).
+* All documented public API remains the same.
+
+## Potential Breaking Changes (Minor Release)
+
+Some internal / undocumented APIs may break.
+
+In particular, the undocumented static `template` setter that could be used for template overrides is deprecated and has no effect.
+
+See [migration guide](https://uploadcare.com/docs/file-uploader/migration-to-1.26.0/) for details.
+
+### Bug Fixes
+
+* Fixed thumbnail flicker
+* Fixed progress bar flicker
+
 # [1.25.0](https://github.com/uploadcare/file-uploader/compare/v1.24.8...v1.25.0) (2026-01-15)
 
 
