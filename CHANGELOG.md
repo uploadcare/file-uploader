@@ -1,3 +1,12 @@
+# [1.26.0](https://github.com/uploadcare/file-uploader/compare/v1.25.0...v1.26.0) (2026-01-27)
+
+
+### Features
+
+* Lit Element migration ([#901](https://github.com/uploadcare/file-uploader/issues/901)) ([bcd4883](https://github.com/uploadcare/file-uploader/commit/bcd48832ff583245f4f59a67d3fa8b1f8a447974))
+
+
+
 # [1.25.0](https://github.com/uploadcare/file-uploader/compare/v1.24.8...v1.25.0) (2026-01-15)
 
 
