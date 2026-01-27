@@ -43,6 +43,10 @@ export class SharedInstance {
           throw new Error('SharedInstance cfg proxy is read-only');
         },
         get: (_obj: ConfigType, key: keyof ConfigType) => {
+          if (typeof key !== 'string') {
+            return;
+          }
+
           const sharedKey = sharedConfigKey(key);
           if (!this._sharedInstancesBag.ctx.has(sharedKey)) {
             return;
