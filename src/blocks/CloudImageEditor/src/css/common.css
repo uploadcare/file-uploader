@@ -1,3 +1,5 @@
+/** biome-ignore-all lint/complexity/noImportantStyles: TODO: Refactor styles to get rid of !important rules */
+
 @layer uc.solutions {
   /* TODO: we should use basic theme there  */
 
@@ -6,7 +8,7 @@
     --color-text-base: var(--uc-foreground);
     --color-text-accent-contrast: var(--uc-background);
     --color-fill-contrast: var(--uc-background);
-    --color-modal-backdrop: oklch(0 0 0 / 0.1);
+    --color-modal-backdrop: oklch(0% 0 0 / 0.1);
     --color-image-background: var(--uc-muted);
     --color-focus-ring: var(--color-primary-accent);
     --color-crop-guides: var(--uc-foreground);
@@ -54,7 +56,7 @@
   }
 
   [uc-cloud-image-editor]
-    :is([tabindex][focus-visible], [tabindex]:hover, [with-effects][focus-visible], [with-effects]:hover) {
+    :is([tabindex]:focus-visible, [tabindex]:hover, [with-effects]:focus-visible, [with-effects]:hover) {
     --filter-effect: var(--hover-filter) !important;
     --opacity-effect: var(--hover-opacity) !important;
     --color-effect: var(--hover-color-rgb) !important;
@@ -231,7 +233,7 @@
 
   [uc-cloud-image-editor] > .uc-wrapper > .uc-network_problems_splash {
     position: absolute;
-    z-index: 4;
+    z-index: 999;
     display: flex;
     flex-direction: column;
     width: 100%;
@@ -421,14 +423,6 @@
     --hover-opacity: 1;
   }
 
-  uc-editor-filter-control.uc-not_active .uc-preview[loaded] {
-    opacity: 1;
-  }
-
-  uc-editor-filter-control.uc-active .uc-preview {
-    opacity: 0;
-  }
-
   uc-editor-button-control.uc-not_active,
   uc-editor-operation-control.uc-not_active,
   uc-editor-crop-button-control.uc-not_active,
@@ -508,6 +502,14 @@
     opacity: 0;
     filter: brightness(var(--filter-effect));
     transition: var(--transition-duration-3);
+  }
+
+  uc-editor-filter-control.uc-not_active .uc-preview[data-loaded] {
+    opacity: 1;
+  }
+
+  uc-editor-filter-control.uc-active .uc-preview {
+    opacity: 0;
   }
 
   uc-editor-filter-control > .uc-original-icon {
@@ -723,7 +725,7 @@
     position: relative;
     display: grid;
     grid-auto-flow: column;
-    grid-gap: 0px var(--l-tab-gap);
+    gap: 0px var(--l-tab-gap);
     align-items: center;
     height: 100%;
   }
@@ -756,26 +758,7 @@
     width: 100%;
     height: 100%;
     overflow: hidden;
-    opacity: 0;
     content-visibility: auto;
-  }
-
-  uc-editor-toolbar
-    > .uc-toolbar-container
-    > .uc-sub-toolbar
-    > .uc-tab-content-row
-    > .uc-tab-content.uc-tab-content--visible {
-    opacity: 1;
-    pointer-events: auto;
-  }
-
-  uc-editor-toolbar
-    > .uc-toolbar-container
-    > .uc-sub-toolbar
-    > .uc-tab-content-row
-    > .uc-tab-content.uc-tab-content--hidden {
-    opacity: 0;
-    pointer-events: none;
   }
 
   uc-editor-toolbar
@@ -862,10 +845,6 @@
     padding-right: var(--uc-padding);
   }
 
-  uc-editor-toolbar .uc-controls-list_last-item {
-    margin-right: var(--cldtr-gap-max);
-  }
-
   uc-editor-toolbar .uc-info-tooltip_container {
     position: absolute;
     display: flex;
@@ -886,7 +865,7 @@
   }
 
   uc-editor-toolbar .uc-info-tooltip {
-    z-index: 3;
+    z-index: 10;
     padding: 3px 6px;
     color: var(--color-text-base);
     font-size: 0.7em;

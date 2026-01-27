@@ -1,0 +1,59 @@
+<!doctype html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script type="module">
+  import '@/solutions/file-uploader/regular/index.css';
+  import * as UC from '@/index.js';
+
+  UC.defineComponents(UC);
+
+  const ctx = document.querySelector('uc-upload-ctx-provider');
+  const api = ctx.getAPI();
+  const radios = document.querySelectorAll('input[name="choice"]');
+
+  const editorAutoOpenListener = (e) => {
+    const { internalId } = e.detail;
+    if (api.getCurrentActivity() !== 'cloud-image-edit') {
+      api.setCurrentActivity('cloud-image-edit', { internalId });
+    }
+  };
+
+  const listeners = [editorAutoOpenListener];
+
+  const handleRadioChange = (choice) => {
+    switch (choice) {
+      case 'auto-editor-open':
+        ctx.addEventListener('file-upload-success', editorAutoOpenListener);
+        break;
+      default:
+        listeners.forEach((listener) => {
+          ctx.removeEventListener('file-upload-success', listener);
+        });
+        break;
+    }
+  };
+
+  radios.forEach((radio) => {
+    radio.addEventListener('change', (e) => {
+      handleRadioChange(e.target.value);
+    });
+  });
+
+  handleRadioChange([...radios].filter((radio) => radio.checked)[0].value);
+  </script>
+</head>
+
+<uc-file-uploader-regular ctx-name="my-uploader" class="uc-light"></uc-file-uploader-regular>
+<uc-config ctx-name="my-uploader" pubkey="demopublickey" debug quality-insights="false" test-mode></uc-config>
+<uc-upload-ctx-provider ctx-name="my-uploader"></uc-upload-ctx-provider>
+
+<fieldset>
+  <legend>Please select behaviour:</legend>
+  <div>
+    <input type="radio" id="choice2" name="choice" value="none" checked="checked">
+    <label for="choice2">None</label>
+
+    <input type="radio" id="choice1" name="choice" value="auto-editor-open">
+    <label for="choice1">Auto editor open</label>
+  </div>
+</fieldset>

@@ -1,33 +1,42 @@
-import { Block } from '../../../abstract/Block';
+import { property } from 'lit/decorators.js';
+import { LitBlock } from '../../../lit/LitBlock';
 
 const X_THRESHOLD = 1;
+const noopScrollListener = () => {};
 
-export class EditorScroller extends Block {
-  override initCallback(): void {
-    super.initCallback();
+export class EditorScroller extends LitBlock {
+  /**
+   * CSS-only attribute
+   */
+  @property({ type: Boolean, noAccessor: true, attribute: 'hidden-scrollbar' })
+  public hiddenScrollbar = false;
 
-    this.addEventListener(
-      'wheel',
-      (e: WheelEvent) => {
-        e.preventDefault();
+  private readonly _handleWheel = (event: WheelEvent): void => {
+    event.preventDefault();
+    const { deltaY, deltaX } = event;
+    if (Math.abs(deltaX) > X_THRESHOLD) {
+      this.scrollLeft += deltaX;
+      return;
+    }
+    this.scrollLeft += deltaY;
+  };
 
-        const { deltaY, deltaX } = e;
-        if (Math.abs(deltaX) > X_THRESHOLD) {
-          this.scrollLeft += deltaX;
-        } else {
-          this.scrollLeft += deltaY;
-        }
-      },
-      {
-        passive: false,
-      },
-    );
+  public override connectedCallback(): void {
+    super.connectedCallback();
+    this.addEventListener('wheel', this._handleWheel, { passive: false });
+    // This fixes a macOS issue where wheel events skip without an attached scroll listener
+    this.addEventListener('scroll', noopScrollListener, { passive: true });
+  }
 
-    // This fixes some strange bug on MacOS - wheel event doesn't fire for physical mouse wheel if no scroll event attached also
-    this.addEventListener('scroll', () => {}, {
-      passive: true,
-    });
+  public override disconnectedCallback(): void {
+    this.removeEventListener('wheel', this._handleWheel);
+    this.removeEventListener('scroll', noopScrollListener);
+    super.disconnectedCallback();
   }
 }
 
-EditorScroller.template = /* HTML */ ` <slot></slot> `;
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-editor-scroller': EditorScroller;
+  }
+}

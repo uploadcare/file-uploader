@@ -1,12 +1,11 @@
 import type { UploadcareGroup } from '@uploadcare/upload-client';
 import { Queue } from '@uploadcare/upload-client';
+import type { LitBlock } from '../lit/LitBlock';
 import type { OutputCollectionState, OutputErrorCollection } from '../types/index';
-import type { Block } from './Block';
-import type { SecureUploadsManager } from './managers/SecureUploadsManager';
 
 export const blockCtx = () => ({});
 
-export const activityBlockCtx = (fnCtx: Block) => ({
+export const activityBlockCtx = (fnCtx: LitBlock) => ({
   ...blockCtx(),
   '*currentActivity': null,
   '*currentActivityParams': {},
@@ -16,13 +15,11 @@ export const activityBlockCtx = (fnCtx: Block) => ({
   '*closeModal': () => {
     fnCtx.modalManager?.close(fnCtx.$['*currentActivity']);
 
-    fnCtx.set$({
-      '*currentActivity': null,
-    });
+    fnCtx.pub('*currentActivity', null);
   },
 });
 
-export const uploaderBlockCtx = (fnCtx: Block) => ({
+export const uploaderBlockCtx = (fnCtx: LitBlock) => ({
   ...activityBlockCtx(fnCtx),
   '*commonProgress': 0,
   '*uploadList': [],
@@ -31,10 +28,9 @@ export const uploaderBlockCtx = (fnCtx: Block) => ({
   '*collectionState': null as OutputCollectionState | null,
   '*groupInfo': null as UploadcareGroup | null,
   '*uploadTrigger': new Set<string>(),
-  '*secureUploadsManager': null as SecureUploadsManager | null,
 });
 
-export const solutionBlockCtx = (fnCtx: Block) => ({
+export const solutionBlockCtx = (fnCtx: LitBlock) => ({
   ...uploaderBlockCtx(fnCtx),
   '*solution': null as string | null,
 });

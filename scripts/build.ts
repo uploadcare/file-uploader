@@ -2,54 +2,33 @@ import fs from 'node:fs';
 import path, { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import postcssCascadeLayers from '@csstools/postcss-cascade-layers';
+import { minifyTemplates, writeFiles } from 'esbuild-minify-templates';
 import postcss from 'postcss';
 import { build as tsupBuild } from 'tsup';
-import { dependencies } from '../package.json';
+import pkgJson from '../package.json';
 import { type BuildItem, buildItems } from './build-items';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const ROOT_DIR = path.resolve(__dirname, '..');
-const LICENSE_PATH = path.resolve(ROOT_DIR, 'LICENSE');
 const TSCONFIG_PATH = path.resolve(ROOT_DIR, 'tsconfig.app.json');
 
-function jsBanner() {
-  const license = fs.readFileSync(LICENSE_PATH).toString();
-  return (
-    '/**\n' +
-    ' * @license\n' +
-    license
-      .split('\n')
-      .map((line) => ` * ${line}`)
-      .join('\n') +
-    '\n */'
-  );
-}
+function banner() {
+  const repositoryUrl = pkgJson.repository.url;
+  const licenseUrl = new URL('blob/main/LICENSE', repositoryUrl).toString();
+  const licenseName = pkgJson.license;
+  const pkgName = pkgJson.name;
+  const version = pkgJson.version;
+  const buildTime = new Date().toISOString();
 
-function minifyHtmlTemplates(js: string): string {
-  const checkIfHtml = (str: string) => {
-    return str.includes('<') && (str.includes('</') || str.includes('/>'));
-  };
-  const processChunk = (ch: string) => {
-    if (checkIfHtml(ch)) {
-      let htmlMin = ch.split('\n').join(' ');
-      while (htmlMin.includes('  ')) {
-        htmlMin = htmlMin.split('  ').join(' ');
-      }
-      htmlMin = htmlMin.split('> <').join('><');
-      return htmlMin.trim();
-    }
-    return ch;
-  };
-  const result = js
-    .split('`')
-    .map((chunk) => processChunk(chunk))
-    .join('`')
-    .split(`'`)
-    .map((chunk) => processChunk(chunk))
-    .join(`'`);
-
-  return result;
+  return [
+    '/**',
+    ' * @license',
+    ` * Package: ${pkgName}@${version} (${licenseName})`,
+    ` * License: ${licenseUrl}`,
+    ` * Built: ${buildTime}`,
+    ' */',
+  ].join('\n');
 }
 
 async function build(buildItem: BuildItem) {
@@ -61,8 +40,8 @@ async function build(buildItem: BuildItem) {
     target: 'esnext',
     minify: buildItem.minify,
     banner: {
-      js: jsBanner(),
-      css: jsBanner(),
+      js: banner(),
+      css: banner(),
     },
     format: buildItem.format,
     skipNodeModulesBundle: true,
@@ -70,23 +49,23 @@ async function build(buildItem: BuildItem) {
       options.conditions = ['browser'];
       options.mainFields = ['exports'];
       options.platform = 'browser';
+      options.legalComments = 'linked';
+      if (buildItem.mangleProps) {
+        options.mangleProps = /^_/;
+      }
     },
-    noExternal: buildItem.bundleExternalDependencies ? Object.keys(dependencies) : undefined,
+    esbuildPlugins: buildItem.minify ? [minifyTemplates(), writeFiles()] : [],
+    noExternal: buildItem.bundleExternalDependencies ? [/.*/] : undefined,
     globalName: buildItem.format === 'iife' ? 'UC' : undefined,
     keepNames: buildItem.format === 'iife' ? true : undefined,
     splitting: false,
+    treeshake: true,
     shims: false,
     dts: true,
+    env: {
+      NODE_ENV: 'production',
+    },
     plugins: [
-      {
-        name: 'minify-html-templates',
-        renderChunk(code) {
-          return {
-            code: buildItem.minify ? minifyHtmlTemplates(code) : code,
-            map: null,
-          };
-        },
-      },
       {
         name: 'rename-output',
         async buildEnd(ctx) {

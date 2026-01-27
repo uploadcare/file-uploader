@@ -1,25 +1,28 @@
 // @ts-check
 
-import { UploaderBlock } from '../../abstract/UploaderBlock';
+import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
 import { type EventPayload, EventType } from './EventEmitter';
 
 // biome-ignore lint/suspicious/noUnsafeDeclarationMerging: This is intentional interface merging, used to add event listener types
-export class UploadCtxProvider extends UploaderBlock {
-  static override styleAttrs = ['uc-wgt-common'];
-  static EventType = EventType;
+export class UploadCtxProvider extends LitUploaderBlock {
+  public declare attributesMeta: {
+    'ctx-name': string;
+  };
+  public static override styleAttrs = ['uc-wgt-common'];
+  public static EventType = EventType;
 
-  override requireCtxName = true;
+  private _unbindEventEmitter: (() => void) | null = null;
 
-  override initCallback() {
+  public override initCallback() {
     super.initCallback();
 
-    this.$['*eventEmitter'].bindTarget(this);
+    this._unbindEventEmitter = this.eventEmitter.bindTarget(this);
   }
 
-  override destroyCallback() {
-    super.destroyCallback();
+  public override disconnectedCallback(): void {
+    super.disconnectedCallback();
 
-    this.$['*eventEmitter'].unbindTarget(this);
+    this._unbindEventEmitter?.();
   }
 }
 
@@ -27,7 +30,7 @@ type EventListenerMap = {
   [K in (typeof EventType)[keyof typeof EventType]]: (e: CustomEvent<EventPayload[K]>) => void;
 };
 
-export interface UploadCtxProvider extends UploaderBlock {
+export interface UploadCtxProvider extends LitUploaderBlock {
   addEventListener<T extends keyof EventListenerMap>(
     type: T,
     listener: EventListenerMap[T],
@@ -38,4 +41,10 @@ export interface UploadCtxProvider extends UploaderBlock {
     listener: EventListenerMap[T],
     options?: boolean | EventListenerOptions,
   ): void;
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-upload-ctx-provider': UploadCtxProvider;
+  }
 }

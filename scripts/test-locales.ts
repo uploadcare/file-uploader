@@ -17,7 +17,7 @@ const localesPerGroup: LocalesPerGroup = {};
 
 for (const group of localeGroups) {
   const locales = (await fs.readdir(path.join(LOCALES_PATH, group))).filter((filename: string) =>
-    filename.endsWith('.js'),
+    filename.endsWith('.ts'),
   );
   localesPerGroup[group] = {};
 
@@ -25,7 +25,7 @@ for (const group of localeGroups) {
     const module = (await import(path.join(LOCALES_PATH, group, locale))) as {
       default: LocaleDefinition;
     };
-    localesPerGroup[group][locale.replace('.js', '')] = module.default;
+    localesPerGroup[group][locale.replace('.ts', '')] = module.default;
   }
 }
 

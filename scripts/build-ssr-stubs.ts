@@ -10,7 +10,6 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const DIST_PATH = resolve(__dirname, '../dist');
 
-// biome-ignore lint/suspicious/noExplicitAny: Type is used to represent any class
 type AnyClass = new (...args: any[]) => any;
 
 const isClass = (value: unknown): value is AnyClass => {
@@ -19,7 +18,6 @@ const isClass = (value: unknown): value is AnyClass => {
 
 const getClassStaticProperties = (klass: AnyClass) => {
   const extractedProperties: Record<string, unknown> = {};
-  // biome-ignore lint/suspicious/noExplicitAny: Type is used to represent any class
   const extract = (proto: any) => {
     if (proto === null) return;
     if (proto === HTMLElement || proto === HTMLElement.prototype) {

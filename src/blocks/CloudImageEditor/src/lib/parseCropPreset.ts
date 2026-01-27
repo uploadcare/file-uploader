@@ -1,6 +1,6 @@
-import { UID } from '@symbiotejs/symbiote';
 import type { ConfigType } from '../../../../types/exported';
 import { stringToArray } from '../../../../utils/stringToArray';
+import { UID } from '../../../../utils/UID';
 import type { CropAspectRatio, CropPresetList } from '../types';
 
 const EXCLUDED_TYPES = ['free'];
@@ -29,7 +29,7 @@ export const parseCropPreset = (cropPreset: ConfigType['cropPreset']): CropAspec
     }
 
     result.push({
-      id: UID.generate(),
+      id: UID.generateFastUid(),
       type: 'aspect-ratio',
       width: EXCLUDED_TYPES.includes(raw) ? 0 : w,
       height: EXCLUDED_TYPES.includes(raw) ? 0 : h,

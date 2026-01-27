@@ -11,12 +11,20 @@
     "noImplicitReturns": true,
     "noImplicitThis": true,
     "noUncheckedIndexedAccess": true,
-    "allowJs": true,
+    "allowJs": false,
     "strict": true,
     "skipLibCheck": true,
     "noEmit": true,
     "sourceMap": true,
-    "types": ["@total-typescript/ts-reset", "vite/client"]
+    "types": ["@total-typescript/ts-reset", "vite/client"],
+    "experimentalDecorators": true,
+    "useDefineForClassFields": false,
+    "plugins": [
+      {
+        "name": "ts-lit-plugin",
+        "strict": true
+      }
+    ]
   },
   "include": ["src"],
   "exclude": ["node_modules", "**/*.test.js"]

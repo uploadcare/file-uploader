@@ -1,4 +1,5 @@
-import { Block } from '../../../../../abstract/Block';
+import { property } from 'lit/decorators.js';
+import { LitBlock } from '../../../../../lit/LitBlock';
 import { applyClassNames } from '../../lib/classNames';
 
 type PresenceToggleStyle = {
@@ -13,32 +14,33 @@ const DEFAULT_STYLE: Required<PresenceToggleStyle> = {
   hidden: 'uc-hidden',
 };
 
-export class PresenceToggle extends Block {
+export class PresenceToggle extends LitBlock {
   private _visible = false;
+  private _styles: PresenceToggleStyle = DEFAULT_STYLE;
   private _visibleStyle: string = DEFAULT_STYLE.visible;
   private _hiddenStyle: string = DEFAULT_STYLE.hidden;
   private _externalTransitions = false;
+  private _initialRenderComplete = false;
 
-  constructor() {
-    super();
+  @property({ type: Boolean })
+  public set visible(value: boolean) {
+    this._visible = value;
+    this._handleVisible();
+  }
 
-    this.defineAccessor('styles', (styles?: PresenceToggleStyle) => {
-      if (!styles) {
-        return;
-      }
-      this._externalTransitions = true;
-      this._visibleStyle = styles.visible ?? DEFAULT_STYLE.visible;
-      this._hiddenStyle = styles.hidden ?? DEFAULT_STYLE.hidden;
-    });
+  public get visible(): boolean {
+    return this._visible;
+  }
 
-    this.defineAccessor('visible', (visible?: boolean) => {
-      if (typeof visible !== 'boolean') {
-        return;
-      }
-
-      this._visible = visible;
-      this._handleVisible();
-    });
+  @property({ attribute: false })
+  public set styles(styles: PresenceToggleStyle) {
+    this._styles = styles;
+    this._externalTransitions = true;
+    this._visibleStyle = styles.visible ?? DEFAULT_STYLE.visible;
+    this._hiddenStyle = styles.hidden ?? DEFAULT_STYLE.hidden;
+  }
+  public get styles(): PresenceToggleStyle {
+    return this._styles;
   }
 
   private _handleVisible(): void {
@@ -48,10 +50,24 @@ export class PresenceToggle extends Block {
       [this._visibleStyle]: this._visible,
       [this._hiddenStyle]: !this._visible,
     });
-    this.setAttribute('aria-hidden', this._visible ? 'false' : 'true');
+    this.toggleAttribute('inert', !this._visible);
   }
 
-  override initCallback(): void {
+  private _dispatchInitialRenderEvent(): void {
+    if (this._initialRenderComplete) {
+      return;
+    }
+
+    this._initialRenderComplete = true;
+    this.dispatchEvent(
+      new CustomEvent('initial-render', {
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  }
+
+  public override initCallback(): void {
     super.initCallback();
 
     this.classList.toggle('uc-initial', true);
@@ -63,7 +79,13 @@ export class PresenceToggle extends Block {
     this._handleVisible();
     setTimeout(() => {
       this.classList.toggle('uc-initial', false);
+      this._dispatchInitialRenderEvent();
     }, 0);
   }
 }
-PresenceToggle.template = /* HTML */ `<slot></slot> `;
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-presence-toggle': PresenceToggle;
+  }
+}

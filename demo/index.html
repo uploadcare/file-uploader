@@ -1,26 +1,393 @@
-<script type="module">
-  const templates = import.meta.glob('./**/*.html');
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Blocks Demo</title>
+    <script type="module">
+    import { css, html, LitElement } from 'lit';
 
-  const templateList = document.createElement('div');
-  templateList.innerHTML = /* html */ `
-    <h2 style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; text-align: center;">Demo</h2>
-    <ul style="list-style: none; padding: 0; max-width: 600px; margin: 0 auto;">
-      ${Object.keys(templates)
-        .map((path) => {
-          return /* html */ `<li style="margin: 10px 0;">
-            <a href="${path}" style="text-decoration: none; color: #007BFF; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-weight: bold;">
-                      ${path.replace('./', '')}
-                    </a>
-                  </li>`;
-        })
-        .join('')}
-    </ul>
-  `;
-  templateList.style.border = '1px solid #ddd';
-  templateList.style.borderRadius = '8px';
-  templateList.style.padding = '20px';
-  templateList.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
-  templateList.style.margin = '20px auto';
-  templateList.style.maxWidth = '600px';
-  document.body.appendChild(templateList);
-</script>
+    const templates = import.meta.glob('./**/*.html');
+
+    // Build nested folder structure
+    function buildTree(paths) {
+      const tree = {};
+      for (const path of paths) {
+        const parts = path.replace('./', '').split('/');
+        let current = tree;
+        for (let i = 0; i < parts.length - 1; i++) {
+          const folder = parts[i];
+          if (!current[folder]) current[folder] = { _files: [], _folders: {} };
+          current = current[folder]._folders;
+        }
+        const fileName = parts[parts.length - 1];
+        if (!current._files) {
+          // We're at a folder level, add to parent
+          if (!tree[parts[0]]) tree[parts[0]] = { _files: [], _folders: {} };
+          let target = tree[parts[0]];
+          for (let i = 1; i < parts.length - 1; i++) {
+            if (!target._folders[parts[i]]) target._folders[parts[i]] = { _files: [], _folders: {} };
+            target = target._folders[parts[i]];
+          }
+          target._files.push({ path, name: fileName });
+        }
+      }
+      // Simpler approach: group by first folder, then by subfolder
+      const result = {};
+      for (const path of paths) {
+        const parts = path.replace('./', '').split('/');
+        if (parts.length === 1) continue; // skip root files
+        const folder = parts[0];
+        if (!result[folder]) result[folder] = { files: [], subfolders: {} };
+        if (parts.length === 2) {
+          result[folder].files.push({ path, name: parts[1] });
+        } else {
+          const subfolder = parts[1];
+          if (!result[folder].subfolders[subfolder]) result[folder].subfolders[subfolder] = [];
+          result[folder].subfolders[subfolder].push({ path, name: parts.slice(2).join('/') });
+        }
+      }
+      return result;
+    }
+
+    const tree = buildTree(Object.keys(templates));
+
+    const folderMeta = {
+      solutions: { icon: '🧩', desc: 'Dev mode with source imports' },
+      bundles: { icon: '📦', desc: 'Pre-built web bundles' },
+      features: { icon: '⚙️', desc: 'Feature demos' },
+      'external-sources': { icon: '🔗', desc: 'External integrations' },
+    };
+
+    class DemoNav extends LitElement {
+      static properties = {
+        openFolders: { state: true },
+        search: { state: true },
+      };
+
+      static styles = css`
+        :host {
+          display: block;
+          font-family: system-ui, -apple-system, sans-serif;
+          max-width: 640px;
+          margin: 40px auto;
+          padding: 0 16px;
+        }
+
+        h1 {
+          font-size: 1.5rem;
+          font-weight: 500;
+          color: #111;
+          margin: 0 0 16px;
+        }
+
+        .search {
+          width: 100%;
+          padding: 10px 14px;
+          border: 1px solid #ddd;
+          border-radius: 8px;
+          font: inherit;
+          font-size: 0.875rem;
+          margin-bottom: 16px;
+          background: #fff;
+        }
+
+        .search:focus {
+          outline: none;
+          border-color: #0066cc;
+          box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+        }
+
+        .search::placeholder {
+          color: #999;
+        }
+
+        .folder {
+          margin-bottom: 8px;
+          border-radius: 8px;
+          overflow: hidden;
+          background: #fff;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        }
+
+        .folder-btn {
+          display: flex;
+          align-items: center;
+          width: 100%;
+          padding: 12px 16px;
+          border: none;
+          background: none;
+          cursor: pointer;
+          font: inherit;
+          text-align: left;
+          gap: 12px;
+        }
+
+        .folder-btn:hover {
+          background: #f8f8f8;
+        }
+
+        .icon {
+          font-size: 1.25rem;
+          line-height: 1;
+        }
+
+        .folder-info {
+          flex: 1;
+          min-width: 0;
+        }
+
+        .folder-name {
+          font-weight: 500;
+          color: #111;
+        }
+
+        .folder-desc {
+          font-size: 0.75rem;
+          color: #666;
+          margin-top: 2px;
+        }
+
+        .count {
+          font-size: 0.75rem;
+          color: #999;
+          background: #f0f0f0;
+          padding: 2px 8px;
+          border-radius: 10px;
+        }
+
+        .chevron {
+          color: #ccc;
+          transition: transform 0.15s ease;
+        }
+
+        .chevron.open {
+          transform: rotate(90deg);
+        }
+
+        .folder-content {
+          border-top: 1px solid #f0f0f0;
+          padding-bottom: 8px;
+        }
+
+        .files {
+          list-style: none;
+          margin: 0;
+          padding: 0;
+        }
+
+        .files a {
+          display: block;
+          padding: 8px 16px 8px 52px;
+          color: #0066cc;
+          text-decoration: none;
+          font-size: 0.875rem;
+        }
+
+        .files a:hover {
+          background: #f8f9fa;
+        }
+
+        .subfolder {
+          margin-top: 4px;
+        }
+
+        .subfolder-header {
+          display: flex;
+          align-items: center;
+          padding: 6px 16px 6px 40px;
+          font-size: 0.75rem;
+          font-weight: 500;
+          color: #666;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          gap: 6px;
+          cursor: pointer;
+        }
+
+        .subfolder-header:hover {
+          color: #333;
+        }
+
+        .subfolder-header .chevron {
+          font-size: 0.625rem;
+        }
+
+        .subfolder .files a {
+          padding-left: 64px;
+        }
+
+        .no-results {
+          text-align: center;
+          color: #999;
+          padding: 40px 20px;
+        }
+
+        mark {
+          background: #fff3cd;
+          padding: 0 2px;
+          border-radius: 2px;
+        }
+
+        @media (prefers-color-scheme: dark) {
+          h1 { color: #eee; }
+          .search { background: #1e1e1e; border-color: #333; color: #eee; }
+          .search:focus { border-color: #6db3f2; box-shadow: 0 0 0 3px rgba(109, 179, 242, 0.2); }
+          .search::placeholder { color: #666; }
+          .folder { background: #1e1e1e; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+          .folder-btn:hover { background: #252525; }
+          .folder-name { color: #eee; }
+          .folder-desc { color: #888; }
+          .count { background: #333; color: #888; }
+          .folder-content { border-color: #333; }
+          .files a { color: #6db3f2; }
+          .files a:hover { background: #252525; }
+          .subfolder-header { color: #888; }
+          .subfolder-header:hover { color: #bbb; }
+          mark { background: #5c4813; color: #fff; }
+        }
+      `;
+
+      constructor() {
+        super();
+        // All folders open by default
+        const open = {};
+        for (const f of Object.keys(tree)) {
+          open[f] = true;
+        }
+        this.openFolders = open;
+        this.search = '';
+      }
+
+      toggle(key) {
+        this.openFolders = { ...this.openFolders, [key]: !this.openFolders[key] };
+      }
+
+      onSearch(e) {
+        this.search = e.target.value.toLowerCase();
+      }
+
+      highlight(text) {
+        if (!this.search) return text;
+        const idx = text.toLowerCase().indexOf(this.search);
+        if (idx === -1) return text;
+        return html`${text.slice(0, idx)}<mark>${text.slice(idx, idx + this.search.length)}</mark>${text.slice(idx + this.search.length)}`;
+      }
+
+      matchesSearch(name) {
+        return !this.search || name.toLowerCase().includes(this.search);
+      }
+
+      countMatches(folder) {
+        const data = tree[folder];
+        let count = data.files.filter((f) => this.matchesSearch(f.name)).length;
+        for (const [, files] of Object.entries(data.subfolders)) {
+          count += files.filter((f) => this.matchesSearch(f.name)).length;
+        }
+        return count;
+      }
+
+      render() {
+        const folders = Object.entries(tree);
+        const hasResults = folders.some(([folder]) => this.countMatches(folder) > 0);
+
+        return html`
+          <h1>Blocks Demos</h1>
+          <input
+            type="search"
+            class="search"
+            placeholder="Search demos..."
+            .value=${this.search}
+            @input=${this.onSearch}
+          />
+          ${
+            !hasResults
+              ? html`<div class="no-results">No demos found for "${this.search}"</div>`
+              : folders.map(([folder, data]) => {
+                  const matchCount = this.countMatches(folder);
+                  if (matchCount === 0) return '';
+
+                  const filteredFiles = data.files.filter((f) => this.matchesSearch(f.name));
+                  const filteredSubfolders = Object.entries(data.subfolders)
+                    .map(([name, files]) => [name, files.filter((f) => this.matchesSearch(f.name))])
+                    .filter(([, files]) => files.length > 0);
+
+                  return html`
+                  <div class="folder">
+                    <button class="folder-btn" @click=${() => this.toggle(folder)}>
+                      <span class="chevron ${this.openFolders[folder] ? 'open' : ''}">▶</span>
+                      <span class="icon">${folderMeta[folder]?.icon || '📁'}</span>
+                      <div class="folder-info">
+                        <div class="folder-name">${folder}</div>
+                        ${folderMeta[folder]?.desc ? html`<div class="folder-desc">${folderMeta[folder].desc}</div>` : ''}
+                      </div>
+                      <span class="count">${matchCount}</span>
+                    </button>
+                    ${
+                      this.openFolders[folder]
+                        ? html`
+                          <div class="folder-content">
+                            ${
+                              filteredFiles.length
+                                ? html`
+                                  <ul class="files">
+                                    ${filteredFiles.map(
+                                      (f) =>
+                                        html`<li><a href="${f.path}">${this.highlight(f.name.replace('.html', ''))}</a></li>`,
+                                    )}
+                                  </ul>
+                                `
+                                : ''
+                            }
+                            ${filteredSubfolders.map(
+                              ([subfolder, files]) => html`
+                                <div class="subfolder">
+                                  <div class="subfolder-header" @click=${() => this.toggle(`${folder}/${subfolder}`)}>
+                                    <span class="chevron ${this.openFolders[`${folder}/${subfolder}`] !== false ? 'open' : ''}">▶</span>
+                                    📂 ${subfolder}
+                                  </div>
+                                  ${
+                                    this.openFolders[`${folder}/${subfolder}`] !== false
+                                      ? html`
+                                        <ul class="files">
+                                          ${files.map(
+                                            (f) =>
+                                              html`<li><a href="${f.path}">${this.highlight(f.name.replace('.html', ''))}</a></li>`,
+                                          )}
+                                        </ul>
+                                      `
+                                      : ''
+                                  }
+                                </div>
+                              `,
+                            )}
+                          </div>
+                        `
+                        : ''
+                    }
+                  </div>
+                `;
+                })
+          }
+        `;
+      }
+    }
+
+    customElements.define('demo-nav', DemoNav);
+    </script>
+    <style>
+    body {
+      margin: 0;
+      background: #f5f5f5;
+    }
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: #121212;
+      }
+    }
+    </style>
+  </head>
+  <body>
+    <demo-nav></demo-nav>
+  </body>
+</html>

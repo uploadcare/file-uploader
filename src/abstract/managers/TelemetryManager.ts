@@ -5,8 +5,10 @@ import { initialConfig } from '../../blocks/Config/initialConfig';
 import type { EventKey, InternalEventKey } from '../../blocks/UploadCtxProvider/EventEmitter';
 import { EventType, InternalEventType } from '../../blocks/UploadCtxProvider/EventEmitter';
 import { PACKAGE_NAME, PACKAGE_VERSION } from '../../env';
+import { SharedInstance, type SharedInstancesBag } from '../../lit/shared-instances';
 import type { ConfigType } from '../../types/index';
-import type { Block } from '../Block';
+import { UID } from '../../utils/UID';
+import { sharedConfigKey } from '../sharedConfigKey';
 
 type CommonEventType = InternalEventKey | EventKey;
 
@@ -19,30 +21,41 @@ type TelemetryEventBody = Partial<Pick<TelemetryState, 'payload' | 'config'>> & 
   eventType?: CommonEventType;
 };
 
-export class TelemetryManager {
-  private readonly _sessionId: string = crypto.randomUUID();
+export class TelemetryManager extends SharedInstance {
+  private readonly _sessionId: string = UID.generateRandomUUID();
   private readonly _telemetryInstance: TelemetryAPIService;
-  private readonly _block: Block;
   private _config: ConfigType = structuredClone(initialConfig);
   private _initialized = false;
   private _lastPayload: TelemetryState | null = null;
   private readonly _queue: Queue;
+  private _isEnabled = false;
 
-  constructor(block: Block) {
-    this._block = block;
+  public constructor(sharedInstancesBag: SharedInstancesBag) {
+    super(sharedInstancesBag);
     this._telemetryInstance = new TelemetryAPIService();
     this._queue = new Queue(10);
 
-    for (const key of Object.keys(this._config) as (keyof ConfigType)[]) {
-      this._block.subConfigValue(key, (value) => {
-        if (this._initialized && this._config[key] !== value) {
-          this.sendEvent({
-            eventType: InternalEventType.CHANGE_CONFIG,
-          });
-        }
+    this.addSub(
+      this._ctx.sub(sharedConfigKey('qualityInsights'), (value) => {
+        this._isEnabled = Boolean(value);
+      }),
+    );
 
-        this._setConfig(key, value);
-      });
+    for (const key of Object.keys(this._config) as (keyof ConfigType)[]) {
+      this.addSub(
+        this._ctx.sub(sharedConfigKey(key), (value) => {
+          if (!this._isEnabled) {
+            return;
+          }
+          if (this._initialized && this._config[key] !== value) {
+            this.sendEvent({
+              eventType: InternalEventType.CHANGE_CONFIG,
+            });
+          }
+
+          this._setConfig(key, value);
+        }),
+      );
     }
   }
 
@@ -111,7 +124,10 @@ export class TelemetryManager {
     return false;
   }
 
-  sendEvent(body: TelemetryEventBody): void {
+  public sendEvent(body: TelemetryEventBody): void {
+    if (!this._isEnabled) {
+      return;
+    }
     const payload = this._formattingPayload({
       eventType: body.eventType,
       payload: body.payload,
@@ -136,7 +152,7 @@ export class TelemetryManager {
     });
   }
 
-  sendEventError(error: unknown, context = 'unknown'): void {
+  public sendEventError(error: unknown, context = 'unknown'): void {
     this.sendEvent({
       eventType: InternalEventType.ERROR_EVENT,
       payload: {
@@ -152,7 +168,7 @@ export class TelemetryManager {
   /**
    * Method to send telemetry event for Cloud Image Editor.
    */
-  sendEventCloudImageEditor(e: MouseEvent, tabId: string, options: Record<string, unknown> = {}): void {
+  public sendEventCloudImageEditor(e: MouseEvent, tabId: string, options: Record<string, unknown> = {}): void {
     this.sendEvent({
       eventType: InternalEventType.ACTION_EVENT,
       payload: {
@@ -189,18 +205,18 @@ export class TelemetryManager {
   }
 
   private get _solution(): string | null {
-    if (!this._block.has('*solution')) {
+    if (!this._ctx.has('*solution')) {
       return null;
     }
-    const solution = this._block.$['*solution'] as string | undefined;
+    const solution = this._ctx.read('*solution');
     return solution ? solution.toLowerCase() : null;
   }
 
   private get _activity(): string | null {
-    if (!this._block.has('*currentActivity')) {
+    if (!this._ctx.has('*currentActivity')) {
       return null;
     }
-    return (this._block.$['*currentActivity'] as string | undefined) ?? null;
+    return this._ctx.read('*currentActivity');
   }
 
   private get _location(): string {

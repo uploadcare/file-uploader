@@ -1,29 +1,34 @@
+import { html, type PropertyValues } from 'lit';
+import { state } from 'lit/decorators.js';
+import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
 import './progress-bar-common.css';
-import { UploaderBlock } from '../../abstract/UploaderBlock';
 
-type BaseInitState = InstanceType<typeof UploaderBlock>['init$'];
+import '../ProgressBar/ProgressBar';
+
+type BaseInitState = InstanceType<typeof LitUploaderBlock>['init$'];
 
 interface ProgressBarCommonInitState extends BaseInitState {
-  visible: boolean;
-  value: number;
   '*commonProgress': number;
 }
 
-export class ProgressBarCommon extends UploaderBlock {
+export class ProgressBarCommon extends LitUploaderBlock {
   private _unobserveCollectionCb?: () => void;
 
-  constructor() {
+  @state()
+  private _visible = false;
+
+  @state()
+  private _value = 0;
+
+  public constructor() {
     super();
     this.init$ = {
       ...this.init$,
-      visible: false,
-      value: 0,
-
       '*commonProgress': 0,
     } as ProgressBarCommonInitState;
   }
 
-  override initCallback(): void {
+  public override initCallback(): void {
     super.initCallback();
     this._unobserveCollectionCb = this.uploadCollection.observeProperties(() => {
       const anyUploading = this.uploadCollection.items().some((id) => {
@@ -31,27 +36,39 @@ export class ProgressBarCommon extends UploaderBlock {
         return item?.getValue('isUploading') ?? false;
       });
 
-      this.$.visible = anyUploading;
+      this._visible = anyUploading;
     });
 
-    this.sub('visible', (visible: boolean) => {
-      if (visible) {
+    this.sub('*commonProgress', (progress: number) => {
+      this._value = progress;
+    });
+  }
+
+  protected override updated(changedProperties: PropertyValues<this>): void {
+    super.updated(changedProperties);
+
+    if (changedProperties.has('visible' as keyof ProgressBarCommon)) {
+      if (this._visible) {
         this.setAttribute('active', '');
       } else {
         this.removeAttribute('active');
       }
-    });
-
-    this.sub('*commonProgress', (progress: number) => {
-      this.$.value = progress;
-    });
+    }
   }
 
-  override destroyCallback(): void {
-    super.destroyCallback();
+  public override disconnectedCallback(): void {
+    super.disconnectedCallback();
     this._unobserveCollectionCb?.();
     this._unobserveCollectionCb = undefined;
   }
+
+  public override render() {
+    return html` <uc-progress-bar .value=${this._value} .visible=${this._visible}></uc-progress-bar> `;
+  }
 }
 
-ProgressBarCommon.template = /* HTML */ ` <uc-progress-bar set="visible: visible; value: value"></uc-progress-bar> `;
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-progress-bar-common': ProgressBarCommon;
+  }
+}

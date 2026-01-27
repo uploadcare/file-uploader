@@ -1,17 +1,20 @@
 import { default as en } from '../locales/file-uploader/en';
 
-export type LocaleDefinition = Record<string, string>;
+export type LocaleDefinition = typeof en;
 export type LocaleDefinitionResolver = () => Promise<LocaleDefinition>;
 
 const localeRegistry: Map<string, LocaleDefinition> = new Map();
 const localeResolvers: Map<string, LocaleDefinitionResolver> = new Map();
 
-const defineLocaleSync = (localeName: string, definition: LocaleDefinition): void => {
+const defineLocaleSync = (localeName: string, definition: LocaleDefinition): LocaleDefinition => {
   if (localeRegistry.has(localeName)) {
     console.log(`Locale ${localeName} is already defined. Overwriting...`);
   }
 
-  localeRegistry.set(localeName, { ...(en as unknown as LocaleDefinition), ...definition });
+  const locale: LocaleDefinition = { ...(en as unknown as LocaleDefinition), ...definition };
+  localeRegistry.set(localeName, locale);
+
+  return locale;
 };
 
 const defineLocaleAsync = (localeName: string, definitionResolver: LocaleDefinitionResolver): void => {
@@ -30,17 +33,19 @@ export const defineLocale = (
 };
 
 export const resolveLocaleDefinition = async (localeName: string): Promise<LocaleDefinition> => {
-  if (!localeRegistry.has(localeName)) {
-    if (!localeResolvers.has(localeName)) {
+  let localeDefinition = localeRegistry.get(localeName);
+
+  if (!localeDefinition) {
+    const definitionResolver = localeResolvers.get(localeName);
+    if (!definitionResolver) {
       throw new Error(`Locale ${localeName} is not defined`);
     }
 
-    const definitionResolver = localeResolvers.get(localeName)!;
     const definition = await definitionResolver();
-    defineLocaleSync(localeName, definition);
+    localeDefinition = defineLocaleSync(localeName, definition);
   }
 
-  return localeRegistry.get(localeName)!;
+  return localeDefinition;
 };
 
 defineLocale('en', en);

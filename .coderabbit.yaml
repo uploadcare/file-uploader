@@ -1,0 +1,8 @@
+# yaml-language-server: $schema=https://www.coderabbit.ai/integrations/schema.v2.json
+
+reviews:
+  # Exclude demo pages from CodeRabbit reviews.
+  # Patterns are glob-style; entries starting with '!' are ignored.
+  path_filters:
+    - "!demo/"
+    - "!demo/**"

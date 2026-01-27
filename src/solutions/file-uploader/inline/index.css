@@ -30,6 +30,7 @@
   @container (min-width: 500px) {
     [uc-file-uploader-inline] uc-start-from .uc-content {
       grid-template-columns: 1fr max-content;
+      grid-template-rows: 1fr max-content;
       height: 100%;
     }
 

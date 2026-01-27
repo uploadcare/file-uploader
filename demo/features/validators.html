@@ -1,0 +1,47 @@
+<!doctype html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script type="module">
+  import '@/solutions/file-uploader/regular/index.css';
+  import * as UC from '@/index.js';
+  import { default as en } from '@/locales/file-uploader/en.js';
+  import { default as fr } from '@/locales/file-uploader/fr.js';
+
+  UC.defineLocale('en', {
+    ...en,
+    ...{
+      'file-is-not-an-image-type': 'File is not an image type',
+    },
+  });
+  UC.defineLocale('fr', {
+    ...fr,
+    ...{
+      'file-is-not-an-image-type': "Le fichier n'est pas une image",
+    },
+  });
+
+  UC.defineComponents(UC);
+  </script>
+</head>
+
+<uc-file-uploader-regular ctx-name="my-uploader"></uc-file-uploader-regular>
+<uc-config
+  multipleMax="2"
+  ctx-name="my-uploader"
+  pubkey="demopublickey"
+  debug
+  quality-insights="false"
+  test-mode
+></uc-config>
+<uc-upload-ctx-provider ctx-name="my-uploader"></uc-upload-ctx-provider>
+
+<script type="module">
+const config = document.querySelector('uc-config');
+const imagesOnly = (fileInfo, _ctx) => {
+  console.log('validator', fileInfo);
+};
+
+config.fileValidators = [imagesOnly];
+
+config.collectionValidators = [];
+</script>

@@ -2,7 +2,6 @@ import { commands, page, userEvent } from '@vitest/browser/context';
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { Config, UploadCtxProvider } from '@/index';
 import '../types/jsx';
-import { delay } from '@/utils/delay';
 import { IMAGE } from './fixtures/files';
 // biome-ignore lint/correctness/noUnusedImports: Used in JSX
 import { renderer } from './utils/test-renderer';

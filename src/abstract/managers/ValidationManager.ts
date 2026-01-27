@@ -1,5 +1,7 @@
 import { Queue } from '@uploadcare/upload-client';
 import { EventType } from '../../blocks/UploadCtxProvider/EventEmitter';
+import { SharedInstance, type SharedInstancesBag } from '../../lit/shared-instances';
+import type { Uid } from '../../lit/Uid';
 import type {
   OutputCollectionErrorType,
   OutputCollectionState,
@@ -19,12 +21,10 @@ import {
   validateMaxSizeLimit,
   validateUploadError,
 } from '../../utils/validators/file/index';
-import { withResolvers } from '../../utils/withResolvers';
 import type { buildOutputCollectionState } from '../buildOutputCollectionState';
-import type { TypedCollection } from '../TypedCollection';
+import { sharedConfigKey } from '../sharedConfigKey';
 import type { TypedData } from '../TypedData';
-import type { UploaderBlock } from '../UploaderBlock';
-import type { uploadEntrySchema } from '../uploadEntrySchema';
+import type { UploadEntryData } from '../uploadEntrySchema';
 
 export type FuncFileValidator = (
   outputEntry: OutputFileEntry,
@@ -58,10 +58,10 @@ const getValidatorDescriptor = (validator: FileValidator): FileValidatorDescript
   return validator;
 };
 
-export class ValidationManager {
-  private _blockInstance: UploaderBlock;
-
-  private _uploadCollection: TypedCollection<typeof uploadEntrySchema>;
+export class ValidationManager extends SharedInstance {
+  private get _uploadCollection() {
+    return this._sharedInstancesBag.uploadCollection;
+  }
 
   private _commonFileValidators: FuncFileValidator[] = [
     validateIsImage,
@@ -73,9 +73,11 @@ export class ValidationManager {
   private _commonCollectionValidators: FuncCollectionValidator[] = [validateMultiple, validateCollectionUploadError];
 
   private _queue = new Queue(20);
-  private _runQueueDebounced: () => void = debounce(() => {
+  private _runQueueDebounced = debounce(() => {
     this._queue.run();
   }, 500);
+
+  private _isDestroyed = false;
 
   private _entryValidationState: Map<
     string,
@@ -87,29 +89,30 @@ export class ValidationManager {
     }
   > = new Map();
 
-  constructor(blockInstance: UploaderBlock) {
-    this._blockInstance = blockInstance;
+  public constructor(sharedInstancesBag: SharedInstancesBag) {
+    super(sharedInstancesBag);
 
-    this._uploadCollection = this._blockInstance.uploadCollection;
-
-    const runAllValidators = () => {
+    const runAllValidators = debounce(() => {
       this.runFileValidators('change');
       this.runCollectionValidators();
-    };
+    }, 0);
 
-    this._blockInstance.subConfigValue('maxLocalFileSizeBytes', runAllValidators);
-    this._blockInstance.subConfigValue('multipleMin', runAllValidators);
-    this._blockInstance.subConfigValue('multipleMax', runAllValidators);
-    this._blockInstance.subConfigValue('multiple', runAllValidators);
-    this._blockInstance.subConfigValue('imgOnly', runAllValidators);
-    this._blockInstance.subConfigValue('accept', runAllValidators);
-
-    this._blockInstance.subConfigValue('validationConcurrency', (concurrency) => {
-      this._queue.concurrency = concurrency;
-    });
+    this.addSub(this._ctx.sub(sharedConfigKey('maxLocalFileSizeBytes'), runAllValidators));
+    this.addSub(this._ctx.sub(sharedConfigKey('multipleMin'), runAllValidators));
+    this.addSub(this._ctx.sub(sharedConfigKey('multipleMax'), runAllValidators));
+    this.addSub(this._ctx.sub(sharedConfigKey('multiple'), runAllValidators));
+    this.addSub(this._ctx.sub(sharedConfigKey('imgOnly'), runAllValidators));
+    this.addSub(this._ctx.sub(sharedConfigKey('accept'), runAllValidators));
+    this.addSub(
+      this._ctx.sub(sharedConfigKey('validationConcurrency'), (concurrency) => {
+        this._queue.concurrency = concurrency;
+      }),
+    );
   }
 
-  runFileValidators(runOn: FileValidatorDescriptor['runOn'], entryIds?: string[]): void {
+  public runFileValidators(runOn: FileValidatorDescriptor['runOn'], entryIds?: Uid[]): void {
+    if (this._isDestroyed) return;
+
     const ids = entryIds ?? this._uploadCollection.items();
     for (const id of ids) {
       const entry = this._uploadCollection.read(id);
@@ -119,13 +122,17 @@ export class ValidationManager {
     }
   }
 
-  runCollectionValidators(): void {
-    const collection = this._blockInstance.api.getOutputCollectionState();
-    const errors: Array<OutputErrorCollection> = [];
+  public runCollectionValidators(): void {
+    if (this._isDestroyed) return;
 
-    for (const validator of [...this._commonCollectionValidators, ...this._blockInstance.cfg.collectionValidators]) {
+    const api = this._sharedInstancesBag.api;
+    const collection = api.getOutputCollectionState();
+    const errors: Array<OutputErrorCollection> = [];
+    const collectionValidators = this._cfg.collectionValidators;
+
+    for (const validator of [...this._commonCollectionValidators, ...collectionValidators]) {
       try {
-        const error = validator(collection, this._blockInstance.api);
+        const error = validator(collection, api);
         if (!error) {
           continue;
         }
@@ -141,18 +148,18 @@ export class ValidationManager {
       }
     }
 
-    this._blockInstance.$['*collectionErrors'] = errors as any;
+    this._ctx.pub('*collectionErrors', errors);
 
     if (errors.length > 0) {
-      this._blockInstance.emit(
+      this._sharedInstancesBag.eventEmitter.emit(
         EventType.COMMON_UPLOAD_FAILED,
-        () => this._blockInstance.api.getOutputCollectionState() as OutputCollectionState<'failed'>,
+        () => api.getOutputCollectionState() as OutputCollectionState<'failed'>,
         { debounce: true },
       );
     }
   }
 
-  cleanupValidationForEntry(entry: TypedData<typeof uploadEntrySchema>): void {
+  public cleanupValidationForEntry(entry: TypedData<UploadEntryData>): void {
     const state = this._entryValidationState.get(entry.uid);
     if (state) {
       state.abortController?.abort();
@@ -161,112 +168,124 @@ export class ValidationManager {
   }
 
   private async _runFileValidatorsForEntry(
-    entry: TypedData<typeof uploadEntrySchema>,
+    entry: TypedData<UploadEntryData>,
     runOn: FileValidatorDescriptor['runOn'],
   ): Promise<void> {
-    const entryDescriptors = this._getValidatorDescriptorsForEntry(entry, runOn);
-    if (entryDescriptors.length === 0) {
-      return;
-    }
-    entry.setMultipleValues({
-      isQueuedForValidation: true,
-      isValidationPending: true,
-    });
-    const outputEntry = this._blockInstance.api.getOutputItem(entry.uid);
+    if (this._isDestroyed) return;
+
+    const api = this._sharedInstancesBag.api;
     const state = this._getEntryValidationState(entry);
 
-    if (state.promise) {
-      await state.promise;
-    }
-
-    const { promise, resolve } = withResolvers();
-    state.promise = promise;
-    const abortController = new AbortController();
-    state.abortController = abortController;
-
-    const timeoutMs = this._blockInstance.cfg.validationTimeout;
-    const allDescriptors = this._getValidatorDescriptors();
-
-    const entryValidatorSet = new Set(entryDescriptors.map((d) => d.validator));
-    const errors: OutputErrorFile[] = [];
-    for (const descriptor of allDescriptors) {
-      if (!entryValidatorSet.has(descriptor.validator)) {
-        const error = state.lastErrorThrownByValidator.get(descriptor.validator);
-        if (error) errors.push(error);
-      }
-    }
-
-    const tasks = entryDescriptors.map((validatorDescriptor) => async () => {
-      if (!this._blockInstance.isConnected) {
+    const previousPromise = state.promise ?? Promise.resolve();
+    const runPromise = (async () => {
+      if (this._isDestroyed) return;
+      await previousPromise;
+      if (this._isDestroyed) return;
+      const entryDescriptors = this._getValidatorDescriptorsForEntry(entry, runOn);
+      if (entryDescriptors.length === 0 || !this._uploadCollection.hasItem(entry.uid)) {
         return;
       }
-      const timeoutId = setTimeout(() => {
-        state.skippedValidators.add(validatorDescriptor.validator);
-        abortController.abort();
-        console.warn(LOG_TEXT.FILE_VALIDATION_TIMEOUT);
-      }, timeoutMs);
+      entry.setMultipleValues({
+        isQueuedForValidation: true,
+        isValidationPending: true,
+      });
+      const outputEntry = api.getOutputItem(entry.uid);
 
-      try {
-        const error = await validatorDescriptor.validator(outputEntry, this._blockInstance.api, {
-          signal: abortController.signal,
-        });
-        if (!error || abortController.signal.aborted) {
-          state.lastErrorThrownByValidator.set(validatorDescriptor.validator, undefined);
-          return;
-        }
-        const normalizedError = this._addCustomTypeToValidationError(error);
-        state.lastErrorThrownByValidator.set(validatorDescriptor.validator, normalizedError);
-        errors.push(normalizedError);
+      const abortController = new AbortController();
+      state.abortController = abortController;
 
-        if (!error.message) {
-          console.warn(LOG_TEXT.MISSING_ERROR_MESSAGE);
-        }
-      } catch (error) {
-        if (!abortController.signal.aborted) {
-          state.skippedValidators.add(validatorDescriptor.validator);
+      const timeoutMs = this._cfg.validationTimeout;
+      const allDescriptors = this._getValidatorDescriptors();
 
-          console.warn(LOG_TEXT.FILE_VALIDATION_FAILED, error);
-          this._blockInstance.telemetryManager.sendEventError(
-            error,
-            `file validator. ${LOG_TEXT.FILE_VALIDATION_FAILED}`,
-          );
-        }
-      } finally {
-        clearTimeout(timeoutId);
-        if (validatorDescriptor.runOn !== 'change') {
-          state.skippedValidators.add(validatorDescriptor.validator);
+      const entryValidatorSet = new Set(entryDescriptors.map((d) => d.validator));
+      const errors: OutputErrorFile[] = [];
+      for (const descriptor of allDescriptors) {
+        if (!entryValidatorSet.has(descriptor.validator)) {
+          const error = state.lastErrorThrownByValidator.get(descriptor.validator);
+          if (error) errors.push(error);
         }
       }
-    });
 
-    this._runQueueDebounced();
+      const tasks = entryDescriptors.map((validatorDescriptor) => async () => {
+        if (this._isDestroyed) return;
 
-    await this._queue.add(
-      async () => {
-        entry.setValue('isQueuedForValidation', false);
-        await Promise.all(tasks.map((task) => task())).catch(() => {});
-      },
-      {
-        autoRun: false,
-      },
-    );
+        const timeoutId = setTimeout(() => {
+          state.skippedValidators.add(validatorDescriptor.validator);
+          abortController.abort();
+          console.warn(LOG_TEXT.FILE_VALIDATION_TIMEOUT);
+        }, timeoutMs);
 
-    if (abortController.signal.aborted) {
-      entry.setMultipleValues({
-        isQueuedForValidation: false,
-        isValidationPending: false,
+        try {
+          const error = await validatorDescriptor.validator(outputEntry, api, {
+            signal: abortController.signal,
+          });
+          if (!error || abortController.signal.aborted) {
+            state.lastErrorThrownByValidator.set(validatorDescriptor.validator, undefined);
+            return;
+          }
+          const normalizedError = this._addCustomTypeToValidationError(error);
+          state.lastErrorThrownByValidator.set(validatorDescriptor.validator, normalizedError);
+          errors.push(normalizedError);
+
+          if (!error.message) {
+            console.warn(LOG_TEXT.MISSING_ERROR_MESSAGE);
+          }
+        } catch (error) {
+          if (!abortController.signal.aborted) {
+            state.skippedValidators.add(validatorDescriptor.validator);
+
+            console.warn(LOG_TEXT.FILE_VALIDATION_FAILED, error);
+            this._sharedInstancesBag.telemetryManager.sendEventError(
+              error,
+              `file validator. ${LOG_TEXT.FILE_VALIDATION_FAILED}`,
+            );
+          }
+        } finally {
+          clearTimeout(timeoutId);
+          if (validatorDescriptor.runOn !== 'change') {
+            state.skippedValidators.add(validatorDescriptor.validator);
+          }
+        }
       });
-      resolve();
-      return;
+
+      this._runQueueDebounced();
+
+      await this._queue.add(
+        async () => {
+          if (this._isDestroyed) return;
+
+          entry.setValue('isQueuedForValidation', false);
+          await Promise.all(tasks.map((task) => task())).catch(() => {});
+        },
+        {
+          autoRun: false,
+        },
+      );
+
+      if (abortController.signal.aborted) {
+        entry.setMultipleValues({
+          isQueuedForValidation: false,
+          isValidationPending: false,
+        });
+        return;
+      }
+
+      entry.setMultipleValues({
+        isValidationPending: false,
+        isQueuedForValidation: false,
+        errors,
+      });
+    })();
+
+    state.promise = runPromise;
+
+    try {
+      await runPromise;
+    } finally {
+      if (state.promise === runPromise) {
+        state.promise = undefined;
+      }
     }
-
-    entry.setMultipleValues({
-      isValidationPending: false,
-      isQueuedForValidation: false,
-      errors,
-    });
-
-    resolve();
   }
 
   private _addCustomTypeToValidationError<T extends OutputError<OutputFileErrorType | OutputCollectionErrorType>>(
@@ -277,7 +296,7 @@ export class ValidationManager {
       type: (error as any).type ?? 'CUSTOM_ERROR',
     } as T;
   }
-  private _getEntryValidationState(entry: TypedData<typeof uploadEntrySchema>): {
+  private _getEntryValidationState(entry: TypedData<UploadEntryData>): {
     abortController?: AbortController;
     skippedValidators: WeakSet<FuncFileValidator>;
     promise?: Promise<void>;
@@ -298,15 +317,28 @@ export class ValidationManager {
     return newState;
   }
   private _getValidatorDescriptors(): FileValidatorDescriptor[] {
-    return [...this._commonFileValidators, ...this._blockInstance.cfg.fileValidators].map(getValidatorDescriptor);
+    const fileValidators = this._cfg.fileValidators;
+    return [...this._commonFileValidators, ...fileValidators].map(getValidatorDescriptor);
   }
   private _getValidatorDescriptorsForEntry(
-    entry: TypedData<typeof uploadEntrySchema>,
+    entry: TypedData<UploadEntryData>,
     runOn: FileValidatorDescriptor['runOn'],
   ): FileValidatorDescriptor[] {
     const state = this._getEntryValidationState(entry);
     return this._getValidatorDescriptors()
       .filter((descriptor) => !state.skippedValidators.has(descriptor.validator))
       .filter((descriptor) => descriptor.runOn === runOn);
+  }
+
+  public override destroy(): void {
+    this._isDestroyed = true;
+    this._runQueueDebounced.cancel();
+
+    for (const state of this._entryValidationState.values()) {
+      state.abortController?.abort();
+      state.promise = undefined;
+    }
+
+    this._entryValidationState.clear();
   }
 }

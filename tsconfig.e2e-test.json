@@ -4,7 +4,7 @@
     "target": "esnext",
     "module": "esnext",
     "moduleResolution": "bundler",
-    "types": ["@total-typescript/ts-reset", "@vitest/browser/providers/playwright", "vite/client"],
+    "types": ["@total-typescript/ts-reset", "@vitest/browser-playwright", "vite/client"],
     "jsxFactory": "renderer.create",
     "jsxFragmentFactory": "renderer.fragment",
     "allowJs": true,
@@ -14,7 +14,9 @@
     "paths": {
       "@/*": ["./src/*"],
       "~/*": ["./*"]
-    }
+    },
+    "experimentalDecorators": true,
+    "useDefineForClassFields": false
   },
   "include": ["src", "tests"],
   "exclude": ["node_modules", "**/*.test.js"]

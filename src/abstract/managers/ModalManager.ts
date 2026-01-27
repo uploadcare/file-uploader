@@ -1,6 +1,6 @@
 import type { Modal as ModalNode } from '../../blocks/Modal/Modal';
-import type { ActivityType } from '../ActivityBlock';
-import type { Block } from '../Block';
+import type { ActivityType } from '../../lit/LitActivityBlock';
+import { SharedInstance } from '../../lit/shared-instances';
 
 export const ModalEvents = Object.freeze({
   ADD: 'modal:add',
@@ -15,35 +15,26 @@ export type ModalId = ActivityType;
 export type ModalCb = (data: { id: ModalId; modal: ModalNode }) => void;
 export type ModalEventType = (typeof ModalEvents)[keyof typeof ModalEvents];
 
-export class ModalManager {
+export class ModalManager extends SharedInstance {
   private _modals: Map<ModalId, ModalNode> = new Map();
   private _activeModals: Set<ModalId> = new Set();
   private _subscribers: Map<ModalEventType, Set<ModalCb>> = new Map();
-  private _block: Block;
-
-  constructor(block: Block) {
-    this._block = block;
-  }
-
-  private _debugPrint(...args: unknown[]): void {
-    this._block.debugPrint('[modal-manager]', ...args);
-  }
 
   /**
    * Register a modal with the manager
    * @param id Unique identifier for the modal
    * @param modal Modal component instance
    */
-  registerModal(id: ModalId, modal: ModalNode): void {
+  public registerModal(id: ModalId, modal: ModalNode): void {
     this._modals.set(id, modal);
     this._notify(ModalEvents.ADD, { id, modal });
   }
 
   /** Remove a modal by ID. */
-  deleteModal(id: ModalId): boolean {
-    if (!this._modals.has(id)) return false;
+  public deleteModal(id: ModalId): boolean {
+    const modal = this._modals.get(id);
+    if (!modal) return false;
 
-    const modal = this._modals.get(id)!;
     this._modals.delete(id);
     this._activeModals.delete(id);
     this._notify(ModalEvents.DELETE, { id, modal });
@@ -51,13 +42,12 @@ export class ModalManager {
   }
 
   /** Open a modal by its ID. */
-  open(id: ModalId): boolean {
-    if (!this._modals.has(id)) {
+  public open(id: ModalId): boolean {
+    const modal = this._modals.get(id);
+    if (!modal) {
       this._debugPrint(`Modal with ID "${id}" not found`);
       return false;
     }
-
-    const modal = this._modals.get(id)!;
 
     this._activeModals.add(id);
     this._notify(ModalEvents.OPEN, { modal, id });
@@ -65,13 +55,12 @@ export class ModalManager {
   }
 
   /** Close a specific modal by ID. */
-  close(id: ModalId): boolean {
-    if (!this._modals.has(id) || !this._activeModals.has(id)) {
+  public close(id: ModalId): boolean {
+    const modal = this._modals.get(id);
+    if (!modal || !this._activeModals.has(id)) {
       this._debugPrint(`Modal with ID "${id}" not found or not active`);
       return false;
     }
-
-    const modal = this._modals.get(id)!;
 
     this._activeModals.delete(id);
     this._notify(ModalEvents.CLOSE, { id, modal });
@@ -82,7 +71,7 @@ export class ModalManager {
   }
 
   /** Toggle a modal - open if closed, close if open. */
-  toggle(id: ModalId): boolean {
+  public toggle(id: ModalId): boolean {
     if (!this._modals.has(id)) {
       this._debugPrint(`Modal with ID "${id}" not found`);
       return false;
@@ -96,12 +85,12 @@ export class ModalManager {
   }
 
   /** True if there are any active modals. */
-  get hasActiveModals(): boolean {
+  public get hasActiveModals(): boolean {
     return this._activeModals.size > 0;
   }
 
   /** Close the most recently opened modal and return to the previous one. */
-  back(): boolean {
+  public back(): boolean {
     if (this._activeModals.size === 0) {
       this._debugPrint('No active modals to go back from');
       return false;
@@ -113,7 +102,7 @@ export class ModalManager {
   }
 
   /** Close all open modals. */
-  closeAll(): number {
+  public closeAll(): number {
     const count = this._activeModals.size;
 
     this._activeModals.clear();
@@ -125,7 +114,7 @@ export class ModalManager {
    * Subscribe to modal events
    * @returns Unsubscribe function
    */
-  subscribe(event: ModalEventType, callback: ModalCb): () => void {
+  public subscribe(event: ModalEventType, callback: ModalCb): () => void {
     if (!this._subscribers.has(event)) {
       this._subscribers.set(event, new Set());
     }
@@ -135,7 +124,7 @@ export class ModalManager {
   }
 
   /** Unsubscribe from modal events */
-  unsubscribe(event: ModalEventType, callback: ModalCb | undefined): void {
+  public unsubscribe(event: ModalEventType, callback: ModalCb | undefined): void {
     if (this._subscribers.has(event)) {
       this._subscribers.get(event)?.delete(callback as ModalCb);
     }
@@ -156,7 +145,7 @@ export class ModalManager {
         try {
           callback(data as { id: ModalId; modal: ModalNode });
         } catch (error) {
-          this._block.telemetryManager.sendEventError(error as unknown, 'modal subscriber');
+          this._sharedInstancesBag.telemetryManager.sendEventError(error as unknown, 'modal subscriber');
           this._debugPrint('Error in modal subscriber:', error);
         }
       }
@@ -164,7 +153,9 @@ export class ModalManager {
   }
 
   /** Destroy the modal manager, clean up resources */
-  destroy(): void {
+  public override destroy(): void {
+    super.destroy();
+
     this.closeAll();
     this._modals.clear();
     this._subscribers.clear();

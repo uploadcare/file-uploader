@@ -4,7 +4,7 @@ import React from 'react';
 // @ts-expect-error - no props
 () => <uc-cloud-image-editor />;
 
-// @ts-expect-error - no css-url
+// @ts-expect-error - no cdn-url
 () => <uc-cloud-image-editor ctx-name="my-uploader" />;
 
 // @ts-expect-error - no css-src

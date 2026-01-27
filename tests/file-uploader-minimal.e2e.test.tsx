@@ -1,7 +1,6 @@
-import { commands, page, userEvent } from '@vitest/browser/context';
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { commands, page, userEvent } from 'vitest/browser';
 import '../types/jsx';
-import fi from '@/locales/file-uploader/fi';
 // biome-ignore lint/correctness/noUnusedImports: Used in JSX
 import { renderer } from './utils/test-renderer';
 

@@ -26,7 +26,7 @@ export type { ApiAddFileCommonOptions, UploaderPublicApi } from '../abstract/Upl
 
 export type { SourceTypes };
 export type MetadataCallback = (fileEntry: OutputFileEntry) => Promise<Metadata> | Metadata;
-export type LocaleDefinitionOverride = Record<string, LocaleDefinition>;
+export type LocaleDefinitionOverride = Record<string, Partial<LocaleDefinition>>;
 export type SecureDeliveryProxyUrlResolver = (
   previewUrl: string,
   urlParts: { uuid: string; cdnUrlModifiers: string; fileName: string },
@@ -373,7 +373,7 @@ export type OutputErrorTypePayload = {
   FORBIDDEN_FILE_TYPE: OutputFileErrorPayload;
   FILE_SIZE_EXCEEDED: OutputFileErrorPayload;
 
-  SOME_FILES_HAS_ERRORS: {};
+  SOME_FILES_HAS_ERRORS: { [k: string]: never };
   TOO_MANY_FILES: {
     min: number;
     max: number;

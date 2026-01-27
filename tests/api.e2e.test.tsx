@@ -1,5 +1,5 @@
-import { page } from '@vitest/browser/context';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { page } from 'vitest/browser';
 import type { EventPayload } from '@/index.js';
 import '../types/jsx';
 // biome-ignore lint/correctness/noUnusedImports: Used in JSX
@@ -118,5 +118,28 @@ describe('API', () => {
     const cloudImageEdit = page.getByTestId('uc-cloud-image-editor-activity');
     await expect.element(startFrom).not.toBeVisible();
     await expect.element(cloudImageEdit).toBeVisible();
+  });
+
+  it('should open external source activity with defined source', async () => {
+    const uploadCtxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
+    const api = uploadCtxProvider.getAPI();
+
+    api.setCurrentActivity('external', { externalSourceType: 'dropbox' });
+    api.setModalState(true);
+
+    const startFrom = page.getByTestId('uc-start-from');
+    const externalSource = page.getByTestId('uc-external-source');
+
+    await expect.element(startFrom).not.toBeVisible();
+    await expect.element(externalSource).toBeVisible();
+
+    await vi.waitFor(() => {
+      const iframe = (externalSource.query() as HTMLElement | null)?.querySelector(
+        'iframe',
+      ) as HTMLIFrameElement | null;
+      expect(iframe).toBeTruthy();
+      // Not the best option to verify correct source, probably we should add some data- or testid attributes for external source activity
+      expect(iframe!.src).toContain('/dropbox');
+    });
   });
 });

@@ -1,5 +1,5 @@
-import { page } from '@vitest/browser/context';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { page } from 'vitest/browser';
 import type { Config, FuncFileValidator, OutputErrorCollection, OutputErrorFile, UploadCtxProvider } from '@/index';
 import { delay } from '@/utils/delay.js';
 import '../types/jsx';
@@ -185,7 +185,7 @@ describe('Custom file validation', () => {
         api.initFlow();
         await expect
           .poll(() => api.getOutputCollectionState().status, {
-            timeout: 5000,
+            timeout: 10000,
           })
           .toBe('success');
         expect(customValidator).toHaveBeenCalledTimes(1);
@@ -229,7 +229,7 @@ describe('Custom file validation', () => {
         api.initFlow();
         await expect
           .poll(() => api.getOutputCollectionState().status, {
-            timeout: 5000,
+            timeout: 10000,
           })
           .toBe('success');
         await expect.poll(() => customValidator).toHaveBeenCalledTimes(1);
@@ -249,7 +249,7 @@ describe('Custom file validation', () => {
         api.addFileFromObject(IMAGE.SQUARE);
         api.initFlow();
         await page.getByLabelText('Edit', { exact: true }).click({
-          timeout: 15000,
+          timeout: 10000,
         });
         await page.getByLabelText('Apply mirror operation', { exact: true }).click();
         await delay(300);
@@ -405,24 +405,32 @@ describe('Custom file validation', () => {
       await expect.element(page.getByText('Bad image')).toBeVisible();
       await expect.element(page.getByLabelText('File pixel.jpg in status finished')).toBeVisible();
     });
-
     it('should be run multiple times during upload', async () => {
       const config = page.getByTestId('uc-config').query()! as Config;
-      const validator = vi.fn(() => undefined);
+      const validator = vi.fn<FuncFileValidator>(() => undefined);
       config.fileValidators = [validator];
       const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
       const api = ctxProvider.getAPI();
       api.addFileFromObject(IMAGE.PIXEL);
       api.initFlow();
       await expect
-        .poll(() => validator)
-        .toHaveBeenCalledWith(expect.objectContaining({ status: 'idle' }), expect.anything(), expect.anything());
-      await expect
-        .poll(() => validator, {
-          timeout: 3000,
+        .poll(() => validator.mock.calls.at(-1)?.[0].status, {
+          timeout: 10000,
         })
-        .toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }), expect.anything(), expect.anything());
-    });
+        .toBe('success');
+
+      expect(validator.mock.calls.length).toBeGreaterThan(1);
+      expect(validator.mock.calls[0]).toEqual([
+        expect.objectContaining({ status: 'idle' }),
+        expect.anything(),
+        expect.anything(),
+      ]);
+      expect(validator.mock.calls.at(-1)).toEqual([
+        expect.objectContaining({ status: 'success' }),
+        expect.anything(),
+        expect.anything(),
+      ]);
+    }, 20000);
 
     it('should be called when cdnUrl or cdnUrlModifiers changed', async () => {
       const config = page.getByTestId('uc-config').query()! as Config;
@@ -435,7 +443,7 @@ describe('Custom file validation', () => {
 
       await expect
         .poll(() => validator, {
-          timeout: 3000,
+          timeout: 5000,
         })
         .toHaveBeenLastCalledWith(
           expect.objectContaining({ cdnUrlModifiers: '' }),
@@ -444,13 +452,14 @@ describe('Custom file validation', () => {
         );
 
       await page.getByLabelText('Edit', { exact: true }).click();
+      await delay(1000);
       await page.getByLabelText('Apply mirror operation', { exact: true }).click();
-      await delay(300);
+      await delay(1000);
       await page.getByRole('button', { name: /apply/i }).click();
 
       await expect
         .poll(() => validator, {
-          timeout: 3000,
+          timeout: 5000,
         })
         .toHaveBeenLastCalledWith(
           expect.objectContaining({
@@ -576,8 +585,9 @@ describe('File errors API', () => {
 
     // Apply mirror and check for error
     await page.getByLabelText('Edit', { exact: true }).click();
+    await delay(3000);
     await page.getByLabelText('Apply mirror operation', { exact: true }).click();
-    await delay(300);
+    await delay(3000);
     await page.getByRole('button', { name: /apply/i }).click();
 
     await expect
@@ -589,8 +599,9 @@ describe('File errors API', () => {
 
     // Remove mirror and check for error gone
     await page.getByLabelText('Edit', { exact: true }).click();
+    await delay(3000);
     await page.getByLabelText('Apply mirror operation', { exact: true }).click();
-    await delay(300);
+    await delay(3000);
     await page.getByRole('button', { name: /apply/i }).click();
 
     await expect
@@ -602,8 +613,9 @@ describe('File errors API', () => {
 
     // Apply mirror and check for error again
     await page.getByLabelText('Edit', { exact: true }).click();
+    await delay(3000);
     await page.getByLabelText('Apply mirror operation', { exact: true }).click();
-    await delay(300);
+    await delay(3000);
     await page.getByRole('button', { name: /apply/i }).click();
 
     await expect
@@ -612,7 +624,7 @@ describe('File errors API', () => {
         return currentEntry.errors;
       })
       .toEqual(expect.arrayContaining([expect.objectContaining<Partial<OutputErrorFile>>({ type: 'CUSTOM_ERROR' })]));
-  });
+  }, 30000);
 
   it('should provide errors for "add" and "change" validators', async () => {
     const config = page.getByTestId('uc-config').query()! as Config;

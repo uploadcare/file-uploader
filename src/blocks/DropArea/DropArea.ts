@@ -1,54 +1,89 @@
-import { Data } from '@symbiotejs/symbiote';
-import { ActivityBlock } from '../../abstract/ActivityBlock';
-import { UploaderBlock } from '../../abstract/UploaderBlock';
+import { html, type PropertyValues } from 'lit';
+import { property, state } from 'lit/decorators.js';
+import { createRef, type Ref, ref } from 'lit/directives/ref.js';
+import { LitActivityBlock } from '../../lit/LitActivityBlock';
+import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
 import { stringToArray } from '../../utils/stringToArray';
 import { UploadSource } from '../../utils/UploadSource';
-import { asBoolean } from '../Config/validatorsType';
 import { addDropzone, DropzoneState, type DropzoneStateValue } from './addDropzone';
 import './drop-area.css';
 import type { DropItem } from './getDropItems';
 
-const GLOBAL_CTX_NAME = 'uc-drop-area';
-const REGISTRY_KEY = `${GLOBAL_CTX_NAME}/registry`;
+import '../Icon/Icon';
 
-type DropAreaInitState = typeof UploaderBlock.prototype.init$ & {
-  state: DropzoneStateValue;
-  withIcon: boolean;
-  isClickable: boolean;
-  isFullscreen: boolean;
-  isEnabled: boolean;
-  isVisible: boolean;
-  isInitFlow: boolean;
-  text: string;
-  [REGISTRY_KEY]: Set<DropArea>;
-};
+const dropAreaRegistry = new Set<DropArea>();
 
-export class DropArea extends UploaderBlock {
-  static override styleAttrs = [...super.styleAttrs, 'uc-drop-area'];
+export class DropArea extends LitUploaderBlock {
+  public static override styleAttrs = [...super.styleAttrs, 'uc-drop-area'];
+
+  /**
+   * CSS-only attribute
+   */
+  @property({ type: Boolean, noAccessor: true })
+  public single = false;
+
+  /**
+   * CSS-only attribute
+   */
+  @property({ type: Boolean, noAccessor: true })
+  public ghost = false;
+
+  @property({ type: Boolean, reflect: true })
+  public disabled = false;
+
+  @property({ type: Boolean, reflect: true })
+  public clickable = false;
+
+  @property({ type: Boolean, attribute: 'with-icon', reflect: true })
+  public withIcon = false;
+
+  @property({ type: Boolean, reflect: true })
+  public fullscreen = false;
+
+  @property({ type: Boolean, reflect: true })
+  public initflow = false;
+
+  @property({ type: String })
+  public text?: string;
+
+  @state()
+  private _isEnabled = true;
+
+  @state()
+  private _isVisible = true;
+
+  private get _localizedText() {
+    const customText = this.text;
+    if (typeof customText === 'string' && customText.length > 0) {
+      return this.l10n(customText) || customText;
+    }
+    return this.l10n('drop-files-here');
+  }
 
   private _destroyDropzone: (() => void) | null = null;
   private _destroyContentWrapperDropzone: (() => void) | null = null;
-  private _onAreaClicked: ((event: Event) => void) | null = null;
+  private _contentWrapperRef: Ref<HTMLInputElement> = createRef();
+  private readonly _handleAreaInteraction = (event: Event) => {
+    if (event instanceof KeyboardEvent) {
+      if (event.code !== 'Space' && event.code !== 'Enter') {
+        return;
+      }
+    } else if (!(event instanceof MouseEvent)) {
+      return;
+    }
 
-  constructor() {
-    super();
+    if (this.initflow) {
+      this.api.initFlow();
+      return;
+    }
 
-    this.init$ = {
-      ...this.init$,
-      state: DropzoneState.INACTIVE,
-      withIcon: false,
-      isClickable: false,
-      isFullscreen: false,
-      isEnabled: true,
-      isVisible: true,
-      isInitFlow: false,
-      text: '',
-      [REGISTRY_KEY]: new Set(),
-    } as DropAreaInitState;
-  }
+    this.api.openSystemDialog();
+  };
+  private _sourceListAllowsLocal = true;
+  private _clickableListenersAttached = false;
 
-  isActive(): boolean {
-    if (!this.$.isEnabled) {
+  public isActive(): boolean {
+    if (!this._isEnabled) {
       return false;
     }
     const bounds = this.getBoundingClientRect();
@@ -65,43 +100,20 @@ export class DropArea extends UploaderBlock {
     return hasSize && visible && isInViewport;
   }
 
-  override initCallback() {
+  public override initCallback(): void {
     super.initCallback();
 
-    this.bindL10n('text', () => this.l10n('drop-files-here'));
-
-    const registry = (this.$ as DropAreaInitState)[REGISTRY_KEY];
-    registry.add(this);
-
-    this.defineAccessor('disabled', (value: unknown) => {
-      this.set$({ isEnabled: !asBoolean(value) });
-    });
-    this.defineAccessor('clickable', (value: unknown) => {
-      this.set$({ isClickable: asBoolean(value) });
-    });
-    this.defineAccessor('initflow', (value: unknown) => {
-      this.set$({ isInitFlow: asBoolean(value) });
-    });
-    this.defineAccessor('with-icon', (value: unknown) => {
-      this.set$({ withIcon: asBoolean(value) });
-    });
-    this.defineAccessor('fullscreen', (value: unknown) => {
-      this.set$({ isFullscreen: asBoolean(value) });
-    });
-
-    this.defineAccessor('text', (value: unknown) => {
-      if (typeof value === 'string') {
-        this.bindL10n('text', () => this.l10n(value) || value);
-      } else {
-        this.bindL10n('text', () => this.l10n('drop-files-here'));
-      }
-    });
+    dropAreaRegistry.add(this);
+    this._updateIsEnabled();
+    this._updateVisibility();
+    this._updateClickableListeners();
+    this._updateDragStateAttribute(DropzoneState.INACTIVE);
 
     this._destroyDropzone = addDropzone({
       element: this,
       shouldIgnore: () => this._shouldIgnore(),
       onChange: (state: DropzoneStateValue) => {
-        this.$.state = state;
+        this._updateDragStateAttribute(state);
       },
       onItems: (items: DropItem[]) => {
         if (!items.length) {
@@ -116,15 +128,15 @@ export class DropArea extends UploaderBlock {
           }
         });
         if (this.uploadCollection.size) {
-          this.modalManager?.open(ActivityBlock.activities.UPLOAD_LIST);
+          this.modalManager?.open(LitActivityBlock.activities.UPLOAD_LIST);
           this.set$({
-            '*currentActivity': ActivityBlock.activities.UPLOAD_LIST,
+            '*currentActivity': LitActivityBlock.activities.UPLOAD_LIST,
           });
         }
       },
     });
 
-    const contentWrapperEl = this.ref['content-wrapper'];
+    const contentWrapperEl = this._contentWrapperRef.value;
     if (contentWrapperEl) {
       this._destroyContentWrapperDropzone = addDropzone({
         element: contentWrapperEl,
@@ -139,70 +151,43 @@ export class DropArea extends UploaderBlock {
       });
     }
 
-    this.sub('state', (state: DropzoneStateValue) => {
-      const stateText = Object.entries(DropzoneState)
-        .find(([, value]) => value === state)?.[0]
-        .toLowerCase();
-      if (stateText) {
-        this.setAttribute('drag-state', stateText);
-      }
-    });
-
     this.subConfigValue('sourceList', (value: string) => {
       const list = stringToArray(value);
-      // Enable drop area if local files are allowed
-      this.$.isEnabled = list.includes(UploadSource.LOCAL);
-      // Show drop area if it's enabled or default slot is overrided
-      this.$.isVisible = this.$.isEnabled || !this.querySelector('[data-default-slot]');
+      this._sourceListAllowsLocal = list.includes(UploadSource.LOCAL);
+      this._updateIsEnabled();
+      this._updateVisibility();
     });
+  }
 
-    this.sub('isVisible', (value: boolean) => {
-      this.toggleAttribute('hidden', !value);
-    });
+  protected override willUpdate(changedProperties: PropertyValues<this>): void {
+    super.willUpdate(changedProperties);
 
-    this.sub('isClickable', (value: boolean) => {
-      this.toggleAttribute('clickable', value);
-    });
+    if (changedProperties.has('disabled')) {
+      this._updateIsEnabled();
+      this._updateVisibility();
+    }
+  }
 
-    if (this.$.isClickable) {
-      const onAreaClicked = (event: Event) => {
-        if (event instanceof KeyboardEvent) {
-          if (event.code === 'Space' || event.code === 'Enter') {
-            if (this.$.isInitFlow) {
-              this.api.initFlow();
-              return;
-            }
+  protected override updated(changedProperties: PropertyValues<this>): void {
+    super.updated(changedProperties);
 
-            this.api.openSystemDialog();
-          }
-        } else if (event instanceof MouseEvent) {
-          if (this.$.isInitFlow) {
-            this.api.initFlow();
-            return;
-          }
-
-          this.api.openSystemDialog();
-        }
-      };
-
-      this._onAreaClicked = onAreaClicked;
-      this.addEventListener('keydown', onAreaClicked);
-      this.addEventListener('click', onAreaClicked);
+    if (changedProperties.has('clickable')) {
+      this._updateClickableListeners();
     }
   }
 
   /** Ignore drop events if there are other visible drop areas on the page. */
   private _shouldIgnore(): boolean {
-    if (!this.$.isEnabled) {
+    if (!this._isEnabled) {
       return true;
     }
     if (!this._couldHandleFiles()) {
       return true;
     }
-    if (!this.$.isFullscreen) {
+    if (!this.fullscreen) {
       return false;
     }
-    const registry = (this.$ as DropAreaInitState)[REGISTRY_KEY];
+    const registry = dropAreaRegistry;
     if (registry.size === 0) {
       return false;
     }
@@ -227,50 +212,71 @@ export class DropArea extends UploaderBlock {
     return true;
   }
 
-  override destroyCallback() {
-    super.destroyCallback();
+  private _updateIsEnabled(): void {
+    const nextIsEnabled = this._sourceListAllowsLocal && !this.disabled;
+    this._isEnabled = nextIsEnabled;
+  }
 
-    const registry = (this.$ as DropAreaInitState)[REGISTRY_KEY];
-    registry.delete(this);
+  private _updateVisibility(): void {
+    const shouldBeVisible = this._isEnabled || !this.querySelector('[data-default-slot]');
+    this._isVisible = shouldBeVisible;
+    this.hidden = !shouldBeVisible;
+  }
 
-    if (registry.size === 0) {
-      Data.deleteCtx(GLOBAL_CTX_NAME);
+  private _updateDragStateAttribute(state: DropzoneStateValue): void {
+    const stateText = Object.entries(DropzoneState)
+      .find(([, value]) => value === state)?.[0]
+      .toLowerCase();
+    if (stateText) {
+      this.setAttribute('drag-state', stateText);
     }
+  }
+
+  private _updateClickableListeners(): void {
+    if (this.clickable && !this._clickableListenersAttached) {
+      this.addEventListener('keydown', this._handleAreaInteraction);
+      this.addEventListener('click', this._handleAreaInteraction);
+      this._clickableListenersAttached = true;
+    } else if (!this.clickable && this._clickableListenersAttached) {
+      this.removeEventListener('keydown', this._handleAreaInteraction);
+      this.removeEventListener('click', this._handleAreaInteraction);
+      this._clickableListenersAttached = false;
+    }
+  }
+
+  public override disconnectedCallback(): void {
+    super.disconnectedCallback();
+
+    dropAreaRegistry.delete(this);
 
     this._destroyDropzone?.();
     this._destroyContentWrapperDropzone?.();
-    if (this._onAreaClicked) {
-      this.removeEventListener('keydown', this._onAreaClicked);
-      this.removeEventListener('click', this._onAreaClicked);
-      this._onAreaClicked = null;
+    if (this._clickableListenersAttached) {
+      this.removeEventListener('keydown', this._handleAreaInteraction);
+      this.removeEventListener('click', this._handleAreaInteraction);
+      this._clickableListenersAttached = false;
     }
   }
-}
 
-DropArea.template = /* HTML */ `
-  <slot>
-    <div data-default-slot hidden></div>
-    <div ref="content-wrapper" class="uc-content-wrapper" set="@hidden: !isVisible">
-      <div class="uc-icon-container" set="@hidden: !withIcon">
+  public override render() {
+    return html`
+    ${this.yield(
+      '',
+      html`<div data-default-slot hidden></div>
+    <div ${ref(this._contentWrapperRef)} class="uc-content-wrapper" ?hidden=${!this._isVisible}>
+      <div class="uc-icon-container" ?hidden=${!this.withIcon}>
         <uc-icon name="default"></uc-icon>
         <uc-icon name="arrow-down"></uc-icon>
       </div>
-      <span class="uc-text">{{text}}</span>
-    </div>
-  </slot>
-`;
+      <span class="uc-text">${this._localizedText}</span>
+    </div>`,
+    )}
+    `;
+  }
+}
 
-DropArea.bindAttributes({
-  // @ts-expect-error TODO: fix types inside symbiote
-  'with-icon': null,
-  // @ts-expect-error TODO: fix types inside symbiote
-  clickable: null,
-  // @ts-expect-error TODO: fix types inside symbiote
-  text: null,
-  // @ts-expect-error TODO: fix types inside symbiote
-  fullscreen: null,
-  // @ts-expect-error TODO: fix types inside symbiote
-  disabled: null,
-  // @ts-expect-error TODO: fix types inside symbiote
-  initflow: null,
-});
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-drop-area': DropArea;
+  }
+}

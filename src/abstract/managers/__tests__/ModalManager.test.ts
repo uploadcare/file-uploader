@@ -1,16 +1,32 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { TelemetryManager } from '../../../abstract/managers/TelemetryManager';
 import type { Modal as ModalNode } from '../../../blocks/Modal/Modal';
-import type { Block } from '../../Block';
+import type { SharedInstancesBag } from '../../../lit/shared-instances';
 import type { ModalId } from '../ModalManager';
 import { ModalEvents, ModalManager } from '../ModalManager';
 
-const createMockBlock = (): Block =>
-  ({
-    debugPrint: vi.fn(),
-    telemetryManager: {
-      sendEventError: vi.fn(),
+let telemetryManagerMock: TelemetryManager;
+
+const createSharedInstancesBag = (): SharedInstancesBag => {
+  telemetryManagerMock = {
+    sendEventError: vi.fn(),
+  } as unknown as TelemetryManager;
+  const ctx = {
+    read: vi.fn().mockReturnValue(false),
+    has: vi.fn().mockReturnValue(true),
+  } as unknown as SharedInstancesBag['ctx'];
+  return {
+    get ctx() {
+      return ctx;
     },
-  }) as unknown as Block;
+    get modalManager() {
+      return null;
+    },
+    get telemetryManager() {
+      return telemetryManagerMock;
+    },
+  } as unknown as SharedInstancesBag;
+};
 
 const createMockModal = (id: ModalId): ModalNode =>
   ({
@@ -19,13 +35,21 @@ const createMockModal = (id: ModalId): ModalNode =>
     hide: vi.fn(),
   }) as unknown as ModalNode;
 
+const assignDebugPrint = (instance: ModalManager): ReturnType<typeof vi.fn> => {
+  const debugPrint = vi.fn();
+  (instance as unknown as { _debugPrint: typeof debugPrint })._debugPrint = debugPrint;
+  return debugPrint;
+};
+
 describe('ModalManager', () => {
-  let manager: ModalManager;
-  let mockBlock: Block;
+  let manager: ModalManager & { _debugPrint: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
-    mockBlock = createMockBlock();
-    manager = new ModalManager(mockBlock);
+    const bag = createSharedInstancesBag();
+    const newManager = new ModalManager(bag);
+    assignDebugPrint(newManager);
+
+    manager = newManager as ModalManager & { _debugPrint: ReturnType<typeof vi.fn> };
   });
 
   describe('constructor', () => {
@@ -110,7 +134,7 @@ describe('ModalManager', () => {
       const result = manager.open('non-existent');
 
       expect(result).toBe(false);
-      expect(mockBlock.debugPrint).toHaveBeenCalled();
+      expect(manager._debugPrint).toHaveBeenCalled();
     });
 
     it('should set hasActiveModals to true after opening', () => {
@@ -145,7 +169,7 @@ describe('ModalManager', () => {
       const result = manager.close('non-existent');
 
       expect(result).toBe(false);
-      expect(mockBlock.debugPrint).toHaveBeenCalled();
+      expect(manager._debugPrint).toHaveBeenCalled();
     });
 
     it('should return false for modal that is not active', () => {
@@ -204,7 +228,7 @@ describe('ModalManager', () => {
       const result = manager.toggle('non-existent');
 
       expect(result).toBe(false);
-      expect(mockBlock.debugPrint).toHaveBeenCalled();
+      expect(manager._debugPrint).toHaveBeenCalled();
     });
   });
 
@@ -257,7 +281,7 @@ describe('ModalManager', () => {
       const result = manager.back();
 
       expect(result).toBe(false);
-      expect(mockBlock.debugPrint).toHaveBeenCalled();
+      expect(manager._debugPrint).toHaveBeenCalled();
     });
 
     it('should close only the last modal and keep previous ones active', () => {
@@ -370,8 +394,8 @@ describe('ModalManager', () => {
       const modal = createMockModal('test-modal');
       manager.registerModal('test-modal', modal);
 
-      expect(mockBlock.telemetryManager.sendEventError).toHaveBeenCalled();
-      expect(mockBlock.debugPrint).toHaveBeenCalled();
+      expect(telemetryManagerMock.sendEventError).toHaveBeenCalled();
+      expect(manager._debugPrint).toHaveBeenCalled();
       expect(successCallback).toHaveBeenCalled();
     });
   });

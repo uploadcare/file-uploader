@@ -1,7 +1,12 @@
-import { Block } from '../../../abstract/Block';
+import type { PropertyValues, TemplateResult } from 'lit';
+import { html } from 'lit';
+import { state } from 'lit/decorators.js';
+import { createRef, ref } from 'lit/directives/ref.js';
+import { LitBlock } from '../../../lit/LitBlock';
 import { debounce } from '../../../utils/debounce.js';
 import { preloadImage } from '../../../utils/preloadImage.js';
 import { throttle } from '../../../utils/throttle.js';
+import type { CropFrame } from './CropFrame';
 import {
   clamp,
   constraintRect,
@@ -15,6 +20,8 @@ import { classNames } from './lib/classNames.js';
 import { pick } from './lib/pick.js';
 import type { CropAspectRatio, ImageSize, LoadingOperations, Rectangle, Transformations } from './types';
 import { viewerImageSrc } from './util.js';
+
+import './CropFrame';
 
 type CropTransform = NonNullable<Transformations['crop']>;
 
@@ -36,8 +43,8 @@ function validateCrop(crop: Transformations['crop']): boolean {
   return shouldMatch.every((matcher) => matcher(crop));
 }
 
-export class EditorImageCropper extends Block {
-  override ctxOwner = true;
+export class EditorImageCropper extends LitBlock {
+  public override ctxOwner = true;
 
   private _commitDebounced: ReturnType<typeof debounce>;
   private _handleResizeThrottled: ReturnType<typeof throttle>;
@@ -46,14 +53,17 @@ export class EditorImageCropper extends Block {
   private _ctx: CanvasRenderingContext2D | null = null;
   private _isActive = false;
   private _observer?: ResizeObserver;
+  @state()
+  private _image: HTMLImageElement | null = null;
   private _cancelPreload?: () => void;
+  private readonly _canvasRef = createRef<HTMLCanvasElement>();
+  private readonly _frameRef = createRef<CropFrame>();
 
-  constructor() {
+  public constructor() {
     super();
 
     this.init$ = {
       ...this.init$,
-      image: null,
       '*padding': CROP_PADDING,
       '*operations': {
         rotate: 0,
@@ -76,18 +86,21 @@ export class EditorImageCropper extends Block {
 
     this._commitDebounced = debounce(this._commit.bind(this), 300);
 
-    this._handleResizeThrottled = throttle(this._handleResize.bind(this), 100);
+    this._handleResizeThrottled = throttle(() => {
+      if (!this.isConnected || !this._isActive) {
+        return;
+      }
+      this._initCanvas();
+      this._syncTransformations();
+      this._alignImage();
+      this._alignCrop();
+      this._draw();
+    }, 100);
   }
 
-  private _handleResize(): void {
-    if (!this.isConnected || !this._isActive) {
-      return;
-    }
+  protected override firstUpdated(changedProperties: PropertyValues<this>): void {
+    super.firstUpdated(changedProperties);
     this._initCanvas();
-    this._syncTransformations();
-    this._alignImage();
-    this._alignCrop();
-    this._draw();
   }
 
   private _syncTransformations(): void {
@@ -101,7 +114,10 @@ export class EditorImageCropper extends Block {
   }
 
   private _initCanvas(): void {
-    const canvas = this.ref['canvas-el'] as HTMLCanvasElement;
+    const canvas = this._canvasRef.value;
+    if (!canvas) {
+      return;
+    }
     const ctx = canvas.getContext('2d');
 
     const width = this.offsetWidth;
@@ -118,11 +134,11 @@ export class EditorImageCropper extends Block {
   }
 
   private _alignImage(): void {
-    if (!this._isActive || !this.$.image) {
+    if (!this._isActive || !this._image) {
       return;
     }
 
-    const image = this.$.image as HTMLImageElement;
+    const image = this._image;
     const padding = this.$['*padding'] as number;
     const operations = this.$['*operations'] as Operations;
     const { rotate } = operations;
@@ -215,7 +231,10 @@ export class EditorImageCropper extends Block {
   private _drawImage(): void {
     const ctx = this._ctx;
     if (!ctx) return;
-    const image = this.$.image as HTMLImageElement;
+    const image = this._image;
+    if (!image) {
+      return;
+    }
     const imageBox = this.$['*imageBox'] as Rectangle;
     const operations = this.$['*operations'] as Operations;
     const { mirror, flip, rotate } = operations;
@@ -229,7 +248,7 @@ export class EditorImageCropper extends Block {
   }
 
   private _draw(): void {
-    if (!this._isActive || !this.$.image || !this._canvas || !this._ctx) {
+    if (!this._isActive || !this._image || !this._canvas || !this._ctx) {
       return;
     }
     const canvas = this._canvas;
@@ -241,8 +260,8 @@ export class EditorImageCropper extends Block {
   }
 
   private _animateIn({ fromViewer }: { fromViewer?: boolean }): void {
-    if (this.$.image) {
-      this.ref['frame-el'].toggleThumbs(true);
+    if (this._image) {
+      this._frameRef.value?.toggleThumbs(true);
       this._transitionToImage();
       setTimeout(() => {
         this.className = classNames({
@@ -324,7 +343,7 @@ export class EditorImageCropper extends Block {
     this.$['*editorTransformations'] = transformations;
   }
 
-  setValue<K extends keyof Operations>(operation: K, value: Operations[K]): void {
+  public setValue<K extends keyof Operations>(operation: K, value: Operations[K]): void {
     this.$['*operations'] = {
       ...this.$['*operations'],
       [operation]: value,
@@ -339,23 +358,26 @@ export class EditorImageCropper extends Block {
     this._draw();
   }
 
-  getValue<K extends keyof Operations>(operation: K): Operations[K] {
+  public getValue<K extends keyof Operations>(operation: K): Operations[K] {
     return this.$['*operations'][operation];
   }
 
-  async activate(imageSize: ImageSize, { fromViewer }: { fromViewer?: boolean } = {}): Promise<void> {
+  public async activate(imageSize: ImageSize, { fromViewer }: { fromViewer?: boolean } = {}): Promise<void> {
     if (this._isActive) {
       return;
     }
     this._isActive = true;
+    await this.updateComplete;
+    this._initCanvas();
     this._imageSize = imageSize;
     this.removeEventListener('transitionend', this._reset);
 
     try {
       const originalUrl = this.$['*originalUrl'] as string;
       const transformations = this.$['*editorTransformations'] as Transformations;
-      this.$.image = await this._waitForImage(originalUrl, transformations);
+      this._image = await this._waitForImage(originalUrl, transformations);
       this._syncTransformations();
+      this._handleResizeThrottled();
       this._animateIn({ fromViewer });
     } catch (err) {
       console.error('Failed to activate cropper', { error: err });
@@ -368,13 +390,13 @@ export class EditorImageCropper extends Block {
         return;
       }
       const nonZeroSize = entry.contentRect.width > 0 && entry.contentRect.height > 0;
-      if (nonZeroSize && this._isActive && this.$.image) {
+      if (nonZeroSize && this._isActive && this._image) {
         this._handleResizeThrottled();
       }
     });
     this._observer.observe(this);
   }
-  deactivate({ reset = false }: { reset?: boolean } = {}): void {
+  public deactivate({ reset = false }: { reset?: boolean } = {}): void {
     if (!this._isActive) {
       return;
     }
@@ -389,7 +411,7 @@ export class EditorImageCropper extends Block {
       'uc-inactive_to_editor': true,
     });
 
-    this.ref['frame-el'].toggleThumbs(false);
+    this._frameRef.value?.toggleThumbs(false);
     this.addEventListener('transitionend', this._reset, { once: true });
     this._observer?.disconnect();
   }
@@ -419,10 +441,9 @@ export class EditorImageCropper extends Block {
   }
 
   private _reset(): void {
-    if (this._isActive) {
-      return;
+    if (!this._isActive) {
+      this._image = null;
     }
-    this.$.image = null;
   }
 
   private async _waitForImage(originalUrl: string, transformations: Transformations): Promise<HTMLImageElement> {
@@ -475,7 +496,7 @@ export class EditorImageCropper extends Block {
     };
   }
 
-  override initCallback(): void {
+  public override initCallback(): void {
     super.initCallback();
 
     this.sub('*imageBox', () => {
@@ -483,7 +504,7 @@ export class EditorImageCropper extends Block {
     });
 
     this.sub('*cropBox', () => {
-      if (this.$.image) {
+      if (this._image) {
         this._commitDebounced();
       }
     });
@@ -495,7 +516,7 @@ export class EditorImageCropper extends Block {
     setTimeout(() => {
       this.sub('*networkProblems', (networkProblems: boolean) => {
         if (!networkProblems) {
-          if (this._isActive) {
+          if (this._isActive && this._imageSize) {
             void this.activate(this._imageSize, { fromViewer: false });
           }
         }
@@ -503,13 +524,24 @@ export class EditorImageCropper extends Block {
     }, 0);
   }
 
-  override destroyCallback(): void {
-    super.destroyCallback();
+  public override disconnectedCallback(): void {
+    super.disconnectedCallback();
     this._observer?.disconnect();
+    if (this._image) {
+      this._image = null;
+    }
+  }
+
+  public override render(): TemplateResult {
+    return html`
+      <canvas class="uc-canvas" ${ref(this._canvasRef)}></canvas>
+      <uc-crop-frame ${ref(this._frameRef)}></uc-crop-frame>
+    `;
   }
 }
 
-EditorImageCropper.template = /* HTML */ `
-  <canvas class="uc-canvas" ref="canvas-el"></canvas>
-  <uc-crop-frame ref="frame-el"></uc-crop-frame>
-`;
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-editor-image-cropper': EditorImageCropper;
+  }
+}
