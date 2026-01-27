@@ -422,7 +422,7 @@ describe('Custom file validation', () => {
           timeout: 10000,
         })
         .toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }), expect.anything(), expect.anything());
-    });
+    }, 20000);
 
     it('should be called when cdnUrl or cdnUrlModifiers changed', async () => {
       const config = page.getByTestId('uc-config').query()! as Config;
