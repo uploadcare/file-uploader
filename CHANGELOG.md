@@ -1,3 +1,12 @@
+## [1.26.1](https://github.com/uploadcare/file-uploader/compare/v1.26.0...v1.26.1) (2026-01-28)
+
+
+### Bug Fixes
+
+* bump @uploadcare/quality-insights to fix zod types import errors ([#920](https://github.com/uploadcare/file-uploader/issues/920)) ([fc6cc37](https://github.com/uploadcare/file-uploader/commit/fc6cc37adf70abd050e3a804bb148581043fa3a4))
+
+
+
 # [1.26.0](https://github.com/uploadcare/file-uploader/compare/v1.25.0...v1.26.0) (2026-01-27)
 
 ## Highlights
