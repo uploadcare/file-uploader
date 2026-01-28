@@ -1,5 +1,6 @@
 import { LitElement } from 'lit';
 import { blockCtx } from '../abstract/CTX';
+import { ClipboardLayer } from '../abstract/features/ClipboardLayer';
 import { A11y } from '../abstract/managers/a11y';
 import { LocaleManager, localeStateKey } from '../abstract/managers/LocaleManager';
 import { ModalManager } from '../abstract/managers/ModalManager';
@@ -96,6 +97,7 @@ export class LitBlock extends LitBlockBase {
     this._addSharedContextInstance('*localeManager', (sharedInstancesBag) => new LocaleManager(sharedInstancesBag));
     this._addSharedContextInstance('*modalManager', (sharedInstancesBag) => new ModalManager(sharedInstancesBag));
     this._addSharedContextInstance('*a11y', () => new A11y());
+    this._addSharedContextInstance('*clipboard', (sharedInstancesBag) => new ClipboardLayer(sharedInstancesBag));
     this._addSharedContextInstance(
       '*telemetryManager',
       (sharedInstancesBag) => new TelemetryManager(sharedInstancesBag),
@@ -137,6 +139,10 @@ export class LitBlock extends LitBlockBase {
 
   public get a11y(): A11y {
     return this._getSharedContextInstance('*a11y');
+  }
+
+  public get clipboardLayer(): ClipboardLayer {
+    return this._getSharedContextInstance('*clipboard');
   }
 
   public get blocksRegistry(): Set<LitBlock> {
