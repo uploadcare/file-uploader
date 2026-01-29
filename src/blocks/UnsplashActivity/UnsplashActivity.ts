@@ -3,6 +3,7 @@ import { state } from 'lit/decorators.js';
 import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
 import { LitActivityBlock } from '../../lit/LitActivityBlock';
 import type { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
+import '../../blocks/ActivityHeader/ActivityHeader';
 import './unsplash-activity.css';
 
 /**
@@ -44,7 +45,9 @@ export class UnsplashActivity extends LitUploaderBlock {
   @state()
   private _searchQuery = '';
 
-  private _accessKey = 'YOUR_UNSPLASH_ACCESS_KEY'; // Will be configurable via plugin config
+  private get _accessKey(): string {
+    return this.cfg.unsplashAccessKey || 'YOUR_UNSPLASH_ACCESS_KEY';
+  }
 
   public override initCallback(): void {
     super.initCallback();
