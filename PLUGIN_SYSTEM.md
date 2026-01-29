@@ -2,6 +2,9 @@
 
 The File Uploader now supports a plugin system that allows you to extend its functionality. The Cloud Image Editor has been refactored to work as a plugin, demonstrating how the system works.
 
+> **📘 Enhanced Plugin System**  
+> For advanced features including plugin-specific configuration, state management API, and custom tabs/sources, see [PLUGIN_SYSTEM_ENHANCED.md](./PLUGIN_SYSTEM_ENHANCED.md)
+
 ## Plugin API
 
 ### Plugin Interface
@@ -14,9 +17,15 @@ interface Plugin {
   pluginId: string;
 
   /**
-   * Plugin initialization function called when plugin is registered
+   * Optional configuration options defined by the plugin
    */
-  init(solution: LitSolutionBlock): void;
+  config?: Record<string, PluginConfigOption>;
+
+  /**
+   * Plugin initialization function called when plugin is registered
+   * @param api - Plugin state API for controlled access to solution state
+   */
+  init(api: PluginStateAPI): void;
 
   /**
    * Optional cleanup function called when solution is destroyed
@@ -81,22 +90,26 @@ document.body.appendChild(uploader);
 You can create custom plugins to extend the file uploader functionality:
 
 ```typescript
-import type { Plugin } from '@uploadcare/file-uploader';
-import type { LitSolutionBlock } from '@uploadcare/file-uploader';
+import type { Plugin, PluginStateAPI } from '@uploadcare/file-uploader';
 
 export class MyCustomPlugin implements Plugin {
   public readonly pluginId = 'my-custom-plugin';
 
-  public init(solution: LitSolutionBlock): void {
+  public init(api: PluginStateAPI): void {
     // Initialize your plugin
-    console.log('Plugin initialized on', solution);
+    console.log('Plugin initialized');
     
-    // Access the solution's configuration
-    const config = solution.cfg;
+    // Access configuration
+    const config = api.getConfigValue('someOption');
     
     // Subscribe to state changes
-    solution.sub('*uploadList', (list) => {
+    api.subscribe('*uploadList', (list) => {
       console.log('Upload list changed:', list);
+    });
+
+    // Subscribe to config changes
+    api.subConfigValue('someOption', (value) => {
+      console.log('Config option changed:', value);
     });
   }
 
@@ -114,6 +127,43 @@ uploader.registerPlugin({
   plugin: new MyCustomPlugin(),
 });
 ```
+
+### Plugin with Configuration
+
+Plugins can declare their own configuration options:
+
+```typescript
+import type { Plugin, PluginStateAPI, PluginConfigOption } from '@uploadcare/file-uploader';
+
+export class MyConfigurablePlugin implements Plugin {
+  public readonly pluginId = 'my-configurable-plugin';
+
+  // Declare plugin-specific config
+  public readonly config: Record<string, PluginConfigOption> = {
+    myPluginEnabled: {
+      defaultValue: true,
+      validator: (value) => Boolean(value),
+    },
+    myPluginColor: {
+      defaultValue: '#ff0000',
+      validator: (value) => String(value),
+    },
+  };
+
+  public init(api: PluginStateAPI): void {
+    // Access plugin config
+    const enabled = api.getConfigValue('myPluginEnabled');
+    const color = api.getConfigValue('myPluginColor');
+
+    console.log('Plugin enabled:', enabled);
+    console.log('Plugin color:', color);
+
+    // Subscribe to config changes
+    api.subConfigValue('myPluginEnabled', (value) => {
+      console.log('Plugin enabled changed to:', value);
+    });
+  }
+}
 
 ## Benefits of the Plugin System
 
