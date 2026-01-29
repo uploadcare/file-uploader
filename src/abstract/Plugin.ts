@@ -30,9 +30,4 @@ export interface PluginConfig {
    * Plugin instance
    */
   plugin: Plugin;
-
-  /**
-   * Optional configuration passed to the plugin
-   */
-  config?: Record<string, unknown>;
 }

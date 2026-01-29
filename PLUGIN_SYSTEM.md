@@ -130,23 +130,7 @@ No changes required! The cloud image editor continues to work as before. It's no
 
 ### For advanced users wanting smaller bundles
 
-To exclude the cloud image editor and reduce bundle size:
-
-1. Use a custom build configuration
-2. Import individual components instead of the full bundle
-3. Selectively register only the plugins you need
-
-```javascript
-// Custom minimal build without cloud image editor
-import { FileUploaderRegular } from '@uploadcare/file-uploader/solutions/file-uploader/regular';
-import { defineComponents } from '@uploadcare/file-uploader';
-
-// Define only the components you need
-defineComponents({
-  FileUploaderRegular,
-  // Don't import CloudImageEditorPlugin
-});
-```
+To exclude the cloud image editor and reduce bundle size, you can create a custom build using a bundler like webpack, rollup, or vite. Import only the components you need and use tree shaking to eliminate unused code. This typically requires custom build configuration and is beyond the scope of this documentation.
 
 ## Plugin Lifecycle
 
