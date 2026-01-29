@@ -1,3 +1,14 @@
+## [1.26.1](https://github.com/uploadcare/file-uploader/compare/v1.26.0...v1.26.1) (2026-01-29)
+
+
+### Bug Fixes
+
+* bump @uploadcare/quality-insights to fix zod types import errors ([#920](https://github.com/uploadcare/file-uploader/issues/920)) ([fc6cc37](https://github.com/uploadcare/file-uploader/commit/fc6cc37adf70abd050e3a804bb148581043fa3a4))
+* config ctx initialization order ([#923](https://github.com/uploadcare/file-uploader/issues/923)) ([f90466c](https://github.com/uploadcare/file-uploader/commit/f90466c4a2c66241af8196d30146e989b5218dc8))
+* **config:** prevent overwriting existing property descriptors in Config class ([#922](https://github.com/uploadcare/file-uploader/issues/922)) ([71d8da0](https://github.com/uploadcare/file-uploader/commit/71d8da0ecb40631b61be59304e3a49602c3a2e2a))
+
+
+
 # [1.26.0](https://github.com/uploadcare/file-uploader/compare/v1.25.0...v1.26.0) (2026-01-27)
 
 ## Highlights
