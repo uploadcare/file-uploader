@@ -16,6 +16,8 @@ import '../../../blocks/SourceList/SourceList';
 import '../../../blocks/CameraSource/CameraSource';
 import '../../../blocks/UrlSource/UrlSource';
 import '../../../blocks/ExternalSource/ExternalSource';
+
+// Cloud image editor is now optional - import it by default for backward compatibility
 import '../../../blocks/CloudImageEditorActivity/CloudImageEditorActivity';
 
 const ACTIVE_CLASS = 'active';
@@ -149,6 +151,14 @@ export class FileUploaderMinimal extends LitSolutionBlock {
     this.modalManager?.unsubscribe(ModalEvents.CLOSE, this._handleModalClose);
   }
 
+  /**
+   * Check if cloud image editor activity is available
+   * (either imported or registered via plugin)
+   */
+  private get _hasCloudImageEditor(): boolean {
+    return customElements.get('uc-cloud-image-editor-activity') !== undefined;
+  }
+
   public override render() {
     return html`
       ${super.render()}
@@ -187,9 +197,15 @@ export class FileUploaderMinimal extends LitSolutionBlock {
         <uc-external-source></uc-external-source>
       </uc-modal>
 
-      <uc-modal id="cloud-image-edit" strokes block-body-scrolling>
-        <uc-cloud-image-editor-activity></uc-cloud-image-editor-activity>
-      </uc-modal>
+      ${
+        this._hasCloudImageEditor
+          ? html`
+              <uc-modal id="${LitActivityBlock.activities.CLOUD_IMG_EDIT}" strokes block-body-scrolling>
+                <uc-cloud-image-editor-activity></uc-cloud-image-editor-activity>
+              </uc-modal>
+            `
+          : ''
+      }
     `;
   }
 }

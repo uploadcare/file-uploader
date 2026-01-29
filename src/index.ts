@@ -58,5 +58,9 @@ export { FileUploaderMinimal } from './solutions/file-uploader/minimal/FileUploa
 // Types
 export * from './types/index';
 
+// Plugin System
+export type { Plugin, PluginConfig } from './abstract/Plugin';
+export { PluginManager } from './abstract/managers/PluginManager';
+
 // Other
 export * from './env';

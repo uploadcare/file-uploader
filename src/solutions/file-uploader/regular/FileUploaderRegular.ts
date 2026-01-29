@@ -2,6 +2,7 @@ import { html } from 'lit';
 import { property } from 'lit/decorators.js';
 import { InternalEventType } from '../../../blocks/UploadCtxProvider/EventEmitter';
 import { LitSolutionBlock } from '../../../lit/LitSolutionBlock';
+import { LitActivityBlock } from '../../../lit/LitActivityBlock';
 import './index.css';
 
 import '../../../blocks/Modal/Modal';
@@ -13,8 +14,10 @@ import '../../../blocks/UploadList/UploadList';
 import '../../../blocks/CameraSource/CameraSource';
 import '../../../blocks/UrlSource/UrlSource';
 import '../../../blocks/ExternalSource/ExternalSource';
-import '../../../blocks/CloudImageEditorActivity/CloudImageEditorActivity';
 import '../../../blocks/SimpleBtn/SimpleBtn';
+
+// Cloud image editor is now optional - import it by default for backward compatibility
+import '../../../blocks/CloudImageEditorActivity/CloudImageEditorActivity';
 
 type BaseInitState = InstanceType<typeof LitSolutionBlock>['init$'];
 interface FileUploaderRegularInitState extends BaseInitState {
@@ -48,6 +51,14 @@ export class FileUploaderRegular extends LitSolutionBlock {
     });
   }
 
+  /**
+   * Check if cloud image editor activity is available
+   * (either imported or registered via plugin)
+   */
+  private get _hasCloudImageEditor(): boolean {
+    return customElements.get('uc-cloud-image-editor-activity') !== undefined;
+  }
+
   public override render() {
     return html`
     ${super.render()}
@@ -78,9 +89,15 @@ export class FileUploaderRegular extends LitSolutionBlock {
     <uc-external-source></uc-external-source>
   </uc-modal>
 
-  <uc-modal id="cloud-image-edit" strokes block-body-scrolling>
-    <uc-cloud-image-editor-activity></uc-cloud-image-editor-activity>
-  </uc-modal>
+  ${
+    this._hasCloudImageEditor
+      ? html`
+          <uc-modal id="${LitActivityBlock.activities.CLOUD_IMG_EDIT}" strokes block-body-scrolling>
+            <uc-cloud-image-editor-activity></uc-cloud-image-editor-activity>
+          </uc-modal>
+        `
+      : ''
+  }
 `;
   }
 }

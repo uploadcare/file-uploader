@@ -14,6 +14,8 @@ import '../../../blocks/UploadList/UploadList';
 import '../../../blocks/CameraSource/CameraSource';
 import '../../../blocks/UrlSource/UrlSource';
 import '../../../blocks/ExternalSource/ExternalSource';
+
+// Cloud image editor is now optional - import it by default for backward compatibility
 import '../../../blocks/CloudImageEditorActivity/CloudImageEditorActivity';
 
 type BaseInitState = InstanceType<typeof LitSolutionBlock>['init$'];
@@ -95,6 +97,14 @@ export class FileUploaderInline extends LitSolutionBlock {
     });
   }
 
+  /**
+   * Check if cloud image editor activity is available
+   * (either imported or registered via plugin)
+   */
+  private get _hasCloudImageEditor(): boolean {
+    return customElements.get('uc-cloud-image-editor-activity') !== undefined;
+  }
+
   public override render() {
     return html`
       ${super.render()}
@@ -115,7 +125,7 @@ export class FileUploaderInline extends LitSolutionBlock {
       <uc-camera-source></uc-camera-source>
       <uc-url-source></uc-url-source>
       <uc-external-source></uc-external-source>
-      <uc-cloud-image-editor-activity></uc-cloud-image-editor-activity>
+      ${this._hasCloudImageEditor ? html`<uc-cloud-image-editor-activity></uc-cloud-image-editor-activity>` : ''}
     `;
   }
 }
