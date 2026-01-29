@@ -60,6 +60,12 @@ export * from './types/index';
 
 // Plugin System
 export type { Plugin, PluginConfig } from './abstract/Plugin';
+export type { 
+  PluginStateAPI, 
+  PluginConfigOption,
+  PluginSourceConfig,
+  PluginActivityConfig 
+} from './abstract/PluginStateAPI';
 export { PluginManager } from './abstract/managers/PluginManager';
 
 // Other

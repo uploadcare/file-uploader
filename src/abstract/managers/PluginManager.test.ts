@@ -12,6 +12,9 @@ describe('PluginManager', () => {
     mockSolution = {
       $: {},
       cfg: {},
+      sub: vi.fn(() => vi.fn()),
+      subConfigValue: vi.fn(() => vi.fn()),
+      l10n: vi.fn((key: string) => key),
     } as unknown as LitSolutionBlock;
 
     pluginManager = new PluginManager(mockSolution);
@@ -45,7 +48,7 @@ describe('PluginManager', () => {
     consoleSpy.mockRestore();
   });
 
-  test('should initialize plugins', () => {
+  test('should initialize plugins with state API', () => {
     const initSpy = vi.fn();
     const plugin: Plugin = {
       pluginId: 'test-plugin',
@@ -55,7 +58,12 @@ describe('PluginManager', () => {
     pluginManager.register({ plugin });
     pluginManager.initPlugins();
 
-    expect(initSpy).toHaveBeenCalledWith(mockSolution);
+    expect(initSpy).toHaveBeenCalled();
+    // Check that the first argument is a state API object
+    const stateAPI = initSpy.mock.calls[0][0];
+    expect(stateAPI).toHaveProperty('subConfigValue');
+    expect(stateAPI).toHaveProperty('getConfigValue');
+    expect(stateAPI).toHaveProperty('subscribe');
   });
 
   test('should initialize plugins only once', () => {
@@ -70,6 +78,24 @@ describe('PluginManager', () => {
     pluginManager.initPlugins();
 
     expect(initSpy).toHaveBeenCalledTimes(1);
+  });
+
+  test('should register plugin config options', () => {
+    const plugin: Plugin = {
+      pluginId: 'test-plugin',
+      init: vi.fn(),
+      config: {
+        testOption: {
+          defaultValue: 'test-value',
+          validator: (value) => String(value),
+        },
+      },
+    };
+
+    pluginManager.register({ plugin });
+    
+    // Config should be set on the solution
+    expect(mockSolution.cfg).toHaveProperty('testOption');
   });
 
   test('should call destroy on plugins', () => {
@@ -111,7 +137,7 @@ describe('PluginManager', () => {
 
     pluginManager.register({ plugin });
 
-    expect(initSpy).toHaveBeenCalledWith(mockSolution);
+    expect(initSpy).toHaveBeenCalled();
   });
 
   test('should handle errors during plugin initialization', () => {

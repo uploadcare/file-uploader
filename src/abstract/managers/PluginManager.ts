@@ -1,5 +1,6 @@
 import type { LitSolutionBlock } from '../../lit/LitSolutionBlock';
 import type { Plugin, PluginConfig } from '../Plugin';
+import { PluginStateAPIImpl } from '../PluginStateAPI';
 
 /**
  * Manages plugin registration and lifecycle for file uploader solutions
@@ -25,11 +26,49 @@ export class PluginManager {
       return;
     }
 
+    // Register plugin config options if any
+    if (plugin.config) {
+      this._registerPluginConfig(plugin);
+    }
+
     this._plugins.set(plugin.pluginId, plugin);
 
     // If manager is already initialized, initialize the plugin immediately
     if (this._initialized) {
-      plugin.init(this._solution);
+      this._initializePlugin(plugin);
+    }
+  }
+
+  /**
+   * Register config options defined by a plugin
+   */
+  private _registerPluginConfig(plugin: Plugin): void {
+    if (!plugin.config) {
+      return;
+    }
+
+    // Add plugin config defaults to the solution's config
+    for (const [key, option] of Object.entries(plugin.config)) {
+      // Check if config key is already defined
+      const existingValue = this._solution.cfg[key as keyof typeof this._solution.cfg];
+      
+      // If not defined or is default, set the plugin's default value
+      if (existingValue === undefined || existingValue === null) {
+        this._solution.cfg[key as keyof typeof this._solution.cfg] = option.defaultValue as any;
+      }
+    }
+  }
+
+  /**
+   * Initialize a single plugin
+   */
+  private _initializePlugin(plugin: Plugin): void {
+    try {
+      // Create state API wrapper for the plugin
+      const stateAPI = new PluginStateAPIImpl(this._solution);
+      plugin.init(stateAPI);
+    } catch (error) {
+      console.error(`Failed to initialize plugin "${plugin.pluginId}":`, error);
     }
   }
 
@@ -43,11 +82,7 @@ export class PluginManager {
     }
 
     for (const plugin of this._plugins.values()) {
-      try {
-        plugin.init(this._solution);
-      } catch (error) {
-        console.error(`Failed to initialize plugin "${plugin.pluginId}":`, error);
-      }
+      this._initializePlugin(plugin);
     }
 
     this._initialized = true;

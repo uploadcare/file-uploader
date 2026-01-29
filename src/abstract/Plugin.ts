@@ -1,4 +1,4 @@
-import type { LitSolutionBlock } from '../lit/LitSolutionBlock';
+import type { PluginStateAPI, PluginConfigOption } from './PluginStateAPI';
 
 /**
  * Plugin interface for extending file uploader functionality.
@@ -11,10 +11,16 @@ export interface Plugin {
   pluginId: string;
 
   /**
-   * Plugin initialization function called when plugin is registered
-   * @param solution - The solution block instance (FileUploaderRegular, FileUploaderInline, etc.)
+   * Optional configuration options defined by the plugin
+   * Key is the config option name, value is the config option definition
    */
-  init(solution: LitSolutionBlock): void;
+  config?: Record<string, PluginConfigOption>;
+
+  /**
+   * Plugin initialization function called when plugin is registered
+   * @param api - Plugin state API for controlled access to solution state
+   */
+  init(api: PluginStateAPI): void;
 
   /**
    * Optional cleanup function called when solution is destroyed
