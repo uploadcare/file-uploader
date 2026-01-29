@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Unsplash Plugin Demo</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 1200px;
+      margin: 50px auto;
+      padding: 20px;
+    }
+    h1 {
+      color: #333;
+    }
+    .demo-section {
+      margin: 30px 0;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    .demo-section h2 {
+      margin-top: 0;
+      color: #0066cc;
+    }
+    .info {
+      background-color: #e8f4f8;
+      padding: 15px;
+      border-left: 4px solid #0066cc;
+      margin: 20px 0;
+    }
+    pre {
+      background-color: #f5f5f5;
+      padding: 15px;
+      border-radius: 4px;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>Unsplash Plugin Demo</h1>
+  
+  <div class="info">
+    <strong>Note:</strong> This demo shows how to use the Unsplash plugin to add a custom upload source.
+    You'll need to provide your own Unsplash API access key.
+  </div>
+
+  <div class="demo-section">
+    <h2>Features</h2>
+    <ul>
+      <li>✅ Custom "Unsplash" source button in file picker</li>
+      <li>✅ Browse Unsplash images in custom activity</li>
+      <li>✅ Search functionality</li>
+      <li>✅ Click to add images to upload list</li>
+      <li>✅ Plugin-based architecture (easily removable)</li>
+    </ul>
+  </div>
+
+  <div class="demo-section">
+    <h2>Usage Example</h2>
+    <pre><code>import { 
+  FileUploaderRegular, 
+  createUnsplashPlugin 
+} from '@uploadcare/file-uploader';
+
+const uploader = new FileUploaderRegular();
+
+// Register the Unsplash plugin
+uploader.registerPlugin({
+  plugin: createUnsplashPlugin(),
+});
+
+// Configure Unsplash access key
+uploader.setAttribute('unsplash-access-key', 'YOUR_ACCESS_KEY');
+
+// Add unsplash to source list
+uploader.setAttribute('source-list', 'local, url, unsplash, camera');
+
+document.body.appendChild(uploader);</code></pre>
+  </div>
+
+  <div class="demo-section">
+    <h2>Getting an Unsplash Access Key</h2>
+    <ol>
+      <li>Go to <a href="https://unsplash.com/developers" target="_blank">Unsplash Developers</a></li>
+      <li>Create a new application</li>
+      <li>Copy your Access Key</li>
+      <li>Use it in the configuration above</li>
+    </ol>
+  </div>
+
+  <div class="demo-section">
+    <h2>Live Demo</h2>
+    <div id="uploader-container">
+      <!-- File uploader will be inserted here -->
+    </div>
+  </div>
+
+  <div class="demo-section">
+    <h2>How It Works</h2>
+    <p><strong>1. Plugin Registration:</strong></p>
+    <ul>
+      <li>UnsplashPlugin uses the PluginStateAPI to register a custom source</li>
+      <li>Calls <code>api.registerSource()</code> with type, activity, icon, and text key</li>
+      <li>Calls <code>api.registerActivity()</code> to define activity lifecycle</li>
+    </ul>
+
+    <p><strong>2. Custom Activity:</strong></p>
+    <ul>
+      <li>UnsplashActivity component extends LitUploaderBlock</li>
+      <li>Fetches images from Unsplash API</li>
+      <li>Renders image grid with Lit templates</li>
+      <li>Handles image selection and adds to upload list via URL</li>
+    </ul>
+
+    <p><strong>3. Integration:</strong></p>
+    <ul>
+      <li>SourceBtn component checks for custom sources in state</li>
+      <li>Automatically picks up plugin-registered sources</li>
+      <li>No modification to core code needed</li>
+    </ul>
+  </div>
+
+  <div class="demo-section">
+    <h2>Plugin Architecture</h2>
+    <p>The Unsplash plugin demonstrates the complete plugin architecture:</p>
+    <ul>
+      <li><strong>Config Declaration:</strong> Declares <code>unsplashAccessKey</code> config option</li>
+      <li><strong>State API Usage:</strong> Uses controlled API instead of direct solution access</li>
+      <li><strong>Custom Activity:</strong> Implements custom UI with Lit</li>
+      <li><strong>Source Registration:</strong> Adds custom button to file picker</li>
+      <li><strong>Activity Registration:</strong> Defines custom activity with lifecycle</li>
+    </ul>
+  </div>
+
+  <script type="module">
+    // Note: In a real implementation, you would import from the built package
+    console.log('Unsplash Plugin Demo Loaded');
+    console.log('To use this demo, you need to:');
+    console.log('1. Build the package with the Unsplash plugin');
+    console.log('2. Import FileUploaderRegular and createUnsplashPlugin');
+    console.log('3. Configure your Unsplash access key');
+    console.log('4. Add "unsplash" to the source-list attribute');
+  </script>
+</body>
+</html>

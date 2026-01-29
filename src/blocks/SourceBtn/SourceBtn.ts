@@ -97,9 +97,33 @@ export class SourceBtn extends LitUploaderBlock {
   public override initCallback(): void {
     super.initCallback();
     this._initTypes();
+    this._initCustomSources();
 
     if (this.type) {
       this._applyType(this.type);
+    }
+  }
+
+  private _initCustomSources(): void {
+    // Check for custom sources registered via plugin system
+    const customSources = this.$['*customSources'] as Array<{
+      type: string;
+      activity?: string;
+      icon?: string;
+      textKey?: string;
+      activate?: () => void;
+    }> | undefined;
+
+    if (customSources && Array.isArray(customSources)) {
+      for (const source of customSources) {
+        this._registerType({
+          type: source.type,
+          activity: source.activity as ActivityType | null,
+          icon: source.icon,
+          textKey: source.textKey,
+          activate: source.activate,
+        });
+      }
     }
   }
 

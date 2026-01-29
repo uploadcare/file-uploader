@@ -55,6 +55,9 @@ export { CloudImageEditor } from './solutions/cloud-image-editor/CloudImageEdito
 export { FileUploaderInline } from './solutions/file-uploader/inline/FileUploaderInline';
 export { FileUploaderMinimal } from './solutions/file-uploader/minimal/FileUploaderMinimal';
 
+// Plugins:
+export { createUnsplashPlugin, UnsplashPlugin, UNSPLASH_PLUGIN_ID } from './solutions/unsplash';
+
 // Types
 export * from './types/index';
 

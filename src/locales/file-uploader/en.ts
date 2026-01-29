@@ -128,4 +128,9 @@ export default {
   'crop-to-shape': 'Crop to {{value}}',
   custom: 'Freeform',
   'freeform-crop': 'Freeform crop',
+  // Unsplash plugin
+  'src-type-unsplash': 'Unsplash',
+  'unsplash-title': 'Choose from Unsplash',
+  'unsplash-search-placeholder': 'Search for images...',
+  'unsplash-search-button': 'Search',
 };
