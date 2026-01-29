@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enhanced Plugin System Demo</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 1200px;
+      margin: 50px auto;
+      padding: 20px;
+    }
+    h1 {
+      color: #333;
+    }
+    .demo-section {
+      margin: 30px 0;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    .demo-section h2 {
+      margin-top: 0;
+      color: #0066cc;
+    }
+    .code-block {
+      background-color: #f5f5f5;
+      padding: 15px;
+      border-radius: 3px;
+      overflow-x: auto;
+    }
+    .code-block pre {
+      margin: 0;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+    }
+    .feature-list {
+      list-style-type: none;
+      padding-left: 0;
+    }
+    .feature-list li {
+      padding: 10px;
+      margin: 5px 0;
+      background-color: #e8f4f8;
+      border-left: 4px solid #0066cc;
+    }
+    .feature-list li::before {
+      content: '✓ ';
+      color: #00aa00;
+      font-weight: bold;
+      margin-right: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Enhanced Plugin System Demo</h1>
+  
+  <div class="demo-section">
+    <h2>Overview</h2>
+    <p>The enhanced plugin system provides three major improvements:</p>
+    <ul class="feature-list">
+      <li><strong>Plugin-Specific Configuration:</strong> Plugins can declare their own config options with defaults and validators</li>
+      <li><strong>State Wrapper API:</strong> Controlled access to solution state without exposing internals</li>
+      <li><strong>Custom Tabs/Sources:</strong> Register custom source buttons, activities, and navigation</li>
+    </ul>
+  </div>
+
+  <div class="demo-section">
+    <h2>1. Plugin with Configuration</h2>
+    <p>Plugins declare their config options directly in the plugin code:</p>
+    <div class="code-block"><pre>
+import type { Plugin, PluginConfigOption, PluginStateAPI } from '@uploadcare/file-uploader';
+
+class MyPlugin implements Plugin {
+  pluginId = 'my-plugin';
+
+  // Declare plugin-specific config
+  config: Record&lt;string, PluginConfigOption&gt; = {
+    myPluginEnabled: {
+      defaultValue: true,
+      validator: (value) => Boolean(value),
+    },
+    myPluginColor: {
+      defaultValue: '#ff0000',
+      validator: (value) => String(value),
+    },
+  };
+
+  init(api: PluginStateAPI) {
+    // Access config through state API
+    const enabled = api.getConfigValue('myPluginEnabled');
+    console.log('Plugin enabled:', enabled);
+
+    // Subscribe to config changes
+    api.subConfigValue('myPluginColor', (color) => {
+      console.log('Color changed to:', color);
+    });
+  }
+}
+    </pre></div>
+  </div>
+
+  <div class="demo-section">
+    <h2>2. Cloud Image Editor Plugin</h2>
+    <p>The Cloud Image Editor now declares its config in the plugin itself:</p>
+    <div class="code-block"><pre>
+class CloudImageEditorPlugin implements Plugin {
+  pluginId = 'cloud-image-editor';
+
+  config: Record&lt;string, PluginConfigOption&gt; = {
+    cloudImageEditorAutoOpen: {
+      defaultValue: false,
+      validator: (value) => Boolean(value),
+    },
+    cloudImageEditorMaskHref: {
+      defaultValue: null,
+      validator: (value) => value == null ? null : String(value),
+    },
+  };
+
+  init(api: PluginStateAPI) {
+    // Config options are automatically registered
+    // Component is loaded via import side-effect
+  }
+}
+    </pre></div>
+  </div>
+
+  <div class="demo-section">
+    <h2>3. Custom Source/Tab Plugin</h2>
+    <p>Plugins can register custom sources that appear in the file picker:</p>
+    <div class="code-block"><pre>
+class CustomSourcePlugin implements Plugin {
+  pluginId = 'custom-source';
+
+  init(api: PluginStateAPI) {
+    // Register a custom source button
+    api.registerSource({
+      type: 'my-custom-source',
+      activity: 'my-custom-activity',
+      icon: 'my-icon',
+      textKey: 'custom-source-label',
+      activate: () => {
+        console.log('Custom source activated!');
+        api.setActivity('my-custom-activity', { foo: 'bar' });
+      },
+    });
+
+    // Register the activity
+    api.registerActivity({
+      activityType: 'my-custom-activity',
+      onActivate: () => {
+        console.log('Custom activity opened');
+      },
+      onDeactivate: () => {
+        console.log('Custom activity closed');
+      },
+    });
+  }
+}
+    </pre></div>
+  </div>
+
+  <div class="demo-section">
+    <h2>4. State Management</h2>
+    <p>Plugins use the state API to interact with the uploader:</p>
+    <div class="code-block"><pre>
+class StatefulPlugin implements Plugin {
+  pluginId = 'stateful-plugin';
+
+  init(api: PluginStateAPI) {
+    // Subscribe to upload list changes
+    api.subscribe('*uploadList', (files) => {
+      console.log('Files uploaded:', files.length);
+    });
+
+    // Subscribe to activity changes
+    api.subscribe('*currentActivity', (activity) => {
+      console.log('Current activity:', activity);
+    });
+
+    // Get current state
+    const currentActivity = api.getState('*currentActivity');
+
+    // Navigate to an activity
+    api.setActivity('upload-list');
+
+    // Go back in history
+    api.historyBack();
+
+    // Use localization
+    const text = api.l10n('upload-files');
+  }
+}
+    </pre></div>
+  </div>
+
+  <div class="demo-section">
+    <h2>Available State API Methods</h2>
+    <ul class="feature-list">
+      <li><strong>Config:</strong> getConfigValue, setConfigValue, subConfigValue</li>
+      <li><strong>State:</strong> getState, setState, subscribe</li>
+      <li><strong>Navigation:</strong> setActivity, historyBack</li>
+      <li><strong>Registration:</strong> registerSource, registerActivity</li>
+      <li><strong>Localization:</strong> l10n</li>
+    </ul>
+  </div>
+
+  <div class="demo-section">
+    <h2>Benefits</h2>
+    <ul class="feature-list">
+      <li><strong>Encapsulation:</strong> Plugins can't accidentally break core functionality</li>
+      <li><strong>Type Safety:</strong> Clear API contracts with TypeScript</li>
+      <li><strong>Self-Documenting:</strong> Config options declared with defaults</li>
+      <li><strong>Extensibility:</strong> Easy to add custom features</li>
+      <li><strong>Testability:</strong> State API can be easily mocked</li>
+    </ul>
+  </div>
+
+  <div class="demo-section">
+    <h2>Usage Example</h2>
+    <div class="code-block"><pre>
+import { FileUploaderRegular } from '@uploadcare/file-uploader';
+import { createCloudImageEditorPlugin } from '@uploadcare/file-uploader/solutions/cloud-image-editor';
+import { MyCustomPlugin } from './my-plugin';
+
+const uploader = new FileUploaderRegular();
+
+// Register plugins
+uploader.registerPlugin({
+  plugin: createCloudImageEditorPlugin(),
+});
+
+uploader.registerPlugin({
+  plugin: new MyCustomPlugin(),
+});
+
+// Set config (including plugin config)
+uploader.setAttribute('ctx-name', 'my-uploader');
+uploader.setAttribute('cloud-image-editor-auto-open', 'true');
+uploader.setAttribute('my-plugin-enabled', 'true');
+uploader.setAttribute('my-plugin-color', '#00ff00');
+
+document.body.appendChild(uploader);
+    </pre></div>
+  </div>
+
+  <div class="demo-section">
+    <h2>Migration Path</h2>
+    <p>Old plugins (direct solution access) continue to work, but should be updated:</p>
+    <table style="width: 100%; border-collapse: collapse;">
+      <tr style="background-color: #f5f5f5;">
+        <th style="padding: 10px; border: 1px solid #ddd;">Old API</th>
+        <th style="padding: 10px; border: 1px solid #ddd;">New API</th>
+      </tr>
+      <tr>
+        <td style="padding: 10px; border: 1px solid #ddd;"><code>solution.cfg.option</code></td>
+        <td style="padding: 10px; border: 1px solid #ddd;"><code>api.getConfigValue('option')</code></td>
+      </tr>
+      <tr>
+        <td style="padding: 10px; border: 1px solid #ddd;"><code>solution.sub(key, cb)</code></td>
+        <td style="padding: 10px; border: 1px solid #ddd;"><code>api.subscribe(key, cb)</code></td>
+      </tr>
+      <tr>
+        <td style="padding: 10px; border: 1px solid #ddd;"><code>solution.$[key]</code></td>
+        <td style="padding: 10px; border: 1px solid #ddd;"><code>api.getState(key)</code></td>
+      </tr>
+      <tr>
+        <td style="padding: 10px; border: 1px solid #ddd;"><code>solution.l10n(key)</code></td>
+        <td style="padding: 10px; border: 1px solid #ddd;"><code>api.l10n(key)</code></td>
+      </tr>
+    </table>
+  </div>
+
+  <script>
+    console.log('✨ Enhanced Plugin System Demo Loaded');
+    console.log('📚 See the documentation for more details:');
+    console.log('   - PLUGIN_SYSTEM.md - Basic usage');
+    console.log('   - PLUGIN_SYSTEM_ENHANCED.md - Advanced features');
+  </script>
+</body>
+</html>
