@@ -167,14 +167,18 @@ export class Config extends LitBlock {
 
       // Define DOM property setters and getters
       // They will be used in the userland directly or by the frameworks
-      Object.defineProperty(this, key, {
-        set: (value: unknown) => {
-          this._setValue(key, value);
-        },
-        get: () => {
-          return this._getValue(key);
-        },
-      });
+
+      const descriptor = Object.getOwnPropertyDescriptor(this, key);
+      if (!descriptor || !descriptor.set || !descriptor.get) {
+        Object.defineProperty(this, key, {
+          set: (value: unknown) => {
+            this._setValue(key, value);
+          },
+          get: () => {
+            return this._getValue(key);
+          },
+        });
+      }
     }
 
     for (const key of allConfigKeys) {
