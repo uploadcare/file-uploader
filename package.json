@@ -63,7 +63,7 @@
   },
   "repository": {
     "type": "https",
-    "url": "https://github.com/uploadcare/file-uploader/"
+    "url": "https://github.com/uploadcare/file-uploader"
   },
   "homepage": "https://uploadcare.com/",
   "files": [
