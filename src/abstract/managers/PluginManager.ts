@@ -1,5 +1,5 @@
-import type { Plugin, PluginConfig } from './Plugin';
-import type { LitSolutionBlock } from '../lit/LitSolutionBlock';
+import type { LitSolutionBlock } from '../../lit/LitSolutionBlock';
+import type { Plugin, PluginConfig } from '../Plugin';
 
 /**
  * Manages plugin registration and lifecycle for file uploader solutions
@@ -9,7 +9,7 @@ export class PluginManager {
   private _solution: LitSolutionBlock;
   private _initialized = false;
 
-  constructor(solution: LitSolutionBlock) {
+  public constructor(solution: LitSolutionBlock) {
     this._solution = solution;
   }
 
