@@ -8,6 +8,7 @@ import type { ValidationManager } from '../abstract/managers/ValidationManager';
 import { sharedConfigKey } from '../abstract/sharedConfigKey';
 import type { TypedCollection } from '../abstract/TypedCollection';
 import type { UploadEntryData } from '../abstract/uploadEntrySchema';
+import { initialConfig } from '../blocks/Config/initialConfig';
 import type { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter';
 import { createDebugPrinter } from './createDebugPrinter';
 import type { LitBlock } from './LitBlock';
@@ -49,7 +50,7 @@ export class SharedInstance {
 
           const sharedKey = sharedConfigKey(key);
           if (!this._sharedInstancesBag.ctx.has(sharedKey)) {
-            return;
+            return initialConfig[key];
           }
           return this._sharedInstancesBag.ctx.read(sharedKey);
         },
