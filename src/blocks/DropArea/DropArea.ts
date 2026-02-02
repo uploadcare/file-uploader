@@ -62,7 +62,7 @@ export class DropArea extends LitUploaderBlock {
 
   private _destroyDropzone: (() => void) | null = null;
   private _destroyContentWrapperDropzone: (() => void) | null = null;
-  private _contentWrapperRef: Ref<HTMLInputElement> = createRef();
+  private _contentWrapperRef: Ref<HTMLDivElement> = createRef();
   private readonly _handleAreaInteraction = (event: Event) => {
     if (event instanceof KeyboardEvent) {
       if (event.code !== 'Space' && event.code !== 'Enter') {
@@ -136,20 +136,7 @@ export class DropArea extends LitUploaderBlock {
       },
     });
 
-    const contentWrapperEl = this._contentWrapperRef.value;
-    if (contentWrapperEl) {
-      this._destroyContentWrapperDropzone = addDropzone({
-        element: contentWrapperEl,
-        onChange: (state: DropzoneStateValue) => {
-          const stateText = Object.entries(DropzoneState)
-            .find(([, value]) => value === state)?.[0]
-            .toLowerCase();
-          stateText && contentWrapperEl.setAttribute('drag-state', stateText);
-        },
-        onItems: () => {},
-        shouldIgnore: () => this._shouldIgnore(),
-      });
-    }
+    this.updateComplete.then(() => this._setupContentWrapperDropzone());
 
     this.subConfigValue('sourceList', (value: string) => {
       const list = stringToArray(value);
@@ -230,6 +217,29 @@ export class DropArea extends LitUploaderBlock {
     if (stateText) {
       this.setAttribute('drag-state', stateText);
     }
+  }
+
+  private _setupContentWrapperDropzone(): void {
+    if (this._destroyContentWrapperDropzone) {
+      return;
+    }
+
+    const contentWrapperEl = this._contentWrapperRef.value;
+    if (!contentWrapperEl) {
+      return;
+    }
+
+    this._destroyContentWrapperDropzone = addDropzone({
+      element: contentWrapperEl,
+      onChange: (state: DropzoneStateValue) => {
+        const stateText = Object.entries(DropzoneState)
+          .find(([, value]) => value === state)?.[0]
+          .toLowerCase();
+        stateText && contentWrapperEl.setAttribute('drag-state', stateText);
+      },
+      onItems: () => {},
+      shouldIgnore: () => this._shouldIgnore(),
+    });
   }
 
   private _updateClickableListeners(): void {
