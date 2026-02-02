@@ -1,3 +1,12 @@
+## [1.26.2](https://github.com/uploadcare/file-uploader/compare/v1.26.1...v1.26.2) (2026-02-02)
+
+
+### Bug Fixes
+
+* **droparea:** icon transition on fullscreen droparea ([#931](https://github.com/uploadcare/file-uploader/issues/931)) ([ddb90ef](https://github.com/uploadcare/file-uploader/commit/ddb90ef2e8241567f10509044aabd5a0d72cdc50))
+
+
+
 ## [1.26.1](https://github.com/uploadcare/file-uploader/compare/v1.26.0...v1.26.1) (2026-01-29)
 
 
