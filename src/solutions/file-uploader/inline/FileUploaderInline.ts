@@ -18,9 +18,7 @@ import '../../../blocks/CloudImageEditorActivity/CloudImageEditorActivity';
 
 type BaseInitState = InstanceType<typeof LitSolutionBlock>['init$'];
 
-type FileUploaderInlineInitState = BaseInitState & {
-  '*solution': string;
-};
+type FileUploaderInlineInitState = BaseInitState;
 
 export class FileUploaderInline extends LitSolutionBlock {
   public declare attributesMeta: {
@@ -36,7 +34,6 @@ export class FileUploaderInline extends LitSolutionBlock {
 
     this.init$ = {
       ...this.init$,
-      '*solution': this.tagName,
     } as FileUploaderInlineInitState;
   }
 

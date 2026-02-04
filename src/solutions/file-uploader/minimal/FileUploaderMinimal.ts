@@ -22,9 +22,7 @@ const ACTIVE_CLASS = 'active';
 const EMPTY_CLASS = '';
 
 type BaseInitState = InstanceType<typeof LitSolutionBlock>['init$'];
-type FileUploaderMinimalInitState = BaseInitState & {
-  '*solution': string;
-};
+type FileUploaderMinimalInitState = BaseInitState;
 
 export class FileUploaderMinimal extends LitSolutionBlock {
   public declare attributesMeta: {
@@ -53,7 +51,6 @@ export class FileUploaderMinimal extends LitSolutionBlock {
 
     this.init$ = {
       ...this.init$,
-      '*solution': this.tagName,
     } as FileUploaderMinimalInitState;
   }
 
