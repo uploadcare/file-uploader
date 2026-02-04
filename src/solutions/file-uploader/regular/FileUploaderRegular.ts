@@ -17,9 +17,7 @@ import '../../../blocks/CloudImageEditorActivity/CloudImageEditorActivity';
 import '../../../blocks/SimpleBtn/SimpleBtn';
 
 type BaseInitState = InstanceType<typeof LitSolutionBlock>['init$'];
-interface FileUploaderRegularInitState extends BaseInitState {
-  '*solution': string;
-}
+interface FileUploaderRegularInitState extends BaseInitState {}
 
 export class FileUploaderRegular extends LitSolutionBlock {
   public declare attributesMeta: {
@@ -36,7 +34,6 @@ export class FileUploaderRegular extends LitSolutionBlock {
 
     this.init$ = {
       ...this.init$,
-      '*solution': this.tagName,
     } as FileUploaderRegularInitState;
   }
 

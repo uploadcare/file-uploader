@@ -11,6 +11,7 @@ export class LitSolutionBlock extends LitBlock {
   public override initCallback(): void {
     super.initCallback();
     this.a11y?.registerBlock(this);
+    this.sharedCtx.pub('*solution', this.tagName);
   }
 
   public override render() {
