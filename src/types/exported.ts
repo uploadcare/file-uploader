@@ -336,7 +336,7 @@ export type ConfigType = {
   /**
    * Define the clipboard paste scope.
    */
-  pasteScope: PasteScope | false;
+  pasteScope: PasteScope;
 };
 export type ConfigComplexType = Pick<ConfigType, (typeof complexConfigKeys)[number]>;
 export type ConfigPlainType = Omit<ConfigType, keyof ConfigComplexType>;

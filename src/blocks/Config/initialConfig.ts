@@ -13,7 +13,7 @@ const config = {
   multipleMin: 0,
   multipleMax: Number.MAX_SAFE_INTEGER,
 
-  confirmUpload: true,
+  confirmUpload: false,
   imgOnly: false,
   accept: '',
   externalSourcesPreferredTypes: '',

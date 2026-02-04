@@ -87,5 +87,6 @@ export class ClipboardLayer extends SharedInstance {
     super.destroy();
 
     window.removeEventListener('paste', this.listener);
+    this.scopes.clear();
   }
 }
