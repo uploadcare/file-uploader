@@ -1,6 +1,8 @@
 import { ACTIVITY_TYPES } from '../../lit/activity-constants';
 import { SharedInstance, type SharedInstancesBag } from '../../lit/shared-instances';
 
+export type PasteScope = 'local' | 'global' | false;
+
 export class ClipboardLayer extends SharedInstance {
   private scopes: Set<Node> = new Set();
   private listener: (event: ClipboardEvent) => void;
@@ -27,35 +29,49 @@ export class ClipboardLayer extends SharedInstance {
         continue;
       }
 
-      if (scope.contains(event.target as Node)) {
-        const items = Array.from(event.clipboardData.items);
-
-        const files = items.map((item) => item.getAsFile()).filter((file): file is File => file !== null);
-        const urls = items
-          .filter((item) => item.kind === 'string' && item.type === 'text/plain')
-          .map((item) => {
-            return new Promise<string>((resolve) => {
-              item.getAsString((text) => {
-                resolve(text);
-              });
-            });
-          });
-
-        if (files.length > 0) {
-          files.forEach((file) => {
-            this._sharedInstancesBag.api.addFileFromObject(file, { source: 'clipboard' });
-          });
-          this.openUploadList();
-        }
-
-        if (urls.length > 0) {
-          const resolvedUrls: string[] = await Promise.all(urls);
-          resolvedUrls.forEach((url) => {
-            this._sharedInstancesBag.api.addFileFromUrl(url, { source: 'clipboard' });
-          });
-          this.openUploadList();
-        }
+      switch (this._cfg.pasteScope) {
+        case 'global':
+          await this.handlePaste(event);
+          break;
+        case 'local':
+          if (!scope.contains(event.target as Node)) {
+            continue;
+          }
+          await this.handlePaste(event);
+          break;
+        default:
+          continue;
       }
+    }
+  }
+
+  private async handlePaste(event: ClipboardEvent) {
+    const items = Array.from(event.clipboardData!.items);
+
+    const files = items.map((item) => item.getAsFile()).filter((file): file is File => file !== null);
+    const urls = items
+      .filter((item) => item.kind === 'string' && item.type === 'text/plain')
+      .map((item) => {
+        return new Promise<string>((resolve) => {
+          item.getAsString((text) => {
+            resolve(text);
+          });
+        });
+      });
+
+    if (files.length > 0) {
+      files.forEach((file) => {
+        this._sharedInstancesBag.api.addFileFromObject(file, { source: 'clipboard' });
+      });
+      this.openUploadList();
+    }
+
+    if (urls.length > 0) {
+      const resolvedUrls: string[] = await Promise.all(urls);
+      resolvedUrls.forEach((url) => {
+        this._sharedInstancesBag.api.addFileFromUrl(url, { source: 'clipboard' });
+      });
+      this.openUploadList();
     }
   }
 
@@ -68,7 +84,8 @@ export class ClipboardLayer extends SharedInstance {
   }
 
   public override destroy(): void {
-    window.removeEventListener('paste', this.listener);
     super.destroy();
+
+    window.removeEventListener('paste', this.listener);
   }
 }

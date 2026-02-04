@@ -1,3 +1,4 @@
+import type { PasteScope } from '../../abstract/features/ClipboardLayer';
 import type { Metadata, MetadataCallback } from '../../types/index';
 import { deserializeCsv } from '../../utils/comma-separated';
 import type { ModeCameraType } from '../CameraSource/constants';
@@ -51,6 +52,18 @@ const asCameraModes = (value: unknown): string => {
     throw new Error(`Invalid value: "${JSON.stringify(array)}"`);
   }
   return str;
+};
+
+const asPasteScope = (value: unknown): PasteScope => {
+  const strValue = asString(value);
+  if (strValue === 'local' || strValue === 'global') {
+    return strValue as PasteScope;
+  }
+  if (asBoolean(value) === false) {
+    return false;
+  }
+
+  throw new Error(`Invalid value: "${strValue}"`);
 };
 
 const asMetadata = (value: unknown): Metadata | MetadataCallback => {
@@ -111,4 +124,5 @@ export {
   asObject,
   asStore,
   asString,
+  asPasteScope,
 };

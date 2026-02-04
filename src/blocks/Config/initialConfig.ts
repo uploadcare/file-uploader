@@ -13,7 +13,7 @@ const config = {
   multipleMin: 0,
   multipleMax: Number.MAX_SAFE_INTEGER,
 
-  confirmUpload: false,
+  confirmUpload: true,
   imgOnly: false,
   accept: '',
   externalSourcesPreferredTypes: '',
@@ -88,6 +88,7 @@ const config = {
   testMode: false,
 
   qualityInsights: true,
+  pasteScope: 'local',
 } satisfies ConfigType;
 
 export const initialConfig: Readonly<ConfigType> = Object.freeze(config);

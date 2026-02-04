@@ -1,3 +1,4 @@
+import type { PasteScope } from '../abstract/features/ClipboardLayer';
 import type { LocaleDefinition } from '../abstract/localeRegistry';
 import type {
   FileValidator,
@@ -331,6 +332,11 @@ export type ConfigType = {
    * @default false
    */
   testMode: boolean;
+
+  /**
+   * Define the clipboard paste scope.
+   */
+  pasteScope: PasteScope | false;
 };
 export type ConfigComplexType = Pick<ConfigType, (typeof complexConfigKeys)[number]>;
 export type ConfigPlainType = Omit<ConfigType, keyof ConfigComplexType>;

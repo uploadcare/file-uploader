@@ -19,6 +19,7 @@ import {
   asMetadata,
   asNumber,
   asObject,
+  asPasteScope,
   asStore,
   asString,
 } from './validatorsType';
@@ -107,6 +108,7 @@ const mapping: { [Key in keyof ConfigType]: ConfigNormalizer<Key> } = {
   testMode: asBoolean,
 
   qualityInsights: asBoolean,
+  pasteScope: asPasteScope,
 };
 
 export const normalizeConfigValue = <T extends keyof ConfigType>(key: T, value: unknown): ConfigType[T] | undefined => {
