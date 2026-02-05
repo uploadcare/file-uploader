@@ -78,6 +78,7 @@ export type SharedInstancesState = Pick<
   | '*localeManager'
   | '*telemetryManager'
   | '*a11y'
+  | '*clipboard'
   | '*modalManager'
   | '*uploadCollection'
   | '*publicApi'
