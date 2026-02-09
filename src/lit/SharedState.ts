@@ -5,6 +5,7 @@ import type { LocaleDefinition } from '../abstract/localeRegistry';
 import type { A11y } from '../abstract/managers/a11y';
 import type { LocaleManager } from '../abstract/managers/LocaleManager';
 import type { ModalManager } from '../abstract/managers/ModalManager';
+import type { PluginManager } from '../abstract/managers/plugin';
 import type { SecureUploadsManager } from '../abstract/managers/SecureUploadsManager';
 import type { TelemetryManager } from '../abstract/managers/TelemetryManager';
 import type { ValidationManager } from '../abstract/managers/ValidationManager';
@@ -94,6 +95,7 @@ type DynamicBlockState = {
   '*a11y': A11y;
   '*modalManager': ModalManager | null;
   '*clipboard': ClipboardLayer;
+  '*pluginManager': PluginManager;
 };
 
 type DynamicUploaderBlockState = {

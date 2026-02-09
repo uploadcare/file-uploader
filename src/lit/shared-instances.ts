@@ -2,6 +2,7 @@ import type { ConfigType, UploaderPublicApi } from '..';
 import type { A11y } from '../abstract/managers/a11y';
 import type { LocaleManager } from '../abstract/managers/LocaleManager';
 import type { ModalManager } from '../abstract/managers/ModalManager';
+import type { PluginManager } from '../abstract/managers/plugin';
 import type { SecureUploadsManager } from '../abstract/managers/SecureUploadsManager';
 import type { TelemetryManager } from '../abstract/managers/TelemetryManager';
 import type { ValidationManager } from '../abstract/managers/ValidationManager';
@@ -80,6 +81,7 @@ export type SharedInstancesState = Pick<
   | '*a11y'
   | '*clipboard'
   | '*modalManager'
+  | '*pluginManager'
   | '*uploadCollection'
   | '*publicApi'
   | '*validationManager'
@@ -114,6 +116,9 @@ export const createSharedInstancesBag = (getCtx: () => PubSub<SharedState>) => {
     },
     get modalManager(): ModalManager | null {
       return getSharedInstance(getCtx(), '*modalManager', false);
+    },
+    get pluginManager(): PluginManager {
+      return getSharedInstance(getCtx(), '*pluginManager');
     },
     get telemetryManager(): TelemetryManager {
       return getSharedInstance(getCtx(), '*telemetryManager');

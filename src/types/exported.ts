@@ -1,5 +1,6 @@
 import type { PasteScope } from '../abstract/features/ClipboardLayer';
 import type { LocaleDefinition } from '../abstract/localeRegistry';
+import type { UploaderPlugin } from '../abstract/managers/plugin';
 import type {
   FileValidator,
   FileValidatorDescriptor,
@@ -23,6 +24,7 @@ import type { Metadata, NetworkError, UploadcareFile, UploadcareGroup, UploadErr
 import type { SourceTypes } from '../utils/UploadSource';
 
 export type { FuncFileValidator, FuncCollectionValidator, FileValidator, FileValidatorDescriptor };
+export type { UploaderPlugin } from '../abstract/managers/plugin';
 export type { ApiAddFileCommonOptions, UploaderPublicApi } from '../abstract/UploaderPublicApi';
 
 export type { SourceTypes };
@@ -236,6 +238,11 @@ export type ConfigType = {
    * Expiry threshold for secure uploads.
    */
   secureUploadsExpireThreshold: number;
+
+  /**
+   * Array of plugins to register with the uploader instance.
+   */
+  plugins: UploaderPlugin[];
 
   // Complex types
   /**

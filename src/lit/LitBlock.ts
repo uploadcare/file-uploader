@@ -4,6 +4,7 @@ import { ClipboardLayer } from '../abstract/features/ClipboardLayer';
 import { A11y } from '../abstract/managers/a11y';
 import { LocaleManager, localeStateKey } from '../abstract/managers/LocaleManager';
 import { ModalManager } from '../abstract/managers/ModalManager';
+import { PluginManager } from '../abstract/managers/plugin';
 import { TelemetryManager } from '../abstract/managers/TelemetryManager';
 import { sharedConfigKey } from '../abstract/sharedConfigKey';
 import { initialConfig } from '../blocks/Config/initialConfig';
@@ -93,6 +94,7 @@ export class LitBlock extends LitBlockBase {
 
   public override initCallback(): void {
     this._addSharedContextInstance('*blocksRegistry', () => new Set());
+    this._addSharedContextInstance('*pluginManager', (sharedInstancesBag) => new PluginManager(sharedInstancesBag));
     this._addSharedContextInstance('*eventEmitter', (sharedInstancesBag) => new EventEmitter(sharedInstancesBag));
     this._addSharedContextInstance('*localeManager', (sharedInstancesBag) => new LocaleManager(sharedInstancesBag));
     this._addSharedContextInstance('*modalManager', (sharedInstancesBag) => new ModalManager(sharedInstancesBag));

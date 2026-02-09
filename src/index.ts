@@ -11,6 +11,7 @@ export { defineComponents } from './abstract/defineComponents';
 export { loadFileUploaderFrom } from './abstract/loadFileUploaderFrom';
 export { defineLocale } from './abstract/localeRegistry';
 export { ModalEvents, type ModalId } from './abstract/managers/ModalManager';
+export * from './abstract/managers/plugin';
 export { toKebabCase } from './utils/toKebabCase';
 
 // Abstract:
@@ -48,6 +49,7 @@ export { ExternalSource } from './blocks/ExternalSource/ExternalSource';
 export { FileItem } from './blocks/FileItem/FileItem';
 export { ExternalUploadSource, UploadSource } from './utils/UploadSource';
 export { SimpleBtn } from './blocks/SimpleBtn/SimpleBtn';
+export { PluginActivityRenderer, PluginActivityHost } from './blocks/PluginActivityRenderer';
 
 // Solutions:
 export { FileUploaderRegular } from './solutions/file-uploader/regular/FileUploaderRegular';

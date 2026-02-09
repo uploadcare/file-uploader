@@ -35,6 +35,7 @@ export class Modal extends LitBlock {
 
     if (!this.modalManager?.hasActiveModals) {
       document.body.style.overflow = '';
+      this.$['*currentActivity'] = null;
     }
   };
 
