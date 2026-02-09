@@ -89,6 +89,8 @@ const config = {
 
   qualityInsights: true,
   pasteScope: 'local',
+
+  plugins: [],
 } satisfies ConfigType;
 
 export const initialConfig: Readonly<ConfigType> = Object.freeze(config);

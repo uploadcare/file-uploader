@@ -19,6 +19,7 @@ const allConfigKeys = [
  */
 export const complexConfigKeys = [
   'metadata',
+  'plugins',
   'localeDefinitionOverride',
   'secureUploadsSignatureResolver',
   'secureDeliveryProxyUrlResolver',

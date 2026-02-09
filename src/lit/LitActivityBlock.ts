@@ -86,7 +86,7 @@ export class LitActivityBlock extends LitBlock {
     }
   }
 
-  private _isActivityRegistered(): boolean {
+  protected _isActivityRegistered(): boolean {
     return !!this.activityType && LitActivityBlock._activityCallbacks.has(this);
   }
 
