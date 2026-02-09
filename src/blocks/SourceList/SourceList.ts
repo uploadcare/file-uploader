@@ -186,33 +186,8 @@ export class SourceList extends LitUploaderBlock {
       id: source.id,
       label: source.label,
       icon: source.icon,
-      onClick: () =>
-        source.onSelect({
-          navigate: (activityId, params) => this._openActivity(activityId, params ?? {}),
-          startUpload: async (input: unknown) => {
-            await this._startUploadFromPlugin(input, source.id);
-          },
-        }),
+      onClick: () => source.onSelect(),
     };
-  }
-
-  private async _startUploadFromPlugin(input: unknown, sourceId: string): Promise<void> {
-    const addFiles = (files: Iterable<File>) => {
-      for (const file of files) {
-        this.api.addFileFromObject(file, { source: sourceId });
-      }
-    };
-
-    if (input instanceof File) {
-      addFiles([input]);
-    } else if (Array.isArray(input)) {
-      addFiles(input.filter((item): item is File => item instanceof File));
-    } else if (input && typeof (input as FileList).length === 'number') {
-      const list = input as FileList;
-      addFiles(Array.from(list).filter((item): item is File => item instanceof File));
-    }
-
-    this.api.uploadAll();
   }
 
   private _openActivity(activityId: string | null, params: Record<string, unknown> = {}): void {

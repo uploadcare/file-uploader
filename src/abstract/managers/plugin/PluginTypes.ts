@@ -10,16 +10,11 @@ export type PluginIconRegistration = {
 
 export type PluginI18nRegistration = Record<string, Partial<LocaleDefinition>>;
 
-export type PluginSourceHelpers = {
-  navigate: (activityId: string | null, params?: Record<string, unknown>) => void;
-  startUpload: (input: unknown) => Promise<void> | void;
-};
-
 export type PluginSourceRegistration = {
   id: string;
   label: string;
   icon?: string;
-  onSelect: (helpers: PluginSourceHelpers) => Promise<void> | void;
+  onSelect: () => Promise<void> | void;
 };
 
 export type PluginActivityDispose = () => void;
