@@ -15,6 +15,7 @@ import '../../../blocks/CameraSource/CameraSource';
 import '../../../blocks/UrlSource/UrlSource';
 import '../../../blocks/ExternalSource/ExternalSource';
 import '../../../blocks/CloudImageEditorActivity/CloudImageEditorActivity';
+import '../../../blocks/PluginActivityRenderer/PluginActivityRenderer';
 
 type BaseInitState = InstanceType<typeof LitSolutionBlock>['init$'];
 
@@ -113,6 +114,7 @@ export class FileUploaderInline extends LitSolutionBlock {
       <uc-url-source></uc-url-source>
       <uc-external-source></uc-external-source>
       <uc-cloud-image-editor-activity></uc-cloud-image-editor-activity>
+      <uc-plugin-activity-renderer mode="inline"></uc-plugin-activity-renderer>
     `;
   }
 }

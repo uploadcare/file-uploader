@@ -17,6 +17,7 @@ import '../../../blocks/CameraSource/CameraSource';
 import '../../../blocks/UrlSource/UrlSource';
 import '../../../blocks/ExternalSource/ExternalSource';
 import '../../../blocks/CloudImageEditorActivity/CloudImageEditorActivity';
+import '../../../blocks/PluginActivityRenderer/PluginActivityRenderer';
 
 const ACTIVE_CLASS = 'active';
 const EMPTY_CLASS = '';
@@ -187,6 +188,8 @@ export class FileUploaderMinimal extends LitSolutionBlock {
       <uc-modal id="cloud-image-edit" strokes block-body-scrolling>
         <uc-cloud-image-editor-activity></uc-cloud-image-editor-activity>
       </uc-modal>
+
+        <uc-plugin-activity-renderer mode="modal"></uc-plugin-activity-renderer>
     `;
   }
 }

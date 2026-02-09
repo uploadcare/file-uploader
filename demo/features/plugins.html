@@ -1,0 +1,187 @@
+<!doctype html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+  @media (prefers-color-scheme: dark) {
+    body {
+      background-color: #121213;
+      color: #fff;
+    }
+  }
+  </style>
+  <script type="module">
+  import '@/solutions/file-uploader/regular/index.css';
+  import * as UC from '@/index.js';
+  import { urlSourcePlugin } from '@/plugins/urlSourcePlugin.js';
+
+  UC.defineComponents(UC);
+
+  const demoPlugin = {
+    id: 'demo.plugin',
+    setup({ pluginApi, uploaderApi }) {
+      const { registry } = pluginApi;
+
+      registry.registerIcon({
+        name: 'demo-plugin-icon',
+        svg: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="currentColor" opacity="0.1"/><path d="M7 12l3 3 7-7" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+      });
+
+      registry.registerI18n({
+        en: {
+          'source.label': 'Demo source',
+        },
+      });
+
+      registry.registerSource({
+        id: 'demo-source',
+        label: 'source.label',
+        icon: 'demo-plugin-icon',
+        async onSelect() {
+          uploaderApi.setCurrentActivity('demo-activity');
+          uploaderApi.setModalState(true);
+        },
+      });
+
+      registry.registerActivity({
+        id: 'demo-activity',
+        render(el) {
+          const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200">
+            <defs>
+              <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#4f46e5" stop-opacity="0.9" />
+                <stop offset="100%" stop-color="#06b6d4" stop-opacity="0.9" />
+              </linearGradient>
+            </defs>
+            <rect width="320" height="200" rx="18" fill="url(#g)" />
+            <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="22" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">Drag me into the dropzone</text>
+          </svg>`;
+
+          const imageSrc = `data:image/svg+xml,${encodeURIComponent(svg)}`;
+
+          const wrapper = document.createElement('div');
+          wrapper.style.display = 'grid';
+          wrapper.style.gap = '12px';
+          wrapper.style.padding = '16px';
+
+          const title = document.createElement('h3');
+          title.textContent = 'Plugin demo: drop a file to add it';
+          title.style.margin = '0';
+          wrapper.appendChild(title);
+
+          const hint = document.createElement('p');
+          hint.textContent = 'Drag the sample card into the dropzone below (or drop any file). It will be added to the uploader list via plugin API.';
+          hint.style.margin = '0';
+          hint.style.color = 'var(--uc-gray-600, #4b5563)';
+          hint.style.fontSize = '14px';
+          wrapper.appendChild(hint);
+
+          const sampleImg = new Image();
+          sampleImg.src = imageSrc;
+          sampleImg.alt = 'Sample card to drop';
+          sampleImg.draggable = true;
+          sampleImg.style.width = '100%';
+          sampleImg.style.maxWidth = '340px';
+          sampleImg.style.borderRadius = '18px';
+          sampleImg.style.boxShadow = '0 10px 30px rgba(0, 0, 0, 0.12)';
+          sampleImg.addEventListener('dragstart', (event) => {
+            event.dataTransfer?.setData('text/uri-list', imageSrc);
+            event.dataTransfer?.setData('text/plain', imageSrc);
+          });
+          wrapper.appendChild(sampleImg);
+
+          const dropzone = document.createElement('div');
+          dropzone.textContent = 'Drop files here';
+          dropzone.style.border = '2px dashed var(--uc-primary, #4f46e5)';
+          dropzone.style.borderRadius = '12px';
+          dropzone.style.padding = '32px';
+          dropzone.style.textAlign = 'center';
+          dropzone.style.fontWeight = '600';
+          dropzone.style.background = 'rgba(79, 70, 229, 0.05)';
+          dropzone.style.transition = 'all 150ms ease';
+          dropzone.style.cursor = 'copy';
+          wrapper.appendChild(dropzone);
+
+          const setHover = (hovering) => {
+            dropzone.style.borderColor = hovering ? '#22c55e' : 'var(--uc-primary, #4f46e5)';
+            dropzone.style.background = hovering ? 'rgba(34, 197, 94, 0.08)' : 'rgba(79, 70, 229, 0.05)';
+            dropzone.textContent = hovering ? 'Release to add to uploader' : 'Drop files here';
+          };
+
+          const preventDefaults = (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+          };
+
+          const addFiles = (files) => {
+            for (const file of files) {
+              uploaderApi.addFileFromObject(file, { source: 'plugin-demo-drop' });
+            }
+            uploaderApi.setCurrentActivity('upload-list');
+            uploaderApi.setModalState(true);
+            uploaderApi.uploadAll();
+          };
+
+          const handleDrop = async (event) => {
+            preventDefaults(event);
+            setHover(false);
+            const dt = event.dataTransfer;
+
+            if (dt?.files && dt.files.length > 0) {
+              addFiles(Array.from(dt.files));
+              return;
+            }
+
+            const url = dt?.getData('text/uri-list')?.split('\n')[0];
+            if (url) {
+              try {
+                const response = await fetch(url);
+                const blob = await response.blob();
+                const fileName = url.split('/').pop() || 'dropped-file';
+                addFiles([new File([blob], fileName, { type: blob.type })]);
+              } catch (error) {
+                console.warn('Could not fetch dropped URL', error);
+              }
+            }
+          };
+
+          const handleDragEnter = (event) => {
+            preventDefaults(event);
+            setHover(true);
+          };
+
+          const handleDragOver = (event) => {
+            preventDefaults(event);
+            setHover(true);
+          };
+
+          const handleDragLeave = (event) => {
+            preventDefaults(event);
+            setHover(false);
+          };
+
+          dropzone.addEventListener('dragenter', handleDragEnter);
+          dropzone.addEventListener('dragover', handleDragOver);
+          dropzone.addEventListener('dragleave', handleDragLeave);
+          dropzone.addEventListener('drop', handleDrop);
+
+          el.replaceChildren(wrapper);
+
+          return () => {
+            dropzone.removeEventListener('dragenter', handleDragEnter);
+            dropzone.removeEventListener('dragover', handleDragOver);
+            dropzone.removeEventListener('dragleave', handleDragLeave);
+            dropzone.removeEventListener('drop', handleDrop);
+          };
+        },
+      });
+    },
+  };
+
+  const config = document.querySelector('uc-config');
+  config.plugins = [demoPlugin, urlSourcePlugin];
+  </script>
+</head>
+
+<uc-file-uploader-regular ctx-name="my-uploader"></uc-file-uploader-regular>
+<uc-config ctx-name="my-uploader" pubkey="demopublickey" debug quality-insights="false" test-mode source-list="local, url, camera, dropbox, gdrive, demo-source"></uc-config>
+<uc-upload-ctx-provider ctx-name="my-uploader"></uc-upload-ctx-provider>
