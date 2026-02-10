@@ -95,11 +95,15 @@ export class ExternalSource extends LitUploaderBlock {
       },
     });
     this.sub('*currentActivityParams', () => {
-      if (!this.isActivityActive) {
-        return;
-      }
-      this._unmountIframe();
-      this._mountIframe();
+      setTimeout(() => {
+        // Since activity params are set before current activity, we need to wait for the next tick to ensure that the activity is still active before processing the params change.
+        // Otherwise, if the activity was changed, we might end up mounting the iframe with params from the next activity.
+        if (!this.isActivityActive) {
+          return;
+        }
+        this._unmountIframe();
+        this._mountIframe();
+      });
     });
     this.sub('*currentActivity', (val) => {
       if (val !== this.activityType) {
