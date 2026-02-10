@@ -88,6 +88,7 @@ const config = {
   testMode: false,
 
   qualityInsights: true,
+  pasteScope: 'local',
 } satisfies ConfigType;
 
 export const initialConfig: Readonly<ConfigType> = Object.freeze(config);
