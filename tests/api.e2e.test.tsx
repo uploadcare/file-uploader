@@ -1,6 +1,6 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
-import type { EventPayload } from '@/index.js';
+import type { Config, EventPayload } from '@/index.js';
 import '../types/jsx';
 // biome-ignore lint/correctness/noUnusedImports: Used in JSX
 import { renderer } from './utils/test-renderer';
@@ -98,48 +98,110 @@ describe('API', () => {
     expect(eventPayload).toMatchObject(expect.objectContaining({ status: 'idle', externalUrl: url }));
   });
 
-  it('should set cloud-image-edit activity with params', async () => {
-    const uploadCtxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
-    const api = uploadCtxProvider.getAPI();
+  describe('setCurrentActivity', () => {
+    it('should set cloud-image-edit activity with params', async () => {
+      const uploadCtxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
+      const api = uploadCtxProvider.getAPI();
 
-    const url =
-      'https://images.unsplash.com/photo-1699102241946-45c5e1937d69?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&dl=prithiviraj-a-fa7Stge3YXs-unsplash.jpg&w=640';
-    api.addFileFromUrl(url);
+      const url =
+        'https://images.unsplash.com/photo-1699102241946-45c5e1937d69?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&dl=prithiviraj-a-fa7Stge3YXs-unsplash.jpg&w=640';
+      api.addFileFromUrl(url);
 
-    const eventHandler = (event: CustomEvent<EventPayload['file-upload-success']>) => {
-      const detail = event.detail as EventPayload['file-upload-success'];
-      api.setCurrentActivity('cloud-image-edit', { internalId: detail.internalId });
+      const eventHandler = (event: CustomEvent<EventPayload['file-upload-success']>) => {
+        const detail = event.detail as EventPayload['file-upload-success'];
+        api.setCurrentActivity('cloud-image-edit', { internalId: detail.internalId });
+        api.setModalState(true);
+      };
+
+      uploadCtxProvider.addEventListener('file-upload-success', eventHandler);
+
+      const startFrom = page.getByTestId('uc-start-from');
+      const cloudImageEdit = page.getByTestId('uc-cloud-image-editor-activity');
+      await expect.element(startFrom).not.toBeVisible();
+      await expect.element(cloudImageEdit).toBeVisible();
+    });
+
+    it('should open external source activity with defined source', async () => {
+      const uploadCtxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
+      const api = uploadCtxProvider.getAPI();
+
+      api.setCurrentActivity('external', { externalSourceType: 'dropbox' });
       api.setModalState(true);
-    };
 
-    uploadCtxProvider.addEventListener('file-upload-success', eventHandler);
+      const startFrom = page.getByTestId('uc-start-from');
+      const externalSource = page.getByTestId('uc-external-source');
 
-    const startFrom = page.getByTestId('uc-start-from');
-    const cloudImageEdit = page.getByTestId('uc-cloud-image-editor-activity');
-    await expect.element(startFrom).not.toBeVisible();
-    await expect.element(cloudImageEdit).toBeVisible();
+      await expect.element(startFrom).not.toBeVisible();
+      await expect.element(externalSource).toBeVisible();
+
+      await vi.waitFor(() => {
+        const iframe = (externalSource.query() as HTMLElement | null)?.querySelector(
+          'iframe',
+        ) as HTMLIFrameElement | null;
+        expect(iframe).toBeTruthy();
+        // Not the best option to verify correct source, probably we should add some data- or testid attributes for external source activity
+        expect(iframe!.src).toContain('/dropbox');
+      });
+    });
   });
 
-  it('should open external source activity with defined source', async () => {
-    const uploadCtxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
-    const api = uploadCtxProvider.getAPI();
+  describe('initFlow', () => {
+    it('should open the start from activity by default', async () => {
+      const uploadCtxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
+      const api = uploadCtxProvider.getAPI();
 
-    api.setCurrentActivity('external', { externalSourceType: 'dropbox' });
-    api.setModalState(true);
+      api.initFlow();
 
-    const startFrom = page.getByTestId('uc-start-from');
-    const externalSource = page.getByTestId('uc-external-source');
+      const startFrom = page.getByTestId('uc-start-from');
+      await expect.element(startFrom).toBeVisible();
+    });
 
-    await expect.element(startFrom).not.toBeVisible();
-    await expect.element(externalSource).toBeVisible();
+    it('should open system dialog for the single local source', async () => {
+      const uploadCtxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
+      const config = page.getByTestId('uc-config').query()! as Config;
+      const api = uploadCtxProvider.getAPI();
 
-    await vi.waitFor(() => {
-      const iframe = (externalSource.query() as HTMLElement | null)?.querySelector(
-        'iframe',
-      ) as HTMLIFrameElement | null;
-      expect(iframe).toBeTruthy();
-      // Not the best option to verify correct source, probably we should add some data- or testid attributes for external source activity
-      expect(iframe!.src).toContain('/dropbox');
+      const openSystemDialogSpy = vi.spyOn(api as any, 'openSystemDialog').mockImplementation(() => {});
+
+      config.sourceList = 'local';
+      api.initFlow();
+
+      await vi.waitFor(() => {
+        expect(openSystemDialogSpy).toHaveBeenCalled();
+      });
+
+      openSystemDialogSpy.mockRestore();
+    });
+
+    it('should open the single activity in the source list', async () => {
+      const uploadCtxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
+      const config = page.getByTestId('uc-config').query()! as Config;
+      const api = uploadCtxProvider.getAPI();
+
+      config.sourceList = 'url';
+      api.initFlow();
+
+      const urlSource = page.getByTestId('uc-url-source');
+      await expect.element(urlSource).toBeVisible();
+    });
+
+    // This is specific case of CKEditor integration, where they update source list and call initFlow on the next tick, so we need to ensure that it works correctly in this scenario
+    it('should handle initFlow right after updating sourceList', async () => {
+      const uploadCtxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
+      const config = page.getByTestId('uc-config').query()! as HTMLElement;
+      const api = uploadCtxProvider.getAPI();
+
+      config.setAttribute('source-list', 'dropbox');
+      api.initFlow();
+
+      const externalSource = page.getByTestId('uc-external-source');
+      await expect.element(externalSource).toBeVisible();
+
+      config.setAttribute('source-list', 'url');
+      api.initFlow();
+
+      const urlSource = page.getByTestId('uc-url-source');
+      await expect.element(urlSource).toBeVisible();
     });
   });
 });

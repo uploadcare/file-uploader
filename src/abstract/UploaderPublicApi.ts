@@ -326,12 +326,20 @@ export class UploaderPublicApi extends SharedInstance {
           }
         }
 
-        const blocksRegistry = this._sharedInstancesBag.blocksRegistry;
-        const isSourceBtn = (block: LitBlock): block is SourceBtn =>
-          'type' in (block as any) && (block as any).type === srcKey;
-        const sourceBtnBlock = findBlockInCtx(blocksRegistry, isSourceBtn) as SourceBtn | undefined;
-        // TODO: This is weird that we have this logic inside UI component, we should consider to move it somewhere else
-        sourceBtnBlock?.activate();
+        // After Lit Element migration, the source buttons are rendered async in the next tick after `sourceList` update.
+        // So we can't find them here right after updating the source list, we need to wait for the next tick to ensure that they are rendered before trying to find and activate them.
+        // Anyway this is a weird logic here that needs to be refactored.
+        setTimeout(() => {
+          if (srcKey !== this._sourceList[0]) {
+            return;
+          }
+          const blocksRegistry = this._sharedInstancesBag.blocksRegistry;
+          const isSourceBtn = (block: LitBlock): block is SourceBtn =>
+            'type' in (block as any) && (block as any).type === srcKey;
+          const sourceBtnBlock = findBlockInCtx(blocksRegistry, isSourceBtn) as SourceBtn | undefined;
+          // TODO: This is weird that we have this logic inside UI component, we should consider to move it somewhere else
+          sourceBtnBlock?.activate();
+        }, 0);
 
         if (this._ctx.read('*currentActivity')) {
           this._sharedInstancesBag.modalManager?.open(this._ctx.read('*currentActivity'));
