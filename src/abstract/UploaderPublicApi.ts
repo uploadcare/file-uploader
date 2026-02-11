@@ -330,6 +330,9 @@ export class UploaderPublicApi extends SharedInstance {
         // So we can't find them here right after updating the source list, we need to wait for the next tick to ensure that they are rendered before trying to find and activate them.
         // Anyway this is a weird logic here that needs to be refactored.
         setTimeout(() => {
+          if (srcKey !== this._sourceList[0]) {
+            return;
+          }
           const blocksRegistry = this._sharedInstancesBag.blocksRegistry;
           const isSourceBtn = (block: LitBlock): block is SourceBtn =>
             'type' in (block as any) && (block as any).type === srcKey;
