@@ -1,3 +1,12 @@
+# [1.27.0](https://github.com/uploadcare/file-uploader/compare/v1.26.3...v1.27.0) (2026-02-11)
+
+
+### Bug Fixes
+
+* **api/initFlow:** `initFlow` doesn't work right after `sourceList` config update ([#937](https://github.com/uploadcare/file-uploader/issues/937)) ([ab51f07](https://github.com/uploadcare/file-uploader/commit/ab51f07afd2009f2cd0c1b10d369e0ba1802f4ba))
+
+
+
 ## [1.26.3](https://github.com/uploadcare/file-uploader/compare/v1.26.2...v1.26.3) (2026-02-04)
 
 
