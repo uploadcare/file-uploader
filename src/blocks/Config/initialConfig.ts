@@ -23,12 +23,10 @@ const config = {
   cameraCapture: '',
   sourceList: 'local, url, camera, dropbox, gdrive',
   topLevelOrigin: '',
-  cloudImageEditorTabs: serializeCsv(ALL_TABS),
   maxLocalFileSizeBytes: 0,
   thumbSize: 76,
   showEmptyList: false,
   useLocalImageEditor: false,
-  useCloudImageEditor: true,
   removeCopyright: false,
   cropPreset: '',
   imageShrink: '',
@@ -81,8 +79,11 @@ const config = {
 
   filesViewMode: 'list',
   gridShowFileNames: false,
-  cloudImageEditorAutoOpen: false,
 
+  // Cloud Image Editor options (used by cloudImageEditorPlugin)
+  useCloudImageEditor: true,
+  cloudImageEditorAutoOpen: false,
+  cloudImageEditorTabs: serializeCsv(ALL_TABS),
   cloudImageEditorMaskHref: null,
 
   testMode: false,

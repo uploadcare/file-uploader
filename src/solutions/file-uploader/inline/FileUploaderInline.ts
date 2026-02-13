@@ -113,7 +113,6 @@ export class FileUploaderInline extends LitSolutionBlock {
       <uc-camera-source></uc-camera-source>
       <uc-url-source></uc-url-source>
       <uc-external-source></uc-external-source>
-      <uc-cloud-image-editor-activity></uc-cloud-image-editor-activity>
       <uc-plugin-activity-renderer mode="inline"></uc-plugin-activity-renderer>
     `;
   }

@@ -59,6 +59,7 @@ export { FileUploaderMinimal } from './solutions/file-uploader/minimal/FileUploa
 
 // Types
 export * from './types/index';
+export type { CustomConfig, CustomConfigDefinition } from './abstract/customConfigOptions';
 
 // Other
 export * from './env';
