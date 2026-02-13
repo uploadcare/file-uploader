@@ -109,6 +109,38 @@ export const getSharedInstance = <TKey extends keyof SharedInstancesState, TRequ
   throw new Error(`Unexpected error: shared instance for key "${String(key)}" is not available`);
 };
 
+// Mapping of friendly instance names to state keys
+const instanceKeyMap = {
+  modalManager: '*modalManager',
+  pluginManager: '*pluginManager',
+  telemetryManager: '*telemetryManager',
+  localeManager: '*localeManager',
+  a11y: '*a11y',
+  blocksRegistry: '*blocksRegistry',
+  eventEmitter: '*eventEmitter',
+  uploadCollection: '*uploadCollection',
+  secureUploadsManager: '*secureUploadsManager',
+  api: '*publicApi',
+  validationManager: '*validationManager',
+} as const;
+
+type InstanceName = keyof typeof instanceKeyMap;
+
+// Helper type to get the instance type from the bag
+type InstanceTypeMap = {
+  modalManager: ModalManager | null;
+  pluginManager: PluginManager;
+  telemetryManager: TelemetryManager;
+  localeManager: LocaleManager;
+  a11y: A11y;
+  blocksRegistry: Set<LitBlock>;
+  eventEmitter: EventEmitter;
+  uploadCollection: TypedCollection<UploadEntryData>;
+  secureUploadsManager: SecureUploadsManager;
+  api: UploaderPublicApi;
+  validationManager: ValidationManager;
+};
+
 export const createSharedInstancesBag = (getCtx: () => PubSub<SharedState>) => {
   return {
     get ctx(): PubSub<SharedState> {
@@ -146,6 +178,29 @@ export const createSharedInstancesBag = (getCtx: () => PubSub<SharedState>) => {
     },
     get validationManager(): ValidationManager {
       return getSharedInstance(getCtx(), '*validationManager');
+    },
+
+    when<TName extends InstanceName>(
+      name: TName,
+      callback: (instance: NonNullable<InstanceTypeMap[TName]>) => void,
+    ): () => void {
+      const stateKey = instanceKeyMap[name] as keyof SharedInstancesState;
+      const ctx = getCtx();
+
+      const existingInstance = ctx.has(stateKey) ? ctx.read(stateKey) : undefined;
+      if (existingInstance) {
+        callback(existingInstance as NonNullable<InstanceTypeMap[TName]>);
+        return () => {};
+      }
+
+      const unsub = ctx.sub(stateKey, (instance) => {
+        if (instance) {
+          callback(instance as NonNullable<InstanceTypeMap[TName]>);
+          unsub();
+        }
+      });
+
+      return unsub;
     },
   };
 };
