@@ -76,10 +76,6 @@ export class FileUploaderRegular extends LitSolutionBlock {
     <uc-external-source></uc-external-source>
   </uc-modal>
 
-  <uc-modal id="cloud-image-edit" strokes block-body-scrolling>
-    <uc-cloud-image-editor-activity></uc-cloud-image-editor-activity>
-  </uc-modal>
-
   <uc-plugin-activity-renderer mode="modal"></uc-plugin-activity-renderer>
 `;
   }
