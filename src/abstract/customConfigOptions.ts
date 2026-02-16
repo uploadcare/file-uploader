@@ -17,11 +17,6 @@ export type CustomConfigDefinition<T = unknown> = {
    */
   attribute?: boolean;
   /**
-   * Whether to create a property accessor (getter/setter) on the Config element
-   * @default true
-   */
-  accessor?: boolean;
-  /**
    * Convert attribute string to config value
    * Only used if attribute is true
    */
@@ -59,6 +54,7 @@ export class CustomConfigRegistry {
     }
 
     const ownedDefinition: OwnedCustomConfigDefinition<T> = {
+      attribute: true,
       ...definition,
       pluginId,
     };
