@@ -16,7 +16,6 @@ export class PluginActivityHost extends LitActivityBlock {
 
   private _dispose?: PluginRenderDispose;
   private _containerRef = createRef<HTMLDivElement>();
-  private _activityParamsUnsub?: () => void;
 
   public override initCallback(): void {
     this.activityType = (this.registration?.id as ActivityType) ?? null;
@@ -59,25 +58,11 @@ export class PluginActivityHost extends LitActivityBlock {
 
     this._disposeActivity();
 
-    // Get current activity params
-    const activityParams = this.$['*currentActivityParams'] as Record<string, unknown>;
-
-    // Subscribe to activity params changes and re-render when they change
-    this._activityParamsUnsub = this.sub('*currentActivityParams', (params) => {
-      // Only re-render if the activity is still active
-      if (this.isActivityActive) {
-        this._disposeActivity();
-        this._dispose = this.registration.render(container, params as Record<string, unknown>) ?? undefined;
-      }
-    });
-
-    // Initial render with current params
+    const activityParams = this.$['*currentActivityParams'];
     this._dispose = this.registration.render(container, activityParams) ?? undefined;
   }
 
   private _disposeActivity(): void {
-    this._activityParamsUnsub?.();
-    this._activityParamsUnsub = undefined;
     this._dispose?.();
     this._dispose = undefined;
     const container = this._containerRef.value;

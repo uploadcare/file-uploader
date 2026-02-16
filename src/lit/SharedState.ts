@@ -21,6 +21,7 @@ import type {
 } from '../blocks/CloudImageEditor/src/types';
 import type { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter';
 import type { ConfigType, OutputCollectionState, OutputErrorCollection } from '../types';
+import type { RegisteredActivityType } from './LitActivityBlock';
 import type { LitBlock } from './LitBlock';
 import type { Uid } from './Uid';
 
@@ -31,9 +32,9 @@ type SharedConfigState = {
 export type BlocksRegistry = Set<LitBlock>;
 
 type ActivityBlockCtxState = {
-  '*currentActivity': string | null;
+  '*currentActivity': RegisteredActivityType | null;
   '*currentActivityParams': Record<string, unknown>;
-  '*history': (string | null)[];
+  '*history': (RegisteredActivityType | null)[];
   '*historyBack': (() => void) | null;
   '*closeModal': () => void;
 };
