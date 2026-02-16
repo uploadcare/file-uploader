@@ -4,6 +4,7 @@ import type { Modal as ModalNode } from '../../../blocks/Modal/Modal';
 import type { SharedInstancesBag } from '../../../lit/shared-instances';
 import type { ModalId } from '../ModalManager';
 import { ModalEvents, ModalManager } from '../ModalManager';
+import '../../../lit/LitActivityBlock';
 
 let telemetryManagerMock: TelemetryManager;
 
@@ -97,7 +98,7 @@ describe('ModalManager', () => {
     });
 
     it('should return false when deleting non-existent modal', () => {
-      const result = manager.deleteModal('non-existent');
+      const result = manager.deleteModal('non-existent' as any);
 
       expect(result).toBe(false);
     });
@@ -131,7 +132,7 @@ describe('ModalManager', () => {
     });
 
     it('should return false for non-existent modal', () => {
-      const result = manager.open('non-existent');
+      const result = manager.open('non-existent' as any);
 
       expect(result).toBe(false);
       expect(manager._debugPrint).toHaveBeenCalled();
@@ -166,7 +167,7 @@ describe('ModalManager', () => {
     });
 
     it('should return false for non-existent modal', () => {
-      const result = manager.close('non-existent');
+      const result = manager.close('non-existent' as any);
 
       expect(result).toBe(false);
       expect(manager._debugPrint).toHaveBeenCalled();
@@ -225,7 +226,7 @@ describe('ModalManager', () => {
     });
 
     it('should return false for non-existent modal', () => {
-      const result = manager.toggle('non-existent');
+      const result = manager.toggle('non-existent' as any);
 
       expect(result).toBe(false);
       expect(manager._debugPrint).toHaveBeenCalled();
@@ -492,3 +493,11 @@ describe('ModalManager', () => {
     });
   });
 });
+
+declare module '../../../lit/LitActivityBlock' {
+  interface CustomActivities {
+    'test-modal': { params: never };
+    'modal-1': { params: never };
+    'modal-2': { params: never };
+  }
+}
