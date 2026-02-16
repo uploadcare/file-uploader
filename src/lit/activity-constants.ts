@@ -1,3 +1,5 @@
+import type { CustomActivities } from './LitActivityBlock';
+
 export const ACTIVITY_TYPES = Object.freeze({
   START_FROM: 'start-from',
   CAMERA: 'camera',
@@ -8,5 +10,5 @@ export const ACTIVITY_TYPES = Object.freeze({
   EXTERNAL: 'external',
 });
 
-export type RegisteredActivityType = (typeof ACTIVITY_TYPES)[keyof typeof ACTIVITY_TYPES];
-export type ActivityType = RegisteredActivityType | (string & {}) | null;
+export type RegisteredActivityType = (typeof ACTIVITY_TYPES)[keyof typeof ACTIVITY_TYPES] | keyof CustomActivities;
+export type ActivityType = RegisteredActivityType | null;
