@@ -370,10 +370,10 @@ export class UploaderPublicApi extends SharedInstance {
   public setCurrentActivity = <T extends RegisteredActivityType>(
     activityType: T,
     ...params: T extends keyof ActivityParamsMap
-      ? [ActivityParamsMap[T]]
-      : T extends RegisteredActivityType
-        ? [undefined?]
-        : [never]
+      ? [ActivityParamsMap[T]] extends [never]
+        ? []
+        : [ActivityParamsMap[T]]
+      : []
   ) => {
     if (hasBlockInCtx(this._sharedInstancesBag.blocksRegistry, (b) => b.activityType === activityType)) {
       this._ctx.pub('*currentActivityParams', params[0] ?? {});
