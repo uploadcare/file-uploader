@@ -29,11 +29,7 @@ export class PluginManager extends SharedInstance {
 
     this.addSub(
       this._ctx.sub(sharedConfigKey('plugins'), (plugins) => {
-        this._pluginsUpdate = this._pluginsUpdate
-          .then(() => this._syncPlugins(plugins))
-          .catch((error) => {
-            this._debugPrint('Plugin sync failed', error);
-          });
+        this._pluginsUpdate = this._pluginsUpdate.then(() => this._syncPlugins(plugins));
       }),
     );
   }
@@ -47,10 +43,24 @@ export class PluginManager extends SharedInstance {
 
   private async _syncPlugins(plugins: UploaderPlugin[]): Promise<void> {
     const currentPluginIds = new Set(this._plugins.keys());
+    const processedIds = new Set<string>();
 
     for (const plugin of plugins) {
-      if (!this._plugins.has(plugin.id)) {
-        await this._registerPlugin(plugin);
+      if (processedIds.has(plugin.id)) {
+        this._debugPrint(`Plugin "${plugin.id}" is already in the list, skipping duplicate`);
+        continue;
+      }
+      processedIds.add(plugin.id);
+
+      const registered = this._plugins.get(plugin.id);
+      if (!registered || registered.plugin !== plugin) {
+        try {
+          await this._registerPlugin(plugin);
+        } catch (error) {
+          this._purgeRegistrations(plugin.id);
+          this._notifySubscribers();
+          this._debugPrint(`Plugin "${plugin.id}" setup failed`, error);
+        }
       }
       currentPluginIds.delete(plugin.id);
     }
@@ -137,14 +147,7 @@ export class PluginManager extends SharedInstance {
     };
 
     const uploaderApi = this._sharedInstancesBag.api;
-    let pluginExports: PluginExports | undefined;
-
-    try {
-      pluginExports = (await plugin.setup({ pluginApi, uploaderApi })) ?? undefined;
-    } catch (error) {
-      this._purgeRegistrations(plugin.id);
-      throw error;
-    }
+    const pluginExports = (await plugin.setup({ pluginApi, uploaderApi })) ?? undefined;
 
     this._plugins.set(plugin.id, {
       plugin,
