@@ -21,6 +21,7 @@ import type {
 } from '../blocks/CloudImageEditor/src/types';
 import type { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter';
 import type { ConfigType, OutputCollectionState, OutputErrorCollection } from '../types';
+import type { ISharedInstance } from './shared-instances';
 import type { RegisteredActivityType } from './LitActivityBlock';
 import type { LitBlock } from './LitBlock';
 import type { Uid } from './Uid';
@@ -88,7 +89,10 @@ type EditorToolbarState = {
   '*operationTooltip': string | null;
 };
 
+type SharedContextInstances = Map<string, ISharedInstance>;
+
 type DynamicBlockState = {
+  '*sharedContextInstances': SharedContextInstances;
   '*blocksRegistry': BlocksRegistry;
   '*eventEmitter': EventEmitter;
   '*localeManager': LocaleManager;
