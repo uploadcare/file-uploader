@@ -44,8 +44,8 @@ export class UrlSource extends LitUploaderBlock {
       return;
     }
     this.api.addFileFromUrl(url, { source: UploadSource.URL });
-    this.modalManager?.open(LitActivityBlock.activities.UPLOAD_LIST);
     this.$['*currentActivity'] = LitActivityBlock.activities.UPLOAD_LIST;
+    this.modalManager?.open(LitActivityBlock.activities.UPLOAD_LIST);
   };
 
   public override firstUpdated() {
