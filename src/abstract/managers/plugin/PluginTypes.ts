@@ -1,6 +1,5 @@
 import type { ConfigType, OutputFileEntry } from '../../../types/exported';
 import type { CustomConfig, CustomConfigDefinition } from '../../customConfigOptions';
-import type { LocaleDefinition } from '../../localeRegistry';
 import type { UploaderPublicApi } from '../../UploaderPublicApi';
 
 export type PluginVersion = string;
@@ -10,7 +9,7 @@ export type PluginIconRegistration = {
   svg: string;
 };
 
-export type PluginI18nRegistration = Record<string, Partial<LocaleDefinition>>;
+export type PluginI18nRegistration = Record<string, Record<string, string>>;
 
 export type PluginSourceRegistration = {
   id: string;
