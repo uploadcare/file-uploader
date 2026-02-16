@@ -72,6 +72,9 @@ export class Config extends LitBlock {
    */
   private _customAttrKeyMapping: Record<string, string> = {};
 
+  /** Set of all custom config names registered by plugins */
+  private _customConfigKeys: Set<string> = new Set();
+
   /**
    * Map of custom config subscriptions (config name -> unsubscribe function)
    * Used to track and clean up subscriptions when plugins change
@@ -82,7 +85,7 @@ export class Config extends LitBlock {
    * Check if a key is a custom config (registered by plugins)
    */
   private _isCustomConfig(key: string): boolean {
-    return key in this._customAttrKeyMapping || Object.values(this._customAttrKeyMapping).includes(key);
+    return this._customConfigKeys.has(key);
   }
 
   /**
@@ -206,8 +209,9 @@ export class Config extends LitBlock {
   private _processCustomConfigs(pluginManager: PluginManager): void {
     const customConfigs = pluginManager.configRegistry.getAll();
 
-    // Rebuild the custom attribute mapping
+    // Rebuild the custom attribute mapping and names set
     this._customAttrKeyMapping = {};
+    this._customConfigKeys = new Set(customConfigs.keys());
 
     // Clean up subscriptions for configs that no longer exist
     for (const [name, unsub] of this._customConfigSubscriptions) {
@@ -235,32 +239,34 @@ export class Config extends LitBlock {
         this.sharedCtx.add(stateKey, definition.defaultValue);
       }
 
-      // Create property accessor if enabled (default true) and not already defined
-      if (definition.accessor) {
-        const descriptor = Object.getOwnPropertyDescriptor(this, name);
-        if (!descriptor || !descriptor.set || !descriptor.get) {
-          Object.defineProperty(this, name, {
-            set: (value: unknown) => {
-              // Use _setValue for consistent handling (normalization happens inside _setValue)
-              this._setValue(name, value);
-            },
-            get: () => {
-              // Use _getValue for consistent handling
-              return this._getValue(name);
-            },
-            enumerable: true,
-            configurable: true,
-          });
-        }
+      // Create property accessor (getter/setter) if not already defined
+      const descriptor = Object.getOwnPropertyDescriptor(this, name);
+      if (!descriptor || !descriptor.set || !descriptor.get) {
+        Object.defineProperty(this, name, {
+          set: (value: unknown) => {
+            // Use _setValue for consistent handling (normalization happens inside _setValue)
+            this._setValue(name, value);
+          },
+          get: () => {
+            // Use _getValue for consistent handling
+            return this._getValue(name);
+          },
+          enumerable: true,
+          configurable: true,
+        });
       }
 
       // Subscribe to state changes (only if not already subscribed)
       if (!this._customConfigSubscriptions.has(name)) {
-        const unsub = this.sub(stateKey, (value) => {
-          // Use _setValue for consistent handling (matches built-in config pattern)
-          // The early return guard in _setValue prevents circular updates
-          this._setValue(name, value);
-        });
+        const unsub = this.sub(
+          stateKey,
+          (value) => {
+            // Use _setValue for consistent handling (matches built-in config pattern)
+            // The early return guard in _setValue prevents circular updates
+            this._setValue(name, value);
+          },
+          false,
+        );
         this._customConfigSubscriptions.set(name, unsub);
       }
     }
@@ -394,11 +400,15 @@ export class Config extends LitBlock {
       // Handle custom config attributes (registered by plugins)
       // This runs asynchronously once pluginManager is available
       this._sharedInstancesBag.when('pluginManager', (pluginManager) => {
+        if (this.getAttribute(name) !== newVal) {
+          return;
+        }
         const key = this._customAttrKeyMapping[name];
         const config = key ? pluginManager.configRegistry.get(key) : undefined;
         if (key && config) {
           // Use fromAttribute to deserialize the value if provided
           const val = config.fromAttribute ? config.fromAttribute(newVal) : newVal;
+          if (this._getValue(key) === val) return;
           // Use _setValue for consistent handling (normalization happens inside _setValue)
           this._setValue(key, val);
         }
