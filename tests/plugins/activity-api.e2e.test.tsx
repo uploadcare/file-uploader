@@ -93,3 +93,17 @@ describe('Activity API', () => {
     expect(paramsCallback).not.toHaveBeenCalled();
   });
 });
+
+declare module '@/index.js' {
+  interface CustomActivities {
+    'getparams-activity': {
+      params: {
+        key: string;
+        value?: unknown;
+      };
+    };
+    'subscribe-activity': {
+      params: Record<string, unknown>;
+    };
+  }
+}
