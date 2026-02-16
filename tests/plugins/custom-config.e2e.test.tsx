@@ -197,16 +197,16 @@ describe('Custom Config', () => {
     await renderUploader([plugin]);
     const config = page.getByTestId('uc-config').query()! as Config;
 
-    await expect.poll(() => configApi.get('noAttrOption')).toBe('server');
+    await expect.poll(() => configApi.get('noAttrOption' as any)).toBe('server');
 
     config.setAttribute('no-attr-option', 'client');
 
     // Value should stay default because attribute is disabled
-    await expect.poll(() => configApi.get('noAttrOption')).toBe('server');
+    await expect.poll(() => configApi.get('noAttrOption' as any)).toBe('server');
 
     // JS property should still work
     config.noAttrOption = 'js-update';
-    await expect.poll(() => configApi.get('noAttrOption')).toBe('js-update');
+    await expect.poll(() => configApi.get('noAttrOption' as any)).toBe('js-update');
   });
 
   it('should warn and keep first config when duplicate name is registered', async () => {
