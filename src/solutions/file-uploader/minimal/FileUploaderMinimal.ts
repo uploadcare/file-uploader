@@ -3,7 +3,7 @@ import { state } from 'lit/decorators.js';
 import type { ModalCb } from '../../../abstract/managers/ModalManager';
 import { ModalEvents } from '../../../abstract/managers/ModalManager';
 import { InternalEventType } from '../../../blocks/UploadCtxProvider/EventEmitter';
-import { LitActivityBlock } from '../../../lit/LitActivityBlock';
+import { LitActivityBlock, type RegisteredActivityType } from '../../../lit/LitActivityBlock';
 import { LitSolutionBlock } from '../../../lit/LitSolutionBlock';
 import './index.css';
 
@@ -43,8 +43,11 @@ export class FileUploaderMinimal extends LitSolutionBlock {
   @state()
   private _classStartFrom = EMPTY_CLASS;
 
-  private _getInitActivity(): string {
-    return (this.getCssData('--cfg-init-activity') as string | undefined) || LitActivityBlock.activities.START_FROM;
+  private _getInitActivity(): RegisteredActivityType {
+    return (
+      (this.getCssData('--cfg-init-activity') as RegisteredActivityType | undefined) ||
+      LitActivityBlock.activities.START_FROM
+    );
   }
 
   public constructor() {

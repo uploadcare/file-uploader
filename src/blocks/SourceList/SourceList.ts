@@ -9,6 +9,7 @@ import { ExternalUploadSource, UploadSource, UploadSourceMobile } from '../../ut
 import type { SourceButtonConfig } from '../SourceBtn/SourceBtn';
 
 import '../SourceBtn/SourceBtn';
+import type { RegisteredActivityType } from '../../lit/LitActivityBlock';
 import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
 
 export class SourceList extends LitUploaderBlock {
@@ -190,7 +191,7 @@ export class SourceList extends LitUploaderBlock {
     };
   }
 
-  private _openActivity(activityId: string | null, params: Record<string, unknown> = {}): void {
+  private _openActivity(activityId: RegisteredActivityType | null, params: Record<string, unknown> = {}): void {
     if (!activityId) {
       this.modalManager?.closeAll();
       this.set$({
