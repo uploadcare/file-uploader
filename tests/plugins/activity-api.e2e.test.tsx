@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { PluginSetupParams } from '@/index.ts';
+import type { PluginSetupParams } from '@/index';
 import { createTestPlugin, getApi, renderUploader } from './utils';
 
 describe('Activity API', () => {
@@ -94,7 +94,7 @@ describe('Activity API', () => {
   });
 });
 
-declare module '@/index.js' {
+declare module '@/types/index' {
   interface CustomActivities {
     'getparams-activity': {
       params: {
@@ -104,6 +104,11 @@ declare module '@/index.js' {
     };
     'subscribe-activity': {
       params: Record<string, unknown>;
+    };
+    'some-activity': {
+      params: {
+        data: string;
+      };
     };
   }
 }

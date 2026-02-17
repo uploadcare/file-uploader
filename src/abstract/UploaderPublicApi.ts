@@ -7,12 +7,7 @@ import { EventType } from '../blocks/UploadCtxProvider/EventEmitter';
 import { ACTIVITY_TYPES } from '../lit/activity-constants';
 import { findBlockInCtx } from '../lit/findBlockInCtx';
 import { hasBlockInCtx } from '../lit/hasBlockInCtx';
-import type {
-  ActivityParamsMap,
-  ActivityType,
-  LitActivityBlock,
-  RegisteredActivityType,
-} from '../lit/LitActivityBlock';
+import type { ActivityParamsMap, ActivityType, LitActivityBlock } from '../lit/LitActivityBlock';
 import type { LitBlock } from '../lit/LitBlock';
 import { createL10n } from '../lit/l10n';
 import { PubSub } from '../lit/PubSubCompat';
@@ -218,8 +213,8 @@ export class UploaderPublicApi extends SharedInstance {
           });
         });
         // To call uploadTrigger UploadList should draw file items first:
-        this._sharedInstancesBag.modalManager?.open(ACTIVITY_TYPES.UPLOAD_LIST);
         this._ctx.pub('*currentActivity', ACTIVITY_TYPES.UPLOAD_LIST);
+        this._sharedInstancesBag.modalManager?.open(ACTIVITY_TYPES.UPLOAD_LIST);
         fileInput.remove();
       },
       {
@@ -293,8 +288,8 @@ export class UploaderPublicApi extends SharedInstance {
 
   public initFlow = (force = false): void => {
     if (this._uploadCollection.size > 0 && !force) {
-      this._sharedInstancesBag.modalManager?.open(ACTIVITY_TYPES.UPLOAD_LIST);
       this._ctx.pub('*currentActivity', ACTIVITY_TYPES.UPLOAD_LIST);
+      this._sharedInstancesBag.modalManager?.open(ACTIVITY_TYPES.UPLOAD_LIST);
     } else {
       if (this._sourceList?.length === 1) {
         const srcKey = this._sourceList[0];
@@ -346,8 +341,8 @@ export class UploaderPublicApi extends SharedInstance {
         }
       } else {
         // Multiple sources case:
-        this._sharedInstancesBag.modalManager?.open(ACTIVITY_TYPES.START_FROM);
         this._ctx.pub('*currentActivity', ACTIVITY_TYPES.START_FROM);
+        this._sharedInstancesBag.modalManager?.open(ACTIVITY_TYPES.START_FROM);
       }
     }
   };
@@ -367,7 +362,7 @@ export class UploaderPublicApi extends SharedInstance {
     }
   };
 
-  public setCurrentActivity = <T extends RegisteredActivityType>(
+  public setCurrentActivity = <T extends ActivityType>(
     activityType: T,
     ...params: T extends keyof ActivityParamsMap
       ? [ActivityParamsMap[T]] extends [never]
