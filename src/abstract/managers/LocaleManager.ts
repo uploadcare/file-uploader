@@ -17,6 +17,17 @@ export class LocaleManager extends SharedInstance {
       this._ctx.add(localeStateKey(key), value, noTranslation);
     }
 
+    const pluginManager = sharedInstancesBag.pluginManager;
+    if (pluginManager?.onPluginsChange) {
+      this.addSub(
+        pluginManager.onPluginsChange(() => {
+          if (this._localeName) {
+            this._applyPluginLocales(this._localeName);
+          }
+        }),
+      );
+    }
+
     this.addSub(
       this._ctx.sub(sharedConfigKey('localeName'), async (localeName) => {
         if (!localeName) {
@@ -27,12 +38,10 @@ export class LocaleManager extends SharedInstance {
         if (localeName !== DEFAULT_LOCALE && this._localeName !== localeName) {
           return;
         }
+        this._applyPluginLocales(localeName);
 
-        const overrides = this._cfg.localeDefinitionOverride?.[localeName];
-        for (const [key, value] of Object.entries(definition) as [keyof LocaleDefinition, string][]) {
-          const overriddenValue = overrides?.[key];
-          this._ctx.add(localeStateKey(key), overriddenValue ?? value, true);
-        }
+        this._applyOverrides(localeName, definition);
+
       }),
     );
 
@@ -45,10 +54,42 @@ export class LocaleManager extends SharedInstance {
         if (!definition) {
           return;
         }
-        for (const [key, value] of Object.entries(definition) as [keyof LocaleDefinition, string][]) {
-          this._ctx.add(localeStateKey(key), value, true);
-        }
+        this._applyOverrides(this._localeName, definition);
       }),
     );
+  }
+
+  private _applyOverrides(localeName: string, definition: Partial<LocaleDefinition>): void {
+    const overrides = this._cfg.localeDefinitionOverride?.[localeName];
+    for (const [key, value] of Object.entries(definition) as [keyof LocaleDefinition, string][]) {
+      const overriddenValue = overrides?.[key];
+      this._ctx.add(localeStateKey(key), overriddenValue ?? value, true);
+    }
+  }
+
+  private _applyPluginLocales(localeName: string): void {
+    const pluginManager = this._sharedInstancesBag.pluginManager;
+    if (!pluginManager) {
+      return;
+    }
+
+    const snapshot = pluginManager.snapshot();
+    for (const entry of snapshot.i18n) {
+      const { pluginId: _pluginId, ...locales } = entry as unknown as Record<string, Partial<LocaleDefinition>> & {
+        pluginId?: string;
+      };
+
+      const pluginDefinition = locales[localeName];
+      if (!pluginDefinition) {
+        continue;
+      }
+
+      for (const [key, value] of Object.entries(pluginDefinition) as [keyof LocaleDefinition, string | undefined][]) {
+        if (value === undefined) {
+          continue;
+        }
+        this._ctx.add(localeStateKey(key), value, true);
+      }
+    }
   }
 }

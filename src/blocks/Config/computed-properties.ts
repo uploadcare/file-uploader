@@ -1,4 +1,5 @@
 import { getPrefixedCdnBaseAsync, isPrefixedCdnBase } from '@uploadcare/cname-prefix/async';
+import type { UploaderPlugin } from '../../abstract/managers/plugin';
 import type { ConfigType } from '../../types/index';
 import { deserializeCsv, serializeCsv } from '../../utils/comma-separated';
 import { isPromiseLike } from '../../utils/isPromiseLike';
@@ -73,6 +74,45 @@ const COMPUTED_PROPERTIES = [
       return cdnCname;
     },
   }),
+  defineComputedProperty({
+    key: 'plugins',
+    deps: ['useCloudImageEditor'] as const,
+    fn: async ({ plugins, useCloudImageEditor }, { signal }) => {
+      const CLOUD_EDITOR_PLUGIN_ID = 'cloud-image-editor';
+      const basePlugins: UploaderPlugin[] = Array.isArray(plugins)
+        ? plugins.filter((p) => p?.id !== CLOUD_EDITOR_PLUGIN_ID)
+        : [];
+
+      if (!useCloudImageEditor) {
+        return basePlugins;
+      }
+
+      try {
+        const module = await import('../../plugins/cloudImageEditorPlugin');
+        if (signal.aborted) return basePlugins;
+
+        const plugin: UploaderPlugin | undefined =
+          (module as { cloudImageEditorPlugin?: UploaderPlugin }).cloudImageEditorPlugin ??
+          (module as { default?: UploaderPlugin }).default;
+
+        if (!plugin) {
+          console.warn('[CloudImageEditorPlugin] Plugin module did not export a plugin');
+          return basePlugins;
+        }
+
+        if (basePlugins.some((p) => p.id === plugin.id)) {
+          return basePlugins;
+        }
+
+        return [...basePlugins, plugin];
+      } catch (error) {
+        if (!signal.aborted) {
+          console.warn('[CloudImageEditorPlugin] Failed to load plugin', error);
+        }
+        return basePlugins;
+      }
+    },
+  }),
 ];
 
 type ConfigSetter = <TSetValue extends ConfigKey>(key: TSetValue, value: ConfigValue<TSetValue>) => void;
@@ -107,6 +147,7 @@ export const computeProperty = <TKey extends ConfigKey>({
 
       let result: ConfigValue<typeof computed.key> | Promise<ConfigValue<typeof computed.key>>;
       try {
+        // @ts-expect-error - TODO: try to fix those types
         result = computed.fn(args as ComputedPropertyArgs<typeof computed.key, typeof computed.deps>, {
           signal: abortController.signal,
         });

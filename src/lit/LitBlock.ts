@@ -4,6 +4,7 @@ import { ClipboardLayer } from '../abstract/features/ClipboardLayer';
 import { A11y } from '../abstract/managers/a11y';
 import { LocaleManager, localeStateKey } from '../abstract/managers/LocaleManager';
 import { ModalManager } from '../abstract/managers/ModalManager';
+import { PluginManager } from '../abstract/managers/plugin';
 import { TelemetryManager } from '../abstract/managers/TelemetryManager';
 import { sharedConfigKey } from '../abstract/sharedConfigKey';
 import { initialConfig } from '../blocks/Config/initialConfig';
@@ -34,7 +35,6 @@ const LitBlockBase = RegisterableElementMixin(SymbioteMixin<SharedState>()(CssDa
 
 export class LitBlock extends LitBlockBase {
   private _cfgProxy!: ConfigType;
-  protected _sharedContextInstances: Map<keyof SharedInstancesState, ISharedInstance> = new Map();
 
   public static styleAttrs: string[] = [];
 
@@ -93,6 +93,7 @@ export class LitBlock extends LitBlockBase {
 
   public override initCallback(): void {
     this._addSharedContextInstance('*blocksRegistry', () => new Set());
+    this._addSharedContextInstance('*pluginManager', (sharedInstancesBag) => new PluginManager(sharedInstancesBag));
     this._addSharedContextInstance('*eventEmitter', (sharedInstancesBag) => new EventEmitter(sharedInstancesBag));
     this._addSharedContextInstance('*localeManager', (sharedInstancesBag) => new LocaleManager(sharedInstancesBag));
     this._addSharedContextInstance('*modalManager', (sharedInstancesBag) => new ModalManager(sharedInstancesBag));
@@ -179,32 +180,38 @@ export class LitBlock extends LitBlockBase {
     PubSub.deleteCtx(this.ctxName);
   }
 
-  /**
-   * Adds a shared context instance if it does not exist yet.
-   * @param key The shared state key.
-   * @param resolver The resolver function that creates the instance.
-   */
+  private _getSharedContextInstances(): Map<string, ISharedInstance> {
+    const key = '*sharedContextInstances';
+    if (!this.has(key) || !this.$[key]) {
+      const map = new Map<string, ISharedInstance>();
+      this.add(key, map, true);
+    }
+    return this.$[key];
+  }
+
   protected _addSharedContextInstance<TKey extends keyof SharedInstancesState>(
     key: TKey,
     resolver: (sharedInstancesBag: SharedInstancesBag) => NonNullable<SharedInstancesState[TKey]>,
   ): void {
-    if (this._sharedContextInstances.has(key)) {
+    const instances = this._getSharedContextInstances();
+    if (instances.has(key)) {
       return;
     }
     if (!this.has(key) || !this.$[key]) {
       const instance = resolver(this._sharedInstancesBag);
       this.add(key, instance, true);
-      this._sharedContextInstances.set(key, instance as ISharedInstance);
+      instances.set(key, instance as ISharedInstance);
       return;
     }
   }
 
   private _destroySharedContextInstances(): void {
-    for (const [key, instance] of this._sharedContextInstances.entries()) {
+    const instances = this._getSharedContextInstances();
+    for (const [key, instance] of instances.entries()) {
       instance?.destroy?.();
       this.pub(key as keyof SharedState, null as never);
-      this._sharedContextInstances.delete(key);
     }
+    instances.clear();
   }
 
   protected _getSharedContextInstance<TKey extends keyof SharedState, TRequired extends boolean = true>(

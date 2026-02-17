@@ -5,6 +5,7 @@ import type { LocaleDefinition } from '../abstract/localeRegistry';
 import type { A11y } from '../abstract/managers/a11y';
 import type { LocaleManager } from '../abstract/managers/LocaleManager';
 import type { ModalManager } from '../abstract/managers/ModalManager';
+import type { PluginManager } from '../abstract/managers/plugin';
 import type { SecureUploadsManager } from '../abstract/managers/SecureUploadsManager';
 import type { TelemetryManager } from '../abstract/managers/TelemetryManager';
 import type { ValidationManager } from '../abstract/managers/ValidationManager';
@@ -20,6 +21,8 @@ import type {
 } from '../blocks/CloudImageEditor/src/types';
 import type { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter';
 import type { ConfigType, OutputCollectionState, OutputErrorCollection } from '../types';
+import type { ISharedInstance } from './shared-instances';
+import type { RegisteredActivityType } from './LitActivityBlock';
 import type { LitBlock } from './LitBlock';
 import type { Uid } from './Uid';
 
@@ -30,9 +33,9 @@ type SharedConfigState = {
 export type BlocksRegistry = Set<LitBlock>;
 
 type ActivityBlockCtxState = {
-  '*currentActivity': string | null;
+  '*currentActivity': RegisteredActivityType | null;
   '*currentActivityParams': Record<string, unknown>;
-  '*history': (string | null)[];
+  '*history': (RegisteredActivityType | null)[];
   '*historyBack': (() => void) | null;
   '*closeModal': () => void;
 };
@@ -86,7 +89,10 @@ type EditorToolbarState = {
   '*operationTooltip': string | null;
 };
 
+type SharedContextInstances = Map<string, ISharedInstance>;
+
 type DynamicBlockState = {
+  '*sharedContextInstances': SharedContextInstances;
   '*blocksRegistry': BlocksRegistry;
   '*eventEmitter': EventEmitter;
   '*localeManager': LocaleManager;
@@ -94,6 +100,7 @@ type DynamicBlockState = {
   '*a11y': A11y;
   '*modalManager': ModalManager | null;
   '*clipboard': ClipboardLayer;
+  '*pluginManager': PluginManager;
 };
 
 type DynamicUploaderBlockState = {

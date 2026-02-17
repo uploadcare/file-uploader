@@ -9,9 +9,14 @@ import { LitBlock } from './LitBlock';
 const ACTIVE_ATTR = 'active';
 const ACTIVE_PROP = '___ACTIVITY_IS_ACTIVE___';
 
+// biome-ignore lint/suspicious/noEmptyInterface: This is user augmented interface
+export interface CustomActivities {}
+
 export type ActivityParamsMap = {
   'cloud-image-edit': CloudImageEditorActivityParams;
   external: ExternalSourceActivityParams;
+} & {
+  [Key in keyof CustomActivities]: CustomActivities[Key]['params'];
 };
 
 export class LitActivityBlock extends LitBlock {
@@ -63,7 +68,8 @@ export class LitActivityBlock extends LitBlock {
         } catch (err) {
           this.telemetryManager.sendEventError(err, `activity "${this.activityType}"`);
           console.error(`Error in activity "${this.activityType}". `, err);
-          this.$['*currentActivity'] = this.$['*history'][this.$['*history'].length - 1] ?? null;
+          const nextActivity = this.$['*history'][this.$['*history'].length - 1] as RegisteredActivityType | undefined;
+          this.$['*currentActivity'] = nextActivity ?? null;
         }
 
         if (!val) {
@@ -86,7 +92,7 @@ export class LitActivityBlock extends LitBlock {
     }
   }
 
-  private _isActivityRegistered(): boolean {
+  protected _isActivityRegistered(): boolean {
     return !!this.activityType && LitActivityBlock._activityCallbacks.has(this);
   }
 
@@ -158,16 +164,16 @@ export class LitActivityBlock extends LitBlock {
     return this.$['*currentActivityParams'] as ActivityParamsMap[keyof ActivityParamsMap];
   }
 
-  public get initActivity(): string | null {
-    return (this.getCssData('--cfg-init-activity') as string | null) ?? null;
+  public get initActivity(): RegisteredActivityType | null {
+    return (this.getCssData('--cfg-init-activity') as RegisteredActivityType | null) ?? null;
   }
 
-  public get doneActivity(): string | null {
-    return (this.getCssData('--cfg-done-activity') as string | null) ?? null;
+  public get doneActivity(): RegisteredActivityType | null {
+    return (this.getCssData('--cfg-done-activity') as RegisteredActivityType | null) ?? null;
   }
 
   public historyBack(): void {
-    const history = this.$['*history'] as string[];
+    const history = this.$['*history'];
 
     if (history) {
       let nextActivity = history.pop();
@@ -184,9 +190,9 @@ export class LitActivityBlock extends LitBlock {
 
       nextActivity = couldOpenActivity ? nextActivity : undefined;
 
-      if (nextActivity) this.modalManager?.open(nextActivity);
-
       this.$['*currentActivity'] = nextActivity ?? null;
+
+      if (nextActivity) this.modalManager?.open(nextActivity as RegisteredActivityType);
       this.$['*history'] = history;
 
       if (!nextActivity) {

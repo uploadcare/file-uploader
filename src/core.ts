@@ -11,7 +11,6 @@ export { defineComponents } from './abstract/defineComponents';
 export { loadFileUploaderFrom } from './abstract/loadFileUploaderFrom';
 export { defineLocale } from './abstract/localeRegistry';
 export { ModalEvents, type ModalId } from './abstract/managers/ModalManager';
-export * from './abstract/managers/plugin';
 export { toKebabCase } from './utils/toKebabCase';
 
 // Abstract:
@@ -41,8 +40,6 @@ export { UploadCtxProvider } from './blocks/UploadCtxProvider/UploadCtxProvider'
 export { UploadList } from './blocks/UploadList/UploadList';
 export { UrlSource } from './blocks/UrlSource/UrlSource';
 export { CameraSource } from './blocks/CameraSource/CameraSource';
-export * from './blocks/CloudImageEditor/index';
-export { CloudImageEditorActivity } from './blocks/CloudImageEditorActivity/CloudImageEditorActivity';
 export { Config } from './blocks/Config/Config';
 export { DropArea } from './blocks/DropArea/DropArea';
 export { ExternalSource } from './blocks/ExternalSource/ExternalSource';
@@ -53,7 +50,6 @@ export { PluginActivityRenderer, PluginActivityHost } from './blocks/PluginActiv
 
 // Solutions:
 export { FileUploaderRegular } from './solutions/file-uploader/regular/FileUploaderRegular';
-export { CloudImageEditor } from './solutions/cloud-image-editor/CloudImageEditor';
 export { FileUploaderInline } from './solutions/file-uploader/inline/FileUploaderInline';
 export { FileUploaderMinimal } from './solutions/file-uploader/minimal/FileUploaderMinimal';
 

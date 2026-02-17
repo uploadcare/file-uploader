@@ -6,6 +6,7 @@ import type {
   LocaleDefinitionOverride,
   SecureDeliveryProxyUrlResolver,
   SecureUploadsSignatureResolver,
+  UploaderPlugin,
 } from '../../types/index';
 import { initialConfig } from './initialConfig';
 import {
@@ -87,6 +88,7 @@ const mapping: { [Key in keyof ConfigType]: ConfigNormalizer<Key> } = {
   secureUploadsSignatureResolver: (value) => asFunction<SecureUploadsSignatureResolver>(value),
   secureDeliveryProxyUrlResolver: (value) => asFunction<SecureDeliveryProxyUrlResolver>(value),
   iconHrefResolver: (value) => asFunction<IconHrefResolver>(value),
+  plugins: (value) => asArray<UploaderPlugin[]>(value),
   fileValidators: asArray<FileValidators>,
   collectionValidators: asArray<CollectionValidators>,
   validationTimeout: asNumber,

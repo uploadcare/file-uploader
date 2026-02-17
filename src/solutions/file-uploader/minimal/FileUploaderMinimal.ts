@@ -3,7 +3,7 @@ import { state } from 'lit/decorators.js';
 import type { ModalCb } from '../../../abstract/managers/ModalManager';
 import { ModalEvents } from '../../../abstract/managers/ModalManager';
 import { InternalEventType } from '../../../blocks/UploadCtxProvider/EventEmitter';
-import { LitActivityBlock } from '../../../lit/LitActivityBlock';
+import { LitActivityBlock, type RegisteredActivityType } from '../../../lit/LitActivityBlock';
 import { LitSolutionBlock } from '../../../lit/LitSolutionBlock';
 import './index.css';
 
@@ -17,6 +17,7 @@ import '../../../blocks/CameraSource/CameraSource';
 import '../../../blocks/UrlSource/UrlSource';
 import '../../../blocks/ExternalSource/ExternalSource';
 import '../../../blocks/CloudImageEditorActivity/CloudImageEditorActivity';
+import '../../../blocks/PluginActivityRenderer/PluginActivityRenderer';
 
 const ACTIVE_CLASS = 'active';
 const EMPTY_CLASS = '';
@@ -42,8 +43,11 @@ export class FileUploaderMinimal extends LitSolutionBlock {
   @state()
   private _classStartFrom = EMPTY_CLASS;
 
-  private _getInitActivity(): string {
-    return (this.getCssData('--cfg-init-activity') as string | undefined) || LitActivityBlock.activities.START_FROM;
+  private _getInitActivity(): RegisteredActivityType {
+    return (
+      (this.getCssData('--cfg-init-activity') as RegisteredActivityType | undefined) ||
+      LitActivityBlock.activities.START_FROM
+    );
   }
 
   public constructor() {
@@ -184,9 +188,7 @@ export class FileUploaderMinimal extends LitSolutionBlock {
         <uc-external-source></uc-external-source>
       </uc-modal>
 
-      <uc-modal id="cloud-image-edit" strokes block-body-scrolling>
-        <uc-cloud-image-editor-activity></uc-cloud-image-editor-activity>
-      </uc-modal>
+        <uc-plugin-activity-renderer mode="modal"></uc-plugin-activity-renderer>
     `;
   }
 }

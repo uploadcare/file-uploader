@@ -3,7 +3,7 @@ import { state } from 'lit/decorators.js';
 import './index.css';
 
 import { InternalEventType } from '../../../blocks/UploadCtxProvider/EventEmitter';
-import { LitActivityBlock } from '../../../lit/LitActivityBlock';
+import { LitActivityBlock, type RegisteredActivityType } from '../../../lit/LitActivityBlock';
 import { LitSolutionBlock } from '../../../lit/LitSolutionBlock';
 
 import '../../../blocks/StartFrom/StartFrom';
@@ -15,6 +15,7 @@ import '../../../blocks/CameraSource/CameraSource';
 import '../../../blocks/UrlSource/UrlSource';
 import '../../../blocks/ExternalSource/ExternalSource';
 import '../../../blocks/CloudImageEditorActivity/CloudImageEditorActivity';
+import '../../../blocks/PluginActivityRenderer/PluginActivityRenderer';
 
 type BaseInitState = InstanceType<typeof LitSolutionBlock>['init$'];
 
@@ -62,8 +63,11 @@ export class FileUploaderInline extends LitSolutionBlock {
     return this.cfg.showEmptyList || (Array.isArray(uploadList) && uploadList.length > 0);
   }
 
-  private _getInitActivity(): string {
-    return (this.getCssData('--cfg-init-activity') as string | undefined) || LitActivityBlock.activities.START_FROM;
+  private _getInitActivity(): RegisteredActivityType {
+    return (
+      (this.getCssData('--cfg-init-activity') as RegisteredActivityType | undefined) ||
+      LitActivityBlock.activities.START_FROM
+    );
   }
 
   public override initCallback(): void {
@@ -75,13 +79,13 @@ export class FileUploaderInline extends LitSolutionBlock {
 
     const initActivity = this._getInitActivity();
 
-    this.sub('*currentActivity', (val: string | null) => {
+    this.sub('*currentActivity', (val) => {
       if (!val) {
         this.$['*currentActivity'] = initActivity;
       }
     });
 
-    this.sub('*uploadList', (list: unknown) => {
+    this.sub('*uploadList', (list) => {
       if (Array.isArray(list) && list.length > 0 && this.$['*currentActivity'] === initActivity) {
         this.$['*currentActivity'] = LitActivityBlock.activities.UPLOAD_LIST;
       }
@@ -112,7 +116,7 @@ export class FileUploaderInline extends LitSolutionBlock {
       <uc-camera-source></uc-camera-source>
       <uc-url-source></uc-url-source>
       <uc-external-source></uc-external-source>
-      <uc-cloud-image-editor-activity></uc-cloud-image-editor-activity>
+      <uc-plugin-activity-renderer mode="inline"></uc-plugin-activity-renderer>
     `;
   }
 }

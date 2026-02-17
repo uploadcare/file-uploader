@@ -7,12 +7,7 @@ import { EventType } from '../blocks/UploadCtxProvider/EventEmitter';
 import { ACTIVITY_TYPES } from '../lit/activity-constants';
 import { findBlockInCtx } from '../lit/findBlockInCtx';
 import { hasBlockInCtx } from '../lit/hasBlockInCtx';
-import type {
-  ActivityParamsMap,
-  ActivityType,
-  LitActivityBlock,
-  RegisteredActivityType,
-} from '../lit/LitActivityBlock';
+import type { ActivityParamsMap, ActivityType, LitActivityBlock } from '../lit/LitActivityBlock';
 import type { LitBlock } from '../lit/LitBlock';
 import { createL10n } from '../lit/l10n';
 import { PubSub } from '../lit/PubSubCompat';
@@ -218,8 +213,8 @@ export class UploaderPublicApi extends SharedInstance {
           });
         });
         // To call uploadTrigger UploadList should draw file items first:
-        this._sharedInstancesBag.modalManager?.open(ACTIVITY_TYPES.UPLOAD_LIST);
         this._ctx.pub('*currentActivity', ACTIVITY_TYPES.UPLOAD_LIST);
+        this._sharedInstancesBag.modalManager?.open(ACTIVITY_TYPES.UPLOAD_LIST);
         fileInput.remove();
       },
       {
@@ -293,8 +288,8 @@ export class UploaderPublicApi extends SharedInstance {
 
   public initFlow = (force = false): void => {
     if (this._uploadCollection.size > 0 && !force) {
-      this._sharedInstancesBag.modalManager?.open(ACTIVITY_TYPES.UPLOAD_LIST);
       this._ctx.pub('*currentActivity', ACTIVITY_TYPES.UPLOAD_LIST);
+      this._sharedInstancesBag.modalManager?.open(ACTIVITY_TYPES.UPLOAD_LIST);
     } else {
       if (this._sourceList?.length === 1) {
         const srcKey = this._sourceList[0];
@@ -346,8 +341,8 @@ export class UploaderPublicApi extends SharedInstance {
         }
       } else {
         // Multiple sources case:
-        this._sharedInstancesBag.modalManager?.open(ACTIVITY_TYPES.START_FROM);
         this._ctx.pub('*currentActivity', ACTIVITY_TYPES.START_FROM);
+        this._sharedInstancesBag.modalManager?.open(ACTIVITY_TYPES.START_FROM);
       }
     }
   };
@@ -367,20 +362,25 @@ export class UploaderPublicApi extends SharedInstance {
     }
   };
 
-  public setCurrentActivity = <T extends RegisteredActivityType>(
+  public setCurrentActivity = <T extends ActivityType>(
     activityType: T,
     ...params: T extends keyof ActivityParamsMap
-      ? [ActivityParamsMap[T]]
-      : T extends RegisteredActivityType
-        ? [undefined?]
-        : [never]
+      ? [ActivityParamsMap[T]] extends [never]
+        ? []
+        : [ActivityParamsMap[T]]
+      : []
   ) => {
-    if (hasBlockInCtx(this._sharedInstancesBag.blocksRegistry, (b) => b.activityType === activityType)) {
-      this._ctx.pub('*currentActivityParams', params[0] ?? {});
-      this._ctx.pub('*currentActivity', activityType);
-      return;
-    }
-    console.warn(`Activity type "${activityType}" not found in the context`);
+    // Since Lit renders DOM asynchronously, we need to wait for the next tick to ensure that the activity block is rendered and registered in the context before we try to set it as current.
+    // TODO: Do not rely on DOM rendering and block registration order, we should have a better way to handle this.
+    // Some kind of ActivityManager that will keep track of registered activities and their states
+    setTimeout(() => {
+      if (hasBlockInCtx(this._sharedInstancesBag.blocksRegistry, (b) => b.activityType === activityType)) {
+        this._ctx.pub('*currentActivityParams', params[0] ?? {});
+        this._ctx.pub('*currentActivity', activityType);
+        return;
+      }
+      console.warn(`Activity type "${activityType}" not found in the context`);
+    });
   };
 
   public getCurrentActivity = (): ActivityType => {
@@ -388,17 +388,20 @@ export class UploaderPublicApi extends SharedInstance {
   };
 
   public setModalState = (opened: boolean): void => {
-    if (opened && !this._ctx.read('*currentActivity')) {
-      console.warn(`Can't open modal without current activity. Please use "setCurrentActivity" method first.`);
-      return;
-    }
+    // Next tick here because setCurrentActivity is also async and we want to make sure that the modal state is set
+    setTimeout(() => {
+      if (opened && !this._ctx.read('*currentActivity')) {
+        console.warn(`Can't open modal without current activity. Please use "setCurrentActivity" method first.`);
+        return;
+      }
 
-    if (opened) {
-      this._sharedInstancesBag.modalManager?.open(this._ctx.read('*currentActivity'));
-    } else {
-      this._sharedInstancesBag.modalManager?.close(this._ctx.read('*currentActivity'));
-      this._ctx.pub('*currentActivity', null);
-    }
+      if (opened) {
+        this._sharedInstancesBag.modalManager?.open(this._ctx.read('*currentActivity'));
+      } else {
+        this._sharedInstancesBag.modalManager?.close(this._ctx.read('*currentActivity'));
+        this._ctx.pub('*currentActivity', null);
+      }
+    });
   };
 
   private get _sourceList(): string[] {

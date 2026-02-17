@@ -1,0 +1,46 @@
+<!doctype html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 24px;
+      line-height: 1.5;
+    }
+    h1 {
+      font-size: 22px;
+      margin: 0 0 12px;
+    }
+    p {
+      margin: 0 0 12px;
+      color: #374151;
+    }
+    @media (prefers-color-scheme: dark) {
+      body { background: #0f1115; color: #f9fafb; }
+      p { color: #9ca3af; }
+    }
+  </style>
+  <script type="module">
+    import '@/solutions/file-uploader/regular/index.css';
+    import * as UC from '@/core';
+
+    UC.defineComponents(UC);
+  </script>
+</head>
+<body>
+  <h1>Cloud Image Editor Plugin</h1>
+  <p>Load the built-in cloud editor as a plugin and use the edit action on uploaded images.</p>
+
+  <uc-file-uploader-regular ctx-name="cloud-editor-demo"></uc-file-uploader-regular>
+  <uc-config
+    ctx-name="cloud-editor-demo"
+    pubkey="demopublickey"
+    debug
+    quality-insights="false"
+    test-mode
+    source-list="local, url, camera, dropbox, gdrive"
+    use-cloud-image-editor="true"
+  ></uc-config>
+  <uc-upload-ctx-provider ctx-name="cloud-editor-demo"></uc-upload-ctx-provider>
+</body>
+</html>

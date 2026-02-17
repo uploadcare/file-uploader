@@ -2,6 +2,7 @@ import type { ConfigType, UploaderPublicApi } from '..';
 import type { A11y } from '../abstract/managers/a11y';
 import type { LocaleManager } from '../abstract/managers/LocaleManager';
 import type { ModalManager } from '../abstract/managers/ModalManager';
+import type { PluginManager } from '../abstract/managers/plugin';
 import type { SecureUploadsManager } from '../abstract/managers/SecureUploadsManager';
 import type { TelemetryManager } from '../abstract/managers/TelemetryManager';
 import type { ValidationManager } from '../abstract/managers/ValidationManager';
@@ -71,20 +72,28 @@ export class SharedInstance {
   }
 }
 
-export type SharedInstancesState = Pick<
-  SharedState,
-  | '*blocksRegistry'
-  | '*eventEmitter'
-  | '*localeManager'
-  | '*telemetryManager'
-  | '*a11y'
-  | '*clipboard'
-  | '*modalManager'
-  | '*uploadCollection'
-  | '*publicApi'
-  | '*validationManager'
-  | '*secureUploadsManager'
->;
+const instanceKeyMap = {
+  modalManager: '*modalManager',
+  pluginManager: '*pluginManager',
+  telemetryManager: '*telemetryManager',
+  localeManager: '*localeManager',
+  a11y: '*a11y',
+  clipboard: '*clipboard',
+  blocksRegistry: '*blocksRegistry',
+  eventEmitter: '*eventEmitter',
+  uploadCollection: '*uploadCollection',
+  secureUploadsManager: '*secureUploadsManager',
+  api: '*publicApi',
+  validationManager: '*validationManager',
+} satisfies Record<string, keyof SharedState>;
+
+type InstanceTypeMap = {
+  [key in keyof typeof instanceKeyMap]: SharedState[(typeof instanceKeyMap)[key]];
+};
+
+type InstanceName = keyof typeof instanceKeyMap;
+
+export type SharedInstancesState = Pick<SharedState, (typeof instanceKeyMap)[keyof typeof instanceKeyMap]>;
 
 export type SharedInstancesBag = ReturnType<typeof createSharedInstancesBag>;
 
@@ -115,6 +124,9 @@ export const createSharedInstancesBag = (getCtx: () => PubSub<SharedState>) => {
     get modalManager(): ModalManager | null {
       return getSharedInstance(getCtx(), '*modalManager', false);
     },
+    get pluginManager(): PluginManager {
+      return getSharedInstance(getCtx(), '*pluginManager');
+    },
     get telemetryManager(): TelemetryManager {
       return getSharedInstance(getCtx(), '*telemetryManager');
     },
@@ -141,6 +153,29 @@ export const createSharedInstancesBag = (getCtx: () => PubSub<SharedState>) => {
     },
     get validationManager(): ValidationManager {
       return getSharedInstance(getCtx(), '*validationManager');
+    },
+
+    when<TName extends InstanceName>(
+      name: TName,
+      callback: (instance: NonNullable<InstanceTypeMap[TName]>) => void,
+    ): () => void {
+      const stateKey = instanceKeyMap[name] as keyof SharedInstancesState;
+      const ctx = getCtx();
+
+      const existingInstance = ctx.has(stateKey) ? ctx.read(stateKey) : undefined;
+      if (existingInstance) {
+        callback(existingInstance as NonNullable<InstanceTypeMap[TName]>);
+        return () => {};
+      }
+
+      const unsub = ctx.sub(stateKey, (instance) => {
+        if (instance) {
+          callback(instance as NonNullable<InstanceTypeMap[TName]>);
+          unsub();
+        }
+      });
+
+      return unsub;
     },
   };
 };

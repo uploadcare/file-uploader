@@ -8,7 +8,7 @@
     background-color: var(--uc-background);
   }
 
-  [uc-modal] > dialog:has(uc-cloud-image-editor-activity[active]) {
+  [uc-modal] > dialog:has([activity="cloud-image-edit"][active]) {
     width: 100%;
     height: 100%;
   }
