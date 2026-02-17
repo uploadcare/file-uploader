@@ -201,11 +201,11 @@ export class SourceList extends LitUploaderBlock {
       return;
     }
 
-    this.modalManager?.open(activityId);
     this.set$({
       '*currentActivityParams': params,
       '*currentActivity': activityId,
     });
+    this.modalManager?.open(activityId);
   }
 
   public override render() {
