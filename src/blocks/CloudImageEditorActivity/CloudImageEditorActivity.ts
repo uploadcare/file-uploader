@@ -20,9 +20,6 @@ type EditorTemplateConfig = {
 };
 
 export class CloudImageEditorActivity extends LitUploaderBlock {
-  public override couldBeCtxOwner = true;
-  public override activityType = LitActivityBlock.activities.CLOUD_IMG_EDIT;
-
   private _entry?: TypedData<UploadEntryData>;
 
   @state()
@@ -39,11 +36,6 @@ export class CloudImageEditorActivity extends LitUploaderBlock {
 
   public override initCallback(): void {
     super.initCallback();
-
-    this.registerActivity(this.activityType, {
-      onActivate: () => this._mountEditor(),
-      onDeactivate: () => this._unmountEditor(),
-    });
 
     this.subConfigValue('cropPreset', (cropPreset) => {
       if (!this._editorConfig) {
@@ -70,6 +62,13 @@ export class CloudImageEditorActivity extends LitUploaderBlock {
         tabs,
       };
     });
+
+    this._mountEditor();
+  }
+
+  public override disconnectedCallback(): void {
+    super.disconnectedCallback();
+    this._unmountEditor();
   }
 
   private _handleApply(e: CustomEvent<ApplyResult>): void {
