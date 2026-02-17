@@ -53,12 +53,16 @@ async function build(buildItem: BuildItem) {
       if (buildItem.mangleProps) {
         options.mangleProps = /^_/;
       }
+      if (buildItem.codeSplitting) {
+        options.splitting = true;
+        options.supported = { 'dynamic-import': true };
+      }
     },
     esbuildPlugins: buildItem.minify ? [minifyTemplates(), writeFiles()] : [],
     noExternal: buildItem.bundleExternalDependencies ? [/.*/] : undefined,
     globalName: buildItem.format === 'iife' ? 'UC' : undefined,
     keepNames: buildItem.format === 'iife' ? true : undefined,
-    splitting: false,
+    splitting: buildItem.codeSplitting ?? false,
     treeshake: true,
     shims: false,
     dts: true,

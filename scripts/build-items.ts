@@ -21,9 +21,19 @@ export interface BuildItem {
   cssFilename?: string;
   bundleExternalDependencies: boolean;
   mangleProps?: boolean;
+  codeSplitting?: boolean;
 }
 
 export const buildItems: BuildItem[] = [
+  {
+    entry: [srcPath('./core.ts')],
+    outDir: outPath('./dist/'),
+    format: 'esm',
+    minify: true,
+    bundleExternalDependencies: true,
+    mangleProps: false,
+    codeSplitting: true,
+  },
   {
     entry: [
       srcPath('./index.ts'),
