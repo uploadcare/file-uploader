@@ -72,21 +72,28 @@ export class SharedInstance {
   }
 }
 
-export type SharedInstancesState = Pick<
-  SharedState,
-  | '*blocksRegistry'
-  | '*eventEmitter'
-  | '*localeManager'
-  | '*telemetryManager'
-  | '*a11y'
-  | '*clipboard'
-  | '*modalManager'
-  | '*pluginManager'
-  | '*uploadCollection'
-  | '*publicApi'
-  | '*validationManager'
-  | '*secureUploadsManager'
->;
+const instanceKeyMap = {
+  modalManager: '*modalManager',
+  pluginManager: '*pluginManager',
+  telemetryManager: '*telemetryManager',
+  localeManager: '*localeManager',
+  a11y: '*a11y',
+  clipboard: '*clipboard',
+  blocksRegistry: '*blocksRegistry',
+  eventEmitter: '*eventEmitter',
+  uploadCollection: '*uploadCollection',
+  secureUploadsManager: '*secureUploadsManager',
+  api: '*publicApi',
+  validationManager: '*validationManager',
+} satisfies Record<string, keyof SharedState>;
+
+type InstanceTypeMap = {
+  [key in keyof typeof instanceKeyMap]: SharedState[(typeof instanceKeyMap)[key]];
+};
+
+type InstanceName = keyof typeof instanceKeyMap;
+
+export type SharedInstancesState = Pick<SharedState, (typeof instanceKeyMap)[keyof typeof instanceKeyMap]>;
 
 export type SharedInstancesBag = ReturnType<typeof createSharedInstancesBag>;
 
@@ -107,38 +114,6 @@ export const getSharedInstance = <TKey extends keyof SharedInstancesState, TRequ
   }
 
   throw new Error(`Unexpected error: shared instance for key "${String(key)}" is not available`);
-};
-
-// Mapping of friendly instance names to state keys
-const instanceKeyMap = {
-  modalManager: '*modalManager',
-  pluginManager: '*pluginManager',
-  telemetryManager: '*telemetryManager',
-  localeManager: '*localeManager',
-  a11y: '*a11y',
-  blocksRegistry: '*blocksRegistry',
-  eventEmitter: '*eventEmitter',
-  uploadCollection: '*uploadCollection',
-  secureUploadsManager: '*secureUploadsManager',
-  api: '*publicApi',
-  validationManager: '*validationManager',
-} as const;
-
-type InstanceName = keyof typeof instanceKeyMap;
-
-// Helper type to get the instance type from the bag
-type InstanceTypeMap = {
-  modalManager: ModalManager | null;
-  pluginManager: PluginManager;
-  telemetryManager: TelemetryManager;
-  localeManager: LocaleManager;
-  a11y: A11y;
-  blocksRegistry: Set<LitBlock>;
-  eventEmitter: EventEmitter;
-  uploadCollection: TypedCollection<UploadEntryData>;
-  secureUploadsManager: SecureUploadsManager;
-  api: UploaderPublicApi;
-  validationManager: ValidationManager;
 };
 
 export const createSharedInstancesBag = (getCtx: () => PubSub<SharedState>) => {
