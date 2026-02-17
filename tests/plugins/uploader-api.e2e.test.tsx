@@ -137,7 +137,7 @@ describe('Uploader API (from plugin)', () => {
   });
 });
 
-declare module '@/index.js' {
+declare module '@/types/index' {
   interface CustomActivities {
     'switchable-activity': {
       params: never;

@@ -1,6 +1,6 @@
 import { beforeAll, expect } from 'vitest';
 import { page } from 'vitest/browser';
-import type { UploaderPlugin } from '@/index.ts';
+import type { Config, UploadCtxProvider, UploaderPlugin } from '@/index.ts';
 // biome-ignore lint/correctness/noUnusedImports: Used in JSX
 import { cleanup, getCtxName, renderer } from '../utils/test-renderer';
 

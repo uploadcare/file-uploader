@@ -32,7 +32,7 @@ export class CloudImageEditorActivity extends LitUploaderBlock {
     const params = super.activityParams;
 
     if ('internalId' in params) {
-      return params;
+      return params as ActivityParams;
     }
     throw new Error(`Cloud Image Editor activity params not found`);
   }

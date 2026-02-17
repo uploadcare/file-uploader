@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
-import type { PluginSetupParams } from '@/index.ts';
+import type { Config, PluginSetupParams } from '@/index.ts';
 import { createTestPlugin, renderUploader } from './utils';
 
 describe('Custom Config', () => {
@@ -242,27 +242,16 @@ describe('Custom Config', () => {
   });
 });
 
-declare module '../../dist/index.ts' {
+declare module '@/types/index' {
   interface CustomConfig {
-    myOption: string;
     readableOption: number;
     subscribedOption: string;
     attrOption: string;
     cleanupOption: string;
     jsPropOption: boolean;
+    noAttrOption: string;
+    myOption: string;
     dupOption: string;
     normalizedOption: number;
-    noAttrOption: string;
-  }
-}
-
-declare module '@/index.ts' {
-  interface CustomConfig {
-    readableOption: number;
-    subscribedOption: string;
-    attrOption: string;
-    cleanupOption: string;
-    jsPropOption: boolean;
-    noAttrOption: string;
   }
 }

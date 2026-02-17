@@ -207,3 +207,15 @@ describe('Activity Registration', () => {
     await expect.element(page.getByText('Throw Activity')).not.toBeInTheDocument();
   });
 });
+
+declare module '@/types/index' {
+  interface CustomActivities {
+    'test-activity': { params: never };
+    'params-activity': { params: { foo: string; num: number } };
+    'dispose-activity': { params: never };
+    'dom-activity': { params: never };
+    'clear-activity': { params: never };
+    'remove-activity': { params: never };
+    'throw-activity': { params: never };
+  }
+}
