@@ -46,6 +46,12 @@
       "browser": "./dist/index.js",
       "default": "./dist/index.js"
     },
+    "./core": {
+      "types": "./dist/core.d.ts",
+      "node": "./dist/index.ssr.js",
+      "browser": "./dist/core.js",
+      "default": "./dist/core.js"
+    },
     "./index.css": {
       "types": "./types/css.d.ts",
       "default": "./dist/index.css"
@@ -170,6 +176,10 @@
     "nanostores": "^1.1.0"
   },
   "size-limit": [
+    {
+      "path": "dist/core.js",
+      "limit": "100 KB"
+    },
     {
       "path": "dist/index.js",
       "limit": "100 KB"
