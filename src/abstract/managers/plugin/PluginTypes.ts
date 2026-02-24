@@ -37,10 +37,26 @@ export type PluginFileActionRegistration = {
   onClick: (fileEntry: OutputFileEntry) => void | Promise<void>;
 };
 
+export type PluginFileTransformerContext = {
+  /** The file to transform */
+  file: File | Blob;
+  /** MIME type of the file */
+  mimeType: string | null;
+};
+
+export type PluginFileTransformerRegistration = {
+  /**
+   * Transform a file before it is uploaded.
+   * Return the modified File or Blob. Return the original file if no transformation is needed.
+   */
+  transform: (context: PluginFileTransformerContext) => File | Blob | Promise<File | Blob>;
+};
+
 export type PluginRegistryApi = {
   registerSource: (source: PluginSourceRegistration) => PluginSourceRegistration;
   registerActivity: (activity: PluginActivityRegistration) => PluginActivityRegistration;
   registerFileAction: (fileAction: PluginFileActionRegistration) => PluginFileActionRegistration;
+  registerFileTransformer: (transformer: PluginFileTransformerRegistration) => PluginFileTransformerRegistration;
   registerIcon: (icon: PluginIconRegistration) => PluginIconRegistration;
   registerI18n: (i18n: PluginI18nRegistration) => PluginI18nRegistration;
   registerConfig: <T = unknown>(definition: CustomConfigDefinition<T>) => void;
@@ -50,40 +66,11 @@ export type PluginRegistryApi = {
  * API for managing plugin config subscriptions
  */
 export type PluginConfigApi = {
-  /**
-   * Get the current value of a config option.
-   *
-   * @param configName - The name of the config to get
-   * @returns The current config value
-   *
-   * @example
-   * ```typescript
-   * const theme = pluginApi.config.get('my-theme');
-   * console.log('Current theme:', theme);
-   * ```
-   */
-  get: <T = unknown>(configName: keyof (ConfigType & CustomConfig)) => T;
-
-  /**
-   * Subscribe to changes in a custom config value.
-   * The callback will be called immediately with the current value,
-   * and then whenever the value changes.
-   *
-   * Subscriptions are automatically cleaned up when the plugin is disposed.
-   *
-   * @param configName - The name of the custom config to subscribe to
-   * @param callback - Function to call with the new value
-   * @returns Unsubscribe function
-   *
-   * @example
-   * ```typescript
-   * pluginApi.config.subscribe('my-option', (value) => {
-   *   console.log('Config changed:', value);
-   * });
-   * // Cleanup happens automatically on plugin disposal
-   * ```
-   */
-  subscribe: <T = unknown>(configName: keyof (ConfigType & CustomConfig), callback: (value: T) => void) => () => void;
+  get: <TKey extends keyof (ConfigType & CustomConfig)>(configName: TKey) => (ConfigType & CustomConfig)[TKey];
+  subscribe: <TKey extends keyof (ConfigType & CustomConfig)>(
+    configName: TKey,
+    callback: (value: (ConfigType & CustomConfig)[TKey]) => void,
+  ) => () => void;
 };
 
 /**
@@ -155,6 +142,7 @@ export type PluginRegistrySnapshot = {
   sources: Owned<PluginSourceRegistration>[];
   activities: Owned<PluginActivityRegistration>[];
   fileActions: Owned<PluginFileActionRegistration>[];
+  fileTransformers: Owned<PluginFileTransformerRegistration>[];
   icons: Owned<PluginIconRegistration>[];
   i18n: Owned<PluginI18nRegistration>[];
 };

@@ -32,6 +32,43 @@ const defineComputedProperty = <TKey extends ConfigKey, TDeps extends DepKeys<TK
   declaration: ComputedPropertyDeclaration<TKey, TDeps>,
 ): ComputedPropertyDeclaration<TKey, TDeps> => declaration;
 
+const withLazyPlugin = async ({
+  plugins,
+  pluginId,
+  isEnabled,
+  load,
+  signal,
+}: {
+  plugins: () => UploaderPlugin[];
+  pluginId: string;
+  isEnabled: () => boolean;
+  load: () => Promise<UploaderPlugin | undefined>;
+  signal: AbortSignal;
+}): Promise<UploaderPlugin[]> => {
+  const pluginsWithout = () => plugins().filter((p) => p?.id !== pluginId);
+
+  if (!isEnabled()) {
+    return pluginsWithout();
+  }
+
+  if (plugins().some((p) => p?.id === pluginId)) {
+    return plugins();
+  }
+
+  try {
+    const plugin = await load();
+    if (signal.aborted) return plugins();
+    if (!isEnabled()) return pluginsWithout();
+    if (!plugin) return plugins();
+    return [...pluginsWithout(), plugin];
+  } catch (error) {
+    if (!signal.aborted) {
+      console.warn(`[${pluginId}] Failed to load plugin`, error);
+    }
+    return plugins();
+  }
+};
+
 const COMPUTED_PROPERTIES = [
   defineComputedProperty({
     key: 'cameraModes',
@@ -84,40 +121,37 @@ const COMPUTED_PROPERTIES = [
   defineComputedProperty({
     key: 'plugins',
     deps: ['useCloudImageEditor'] as const,
-    fn: async ({ plugins, useCloudImageEditor }, { signal }) => {
-      const CLOUD_EDITOR_PLUGIN_ID = 'cloud-image-editor';
-
-      if (!useCloudImageEditor()) {
-        return plugins();
-      }
-
-      if (plugins().some((p) => p?.id === CLOUD_EDITOR_PLUGIN_ID)) {
-        return plugins();
-      }
-
-      try {
-        const module = await import('../../plugins/cloudImageEditorPlugin');
-        if (signal.aborted) return plugins();
-
-        const plugin: UploaderPlugin | undefined =
-          (module as { cloudImageEditorPlugin?: UploaderPlugin }).cloudImageEditorPlugin ??
-          (module as { default?: UploaderPlugin }).default;
-
-        if (!plugin) {
-          console.warn('[CloudImageEditorPlugin] Plugin module did not export a plugin');
-          return plugins();
-        }
-
-        return [...plugins(), plugin];
-      } catch (error) {
-        if (!signal.aborted) {
-          console.warn('[CloudImageEditorPlugin] Failed to load plugin', error);
-        }
-        return plugins();
-      }
-    },
+    fn: ({ plugins, useCloudImageEditor }, { signal }) =>
+      withLazyPlugin({
+        plugins,
+        pluginId: 'cloud-image-editor',
+        isEnabled: () => !!useCloudImageEditor(),
+        load: async () => {
+          const { cloudImageEditorPlugin } = await import('../../plugins/cloudImageEditorPlugin');
+          return cloudImageEditorPlugin;
+        },
+        signal,
+      }),
+  }),
+  defineComputedProperty({
+    key: 'plugins',
+    deps: ['imageShrink'] as const,
+    fn: ({ plugins, imageShrink }, { signal }) =>
+      withLazyPlugin({
+        plugins,
+        pluginId: 'image-shrink',
+        isEnabled: () => !!imageShrink(),
+        load: async () => {
+          const { imageShrinkPlugin } = await import('../../plugins/imageShrinkPlugin');
+          return imageShrinkPlugin;
+        },
+        signal,
+      }),
   }),
 ];
+
+const computedPropertyKey = (computed: { key: string; deps: ReadonlyArray<string> }): string =>
+  `${computed.key}:${computed.deps.join(',')}`;
 
 type ConfigSetter = <TSetValue extends ConfigKey>(key: TSetValue, value: ConfigValue<TSetValue>) => void;
 type ConfigGetter = <TGetValue extends ConfigKey>(key: TGetValue) => ConfigValue<TGetValue>;
@@ -126,7 +160,7 @@ type ComputePropertyOptions<TKey extends ConfigKey> = {
   key: TKey;
   setValue: ConfigSetter;
   getValue: ConfigGetter;
-  computationControllers: Map<keyof ConfigType, AbortController>;
+  computationControllers: Map<string, AbortController>;
 };
 
 export const computeProperty = <TKey extends ConfigKey>({
@@ -146,8 +180,8 @@ export const computeProperty = <TKey extends ConfigKey>({
       }
       const abortController = new AbortController();
 
-      computationControllers.get(computed.key)?.abort();
-      computationControllers.set(computed.key, abortController);
+      computationControllers.get(computedPropertyKey(computed))?.abort();
+      computationControllers.set(computedPropertyKey(computed), abortController);
 
       let result: ConfigValue<typeof computed.key> | Promise<ConfigValue<typeof computed.key>>;
       try {
@@ -155,8 +189,8 @@ export const computeProperty = <TKey extends ConfigKey>({
           signal: abortController.signal,
         });
       } catch (error) {
-        if (computationControllers.get(computed.key) === abortController) {
-          computationControllers.delete(computed.key);
+        if (computationControllers.get(computedPropertyKey(computed)) === abortController) {
+          computationControllers.delete(computedPropertyKey(computed));
         }
         console.error(`Failed to compute value for "${computed.key}"`, error);
         return;
@@ -176,8 +210,8 @@ export const computeProperty = <TKey extends ConfigKey>({
             console.error(`Failed to compute value for "${computed.key}"`, error);
           })
           .finally(() => {
-            if (computationControllers.get(computed.key) === abortController) {
-              computationControllers.delete(computed.key);
+            if (computationControllers.get(computedPropertyKey(computed)) === abortController) {
+              computationControllers.delete(computedPropertyKey(computed));
             }
           });
       } else {

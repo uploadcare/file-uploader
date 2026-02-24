@@ -61,7 +61,7 @@ export class Config extends LitBlock {
     ),
   } as unknown as LitBlock['init$'] & ConfigType;
 
-  private _computationControllers: Map<keyof ConfigType, AbortController> = new Map();
+  private _computationControllers: Map<string, AbortController> = new Map();
   private _pluginChangeUnsubscribe?: () => void;
   private _mutationObserver?: MutationObserver;
 
