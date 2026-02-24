@@ -176,10 +176,10 @@ export class LitActivityBlock extends LitBlock {
     const history = this.$['*history'];
 
     if (history) {
-      let nextActivity = history.pop();
+      let nextActivity = history.pop() as RegisteredActivityType | null;
 
       while (nextActivity === this.activityType) {
-        nextActivity = history.pop();
+        nextActivity = history.pop() as RegisteredActivityType | null;
       }
 
       let couldOpenActivity = !!nextActivity;
@@ -188,9 +188,9 @@ export class LitActivityBlock extends LitBlock {
         couldOpenActivity = (nextLitActivityBlock as LitActivityBlock | undefined)?.couldOpenActivity ?? false;
       }
 
-      nextActivity = couldOpenActivity ? nextActivity : undefined;
+      nextActivity = couldOpenActivity ? (nextActivity as RegisteredActivityType | null) : null;
 
-      this.$['*currentActivity'] = nextActivity ?? null;
+      this.$['*currentActivity'] = (nextActivity as RegisteredActivityType | null) ?? null;
 
       if (nextActivity) this.modalManager?.open(nextActivity as RegisteredActivityType);
       this.$['*history'] = history;
