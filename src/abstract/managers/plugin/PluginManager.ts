@@ -8,6 +8,7 @@ import type {
   PluginConfigApi,
   PluginExports,
   PluginFileActionRegistration,
+  PluginFileTransformerRegistration,
   PluginRegistryApi,
   PluginRegistrySnapshot,
   UploaderPlugin,
@@ -18,6 +19,7 @@ export class PluginManager extends SharedInstance {
   private _sources: Owned<PluginSourceRegistration>[] = [];
   private _activities: Owned<PluginActivityRegistration>[] = [];
   private _fileActions: Owned<PluginFileActionRegistration>[] = [];
+  private _fileTransformers: Owned<PluginFileTransformerRegistration>[] = [];
   private _icons: Owned<PluginIconRegistration>[] = [];
   private _i18n: Owned<PluginI18nRegistration>[] = [];
   private _subscribers: Set<() => void> = new Set();
@@ -79,6 +81,7 @@ export class PluginManager extends SharedInstance {
       sources: [],
       activities: [],
       fileActions: [],
+      fileTransformers: [],
       icons: [],
       i18n: [],
     };
@@ -91,6 +94,8 @@ export class PluginManager extends SharedInstance {
       registerActivity: (activity) => this._register(this._activities, registrations.activities, plugin.id, activity),
       registerFileAction: (fileAction) =>
         this._register(this._fileActions, registrations.fileActions, plugin.id, fileAction),
+      registerFileTransformer: (transformer) =>
+        this._register(this._fileTransformers, registrations.fileTransformers, plugin.id, transformer),
       registerIcon: (icon) => this._register(this._icons, registrations.icons, plugin.id, icon),
       registerI18n: (i18n) => this._register(this._i18n, registrations.i18n, plugin.id, i18n),
       registerConfig: (definition) => {
@@ -147,7 +152,19 @@ export class PluginManager extends SharedInstance {
     };
 
     const uploaderApi = this._sharedInstancesBag.api;
-    const pluginExports = (await plugin.setup({ pluginApi, uploaderApi })) ?? undefined;
+    let pluginExports: PluginExports | undefined;
+    try {
+      pluginExports = (await plugin.setup({ pluginApi, uploaderApi })) ?? undefined;
+    } catch (error) {
+      for (const unsub of configSubscriptions) {
+        try {
+          unsub();
+        } catch (e) {
+          this._debugPrint('Failed to unsubscribe config listener', e);
+        }
+      }
+      throw error;
+    }
 
     this._plugins.set(plugin.id, {
       plugin,
@@ -187,6 +204,7 @@ export class PluginManager extends SharedInstance {
       sources: [...this._sources],
       activities: [...this._activities],
       fileActions: [...this._fileActions],
+      fileTransformers: [...this._fileTransformers],
       icons: [...this._icons],
       i18n: [...this._i18n],
     };
@@ -210,6 +228,7 @@ export class PluginManager extends SharedInstance {
     this._sources = this._sources.filter((item) => item.pluginId !== pluginId);
     this._activities = this._activities.filter((item) => item.pluginId !== pluginId);
     this._fileActions = this._fileActions.filter((item) => item.pluginId !== pluginId);
+    this._fileTransformers = this._fileTransformers.filter((item) => item.pluginId !== pluginId);
     this._icons = this._icons.filter((item) => item.pluginId !== pluginId);
     this._i18n = this._i18n.filter((item) => item.pluginId !== pluginId);
     this.configRegistry.unregisterByPlugin(pluginId);
