@@ -422,9 +422,9 @@ export const unsplashPlugin: UploaderPlugin = {
       render(el) {
         const activityEl = document.createElement('uc-unsplash-activity') as UcUnsplashActivity;
         activityEl.uploaderApi = uploaderApi;
-        activityEl.accessKey = pluginApi.config.get<string>('unsplashAccessKey');
+        activityEl.accessKey = pluginApi.config.get('unsplashAccessKey');
 
-        const unsubscribe = pluginApi.config.subscribe<string>('unsplashAccessKey', (value) => {
+        const unsubscribe = pluginApi.config.subscribe('unsplashAccessKey', (value) => {
           activityEl.accessKey = value;
         });
 

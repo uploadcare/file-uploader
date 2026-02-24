@@ -97,5 +97,3 @@ export const cloudImageEditorPlugin: UploaderPlugin = {
     });
   },
 };
-
-export default cloudImageEditorPlugin;

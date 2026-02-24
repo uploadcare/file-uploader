@@ -1,4 +1,3 @@
-import { shrinkFile } from '@uploadcare/image-shrink';
 import {
   CancelError,
   type FileFromOptions,
@@ -11,7 +10,7 @@ import { property, state } from 'lit/decorators.js';
 import type { PluginFileActionRegistration } from '../../abstract/managers/plugin';
 import type { UploadEntryTypedData } from '../../abstract/uploadEntrySchema';
 import { debounce } from '../../utils/debounce';
-import { parseShrink } from '../../utils/parseShrink';
+
 import { throttle } from '../../utils/throttle';
 import { ExternalUploadSource } from '../../utils/UploadSource';
 import './file-item.css';
@@ -412,16 +411,19 @@ export class FileItem extends FileItemConfig {
       const uploadTask = async (): Promise<UploadcareFile> => {
         entry.setValue('isQueuedForUploading', false);
         let file: File | Blob | null = entry.getValue('file');
-        if (file instanceof File && this.cfg.imageShrink) {
-          try {
-            const settings = parseShrink(this.cfg.imageShrink);
-            if (!settings) {
-              console.warn('Image shrink settings are invalid, skipping shrinking');
-            } else {
-              file = await shrinkFile(file, settings);
+
+        if (file instanceof File) {
+          const pluginManager = this._sharedInstancesBag.pluginManager;
+          const fileTransformers = pluginManager?.snapshot().fileTransformers ?? [];
+          for (const transformer of fileTransformers) {
+            try {
+              file = await transformer.transform({
+                file,
+                mimeType: entry.getValue('mimeType'),
+              });
+            } catch (error) {
+              this.debugPrint(`File transformer from plugin "${transformer.pluginId}" failed`, error);
             }
-          } catch {
-            // keep original file if shrinking fails
           }
         }
 
