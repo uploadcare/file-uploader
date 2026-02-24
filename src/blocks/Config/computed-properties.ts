@@ -9,8 +9,10 @@ type ConfigKey = keyof ConfigType;
 type ConfigValue<TKey extends ConfigKey> = ConfigType[TKey];
 type DepKeys<TKey extends ConfigKey> = ReadonlyArray<Exclude<ConfigKey, TKey>>;
 
-type ComputedPropertyArgs<TKey extends ConfigKey, TDeps extends DepKeys<TKey>> = Record<TKey, ConfigValue<TKey>> & {
-  [K in TDeps[number]]: ConfigValue<K>;
+type ComputedPropertyArgs<TKey extends ConfigKey, TDeps extends DepKeys<TKey>> = {
+  [K in TKey]: () => ConfigValue<K>;
+} & {
+  [K in TDeps[number]]: () => ConfigValue<K>;
 };
 
 type ComputedPropertyOptions = {
@@ -35,13 +37,14 @@ const COMPUTED_PROPERTIES = [
     key: 'cameraModes',
     deps: ['enableVideoRecording'] as const,
     fn: ({ cameraModes, enableVideoRecording }) => {
-      if (enableVideoRecording === null) {
-        return cameraModes;
+      const evr = enableVideoRecording();
+      if (evr === null) {
+        return cameraModes();
       }
-      let cameraModesCsv = deserializeCsv(cameraModes);
-      if (enableVideoRecording && !cameraModesCsv.includes('video')) {
+      let cameraModesCsv = deserializeCsv(cameraModes());
+      if (evr && !cameraModesCsv.includes('video')) {
         cameraModesCsv = cameraModesCsv.concat('video');
-      } else if (!enableVideoRecording) {
+      } else if (!evr) {
         cameraModesCsv = cameraModesCsv.filter((mode) => mode !== 'video');
       }
       return serializeCsv(cameraModesCsv);
@@ -51,13 +54,14 @@ const COMPUTED_PROPERTIES = [
     key: 'cameraModes',
     deps: ['defaultCameraMode'] as const,
     fn: ({ cameraModes, defaultCameraMode }) => {
-      if (defaultCameraMode === null) {
-        return cameraModes;
+      const dcm = defaultCameraMode();
+      if (dcm === null) {
+        return cameraModes();
       }
-      let cameraModesCsv = deserializeCsv(cameraModes);
+      let cameraModesCsv = deserializeCsv(cameraModes());
       cameraModesCsv = cameraModesCsv.sort((a, b) => {
-        if (a === defaultCameraMode) return -1;
-        if (b === defaultCameraMode) return 1;
+        if (a === dcm) return -1;
+        if (b === dcm) return 1;
         return 0;
       });
       return serializeCsv(cameraModesCsv);
@@ -67,11 +71,14 @@ const COMPUTED_PROPERTIES = [
     key: 'cdnCname',
     deps: ['pubkey', 'cdnCnamePrefixed'] as const,
     fn: ({ pubkey, cdnCname, cdnCnamePrefixed }) => {
-      if (pubkey && (cdnCname === DEFAULT_CDN_CNAME || isPrefixedCdnBase(cdnCname, cdnCnamePrefixed))) {
-        return getPrefixedCdnBaseAsync(pubkey, cdnCnamePrefixed);
+      const pk = pubkey();
+      const cname = cdnCname();
+      const prefixed = cdnCnamePrefixed();
+      if (pk && (cname === DEFAULT_CDN_CNAME || isPrefixedCdnBase(cname, prefixed))) {
+        return getPrefixedCdnBaseAsync(pk, prefixed);
       }
 
-      return cdnCname;
+      return cname;
     },
   }),
   defineComputedProperty({
@@ -79,17 +86,18 @@ const COMPUTED_PROPERTIES = [
     deps: ['useCloudImageEditor'] as const,
     fn: async ({ plugins, useCloudImageEditor }, { signal }) => {
       const CLOUD_EDITOR_PLUGIN_ID = 'cloud-image-editor';
-      const basePlugins: UploaderPlugin[] = Array.isArray(plugins)
-        ? plugins.filter((p) => p?.id !== CLOUD_EDITOR_PLUGIN_ID)
-        : [];
 
-      if (!useCloudImageEditor) {
-        return basePlugins;
+      if (!useCloudImageEditor()) {
+        return plugins();
+      }
+
+      if (plugins().some((p) => p?.id === CLOUD_EDITOR_PLUGIN_ID)) {
+        return plugins();
       }
 
       try {
         const module = await import('../../plugins/cloudImageEditorPlugin');
-        if (signal.aborted) return basePlugins;
+        if (signal.aborted) return plugins();
 
         const plugin: UploaderPlugin | undefined =
           (module as { cloudImageEditorPlugin?: UploaderPlugin }).cloudImageEditorPlugin ??
@@ -97,19 +105,15 @@ const COMPUTED_PROPERTIES = [
 
         if (!plugin) {
           console.warn('[CloudImageEditorPlugin] Plugin module did not export a plugin');
-          return basePlugins;
+          return plugins();
         }
 
-        if (basePlugins.some((p) => p.id === plugin.id)) {
-          return basePlugins;
-        }
-
-        return [...basePlugins, plugin];
+        return [...plugins(), plugin];
       } catch (error) {
         if (!signal.aborted) {
           console.warn('[CloudImageEditorPlugin] Failed to load plugin', error);
         }
-        return basePlugins;
+        return plugins();
       }
     },
   }),
@@ -133,12 +137,12 @@ export const computeProperty = <TKey extends ConfigKey>({
 }: ComputePropertyOptions<TKey>) => {
   for (const computed of COMPUTED_PROPERTIES) {
     if (computed.deps.includes(key)) {
-      const args: Partial<Record<ConfigKey, ConfigType[ConfigKey]>> = {
-        [computed.key]: getValue(computed.key),
+      const args: Partial<Record<ConfigKey, () => ConfigType[ConfigKey]>> = {
+        [computed.key]: () => getValue(computed.key),
       };
 
       for (const dep of computed.deps) {
-        args[dep] = getValue(dep);
+        args[dep] = () => getValue(dep);
       }
       const abortController = new AbortController();
 
@@ -147,7 +151,6 @@ export const computeProperty = <TKey extends ConfigKey>({
 
       let result: ConfigValue<typeof computed.key> | Promise<ConfigValue<typeof computed.key>>;
       try {
-        // @ts-expect-error - TODO: try to fix those types
         result = computed.fn(args as ComputedPropertyArgs<typeof computed.key, typeof computed.deps>, {
           signal: abortController.signal,
         });
