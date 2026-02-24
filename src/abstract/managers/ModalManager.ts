@@ -16,8 +16,8 @@ export type ModalCb = (data: { id: ModalId; modal: ModalNode }) => void;
 export type ModalEventType = (typeof ModalEvents)[keyof typeof ModalEvents];
 
 export class ModalManager extends SharedInstance {
-  private _modals: Map<ModalId, ModalNode> = new Map();
-  private _activeModals: Set<ModalId> = new Set();
+  private _modals: Map<ModalId, ModalNode> = new Map() as Map<ModalId, ModalNode>;
+  private _activeModals: Set<ModalId> = new Set() as Set<ModalId>;
   private _subscribers: Map<ModalEventType, Set<ModalCb>> = new Map();
 
   /**
