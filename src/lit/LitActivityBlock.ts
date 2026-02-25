@@ -108,7 +108,6 @@ export class LitActivityBlock extends LitBlock {
   public static activities: Readonly<{
     START_FROM: 'start-from';
     CAMERA: 'camera';
-    DRAW: 'draw';
     UPLOAD_LIST: 'upload-list';
     URL: 'url';
     CLOUD_IMG_EDIT: 'cloud-image-edit';
