@@ -26,19 +26,11 @@ export interface BuildItem {
 
 export const buildItems: BuildItem[] = [
   {
-    entry: [srcPath('./core.ts')],
-    outDir: outPath('./dist/'),
-    format: 'esm',
-    minify: true,
-    bundleExternalDependencies: true,
-    mangleProps: false,
-    codeSplitting: true,
-  },
-  {
     entry: [
       srcPath('./index.ts'),
       srcPath('./abstract/loadFileUploaderFrom.ts'),
       srcPath('./env.ts'),
+      srcPath('./solutions/cloud-image-editor/index.ts'),
       ...localeFiles.map((f) => srcPath(`./locales/file-uploader/${f}`)),
     ],
     outDir: outPath('./dist/'),
@@ -46,6 +38,7 @@ export const buildItems: BuildItem[] = [
     minify: true,
     bundleExternalDependencies: false,
     mangleProps: false,
+    codeSplitting: true,
   },
   // uc-blocks
   {
