@@ -23,7 +23,6 @@ export const UploadSource = Object.freeze({
   EXTERNAL: 'external',
   API: 'js-api',
   URL: 'url',
-  DRAW: 'draw',
 
   ...UploadSourceMobile,
   ...ExternalUploadSource,
