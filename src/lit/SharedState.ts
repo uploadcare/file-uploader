@@ -1,5 +1,4 @@
 import type { Queue, UploadcareGroup } from '@uploadcare/upload-client';
-import type { EditorImageCropper, EditorImageFader, EditorSlider } from '..';
 import type { ClipboardLayer } from '../abstract/features/ClipboardLayer';
 import type { LocaleDefinition } from '../abstract/localeRegistry';
 import type { A11y } from '../abstract/managers/a11y';
@@ -25,6 +24,7 @@ import type { ISharedInstance } from './shared-instances';
 import type { RegisteredActivityType } from './LitActivityBlock';
 import type { LitBlock } from './LitBlock';
 import type { Uid } from './Uid';
+import type { EditorImageCropper, EditorImageFader, EditorSlider } from '../blocks/CloudImageEditor';
 
 type SharedConfigState = {
   [K in keyof ConfigType as `*cfg/${K}`]: ConfigType[K];

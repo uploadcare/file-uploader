@@ -46,12 +46,6 @@
       "browser": "./dist/index.js",
       "default": "./dist/index.js"
     },
-    "./core": {
-      "types": "./dist/core.d.ts",
-      "node": "./dist/index.ssr.js",
-      "browser": "./dist/core.js",
-      "default": "./dist/core.js"
-    },
     "./index.css": {
       "types": "./types/css.d.ts",
       "default": "./dist/index.css"
