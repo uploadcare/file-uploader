@@ -4,23 +4,24 @@ import { parseShrink } from '../utils/parseShrink';
 
 export const imageShrinkPlugin: UploaderPlugin = {
   id: 'image-shrink',
-  version: '0.1.0',
   setup({ pluginApi }) {
-    pluginApi.registry.registerFileTransformer({
-      transform: async ({ file }) => {
+    pluginApi.registry.registerFileHook({
+      type: 'beforeUpload',
+      handler: async ({ file, mimeType }) => {
         const imageShrink = pluginApi.config.get('imageShrink');
-        if (!imageShrink) return file;
+        if (!imageShrink) return { file, mimeType };
 
         const settings = parseShrink(imageShrink);
         if (!settings) {
           console.warn('[ImageShrinkPlugin] Image shrink settings are invalid, skipping shrinking');
-          return file;
+          return { file, mimeType };
         }
 
         try {
-          return await shrinkFile(file, settings);
+          const shrunk = await shrinkFile(file, settings);
+          return { file: shrunk, mimeType: shrunk.type || mimeType };
         } catch {
-          return file;
+          return { file, mimeType };
         }
       },
     });

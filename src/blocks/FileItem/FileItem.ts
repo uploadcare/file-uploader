@@ -254,6 +254,33 @@ export class FileItem extends FileItemConfig {
 
     this._calculateState();
     this._updatePluginFileActions();
+    void this._applyOnAddHooks(entry);
+  }
+
+  private async _applyOnAddHooks(entry: UploadEntryTypedData): Promise<void> {
+    const initialFile = entry.getValue('file');
+    if (!initialFile) return;
+
+    const pluginManager = this._sharedInstancesBag.pluginManager;
+    const onAddHooks = (pluginManager?.snapshot().fileHooks ?? []).filter((h) => h.type === 'onAdd');
+
+    let file: File | Blob = initialFile;
+    let mimeType = entry.getValue('mimeType');
+    for (const hook of onAddHooks) {
+      try {
+        ({ file, mimeType } = await hook.handler({ file, mimeType }));
+      } catch (error) {
+        this.debugPrint(`File hook "onAdd" from plugin "${hook.pluginId}" failed`, error);
+      }
+    }
+
+    if (file !== initialFile) {
+      entry.setValue('file', file as File);
+      entry.setValue('fileSize', file.size);
+    }
+    if (mimeType !== entry.getValue('mimeType')) {
+      entry.setValue('mimeType', mimeType);
+    }
   }
 
   private _updateShowFileNames(value: boolean): void {
@@ -412,17 +439,23 @@ export class FileItem extends FileItemConfig {
         entry.setValue('isQueuedForUploading', false);
         let file: File | Blob | null = entry.getValue('file');
 
-        if (file instanceof File) {
+        if (file instanceof File || file instanceof Blob) {
           const pluginManager = this._sharedInstancesBag.pluginManager;
-          const fileTransformers = pluginManager?.snapshot().fileTransformers ?? [];
-          for (const transformer of fileTransformers) {
+          const beforeUploadHooks = (pluginManager?.snapshot().fileHooks ?? []).filter(
+            (h) => h.type === 'beforeUpload',
+          );
+          for (const hook of beforeUploadHooks) {
             try {
-              file = await transformer.transform({
+              const { file: newFile, mimeType: newMimeType } = await hook.handler({
                 file,
                 mimeType: entry.getValue('mimeType'),
               });
+              file = newFile;
+              if (newMimeType !== entry.getValue('mimeType')) {
+                entry.setValue('mimeType', newMimeType);
+              }
             } catch (error) {
-              this.debugPrint(`File transformer from plugin "${transformer.pluginId}" failed`, error);
+              this.debugPrint(`File hook "beforeUpload" from plugin "${hook.pluginId}" failed`, error);
             }
           }
         }
