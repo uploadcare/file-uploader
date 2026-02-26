@@ -2,8 +2,6 @@ import type { ConfigType, OutputFileEntry } from '../../../types/exported';
 import type { CustomConfig, CustomConfigDefinition } from '../../customConfigOptions';
 import type { UploaderPublicApi } from '../../UploaderPublicApi';
 
-export type PluginVersion = string;
-
 export type PluginIconRegistration = {
   name: string;
   svg: string;
@@ -15,6 +13,14 @@ export type PluginSourceRegistration = {
   id: string;
   label: string;
   icon?: string;
+  /**
+   * Optional expansion function. When present, SourceList calls this to determine
+   * which source IDs should actually be rendered in place of this source.
+   * Useful for sources that map to multiple device-specific variants (e.g. camera
+   * expanding to separate photo/video buttons on mobile).
+   * Return `[id]` (the source's own id) to render it as-is.
+   */
+  expand?: () => string[];
   onSelect: () => Promise<void> | void;
 };
 
@@ -37,26 +43,30 @@ export type PluginFileActionRegistration = {
   onClick: (fileEntry: OutputFileEntry) => void | Promise<void>;
 };
 
-export type PluginFileTransformerContext = {
+export type PluginFileHookContext = {
   /** The file to transform */
   file: File | Blob;
   /** MIME type of the file */
   mimeType: string | null;
 };
 
-export type PluginFileTransformerRegistration = {
+export type PluginFileHookRegistration = {
   /**
-   * Transform a file before it is uploaded.
-   * Return the modified File or Blob. Return the original file if no transformation is needed.
+   * When the hook is called:
+   * - `'beforeUpload'`: called right before the file is uploaded.
+   * - `'onAdd'`: called after the file is added to the upload list.
+   *
+   * Return the modified file and mimeType. Return the originals if no transformation is needed.
    */
-  transform: (context: PluginFileTransformerContext) => File | Blob | Promise<File | Blob>;
+  type: 'beforeUpload' | 'onAdd';
+  handler: (context: PluginFileHookContext) => PluginFileHookContext | Promise<PluginFileHookContext>;
 };
 
 export type PluginRegistryApi = {
   registerSource: (source: PluginSourceRegistration) => PluginSourceRegistration;
   registerActivity: (activity: PluginActivityRegistration) => PluginActivityRegistration;
   registerFileAction: (fileAction: PluginFileActionRegistration) => PluginFileActionRegistration;
-  registerFileTransformer: (transformer: PluginFileTransformerRegistration) => PluginFileTransformerRegistration;
+  registerFileHook: (hook: PluginFileHookRegistration) => PluginFileHookRegistration;
   registerIcon: (icon: PluginIconRegistration) => PluginIconRegistration;
   registerI18n: (i18n: PluginI18nRegistration) => PluginI18nRegistration;
   registerConfig: <T = unknown>(definition: CustomConfigDefinition<T>) => void;
@@ -111,10 +121,26 @@ export type PluginActivityApi = {
   subscribeToParams: (callback: (params: Record<string, unknown>) => void) => () => void;
 };
 
+export type PluginFileEntryUpdate = {
+  file?: File | Blob;
+  cdnUrl?: string | null;
+  cdnUrlModifiers?: string | null;
+  mimeType?: string | null;
+};
+
+export type PluginFilesApi = {
+  /**
+   * Update mutable properties of a file entry by its internalId.
+   * `fileSize` is recalculated automatically when `file` is provided.
+   */
+  update: (internalId: string, changes: PluginFileEntryUpdate) => void;
+};
+
 export type PluginApi = {
   registry: PluginRegistryApi;
   config: PluginConfigApi;
   activity: PluginActivityApi;
+  files: PluginFilesApi;
 };
 
 export type PluginUploaderApi = UploaderPublicApi;
@@ -132,7 +158,6 @@ export type PluginSetupParams = {
 
 export type UploaderPlugin = {
   id: string;
-  version: PluginVersion;
   setup: (params: PluginSetupParams) => PluginSetupResult;
 };
 
@@ -142,7 +167,7 @@ export type PluginRegistrySnapshot = {
   sources: Owned<PluginSourceRegistration>[];
   activities: Owned<PluginActivityRegistration>[];
   fileActions: Owned<PluginFileActionRegistration>[];
-  fileTransformers: Owned<PluginFileTransformerRegistration>[];
+  fileHooks: Owned<PluginFileHookRegistration>[];
   icons: Owned<PluginIconRegistration>[];
   i18n: Owned<PluginI18nRegistration>[];
 };

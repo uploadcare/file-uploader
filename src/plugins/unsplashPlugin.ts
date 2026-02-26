@@ -390,7 +390,6 @@ customElements.define('uc-unsplash-activity', UcUnsplashActivity);
 
 export const unsplashPlugin: UploaderPlugin = {
   id: 'unsplash',
-  version: '0.1.0',
   setup({ pluginApi, uploaderApi }) {
     pluginApi.registry.registerConfig({
       name: 'unsplashAccessKey',

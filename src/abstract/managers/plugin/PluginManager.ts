@@ -1,4 +1,5 @@
 import { SharedInstance, type SharedInstancesBag } from '../../../lit/shared-instances';
+import type { Uid } from '../../../lit/Uid';
 import { type CustomConfigDefinition, CustomConfigRegistry } from '../../customConfigOptions';
 import { sharedConfigKey } from '../../sharedConfigKey';
 import type {
@@ -8,7 +9,9 @@ import type {
   PluginConfigApi,
   PluginExports,
   PluginFileActionRegistration,
-  PluginFileTransformerRegistration,
+  PluginFileEntryUpdate,
+  PluginFileHookRegistration,
+  PluginFilesApi,
   PluginRegistryApi,
   PluginRegistrySnapshot,
   UploaderPlugin,
@@ -19,7 +22,7 @@ export class PluginManager extends SharedInstance {
   private _sources: Owned<PluginSourceRegistration>[] = [];
   private _activities: Owned<PluginActivityRegistration>[] = [];
   private _fileActions: Owned<PluginFileActionRegistration>[] = [];
-  private _fileTransformers: Owned<PluginFileTransformerRegistration>[] = [];
+  private _fileHooks: Owned<PluginFileHookRegistration>[] = [];
   private _icons: Owned<PluginIconRegistration>[] = [];
   private _i18n: Owned<PluginI18nRegistration>[] = [];
   private _subscribers: Set<() => void> = new Set();
@@ -81,7 +84,7 @@ export class PluginManager extends SharedInstance {
       sources: [],
       activities: [],
       fileActions: [],
-      fileTransformers: [],
+      fileHooks: [],
       icons: [],
       i18n: [],
     };
@@ -94,8 +97,7 @@ export class PluginManager extends SharedInstance {
       registerActivity: (activity) => this._register(this._activities, registrations.activities, plugin.id, activity),
       registerFileAction: (fileAction) =>
         this._register(this._fileActions, registrations.fileActions, plugin.id, fileAction),
-      registerFileTransformer: (transformer) =>
-        this._register(this._fileTransformers, registrations.fileTransformers, plugin.id, transformer),
+      registerFileHook: (hook) => this._register(this._fileHooks, registrations.fileHooks, plugin.id, hook),
       registerIcon: (icon) => this._register(this._icons, registrations.icons, plugin.id, icon),
       registerI18n: (i18n) => this._register(this._i18n, registrations.i18n, plugin.id, i18n),
       registerConfig: (definition) => {
@@ -145,10 +147,25 @@ export class PluginManager extends SharedInstance {
       },
     };
 
+    const filesApi: PluginFilesApi = {
+      update: (internalId: string, changes: PluginFileEntryUpdate) => {
+        const entry = this._sharedInstancesBag.uploadCollection?.read(internalId as Uid);
+        if (!entry) return;
+        if (changes.file !== undefined) {
+          entry.setValue('file', changes.file as File);
+          entry.setValue('fileSize', changes.file.size);
+        }
+        if (changes.cdnUrl !== undefined) entry.setValue('cdnUrl', changes.cdnUrl);
+        if (changes.cdnUrlModifiers !== undefined) entry.setValue('cdnUrlModifiers', changes.cdnUrlModifiers);
+        if (changes.mimeType !== undefined) entry.setValue('mimeType', changes.mimeType);
+      },
+    };
+
     const pluginApi: PluginApi = {
       registry: registryApi,
       config: configApi,
       activity: activityApi,
+      files: filesApi,
     };
 
     const uploaderApi = this._sharedInstancesBag.api;
@@ -204,7 +221,7 @@ export class PluginManager extends SharedInstance {
       sources: [...this._sources],
       activities: [...this._activities],
       fileActions: [...this._fileActions],
-      fileTransformers: [...this._fileTransformers],
+      fileHooks: [...this._fileHooks],
       icons: [...this._icons],
       i18n: [...this._i18n],
     };
@@ -228,7 +245,7 @@ export class PluginManager extends SharedInstance {
     this._sources = this._sources.filter((item) => item.pluginId !== pluginId);
     this._activities = this._activities.filter((item) => item.pluginId !== pluginId);
     this._fileActions = this._fileActions.filter((item) => item.pluginId !== pluginId);
-    this._fileTransformers = this._fileTransformers.filter((item) => item.pluginId !== pluginId);
+    this._fileHooks = this._fileHooks.filter((item) => item.pluginId !== pluginId);
     this._icons = this._icons.filter((item) => item.pluginId !== pluginId);
     this._i18n = this._i18n.filter((item) => item.pluginId !== pluginId);
     this.configRegistry.unregisterByPlugin(pluginId);
