@@ -11,9 +11,6 @@ import '../../../blocks/DropArea/DropArea';
 import '../../../blocks/SourceList/SourceList';
 import '../../../blocks/Copyright/Copyright';
 import '../../../blocks/UploadList/UploadList';
-import '../../../blocks/CameraSource/CameraSource';
-import '../../../blocks/UrlSource/UrlSource';
-import '../../../blocks/ExternalSource/ExternalSource';
 import '../../../blocks/CloudImageEditorActivity/CloudImageEditorActivity';
 import '../../../blocks/PluginActivityRenderer/PluginActivityRenderer';
 
@@ -113,9 +110,6 @@ export class FileUploaderInline extends LitSolutionBlock {
         <uc-copyright></uc-copyright>
       </uc-start-from>
       <uc-upload-list></uc-upload-list>
-      <uc-camera-source></uc-camera-source>
-      <uc-url-source></uc-url-source>
-      <uc-external-source></uc-external-source>
       <uc-plugin-activity-renderer mode="inline"></uc-plugin-activity-renderer>
     `;
   }
