@@ -10,9 +10,6 @@ import '../../../blocks/DropArea/DropArea';
 import '../../../blocks/SourceList/SourceList';
 import '../../../blocks/Copyright/Copyright';
 import '../../../blocks/UploadList/UploadList';
-import '../../../blocks/CameraSource/CameraSource';
-import '../../../blocks/UrlSource/UrlSource';
-import '../../../blocks/ExternalSource/ExternalSource';
 import '../../../blocks/CloudImageEditorActivity/CloudImageEditorActivity';
 import '../../../blocks/SimpleBtn/SimpleBtn';
 import '../../../blocks/PluginActivityRenderer/PluginActivityRenderer';
@@ -62,18 +59,6 @@ export class FileUploaderRegular extends LitSolutionBlock {
 
   <uc-modal id="upload-list" strokes block-body-scrolling>
     <uc-upload-list></uc-upload-list>
-  </uc-modal>
-
-  <uc-modal id="camera" strokes block-body-scrolling>
-    <uc-camera-source></uc-camera-source>
-  </uc-modal>
-
-  <uc-modal id="url" strokes block-body-scrolling>
-    <uc-url-source></uc-url-source>
-  </uc-modal>
-
-  <uc-modal id="external" strokes block-body-scrolling>
-    <uc-external-source></uc-external-source>
   </uc-modal>
 
   <uc-plugin-activity-renderer mode="modal"></uc-plugin-activity-renderer>
