@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
+import { instagramPlugin } from '@/plugins/instagramPlugin';
 import { addSource, createTestPlugin, openModal, renderUploader } from './utils';
 
 describe('Source Registration', () => {
@@ -92,6 +93,24 @@ describe('Source Registration', () => {
     config.plugins = [];
 
     await expect.element(page.getByText('Removable Source')).not.toBeInTheDocument();
+  });
+
+  it('should print console.error and not render a source button for deprecated instagram source', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      const { config } = await renderUploader([instagramPlugin]);
+      addSource(config, 'instagram');
+
+      await openModal();
+
+      await vi.waitFor(() => {
+        expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Instagram source was removed'));
+      });
+
+      await expect.element(document.querySelector<HTMLElement>('[data-source-id="instagram"]')).not.toBeInTheDocument();
+    } finally {
+      errorSpy.mockRestore();
+    }
   });
 
   it('should not render plugin source if not present in sourceList', async () => {

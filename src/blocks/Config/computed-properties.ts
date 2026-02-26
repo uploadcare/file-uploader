@@ -3,6 +3,7 @@ import type { UploaderPlugin } from '../../abstract/managers/plugin';
 import type { ConfigType } from '../../types/index';
 import { deserializeCsv, serializeCsv } from '../../utils/comma-separated';
 import { isPromiseLike } from '../../utils/isPromiseLike';
+import { ExternalUploadSource } from '../../utils/UploadSource';
 import { DEFAULT_CDN_CNAME } from './initialConfig';
 
 type ConfigKey = keyof ConfigType;
@@ -19,54 +20,70 @@ type ComputedPropertyOptions = {
   signal: AbortSignal;
 };
 
+type ComputedPropertyFn<TKey extends ConfigKey, TDeps extends DepKeys<TKey>> = (
+  args: ComputedPropertyArgs<TKey, TDeps>,
+  options: ComputedPropertyOptions,
+) => ConfigValue<TKey> | Promise<ConfigValue<TKey>>;
+
 type ComputedPropertyDeclaration<TKey extends ConfigKey, TDeps extends DepKeys<TKey>> = {
   key: TKey;
   deps: TDeps;
-  fn: (
-    args: ComputedPropertyArgs<TKey, TDeps>,
-    options: ComputedPropertyOptions,
-  ) => ConfigValue<TKey> | Promise<ConfigValue<TKey>>;
+  fn: ComputedPropertyFn<TKey, TDeps>;
 };
+
+export type ComputedPropertyControllers = Map<ComputedPropertyFn<any, any>, AbortController>
 
 const defineComputedProperty = <TKey extends ConfigKey, TDeps extends DepKeys<TKey>>(
   declaration: ComputedPropertyDeclaration<TKey, TDeps>,
 ): ComputedPropertyDeclaration<TKey, TDeps> => declaration;
 
-const withLazyPlugin = async ({
-  plugins,
-  pluginId,
-  isEnabled,
-  load,
-  signal,
-}: {
-  plugins: () => UploaderPlugin[];
+type LazyPluginEntry = {
   pluginId: string;
   isEnabled: () => boolean;
   load: () => Promise<UploaderPlugin | undefined>;
+};
+
+const withLazyPlugins = async ({
+  plugins,
+  entries,
+  signal,
+}: {
+  plugins: () => UploaderPlugin[];
+  entries: LazyPluginEntry[];
   signal: AbortSignal;
 }): Promise<UploaderPlugin[]> => {
-  const pluginsWithout = () => plugins().filter((p) => p?.id !== pluginId);
+  const current = plugins();
+  const lazyIds = new Set(entries.map((e) => e.pluginId));
+  const userPlugins = current.filter((p) => !lazyIds.has(p?.id));
 
-  if (!isEnabled()) {
-    return pluginsWithout();
+  const loadResults = await Promise.all(
+    entries.map(async (entry): Promise<UploaderPlugin | null> => {
+      if (!entry.isEnabled()) return null;
+      const existing = current.find((p) => p?.id === entry.pluginId);
+      if (existing) return existing;
+      try {
+        const plugin = await entry.load();
+        if (signal.aborted || !entry.isEnabled()) return null;
+        return plugin ?? null;
+      } catch (error) {
+        if (!signal.aborted) {
+          console.warn(`[${entry.pluginId}] Failed to load plugin`, error);
+        }
+        return null;
+      }
+    }),
+  );
+
+  if (signal.aborted) return current;
+
+  const lazyPlugins = loadResults.filter((p): p is UploaderPlugin => p !== null);
+  const next = [...userPlugins, ...lazyPlugins];
+
+  if (next.length === current.length && next.every((p, i) => p === current[i])) {
+    return current;
   }
 
-  if (plugins().some((p) => p?.id === pluginId)) {
-    return plugins();
-  }
-
-  try {
-    const plugin = await load();
-    if (signal.aborted) return plugins();
-    if (!isEnabled()) return pluginsWithout();
-    if (!plugin) return plugins();
-    return [...pluginsWithout(), plugin];
-  } catch (error) {
-    if (!signal.aborted) {
-      console.warn(`[${pluginId}] Failed to load plugin`, error);
-    }
-    return plugins();
-  }
+  return next;
 };
 
 const COMPUTED_PROPERTIES = [
@@ -120,38 +137,65 @@ const COMPUTED_PROPERTIES = [
   }),
   defineComputedProperty({
     key: 'plugins',
-    deps: ['useCloudImageEditor'] as const,
-    fn: ({ plugins, useCloudImageEditor }, { signal }) =>
-      withLazyPlugin({
+    deps: ['useCloudImageEditor', 'imageShrink', 'sourceList'] as const,
+    fn: ({ plugins, useCloudImageEditor, imageShrink, sourceList }, { signal }) =>
+      withLazyPlugins({
         plugins,
-        pluginId: 'cloud-image-editor',
-        isEnabled: () => !!useCloudImageEditor(),
-        load: async () => {
-          const { cloudImageEditorPlugin } = await import('../../plugins/cloudImageEditorPlugin');
-          return cloudImageEditorPlugin;
-        },
-        signal,
-      }),
-  }),
-  defineComputedProperty({
-    key: 'plugins',
-    deps: ['imageShrink'] as const,
-    fn: ({ plugins, imageShrink }, { signal }) =>
-      withLazyPlugin({
-        plugins,
-        pluginId: 'image-shrink',
-        isEnabled: () => !!imageShrink(),
-        load: async () => {
-          const { imageShrinkPlugin } = await import('../../plugins/imageShrinkPlugin');
-          return imageShrinkPlugin;
-        },
+        entries: [
+          {
+            pluginId: 'cloud-image-editor',
+            isEnabled: () => !!useCloudImageEditor(),
+            load: async () => {
+              const { cloudImageEditorPlugin } = await import('../../plugins/cloudImageEditorPlugin');
+              return cloudImageEditorPlugin;
+            },
+          },
+          {
+            pluginId: 'image-shrink',
+            isEnabled: () => !!imageShrink(),
+            load: async () => {
+              const { imageShrinkPlugin } = await import('../../plugins/imageShrinkPlugin');
+              return imageShrinkPlugin;
+            },
+          },
+          {
+            pluginId: 'camera',
+            isEnabled: () => deserializeCsv(sourceList()).includes('camera'),
+            load: async () => {
+              const { cameraPlugin } = await import('../../plugins/cameraPlugin');
+              return cameraPlugin;
+            },
+          },
+          {
+            pluginId: 'instagram',
+            isEnabled: () => deserializeCsv(sourceList()).includes('instagram'),
+            load: async () => {
+              const { instagramPlugin } = await import('../../plugins/instagramPlugin');
+              return instagramPlugin;
+            },
+          },
+          {
+            pluginId: 'external-sources',
+            isEnabled: () =>
+              Object.values(ExternalUploadSource).some((src) => deserializeCsv(sourceList()).includes(src)),
+            load: async () => {
+              const { externalSourcesPlugin } = await import('../../plugins/externalSourcesPlugin');
+              return externalSourcesPlugin;
+            },
+          },
+          {
+            pluginId: 'url-source',
+            isEnabled: () => deserializeCsv(sourceList()).includes('url'),
+            load: async () => {
+              const { urlSourcePlugin } = await import('../../plugins/urlSourcePlugin');
+              return urlSourcePlugin;
+            },
+          },
+        ],
         signal,
       }),
   }),
 ];
-
-const computedPropertyKey = (computed: { key: string; deps: ReadonlyArray<string> }): string =>
-  `${computed.key}:${computed.deps.join(',')}`;
 
 type ConfigSetter = <TSetValue extends ConfigKey>(key: TSetValue, value: ConfigValue<TSetValue>) => void;
 type ConfigGetter = <TGetValue extends ConfigKey>(key: TGetValue) => ConfigValue<TGetValue>;
@@ -160,7 +204,7 @@ type ComputePropertyOptions<TKey extends ConfigKey> = {
   key: TKey;
   setValue: ConfigSetter;
   getValue: ConfigGetter;
-  computationControllers: Map<string, AbortController>;
+  computationControllers: ComputedPropertyControllers;
 };
 
 export const computeProperty = <TKey extends ConfigKey>({
@@ -180,8 +224,8 @@ export const computeProperty = <TKey extends ConfigKey>({
       }
       const abortController = new AbortController();
 
-      computationControllers.get(computedPropertyKey(computed))?.abort();
-      computationControllers.set(computedPropertyKey(computed), abortController);
+      computationControllers.get(computed.fn)?.abort();
+      computationControllers.set(computed.fn, abortController);
 
       let result: ConfigValue<typeof computed.key> | Promise<ConfigValue<typeof computed.key>>;
       try {
@@ -189,8 +233,8 @@ export const computeProperty = <TKey extends ConfigKey>({
           signal: abortController.signal,
         });
       } catch (error) {
-        if (computationControllers.get(computedPropertyKey(computed)) === abortController) {
-          computationControllers.delete(computedPropertyKey(computed));
+        if (computationControllers.get(computed.fn) === abortController) {
+          computationControllers.delete(computed.fn);
         }
         console.error(`Failed to compute value for "${computed.key}"`, error);
         return;
@@ -210,8 +254,8 @@ export const computeProperty = <TKey extends ConfigKey>({
             console.error(`Failed to compute value for "${computed.key}"`, error);
           })
           .finally(() => {
-            if (computationControllers.get(computedPropertyKey(computed)) === abortController) {
-              computationControllers.delete(computedPropertyKey(computed));
+            if (computationControllers.get(computed.fn) === abortController) {
+              computationControllers.delete(computed.fn);
             }
           });
       } else {
