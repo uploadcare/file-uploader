@@ -61,7 +61,6 @@ const loadEditorModule = async () => {
 
 export const cloudImageEditorPlugin: UploaderPlugin = {
   id: CLOUD_EDITOR_PLUGIN_ID,
-  version: '0.1.0',
   setup: async ({ pluginApi, uploaderApi }) => {
     await loadEditorModule();
 
