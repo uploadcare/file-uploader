@@ -1,13 +1,11 @@
-import { build as viteBuild } from 'vite';
-import dts from 'vite-plugin-dts';
-
 import { dirname, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { dependencies } from '../package.json'
-
-import { type BuildItem, srcPath, buildItems } from './build-items';
-import { unlayeredCss } from './vite-plugins/unlayered-css';
+import { build as viteBuild } from 'vite';
+import dts from 'vite-plugin-dts';
+import { dependencies } from '../package.json';
 import { banner } from './banner';
+import { type BuildItem, buildItems, srcPath } from './build-items';
+import { unlayeredCss } from './vite-plugins/unlayered-css';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -52,6 +50,7 @@ async function build(buildItem: BuildItem) {
     configFile: false,
     plugins,
     build: {
+      // cssCodeSplit: buildItem.codeSplitting ?? false,
       outDir: buildItem.outDir,
       emptyOutDir: false,
       lib: {
@@ -64,11 +63,9 @@ async function build(buildItem: BuildItem) {
       rolldownOptions: {
         treeshake: true,
         output: {
-          banner: banner()
+          banner: banner(),
         },
-        external: isLibBuild
-          ? (id: string) => externalDeps.some((dep) => id === dep || id.startsWith(dep + '/'))
-          : [],
+        external: isLibBuild ? (id: string) => externalDeps.some((dep) => id === dep || id.startsWith(dep + '/')) : [],
       },
     },
   });
