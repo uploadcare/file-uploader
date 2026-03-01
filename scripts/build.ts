@@ -5,31 +5,13 @@ import postcssCascadeLayers from '@csstools/postcss-cascade-layers';
 import { minifyTemplates, writeFiles } from 'esbuild-minify-templates';
 import postcss from 'postcss';
 import { build as tsupBuild } from 'tsup';
-import pkgJson from '../package.json';
+import { banner } from './banner';
 import { type BuildItem, buildItems } from './build-items';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const ROOT_DIR = path.resolve(__dirname, '..');
 const TSCONFIG_PATH = path.resolve(ROOT_DIR, 'tsconfig.app.json');
-
-function banner() {
-  const repositoryUrl = pkgJson.repository.url;
-  const licenseUrl = new URL('blob/main/LICENSE', repositoryUrl).toString();
-  const licenseName = pkgJson.license;
-  const pkgName = pkgJson.name;
-  const version = pkgJson.version;
-  const buildTime = new Date().toISOString();
-
-  return [
-    '/**',
-    ' * @license',
-    ` * Package: ${pkgName}@${version} (${licenseName})`,
-    ` * License: ${licenseUrl}`,
-    ` * Built: ${buildTime}`,
-    ' */',
-  ].join('\n');
-}
 
 async function build(buildItem: BuildItem) {
   await tsupBuild({

@@ -64,6 +64,22 @@ async function build(buildItem: BuildItem) {
         treeshake: true,
         output: {
           banner: banner(),
+          // assetFileNames: (assetInfo) => {
+          //   // Check the asset file name (e.g., "index.css" is a common default name before hashing)
+          //   if (assetInfo.name === 'index.css') {
+          //     return 'css/my-custom-name.css'; // Custom name and path
+          //   }
+          //   // Fallback for other assets (images, fonts, etc.)
+          //   return 'assets/[name]-[hash][extname]';
+          // },
+          advancedChunks: buildItem.format === 'esm' && {
+            groups: [
+              {
+                name: 'plugins',
+                test: (id) => id.includes('plugins') && !id.includes('node_modules'),
+              },
+            ],
+          },
         },
         external: isLibBuild ? (id: string) => externalDeps.some((dep) => id === dep || id.startsWith(dep + '/')) : [],
       },

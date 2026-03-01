@@ -1,7 +1,7 @@
 import { readdir } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { type LibraryOptions } from 'vite'
+import type { LibraryOptions } from 'vite';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -30,6 +30,7 @@ export const buildItems: BuildItem[] = [
       srcPath('./index.ts'),
       srcPath('./abstract/loadFileUploaderFrom.ts'),
       srcPath('./env.ts'),
+      srcPath('./solutions/cloud-image-editor/index.ts'),
       ...localeFiles.map((f) => srcPath(`./locales/file-uploader/${f}`)),
     ],
     outDir: outPath('./dist/'),

@@ -86,7 +86,7 @@
     "test:locales": "tsx ./scripts/test-locales.ts",
     "release": "shipjs prepare",
     "build:vite": "npm run clean:web && npm run clean:dist && tsx ./scripts/build.vite.ts",
-    "build:lib": "npm run clean:web && npm run clean:dist && tsx ./scripts/build.vite.ts",
+    "build:lib": "npm run clean:web && npm run clean:dist && tsx ./scripts/build.ts",
     "build:ssr-stubs": "tsx ./scripts/build-ssr-stubs.ts",
     "build:jsx:types": "tsx ./scripts/build-jsx-types.ts",
     "build:svg-sprites": "tsx ./scripts/build-svg-sprite.ts",
