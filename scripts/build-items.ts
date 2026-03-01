@@ -1,19 +1,19 @@
 import { readdir } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { Options } from 'tsup';
+import { type LibraryOptions } from 'vite'
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const SRC_PATH = resolve(__dirname, '../src');
 
-const srcPath = (subpath: string) => resolve(SRC_PATH, subpath);
-const outPath = (subpath: string) => resolve(__dirname, '..', subpath);
+export const srcPath = (subpath: string) => resolve(SRC_PATH, subpath);
+export const outPath = (subpath: string) => resolve(__dirname, '..', subpath);
 
-const localeFiles = await readdir(srcPath('./locales/file-uploader/'));
+export const localeFiles = await readdir(srcPath('./locales/file-uploader/'));
 
 export interface BuildItem {
-  entry: Options['entry'];
+  entry: LibraryOptions['entry'];
   outDir: string;
   format: 'esm' | 'iife';
   minify: boolean;
@@ -30,7 +30,6 @@ export const buildItems: BuildItem[] = [
       srcPath('./index.ts'),
       srcPath('./abstract/loadFileUploaderFrom.ts'),
       srcPath('./env.ts'),
-      srcPath('./solutions/cloud-image-editor/index.ts'),
       ...localeFiles.map((f) => srcPath(`./locales/file-uploader/${f}`)),
     ],
     outDir: outPath('./dist/'),
@@ -65,6 +64,7 @@ export const buildItems: BuildItem[] = [
       'uc-cloud-image-editor.min': srcPath('./solutions/cloud-image-editor/index.ts'),
     },
     outDir: outPath('./web'),
+    cssFilename: 'uc-cloud-image-editor.min.css',
     format: 'esm',
     minify: true,
     bundleExternalDependencies: true,
@@ -76,6 +76,7 @@ export const buildItems: BuildItem[] = [
       'uc-file-uploader-regular.min': srcPath('./solutions/file-uploader/regular/index.ts'),
     },
     outDir: outPath('./web'),
+    cssFilename: 'uc-file-uploader-regular.min.css',
     format: 'esm',
     minify: true,
     bundleExternalDependencies: true,
@@ -87,6 +88,7 @@ export const buildItems: BuildItem[] = [
       'uc-file-uploader-inline.min': srcPath('./solutions/file-uploader/inline/index.ts'),
     },
     outDir: outPath('./web'),
+    cssFilename: 'uc-file-uploader-inline.min.css',
     format: 'esm',
     minify: true,
     bundleExternalDependencies: true,
@@ -98,6 +100,7 @@ export const buildItems: BuildItem[] = [
       'uc-file-uploader-minimal.min': srcPath('./solutions/file-uploader/minimal/index.ts'),
     },
     outDir: outPath('./web'),
+    cssFilename: 'uc-file-uploader-minimal.min.css',
     format: 'esm',
     minify: true,
     bundleExternalDependencies: true,

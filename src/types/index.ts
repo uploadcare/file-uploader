@@ -6,7 +6,7 @@ export type {
   PluginConfigApi,
   PluginExports,
   PluginFileActionRegistration,
-  PluginFileTransformerRegistration,
+  // PluginFileTransformerRegistration,
   PluginRegistryApi,
   PluginRegistrySnapshot,
   UploaderPlugin,
