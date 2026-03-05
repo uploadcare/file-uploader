@@ -1,6 +1,8 @@
 import { defineComponents } from '../abstract/defineComponents';
 import type { UploaderPlugin } from '../abstract/managers/plugin';
+import * as activityModule from '../blocks/CloudImageEditorActivity/CloudImageEditorActivity';
 import { ACTIVITY_TYPES } from '../lit/activity-constants';
+import * as cloudEditorModules from '../solutions/cloud-image-editor';
 
 const CLOUD_EDITOR_PLUGIN_ID = 'cloud-image-editor';
 
@@ -47,22 +49,10 @@ const editorI18n = {
   },
 };
 
-const loadEditorModule = async () => {
-  const [cloudEditorModules, activityModule] = await Promise.all([
-    import('../solutions/cloud-image-editor'),
-    import('../blocks/CloudImageEditorActivity/CloudImageEditorActivity'),
-  ]);
-
-  defineComponents({
-    ...cloudEditorModules,
-    ...activityModule,
-  });
-};
-
 export const cloudImageEditorPlugin: UploaderPlugin = {
   id: CLOUD_EDITOR_PLUGIN_ID,
   setup: async ({ pluginApi, uploaderApi }) => {
-    await loadEditorModule();
+    defineComponents({ ...cloudEditorModules, ...activityModule });
 
     pluginApi.registry.registerIcon({
       name: 'edit-file',

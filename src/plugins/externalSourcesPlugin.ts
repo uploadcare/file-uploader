@@ -1,17 +1,13 @@
 import { defineComponents } from '../abstract/defineComponents';
 import type { UploaderPlugin } from '../abstract/managers/plugin';
+import { ExternalSource } from '../blocks/ExternalSource/ExternalSource';
 import { ACTIVITY_TYPES } from '../lit/activity-constants';
 import { ExternalUploadSource } from '../utils/UploadSource';
-
-const loadExternalSourceModule = async () => {
-  const { ExternalSource } = await import('../blocks/ExternalSource/ExternalSource');
-  defineComponents({ ExternalSource });
-};
 
 export const externalSourcesPlugin: UploaderPlugin = {
   id: 'external-sources',
   setup: async ({ pluginApi, uploaderApi }) => {
-    await loadExternalSourceModule();
+    defineComponents({ ExternalSource });
 
     pluginApi.registry.registerActivity({
       id: ACTIVITY_TYPES.EXTERNAL,
