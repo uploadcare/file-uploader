@@ -1,18 +1,14 @@
 import { defineComponents } from '../abstract/defineComponents';
 import type { UploaderPlugin } from '../abstract/managers/plugin';
+import { CameraSource } from '../blocks/CameraSource/CameraSource';
 import { ACTIVITY_TYPES } from '../lit/activity-constants';
 import { browserFeatures } from '../utils/browser-info';
 import { deserializeCsv } from '../utils/comma-separated';
 
-const loadCameraModule = async () => {
-  const { CameraSource } = await import('../blocks/CameraSource/CameraSource');
-  defineComponents({ CameraSource });
-};
-
 export const cameraPlugin: UploaderPlugin = {
   id: 'camera',
   setup: async ({ pluginApi, uploaderApi }) => {
-    await loadCameraModule();
+    defineComponents({ CameraSource });
 
     // Desktop camera source — opens the camera activity.
     // On mobile devices with htmlMediaCapture, expands to separate photo/video sources.

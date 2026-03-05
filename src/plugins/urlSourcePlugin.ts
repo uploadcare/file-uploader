@@ -1,16 +1,12 @@
 import { defineComponents } from '../abstract/defineComponents';
 import type { UploaderPlugin } from '../abstract/managers/plugin';
+import { UrlSource } from '../blocks/UrlSource/UrlSource';
 import { ACTIVITY_TYPES } from '../lit/activity-constants';
-
-const loadUrlSourceModule = async () => {
-  const { UrlSource } = await import('../blocks/UrlSource/UrlSource');
-  defineComponents({ UrlSource });
-};
 
 export const urlSourcePlugin: UploaderPlugin = {
   id: 'url-source',
   setup: async ({ pluginApi, uploaderApi }) => {
-    await loadUrlSourceModule();
+    defineComponents({ UrlSource });
 
     pluginApi.registry.registerActivity({
       id: ACTIVITY_TYPES.URL,

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { computeProperty } from './computed-properties';
+import { type ComputedPropertyControllers, computeProperty } from './computed-properties';
 
 vi.mock('../../plugins/imageShrinkPlugin', () => ({
   imageShrinkPlugin: { id: 'image-shrink', version: '0.1.0', setup: vi.fn() },
@@ -136,7 +136,7 @@ describe('computeProperty', () => {
 
     it('does not call setValue when computation is aborted before load resolves', async () => {
       const setValue = vi.fn();
-      const computationControllers = new Map<string, AbortController>();
+      const computationControllers: ComputedPropertyControllers = new Map();
 
       computeProperty({
         key: 'imageShrink',
@@ -163,7 +163,7 @@ describe('computeProperty', () => {
     });
 
     it('stores and replaces AbortController per computation key', () => {
-      const computationControllers = new Map<string, AbortController>();
+      const computationControllers: ComputedPropertyControllers = new Map();
 
       computeProperty({
         key: 'imageShrink',
@@ -174,7 +174,7 @@ describe('computeProperty', () => {
         computationControllers,
       });
 
-      const firstController = computationControllers.get('plugins:imageShrink');
+      const firstController = [...computationControllers.values()][0];
       expect(firstController).toBeDefined();
 
       computeProperty({
@@ -187,7 +187,7 @@ describe('computeProperty', () => {
       });
 
       expect(firstController?.signal.aborted).toBe(true);
-      expect(computationControllers.get('plugins:imageShrink')).not.toBe(firstController);
+      expect([...computationControllers.values()][0]).not.toBe(firstController);
     });
   });
 
