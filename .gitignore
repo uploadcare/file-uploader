@@ -5,7 +5,7 @@ TMP
 !types/**
 **/*.d.ts.map
 !global.d.ts
-web
+web/**
 tests/__coverage__
 tsconfig.types.tsbuildinfo
-dist
+dist/**
