@@ -21,7 +21,6 @@ export interface BuildItem {
   cssFilename?: string;
   bundleExternalDependencies: boolean;
   mangleProps?: boolean;
-  codeSplitting?: boolean;
 }
 
 export const buildItems: BuildItem[] = [
@@ -30,7 +29,6 @@ export const buildItems: BuildItem[] = [
       srcPath('./index.ts'),
       srcPath('./abstract/loadFileUploaderFrom.ts'),
       srcPath('./env.ts'),
-      srcPath('./solutions/cloud-image-editor/index.ts'),
       ...localeFiles.map((f) => srcPath(`./locales/file-uploader/${f}`)),
     ],
     outDir: outPath('./dist/'),
@@ -38,7 +36,6 @@ export const buildItems: BuildItem[] = [
     minify: true,
     bundleExternalDependencies: false,
     mangleProps: false,
-    codeSplitting: true,
   },
   // uc-blocks
   {

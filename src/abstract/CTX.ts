@@ -1,5 +1,6 @@
 import type { UploadcareGroup } from '@uploadcare/upload-client';
 import { Queue } from '@uploadcare/upload-client';
+import type { LazyPluginEntryFactory } from '../blocks/Config/lazyPluginRegistry';
 import type { LitBlock } from '../lit/LitBlock';
 import type { OutputCollectionState, OutputErrorCollection } from '../types/index';
 
@@ -33,4 +34,5 @@ export const uploaderBlockCtx = (fnCtx: LitBlock) => ({
 export const solutionBlockCtx = (fnCtx: LitBlock) => ({
   ...uploaderBlockCtx(fnCtx),
   '*solution': null as string | null,
+  '*lazyPlugins': null as LazyPluginEntryFactory | null,
 });

@@ -41,12 +41,20 @@ export { UploadList } from './blocks/UploadList/UploadList';
 export { Config } from './blocks/Config/Config';
 export { DropArea } from './blocks/DropArea/DropArea';
 export { FileItem } from './blocks/FileItem/FileItem';
-export { ExternalUploadSource, UploadSource } from './utils/UploadSource';
 export { SimpleBtn } from './blocks/SimpleBtn/SimpleBtn';
 export { PluginActivityRenderer, PluginActivityHost } from './blocks/PluginActivityRenderer';
+export { ExternalUploadSource, UploadSource } from './utils/UploadSource';
+
+// Extract as plugins
+export * from './blocks/CloudImageEditor/index';
+export { CloudImageEditorActivity } from './blocks/CloudImageEditorActivity/CloudImageEditorActivity';
+export { UrlSource } from './blocks/UrlSource/UrlSource';
+export { ExternalSource } from './blocks/ExternalSource/ExternalSource';
+export { CameraSource } from './blocks/CameraSource/CameraSource';
 
 // Solutions:
 export { FileUploaderRegular } from './solutions/file-uploader/regular/FileUploaderRegular';
+export { CloudImageEditor } from './solutions/cloud-image-editor/CloudImageEditor';
 export { FileUploaderInline } from './solutions/file-uploader/inline/FileUploaderInline';
 export { FileUploaderMinimal } from './solutions/file-uploader/minimal/FileUploaderMinimal';
 

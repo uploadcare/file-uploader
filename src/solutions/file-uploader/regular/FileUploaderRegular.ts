@@ -3,6 +3,7 @@ import { property } from 'lit/decorators.js';
 import { InternalEventType } from '../../../blocks/UploadCtxProvider/EventEmitter';
 import { LitSolutionBlock } from '../../../lit/LitSolutionBlock';
 import './index.css';
+import { fileUploaderLazyPlugins } from '../lazyPlugins.js';
 
 import '../../../blocks/Modal/Modal';
 import '../../../blocks/StartFrom/StartFrom';
@@ -18,6 +19,8 @@ type BaseInitState = InstanceType<typeof LitSolutionBlock>['init$'];
 interface FileUploaderRegularInitState extends BaseInitState {}
 
 export class FileUploaderRegular extends LitSolutionBlock {
+  public static override lazyPlugins = fileUploaderLazyPlugins;
+
   public declare attributesMeta: {
     headless?: boolean;
     'ctx-name': string;
