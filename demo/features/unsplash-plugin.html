@@ -1,59 +1,57 @@
 <!doctype html>
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Unsplash Plugin Demo</title>
   <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      margin: 0;
-      padding: 24px;
-      line-height: 1.5;
-    }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    margin: 0;
+    padding: 24px;
+    line-height: 1.5;
+  }
 
-    h1 {
-      font-size: 22px;
-      margin: 0 0 6px;
+  h1 {
+    font-size: 22px;
+    margin: 0 0 6px;
+  }
+
+  p {
+    margin: 0 0 20px;
+    color: #6b7280;
+    font-size: 14px;
+  }
+
+  p a {
+    color: #4f46e5;
+    font-size: 13px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    body {
+      background: #0f1115;
+      color: #f9fafb;
     }
 
     p {
-      margin: 0 0 20px;
-      color: #6b7280;
-      font-size: 14px;
+      color: #9ca3af;
     }
-
-    p a {
-      color: #4f46e5;
-      font-size: 13px;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      body {
-        background: #0f1115;
-        color: #f9fafb;
-      }
-
-      p {
-        color: #9ca3af;
-      }
-    }
+  }
   </style>
   <script type="module">
-    import '@/solutions/file-uploader/regular/index.css';
-    import * as UC from '@/index.js';
-    import { unsplashPlugin } from '@/plugins/unsplashPlugin.js';
+  import '@/solutions/file-uploader/regular/index.css';
+  import * as UC from '@/index.js';
+  import { unsplashPlugin } from '@/plugins/unsplashPlugin.js';
 
-    UC.defineComponents(UC);
+  UC.defineComponents(UC);
 
-    const config = document.querySelector('uc-config');
-    config.plugins = [unsplashPlugin];
+  const config = document.querySelector('uc-config');
+  config.plugins = [unsplashPlugin];
   </script>
 </head>
 
 <body>
   <h1>Unsplash Plugin</h1>
-  <p>
-    Search and pick photos from Unsplash directly in the uploader.<br />
-  </p>
+  <p>Search and pick photos from Unsplash directly in the uploader.<br></p>
 
   <uc-file-uploader-regular ctx-name="unsplash-demo"></uc-file-uploader-regular>
   <uc-config
@@ -66,4 +64,3 @@
   ></uc-config>
   <uc-upload-ctx-provider ctx-name="unsplash-demo"></uc-upload-ctx-provider>
 </body>
-</html>

@@ -41,7 +41,6 @@ export class LocaleManager extends SharedInstance {
         this._applyPluginLocales(localeName);
 
         this._applyOverrides(localeName, definition);
-
       }),
     );
 

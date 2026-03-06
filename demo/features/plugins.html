@@ -69,7 +69,8 @@
           wrapper.appendChild(title);
 
           const hint = document.createElement('p');
-          hint.textContent = 'Drag the sample card into the dropzone below (or drop any file). It will be added to the uploader list via plugin API.';
+          hint.textContent =
+            'Drag the sample card into the dropzone below (or drop any file). It will be added to the uploader list via plugin API.';
           hint.style.margin = '0';
           hint.style.color = 'var(--uc-gray-600, #4b5563)';
           hint.style.fontSize = '14px';
@@ -183,5 +184,12 @@
 </head>
 
 <uc-file-uploader-regular ctx-name="my-uploader"></uc-file-uploader-regular>
-<uc-config ctx-name="my-uploader" pubkey="demopublickey" debug quality-insights="false" test-mode source-list="local, url, camera, dropbox, gdrive, demo-source"></uc-config>
+<uc-config
+  ctx-name="my-uploader"
+  pubkey="demopublickey"
+  debug
+  quality-insights="false"
+  test-mode
+  source-list="local, url, camera, dropbox, gdrive, demo-source"
+></uc-config>
 <uc-upload-ctx-provider ctx-name="my-uploader"></uc-upload-ctx-provider>
