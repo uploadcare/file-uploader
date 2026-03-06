@@ -1,18 +1,24 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { type ComputedPropertyControllers, computeProperty } from './computed-properties';
-
-vi.mock('../../plugins/imageShrinkPlugin', () => ({
-  imageShrinkPlugin: { id: 'image-shrink', version: '0.1.0', setup: vi.fn() },
-}));
-
-vi.mock('../../plugins/cloudImageEditorPlugin', () => ({
-  cloudImageEditorPlugin: { id: 'cloud-image-editor', version: '0.1.0', setup: vi.fn() },
-}));
+import type { LazyPluginEntryFactory } from './lazyPluginRegistry';
 
 // biome-ignore lint/suspicious/noExplicitAny: test helper
 type AnyRecord = Record<string, any>;
 // biome-ignore lint/suspicious/noExplicitAny: test helper
 const makeGetter = (values: AnyRecord) => (key: string) => values[key] as any;
+
+const testLazyPlugins: LazyPluginEntryFactory = ({ useCloudImageEditor, imageShrink }) => [
+  {
+    pluginId: 'cloud-image-editor',
+    isEnabled: () => !!useCloudImageEditor(),
+    load: async () => ({ id: 'cloud-image-editor', version: '0.1.0', setup: vi.fn() }),
+  },
+  {
+    pluginId: 'image-shrink',
+    isEnabled: () => !!imageShrink(),
+    load: async () => ({ id: 'image-shrink', version: '0.1.0', setup: vi.fn() }),
+  },
+];
 
 describe('computeProperty', () => {
   afterEach(() => vi.restoreAllMocks());
@@ -27,6 +33,7 @@ describe('computeProperty', () => {
         // biome-ignore lint/suspicious/noExplicitAny: test helper
         getValue: makeGetter({ enableVideoRecording: true, cameraModes: 'photo' }) as any,
         computationControllers: new Map(),
+        getLazyPluginEntries: () => [],
       });
       expect(setValue).toHaveBeenCalledWith('cameraModes', 'photo,video');
     });
@@ -40,6 +47,7 @@ describe('computeProperty', () => {
         // biome-ignore lint/suspicious/noExplicitAny: test helper
         getValue: makeGetter({ enableVideoRecording: false, cameraModes: 'photo,video' }) as any,
         computationControllers: new Map(),
+        getLazyPluginEntries: () => [],
       });
       expect(setValue).toHaveBeenCalledWith('cameraModes', 'photo');
     });
@@ -53,6 +61,7 @@ describe('computeProperty', () => {
         // biome-ignore lint/suspicious/noExplicitAny: test helper
         getValue: makeGetter({ enableVideoRecording: null, cameraModes: 'photo,video' }) as any,
         computationControllers: new Map(),
+        getLazyPluginEntries: () => [],
       });
       expect(setValue).toHaveBeenCalledWith('cameraModes', 'photo,video');
     });
@@ -68,6 +77,7 @@ describe('computeProperty', () => {
         // biome-ignore lint/suspicious/noExplicitAny: test helper
         getValue: makeGetter({ defaultCameraMode: 'video', cameraModes: 'photo,video' }) as any,
         computationControllers: new Map(),
+        getLazyPluginEntries: () => [],
       });
       expect(setValue).toHaveBeenCalledWith('cameraModes', 'video,photo');
     });
@@ -81,6 +91,7 @@ describe('computeProperty', () => {
         // biome-ignore lint/suspicious/noExplicitAny: test helper
         getValue: makeGetter({ defaultCameraMode: null, cameraModes: 'photo,video' }) as any,
         computationControllers: new Map(),
+        getLazyPluginEntries: () => [],
       });
       expect(setValue).toHaveBeenCalledWith('cameraModes', 'photo,video');
     });
@@ -96,6 +107,7 @@ describe('computeProperty', () => {
         // biome-ignore lint/suspicious/noExplicitAny: test helper
         getValue: makeGetter({ imageShrink: '800x600', plugins: [] }) as any,
         computationControllers: new Map(),
+        getLazyPluginEntries: testLazyPlugins,
       });
       await vi.waitFor(() => {
         expect(setValue).toHaveBeenCalledWith('plugins', [expect.objectContaining({ id: 'image-shrink' })]);
@@ -112,6 +124,7 @@ describe('computeProperty', () => {
         // biome-ignore lint/suspicious/noExplicitAny: test helper
         getValue: makeGetter({ imageShrink: '', plugins: [existingPlugin] }) as any,
         computationControllers: new Map(),
+        getLazyPluginEntries: testLazyPlugins,
       });
       await vi.waitFor(() => {
         expect(setValue).toHaveBeenCalledWith('plugins', []);
@@ -128,6 +141,7 @@ describe('computeProperty', () => {
         // biome-ignore lint/suspicious/noExplicitAny: test helper
         getValue: makeGetter({ imageShrink: '800x600', plugins: [existingPlugin] }) as any,
         computationControllers: new Map(),
+        getLazyPluginEntries: testLazyPlugins,
       });
       await vi.waitFor(() => {
         expect(setValue).toHaveBeenCalledWith('plugins', [existingPlugin]);
@@ -145,6 +159,7 @@ describe('computeProperty', () => {
         // biome-ignore lint/suspicious/noExplicitAny: test helper
         getValue: makeGetter({ imageShrink: '800x600', plugins: [] }) as any,
         computationControllers,
+        getLazyPluginEntries: testLazyPlugins,
       });
 
       // Abort by triggering a second computation — this aborts the first controller
@@ -155,6 +170,7 @@ describe('computeProperty', () => {
         // biome-ignore lint/suspicious/noExplicitAny: test helper
         getValue: makeGetter({ imageShrink: '', plugins: [] }) as any,
         computationControllers,
+        getLazyPluginEntries: testLazyPlugins,
       });
 
       await vi.waitFor(() => expect(setValue).toHaveBeenCalledOnce());
@@ -172,6 +188,7 @@ describe('computeProperty', () => {
         // biome-ignore lint/suspicious/noExplicitAny: test helper
         getValue: makeGetter({ imageShrink: '800x600', plugins: [] }) as any,
         computationControllers,
+        getLazyPluginEntries: testLazyPlugins,
       });
 
       const firstController = [...computationControllers.values()][0];
@@ -184,6 +201,7 @@ describe('computeProperty', () => {
         // biome-ignore lint/suspicious/noExplicitAny: test helper
         getValue: makeGetter({ imageShrink: '1024x768', plugins: [] }) as any,
         computationControllers,
+        getLazyPluginEntries: testLazyPlugins,
       });
 
       expect(firstController?.signal.aborted).toBe(true);
@@ -201,6 +219,7 @@ describe('computeProperty', () => {
         // biome-ignore lint/suspicious/noExplicitAny: test helper
         getValue: makeGetter({ useCloudImageEditor: true, plugins: [] }) as any,
         computationControllers: new Map(),
+        getLazyPluginEntries: testLazyPlugins,
       });
       await vi.waitFor(() => {
         expect(setValue).toHaveBeenCalledWith('plugins', [expect.objectContaining({ id: 'cloud-image-editor' })]);
@@ -217,6 +236,7 @@ describe('computeProperty', () => {
         // biome-ignore lint/suspicious/noExplicitAny: test helper
         getValue: makeGetter({ useCloudImageEditor: false, plugins: [existingPlugin] }) as any,
         computationControllers: new Map(),
+        getLazyPluginEntries: testLazyPlugins,
       });
       await vi.waitFor(() => {
         expect(setValue).toHaveBeenCalledWith('plugins', []);

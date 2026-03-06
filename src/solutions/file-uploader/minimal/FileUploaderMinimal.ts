@@ -6,6 +6,7 @@ import { InternalEventType } from '../../../blocks/UploadCtxProvider/EventEmitte
 import { LitActivityBlock, type RegisteredActivityType } from '../../../lit/LitActivityBlock';
 import { LitSolutionBlock } from '../../../lit/LitSolutionBlock';
 import './index.css';
+import { fileUploaderLazyPlugins } from '../lazyPlugins.js';
 
 import '../../../blocks/Modal/Modal';
 import '../../../blocks/StartFrom/StartFrom';
@@ -23,6 +24,8 @@ type BaseInitState = InstanceType<typeof LitSolutionBlock>['init$'];
 type FileUploaderMinimalInitState = BaseInitState;
 
 export class FileUploaderMinimal extends LitSolutionBlock {
+  public static override lazyPlugins = fileUploaderLazyPlugins;
+
   public declare attributesMeta: {
     'ctx-name': string;
   };

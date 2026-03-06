@@ -11,6 +11,7 @@ import type { ValidationManager } from '../abstract/managers/ValidationManager';
 import type { TypedCollection } from '../abstract/TypedCollection';
 import type { UploaderPublicApi } from '../abstract/UploaderPublicApi';
 import type { UploadEntryData } from '../abstract/uploadEntrySchema';
+import type { EditorImageCropper, EditorImageFader, EditorSlider } from '../blocks/CloudImageEditor';
 import type { TabIdValue } from '../blocks/CloudImageEditor/src/toolbar-constants';
 import type {
   CropAspectRatio,
@@ -18,13 +19,13 @@ import type {
   LoadingOperations,
   Transformations,
 } from '../blocks/CloudImageEditor/src/types';
+import type { LazyPluginEntryFactory } from '../blocks/Config/lazyPluginRegistry';
 import type { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter';
 import type { ConfigType, OutputCollectionState, OutputErrorCollection } from '../types';
-import type { ISharedInstance } from './shared-instances';
 import type { RegisteredActivityType } from './LitActivityBlock';
 import type { LitBlock } from './LitBlock';
+import type { ISharedInstance } from './shared-instances';
 import type { Uid } from './Uid';
-import type { EditorImageCropper, EditorImageFader, EditorSlider } from '../blocks/CloudImageEditor';
 
 type SharedConfigState = {
   [K in keyof ConfigType as `*cfg/${K}`]: ConfigType[K];
@@ -52,6 +53,7 @@ type UploaderBlockCtxState = ActivityBlockCtxState & {
 
 type SolutionBlockCtxState = UploaderBlockCtxState & {
   '*solution': string | null;
+  '*lazyPlugins': LazyPluginEntryFactory | null;
 };
 
 type CloudImageEditorState = {

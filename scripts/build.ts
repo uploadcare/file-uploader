@@ -50,19 +50,16 @@ async function build(buildItem: BuildItem) {
       options.mainFields = ['exports'];
       options.platform = 'browser';
       options.legalComments = 'linked';
+      options.logOverride = { 'ignored-bare-import': 'silent' };
       if (buildItem.mangleProps) {
         options.mangleProps = /^_/;
-      }
-      if (buildItem.codeSplitting) {
-        options.splitting = true;
-        options.supported = { 'dynamic-import': true };
       }
     },
     esbuildPlugins: buildItem.minify ? [minifyTemplates(), writeFiles()] : [],
     noExternal: buildItem.bundleExternalDependencies ? [/.*/] : undefined,
     globalName: buildItem.format === 'iife' ? 'UC' : undefined,
     keepNames: buildItem.format === 'iife' ? true : undefined,
-    splitting: buildItem.codeSplitting ?? false,
+    splitting: false,
     treeshake: true,
     shims: false,
     dts: true,
