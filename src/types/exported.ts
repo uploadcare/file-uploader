@@ -12,7 +12,7 @@ import type { complexConfigKeys } from '../blocks/Config/Config';
 import type { FilesViewMode } from '../blocks/UploadList/UploadList';
 
 export {
-  Metadata,
+  type Metadata,
   NetworkError,
   UploadcareError,
   UploadcareFile,
