@@ -165,7 +165,7 @@ export class FileItem extends FileItemConfig {
     }, 100),
   );
 
-  private _handleState(entry: UploadEntryTypedData, state: FileItemStateValue): void {
+  private _handleState(_entry: UploadEntryTypedData, state: FileItemStateValue): void {
     if (state === FileItemState.FAILED) {
       this._badgeIcon = 'badge-error';
     } else if (state === FileItemState.FINISHED) {

@@ -46,7 +46,10 @@ export class ClipboardLayer extends SharedInstance {
   }
 
   private async handlePaste(event: ClipboardEvent) {
-    const items = Array.from(event.clipboardData!.items);
+    if (!event.clipboardData) {
+      return;
+    }
+    const items = Array.from(event.clipboardData.items);
 
     const files = items.map((item) => item.getAsFile()).filter((file): file is File => file !== null);
     const urls = items
