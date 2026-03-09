@@ -1,4 +1,4 @@
-import type { LazyPluginEntryFactory } from '../../blocks/Config/lazyPluginRegistry';
+import type { LazyPluginEntry } from '../../abstract/managers/plugin/lazyPluginRegistry';
 import { cameraPlugin } from '../../plugins/cameraPlugin';
 import { cloudImageEditorPlugin } from '../../plugins/cloudImageEditorPlugin';
 import { externalSourcesPlugin } from '../../plugins/externalSourcesPlugin';
@@ -8,35 +8,42 @@ import { urlSourcePlugin } from '../../plugins/urlSourcePlugin';
 import { deserializeCsv } from '../../utils/comma-separated';
 import { ExternalUploadSource } from '../../utils/UploadSource';
 
-export const fileUploaderLazyPlugins: LazyPluginEntryFactory = ({ useCloudImageEditor, imageShrink, sourceList }) => [
+export const fileUploaderLazyPlugins: LazyPluginEntry[] = [
   {
     pluginId: 'cloud-image-editor',
-    isEnabled: () => !!useCloudImageEditor(),
+    configDeps: ['useCloudImageEditor'],
+    isEnabled: (get) => !!get('useCloudImageEditor'),
     load: () => cloudImageEditorPlugin,
   },
   {
     pluginId: 'image-shrink',
-    isEnabled: () => !!imageShrink(),
+    configDeps: ['imageShrink'],
+    isEnabled: (get) => !!get('imageShrink'),
     load: () => imageShrinkPlugin,
   },
   {
     pluginId: 'camera',
-    isEnabled: () => deserializeCsv(sourceList()).includes('camera'),
+    configDeps: ['sourceList'],
+    isEnabled: (get) => deserializeCsv(get('sourceList')).includes('camera'),
     load: () => cameraPlugin,
   },
   {
     pluginId: 'instagram',
-    isEnabled: () => deserializeCsv(sourceList()).includes('instagram'),
+    configDeps: ['sourceList'],
+    isEnabled: (get) => deserializeCsv(get('sourceList')).includes('instagram'),
     load: () => instagramPlugin,
   },
   {
     pluginId: 'external-sources',
-    isEnabled: () => Object.values(ExternalUploadSource).some((src) => deserializeCsv(sourceList()).includes(src)),
+    configDeps: ['sourceList'],
+    isEnabled: (get) =>
+      Object.values(ExternalUploadSource).some((src) => deserializeCsv(get('sourceList')).includes(src)),
     load: () => externalSourcesPlugin,
   },
   {
     pluginId: 'url-source',
-    isEnabled: () => deserializeCsv(sourceList()).includes('url'),
+    configDeps: ['sourceList'],
+    isEnabled: (get) => deserializeCsv(get('sourceList')).includes('url'),
     load: () => urlSourcePlugin,
   },
 ];

@@ -3,8 +3,6 @@ import type { ConfigType } from '../../types/index';
 import { deserializeCsv, serializeCsv } from '../../utils/comma-separated';
 import { isPromiseLike } from '../../utils/isPromiseLike';
 import { DEFAULT_CDN_CNAME } from './initialConfig';
-import type { LazyPluginEntry, LazyPluginEntryArgs } from './lazyPluginRegistry';
-import { withLazyPlugins } from './lazyPluginRegistry';
 
 type ConfigKey = keyof ConfigType;
 type ConfigValue<TKey extends ConfigKey> = ConfigType[TKey];
@@ -18,7 +16,6 @@ type ComputedPropertyArgs<TKey extends ConfigKey, TDeps extends DepKeys<TKey>> =
 
 type ComputedPropertyOptions = {
   signal: AbortSignal;
-  getLazyPluginEntries: (args: LazyPluginEntryArgs) => LazyPluginEntry[];
 };
 
 type ComputedPropertyFn<TKey extends ConfigKey, TDeps extends DepKeys<TKey>> = (
@@ -87,16 +84,6 @@ const COMPUTED_PROPERTIES = [
       return cname;
     },
   }),
-  defineComputedProperty({
-    key: 'plugins',
-    deps: ['useCloudImageEditor', 'imageShrink', 'sourceList'] as const,
-    fn: ({ plugins, useCloudImageEditor, imageShrink, sourceList }, { signal, getLazyPluginEntries }) =>
-      withLazyPlugins({
-        plugins,
-        entries: getLazyPluginEntries({ useCloudImageEditor, imageShrink, sourceList }),
-        signal,
-      }),
-  }),
 ];
 
 type ConfigSetter = <TSetValue extends ConfigKey>(key: TSetValue, value: ConfigValue<TSetValue>) => void;
@@ -107,7 +94,6 @@ type ComputePropertyOptions<TKey extends ConfigKey> = {
   setValue: ConfigSetter;
   getValue: ConfigGetter;
   computationControllers: ComputedPropertyControllers;
-  getLazyPluginEntries: (args: LazyPluginEntryArgs) => LazyPluginEntry[];
 };
 
 export const computeProperty = <TKey extends ConfigKey>({
@@ -115,7 +101,6 @@ export const computeProperty = <TKey extends ConfigKey>({
   setValue,
   getValue,
   computationControllers,
-  getLazyPluginEntries,
 }: ComputePropertyOptions<TKey>) => {
   for (const computed of COMPUTED_PROPERTIES) {
     if (!computed.deps.includes(key)) continue;
@@ -136,7 +121,6 @@ export const computeProperty = <TKey extends ConfigKey>({
     try {
       result = computed.fn(args as ComputedPropertyArgs<typeof computed.key, typeof computed.deps>, {
         signal: abortController.signal,
-        getLazyPluginEntries,
       });
     } catch (error) {
       if (computationControllers.get(computed.fn) === abortController) {

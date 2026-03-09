@@ -120,7 +120,7 @@
     "@size-limit/preset-small-lib": "^12.0.1",
     "@total-typescript/ts-reset": "^0.6.1",
     "@types/node": "^25",
-    "@types/react": "^19.2.14",
+    "@types/react": "^18.0.0",
     "@types/svg-sprite": "^0.0.39",
     "@vitest/browser": "^4.0.18",
     "@vitest/browser-playwright": "^4.0.18",

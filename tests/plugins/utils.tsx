@@ -20,7 +20,6 @@ export const TEST_IMAGE_URL =
 /** Helper to create a minimal test plugin */
 export function createTestPlugin(overrides: Partial<UploaderPlugin> & { id: string }): UploaderPlugin {
   return {
-    version: '1.0.0',
     setup: () => {},
     ...overrides,
   };

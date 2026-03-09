@@ -1,3 +1,3 @@
-import type { ConfigType } from '../types';
+import type { ConfigType, CustomConfig } from '../types';
 
-export const sharedConfigKey = <T extends keyof ConfigType>(key: T): `*cfg/${T}` => `*cfg/${key}`;
+export const sharedConfigKey = <T extends keyof (ConfigType & CustomConfig)>(key: T): `*cfg/${T}` => `*cfg/${key}`;

@@ -1,45 +1,30 @@
+import type { Unsubscriber } from '../../../lit/PubSubCompat';
 import { SharedInstance, type SharedInstancesBag } from '../../../lit/shared-instances';
-import type { Uid } from '../../../lit/Uid';
-import { type CustomConfigDefinition, CustomConfigRegistry } from '../../customConfigOptions';
-import { sharedConfigKey } from '../../sharedConfigKey';
-import type {
-  Owned,
-  PluginActivityApi,
-  PluginApi,
-  PluginConfigApi,
-  PluginExports,
-  PluginFileActionRegistration,
-  PluginFileEntryUpdate,
-  PluginFileHookRegistration,
-  PluginFilesApi,
-  PluginRegistryApi,
-  PluginRegistrySnapshot,
-  UploaderPlugin,
-} from './PluginTypes';
+import { buildPluginApi } from './buildPluginApi';
+import { LazyPluginLoader } from './LazyPluginLoader';
+import { PluginRegistry } from './PluginRegistry';
+import type { PluginRegistrySnapshot, UploaderPlugin } from './PluginTypes';
 
 export class PluginManager extends SharedInstance {
   private _plugins: Map<string, RegisteredPlugin> = new Map();
-  private _sources: Owned<PluginSourceRegistration>[] = [];
-  private _activities: Owned<PluginActivityRegistration>[] = [];
-  private _fileActions: Owned<PluginFileActionRegistration>[] = [];
-  private _fileHooks: Owned<PluginFileHookRegistration>[] = [];
-  private _icons: Owned<PluginIconRegistration>[] = [];
-  private _i18n: Owned<PluginI18nRegistration>[] = [];
-  private _subscribers: Set<() => void> = new Set();
+  private _subscribers: Set<Unsubscriber> = new Set();
   private _pluginsUpdate: Promise<void> = Promise.resolve();
-  public readonly configRegistry = new CustomConfigRegistry();
+  private _lazyPluginLoader: LazyPluginLoader;
+  public readonly registry = new PluginRegistry();
+
+  public get configRegistry() {
+    return this.registry.config;
+  }
 
   public constructor(sharedInstancesBag: SharedInstancesBag) {
     super(sharedInstancesBag);
 
-    this.addSub(
-      this._ctx.sub(sharedConfigKey('plugins'), (plugins) => {
-        this._pluginsUpdate = this._pluginsUpdate.then(() => this._syncPlugins(plugins));
-      }),
-    );
+    this._lazyPluginLoader = new LazyPluginLoader(this._ctx, (plugins) => {
+      this._pluginsUpdate = this._pluginsUpdate.then(() => this._syncPlugins(plugins));
+    });
   }
 
-  public onPluginsChange(callback: () => void): () => void {
+  public onPluginsChange(callback: Unsubscriber): Unsubscriber {
     this._subscribers.add(callback);
     return () => {
       this._subscribers.delete(callback);
@@ -62,7 +47,7 @@ export class PluginManager extends SharedInstance {
         try {
           await this._registerPlugin(plugin);
         } catch (error) {
-          this._purgeRegistrations(plugin.id);
+          this.registry.purge(plugin.id);
           this._notifySubscribers();
           this._debugPrint(`Plugin "${plugin.id}" setup failed`, error);
         }
@@ -80,98 +65,19 @@ export class PluginManager extends SharedInstance {
       this._unregisterPlugin(plugin.id);
     }
 
-    const registrations: PluginRegistrySnapshot = {
-      sources: [],
-      activities: [],
-      fileActions: [],
-      fileHooks: [],
-      icons: [],
-      i18n: [],
-    };
-
-    // Track config subscriptions for automatic cleanup
-    const configSubscriptions: Array<() => void> = [];
-
-    const registryApi: PluginRegistryApi = {
-      registerSource: (source) => this._register(this._sources, registrations.sources, plugin.id, source),
-      registerActivity: (activity) => this._register(this._activities, registrations.activities, plugin.id, activity),
-      registerFileAction: (fileAction) =>
-        this._register(this._fileActions, registrations.fileActions, plugin.id, fileAction),
-      registerFileHook: (hook) => this._register(this._fileHooks, registrations.fileHooks, plugin.id, hook),
-      registerIcon: (icon) => this._register(this._icons, registrations.icons, plugin.id, icon),
-      registerI18n: (i18n) => this._register(this._i18n, registrations.i18n, plugin.id, i18n),
-      registerConfig: (definition) => {
-        this.configRegistry.register(plugin.id, definition as CustomConfigDefinition);
-      },
-    };
-
-    const configApi: PluginConfigApi = {
-      get: <T = unknown>(configName: string): T => {
-        // Custom config names are dynamic and not known at compile time
-        // biome-ignore lint/suspicious/noExplicitAny: Custom config keys are dynamic
-        const stateKey = sharedConfigKey(configName as any);
-        // @ts-expect-error - Custom config state keys are not in the static type
-        return this._ctx.read(stateKey) as T;
-      },
-
-      subscribe: <T = unknown>(configName: string, callback: (value: T) => void): (() => void) => {
-        // Custom config names are dynamic and not known at compile time
-        // biome-ignore lint/suspicious/noExplicitAny: Custom config keys are dynamic
-        const stateKey = sharedConfigKey(configName as any);
-        // @ts-expect-error - Custom config state keys are not in the static type
-        const unsub = this._ctx.sub(stateKey, (value) => {
-          callback(value as T);
-        });
-
-        // Track subscription for automatic cleanup
-        configSubscriptions.push(unsub);
-
-        return unsub;
-      },
-    };
-
-    const activityApi: PluginActivityApi = {
-      getParams: (): Record<string, unknown> => {
-        return this._ctx.read('*currentActivityParams') as Record<string, unknown>;
-      },
-
-      subscribeToParams: (callback: (params: Record<string, unknown>) => void): (() => void) => {
-        const unsub = this._ctx.sub('*currentActivityParams', (params) => {
-          callback(params as Record<string, unknown>);
-        });
-
-        // Track subscription for automatic cleanup
-        configSubscriptions.push(unsub);
-
-        return unsub;
-      },
-    };
-
-    const filesApi: PluginFilesApi = {
-      update: (internalId: string, changes: PluginFileEntryUpdate) => {
-        const entry = this._sharedInstancesBag.uploadCollection?.read(internalId as Uid);
-        if (!entry) return;
-        if (changes.file !== undefined) {
-          entry.setValue('file', changes.file as File);
-          entry.setValue('fileSize', changes.file.size);
-        }
-        if (changes.cdnUrl !== undefined) entry.setValue('cdnUrl', changes.cdnUrl);
-        if (changes.cdnUrlModifiers !== undefined) entry.setValue('cdnUrlModifiers', changes.cdnUrlModifiers);
-        if (changes.mimeType !== undefined) entry.setValue('mimeType', changes.mimeType);
-      },
-    };
-
-    const pluginApi: PluginApi = {
-      registry: registryApi,
-      config: configApi,
-      activity: activityApi,
-      files: filesApi,
-    };
+    const configSubscriptions: Unsubscriber[] = [];
+    const pluginApi = buildPluginApi(
+      this.registry,
+      this._ctx,
+      this._sharedInstancesBag,
+      plugin.id,
+      configSubscriptions,
+    );
 
     const uploaderApi = this._sharedInstancesBag.api;
-    let pluginExports: PluginExports | undefined;
+    let pluginDispose: Unsubscriber | undefined;
     try {
-      pluginExports = (await plugin.setup({ pluginApi, uploaderApi })) ?? undefined;
+      pluginDispose = (await plugin.setup({ pluginApi, uploaderApi })) ?? undefined;
     } catch (error) {
       for (const unsub of configSubscriptions) {
         try {
@@ -183,25 +89,16 @@ export class PluginManager extends SharedInstance {
       throw error;
     }
 
-    this._plugins.set(plugin.id, {
-      plugin,
-      exports: pluginExports,
-      registrations,
-      configSubscriptions,
-    });
-
+    this._plugins.set(plugin.id, { plugin, dispose: pluginDispose, configSubscriptions });
     this._notifySubscribers();
   }
 
   private _unregisterPlugin(pluginId: string): void {
     const registered = this._plugins.get(pluginId);
-    if (!registered) {
-      return;
-    }
+    if (!registered) return;
 
-    this._purgeRegistrations(pluginId);
+    this.registry.purge(pluginId);
 
-    // Clean up config subscriptions
     for (const unsub of registered.configSubscriptions) {
       try {
         unsub();
@@ -210,45 +107,21 @@ export class PluginManager extends SharedInstance {
       }
     }
 
-    registered.exports?.dispose?.();
+    registered.dispose?.();
     this._plugins.delete(pluginId);
-
     this._notifySubscribers();
   }
 
   public snapshot(): PluginRegistrySnapshot {
-    return {
-      sources: [...this._sources],
-      activities: [...this._activities],
-      fileActions: [...this._fileActions],
-      fileHooks: [...this._fileHooks],
-      icons: [...this._icons],
-      i18n: [...this._i18n],
-    };
+    return this.registry.snapshot();
   }
 
   public override destroy(): void {
     for (const pluginId of Array.from(this._plugins.keys())) {
       this._unregisterPlugin(pluginId);
     }
+    this._lazyPluginLoader.destroy();
     super.destroy();
-  }
-
-  private _register<T>(target: Owned<T>[], bucket: Owned<T>[], pluginId: string, registration: T): T {
-    const owned = { ...registration, pluginId } as Owned<T>;
-    target.push(owned);
-    bucket.push(owned);
-    return registration;
-  }
-
-  private _purgeRegistrations(pluginId: string): void {
-    this._sources = this._sources.filter((item) => item.pluginId !== pluginId);
-    this._activities = this._activities.filter((item) => item.pluginId !== pluginId);
-    this._fileActions = this._fileActions.filter((item) => item.pluginId !== pluginId);
-    this._fileHooks = this._fileHooks.filter((item) => item.pluginId !== pluginId);
-    this._icons = this._icons.filter((item) => item.pluginId !== pluginId);
-    this._i18n = this._i18n.filter((item) => item.pluginId !== pluginId);
-    this.configRegistry.unregisterByPlugin(pluginId);
   }
 
   private _notifySubscribers(): void {
@@ -262,14 +135,8 @@ export class PluginManager extends SharedInstance {
   }
 }
 
-type PluginSourceRegistration = PluginRegistrySnapshot['sources'][number];
-type PluginActivityRegistration = PluginRegistrySnapshot['activities'][number];
-type PluginIconRegistration = PluginRegistrySnapshot['icons'][number];
-type PluginI18nRegistration = PluginRegistrySnapshot['i18n'][number];
-
 type RegisteredPlugin = {
   plugin: UploaderPlugin;
-  exports?: PluginExports;
-  registrations: PluginRegistrySnapshot;
-  configSubscriptions: Array<() => void>;
+  dispose?: Unsubscriber;
+  configSubscriptions: Unsubscriber[];
 };

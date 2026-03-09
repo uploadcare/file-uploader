@@ -7,7 +7,7 @@ describe('Cleanup & Edge Cases', () => {
     const dispose = vi.fn();
     const plugin = createTestPlugin({
       id: 'cleanup-destroy',
-      setup: () => ({ dispose }),
+      setup: () => dispose,
     });
 
     await renderUploader([plugin]);
@@ -31,7 +31,7 @@ describe('Cleanup & Edge Cases', () => {
       id: 'rapid-toggle',
       setup: () => {
         setup();
-        return { dispose };
+        return dispose;
       },
     });
 
@@ -60,7 +60,7 @@ describe('Cleanup & Edge Cases', () => {
 
     const plugin1 = createTestPlugin({
       id: 'duplicate-id',
-      setup: () => ({ dispose: dispose1 }),
+      setup: () => dispose1,
     });
 
     const plugin2 = createTestPlugin({

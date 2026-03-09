@@ -70,11 +70,11 @@ describe('Plugin Registration & Lifecycle', () => {
     await expect.element(page.getByText('Temp Source')).not.toBeInTheDocument();
   });
 
-  it('should call plugin dispose() on unregister', async () => {
+  it('should call plugin disposer on unregister', async () => {
     const dispose = vi.fn();
     const plugin = createTestPlugin({
       id: 'test-dispose',
-      setup: () => ({ dispose }),
+      setup: () => dispose,
     });
 
     const { config } = await renderUploader([plugin]);
@@ -111,7 +111,7 @@ describe('Plugin Registration & Lifecycle', () => {
 
     const plugin1 = createTestPlugin({
       id: 'replace-old',
-      setup: () => ({ dispose: dispose1 }),
+      setup: () => dispose1,
     });
     const plugin2 = createTestPlugin({ id: 'replace-new', setup: setup2 });
 
@@ -199,13 +199,13 @@ describe('Plugin Registration & Lifecycle', () => {
     await expect.element(page.getByText('Async Source')).toBeVisible();
   });
 
-  it('should await async setup() dispose() on unregister', async () => {
+  it('should await async setup() disposer on unregister', async () => {
     const dispose = vi.fn();
     const plugin = createTestPlugin({
       id: 'async-dispose',
       setup: async () => {
         await Promise.resolve();
-        return { dispose };
+        return dispose;
       },
     });
 

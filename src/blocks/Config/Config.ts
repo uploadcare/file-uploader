@@ -9,7 +9,6 @@ import './config.css';
 import { LitBlock } from '../../lit/LitBlock';
 import { type ComputedPropertyControllers, computeProperty } from './computed-properties';
 import { initialConfig } from './initialConfig';
-import type { LazyPluginEntryFactory } from './lazyPluginRegistry';
 import { normalizeConfigValue } from './normalizeConfigValue';
 
 const allConfigKeys = [
@@ -370,25 +369,17 @@ export class Config extends LitBlock {
     }
 
     const runComputeProperty = (key: keyof ConfigType) => {
-      const factory = this.has('*lazyPlugins') ? (this.$['*lazyPlugins'] as LazyPluginEntryFactory) : null;
       computeProperty({
         key,
         setValue: this._setValue.bind(this),
         getValue: this._getValue.bind(this),
         computationControllers: this._computationControllers,
-        getLazyPluginEntries: factory ? (args) => factory(args) : () => [],
       });
     };
 
     for (const key of allConfigKeys) {
       this.sub(sharedConfigKey(key), () => runComputeProperty(key));
     }
-
-    this.sub('*lazyPlugins', () => {
-      for (const key of allConfigKeys) {
-        runComputeProperty(key);
-      }
-    });
   }
 
   public override attributeChangedCallback(name: string, oldVal: string, newVal: string) {

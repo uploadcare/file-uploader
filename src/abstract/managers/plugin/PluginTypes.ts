@@ -145,11 +145,8 @@ export type PluginApi = {
 
 export type PluginUploaderApi = UploaderPublicApi;
 
-export type PluginExports = {
-  dispose?: () => void;
-};
-
-export type PluginSetupResult = PluginExports | void | Promise<PluginExports | void>;
+// biome-ignore lint/suspicious/noConfusingVoidType: That's a function return type
+export type PluginSetupResult = (() => void) | void | Promise<(() => void) | void>;
 
 export type PluginSetupParams = {
   pluginApi: PluginApi;
