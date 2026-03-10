@@ -24,6 +24,10 @@ export class PluginManager extends SharedInstance {
     });
   }
 
+  public pluginsReady(): Promise<void> {
+    return this._pluginsUpdate;
+  }
+
   public onPluginsChange(callback: Unsubscriber): Unsubscriber {
     this._subscribers.add(callback);
     return () => {

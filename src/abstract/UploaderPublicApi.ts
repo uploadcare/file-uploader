@@ -362,6 +362,11 @@ export class UploaderPublicApi extends SharedInstance {
     }
   };
 
+  public async pluginsReady(): Promise<void> {
+    const pluginManager = await this._sharedInstancesBag.wait('pluginManager');
+    return pluginManager.pluginsReady();
+  }
+
   public setCurrentActivity = <T extends ActivityType>(
     activityType: T,
     ...params: T extends keyof ActivityParamsMap
@@ -385,6 +390,11 @@ export class UploaderPublicApi extends SharedInstance {
 
   public getCurrentActivity = (): ActivityType => {
     return this._ctx.read('*currentActivity');
+  };
+
+  public historyBack = (): void => {
+    const fn = this._ctx.read('*historyBack');
+    fn?.();
   };
 
   public setModalState = (opened: boolean): void => {

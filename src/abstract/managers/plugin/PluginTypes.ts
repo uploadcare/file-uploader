@@ -14,6 +14,8 @@ export type PluginSourceRegistration = {
   label: string;
   icon?: string;
   /**
+   * @internal
+   *
    * Optional expansion function. When present, SourceList calls this to determine
    * which source IDs should actually be rendered in place of this source.
    * Useful for sources that map to multiple device-specific variants (e.g. camera

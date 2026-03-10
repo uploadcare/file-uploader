@@ -145,6 +145,25 @@ describe('API', () => {
     });
   });
 
+  describe('historyBack', () => {
+    it('should navigate back to the previous activity', async () => {
+      const uploadCtxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
+      const api = uploadCtxProvider.getAPI();
+
+      api.setCurrentActivity('url');
+      api.setModalState(true);
+
+      const urlSource = page.getByTestId('uc-url-source');
+      await expect.element(urlSource).toBeVisible();
+
+      api.historyBack();
+
+      const startFrom = page.getByTestId('uc-start-from');
+      await expect.element(startFrom).toBeVisible();
+      await expect.element(urlSource).not.toBeVisible();
+    });
+  });
+
   describe('initFlow', () => {
     it('should open the start from activity by default', async () => {
       const uploadCtxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
