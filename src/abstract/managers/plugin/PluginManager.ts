@@ -1,5 +1,6 @@
 import type { Unsubscriber } from '../../../lit/PubSubCompat';
 import { SharedInstance, type SharedInstancesBag } from '../../../lit/shared-instances';
+import type { UploadEntryTypedData } from '../../uploadEntrySchema';
 import { buildPluginApi } from './buildPluginApi';
 import { LazyPluginLoader } from './LazyPluginLoader';
 import { PluginRegistry } from './PluginRegistry';
@@ -118,6 +119,32 @@ export class PluginManager extends SharedInstance {
 
   public snapshot(): PluginRegistrySnapshot {
     return this.registry.snapshot();
+  }
+
+  public async runOnAddHooks(entry: UploadEntryTypedData): Promise<void> {
+    const initialFile = entry.getValue('file');
+    if (!initialFile) return;
+
+    const onAddHooks = this.registry.snapshot().fileHooks.filter((h) => h.type === 'onAdd');
+    if (onAddHooks.length === 0) return;
+
+    let file: File | Blob = initialFile;
+    let mimeType = entry.getValue('mimeType');
+    for (const hook of onAddHooks) {
+      try {
+        ({ file, mimeType } = await hook.handler({ file, mimeType }));
+      } catch (error) {
+        this._debugPrint(`File hook "onAdd" from plugin "${hook.pluginId}" failed`, error);
+      }
+    }
+
+    if (file !== initialFile) {
+      entry.setValue('file', file as File);
+      entry.setValue('fileSize', file.size);
+    }
+    if (mimeType !== entry.getValue('mimeType')) {
+      entry.setValue('mimeType', mimeType);
+    }
   }
 
   public override destroy(): void {
