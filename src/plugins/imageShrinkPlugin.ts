@@ -7,21 +7,21 @@ export const imageShrinkPlugin: UploaderPlugin = {
   setup({ pluginApi }) {
     pluginApi.registry.registerFileHook({
       type: 'beforeUpload',
-      handler: async ({ file, mimeType }) => {
+      handler: async ({ file }) => {
         const imageShrink = pluginApi.config.get('imageShrink');
-        if (!imageShrink) return { file, mimeType };
+        if (!imageShrink) return { file };
 
         const settings = parseShrink(imageShrink);
         if (!settings) {
           console.warn('[ImageShrinkPlugin] Image shrink settings are invalid, skipping shrinking');
-          return { file, mimeType };
+          return { file };
         }
 
         try {
           const shrunk = await shrinkFile(file, settings);
-          return { file: shrunk, mimeType: shrunk.type || mimeType };
+          return { file: shrunk };
         } catch {
-          return { file, mimeType };
+          return { file };
         }
       },
     });

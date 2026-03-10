@@ -1,5 +1,6 @@
 import type { Unsubscriber } from '../../../lit/PubSubCompat';
 import { SharedInstance, type SharedInstancesBag } from '../../../lit/shared-instances';
+import { fileIsImage } from '../../../utils/fileTypes';
 import type { UploadEntryTypedData } from '../../uploadEntrySchema';
 import { buildPluginApi } from './buildPluginApi';
 import { LazyPluginLoader } from './LazyPluginLoader';
@@ -20,8 +21,10 @@ export class PluginManager extends SharedInstance {
   public constructor(sharedInstancesBag: SharedInstancesBag) {
     super(sharedInstancesBag);
 
-    this._lazyPluginLoader = new LazyPluginLoader(this._ctx, (plugins) => {
-      this._pluginsUpdate = this._pluginsUpdate.then(() => this._syncPlugins(plugins));
+    this._lazyPluginLoader = new LazyPluginLoader(this._ctx, (pluginsPromise) => {
+      this._pluginsUpdate = this._pluginsUpdate
+        .then(() => pluginsPromise)
+        .then((plugins) => (plugins !== undefined ? this._syncPlugins(plugins) : undefined));
     });
   }
 
@@ -129,10 +132,9 @@ export class PluginManager extends SharedInstance {
     if (onAddHooks.length === 0) return;
 
     let file: File | Blob = initialFile;
-    let mimeType = entry.getValue('mimeType');
     for (const hook of onAddHooks) {
       try {
-        ({ file, mimeType } = await hook.handler({ file, mimeType }));
+        ({ file } = await hook.handler({ file }));
       } catch (error) {
         this._debugPrint(`File hook "onAdd" from plugin "${hook.pluginId}" failed`, error);
       }
@@ -141,9 +143,11 @@ export class PluginManager extends SharedInstance {
     if (file !== initialFile) {
       entry.setValue('file', file as File);
       entry.setValue('fileSize', file.size);
-    }
-    if (mimeType !== entry.getValue('mimeType')) {
-      entry.setValue('mimeType', mimeType);
+      entry.setValue('mimeType', file.type || null);
+      entry.setValue('isImage', fileIsImage(file));
+      if (file instanceof File) {
+        entry.setValue('fileName', file.name);
+      }
     }
   }
 

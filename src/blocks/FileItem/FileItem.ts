@@ -10,7 +10,7 @@ import { property, state } from 'lit/decorators.js';
 import type { PluginFileActionRegistration } from '../../abstract/managers/plugin';
 import type { UploadEntryTypedData } from '../../abstract/uploadEntrySchema';
 import { debounce } from '../../utils/debounce';
-
+import { fileIsImage } from '../../utils/fileTypes';
 import { throttle } from '../../utils/throttle';
 import { canonicalSourceName, ExternalUploadSource } from '../../utils/UploadSource';
 import './file-item.css';
@@ -419,13 +419,15 @@ export class FileItem extends FileItemConfig {
           );
           for (const hook of beforeUploadHooks) {
             try {
-              const { file: newFile, mimeType: newMimeType } = await hook.handler({
-                file,
-                mimeType: entry.getValue('mimeType'),
-              });
-              file = newFile;
-              if (newMimeType !== entry.getValue('mimeType')) {
-                entry.setValue('mimeType', newMimeType);
+              const { file: newFile } = await hook.handler({ file });
+              if (newFile !== file) {
+                file = newFile;
+                entry.setValue('mimeType', file.type || null);
+                entry.setValue('isImage', fileIsImage(file));
+                entry.setValue('fileSize', file.size);
+                if (file instanceof File) {
+                  entry.setValue('fileName', file.name);
+                }
               }
             } catch (error) {
               this.debugPrint(`File hook "beforeUpload" from plugin "${hook.pluginId}" failed`, error);

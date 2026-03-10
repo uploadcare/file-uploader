@@ -48,8 +48,6 @@ export type PluginFileActionRegistration = {
 export type PluginFileHookContext = {
   /** The file to transform */
   file: File | Blob;
-  /** MIME type of the file */
-  mimeType: string | null;
 };
 
 export type PluginFileHookRegistration = {
@@ -58,7 +56,8 @@ export type PluginFileHookRegistration = {
    * - `'beforeUpload'`: called right before the file is uploaded.
    * - `'onAdd'`: called after the file is added to the upload list.
    *
-   * Return the modified file and mimeType. Return the originals if no transformation is needed.
+   * Return the (optionally transformed) file. After the hook runs, `mimeType`,
+   * `isImage`, `fileSize`, and `fileName` are all re-derived from the returned file.
    */
   type: 'beforeUpload' | 'onAdd';
   handler: (context: PluginFileHookContext) => PluginFileHookContext | Promise<PluginFileHookContext>;

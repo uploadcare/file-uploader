@@ -2,9 +2,48 @@ import type { PubSub } from '../../../lit/PubSubCompat';
 import type { SharedState } from '../../../lit/SharedState';
 import type { ConfigType } from '../../../types/index';
 import { sharedConfigKey } from '../../sharedConfigKey';
-import type { ConfigGetter, LazyPluginEntry } from './lazyPluginRegistry';
-import { withLazyPlugins } from './lazyPluginRegistry';
 import type { UploaderPlugin } from './PluginTypes';
+
+export type ConfigGetter = <K extends keyof ConfigType>(key: K) => ConfigType[K];
+
+export type LazyPluginEntry = {
+  pluginId: string;
+  configDeps: readonly (keyof ConfigType)[];
+  isEnabled: (get: ConfigGetter) => boolean;
+  load: () => UploaderPlugin | undefined | Promise<UploaderPlugin | undefined>;
+};
+
+type ResolvedEntry = {
+  pluginId: string;
+  isEnabled: () => boolean;
+  load: () => UploaderPlugin | undefined | Promise<UploaderPlugin | undefined>;
+};
+
+const resolveLazyPlugins = async ({
+  entries,
+  signal,
+}: {
+  entries: ResolvedEntry[];
+  signal: AbortSignal;
+}): Promise<UploaderPlugin[]> => {
+  const loadResults = await Promise.all(
+    entries.map(async (entry): Promise<UploaderPlugin | undefined> => {
+      if (!entry.isEnabled()) return undefined;
+      try {
+        const plugin = await entry.load();
+        if (signal.aborted || !entry.isEnabled()) return undefined;
+        return plugin ?? undefined;
+      } catch (error) {
+        if (!signal.aborted) {
+          console.warn(`[${entry.pluginId}] Failed to load plugin`, error);
+        }
+        return undefined;
+      }
+    }),
+  );
+
+  return loadResults.filter((p): p is UploaderPlugin => p !== undefined);
+};
 
 export class LazyPluginLoader {
   private _subs: Set<() => void> = new Set();
@@ -13,7 +52,7 @@ export class LazyPluginLoader {
 
   public constructor(
     private readonly _ctx: PubSub<SharedState>,
-    private readonly _onResolved: (plugins: UploaderPlugin[]) => void,
+    private readonly _onCompute: (plugins: Promise<UploaderPlugin[] | undefined>) => void,
   ) {
     this._unsubLazyPlugins = this._ctx.sub('*lazyPlugins', (entries) => {
       this._setEntries(entries ?? []);
@@ -49,19 +88,22 @@ export class LazyPluginLoader {
     const get: ConfigGetter = <K extends keyof ConfigType>(key: K) =>
       this._ctx.read(sharedConfigKey(key)) as unknown as ConfigType[K];
 
-    withLazyPlugins({
-      plugins: () => get('plugins'),
+    const lazyIds = new Set(entries.map((e) => e.pluginId));
+    const userPlugins = (get('plugins') ?? []).filter((p) => !lazyIds.has(p?.id));
+
+    const pluginsPromise = resolveLazyPlugins({
       entries: entries.map((entry) => ({
         pluginId: entry.pluginId,
         isEnabled: () => entry.isEnabled(get),
         load: entry.load,
       })),
       signal: controller.signal,
-    }).then((plugins) => {
-      if (!controller.signal.aborted) {
-        this._onResolved(plugins);
-      }
+    }).then((lazyPlugins) => {
+      if (controller.signal.aborted) return undefined;
+      return [...userPlugins, ...lazyPlugins];
     });
+
+    this._onCompute(pluginsPromise);
   }
 
   public destroy(): void {

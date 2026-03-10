@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import type { PluginRender } from '@/index.ts';
+import { delay } from '@/utils/delay';
 import { addSource, createTestPlugin, getApi, renderUploader } from './utils';
 
 describe('Activity Registration', () => {
@@ -206,6 +207,33 @@ describe('Activity Registration', () => {
     // Activity should not render because setup failed and registrations were purged
     await expect.element(page.getByText('Throw Activity')).not.toBeInTheDocument();
   });
+
+  it('should render activity registered by an async plugin setup without awaiting pluginsReady', async () => {
+    const plugin = createTestPlugin({
+      id: 'act-async-setup',
+      setup: async ({ pluginApi }) => {
+        await delay(50);
+        pluginApi.registry.registerActivity({
+          id: 'async-setup-activity',
+          render: (el) => {
+            const div = document.createElement('div');
+            div.textContent = 'Async Setup Activity Content';
+            el.appendChild(div);
+            return () => el.replaceChildren();
+          },
+        });
+      },
+    });
+
+    await renderUploader([plugin]);
+    const api = getApi();
+
+    // setCurrentActivity internally waits for pluginsReady, so no explicit await needed
+    api.setCurrentActivity('async-setup-activity');
+    api.setModalState(true);
+
+    await expect.element(page.getByText('Async Setup Activity Content')).toBeVisible();
+  });
 });
 
 declare module '@/types/index' {
@@ -217,5 +245,6 @@ declare module '@/types/index' {
     'clear-activity': { params: never };
     'remove-activity': { params: never };
     'throw-activity': { params: never };
+    'async-setup-activity': { params: never };
   }
 }

@@ -121,7 +121,7 @@ export class UploaderPublicApi extends SharedInstance {
     const internalId = this._uploadCollection.add({
       file,
       isImage: fileIsImage(file),
-      mimeType: file.type,
+      mimeType: file.type || null,
       fileName: fileName ?? file.name,
       fileSize: file.size,
       silent: silent ?? false,
@@ -362,7 +362,7 @@ export class UploaderPublicApi extends SharedInstance {
     }
   };
 
-  public async pluginsReady(): Promise<void> {
+  private async _pluginsReady(): Promise<void> {
     const pluginManager = await this._sharedInstancesBag.wait('pluginManager');
     return pluginManager.pluginsReady();
   }
@@ -375,10 +375,7 @@ export class UploaderPublicApi extends SharedInstance {
         : [ActivityParamsMap[T]]
       : []
   ) => {
-    // Since Lit renders DOM asynchronously, we need to wait for the next tick to ensure that the activity block is rendered and registered in the context before we try to set it as current.
-    // TODO: Do not rely on DOM rendering and block registration order, we should have a better way to handle this.
-    // Some kind of ActivityManager that will keep track of registered activities and their states
-    setTimeout(() => {
+    void this._pluginsReady().then(() => {
       if (hasBlockInCtx(this._sharedInstancesBag.blocksRegistry, (b) => b.activityType === activityType)) {
         this._ctx.pub('*currentActivityParams', params[0] ?? {});
         this._ctx.pub('*currentActivity', activityType);
@@ -398,8 +395,7 @@ export class UploaderPublicApi extends SharedInstance {
   };
 
   public setModalState = (opened: boolean): void => {
-    // Next tick here because setCurrentActivity is also async and we want to make sure that the modal state is set
-    setTimeout(() => {
+    void this._pluginsReady().then(() => {
       if (opened && !this._ctx.read('*currentActivity')) {
         console.warn(`Can't open modal without current activity. Please use "setCurrentActivity" method first.`);
         return;

@@ -5,7 +5,7 @@ import type { A11y } from '../abstract/managers/a11y';
 import type { LocaleManager } from '../abstract/managers/LocaleManager';
 import type { ModalManager } from '../abstract/managers/ModalManager';
 import type { PluginManager } from '../abstract/managers/plugin';
-import type { LazyPluginEntry } from '../abstract/managers/plugin/lazyPluginRegistry';
+import type { LazyPluginEntry } from '../abstract/managers/plugin/LazyPluginLoader';
 import type { SecureUploadsManager } from '../abstract/managers/SecureUploadsManager';
 import type { TelemetryManager } from '../abstract/managers/TelemetryManager';
 import type { ValidationManager } from '../abstract/managers/ValidationManager';
