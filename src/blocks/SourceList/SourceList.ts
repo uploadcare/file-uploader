@@ -3,7 +3,6 @@ import { html } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import type { PluginSourceRegistration } from '../../abstract/managers/plugin';
 import { stringToArray } from '../../utils/stringToArray';
-import { UploadSource } from '../../utils/UploadSource';
 import type { SourceButtonConfig } from '../SourceBtn/SourceBtn';
 
 import '../SourceBtn/SourceBtn';
@@ -60,22 +59,11 @@ export class SourceList extends LitUploaderBlock {
       const expandedDiffer = expanded.length !== 1 || expanded[0] !== srcName;
       if (expandedDiffer) {
         for (const name of expanded) {
-          const config = this._makeBuiltInSourceConfig(name);
-          if (config) {
-            sources.push(config);
-            continue;
-          }
           const pluginSource = pluginSourceById.get(name);
           if (pluginSource) {
             sources.push(this._makePluginSourceConfig(pluginSource));
           }
         }
-        return;
-      }
-
-      const builtInConfig = this._makeBuiltInSourceConfig(srcName);
-      if (builtInConfig) {
-        sources.push(builtInConfig);
         return;
       }
 
@@ -95,22 +83,6 @@ export class SourceList extends LitUploaderBlock {
     }
 
     return [srcName];
-  }
-
-  private _makeBuiltInSourceConfig(type: string): SourceButtonConfig | null {
-    switch (type) {
-      case UploadSource.LOCAL:
-        return {
-          id: type,
-          label: `src-type-${type}`,
-          icon: type,
-          onClick: () => this.api.openSystemDialog(),
-        };
-      default:
-        break;
-    }
-
-    return null;
   }
 
   private _makePluginSourceConfig(source: PluginSourceRegistration): SourceButtonConfig {
