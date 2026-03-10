@@ -538,8 +538,8 @@ export class FileItem extends FileItemConfig {
               <button
                 type="button"
                 @click=${() => this._handlePluginFileAction(action)}
-                title=${action.id}
-                aria-label=${action.id}
+                title=${this.l10n(action.label)}
+                aria-label=${this.l10n(action.label)}
                 class="uc-plugin-action-btn uc-mini-btn"
                 data-plugin-action-id=${action.id}
               >
