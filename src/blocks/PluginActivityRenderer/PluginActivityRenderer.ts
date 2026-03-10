@@ -12,15 +12,13 @@ export class PluginActivityHost extends LitActivityBlock {
   @property({ attribute: false })
   public registration!: Owned<PluginActivityRegistration>;
 
-  public override activityType: ActivityType = null;
-
   private _dispose?: PluginRenderDispose;
   private _containerRef = createRef<HTMLDivElement>();
 
   public override initCallback(): void {
     this.activityType = (this.registration?.id as ActivityType) ?? null;
-    super.initCallback();
     this._ensureRegistered();
+    super.initCallback();
   }
 
   protected override willUpdate(changedProperties: PropertyValues<this>): void {
@@ -50,7 +48,8 @@ export class PluginActivityHost extends LitActivityBlock {
     });
   }
 
-  private _renderActivity(): void {
+  private async _renderActivity(): Promise<void> {
+    await this.updateComplete;
     const container = this._containerRef.value;
     if (!container || !this.registration) {
       return;
@@ -63,10 +62,11 @@ export class PluginActivityHost extends LitActivityBlock {
   }
 
   private _disposeActivity(): void {
-    this._dispose?.();
-    this._dispose = undefined;
     const container = this._containerRef.value;
     if (container) {
+      this._dispose?.();
+      this._dispose = undefined;
+
       container.replaceChildren();
     }
   }

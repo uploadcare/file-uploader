@@ -2,13 +2,11 @@
 
 import { calcCameraModes } from '../blocks/CameraSource/calcCameraModes';
 import { CameraSourceTypes, type ModeCameraType } from '../blocks/CameraSource/constants';
-import type { SourceBtn } from '../blocks/SourceBtn/SourceBtn';
 import { EventType } from '../blocks/UploadCtxProvider/EventEmitter';
 import { ACTIVITY_TYPES } from '../lit/activity-constants';
 import { findBlockInCtx } from '../lit/findBlockInCtx';
-import { hasBlockInCtx } from '../lit/hasBlockInCtx';
+import { waitForBlockInCtx } from '../lit/hasBlockInCtx';
 import type { ActivityParamsMap, ActivityType, LitActivityBlock } from '../lit/LitActivityBlock';
-import type { LitBlock } from '../lit/LitBlock';
 import { createL10n } from '../lit/l10n';
 import { PubSub } from '../lit/PubSubCompat';
 import { SharedInstance } from '../lit/shared-instances';
@@ -21,7 +19,6 @@ import type {
   UploadcareFile,
 } from '../types/index';
 import { applyStyles } from '../utils/applyStyles';
-import { browserFeatures } from '../utils/browser-info';
 import { serializeCsv } from '../utils/comma-separated';
 import {
   BASIC_IMAGE_WILDCARD,
@@ -294,53 +291,28 @@ export class UploaderPublicApi extends SharedInstance {
       if (this._sourceList?.length === 1) {
         const srcKey = this._sourceList[0];
 
-        // TODO: We should refactor those handlers
-        if (srcKey === 'local') {
-          this._ctx.pub('*currentActivity', ACTIVITY_TYPES.UPLOAD_LIST);
-          this.openSystemDialog();
-          return;
-        }
+        void this._pluginsReady().then(() => {
+          const sources = this._sharedInstancesBag.pluginManager.snapshot().sources;
+          const registeredSource = sources.find((s) => s.id === srcKey);
 
-        if (srcKey === 'camera' && browserFeatures.htmlMediaCapture) {
-          const { isPhotoEnabled, isVideoRecordingEnabled } = calcCameraModes(this.cfg);
+          if (registeredSource) {
+            const expandedIds = registeredSource.expand?.() ?? [srcKey];
 
-          if (isPhotoEnabled && isVideoRecordingEnabled) {
-            this._ctx.pub('*currentActivity', ACTIVITY_TYPES.START_FROM);
-            return;
-          } else if (isPhotoEnabled || isVideoRecordingEnabled) {
-            this.openSystemDialog({
-              captureCamera: true,
-              modeCamera: isPhotoEnabled ? CameraSourceTypes.PHOTO : CameraSourceTypes.VIDEO,
-            });
-            return;
-          } else {
-            this.openSystemDialog({
-              captureCamera: true,
-              modeCamera: CameraSourceTypes.PHOTO,
-            });
-          }
-        }
-
-        // After Lit Element migration, the source buttons are rendered async in the next tick after `sourceList` update.
-        // So we can't find them here right after updating the source list, we need to wait for the next tick to ensure that they are rendered before trying to find and activate them.
-        // Anyway this is a weird logic here that needs to be refactored.
-        setTimeout(() => {
-          if (srcKey !== this._sourceList[0]) {
+            if (expandedIds.length === 1) {
+              const target = sources.find((s) => s.id === expandedIds[0]) ?? registeredSource;
+              target.onSelect();
+            } else {
+              this._ctx.pub('*currentActivity', ACTIVITY_TYPES.START_FROM);
+              this._sharedInstancesBag.modalManager?.open(ACTIVITY_TYPES.START_FROM);
+            }
             return;
           }
-          const blocksRegistry = this._sharedInstancesBag.blocksRegistry;
-          const isSourceBtn = (block: LitBlock): block is SourceBtn =>
-            'type' in (block as any) && (block as any).type === srcKey;
-          const sourceBtnBlock = findBlockInCtx(blocksRegistry, isSourceBtn) as SourceBtn | undefined;
-          // TODO: This is weird that we have this logic inside UI component, we should consider to move it somewhere else
-          sourceBtnBlock?.activate();
-        }, 0);
 
-        if (this._ctx.read('*currentActivity')) {
-          this._sharedInstancesBag.modalManager?.open(this._ctx.read('*currentActivity'));
-        }
+          if (this._ctx.read('*currentActivity')) {
+            this._sharedInstancesBag.modalManager?.open(this._ctx.read('*currentActivity'));
+          }
+        });
       } else {
-        // Multiple sources case:
         this._ctx.pub('*currentActivity', ACTIVITY_TYPES.START_FROM);
         this._sharedInstancesBag.modalManager?.open(ACTIVITY_TYPES.START_FROM);
       }
@@ -376,12 +348,16 @@ export class UploaderPublicApi extends SharedInstance {
       : []
   ) => {
     void this._pluginsReady().then(() => {
-      if (hasBlockInCtx(this._sharedInstancesBag.blocksRegistry, (b) => b.activityType === activityType)) {
-        this._ctx.pub('*currentActivityParams', params[0] ?? {});
-        this._ctx.pub('*currentActivity', activityType);
-        return;
-      }
-      console.warn(`Activity type "${activityType}" not found in the context`);
+      this._ctx.pub('*currentActivityParams', params[0] ?? {});
+      this._ctx.pub('*currentActivity', activityType);
+      waitForBlockInCtx(
+        this._sharedInstancesBag.blocksRegistry,
+        (b) => (b as LitActivityBlock).activityType === activityType,
+        {
+          onTimeout: () => console.warn(`Activity type "${activityType}" not found in the context`),
+          timeout: 100,
+        },
+      );
     });
   };
 
@@ -396,17 +372,27 @@ export class UploaderPublicApi extends SharedInstance {
 
   public setModalState = (opened: boolean): void => {
     void this._pluginsReady().then(() => {
-      if (opened && !this._ctx.read('*currentActivity')) {
+      if (!opened) {
+        this._sharedInstancesBag.modalManager?.close(this._ctx.read('*currentActivity'));
+        this._ctx.pub('*currentActivity', null);
+        return;
+      }
+
+      const activityType = this._ctx.read('*currentActivity');
+      if (!activityType) {
         console.warn(`Can't open modal without current activity. Please use "setCurrentActivity" method first.`);
         return;
       }
 
-      if (opened) {
-        this._sharedInstancesBag.modalManager?.open(this._ctx.read('*currentActivity'));
-      } else {
-        this._sharedInstancesBag.modalManager?.close(this._ctx.read('*currentActivity'));
-        this._ctx.pub('*currentActivity', null);
-      }
+      return waitForBlockInCtx(
+        this._sharedInstancesBag.blocksRegistry,
+        (b) => (b as LitActivityBlock).activityType === activityType,
+        {
+          onTimeout: () => console.warn(`Activity block "${activityType}" not found in the context`),
+        },
+      ).then(() => {
+        this._sharedInstancesBag.modalManager?.open(activityType);
+      });
     });
   };
 

@@ -39,8 +39,13 @@ export type PluginActivityRegistration = {
 };
 
 export type PluginFileActionRegistration = {
+  /** Unique action identifier. */
   id: string;
+  /** Icon name to display in the action button. */
   icon: string;
+  /** Label shown next to the icon in the action button. Accepts a plain string or an i18n key registered via `registerI18n`. */
+  label: string;
+  /** Return `true` to show the action button for the given file entry. */
   shouldRender: (fileEntry: OutputFileEntry) => boolean;
   onClick: (fileEntry: OutputFileEntry) => void | Promise<void>;
 };

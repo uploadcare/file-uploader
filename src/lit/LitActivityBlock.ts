@@ -22,6 +22,8 @@ export type ActivityParamsMap = {
 export class LitActivityBlock extends LitBlock {
   protected historyTracked = false;
 
+  public activityType: ActivityType = null;
+
   private [ACTIVE_PROP]?: boolean;
 
   public override init$ = activityBlockCtx(this);
@@ -144,19 +146,6 @@ export class LitActivityBlock extends LitBlock {
   public override disconnectedCallback(): void {
     super.disconnectedCallback();
     this._isActivityRegistered() && this._unregisterActivity();
-
-    const currentActivity = this.$['*currentActivity'] as string | null;
-
-    if (this.blocksRegistry) {
-      const hasCurrentActivityInCtx = !![...this.blocksRegistry].find(
-        (block) => block instanceof LitActivityBlock && block.activityType === currentActivity,
-      );
-
-      if (!hasCurrentActivityInCtx) {
-        this.$['*currentActivity'] = null;
-        this.modalManager?.closeAll();
-      }
-    }
   }
 
   public get activityParams(): ActivityParamsMap[keyof ActivityParamsMap] {
@@ -183,7 +172,9 @@ export class LitActivityBlock extends LitBlock {
 
       let couldOpenActivity = !!nextActivity;
       if (nextActivity) {
-        const nextLitActivityBlock = [...this.blocksRegistry].find((block) => block.activityType === nextActivity);
+        const nextLitActivityBlock = [...this.blocksRegistry].find(
+          (block) => (block as LitActivityBlock).activityType === nextActivity,
+        );
         couldOpenActivity = (nextLitActivityBlock as LitActivityBlock | undefined)?.couldOpenActivity ?? false;
       }
 

@@ -24,7 +24,12 @@ export class PluginManager extends SharedInstance {
     this._lazyPluginLoader = new LazyPluginLoader(this._ctx, (pluginsPromise) => {
       this._pluginsUpdate = this._pluginsUpdate
         .then(() => pluginsPromise)
-        .then((plugins) => (plugins !== undefined ? this._syncPlugins(plugins) : undefined));
+        .then((plugins) => {
+          if (plugins) {
+            return this._syncPlugins(plugins);
+          }
+          return;
+        });
     });
   }
 
@@ -50,8 +55,7 @@ export class PluginManager extends SharedInstance {
       }
       processedIds.add(plugin.id);
 
-      const registered = this._plugins.get(plugin.id);
-      if (!registered || registered.plugin !== plugin) {
+      if (!this._plugins.has(plugin.id)) {
         try {
           await this._registerPlugin(plugin);
         } catch (error) {
