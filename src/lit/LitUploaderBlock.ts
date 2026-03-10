@@ -198,6 +198,10 @@ export class LitUploaderBlock extends LitActivityBlock {
       if (!entry.getValue('silent')) {
         this.emit(EventType.FILE_ADDED, this.api.getOutputItem(entry.uid));
       }
+      const pluginManager = this._sharedInstancesBag.pluginManager;
+      if (pluginManager) {
+        void pluginManager.runOnAddHooks(entry);
+      }
     }
 
     this.validationManager.runCollectionValidators();
