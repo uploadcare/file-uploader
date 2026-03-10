@@ -13,6 +13,7 @@ describe('Icon Registration', () => {
         });
         pluginApi.registry.registerFileAction({
           id: 'icon-action',
+          label: 'Icon Action',
           icon: 'my-custom-icon',
           shouldRender: () => true,
           onClick: () => {},
@@ -27,7 +28,7 @@ describe('Icon Registration', () => {
     api.initFlow();
 
     // The file action button with the custom icon should be visible
-    await expect.element(page.getByRole('button', { name: 'icon-action' })).toBeVisible();
+    await expect.element(page.getByRole('button', { name: 'Icon Action' })).toBeVisible();
   });
 });
 

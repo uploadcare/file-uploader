@@ -14,6 +14,7 @@ describe('File Action Registration', () => {
         pluginApi.registry.registerFileAction({
           id: 'show-action',
           icon: 'test-action-icon',
+          label: 'Show Action',
           shouldRender: () => true,
           onClick: () => {},
         });
@@ -26,7 +27,7 @@ describe('File Action Registration', () => {
     api.addFileFromUrl(TEST_IMAGE_URL);
     api.initFlow();
 
-    await expect.element(page.getByRole('button', { name: 'show-action' })).toBeVisible();
+    await expect.element(page.getByRole('button', { name: 'Show Action', exact: true })).toBeVisible();
   });
 
   it('should hide file action button when shouldRender() returns false', async () => {
@@ -36,6 +37,7 @@ describe('File Action Registration', () => {
         pluginApi.registry.registerFileAction({
           id: 'hidden-action',
           icon: 'default',
+          label: 'Hidden Action',
           shouldRender: () => false,
           onClick: () => {},
         });
@@ -52,7 +54,7 @@ describe('File Action Registration', () => {
     await expect.element(page.getByTestId('uc-upload-list')).toBeVisible();
 
     // The action button should not be in the DOM
-    await expect.element(page.getByRole('button', { name: 'hidden-action' })).not.toBeInTheDocument();
+    await expect.element(page.getByRole('button', { name: 'Hidden Action', exact: true })).not.toBeInTheDocument();
   });
 
   it('should call onClick() when file action button is clicked', async () => {
@@ -63,6 +65,7 @@ describe('File Action Registration', () => {
         pluginApi.registry.registerFileAction({
           id: 'click-action',
           icon: 'default',
+          label: 'Click Action',
           shouldRender: () => true,
           onClick,
         });
@@ -75,7 +78,7 @@ describe('File Action Registration', () => {
     api.addFileFromUrl(TEST_IMAGE_URL);
     api.initFlow();
 
-    const actionBtn = page.getByRole('button', { name: 'click-action' });
+    const actionBtn = page.getByRole('button', { name: 'Click Action', exact: true });
     await expect.element(actionBtn).toBeVisible();
     await actionBtn.click();
 
@@ -95,6 +98,7 @@ describe('File Action Registration', () => {
         pluginApi.registry.registerFileAction({
           id: 'status-action',
           icon: 'default',
+          label: 'Status Action',
           shouldRender,
           onClick: () => {},
         });
@@ -108,7 +112,7 @@ describe('File Action Registration', () => {
     api.initFlow();
 
     // After upload completes, the action should appear
-    await expect.element(page.getByRole('button', { name: 'status-action' })).toBeVisible();
+    await expect.element(page.getByRole('button', { name: 'Status Action', exact: true })).toBeVisible();
   });
 
   it('should handle shouldRender() throwing an error gracefully', async () => {
@@ -118,6 +122,7 @@ describe('File Action Registration', () => {
         pluginApi.registry.registerFileAction({
           id: 'error-action',
           icon: 'default',
+          label: 'Error Action',
           shouldRender: () => {
             throw new Error('shouldRender failed');
           },
@@ -135,7 +140,7 @@ describe('File Action Registration', () => {
     await expect.element(page.getByTestId('uc-upload-list')).toBeVisible();
 
     // The action should not appear, but the UI should not be broken
-    await expect.element(page.getByRole('button', { name: 'error-action' })).not.toBeInTheDocument();
+    await expect.element(page.getByRole('button', { name: 'Error Action', exact: true })).not.toBeInTheDocument();
 
     // The file item should still be visible and functional
     await expect.element(page.getByText('prithiviraj-a-fa7Stge3YXs-unsplash.jpg')).toBeVisible();
@@ -148,6 +153,7 @@ describe('File Action Registration', () => {
         pluginApi.registry.registerFileAction({
           id: 'remove-file-action',
           icon: 'default',
+          label: 'Remove File Action',
           shouldRender: () => true,
           onClick: () => {},
         });
@@ -160,11 +166,11 @@ describe('File Action Registration', () => {
     api.addFileFromUrl(TEST_IMAGE_URL);
     api.initFlow();
 
-    await expect.element(page.getByRole('button', { name: 'remove-file-action' })).toBeVisible();
+    await expect.element(page.getByRole('button', { name: 'Remove File Action', exact: true })).toBeVisible();
 
     config.plugins = [];
 
-    await expect.element(page.getByRole('button', { name: 'remove-file-action' })).not.toBeInTheDocument();
+    await expect.element(page.getByRole('button', { name: 'Remove File Action', exact: true })).not.toBeInTheDocument();
   });
 
   it('should purge file actions and icons when setup throws', async () => {
@@ -178,6 +184,7 @@ describe('File Action Registration', () => {
         pluginApi.registry.registerFileAction({
           id: 'temp-action',
           icon: 'temp-icon',
+          label: 'Temp Action',
           shouldRender: () => true,
           onClick: () => {},
         });
@@ -191,7 +198,7 @@ describe('File Action Registration', () => {
     api.addFileFromUrl(TEST_IMAGE_URL);
     api.initFlow();
 
-    await expect.element(page.getByRole('button', { name: 'temp-action' })).not.toBeInTheDocument();
+    await expect.element(page.getByRole('button', { name: 'Temp Action', exact: true })).not.toBeInTheDocument();
   });
 
   it('should render multiple actions from different plugins on the same file', async () => {
@@ -201,6 +208,7 @@ describe('File Action Registration', () => {
         pluginApi.registry.registerFileAction({
           id: 'action-a',
           icon: 'default',
+          label: 'Action A',
           shouldRender: () => true,
           onClick: () => {},
         });
@@ -213,6 +221,7 @@ describe('File Action Registration', () => {
         pluginApi.registry.registerFileAction({
           id: 'action-b',
           icon: 'default',
+          label: 'Action B',
           shouldRender: () => true,
           onClick: () => {},
         });
@@ -225,8 +234,8 @@ describe('File Action Registration', () => {
     api.addFileFromUrl(TEST_IMAGE_URL);
     api.initFlow();
 
-    await expect.element(page.getByRole('button', { name: 'action-a' })).toBeVisible();
-    await expect.element(page.getByRole('button', { name: 'action-b' })).toBeVisible();
+    await expect.element(page.getByRole('button', { name: 'Action A', exact: true })).toBeVisible();
+    await expect.element(page.getByRole('button', { name: 'Action B', exact: true })).toBeVisible();
   });
 
   it('should tolerate onClick throwing without breaking UI', async () => {
@@ -236,6 +245,7 @@ describe('File Action Registration', () => {
         pluginApi.registry.registerFileAction({
           id: 'error-onclick',
           icon: 'default',
+          label: 'Error OnClick',
           shouldRender: () => true,
           onClick: () => {
             throw new Error('boom');
@@ -250,7 +260,7 @@ describe('File Action Registration', () => {
     api.addFileFromUrl(TEST_IMAGE_URL);
     api.initFlow();
 
-    const btn = page.getByRole('button', { name: 'error-onclick' });
+    const btn = page.getByRole('button', { name: 'Error OnClick', exact: true });
     await expect.element(btn).toBeVisible();
     await btn.click();
 

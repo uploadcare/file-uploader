@@ -54,7 +54,7 @@ describe('Cleanup & Edge Cases', () => {
     });
   });
 
-  it('should handle duplicate plugin IDs (re-register)', async () => {
+  it('should ignore a plugin whose id is already registered', async () => {
     const dispose1 = vi.fn();
     const setup2 = vi.fn();
 
@@ -74,12 +74,12 @@ describe('Cleanup & Edge Cases', () => {
       expect(dispose1).not.toHaveBeenCalled();
     });
 
-    // Replace with same-id plugin
+    // Attempt to replace with same-id plugin — should be ignored
     config.plugins = [plugin2];
 
     await vi.waitFor(() => {
-      expect(dispose1).toHaveBeenCalledOnce();
-      expect(setup2).toHaveBeenCalledOnce();
+      expect(dispose1).not.toHaveBeenCalled();
+      expect(setup2).not.toHaveBeenCalled();
     });
   });
 

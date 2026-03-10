@@ -583,46 +583,41 @@ describe('File errors API', () => {
     const entry = api.addFileFromObject(IMAGE.SQUARE);
     api.initFlow();
 
-    // Apply mirror and check for error
-    await page.getByLabelText('Edit', { exact: true }).click();
-    await delay(3000);
-    await page.getByLabelText('Apply mirror operation', { exact: true }).click();
-    await delay(3000);
-    await page.getByRole('button', { name: /apply/i }).click();
+    const applyMirror = async () => {
+      const editButton = page.getByLabelText('Edit', { exact: true });
+      await expect.element(editButton).toBeVisible();
+      await editButton.click();
 
+      await delay(1000);
+
+      const mirrorButton = page.getByLabelText('Apply mirror operation', { exact: true });
+      await expect.element(mirrorButton).toBeVisible();
+      await mirrorButton.click();
+
+      await delay(1000);
+
+      const applyButton = page.getByRole('button', { name: /apply/i });
+      await expect.element(applyButton).toBeEnabled();
+      await applyButton.click();
+
+      // Wait for modal to close before next cycle
+      await expect.element(page.getByLabelText('Edit', { exact: true })).toBeVisible();
+    };
+
+    // Apply mirror and check for error
+    await applyMirror();
     await expect
-      .poll(() => {
-        const currentEntry = api.getOutputItem(entry.internalId);
-        return currentEntry.errors;
-      })
+      .poll(() => api.getOutputItem(entry.internalId).errors)
       .toEqual(expect.arrayContaining([expect.objectContaining<Partial<OutputErrorFile>>({ type: 'CUSTOM_ERROR' })]));
 
     // Remove mirror and check for error gone
-    await page.getByLabelText('Edit', { exact: true }).click();
-    await delay(3000);
-    await page.getByLabelText('Apply mirror operation', { exact: true }).click();
-    await delay(3000);
-    await page.getByRole('button', { name: /apply/i }).click();
-
-    await expect
-      .poll(() => {
-        const currentEntry = api.getOutputItem(entry.internalId);
-        return currentEntry.errors;
-      })
-      .toEqual([]);
+    await applyMirror();
+    await expect.poll(() => api.getOutputItem(entry.internalId).errors).toEqual([]);
 
     // Apply mirror and check for error again
-    await page.getByLabelText('Edit', { exact: true }).click();
-    await delay(3000);
-    await page.getByLabelText('Apply mirror operation', { exact: true }).click();
-    await delay(3000);
-    await page.getByRole('button', { name: /apply/i }).click();
-
+    await applyMirror();
     await expect
-      .poll(() => {
-        const currentEntry = api.getOutputItem(entry.internalId);
-        return currentEntry.errors;
-      })
+      .poll(() => api.getOutputItem(entry.internalId).errors)
       .toEqual(expect.arrayContaining([expect.objectContaining<Partial<OutputErrorFile>>({ type: 'CUSTOM_ERROR' })]));
   }, 30000);
 

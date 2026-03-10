@@ -57,7 +57,8 @@ describe('File uploader minimal', () => {
       await expect.element(uploadList).toBeVisible();
       const file = page.getByTestId('uc-file-item');
 
-      const editButton = file.getByTestId('uc-file-item--edit');
+      const editButton = file.getByRole('button', { name: 'Edit', exact: true });
+      await expect.poll(() => editButton.query()).toBeTruthy();
       await userEvent.click(editButton);
 
       const modal = page.getByTestId('uc-cloud-image-editor-activity');

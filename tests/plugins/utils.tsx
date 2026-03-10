@@ -1,6 +1,7 @@
 import { beforeAll, expect } from 'vitest';
 import { page } from 'vitest/browser';
 import type { Config, UploadCtxProvider, UploaderPlugin } from '@/index.ts';
+import { delay } from '@/utils/delay';
 // biome-ignore lint/correctness/noUnusedImports: Used in JSX
 import { cleanup, getCtxName, renderer } from '../utils/test-renderer';
 
@@ -35,7 +36,7 @@ export async function renderUploader(plugins: UploaderPlugin[] = []) {
       <uc-upload-ctx-provider ctx-name={ctxName}></uc-upload-ctx-provider>
     </>,
   );
-  await new Promise((resolve) => setTimeout(resolve, 0));
+  await delay(0);
   const config = page.getByTestId('uc-config').query()! as Config;
   config.plugins = plugins;
   return { ctxName, config };
