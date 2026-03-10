@@ -49,6 +49,7 @@ export class LitUploaderBlock extends LitActivityBlock {
       return new TypedCollection<UploadEntryData>({
         initialValue: initialUploadEntryData,
         watchList: [
+          'file',
           'uploadProgress',
           'uploadError',
           'fileInfo',
@@ -198,10 +199,7 @@ export class LitUploaderBlock extends LitActivityBlock {
       if (!entry.getValue('silent')) {
         this.emit(EventType.FILE_ADDED, this.api.getOutputItem(entry.uid));
       }
-      const pluginManager = this._sharedInstancesBag.pluginManager;
-      if (pluginManager) {
-        void pluginManager.runOnAddHooks(entry);
-      }
+      void this._sharedInstancesBag.wait('pluginManager').then((pluginManager) => pluginManager.runOnAddHooks(entry));
     }
 
     this.validationManager.runCollectionValidators();
@@ -238,7 +236,7 @@ export class LitUploaderBlock extends LitActivityBlock {
     const entriesToRunValidation = [
       ...new Set(
         Object.entries(changeMap)
-          .filter(([key]) => ['uploadError', 'fileInfo', 'cdnUrl', 'cdnUrlModifiers'].includes(key))
+          .filter(([key]) => ['file', 'uploadError', 'fileInfo', 'cdnUrl', 'cdnUrlModifiers'].includes(key))
           .flatMap(([, ids]) => [...ids]),
       ),
     ];

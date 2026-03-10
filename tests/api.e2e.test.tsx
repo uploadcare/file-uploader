@@ -180,7 +180,7 @@ describe('API', () => {
       const config = page.getByTestId('uc-config').query()! as Config;
       const api = uploadCtxProvider.getAPI();
 
-      const openSystemDialogSpy = vi.spyOn(api as any, 'openSystemDialog').mockImplementation(() => {});
+      const openSystemDialogSpy = vi.spyOn(api, 'openSystemDialog').mockImplementation(() => {});
 
       config.sourceList = 'local';
       api.initFlow();

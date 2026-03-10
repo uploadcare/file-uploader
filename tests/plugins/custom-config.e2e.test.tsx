@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import type { Config, PluginSetupParams } from '@/index.ts';
+import { delay } from '@/utils/delay';
 import { createTestPlugin, renderUploader } from './utils';
 
 describe('Custom Config', () => {
@@ -145,11 +146,11 @@ describe('Custom Config', () => {
     config.plugins = [];
 
     // Give it time to settle, then verify callback is not called for new changes
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    await delay(100);
     callback.mockClear();
 
     // This should not trigger the old subscription's callback
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    await delay(100);
     expect(callback).not.toHaveBeenCalled();
   });
 

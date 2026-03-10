@@ -1,4 +1,4 @@
-import type { LazyPluginEntry } from '../../abstract/managers/plugin/lazyPluginRegistry';
+import type { LazyPluginEntry } from '../../abstract/managers/plugin/LazyPluginLoader';
 import { cameraPlugin } from '../../plugins/cameraPlugin';
 import { cloudImageEditorPlugin } from '../../plugins/cloudImageEditorPlugin';
 import { externalSourcesPlugin } from '../../plugins/externalSourcesPlugin';

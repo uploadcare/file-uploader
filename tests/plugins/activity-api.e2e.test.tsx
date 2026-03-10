@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { PluginSetupParams } from '@/index';
+import { delay } from '@/utils/delay';
 import { createTestPlugin, getApi, renderUploader } from './utils';
 
 describe('Activity API', () => {
@@ -82,14 +83,14 @@ describe('Activity API', () => {
     config.plugins = [];
 
     // Wait for cleanup to happen
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    await delay(100);
     paramsCallback.mockClear();
 
     // Changes should not trigger the old subscription
     const api = getApi();
     api.setCurrentActivity('some-activity', { data: 'test' });
 
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    await delay(100);
     expect(paramsCallback).not.toHaveBeenCalled();
   });
 });

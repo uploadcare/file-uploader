@@ -2,7 +2,7 @@ import type { UploadcareGroup } from '@uploadcare/upload-client';
 import { Queue } from '@uploadcare/upload-client';
 import type { LitBlock } from '../lit/LitBlock';
 import type { OutputCollectionState, OutputErrorCollection } from '../types/index';
-import type { LazyPluginEntry } from './managers/plugin/lazyPluginRegistry';
+import type { LazyPluginEntry } from './managers/plugin/LazyPluginLoader';
 
 export const blockCtx = () => ({});
 

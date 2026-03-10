@@ -1,7 +1,7 @@
 import { html } from 'lit';
 import { unsafeSVG } from 'lit/directives/unsafe-svg.js';
 import { solutionBlockCtx } from '../abstract/CTX';
-import type { LazyPluginEntry } from '../abstract/managers/plugin/lazyPluginRegistry';
+import type { LazyPluginEntry } from '../abstract/managers/plugin/LazyPluginLoader';
 import svgIconsSprite from '../blocks/themes/uc-basic/svg-sprite';
 import { LitBlock } from './LitBlock';
 
