@@ -7,14 +7,12 @@ import type { UploaderPlugin } from './PluginTypes';
 export type ConfigGetter = <K extends keyof ConfigType>(key: K) => ConfigType[K];
 
 export type LazyPluginEntry = {
-  pluginId: string;
   configDeps: readonly (keyof ConfigType)[];
   isEnabled: (get: ConfigGetter) => boolean;
   load: () => UploaderPlugin | undefined | Promise<UploaderPlugin | undefined>;
 };
 
 type ResolvedEntry = {
-  pluginId: string;
   isEnabled: () => boolean;
   load: () => UploaderPlugin | undefined | Promise<UploaderPlugin | undefined>;
 };
@@ -35,7 +33,7 @@ const resolveLazyPlugins = async ({
         return plugin ?? undefined;
       } catch (error) {
         if (!signal.aborted) {
-          console.warn(`[${entry.pluginId}] Failed to load plugin`, error);
+          console.warn(`Failed to load lazy plugin`, error);
         }
         return undefined;
       }
@@ -88,12 +86,10 @@ export class LazyPluginLoader {
     const get: ConfigGetter = <K extends keyof ConfigType>(key: K) =>
       this._ctx.read(sharedConfigKey(key)) as unknown as ConfigType[K];
 
-    const lazyIds = new Set(entries.map((e) => e.pluginId));
-    const userPlugins = (get('plugins') ?? []).filter((p) => !lazyIds.has(p?.id));
+    const userPlugins = get('plugins');
 
     const pluginsPromise = resolveLazyPlugins({
       entries: entries.map((entry) => ({
-        pluginId: entry.pluginId,
         isEnabled: () => entry.isEnabled(get),
         load: entry.load,
       })),

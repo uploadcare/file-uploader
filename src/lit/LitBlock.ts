@@ -9,7 +9,6 @@ import { TelemetryManager } from '../abstract/managers/TelemetryManager';
 import { sharedConfigKey } from '../abstract/sharedConfigKey';
 import { initialConfig } from '../blocks/Config/initialConfig';
 import { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter';
-import type { ActivityType } from '../lit/LitActivityBlock';
 import { PubSub } from '../lit/PubSubCompat';
 import type { ConfigType } from '../types';
 import { extractCdnUrlModifiers, extractFilename, extractUuid } from '../utils/cdn-utils';
@@ -37,8 +36,6 @@ export class LitBlock extends LitBlockBase {
   private _cfgProxy!: ConfigType;
 
   public static styleAttrs: string[] = [];
-
-  public activityType: ActivityType = null;
 
   public init$ = blockCtx();
 

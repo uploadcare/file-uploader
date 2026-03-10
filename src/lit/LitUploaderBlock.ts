@@ -371,7 +371,9 @@ export class LitUploaderBlock extends LitActivityBlock {
       entry &&
       this.uploadCollection.size === 1 &&
       this.cfg.useCloudImageEditor &&
-      this.hasBlockInCtx((block) => block.activityType === LitActivityBlock.activities.CLOUD_IMG_EDIT)
+      this.hasBlockInCtx(
+        (block) => (block as LitActivityBlock).activityType === LitActivityBlock.activities.CLOUD_IMG_EDIT,
+      )
     ) {
       this.$['*currentActivityParams'] = {
         internalId: entry.uid,
@@ -428,7 +430,9 @@ export class LitUploaderBlock extends LitActivityBlock {
         if (
           this.uploadCollection.size === 1 &&
           this.cfg.useCloudImageEditor &&
-          this.hasBlockInCtx((block) => block.activityType === LitActivityBlock.activities.CLOUD_IMG_EDIT)
+          this.hasBlockInCtx(
+            (block) => (block as LitActivityBlock).activityType === LitActivityBlock.activities.CLOUD_IMG_EDIT,
+          )
         ) {
           this.$['*currentActivityParams'] = {
             internalId: entry.uid,
