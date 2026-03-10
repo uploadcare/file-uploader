@@ -72,15 +72,16 @@ describe('Plugin Registration & Lifecycle', () => {
 
   it('should call plugin disposer on unregister', async () => {
     const dispose = vi.fn();
+    const setup = vi.fn(() => dispose);
     const plugin = createTestPlugin({
       id: 'test-dispose',
-      setup: () => dispose,
+      setup,
     });
 
     const { config } = await renderUploader([plugin]);
 
     await vi.waitFor(() => {
-      expect(dispose).not.toHaveBeenCalled();
+      expect(setup).toHaveBeenCalledOnce();
     });
 
     config.plugins = [];
@@ -107,18 +108,16 @@ describe('Plugin Registration & Lifecycle', () => {
 
   it('should handle replacing plugins (remove old, add new)', async () => {
     const dispose1 = vi.fn();
+    const setup1 = vi.fn(() => dispose1);
     const setup2 = vi.fn();
 
-    const plugin1 = createTestPlugin({
-      id: 'replace-old',
-      setup: () => dispose1,
-    });
+    const plugin1 = createTestPlugin({ id: 'replace-old', setup: setup1 });
     const plugin2 = createTestPlugin({ id: 'replace-new', setup: setup2 });
 
     const { config } = await renderUploader([plugin1]);
 
     await vi.waitFor(() => {
-      expect(dispose1).not.toHaveBeenCalled();
+      expect(setup1).toHaveBeenCalledOnce();
     });
 
     config.plugins = [plugin2];
@@ -201,18 +200,16 @@ describe('Plugin Registration & Lifecycle', () => {
 
   it('should await async setup() disposer on unregister', async () => {
     const dispose = vi.fn();
-    const plugin = createTestPlugin({
-      id: 'async-dispose',
-      setup: async () => {
-        await Promise.resolve();
-        return dispose;
-      },
+    const setup = vi.fn(async () => {
+      await Promise.resolve();
+      return dispose;
     });
+    const plugin = createTestPlugin({ id: 'async-dispose', setup });
 
     const { config } = await renderUploader([plugin]);
 
     await vi.waitFor(() => {
-      expect(dispose).not.toHaveBeenCalled();
+      expect(setup).toHaveBeenCalledOnce();
     });
 
     config.plugins = [];

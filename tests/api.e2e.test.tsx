@@ -18,7 +18,7 @@ beforeEach(() => {
   page.render(
     <>
       <uc-file-uploader-regular ctx-name={ctxName}></uc-file-uploader-regular>
-      <uc-config qualityInsights={false} ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
+      <uc-config qualityInsights={false} ctx-name={ctxName} pubkey="demopublickey" testMode debug></uc-config>
       <uc-upload-ctx-provider ctx-name={ctxName}></uc-upload-ctx-provider>
     </>,
   );
@@ -150,6 +150,11 @@ describe('API', () => {
       const uploadCtxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
       const api = uploadCtxProvider.getAPI();
 
+      api.initFlow();
+
+      const startFrom = page.getByTestId('uc-start-from');
+      await expect.element(startFrom).toBeVisible();
+
       api.setCurrentActivity('url');
       api.setModalState(true);
 
@@ -158,9 +163,8 @@ describe('API', () => {
 
       api.historyBack();
 
-      const startFrom = page.getByTestId('uc-start-from');
       await expect.element(startFrom).toBeVisible();
-      await expect.element(urlSource).not.toBeVisible();
+      await expect.element(urlSource).not.toBeInTheDocument();
     });
   });
 
