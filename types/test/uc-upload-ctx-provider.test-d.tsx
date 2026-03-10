@@ -2,9 +2,8 @@ import '../jsx';
 
 import React, { useRef } from 'react';
 import { expectType } from 'tsd';
-import type { ActivityType } from '@/lit/LitActivityBlock';
 import {
-  type ActivityBlock,
+  type ActivityType,
   type EventMap,
   type ModalId,
   type OutputCollectionErrorType,
