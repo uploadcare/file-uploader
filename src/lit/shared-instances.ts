@@ -177,5 +177,14 @@ export const createSharedInstancesBag = (getCtx: () => PubSub<SharedState>) => {
 
       return unsub;
     },
+
+    wait<TName extends InstanceName>(name: TName): Promise<NonNullable<InstanceTypeMap[TName]>> {
+      return new Promise((resolve) => {
+        const unsub = this.when(name, (instance) => {
+          resolve(instance);
+          unsub();
+        });
+      });
+    },
   };
 };
