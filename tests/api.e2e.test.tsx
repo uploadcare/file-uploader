@@ -15,7 +15,7 @@ beforeEach(() => {
   page.render(
     <>
       <uc-file-uploader-regular ctx-name={ctxName}></uc-file-uploader-regular>
-      <uc-config qualityInsights={false} ctx-name={ctxName} pubkey="demopublickey" testMode debug></uc-config>
+      <uc-config qualityInsights={false} ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
       <uc-upload-ctx-provider ctx-name={ctxName}></uc-upload-ctx-provider>
     </>,
   );

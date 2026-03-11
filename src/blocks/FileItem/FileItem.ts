@@ -505,7 +505,7 @@ export class FileItem extends FileItemConfig {
         this._debouncedCalculateState();
       }
 
-      if (!isCancelError) {
+      if (this.isConnected && !isCancelError) {
         this.telemetryManager.sendEventError(cause, 'file upload. Failed to upload file');
       }
     }
