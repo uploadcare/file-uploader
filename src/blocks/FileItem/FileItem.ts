@@ -477,8 +477,8 @@ export class FileItem extends FileItemConfig {
         this._debouncedCalculateState();
       }
     } catch (cause) {
-      this.telemetryManager.sendEventError(cause, 'file upload. Failed to upload file');
-      if (cause instanceof CancelError && cause.isCancel) {
+      const isCancelError = cause instanceof CancelError && cause.isCancel;
+      if (isCancelError) {
         entry.setMultipleValues({
           isUploading: false,
           uploadProgress: 0,
@@ -503,6 +503,10 @@ export class FileItem extends FileItemConfig {
 
       if (entry === this.entry) {
         this._debouncedCalculateState();
+      }
+
+      if (!isCancelError) {
+        this.telemetryManager.sendEventError(cause, 'file upload. Failed to upload file');
       }
     }
   });
