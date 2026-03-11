@@ -135,10 +135,17 @@
             const url = dt?.getData('text/uri-list')?.split('\n')[0];
             if (url) {
               try {
-                const response = await fetch(url);
-                const blob = await response.blob();
-                const fileName = url.split('/').pop() || 'dropped-file';
-                addFiles([new File([blob], fileName, { type: blob.type })]);
+                const parsedUrl = new URL(url);
+                const protocol = parsedUrl.protocol.toLowerCase();
+                if ((protocol === 'http:' || protocol === 'https:') && parsedUrl.hostname) {
+                  const safeUrl = parsedUrl.toString();
+                  const response = await fetch(safeUrl);
+                  const blob = await response.blob();
+                  const fileName = parsedUrl.pathname.split('/').pop() || 'dropped-file';
+                  addFiles([new File([blob], fileName, { type: blob.type })]);
+                } else {
+                  console.warn('Dropped URL has an unsupported protocol or no hostname and will not be fetched:', url);
+                }
               } catch (error) {
                 console.warn('Could not fetch dropped URL', error);
               }
