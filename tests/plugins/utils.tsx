@@ -1,4 +1,4 @@
-import { beforeAll, expect } from 'vitest';
+import { afterEach, beforeAll, expect } from 'vitest';
 import { page } from 'vitest/browser';
 import type { Config, UploadCtxProvider, UploaderPlugin } from '@/index.ts';
 import { delay } from '@/utils/delay';
@@ -10,6 +10,11 @@ export { cleanup };
 beforeAll(async () => {
   const UC = await import('@/index.js');
   UC.defineComponents(UC);
+});
+
+afterEach(() => {
+  const provider = page.getByTestId('uc-upload-ctx-provider').query() as UploadCtxProvider | null;
+  provider?.api.removeAllFiles();
 });
 
 export const TEST_IMAGE_URL =
