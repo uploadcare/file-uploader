@@ -144,7 +144,8 @@
                   const fileName = parsedUrl.pathname.split('/').pop() || 'dropped-file';
                   addFiles([new File([blob], fileName, { type: blob.type })]);
                 } else {
-                  console.warn('Dropped URL has an unsupported protocol or no hostname and will not be fetched:', url);
+                  const safeUrlForLog = String(url).replace(/[\r\n]/g, '');
+                  console.warn('Dropped URL has an unsupported protocol or no hostname and will not be fetched:', safeUrlForLog);
                 }
               } catch (error) {
                 console.warn('Could not fetch dropped URL', error);
