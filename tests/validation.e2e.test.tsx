@@ -583,18 +583,26 @@ describe('File errors API', () => {
     const entry = api.addFileFromObject(IMAGE.SQUARE);
     api.initFlow();
 
+    const waitForEditorChange = () =>
+      new Promise<void>((resolve) => {
+        document.querySelector('uc-cloud-image-editor')?.addEventListener('change', () => resolve(), { once: true });
+      });
+
     const applyMirror = async () => {
       const editButton = page.getByLabelText('Edit', { exact: true });
       await expect.element(editButton).toBeVisible();
       await editButton.click();
 
-      await delay(1000);
-
+      // Editor is in DOM once mirror button is visible
       const mirrorButton = page.getByLabelText('Apply mirror operation', { exact: true });
       await expect.element(mirrorButton).toBeVisible();
-      await mirrorButton.click();
+      // Wait for initial crop to commit (image loaded + 300ms debounce)
+      await waitForEditorChange();
 
-      await delay(1000);
+      // Register before click to avoid missing the event
+      const changeAfterMirror = waitForEditorChange();
+      await mirrorButton.click();
+      await changeAfterMirror;
 
       const applyButton = page.getByRole('button', { name: /apply/i });
       await expect.element(applyButton).toBeEnabled();
