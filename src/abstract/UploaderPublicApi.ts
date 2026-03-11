@@ -2,7 +2,7 @@
 
 import { calcCameraModes } from '../blocks/CameraSource/calcCameraModes';
 import { CameraSourceTypes, type ModeCameraType } from '../blocks/CameraSource/constants';
-import { EventType } from '../blocks/UploadCtxProvider/EventEmitter';
+import { type EventKey, type EventPayload, EventType } from '../blocks/UploadCtxProvider/EventEmitter';
 import { ACTIVITY_TYPES } from '../lit/activity-constants';
 import { findBlockInCtx } from '../lit/findBlockInCtx';
 import { waitForBlockInCtx } from '../lit/hasBlockInCtx';
@@ -359,6 +359,10 @@ export class UploaderPublicApi extends SharedInstance {
         },
       );
     });
+  };
+
+  public on = <T extends EventKey>(type: T, handler: (payload: EventPayload[T]) => void): (() => void) => {
+    return this._sharedInstancesBag.eventEmitter.on(type, handler);
   };
 
   public getCurrentActivity = (): ActivityType => {

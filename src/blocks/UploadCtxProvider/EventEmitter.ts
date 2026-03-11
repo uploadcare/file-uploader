@@ -70,12 +70,23 @@ export type EventPayload = {
 export class EventEmitter extends SharedInstance {
   private _timeoutStore: Map<string, number> = new Map();
   private _targets: Set<LitBlock> = new Set();
+  private _listeners: Map<string, Set<(payload: unknown) => void>> = new Map();
 
   public bindTarget(target: LitBlock) {
     this._targets.add(target);
     return () => {
       this._targets.delete(target);
     };
+  }
+
+  public on<T extends EventKey>(type: T, handler: (payload: EventPayload[T]) => void): () => void {
+    let listeners = this._listeners.get(type);
+    if (!listeners) {
+      listeners = new Set();
+      this._listeners.set(type, listeners);
+    }
+    listeners.add(handler as (payload: unknown) => void);
+    return () => this._listeners.get(type)?.delete(handler as (payload: unknown) => void);
   }
 
   private _dispatch<T extends EventKey>(type: T, payload?: EventPayload[T]): void {
@@ -85,6 +96,13 @@ export class EventEmitter extends SharedInstance {
           detail: payload,
         }),
       );
+    }
+
+    const listeners = this._listeners.get(type);
+    if (listeners) {
+      for (const handler of listeners) {
+        handler(payload);
+      }
     }
 
     this._debugPrint?.(() => {
@@ -126,5 +144,6 @@ export class EventEmitter extends SharedInstance {
     }
 
     this._targets.clear();
+    this._listeners.clear();
   }
 }

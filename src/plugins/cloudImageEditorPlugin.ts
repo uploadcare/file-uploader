@@ -1,6 +1,7 @@
 import { defineComponents } from '../abstract/defineComponents';
 import type { UploaderPlugin } from '../abstract/managers/plugin';
-import * as activityModule from '../blocks/CloudImageEditorActivity/CloudImageEditorActivity';
+import * as cloudImageEditorActivityModule from '../blocks/CloudImageEditorActivity/CloudImageEditorActivity';
+import { EventType } from '../blocks/UploadCtxProvider/EventEmitter';
 import { ACTIVITY_TYPES } from '../lit/activity-constants';
 import * as cloudEditorModules from '../solutions/cloud-image-editor';
 
@@ -12,7 +13,7 @@ const EDIT_FILE_ICON_SVG =
 export const cloudImageEditorPlugin: UploaderPlugin = {
   id: CLOUD_EDITOR_PLUGIN_ID,
   setup: async ({ pluginApi, uploaderApi }) => {
-    defineComponents({ ...cloudEditorModules, ...activityModule });
+    defineComponents({ ...cloudEditorModules, ...cloudImageEditorActivityModule });
 
     pluginApi.registry.registerIcon({
       name: 'edit-file',
@@ -43,5 +44,23 @@ export const cloudImageEditorPlugin: UploaderPlugin = {
         };
       },
     });
+
+    const unsubscribe = uploaderApi.on(EventType.FILE_UPLOAD_SUCCESS, (fileEntry) => {
+      if (!fileEntry.isImage) return;
+
+      const cropPreset = pluginApi.config.get('cropPreset');
+      const useEditor = pluginApi.config.get('useCloudImageEditor');
+      const autoOpen = pluginApi.config.get('cloudImageEditorAutoOpen');
+      const collectionSize = uploaderApi._uploadCollection.size;
+
+      if (useEditor && collectionSize === 1 && (cropPreset || autoOpen)) {
+        uploaderApi.setCurrentActivity?.(ACTIVITY_TYPES.CLOUD_IMG_EDIT, {
+          internalId: fileEntry.internalId,
+        });
+        uploaderApi.setModalState?.(true);
+      }
+    });
+
+    return unsubscribe;
   },
 };
