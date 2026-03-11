@@ -140,18 +140,12 @@
             }
 
             // Block common internal / special-use domains.
-            if (
-              lowerHost.endsWith('.local') ||
-              lowerHost.endsWith('.internal') ||
-              lowerHost.endsWith('.intranet')
-            ) {
+            if (lowerHost.endsWith('.local') || lowerHost.endsWith('.internal') || lowerHost.endsWith('.intranet')) {
               return false;
             }
 
             // Block private and link-local IPv4 ranges.
-            const ipv4Match = lowerHost.match(
-              /^(?<a>\d{1,3})\.(?<b>\d{1,3})\.(?<c>\d{1,3})\.(?<d>\d{1,3})$/
-            );
+            const ipv4Match = lowerHost.match(/^(?<a>\d{1,3})\.(?<b>\d{1,3})\.(?<c>\d{1,3})\.(?<d>\d{1,3})$/);
             if (ipv4Match && ipv4Match.groups) {
               const a = Number(ipv4Match.groups.a);
               const b = Number(ipv4Match.groups.b);
@@ -201,9 +195,12 @@
                 } else {
                   console.warn(
                     'Dropped URL has an unsupported protocol, disallowed hostname, or no hostname and will not be fetched:',
-                    url
+                    url,
                   );
-                  console.warn('Dropped URL has an unsupported protocol or no hostname and will not be fetched:', safeUrlForLog);
+                  console.warn(
+                    'Dropped URL has an unsupported protocol or no hostname and will not be fetched:',
+                    safeUrlForLog,
+                  );
                 }
               } catch (error) {
                 console.warn('Could not fetch dropped URL', error);

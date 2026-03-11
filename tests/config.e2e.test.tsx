@@ -5,9 +5,6 @@ import '../types/jsx';
 import { cleanup, getCtxName, renderer } from './utils/test-renderer';
 
 beforeAll(async () => {
-  // biome-ignore lint/suspicious/noTsIgnore: Ignoring TypeScript error for CSS import
-  // @ts-ignore
-  await import('@/solutions/file-uploader/regular/index.css');
   const UC = await import('@/index.js');
   UC.defineComponents(UC);
 });
