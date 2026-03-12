@@ -2,6 +2,7 @@ node_modules
 .DS_Store
 TMP
 **/*.d.ts
+!tests/render-jsx-children.d.ts
 !types/**
 **/*.d.ts.map
 !global.d.ts
