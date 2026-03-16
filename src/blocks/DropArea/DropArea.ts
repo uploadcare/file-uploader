@@ -128,10 +128,10 @@ export class DropArea extends LitUploaderBlock {
           }
         });
         if (this.uploadCollection.size) {
-          this.modalManager?.open(LitActivityBlock.activities.UPLOAD_LIST);
           this.set$({
             '*currentActivity': LitActivityBlock.activities.UPLOAD_LIST,
           });
+          this.modalManager?.open(LitActivityBlock.activities.UPLOAD_LIST);
         }
       },
     });

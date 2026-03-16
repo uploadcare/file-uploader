@@ -1,4 +1,3 @@
-import { shrinkFile } from '@uploadcare/image-shrink';
 import {
   CancelError,
   type FileFromOptions,
@@ -8,10 +7,10 @@ import {
 } from '@uploadcare/upload-client';
 import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
+import type { PluginFileActionRegistration } from '../../abstract/managers/plugin';
 import type { UploadEntryTypedData } from '../../abstract/uploadEntrySchema';
-import { LitActivityBlock } from '../../lit/LitActivityBlock';
 import { debounce } from '../../utils/debounce';
-import { parseShrink } from '../../utils/parseShrink';
+import { fileIsImage } from '../../utils/fileTypes';
 import { throttle } from '../../utils/throttle';
 import { ExternalUploadSource } from '../../utils/UploadSource';
 import './file-item.css';
@@ -76,32 +75,17 @@ export class FileItem extends FileItemConfig {
   private _isFocused = false;
 
   @state()
-  private _isEditable = false;
-
-  @state()
   private _showFileNames = false;
 
   @state()
   private _ariaLabelStatusFile = '';
 
+  @state()
+  private _pluginFileActions: PluginFileActionRegistration[] = [];
+
   private _renderedOnce = false;
   private _observer?: IntersectionObserver;
-
-  private _handleEdit = this.withEntry((entry) => {
-    this.telemetryManager.sendEvent({
-      payload: {
-        metadata: {
-          event: 'edit-file',
-          node: this.tagName,
-        },
-      },
-    });
-    this.$['*currentActivityParams'] = {
-      internalId: entry.uid,
-    };
-    this.modalManager?.open(LitActivityBlock.activities.CLOUD_IMG_EDIT);
-    this.$['*currentActivity'] = LitActivityBlock.activities.CLOUD_IMG_EDIT;
-  });
+  private _unsubscribePlugins?: () => void;
 
   private _handleRemove = (): void => {
     this.telemetryManager.sendEvent({
@@ -181,7 +165,7 @@ export class FileItem extends FileItemConfig {
     }, 100),
   );
 
-  private _handleState(entry: UploadEntryTypedData, state: FileItemStateValue): void {
+  private _handleState(_entry: UploadEntryTypedData, state: FileItemStateValue): void {
     if (state === FileItemState.FAILED) {
       this._badgeIcon = 'badge-error';
     } else if (state === FileItemState.FINISHED) {
@@ -196,7 +180,6 @@ export class FileItem extends FileItemConfig {
     this._isFailed = state === FileItemState.FAILED;
     this._isUploading = state === FileItemState.UPLOADING;
     this._isFinished = state === FileItemState.FINISHED;
-    this._isEditable = Boolean(this.cfg.useCloudImageEditor && entry.getValue('isImage') && entry.getValue('cdnUrl'));
 
     this._updateHintAndProgress(state);
   }
@@ -225,6 +208,7 @@ export class FileItem extends FileItemConfig {
     this.entry = entry;
 
     if (!entry) {
+      this._updatePluginFileActions();
       return;
     }
 
@@ -263,7 +247,13 @@ export class FileItem extends FileItemConfig {
     this.subEntry('mimeType', () => this._debouncedCalculateState());
     this.subEntry('isImage', () => this._debouncedCalculateState());
 
+    // Update plugin file actions when file status changes
+    this.subEntry('fileInfo', () => this._updatePluginFileActions());
+    this.subEntry('isUploading', () => this._updatePluginFileActions());
+    this.subEntry('errors', () => this._updatePluginFileActions());
+
     this._calculateState();
+    this._updatePluginFileActions();
   }
 
   private _updateShowFileNames(value: boolean): void {
@@ -284,12 +274,52 @@ export class FileItem extends FileItemConfig {
     }
   }
 
+  private _updatePluginFileActions(): void {
+    const pluginManager = this._sharedInstancesBag.pluginManager;
+    if (!pluginManager || !this.uid) {
+      this._pluginFileActions = [];
+      return;
+    }
+
+    const allFileActions = pluginManager.snapshot().fileActions;
+    const outputFileEntry = this.api.getOutputItem(this.uid);
+
+    if (!outputFileEntry) {
+      this._pluginFileActions = [];
+      return;
+    }
+
+    this._pluginFileActions = allFileActions.filter((action) => {
+      try {
+        return action.shouldRender(outputFileEntry);
+      } catch (error) {
+        console.error(`Error in plugin file action shouldRender (${action.id}):`, error);
+        return false;
+      }
+    });
+  }
+
+  private _handlePluginFileAction(action: PluginFileActionRegistration): void {
+    if (!this.uid) {
+      return;
+    }
+
+    const outputFileEntry = this.api.getOutputItem(this.uid);
+    if (!outputFileEntry) {
+      return;
+    }
+
+    try {
+      action.onClick(outputFileEntry);
+    } catch (error) {
+      console.error(`Error in plugin file action onClick (${action.id}):`, error);
+    }
+  }
+
   public override initCallback(): void {
     super.initCallback();
 
     this._handleEntryId(this.uid);
-
-    this.subConfigValue('useCloudImageEditor', () => this._debouncedCalculateState());
 
     this.subConfigValue('filesViewMode', (mode) => {
       this._updateShowFileNames(this.cfg.gridShowFileNames);
@@ -317,6 +347,13 @@ export class FileItem extends FileItemConfig {
       }
       setTimeout(() => this.isConnected && this._upload());
     });
+
+    const pluginManager = this._sharedInstancesBag.pluginManager;
+    if (pluginManager?.onPluginsChange) {
+      this._unsubscribePlugins = pluginManager.onPluginsChange(() => this._updatePluginFileActions());
+    }
+    this._updatePluginFileActions();
+
     FileItem.activeInstances.add(this);
   }
 
@@ -330,6 +367,8 @@ export class FileItem extends FileItemConfig {
   }
 
   public override disconnectedCallback(): void {
+    this._unsubscribePlugins?.();
+    this._unsubscribePlugins = undefined;
     super.disconnectedCallback();
 
     this._observer?.disconnect();
@@ -372,16 +411,27 @@ export class FileItem extends FileItemConfig {
       const uploadTask = async (): Promise<UploadcareFile> => {
         entry.setValue('isQueuedForUploading', false);
         let file: File | Blob | null = entry.getValue('file');
-        if (file instanceof File && this.cfg.imageShrink) {
-          try {
-            const settings = parseShrink(this.cfg.imageShrink);
-            if (!settings) {
-              console.warn('Image shrink settings are invalid, skipping shrinking');
-            } else {
-              file = await shrinkFile(file, settings);
+
+        if (file instanceof File || file instanceof Blob) {
+          const pluginManager = this._sharedInstancesBag.pluginManager;
+          const beforeUploadHooks = (pluginManager?.snapshot().fileHooks ?? []).filter(
+            (h) => h.type === 'beforeUpload',
+          );
+          for (const hook of beforeUploadHooks) {
+            try {
+              const { file: newFile } = await hook.handler({ file });
+              if (newFile !== file) {
+                file = newFile;
+                entry.setValue('mimeType', file.type || null);
+                entry.setValue('isImage', fileIsImage(file));
+                entry.setValue('fileSize', file.size);
+                if (file instanceof File) {
+                  entry.setValue('fileName', file.name);
+                }
+              }
+            } catch (error) {
+              this.debugPrint(`File hook "beforeUpload" from plugin "${hook.pluginId}" failed`, error);
             }
-          } catch {
-            // keep original file if shrinking fails
           }
         }
 
@@ -427,8 +477,8 @@ export class FileItem extends FileItemConfig {
         this._debouncedCalculateState();
       }
     } catch (cause) {
-      this.telemetryManager.sendEventError(cause, 'file upload. Failed to upload file');
-      if (cause instanceof CancelError && cause.isCancel) {
+      const isCancelError = cause instanceof CancelError && cause.isCancel;
+      if (isCancelError) {
         entry.setMultipleValues({
           isUploading: false,
           uploadProgress: 0,
@@ -453,6 +503,10 @@ export class FileItem extends FileItemConfig {
 
       if (entry === this.entry) {
         this._debouncedCalculateState();
+      }
+
+      if (this.isConnected && !isCancelError) {
+        this.telemetryManager.sendEventError(cause, 'file upload. Failed to upload file');
       }
     }
   });
@@ -483,17 +537,20 @@ export class FileItem extends FileItemConfig {
           <span class="uc-file-hint" ?hidden=${!this._hint}>${this._hint}</span>
         </div>
         <div class="uc-file-actions">
-          <button
-            type="button"
-            @click=${this._handleEdit}
-            ?hidden=${!this._isEditable}
-            title=${this.l10n('file-item-edit-button')}
-            aria-label=${this.l10n('file-item-edit-button')}
-            class="uc-edit-btn uc-mini-btn"
-            data-testid="edit"
-          >
-            <uc-icon name="edit-file"></uc-icon>
-          </button>
+          ${this._pluginFileActions.map(
+            (action) => html`
+              <button
+                type="button"
+                @click=${() => this._handlePluginFileAction(action)}
+                title=${this.l10n(action.label)}
+                aria-label=${this.l10n(action.label)}
+                class="uc-plugin-action-btn uc-mini-btn"
+                data-plugin-action-id=${action.id}
+              >
+                <uc-icon name=${action.icon}></uc-icon>
+              </button>
+            `,
+          )}
           <button
             type="button"
             @click=${this._handleRemove}

@@ -50,6 +50,7 @@ async function build(buildItem: BuildItem) {
       options.mainFields = ['exports'];
       options.platform = 'browser';
       options.legalComments = 'linked';
+      options.logOverride = { 'ignored-bare-import': 'silent' };
       if (buildItem.mangleProps) {
         options.mangleProps = /^_/;
       }

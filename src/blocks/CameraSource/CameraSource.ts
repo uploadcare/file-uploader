@@ -52,8 +52,6 @@ export type CameraStatus = 'shot' | 'retake' | 'accept' | 'play' | 'stop' | 'pau
 
 export class CameraSource extends LitUploaderBlock {
   public override couldBeCtxOwner = true;
-  public override activityType = LitActivityBlock.activities.CAMERA;
-
   private _unsubPermissions: (() => void) | null = null;
 
   private _capturing = false;
@@ -940,11 +938,6 @@ export class CameraSource extends LitUploaderBlock {
   public override initCallback(): void {
     super.initCallback();
 
-    this.registerActivity(this.activityType, {
-      onActivate: this._onActivate,
-      onDeactivate: this._onDeactivate,
-    });
-
     this.subConfigValue('cameraMirror', (val) => {
       this._videoTransformCss = val ? 'scaleX(-1)' : null;
     });
@@ -955,7 +948,7 @@ export class CameraSource extends LitUploaderBlock {
     });
 
     this.subConfigValue('cameraModes', (val) => {
-      if (!this.isActivityActive) return;
+      if (!this.isConnected) return;
       const cameraModes = deserializeCsv(val);
       this._handleCameraModes(
         cameraModes.filter(
@@ -963,6 +956,8 @@ export class CameraSource extends LitUploaderBlock {
         ),
       );
     });
+
+    void this._onActivate();
   }
 
   public override firstUpdated(changedProperties: PropertyValues<this>): void {
@@ -985,6 +980,7 @@ export class CameraSource extends LitUploaderBlock {
   public override disconnectedCallback(): void {
     super.disconnectedCallback();
 
+    void this._onDeactivate();
     this._destroy();
   }
 

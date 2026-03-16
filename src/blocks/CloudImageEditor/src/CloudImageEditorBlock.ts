@@ -78,6 +78,8 @@ export class CloudImageEditorBlock extends LitBlock {
 
   private _pendingInitUpdate: Promise<void> | null = null;
 
+  private _pendingSizeWait: Promise<void> | null = null;
+
   private readonly _debouncedShowLoader = debounce((show: boolean) => {
     this._showLoader = show;
   }, 300);
@@ -179,24 +181,60 @@ export class CloudImageEditorBlock extends LitBlock {
    * To proper work, we need non-zero size the element. So, we'll wait for it.
    */
   private _waitForSize(): Promise<void> {
+    if (this._pendingSizeWait) {
+      return this._pendingSizeWait;
+    }
+
     const TIMEOUT = 3000;
-    return new Promise<void>((resolve, reject) => {
-      const timeoutId = window.setTimeout(() => {
-        reject(new Error('[cloud-image-editor] timeout waiting for non-zero container size'));
-      }, TIMEOUT);
+    this._pendingSizeWait = new Promise<void>((resolve, reject) => {
+      const cleanup = () => {
+        window.clearTimeout(timeoutId);
+        resizeObserver.disconnect();
+        this._pendingSizeWait = null;
+      };
+
+      const hasNonZeroSize = () => {
+        const { width, height } = this.getBoundingClientRect();
+        return width > 0 && height > 0;
+      };
+
+      const resolveWait = () => {
+        cleanup();
+        window.setTimeout(() => resolve(), 0);
+      };
+
+      const rejectWait = () => {
+        const error = new Error('[cloud-image-editor] timeout waiting for non-zero container size');
+        cleanup();
+        if (this.isConnected) {
+          console.error(error.message);
+        }
+        reject(error);
+      };
+
       const resizeObserver = new ResizeObserver((entries) => {
         const [element] = entries;
         if (!element) {
           return;
         }
         if (element.contentRect.width > 0 && element.contentRect.height > 0) {
-          window.clearTimeout(timeoutId);
-          resizeObserver.disconnect();
-          window.setTimeout(() => resolve(), 0);
+          resolveWait();
         }
       });
+
+      const timeoutId = window.setTimeout(() => {
+        rejectWait();
+      }, TIMEOUT);
+
+      if (hasNonZeroSize()) {
+        resolveWait();
+        return;
+      }
+
       resizeObserver.observe(this);
     });
+
+    return this._pendingSizeWait;
   }
 
   public override firstUpdated(changedProperties: PropertyValues<this>): void {
@@ -306,7 +344,15 @@ export class CloudImageEditorBlock extends LitBlock {
     if (!this.isConnected) {
       return;
     }
-    await this._waitForSize();
+    try {
+      await this._waitForSize();
+    } catch {
+      return;
+    }
+
+    if (!this.isConnected) {
+      return;
+    }
 
     if (this.cdnUrl) {
       const cdnUrlValue = this.cdnUrl as string;
@@ -364,11 +410,7 @@ export class CloudImageEditorBlock extends LitBlock {
   public async initEditor(): Promise<void> {
     try {
       await this._waitForSize();
-    } catch (err) {
-      if (this.isConnected) {
-        // @ts-expect-error TODO: fix this
-        console.error(err.message);
-      }
+    } catch {
       return;
     }
 

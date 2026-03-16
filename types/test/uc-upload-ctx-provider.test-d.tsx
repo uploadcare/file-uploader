@@ -3,7 +3,7 @@ import '../jsx';
 import React, { useRef } from 'react';
 import { expectType } from 'tsd';
 import {
-  type ActivityBlock,
+  type ActivityType,
   type EventMap,
   type ModalId,
   type OutputCollectionErrorType,
@@ -214,9 +214,7 @@ instance.addEventListener('modal-open', (e) => {
 
 instance.addEventListener('activity-change', (e) => {
   const payload = e.detail;
-  expectType<(typeof ActivityBlock)['activities'][keyof (typeof ActivityBlock)['activities']] | null | (string & {})>(
-    payload.activity,
-  );
+  expectType<ActivityType>(payload.activity);
 });
 
 () => {

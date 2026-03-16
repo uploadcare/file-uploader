@@ -5,9 +5,6 @@ import '../types/jsx';
 import { renderer } from './utils/test-renderer';
 
 beforeAll(async () => {
-  // biome-ignore lint/suspicious/noTsIgnore: Ignoring TypeScript error for CSS import
-  // @ts-ignore
-  await import('@/solutions/file-uploader/minimal/index.css');
   const UC = await import('@/index.js');
   UC.defineComponents(UC);
 });
@@ -57,7 +54,8 @@ describe('File uploader minimal', () => {
       await expect.element(uploadList).toBeVisible();
       const file = page.getByTestId('uc-file-item');
 
-      const editButton = file.getByTestId('uc-file-item--edit');
+      const editButton = file.getByRole('button', { name: 'Edit', exact: true });
+      await expect.poll(() => editButton.query()).toBeTruthy();
       await userEvent.click(editButton);
 
       const modal = page.getByTestId('uc-cloud-image-editor-activity');

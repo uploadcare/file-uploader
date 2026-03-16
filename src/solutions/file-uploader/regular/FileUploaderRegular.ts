@@ -3,6 +3,7 @@ import { property } from 'lit/decorators.js';
 import { InternalEventType } from '../../../blocks/UploadCtxProvider/EventEmitter';
 import { LitSolutionBlock } from '../../../lit/LitSolutionBlock';
 import './index.css';
+import { fileUploaderLazyPlugins } from '../lazyPlugins.js';
 
 import '../../../blocks/Modal/Modal';
 import '../../../blocks/StartFrom/StartFrom';
@@ -10,16 +11,16 @@ import '../../../blocks/DropArea/DropArea';
 import '../../../blocks/SourceList/SourceList';
 import '../../../blocks/Copyright/Copyright';
 import '../../../blocks/UploadList/UploadList';
-import '../../../blocks/CameraSource/CameraSource';
-import '../../../blocks/UrlSource/UrlSource';
-import '../../../blocks/ExternalSource/ExternalSource';
 import '../../../blocks/CloudImageEditorActivity/CloudImageEditorActivity';
 import '../../../blocks/SimpleBtn/SimpleBtn';
+import '../../../blocks/PluginActivityRenderer/PluginActivityRenderer';
 
 type BaseInitState = InstanceType<typeof LitSolutionBlock>['init$'];
 interface FileUploaderRegularInitState extends BaseInitState {}
 
 export class FileUploaderRegular extends LitSolutionBlock {
+  public static override lazyPlugins = fileUploaderLazyPlugins;
+
   public declare attributesMeta: {
     headless?: boolean;
     'ctx-name': string;
@@ -63,21 +64,7 @@ export class FileUploaderRegular extends LitSolutionBlock {
     <uc-upload-list></uc-upload-list>
   </uc-modal>
 
-  <uc-modal id="camera" strokes block-body-scrolling>
-    <uc-camera-source></uc-camera-source>
-  </uc-modal>
-
-  <uc-modal id="url" strokes block-body-scrolling>
-    <uc-url-source></uc-url-source>
-  </uc-modal>
-
-  <uc-modal id="external" strokes block-body-scrolling>
-    <uc-external-source></uc-external-source>
-  </uc-modal>
-
-  <uc-modal id="cloud-image-edit" strokes block-body-scrolling>
-    <uc-cloud-image-editor-activity></uc-cloud-image-editor-activity>
-  </uc-modal>
+  <uc-plugin-activity-renderer mode="modal"></uc-plugin-activity-renderer>
 `;
   }
 }

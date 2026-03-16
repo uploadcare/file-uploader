@@ -8,9 +8,6 @@ import { IMAGE } from './fixtures/files';
 import { renderer } from './utils/test-renderer';
 
 beforeAll(async () => {
-  // biome-ignore lint/suspicious/noTsIgnore: Ignoring TypeScript error for CSS import
-  // @ts-ignore
-  await import('@/solutions/file-uploader/regular/index.css');
   const UC = await import('@/index.js');
   UC.defineComponents(UC);
 });
@@ -583,46 +580,49 @@ describe('File errors API', () => {
     const entry = api.addFileFromObject(IMAGE.SQUARE);
     api.initFlow();
 
-    // Apply mirror and check for error
-    await page.getByLabelText('Edit', { exact: true }).click();
-    await delay(3000);
-    await page.getByLabelText('Apply mirror operation', { exact: true }).click();
-    await delay(3000);
-    await page.getByRole('button', { name: /apply/i }).click();
+    const waitForEditorChange = () =>
+      new Promise<void>((resolve) => {
+        document.querySelector('uc-cloud-image-editor')?.addEventListener('change', () => resolve(), { once: true });
+      });
 
+    const applyMirror = async () => {
+      const editButton = page.getByLabelText('Edit', { exact: true });
+      await expect.element(editButton).toBeVisible();
+      await editButton.click();
+
+      // Editor is in DOM once mirror button is visible
+      const mirrorButton = page.getByLabelText('Apply mirror operation', { exact: true });
+      await expect.element(mirrorButton).toBeVisible();
+      // Wait for initial crop to commit (image loaded + 300ms debounce)
+      await waitForEditorChange();
+
+      // Register before click to avoid missing the event
+      const changeAfterMirror = waitForEditorChange();
+      await mirrorButton.click();
+      await changeAfterMirror;
+
+      const applyButton = page.getByRole('button', { name: /apply/i });
+      await expect.element(applyButton).toBeEnabled();
+      await applyButton.click();
+
+      // Wait for modal to close before next cycle
+      await expect.element(page.getByLabelText('Edit', { exact: true })).toBeVisible();
+    };
+
+    // Apply mirror and check for error
+    await applyMirror();
     await expect
-      .poll(() => {
-        const currentEntry = api.getOutputItem(entry.internalId);
-        return currentEntry.errors;
-      })
+      .poll(() => api.getOutputItem(entry.internalId).errors)
       .toEqual(expect.arrayContaining([expect.objectContaining<Partial<OutputErrorFile>>({ type: 'CUSTOM_ERROR' })]));
 
     // Remove mirror and check for error gone
-    await page.getByLabelText('Edit', { exact: true }).click();
-    await delay(3000);
-    await page.getByLabelText('Apply mirror operation', { exact: true }).click();
-    await delay(3000);
-    await page.getByRole('button', { name: /apply/i }).click();
-
-    await expect
-      .poll(() => {
-        const currentEntry = api.getOutputItem(entry.internalId);
-        return currentEntry.errors;
-      })
-      .toEqual([]);
+    await applyMirror();
+    await expect.poll(() => api.getOutputItem(entry.internalId).errors).toEqual([]);
 
     // Apply mirror and check for error again
-    await page.getByLabelText('Edit', { exact: true }).click();
-    await delay(3000);
-    await page.getByLabelText('Apply mirror operation', { exact: true }).click();
-    await delay(3000);
-    await page.getByRole('button', { name: /apply/i }).click();
-
+    await applyMirror();
     await expect
-      .poll(() => {
-        const currentEntry = api.getOutputItem(entry.internalId);
-        return currentEntry.errors;
-      })
+      .poll(() => api.getOutputItem(entry.internalId).errors)
       .toEqual(expect.arrayContaining([expect.objectContaining<Partial<OutputErrorFile>>({ type: 'CUSTOM_ERROR' })]));
   }, 30000);
 
