@@ -6,6 +6,7 @@ export default {
   'choose-file': 'Izvēlēties failu',
   'choose-files': 'Izvēlēties failus',
   'drop-files-here': 'Nomest failus šeit',
+  'drop-file-here': 'Nomest failu šeit',
   'select-file-source': 'Izvēlēties faila avotu',
   selected: 'Izvēlēts',
   upload: 'Augšupielādēt',

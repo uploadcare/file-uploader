@@ -6,6 +6,7 @@ export default {
   'choose-file': 'აირჩიეთ ფაილი',
   'choose-files': 'აირჩიეთ ფაილები',
   'drop-files-here': 'ჩააგდეთ ფაილები აქ',
+  'drop-file-here': 'ჩააგდეთ ფაილი აქ',
   'select-file-source': 'აირჩიეთ ფაილის წყარო',
   selected: 'არჩეულია',
   upload: 'ატვირთვა',

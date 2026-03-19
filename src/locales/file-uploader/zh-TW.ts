@@ -6,6 +6,7 @@ export default {
   'choose-file': '選擇檔案',
   'choose-files': '選擇多個檔案',
   'drop-files-here': '將檔案拖曳至此',
+  'drop-file-here': '將檔案拖曳至此',
   'select-file-source': '選擇檔案來源',
   selected: '已選擇',
   upload: '上傳',

@@ -6,6 +6,7 @@ export default {
   'choose-file': 'Выбрать файл',
   'choose-files': 'Выбрать файлы',
   'drop-files-here': 'Перетащите файлы сюда',
+  'drop-file-here': 'Перетащите файл сюда',
   'select-file-source': 'Выбрать источник файла',
   selected: 'Выбрано',
   upload: 'Загрузить',

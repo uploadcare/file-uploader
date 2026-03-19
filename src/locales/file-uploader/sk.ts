@@ -6,6 +6,7 @@ export default {
   'choose-file': 'Vybrať súbor',
   'choose-files': 'Vybrať súbory',
   'drop-files-here': 'Pretiahnite súbory sem',
+  'drop-file-here': 'Pretiahnite súbor sem',
   'select-file-source': 'Vyberte zdroj súboru',
   selected: 'Vybrané',
   upload: 'Nahrať',

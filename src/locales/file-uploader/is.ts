@@ -6,6 +6,7 @@ export default {
   'choose-file': 'Veldu skrá',
   'choose-files': 'Veldu skrár',
   'drop-files-here': 'Slepptu skrám hér',
+  'drop-file-here': 'Slepptu skrá hér',
   'select-file-source': 'Veldu uppruna skrár',
   selected: 'Valið',
   upload: 'Hlaða upp',

@@ -6,6 +6,7 @@ export default {
   'choose-file': 'Valitse tiedosto',
   'choose-files': 'Valitse tiedostoja',
   'drop-files-here': 'Raahaa tiedostot tänne',
+  'drop-file-here': 'Raahaa tiedosto tänne',
   'select-file-source': 'Valitse tiedoston lähde',
   selected: 'Valittu',
   upload: 'Lataa',

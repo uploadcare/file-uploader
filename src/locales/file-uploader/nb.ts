@@ -6,6 +6,7 @@ export default {
   'choose-file': 'Velg fil',
   'choose-files': 'Velg filer',
   'drop-files-here': 'Slipp filer her',
+  'drop-file-here': 'Slipp filen her',
   'select-file-source': 'Velg filkilde',
   selected: 'Valgt',
   upload: 'Last opp',

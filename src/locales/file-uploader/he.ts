@@ -6,6 +6,7 @@ export default {
   'choose-file': 'בחר קובץ',
   'choose-files': 'בחר קבצים',
   'drop-files-here': 'שחרר קבצים כאן',
+  'drop-file-here': 'שחרר קובץ כאן',
   'select-file-source': 'בחר מקור קבצים',
   selected: 'נבחר',
   upload: 'העלה',

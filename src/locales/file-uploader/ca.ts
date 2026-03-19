@@ -6,6 +6,7 @@ export default {
   'choose-file': 'Tria fitxer',
   'choose-files': 'Tria fitxers',
   'drop-files-here': 'Deixa caure els fitxers aquí',
+  'drop-file-here': 'Deixa caure el fitxer aquí',
   'select-file-source': "Selecciona l'origen del fitxer",
   selected: 'Seleccionat',
   upload: 'Pujar',
