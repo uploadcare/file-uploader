@@ -52,13 +52,8 @@ export class DropArea extends LitUploaderBlock {
   @state()
   private _isVisible = true;
 
-  private get _localizedText() {
-    const customText = this.text;
-    if (typeof customText === 'string' && customText.length > 0) {
-      return this.l10n(customText) || customText;
-    }
-    return this.l10n('drop-files-here');
-  }
+  @state()
+  private _dropTextKey = 'drop-files-here';
 
   private _destroyDropzone: (() => void) | null = null;
   private _destroyContentWrapperDropzone: (() => void) | null = null;
@@ -143,6 +138,15 @@ export class DropArea extends LitUploaderBlock {
       this._sourceListAllowsLocal = list.includes(UploadSource.LOCAL);
       this._updateIsEnabled();
       this._updateVisibility();
+    });
+
+    this.subConfigValue('multiple', (val) => {
+      const customText = this.text;
+      if (typeof customText === 'string' && customText.length > 0) {
+        this._dropTextKey = this.l10n(customText) || customText;
+        return;
+      }
+      this._dropTextKey = val ? this.l10n('drop-files-here') : this.l10n('drop-file-here');
     });
   }
 
@@ -278,7 +282,7 @@ export class DropArea extends LitUploaderBlock {
         <uc-icon name="default"></uc-icon>
         <uc-icon name="arrow-down"></uc-icon>
       </div>
-      <span class="uc-text">${this._localizedText}</span>
+      <span class="uc-text">${this._dropTextKey}</span>
     </div>`,
     )}
     `;
