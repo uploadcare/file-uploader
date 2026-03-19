@@ -42,6 +42,9 @@ export class FileUploaderMinimal extends LitSolutionBlock {
   @state()
   private _classStartFrom = EMPTY_CLASS;
 
+  @state()
+  private _buttonTextKey = 'choose-file';
+
   private _getInitActivity(): string {
     return (this.getCssData('--cfg-init-activity') as string | undefined) || LitActivityBlock.activities.START_FROM;
   }
@@ -136,6 +139,10 @@ export class FileUploaderMinimal extends LitSolutionBlock {
       });
     });
 
+    this.subConfigValue('multiple', (val) => {
+      this._buttonTextKey = val ? 'choose-files' : 'choose-file';
+    });
+
     this.modalManager?.subscribe(ModalEvents.OPEN, this._handleModalOpen);
     this.modalManager?.subscribe(ModalEvents.CLOSE, this._handleModalClose);
   }
@@ -155,7 +162,7 @@ export class FileUploaderMinimal extends LitSolutionBlock {
           initflow
           clickable
           tabindex="0"
-        ><span>${this.l10n('choose-file')}</span></uc-drop-area>
+        ><span>${this.l10n(this._buttonTextKey)}</span></uc-drop-area>
         <uc-copyright></uc-copyright>
       </uc-start-from>
       <uc-upload-list class=${this._classUploadList}></uc-upload-list>
