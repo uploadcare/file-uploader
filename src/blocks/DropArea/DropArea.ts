@@ -55,6 +55,16 @@ export class DropArea extends LitUploaderBlock {
   @state()
   private _dropTextKey = 'drop-files-here';
 
+  private _isMultiple = false;
+  private _updateDropText(): void {
+    const customText = this.text;
+    if (typeof customText === 'string' && customText.length > 0) {
+      this._dropTextKey = this.l10n(customText) || customText;
+      return;
+    }
+    this._dropTextKey = this._isMultiple ? this.l10n('drop-files-here') : this.l10n('drop-file-here');
+  }
+
   private _destroyDropzone: (() => void) | null = null;
   private _destroyContentWrapperDropzone: (() => void) | null = null;
   private _contentWrapperRef: Ref<HTMLDivElement> = createRef();
@@ -141,21 +151,21 @@ export class DropArea extends LitUploaderBlock {
     });
 
     this.subConfigValue('multiple', (val) => {
-      const customText = this.text;
-      if (typeof customText === 'string' && customText.length > 0) {
-        this._dropTextKey = this.l10n(customText) || customText;
-        return;
-      }
-      this._dropTextKey = val ? this.l10n('drop-files-here') : this.l10n('drop-file-here');
+      this._isMultiple = Boolean(val);
+      this._updateDropText();
     });
   }
 
-  protected override willUpdate(changedProperties: PropertyValues<this>): void {
+  protected override willUpdate(changedProperties: PropertyValues<this & { localeId: string }>): void {
     super.willUpdate(changedProperties);
 
     if (changedProperties.has('disabled')) {
       this._updateIsEnabled();
       this._updateVisibility();
+    }
+
+    if (changedProperties.has('text') || changedProperties.has('localeId')) {
+      this._updateDropText();
     }
   }
 

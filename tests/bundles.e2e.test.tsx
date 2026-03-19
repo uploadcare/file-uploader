@@ -158,7 +158,7 @@ describe('Bundles', () => {
       </>,
     );
 
-    await expect.element(page.getByText('Choose file', { exact: true })).toBeVisible();
+    await expect.element(page.getByText('Choose files', { exact: true })).toBeVisible();
   });
 
   test('web/uc-file-uploader-regular.min.js', async () => {
