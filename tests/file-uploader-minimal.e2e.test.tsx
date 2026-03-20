@@ -25,11 +25,11 @@ beforeEach(() => {
 describe('File uploader minimal', () => {
   describe('Upload button', () => {
     it('should be rendered', async () => {
-      await expect.element(page.getByText('Choose file', { exact: true })).toBeVisible();
+      await expect.element(page.getByText('Choose files', { exact: true })).toBeVisible();
     });
 
     it('should open file dialog on click', async () => {
-      await page.getByText('Choose file', { exact: true }).click();
+      await page.getByText('Choose files', { exact: true }).click();
       const startFrom = page.getByTestId('uc-start-from');
       await expect(startFrom).toBeDefined();
     });
@@ -46,7 +46,7 @@ describe('File uploader minimal', () => {
     });
 
     it('should open cloud image editor modal on edit button click', async () => {
-      await page.getByText('Choose file', { exact: true }).click();
+      await page.getByText('Choose files', { exact: true }).click();
       const startFrom = page.getByTestId('uc-start-from');
       const uploadList = page.getByTestId('uc-upload-list');
 

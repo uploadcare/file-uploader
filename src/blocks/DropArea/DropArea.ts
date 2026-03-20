@@ -52,12 +52,17 @@ export class DropArea extends LitUploaderBlock {
   @state()
   private _isVisible = true;
 
-  private get _localizedText() {
+  @state()
+  private _dropTextKey = 'drop-files-here';
+
+  private _isMultiple = false;
+  private _updateDropText(): void {
     const customText = this.text;
     if (typeof customText === 'string' && customText.length > 0) {
-      return this.l10n(customText) || customText;
+      this._dropTextKey = this.l10n(customText) || customText;
+      return;
     }
-    return this.l10n('drop-files-here');
+    this._dropTextKey = this._isMultiple ? this.l10n('drop-files-here') : this.l10n('drop-file-here');
   }
 
   private _destroyDropzone: (() => void) | null = null;
@@ -144,14 +149,23 @@ export class DropArea extends LitUploaderBlock {
       this._updateIsEnabled();
       this._updateVisibility();
     });
+
+    this.subConfigValue('multiple', (val) => {
+      this._isMultiple = Boolean(val);
+      this._updateDropText();
+    });
   }
 
-  protected override willUpdate(changedProperties: PropertyValues<this>): void {
+  protected override willUpdate(changedProperties: PropertyValues<this & { localeId: string }>): void {
     super.willUpdate(changedProperties);
 
     if (changedProperties.has('disabled')) {
       this._updateIsEnabled();
       this._updateVisibility();
+    }
+
+    if (changedProperties.has('text') || changedProperties.has('localeId')) {
+      this._updateDropText();
     }
   }
 
@@ -278,7 +292,7 @@ export class DropArea extends LitUploaderBlock {
         <uc-icon name="default"></uc-icon>
         <uc-icon name="arrow-down"></uc-icon>
       </div>
-      <span class="uc-text">${this._localizedText}</span>
+      <span class="uc-text">${this._dropTextKey}</span>
     </div>`,
     )}
     `;

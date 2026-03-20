@@ -6,6 +6,7 @@ export default {
   'choose-file': 'Ընտրեք ֆայլը',
   'choose-files': 'Ընտրեք ֆայլերը',
   'drop-files-here': 'Թողարկեք ֆայլերը այստեղ',
+  'drop-file-here': 'Թողարկեք ֆայլը այստեղ',
   'select-file-source': 'Ընտրեք ֆայլի աղբյուրը',
   selected: 'Ընտրված է',
   upload: 'Բեռնել',

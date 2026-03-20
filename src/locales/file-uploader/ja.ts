@@ -6,6 +6,7 @@ export default {
   'choose-file': 'ファイルを選択',
   'choose-files': 'ファイルを選択する',
   'drop-files-here': 'ここにファイルをドロップしてください',
+  'drop-file-here': 'ここにファイルをドロップしてください',
   'select-file-source': 'ファイルソースを選択',
   selected: '選択された',
   upload: 'アップロード',

@@ -6,6 +6,7 @@ export default {
   'choose-file': 'Dosya seç',
   'choose-files': 'Dosyaları seç',
   'drop-files-here': 'Dosyaları buraya bırak',
+  'drop-file-here': 'Dosyayı buraya bırak',
   'select-file-source': 'Dosya kaynağı seç',
   selected: 'Seçildi',
   upload: 'Yükle',

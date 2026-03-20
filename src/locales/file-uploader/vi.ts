@@ -6,6 +6,7 @@ export default {
   'choose-file': 'Chọn tệp',
   'choose-files': 'Chọn các tệp',
   'drop-files-here': 'Thả các tệp vào đây',
+  'drop-file-here': 'Thả tệp vào đây',
   'select-file-source': 'Chọn nguồn tệp',
   selected: 'Đã chọn',
   upload: 'Tải lên',

@@ -6,6 +6,7 @@ export default {
   'choose-file': 'Escolher arquivo',
   'choose-files': 'Escolher arquivos',
   'drop-files-here': 'Solte os arquivos aqui',
+  'drop-file-here': 'Solte o arquivo aqui',
   'select-file-source': 'Selecionar origem do arquivo',
   selected: 'Selecionado',
   upload: 'Carregar',

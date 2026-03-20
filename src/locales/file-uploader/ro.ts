@@ -6,6 +6,7 @@ export default {
   'choose-file': 'Alegeți fișierul',
   'choose-files': 'Alegeți fișierele',
   'drop-files-here': 'Depuneți fișierele aici',
+  'drop-file-here': 'Depuneți fișierul aici',
   'select-file-source': 'Selectați sursa fișierului',
   selected: 'Selectat',
   upload: 'Încărcați',

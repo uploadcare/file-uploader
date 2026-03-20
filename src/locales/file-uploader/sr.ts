@@ -6,6 +6,7 @@ export default {
   'choose-file': 'Изабери датотеку',
   'choose-files': 'Изабери датотеке',
   'drop-files-here': 'Повуци датотеке овде',
+  'drop-file-here': 'Повуци датотеку овде',
   'select-file-source': 'Изабери извор датотеке',
   selected: 'Изабрано',
   upload: 'Отпреми',

@@ -6,6 +6,7 @@ export default {
   'choose-file': 'Vælg fil',
   'choose-files': 'Vælg filer',
   'drop-files-here': 'Slip filer her',
+  'drop-file-here': 'Slip filen her',
   'select-file-source': 'Vælg filkilde',
   selected: 'Valgt',
   upload: 'Upload',

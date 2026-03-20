@@ -6,6 +6,7 @@ export default {
   'choose-file': 'Välj fil',
   'choose-files': 'Välj filer',
   'drop-files-here': 'Släpp filer här',
+  'drop-file-here': 'Släpp filen här',
   'select-file-source': 'Välj filkälla',
   selected: 'Vald',
   upload: 'Ladda upp',

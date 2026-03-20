@@ -6,6 +6,7 @@ export default {
   'choose-file': 'Επιλογή αρχείου',
   'choose-files': 'Επιλογή αρχείων',
   'drop-files-here': 'Αφήστε τα αρχεία εδώ',
+  'drop-file-here': 'Αφήστε το αρχείο εδώ',
   'select-file-source': 'Επιλέξτε πηγή αρχείου',
   selected: 'Επιλεγμένο',
   upload: 'Μεταφόρτωση',

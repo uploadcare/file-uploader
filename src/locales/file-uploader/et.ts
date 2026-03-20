@@ -6,6 +6,7 @@ export default {
   'choose-file': 'Vali fail',
   'choose-files': 'Vali failid',
   'drop-files-here': 'Lohista failid siia',
+  'drop-file-here': 'Lohista fail siia',
   'select-file-source': 'Vali faili allikas',
   selected: 'Valitud',
   upload: 'Lae üles',

@@ -6,6 +6,7 @@ export default {
   'choose-file': 'Kies bestand',
   'choose-files': 'Kies bestanden',
   'drop-files-here': 'Bestanden hier neerzetten',
+  'drop-file-here': 'Bestand hier neerzetten',
   'select-file-source': 'Selecteer bestandsbron',
   selected: 'Geselecteerd',
   upload: 'Uploaden',
