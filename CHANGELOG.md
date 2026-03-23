@@ -3,7 +3,7 @@
 
 ### Bug Fixes
 
-* added missing field for multiple upload ([#948](https://github.com/uploadcare/file-uploader/issues/948)) ([37ba6c8](https://github.com/uploadcare/file-uploader/commit/37ba6c840876cdafe24614cc239942bea9e720a5))
+* implemented correct text rendering for **minimal** and **inline** modes when multiple selection is enabled. ([#948](https://github.com/uploadcare/file-uploader/issues/948)) ([37ba6c8](https://github.com/uploadcare/file-uploader/commit/37ba6c840876cdafe24614cc239942bea9e720a5))
 
 
 
