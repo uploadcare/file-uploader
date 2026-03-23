@@ -1,3 +1,12 @@
+## [1.27.2](https://github.com/uploadcare/file-uploader/compare/v1.27.1...v1.27.2) (2026-03-20)
+
+
+### Bug Fixes
+
+* implemented correct text rendering for **minimal** and **inline** modes when multiple selection is enabled. ([#948](https://github.com/uploadcare/file-uploader/issues/948)) ([37ba6c8](https://github.com/uploadcare/file-uploader/commit/37ba6c840876cdafe24614cc239942bea9e720a5))
+
+
+
 ## [1.27.1](https://github.com/uploadcare/file-uploader/compare/v1.27.0...v1.27.1) (2026-02-16)
 
 
