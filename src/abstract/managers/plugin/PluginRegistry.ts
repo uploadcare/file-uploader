@@ -23,34 +23,42 @@ export class PluginRegistry {
     return { ...item, pluginId } as Owned<T>;
   }
 
-  public addSource(pluginId: string, item: PluginSourceRegistration): PluginSourceRegistration {
+  public addSource(pluginId: string, item: PluginSourceRegistration): void {
+    const existing = this._sources.find((s) => s.id === item.id);
+    if (existing) {
+      console.warn(
+        `[Plugin "${pluginId}"] Source with id "${item.id}" is already registered by plugin "${existing.pluginId}". Skipping.`,
+      );
+      return;
+    }
     this._sources.push(this._own(pluginId, item));
-    return item;
   }
 
-  public addActivity(pluginId: string, item: PluginActivityRegistration): PluginActivityRegistration {
+  public addActivity(pluginId: string, item: PluginActivityRegistration): void {
+    const existing = this._activities.find((a) => a.id === item.id);
+    if (existing) {
+      console.warn(
+        `[Plugin "${pluginId}"] Activity with id "${item.id}" is already registered by plugin "${existing.pluginId}". Skipping.`,
+      );
+      return;
+    }
     this._activities.push(this._own(pluginId, item));
-    return item;
   }
 
-  public addFileAction(pluginId: string, item: PluginFileActionRegistration): PluginFileActionRegistration {
+  public addFileAction(pluginId: string, item: PluginFileActionRegistration): void {
     this._fileActions.push(this._own(pluginId, item));
-    return item;
   }
 
-  public addFileHook(pluginId: string, item: PluginFileHookRegistration): PluginFileHookRegistration {
-    this._fileHooks.push(this._own(pluginId, item));
-    return item;
+  public addFileHook(pluginId: string, item: PluginFileHookRegistration): void {
+    this._fileHooks.push(this._own(pluginId, { timeout: 30_000, ...item }));
   }
 
-  public addIcon(pluginId: string, item: PluginIconRegistration): PluginIconRegistration {
+  public addIcon(pluginId: string, item: PluginIconRegistration): void {
     this._icons.push(this._own(pluginId, item));
-    return item;
   }
 
-  public addI18n(pluginId: string, item: PluginI18nRegistration): PluginI18nRegistration {
+  public addI18n(pluginId: string, item: PluginI18nRegistration): void {
     this._i18n.push(this._own(pluginId, item));
-    return item;
   }
 
   public addConfig<T>(pluginId: string, definition: CustomConfigDefinition<T>): void {

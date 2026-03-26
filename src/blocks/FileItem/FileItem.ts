@@ -419,7 +419,11 @@ export class FileItem extends FileItemConfig {
           );
           for (const hook of beforeUploadHooks) {
             try {
-              const { file: newFile } = await hook.handler({ file });
+              const hookPromise = hook.handler({ file, signal: abortController.signal });
+              const timeoutPromise = new Promise<never>((_, reject) =>
+                setTimeout(() => reject(new Error(`beforeUpload hook timed out`)), hook.timeout),
+              );
+              const { file: newFile } = await Promise.race([hookPromise, timeoutPromise]);
               if (newFile !== file) {
                 file = newFile;
                 entry.setValue('mimeType', file.type || null);
@@ -430,7 +434,7 @@ export class FileItem extends FileItemConfig {
                 }
               }
             } catch (error) {
-              this.debugPrint(`File hook "beforeUpload" from plugin "${hook.pluginId}" failed`, error);
+              console.warn(`File hook "beforeUpload" from plugin "${hook.pluginId}" failed`, error);
             }
           }
         }
