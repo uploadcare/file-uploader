@@ -40,6 +40,55 @@ describe('Custom Config', () => {
     await expect.poll(() => configApi.get('readableOption')).toBe(42);
   });
 
+  it('should return defaultValue from config.get() synchronously inside setup()', async () => {
+    let valueInsideSetup: unknown = 'not-set';
+    let setupCalled = false;
+    const plugin = createTestPlugin({
+      id: 'cfg-sync-get',
+      setup: ({ pluginApi }) => {
+        pluginApi.registry.registerConfig({
+          name: 'syncGetOption',
+          defaultValue: 'sync-default',
+        });
+        valueInsideSetup = pluginApi.config.get('syncGetOption');
+        setupCalled = true;
+      },
+    });
+
+    await renderUploader([plugin]);
+
+    // Wait for setup() to complete (it's called asynchronously after config.plugins is set)
+    await vi.waitFor(() => {
+      expect(setupCalled).toBe(true);
+    });
+
+    expect(valueInsideSetup).toBe('sync-default');
+  });
+
+  it('should call config.subscribe() with defaultValue as first value inside setup()', async () => {
+    const firstCallValue: unknown[] = [];
+    const plugin = createTestPlugin({
+      id: 'cfg-sync-subscribe',
+      setup: ({ pluginApi }) => {
+        pluginApi.registry.registerConfig({
+          name: 'syncSubscribeOption',
+          defaultValue: 'subscribe-default',
+        });
+        pluginApi.config.subscribe('syncSubscribeOption', (v) => {
+          firstCallValue.push(v);
+        });
+      },
+    });
+
+    await renderUploader([plugin]);
+
+    await vi.waitFor(() => {
+      expect(firstCallValue.length).toBeGreaterThan(0);
+    });
+
+    expect(firstCallValue[0]).toBe('subscribe-default');
+  });
+
   it('should allow subscribing to custom config changes via config.subscribe()', async () => {
     const callback = vi.fn<(value: string) => void>();
 
@@ -120,6 +169,32 @@ describe('Custom Config', () => {
     await expect.poll(() => configApi.get('attrOption')).toBe('from-attribute');
   });
 
+  it('should restore defaultValue when HTML attribute is removed', async () => {
+    let configApi: PluginSetupParams['pluginApi']['config'];
+    const plugin = createTestPlugin({
+      id: 'cfg-attr-remove',
+      setup: ({ pluginApi }) => {
+        configApi = pluginApi.config;
+        pluginApi.registry.registerConfig({
+          name: 'removableAttrOption',
+          defaultValue: 'default-qa',
+          attribute: true,
+        });
+      },
+    });
+
+    await renderUploader([plugin]);
+    const config = page.getByTestId('uc-config').query()! as Config;
+
+    await expect.poll(() => configApi.get('removableAttrOption')).toBe('default-qa');
+
+    config.setAttribute('removable-attr-option', 'custom');
+    await expect.poll(() => configApi.get('removableAttrOption')).toBe('custom');
+
+    config.removeAttribute('removable-attr-option');
+    await expect.poll(() => configApi.get('removableAttrOption')).toBe('default-qa');
+  });
+
   it('should auto-cleanup config subscriptions when plugin is unregistered', async () => {
     const callback = vi.fn<(value: string) => void>();
 
@@ -179,6 +254,40 @@ describe('Custom Config', () => {
 
     config.normalizedOption = 42;
     await expect.poll(() => config.normalizedOption).toBe(42);
+  });
+
+  it('should warn and keep previous value when normalize() throws', async () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const plugin = createTestPlugin({
+      id: 'cfg-normalize-throw',
+      setup: ({ pluginApi }) => {
+        pluginApi.registry.registerConfig({
+          name: 'throwingNormOption',
+          defaultValue: 'safe',
+          normalize: (value) => {
+            if (value === 'bad') throw new Error('normalize error');
+            return String(value);
+          },
+        });
+      },
+    });
+
+    await renderUploader([plugin]);
+    const config = page.getByTestId('uc-config').query()! as Config;
+
+    await expect.poll(() => config.throwingNormOption).toBe('safe');
+
+    config.throwingNormOption = 'bad';
+
+    await vi.waitFor(() => {
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('normalize()'), expect.any(Error));
+    });
+
+    // Value should remain unchanged
+    await expect.poll(() => config.throwingNormOption).toBe('safe');
+
+    warnSpy.mockRestore();
   });
 
   it('should not allow setting attribute when attribute is false', async () => {
@@ -254,5 +363,9 @@ declare module '@/types/index' {
     myOption: string;
     dupOption: string;
     normalizedOption: number;
+    syncGetOption: string;
+    syncSubscribeOption: string;
+    removableAttrOption: string;
+    throwingNormOption: string;
   }
 }

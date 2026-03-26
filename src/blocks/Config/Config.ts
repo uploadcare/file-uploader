@@ -152,7 +152,12 @@ export class Config extends LitBlock {
     if (this._isCustomConfig(key)) {
       // For custom configs, try to get normalize function from plugin definition
       const config = this._getCustomConfigDefinition(key);
-      normalizedValue = config?.normalize?.(value) ?? value;
+      try {
+        normalizedValue = config?.normalize?.(value) ?? value;
+      } catch (error) {
+        console.warn(`[uc-config] normalize() for "${key}" threw an error, keeping previous value`, error);
+        return;
+      }
     } else {
       // For built-in configs, use the standard normalization
       normalizedValue = normalizeConfigValue(key as keyof ConfigType, value);
@@ -306,8 +311,11 @@ export class Config extends LitBlock {
 
           // Check if it's a custom plugin config attribute using the mapping
           if (attrName in this._customAttrKeyMapping) {
+            const key = this._customAttrKeyMapping[attrName] as string;
+            const config = this._getCustomConfigDefinition(key);
+
             // Call attributeChangedCallback for custom plugin attributes
-            this.attributeChangedCallback(attrName, oldValue ?? '', newValue ?? '');
+            this.attributeChangedCallback(attrName, oldValue ?? '', newValue ?? config?.defaultValue ?? '');
           }
         }
       }
@@ -402,7 +410,8 @@ export class Config extends LitBlock {
       // Handle custom config attributes (registered by plugins)
       // This runs asynchronously once pluginManager is available
       this._sharedInstancesBag.when('pluginManager', (pluginManager) => {
-        if (this.getAttribute(name) !== newVal) {
+        const currentAttrValue = this.getAttribute(name);
+        if (currentAttrValue && currentAttrValue !== newVal) {
           return;
         }
         const key = this._customAttrKeyMapping[name];
