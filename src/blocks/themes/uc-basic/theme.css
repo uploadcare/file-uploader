@@ -202,7 +202,8 @@
     }
   }
 
-  :where(.uc-light) {
+  :where(.uc-light),
+  :where(.uc-light) :where([uc-wgt-common]) {
     --uc-background: var(--uc-background-light);
     --uc-foreground: var(--uc-foreground-light);
     --uc-primary: var(--uc-primary-light);
@@ -223,7 +224,8 @@
     --uc-simple-btn-foreground: var(--uc-simple-btn-foreground-light);
   }
 
-  :where(.uc-dark) {
+  :where(.uc-dark),
+  :where(.uc-dark) :where([uc-wgt-common]) {
     --uc-background: var(--uc-background-dark);
     --uc-foreground: var(--uc-foreground-dark);
     --uc-primary: var(--uc-primary-dark);
