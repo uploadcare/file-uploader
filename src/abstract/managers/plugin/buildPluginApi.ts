@@ -29,7 +29,13 @@ export function buildPluginApi(
     registerFileHook: (hook) => registry.addFileHook(pluginId, hook),
     registerIcon: (icon) => registry.addIcon(pluginId, icon),
     registerI18n: (i18n) => registry.addI18n(pluginId, i18n),
-    registerConfig: (definition) => registry.addConfig(pluginId, definition),
+    registerConfig: (definition) => {
+      registry.addConfig(pluginId, definition);
+      const stateKey = sharedConfigKey(definition.name as keyof (ConfigType & CustomConfig));
+      if (!ctx.has(stateKey as keyof SharedState)) {
+        ctx.add(stateKey, definition.defaultValue as unknown as SharedState[typeof stateKey]);
+      }
+    },
   };
 
   const configApi: PluginConfigApi = {
