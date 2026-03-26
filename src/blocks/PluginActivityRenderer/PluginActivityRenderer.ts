@@ -58,13 +58,21 @@ export class PluginActivityHost extends LitActivityBlock {
     this._disposeActivity();
 
     const activityParams = this.$['*currentActivityParams'];
-    this._dispose = this.registration.render(container, activityParams) ?? undefined;
+    try {
+      this._dispose = this.registration.render(container, activityParams) ?? undefined;
+    } catch (error) {
+      console.error(`[Plugin "${this.registration.pluginId}"] Activity render() threw an error`, error);
+    }
   }
 
   private _disposeActivity(): void {
     const container = this._containerRef.value;
     if (container) {
-      this._dispose?.();
+      try {
+        this._dispose?.();
+      } catch (error) {
+        console.error(`[Plugin "${this.registration?.pluginId}"] Activity dispose threw an error`, error);
+      }
       this._dispose = undefined;
 
       container.replaceChildren();
