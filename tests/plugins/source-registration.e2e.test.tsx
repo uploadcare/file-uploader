@@ -113,6 +113,46 @@ describe('Source Registration', () => {
     }
   });
 
+  it('should warn and skip duplicate source registration', async () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const pluginA = createTestPlugin({
+      id: 'src-dup-a',
+      setup: ({ pluginApi }) => {
+        pluginApi.registry.registerSource({
+          id: 'shared-source',
+          label: 'First',
+          onSelect: () => {},
+        });
+      },
+    });
+
+    const pluginB = createTestPlugin({
+      id: 'src-dup-b',
+      setup: ({ pluginApi }) => {
+        pluginApi.registry.registerSource({
+          id: 'shared-source',
+          label: 'Second',
+          onSelect: () => {},
+        });
+      },
+    });
+
+    const { config } = await renderUploader([pluginA, pluginB]);
+    addSource(config, 'shared-source');
+
+    await vi.waitFor(() => {
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('"shared-source"'));
+    });
+
+    await openModal();
+    // Only the first registration should appear
+    await expect.element(page.getByText('First')).toBeVisible();
+    await expect.element(page.getByText('Second')).not.toBeInTheDocument();
+
+    warnSpy.mockRestore();
+  });
+
   it('should not render plugin source if not present in sourceList', async () => {
     const plugin = createTestPlugin({
       id: 'src-negative',

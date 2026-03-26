@@ -49,8 +49,13 @@ export class PluginManager extends SharedInstance {
     const processedIds = new Set<string>();
 
     for (const plugin of plugins) {
+      if (!plugin.id) {
+        console.warn('[PluginManager] A plugin is missing the required "id" field, skipping');
+        continue;
+      }
+
       if (processedIds.has(plugin.id)) {
-        this._debugPrint(`Plugin "${plugin.id}" is already in the list, skipping duplicate`);
+        console.warn(`[PluginManager] Plugin "${plugin.id}" is already in the list, skipping duplicate`);
         continue;
       }
       processedIds.add(plugin.id);
@@ -61,7 +66,7 @@ export class PluginManager extends SharedInstance {
         } catch (error) {
           this.registry.purge(plugin.id);
           this._notifySubscribers();
-          this._debugPrint(`Plugin "${plugin.id}" setup failed`, error);
+          console.error(`[PluginManager] Plugin "${plugin.id}" setup() threw an error`, error);
         }
       }
       currentPluginIds.delete(plugin.id);
@@ -136,11 +141,16 @@ export class PluginManager extends SharedInstance {
     if (onAddHooks.length === 0) return;
 
     let file: File | Blob = initialFile;
+    const abortController = new AbortController();
     for (const hook of onAddHooks) {
       try {
-        ({ file } = await hook.handler({ file }));
+        const hookPromise = hook.handler({ file, signal: abortController.signal });
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error(`onAdd hook timed out`)), hook.timeout),
+        );
+        ({ file } = await Promise.race([hookPromise, timeoutPromise]));
       } catch (error) {
-        this._debugPrint(`File hook "onAdd" from plugin "${hook.pluginId}" failed`, error);
+        console.warn(`File hook "onAdd" from plugin "${hook.pluginId}" failed`, error);
       }
     }
 

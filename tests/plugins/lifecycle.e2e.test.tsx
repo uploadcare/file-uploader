@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
-import type { PluginSetupParams } from '@/index.ts';
+import type { PluginSetupParams, UploaderPlugin } from '@/index.ts';
 import { addSource, createTestPlugin, openModal, renderUploader } from './utils';
 
 describe('Plugin Registration & Lifecycle', () => {
@@ -196,6 +196,85 @@ describe('Plugin Registration & Lifecycle', () => {
 
     await openModal();
     await expect.element(page.getByText('Async Source')).toBeVisible();
+  });
+
+  it('should warn when two plugins have the same id', async () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const setup1 = vi.fn();
+    const setup2 = vi.fn();
+    const plugin1 = createTestPlugin({ id: 'dup-id', setup: setup1 });
+    const plugin2 = createTestPlugin({ id: 'dup-id', setup: setup2 });
+
+    await renderUploader([plugin1, plugin2]);
+
+    await vi.waitFor(() => {
+      expect(setup1).toHaveBeenCalledOnce();
+    });
+
+    // Second plugin with same id should be skipped with a warning
+    expect(setup2).not.toHaveBeenCalled();
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('"dup-id"'));
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('duplicate'));
+
+    warnSpy.mockRestore();
+  });
+
+  it('should log error when plugin setup() throws and warn about failure', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const plugin = createTestPlugin({
+      id: 'setup-throws',
+      setup: () => {
+        throw new Error('intentional failure');
+      },
+    });
+
+    await renderUploader([plugin]);
+
+    await vi.waitFor(() => {
+      expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('"setup-throws"'), expect.any(Error));
+    });
+
+    errorSpy.mockRestore();
+  });
+
+  it('should log error when async plugin setup() rejects', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const plugin = createTestPlugin({
+      id: 'async-setup-rejects',
+      setup: async () => {
+        await Promise.resolve();
+        throw new Error('async failure');
+      },
+    });
+
+    await renderUploader([plugin]);
+
+    await vi.waitFor(() => {
+      expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('"async-setup-rejects"'), expect.any(Error));
+    });
+
+    errorSpy.mockRestore();
+  });
+
+  it('should warn when a plugin is missing required id field', async () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const setupFn = vi.fn();
+    const pluginWithoutId = { setup: setupFn } as unknown as UploaderPlugin;
+
+    await renderUploader([pluginWithoutId]);
+
+    await vi.waitFor(() => {
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('"id"'));
+    });
+
+    // setup() should not be called since the plugin was skipped
+    expect(setupFn).not.toHaveBeenCalled();
+
+    warnSpy.mockRestore();
   });
 
   it('should await async setup() disposer on unregister', async () => {

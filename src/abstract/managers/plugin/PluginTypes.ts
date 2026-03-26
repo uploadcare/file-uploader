@@ -50,9 +50,17 @@ export type PluginFileActionRegistration = {
   onClick: (fileEntry: OutputFileEntry) => void | Promise<void>;
 };
 
-export type PluginFileHookContext = {
-  /** The file to transform */
+export type PluginFileHookResult = {
+  /** The (optionally transformed) file */
   file: File | Blob;
+};
+
+export type PluginFileHookContext = PluginFileHookResult & {
+  /**
+   * An AbortSignal that fires when the operation is cancelled (e.g. upload aborted or file removed).
+   * Hooks should respect this signal to avoid doing unnecessary work.
+   */
+  signal: AbortSignal;
 };
 
 export type PluginFileHookRegistration = {
@@ -65,16 +73,21 @@ export type PluginFileHookRegistration = {
    * `isImage`, `fileSize`, and `fileName` are all re-derived from the returned file.
    */
   type: 'beforeUpload' | 'onAdd';
-  handler: (context: PluginFileHookContext) => PluginFileHookContext | Promise<PluginFileHookContext>;
+  handler: (context: PluginFileHookContext) => PluginFileHookResult | Promise<PluginFileHookResult>;
+  /**
+   * Maximum time in milliseconds to wait for the hook to complete before skipping it.
+   * @default 30000
+   */
+  timeout?: number;
 };
 
 export type PluginRegistryApi = {
-  registerSource: (source: PluginSourceRegistration) => PluginSourceRegistration;
-  registerActivity: (activity: PluginActivityRegistration) => PluginActivityRegistration;
-  registerFileAction: (fileAction: PluginFileActionRegistration) => PluginFileActionRegistration;
-  registerFileHook: (hook: PluginFileHookRegistration) => PluginFileHookRegistration;
-  registerIcon: (icon: PluginIconRegistration) => PluginIconRegistration;
-  registerI18n: (i18n: PluginI18nRegistration) => PluginI18nRegistration;
+  registerSource: (source: PluginSourceRegistration) => void;
+  registerActivity: (activity: PluginActivityRegistration) => void;
+  registerFileAction: (fileAction: PluginFileActionRegistration) => void;
+  registerFileHook: (hook: PluginFileHookRegistration) => void;
+  registerIcon: (icon: PluginIconRegistration) => void;
+  registerI18n: (i18n: PluginI18nRegistration) => void;
   registerConfig: <T = unknown>(definition: CustomConfigDefinition<T>) => void;
 };
 
