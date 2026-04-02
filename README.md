@@ -21,6 +21,8 @@
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![minzipped size](https://img.shields.io/bundlephobia/minzip/@uploadcare/file-uploader@latest)](https://bundlephobia.com/package/@uploadcare/file-uploader@latest)
 
+`@uploadcare/file-uploader` is a Web Components–based file upload widget compatible with any JavaScript framework — React, Next.js, Vue, Angular, and Svelte — without framework adapters. It supports uploads from local disk, Dropbox, Google Drive, camera, and URL; chunked multipart transfers with resumable uploads for large files; built-in image editing (crop, resize, color filters); automatic malware and content moderation; and delivery via Uploadcare CDN. Fully accessible (keyboard navigation, screen readers) and TypeScript-ready.
+
 Add file uploads to your app and configure behavior and appearance as needed. Process and transform files before and after uploading. Compatible with any framework or environment.
 
 <img alt="Uploadcare File Uploader examples" src="https://ucarecdn.com/916a1054-ca44-4c4a-9f7b-99fa499043d9/-/preview/">
