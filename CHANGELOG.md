@@ -1,3 +1,12 @@
+## [1.27.3](https://github.com/uploadcare/file-uploader/compare/v1.27.2...v1.27.3) (2026-04-02)
+
+
+### Bug Fixes
+
+* **types:** add fallback types for addEventListener/removeEventListener on UploadCtxProvider ([6b25c17](https://github.com/uploadcare/file-uploader/commit/6b25c178620018fd9427642afdd17957eae06e45))
+
+
+
 ## [1.27.2](https://github.com/uploadcare/file-uploader/compare/v1.27.1...v1.27.2) (2026-03-20)
 
 
