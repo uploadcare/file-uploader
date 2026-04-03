@@ -3,7 +3,7 @@ import { property, state } from 'lit/decorators.js';
 import { type ActivityType, LitActivityBlock } from '../../lit/LitActivityBlock';
 import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
 import { browserFeatures } from '../../utils/browser-info';
-import { ExternalUploadSource, UploadSource, UploadSourceMobile } from '../../utils/UploadSource';
+import { canonicalSourceName, ExternalUploadSource, UploadSource, UploadSourceMobile } from '../../utils/UploadSource';
 import { CameraSourceTypes } from '../CameraSource/constants';
 import './source-btn.css';
 
@@ -136,10 +136,10 @@ export class SourceBtn extends LitUploaderBlock {
       console.warn(`Unsupported source type: ${type}`);
       return;
     }
-    const { textKey = type, icon = type } = configType;
+    const { textKey, icon } = configType;
 
-    this._srcTypeKey = `${L10N_PREFIX}${textKey}`;
-    this._iconName = icon;
+    this._srcTypeKey = `${L10N_PREFIX}${canonicalSourceName(textKey ?? type)}`;
+    this._iconName = icon ?? canonicalSourceName(type);
   }
 
   protected override willUpdate(changedProperties: PropertyValues<this>): void {
