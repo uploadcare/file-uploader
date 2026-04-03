@@ -13,7 +13,7 @@ import { LitActivityBlock } from '../../lit/LitActivityBlock';
 import { debounce } from '../../utils/debounce';
 import { parseShrink } from '../../utils/parseShrink';
 import { throttle } from '../../utils/throttle';
-import { ExternalUploadSource } from '../../utils/UploadSource';
+import { canonicalSourceName, ExternalUploadSource } from '../../utils/UploadSource';
 import './file-item.css';
 import type { Uid } from '../../lit/Uid';
 import { FileItemConfig } from './FileItemConfig';
@@ -165,7 +165,7 @@ export class FileItem extends FileItemConfig {
       if (errorText) {
         hint = '';
       } else if (!isFinished && externalUrl && source && Object.values(ExternalUploadSource).includes(source)) {
-        hint = this.l10n('waiting-for', { source: this.l10n(`src-type-${source}`) });
+        hint = this.l10n('waiting-for', { source: this.l10n(`src-type-${canonicalSourceName(source)}`) });
       }
 
       this._hint = hint;

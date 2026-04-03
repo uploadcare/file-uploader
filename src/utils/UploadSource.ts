@@ -1,6 +1,7 @@
 export const ExternalUploadSource = Object.freeze({
   FACEBOOK: 'facebook',
   DROPBOX: 'dropbox',
+  DROPBOX_CHOOSER: 'dropboxchooser',
   GDRIVE: 'gdrive',
   GPHOTOS: 'gphotos',
   FLICKR: 'flickr',
@@ -30,3 +31,10 @@ export const UploadSource = Object.freeze({
 } as const);
 
 export type SourceTypes = (typeof UploadSource)[keyof typeof UploadSource];
+
+const SOURCE_L10N_KEY_MAP: Partial<Record<SourceTypes, SourceTypes>> = {
+  [ExternalUploadSource.DROPBOX_CHOOSER]: ExternalUploadSource.DROPBOX,
+};
+
+/** Returns the canonical name for a source, mapping aliases to their shared display name, icon, and translation key. */
+export const canonicalSourceName = (source: string): string => SOURCE_L10N_KEY_MAP[source as SourceTypes] ?? source;
