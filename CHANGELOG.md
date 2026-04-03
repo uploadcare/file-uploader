@@ -1,3 +1,12 @@
+# [1.28.0](https://github.com/uploadcare/file-uploader/compare/v1.27.3...v1.28.0) (2026-04-03)
+
+
+### Features
+
+* add dropboxchooser as external upload source ([#953](https://github.com/uploadcare/file-uploader/issues/953)) ([bf0b1b1](https://github.com/uploadcare/file-uploader/commit/bf0b1b1cdfcc8b5f331c12a64cbb92c81533b02d))
+
+
+
 ## [1.27.3](https://github.com/uploadcare/file-uploader/compare/v1.27.2...v1.27.3) (2026-04-02)
 
 
