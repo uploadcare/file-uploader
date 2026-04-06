@@ -143,6 +143,7 @@ export class PluginManager extends SharedInstance {
     let file: File | Blob = initialFile;
     const abortController = new AbortController();
     for (const hook of onAddHooks) {
+      if (abortController.signal.aborted) break;
       try {
         const hookPromise = hook.handler({ file, signal: abortController.signal });
         const timeoutPromise = new Promise<never>((_, reject) =>

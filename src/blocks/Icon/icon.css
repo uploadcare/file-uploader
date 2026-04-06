@@ -1,4 +1,4 @@
-@layer uc.components {
+@layer uc.shared {
   uc-icon {
     display: inline-flex;
     align-items: center;

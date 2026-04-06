@@ -30,7 +30,9 @@
   :where([uc-wgt-common]) button:focus-visible {
     outline-offset: 2px;
   }
+}
 
+@layer uc.shared {
   :where([uc-wgt-common]) :is(button.uc-primary-btn, button.uc-ui-primary-btn) {
     color: var(--uc-primary-foreground);
     background-color: var(--uc-primary);
@@ -119,6 +121,7 @@
     opacity: 0.6;
     pointer-events: none;
   }
+
   :where([uc-wgt-common]) uc-select[disabled],
   :where([uc-wgt-common]) select[disabled] {
     opacity: 0.6;

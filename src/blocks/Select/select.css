@@ -1,4 +1,4 @@
-@layer uc.components {
+@layer uc.shared {
   uc-select {
     display: inline-flex;
   }

@@ -1,4 +1,4 @@
-@layer uc.components {
+@layer uc.shared {
   :is(uc-activity-header, .uc-ui-activity-header) {
     display: flex;
     justify-content: space-between;
