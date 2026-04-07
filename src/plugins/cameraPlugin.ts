@@ -32,7 +32,7 @@ export const cameraPlugin: UploaderPlugin = {
     // Mobile sources — expanded from 'camera' on devices with htmlMediaCapture
     pluginApi.registry.registerSource({
       id: 'mobile-photo-camera',
-      label: 'src-type-camera',
+      label: 'src-type-mobile-photo-camera',
       icon: 'camera',
       onSelect: () => {
         uploaderApi.openSystemDialog({ captureCamera: true, modeCamera: 'photo' });
@@ -41,7 +41,7 @@ export const cameraPlugin: UploaderPlugin = {
 
     pluginApi.registry.registerSource({
       id: 'mobile-video-camera',
-      label: 'src-type-camera',
+      label: 'src-type-mobile-video-camera',
       icon: 'camera',
       onSelect: () => {
         uploaderApi.openSystemDialog({ captureCamera: true, modeCamera: 'video' });
