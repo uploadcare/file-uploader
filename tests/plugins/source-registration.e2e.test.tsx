@@ -170,4 +170,126 @@ describe('Source Registration', () => {
     await openModal();
     await expect.element(page.getByText('Unlisted Source')).not.toBeInTheDocument();
   });
+
+  it('should render expanded sources with distinct labels', async () => {
+    const plugin = createTestPlugin({
+      id: 'expandable-plugin',
+      setup: ({ pluginApi }) => {
+        pluginApi.registry.registerSource({
+          id: 'parent-source',
+          label: 'Parent',
+          expand: () => ['child-photo', 'child-video'],
+          onSelect: () => {},
+        });
+
+        pluginApi.registry.registerSource({
+          id: 'child-photo',
+          label: 'Photo',
+          onSelect: () => {},
+        });
+
+        pluginApi.registry.registerSource({
+          id: 'child-video',
+          label: 'Video',
+          onSelect: () => {},
+        });
+      },
+    });
+
+    const { config } = await renderUploader([plugin]);
+    addSource(config, 'parent-source');
+
+    await openModal();
+
+    await expect.element(page.getByText('Photo')).toBeVisible();
+    await expect.element(page.getByText('Video')).toBeVisible();
+    await expect.element(page.getByText('Parent')).not.toBeInTheDocument();
+  });
+
+  it('should call correct onSelect for each expanded source', async () => {
+    const onSelectPhoto = vi.fn();
+    const onSelectVideo = vi.fn();
+
+    const plugin = createTestPlugin({
+      id: 'expand-click-plugin',
+      setup: ({ pluginApi }) => {
+        pluginApi.registry.registerSource({
+          id: 'camera-like',
+          label: 'Camera',
+          expand: () => ['photo-mode', 'video-mode'],
+          onSelect: () => {},
+        });
+
+        pluginApi.registry.registerSource({
+          id: 'photo-mode',
+          label: 'Take Photo',
+          onSelect: onSelectPhoto,
+        });
+
+        pluginApi.registry.registerSource({
+          id: 'video-mode',
+          label: 'Record Video',
+          onSelect: onSelectVideo,
+        });
+      },
+    });
+
+    const { config } = await renderUploader([plugin]);
+    addSource(config, 'camera-like');
+
+    await openModal();
+
+    await page.getByText('Take Photo').click();
+    await vi.waitFor(() => {
+      expect(onSelectPhoto).toHaveBeenCalledOnce();
+    });
+    expect(onSelectVideo).not.toHaveBeenCalled();
+  });
+
+  it('should render parent source when expand returns its own id', async () => {
+    const plugin = createTestPlugin({
+      id: 'no-expand-plugin',
+      setup: ({ pluginApi }) => {
+        pluginApi.registry.registerSource({
+          id: 'desktop-camera',
+          label: 'Desktop Camera',
+          expand: () => ['desktop-camera'],
+          onSelect: () => {},
+        });
+      },
+    });
+
+    const { config } = await renderUploader([plugin]);
+    addSource(config, 'desktop-camera');
+
+    await openModal();
+    await expect.element(page.getByText('Desktop Camera')).toBeVisible();
+  });
+
+  it('should not render expanded sources that are not registered', async () => {
+    const plugin = createTestPlugin({
+      id: 'missing-expand-plugin',
+      setup: ({ pluginApi }) => {
+        pluginApi.registry.registerSource({
+          id: 'partial-expand',
+          label: 'Partial',
+          expand: () => ['registered-child', 'unregistered-child'],
+          onSelect: () => {},
+        });
+
+        pluginApi.registry.registerSource({
+          id: 'registered-child',
+          label: 'Registered Child',
+          onSelect: () => {},
+        });
+      },
+    });
+
+    const { config } = await renderUploader([plugin]);
+    addSource(config, 'partial-expand');
+
+    await openModal();
+    await expect.element(page.getByText('Registered Child')).toBeVisible();
+    await expect.element(page.getByText('Partial')).not.toBeInTheDocument();
+  });
 });
