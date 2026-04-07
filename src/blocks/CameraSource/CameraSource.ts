@@ -9,6 +9,7 @@ import { stringToArray } from '../../utils/stringToArray';
 import { UploadSource } from '../../utils/UploadSource';
 import { InternalEventType } from '../UploadCtxProvider/EventEmitter';
 import './camera-source.css';
+import { classMap } from 'lit/directives/class-map.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import { styleMap } from 'lit/directives/style-map.js';
 import { CameraSourceEvents, CameraSourceTypes } from './constants';
@@ -89,7 +90,6 @@ export class CameraSource extends LitUploaderBlock {
   private _timerRef = createRef<HTMLElement>();
   private _lineRef = createRef<HTMLElement>();
   private _videoRef = createRef<HTMLVideoElement>();
-  private _switcherRef = createRef<HTMLElement>();
   private _startTime = 0;
   private _elapsedTime = 0;
 
@@ -606,11 +606,6 @@ export class CameraSource extends LitUploaderBlock {
   }
 
   private _handleActiveTab = (tabId: CameraMode): void => {
-    const switcher = this._switcherRef.value as HTMLElement | undefined;
-    switcher?.querySelectorAll('button').forEach((btn) => {
-      btn.classList.toggle('uc-active', btn.getAttribute('data-id') === tabId);
-    });
-
     if (tabId === CameraSourceTypes.PHOTO) {
       this._currentIcon = 'camera-full';
       this._audioSelectHidden = true;
@@ -1038,11 +1033,11 @@ export class CameraSource extends LitUploaderBlock {
   </div>
 
   <div class="uc-controls">
-    <div ${ref(this._switcherRef)} class="uc-switcher" ?hidden=${!this._timerHidden}>
+    <div class="uc-switcher" ?hidden=${!this._timerHidden}>
       <button
         data-id="photo"
         type="button"
-        class="uc-switch uc-mini-btn"
+        class=${classMap({ 'uc-switch': true, 'uc-mini-btn': true, 'uc-active': this._activeTab === CameraSourceTypes.PHOTO })}
         @click=${this._handleClickTab}
         ?hidden=${this._tabCameraHidden}
         data-testid="tab-photo"
@@ -1052,7 +1047,7 @@ export class CameraSource extends LitUploaderBlock {
       <button
         data-id="video"
         type="button"
-        class="uc-switch uc-mini-btn"
+        class=${classMap({ 'uc-switch': true, 'uc-mini-btn': true, 'uc-active': this._activeTab === CameraSourceTypes.VIDEO })}
         @click=${this._handleClickTab}
         ?hidden=${this._tabVideoHidden}
         data-testid="tab-video"
