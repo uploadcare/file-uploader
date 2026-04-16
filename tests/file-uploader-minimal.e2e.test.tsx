@@ -32,6 +32,8 @@ describe('File uploader minimal', () => {
     });
 
     it('should drag and drop file', async () => {
+      await expect.element(page.getByText('Choose files', { exact: true })).toBeVisible();
+
       const fileUploader = page.getByTestId('uc-file-uploader-minimal');
       const copyright = page.getByText('Powered by Uploadcare', { exact: true });
 
