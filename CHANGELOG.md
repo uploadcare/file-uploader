@@ -1,3 +1,9 @@
+# [1.29.0](https://github.com/uploadcare/file-uploader/compare/v1.28.0...v1.29.0) (2026-04-16)
+
+
+### Features
+
+* add Plugin API ([55c1e27](https://github.com/uploadcare/file-uploader/commit/55c1e270d91e3bb3e192a55bb91af301890ee3a0))
 # [1.28.0](https://github.com/uploadcare/file-uploader/compare/v1.27.3...v1.28.0) (2026-04-03)
 
 
