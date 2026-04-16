@@ -188,7 +188,7 @@ export const unsplashPlugin: UploaderPlugin = {
       svg: UNSPLASH_ICON_SVG,
     });
 
-    pluginApi.registry.registerI18n({
+    pluginApi.registry.registerL10n({
       en: { 'unsplash.label': 'Unsplash' },
     });
 

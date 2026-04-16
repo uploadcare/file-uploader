@@ -7,7 +7,7 @@ export type PluginIconRegistration = {
   svg: string;
 };
 
-export type PluginI18nRegistration = Record<string, Record<string, string>>;
+export type PluginL10nRegistration = Record<string, Record<string, string>>;
 
 export type PluginSourceRegistration = {
   id: string;
@@ -43,7 +43,7 @@ export type PluginFileActionRegistration = {
   id: string;
   /** Icon name to display in the action button. */
   icon: string;
-  /** Label shown next to the icon in the action button. Accepts a plain string or an i18n key registered via `registerI18n`. */
+  /** Label shown next to the icon in the action button. Accepts a plain string or an l10n key registered via `registerL10n`. */
   label: string;
   /** Return `true` to show the action button for the given file entry. */
   shouldRender: (fileEntry: OutputFileEntry) => boolean;
@@ -87,7 +87,7 @@ export type PluginRegistryApi = {
   registerFileAction: (fileAction: PluginFileActionRegistration) => void;
   registerFileHook: (hook: PluginFileHookRegistration) => void;
   registerIcon: (icon: PluginIconRegistration) => void;
-  registerI18n: (i18n: PluginI18nRegistration) => void;
+  registerL10n: (l10n: PluginL10nRegistration) => void;
   registerConfig: <T = unknown>(definition: CustomConfigDefinition<T>) => void;
 };
 
@@ -185,5 +185,5 @@ export type PluginRegistrySnapshot = {
   fileActions: Owned<PluginFileActionRegistration>[];
   fileHooks: Owned<PluginFileHookRegistration>[];
   icons: Owned<PluginIconRegistration>[];
-  i18n: Owned<PluginI18nRegistration>[];
+  l10n: Owned<PluginL10nRegistration>[];
 };

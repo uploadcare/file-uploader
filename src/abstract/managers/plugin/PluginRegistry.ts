@@ -4,8 +4,8 @@ import type {
   PluginActivityRegistration,
   PluginFileActionRegistration,
   PluginFileHookRegistration,
-  PluginI18nRegistration,
   PluginIconRegistration,
+  PluginL10nRegistration,
   PluginRegistrySnapshot,
   PluginSourceRegistration,
 } from './PluginTypes';
@@ -16,7 +16,7 @@ export class PluginRegistry {
   private _fileActions: Owned<PluginFileActionRegistration>[] = [];
   private _fileHooks: Owned<PluginFileHookRegistration>[] = [];
   private _icons: Owned<PluginIconRegistration>[] = [];
-  private _i18n: Owned<PluginI18nRegistration>[] = [];
+  private _l10n: Owned<PluginL10nRegistration>[] = [];
   public readonly config = new CustomConfigRegistry();
 
   private _own<T>(pluginId: string, item: T): Owned<T> {
@@ -57,8 +57,8 @@ export class PluginRegistry {
     this._icons.push(this._own(pluginId, item));
   }
 
-  public addI18n(pluginId: string, item: PluginI18nRegistration): void {
-    this._i18n.push(this._own(pluginId, item));
+  public addL10n(pluginId: string, item: PluginL10nRegistration): void {
+    this._l10n.push(this._own(pluginId, item));
   }
 
   public addConfig<T>(pluginId: string, definition: CustomConfigDefinition<T>): void {
@@ -71,7 +71,7 @@ export class PluginRegistry {
     this._fileActions = this._fileActions.filter((item) => item.pluginId !== pluginId);
     this._fileHooks = this._fileHooks.filter((item) => item.pluginId !== pluginId);
     this._icons = this._icons.filter((item) => item.pluginId !== pluginId);
-    this._i18n = this._i18n.filter((item) => item.pluginId !== pluginId);
+    this._l10n = this._l10n.filter((item) => item.pluginId !== pluginId);
     this.config.unregisterByPlugin(pluginId);
   }
 
@@ -82,7 +82,7 @@ export class PluginRegistry {
       fileActions: [...this._fileActions],
       fileHooks: [...this._fileHooks],
       icons: [...this._icons],
-      i18n: [...this._i18n],
+      l10n: [...this._l10n],
     };
   }
 }

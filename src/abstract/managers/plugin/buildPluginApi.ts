@@ -28,7 +28,7 @@ export function buildPluginApi(
     registerFileAction: (fileAction) => registry.addFileAction(pluginId, fileAction),
     registerFileHook: (hook) => registry.addFileHook(pluginId, hook),
     registerIcon: (icon) => registry.addIcon(pluginId, icon),
-    registerI18n: (i18n) => registry.addI18n(pluginId, i18n),
+    registerL10n: (l10n) => registry.addL10n(pluginId, l10n),
     registerConfig: (definition) => {
       registry.addConfig(pluginId, definition);
       const stateKey = sharedConfigKey(definition.name as keyof (ConfigType & CustomConfig));

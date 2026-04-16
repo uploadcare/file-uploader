@@ -47,18 +47,18 @@ describe('Source Registration', () => {
     });
   });
 
-  it('should display the source with i18n label', async () => {
+  it('should display the source with l10n label', async () => {
     const plugin = createTestPlugin({
-      id: 'src-i18n',
+      id: 'src-l10n',
       setup: ({ pluginApi }) => {
-        pluginApi.registry.registerI18n({
+        pluginApi.registry.registerL10n({
           en: {
             'src-type-custom': 'Translated Source',
           },
         });
 
         pluginApi.registry.registerSource({
-          id: 'i18n-source',
+          id: 'l10n-source',
           label: 'src-type-custom',
           onSelect: () => {},
         });
@@ -66,7 +66,7 @@ describe('Source Registration', () => {
     });
 
     const { config } = await renderUploader([plugin]);
-    addSource(config, 'i18n-source');
+    addSource(config, 'l10n-source');
 
     await openModal();
     await expect.element(page.getByText('Translated Source')).toBeVisible();

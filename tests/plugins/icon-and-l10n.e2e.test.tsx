@@ -32,12 +32,12 @@ describe('Icon Registration', () => {
   });
 });
 
-describe('I18n Registration', () => {
+describe('L10n Registration', () => {
   it('should use registered label translations for source list items', async () => {
     const plugin = createTestPlugin({
-      id: 'i18n-plugin',
+      id: 'l10n-plugin',
       setup: ({ pluginApi }) => {
-        pluginApi.registry.registerI18n({
+        pluginApi.registry.registerL10n({
           en: {
             'my-source-label': 'My Translated Source',
           },
@@ -58,11 +58,11 @@ describe('I18n Registration', () => {
     await expect.element(page.getByText('My Translated Source')).toBeVisible();
   });
 
-  it('should keep plugin i18n overrides even after plugin is unregistered (current behavior)', async () => {
+  it('should keep plugin l10n overrides even after plugin is unregistered (current behavior)', async () => {
     const plugin = createTestPlugin({
-      id: 'i18n-persist',
+      id: 'l10n-persist',
       setup: ({ pluginApi }) => {
-        pluginApi.registry.registerI18n({
+        pluginApi.registry.registerL10n({
           en: {
             'upload-files': 'Translated Upload',
           },

@@ -73,7 +73,7 @@ export class LocaleManager extends SharedInstance {
     }
 
     const snapshot = pluginManager.snapshot();
-    for (const entry of snapshot.i18n) {
+    for (const entry of snapshot.l10n) {
       const { pluginId: _pluginId, ...locales } = entry as unknown as Record<string, Partial<LocaleDefinition>> & {
         pluginId?: string;
       };
