@@ -1,7 +1,6 @@
 import { html } from 'lit';
 import { state } from 'lit/decorators.js';
-import { createRef, ref } from 'lit/directives/ref.js';
-import { type ActivityType, LitActivityBlock } from '../../lit/LitActivityBlock';
+import { LitActivityBlock } from '../../lit/LitActivityBlock';
 import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
 import { UploadSource } from '../../utils/UploadSource';
 import { InternalEventType } from '../UploadCtxProvider/EventEmitter';
@@ -10,38 +9,12 @@ import './url-source.css';
 import '../ActivityHeader/ActivityHeader';
 import '../Icon/Icon';
 
-interface UrlSourceState {
-  importDisabled: boolean;
-}
-
 export class UrlSource extends LitUploaderBlock {
-  public override couldBeCtxOwner = true;
-  public override activityType: ActivityType = LitActivityBlock.activities.URL;
-
   @state()
-  private _formState: UrlSourceState = {
-    importDisabled: true,
-  };
-
-  public override initCallback(): void {
-    super.initCallback();
-    this.registerActivity(this.activityType ?? '', {
-      onActivate: () => {
-        const input = this._inputRef.value;
-        if (input) {
-          input.value = '';
-          input.focus();
-        }
-        this._formState = { importDisabled: true };
-      },
-    });
-  }
-
-  private _inputRef = createRef<HTMLInputElement>();
+  private _url = '';
 
   private _handleInput = (event: Event) => {
-    const value = (event.target as HTMLInputElement | null)?.value ?? '';
-    this._formState = { importDisabled: !value };
+    this._url = (event.target as HTMLInputElement | null)?.value ?? '';
   };
 
   private _handleUpload = (event: Event) => {
@@ -55,14 +28,13 @@ export class UrlSource extends LitUploaderBlock {
         },
       },
     });
-    const input = this._inputRef.value;
-    const url = input?.value?.trim();
+    const url = this._url.trim();
     if (!url) {
       return;
     }
     this.api.addFileFromUrl(url, { source: UploadSource.URL });
-    this.modalManager?.open(LitActivityBlock.activities.UPLOAD_LIST);
     this.$['*currentActivity'] = LitActivityBlock.activities.UPLOAD_LIST;
+    this.modalManager?.open(LitActivityBlock.activities.UPLOAD_LIST);
   };
 
   public override render() {
@@ -88,17 +60,17 @@ export class UrlSource extends LitUploaderBlock {
       <form class="uc-content" @submit=${this._handleUpload}>
         <label>
           <input
-            ${ref(this._inputRef)}
             placeholder="https://"
             class="uc-url-input"
             type="text"
+            autofocus
             @input=${this._handleInput}
           />
         </label>
           <button
             type="submit"
             class="uc-url-upload-btn uc-primary-btn"
-            ?disabled=${this._formState.importDisabled}
+            ?disabled=${!this._url}
             >${this.l10n('upload-url')}</button>
       </form>
     `;

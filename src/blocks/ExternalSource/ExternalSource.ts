@@ -25,7 +25,6 @@ export type ActivityParams = { externalSourceType: string };
 
 export class ExternalSource extends LitUploaderBlock {
   public override couldBeCtxOwner = true;
-  public override activityType = LitActivityBlock.activities.EXTERNAL;
   private _messageBridge?: MessageBridge;
 
   private _iframeRef = createRef<HTMLIFrameElement>();
@@ -80,35 +79,24 @@ export class ExternalSource extends LitUploaderBlock {
 
   public override initCallback(): void {
     super.initCallback();
-    this.registerActivity(this.activityType, {
-      onActivate: () => {
-        const { externalSourceType } = this.activityParams;
 
-        if (!externalSourceType) {
-          this.modalManager?.close(this.$['*currentActivity']);
-          this.$['*currentActivity'] = null;
-          console.error(`Param "externalSourceType" is required for activity "${this.activityType}"`);
-          return;
-        }
+    const { externalSourceType } = this.activityParams;
+    if (!externalSourceType) {
+      console.error(`Param "externalSourceType" is required for external source activity`);
+    } else {
+      this._mountIframe();
+    }
 
-        this._mountIframe();
-      },
-    });
     this.sub('*currentActivityParams', () => {
       setTimeout(() => {
         // Since activity params are set before current activity, we need to wait for the next tick to ensure that the activity is still active before processing the params change.
         // Otherwise, if the activity was changed, we might end up mounting the iframe with params from the next activity.
-        if (!this.isActivityActive || !this.isConnected) {
+        if (!this.isConnected) {
           return;
         }
         this._unmountIframe();
         this._mountIframe();
       });
-    });
-    this.sub('*currentActivity', (val) => {
-      if (val !== this.activityType) {
-        this._unmountIframe();
-      }
     });
     this.subConfigValue('multiple', (multiple) => {
       this._showSelectionStatus = multiple;

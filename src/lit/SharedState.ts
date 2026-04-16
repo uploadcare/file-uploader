@@ -1,16 +1,18 @@
 import type { Queue, UploadcareGroup } from '@uploadcare/upload-client';
-import type { EditorImageCropper, EditorImageFader, EditorSlider } from '..';
 import type { ClipboardLayer } from '../abstract/features/ClipboardLayer';
 import type { LocaleDefinition } from '../abstract/localeRegistry';
 import type { A11y } from '../abstract/managers/a11y';
 import type { LocaleManager } from '../abstract/managers/LocaleManager';
 import type { ModalManager } from '../abstract/managers/ModalManager';
+import type { PluginManager } from '../abstract/managers/plugin';
+import type { LazyPluginEntry } from '../abstract/managers/plugin/LazyPluginLoader';
 import type { SecureUploadsManager } from '../abstract/managers/SecureUploadsManager';
 import type { TelemetryManager } from '../abstract/managers/TelemetryManager';
 import type { ValidationManager } from '../abstract/managers/ValidationManager';
 import type { TypedCollection } from '../abstract/TypedCollection';
 import type { UploaderPublicApi } from '../abstract/UploaderPublicApi';
 import type { UploadEntryData } from '../abstract/uploadEntrySchema';
+import type { EditorImageCropper, EditorImageFader, EditorSlider } from '../blocks/CloudImageEditor';
 import type { TabIdValue } from '../blocks/CloudImageEditor/src/toolbar-constants';
 import type {
   CropAspectRatio,
@@ -19,20 +21,26 @@ import type {
   Transformations,
 } from '../blocks/CloudImageEditor/src/types';
 import type { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter';
-import type { ConfigType, OutputCollectionState, OutputErrorCollection } from '../types';
+import type { ConfigType, CustomConfig, OutputCollectionState, OutputErrorCollection } from '../types';
+import type { RegisteredActivityType } from './LitActivityBlock';
 import type { LitBlock } from './LitBlock';
+import type { ISharedInstance } from './shared-instances';
 import type { Uid } from './Uid';
 
 type SharedConfigState = {
   [K in keyof ConfigType as `*cfg/${K}`]: ConfigType[K];
 };
 
+type SharedCustomConfigState = {
+  [K in keyof CustomConfig as `*cfg/${K}`]: CustomConfig[K];
+};
+
 export type BlocksRegistry = Set<LitBlock>;
 
 type ActivityBlockCtxState = {
-  '*currentActivity': string | null;
+  '*currentActivity': RegisteredActivityType | null;
   '*currentActivityParams': Record<string, unknown>;
-  '*history': (string | null)[];
+  '*history': (RegisteredActivityType | null)[];
   '*historyBack': (() => void) | null;
   '*closeModal': () => void;
 };
@@ -49,6 +57,7 @@ type UploaderBlockCtxState = ActivityBlockCtxState & {
 
 type SolutionBlockCtxState = UploaderBlockCtxState & {
   '*solution': string | null;
+  '*lazyPlugins': LazyPluginEntry[] | null;
 };
 
 type CloudImageEditorState = {
@@ -86,7 +95,10 @@ type EditorToolbarState = {
   '*operationTooltip': string | null;
 };
 
+type SharedContextInstances = Map<string, ISharedInstance>;
+
 type DynamicBlockState = {
+  '*sharedContextInstances': SharedContextInstances;
   '*blocksRegistry': BlocksRegistry;
   '*eventEmitter': EventEmitter;
   '*localeManager': LocaleManager;
@@ -94,6 +106,7 @@ type DynamicBlockState = {
   '*a11y': A11y;
   '*modalManager': ModalManager | null;
   '*clipboard': ClipboardLayer;
+  '*pluginManager': PluginManager;
 };
 
 type DynamicUploaderBlockState = {
@@ -109,6 +122,7 @@ type LocaleState = {
 
 export type SharedState = SolutionBlockCtxState &
   SharedConfigState &
+  SharedCustomConfigState &
   CloudImageEditorState &
   EditorImageCropperState &
   EditorToolbarState &

@@ -3,9 +3,10 @@ import { state } from 'lit/decorators.js';
 import type { ModalCb } from '../../../abstract/managers/ModalManager';
 import { ModalEvents } from '../../../abstract/managers/ModalManager';
 import { InternalEventType } from '../../../blocks/UploadCtxProvider/EventEmitter';
-import { LitActivityBlock } from '../../../lit/LitActivityBlock';
+import { LitActivityBlock, type RegisteredActivityType } from '../../../lit/LitActivityBlock';
 import { LitSolutionBlock } from '../../../lit/LitSolutionBlock';
 import './index.css';
+import { fileUploaderLazyPlugins } from '../lazyPlugins.js';
 
 import '../../../blocks/Modal/Modal';
 import '../../../blocks/StartFrom/StartFrom';
@@ -13,10 +14,8 @@ import '../../../blocks/DropArea/DropArea';
 import '../../../blocks/Copyright/Copyright';
 import '../../../blocks/UploadList/UploadList';
 import '../../../blocks/SourceList/SourceList';
-import '../../../blocks/CameraSource/CameraSource';
-import '../../../blocks/UrlSource/UrlSource';
-import '../../../blocks/ExternalSource/ExternalSource';
 import '../../../blocks/CloudImageEditorActivity/CloudImageEditorActivity';
+import '../../../blocks/PluginActivityRenderer/PluginActivityRenderer';
 
 const ACTIVE_CLASS = 'active';
 const EMPTY_CLASS = '';
@@ -25,6 +24,8 @@ type BaseInitState = InstanceType<typeof LitSolutionBlock>['init$'];
 type FileUploaderMinimalInitState = BaseInitState;
 
 export class FileUploaderMinimal extends LitSolutionBlock {
+  public static override lazyPlugins = fileUploaderLazyPlugins;
+
   public declare attributesMeta: {
     'ctx-name': string;
   };
@@ -45,8 +46,11 @@ export class FileUploaderMinimal extends LitSolutionBlock {
   @state()
   private _buttonTextKey = 'choose-file';
 
-  private _getInitActivity(): string {
-    return (this.getCssData('--cfg-init-activity') as string | undefined) || LitActivityBlock.activities.START_FROM;
+  private _getInitActivity(): RegisteredActivityType {
+    return (
+      (this.getCssData('--cfg-init-activity') as RegisteredActivityType | undefined) ||
+      LitActivityBlock.activities.START_FROM
+    );
   }
 
   public constructor() {
@@ -179,21 +183,7 @@ export class FileUploaderMinimal extends LitSolutionBlock {
         </uc-start-from>
       </uc-modal>
 
-      <uc-modal id="camera" strokes block-body-scrolling>
-        <uc-camera-source></uc-camera-source>
-      </uc-modal>
-
-      <uc-modal id="url" strokes block-body-scrolling>
-        <uc-url-source></uc-url-source>
-      </uc-modal>
-
-      <uc-modal id="external" strokes block-body-scrolling>
-        <uc-external-source></uc-external-source>
-      </uc-modal>
-
-      <uc-modal id="cloud-image-edit" strokes block-body-scrolling>
-        <uc-cloud-image-editor-activity></uc-cloud-image-editor-activity>
-      </uc-modal>
+        <uc-plugin-activity-renderer mode="modal"></uc-plugin-activity-renderer>
     `;
   }
 }

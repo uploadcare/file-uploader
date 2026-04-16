@@ -49,6 +49,7 @@ export class LitUploaderBlock extends LitActivityBlock {
       return new TypedCollection<UploadEntryData>({
         initialValue: initialUploadEntryData,
         watchList: [
+          'file',
           'uploadProgress',
           'uploadError',
           'fileInfo',
@@ -198,6 +199,7 @@ export class LitUploaderBlock extends LitActivityBlock {
       if (!entry.getValue('silent')) {
         this.emit(EventType.FILE_ADDED, this.api.getOutputItem(entry.uid));
       }
+      void this._sharedInstancesBag.wait('pluginManager').then((pluginManager) => pluginManager.runOnAddHooks(entry));
     }
 
     this.validationManager.runCollectionValidators();
@@ -234,7 +236,7 @@ export class LitUploaderBlock extends LitActivityBlock {
     const entriesToRunValidation = [
       ...new Set(
         Object.entries(changeMap)
-          .filter(([key]) => ['uploadError', 'fileInfo', 'cdnUrl', 'cdnUrlModifiers'].includes(key))
+          .filter(([key]) => ['file', 'uploadError', 'fileInfo', 'cdnUrl', 'cdnUrlModifiers'].includes(key))
           .flatMap(([, ids]) => [...ids]),
       ),
     ];
@@ -285,10 +287,6 @@ export class LitUploaderBlock extends LitActivityBlock {
       }
       if (this.cfg.cropPreset) {
         this._setInitialCrop();
-      }
-
-      if (this.cfg.cloudImageEditorAutoOpen) {
-        this._openCloudImageEditor();
       }
     }
     if (changeMap.errors) {
@@ -360,81 +358,47 @@ export class LitUploaderBlock extends LitActivityBlock {
     );
   };
 
-  private _openCloudImageEditor(): void {
-    const [entry] = this.uploadCollection
-      .findItems((entry) => !!entry.getValue('fileInfo') && entry.getValue('isImage'))
-      .map((id) => this.uploadCollection.read(id));
-
-    if (
-      entry &&
-      this.uploadCollection.size === 1 &&
-      this.cfg.useCloudImageEditor &&
-      this.hasBlockInCtx((block) => block.activityType === LitActivityBlock.activities.CLOUD_IMG_EDIT)
-    ) {
-      this.$['*currentActivityParams'] = {
-        internalId: entry.uid,
-      };
-      this.$['*currentActivity'] = LitActivityBlock.activities.CLOUD_IMG_EDIT;
-      this.modalManager?.open(LitActivityBlock.activities.CLOUD_IMG_EDIT);
-    }
-  }
-
   private _setInitialCrop(): void {
     const cropPreset = parseCropPreset(this.cfg.cropPreset);
-    if (cropPreset) {
-      const [aspectRatioPreset] = cropPreset;
+    if (!cropPreset) return;
 
-      const entries = this.uploadCollection
-        .findItems(
-          (entry) =>
-            !!entry.getValue('fileInfo') &&
-            entry.getValue('isImage') &&
-            !entry.getValue('cdnUrlModifiers')?.includes('/crop/'),
-        )
-        .map((id) => this.uploadCollection.read(id))
-        .filter(Boolean);
+    const [aspectRatioPreset] = cropPreset;
+    const entries = this.uploadCollection
+      .findItems(
+        (entry) =>
+          !!entry.getValue('fileInfo') &&
+          entry.getValue('isImage') &&
+          !entry.getValue('cdnUrlModifiers')?.includes('/crop/'),
+      )
+      .map((id) => this.uploadCollection.read(id))
+      .filter(Boolean);
 
-      for (const entry of entries) {
-        const fileInfo = entry.getValue('fileInfo');
-        if (!fileInfo || !fileInfo.imageInfo) {
-          console.warn('Failed to get image info for entry', entry.uid);
-          continue;
-        }
-        const { width, height } = fileInfo.imageInfo;
-        const expectedAspectRatio =
-          typeof aspectRatioPreset?.width === 'number' &&
-          typeof aspectRatioPreset?.height === 'number' &&
-          aspectRatioPreset.width > 0 &&
-          aspectRatioPreset.height > 0
-            ? aspectRatioPreset.width / aspectRatioPreset.height
-            : 1;
-
-        const crop = calculateMaxCenteredCropFrame(width, height, expectedAspectRatio);
-        const cdnUrlModifiers = createCdnUrlModifiers(
-          `crop/${crop.width}x${crop.height}/${crop.x},${crop.y}`,
-          'preview',
-        );
-        const cdnUrl = entry.getValue('cdnUrl');
-        if (!cdnUrl) {
-          console.warn('Failed to get cdnUrl for entry', entry.uid);
-          continue;
-        }
-        entry.setMultipleValues({
-          cdnUrlModifiers,
-          cdnUrl: createCdnUrl(cdnUrl, cdnUrlModifiers),
-        });
-        if (
-          this.uploadCollection.size === 1 &&
-          this.cfg.useCloudImageEditor &&
-          this.hasBlockInCtx((block) => block.activityType === LitActivityBlock.activities.CLOUD_IMG_EDIT)
-        ) {
-          this.$['*currentActivityParams'] = {
-            internalId: entry.uid,
-          };
-          this.$['*currentActivity'] = LitActivityBlock.activities.CLOUD_IMG_EDIT;
-          this.modalManager?.open(LitActivityBlock.activities.CLOUD_IMG_EDIT);
-        }
+    for (const entry of entries) {
+      const fileInfo = entry.getValue('fileInfo');
+      if (!fileInfo || !fileInfo.imageInfo) {
+        console.warn('Failed to get image info for entry', entry.uid);
+        continue;
       }
+      const { width, height } = fileInfo.imageInfo;
+      const expectedAspectRatio =
+        typeof aspectRatioPreset?.width === 'number' &&
+        typeof aspectRatioPreset?.height === 'number' &&
+        aspectRatioPreset.width > 0 &&
+        aspectRatioPreset.height > 0
+          ? aspectRatioPreset.width / aspectRatioPreset.height
+          : 1;
+
+      const crop = calculateMaxCenteredCropFrame(width, height, expectedAspectRatio);
+      const cdnUrlModifiers = createCdnUrlModifiers(`crop/${crop.width}x${crop.height}/${crop.x},${crop.y}`, 'preview');
+      const cdnUrl = entry.getValue('cdnUrl');
+      if (!cdnUrl) {
+        console.warn('Failed to get cdnUrl for entry', entry.uid);
+        continue;
+      }
+      entry.setMultipleValues({
+        cdnUrlModifiers,
+        cdnUrl: createCdnUrl(cdnUrl, cdnUrlModifiers),
+      });
     }
   }
 

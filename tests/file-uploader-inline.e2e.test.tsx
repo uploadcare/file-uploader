@@ -6,9 +6,6 @@ import { delay } from '@/utils/delay';
 import { renderer } from './utils/test-renderer';
 
 beforeAll(async () => {
-  // biome-ignore lint/suspicious/noTsIgnore: Ignoring TypeScript error for CSS import
-  // @ts-ignore
-  await import('@/solutions/file-uploader/inline/index.css');
   const UC = await import('@/index.js');
   UC.defineComponents(UC);
 });

@@ -1,14 +1,12 @@
-import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
+import { delay } from '@/utils/delay';
 import '../types/jsx';
 
 // biome-ignore lint/correctness/noUnusedImports: Used in JSX
-import { renderer } from './utils/test-renderer';
+import { cleanup, renderer } from './utils/test-renderer';
 
 beforeAll(async () => {
-  // biome-ignore lint/suspicious/noTsIgnore: Ignoring TypeScript error for CSS import
-  // @ts-ignore
-  await import('@/solutions/cloud-image-editor/index.css');
   const UC = await import('@/index.js');
   UC.defineComponents(UC);
 });
@@ -78,5 +76,41 @@ describe('Cloud Image Editor', () => {
     await userEvent.click(applySlider);
 
     await expect.element(tuningTab).toBeVisible();
+  });
+
+  it('should log timeout without unhandled rejection when container size stays zero', async () => {
+    cleanup();
+
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    try {
+      const ctxName = `test-${Math.random().toString(36).slice(2)}`;
+
+      page.render(
+        <>
+          <div style="width: 0; height: 0; overflow: hidden;">
+            <uc-cloud-image-editor
+              crop-preset="1:1, 16:9, 4:3, 3:4, 9:16"
+              uuid="f4dc9ebc-ed6d-4b4d-83d1-863bf1e4bb7f"
+              ctx-name={ctxName}
+            ></uc-cloud-image-editor>
+          </div>
+          <uc-config
+            cdn-cname="https://ucarecdn.com/"
+            qualityInsights={false}
+            ctx-name={ctxName}
+            pubkey="demopublickey"
+            testMode
+          ></uc-config>
+        </>,
+      );
+
+      await delay(3100);
+
+      expect(errorSpy).toHaveBeenCalledTimes(1);
+      expect(errorSpy).toHaveBeenCalledWith('[cloud-image-editor] timeout waiting for non-zero container size');
+    } finally {
+      errorSpy.mockRestore();
+    }
   });
 });

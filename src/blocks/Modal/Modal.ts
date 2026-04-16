@@ -6,6 +6,7 @@ import { EventType } from '../UploadCtxProvider/EventEmitter';
 import './modal.css';
 import { property } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
+import type { RegisteredActivityType } from '../../lit/LitActivityBlock';
 
 let LAST_ACTIVE_MODAL_ID: ModalId | null = null;
 
@@ -31,10 +32,11 @@ export class Modal extends LitBlock {
 
   /** WARNING: Do not rename/change this, it's used in dashboard */
   protected closeDialog = (): void => {
-    this.modalManager?.close(this.id);
+    this.modalManager?.close(this.id as RegisteredActivityType);
 
     if (!this.modalManager?.hasActiveModals) {
       document.body.style.overflow = '';
+      this.$['*currentActivity'] = null;
     }
   };
 
@@ -53,7 +55,8 @@ export class Modal extends LitBlock {
     }
   };
 
-  public show(): void {
+  public async show(): Promise<void> {
+    await this.updateComplete;
     const dialog = this.dialogEl.value as HTMLDialogElement & {
       showModal?: () => void;
     };
@@ -73,6 +76,7 @@ export class Modal extends LitBlock {
     const dialog = this.dialogEl.value as HTMLDialogElement & {
       close?: () => void;
     };
+    if (!dialog) return;
     if (typeof dialog.close === 'function') {
       this.setAttribute('aria-modal', 'false');
       dialog.close();
@@ -117,7 +121,7 @@ export class Modal extends LitBlock {
   public override initCallback(): void {
     super.initCallback();
 
-    this.modalManager?.registerModal(this.id, this);
+    this.modalManager?.registerModal(this.id as RegisteredActivityType, this);
 
     this.subConfigValue('modalBackdropStrokes', (val: boolean) => {
       if (val) {

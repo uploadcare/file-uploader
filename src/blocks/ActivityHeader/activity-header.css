@@ -1,5 +1,5 @@
-@layer uc.components {
-  uc-activity-header {
+@layer uc.shared {
+  :is(uc-activity-header, .uc-ui-activity-header) {
     display: flex;
     justify-content: space-between;
     gap: var(--uc-padding);
@@ -9,16 +9,16 @@
     font-size: 1em;
   }
 
-  uc-activity-header > * {
+  :is(uc-activity-header, .uc-ui-activity-header) > * {
     display: flex;
     align-items: center;
   }
 
-  uc-activity-header > div > uc-icon {
+  :is(uc-activity-header, .uc-ui-activity-header) > div > uc-icon {
     width: auto;
   }
 
-  uc-activity-header > div {
+  :is(uc-activity-header, .uc-ui-activity-header) > div {
     gap: var(--uc-padding);
   }
 }

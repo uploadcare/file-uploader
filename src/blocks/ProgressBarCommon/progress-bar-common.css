@@ -1,4 +1,4 @@
-@layer uc.components {
+@layer uc.shared {
   uc-progress-bar-common {
     position: fixed;
     right: 0;

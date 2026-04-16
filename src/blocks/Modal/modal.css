@@ -1,4 +1,4 @@
-@layer uc.components {
+@layer uc.shared {
   @supports selector(dialog::backdrop) {
     :where([uc-modal]) > dialog::backdrop {
       /* backdrop don't inherit theme properties */

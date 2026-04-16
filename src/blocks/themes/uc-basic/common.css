@@ -30,41 +30,51 @@
   :where([uc-wgt-common]) button:focus-visible {
     outline-offset: 2px;
   }
+}
 
-  :where([uc-wgt-common]) button.uc-primary-btn {
+@layer uc.shared {
+  :where([uc-wgt-common]) :is(button.uc-primary-btn, button.uc-ui-primary-btn) {
     color: var(--uc-primary-foreground);
     background-color: var(--uc-primary);
   }
 
-  :where([uc-wgt-common]) button.uc-primary-btn:hover {
+  :where([uc-wgt-common]) :is(button.uc-primary-btn, button.uc-ui-primary-btn):hover {
     background-color: var(--uc-primary-hover);
   }
 
-  :where([uc-wgt-common]) button.uc-secondary-btn {
+  :where([uc-wgt-common]) :is(button.uc-secondary-btn, button.uc-ui-secondary-btn) {
     color: var(--uc-secondary-foreground);
     background-color: var(--uc-secondary);
   }
 
-  :where([uc-wgt-common]) button.uc-secondary-btn:hover {
+  :where([uc-wgt-common]) :is(button.uc-secondary-btn, button.uc-ui-secondary-btn):hover {
     background-color: var(--uc-secondary-hover);
   }
 
-  :where([uc-wgt-common].uc-contrast) button.uc-secondary-btn {
+  :where([uc-wgt-common].uc-contrast) :is(button.uc-secondary-btn, button.uc-ui-secondary-btn) {
     border: 1px solid var(--uc-border);
   }
 
-  :where([uc-wgt-common]) button.uc-mini-btn {
+  :where([uc-wgt-common]) :is(button.uc-mini-btn, button.uc-ui-icon-btn) {
     height: var(--uc-button-size);
     padding: 0;
     background-color: transparent;
     color: var(--uc-secondary-foreground);
   }
 
-  :where([uc-wgt-common]) button.uc-mini-btn:hover {
+  :where([uc-wgt-common]) :is(button.uc-mini-btn, button.uc-ui-icon-btn):hover {
     background-color: var(--uc-secondary);
   }
 
-  :where([uc-wgt-common]) :is(button[disabled], button.uc-primary-btn[disabled], button.uc-secondary-btn[disabled]) {
+  :where([uc-wgt-common])
+    :is(
+      button[disabled],
+      button.uc-primary-btn[disabled],
+      button.uc-secondary-btn[disabled],
+      button.uc-ui-primary-btn[disabled],
+      button.uc-ui-secondary-btn[disabled],
+      button.uc-ui-icon-btn[disabled]
+    ) {
     opacity: 0.5;
     pointer-events: none;
   }
@@ -111,9 +121,22 @@
     opacity: 0.6;
     pointer-events: none;
   }
+
   :where([uc-wgt-common]) uc-select[disabled],
   :where([uc-wgt-common]) select[disabled] {
     opacity: 0.6;
     pointer-events: none;
+  }
+
+  :where([uc-wgt-common]) .uc-ui-toolbar {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    padding: var(--uc-padding);
+    background-color: var(--uc-background);
+  }
+
+  :where([uc-wgt-common]) .uc-ui-toolbar-spacer {
+    flex: 1;
   }
 }

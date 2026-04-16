@@ -6,9 +6,6 @@ import '../types/jsx';
 import { renderer } from './utils/test-renderer';
 
 beforeAll(async () => {
-  // biome-ignore lint/suspicious/noTsIgnore: Ignoring TypeScript error for CSS import
-  // @ts-ignore
-  await import('@/solutions/file-uploader/regular/index.css');
   const UC = await import('@/index.js');
   UC.defineComponents(UC);
 });
@@ -145,6 +142,29 @@ describe('API', () => {
     });
   });
 
+  describe('historyBack', () => {
+    it('should navigate back to the previous activity', async () => {
+      const uploadCtxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
+      const api = uploadCtxProvider.getAPI();
+
+      api.initFlow();
+
+      const startFrom = page.getByTestId('uc-start-from');
+      await expect.element(startFrom).toBeVisible();
+
+      api.setCurrentActivity('url');
+      api.setModalState(true);
+
+      const urlSource = page.getByTestId('uc-url-source');
+      await expect.element(urlSource).toBeVisible();
+
+      api.historyBack();
+
+      await expect.element(startFrom).toBeVisible();
+      await expect.element(urlSource).not.toBeInTheDocument();
+    });
+  });
+
   describe('initFlow', () => {
     it('should open the start from activity by default', async () => {
       const uploadCtxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
@@ -161,7 +181,7 @@ describe('API', () => {
       const config = page.getByTestId('uc-config').query()! as Config;
       const api = uploadCtxProvider.getAPI();
 
-      const openSystemDialogSpy = vi.spyOn(api as any, 'openSystemDialog').mockImplementation(() => {});
+      const openSystemDialogSpy = vi.spyOn(api, 'openSystemDialog').mockImplementation(() => {});
 
       config.sourceList = 'local';
       api.initFlow();

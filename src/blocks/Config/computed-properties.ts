@@ -8,22 +8,28 @@ type ConfigKey = keyof ConfigType;
 type ConfigValue<TKey extends ConfigKey> = ConfigType[TKey];
 type DepKeys<TKey extends ConfigKey> = ReadonlyArray<Exclude<ConfigKey, TKey>>;
 
-type ComputedPropertyArgs<TKey extends ConfigKey, TDeps extends DepKeys<TKey>> = Record<TKey, ConfigValue<TKey>> & {
-  [K in TDeps[number]]: ConfigValue<K>;
+type ComputedPropertyArgs<TKey extends ConfigKey, TDeps extends DepKeys<TKey>> = {
+  [K in TKey]: () => ConfigValue<K>;
+} & {
+  [K in TDeps[number]]: () => ConfigValue<K>;
 };
 
 type ComputedPropertyOptions = {
   signal: AbortSignal;
 };
 
+type ComputedPropertyFn<TKey extends ConfigKey, TDeps extends DepKeys<TKey>> = (
+  args: ComputedPropertyArgs<TKey, TDeps>,
+  options: ComputedPropertyOptions,
+) => ConfigValue<TKey> | Promise<ConfigValue<TKey>>;
+
 type ComputedPropertyDeclaration<TKey extends ConfigKey, TDeps extends DepKeys<TKey>> = {
   key: TKey;
   deps: TDeps;
-  fn: (
-    args: ComputedPropertyArgs<TKey, TDeps>,
-    options: ComputedPropertyOptions,
-  ) => ConfigValue<TKey> | Promise<ConfigValue<TKey>>;
+  fn: ComputedPropertyFn<TKey, TDeps>;
 };
+
+export type ComputedPropertyControllers = Map<ComputedPropertyFn<any, any>, AbortController>;
 
 const defineComputedProperty = <TKey extends ConfigKey, TDeps extends DepKeys<TKey>>(
   declaration: ComputedPropertyDeclaration<TKey, TDeps>,
@@ -34,13 +40,14 @@ const COMPUTED_PROPERTIES = [
     key: 'cameraModes',
     deps: ['enableVideoRecording'] as const,
     fn: ({ cameraModes, enableVideoRecording }) => {
-      if (enableVideoRecording === null) {
-        return cameraModes;
+      const evr = enableVideoRecording();
+      if (evr === null) {
+        return cameraModes();
       }
-      let cameraModesCsv = deserializeCsv(cameraModes);
-      if (enableVideoRecording && !cameraModesCsv.includes('video')) {
+      let cameraModesCsv = deserializeCsv(cameraModes());
+      if (evr && !cameraModesCsv.includes('video')) {
         cameraModesCsv = cameraModesCsv.concat('video');
-      } else if (!enableVideoRecording) {
+      } else if (!evr) {
         cameraModesCsv = cameraModesCsv.filter((mode) => mode !== 'video');
       }
       return serializeCsv(cameraModesCsv);
@@ -50,13 +57,14 @@ const COMPUTED_PROPERTIES = [
     key: 'cameraModes',
     deps: ['defaultCameraMode'] as const,
     fn: ({ cameraModes, defaultCameraMode }) => {
-      if (defaultCameraMode === null) {
-        return cameraModes;
+      const dcm = defaultCameraMode();
+      if (dcm === null) {
+        return cameraModes();
       }
-      let cameraModesCsv = deserializeCsv(cameraModes);
+      let cameraModesCsv = deserializeCsv(cameraModes());
       cameraModesCsv = cameraModesCsv.sort((a, b) => {
-        if (a === defaultCameraMode) return -1;
-        if (b === defaultCameraMode) return 1;
+        if (a === dcm) return -1;
+        if (b === dcm) return 1;
         return 0;
       });
       return serializeCsv(cameraModesCsv);
@@ -66,11 +74,14 @@ const COMPUTED_PROPERTIES = [
     key: 'cdnCname',
     deps: ['pubkey', 'cdnCnamePrefixed'] as const,
     fn: ({ pubkey, cdnCname, cdnCnamePrefixed }) => {
-      if (pubkey && (cdnCname === DEFAULT_CDN_CNAME || isPrefixedCdnBase(cdnCname, cdnCnamePrefixed))) {
-        return getPrefixedCdnBaseAsync(pubkey, cdnCnamePrefixed);
+      const pk = pubkey();
+      const cname = cdnCname();
+      const prefixed = cdnCnamePrefixed();
+      if (pk && (cname === DEFAULT_CDN_CNAME || isPrefixedCdnBase(cname, prefixed))) {
+        return getPrefixedCdnBaseAsync(pk, prefixed);
       }
 
-      return cdnCname;
+      return cname;
     },
   }),
 ];
@@ -82,7 +93,7 @@ type ComputePropertyOptions<TKey extends ConfigKey> = {
   key: TKey;
   setValue: ConfigSetter;
   getValue: ConfigGetter;
-  computationControllers: Map<keyof ConfigType, AbortController>;
+  computationControllers: ComputedPropertyControllers;
 };
 
 export const computeProperty = <TKey extends ConfigKey>({
@@ -92,53 +103,53 @@ export const computeProperty = <TKey extends ConfigKey>({
   computationControllers,
 }: ComputePropertyOptions<TKey>) => {
   for (const computed of COMPUTED_PROPERTIES) {
-    if (computed.deps.includes(key)) {
-      const args: Partial<Record<ConfigKey, ConfigType[ConfigKey]>> = {
-        [computed.key]: getValue(computed.key),
-      };
+    if (!computed.deps.includes(key)) continue;
 
-      for (const dep of computed.deps) {
-        args[dep] = getValue(dep);
+    const args: Partial<Record<ConfigKey, () => ConfigType[ConfigKey]>> = {
+      [computed.key]: () => getValue(computed.key),
+    };
+
+    for (const dep of computed.deps) {
+      args[dep] = () => getValue(dep);
+    }
+    const abortController = new AbortController();
+
+    computationControllers.get(computed.fn)?.abort();
+    computationControllers.set(computed.fn, abortController);
+
+    let result: ConfigValue<typeof computed.key> | Promise<ConfigValue<typeof computed.key>>;
+    try {
+      result = computed.fn(args as ComputedPropertyArgs<typeof computed.key, typeof computed.deps>, {
+        signal: abortController.signal,
+      });
+    } catch (error) {
+      if (computationControllers.get(computed.fn) === abortController) {
+        computationControllers.delete(computed.fn);
       }
-      const abortController = new AbortController();
-
-      computationControllers.get(computed.key)?.abort();
-      computationControllers.set(computed.key, abortController);
-
-      let result: ConfigValue<typeof computed.key> | Promise<ConfigValue<typeof computed.key>>;
-      try {
-        result = computed.fn(args as ComputedPropertyArgs<typeof computed.key, typeof computed.deps>, {
-          signal: abortController.signal,
+      console.error(`Failed to compute value for "${computed.key}"`, error);
+      return;
+    }
+    if (isPromiseLike(result)) {
+      result
+        .then((resolvedValue) => {
+          if (abortController.signal.aborted) {
+            return;
+          }
+          setValue(computed.key, resolvedValue);
+        })
+        .catch((error) => {
+          if (abortController.signal.aborted) {
+            return;
+          }
+          console.error(`Failed to compute value for "${computed.key}"`, error);
+        })
+        .finally(() => {
+          if (computationControllers.get(computed.fn) === abortController) {
+            computationControllers.delete(computed.fn);
+          }
         });
-      } catch (error) {
-        if (computationControllers.get(computed.key) === abortController) {
-          computationControllers.delete(computed.key);
-        }
-        console.error(`Failed to compute value for "${computed.key}"`, error);
-        return;
-      }
-      if (isPromiseLike(result)) {
-        result
-          .then((resolvedValue) => {
-            if (abortController.signal.aborted) {
-              return;
-            }
-            setValue(computed.key, resolvedValue);
-          })
-          .catch((error) => {
-            if (abortController.signal.aborted) {
-              return;
-            }
-            console.error(`Failed to compute value for "${computed.key}"`, error);
-          })
-          .finally(() => {
-            if (computationControllers.get(computed.key) === abortController) {
-              computationControllers.delete(computed.key);
-            }
-          });
-      } else {
-        setValue(computed.key, result);
-      }
+    } else {
+      setValue(computed.key, result);
     }
   }
 };
