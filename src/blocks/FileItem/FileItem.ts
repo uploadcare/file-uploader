@@ -8,6 +8,7 @@ import {
 import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import type { PluginFileActionRegistration } from '../../abstract/managers/plugin';
+import type { Owned } from '../../abstract/managers/plugin/PluginTypes';
 import type { UploadEntryTypedData } from '../../abstract/uploadEntrySchema';
 import { debounce } from '../../utils/debounce';
 import { fileIsImage } from '../../utils/fileTypes';
@@ -81,7 +82,7 @@ export class FileItem extends FileItemConfig {
   private _ariaLabelStatusFile = '';
 
   @state()
-  private _pluginFileActions: PluginFileActionRegistration[] = [];
+  private _pluginFileActions: Owned<PluginFileActionRegistration>[] = [];
 
   private _renderedOnce = false;
   private _observer?: IntersectionObserver;
@@ -299,7 +300,7 @@ export class FileItem extends FileItemConfig {
     });
   }
 
-  private _handlePluginFileAction(action: PluginFileActionRegistration): void {
+  private _handlePluginFileAction(action: Owned<PluginFileActionRegistration>): void {
     if (!this.uid) {
       return;
     }
@@ -308,6 +309,16 @@ export class FileItem extends FileItemConfig {
     if (!outputFileEntry) {
       return;
     }
+
+    this.telemetryManager.sendEvent({
+      payload: {
+        metadata: {
+          event: action.id,
+          node: this.tagName,
+          pluginId: action.pluginId,
+        },
+      },
+    });
 
     try {
       action.onClick(outputFileEntry);
