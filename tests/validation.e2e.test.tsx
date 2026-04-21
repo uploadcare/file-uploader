@@ -448,11 +448,27 @@ describe('Custom file validation', () => {
           expect.anything(),
         );
 
-      await page.getByLabelText('Edit', { exact: true }).click();
-      await delay(1000);
-      await page.getByLabelText('Apply mirror operation', { exact: true }).click();
-      await delay(1000);
-      await page.getByRole('button', { name: /apply/i }).click();
+      const waitForEditorChange = () =>
+        new Promise<void>((resolve) => {
+          document.querySelector('uc-cloud-image-editor')?.addEventListener('change', () => resolve(), { once: true });
+        });
+
+      const editButton = page.getByLabelText('Edit', { exact: true });
+      await expect.element(editButton).toBeVisible();
+      await editButton.click();
+
+      const mirrorButton = page.getByLabelText('Apply mirror operation', { exact: true });
+      await expect.element(mirrorButton).toBeVisible();
+      // Wait for initial crop to commit so the editor is ready to accept operations
+      await waitForEditorChange();
+
+      const changeAfterMirror = waitForEditorChange();
+      await mirrorButton.click();
+      await changeAfterMirror;
+
+      const applyButton = page.getByRole('button', { name: /apply/i });
+      await expect.element(applyButton).toBeEnabled();
+      await applyButton.click();
 
       await expect
         .poll(() => validator, {
