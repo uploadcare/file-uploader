@@ -1,3 +1,14 @@
+# [1.29.0](https://github.com/uploadcare/file-uploader/compare/v1.28.0...v1.29.0) (2026-04-22)
+
+
+### Bug Fixes
+
+* let plugin activities control their own modal height ([#956](https://github.com/uploadcare/file-uploader/issues/956)) ([f997570](https://github.com/uploadcare/file-uploader/commit/f997570f44e060d8c8d2b1db62331ecd74e06bb6))
+
+
+### Features
+
+* add Plugin API ([55c1e27](https://github.com/uploadcare/file-uploader/commit/55c1e270d91e3bb3e192a55bb91af301890ee3a0))
 # [1.28.0](https://github.com/uploadcare/file-uploader/compare/v1.27.3...v1.28.0) (2026-04-03)
 
 
