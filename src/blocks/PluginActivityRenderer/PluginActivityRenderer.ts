@@ -85,10 +85,7 @@ export class PluginActivityHost extends LitActivityBlock {
   }
 
   public override render() {
-    return html`<div
-      style="display: flex; flex-direction: column; width: 100%; min-height: 0;"
-      ${ref(this._containerRef)}
-    ></div>`;
+    return html`<div style="display: contents;" ${ref(this._containerRef)}></div>`;
   }
 }
 
