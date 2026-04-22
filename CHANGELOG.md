@@ -1,3 +1,13 @@
+# [1.29.0](https://github.com/uploadcare/file-uploader/compare/v1.28.0...v1.29.0) (2026-04-22)
+
+This release introduces the [Plugin API](https://uploadcare.com/docs/file-uploader/plugins/) — extend the File Uploader with custom upload sources, activities, file actions, and hooks.
+
+All documented public API remains the same, but some internal/undocumented APIs may break. See the [migration guide](https://uploadcare.com/docs/file-uploader/migration-to-1.29.0/) for details.
+
+### Features
+
+* add Plugin API ([55c1e27](https://github.com/uploadcare/file-uploader/commit/55c1e270d91e3bb3e192a55bb91af301890ee3a0))
+
 # [1.28.0](https://github.com/uploadcare/file-uploader/compare/v1.27.3...v1.28.0) (2026-04-03)
 
 
