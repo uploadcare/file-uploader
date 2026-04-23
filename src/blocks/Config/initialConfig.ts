@@ -92,6 +92,9 @@ const config = {
   pasteScope: 'local',
 
   plugins: [],
+
+  smartBtnViewMode: 'auto',
+  smartBtnShowFirstIcon: true,
 } satisfies ConfigType;
 
 export const initialConfig: Readonly<ConfigType> = Object.freeze(config);

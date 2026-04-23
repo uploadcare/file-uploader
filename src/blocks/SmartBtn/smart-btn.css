@@ -1,0 +1,71 @@
+@layer uc.components {
+  :where([uc-smart-btn]) {
+    position: relative;
+    display: inline-flex;
+    padding: 2px;
+  }
+
+  :where([uc-smart-btn]) .uc-source-list {
+    display: flex;
+    gap: 3px;
+  }
+
+  :where([uc-smart-btn]) uc-source-btn button {
+    margin-bottom: 0;
+    padding: 0 var(--uc-padding);
+  }
+
+  /* AllWrapModeSmartBtn */
+  :where([uc-all-wrap-mode-smart-btn]) .uc-source-list {
+    flex-direction: column;
+  }
+
+  :where([uc-all-wrap-mode-smart-btn]) .uc-dropdown-btn {
+    position: relative;
+    anchor-name: --menu-button;
+  }
+
+  :where([uc-all-wrap-mode-smart-btn]) .uc-dropdown-content {
+    position-anchor: --menu-button;
+    position-area: bottom span-left;
+    margin-block-start: 0.25rem;
+    padding: calc(var(--uc-padding) / 2);
+    border: none;
+    border-radius: 12px;
+    box-shadow: var(--uc-dialog-shadow);
+    background-color: var(--uc-background);
+    margin: 0;
+  }
+
+  [popover]:popover-open {
+    opacity: 1;
+    transform: translateY(0);
+
+    transition:
+      transform 0.4s ease,
+      opacity 0.4s ease;
+
+    @starting-style {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+  }
+
+  .uc-dropdown-menu {
+    display: flex;
+    flex-direction: column;
+    gap: calc(var(--uc-padding) / 2);
+  }
+
+  :where([uc-no-wrap-mode-smart-btn]) {
+    display: flex;
+
+    & uc-source-btn button {
+      padding: 0;
+    }
+
+    & uc-source-btn uc-icon {
+      margin-right: 0;
+    }
+  }
+}

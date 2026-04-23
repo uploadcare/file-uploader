@@ -18,6 +18,12 @@ export class SourceBtn extends LitUploaderBlock {
   @property({ attribute: false })
   public source?: SourceButtonConfig;
 
+  @property({ type: Boolean })
+  public textOnly = false;
+
+  @property({ type: Boolean })
+  public iconOnly = false;
+
   @state()
   private _iconName = 'default';
 
@@ -52,8 +58,8 @@ export class SourceBtn extends LitUploaderBlock {
   public override render() {
     return html`
       <button type="button" @click=${this.activate}>
-        <uc-icon name=${this._iconName}></uc-icon>
-        <div class="uc-txt">${this.l10n(this._srcTypeKey)}</div>
+        ${this.textOnly ? '' : html`<uc-icon name=${this._iconName}></uc-icon>`}
+        ${this.iconOnly ? '' : html`<div class="uc-txt">${this.l10n(this._srcTypeKey)}</div>`}
       </button>
     `;
   }
