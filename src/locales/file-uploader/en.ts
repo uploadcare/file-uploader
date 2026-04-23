@@ -127,4 +127,10 @@ export default {
   'crop-to-shape': 'Crop to {{value}}',
   custom: 'Freeform',
   'freeform-crop': 'Freeform crop',
+
+  'upload-from': 'Upload {{source}}',
+  'get-from': 'Get from {{source}}',
+  take: 'Take {{source}}',
+  record: 'Record {{source}}',
+  or: 'or',
 };

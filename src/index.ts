@@ -42,6 +42,7 @@ export { Config } from './blocks/Config/Config';
 export { DropArea } from './blocks/DropArea/DropArea';
 export { FileItem } from './blocks/FileItem/FileItem';
 export { SimpleBtn } from './blocks/SimpleBtn/SimpleBtn';
+export { SmartBtn, AllWrapModeSmartBtn, NoWrapModeSmartBtn } from './blocks/SmartBtn/SmartBtn';
 export { PluginActivityRenderer, PluginActivityHost } from './blocks/PluginActivityRenderer';
 export { ExternalUploadSource, UploadSource } from './utils/UploadSource';
 
