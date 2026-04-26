@@ -34,7 +34,7 @@
     overflow: hidden;
     background-color: var(--uc-background);
     border: 0;
-    border-radius: calc(var(--uc-radius) + var(--uc-padding));
+    border-radius: calc(var(--uc-radius) * 1.75);
     box-shadow: var(--uc-dialog-shadow);
     transition:
       transform 0.4s ease,
