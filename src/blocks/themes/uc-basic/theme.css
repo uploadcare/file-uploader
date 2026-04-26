@@ -292,4 +292,20 @@
     --uc-background-dark: oklch(10% 0 0);
     --uc-foreground-dark: oklch(100% 0 0);
   }
+
+  :where(.uc-radius-none) {
+    --uc-radius: 0;
+  }
+
+  :where(.uc-radius-small) {
+    --uc-radius: 5px;
+  }
+
+  :where(.uc-radius-medium) {
+    --uc-radius: 8px;
+  }
+
+  :where(.uc-radius-large) {
+    --uc-radius: 16px;
+  }
 }
