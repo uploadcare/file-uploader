@@ -2,7 +2,52 @@
   :where([uc-smart-btn]) {
     position: relative;
     display: inline-flex;
+  }
+
+  :where([uc-smart-btn]) > uc-drop-area {
+    display: contents;
+  }
+
+  :where([uc-smart-btn]) .uc-smart-btn-inner {
+    display: flex;
+    gap: 3px;
+    background-color: var(--uc-simple-btn);
+    border-radius: calc(var(--uc-radius) * 1.25);
     padding: 2px;
+    isolation: isolate;
+  }
+
+  :where([uc-smart-btn]) .uc-visual-drop-area {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    padding: var(--uc-simple-btn-padding);
+    background-color: var(--uc-background);
+    color: var(--uc-primary);
+    font-size: var(--uc-simple-btn-font-size);
+    border: 1px dashed var(--uc-simple-btn-foreground);
+    border-radius: inherit;
+    opacity: 0;
+    transition: opacity var(--uc-transition);
+    pointer-events: none;
+  }
+
+  :where([uc-smart-btn]) > uc-drop-area[drag-state="active"] .uc-visual-drop-area {
+    opacity: 1;
+  }
+  :where([uc-smart-btn]) > uc-drop-area[drag-state="inactive"] .uc-visual-drop-area {
+    opacity: 0;
+  }
+  :where([uc-smart-btn]) > uc-drop-area[drag-state="near"] .uc-visual-drop-area {
+    opacity: 1;
+  }
+  :where([uc-smart-btn]) > uc-drop-area[drag-state="over"] .uc-visual-drop-area {
+    opacity: 1;
   }
 
   :where([uc-smart-btn]) .uc-source-list {
@@ -13,6 +58,73 @@
   :where([uc-smart-btn]) uc-source-btn button {
     margin-bottom: 0;
     padding: 0 var(--uc-padding);
+  }
+
+  :where([uc-smart-btn]) uc-source-btn button uc-icon {
+    /*margin-right: 0;*/
+    /*margin-left: calc(var(--uc-padding) * -1);*/
+  }
+
+  :where([uc-smart-btn]) uc-source-btn button:hover {
+    background-color: var(--uc-secondary);
+    /*background-color: var(--uc-simple-btn-hover);*/
+  }
+
+  /*uc-primary-action*/
+
+  :where([uc-primary-action]) {
+    position: relative;
+  }
+
+  :where([uc-primary-action]) button {
+    background-color: transparent;
+    color: var(--uc-foreground);
+  }
+
+  :where([uc-primary-action]) button:hover {
+    background-color: var(--uc-secondary);
+    /*background-color: var(--uc-simple-btn-hover);*/
+  }
+
+  :where([uc-primary-action]) button uc-icon {
+    margin-left: calc(var(--uc-padding) * -1);
+  }
+
+  /*NoWrapModeSmartBtn*/
+
+  :where([uc-no-wrap-mode-smart-btn]) {
+    display: flex;
+    gap: 3px;
+  }
+
+  :where([uc-no-wrap-mode-smart-btn]) > uc-source-btn {
+    position: relative;
+  }
+
+  :where([uc-no-wrap-mode-smart-btn]) > uc-source-btn button {
+    padding: 0;
+  }
+
+  :where([uc-no-wrap-mode-smart-btn]) > uc-source-btn button uc-icon {
+    margin-right: 0;
+  }
+
+  :where([uc-smart-btn]) button:before {
+    position: absolute;
+    content: "";
+    right: -2px;
+    width: 1px;
+    height: 18px;
+    bottom: 0;
+    top: 0;
+    margin: auto;
+    background-color: var(--uc-secondary);
+  }
+
+  :where([uc-abort-action]) button::before,
+  :where([uc-all-wrap-mode-smart-btn]) button::before,
+  :where([uc-no-wrap-mode-smart-btn]) > uc-source-btn:last-child button::before {
+    content: none;
   }
 
   /* AllWrapModeSmartBtn */
@@ -55,17 +167,5 @@
     display: flex;
     flex-direction: column;
     gap: calc(var(--uc-padding) / 2);
-  }
-
-  :where([uc-no-wrap-mode-smart-btn]) {
-    display: flex;
-
-    & uc-source-btn button {
-      padding: 0;
-    }
-
-    & uc-source-btn uc-icon {
-      margin-right: 0;
-    }
   }
 }
