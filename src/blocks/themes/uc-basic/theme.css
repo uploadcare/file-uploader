@@ -303,6 +303,8 @@
 
   :where(.uc-radius-medium) {
     --uc-radius: 8px;
+
+    /* Equals the default radius so it can be forced when necessary. */
   }
 
   :where(.uc-radius-large) {
