@@ -121,7 +121,7 @@
     background-color: var(--uc-secondary);
   }
 
-  :where([uc-abort-action]) button::before,
+  :where([uc-file-action-button]) button::before,
   :where([uc-all-wrap-mode-smart-btn]) button::before,
   :where([uc-no-wrap-mode-smart-btn]) > uc-source-btn:last-child button::before {
     content: none;

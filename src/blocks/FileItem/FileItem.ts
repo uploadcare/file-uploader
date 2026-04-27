@@ -21,6 +21,7 @@ import { FileItemConfig } from './FileItemConfig';
 import '../Thumb/Thumb';
 import '../Icon/Icon';
 import '../ProgressBar/ProgressBar';
+import './FileActionButton';
 
 const FileItemState = Object.freeze({
   FINISHED: Symbol('FINISHED'),
@@ -566,21 +567,11 @@ export class FileItem extends FileItemConfig {
               </button>
             `,
           )}
-          <button
-            type="button"
-            @click=${this._handleRemove}
-            title=${this.l10n('file-item-remove-button')}
-            aria-label=${this.l10n('file-item-remove-button')}
-            class="uc-remove-btn uc-mini-btn"
-          >
-            <uc-icon name="remove-file"></uc-icon>
-          </button>
+          <uc-file-action-button @uc:remove=${this._handleRemove}  .uploading=${this._progressVisible} .progress=${this._progressValue}></uc-file-action-button>
           <button type="button" class="uc-upload-btn uc-mini-btn" @click=${this._handleUploadClick}>
             <uc-icon name="upload"></uc-icon>
           </button>
         </div>
-        <uc-progress-bar class="uc-progress-bar" .value=${this._progressValue} .visible=${this._progressVisible} ?hasFileName=${this._showFileNames}>
-        </uc-progress-bar>
       </div>
     `;
   }
