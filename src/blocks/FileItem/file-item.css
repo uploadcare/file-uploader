@@ -129,7 +129,7 @@
     height: 100%;
   }
 
-  uc-file-item .uc-progress-bar {
+  /* uc-file-item .uc-progress-bar {
     --visible-opacity: 0.7;
 
     top: calc(100% - 2px);
@@ -138,7 +138,7 @@
 
   :where(.uc-contrast) uc-file-item .uc-progress-bar {
     --visible-opacity: 1;
-  }
+  } */
 
   uc-file-item .uc-file-actions {
     display: flex;
@@ -221,7 +221,7 @@
     background-color: var(--uc-muted);
   }
 
-  uc-file-item[mode="grid"] .uc-progress-bar {
+  /* uc-file-item[mode="grid"] .uc-progress-bar {
     width: initial;
     height: 4px;
     top: initial;
@@ -242,5 +242,5 @@
 
   uc-file-item[mode="grid"] .uc-progress-bar[hasfilename] {
     bottom: calc(var(--uc-padding) + var(--uc-font-size));
-  }
+  } */
 }

@@ -1,5 +1,6 @@
-import { html, type PropertyValues } from 'lit';
+import { html } from 'lit';
 import { property, state } from 'lit/decorators.js';
+import { classMap } from 'lit/directives/class-map.js';
 import { SourceListController } from '../../abstract/controllers';
 import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
 import type { SourceButtonConfig } from '../SourceBtn/SourceBtn';
@@ -7,6 +8,7 @@ import type { SourceButtonConfig } from '../SourceBtn/SourceBtn';
 import '../DropArea/DropArea';
 import '../SourceBtn/SourceBtn';
 import './smart-btn.css';
+
 import type { OutputCollectionState, OutputCollectionStatus, OutputFileEntry } from '../../types/exported';
 import { throttle } from '../../utils/throttle';
 import { UID } from '../../utils/UID';
@@ -71,17 +73,17 @@ export class PrimaryAction extends LitUploaderBlock {
     });
   }
 
-  protected override update(changedProperties: PropertyValues): void {
-    super.update(changedProperties);
+  // protected override update(changedProperties: PropertyValues): void {
+  //   super.update(changedProperties);
 
-    if (changedProperties.has('entries')) {
-      const newShowIcon = this.entries.allEntries.length > 0 ? false : this.cfg.smartBtnShowFirstIcon;
-      if (newShowIcon !== this.showIcon) {
-        this.showIcon = newShowIcon;
-        // this.requestUpdate();
-      }
-    }
-  }
+  //   if (changedProperties.has('entries')) {
+  //     const newShowIcon = this.entries.allEntries.length > 0 ? false : this.cfg.smartBtnShowFirstIcon;
+  //     if (newShowIcon !== this.showIcon) {
+  //       this.showIcon = newShowIcon;
+  //       // this.requestUpdate();
+  //     }
+  //   }
+  // }
 
   private _headerTextDependentOnEntries() {
     if (this.entries?.status === 'uploading') {
@@ -118,6 +120,14 @@ export class PrimaryAction extends LitUploaderBlock {
         return this.l10n('take', {
           source: this.l10n(this.source.label).toLocaleLowerCase(),
         });
+      case 'mobile-photo-camera':
+        return this.l10n('take', {
+          source: this.l10n('photo').toLocaleLowerCase(),
+        });
+      case 'mobile-video-camera':
+        return this.l10n('record', {
+          source: this.l10n('video').toLocaleLowerCase(),
+        });
       case 'url':
         return this.l10n('upload-from', {
           source: this.l10n(this.source.label).toLocaleLowerCase(),
@@ -130,7 +140,7 @@ export class PrimaryAction extends LitUploaderBlock {
   }
 
   private _handleClick() {
-    if (this.entries.allEntries.length > 0) {
+    if (this.entries?.allEntries?.length > 0) {
       this._sharedInstancesBag.ctx.pub('*currentActivity', 'upload-list');
       this._sharedInstancesBag.modalManager?.open('upload-list');
 
@@ -138,35 +148,14 @@ export class PrimaryAction extends LitUploaderBlock {
     }
 
     this.source?.onClick();
-    setTimeout(() => {
-      this._sharedInstancesBag.ctx.pub('*currentActivity', null);
-      this._sharedInstancesBag.modalManager?.closeAll();
-    }, 300);
   }
 
   protected override render() {
     return html`
         <button class="uc-primary-action" @click=${this._handleClick}>
-            ${this.showIcon ? html`<uc-icon name=${this.source?.icon}></uc-icon>` : null}
-            <!-- ${this.entries ? html`<uc-thumb .uid=${this.entries.internalId}></uc-thumb>` : null} -->
+            ${this?.entries?.allEntries?.length > 0 ? null : this.showIcon ? html`<uc-icon name=${this.source?.icon}></uc-icon>` : null}
             <span>${this.textBasedOnLocale}</span>
         </button>
-    `;
-  }
-}
-
-export class AbortAction extends LitUploaderBlock {
-  public static override styleAttrs = [...super.styleAttrs, 'uc-abort-action'];
-
-  private _handleClickAbort() {
-    this.uploadCollection.clearAll();
-  }
-
-  public override render() {
-    return html`
-      <button class="uc-mini-btn uc-close-btn uc-abort-btn" type="button" @click=${this._handleClickAbort}>
-        <uc-icon name="remove-file"></uc-icon>
-      </button>
     `;
   }
 }
@@ -223,6 +212,9 @@ export class SmartBtn extends LitUploaderBlock {
   @state()
   private _entries?: OutputFileEntry[];
 
+  @state()
+  private _progress = 0;
+
   private _throttledHandleCollectionUpdate = throttle(() => {
     if (!this.isConnected) {
       return;
@@ -232,14 +224,6 @@ export class SmartBtn extends LitUploaderBlock {
 
   private _updateButtonBasedOnCollectionState() {
     const collectionState = this.api.getOutputCollectionState();
-
-    // if (collectionState.totalCount === 1 && collectionState.successEntries.length === 1) {
-    //   const successfulEntry = collectionState.successEntries[0];
-
-    //   this.entry = successfulEntry;
-    // } else {
-    //   this.entry = undefined;
-    // }
 
     this._collection = collectionState;
     this._entries = collectionState.allEntries;
@@ -253,6 +237,10 @@ export class SmartBtn extends LitUploaderBlock {
       this._mode = value;
 
       this._mainAndRemainSources = adjustSourceBasedOnMode(this._sources, this._mode);
+    });
+
+    this.sub('*commonProgress', (progress: number) => {
+      this._progress = progress;
     });
 
     this._controller = new SourceListController({
@@ -296,8 +284,12 @@ export class SmartBtn extends LitUploaderBlock {
     return html`<uc-primary-action .entries=${this._collection} .source=${this._mainAndRemainSources?.main}></uc-primary-action>`;
   }
 
+  private _handleRemove() {
+    this.uploadCollection.clearAll();
+  }
+
   private _renderAbortAction() {
-    return html`<uc-abort-action></uc-abort-action>`;
+    return html`<uc-file-action-button @uc:remove=${this._handleRemove} .uploading=${this._status === 'uploading'} .progress=${this._progress}></uc-file-action-button>`;
   }
 
   public override render() {
@@ -305,7 +297,8 @@ export class SmartBtn extends LitUploaderBlock {
         <uc-drop-area .disabled=${!this.dropzone}>
             <div class="uc-smart-btn-inner">
 
-                ${this._mode !== 'collapse' ? this._renderPrimaryAction() : null}
+                ${this._mode !== 'collapse' ? this._renderPrimaryAction() : this._status !== 'idle' ? this._renderPrimaryAction() : null}
+
 
                 ${this._status === 'idle' ? (this._mode === 'nowrap' || (this._mode === 'auto' && this._sources.length <= 3) ? this._renderInline() : this._renderDropdown()) : null}
 

@@ -185,6 +185,19 @@ export class TypedCollection<T extends Record<string, unknown>> {
     delete this._subsMap[id];
   }
 
+  public abort(id: Uid): void {
+    const item = this.read(id);
+    if (item?.getValue('isUploading')) {
+      // this.remove(id);
+    }
+  }
+
+  public abortAll() {
+    this._items.forEach((id) => {
+      this.abort(id);
+    });
+  }
+
   public clearAll(): void {
     this._items.forEach((id) => {
       this.remove(id);

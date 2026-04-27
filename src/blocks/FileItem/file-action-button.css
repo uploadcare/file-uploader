@@ -1,0 +1,47 @@
+@layer uc.shared {
+  :where([uc-file-action-button]) {
+    position: relative;
+  }
+
+  :where([uc-file-action-button]) button uc-icon {
+    transition: opacity var(--uc-transition);
+  }
+
+  :where([uc-file-action-button]) button.uc-uploading uc-icon[name="remove-file"] {
+    opacity: 0;
+  }
+
+  :where([uc-file-action-button]) button.uc-success uc-icon[name="close"] {
+    opacity: 0;
+  }
+
+  :where([uc-file-action-button]) button uc-icon[name="close"] {
+    position: absolute;
+
+    &::before {
+      position: absolute;
+      content: "";
+      inset: 4px;
+      border: 1px solid var(--uc-primary);
+      border-radius: 50%;
+      opacity: 0.2;
+    }
+
+    &::after {
+      position: absolute;
+      content: "";
+      inset: 4px;
+      border: 1px solid var(--uc-primary);
+      border-top-color: transparent;
+      border-radius: 50%;
+      opacity: 1;
+      animation: preloader-spin 1s linear infinite;
+    }
+  }
+
+  @keyframes preloader-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+}
