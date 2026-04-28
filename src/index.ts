@@ -45,12 +45,13 @@ export { FileActionButton } from './blocks/FileItem/FileActionButton';
 export { SimpleBtn } from './blocks/SimpleBtn/SimpleBtn';
 export {
   SmartBtn,
-  AllWrapModeSmartBtn,
+  // AllWrapModeSmartBtn,
   NoWrapModeSmartBtn,
   PrimaryAction,
 } from './blocks/SmartBtn/SmartBtn';
 export { PluginActivityRenderer, PluginActivityHost } from './blocks/PluginActivityRenderer';
 export { ExternalUploadSource, UploadSource } from './utils/UploadSource';
+export { DropDown } from './blocks/DropDown/DropDown';
 
 // Extract as plugins
 export * from './blocks/CloudImageEditor/index';

@@ -1,6 +1,5 @@
 import { html } from 'lit';
 import { property, state } from 'lit/decorators.js';
-import { classMap } from 'lit/directives/class-map.js';
 import { SourceListController } from '../../abstract/controllers';
 import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
 import type { SourceButtonConfig } from '../SourceBtn/SourceBtn';
@@ -8,46 +7,16 @@ import type { SourceButtonConfig } from '../SourceBtn/SourceBtn';
 import '../DropArea/DropArea';
 import '../SourceBtn/SourceBtn';
 import './smart-btn.css';
+import './smart-btn-mode.css';
 
-import type { OutputCollectionState, OutputCollectionStatus, OutputFileEntry } from '../../types/exported';
+import type { OutputCollectionState, OutputCollectionStatus } from '../../types/exported';
 import { throttle } from '../../utils/throttle';
-import { UID } from '../../utils/UID';
+import '../Thumb/Thumb';
 
 export type SmartButtonMode = 'auto' | 'allwrap' | 'nowrap' | 'collapse';
 
-export class AllWrapModeSmartBtn extends LitUploaderBlock {
-  public static override styleAttrs = [...super.styleAttrs, 'uc-all-wrap-mode-smart-btn'];
-
-  @property({ attribute: 'mode' })
-  public mode = this.cfg.smartBtnViewMode;
-
-  private _id = UID.generateFastUid();
-
-  private readonly _handleContentClick = (e: Event) => {
-    (e.currentTarget as HTMLElement).hidePopover();
-  };
-
-  protected override render() {
-    return html`
-      <button class="uc-mini-btn uc-dropdown-btn" popovertarget=${this._id} popovertargetaction="toggle">
-        ${this.yield('dd-header-button')}
-      </button>
-
-      <div id=${this._id} class="uc-dropdown-content" popover="auto" @click=${this._handleContentClick}>
-        ${this.yield('dd-content')}
-      </div>
-    `;
-  }
-}
-
 export class NoWrapModeSmartBtn extends LitUploaderBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-no-wrap-mode-smart-btn'];
-
-  protected override render() {
-    return html`
-
-    `;
-  }
 }
 
 export class PrimaryAction extends LitUploaderBlock {
@@ -73,36 +42,37 @@ export class PrimaryAction extends LitUploaderBlock {
     });
   }
 
-  // protected override update(changedProperties: PropertyValues): void {
-  //   super.update(changedProperties);
-
-  //   if (changedProperties.has('entries')) {
-  //     const newShowIcon = this.entries.allEntries.length > 0 ? false : this.cfg.smartBtnShowFirstIcon;
-  //     if (newShowIcon !== this.showIcon) {
-  //       this.showIcon = newShowIcon;
-  //       // this.requestUpdate();
-  //     }
-  //   }
-  // }
-
   private _headerTextDependentOnEntries() {
+    const wr = (key, count) => {
+      return this.l10n(key, {
+        count,
+      });
+    };
+
     if (this.entries?.status === 'uploading') {
-      return this.l10n('header-uploading', { count: this.entries.uploadingCount });
+      return wr('header-uploading', this.entries.uploadingCount);
     }
     if (this.entries?.status === 'failed') {
-      return this.l10n('header-failed', { count: this.entries.failedCount });
+      return wr('header-failed', this.entries.failedCount);
     }
     if (this.entries?.status === 'success') {
-      return this.l10n('header-succeed', { count: this.entries.successCount });
+      return wr('header-succeed', this.entries.successCount);
     }
   }
 
   private get textBasedOnLocale() {
+    const wr = (key, label) => {
+      return this.l10n(key, {
+        source: this.l10n(label).toLocaleLowerCase(),
+      });
+    };
+
     if (this.customLabel) {
       return this.customLabel;
     }
 
     const result = this._headerTextDependentOnEntries();
+
     if (result) {
       return result;
     }
@@ -113,29 +83,17 @@ export class PrimaryAction extends LitUploaderBlock {
 
     switch (this.source?.id) {
       case 'local':
-        return this.l10n('upload-from', {
-          source: this.l10n(this.source.label).toLocaleLowerCase(),
-        });
+        return wr('upload-from', this.source.label);
       case 'camera':
-        return this.l10n('take', {
-          source: this.l10n(this.source.label).toLocaleLowerCase(),
-        });
+        return wr('take', this.source.label);
       case 'mobile-photo-camera':
-        return this.l10n('take', {
-          source: this.l10n('photo').toLocaleLowerCase(),
-        });
+        return wr('take', 'photo');
       case 'mobile-video-camera':
-        return this.l10n('record', {
-          source: this.l10n('video').toLocaleLowerCase(),
-        });
+        return wr('record', 'video');
       case 'url':
-        return this.l10n('upload-from', {
-          source: this.l10n(this.source.label).toLocaleLowerCase(),
-        });
+        return wr('upload-from', this.source.label);
       default:
-        return this.l10n('get-from', {
-          source: this.l10n(this.source.label),
-        });
+        return wr('get-from', this.source.label);
     }
   }
 
@@ -147,14 +105,30 @@ export class PrimaryAction extends LitUploaderBlock {
       return;
     }
 
-    this.source?.onClick();
+    void this.source?.onClick();
+  }
+
+  private _renderThumbnail() {
+    if (this.entries?.allEntries?.length === 1 && this.entries.isSuccess) {
+      const entry = this.entries.allEntries[0];
+      const isImage = entry?.isImage;
+
+      if (isImage) {
+        return html`<uc-thumb .uid=${entry?.internalId}></uc-thumb>`;
+      }
+      return null;
+    } else if (this.entries?.allEntries?.length > 1) {
+      return null;
+    } else {
+      return this.showIcon ? html`<uc-icon .name=${this.source?.icon}></uc-icon>` : null;
+    }
   }
 
   protected override render() {
     return html`
         <button class="uc-primary-action" @click=${this._handleClick}>
-            ${this?.entries?.allEntries?.length > 0 ? null : this.showIcon ? html`<uc-icon name=${this.source?.icon}></uc-icon>` : null}
-            <span>${this.textBasedOnLocale}</span>
+          ${this._renderThumbnail()}
+          <span>${this.textBasedOnLocale}</span>
         </button>
     `;
   }
@@ -207,13 +181,14 @@ export class SmartBtn extends LitUploaderBlock {
   };
 
   @state()
-  private _collection;
-
-  @state()
-  private _entries?: OutputFileEntry[];
+  private _collection!: OutputCollectionState<OutputCollectionStatus, 'maybe-has-group'>;
 
   @state()
   private _progress = 0;
+
+  private get isIdle() {
+    return this._status === 'idle';
+  }
 
   private _throttledHandleCollectionUpdate = throttle(() => {
     if (!this.isConnected) {
@@ -226,7 +201,6 @@ export class SmartBtn extends LitUploaderBlock {
     const collectionState = this.api.getOutputCollectionState();
 
     this._collection = collectionState;
-    this._entries = collectionState.allEntries;
     this._status = collectionState.status;
   }
 
@@ -264,20 +238,20 @@ export class SmartBtn extends LitUploaderBlock {
 
   private _renderInline() {
     return html`
-        <uc-no-wrap-mode-smart-btn>
-            ${this._mainAndRemainSources?.remain?.map((source) => html`<uc-source-btn .iconOnly=${true} role="menuitem" .source=${source}></uc-source-btn>`)}
-        </uc-no-wrap-mode-smart-btn>
+      <uc-no-wrap-mode-smart-btn>
+        ${this._mainAndRemainSources?.remain?.map((source) => html`<uc-source-btn .iconOnly=${true} role="menuitem" .source=${source}></uc-source-btn>`)}
+      </uc-no-wrap-mode-smart-btn>
     `;
   }
 
   private _renderDropdown() {
     return html`
-        <uc-all-wrap-mode-smart-btn mode=${this._mode}>
-            <uc-icon content-for="dd-header-button" name=${iconsBasedOnMode[this._mode]}></uc-icon>
-            <div content-for="dd-content" role="menu" class="uc-dropdown-menu">
-                ${this._mainAndRemainSources?.remain?.map((source) => html`<uc-source-btn role="menuitem" .source=${source}></uc-source-btn>`)}
-            </div>
-        </uc-all-wrap-mode-smart-btn>`;
+      <uc-drop-down>
+        <uc-icon content-for="dd-header-button" name=${iconsBasedOnMode[this._mode]}></uc-icon>
+        <div content-for="dd-content" role="menu" class="uc-dropdown-menu">
+          ${this._mainAndRemainSources?.remain?.map((source) => html`<uc-source-btn role="menuitem" .source=${source}></uc-source-btn>`)}
+        </div>
+      </uc-drop-down>`;
   }
 
   private _renderPrimaryAction() {
@@ -289,26 +263,24 @@ export class SmartBtn extends LitUploaderBlock {
   }
 
   private _renderAbortAction() {
-    return html`<uc-file-action-button @uc:remove=${this._handleRemove} .uploading=${this._status === 'uploading'} .progress=${this._progress}></uc-file-action-button>`;
+    return html`<uc-file-action-button @uc:remove=${this._handleRemove} .uploading=${this._status === 'uploading'} .failed=${this._status === 'failed'} .progress=${this._progress}></uc-file-action-button>`;
   }
 
   public override render() {
     return html`
-        <uc-drop-area .disabled=${!this.dropzone}>
-            <div class="uc-smart-btn-inner">
+      <uc-drop-area .disabled=${!this.dropzone}>
+        <div class="uc-smart-btn-inner">
+          ${this._mode !== 'collapse' ? this._renderPrimaryAction() : !this.isIdle ? this._renderPrimaryAction() : null}
 
-                ${this._mode !== 'collapse' ? this._renderPrimaryAction() : this._status !== 'idle' ? this._renderPrimaryAction() : null}
+          ${this.isIdle ? (this._mode === 'nowrap' || (this._mode === 'auto' && this._sources.length <= 3) ? this._renderInline() : this._renderDropdown()) : null}
 
+          ${!this.isIdle ? (this._collection?.allEntries?.length ? this._renderAbortAction() : null) : null}
 
-                ${this._status === 'idle' ? (this._mode === 'nowrap' || (this._mode === 'auto' && this._sources.length <= 3) ? this._renderInline() : this._renderDropdown()) : null}
-
-                ${this._status !== 'idle' ? (this._entries?.length ? this._renderAbortAction() : null) : null}
-
-                <div class="uc-visual-drop-area">
-                    <uc-icon name="arrow-down"></uc-icon>
-                </div>
-            </div>
-        </uc-drop-area>
+          <div class="uc-visual-drop-area">
+            <uc-icon name="arrow-down"></uc-icon>
+          </div>
+        </div>
+      </uc-drop-area>
     `;
   }
 }

@@ -14,6 +14,9 @@ export class FileActionButton extends LitUploaderBlock {
   @property({ type: Boolean, reflect: true })
   public uploading = false;
 
+  @property({ type: Boolean })
+  public failed = false;
+
   @property({ type: Number })
   public progress = 0;
 
@@ -31,6 +34,7 @@ export class FileActionButton extends LitUploaderBlock {
       'uc-remove-btn': true,
       'uc-mini-btn': true,
       'uc-uploading': this.uploading,
+      'uc-failed': this.failed,
       'uc-success': !this.uploading && this.progress === 100,
     });
 

@@ -60,53 +60,8 @@
     padding: 0 var(--uc-padding);
   }
 
-  :where([uc-smart-btn]) uc-source-btn button uc-icon {
-    /*margin-right: 0;*/
-    /*margin-left: calc(var(--uc-padding) * -1);*/
-  }
-
   :where([uc-smart-btn]) uc-source-btn button:hover {
     background-color: var(--uc-secondary);
-    /*background-color: var(--uc-simple-btn-hover);*/
-  }
-
-  /*uc-primary-action*/
-
-  :where([uc-primary-action]) {
-    position: relative;
-  }
-
-  :where([uc-primary-action]) button {
-    background-color: transparent;
-    color: var(--uc-foreground);
-  }
-
-  :where([uc-primary-action]) button:hover {
-    background-color: var(--uc-secondary);
-    /*background-color: var(--uc-simple-btn-hover);*/
-  }
-
-  :where([uc-primary-action]) button uc-icon {
-    margin-left: calc(var(--uc-padding) * -1);
-  }
-
-  /*NoWrapModeSmartBtn*/
-
-  :where([uc-no-wrap-mode-smart-btn]) {
-    display: flex;
-    gap: 3px;
-  }
-
-  :where([uc-no-wrap-mode-smart-btn]) > uc-source-btn {
-    position: relative;
-  }
-
-  :where([uc-no-wrap-mode-smart-btn]) > uc-source-btn button {
-    padding: 0;
-  }
-
-  :where([uc-no-wrap-mode-smart-btn]) > uc-source-btn button uc-icon {
-    margin-right: 0;
   }
 
   :where([uc-smart-btn]) button:before {
@@ -122,48 +77,17 @@
   }
 
   :where([uc-file-action-button]) button::before,
-  :where([uc-all-wrap-mode-smart-btn]) button::before,
+  :where([uc-drop-down]) button::before,
   :where([uc-no-wrap-mode-smart-btn]) > uc-source-btn:last-child button::before {
     content: none;
   }
 
-  /* AllWrapModeSmartBtn */
-  :where([uc-all-wrap-mode-smart-btn]) .uc-source-list {
-    flex-direction: column;
+  :where([uc-smart-btn] [uc-drop-down]) .uc-dropdown-content uc-source-btn uc-icon {
+    margin-right: 0;
+    margin-left: calc(var(--uc-padding) * -0.5);
   }
 
-  :where([uc-all-wrap-mode-smart-btn]) .uc-dropdown-btn {
-    position: relative;
-    anchor-name: --menu-button;
-  }
-
-  :where([uc-all-wrap-mode-smart-btn]) .uc-dropdown-content {
-    position-anchor: --menu-button;
-    position-area: bottom span-left;
-    margin-block-start: 0.25rem;
-    padding: calc(var(--uc-padding) / 2);
-    border: none;
-    border-radius: 12px;
-    box-shadow: var(--uc-dialog-shadow);
-    background-color: var(--uc-background);
-    margin: 0;
-  }
-
-  [popover]:popover-open {
-    opacity: 1;
-    transform: translateY(0);
-
-    transition:
-      transform 0.4s ease,
-      opacity 0.4s ease;
-
-    @starting-style {
-      opacity: 0;
-      transform: translateY(8px);
-    }
-  }
-
-  .uc-dropdown-menu {
+  :where([uc-drop-down]) .uc-dropdown-menu {
     display: flex;
     flex-direction: column;
     gap: calc(var(--uc-padding) / 2);
