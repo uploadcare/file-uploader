@@ -1,0 +1,32 @@
+@layer uc.shared {
+  :where([uc-drop-down]) .uc-dropdown-btn {
+    position: relative;
+    anchor-name: --menu-button;
+  }
+
+  :where([uc-drop-down]) .uc-dropdown-content {
+    position-anchor: --menu-button;
+    position-area: bottom span-left;
+    margin-block-start: 0.25rem;
+    padding: calc(var(--uc-padding) / 2);
+    border: none;
+    border-radius: 12px;
+    box-shadow: var(--uc-dialog-shadow);
+    background-color: var(--uc-background);
+    margin: 0;
+  }
+
+  [popover]:popover-open {
+    opacity: 1;
+    transform: translateY(0);
+
+    transition:
+      transform 0.4s ease,
+      opacity 0.4s ease;
+
+    @starting-style {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+  }
+}

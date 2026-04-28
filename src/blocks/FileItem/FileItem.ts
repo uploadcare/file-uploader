@@ -567,7 +567,7 @@ export class FileItem extends FileItemConfig {
               </button>
             `,
           )}
-          <uc-file-action-button @uc:remove=${this._handleRemove}  .uploading=${this._progressVisible} .progress=${this._progressValue}></uc-file-action-button>
+          <uc-file-action-button @uc:remove=${this._handleRemove}  .uploading=${this._progressVisible} .failed=${this._isFailed} .progress=${this._progressValue}></uc-file-action-button>
           <button type="button" class="uc-upload-btn uc-mini-btn" @click=${this._handleUploadClick}>
             <uc-icon name="upload"></uc-icon>
           </button>

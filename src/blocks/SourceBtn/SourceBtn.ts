@@ -56,6 +56,13 @@ export class SourceBtn extends LitUploaderBlock {
   public activate(): void {
     if (!this.source) return;
     void this.source.onClick();
+
+    // this.telemetryManager.sendEvent({
+    //   eventType: 'action-event',
+    //   payload: {
+    //     sourceId: this.source.id,
+    //   },
+    // });
   }
 
   public override render() {

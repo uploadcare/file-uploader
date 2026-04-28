@@ -1,0 +1,44 @@
+@layer uc.components {
+  :where([uc-no-wrap-mode-smart-btn]) {
+    display: flex;
+    gap: 3px;
+  }
+
+  :where([uc-no-wrap-mode-smart-btn]) > uc-source-btn {
+    position: relative;
+  }
+
+  :where([uc-no-wrap-mode-smart-btn]) > uc-source-btn button {
+    padding: 0;
+  }
+
+  :where([uc-no-wrap-mode-smart-btn]) > uc-source-btn button uc-icon {
+    margin-right: 0;
+  }
+
+  :where([uc-primary-action]) {
+    position: relative;
+  }
+
+  :where([uc-primary-action]) button {
+    background-color: transparent;
+    color: var(--uc-foreground);
+  }
+
+  :where([uc-primary-action]) button:hover {
+    background-color: var(--uc-secondary);
+  }
+
+  :where([uc-primary-action]) button uc-icon {
+    margin-left: calc(var(--uc-padding) * -1);
+  }
+
+  :where([uc-primary-action]) uc-thumb {
+    margin-left: calc(var(--uc-padding) * -0.5);
+    margin-right: var(--uc-padding);
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    overflow: hidden;
+  }
+}

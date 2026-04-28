@@ -7,11 +7,11 @@
     transition: opacity var(--uc-transition);
   }
 
-  :where([uc-file-action-button]) button.uc-uploading uc-icon[name="remove-file"] {
+  :where([uc-file-action-button]) button:is(.uc-uploading) uc-icon[name="remove-file"] {
     opacity: 0;
   }
 
-  :where([uc-file-action-button]) button.uc-success uc-icon[name="close"] {
+  :where([uc-file-action-button]) button:is(.uc-success, .uc-failed) uc-icon[name="close"] {
     opacity: 0;
   }
 
