@@ -1,3 +1,9 @@
+## [1.29.1](https://github.com/uploadcare/file-uploader/compare/v1.29.0...v1.29.1) (2026-04-28)
+
+
+### Reverts
+
+* Revert "update modal border-radius math" ([1bd9783](https://github.com/uploadcare/file-uploader/commit/1bd978395c3fa3ebf923b9ee5b5d46dff97baf6c))
 # [1.29.0](https://github.com/uploadcare/file-uploader/compare/v1.28.0...v1.29.0) (2026-04-22)
 
 This release introduces the [Plugin API](https://uploadcare.com/docs/file-uploader/plugins/) — extend the File Uploader with custom upload sources, activities, file actions, and hooks.
