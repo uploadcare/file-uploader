@@ -36,17 +36,17 @@ export interface UploadCtxProvider extends LitUploaderBlock {
     listener: EventListenerMap[T],
     options?: boolean | AddEventListenerOptions,
   ): void;
-  removeEventListener<T extends keyof EventListenerMap>(
-    type: T,
-    listener: EventListenerMap[T],
-    options?: boolean | EventListenerOptions,
-  ): void;
-
   // fallback overloads for compatibility with the DOM lib (lib.dom.d.ts)
   addEventListener(
     type: string,
     listener: EventListenerOrEventListenerObject | null,
     options?: boolean | AddEventListenerOptions,
+  ): void;
+
+  removeEventListener<T extends keyof EventListenerMap>(
+    type: T,
+    listener: EventListenerMap[T],
+    options?: boolean | EventListenerOptions,
   ): void;
   removeEventListener(
     type: string,
