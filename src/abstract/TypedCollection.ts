@@ -188,7 +188,7 @@ export class TypedCollection<T extends Record<string, unknown>> {
   public abort(id: Uid): void {
     const item = this.read(id);
     if (item?.getValue('isUploading')) {
-      // this.remove(id);
+      this.remove(id);
     }
   }
 

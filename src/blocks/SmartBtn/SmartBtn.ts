@@ -12,126 +12,16 @@ import './smart-btn-mode.css';
 import type { OutputCollectionState, OutputCollectionStatus } from '../../types/exported';
 import { throttle } from '../../utils/throttle';
 import '../Thumb/Thumb';
+import { classMap } from 'lit/directives/class-map.js';
+
+import './PrimaryAction';
+import '../DropDown/DropDown';
+import '../FileItem/FileActionButton';
 
 export type SmartButtonMode = 'auto' | 'allwrap' | 'nowrap' | 'collapse';
 
 export class NoWrapModeSmartBtn extends LitUploaderBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-no-wrap-mode-smart-btn'];
-}
-
-export class PrimaryAction extends LitUploaderBlock {
-  public static override styleAttrs = [...super.styleAttrs, 'uc-primary-action'];
-
-  @property({ attribute: 'custom-label' })
-  public customLabel!: string;
-
-  @property()
-  public source!: SourceButtonConfig;
-
-  @property()
-  public entries!: OutputCollectionState<OutputCollectionStatus, 'maybe-has-group'>;
-
-  @state()
-  private showIcon = this.cfg.smartBtnShowFirstIcon;
-
-  public override initCallback(): void {
-    super.initCallback();
-
-    this.subConfigValue('smartBtnShowFirstIcon', (value) => {
-      this.showIcon = value;
-    });
-  }
-
-  private _headerTextDependentOnEntries() {
-    const wr = (key, count) => {
-      return this.l10n(key, {
-        count,
-      });
-    };
-
-    if (this.entries?.status === 'uploading') {
-      return wr('header-uploading', this.entries.uploadingCount);
-    }
-    if (this.entries?.status === 'failed') {
-      return wr('header-failed', this.entries.failedCount);
-    }
-    if (this.entries?.status === 'success') {
-      return wr('header-succeed', this.entries.successCount);
-    }
-  }
-
-  private get textBasedOnLocale() {
-    const wr = (key, label) => {
-      return this.l10n(key, {
-        source: this.l10n(label).toLocaleLowerCase(),
-      });
-    };
-
-    if (this.customLabel) {
-      return this.customLabel;
-    }
-
-    const result = this._headerTextDependentOnEntries();
-
-    if (result) {
-      return result;
-    }
-
-    if (!this.source?.label || !this.source?.id) {
-      return '';
-    }
-
-    switch (this.source?.id) {
-      case 'local':
-        return wr('upload-from', this.source.label);
-      case 'camera':
-        return wr('take', this.source.label);
-      case 'mobile-photo-camera':
-        return wr('take', 'photo');
-      case 'mobile-video-camera':
-        return wr('record', 'video');
-      case 'url':
-        return wr('upload-from', this.source.label);
-      default:
-        return wr('get-from', this.source.label);
-    }
-  }
-
-  private _handleClick() {
-    if (this.entries?.allEntries?.length > 0) {
-      this._sharedInstancesBag.ctx.pub('*currentActivity', 'upload-list');
-      this._sharedInstancesBag.modalManager?.open('upload-list');
-
-      return;
-    }
-
-    void this.source?.onClick();
-  }
-
-  private _renderThumbnail() {
-    if (this.entries?.allEntries?.length === 1 && this.entries.isSuccess) {
-      const entry = this.entries.allEntries[0];
-      const isImage = entry?.isImage;
-
-      if (isImage) {
-        return html`<uc-thumb .uid=${entry?.internalId}></uc-thumb>`;
-      }
-      return null;
-    } else if (this.entries?.allEntries?.length > 1) {
-      return null;
-    } else {
-      return this.showIcon ? html`<uc-icon .name=${this.source?.icon}></uc-icon>` : null;
-    }
-  }
-
-  protected override render() {
-    return html`
-        <button class="uc-primary-action" @click=${this._handleClick}>
-          ${this._renderThumbnail()}
-          <span>${this.textBasedOnLocale}</span>
-        </button>
-    `;
-  }
 }
 
 const adjustSourceBasedOnMode = (sources: SourceButtonConfig[], mode: SmartButtonMode) => {
@@ -247,7 +137,7 @@ export class SmartBtn extends LitUploaderBlock {
   private _renderDropdown() {
     return html`
       <uc-drop-down>
-        <uc-icon content-for="dd-header-button" name=${iconsBasedOnMode[this._mode]}></uc-icon>
+        <uc-icon content-for="dd-header-button" name=${iconsBasedOnMode[this._mode as Exclude<SmartButtonMode, 'nowrap'>]}></uc-icon>
         <div content-for="dd-content" role="menu" class="uc-dropdown-menu">
           ${this._mainAndRemainSources?.remain?.map((source) => html`<uc-source-btn role="menuitem" .source=${source}></uc-source-btn>`)}
         </div>
@@ -259,6 +149,11 @@ export class SmartBtn extends LitUploaderBlock {
   }
 
   private _handleRemove() {
+    if (this._status === 'uploading') {
+      this.uploadCollection.abortAll();
+      return;
+    }
+
     this.uploadCollection.clearAll();
   }
 
@@ -268,8 +163,15 @@ export class SmartBtn extends LitUploaderBlock {
 
   public override render() {
     return html`
-      <uc-drop-area .disabled=${!this.dropzone}>
-        <div class="uc-smart-btn-inner">
+      <uc-drop-area .disabled=${!this.dropzone} >
+        <div
+          class=${classMap({
+            'uc-smart-btn-inner': true,
+            'uc-failed': this._status === 'failed',
+            'uc-uploading': this._status === 'uploading',
+            'uc-success': this._status === 'success',
+          })}
+        >
           ${this._mode !== 'collapse' ? this._renderPrimaryAction() : !this.isIdle ? this._renderPrimaryAction() : null}
 
           ${this.isIdle ? (this._mode === 'nowrap' || (this._mode === 'auto' && this._sources.length <= 3) ? this._renderInline() : this._renderDropdown()) : null}
