@@ -11,7 +11,8 @@ const L10N_REMOVE_KEY = 'file-item-remove-button';
 
 export class FileActionButton extends LitUploaderBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-file-action-button'];
-  @property({ type: Boolean, reflect: true })
+
+  @property({ type: Boolean })
   public uploading = false;
 
   @property({ type: Boolean })

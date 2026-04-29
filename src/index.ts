@@ -45,10 +45,9 @@ export { FileActionButton } from './blocks/FileItem/FileActionButton';
 export { SimpleBtn } from './blocks/SimpleBtn/SimpleBtn';
 export {
   SmartBtn,
-  // AllWrapModeSmartBtn,
   NoWrapModeSmartBtn,
-  PrimaryAction,
 } from './blocks/SmartBtn/SmartBtn';
+export { PrimaryAction } from './blocks/SmartBtn/PrimaryAction';
 export { PluginActivityRenderer, PluginActivityHost } from './blocks/PluginActivityRenderer';
 export { ExternalUploadSource, UploadSource } from './utils/UploadSource';
 export { DropDown } from './blocks/DropDown/DropDown';

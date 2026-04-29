@@ -17,6 +17,18 @@
     isolation: isolate;
   }
 
+  :where([uc-smart-btn]) .uc-smart-btn-inner.uc-failed {
+    background-color: var(--uc-destructive);
+  }
+
+  :where([uc-smart-btn]) .uc-smart-btn-inner.uc-failed button {
+    color: var(--uc-destructive-foreground);
+
+    &:hover {
+      background-color: var(--uc-destructive);
+    }
+  }
+
   :where([uc-smart-btn]) .uc-visual-drop-area {
     position: absolute;
     top: 0px;

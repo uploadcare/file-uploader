@@ -4,6 +4,7 @@ import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
 import './source-btn.css';
 
 import '../Icon/Icon';
+import { InternalEventType } from '../UploadCtxProvider/EventEmitter';
 
 export type SourceButtonConfig = {
   id: string;
@@ -55,14 +56,15 @@ export class SourceBtn extends LitUploaderBlock {
 
   public activate(): void {
     if (!this.source) return;
-    void this.source.onClick();
 
-    // this.telemetryManager.sendEvent({
-    //   eventType: 'action-event',
-    //   payload: {
-    //     sourceId: this.source.id,
-    //   },
-    // });
+    this.telemetryManager.sendEvent({
+      eventType: InternalEventType.ACTION_EVENT,
+      payload: {
+        sourceId: this.source.id,
+      },
+    });
+
+    void this.source.onClick();
   }
 
   public override render() {
