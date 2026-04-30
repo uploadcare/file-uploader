@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
-import type { Config, PluginSetupParams } from '@/index.ts';
+import type { Config, PluginConfigApi } from '@/index.ts';
 import { delay } from '@/utils/delay';
+import { getCtxName } from '../utils/test-renderer';
 import { createTestPlugin, renderUploader } from './utils';
 
 describe('Custom Config', () => {
@@ -23,7 +24,7 @@ describe('Custom Config', () => {
   });
 
   it('should allow reading custom config via config.get()', async () => {
-    let configApi: PluginSetupParams['pluginApi']['config'];
+    let configApi: PluginConfigApi;
     const plugin = createTestPlugin({
       id: 'cfg-get',
       setup: ({ pluginApi }) => {
@@ -121,7 +122,7 @@ describe('Custom Config', () => {
   });
 
   it('should support setting custom config via JS property on uc-config element', async () => {
-    let configApi: PluginSetupParams['pluginApi']['config'];
+    let configApi: PluginConfigApi;
     const plugin = createTestPlugin({
       id: 'cfg-prop',
       setup: ({ pluginApi }) => {
@@ -145,7 +146,7 @@ describe('Custom Config', () => {
   });
 
   it('should support setting custom config via HTML attribute on uc-config element', async () => {
-    let configApi: PluginSetupParams['pluginApi']['config'];
+    let configApi: PluginConfigApi;
     const plugin = createTestPlugin({
       id: 'cfg-attr',
       setup: ({ pluginApi }) => {
@@ -170,7 +171,7 @@ describe('Custom Config', () => {
   });
 
   it('should restore defaultValue when HTML attribute is removed', async () => {
-    let configApi: PluginSetupParams['pluginApi']['config'];
+    let configApi: PluginConfigApi;
     const plugin = createTestPlugin({
       id: 'cfg-attr-remove',
       setup: ({ pluginApi }) => {
@@ -291,7 +292,7 @@ describe('Custom Config', () => {
   });
 
   it('should not allow setting attribute when attribute is false', async () => {
-    let configApi: PluginSetupParams['pluginApi']['config'];
+    let configApi: PluginConfigApi;
     const plugin = createTestPlugin({
       id: 'cfg-attr-false',
       setup: ({ pluginApi }) => {
@@ -317,6 +318,141 @@ describe('Custom Config', () => {
     // JS property should still work
     config.noAttrOption = 'js-update';
     await expect.poll(() => configApi.get('noAttrOption')).toBe('js-update');
+  });
+
+  it('should preserve a JS property set BEFORE plugins is assigned', async () => {
+    const callback = vi.fn<(value: string) => void>();
+    const plugin = createTestPlugin({
+      id: 'cfg-prop-before-plugins',
+      setup: ({ pluginApi }) => {
+        pluginApi.registry.registerConfig({
+          name: 'preAssignedProp',
+          defaultValue: 'default',
+        });
+        pluginApi.config.subscribe('preAssignedProp', callback);
+      },
+    });
+
+    const ctxName = getCtxName();
+    page.render(
+      <>
+        <uc-file-uploader-regular ctx-name={ctxName}></uc-file-uploader-regular>
+        <uc-config qualityInsights={false} ctx-name={ctxName} pubkey="demopublickey" testMode debug></uc-config>
+        <uc-upload-ctx-provider ctx-name={ctxName}></uc-upload-ctx-provider>
+      </>,
+    );
+    await delay(0);
+    const config = page.getByTestId('uc-config').query()! as Config;
+
+    // Property is set BEFORE the plugin registers — there's no setter on the
+    // element at this point, so it lands as an instance data property.
+    config.preAssignedProp = 'pre-assigned';
+
+    config.plugins = [plugin];
+
+    await vi.waitFor(() => {
+      expect(callback).toHaveBeenCalled();
+    });
+
+    await expect.poll(() => callback.mock.calls.at(-1)?.[0]).toBe('pre-assigned');
+    await expect.poll(() => config.preAssignedProp).toBe('pre-assigned');
+  });
+
+  it('should preserve a JS property set IMMEDIATELY AFTER plugins is assigned', async () => {
+    // Regression test: previously, when the user set the plugin's custom
+    // config property right after assigning `config.plugins`, the assignment
+    // landed on the element as a data descriptor (the plugin's accessor
+    // didn't yet exist because plugin.setup is awaited asynchronously). When
+    // the plugin manager later registered the property accessor via
+    // `Object.defineProperty`, the data descriptor was replaced and the
+    // user-set value was silently lost.
+    const callback = vi.fn<(value: string) => void>();
+    const plugin = createTestPlugin({
+      id: 'cfg-prop-after-plugins',
+      setup: ({ pluginApi }) => {
+        pluginApi.registry.registerConfig({
+          name: 'lateAssignedProp',
+          defaultValue: 'default',
+        });
+        pluginApi.config.subscribe('lateAssignedProp', callback);
+      },
+    });
+
+    const ctxName = getCtxName();
+    page.render(
+      <>
+        <uc-file-uploader-regular ctx-name={ctxName}></uc-file-uploader-regular>
+        <uc-config qualityInsights={false} ctx-name={ctxName} pubkey="demopublickey" testMode debug></uc-config>
+        <uc-upload-ctx-provider ctx-name={ctxName}></uc-upload-ctx-provider>
+      </>,
+    );
+    await delay(0);
+    const config = page.getByTestId('uc-config').query()! as Config;
+
+    // Bug repro: assign plugins first, then set the property synchronously
+    // before the async plugin registration has had a chance to install the
+    // accessor descriptor. The property must still be observable after the
+    // plugin finishes registering.
+    config.plugins = [plugin];
+    config.lateAssignedProp = 'late-assigned';
+
+    await vi.waitFor(() => {
+      expect(callback).toHaveBeenCalled();
+    });
+
+    await expect.poll(() => callback.mock.calls.at(-1)?.[0]).toBe('late-assigned');
+    await expect.poll(() => config.lateAssignedProp).toBe('late-assigned');
+  });
+
+  it('should reflect an HTML attribute set BEFORE plugin registration in subscribe', async () => {
+    // Regression test: previously, an attribute on `<uc-config>` rendered
+    // before the plugin registered would not flow into state. The earlier
+    // `attributeChangedCallback` queued via `when('pluginManager')` would
+    // run before `_processCustomConfigs` populated the attribute → key
+    // mapping, so the value was dropped. Subscribers ended up seeing only
+    // the plugin's defaultValue.
+    const callback = vi.fn<(value: string) => void>();
+    let configApi: PluginConfigApi;
+    const plugin = createTestPlugin({
+      id: 'cfg-attr-before-register',
+      setup: ({ pluginApi }) => {
+        configApi = pluginApi.config;
+        pluginApi.registry.registerConfig({
+          name: 'preAttrOption',
+          defaultValue: 'default-value',
+        });
+        pluginApi.config.subscribe('preAttrOption', callback);
+      },
+    });
+
+    const ctxName = getCtxName();
+    page.render(
+      <>
+        <uc-file-uploader-regular ctx-name={ctxName}></uc-file-uploader-regular>
+        <uc-config
+          qualityInsights={false}
+          ctx-name={ctxName}
+          pubkey="demopublickey"
+          testMode
+          debug
+          pre-attr-option="from-attribute"
+        ></uc-config>
+        <uc-upload-ctx-provider ctx-name={ctxName}></uc-upload-ctx-provider>
+      </>,
+    );
+    await delay(0);
+    const config = page.getByTestId('uc-config').query()! as Config;
+
+    // Plugin registers AFTER the attribute is already on the element.
+    config.plugins = [plugin];
+
+    await vi.waitFor(() => {
+      expect(callback).toHaveBeenCalled();
+    });
+
+    await expect.poll(() => callback.mock.calls.at(-1)?.[0]).toBe('from-attribute');
+    await expect.poll(() => configApi.get('preAttrOption')).toBe('from-attribute');
+    await expect.poll(() => config.preAttrOption).toBe('from-attribute');
   });
 
   it('should warn and keep first config when duplicate name is registered', async () => {
@@ -367,5 +503,8 @@ declare module '@/types/index' {
     syncSubscribeOption: string;
     removableAttrOption: string;
     throwingNormOption: string;
+    preAssignedProp: string;
+    lateAssignedProp: string;
+    preAttrOption: string;
   }
 }

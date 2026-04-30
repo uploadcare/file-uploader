@@ -2,8 +2,6 @@ import { describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 import '../types/jsx';
 import { getCtxName } from './utils/getCtxName';
-// biome-ignore lint/correctness/noUnusedImports: Used in JSX
-import { renderer } from './utils/test-renderer';
 
 /**
  * Those tests are for the bundles to make sure that they work correctly:

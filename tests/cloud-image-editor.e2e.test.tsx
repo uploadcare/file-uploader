@@ -2,9 +2,7 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 import { delay } from '@/utils/delay';
 import '../types/jsx';
-
-// biome-ignore lint/correctness/noUnusedImports: Used in JSX
-import { cleanup, renderer } from './utils/test-renderer';
+import { cleanup } from './utils/test-renderer';
 
 beforeAll(async () => {
   const UC = await import('@/index.js');

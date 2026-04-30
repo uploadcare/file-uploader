@@ -15,6 +15,9 @@ export default defineConfig({
   resolve: {
     alias,
   },
+  esbuild: {
+    jsxInject: "import { renderer } from '~/tests/utils/test-renderer';",
+  },
   test: {
     coverage: {
       provider: 'v8',

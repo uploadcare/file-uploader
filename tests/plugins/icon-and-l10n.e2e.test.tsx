@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { page } from 'vitest/browser';
-import { addSource, createTestPlugin, getApi, openModal, renderUploader, TEST_IMAGE_URL } from './utils';
+import { TEST_IMAGE_URL } from '../utils/constants';
+import { addSource, createTestPlugin, getApi, openModal, renderUploader } from './utils';
 
 describe('Icon Registration', () => {
   it('should make registered icon available for use in file actions', async () => {

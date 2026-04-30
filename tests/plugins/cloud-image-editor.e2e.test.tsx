@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { cloudImageEditorPlugin } from '@/plugins/cloudImageEditorPlugin';
-import { getApi, renderUploader, TEST_IMAGE_URL } from './utils';
+import { TEST_IMAGE_URL } from '../utils/constants';
+import { getApi, renderUploader } from './utils';
 
 const CLOUD_IMG_EDIT = 'cloud-image-edit';
 

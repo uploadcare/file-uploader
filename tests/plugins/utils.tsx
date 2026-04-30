@@ -2,8 +2,7 @@ import { afterEach, beforeAll, expect } from 'vitest';
 import { page } from 'vitest/browser';
 import type { Config, UploadCtxProvider, UploaderPlugin } from '@/index.ts';
 import { delay } from '@/utils/delay';
-// biome-ignore lint/correctness/noUnusedImports: Used in JSX
-import { cleanup, getCtxName, renderer } from '../utils/test-renderer';
+import { cleanup, getCtxName } from '../utils/test-renderer';
 
 export { cleanup };
 
@@ -16,9 +15,6 @@ afterEach(() => {
   const provider = page.getByTestId('uc-upload-ctx-provider').query() as UploadCtxProvider | null;
   provider?.api.removeAllFiles();
 });
-
-export const TEST_IMAGE_URL =
-  'https://images.unsplash.com/photo-1699102241946-45c5e1937d69?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&dl=prithiviraj-a-fa7Stge3YXs-unsplash.jpg&w=640';
 
 /** Helper to create a minimal test plugin */
 export function createTestPlugin(overrides: Partial<UploaderPlugin> & { id: string }): UploaderPlugin {

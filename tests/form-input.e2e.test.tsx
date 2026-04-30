@@ -3,8 +3,6 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import type { Config, UploadCtxProvider } from '@/index';
 import '../types/jsx';
 import { IMAGE } from './fixtures/files';
-// biome-ignore lint/correctness/noUnusedImports: Used in JSX
-import { renderer } from './utils/test-renderer';
 
 beforeAll(async () => {
   const UC = await import('@/index.js');
@@ -72,14 +70,16 @@ describe('Form input', () => {
     const config = page.getByTestId('uc-config').query()! as Config;
     config.multiple = false;
 
-    commands.waitFileChooserAndUpload(['./fixtures/test_image.jpeg']);
-
     const uploadButton = page.getByText('Upload file', { exact: true });
     await userEvent.click(uploadButton);
 
     const startFrom = page.getByTestId('uc-start-from');
+    const fromDeviceButton = startFrom.getByText('From device', { exact: true });
     await expect.element(startFrom).toBeVisible();
-    await userEvent.click(startFrom.getByText('From device', { exact: true }));
+    await Promise.all([
+      commands.waitFileChooserAndUpload(['./fixtures/test_image.jpeg']),
+      userEvent.click(fromDeviceButton),
+    ]);
 
     const uploadList = page.getByTestId('uc-upload-list');
     await expect.element(uploadList).toBeVisible();
@@ -113,23 +113,36 @@ describe('Form input', () => {
     config.multiple = false;
 
     // First upload
-    commands.waitFileChooserAndUpload(['./fixtures/test_image.jpeg']);
     await userEvent.click(page.getByText('Upload file', { exact: true }));
-    await userEvent.click(page.getByTestId('uc-start-from').getByText('From device', { exact: true }));
+    const startFrom = page.getByTestId('uc-start-from');
+    const fromDeviceButton = startFrom.getByText('From device', { exact: true });
+    await expect.element(startFrom).toBeVisible();
+    await Promise.all([
+      commands.waitFileChooserAndUpload(['./fixtures/test_image.jpeg']),
+      userEvent.click(fromDeviceButton),
+    ]);
 
     const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
     const api = ctxProvider.getAPI();
-    await expect.poll(() => api.getOutputCollectionState().allEntries[0]?.cdnUrl, { timeout: 5000 }).toBeTruthy();
+
+    await expect.poll(() => api.getOutputCollectionState().allEntries[0]?.cdnUrl, { timeout: 15000 }).toBeTruthy();
     const firstCdn = api.getOutputCollectionState().allEntries[0]?.cdnUrl;
+    expect(firstCdn).toBeTruthy();
 
     await userEvent.click(page.getByLabelText('Remove'));
+    await expect.poll(() => api.getOutputCollectionState().allEntries.length, { timeout: 5000 }).toBe(0);
 
     // Second upload
-    commands.waitFileChooserAndUpload(['./fixtures/test_image2.jpeg']);
-    await userEvent.click(page.getByTestId('uc-start-from').getByText('From device', { exact: true }));
+    await expect.element(startFrom).toBeVisible();
+    await Promise.all([
+      commands.waitFileChooserAndUpload(['./fixtures/test_image2.jpeg']),
+      userEvent.click(fromDeviceButton),
+    ]);
 
-    await expect.poll(() => api.getOutputCollectionState().allEntries[0]?.cdnUrl, { timeout: 5000 }).not.toBe(firstCdn);
-    await expect.poll(() => api.getOutputCollectionState().allEntries[0]?.cdnUrl, { timeout: 5000 }).toBeTruthy();
+    await expect
+      .poll(() => api.getOutputCollectionState().allEntries[0]?.cdnUrl, { timeout: 15000 })
+      .not.toBe(firstCdn);
+    await expect.poll(() => api.getOutputCollectionState().allEntries[0]?.cdnUrl, { timeout: 15000 }).toBeTruthy();
 
     const secondCdn = api.getOutputCollectionState().allEntries[0]?.cdnUrl;
 
@@ -153,14 +166,16 @@ describe('Form input', () => {
     const config = page.getByTestId('uc-config').query()! as Config;
     config.multiple = false;
 
-    commands.waitFileChooserAndUpload(['./fixtures/test_image.jpeg']);
-
     const uploadButton = page.getByText('Upload file', { exact: true });
     await userEvent.click(uploadButton);
 
     const startFrom = page.getByTestId('uc-start-from');
+    const fromDeviceButton = startFrom.getByText('From device', { exact: true });
     await expect.element(startFrom).toBeVisible();
-    await userEvent.click(startFrom.getByText('From device', { exact: true }));
+    await Promise.all([
+      commands.waitFileChooserAndUpload(['./fixtures/test_image.jpeg']),
+      userEvent.click(fromDeviceButton),
+    ]);
 
     const uploadList = page.getByTestId('uc-upload-list');
     await expect.element(uploadList).toBeVisible();
@@ -193,14 +208,16 @@ describe('Form input', () => {
     const config = page.getByTestId('uc-config').query()! as Config;
     config.multiple = true;
 
-    commands.waitFileChooserAndUpload(['./fixtures/test_image.jpeg', './fixtures/test_image2.jpeg']);
-
     const uploadButton = page.getByText('Upload files', { exact: true });
     await userEvent.click(uploadButton);
 
     const startFrom = page.getByTestId('uc-start-from');
+    const fromDeviceButton = startFrom.getByText('From device', { exact: true });
     await expect.element(startFrom).toBeVisible();
-    await userEvent.click(startFrom.getByText('From device', { exact: true }));
+    await Promise.all([
+      commands.waitFileChooserAndUpload(['./fixtures/test_image.jpeg', './fixtures/test_image2.jpeg']),
+      userEvent.click(fromDeviceButton),
+    ]);
 
     const uploadList = page.getByTestId('uc-upload-list');
     await expect.element(uploadList).toBeVisible();
@@ -215,7 +232,7 @@ describe('Form input', () => {
             .getOutputCollectionState()
             .allEntries.map((entry) => entry.cdnUrl)
             .filter(Boolean).length,
-        { timeout: 5000 },
+        { timeout: 15000 },
       )
       .toBe(2);
 
@@ -245,14 +262,16 @@ describe('Form input', () => {
     const config = page.getByTestId('uc-config').query()! as Config;
     config.multiple = true;
 
-    commands.waitFileChooserAndUpload(['./fixtures/test_image.jpeg', './fixtures/test_image2.jpeg']);
-
     const uploadButton = page.getByText('Upload files', { exact: true });
     await userEvent.click(uploadButton);
 
     const startFrom = page.getByTestId('uc-start-from');
+    const fromDeviceButton = startFrom.getByText('From device', { exact: true });
     await expect.element(startFrom).toBeVisible();
-    await userEvent.click(startFrom.getByText('From device', { exact: true }));
+    await Promise.all([
+      commands.waitFileChooserAndUpload(['./fixtures/test_image.jpeg', './fixtures/test_image2.jpeg']),
+      userEvent.click(fromDeviceButton),
+    ]);
 
     const uploadList = page.getByTestId('uc-upload-list');
     await expect.element(uploadList).toBeVisible();
@@ -267,7 +286,7 @@ describe('Form input', () => {
             .getOutputCollectionState()
             .allEntries.map((entry) => entry.cdnUrl)
             .filter(Boolean).length,
-        { timeout: 5000 },
+        { timeout: 15000 },
       )
       .toBe(2);
 
@@ -297,14 +316,16 @@ describe('Form input', () => {
     config.multiple = true;
     config.groupOutput = true;
 
-    commands.waitFileChooserAndUpload(['./fixtures/test_image.jpeg', './fixtures/test_image2.jpeg']);
-
     const uploadButton = page.getByText('Upload files', { exact: true });
     await userEvent.click(uploadButton);
 
     const startFrom = page.getByTestId('uc-start-from');
+    const fromDeviceButton = startFrom.getByText('From device', { exact: true });
     await expect.element(startFrom).toBeVisible();
-    await userEvent.click(startFrom.getByText('From device', { exact: true }));
+    await Promise.all([
+      commands.waitFileChooserAndUpload(['./fixtures/test_image.jpeg', './fixtures/test_image2.jpeg']),
+      userEvent.click(fromDeviceButton),
+    ]);
 
     const uploadList = page.getByTestId('uc-upload-list');
     await expect.element(uploadList).toBeVisible();
@@ -312,13 +333,20 @@ describe('Form input', () => {
     const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
     const api = ctxProvider.getAPI();
 
-    await expect.poll(() => api.getOutputCollectionState().group?.cdnUrl, { timeout: 5000 }).toBeTruthy();
+    const getGroupCdnUrl = () => api.getOutputCollectionState().group?.cdnUrl;
+    await expect.poll(getGroupCdnUrl, { timeout: 15000 }).toBeTruthy();
 
-    const groupCdnUrl = api.getOutputCollectionState().group?.cdnUrl;
+    const groupCdnUrl = getGroupCdnUrl();
+    expect(groupCdnUrl).toBeTruthy();
 
-    const inputs = Array.from(document.querySelectorAll(`input[name="${ctxName}"]`)) as HTMLInputElement[];
-    expect(inputs).toHaveLength(1);
-    expect(inputs[0]?.value).toBe(groupCdnUrl);
+    await expect
+      .poll(() => Array.from(document.querySelectorAll(`input[name="${ctxName}"]`)) as HTMLInputElement[], {
+        timeout: 5000,
+      })
+      .toHaveLength(1);
+
+    const input = document.querySelector(`input[name="${ctxName}"]`) as HTMLInputElement | null;
+    await expect.poll(() => input?.value).toBe(groupCdnUrl);
   });
 
   it('should set validation message on failed collection', async () => {
@@ -362,14 +390,16 @@ describe('Form input', () => {
     config.multiple = true;
     config.groupOutput = true;
 
-    commands.waitFileChooserAndUpload(['./fixtures/test_image.jpeg', './fixtures/test_image2.jpeg']);
-
     const uploadButton = page.getByText('Upload files', { exact: true });
     await userEvent.click(uploadButton);
 
     const startFrom = page.getByTestId('uc-start-from');
+    const fromDeviceButton = startFrom.getByText('From device', { exact: true });
     await expect.element(startFrom).toBeVisible();
-    await userEvent.click(startFrom.getByText('From device', { exact: true }));
+    await Promise.all([
+      commands.waitFileChooserAndUpload(['./fixtures/test_image.jpeg', './fixtures/test_image2.jpeg']),
+      userEvent.click(fromDeviceButton),
+    ]);
 
     const uploadList = page.getByTestId('uc-upload-list');
     await expect.element(uploadList).toBeVisible();
@@ -377,12 +407,19 @@ describe('Form input', () => {
     const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
     const api = ctxProvider.getAPI();
 
-    await expect.poll(() => api.getOutputCollectionState().group?.cdnUrl, { timeout: 5000 }).toBeTruthy();
+    const getGroupCdnUrl = () => api.getOutputCollectionState().group?.cdnUrl;
+    await expect.poll(getGroupCdnUrl, { timeout: 15000 }).toBeTruthy();
 
-    const groupCdnUrl = api.getOutputCollectionState().group?.cdnUrl;
+    const groupCdnUrl = getGroupCdnUrl();
+    expect(groupCdnUrl).toBeTruthy();
 
-    const inputs = Array.from(document.querySelectorAll(`input[name="${nameAttr}"]`)) as HTMLInputElement[];
-    expect(inputs).toHaveLength(1);
-    expect(inputs[0]?.value).toBe(groupCdnUrl);
+    await expect
+      .poll(() => Array.from(document.querySelectorAll(`input[name="${nameAttr}"]`)) as HTMLInputElement[], {
+        timeout: 5000,
+      })
+      .toHaveLength(1);
+
+    const input = document.querySelector(`input[name="${nameAttr}"]`) as HTMLInputElement | null;
+    await expect.poll(() => input?.value).toBe(groupCdnUrl);
   });
 });

@@ -239,6 +239,35 @@ export class Config extends LitBlock {
         }
       }
 
+      let preExistingValue: unknown;
+      let hasPreExistingValue = false;
+
+      const existingDescriptor = Object.getOwnPropertyDescriptor(this, name);
+      const isExistingDataDescriptor = !!existingDescriptor && !existingDescriptor.get && !existingDescriptor.set;
+      if (isExistingDataDescriptor && existingDescriptor.value !== undefined) {
+        preExistingValue = existingDescriptor.value;
+        hasPreExistingValue = true;
+      }
+
+      if (!hasPreExistingValue && !!definition.attribute) {
+        for (const attrName of this._getAttributeNames(name)) {
+          const attrValue = this.getAttribute(attrName);
+          if (attrValue !== undefined && attrValue !== null) {
+            try {
+              preExistingValue = definition.fromAttribute ? definition.fromAttribute(attrValue) : attrValue;
+            } catch (error) {
+              console.warn(
+                `[uc-config] fromAttribute() for "${name}" threw an error, using raw attribute value`,
+                error,
+              );
+              preExistingValue = attrValue;
+            }
+            hasPreExistingValue = true;
+            break;
+          }
+        }
+      }
+
       // Set initial value in state if not already set
       if (!this.sharedCtx.has(stateKey)) {
         this.sharedCtx.add(stateKey, definition.defaultValue);
@@ -273,6 +302,10 @@ export class Config extends LitBlock {
           false,
         );
         this._customConfigSubscriptions.set(name, unsub);
+      }
+
+      if (hasPreExistingValue) {
+        this._setValue(name, preExistingValue);
       }
     }
   }

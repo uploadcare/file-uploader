@@ -4,8 +4,6 @@ import type { Config, FuncFileValidator, OutputErrorCollection, OutputErrorFile,
 import { delay } from '@/utils/delay.js';
 import '../types/jsx';
 import { IMAGE } from './fixtures/files';
-// biome-ignore lint/correctness/noUnusedImports: Used in JSX
-import { renderer } from './utils/test-renderer';
 
 beforeAll(async () => {
   const UC = await import('@/index.js');

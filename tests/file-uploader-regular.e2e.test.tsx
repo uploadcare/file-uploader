@@ -1,8 +1,7 @@
 import { beforeAll, beforeEach, describe, expect, it, test } from 'vitest';
 import { commands, page, userEvent } from 'vitest/browser';
+import { TEST_IMAGE_URL } from './utils/constants';
 import '../types/jsx';
-// biome-ignore lint/correctness/noUnusedImports: Used in JSX
-import { renderer } from './utils/test-renderer';
 
 beforeAll(async () => {
   const UC = await import('@/index.js');
@@ -108,10 +107,7 @@ describe('File uploader regular', () => {
       await expect.element(urlSource).toBeVisible();
 
       const urlInput = urlSource.getByPlaceholder('https://');
-      await userEvent.fill(
-        urlInput,
-        'https://images.unsplash.com/photo-1699102241946-45c5e1937d69?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&dl=prithiviraj-a-fa7Stge3YXs-unsplash.jpg&w=640',
-      );
+      await userEvent.fill(urlInput, TEST_IMAGE_URL);
       await userEvent.keyboard('{Enter}');
 
       await expect.element(uploadList).toBeVisible();
