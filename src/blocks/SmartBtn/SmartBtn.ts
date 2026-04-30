@@ -20,22 +20,25 @@ import '../FileItem/FileActionButton';
 
 export type SmartButtonMode = 'auto' | 'allwrap' | 'nowrap' | 'collapse';
 
+type SourceSplit = {
+  main: SourceButtonConfig | null;
+  remain: SourceButtonConfig[];
+};
+
 export class NoWrapModeSmartBtn extends LitUploaderBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-no-wrap-mode-smart-btn'];
 }
 
-const adjustSourceBasedOnMode = (sources: SourceButtonConfig[], mode: SmartButtonMode) => {
-  if (mode === 'collapse') {
+const adjustSourceBasedOnMode = (sources: SourceButtonConfig[], mode: SmartButtonMode): SourceSplit => {
+  if (mode === 'collapse' || sources.length === 0) {
     return {
       main: null,
       remain: sources,
     };
   }
 
-  const [firstSource] = sources;
-
   return {
-    main: firstSource,
+    main: sources[0] ?? null,
     remain: sources.slice(1),
   };
 };
@@ -49,6 +52,8 @@ const iconsBasedOnMode: Record<Exclude<SmartButtonMode, 'nowrap'>, string> = {
 export class SmartBtn extends LitUploaderBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-smart-btn', 'uc-wgt-common'];
   public override couldBeCtxOwner = true;
+
+  private static readonly AUTO_MODE_INLINE_THRESHOLD = 3;
 
   private _controller?: SourceListController;
 
@@ -65,10 +70,7 @@ export class SmartBtn extends LitUploaderBlock {
   private _status: 'idle' | 'success' | 'uploading' | 'failed' = 'idle';
 
   @state()
-  private _mainAndRemainSources!: {
-    main?: SourceButtonConfig | null;
-    remain: SourceButtonConfig[];
-  };
+  private _mainAndRemainSources!: SourceSplit;
 
   @state()
   private _collection!: OutputCollectionState<OutputCollectionStatus, 'maybe-has-group'>;
@@ -80,6 +82,26 @@ export class SmartBtn extends LitUploaderBlock {
     return this._status === 'idle';
   }
 
+  private get shouldShowPrimaryAction(): boolean {
+    return this._mode !== 'collapse' || !this.isIdle;
+  }
+
+  private get shouldShowInline(): boolean {
+    return (
+      this.isIdle &&
+      (this._mode === 'nowrap' ||
+        (this._mode === 'auto' && this._sources.length <= SmartBtn.AUTO_MODE_INLINE_THRESHOLD))
+    );
+  }
+
+  private get shouldShowDropdown(): boolean {
+    return this.isIdle && !this.shouldShowInline;
+  }
+
+  private get shouldShowAbortAction(): boolean {
+    return !this.isIdle && (this._collection?.allEntries?.length ?? 0) > 0;
+  }
+
   private _throttledHandleCollectionUpdate = throttle(() => {
     if (!this.isConnected) {
       return;
@@ -88,19 +110,29 @@ export class SmartBtn extends LitUploaderBlock {
   }, 300);
 
   private _updateButtonBasedOnCollectionState() {
-    const collectionState = this.api.getOutputCollectionState();
+    const collectionState = this.api?.getOutputCollectionState();
+
+    if (!collectionState) {
+      console.warn('Collection state is undefined');
+      return;
+    }
 
     this._collection = collectionState;
     this._status = collectionState.status;
+  }
+
+  private _updateSourceSplit(): void {
+    this._mainAndRemainSources = adjustSourceBasedOnMode(this._sources, this._mode);
   }
 
   public override initCallback(): void {
     super.initCallback();
 
     this.subConfigValue('smartBtnViewMode', (value) => {
-      this._mode = value;
+      if (this._mode === value) return;
 
-      this._mainAndRemainSources = adjustSourceBasedOnMode(this._sources, this._mode);
+      this._mode = value;
+      this._updateSourceSplit();
     });
 
     this.sub('*commonProgress', (progress: number) => {
@@ -111,8 +143,8 @@ export class SmartBtn extends LitUploaderBlock {
       ctx: this._sharedInstancesBag.ctx,
       sharedInstancesBag: this._sharedInstancesBag,
       onSourcesChange: (sources) => {
-        this._mainAndRemainSources = adjustSourceBasedOnMode(sources, this._mode);
         this._sources = sources;
+        this._updateSourceSplit();
       },
     });
     this._controller.init();
@@ -122,6 +154,9 @@ export class SmartBtn extends LitUploaderBlock {
   }
 
   public override disconnectedCallback(): void {
+    if (typeof this._throttledHandleCollectionUpdate.cancel === 'function') {
+      this._throttledHandleCollectionUpdate.cancel();
+    }
     this._controller?.destroy();
     super.disconnectedCallback();
   }
@@ -134,10 +169,14 @@ export class SmartBtn extends LitUploaderBlock {
     `;
   }
 
+  private _getDropdownIconName(): string {
+    return iconsBasedOnMode[this._mode] ?? 'arrow-dropdown';
+  }
+
   private _renderDropdown() {
     return html`
       <uc-drop-down>
-        <uc-icon content-for="dd-header-button" name=${iconsBasedOnMode[this._mode as Exclude<SmartButtonMode, 'nowrap'>]}></uc-icon>
+        <uc-icon content-for="dd-header-button" name=${this._getDropdownIconName()}></uc-icon>
         <div content-for="dd-content" role="menu" class="uc-dropdown-menu">
           ${this._mainAndRemainSources?.remain?.map((source) => html`<uc-source-btn role="menuitem" .source=${source}></uc-source-btn>`)}
         </div>
@@ -161,28 +200,41 @@ export class SmartBtn extends LitUploaderBlock {
     return html`<uc-file-action-button @uc:remove=${this._handleRemove} .uploading=${this._status === 'uploading'} .failed=${this._status === 'failed'} .progress=${this._progress}></uc-file-action-button>`;
   }
 
+  private _getInnerClassMap() {
+    return classMap({
+      'uc-smart-btn-inner': true,
+      'uc-failed': this._status === 'failed',
+      'uc-uploading': this._status === 'uploading',
+      'uc-success': this._status === 'success',
+    });
+  }
+
+  private _renderVisualDropArea() {
+    return html`
+      <div class="uc-visual-drop-area">
+        <uc-icon name="arrow-down"></uc-icon>
+      </div>
+    `;
+  }
+
   public override render() {
     return html`
-      <uc-drop-area .disabled=${!this.dropzone} >
-        <div
-          class=${classMap({
-            'uc-smart-btn-inner': true,
-            'uc-failed': this._status === 'failed',
-            'uc-uploading': this._status === 'uploading',
-            'uc-success': this._status === 'success',
-          })}
-        >
-          ${this._mode !== 'collapse' ? this._renderPrimaryAction() : !this.isIdle ? this._renderPrimaryAction() : null}
-
-          ${this.isIdle ? (this._mode === 'nowrap' || (this._mode === 'auto' && this._sources.length <= 3) ? this._renderInline() : this._renderDropdown()) : null}
-
-          ${!this.isIdle ? (this._collection?.allEntries?.length ? this._renderAbortAction() : null) : null}
-
-          <div class="uc-visual-drop-area">
-            <uc-icon name="arrow-down"></uc-icon>
-          </div>
+      <uc-drop-area .disabled=${!this.dropzone}>
+        <div class=${this._getInnerClassMap()}>
+          ${this.shouldShowPrimaryAction ? this._renderPrimaryAction() : null}
+          ${this.shouldShowInline ? this._renderInline() : null}
+          ${this.shouldShowDropdown ? this._renderDropdown() : null}
+          ${this.shouldShowAbortAction ? this._renderAbortAction() : null}
+          ${this._renderVisualDropArea()}
         </div>
       </uc-drop-area>
     `;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'uc-smart-btn': SmartBtn;
+    'uc-no-wrap-mode-smart-btn': SmartBtn;
   }
 }
