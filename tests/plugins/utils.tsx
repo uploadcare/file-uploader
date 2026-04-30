@@ -2,8 +2,7 @@ import { afterEach, beforeAll, expect } from 'vitest';
 import { page } from 'vitest/browser';
 import type { Config, UploadCtxProvider, UploaderPlugin } from '@/index.ts';
 import { delay } from '@/utils/delay';
-// biome-ignore lint/correctness/noUnusedImports: Used in JSX
-import { cleanup, getCtxName, renderer } from '../utils/test-renderer';
+import { cleanup, getCtxName } from '../utils/test-renderer';
 
 export { cleanup };
 

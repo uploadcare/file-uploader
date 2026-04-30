@@ -1,8 +1,6 @@
 import { beforeAll, beforeEach, describe, it } from 'vitest';
 import { page } from 'vitest/browser';
 import '../types/jsx';
-// biome-ignore lint/correctness/noUnusedImports: Used in JSX
-import { renderer } from './utils/test-renderer';
 
 beforeAll(async () => {
   await import('@/solutions/adaptive-image/index.js');

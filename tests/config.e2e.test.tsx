@@ -1,8 +1,7 @@
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { page } from 'vitest/browser';
 import '../types/jsx';
-// biome-ignore lint/correctness/noUnusedImports: Used in JSX
-import { cleanup, getCtxName, renderer } from './utils/test-renderer';
+import { cleanup, getCtxName } from './utils/test-renderer';
 
 beforeAll(async () => {
   const UC = await import('@/index.js');

@@ -3,8 +3,6 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import type { Config, UploadCtxProvider } from '@/index';
 import '../types/jsx';
 import { IMAGE } from './fixtures/files';
-// biome-ignore lint/correctness/noUnusedImports: Used in JSX
-import { renderer } from './utils/test-renderer';
 
 beforeAll(async () => {
   const UC = await import('@/index.js');
