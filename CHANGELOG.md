@@ -5,10 +5,10 @@
 
 * **config:** preserve pre-existing values when registering custom configs ([#960](https://github.com/uploadcare/file-uploader/issues/960)) ([9e06f98](https://github.com/uploadcare/file-uploader/commit/9e06f98a9a91bdbe6999b768ab3745d5cfd26947))
 
+### Features
 
-### Reverts
+* **theme:** add shorthand radius classes (`.uc-radius-none`, `.uc-radius-small`, `.uc-radius-medium`, `.uc-radius-large`) ([df9f112](https://github.com/uploadcare/file-uploader/commit/df9f112fd8e2db72f9cb6efcb2946d7805f5bc22))
 
-* Revert "update modal border-radius math" ([1bd9783](https://github.com/uploadcare/file-uploader/commit/1bd978395c3fa3ebf923b9ee5b5d46dff97baf6c))
 # [1.29.0](https://github.com/uploadcare/file-uploader/compare/v1.28.0...v1.29.0) (2026-04-22)
 
 This release introduces the [Plugin API](https://uploadcare.com/docs/file-uploader/plugins/) — extend the File Uploader with custom upload sources, activities, file actions, and hooks.
