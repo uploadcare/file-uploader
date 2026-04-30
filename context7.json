@@ -1,0 +1,24 @@
+{
+  "$schema": "https://context7.com/schema/context7.json",
+  "projectTitle": "Uploadcare File Uploader",
+  "description": "Web Components based Uploadcare file upload widget with configurable sources, validation, image editing, secure uploads, and CDN delivery.",
+  "url": "https://context7.com/uploadcare/file-uploader",
+  "public_key": "pk_WoigIc3LrHKMjLxnI0IA2",
+  "branch": "main",
+  "folders": ["demo", "src/types", "types"],
+  "excludeFolders": ["demo/bundles", "types/test"],
+  "excludeFiles": [
+    "CHANGELOG*",
+    "CODE_OF_CONDUCT*",
+    "CONTRIBUTING*",
+    "LICENSE",
+    "pull_request_template.md"
+  ],
+  "rules": [
+    "Import from @uploadcare/file-uploader or the versioned CDN module and call UC.defineComponents(UC) before using uploader elements.",
+    "Configure uploads with a uc-config element containing pubkey; its ctx-name must match the uploader solution element.",
+    "Use the public Web Components API rather than assuming framework-specific adapters.",
+    "Include the CSS for the selected uploader solution when using CDN or package web assets.",
+    "Use secure uploads with server-generated secureSignature and secureExpire values; do not expose private API keys in client code."
+  ]
+}
