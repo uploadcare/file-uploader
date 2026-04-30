@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
-import { createTestPlugin, getApi, renderUploader, TEST_IMAGE_URL } from './utils';
+import { TEST_IMAGE_URL } from '../utils/constants';
+import { createTestPlugin, getApi, renderUploader } from './utils';
 
 describe('File Action Registration', () => {
   it('should show file action button when shouldRender() returns true', async () => {

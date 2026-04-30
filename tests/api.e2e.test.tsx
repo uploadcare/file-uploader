@@ -1,6 +1,7 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import type { Config, EventPayload } from '@/index.js';
+import { TEST_IMAGE_URL } from './utils/constants';
 import '../types/jsx';
 
 beforeAll(async () => {
@@ -28,8 +29,7 @@ describe('API', () => {
 
     uploadCtxProvider.addEventListener('file-added', eventHandler);
 
-    const url =
-      'https://images.unsplash.com/photo-1699102241946-45c5e1937d69?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&dl=prithiviraj-a-fa7Stge3YXs-unsplash.jpg&w=640';
+    const url = TEST_IMAGE_URL;
     api.addFileFromUrl(url);
 
     const eventPayload = await vi.waitFor(() => {
@@ -55,8 +55,7 @@ describe('API', () => {
 
     uploadCtxProvider.addEventListener('file-added', eventHandler);
 
-    const url =
-      'https://images.unsplash.com/photo-1699102241946-45c5e1937d69?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&dl=prithiviraj-a-fa7Stge3YXs-unsplash.jpg&w=640';
+    const url = TEST_IMAGE_URL;
     api.addFileFromUrl(url);
 
     const eventPayload = await vi.waitFor(() => {
@@ -81,8 +80,7 @@ describe('API', () => {
 
     uploadCtxProvider.addEventListener('file-added', eventHandler);
 
-    const url =
-      'https://images.unsplash.com/photo-1699102241946-45c5e1937d69?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&dl=prithiviraj-a-fa7Stge3YXs-unsplash.jpg&w=640';
+    const url = TEST_IMAGE_URL;
     api.addFileFromUrl(url);
 
     const eventPayload = await vi.waitFor(() => {
@@ -98,8 +96,7 @@ describe('API', () => {
       const uploadCtxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
       const api = uploadCtxProvider.getAPI();
 
-      const url =
-        'https://images.unsplash.com/photo-1699102241946-45c5e1937d69?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&dl=prithiviraj-a-fa7Stge3YXs-unsplash.jpg&w=640';
+      const url = TEST_IMAGE_URL;
       api.addFileFromUrl(url);
 
       const eventHandler = (event: CustomEvent<EventPayload['file-upload-success']>) => {

@@ -1,5 +1,7 @@
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { commands, page, userEvent } from 'vitest/browser';
+import { page, userEvent } from 'vitest/browser';
+import type { UploadCtxProvider } from '@/index';
+import { TEST_IMAGE_URL } from './utils/constants';
 import '../types/jsx';
 
 beforeAll(async () => {
@@ -13,6 +15,7 @@ beforeEach(() => {
     <>
       <uc-file-uploader-minimal ctx-name={ctxName}></uc-file-uploader-minimal>
       <uc-config qualityInsights={false} ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
+      <uc-upload-ctx-provider ctx-name={ctxName}></uc-upload-ctx-provider>
     </>,
   );
 });
@@ -42,17 +45,15 @@ describe('File uploader minimal', () => {
     });
 
     it('should open cloud image editor modal on edit button click', async () => {
-      await page.getByText('Choose files', { exact: true }).click();
-      const fromDeviceButton = page.getByText('From device', { exact: true });
-      const uploadList = page.getByTestId('uc-upload-list');
+      const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
+      const api = ctxProvider.getAPI();
+
+      api.addFileFromUrl(TEST_IMAGE_URL);
+      api.initFlow();
+
+      await expect.poll(() => api.getOutputCollectionState().allEntries[0]?.cdnUrl, { timeout: 15000 }).toBeTruthy();
+
       const file = page.getByTestId('uc-file-item');
-
-      await expect.element(fromDeviceButton).toBeVisible();
-      commands.waitFileChooserAndUpload(['./fixtures/test_image.jpeg']);
-      await fromDeviceButton.click();
-
-      await expect.element(fromDeviceButton).not.toBeVisible();
-      await expect.element(uploadList).toBeVisible();
       await expect.element(file).toBeVisible();
 
       const editButton = file.getByRole('button', { name: 'Edit', exact: true });

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { page } from 'vitest/browser';
-import { addSource, createTestPlugin, openModal, renderUploader, TEST_IMAGE_URL } from './utils';
+import { TEST_IMAGE_URL } from '../utils/constants';
+import { addSource, createTestPlugin, openModal, renderUploader } from './utils';
 
 describe('Uploader API (from plugin)', () => {
   it('should allow adding files via uploaderApi.addFileFromUrl()', async () => {
