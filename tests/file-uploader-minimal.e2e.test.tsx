@@ -25,8 +25,7 @@ describe('File uploader minimal', () => {
 
     it('should open file dialog on click', async () => {
       await page.getByText('Choose files', { exact: true }).click();
-      const startFrom = page.getByTestId('uc-start-from');
-      await expect(startFrom).toBeDefined();
+      await expect.element(page.getByText('From device', { exact: true })).toBeVisible();
     });
 
     it('should drag and drop file', async () => {
@@ -44,18 +43,20 @@ describe('File uploader minimal', () => {
 
     it('should open cloud image editor modal on edit button click', async () => {
       await page.getByText('Choose files', { exact: true }).click();
-      const startFrom = page.getByTestId('uc-start-from');
+      const fromDeviceButton = page.getByText('From device', { exact: true });
       const uploadList = page.getByTestId('uc-upload-list');
-
-      commands.waitFileChooserAndUpload(['./fixtures/test_image.jpeg']);
-
-      await startFrom.getByText('From device', { exact: true }).click();
-
-      await expect.element(uploadList).toBeVisible();
       const file = page.getByTestId('uc-file-item');
 
+      await expect.element(fromDeviceButton).toBeVisible();
+      commands.waitFileChooserAndUpload(['./fixtures/test_image.jpeg']);
+      await fromDeviceButton.click();
+
+      await expect.element(fromDeviceButton).not.toBeVisible();
+      await expect.element(uploadList).toBeVisible();
+      await expect.element(file).toBeVisible();
+
       const editButton = file.getByRole('button', { name: 'Edit', exact: true });
-      await expect.poll(() => editButton.query()).toBeTruthy();
+      await expect.element(editButton).toBeVisible();
       await userEvent.click(editButton);
 
       const modal = page.getByTestId('uc-cloud-image-editor-activity');
