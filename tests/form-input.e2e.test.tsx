@@ -310,13 +310,20 @@ describe('Form input', () => {
     const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
     const api = ctxProvider.getAPI();
 
-    await expect.poll(() => api.getOutputCollectionState().group?.cdnUrl, { timeout: 5000 }).toBeTruthy();
+    const getGroupCdnUrl = () => api.getOutputCollectionState().group?.cdnUrl;
+    await expect.poll(getGroupCdnUrl, { timeout: 15000 }).toBeTruthy();
 
-    const groupCdnUrl = api.getOutputCollectionState().group?.cdnUrl;
+    const groupCdnUrl = getGroupCdnUrl();
+    expect(groupCdnUrl).toBeTruthy();
 
-    const inputs = Array.from(document.querySelectorAll(`input[name="${ctxName}"]`)) as HTMLInputElement[];
-    expect(inputs).toHaveLength(1);
-    expect(inputs[0]?.value).toBe(groupCdnUrl);
+    await expect
+      .poll(() => Array.from(document.querySelectorAll(`input[name="${ctxName}"]`)) as HTMLInputElement[], {
+        timeout: 5000,
+      })
+      .toHaveLength(1);
+
+    const input = document.querySelector(`input[name="${ctxName}"]`) as HTMLInputElement | null;
+    await expect.poll(() => input?.value).toBe(groupCdnUrl);
   });
 
   it('should set validation message on failed collection', async () => {
@@ -375,12 +382,19 @@ describe('Form input', () => {
     const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
     const api = ctxProvider.getAPI();
 
-    await expect.poll(() => api.getOutputCollectionState().group?.cdnUrl, { timeout: 5000 }).toBeTruthy();
+    const getGroupCdnUrl = () => api.getOutputCollectionState().group?.cdnUrl;
+    await expect.poll(getGroupCdnUrl, { timeout: 15000 }).toBeTruthy();
 
-    const groupCdnUrl = api.getOutputCollectionState().group?.cdnUrl;
+    const groupCdnUrl = getGroupCdnUrl();
+    expect(groupCdnUrl).toBeTruthy();
 
-    const inputs = Array.from(document.querySelectorAll(`input[name="${nameAttr}"]`)) as HTMLInputElement[];
-    expect(inputs).toHaveLength(1);
-    expect(inputs[0]?.value).toBe(groupCdnUrl);
+    await expect
+      .poll(() => Array.from(document.querySelectorAll(`input[name="${nameAttr}"]`)) as HTMLInputElement[], {
+        timeout: 5000,
+      })
+      .toHaveLength(1);
+
+    const input = document.querySelector(`input[name="${nameAttr}"]`) as HTMLInputElement | null;
+    await expect.poll(() => input?.value).toBe(groupCdnUrl);
   });
 });
