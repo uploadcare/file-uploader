@@ -297,11 +297,6 @@
       { value: 'collapse', label: 'collapse', desc: 'Single paperclip button, no primary action' },
     ];
 
-    const readCsv = (v) =>
-      (v || '')
-        .split(',')
-        .map((s) => s.trim())
-        .filter(Boolean);
     const writeCsv = (arr) => arr.join(', ');
 
     class SmartBtnPlayground extends LitElement {
