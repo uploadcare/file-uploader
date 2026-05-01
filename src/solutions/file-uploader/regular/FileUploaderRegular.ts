@@ -1,3 +1,4 @@
+import { ContextProvider } from '@lit/context';
 import { html } from 'lit';
 import { property } from 'lit/decorators.js';
 import { InternalEventType } from '../../../blocks/UploadCtxProvider/EventEmitter';
@@ -16,6 +17,8 @@ import '../../../blocks/SimpleBtn/SimpleBtn';
 import '../../../blocks/SmartBtn/SmartBtn';
 import '../../../blocks/PluginActivityRenderer/PluginActivityRenderer';
 
+import { smartBtnActiveContext } from '../../../blocks/SmartBtn/smart-btn-context';
+
 type BaseInitState = InstanceType<typeof LitSolutionBlock>['init$'];
 interface FileUploaderRegularInitState extends BaseInitState {}
 
@@ -28,6 +31,11 @@ export class FileUploaderRegular extends LitSolutionBlock {
     'ctx-name': string;
   };
   public static override styleAttrs = [...super.styleAttrs, 'uc-file-uploader-regular'];
+
+  private _smartBtnActiveProvider = new ContextProvider(this, {
+    context: smartBtnActiveContext,
+    initialValue: false,
+  });
 
   @property({ type: Boolean })
   public headless = false;
@@ -51,6 +59,21 @@ export class FileUploaderRegular extends LitSolutionBlock {
     });
   }
 
+  protected override willUpdate(changedProperties: Map<PropertyKey, unknown>): void {
+    super.willUpdate(changedProperties);
+
+    if (changedProperties.has('dynamic')) {
+      this._smartBtnActiveProvider.setValue(this.dynamic);
+    }
+  }
+
+  /**
+   * Exposes whether SmartBtn is active for non-Lit classes that can't use context
+   */
+  public get isSmartBtnActive(): boolean {
+    return this.dynamic;
+  }
+
   private _renderDynamicButton() {
     return html`
       <uc-smart-btn></uc-smart-btn>
@@ -63,11 +86,17 @@ export class FileUploaderRegular extends LitSolutionBlock {
     `;
   }
 
+  private _renderButton() {
+    if (this.headless) return null;
+    if (this.dynamic) return this._renderDynamicButton();
+    return this._renderStaticButton();
+  }
+
   public override render() {
     return html`
     ${super.render()}
 
-    ${this.headless ? null : this.dynamic ? this._renderDynamicButton() : this._renderStaticButton()}
+    ${this._renderButton()}
 
   <uc-modal id="start-from" strokes block-body-scrolling>
     <uc-start-from>

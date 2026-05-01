@@ -11,7 +11,7 @@
     opacity: 0;
   }
 
-  :where([uc-file-action-button]) button:is(.uc-success, .uc-failed) uc-icon[name="close"] {
+  :where([uc-file-action-button]) button:is(.uc-success, .uc-failed, .uc-idle) uc-icon[name="close"] {
     opacity: 0;
   }
 

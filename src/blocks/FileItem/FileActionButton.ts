@@ -18,6 +18,12 @@ export class FileActionButton extends LitUploaderBlock {
   @property({ type: Boolean })
   public failed = false;
 
+  @property({ type: Boolean })
+  public success = false;
+
+  @property({ type: Boolean })
+  public idle = false;
+
   @property({ type: Number })
   public progress = 0;
 
@@ -34,9 +40,10 @@ export class FileActionButton extends LitUploaderBlock {
     const classes = classMap({
       'uc-remove-btn': true,
       'uc-mini-btn': true,
+      'uc-idle': this.idle,
       'uc-uploading': this.uploading,
       'uc-failed': this.failed,
-      'uc-success': !this.uploading && this.progress === 100,
+      'uc-success': this.success,
     });
 
     return html`
