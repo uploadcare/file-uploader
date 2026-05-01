@@ -3,6 +3,7 @@ import type { Metadata, MetadataCallback } from '../../types/index';
 import { deserializeCsv } from '../../utils/comma-separated';
 import type { ModeCameraType } from '../CameraSource/constants';
 import { CameraSourceTypes } from '../CameraSource/constants';
+import type { SmartButtonMode } from '../SmartBtn/SmartBtn';
 import type { FilesViewMode } from '../UploadList/UploadList';
 
 const asString = (value: unknown): string => String(value);
@@ -111,6 +112,14 @@ const asFilesViewMode = (value: unknown): FilesViewMode => {
   throw new Error(`Invalid value: "${strValue}"`);
 };
 
+const asSmartBtnViewMode = (value: unknown): SmartButtonMode => {
+  const strValue = asString(value);
+  if (['auto', 'allwrap', 'nowrap', 'collapse'].includes(strValue)) {
+    return strValue as SmartButtonMode;
+  }
+  throw new Error(`Invalid value: "${strValue}"`);
+};
+
 export {
   asArray,
   asBoolean,
@@ -125,4 +134,5 @@ export {
   asStore,
   asString,
   asPasteScope,
+  asSmartBtnViewMode,
 };

@@ -4,6 +4,7 @@ import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
 import './source-btn.css';
 
 import '../Icon/Icon';
+import { InternalEventType } from '../UploadCtxProvider/EventEmitter';
 
 export type SourceButtonConfig = {
   id: string;
@@ -18,11 +19,20 @@ export class SourceBtn extends LitUploaderBlock {
   @property({ attribute: false })
   public source?: SourceButtonConfig;
 
+  @property({ type: Boolean })
+  public textOnly = false;
+
+  @property({ type: Boolean })
+  public iconOnly = false;
+
+  @property()
+  public customLabel = '';
+
   @state()
   private _iconName = 'default';
 
   @state()
-  private _srcTypeKey = '';
+  private _label = '';
 
   protected override willUpdate(changedProperties: PropertyValues<this>): void {
     super.willUpdate(changedProperties);
@@ -34,26 +44,34 @@ export class SourceBtn extends LitUploaderBlock {
 
   private _applySource(source?: SourceButtonConfig): void {
     if (!source) {
-      this._srcTypeKey = '';
+      this._label = '';
       this._iconName = 'default';
       return;
     }
 
     const { label, icon, id } = source;
-    this._srcTypeKey = label;
+    this._label = this.customLabel ? this.customLabel : this.l10n(label);
     this._iconName = icon ?? id ?? 'default';
   }
 
   public activate(): void {
     if (!this.source) return;
+
+    this.telemetryManager.sendEvent({
+      eventType: InternalEventType.ACTION_EVENT,
+      payload: {
+        sourceId: this.source.id,
+      },
+    });
+
     void this.source.onClick();
   }
 
   public override render() {
     return html`
       <button type="button" @click=${this.activate}>
-        <uc-icon name=${this._iconName}></uc-icon>
-        <div class="uc-txt">${this.l10n(this._srcTypeKey)}</div>
+        ${this.textOnly ? '' : html`<uc-icon name=${this._iconName}></uc-icon>`}
+        ${this.iconOnly ? '' : html`<div class="uc-txt">${this._label}</div>`}
       </button>
     `;
   }

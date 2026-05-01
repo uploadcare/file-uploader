@@ -5,10 +5,12 @@ import { ExternalUploadSource } from '../../utils/UploadSource';
 import { wildcardRegexp } from '../../utils/wildcardRegexp';
 import { buildThemeDefinition } from './buildThemeDefinition';
 import './external-source.css';
+import { consume } from '@lit/context';
 import { html } from 'lit';
 import { state } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
+import { smartBtnActiveContext } from '../SmartBtn/smart-btn-context';
 import { MessageBridge } from './MessageBridge';
 import { queryString } from './query-string';
 import type { InputMessageMap } from './types';
@@ -28,7 +30,10 @@ export class ExternalSource extends LitUploaderBlock {
   private _messageBridge?: MessageBridge;
 
   private _iframeRef = createRef<HTMLIFrameElement>();
-  private _latestSelectionSummary: { selectedCount: number; total: number } | null = null;
+  private _latestSelectionSummary: {
+    selectedCount: number;
+    total: number;
+  } | null = null;
 
   @state()
   private _selectedList: NonNullable<InputMessageMap['selected-files-change']['selectedFiles']> = [];
@@ -47,6 +52,10 @@ export class ExternalSource extends LitUploaderBlock {
 
   @state()
   private _showSelectionStatus = false;
+
+  @consume({ context: smartBtnActiveContext, subscribe: true })
+  @state()
+  private _smartBtnActive = false;
 
   @state()
   private _showDoneBtn = false;
@@ -203,12 +212,32 @@ export class ExternalSource extends LitUploaderBlock {
       const url = this._extractUrlFromSelectedFile(message);
       const { filename } = message;
       const { externalSourceType } = this.activityParams;
-      this.api.addFileFromUrl(url, { fileName: filename, source: externalSourceType });
+      this.api.addFileFromUrl(url, {
+        fileName: filename,
+        source: externalSourceType,
+      });
+    }
+
+    if (this._usingAdjustBasedOnSmartBtn()) {
+      this.modalManager?.close(this.$['*currentActivity']);
+      this.$['*currentActivity'] = null;
+      return;
     }
 
     this.$['*currentActivity'] = LitActivityBlock.activities.UPLOAD_LIST;
     this.modalManager?.open(LitActivityBlock.activities.UPLOAD_LIST);
   };
+
+  private _usingAdjustBasedOnSmartBtn() {
+    const history = this._sharedInstancesBag.ctx.read('*history');
+    const len = history.length;
+
+    if (len === 0 && this._smartBtnActive) {
+      return true;
+    }
+
+    return false;
+  }
 
   private _handleCancel = (): void => {
     this.historyBack();
@@ -288,37 +317,58 @@ export class ExternalSource extends LitUploaderBlock {
   public override render() {
     return html`
       <uc-activity-header>
+        <button
+          type="button"
+          class="uc-mini-btn uc-close-btn"
+          @click=${this.$['*historyBack']}
+          title=${this.l10n('a11y-activity-header-button-close')}
+          aria-label=${this.l10n('a11y-activity-header-button-close')}
+        >
+          <uc-icon name="close"></uc-icon>
+        </button>
+      </uc-activity-header>
+      <div class="uc-content">
+        <div ${ref(this._iframeRef)} class="uc-iframe-wrapper"></div>
+        <div class="uc-toolbar" ?hidden=${!this._toolbarVisible}>
           <button
             type="button"
-            class="uc-mini-btn uc-close-btn"
-            @click=${this.$['*historyBack']}
-            title=${this.l10n('a11y-activity-header-button-close')}
-            aria-label=${this.l10n('a11y-activity-header-button-close')}
+            class="uc-cancel-btn uc-secondary-btn"
+            @click=${this._handleCancel}
           >
-            <uc-icon name="close"></uc-icon>
+            ${this.l10n('cancel')}
           </button>
-        </uc-activity-header>
-        <div class="uc-content">
-          <div ${ref(this._iframeRef)} class="uc-iframe-wrapper"></div>
-          <div class="uc-toolbar" ?hidden=${!this._toolbarVisible}>
-            <button type="button" class="uc-cancel-btn uc-secondary-btn" @click=${this._handleCancel}>${this.l10n('cancel')}</button>
-            <div class="uc-selection-status-box" ?hidden=${!this._showSelectionStatus}>
-              <span>${this._counterText}</span>
-              <button type="button" @click=${this._handleSelectAll} ?hidden=${!this._couldSelectAll}>${this.l10n('select-all')}</button>
-              <button type="button" @click=${this._handleDeselectAll} ?hidden=${!this._couldDeselectAll}>${this.l10n('deselect-all')}</button>
-            </div>
+          <div
+            class="uc-selection-status-box"
+            ?hidden=${!this._showSelectionStatus}
+          >
+            <span>${this._counterText}</span>
             <button
               type="button"
-              class="uc-done-btn uc-primary-btn"
-              @click=${this._handleDone}
-              ?disabled=${!this._isDoneBtnEnabled}
-              ?hidden=${!this._showDoneBtn}
+              @click=${this._handleSelectAll}
+              ?hidden=${!this._couldSelectAll}
             >
-              <uc-spinner ?hidden=${this._isSelectionReady}></uc-spinner>
-              <span class=${this._doneBtnTextClass}>${this.l10n('done')}</span>
+              ${this.l10n('select-all')}
+            </button>
+            <button
+              type="button"
+              @click=${this._handleDeselectAll}
+              ?hidden=${!this._couldDeselectAll}
+            >
+              ${this.l10n('deselect-all')}
             </button>
           </div>
+          <button
+            type="button"
+            class="uc-done-btn uc-primary-btn"
+            @click=${this._handleDone}
+            ?disabled=${!this._isDoneBtnEnabled}
+            ?hidden=${!this._showDoneBtn}
+          >
+            <uc-spinner ?hidden=${this._isSelectionReady}></uc-spinner>
+            <span class=${this._doneBtnTextClass}>${this.l10n('done')}</span>
+          </button>
         </div>
+      </div>
     `;
   }
 }

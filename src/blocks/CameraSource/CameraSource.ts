@@ -1,3 +1,4 @@
+import { consume } from '@lit/context';
 import { html, type PropertyValues } from 'lit';
 import { state } from 'lit/decorators.js';
 import { LitActivityBlock } from '../../lit/LitActivityBlock';
@@ -7,6 +8,7 @@ import { deserializeCsv } from '../../utils/comma-separated';
 import { debounce } from '../../utils/debounce';
 import { stringToArray } from '../../utils/stringToArray';
 import { UploadSource } from '../../utils/UploadSource';
+import { smartBtnActiveContext } from '../SmartBtn/smart-btn-context';
 import { InternalEventType } from '../UploadCtxProvider/EventEmitter';
 import './camera-source.css';
 import { classMap } from 'lit/directives/class-map.js';
@@ -76,6 +78,10 @@ export class CameraSource extends LitUploaderBlock {
   private _permissionResponses: Partial<Record<(typeof DEFAULT_PERMISSIONS)[number], PermissionStatus>> = {};
   private _permissionCleanupFns: Array<() => void> = [];
   private _currentVideoSource: MediaStream | null = null;
+
+  @consume({ context: smartBtnActiveContext, subscribe: true })
+  @state()
+  private _smartBtnActive = false;
 
   private readonly _handlePreviewPlay = (): void => {
     this._startTimeline();
@@ -683,11 +689,29 @@ export class CameraSource extends LitUploaderBlock {
    */
   private _toSend = (file: File): void => {
     this.api.addFileFromObject(file, { source: UploadSource.CAMERA });
+
+    if (this._usingAdjustBasedOnSmartBtn()) {
+      this.modalManager?.close(this.$['*currentActivity']);
+      this.$['*currentActivity'] = null;
+      return;
+    }
+
     this.set$({
       '*currentActivity': LitActivityBlock.activities.UPLOAD_LIST,
     });
     this.modalManager?.open(LitActivityBlock.activities.UPLOAD_LIST);
   };
+
+  private _usingAdjustBasedOnSmartBtn() {
+    const history = this._sharedInstancesBag.ctx.read('*history');
+    const len = history.length;
+
+    if (len === 0 && this._smartBtnActive) {
+      return true;
+    }
+
+    return false;
+  }
 
   private get _cameraModes(): CameraMode[] {
     return stringToArray(this.cfg.cameraModes).filter(
@@ -981,142 +1005,156 @@ export class CameraSource extends LitUploaderBlock {
 
   public override render() {
     return html`
-  <uc-activity-header>
-    <button
-      type="button"
-      class="uc-mini-btn"
-      @click=${this.$['*historyBack']}
-      title=${this.l10n('back')}
-    >
-      <uc-icon name="back"></uc-icon>
-    </button>
-    <div ?hidden=${!this._cameraSelectHidden}>
-      <uc-icon name="camera"></uc-icon>
-      <span>${this.l10n('caption-camera')}</span>
-    </div>
-    <uc-select
-      class="uc-camera-select"
-      .options=${this._cameraSelectOptions}
-      ?hidden=${this._cameraSelectHidden}
-      @change=${this._handleCameraSelectChange}
-    >
-    </uc-select>
-    <button
-      type="button"
-      class="uc-mini-btn uc-close-btn"
-      @click=${this.$['*closeModal']}
-      title=${this.l10n('a11y-activity-header-button-close')}
-      aria-label=${this.l10n('a11y-activity-header-button-close')}
-    >
-      <uc-icon name="close"></uc-icon>
-    </button>
-  </uc-activity-header>
-  <div class="uc-content">
-    <video
-      muted
-      autoplay
-      playsinline
-      style=${styleMap({
-        transform: this._videoTransformCss,
-      })}
-      ?hidden=${this._videoHidden}
-      ${ref(this._videoRef)}
-    ></video>
-    <div class="uc-message-box" ?hidden=${this._messageHidden}>
-      <span>${this.l10n(this._l10nMessage)}</span>
-      <button
-        type="button"
-        @click=${this._handleRequestPermissions}
-        ?hidden=${this._requestBtnHidden}
-        >${this.l10n('camera-permissions-request')}</button>
-    </div>
-  </div>
+     <uc-activity-header>
+        <button
+          type="button"
+          class="uc-mini-btn"
+          @click=${this.$['*historyBack']}
+          title=${this.l10n('back')}
+        >
+          <uc-icon name="back"></uc-icon>
+        </button>
+        <div ?hidden=${!this._cameraSelectHidden}>
+          <uc-icon name="camera"></uc-icon>
+          <span>${this.l10n('caption-camera')}</span>
+        </div>
+        <uc-select
+          class="uc-camera-select"
+          .options=${this._cameraSelectOptions}
+          ?hidden=${this._cameraSelectHidden}
+          @change=${this._handleCameraSelectChange}
+        >
+        </uc-select>
+        <button
+          type="button"
+          class="uc-mini-btn uc-close-btn"
+          @click=${this.$['*closeModal']}
+          title=${this.l10n('a11y-activity-header-button-close')}
+          aria-label=${this.l10n('a11y-activity-header-button-close')}
+        >
+          <uc-icon name="close"></uc-icon>
+        </button>
+      </uc-activity-header>
+      <div class="uc-content">
+        <video
+          muted
+          autoplay
+          playsinline
+          style=${styleMap({
+            transform: this._videoTransformCss,
+          })}
+          ?hidden=${this._videoHidden}
+          ${ref(this._videoRef)}
+        ></video>
+        <div class="uc-message-box" ?hidden=${this._messageHidden}>
+          <span>${this.l10n(this._l10nMessage)}</span>
+          <button
+            type="button"
+            @click=${this._handleRequestPermissions}
+            ?hidden=${this._requestBtnHidden}
+          >
+            ${this.l10n('camera-permissions-request')}
+          </button>
+        </div>
+      </div>
 
-  <div class="uc-controls">
-    <div class="uc-switcher" ?hidden=${!this._timerHidden}>
-      <button
-        data-id="photo"
-        type="button"
-        class=${classMap({ 'uc-switch': true, 'uc-mini-btn': true, 'uc-active': this._activeTab === CameraSourceTypes.PHOTO })}
-        @click=${this._handleClickTab}
-        ?hidden=${this._tabCameraHidden}
-        data-testid="tab-photo"
-      >
-        <uc-icon name="camera"></uc-icon>
-      </button>
-      <button
-        data-id="video"
-        type="button"
-        class=${classMap({ 'uc-switch': true, 'uc-mini-btn': true, 'uc-active': this._activeTab === CameraSourceTypes.VIDEO })}
-        @click=${this._handleClickTab}
-        ?hidden=${this._tabVideoHidden}
-        data-testid="tab-video"
-      >
-        <uc-icon name="video-camera"></uc-icon>
-      </button>
-    </div>
+      <div class="uc-controls">
+        <div class="uc-switcher" ?hidden=${!this._timerHidden}>
+          <button
+            data-id="photo"
+            type="button"
+            class=${classMap({
+              'uc-switch': true,
+              'uc-mini-btn': true,
+              'uc-active': this._activeTab === CameraSourceTypes.PHOTO,
+            })}
+            @click=${this._handleClickTab}
+            ?hidden=${this._tabCameraHidden}
+            data-testid="tab-photo"
+          >
+            <uc-icon name="camera"></uc-icon>
+          </button>
+          <button
+            data-id="video"
+            type="button"
+            class=${classMap({
+              'uc-switch': true,
+              'uc-mini-btn': true,
+              'uc-active': this._activeTab === CameraSourceTypes.VIDEO,
+            })}
+            @click=${this._handleClickTab}
+            ?hidden=${this._tabVideoHidden}
+            data-testid="tab-video"
+          >
+            <uc-icon name="video-camera"></uc-icon>
+          </button>
+        </div>
 
-    <button
-      class="uc-secondary-btn uc-recording-timer"
-      @click=${this._handleToggleRecording}
-      ?hidden=${this._timerHidden}
-      data-testid="recording-timer"
-    >
-      <uc-icon name=${this._currentTimelineIcon}></uc-icon>
-      <span ${ref(this._timerRef)}> 00:00 </span>
-      <span ${ref(this._lineRef)} class="uc-line"></span>
-    </button>
+        <button
+          class="uc-secondary-btn uc-recording-timer"
+          @click=${this._handleToggleRecording}
+          ?hidden=${this._timerHidden}
+          data-testid="recording-timer"
+        >
+          <uc-icon name=${this._currentTimelineIcon}></uc-icon>
+          <span ${ref(this._timerRef)}> 00:00 </span>
+          <span ${ref(this._lineRef)} class="uc-line"></span>
+        </button>
 
-    <div
-      class="uc-camera-actions uc-camera-action"
-      ?hidden=${this._cameraActionsHidden}
-    >
-      <button type="button" class="uc-secondary-btn" @click=${this._handleRetake}>
-        Retake
-      </button>
-      <button
-        type="button"
-        class="uc-primary-btn"
-        @click=${this._handleAccept}
-        data-testid="accept"
-      >
-        Accept
-      </button>
-    </div>
+        <div
+          class="uc-camera-actions uc-camera-action"
+          ?hidden=${this._cameraActionsHidden}
+        >
+          <button
+            type="button"
+            class="uc-secondary-btn"
+            @click=${this._handleRetake}
+          >
+            Retake
+          </button>
+          <button
+            type="button"
+            class="uc-primary-btn"
+            @click=${this._handleAccept}
+            data-testid="accept"
+          >
+            Accept
+          </button>
+        </div>
 
-    <button
-      type="button"
-      data-testid="shot"
-      @click=${this._handleStartCamera}
-      class=${this._mutableClassButton}
-      ?hidden=${this._cameraHidden}
-    >
-      <uc-icon name=${this._currentIcon}></uc-icon>
-    </button>
+        <button
+          type="button"
+          data-testid="shot"
+          @click=${this._handleStartCamera}
+          class=${this._mutableClassButton}
+          ?hidden=${this._cameraHidden}
+        >
+          <uc-icon name=${this._currentIcon}></uc-icon>
+        </button>
 
-    <div class="uc-select">
-      <button
-        type="button"
-        class="uc-mini-btn uc-btn-microphone"
-        @click=${this._handleToggleAudio}
-        ?hidden=${this._audioToggleMicrophoneHidden}
-        data-testid="toggle-microphone"
-      >
-        <uc-icon name=${this._toggleMicrophoneIcon}></uc-icon>
-      </button>
+        <div class="uc-select">
+          <button
+            type="button"
+            class="uc-mini-btn uc-btn-microphone"
+            @click=${this._handleToggleAudio}
+            ?hidden=${this._audioToggleMicrophoneHidden}
+            data-testid="toggle-microphone"
+          >
+            <uc-icon name=${this._toggleMicrophoneIcon}></uc-icon>
+          </button>
 
-      <uc-select
-        class="uc-audio-select"
-        .options=${this._audioSelectOptions}
-        ?hidden=${this._audioSelectHidden}
-        ?disabled=${this._audioSelectDisabled}
-        @change=${this._handleAudioSelectChange}
-        data-testid="audio-select"
-      >
-      </uc-select>
-    </div>
-  </div>
-`;
+          <uc-select
+            class="uc-audio-select"
+            .options=${this._audioSelectOptions}
+            ?hidden=${this._audioSelectHidden}
+            ?disabled=${this._audioSelectDisabled}
+            @change=${this._handleAudioSelectChange}
+            data-testid="audio-select"
+          >
+          </uc-select>
+        </div>
+      </div>
+    `;
   }
 }
 

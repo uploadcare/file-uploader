@@ -41,9 +41,16 @@ export { UploadList } from './blocks/UploadList/UploadList';
 export { Config } from './blocks/Config/Config';
 export { DropArea } from './blocks/DropArea/DropArea';
 export { FileItem } from './blocks/FileItem/FileItem';
+export { FileActionButton } from './blocks/FileItem/FileActionButton';
 export { SimpleBtn } from './blocks/SimpleBtn/SimpleBtn';
+export {
+  SmartBtn,
+  NoWrapModeSmartBtn,
+} from './blocks/SmartBtn/SmartBtn';
+export { PrimaryAction } from './blocks/SmartBtn/PrimaryAction';
 export { PluginActivityRenderer, PluginActivityHost } from './blocks/PluginActivityRenderer';
 export { ExternalUploadSource, UploadSource } from './utils/UploadSource';
+export { DropDown } from './blocks/DropDown/DropDown';
 
 // Extract as plugins
 export * from './blocks/CloudImageEditor/index';
