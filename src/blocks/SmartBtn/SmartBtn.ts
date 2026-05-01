@@ -1,8 +1,10 @@
 import { html } from 'lit';
 import { property, state } from 'lit/decorators.js';
+import { cache } from 'lit/directives/cache.js';
 import { SourceListController } from '../../abstract/controllers';
 import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
 import type { SourceButtonConfig } from '../SourceBtn/SourceBtn';
+import type { Uid } from '../../lit/Uid';
 
 import '../DropArea/DropArea';
 import '../SourceBtn/SourceBtn';
@@ -82,8 +84,20 @@ export class SmartBtn extends LitUploaderBlock {
     return this._status === 'idle';
   }
 
+  private get isSuccess() {
+    return this._status === 'success';
+  }
+
+  private get isFailed() {
+    return this._status === 'failed';
+  }
+
+  private get isUploading() {
+    return this._status === 'uploading';
+  }
+
   private get shouldShowPrimaryAction(): boolean {
-    return this._mode !== 'collapse' || !this.isIdle;
+    return this._mode !== 'collapse' || !this.isIdle || this.hasCollectionEntries;
   }
 
   private get shouldShowInline(): boolean {
@@ -98,8 +112,12 @@ export class SmartBtn extends LitUploaderBlock {
     return this.isIdle && !this.shouldShowInline;
   }
 
+  private get hasCollectionEntries(): boolean {
+    return (this._collection?.allEntries?.length ?? 0) > 0;
+  }
+
   private get shouldShowAbortAction(): boolean {
-    return !this.isIdle && (this._collection?.allEntries?.length ?? 0) > 0;
+    return !this.isIdle && this.hasCollectionEntries;
   }
 
   private _throttledHandleCollectionUpdate = throttle(() => {
@@ -164,48 +182,93 @@ export class SmartBtn extends LitUploaderBlock {
   private _renderInline() {
     return html`
       <uc-no-wrap-mode-smart-btn>
-        ${this._mainAndRemainSources?.remain?.map((source) => html`<uc-source-btn .iconOnly=${true} role="menuitem" .source=${source}></uc-source-btn>`)}
+        ${this._mainAndRemainSources?.remain?.map(
+          (source) =>
+            html`<uc-source-btn
+              .iconOnly=${true}
+              role="menuitem"
+              .source=${source}
+            ></uc-source-btn>`,
+        )}
       </uc-no-wrap-mode-smart-btn>
     `;
   }
 
   private _getDropdownIconName(): string {
-    return iconsBasedOnMode[this._mode] ?? 'arrow-dropdown';
+    return iconsBasedOnMode[this._mode as Exclude<SmartButtonMode, 'nowrap'>] ?? 'arrow-dropdown';
   }
 
-  private _renderDropdown() {
-    return html`
-      <uc-drop-down>
-        <uc-icon content-for="dd-header-button" name=${this._getDropdownIconName()}></uc-icon>
-        <div content-for="dd-content" role="menu" class="uc-dropdown-menu">
-          ${this._mainAndRemainSources?.remain?.map((source) => html`<uc-source-btn role="menuitem" .source=${source}></uc-source-btn>`)}
-        </div>
-      </uc-drop-down>`;
-  }
-
-  private _renderPrimaryAction() {
-    return html`<uc-primary-action .entries=${this._collection} .source=${this._mainAndRemainSources?.main}></uc-primary-action>`;
-  }
-
-  private _handleRemove() {
-    if (this._status === 'uploading') {
-      this.uploadCollection.abortAll();
-      return;
-    }
-
+  private _clearAllEntries() {
     this.uploadCollection.clearAll();
   }
 
+  private _clearAllFailedEntries() {
+    this._collection.failedEntries.forEach((it) => {
+      if (it && this.uploadCollection.hasItem(it.internalId as Uid)) {
+        this.uploadCollection.remove(it.internalId as Uid);
+      }
+    });
+  }
+  private _abortAllEntries() {
+    this.uploadCollection.abortAll();
+  }
+
+  private _handleRemove() {
+    switch (this._status) {
+      case 'failed':
+        this._clearAllFailedEntries();
+        break;
+      case 'uploading':
+        this._abortAllEntries();
+        break;
+      default:
+        this._clearAllEntries();
+    }
+  }
+
+  private _renderDropdown() {
+    return html` <uc-drop-down>
+      <uc-icon
+        content-for="dd-header-button"
+        name=${this._getDropdownIconName()}
+      ></uc-icon>
+      <div content-for="dd-content" role="menu" class="uc-dropdown-menu">
+        ${this._mainAndRemainSources?.remain?.map(
+          (source) =>
+            html`<uc-source-btn
+              role="menuitem"
+              .source=${source}
+            ></uc-source-btn>`,
+        )}
+      </div>
+    </uc-drop-down>`;
+  }
+
+  private _renderPrimaryAction() {
+    return html`<uc-primary-action
+      .entries=${this._collection}
+      .source=${this._mainAndRemainSources?.main}
+    ></uc-primary-action>`;
+  }
+
   private _renderAbortAction() {
-    return html`<uc-file-action-button @uc:remove=${this._handleRemove} .uploading=${this._status === 'uploading'} .failed=${this._status === 'failed'} .progress=${this._progress}></uc-file-action-button>`;
+    return html`<uc-file-action-button
+      @uc:remove=${this._handleRemove}
+      .uploading=${this.isUploading}
+      .failed=${this.isFailed}
+      .success=${this.isSuccess}
+      .idle=${this.isIdle}
+      .progress=${this._progress}
+
+    ></uc-file-action-button>`;
   }
 
   private _getInnerClassMap() {
     return classMap({
       'uc-smart-btn-inner': true,
-      'uc-failed': this._status === 'failed',
-      'uc-uploading': this._status === 'uploading',
-      'uc-success': this._status === 'success',
+      'uc-failed': this.isFailed,
+      'uc-uploading': this.isUploading,
+      'uc-success': this.isSuccess,
     });
   }
 
@@ -221,11 +284,11 @@ export class SmartBtn extends LitUploaderBlock {
     return html`
       <uc-drop-area .disabled=${!this.dropzone}>
         <div class=${this._getInnerClassMap()}>
-          ${this.shouldShowPrimaryAction ? this._renderPrimaryAction() : null}
-          ${this.shouldShowInline ? this._renderInline() : null}
-          ${this.shouldShowDropdown ? this._renderDropdown() : null}
-          ${this.shouldShowAbortAction ? this._renderAbortAction() : null}
-          ${this._renderVisualDropArea()}
+          ${cache(this.shouldShowPrimaryAction ? this._renderPrimaryAction() : null)}
+          ${cache(this.shouldShowInline && !this.hasCollectionEntries ? this._renderInline() : null)}
+          ${cache(this.shouldShowDropdown && !this.hasCollectionEntries ? this._renderDropdown() : null)}
+          ${cache(this.shouldShowAbortAction || this.hasCollectionEntries ? this._renderAbortAction() : null)}
+          ${cache(this._renderVisualDropArea())}
         </div>
       </uc-drop-area>
     `;

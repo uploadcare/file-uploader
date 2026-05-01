@@ -1,6 +1,7 @@
 import { html } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
+import type { Uid } from '../../lit/Uid';
 import type { OutputCollectionState, OutputCollectionStatus } from '../../types';
 import { UploadSource } from '../../utils/UploadSource';
 import type { SourceButtonConfig } from '../SourceBtn/SourceBtn';
@@ -24,7 +25,7 @@ export class PrimaryAction extends LitUploaderBlock {
   public customLabel!: string;
 
   @property({ attribute: 'source', type: Object })
-  public source?: SourceButtonConfig;
+  public source!: SourceButtonConfig | null;
 
   @property({ attribute: 'entries', type: Object })
   public entries!: OutputCollectionState<OutputCollectionStatus, 'maybe-has-group'>;
@@ -32,11 +33,18 @@ export class PrimaryAction extends LitUploaderBlock {
   @state()
   private showIcon = false;
 
+  @state()
+  private _isMultiple = false;
+
   public override initCallback(): void {
     super.initCallback();
 
     this.subConfigValue('smartBtnShowFirstIcon', (value) => {
       this.showIcon = value;
+    });
+
+    this.subConfigValue('multiple', (value) => {
+      this._isMultiple = value;
     });
   }
 
@@ -51,7 +59,7 @@ export class PrimaryAction extends LitUploaderBlock {
   }
 
   private get hasMultipleEntries(): boolean {
-    return (this.entries?.allEntries?.length ?? 0) > 1;
+    return (this.entries?.allEntries?.length ?? 0) >= 1;
   }
 
   private get localizedSourceLabel(): string {
@@ -60,19 +68,6 @@ export class PrimaryAction extends LitUploaderBlock {
 
   private _translate(key: string, params?: Record<string, string | number>): string {
     return this.l10n(key, params);
-  }
-
-  private _headerTextDependentOnEntries(): string | undefined {
-    if (this.entries?.status === 'uploading') {
-      return this._translate('header-uploading', { count: this.entries.uploadingCount });
-    }
-    if (this.entries?.status === 'failed') {
-      return this._translate('header-failed', { count: this.entries.failedCount });
-    }
-    if (this.entries?.status === 'success') {
-      return this._translate('header-succeed', { count: this.entries.successCount });
-    }
-    return undefined;
   }
 
   private get textBasedOnLocale(): string {
@@ -86,6 +81,24 @@ export class PrimaryAction extends LitUploaderBlock {
     }
 
     return this._getSourceLabelText();
+  }
+
+  private _headerTextDependentOnEntries(): string | undefined {
+    if (this.entries?.status === 'uploading') {
+      return this._translate('header-uploading', { count: this.entries.uploadingCount });
+    }
+    if (this.entries?.status === 'failed') {
+      return this._translate('header-failed', { count: this.entries.failedCount });
+    }
+    if (this.entries?.status === 'success') {
+      return this._translate('header-succeed', { count: this.entries.successCount });
+    }
+
+    if (this.entries?.totalCount > 0) {
+      return this._translate('header-total', { count: this.entries?.totalCount ?? 0 });
+    } else {
+      return undefined;
+    }
   }
 
   private _getSourceLabelText(): string {
@@ -119,13 +132,13 @@ export class PrimaryAction extends LitUploaderBlock {
   }
 
   private _renderThumbnail() {
-    if (this.hasSingleSuccessImage) {
+    if (!this._isMultiple && this.hasSingleSuccessImage) {
       const entry = this.entries.allEntries[0];
       if (!entry) return null;
-      return html`<uc-thumb .uid=${entry.internalId as any}></uc-thumb>`;
+      return html`<uc-thumb .uid=${entry.internalId as Uid}></uc-thumb>`;
     }
 
-    if (this.hasMultipleEntries) {
+    if (this._isMultiple && this.hasMultipleEntries) {
       return null;
     }
 

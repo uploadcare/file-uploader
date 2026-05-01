@@ -1,0 +1,494 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartBtn playground</title>
+    <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+      background: linear-gradient(180deg, #f6f7fb 0%, #eef2ff 100%);
+      color: #0f172a;
+      min-height: 100vh;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: linear-gradient(180deg, #0b1221 0%, #0f172a 100%);
+        color: #e2e8f0;
+      }
+    }
+
+    .page {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 32px 20px 60px;
+      display: grid;
+      gap: 24px;
+    }
+
+    .hero {
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid #e2e8f0;
+      border-radius: 18px;
+      padding: 20px 24px;
+      display: grid;
+      gap: 6px;
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: 1.3rem;
+    }
+    .hero p {
+      margin: 0;
+      color: #475569;
+      font-size: 0.9rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #eef2ff;
+      color: #4338ca;
+      border: 1px solid #c7d2fe;
+      border-radius: 999px;
+      padding: 4px 12px;
+      font-weight: 600;
+      font-size: 0.78rem;
+      width: fit-content;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    @media (max-width: 700px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .panel {
+      background: rgba(255, 255, 255, 0.94);
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 16px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .panel h2 {
+      margin: 0;
+      font-size: 0.95rem;
+      color: #374151;
+    }
+
+    .group {
+      display: grid;
+      gap: 6px;
+    }
+    .group-label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #6366f1;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .radio-group {
+      display: grid;
+      gap: 4px;
+    }
+
+    .radio-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      background: #fff;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+
+    .radio-row:hover {
+      border-color: #a5b4fc;
+    }
+    .radio-row.active {
+      border-color: #6366f1;
+      background: #eef2ff;
+    }
+
+    .radio-row input[type="radio"] {
+      accent-color: #6366f1;
+    }
+
+    .radio-label {
+      display: grid;
+      gap: 1px;
+      flex: 1;
+    }
+
+    .radio-label strong {
+      font-size: 0.85rem;
+    }
+    .radio-label small {
+      font-size: 0.75rem;
+      color: #64748b;
+    }
+
+    .check-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      background: #fff;
+      cursor: pointer;
+    }
+
+    .check-row input[type="checkbox"] {
+      accent-color: #6366f1;
+      width: 15px;
+      height: 15px;
+    }
+    .check-row span {
+      font-size: 0.85rem;
+    }
+
+    .select-control {
+      display: grid;
+      gap: 4px;
+    }
+
+    .select-control select {
+      font: inherit;
+      font-size: 0.85rem;
+      padding: 6px 8px;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+      background: #f8fafc;
+      color: inherit;
+    }
+
+    .preview-panel {
+      background: rgba(255, 255, 255, 0.94);
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .preview-panel h2 {
+      margin: 0;
+      font-size: 0.95rem;
+      color: #374151;
+    }
+
+    .preview-stage {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 160px;
+      border: 2px dashed #e2e8f0;
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .config-snippet {
+      font-size: 0.78rem;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 10px 12px;
+      color: #475569;
+      font-family: monospace;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .hero,
+      .panel,
+      .preview-panel {
+        background: rgba(15, 23, 42, 0.9);
+        border-color: #1e293b;
+      }
+      .hero p,
+      .panel h2,
+      .preview-panel h2 {
+        color: #94a3b8;
+      }
+      .radio-row,
+      .check-row {
+        background: #111827;
+        border-color: #1e293b;
+        color: #e2e8f0;
+      }
+      .radio-row.active {
+        background: #1e1b4b;
+        border-color: #6366f1;
+      }
+      .radio-label small {
+        color: #94a3b8;
+      }
+      .select-control select {
+        background: #0f172a;
+        border-color: #1e293b;
+        color: #e2e8f0;
+      }
+      .config-snippet {
+        background: #0f172a;
+        border-color: #1e293b;
+        color: #94a3b8;
+      }
+      .badge {
+        background: #1e293b;
+        border-color: #334155;
+        color: #c7d2fe;
+      }
+    }
+    </style>
+  </head>
+  <body>
+    <script type="module">
+    import { html, LitElement } from 'lit';
+    import '@/solutions/file-uploader/regular/index.css';
+    import * as UC from '@/index.js';
+
+    UC.defineComponents(UC);
+
+    const SOURCE_LIST_OPTIONS = [
+      'local',
+      'camera',
+      'url',
+      'dropbox',
+      'gdrive',
+      'facebook',
+      'gphotos',
+      'flickr',
+      'vk',
+      'evernote',
+      'box',
+      'onedrive',
+      'huddle',
+    ];
+
+    const VIEW_MODES = [
+      { value: 'auto', label: 'auto', desc: 'Inline up to 3 sources, dropdown for more' },
+      { value: 'allwrap', label: 'allwrap', desc: 'All sources behind dropdown arrow' },
+      { value: 'nowrap', label: 'nowrap', desc: 'All sources shown inline' },
+      { value: 'collapse', label: 'collapse', desc: 'Single paperclip button, no primary action' },
+    ];
+
+    const readCsv = (v) =>
+      (v || '')
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+    const writeCsv = (arr) => arr.join(', ');
+
+    class SmartBtnPlayground extends LitElement {
+      static properties = {
+        _viewMode: { state: true },
+        _showFirstIcon: { state: true },
+        _sourceList: { state: true },
+        _multiple: { state: true },
+      };
+
+      constructor() {
+        super();
+        this._viewMode = 'auto';
+        this._showFirstIcon = true;
+        this._sourceList = ['local', 'camera', 'url', 'dropbox'];
+        this._multiple = true;
+      }
+
+      createRenderRoot() {
+        return this;
+      }
+
+      firstUpdated() {
+        this._configEl = this.querySelector('#smart-btn-config');
+        this._applyConfig();
+      }
+
+      updated(changed) {
+        if (
+          changed.has('_viewMode') ||
+          changed.has('_showFirstIcon') ||
+          changed.has('_sourceList') ||
+          changed.has('_multiple')
+        ) {
+          this._applyConfig();
+        }
+      }
+
+      _applyConfig() {
+        if (!this._configEl) return;
+        this._configEl.smartBtnViewMode = this._viewMode;
+        this._configEl.smartBtnShowFirstIcon = this._showFirstIcon;
+        this._configEl.sourceList = writeCsv(this._sourceList);
+        this._configEl.multiple = this._multiple;
+      }
+
+      _toggleSource(src) {
+        const next = this._sourceList.includes(src)
+          ? this._sourceList.filter((s) => s !== src)
+          : [...this._sourceList, src];
+        this._sourceList = next;
+      }
+
+      _renderViewModeControls() {
+        return VIEW_MODES.map(
+          ({ value, label, desc }) => html`
+          <label class="radio-row ${this._viewMode === value ? 'active' : ''}">
+            <input
+              type="radio"
+              name="view-mode"
+              .value=${value}
+              .checked=${this._viewMode === value}
+              @change=${() => {
+                this._viewMode = value;
+              }}
+            />
+            <span class="radio-label">
+              <strong>${label}</strong>
+              <small>${desc}</small>
+            </span>
+          </label>
+        `,
+        );
+      }
+
+      _renderSourceControls() {
+        return SOURCE_LIST_OPTIONS.map(
+          (src) => html`
+          <label class="check-row">
+            <input
+              type="checkbox"
+              .checked=${this._sourceList.includes(src)}
+              @change=${() => this._toggleSource(src)}
+            />
+            <span>${src}</span>
+          </label>
+        `,
+        );
+      }
+
+      _configSnippet() {
+        return [
+          `<uc-file-uploader-regular dynamic ctx-name="my-uploader">`,
+          `</uc-file-uploader-regular>`,
+          `<uc-config`,
+          `  ctx-name="my-uploader"`,
+          `  pubkey="YOUR_PUBLIC_KEY"`,
+          `  smart-btn-view-mode="${this._viewMode}"`,
+          `  smart-btn-show-first-icon="${this._showFirstIcon}"`,
+          `  source-list="${writeCsv(this._sourceList)}"`,
+          `  ${this._multiple ? 'multiple' : '<!-- multiple -->'}`,
+          `></uc-config>`,
+        ].join('\n');
+      }
+
+      render() {
+        return html`
+          <div class="page">
+            <header class="hero">
+              <div class="badge">SmartBtn</div>
+              <h1>SmartBtn playground</h1>
+              <p>Explore <code>smartBtnViewMode</code> and related options live.</p>
+            </header>
+
+            <div class="layout">
+              <aside class="panel">
+                <h2>Controls</h2>
+
+                <div class="group">
+                  <div class="group-label">smartBtnViewMode</div>
+                  <div class="radio-group">
+                    ${this._renderViewModeControls()}
+                  </div>
+                </div>
+
+                <div class="group">
+                  <div class="group-label">Options</div>
+                  <label class="check-row">
+                    <input
+                      type="checkbox"
+                      .checked=${this._showFirstIcon}
+                      @change=${(e) => {
+                        this._showFirstIcon = e.target.checked;
+                      }}
+                    />
+                    <span>smartBtnShowFirstIcon</span>
+                  </label>
+                  <label class="check-row">
+                    <input
+                      type="checkbox"
+                      .checked=${this._multiple}
+                      @change=${(e) => {
+                        this._multiple = e.target.checked;
+                      }}
+                    />
+                    <span>multiple</span>
+                  </label>
+                </div>
+
+                <div class="group">
+                  <div class="group-label">sourceList</div>
+                  ${this._renderSourceControls()}
+                </div>
+              </aside>
+
+              <div style="display:grid;gap:18px;">
+                <div class="preview-panel">
+                  <h2>Preview</h2>
+                  <div class="preview-stage">
+                    <uc-file-uploader-regular dynamic ctx-name="smart-btn-demo"></uc-file-uploader-regular>
+                  </div>
+                </div>
+
+                <div class="panel">
+                  <h2>Config snippet</h2>
+                  <pre class="config-snippet">${this._configSnippet()}</pre>
+                </div>
+              </div>
+            </div>
+
+            <uc-config
+              id="smart-btn-config"
+              ctx-name="smart-btn-demo"
+              pubkey="demopublickey"
+              quality-insights="false"
+              test-mode
+              debug
+            ></uc-config>
+            <uc-upload-ctx-provider ctx-name="smart-btn-demo"></uc-upload-ctx-provider>
+          </div>
+        `;
+      }
+    }
+
+    customElements.define('uc-smart-btn-playground', SmartBtnPlayground);
+    </script>
+
+    <uc-smart-btn-playground></uc-smart-btn-playground>
+  </body>
+</html>

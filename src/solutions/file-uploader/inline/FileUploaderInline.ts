@@ -108,7 +108,7 @@ export class FileUploaderInline extends LitSolutionBlock {
           @click=${this._handleCancel}
           ?hidden=${!this._couldCancel}
         >
-        ${this.l10n('start-from-cancel')}
+          ${this.l10n('start-from-cancel')}
         </button>
         <uc-copyright></uc-copyright>
       </uc-start-from>

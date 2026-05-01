@@ -17,7 +17,8 @@
   }
 
   :where([uc-primary-action]) uc-thumb {
-    margin-left: calc(var(--uc-padding) * -0.5);
+    /*margin-left: calc(var(--uc-padding) * -0.5);*/
+    margin-left: calc(var(--uc-padding) * -1);
     margin-right: var(--uc-padding);
     width: 24px;
     height: 24px;
