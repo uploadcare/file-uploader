@@ -3,8 +3,8 @@ import { property, state } from 'lit/decorators.js';
 import { cache } from 'lit/directives/cache.js';
 import { SourceListController } from '../../abstract/controllers';
 import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
-import type { SourceButtonConfig } from '../SourceBtn/SourceBtn';
 import type { Uid } from '../../lit/Uid';
+import type { SourceButtonConfig } from '../SourceBtn/SourceBtn';
 
 import '../DropArea/DropArea';
 import '../SourceBtn/SourceBtn';
@@ -19,6 +19,7 @@ import { classMap } from 'lit/directives/class-map.js';
 import './PrimaryAction';
 import '../DropDown/DropDown';
 import '../FileItem/FileActionButton';
+import './NoWrapModeSmartBtn';
 
 export type SmartButtonMode = 'auto' | 'allwrap' | 'nowrap' | 'collapse';
 
@@ -26,10 +27,6 @@ type SourceSplit = {
   main: SourceButtonConfig | null;
   remain: SourceButtonConfig[];
 };
-
-export class NoWrapModeSmartBtn extends LitUploaderBlock {
-  public static override styleAttrs = [...super.styleAttrs, 'uc-no-wrap-mode-smart-btn'];
-}
 
 const adjustSourceBasedOnMode = (sources: SourceButtonConfig[], mode: SmartButtonMode): SourceSplit => {
   if (mode === 'collapse' || sources.length === 0) {
@@ -51,11 +48,11 @@ const iconsBasedOnMode: Record<Exclude<SmartButtonMode, 'nowrap'>, string> = {
   auto: 'arrow-dropdown',
 };
 
+const AUTO_MODE_INLINE_THRESHOLD = 3;
+
 export class SmartBtn extends LitUploaderBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-smart-btn', 'uc-wgt-common'];
   public override couldBeCtxOwner = true;
-
-  private static readonly AUTO_MODE_INLINE_THRESHOLD = 3;
 
   private _controller?: SourceListController;
 
@@ -104,8 +101,7 @@ export class SmartBtn extends LitUploaderBlock {
     return (
       this.isIdle &&
       !this.hasCollectionEntries &&
-      (this._mode === 'nowrap' ||
-        (this._mode === 'auto' && this._sources.length <= SmartBtn.AUTO_MODE_INLINE_THRESHOLD))
+      (this._mode === 'nowrap' || (this._mode === 'auto' && this._sources.length <= AUTO_MODE_INLINE_THRESHOLD))
     );
   }
 
@@ -299,6 +295,5 @@ export class SmartBtn extends LitUploaderBlock {
 declare global {
   interface HTMLElementTagNameMap {
     'uc-smart-btn': SmartBtn;
-    'uc-no-wrap-mode-smart-btn': SmartBtn;
   }
 }
