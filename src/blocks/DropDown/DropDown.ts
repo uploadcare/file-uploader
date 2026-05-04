@@ -17,7 +17,7 @@ export class DropDown extends LitBlock {
 
   public override render() {
     return html`
-      <button class="uc-mini-btn uc-dropdown-btn" popovertarget=${this._id} popovertargetaction="toggle">
+      <button class="uc-mini-btn uc-dropdown-btn" popovertarget=${this._id as string} popovertargetaction="toggle">
         ${this.yield('dd-header-button')}
       </button>
 
