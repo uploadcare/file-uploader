@@ -130,4 +130,10 @@ export default {
 
   custom: 'Serbest form',
   'freeform-crop': 'Serbest kırpma',
+
+  'upload-from': '{{source}} kaynağından yükle',
+  'get-from': '{{source}} kaynağından al',
+  'capture-with': '{{source}} ile kaydet',
+  take: '{{source}} çek',
+  record: '{{source}} kaydet',
 };

@@ -134,4 +134,10 @@ export default {
 
   custom: 'Вільна форма',
   'freeform-crop': 'Вільна обрізка',
+
+  'upload-from': 'Завантажити з {{source}}',
+  'get-from': 'Отримати з {{source}}',
+  'capture-with': 'Зняти за допомогою {{source}}',
+  take: 'Зробити {{source}}',
+  record: 'Записати {{source}}',
 };

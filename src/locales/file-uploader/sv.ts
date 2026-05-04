@@ -130,4 +130,10 @@ export default {
 
   custom: 'Fri form',
   'freeform-crop': 'Fri beskärning',
+
+  'upload-from': 'Ladda upp från {{source}}',
+  'get-from': 'Hämta från {{source}}',
+  'capture-with': 'Fånga med {{source}}',
+  take: 'Ta {{source}}',
+  record: 'Spela in {{source}}',
 };

@@ -132,4 +132,10 @@ export default {
   'crop-to-shape': 'Обрезать до {{value}}',
   custom: 'Свободная форма',
   'freeform-crop': 'Свободная обрезка',
+
+  'upload-from': 'Загрузить из {{source}}',
+  'get-from': 'Получить из {{source}}',
+  'capture-with': 'Снять с помощью {{source}}',
+  take: 'Сделать {{source}}',
+  record: 'Записать {{source}}',
 };

@@ -134,4 +134,10 @@ export default {
 
   custom: 'Forma swobodna',
   'freeform-crop': 'Swobodne kadrowanie',
+
+  'upload-from': 'Prześlij z {{source}}',
+  'get-from': 'Pobierz z {{source}}',
+  'capture-with': 'Przechwyć za pomocą {{source}}',
+  take: 'Zrób {{source}}',
+  record: 'Nagraj {{source}}',
 };

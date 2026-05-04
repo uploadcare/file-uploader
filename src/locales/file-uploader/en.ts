@@ -130,7 +130,7 @@ export default {
 
   'upload-from': 'Upload {{source}}',
   'get-from': 'Get from {{source}}',
+  'capture-with': 'Capture with {{source}}',
   take: 'Take {{source}}',
   record: 'Record {{source}}',
-  or: 'or',
 };

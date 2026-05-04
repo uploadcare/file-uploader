@@ -103,13 +103,14 @@ export class SmartBtn extends LitUploaderBlock {
   private get shouldShowInline(): boolean {
     return (
       this.isIdle &&
+      !this.hasCollectionEntries &&
       (this._mode === 'nowrap' ||
         (this._mode === 'auto' && this._sources.length <= SmartBtn.AUTO_MODE_INLINE_THRESHOLD))
     );
   }
 
   private get shouldShowDropdown(): boolean {
-    return this.isIdle && !this.shouldShowInline;
+    return this.isIdle && !this.shouldShowInline && !this.hasCollectionEntries;
   }
 
   private get hasCollectionEntries(): boolean {
@@ -285,8 +286,8 @@ export class SmartBtn extends LitUploaderBlock {
       <uc-drop-area .disabled=${!this.dropzone}>
         <div class=${this._getInnerClassMap()}>
           ${cache(this.shouldShowPrimaryAction ? this._renderPrimaryAction() : null)}
-          ${cache(this.shouldShowInline && !this.hasCollectionEntries ? this._renderInline() : null)}
-          ${cache(this.shouldShowDropdown && !this.hasCollectionEntries ? this._renderDropdown() : null)}
+          ${cache(this.shouldShowInline ? this._renderInline() : null)}
+          ${cache(this.shouldShowDropdown ? this._renderDropdown() : null)}
           ${cache(this.shouldShowAbortAction || this.hasCollectionEntries ? this._renderAbortAction() : null)}
           ${cache(this._renderVisualDropArea())}
         </div>

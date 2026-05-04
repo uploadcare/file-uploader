@@ -133,4 +133,10 @@ export default {
 
   custom: 'Forme libre',
   'freeform-crop': 'Recadrage libre',
+
+  'upload-from': 'Télécharger depuis {{source}}',
+  'get-from': 'Obtenir depuis {{source}}',
+  'capture-with': 'Capturer avec {{source}}',
+  take: 'Prendre {{source}}',
+  record: 'Enregistrer {{source}}',
 };

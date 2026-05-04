@@ -130,4 +130,10 @@ export default {
 
   custom: 'Еркін форма',
   'freeform-crop': 'Еркін кесу',
+
+  'upload-from': '{{source}} жүктеу',
+  'get-from': '{{source}}-дан алу',
+  'capture-with': '{{source}} арқылы түсіру',
+  take: '{{source}} алу',
+  record: '{{source}} жазу',
 };

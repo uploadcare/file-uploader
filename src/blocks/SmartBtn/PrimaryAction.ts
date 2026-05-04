@@ -16,13 +16,10 @@ export class PrimaryAction extends LitUploaderBlock {
   private static readonly SOURCE_TEXT_CONFIG: Record<string, { action: string }> = {
     [UploadSource.LOCAL]: { action: 'upload-from' },
     [UploadSource.URL]: { action: 'upload-from' },
-    [UploadSource.CAMERA]: { action: 'take' },
+    [UploadSource.CAMERA]: { action: 'capture-with' },
     [UploadSource.MOBILE_PHOTO_CAMERA]: { action: 'take' },
     [UploadSource.MOBILE_VIDEO_CAMERA]: { action: 'record' },
   };
-
-  @property({ attribute: 'custom-label' })
-  public customLabel!: string;
 
   @property({ attribute: 'source', type: Object })
   public source!: SourceButtonConfig | null;
@@ -71,10 +68,6 @@ export class PrimaryAction extends LitUploaderBlock {
   }
 
   private get textBasedOnLocale(): string {
-    if (this.customLabel) {
-      return this.customLabel;
-    }
-
     const headerText = this._headerTextDependentOnEntries();
     if (headerText) {
       return headerText;

@@ -25,9 +25,6 @@ export class SourceBtn extends LitUploaderBlock {
   @property({ type: Boolean })
   public iconOnly = false;
 
-  @property()
-  public customLabel = '';
-
   @state()
   private _iconName = 'default';
 
@@ -50,7 +47,7 @@ export class SourceBtn extends LitUploaderBlock {
     }
 
     const { label, icon, id } = source;
-    this._label = this.customLabel ? this.customLabel : this.l10n(label);
+    this._label = this.l10n(label);
     this._iconName = icon ?? id ?? 'default';
   }
 

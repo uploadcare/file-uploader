@@ -132,4 +132,10 @@ export default {
 
   custom: 'Ελεύθερη μορφή',
   'freeform-crop': 'Ελεύθερη περικοπή',
+
+  'upload-from': 'Μεταφόρτωση από {{source}}',
+  'get-from': 'Λήψη από {{source}}',
+  'capture-with': 'Λήψη με {{source}}',
+  take: 'Λήψη {{source}}',
+  record: 'Εγγραφή {{source}}',
 };

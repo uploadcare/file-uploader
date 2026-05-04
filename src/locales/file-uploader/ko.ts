@@ -129,4 +129,10 @@ export default {
 
   custom: '자유형식',
   'freeform-crop': '자유 자르기',
+
+  'upload-from': '{{source}}에서 업로드',
+  'get-from': '{{source}}에서 가져오기',
+  'capture-with': '{{source}}로 캡처',
+  take: '{{source}} 촬영',
+  record: '{{source}} 녹화',
 };

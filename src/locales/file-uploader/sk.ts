@@ -134,4 +134,10 @@ export default {
 
   custom: 'Voľná forma',
   'freeform-crop': 'Voľné orezávanie',
+
+  'upload-from': 'Nahrať z {{source}}',
+  'get-from': 'Získať z {{source}}',
+  'capture-with': 'Zachytiť pomocou {{source}}',
+  take: 'Vziať {{source}}',
+  record: 'Nahrať {{source}}',
 };
