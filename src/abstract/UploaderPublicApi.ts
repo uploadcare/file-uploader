@@ -53,17 +53,6 @@ export class UploaderPublicApi extends SharedInstance {
     return this._l10n;
   }
 
-  private _isSmartBtnActive(): boolean {
-    const solutionBlock = findBlockInCtx(
-      this._sharedInstancesBag.blocksRegistry,
-      (block) => 'isSmartBtnActive' in block,
-    ) as { isSmartBtnActive: boolean } | undefined;
-
-    const history = this._sharedInstancesBag.ctx.read('*history');
-
-    return (solutionBlock?.isSmartBtnActive && history.length === 0) ?? false;
-  }
-
   /**
    * TODO: Probably we should not allow user to override `source` property
    */
@@ -220,14 +209,8 @@ export class UploaderPublicApi extends SharedInstance {
             source: options.captureCamera ? UploadSource.CAMERA : UploadSource.LOCAL,
           });
         });
-        // To call uploadTrigger UploadList should draw file items first:
-        // Skip auto-opening upload list when SmartBtn is active
-        if (!this._isSmartBtnActive()) {
-          this._ctx.pub('*currentActivity', ACTIVITY_TYPES.UPLOAD_LIST);
-          this._sharedInstancesBag.modalManager?.open(ACTIVITY_TYPES.UPLOAD_LIST);
-        } else {
-          this._sharedInstancesBag.modalManager?.closeAll();
-        }
+        // To call uploadTrigger UploadList should draw file items first.
+        this._sharedInstancesBag.smartBtn.showUploadListAfterFileAdd();
         fileInput.remove();
       },
       {

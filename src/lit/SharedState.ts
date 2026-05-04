@@ -1,5 +1,6 @@
 import type { Queue, UploadcareGroup } from '@uploadcare/upload-client';
 import type { ClipboardLayer } from '../abstract/features/ClipboardLayer';
+import type { SmartBtnLayer } from '../abstract/features/SmartBtnLayer';
 import type { LocaleDefinition } from '../abstract/localeRegistry';
 import type { A11y } from '../abstract/managers/a11y';
 import type { LocaleManager } from '../abstract/managers/LocaleManager';
@@ -106,6 +107,7 @@ type DynamicBlockState = {
   '*a11y': A11y;
   '*modalManager': ModalManager | null;
   '*clipboard': ClipboardLayer;
+  '*smartBtn': SmartBtnLayer;
   '*pluginManager': PluginManager;
 };
 

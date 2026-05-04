@@ -43,6 +43,7 @@ export class SourceListController {
 
     // Subscribe to plugin changes
     const pluginManager = this._sharedInstancesBag.pluginManager;
+
     if (pluginManager?.onPluginsChange) {
       this._unsubscribePlugins = pluginManager.onPluginsChange(() => this._updateSources());
     }

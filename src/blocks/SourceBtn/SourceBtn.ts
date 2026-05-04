@@ -29,7 +29,7 @@ export class SourceBtn extends LitUploaderBlock {
   private _iconName = 'default';
 
   @state()
-  private _label = '';
+  private _srcTypeKey = '';
 
   protected override willUpdate(changedProperties: PropertyValues<this>): void {
     super.willUpdate(changedProperties);
@@ -41,13 +41,13 @@ export class SourceBtn extends LitUploaderBlock {
 
   private _applySource(source?: SourceButtonConfig): void {
     if (!source) {
-      this._label = '';
+      this._srcTypeKey = '';
       this._iconName = 'default';
       return;
     }
 
     const { label, icon, id } = source;
-    this._label = this.l10n(label);
+    this._srcTypeKey = label;
     this._iconName = icon ?? id ?? 'default';
   }
 
@@ -68,7 +68,7 @@ export class SourceBtn extends LitUploaderBlock {
     return html`
       <button type="button" @click=${this.activate}>
         ${this.textOnly ? '' : html`<uc-icon name=${this._iconName}></uc-icon>`}
-        ${this.iconOnly ? '' : html`<div class="uc-txt">${this._label}</div>`}
+        ${this.iconOnly ? '' : html`<div class="uc-txt">${this.l10n(this._srcTypeKey)}</div>`}
       </button>
     `;
   }

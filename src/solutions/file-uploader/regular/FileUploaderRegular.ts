@@ -1,4 +1,3 @@
-import { ContextProvider } from '@lit/context';
 import { html } from 'lit';
 import { property } from 'lit/decorators.js';
 import { InternalEventType } from '../../../blocks/UploadCtxProvider/EventEmitter';
@@ -17,8 +16,6 @@ import '../../../blocks/SimpleBtn/SimpleBtn';
 import '../../../blocks/SmartBtn/SmartBtn';
 import '../../../blocks/PluginActivityRenderer/PluginActivityRenderer';
 
-import { smartBtnActiveContext } from '../../../blocks/SmartBtn/smart-btn-context';
-
 type BaseInitState = InstanceType<typeof LitSolutionBlock>['init$'];
 interface FileUploaderRegularInitState extends BaseInitState {}
 
@@ -31,11 +28,6 @@ export class FileUploaderRegular extends LitSolutionBlock {
     'ctx-name': string;
   };
   public static override styleAttrs = [...super.styleAttrs, 'uc-file-uploader-regular'];
-
-  private _smartBtnActiveProvider = new ContextProvider(this, {
-    context: smartBtnActiveContext,
-    initialValue: false,
-  });
 
   @property({ type: Boolean })
   public headless = false;
@@ -57,14 +49,6 @@ export class FileUploaderRegular extends LitSolutionBlock {
     this.telemetryManager.sendEvent({
       eventType: InternalEventType.INIT_SOLUTION,
     });
-  }
-
-  protected override willUpdate(changedProperties: Map<PropertyKey, unknown>): void {
-    super.willUpdate(changedProperties);
-
-    if (changedProperties.has('dynamic')) {
-      this._smartBtnActiveProvider.setValue(this.dynamic);
-    }
   }
 
   /**

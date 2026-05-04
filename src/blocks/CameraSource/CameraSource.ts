@@ -1,14 +1,11 @@
-import { consume } from '@lit/context';
 import { html, type PropertyValues } from 'lit';
 import { state } from 'lit/decorators.js';
-import { LitActivityBlock } from '../../lit/LitActivityBlock';
 import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
 import { canUsePermissionsApi } from '../../utils/abilities';
 import { deserializeCsv } from '../../utils/comma-separated';
 import { debounce } from '../../utils/debounce';
 import { stringToArray } from '../../utils/stringToArray';
 import { UploadSource } from '../../utils/UploadSource';
-import { smartBtnActiveContext } from '../SmartBtn/smart-btn-context';
 import { InternalEventType } from '../UploadCtxProvider/EventEmitter';
 import './camera-source.css';
 import { classMap } from 'lit/directives/class-map.js';
@@ -78,10 +75,6 @@ export class CameraSource extends LitUploaderBlock {
   private _permissionResponses: Partial<Record<(typeof DEFAULT_PERMISSIONS)[number], PermissionStatus>> = {};
   private _permissionCleanupFns: Array<() => void> = [];
   private _currentVideoSource: MediaStream | null = null;
-
-  @consume({ context: smartBtnActiveContext, subscribe: true })
-  @state()
-  private _smartBtnActive = false;
 
   private readonly _handlePreviewPlay = (): void => {
     this._startTimeline();
@@ -690,28 +683,8 @@ export class CameraSource extends LitUploaderBlock {
   private _toSend = (file: File): void => {
     this.api.addFileFromObject(file, { source: UploadSource.CAMERA });
 
-    if (this._usingAdjustBasedOnSmartBtn()) {
-      this.modalManager?.close(this.$['*currentActivity']);
-      this.$['*currentActivity'] = null;
-      return;
-    }
-
-    this.set$({
-      '*currentActivity': LitActivityBlock.activities.UPLOAD_LIST,
-    });
-    this.modalManager?.open(LitActivityBlock.activities.UPLOAD_LIST);
+    this.smartBtnLayer.showUploadListAfterFileAdd();
   };
-
-  private _usingAdjustBasedOnSmartBtn() {
-    const history = this._sharedInstancesBag.ctx.read('*history');
-    const len = history.length;
-
-    if (len === 0 && this._smartBtnActive) {
-      return true;
-    }
-
-    return false;
-  }
 
   private get _cameraModes(): CameraMode[] {
     return stringToArray(this.cfg.cameraModes).filter(

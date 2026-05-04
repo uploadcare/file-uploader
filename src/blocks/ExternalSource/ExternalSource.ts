@@ -1,16 +1,13 @@
-import { LitActivityBlock } from '../../lit/LitActivityBlock';
 import { getTopLevelOrigin } from '../../utils/get-top-level-origin';
 import { stringToArray } from '../../utils/stringToArray';
 import { ExternalUploadSource } from '../../utils/UploadSource';
 import { wildcardRegexp } from '../../utils/wildcardRegexp';
 import { buildThemeDefinition } from './buildThemeDefinition';
 import './external-source.css';
-import { consume } from '@lit/context';
 import { html } from 'lit';
 import { state } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
-import { smartBtnActiveContext } from '../SmartBtn/smart-btn-context';
 import { MessageBridge } from './MessageBridge';
 import { queryString } from './query-string';
 import type { InputMessageMap } from './types';
@@ -52,10 +49,6 @@ export class ExternalSource extends LitUploaderBlock {
 
   @state()
   private _showSelectionStatus = false;
-
-  @consume({ context: smartBtnActiveContext, subscribe: true })
-  @state()
-  private _smartBtnActive = false;
 
   @state()
   private _showDoneBtn = false;
@@ -218,26 +211,8 @@ export class ExternalSource extends LitUploaderBlock {
       });
     }
 
-    if (this._usingAdjustBasedOnSmartBtn()) {
-      this.modalManager?.close(this.$['*currentActivity']);
-      this.$['*currentActivity'] = null;
-      return;
-    }
-
-    this.$['*currentActivity'] = LitActivityBlock.activities.UPLOAD_LIST;
-    this.modalManager?.open(LitActivityBlock.activities.UPLOAD_LIST);
+    this.smartBtnLayer.showUploadListAfterFileAdd();
   };
-
-  private _usingAdjustBasedOnSmartBtn() {
-    const history = this._sharedInstancesBag.ctx.read('*history');
-    const len = history.length;
-
-    if (len === 0 && this._smartBtnActive) {
-      return true;
-    }
-
-    return false;
-  }
 
   private _handleCancel = (): void => {
     this.historyBack();

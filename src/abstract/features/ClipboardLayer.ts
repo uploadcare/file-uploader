@@ -1,5 +1,4 @@
 import { ACTIVITY_TYPES } from '../../lit/activity-constants';
-import { findBlockInCtx } from '../../lit/findBlockInCtx';
 import { SharedInstance, type SharedInstancesBag } from '../../lit/shared-instances';
 
 export type PasteScope = 'local' | 'global' | false;
@@ -15,20 +14,6 @@ export class ClipboardLayer extends SharedInstance {
     window.addEventListener('paste', this.listener);
   }
 
-  /**
-   * Check if SmartBtn is active by finding the solution block and reading its dynamic property
-   */
-  private _isSmartBtnActive(): boolean {
-    const solutionBlock = findBlockInCtx(
-      this._sharedInstancesBag.blocksRegistry,
-      (block) => 'isSmartBtnActive' in block,
-    ) as { isSmartBtnActive: boolean } | undefined;
-
-    const history = this._sharedInstancesBag.ctx.read('*history');
-
-    return (solutionBlock?.isSmartBtnActive && history.length === 0) ?? false;
-  }
-
   private _excludingNodes(target: Element) {
     if (target.closest('uc-url-source')) {
       return true;
@@ -38,7 +23,7 @@ export class ClipboardLayer extends SharedInstance {
   }
 
   private openUploadList() {
-    if (this._isSmartBtnActive()) {
+    if (this._sharedInstancesBag.smartBtn.shouldReturnToSmartButtonAfterFileAdd()) {
       return;
     }
 

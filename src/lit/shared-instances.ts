@@ -1,4 +1,5 @@
 import type { ConfigType, UploaderPublicApi } from '..';
+import type { SmartBtnLayer } from '../abstract/features/SmartBtnLayer';
 import type { A11y } from '../abstract/managers/a11y';
 import type { LocaleManager } from '../abstract/managers/LocaleManager';
 import type { ModalManager } from '../abstract/managers/ModalManager';
@@ -79,6 +80,7 @@ const instanceKeyMap = {
   localeManager: '*localeManager',
   a11y: '*a11y',
   clipboard: '*clipboard',
+  smartBtn: '*smartBtn',
   blocksRegistry: '*blocksRegistry',
   eventEmitter: '*eventEmitter',
   uploadCollection: '*uploadCollection',
@@ -135,6 +137,9 @@ export const createSharedInstancesBag = (getCtx: () => PubSub<SharedState>) => {
     },
     get a11y(): A11y {
       return getSharedInstance(getCtx(), '*a11y');
+    },
+    get smartBtn(): SmartBtnLayer {
+      return getSharedInstance(getCtx(), '*smartBtn');
     },
     get blocksRegistry(): Set<LitBlock> {
       return getSharedInstance(getCtx(), '*blocksRegistry');

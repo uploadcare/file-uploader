@@ -1,10 +1,7 @@
-import { consume } from '@lit/context';
 import { html } from 'lit';
 import { state } from 'lit/decorators.js';
-import { LitActivityBlock } from '../../lit/LitActivityBlock';
 import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
 import { UploadSource } from '../../utils/UploadSource';
-import { smartBtnActiveContext } from '../SmartBtn/smart-btn-context';
 import { InternalEventType } from '../UploadCtxProvider/EventEmitter';
 import './url-source.css';
 
@@ -14,10 +11,6 @@ import '../Icon/Icon';
 export class UrlSource extends LitUploaderBlock {
   @state()
   private _url = '';
-
-  @consume({ context: smartBtnActiveContext, subscribe: true })
-  @state()
-  private _smartBtnActive = false;
 
   private _handleInput = (event: Event) => {
     this._url = (event.target as HTMLInputElement | null)?.value ?? '';
@@ -39,27 +32,8 @@ export class UrlSource extends LitUploaderBlock {
       return;
     }
     this.api.addFileFromUrl(url, { source: UploadSource.URL });
-
-    if (this._usingAdjustBasedOnSmartBtn()) {
-      this.modalManager?.close(this.$['*currentActivity']);
-      this.$['*currentActivity'] = null;
-      return;
-    }
-
-    this.$['*currentActivity'] = LitActivityBlock.activities.UPLOAD_LIST;
-    this.modalManager?.open(LitActivityBlock.activities.UPLOAD_LIST);
+    this.smartBtnLayer.showUploadListAfterFileAdd();
   };
-
-  private _usingAdjustBasedOnSmartBtn() {
-    const history = this._sharedInstancesBag.ctx.read('*history');
-    const len = history.length;
-
-    if (len === 0 && this._smartBtnActive) {
-      return true;
-    }
-
-    return false;
-  }
 
   public override render() {
     return html`
