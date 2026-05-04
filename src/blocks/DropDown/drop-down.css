@@ -19,7 +19,6 @@
   [popover]:popover-open {
     opacity: 1;
     transform: translateY(0);
-
     transition:
       transform 0.4s ease,
       opacity 0.4s ease;

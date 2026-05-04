@@ -8,7 +8,7 @@
     display: contents;
   }
 
-  :where([uc-smart-btn]) .uc-smart-btn-inner {
+  :where([uc-smart-btn] .uc-smart-btn-inner) {
     display: flex;
     gap: 3px;
     background-color: var(--uc-simple-btn);
@@ -17,11 +17,11 @@
     isolation: isolate;
   }
 
-  :where([uc-smart-btn]) .uc-smart-btn-inner.uc-failed {
+  :where([uc-smart-btn] .uc-smart-btn-inner.uc-failed) {
     background-color: var(--uc-destructive);
   }
 
-  :where([uc-smart-btn]) .uc-smart-btn-inner.uc-failed button {
+  :where([uc-smart-btn] .uc-smart-btn-inner.uc-failed) button {
     color: var(--uc-destructive-foreground);
 
     &:hover {
@@ -76,7 +76,7 @@
     background-color: var(--uc-secondary);
   }
 
-  :where([uc-smart-btn]) button:before {
+  :where([uc-smart-btn]) button::before {
     position: absolute;
     content: "";
     right: -2px;
