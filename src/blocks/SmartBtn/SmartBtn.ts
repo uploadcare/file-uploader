@@ -93,20 +93,30 @@ export class SmartBtn extends LitUploaderBlock {
     return this._status === 'uploading';
   }
 
+  private get isCollapsedMode() {
+    return this._mode === 'collapse';
+  }
+
   private get shouldShowPrimaryAction(): boolean {
-    return this._mode !== 'collapse' || !this.isIdle || this.hasCollectionEntries;
+    return !this.isCollapsedMode || !this.isIdle || this.hasCollectionEntries;
   }
 
   private get shouldShowInline(): boolean {
     return (
       this.isIdle &&
       !this.hasCollectionEntries &&
+      this._sources.length > 1 &&
       (this._mode === 'nowrap' || (this._mode === 'auto' && this._sources.length <= AUTO_MODE_INLINE_THRESHOLD))
     );
   }
 
   private get shouldShowDropdown(): boolean {
-    return this.isIdle && !this.shouldShowInline && !this.hasCollectionEntries;
+    return (
+      this.isIdle &&
+      !this.shouldShowInline &&
+      !this.hasCollectionEntries &&
+      (this._sources.length > 1 || this.isCollapsedMode)
+    );
   }
 
   private get hasCollectionEntries(): boolean {
