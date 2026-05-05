@@ -24,9 +24,6 @@ export class FileActionButton extends LitUploaderBlock {
   @property({ type: Boolean })
   public idle = false;
 
-  @property({ type: Number })
-  public progress = 0;
-
   private _handleRemove() {
     this.dispatchEvent(
       new CustomEvent('uc:remove', {

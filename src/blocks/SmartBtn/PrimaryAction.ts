@@ -21,10 +21,10 @@ export class PrimaryAction extends LitUploaderBlock {
     [UploadSource.MOBILE_VIDEO_CAMERA]: { action: 'record' },
   };
 
-  @property({ attribute: 'source', type: Object })
+  @property({ type: Object })
   public source!: SourceButtonConfig | null;
 
-  @property({ attribute: 'entries', type: Object })
+  @property({ type: Object })
   public entries!: OutputCollectionState<OutputCollectionStatus, 'maybe-has-group'>;
 
   @state()
