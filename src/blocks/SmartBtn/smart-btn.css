@@ -88,9 +88,13 @@
     background-color: var(--uc-secondary);
   }
 
-  :where([uc-file-action-button]) button::before,
-  :where([uc-drop-down]) button::before,
-  :where([uc-no-wrap-mode-smart-btn]) > uc-source-btn:last-child button::before {
+  :where(
+      [uc-smart-btn]:not(:has([uc-no-wrap-mode-smart-btn], [uc-drop-down])) [uc-primary-action],
+      [uc-file-action-button],
+      [uc-drop-down],
+      [uc-no-wrap-mode-smart-btn] > uc-source-btn:last-child
+    )
+    button::before {
     content: none;
   }
 

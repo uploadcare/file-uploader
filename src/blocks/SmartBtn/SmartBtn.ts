@@ -153,7 +153,7 @@ export class SmartBtn extends LitUploaderBlock {
   public override initCallback(): void {
     super.initCallback();
 
-    this.subConfigValue('smartBtnViewMode', (value) => {
+    this.subConfigValue('smartButtonViewMode', (value) => {
       if (this._mode === value) return;
 
       this._mode = value;

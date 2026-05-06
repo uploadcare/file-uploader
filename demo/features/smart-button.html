@@ -337,8 +337,8 @@
 
       _applyConfig() {
         if (!this._configEl) return;
-        this._configEl.smartBtnViewMode = this._viewMode;
-        this._configEl.smartBtnShowFirstIcon = this._showFirstIcon;
+        this._configEl.smartButtonViewMode = this._viewMode;
+        this._configEl.smartButtonShowFirstIcon = this._showFirstIcon;
         this._configEl.sourceList = writeCsv(this._sourceList);
         this._configEl.multiple = this._multiple;
       }
@@ -408,7 +408,7 @@
             <header class="hero">
               <div class="badge">SmartBtn</div>
               <h1>SmartBtn playground</h1>
-              <p>Explore <code>smartBtnViewMode</code> and related options live.</p>
+              <p>Explore <code>smartButtonViewMode</code> and related options live.</p>
             </header>
 
             <div class="layout">
@@ -416,7 +416,7 @@
                 <h2>Controls</h2>
 
                 <div class="group">
-                  <div class="group-label">smartBtnViewMode</div>
+                  <div class="group-label">smartButtonViewMode</div>
                   <div class="radio-group">
                     ${this._renderViewModeControls()}
                   </div>
@@ -432,7 +432,7 @@
                         this._showFirstIcon = e.target.checked;
                       }}
                     />
-                    <span>smartBtnShowFirstIcon</span>
+                    <span>smartButtonShowFirstIcon</span>
                   </label>
                   <label class="check-row">
                     <input
@@ -456,7 +456,7 @@
                 <div class="preview-panel">
                   <h2>Preview</h2>
                   <div class="preview-stage">
-                    <uc-file-uploader-regular dynamic ctx-name="smart-btn-demo"></uc-file-uploader-regular>
+                    <uc-file-uploader-regular smart-button ctx-name="smart-btn-demo"></uc-file-uploader-regular>
                   </div>
                 </div>
 

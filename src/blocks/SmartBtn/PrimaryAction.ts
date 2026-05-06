@@ -36,7 +36,7 @@ export class PrimaryAction extends LitUploaderBlock {
   public override initCallback(): void {
     super.initCallback();
 
-    this.subConfigValue('smartBtnShowFirstIcon', (value) => {
+    this.subConfigValue('smartButtonShowFirstIcon', (value) => {
       this.showIcon = value;
     });
 
@@ -60,7 +60,13 @@ export class PrimaryAction extends LitUploaderBlock {
   }
 
   private get localizedSourceLabel(): string {
-    return this.source?.label ? this.l10n(this.source.label).toLowerCase() : '';
+    if (!this.source?.label) return '';
+
+    if (['local', 'url', 'camera'].includes(this.source?.id)) {
+      return this.l10n(this.source.label).toLowerCase();
+    }
+
+    return this.l10n(this.source.label);
   }
 
   private _translate(key: string, params?: Record<string, string | number>): string {

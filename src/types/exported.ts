@@ -345,8 +345,8 @@ export type ConfigType = {
    */
   pasteScope: PasteScope;
 
-  smartBtnViewMode: SmartButtonMode;
-  smartBtnShowFirstIcon: boolean;
+  smartButtonViewMode: SmartButtonMode;
+  smartButtonShowFirstIcon: boolean;
 };
 export type ConfigComplexType = Pick<ConfigType, (typeof complexConfigKeys)[number]>;
 export type ConfigPlainType = Omit<ConfigType, keyof ConfigComplexType>;

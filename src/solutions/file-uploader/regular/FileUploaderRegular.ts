@@ -32,8 +32,8 @@ export class FileUploaderRegular extends LitSolutionBlock {
   @property({ type: Boolean })
   public headless = false;
 
-  @property({ type: Boolean })
-  public dynamic = false;
+  @property({ attribute: 'smart-button', type: Boolean })
+  public smartButton = false;
 
   public constructor() {
     super();
@@ -55,10 +55,10 @@ export class FileUploaderRegular extends LitSolutionBlock {
    * Exposes whether SmartBtn is active for non-Lit classes that can't use context
    */
   public get isSmartBtnActive(): boolean {
-    return this.dynamic;
+    return this.smartButton;
   }
 
-  private _renderDynamicButton() {
+  private _renderSmartButton() {
     return html`
       <uc-smart-btn></uc-smart-btn>
     `;
@@ -72,7 +72,7 @@ export class FileUploaderRegular extends LitSolutionBlock {
 
   private _renderButton() {
     if (this.headless) return null;
-    if (this.dynamic) return this._renderDynamicButton();
+    if (this.smartButton) return this._renderSmartButton();
     return this._renderStaticButton();
   }
 
