@@ -4,12 +4,8 @@ export const ExternalUploadSource = Object.freeze({
   DROPBOX_CHOOSER: 'dropboxchooser',
   GDRIVE: 'gdrive',
   GPHOTOS: 'gphotos',
-  FLICKR: 'flickr',
-  VK: 'vk',
-  EVERNOTE: 'evernote',
   BOX: 'box',
   ONEDRIVE: 'onedrive',
-  HUDDLE: 'huddle',
 } as const);
 
 export const UploadSourceMobile = Object.freeze({
