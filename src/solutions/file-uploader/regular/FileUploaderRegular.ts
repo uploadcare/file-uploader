@@ -24,7 +24,7 @@ export class FileUploaderRegular extends LitSolutionBlock {
 
   public declare attributesMeta: {
     headless?: boolean;
-    dynamic?: boolean;
+    'smart-button'?: boolean;
     'ctx-name': string;
   };
   public static override styleAttrs = [...super.styleAttrs, 'uc-file-uploader-regular'];

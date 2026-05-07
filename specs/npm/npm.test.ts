@@ -10,7 +10,7 @@ const stickyPackageVersion = (obj: any) => {
   return obj;
 };
 
-describe.skip('NPM package', () => {
+describe('NPM package', () => {
   test('import asserts are working', async () => {
     await expect(import(`@uploadcare/file-uploader/${'abstract/Block.js'}`)).rejects.toThrow();
   });

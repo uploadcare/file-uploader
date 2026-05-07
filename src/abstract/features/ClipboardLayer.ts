@@ -1,4 +1,3 @@
-import { ACTIVITY_TYPES } from '../../lit/activity-constants';
 import { SharedInstance, type SharedInstancesBag } from '../../lit/shared-instances';
 
 export type PasteScope = 'local' | 'global' | false;
@@ -23,12 +22,7 @@ export class ClipboardLayer extends SharedInstance {
   }
 
   private openUploadList() {
-    if (this._sharedInstancesBag.smartBtn.shouldReturnToSmartButtonAfterFileAdd()) {
-      return;
-    }
-
-    this._sharedInstancesBag.api.setCurrentActivity(ACTIVITY_TYPES.UPLOAD_LIST);
-    this._sharedInstancesBag.api.setModalState(true);
+    this._sharedInstancesBag.smartBtn.shouldReturnToSmartButtonAfterFileAdd();
   }
 
   private async _listener(event: ClipboardEvent) {

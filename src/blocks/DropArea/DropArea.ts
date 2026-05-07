@@ -122,6 +122,7 @@ export class DropArea extends LitUploaderBlock {
         if (!items.length) {
           return;
         }
+        const prevSize = this.uploadCollection.size;
 
         items.forEach((item) => {
           if (item.type === 'url') {
@@ -135,7 +136,7 @@ export class DropArea extends LitUploaderBlock {
             });
           }
         });
-        if (this.uploadCollection.size) {
+        if (this.uploadCollection.size > prevSize) {
           this.smartBtnLayer.showUploadListAfterFileAdd();
         }
       },
