@@ -138,4 +138,7 @@ export default {
   'capture-with': 'לכוד עם {{source}}',
   take: 'קח {{source}}',
   record: 'הקלט {{source}}',
+
+  retake: 'צלם שוב',
+  accept: 'קבל',
 };

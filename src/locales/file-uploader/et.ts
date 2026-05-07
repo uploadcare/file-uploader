@@ -136,4 +136,7 @@ export default {
   'capture-with': 'Jäädvusta {{source}}',
   take: 'Võta {{source}}',
   record: 'Salvesta {{source}}',
+
+  retake: 'Tee uuesti',
+  accept: 'Nõustu',
 };

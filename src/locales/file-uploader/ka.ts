@@ -136,4 +136,7 @@ export default {
   'capture-with': 'გადაღება {{source}}-ით',
   take: 'აღება {{source}}',
   record: 'ჩაწერა {{source}}',
+
+  retake: 'ხელახლა გადაღება',
+  accept: 'მიღება',
 };

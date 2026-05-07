@@ -138,4 +138,7 @@ export default {
   'capture-with': 'Λήψη με {{source}}',
   take: 'Λήψη {{source}}',
   record: 'Εγγραφή {{source}}',
+
+  retake: 'Επανάληψη',
+  accept: 'Αποδοχή',
 };

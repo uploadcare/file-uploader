@@ -136,4 +136,7 @@ export default {
   'capture-with': 'Taka með {{source}}',
   take: 'Taka {{source}}',
   record: 'Taka upp {{source}}',
+
+  retake: 'Taka aftur',
+  accept: 'Samþykkja',
 };

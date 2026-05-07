@@ -136,4 +136,7 @@ export default {
   'capture-with': 'Ta opp med {{source}}',
   take: 'Ta {{source}}',
   record: 'Spill inn {{source}}',
+
+  retake: 'Ta på nytt',
+  accept: 'Godta',
 };

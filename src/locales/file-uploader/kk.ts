@@ -136,4 +136,7 @@ export default {
   'capture-with': '{{source}} арқылы түсіру',
   take: '{{source}} алу',
   record: '{{source}} жазу',
+
+  retake: 'Қайта түсіру',
+  accept: 'Қабылдау',
 };

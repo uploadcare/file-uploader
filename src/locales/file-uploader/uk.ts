@@ -140,4 +140,7 @@ export default {
   'capture-with': 'Зняти за допомогою {{source}}',
   take: 'Зробити {{source}}',
   record: 'Записати {{source}}',
+
+  retake: 'Перезняти',
+  accept: 'Прийняти',
 };

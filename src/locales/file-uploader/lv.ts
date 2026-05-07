@@ -138,4 +138,7 @@ export default {
   'capture-with': 'Tvert ar {{source}}',
   take: 'Ņemt {{source}}',
   record: 'Ierakstīt {{source}}',
+
+  retake: 'Uzņemt vēlreiz',
+  accept: 'Pieņemt',
 };

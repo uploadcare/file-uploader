@@ -134,4 +134,7 @@ export default {
   'capture-with': 'Ֆիքսել {{source}}-ով',
   take: 'Վերցնել {{source}}',
   record: 'Ձայնագրել {{source}}',
+
+  retake: 'Վերնկարել',
+  accept: 'Ընդունել',
 };

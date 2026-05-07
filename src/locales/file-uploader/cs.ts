@@ -141,4 +141,7 @@ export default {
   'capture-with': 'Zachytit pomocí {{source}}',
   take: 'Vzít {{source}}',
   record: 'Nahrát {{source}}',
+
+  retake: 'Znovu pořídit',
+  accept: 'Přijmout',
 };

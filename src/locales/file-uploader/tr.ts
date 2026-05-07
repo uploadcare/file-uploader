@@ -136,4 +136,7 @@ export default {
   'capture-with': '{{source}} ile kaydet',
   take: '{{source}} çek',
   record: '{{source}} kaydet',
+
+  retake: 'Yeniden çek',
+  accept: 'Kabul et',
 };

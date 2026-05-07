@@ -136,4 +136,7 @@ export default {
   'capture-with': 'Fånga med {{source}}',
   take: 'Ta {{source}}',
   record: 'Spela in {{source}}',
+
+  retake: 'Ta om',
+  accept: 'Acceptera',
 };

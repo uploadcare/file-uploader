@@ -136,4 +136,7 @@ export default {
   'capture-with': 'Chụp bằng {{source}}',
   take: 'Lấy {{source}}',
   record: 'Ghi {{source}}',
+
+  retake: 'Chụp lại',
+  accept: 'Chấp nhận',
 };

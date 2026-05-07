@@ -139,4 +139,7 @@ export default {
   'capture-with': 'Capturați cu {{source}}',
   take: 'Luați {{source}}',
   record: 'Înregistrați {{source}}',
+
+  retake: 'Refaceți',
+  accept: 'Acceptați',
 };

@@ -137,4 +137,7 @@ export default {
   'capture-with': 'Kaappaa käyttämällä {{source}}',
   take: 'Ota {{source}}',
   record: 'Tallenna {{source}}',
+
+  retake: 'Ota uudelleen',
+  accept: 'Hyväksy',
 };

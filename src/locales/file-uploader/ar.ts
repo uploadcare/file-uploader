@@ -141,4 +141,7 @@ export default {
   'capture-with': 'التقاط مع {{source}}',
   take: 'أخذ {{source}}',
   record: 'تسجيل {{source}}',
+
+  retake: 'إعادة التصوير',
+  accept: 'قبول',
 };

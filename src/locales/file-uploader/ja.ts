@@ -136,4 +136,7 @@ export default {
   'capture-with': '{{source}}でキャプチャ',
   take: '{{source}}を撮影',
   record: '{{source}}を録画',
+
+  retake: '撮り直し',
+  accept: '承認',
 };

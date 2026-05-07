@@ -133,4 +133,7 @@ export default {
   'capture-with': 'Capture with {{source}}',
   take: 'Take {{source}}',
   record: 'Record {{source}}',
+
+  retake: 'Retake',
+  accept: 'Accept',
 };

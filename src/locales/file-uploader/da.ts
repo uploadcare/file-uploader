@@ -137,4 +137,7 @@ export default {
   'capture-with': 'Optag med {{source}}',
   take: 'Tag {{source}}',
   record: 'Optag {{source}}',
+
+  retake: 'Tag igen',
+  accept: 'Accepter',
 };

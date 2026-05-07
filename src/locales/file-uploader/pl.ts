@@ -140,4 +140,7 @@ export default {
   'capture-with': 'Przechwyć za pomocą {{source}}',
   take: 'Zrób {{source}}',
   record: 'Nagraj {{source}}',
+
+  retake: 'Zrób ponownie',
+  accept: 'Akceptuj',
 };

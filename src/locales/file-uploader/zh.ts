@@ -134,4 +134,7 @@ export default {
   'capture-with': '使用 {{source}} 捕获',
   take: '拍摄 {{source}}',
   record: '录制 {{source}}',
+
+  retake: '重拍',
+  accept: '接受',
 };

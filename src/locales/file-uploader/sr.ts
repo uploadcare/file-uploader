@@ -138,4 +138,7 @@ export default {
   'capture-with': 'Сними помоћу {{source}}',
   take: 'Узми {{source}}',
   record: 'Сними {{source}}',
+
+  retake: 'Поново сними',
+  accept: 'Прихвати',
 };

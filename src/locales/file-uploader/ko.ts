@@ -135,4 +135,7 @@ export default {
   'capture-with': '{{source}}로 캡처',
   take: '{{source}} 촬영',
   record: '{{source}} 녹화',
+
+  retake: '다시 찍기',
+  accept: '수락',
 };

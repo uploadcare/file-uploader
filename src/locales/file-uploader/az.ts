@@ -135,4 +135,7 @@ export default {
   'capture-with': '{{source}} ilə çəkiş',
   take: '{{source}} çək',
   record: '{{source}} yaz',
+
+  retake: 'Yenidən çək',
+  accept: 'Qəbul et',
 };

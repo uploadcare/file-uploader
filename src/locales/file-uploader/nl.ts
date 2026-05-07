@@ -137,4 +137,7 @@ export default {
   'capture-with': 'Vastleggen met {{source}}',
   take: 'Neem {{source}}',
   record: 'Opnemen {{source}}',
+
+  retake: 'Opnieuw nemen',
+  accept: 'Accepteren',
 };

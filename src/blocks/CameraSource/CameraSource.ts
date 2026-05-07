@@ -1083,7 +1083,7 @@ export class CameraSource extends LitUploaderBlock {
             class="uc-secondary-btn"
             @click=${this._handleRetake}
           >
-            Retake
+            ${this.l10n('retake')}
           </button>
           <button
             type="button"
@@ -1091,7 +1091,7 @@ export class CameraSource extends LitUploaderBlock {
             @click=${this._handleAccept}
             data-testid="accept"
           >
-            Accept
+            ${this.l10n('accept')}
           </button>
         </div>
 
