@@ -32,7 +32,7 @@ export class UrlSource extends LitUploaderBlock {
       return;
     }
     this.api.addFileFromUrl(url, { source: UploadSource.URL });
-    this.smartBtnLayer.showUploadListAfterFileAdd();
+    this.routerLayer.navigateAfterFileAdd();
   };
 
   public override render() {

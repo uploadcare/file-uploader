@@ -1,7 +1,7 @@
 import { LitElement } from 'lit';
 import { blockCtx } from '../abstract/CTX';
 import { ClipboardLayer } from '../abstract/features/ClipboardLayer';
-import { SmartBtnLayer } from '../abstract/features/SmartBtnLayer';
+import { RouterHooksLayer } from '../abstract/features/RouterHooksLayer';
 import { A11y } from '../abstract/managers/a11y';
 import { LocaleManager, localeStateKey } from '../abstract/managers/LocaleManager';
 import { ModalManager } from '../abstract/managers/ModalManager';
@@ -96,7 +96,7 @@ export class LitBlock extends LitBlockBase {
     this._addSharedContextInstance('*localeManager', (sharedInstancesBag) => new LocaleManager(sharedInstancesBag));
     this._addSharedContextInstance('*modalManager', (sharedInstancesBag) => new ModalManager(sharedInstancesBag));
     this._addSharedContextInstance('*a11y', () => new A11y());
-    this._addSharedContextInstance('*smartBtn', (sharedInstancesBag) => new SmartBtnLayer(sharedInstancesBag));
+    this._addSharedContextInstance('*routerLayer', (sharedInstancesBag) => new RouterHooksLayer(sharedInstancesBag));
     this._addSharedContextInstance('*clipboard', (sharedInstancesBag) => new ClipboardLayer(sharedInstancesBag));
     this._addSharedContextInstance(
       '*telemetryManager',
@@ -145,8 +145,8 @@ export class LitBlock extends LitBlockBase {
     return this._getSharedContextInstance('*clipboard');
   }
 
-  public get smartBtnLayer(): SmartBtnLayer {
-    return this._getSharedContextInstance('*smartBtn');
+  public get routerLayer(): RouterHooksLayer {
+    return this._getSharedContextInstance('*routerLayer');
   }
 
   public get blocksRegistry(): Set<LitBlock> {

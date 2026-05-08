@@ -55,6 +55,7 @@ export class SmartBtn extends LitUploaderBlock {
   public override couldBeCtxOwner = true;
 
   private _controller?: SourceListController;
+  private _unregisterAfterFileAddHook?: () => void;
 
   @property({ attribute: 'dropzone', type: Boolean })
   public dropzone = true;
@@ -175,12 +176,25 @@ export class SmartBtn extends LitUploaderBlock {
 
     this.uploadCollection.observeProperties(this._throttledHandleCollectionUpdate);
     this.uploadCollection.observeCollection(this._throttledHandleCollectionUpdate);
+
+    this._unregisterAfterFileAddHook = this.routerLayer.registerAfterFileAddHook(({ historyLength }) => {
+      if (historyLength > 0) return false;
+      const currentActivity = this._sharedInstancesBag.ctx.read('*currentActivity');
+      if (currentActivity) {
+        this.modalManager?.close(currentActivity);
+      } else {
+        this.modalManager?.closeAll();
+      }
+      this._sharedInstancesBag.ctx.pub('*currentActivity', null);
+      return true;
+    });
   }
 
   public override disconnectedCallback(): void {
     if (typeof this._throttledHandleCollectionUpdate.cancel === 'function') {
       this._throttledHandleCollectionUpdate.cancel();
     }
+    this._unregisterAfterFileAddHook?.();
     super.disconnectedCallback();
   }
 

@@ -22,7 +22,7 @@ export class ClipboardLayer extends SharedInstance {
   }
 
   private openUploadList() {
-    this._sharedInstancesBag.smartBtn.shouldReturnToSmartButtonAfterFileAdd();
+    this._sharedInstancesBag.routerLayer.navigateAfterFileAdd();
   }
 
   private async _listener(event: ClipboardEvent) {

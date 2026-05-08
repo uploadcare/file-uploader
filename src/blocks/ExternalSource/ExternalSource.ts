@@ -211,7 +211,7 @@ export class ExternalSource extends LitUploaderBlock {
       });
     }
 
-    this.smartBtnLayer.showUploadListAfterFileAdd();
+    this.routerLayer.navigateAfterFileAdd();
   };
 
   private _handleCancel = (): void => {
