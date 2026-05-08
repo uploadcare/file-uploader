@@ -164,7 +164,7 @@ export class SmartBtn extends LitUploaderBlock {
       this._progress = progress;
     });
 
-    this._controller = new SourceListController({
+    this._controller = new SourceListController(this, {
       ctx: this._sharedInstancesBag.ctx,
       sharedInstancesBag: this._sharedInstancesBag,
       onSourcesChange: (sources) => {
@@ -172,7 +172,6 @@ export class SmartBtn extends LitUploaderBlock {
         this._updateSourceSplit();
       },
     });
-    this._controller.init();
 
     this.uploadCollection.observeProperties(this._throttledHandleCollectionUpdate);
     this.uploadCollection.observeCollection(this._throttledHandleCollectionUpdate);
@@ -182,7 +181,6 @@ export class SmartBtn extends LitUploaderBlock {
     if (typeof this._throttledHandleCollectionUpdate.cancel === 'function') {
       this._throttledHandleCollectionUpdate.cancel();
     }
-    this._controller?.destroy();
     super.disconnectedCallback();
   }
 

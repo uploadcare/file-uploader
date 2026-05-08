@@ -22,14 +22,13 @@ export class SourceList extends LitUploaderBlock {
   public override initCallback(): void {
     super.initCallback();
 
-    this._controller = new SourceListController({
+    this._controller = new SourceListController(this, {
       ctx: this._sharedInstancesBag.ctx,
       sharedInstancesBag: this._sharedInstancesBag,
       onSourcesChange: (sources) => {
         this._sources = sources;
       },
     });
-    this._controller.init();
   }
 
   protected override updated(changedProperties: PropertyValues<this>): void {
@@ -44,11 +43,6 @@ export class SourceList extends LitUploaderBlock {
 
   public override render() {
     return html`${this._sources.map((source) => html`<uc-source-btn role="listitem" .source=${source} data-source-id=${source.id}></uc-source-btn>`)}`;
-  }
-
-  public override disconnectedCallback(): void {
-    super.disconnectedCallback();
-    this._controller?.destroy();
   }
 }
 

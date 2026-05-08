@@ -11,7 +11,7 @@ beforeEach(() => {
   const ctxName = `test-${Math.random().toString(36).slice(2)}`;
   page.render(
     <>
-      <uc-file-uploader-regular dynamic ctx-name={ctxName}></uc-file-uploader-regular>
+      <uc-file-uploader-regular smart-button ctx-name={ctxName}></uc-file-uploader-regular>
       <uc-config qualityInsights={false} ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
     </>,
   );

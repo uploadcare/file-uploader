@@ -1,3 +1,4 @@
+import type { ReactiveController, ReactiveControllerHost } from 'lit';
 import type { SourceButtonConfig } from '../../blocks/SourceBtn/SourceBtn';
 import type { PubSub } from '../../lit/PubSubCompat';
 import type { SharedState } from '../../lit/SharedState';
@@ -12,50 +13,36 @@ export type SourceListControllerOptions = {
   onSourcesChange: (sources: SourceButtonConfig[]) => void;
 };
 
-/**
- * Controller that manages source list business logic.
- * Handles source list configuration, plugin integration, and source expansion.
- */
-export class SourceListController {
+export class SourceListController implements ReactiveController {
   private _rawSourceList: string[] = [];
-  private _sources: SourceButtonConfig[] = [];
   private _unsubscribePlugins?: () => void;
   private _unsubscribeConfig?: () => void;
   private _ctx: PubSub<SharedState>;
   private _sharedInstancesBag: SharedInstancesBag;
   private _onSourcesChange: (sources: SourceButtonConfig[]) => void;
 
-  public constructor(options: SourceListControllerOptions) {
+  public constructor(host: ReactiveControllerHost, options: SourceListControllerOptions) {
     this._ctx = options.ctx;
     this._sharedInstancesBag = options.sharedInstancesBag;
     this._onSourcesChange = options.onSourcesChange;
+    host.addController(this);
   }
 
-  /**
-   * Initialize the controller and start listening to config and plugin changes
-   */
-  public init(): void {
-    // Subscribe to sourceList config changes
+  public hostConnected(): void {
     this._unsubscribeConfig = this._ctx.sub(sharedConfigKey('sourceList'), (val: string) => {
       this._rawSourceList = stringToArray(val);
       this._updateSources();
     });
 
-    // Subscribe to plugin changes
     const pluginManager = this._sharedInstancesBag.pluginManager;
-
     if (pluginManager?.onPluginsChange) {
       this._unsubscribePlugins = pluginManager.onPluginsChange(() => this._updateSources());
     }
 
-    // Perform initial update
     this._updateSources();
   }
 
-  /**
-   * Clean up subscriptions and resources
-   */
-  public destroy(): void {
+  public hostDisconnected(): void {
     this._unsubscribePlugins?.();
     this._unsubscribePlugins = undefined;
 
@@ -63,16 +50,6 @@ export class SourceListController {
     this._unsubscribeConfig = undefined;
   }
 
-  /**
-   * Get the current list of sources
-   */
-  public getSources(): SourceButtonConfig[] {
-    return this._sources;
-  }
-
-  /**
-   * Update sources based on the current raw source list and available plugins
-   */
   private _updateSources(): void {
     const pluginManager = this._sharedInstancesBag.pluginManager;
     const pluginSources = pluginManager?.snapshot().sources ?? [];
@@ -101,13 +78,9 @@ export class SourceListController {
       }
     });
 
-    this._sources = sources;
-    this._onSourcesChange(this._sources);
+    this._onSourcesChange(sources);
   }
 
-  /**
-   * Expand a source name into one or more source IDs
-   */
   private _expandSource(srcName: string, pluginSourceById: Map<string, PluginSourceRegistration>): string[] {
     const pluginSource = pluginSourceById.get(srcName);
     if (pluginSource?.expand) {
@@ -117,9 +90,6 @@ export class SourceListController {
     return [srcName];
   }
 
-  /**
-   * Convert a plugin source registration into a source button config
-   */
   private _makePluginSourceConfig(source: PluginSourceRegistration): SourceButtonConfig {
     return {
       id: source.id,
