@@ -292,9 +292,9 @@
 
     const VIEW_MODES = [
       { value: 'auto', label: 'auto', desc: 'Inline up to 3 sources, dropdown for more' },
-      { value: 'allwrap', label: 'allwrap', desc: 'All sources behind dropdown arrow' },
-      { value: 'nowrap', label: 'nowrap', desc: 'All sources shown inline' },
-      { value: 'collapse', label: 'collapse', desc: 'Single paperclip button, no primary action' },
+      { value: 'menu', label: 'menu', desc: 'All sources behind dropdown arrow' },
+      { value: 'toolbar', label: 'toolbar', desc: 'All sources shown inline' },
+      { value: 'compact', label: 'compact', desc: 'Single paperclip button, no primary action' },
     ];
 
     const writeCsv = (arr) => arr.join(', ');
@@ -416,7 +416,7 @@
                 <h2>Controls</h2>
 
                 <div class="group">
-                  <div class="group-label">smartButtonViewMode</div>
+                  <div class="group-label">smart Button View Mode</div>
                   <div class="radio-group">
                     ${this._renderViewModeControls()}
                   </div>

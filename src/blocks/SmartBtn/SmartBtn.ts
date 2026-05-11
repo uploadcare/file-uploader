@@ -21,7 +21,7 @@ import '../DropDown/DropDown';
 import '../FileItem/FileActionButton';
 import './NoWrapModeSmartBtn';
 
-export type SmartButtonMode = 'auto' | 'allwrap' | 'nowrap' | 'collapse';
+export type SmartButtonMode = 'auto' | 'menu' | 'toolbar' | 'compact';
 
 type SourceSplit = {
   main: SourceButtonConfig | null;
@@ -29,7 +29,7 @@ type SourceSplit = {
 };
 
 const adjustSourceBasedOnMode = (sources: SourceButtonConfig[], mode: SmartButtonMode): SourceSplit => {
-  if (mode === 'collapse' || sources.length === 0) {
+  if (mode === 'compact' || sources.length === 0) {
     return {
       main: null,
       remain: sources,
@@ -42,9 +42,9 @@ const adjustSourceBasedOnMode = (sources: SourceButtonConfig[], mode: SmartButto
   };
 };
 
-const iconsBasedOnMode: Record<Exclude<SmartButtonMode, 'nowrap'>, string> = {
-  collapse: 'paperclip',
-  allwrap: 'arrow-dropdown',
+const iconsBasedOnMode: Record<Exclude<SmartButtonMode, 'toolbar'>, string> = {
+  compact: 'paperclip',
+  menu: 'arrow-dropdown',
   auto: 'arrow-dropdown',
 };
 
@@ -54,7 +54,6 @@ export class SmartBtn extends LitUploaderBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-smart-btn', 'uc-wgt-common'];
   public override couldBeCtxOwner = true;
 
-  private _controller?: SourceListController;
   private _unregisterAfterFileAddHook?: () => void;
 
   @property({ attribute: 'dropzone', type: Boolean })
@@ -95,7 +94,7 @@ export class SmartBtn extends LitUploaderBlock {
   }
 
   private get isCollapsedMode() {
-    return this._mode === 'collapse';
+    return this._mode === 'compact';
   }
 
   private get shouldShowPrimaryAction(): boolean {
@@ -107,7 +106,7 @@ export class SmartBtn extends LitUploaderBlock {
       this.isIdle &&
       !this.hasCollectionEntries &&
       this._sources.length > 1 &&
-      (this._mode === 'nowrap' || (this._mode === 'auto' && this._sources.length <= AUTO_MODE_INLINE_THRESHOLD))
+      (this._mode === 'toolbar' || (this._mode === 'auto' && this._sources.length <= AUTO_MODE_INLINE_THRESHOLD))
     );
   }
 
@@ -165,7 +164,7 @@ export class SmartBtn extends LitUploaderBlock {
       this._progress = progress;
     });
 
-    this._controller = new SourceListController(this, {
+    new SourceListController(this, {
       ctx: this._sharedInstancesBag.ctx,
       sharedInstancesBag: this._sharedInstancesBag,
       onSourcesChange: (sources) => {
@@ -214,7 +213,7 @@ export class SmartBtn extends LitUploaderBlock {
   }
 
   private _getDropdownIconName(): string {
-    return iconsBasedOnMode[this._mode as Exclude<SmartButtonMode, 'nowrap'>] ?? 'arrow-dropdown';
+    return iconsBasedOnMode[this._mode as Exclude<SmartButtonMode, 'toolbar'>] ?? 'arrow-dropdown';
   }
 
   private _clearAllEntries() {

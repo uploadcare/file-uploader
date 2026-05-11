@@ -114,7 +114,7 @@ const asFilesViewMode = (value: unknown): FilesViewMode => {
 
 const asSmartButtonViewMode = (value: unknown): SmartButtonMode => {
   const strValue = asString(value);
-  if (['auto', 'allwrap', 'nowrap', 'collapse'].includes(strValue)) {
+  if (['auto', 'menu', 'toolbar', 'compact'].includes(strValue)) {
     return strValue as SmartButtonMode;
   }
   throw new Error(`Invalid value: "${strValue}"`);

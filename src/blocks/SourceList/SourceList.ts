@@ -8,8 +8,6 @@ import '../SourceBtn/SourceBtn';
 import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
 
 export class SourceList extends LitUploaderBlock {
-  private _controller?: SourceListController;
-
   @state()
   private _sources: SourceButtonConfig[] = [];
 
@@ -22,7 +20,7 @@ export class SourceList extends LitUploaderBlock {
   public override initCallback(): void {
     super.initCallback();
 
-    this._controller = new SourceListController(this, {
+    new SourceListController(this, {
       ctx: this._sharedInstancesBag.ctx,
       sharedInstancesBag: this._sharedInstancesBag,
       onSourcesChange: (sources) => {
