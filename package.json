@@ -6,7 +6,8 @@
   "type": "module",
   "workspaces": [
     "packages/file-uploader",
-    "packages/adaptive-image"
+    "packages/adaptive-image",
+    "packages/cloud-image-editor"
   ],
   "repository": {
     "type": "https",

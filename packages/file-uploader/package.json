@@ -56,6 +56,10 @@
     },
     "./abstract/loadFileUploaderFrom.js": "./dist/abstract/loadFileUploaderFrom.js",
     "./env": "./dist/env.js",
+    "./solutions/cloud-image-editor": {
+      "types": "./dist/solutions/cloud-image-editor/index.d.ts",
+      "default": "./dist/solutions/cloud-image-editor/index.js"
+    },
     "./web/*": "./web/*",
     "./types/jsx": "./types/jsx.d.ts",
     "./types/*": "./types/*",
