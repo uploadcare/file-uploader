@@ -190,10 +190,6 @@
     {
       "path": "web/uc-file-uploader-minimal.min.js",
       "limit": "100 KB"
-    },
-    {
-      "path": "web/uc-img.min.js",
-      "limit": "10 KB"
     }
   ]
 }

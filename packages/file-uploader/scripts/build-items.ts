@@ -90,13 +90,4 @@ export const buildItems: BuildItem[] = [
     bundleExternalDependencies: true,
     mangleProps: true,
   },
-  // uc-img
-  {
-    entry: { 'uc-img.min': srcPath('./solutions/adaptive-image/index.ts') },
-    outDir: outPath('./web'),
-    format: 'esm',
-    minify: true,
-    bundleExternalDependencies: true,
-    mangleProps: true,
-  },
 ];

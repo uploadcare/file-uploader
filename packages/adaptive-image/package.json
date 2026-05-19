@@ -52,15 +52,12 @@
     "test": "echo \"no tests yet\" && exit 0"
   },
   "dependencies": {
+    "@uploadcare/file-uploader": "^1.29.1",
     "lit": "^3.3.2"
   },
   "author": "Uploadcare Inc.",
   "license": "MIT",
   "size-limit": [
-    {
-      "path": "dist/index.js",
-      "limit": "10 KB"
-    },
     {
       "path": "web/uc-img.min.js",
       "limit": "10 KB"

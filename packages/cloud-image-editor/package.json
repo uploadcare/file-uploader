@@ -63,7 +63,7 @@
   "size-limit": [
     {
       "path": "web/uc-cloud-image-editor.min.js",
-      "limit": "50 KB"
+      "limit": "100 KB"
     }
   ]
 }

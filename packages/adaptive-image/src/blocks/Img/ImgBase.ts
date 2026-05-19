@@ -1,7 +1,11 @@
-import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../utils/cdn-utils.js';
-import { stringToArray } from '../../utils/stringToArray';
-import { applyTemplateData } from '../../utils/template-utils';
-import { uniqueArray } from '../../utils/uniqueArray';
+import {
+  applyTemplateData,
+  createCdnUrl,
+  createCdnUrlModifiers,
+  createOriginalUrl,
+  stringToArray,
+  uniqueArray,
+} from '@uploadcare/file-uploader/internal';
 import {
   DEV_MODE,
   HI_RES_K,

@@ -40,7 +40,13 @@ await build({
   },
 });
 
-// web: standalone ESM bundle, all deps inlined, minified, mangled
+// web: standalone ESM bundle, all deps inlined, minified, mangled.
+// Alias `@uploadcare/file-uploader/internal` to its SOURCE file so esbuild
+// sees the granular module graph (per-export source files) instead of the
+// pre-bundled dist/internal.js -- tree-shaking is then per-module and the
+// standalone bundle stays close to its 10 KB budget.
+const FILE_UPLOADER_INTERNAL_SRC = resolve(ROOT, '../file-uploader/src/internal.ts');
+
 await build({
   tsconfig: TSCONFIG,
   entry: { 'uc-img.min': resolve(ROOT, 'src/index.ts') },
@@ -59,5 +65,9 @@ await build({
     options.platform = 'browser';
     options.legalComments = 'linked';
     options.mangleProps = /^_/;
+    options.alias = {
+      ...(options.alias ?? {}),
+      '@uploadcare/file-uploader/internal': FILE_UPLOADER_INTERNAL_SRC,
+    };
   },
 });

@@ -40,7 +40,12 @@ await build({
   },
 });
 
-// web: standalone bundle, all deps inlined, minified, mangled
+// web: standalone bundle, all deps inlined, minified, mangled.
+// Alias `@uploadcare/file-uploader/internal` to its SOURCE file so esbuild
+// can tree-shake at the module level instead of inlining all of
+// file-uploader's pre-bundled dist/internal.js.
+const FILE_UPLOADER_INTERNAL_SRC = resolve(ROOT, '../file-uploader/src/internal.ts');
+
 await build({
   tsconfig: TSCONFIG,
   entry: { 'uc-cloud-image-editor.min': resolve(ROOT, 'src/index.ts') },
@@ -59,5 +64,9 @@ await build({
     options.platform = 'browser';
     options.legalComments = 'linked';
     options.mangleProps = /^_/;
+    options.alias = {
+      ...(options.alias ?? {}),
+      '@uploadcare/file-uploader/internal': FILE_UPLOADER_INTERNAL_SRC,
+    };
   },
 });
