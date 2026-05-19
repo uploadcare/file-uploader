@@ -1,0 +1,80 @@
+:host {
+  display: block;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: var(--ai-muted);
+  border-radius: var(--ai-radius);
+  padding: 5px;
+  min-height: 42px;
+}
+
+.icon-btn {
+  flex: 0 0 var(--ai-button-size);
+  width: var(--ai-button-size);
+  height: var(--ai-button-size);
+  display: grid;
+  place-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: calc(var(--ai-radius) * 0.7);
+  cursor: pointer;
+  color: var(--ai-muted-foreground);
+  transition:
+    background var(--ai-transition),
+    color var(--ai-transition);
+  padding: 0;
+}
+
+.icon-btn:hover,
+.icon-btn[aria-expanded="true"] {
+  background: var(--ai-secondary-hover);
+  color: var(--ai-foreground);
+}
+
+.icon-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.icon-btn--primary {
+  background: var(--ai-primary);
+  color: var(--ai-primary-foreground);
+}
+
+.icon-btn--primary:hover {
+  background: var(--ai-primary-hover);
+  color: var(--ai-primary-foreground);
+}
+
+.icon-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.divider {
+  flex: 0 0 1px;
+  align-self: stretch;
+  margin: 8px 5px;
+  background: var(--ai-border);
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  font-size: var(--ai-font-size);
+  color: var(--ai-foreground);
+  outline: none;
+  padding: 0 8px;
+  height: 30px;
+}
+
+.input::placeholder {
+  color: var(--ai-muted-foreground);
+}

@@ -1,0 +1,84 @@
+:host {
+  display: block;
+  width: 100%;
+  container-type: inline-size;
+}
+
+.canvas {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--ai-radius);
+  background:
+    repeating-conic-gradient(var(--ai-muted) 0% 25%, transparent 0% 50%) 0 0 / 24px 24px,
+    var(--ai-muted);
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--ai-border);
+}
+
+.canvas img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.canvas[data-state="empty"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 30% 30%, color-mix(in oklch, var(--ai-primary) 14%, transparent), transparent 50%),
+    radial-gradient(circle at 70% 70%, color-mix(in oklch, var(--ai-primary) 10%, transparent), transparent 55%);
+  pointer-events: none;
+}
+
+.empty-hint {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: var(--ai-muted-foreground);
+  font-size: 13px;
+  z-index: 1;
+}
+
+.empty-hint svg {
+  width: 32px;
+  height: 32px;
+  opacity: 0.5;
+}
+
+.busy-overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: color-mix(in oklch, var(--ai-background) 70%, transparent);
+  backdrop-filter: blur(2px);
+  z-index: 2;
+}
+
+.spinner {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2.5px solid color-mix(in oklch, var(--ai-primary) 25%, transparent);
+  border-top-color: var(--ai-primary);
+  animation: ai-spin 0.8s linear infinite;
+}
+
+@keyframes ai-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@container (max-width: 380px) {
+  .canvas {
+    aspect-ratio: 4 / 5;
+  }
+}

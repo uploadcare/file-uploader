@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI Enhancer — File Uploader Plugin</title>
+  <style>
+    @media (prefers-color-scheme: dark) {
+      body { background-color: #121213; color: #fff; }
+    }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      padding: 24px;
+      max-width: 720px;
+      margin: 0 auto;
+    }
+    h1 { font-weight: 500; }
+    p { color: light-dark(#4b5563, #9ca3af); }
+  </style>
+</head>
+<body>
+  <h1>AI Enhancer — File Uploader Plugin</h1>
+  <p>Click <strong>Generate image</strong> as an upload source, or click the AI icon next to an uploaded image to edit it.</p>
+
+  <script type="module">
+    import '@/solutions/file-uploader/regular/index.css';
+    import * as UC from '@/index.js';
+    import { AiEnhancerPlugin } from '@/ai-enhancer/index';
+
+    UC.defineComponents(UC);
+
+    const config = document.querySelector('uc-config');
+    config.plugins = [AiEnhancerPlugin];
+  </script>
+
+  <uc-file-uploader-regular ctx-name="my-uploader"></uc-file-uploader-regular>
+  <uc-config
+    ctx-name="my-uploader"
+    pubkey="demopublickey"
+    debug
+    test-mode
+    source-list="local, url, camera, ai-generate"
+  ></uc-config>
+  <uc-upload-ctx-provider ctx-name="my-uploader"></uc-upload-ctx-provider>
+</body>
+</html>

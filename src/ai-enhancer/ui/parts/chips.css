@@ -1,0 +1,52 @@
+:host {
+  display: block;
+}
+
+.row {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 5px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--ai-border) transparent;
+}
+
+.row::-webkit-scrollbar {
+  height: 4px;
+}
+
+.row::-webkit-scrollbar-thumb {
+  background: var(--ai-border);
+  border-radius: 4px;
+}
+
+.chip {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  height: var(--ai-button-size);
+  padding: 0 12px;
+  background: var(--ai-secondary);
+  color: var(--ai-secondary-foreground);
+  border: 0;
+  border-radius: calc(var(--ai-radius) * 0.7);
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background var(--ai-transition);
+  white-space: nowrap;
+}
+
+.chip:hover {
+  background: var(--ai-secondary-hover);
+}
+
+.chip[aria-pressed="true"] {
+  background: var(--ai-primary);
+  color: var(--ai-primary-foreground);
+}
+
+.chip:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

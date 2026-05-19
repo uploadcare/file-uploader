@@ -1,0 +1,99 @@
+:host {
+  /*
+   * Aliases over --uc-* (file uploader tokens) with light-mode fallbacks.
+   * When mounted inside the file uploader theme, the parent already switches
+   * --uc-* values for dark mode and those flow through inheritance. When
+   * standalone, the light-dark() fallback handles prefers-color-scheme.
+   * These tokens also inherit into the child parts' shadow roots — define
+   * once here, reference everywhere.
+   */
+  --ai-foreground: var(--uc-foreground, light-dark(oklch(21% 0.034 264.665), oklch(98.5% 0 0)));
+  --ai-background: var(--uc-background, light-dark(oklch(100% 0 0), oklch(21% 0.034 264.665)));
+  --ai-muted: var(--uc-muted, light-dark(oklch(96.7% 0.001 286.375), oklch(27.4% 0.006 286.033)));
+  --ai-muted-foreground: var(--uc-muted-foreground, light-dark(oklch(55.2% 0.014 285.938), oklch(70.5% 0.015 286.067)));
+  --ai-primary: var(--uc-primary, light-dark(oklch(47% 0.22 264), oklch(69% 0.18 258)));
+  --ai-primary-hover: var(--uc-primary-hover, light-dark(oklch(42% 0.24 264), oklch(62% 0.2 258)));
+  --ai-primary-foreground: var(--uc-primary-foreground, oklch(100% 0 0));
+  --ai-secondary: var(--uc-secondary, light-dark(oklch(96.7% 0.001 286.375), oklch(27.4% 0.006 286.033)));
+  --ai-secondary-hover: var(--uc-secondary-hover, light-dark(oklch(92% 0.004 286.32), oklch(34% 0.008 286)));
+  --ai-secondary-foreground: var(--uc-secondary-foreground, light-dark(oklch(21% 0.034 264.665), oklch(98.5% 0 0)));
+  --ai-border: var(--uc-border, light-dark(oklch(92% 0.004 286.32), oklch(34% 0.008 286)));
+  --ai-destructive: var(--uc-destructive, oklch(57.7% 0.245 27.325));
+  --ai-radius: var(--uc-radius, 8px);
+  --ai-padding: var(--uc-padding, 10px);
+  --ai-button-size: var(--uc-button-size, 32px);
+  --ai-font-family: var(--uc-font-family, system-ui, -apple-system, sans-serif);
+  --ai-font-size: var(--uc-font-size, 14px);
+  --ai-transition: var(--uc-transition, 0.2s ease);
+  --ai-dialog-width: var(--uc-dialog-width, 583px);
+
+  display: block;
+  width: 100%;
+  max-width: var(--ai-dialog-width);
+  font-family: var(--ai-font-family);
+  font-size: var(--ai-font-size);
+  color: var(--ai-foreground);
+  color-scheme: light dark;
+  container-type: inline-size;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+.shell {
+  display: flex;
+  flex-direction: column;
+  background: var(--ai-background);
+  border: 1px solid var(--ai-border);
+  border-radius: var(--ai-radius);
+  overflow: hidden;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ai-padding);
+  padding: var(--ai-padding);
+}
+
+.bottom {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.history-wrap {
+  position: relative;
+}
+
+/*
+ * Native Popover API + CSS Anchor Positioning. Anchor names are tree-scoped,
+ * so both the anchor declaration and the position-anchor reference must live
+ * here in UcAiEditor's CSS — the popover, when promoted to the top layer,
+ * still resolves the anchor against this scope.
+ */
+uc-ai-prompt-row {
+  anchor-name: --ai-history-anchor;
+}
+
+uc-ai-history-popover {
+  /* UA popover styles set top/right/bottom/left to 0; reset to auto so the
+     anchor-positioned bottom/left actually size the popover to its content. */
+  position-anchor: --ai-history-anchor;
+  inset: auto;
+  bottom: anchor(top);
+  left: anchor(left);
+  margin: 0 0 6px;
+}
+
+.error-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: color-mix(in oklch, var(--ai-destructive) 12%, transparent);
+  color: var(--ai-destructive);
+  border-radius: calc(var(--ai-radius) * 0.7);
+  font-size: 13px;
+}

@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI Enhancer — Standalone</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+    }
+    body {
+      margin: 0;
+      padding: 24px;
+      font-family: system-ui, -apple-system, sans-serif;
+      background: light-dark(#f6f7f9, #1b1b1f);
+      color: light-dark(#111, #f5f5f5);
+      min-height: 100vh;
+    }
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      max-width: 640px;
+      margin: 0 auto 20px;
+      padding: 12px;
+      background: light-dark(#fff, #25262b);
+      border-radius: 10px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+    .toolbar label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+    }
+    .toolbar select,
+    .toolbar input {
+      padding: 4px 8px;
+      font: inherit;
+      font-size: 13px;
+      border: 1px solid light-dark(#d1d5db, #3a3b41);
+      border-radius: 6px;
+      background: transparent;
+      color: inherit;
+    }
+    .stage {
+      max-width: 583px;
+      margin: 0 auto;
+    }
+    .log {
+      max-width: 640px;
+      margin: 20px auto 0;
+      padding: 10px 14px;
+      background: light-dark(#fff, #25262b);
+      border-radius: 10px;
+      font-family: ui-monospace, Menlo, monospace;
+      font-size: 12px;
+      max-height: 140px;
+      overflow-y: auto;
+    }
+    .log p { margin: 2px 0; }
+    h1 {
+      text-align: center;
+      font-weight: 500;
+      margin: 0 0 16px;
+    }
+    .brand-overrides uc-ai-editor {
+      --uc-primary: oklch(0.6 0.18 25);
+      --uc-radius: 14px;
+    }
+  </style>
+</head>
+<body>
+  <h1>AI Enhancer — Standalone</h1>
+
+  <div class="toolbar">
+    <label>
+      Mode
+      <select id="mode">
+        <option value="generate">generate</option>
+        <option value="edit">edit</option>
+      </select>
+    </label>
+    <label>
+      Capability
+      <select id="capability">
+        <option value="generate">generate</option>
+        <option value="object-remove">object-remove</option>
+        <option value="bg-replace">bg-replace</option>
+        <option value="outpaint">outpaint</option>
+      </select>
+    </label>
+    <label>
+      Source URL (edit mode)
+      <input id="src" type="url" size="40" placeholder="https://picsum.photos/seed/cat/800/600" />
+    </label>
+    <label>
+      <input id="branded" type="checkbox" /> Brand-themed
+    </label>
+  </div>
+
+  <div class="stage" id="stage">
+    <uc-ai-editor mode="generate"></uc-ai-editor>
+  </div>
+
+  <div class="log" id="log"></div>
+
+  <script type="module">
+    import '@/ai-enhancer/index';
+
+    const editor = document.querySelector('uc-ai-editor');
+    const log = document.getElementById('log');
+    const append = (msg) => {
+      const p = document.createElement('p');
+      p.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+      log.prepend(p);
+    };
+
+    document.getElementById('mode').addEventListener('change', (e) => {
+      editor.mode = e.target.value;
+      append(`mode → ${e.target.value}`);
+    });
+    document.getElementById('capability').addEventListener('change', (e) => {
+      editor.capability = e.target.value;
+      append(`capability → ${e.target.value}`);
+    });
+    document.getElementById('src').addEventListener('change', (e) => {
+      editor.src = e.target.value || null;
+      append(`src → ${e.target.value || '(cleared)'}`);
+    });
+    document.getElementById('branded').addEventListener('change', (e) => {
+      document.getElementById('stage').classList.toggle('brand-overrides', e.target.checked);
+      append(`brand-themed: ${e.target.checked}`);
+    });
+
+    editor.addEventListener('uc:apply', (e) => {
+      append(`uc:apply: ${JSON.stringify(e.detail)}`);
+    });
+    editor.addEventListener('uc:cancel', () => append('uc:cancel'));
+    editor.addEventListener('uc:error', (e) => append(`uc:error: ${e.detail.error?.message ?? e.detail.error}`));
+  </script>
+</body>
+</html>

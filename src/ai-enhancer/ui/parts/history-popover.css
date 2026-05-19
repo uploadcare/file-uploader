@@ -1,0 +1,73 @@
+:host {
+  /* Reset UA popover styles. Positioning is set from the parent via
+     position-anchor (so the anchor-name in UcAiEditor's tree-scope resolves). */
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  overflow: visible;
+  width: min(300px, 90vw);
+}
+
+:host(:not(:popover-open)) {
+  display: none;
+}
+
+.pop {
+  max-height: 260px;
+  overflow-y: auto;
+  background: var(--ai-background);
+  border: 1px solid var(--ai-border);
+  border-radius: var(--ai-radius);
+  box-shadow: 0 10px 30px color-mix(in oklch, var(--ai-foreground) 18%, transparent);
+  padding: 5px;
+}
+
+.empty {
+  padding: 12px;
+  color: var(--ai-muted-foreground);
+  text-align: center;
+  font-size: 13px;
+}
+
+.item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px;
+  background: transparent;
+  border: 0;
+  border-radius: calc(var(--ai-radius) * 0.7);
+  cursor: pointer;
+  color: var(--ai-foreground);
+  font: inherit;
+  text-align: left;
+}
+
+.item:hover {
+  background: var(--ai-muted);
+}
+
+.thumb {
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background: var(--ai-muted);
+  object-fit: cover;
+  border: 1px solid var(--ai-border);
+}
+
+.text {
+  flex: 1;
+  font-size: 13px;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
