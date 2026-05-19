@@ -1,19 +1,8 @@
 {
+  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "target": "esnext",
-    "module": "esnext",
-    "moduleResolution": "bundler",
-    "lib": ["esnext", "dom", "dom.iterable"],
-    "strict": true,
-    "skipLibCheck": true,
-    "noEmit": true,
-    "esModuleInterop": true,
-    "isolatedModules": true,
     "verbatimModuleSyntax": true,
-    "experimentalDecorators": true,
-    "useDefineForClassFields": false,
-    "allowImportingTsExtensions": false,
-    "resolveJsonModule": true
+    "allowImportingTsExtensions": false
   },
   "include": ["src/**/*", "scripts/**/*"]
 }

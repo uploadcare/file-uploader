@@ -3,7 +3,7 @@ import { configs as litConfigs } from 'eslint-plugin-lit';
 import { configs as wcConfigs } from 'eslint-plugin-wc';
 import tseslint from 'typescript-eslint';
 
-const SRC_GLOB = 'src/**/*.ts';
+const SRC_GLOB = 'packages/*/src/**/*.ts';
 
 const BASE_CLASSES = [
   'LitElement',
@@ -18,6 +18,18 @@ const BASE_CLASSES = [
 ];
 
 export default defineConfig([
+  {
+    ignores: [
+      '**/dist/**',
+      '**/web/**',
+      '**/node_modules/**',
+      '**/tests/__coverage__/**',
+      '**/.tsup/**',
+      '**/.nx/**',
+      '**/.claude/**',
+      '**/.git/**',
+    ],
+  },
   {
     ...litConfigs['flat/recommended'],
     files: [SRC_GLOB],
