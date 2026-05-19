@@ -21,6 +21,7 @@
     "build": "lerna run build --stream",
     "test": "lerna run test --stream",
     "lint": "lerna run lint --stream",
+    "tsc": "lerna run tsc --stream",
     "format": "biome check --write",
     "prepare": "husky install",
     "playwright:install": "lerna run playwright:install --stream",
