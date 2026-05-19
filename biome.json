@@ -69,7 +69,7 @@
       }
     },
     {
-      "includes": ["**/*.test.*", "**/*.spec.*", "**/*.e2e.test.*", "tests/**/*"],
+      "includes": ["**/*.test.*", "**/*.spec.*", "**/*.e2e.test.*", "**/tests/**/*"],
       "linter": {
         "rules": {
           "style": {
@@ -82,7 +82,7 @@
       }
     },
     {
-      "includes": ["demo/**/*.html"],
+      "includes": ["**/demo/**/*.html"],
       "linter": {
         "rules": {
           "style": {

@@ -1,218 +1,33 @@
 {
-  "name": "@uploadcare/file-uploader",
-  "version": "1.29.1",
-  "description": "Building blocks for Uploadcare products integration",
-  "keywords": [
-    "web components",
-    "uploadcare",
-    "lighter",
-    "file uploader",
-    "adaptive image",
-    "image optimization",
-    "image editing",
-    "image size",
-    "cloud image editor",
-    "symbiote.js",
-    "upload api client",
-    "building blocks",
-    "blocks",
-    "lr-blocks",
-    "uc-blocks",
-    "widget",
-    "integrations",
-    "frontend",
-    "typescript",
-    "smart cdn",
-    "cloud file platform",
-    "transformation api",
-    "webp",
-    "avif",
-    "custom elements",
-    "shadow dom",
-    "shadow root",
-    "css context properties",
-    "meta applications",
-    "MIT"
-  ],
+  "name": "@uploadcare/file-uploader-monorepo",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Monorepo for @uploadcare/file-uploader and related packages",
   "type": "module",
-  "sideEffects": [
-    "*.css"
+  "workspaces": [
+    "packages/file-uploader"
   ],
-  "module": "./dist/index.js",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "node": "./dist/index.ssr.js",
-      "browser": "./dist/index.js",
-      "default": "./dist/index.js"
-    },
-    "./index.css": {
-      "types": "./types/css.d.ts",
-      "default": "./dist/index.css"
-    },
-    "./index.layered.css": {
-      "types": "./types/css.d.ts",
-      "default": "./dist/index.layered.css"
-    },
-    "./abstract/loadFileUploaderFrom.js": "./dist/abstract/loadFileUploaderFrom.js",
-    "./env": "./dist/env.js",
-    "./web/*": "./web/*",
-    "./types/jsx": "./types/jsx.d.ts",
-    "./types/*": "./types/*",
-    "./locales/*": "./dist/locales/*"
-  },
   "repository": {
     "type": "https",
     "url": "https://github.com/uploadcare/file-uploader"
   },
   "homepage": "https://uploadcare.com/",
-  "files": [
-    "{dist,web,types}/**/*.{js,css,d.ts,d.ts.map,txt}",
-    "README.md",
-    "LICENSE"
-  ],
-  "publishConfig": {
-    "access": "public"
-  },
+  "license": "MIT",
+  "author": "Uploadcare Inc.",
   "scripts": {
-    "dev": "vite dev",
-    "test": "npm run test:types && npm run test:specs && npm run test:specs && npm run test:locales && npm run test:e2e",
-    "test:types": "tsd -t ./dist/index.d.ts -f ./types/test/",
-    "test:attw": "attw --pack . --profile esm-only",
-    "test:publint": "publint",
-    "test:specs": "vitest run --project specs",
-    "test:e2e": "vitest run --coverage --project e2e",
-    "test:e2e:dev": "vitest --coverage --project e2e --browser.headless=false",
-    "test:locales": "tsx ./scripts/test-locales.ts",
-    "release": "shipjs prepare",
-    "build:lib": "npm run clean:web && npm run clean:dist && tsx ./scripts/build.ts",
-    "build:ssr-stubs": "tsx ./scripts/build-ssr-stubs.ts",
-    "build:jsx:types": "tsx ./scripts/build-jsx-types.ts",
-    "build:svg-sprites": "tsx ./scripts/build-svg-sprite.ts",
-    "build": "run-s build:svg-sprites build:lib build:ssr-stubs build:jsx:types && npm run test:attw && npm run test:publint && npm run lint:size",
-    "tsc": "run-s tsc:app tsc:test tsc:e2e tsc:node",
-    "tsc:app": "tsc --project tsconfig.app.json",
-    "tsc:test": "tsc --project tsconfig.test.json",
-    "tsc:e2e": "tsc --project tsconfig.e2e-test.json",
-    "tsc:node": "tsc --project tsconfig.node.json",
-    "lint:size": "size-limit",
-    "lint:js": "biome lint && eslint .",
-    "lint:js:fix": "biome lint --write",
-    "lint:css": "stylelint './**/*.css'",
-    "lint:css:fix": "stylelint './**/*.css' --fix",
-    "lint:lit-analyzer": "lit-analyzer './src/**/*.ts' --strict",
-    "lint": "run-s lint:js lint:css lint:lit-analyzer",
-    "clean:web": "rimraf './web/'",
-    "clean:dist": "rimraf './dist/'",
-    "clean": "run-s clean:*",
+    "dev": "lerna run dev --stream",
+    "build": "lerna run build --stream",
+    "test": "lerna run test --stream",
+    "lint": "lerna run lint --stream",
     "format": "biome check --write",
     "prepare": "husky install",
-    "playwright:install": "npx playwright install && npx playwright install --with-deps chromium"
+    "playwright:install": "lerna run playwright:install --stream"
   },
   "devDependencies": {
-    "@arethetypeswrong/cli": "^0.18.2",
     "@biomejs/biome": "2.4.6",
-    "@biomejs/js-api": "^4.0.0",
-    "@biomejs/wasm-nodejs": "^2.4.6",
-    "@csstools/postcss-cascade-layers": "^6.0.0",
-    "@happy-dom/global-registrator": "^20.8.3",
-    "@size-limit/esbuild-why": "^12.0.1",
-    "@size-limit/preset-small-lib": "^12.0.1",
-    "@total-typescript/ts-reset": "^0.6.1",
-    "@types/node": "^25",
-    "@types/react": "^18.0.0",
-    "@types/svg-sprite": "^0.0.39",
-    "@vitest/browser": "^4.0.18",
-    "@vitest/browser-playwright": "^4.0.18",
-    "@vitest/coverage-v8": "^4.0.18",
-    "esbuild-minify-templates": "^0.13.1",
-    "eslint": "^10.0.3",
-    "eslint-plugin-lit": "^2.2.1",
-    "eslint-plugin-wc": "^3.1.0",
     "husky": "^9.1.7",
-    "jiti": "^2.6.1",
+    "lerna": "^9.0.3",
     "lint-staged": "^16.3.3",
-    "lit-analyzer": "^2.0.3",
-    "node-watch": "^0.7.4",
-    "npm-run-all": "^4.1.5",
-    "playwright": "^1.58.2",
-    "postcss": "^8.5.8",
-    "publint": "^0.3.18",
-    "render-jsx": "^0.2.4",
-    "rimraf": "^6.1.3",
-    "shipjs": "^0.28.2",
-    "size-limit": "^12.0.1",
-    "stylelint": "^17.4.0",
-    "stylelint-config-standard": "^40.0.0",
-    "stylelint-declaration-block-no-ignored-properties": "^3.0.0",
-    "stylelint-order": "^8.0.0",
-    "svg-sprite": "^2.0.4",
-    "ts-lit-plugin": "^2.0.2",
-    "tsd": "^0.33.0",
-    "tsup": "^8.5.1",
-    "tsx": "^4.21.0",
-    "typescript": "^5.9.3",
-    "typescript-eslint": "^8.57.0",
-    "vite": "8.0.0-beta.0",
-    "vitest": "^4.0.18",
-    "vitest-browser-lit": "^1.0.1"
-  },
-  "author": "Uploadcare Inc.",
-  "license": "MIT",
-  "dependencies": {
-    "@lit/context": "^1.1.6",
-    "@uploadcare/cname-prefix": "^6.18.4",
-    "@uploadcare/image-shrink": "^6.18.4",
-    "@uploadcare/quality-insights": "^6.18.4",
-    "@uploadcare/upload-client": "^6.18.4",
-    "keyux": "^0.11.3",
-    "lit": "^3.3.2",
-    "nanostores": "^1.1.1"
-  },
-  "size-limit": [
-    {
-      "path": "dist/index.js",
-      "limit": "100 KB"
-    },
-    {
-      "path": "dist/env.js",
-      "limit": "1 KB"
-    },
-    {
-      "path": "dist/abstract/loadFileUploaderFrom.js",
-      "limit": "1 KB"
-    },
-    {
-      "path": "dist/index.ssr.js",
-      "limit": "10 KB"
-    },
-    {
-      "path": "web/file-uploader.min.js",
-      "limit": "100 KB"
-    },
-    {
-      "path": "web/file-uploader.iife.min.js",
-      "limit": "100 KB"
-    },
-    {
-      "path": "web/uc-cloud-image-editor.min.js",
-      "limit": "50 KB"
-    },
-    {
-      "path": "web/uc-file-uploader-regular.min.js",
-      "limit": "100 KB"
-    },
-    {
-      "path": "web/uc-file-uploader-inline.min.js",
-      "limit": "100 KB"
-    },
-    {
-      "path": "web/uc-file-uploader-minimal.min.js",
-      "limit": "100 KB"
-    },
-    {
-      "path": "web/uc-img.min.js",
-      "limit": "10 KB"
-    }
-  ]
+    "nx": "^21.0.0"
+  }
 }

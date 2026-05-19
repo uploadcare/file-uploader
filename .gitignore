@@ -3,10 +3,14 @@ node_modules
 TMP
 **/*.d.ts
 !tests/render-jsx-children.d.ts
+!packages/*/tests/render-jsx-children.d.ts
 !types/**
+!packages/*/types/**
 **/*.d.ts.map
 !global.d.ts
-web/**
-tests/__coverage__
+**/web/**
+**/tests/__coverage__
 tsconfig.types.tsbuildinfo
-dist/**
+**/dist/**
+.nx/cache
+.nx/workspace-data
