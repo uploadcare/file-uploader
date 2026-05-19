@@ -5,7 +5,8 @@
   "description": "Monorepo for @uploadcare/file-uploader and related packages",
   "type": "module",
   "workspaces": [
-    "packages/file-uploader"
+    "packages/file-uploader",
+    "packages/adaptive-image"
   ],
   "repository": {
     "type": "https",
