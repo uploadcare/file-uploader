@@ -23,7 +23,10 @@
     "lint": "lerna run lint --stream",
     "format": "biome check --write",
     "prepare": "husky install",
-    "playwright:install": "lerna run playwright:install --stream"
+    "playwright:install": "lerna run playwright:install --stream",
+    "version": "lerna version",
+    "release": "lerna publish from-git",
+    "release:from-package": "lerna publish from-package"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.6",
