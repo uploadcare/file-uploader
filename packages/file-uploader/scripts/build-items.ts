@@ -27,9 +27,9 @@ export const buildItems: BuildItem[] = [
   {
     entry: [
       srcPath('./index.ts'),
+      srcPath('./internal.ts'),
       srcPath('./abstract/loadFileUploaderFrom.ts'),
       srcPath('./env.ts'),
-      srcPath('./solutions/cloud-image-editor/index.ts'),
       ...localeFiles.map((f) => srcPath(`./locales/file-uploader/${f}`)),
     ],
     outDir: outPath('./dist/'),
@@ -53,17 +53,6 @@ export const buildItems: BuildItem[] = [
     outDir: outPath('./web'),
     cssFilename: 'uc-basic.min.css',
     format: 'iife',
-    minify: true,
-    bundleExternalDependencies: true,
-    mangleProps: true,
-  },
-  // uc-cloud-image-editor
-  {
-    entry: {
-      'uc-cloud-image-editor.min': srcPath('./solutions/cloud-image-editor/index.ts'),
-    },
-    outDir: outPath('./web'),
-    format: 'esm',
     minify: true,
     bundleExternalDependencies: true,
     mangleProps: true,

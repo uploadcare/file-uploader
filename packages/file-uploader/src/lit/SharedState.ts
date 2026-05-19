@@ -1,3 +1,13 @@
+import type {
+  CropAspectRatio,
+  CropPresetList,
+  EditorImageCropper,
+  EditorImageFader,
+  EditorSlider,
+  LoadingOperations,
+  TabIdValue,
+  Transformations,
+} from '@uploadcare/cloud-image-editor';
 import type { Queue, UploadcareGroup } from '@uploadcare/upload-client';
 import type { ClipboardLayer } from '../abstract/features/ClipboardLayer';
 import type { LocaleDefinition } from '../abstract/localeRegistry';
@@ -12,14 +22,6 @@ import type { ValidationManager } from '../abstract/managers/ValidationManager';
 import type { TypedCollection } from '../abstract/TypedCollection';
 import type { UploaderPublicApi } from '../abstract/UploaderPublicApi';
 import type { UploadEntryData } from '../abstract/uploadEntrySchema';
-import type { EditorImageCropper, EditorImageFader, EditorSlider } from '../blocks/CloudImageEditor';
-import type { TabIdValue } from '../blocks/CloudImageEditor/src/toolbar-constants';
-import type {
-  CropAspectRatio,
-  CropPresetList,
-  LoadingOperations,
-  Transformations,
-} from '../blocks/CloudImageEditor/src/types';
 import type { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter';
 import type { ConfigType, CustomConfig, OutputCollectionState, OutputErrorCollection } from '../types';
 import type { RegisteredActivityType } from './LitActivityBlock';

@@ -22,9 +22,10 @@
   "module": "./dist/index.js",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
+      "types": "./src/index.ts",
       "default": "./dist/index.js"
     },
+    "./index.css": "./dist/index.css",
     "./web/*": "./web/*"
   },
   "repository": {
@@ -50,12 +51,12 @@
     "lint": "biome lint",
     "test": "echo \"no tests yet\" && exit 0"
   },
-  "peerDependencies": {
-    "@uploadcare/file-uploader": "^1.29.1"
+  "dependencies": {
+    "@uploadcare/file-uploader": "^1.29.1",
+    "lit": "^3.3.2"
   },
   "devDependencies": {
     "@size-limit/preset-small-lib": "^12.0.1",
-    "@uploadcare/file-uploader": "^1.29.1",
     "rimraf": "^6.1.3",
     "size-limit": "^12.0.1",
     "tsup": "^8.5.1",

@@ -1,1 +1,1 @@
-export * from '@uploadcare/file-uploader/solutions/cloud-image-editor';
+export * from './solutions/cloud-image-editor/index.js';

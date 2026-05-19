@@ -56,9 +56,9 @@
     },
     "./abstract/loadFileUploaderFrom.js": "./dist/abstract/loadFileUploaderFrom.js",
     "./env": "./dist/env.js",
-    "./solutions/cloud-image-editor": {
-      "types": "./dist/solutions/cloud-image-editor/index.d.ts",
-      "default": "./dist/solutions/cloud-image-editor/index.js"
+    "./internal": {
+      "types": "./src/internal.ts",
+      "default": "./dist/internal.js"
     },
     "./web/*": "./web/*",
     "./types/jsx": "./types/jsx.d.ts",
@@ -160,6 +160,7 @@
   "license": "MIT",
   "dependencies": {
     "@lit/context": "^1.1.6",
+    "@uploadcare/cloud-image-editor": "^1.0.0",
     "@uploadcare/cname-prefix": "^6.18.4",
     "@uploadcare/image-shrink": "^6.18.4",
     "@uploadcare/quality-insights": "^6.18.4",
@@ -192,10 +193,6 @@
     {
       "path": "web/file-uploader.iife.min.js",
       "limit": "100 KB"
-    },
-    {
-      "path": "web/uc-cloud-image-editor.min.js",
-      "limit": "50 KB"
     },
     {
       "path": "web/uc-file-uploader-regular.min.js",

@@ -1,9 +1,9 @@
+import * as cloudEditorModules from '@uploadcare/cloud-image-editor';
 import { defineComponents } from '../abstract/defineComponents';
 import type { UploaderPlugin } from '../abstract/managers/plugin';
 import * as cloudImageEditorActivityModule from '../blocks/CloudImageEditorActivity/CloudImageEditorActivity';
 import { EventType } from '../blocks/UploadCtxProvider/EventEmitter';
 import { ACTIVITY_TYPES } from '../lit/activity-constants';
-import * as cloudEditorModules from '../solutions/cloud-image-editor';
 
 const CLOUD_EDITOR_PLUGIN_ID = 'cloud-image-editor';
 

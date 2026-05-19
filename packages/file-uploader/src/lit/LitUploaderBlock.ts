@@ -1,5 +1,6 @@
 // @ts-check
 
+import { calculateMaxCenteredCropFrame, parseCropPreset } from '@uploadcare/cloud-image-editor';
 import { type FileFromOptions, uploadFileGroup } from '@uploadcare/upload-client';
 import { uploaderBlockCtx } from '../abstract/CTX';
 import { SecureUploadsManager } from '../abstract/managers/SecureUploadsManager';
@@ -8,8 +9,6 @@ import type { TypedCollectionObserverHandler } from '../abstract/TypedCollection
 import { TypedCollection } from '../abstract/TypedCollection';
 import { UploaderPublicApi } from '../abstract/UploaderPublicApi';
 import { initialUploadEntryData, type UploadEntryData } from '../abstract/uploadEntrySchema';
-import { calculateMaxCenteredCropFrame } from '../blocks/CloudImageEditor/src/crop-utils';
-import { parseCropPreset } from '../blocks/CloudImageEditor/src/lib/parseCropPreset';
 import { EventType } from '../blocks/UploadCtxProvider/EventEmitter';
 import type { OutputCollectionState, OutputFileEntry } from '../types/index';
 import { createCdnUrl, createCdnUrlModifiers } from '../utils/cdn-utils';

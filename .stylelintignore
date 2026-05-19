@@ -1,0 +1,4 @@
+web
+node_modules
+dist
+**/__coverage__/
