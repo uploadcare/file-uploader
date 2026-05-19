@@ -11,7 +11,7 @@ import '../../../blocks/DropArea/DropArea';
 import '../../../blocks/SourceList/SourceList';
 import '../../../blocks/Copyright/Copyright';
 import '../../../blocks/UploadList/UploadList';
-import '../../../blocks/CloudImageEditorActivity/CloudImageEditorActivity';
+import '@uploadcare/cloud-image-editor';
 import '../../../blocks/SimpleBtn/SimpleBtn';
 import '../../../blocks/PluginActivityRenderer/PluginActivityRenderer';
 

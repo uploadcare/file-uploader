@@ -12,7 +12,7 @@ import '../../../blocks/DropArea/DropArea';
 import '../../../blocks/SourceList/SourceList';
 import '../../../blocks/Copyright/Copyright';
 import '../../../blocks/UploadList/UploadList';
-import '../../../blocks/CloudImageEditorActivity/CloudImageEditorActivity';
+import '@uploadcare/cloud-image-editor';
 import '../../../blocks/PluginActivityRenderer/PluginActivityRenderer';
 
 type BaseInitState = InstanceType<typeof LitSolutionBlock>['init$'];

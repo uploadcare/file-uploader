@@ -14,7 +14,7 @@ import '../../../blocks/DropArea/DropArea';
 import '../../../blocks/Copyright/Copyright';
 import '../../../blocks/UploadList/UploadList';
 import '../../../blocks/SourceList/SourceList';
-import '../../../blocks/CloudImageEditorActivity/CloudImageEditorActivity';
+import '@uploadcare/cloud-image-editor';
 import '../../../blocks/PluginActivityRenderer/PluginActivityRenderer';
 
 const ACTIVE_CLASS = 'active';

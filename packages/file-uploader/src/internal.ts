@@ -50,7 +50,6 @@ export { PluginActivityRenderer, PluginActivityHost } from './blocks/PluginActiv
 export { ExternalUploadSource, UploadSource } from './utils/UploadSource';
 
 // Optional sources:
-export { CloudImageEditorActivity } from './blocks/CloudImageEditorActivity/CloudImageEditorActivity';
 export { UrlSource } from './blocks/UrlSource/UrlSource';
 export { ExternalSource } from './blocks/ExternalSource/ExternalSource';
 export { CameraSource } from './blocks/CameraSource/CameraSource';
@@ -61,7 +60,11 @@ export { FileUploaderInline } from './solutions/file-uploader/inline/FileUploade
 export { FileUploaderMinimal } from './solutions/file-uploader/minimal/FileUploaderMinimal';
 
 // Cross-package contracts (used by @uploadcare/cloud-image-editor):
-export { InternalEventType } from './blocks/UploadCtxProvider/EventEmitter';
+export { EventType, InternalEventType } from './blocks/UploadCtxProvider/EventEmitter';
+export { ACTIVITY_TYPES } from './lit/activity-constants';
+export type { UploaderPlugin } from './abstract/managers/plugin';
+export type { TypedData } from './abstract/TypedData';
+export type { UploadEntryData } from './abstract/uploadEntrySchema';
 
 // Utils used by sibling packages:
 export {

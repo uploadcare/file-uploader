@@ -1,13 +1,15 @@
-import type { ApplyResult, ChangeResult } from '@uploadcare/cloud-image-editor';
+import {
+  LitActivityBlock,
+  LitUploaderBlock,
+  type TypedData,
+  type Uid,
+  type UploadEntryData,
+} from '@uploadcare/file-uploader/internal';
 import { html, nothing } from 'lit';
 import { state } from 'lit/decorators.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
-import type { TypedData } from '../../abstract/TypedData';
-import { LitActivityBlock } from '../../lit/LitActivityBlock';
-import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
+import type { ApplyResult, ChangeResult } from '../CloudImageEditor/src/types';
 import './cloud-image-editor-activity.css';
-import type { UploadEntryData } from '../../abstract/uploadEntrySchema';
-import type { Uid } from '../../lit/Uid';
 
 export type ActivityParams = { internalId: string };
 

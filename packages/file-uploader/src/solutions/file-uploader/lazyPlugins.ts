@@ -1,6 +1,6 @@
+import { cloudImageEditorPlugin } from '@uploadcare/cloud-image-editor';
 import type { LazyPluginEntry } from '../../abstract/managers/plugin/LazyPluginLoader';
 import { cameraPlugin } from '../../plugins/cameraPlugin';
-import { cloudImageEditorPlugin } from '../../plugins/cloudImageEditorPlugin';
 import { externalSourcesPlugin } from '../../plugins/externalSourcesPlugin';
 import { imageShrinkPlugin } from '../../plugins/imageShrinkPlugin';
 import { instagramPlugin } from '../../plugins/instagramPlugin';

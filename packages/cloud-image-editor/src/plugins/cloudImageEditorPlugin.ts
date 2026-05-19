@@ -1,9 +1,6 @@
-import * as cloudEditorModules from '@uploadcare/cloud-image-editor';
-import { defineComponents } from '../abstract/defineComponents';
-import type { UploaderPlugin } from '../abstract/managers/plugin';
+import { ACTIVITY_TYPES, defineComponents, EventType, type UploaderPlugin } from '@uploadcare/file-uploader/internal';
 import * as cloudImageEditorActivityModule from '../blocks/CloudImageEditorActivity/CloudImageEditorActivity';
-import { EventType } from '../blocks/UploadCtxProvider/EventEmitter';
-import { ACTIVITY_TYPES } from '../lit/activity-constants';
+import * as cloudEditorModules from '../solutions/cloud-image-editor/index';
 
 const CLOUD_EDITOR_PLUGIN_ID = 'cloud-image-editor';
 

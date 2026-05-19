@@ -1,5 +1,5 @@
+import type { ActivityParams as CloudImageEditorActivityParams } from '@uploadcare/cloud-image-editor';
 import { activityBlockCtx } from '../abstract/CTX';
-import type { ActivityParams as CloudImageEditorActivityParams } from '../blocks/CloudImageEditorActivity/CloudImageEditorActivity';
 import type { ActivityParams as ExternalSourceActivityParams } from '../blocks/ExternalSource/ExternalSource';
 import { EventType } from '../blocks/UploadCtxProvider/EventEmitter';
 import { debounce } from '../utils/debounce';
