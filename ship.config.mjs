@@ -1,4 +1,4 @@
 export default {
   buildCommand: () => 'npm run build',
-  publishCommand: ({ defaultCommand }) => `${defaultCommand} --access public`,
+  publishCommand: ({ tag }) => `npm stage publish --tag ${tag}`,
 };
