@@ -1,3 +1,9 @@
+# [1.30.0](https://github.com/uploadcare/file-uploader/compare/v1.29.1...v1.30.0) (2026-05-27)
+
+
+### Features
+
+* added smart dynamic button ([#964](https://github.com/uploadcare/file-uploader/issues/964)) ([2eac447](https://github.com/uploadcare/file-uploader/commit/2eac447b47f92e92d280aa1af5a60baa2ca6724b))
 ## [1.29.1](https://github.com/uploadcare/file-uploader/compare/v1.29.0...v1.29.1) (2026-04-30)
 
 
