@@ -36,7 +36,7 @@ export class PrimaryAction extends LitUploaderBlock {
   public override initCallback(): void {
     super.initCallback();
 
-    this.subConfigValue('smartButtonShowFirstIcon', (value) => {
+    this.subConfigValue('dynamicButtonShowFirstIcon', (value) => {
       this.showIcon = value;
     });
 

@@ -13,7 +13,7 @@ import '../../../blocks/Copyright/Copyright';
 import '../../../blocks/UploadList/UploadList';
 import '../../../blocks/CloudImageEditorActivity/CloudImageEditorActivity';
 import '../../../blocks/SimpleBtn/SimpleBtn';
-import '../../../blocks/SmartBtn/SmartBtn';
+import '../../../blocks/DynamicBtn/DynamicBtn';
 import '../../../blocks/PluginActivityRenderer/PluginActivityRenderer';
 
 type BaseInitState = InstanceType<typeof LitSolutionBlock>['init$'];
@@ -24,7 +24,7 @@ export class FileUploaderRegular extends LitSolutionBlock {
 
   public declare attributesMeta: {
     headless?: boolean;
-    'smart-button'?: boolean;
+    'dynamic-button'?: boolean;
     'ctx-name': string;
   };
   public static override styleAttrs = [...super.styleAttrs, 'uc-file-uploader-regular'];
@@ -32,8 +32,8 @@ export class FileUploaderRegular extends LitSolutionBlock {
   @property({ type: Boolean })
   public headless = false;
 
-  @property({ attribute: 'smart-button', type: Boolean })
-  public smartButton = false;
+  @property({ attribute: 'dynamic-button', type: Boolean })
+  public dynamicButton = false;
 
   public constructor() {
     super();
@@ -52,15 +52,15 @@ export class FileUploaderRegular extends LitSolutionBlock {
   }
 
   /**
-   * Exposes whether SmartBtn is active for non-Lit classes that can't use context
+   * Exposes whether the dynamic button is active for non-Lit classes that can't use context
    */
-  public get isSmartBtnActive(): boolean {
-    return this.smartButton;
+  public get isDynamicButtonActive(): boolean {
+    return this.dynamicButton;
   }
 
-  private _renderSmartButton() {
+  private _renderDynamicButton() {
     return html`
-      <uc-smart-btn></uc-smart-btn>
+      <uc-dynamic-btn></uc-dynamic-btn>
     `;
   }
 
@@ -72,7 +72,7 @@ export class FileUploaderRegular extends LitSolutionBlock {
 
   private _renderButton() {
     if (this.headless) return null;
-    if (this.smartButton) return this._renderSmartButton();
+    if (this.dynamicButton) return this._renderDynamicButton();
     return this._renderStaticButton();
   }
 
