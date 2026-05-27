@@ -209,9 +209,8 @@ export class UploaderPublicApi extends SharedInstance {
             source: options.captureCamera ? UploadSource.CAMERA : UploadSource.LOCAL,
           });
         });
-        // To call uploadTrigger UploadList should draw file items first:
-        this._ctx.pub('*currentActivity', ACTIVITY_TYPES.UPLOAD_LIST);
-        this._sharedInstancesBag.modalManager?.open(ACTIVITY_TYPES.UPLOAD_LIST);
+        // To call uploadTrigger UploadList should draw file items first.
+        this._sharedInstancesBag.routerLayer.navigateAfterFileAdd();
         fileInput.remove();
       },
       {

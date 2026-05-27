@@ -131,4 +131,13 @@ export default {
 
   custom: 'Fri form',
   'freeform-crop': 'Fri beskæring',
+
+  'upload-from': 'Upload fra {{source}}',
+  'get-from': 'Hent fra {{source}}',
+  'capture-with': 'Optag med {{source}}',
+  take: 'Tag {{source}}',
+  record: 'Optag {{source}}',
+
+  retake: 'Tag igen',
+  accept: 'Accepter',
 };

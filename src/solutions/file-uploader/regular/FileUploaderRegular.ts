@@ -13,6 +13,7 @@ import '../../../blocks/Copyright/Copyright';
 import '../../../blocks/UploadList/UploadList';
 import '../../../blocks/CloudImageEditorActivity/CloudImageEditorActivity';
 import '../../../blocks/SimpleBtn/SimpleBtn';
+import '../../../blocks/SmartBtn/SmartBtn';
 import '../../../blocks/PluginActivityRenderer/PluginActivityRenderer';
 
 type BaseInitState = InstanceType<typeof LitSolutionBlock>['init$'];
@@ -23,12 +24,16 @@ export class FileUploaderRegular extends LitSolutionBlock {
 
   public declare attributesMeta: {
     headless?: boolean;
+    'smart-button'?: boolean;
     'ctx-name': string;
   };
   public static override styleAttrs = [...super.styleAttrs, 'uc-file-uploader-regular'];
 
   @property({ type: Boolean })
   public headless = false;
+
+  @property({ attribute: 'smart-button', type: Boolean })
+  public smartButton = false;
 
   public constructor() {
     super();
@@ -46,10 +51,36 @@ export class FileUploaderRegular extends LitSolutionBlock {
     });
   }
 
+  /**
+   * Exposes whether SmartBtn is active for non-Lit classes that can't use context
+   */
+  public get isSmartBtnActive(): boolean {
+    return this.smartButton;
+  }
+
+  private _renderSmartButton() {
+    return html`
+      <uc-smart-btn></uc-smart-btn>
+    `;
+  }
+
+  private _renderStaticButton() {
+    return html`
+      <uc-simple-btn></uc-simple-btn>
+    `;
+  }
+
+  private _renderButton() {
+    if (this.headless) return null;
+    if (this.smartButton) return this._renderSmartButton();
+    return this._renderStaticButton();
+  }
+
   public override render() {
     return html`
     ${super.render()}
-  <uc-simple-btn ?hidden=${this.headless}></uc-simple-btn>
+
+    ${this._renderButton()}
 
   <uc-modal id="start-from" strokes block-body-scrolling>
     <uc-start-from>

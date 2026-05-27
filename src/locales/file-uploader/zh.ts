@@ -128,4 +128,13 @@ export default {
   'crop-to-shape': '裁剪为 {{value}}',
   custom: '自由形式',
   'freeform-crop': '自由裁剪',
+
+  'upload-from': '从 {{source}} 上传',
+  'get-from': '从 {{source}} 获取',
+  'capture-with': '使用 {{source}} 捕获',
+  take: '拍摄 {{source}}',
+  record: '录制 {{source}}',
+
+  retake: '重拍',
+  accept: '接受',
 };

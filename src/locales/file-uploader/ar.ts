@@ -135,4 +135,13 @@ export default {
   'crop-to-shape': 'اقتصاص إلى {{value}}',
   custom: 'حر الشكل',
   'freeform-crop': 'قص حر',
+
+  'upload-from': 'رفع {{source}}',
+  'get-from': 'الحصول من {{source}}',
+  'capture-with': 'التقاط مع {{source}}',
+  take: 'أخذ {{source}}',
+  record: 'تسجيل {{source}}',
+
+  retake: 'إعادة التصوير',
+  accept: 'قبول',
 };

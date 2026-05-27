@@ -21,6 +21,7 @@ import {
   asNumber,
   asObject,
   asPasteScope,
+  asSmartButtonViewMode,
   asStore,
   asString,
 } from './validatorsType';
@@ -111,6 +112,9 @@ const mapping: { [Key in keyof ConfigType]: ConfigNormalizer<Key> } = {
 
   qualityInsights: asBoolean,
   pasteScope: asPasteScope,
+
+  smartButtonShowFirstIcon: asBoolean,
+  smartButtonViewMode: asSmartButtonViewMode,
 };
 
 export const normalizeConfigValue = <T extends keyof ConfigType>(key: T, value: unknown): ConfigType[T] | undefined => {

@@ -1,7 +1,6 @@
 import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { createRef, type Ref, ref } from 'lit/directives/ref.js';
-import { LitActivityBlock } from '../../lit/LitActivityBlock';
 import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
 import { stringToArray } from '../../utils/stringToArray';
 import { UploadSource } from '../../utils/UploadSource';
@@ -52,17 +51,16 @@ export class DropArea extends LitUploaderBlock {
   @state()
   private _isVisible = true;
 
-  @state()
   private _dropTextKey = 'drop-files-here';
 
   private _isMultiple = false;
   private _updateDropText(): void {
     const customText = this.text;
     if (typeof customText === 'string' && customText.length > 0) {
-      this._dropTextKey = this.l10n(customText) || customText;
+      this._dropTextKey = customText;
       return;
     }
-    this._dropTextKey = this._isMultiple ? this.l10n('drop-files-here') : this.l10n('drop-file-here');
+    this._dropTextKey = this._isMultiple ? 'drop-files-here' : 'drop-file-here';
   }
 
   private _destroyDropzone: (() => void) | null = null;
@@ -124,19 +122,22 @@ export class DropArea extends LitUploaderBlock {
         if (!items.length) {
           return;
         }
+        const prevSize = this.uploadCollection.size;
 
         items.forEach((item) => {
           if (item.type === 'url') {
-            this.api.addFileFromUrl(item.url, { source: UploadSource.DROP_AREA });
+            this.api.addFileFromUrl(item.url, {
+              source: UploadSource.DROP_AREA,
+            });
           } else if (item.type === 'file') {
-            this.api.addFileFromObject(item.file, { source: UploadSource.DROP_AREA, fullPath: item.fullPath });
+            this.api.addFileFromObject(item.file, {
+              source: UploadSource.DROP_AREA,
+              fullPath: item.fullPath,
+            });
           }
         });
-        if (this.uploadCollection.size) {
-          this.set$({
-            '*currentActivity': LitActivityBlock.activities.UPLOAD_LIST,
-          });
-          this.modalManager?.open(LitActivityBlock.activities.UPLOAD_LIST);
+        if (this.uploadCollection.size > prevSize) {
+          this.routerLayer.navigateAfterFileAdd();
         }
       },
     });
@@ -284,17 +285,21 @@ export class DropArea extends LitUploaderBlock {
 
   public override render() {
     return html`
-    ${this.yield(
-      '',
-      html`<div data-default-slot hidden></div>
-    <div ${ref(this._contentWrapperRef)} class="uc-content-wrapper" ?hidden=${!this._isVisible}>
-      <div class="uc-icon-container" ?hidden=${!this.withIcon}>
-        <uc-icon name="default"></uc-icon>
-        <uc-icon name="arrow-down"></uc-icon>
-      </div>
-      <span class="uc-text">${this._dropTextKey}</span>
-    </div>`,
-    )}
+      ${this.yield(
+        '',
+        html`<div data-default-slot hidden></div>
+          <div
+            ${ref(this._contentWrapperRef)}
+            class="uc-content-wrapper"
+            ?hidden=${!this._isVisible}
+          >
+            <div class="uc-icon-container" ?hidden=${!this.withIcon}>
+              <uc-icon name="default"></uc-icon>
+              <uc-icon name="arrow-down"></uc-icon>
+            </div>
+            <span class="uc-text">${this.l10n(this._dropTextKey)}</span>
+          </div>`,
+      )}
     `;
   }
 }

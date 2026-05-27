@@ -130,4 +130,13 @@ export default {
 
   custom: '自由形式',
   'freeform-crop': '自由裁剪',
+
+  'upload-from': '從 {{source}} 上傳',
+  'get-from': '從 {{source}} 取得',
+  'capture-with': '使用 {{source}} 拍攝',
+  take: '拍攝 {{source}}',
+  record: '錄製 {{source}}',
+
+  retake: '重拍',
+  accept: '接受',
 };

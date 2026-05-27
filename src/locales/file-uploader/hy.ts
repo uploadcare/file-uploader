@@ -128,4 +128,13 @@ export default {
 
   custom: 'Ազատ ձև',
   'freeform-crop': 'Ազատ կտրում',
+
+  'upload-from': 'Բեռնել {{source}}-ից',
+  'get-from': 'Ստանալ {{source}}-ից',
+  'capture-with': 'Ֆիքսել {{source}}-ով',
+  take: 'Վերցնել {{source}}',
+  record: 'Ձայնագրել {{source}}',
+
+  retake: 'Վերնկարել',
+  accept: 'Ընդունել',
 };

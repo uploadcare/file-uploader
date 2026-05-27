@@ -131,4 +131,13 @@ export default {
 
   custom: 'Vapaa muoto',
   'freeform-crop': 'Vapaa rajaus',
+
+  'upload-from': 'Lataa {{source}}',
+  'get-from': 'Hae kohteesta {{source}}',
+  'capture-with': 'Kaappaa käyttämällä {{source}}',
+  take: 'Ota {{source}}',
+  record: 'Tallenna {{source}}',
+
+  retake: 'Ota uudelleen',
+  accept: 'Hyväksy',
 };

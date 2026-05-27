@@ -130,4 +130,13 @@ export default {
 
   custom: 'Vaba vorm',
   'freeform-crop': 'Vaba lõikamine',
+
+  'upload-from': 'Lae üles {{source}}',
+  'get-from': 'Hangi {{source}}',
+  'capture-with': 'Jäädvusta {{source}}',
+  take: 'Võta {{source}}',
+  record: 'Salvesta {{source}}',
+
+  retake: 'Tee uuesti',
+  accept: 'Nõustu',
 };

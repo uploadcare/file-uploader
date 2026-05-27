@@ -4,6 +4,7 @@ import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
 import './source-btn.css';
 
 import '../Icon/Icon';
+import { InternalEventType } from '../UploadCtxProvider/EventEmitter';
 
 export type SourceButtonConfig = {
   id: string;
@@ -17,6 +18,12 @@ export class SourceBtn extends LitUploaderBlock {
 
   @property({ attribute: false })
   public source?: SourceButtonConfig;
+
+  @property({ type: Boolean })
+  public textOnly = false;
+
+  @property({ type: Boolean })
+  public iconOnly = false;
 
   @state()
   private _iconName = 'default';
@@ -46,14 +53,22 @@ export class SourceBtn extends LitUploaderBlock {
 
   public activate(): void {
     if (!this.source) return;
+
+    this.telemetryManager.sendEvent({
+      eventType: InternalEventType.ACTION_EVENT,
+      payload: {
+        sourceId: this.source.id,
+      },
+    });
+
     void this.source.onClick();
   }
 
   public override render() {
     return html`
-      <button type="button" @click=${this.activate}>
-        <uc-icon name=${this._iconName}></uc-icon>
-        <div class="uc-txt">${this.l10n(this._srcTypeKey)}</div>
+      <button aria-label=${this.l10n(this._srcTypeKey)} type="button" @click=${this.activate}>
+        ${this.textOnly ? '' : html`<uc-icon name=${this._iconName}></uc-icon>`}
+        ${this.iconOnly ? '' : html`<div class="uc-txt">${this.l10n(this._srcTypeKey)}</div>`}
       </button>
     `;
   }

@@ -135,4 +135,13 @@ export default {
 
   custom: 'Volná forma',
   'freeform-crop': 'Volné ořezání',
+
+  'upload-from': 'Nahrát z {{source}}',
+  'get-from': 'Získat z {{source}}',
+  'capture-with': 'Zachytit pomocí {{source}}',
+  take: 'Vzít {{source}}',
+  record: 'Nahrát {{source}}',
+
+  retake: 'Znovu pořídit',
+  accept: 'Přijmout',
 };

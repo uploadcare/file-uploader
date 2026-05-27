@@ -130,4 +130,13 @@ export default {
 
   custom: '自由形式',
   'freeform-crop': '自由切り抜き',
+
+  'upload-from': '{{source}}からアップロード',
+  'get-from': '{{source}}から取得',
+  'capture-with': '{{source}}でキャプチャ',
+  take: '{{source}}を撮影',
+  record: '{{source}}を録画',
+
+  retake: '撮り直し',
+  accept: '承認',
 };

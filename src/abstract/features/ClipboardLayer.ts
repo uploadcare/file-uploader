@@ -1,4 +1,3 @@
-import { ACTIVITY_TYPES } from '../../lit/activity-constants';
 import { SharedInstance, type SharedInstancesBag } from '../../lit/shared-instances';
 
 export type PasteScope = 'local' | 'global' | false;
@@ -14,9 +13,16 @@ export class ClipboardLayer extends SharedInstance {
     window.addEventListener('paste', this.listener);
   }
 
+  private _excludingNodes(target: Element) {
+    if (target.closest('uc-url-source')) {
+      return true;
+    }
+
+    return false;
+  }
+
   private openUploadList() {
-    this._sharedInstancesBag.api.setCurrentActivity(ACTIVITY_TYPES.UPLOAD_LIST);
-    this._sharedInstancesBag.api.setModalState(true);
+    this._sharedInstancesBag.routerLayer.navigateAfterFileAdd();
   }
 
   private async _listener(event: ClipboardEvent) {
@@ -29,12 +35,16 @@ export class ClipboardLayer extends SharedInstance {
         continue;
       }
 
+      if (this._excludingNodes(event.target as Element)) {
+        return;
+      }
+
       switch (this._cfg.pasteScope) {
         case 'global':
           await this.handlePaste(event);
           break;
         case 'local':
-          if (!scope.contains(event.target as Node)) {
+          if (!scope.contains(event.target as Element)) {
             continue;
           }
           await this.handlePaste(event);

@@ -129,4 +129,13 @@ export default {
 
   custom: 'Sərbəst forma',
   'freeform-crop': 'Sərbəst kəsmə',
+
+  'upload-from': '{{source}} yüklə',
+  'get-from': '{{source}}-dən al',
+  'capture-with': '{{source}} ilə çəkiş',
+  take: '{{source}} çək',
+  record: '{{source}} yaz',
+
+  retake: 'Yenidən çək',
+  accept: 'Qəbul et',
 };

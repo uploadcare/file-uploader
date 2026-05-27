@@ -130,4 +130,13 @@ export default {
 
   custom: 'Frjáls form',
   'freeform-crop': 'Frjáls klipping',
+
+  'upload-from': 'Hlaða upp frá {{source}}',
+  'get-from': 'Sækja frá {{source}}',
+  'capture-with': 'Taka með {{source}}',
+  take: 'Taka {{source}}',
+  record: 'Taka upp {{source}}',
+
+  retake: 'Taka aftur',
+  accept: 'Samþykkja',
 };

@@ -130,4 +130,13 @@ export default {
 
   custom: 'Dạng tự do',
   'freeform-crop': 'Cắt tự do',
+
+  'upload-from': 'Tải lên từ {{source}}',
+  'get-from': 'Lấy từ {{source}}',
+  'capture-with': 'Chụp bằng {{source}}',
+  take: 'Lấy {{source}}',
+  record: 'Ghi {{source}}',
+
+  retake: 'Chụp lại',
+  accept: 'Chấp nhận',
 };

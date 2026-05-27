@@ -131,4 +131,13 @@ export default {
 
   custom: 'Vrije vorm',
   'freeform-crop': 'Vrije uitsnijding',
+
+  'upload-from': 'Uploaden van {{source}}',
+  'get-from': 'Ophalen van {{source}}',
+  'capture-with': 'Vastleggen met {{source}}',
+  take: 'Neem {{source}}',
+  record: 'Opnemen {{source}}',
+
+  retake: 'Opnieuw nemen',
+  accept: 'Accepteren',
 };

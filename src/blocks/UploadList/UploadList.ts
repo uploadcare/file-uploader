@@ -263,7 +263,7 @@ export class UploadList extends LitUploaderBlock {
     </button>
   </div>
 
-  <div class="uc-common-error" 
+  <div class="uc-common-error"
   ?hidden=${!this._commonErrorMessage}
   >
   ${this._commonErrorMessage ?? ''}

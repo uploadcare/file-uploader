@@ -133,4 +133,13 @@ export default {
 
   custom: 'Formă liberă',
   'freeform-crop': 'Decupare liberă',
+
+  'upload-from': 'Încărcați din {{source}}',
+  'get-from': 'Obțineți din {{source}}',
+  'capture-with': 'Capturați cu {{source}}',
+  take: 'Luați {{source}}',
+  record: 'Înregistrați {{source}}',
+
+  retake: 'Refaceți',
+  accept: 'Acceptați',
 };

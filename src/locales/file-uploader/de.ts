@@ -132,4 +132,13 @@ export default {
 
   custom: 'Freiform',
   'freeform-crop': 'Freier Zuschnitt',
+
+  'upload-from': 'Hochladen von {{source}}',
+  'get-from': 'Abrufen von {{source}}',
+  'capture-with': 'Aufnehmen mit {{source}}',
+  take: '{{source}} aufnehmen',
+  record: '{{source}} aufzeichnen',
+
+  retake: 'Erneut aufnehmen',
+  accept: 'Akzeptieren',
 };

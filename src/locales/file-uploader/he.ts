@@ -132,4 +132,13 @@ export default {
 
   custom: 'צורה חופשית',
   'freeform-crop': 'חיתוך חופשי',
+
+  'upload-from': 'העלה מ{{source}}',
+  'get-from': 'קבל מ{{source}}',
+  'capture-with': 'לכוד עם {{source}}',
+  take: 'קח {{source}}',
+  record: 'הקלט {{source}}',
+
+  retake: 'צלם שוב',
+  accept: 'קבל',
 };

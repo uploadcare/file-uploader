@@ -132,4 +132,13 @@ export default {
 
   custom: 'Brīvā forma',
   'freeform-crop': 'Brīva apgriešana',
+
+  'upload-from': 'Augšupielādēt no {{source}}',
+  'get-from': 'Iegūt no {{source}}',
+  'capture-with': 'Tvert ar {{source}}',
+  take: 'Ņemt {{source}}',
+  record: 'Ierakstīt {{source}}',
+
+  retake: 'Uzņemt vēlreiz',
+  accept: 'Pieņemt',
 };

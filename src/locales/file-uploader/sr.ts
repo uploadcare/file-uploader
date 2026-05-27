@@ -132,4 +132,13 @@ export default {
 
   custom: 'Слободна форма',
   'freeform-crop': 'Слободно исецање',
+
+  'upload-from': 'Отпреми са {{source}}',
+  'get-from': 'Добиј са {{source}}',
+  'capture-with': 'Сними помоћу {{source}}',
+  take: 'Узми {{source}}',
+  record: 'Сними {{source}}',
+
+  retake: 'Поново сними',
+  accept: 'Прихвати',
 };

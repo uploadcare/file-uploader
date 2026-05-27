@@ -130,4 +130,13 @@ export default {
 
   custom: 'თავისუფალი ფორმა',
   'freeform-crop': 'თავისუფალი კვეთა',
+
+  'upload-from': 'ატვირთვა {{source}}-დან',
+  'get-from': 'მიღება {{source}}-დან',
+  'capture-with': 'გადაღება {{source}}-ით',
+  take: 'აღება {{source}}',
+  record: 'ჩაწერა {{source}}',
+
+  retake: 'ხელახლა გადაღება',
+  accept: 'მიღება',
 };

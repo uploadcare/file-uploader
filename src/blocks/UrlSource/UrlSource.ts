@@ -1,6 +1,5 @@
 import { html } from 'lit';
 import { state } from 'lit/decorators.js';
-import { LitActivityBlock } from '../../lit/LitActivityBlock';
 import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
 import { UploadSource } from '../../utils/UploadSource';
 import { InternalEventType } from '../UploadCtxProvider/EventEmitter';
@@ -33,14 +32,19 @@ export class UrlSource extends LitUploaderBlock {
       return;
     }
     this.api.addFileFromUrl(url, { source: UploadSource.URL });
-    this.$['*currentActivity'] = LitActivityBlock.activities.UPLOAD_LIST;
-    this.modalManager?.open(LitActivityBlock.activities.UPLOAD_LIST);
+    this.routerLayer.navigateAfterFileAdd();
   };
 
   public override render() {
     return html`
       <uc-activity-header>
-        <button type="button" class="uc-mini-btn" @click=${this.historyBack} title=${this.l10n('back')} aria-label=${this.l10n('back')}>
+        <button
+          type="button"
+          class="uc-mini-btn"
+          @click=${this.historyBack}
+          title=${this.l10n('back')}
+          aria-label=${this.l10n('back')}
+        >
           <uc-icon name="back"></uc-icon>
         </button>
         <div>
@@ -67,11 +71,13 @@ export class UrlSource extends LitUploaderBlock {
             @input=${this._handleInput}
           />
         </label>
-          <button
-            type="submit"
-            class="uc-url-upload-btn uc-primary-btn"
-            ?disabled=${!this._url}
-            >${this.l10n('upload-url')}</button>
+        <button
+          type="submit"
+          class="uc-url-upload-btn uc-primary-btn"
+          ?disabled=${!this._url}
+        >
+          ${this.l10n('upload-url')}
+        </button>
       </form>
     `;
   }
