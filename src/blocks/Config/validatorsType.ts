@@ -3,7 +3,7 @@ import type { Metadata, MetadataCallback } from '../../types/index';
 import { deserializeCsv } from '../../utils/comma-separated';
 import type { ModeCameraType } from '../CameraSource/constants';
 import { CameraSourceTypes } from '../CameraSource/constants';
-import type { SmartButtonMode } from '../SmartBtn/SmartBtn';
+import type { DynamicButtonMode } from '../DynamicBtn/DynamicBtn';
 import type { FilesViewMode } from '../UploadList/UploadList';
 
 const asString = (value: unknown): string => String(value);
@@ -112,10 +112,10 @@ const asFilesViewMode = (value: unknown): FilesViewMode => {
   throw new Error(`Invalid value: "${strValue}"`);
 };
 
-const asSmartButtonViewMode = (value: unknown): SmartButtonMode => {
+const asDynamicButtonViewMode = (value: unknown): DynamicButtonMode => {
   const strValue = asString(value);
   if (['auto', 'menu', 'toolbar', 'compact'].includes(strValue)) {
-    return strValue as SmartButtonMode;
+    return strValue as DynamicButtonMode;
   }
   throw new Error(`Invalid value: "${strValue}"`);
 };
@@ -134,5 +134,5 @@ export {
   asStore,
   asString,
   asPasteScope,
-  asSmartButtonViewMode,
+  asDynamicButtonViewMode,
 };

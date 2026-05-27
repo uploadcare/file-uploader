@@ -11,38 +11,38 @@ beforeEach(() => {
   const ctxName = `test-${Math.random().toString(36).slice(2)}`;
   page.render(
     <>
-      <uc-file-uploader-regular smart-button ctx-name={ctxName}></uc-file-uploader-regular>
+      <uc-file-uploader-regular dynamic-button ctx-name={ctxName}></uc-file-uploader-regular>
       <uc-config qualityInsights={false} ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
     </>,
   );
 });
 
-describe('SmartBtn upload list behavior', () => {
-  describe('with dynamic mode (SmartBtn active)', () => {
+describe('DynamicBtn upload list behavior', () => {
+  describe('with dynamic mode (DynamicBtn active)', () => {
     it('should NOT open upload list after file selection from system dialog', async () => {
-      const smartBtn = page.getByTestId('uc-smart-btn');
+      const dynamicBtn = page.getByTestId('uc-dynamic-btn');
       const uploadList = page.getByTestId('uc-upload-list');
 
-      await expect.element(smartBtn).toBeVisible();
+      await expect.element(dynamicBtn).toBeVisible();
 
       commands.waitFileChooserAndUpload(['./fixtures/test_image.jpeg']);
 
-      await smartBtn.click();
+      await dynamicBtn.click();
 
       await expect.element(uploadList).not.toBeVisible();
-      await expect.element(smartBtn.getByText('1 file uploaded')).toBeVisible();
+      await expect.element(dynamicBtn.getByText('1 file uploaded')).toBeVisible();
     });
 
-    it('should open upload list when clicking SmartBtn after files are uploaded', async () => {
-      const smartBtn = page.getByTestId('uc-smart-btn');
+    it('should open upload list when clicking DynamicBtn after files are uploaded', async () => {
+      const dynamicBtn = page.getByTestId('uc-dynamic-btn');
       const uploadList = page.getByTestId('uc-upload-list');
 
-      await expect.element(smartBtn).toBeVisible();
+      await expect.element(dynamicBtn).toBeVisible();
 
       commands.waitFileChooserAndUpload(['./fixtures/test_image.jpeg']);
-      await smartBtn.click();
+      await dynamicBtn.click();
 
-      await smartBtn.click();
+      await dynamicBtn.click();
       await expect.element(uploadList).toBeVisible();
     });
   });

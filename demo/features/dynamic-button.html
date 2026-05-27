@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SmartBtn playground</title>
+    <title>DynamicBtn playground</title>
     <style>
     *,
     *::before,
@@ -299,7 +299,7 @@
 
     const writeCsv = (arr) => arr.join(', ');
 
-    class SmartBtnPlayground extends LitElement {
+    class DynamicBtnPlayground extends LitElement {
       static properties = {
         _viewMode: { state: true },
         _showFirstIcon: { state: true },
@@ -320,7 +320,7 @@
       }
 
       firstUpdated() {
-        this._configEl = this.querySelector('#smart-btn-config');
+        this._configEl = this.querySelector('#dynamic-btn-config');
         this._applyConfig();
       }
 
@@ -337,8 +337,8 @@
 
       _applyConfig() {
         if (!this._configEl) return;
-        this._configEl.smartButtonViewMode = this._viewMode;
-        this._configEl.smartButtonShowFirstIcon = this._showFirstIcon;
+        this._configEl.dynamicButtonViewMode = this._viewMode;
+        this._configEl.dynamicButtonShowFirstIcon = this._showFirstIcon;
         this._configEl.sourceList = writeCsv(this._sourceList);
         this._configEl.multiple = this._multiple;
       }
@@ -394,8 +394,8 @@
           `<uc-config`,
           `  ctx-name="my-uploader"`,
           `  pubkey="YOUR_PUBLIC_KEY"`,
-          `  smart-button-view-mode="${this._viewMode}"`,
-          `  smart-button-show-first-icon="${this._showFirstIcon}"`,
+          `  dynamic-button-view-mode="${this._viewMode}"`,
+          `  dynamic-button-show-first-icon="${this._showFirstIcon}"`,
           `  source-list="${writeCsv(this._sourceList)}"`,
           `  ${this._multiple ? 'multiple' : '<!-- multiple -->'}`,
           `></uc-config>`,
@@ -406,9 +406,9 @@
         return html`
           <div class="page">
             <header class="hero">
-              <div class="badge">SmartBtn</div>
-              <h1>SmartBtn playground</h1>
-              <p>Explore <code>smartButtonViewMode</code> and related options live.</p>
+              <div class="badge">DynamicBtn</div>
+              <h1>DynamicBtn playground</h1>
+              <p>Explore <code>dynamicButtonViewMode</code> and related options live.</p>
             </header>
 
             <div class="layout">
@@ -416,7 +416,7 @@
                 <h2>Controls</h2>
 
                 <div class="group">
-                  <div class="group-label">smart Button View Mode</div>
+                  <div class="group-label">dynamic Button View Mode</div>
                   <div class="radio-group">
                     ${this._renderViewModeControls()}
                   </div>
@@ -432,7 +432,7 @@
                         this._showFirstIcon = e.target.checked;
                       }}
                     />
-                    <span>smartButtonShowFirstIcon</span>
+                    <span>dynamicButtonShowFirstIcon</span>
                   </label>
                   <label class="check-row">
                     <input
@@ -456,7 +456,7 @@
                 <div class="preview-panel">
                   <h2>Preview</h2>
                   <div class="preview-stage">
-                    <uc-file-uploader-regular smart-button ctx-name="smart-btn-demo"></uc-file-uploader-regular>
+                    <uc-file-uploader-regular dynamic-button ctx-name="dynamic-btn-demo"></uc-file-uploader-regular>
                   </div>
                 </div>
 
@@ -468,22 +468,22 @@
             </div>
 
             <uc-config
-              id="smart-btn-config"
-              ctx-name="smart-btn-demo"
+              id="dynamic-btn-config"
+              ctx-name="dynamic-btn-demo"
               pubkey="demopublickey"
               quality-insights="false"
               test-mode
               debug
             ></uc-config>
-            <uc-upload-ctx-provider ctx-name="smart-btn-demo"></uc-upload-ctx-provider>
+            <uc-upload-ctx-provider ctx-name="dynamic-btn-demo"></uc-upload-ctx-provider>
           </div>
         `;
       }
     }
 
-    customElements.define('uc-smart-btn-playground', SmartBtnPlayground);
+    customElements.define('uc-dynamic-btn-playground', DynamicBtnPlayground);
     </script>
 
-    <uc-smart-btn-playground></uc-smart-btn-playground>
+    <uc-dynamic-btn-playground></uc-dynamic-btn-playground>
   </body>
 </html>

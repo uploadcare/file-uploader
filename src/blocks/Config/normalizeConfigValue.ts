@@ -15,13 +15,13 @@ import {
   asCameraCapture,
   asCameraMode,
   asCameraModes,
+  asDynamicButtonViewMode,
   asFilesViewMode,
   asFunction,
   asMetadata,
   asNumber,
   asObject,
   asPasteScope,
-  asSmartButtonViewMode,
   asStore,
   asString,
 } from './validatorsType';
@@ -113,8 +113,8 @@ const mapping: { [Key in keyof ConfigType]: ConfigNormalizer<Key> } = {
   qualityInsights: asBoolean,
   pasteScope: asPasteScope,
 
-  smartButtonShowFirstIcon: asBoolean,
-  smartButtonViewMode: asSmartButtonViewMode,
+  dynamicButtonShowFirstIcon: asBoolean,
+  dynamicButtonViewMode: asDynamicButtonViewMode,
 };
 
 export const normalizeConfigValue = <T extends keyof ConfigType>(key: T, value: unknown): ConfigType[T] | undefined => {

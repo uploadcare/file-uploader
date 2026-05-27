@@ -8,8 +8,8 @@ import type { SourceButtonConfig } from '../SourceBtn/SourceBtn';
 
 import '../DropArea/DropArea';
 import '../SourceBtn/SourceBtn';
-import './smart-btn.css';
-import './smart-btn-mode.css';
+import './dynamic-btn.css';
+import './dynamic-btn-mode.css';
 
 import type { OutputCollectionState, OutputCollectionStatus } from '../../types/exported';
 import { throttle } from '../../utils/throttle';
@@ -19,16 +19,16 @@ import { classMap } from 'lit/directives/class-map.js';
 import './PrimaryAction';
 import '../DropDown/DropDown';
 import '../FileItem/FileActionButton';
-import './NoWrapModeSmartBtn';
+import './NoWrapModeDynamicBtn';
 
-export type SmartButtonMode = 'auto' | 'menu' | 'toolbar' | 'compact';
+export type DynamicButtonMode = 'auto' | 'menu' | 'toolbar' | 'compact';
 
 type SourceSplit = {
   main: SourceButtonConfig | null;
   remain: SourceButtonConfig[];
 };
 
-const adjustSourceBasedOnMode = (sources: SourceButtonConfig[], mode: SmartButtonMode): SourceSplit => {
+const adjustSourceBasedOnMode = (sources: SourceButtonConfig[], mode: DynamicButtonMode): SourceSplit => {
   if (mode === 'compact' || sources.length === 0) {
     return {
       main: null,
@@ -42,7 +42,7 @@ const adjustSourceBasedOnMode = (sources: SourceButtonConfig[], mode: SmartButto
   };
 };
 
-const iconsBasedOnMode: Record<Exclude<SmartButtonMode, 'toolbar'>, string> = {
+const iconsBasedOnMode: Record<Exclude<DynamicButtonMode, 'toolbar'>, string> = {
   compact: 'paperclip',
   menu: 'arrow-dropdown',
   auto: 'arrow-dropdown',
@@ -50,8 +50,8 @@ const iconsBasedOnMode: Record<Exclude<SmartButtonMode, 'toolbar'>, string> = {
 
 const AUTO_MODE_INLINE_THRESHOLD = 3;
 
-export class SmartBtn extends LitUploaderBlock {
-  public static override styleAttrs = [...super.styleAttrs, 'uc-smart-btn', 'uc-wgt-common'];
+export class DynamicBtn extends LitUploaderBlock {
+  public static override styleAttrs = [...super.styleAttrs, 'uc-dynamic-btn', 'uc-wgt-common'];
   public override couldBeCtxOwner = true;
 
   private _unregisterAfterFileAddHook?: () => void;
@@ -60,7 +60,7 @@ export class SmartBtn extends LitUploaderBlock {
   public dropzone = true;
 
   @state()
-  private _mode: SmartButtonMode = 'auto';
+  private _mode: DynamicButtonMode = 'auto';
 
   @state()
   private _sources: SourceButtonConfig[] = [];
@@ -153,7 +153,7 @@ export class SmartBtn extends LitUploaderBlock {
   public override initCallback(): void {
     super.initCallback();
 
-    this.subConfigValue('smartButtonViewMode', (value) => {
+    this.subConfigValue('dynamicButtonViewMode', (value) => {
       if (this._mode === value) return;
 
       this._mode = value;
@@ -199,7 +199,7 @@ export class SmartBtn extends LitUploaderBlock {
 
   private _renderInline() {
     return html`
-      <uc-no-wrap-mode-smart-btn>
+      <uc-no-wrap-mode-dynamic-btn>
         ${this._mainAndRemainSources?.remain?.map(
           (source) =>
             html`<uc-source-btn
@@ -208,12 +208,12 @@ export class SmartBtn extends LitUploaderBlock {
               .source=${source}
             ></uc-source-btn>`,
         )}
-      </uc-no-wrap-mode-smart-btn>
+      </uc-no-wrap-mode-dynamic-btn>
     `;
   }
 
   private _getDropdownIconName(): string {
-    return iconsBasedOnMode[this._mode as Exclude<SmartButtonMode, 'toolbar'>] ?? 'arrow-dropdown';
+    return iconsBasedOnMode[this._mode as Exclude<DynamicButtonMode, 'toolbar'>] ?? 'arrow-dropdown';
   }
 
   private _clearAllEntries() {
@@ -283,7 +283,7 @@ export class SmartBtn extends LitUploaderBlock {
 
   private _getInnerClassMap() {
     return classMap({
-      'uc-smart-btn-inner': true,
+      'uc-dynamic-btn-inner': true,
       'uc-failed': this.isFailed,
       'uc-uploading': this.isUploading,
       'uc-success': this.isSuccess,
@@ -315,6 +315,6 @@ export class SmartBtn extends LitUploaderBlock {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'uc-smart-btn': SmartBtn;
+    'uc-dynamic-btn': DynamicBtn;
   }
 }
