@@ -1,6 +1,8 @@
+import { uploadFile } from '@uploadcare/upload-client';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import type { Config, EventPayload } from '@/index.js';
+import { IMAGE } from './fixtures/files';
 import { TEST_IMAGE_URL } from './utils/constants';
 import '../types/jsx';
 
@@ -39,6 +41,42 @@ describe('API', () => {
 
     expect(eventPayload).toMatchObject(expect.objectContaining({ status: 'idle', externalUrl: url }));
   });
+
+  it('should add an already-uploaded file from an UploadcareFile instance without re-uploading it', async () => {
+    // Upload a real local image via the upload client to get a genuine UploadcareFile.
+    const file = await uploadFile(IMAGE.PIXEL, { publicKey: 'demopublickey', store: false });
+
+    const uploadCtxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
+    const api = uploadCtxProvider.api;
+
+    const uploadStartHandler = vi.fn<(e: CustomEvent<EventPayload['file-upload-start']>) => void>();
+    const uploadSuccessHandler = vi.fn<(e: CustomEvent<EventPayload['file-upload-success']>) => void>();
+    uploadCtxProvider.addEventListener('file-upload-start', uploadStartHandler);
+    uploadCtxProvider.addEventListener('file-upload-success', uploadSuccessHandler);
+
+    const entry = api.addFileFromUploadcareFile(file);
+
+    // Added in its completed state, referencing the existing file.
+    expect(entry.uuid).toBe(file.uuid);
+    expect(entry.cdnUrl).toBe(file.cdnUrl);
+    expect(entry.name).toBe(file.originalFilename);
+    expect(entry.size).toBe(file.size);
+    expect(entry.isImage).toBe(file.isImage);
+    // `fileInfo` being set is what marks the entry as already uploaded.
+    expect(entry.fileInfo?.uuid).toBe(file.uuid);
+
+    // Triggering the upload flow must not re-upload an already-uploaded file.
+    api.uploadAll();
+
+    // It settles as successful (it already carries fileInfo)...
+    const successPayload = await vi.waitFor(() => {
+      expect(uploadSuccessHandler).toHaveBeenCalled();
+      return uploadSuccessHandler.mock.calls[0][0].detail;
+    });
+    expect(successPayload).toMatchObject(expect.objectContaining({ uuid: file.uuid }));
+    // ...without ever starting an upload.
+    expect(uploadStartHandler).not.toHaveBeenCalled();
+  }, 30_000);
 
   it('should not duplicate events after uploader add/removal', async () => {
     for (let i = 0; i < 5; i++) {

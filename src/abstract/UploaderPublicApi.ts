@@ -128,6 +128,25 @@ export class UploaderPublicApi extends SharedInstance {
     return this.getOutputItem(internalId);
   };
 
+  public addFileFromUploadcareFile = (
+    file: UploadcareFile,
+    { silent, fileName, source }: ApiAddFileCommonOptions = {},
+  ): OutputFileEntry<'success'> => {
+    const internalId = this._uploadCollection.add({
+      fileInfo: file,
+      uuid: file.uuid,
+      cdnUrl: file.cdnUrl,
+      fileName: fileName ?? file.originalFilename,
+      fileSize: file.size,
+      isImage: file.isImage ?? false,
+      mimeType: file.contentInfo?.mime?.mime ?? file.mimeType,
+      uploadProgress: 100,
+      silent: silent ?? false,
+      source: source ?? UploadSource.API,
+    });
+    return this.getOutputItem(internalId);
+  };
+
   public removeFileByInternalId = (internalId: string): void => {
     if (!this._uploadCollection.read(internalId as Uid)) {
       throw new Error(`File with internalId ${internalId} not found`);
