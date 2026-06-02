@@ -3,11 +3,18 @@ name: checks
 on:
   pull_request:
 
+# The checks only read the repo; keep the GITHUB_TOKEN least-privilege
+# (the repo default is write-all).
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/setup
       - name: Build
         run: npm run build
@@ -22,6 +29,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/setup
       - name: Lint
         run: npm run lint
@@ -30,21 +39,28 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/setup
+      # System packages aren't covered by the browser cache, so install them
+      # unconditionally; only the browser binaries below are cache-gated.
+      - name: Install playwright system deps
+        timeout-minutes: 10
+        env:
+          # `playwright install-deps` shells out to apt-get; keep it from
+          # stalling for hours on an interactive prompt (e.g. Ubuntu's needrestart).
+          DEBIAN_FRONTEND: noninteractive
+          NEEDRESTART_MODE: a
+        run: npx playwright install-deps chromium
       - uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
         id: playwright-cache
         with:
           path: ~/.cache/ms-playwright
           key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
-      - name: Install playwright deps
+      - name: Install playwright browsers
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         timeout-minutes: 10
-        env:
-          # `playwright install --with-deps` shells out to apt-get; keep it from
-          # stalling for hours on an interactive prompt (e.g. Ubuntu's needrestart).
-          DEBIAN_FRONTEND: noninteractive
-          NEEDRESTART_MODE: a
-        run: npm run playwright:install
+        run: npx playwright install chromium
       # specs/npm imports the published package (dist/ + web/), so tests need
       # the build output too.
       - name: Build
