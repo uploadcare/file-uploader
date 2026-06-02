@@ -147,7 +147,7 @@ export class PrimaryAction extends LitUploaderBlock {
 
   protected override render() {
     return html`
-      <button @click=${this._handleClick} aria-label=${this.textBasedOnLocale}>
+      <button type="button" @click=${this._handleClick} aria-label=${this.textBasedOnLocale}>
         ${this._renderThumbnail()}
         <span>${this.textBasedOnLocale}</span>
       </button>
