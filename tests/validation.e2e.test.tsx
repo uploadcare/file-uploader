@@ -438,7 +438,9 @@ describe('Custom file validation', () => {
 
       await expect
         .poll(() => validator, {
-          timeout: 5000,
+          // The validator fires with `cdnUrlModifiers: ''` only once the real
+          // upload completes; 5s is flaky, match the upload waits above.
+          timeout: 10000,
         })
         .toHaveBeenLastCalledWith(
           expect.objectContaining({ cdnUrlModifiers: '' }),
