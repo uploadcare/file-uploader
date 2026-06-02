@@ -11,8 +11,12 @@ jobs:
       - uses: ./.github/actions/setup
       - name: Build
         run: npm run build
+      # test:types (tsd vs dist/index.d.ts) and tsc (tsconfig.test references the
+      # generated types/jsx.d.ts) both need the build output, so they run here.
       - name: Validate type definitions
         run: npm run test:types
+      - name: Typecheck
+        run: npm run tsc
 
   lint:
     runs-on: ubuntu-latest
@@ -21,14 +25,6 @@ jobs:
       - uses: ./.github/actions/setup
       - name: Lint
         run: npm run lint
-
-  tsc:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
-      - uses: ./.github/actions/setup
-      - name: Typecheck
-        run: npm run tsc
 
   test:
     runs-on: ubuntu-latest
