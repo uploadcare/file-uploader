@@ -1,0 +1,19 @@
+name: Setup
+description: Set up Node 24 and install dependencies, restoring node_modules from cache when possible.
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
+      with:
+        node-version: 24
+        cache: npm
+    # Cache the whole install (incl. Vite's dep pre-bundle in node_modules/.vite)
+    # so jobs restore it instead of reinstalling. Keyed on the lockfile + node.
+    - uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
+      id: node-modules
+      with:
+        path: node_modules
+        key: ${{ runner.os }}-node24-node_modules-${{ hashFiles('package-lock.json') }}
+    - if: steps.node-modules.outputs.cache-hit != 'true'
+      shell: bash
+      run: npm ci

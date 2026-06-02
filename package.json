@@ -107,7 +107,7 @@
     "clean": "run-s clean:*",
     "format": "biome check --write",
     "prepare": "husky install",
-    "playwright:install": "npx playwright install && npx playwright install --with-deps chromium"
+    "playwright:install": "npx playwright install --with-deps chromium"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.2",
