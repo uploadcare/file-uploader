@@ -45,6 +45,10 @@ jobs:
           DEBIAN_FRONTEND: noninteractive
           NEEDRESTART_MODE: a
         run: npm run playwright:install
+      # specs/npm imports the published package (dist/ + web/), so tests need
+      # the build output too.
+      - name: Build
+        run: npm run build
       - name: Run tests
         run: npm run test:specs && npm run test:locales && npm run test:e2e
       - name: Archive artifacts
