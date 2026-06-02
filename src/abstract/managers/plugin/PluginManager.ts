@@ -12,7 +12,7 @@ export class PluginManager extends SharedInstance {
   private _subscribers: Set<Unsubscriber> = new Set();
   private _pluginsUpdate: Promise<void> = Promise.resolve();
   private _lazyPluginLoader: LazyPluginLoader;
-  public readonly registry = new PluginRegistry();
+  public readonly registry = new PluginRegistry(() => this._notifySubscribers());
 
   public get configRegistry() {
     return this.registry.config;
@@ -170,6 +170,7 @@ export class PluginManager extends SharedInstance {
     for (const pluginId of Array.from(this._plugins.keys())) {
       this._unregisterPlugin(pluginId);
     }
+    this.registry.destroy();
     this._lazyPluginLoader.destroy();
     super.destroy();
   }
