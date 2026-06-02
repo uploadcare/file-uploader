@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { page } from 'vitest/browser';
-import { defineLocale } from '@/index.ts';
+import { defineLocale } from '@/index';
 import { delay } from '@/utils/delay';
 import { TEST_IMAGE_URL } from '../utils/constants';
 import { addSource, createTestPlugin, getApi, openModal, renderUploader } from './utils';
