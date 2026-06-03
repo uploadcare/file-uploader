@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { page } from 'vitest/browser';
+import { defineLocale } from '@/index';
+import { delay } from '@/utils/delay';
 import { TEST_IMAGE_URL } from '../utils/constants';
 import { addSource, createTestPlugin, getApi, openModal, renderUploader } from './utils';
 
@@ -57,6 +59,43 @@ describe('L10n Registration', () => {
 
     await openModal();
     await expect.element(page.getByText('My Translated Source')).toBeVisible();
+  });
+
+  it('applies l10n registered asynchronously after a locale switch to a rendered source label', async () => {
+    // The uploader needs a `de` definition so the locale switch resolves cleanly.
+    defineLocale('de', {} as never);
+
+    const plugin = createTestPlugin({
+      id: 'lazy-l10n',
+      setup: ({ pluginApi }) => {
+        pluginApi.registry.registerL10n({ en: { 'lazy-source-label': 'Generate' } });
+        pluginApi.registry.registerSource({
+          id: 'lazy-source',
+          label: 'lazy-source-label',
+          onSelect: () => {},
+        });
+        // Register the locale's strings lazily — AFTER the LocaleManager has
+        // already applied plugin locales for the switch (mimics a real plugin
+        // awaiting a dynamic locale import). This only reaches the rendered
+        // label if `registerL10n` notifies subscribers.
+        pluginApi.config.subscribe('localeName', (name) => {
+          if (name === 'de') {
+            void delay(0).then(() => {
+              pluginApi.registry.registerL10n({ de: { 'lazy-source-label': 'Erzeugen' } });
+            });
+          }
+        });
+      },
+    });
+
+    const { config } = await renderUploader([plugin]);
+    addSource(config, 'lazy-source');
+
+    await openModal();
+    await expect.element(page.getByText('Generate')).toBeVisible();
+
+    config.localeName = 'de';
+    await expect.element(page.getByText('Erzeugen')).toBeVisible();
   });
 
   it('should keep plugin l10n overrides even after plugin is unregistered (current behavior)', async () => {

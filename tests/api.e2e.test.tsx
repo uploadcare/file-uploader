@@ -1,6 +1,8 @@
+import { uploadFile } from '@uploadcare/upload-client';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import type { Config, EventPayload } from '@/index.js';
+import { IMAGE } from './fixtures/files';
 import { TEST_IMAGE_URL } from './utils/constants';
 import '../types/jsx';
 
@@ -39,6 +41,52 @@ describe('API', () => {
 
     expect(eventPayload).toMatchObject(expect.objectContaining({ status: 'idle', externalUrl: url }));
   });
+
+  it('should add an already-uploaded file from an UploadcareFile instance and fire the success events without uploading', async () => {
+    // Upload a real local image via the upload client to get a genuine UploadcareFile.
+    const file = await uploadFile(IMAGE.PIXEL, { publicKey: 'demopublickey', store: false });
+
+    const uploadCtxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
+    const api = uploadCtxProvider.api;
+
+    const fileAddedHandler = vi.fn<(e: CustomEvent<EventPayload['file-added']>) => void>();
+    const uploadStartHandler = vi.fn<(e: CustomEvent<EventPayload['file-upload-start']>) => void>();
+    const uploadSuccessHandler = vi.fn<(e: CustomEvent<EventPayload['file-upload-success']>) => void>();
+    const commonSuccessHandler = vi.fn<(e: CustomEvent<EventPayload['common-upload-success']>) => void>();
+    uploadCtxProvider.addEventListener('file-added', fileAddedHandler);
+    uploadCtxProvider.addEventListener('file-upload-start', uploadStartHandler);
+    uploadCtxProvider.addEventListener('file-upload-success', uploadSuccessHandler);
+    uploadCtxProvider.addEventListener('common-upload-success', commonSuccessHandler);
+
+    const entry = api.addFileFromUploadcareFile(file);
+
+    // Added in its completed state, referencing the existing file.
+    expect(entry.uuid).toBe(file.uuid);
+    expect(entry.cdnUrl).toBe(file.cdnUrl);
+    expect(entry.name).toBe(file.originalFilename);
+    expect(entry.size).toBe(file.size);
+    expect(entry.isImage).toBe(file.isImage);
+    // `fileInfo` being set is what marks the entry as already uploaded.
+    expect(entry.fileInfo?.uuid).toBe(file.uuid);
+
+    // Adding an already-uploaded file fires the success events on its own — no `uploadAll()` needed.
+    const successPayload = await vi.waitFor(() => {
+      expect(uploadSuccessHandler).toHaveBeenCalled();
+      return uploadSuccessHandler.mock.calls[0][0].detail;
+    });
+    expect(successPayload).toMatchObject(expect.objectContaining({ uuid: file.uuid }));
+
+    // The collection reaches the success state as a whole.
+    const commonPayload = await vi.waitFor(() => {
+      expect(commonSuccessHandler).toHaveBeenCalled();
+      return commonSuccessHandler.mock.calls[0][0].detail;
+    });
+    expect(commonPayload.status).toBe('success');
+
+    // The file was announced as added, and was never uploaded (it already carried fileInfo).
+    expect(fileAddedHandler).toHaveBeenCalled();
+    expect(uploadStartHandler).not.toHaveBeenCalled();
+  }, 30_000);
 
   it('should not duplicate events after uploader add/removal', async () => {
     for (let i = 0; i < 5; i++) {
