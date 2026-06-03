@@ -3,7 +3,6 @@
 
 ### Bug Fixes
 
-* **deps:** upgrade playwright to 1.60.0 to fix install hang in CI ([129465b](https://github.com/uploadcare/file-uploader/commit/129465bd594e613637edccf9a69f26270d813864)), closes [microsoft/playwright#40998](https://github.com/microsoft/playwright/issues/40998) [microsoft/playwright#41102](https://github.com/microsoft/playwright/issues/41102)
 * **plugins:** make plugin registry changes reactive (batched) ([ce5034a](https://github.com/uploadcare/file-uploader/commit/ce5034aab2640ee5caee6868c31daf630165b97d))
 
 
