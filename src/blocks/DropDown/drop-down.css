@@ -1,4 +1,8 @@
 @layer uc.shared {
+  :where([uc-drop-down]) {
+    anchor-scope: --menu-button;
+  }
+
   :where([uc-drop-down]) .uc-dropdown-btn {
     position: relative;
     anchor-name: --menu-button;
