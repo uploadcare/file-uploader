@@ -1,3 +1,14 @@
+# [1.31.0](https://github.com/uploadcare/file-uploader/compare/v1.30.2...v1.31.0) (2026-06-03)
+
+
+### Bug Fixes
+
+* **plugins:** make plugin registry changes reactive (batched) ([ce5034a](https://github.com/uploadcare/file-uploader/commit/ce5034aab2640ee5caee6868c31daf630165b97d))
+
+
+### Features
+
+* add addFileFromUploadcareFile to the uploader public API ([34e4b5e](https://github.com/uploadcare/file-uploader/commit/34e4b5e53bd24b8f63df5650c183705e816c1f1b))
 ## [1.30.2](https://github.com/uploadcare/file-uploader/compare/v1.30.1...v1.30.2) (2026-05-28)
 ## [1.30.1](https://github.com/uploadcare/file-uploader/compare/v1.30.0...v1.30.1) (2026-05-27)
 # [1.30.0](https://github.com/uploadcare/file-uploader/compare/v1.29.1...v1.30.0) (2026-05-27)
