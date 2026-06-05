@@ -74,6 +74,9 @@ export class FileItem extends FileItemConfig {
   private _isUploading = false;
 
   @state()
+  private _hideRemoveAction = false;
+
+  @state()
   private _isFocused = false;
 
   @state()
@@ -100,6 +103,7 @@ export class FileItem extends FileItemConfig {
     });
 
     if (this.uid && this.uploadCollection.hasItem(this.uid)) {
+      this.entry?.getValue('abortController')?.abort();
       this.uploadCollection.remove(this.uid);
     }
   };
@@ -181,6 +185,7 @@ export class FileItem extends FileItemConfig {
 
     this._isFailed = state === FileItemState.FAILED;
     this._isUploading = state === FileItemState.UPLOADING;
+    this._hideRemoveAction = state === FileItemState.QUEUED_UPLOADING || state === FileItemState.UPLOADING;
     this._isFinished = state === FileItemState.FINISHED;
 
     this._updateHintAndProgress(state);
@@ -567,7 +572,14 @@ export class FileItem extends FileItemConfig {
               </button>
             `,
           )}
-          <uc-file-action-button @uc:remove=${this._handleRemove}  .uploading=${this._progressVisible} .failed=${this._isFailed} .success=${this._isFinished}></uc-file-action-button>
+          <uc-file-action-button
+            @uc:remove=${this._handleRemove}
+            .uploading=${this._isUploading}
+            .hideRemove=${this._hideRemoveAction}
+            .progress=${this._progressValue}
+            .failed=${this._isFailed}
+            .success=${this._isFinished}
+          ></uc-file-action-button>
           <button type="button" class="uc-upload-btn uc-mini-btn" @click=${this._handleUploadClick}>
             <uc-icon name="upload"></uc-icon>
           </button>

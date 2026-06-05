@@ -20,6 +20,7 @@ import './PrimaryAction';
 import '../DropDown/DropDown';
 import '../FileItem/FileActionButton';
 import './NoWrapModeDynamicBtn';
+import { ACTIVITY_TYPES } from '../../lit/activity-constants';
 
 export type DynamicButtonMode = 'auto' | 'menu' | 'toolbar' | 'compact';
 
@@ -177,6 +178,12 @@ export class DynamicBtn extends LitUploaderBlock {
     this.uploadCollection.observeCollection(this._throttledHandleCollectionUpdate);
 
     this._unregisterAfterFileAddHook = this.routerLayer.registerAfterFileAddHook(({ historyLength }) => {
+      if (this.cfg.confirmUpload) {
+        this._sharedInstancesBag.ctx.pub('*currentActivity', ACTIVITY_TYPES.UPLOAD_LIST);
+        this.modalManager?.open(ACTIVITY_TYPES.UPLOAD_LIST);
+        return true;
+      }
+
       if (historyLength > 0) return false;
       const currentActivity = this._sharedInstancesBag.ctx.read('*currentActivity');
       if (currentActivity) {
@@ -201,12 +208,7 @@ export class DynamicBtn extends LitUploaderBlock {
     return html`
       <uc-no-wrap-mode-dynamic-btn>
         ${this._mainAndRemainSources?.remain?.map(
-          (source) =>
-            html`<uc-source-btn
-              .iconOnly=${true}
-              role="menuitem"
-              .source=${source}
-            ></uc-source-btn>`,
+          (source) => html`<uc-source-btn .iconOnly=${true} role="menuitem" .source=${source}></uc-source-btn>`,
         )}
       </uc-no-wrap-mode-dynamic-btn>
     `;
@@ -246,17 +248,10 @@ export class DynamicBtn extends LitUploaderBlock {
 
   private _renderDropdown() {
     return html` <uc-drop-down>
-      <uc-icon
-        content-for="dd-header-button"
-        name=${this._getDropdownIconName()}
-      ></uc-icon>
+      <uc-icon content-for="dd-header-button" name=${this._getDropdownIconName()}></uc-icon>
       <div content-for="dd-content" role="menu" class="uc-dropdown-menu">
         ${this._mainAndRemainSources?.remain?.map(
-          (source) =>
-            html`<uc-source-btn
-              role="menuitem"
-              .source=${source}
-            ></uc-source-btn>`,
+          (source) => html`<uc-source-btn role="menuitem" .source=${source}></uc-source-btn>`,
         )}
       </div>
     </uc-drop-down>`;
@@ -277,7 +272,6 @@ export class DynamicBtn extends LitUploaderBlock {
       .success=${this.isSuccess}
       .idle=${this.isIdle}
       .progress=${this._progress}
-
     ></uc-file-action-button>`;
   }
 
