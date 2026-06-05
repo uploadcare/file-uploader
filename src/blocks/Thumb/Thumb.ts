@@ -59,7 +59,7 @@ export class Thumb extends FileItemConfig {
       size *= window.devicePixelRatio;
     }
 
-    return Math.min(size, CDN_MAX_OUTPUT_DIMENSION);
+    return Math.min(Math.round(size), CDN_MAX_OUTPUT_DIMENSION);
   }
 
   // biome-ignore lint/style/noInferrableTypes: Here the type is needed because `_withEntry` could not infer it correctly
