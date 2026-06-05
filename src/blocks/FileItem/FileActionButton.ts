@@ -35,10 +35,6 @@ export class FileActionButton extends LitUploaderBlock {
     return Math.min(Math.max(this.progress || 0, 0), 100);
   }
 
-  private get _isProgress(): boolean {
-    return this.uploading && this._normalizedProgress > 0;
-  }
-
   private _handleAction() {
     this.dispatchEvent(
       new CustomEvent('uc:remove', {
@@ -82,42 +78,22 @@ export class FileActionButton extends LitUploaderBlock {
             xmlns="http://www.w3.org/2000/svg"
             aria-hidden="true"
           >
-            ${
-              this._isProgress
-                ? html`
-                  <g transform="rotate(-90 12 12)">
-                    <circle
-                      class="uc-progress-ring"
-                      cx="12"
-                      cy="12"
-                      r="11"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="1"
-                      stroke-linecap="round"
-                      pathLength="100"
-                      style=${styleMap({
-                        strokeDashoffset: String(progressOffset),
-                      })}
-                    />
-                  </g>
-                `
-                : html`
-                  <g class="uc-preloader-spin">
-                    <circle
-                      cx="12"
-                      cy="12"
-                      r="11"
-                      stroke="currentColor"
-                      stroke-width="1"
-                      stroke-linecap="round"
-                      stroke-dasharray="40 60"
-                      fill="none"
-                      pathLength="100"
-                    />
-                  </g>
-                `
-            }
+          <g transform="rotate(-90 12 12)">
+              <circle
+                class="uc-progress-ring"
+                cx="12"
+                cy="12"
+                r="11"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1"
+                stroke-linecap="round"
+                pathLength="100"
+                style=${styleMap({
+                  strokeDashoffset: String(progressOffset),
+                })}
+              />
+            </g>
             <g class="uc-preloader-bg">
               <circle
                 cx="12"
