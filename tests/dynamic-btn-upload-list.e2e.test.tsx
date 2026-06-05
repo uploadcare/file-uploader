@@ -45,5 +45,22 @@ describe('DynamicBtn upload list behavior', () => {
       await dynamicBtn.click();
       await expect.element(uploadList).toBeVisible();
     });
+
+    it('should open upload list after file selection when upload confirmation is required', async () => {
+      const config = document.querySelector('uc-config') as HTMLElement & { confirmUpload: boolean };
+      config.confirmUpload = true;
+
+      const dynamicBtn = page.getByTestId('uc-dynamic-btn');
+      const uploadList = page.getByTestId('uc-upload-list');
+
+      await expect.element(dynamicBtn).toBeVisible();
+
+      commands.waitFileChooserAndUpload(['./fixtures/test_image.jpeg']);
+      await dynamicBtn.click();
+
+      await expect.element(uploadList).toBeVisible();
+      await expect.element(uploadList.getByText('test_image.jpeg')).toBeVisible();
+      await expect.element(uploadList.getByText('Upload', { exact: true })).toBeVisible();
+    });
   });
 });

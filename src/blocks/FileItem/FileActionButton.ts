@@ -90,7 +90,7 @@ export class FileActionButton extends LitUploaderBlock {
                 stroke-linecap="round"
                 pathLength="100"
                 style=${styleMap({
-                  strokeDashoffset: String(progressOffset),
+                  '--l-progress-offset': String(progressOffset),
                 })}
               />
             </g>
