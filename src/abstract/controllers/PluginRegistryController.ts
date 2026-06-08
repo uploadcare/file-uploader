@@ -1,4 +1,5 @@
 import type { OutputFileEntry } from '../../types/exported';
+import { debounce } from '../../utils/debounce';
 import { Listeners } from '../host-subscription';
 import type { ActivityRoute } from './RouterController';
 import type { BeforeUploadHandler } from './UploadCollectionController';
@@ -73,6 +74,15 @@ export class PluginRegistryController {
   // biome-ignore lint/suspicious/noConfusingVoidType: mirrors `PluginDefinition.setup`'s return; entries hold the plugin teardown or void when there's nothing to undo.
   private _installed = new Map<string, (() => void) | void>();
 
+  /**
+   * Batched change notification. Contributions often arrive in a synchronous
+   * burst (a plugin's setup() registering an icon + source + several l10n maps
+   * in one tick, or a locale switch re-registering strings); coalescing them
+   * via a 0ms debounce collapses that burst into a single subscriber
+   * notification instead of one per registration.
+   */
+  private _notify = debounce(() => this._listeners.notify(), 0);
+
   public subscribe(listener: () => void): () => void {
     return this._listeners.subscribe(listener);
   }
@@ -103,10 +113,10 @@ export class PluginRegistryController {
       return () => {};
     }
     this._sources.set(s.id, s);
-    this._listeners.notify();
+    this._notify();
     return () => {
       this._sources.delete(s.id);
-      this._listeners.notify();
+      this._notify();
     };
   }
 
@@ -116,30 +126,30 @@ export class PluginRegistryController {
       return () => {};
     }
     this._activities.set(a.id, a);
-    this._listeners.notify();
+    this._notify();
     return () => {
       this._activities.delete(a.id);
-      this._listeners.notify();
+      this._notify();
     };
   }
 
   public registerAction(a: FileActionRegistration): () => void {
     this._actions.set(a.id, a);
-    this._listeners.notify();
+    this._notify();
     return () => {
       this._actions.delete(a.id);
-      this._listeners.notify();
+      this._notify();
     };
   }
 
   public registerIcon(name: string, svg: string): () => void {
     const previous = this._icons.get(name);
     this._icons.set(name, svg);
-    this._listeners.notify();
+    this._notify();
     return () => {
       if (previous === undefined) this._icons.delete(name);
       else this._icons.set(name, previous);
-      this._listeners.notify();
+      this._notify();
     };
   }
 
@@ -206,6 +216,7 @@ export class PluginRegistryController {
   }
 
   public destroy(): void {
+    this._notify.cancel();
     for (const id of [...this._installed.keys()]) this.uninstall(id);
     this._sources.clear();
     this._activities.clear();
