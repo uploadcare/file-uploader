@@ -1,4 +1,4 @@
-import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { commands, page } from 'vitest/browser';
 import '../types/jsx';
 
@@ -61,6 +61,27 @@ describe('DynamicBtn upload list behavior', () => {
       await expect.element(uploadList).toBeVisible();
       await expect.element(uploadList.getByText('test_image.jpeg')).toBeVisible();
       await expect.element(uploadList.getByText('Upload', { exact: true })).toBeVisible();
+    });
+
+    it('should activate the only source directly in compact mode', async () => {
+      const config = document.querySelector('uc-config') as HTMLElement & {
+        dynamicButtonViewMode: string;
+        sourceList: string;
+      };
+      config.dynamicButtonViewMode = 'compact';
+      config.sourceList = 'local';
+
+      const dynamicBtn = page.getByTestId('uc-dynamic-btn');
+
+      await expect.element(dynamicBtn).toBeVisible();
+      await vi.waitFor(() => {
+        expect(dynamicBtn.query()?.querySelector('uc-drop-down')).toBeNull();
+      });
+
+      commands.waitFileChooserAndUpload(['./fixtures/test_image.jpeg']);
+      await dynamicBtn.click();
+
+      await expect.element(dynamicBtn.getByText('1 file uploaded')).toBeVisible();
     });
   });
 });

@@ -115,9 +115,14 @@ export class DynamicBtn extends LitUploaderBlock {
     return (
       this.isIdle &&
       !this.shouldShowInline &&
+      !this.shouldShowCompactSingleSource &&
       !this.hasCollectionEntries &&
       (this._sources.length > 1 || this.isCollapsedMode)
     );
+  }
+
+  private get shouldShowCompactSingleSource(): boolean {
+    return this.isIdle && this.isCollapsedMode && !this.hasCollectionEntries && this._sources.length === 1;
   }
 
   private get hasCollectionEntries(): boolean {
@@ -257,6 +262,17 @@ export class DynamicBtn extends LitUploaderBlock {
     </uc-drop-down>`;
   }
 
+  private _renderCompactSingleSource() {
+    const source = this._sources[0];
+    const compactSource = source ? { ...source, icon: iconsBasedOnMode.compact } : source;
+
+    return html`
+      <uc-no-wrap-mode-dynamic-btn>
+        <uc-source-btn .iconOnly=${true} .source=${compactSource}></uc-source-btn>
+      </uc-no-wrap-mode-dynamic-btn>
+    `;
+  }
+
   private _renderPrimaryAction() {
     return html`<uc-primary-action
       .entries=${this._collection}
@@ -298,6 +314,7 @@ export class DynamicBtn extends LitUploaderBlock {
         <div class=${this._getInnerClassMap()}>
           ${cache(this.shouldShowPrimaryAction ? this._renderPrimaryAction() : null)}
           ${cache(this.shouldShowInline ? this._renderInline() : null)}
+          ${cache(this.shouldShowCompactSingleSource ? this._renderCompactSingleSource() : null)}
           ${cache(this.shouldShowDropdown ? this._renderDropdown() : null)}
           ${cache(this.shouldShowAbortAction || this.hasCollectionEntries ? this._renderAbortAction() : null)}
           ${cache(this._renderVisualDropArea())}

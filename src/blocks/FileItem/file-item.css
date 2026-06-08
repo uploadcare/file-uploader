@@ -87,10 +87,6 @@
     pointer-events: none;
   }
 
-  uc-file-item button.uc-upload-btn {
-    display: none;
-  }
-
   uc-file-item .uc-badge {
     position: absolute;
     bottom: 2px;

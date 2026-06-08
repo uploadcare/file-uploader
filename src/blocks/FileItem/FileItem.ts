@@ -580,9 +580,6 @@ export class FileItem extends FileItemConfig {
             .failed=${this._isFailed}
             .success=${this._isFinished}
           ></uc-file-action-button>
-          <button type="button" class="uc-upload-btn uc-mini-btn" @click=${this._handleUploadClick}>
-            <uc-icon name="upload"></uc-icon>
-          </button>
         </div>
       </div>
     `;
