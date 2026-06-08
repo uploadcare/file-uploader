@@ -1,6 +1,8 @@
+import type { UploadcareFile } from '@uploadcare/upload-client';
 import type { OutputFileEntry } from '../../types/exported';
 import { fileIsImage } from '../../utils/fileTypes';
 import { parseCdnUrl } from '../../utils/parseCdnUrl';
+import { UploadSource } from '../../utils/UploadSource';
 import { type EventBus, UploaderEventType } from '../EventBus';
 import { Listeners } from '../host-subscription';
 import { getOutputItem } from '../output-collection-state';
@@ -153,6 +155,31 @@ export class UploadCollectionController {
       this._events.emit(UploaderEventType.FILE_ADDED, snap as OutputFileEntry<'idle'>);
     }
     return snap;
+  }
+
+  /**
+   * Adds an already-uploaded file from an `UploadcareFile` (e.g. the result of
+   * `uploadFile()` from `@uploadcare/upload-client`). The entry is created in
+   * its completed state (`fileInfo` set, `uploadProgress: 100`) so it is not
+   * uploaded again.
+   */
+  public addFileFromUploadcareFile(file: UploadcareFile, options: AddFileOptions = {}): OutputFileEntry<'success'> {
+    const entry = this.collection.add({
+      fileInfo: file,
+      uuid: file.uuid,
+      cdnUrl: file.cdnUrl,
+      fileName: options.fileName ?? file.originalFilename ?? null,
+      fileSize: file.size,
+      isImage: file.isImage ?? false,
+      mimeType: file.contentInfo?.mime?.mime ?? file.mimeType,
+      uploadProgress: 100,
+      source: options.source ?? UploadSource.API,
+    });
+    const snap = getOutputItem(entry);
+    if (!options.silent) {
+      this._events.emit(UploaderEventType.FILE_ADDED, snap as OutputFileEntry<'idle'>);
+    }
+    return snap as OutputFileEntry<'success'>;
   }
 
   public update(internalId: string, patch: Partial<OutputFileEntry>): void {

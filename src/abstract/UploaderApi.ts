@@ -1,3 +1,4 @@
+import type { UploadcareFile } from '@uploadcare/upload-client';
 import type { ConfigController } from '../abstract/controllers/ConfigController';
 import type { RouterController } from '../abstract/controllers/RouterController';
 import type { AddFileOptions, UploadCollectionController } from '../abstract/controllers/UploadCollectionController';
@@ -82,6 +83,18 @@ export class UploaderApi {
 
   public addFileFromCdnUrl(cdnUrl: string, options: ApiAddFileCommonOptions = {}): OutputFileEntry {
     return this._collection.addFileFromCdnUrl(cdnUrl, options);
+  }
+
+  /**
+   * Adds an already-uploaded file from an `UploadcareFile` instance (e.g. the
+   * result of `uploadFile()` from `@uploadcare/upload-client`). The entry is
+   * added in its completed state, so it is not uploaded again.
+   */
+  public addFileFromUploadcareFile(
+    file: UploadcareFile,
+    options: ApiAddFileCommonOptions = {},
+  ): OutputFileEntry<'success'> {
+    return this._collection.addFileFromUploadcareFile(file, options);
   }
 
   public removeFileByInternalId(internalId: string): void {
