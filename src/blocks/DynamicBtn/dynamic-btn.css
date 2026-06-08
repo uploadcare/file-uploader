@@ -89,7 +89,8 @@
   }
 
   :where(
-      [uc-dynamic-btn]:not(:has([uc-no-wrap-mode-dynamic-btn], [uc-drop-down])) [uc-primary-action],
+      [uc-dynamic-btn]:not(:has([uc-no-wrap-mode-dynamic-btn], [uc-drop-down], [uc-file-action-button]))
+        [uc-primary-action],
       [uc-file-action-button],
       [uc-drop-down],
       [uc-no-wrap-mode-dynamic-btn] > uc-source-btn:last-child

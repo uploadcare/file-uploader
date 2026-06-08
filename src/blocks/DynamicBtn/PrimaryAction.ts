@@ -137,7 +137,7 @@ export class PrimaryAction extends ChildBlock {
   public override render() {
     const label = this._label;
     return html`
-      <button @click=${this._handleClick} aria-label=${label}>
+      <button type="button" @click=${this._handleClick} aria-label=${label}>
         ${this._renderLeading()}
         <span>${label}</span>
       </button>

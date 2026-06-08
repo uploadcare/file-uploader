@@ -167,9 +167,18 @@ export class DynamicBtn extends ChildBlock {
     return (
       status === 'idle' &&
       !this._shouldShowInline(status, hasEntries) &&
+      !this._shouldShowCompactSingleSource(status, hasEntries) &&
       !hasEntries &&
       (this._sources.length > 1 || this._isCompactMode())
     );
+  }
+
+  /**
+   * Compact mode with exactly one source: render a single icon-only source
+   * button instead of a dropdown that would only ever hold one item.
+   */
+  private _shouldShowCompactSingleSource(status: OutputCollectionStatus, hasEntries: boolean): boolean {
+    return status === 'idle' && this._isCompactMode() && !hasEntries && this._sources.length === 1;
   }
 
   private _shouldShowAbort(status: OutputCollectionStatus, hasEntries: boolean): boolean {
@@ -241,11 +250,22 @@ export class DynamicBtn extends ChildBlock {
     `;
   }
 
-  private _renderAbort(status: OutputCollectionStatus) {
+  private _renderCompactSingleSource() {
+    const source = this._sources[0];
+    const compactSource = source ? { ...source, icon: iconsBasedOnMode.compact } : source;
+    return html`
+      <uc-no-wrap-mode-dynamic-btn>
+        <uc-source-btn .iconOnly=${true} .source=${compactSource}></uc-source-btn>
+      </uc-no-wrap-mode-dynamic-btn>
+    `;
+  }
+
+  private _renderAbort(status: OutputCollectionStatus, progress: number) {
     return html`
       <uc-file-action-button
         @uc:remove=${this._handleRemove}
         .uploading=${status === 'uploading'}
+        .progress=${progress}
         .failed=${status === 'failed'}
         .success=${status === 'success'}
         .idle=${status === 'idle'}
@@ -284,8 +304,13 @@ export class DynamicBtn extends ChildBlock {
         <div class=${this._innerClasses(status)}>
           ${cache(collection && this._shouldShowPrimary(status, hasEntries) ? this._renderPrimary(collection) : null)}
           ${cache(this._shouldShowInline(status, hasEntries) ? this._renderInline() : null)}
+          ${cache(this._shouldShowCompactSingleSource(status, hasEntries) ? this._renderCompactSingleSource() : null)}
           ${cache(this._shouldShowDropdown(status, hasEntries) ? this._renderDropdown() : null)}
-          ${cache(this._shouldShowAbort(status, hasEntries) || hasEntries ? this._renderAbort(status) : null)}
+          ${cache(
+            this._shouldShowAbort(status, hasEntries) || hasEntries
+              ? this._renderAbort(status, collection?.progress ?? 0)
+              : null,
+          )}
           ${cache(this._renderVisualDropArea())}
         </div>
       </uc-drop-area>

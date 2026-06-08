@@ -35,6 +35,7 @@ export class DropDown extends LightDomMixin(LitElement) {
     const popoverId = this._id as string;
     return html`
       <button
+        type="button"
         class="uc-mini-btn uc-dropdown-btn"
         popovertarget=${popoverId}
         popovertargetaction="toggle"

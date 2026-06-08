@@ -149,6 +149,9 @@ export class FileItem extends ChildBlock {
 
   private _handleRemove = (): void => {
     if (!this.entry) return;
+    // Abort an in-flight upload before removing so the request doesn't keep
+    // running (and firing progress) after the entry is gone.
+    this.entry.getValue('abortController')?.abort();
     this.uploader.api.removeFileByInternalId(this.entry.internalId);
   };
 
@@ -179,6 +182,13 @@ export class FileItem extends ChildBlock {
     // (no inline progress-bar), so we only need the boolean.
     const progressVisible =
       state === 'uploading' || state === 'queued-uploading' || state === 'queued-validation' || state === 'validation';
+    // Upload progress (0–100) shown as a ring on the action button; pre-upload
+    // validation/queue states have no meaningful percentage yet.
+    const progressValue =
+      state === 'queued-validation' || state === 'validation' ? 0 : (entry.getValue('uploadProgress') ?? 0);
+    // Hide the remove glyph while the file is actively uploading/queued so the
+    // button reads as a spinner, not a remove affordance.
+    const hideRemove = state === 'uploading' || state === 'queued-uploading';
 
     const snap = this._snapshot(entry);
     const visibleActions = (this.uploaderOrNull?.plugins.actions ?? []).filter((a) => {
@@ -231,6 +241,8 @@ export class FileItem extends ChildBlock {
           <uc-file-action-button
             @uc:remove=${this._handleRemove}
             .uploading=${progressVisible}
+            .progress=${progressValue}
+            .hideRemove=${hideRemove}
             .failed=${isFailed}
             .success=${isFinished}
           ></uc-file-action-button>
