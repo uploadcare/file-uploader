@@ -1,6 +1,6 @@
 import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
-import '../../blocks/SmartBtn/primary-action.css';
+import '../../blocks/DynamicBtn/primary-action.css';
 import { UploadSource } from '../../utils/UploadSource';
 import '../Icon/Icon';
 import '../Thumb/Thumb';
@@ -10,7 +10,7 @@ import type { OutputCollectionState, OutputCollectionStatus } from '../../types/
 import type { SourceButtonConfig } from '../SourceBtn/SourceBtn';
 
 /**
- * v2 `<uc-primary-action>`. The main button surface inside SmartBtn.
+ * v2 `<uc-primary-action>`. The main button surface inside DynamicBtn.
  * State-driven text (`upload from <source>`, `header-uploading`,
  * `header-succeed`, etc.) plus optional source icon or single-file
  * thumbnail. Clicking either invokes the source's `onClick` (when no
@@ -49,10 +49,10 @@ export class PrimaryAction extends ChildBlock {
   protected override willUpdate(_changed: PropertyValues<this>): void {
     super.willUpdate?.(_changed);
     const cfg = this.uploaderOrNull?.config.values as
-      | { smartButtonShowFirstIcon?: boolean; multiple?: boolean }
+      | { dynamicButtonShowFirstIcon?: boolean; multiple?: boolean }
       | undefined;
     if (cfg) {
-      this._showIcon = cfg.smartButtonShowFirstIcon ?? true;
+      this._showIcon = cfg.dynamicButtonShowFirstIcon ?? true;
       this._isMultiple = cfg.multiple ?? true;
     }
   }
@@ -147,4 +147,4 @@ export class PrimaryAction extends ChildBlock {
 
 if (!customElements.get('uc-primary-action')) customElements.define('uc-primary-action', PrimaryAction);
 
-// Tag is globally declared by v1's `src/blocks/SmartBtn/PrimaryAction.ts`.
+// Tag is globally declared by v1's `src/blocks/DynamicBtn/PrimaryAction.ts`.

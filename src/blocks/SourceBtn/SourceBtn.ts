@@ -21,7 +21,7 @@ export class SourceBtn extends ChildBlock {
   @property({ attribute: false })
   public source?: SourceButtonConfig;
 
-  /** Renders only the icon (no label). Used by SmartBtn's inline mode. */
+  /** Renders only the icon (no label). Used by DynamicBtn's inline mode. */
   @property({ type: Boolean })
   public iconOnly = false;
 

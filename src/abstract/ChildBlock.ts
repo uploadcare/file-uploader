@@ -20,7 +20,7 @@ export abstract class ChildBlock extends LightDomMixin(LitElement) {
   /**
    * v1-style "style attributes" applied to the host on connect — used
    * by `themes/uc-basic` CSS rules that key off attributes like
-   * `[uc-modal]`, `[uc-drop-area]`, `[uc-smart-btn]`, etc. Subclasses
+   * `[uc-modal]`, `[uc-drop-area]`, `[uc-dynamic-btn]`, etc. Subclasses
    * extend via:
    *
    *   static override styleAttrs = [...super.styleAttrs, 'uc-modal'];

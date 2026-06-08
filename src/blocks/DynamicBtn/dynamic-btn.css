@@ -1,14 +1,14 @@
 @layer uc.components {
-  :where([uc-smart-btn]) {
+  :where([uc-dynamic-btn]) {
     position: relative;
     display: inline-flex;
   }
 
-  :where([uc-smart-btn]) > uc-drop-area {
+  :where([uc-dynamic-btn]) > uc-drop-area {
     display: contents;
   }
 
-  :where([uc-smart-btn] .uc-smart-btn-inner) {
+  :where([uc-dynamic-btn] .uc-dynamic-btn-inner) {
     display: flex;
     gap: 3px;
     background-color: var(--uc-simple-btn);
@@ -17,11 +17,11 @@
     isolation: isolate;
   }
 
-  :where([uc-smart-btn] .uc-smart-btn-inner.uc-failed) {
+  :where([uc-dynamic-btn] .uc-dynamic-btn-inner.uc-failed) {
     background-color: var(--uc-destructive);
   }
 
-  :where([uc-smart-btn] .uc-smart-btn-inner.uc-failed) button {
+  :where([uc-dynamic-btn] .uc-dynamic-btn-inner.uc-failed) button {
     color: var(--uc-destructive-foreground);
 
     &:hover {
@@ -29,7 +29,7 @@
     }
   }
 
-  :where([uc-smart-btn]) .uc-visual-drop-area {
+  :where([uc-dynamic-btn]) .uc-visual-drop-area {
     position: absolute;
     top: 0px;
     left: 0px;
@@ -49,34 +49,34 @@
     pointer-events: none;
   }
 
-  :where([uc-smart-btn]) > uc-drop-area[drag-state="active"] .uc-visual-drop-area {
+  :where([uc-dynamic-btn]) > uc-drop-area[drag-state="active"] .uc-visual-drop-area {
     opacity: 1;
   }
-  :where([uc-smart-btn]) > uc-drop-area[drag-state="inactive"] .uc-visual-drop-area {
+  :where([uc-dynamic-btn]) > uc-drop-area[drag-state="inactive"] .uc-visual-drop-area {
     opacity: 0;
   }
-  :where([uc-smart-btn]) > uc-drop-area[drag-state="near"] .uc-visual-drop-area {
+  :where([uc-dynamic-btn]) > uc-drop-area[drag-state="near"] .uc-visual-drop-area {
     opacity: 1;
   }
-  :where([uc-smart-btn]) > uc-drop-area[drag-state="over"] .uc-visual-drop-area {
+  :where([uc-dynamic-btn]) > uc-drop-area[drag-state="over"] .uc-visual-drop-area {
     opacity: 1;
   }
 
-  :where([uc-smart-btn]) .uc-source-list {
+  :where([uc-dynamic-btn]) .uc-source-list {
     display: flex;
     gap: 3px;
   }
 
-  :where([uc-smart-btn]) uc-source-btn button {
+  :where([uc-dynamic-btn]) uc-source-btn button {
     margin-bottom: 0;
     padding: 0 var(--uc-padding);
   }
 
-  :where([uc-smart-btn]) uc-source-btn button:hover {
+  :where([uc-dynamic-btn]) uc-source-btn button:hover {
     background-color: var(--uc-secondary);
   }
 
-  :where([uc-smart-btn]) button::before {
+  :where([uc-dynamic-btn]) button::before {
     position: absolute;
     content: "";
     right: -2px;
@@ -89,16 +89,16 @@
   }
 
   :where(
-      [uc-smart-btn]:not(:has([uc-no-wrap-mode-smart-btn], [uc-drop-down])) [uc-primary-action],
+      [uc-dynamic-btn]:not(:has([uc-no-wrap-mode-dynamic-btn], [uc-drop-down])) [uc-primary-action],
       [uc-file-action-button],
       [uc-drop-down],
-      [uc-no-wrap-mode-smart-btn] > uc-source-btn:last-child
+      [uc-no-wrap-mode-dynamic-btn] > uc-source-btn:last-child
     )
     button::before {
     content: none;
   }
 
-  :where([uc-smart-btn] [uc-drop-down]) .uc-dropdown-content uc-source-btn uc-icon {
+  :where([uc-dynamic-btn] [uc-drop-down]) .uc-dropdown-content uc-source-btn uc-icon {
     margin-right: 0;
     margin-left: calc(var(--uc-padding) * -0.5);
   }

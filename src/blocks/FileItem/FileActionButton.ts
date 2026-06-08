@@ -10,7 +10,7 @@ const L10N_REMOVE_KEY = 'file-item-remove-button';
 
 /**
  * v2 `<uc-file-action-button>`. Multi-state remove/abort button used by
- * SmartBtn: morphs between `idle/uploading/success/failed` to show
+ * DynamicBtn: morphs between `idle/uploading/success/failed` to show
  * either a remove glyph or a spinner overlay. Dispatches `uc:remove`
  * (bubbling) when clicked so the host decides what to do — remove all,
  * abort all, or clear failed.

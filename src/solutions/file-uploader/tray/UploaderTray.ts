@@ -74,7 +74,7 @@ export class UploaderTray extends ChildBlock {
     }
     // Suppress the default "navigate to upload-list" navigation after file
     // add. With the tray in place, the modal stays closed and the tray
-    // becomes the visible upload-status surface. Mirrors SmartBtn's hook
+    // becomes the visible upload-status surface. Mirrors DynamicBtn's hook
     // pattern.
     this._unregisterAfterFileAdd?.();
     this._unregisterAfterFileAdd = ctrl.router.hooks.afterFileAdd(() => null);

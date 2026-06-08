@@ -5,7 +5,7 @@ import { LightDomMixin } from '../../lit/LightDomMixin';
 import { UID } from '../../utils/UID';
 
 /**
- * v2 `<uc-drop-down>`. Light-DOM popover wrapper used by SmartBtn for
+ * v2 `<uc-drop-down>`. Light-DOM popover wrapper used by DynamicBtn for
  * its overflow menu. Headless: the user supplies the trigger button via
  * the `dd-header-button` slot (via `yield`) and the menu content via
  * `dd-content`. No controller dependency — pure DOM utility.

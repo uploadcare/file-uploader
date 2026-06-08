@@ -259,7 +259,7 @@ export class RouterController {
    * v1-compatible history: each activated activity pushes itself. Going
    * to `null` (closing everything) clears. The check
    * `router.history.length > 0` therefore answers "did the user navigate
-   * to *any* activity since the last close" — SmartBtn uses this to
+   * to *any* activity since the last close" — DynamicBtn uses this to
    * decide whether to suppress the upload-list modal after a file add.
    */
   private _pushHistory(to: EdgeTarget): void {
@@ -292,14 +292,14 @@ export class RouterController {
   /**
    * v1-compatible "after file add" routing. Sources, drop zones, paste,
    * and the system dialog all call this after adding a file so consumers
-   * (notably SmartBtn) can override the default navigation via
+   * (notably DynamicBtn) can override the default navigation via
    * `hooks.afterFileAdd`. Independent of `traverse` because the file may
    * have been added with no current activity (regular preset's
    * `<uc-simple-btn>` triggers a system dialog directly).
    *
-   * Default: navigate to `upload-list`. SmartBtn's hook returns `null`
+   * Default: navigate to `upload-list`. DynamicBtn's hook returns `null`
    * when there's no history (file added straight from the trigger) so
-   * the upload-list modal does NOT open — the inline smart-button shows
+   * the upload-list modal does NOT open — the inline dynamic-button shows
    * the upload status instead.
    */
   public afterFileAdd(): void {

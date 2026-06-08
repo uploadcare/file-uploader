@@ -303,7 +303,7 @@ export class UploaderApi {
           for (const f of input.files) {
             this.addFileFromObject(f, { source: options.source ?? 'local' });
           }
-          // Route through the hook chain — SmartBtn overrides this to
+          // Route through the hook chain — DynamicBtn overrides this to
           // keep the modal closed when there's no history (file added
           // directly from the trigger). Defaults to navigating to
           // `upload-list`.

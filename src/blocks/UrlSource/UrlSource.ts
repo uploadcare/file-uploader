@@ -36,8 +36,8 @@ export class UrlSource extends ChildBlock {
     const url = this._url.trim();
     if (!url) return;
     this.uploader.api.addFileFromUrl(url, { source: UploadSource.URL });
-    // Route through `afterFileAdd` — runs preset/SmartBtn hooks that
-    // can override the default `'upload-list'` navigation (SmartBtn
+    // Route through `afterFileAdd` — runs preset/DynamicBtn hooks that
+    // can override the default `'upload-list'` navigation (DynamicBtn
     // suppresses it when there's no history).
     this.uploader.router.afterFileAdd();
   };

@@ -6,7 +6,7 @@ import '../../../blocks/DropArea/DropArea';
 import '../../../blocks/Modal/Modal';
 import '../../../blocks/PluginActivityRenderer/PluginActivityRenderer';
 import '../../../blocks/SimpleBtn/SimpleBtn';
-import '../../../blocks/SmartBtn/SmartBtn';
+import '../../../blocks/DynamicBtn/DynamicBtn';
 import '../../../blocks/SourceList/SourceList';
 import '../../../blocks/StartFrom/StartFrom';
 import '../../../blocks/UploadList/UploadList';
@@ -14,7 +14,7 @@ import { Uploader } from '../../../abstract/Uploader';
 
 /**
  * Regular preset. Renders the v2 layout directly — `<uc-simple-btn>` (or
- * `<uc-smart-btn>` when `smart-button` is set) trigger, modals for
+ * `<uc-dynamic-btn>` when `dynamic-button` is set) trigger, modals for
  * start-from + upload-list, plugin activities, and the surrounding
  * `<uc-drop-area>` for drag-and-drop. v1's `regular/index.css` scopes
  * rules to `[uc-file-uploader-regular]`, so the host carries that
@@ -24,12 +24,12 @@ export class UploaderRegular extends Uploader {
   public static override styleAttrs = [...super.styleAttrs, 'uc-file-uploader-regular'];
 
   /**
-   * Swap the simple trigger for `<uc-smart-btn>` — the multi-state
+   * Swap the simple trigger for `<uc-dynamic-btn>` — the multi-state
    * dynamic toolbar (source picker + upload status + abort). Matches
-   * v1's `<uc-file-uploader-regular smart-button>` attribute.
+   * v1's `<uc-file-uploader-regular dynamic-button>` attribute.
    */
-  @property({ attribute: 'smart-button', type: Boolean })
-  public smartButton = false;
+  @property({ attribute: 'dynamic-button', type: Boolean })
+  public dynamicButton = false;
 
   /**
    * Headless mode — suppresses the built-in trigger button. The consumer
@@ -43,7 +43,7 @@ export class UploaderRegular extends Uploader {
   /**
    * Every regular-preset screen lives in a modal — the start-from
    * source picker, every external source, and the upload list. The
-   * host's only persistent UI is the `<uc-simple-btn>` / `<uc-smart-btn>`
+   * host's only persistent UI is the `<uc-simple-btn>` / `<uc-dynamic-btn>`
    * trigger, which isn't activity-bound.
    */
   protected override navigationSlotFor(): 'foreground' {
@@ -54,7 +54,7 @@ export class UploaderRegular extends Uploader {
 
   private _renderTrigger() {
     if (this.headless) return null;
-    return this.smartButton ? html`<uc-smart-btn></uc-smart-btn>` : html`<uc-simple-btn></uc-simple-btn>`;
+    return this.dynamicButton ? html`<uc-dynamic-btn></uc-dynamic-btn>` : html`<uc-simple-btn></uc-simple-btn>`;
   }
 
   protected override renderLayout() {

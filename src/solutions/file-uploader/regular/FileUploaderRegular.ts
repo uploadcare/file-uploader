@@ -4,9 +4,9 @@ import { UploaderRegular } from './UploaderRegular';
 /**
  * v1-compat shim — `<uc-file-uploader-regular>`.
  *
- * Subclass of v2's `UploaderRegular`. Same `headless` / `smart-button`
+ * Subclass of v2's `UploaderRegular`. Same `headless` / `dynamic-button`
  * attributes, same `plugins` property, same render output. v1's
- * `lazyPlugins` static and `isSmartBtnActive` getter are no longer
+ * `lazyPlugins` static and `isDynamicBtnActive` getter are no longer
  * implemented; instead the default plugin set (local / url / camera /
  * external-sources / image-shrink) is auto-installed on connect for v1
  * parity. Consumers can still set `plugins` explicitly to override.

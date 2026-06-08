@@ -2,13 +2,13 @@ import { html } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { cache } from 'lit/directives/cache.js';
 import { classMap } from 'lit/directives/class-map.js';
-import '../../blocks/SmartBtn/smart-btn-mode.css';
-import '../../blocks/SmartBtn/smart-btn.css';
+import '../../blocks/DynamicBtn/dynamic-btn-mode.css';
+import '../../blocks/DynamicBtn/dynamic-btn.css';
 import '../DropArea/DropArea';
 import '../DropDown/DropDown';
 import '../FileItem/FileActionButton';
 import '../Icon/Icon';
-import './NoWrapModeSmartBtn';
+import './NoWrapModeDynamicBtn';
 import './PrimaryAction';
 import '../SourceBtn/SourceBtn';
 import '../Thumb/Thumb';
@@ -18,11 +18,11 @@ import { buildOutputCollectionState } from '../../abstract/output-collection-sta
 import type { OutputCollectionState, OutputCollectionStatus } from '../../types/exported';
 import type { SourceButtonConfig } from '../SourceBtn/SourceBtn';
 
-export type SmartButtonMode = 'auto' | 'menu' | 'toolbar' | 'compact';
+export type DynamicButtonMode = 'auto' | 'menu' | 'toolbar' | 'compact';
 
 const AUTO_MODE_INLINE_THRESHOLD = 3;
 
-const iconsBasedOnMode: Record<Exclude<SmartButtonMode, 'toolbar'>, string> = {
+const iconsBasedOnMode: Record<Exclude<DynamicButtonMode, 'toolbar'>, string> = {
   compact: 'paperclip',
   menu: 'arrow-dropdown',
   auto: 'arrow-dropdown',
@@ -33,7 +33,7 @@ interface SourceSplit {
   remain: SourceButtonConfig[];
 }
 
-const splitSources = (sources: SourceButtonConfig[], mode: SmartButtonMode): SourceSplit => {
+const splitSources = (sources: SourceButtonConfig[], mode: DynamicButtonMode): SourceSplit => {
   if (mode === 'compact' || sources.length === 0) {
     return { main: null, remain: sources };
   }
@@ -41,11 +41,11 @@ const splitSources = (sources: SourceButtonConfig[], mode: SmartButtonMode): Sou
 };
 
 /**
- * v2 `<uc-smart-btn>`. Port of v1's SmartBtn — same DOM, same CSS,
+ * v2 `<uc-dynamic-btn>`. Port of v1's DynamicBtn — same DOM, same CSS,
  * same state machine. Combines a `<uc-primary-action>` (the main
  * button), optional inline `<uc-source-btn>` row OR `<uc-drop-down>`
  * (overflow menu), and a multi-state `<uc-file-action-button>` for
- * remove / abort. Drives layout from `config.smartButtonViewMode`
+ * remove / abort. Drives layout from `config.dynamicButtonViewMode`
  * (`auto | toolbar | menu | compact`).
  *
  * Wraps everything in `<uc-drop-area>` so drag-and-drop targets the
@@ -53,16 +53,16 @@ const splitSources = (sources: SourceButtonConfig[], mode: SmartButtonMode): Sou
  * `_collection` and `_status` in sync, plus to the plugin registry for
  * the source list. Uses v2's `buildOutputCollectionState` (memoized
  * getters identical to v1) so the inner components see the same shape
- * v1 SmartBtn passes around.
+ * v1 DynamicBtn passes around.
  */
-export class SmartBtn extends ChildBlock {
-  public static override styleAttrs = [...super.styleAttrs, 'uc-smart-btn', 'uc-wgt-common'];
+export class DynamicBtn extends ChildBlock {
+  public static override styleAttrs = [...super.styleAttrs, 'uc-dynamic-btn', 'uc-wgt-common'];
 
   @property({ attribute: 'dropzone', type: Boolean })
   public dropzone = true;
 
   @state()
-  private _mode: SmartButtonMode = 'auto';
+  private _mode: DynamicButtonMode = 'auto';
 
   @state()
   private _split: SourceSplit = { main: null, remain: [] };
@@ -93,9 +93,9 @@ export class SmartBtn extends ChildBlock {
   }
 
   protected override controllerReady(ctrl: UploaderController): void {
-    // v1's SmartBtn registers an `afterFileAdd` hook that suppresses
+    // v1's DynamicBtn registers an `afterFileAdd` hook that suppresses
     // the default "open upload-list modal" navigation when the user
-    // added the file directly from the smart button (no source picker
+    // added the file directly from the dynamic button (no source picker
     // history). The button itself is the persistent status display so
     // there's nothing to surface in a modal.
     //
@@ -105,7 +105,7 @@ export class SmartBtn extends ChildBlock {
     //    in regular preset.
     //  - `historyLength === 0` (file added straight from the trigger,
     //    drop, or system dialog): return `null` → `navigate(null)`
-    //    closes any modal and clears the activity. The smart button
+    //    closes any modal and clears the activity. The dynamic button
     //    now displays the upload status inline.
     this._unregisterFileAddHook = ctrl.router.hooks.afterFileAdd(() => {
       if (ctrl.router.history.length > 0) return undefined;
@@ -127,8 +127,8 @@ export class SmartBtn extends ChildBlock {
   public override willUpdate(): void {
     const ctrl = this.uploaderOrNull;
     if (!ctrl) return;
-    const cfg = ctrl.config.values as { smartButtonViewMode?: SmartButtonMode };
-    const mode = cfg.smartButtonViewMode ?? 'auto';
+    const cfg = ctrl.config.values as { dynamicButtonViewMode?: DynamicButtonMode };
+    const mode = cfg.dynamicButtonViewMode ?? 'auto';
     const sources = ctrl.sources.list;
     // Stable key per (length, mode, source ids) — detects shape change
     // without storing the array itself as state.
@@ -202,7 +202,7 @@ export class SmartBtn extends ChildBlock {
 
   private _renderInline() {
     return html`
-      <uc-no-wrap-mode-smart-btn>
+      <uc-no-wrap-mode-dynamic-btn>
         ${this._split.remain.map(
           (source) => html`
             <uc-source-btn
@@ -212,12 +212,12 @@ export class SmartBtn extends ChildBlock {
             ></uc-source-btn>
           `,
         )}
-      </uc-no-wrap-mode-smart-btn>
+      </uc-no-wrap-mode-dynamic-btn>
     `;
   }
 
   private _renderDropdown() {
-    const icon = iconsBasedOnMode[this._mode as Exclude<SmartButtonMode, 'toolbar'>] ?? 'arrow-dropdown';
+    const icon = iconsBasedOnMode[this._mode as Exclude<DynamicButtonMode, 'toolbar'>] ?? 'arrow-dropdown';
     return html`
       <uc-drop-down>
         <uc-icon content-for="dd-header-button" name=${icon}></uc-icon>
@@ -263,7 +263,7 @@ export class SmartBtn extends ChildBlock {
 
   private _innerClasses(status: OutputCollectionStatus) {
     return classMap({
-      'uc-smart-btn-inner': true,
+      'uc-dynamic-btn-inner': true,
       'uc-failed': status === 'failed',
       'uc-uploading': status === 'uploading',
       'uc-success': status === 'success',
@@ -293,6 +293,6 @@ export class SmartBtn extends ChildBlock {
   }
 }
 
-if (!customElements.get('uc-smart-btn')) customElements.define('uc-smart-btn', SmartBtn);
+if (!customElements.get('uc-dynamic-btn')) customElements.define('uc-dynamic-btn', DynamicBtn);
 
-// Tag is globally declared by v1's `src/blocks/SmartBtn/SmartBtn.ts`.
+// Tag is globally declared by v1's `src/blocks/DynamicBtn/DynamicBtn.ts`.

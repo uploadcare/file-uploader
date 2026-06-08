@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>v2 Spike — Smart Button</title>
+    <title>v2 Spike — Dynamic Button</title>
     <style>
       body {
         font-family: system-ui, sans-serif;
@@ -35,13 +35,13 @@
     <script type="module" src="../../src/index.ts"></script>
   </head>
   <body>
-    <h1>v2 spike — smart button</h1>
+    <h1>v2 spike — dynamic button</h1>
     <p class="desc">
-      Regular preset with <code>smart-button</code> enabled. Replaces
+      Regular preset with <code>dynamic-button</code> enabled. Replaces
       the static <code>&lt;uc-simple-btn&gt;</code> with the dynamic
-      <code>&lt;uc-smart-btn&gt;</code> that swaps between source-picker,
+      <code>&lt;uc-dynamic-btn&gt;</code> that swaps between source-picker,
       upload-progress, success and failure states. Layout adapts via
-      <code>smart-button-view-mode</code>: <code>auto</code> /
+      <code>dynamic-button-view-mode</code>: <code>auto</code> /
       <code>toolbar</code> / <code>menu</code> / <code>compact</code>.
     </p>
 
@@ -63,12 +63,12 @@
     </section>
 
     <section>
-      <h2>1. Regular + smart button</h2>
+      <h2>1. Regular + dynamic button</h2>
       <uc-uploader-regular
         id="u1"
-        ctx-name="smart-demo"
+        ctx-name="dynamic-demo"
         pubkey="demopublickey"
-        smart-button
+        dynamic-button
       ></uc-uploader-regular>
     </section>
 
@@ -91,10 +91,10 @@
       ];
 
       document.getElementById('mode').addEventListener('change', (e) => {
-        u.api.setConfig('smartButtonViewMode', e.target.value);
+        u.api.setConfig('dynamicButtonViewMode', e.target.value);
       });
       document.getElementById('showIcon').addEventListener('change', (e) => {
-        u.api.setConfig('smartButtonShowFirstIcon', e.target.checked);
+        u.api.setConfig('dynamicButtonShowFirstIcon', e.target.checked);
       });
       window.u = u;
     </script>

@@ -97,11 +97,11 @@ const defaults = {
   qualityInsights: true,
   pasteScope: 'local',
 
-  // smart button (regular preset's dynamic toolbar). `auto` picks
+  // dynamic button (regular preset's dynamic toolbar). `auto` picks
   // wrap vs no-wrap based on viewport; `firstIcon` toggles the leading
   // upload icon. Defaults match v1's `initialConfig`.
-  smartButtonViewMode: 'auto',
-  smartButtonShowFirstIcon: true,
+  dynamicButtonViewMode: 'auto',
+  dynamicButtonShowFirstIcon: true,
 
   plugins: [],
 } satisfies ConfigType;

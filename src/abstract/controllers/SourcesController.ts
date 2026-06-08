@@ -11,7 +11,7 @@ import type { UploaderController } from './UploaderController';
  * (sources can install / expand) — and emits a single "sources
  * changed" notification when the shape actually shifts.
  *
- * Consumers (`<uc-source-list>`, `<uc-smart-btn>`) read `.list` and
+ * Consumers (`<uc-source-list>`, `<uc-dynamic-btn>`) read `.list` and
  * subscribe via `subscribe(listener)`. Replaces having each block
  * subscribe to `config` + `plugins` separately for source-list
  * reactivity, and dedups the notifications (e.g., installing several

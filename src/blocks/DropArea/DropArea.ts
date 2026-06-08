@@ -129,9 +129,9 @@ export class DropArea extends ChildBlock {
       }
     }
     if (ctrl.collection.size > 0) {
-      // Goes through the hook chain — SmartBtn can suppress the
+      // Goes through the hook chain — DynamicBtn can suppress the
       // upload-list modal when there's no history (drop landed on the
-      // smart button itself).
+      // dynamic button itself).
       ctrl.router.afterFileAdd();
     }
   }

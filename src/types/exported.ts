@@ -351,8 +351,8 @@ export type ConfigType = {
    */
   pasteScope: PasteScope;
 
-  smartButtonViewMode: SmartButtonMode;
-  smartButtonShowFirstIcon: boolean;
+  dynamicButtonViewMode: DynamicButtonMode;
+  dynamicButtonShowFirstIcon: boolean;
 };
 export type ConfigComplexType = Pick<ConfigType, (typeof complexConfigKeys)[number]>;
 export type ConfigPlainType = Omit<ConfigType, keyof ConfigComplexType>;
@@ -576,7 +576,7 @@ export type OutputCollectionState<
   );
 
 import { type UploaderEventPayload as EventPayload, UploaderEventType as EventType } from '../abstract/EventBus';
-import type { SmartButtonMode } from '../blocks/SmartBtn/SmartBtn';
+import type { DynamicButtonMode } from '../blocks/DynamicBtn/DynamicBtn';
 
 export { EventType };
 export type { EventPayload };
