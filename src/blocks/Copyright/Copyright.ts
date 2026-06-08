@@ -1,20 +1,19 @@
 import { html } from 'lit';
-import { LitBlock } from '../../lit/LitBlock';
-import './copyright.css';
+import '../../blocks/Copyright/copyright.css';
+import { ChildBlock } from '../../abstract/ChildBlock';
 
-export class Copyright extends LitBlock {
-  public override initCallback(): void {
-    super.initCallback();
-
-    this.subConfigValue('removeCopyright', (value) => {
-      this.toggleAttribute('hidden', !!value);
-    });
-  }
-
+/**
+ * v2 `<uc-copyright>`. Renders the "Powered by Uploadcare" link; hides
+ * itself when `config.removeCopyright` is set. v1's `copyright.css`
+ * targets the tag name so visuals are inherited.
+ */
+export class Copyright extends ChildBlock {
   public override render() {
+    const remove = !!this.uploaderOrNull?.config.values.removeCopyright;
+    this.toggleAttribute('hidden', remove);
     return html`
       <a
-        href="https://uploadcare.com/?utm_source=copyright&amp;utm_medium=referral&amp;utm_campaign=v4"
+        href="https://uploadcare.com/?utm_source=copyright&utm_medium=referral&utm_campaign=v4"
         target="_blank noopener"
         class="uc-credits"
         >Powered by Uploadcare</a
@@ -23,8 +22,4 @@ export class Copyright extends LitBlock {
   }
 }
 
-declare global {
-  interface HTMLElementTagNameMap {
-    'uc-copyright': Copyright;
-  }
-}
+if (!customElements.get('uc-copyright')) customElements.define('uc-copyright', Copyright);

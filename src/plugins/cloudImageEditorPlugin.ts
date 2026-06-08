@@ -1,9 +1,12 @@
 import { defineComponents } from '../abstract/defineComponents';
-import type { UploaderPlugin } from '../abstract/managers/plugin';
+import { UploaderEventType as EventType } from '../abstract/EventBus';
+import type { LegacyUploaderPlugin as UploaderPlugin } from '../abstract/plugin-types-legacy';
+import { calculateMaxCenteredCropFrame } from '../blocks/CloudImageEditor/src/crop-utils';
+import { parseCropPreset } from '../blocks/CloudImageEditor/src/lib/parseCropPreset';
 import * as cloudImageEditorActivityModule from '../blocks/CloudImageEditorActivity/CloudImageEditorActivity';
-import { EventType } from '../blocks/UploadCtxProvider/EventEmitter';
 import { ACTIVITY_TYPES } from '../lit/activity-constants';
 import * as cloudEditorModules from '../solutions/cloud-image-editor';
+import { createCdnUrl, createCdnUrlModifiers } from '../utils/cdn-utils';
 
 const CLOUD_EDITOR_PLUGIN_ID = 'cloud-image-editor';
 
@@ -53,6 +56,14 @@ export const cloudImageEditorPlugin: UploaderPlugin = {
       const autoOpen = pluginApi.config.get('cloudImageEditorAutoOpen');
       const collectionSize = uploaderApi._uploadCollection.size;
 
+      // v1 parity (`LitUploaderBlock._setInitialCrop`): when `cropPreset`
+      // is configured, auto-apply a max-centered crop modifier to each
+      // image entry on upload. Runs regardless of `useCloudImageEditor`
+      // so consumers can pre-crop without opening the editor.
+      if (cropPreset && fileEntry.cdnUrl && !fileEntry.cdnUrlModifiers?.includes('/crop/')) {
+        applyCropPreset(fileEntry, cropPreset, pluginApi);
+      }
+
       if (useEditor && collectionSize === 1 && (cropPreset || autoOpen)) {
         uploaderApi.setCurrentActivity?.(ACTIVITY_TYPES.CLOUD_IMG_EDIT, {
           internalId: fileEntry.internalId,
@@ -64,3 +75,34 @@ export const cloudImageEditorPlugin: UploaderPlugin = {
     return unsubscribe;
   },
 };
+
+function applyCropPreset(
+  fileEntry: import('../types/exported').OutputFileEntry<'success'>,
+  cropPreset: string,
+  pluginApi: { files: { update: (id: string, changes: { cdnUrl?: string; cdnUrlModifiers?: string }) => void } },
+): void {
+  const presets = parseCropPreset(cropPreset);
+  if (!presets.length) return;
+  const [aspectRatioPreset] = presets;
+  const imageInfo = fileEntry.fileInfo?.imageInfo;
+  if (!imageInfo) {
+    console.warn('[cloud-image-editor] cropPreset auto-apply skipped — no imageInfo', {
+      internalId: fileEntry.internalId,
+    });
+    return;
+  }
+  const { width, height } = imageInfo;
+  const aspectRatio =
+    typeof aspectRatioPreset?.width === 'number' &&
+    typeof aspectRatioPreset?.height === 'number' &&
+    aspectRatioPreset.width > 0 &&
+    aspectRatioPreset.height > 0
+      ? aspectRatioPreset.width / aspectRatioPreset.height
+      : 1;
+  const crop = calculateMaxCenteredCropFrame(width, height, aspectRatio);
+  const cdnUrlModifiers = createCdnUrlModifiers(`crop/${crop.width}x${crop.height}/${crop.x},${crop.y}`, 'preview');
+  pluginApi.files.update(fileEntry.internalId, {
+    cdnUrlModifiers,
+    cdnUrl: createCdnUrl(fileEntry.cdnUrl as string, cdnUrlModifiers),
+  });
+}

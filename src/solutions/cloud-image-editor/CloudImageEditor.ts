@@ -1,32 +1,18 @@
 import { CloudImageEditorBlock } from '../../blocks/CloudImageEditor/src/CloudImageEditorBlock';
-import { InternalEventType } from '../../blocks/UploadCtxProvider/EventEmitter';
 
-type BaseInitState = InstanceType<typeof CloudImageEditorBlock>['init$'];
-interface CloudImageEditorInitState extends BaseInitState {
-  '*solution': string;
+/**
+ * Public `<uc-cloud-image-editor>` element. Thin subclass of the v2
+ * editor block — adds the `uc-wgt-common` host attribute so theme CSS
+ * applies. Telemetry / a11y / `*solution` state were tied to v1's
+ * `LitBlock`; in v2 they're optional services that flow through the
+ * editor context when mounted inside `<uc-uploader>`, no-op otherwise.
+ */
+export class CloudImageEditor extends CloudImageEditorBlock {
+  public static override styleAttrs: string[] = [...CloudImageEditorBlock.styleAttrs, 'uc-wgt-common'];
 }
 
-export class CloudImageEditor extends CloudImageEditorBlock {
-  public static override styleAttrs = [...super.styleAttrs, 'uc-wgt-common'];
-
-  public constructor() {
-    super();
-
-    this.init$ = {
-      ...this.init$,
-      '*solution': this.tagName,
-    } as CloudImageEditorInitState;
-  }
-
-  public override initCallback(): void {
-    super.initCallback();
-
-    this.telemetryManager.sendEvent({
-      eventType: InternalEventType.INIT_SOLUTION,
-    });
-
-    this.a11y?.registerBlock(this);
-  }
+if (!customElements.get('uc-cloud-image-editor')) {
+  customElements.define('uc-cloud-image-editor', CloudImageEditor);
 }
 
 declare global {

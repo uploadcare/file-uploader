@@ -1,13 +1,11 @@
-import { html, nothing } from 'lit';
+import { html, nothing, type PropertyValues } from 'lit';
 import { state } from 'lit/decorators.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
-import type { TypedData } from '../../abstract/TypedData';
-import { LitActivityBlock } from '../../lit/LitActivityBlock';
-import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
+import { ActivityBlock } from '../../abstract/ActivityBlock';
+import type { UploaderController } from '../../abstract/controllers/UploaderController';
+import type { UploadEntry } from '../../abstract/UploadEntry';
 import type { ApplyResult, ChangeResult } from '../CloudImageEditor/src/types';
 import './cloud-image-editor-activity.css';
-import type { UploadEntryData } from '../../abstract/uploadEntrySchema';
-import type { Uid } from '../../lit/Uid';
 
 import '../../solutions/cloud-image-editor/CloudImageEditor';
 
@@ -15,133 +13,140 @@ export type ActivityParams = { internalId: string };
 
 type EditorTemplateConfig = {
   cdnUrl: string;
+  cdnCname: string;
   cropPreset: string;
   tabs: string;
+  testMode: boolean;
 };
 
-export class CloudImageEditorActivity extends LitUploaderBlock {
-  private _entry?: TypedData<UploadEntryData>;
+/**
+ * v2-native cloud image editor activity. Replaces v1's `LitUploaderBlock`
+ * subclass: pulls the upload entry from `controller.collection`, reads
+ * config via `controller.config.get`, dispatches modal close + history
+ * back via `controller.router`. No `LitBlock`, no `_sharedInstancesBag`,
+ * no `modalManager`, no `historyBack`.
+ */
+export class CloudImageEditorActivity extends ActivityBlock {
+  public override activityType = 'cloud-image-edit';
+
+  private _entry: UploadEntry | null = null;
 
   @state()
   private _editorConfig: EditorTemplateConfig | null = null;
 
-  public override get activityParams(): ActivityParams {
-    const params = super.activityParams;
-
-    if ('internalId' in params) {
-      return params as ActivityParams;
-    }
-    throw new Error(`Cloud Image Editor activity params not found`);
+  protected override controllerReady(ctrl: UploaderController): void {
+    this._mountEditor(ctrl);
   }
 
-  public override initCallback(): void {
-    super.initCallback();
-
-    this.subConfigValue('cropPreset', (cropPreset) => {
-      if (!this._editorConfig) {
-        return;
-      }
-      if (this._editorConfig.cropPreset === cropPreset) {
-        return;
-      }
-      this._editorConfig = {
-        ...this._editorConfig,
-        cropPreset,
-      };
-    });
-
-    this.subConfigValue('cloudImageEditorTabs', (tabs) => {
-      if (!this._editorConfig) {
-        return;
-      }
-      if (this._editorConfig.tabs === tabs) {
-        return;
-      }
-      this._editorConfig = {
-        ...this._editorConfig,
-        tabs,
-      };
-    });
-
-    this._mountEditor();
-  }
-
-  public override disconnectedCallback(): void {
-    super.disconnectedCallback();
+  protected override controllerReleased(): void {
     this._unmountEditor();
   }
 
-  private _handleApply(e: CustomEvent<ApplyResult>): void {
-    if (!this._entry) {
+  public override updated(changedProperties: PropertyValues<this>): void {
+    super.updated(changedProperties);
+    // Re-mount whenever the router's params point at a different entry
+    // than the one we already mounted (covers a second edit on a
+    // different file). Also handles the initial mount when params arrive
+    // after the activity becomes active.
+    const ctrl = this.uploaderOrNull;
+    if (!ctrl || !this.hasAttribute('active')) return;
+    const params = ctrl.router.params as Partial<ActivityParams>;
+    const targetId = typeof params?.internalId === 'string' ? params.internalId : null;
+    if (!targetId) return;
+    if (this._entry?.internalId === targetId) return;
+    this._mountEditor(ctrl);
+  }
+
+  private _mountEditor(ctrl: UploaderController): void {
+    const params = ctrl.router.params as Partial<ActivityParams>;
+    if (!params || typeof params.internalId !== 'string') {
+      // Activity opened without an `internalId` — happens during the
+      // initial render before the plugin's `setCurrentActivity` fires.
+      // We'll re-mount when params arrive.
       return;
     }
-    this.debugPrint(`editor event "apply"`, e.detail);
-    const result = e.detail;
-    this._entry.setMultipleValues({
-      cdnUrl: result.cdnUrl,
-      cdnUrlModifiers: result.cdnUrlModifiers,
-    });
-    this.modalManager?.close(LitActivityBlock.activities.CLOUD_IMG_EDIT);
-    this.historyBack();
-  }
-
-  private _handleCancel(event?: Event): void {
-    const detail = event instanceof CustomEvent ? event.detail : undefined;
-    this.debugPrint(`editor event "cancel"`, detail);
-    this.modalManager?.close(LitActivityBlock.activities.CLOUD_IMG_EDIT);
-    this.historyBack();
-  }
-
-  public handleChange(event: CustomEvent<ChangeResult>): void {
-    this.debugPrint(`editor event "change"`, event.detail);
-  }
-
-  private _mountEditor(): void {
-    const { internalId } = this.activityParams;
-    const entry = this.uploadCollection.read(internalId as Uid);
+    const entry = ctrl.collection.read(params.internalId);
     if (!entry) {
-      throw new Error(`Entry with internalId "${internalId}" not found`);
+      console.error(`[uc-cloud-image-editor-activity] entry with internalId "${params.internalId}" not found`);
+      return;
     }
     this._entry = entry;
-    const cdnUrl = this._entry.getValue('cdnUrl');
+    const cdnUrl = entry.getValue('cdnUrl');
     if (!cdnUrl) {
-      throw new Error(`Entry with internalId "${internalId}" hasn't uploaded yet`);
+      console.error(`[uc-cloud-image-editor-activity] entry "${params.internalId}" has not finished uploading yet`);
+      return;
     }
-    this._editorConfig = this._createEditorConfig(cdnUrl);
+    this._editorConfig = this._buildConfig(ctrl, cdnUrl);
   }
 
   private _unmountEditor(): void {
-    this._entry = undefined;
+    this._entry = null;
     this._editorConfig = null;
   }
 
-  public override render() {
-    if (!this._editorConfig) {
-      return nothing;
+  private _buildConfig(ctrl: UploaderController, cdnUrl: string): EditorTemplateConfig {
+    const cfg = ctrl.config.values as {
+      cdnCname?: string;
+      cropPreset?: string;
+      cloudImageEditorTabs?: string;
+      testMode?: boolean;
+    };
+    return {
+      cdnUrl,
+      cdnCname: cfg.cdnCname ?? '',
+      cropPreset: cfg.cropPreset ?? '',
+      tabs: cfg.cloudImageEditorTabs ?? '',
+      testMode: Boolean(cfg.testMode),
+    };
+  }
+
+  private _handleApply = (e: CustomEvent<ApplyResult>): void => {
+    const ctrl = this.uploaderOrNull;
+    if (!ctrl) return;
+    if (this._entry) {
+      const result = e.detail;
+      this._entry.setMultipleValues({
+        cdnUrl: result.cdnUrl,
+        cdnUrlModifiers: result.cdnUrlModifiers,
+      });
     }
+    // `back()` alone returns to the previous activity (upload-list for
+    // the regular preset). Calling `closeModal()` first would push a
+    // `null` onto history, leaving nothing for `back()` to navigate to.
+    ctrl.router.back();
+  };
 
-    const { cdnUrl, cropPreset, tabs } = this._editorConfig;
+  private _handleCancel = (): void => {
+    const ctrl = this.uploaderOrNull;
+    if (!ctrl) return;
+    ctrl.router.back();
+  };
 
+  private _handleChange = (_event: CustomEvent<ChangeResult>): void => {
+    // No-op — v1 only logged the event for debug. Surface here for
+    // consumers that subscribe via `controller.events` if needed.
+  };
+
+  public override render() {
+    if (!this._editorConfig) return nothing;
+    const { cdnUrl, cdnCname, cropPreset, tabs, testMode } = this._editorConfig;
     return html`
       <uc-cloud-image-editor
         cdn-url=${cdnUrl}
-        crop-preset=${ifDefined(cropPreset)}
-        tabs=${ifDefined(tabs)}
+        cdn-cname=${cdnCname}
+        crop-preset=${ifDefined(cropPreset || undefined)}
+        tabs=${ifDefined(tabs || undefined)}
+        ?test-mode=${testMode}
         @apply=${this._handleApply}
         @cancel=${this._handleCancel}
-        @change=${this.handleChange}
+        @change=${this._handleChange}
       ></uc-cloud-image-editor>
     `;
   }
+}
 
-  private _createEditorConfig(cdnUrl: string): EditorTemplateConfig {
-    const config: EditorTemplateConfig = {
-      cdnUrl,
-      cropPreset: this.cfg.cropPreset,
-      tabs: this.cfg.cloudImageEditorTabs,
-    };
-    return config;
-  }
+if (!customElements.get('uc-cloud-image-editor-activity')) {
+  customElements.define('uc-cloud-image-editor-activity', CloudImageEditorActivity);
 }
 
 declare global {

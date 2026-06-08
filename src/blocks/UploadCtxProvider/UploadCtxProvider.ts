@@ -1,42 +1,82 @@
-// @ts-check
+import { ChildBlock } from '../../abstract/ChildBlock';
+import type { UploaderController } from '../../abstract/controllers/UploaderController';
+import { type UploaderEventPayload, UploaderEventType } from '../../abstract/EventBus';
+import type { UploaderApi } from '../../abstract/UploaderApi';
+import { bindEventBusToElement } from '../../abstract/ui-adapters';
 
-import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
-import { type EventPayload, EventType } from './EventEmitter';
+/**
+ * v1-compat shim for `<uc-upload-ctx-provider>`.
+ *
+ * Originally a `LitUploaderBlock` that hosted the shared upload context.
+ * In v2 the upload context lives on `<uc-uploader>` (resolved via
+ * `UploaderRegistry` keyed by `ctx-name`); this element is now a thin
+ * adapter that exposes the v1 surface — `.api`, `.getAPI()`,
+ * `.uploadCollection`, and DOM event dispatch — backed by the v2
+ * `UploaderController`.
+ *
+ * **Required**: a sibling `<uc-uploader*>` element with the same
+ * `ctx-name` attribute must exist somewhere in the document. Without
+ * one, `.api` throws — matching v1's behaviour when the context
+ * provider couldn't find its owner.
+ *
+ * @deprecated Place `<uc-uploader-regular>` (or other preset) directly;
+ * its `.api` is the recommended surface. The provider element will be
+ * removed in the next major version.
+ */
+// biome-ignore lint/suspicious/noUnsafeDeclarationMerging: typed addEventListener overloads
+export class UploadCtxProvider extends ChildBlock {
+  public static override styleAttrs = [...super.styleAttrs, 'uc-wgt-common'];
 
-// biome-ignore lint/suspicious/noUnsafeDeclarationMerging: This is intentional interface merging, used to add event listener types
-export class UploadCtxProvider extends LitUploaderBlock {
-  public declare attributesMeta: {
-    'ctx-name': string;
-  };
-  public static override styleAttrs = ['uc-wgt-common'];
-  public static EventType = EventType;
+  /** v1-compat: static enum of all event type strings. */
+  public static EventType = UploaderEventType;
 
-  private _unbindEventEmitter: (() => void) | null = null;
+  private _unbindEventBus?: () => void;
 
-  public override initCallback() {
-    super.initCallback();
-
-    this._unbindEventEmitter = this.eventEmitter.bindTarget(this);
+  protected override controllerReady(ctrl: UploaderController): void {
+    this._unbindEventBus?.();
+    this._unbindEventBus = bindEventBusToElement(this, ctrl.events);
   }
 
-  public override disconnectedCallback(): void {
-    super.disconnectedCallback();
+  protected override controllerReleased(): void {
+    this._unbindEventBus?.();
+    this._unbindEventBus = undefined;
+  }
 
-    this._unbindEventEmitter?.();
+  /** v2's public api facade. Carries v1 method aliases (initFlow, doneFlow, …). */
+  public get api(): UploaderApi {
+    return this.uploader.api;
+  }
+
+  /** @deprecated v1 alias for `api`. Use `element.api` instead. */
+  public getAPI(): UploaderApi {
+    return this.uploader.api;
+  }
+
+  /**
+   * v1 surface — read-only view of the upload collection. Returns the v2
+   * `UploadCollectionController`; method names happen to overlap (`size`,
+   * `clearAll`, etc.). v1's `TypedCollection`-specific APIs (`findItems`,
+   * `read`, `readProp`, `items()` as a method, `observeCollection`) are
+   * not provided; consumers who need them should migrate to the
+   * controller's `entries` getter and `subscribe()` method.
+   *
+   * @deprecated Use `element.api.getItems()` / `element.api.on('change', …)` instead.
+   */
+  public get uploadCollection() {
+    return this.uploader.collection;
   }
 }
 
 type EventListenerMap = {
-  [K in (typeof EventType)[keyof typeof EventType]]: (e: CustomEvent<EventPayload[K]>) => void;
+  [K in (typeof UploaderEventType)[keyof typeof UploaderEventType]]: (e: CustomEvent<UploaderEventPayload[K]>) => void;
 };
 
-export interface UploadCtxProvider extends LitUploaderBlock {
+export interface UploadCtxProvider extends ChildBlock {
   addEventListener<T extends keyof EventListenerMap>(
     type: T,
     listener: EventListenerMap[T],
     options?: boolean | AddEventListenerOptions,
   ): void;
-  // fallback overloads for compatibility with the DOM lib (lib.dom.d.ts)
   addEventListener(
     type: string,
     listener: EventListenerOrEventListenerObject | null,
@@ -53,6 +93,10 @@ export interface UploadCtxProvider extends LitUploaderBlock {
     listener: EventListenerOrEventListenerObject | null,
     options?: boolean | EventListenerOptions,
   ): void;
+}
+
+if (!customElements.get('uc-upload-ctx-provider')) {
+  customElements.define('uc-upload-ctx-provider', UploadCtxProvider);
 }
 
 declare global {

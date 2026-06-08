@@ -1,0 +1,136 @@
+@layer uc.components {
+  :where([uc-uploader-tray]) {
+    --uc-tray-inset: 16px;
+    --uc-tray-width: 320px;
+    --uc-tray-max-height: min(480px, 60vh);
+    --uc-tray-z-index: 9000;
+    --uc-tray-transition-duration: 200ms;
+
+    position: fixed;
+    width: var(--uc-tray-width);
+    max-width: calc(100vw - var(--uc-tray-inset) * 2);
+    z-index: var(--uc-tray-z-index);
+    pointer-events: none;
+  }
+
+  :where([uc-uploader-tray])[position="bottom-right"] {
+    bottom: var(--uc-tray-inset);
+    right: var(--uc-tray-inset);
+  }
+  :where([uc-uploader-tray])[position="bottom-left"] {
+    bottom: var(--uc-tray-inset);
+    left: var(--uc-tray-inset);
+  }
+  :where([uc-uploader-tray])[position="top-right"] {
+    top: var(--uc-tray-inset);
+    right: var(--uc-tray-inset);
+  }
+  :where([uc-uploader-tray])[position="top-left"] {
+    top: var(--uc-tray-inset);
+    left: var(--uc-tray-inset);
+  }
+
+  :where([uc-uploader-tray]) .uc-tray-panel {
+    pointer-events: auto;
+    background-color: var(--uc-background);
+    color: var(--uc-foreground);
+    border: 1px solid var(--uc-border);
+    border-radius: calc(var(--uc-radius) * 1.5);
+    box-shadow: var(--uc-dialog-shadow);
+    overflow: hidden;
+  }
+
+  /* Header */
+  :where([uc-uploader-tray]) .uc-tray-header {
+    display: flex;
+    align-items: stretch;
+    gap: 4px;
+    padding: 4px 6px;
+    border-bottom: 1px solid var(--uc-border);
+    background-color: var(--uc-muted);
+  }
+
+  :where([uc-uploader-tray]) .uc-tray-header-clickable {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    background: transparent;
+    border: 0;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+    text-align: left;
+    border-radius: calc(var(--uc-radius) * 0.75);
+  }
+
+  :where([uc-uploader-tray]) .uc-tray-header-clickable:hover {
+    background-color: var(--uc-background);
+  }
+
+  :where([uc-uploader-tray]) .uc-tray-header-text {
+    flex: 1;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--uc-foreground);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  :where([uc-uploader-tray]) .uc-tray-chevron {
+    width: 14px;
+    height: 14px;
+    color: var(--uc-muted-foreground);
+    transition: transform var(--uc-tray-transition-duration) ease;
+  }
+
+  :where([uc-uploader-tray])[collapsed] .uc-tray-chevron {
+    transform: rotate(180deg);
+  }
+
+  :where([uc-uploader-tray]) .uc-tray-mini-btn {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    color: var(--uc-muted-foreground);
+    cursor: pointer;
+    border-radius: calc(var(--uc-radius) * 0.75);
+  }
+
+  :where([uc-uploader-tray]) .uc-tray-mini-btn:hover {
+    background-color: var(--uc-background);
+    color: var(--uc-foreground);
+  }
+
+  :where([uc-uploader-tray]) .uc-tray-mini-btn uc-icon {
+    width: 16px;
+    height: 16px;
+  }
+
+  /* Aggregate progress bar — thin sliver below the header */
+  :where([uc-uploader-tray]) .uc-tray-progress {
+    display: block;
+    height: 2px;
+  }
+
+  /* Body */
+  :where([uc-uploader-tray]) .uc-tray-body {
+    max-height: var(--uc-tray-max-height);
+    overflow-y: auto;
+    padding: 4px 0;
+  }
+
+  :where([uc-uploader-tray])[collapsed] .uc-tray-body,
+  :where([uc-uploader-tray])[collapsed] .uc-tray-progress {
+    display: none;
+  }
+}

@@ -5,9 +5,9 @@ import type { Ref } from 'lit/directives/ref.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import { styleMap } from 'lit/directives/style-map.js';
 import { when } from 'lit/directives/when.js';
-import { LitBlock } from '../../../lit/LitBlock';
 import { debounce } from '../../../utils/debounce';
 import { batchPreloadImages } from '../../../utils/preloadImage';
+import { EditorBlock } from '../EditorBlock';
 import type { EditorImageCropper } from './EditorImageCropper';
 import type { EditorImageFader } from './EditorImageFader';
 import { type EditorSlider, FAKE_ORIGINAL_FILTER } from './EditorSlider';
@@ -37,7 +37,7 @@ import './EditorSlider';
 
 type TabIdValue = (typeof TabId)[keyof typeof TabId];
 
-export class EditorToolbar extends LitBlock {
+export class EditorToolbar extends EditorBlock {
   @state()
   private _showLoader = false;
 
@@ -94,26 +94,26 @@ export class EditorToolbar extends LitBlock {
   }, 500);
 
   private readonly _updateInfoTooltip = debounce(() => {
-    const transformations = this.$['*editorTransformations'];
-    const currentOperation = this.$['*currentOperation'] as keyof typeof COLOR_OPERATIONS_CONFIG | null;
+    const transformations = this.editor.get('*editorTransformations');
+    const currentOperation = this.editor.get('*currentOperation') as keyof typeof COLOR_OPERATIONS_CONFIG | null;
     let text = '';
     let visible = false;
 
-    if (this.$['*tabId'] === TabId.FILTERS) {
+    if (this.editor.get('*tabId') === TabId.FILTERS) {
       visible = true;
-      if (this.$['*currentFilter'] && transformations?.filter?.name === this.$['*currentFilter']) {
+      if (this.editor.get('*currentFilter') && transformations?.filter?.name === this.editor.get('*currentFilter')) {
         const value = transformations?.filter?.amount || 100;
-        text = `${this.$['*currentFilter']} ${value}`;
+        text = `${this.editor.get('*currentFilter')} ${value}`;
       } else {
         text = this.l10n(FAKE_ORIGINAL_FILTER);
       }
-    } else if (this.showSubToolbar && this.$['*tabId'] === TabId.TUNING && currentOperation) {
+    } else if (this.showSubToolbar && this.editor.get('*tabId') === TabId.TUNING && currentOperation) {
       visible = true;
       const value = transformations?.[currentOperation] || COLOR_OPERATIONS_CONFIG[currentOperation].zero;
       text = `${this.l10n(currentOperation)} ${value}`;
     }
     if (visible) {
-      this.$['*operationTooltip'] = text;
+      this.editor.set('*operationTooltip', text);
     }
     this._tooltipVisible = visible;
   }, 0);
@@ -138,24 +138,14 @@ export class EditorToolbar extends LitBlock {
     visible: 'uc-tab-toggles--visible',
   };
 
-  public override init$: Record<string, unknown> = {
-    ...this.init$,
-    '*sliderEl': null,
-    '*showSlider': false,
-    '*showListAspectRatio': false,
-    '*currentFilter': FAKE_ORIGINAL_FILTER,
-    '*currentOperation': null,
-    '*operationTooltip': null,
-  };
-
   private _onSliderClose(): void {
-    this.$['*showSlider'] = false;
+    this.editor.set('*showSlider', false);
 
-    if (this.$['*tabId'] === TabId.CROP) {
-      this.$['*showListAspectRatio'] = false;
+    if (this.editor.get('*tabId') === TabId.CROP) {
+      this.editor.set('*showListAspectRatio', false);
     }
 
-    if (this.$['*tabId'] === TabId.TUNING) {
+    if (this.editor.get('*tabId') === TabId.TUNING) {
       this._tooltipVisible = false;
     }
   }
@@ -164,8 +154,8 @@ export class EditorToolbar extends LitBlock {
     id: TabIdValue,
     { fromViewer = false, force = false }: { fromViewer?: boolean; force?: boolean } = {},
   ): void {
-    if (this.$['*tabId'] !== id) {
-      this.$['*tabId'] = id;
+    if (this.editor.get('*tabId') !== id) {
+      this.editor.set('*tabId', id);
     }
     this._applyTabState(id, { fromViewer, force });
   }
@@ -181,18 +171,18 @@ export class EditorToolbar extends LitBlock {
 
     this.activeTab = id;
 
-    const faderEl = this.$['*faderEl'] as EditorImageFader | undefined;
-    const cropperEl = this.$['*cropperEl'] as EditorImageCropper | undefined;
+    const faderEl = this.editor.get('*faderEl') as EditorImageFader | undefined;
+    const cropperEl = this.editor.get('*cropperEl') as EditorImageCropper | undefined;
 
     if (id === TabId.CROP) {
       faderEl?.deactivate();
-      const imageSize = this.$['*imageSize'] as { width: number; height: number } | undefined;
+      const imageSize = this.editor.get('*imageSize') as { width: number; height: number } | undefined;
       if (imageSize) {
-        cropperEl?.activate(this.$['*imageSize'] as { width: number; height: number }, { fromViewer });
+        cropperEl?.activate(this.editor.get('*imageSize') as { width: number; height: number }, { fromViewer });
       }
     } else {
       faderEl?.activate({
-        url: this.$['*originalUrl'] as string,
+        url: this.editor.get('*originalUrl') as string,
         fromViewer,
       });
       cropperEl?.deactivate();
@@ -310,9 +300,11 @@ export class EditorToolbar extends LitBlock {
   }
 
   private async _preloadEditedImage(): Promise<void> {
-    if (this.$['*imgContainerEl'] && this.$['*originalUrl']) {
-      const width = this.$['*imgContainerEl'].offsetWidth;
-      const src = await this.proxyUrl(viewerImageSrc(this.$['*originalUrl'], width, this.$['*editorTransformations']));
+    const container = this.editor.get('*imgContainerEl');
+    const originalUrl = this.editor.get('*originalUrl') as string | null;
+    if (container && originalUrl) {
+      const width = container.offsetWidth;
+      const src = await this.proxyUrl(viewerImageSrc(originalUrl, width, this.editor.get('*editorTransformations')));
       this._cancelPreload?.();
       const { cancel } = batchPreloadImages([src]);
 
@@ -323,58 +315,60 @@ export class EditorToolbar extends LitBlock {
     }
   }
 
-  public override initCallback(): void {
-    super.initCallback();
-
-    const initialCropPresets = this.$['*cropPresetList'] ?? [];
-    this._cropPresets = [...initialCropPresets];
-    this.sub('*cropPresetList', (cropPresetList) => {
-      this._cropPresets = [...(cropPresetList ?? [])];
+  protected override editorReady(): void {
+    // Initial crop-preset seed BEFORE the subscription's initial fire
+    // adds a duplicate — the subscribe callback below will refresh.
+    this._cropPresets = [...(this.editor.get('*cropPresetList') ?? [])];
+    this.subscribeKey('*cropPresetList', () => {
+      this._cropPresets = [...((this.editor.get('*cropPresetList') as CropAspectRatio[] | null) ?? [])];
     });
 
-    this.sub('*imageSize', (imageSize) => {
+    this.subscribeKey('*imageSize', () => {
+      const imageSize = this.editor.get('*imageSize');
       if (imageSize) {
         setTimeout(() => {
-          this._activateTab(this.$['*tabId'], { fromViewer: true });
+          this._activateTab(this.editor.get('*tabId'), { fromViewer: true });
         }, 0);
       }
     });
 
-    this.sub('*editorTransformations', (editorTransformations) => {
+    this.subscribeKey('*editorTransformations', () => {
+      const editorTransformations = this.editor.get('*editorTransformations') as Transformations;
       const appliedFilter = editorTransformations?.filter?.name;
-      if (this.$['*currentFilter'] !== appliedFilter) {
-        this.$['*currentFilter'] = appliedFilter ?? '';
+      if (this.editor.get('*currentFilter') !== appliedFilter) {
+        this.editor.set('*currentFilter', appliedFilter ?? '');
       }
     });
 
-    this.sub('*currentFilter', () => {
+    this.subscribeKey('*currentFilter', () => {
       this._updateInfoTooltip();
     });
 
-    this.sub('*currentOperation', () => {
+    this.subscribeKey('*currentOperation', () => {
       this._updateInfoTooltip();
     });
 
-    this.sub('*tabId', (tabId) => {
+    this.subscribeKey('*tabId', () => {
+      const tabId = this.editor.get('*tabId');
       this._applyTabState(tabId, { fromViewer: false, force: true });
       this._updateInfoTooltip();
     });
 
-    this.sub('*originalUrl', () => {
-      this.$['*faderEl']?.deactivate();
+    this.subscribeKey('*originalUrl', () => {
+      (this.editor.get('*faderEl') as EditorImageFader | null)?.deactivate();
     });
 
-    this.sub('*editorTransformations', (transformations) => {
+    this.subscribeKey('*editorTransformations', () => {
+      const transformations = this.editor.get('*editorTransformations') as Transformations;
       this._preloadEditedImage();
-      this.$['*faderEl']?.setTransformations(transformations);
+      (this.editor.get('*faderEl') as EditorImageFader | null)?.setTransformations(transformations);
     });
 
-    this.sub('*loadingOperations', (loadingOperations) => {
+    this.subscribeKey('*loadingOperations', () => {
+      const loadingOperations = this.editor.get('*loadingOperations');
       let anyLoading = false;
       for (const [, mapping] of loadingOperations.entries()) {
-        if (anyLoading) {
-          break;
-        }
+        if (anyLoading) break;
         for (const [, loading] of mapping.entries()) {
           if (loading) {
             anyLoading = true;
@@ -385,33 +379,36 @@ export class EditorToolbar extends LitBlock {
       this._debouncedShowLoader(anyLoading);
     });
 
-    this.sub('*showSlider', (showSlider) => {
+    this.subscribeKey('*showSlider', () => {
+      const showSlider = this.editor.get('*showSlider');
       if (showSlider) {
         this.showSubToolbar = true;
         this.showMainToolbar = false;
         this._useSliderPanel = true;
-      } else if (!this.$['*showListAspectRatio']) {
+      } else if (!this.editor.get('*showListAspectRatio')) {
         this.showSubToolbar = false;
         this.showMainToolbar = true;
       }
     });
 
-    this.sub('*showListAspectRatio', (show) => {
+    this.subscribeKey('*showListAspectRatio', () => {
+      const show = this.editor.get('*showListAspectRatio');
       if (show) {
         this.showSubToolbar = true;
         this.showMainToolbar = false;
         this._useSliderPanel = false;
-      } else if (!this.$['*showSlider']) {
+      } else if (!this.editor.get('*showSlider')) {
         this.showSubToolbar = false;
         this.showMainToolbar = true;
       }
     });
 
-    this.sub('*tabList', (tabList) => {
+    this.subscribeKey('*tabList', () => {
+      const tabList = this.editor.get('*tabList');
       this.tabList = tabList;
       this._showTabToggles = tabList.length > 1;
 
-      if (!tabList.includes(this.$['*tabId']) && tabList.length > 0) {
+      if (!tabList.includes(this.editor.get('*tabId')) && tabList.length > 0) {
         const [firstTab] = tabList;
         if (firstTab) {
           this._activateTab(firstTab, { fromViewer: false });
@@ -422,8 +419,8 @@ export class EditorToolbar extends LitBlock {
       this._syncTabIndicator();
     });
 
-    this.sub('*operationTooltip', (tooltip: string | null) => {
-      this._operationTooltip = tooltip;
+    this.subscribeKey('*operationTooltip', () => {
+      this._operationTooltip = (this.editor.get('*operationTooltip') as string | null) ?? null;
     });
 
     this._updateInfoTooltip();
@@ -441,7 +438,7 @@ export class EditorToolbar extends LitBlock {
     this._syncTabIndicator();
   }
 
-  protected override updated(changedProperties: PropertyValues<this>): void {
+  public override updated(changedProperties: PropertyValues<this>): void {
     super.updated(changedProperties);
 
     if (changedProperties.has('activeTab') || changedProperties.has('tabList')) {
@@ -455,40 +452,40 @@ export class EditorToolbar extends LitBlock {
 
   public override disconnectedCallback(): void {
     window.removeEventListener('resize', this._handleWindowResize);
+    const editor = this.editorOrNull;
     super.disconnectedCallback();
-
-    this.$['*showSlider'] = false;
-    this.$['*showListAspectRatio'] = false;
+    editor?.set('*showSlider', false);
+    editor?.set('*showListAspectRatio', false);
   }
 
   private _assignSharedElements(): void {
     const slider = this._sliderRef.value;
     if (slider) {
-      this.$['*sliderEl'] = slider;
+      this.editor.set('*sliderEl', slider);
     }
   }
 
   private readonly _handleCancel = (e: MouseEvent): void => {
-    this.telemetryManager.sendEventCloudImageEditor(e, this.$['*tabId'], {
+    this.telemetryManager.sendEventCloudImageEditor(e, this.editor.get('*tabId'), {
       action: 'cancel',
     });
     this._cancelPreload?.();
-    const onCancel = this.$['*on.cancel'] as (() => void) | undefined;
+    const onCancel = this.editor.get('*on.cancel') as (() => void) | undefined;
     onCancel?.();
   };
 
   private readonly _handleApply = (e: MouseEvent): void => {
-    this.telemetryManager.sendEventCloudImageEditor(e, this.$['*tabId'], {
+    this.telemetryManager.sendEventCloudImageEditor(e, this.editor.get('*tabId'), {
       action: 'apply',
     });
-    const onApply = this.$['*on.apply'] as ((transformations: Transformations) => void) | undefined;
-    onApply?.(this.$['*editorTransformations'] as Transformations);
+    const onApply = this.editor.get('*on.apply') as ((transformations: Transformations) => void) | undefined;
+    onApply?.(this.editor.get('*editorTransformations') as Transformations);
   };
 
   private readonly _handleApplySlider = (e: MouseEvent): void => {
-    this.telemetryManager.sendEventCloudImageEditor(e, this.$['*tabId'], {
+    this.telemetryManager.sendEventCloudImageEditor(e, this.editor.get('*tabId'), {
       action: 'apply-slider',
-      operation: parseFilterValue(this.$['*operationTooltip']),
+      operation: parseFilterValue(this.editor.get('*operationTooltip')),
     });
     const slider = this._sliderRef.value;
     slider?.apply();
@@ -496,7 +493,7 @@ export class EditorToolbar extends LitBlock {
   };
 
   private readonly _handleCancelSlider = (e: MouseEvent): void => {
-    this.telemetryManager.sendEventCloudImageEditor(e, this.$['*tabId'], {
+    this.telemetryManager.sendEventCloudImageEditor(e, this.editor.get('*tabId'), {
       action: 'cancel-slider',
     });
     const slider = this._sliderRef.value;
@@ -625,6 +622,10 @@ export class EditorToolbar extends LitBlock {
       </div>
     `;
   }
+}
+
+if (!customElements.get('uc-editor-toolbar')) {
+  customElements.define('uc-editor-toolbar', EditorToolbar);
 }
 
 declare global {

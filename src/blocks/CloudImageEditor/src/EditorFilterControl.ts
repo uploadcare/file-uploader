@@ -61,20 +61,23 @@ export class EditorFilterControl extends EditorButtonControl {
 
   public override onClick(e: MouseEvent) {
     if (!this.active) {
-      const slider = this.$['*sliderEl'] as { setOperation: (op: string, filter: string) => void; apply: () => void };
-      slider.setOperation(this._operation, this._filter);
-      slider.apply();
+      const slider = this.editor.get('*sliderEl') as {
+        setOperation: (op: string, filter: string) => void;
+        apply: () => void;
+      } | null;
+      slider?.setOperation(this._operation, this._filter);
+      slider?.apply();
     } else if (!this.isOriginal) {
-      const slider = this.$['*sliderEl'] as { setOperation: (op: string, filter: string) => void };
-      slider.setOperation(this._operation, this._filter);
-      this.$['*showSlider'] = true;
+      const slider = this.editor.get('*sliderEl') as { setOperation: (op: string, filter: string) => void } | null;
+      slider?.setOperation(this._operation, this._filter);
+      this.editor.set('*showSlider', true);
     }
 
-    this.telemetryManager.sendEventCloudImageEditor(e, this.$['*tabId'], {
-      operation: parseFilterValue(this.$['*operationTooltip']),
+    this.telemetryManager.sendEventCloudImageEditor(e, String(this.editor.get('*tabId')), {
+      operation: parseFilterValue(this.editor.get('*operationTooltip') ?? ''),
     });
 
-    this.$['*currentFilter'] = this._filter;
+    this.editor.set('*currentFilter', this._filter);
   }
 
   private _previewSrc(): string {
@@ -85,7 +88,7 @@ export class EditorFilterControl extends EditorButtonControl {
     const quality = dpr >= 2 ? 'lightest' : 'normal';
     const filterValue = 100;
 
-    const transformations = { ...(this.$['*editorTransformations'] as Transformations) };
+    const transformations = { ...(this.editor.get('*editorTransformations') as Transformations) };
     // @ts-expect-error FIXME: fix this
     transformations[this._operation] =
       this._filter !== FAKE_ORIGINAL_FILTER
@@ -115,17 +118,15 @@ export class EditorFilterControl extends EditorButtonControl {
     }
   }
 
-  public override initCallback(): void {
-    super.initCallback();
-
+  protected override editorReady(): void {
     this._observer = new window.IntersectionObserver(this._observerCallback.bind(this), {
       threshold: [0, 1],
     });
 
-    const originalUrl = this.$['*originalUrl'] as string;
-    this._originalUrl = originalUrl ?? '';
+    this._originalUrl = (this.editor.get('*originalUrl') as string | null) ?? '';
 
-    this.sub('*originalUrl', (nextUrl: string | null) => {
+    this.subscribeKey('*originalUrl', () => {
+      const nextUrl = this.editor.get('*originalUrl') as string | null;
       this._originalUrl = nextUrl ?? '';
       if (!this.isOriginal && this._originalUrl && this.isConnected && !this._previewImage) {
         this._observer?.observe(this);
@@ -142,16 +143,16 @@ export class EditorFilterControl extends EditorButtonControl {
       this._updateFilterLabels(this._filter);
     }
 
-    this.sub('*currentFilter', (currentFilter: string) => {
+    this.subscribeKey('*currentFilter', () => {
+      const currentFilter = this.editor.get('*currentFilter');
       this.active = !!(currentFilter && currentFilter === this._filter);
     });
 
-    this.sub('*networkProblems', async (networkProblems: boolean) => {
-      if (networkProblems) {
-        return;
-      }
+    this.subscribeKey('*networkProblems', () => {
+      const networkProblems = this.editor.get('*networkProblems');
+      if (networkProblems) return;
       if (this._previewImage) {
-        await this._loadPreview();
+        void this._loadPreview();
       } else {
         this._schedulePreviewVisibilityCheck();
       }
@@ -165,7 +166,7 @@ export class EditorFilterControl extends EditorButtonControl {
     this._clearPreviewVisibilityChecks();
   }
 
-  protected override updated(changedProperties: PropertyValues<this>): void {
+  public override updated(changedProperties: PropertyValues<this>): void {
     super.updated(changedProperties);
 
     if (changedProperties.has('isOriginal')) {
@@ -209,7 +210,7 @@ export class EditorFilterControl extends EditorButtonControl {
     try {
       src = await this.proxyUrl(this._previewSrc());
     } catch (err) {
-      this.$['*networkProblems'] = true;
+      this.editor.set('*networkProblems', true);
       console.error('Failed to resolve preview URL', { error: err });
       return;
     }
@@ -234,7 +235,7 @@ export class EditorFilterControl extends EditorButtonControl {
       this._clearPreviewVisibilityChecks();
       (observer ?? this._observer)?.unobserve(this);
     } catch (err) {
-      this.$['*networkProblems'] = true;
+      this.editor.set('*networkProblems', true);
       console.error('Failed to load image', { error: err });
       this._schedulePreviewVisibilityCheck();
     } finally {
@@ -250,7 +251,7 @@ export class EditorFilterControl extends EditorButtonControl {
       this._previewImage ||
       this._previewLoaded ||
       this.isOriginal ||
-      this.$['*networkProblems']
+      this.editorOrNull?.get('*networkProblems')
     ) {
       this._clearPreviewVisibilityChecks();
       return;
@@ -327,6 +328,10 @@ export class EditorFilterControl extends EditorButtonControl {
       </button>
     `;
   }
+}
+
+if (!customElements.get('uc-editor-filter-control')) {
+  customElements.define('uc-editor-filter-control', EditorFilterControl);
 }
 
 declare global {

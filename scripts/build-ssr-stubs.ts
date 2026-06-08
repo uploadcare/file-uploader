@@ -75,6 +75,8 @@ const stubbedExports = Object.fromEntries(
       newValue = `\`${value}\``;
     } else if (typeof value === 'object') {
       newValue = JSON.stringify(value);
+    } else if (typeof value === 'symbol') {
+      newValue = `Symbol(${JSON.stringify(value.description ?? '')})`;
     } else {
       throw new Error(`Unexpected export type: ${typeof value}`);
     }

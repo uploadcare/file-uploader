@@ -1,4 +1,4 @@
-import type { CustomActivities } from './LitActivityBlock';
+import type { CustomActivities } from '../abstract/activity-ids';
 
 export const ACTIVITY_TYPES = Object.freeze({
   START_FROM: 'start-from',

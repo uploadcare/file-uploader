@@ -1,62 +1,78 @@
-import { defineComponents } from '../abstract/defineComponents';
-import type { UploaderPlugin } from '../abstract/managers/plugin';
-import { CameraSource } from '../blocks/CameraSource/CameraSource';
-import { ACTIVITY_TYPES } from '../lit/activity-constants';
 import { browserFeatures } from '../utils/browser-info';
 import { deserializeCsv } from '../utils/comma-separated';
+import '../blocks/CameraSource/CameraSource';
+import { definePlugin } from '../abstract/plugin';
 
-export const cameraPlugin: UploaderPlugin = {
+const PHOTO = 'photo' as const;
+const VIDEO = 'video' as const;
+
+/**
+ * Camera plugin for v2. Three sources:
+ *
+ *  - `camera`: desktop. Opens an in-page MediaStream-based capture activity.
+ *    On mobile (when `htmlMediaCapture` is supported), `expand()` replaces
+ *    this with mobile photo/video sources that pop the system camera.
+ *  - `mobile-photo-camera`: mobile-only. Calls `openSystemDialog` with
+ *    `captureCamera: true, modeCamera: 'photo'`. Hidden from the regular
+ *    source list (rendered only via `expand()`).
+ *  - `mobile-video-camera`: same, but video.
+ *
+ * Spike scope: photo capture only on desktop. Real-time video recording with
+ * MediaRecorder is straightforward to add in a follow-up; this commit
+ * focuses on proving the plugin shape covers the full v1 camera surface.
+ */
+export const cameraPlugin = definePlugin({
   id: 'camera',
-  setup: async ({ pluginApi, uploaderApi }) => {
-    defineComponents({ CameraSource });
-
-    // Desktop camera source — opens the camera activity.
-    // On mobile devices with htmlMediaCapture, expands to separate photo/video sources.
-    pluginApi.registry.registerSource({
+  setup({ uploader, sources, activities }) {
+    sources.register({
       id: 'camera',
       label: 'src-type-camera',
-      icon: 'camera',
+      onSelect: () => uploader.router.navigate('camera'),
       expand: () => {
-        if (!browserFeatures.htmlMediaCapture) {
-          return ['camera'];
-        }
-        const modes = deserializeCsv(pluginApi.config.get('cameraModes'));
-        return modes.length ? modes.map((mode) => `mobile-${mode}-camera`) : ['mobile-photo-camera'];
-      },
-      onSelect: () => {
-        uploaderApi.setCurrentActivity(ACTIVITY_TYPES.CAMERA);
-        uploaderApi.setModalState(true);
+        if (!browserFeatures.htmlMediaCapture) return ['camera'];
+        const modes = deserializeCsv(
+          (uploader.config.values as { cameraModes?: string }).cameraModes ?? 'photo, video',
+        );
+        return modes.length ? modes.map((m) => `mobile-${m}-camera`) : ['mobile-photo-camera'];
       },
     });
 
-    // Mobile sources — expanded from 'camera' on devices with htmlMediaCapture
-    pluginApi.registry.registerSource({
+    sources.register({
       id: 'mobile-photo-camera',
       label: 'src-type-mobile-photo-camera',
-      icon: 'camera',
+      hiddenFromList: true,
       onSelect: () => {
-        uploaderApi.openSystemDialog({ captureCamera: true, modeCamera: 'photo' });
+        // `openSystemDialog` itself fires `router.afterFileAdd()` when
+        // the user picks — no need to navigate here pre-pick.
+        uploader.api.openSystemDialog({
+          captureCamera: true,
+          modeCamera: PHOTO,
+          source: 'camera',
+        });
       },
     });
 
-    pluginApi.registry.registerSource({
+    sources.register({
       id: 'mobile-video-camera',
       label: 'src-type-mobile-video-camera',
-      icon: 'camera',
+      hiddenFromList: true,
       onSelect: () => {
-        uploaderApi.openSystemDialog({ captureCamera: true, modeCamera: 'video' });
+        uploader.api.openSystemDialog({
+          captureCamera: true,
+          modeCamera: VIDEO,
+          source: 'camera',
+        });
       },
     });
 
-    pluginApi.registry.registerActivity({
-      id: ACTIVITY_TYPES.CAMERA,
-      render: (host) => {
-        const cameraEl = document.createElement('uc-camera-source');
-        host.append(cameraEl);
-        return () => {
-          host.replaceChildren();
-        };
+    activities.register({
+      id: 'camera',
+      routes: { onFileAdd: 'upload-list', onCancel: 'start-from' },
+      render(host) {
+        const el = document.createElement('uc-camera-source');
+        host.append(el);
+        return () => host.replaceChildren();
       },
     });
   },
-};
+});

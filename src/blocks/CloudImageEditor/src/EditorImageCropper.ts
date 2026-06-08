@@ -2,10 +2,10 @@ import type { PropertyValues, TemplateResult } from 'lit';
 import { html } from 'lit';
 import { state } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
-import { LitBlock } from '../../../lit/LitBlock';
 import { debounce } from '../../../utils/debounce.js';
 import { preloadImage } from '../../../utils/preloadImage.js';
 import { throttle } from '../../../utils/throttle.js';
+import { EditorBlock } from '../EditorBlock';
 import type { CropFrame } from './CropFrame';
 import {
   clamp,
@@ -15,7 +15,6 @@ import {
   rotateSize,
   roundRect,
 } from './crop-utils.js';
-import { CROP_PADDING } from './cropper-constants.js';
 import { classNames } from './lib/classNames.js';
 import { pick } from './lib/pick.js';
 import type { CropAspectRatio, ImageSize, LoadingOperations, Rectangle, Transformations } from './types';
@@ -43,9 +42,7 @@ function validateCrop(crop: Transformations['crop']): boolean {
   return shouldMatch.every((matcher) => matcher(crop));
 }
 
-export class EditorImageCropper extends LitBlock {
-  public override ctxOwner = true;
-
+export class EditorImageCropper extends EditorBlock {
   private _commitDebounced: ReturnType<typeof debounce>;
   private _handleResizeThrottled: ReturnType<typeof throttle>;
   private _imageSize: ImageSize = { width: 0, height: 0 };
@@ -62,28 +59,6 @@ export class EditorImageCropper extends LitBlock {
   public constructor() {
     super();
 
-    this.init$ = {
-      ...this.init$,
-      '*padding': CROP_PADDING,
-      '*operations': {
-        rotate: 0,
-        mirror: false,
-        flip: false,
-      },
-      '*imageBox': {
-        x: 0,
-        y: 0,
-        width: 0,
-        height: 0,
-      },
-      '*cropBox': {
-        x: 0,
-        y: 0,
-        width: 0,
-        height: 0,
-      },
-    };
-
     this._commitDebounced = debounce(this._commit.bind(this), 300);
 
     this._handleResizeThrottled = throttle(() => {
@@ -98,19 +73,19 @@ export class EditorImageCropper extends LitBlock {
     }, 100);
   }
 
-  protected override firstUpdated(changedProperties: PropertyValues<this>): void {
+  public override firstUpdated(changedProperties: PropertyValues<this>): void {
     super.firstUpdated(changedProperties);
     this._initCanvas();
   }
 
   private _syncTransformations(): void {
-    const transformations = this.$['*editorTransformations'] as Transformations;
+    const transformations = this.editor.get('*editorTransformations') as Transformations;
     const pickedTransformations = pick(
       transformations,
-      Object.keys(this.$['*operations']) as readonly (keyof Transformations)[],
+      Object.keys(this.editor.get('*operations')) as readonly (keyof Transformations)[],
     ) as Partial<Operations>;
-    const operations: Operations = { ...this.$['*operations'], ...pickedTransformations };
-    this.$['*operations'] = operations;
+    const operations: Operations = { ...this.editor.get('*operations'), ...pickedTransformations };
+    this.editor.set('*operations', operations);
   }
 
   private _initCanvas(): void {
@@ -139,8 +114,8 @@ export class EditorImageCropper extends LitBlock {
     }
 
     const image = this._image;
-    const padding = this.$['*padding'] as number;
-    const operations = this.$['*operations'] as Operations;
+    const padding = this.editor.get('*padding') as number;
+    const operations = this.editor.get('*operations') as Operations;
     const { rotate } = operations;
 
     const bounds = { width: this.offsetWidth, height: this.offsetHeight };
@@ -171,15 +146,15 @@ export class EditorImageCropper extends LitBlock {
       imageBox = { x, y, width, height };
     }
 
-    this.$['*imageBox'] = roundRect(imageBox);
+    this.editor.set('*imageBox', roundRect(imageBox));
   }
 
   private _alignCrop(): void {
-    let cropBox = this.$['*cropBox'] as Rectangle;
-    const imageBox = this.$['*imageBox'] as Rectangle;
-    const operations = this.$['*operations'] as Operations;
+    let cropBox = this.editor.get('*cropBox') as Rectangle;
+    const imageBox = this.editor.get('*imageBox') as Rectangle;
+    const operations = this.editor.get('*operations') as Operations;
     const { rotate } = operations;
-    const cropTransformation = (this.$['*editorTransformations'] as Transformations).crop;
+    const cropTransformation = (this.editor.get('*editorTransformations') as Transformations).crop;
     const { width: previewWidth, x: previewX, y: previewY } = imageBox;
 
     if (cropTransformation) {
@@ -200,7 +175,7 @@ export class EditorImageCropper extends LitBlock {
       );
     }
 
-    const cropPreset = this.$['*currentAspectRatio'] as CropAspectRatio | null;
+    const cropPreset = this.editor.get('*currentAspectRatio') as CropAspectRatio | null;
     const cropAspectRatio = cropPreset ? cropPreset.width / cropPreset.height : undefined;
 
     if (
@@ -225,7 +200,7 @@ export class EditorImageCropper extends LitBlock {
       };
     }
 
-    this.$['*cropBox'] = constraintRect(roundRect(cropBox), imageBox);
+    this.editor.set('*cropBox', constraintRect(roundRect(cropBox), imageBox));
   }
 
   private _drawImage(): void {
@@ -235,8 +210,8 @@ export class EditorImageCropper extends LitBlock {
     if (!image) {
       return;
     }
-    const imageBox = this.$['*imageBox'] as Rectangle;
-    const operations = this.$['*operations'] as Operations;
+    const imageBox = this.editor.get('*imageBox') as Rectangle;
+    const operations = this.editor.get('*operations') as Operations;
     const { mirror, flip, rotate } = operations;
     const rotated = rotateSize({ width: imageBox.width, height: imageBox.height }, rotate);
     ctx.save();
@@ -274,9 +249,9 @@ export class EditorImageCropper extends LitBlock {
   }
 
   private _getCropDimensions(): CropTransform['dimensions'] {
-    const cropBox = this.$['*cropBox'] as Rectangle;
-    const imageBox = this.$['*imageBox'] as Rectangle;
-    const operations = this.$['*operations'] as Operations;
+    const cropBox = this.editor.get('*cropBox') as Rectangle;
+    const imageBox = this.editor.get('*imageBox') as Rectangle;
+    const operations = this.editor.get('*operations') as Operations;
     const { rotate } = operations;
     const { width: previewWidth, height: previewHeight } = imageBox;
     const { width: sourceWidth, height: sourceHeight } = rotateSize(this._imageSize, rotate);
@@ -293,9 +268,9 @@ export class EditorImageCropper extends LitBlock {
   }
 
   private _getCropTransformation(): Transformations['crop'] {
-    const cropBox = this.$['*cropBox'] as Rectangle;
-    const imageBox = this.$['*imageBox'] as Rectangle;
-    const operations = this.$['*operations'] as Operations;
+    const cropBox = this.editor.get('*cropBox') as Rectangle;
+    const imageBox = this.editor.get('*imageBox') as Rectangle;
+    const operations = this.editor.get('*operations') as Operations;
     const { rotate } = operations;
     const { width: previewWidth, height: previewHeight, x: previewX, y: previewY } = imageBox;
     const { width: sourceWidth, height: sourceHeight } = rotateSize(this._imageSize, rotate);
@@ -328,10 +303,10 @@ export class EditorImageCropper extends LitBlock {
     if (!this.isConnected || !this._imageSize) {
       return;
     }
-    const operations = this.$['*operations'] as Operations;
+    const operations = this.editor.get('*operations') as Operations;
     const { rotate, mirror, flip } = operations;
     const crop = this._getCropTransformation();
-    const editorTransformations = this.$['*editorTransformations'] as Transformations;
+    const editorTransformations = this.editor.get('*editorTransformations') as Transformations;
     const transformations: Transformations = {
       ...editorTransformations,
       crop,
@@ -340,14 +315,14 @@ export class EditorImageCropper extends LitBlock {
       flip,
     };
 
-    this.$['*editorTransformations'] = transformations;
+    this.editor.set('*editorTransformations', transformations);
   }
 
   public setValue<K extends keyof Operations>(operation: K, value: Operations[K]): void {
-    this.$['*operations'] = {
-      ...this.$['*operations'],
+    this.editor.set('*operations', {
+      ...this.editor.get('*operations'),
       [operation]: value,
-    };
+    });
 
     if (!this._isActive) {
       return;
@@ -359,7 +334,7 @@ export class EditorImageCropper extends LitBlock {
   }
 
   public getValue<K extends keyof Operations>(operation: K): Operations[K] {
-    return this.$['*operations'][operation];
+    return this.editor.get('*operations')[operation];
   }
 
   public async activate(imageSize: ImageSize, { fromViewer }: { fromViewer?: boolean } = {}): Promise<void> {
@@ -373,8 +348,8 @@ export class EditorImageCropper extends LitBlock {
     this.removeEventListener('transitionend', this._reset);
 
     try {
-      const originalUrl = this.$['*originalUrl'] as string;
-      const transformations = this.$['*editorTransformations'] as Transformations;
+      const originalUrl = this.editor.get('*originalUrl') as string;
+      const transformations = this.editor.get('*editorTransformations') as Transformations;
       this._image = await this._waitForImage(originalUrl, transformations);
       this._syncTransformations();
       this._handleResizeThrottled();
@@ -418,7 +393,7 @@ export class EditorImageCropper extends LitBlock {
 
   private _transitionToCrop(): void {
     const dimensions = this._getCropDimensions();
-    const cropBox = this.$['*cropBox'] as Rectangle;
+    const cropBox = this.editor.get('*cropBox') as Rectangle;
     const scaleX = Math.min(this.offsetWidth, dimensions[0]) / cropBox.width;
     const scaleY = Math.min(this.offsetHeight, dimensions[1]) / cropBox.height;
     const scale = Math.min(scaleX, scaleY);
@@ -432,7 +407,7 @@ export class EditorImageCropper extends LitBlock {
   }
 
   private _transitionToImage(): void {
-    const cropBox = this.$['*cropBox'] as Rectangle;
+    const cropBox = this.editor.get('*cropBox') as Rectangle;
     const cropCenterX = cropBox.x + cropBox.width / 2;
     const cropCenterY = cropBox.y + cropBox.height / 2;
 
@@ -468,14 +443,14 @@ export class EditorImageCropper extends LitBlock {
       .then(() => image)
       .catch((err) => {
         console.error('Failed to load image', { error: err });
-        this.$['*networkProblems'] = true;
+        this.editor.set('*networkProblems', true);
         return image;
       });
   }
 
   private _handleImageLoading(src: string): () => void {
     const operation = 'crop';
-    const loadingOperations = this.$['*loadingOperations'] as LoadingOperations;
+    const loadingOperations = this.editor.get('*loadingOperations') as LoadingOperations;
     let operationMap = loadingOperations.get(operation);
     if (!operationMap) {
       operationMap = new Map<string, boolean>();
@@ -484,37 +459,39 @@ export class EditorImageCropper extends LitBlock {
 
     if (!operationMap.get(src)) {
       operationMap.set(src, true);
-      this.$['*loadingOperations'] = loadingOperations;
+      // The Map is mutated in place — `set` would short-circuit on the
+      // unchanged reference, so subscribers (toolbar spinner) wouldn't
+      // see the load start. `touch` forces a notify with the same ref.
+      this.editor.touch('*loadingOperations');
     }
 
     return () => {
       const map = loadingOperations.get(operation);
       if (map?.has(src)) {
         map.delete(src);
-        this.$['*loadingOperations'] = loadingOperations;
+        this.editor.touch('*loadingOperations');
       }
     };
   }
 
-  public override initCallback(): void {
-    super.initCallback();
-
-    this.sub('*imageBox', () => {
+  protected override editorReady(): void {
+    this.subscribeKey('*imageBox', () => {
       this._draw();
     });
 
-    this.sub('*cropBox', () => {
+    this.subscribeKey('*cropBox', () => {
       if (this._image) {
         this._commitDebounced();
       }
     });
 
-    this.sub('*currentAspectRatio', () => {
+    this.subscribeKey('*currentAspectRatio', () => {
       this._alignCrop();
     });
 
     setTimeout(() => {
-      this.sub('*networkProblems', (networkProblems: boolean) => {
+      this.subscribeKey('*networkProblems', () => {
+        const networkProblems = this.editor.get('*networkProblems');
         if (!networkProblems) {
           if (this._isActive && this._imageSize) {
             void this.activate(this._imageSize, { fromViewer: false });
@@ -538,6 +515,10 @@ export class EditorImageCropper extends LitBlock {
       <uc-crop-frame ${ref(this._frameRef)}></uc-crop-frame>
     `;
   }
+}
+
+if (!customElements.get('uc-editor-image-cropper')) {
+  customElements.define('uc-editor-image-cropper', EditorImageCropper);
 }
 
 declare global {

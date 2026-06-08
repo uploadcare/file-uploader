@@ -1,154 +1,145 @@
-import { html, type PropertyValues } from 'lit';
+import { html } from 'lit';
 import { property, state } from 'lit/decorators.js';
-import { createRef, ref } from 'lit/directives/ref.js';
+import { createRef, type Ref, ref } from 'lit/directives/ref.js';
 import { repeat } from 'lit/directives/repeat.js';
-import type { Owned, PluginActivityRegistration, PluginRenderDispose } from '../../abstract/managers/plugin';
-import { type ActivityType, LitActivityBlock } from '../../lit/LitActivityBlock';
-import { LitBlock } from '../../lit/LitBlock';
+import '../../blocks/PluginActivityRenderer/uc-plugin-activity-host.css';
 import '../Modal/Modal';
-import './uc-plugin-activity-host.css';
+import { ChildBlock } from '../../abstract/ChildBlock';
+import type {
+  ActivityRegistration,
+  PluginRegistryController,
+} from '../../abstract/controllers/PluginRegistryController';
+import type { UploaderController } from '../../abstract/controllers/UploaderController';
 
-export class PluginActivityHost extends LitActivityBlock {
+/**
+ * v2 `<uc-plugin-activity-host>`. Mounts a plugin-registered activity
+ * into a local container when it becomes the router's current activity
+ * and tears it down when navigation moves away. Owns the `render() /
+ * dispose()` lifecycle that plugins expose.
+ */
+export class PluginActivityHost extends ChildBlock {
   @property({ attribute: false })
-  public registration!: Owned<PluginActivityRegistration>;
+  public registration?: ActivityRegistration;
 
-  private _dispose?: PluginRenderDispose;
-  private _containerRef = createRef<HTMLDivElement>();
+  private _container: Ref<HTMLDivElement> = createRef();
+  private _dispose: (() => void) | undefined = undefined;
+  private _isMounted = false;
 
-  public override initCallback(): void {
-    this.activityType = (this.registration?.id as ActivityType) ?? null;
-    this._ensureRegistered();
-    super.initCallback();
+  protected override subscriptionsFor(ctrl: UploaderController) {
+    return [ctrl.router.subscribe.bind(ctrl.router), ctrl.plugins.subscribe.bind(ctrl.plugins)];
   }
 
-  protected override willUpdate(changedProperties: PropertyValues<this>): void {
-    super.willUpdate(changedProperties);
-
-    if (changedProperties.has('registration')) {
-      this._ensureRegistered();
-      if (this.isActivityActive) {
-        this._disposeActivity();
-        this._renderActivity();
-      }
-    }
+  public override updated(): void {
+    const ctrl = this.uploaderOrNull;
+    const reg = this.registration;
+    if (!ctrl || !reg) return;
+    // v1's per-activity CSS rules (e.g. `[uc-modal] > dialog:has(
+    // [activity="camera"][active])`) key off these two attributes,
+    // applied to whatever activity element is inside the modal.
+    // setAttribute / toggleAttribute don't trigger requestUpdate
+    // unless the attribute is reflected to a property, so it's safe to
+    // do here.
+    this.setAttribute('activity', reg.id);
+    // Same rule as ActivityBlock — modal-wrapped hosts track the
+    // foreground slot; inline ones (the renderer in `mode="inline"`)
+    // track the background.
+    const isInModal = this.closest('uc-modal') !== null;
+    const slot = isInModal ? ctrl.router.modal : ctrl.router.activity;
+    const isActive = slot === reg.id;
+    this.toggleAttribute('active', isActive);
+    if (isActive && !this._isMounted) this._mount(ctrl);
+    else if (!isActive && this._isMounted) this._unmount();
   }
 
-  private _ensureRegistered(): void {
-    if (!this.registration) {
-      return;
-    }
-
-    if (this._isActivityRegistered()) {
-      return;
-    }
-
-    this.registerActivity(this.activityType ?? '', {
-      onActivate: () => this._renderActivity(),
-      onDeactivate: () => this._disposeActivity(),
-    });
-  }
-
-  private async _renderActivity(): Promise<void> {
-    await this.updateComplete;
-    const container = this._containerRef.value;
-    if (!container || !this.registration) {
-      return;
-    }
-
-    this._disposeActivity();
-
-    const activityParams = this.$['*currentActivityParams'];
+  private _mount(ctrl: UploaderController): void {
+    const container = this._container.value;
+    if (!container || !this.registration) return;
     try {
-      this._dispose = this.registration.render(container, activityParams) ?? undefined;
-    } catch (error) {
-      console.error(`[Plugin "${this.registration.pluginId}"] Activity render() threw an error`, error);
+      this._dispose = this.registration.render(container, ctrl.router.params as Record<string, unknown>) ?? undefined;
+      this._isMounted = true;
+    } catch (err) {
+      console.error(`[v2] activity "${this.registration.id}" render threw`, err);
     }
   }
 
-  private _disposeActivity(): void {
-    const container = this._containerRef.value;
-    if (container) {
-      try {
-        this._dispose?.();
-      } catch (error) {
-        console.error(`[Plugin "${this.registration?.pluginId}"] Activity dispose threw an error`, error);
-      }
-      this._dispose = undefined;
-
-      container.replaceChildren();
+  private _unmount(): void {
+    try {
+      this._dispose?.();
+    } catch (err) {
+      console.error(`[v2] activity "${this.registration?.id}" dispose threw`, err);
     }
+    this._dispose = undefined;
+    this._container.value?.replaceChildren();
+    this._isMounted = false;
   }
 
   public override disconnectedCallback(): void {
-    this._disposeActivity();
+    this._unmount();
     super.disconnectedCallback();
   }
 
   public override render() {
-    return html`<div style="display: contents;" ${ref(this._containerRef)}></div>`;
+    return html`<div style="display: contents;" ${ref(this._container)}></div>`;
   }
 }
 
-export class PluginActivityRenderer extends LitBlock {
+if (!customElements.get('uc-plugin-activity-host'))
+  customElements.define('uc-plugin-activity-host', PluginActivityHost);
+
+/**
+ * v2 `<uc-plugin-activity-renderer>`. Reads the v2 plugin registry and
+ * renders one `<uc-modal>` per activity registration. Each modal hosts
+ * a `<uc-plugin-activity-host>` that mounts the plugin's content when
+ * the router lands on its activity id.
+ */
+export class PluginActivityRenderer extends ChildBlock {
   @property({ type: String })
   public mode: 'modal' | 'inline' = 'modal';
 
   @state()
-  private _activities: Owned<PluginActivityRegistration>[] = [];
+  private _activities: ActivityRegistration[] = [];
 
-  private _unsubscribePlugins?: () => void;
-
-  public override initCallback(): void {
-    super.initCallback();
-
-    const pluginManager = this._sharedInstancesBag.pluginManager;
-    if (pluginManager?.onPluginsChange) {
-      this._unsubscribePlugins = pluginManager.onPluginsChange(() => this._syncActivities());
-    }
-
-    this._syncActivities();
+  protected override subscriptionsFor(ctrl: UploaderController) {
+    return [ctrl.plugins.subscribe.bind(ctrl.plugins)];
   }
 
-  private _syncActivities(): void {
-    const pluginManager = this._sharedInstancesBag.pluginManager;
-    if (!pluginManager) {
-      this._activities = [];
-      return;
-    }
-
-    this._activities = pluginManager.snapshot().activities;
+  protected override controllerReady(ctrl: UploaderController): void {
+    this._syncActivities(ctrl.plugins);
   }
 
-  public override disconnectedCallback(): void {
-    this._unsubscribePlugins?.();
-    this._unsubscribePlugins = undefined;
-    super.disconnectedCallback();
+  // Pull the latest list in `willUpdate` so writes to `_activities`
+  // land inside the current cycle. Doing it in `updated()` triggers
+  // Lit's "change-in-update" dev warning.
+  public override willUpdate(): void {
+    const ctrl = this.uploaderOrNull;
+    if (ctrl) this._syncActivities(ctrl.plugins);
+  }
+
+  private _syncActivities(registry: PluginRegistryController): void {
+    const next = registry.activities;
+    if (next.length === this._activities.length && next.every((a, i) => a.id === this._activities[i]?.id)) return;
+    this._activities = next;
   }
 
   public override render() {
     if (this.mode === 'inline') {
       return html`${repeat(
         this._activities,
-        (activity) => activity.id,
-        (activity) => html`<uc-plugin-activity-host .registration=${activity}></uc-plugin-activity-host>`,
+        (a) => a.id,
+        (a) => html`<uc-plugin-activity-host .registration=${a}></uc-plugin-activity-host>`,
       )}`;
     }
-
     return html`${repeat(
       this._activities,
-      (activity) => activity.id,
-      (activity) => html`
-        <uc-modal id=${activity.id} strokes block-body-scrolling>
-          <uc-plugin-activity-host .registration=${activity}></uc-plugin-activity-host>
+      (a) => a.id,
+      (a) => html`
+        <uc-modal id=${a.id} strokes block-body-scrolling>
+          <uc-plugin-activity-host .registration=${a}></uc-plugin-activity-host>
         </uc-modal>
       `,
     )}`;
   }
 }
 
-declare global {
-  interface HTMLElementTagNameMap {
-    'uc-plugin-activity-host': PluginActivityHost;
-    'uc-plugin-activity-renderer': PluginActivityRenderer;
-  }
-}
+if (!customElements.get('uc-plugin-activity-renderer'))
+  customElements.define('uc-plugin-activity-renderer', PluginActivityRenderer);

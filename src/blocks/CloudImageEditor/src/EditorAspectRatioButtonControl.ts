@@ -27,12 +27,11 @@ const getAdjustResolutions = (value: CropAspectRatio) => {
 };
 
 export class EditorFreeformButtonControl extends EditorButtonControl {
-  public override initCallback(): void {
-    super.initCallback();
-
+  protected override editorReady(): void {
     this.icon = 'arrow-dropdown';
 
-    this.sub('*currentAspectRatio', (opt: CropAspectRatio | null) => {
+    this.subscribeKey('*currentAspectRatio', () => {
+      const opt = this.editor.get('*currentAspectRatio');
       const title = this._computeTitle(opt);
       this.title = title;
       this.titleProp = title;
@@ -40,7 +39,7 @@ export class EditorFreeformButtonControl extends EditorButtonControl {
   }
 
   public override onClick(): void {
-    this.$['*showListAspectRatio'] = true;
+    this.editor.set('*showListAspectRatio', true);
   }
 
   private _computeTitle(aspectRatio: CropAspectRatio | null): string {
@@ -94,27 +93,24 @@ export class EditorAspectRatioButtonControl extends EditorButtonControl {
     }
   }
 
-  public override initCallback(): void {
-    super.initCallback();
-
+  protected override editorReady(): void {
     if (this._aspectRatio) {
       this._updateAspectRatioPresentation(this._aspectRatio);
     }
 
-    this.sub('*currentAspectRatio', (opt: CropAspectRatio | null) => {
-      this.active =
+    this.subscribeKey('*currentAspectRatio', () => {
+      const opt = this.editor.get('*currentAspectRatio');
+      this.active = Boolean(
         (opt && opt.id === this._aspectRatio?.id) ||
-        (opt?.width === this._aspectRatio?.width && opt?.height === this._aspectRatio?.height);
+          (opt?.width === this._aspectRatio?.width && opt?.height === this._aspectRatio?.height),
+      );
     });
   }
 
   protected override onClick(): void {
-    const currentAspectRatio = this.$['*currentAspectRatio'] as CropAspectRatio | undefined;
-    if (currentAspectRatio?.id === this._aspectRatio?.id) {
-      return;
-    }
-
-    this.$['*currentAspectRatio'] = this._aspectRatio;
+    const currentAspectRatio = this.editor.get('*currentAspectRatio');
+    if (currentAspectRatio?.id === this._aspectRatio?.id) return;
+    this.editor.set('*currentAspectRatio', this._aspectRatio);
   }
 
   private _updateAspectRatioPresentation(value: CropAspectRatio): void {
@@ -197,6 +193,13 @@ export class EditorAspectRatioButtonControl extends EditorButtonControl {
       </button>
     `;
   }
+}
+
+if (!customElements.get('uc-editor-freeform-button-control')) {
+  customElements.define('uc-editor-freeform-button-control', EditorFreeformButtonControl);
+}
+if (!customElements.get('uc-editor-aspect-ratio-button-control')) {
+  customElements.define('uc-editor-aspect-ratio-button-control', EditorAspectRatioButtonControl);
 }
 
 declare global {

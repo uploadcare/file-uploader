@@ -93,8 +93,8 @@ const config = {
 
   plugins: [],
 
-  dynamicButtonViewMode: 'auto',
-  dynamicButtonShowFirstIcon: true,
+  smartButtonViewMode: 'auto',
+  smartButtonShowFirstIcon: true,
 } satisfies ConfigType;
 
 export const initialConfig: Readonly<ConfigType> = Object.freeze(config);

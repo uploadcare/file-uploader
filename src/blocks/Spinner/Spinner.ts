@@ -1,15 +1,19 @@
-import { html } from 'lit';
-import { LitBlock } from '../../lit/LitBlock';
-import './spinner.css';
+import { html, LitElement } from 'lit';
+import '../../blocks/Spinner/spinner.css';
+import { LightDomMixin } from '../../lit/LightDomMixin';
 
-export class Spinner extends LitBlock {
+/**
+ * v2 `<uc-spinner>`. Pure visual element — no state, no controller. v1's
+ * `spinner.css` styles `uc-spinner` directly so we inherit visuals.
+ *
+ * Extends `LightDomMixin(LitElement)` instead of `ChildBlock` because the
+ * spinner doesn't need access to an `UploaderController`. Keeps the
+ * component independent and importable in isolation.
+ */
+export class Spinner extends LightDomMixin(LitElement) {
   public override render() {
-    return html` <div class="uc-spinner"></div> `;
+    return html`<div class="uc-spinner"></div>`;
   }
 }
 
-declare global {
-  interface HTMLElementTagNameMap {
-    'uc-spinner': Spinner;
-  }
-}
+if (!customElements.get('uc-spinner')) customElements.define('uc-spinner', Spinner);

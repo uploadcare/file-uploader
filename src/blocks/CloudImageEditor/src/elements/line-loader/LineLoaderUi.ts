@@ -1,10 +1,9 @@
-import type { PropertyValues } from 'lit';
-import { html } from 'lit';
+import { html, LitElement, type PropertyValues } from 'lit';
 import { property } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
-import { LitBlock } from '../../../../../lit/LitBlock';
+import { LightDomMixin } from '../../../../../lit/LightDomMixin';
 
-export class LineLoaderUi extends LitBlock {
+export class LineLoaderUi extends LightDomMixin(LitElement) {
   @property({ type: Boolean, reflect: true })
   public active = false;
 
@@ -80,6 +79,10 @@ export class LineLoaderUi extends LitBlock {
       </div>
     `;
   }
+}
+
+if (!customElements.get('uc-line-loader-ui')) {
+  customElements.define('uc-line-loader-ui', LineLoaderUi);
 }
 
 declare global {

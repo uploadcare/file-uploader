@@ -1,16 +1,19 @@
-import type { UploaderPlugin } from '../abstract/managers/plugin';
-import { UploadSource } from '../utils/UploadSource';
+import { definePlugin } from '../abstract/plugin';
 
-export const localSourcePlugin: UploaderPlugin = {
-  id: UploadSource.LOCAL,
-  setup: ({ pluginApi, uploaderApi }) => {
-    pluginApi.registry.registerSource({
-      id: UploadSource.LOCAL,
+/**
+ * Local file picker plugin. Registers a "From device" source that opens the
+ * native file dialog via `api.openSystemDialog()`. Presets auto-install
+ * this as a sensible default; bare `<uc-uploader>` consumers opt in
+ * explicitly (or omit it for fully programmatic flows).
+ */
+export const localSourcePlugin = definePlugin({
+  id: 'local',
+  setup({ uploader, sources }) {
+    sources.register({
+      id: 'local',
       label: 'src-type-local',
       icon: 'local',
-      onSelect: () => {
-        uploaderApi.openSystemDialog();
-      },
+      onSelect: () => uploader.api.openSystemDialog({ source: 'local' }),
     });
   },
-};
+});

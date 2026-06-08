@@ -1,11 +1,20 @@
-import './progress-bar.css';
-import type { PropertyValues } from 'lit';
-import { html } from 'lit';
+import { html, LitElement, type PropertyValues } from 'lit';
 import { property } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
-import { LitBlock } from '../../lit/LitBlock';
+import '../../blocks/ProgressBar/progress-bar.css';
+import { LightDomMixin } from '../../lit/LightDomMixin';
 
-export class ProgressBar extends LitBlock {
+/**
+ * v2 `<uc-progress-bar>`. Stateless display element driven by `value`
+ * (0-100) + `visible` (boolean) attributes. v1's `progress-bar.css`
+ * targets this tag name so visuals are inherited.
+ *
+ * Mechanics ported verbatim from v1:
+ *  - monotonic progress (never moves backward while visible)
+ *  - fake-progress overlay animation that fades once a real value arrives
+ *  - resets progress to the current value when hidden
+ */
+export class ProgressBar extends LightDomMixin(LitElement) {
   @property({ type: Boolean, noAccessor: true })
   public hasFileName = false;
 
@@ -16,57 +25,38 @@ export class ProgressBar extends LitBlock {
   public visible = true;
 
   private _progressValue = 0;
-
   private readonly _fakeProgressLineRef = createRef<HTMLDivElement>();
 
   private readonly _handleFakeProgressAnimation = (): void => {
-    const fakeProgressLine = this._fakeProgressLineRef.value;
-    if (!fakeProgressLine) {
-      return;
-    }
-
-    if (!this.visible) {
-      fakeProgressLine.classList.add('uc-fake-progress--hidden');
-      return;
-    }
-
-    if (this._progressValue > 0) {
-      fakeProgressLine.classList.add('uc-fake-progress--hidden');
+    const line = this._fakeProgressLineRef.value;
+    if (!line) return;
+    if (!this.visible || this._progressValue > 0) {
+      line.classList.add('uc-fake-progress--hidden');
     }
   };
 
-  protected override firstUpdated(changedProperties: PropertyValues<this>): void {
-    super.firstUpdated(changedProperties);
-
-    this._progressValue = this._normalizeProgressValue(this.value);
-    this._updateProgressValueStyle();
+  protected override firstUpdated(changed: PropertyValues<this>): void {
+    super.firstUpdated(changed);
+    this._progressValue = this._clamp(this.value);
+    this._setStyle();
     this._fakeProgressLineRef.value?.addEventListener('animationiteration', this._handleFakeProgressAnimation);
   }
 
-  protected override updated(changedProperties: PropertyValues<this>): void {
-    super.updated(changedProperties);
-
-    if (changedProperties.has('value')) {
-      const normalizedValue = this._normalizeProgressValue(this.value);
-
+  protected override updated(changed: PropertyValues<this>): void {
+    super.updated(changed);
+    if (changed.has('value')) {
+      const next = this._clamp(this.value);
       if (!this.visible) {
-        this._progressValue = normalizedValue;
-      } else {
-        const nextValue = Math.max(this._progressValue, normalizedValue);
-        if (nextValue !== this._progressValue) {
-          this._progressValue = nextValue;
-          this._updateProgressValueStyle();
-        }
+        this._progressValue = next;
+      } else if (next > this._progressValue) {
+        this._progressValue = next;
+        this._setStyle();
       }
     }
-
-    if (changedProperties.has('visible')) {
+    if (changed.has('visible')) {
       this.classList.toggle('uc-progress-bar--hidden', !this.visible);
-      if (this.visible) {
-        this._updateProgressValueStyle();
-      } else {
-        this._progressValue = this._normalizeProgressValue(this.value);
-      }
+      if (this.visible) this._setStyle();
+      else this._progressValue = this._clamp(this.value);
     }
   }
 
@@ -75,17 +65,13 @@ export class ProgressBar extends LitBlock {
     this._fakeProgressLineRef.value?.removeEventListener('animationiteration', this._handleFakeProgressAnimation);
   }
 
-  private _normalizeProgressValue(value: number): number {
-    if (!Number.isFinite(value)) {
-      return 0;
-    }
+  private _clamp(value: number): number {
+    if (!Number.isFinite(value)) return 0;
     return Math.min(100, Math.max(0, value));
   }
 
-  private _updateProgressValueStyle(): void {
-    if (!this.visible) {
-      return;
-    }
+  private _setStyle(): void {
+    if (!this.visible) return;
     this.style.setProperty('--l-progress-value', this._progressValue.toString());
   }
 
@@ -97,8 +83,4 @@ export class ProgressBar extends LitBlock {
   }
 }
 
-declare global {
-  interface HTMLElementTagNameMap {
-    'uc-progress-bar': ProgressBar;
-  }
-}
+if (!customElements.get('uc-progress-bar')) customElements.define('uc-progress-bar', ProgressBar);

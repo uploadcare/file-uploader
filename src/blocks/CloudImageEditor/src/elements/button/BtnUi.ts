@@ -1,16 +1,15 @@
-import type { PropertyValues } from 'lit';
-import { html } from 'lit';
+import { html, type PropertyValues } from 'lit';
 import { property } from 'lit/decorators.js';
 import { classMap } from 'lit/directives/class-map.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
-import { LitBlock } from '../../../../../lit/LitBlock';
+import { EditorBlock } from '../../../EditorBlock';
 
 import '../../../../Icon/Icon';
 import type { AriaRole } from '../../../../../types/dom';
 
 type Theme = string | null;
 
-export class BtnUi extends LitBlock {
+export class BtnUi extends EditorBlock {
   @property({ type: String })
   public text = '';
 
@@ -38,7 +37,7 @@ export class BtnUi extends LitBlock {
   @property({ type: Boolean, noAccessor: true })
   public active = false;
 
-  protected override firstUpdated(changed: PropertyValues<this>): void {
+  public override firstUpdated(changed: PropertyValues<this>): void {
     super.firstUpdated(changed);
     this._applyReverse();
     this._applyThemeClass();
@@ -103,6 +102,10 @@ export class BtnUi extends LitBlock {
       </button>
     `;
   }
+}
+
+if (!customElements.get('uc-btn-ui')) {
+  customElements.define('uc-btn-ui', BtnUi);
 }
 
 declare global {

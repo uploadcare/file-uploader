@@ -1,170 +1,95 @@
 import { html } from 'lit';
-import type { ModalCb, ModalId } from '../../abstract/managers/ModalManager';
-import { ModalEvents } from '../../abstract/managers/ModalManager';
-import { LitBlock } from '../../lit/LitBlock';
-import { EventType } from '../UploadCtxProvider/EventEmitter';
-import './modal.css';
-import { property } from 'lit/decorators.js';
-import { createRef, ref } from 'lit/directives/ref.js';
-import type { RegisteredActivityType } from '../../lit/LitActivityBlock';
+import { createRef, type Ref, ref } from 'lit/directives/ref.js';
+import '../../blocks/Modal/modal.css';
+import { ChildBlock } from '../../abstract/ChildBlock';
+import type { UploaderController } from '../../abstract/controllers/UploaderController';
 
-let LAST_ACTIVE_MODAL_ID: ModalId | null = null;
-
-export class Modal extends LitBlock {
+/**
+ * v2 `<uc-modal>`. Wraps a `<dialog>` and toggles it open/closed based
+ * on whether the router's current activity matches the modal's `id`.
+ *
+ * Same DOM + style attribute (`uc-modal`) as v1 so `modal.css` applies
+ * unchanged. Click-on-backdrop and `<dialog>`'s built-in escape-close
+ * route back through the router so events are emitted consistently.
+ */
+export class Modal extends ChildBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-modal'];
 
-  private _mouseDownTarget: EventTarget | null | undefined;
+  private _dialogRef: Ref<HTMLDialogElement> = createRef();
+  private _mouseDownTarget: EventTarget | null = null;
+  private _closingProgrammatically = false;
 
-  /** WARNING: Do not rename/change this, it's used in dashboard */
-  protected dialogEl = createRef<HTMLDialogElement>();
+  protected override subscriptionsFor(ctrl: UploaderController) {
+    return [ctrl.router.subscribe.bind(ctrl.router), ctrl.config.subscribe.bind(ctrl.config)];
+  }
 
-  /**
-   * CSS-only attribute
-   */
-  @property({ type: Boolean, noAccessor: true })
-  public strokes = false;
-
-  /**
-   * CSS-only attribute
-   */
-  @property({ type: Boolean, attribute: 'block-body-scrolling', noAccessor: true })
-  public blockBodyScrolling = false;
-
-  /** WARNING: Do not rename/change this, it's used in dashboard */
-  protected closeDialog = (): void => {
-    this.modalManager?.close(this.id as RegisteredActivityType);
-
-    if (!this.modalManager?.hasActiveModals) {
-      document.body.style.overflow = '';
-      this.$['*currentActivity'] = null;
-    }
-  };
-
-  private _handleDialogClose = (): void => {
-    this.closeDialog();
-  };
-
-  private _handleDialogMouseDown = (e: MouseEvent): void => {
-    this._mouseDownTarget = e.target;
-  };
-
-  private _handleDialogMouseUp = (e: MouseEvent): void => {
-    const target = e.target as EventTarget | null;
-    if (target === this.dialogEl.value && target === this._mouseDownTarget) {
-      this.closeDialog();
-    }
-  };
-
-  public async show(): Promise<void> {
-    await this.updateComplete;
-    const dialog = this.dialogEl.value as HTMLDialogElement & {
-      showModal?: () => void;
-    };
-    if (typeof dialog.showModal === 'function') {
-      this.setAttribute('aria-modal', 'true');
-      dialog.showModal();
-    } else {
-      dialog.setAttribute('open', '');
-    }
-
-    if (this.cfg.modalScrollLock) {
+  public override updated(): void {
+    this._syncOpenState();
+    const cfg = this.uploaderOrNull?.config.values as
+      | { modalBackdropStrokes?: boolean; modalScrollLock?: boolean }
+      | undefined;
+    this.toggleAttribute('strokes', !!cfg?.modalBackdropStrokes);
+    if (cfg?.modalScrollLock && this._isOpen()) {
       document.body.style.overflow = 'hidden';
     }
-  }
-
-  public hide(): void {
-    const dialog = this.dialogEl.value as HTMLDialogElement & {
-      close?: () => void;
-    };
-    if (!dialog) return;
-    if (typeof dialog.close === 'function') {
-      this.setAttribute('aria-modal', 'false');
-      dialog.close();
-    } else {
-      dialog.removeAttribute('open');
-    }
-  }
-
-  private _handleModalOpen = ({ id }: Parameters<ModalCb>[0]): void => {
-    if (id === this.id) {
-      LAST_ACTIVE_MODAL_ID = id;
-      this.show();
-      this.emit(EventType.MODAL_OPEN, { modalId: id }, { debounce: true });
-    } else {
-      this.hide();
-    }
-  };
-
-  private _handleModalClose = ({ id }: Parameters<ModalCb>[0]): void => {
-    if (id === this.id) {
-      this.hide();
-      this.emit(
-        EventType.MODAL_CLOSE,
-        { modalId: id, hasActiveModals: this.modalManager?.hasActiveModals },
-        { debounce: true },
-      );
-    }
-  };
-
-  private _handleModalCloseAll = (_data: Parameters<ModalCb>[0]): void => {
-    this.hide();
-
-    if (LAST_ACTIVE_MODAL_ID === this.id) {
-      this.emit(
-        EventType.MODAL_CLOSE,
-        { modalId: LAST_ACTIVE_MODAL_ID, hasActiveModals: this.modalManager?.hasActiveModals },
-        { debounce: true },
-      );
-    }
-  };
-
-  public override initCallback(): void {
-    super.initCallback();
-
-    this.modalManager?.registerModal(this.id as RegisteredActivityType, this);
-
-    this.subConfigValue('modalBackdropStrokes', (val: boolean) => {
-      if (val) {
-        this.setAttribute('strokes', '');
-      } else {
-        this.removeAttribute('strokes');
-      }
-    });
-
-    this.modalManager?.subscribe(ModalEvents.OPEN, this._handleModalOpen);
-    this.modalManager?.subscribe(ModalEvents.CLOSE, this._handleModalClose);
-    this.modalManager?.subscribe(ModalEvents.CLOSE_ALL, this._handleModalCloseAll);
   }
 
   public override disconnectedCallback(): void {
     super.disconnectedCallback();
     document.body.style.overflow = '';
-    this._mouseDownTarget = undefined;
-
-    this.modalManager?.unsubscribe(ModalEvents.OPEN, this._handleModalOpen);
-    this.modalManager?.unsubscribe(ModalEvents.CLOSE, this._handleModalClose);
-    this.modalManager?.unsubscribe(ModalEvents.CLOSE_ALL, this._handleModalCloseAll);
   }
 
-  private _handleDialogRef(dialog: Element | undefined): void {
-    this.dialogEl = { value: dialog } as typeof this.dialogEl;
-
-    this.dialogEl.value?.addEventListener('close', this._handleDialogClose);
-    this.dialogEl.value?.addEventListener('mousedown', this._handleDialogMouseDown);
-    this.dialogEl.value?.addEventListener('mouseup', this._handleDialogMouseUp);
+  private _isOpen(): boolean {
+    return this.uploaderOrNull?.router.modal === this.id;
   }
+
+  private _syncOpenState(): void {
+    const dialog = this._dialogRef.value;
+    if (!dialog) return;
+    const shouldOpen = this._isOpen();
+    if (shouldOpen && !dialog.open) {
+      this.setAttribute('aria-modal', 'true');
+      dialog.showModal();
+    } else if (!shouldOpen && dialog.open) {
+      this.setAttribute('aria-modal', 'false');
+      this._closingProgrammatically = true;
+      dialog.close();
+      this._closingProgrammatically = false;
+      const cfg = this.uploaderOrNull?.config.values as { modalScrollLock?: boolean } | undefined;
+      if (cfg?.modalScrollLock) document.body.style.overflow = '';
+    }
+  }
+
+  private _handleDialogRef = (dialog: Element | undefined): void => {
+    this._dialogRef = { value: dialog } as Ref<HTMLDialogElement>;
+    if (!dialog) return;
+    const el = dialog as HTMLDialogElement;
+    el.addEventListener('close', this._handleClose);
+    el.addEventListener('mousedown', this._handleMouseDown);
+    el.addEventListener('mouseup', this._handleMouseUp);
+  };
+
+  private _handleClose = (): void => {
+    // Skip our own programmatic close — only act on user-initiated close
+    // (escape key or programmatic close from elsewhere).
+    if (this._closingProgrammatically) return;
+    if (this._isOpen()) this.uploader.api.close();
+  };
+
+  private _handleMouseDown = (e: MouseEvent): void => {
+    this._mouseDownTarget = e.target;
+  };
+
+  private _handleMouseUp = (e: MouseEvent): void => {
+    if (e.target === this._dialogRef.value && e.target === this._mouseDownTarget) {
+      this.uploader.api.close();
+    }
+    this._mouseDownTarget = null;
+  };
 
   public override render() {
-    return html`
-  <dialog ${ref(this._handleDialogRef)}>
-    ${this.yield('')}
-  </dialog>
-`;
+    return html`<dialog ${ref(this._handleDialogRef)}>${this.yield('')}</dialog>`;
   }
 }
 
-declare global {
-  interface HTMLElementTagNameMap {
-    'uc-modal': Modal;
-  }
-}
+if (!customElements.get('uc-modal')) customElements.define('uc-modal', Modal);

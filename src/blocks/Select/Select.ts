@@ -1,14 +1,19 @@
-import { html } from 'lit';
+import { html, LitElement } from 'lit';
 import { property } from 'lit/decorators.js';
-import { LitBlock } from '../../lit/LitBlock';
-import './select.css';
+import '../../blocks/Select/select.css';
+import { LightDomMixin } from '../../lit/LightDomMixin';
 
-type SelectOption = {
+interface SelectOption {
   text: string;
   value: string;
-};
+}
 
-export class Select extends LitBlock {
+/**
+ * v2 `<uc-select>`. Stateless wrapper around a native `<select>` with
+ * value/options/disabled props and a forwarded `change` event. v1's
+ * `select.css` styles the tag directly so visuals are inherited.
+ */
+export class Select extends LightDomMixin(LitElement) {
   @property({ type: String, attribute: false })
   public value = '';
 
@@ -18,36 +23,27 @@ export class Select extends LitBlock {
   @property({ type: Array, attribute: false })
   public options: SelectOption[] = [];
 
+  private _handleChange = (event: Event): void => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (this.disabled) return;
+    const target = event.currentTarget as HTMLSelectElement | null;
+    if (!target) return;
+    this.value = target.value;
+    this.dispatchEvent(new Event('change'));
+  };
+
   public override render() {
     return html`
-      <select @change=${this._handleChange} .value=${this.value} ?disabled=${this.disabled}>
-        ${this.options.map((option) => html`<option value=${option.value}>${option.text}</option>`)}
+      <select
+        @change=${this._handleChange}
+        .value=${this.value}
+        ?disabled=${this.disabled}
+      >
+        ${this.options.map((opt) => html`<option value=${opt.value}>${opt.text}</option>`)}
       </select>
     `;
   }
-
-  private _handleChange = (event: Event): void => {
-    if (this.disabled) {
-      event.preventDefault();
-      event.stopPropagation();
-      return;
-    }
-
-    event.preventDefault();
-    event.stopPropagation();
-
-    const selectEl = event.currentTarget as HTMLSelectElement | null;
-    if (!selectEl) {
-      return;
-    }
-
-    this.value = selectEl.value;
-    this.dispatchEvent(new Event('change'));
-  };
 }
 
-declare global {
-  interface HTMLElementTagNameMap {
-    'uc-select': Select;
-  }
-}
+if (!customElements.get('uc-select')) customElements.define('uc-select', Select);

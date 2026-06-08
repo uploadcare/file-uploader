@@ -1,0 +1,18 @@
+@layer uc.components {
+  :where([uc-no-wrap-mode-smart-btn]) {
+    display: flex;
+    gap: 3px;
+  }
+
+  :where([uc-no-wrap-mode-smart-btn]) > uc-source-btn {
+    position: relative;
+  }
+
+  :where([uc-no-wrap-mode-smart-btn]) > uc-source-btn button {
+    padding: 0;
+  }
+
+  :where([uc-no-wrap-mode-smart-btn]) > uc-source-btn button uc-icon {
+    margin-right: 0;
+  }
+}
