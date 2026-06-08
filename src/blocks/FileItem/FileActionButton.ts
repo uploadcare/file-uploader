@@ -69,44 +69,13 @@ export class FileActionButton extends LitUploaderBlock {
             <uc-icon name="close"></uc-icon>
             <uc-icon name="remove-file"></uc-icon>
           </span>
-          <svg
+          <uc-icon
+            name="preloader"
             class="uc-preloader"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            aria-hidden="true"
-          >
-          <g transform="rotate(-90 12 12)">
-              <circle
-                class="uc-progress-ring"
-                cx="12"
-                cy="12"
-                r="11"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1"
-                stroke-linecap="round"
-                pathLength="100"
-                style=${styleMap({
-                  '--l-progress-offset': String(progressOffset),
-                })}
-              />
-            </g>
-            <g class="uc-preloader-bg">
-              <circle
-                cx="12"
-                cy="12"
-                r="11"
-                stroke="currentColor"
-                stroke-width="1"
-                stroke-linecap="round"
-                fill="none"
-                opacity="0.2"
-              />
-            </g>
-          </svg>
+            style=${styleMap({
+              '--l-progress-offset': String(progressOffset),
+            })}
+          ></uc-icon>
         </button>
     `;
   }

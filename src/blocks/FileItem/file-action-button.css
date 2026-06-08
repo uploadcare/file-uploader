@@ -57,29 +57,12 @@
     pointer-events: none;
   }
 
+  :where([uc-file-action-button]) .uc-preloader svg {
+    width: 24px;
+    height: 24px;
+  }
+
   :where([uc-file-action-button]) button.uc-uploading .uc-preloader {
     opacity: 1;
-  }
-
-  :where([uc-file-action-button]) button.uc-uploading .uc-preloader-spin {
-    animation: preloader-spin 0.8s linear infinite;
-    transform-origin: center;
-    transform-box: fill-box;
-  }
-
-  :where([uc-file-action-button]) .uc-progress-ring {
-    stroke-dasharray: 100 100;
-    stroke-dashoffset: 100;
-    transition: stroke-dashoffset 0.6s linear;
-  }
-
-  :where([uc-file-action-button]) button:is(.uc-uploading, .uc-success) .uc-progress-ring {
-    stroke-dashoffset: var(--l-progress-offset);
-  }
-
-  @keyframes preloader-spin {
-    to {
-      transform: rotate(360deg);
-    }
   }
 }
