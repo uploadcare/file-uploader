@@ -1,10 +1,11 @@
+import { LitElement } from 'lit';
 import { property } from 'lit/decorators.js';
-import { LitBlock } from '../../../lit/LitBlock';
+import { LightDomMixin } from '../../../lit/LightDomMixin';
 
 const X_THRESHOLD = 1;
 const noopScrollListener = () => {};
 
-export class EditorScroller extends LitBlock {
+export class EditorScroller extends LightDomMixin(LitElement) {
   /**
    * CSS-only attribute
    */
@@ -33,6 +34,10 @@ export class EditorScroller extends LitBlock {
     this.removeEventListener('scroll', noopScrollListener);
     super.disconnectedCallback();
   }
+}
+
+if (!customElements.get('uc-editor-scroller')) {
+  customElements.define('uc-editor-scroller', EditorScroller);
 }
 
 declare global {

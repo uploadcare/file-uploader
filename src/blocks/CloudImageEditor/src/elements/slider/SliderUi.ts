@@ -1,9 +1,9 @@
-import { html, type PropertyValues } from 'lit';
+import { html, LitElement, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
-import { LitBlock } from '../../../../../lit/LitBlock';
+import { LightDomMixin } from '../../../../../lit/LightDomMixin';
 
-export class SliderUi extends LitBlock {
+export class SliderUi extends LightDomMixin(LitElement) {
   private _observer?: ResizeObserver;
   private _thumbSize = 0;
   private _zeroDotEl?: HTMLDivElement;
@@ -245,6 +245,10 @@ export class SliderUi extends LitBlock {
       />
     `;
   }
+}
+
+if (!customElements.get('uc-slider-ui')) {
+  customElements.define('uc-slider-ui', SliderUi);
 }
 
 declare global {

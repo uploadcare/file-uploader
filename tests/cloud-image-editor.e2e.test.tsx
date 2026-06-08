@@ -10,21 +10,17 @@ beforeAll(async () => {
 });
 
 beforeEach(() => {
-  const ctxName = `test-${Math.random().toString(36).slice(2)}`;
+  // Standalone editor: cdn-cname / test-mode flow as direct attributes
+  // on the element. The v1-era `<uc-config>` sibling is no longer
+  // required for the editor to pick up these values.
   page.render(
     <>
       <uc-cloud-image-editor
         crop-preset="1:1, 16:9, 4:3, 3:4, 9:16"
         uuid="f4dc9ebc-ed6d-4b4d-83d1-863bf1e4bb7f"
-        ctx-name={ctxName}
-      ></uc-cloud-image-editor>
-      <uc-config
         cdn-cname="https://ucarecdn.com/"
-        qualityInsights={false}
-        ctx-name={ctxName}
-        pubkey="demopublickey"
-        testMode
-      ></uc-config>
+        test-mode
+      ></uc-cloud-image-editor>
     </>,
   );
 });
@@ -82,24 +78,16 @@ describe('Cloud Image Editor', () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     try {
-      const ctxName = `test-${Math.random().toString(36).slice(2)}`;
-
       page.render(
         <>
           <div style="width: 0; height: 0; overflow: hidden;">
             <uc-cloud-image-editor
               crop-preset="1:1, 16:9, 4:3, 3:4, 9:16"
               uuid="f4dc9ebc-ed6d-4b4d-83d1-863bf1e4bb7f"
-              ctx-name={ctxName}
+              cdn-cname="https://ucarecdn.com/"
+              test-mode
             ></uc-cloud-image-editor>
           </div>
-          <uc-config
-            cdn-cname="https://ucarecdn.com/"
-            qualityInsights={false}
-            ctx-name={ctxName}
-            pubkey="demopublickey"
-            testMode
-          ></uc-config>
         </>,
       );
 

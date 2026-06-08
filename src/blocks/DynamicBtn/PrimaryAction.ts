@@ -1,16 +1,25 @@
-import { html } from 'lit';
+import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
-import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
-import type { Uid } from '../../lit/Uid';
-import type { OutputCollectionState, OutputCollectionStatus } from '../../types';
+import '../../blocks/DynamicBtn/primary-action.css';
 import { UploadSource } from '../../utils/UploadSource';
-import type { SourceButtonConfig } from '../SourceBtn/SourceBtn';
-
-import './primary-action.css';
 import '../Icon/Icon';
 import '../Thumb/Thumb';
+import { ChildBlock } from '../../abstract/ChildBlock';
+import type { UploaderController } from '../../abstract/controllers/UploaderController';
+import type { OutputCollectionState, OutputCollectionStatus } from '../../types/exported';
+import type { SourceButtonConfig } from '../SourceBtn/SourceBtn';
 
-export class PrimaryAction extends LitUploaderBlock {
+/**
+ * v2 `<uc-primary-action>`. The main button surface inside DynamicBtn.
+ * State-driven text (`upload from <source>`, `header-uploading`,
+ * `header-succeed`, etc.) plus optional source icon or single-file
+ * thumbnail. Clicking either invokes the source's `onClick` (when no
+ * files yet) or opens the upload list (when files exist).
+ *
+ * Mirrors v1's `PrimaryAction.ts` 1:1 but uses v2 controllers and the
+ * v2 `OutputCollectionState` shape (now identical to v1's).
+ */
+export class PrimaryAction extends ChildBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-primary-action'];
 
   private static readonly SOURCE_TEXT_CONFIG: Record<string, { action: string }> = {
@@ -22,141 +31,120 @@ export class PrimaryAction extends LitUploaderBlock {
   };
 
   @property({ type: Object })
-  public source!: SourceButtonConfig | null;
+  public source: SourceButtonConfig | null = null;
 
   @property({ type: Object })
-  public entries!: OutputCollectionState<OutputCollectionStatus, 'maybe-has-group'>;
+  public entries: OutputCollectionState<OutputCollectionStatus, 'maybe-has-group'> | null = null;
 
   @state()
-  private showIcon = false;
+  private _showIcon = true;
 
   @state()
-  private _isMultiple = false;
+  private _isMultiple = true;
 
-  public override initCallback(): void {
-    super.initCallback();
-
-    this.subConfigValue('dynamicButtonShowFirstIcon', (value) => {
-      this.showIcon = value;
-    });
-
-    this.subConfigValue('multiple', (value) => {
-      this._isMultiple = value;
-    });
+  protected override subscriptionsFor(ctrl: UploaderController) {
+    return [ctrl.locale.subscribe.bind(ctrl.locale), ctrl.config.subscribe.bind(ctrl.config)];
   }
 
-  private get hasEntries(): boolean {
+  protected override willUpdate(_changed: PropertyValues<this>): void {
+    super.willUpdate?.(_changed);
+    const cfg = this.uploaderOrNull?.config.values as
+      | { dynamicButtonShowFirstIcon?: boolean; multiple?: boolean }
+      | undefined;
+    if (cfg) {
+      this._showIcon = cfg.dynamicButtonShowFirstIcon ?? true;
+      this._isMultiple = cfg.multiple ?? true;
+    }
+  }
+
+  private get _hasEntries(): boolean {
     return (this.entries?.allEntries?.length ?? 0) > 0;
   }
 
-  private get hasSingleSuccessImage(): boolean {
-    return (
-      this.entries?.allEntries?.length === 1 && this.entries.isSuccess && (this.entries.allEntries[0]?.isImage ?? false)
-    );
+  private get _hasSingleSuccessImage(): boolean {
+    const all = this.entries?.allEntries;
+    return !!all && all.length === 1 && this.entries?.isSuccess === true && (all[0]?.isImage ?? false);
   }
 
-  private get hasMultipleEntries(): boolean {
+  private get _hasMultipleEntries(): boolean {
     return (this.entries?.allEntries?.length ?? 0) >= 1;
   }
 
-  private get localizedSourceLabel(): string {
-    if (!this.source?.label) return '';
-
-    if (['local', 'url', 'camera'].includes(this.source?.id)) {
-      return this.l10n(this.source.label).toLowerCase();
-    }
-
-    return this.l10n(this.source.label);
+  private _t(key: string, params?: Record<string, string | number>): string {
+    return this.uploaderOrNull?.locale.t(key, params) ?? key;
   }
 
-  private _translate(key: string, params?: Record<string, string | number>): string {
-    return this.l10n(key, params);
+  private _localizedSourceLabel(): string {
+    const src = this.source;
+    if (!src?.label) return '';
+    const lower = ['local', 'url', 'camera'].includes(src.id);
+    const text = this._t(src.label);
+    return lower ? text.toLowerCase() : text;
   }
 
-  private get textBasedOnLocale(): string {
-    const headerText = this._headerTextDependentOnEntries();
-    if (headerText) {
-      return headerText;
-    }
-
-    return this._getSourceLabelText();
+  private _headerTextForEntries(): string | undefined {
+    const e = this.entries;
+    if (!e) return undefined;
+    if (e.status === 'uploading') return this._t('header-uploading', { count: e.uploadingCount });
+    if (e.status === 'failed') return this._t('header-failed', { count: e.failedCount });
+    if (e.status === 'success') return this._t('header-succeed', { count: e.successCount });
+    if (e.totalCount > 0) return this._t('header-total', { count: e.totalCount });
+    return undefined;
   }
 
-  private _headerTextDependentOnEntries(): string | undefined {
-    if (this.entries?.status === 'uploading') {
-      return this._translate('header-uploading', { count: this.entries.uploadingCount });
-    }
-    if (this.entries?.status === 'failed') {
-      return this._translate('header-failed', { count: this.entries.failedCount });
-    }
-    if (this.entries?.status === 'success') {
-      return this._translate('header-succeed', { count: this.entries.successCount });
-    }
-
-    if (this.entries?.totalCount > 0) {
-      return this._translate('header-total', { count: this.entries?.totalCount ?? 0 });
-    } else {
-      return undefined;
-    }
-  }
-
-  private _getSourceLabelText(): string {
-    if (!this.source?.id) {
-      return '';
-    }
-
-    const config = PrimaryAction.SOURCE_TEXT_CONFIG[this.source.id];
-    const action = config?.action ?? 'get-from';
-
+  private _sourceLabelText(): string {
+    const src = this.source;
+    if (!src?.id) return '';
+    const action = PrimaryAction.SOURCE_TEXT_CONFIG[src.id]?.action ?? 'get-from';
     let sourceLabel: string;
-    if (this.source.id === UploadSource.MOBILE_PHOTO_CAMERA) {
-      sourceLabel = this.l10n('photo').toLowerCase();
-    } else if (this.source.id === UploadSource.MOBILE_VIDEO_CAMERA) {
-      sourceLabel = this.l10n('video').toLowerCase();
+    if (src.id === UploadSource.MOBILE_PHOTO_CAMERA) {
+      sourceLabel = this._t('photo').toLowerCase();
+    } else if (src.id === UploadSource.MOBILE_VIDEO_CAMERA) {
+      sourceLabel = this._t('video').toLowerCase();
     } else {
-      sourceLabel = this.localizedSourceLabel;
+      sourceLabel = this._localizedSourceLabel();
     }
-
-    return this._translate(action, { source: sourceLabel });
+    return this._t(action, { source: sourceLabel });
   }
 
-  private _handleClick() {
-    if (this.hasEntries) {
-      this._sharedInstancesBag.ctx.pub('*currentActivity', 'upload-list');
-      this._sharedInstancesBag.modalManager?.open('upload-list');
+  private get _label(): string {
+    return this._headerTextForEntries() ?? this._sourceLabelText();
+  }
+
+  private _handleClick = (): void => {
+    if (this._hasEntries) {
+      // Files exist — surface the upload list. Routes through the
+      // preset's strategy so regular opens it in a modal, inline /
+      // minimal swap the background activity to the inline list.
+      this.uploader.router.navigate('upload-list');
       return;
     }
-
     void this.source?.onClick();
-  }
+  };
 
-  private _renderThumbnail() {
-    if (!this._isMultiple && this.hasSingleSuccessImage) {
-      const entry = this.entries.allEntries[0];
+  private _renderLeading() {
+    if (!this._isMultiple && this._hasSingleSuccessImage) {
+      const entry = this.entries?.allEntries[0];
       if (!entry) return null;
-      return html`<uc-thumb .uid=${entry.internalId as Uid}></uc-thumb>`;
+      const live = this.uploaderOrNull?.collection.read(entry.internalId);
+      return live ? html`<uc-thumb .entry=${live}></uc-thumb>` : null;
     }
-
-    if (this._isMultiple && this.hasMultipleEntries) {
-      return null;
-    }
-
+    if (this._isMultiple && this._hasMultipleEntries) return null;
     const iconName = this.source?.icon;
-    return this.showIcon && iconName ? html`<uc-icon .name=${iconName}></uc-icon>` : null;
+    return this._showIcon && iconName ? html`<uc-icon .name=${iconName}></uc-icon>` : null;
   }
 
-  protected override render() {
+  public override render() {
+    const label = this._label;
     return html`
-      <button type="button" @click=${this._handleClick} aria-label=${this.textBasedOnLocale}>
-        ${this._renderThumbnail()}
-        <span>${this.textBasedOnLocale}</span>
+      <button type="button" @click=${this._handleClick} aria-label=${label}>
+        ${this._renderLeading()}
+        <span>${label}</span>
       </button>
     `;
   }
 }
 
-declare global {
-  interface HTMLElementTagNameMap {
-    'uc-primary-action': PrimaryAction;
-  }
-}
+if (!customElements.get('uc-primary-action')) customElements.define('uc-primary-action', PrimaryAction);
+
+// Tag is globally declared by v1's `src/blocks/DynamicBtn/PrimaryAction.ts`.

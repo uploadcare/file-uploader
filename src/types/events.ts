@@ -1,5 +1,5 @@
-import type { EventPayload } from '../blocks/UploadCtxProvider/EventEmitter';
+import type { UploaderEventPayload } from '../abstract/EventBus';
 
 export type EventMap = {
-  [T in keyof EventPayload]: CustomEvent<EventPayload[T]>;
+  [T in keyof UploaderEventPayload]: CustomEvent<UploaderEventPayload[T]>;
 };

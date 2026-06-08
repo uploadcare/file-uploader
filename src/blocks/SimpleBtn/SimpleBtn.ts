@@ -1,14 +1,22 @@
 import { html } from 'lit';
 import { property, state } from 'lit/decorators.js';
-import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
-import './simple-btn.css';
-
+import '../../blocks/SimpleBtn/simple-btn.css';
 import '../DropArea/DropArea';
 import '../Icon/Icon';
+import { ChildBlock } from '../../abstract/ChildBlock';
+import type { UploaderController } from '../../abstract/controllers/UploaderController';
 
-export class SimpleBtn extends LitUploaderBlock {
+/**
+ * v2 `<uc-simple-btn>`. Trigger button that opens the upload flow.
+ * Click delegates to `api.open()`. The button label tracks v1's
+ * `multiple` config to flip between `upload-file` / `upload-files`.
+ *
+ * Markup mirrors v1 exactly so `simple-btn.css` applies — the
+ * `uc-simple-btn` style attribute is added via `styleAttrs` (v1
+ * parity).
+ */
+export class SimpleBtn extends ChildBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-simple-btn'];
-  public override couldBeCtxOwner = true;
 
   @property({ attribute: 'dropzone', type: Boolean })
   public dropzone = true;
@@ -16,34 +24,38 @@ export class SimpleBtn extends LitUploaderBlock {
   @state()
   private _buttonTextKey = 'upload-file';
 
-  private readonly _handleClick = () => {
-    this.api.initFlow();
-  };
-
-  public override initCallback(): void {
-    super.initCallback();
-
-    this.subConfigValue('multiple', (val) => {
-      this._buttonTextKey = val ? 'upload-files' : 'upload-file';
-    });
+  protected override controllerReady(ctrl: UploaderController): void {
+    this._syncButtonTextKey(ctrl);
   }
 
+  public override updated(): void {
+    const ctrl = this.uploaderOrNull;
+    if (ctrl) this._syncButtonTextKey(ctrl);
+  }
+
+  private _syncButtonTextKey(ctrl: UploaderController): void {
+    const multiple = (ctrl.config.values as { multiple?: boolean }).multiple;
+    const next = multiple ? 'upload-files' : 'upload-file';
+    if (next !== this._buttonTextKey) this._buttonTextKey = next;
+  }
+
+  private readonly _handleClick = (): void => {
+    this.uploader.api.open();
+  };
+
   public override render() {
+    const t = (key: string): string => this.uploaderOrNull?.locale.t(key) ?? key;
     return html`
-    <uc-drop-area .disabled=${!this.dropzone}>
-    <button type="button" @click=${this._handleClick}>
-      <uc-icon name="upload"></uc-icon>
-      <span>${this.l10n(this._buttonTextKey)}</span>
-      ${this.yield('')}
-      <div class="uc-visual-drop-area">${this.l10n('drop-files-here')}</div>
-    </button>
-  </uc-drop-area>
+      <uc-drop-area .disabled=${!this.dropzone}>
+        <button type="button" @click=${this._handleClick}>
+          <uc-icon name="upload"></uc-icon>
+          <span>${t(this._buttonTextKey)}</span>
+          ${this.yield('')}
+          <div class="uc-visual-drop-area">${t('drop-files-here')}</div>
+        </button>
+      </uc-drop-area>
     `;
   }
 }
 
-declare global {
-  interface HTMLElementTagNameMap {
-    'uc-simple-btn': SimpleBtn;
-  }
-}
+if (!customElements.get('uc-simple-btn')) customElements.define('uc-simple-btn', SimpleBtn);

@@ -4,6 +4,9 @@ import { EditorButtonControl } from './EditorButtonControl.js';
 import type { EditorImageCropper } from './EditorImageCropper.js';
 import type { CropOperation } from './toolbar-constants';
 
+type CropperOperationKey = 'rotate' | 'mirror' | 'flip';
+type CropperOperationValue<K extends CropperOperationKey> = K extends 'rotate' ? number : boolean;
+
 function nextAngle(prev: number): number {
   let angle = prev + 90;
   angle = angle >= 360 ? 0 : angle;
@@ -40,22 +43,26 @@ export class EditorCropButtonControl extends EditorButtonControl {
   }
 
   protected override onClick(e: MouseEvent) {
-    if (!this.operation) {
-      return;
-    }
+    if (!this.operation) return;
 
-    const cropper = this.$['*cropperEl'] as EditorImageCropper;
-    const prev = cropper.getValue(this.operation);
+    const cropper = this.editor.get('*cropperEl') as EditorImageCropper | null;
+    if (!cropper) return;
+    const op = this.operation as CropperOperationKey;
+    const prev = cropper.getValue(op) as CropperOperationValue<typeof op>;
     const next = nextValue(this.operation, prev);
 
-    this.telemetryManager.sendEventCloudImageEditor(e, this.$['*tabId'], {
+    this.telemetryManager.sendEventCloudImageEditor(e, String(this.editor.get('*tabId')), {
       operation: this.operation,
       next,
       prev,
     });
 
-    cropper.setValue(this.operation, next);
+    cropper.setValue(op, next as CropperOperationValue<typeof op>);
   }
+}
+
+if (!customElements.get('uc-editor-crop-button-control')) {
+  customElements.define('uc-editor-crop-button-control', EditorCropButtonControl);
 }
 
 declare global {

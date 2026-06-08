@@ -40,6 +40,13 @@ export default defineConfig({
         test: {
           name: 'e2e',
           include: ['./**/*.e2e.test.ts', './**/*.e2e.test.tsx'],
+          // The renderer registers a top-level `beforeEach(cleanup)`.
+          // Without re-import-per-file, that hook only fires for the
+          // first file Vitest evaluates — every subsequent test file
+          // accumulates DOM nodes from prior tests in the same browser
+          // session. Listing it as a setup file re-registers the hook
+          // for each file's suite.
+          setupFiles: ['./tests/utils/test-renderer.ts'],
           expect: {
             poll: {
               timeout: 20_000,

@@ -1,0 +1,5 @@
+@layer uc.components {
+  :where(uc-uploader, uc-uploader-regular, uc-uploader-inline, uc-uploader-minimal) {
+    display: block;
+  }
+}

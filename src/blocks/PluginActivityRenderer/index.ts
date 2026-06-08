@@ -1,1 +1,1 @@
-export { PluginActivityHost, PluginActivityRenderer } from './PluginActivityRenderer';
+export { PluginActivityHost, PluginActivityRenderer } from '../PluginActivityRenderer/PluginActivityRenderer';

@@ -36,7 +36,9 @@
   ],
   "type": "module",
   "sideEffects": [
-    "*.css"
+    "*.css",
+    "./src/v2/blocks/*.ts",
+    "./src/v2/elements/*.ts"
   ],
   "module": "./dist/index.js",
   "exports": {

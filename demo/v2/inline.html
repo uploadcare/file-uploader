@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>v2 Spike — Inline</title>
+    <style>
+      body { font-family: system-ui, sans-serif; max-width: 720px; margin: 2rem auto; padding: 0 1rem; }
+      pre { background: #f8fafc; padding: 0.75rem; border-radius: 0.375rem; font-size: 0.85rem; white-space: pre-wrap; }
+    </style>
+    <script type="module" src="../../src/index.ts"></script>
+  </head>
+  <body>
+    <h1>v2 spike — inline preset</h1>
+    <p>No modal-target. start-from and upload-list render inline; activity toggles which one is visible.</p>
+    <uc-uploader-inline id="u" ctx-name="inline-demo" pubkey="demopublickey"></uc-uploader-inline>
+
+    <script type="module">
+      import {
+        urlSourcePlugin,
+        cameraPlugin,
+        externalSourcesPlugin,
+        imageShrinkPlugin,
+        localSourcePlugin,
+      } from '../../src/index.ts';
+
+      const u = document.getElementById('u');
+      u.plugins = [
+        localSourcePlugin,
+        urlSourcePlugin,
+        cameraPlugin,
+        externalSourcesPlugin,
+        imageShrinkPlugin,
+      ];
+      window.u = u;
+    </script>
+  </body>
+</html>

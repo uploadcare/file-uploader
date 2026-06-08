@@ -1,111 +1,189 @@
 import { property } from 'lit/decorators.js';
-import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
-import type { OutputCollectionState } from '../../types/index';
+import { ChildBlock } from '../../abstract/ChildBlock';
+import type { UploaderController } from '../../abstract/controllers/UploaderController';
+import type { OutputCollectionState } from '../../types/exported';
 import { applyStyles } from '../../utils/applyStyles';
 
-export class FormInput extends LitUploaderBlock {
-  public declare attributesMeta: {
-    'ctx-name': string;
-    name?: string;
-  };
-  private _validationInputElement: HTMLInputElement | null = null;
-  private _dynamicInputsContainer: HTMLDivElement | null = null;
-
-  @property({ type: String, noAccessor: true, attribute: 'name' })
+/**
+ * v2-compat shim — `<uc-form-input>`.
+ *
+ * Reflects the upload-collection state into hidden `<input>` elements
+ * so the surrounding `<form>` can submit Uploadcare CDN URLs without
+ * any extra glue. Same behavior as v1:
+ *  - Single mode (`!multiple` and one entry): one `<input name="X">`
+ *    holding the file's `cdnUrl`.
+ *  - Group output: one `<input name="X">` holding the group `cdnUrl`.
+ *  - Multiple mode: one `<input name="X[]">` per entry, value =
+ *    `cdnUrl`.
+ *  - Collection-level failures populate the validation input's
+ *    `setCustomValidity` so native form submission is blocked.
+ *
+ * Reads `multipleMin` to mark the validation input as `required` and
+ * resolves `name` from the element's `name` attribute, falling back to
+ * `ctx-name` for unique scoping when several uploaders share the same
+ * page.
+ */
+export class FormInput extends ChildBlock {
+  @property({ type: String, attribute: 'name' })
   public nameAttrValue?: string;
 
+  private _validationInput: HTMLInputElement | null = null;
+  private _dynamicInputsContainer: HTMLDivElement | null = null;
+
+  protected override controllerReady(ctrl: UploaderController): void {
+    this._ensureContainers();
+    this._sync(ctrl);
+  }
+
+  protected override controllerReleased(): void {
+    if (this._validationInput) {
+      this._validationInput.remove();
+      this._validationInput = null;
+    }
+    if (this._dynamicInputsContainer) {
+      this._dynamicInputsContainer.remove();
+      this._dynamicInputsContainer = null;
+    }
+  }
+
+  protected override subscriptionsFor(ctrl: UploaderController): Array<(listener: () => void) => () => void> {
+    const sync = (): void => this._sync(ctrl);
+    return [
+      (listener) =>
+        ctrl.config.subscribe(() => {
+          listener();
+          sync();
+        }),
+      (listener) =>
+        ctrl.collection.subscribe(() => {
+          listener();
+          sync();
+        }),
+      (listener) =>
+        ctrl.upload.subscribe(() => {
+          listener();
+          sync();
+        }),
+      (listener) =>
+        ctrl.validation.subscribe(() => {
+          listener();
+          sync();
+        }),
+    ];
+  }
+
+  public override render(): null {
+    return null;
+  }
+
   private get _inputName(): string {
-    return this.nameAttrValue ?? this.ctxName;
+    return this.nameAttrValue ?? this.ctxName ?? '';
   }
 
-  private _createValidationInput(): HTMLInputElement {
-    const validationInput = document.createElement('input');
-    validationInput.type = 'text';
-    validationInput.name = this._inputName;
-    validationInput.required = this.cfg.multipleMin > 0;
-    validationInput.tabIndex = -1;
-    applyStyles(validationInput, {
-      opacity: 0,
-      height: 0,
-      width: 0,
-    });
-    return validationInput;
+  private _createValidationInput(name: string, required: boolean): HTMLInputElement {
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.name = name;
+    input.required = required;
+    input.tabIndex = -1;
+    applyStyles(input, { opacity: 0, height: 0, width: 0 });
+    return input;
   }
 
-  public override initCallback(): void {
-    super.initCallback();
-
-    this._validationInputElement = this._createValidationInput();
-    this.appendChild(this._validationInputElement);
-
-    this.sub(
-      '*collectionState',
-      (collectionState: OutputCollectionState | null) => {
-        if (!collectionState) {
-          return;
-        }
-        if (!this._dynamicInputsContainer) {
-          const dynamicInputsContainer = document.createElement('div');
-          this.appendChild(dynamicInputsContainer);
-          this._dynamicInputsContainer = dynamicInputsContainer;
-        }
-        if (!this._validationInputElement) {
-          const input = this._createValidationInput();
-          this.appendChild(input);
-          this._validationInputElement = input;
-        }
-
-        this._dynamicInputsContainer.innerHTML = '';
-
-        if (collectionState.status === 'uploading' || collectionState.status === 'idle') {
-          this._validationInputElement.value = '';
-          this._validationInputElement.setCustomValidity('');
-          return;
-        }
-
-        if (collectionState.status === 'failed') {
-          const errorMsg = collectionState.errors[0]?.message;
-          this._validationInputElement.value = '';
-          this._validationInputElement.setCustomValidity(errorMsg ?? '');
-          return;
-        }
-
-        const group = collectionState.group ? collectionState.group : null;
-        if (group) {
-          this._validationInputElement.value = group.cdnUrl ?? '';
-          this._validationInputElement.setCustomValidity('');
-          return;
-        }
-
-        const cdnUrls = collectionState.allEntries
-          .map((entry) => entry.cdnUrl)
-          .filter((url): url is string => typeof url === 'string');
-
-        if (!this.cfg.multiple && cdnUrls.length === 1 && cdnUrls[0]) {
-          this._validationInputElement.value = cdnUrls[0];
-          this._validationInputElement.setCustomValidity('');
-          return;
-        }
-
-        // Remove validation input to prevent it from being submitted
-        this._validationInputElement.remove();
-        this._validationInputElement = null;
-
-        const fr = new DocumentFragment();
-
-        for (const value of cdnUrls) {
-          const input = document.createElement('input');
-          input.type = 'hidden';
-          input.name = `${this._inputName}[]`;
-          input.value = value;
-          fr.appendChild(input);
-        }
-
-        this._dynamicInputsContainer.replaceChildren(fr);
-      },
-      false,
-    );
+  private _ensureContainers(): void {
+    if (!this._dynamicInputsContainer) {
+      this._dynamicInputsContainer = document.createElement('div');
+      this.appendChild(this._dynamicInputsContainer);
+    }
+    if (!this._validationInput) {
+      const cfg = (this.uploaderOrNull?.config.values ?? {}) as { multipleMin?: number };
+      this._validationInput = this._createValidationInput(this._inputName, (cfg.multipleMin ?? 0) > 0);
+      this.appendChild(this._validationInput);
+    }
   }
+
+  private _sync(ctrl: UploaderController): void {
+    this._ensureContainers();
+    const cfg = ctrl.config.values as {
+      multiple?: boolean;
+      multipleMin?: number;
+      groupOutput?: boolean;
+    };
+    const state = ctrl.api.getOutputCollectionState() as OutputCollectionState;
+    const name = this._inputName;
+
+    if (this._validationInput) {
+      this._validationInput.name = name;
+      this._validationInput.required = (cfg.multipleMin ?? 0) > 0;
+    }
+
+    if (this._dynamicInputsContainer) this._dynamicInputsContainer.innerHTML = '';
+
+    if (state.status === 'idle' || state.status === 'uploading') {
+      this._ensureValidationInput();
+      this._validationInput!.value = '';
+      this._validationInput?.setCustomValidity('');
+      return;
+    }
+
+    if (state.status === 'failed') {
+      this._ensureValidationInput();
+      this._validationInput!.value = '';
+      const message = state.errors[0]?.message ?? '';
+      this._validationInput?.setCustomValidity(message);
+      return;
+    }
+
+    const group = state.group ?? null;
+    if (group) {
+      this._ensureValidationInput();
+      this._validationInput!.value = group.cdnUrl ?? '';
+      this._validationInput?.setCustomValidity('');
+      return;
+    }
+
+    const cdnUrls = state.allEntries
+      .map((entry) => entry.cdnUrl)
+      .filter((url): url is string => typeof url === 'string');
+
+    if (!cfg.multiple && cdnUrls.length === 1 && cdnUrls[0]) {
+      this._ensureValidationInput();
+      this._validationInput!.value = cdnUrls[0];
+      this._validationInput?.setCustomValidity('');
+      return;
+    }
+
+    // Multi-file mode with at least one CDN URL — emit a `<input name="X[]">`
+    // per entry. Drop the validation input so it doesn't submit a stale value.
+    if (this._validationInput) {
+      this._validationInput.remove();
+      this._validationInput = null;
+    }
+
+    if (cdnUrls.length === 0) return;
+
+    const fragment = document.createDocumentFragment();
+    for (const value of cdnUrls) {
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = `${name}[]`;
+      input.value = value;
+      fragment.appendChild(input);
+    }
+    this._dynamicInputsContainer?.replaceChildren(fragment);
+  }
+
+  private _ensureValidationInput(): void {
+    if (this._validationInput) return;
+    const ctrl = this.uploaderOrNull;
+    const cfg = (ctrl?.config.values ?? {}) as { multipleMin?: number };
+    this._validationInput = this._createValidationInput(this._inputName, (cfg.multipleMin ?? 0) > 0);
+    this.appendChild(this._validationInput);
+  }
+}
+
+if (!customElements.get('uc-form-input')) {
+  customElements.define('uc-form-input', FormInput);
 }
 
 declare global {

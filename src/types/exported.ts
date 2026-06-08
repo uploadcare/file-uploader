@@ -1,15 +1,19 @@
-import type { PasteScope } from '../abstract/features/ClipboardLayer';
 import type { LocaleDefinition } from '../abstract/localeRegistry';
-import type { UploaderPlugin } from '../abstract/managers/plugin';
 import type {
   FileValidator,
   FileValidatorDescriptor,
   FuncCollectionValidator,
   FuncFileValidator,
-} from '../abstract/managers/ValidationManager';
+} from '../abstract/validator-types';
 import type { CameraMode } from '../blocks/CameraSource/CameraSource';
 import type { complexConfigKeys } from '../blocks/Config/Config';
 import type { FilesViewMode } from '../blocks/UploadList/UploadList';
+
+/**
+ * v1-compat paste-scope literal. Values match the v1 `ClipboardLayer`
+ * pasteScope union.
+ */
+export type PasteScope = 'local' | 'global' | false;
 
 export {
   type Metadata,
@@ -24,8 +28,10 @@ import type { Metadata, NetworkError, UploadcareFile, UploadcareGroup, UploadErr
 import type { SourceTypes } from '../utils/UploadSource';
 
 export type { FuncFileValidator, FuncCollectionValidator, FileValidator, FileValidatorDescriptor };
-export type { UploaderPlugin } from '../abstract/managers/plugin';
-export type { ApiAddFileCommonOptions, UploaderPublicApi } from '../abstract/UploaderPublicApi';
+
+import type { PluginDefinition as UploaderPlugin } from '../abstract/controllers/PluginRegistryController';
+export type { UploaderPlugin };
+export type { ApiAddFileCommonOptions, UploaderApi as UploaderPublicApi } from '../abstract/UploaderApi';
 
 export type { SourceTypes };
 export type MetadataCallback = (fileEntry: OutputFileEntry) => Promise<Metadata> | Metadata;
@@ -569,8 +575,8 @@ export type OutputCollectionState<
       }
   );
 
+import { type UploaderEventPayload as EventPayload, UploaderEventType as EventType } from '../abstract/EventBus';
 import type { DynamicButtonMode } from '../blocks/DynamicBtn/DynamicBtn';
-import { type EventPayload, EventType } from '../blocks/UploadCtxProvider/EventEmitter';
 
 export { EventType };
 export type { EventPayload };

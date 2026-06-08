@@ -2,11 +2,11 @@ import type { PropertyValues } from 'lit';
 import { html } from 'lit';
 import { state } from 'lit/decorators.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
-import { LitBlock } from '../../../lit/LitBlock';
+import { EditorBlock } from '../EditorBlock';
 
 import '../../Icon/Icon';
 
-export class EditorButtonControl extends LitBlock {
+export class EditorButtonControl extends EditorBlock {
   // This is public because it's used in the updated lifecycle to assign to the shared state.
   @state()
   public active = false;
@@ -43,7 +43,7 @@ export class EditorButtonControl extends LitBlock {
     this._updateHostStateClasses();
   }
 
-  protected override updated(changedProperties: PropertyValues<this>): void {
+  public override updated(changedProperties: PropertyValues<this>): void {
     super.updated(changedProperties);
     if (changedProperties.has('active')) {
       this._updateHostStateClasses();

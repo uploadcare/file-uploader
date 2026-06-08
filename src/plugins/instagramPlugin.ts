@@ -1,4 +1,4 @@
-import type { UploaderPlugin } from '../abstract/managers/plugin';
+import type { LegacyUploaderPlugin as UploaderPlugin } from '../abstract/plugin-types-legacy';
 
 export const instagramPlugin: UploaderPlugin = {
   id: 'instagram',

@@ -1,27 +1,27 @@
 import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
-import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
-import './source-btn.css';
-
+import '../../blocks/SourceBtn/source-btn.css';
 import '../Icon/Icon';
-import { InternalEventType } from '../UploadCtxProvider/EventEmitter';
+import { ChildBlock } from '../../abstract/ChildBlock';
+import type { UploaderController } from '../../abstract/controllers/UploaderController';
 
-export type SourceButtonConfig = {
+export interface SourceButtonConfig {
   id: string;
   label: string;
   icon?: string;
   onClick: () => void | Promise<void>;
-};
+}
 
-export class SourceBtn extends LitUploaderBlock {
-  public override couldBeCtxOwner = true;
-
+/**
+ * v2 `<uc-source-btn>`. Renders a single source row (icon + localized
+ * label) and forwards click to `source.onClick`. v1's `source-btn.css`
+ * styles the tag directly so visuals are inherited.
+ */
+export class SourceBtn extends ChildBlock {
   @property({ attribute: false })
   public source?: SourceButtonConfig;
 
-  @property({ type: Boolean })
-  public textOnly = false;
-
+  /** Renders only the icon (no label). Used by DynamicBtn's inline mode. */
   @property({ type: Boolean })
   public iconOnly = false;
 
@@ -29,53 +29,35 @@ export class SourceBtn extends LitUploaderBlock {
   private _iconName = 'default';
 
   @state()
-  private _srcTypeKey = '';
+  private _labelKey = '';
 
-  protected override willUpdate(changedProperties: PropertyValues<this>): void {
-    super.willUpdate(changedProperties);
+  protected override subscriptionsFor(ctrl: UploaderController) {
+    // Re-render on locale or icon-registry changes.
+    return [ctrl.locale.subscribe.bind(ctrl.locale), ctrl.plugins.subscribe.bind(ctrl.plugins)];
+  }
 
-    if (changedProperties.has('source')) {
-      this._applySource(this.source);
+  protected override willUpdate(changed: PropertyValues<this>): void {
+    super.willUpdate?.(changed);
+    if (changed.has('source')) {
+      this._iconName = this.source?.icon ?? this.source?.id ?? 'default';
+      this._labelKey = this.source?.label ?? '';
     }
   }
 
-  private _applySource(source?: SourceButtonConfig): void {
-    if (!source) {
-      this._srcTypeKey = '';
-      this._iconName = 'default';
-      return;
-    }
-
-    const { label, icon, id } = source;
-    this._srcTypeKey = label;
-    this._iconName = icon ?? id ?? 'default';
-  }
-
-  public activate(): void {
+  private _activate = (): void => {
     if (!this.source) return;
-
-    this.telemetryManager.sendEvent({
-      eventType: InternalEventType.ACTION_EVENT,
-      payload: {
-        sourceId: this.source.id,
-      },
-    });
-
     void this.source.onClick();
-  }
+  };
 
   public override render() {
+    const label = this._labelKey ? (this.uploaderOrNull?.locale.t(this._labelKey) ?? this._labelKey) : '';
     return html`
-      <button aria-label=${this.l10n(this._srcTypeKey)} type="button" @click=${this.activate}>
-        ${this.textOnly ? '' : html`<uc-icon name=${this._iconName}></uc-icon>`}
-        ${this.iconOnly ? '' : html`<div class="uc-txt">${this.l10n(this._srcTypeKey)}</div>`}
+      <button type="button" @click=${this._activate}>
+        <uc-icon name=${this._iconName}></uc-icon>
+        ${this.iconOnly ? '' : html`<div class="uc-txt">${label}</div>`}
       </button>
     `;
   }
 }
 
-declare global {
-  interface HTMLElementTagNameMap {
-    'uc-source-btn': SourceBtn;
-  }
-}
+if (!customElements.get('uc-source-btn')) customElements.define('uc-source-btn', SourceBtn);
