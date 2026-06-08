@@ -1,5 +1,6 @@
 import { html } from 'lit';
 import { property } from 'lit/decorators.js';
+import { styleMap } from 'lit/directives/style-map.js';
 import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
 
 import '../Icon/Icon';
@@ -24,7 +25,17 @@ export class FileActionButton extends LitUploaderBlock {
   @property({ type: Boolean })
   public idle = false;
 
-  private _handleRemove() {
+  @property({ type: Boolean })
+  public hideRemove = false;
+
+  @property({ type: Number })
+  public progress = 0;
+
+  private get _normalizedProgress(): number {
+    return Math.min(Math.max(this.progress || 0, 0), 100);
+  }
+
+  private _handleAction() {
     this.dispatchEvent(
       new CustomEvent('uc:remove', {
         bubbles: true,
@@ -39,20 +50,32 @@ export class FileActionButton extends LitUploaderBlock {
       'uc-mini-btn': true,
       'uc-idle': this.idle,
       'uc-uploading': this.uploading,
+      'uc-hide-remove': this.hideRemove,
       'uc-failed': this.failed,
       'uc-success': this.success,
     });
+    const progressOffset = 100 - this._normalizedProgress;
+    const actionLabel = this.l10n(L10N_REMOVE_KEY);
 
     return html`
       <button
           type="button"
-          @click=${this._handleRemove}
-          title=${this.l10n(L10N_REMOVE_KEY)}
-          aria-label=${this.l10n(L10N_REMOVE_KEY)}
+          @click=${this._handleAction}
+          title=${actionLabel}
+          aria-label=${actionLabel}
           class=${classes}
         >
-          <uc-icon name="remove-file"></uc-icon>
-          <uc-icon name="close"></uc-icon>
+          <span class="uc-icon-wrap">
+            <uc-icon name="close"></uc-icon>
+            <uc-icon name="remove-file"></uc-icon>
+          </span>
+          <uc-icon
+            name="preloader"
+            class="uc-preloader"
+            style=${styleMap({
+              '--l-progress-offset': String(progressOffset),
+            })}
+          ></uc-icon>
         </button>
     `;
   }

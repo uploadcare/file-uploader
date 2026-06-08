@@ -3,45 +3,66 @@
     position: relative;
   }
 
-  :where([uc-file-action-button]) button uc-icon {
-    transition: opacity var(--uc-transition);
+  :where([uc-file-action-button]) button {
+    position: relative;
   }
 
-  :where([uc-file-action-button]) button:is(.uc-uploading) uc-icon[name="remove-file"] {
+  :where([uc-file-action-button]) .uc-icon-wrap {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 100%;
+  }
+
+  :where([uc-file-action-button]) .uc-icon-wrap uc-icon {
+    grid-area: 1 / 1;
+    transition:
+      opacity var(--uc-transition),
+      transform var(--uc-transition);
+  }
+
+  :where([uc-file-action-button]) uc-icon[name="close"] {
     opacity: 0;
+    transform: scale(1);
   }
 
-  :where([uc-file-action-button]) button:is(.uc-success, .uc-failed, .uc-idle) uc-icon[name="close"] {
+  :where([uc-file-action-button]) uc-icon[name="remove-file"] {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  :where([uc-file-action-button]) button:is(.uc-uploading, .uc-hide-remove) uc-icon[name="close"] {
+    opacity: 0.5;
+  }
+
+  :where([uc-file-action-button]) button:is(.uc-uploading, .uc-hide-remove):hover uc-icon[name="close"] {
+    opacity: 1;
+  }
+
+  :where([uc-file-action-button]) button:is(.uc-uploading, .uc-hide-remove) uc-icon[name="remove-file"] {
     opacity: 0;
+    transform: scale(0.95);
   }
 
-  :where([uc-file-action-button]) button uc-icon[name="close"] {
+  :where([uc-file-action-button]) .uc-preloader {
     position: absolute;
-
-    &::before {
-      position: absolute;
-      content: "";
-      inset: 4px;
-      border: 1px solid var(--uc-primary);
-      border-radius: 50%;
-      opacity: 0.2;
-    }
-
-    &::after {
-      position: absolute;
-      content: "";
-      inset: 4px;
-      border: 1px solid var(--uc-primary);
-      border-top-color: transparent;
-      border-radius: 50%;
-      opacity: 1;
-      animation: preloader-spin 1s linear infinite;
-    }
+    left: 50%;
+    top: 50%;
+    width: 24px;
+    height: 24px;
+    margin: -12px 0 0 -12px;
+    color: var(--uc-primary);
+    opacity: 0;
+    pointer-events: none;
   }
 
-  @keyframes preloader-spin {
-    to {
-      transform: rotate(360deg);
-    }
+  :where([uc-file-action-button]) .uc-preloader svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  :where([uc-file-action-button]) button.uc-uploading .uc-preloader {
+    opacity: 1;
   }
 }
