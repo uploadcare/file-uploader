@@ -80,7 +80,7 @@ export class Thumb extends ChildBlock {
     const baseSize = cfg?.thumbSize ?? 76;
     let size = Math.max(Math.floor(this._thumbRect?.height ?? 0), Math.floor(this._thumbRect?.width ?? 0), baseSize);
     if (window.devicePixelRatio > 1) size *= window.devicePixelRatio;
-    return Math.min(size, CDN_MAX_OUTPUT_DIMENSION);
+    return Math.min(Math.round(size), CDN_MAX_OUTPUT_DIMENSION);
   }
 
   private async _generateThumb(force = false): Promise<void> {
