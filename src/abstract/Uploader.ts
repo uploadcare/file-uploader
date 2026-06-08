@@ -109,6 +109,10 @@ export class Uploader extends LightDomMixin(LitElement) {
 
     this._teardown.push(bindConfigToElement(this, this.controller.config));
     this._teardown.push(bindEventBusToElement(this, this.controller.events));
+
+    // Register this element as a clipboard-paste scope; the controller attaches
+    // the window `paste` listener while connected and removes it on teardown.
+    this._teardown.push(this.controller.clipboard.registerScope(this));
     // Watch `config.plugins` for changes — `<uc-config plugins>` writes
     // them through the controller, not via the `plugins` Lit property.
     // The shapes differ between v1 `UploaderPlugin` and v2 `PluginDefinition`;

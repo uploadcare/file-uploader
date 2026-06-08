@@ -2,6 +2,7 @@ import { EventBus } from '../EventBus';
 import { buildOutputCollectionState } from '../output-collection-state';
 import { buildLegacyPluginCtx } from '../plugin-api-bridge';
 import { UploaderApi } from '../UploaderApi';
+import { ClipboardController } from './ClipboardController';
 import { ConfigController } from './ConfigController';
 import { LocaleController } from './LocaleController';
 import { type PluginDefinition, PluginRegistryController, type PluginSetupContext } from './PluginRegistryController';
@@ -29,6 +30,9 @@ export class UploaderController {
   public readonly upload = new UploadController(this.events, this.config, this.validation, this.secureUploads);
   public readonly plugins = new PluginRegistryController();
   public readonly sources = new SourcesController(this, this.config, this.plugins);
+  // Dormant until the `Uploader` element registers a scope (the window paste
+  // listener attaches then) — construction stays DOM-free.
+  public readonly clipboard = new ClipboardController(this.config, this.collection, this.router);
   public readonly telemetry = new Telemetry(this.config, this.events);
   public readonly api = new UploaderApi(this, this.config, this.router, this.collection, this.events, this.upload);
 
@@ -84,6 +88,7 @@ export class UploaderController {
     this.upload.destroy();
     this.plugins.destroy();
     this.sources.destroy();
+    this.clipboard.destroy();
     this.validation.destroy();
     this.locale.destroy();
     this.telemetry.destroy();
