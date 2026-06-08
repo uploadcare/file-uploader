@@ -1,3 +1,10 @@
+## [1.31.1](https://github.com/uploadcare/file-uploader/compare/v1.31.0...v1.31.1) (2026-06-08)
+
+
+### Bug Fixes
+
+* **dynamic-button:** refined loading UI, snippets, and source variants ([44201fa](https://github.com/uploadcare/file-uploader/commit/44201fa0fdb72b108815c0e1558942f8340024f4))
+* **thumb:** added support for rounding size values using Math.round ([#982](https://github.com/uploadcare/file-uploader/issues/982)) ([57c111b](https://github.com/uploadcare/file-uploader/commit/57c111b8b528cb856b5a5ef53d5e70179ce98ab7))
 # [1.31.0](https://github.com/uploadcare/file-uploader/compare/v1.30.2...v1.31.0) (2026-06-03)
 
 
