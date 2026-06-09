@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { EventBus } from '../EventBus';
+import { ConfigController } from './ConfigController';
 import { UploaderController } from './UploaderController';
 
 describe('UploaderController', () => {
-  it('constructs with an event bus', () => {
+  it('constructs with an event bus and a config controller', () => {
     const controller = new UploaderController();
     expect(controller.events).toBeInstanceOf(EventBus);
+    expect(controller.config).toBeInstanceOf(ConfigController);
   });
 
   it('destroy() tears down without throwing', () => {
