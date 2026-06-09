@@ -5,11 +5,6 @@ import { type ActivityType, LitActivityBlock } from '../../lit/LitActivityBlock'
 export class StartFrom extends LitActivityBlock {
   public override activityType: ActivityType = LitActivityBlock.activities.START_FROM;
 
-  public override initCallback(): void {
-    super.initCallback();
-    this.registerActivity(this.activityType ?? '');
-  }
-
   public override render() {
     return html` <div class="uc-content">${this.yield('')}</div> `;
   }

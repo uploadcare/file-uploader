@@ -180,8 +180,6 @@ export class UploadList extends LitUploaderBlock {
   public override initCallback() {
     super.initCallback();
 
-    this.registerActivity(this.activityType);
-
     this.subConfigValue('multiple', this._throttledHandleCollectionUpdate);
     this.subConfigValue('multipleMin', this._throttledHandleCollectionUpdate);
     this.subConfigValue('multipleMax', this._throttledHandleCollectionUpdate);
