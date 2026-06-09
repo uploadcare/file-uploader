@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, type Mock, vi } from 'vitest';
+import type { ActivityId } from '../../lit/activity-constants';
 import { UploaderEventType } from '../EventBus';
 import { NAVIGATE_CANCEL, RouterController, type RouterControllerDeps } from './RouterController';
 
@@ -153,9 +154,16 @@ describe('RouterController (v2)', () => {
 
     it('caps history at 10 entries', () => {
       const { router } = setup();
-      for (let i = 0; i < 14; i++) router.navigate(`a${i}`);
+      // Cycle real ids — dedup only collapses *consecutive* repeats, so a
+      // 6-id cycle gives 14 distinct-from-previous pushes to exercise the cap.
+      const cycle: ActivityId[] = ['start-from', 'camera', 'upload-list', 'url', 'cloud-image-edit', 'external'];
+      let last: ActivityId = 'start-from';
+      for (let i = 0; i < 14; i++) {
+        last = cycle[i % cycle.length] ?? 'start-from';
+        router.navigate(last);
+      }
       expect(router.history.length).toBe(10);
-      expect(router.history[router.history.length - 1]).toBe('a13');
+      expect(router.history.at(-1)).toBe(last);
     });
 
     it('back navigates to the previous entry', () => {

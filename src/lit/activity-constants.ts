@@ -13,13 +13,9 @@ export type RegisteredActivityType = (typeof ACTIVITY_TYPES)[keyof typeof ACTIVI
 export type ActivityType = RegisteredActivityType | null;
 
 /**
- * v2-native activity id: the built-in literals, consumer-augmented
- * `CustomActivities` keys, plus any string (`string & {}` keeps literal
- * autocomplete while accepting arbitrary plugin-registered ids). The
- * `string & {}` term keeps the union `string`-wide in every position, so —
- * unlike the bare `RegisteredActivityType` — it resolves consistently and the
- * `RouterController` can use it as its internal id type without the
- * narrow/wide split. Includes `keyof CustomActivities` so augmented activities
- * still get typed autocomplete.
+ * Strict, v2-native activity id: the built-in literals plus consumer-augmented
+ * `CustomActivities` keys — and nothing else. The `RouterController` uses it as
+ * its internal id type. (Same membership as `RegisteredActivityType`, exposed
+ * under the router's own name.)
  */
-export type ActivityId = (typeof ACTIVITY_TYPES)[keyof typeof ACTIVITY_TYPES] | keyof CustomActivities | (string & {});
+export type ActivityId = (typeof ACTIVITY_TYPES)[keyof typeof ACTIVITY_TYPES] | keyof CustomActivities;

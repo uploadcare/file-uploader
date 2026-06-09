@@ -30,7 +30,8 @@ export interface RouteTable {
 
 export interface EdgeContext {
   edge: string;
-  from: ActivityId;
+  /** The current activity when the edge fires, or `null` when nothing is open. */
+  from: ActivityId | null;
   proposed: EdgeTarget;
   defaults: () => EdgeTarget;
 }
@@ -38,7 +39,7 @@ export interface EdgeContext {
 type Hook = (ctx: EdgeContext) => EdgeTarget | NavigateCancel | undefined;
 
 /**
- * Emit the router's documented events. Activity ids are typed as the stable
+ * Emit the router's documented events. Activity ids are typed as the strict
  * `ActivityId`; the documented `ActivityType` view is bridged where this is
  * wired to the block's telemetry-augmented `emit`.
  */
@@ -173,7 +174,7 @@ export class RouterController {
   public navigate(to: EdgeTarget, params: Record<string, unknown> = {}): void {
     const ctx: EdgeContext = {
       edge: 'navigate',
-      from: this._activity ?? ('' as ActivityId),
+      from: this._activity,
       proposed: to,
       defaults: () => to,
     };
@@ -274,9 +275,9 @@ export class RouterController {
   public afterFileAdd(): void {
     const ctx: EdgeContext = {
       edge: 'onFileAdd',
-      from: this._activity ?? ('' as ActivityId),
-      proposed: 'upload-list' as ActivityId,
-      defaults: () => 'upload-list' as ActivityId,
+      from: this._activity,
+      proposed: 'upload-list',
+      defaults: () => 'upload-list',
     };
     const final = this._runEdgeHooks('afterFileAdd', ctx);
     if (final === NAVIGATE_CANCEL) return;
@@ -298,7 +299,7 @@ export class RouterController {
   private _resolveEdge(e: Edge | undefined): EdgeTarget {
     if (e === undefined) return null;
     if (typeof e === 'function') {
-      return e({ edge: '', from: this._activity ?? ('' as ActivityId), proposed: null, defaults: () => null });
+      return e({ edge: '', from: this._activity, proposed: null, defaults: () => null });
     }
     return e;
   }
