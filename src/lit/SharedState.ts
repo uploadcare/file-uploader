@@ -1,4 +1,5 @@
 import type { Queue, UploadcareGroup } from '@uploadcare/upload-client';
+import type { UploadCollectionController } from '../abstract/controllers/UploadCollectionController';
 import type { ClipboardLayer } from '../abstract/features/ClipboardLayer';
 import type { RouterHooksLayer } from '../abstract/features/RouterHooksLayer';
 import type { LocaleDefinition } from '../abstract/localeRegistry';
@@ -10,9 +11,7 @@ import type { LazyPluginEntry } from '../abstract/managers/plugin/LazyPluginLoad
 import type { SecureUploadsManager } from '../abstract/managers/SecureUploadsManager';
 import type { TelemetryManager } from '../abstract/managers/TelemetryManager';
 import type { ValidationManager } from '../abstract/managers/ValidationManager';
-import type { TypedCollection } from '../abstract/TypedCollection';
 import type { UploaderPublicApi } from '../abstract/UploaderPublicApi';
-import type { UploadEntryData } from '../abstract/uploadEntrySchema';
 import type { EditorImageCropper, EditorImageFader, EditorSlider } from '../blocks/CloudImageEditor';
 import type { TabIdValue } from '../blocks/CloudImageEditor/src/toolbar-constants';
 import type {
@@ -112,7 +111,7 @@ type DynamicBlockState = {
 };
 
 type DynamicUploaderBlockState = {
-  '*uploadCollection': TypedCollection<UploadEntryData>;
+  '*uploadCollection': UploadCollectionController;
   '*publicApi': UploaderPublicApi;
   '*validationManager': ValidationManager;
   '*secureUploadsManager': SecureUploadsManager;

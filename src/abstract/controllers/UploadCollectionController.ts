@@ -14,9 +14,9 @@ export const UPLOAD_WATCH_LIST: (keyof UploadEntryData)[] = [
   'isValidationPending',
 ];
 
-type ChangeMap = Partial<Record<keyof UploadEntryData, Set<Uid>>>;
+export type UploadCollectionChangeMap = Partial<Record<keyof UploadEntryData, Set<Uid>>>;
 type Unsubscriber = () => void;
-type PropertyObserver = (changeMap: ChangeMap) => void;
+export type PropertyObserver = (changeMap: UploadCollectionChangeMap) => void;
 export type CollectionObserver = (
   list: Uid[],
   added: Set<TypedData<UploadEntryData>>,
@@ -49,7 +49,7 @@ export class UploadCollectionController {
   private _observeTimeout?: ReturnType<typeof setTimeout>;
   private _notifyTimeout?: ReturnType<typeof setTimeout>;
   private _destroyTimeout?: ReturnType<typeof setTimeout>;
-  private _changeMap: ChangeMap = Object.create(null);
+  private _changeMap: UploadCollectionChangeMap = Object.create(null);
 
   private _notifyObservers(propName: keyof UploadEntryData, ctxId: Uid): void {
     if (this._observeTimeout) {
