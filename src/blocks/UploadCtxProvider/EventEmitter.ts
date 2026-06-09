@@ -1,10 +1,21 @@
 import type { ModalId } from '../../abstract/managers/ModalManager';
 import type { ActivityType } from '../../lit/LitActivityBlock';
-import type { LitBlock } from '../../lit/LitBlock';
 import { SharedInstance } from '../../lit/shared-instances';
 import type { OutputCollectionState, OutputFileEntry } from '../../types';
 
 const DEFAULT_DEBOUNCE_TIMEOUT = 20;
+
+/**
+ * Transport view of the per-ctx `EventBus`. The facade carries the documented
+ * (v1) `EventPayload` shapes through the bus, which types its own richer v2
+ * payloads (`UploaderEventPayload`); the two type views of the same runtime
+ * events are bridged once, here.
+ */
+type EventBusTransport = {
+  on(type: string, handler: (payload: unknown) => void): () => void;
+  emit(type: string, payload: unknown): void;
+  emitDebounced(type: string, payload: () => unknown, ms?: number): void;
+};
 
 export const InternalEventType = Object.freeze({
   INIT_SOLUTION: 'init-solution',
@@ -67,48 +78,21 @@ export type EventPayload = {
   [EventType.GROUP_CREATED]: OutputCollectionState<'success', 'has-group'>;
 };
 
+/**
+ * Facade over the per-ctx DOM-free `EventBus` (`UploaderController.events`).
+ *
+ * `on`/`emit` delegate to the bus; the DOM `CustomEvent` dispatch now lives in
+ * the reactive `EventBridgeController` attached to `<uc-upload-ctx-provider>`.
+ * The public surface (`EventType`/`EventPayload`, debounce, payload thunks,
+ * `api.on`) is unchanged — only the storage/dispatch moved behind the bus.
+ */
 export class EventEmitter extends SharedInstance {
-  private _timeoutStore: Map<string, number> = new Map();
-  private _targets: Set<LitBlock> = new Set();
-  private _listeners: Map<string, Set<(payload: unknown) => void>> = new Map();
-
-  public bindTarget(target: LitBlock) {
-    this._targets.add(target);
-    return () => {
-      this._targets.delete(target);
-    };
+  private get _bus(): EventBusTransport {
+    return this._ctx.uploaderController().events as EventBusTransport;
   }
 
   public on<T extends EventKey>(type: T, handler: (payload: EventPayload[T]) => void): () => void {
-    let listeners = this._listeners.get(type);
-    if (!listeners) {
-      listeners = new Set();
-      this._listeners.set(type, listeners);
-    }
-    listeners.add(handler as (payload: unknown) => void);
-    return () => this._listeners.get(type)?.delete(handler as (payload: unknown) => void);
-  }
-
-  private _dispatch<T extends EventKey>(type: T, payload?: EventPayload[T]): void {
-    for (const target of this._targets) {
-      target.dispatchEvent(
-        new CustomEvent(type, {
-          detail: payload,
-        }),
-      );
-    }
-
-    const listeners = this._listeners.get(type);
-    if (listeners) {
-      for (const handler of listeners) {
-        handler(payload);
-      }
-    }
-
-    this._debugPrint?.(() => {
-      const copyPayload = !!payload && typeof payload === 'object' ? { ...payload } : payload;
-      return [`event "${type}"`, copyPayload];
-    });
+    return this._bus.on(type, handler as (payload: unknown) => void);
   }
 
   public emit<T extends EventKey, TDebounce extends boolean | number | undefined = undefined>(
@@ -117,33 +101,12 @@ export class EventEmitter extends SharedInstance {
     options: { debounce?: TDebounce } = {},
   ): void {
     const { debounce } = options;
+    const resolve = () => (typeof payload === 'function' ? payload() : payload);
     if (typeof debounce !== 'number' && !debounce) {
-      this._dispatch(type, typeof payload === 'function' ? payload() : (payload as EventPayload[T]));
+      this._bus.emit(type, resolve());
       return;
     }
-
-    if (this._timeoutStore.has(type)) {
-      window.clearTimeout(this._timeoutStore.get(type));
-    }
     const timeout = typeof debounce === 'number' ? debounce : DEFAULT_DEBOUNCE_TIMEOUT;
-    const timeoutId = window.setTimeout(() => {
-      try {
-        const data = typeof payload === 'function' ? payload() : (payload as EventPayload[T]);
-        this._dispatch(type, data);
-        this._timeoutStore.delete(type);
-      } catch (error) {
-        this._debugPrint?.(() => `Error while getting payload for event "${type}"`, error);
-      }
-    }, timeout);
-    this._timeoutStore.set(type, timeoutId);
-  }
-
-  public override destroy(): void {
-    for (const timeoutId of this._timeoutStore.values()) {
-      window.clearTimeout(timeoutId);
-    }
-
-    this._targets.clear();
-    this._listeners.clear();
+    this._bus.emitDebounced(type, resolve, timeout);
   }
 }
