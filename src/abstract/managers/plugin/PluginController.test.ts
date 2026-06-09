@@ -50,8 +50,9 @@ const setup = () => {
     onCompute?.(Promise.resolve(plugins));
     await controller.pluginsReady();
   };
+  const push = (pluginsPromise: Promise<UploaderPlugin[] | undefined>) => onCompute?.(pluginsPromise);
 
-  return { controller, sync, getUploaderApi, debug, unwatch, configUnsubs };
+  return { controller, sync, push, getUploaderApi, debug, unwatch, configUnsubs };
 };
 
 const sourcePlugin = (id: string, setup?: UploaderPlugin['setup']): UploaderPlugin => ({
@@ -152,6 +153,47 @@ describe('PluginController', () => {
     it('ignores an undefined plugin list from the loader', async () => {
       const t = setup();
       await expect(t.sync(undefined)).resolves.toBeUndefined();
+      expect(t.controller.snapshot().sources).toHaveLength(0);
+    });
+
+    it('isolates a throwing plugin dispose during unregister and still completes cleanup', async () => {
+      const t = setup();
+      const dispose = vi.fn(() => {
+        throw new Error('dispose boom');
+      });
+      await t.sync([
+        sourcePlugin('a', ({ pluginApi }) => {
+          pluginApi.registry.registerSource({ id: 'a', label: 'a', icon: 'a', onSelect: () => {} });
+          return dispose;
+        }),
+      ]);
+
+      await expect(t.sync([])).resolves.toBeUndefined(); // unregister doesn't throw
+      expect(dispose).toHaveBeenCalled();
+      expect(t.controller.snapshot().sources).toHaveLength(0); // cleanup still ran
+      expect(t.debug).toHaveBeenCalledWith('Failed to dispose plugin', expect.any(Error));
+    });
+
+    it('recovers the sync queue after a rejected emission so later syncs still run', async () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const t = setup();
+
+      t.push(Promise.reject(new Error('load failed')));
+      await t.controller.pluginsReady(); // must not reject
+
+      expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Failed to sync plugins'), expect.any(Error));
+
+      await t.sync([sourcePlugin('a')]); // queue recovered → still processes
+      expect(t.controller.snapshot().sources.map((s) => s.id)).toEqual(['a']);
+    });
+
+    it('skips a queued emission that arrives after destroy()', async () => {
+      const t = setup();
+      t.controller.destroy();
+
+      t.push(Promise.resolve([sourcePlugin('late')]));
+      await t.controller.pluginsReady();
+
       expect(t.controller.snapshot().sources).toHaveLength(0);
     });
   });

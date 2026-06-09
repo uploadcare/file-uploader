@@ -38,6 +38,7 @@ type RegisteredPlugin = {
 export class PluginController {
   private _deps: PluginControllerDeps;
   private _debug: (...args: unknown[]) => void;
+  private _isDestroyed = false;
   private _plugins: Map<string, RegisteredPlugin> = new Map();
   private _subscribers: Set<Unsubscribe> = new Set();
   private _pluginsUpdate: Promise<void> = Promise.resolve();
@@ -56,10 +57,14 @@ export class PluginController {
       this._pluginsUpdate = this._pluginsUpdate
         .then(() => pluginsPromise)
         .then((plugins) => {
-          if (plugins) {
-            return this._syncPlugins(plugins);
-          }
-          return;
+          // Skip once destroyed so a queued emission can't re-register on a dead controller.
+          if (this._isDestroyed || !plugins) return;
+          return this._syncPlugins(plugins);
+        })
+        // Recover the queue: a rejected emission must not permanently poison the
+        // chain so later emissions never run. (`_pluginsUpdate` always resolves.)
+        .catch((error) => {
+          console.error('[PluginManager] Failed to sync plugins', error);
         });
     });
   }
@@ -149,7 +154,11 @@ export class PluginController {
       }
     }
 
-    registered.dispose?.();
+    try {
+      registered.dispose?.();
+    } catch (error) {
+      this._debug('Failed to dispose plugin', error);
+    }
     this._plugins.delete(pluginId);
     this._notifySubscribers();
   }
@@ -192,11 +201,13 @@ export class PluginController {
   }
 
   public destroy(): void {
+    this._isDestroyed = true;
+    // Stop new emissions first so a queued sync can't re-register on a dead controller.
+    this._unwatchPlugins();
     for (const pluginId of Array.from(this._plugins.keys())) {
       this._unregisterPlugin(pluginId);
     }
     this.registry.destroy();
-    this._unwatchPlugins();
   }
 
   private _notifySubscribers(): void {
