@@ -59,7 +59,20 @@ export class TypedData<T extends Record<string, unknown>> {
     this._data[prop] = value;
     const set = this._subs.get(prop);
     if (set) {
-      for (const handler of [...set]) handler(value);
+      // Isolate each subscriber so one that throws can't abort notification of
+      // the rest — notably the `TypedCollection` watch-list observer, whose
+      // failure to run would stall collection/event updates. Matches the
+      // fan-out semantics of `Listeners.notify` / `EventBus.emit`.
+      for (const handler of [...set]) this._emit(prop, handler, value);
+    }
+  }
+
+  /** Invoke a subscriber, isolating (and logging) any error it throws. */
+  private _emit(prop: keyof T, handler: (value: unknown) => void, value: unknown): void {
+    try {
+      handler(value);
+    } catch (err) {
+      console.warn(`[Typed State] subscriber for "${String(prop)}" threw`, err);
     }
   }
 
@@ -85,8 +98,9 @@ export class TypedData<T extends Record<string, unknown>> {
     const wrapped = handler as (value: unknown) => void;
     set.add(wrapped);
     // Fire immediately with the current value (parity with the previous
-    // `PubSub.sub(..., init=true)` subscription semantics).
-    handler(this._data[prop]);
+    // `PubSub.sub(..., init=true)` subscription semantics), isolated like the
+    // notify path so a throwing subscriber can't break the subscribe call.
+    this._emit(prop, wrapped, this._data[prop]);
     return () => {
       set?.delete(wrapped);
     };

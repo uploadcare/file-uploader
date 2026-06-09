@@ -85,6 +85,25 @@ describe('TypedData', () => {
     ctx.destroy();
   });
 
+  it('isolates a throwing subscriber so other subscribers still run', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const ctx = new TypedData<{ a: number }>({ a: 1 });
+    const bad = vi.fn(() => {
+      throw new Error('boom');
+    });
+    const good = vi.fn();
+    ctx.subscribe('a', bad);
+    ctx.subscribe('a', good);
+    bad.mockClear();
+    good.mockClear();
+
+    expect(() => ctx.setValue('a', 2)).not.toThrow();
+    expect(good).toHaveBeenCalledWith(2);
+    expect(warn).toHaveBeenCalled();
+
+    ctx.destroy();
+  });
+
   it('setMultipleValues updates multiple properties via setValue', () => {
     const ctx = new TypedData<{ a: number; b: number }>({ a: 1, b: 10 });
 
