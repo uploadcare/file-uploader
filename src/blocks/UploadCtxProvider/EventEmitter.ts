@@ -1,21 +1,12 @@
-import type { ModalId } from '../../abstract/managers/ModalManager';
-import type { ActivityType } from '../../lit/LitActivityBlock';
+import {
+  type EventBus,
+  type UploaderEventKey,
+  type UploaderEventPayload,
+  UploaderEventType,
+} from '../../abstract/EventBus';
 import { SharedInstance } from '../../lit/shared-instances';
-import type { OutputCollectionState, OutputFileEntry } from '../../types';
 
 const DEFAULT_DEBOUNCE_TIMEOUT = 20;
-
-/**
- * Transport view of the per-ctx `EventBus`. The facade carries the documented
- * (v1) `EventPayload` shapes through the bus, which types its own richer v2
- * payloads (`UploaderEventPayload`); the two type views of the same runtime
- * events are bridged once, here.
- */
-type EventBusTransport = {
-  on(type: string, handler: (payload: unknown) => void): () => void;
-  emit(type: string, payload: unknown): void;
-  emitDebounced(type: string, payload: () => unknown, ms?: number): void;
-};
 
 export const InternalEventType = Object.freeze({
   INIT_SOLUTION: 'init-solution',
@@ -24,84 +15,45 @@ export const InternalEventType = Object.freeze({
   ERROR_EVENT: 'error-event',
 } as const);
 
-export const EventType = Object.freeze({
-  FILE_ADDED: 'file-added',
-  FILE_REMOVED: 'file-removed',
-  FILE_UPLOAD_START: 'file-upload-start',
-  FILE_UPLOAD_PROGRESS: 'file-upload-progress',
-  FILE_UPLOAD_SUCCESS: 'file-upload-success',
-  FILE_UPLOAD_FAILED: 'file-upload-failed',
-  FILE_URL_CHANGED: 'file-url-changed',
-
-  MODAL_OPEN: 'modal-open',
-  MODAL_CLOSE: 'modal-close',
-  DONE_CLICK: 'done-click',
-  UPLOAD_CLICK: 'upload-click',
-  ACTIVITY_CHANGE: 'activity-change',
-
-  COMMON_UPLOAD_START: 'common-upload-start',
-  COMMON_UPLOAD_PROGRESS: 'common-upload-progress',
-  COMMON_UPLOAD_SUCCESS: 'common-upload-success',
-  COMMON_UPLOAD_FAILED: 'common-upload-failed',
-
-  CHANGE: 'change',
-  GROUP_CREATED: 'group-created',
-} as const);
-
-export type EventKey = (typeof EventType)[keyof typeof EventType];
-
 export type InternalEventKey = (typeof InternalEventType)[keyof typeof InternalEventType];
 
-export type EventPayload = {
-  [EventType.FILE_ADDED]: OutputFileEntry<'idle'>;
-  [EventType.FILE_REMOVED]: OutputFileEntry<'removed'>;
-  [EventType.FILE_UPLOAD_START]: OutputFileEntry<'uploading'>;
-  [EventType.FILE_UPLOAD_PROGRESS]: OutputFileEntry<'uploading'>;
-  [EventType.FILE_UPLOAD_SUCCESS]: OutputFileEntry<'success'>;
-  [EventType.FILE_UPLOAD_FAILED]: OutputFileEntry<'failed'>;
-  [EventType.FILE_URL_CHANGED]: OutputFileEntry<'success'>;
-  [EventType.MODAL_OPEN]: { modalId: ModalId };
-  [EventType.MODAL_CLOSE]: {
-    modalId: ModalId;
-    hasActiveModals: boolean;
-  };
-  [EventType.ACTIVITY_CHANGE]: {
-    activity: ActivityType;
-  };
-  [EventType.UPLOAD_CLICK]: undefined;
-  [EventType.DONE_CLICK]: OutputCollectionState;
-  [EventType.COMMON_UPLOAD_START]: OutputCollectionState<'uploading'>;
-  [EventType.COMMON_UPLOAD_PROGRESS]: OutputCollectionState<'uploading'>;
-  [EventType.COMMON_UPLOAD_SUCCESS]: OutputCollectionState<'success'>;
-  [EventType.COMMON_UPLOAD_FAILED]: OutputCollectionState<'failed'>;
-  [EventType.CHANGE]: OutputCollectionState;
-  [EventType.GROUP_CREATED]: OutputCollectionState<'success', 'has-group'>;
-};
+/**
+ * The documented event surface lives in `EventBus`
+ * (`UploaderEventType`/`UploaderEventPayload`) — the single source of truth. It
+ * is re-exported here under the public `EventType`/`EventPayload`/`EventKey`
+ * names so the documented contract and the bus the facade delegates to cannot
+ * drift apart.
+ */
+export { UploaderEventType as EventType };
+export type { UploaderEventKey as EventKey, UploaderEventPayload as EventPayload };
 
 /**
  * Facade over the per-ctx DOM-free `EventBus` (`UploaderController.events`).
  *
- * `on`/`emit` delegate to the bus; the DOM `CustomEvent` dispatch now lives in
- * the reactive `EventBridgeController` attached to `<uc-upload-ctx-provider>`.
- * The public surface (`EventType`/`EventPayload`, debounce, payload thunks,
- * `api.on`) is unchanged — only the storage/dispatch moved behind the bus.
+ * `on`/`emit` delegate to the bus; the DOM `CustomEvent` dispatch lives in the
+ * reactive `EventBridgeController` attached to `<uc-upload-ctx-provider>`. The
+ * public surface (event types, debounce, payload thunks, `api.on`) is
+ * unchanged — only the storage/dispatch moved behind the bus.
  */
 export class EventEmitter extends SharedInstance {
-  private get _bus(): EventBusTransport {
-    return this._ctx.uploaderController().events as EventBusTransport;
+  private get _bus(): EventBus {
+    return this._ctx.uploaderController().events;
   }
 
-  public on<T extends EventKey>(type: T, handler: (payload: EventPayload[T]) => void): () => void {
-    return this._bus.on(type, handler as (payload: unknown) => void);
+  public on<T extends UploaderEventKey>(type: T, handler: (payload: UploaderEventPayload[T]) => void): () => void {
+    return this._bus.on(type, handler);
   }
 
-  public emit<T extends EventKey, TDebounce extends boolean | number | undefined = undefined>(
+  public emit<T extends UploaderEventKey, TDebounce extends boolean | number | undefined = undefined>(
     type: T,
-    payload?: TDebounce extends false | undefined ? EventPayload[T] : () => EventPayload[T],
+    payload?: TDebounce extends false | undefined ? UploaderEventPayload[T] : () => UploaderEventPayload[T],
     options: { debounce?: TDebounce } = {},
   ): void {
     const { debounce } = options;
-    const resolve = () => (typeof payload === 'function' ? payload() : payload);
+    // The public API permits omitting `payload`, but callers always provide one
+    // for events whose payload isn't `undefined`; assert presence at this single
+    // boundary (mirrors v1's `payload as EventPayload[T]`).
+    const resolve = () => (typeof payload === 'function' ? payload() : payload) as UploaderEventPayload[T];
     if (typeof debounce !== 'number' && !debounce) {
       this._bus.emit(type, resolve());
       return;
