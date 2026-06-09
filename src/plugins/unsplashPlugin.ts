@@ -75,7 +75,7 @@ class UcUnsplashActivity extends LitElement {
       fileName: `unsplash-${photo.id}.jpg`,
       source: 'unsplash',
     });
-    this.uploaderApi.navigate?.('upload-list');
+    this.uploaderApi.navigate('upload-list');
   }
 
   public override render() {
@@ -88,7 +88,7 @@ class UcUnsplashActivity extends LitElement {
           <uc-icon name="unsplash"></uc-icon>
           <span>Unsplash</span>
         </div>
-        <button type="button" class="uc-ui-icon-btn" title="Close" @click=${() => this.uploaderApi.navigate?.(null)}>
+        <button type="button" class="uc-ui-icon-btn" title="Close" @click=${() => this.uploaderApi.navigate(null)}>
           <uc-icon name="close"></uc-icon>
         </button>
       </div>
@@ -163,7 +163,7 @@ class UcUnsplashActivity extends LitElement {
       <div class="uc-ui-toolbar bottom-toolbar">
         <div class="uc-ui-toolbar-spacer"></div>
         <button type="button" class="uc-ui-secondary-btn" @click=${() => {
-          this.uploaderApi.navigate?.('upload-list');
+          this.uploaderApi.navigate('upload-list');
         }}>Done</button>
       </div>
     `;
@@ -195,7 +195,7 @@ export const unsplashPlugin: UploaderPlugin = {
       label: 'unsplash.label',
       icon: 'unsplash',
       onSelect() {
-        uploaderApi.navigate?.(UNSPLASH_ACTIVITY_ID);
+        uploaderApi.navigate(UNSPLASH_ACTIVITY_ID);
       },
     });
 

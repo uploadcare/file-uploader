@@ -26,7 +26,7 @@ export const cloudImageEditorPlugin: UploaderPlugin = {
       label: 'file-item-edit-button',
       shouldRender: (fileEntry) => Boolean(fileEntry.isImage && fileEntry.cdnUrl),
       onClick: (fileEntry) => {
-        uploaderApi.navigate?.(ACTIVITY_TYPES.CLOUD_IMG_EDIT, {
+        uploaderApi.navigate(ACTIVITY_TYPES.CLOUD_IMG_EDIT, {
           internalId: fileEntry.internalId,
         });
       },
@@ -53,7 +53,7 @@ export const cloudImageEditorPlugin: UploaderPlugin = {
       const collectionSize = uploaderApi._uploadCollection.size;
 
       if (useEditor && collectionSize === 1 && (cropPreset || autoOpen)) {
-        uploaderApi.navigate?.(ACTIVITY_TYPES.CLOUD_IMG_EDIT, {
+        uploaderApi.navigate(ACTIVITY_TYPES.CLOUD_IMG_EDIT, {
           internalId: fileEntry.internalId,
         });
       }
