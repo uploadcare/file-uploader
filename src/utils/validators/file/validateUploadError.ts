@@ -1,5 +1,5 @@
 import { NetworkError, UploadError } from '@uploadcare/upload-client';
-import type { FuncFileValidator } from '../../../abstract/managers/ValidationManager';
+import type { FuncFileValidator } from '../../../abstract/validatorTypes';
 import type { Uid } from '../../../lit/Uid';
 
 export const validateUploadError: FuncFileValidator = (outputEntry, api) => {
