@@ -2,13 +2,13 @@
 
 import { type FileFromOptions, uploadFileGroup } from '@uploadcare/upload-client';
 import { uploaderBlockCtx } from '../abstract/CTX';
+import { SecureUploadsController } from '../abstract/controllers/SecureUploadsController';
 import type {
   CollectionObserver,
   UploadCollectionChangeMap,
   UploadCollectionController,
 } from '../abstract/controllers/UploadCollectionController';
 import { ValidationController } from '../abstract/controllers/ValidationController';
-import { SecureUploadsManager } from '../abstract/managers/SecureUploadsManager';
 import { TypedData } from '../abstract/TypedData';
 import { UploaderPublicApi } from '../abstract/UploaderPublicApi';
 import type { UploadEntryData } from '../abstract/uploadEntrySchema';
@@ -51,10 +51,15 @@ export class LitUploaderBlock extends LitActivityBlock {
     // shared instance resolves to it so all blocks share one source of truth.
     this._addSharedContextInstance('*uploadCollection', () => this.sharedCtx.uploaderController().collection);
 
-    this._addSharedContextInstance(
-      '*secureUploadsManager',
-      (sharedInstancesBag) => new SecureUploadsManager(sharedInstancesBag),
-    );
+    this._addSharedContextInstance('*secureUploadsManager', (sharedInstancesBag) => {
+      return new SecureUploadsController({
+        config: this.sharedCtx.uploaderController().config,
+        onResolverError: (error, context) => {
+          sharedInstancesBag.telemetryManager.sendEventError(error, context);
+        },
+        debug: (...args) => this.debugPrint(...args),
+      });
+    });
     // Register *publicApi before *validationManager: the ValidationController
     // resolves `sharedInstancesBag.api` (which constructs *publicApi on demand),
     // so the api factory must already be registered when validation first runs.
@@ -102,7 +107,7 @@ export class LitUploaderBlock extends LitActivityBlock {
     return this._getSharedContextInstance('*uploadCollection');
   }
 
-  public get secureUploadsManager(): SecureUploadsManager {
+  public get secureUploadsManager(): SecureUploadsController {
     return this._getSharedContextInstance('*secureUploadsManager');
   }
 
