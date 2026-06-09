@@ -62,6 +62,34 @@ describe('ConfigController', () => {
     expect(config.getCustom('unsplashApiKey')).toBe('changed');
   });
 
+  it('hasKey uses own-property semantics, not the prototype chain', () => {
+    const config = new ConfigController();
+    expect(config.hasKey('toString')).toBe(false);
+    expect(config.hasKey('constructor')).toBe(false);
+    expect(config.hasKey('__proto__')).toBe(false);
+  });
+
+  it('does not pollute the prototype when a custom key is named __proto__', () => {
+    const config = new ConfigController();
+    config.setCustom('__proto__', { polluted: true });
+    config.register('__proto__', { polluted: true });
+
+    expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+    expect(Object.hasOwn(Object.prototype, 'polluted')).toBe(false);
+  });
+
+  it('register preserves a custom key that was explicitly cleared to undefined', () => {
+    const config = new ConfigController();
+    // Set then clear so an own property with value `undefined` exists — the
+    // case where own-property vs `=== undefined` detection diverges.
+    config.setCustom('unsplashApiKey', 'preset');
+    config.setCustom('unsplashApiKey', undefined);
+
+    config.register('unsplashApiKey', 'default-key');
+
+    expect(config.getCustom('unsplashApiKey')).toBeUndefined();
+  });
+
   it('destroy() clears custom keys and listeners', () => {
     const config = new ConfigController();
     config.register('unsplashApiKey', 'x');

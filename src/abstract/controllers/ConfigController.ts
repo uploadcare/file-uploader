@@ -19,7 +19,10 @@ import { Listeners } from '../host-subscription';
  * — `register()` adds them, `getCustom`/`setCustom` access them.
  */
 export class ConfigController {
-  private _values: ConfigType = { ...initialConfig };
+  // Null-prototype backing object: custom (plugin-registered) key names flow
+  // into `getCustom`/`setCustom`, so a key like `__proto__` must create a
+  // plain own property here rather than mutate the prototype chain.
+  private _values: ConfigType = Object.assign(Object.create(null), initialConfig);
   private _customKeys = new Set<string>();
   private _customDefs = new Map<string, CustomConfigDefinition<unknown>>();
   private _listeners = new Listeners();
@@ -34,7 +37,9 @@ export class ConfigController {
 
   /** True for any known key — a built-in default or a registered custom key. */
   public hasKey(name: string): boolean {
-    return name in initialConfig || this._customKeys.has(name);
+    // Own-property check: `in` would walk the prototype chain and wrongly
+    // report `toString`, `constructor`, `__proto__`, etc. as known keys.
+    return Object.hasOwn(initialConfig, name) || this._customKeys.has(name);
   }
 
   public get<K extends keyof ConfigType>(key: K): ConfigType[K] {
@@ -65,8 +70,10 @@ export class ConfigController {
     this._customDefs.set(def.name, def as CustomConfigDefinition<unknown>);
     const bag = this._values as Record<string, unknown>;
     // Keep any value set before the plugin registered (e.g. an attribute that
-    // landed first); otherwise seed the registered default.
-    if (bag[def.name] === undefined) {
+    // landed first), otherwise seed the registered default. Own-property check
+    // (not `=== undefined`) mirrors the nanostores `key in store` semantics, so
+    // an explicit pre-registration write of `undefined` is preserved.
+    if (!Object.hasOwn(bag, def.name)) {
       bag[def.name] = def.defaultValue;
     }
     this._listeners.notify();
