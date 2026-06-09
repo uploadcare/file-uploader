@@ -14,7 +14,10 @@ import { Listeners } from '../host-subscription';
  * controller when `LocaleManager` is retired.
  */
 export class LocaleController {
-  private _values: Record<string, string> = {};
+  // Null-prototype backing object: locale keys can be plugin-supplied, so a
+  // key like `__proto__` must create a plain own property here rather than
+  // touch the prototype chain.
+  private _values: Record<string, string> = Object.create(null);
   private _listeners = new Listeners();
 
   public get values(): Readonly<Record<string, string>> {
@@ -26,7 +29,9 @@ export class LocaleController {
   }
 
   public has(key: string): boolean {
-    return key in this._values;
+    // Own-property check: `in` would walk the prototype chain and wrongly
+    // report `toString`, `__proto__`, etc. as present.
+    return Object.hasOwn(this._values, key);
   }
 
   public get(key: string): string | undefined {
@@ -41,7 +46,7 @@ export class LocaleController {
   }
 
   public destroy(): void {
-    this._values = {};
+    this._values = Object.create(null);
     this._listeners.clear();
   }
 }

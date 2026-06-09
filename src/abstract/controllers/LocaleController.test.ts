@@ -37,6 +37,19 @@ describe('LocaleController', () => {
     expect(listener).not.toHaveBeenCalled();
   });
 
+  it('has() uses own-property semantics, not the prototype chain', () => {
+    const locale = new LocaleController();
+    expect(locale.has('toString')).toBe(false);
+    expect(locale.has('__proto__')).toBe(false);
+  });
+
+  it('does not pollute the prototype for a key named __proto__', () => {
+    const locale = new LocaleController();
+    locale.set('__proto__', 'evil');
+    expect(({} as Record<string, unknown>).evil).toBeUndefined();
+    expect(locale.get('__proto__')).toBe('evil');
+  });
+
   it('destroy() clears values and listeners', () => {
     const locale = new LocaleController();
     locale.set('upload', 'Upload');
