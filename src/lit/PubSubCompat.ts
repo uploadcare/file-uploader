@@ -1,5 +1,6 @@
 import { listenKeys, type MapStore, map, subscribeKeys } from 'nanostores';
 import type { ConfigController } from '../abstract/controllers/ConfigController';
+import type { LocaleController } from '../abstract/controllers/LocaleController';
 import { UploaderController } from '../abstract/controllers/UploaderController';
 import { UploaderRegistry } from '../abstract/UploaderRegistry';
 
@@ -7,8 +8,13 @@ export type Unsubscriber = () => void;
 
 type PubSubStore<T extends Record<string, unknown>> = MapStore<T>;
 
-/** Namespace for config keys (`*cfg/<configKey>`). Routed to the controller. */
+/**
+ * Namespaces routed to the per-ctx `UploaderController` instead of the
+ * nanostores map: config (`*cfg/<key>`) → `controller.config`, locale
+ * (`*l10n/<key>`) → `controller.locale`. Everything else stays on nanostores.
+ */
 const CFG_PREFIX = '*cfg/';
+const L10N_PREFIX = '*l10n/';
 
 export class PubSub<T extends Record<string, unknown>> {
   private static _contexts = new Map<string, PubSubStore<Record<string, unknown>>>();
@@ -35,27 +41,64 @@ export class PubSub<T extends Record<string, unknown>> {
 
   /** Strip the `*cfg/` prefix, or return null if `key` is not a config key. */
   private _cfgName(key: PropertyKey): string | null {
-    if (typeof key === 'string' && key.startsWith(CFG_PREFIX)) {
-      return key.slice(CFG_PREFIX.length);
-    }
-    return null;
+    return typeof key === 'string' && key.startsWith(CFG_PREFIX) ? key.slice(CFG_PREFIX.length) : null;
   }
 
-  /** Get (or lazily create + register) the config controller for this ctx. */
-  private _config(): ConfigController {
+  /** Strip the `*l10n/` prefix, or return null if `key` is not a locale key. */
+  private _l10nName(key: PropertyKey): string | null {
+    return typeof key === 'string' && key.startsWith(L10N_PREFIX) ? key.slice(L10N_PREFIX.length) : null;
+  }
+
+  /** Get (or lazily create + register) the controller for this ctx. */
+  private _uploader(): UploaderController {
     let controller = PubSub._controllers.get(this._ctxId);
     if (!controller) {
       controller = new UploaderController();
       PubSub._controllers.set(this._ctxId, controller);
       UploaderRegistry.register(this._ctxId, controller);
     }
-    return controller.config;
+    return controller;
+  }
+
+  private _config(): ConfigController {
+    return this._uploader().config;
+  }
+
+  private _locale(): LocaleController {
+    return this._uploader().locale;
+  }
+
+  /**
+   * Subscribe over a controller's coarse change notification but only invoke
+   * `callback` when the specific derived value changes — preserving the
+   * per-key subscription semantics of the nanostores map being replaced.
+   */
+  private _subDerived<V>(
+    read: () => V,
+    subscribe: (listener: () => void) => Unsubscriber,
+    callback: (value: V) => void,
+    init: boolean,
+  ): Unsubscriber {
+    let last = read();
+    if (init) callback(last);
+    return subscribe(() => {
+      const next = read();
+      if (!Object.is(next, last)) {
+        last = next;
+        callback(next);
+      }
+    });
   }
 
   public pub<K extends keyof T>(key: K, value: T[K]): void {
-    const name = this._cfgName(key);
-    if (name !== null) {
-      this._config().setCustom(name, value);
+    const cfg = this._cfgName(key);
+    if (cfg !== null) {
+      this._config().setCustom(cfg, value);
+      return;
+    }
+    const loc = this._l10nName(key);
+    if (loc !== null) {
+      this._locale().set(loc, value as unknown as string);
       return;
     }
     if (!(key in this._store.get())) {
@@ -65,21 +108,25 @@ export class PubSub<T extends Record<string, unknown>> {
   }
 
   public sub<K extends keyof T>(key: K, callback: (value: T[K]) => void, init = true): Unsubscriber {
-    const name = this._cfgName(key);
-    if (name !== null) {
-      // The controller notifies on ANY config change; re-derive this key's
-      // value and only invoke `callback` when it actually changes, preserving
-      // the per-key subscription semantics of the nanostores map.
-      const cfg = this._config();
-      let last = cfg.getCustom(name);
-      if (init) callback(last as T[K]);
-      return cfg.subscribe(() => {
-        const next = cfg.getCustom(name);
-        if (!Object.is(next, last)) {
-          last = next;
-          callback(next as T[K]);
-        }
-      });
+    const cfg = this._cfgName(key);
+    if (cfg !== null) {
+      const config = this._config();
+      return this._subDerived<T[K]>(
+        () => config.getCustom(cfg) as T[K],
+        (l) => config.subscribe(l),
+        callback,
+        init,
+      );
+    }
+    const loc = this._l10nName(key);
+    if (loc !== null) {
+      const locale = this._locale();
+      return this._subDerived<T[K]>(
+        () => locale.get(loc) as T[K],
+        (l) => locale.subscribe(l),
+        callback,
+        init,
+      );
     }
     const unsubscribe = (init ? subscribeKeys : listenKeys)(this._store, [key as any], (values: Partial<T>) => {
       callback(values[key] as T[K]);
@@ -89,10 +136,10 @@ export class PubSub<T extends Record<string, unknown>> {
   }
 
   public read<K extends keyof T>(key: K): T[K] {
-    const name = this._cfgName(key);
-    if (name !== null) {
-      return this._config().getCustom(name) as T[K];
-    }
+    const cfg = this._cfgName(key);
+    if (cfg !== null) return this._config().getCustom(cfg) as T[K];
+    const loc = this._l10nName(key);
+    if (loc !== null) return this._locale().get(loc) as T[K];
     if (!(key in this._store.get())) {
       console.warn(`PubSub#read: Key "${String(key)}" not found`);
     }
@@ -100,19 +147,27 @@ export class PubSub<T extends Record<string, unknown>> {
   }
 
   public add<K extends keyof T>(key: K, value: T[K], rewrite = false): void {
-    const name = this._cfgName(key);
-    if (name !== null) {
-      const cfg = this._config();
-      if (cfg.hasKey(name)) {
+    const cfg = this._cfgName(key);
+    if (cfg !== null) {
+      const config = this._config();
+      if (config.hasKey(cfg)) {
         // Built-in keys always carry a default, and registered custom keys
         // their seeded value — only an explicit rewrite overwrites them
         // (mirrors nanostores `add`'s first-write-wins).
-        if (rewrite) cfg.setCustom(name, value);
+        if (rewrite) config.setCustom(cfg, value);
       } else {
         // First sighting of a custom key (e.g. plugin `registerConfig`): seed
         // it as a registered custom config with this default.
-        cfg.register(name, value);
+        config.register(cfg, value);
       }
+      return;
+    }
+    const loc = this._l10nName(key);
+    if (loc !== null) {
+      // Locale keys have no built-in defaults — generic first-write-wins, as
+      // `LocaleManager` seeds the dictionary via `add(..., rewrite)`.
+      const locale = this._locale();
+      if (!locale.has(loc) || rewrite) locale.set(loc, value as unknown as string);
       return;
     }
     const exists = key in this._store.get();
@@ -124,10 +179,10 @@ export class PubSub<T extends Record<string, unknown>> {
   }
 
   public has(key: keyof T): boolean {
-    const name = this._cfgName(key);
-    if (name !== null) {
-      return this._config().hasKey(name);
-    }
+    const cfg = this._cfgName(key);
+    if (cfg !== null) return this._config().hasKey(cfg);
+    const loc = this._l10nName(key);
+    if (loc !== null) return this._locale().has(loc);
     return key in this._store.get();
   }
 
