@@ -55,6 +55,10 @@ export class LitUploaderBlock extends LitActivityBlock {
       '*secureUploadsManager',
       (sharedInstancesBag) => new SecureUploadsManager(sharedInstancesBag),
     );
+    // Register *publicApi before *validationManager: the ValidationController
+    // resolves `sharedInstancesBag.api` (which constructs *publicApi on demand),
+    // so the api factory must already be registered when validation first runs.
+    this._addSharedContextInstance('*publicApi', (sharedInstancesBag) => new UploaderPublicApi(sharedInstancesBag));
     this._addSharedContextInstance('*validationManager', (sharedInstancesBag) => {
       const uploader = this.sharedCtx.uploaderController();
       return new ValidationController({
@@ -76,7 +80,6 @@ export class LitUploaderBlock extends LitActivityBlock {
         },
       });
     });
-    this._addSharedContextInstance('*publicApi', (sharedInstancesBag) => new UploaderPublicApi(sharedInstancesBag));
 
     if (!this._hasCtxOwner && this.couldBeCtxOwner) {
       this._initCtxOwner();
