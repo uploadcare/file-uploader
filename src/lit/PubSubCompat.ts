@@ -137,9 +137,18 @@ export class PubSub<T extends Record<string, unknown>> {
 
   public read<K extends keyof T>(key: K): T[K] {
     const cfg = this._cfgName(key);
-    if (cfg !== null) return this._config().getCustom(cfg) as T[K];
+    if (cfg !== null) {
+      const config = this._config();
+      // Preserve the v1 missing-key warning — useful for surfacing typo'd keys.
+      if (!config.hasKey(cfg)) console.warn(`PubSub#read: Key "${String(key)}" not found`);
+      return config.getCustom(cfg) as T[K];
+    }
     const loc = this._l10nName(key);
-    if (loc !== null) return this._locale().get(loc) as T[K];
+    if (loc !== null) {
+      const locale = this._locale();
+      if (!locale.has(loc)) console.warn(`PubSub#read: Key "${String(key)}" not found`);
+      return locale.get(loc) as T[K];
+    }
     if (!(key in this._store.get())) {
       console.warn(`PubSub#read: Key "${String(key)}" not found`);
     }

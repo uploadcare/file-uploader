@@ -165,4 +165,19 @@ describe('PubSub locale (*l10n/*) facade', () => {
     const controller = UploaderRegistry.get(id);
     expect(controller?.locale.get('upload')).toBe('Upload');
   });
+
+  it('warns when reading a missing locale key but not a present one (typo surfacing)', () => {
+    const ctx = freshCtx();
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    ctx.read('*l10n/typoKey');
+    expect(warn).toHaveBeenCalledWith('PubSub#read: Key "*l10n/typoKey" not found');
+
+    warn.mockClear();
+    ctx.add('*l10n/upload', 'Upload');
+    ctx.read('*l10n/upload');
+    expect(warn).not.toHaveBeenCalled();
+
+    warn.mockRestore();
+  });
 });
