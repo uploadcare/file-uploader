@@ -33,7 +33,15 @@ class UploaderRegistryImpl {
     // controller.
     const set = this._consumers.get(ctxName);
     if (set) {
-      for (const cb of set) cb(controller);
+      // Isolate each consumer: a single throwing callback must not abort
+      // notification of the others or bubble out of `register()`.
+      for (const cb of set) {
+        try {
+          cb(controller);
+        } catch (err) {
+          console.warn(`[uc] a whenAvailable consumer for ctx-name="${ctxName}" threw`, err);
+        }
+      }
     }
   }
 
@@ -62,7 +70,10 @@ class UploaderRegistryImpl {
     const existing = this._map.get(ctxName);
     if (existing) cb(existing);
     return () => {
-      set?.delete(cb);
+      set.delete(cb);
+      // Drop the empty consumer Set so unused ctx-names don't accumulate in
+      // this module-level singleton over the app's lifetime.
+      if (set.size === 0) this._consumers.delete(ctxName);
     };
   }
 }

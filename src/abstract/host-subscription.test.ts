@@ -26,6 +26,22 @@ describe('Listeners', () => {
     expect(a).not.toHaveBeenCalled();
   });
 
+  it('isolates a throwing listener so the others still run', () => {
+    const listeners = new Listeners();
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const bad = vi.fn(() => {
+      throw new Error('boom');
+    });
+    const good = vi.fn();
+    listeners.subscribe(bad);
+    listeners.subscribe(good);
+
+    expect(() => listeners.notify()).not.toThrow();
+    expect(good).toHaveBeenCalledTimes(1);
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
   it('clear() removes all listeners', () => {
     const listeners = new Listeners();
     const a = vi.fn();

@@ -67,6 +67,26 @@ describe('UploaderRegistry', () => {
     warn.mockRestore();
   });
 
+  it('isolates a throwing consumer so other consumers are still notified on register', () => {
+    const name = uniqueName();
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const bad = vi.fn(() => {
+      throw new Error('boom');
+    });
+    const good = vi.fn();
+    UploaderRegistry.whenAvailable(name, bad);
+    const off = UploaderRegistry.whenAvailable(name, good);
+
+    const controller = new UploaderController();
+    expect(() => UploaderRegistry.register(name, controller)).not.toThrow();
+    expect(good).toHaveBeenCalledWith(controller);
+    expect(warn).toHaveBeenCalled();
+
+    off();
+    UploaderRegistry.unregister(name, controller);
+    warn.mockRestore();
+  });
+
   it('unregister only deletes when the controller identity matches', () => {
     const name = uniqueName();
     const current = new UploaderController();

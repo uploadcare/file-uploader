@@ -14,7 +14,16 @@ export class Listeners {
   }
 
   public notify(): void {
-    for (const listener of this._set) listener();
+    // Isolate each listener: one throwing subscriber must not prevent the
+    // rest from being notified (e.g. block a sibling component's re-render).
+    // Mirrors `EventBus.emit`'s fan-out semantics.
+    for (const listener of this._set) {
+      try {
+        listener();
+      } catch (err) {
+        console.warn('[uc] a state-change listener threw', err);
+      }
+    }
   }
 
   public clear(): void {

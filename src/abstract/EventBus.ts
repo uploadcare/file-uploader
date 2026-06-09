@@ -90,7 +90,13 @@ export class EventBus {
       this._listeners.set(type, set);
     }
     set.add(handler as (payload: unknown) => void);
-    return () => set.delete(handler as (payload: unknown) => void);
+    return () => {
+      set.delete(handler as (payload: unknown) => void);
+      // Drop the empty Set so unused event keys don't linger. The key space
+      // is a fixed enum so this is bounded either way, but it keeps the map
+      // tidy and consistent with `UploaderRegistry`.
+      if (set.size === 0) this._listeners.delete(type);
+    };
   }
 
   /**
