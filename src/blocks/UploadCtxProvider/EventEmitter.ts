@@ -44,15 +44,15 @@ export class EventEmitter extends SharedInstance {
     return this._bus.on(type, handler);
   }
 
-  public emit<T extends UploaderEventKey, TDebounce extends boolean | number | undefined = undefined>(
+  public emit<T extends UploaderEventKey>(
     type: T,
-    payload?: TDebounce extends false | undefined ? UploaderEventPayload[T] : () => UploaderEventPayload[T],
-    options: { debounce?: TDebounce } = {},
+    payload?: UploaderEventPayload[T] | (() => UploaderEventPayload[T]),
+    options: { debounce?: boolean | number } = {},
   ): void {
     const { debounce } = options;
-    // The public API permits omitting `payload`, but callers always provide one
-    // for events whose payload isn't `undefined`; assert presence at this single
-    // boundary (mirrors v1's `payload as EventPayload[T]`).
+    // A value or a thunk is accepted on either path (the runtime resolves
+    // both); the single `as` bridges the optional `payload?` to the required
+    // payload for events whose payload isn't `undefined`.
     const resolve = () => (typeof payload === 'function' ? payload() : payload) as UploaderEventPayload[T];
     if (typeof debounce !== 'number' && !debounce) {
       this._bus.emit(type, resolve());

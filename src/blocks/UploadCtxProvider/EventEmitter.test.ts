@@ -43,7 +43,7 @@ describe('EventEmitter (EventBus facade)', () => {
 
     const payload = fileEntry('b');
     // A thunk payload is allowed even without debounce; it must be resolved.
-    emitter.emit(EventType.FILE_ADDED, (() => payload) as never);
+    emitter.emit(EventType.FILE_ADDED, () => payload);
 
     expect(handler).toHaveBeenCalledWith(payload);
   });
@@ -51,10 +51,10 @@ describe('EventEmitter (EventBus facade)', () => {
   it('debounces with the default 20ms window and coalesces to one dispatch', () => {
     const { emitter } = setup();
     const handler = vi.fn();
-    emitter.on(EventType.CHANGE, handler);
+    emitter.on(EventType.FILE_ADDED, handler);
 
-    emitter.emit(EventType.CHANGE, () => fileEntry('1') as never, { debounce: true });
-    emitter.emit(EventType.CHANGE, () => fileEntry('2') as never, { debounce: true });
+    emitter.emit(EventType.FILE_ADDED, () => fileEntry('1'), { debounce: true });
+    emitter.emit(EventType.FILE_ADDED, () => fileEntry('2'), { debounce: true });
     expect(handler).not.toHaveBeenCalled();
 
     vi.advanceTimersByTime(20);
@@ -66,9 +66,9 @@ describe('EventEmitter (EventBus facade)', () => {
   it('honors a numeric debounce window', () => {
     const { emitter } = setup();
     const handler = vi.fn();
-    emitter.on(EventType.COMMON_UPLOAD_PROGRESS, handler);
+    emitter.on(EventType.FILE_ADDED, handler);
 
-    emitter.emit(EventType.COMMON_UPLOAD_PROGRESS, () => fileEntry('p') as never, { debounce: 100 });
+    emitter.emit(EventType.FILE_ADDED, () => fileEntry('p'), { debounce: 100 });
 
     vi.advanceTimersByTime(50);
     expect(handler).not.toHaveBeenCalled();

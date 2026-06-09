@@ -19,7 +19,11 @@ export class UploadCtxProvider extends LitUploaderBlock {
 
     // Bridge the per-ctx EventBus to documented DOM CustomEvents on this
     // element. The reactive controller manages its own connect/disconnect.
-    this._eventBridge ??= new EventBridgeController(this, () => this.sharedCtx.uploaderController().events);
+    this._eventBridge ??= new EventBridgeController(
+      this,
+      () => this.sharedCtx.uploaderController().events,
+      (...args) => this.debugPrint(...args),
+    );
   }
 }
 

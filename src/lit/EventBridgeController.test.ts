@@ -84,4 +84,28 @@ describe('EventBridgeController', () => {
 
     expect(host.events).toHaveLength(1);
   });
+
+  it('logs each event via the debug hook (shallow-copying object payloads)', () => {
+    // Invoke the thunk like the real `debugPrint` does, to capture the logged args.
+    const logged: unknown[][] = [];
+    const debug = vi.fn((...args: unknown[]) => {
+      logged.push((args[0] as () => unknown[])());
+    });
+    new EventBridgeController(asHostArg(host), () => bus, debug);
+
+    const payload = { internalId: 'a' };
+    bus.emit('file-added', payload as never);
+    bus.emit('upload-click', undefined); // non-object payload → passed through as-is
+
+    expect(debug).toHaveBeenCalledTimes(2);
+    expect(logged[0]?.[0]).toBe('event "file-added"');
+    expect(logged[0]?.[1]).toEqual(payload);
+    expect(logged[0]?.[1]).not.toBe(payload); // shallow copy, not the same ref
+    expect(logged[1]?.[1]).toBeUndefined(); // undefined payload, not copied
+  });
+
+  it('does not throw when no debug hook is provided', () => {
+    new EventBridgeController(asHostArg(host), () => bus);
+    expect(() => bus.emit('upload-click', undefined)).not.toThrow();
+  });
 });
