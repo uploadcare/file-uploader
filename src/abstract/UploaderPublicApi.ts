@@ -359,6 +359,43 @@ export class UploaderPublicApi extends SharedInstance {
     return pluginManager.pluginsReady();
   }
 
+  /**
+   * Navigate to an activity and show it in the slot appropriate for the current
+   * preset (a modal in `regular`, inline in `inline`, a modal over the trigger
+   * in `minimal`). Pass `null` to close everything.
+   *
+   * This is the v2 routing entry point — the single-call replacement for the
+   * `setCurrentActivity` + `setModalState(true)` pair.
+   */
+  public navigate = <T extends ActivityType>(
+    activityType: T,
+    ...params: T extends keyof ActivityParamsMap
+      ? [ActivityParamsMap[T]] extends [never]
+        ? []
+        : [ActivityParamsMap[T]]
+      : []
+  ) => {
+    void this._pluginsReady().then(() => {
+      this._sharedInstancesBag.router.navigate(activityType, params[0] ?? {});
+      if (activityType !== null) {
+        waitForBlockInCtx(
+          this._sharedInstancesBag.blocksRegistry,
+          (b) => (b as LitActivityBlock).activityType === activityType,
+          {
+            onTimeout: () => console.warn(`Activity type "${activityType}" not found in the context`),
+            timeout: 100,
+          },
+        );
+      }
+    });
+  };
+
+  /**
+   * @deprecated Use {@link navigate} instead — it sets the activity *and* shows
+   * it in one call. `setCurrentActivity` only sets the activity (in the
+   * background slot) without opening the modal, so it must be paired with
+   * `setModalState(true)`.
+   */
   public setCurrentActivity = <T extends ActivityType>(
     activityType: T,
     ...params: T extends keyof ActivityParamsMap
@@ -399,6 +436,11 @@ export class UploaderPublicApi extends SharedInstance {
     this._sharedInstancesBag.router.back();
   };
 
+  /**
+   * @deprecated Use {@link navigate} to open an activity, or `navigate(null)`
+   * to close. `setModalState` only toggles the modal for the activity that was
+   * already set via `setCurrentActivity`.
+   */
   public setModalState = (opened: boolean): void => {
     void this._pluginsReady().then(() => {
       const router = this._sharedInstancesBag.router;

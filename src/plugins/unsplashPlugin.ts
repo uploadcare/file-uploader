@@ -1,10 +1,10 @@
 import { html, LitElement } from 'lit';
 import { property, state } from 'lit/decorators.js';
 
-import '../blocks/ActivityHeader/ActivityHeader.js';
-import '../blocks/Icon/Icon.js';
+import '../blocks/ActivityHeader/ActivityHeader';
+import '../blocks/Icon/Icon';
 import './unsplash-activity.css';
-import type { PluginUploaderApi, UploaderPlugin } from '../abstract/managers/plugin/index.js';
+import type { PluginUploaderApi, UploaderPlugin } from '../abstract/managers/plugin/index';
 
 const UNSPLASH_ACTIVITY_ID = 'unsplash-gallery';
 
@@ -75,8 +75,7 @@ class UcUnsplashActivity extends LitElement {
       fileName: `unsplash-${photo.id}.jpg`,
       source: 'unsplash',
     });
-    this.uploaderApi.setCurrentActivity?.('upload-list');
-    this.uploaderApi.setModalState?.(true);
+    this.uploaderApi.navigate?.('upload-list');
   }
 
   public override render() {
@@ -89,7 +88,7 @@ class UcUnsplashActivity extends LitElement {
           <uc-icon name="unsplash"></uc-icon>
           <span>Unsplash</span>
         </div>
-        <button type="button" class="uc-ui-icon-btn" title="Close" @click=${() => this.uploaderApi.setModalState?.(false)}>
+        <button type="button" class="uc-ui-icon-btn" title="Close" @click=${() => this.uploaderApi.navigate?.(null)}>
           <uc-icon name="close"></uc-icon>
         </button>
       </div>
@@ -164,8 +163,7 @@ class UcUnsplashActivity extends LitElement {
       <div class="uc-ui-toolbar bottom-toolbar">
         <div class="uc-ui-toolbar-spacer"></div>
         <button type="button" class="uc-ui-secondary-btn" @click=${() => {
-          this.uploaderApi.setCurrentActivity?.('upload-list');
-          this.uploaderApi.setModalState?.(true);
+          this.uploaderApi.navigate?.('upload-list');
         }}>Done</button>
       </div>
     `;
@@ -197,8 +195,7 @@ export const unsplashPlugin: UploaderPlugin = {
       label: 'unsplash.label',
       icon: 'unsplash',
       onSelect() {
-        uploaderApi.setCurrentActivity?.(UNSPLASH_ACTIVITY_ID);
-        uploaderApi.setModalState?.(true);
+        uploaderApi.navigate?.(UNSPLASH_ACTIVITY_ID);
       },
     });
 

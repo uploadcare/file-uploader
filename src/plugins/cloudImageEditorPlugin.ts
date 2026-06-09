@@ -1,9 +1,9 @@
 import { defineComponents } from '../abstract/defineComponents';
-import type { UploaderPlugin } from '../abstract/managers/plugin';
+import type { UploaderPlugin } from '../abstract/managers/plugin/index';
 import * as cloudImageEditorActivityModule from '../blocks/CloudImageEditorActivity/CloudImageEditorActivity';
 import { EventType } from '../blocks/UploadCtxProvider/EventEmitter';
 import { ACTIVITY_TYPES } from '../lit/activity-constants';
-import * as cloudEditorModules from '../solutions/cloud-image-editor';
+import * as cloudEditorModules from '../solutions/cloud-image-editor/index';
 
 const CLOUD_EDITOR_PLUGIN_ID = 'cloud-image-editor';
 
@@ -26,10 +26,9 @@ export const cloudImageEditorPlugin: UploaderPlugin = {
       label: 'file-item-edit-button',
       shouldRender: (fileEntry) => Boolean(fileEntry.isImage && fileEntry.cdnUrl),
       onClick: (fileEntry) => {
-        uploaderApi.setCurrentActivity?.(ACTIVITY_TYPES.CLOUD_IMG_EDIT, {
+        uploaderApi.navigate?.(ACTIVITY_TYPES.CLOUD_IMG_EDIT, {
           internalId: fileEntry.internalId,
         });
-        uploaderApi.setModalState?.(true);
       },
     });
 
@@ -54,10 +53,9 @@ export const cloudImageEditorPlugin: UploaderPlugin = {
       const collectionSize = uploaderApi._uploadCollection.size;
 
       if (useEditor && collectionSize === 1 && (cropPreset || autoOpen)) {
-        uploaderApi.setCurrentActivity?.(ACTIVITY_TYPES.CLOUD_IMG_EDIT, {
+        uploaderApi.navigate?.(ACTIVITY_TYPES.CLOUD_IMG_EDIT, {
           internalId: fileEntry.internalId,
         });
-        uploaderApi.setModalState?.(true);
       }
     });
 
