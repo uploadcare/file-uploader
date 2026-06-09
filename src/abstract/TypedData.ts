@@ -1,31 +1,65 @@
-import { PubSub } from '../lit/PubSubCompat';
 import type { Uid } from '../lit/Uid';
 import { UID } from '../utils/UID';
 
 const MSG_NAME = '[Typed State] Wrong property name: ';
 
+/**
+ * Per-entry reactive store. Each upload entry is one `TypedData`.
+ *
+ * As of the v1 → v2 strangler (M3a) this is self-contained — a plain
+ * null-prototype field object plus per-key listener sets — rather than a
+ * nanostores `PubSub` context per entry. A module-level registry keyed by the
+ * entry's `uid` replaces the old `PubSub.getCtx(uid)` lookup that hot paths
+ * (`getOutputItem`, event emission) used to read entry state by id; because
+ * `TypedCollection` defers `destroy()` ~10s after removal, `getByUid` keeps
+ * returning a removed entry's data during that window, exactly as the old
+ * per-entry context did.
+ *
+ * Public API (`uid`, `getValue`, `setValue`, `setMultipleValues`, `subscribe`,
+ * `destroy`) is unchanged, so `TypedCollection` and all consumers are
+ * untouched. `subscribe` fires immediately with the current value, matching
+ * the previous `PubSub.sub(..., init=true)` behavior.
+ */
 export class TypedData<T extends Record<string, unknown>> {
+  private static _registry = new Map<string, TypedData<Record<string, unknown>>>();
+
   private _ctxId: Uid;
-  private _data: PubSub<T>;
+  private _data: T;
+  private _subs = new Map<keyof T, Set<(value: unknown) => void>>();
 
   public constructor(initialValue: T) {
     this._ctxId = UID.generateFastUid();
-    this._data = PubSub.registerCtx(initialValue, this._ctxId);
+    // Null-prototype so a field name like `__proto__` can't touch the chain.
+    this._data = Object.assign(Object.create(null), initialValue);
+    TypedData._registry.set(this._ctxId, this as unknown as TypedData<Record<string, unknown>>);
+  }
+
+  /** Look up a live entry store by its uid (returns removed-but-not-yet-destroyed entries too). */
+  public static getByUid<T extends Record<string, unknown>>(uid: string): TypedData<T> | null {
+    return (TypedData._registry.get(uid) as TypedData<T> | undefined) ?? null;
   }
 
   public get uid(): Uid {
     return this._ctxId;
   }
 
+  /** Full current field object — the replacement for the old `PubSub#store`. */
+  public snapshot(): Readonly<T> {
+    return this._data;
+  }
+
   public setValue<K extends keyof T>(prop: K, value: T[K]): void {
-    if (!this._data.has(prop)) {
+    if (!Object.hasOwn(this._data, prop as PropertyKey)) {
       console.warn(`${MSG_NAME}${String(prop)}`);
       return;
     }
-
-    const isChanged = this._data.read(prop) !== value;
-    if (isChanged) {
-      this._data.pub(prop, value);
+    if (this._data[prop] === value) {
+      return;
+    }
+    this._data[prop] = value;
+    const set = this._subs.get(prop);
+    if (set) {
+      for (const handler of [...set]) handler(value);
     }
   }
 
@@ -36,17 +70,30 @@ export class TypedData<T extends Record<string, unknown>> {
   }
 
   public getValue<K extends keyof T>(prop: K): T[K] {
-    if (!this._data.has(prop)) {
+    if (!Object.hasOwn(this._data, prop as PropertyKey)) {
       console.warn(`${MSG_NAME}${String(prop)}`);
     }
-    return this._data.read(prop);
+    return this._data[prop];
   }
 
-  public subscribe<K extends keyof T>(prop: K, handler: (newVal: T[K]) => void) {
-    return this._data.sub(prop, handler);
+  public subscribe<K extends keyof T>(prop: K, handler: (newVal: T[K]) => void): () => void {
+    let set = this._subs.get(prop);
+    if (!set) {
+      set = new Set();
+      this._subs.set(prop, set);
+    }
+    const wrapped = handler as (value: unknown) => void;
+    set.add(wrapped);
+    // Fire immediately with the current value (parity with the previous
+    // `PubSub.sub(..., init=true)` subscription semantics).
+    handler(this._data[prop]);
+    return () => {
+      set?.delete(wrapped);
+    };
   }
 
   public destroy(): void {
-    PubSub.deleteCtx(this._ctxId);
+    TypedData._registry.delete(this._ctxId);
+    this._subs.clear();
   }
 }
