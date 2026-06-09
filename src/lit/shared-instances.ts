@@ -152,7 +152,7 @@ export const createSharedInstancesBag = (getCtx: () => PubSub<SharedState>) => {
       return getSharedInstance(getCtx(), '*uploadCollection');
     },
     get secureUploadsManager(): SecureUploadsController {
-      return getSharedInstance(getCtx(), '*secureUploadsManager', false);
+      return getSharedInstance(getCtx(), '*secureUploadsManager');
     },
     get uploadController(): UploadController {
       return getSharedInstance(getCtx(), '*uploadController');
