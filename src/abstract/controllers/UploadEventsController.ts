@@ -276,7 +276,10 @@ export class UploadEventsController {
       ...uploadClientOptions,
       signal: abortController.signal,
     });
-    if (getCollectionState() !== collectionState) {
+    // Bail if the controller was unobserved mid-flight (the `_active` check is
+    // new with the controller lifecycle) or the collection state moved on
+    // (mirrors v1).
+    if (!this._active || getCollectionState() !== collectionState) {
       abortController.abort();
       return;
     }

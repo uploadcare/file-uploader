@@ -453,6 +453,27 @@ describe('UploadEventsController', () => {
       expect(t.emit).toHaveBeenCalledWith(UploaderEventType.GROUP_CREATED, expect.anything());
     });
 
+    it('does not finalize the group if the controller is unobserved mid-flight', async () => {
+      const state = makeState({
+        totalCount: 1,
+        status: 'success',
+        allEntries: [{ uuid: 'u1', cdnUrlModifiers: '' }] as never,
+      });
+      const t = setup({ collectionState: state, outputDataLength: 1 });
+      t.config.set('groupOutput', true);
+      mockUploadFileGroup.mockImplementation(async () => {
+        t.controller.unobserve(); // host disconnects while the group upload is in-flight
+        return { uuid: 'group~1' } as UploadcareGroup;
+      });
+      const id = t.collection.add({ fileName: 'a.txt' });
+
+      t.fireCollection([id], entriesByUid(t.collection, [id]), new Set());
+      await vi.advanceTimersByTimeAsync(300);
+
+      expect(t.deps.setGroupInfo).not.toHaveBeenCalledWith({ uuid: 'group~1' });
+      expect(t.emit).not.toHaveBeenCalledWith(UploaderEventType.GROUP_CREATED, expect.anything());
+    });
+
     it('aborts group creation if the collection state changed mid-flight', async () => {
       const state = makeState({
         totalCount: 1,
