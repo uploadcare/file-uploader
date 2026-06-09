@@ -104,7 +104,9 @@ export class LitBlock extends LitBlockBase {
             const loader = new LazyPluginLoader(sharedInstancesBag.ctx, onCompute);
             return () => loader.destroy();
           },
-          debug: (...args) => this.debugPrint(...args),
+          // Scope debug output to the controller (not the hosting block) so its
+          // logs stay consistently prefixed, as v1's SharedInstance did.
+          debug: createDebugPrinter(() => sharedInstancesBag.ctx, 'PluginController'),
         }),
     );
     this._addSharedContextInstance('*eventEmitter', (sharedInstancesBag) => new EventEmitter(sharedInstancesBag));
