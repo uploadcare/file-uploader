@@ -1,358 +1,369 @@
 import { afterEach, describe, expect, it, type Mock, vi } from 'vitest';
-import { ACTIVITY_TYPES } from '../../lit/activity-constants';
 import { UploaderEventType } from '../EventBus';
-import { RouterController, type RouterControllerDeps } from './RouterController';
+import { NAVIGATE_CANCEL, RouterController, type RouterControllerDeps } from './RouterController';
 
-const setup = (overrides: Partial<RouterControllerDeps> = {}) => {
+const setup = () => {
   const emit = vi.fn() as Mock & RouterControllerDeps['emit'];
-  const deps: RouterControllerDeps = {
-    emit,
-    couldOpenActivity: vi.fn(() => true),
-    isHistoryTracked: vi.fn(() => true),
-    getDoneActivity: vi.fn(() => null),
-    hasFiles: vi.fn(() => false),
-    getSourceList: vi.fn(() => []),
-    pluginsReady: vi.fn(async () => {}),
-    getSources: vi.fn(() => []),
-    ...overrides,
-  };
-  const router = new RouterController(deps);
-  return { router, deps, emit };
+  const router = new RouterController({ emit });
+  return { router, emit };
 };
 
-const { START_FROM, UPLOAD_LIST, CAMERA } = ACTIVITY_TYPES;
-
-describe('RouterController', () => {
+describe('RouterController (v2)', () => {
   afterEach(() => vi.restoreAllMocks());
 
-  describe('activity slot', () => {
-    it('sets activity + params, emits ACTIVITY_CHANGE, and notifies subscribers', () => {
+  describe('navigate + slots', () => {
+    it('background strategy sets the activity slot, closes any modal, emits ACTIVITY_CHANGE', () => {
       const { router, emit } = setup();
       const onChange = vi.fn();
       router.subscribe(onChange);
 
-      router.setActivity(START_FROM, { foo: 'bar' });
+      router.navigate('start-from', { foo: 1 });
 
-      expect(router.activity).toBe(START_FROM);
-      expect(router.params).toEqual({ foo: 'bar' });
-      expect(router.getCurrentActivity()).toBe(START_FROM);
-      expect(emit).toHaveBeenCalledWith(UploaderEventType.ACTIVITY_CHANGE, { activity: START_FROM });
+      expect(router.activity).toBe('start-from');
+      expect(router.modal).toBeNull();
+      expect(router.params).toEqual({ foo: 1 });
+      expect(emit).toHaveBeenCalledWith(UploaderEventType.ACTIVITY_CHANGE, { activity: 'start-from' });
       expect(onChange).toHaveBeenCalled();
     });
 
-    it('notifies but does not re-emit when the activity is unchanged', () => {
+    it('foreground strategy opens a modal (background activity untouched)', () => {
       const { router, emit } = setup();
-      router.setActivity(START_FROM);
+      router.navigationStrategy = () => 'foreground';
+
+      router.navigate('camera');
+
+      expect(router.modal).toBe('camera');
+      expect(router.activity).toBeNull();
+      expect(emit).toHaveBeenCalledWith(UploaderEventType.MODAL_OPEN, { activity: 'camera', modalId: 'camera' });
+    });
+
+    it('a background navigation closes an open modal first', () => {
+      const { router, emit } = setup();
+      router.navigationStrategy = (to) => (to === 'upload-list' ? 'background' : 'foreground');
+      router.navigate('camera'); // foreground modal
+      expect(router.modal).toBe('camera');
       emit.mockClear();
+
+      router.navigate('upload-list'); // background → closes modal + sets activity
+
+      expect(router.modal).toBeNull();
+      expect(router.activity).toBe('upload-list');
+      expect(emit).toHaveBeenCalledWith(
+        UploaderEventType.MODAL_CLOSE,
+        expect.objectContaining({ hasActiveModals: false }),
+      );
+    });
+
+    it('navigate(null) closes everything', () => {
+      const { router } = setup();
+      router.navigate('start-from');
+      router.navigate(null);
+      expect(router.activity).toBeNull();
+      expect(router.modal).toBeNull();
+      expect(router.history).toEqual([]);
+    });
+
+    it('notifies on a params-only navigation (no slot change)', () => {
+      const { router } = setup();
+      router.navigate('start-from', { a: 1 });
       const onChange = vi.fn();
       router.subscribe(onChange);
 
-      router.setActivity(START_FROM, { x: 1 });
+      router.navigate('start-from', { a: 2 }); // same activity, new params
 
-      expect(router.params).toEqual({ x: 1 });
-      expect(emit).not.toHaveBeenCalled();
+      expect(router.params).toEqual({ a: 2 });
       expect(onChange).toHaveBeenCalled();
     });
 
-    it('clears history when the activity is set to null (no ACTIVITY_CHANGE)', () => {
-      const { router, emit } = setup();
-      router.setActivity(START_FROM);
-      emit.mockClear();
+    it('treats the same params object reference as unchanged', () => {
+      const { router } = setup();
+      const params = { a: 1 };
+      router.navigate('start-from', params);
+      expect(() => router.navigate('start-from', params)).not.toThrow();
+      expect(router.params).toBe(params);
+    });
 
-      router.setActivity(null);
-
-      expect(router.activity).toBeNull();
-      expect(router.history).toEqual([]);
-      expect(emit).not.toHaveBeenCalled();
+    it('dedups history when a modal opens an id already at the history top', () => {
+      const { router } = setup();
+      router.setActivity('camera'); // history ['camera']
+      router.openModal('camera'); // pushes 'camera' again → deduped
+      expect(router.history).toEqual(['camera']);
     });
   });
 
-  describe('history', () => {
-    it('records tracked activities (deduping consecutive repeats)', () => {
-      const { router } = setup({ isHistoryTracked: () => true });
-      router.setActivity(START_FROM);
-      router.setActivity(UPLOAD_LIST);
-      router.setActivity(UPLOAD_LIST); // same → no dup push
-
-      expect(router.history).toEqual([START_FROM, UPLOAD_LIST]);
-    });
-
-    it('does not record untracked activities', () => {
-      const { router } = setup({ isHistoryTracked: () => false });
-      router.setActivity(START_FROM);
-      expect(router.history).toEqual([]);
-    });
-
-    it('trims history beyond 10 entries', () => {
-      const tracked = [START_FROM, UPLOAD_LIST, CAMERA];
-      const { router } = setup({ isHistoryTracked: () => true });
-      // 12 distinct-ish pushes; the controller trims to <= 10 on flush
-      for (let i = 0; i < 12; i++) {
-        router.setActivity(tracked[i % 3] ?? null);
-        // force distinct last by alternating so the dedup guard doesn't block
-        router.setActivity(tracked[(i + 1) % 3] ?? null);
-      }
-      expect(router.history.length).toBeLessThanOrEqual(10);
-    });
-  });
-
-  describe('modal slot', () => {
-    it('opens a modal: sets the slot + emits MODAL_OPEN', () => {
-      const { router, emit } = setup();
-      router.openModal(START_FROM);
-      expect(router.modal).toBe(START_FROM);
-      expect(emit).toHaveBeenCalledWith(UploaderEventType.MODAL_OPEN, { modalId: START_FROM });
-    });
-
-    it('ignores opening a falsy modal id', () => {
-      const { router, emit } = setup();
-      router.openModal('');
-      expect(router.modal).toBeNull();
-      expect(emit).not.toHaveBeenCalled();
-    });
-
-    it('closes a modal only when it matches the open slot, emitting MODAL_CLOSE', () => {
-      const { router, emit } = setup();
-      router.openModal(START_FROM);
-      emit.mockClear();
-
-      router.closeModal(UPLOAD_LIST); // not the open one → no-op
-      expect(router.modal).toBe(START_FROM);
-      expect(emit).not.toHaveBeenCalled();
-
-      router.closeModal(START_FROM);
-      expect(router.modal).toBeNull();
-      expect(emit).toHaveBeenCalledWith(UploaderEventType.MODAL_CLOSE, {
-        modalId: START_FROM,
-        hasActiveModals: false,
-      });
-    });
-
-    it('closeAllModals emits MODAL_CLOSE for the open modal (no-op when none)', () => {
-      const { router, emit } = setup();
-      router.closeAllModals(); // none open
-      expect(emit).not.toHaveBeenCalled();
-
-      router.openModal(UPLOAD_LIST);
-      emit.mockClear();
-      router.closeAllModals();
-      expect(router.modal).toBeNull();
-      expect(emit).toHaveBeenCalledWith(UploaderEventType.MODAL_CLOSE, {
-        modalId: UPLOAD_LIST,
-        hasActiveModals: false,
-      });
-    });
-  });
-
-  describe('setModalState', () => {
-    it('opens the current activity modal when opened=true', () => {
-      const { router, emit } = setup();
-      router.setActivity(START_FROM);
-      emit.mockClear();
-
-      router.setModalState(true);
-
-      expect(router.modal).toBe(START_FROM);
-      expect(emit).toHaveBeenCalledWith(UploaderEventType.MODAL_OPEN, { modalId: START_FROM });
-    });
-
-    it('warns and no-ops when opening without a current activity', () => {
-      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+  describe('beforeChange hooks', () => {
+    it('redirects to a hook-provided target', () => {
       const { router } = setup();
-
-      router.setModalState(true);
-
-      expect(router.modal).toBeNull();
-      expect(warn).toHaveBeenCalledWith(expect.stringContaining('without current activity'));
+      router.hooks.beforeChange(() => 'upload-list');
+      router.navigate('start-from');
+      expect(router.activity).toBe('upload-list');
     });
 
-    it('closes the modal and clears the activity when opened=false', () => {
+    it('cancels navigation on NAVIGATE_CANCEL', () => {
       const { router } = setup();
-      router.setActivity(START_FROM);
-      router.openModal(START_FROM);
-
-      router.setModalState(false);
-
-      expect(router.modal).toBeNull();
+      router.hooks.beforeChange(() => NAVIGATE_CANCEL);
+      router.navigate('start-from');
       expect(router.activity).toBeNull();
     });
 
-    it('opened=false with no current activity is a safe no-op', () => {
+    it('lets the proposed target through when the hook returns undefined', () => {
       const { router } = setup();
-      expect(() => router.setModalState(false)).not.toThrow();
-      expect(router.activity).toBeNull();
-      expect(router.modal).toBeNull();
-    });
-  });
-
-  describe('historyBack', () => {
-    it('navigates to the previous (allowed) tracked activity and opens its modal', () => {
-      const { router } = setup({ couldOpenActivity: () => true });
-      router.setActivity(START_FROM);
-      router.setActivity(UPLOAD_LIST);
-
-      router.historyBack();
-
-      expect(router.activity).toBe(START_FROM);
-      expect(router.modal).toBe(START_FROM);
+      router.hooks.beforeChange(() => undefined);
+      router.navigate('start-from');
+      expect(router.activity).toBe('start-from');
     });
 
-    it('closes all when the previous activity is not allowed', () => {
-      const couldOpenActivity = vi.fn(() => false);
-      const { router } = setup({ couldOpenActivity });
-      router.setActivity(START_FROM);
-      router.setActivity(UPLOAD_LIST);
-      router.openModal(UPLOAD_LIST);
-
-      router.historyBack();
-
-      expect(router.activity).toBeNull();
-      expect(router.modal).toBeNull();
-    });
-
-    it('closes all when there is no previous activity', () => {
+    it('unsubscribes a hook', () => {
       const { router } = setup();
-      router.setActivity(START_FROM);
-
-      router.historyBack(); // only [start-from], which is current → skipped → null
-
-      expect(router.activity).toBeNull();
-    });
-
-    it('is a safe no-op with empty history and no current activity', () => {
-      const { router } = setup();
-      router.openModal(START_FROM);
-
-      expect(() => router.historyBack()).not.toThrow(); // must not loop forever
-
-      expect(router.activity).toBeNull();
-      expect(router.modal).toBeNull();
-    });
-  });
-
-  describe('doneFlow', () => {
-    it('navigates to the done activity and seeds history', () => {
-      const { router } = setup({ getDoneActivity: () => UPLOAD_LIST });
-      router.setActivity(START_FROM);
-
-      router.doneFlow();
-
-      expect(router.activity).toBe(UPLOAD_LIST);
-      expect(router.history).toEqual([UPLOAD_LIST]);
-    });
-
-    it('closes all modals when there is no done activity', () => {
-      const { router } = setup({ getDoneActivity: () => null });
-      router.setActivity(START_FROM);
-      router.openModal(START_FROM);
-
-      router.doneFlow();
-
-      expect(router.activity).toBeNull();
-      expect(router.history).toEqual([]);
-      expect(router.modal).toBeNull();
-    });
-  });
-
-  describe('initFlow', () => {
-    it('opens upload-list when there are files and not forced', async () => {
-      const { router } = setup({ hasFiles: () => true });
-      await router.initFlow();
-      expect(router.activity).toBe(UPLOAD_LIST);
-      expect(router.modal).toBe(UPLOAD_LIST);
-    });
-
-    it('opens start-from for a multi-source list', async () => {
-      const { router } = setup({ getSourceList: () => ['local', 'url'] });
-      await router.initFlow();
-      expect(router.activity).toBe(START_FROM);
-      expect(router.modal).toBe(START_FROM);
-    });
-
-    it('selects the single source directly when it does not expand', async () => {
-      const onSelect = vi.fn();
-      const { router } = setup({
-        getSourceList: () => ['local'],
-        getSources: () => [{ id: 'local', onSelect }],
-      });
-      await router.initFlow();
-      expect(onSelect).toHaveBeenCalled();
-      expect(router.activity).toBeNull(); // direct select, no activity change
-    });
-
-    it('opens start-from when the single source expands to multiple', async () => {
-      const { router } = setup({
-        getSourceList: () => ['camera'],
-        getSources: () => [{ id: 'camera', expand: () => ['photo', 'video'], onSelect: vi.fn() }],
-      });
-      await router.initFlow();
-      expect(router.activity).toBe(START_FROM);
-    });
-
-    it('selects the expanded source when it resolves to exactly one', async () => {
-      const onSelect = vi.fn();
-      const { router } = setup({
-        getSourceList: () => ['camera'],
-        getSources: () => [
-          { id: 'camera', expand: () => ['photo'], onSelect: vi.fn() },
-          { id: 'photo', onSelect },
-        ],
-      });
-      await router.initFlow();
-      expect(onSelect).toHaveBeenCalled();
-    });
-
-    it('falls back to the original source when the single expansion id is not separately registered', async () => {
-      const onSelect = vi.fn();
-      const { router } = setup({
-        getSourceList: () => ['camera'],
-        getSources: () => [{ id: 'camera', expand: () => ['photo'], onSelect }], // 'photo' not registered
-      });
-      await router.initFlow();
-      expect(onSelect).toHaveBeenCalled();
-    });
-
-    it('re-opens the current activity modal when the single source is not registered', async () => {
-      const { router } = setup({ getSourceList: () => ['ghost'], getSources: () => [] });
-      router.setActivity(CAMERA);
-      await router.initFlow();
-      expect(router.modal).toBe(CAMERA);
-    });
-
-    it('does nothing for an unregistered single source with no current activity', async () => {
-      const { router } = setup({ getSourceList: () => ['ghost'], getSources: () => [] });
-      await router.initFlow();
-      expect(router.modal).toBeNull();
-      expect(router.activity).toBeNull();
-    });
-
-    it('forced ignores existing files and goes to start-from', async () => {
-      const { router } = setup({ hasFiles: () => true, getSourceList: () => [] });
-      await router.initFlow(true);
-      expect(router.activity).toBe(START_FROM);
-    });
-  });
-
-  describe('after-file-add hooks', () => {
-    it('runs the default navigation when no hook handles it', () => {
-      const { router } = setup();
-      router.navigateAfterFileAdd();
-      expect(router.activity).toBe(UPLOAD_LIST);
-      expect(router.modal).toBe(UPLOAD_LIST);
-    });
-
-    it('respects a hook that handles navigation (and unsubscribe stops it)', () => {
-      const { router } = setup();
-      const hook = vi.fn(() => true);
-      const unsub = router.registerAfterFileAddHook(hook);
-
-      router.navigateAfterFileAdd();
-      expect(hook).toHaveBeenCalledWith({ historyLength: 0 });
-      expect(router.activity).toBeNull(); // hook handled → no default nav
-
+      const unsub = router.hooks.beforeChange(() => NAVIGATE_CANCEL);
       unsub();
-      router.navigateAfterFileAdd();
-      expect(router.activity).toBe(UPLOAD_LIST); // default nav again
+      router.navigate('start-from');
+      expect(router.activity).toBe('start-from');
+    });
+
+    it('exposes ctx.defaults() (the proposed target) to beforeChange hooks', () => {
+      const { router } = setup();
+      let seen: unknown;
+      router.hooks.beforeChange((ctx) => {
+        seen = ctx.defaults();
+        return undefined;
+      });
+      router.navigate('start-from');
+      expect(seen).toBe('start-from');
+    });
+
+    it('registers onClose / onDone hooks without throwing', () => {
+      const { router } = setup();
+      expect(() => {
+        router.hooks.onClose(() => null);
+        router.hooks.onDone(() => null);
+      }).not.toThrow();
+    });
+  });
+
+  describe('history + back', () => {
+    it('pushes activated activities, deduping consecutive repeats', () => {
+      const { router } = setup();
+      router.navigate('start-from');
+      router.navigate('upload-list');
+      router.navigate('upload-list'); // same → no dup
+      expect(router.history).toEqual(['start-from', 'upload-list']);
+      expect(router.canGoBack).toBe(true);
+    });
+
+    it('caps history at 10 entries', () => {
+      const { router } = setup();
+      for (let i = 0; i < 14; i++) router.navigate(`a${i}`);
+      expect(router.history.length).toBe(10);
+      expect(router.history[router.history.length - 1]).toBe('a13');
+    });
+
+    it('back navigates to the previous entry', () => {
+      const { router } = setup();
+      router.navigate('start-from');
+      router.navigate('camera');
+
+      router.back();
+
+      expect(router.activity).toBe('start-from');
+    });
+
+    it('back closes everything when there is no previous entry', () => {
+      const { router } = setup();
+      router.navigate('start-from');
+      router.back();
+      expect(router.activity).toBeNull();
+    });
+
+    it('back on empty history closes everything (no throw)', () => {
+      const { router } = setup();
+      expect(() => router.back()).not.toThrow();
+      expect(router.activity).toBeNull();
+    });
+  });
+
+  describe('setActivity / openModal / closeModal', () => {
+    it('setActivity sets the background slot directly (bypasses beforeChange)', () => {
+      const { router } = setup();
+      router.hooks.beforeChange(() => NAVIGATE_CANCEL); // would block navigate()
+      router.setActivity('start-from', { x: 1 });
+      expect(router.activity).toBe('start-from');
+      expect(router.params).toEqual({ x: 1 });
+    });
+
+    it('setActivity to the same value is a no-op', () => {
+      const { router, emit } = setup();
+      router.setActivity('start-from');
+      emit.mockClear();
+      router.setActivity('start-from');
+      expect(emit).not.toHaveBeenCalled();
+    });
+
+    it('openModal emits MODAL_OPEN; a second open of the same id is a no-op', () => {
+      const { router, emit } = setup();
+      router.openModal('camera');
+      expect(router.modal).toBe('camera');
+      emit.mockClear();
+      router.openModal('camera');
+      expect(emit).not.toHaveBeenCalledWith(UploaderEventType.MODAL_OPEN, expect.anything());
+    });
+
+    it('closeModal emits MODAL_CLOSE only when a modal was open', () => {
+      const { router, emit } = setup();
+      router.closeModal(); // nothing open
+      expect(emit).not.toHaveBeenCalled();
+
+      router.openModal('camera');
+      emit.mockClear();
+      router.closeModal();
+      expect(router.modal).toBeNull();
+      expect(emit).toHaveBeenCalledWith(UploaderEventType.MODAL_CLOSE, {
+        activity: null,
+        modalId: null,
+        hasActiveModals: false,
+      });
+    });
+  });
+
+  describe('afterFileAdd', () => {
+    it('navigates to upload-list by default', () => {
+      const { router } = setup();
+      router.afterFileAdd();
+      expect(router.activity).toBe('upload-list');
+    });
+
+    it('respects an afterFileAdd hook returning null (stay closed)', () => {
+      const { router } = setup();
+      router.hooks.afterFileAdd(() => null);
+      router.afterFileAdd();
+      expect(router.activity).toBeNull();
+    });
+
+    it('cancels when the afterFileAdd hook returns NAVIGATE_CANCEL', () => {
+      const { router } = setup();
+      router.setActivity('start-from');
+      router.hooks.afterFileAdd(() => NAVIGATE_CANCEL);
+      router.afterFileAdd();
+      expect(router.activity).toBe('start-from'); // unchanged
+    });
+
+    it('exposes ctx.defaults() (upload-list) to afterFileAdd hooks', () => {
+      const { router } = setup();
+      let seen: unknown;
+      router.hooks.afterFileAdd((ctx) => {
+        seen = ctx.defaults();
+        return undefined;
+      });
+      router.afterFileAdd();
+      expect(seen).toBe('upload-list');
+    });
+  });
+
+  describe('traverse + route table', () => {
+    it('follows a static edge target from the route table', () => {
+      const { router } = setup();
+      router.configure({ activities: { 'start-from': { onBack: 'upload-list' } } });
+      router.setActivity('start-from');
+
+      router.traverse('onBack');
+
+      expect(router.activity).toBe('upload-list');
+    });
+
+    it('follows an edge handler', () => {
+      const { router } = setup();
+      router.configure({ activities: { 'start-from': { onBack: () => 'camera' } } });
+      router.setActivity('start-from');
+
+      router.traverse('onBack');
+
+      expect(router.activity).toBe('camera');
+    });
+
+    it('resolves an undefined edge to null (closes everything)', () => {
+      const { router } = setup();
+      router.setActivity('start-from');
+      router.traverse('onBack'); // no route configured → null
+      expect(router.activity).toBeNull();
+    });
+
+    it('runs the mapped hook for onCancel/onDone edges and can cancel', () => {
+      const { router } = setup();
+      router.configure({ activities: { 'start-from': { onCancel: 'upload-list' } } });
+      router.setActivity('start-from');
+      router.hooks.onCancel(() => NAVIGATE_CANCEL);
+
+      router.traverse('onCancel');
+
+      expect(router.activity).toBe('start-from'); // cancelled
+    });
+
+    it('is a no-op when there is no current activity', () => {
+      const { router, emit } = setup();
+      router.traverse('onBack');
+      expect(emit).not.toHaveBeenCalled();
+    });
+
+    it('passes a ctx.defaults() to edge handlers', () => {
+      const { router } = setup();
+      let seen: unknown = 'unset';
+      router.configure({
+        activities: {
+          'start-from': {
+            onBack: (ctx) => {
+              seen = ctx.defaults();
+              return 'camera';
+            },
+          },
+        },
+      });
+      router.setActivity('start-from');
+      router.traverse('onBack');
+      expect(seen).toBeNull();
+      expect(router.activity).toBe('camera');
+    });
+
+    it('maps the onFileAdd edge to the afterFileAdd hook chain', () => {
+      const { router } = setup();
+      router.configure({ activities: { 'start-from': { onFileAdd: 'upload-list' } } });
+      router.setActivity('start-from');
+      const hook = vi.fn(() => undefined);
+      router.hooks.afterFileAdd(hook);
+
+      router.traverse('onFileAdd');
+
+      expect(hook).toHaveBeenCalled();
+      expect(router.activity).toBe('upload-list');
+    });
+
+    it('uses plugin-registered routes as a fallback', () => {
+      const { router } = setup();
+      router.addPluginRoutes('start-from', { onDone: 'upload-list' });
+      router.setActivity('start-from');
+      router.traverse('onDone');
+      expect(router.activity).toBe('upload-list');
+    });
+
+    it('configure() defaults activities to an empty table', () => {
+      const { router } = setup();
+      expect(() => router.configure({})).not.toThrow();
+      router.setActivity('start-from');
+      router.traverse('onBack'); // no route → null
+      expect(router.activity).toBeNull();
+    });
+  });
+
+  describe('modal slot edges', () => {
+    it('replacing one open modal with another emits no extra open/close', () => {
+      const { router, emit } = setup();
+      router.openModal('camera');
+      emit.mockClear();
+
+      router.openModal('url'); // a modal was already open
+
+      expect(router.modal).toBe('url');
+      expect(emit).not.toHaveBeenCalledWith(UploaderEventType.MODAL_OPEN, expect.anything());
+      expect(emit).not.toHaveBeenCalledWith(UploaderEventType.MODAL_CLOSE, expect.anything());
     });
   });
 
@@ -361,14 +372,13 @@ describe('RouterController', () => {
       const { router } = setup();
       const onChange = vi.fn();
       router.subscribe(onChange);
-      router.registerAfterFileAddHook(() => true);
+      router.hooks.beforeChange(() => NAVIGATE_CANCEL);
 
       router.destroy();
 
-      router.setActivity(START_FROM);
+      router.navigate('start-from'); // hooks cleared → proceeds; listeners cleared → no notify
       expect(onChange).not.toHaveBeenCalled();
-      router.navigateAfterFileAdd(); // hooks cleared → default nav
-      expect(router.activity).toBe(UPLOAD_LIST);
+      expect(router.activity).toBe('start-from');
     });
   });
 });

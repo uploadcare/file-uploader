@@ -1,248 +1,341 @@
-import { ACTIVITY_TYPES } from '../../lit/activity-constants';
+import type { ActivityId } from '../../lit/activity-constants';
 import { UploaderEventType } from '../EventBus';
 import { Listeners } from '../host-subscription';
 
+export type EdgeTarget = ActivityId | null;
+export type EdgeHandler = (ctx: EdgeContext) => EdgeTarget;
+export type Edge = EdgeTarget | EdgeHandler;
+
 /**
- * Emit the router's documented events. Activity ids are typed as `string` here
- * (the honest runtime type — plugins register arbitrary ids); the documented
- * `ActivityType` view is bridged where this is wired to the block's `emit`.
+ * Hook return sentinel — short-circuits the navigation entirely (no activity
+ * change, no modal change). Distinct from `null` (which closes everything) and
+ * `undefined` (which lets the proposed target through).
+ */
+export const NAVIGATE_CANCEL: unique symbol = Symbol('uc:navigate-cancel');
+export type NavigateCancel = typeof NAVIGATE_CANCEL;
+
+export interface ActivityRoute {
+  onFileAdd?: Edge;
+  onCancel?: Edge;
+  onBack?: Edge;
+  onDone?: Edge;
+  onCapture?: Edge;
+  [custom: string]: Edge | undefined;
+}
+
+export interface RouteTable {
+  _doneActivity?: ActivityId | null;
+  activities?: Partial<Record<ActivityId, ActivityRoute>>;
+}
+
+export interface EdgeContext {
+  edge: string;
+  from: ActivityId;
+  proposed: EdgeTarget;
+  defaults: () => EdgeTarget;
+}
+
+type Hook = (ctx: EdgeContext) => EdgeTarget | NavigateCancel | undefined;
+
+/**
+ * Emit the router's documented events. Activity ids are typed as the stable
+ * `ActivityId`; the documented `ActivityType` view is bridged where this is
+ * wired to the block's telemetry-augmented `emit`.
  */
 type RouterEmit = {
-  (type: typeof UploaderEventType.ACTIVITY_CHANGE, payload: { activity: string | null }): void;
-  (type: typeof UploaderEventType.MODAL_OPEN, payload: { modalId: string }): void;
-  (type: typeof UploaderEventType.MODAL_CLOSE, payload: { modalId: string; hasActiveModals: boolean }): void;
+  (type: typeof UploaderEventType.ACTIVITY_CHANGE, payload: { activity: ActivityId | null }): void;
+  (type: typeof UploaderEventType.MODAL_OPEN, payload: { activity: ActivityId; modalId: ActivityId }): void;
+  (
+    type: typeof UploaderEventType.MODAL_CLOSE,
+    payload: { activity: ActivityId | null; modalId: ActivityId | null; hasActiveModals: boolean },
+  ): void;
 };
-
-/** A registered source as the init flow needs it (subset of the plugin source). */
-type RouterSource = { id: string; expand?: () => string[]; onSelect: () => void };
-
-type AfterFileAddContext = { historyLength: number };
-type AfterFileAddHook = (ctx: AfterFileAddContext) => boolean;
 
 export type RouterControllerDeps = {
   emit: RouterEmit;
-  /** Visibility gate: may this activity be opened right now? (e.g. UploadList only with files) */
-  couldOpenActivity: (activity: string) => boolean;
-  /** Whether an activity is recorded in history (v1 `historyTracked` blocks). */
-  isHistoryTracked: (activity: string) => boolean;
-  /** Solution exit activity (`--cfg-done-activity`). */
-  getDoneActivity: () => string | null;
-  /** Are there upload entries? (drives `initFlow`). */
-  hasFiles: () => boolean;
-  /** Configured `sourceList`. */
-  getSourceList: () => string[];
-  /** Resolves once plugins (and their sources) are registered. */
-  pluginsReady: () => Promise<void>;
-  /** Currently-registered plugin sources. */
-  getSources: () => readonly RouterSource[];
 };
 
 /**
- * DOM-free dual-slot router — the v2 replacement for the activity/modal engine
- * (v1's `LitActivityBlock` FSM + `ModalManager` + `RouterHooksLayer` + the
- * `*currentActivity` state + the public-API flow methods).
+ * v2-native dual-slot router. Tracks two independent activity slots:
  *
- * Two slots:
- * - `activity` (background): which activity is current. Activity elements show
- *   when `router.activity === their type`.
- * - `modal` (foreground): which activity's modal is shown. `<uc-modal>` shows
- *   when `router.modal === its id`. A single foreground slot (v1 ran one modal
- *   at a time in practice).
+ * - `activity` (background): what's rendered inline in the host (minimal's
+ *   trigger, inline's picker). v1 calls this `*currentActivity`.
+ * - `modal` (foreground): which activity is open in a modal. May be `null` or
+ *   differ from `activity` (minimal: background `start-from` trigger +
+ *   foreground `camera` modal). v1 keeps these decoupled via `modalManager`.
  *
- * Holds the state + transition logic; DOM concerns (element show/hide, dispatch)
- * live in the UI bridge that observes this controller. Collaborators are
- * injected, so it runs without a DOM and is unit-testable.
+ * `<uc-modal>` opens when `router.modal === its id`. Replaces v1's
+ * `LitActivityBlock` FSM + `ModalManager` + `RouterHooksLayer` +
+ * `*currentActivity`. DOM-free + unit-testable: collaborators are injected and
+ * the only side effect is the injected `emit`.
  */
 export class RouterController {
-  private _deps: RouterControllerDeps;
-  private _activity: string | null = null;
-  private _params: Record<string, unknown> = {};
-  private _modal: string | null = null;
-  private _history: string[] = [];
-  private _afterFileAddHooks: AfterFileAddHook[] = [];
+  private _emit: RouterEmit;
   private _listeners = new Listeners();
+  private _table: Required<Pick<RouteTable, 'activities'>> & RouteTable = { activities: {} };
+  private _activity: ActivityId | null = null;
+  private _modal: ActivityId | null = null;
+  private _params: Record<string, unknown> = {};
+  private _history: ActivityId[] = [];
+  private _hooks = {
+    beforeChange: [] as Hook[],
+    afterFileAdd: [] as Hook[],
+    onCancel: [] as Hook[],
+    onClose: [] as Hook[],
+    onDone: [] as Hook[],
+  };
+  private _pluginRoutes: Partial<Record<ActivityId, ActivityRoute>> = {};
 
   public constructor(deps: RouterControllerDeps) {
-    this._deps = deps;
+    this._emit = deps.emit;
   }
 
-  // ─── State accessors ───
-  public get activity(): string | null {
+  // ─── State (reactive reads) ───
+  public get activity(): ActivityId | null {
     return this._activity;
   }
-  public get params(): Record<string, unknown> {
-    return this._params;
-  }
-  public get modal(): string | null {
+  public get modal(): ActivityId | null {
     return this._modal;
   }
-  public get history(): readonly string[] {
+  public get params(): Readonly<Record<string, unknown>> {
+    return this._params;
+  }
+  public get history(): readonly ActivityId[] {
     return this._history;
   }
+  public get canGoBack(): boolean {
+    return this._history.length > 0;
+  }
 
-  /** Observe any router state change (activity/modal/params/history). */
   public subscribe(listener: () => void): () => void {
     return this._listeners.subscribe(listener);
   }
 
-  // ─── Activity slot ───
-
-  /** Set the background activity (does not open a modal — v1 parity). */
-  public setActivity(activity: string | null, params: Record<string, unknown> = {}): void {
-    this._params = params;
-    if (this._activity === activity) {
-      this._listeners.notify();
-      return;
-    }
-    this._activity = activity;
-    if (activity) {
-      this._flushHistory(activity);
-    } else {
-      this._history = [];
-    }
-    this._listeners.notify();
-    if (activity) {
-      this._deps.emit(UploaderEventType.ACTIVITY_CHANGE, { activity });
-    }
+  // ─── Route table ───
+  public configure(table: RouteTable): void {
+    this._table = { ...table, activities: table.activities ?? {} };
   }
 
-  public getCurrentActivity(): string | null {
-    return this._activity;
+  public addPluginRoutes(activityId: ActivityId, routes: ActivityRoute): void {
+    this._pluginRoutes[activityId] = routes;
   }
 
-  private _flushHistory(activity: string): void {
-    if (this._history.length > 10) {
-      this._history = this._history.slice(this._history.length - 11, this._history.length - 1);
-    }
-    if (activity && this._deps.isHistoryTracked(activity) && this._history[this._history.length - 1] !== activity) {
-      this._history.push(activity);
-    }
+  private _routeFor(activityId: ActivityId): ActivityRoute | undefined {
+    return this._table.activities[activityId] ?? this._pluginRoutes[activityId];
   }
 
-  // ─── Modal slot ───
+  // ─── Hooks ───
+  public readonly hooks = {
+    beforeChange: (h: Hook) => this._register('beforeChange', h),
+    afterFileAdd: (h: Hook) => this._register('afterFileAdd', h),
+    onCancel: (h: Hook) => this._register('onCancel', h),
+    onClose: (h: Hook) => this._register('onClose', h),
+    onDone: (h: Hook) => this._register('onDone', h),
+  };
 
-  public openModal(id: string): void {
-    if (!id) return;
-    this._modal = id;
-    this._listeners.notify();
-    this._deps.emit(UploaderEventType.MODAL_OPEN, { modalId: id });
-  }
-
-  public closeModal(id: string): void {
-    if (this._modal !== id) return;
-    this._modal = null;
-    this._listeners.notify();
-    this._deps.emit(UploaderEventType.MODAL_CLOSE, { modalId: id, hasActiveModals: false });
-  }
-
-  public closeAllModals(): void {
-    const closing = this._modal;
-    if (!closing) return;
-    this._modal = null;
-    this._listeners.notify();
-    this._deps.emit(UploaderEventType.MODAL_CLOSE, { modalId: closing, hasActiveModals: false });
-  }
-
-  /** Open/close the current activity's modal (documented `setModalState`). */
-  public setModalState(opened: boolean): void {
-    if (!opened) {
-      const activity = this._activity;
-      if (activity) this.closeModal(activity);
-      this.setActivity(null);
-      return;
-    }
-    if (!this._activity) {
-      console.warn(`Can't open modal without current activity. Please use "setCurrentActivity" method first.`);
-      return;
-    }
-    this.openModal(this._activity);
-  }
-
-  // ─── Flows ───
-
-  /** Go back through history, honoring `couldOpenActivity`; close all if none. */
-  public historyBack(): void {
-    const history = this._history;
-    let next = history.pop() ?? null;
-    // Skip entries equal to the current activity; stop when history is
-    // exhausted (`next === null`) — guarding the `activity === null` case from
-    // looping forever.
-    while (next !== null && next === this._activity) {
-      next = history.pop() ?? null;
-    }
-
-    const allowed = next ? this._deps.couldOpenActivity(next) : false;
-    const target = allowed ? next : null;
-
-    this.setActivity(target);
-    this._history = history;
-    if (target) {
-      this.openModal(target);
-    } else {
-      this.closeAllModals();
-    }
-  }
-
-  /** Solution exit (documented `doneFlow`). */
-  public doneFlow(): void {
-    const done = this._deps.getDoneActivity();
-    this.setActivity(done);
-    this._history = done ? [done] : [];
-    if (!this._activity) {
-      this.closeAllModals();
-    }
-  }
-
-  /** Open the start/upload-list flow (documented `initFlow`). */
-  public async initFlow(force = false): Promise<void> {
-    if (this._deps.hasFiles() && !force) {
-      this._openActivityAsModal(ACTIVITY_TYPES.UPLOAD_LIST);
-      return;
-    }
-
-    const sourceList = this._deps.getSourceList();
-    if (sourceList.length === 1) {
-      await this._deps.pluginsReady();
-      const sources = this._deps.getSources();
-      const registered = sources.find((s) => s.id === sourceList[0]);
-      if (registered) {
-        const expandedIds = registered.expand?.() ?? [sourceList[0]];
-        if (expandedIds.length === 1) {
-          (sources.find((s) => s.id === expandedIds[0]) ?? registered).onSelect();
-        } else {
-          this._openActivityAsModal(ACTIVITY_TYPES.START_FROM);
-        }
-        return;
-      }
-      if (this._activity) this.openModal(this._activity);
-    } else {
-      this._openActivityAsModal(ACTIVITY_TYPES.START_FROM);
-    }
-  }
-
-  private _openActivityAsModal(activity: string): void {
-    this.setActivity(activity);
-    this.openModal(activity);
-  }
-
-  // ─── After-file-add hooks (v1 RouterHooksLayer) ───
-
-  public registerAfterFileAddHook(hook: AfterFileAddHook): () => void {
-    this._afterFileAddHooks.push(hook);
+  private _register(name: keyof typeof this._hooks, h: Hook): () => void {
+    this._hooks[name].push(h);
     return () => {
-      this._afterFileAddHooks = this._afterFileAddHooks.filter((h) => h !== hook);
+      this._hooks[name] = this._hooks[name].filter((x) => x !== h);
     };
   }
 
-  public navigateAfterFileAdd(): void {
-    const handled = this._afterFileAddHooks.some((hook) => hook({ historyLength: this._history.length }));
-    if (!handled) {
-      this._openActivityAsModal(ACTIVITY_TYPES.UPLOAD_LIST);
+  /**
+   * Runs hooks registered under a single edge name. The global `beforeChange`
+   * hook lives in `navigate()` so it fires once per actual navigation.
+   */
+  private _runEdgeHooks(name: keyof typeof this._hooks, ctx: EdgeContext): EdgeTarget | NavigateCancel {
+    for (const hook of this._hooks[name]) {
+      const r = hook(ctx);
+      if (r === NAVIGATE_CANCEL) return NAVIGATE_CANCEL;
+      if (r !== undefined) return r;
+    }
+    return ctx.proposed;
+  }
+
+  // ─── Navigation ───
+
+  /**
+   * Per-preset strategy: given a navigation target, decide whether it goes in
+   * the background (`activity`) or foreground (`modal`) slot. Defaults to
+   * `'background'` (inline-preset behavior); the Uploader element overrides it
+   * per preset (regular → always foreground, inline → always background,
+   * minimal → `upload-list` background, else foreground).
+   */
+  public navigationStrategy: (to: ActivityId) => 'background' | 'foreground' = () => 'background';
+
+  /**
+   * Navigate to `to` via the preset `navigationStrategy`. `navigate(null)`
+   * closes everything. Runs `hooks.beforeChange` first — a hook may redirect
+   * (return an id), close everything (`null`), or cancel (`NAVIGATE_CANCEL`);
+   * `undefined` lets the proposed target through.
+   */
+  public navigate(to: EdgeTarget, params: Record<string, unknown> = {}): void {
+    const ctx: EdgeContext = {
+      edge: 'navigate',
+      from: this._activity ?? ('' as ActivityId),
+      proposed: to,
+      defaults: () => to,
+    };
+    let target: EdgeTarget = to;
+    for (const hook of this._hooks.beforeChange) {
+      const r = hook(ctx);
+      if (r === NAVIGATE_CANCEL) return;
+      if (r !== undefined) {
+        target = r;
+        break;
+      }
+    }
+    this._executeNavigate(target, params);
+  }
+
+  private _executeNavigate(to: EdgeTarget, params: Record<string, unknown>): void {
+    const paramsChanged = !shallowEqual(this._params, params);
+    this._params = params;
+    if (to === null) {
+      this._setModal(null);
+      this._setActivity(null);
+      return;
+    }
+    const slot = this.navigationStrategy(to);
+    const prevActivity = this._activity;
+    const prevModal = this._modal;
+    if (slot === 'background') {
+      // Close any open modal first — the inline content is the focus now.
+      this._setModal(null);
+      this._setActivity(to);
+    } else {
+      this._setModal(to);
+    }
+    // No slot change but params did — still notify so params-only updates fire.
+    if (paramsChanged && prevActivity === this._activity && prevModal === this._modal) {
+      this._listeners.notify();
+    }
+  }
+
+  /** Set the background activity directly (preset init); skips `beforeChange`. */
+  public setActivity(to: EdgeTarget, params: Record<string, unknown> = {}): void {
+    this._params = params;
+    this._setActivity(to);
+  }
+
+  private _setActivity(to: EdgeTarget): void {
+    if (to === this._activity) return;
+    this._activity = to;
+    this._pushHistory(to);
+    this._emit(UploaderEventType.ACTIVITY_CHANGE, { activity: to });
+    this._listeners.notify();
+  }
+
+  private _setModal(to: EdgeTarget): void {
+    if (to === this._modal) return;
+    const wasOpen = this._modal !== null;
+    this._modal = to;
+    if (to === null && wasOpen) {
+      this._emit(UploaderEventType.MODAL_CLOSE, { activity: null, modalId: null, hasActiveModals: false });
+    } else if (to !== null && !wasOpen) {
+      this._emit(UploaderEventType.MODAL_OPEN, { activity: to, modalId: to });
+    }
+    this._pushHistory(to);
+    this._emit(UploaderEventType.ACTIVITY_CHANGE, { activity: to });
+    this._listeners.notify();
+  }
+
+  /**
+   * v1-compatible history: each activated activity pushes itself; going to
+   * `null` clears. `history.length > 0` answers "navigated to any activity
+   * since the last close" — DynamicBtn uses it to decide the post-file-add modal.
+   */
+  private _pushHistory(to: EdgeTarget): void {
+    if (to === null) {
+      this._history = [];
+      return;
+    }
+    if (this._history[this._history.length - 1] === to) return;
+    this._history.push(to);
+    if (this._history.length > 10) this._history.shift();
+  }
+
+  /** Open a modal for `id` without touching the background activity. */
+  public openModal(id: ActivityId): void {
+    this._setModal(id);
+  }
+
+  /** Close the foreground modal; keeps the background activity. */
+  public closeModal(): void {
+    this._setModal(null);
+  }
+
+  /**
+   * v1-compatible "after file add" routing. Default: navigate to `upload-list`;
+   * `hooks.afterFileAdd` may override (DynamicBtn returns `null` with no history
+   * so the modal stays closed and the inline button shows status).
+   */
+  public afterFileAdd(): void {
+    const ctx: EdgeContext = {
+      edge: 'onFileAdd',
+      from: this._activity ?? ('' as ActivityId),
+      proposed: 'upload-list' as ActivityId,
+      defaults: () => 'upload-list' as ActivityId,
+    };
+    const final = this._runEdgeHooks('afterFileAdd', ctx);
+    if (final === NAVIGATE_CANCEL) return;
+    this.navigate(final);
+  }
+
+  /** Traverse a named edge of the current activity's route. */
+  public traverse(edge: string): void {
+    if (!this._activity) return;
+    const route = this._routeFor(this._activity);
+    const proposed = this._resolveEdge(route?.[edge]);
+    const ctx: EdgeContext = { edge, from: this._activity, proposed, defaults: () => proposed };
+    const hookName = this._hookNameForEdge(edge);
+    const final = hookName ? this._runEdgeHooks(hookName, ctx) : proposed;
+    if (final === NAVIGATE_CANCEL) return;
+    this.navigate(final);
+  }
+
+  private _resolveEdge(e: Edge | undefined): EdgeTarget {
+    if (e === undefined) return null;
+    if (typeof e === 'function') {
+      return e({ edge: '', from: this._activity ?? ('' as ActivityId), proposed: null, defaults: () => null });
+    }
+    return e;
+  }
+
+  private _hookNameForEdge(edge: string): keyof typeof this._hooks | null {
+    if (edge === 'onFileAdd') return 'afterFileAdd';
+    if (edge === 'onCancel') return 'onCancel';
+    if (edge === 'onDone') return 'onDone';
+    return null;
+  }
+
+  /**
+   * Pop the current activity off history and navigate to the previous one (or
+   * close everything if history is empty). History stores `[...past, current]`,
+   * so we pop the current entry then peek the new top.
+   */
+  public back(): void {
+    this._history.pop(); // drop current
+    const prev = this._history[this._history.length - 1];
+    if (prev) {
+      this._history.pop(); // navigate(prev) re-pushes it
+      this.navigate(prev);
+    } else {
+      this.navigate(null);
     }
   }
 
   public destroy(): void {
     this._listeners.clear();
-    this._afterFileAddHooks = [];
+    this._hooks = { beforeChange: [], afterFileAdd: [], onCancel: [], onClose: [], onDone: [] };
   }
+}
+
+function shallowEqual(a: Record<string, unknown>, b: Record<string, unknown>): boolean {
+  if (a === b) return true;
+  const ak = Object.keys(a);
+  const bk = Object.keys(b);
+  if (ak.length !== bk.length) return false;
+  return ak.every((k) => a[k] === b[k]);
 }
