@@ -178,7 +178,13 @@ milestone per PR. **Full plan: [`MIGRATION-PLAN.md`](./MIGRATION-PLAN.md).**
 3. **Don't loosen tests or swallow errors** to make something pass. Fan-out
    paths isolate-and-warn (see `EventBus.emit` / `Listeners.notify`); follow
    that pattern rather than hiding failures.
-4. **One concern per PR**, with a Conventional-Commit title and the gate green.
-5. **Match surrounding code** — comment density, naming, idioms.
-6. **Don't `git stash pop` blindly** — a pre-existing user stash
+4. **Write disciplined TypeScript.** Invoke the `typescript` skill when writing
+   non-trivial TypeScript. Avoid unnecessary type assertions and `any`/`unknown`
+   — prefer precise types, generics, and narrowing. Reserve casts for genuine
+   boundaries (test mocks of large types, branded-type bridges, conditional-type
+   defaults) and keep them as narrow as possible (`as { type?: string }`, not
+   `as any`). `tsc:test` (run by the pre-commit hook) type-checks test files too.
+5. **One concern per PR**, with a Conventional-Commit title and the gate green.
+6. **Match surrounding code** — comment density, naming, idioms.
+7. **Don't `git stash pop` blindly** — a pre-existing user stash
    (`temp-package-json-before-release-branch`) conflicts on `package.json`.
