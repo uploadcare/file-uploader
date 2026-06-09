@@ -40,6 +40,12 @@ export default defineConfig({
         test: {
           name: 'e2e',
           include: ['./**/*.e2e.test.ts', './**/*.e2e.test.tsx'],
+          // Browser e2e tests can flake under full parallel load (e.g. the
+          // cloud-image-editor `uc-crop-frame` locator loses a render race
+          // that passes reliably in isolation). Retry once so a transient
+          // flake can't fail the gate; a genuine regression still fails both
+          // attempts.
+          retry: 1,
           expect: {
             poll: {
               timeout: 20_000,
