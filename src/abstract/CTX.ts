@@ -5,18 +5,8 @@ import type { LazyPluginEntry } from './managers/plugin/LazyPluginLoader';
 
 export const blockCtx = () => ({});
 
-export const activityBlockCtx = (fnCtx: LitBlock) => ({
+export const activityBlockCtx = (_fnCtx: LitBlock) => ({
   ...blockCtx(),
-  '*currentActivity': null,
-  '*currentActivityParams': {},
-
-  '*history': [],
-  '*historyBack': null,
-  '*closeModal': () => {
-    fnCtx.modalManager?.close(fnCtx.$['*currentActivity']);
-
-    fnCtx.pub('*currentActivity', null);
-  },
 });
 
 export const uploaderBlockCtx = (fnCtx: LitBlock) => ({

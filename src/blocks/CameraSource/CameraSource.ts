@@ -683,7 +683,7 @@ export class CameraSource extends LitUploaderBlock {
   private _toSend = (file: File): void => {
     this.api.addFileFromObject(file, { source: UploadSource.CAMERA });
 
-    this.routerLayer.navigateAfterFileAdd();
+    this.router.afterFileAdd();
   };
 
   private get _cameraModes(): CameraMode[] {
@@ -982,7 +982,7 @@ export class CameraSource extends LitUploaderBlock {
         <button
           type="button"
           class="uc-mini-btn"
-          @click=${this.$['*historyBack']}
+          @click=${this.historyBack}
           title=${this.l10n('back')}
         >
           <uc-icon name="back"></uc-icon>
@@ -1001,7 +1001,7 @@ export class CameraSource extends LitUploaderBlock {
         <button
           type="button"
           class="uc-mini-btn uc-close-btn"
-          @click=${this.$['*closeModal']}
+          @click=${() => this.router.navigate(null)}
           title=${this.l10n('a11y-activity-header-button-close')}
           aria-label=${this.l10n('a11y-activity-header-button-close')}
         >

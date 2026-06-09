@@ -25,7 +25,6 @@ export type Summary = {
 
 export class UploadList extends LitUploaderBlock {
   public override couldBeCtxOwner = true;
-  protected override historyTracked = true;
   public override activityType = LitActivityBlock.activities.UPLOAD_LIST;
 
   @state()
@@ -103,7 +102,7 @@ export class UploadList extends LitUploaderBlock {
     }
     this._updateUploadsState();
 
-    if (!this.couldOpenActivity && this.$['*currentActivity'] === this.activityType) {
+    if (!this.couldOpenActivity && this.router.currentActivity === this.activityType) {
       this.historyBack();
     }
 
@@ -196,9 +195,9 @@ export class UploadList extends LitUploaderBlock {
       this.setAttribute('mode', mode);
     });
 
-    this.sub('*currentActivity', (currentActivity) => {
+    this.subActivity((currentActivity) => {
       if (!this.couldOpenActivity && currentActivity === this.activityType) {
-        this.$['*currentActivity'] = this.initActivity;
+        this.router.navigate(this.initActivity);
       }
     });
 
@@ -232,7 +231,7 @@ export class UploadList extends LitUploaderBlock {
     <button
       type="button"
       class="uc-mini-btn uc-close-btn"
-      @click=${this.$['*closeModal']}
+      @click=${() => this.router.navigate(null)}
       title=${this.l10n('a11y-activity-header-button-close')}
       aria-label=${this.l10n('a11y-activity-header-button-close')}
     >

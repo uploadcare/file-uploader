@@ -57,7 +57,7 @@ export class PluginActivityHost extends LitActivityBlock {
 
     this._disposeActivity();
 
-    const activityParams = this.$['*currentActivityParams'];
+    const activityParams = this.router.params;
     try {
       this._dispose = this.registration.render(container, activityParams) ?? undefined;
     } catch (error) {

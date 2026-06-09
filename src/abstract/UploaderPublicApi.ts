@@ -229,7 +229,7 @@ export class UploaderPublicApi extends SharedInstance {
           });
         });
         // To call uploadTrigger UploadList should draw file items first.
-        this._sharedInstancesBag.routerLayer.navigateAfterFileAdd();
+        this._sharedInstancesBag.router.afterFileAdd();
         fileInput.remove();
       },
       {
@@ -302,9 +302,9 @@ export class UploaderPublicApi extends SharedInstance {
   }
 
   public initFlow = (force = false): void => {
+    const router = this._sharedInstancesBag.router;
     if (this._uploadCollection.size > 0 && !force) {
-      this._ctx.pub('*currentActivity', ACTIVITY_TYPES.UPLOAD_LIST);
-      this._sharedInstancesBag.modalManager?.open(ACTIVITY_TYPES.UPLOAD_LIST);
+      router.navigate(ACTIVITY_TYPES.UPLOAD_LIST);
     } else {
       if (this._sourceList?.length === 1) {
         const srcKey = this._sourceList[0];
@@ -320,19 +320,18 @@ export class UploaderPublicApi extends SharedInstance {
               const target = sources.find((s) => s.id === expandedIds[0]) ?? registeredSource;
               target.onSelect();
             } else {
-              this._ctx.pub('*currentActivity', ACTIVITY_TYPES.START_FROM);
-              this._sharedInstancesBag.modalManager?.open(ACTIVITY_TYPES.START_FROM);
+              router.navigate(ACTIVITY_TYPES.START_FROM);
             }
             return;
           }
 
-          if (this._ctx.read('*currentActivity')) {
-            this._sharedInstancesBag.modalManager?.open(this._ctx.read('*currentActivity'));
+          const current = router.currentActivity;
+          if (current) {
+            router.openModal(current);
           }
         });
       } else {
-        this._ctx.pub('*currentActivity', ACTIVITY_TYPES.START_FROM);
-        this._sharedInstancesBag.modalManager?.open(ACTIVITY_TYPES.START_FROM);
+        router.navigate(ACTIVITY_TYPES.START_FROM);
       }
     }
   };
@@ -345,10 +344,13 @@ export class UploaderPublicApi extends SharedInstance {
     if (!activityBlock) {
       return;
     }
-    this._ctx.pub('*currentActivity', activityBlock.doneActivity);
-    this._ctx.pub('*history', activityBlock.doneActivity ? [activityBlock.doneActivity] : []);
-    if (!this._ctx.read('*currentActivity')) {
-      this._sharedInstancesBag.modalManager?.closeAll();
+    // Reset the router: clearing everything (also wipes history) then opening
+    // the configured done-activity, mirroring v1's `currentActivity =
+    // doneActivity` + `history = [doneActivity]`.
+    const router = this._sharedInstancesBag.router;
+    router.navigate(null);
+    if (activityBlock.doneActivity) {
+      router.navigate(activityBlock.doneActivity);
     }
   };
 
@@ -366,8 +368,14 @@ export class UploaderPublicApi extends SharedInstance {
       : []
   ) => {
     void this._pluginsReady().then(() => {
-      this._ctx.pub('*currentActivityParams', params[0] ?? {});
-      this._ctx.pub('*currentActivity', activityType);
+      // `setCurrentActivity(null)` means "no current activity" — close every
+      // slot (background + modal). Otherwise set the background activity (no
+      // modal); a paired `setModalState(true)` opens it in the modal slot.
+      if (activityType === null) {
+        this._sharedInstancesBag.router.navigate(null);
+        return;
+      }
+      this._sharedInstancesBag.router.setActivity(activityType, params[0] ?? {});
       waitForBlockInCtx(
         this._sharedInstancesBag.blocksRegistry,
         (b) => (b as LitActivityBlock).activityType === activityType,
@@ -384,23 +392,27 @@ export class UploaderPublicApi extends SharedInstance {
   };
 
   public getCurrentActivity = (): ActivityType => {
-    return this._ctx.read('*currentActivity');
+    return this._sharedInstancesBag.router.currentActivity;
   };
 
   public historyBack = (): void => {
-    const fn = this._ctx.read('*historyBack');
-    fn?.();
+    this._sharedInstancesBag.router.back();
   };
 
   public setModalState = (opened: boolean): void => {
     void this._pluginsReady().then(() => {
+      const router = this._sharedInstancesBag.router;
       if (!opened) {
-        this._sharedInstancesBag.modalManager?.close(this._ctx.read('*currentActivity'));
-        this._ctx.pub('*currentActivity', null);
+        // Close everything (matches v1: close the modal + null the activity,
+        // which also cleared history).
+        router.navigate(null);
         return;
       }
 
-      const activityType = this._ctx.read('*currentActivity');
+      // Open the modal for the *intended* activity — the one `setCurrentActivity`
+      // put in the background slot — not the effective current activity (which,
+      // if a modal is already open, is that stale modal and would no-op).
+      const activityType = router.activity ?? router.currentActivity;
       if (!activityType) {
         console.warn(`Can't open modal without current activity. Please use "setCurrentActivity" method first.`);
         return;
@@ -413,7 +425,7 @@ export class UploaderPublicApi extends SharedInstance {
           onTimeout: () => console.warn(`Activity block "${activityType}" not found in the context`),
         },
       ).then(() => {
-        this._sharedInstancesBag.modalManager?.open(activityType);
+        router.openModal(activityType);
       });
     });
   };

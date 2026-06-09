@@ -1,16 +1,16 @@
 import { activityBlockCtx } from '../abstract/CTX';
 import type { ActivityParams as CloudImageEditorActivityParams } from '../blocks/CloudImageEditorActivity/CloudImageEditorActivity';
 import type { ActivityParams as ExternalSourceActivityParams } from '../blocks/ExternalSource/ExternalSource';
-import { EventType } from '../blocks/UploadCtxProvider/EventEmitter';
-import { debounce } from '../utils/debounce';
-import { ACTIVITY_TYPES, type ActivityType, type RegisteredActivityType } from './activity-constants';
+import {
+  ACTIVITY_TYPES,
+  type ActivityType,
+  type CustomActivities,
+  type RegisteredActivityType,
+} from './activity-constants';
 import { LitBlock } from './LitBlock';
 
 const ACTIVE_ATTR = 'active';
 const ACTIVE_PROP = '___ACTIVITY_IS_ACTIVE___';
-
-// biome-ignore lint/suspicious/noEmptyInterface: This is user augmented interface
-export interface CustomActivities {}
 
 export type ActivityParamsMap = {
   'cloud-image-edit': CloudImageEditorActivityParams;
@@ -20,15 +20,11 @@ export type ActivityParamsMap = {
 };
 
 export class LitActivityBlock extends LitBlock {
-  protected historyTracked = false;
-
   public activityType: ActivityType = null;
 
   private [ACTIVE_PROP]?: boolean;
 
   public override init$ = activityBlockCtx(this);
-
-  private _debouncedHistoryFlush = debounce(this._historyFlush.bind(this), 10);
 
   private _deactivate(): void {
     const actDesc = LitActivityBlock._activityCallbacks.get(this);
@@ -39,16 +35,9 @@ export class LitActivityBlock extends LitBlock {
 
   private _activate(): void {
     const actDesc = LitActivityBlock._activityCallbacks.get(this);
-    this.$['*historyBack'] = this.historyBack.bind(this);
     this[ACTIVE_PROP] = true;
     this.setAttribute(ACTIVE_ATTR, '');
     actDesc?.activateCallback?.();
-
-    this._debouncedHistoryFlush();
-
-    this.emit(EventType.ACTIVITY_CHANGE, {
-      activity: this.activityType,
-    });
   }
 
   // must match visibility of base class
@@ -60,37 +49,28 @@ export class LitActivityBlock extends LitBlock {
       if (!this.hasAttribute('activity')) {
         this.setAttribute('activity', this.activityType);
       }
-      this.sub('*currentActivity', (val: string | null) => {
+      // v2 composition: a block picks its slot by DOM location. Blocks inside a
+      // `<uc-modal>` track the foreground slot (`router.modal`); inline blocks
+      // track the background slot (`router.activity`). This lets minimal's two
+      // `<uc-start-from>` elements (same `activityType`, different DOM scopes)
+      // light up under different conditions. History and the `activity-change`
+      // event are owned by the RouterController.
+      this.subRouter(() => {
+        const isInModal = this.closest('uc-modal') !== null;
+        const slot = isInModal ? this.router.modal : this.router.activity;
+        const shouldBeActive = slot === this.activityType;
         try {
-          if (this.activityType !== val && this[ACTIVE_PROP]) {
+          if (!shouldBeActive && this[ACTIVE_PROP]) {
             this._deactivate();
-          } else if (this.activityType === val && !this[ACTIVE_PROP]) {
+          } else if (shouldBeActive && !this[ACTIVE_PROP]) {
             this._activate();
           }
         } catch (err) {
           this.telemetryManager.sendEventError(err, `activity "${this.activityType}"`);
           console.error(`Error in activity "${this.activityType}". `, err);
-          const nextActivity = this.$['*history'][this.$['*history'].length - 1] as RegisteredActivityType | undefined;
-          this.$['*currentActivity'] = nextActivity ?? null;
-        }
-
-        if (!val) {
-          this.$['*history'] = [];
+          this.router.back();
         }
       });
-    }
-  }
-
-  private _historyFlush(): void {
-    let history = this.$['*history'];
-    if (history) {
-      if (history.length > 10) {
-        history = history.slice(history.length - 11, history.length - 1);
-      }
-      if (this.historyTracked && history[history.length - 1] !== this.activityType) {
-        history.push(this.activityType);
-      }
-      this.$['*history'] = history;
     }
   }
 
@@ -149,7 +129,7 @@ export class LitActivityBlock extends LitBlock {
   }
 
   public get activityParams(): ActivityParamsMap[keyof ActivityParamsMap] {
-    return this.$['*currentActivityParams'] as ActivityParamsMap[keyof ActivityParamsMap];
+    return this.router.params as ActivityParamsMap[keyof ActivityParamsMap];
   }
 
   public get initActivity(): RegisteredActivityType | null {
@@ -161,37 +141,10 @@ export class LitActivityBlock extends LitBlock {
   }
 
   public historyBack(): void {
-    const history = this.$['*history'];
-
-    if (history) {
-      let nextActivity = history.pop() as RegisteredActivityType | null;
-
-      while (nextActivity === this.activityType) {
-        nextActivity = history.pop() as RegisteredActivityType | null;
-      }
-
-      let couldOpenActivity = !!nextActivity;
-      if (nextActivity) {
-        const nextLitActivityBlock = [...this.blocksRegistry].find(
-          (block) => (block as LitActivityBlock).activityType === nextActivity,
-        );
-        couldOpenActivity = (nextLitActivityBlock as LitActivityBlock | undefined)?.couldOpenActivity ?? false;
-      }
-
-      nextActivity = couldOpenActivity ? (nextActivity as RegisteredActivityType | null) : null;
-
-      this.$['*currentActivity'] = (nextActivity as RegisteredActivityType | null) ?? null;
-
-      if (nextActivity) this.modalManager?.open(nextActivity as RegisteredActivityType);
-      this.$['*history'] = history;
-
-      if (!nextActivity) {
-        this.modalManager?.closeAll();
-      }
-    }
+    this.router.back();
   }
 }
 
 LitActivityBlock.activities = ACTIVITY_TYPES;
 
-export type { RegisteredActivityType, ActivityType };
+export type { RegisteredActivityType, ActivityType, CustomActivities };

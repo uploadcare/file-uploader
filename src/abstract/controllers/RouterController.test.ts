@@ -35,7 +35,8 @@ describe('RouterController (v2)', () => {
 
       expect(router.modal).toBe('camera');
       expect(router.activity).toBeNull();
-      expect(emit).toHaveBeenCalledWith(UploaderEventType.MODAL_OPEN, { activity: 'camera', modalId: 'camera' });
+      expect(router.currentActivity).toBe('camera');
+      expect(emit).toHaveBeenCalledWith(UploaderEventType.MODAL_OPEN, { modalId: 'camera' });
     });
 
     it('a background navigation closes an open modal first', () => {
@@ -226,8 +227,7 @@ describe('RouterController (v2)', () => {
       router.closeModal();
       expect(router.modal).toBeNull();
       expect(emit).toHaveBeenCalledWith(UploaderEventType.MODAL_CLOSE, {
-        activity: null,
-        modalId: null,
+        modalId: 'camera',
         hasActiveModals: false,
       });
     });

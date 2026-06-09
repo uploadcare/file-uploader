@@ -39,17 +39,15 @@ export interface EdgeContext {
 type Hook = (ctx: EdgeContext) => EdgeTarget | NavigateCancel | undefined;
 
 /**
- * Emit the router's documented events. Activity ids are typed as the strict
- * `ActivityId`; the documented `ActivityType` view is bridged where this is
- * wired to the block's telemetry-augmented `emit`.
+ * Emit the router's documented events with their exact documented payloads
+ * (see `UploaderEventPayload` in `EventBus`). Activity ids are typed as the
+ * strict `ActivityId`; the documented `ActivityType` view is bridged where this
+ * is wired to the block's telemetry-augmented `emit`.
  */
 type RouterEmit = {
   (type: typeof UploaderEventType.ACTIVITY_CHANGE, payload: { activity: ActivityId | null }): void;
-  (type: typeof UploaderEventType.MODAL_OPEN, payload: { activity: ActivityId; modalId: ActivityId }): void;
-  (
-    type: typeof UploaderEventType.MODAL_CLOSE,
-    payload: { activity: ActivityId | null; modalId: ActivityId | null; hasActiveModals: boolean },
-  ): void;
+  (type: typeof UploaderEventType.MODAL_OPEN, payload: { modalId: ActivityId }): void;
+  (type: typeof UploaderEventType.MODAL_CLOSE, payload: { modalId: ActivityId; hasActiveModals: boolean }): void;
 };
 
 export type RouterControllerDeps = {
@@ -97,6 +95,14 @@ export class RouterController {
   }
   public get modal(): ActivityId | null {
     return this._modal;
+  }
+  /**
+   * The single "effective" activity — the foreground modal if one is open,
+   * otherwise the background activity. This is the v1 `*currentActivity`
+   * semantics: what the activity FSM activates on and what most readers want.
+   */
+  public get currentActivity(): ActivityId | null {
+    return this._modal ?? this._activity;
   }
   public get params(): Readonly<Record<string, unknown>> {
     return this._params;
@@ -191,54 +197,51 @@ export class RouterController {
   }
 
   private _executeNavigate(to: EdgeTarget, params: Record<string, unknown>): void {
-    const paramsChanged = !shallowEqual(this._params, params);
     this._params = params;
     if (to === null) {
-      this._setModal(null);
-      this._setActivity(null);
+      this._transition(null, null);
       return;
     }
-    const slot = this.navigationStrategy(to);
-    const prevActivity = this._activity;
-    const prevModal = this._modal;
-    if (slot === 'background') {
-      // Close any open modal first — the inline content is the focus now.
-      this._setModal(null);
-      this._setActivity(to);
+    // A background target closes any open modal first — the inline content is
+    // the focus now; a foreground target leaves the background slot untouched.
+    if (this.navigationStrategy(to) === 'background') {
+      this._transition(to, null);
     } else {
-      this._setModal(to);
-    }
-    // No slot change but params did — still notify so params-only updates fire.
-    if (paramsChanged && prevActivity === this._activity && prevModal === this._modal) {
-      this._listeners.notify();
+      this._transition(this._activity, to);
     }
   }
 
   /** Set the background activity directly (preset init); skips `beforeChange`. */
   public setActivity(to: EdgeTarget, params: Record<string, unknown> = {}): void {
     this._params = params;
-    this._setActivity(to);
+    this._transition(to, this._modal);
   }
 
-  private _setActivity(to: EdgeTarget): void {
-    if (to === this._activity) return;
-    this._activity = to;
-    this._pushHistory(to);
-    this._emit(UploaderEventType.ACTIVITY_CHANGE, { activity: to });
-    this._listeners.notify();
-  }
+  /**
+   * Apply a new pair of slot values, emitting the documented events for the
+   * transitions that actually happened:
+   * - `MODAL_OPEN` when the modal slot goes closed → open,
+   * - `MODAL_CLOSE` (carrying the id that closed) when it goes open → closed,
+   * - `ACTIVITY_CHANGE` whenever the *effective* activity changes.
+   * Always notifies subscribers, so params-only updates still re-render.
+   */
+  private _transition(nextActivity: EdgeTarget, nextModal: EdgeTarget): void {
+    const prevModal = this._modal;
+    const prevEffective = this.currentActivity;
+    this._activity = nextActivity;
+    this._modal = nextModal;
+    const nextEffective = this.currentActivity;
 
-  private _setModal(to: EdgeTarget): void {
-    if (to === this._modal) return;
-    const wasOpen = this._modal !== null;
-    this._modal = to;
-    if (to === null && wasOpen) {
-      this._emit(UploaderEventType.MODAL_CLOSE, { activity: null, modalId: null, hasActiveModals: false });
-    } else if (to !== null && !wasOpen) {
-      this._emit(UploaderEventType.MODAL_OPEN, { activity: to, modalId: to });
+    if (prevModal === null && nextModal !== null) {
+      this._emit(UploaderEventType.MODAL_OPEN, { modalId: nextModal });
+    } else if (prevModal !== null && nextModal === null) {
+      this._emit(UploaderEventType.MODAL_CLOSE, { modalId: prevModal, hasActiveModals: false });
     }
-    this._pushHistory(to);
-    this._emit(UploaderEventType.ACTIVITY_CHANGE, { activity: to });
+
+    if (nextEffective !== prevEffective) {
+      this._pushHistory(nextEffective);
+      this._emit(UploaderEventType.ACTIVITY_CHANGE, { activity: nextEffective });
+    }
     this._listeners.notify();
   }
 
@@ -259,12 +262,12 @@ export class RouterController {
 
   /** Open a modal for `id` without touching the background activity. */
   public openModal(id: ActivityId): void {
-    this._setModal(id);
+    this._transition(this._activity, id);
   }
 
   /** Close the foreground modal; keeps the background activity. */
   public closeModal(): void {
-    this._setModal(null);
+    this._transition(this._activity, null);
   }
 
   /**
@@ -331,12 +334,4 @@ export class RouterController {
     this._listeners.clear();
     this._hooks = { beforeChange: [], afterFileAdd: [], onCancel: [], onClose: [], onDone: [] };
   }
-}
-
-function shallowEqual(a: Record<string, unknown>, b: Record<string, unknown>): boolean {
-  if (a === b) return true;
-  const ak = Object.keys(a);
-  const bk = Object.keys(b);
-  if (ak.length !== bk.length) return false;
-  return ak.every((k) => a[k] === b[k]);
 }

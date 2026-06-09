@@ -59,12 +59,19 @@ export function buildPluginApi(
 
   const activityApi: PluginActivityApi = {
     getParams: (): Record<string, unknown> => {
-      return ctx.read('*currentActivityParams') as Record<string, unknown>;
+      return sharedInstancesBag.router.params as Record<string, unknown>;
     },
 
     subscribeToParams: (callback: (params: Record<string, unknown>) => void): (() => void) => {
-      const unsub = ctx.sub('*currentActivityParams', (params) => {
-        callback(params as Record<string, unknown>);
+      const router = sharedInstancesBag.router;
+      let last = router.params;
+      // Fire immediately with the current params (matches v1's `ctx.sub`).
+      callback(last as Record<string, unknown>);
+      const unsub = router.subscribe(() => {
+        if (router.params !== last) {
+          last = router.params;
+          callback(router.params as Record<string, unknown>);
+        }
       });
       configSubscriptions.push(unsub);
       return unsub;

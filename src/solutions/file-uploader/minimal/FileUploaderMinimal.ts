@@ -1,7 +1,5 @@
 import { html } from 'lit';
 import { state } from 'lit/decorators.js';
-import type { ModalCb } from '../../../abstract/managers/ModalManager';
-import { ModalEvents } from '../../../abstract/managers/ModalManager';
 import { InternalEventType } from '../../../blocks/UploadCtxProvider/EventEmitter';
 import { LitActivityBlock, type RegisteredActivityType } from '../../../lit/LitActivityBlock';
 import { LitSolutionBlock } from '../../../lit/LitSolutionBlock';
@@ -17,9 +15,6 @@ import '../../../blocks/SourceList/SourceList';
 import '../../../blocks/CloudImageEditorActivity/CloudImageEditorActivity';
 import '../../../blocks/PluginActivityRenderer/PluginActivityRenderer';
 
-const ACTIVE_CLASS = 'active';
-const EMPTY_CLASS = '';
-
 type BaseInitState = InstanceType<typeof LitSolutionBlock>['init$'];
 type FileUploaderMinimalInitState = BaseInitState;
 
@@ -33,15 +28,6 @@ export class FileUploaderMinimal extends LitSolutionBlock {
 
   @state()
   private _singleUpload = false;
-
-  @state()
-  private _isHiddenStartFrom = false;
-
-  @state()
-  private _classUploadList = EMPTY_CLASS;
-
-  @state()
-  private _classStartFrom = EMPTY_CLASS;
 
   @state()
   private _buttonTextKey = 'choose-file';
@@ -61,33 +47,6 @@ export class FileUploaderMinimal extends LitSolutionBlock {
     } as FileUploaderMinimalInitState;
   }
 
-  private _handleModalOpen = (data: Parameters<ModalCb>[0]): void => {
-    if (data.id === LitActivityBlock.activities.CLOUD_IMG_EDIT) {
-      this._classUploadList = ACTIVE_CLASS;
-    }
-
-    if (this.$['*currentActivity'] === LitActivityBlock.activities.UPLOAD_LIST) {
-      this._classUploadList = ACTIVE_CLASS;
-      this._isHiddenStartFrom = true;
-    }
-
-    const uploadList = this.$['*uploadList'] as unknown[] | undefined;
-    if (!uploadList || uploadList.length <= 0) {
-      this._classStartFrom = ACTIVE_CLASS;
-    }
-  };
-
-  private _handleModalClose = (data: Parameters<ModalCb>[0]): void => {
-    if (data.id === this.$['*currentActivity']) {
-      this.$['*currentActivity'] = LitActivityBlock.activities.UPLOAD_LIST;
-      this._isHiddenStartFrom = false;
-    }
-
-    if (data.id === LitActivityBlock.activities.CLOUD_IMG_EDIT) {
-      this.$['*currentActivity'] = LitActivityBlock.activities.UPLOAD_LIST;
-    }
-  };
-
   public override initCallback(): void {
     super.initCallback();
 
@@ -97,24 +56,28 @@ export class FileUploaderMinimal extends LitSolutionBlock {
 
     const initActivity = this._getInitActivity();
 
-    this.sub('*currentActivity', (val: string | null) => {
-      if (val === LitActivityBlock.activities.UPLOAD_LIST) {
-        this.modalManager?.closeAll();
-      }
+    // Minimal layers a modal source picker over a persistent inline view: the
+    // upload list is the *background* (it replaces the inline trigger once files
+    // exist, no modal); everything else (the start-from picker, every source
+    // activity) is *foreground* and opens over it. The inline `<uc-start-from>`
+    // and `<uc-upload-list>` light up via the background slot's `[active]`
+    // attribute (no manual class toggling).
+    this.router.navigationStrategy = (to) =>
+      to === LitActivityBlock.activities.UPLOAD_LIST ? 'background' : 'foreground';
 
-      if (!val) {
-        this.$['*currentActivity'] = initActivity;
-      }
+    // Background slot follows file state: the upload list once files exist,
+    // otherwise the configured init activity (the trigger).
+    this.sub('*uploadList', (list: unknown) => {
+      const hasFiles = Array.isArray(list) && list.length > 0;
+      this.router.setActivity(hasFiles ? LitActivityBlock.activities.UPLOAD_LIST : initActivity);
     });
 
-    this.sub('*uploadList', (list: unknown) => {
-      if (Array.isArray(list) && list.length > 0) {
-        this.$['*currentActivity'] = LitActivityBlock.activities.UPLOAD_LIST;
-        this._classStartFrom = EMPTY_CLASS;
-      } else {
-        this._classUploadList = EMPTY_CLASS;
-        this._isHiddenStartFrom = false;
-        this.$['*currentActivity'] = initActivity;
+    this.subActivity((val) => {
+      if (val === LitActivityBlock.activities.UPLOAD_LIST) {
+        this.router.closeModal();
+      }
+      if (!val) {
+        this.router.setActivity(initActivity);
       }
     });
 
@@ -146,21 +109,12 @@ export class FileUploaderMinimal extends LitSolutionBlock {
     this.subConfigValue('multiple', (val) => {
       this._buttonTextKey = val ? 'choose-files' : 'choose-file';
     });
-
-    this.modalManager?.subscribe(ModalEvents.OPEN, this._handleModalOpen);
-    this.modalManager?.subscribe(ModalEvents.CLOSE, this._handleModalClose);
-  }
-
-  public override disconnectedCallback(): void {
-    super.disconnectedCallback();
-    this.modalManager?.unsubscribe(ModalEvents.OPEN, this._handleModalOpen);
-    this.modalManager?.unsubscribe(ModalEvents.CLOSE, this._handleModalClose);
   }
 
   public override render() {
     return html`
       ${super.render()}
-      <uc-start-from ?hidden=${this._isHiddenStartFrom} class=${this._classStartFrom}>
+      <uc-start-from>
         <uc-drop-area
           ?single=${this._singleUpload}
           initflow
@@ -169,7 +123,7 @@ export class FileUploaderMinimal extends LitSolutionBlock {
         ><span>${this.l10n(this._buttonTextKey)}</span></uc-drop-area>
         <uc-copyright></uc-copyright>
       </uc-start-from>
-      <uc-upload-list class=${this._classUploadList}></uc-upload-list>
+      <uc-upload-list></uc-upload-list>
 
       <uc-modal id="start-from" strokes block-body-scrolling>
         <uc-start-from>
@@ -178,7 +132,7 @@ export class FileUploaderMinimal extends LitSolutionBlock {
           <button
             type="button"
             class="uc-secondary-btn"
-            @click=${this.$['*historyBack']}
+            @click=${() => this.router.back()}
           >${this.l10n('start-from-cancel')}</button>
         </uc-start-from>
       </uc-modal>

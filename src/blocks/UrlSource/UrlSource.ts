@@ -32,7 +32,7 @@ export class UrlSource extends LitUploaderBlock {
       return;
     }
     this.api.addFileFromUrl(url, { source: UploadSource.URL });
-    this.routerLayer.navigateAfterFileAdd();
+    this.router.afterFileAdd();
   };
 
   public override render() {
@@ -54,7 +54,7 @@ export class UrlSource extends LitUploaderBlock {
         <button
           type="button"
           class="uc-mini-btn uc-close-btn"
-          @click=${this.$['*closeModal']}
+          @click=${() => this.router.navigate(null)}
           title=${this.l10n('a11y-activity-header-button-close')}
           aria-label=${this.l10n('a11y-activity-header-button-close')}
         >

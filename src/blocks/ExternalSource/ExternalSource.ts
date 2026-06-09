@@ -89,7 +89,7 @@ export class ExternalSource extends LitUploaderBlock {
       this._mountIframe();
     }
 
-    this.sub('*currentActivityParams', () => {
+    this.subActivityParams(() => {
       setTimeout(() => {
         // Since activity params are set before current activity, we need to wait for the next tick to ensure that the activity is still active before processing the params change.
         // Otherwise, if the activity was changed, we might end up mounting the iframe with params from the next activity.
@@ -211,7 +211,7 @@ export class ExternalSource extends LitUploaderBlock {
       });
     }
 
-    this.routerLayer.navigateAfterFileAdd();
+    this.router.afterFileAdd();
   };
 
   private _handleCancel = (): void => {
@@ -295,7 +295,7 @@ export class ExternalSource extends LitUploaderBlock {
         <button
           type="button"
           class="uc-mini-btn uc-close-btn"
-          @click=${this.$['*historyBack']}
+          @click=${() => this.historyBack()}
           title=${this.l10n('a11y-activity-header-button-close')}
           aria-label=${this.l10n('a11y-activity-header-button-close')}
         >

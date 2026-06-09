@@ -1,10 +1,10 @@
 import { LitElement } from 'lit';
 import { blockCtx } from '../abstract/CTX';
+import { RouterController, type RouterControllerDeps } from '../abstract/controllers/RouterController';
+import { type UploaderEventKey, UploaderEventType } from '../abstract/EventBus';
 import { ClipboardLayer } from '../abstract/features/ClipboardLayer';
-import { RouterHooksLayer } from '../abstract/features/RouterHooksLayer';
 import { A11y } from '../abstract/managers/a11y';
 import { LocaleManager, localeStateKey } from '../abstract/managers/LocaleManager';
-import { ModalManager } from '../abstract/managers/ModalManager';
 import { PluginController } from '../abstract/managers/plugin';
 import { buildPluginApi } from '../abstract/managers/plugin/buildPluginApi';
 import { LazyPluginLoader } from '../abstract/managers/plugin/LazyPluginLoader';
@@ -111,9 +111,8 @@ export class LitBlock extends LitBlockBase {
     );
     this._addSharedContextInstance('*eventEmitter', (sharedInstancesBag) => new EventEmitter(sharedInstancesBag));
     this._addSharedContextInstance('*localeManager', (sharedInstancesBag) => new LocaleManager(sharedInstancesBag));
-    this._addSharedContextInstance('*modalManager', (sharedInstancesBag) => new ModalManager(sharedInstancesBag));
     this._addSharedContextInstance('*a11y', () => new A11y());
-    this._addSharedContextInstance('*routerLayer', (sharedInstancesBag) => new RouterHooksLayer(sharedInstancesBag));
+    this._addSharedContextInstance('*router', () => new RouterController({ emit: this._routerEmit }));
     this._addSharedContextInstance('*clipboard', (sharedInstancesBag) => new ClipboardLayer(sharedInstancesBag));
     this._addSharedContextInstance(
       '*telemetryManager',
@@ -142,9 +141,79 @@ export class LitBlock extends LitBlockBase {
     return testId;
   }
 
-  public get modalManager(): ModalManager | null {
-    return this._getSharedContextInstance('*modalManager', false);
+  public get router(): RouterController {
+    return this._getSharedContextInstance('*router');
   }
+
+  /**
+   * Telemetry-augmented emit, narrowed to the router's documented payloads and
+   * matching v1's debounce behavior (modal events debounce; activity-change
+   * fires immediately). Injected into the {@link RouterController}.
+   */
+  private _routerEmit = ((type: UploaderEventKey, payload: unknown): void => {
+    const debounce = type === UploaderEventType.MODAL_OPEN || type === UploaderEventType.MODAL_CLOSE;
+    this.emit(
+      type as Parameters<EventEmitter['emit']>[0],
+      payload as Parameters<EventEmitter['emit']>[1],
+      debounce ? { debounce: true } : undefined,
+    );
+  }) as RouterControllerDeps['emit'];
+
+  /**
+   * Subscribe to the effective current activity (foreground modal, else
+   * background). Fires immediately with the current value, then on every
+   * change. Replaces `this.sub('*currentActivity', cb)`. Auto-cleaned on
+   * disconnect.
+   *
+   * The callback receives a plain `string | null` rather than the strict
+   * `ActivityId` — this is internal subscription plumbing (callers compare
+   * against known activity literals), and the strict id type resolves
+   * inconsistently inside `LitBlock`'s import context. Strict `ActivityId`
+   * stays on the router's public surface (`navigate`/`setActivity`/…).
+   */
+  protected subActivity(cb: (activity: string | null) => void): () => void {
+    let last = this.router.currentActivity;
+    cb(last);
+    const unsub = this.router.subscribe(() => {
+      const next = this.router.currentActivity;
+      if (next !== last) {
+        last = next;
+        cb(next);
+      }
+    });
+    this._routerUnsubs.add(unsub);
+    return unsub;
+  }
+
+  /** Subscribe to the current activity params. Fires immediately + on change. */
+  protected subActivityParams(cb: (params: Readonly<Record<string, unknown>>) => void): () => void {
+    let last = this.router.params;
+    cb(last);
+    const unsub = this.router.subscribe(() => {
+      const next = this.router.params;
+      if (next !== last) {
+        last = next;
+        cb(next);
+      }
+    });
+    this._routerUnsubs.add(unsub);
+    return unsub;
+  }
+
+  /**
+   * Subscribe to *any* router change (slot or params). Fires immediately, then
+   * on every notification — no value dedup. Use when a reader depends on a slot
+   * the effective-activity dedup would hide (e.g. a modal opening on the id
+   * that's already the background activity). Auto-cleaned on disconnect.
+   */
+  protected subRouter(cb: () => void): () => void {
+    cb();
+    const unsub = this.router.subscribe(cb);
+    this._routerUnsubs.add(unsub);
+    return unsub;
+  }
+
+  private _routerUnsubs = new Set<() => void>();
 
   public get telemetryManager(): TelemetryManager {
     return this._getSharedContextInstance('*telemetryManager');
@@ -162,10 +231,6 @@ export class LitBlock extends LitBlockBase {
     return this._getSharedContextInstance('*clipboard');
   }
 
-  public get routerLayer(): RouterHooksLayer {
-    return this._getSharedContextInstance('*routerLayer');
-  }
-
   public get blocksRegistry(): Set<LitBlock> {
     return this._getSharedContextInstance('*blocksRegistry');
   }
@@ -177,6 +242,9 @@ export class LitBlock extends LitBlockBase {
   public override disconnectedCallback(): void {
     super.disconnectedCallback();
     WindowHeightTracker.unregisterClient(this);
+
+    for (const unsub of this._routerUnsubs) unsub();
+    this._routerUnsubs.clear();
 
     const blocksRegistry = this.blocksRegistry;
     blocksRegistry?.delete(this);

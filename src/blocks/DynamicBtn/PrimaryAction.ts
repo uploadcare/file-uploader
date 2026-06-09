@@ -122,8 +122,7 @@ export class PrimaryAction extends LitUploaderBlock {
 
   private _handleClick() {
     if (this.hasEntries) {
-      this._sharedInstancesBag.ctx.pub('*currentActivity', 'upload-list');
-      this._sharedInstancesBag.modalManager?.open('upload-list');
+      this._sharedInstancesBag.router.navigate('upload-list');
       return;
     }
 

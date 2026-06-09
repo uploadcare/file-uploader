@@ -46,6 +46,10 @@ export class FileUploaderRegular extends LitSolutionBlock {
   public override initCallback(): void {
     super.initCallback();
 
+    // Regular renders every activity inside a `<uc-modal>`, so all navigation
+    // targets the foreground (modal) slot.
+    this.router.navigationStrategy = () => 'foreground';
+
     this.telemetryManager.sendEvent({
       eventType: InternalEventType.INIT_SOLUTION,
     });
@@ -86,7 +90,7 @@ export class FileUploaderRegular extends LitSolutionBlock {
     <uc-start-from>
       <uc-drop-area with-icon clickable></uc-drop-area>
       <uc-source-list role="list" wrap></uc-source-list>
-      <button type="button" class="uc-secondary-btn" @click=${this.$['*historyBack']}>${this.l10n('start-from-cancel')}</button>
+      <button type="button" class="uc-secondary-btn" @click=${() => this.router.back()}>${this.l10n('start-from-cancel')}</button>
       <uc-copyright></uc-copyright>
     </uc-start-from>
   </uc-modal>

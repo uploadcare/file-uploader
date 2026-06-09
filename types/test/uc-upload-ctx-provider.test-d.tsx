@@ -5,7 +5,6 @@ import { expectType } from 'tsd';
 import {
   type ActivityType,
   type EventMap,
-  type ModalId,
   type OutputCollectionErrorType,
   type OutputCollectionStatus,
   type OutputError,
@@ -200,7 +199,7 @@ instance.addEventListener('common-upload-success', (e) => {
 instance.addEventListener('modal-close', (e) => {
   const payload = e.detail;
   expectType<{
-    modalId: ModalId;
+    modalId: ActivityType;
     hasActiveModals: boolean;
   }>(payload);
 });
@@ -208,7 +207,7 @@ instance.addEventListener('modal-close', (e) => {
 instance.addEventListener('modal-open', (e) => {
   const payload = e.detail;
   expectType<{
-    modalId: ModalId;
+    modalId: ActivityType;
   }>(payload);
 });
 

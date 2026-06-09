@@ -1,4 +1,13 @@
-import type { CustomActivities } from './LitActivityBlock';
+/**
+ * Consumer-augmentable map of custom activity ids → `{ params }`. Declared here
+ * (a dependency-free leaf) rather than in `LitActivityBlock` so the activity-id
+ * types below don't form an import cycle through `LitBlock` — which made the
+ * `keyof CustomActivities` term resolve inconsistently (wide in some positions,
+ * narrow in others). Re-exported from `LitActivityBlock` and the package root,
+ * so existing `declare module` augmentations of either path still merge here.
+ */
+// biome-ignore lint/suspicious/noEmptyInterface: consumer-augmented interface
+export interface CustomActivities {}
 
 export const ACTIVITY_TYPES = Object.freeze({
   START_FROM: 'start-from',

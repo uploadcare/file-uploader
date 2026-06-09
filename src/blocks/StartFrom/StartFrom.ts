@@ -3,7 +3,6 @@ import { html } from 'lit';
 import { type ActivityType, LitActivityBlock } from '../../lit/LitActivityBlock';
 
 export class StartFrom extends LitActivityBlock {
-  protected override historyTracked = true;
   public override activityType: ActivityType = LitActivityBlock.activities.START_FROM;
 
   public override initCallback(): void {

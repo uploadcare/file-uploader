@@ -1,14 +1,9 @@
 import { html } from 'lit';
-import type { ModalCb, ModalId } from '../../abstract/managers/ModalManager';
-import { ModalEvents } from '../../abstract/managers/ModalManager';
 import { LitBlock } from '../../lit/LitBlock';
-import { EventType } from '../UploadCtxProvider/EventEmitter';
 import './modal.css';
 import { property } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import type { RegisteredActivityType } from '../../lit/LitActivityBlock';
-
-let LAST_ACTIVE_MODAL_ID: ModalId | null = null;
 
 export class Modal extends LitBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-modal'];
@@ -32,12 +27,16 @@ export class Modal extends LitBlock {
 
   /** WARNING: Do not rename/change this, it's used in dashboard */
   protected closeDialog = (): void => {
-    this.modalManager?.close(this.id as RegisteredActivityType);
-
-    if (!this.modalManager?.hasActiveModals) {
-      document.body.style.overflow = '';
-      this.$['*currentActivity'] = null;
+    // Only close when *this* modal is the one currently in the foreground slot.
+    // `hide()` fires the native `<dialog>` "close" event even when we hid this
+    // modal programmatically to switch to another — without this guard that
+    // stale close would tear down the modal we just navigated to.
+    if (this.router.modal !== (this.id as RegisteredActivityType)) {
+      return;
     }
+    // Close the foreground modal slot; the router owns the close transition
+    // (and the `modal-close` event).
+    this.router.closeModal();
   };
 
   private _handleDialogClose = (): void => {
@@ -60,6 +59,9 @@ export class Modal extends LitBlock {
     const dialog = this.dialogEl.value as HTMLDialogElement & {
       showModal?: () => void;
     };
+    // Idempotent: `subRouter` fires on every change, but `showModal()` throws
+    // on an already-open dialog.
+    if (dialog?.open) return;
     if (typeof dialog.showModal === 'function') {
       this.setAttribute('aria-modal', 'true');
       dialog.showModal();
@@ -76,7 +78,8 @@ export class Modal extends LitBlock {
     const dialog = this.dialogEl.value as HTMLDialogElement & {
       close?: () => void;
     };
-    if (!dialog) return;
+    if (!dialog || !dialog.open) return;
+    document.body.style.overflow = '';
     if (typeof dialog.close === 'function') {
       this.setAttribute('aria-modal', 'false');
       dialog.close();
@@ -85,43 +88,8 @@ export class Modal extends LitBlock {
     }
   }
 
-  private _handleModalOpen = ({ id }: Parameters<ModalCb>[0]): void => {
-    if (id === this.id) {
-      LAST_ACTIVE_MODAL_ID = id;
-      this.show();
-      this.emit(EventType.MODAL_OPEN, { modalId: id }, { debounce: true });
-    } else {
-      this.hide();
-    }
-  };
-
-  private _handleModalClose = ({ id }: Parameters<ModalCb>[0]): void => {
-    if (id === this.id) {
-      this.hide();
-      this.emit(
-        EventType.MODAL_CLOSE,
-        { modalId: id, hasActiveModals: this.modalManager?.hasActiveModals },
-        { debounce: true },
-      );
-    }
-  };
-
-  private _handleModalCloseAll = (_data: Parameters<ModalCb>[0]): void => {
-    this.hide();
-
-    if (LAST_ACTIVE_MODAL_ID === this.id) {
-      this.emit(
-        EventType.MODAL_CLOSE,
-        { modalId: LAST_ACTIVE_MODAL_ID, hasActiveModals: this.modalManager?.hasActiveModals },
-        { debounce: true },
-      );
-    }
-  };
-
   public override initCallback(): void {
     super.initCallback();
-
-    this.modalManager?.registerModal(this.id as RegisteredActivityType, this);
 
     this.subConfigValue('modalBackdropStrokes', (val: boolean) => {
       if (val) {
@@ -131,19 +99,23 @@ export class Modal extends LitBlock {
       }
     });
 
-    this.modalManager?.subscribe(ModalEvents.OPEN, this._handleModalOpen);
-    this.modalManager?.subscribe(ModalEvents.CLOSE, this._handleModalClose);
-    this.modalManager?.subscribe(ModalEvents.CLOSE_ALL, this._handleModalCloseAll);
+    // Show when the router's foreground modal slot is this modal's id; hide
+    // otherwise. The router emits `modal-open`/`modal-close` centrally. Uses
+    // `subRouter` (no effective-activity dedup) so a modal opening on the id
+    // that's already the background activity still shows.
+    this.subRouter(() => {
+      if (this.router.modal === (this.id as RegisteredActivityType)) {
+        this.show();
+      } else {
+        this.hide();
+      }
+    });
   }
 
   public override disconnectedCallback(): void {
     super.disconnectedCallback();
     document.body.style.overflow = '';
     this._mouseDownTarget = undefined;
-
-    this.modalManager?.unsubscribe(ModalEvents.OPEN, this._handleModalOpen);
-    this.modalManager?.unsubscribe(ModalEvents.CLOSE, this._handleModalClose);
-    this.modalManager?.unsubscribe(ModalEvents.CLOSE_ALL, this._handleModalCloseAll);
   }
 
   private _handleDialogRef(dialog: Element | undefined): void {
