@@ -453,6 +453,21 @@ describe('UploadController', () => {
       expect(queueConcurrency(controller)).toBe(1);
     });
 
+    it('clamps a negative value to 1', () => {
+      const { controller } = setup({ cfg: { maxConcurrentRequests: -3 } });
+      expect(queueConcurrency(controller)).toBe(1);
+    });
+
+    it('falls back to 1 for a non-finite value', () => {
+      const { controller } = setup({ cfg: { maxConcurrentRequests: Number.NaN } });
+      expect(queueConcurrency(controller)).toBe(1);
+    });
+
+    it('floors a fractional value', () => {
+      const { controller } = setup({ cfg: { maxConcurrentRequests: 3.9 } });
+      expect(queueConcurrency(controller)).toBe(3);
+    });
+
     it('syncs concurrency when the config changes', () => {
       const { controller, config } = setup({ cfg: { maxConcurrentRequests: 2 } });
       config.set('maxConcurrentRequests', 7);

@@ -73,7 +73,10 @@ export class UploadController {
   }
 
   private _concurrencyFromConfig(): number {
-    return Number(this._config.get('maxConcurrentRequests')) || 1;
+    // Clamp to a positive integer: a negative/fractional/non-numeric
+    // `maxConcurrentRequests` would otherwise produce invalid queue concurrency.
+    const raw = Number(this._config.get('maxConcurrentRequests'));
+    return Number.isFinite(raw) ? Math.max(1, Math.floor(raw)) : 1;
   }
 
   /**
