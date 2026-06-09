@@ -1,6 +1,14 @@
 # yaml-language-server: $schema=https://www.coderabbit.ai/integrations/schema.v2.json
 
 reviews:
+  auto_review:
+    # By default CodeRabbit only auto-reviews PRs whose base is the default
+    # branch. The v2 strangler migration uses stacked PRs that target the
+    # `feat/v2-migration` integration branch and its per-milestone branches
+    # (feat/v2-mN-*), so opt those bases in too — otherwise CodeRabbit skips
+    # them. Matched as regex against the PR base branch name.
+    base_branches:
+      - "feat/v2-.*"
   # Exclude demo pages from CodeRabbit reviews.
   # Patterns are glob-style; entries starting with '!' are ignored.
   path_filters:
