@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Uid } from '../../lit/Uid';
-import type { OutputErrorCollection, OutputFileEntry, UploaderPublicApi } from '../../types';
+import type { OutputErrorCollection, UploaderPublicApi } from '../../types';
 import { ConfigController } from './ConfigController';
 import { UploadCollectionController } from './UploadCollectionController';
 import { ValidationController, type ValidationControllerDeps } from './ValidationController';
@@ -11,12 +11,15 @@ import { ValidationController, type ValidationControllerDeps } from './Validatio
 const QUEUE_FLUSH_MS = 600;
 const flush = (ms = QUEUE_FLUSH_MS) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// Builds a minimal OutputFileEntry from a (typed) entry snapshot — enough for
-// the built-in validators. One assertion at the mock boundary keeps the fake
-// faithful to the public shape without re-declaring all ~20 fields.
-function buildOutputItem(collection: UploadCollectionController, uid: Uid): OutputFileEntry {
+// Built from the typed entry snapshot — the natural (inferred) shape is used
+// directly; the only boundary cast is on the api mock below. A fully
+// type-checked `Pick<OutputFileEntry, …>` isn't feasible here: OutputFileEntry's
+// field types intentionally differ from the entry's storage (`source` is a
+// `SourceTypes` union, `name`/`size` are non-null) — the production
+// `getOutputItem` bridges that mismatch with the same cast.
+function buildOutputItem(collection: UploadCollectionController, uid: Uid) {
   const entry = collection.read(uid);
-  if (!entry) return { internalId: uid, status: 'removed', errors: [] } as unknown as OutputFileEntry;
+  if (!entry) throw new Error(`test fixture: entry "${uid}" not found`);
   const e = entry.snapshot();
   const status = e.isRemoved
     ? 'removed'
@@ -35,14 +38,13 @@ function buildOutputItem(collection: UploadCollectionController, uid: Uid): Outp
     mimeType: e.mimeType,
     size: e.fileSize,
     name: e.fileName,
-    uploadError: e.uploadError,
     errors: e.errors,
     uploadProgress: e.uploadProgress,
     status,
     source: e.source,
     uuid: e.uuid,
     cdnUrl: e.cdnUrl,
-  } as unknown as OutputFileEntry;
+  };
 }
 
 const active: ValidationController[] = [];
