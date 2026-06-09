@@ -32,8 +32,8 @@ export type CollectionObserver = (
  * change-map, and a ~10s deferred destroy of removed entries) but backed by a
  * plain `Map<uid, TypedData>` instead of a nanostores `PubSub` context, and
  * using global timers so it runs without a DOM. Entries are `TypedData`
- * instances (already DOM-free as of M3a). The public API matches
- * `TypedCollection` so `TypedCollection` can be a thin facade over it.
+ * instances (already DOM-free as of M3a). The public API mirrors the former
+ * `TypedCollection` (now removed) for drop-in parity with its consumers.
  */
 export class UploadCollectionController {
   private static readonly _destroyDelayMs = 10_000;

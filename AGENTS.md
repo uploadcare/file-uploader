@@ -102,7 +102,7 @@ Single package on `main` (root `package.json` = `@uploadcare/file-uploader`,
 > stray cruft** from a `feat/monorepo` checkout (0 tracked files). Ignore it;
 > it is safe to `rm -rf packages/`. All work targets root `src/`.
 
-```
+```text
 src/
   abstract/        Logic layer: managers/, controllers/, UploaderPublicApi, EventBus, …
   lit/             Base element classes + state shim (LitBlock, SymbioteCompatMixin, PubSubCompat)
