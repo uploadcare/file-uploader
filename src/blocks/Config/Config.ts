@@ -1,6 +1,6 @@
 // @ts-check
 import type { CustomConfig } from '../../abstract/customConfigOptions';
-import type { PluginManager } from '../../abstract/managers/plugin';
+import type { PluginController } from '../../abstract/managers/plugin';
 import { sharedConfigKey } from '../../abstract/sharedConfigKey';
 import type { ConfigComplexType, ConfigPlainType, ConfigType } from '../../types';
 import { toKebabCase } from '../../utils/toKebabCase';
@@ -211,7 +211,7 @@ export class Config extends LitBlock {
     }
   }
 
-  private _processCustomConfigs(pluginManager: PluginManager): void {
+  private _processCustomConfigs(pluginManager: PluginController): void {
     const customConfigs = pluginManager.configRegistry.getAll();
 
     // Rebuild the custom attribute mapping and names set

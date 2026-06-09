@@ -5,7 +5,9 @@ import { RouterHooksLayer } from '../abstract/features/RouterHooksLayer';
 import { A11y } from '../abstract/managers/a11y';
 import { LocaleManager, localeStateKey } from '../abstract/managers/LocaleManager';
 import { ModalManager } from '../abstract/managers/ModalManager';
-import { PluginManager } from '../abstract/managers/plugin';
+import { PluginController } from '../abstract/managers/plugin';
+import { buildPluginApi } from '../abstract/managers/plugin/buildPluginApi';
+import { LazyPluginLoader } from '../abstract/managers/plugin/LazyPluginLoader';
 import { TelemetryManager } from '../abstract/managers/TelemetryManager';
 import { sharedConfigKey } from '../abstract/sharedConfigKey';
 import { initialConfig } from '../blocks/Config/initialConfig';
@@ -91,7 +93,20 @@ export class LitBlock extends LitBlockBase {
 
   public override initCallback(): void {
     this._addSharedContextInstance('*blocksRegistry', () => new Set());
-    this._addSharedContextInstance('*pluginManager', (sharedInstancesBag) => new PluginManager(sharedInstancesBag));
+    this._addSharedContextInstance(
+      '*pluginManager',
+      (sharedInstancesBag) =>
+        new PluginController({
+          buildApi: (registry, pluginId, configSubscriptions) =>
+            buildPluginApi(registry, sharedInstancesBag.ctx, sharedInstancesBag, pluginId, configSubscriptions),
+          getUploaderApi: () => sharedInstancesBag.api,
+          watchPlugins: (onCompute) => {
+            const loader = new LazyPluginLoader(sharedInstancesBag.ctx, onCompute);
+            return () => loader.destroy();
+          },
+          debug: (...args) => this.debugPrint(...args),
+        }),
+    );
     this._addSharedContextInstance('*eventEmitter', (sharedInstancesBag) => new EventEmitter(sharedInstancesBag));
     this._addSharedContextInstance('*localeManager', (sharedInstancesBag) => new LocaleManager(sharedInstancesBag));
     this._addSharedContextInstance('*modalManager', (sharedInstancesBag) => new ModalManager(sharedInstancesBag));
