@@ -181,3 +181,68 @@ describe('PubSub locale (*l10n/*) facade', () => {
     warn.mockRestore();
   });
 });
+
+describe('PubSub (additional coverage)', () => {
+  it('pub routes a locale key to the controller', () => {
+    const ctx = freshCtx();
+    ctx.pub('*l10n/upload', 'Upload');
+    expect(ctx.read('*l10n/upload')).toBe('Upload');
+  });
+
+  it('read warns for an unknown config key', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const ctx = freshCtx();
+
+    ctx.read('*cfg/totallyUnknownKey');
+
+    expect(warn).toHaveBeenCalledWith('PubSub#read: Key "*cfg/totallyUnknownKey" not found');
+    warn.mockRestore();
+  });
+
+  it('add for a non-facade key is first-write-wins and rewrites only on rewrite', () => {
+    const ctx = freshCtx();
+    ctx.add('extra', 'one');
+    expect(ctx.read('extra')).toBe('one');
+
+    ctx.add('extra', 'two'); // exists, no rewrite — kept
+    expect(ctx.read('extra')).toBe('one');
+
+    ctx.add('extra', 'two', true); // rewrite
+    expect(ctx.read('extra')).toBe('two');
+  });
+
+  it('pub warns for an unknown non-facade key', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const ctx = freshCtx();
+
+    ctx.pub('missingKey', 'v');
+
+    expect(warn).toHaveBeenCalledWith('PubSub#pub: Key "missingKey" not found');
+    warn.mockRestore();
+  });
+
+  it('has() routes namespaces and falls back to the nanostores store', () => {
+    const ctx = freshCtx();
+    expect(ctx.has('plain')).toBe(true); // non-facade key present in the store
+    expect(ctx.has('absent')).toBe(false);
+  });
+
+  it('registerCtx throws on a duplicate ctx id', () => {
+    const ctx = freshCtx();
+    expect(() => PubSub.registerCtx({}, ctx.id)).toThrow(/already exists/);
+  });
+
+  it('getCtx returns null for an unknown ctx; hasCtx reflects existence', () => {
+    const ctx = freshCtx();
+    expect(PubSub.getCtx('does-not-exist')).toBeNull();
+    expect(PubSub.hasCtx(ctx.id)).toBe(true);
+    expect(PubSub.hasCtx('does-not-exist')).toBe(false);
+  });
+
+  it('deleteCtx is a no-op for the controller when none was created', () => {
+    const ctx = freshCtx();
+    // Never touched a *cfg/ or *l10n/ key, so no UploaderController exists.
+    expect(() => PubSub.deleteCtx(ctx.id)).not.toThrow();
+    expect(PubSub.hasCtx(ctx.id)).toBe(false);
+  });
+});
