@@ -982,7 +982,7 @@ export class CameraSource extends LitUploaderBlock {
         <button
           type="button"
           class="uc-mini-btn"
-          @click=${() => this.router.traverse('onCancel')}
+          @click=${this.historyBack}
           title=${this.l10n('back')}
         >
           <uc-icon name="back"></uc-icon>

@@ -56,7 +56,7 @@ export class FileUploaderMinimal extends LitSolutionBlock {
     // upload list.
     this.router.navigationStrategy = (to) =>
       to === LitActivityBlock.activities.UPLOAD_LIST ? 'background' : 'foreground';
-    this.router.configure({ _doneActivity: LitActivityBlock.activities.UPLOAD_LIST });
+    this.router.configure({ doneActivity: LitActivityBlock.activities.UPLOAD_LIST });
 
     // Background slot follows file state: the upload list once files exist,
     // otherwise the start-from trigger.

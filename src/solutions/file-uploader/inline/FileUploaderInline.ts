@@ -74,7 +74,7 @@ export class FileUploaderInline extends LitSolutionBlock {
     // Inline renders every activity in place (no modal), so all navigation
     // targets the background slot; a completed flow returns to start-from.
     this.router.navigationStrategy = () => 'background';
-    this.router.configure({ _doneActivity: LitActivityBlock.activities.START_FROM });
+    this.router.configure({ doneActivity: LitActivityBlock.activities.START_FROM });
 
     this.subActivity((val) => {
       if (!val) {

@@ -10,7 +10,6 @@ export const urlSourcePlugin: UploaderPlugin = {
 
     pluginApi.registry.registerActivity({
       id: ACTIVITY_TYPES.URL,
-      routes: { onFileAdd: ACTIVITY_TYPES.UPLOAD_LIST, onCancel: ACTIVITY_TYPES.START_FROM },
       render: (host) => {
         const el = document.createElement('uc-url-source');
         host.append(el);

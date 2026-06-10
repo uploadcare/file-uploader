@@ -1,5 +1,4 @@
 import type { ConfigType, OutputFileEntry } from '../../../types/exported';
-import type { ActivityRoute } from '../../controllers/RouterController';
 import type { CustomConfig, CustomConfigDefinition } from '../../customConfigOptions';
 import type { UploaderPublicApi } from '../../UploaderPublicApi';
 
@@ -37,8 +36,6 @@ export type PluginRender = (
 export type PluginActivityRegistration = {
   id: string;
   render: PluginRender;
-  /** Declarative navigation edges for this activity (onCancel, onDone, onFileAdd, …). */
-  routes?: ActivityRoute;
 };
 
 export type PluginFileActionRegistration = {

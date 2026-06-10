@@ -41,7 +41,7 @@ export class UrlSource extends LitUploaderBlock {
         <button
           type="button"
           class="uc-mini-btn"
-          @click=${() => this.router.traverse('onCancel')}
+          @click=${this.historyBack}
           title=${this.l10n('back')}
           aria-label=${this.l10n('back')}
         >

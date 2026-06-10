@@ -3,8 +3,6 @@ import { UploaderEventType } from '../EventBus';
 import { Listeners } from '../host-subscription';
 
 export type EdgeTarget = ActivityId | null;
-export type EdgeHandler = (ctx: EdgeContext) => EdgeTarget;
-export type Edge = EdgeTarget | EdgeHandler;
 
 /**
  * Hook return sentinel — short-circuits the navigation entirely (no activity
@@ -14,18 +12,10 @@ export type Edge = EdgeTarget | EdgeHandler;
 export const NAVIGATE_CANCEL: unique symbol = Symbol('uc:navigate-cancel');
 export type NavigateCancel = typeof NAVIGATE_CANCEL;
 
-export interface ActivityRoute {
-  onFileAdd?: Edge;
-  onCancel?: Edge;
-  onBack?: Edge;
-  onDone?: Edge;
-  onCapture?: Edge;
-  [custom: string]: Edge | undefined;
-}
-
+/** Per-preset routing config, set by the solution via {@link RouterController.configure}. */
 export interface RouteTable {
-  _doneActivity?: ActivityId | null;
-  activities?: Partial<Record<ActivityId, ActivityRoute>>;
+  /** Activity to land on after a completed flow (preset-specific). */
+  doneActivity?: ActivityId | null;
 }
 
 export interface EdgeContext {
@@ -71,7 +61,7 @@ export type RouterControllerDeps = {
 export class RouterController {
   private _emit: RouterEmit;
   private _listeners = new Listeners();
-  private _table: Required<Pick<RouteTable, 'activities'>> & RouteTable = { activities: {} };
+  private _table: RouteTable = {};
   private _activity: ActivityId | null = null;
   private _modal: ActivityId | null = null;
   private _params: Record<string, unknown> = {};
@@ -79,11 +69,7 @@ export class RouterController {
   private _hooks = {
     beforeChange: [] as Hook[],
     afterFileAdd: [] as Hook[],
-    onCancel: [] as Hook[],
-    onClose: [] as Hook[],
-    onDone: [] as Hook[],
   };
-  private _pluginRoutes: Partial<Record<string, ActivityRoute>> = {};
 
   public constructor(deps: RouterControllerDeps) {
     this._emit = deps.emit;
@@ -115,33 +101,22 @@ export class RouterController {
   }
   /** The activity to land on after a completed flow, configured per preset. */
   public get doneActivity(): ActivityId | null {
-    return this._table._doneActivity ?? null;
+    return this._table.doneActivity ?? null;
   }
 
   public subscribe(listener: () => void): () => void {
     return this._listeners.subscribe(listener);
   }
 
-  // ─── Route table ───
+  /** Per-preset routing config (solution-level), e.g. the post-flow done activity. */
   public configure(table: RouteTable): void {
-    this._table = { ...table, activities: table.activities ?? {} };
-  }
-
-  public addPluginRoutes(activityId: string, routes: ActivityRoute): void {
-    this._pluginRoutes[activityId] = routes;
-  }
-
-  private _routeFor(activityId: ActivityId): ActivityRoute | undefined {
-    return this._table.activities[activityId] ?? this._pluginRoutes[activityId];
+    this._table = { ...table };
   }
 
   // ─── Hooks ───
   public readonly hooks = {
     beforeChange: (h: Hook) => this._register('beforeChange', h),
     afterFileAdd: (h: Hook) => this._register('afterFileAdd', h),
-    onCancel: (h: Hook) => this._register('onCancel', h),
-    onClose: (h: Hook) => this._register('onClose', h),
-    onDone: (h: Hook) => this._register('onDone', h),
   };
 
   private _register(name: keyof typeof this._hooks, h: Hook): () => void {
@@ -296,33 +271,6 @@ export class RouterController {
     this.navigate(final);
   }
 
-  /** Traverse a named edge of the current activity's route. */
-  public traverse(edge: string): void {
-    if (!this._activity) return;
-    const route = this._routeFor(this._activity);
-    const proposed = this._resolveEdge(route?.[edge]);
-    const ctx: EdgeContext = { edge, from: this._activity, proposed, defaults: () => proposed };
-    const hookName = this._hookNameForEdge(edge);
-    const final = hookName ? this._runEdgeHooks(hookName, ctx) : proposed;
-    if (final === NAVIGATE_CANCEL) return;
-    this.navigate(final);
-  }
-
-  private _resolveEdge(e: Edge | undefined): EdgeTarget {
-    if (e === undefined) return null;
-    if (typeof e === 'function') {
-      return e({ edge: '', from: this._activity, proposed: null, defaults: () => null });
-    }
-    return e;
-  }
-
-  private _hookNameForEdge(edge: string): keyof typeof this._hooks | null {
-    if (edge === 'onFileAdd') return 'afterFileAdd';
-    if (edge === 'onCancel') return 'onCancel';
-    if (edge === 'onDone') return 'onDone';
-    return null;
-  }
-
   /**
    * Pop the current activity off history and navigate to the previous one (or
    * close everything if history is empty). History stores `[...past, current]`,
@@ -341,6 +289,6 @@ export class RouterController {
 
   public destroy(): void {
     this._listeners.clear();
-    this._hooks = { beforeChange: [], afterFileAdd: [], onCancel: [], onClose: [], onDone: [] };
+    this._hooks = { beforeChange: [], afterFileAdd: [] };
   }
 }

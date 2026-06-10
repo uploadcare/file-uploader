@@ -49,7 +49,6 @@ export const cameraPlugin: UploaderPlugin = {
 
     pluginApi.registry.registerActivity({
       id: ACTIVITY_TYPES.CAMERA,
-      routes: { onFileAdd: ACTIVITY_TYPES.UPLOAD_LIST, onCancel: ACTIVITY_TYPES.START_FROM },
       render: (host) => {
         const cameraEl = document.createElement('uc-camera-source');
         host.append(cameraEl);

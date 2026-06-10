@@ -133,14 +133,6 @@ describe('RouterController (v2)', () => {
       router.navigate('start-from');
       expect(seen).toBe('start-from');
     });
-
-    it('registers onClose / onDone hooks without throwing', () => {
-      const { router } = setup();
-      expect(() => {
-        router.hooks.onClose(() => null);
-        router.hooks.onDone(() => null);
-      }).not.toThrow();
-    });
   });
 
   describe('history + back', () => {
@@ -267,97 +259,12 @@ describe('RouterController (v2)', () => {
     });
   });
 
-  describe('traverse + route table', () => {
-    it('follows a static edge target from the route table', () => {
+  describe('configure (solution-level routing)', () => {
+    it('exposes the configured done activity', () => {
       const { router } = setup();
-      router.configure({ activities: { 'start-from': { onBack: 'upload-list' } } });
-      router.setActivity('start-from');
-
-      router.traverse('onBack');
-
-      expect(router.activity).toBe('upload-list');
-    });
-
-    it('follows an edge handler', () => {
-      const { router } = setup();
-      router.configure({ activities: { 'start-from': { onBack: () => 'camera' } } });
-      router.setActivity('start-from');
-
-      router.traverse('onBack');
-
-      expect(router.activity).toBe('camera');
-    });
-
-    it('resolves an undefined edge to null (closes everything)', () => {
-      const { router } = setup();
-      router.setActivity('start-from');
-      router.traverse('onBack'); // no route configured → null
-      expect(router.activity).toBeNull();
-    });
-
-    it('runs the mapped hook for onCancel/onDone edges and can cancel', () => {
-      const { router } = setup();
-      router.configure({ activities: { 'start-from': { onCancel: 'upload-list' } } });
-      router.setActivity('start-from');
-      router.hooks.onCancel(() => NAVIGATE_CANCEL);
-
-      router.traverse('onCancel');
-
-      expect(router.activity).toBe('start-from'); // cancelled
-    });
-
-    it('is a no-op when there is no current activity', () => {
-      const { router, emit } = setup();
-      router.traverse('onBack');
-      expect(emit).not.toHaveBeenCalled();
-    });
-
-    it('passes a ctx.defaults() to edge handlers', () => {
-      const { router } = setup();
-      let seen: unknown = 'unset';
-      router.configure({
-        activities: {
-          'start-from': {
-            onBack: (ctx) => {
-              seen = ctx.defaults();
-              return 'camera';
-            },
-          },
-        },
-      });
-      router.setActivity('start-from');
-      router.traverse('onBack');
-      expect(seen).toBeNull();
-      expect(router.activity).toBe('camera');
-    });
-
-    it('maps the onFileAdd edge to the afterFileAdd hook chain', () => {
-      const { router } = setup();
-      router.configure({ activities: { 'start-from': { onFileAdd: 'upload-list' } } });
-      router.setActivity('start-from');
-      const hook = vi.fn(() => undefined);
-      router.hooks.afterFileAdd(hook);
-
-      router.traverse('onFileAdd');
-
-      expect(hook).toHaveBeenCalled();
-      expect(router.activity).toBe('upload-list');
-    });
-
-    it('uses plugin-registered routes as a fallback', () => {
-      const { router } = setup();
-      router.addPluginRoutes('start-from', { onDone: 'upload-list' });
-      router.setActivity('start-from');
-      router.traverse('onDone');
-      expect(router.activity).toBe('upload-list');
-    });
-
-    it('configure() defaults activities to an empty table', () => {
-      const { router } = setup();
-      expect(() => router.configure({})).not.toThrow();
-      router.setActivity('start-from');
-      router.traverse('onBack'); // no route → null
-      expect(router.activity).toBeNull();
+      expect(router.doneActivity).toBeNull();
+      router.configure({ doneActivity: 'upload-list' });
+      expect(router.doneActivity).toBe('upload-list');
     });
   });
 

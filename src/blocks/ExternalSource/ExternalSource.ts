@@ -215,7 +215,7 @@ export class ExternalSource extends LitUploaderBlock {
   };
 
   private _handleCancel = (): void => {
-    this.router.traverse('onCancel');
+    this.historyBack();
   };
 
   private _handleSelectAll = (): void => {
