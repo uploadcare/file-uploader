@@ -102,11 +102,9 @@ export class UploadList extends LitUploaderBlock {
     }
     this._updateUploadsState();
 
-    // Bounce away if we shouldn't be on an empty list (unless showEmptyList).
-    const couldOpen = this.cfg.showEmptyList || this.uploadCollection.size > 0;
-    if (!couldOpen && this.router.currentActivity === this.activityType) {
-      this.historyBack();
-    }
+    // The router guard (registered in initCallback) decides whether the empty
+    // list may stay open; ask it to re-check now that the collection changed.
+    this.router.revalidate();
 
     if (!this.cfg.confirmUpload) {
       this.api.uploadAll();
@@ -175,8 +173,18 @@ export class UploadList extends LitUploaderBlock {
     return localizedText('total');
   }
 
+  private _unregisterGuard?: () => void;
+
   public override initCallback() {
     super.initCallback();
+
+    // Guard: the upload list may only be open while it has files (or
+    // `showEmptyList`). The router blocks navigating into it otherwise and
+    // `revalidate()` (called on collection changes) leaves it once it empties.
+    this._unregisterGuard = this.router.guard(
+      this.activityType,
+      () => this.cfg.showEmptyList || this.uploadCollection.size > 0,
+    );
 
     this.subConfigValue('multiple', this._throttledHandleCollectionUpdate);
     this.subConfigValue('multipleMin', this._throttledHandleCollectionUpdate);
@@ -189,13 +197,6 @@ export class UploadList extends LitUploaderBlock {
 
     this.subConfigValue('filesViewMode', (mode: FilesViewMode) => {
       this.setAttribute('mode', mode);
-    });
-
-    this.subActivity((currentActivity) => {
-      const couldOpen = this.cfg.showEmptyList || this.uploadCollection.size > 0;
-      if (!couldOpen && currentActivity === this.activityType) {
-        this.router.navigate(LitActivityBlock.activities.START_FROM);
-      }
     });
 
     // TODO: could be performance issue on many files
@@ -215,6 +216,8 @@ export class UploadList extends LitUploaderBlock {
 
   public override disconnectedCallback(): void {
     super.disconnectedCallback();
+    this._unregisterGuard?.();
+    this._unregisterGuard = undefined;
     if (this.has('*uploadCollection')) {
       this.uploadCollection.unobserveProperties(this._throttledHandleCollectionUpdate);
       this.uploadCollection.unobserveCollection(this._throttledHandleCollectionUpdate);

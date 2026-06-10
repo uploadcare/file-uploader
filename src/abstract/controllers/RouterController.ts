@@ -113,6 +113,39 @@ export class RouterController {
     this._table = { ...table };
   }
 
+  // ─── Guards ───
+  private _guards = new Map<ActivityId, () => boolean>();
+
+  /**
+   * Register a guard for an activity: it may only become / stay the current
+   * activity while `canActivate()` returns true. The router blocks navigation
+   * into a guarded-out activity, and `revalidate()` leaves one that no longer
+   * holds (e.g. the upload list once it empties). Returns an unregister fn.
+   */
+  public guard(activityId: ActivityId, canActivate: () => boolean): () => void {
+    this._guards.set(activityId, canActivate);
+    return () => {
+      if (this._guards.get(activityId) === canActivate) {
+        this._guards.delete(activityId);
+      }
+    };
+  }
+
+  private _canActivate(id: EdgeTarget): boolean {
+    return id === null || (this._guards.get(id)?.() ?? true);
+  }
+
+  /**
+   * Re-evaluate the current activity against its guard; if it no longer holds,
+   * navigate back. Call after external state changes a guard depends on (the
+   * upload list calls this when its collection changes).
+   */
+  public revalidate(): void {
+    if (!this._canActivate(this.currentActivity)) {
+      this.back();
+    }
+  }
+
   // ─── Hooks ───
   public readonly hooks = {
     beforeChange: (h: Hook) => this._register('beforeChange', h),
@@ -179,6 +212,11 @@ export class RouterController {
     this._params = params;
     if (to === null) {
       this._transition(null, null);
+      return;
+    }
+    // A guarded-out activity can't be entered (e.g. an empty upload list);
+    // refuse the navigation and stay where we are.
+    if (!this._canActivate(to)) {
       return;
     }
     // A background target closes any open modal first — the inline content is

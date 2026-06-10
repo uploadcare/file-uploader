@@ -268,6 +268,51 @@ describe('RouterController (v2)', () => {
     });
   });
 
+  describe('guards', () => {
+    it('blocks navigation into a guarded-out activity (stays put)', () => {
+      const { router } = setup();
+      let allowed = false;
+      router.guard('upload-list', () => allowed);
+      router.navigate('start-from');
+
+      router.navigate('upload-list'); // guarded out → refused
+      expect(router.currentActivity).toBe('start-from');
+
+      allowed = true;
+      router.navigate('upload-list'); // now allowed
+      expect(router.currentActivity).toBe('upload-list');
+    });
+
+    it('revalidate() leaves the current activity when its guard no longer holds', () => {
+      const { router } = setup();
+      let allowed = true;
+      router.guard('upload-list', () => allowed);
+      router.navigate('start-from');
+      router.navigate('upload-list');
+      expect(router.currentActivity).toBe('upload-list');
+
+      allowed = false;
+      router.revalidate(); // guard fails → back to previous
+      expect(router.currentActivity).toBe('start-from');
+    });
+
+    it('revalidate() is a no-op while the guard holds', () => {
+      const { router } = setup();
+      router.guard('upload-list', () => true);
+      router.navigate('upload-list');
+      router.revalidate();
+      expect(router.currentActivity).toBe('upload-list');
+    });
+
+    it('unregistering removes the guard', () => {
+      const { router } = setup();
+      const unregister = router.guard('upload-list', () => false);
+      unregister();
+      router.navigate('upload-list'); // no guard now → allowed
+      expect(router.currentActivity).toBe('upload-list');
+    });
+  });
+
   describe('modal slot edges', () => {
     it('replacing one open modal with another emits no extra open/close', () => {
       const { router, emit } = setup();
