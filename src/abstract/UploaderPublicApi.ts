@@ -428,6 +428,16 @@ export class UploaderPublicApi extends SharedInstance {
   };
 
   /**
+   * Express a navigation intent and let the router resolve it (with any
+   * registered hooks). This is how plugin activities should navigate — e.g.
+   * `traverse('onCancel')` to go back, `traverse('onClose')` to close — instead
+   * of computing a concrete target themselves.
+   */
+  public traverse = (edge: 'onBack' | 'onCancel' | 'onClose' | 'onDone'): void => {
+    this._sharedInstancesBag.router.traverse(edge);
+  };
+
+  /**
    * @deprecated Use {@link navigate} to open an activity, or `navigate(null)`
    * to close. `setModalState` only toggles the modal for the activity that was
    * already set via `setCurrentActivity`.

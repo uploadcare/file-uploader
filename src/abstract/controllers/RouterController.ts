@@ -69,6 +69,10 @@ export class RouterController {
   private _hooks = {
     beforeChange: [] as Hook[],
     afterFileAdd: [] as Hook[],
+    onBack: [] as Hook[],
+    onCancel: [] as Hook[],
+    onClose: [] as Hook[],
+    onDone: [] as Hook[],
   };
 
   public constructor(deps: RouterControllerDeps) {
@@ -147,9 +151,19 @@ export class RouterController {
   }
 
   // ─── Hooks ───
+  /**
+   * Register interceptors for navigation intents. A hook may redirect (return
+   * an activity id), close everything (`null`), cancel the intent
+   * (`NAVIGATE_CANCEL`), or defer to the default (`undefined`). The edge hooks
+   * (`onBack`/`onCancel`/`onClose`/`onDone`) fire from {@link traverse}.
+   */
   public readonly hooks = {
     beforeChange: (h: Hook) => this._register('beforeChange', h),
     afterFileAdd: (h: Hook) => this._register('afterFileAdd', h),
+    onBack: (h: Hook) => this._register('onBack', h),
+    onCancel: (h: Hook) => this._register('onCancel', h),
+    onClose: (h: Hook) => this._register('onClose', h),
+    onDone: (h: Hook) => this._register('onDone', h),
   };
 
   private _register(name: keyof typeof this._hooks, h: Hook): () => void {
@@ -293,6 +307,40 @@ export class RouterController {
   }
 
   /**
+   * Express a navigation *intent* and let the router resolve it — the way
+   * activities and plugins should navigate instead of calling `back()`/`close()`
+   * directly. A registered edge hook may intercept (redirect / `null` / cancel);
+   * otherwise the built-in default applies:
+   * - `onBack` / `onCancel` → {@link back},
+   * - `onClose` → {@link close},
+   * - `onDone` → navigate to the configured {@link doneActivity}.
+   */
+  public traverse(edge: 'onBack' | 'onCancel' | 'onClose' | 'onDone'): void {
+    const proposed = edge === 'onDone' ? this.doneActivity : null;
+    const ctx: EdgeContext = { edge, from: this.currentActivity, proposed, defaults: () => proposed };
+    for (const hook of this._hooks[edge]) {
+      const r = hook(ctx);
+      if (r === NAVIGATE_CANCEL) return;
+      if (r !== undefined) {
+        this.navigate(r);
+        return;
+      }
+    }
+    switch (edge) {
+      case 'onBack':
+      case 'onCancel':
+        this.back();
+        break;
+      case 'onClose':
+        this.close();
+        break;
+      case 'onDone':
+        this.navigate(this.doneActivity);
+        break;
+    }
+  }
+
+  /**
    * v1-compatible "after file add" routing. Default: navigate to `upload-list`;
    * `hooks.afterFileAdd` may override (DynamicBtn returns `null` with no history
    * so the modal stays closed and the inline button shows status).
@@ -327,6 +375,6 @@ export class RouterController {
 
   public destroy(): void {
     this._listeners.clear();
-    this._hooks = { beforeChange: [], afterFileAdd: [] };
+    this._hooks = { beforeChange: [], afterFileAdd: [], onBack: [], onCancel: [], onClose: [], onDone: [] };
   }
 }

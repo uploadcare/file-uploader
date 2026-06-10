@@ -40,7 +40,7 @@ export class FileUploaderInline extends LitSolutionBlock {
 
   private _handleCancel = (): void => {
     if (this._couldHistoryBack) {
-      this.router.back();
+      this.router.traverse('onBack');
       return;
     }
 

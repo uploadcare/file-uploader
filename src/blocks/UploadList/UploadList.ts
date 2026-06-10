@@ -231,7 +231,7 @@ export class UploadList extends LitUploaderBlock {
     <button
       type="button"
       class="uc-mini-btn uc-close-btn"
-      @click=${() => this.router.close()}
+      @click=${() => this.router.traverse('onClose')}
       title=${this.l10n('a11y-activity-header-button-close')}
       aria-label=${this.l10n('a11y-activity-header-button-close')}
     >

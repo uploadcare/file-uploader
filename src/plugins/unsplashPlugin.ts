@@ -81,14 +81,14 @@ class UcUnsplashActivity extends LitElement {
   public override render() {
     return html`
       <div class="uc-ui-activity-header">
-        <button type="button" class="uc-ui-icon-btn" title="Back" @click=${() => this.uploaderApi.historyBack()}>
+        <button type="button" class="uc-ui-icon-btn" title="Back" @click=${() => this.uploaderApi.traverse('onBack')}>
           <uc-icon name="back"></uc-icon>
         </button>
         <div>
           <uc-icon name="unsplash"></uc-icon>
           <span>Unsplash</span>
         </div>
-        <button type="button" class="uc-ui-icon-btn" title="Close" @click=${() => this.uploaderApi.navigate(null)}>
+        <button type="button" class="uc-ui-icon-btn" title="Close" @click=${() => this.uploaderApi.traverse('onClose')}>
           <uc-icon name="close"></uc-icon>
         </button>
       </div>

@@ -80,15 +80,15 @@ export class CloudImageEditorActivity extends LitUploaderBlock {
       cdnUrl: result.cdnUrl,
       cdnUrlModifiers: result.cdnUrlModifiers,
     });
-    // `historyBack()` (router.back) closes the cloud-editor activity and
-    // returns to the previous one.
-    this.historyBack();
+    // The back intent closes the cloud-editor activity and returns to the
+    // previous one.
+    this.router.traverse('onBack');
   }
 
   private _handleCancel(event?: Event): void {
     const detail = event instanceof CustomEvent ? event.detail : undefined;
     this.debugPrint(`editor event "cancel"`, detail);
-    this.historyBack();
+    this.router.traverse('onBack');
   }
 
   public handleChange(event: CustomEvent<ChangeResult>): void {

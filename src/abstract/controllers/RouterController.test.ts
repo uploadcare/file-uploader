@@ -313,6 +313,56 @@ describe('RouterController (v2)', () => {
     });
   });
 
+  describe('traverse (navigation intents)', () => {
+    it('onBack defaults to back()', () => {
+      const { router } = setup();
+      router.navigate('start-from');
+      router.navigate('camera');
+      router.traverse('onBack');
+      expect(router.currentActivity).toBe('start-from');
+    });
+
+    it('onClose defaults to close() (everything closed)', () => {
+      const { router } = setup();
+      router.navigate('start-from');
+      router.traverse('onClose');
+      expect(router.currentActivity).toBeNull();
+    });
+
+    it('onDone defaults to navigating to the configured done activity', () => {
+      const { router } = setup();
+      router.configure({ doneActivity: 'upload-list' });
+      router.navigate('start-from');
+      router.traverse('onDone');
+      expect(router.currentActivity).toBe('upload-list');
+    });
+
+    it('an edge hook can redirect the intent', () => {
+      const { router } = setup();
+      router.navigate('camera');
+      router.hooks.onCancel(() => 'upload-list');
+      router.traverse('onCancel');
+      expect(router.currentActivity).toBe('upload-list');
+    });
+
+    it('an edge hook can cancel the intent (NAVIGATE_CANCEL)', () => {
+      const { router } = setup();
+      router.navigate('camera');
+      router.hooks.onClose(() => NAVIGATE_CANCEL);
+      router.traverse('onClose');
+      expect(router.currentActivity).toBe('camera'); // unchanged
+    });
+
+    it('a hook returning undefined defers to the default', () => {
+      const { router } = setup();
+      router.navigate('start-from');
+      router.navigate('camera');
+      router.hooks.onBack(() => undefined);
+      router.traverse('onBack');
+      expect(router.currentActivity).toBe('start-from');
+    });
+  });
+
   describe('modal slot edges', () => {
     it('replacing one open modal with another emits no extra open/close', () => {
       const { router, emit } = setup();

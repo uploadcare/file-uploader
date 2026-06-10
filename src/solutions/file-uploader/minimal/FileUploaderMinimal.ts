@@ -127,7 +127,7 @@ export class FileUploaderMinimal extends LitSolutionBlock {
           <button
             type="button"
             class="uc-secondary-btn"
-            @click=${() => this.router.close()}
+            @click=${() => this.router.traverse('onClose')}
           >${this.l10n('start-from-cancel')}</button>
         </uc-start-from>
       </uc-modal>

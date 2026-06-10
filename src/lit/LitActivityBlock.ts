@@ -76,10 +76,6 @@ export class LitActivityBlock extends LitBlock {
   public get activityParams(): ActivityParamsMap[keyof ActivityParamsMap] {
     return this.router.params as ActivityParamsMap[keyof ActivityParamsMap];
   }
-
-  public historyBack(): void {
-    this.router.back();
-  }
 }
 
 LitActivityBlock.activities = ACTIVITY_TYPES;

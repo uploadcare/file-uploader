@@ -215,7 +215,7 @@ export class ExternalSource extends LitUploaderBlock {
   };
 
   private _handleCancel = (): void => {
-    this.historyBack();
+    this.router.traverse('onCancel');
   };
 
   private _handleSelectAll = (): void => {
@@ -295,7 +295,7 @@ export class ExternalSource extends LitUploaderBlock {
         <button
           type="button"
           class="uc-mini-btn uc-close-btn"
-          @click=${() => this.router.close()}
+          @click=${() => this.router.traverse('onClose')}
           title=${this.l10n('a11y-activity-header-button-close')}
           aria-label=${this.l10n('a11y-activity-header-button-close')}
         >
