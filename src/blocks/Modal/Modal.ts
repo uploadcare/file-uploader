@@ -54,7 +54,7 @@ export class Modal extends LitBlock {
     }
   };
 
-  public async show(): Promise<void> {
+  protected async show(): Promise<void> {
     await this.updateComplete;
     const dialog = this.dialogEl.value as HTMLDialogElement & {
       showModal?: () => void;
@@ -74,7 +74,7 @@ export class Modal extends LitBlock {
     }
   }
 
-  public hide(): void {
+  protected hide(): void {
     const dialog = this.dialogEl.value as HTMLDialogElement & {
       close?: () => void;
     };
