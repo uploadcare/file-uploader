@@ -90,7 +90,7 @@ export class FileUploaderRegular extends LitSolutionBlock {
     <uc-start-from>
       <uc-drop-area with-icon clickable></uc-drop-area>
       <uc-source-list role="list" wrap></uc-source-list>
-      <button type="button" class="uc-secondary-btn" @click=${() => this.router.traverse('onClose')}>${this.l10n('start-from-cancel')}</button>
+      <button type="button" class="uc-secondary-btn" @click=${() => this.router.traverse('onCancel')}>${this.l10n('start-from-cancel')}</button>
       <uc-copyright></uc-copyright>
     </uc-start-from>
   </uc-modal>

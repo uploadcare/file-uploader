@@ -295,7 +295,7 @@ export class ExternalSource extends LitUploaderBlock {
         <button
           type="button"
           class="uc-mini-btn uc-close-btn"
-          @click=${() => this.router.traverse('onClose')}
+          @click=${() => this.router.traverse('onCancel')}
           title=${this.l10n('a11y-activity-header-button-close')}
           aria-label=${this.l10n('a11y-activity-header-button-close')}
         >
