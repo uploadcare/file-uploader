@@ -102,7 +102,9 @@ export class UploadList extends LitUploaderBlock {
     }
     this._updateUploadsState();
 
-    if (!this.couldOpenActivity && this.router.currentActivity === this.activityType) {
+    // Bounce away if we shouldn't be on an empty list (unless showEmptyList).
+    const couldOpen = this.cfg.showEmptyList || this.uploadCollection.size > 0;
+    if (!couldOpen && this.router.currentActivity === this.activityType) {
       this.historyBack();
     }
 
@@ -173,10 +175,6 @@ export class UploadList extends LitUploaderBlock {
     return localizedText('total');
   }
 
-  public override get couldOpenActivity(): boolean {
-    return this.cfg.showEmptyList || this.uploadCollection.size > 0;
-  }
-
   public override initCallback() {
     super.initCallback();
 
@@ -194,8 +192,9 @@ export class UploadList extends LitUploaderBlock {
     });
 
     this.subActivity((currentActivity) => {
-      if (!this.couldOpenActivity && currentActivity === this.activityType) {
-        this.router.navigate(this.initActivity);
+      const couldOpen = this.cfg.showEmptyList || this.uploadCollection.size > 0;
+      if (!couldOpen && currentActivity === this.activityType) {
+        this.router.navigate(LitActivityBlock.activities.START_FROM);
       }
     });
 
@@ -229,7 +228,7 @@ export class UploadList extends LitUploaderBlock {
     <button
       type="button"
       class="uc-mini-btn uc-close-btn"
-      @click=${() => this.router.navigate(null)}
+      @click=${() => this.router.close()}
       title=${this.l10n('a11y-activity-header-button-close')}
       aria-label=${this.l10n('a11y-activity-header-button-close')}
     >

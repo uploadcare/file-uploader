@@ -105,6 +105,14 @@ export class PluginActivityRenderer extends LitBlock {
     }
 
     this._activities = pluginManager.snapshot().activities;
+
+    // Register each activity's declarative navigation edges with the router so
+    // `router.traverse('onCancel'|'onDone'|…)` from the activity's UI resolves.
+    for (const activity of this._activities) {
+      if (activity.routes) {
+        this.router.addPluginRoutes(activity.id, activity.routes);
+      }
+    }
   }
 
   public override disconnectedCallback(): void {

@@ -3,9 +3,6 @@
 @layer uc.solutions {
   /* ICONS: */
   :where([uc-file-uploader-minimal]) {
-    --cfg-init-activity: "start-from";
-    --cfg-done-activity: "upload-list";
-
     position: relative;
     display: block;
   }

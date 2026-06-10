@@ -4,7 +4,6 @@ import { calcCameraModes } from '../blocks/CameraSource/calcCameraModes';
 import { CameraSourceTypes, type ModeCameraType } from '../blocks/CameraSource/constants';
 import { type EventKey, type EventPayload, EventType } from '../blocks/UploadCtxProvider/EventEmitter';
 import { ACTIVITY_TYPES } from '../lit/activity-constants';
-import { findBlockInCtx } from '../lit/findBlockInCtx';
 import { waitForBlockInCtx } from '../lit/hasBlockInCtx';
 import type { ActivityParamsMap, ActivityType, LitActivityBlock } from '../lit/LitActivityBlock';
 import { createL10n } from '../lit/l10n';
@@ -337,20 +336,12 @@ export class UploaderPublicApi extends SharedInstance {
   };
 
   public doneFlow = (): void => {
-    const activityBlock = findBlockInCtx(this._sharedInstancesBag.blocksRegistry, (b) => 'doneActivity' in b) as
-      | LitActivityBlock
-      | undefined;
-
-    if (!activityBlock) {
-      return;
-    }
-    // Reset the router: clearing everything (also wipes history) then opening
-    // the configured done-activity, mirroring v1's `currentActivity =
-    // doneActivity` + `history = [doneActivity]`.
+    // Reset the router: clear everything (also wipes history), then land on the
+    // preset's configured done activity (set via `router.configure`).
     const router = this._sharedInstancesBag.router;
     router.navigate(null);
-    if (activityBlock.doneActivity) {
-      router.navigate(activityBlock.doneActivity);
+    if (router.doneActivity) {
+      router.navigate(router.doneActivity);
     }
   };
 

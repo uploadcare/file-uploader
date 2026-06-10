@@ -201,6 +201,7 @@ export const unsplashPlugin: UploaderPlugin = {
 
     pluginApi.registry.registerActivity({
       id: UNSPLASH_ACTIVITY_ID,
+      routes: { onCancel: 'start-from', onDone: 'upload-list' },
       render(el) {
         const activityEl = document.createElement('uc-unsplash-activity') as UcUnsplashActivity;
         activityEl.uploaderApi = uploaderApi;

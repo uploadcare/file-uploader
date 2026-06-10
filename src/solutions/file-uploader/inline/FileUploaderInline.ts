@@ -3,7 +3,7 @@ import { state } from 'lit/decorators.js';
 import './index.css';
 
 import { InternalEventType } from '../../../blocks/UploadCtxProvider/EventEmitter';
-import { LitActivityBlock, type RegisteredActivityType } from '../../../lit/LitActivityBlock';
+import { LitActivityBlock } from '../../../lit/LitActivityBlock';
 import { LitSolutionBlock } from '../../../lit/LitSolutionBlock';
 import { fileUploaderLazyPlugins } from '../lazyPlugins.js';
 
@@ -62,13 +62,6 @@ export class FileUploaderInline extends LitSolutionBlock {
     return this.cfg.showEmptyList || (Array.isArray(uploadList) && uploadList.length > 0);
   }
 
-  private _getInitActivity(): RegisteredActivityType {
-    return (
-      (this.getCssData('--cfg-init-activity') as RegisteredActivityType | undefined) ||
-      LitActivityBlock.activities.START_FROM
-    );
-  }
-
   public override initCallback(): void {
     super.initCallback();
 
@@ -76,11 +69,12 @@ export class FileUploaderInline extends LitSolutionBlock {
       eventType: InternalEventType.INIT_SOLUTION,
     });
 
-    const initActivity = this._getInitActivity();
+    const initActivity = LitActivityBlock.activities.START_FROM;
 
     // Inline renders every activity in place (no modal), so all navigation
-    // targets the background slot.
+    // targets the background slot; a completed flow returns to start-from.
     this.router.navigationStrategy = () => 'background';
+    this.router.configure({ _doneActivity: LitActivityBlock.activities.START_FROM });
 
     this.subActivity((val) => {
       if (!val) {

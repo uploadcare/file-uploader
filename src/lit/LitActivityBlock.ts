@@ -63,10 +63,6 @@ export class LitActivityBlock extends LitBlock {
     }
   }
 
-  public get couldOpenActivity(): boolean {
-    return true;
-  }
-
   // declare static activities to satisfy type references below
   public static activities: Readonly<{
     START_FROM: 'start-from';
@@ -79,14 +75,6 @@ export class LitActivityBlock extends LitBlock {
 
   public get activityParams(): ActivityParamsMap[keyof ActivityParamsMap] {
     return this.router.params as ActivityParamsMap[keyof ActivityParamsMap];
-  }
-
-  public get initActivity(): RegisteredActivityType | null {
-    return (this.getCssData('--cfg-init-activity') as RegisteredActivityType | null) ?? null;
-  }
-
-  public get doneActivity(): RegisteredActivityType | null {
-    return (this.getCssData('--cfg-done-activity') as RegisteredActivityType | null) ?? null;
   }
 
   public historyBack(): void {

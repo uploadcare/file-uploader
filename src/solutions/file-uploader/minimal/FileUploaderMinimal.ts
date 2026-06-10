@@ -1,7 +1,7 @@
 import { html } from 'lit';
 import { state } from 'lit/decorators.js';
 import { InternalEventType } from '../../../blocks/UploadCtxProvider/EventEmitter';
-import { LitActivityBlock, type RegisteredActivityType } from '../../../lit/LitActivityBlock';
+import { LitActivityBlock } from '../../../lit/LitActivityBlock';
 import { LitSolutionBlock } from '../../../lit/LitSolutionBlock';
 import './index.css';
 import { fileUploaderLazyPlugins } from '../lazyPlugins.js';
@@ -32,13 +32,6 @@ export class FileUploaderMinimal extends LitSolutionBlock {
   @state()
   private _buttonTextKey = 'choose-file';
 
-  private _getInitActivity(): RegisteredActivityType {
-    return (
-      (this.getCssData('--cfg-init-activity') as RegisteredActivityType | undefined) ||
-      LitActivityBlock.activities.START_FROM
-    );
-  }
-
   public constructor() {
     super();
 
@@ -54,22 +47,24 @@ export class FileUploaderMinimal extends LitSolutionBlock {
       eventType: InternalEventType.INIT_SOLUTION,
     });
 
-    const initActivity = this._getInitActivity();
-
     // Minimal layers a modal source picker over a persistent inline view: the
     // upload list is the *background* (it replaces the inline trigger once files
     // exist, no modal); everything else (the start-from picker, every source
     // activity) is *foreground* and opens over it. The inline `<uc-start-from>`
     // and `<uc-upload-list>` light up via the background slot's `[active]`
-    // attribute (no manual class toggling).
+    // attribute (no manual class toggling). A completed flow lands on the
+    // upload list.
     this.router.navigationStrategy = (to) =>
       to === LitActivityBlock.activities.UPLOAD_LIST ? 'background' : 'foreground';
+    this.router.configure({ _doneActivity: LitActivityBlock.activities.UPLOAD_LIST });
 
     // Background slot follows file state: the upload list once files exist,
-    // otherwise the configured init activity (the trigger).
+    // otherwise the start-from trigger.
     this.sub('*uploadList', (list: unknown) => {
       const hasFiles = Array.isArray(list) && list.length > 0;
-      this.router.setActivity(hasFiles ? LitActivityBlock.activities.UPLOAD_LIST : initActivity);
+      this.router.setActivity(
+        hasFiles ? LitActivityBlock.activities.UPLOAD_LIST : LitActivityBlock.activities.START_FROM,
+      );
     });
 
     this.subActivity((val) => {
@@ -77,7 +72,7 @@ export class FileUploaderMinimal extends LitSolutionBlock {
         this.router.closeModal();
       }
       if (!val) {
-        this.router.setActivity(initActivity);
+        this.router.setActivity(LitActivityBlock.activities.START_FROM);
       }
     });
 
@@ -132,7 +127,7 @@ export class FileUploaderMinimal extends LitSolutionBlock {
           <button
             type="button"
             class="uc-secondary-btn"
-            @click=${() => this.router.back()}
+            @click=${() => this.router.close()}
           >${this.l10n('start-from-cancel')}</button>
         </uc-start-from>
       </uc-modal>

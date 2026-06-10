@@ -83,7 +83,7 @@ export class RouterController {
     onClose: [] as Hook[],
     onDone: [] as Hook[],
   };
-  private _pluginRoutes: Partial<Record<ActivityId, ActivityRoute>> = {};
+  private _pluginRoutes: Partial<Record<string, ActivityRoute>> = {};
 
   public constructor(deps: RouterControllerDeps) {
     this._emit = deps.emit;
@@ -113,6 +113,10 @@ export class RouterController {
   public get canGoBack(): boolean {
     return this._history.length > 0;
   }
+  /** The activity to land on after a completed flow, configured per preset. */
+  public get doneActivity(): ActivityId | null {
+    return this._table._doneActivity ?? null;
+  }
 
   public subscribe(listener: () => void): () => void {
     return this._listeners.subscribe(listener);
@@ -123,7 +127,7 @@ export class RouterController {
     this._table = { ...table, activities: table.activities ?? {} };
   }
 
-  public addPluginRoutes(activityId: ActivityId, routes: ActivityRoute): void {
+  public addPluginRoutes(activityId: string, routes: ActivityRoute): void {
     this._pluginRoutes[activityId] = routes;
   }
 
@@ -268,6 +272,11 @@ export class RouterController {
   /** Close the foreground modal; keeps the background activity. */
   public closeModal(): void {
     this._transition(this._activity, null);
+  }
+
+  /** Close everything — both the modal and the background activity slot. */
+  public close(): void {
+    this.navigate(null);
   }
 
   /**

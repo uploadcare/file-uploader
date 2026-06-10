@@ -11,6 +11,11 @@ export const externalSourcesPlugin: UploaderPlugin = {
 
     pluginApi.registry.registerActivity({
       id: ACTIVITY_TYPES.EXTERNAL,
+      routes: {
+        onFileAdd: ACTIVITY_TYPES.UPLOAD_LIST,
+        onCancel: ACTIVITY_TYPES.START_FROM,
+        onDone: ACTIVITY_TYPES.UPLOAD_LIST,
+      },
       render: (host) => {
         const el = document.createElement('uc-external-source');
         host.append(el);
