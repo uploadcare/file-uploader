@@ -1,3 +1,6 @@
+import type { ActivityParams as CloudImageEditorActivityParams } from '../blocks/CloudImageEditorActivity/CloudImageEditorActivity';
+import type { ActivityParams as ExternalSourceActivityParams } from '../blocks/ExternalSource/ExternalSource';
+
 /**
  * Consumer-augmentable map of custom activity ids → `{ params }`. Declared here
  * (a dependency-free leaf) rather than in `LitActivityBlock` so the activity-id
@@ -28,3 +31,11 @@ export type ActivityType = RegisteredActivityType | null;
  * under the router's own name.)
  */
 export type ActivityId = (typeof ACTIVITY_TYPES)[keyof typeof ACTIVITY_TYPES] | keyof CustomActivities;
+
+/** Maps each activity id to the params shape it accepts (built-in + augmented). */
+export type ActivityParamsMap = {
+  'cloud-image-edit': CloudImageEditorActivityParams;
+  external: ExternalSourceActivityParams;
+} & {
+  [Key in keyof CustomActivities]: CustomActivities[Key]['params'];
+};

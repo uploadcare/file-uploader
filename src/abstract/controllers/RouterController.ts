@@ -204,20 +204,10 @@ export class RouterController {
    * `undefined` lets the proposed target through.
    */
   public navigate(to: EdgeTarget, params: Record<string, unknown> = {}): void {
-    const ctx: EdgeContext = {
-      edge: 'navigate',
-      from: this._activity,
-      proposed: to,
-      defaults: () => to,
-    };
-    let target: EdgeTarget = to;
-    for (const hook of this._hooks.beforeChange) {
-      const r = hook(ctx);
-      if (r === NAVIGATE_CANCEL) return;
-      if (r !== undefined) {
-        target = r;
-        break;
-      }
+    const ctx: EdgeContext = { edge: 'navigate', from: this._activity, proposed: to, defaults: () => to };
+    const target = this._runEdgeHooks('beforeChange', ctx);
+    if (target === NAVIGATE_CANCEL) {
+      return;
     }
     this._executeNavigate(target, params);
   }
@@ -244,6 +234,9 @@ export class RouterController {
 
   /** Set the background activity directly (preset init); skips `beforeChange`. */
   public setActivity(to: EdgeTarget, params: Record<string, unknown> = {}): void {
+    if (!this._canActivate(to)) {
+      return;
+    }
     this._params = params;
     this._transition(to, this._modal);
   }
@@ -293,6 +286,9 @@ export class RouterController {
 
   /** Open a modal for `id` without touching the background activity. */
   public openModal(id: ActivityId): void {
+    if (!this._canActivate(id)) {
+      return;
+    }
     this._transition(this._activity, id);
   }
 
@@ -316,6 +312,9 @@ export class RouterController {
    * - `onDone` → navigate to the configured {@link doneActivity}.
    */
   public traverse(edge: 'onBack' | 'onCancel' | 'onClose' | 'onDone'): void {
+    // `proposed`/`defaults()` carry a concrete target only for `onDone` (the
+    // done activity). For `onBack`/`onCancel`/`onClose` the default is an
+    // *action* (`back()`/`close()`), not a target, so `proposed` is `null`.
     const proposed = edge === 'onDone' ? this.doneActivity : null;
     const ctx: EdgeContext = { edge, from: this.currentActivity, proposed, defaults: () => proposed };
     for (const hook of this._hooks[edge]) {

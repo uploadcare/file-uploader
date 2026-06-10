@@ -1,7 +1,7 @@
 import { html } from 'lit';
 import { state } from 'lit/decorators.js';
 import { InternalEventType } from '../../../blocks/UploadCtxProvider/EventEmitter';
-import { LitActivityBlock } from '../../../lit/LitActivityBlock';
+import { ACTIVITY_TYPES } from '../../../lit/activity-constants';
 import { LitSolutionBlock } from '../../../lit/LitSolutionBlock';
 import './index.css';
 import { fileUploaderLazyPlugins } from '../lazyPlugins.js';
@@ -54,25 +54,22 @@ export class FileUploaderMinimal extends LitSolutionBlock {
     // and `<uc-upload-list>` light up via the background slot's `[active]`
     // attribute (no manual class toggling). A completed flow lands on the
     // upload list.
-    this.router.navigationStrategy = (to) =>
-      to === LitActivityBlock.activities.UPLOAD_LIST ? 'background' : 'foreground';
-    this.router.configure({ doneActivity: LitActivityBlock.activities.UPLOAD_LIST });
+    this.router.navigationStrategy = (to) => (to === ACTIVITY_TYPES.UPLOAD_LIST ? 'background' : 'foreground');
+    this.router.configure({ doneActivity: ACTIVITY_TYPES.UPLOAD_LIST });
 
     // Background slot follows file state: the upload list once files exist,
     // otherwise the start-from trigger.
     this.sub('*uploadList', (list: unknown) => {
       const hasFiles = Array.isArray(list) && list.length > 0;
-      this.router.setActivity(
-        hasFiles ? LitActivityBlock.activities.UPLOAD_LIST : LitActivityBlock.activities.START_FROM,
-      );
+      this.router.setActivity(hasFiles ? ACTIVITY_TYPES.UPLOAD_LIST : ACTIVITY_TYPES.START_FROM);
     });
 
     this.subActivity((val) => {
-      if (val === LitActivityBlock.activities.UPLOAD_LIST) {
+      if (val === ACTIVITY_TYPES.UPLOAD_LIST) {
         this.router.closeModal();
       }
       if (!val) {
-        this.router.setActivity(LitActivityBlock.activities.START_FROM);
+        this.router.setActivity(ACTIVITY_TYPES.START_FROM);
       }
     });
 

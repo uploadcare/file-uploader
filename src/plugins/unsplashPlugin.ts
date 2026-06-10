@@ -227,7 +227,7 @@ declare module '../abstract/customConfigOptions' {
   }
 }
 
-declare module '../lit/LitActivityBlock' {
+declare module '../lit/activity-constants' {
   interface CustomActivities {
     [UNSPLASH_ACTIVITY_ID]: { params: never };
   }

@@ -3,7 +3,7 @@ import { state } from 'lit/decorators.js';
 import './index.css';
 
 import { InternalEventType } from '../../../blocks/UploadCtxProvider/EventEmitter';
-import { LitActivityBlock } from '../../../lit/LitActivityBlock';
+import { ACTIVITY_TYPES } from '../../../lit/activity-constants';
 import { LitSolutionBlock } from '../../../lit/LitSolutionBlock';
 import { fileUploaderLazyPlugins } from '../lazyPlugins.js';
 
@@ -45,7 +45,7 @@ export class FileUploaderInline extends LitSolutionBlock {
     }
 
     if (this._couldShowList) {
-      this.router.setActivity(LitActivityBlock.activities.UPLOAD_LIST);
+      this.router.setActivity(ACTIVITY_TYPES.UPLOAD_LIST);
     }
   };
 
@@ -54,7 +54,7 @@ export class FileUploaderInline extends LitSolutionBlock {
     if (history.length <= 1) {
       return false;
     }
-    return history[history.length - 1] !== LitActivityBlock.activities.START_FROM;
+    return history[history.length - 1] !== ACTIVITY_TYPES.START_FROM;
   }
 
   private get _couldShowList(): boolean {
@@ -69,12 +69,12 @@ export class FileUploaderInline extends LitSolutionBlock {
       eventType: InternalEventType.INIT_SOLUTION,
     });
 
-    const initActivity = LitActivityBlock.activities.START_FROM;
+    const initActivity = ACTIVITY_TYPES.START_FROM;
 
     // Inline renders every activity in place (no modal), so all navigation
     // targets the background slot; a completed flow returns to start-from.
     this.router.navigationStrategy = () => 'background';
-    this.router.configure({ doneActivity: LitActivityBlock.activities.START_FROM });
+    this.router.configure({ doneActivity: ACTIVITY_TYPES.START_FROM });
 
     this.subActivity((val) => {
       if (!val) {
@@ -84,7 +84,7 @@ export class FileUploaderInline extends LitSolutionBlock {
 
     this.sub('*uploadList', (list) => {
       if (Array.isArray(list) && list.length > 0 && this.router.currentActivity === initActivity) {
-        this.router.setActivity(LitActivityBlock.activities.UPLOAD_LIST);
+        this.router.setActivity(ACTIVITY_TYPES.UPLOAD_LIST);
       }
     });
 

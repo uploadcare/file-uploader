@@ -3,7 +3,7 @@ import { LitBlock } from '../../lit/LitBlock';
 import './modal.css';
 import { property } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
-import type { RegisteredActivityType } from '../../lit/LitActivityBlock';
+import type { RegisteredActivityType } from '../../lit/activity-constants';
 
 export class Modal extends LitBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-modal'];

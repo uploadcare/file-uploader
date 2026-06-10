@@ -3,9 +3,10 @@
 import { calcCameraModes } from '../blocks/CameraSource/calcCameraModes';
 import { CameraSourceTypes, type ModeCameraType } from '../blocks/CameraSource/constants';
 import { type EventKey, type EventPayload, EventType } from '../blocks/UploadCtxProvider/EventEmitter';
+import type { ActivityParamsMap, ActivityType } from '../lit/activity-constants';
 import { ACTIVITY_TYPES } from '../lit/activity-constants';
 import { waitForBlockInCtx } from '../lit/hasBlockInCtx';
-import type { ActivityParamsMap, ActivityType, LitActivityBlock } from '../lit/LitActivityBlock';
+import type { LitActivityBlock } from '../lit/LitActivityBlock';
 import { createL10n } from '../lit/l10n';
 import { SharedInstance } from '../lit/shared-instances';
 import type { Uid } from '../lit/Uid';

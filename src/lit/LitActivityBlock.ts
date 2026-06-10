@@ -1,23 +1,9 @@
 import type { PropertyValues } from 'lit';
 import { activityBlockCtx } from '../abstract/CTX';
-import type { ActivityParams as CloudImageEditorActivityParams } from '../blocks/CloudImageEditorActivity/CloudImageEditorActivity';
-import type { ActivityParams as ExternalSourceActivityParams } from '../blocks/ExternalSource/ExternalSource';
-import {
-  ACTIVITY_TYPES,
-  type ActivityType,
-  type CustomActivities,
-  type RegisteredActivityType,
-} from './activity-constants';
+import { ACTIVITY_TYPES, type ActivityParamsMap, type ActivityType } from './activity-constants';
 import { LitBlock } from './LitBlock';
 
 const ACTIVE_ATTR = 'active';
-
-export type ActivityParamsMap = {
-  'cloud-image-edit': CloudImageEditorActivityParams;
-  external: ExternalSourceActivityParams;
-} & {
-  [Key in keyof CustomActivities]: CustomActivities[Key]['params'];
-};
 
 /**
  * Base for activity blocks. A subclass declares its `activityType`; the base
@@ -38,8 +24,15 @@ export class LitActivityBlock extends LitBlock {
   public override initCallback(): void {
     super.initCallback();
 
+    // Only blocks that actually represent an activity react to the router.
+    // Many `LitActivityBlock`/`LitUploaderBlock` subclasses (source buttons,
+    // source list, headers, …) have no `activityType` and would otherwise
+    // re-render on every navigation for nothing.
+    if (!this.activityType) {
+      return;
+    }
     // TODO: rename activityType to activityId
-    if (this.activityType && !this.hasAttribute('activity')) {
+    if (!this.hasAttribute('activity')) {
       this.setAttribute('activity', this.activityType);
     }
     // Re-render on every router transition so `updated()` re-evaluates the slot.
@@ -79,5 +72,3 @@ export class LitActivityBlock extends LitBlock {
 }
 
 LitActivityBlock.activities = ACTIVITY_TYPES;
-
-export type { ActivityType, CustomActivities, RegisteredActivityType };
