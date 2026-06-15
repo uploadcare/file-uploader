@@ -57,6 +57,9 @@ export class LitUploaderBlock extends LitActivityBlock {
           'cdnUrl',
           'isUploading',
           'isValidationPending',
+          // Watched so `filesApi.replace` reaches the observer's change map and
+          // routes to the `file-updated` event (see _handleCollectionPropertiesUpdate).
+          'isReplacement',
         ],
       });
     });

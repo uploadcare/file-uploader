@@ -87,6 +87,13 @@ export function buildPluginApi(
     replace: (internalId: string, file: UploadcareFile) => {
       const entry = sharedInstancesBag.uploadCollection?.read(internalId as Uid);
       if (!entry) return;
+      // Release the previous file's resources before discarding their references:
+      // cancel any in-flight upload and revoke a local blob thumbnail.
+      entry.getValue('abortController')?.abort();
+      const prevThumbUrl = entry.getValue('thumbUrl');
+      if (prevThumbUrl?.startsWith('blob:')) {
+        URL.revokeObjectURL(prevThumbUrl);
+      }
       entry.setMultipleValues({
         // New file + everything derived from its uuid (mirrors addFileFromUploadcareFile).
         fileInfo: file,
