@@ -3,6 +3,7 @@ import type { SharedState } from '../../../lit/SharedState';
 import type { SharedInstancesBag } from '../../../lit/shared-instances';
 import type { Uid } from '../../../lit/Uid';
 import type { ConfigType } from '../../../types';
+import type { UploadcareFile } from '../../../types/exported';
 import type { CustomConfig } from '../../customConfigOptions';
 import { sharedConfigKey } from '../../sharedConfigKey';
 import type { PluginRegistry } from './PluginRegistry';
@@ -82,6 +83,37 @@ export function buildPluginApi(
       if (changes.cdnUrl !== undefined) entry.setValue('cdnUrl', changes.cdnUrl);
       if (changes.cdnUrlModifiers !== undefined) entry.setValue('cdnUrlModifiers', changes.cdnUrlModifiers);
       if (changes.mimeType !== undefined) entry.setValue('mimeType', changes.mimeType);
+    },
+    replace: (internalId: string, file: UploadcareFile) => {
+      const entry = sharedInstancesBag.uploadCollection?.read(internalId as Uid);
+      if (!entry) return;
+      entry.setMultipleValues({
+        // New file + everything derived from its uuid (mirrors addFileFromUploadcareFile).
+        fileInfo: file,
+        uuid: file.uuid,
+        cdnUrl: file.cdnUrl,
+        fileName: file.originalFilename ?? null,
+        fileSize: file.size,
+        isImage: file.isImage ?? false,
+        mimeType: file.contentInfo?.mime?.mime ?? file.mimeType ?? null,
+        uploadProgress: 100,
+        // Reset state tied to the previous file — the old modifiers, local blob,
+        // errors and progress no longer apply to the replacement.
+        cdnUrlModifiers: '',
+        file: null,
+        externalUrl: null,
+        thumbUrl: null,
+        errors: [],
+        uploadError: null,
+        isUploading: false,
+        isQueuedForUploading: false,
+        isValidationPending: false,
+        isQueuedForValidation: false,
+        isRemoved: false,
+        abortController: null,
+        // Tell the observer this is a replacement → emit `file-updated`.
+        isReplacement: true,
+      });
     },
   };
 

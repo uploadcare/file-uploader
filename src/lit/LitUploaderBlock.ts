@@ -278,6 +278,8 @@ export class LitUploaderBlock extends LitActivityBlock {
     }
     if (changeMap.fileInfo) {
       for (const entryId of changeMap.fileInfo) {
+        // A replacement reports via `file-updated` below, not a fresh success.
+        if (changeMap.isReplacement?.has(entryId)) continue;
         const ctx = PubSub.getCtx<UploadEntryData>(entryId);
         if (!ctx) continue;
         const { fileInfo, silent } = ctx.store;
@@ -325,13 +327,26 @@ export class LitUploaderBlock extends LitActivityBlock {
     }
     if (changeMap.cdnUrl) {
       const uids = [...changeMap.cdnUrl].filter((uid) => {
-        return !!this.uploadCollection.read(uid)?.getValue('cdnUrl');
+        // A replacement reports via `file-updated`, not `file-url-changed`.
+        return !changeMap.isReplacement?.has(uid) && !!this.uploadCollection.read(uid)?.getValue('cdnUrl');
       });
       uids.forEach((uid) => {
         this.emit(EventType.FILE_URL_CHANGED, this.api.getOutputItem(uid));
       });
 
       this.$['*groupInfo'] = null;
+    }
+    if (changeMap.isReplacement) {
+      for (const entryId of changeMap.isReplacement) {
+        const entry = this.uploadCollection.read(entryId);
+        // Only the set→true edge is a fresh replacement; the observer clears the
+        // flag below, which re-enters here with it already false.
+        if (!entry?.getValue('isReplacement')) continue;
+        if (!entry.getValue('silent')) {
+          this.emit(EventType.FILE_UPDATED, this.api.getOutputItem(entryId));
+        }
+        entry.setValue('isReplacement', false);
+      }
     }
   };
 

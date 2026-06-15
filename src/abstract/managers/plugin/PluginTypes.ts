@@ -1,4 +1,4 @@
-import type { ConfigType, OutputFileEntry } from '../../../types/exported';
+import type { ConfigType, OutputFileEntry, UploadcareFile } from '../../../types/exported';
 import type { CustomConfig, CustomConfigDefinition } from '../../customConfigOptions';
 import type { UploaderPublicApi } from '../../UploaderPublicApi';
 
@@ -153,6 +153,14 @@ export type PluginFilesApi = {
    * `fileSize` is recalculated automatically when `file` is provided.
    */
   update: (internalId: string, changes: PluginFileEntryUpdate) => void;
+  /**
+   * Replace an existing entry's file in place with an already-uploaded
+   * Uploadcare file, keeping its `internalId`. The uuid and all uuid-derived
+   * fields (cdnUrl, fileInfo, name, size, mimeType, …) are taken from `file`;
+   * stale state (errors, progress, local File, modifiers) is reset. Emits the
+   * `file-updated` event instead of a fresh `file-upload-success`.
+   */
+  replace: (internalId: string, file: UploadcareFile) => void;
 };
 
 export type PluginApi = {

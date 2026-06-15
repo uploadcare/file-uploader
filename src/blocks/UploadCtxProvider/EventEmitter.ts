@@ -21,6 +21,7 @@ export const EventType = Object.freeze({
   FILE_UPLOAD_SUCCESS: 'file-upload-success',
   FILE_UPLOAD_FAILED: 'file-upload-failed',
   FILE_URL_CHANGED: 'file-url-changed',
+  FILE_UPDATED: 'file-updated',
 
   MODAL_OPEN: 'modal-open',
   MODAL_CLOSE: 'modal-close',
@@ -49,6 +50,7 @@ export type EventPayload = {
   [EventType.FILE_UPLOAD_SUCCESS]: OutputFileEntry<'success'>;
   [EventType.FILE_UPLOAD_FAILED]: OutputFileEntry<'failed'>;
   [EventType.FILE_URL_CHANGED]: OutputFileEntry<'success'>;
+  [EventType.FILE_UPDATED]: OutputFileEntry<'success'>;
   [EventType.MODAL_OPEN]: { modalId: ModalId };
   [EventType.MODAL_CLOSE]: {
     modalId: ModalId;
@@ -106,7 +108,7 @@ export class EventEmitter extends SharedInstance {
     }
 
     this._debugPrint?.(() => {
-      const copyPayload = !!payload && typeof payload === 'object' ? { ...payload } : payload;
+      const copyPayload = payload && typeof payload === 'object' ? { ...payload } : payload;
       return [`event "${type}"`, copyPayload];
     });
   }
