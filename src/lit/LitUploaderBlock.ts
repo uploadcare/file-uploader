@@ -330,9 +330,11 @@ export class LitUploaderBlock extends LitActivityBlock {
     }
     if (changeMap.cdnUrl) {
       const uids = [...changeMap.cdnUrl].filter((uid) => {
-        // A replacement reports via `file-updated`, not `file-url-changed`.
-        return !changeMap.isReplacement?.has(uid) && !!this.uploadCollection.read(uid)?.getValue('cdnUrl');
+        return !!this.uploadCollection.read(uid)?.getValue('cdnUrl');
       });
+      // A replacement changes the cdn url too, so `file-url-changed` fires
+      // alongside `file-updated` — only the fresh-upload `file-upload-success`
+      // is suppressed for replacements.
       uids.forEach((uid) => {
         this.emit(EventType.FILE_URL_CHANGED, this.api.getOutputItem(uid));
       });
