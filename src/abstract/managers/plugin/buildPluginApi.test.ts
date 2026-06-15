@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { EventType } from '../../../blocks/UploadCtxProvider/EventEmitter';
 import type { UploadcareFile } from '../../../types/exported';
 import { buildPluginApi } from './buildPluginApi';
 
@@ -16,11 +17,13 @@ function makeEntry(values: Record<string, unknown> = {}): EntryMock {
 
 function makePluginApi(entry: EntryMock | null) {
   const uploadCollection = { read: vi.fn(() => entry) };
-  // biome-ignore lint/suspicious/noExplicitAny: minimal mocks — files.replace only touches uploadCollection.
-  const sharedInstancesBag = { uploadCollection } as any;
+  const eventEmitter = { suppressEventOnce: vi.fn(), emit: vi.fn() };
+  const uploaderApi = { getOutputItem: vi.fn(() => ({ status: 'success', uuid: 'new-uuid' })) };
+  // biome-ignore lint/suspicious/noExplicitAny: minimal mocks for the bits files.replace touches.
+  const sharedInstancesBag = { uploadCollection, eventEmitter, api: uploaderApi } as any;
   // biome-ignore lint/suspicious/noExplicitAny: registry/ctx are unused by files.replace.
   const api = buildPluginApi({} as any, {} as any, sharedInstancesBag, 'p', []);
-  return { api, uploadCollection };
+  return { api, uploadCollection, eventEmitter, uploaderApi };
 }
 
 const sampleFile = {
@@ -34,11 +37,18 @@ const sampleFile = {
 } as unknown as UploadcareFile;
 
 describe('buildPluginApi — files.replace', () => {
-  it('swaps the file in place: uuid-derived fields from the file, stale state reset, marked as replacement', () => {
+  it('swaps the file in place: uuid-derived fields from the file, stale state reset, emits file-replaced', () => {
     const entry = makeEntry();
-    const { api } = makePluginApi(entry);
+    const { api, eventEmitter } = makePluginApi(entry);
 
     api.files.replace('entry-1', sampleFile);
+
+    // Announces the replacement directly and arms the one-shot success suppression.
+    expect(eventEmitter.emit).toHaveBeenCalledWith(
+      EventType.FILE_REPLACED,
+      expect.objectContaining({ status: 'success' }),
+    );
+    expect(eventEmitter.suppressEventOnce).toHaveBeenCalledWith(EventType.FILE_UPLOAD_SUCCESS, 'entry-1');
 
     expect(entry.setMultipleValues).toHaveBeenCalledOnce();
     expect(entry.setMultipleValues.mock.calls[0]![0]).toMatchObject({

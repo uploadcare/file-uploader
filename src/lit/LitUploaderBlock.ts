@@ -57,9 +57,6 @@ export class LitUploaderBlock extends LitActivityBlock {
           'cdnUrl',
           'isUploading',
           'isValidationPending',
-          // Watched so a uuid swap (filesApi.replace) reaches the observer's
-          // change map and routes to `file-replaced` (see _handleCollectionPropertiesUpdate).
-          'uuid',
         ],
       });
     });
@@ -220,7 +217,6 @@ export class LitUploaderBlock extends LitActivityBlock {
       });
       const thumbUrl = entry?.getValue('thumbUrl');
       thumbUrl && URL.revokeObjectURL(thumbUrl);
-      this._lastSeenUuid.delete(entry.uid);
       this.emit(EventType.FILE_REMOVED, this.api.getOutputItem(entry.uid));
     }
 
@@ -232,35 +228,11 @@ export class LitUploaderBlock extends LitActivityBlock {
     this._flushOutputItems();
   };
 
-  /** Last seen uuid per entry, to tell a replacement (uuid swapped for another)
-   *  from a first upload (uuid set from null). */
-  private _lastSeenUuid = new Map<Uid, string | null>();
-
   private _handleCollectionPropertiesUpdate = (changeMap: Record<keyof UploadEntryData, Set<Uid>>): void => {
     if (!this.isConnected) return;
     this._flushOutputItems();
 
     const uploadCollection = this.uploadCollection;
-
-    // A `filesApi.replace` swaps the entry's uuid for another (a fresh upload
-    // instead sets it from null). Detect that here so we emit `file-replaced`
-    // and suppress the misleading `file-upload-success`.
-    const replacedEntries = new Set<Uid>();
-    if (changeMap.uuid) {
-      for (const entryId of changeMap.uuid) {
-        const entry = uploadCollection.read(entryId);
-        if (!entry) {
-          this._lastSeenUuid.delete(entryId);
-          continue;
-        }
-        const newUuid = entry.getValue('uuid');
-        const prevUuid = this._lastSeenUuid.get(entryId) ?? null;
-        this._lastSeenUuid.set(entryId, newUuid);
-        if (prevUuid && newUuid && prevUuid !== newUuid) {
-          replacedEntries.add(entryId);
-        }
-      }
-    }
     const entriesToRunValidation = [
       ...new Set(
         Object.entries(changeMap)
@@ -306,8 +278,11 @@ export class LitUploaderBlock extends LitActivityBlock {
     }
     if (changeMap.fileInfo) {
       for (const entryId of changeMap.fileInfo) {
-        // A replacement reports via `file-replaced` below, not a fresh success.
-        if (replacedEntries.has(entryId)) continue;
+        // A `filesApi.replace` announces itself as `file-replaced` and arms this
+        // one-shot suppression, so skip the misleading fresh-upload success.
+        if (this._sharedInstancesBag.eventEmitter.consumeEventSuppression(EventType.FILE_UPLOAD_SUCCESS, entryId)) {
+          continue;
+        }
         const ctx = PubSub.getCtx<UploadEntryData>(entryId);
         if (!ctx) continue;
         const { fileInfo, silent } = ctx.store;
@@ -365,11 +340,6 @@ export class LitUploaderBlock extends LitActivityBlock {
       });
 
       this.$['*groupInfo'] = null;
-    }
-    for (const entryId of replacedEntries) {
-      if (!this.uploadCollection.read(entryId)?.getValue('silent')) {
-        this.emit(EventType.FILE_REPLACED, this.api.getOutputItem(entryId));
-      }
     }
   };
 
