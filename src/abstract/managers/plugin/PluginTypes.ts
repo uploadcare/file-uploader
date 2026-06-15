@@ -158,7 +158,8 @@ export type PluginFilesApi = {
    * Uploadcare file, keeping its `internalId`. The uuid and all uuid-derived
    * fields (cdnUrl, fileInfo, name, size, mimeType, …) are taken from `file`;
    * stale state (errors, progress, local File, modifiers) is reset. Emits the
-   * `file-updated` event instead of a fresh `file-upload-success`.
+   * `file-replaced` event (and `file-url-changed`) instead of a fresh
+   * `file-upload-success`.
    */
   replace: (internalId: string, file: UploadcareFile) => void;
 };

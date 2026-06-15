@@ -118,8 +118,6 @@ export function buildPluginApi(
         isQueuedForValidation: false,
         isRemoved: false,
         abortController: null,
-        // Tell the observer this is a replacement → emit `file-updated`.
-        isReplacement: true,
       });
     },
   };

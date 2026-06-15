@@ -1,7 +1,7 @@
 import { uploadFile } from '@uploadcare/upload-client';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
-import type { Config, EventPayload } from '@/index.js';
+import type { Config, EventPayload, UploadCtxProvider } from '@/index.js';
 import { IMAGE } from './fixtures/files';
 import { TEST_IMAGE_URL } from './utils/constants';
 import '../types/jsx';
@@ -86,6 +86,73 @@ describe('API', () => {
     // The file was announced as added, and was never uploaded (it already carried fileInfo).
     expect(fileAddedHandler).toHaveBeenCalled();
     expect(uploadStartHandler).not.toHaveBeenCalled();
+  }, 30_000);
+
+  it('files.replace swaps a file in place: emits file-replaced + file-url-changed (not a fresh success) and re-validates', async () => {
+    // Two genuine, distinct Uploadcare files.
+    const fileA = await uploadFile(IMAGE.PIXEL, { publicKey: 'demopublickey', store: false });
+    const fileB = await uploadFile(IMAGE.PIXEL, { publicKey: 'demopublickey', store: false });
+    expect(fileB.uuid).not.toBe(fileA.uuid);
+
+    const config = page.getByTestId('uc-config').query()! as Config;
+
+    // Reach the plugin-only files.replace by registering a tiny capturing plugin.
+    let replace: ((internalId: string, file: typeof fileB) => void) | undefined;
+    config.plugins = [
+      {
+        id: 'test-replace',
+        setup: ({ pluginApi }) => {
+          replace = pluginApi.files.replace;
+        },
+      },
+    ];
+
+    // A file validator records every entry it runs against — proves replacement re-validates.
+    const validatedUuids: string[] = [];
+    config.fileValidators = [
+      (entry) => {
+        if (entry.uuid) validatedUuids.push(entry.uuid);
+        return undefined;
+      },
+    ];
+
+    await vi.waitFor(() => expect(replace).toBeTruthy());
+
+    const uploadCtxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
+    const api = uploadCtxProvider.api;
+
+    const replacedHandler = vi.fn<(e: CustomEvent<EventPayload['file-replaced']>) => void>();
+    const urlChangedHandler = vi.fn<(e: CustomEvent<EventPayload['file-url-changed']>) => void>();
+    const successHandler = vi.fn<(e: CustomEvent<EventPayload['file-upload-success']>) => void>();
+    uploadCtxProvider.addEventListener('file-replaced', replacedHandler);
+    uploadCtxProvider.addEventListener('file-url-changed', urlChangedHandler);
+    uploadCtxProvider.addEventListener('file-upload-success', successHandler);
+
+    const entry = api.addFileFromUploadcareFile(fileA);
+    // Wait for the add's own success so we can assert the replace adds no further one.
+    await vi.waitFor(() => expect(successHandler).toHaveBeenCalled());
+    const successCallsAfterAdd = successHandler.mock.calls.length;
+
+    replace!(entry.internalId, fileB);
+
+    // Replacement reports via file-replaced, on the same entry, with the new uuid.
+    const replaced = await vi.waitFor(() => {
+      expect(replacedHandler).toHaveBeenCalled();
+      return replacedHandler.mock.calls.at(-1)![0].detail;
+    });
+    expect(replaced.uuid).toBe(fileB.uuid);
+    expect(replaced.internalId).toBe(entry.internalId);
+
+    // The url changed too, so file-url-changed fires for the new file.
+    await vi.waitFor(() =>
+      expect(urlChangedHandler.mock.calls.some((c) => c[0].detail.uuid === fileB.uuid)).toBe(true),
+    );
+
+    // Validators re-ran for the replaced file (same pipeline as a fresh file).
+    await vi.waitFor(() => expect(validatedUuids).toContain(fileB.uuid));
+
+    // The replace did NOT emit a fresh file-upload-success.
+    expect(successHandler).toHaveBeenCalledTimes(successCallsAfterAdd);
   }, 30_000);
 
   it('should not duplicate events after uploader add/removal', async () => {

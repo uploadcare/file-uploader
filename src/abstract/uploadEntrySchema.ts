@@ -29,13 +29,6 @@ export interface UploadEntryData extends Record<string, unknown> {
   isQueuedForUploading: boolean;
   isValidationPending: boolean;
   isQueuedForValidation: boolean;
-  /**
-   * Transient, one-shot marker set by `filesApi.replace` while it swaps the
-   * entry's file in place. The collection observer reads it to emit
-   * `file-updated` (instead of a misleading `file-upload-success` /
-   * `file-url-changed`) and then clears it. Not part of the public output.
-   */
-  isReplacement: boolean;
 }
 
 export const initialUploadEntryData: UploadEntryData = {
@@ -65,7 +58,6 @@ export const initialUploadEntryData: UploadEntryData = {
   isQueuedForUploading: false,
   isValidationPending: false,
   isQueuedForValidation: false,
-  isReplacement: false,
 };
 
 export type UploadEntryTypedData = TypedData<UploadEntryData>;

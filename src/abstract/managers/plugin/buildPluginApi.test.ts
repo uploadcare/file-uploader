@@ -57,8 +57,6 @@ describe('buildPluginApi — files.replace', () => {
       errors: [],
       uploadError: null,
       isUploading: false,
-      // observer signal
-      isReplacement: true,
     });
   });
 

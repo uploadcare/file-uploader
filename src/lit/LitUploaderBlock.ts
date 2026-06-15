@@ -57,9 +57,9 @@ export class LitUploaderBlock extends LitActivityBlock {
           'cdnUrl',
           'isUploading',
           'isValidationPending',
-          // Watched so `filesApi.replace` reaches the observer's change map and
-          // routes to the `file-updated` event (see _handleCollectionPropertiesUpdate).
-          'isReplacement',
+          // Watched so a uuid swap (filesApi.replace) reaches the observer's
+          // change map and routes to `file-replaced` (see _handleCollectionPropertiesUpdate).
+          'uuid',
         ],
       });
     });
@@ -220,6 +220,7 @@ export class LitUploaderBlock extends LitActivityBlock {
       });
       const thumbUrl = entry?.getValue('thumbUrl');
       thumbUrl && URL.revokeObjectURL(thumbUrl);
+      this._lastSeenUuid.delete(entry.uid);
       this.emit(EventType.FILE_REMOVED, this.api.getOutputItem(entry.uid));
     }
 
@@ -231,11 +232,35 @@ export class LitUploaderBlock extends LitActivityBlock {
     this._flushOutputItems();
   };
 
+  /** Last seen uuid per entry, to tell a replacement (uuid swapped for another)
+   *  from a first upload (uuid set from null). */
+  private _lastSeenUuid = new Map<Uid, string | null>();
+
   private _handleCollectionPropertiesUpdate = (changeMap: Record<keyof UploadEntryData, Set<Uid>>): void => {
     if (!this.isConnected) return;
     this._flushOutputItems();
 
     const uploadCollection = this.uploadCollection;
+
+    // A `filesApi.replace` swaps the entry's uuid for another (a fresh upload
+    // instead sets it from null). Detect that here so we emit `file-replaced`
+    // and suppress the misleading `file-upload-success`.
+    const replacedEntries = new Set<Uid>();
+    if (changeMap.uuid) {
+      for (const entryId of changeMap.uuid) {
+        const entry = uploadCollection.read(entryId);
+        if (!entry) {
+          this._lastSeenUuid.delete(entryId);
+          continue;
+        }
+        const newUuid = entry.getValue('uuid');
+        const prevUuid = this._lastSeenUuid.get(entryId) ?? null;
+        this._lastSeenUuid.set(entryId, newUuid);
+        if (prevUuid && newUuid && prevUuid !== newUuid) {
+          replacedEntries.add(entryId);
+        }
+      }
+    }
     const entriesToRunValidation = [
       ...new Set(
         Object.entries(changeMap)
@@ -281,8 +306,8 @@ export class LitUploaderBlock extends LitActivityBlock {
     }
     if (changeMap.fileInfo) {
       for (const entryId of changeMap.fileInfo) {
-        // A replacement reports via `file-updated` below, not a fresh success.
-        if (changeMap.isReplacement?.has(entryId)) continue;
+        // A replacement reports via `file-replaced` below, not a fresh success.
+        if (replacedEntries.has(entryId)) continue;
         const ctx = PubSub.getCtx<UploadEntryData>(entryId);
         if (!ctx) continue;
         const { fileInfo, silent } = ctx.store;
@@ -333,7 +358,7 @@ export class LitUploaderBlock extends LitActivityBlock {
         return !!this.uploadCollection.read(uid)?.getValue('cdnUrl');
       });
       // A replacement changes the cdn url too, so `file-url-changed` fires
-      // alongside `file-updated` — only the fresh-upload `file-upload-success`
+      // alongside `file-replaced` — only the fresh-upload `file-upload-success`
       // is suppressed for replacements.
       uids.forEach((uid) => {
         this.emit(EventType.FILE_URL_CHANGED, this.api.getOutputItem(uid));
@@ -341,16 +366,9 @@ export class LitUploaderBlock extends LitActivityBlock {
 
       this.$['*groupInfo'] = null;
     }
-    if (changeMap.isReplacement) {
-      for (const entryId of changeMap.isReplacement) {
-        const entry = this.uploadCollection.read(entryId);
-        // Only the set→true edge is a fresh replacement; the observer clears the
-        // flag below, which re-enters here with it already false.
-        if (!entry?.getValue('isReplacement')) continue;
-        if (!entry.getValue('silent')) {
-          this.emit(EventType.FILE_UPDATED, this.api.getOutputItem(entryId));
-        }
-        entry.setValue('isReplacement', false);
+    for (const entryId of replacedEntries) {
+      if (!this.uploadCollection.read(entryId)?.getValue('silent')) {
+        this.emit(EventType.FILE_REPLACED, this.api.getOutputItem(entryId));
       }
     }
   };
