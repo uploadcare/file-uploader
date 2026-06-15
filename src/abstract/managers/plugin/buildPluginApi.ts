@@ -1,4 +1,3 @@
-import { EventType } from '../../../blocks/UploadCtxProvider/EventEmitter';
 import type { PubSub } from '../../../lit/PubSubCompat';
 import type { SharedState } from '../../../lit/SharedState';
 import type { SharedInstancesBag } from '../../../lit/shared-instances';
@@ -120,13 +119,11 @@ export function buildPluginApi(
         isRemoved: false,
         abortController: null,
       });
-      // Replace is an explicit operation, so announce it directly as
-      // `file-replaced` and skip the misleading fresh-upload `file-upload-success`
-      // the observer would otherwise emit for the fileInfo change. The cdn url did
-      // change, so `file-url-changed` still fires from the observer.
-      const { eventEmitter, api } = sharedInstancesBag;
-      eventEmitter.suppressEventOnce(EventType.FILE_UPLOAD_SUCCESS, internalId);
-      eventEmitter.emit(EventType.FILE_REPLACED, api.getOutputItem<'success'>(internalId));
+      // Mark the entry as replaced. The collection observer reacts to the
+      // fileInfo change and emits `file-replaced` for it (instead of a
+      // misleading fresh-upload `file-upload-success`); `file-url-changed`
+      // still fires there too, since the cdn url did change.
+      sharedInstancesBag.eventEmitter.markReplacement(internalId);
     },
   };
 

@@ -278,17 +278,16 @@ export class LitUploaderBlock extends LitActivityBlock {
     }
     if (changeMap.fileInfo) {
       for (const entryId of changeMap.fileInfo) {
-        // A `filesApi.replace` announces itself as `file-replaced` and arms this
-        // one-shot suppression, so skip the misleading fresh-upload success.
-        if (this._sharedInstancesBag.eventEmitter.consumeEventSuppression(EventType.FILE_UPLOAD_SUCCESS, entryId)) {
-          continue;
-        }
         const ctx = PubSub.getCtx<UploadEntryData>(entryId);
         if (!ctx) continue;
         const { fileInfo, silent } = ctx.store;
-        if (fileInfo && !silent) {
-          this.emit(EventType.FILE_UPLOAD_SUCCESS, this.api.getOutputItem(entryId));
-        }
+        if (!fileInfo || silent) continue;
+        // A `filesApi.replace` swaps the file in place and marks the entry, so
+        // announce it as `file-replaced` rather than a misleading fresh upload.
+        const eventType = this._sharedInstancesBag.eventEmitter.consumeReplacement(entryId)
+          ? EventType.FILE_REPLACED
+          : EventType.FILE_UPLOAD_SUCCESS;
+        this.emit(eventType, this.api.getOutputItem(entryId));
       }
       if (this.cfg.cropPreset) {
         this._setInitialCrop();

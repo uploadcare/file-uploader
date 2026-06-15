@@ -73,19 +73,19 @@ export class EventEmitter extends SharedInstance {
   private _timeoutStore: Map<string, number> = new Map();
   private _targets: Set<LitBlock> = new Set();
   private _listeners: Map<string, Set<(payload: unknown) => void>> = new Map();
-  /** One-shot per-entry event suppressions, keyed `${type}:${uid}`. Lets a
-   *  deliberate mutation (e.g. `filesApi.replace`) skip the next derived event
-   *  the collection observer would otherwise emit for that entry. */
-  private _suppressedOnce: Set<string> = new Set();
+  /** Entries whose file was just swapped via `filesApi.replace`. The collection
+   *  observer consumes this (one-shot) so it emits `file-replaced` for them
+   *  instead of a fresh `file-upload-success`. */
+  private _pendingReplacements: Set<string> = new Set();
 
-  /** Skip the next `type` event for `uid` (one-shot). */
-  public suppressEventOnce(type: EventKey, uid: string): void {
-    this._suppressedOnce.add(`${type}:${uid}`);
+  /** Mark an entry as replaced, so its next success becomes `file-replaced`. */
+  public markReplacement(uid: string): void {
+    this._pendingReplacements.add(uid);
   }
 
-  /** Whether the next `type` event for `uid` was suppressed; consumes the flag. */
-  public consumeEventSuppression(type: EventKey, uid: string): boolean {
-    return this._suppressedOnce.delete(`${type}:${uid}`);
+  /** Whether `uid` was marked as a replacement; consumes the flag. */
+  public consumeReplacement(uid: string): boolean {
+    return this._pendingReplacements.delete(uid);
   }
 
   public bindTarget(target: LitBlock) {
@@ -161,6 +161,6 @@ export class EventEmitter extends SharedInstance {
 
     this._targets.clear();
     this._listeners.clear();
-    this._suppressedOnce.clear();
+    this._pendingReplacements.clear();
   }
 }
