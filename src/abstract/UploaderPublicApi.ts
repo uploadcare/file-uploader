@@ -31,7 +31,7 @@ import { parseCdnUrl } from '../utils/parseCdnUrl';
 import { stringToArray } from '../utils/stringToArray';
 import { UploadSource } from '../utils/UploadSource';
 import { buildOutputCollectionState } from './buildOutputCollectionState';
-import type { UploadEntryData } from './uploadEntrySchema';
+import { type UploadEntryData, uploadcareFileToEntryData } from './uploadEntrySchema';
 export type ApiAddFileCommonOptions = {
   silent?: boolean;
   fileName?: string;
@@ -133,18 +133,57 @@ export class UploaderPublicApi extends SharedInstance {
     { silent, fileName, source }: ApiAddFileCommonOptions = {},
   ): OutputFileEntry<'success'> => {
     const internalId = this._uploadCollection.add({
-      fileInfo: file,
-      uuid: file.uuid,
-      cdnUrl: file.cdnUrl,
-      fileName: fileName ?? file.originalFilename,
-      fileSize: file.size,
-      isImage: file.isImage ?? false,
-      mimeType: file.contentInfo?.mime?.mime ?? file.mimeType,
-      uploadProgress: 100,
+      ...uploadcareFileToEntryData(file),
+      // A caller-supplied name takes precedence over the file's own.
+      fileName: fileName ?? file.originalFilename ?? null,
       silent: silent ?? false,
       source: source ?? UploadSource.API,
     });
     return this.getOutputItem(internalId);
+  };
+
+  /**
+   * Replace an existing entry with an already-uploaded Uploadcare file, keeping
+   * the file's position in the list. The original entry is removed and a fresh
+   * entry is added in its place, so the replacement runs through the full add
+   * pipeline (validators, events) like any newly added file. The original's
+   * context (source, metadata, fullPath, silent) is preserved.
+   *
+   * Note: the replacement is a new entry, so it has a NEW `internalId` — use the
+   * returned entry to reference it going forward.
+   */
+  public replaceFileFromUploadcareFile = (
+    internalId: string,
+    file: UploadcareFile,
+    { silent, fileName, source }: ApiAddFileCommonOptions = {},
+  ): OutputFileEntry<'success'> => {
+    const oldId = internalId as Uid;
+    const index = this._uploadCollection.items().indexOf(oldId);
+    const oldEntry = this._uploadCollection.read(oldId);
+    if (index === -1 || !oldEntry) {
+      throw new Error(`File with internalId ${internalId} not found`);
+    }
+    // Carry over the original entry's context so the replacement keeps its
+    // identity within the session; everything file-specific comes from `file`.
+    const preserved = {
+      source: oldEntry.getValue('source'),
+      metadata: oldEntry.getValue('metadata'),
+      fullPath: oldEntry.getValue('fullPath'),
+      silent: oldEntry.getValue('silent'),
+    };
+    this._uploadCollection.remove(oldId);
+    const newId = this._uploadCollection.add(
+      {
+        ...uploadcareFileToEntryData(file),
+        fileName: fileName ?? file.originalFilename ?? null,
+        silent: silent ?? preserved.silent,
+        source: source ?? preserved.source ?? UploadSource.API,
+        metadata: preserved.metadata,
+        fullPath: preserved.fullPath,
+      },
+      { index },
+    );
+    return this.getOutputItem(newId);
   };
 
   public removeFileByInternalId = (internalId: string): void => {

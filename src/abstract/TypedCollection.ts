@@ -122,12 +122,20 @@ export class TypedCollection<T extends Record<string, unknown>> {
     this._collectionObservers.delete(handler);
   }
 
-  public add(init: Partial<T>): Uid {
+  public add(init: Partial<T>, options: { index?: number } = {}): Uid {
     const item = new TypedData<T>(this._initialValue);
     for (const [prop, value] of Object.entries(init) as [keyof T, T[keyof T]][]) {
       item.setValue(prop, value);
     }
-    this._items.add(item.uid);
+    if (options.index === undefined) {
+      this._items.add(item.uid);
+    } else {
+      // Insert at a specific position by rebuilding the insertion-ordered set.
+      // Used by `replaceFileFromUploadcareFile` to keep a replaced file in place.
+      const ids = [...this._items];
+      ids.splice(options.index, 0, item.uid);
+      this._items = new Set(ids);
+    }
     this._notify();
 
     this._data.add(item.uid, item);

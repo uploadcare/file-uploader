@@ -3,6 +3,7 @@ import type { SharedState } from '../../../lit/SharedState';
 import type { SharedInstancesBag } from '../../../lit/shared-instances';
 import type { Uid } from '../../../lit/Uid';
 import type { ConfigType } from '../../../types';
+import type { UploadcareFile } from '../../../types/exported';
 import type { CustomConfig } from '../../customConfigOptions';
 import { sharedConfigKey } from '../../sharedConfigKey';
 import type { PluginRegistry } from './PluginRegistry';
@@ -83,6 +84,8 @@ export function buildPluginApi(
       if (changes.cdnUrlModifiers !== undefined) entry.setValue('cdnUrlModifiers', changes.cdnUrlModifiers);
       if (changes.mimeType !== undefined) entry.setValue('mimeType', changes.mimeType);
     },
+    replace: (internalId: string, file: UploadcareFile) =>
+      sharedInstancesBag.api.replaceFileFromUploadcareFile(internalId, file),
   };
 
   return { registry: registryApi, config: configApi, activity: activityApi, files: filesApi };

@@ -35,6 +35,31 @@ describe('TypedCollection', () => {
     expect(collection.read(id)).toBeNull();
   });
 
+  it('add({ index }) inserts an item at a specific position', () => {
+    const collection = new TypedCollection<{ name: string }>({
+      initialValue: { name: '' },
+      watchList: ['name'],
+    });
+
+    const a = collection.add({ name: 'a' });
+    const b = collection.add({ name: 'b' });
+    const c = collection.add({ name: 'c' });
+    expect(collection.items()).toEqual([a, b, c]);
+
+    // Replace-in-place pattern: remove the middle item, add a new one at its index.
+    const bIndex = collection.items().indexOf(b);
+    collection.remove(b);
+    const replacement = collection.add({ name: 'b2' }, { index: bIndex });
+
+    expect(collection.items()).toEqual([a, replacement, c]);
+    expect(collection.readProp(replacement, 'name')).toBe('b2');
+
+    // index past the end appends; index 0 prepends.
+    const head = collection.add({ name: 'head' }, { index: 0 });
+    const tail = collection.add({ name: 'tail' }, { index: 999 });
+    expect(collection.items()).toEqual([head, a, replacement, c, tail]);
+  });
+
   it('throws on readProp/publishProp for missing ids', () => {
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     const collection = new TypedCollection<{ name: string }>({
