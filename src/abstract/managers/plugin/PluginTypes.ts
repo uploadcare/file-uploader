@@ -1,6 +1,6 @@
 import type { ConfigType, OutputFileEntry, UploadcareFile } from '../../../types/exported';
 import type { CustomConfig, CustomConfigDefinition } from '../../customConfigOptions';
-import type { UploaderPublicApi } from '../../UploaderPublicApi';
+import type { ApiAddFileCommonOptions, UploaderPublicApi } from '../../UploaderPublicApi';
 
 export type PluginIconRegistration = {
   name: string;
@@ -163,7 +163,7 @@ export type PluginFilesApi = {
    * Returns the new entry. Note: it has a NEW `internalId` — use the returned
    * entry to reference the replacement going forward.
    */
-  replace: (internalId: string, file: UploadcareFile) => OutputFileEntry<'success'>;
+  replace: (internalId: string, file: UploadcareFile, options?: ApiAddFileCommonOptions) => OutputFileEntry<'success'>;
 };
 
 export type PluginApi = {

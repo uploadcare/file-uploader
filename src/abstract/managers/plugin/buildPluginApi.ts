@@ -4,8 +4,11 @@ import type { SharedInstancesBag } from '../../../lit/shared-instances';
 import type { Uid } from '../../../lit/Uid';
 import type { ConfigType } from '../../../types';
 import type { UploadcareFile } from '../../../types/exported';
+import { UploadSource } from '../../../utils/UploadSource';
 import type { CustomConfig } from '../../customConfigOptions';
 import { sharedConfigKey } from '../../sharedConfigKey';
+import type { ApiAddFileCommonOptions } from '../../UploaderPublicApi';
+import { uploadcareFileToEntryData } from '../../uploadEntrySchema';
 import type { PluginRegistry } from './PluginRegistry';
 import type {
   PluginActivityApi,
@@ -84,8 +87,36 @@ export function buildPluginApi(
       if (changes.cdnUrlModifiers !== undefined) entry.setValue('cdnUrlModifiers', changes.cdnUrlModifiers);
       if (changes.mimeType !== undefined) entry.setValue('mimeType', changes.mimeType);
     },
-    replace: (internalId: string, file: UploadcareFile) =>
-      sharedInstancesBag.api.replaceFileFromUploadcareFile(internalId, file),
+    replace: (internalId: string, file: UploadcareFile, { silent, fileName, source }: ApiAddFileCommonOptions = {}) => {
+      const oldId = internalId as Uid;
+      const collection = sharedInstancesBag.uploadCollection;
+      const index = collection.items().indexOf(oldId);
+      const oldEntry = collection.read(oldId);
+      if (index === -1 || !oldEntry) {
+        throw new Error(`File with internalId ${internalId} not found`);
+      }
+      // Carry over the original entry's context so the replacement keeps its
+      // identity within the session; everything file-specific comes from `file`.
+      const preserved = {
+        source: oldEntry.getValue('source'),
+        metadata: oldEntry.getValue('metadata'),
+        fullPath: oldEntry.getValue('fullPath'),
+        silent: oldEntry.getValue('silent'),
+      };
+      collection.remove(oldId);
+      const newId = collection.add(
+        {
+          ...uploadcareFileToEntryData(file),
+          fileName: fileName ?? file.originalFilename ?? null,
+          silent: silent ?? preserved.silent,
+          source: source ?? preserved.source ?? UploadSource.API,
+          metadata: preserved.metadata,
+          fullPath: preserved.fullPath,
+        },
+        { index },
+      );
+      return sharedInstancesBag.api.getOutputItem<'success'>(newId);
+    },
   };
 
   return { registry: registryApi, config: configApi, activity: activityApi, files: filesApi };

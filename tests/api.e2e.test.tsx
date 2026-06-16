@@ -97,7 +97,7 @@ describe('API', () => {
     const config = page.getByTestId('uc-config').query()! as Config;
 
     // Reach the plugin-only files.replace by registering a tiny capturing plugin.
-    let replace: ((internalId: string, file: typeof fileB) => unknown) | undefined;
+    let replace: ((internalId: string, file: typeof fileB, options?: { source?: string }) => unknown) | undefined;
     config.plugins = [
       {
         id: 'test-replace',
@@ -140,11 +140,15 @@ describe('API', () => {
     const order = () => api.getOutputCollectionState().allEntries.map((e) => e.uuid);
     expect(order()).toEqual([fileA.uuid, fileC.uuid]);
 
-    const replaced = replace!(entryA.internalId, fileB) as ReturnType<typeof api.addFileFromUploadcareFile>;
+    const replaced = replace!(entryA.internalId, fileB, { source: 'ai-replace' }) as ReturnType<
+      typeof api.addFileFromUploadcareFile
+    >;
 
     // The replacement is a NEW entry (new internalId) carrying fileB.
     expect(replaced.uuid).toBe(fileB.uuid);
     expect(replaced.internalId).not.toBe(entryA.internalId);
+    // The `source` option is honored (overriding the original entry's source).
+    expect(replaced.source).toBe('ai-replace');
 
     // It kept fileA's position — still first, fileC still second.
     expect(order()).toEqual([fileB.uuid, fileC.uuid]);
