@@ -160,6 +160,10 @@ export type PluginFilesApi = {
    * added in its place, so the replacement goes through the full add pipeline
    * (validators, events) like any newly added file.
    *
+   * The original entry's `source`, `metadata`, `fullPath` and `silent` are
+   * preserved by default; `silent`, `fileName` and `source` can be overridden
+   * via `options`.
+   *
    * Returns the new entry. Note: it has a NEW `internalId` — use the returned
    * entry to reference the replacement going forward.
    */

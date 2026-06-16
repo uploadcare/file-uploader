@@ -131,9 +131,12 @@ export class TypedCollection<T extends Record<string, unknown>> {
       this._items.add(item.uid);
     } else {
       // Insert at a specific position by rebuilding the insertion-ordered set.
-      // Used by `replaceFileFromUploadcareFile` to keep a replaced file in place.
+      // Used by `filesApi.replace` to keep a replaced file in place. Clamp to a
+      // valid range so a stray (negative / non-finite / out-of-bounds) index
+      // can't trigger splice's count-from-the-end behaviour or misorder items.
       const ids = [...this._items];
-      ids.splice(options.index, 0, item.uid);
+      const at = Math.min(Math.max(Math.trunc(options.index) || 0, 0), ids.length);
+      ids.splice(at, 0, item.uid);
       this._items = new Set(ids);
     }
     this._notify();

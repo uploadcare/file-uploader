@@ -265,7 +265,9 @@ export class UploaderPublicApi extends SharedInstance {
     const outputItem = {
       uuid: fileInfo?.uuid ?? uploadEntryData.uuid ?? null,
       internalId: entryId,
-      name: fileInfo?.originalFilename ?? uploadEntryData.fileName,
+      // An explicit entry `fileName` (e.g. a caller-supplied name on add/replace)
+      // wins over the uploaded file's own name; otherwise fall back to it.
+      name: uploadEntryData.fileName ?? fileInfo?.originalFilename ?? null,
       size: fileInfo?.size ?? uploadEntryData.fileSize,
       isImage: fileInfo?.isImage ?? uploadEntryData.isImage,
       mimeType: fileInfo?.mimeType ?? uploadEntryData.mimeType,
