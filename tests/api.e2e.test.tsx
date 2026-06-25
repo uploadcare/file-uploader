@@ -88,26 +88,13 @@ describe('API', () => {
     expect(uploadStartHandler).not.toHaveBeenCalled();
   }, 30_000);
 
-  it('files.replace swaps a file in place: keeps position, new internalId, re-validates, fires natural add/remove events', async () => {
+  it('replaceFile swaps a file in place: keeps position, new internalId, re-validates, fires natural add/remove events', async () => {
     // Three genuine, distinct already-uploaded files.
     const fileA = await uploadFile(IMAGE.PIXEL, { publicKey: 'demopublickey', store: false });
     const fileB = await uploadFile(IMAGE.PIXEL, { publicKey: 'demopublickey', store: false });
     const fileC = await uploadFile(IMAGE.PIXEL, { publicKey: 'demopublickey', store: false });
 
     const config = page.getByTestId('uc-config').query()! as Config;
-
-    // Reach the plugin-only files.replace by registering a tiny capturing plugin.
-    let replace:
-      | ((internalId: string, file: typeof fileB, options?: { source?: string; fileName?: string }) => unknown)
-      | undefined;
-    config.plugins = [
-      {
-        id: 'test-replace',
-        setup: ({ pluginApi }) => {
-          replace = pluginApi.files.replace;
-        },
-      },
-    ];
 
     // An `upload`-time validator runs once per uploaded file and is then skipped
     // on later changes. Seeing it run for the replacement proves the new entry
@@ -122,8 +109,6 @@ describe('API', () => {
         },
       },
     ];
-
-    await vi.waitFor(() => expect(replace).toBeTruthy());
 
     const uploadCtxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
     const api = uploadCtxProvider.api;
@@ -142,10 +127,10 @@ describe('API', () => {
     const order = () => api.getOutputCollectionState().allEntries.map((e) => e.uuid);
     expect(order()).toEqual([fileA.uuid, fileC.uuid]);
 
-    const replaced = replace!(entryA.internalId, fileB, {
+    const replaced = api.replaceFile(entryA.internalId, fileB, {
       source: 'ai-replace',
       fileName: 'renamed.png',
-    }) as ReturnType<typeof api.addFileFromUploadcareFile>;
+    });
 
     // The replacement is a NEW entry (new internalId) carrying fileB.
     expect(replaced.uuid).toBe(fileB.uuid);

@@ -1,6 +1,6 @@
-import type { ConfigType, OutputFileEntry, UploadcareFile } from '../../../types/exported';
+import type { ConfigType, OutputFileEntry } from '../../../types/exported';
 import type { CustomConfig, CustomConfigDefinition } from '../../customConfigOptions';
-import type { ApiAddFileCommonOptions, UploaderPublicApi } from '../../UploaderPublicApi';
+import type { UploaderPublicApi } from '../../UploaderPublicApi';
 
 export type PluginIconRegistration = {
   name: string;
@@ -151,23 +151,11 @@ export type PluginFilesApi = {
   /**
    * Update mutable properties of a file entry by its internalId.
    * `fileSize` is recalculated automatically when `file` is provided.
+   *
+   * Other file operations (add / remove / `replaceFile`) live on the public
+   * uploader API, which plugins receive as `uploaderApi` in `setup`.
    */
   update: (internalId: string, changes: PluginFileEntryUpdate) => void;
-
-  /**
-   * Replace an existing entry with an already-uploaded Uploadcare file, keeping
-   * its position in the list. The original entry is removed and a fresh one is
-   * added in its place, so the replacement goes through the full add pipeline
-   * (validators, events) like any newly added file.
-   *
-   * The original entry's `source`, `metadata`, `fullPath` and `silent` are
-   * preserved by default; `silent`, `fileName` and `source` can be overridden
-   * via `options`.
-   *
-   * Returns the new entry. Note: it has a NEW `internalId` — use the returned
-   * entry to reference the replacement going forward.
-   */
-  replace: (internalId: string, file: UploadcareFile, options?: ApiAddFileCommonOptions) => OutputFileEntry<'success'>;
 };
 
 export type PluginApi = {

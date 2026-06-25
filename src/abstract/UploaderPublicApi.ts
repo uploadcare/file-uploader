@@ -142,6 +142,54 @@ export class UploaderPublicApi extends SharedInstance {
     return this.getOutputItem(internalId);
   };
 
+  /**
+   * Replace an existing entry with an already-uploaded Uploadcare file, keeping
+   * its position in the list. The original entry is removed and a fresh one is
+   * added in its place, so the replacement goes through the full add pipeline
+   * (validators, events) like any newly added file.
+   *
+   * The original entry's `source`, `metadata`, `fullPath` and `silent` are
+   * preserved by default; `silent`, `fileName` and `source` can be overridden
+   * via `options`.
+   *
+   * Returns the new entry. Note: it has a NEW `internalId` — use the returned
+   * entry to reference the replacement going forward.
+   */
+  public replaceFile = (
+    internalId: string,
+    file: UploadcareFile,
+    { silent, fileName, source }: ApiAddFileCommonOptions = {},
+  ): OutputFileEntry<'success'> => {
+    const oldId = internalId as Uid;
+    const collection = this._uploadCollection;
+    const index = collection.items().indexOf(oldId);
+    const oldEntry = collection.read(oldId);
+    if (index === -1 || !oldEntry) {
+      throw new Error(`File with internalId ${internalId} not found`);
+    }
+    // Carry over the original entry's context so the replacement keeps its
+    // identity within the session; everything file-specific comes from `file`.
+    const preserved = {
+      source: oldEntry.getValue('source'),
+      metadata: oldEntry.getValue('metadata'),
+      fullPath: oldEntry.getValue('fullPath'),
+      silent: oldEntry.getValue('silent'),
+    };
+    collection.remove(oldId);
+    const newId = collection.add(
+      {
+        ...uploadcareFileToEntryData(file),
+        fileName: fileName ?? file.originalFilename ?? null,
+        silent: silent ?? preserved.silent,
+        source: source ?? preserved.source ?? UploadSource.API,
+        metadata: preserved.metadata,
+        fullPath: preserved.fullPath,
+      },
+      { index },
+    );
+    return this.getOutputItem<'success'>(newId);
+  };
+
   public removeFileByInternalId = (internalId: string): void => {
     if (!this._uploadCollection.read(internalId as Uid)) {
       throw new Error(`File with internalId ${internalId} not found`);
