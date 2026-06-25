@@ -1,0 +1,86 @@
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { EventBus, UploaderEventType } from './EventBus';
+
+describe('EventBus', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('delivers an emitted payload to its listener', () => {
+    const bus = new EventBus();
+    const handler = vi.fn();
+    bus.on(UploaderEventType.UPLOAD_CLICK, handler);
+
+    bus.emit(UploaderEventType.UPLOAD_CLICK, undefined);
+
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+
+  it('stops delivery after unsubscribe', () => {
+    const bus = new EventBus();
+    const handler = vi.fn();
+    const off = bus.on(UploaderEventType.UPLOAD_CLICK, handler);
+
+    off();
+    bus.emit(UploaderEventType.UPLOAD_CLICK, undefined);
+
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  it('isolates a throwing listener so others still run', () => {
+    const bus = new EventBus();
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const bad = vi.fn(() => {
+      throw new Error('boom');
+    });
+    const good = vi.fn();
+    bus.on(UploaderEventType.UPLOAD_CLICK, bad);
+    bus.on(UploaderEventType.UPLOAD_CLICK, good);
+
+    expect(() => bus.emit(UploaderEventType.UPLOAD_CLICK, undefined)).not.toThrow();
+    expect(good).toHaveBeenCalledTimes(1);
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it('onAny receives the type and payload of every event', () => {
+    const bus = new EventBus();
+    const any = vi.fn();
+    bus.onAny(any);
+
+    bus.emit(UploaderEventType.UPLOAD_CLICK, undefined);
+
+    expect(any).toHaveBeenCalledWith(UploaderEventType.UPLOAD_CLICK, undefined);
+  });
+
+  it('emitDebounced fires once after the window and evaluates the thunk lazily', () => {
+    vi.useFakeTimers();
+    const bus = new EventBus();
+    const handler = vi.fn();
+    const thunk = vi.fn(() => undefined);
+    bus.on(UploaderEventType.UPLOAD_CLICK, handler);
+
+    bus.emitDebounced(UploaderEventType.UPLOAD_CLICK, thunk, 20);
+    bus.emitDebounced(UploaderEventType.UPLOAD_CLICK, thunk, 20);
+    expect(handler).not.toHaveBeenCalled();
+
+    vi.advanceTimersByTime(20);
+
+    expect(handler).toHaveBeenCalledTimes(1);
+    expect(thunk).toHaveBeenCalledTimes(1);
+  });
+
+  it('destroy() clears listeners and pending debounced emits', () => {
+    vi.useFakeTimers();
+    const bus = new EventBus();
+    const handler = vi.fn();
+    bus.on(UploaderEventType.UPLOAD_CLICK, handler);
+    bus.emitDebounced(UploaderEventType.UPLOAD_CLICK, () => undefined, 20);
+
+    bus.destroy();
+    vi.advanceTimersByTime(20);
+    bus.emit(UploaderEventType.UPLOAD_CLICK, undefined);
+
+    expect(handler).not.toHaveBeenCalled();
+  });
+});
