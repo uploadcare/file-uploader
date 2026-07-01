@@ -59,6 +59,7 @@ const config = {
   debug: false,
 
   metadata: null,
+  tags: null,
   localeName: 'en',
   localeDefinitionOverride: null,
   secureUploadsExpireThreshold: 10 * 60 * 1000,

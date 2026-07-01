@@ -1,5 +1,5 @@
 import type { PasteScope } from '../../abstract/features/ClipboardLayer';
-import type { Metadata, MetadataCallback } from '../../types/index';
+import type { Metadata, MetadataCallback, Tags, TagsCallback } from '../../types/index';
 import { deserializeCsv } from '../../utils/comma-separated';
 import type { ModeCameraType } from '../CameraSource/constants';
 import { CameraSourceTypes } from '../CameraSource/constants';
@@ -78,6 +78,17 @@ const asMetadata = (value: unknown): Metadata | MetadataCallback => {
   throw new Error('Invalid metadata value. Must be an object or function.');
 };
 
+const asTags = (value: unknown): Tags | TagsCallback => {
+  if (Array.isArray(value)) {
+    return value as Tags;
+  }
+  if (typeof value === 'function') {
+    return value as TagsCallback;
+  }
+
+  throw new Error('Invalid tags value. Must be an array or function.');
+};
+
 const asObject = <T>(value: unknown): T => {
   if (typeof value === 'object') {
     return value as T;
@@ -133,6 +144,7 @@ export {
   asObject,
   asStore,
   asString,
+  asTags,
   asPasteScope,
   asDynamicButtonViewMode,
 };

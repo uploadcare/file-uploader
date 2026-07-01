@@ -164,7 +164,7 @@
     "@uploadcare/cname-prefix": "^6.18.4",
     "@uploadcare/image-shrink": "^6.18.4",
     "@uploadcare/quality-insights": "^6.18.4",
-    "@uploadcare/upload-client": "^6.18.4",
+    "@uploadcare/upload-client": "^6.19.0-alpha.0",
     "keyux": "^0.11.3",
     "lit": "^3.3.2",
     "nanostores": "^1.1.1"

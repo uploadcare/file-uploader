@@ -412,6 +412,16 @@ export class LitUploaderBlock extends LitActivityBlock {
     return configValue;
   }
 
+  protected async getTagsFor(entryId: string) {
+    const configValue = this.cfg.tags || undefined;
+    if (typeof configValue === 'function') {
+      const outputFileEntry = this.api.getOutputItem(entryId);
+      const tags = await configValue(outputFileEntry);
+      return tags;
+    }
+    return configValue;
+  }
+
   protected async getUploadClientOptions(): Promise<FileFromOptions> {
     const secureToken = await this.secureUploadsManager.getSecureToken().catch(() => null);
 
