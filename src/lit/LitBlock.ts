@@ -1,7 +1,7 @@
 import { LitElement } from 'lit';
 import { blockCtx } from '../abstract/CTX';
 import { RouterController, type RouterControllerDeps } from '../abstract/controllers/RouterController';
-import { type UploaderEventKey, UploaderEventType } from '../abstract/EventBus';
+import { type UploaderEventKey, type UploaderEventPayload, UploaderEventType } from '../abstract/EventBus';
 import { ClipboardLayer } from '../abstract/features/ClipboardLayer';
 import { A11y } from '../abstract/managers/a11y';
 import { LocaleManager, localeStateKey } from '../abstract/managers/LocaleManager';
@@ -150,14 +150,17 @@ export class LitBlock extends LitBlockBase {
    * matching v1's debounce behavior (modal events debounce; activity-change
    * fires immediately). Injected into the {@link RouterController}.
    */
-  private _routerEmit = ((type: UploaderEventKey, payload: unknown): void => {
+  private _routerEmit: RouterControllerDeps['emit'] = (
+    type: UploaderEventKey,
+    payload: UploaderEventPayload[UploaderEventKey],
+  ): void => {
     const debounce = type === UploaderEventType.MODAL_OPEN || type === UploaderEventType.MODAL_CLOSE;
-    this.emit(
-      type as Parameters<EventEmitter['emit']>[0],
-      payload as Parameters<EventEmitter['emit']>[1],
-      debounce ? { debounce: true } : undefined,
-    );
-  }) as RouterControllerDeps['emit'];
+    // `this.emit` already accepts the widened `(UploaderEventKey, payload)` union
+    // that the field's `RouterEmit` type funnels down to, so no cast is needed —
+    // and it must stay a bound method call (`this.emit`, not an extracted ref) so
+    // it keeps its `this` when the router invokes it.
+    this.emit(type, payload, debounce ? { debounce: true } : undefined);
+  };
 
   /**
    * Subscribe to the effective current activity (foreground modal, else
@@ -306,7 +309,7 @@ export class LitBlock extends LitBlockBase {
     key: TKey,
     isRequired: TRequired = true as TRequired,
   ): TRequired extends true ? NonNullable<SharedState[TKey]> : SharedState[TKey] {
-    if (this.has(key) && !!this.$[key]) {
+    if (this.has(key) && this.$[key]) {
       return this.$[key] as NonNullable<SharedState[TKey]>;
     }
 

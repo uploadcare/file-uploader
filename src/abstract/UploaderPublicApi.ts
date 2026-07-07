@@ -7,6 +7,7 @@ import type { ActivityParamsMap, ActivityType } from '../lit/activity-constants'
 import { ACTIVITY_TYPES } from '../lit/activity-constants';
 import { waitForBlockInCtx } from '../lit/hasBlockInCtx';
 import type { LitActivityBlock } from '../lit/LitActivityBlock';
+import type { LitBlock } from '../lit/LitBlock';
 import { createL10n } from '../lit/l10n';
 import { SharedInstance } from '../lit/shared-instances';
 import type { Uid } from '../lit/Uid';
@@ -37,6 +38,13 @@ export type ApiAddFileCommonOptions = {
   fileName?: string;
   source?: string;
 };
+
+/**
+ * Narrows a registry block to a {@link LitActivityBlock}. Non-activity blocks
+ * (config, form-input, sources, …) carry no `activityType`, so this filters
+ * them out instead of blindly casting and reading `undefined`.
+ */
+const isActivityBlock = (block: LitBlock): block is LitActivityBlock => 'activityType' in block;
 
 export class UploaderPublicApi extends SharedInstance {
   private _l10n = createL10n(() => this._ctx);
@@ -372,7 +380,7 @@ export class UploaderPublicApi extends SharedInstance {
       if (activityType !== null) {
         waitForBlockInCtx(
           this._sharedInstancesBag.blocksRegistry,
-          (b) => (b as LitActivityBlock).activityType === activityType,
+          (b) => isActivityBlock(b) && b.activityType === activityType,
           {
             onTimeout: () => console.warn(`Activity type "${activityType}" not found in the context`),
             timeout: 100,
@@ -407,7 +415,7 @@ export class UploaderPublicApi extends SharedInstance {
       this._sharedInstancesBag.router.setActivity(activityType, params[0] ?? {});
       waitForBlockInCtx(
         this._sharedInstancesBag.blocksRegistry,
-        (b) => (b as LitActivityBlock).activityType === activityType,
+        (b) => isActivityBlock(b) && b.activityType === activityType,
         {
           onTimeout: () => console.warn(`Activity type "${activityType}" not found in the context`),
           timeout: 100,
@@ -464,7 +472,7 @@ export class UploaderPublicApi extends SharedInstance {
 
       return waitForBlockInCtx(
         this._sharedInstancesBag.blocksRegistry,
-        (b) => (b as LitActivityBlock).activityType === activityType,
+        (b) => isActivityBlock(b) && b.activityType === activityType,
         {
           onTimeout: () => console.warn(`Activity block "${activityType}" not found in the context`),
         },
