@@ -1,3 +1,10 @@
+## [1.31.2](https://github.com/uploadcare/file-uploader/compare/v1.31.1...v1.31.2) (2026-07-07)
+
+### Internal features
+
+* **api:** add `replaceFile` method — swap a file in place via remove + add at position ([bb739bb](https://github.com/uploadcare/file-uploader/commit/bb739bb9))
+* **types:** expose augmentable CustomLocaleDefinition for locale overrides ([04ff43b](https://github.com/uploadcare/file-uploader/commit/04ff43b7))
+
 ## [1.31.1](https://github.com/uploadcare/file-uploader/compare/v1.31.0...v1.31.1) (2026-06-08)
 
 
