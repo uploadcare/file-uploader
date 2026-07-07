@@ -123,6 +123,32 @@ describe('RouterController (v2)', () => {
       expect(router.activity).toBe('start-from');
     });
 
+    it('isolates a throwing beforeChange hook (proceeds to the proposed target, warns)', () => {
+      const { router } = setup();
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      router.hooks.beforeChange(() => {
+        throw new Error('boom');
+      });
+
+      router.navigate('start-from');
+
+      expect(router.activity).toBe('start-from'); // navigation not aborted
+      expect(warn).toHaveBeenCalled();
+    });
+
+    it('runs later hooks after an earlier one throws', () => {
+      const { router } = setup();
+      vi.spyOn(console, 'warn').mockImplementation(() => {});
+      router.hooks.beforeChange(() => {
+        throw new Error('boom');
+      });
+      router.hooks.beforeChange(() => 'upload-list'); // still runs → redirects
+
+      router.navigate('start-from');
+
+      expect(router.activity).toBe('upload-list');
+    });
+
     it('exposes ctx.defaults() (the proposed target) to beforeChange hooks', () => {
       const { router } = setup();
       let seen: unknown;
@@ -180,6 +206,37 @@ describe('RouterController (v2)', () => {
       const { router } = setup();
       expect(() => router.back()).not.toThrow();
       expect(router.activity).toBeNull();
+    });
+
+    it('back skips a previous entry that is now guarded-out', () => {
+      const { router } = setup();
+      let listAllowed = true;
+      router.guard('upload-list', () => listAllowed);
+      router.navigate('start-from');
+      router.navigate('upload-list');
+      router.navigate('camera'); // history: [start-from, upload-list, camera]
+
+      listAllowed = false; // upload-list emptied while camera is open
+      router.back();
+
+      // upload-list is guarded-out, so back() skips it and lands on start-from,
+      // leaving history consistent with the visible activity.
+      expect(router.currentActivity).toBe('start-from');
+      expect(router.history).toEqual(['start-from']);
+    });
+
+    it('back closes everything when every previous entry is guarded-out', () => {
+      const { router } = setup();
+      let allowed = true;
+      router.guard('upload-list', () => allowed);
+      router.navigate('upload-list');
+      router.navigate('camera'); // history: [upload-list, camera]
+
+      allowed = false;
+      router.back(); // only prev (upload-list) is guarded-out → close
+
+      expect(router.currentActivity).toBeNull();
+      expect(router.history).toEqual([]);
     });
   });
 
@@ -257,6 +314,19 @@ describe('RouterController (v2)', () => {
       router.afterFileAdd();
       expect(seen).toBe('upload-list');
     });
+
+    it('isolates a throwing afterFileAdd hook and falls back to upload-list', () => {
+      const { router } = setup();
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      router.hooks.afterFileAdd(() => {
+        throw new Error('boom');
+      });
+
+      router.afterFileAdd(); // hook throws → default upload-list still applies
+
+      expect(router.activity).toBe('upload-list');
+      expect(warn).toHaveBeenCalled();
+    });
   });
 
   describe('configure (solution-level routing)', () => {
@@ -311,6 +381,36 @@ describe('RouterController (v2)', () => {
       router.navigate('upload-list'); // no guard now → allowed
       expect(router.currentActivity).toBe('upload-list');
     });
+
+    it('treats a throwing guard as not-activatable (refuses navigation, warns)', () => {
+      const { router } = setup();
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      router.guard('upload-list', () => {
+        throw new Error('boom');
+      });
+      router.navigate('start-from');
+
+      router.navigate('upload-list'); // guard throws → refused, not crashed
+
+      expect(router.currentActivity).toBe('start-from');
+      expect(warn).toHaveBeenCalled();
+    });
+
+    it('revalidate() does not throw when the current activity guard throws', () => {
+      const { router } = setup();
+      vi.spyOn(console, 'warn').mockImplementation(() => {});
+      let throws = false;
+      router.guard('upload-list', () => {
+        if (throws) throw new Error('boom');
+        return true;
+      });
+      router.navigate('start-from');
+      router.navigate('upload-list');
+
+      throws = true;
+      expect(() => router.revalidate()).not.toThrow();
+      expect(router.currentActivity).toBe('start-from'); // guard failed → backed out
+    });
   });
 
   describe('traverse (navigation intents)', () => {
@@ -360,6 +460,20 @@ describe('RouterController (v2)', () => {
       router.hooks.onBack(() => undefined);
       router.traverse('onBack');
       expect(router.currentActivity).toBe('start-from');
+    });
+
+    it('isolates a throwing edge hook and falls back to the default', () => {
+      const { router } = setup();
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      router.navigate('start-from');
+      router.hooks.onClose(() => {
+        throw new Error('boom');
+      });
+
+      router.traverse('onClose'); // hook throws → default close() still runs
+
+      expect(router.currentActivity).toBeNull();
+      expect(warn).toHaveBeenCalled();
     });
   });
 

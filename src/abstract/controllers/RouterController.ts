@@ -136,7 +136,17 @@ export class RouterController {
   }
 
   private _canActivate(id: EdgeTarget): boolean {
-    return id === null || (this._guards.get(id)?.() ?? true);
+    if (id === null) return true;
+    const guard = this._guards.get(id);
+    if (!guard) return true;
+    // Isolate-and-warn (AGENTS.md #3): a throwing guard must not crash
+    // navigation/`revalidate`; treat it as "cannot activate" so it fails safe.
+    try {
+      return guard();
+    } catch (err) {
+      console.warn(`[uc] router guard for "${id}" threw; treating the activity as not activatable`, err);
+      return false;
+    }
   }
 
   /**
@@ -174,12 +184,26 @@ export class RouterController {
   }
 
   /**
+   * Invoke a single hook, isolating a throw (AGENTS.md #3): a broken hook must
+   * not abort the navigation or the rest of the chain. A throw is warned and
+   * treated as `undefined` (defer to the next hook / the default).
+   */
+  private _invokeHook(name: string, hook: Hook, ctx: EdgeContext): EdgeTarget | NavigateCancel | undefined {
+    try {
+      return hook(ctx);
+    } catch (err) {
+      console.warn(`[uc] router "${name}" hook threw; skipping it`, err);
+      return undefined;
+    }
+  }
+
+  /**
    * Runs hooks registered under a single edge name. The global `beforeChange`
    * hook lives in `navigate()` so it fires once per actual navigation.
    */
   private _runEdgeHooks(name: keyof typeof this._hooks, ctx: EdgeContext): EdgeTarget | NavigateCancel {
     for (const hook of this._hooks[name]) {
-      const r = hook(ctx);
+      const r = this._invokeHook(name, hook, ctx);
       if (r === NAVIGATE_CANCEL) return NAVIGATE_CANCEL;
       if (r !== undefined) return r;
     }
@@ -318,7 +342,7 @@ export class RouterController {
     const proposed = edge === 'onDone' ? this.doneActivity : null;
     const ctx: EdgeContext = { edge, from: this.currentActivity, proposed, defaults: () => proposed };
     for (const hook of this._hooks[edge]) {
-      const r = hook(ctx);
+      const r = this._invokeHook(edge, hook, ctx);
       if (r === NAVIGATE_CANCEL) return;
       if (r !== undefined) {
         this.navigate(r);
@@ -360,16 +384,24 @@ export class RouterController {
    * Pop the current activity off history and navigate to the previous one (or
    * close everything if history is empty). History stores `[...past, current]`,
    * so we pop the current entry then peek the new top.
+   *
+   * Skips previous entries that are now guarded-out (e.g. an upload list that
+   * emptied while a modal was open over it) rather than popping one blindly —
+   * `navigate` would refuse a guarded-out target without re-pushing it, which
+   * would leave history inconsistent with the visible activity.
    */
   public back(): void {
     this._history.pop(); // drop current
-    const prev = this._history[this._history.length - 1];
-    if (prev) {
-      this._history.pop(); // navigate(prev) re-pushes it
-      this.navigate(prev);
-    } else {
-      this.navigate(null);
+    while (this._history.length > 0) {
+      const prev = this._history[this._history.length - 1]!;
+      if (this._canActivate(prev)) {
+        this._history.pop(); // navigate(prev) re-pushes it
+        this.navigate(prev);
+        return;
+      }
+      this._history.pop(); // guarded-out now — drop it and keep looking back
     }
+    this.navigate(null);
   }
 
   public destroy(): void {
