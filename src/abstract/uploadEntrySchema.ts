@@ -60,6 +60,30 @@ export const initialUploadEntryData: UploadEntryData = {
   isQueuedForValidation: false,
 };
 
+/**
+ * Maps an already-uploaded Uploadcare file to the entry fields derived from its
+ * uuid (cdnUrl, fileInfo, name, size, image flag, mime type). Shared by
+ * `addFileFromUploadcareFile` and `replaceFileFromUploadcareFile` so the two
+ * derivations cannot drift apart.
+ */
+export function uploadcareFileToEntryData(
+  file: UploadcareFile,
+): Pick<
+  UploadEntryData,
+  'fileInfo' | 'uuid' | 'cdnUrl' | 'fileName' | 'fileSize' | 'isImage' | 'mimeType' | 'uploadProgress'
+> {
+  return {
+    fileInfo: file,
+    uuid: file.uuid,
+    cdnUrl: file.cdnUrl,
+    fileName: file.originalFilename ?? null,
+    fileSize: file.size,
+    isImage: file.isImage ?? false,
+    mimeType: file.contentInfo?.mime?.mime ?? file.mimeType ?? null,
+    uploadProgress: 100,
+  };
+}
+
 export type UploadEntryTypedData = TypedData<UploadEntryData>;
 
 export type UploadEntryKeys = keyof UploadEntryData;

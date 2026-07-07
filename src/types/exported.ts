@@ -1,5 +1,5 @@
 import type { PasteScope } from '../abstract/features/ClipboardLayer';
-import type { LocaleDefinition } from '../abstract/localeRegistry';
+import type { CustomLocaleDefinition, LocaleDefinition } from '../abstract/localeRegistry';
 import type { UploaderPlugin } from '../abstract/managers/plugin';
 import type {
   FileValidator,
@@ -23,13 +23,11 @@ export {
 import type { Metadata, NetworkError, UploadcareFile, UploadcareGroup, UploadError } from '@uploadcare/upload-client';
 import type { SourceTypes } from '../utils/UploadSource';
 
-export type { FuncFileValidator, FuncCollectionValidator, FileValidator, FileValidatorDescriptor };
 export type { UploaderPlugin } from '../abstract/managers/plugin';
 export type { ApiAddFileCommonOptions, UploaderPublicApi } from '../abstract/UploaderPublicApi';
-
-export type { SourceTypes };
+export type { FileValidator, FileValidatorDescriptor, FuncCollectionValidator, FuncFileValidator, SourceTypes };
 export type MetadataCallback = (fileEntry: OutputFileEntry) => Promise<Metadata> | Metadata;
-export type LocaleDefinitionOverride = Record<string, Partial<LocaleDefinition>>;
+export type LocaleDefinitionOverride = Record<string, Partial<LocaleDefinition & CustomLocaleDefinition>>;
 export type SecureDeliveryProxyUrlResolver = (
   previewUrl: string,
   urlParts: { uuid: string; cdnUrlModifiers: string; fileName: string },
@@ -572,5 +570,5 @@ export type OutputCollectionState<
 import type { DynamicButtonMode } from '../blocks/DynamicBtn/DynamicBtn';
 import { type EventPayload, EventType } from '../blocks/UploadCtxProvider/EventEmitter';
 
-export { EventType };
 export type { EventPayload };
+export { EventType };

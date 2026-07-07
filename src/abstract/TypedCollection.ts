@@ -122,12 +122,23 @@ export class TypedCollection<T extends Record<string, unknown>> {
     this._collectionObservers.delete(handler);
   }
 
-  public add(init: Partial<T>): Uid {
+  public add(init: Partial<T>, options: { index?: number } = {}): Uid {
     const item = new TypedData<T>(this._initialValue);
     for (const [prop, value] of Object.entries(init) as [keyof T, T[keyof T]][]) {
       item.setValue(prop, value);
     }
-    this._items.add(item.uid);
+    if (options.index === undefined) {
+      this._items.add(item.uid);
+    } else {
+      // Insert at a specific position by rebuilding the insertion-ordered set.
+      // Used by `filesApi.replace` to keep a replaced file in place. Clamp to a
+      // valid range so a stray (negative / non-finite / out-of-bounds) index
+      // can't trigger splice's count-from-the-end behaviour or misorder items.
+      const ids = [...this._items];
+      const at = Math.min(Math.max(Math.trunc(options.index) || 0, 0), ids.length);
+      ids.splice(at, 0, item.uid);
+      this._items = new Set(ids);
+    }
     this._notify();
 
     this._data.add(item.uid, item);
