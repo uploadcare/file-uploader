@@ -7,7 +7,7 @@ import { toKebabCase } from '../../utils/toKebabCase';
 import { runAssertions } from './assertions';
 import './config.css';
 import { LitBlock } from '../../lit/LitBlock';
-import { type ComputedPropertyControllers, computeProperty } from './computed-properties';
+import { type ComputedPropertyControllers, type ComputedPropertyValues, computeProperty } from './computed-properties';
 import { initialConfig } from './initialConfig';
 import { normalizeConfigValue } from './normalizeConfigValue';
 
@@ -62,6 +62,7 @@ export class Config extends LitBlock {
   } as unknown as LitBlock['init$'] & ConfigType;
 
   private _computationControllers: ComputedPropertyControllers = new Map();
+  private _computedValues: ComputedPropertyValues = new Map();
   private _pluginChangeUnsubscribe?: () => void;
   private _mutationObserver?: MutationObserver;
 
@@ -415,6 +416,7 @@ export class Config extends LitBlock {
         setValue: this._setValue.bind(this),
         getValue: this._getValue.bind(this),
         computationControllers: this._computationControllers,
+        computedValues: this._computedValues,
       });
     };
 

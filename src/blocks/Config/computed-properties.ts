@@ -1,4 +1,4 @@
-import { getPrefixedCdnBaseAsync, isPrefixedCdnBase } from '@uploadcare/cname-prefix/async';
+import { getPrefixedCdnBaseAsync, isSameCdnHost } from '@uploadcare/cname-prefix/async';
 import type { ConfigType } from '../../types/index';
 import { deserializeCsv, serializeCsv } from '../../utils/comma-separated';
 import { isPromiseLike } from '../../utils/isPromiseLike';
@@ -16,6 +16,12 @@ type ComputedPropertyArgs<TKey extends ConfigKey, TDeps extends DepKeys<TKey>> =
 
 type ComputedPropertyOptions = {
   signal: AbortSignal;
+  /**
+   * The value this computed property wrote on its previous run (per Config
+   * instance). Lets a property recognize its own output when it is fed back
+   * as input and re-derive it, while leaving user-provided values untouched.
+   */
+  lastComputedValue: unknown;
 };
 
 type ComputedPropertyFn<TKey extends ConfigKey, TDeps extends DepKeys<TKey>> = (
@@ -30,6 +36,9 @@ type ComputedPropertyDeclaration<TKey extends ConfigKey, TDeps extends DepKeys<T
 };
 
 export type ComputedPropertyControllers = Map<ComputedPropertyFn<any, any>, AbortController>;
+
+/** Last value written by each computed property, per Config instance. */
+export type ComputedPropertyValues = Map<ComputedPropertyFn<any, any>, unknown>;
 
 const defineComputedProperty = <TKey extends ConfigKey, TDeps extends DepKeys<TKey>>(
   declaration: ComputedPropertyDeclaration<TKey, TDeps>,
@@ -73,11 +82,17 @@ const COMPUTED_PROPERTIES = [
   defineComputedProperty({
     key: 'cdnCname',
     deps: ['pubkey', 'cdnCnamePrefixed'] as const,
-    fn: ({ pubkey, cdnCname, cdnCnamePrefixed }) => {
+    fn: ({ pubkey, cdnCname, cdnCnamePrefixed }, { lastComputedValue }) => {
       const pk = pubkey();
       const cname = cdnCname();
       const prefixed = cdnCnamePrefixed();
-      if (pk && (cname === DEFAULT_CDN_CNAME || isPrefixedCdnBase(cname, prefixed))) {
+      // Derive the per-project prefixed base when cdnCname is untouched, is a
+      // value this property computed earlier (re-derive on pubkey change), or
+      // explicitly targets the prefixed zone apex (e.g. bare `ucarecd.net`).
+      // Any other value — including a dedicated domain inside the prefixed
+      // zone like `custom.ucarecd.net` — is the user's and is kept verbatim.
+      const shouldDerive = cname === DEFAULT_CDN_CNAME || cname === lastComputedValue || isSameCdnHost(cname, prefixed);
+      if (pk && shouldDerive) {
         return getPrefixedCdnBaseAsync(pk, prefixed);
       }
 
@@ -94,6 +109,7 @@ type ComputePropertyOptions<TKey extends ConfigKey> = {
   setValue: ConfigSetter;
   getValue: ConfigGetter;
   computationControllers: ComputedPropertyControllers;
+  computedValues: ComputedPropertyValues;
 };
 
 export const computeProperty = <TKey extends ConfigKey>({
@@ -101,6 +117,7 @@ export const computeProperty = <TKey extends ConfigKey>({
   setValue,
   getValue,
   computationControllers,
+  computedValues,
 }: ComputePropertyOptions<TKey>) => {
   for (const computed of COMPUTED_PROPERTIES) {
     if (!computed.deps.includes(key)) continue;
@@ -117,10 +134,22 @@ export const computeProperty = <TKey extends ConfigKey>({
     computationControllers.get(computed.fn)?.abort();
     computationControllers.set(computed.fn, abortController);
 
+    // Record provenance only when the property transformed its input: a value
+    // returned verbatim (pass-through) is the user's, not the property's, and
+    // must not be recognized as `lastComputedValue` on later runs.
+    const inputValue = getValue(computed.key);
+    const recordAndSetValue = (value: ConfigValue<typeof computed.key>) => {
+      if (value !== inputValue) {
+        computedValues.set(computed.fn, value);
+      }
+      setValue(computed.key, value);
+    };
+
     let result: ConfigValue<typeof computed.key> | Promise<ConfigValue<typeof computed.key>>;
     try {
       result = computed.fn(args as ComputedPropertyArgs<typeof computed.key, typeof computed.deps>, {
         signal: abortController.signal,
+        lastComputedValue: computedValues.get(computed.fn),
       });
     } catch (error) {
       if (computationControllers.get(computed.fn) === abortController) {
@@ -135,7 +164,7 @@ export const computeProperty = <TKey extends ConfigKey>({
           if (abortController.signal.aborted) {
             return;
           }
-          setValue(computed.key, resolvedValue);
+          recordAndSetValue(resolvedValue);
         })
         .catch((error) => {
           if (abortController.signal.aborted) {
@@ -149,7 +178,7 @@ export const computeProperty = <TKey extends ConfigKey>({
           }
         });
     } else {
-      setValue(computed.key, result);
+      recordAndSetValue(result);
     }
   }
 };
