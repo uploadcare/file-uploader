@@ -1,4 +1,4 @@
-import type { ActivityType } from '../lit/activity-constants';
+import type { ActivityType, RegisteredActivityType } from '../lit/activity-constants';
 import type { OutputCollectionState, OutputFileEntry } from '../types/exported';
 
 /**
@@ -44,8 +44,10 @@ export type UploaderEventPayload = {
   'file-upload-failed': OutputFileEntry<'failed'>;
   'file-url-changed': OutputFileEntry<'success'>;
 
-  'modal-open': { modalId: ActivityType };
-  'modal-close': { modalId: ActivityType; hasActiveModals: boolean };
+  // `modalId` is always a concrete activity id — the router only emits these on
+  // open→close transitions with a real id, never `null`.
+  'modal-open': { modalId: RegisteredActivityType };
+  'modal-close': { modalId: RegisteredActivityType; hasActiveModals: boolean };
   'activity-change': { activity: ActivityType };
 
   'upload-click': undefined;

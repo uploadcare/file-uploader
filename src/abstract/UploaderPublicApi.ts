@@ -412,7 +412,7 @@ export class UploaderPublicApi extends SharedInstance {
         this._sharedInstancesBag.router.navigate(null);
         return;
       }
-      this._sharedInstancesBag.router.setActivity(activityType, params[0] ?? {});
+      this._sharedInstancesBag.router.setActivity(activityType, params[0]);
       waitForBlockInCtx(
         this._sharedInstancesBag.blocksRegistry,
         (b) => isActivityBlock(b) && b.activityType === activityType,

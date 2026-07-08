@@ -228,7 +228,10 @@ export class RouterController {
    * `undefined` lets the proposed target through.
    */
   public navigate(to: EdgeTarget, params: Record<string, unknown> = {}): void {
-    const ctx: EdgeContext = { edge: 'navigate', from: this._activity, proposed: to, defaults: () => to };
+    // `from` is the *effective* current activity (modal if open, else the
+    // background slot), matching `traverse()` so `beforeChange` hooks always
+    // observe the same "current activity" regardless of which slot it's in.
+    const ctx: EdgeContext = { edge: 'navigate', from: this.currentActivity, proposed: to, defaults: () => to };
     const target = this._runEdgeHooks('beforeChange', ctx);
     if (target === NAVIGATE_CANCEL) {
       return;
@@ -237,16 +240,18 @@ export class RouterController {
   }
 
   private _executeNavigate(to: EdgeTarget, params: Record<string, unknown>): void {
-    this._params = params;
     if (to === null) {
+      this._params = params;
       this._transition(null, null);
       return;
     }
     // A guarded-out activity can't be entered (e.g. an empty upload list);
-    // refuse the navigation and stay where we are.
+    // refuse the navigation and stay where we are — leaving `_params` untouched
+    // so readers never observe params for an activity we didn't actually enter.
     if (!this._canActivate(to)) {
       return;
     }
+    this._params = params;
     // A background target closes any open modal first — the inline content is
     // the focus now; a foreground target leaves the background slot untouched.
     if (this.navigationStrategy(to) === 'background') {
@@ -256,12 +261,19 @@ export class RouterController {
     }
   }
 
-  /** Set the background activity directly (preset init); skips `beforeChange`. */
-  public setActivity(to: EdgeTarget, params: Record<string, unknown> = {}): void {
+  /**
+   * Set the background activity directly (preset init); skips `beforeChange`.
+   * `params` is optional — omit it to change only the background slot without
+   * clobbering the current activity's params (e.g. a preset reacting to the
+   * upload list while a modal is open in the foreground slot).
+   */
+  public setActivity(to: EdgeTarget, params?: Record<string, unknown>): void {
     if (!this._canActivate(to)) {
       return;
     }
-    this._params = params;
+    if (params !== undefined) {
+      this._params = params;
+    }
     this._transition(to, this._modal);
   }
 

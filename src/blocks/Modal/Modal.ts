@@ -79,7 +79,13 @@ export class Modal extends LitBlock {
       close?: () => void;
     };
     if (!dialog || !dialog.open) return;
-    document.body.style.overflow = '';
+    // Release the body scroll lock only when no modal remains in the router's
+    // foreground slot. On a modal-to-modal swap this modal's hide() can run
+    // after the next modal's show(), so clearing unconditionally would unlock
+    // scrolling while a modal is still open.
+    if (this.cfg.modalScrollLock && this.router.modal === null) {
+      document.body.style.overflow = '';
+    }
     if (typeof dialog.close === 'function') {
       this.setAttribute('aria-modal', 'false');
       dialog.close();
