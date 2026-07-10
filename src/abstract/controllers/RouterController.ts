@@ -242,11 +242,13 @@ export class RouterController {
   /**
    * `navigate` with an optional commit callback: `onCommit` runs only once the
    * navigation is definitely happening (hooks didn't cancel, guards didn't
-   * refuse), just before the transition. `back()` uses it to mutate history at
-   * the commit point instead of up front, so `beforeChange` hooks observe the
-   * un-mutated history and a cancel costs nothing.
+   * refuse), just before the transition, and receives the *resolved* target —
+   * which may differ from the proposed one when a hook redirected. `back()`
+   * uses it to mutate history at the commit point instead of up front, so
+   * `beforeChange` hooks observe the un-mutated history and a cancel costs
+   * nothing.
    */
-  private _navigate(to: EdgeTarget, params: Record<string, unknown>, onCommit?: () => void): void {
+  private _navigate(to: EdgeTarget, params: Record<string, unknown>, onCommit?: (resolved: EdgeTarget) => void): void {
     // `from` is the *effective* current activity (modal if open, else the
     // background slot), matching `traverse()` so `beforeChange` hooks always
     // observe the same "current activity" regardless of which slot it's in.
@@ -260,10 +262,14 @@ export class RouterController {
     this._executeNavigate(resolved === undefined ? to : resolved, params, onCommit);
   }
 
-  private _executeNavigate(to: EdgeTarget, params: Record<string, unknown>, onCommit?: () => void): void {
+  private _executeNavigate(
+    to: EdgeTarget,
+    params: Record<string, unknown>,
+    onCommit?: (resolved: EdgeTarget) => void,
+  ): void {
     if (to === null) {
       this._params = params;
-      onCommit?.();
+      onCommit?.(null);
       this._transition(null, null);
       return;
     }
@@ -274,7 +280,7 @@ export class RouterController {
       return;
     }
     this._params = params;
-    onCommit?.();
+    onCommit?.(to);
     // A background target closes any open modal first — the inline content is
     // the focus now; a foreground target leaves the background slot untouched.
     if (this.navigationStrategy(to) === 'background') {
@@ -422,8 +428,13 @@ export class RouterController {
       if (this._canActivate(prev)) {
         // Commit: truncate to the target (dropping the current entry and any
         // guarded-out entries above it); `_pushHistory` dedupes the re-push.
-        this._navigate(prev, {}, () => {
-          this._history.length = i + 1;
+        // When a hook redirected to the activity we're already on, the
+        // effective activity won't change, so `_transition` would never
+        // re-push it — keep history intact instead of dropping the top.
+        this._navigate(prev, {}, (resolved) => {
+          if (resolved !== this.currentActivity) {
+            this._history.length = i + 1;
+          }
         });
         return;
       }
@@ -433,6 +444,7 @@ export class RouterController {
 
   public destroy(): void {
     this._listeners.clear();
+    this._guards.clear();
     this._hooks = { beforeChange: [], onFileAdd: [], onBack: [], onCancel: [], onClose: [], onDone: [] };
   }
 }

@@ -250,6 +250,26 @@ describe('RouterController (v2)', () => {
       expect(router.history).toEqual(['start-from', 'url']);
     });
 
+    it('a back() redirect to the current activity keeps history intact', () => {
+      const { router } = setup();
+      router.navigate('start-from');
+      router.navigate('camera'); // history: [start-from, camera]
+      let stay = true;
+      // Redirect the back() target (start-from) to the activity we're on.
+      router.hooks.beforeChange((ctx) => (stay && ctx.proposed === 'start-from' ? 'camera' : undefined));
+
+      router.back(); // resolved to "stay on camera" — nothing may be dropped
+
+      expect(router.currentActivity).toBe('camera');
+      expect(router.history).toEqual(['start-from', 'camera']);
+
+      stay = false;
+      router.back(); // a later real back still reaches start-from
+
+      expect(router.currentActivity).toBe('start-from');
+      expect(router.history).toEqual(['start-from']);
+    });
+
     it('a back() redirect into a guarded-out target is refused with history untouched', () => {
       const { router } = setup();
       router.guard('upload-list', () => false);
@@ -608,6 +628,16 @@ describe('RouterController (v2)', () => {
   });
 
   describe('destroy', () => {
+    it('clears registered guards', () => {
+      const { router } = setup();
+      router.guard('upload-list', () => false);
+
+      router.destroy();
+
+      router.navigate('upload-list'); // guard cleared → allowed
+      expect(router.currentActivity).toBe('upload-list');
+    });
+
     it('clears listeners and hooks', () => {
       const { router } = setup();
       const onChange = vi.fn();
