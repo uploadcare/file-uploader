@@ -198,8 +198,10 @@ instance.addEventListener('common-upload-success', (e) => {
 
 instance.addEventListener('modal-close', (e) => {
   const payload = e.detail;
+  // `modalId` is always a concrete activity id — the router only emits these
+  // on open/close transitions with a real id, never `null`.
   expectType<{
-    modalId: ActivityType;
+    modalId: Exclude<ActivityType, null>;
     hasActiveModals: boolean;
   }>(payload);
 });
@@ -207,7 +209,7 @@ instance.addEventListener('modal-close', (e) => {
 instance.addEventListener('modal-open', (e) => {
   const payload = e.detail;
   expectType<{
-    modalId: ActivityType;
+    modalId: Exclude<ActivityType, null>;
   }>(payload);
 });
 
