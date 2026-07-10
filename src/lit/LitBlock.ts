@@ -18,6 +18,7 @@ import { extractCdnUrlModifiers, extractFilename, extractUuid } from '../utils/c
 import { getLocaleDirection } from '../utils/getLocaleDirection';
 import { applyTemplateData } from '../utils/template-utils';
 import { WindowHeightTracker } from '../utils/WindowHeightTracker';
+import type { ActivityId } from './activity-constants';
 import { CssDataMixin } from './CssDataMixin';
 import { createDebugPrinter } from './createDebugPrinter';
 import { LightDomMixin } from './LightDomMixin';
@@ -163,22 +164,16 @@ export class LitBlock extends LitBlockBase {
   };
 
   /**
-   * Subscribe to the effective current activity (foreground modal, else
-   * background). Fires immediately with the current value, then on every
-   * change. Replaces `this.sub('*currentActivity', cb)`. Auto-cleaned on
+   * Subscribe to a value derived from router state: fires immediately with
+   * the current value, then on every change (reference dedup). All the
+   * `sub*` router helpers are one-liners over this. Auto-cleaned on
    * disconnect.
-   *
-   * The callback receives a plain `string | null` rather than the strict
-   * `ActivityId` — this is internal subscription plumbing (callers compare
-   * against known activity literals), and the strict id type resolves
-   * inconsistently inside `LitBlock`'s import context. Strict `ActivityId`
-   * stays on the router's public surface (`navigate`/`setActivity`/…).
    */
-  protected subActivity(cb: (activity: string | null) => void): () => void {
-    let last = this.router.currentActivity;
+  private _subRouterDerived<T>(select: () => T, cb: (value: T) => void): () => void {
+    let last = select();
     cb(last);
     const unsub = this.router.subscribe(() => {
-      const next = this.router.currentActivity;
+      const next = select();
       if (next !== last) {
         last = next;
         cb(next);
@@ -188,19 +183,19 @@ export class LitBlock extends LitBlockBase {
     return unsub;
   }
 
+  /**
+   * Subscribe to the effective current activity (foreground modal, else
+   * background). Fires immediately with the current value, then on every
+   * change. Replaces `this.sub('*currentActivity', cb)`. Auto-cleaned on
+   * disconnect.
+   */
+  protected subActivity(cb: (activity: ActivityId | null) => void): () => void {
+    return this._subRouterDerived(() => this.router.currentActivity, cb);
+  }
+
   /** Subscribe to the current activity params. Fires immediately + on change. */
   protected subActivityParams(cb: (params: Readonly<Record<string, unknown>>) => void): () => void {
-    let last = this.router.params;
-    cb(last);
-    const unsub = this.router.subscribe(() => {
-      const next = this.router.params;
-      if (next !== last) {
-        last = next;
-        cb(next);
-      }
-    });
-    this._routerUnsubs.add(unsub);
-    return unsub;
+    return this._subRouterDerived(() => this.router.params, cb);
   }
 
   /**
