@@ -6,6 +6,7 @@ import { SecureUploadsManager } from '../abstract/managers/SecureUploadsManager'
 import { ValidationManager } from '../abstract/managers/ValidationManager';
 import type { TypedCollectionObserverHandler } from '../abstract/TypedCollection';
 import { TypedCollection } from '../abstract/TypedCollection';
+import { TypedData } from '../abstract/TypedData';
 import { UploaderPublicApi } from '../abstract/UploaderPublicApi';
 import { initialUploadEntryData, type UploadEntryData } from '../abstract/uploadEntrySchema';
 import { calculateMaxCenteredCropFrame } from '../blocks/CloudImageEditor/src/crop-utils';
@@ -18,7 +19,6 @@ import { ExternalUploadSource, UploadSource } from '../utils/UploadSource';
 import { customUserAgent } from '../utils/userAgent';
 import { getOutputData } from './getOutputData';
 import { LitActivityBlock } from './LitActivityBlock';
-import { PubSub } from './PubSubCompat';
 import type { Uid } from './Uid';
 
 export class LitUploaderBlock extends LitActivityBlock {
@@ -246,7 +246,8 @@ export class LitUploaderBlock extends LitActivityBlock {
         if (!this.isConnected) return;
         // We can't modify entry properties in the same tick, so we need to wait a bit
         const entriesToRunOnUpload = entriesToRunValidation.filter(
-          (entryId) => changeMap.fileInfo?.has(entryId) && !!PubSub.getCtx(entryId)?.store.fileInfo,
+          (entryId) =>
+            changeMap.fileInfo?.has(entryId) && !!TypedData.getByUid<UploadEntryData>(entryId)?.snapshot().fileInfo,
         );
         if (entriesToRunOnUpload.length > 0) {
           this.validationManager.runFileValidators('upload', entriesToRunOnUpload);
@@ -256,9 +257,9 @@ export class LitUploaderBlock extends LitActivityBlock {
 
     if (changeMap.uploadProgress) {
       for (const entryId of changeMap.uploadProgress) {
-        const ctx = PubSub.getCtx<UploadEntryData>(entryId);
-        if (!ctx) continue;
-        const { isUploading, silent } = ctx.store;
+        const entry = TypedData.getByUid<UploadEntryData>(entryId);
+        if (!entry) continue;
+        const { isUploading, silent } = entry.snapshot();
         if (isUploading && !silent) {
           this.emit(EventType.FILE_UPLOAD_PROGRESS, this.api.getOutputItem(entryId));
         }
@@ -268,9 +269,9 @@ export class LitUploaderBlock extends LitActivityBlock {
     }
     if (changeMap.isUploading) {
       for (const entryId of changeMap.isUploading) {
-        const ctx = PubSub.getCtx<UploadEntryData>(entryId);
-        if (!ctx) continue;
-        const { isUploading, silent } = ctx.store;
+        const entry = TypedData.getByUid<UploadEntryData>(entryId);
+        if (!entry) continue;
+        const { isUploading, silent } = entry.snapshot();
         if (isUploading && !silent) {
           this.emit(EventType.FILE_UPLOAD_START, this.api.getOutputItem(entryId));
         }
@@ -278,9 +279,9 @@ export class LitUploaderBlock extends LitActivityBlock {
     }
     if (changeMap.fileInfo) {
       for (const entryId of changeMap.fileInfo) {
-        const ctx = PubSub.getCtx<UploadEntryData>(entryId);
-        if (!ctx) continue;
-        const { fileInfo, silent } = ctx.store;
+        const entry = TypedData.getByUid<UploadEntryData>(entryId);
+        if (!entry) continue;
+        const { fileInfo, silent } = entry.snapshot();
         if (fileInfo && !silent) {
           this.emit(EventType.FILE_UPLOAD_SUCCESS, this.api.getOutputItem(entryId));
         }
@@ -293,9 +294,9 @@ export class LitUploaderBlock extends LitActivityBlock {
       this.validationManager.runCollectionValidators();
 
       for (const entryId of changeMap.errors) {
-        const ctx = PubSub.getCtx<UploadEntryData>(entryId);
-        if (!ctx) continue;
-        const { errors } = ctx.store;
+        const entry = TypedData.getByUid<UploadEntryData>(entryId);
+        if (!entry) continue;
+        const { errors } = entry.snapshot();
         if (errors.length > 0) {
           this.emit(EventType.FILE_UPLOAD_FAILED, this.api.getOutputItem(entryId));
           this.emit(

@@ -8,7 +8,6 @@ import { findBlockInCtx } from '../lit/findBlockInCtx';
 import { waitForBlockInCtx } from '../lit/hasBlockInCtx';
 import type { ActivityParamsMap, ActivityType, LitActivityBlock } from '../lit/LitActivityBlock';
 import { createL10n } from '../lit/l10n';
-import { PubSub } from '../lit/PubSubCompat';
 import { SharedInstance } from '../lit/shared-instances';
 import type { Uid } from '../lit/Uid';
 import type {
@@ -31,6 +30,7 @@ import { parseCdnUrl } from '../utils/parseCdnUrl';
 import { stringToArray } from '../utils/stringToArray';
 import { UploadSource } from '../utils/UploadSource';
 import { buildOutputCollectionState } from './buildOutputCollectionState';
+import { TypedData } from './TypedData';
 import type { UploadEntryData } from './uploadEntrySchema';
 export type ApiAddFileCommonOptions = {
   silent?: boolean;
@@ -250,11 +250,11 @@ export class UploaderPublicApi extends SharedInstance {
   };
 
   public getOutputItem<TStatus extends OutputFileStatus>(entryId: string): OutputFileEntry<TStatus> {
-    const ctx = PubSub.getCtx<UploadEntryData>(entryId);
-    if (!ctx) {
+    const entry = TypedData.getByUid<UploadEntryData>(entryId);
+    if (!entry) {
       throw new Error(`UploaderPublicApi#getOutputItem: Entry with ID "${entryId}" not found in the upload collection`);
     }
-    const uploadEntryData = ctx.store;
+    const uploadEntryData = entry.snapshot();
     const fileInfo = uploadEntryData.fileInfo as UploadcareFile | null;
 
     const status: OutputFileEntry['status'] = uploadEntryData.isRemoved
