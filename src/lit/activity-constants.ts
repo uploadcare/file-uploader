@@ -6,8 +6,10 @@ import type { ActivityParams as ExternalSourceActivityParams } from '../blocks/E
  * (a dependency-free leaf) rather than in `LitActivityBlock` so the activity-id
  * types below don't form an import cycle through `LitBlock` — which made the
  * `keyof CustomActivities` term resolve inconsistently (wide in some positions,
- * narrow in others). Re-exported from `LitActivityBlock` and the package root,
- * so existing `declare module` augmentations of either path still merge here.
+ * narrow in others). Re-exported from the package root (via `src/types`), so
+ * consumer `declare module` augmentations of the published entry still merge
+ * in the flattened dist types; in-repo augmentations target this file directly
+ * (see `unsplashPlugin`).
  */
 // biome-ignore lint/suspicious/noEmptyInterface: consumer-augmented interface
 export interface CustomActivities {}

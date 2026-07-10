@@ -228,6 +228,17 @@ export class RouterController {
    * `undefined` lets the proposed target through.
    */
   public navigate(to: EdgeTarget, params: Record<string, unknown> = {}): void {
+    this._navigate(to, params);
+  }
+
+  /**
+   * `navigate` with an optional commit callback: `onCommit` runs only once the
+   * navigation is definitely happening (hooks didn't cancel, guards didn't
+   * refuse), just before the transition. `back()` uses it to mutate history at
+   * the commit point instead of up front, so `beforeChange` hooks observe the
+   * un-mutated history and a cancel costs nothing.
+   */
+  private _navigate(to: EdgeTarget, params: Record<string, unknown>, onCommit?: () => void): void {
     // `from` is the *effective* current activity (modal if open, else the
     // background slot), matching `traverse()` so `beforeChange` hooks always
     // observe the same "current activity" regardless of which slot it's in.
@@ -236,12 +247,13 @@ export class RouterController {
     if (target === NAVIGATE_CANCEL) {
       return;
     }
-    this._executeNavigate(target, params);
+    this._executeNavigate(target, params, onCommit);
   }
 
-  private _executeNavigate(to: EdgeTarget, params: Record<string, unknown>): void {
+  private _executeNavigate(to: EdgeTarget, params: Record<string, unknown>, onCommit?: () => void): void {
     if (to === null) {
       this._params = params;
+      onCommit?.();
       this._transition(null, null);
       return;
     }
@@ -252,6 +264,7 @@ export class RouterController {
       return;
     }
     this._params = params;
+    onCommit?.();
     // A background target closes any open modal first — the inline content is
     // the focus now; a foreground target leaves the background slot untouched.
     if (this.navigationStrategy(to) === 'background') {
@@ -383,7 +396,9 @@ export class RouterController {
   public afterFileAdd(): void {
     const ctx: EdgeContext = {
       edge: 'onFileAdd',
-      from: this._activity,
+      // Effective activity (modal-aware), matching `navigate()`/`traverse()` —
+      // `EdgeContext.from` always means "what the user currently sees".
+      from: this.currentActivity,
       proposed: 'upload-list',
       defaults: () => 'upload-list',
     };
@@ -393,25 +408,28 @@ export class RouterController {
   }
 
   /**
-   * Pop the current activity off history and navigate to the previous one (or
-   * close everything if history is empty). History stores `[...past, current]`,
-   * so we pop the current entry then peek the new top.
+   * Navigate to the previous history entry (or close everything if there is
+   * none). History stores `[...past, current]`, so the target is the newest
+   * entry below the top, skipping entries that are now guarded-out (e.g. an
+   * upload list that emptied while a modal was open over it).
    *
-   * Skips previous entries that are now guarded-out (e.g. an upload list that
-   * emptied while a modal was open over it) rather than popping one blindly —
-   * `navigate` would refuse a guarded-out target without re-pushing it, which
-   * would leave history inconsistent with the visible activity.
+   * History is only *peeked* here — it mutates at the commit point, after the
+   * `beforeChange` hooks have had their say. A hook that cancels (or a guard
+   * that refuses a redirect target) leaves history exactly as it was; a hook
+   * that redirects still drops the entry being left before the redirect target
+   * is pushed.
    */
   public back(): void {
-    this._history.pop(); // drop current
-    while (this._history.length > 0) {
-      const prev = this._history[this._history.length - 1]!;
+    for (let i = this._history.length - 2; i >= 0; i--) {
+      const prev = this._history[i]!;
       if (this._canActivate(prev)) {
-        this._history.pop(); // navigate(prev) re-pushes it
-        this.navigate(prev);
+        // Commit: truncate to the target (dropping the current entry and any
+        // guarded-out entries above it); `_pushHistory` dedupes the re-push.
+        this._navigate(prev, {}, () => {
+          this._history.length = i + 1;
+        });
         return;
       }
-      this._history.pop(); // guarded-out now — drop it and keep looking back
     }
     this.navigate(null);
   }

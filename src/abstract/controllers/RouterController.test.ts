@@ -195,6 +195,76 @@ describe('RouterController (v2)', () => {
       expect(router.activity).toBe('start-from');
     });
 
+    it('beforeChange hooks observe the un-mutated history when back() fires them', () => {
+      const { router } = setup();
+      router.navigate('start-from');
+      router.navigate('camera'); // history: [start-from, camera]
+      let seen: readonly ActivityId[] | undefined;
+      router.hooks.beforeChange(() => {
+        seen = [...router.history];
+        return undefined;
+      });
+
+      router.back();
+
+      // The hook decides whether the navigation happens at all, so it must see
+      // history as it was *before* back() touches it — including the entry
+      // being left.
+      expect(seen).toEqual(['start-from', 'camera']);
+      expect(router.currentActivity).toBe('start-from');
+      expect(router.history).toEqual(['start-from']);
+    });
+
+    it('a canceled back() leaves history intact and a later back() still works', () => {
+      const { router } = setup();
+      router.navigate('start-from');
+      router.navigate('upload-list');
+      router.navigate('camera'); // history: [start-from, upload-list, camera]
+      let block = true;
+      router.hooks.beforeChange(() => (block ? NAVIGATE_CANCEL : undefined));
+
+      router.back(); // canceled — nothing may change
+
+      expect(router.currentActivity).toBe('camera');
+      expect(router.history).toEqual(['start-from', 'upload-list', 'camera']);
+      expect(router.canGoBack).toBe(true);
+
+      block = false;
+      router.back(); // now allowed — lands on the real previous entry
+
+      expect(router.currentActivity).toBe('upload-list');
+      expect(router.history).toEqual(['start-from', 'upload-list']);
+    });
+
+    it('a beforeChange redirect during back() drops the left entry and records the target', () => {
+      const { router } = setup();
+      router.navigate('start-from');
+      router.navigate('camera'); // history: [start-from, camera]
+      router.hooks.beforeChange((ctx) => (ctx.proposed === 'start-from' ? 'url' : undefined));
+
+      router.back(); // back from camera, redirected to url
+
+      expect(router.currentActivity).toBe('url');
+      // camera (the entry being left) is gone; back from url returns to
+      // start-from, not to the screen the user just backed out of.
+      expect(router.history).toEqual(['start-from', 'url']);
+    });
+
+    it('a back() redirect into a guarded-out target is refused with history untouched', () => {
+      const { router } = setup();
+      router.guard('upload-list', () => false);
+      router.navigate('start-from');
+      router.navigate('camera'); // history: [start-from, camera]
+      router.hooks.beforeChange((ctx) =>
+        ctx.edge === 'navigate' && ctx.from === 'camera' ? 'upload-list' : undefined,
+      );
+
+      router.back(); // redirect target is guarded-out → nothing happens
+
+      expect(router.currentActivity).toBe('camera');
+      expect(router.history).toEqual(['start-from', 'camera']);
+    });
+
     it('back closes everything when there is no previous entry', () => {
       const { router } = setup();
       router.navigate('start-from');
@@ -223,6 +293,24 @@ describe('RouterController (v2)', () => {
       // leaving history consistent with the visible activity.
       expect(router.currentActivity).toBe('start-from');
       expect(router.history).toEqual(['start-from']);
+    });
+
+    it('a canceled back() keeps guarded-out entries it would have skipped', () => {
+      const { router } = setup();
+      let listAllowed = true;
+      router.guard('upload-list', () => listAllowed);
+      router.navigate('start-from');
+      router.navigate('upload-list');
+      router.navigate('camera'); // history: [start-from, upload-list, camera]
+      router.hooks.beforeChange(() => NAVIGATE_CANCEL);
+
+      listAllowed = false;
+      router.back(); // would skip upload-list and land on start-from — canceled
+
+      expect(router.currentActivity).toBe('camera');
+      // The guarded-out entry stays: its guard may hold again by the next
+      // back() (e.g. files get added back to the list).
+      expect(router.history).toEqual(['start-from', 'upload-list', 'camera']);
     });
 
     it('back closes everything when every previous entry is guarded-out', () => {
@@ -302,6 +390,21 @@ describe('RouterController (v2)', () => {
       router.hooks.afterFileAdd(() => NAVIGATE_CANCEL);
       router.afterFileAdd();
       expect(router.activity).toBe('start-from'); // unchanged
+    });
+
+    it('exposes the effective (modal-aware) activity as ctx.from', () => {
+      const { router } = setup();
+      router.setActivity('start-from');
+      router.openModal('camera'); // camera is what the user actually sees
+      let seen: unknown;
+      router.hooks.afterFileAdd((ctx) => {
+        seen = ctx.from;
+        return NAVIGATE_CANCEL;
+      });
+
+      router.afterFileAdd();
+
+      expect(seen).toBe('camera');
     });
 
     it('exposes ctx.defaults() (upload-list) to afterFileAdd hooks', () => {

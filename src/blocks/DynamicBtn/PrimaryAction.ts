@@ -122,7 +122,7 @@ export class PrimaryAction extends LitUploaderBlock {
 
   private _handleClick() {
     if (this.hasEntries) {
-      this._sharedInstancesBag.router.navigate('upload-list');
+      this.router.navigate('upload-list');
       return;
     }
 

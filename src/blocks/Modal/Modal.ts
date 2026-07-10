@@ -59,9 +59,10 @@ export class Modal extends LitBlock {
     const dialog = this.dialogEl.value as HTMLDialogElement & {
       showModal?: () => void;
     };
-    // Idempotent: `subRouter` fires on every change, but `showModal()` throws
-    // on an already-open dialog.
-    if (dialog?.open) return;
+    // Idempotent + null-safe (matching `hide()`): `subRouter` fires on every
+    // change, but `showModal()` throws on an already-open dialog, and the ref
+    // may be cleared by a teardown racing this async method.
+    if (!dialog || dialog.open) return;
     if (typeof dialog.showModal === 'function') {
       this.setAttribute('aria-modal', 'true');
       dialog.showModal();
