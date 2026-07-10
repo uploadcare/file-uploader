@@ -214,7 +214,7 @@ export class ExternalSource extends LitUploaderBlock {
       });
     }
 
-    this.router.afterFileAdd();
+    this.router.traverse('onFileAdd');
   };
 
   private _handleCancel = (): void => {

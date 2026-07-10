@@ -237,7 +237,7 @@ export class UploaderPublicApi extends SharedInstance {
           });
         });
         // To call uploadTrigger UploadList should draw file items first.
-        this._sharedInstancesBag.router.afterFileAdd();
+        this._sharedInstancesBag.router.traverse('onFileAdd');
         fileInput.remove();
       },
       {

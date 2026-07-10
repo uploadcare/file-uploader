@@ -68,7 +68,7 @@ export class RouterController {
   private _history: ActivityId[] = [];
   private _hooks = {
     beforeChange: [] as Hook[],
-    afterFileAdd: [] as Hook[],
+    onFileAdd: [] as Hook[],
     onBack: [] as Hook[],
     onCancel: [] as Hook[],
     onClose: [] as Hook[],
@@ -165,11 +165,13 @@ export class RouterController {
    * Register interceptors for navigation intents. A hook may redirect (return
    * an activity id), close everything (`null`), cancel the intent
    * (`NAVIGATE_CANCEL`), or defer to the default (`undefined`). The edge hooks
-   * (`onBack`/`onCancel`/`onClose`/`onDone`) fire from {@link traverse}.
+   * (`onFileAdd`/`onBack`/`onCancel`/`onClose`/`onDone`) fire from
+   * {@link traverse}; `beforeChange` fires from `navigate()` itself, once per
+   * actual navigation.
    */
   public readonly hooks = {
     beforeChange: (h: Hook) => this._register('beforeChange', h),
-    afterFileAdd: (h: Hook) => this._register('afterFileAdd', h),
+    onFileAdd: (h: Hook) => this._register('onFileAdd', h),
     onBack: (h: Hook) => this._register('onBack', h),
     onCancel: (h: Hook) => this._register('onCancel', h),
     onClose: (h: Hook) => this._register('onClose', h),
@@ -358,13 +360,17 @@ export class RouterController {
    * otherwise the built-in default applies:
    * - `onBack` / `onCancel` → {@link back},
    * - `onClose` → {@link close},
-   * - `onDone` → navigate to the configured {@link doneActivity}.
+   * - `onDone` → navigate to the configured {@link doneActivity},
+   * - `onFileAdd` → navigate to `upload-list`.
    */
-  public traverse(edge: 'onBack' | 'onCancel' | 'onClose' | 'onDone'): void {
-    // `proposed`/`defaults()` carry a concrete target only for `onDone` (the
-    // done activity). For `onBack`/`onCancel`/`onClose` the default is an
-    // *action* (`back()`/`close()`), not a target, so `proposed` is `null`.
-    const proposed = edge === 'onDone' ? this.doneActivity : null;
+  public traverse(edge: 'onBack' | 'onCancel' | 'onClose' | 'onDone' | 'onFileAdd'): void {
+    // `proposed`/`defaults()` carry a concrete target only when the default
+    // *is* a target (`onDone` → done activity, `onFileAdd` → upload-list).
+    // For `onBack`/`onCancel`/`onClose` the default is an *action*
+    // (`back()`/`close()`), not a target, so `proposed` is `null`.
+    const proposed = edge === 'onDone' ? this.doneActivity : edge === 'onFileAdd' ? 'upload-list' : null;
+    // `from` is the effective (modal-aware) activity — `EdgeContext.from`
+    // always means "what the user currently sees".
     const ctx: EdgeContext = { edge, from: this.currentActivity, proposed, defaults: () => proposed };
     for (const hook of this._hooks[edge]) {
       const r = this._invokeHook(edge, hook, ctx);
@@ -385,26 +391,10 @@ export class RouterController {
       case 'onDone':
         this.navigate(this.doneActivity);
         break;
+      case 'onFileAdd':
+        this.navigate('upload-list');
+        break;
     }
-  }
-
-  /**
-   * v1-compatible "after file add" routing. Default: navigate to `upload-list`;
-   * `hooks.afterFileAdd` may override (DynamicBtn returns `null` with no history
-   * so the modal stays closed and the inline button shows status).
-   */
-  public afterFileAdd(): void {
-    const ctx: EdgeContext = {
-      edge: 'onFileAdd',
-      // Effective activity (modal-aware), matching `navigate()`/`traverse()` —
-      // `EdgeContext.from` always means "what the user currently sees".
-      from: this.currentActivity,
-      proposed: 'upload-list',
-      defaults: () => 'upload-list',
-    };
-    const final = this._runEdgeHooks('afterFileAdd', ctx);
-    if (final === NAVIGATE_CANCEL) return;
-    this.navigate(final);
   }
 
   /**
@@ -436,6 +426,6 @@ export class RouterController {
 
   public destroy(): void {
     this._listeners.clear();
-    this._hooks = { beforeChange: [], afterFileAdd: [], onBack: [], onCancel: [], onClose: [], onDone: [] };
+    this._hooks = { beforeChange: [], onFileAdd: [], onBack: [], onCancel: [], onClose: [], onDone: [] };
   }
 }

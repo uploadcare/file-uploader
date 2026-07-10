@@ -683,7 +683,7 @@ export class CameraSource extends LitUploaderBlock {
   private _toSend = (file: File): void => {
     this.api.addFileFromObject(file, { source: UploadSource.CAMERA });
 
-    this.router.afterFileAdd();
+    this.router.traverse('onFileAdd');
   };
 
   private get _cameraModes(): CameraMode[] {

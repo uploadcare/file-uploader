@@ -55,7 +55,7 @@ export class DynamicBtn extends LitUploaderBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-dynamic-btn'];
   public override couldBeCtxOwner = true;
 
-  private _unregisterAfterFileAddHook?: () => void;
+  private _unregisterOnFileAddHook?: () => void;
 
   @property({ attribute: 'dropzone', type: Boolean })
   public dropzone = true;
@@ -182,7 +182,7 @@ export class DynamicBtn extends LitUploaderBlock {
     this.uploadCollection.observeProperties(this._throttledHandleCollectionUpdate);
     this.uploadCollection.observeCollection(this._throttledHandleCollectionUpdate);
 
-    this._unregisterAfterFileAddHook = this.router.hooks.afterFileAdd(() => {
+    this._unregisterOnFileAddHook = this.router.hooks.onFileAdd(() => {
       // With confirmUpload, always land on the upload list.
       if (this.cfg.confirmUpload) {
         return ACTIVITY_TYPES.UPLOAD_LIST;
@@ -201,7 +201,7 @@ export class DynamicBtn extends LitUploaderBlock {
     if (typeof this._throttledHandleCollectionUpdate.cancel === 'function') {
       this._throttledHandleCollectionUpdate.cancel();
     }
-    this._unregisterAfterFileAddHook?.();
+    this._unregisterOnFileAddHook?.();
     super.disconnectedCallback();
   }
 

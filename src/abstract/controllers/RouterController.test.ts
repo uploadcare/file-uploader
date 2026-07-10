@@ -370,25 +370,25 @@ describe('RouterController (v2)', () => {
     });
   });
 
-  describe('afterFileAdd', () => {
+  describe('onFileAdd (traverse edge)', () => {
     it('navigates to upload-list by default', () => {
       const { router } = setup();
-      router.afterFileAdd();
+      router.traverse('onFileAdd');
       expect(router.activity).toBe('upload-list');
     });
 
-    it('respects an afterFileAdd hook returning null (stay closed)', () => {
+    it('respects an onFileAdd hook returning null (stay closed)', () => {
       const { router } = setup();
-      router.hooks.afterFileAdd(() => null);
-      router.afterFileAdd();
+      router.hooks.onFileAdd(() => null);
+      router.traverse('onFileAdd');
       expect(router.activity).toBeNull();
     });
 
-    it('cancels when the afterFileAdd hook returns NAVIGATE_CANCEL', () => {
+    it('cancels when the onFileAdd hook returns NAVIGATE_CANCEL', () => {
       const { router } = setup();
       router.setActivity('start-from');
-      router.hooks.afterFileAdd(() => NAVIGATE_CANCEL);
-      router.afterFileAdd();
+      router.hooks.onFileAdd(() => NAVIGATE_CANCEL);
+      router.traverse('onFileAdd');
       expect(router.activity).toBe('start-from'); // unchanged
     });
 
@@ -397,35 +397,35 @@ describe('RouterController (v2)', () => {
       router.setActivity('start-from');
       router.openModal('camera'); // camera is what the user actually sees
       let seen: unknown;
-      router.hooks.afterFileAdd((ctx) => {
+      router.hooks.onFileAdd((ctx) => {
         seen = ctx.from;
         return NAVIGATE_CANCEL;
       });
 
-      router.afterFileAdd();
+      router.traverse('onFileAdd');
 
       expect(seen).toBe('camera');
     });
 
-    it('exposes ctx.defaults() (upload-list) to afterFileAdd hooks', () => {
+    it('exposes ctx.defaults() (upload-list) to onFileAdd hooks', () => {
       const { router } = setup();
       let seen: unknown;
-      router.hooks.afterFileAdd((ctx) => {
+      router.hooks.onFileAdd((ctx) => {
         seen = ctx.defaults();
         return undefined;
       });
-      router.afterFileAdd();
+      router.traverse('onFileAdd');
       expect(seen).toBe('upload-list');
     });
 
-    it('isolates a throwing afterFileAdd hook and falls back to upload-list', () => {
+    it('isolates a throwing onFileAdd hook and falls back to upload-list', () => {
       const { router } = setup();
       const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-      router.hooks.afterFileAdd(() => {
+      router.hooks.onFileAdd(() => {
         throw new Error('boom');
       });
 
-      router.afterFileAdd(); // hook throws → default upload-list still applies
+      router.traverse('onFileAdd'); // hook throws → default upload-list still applies
 
       expect(router.activity).toBe('upload-list');
       expect(warn).toHaveBeenCalled();
@@ -563,6 +563,19 @@ describe('RouterController (v2)', () => {
       router.hooks.onBack(() => undefined);
       router.traverse('onBack');
       expect(router.currentActivity).toBe('start-from');
+    });
+
+    it('onFileAdd defaults to navigating to upload-list', () => {
+      const { router } = setup();
+      router.traverse('onFileAdd');
+      expect(router.currentActivity).toBe('upload-list');
+    });
+
+    it('hooks registered via hooks.onFileAdd intercept traverse(onFileAdd)', () => {
+      const { router } = setup();
+      router.hooks.onFileAdd(() => null); // DynamicBtn: keep the modal closed
+      router.traverse('onFileAdd');
+      expect(router.currentActivity).toBeNull();
     });
 
     it('isolates a throwing edge hook and falls back to the default', () => {

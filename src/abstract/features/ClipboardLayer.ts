@@ -81,7 +81,7 @@ export class ClipboardLayer extends SharedInstance {
   }
 
   private openUploadList() {
-    this._sharedInstancesBag.router.afterFileAdd();
+    this._sharedInstancesBag.router.traverse('onFileAdd');
   }
 
   private async _listener(event: ClipboardEvent) {

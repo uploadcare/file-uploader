@@ -30,7 +30,7 @@ describe('buildPluginApi', () => {
 
     it('afterFileAdd is interceptable by the registered hooks, like any built-in source', () => {
       const { api, router } = setup();
-      router.hooks.afterFileAdd(() => null); // e.g. DynamicBtn keeping the modal closed
+      router.hooks.onFileAdd(() => null); // e.g. DynamicBtn keeping the modal closed
       api.router.afterFileAdd();
       expect(router.currentActivity).toBeNull();
     });
