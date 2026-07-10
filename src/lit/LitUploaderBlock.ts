@@ -2,13 +2,16 @@
 
 import { type FileFromOptions, uploadFileGroup } from '@uploadcare/upload-client';
 import { uploaderBlockCtx } from '../abstract/CTX';
+import type {
+  CollectionObserver,
+  UploadCollectionChangeMap,
+  UploadCollectionController,
+} from '../abstract/controllers/UploadCollectionController';
 import { SecureUploadsManager } from '../abstract/managers/SecureUploadsManager';
 import { ValidationManager } from '../abstract/managers/ValidationManager';
-import type { TypedCollectionObserverHandler } from '../abstract/TypedCollection';
-import { TypedCollection } from '../abstract/TypedCollection';
 import { TypedData } from '../abstract/TypedData';
 import { UploaderPublicApi } from '../abstract/UploaderPublicApi';
-import { initialUploadEntryData, type UploadEntryData } from '../abstract/uploadEntrySchema';
+import type { UploadEntryData } from '../abstract/uploadEntrySchema';
 import { calculateMaxCenteredCropFrame } from '../blocks/CloudImageEditor/src/crop-utils';
 import { parseCropPreset } from '../blocks/CloudImageEditor/src/lib/parseCropPreset';
 import { EventType } from '../blocks/UploadCtxProvider/EventEmitter';
@@ -19,7 +22,6 @@ import { ExternalUploadSource, UploadSource } from '../utils/UploadSource';
 import { customUserAgent } from '../utils/userAgent';
 import { getOutputData } from './getOutputData';
 import { LitActivityBlock } from './LitActivityBlock';
-import type { Uid } from './Uid';
 
 export class LitUploaderBlock extends LitActivityBlock {
   public static extSrcList: Readonly<typeof ExternalUploadSource>;
@@ -45,21 +47,9 @@ export class LitUploaderBlock extends LitActivityBlock {
   public override initCallback(): void {
     super.initCallback();
 
-    this._addSharedContextInstance('*uploadCollection', () => {
-      return new TypedCollection<UploadEntryData>({
-        initialValue: initialUploadEntryData,
-        watchList: [
-          'file',
-          'uploadProgress',
-          'uploadError',
-          'fileInfo',
-          'errors',
-          'cdnUrl',
-          'isUploading',
-          'isValidationPending',
-        ],
-      });
-    });
+    // The upload collection is owned by the per-ctx UploaderController; the
+    // shared instance resolves to it so all blocks share one source of truth.
+    this._addSharedContextInstance('*uploadCollection', () => this.sharedCtx.uploaderController().collection);
 
     this._addSharedContextInstance(
       '*secureUploadsManager',
@@ -88,7 +78,7 @@ export class LitUploaderBlock extends LitActivityBlock {
     return this._getSharedContextInstance('*publicApi');
   }
 
-  public get uploadCollection(): TypedCollection<UploadEntryData> {
+  public get uploadCollection(): UploadCollectionController {
     return this._getSharedContextInstance('*uploadCollection');
   }
 
@@ -184,7 +174,7 @@ export class LitUploaderBlock extends LitActivityBlock {
     }
   }, 300);
 
-  private _handleCollectionUpdate: TypedCollectionObserverHandler<UploadEntryData> = (entries, added, removed) => {
+  private _handleCollectionUpdate: CollectionObserver = (entries, added, removed) => {
     if (!this.isConnected) return;
     if (added.size || removed.size) {
       this.$['*groupInfo'] = null;
@@ -228,7 +218,7 @@ export class LitUploaderBlock extends LitActivityBlock {
     this._flushOutputItems();
   };
 
-  private _handleCollectionPropertiesUpdate = (changeMap: Record<keyof UploadEntryData, Set<Uid>>): void => {
+  private _handleCollectionPropertiesUpdate = (changeMap: UploadCollectionChangeMap): void => {
     if (!this.isConnected) return;
     this._flushOutputItems();
 
@@ -237,7 +227,7 @@ export class LitUploaderBlock extends LitActivityBlock {
       ...new Set(
         Object.entries(changeMap)
           .filter(([key]) => ['file', 'uploadError', 'fileInfo', 'cdnUrl', 'cdnUrlModifiers'].includes(key))
-          .flatMap(([, ids]) => [...ids]),
+          .flatMap(([, ids]) => [...(ids ?? [])]),
       ),
     ];
 

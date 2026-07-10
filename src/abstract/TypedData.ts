@@ -11,12 +11,12 @@ const MSG_NAME = '[Typed State] Wrong property name: ';
  * nanostores `PubSub` context per entry. A module-level registry keyed by the
  * entry's `uid` replaces the old `PubSub.getCtx(uid)` lookup that hot paths
  * (`getOutputItem`, event emission) used to read entry state by id; because
- * `TypedCollection` defers `destroy()` ~10s after removal, `getByUid` keeps
+ * the collection defers `destroy()` ~10s after removal, `getByUid` keeps
  * returning a removed entry's data during that window, exactly as the old
  * per-entry context did.
  *
  * Public API (`uid`, `getValue`, `setValue`, `setMultipleValues`, `subscribe`,
- * `destroy`) is unchanged, so `TypedCollection` and all consumers are
+ * `destroy`) is unchanged, so the collection and all consumers are
  * untouched. `subscribe` fires immediately with the current value, matching
  * the previous `PubSub.sub(..., init=true)` behavior.
  */
@@ -60,7 +60,7 @@ export class TypedData<T extends Record<string, unknown>> {
     const set = this._subs.get(prop);
     if (set) {
       // Isolate each subscriber so one that throws can't abort notification of
-      // the rest — notably the `TypedCollection` watch-list observer, whose
+      // the rest — notably the collection watch-list observer, whose
       // failure to run would stall collection/event updates. Matches the
       // fan-out semantics of `Listeners.notify` / `EventBus.emit`.
       for (const handler of [...set]) this._emit(prop, handler, value);

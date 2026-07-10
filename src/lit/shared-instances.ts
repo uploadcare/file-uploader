@@ -1,4 +1,5 @@
 import type { ConfigType, UploaderPublicApi } from '..';
+import type { UploadCollectionController } from '../abstract/controllers/UploadCollectionController';
 import type { RouterHooksLayer } from '../abstract/features/RouterHooksLayer';
 import type { A11y } from '../abstract/managers/a11y';
 import type { LocaleManager } from '../abstract/managers/LocaleManager';
@@ -8,8 +9,6 @@ import type { SecureUploadsManager } from '../abstract/managers/SecureUploadsMan
 import type { TelemetryManager } from '../abstract/managers/TelemetryManager';
 import type { ValidationManager } from '../abstract/managers/ValidationManager';
 import { sharedConfigKey } from '../abstract/sharedConfigKey';
-import type { TypedCollection } from '../abstract/TypedCollection';
-import type { UploadEntryData } from '../abstract/uploadEntrySchema';
 import { initialConfig } from '../blocks/Config/initialConfig';
 import type { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter';
 import { createDebugPrinter } from './createDebugPrinter';
@@ -147,7 +146,7 @@ export const createSharedInstancesBag = (getCtx: () => PubSub<SharedState>) => {
     get eventEmitter(): EventEmitter {
       return getSharedInstance(getCtx(), '*eventEmitter');
     },
-    get uploadCollection(): TypedCollection<UploadEntryData> {
+    get uploadCollection(): UploadCollectionController {
       return getSharedInstance(getCtx(), '*uploadCollection');
     },
     get secureUploadsManager(): SecureUploadsManager {

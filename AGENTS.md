@@ -167,12 +167,18 @@ milestone per PR. **Full plan: [`MIGRATION-PLAN.md`](./MIGRATION-PLAN.md).**
 
 ## Working agreements for agents
 
-1. **Verify, don't claim.** Run the relevant gate commands and report real
+1. **Cover before you refactor.** Before changing existing functionality, first
+   bring it (or its drop-in replacement) to **100% test coverage**, as a
+   separate, purely-additive step — so the refactor has a safety net and
+   behavior is provably preserved. Add new test cases only; never modify or
+   weaken existing ones. Measure with `vitest --coverage` and confirm the
+   touched files hit 100% before touching the code.
+2. **Verify, don't claim.** Run the relevant gate commands and report real
    output. "Tests pass" requires having run them.
-2. **Don't loosen tests or swallow errors** to make something pass. Fan-out
+3. **Don't loosen tests or swallow errors** to make something pass. Fan-out
    paths isolate-and-warn (see `EventBus.emit` / `Listeners.notify`); follow
    that pattern rather than hiding failures.
-3. **One concern per PR**, with a Conventional-Commit title and the gate green.
-4. **Match surrounding code** — comment density, naming, idioms.
-5. **Don't `git stash pop` blindly** — a pre-existing user stash
+4. **One concern per PR**, with a Conventional-Commit title and the gate green.
+5. **Match surrounding code** — comment density, naming, idioms.
+6. **Don't `git stash pop` blindly** — a pre-existing user stash
    (`temp-package-json-before-release-branch`) conflicts on `package.json`.

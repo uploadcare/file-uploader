@@ -69,6 +69,15 @@ export class PubSub<T extends Record<string, unknown>> {
   }
 
   /**
+   * Get (or lazily create + register) the `UploaderController` for this ctx.
+   * Public so the v1 element layer can resolve the controller that owns the
+   * shared upload collection (the `*uploadCollection` instance).
+   */
+  public uploaderController(): UploaderController {
+    return this._uploader();
+  }
+
+  /**
    * Subscribe over a controller's coarse change notification but only invoke
    * `callback` when the specific derived value changes — preserving the
    * per-key subscription semantics of the nanostores map being replaced.
