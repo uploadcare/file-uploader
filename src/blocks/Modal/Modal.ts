@@ -4,11 +4,15 @@ import './modal.css';
 import { property } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import type { RegisteredActivityType } from '../../lit/activity-constants';
+import { getScrollLock } from '../../utils/scroll-lock';
 
 export class Modal extends LitBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-modal'];
 
   private _mouseDownTarget: EventTarget | null | undefined;
+
+  /** Idempotent release for our acquisition of the shared body scroll lock. */
+  private _releaseScrollLock: (() => void) | null = null;
 
   /** WARNING: Do not rename/change this, it's used in dashboard */
   protected dialogEl = createRef<HTMLDialogElement>();
@@ -69,10 +73,6 @@ export class Modal extends LitBlock {
     } else {
       dialog.setAttribute('open', '');
     }
-
-    if (this.cfg.modalScrollLock) {
-      document.body.style.overflow = 'hidden';
-    }
   }
 
   protected hide(): void {
@@ -80,13 +80,6 @@ export class Modal extends LitBlock {
       close?: () => void;
     };
     if (!dialog || !dialog.open) return;
-    // Release the body scroll lock only when no modal remains in the router's
-    // foreground slot. On a modal-to-modal swap this modal's hide() can run
-    // after the next modal's show(), so clearing unconditionally would unlock
-    // scrolling while a modal is still open.
-    if (this.cfg.modalScrollLock && this.router.modal === null) {
-      document.body.style.overflow = '';
-    }
     if (typeof dialog.close === 'function') {
       this.setAttribute('aria-modal', 'false');
       dialog.close();
@@ -110,8 +103,21 @@ export class Modal extends LitBlock {
     // otherwise. The router emits `modal-open`/`modal-close` centrally. Uses
     // `subRouter` (no effective-activity dedup) so a modal opening on the id
     // that's already the background activity still shows.
+    //
+    // The scroll lock follows *router* state, not dialog state — a native
+    // Esc-close reaches here with the <dialog> already closed (so `hide()`
+    // early-returns), and the lock must release regardless. The shared
+    // refcount keeps the body locked across modal-to-modal swaps and across
+    // other uploader instances on the same page.
     this.subRouter(() => {
-      if (this.router.modal === (this.id as RegisteredActivityType)) {
+      const isForeground = this.router.modal === (this.id as RegisteredActivityType);
+      if (isForeground && this.cfg.modalScrollLock) {
+        this._releaseScrollLock ??= getScrollLock(document).acquire();
+      } else {
+        this._releaseScrollLock?.();
+        this._releaseScrollLock = null;
+      }
+      if (isForeground) {
         this.show();
       } else {
         this.hide();
@@ -121,7 +127,10 @@ export class Modal extends LitBlock {
 
   public override disconnectedCallback(): void {
     super.disconnectedCallback();
-    document.body.style.overflow = '';
+    // Release only our own acquisition (idempotent) — never clobber
+    // `body.style.overflow` while another holder still has it locked.
+    this._releaseScrollLock?.();
+    this._releaseScrollLock = null;
     this._mouseDownTarget = undefined;
   }
 
