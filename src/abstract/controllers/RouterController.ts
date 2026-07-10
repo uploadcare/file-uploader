@@ -200,16 +200,19 @@ export class RouterController {
   }
 
   /**
-   * Runs hooks registered under a single edge name. The global `beforeChange`
-   * hook lives in `navigate()` so it fires once per actual navigation.
+   * Runs the hooks registered under a single edge name until one decides:
+   * a target (or `null`), or `NAVIGATE_CANCEL`. Returns `undefined` when
+   * every hook defers — what that means is the *caller's* call: `navigate()`
+   * proceeds to the proposed target, `traverse()` runs the edge's default
+   * action (`back()`/`close()`/…), which is why the fall-through can't be
+   * resolved here.
    */
-  private _runEdgeHooks(name: keyof typeof this._hooks, ctx: EdgeContext): EdgeTarget | NavigateCancel {
+  private _resolveHooks(name: keyof typeof this._hooks, ctx: EdgeContext): EdgeTarget | NavigateCancel | undefined {
     for (const hook of this._hooks[name]) {
       const r = this._invokeHook(name, hook, ctx);
-      if (r === NAVIGATE_CANCEL) return NAVIGATE_CANCEL;
       if (r !== undefined) return r;
     }
-    return ctx.proposed;
+    return undefined;
   }
 
   // ─── Navigation ───
@@ -245,11 +248,13 @@ export class RouterController {
     // background slot), matching `traverse()` so `beforeChange` hooks always
     // observe the same "current activity" regardless of which slot it's in.
     const ctx: EdgeContext = { edge: 'navigate', from: this.currentActivity, proposed: to, defaults: () => to };
-    const target = this._runEdgeHooks('beforeChange', ctx);
-    if (target === NAVIGATE_CANCEL) {
+    const resolved = this._resolveHooks('beforeChange', ctx);
+    if (resolved === NAVIGATE_CANCEL) {
       return;
     }
-    this._executeNavigate(target, params, onCommit);
+    // All hooks deferred (`undefined`) → the proposed target goes through.
+    // Note `null` is a real decision (close everything), so no `??` here.
+    this._executeNavigate(resolved === undefined ? to : resolved, params, onCommit);
   }
 
   private _executeNavigate(to: EdgeTarget, params: Record<string, unknown>, onCommit?: () => void): void {
@@ -372,14 +377,13 @@ export class RouterController {
     // `from` is the effective (modal-aware) activity — `EdgeContext.from`
     // always means "what the user currently sees".
     const ctx: EdgeContext = { edge, from: this.currentActivity, proposed, defaults: () => proposed };
-    for (const hook of this._hooks[edge]) {
-      const r = this._invokeHook(edge, hook, ctx);
-      if (r === NAVIGATE_CANCEL) return;
-      if (r !== undefined) {
-        this.navigate(r);
-        return;
-      }
+    const resolved = this._resolveHooks(edge, ctx);
+    if (resolved === NAVIGATE_CANCEL) return;
+    if (resolved !== undefined) {
+      this.navigate(resolved);
+      return;
     }
+    // All hooks deferred → the edge's default *action* applies.
     switch (edge) {
       case 'onBack':
       case 'onCancel':
