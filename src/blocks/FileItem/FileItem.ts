@@ -1,17 +1,9 @@
-import {
-  CancelError,
-  type FileFromOptions,
-  UploadcareError,
-  type UploadcareFile,
-  uploadFile,
-} from '@uploadcare/upload-client';
 import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import type { PluginFileActionRegistration } from '../../abstract/managers/plugin';
 import type { Owned } from '../../abstract/managers/plugin/PluginTypes';
 import type { UploadEntryTypedData } from '../../abstract/uploadEntrySchema';
 import { debounce } from '../../utils/debounce';
-import { fileIsImage } from '../../utils/fileTypes';
 import { throttle } from '../../utils/throttle';
 import { canonicalSourceName, ExternalUploadSource } from '../../utils/UploadSource';
 import './file-item.css';
@@ -395,141 +387,12 @@ export class FileItem extends FileItemConfig {
     this.reset();
   }
 
+  // The upload mechanics (queue, beforeUpload chain, progress/abort, error
+  // handling) now live in the DOM-free UploadController. This block stays the
+  // trigger; it reacts to the resulting entry mutations through its existing
+  // per-entry subscriptions (`isUploading`/`errors`/… → `_debouncedCalculateState`).
   private _upload = this.withEntry(async (entry) => {
-    if (!this.uploadCollection.read(entry.uid)) {
-      return;
-    }
-
-    if (
-      entry.getValue('fileInfo') ||
-      entry.getValue('isUploading') ||
-      entry.getValue('errors').length > 0 ||
-      entry.getValue('isValidationPending')
-    ) {
-      return;
-    }
-    const multipleMax = this.cfg.multiple ? this.cfg.multipleMax : 1;
-    if (multipleMax && this.uploadCollection.size > multipleMax) {
-      return;
-    }
-
-    entry.setMultipleValues({
-      isUploading: true,
-      errors: [],
-      isQueuedForUploading: true,
-    });
-
-    this._debouncedCalculateState();
-
-    try {
-      const abortController = new AbortController();
-      entry.setValue('abortController', abortController);
-
-      const uploadTask = async (): Promise<UploadcareFile> => {
-        entry.setValue('isQueuedForUploading', false);
-        let file: File | Blob | null = entry.getValue('file');
-
-        if (file instanceof File || file instanceof Blob) {
-          const pluginManager = this._sharedInstancesBag.pluginManager;
-          const beforeUploadHooks = (pluginManager?.snapshot().fileHooks ?? []).filter(
-            (h) => h.type === 'beforeUpload',
-          );
-          for (const hook of beforeUploadHooks) {
-            try {
-              const hookPromise = hook.handler({ file, signal: abortController.signal });
-              const timeoutPromise = new Promise<never>((_, reject) =>
-                setTimeout(() => reject(new Error(`beforeUpload hook timed out`)), hook.timeout),
-              );
-              const { file: newFile } = await Promise.race([hookPromise, timeoutPromise]);
-              if (newFile !== file) {
-                file = newFile;
-                entry.setValue('mimeType', file.type || null);
-                entry.setValue('isImage', fileIsImage(file));
-                entry.setValue('fileSize', file.size);
-                if (file instanceof File) {
-                  entry.setValue('fileName', file.name);
-                }
-              }
-            } catch (error) {
-              console.warn(`File hook "beforeUpload" from plugin "${hook.pluginId}" failed`, error);
-            }
-          }
-        }
-
-        const fileInput = file || entry.getValue('externalUrl') || entry.getValue('uuid');
-        if (!fileInput) {
-          throw new Error('No file input');
-        }
-        const baseUploadClientOptions = await this.getUploadClientOptions();
-        const uploadClientOptions: FileFromOptions = {
-          ...baseUploadClientOptions,
-          fileName: entry.getValue('fileName') ?? undefined,
-          source: entry.getValue('source') ?? undefined,
-          onProgress: (progress) => {
-            if (progress.isComputable) {
-              const percentage = progress.value * 100;
-              entry.setValue('uploadProgress', percentage);
-            }
-          },
-          signal: abortController.signal,
-          metadata: await this.getMetadataFor(entry.uid),
-        };
-        this.debugPrint('upload options', fileInput, uploadClientOptions);
-        return uploadFile(fileInput, uploadClientOptions);
-      };
-
-      const fileInfo = await this.$['*uploadQueue'].add(uploadTask);
-      entry.setMultipleValues({
-        fileInfo,
-        isQueuedForUploading: false,
-        isUploading: false,
-        fileName: fileInfo.originalFilename,
-        fileSize: fileInfo.size,
-        isImage: fileInfo.isImage ?? false,
-        mimeType: fileInfo.contentInfo?.mime?.mime ?? fileInfo.mimeType,
-        uuid: fileInfo.uuid,
-        cdnUrl: entry.getValue('cdnUrl') ?? fileInfo.cdnUrl,
-        cdnUrlModifiers: entry.getValue('cdnUrlModifiers') ?? '',
-        uploadProgress: 100,
-        source: entry.getValue('source') ?? null,
-      });
-
-      if (entry === this.entry) {
-        this._debouncedCalculateState();
-      }
-    } catch (cause) {
-      const isCancelError = cause instanceof CancelError && cause.isCancel;
-      if (isCancelError) {
-        entry.setMultipleValues({
-          isUploading: false,
-          uploadProgress: 0,
-        });
-      } else if (cause instanceof UploadcareError) {
-        entry.setMultipleValues({
-          isUploading: false,
-          uploadProgress: 0,
-          uploadError: cause,
-        });
-      } else {
-        console.error('Unknown upload error', cause);
-        entry.setMultipleValues({
-          isUploading: false,
-          uploadProgress: 0,
-          // TODO: Add translation?
-          uploadError: new Error('Something went wrong', {
-            cause,
-          }),
-        });
-      }
-
-      if (entry === this.entry) {
-        this._debouncedCalculateState();
-      }
-
-      if (this.isConnected && !isCancelError) {
-        this.telemetryManager.sendEventError(cause, 'file upload. Failed to upload file');
-      }
-    }
+    await this.uploadController.uploadEntry(entry.uid);
   });
 
   public static activeInstances: Set<FileItem> = new Set<FileItem>();

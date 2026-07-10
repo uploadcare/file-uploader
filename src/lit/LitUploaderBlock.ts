@@ -1,14 +1,15 @@
 // @ts-check
 
-import { type FileFromOptions, uploadFileGroup } from '@uploadcare/upload-client';
+import { uploadFileGroup } from '@uploadcare/upload-client';
 import { uploaderBlockCtx } from '../abstract/CTX';
+import { SecureUploadsController } from '../abstract/controllers/SecureUploadsController';
 import type {
   CollectionObserver,
   UploadCollectionChangeMap,
   UploadCollectionController,
 } from '../abstract/controllers/UploadCollectionController';
+import { UploadController } from '../abstract/controllers/UploadController';
 import { ValidationController } from '../abstract/controllers/ValidationController';
-import { SecureUploadsManager } from '../abstract/managers/SecureUploadsManager';
 import { TypedData } from '../abstract/TypedData';
 import { UploaderPublicApi } from '../abstract/UploaderPublicApi';
 import type { UploadEntryData } from '../abstract/uploadEntrySchema';
@@ -19,7 +20,6 @@ import type { OutputCollectionState, OutputFileEntry } from '../types/index';
 import { createCdnUrl, createCdnUrlModifiers } from '../utils/cdn-utils';
 import { debounce } from '../utils/debounce';
 import { ExternalUploadSource, UploadSource } from '../utils/UploadSource';
-import { customUserAgent } from '../utils/userAgent';
 import { getOutputData } from './getOutputData';
 import { LitActivityBlock } from './LitActivityBlock';
 
@@ -51,10 +51,29 @@ export class LitUploaderBlock extends LitActivityBlock {
     // shared instance resolves to it so all blocks share one source of truth.
     this._addSharedContextInstance('*uploadCollection', () => this.sharedCtx.uploaderController().collection);
 
-    this._addSharedContextInstance(
-      '*secureUploadsManager',
-      (sharedInstancesBag) => new SecureUploadsManager(sharedInstancesBag),
-    );
+    this._addSharedContextInstance('*secureUploadsManager', (sharedInstancesBag) => {
+      return new SecureUploadsController({
+        config: this.sharedCtx.uploaderController().config,
+        onResolverError: (error, context) => {
+          sharedInstancesBag.telemetryManager.sendEventError(error, context);
+        },
+        debug: (...args) => this.debugPrint(...args),
+      });
+    });
+    this._addSharedContextInstance('*uploadController', (sharedInstancesBag) => {
+      const uploader = this.sharedCtx.uploaderController();
+      return new UploadController({
+        collection: uploader.collection,
+        config: uploader.config,
+        secureUploads: this.secureUploadsManager,
+        getFileHooks: () => sharedInstancesBag.pluginManager?.snapshot().fileHooks ?? [],
+        getOutputItem: (uid) => sharedInstancesBag.api.getOutputItem(uid),
+        onUploadError: (error, context) => {
+          sharedInstancesBag.telemetryManager.sendEventError(error, context);
+        },
+        debug: (...args) => this.debugPrint(...args),
+      });
+    });
     // Register *publicApi before *validationManager: the ValidationController
     // resolves `sharedInstancesBag.api` (which constructs *publicApi on demand),
     // so the api factory must already be registered when validation first runs.
@@ -102,8 +121,12 @@ export class LitUploaderBlock extends LitActivityBlock {
     return this._getSharedContextInstance('*uploadCollection');
   }
 
-  public get secureUploadsManager(): SecureUploadsManager {
+  public get secureUploadsManager(): SecureUploadsController {
     return this._getSharedContextInstance('*secureUploadsManager');
+  }
+
+  public get uploadController(): UploadController {
+    return this._getSharedContextInstance('*uploadController');
   }
 
   public override disconnectedCallback(): void {
@@ -129,9 +152,8 @@ export class LitUploaderBlock extends LitActivityBlock {
 
     this._observeUploadCollection();
 
-    this.subConfigValue('maxConcurrentRequests', (value) => {
-      this.$['*uploadQueue'].concurrency = Number(value) || 1;
-    });
+    // Upload-queue concurrency is owned by the UploadController, which syncs it
+    // from `maxConcurrentRequests` itself.
   }
 
   private _observeUploadCollection(): void {
@@ -153,7 +175,7 @@ export class LitUploaderBlock extends LitActivityBlock {
   }
 
   private async _createGroup(collectionState: OutputCollectionState): Promise<void> {
-    const uploadClientOptions = await this.getUploadClientOptions();
+    const uploadClientOptions = await this.uploadController.buildUploadOptions();
     const uuidList = collectionState.allEntries.map((entry) => {
       return entry.uuid + (entry.cdnUrlModifiers ? `/${entry.cdnUrlModifiers}` : '');
     });
@@ -411,41 +433,6 @@ export class LitUploaderBlock extends LitActivityBlock {
         cdnUrl: createCdnUrl(cdnUrl, cdnUrlModifiers),
       });
     }
-  }
-
-  protected async getMetadataFor(entryId: string) {
-    const configValue = this.cfg.metadata || undefined;
-    if (typeof configValue === 'function') {
-      const outputFileEntry = this.api.getOutputItem(entryId);
-      const metadata = await configValue(outputFileEntry);
-      return metadata;
-    }
-    return configValue;
-  }
-
-  protected async getUploadClientOptions(): Promise<FileFromOptions> {
-    const secureToken = await this.secureUploadsManager.getSecureToken().catch(() => null);
-
-    const options = {
-      store: this.cfg.store,
-      publicKey: this.cfg.pubkey,
-      baseCDN: this.cfg.cdnCname,
-      baseURL: this.cfg.baseUrl,
-      userAgent: customUserAgent,
-      integration: this.cfg.userAgentIntegration,
-      secureSignature: secureToken?.secureSignature,
-      secureExpire: secureToken?.secureExpire,
-      retryThrottledRequestMaxTimes: this.cfg.retryThrottledRequestMaxTimes,
-      retryNetworkErrorMaxTimes: this.cfg.retryNetworkErrorMaxTimes,
-      multipartMinFileSize: this.cfg.multipartMinFileSize,
-      multipartChunkSize: this.cfg.multipartChunkSize,
-      maxConcurrentRequests: this.cfg.multipartMaxConcurrentRequests,
-      multipartMaxAttempts: this.cfg.multipartMaxAttempts,
-      checkForUrlDuplicates: !!this.cfg.checkForUrlDuplicates,
-      saveUrlForRecurrentUploads: !!this.cfg.saveUrlForRecurrentUploads,
-    };
-
-    return options;
   }
 
   public getOutputData(): OutputFileEntry[] {

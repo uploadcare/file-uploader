@@ -1,5 +1,7 @@
-import type { Queue, UploadcareGroup } from '@uploadcare/upload-client';
+import type { UploadcareGroup } from '@uploadcare/upload-client';
+import type { SecureUploadsController } from '../abstract/controllers/SecureUploadsController';
 import type { UploadCollectionController } from '../abstract/controllers/UploadCollectionController';
+import type { UploadController } from '../abstract/controllers/UploadController';
 import type { ValidationController } from '../abstract/controllers/ValidationController';
 import type { ClipboardLayer } from '../abstract/features/ClipboardLayer';
 import type { RouterHooksLayer } from '../abstract/features/RouterHooksLayer';
@@ -9,7 +11,6 @@ import type { LocaleManager } from '../abstract/managers/LocaleManager';
 import type { ModalManager } from '../abstract/managers/ModalManager';
 import type { PluginManager } from '../abstract/managers/plugin';
 import type { LazyPluginEntry } from '../abstract/managers/plugin/LazyPluginLoader';
-import type { SecureUploadsManager } from '../abstract/managers/SecureUploadsManager';
 import type { TelemetryManager } from '../abstract/managers/TelemetryManager';
 import type { UploaderPublicApi } from '../abstract/UploaderPublicApi';
 import type { EditorImageCropper, EditorImageFader, EditorSlider } from '../blocks/CloudImageEditor';
@@ -48,7 +49,6 @@ type ActivityBlockCtxState = {
 type UploaderBlockCtxState = ActivityBlockCtxState & {
   '*commonProgress': number;
   '*uploadList': { uid: Uid }[];
-  '*uploadQueue': Queue;
   '*collectionErrors': OutputErrorCollection[];
   '*collectionState': OutputCollectionState | null;
   '*groupInfo': UploadcareGroup | null;
@@ -114,7 +114,8 @@ type DynamicUploaderBlockState = {
   '*uploadCollection': UploadCollectionController;
   '*publicApi': UploaderPublicApi;
   '*validationManager': ValidationController;
-  '*secureUploadsManager': SecureUploadsManager;
+  '*secureUploadsManager': SecureUploadsController;
+  '*uploadController': UploadController;
 };
 
 type LocaleState = {
