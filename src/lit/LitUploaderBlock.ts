@@ -7,8 +7,8 @@ import type {
   UploadCollectionChangeMap,
   UploadCollectionController,
 } from '../abstract/controllers/UploadCollectionController';
+import { ValidationController } from '../abstract/controllers/ValidationController';
 import { SecureUploadsManager } from '../abstract/managers/SecureUploadsManager';
-import { ValidationManager } from '../abstract/managers/ValidationManager';
 import { TypedData } from '../abstract/TypedData';
 import { UploaderPublicApi } from '../abstract/UploaderPublicApi';
 import type { UploadEntryData } from '../abstract/uploadEntrySchema';
@@ -55,11 +55,31 @@ export class LitUploaderBlock extends LitActivityBlock {
       '*secureUploadsManager',
       (sharedInstancesBag) => new SecureUploadsManager(sharedInstancesBag),
     );
-    this._addSharedContextInstance(
-      '*validationManager',
-      (sharedInstancesBag) => new ValidationManager(sharedInstancesBag),
-    );
+    // Register *publicApi before *validationManager: the ValidationController
+    // resolves `sharedInstancesBag.api` (which constructs *publicApi on demand),
+    // so the api factory must already be registered when validation first runs.
     this._addSharedContextInstance('*publicApi', (sharedInstancesBag) => new UploaderPublicApi(sharedInstancesBag));
+    this._addSharedContextInstance('*validationManager', (sharedInstancesBag) => {
+      const uploader = this.sharedCtx.uploaderController();
+      return new ValidationController({
+        config: uploader.config,
+        collection: uploader.collection,
+        getApi: () => sharedInstancesBag.api,
+        setCollectionErrors: (errors) => {
+          this.$['*collectionErrors'] = errors;
+        },
+        emitCommonUploadFailed: () => {
+          sharedInstancesBag.eventEmitter.emit(
+            EventType.COMMON_UPLOAD_FAILED,
+            () => sharedInstancesBag.api.getOutputCollectionState() as OutputCollectionState<'failed'>,
+            { debounce: true },
+          );
+        },
+        onValidatorError: (error, context) => {
+          sharedInstancesBag.telemetryManager.sendEventError(error, context);
+        },
+      });
+    });
 
     if (!this._hasCtxOwner && this.couldBeCtxOwner) {
       this._initCtxOwner();
@@ -70,7 +90,7 @@ export class LitUploaderBlock extends LitActivityBlock {
     return this.api;
   }
 
-  public get validationManager(): ValidationManager {
+  public get validationManager(): ValidationController {
     return this._getSharedContextInstance('*validationManager');
   }
 

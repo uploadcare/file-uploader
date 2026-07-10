@@ -1,7 +1,11 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Listeners } from './host-subscription';
 
 describe('Listeners', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('notifies every subscribed listener', () => {
     const listeners = new Listeners();
     const a = vi.fn();

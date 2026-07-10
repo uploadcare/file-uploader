@@ -19,12 +19,33 @@ import { UploadCollectionController } from './UploadCollectionController';
  *   locale namespace here.
  * - `collection`: source of truth for the upload entries — the `*uploadCollection`
  *   shared instance resolves to this.
+ *
+ * Sub-controllers are constructor-injected (mirroring `ValidationController`'s
+ * deps-object style): each defaults to a freshly-constructed instance, so
+ * `new UploaderController()` keeps working, while tests and later milestones can
+ * substitute a fake or share an existing instance. This is deliberately just
+ * default-parameter injection — no container/decorators; the DOM layer already
+ * has its own wiring via `@lit/context`.
  */
+export type UploaderControllerDeps = {
+  events?: EventBus;
+  config?: ConfigController;
+  locale?: LocaleController;
+  collection?: UploadCollectionController;
+};
+
 export class UploaderController {
-  public readonly events = new EventBus();
-  public readonly config = new ConfigController();
-  public readonly locale = new LocaleController();
-  public readonly collection = new UploadCollectionController();
+  public readonly events: EventBus;
+  public readonly config: ConfigController;
+  public readonly locale: LocaleController;
+  public readonly collection: UploadCollectionController;
+
+  public constructor(deps: UploaderControllerDeps = {}) {
+    this.events = deps.events ?? new EventBus();
+    this.config = deps.config ?? new ConfigController();
+    this.locale = deps.locale ?? new LocaleController();
+    this.collection = deps.collection ?? new UploadCollectionController();
+  }
 
   public destroy(): void {
     this.events.destroy();

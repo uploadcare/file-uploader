@@ -6,7 +6,7 @@ import type {
   FileValidatorDescriptor,
   FuncCollectionValidator,
   FuncFileValidator,
-} from '../abstract/managers/ValidationManager';
+} from '../abstract/validatorTypes';
 import type { CameraMode } from '../blocks/CameraSource/CameraSource';
 import type { complexConfigKeys } from '../blocks/Config/Config';
 import type { FilesViewMode } from '../blocks/UploadList/UploadList';
