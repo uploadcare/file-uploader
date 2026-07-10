@@ -1,5 +1,6 @@
 // @ts-check
 
+import { EventBridgeController } from '../../lit/EventBridgeController';
 import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
 import { type EventPayload, EventType } from './EventEmitter';
 
@@ -11,18 +12,18 @@ export class UploadCtxProvider extends LitUploaderBlock {
   public static override styleAttrs = ['uc-wgt-common'];
   public static EventType = EventType;
 
-  private _unbindEventEmitter: (() => void) | null = null;
+  private _eventBridge: EventBridgeController | null = null;
 
   public override initCallback() {
     super.initCallback();
 
-    this._unbindEventEmitter = this.eventEmitter.bindTarget(this);
-  }
-
-  public override disconnectedCallback(): void {
-    super.disconnectedCallback();
-
-    this._unbindEventEmitter?.();
+    // Bridge the per-ctx EventBus to documented DOM CustomEvents on this
+    // element. The reactive controller manages its own connect/disconnect.
+    this._eventBridge ??= new EventBridgeController(
+      this,
+      () => this.sharedCtx.uploaderController().events,
+      (...args) => this.debugPrint(...args),
+    );
   }
 }
 
