@@ -1,4 +1,5 @@
 import { EventBus } from '../EventBus';
+import { Listeners } from '../host-subscription';
 import { ConfigController } from './ConfigController';
 import { LocaleController } from './LocaleController';
 import { UploadCollectionController } from './UploadCollectionController';
@@ -40,6 +41,13 @@ export class UploaderController {
   public readonly locale: LocaleController;
   public readonly collection: UploadCollectionController;
 
+  // ─── Solution (M8) ───
+  // Source of truth for the v1 `*solution` key: the solution block's tag name,
+  // published once by `LitSolutionBlock`, read by telemetry. `PubSubCompat`
+  // routes the `*solution` key here.
+  private _solution: string | null = null;
+  private _solutionListeners = new Listeners();
+
   public constructor(deps: UploaderControllerDeps = {}) {
     this.events = deps.events ?? new EventBus();
     this.config = deps.config ?? new ConfigController();
@@ -47,10 +55,26 @@ export class UploaderController {
     this.collection = deps.collection ?? new UploadCollectionController();
   }
 
+  public get solution(): string | null {
+    return this._solution;
+  }
+
+  /** Notifies only on an actual change (per-key change semantics). */
+  public setSolution(name: string | null): void {
+    if (this._solution === name) return;
+    this._solution = name;
+    this._solutionListeners.notify();
+  }
+
+  public subscribeSolution(listener: () => void): () => void {
+    return this._solutionListeners.subscribe(listener);
+  }
+
   public destroy(): void {
     this.events.destroy();
     this.config.destroy();
     this.locale.destroy();
     this.collection.destroy();
+    this._solutionListeners.clear();
   }
 }

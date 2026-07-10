@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { EventType, InternalEventType } from '../../blocks/UploadCtxProvider/EventEmitter';
-import type { SharedInstancesBag } from '../../lit/shared-instances';
-import { sharedConfigKey } from '../sharedConfigKey';
+import type { ConfigType } from '../../types/index';
+import { ConfigController } from '../controllers/ConfigController';
 import { TelemetryManager } from './TelemetryManager';
 
 const sendEventMock = vi.hoisted(() => vi.fn(async (_payload: Record<string, unknown>) => {}));
@@ -23,27 +23,15 @@ const setup = ({
   activity?: string | null;
   router?: boolean;
 } = {}) => {
-  const subs = new Map<string, Set<(value: unknown) => void>>();
-  const state = new Map<string, unknown>();
-  if (solution !== undefined) state.set('*solution', solution);
-  if (router) state.set('*router', { currentActivity: activity });
+  const config = new ConfigController();
+  const manager = new TelemetryManager({
+    config,
+    getSolution: () => solution ?? null,
+    // Mirrors the wiring closure: null until the router instance exists.
+    getActivity: () => (router ? activity : null),
+  });
 
-  const ctx = {
-    sub: (key: string, cb: (value: unknown) => void) => {
-      const set = subs.get(key) ?? new Set();
-      set.add(cb);
-      subs.set(key, set);
-      return () => set.delete(cb);
-    },
-    has: (key: string) => state.has(key),
-    read: (key: string) => state.get(key),
-  };
-  const bag = { ctx } as unknown as SharedInstancesBag;
-  const manager = new TelemetryManager(bag);
-
-  const setConfig = (key: Parameters<typeof sharedConfigKey>[0], value: unknown) => {
-    for (const cb of subs.get(sharedConfigKey(key)) ?? []) cb(value);
-  };
+  const setConfig = <K extends keyof ConfigType>(key: K, value: ConfigType[K]) => config.set(key, value);
   const enable = () => setConfig('qualityInsights', true);
 
   return { manager, setConfig, enable };
@@ -60,7 +48,9 @@ describe('TelemetryManager', () => {
   });
 
   it('sends nothing while qualityInsights is disabled', async () => {
-    const { manager } = setup();
+    const { manager, setConfig } = setup();
+    // Enabled by default (initialConfig.qualityInsights: true) — opt out.
+    setConfig('qualityInsights', false);
     manager.sendEvent({ eventType: InternalEventType.INIT_SOLUTION });
     await flush();
     expect(sendEventMock).not.toHaveBeenCalled();
@@ -136,19 +126,21 @@ describe('TelemetryManager', () => {
     expect(sendEventMock).not.toHaveBeenCalled();
   });
 
-  it('ignores config updates entirely while disabled', async () => {
+  it('absorbs disabled-time config changes silently when enabled (no spurious CHANGE_CONFIG)', async () => {
     const { manager, enable, setConfig } = setup();
-    setConfig('multiple', false); // disabled → not tracked
-    enable();
+    setConfig('qualityInsights', false); // opt out of the on-by-default state
+    setConfig('multiple', false); // disabled → not reported, but…
+
+    enable(); // …absorbed into the snapshot here, before the init event
     manager.sendEvent({ eventType: InternalEventType.INIT_SOLUTION });
     await flush();
-    sendEventMock.mockClear();
 
-    vi.setSystemTime(1_700_000_000_500);
-    setConfig('multiple', false); // now tracked; counts as a change vs initial
-    await flush();
-
+    // The init event reports the *current* config (the v1 per-key-subscription
+    // implementation carried a stale value here), and the pre-enable change
+    // never fires its own CHANGE_CONFIG.
     expect(sendEventMock).toHaveBeenCalledTimes(1);
+    const payload = sendEventMock.mock.calls[0]?.[0] as { config: ConfigType };
+    expect(payload.config.multiple).toBe(false);
   });
 
   it('does not resend when the tracked config value is unchanged', async () => {
