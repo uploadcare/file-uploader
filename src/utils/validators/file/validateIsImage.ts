@@ -1,4 +1,4 @@
-import type { FuncFileValidator } from '../../../abstract/managers/ValidationManager';
+import type { FuncFileValidator } from '../../../abstract/validatorTypes';
 
 export const validateIsImage: FuncFileValidator = (outputEntry, api) => {
   const imagesOnly = api.cfg.imgOnly;

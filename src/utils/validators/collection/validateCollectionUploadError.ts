@@ -1,4 +1,4 @@
-import type { FuncCollectionValidator } from '../../../abstract/managers/ValidationManager';
+import type { FuncCollectionValidator } from '../../../abstract/validatorTypes';
 
 export const validateCollectionUploadError: FuncCollectionValidator = (collection, api) => {
   if (collection.failedCount > 0) {
