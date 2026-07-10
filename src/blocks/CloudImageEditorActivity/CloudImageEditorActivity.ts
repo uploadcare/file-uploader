@@ -2,7 +2,6 @@ import { html, nothing } from 'lit';
 import { state } from 'lit/decorators.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
 import type { TypedData } from '../../abstract/TypedData';
-import { LitActivityBlock } from '../../lit/LitActivityBlock';
 import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
 import type { ApplyResult, ChangeResult } from '../CloudImageEditor/src/types';
 import './cloud-image-editor-activity.css';
@@ -81,15 +80,15 @@ export class CloudImageEditorActivity extends LitUploaderBlock {
       cdnUrl: result.cdnUrl,
       cdnUrlModifiers: result.cdnUrlModifiers,
     });
-    this.modalManager?.close(LitActivityBlock.activities.CLOUD_IMG_EDIT);
-    this.historyBack();
+    // The back intent closes the cloud-editor activity and returns to the
+    // previous one.
+    this.router.traverse('onBack');
   }
 
   private _handleCancel(event?: Event): void {
     const detail = event instanceof CustomEvent ? event.detail : undefined;
     this.debugPrint(`editor event "cancel"`, detail);
-    this.modalManager?.close(LitActivityBlock.activities.CLOUD_IMG_EDIT);
-    this.historyBack();
+    this.router.traverse('onBack');
   }
 
   public handleChange(event: CustomEvent<ChangeResult>): void {

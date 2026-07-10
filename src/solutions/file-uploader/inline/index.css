@@ -7,9 +7,6 @@
   }
 
   [uc-file-uploader-inline] {
-    --cfg-done-activity: "start-from";
-    --cfg-init-activity: "start-from";
-
     flex: 1;
   }
 

@@ -1,6 +1,6 @@
 import { describe, expectTypeOf, it } from 'vitest';
 import type { UploaderEventKey, UploaderEventPayload, UploaderEventType } from '../../abstract/EventBus';
-import type { ActivityType } from '../../lit/activity-constants';
+import type { ActivityType, RegisteredActivityType } from '../../lit/activity-constants';
 import type { OutputCollectionState, OutputFileEntry } from '../../types';
 import type { EventKey, EventPayload, EventType } from './EventEmitter';
 
@@ -24,8 +24,11 @@ describe('event type contract', () => {
     expectTypeOf<EventPayload['file-upload-start']>().toEqualTypeOf<OutputFileEntry<'uploading'>>();
     expectTypeOf<EventPayload['file-upload-success']>().toEqualTypeOf<OutputFileEntry<'success'>>();
     expectTypeOf<EventPayload['file-upload-failed']>().toEqualTypeOf<OutputFileEntry<'failed'>>();
-    expectTypeOf<EventPayload['modal-open']>().toEqualTypeOf<{ modalId: ActivityType }>();
-    expectTypeOf<EventPayload['modal-close']>().toEqualTypeOf<{ modalId: ActivityType; hasActiveModals: boolean }>();
+    expectTypeOf<EventPayload['modal-open']>().toEqualTypeOf<{ modalId: RegisteredActivityType }>();
+    expectTypeOf<EventPayload['modal-close']>().toEqualTypeOf<{
+      modalId: RegisteredActivityType;
+      hasActiveModals: boolean;
+    }>();
     expectTypeOf<EventPayload['activity-change']>().toEqualTypeOf<{ activity: ActivityType }>();
     expectTypeOf<EventPayload['upload-click']>().toEqualTypeOf<undefined>();
     expectTypeOf<EventPayload['done-click']>().toEqualTypeOf<OutputCollectionState>();

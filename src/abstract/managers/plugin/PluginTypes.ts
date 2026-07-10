@@ -1,4 +1,5 @@
 import type { ConfigType, OutputFileEntry } from '../../../types/exported';
+import type { NavigationEdge } from '../../controllers/RouterController';
 import type { CustomConfig, CustomConfigDefinition } from '../../customConfigOptions';
 import type { UploaderPublicApi } from '../../UploaderPublicApi';
 
@@ -155,11 +156,31 @@ export type PluginFilesApi = {
   update: (internalId: string, changes: PluginFileEntryUpdate) => void;
 };
 
+/**
+ * Deliberately minimal router surface for plugins — navigation *intents* only,
+ * not the full router. Plugins that need a hard navigation to a concrete
+ * target already have `uploaderApi.navigate()`; this exists for the flows
+ * where the host's hooks must stay in charge.
+ */
+export type PluginRouterApi = {
+  /**
+   * Express a navigation intent and let the router resolve it, exactly like
+   * the built-in sources: registered hooks may intercept, otherwise the
+   * edge's default applies — `onBack`/`onCancel` go back, `onClose` closes
+   * everything, `onDone` lands on the preset's done activity, and
+   * `onFileAdd` opens `upload-list` (unless e.g. the minimal preset keeps
+   * its modal closed and shows status inline). Call `traverse('onFileAdd')`
+   * after adding files instead of navigating to `upload-list` directly.
+   */
+  traverse: (edge: NavigationEdge) => void;
+};
+
 export type PluginApi = {
   registry: PluginRegistryApi;
   config: PluginConfigApi;
   activity: PluginActivityApi;
   files: PluginFilesApi;
+  router: PluginRouterApi;
 };
 
 export type PluginUploaderApi = UploaderPublicApi;

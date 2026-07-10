@@ -3,7 +3,8 @@ import { property, state } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import { repeat } from 'lit/directives/repeat.js';
 import type { Owned, PluginActivityRegistration, PluginRenderDispose } from '../../abstract/managers/plugin';
-import { type ActivityType, LitActivityBlock } from '../../lit/LitActivityBlock';
+import type { ActivityType } from '../../lit/activity-constants';
+import { LitActivityBlock } from '../../lit/LitActivityBlock';
 import { LitBlock } from '../../lit/LitBlock';
 import '../Modal/Modal';
 import './uc-plugin-activity-host.css';
@@ -14,73 +15,61 @@ export class PluginActivityHost extends LitActivityBlock {
 
   private _dispose?: PluginRenderDispose;
   private _containerRef = createRef<HTMLDivElement>();
+  private _isMounted = false;
 
   public override initCallback(): void {
     this.activityType = (this.registration?.id as ActivityType) ?? null;
-    this._ensureRegistered();
     super.initCallback();
   }
 
-  protected override willUpdate(changedProperties: PropertyValues<this>): void {
-    super.willUpdate(changedProperties);
+  protected override updated(changed: PropertyValues<this>): void {
+    super.updated(changed); // reflects [active] for the current slot
 
-    if (changedProperties.has('registration')) {
-      this._ensureRegistered();
-      if (this.isActivityActive) {
-        this._disposeActivity();
-        this._renderActivity();
+    // Keep activityType in sync if the registration arrives/changes late.
+    const id = (this.registration?.id as ActivityType) ?? null;
+    if (id !== this.activityType) {
+      this.activityType = id;
+      if (id) {
+        this.setAttribute('activity', id);
       }
     }
+
+    // Own the plugin's render()/dispose() lifecycle: mount when this activity
+    // becomes the current one, tear down when navigation moves away.
+    const active = this.isActivityActive;
+    if (active && !this._isMounted) {
+      this._mount();
+    } else if (!active && this._isMounted) {
+      this._unmount();
+    }
   }
 
-  private _ensureRegistered(): void {
-    if (!this.registration) {
-      return;
-    }
-
-    if (this._isActivityRegistered()) {
-      return;
-    }
-
-    this.registerActivity(this.activityType ?? '', {
-      onActivate: () => this._renderActivity(),
-      onDeactivate: () => this._disposeActivity(),
-    });
-  }
-
-  private async _renderActivity(): Promise<void> {
-    await this.updateComplete;
+  private _mount(): void {
     const container = this._containerRef.value;
     if (!container || !this.registration) {
       return;
     }
-
-    this._disposeActivity();
-
-    const activityParams = this.$['*currentActivityParams'];
     try {
-      this._dispose = this.registration.render(container, activityParams) ?? undefined;
+      this._dispose = this.registration.render(container, this.router.params) ?? undefined;
+      this._isMounted = true;
     } catch (error) {
       console.error(`[Plugin "${this.registration.pluginId}"] Activity render() threw an error`, error);
     }
   }
 
-  private _disposeActivity(): void {
-    const container = this._containerRef.value;
-    if (container) {
-      try {
-        this._dispose?.();
-      } catch (error) {
-        console.error(`[Plugin "${this.registration?.pluginId}"] Activity dispose threw an error`, error);
-      }
-      this._dispose = undefined;
-
-      container.replaceChildren();
+  private _unmount(): void {
+    try {
+      this._dispose?.();
+    } catch (error) {
+      console.error(`[Plugin "${this.registration?.pluginId}"] Activity dispose threw an error`, error);
     }
+    this._dispose = undefined;
+    this._containerRef.value?.replaceChildren();
+    this._isMounted = false;
   }
 
   public override disconnectedCallback(): void {
-    this._disposeActivity();
+    this._unmount();
     super.disconnectedCallback();
   }
 

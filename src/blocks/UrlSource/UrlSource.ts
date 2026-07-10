@@ -32,7 +32,7 @@ export class UrlSource extends LitUploaderBlock {
       return;
     }
     this.api.addFileFromUrl(url, { source: UploadSource.URL });
-    this.routerLayer.navigateAfterFileAdd();
+    this.router.traverse('onFileAdd');
   };
 
   public override render() {
@@ -41,7 +41,7 @@ export class UrlSource extends LitUploaderBlock {
         <button
           type="button"
           class="uc-mini-btn"
-          @click=${this.historyBack}
+          @click=${() => this.router.traverse('onBack')}
           title=${this.l10n('back')}
           aria-label=${this.l10n('back')}
         >
@@ -54,7 +54,7 @@ export class UrlSource extends LitUploaderBlock {
         <button
           type="button"
           class="uc-mini-btn uc-close-btn"
-          @click=${this.$['*closeModal']}
+          @click=${() => this.router.traverse('onClose')}
           title=${this.l10n('a11y-activity-header-button-close')}
           aria-label=${this.l10n('a11y-activity-header-button-close')}
         >
