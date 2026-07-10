@@ -13,7 +13,7 @@ export class LitSolutionBlock extends LitBlock {
   public override initCallback(): void {
     super.initCallback();
     this.a11y?.registerBlock(this);
-    this.clipboardLayer?.registerBlock(this);
+    this.clipboardLayer?.registerScope(this);
     this.sharedCtx.pub('*solution', this.tagName);
     const entries = (this.constructor as typeof LitSolutionBlock).lazyPlugins;
     if (entries) {

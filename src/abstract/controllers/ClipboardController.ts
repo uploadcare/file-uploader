@@ -1,22 +1,44 @@
-import { ACTIVITY_TYPES } from '../../lit/activity-constants';
-import { SharedInstance, type SharedInstancesBag } from '../../lit/shared-instances';
+import { ACTIVITY_TYPES, type ActivityId } from '../../lit/activity-constants';
 
 export type PasteScope = 'local' | 'global' | false;
 
 const ALLOWED_PASTE_ACTIVITIES = new Set<string>([ACTIVITY_TYPES.START_FROM, ACTIVITY_TYPES.UPLOAD_LIST]);
 
-export class ClipboardLayer extends SharedInstance {
-  private scopes: Set<Node> = new Set();
-  private listener: (event: ClipboardEvent) => void;
+export type ClipboardControllerDeps = {
+  /** Live `pasteScope` config read. */
+  getPasteScope: () => PasteScope;
+  /** Effective (modal-aware) current activity. */
+  getCurrentActivity: () => ActivityId | null;
+  addFileFromObject: (file: File, options: { source: 'clipboard' }) => void;
+  addFileFromUrl: (url: string, options: { source: 'clipboard' }) => void;
+  /** Post-add navigation intent (`router.traverse('onFileAdd')`). */
+  onFileAdd: () => void;
+  /** Paste-event source, injectable for tests. Defaults to `window`. */
+  eventTarget?: Pick<Window, 'addEventListener' | 'removeEventListener'>;
+};
 
-  public constructor(sharedInstancesBag: SharedInstancesBag) {
-    super(sharedInstancesBag);
+/**
+ * Window paste handling (v2 port of the `ClipboardLayer` shared instance).
+ * Owns the single `paste` listener and the set of registered scopes; all
+ * uploader couplings (config, router, public API) are injected, so the
+ * controller is constructible and testable without the `$` state or the
+ * shared-instances bag. It is DOM-*event*-coupled by nature — it exists to
+ * adapt the browser clipboard to the uploader — but imports nothing from lit.
+ */
+export class ClipboardController {
+  private _deps: ClipboardControllerDeps;
+  private _eventTarget: Pick<Window, 'addEventListener' | 'removeEventListener'>;
+  private _scopes: Set<Node> = new Set();
+  private _listener: (event: ClipboardEvent) => void;
 
-    this.listener = this._listener.bind(this);
-    window.addEventListener('paste', this.listener);
+  public constructor(deps: ClipboardControllerDeps) {
+    this._deps = deps;
+    this._eventTarget = deps.eventTarget ?? window;
+    this._listener = (event) => void this._handlePasteEvent(event);
+    this._eventTarget.addEventListener('paste', this._listener);
   }
 
-  private _isEditableTarget(target: EventTarget | null) {
+  private _isEditableTarget(target: EventTarget | null): boolean {
     if (!(target instanceof Element)) {
       return false;
     }
@@ -46,11 +68,11 @@ export class ClipboardLayer extends SharedInstance {
   }
 
   private _hasConnectedScope(): boolean {
-    return [...this.scopes].some((scope) => scope.isConnected);
+    return [...this._scopes].some((scope) => scope.isConnected);
   }
 
   private _hasRegularSolutionScope(): boolean {
-    return [...this.scopes].some((scope) => {
+    return [...this._scopes].some((scope) => {
       return scope.isConnected && scope instanceof Element && scope.localName === 'uc-file-uploader-regular';
     });
   }
@@ -60,7 +82,7 @@ export class ClipboardLayer extends SharedInstance {
       return false;
     }
 
-    return [...this.scopes].some((scope) => scope.isConnected && scope.contains(target));
+    return [...this._scopes].some((scope) => scope.isConnected && scope.contains(target));
   }
 
   private _getPastedUrl(text: string): string | null {
@@ -80,11 +102,7 @@ export class ClipboardLayer extends SharedInstance {
     }
   }
 
-  private openUploadList() {
-    this._sharedInstancesBag.router.traverse('onFileAdd');
-  }
-
-  private async _listener(event: ClipboardEvent) {
+  private async _handlePasteEvent(event: ClipboardEvent): Promise<void> {
     if (!event.clipboardData) {
       return;
     }
@@ -97,23 +115,23 @@ export class ClipboardLayer extends SharedInstance {
       return;
     }
 
-    const currentActivity = this._sharedInstancesBag.router.currentActivity;
+    const currentActivity = this._deps.getCurrentActivity();
     const isInitialState = currentActivity === null;
     const isAllowedActivity = this._isAllowedPasteActivity(currentActivity);
 
-    switch (this._cfg.pasteScope) {
+    switch (this._deps.getPasteScope()) {
       case 'global':
         if (!isAllowedActivity && !(isInitialState && this._hasRegularSolutionScope())) {
           return;
         }
-        await this.handlePaste(event);
+        await this._handlePaste(event.clipboardData);
         return;
       case 'local': {
         const target = event.target instanceof Node ? event.target : null;
         if (!this._isInsideScope(target) || (!isAllowedActivity && !isInitialState)) {
           return;
         }
-        await this.handlePaste(event);
+        await this._handlePaste(event.clipboardData);
         return;
       }
       default:
@@ -121,11 +139,8 @@ export class ClipboardLayer extends SharedInstance {
     }
   }
 
-  private async handlePaste(event: ClipboardEvent) {
-    if (!event.clipboardData) {
-      return;
-    }
-    const items = Array.from(event.clipboardData.items);
+  private async _handlePaste(clipboardData: DataTransfer): Promise<void> {
+    const items = Array.from(clipboardData.items);
 
     const files = items
       .filter((item) => item.kind === 'file')
@@ -145,7 +160,7 @@ export class ClipboardLayer extends SharedInstance {
 
     if (files.length > 0) {
       files.forEach((file) => {
-        this._sharedInstancesBag.api.addFileFromObject(file, { source: 'clipboard' });
+        this._deps.addFileFromObject(file, { source: 'clipboard' });
       });
       hasAddedFiles = true;
     }
@@ -153,28 +168,31 @@ export class ClipboardLayer extends SharedInstance {
     if (urlItems.length > 0) {
       const resolvedUrls = (await Promise.all(urlItems)).filter((url): url is string => url !== null);
       resolvedUrls.forEach((url) => {
-        this._sharedInstancesBag.api.addFileFromUrl(url, { source: 'clipboard' });
+        this._deps.addFileFromUrl(url, { source: 'clipboard' });
       });
       hasAddedFiles ||= resolvedUrls.length > 0;
     }
 
     if (hasAddedFiles) {
-      this.openUploadList();
+      this._deps.onFileAdd();
     }
   }
 
-  public registerBlock(scope: Node) {
-    this.scopes.add(scope);
+  /**
+   * Register a DOM scope pastes may land in (`pasteScope: 'local'` only
+   * handles pastes targeted inside a registered scope; a `'global'` scope
+   * must merely be connected). Returns an unregister fn.
+   */
+  public registerScope(scope: Node): () => void {
+    this._scopes.add(scope);
 
     return () => {
-      this.scopes.delete(scope);
+      this._scopes.delete(scope);
     };
   }
 
-  public override destroy(): void {
-    super.destroy();
-
-    window.removeEventListener('paste', this.listener);
-    this.scopes.clear();
+  public destroy(): void {
+    this._eventTarget.removeEventListener('paste', this._listener);
+    this._scopes.clear();
   }
 }

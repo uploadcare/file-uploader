@@ -182,6 +182,44 @@ describe('PubSub locale (*l10n/*) facade', () => {
   });
 });
 
+describe('PubSub solution (*solution) facade', () => {
+  it('routes pub/read to the controller instead of nanostores', () => {
+    const ctx = freshCtx();
+
+    ctx.pub('*solution', 'UC-FILE-UPLOADER-REGULAR');
+
+    expect(ctx.read('*solution')).toBe('UC-FILE-UPLOADER-REGULAR');
+    expect(ctx.uploaderController().solution).toBe('UC-FILE-UPLOADER-REGULAR');
+    expect('*solution' in ctx.store).toBe(false); // nanostores holds nothing
+  });
+
+  it('sub fires immediately and on change, deduping unchanged values', () => {
+    const ctx = freshCtx();
+    const cb = vi.fn();
+
+    ctx.sub('*solution', cb);
+    expect(cb).toHaveBeenCalledWith(null); // immediate fire with the default
+
+    ctx.pub('*solution', 'uc-x');
+    ctx.pub('*solution', 'uc-x'); // unchanged → no extra notify
+    expect(cb).toHaveBeenCalledTimes(2);
+    expect(cb).toHaveBeenLastCalledWith('uc-x');
+  });
+
+  it('has() reports the key as known; add() is first-write-wins', () => {
+    const ctx = freshCtx();
+
+    expect(ctx.has('*solution')).toBe(true);
+
+    ctx.pub('*solution', 'uc-y');
+    ctx.add('*solution', null); // init$ seeding must not clobber a set value
+    expect(ctx.read('*solution')).toBe('uc-y');
+
+    ctx.add('*solution', null, true); // explicit rewrite wins
+    expect(ctx.read('*solution')).toBeNull();
+  });
+});
+
 describe('PubSub (additional coverage)', () => {
   it('pub routes a locale key to the controller', () => {
     const ctx = freshCtx();

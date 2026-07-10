@@ -5,10 +5,9 @@ import { initialConfig } from '../../blocks/Config/initialConfig';
 import type { EventKey, InternalEventKey } from '../../blocks/UploadCtxProvider/EventEmitter';
 import { EventType, InternalEventType } from '../../blocks/UploadCtxProvider/EventEmitter';
 import { PACKAGE_NAME, PACKAGE_VERSION } from '../../env';
-import { SharedInstance, type SharedInstancesBag } from '../../lit/shared-instances';
 import type { ConfigType } from '../../types/index';
 import { UID } from '../../utils/UID';
-import { sharedConfigKey } from '../sharedConfigKey';
+import type { ConfigController } from '../controllers/ConfigController';
 
 type CommonEventType = InternalEventKey | EventKey;
 
@@ -21,41 +20,69 @@ type TelemetryEventBody = Partial<Pick<TelemetryState, 'payload' | 'config'>> & 
   eventType?: CommonEventType;
 };
 
-export class TelemetryManager extends SharedInstance {
+export type TelemetryManagerDeps = {
+  /** v2 config source of truth — enablement, snapshot, and change detection. */
+  config: ConfigController;
+  /** Solution tag name (lowercased for the payload); null before a solution registers. */
+  getSolution: () => string | null;
+  /** Effective current activity; null before the router exists / nothing open. */
+  getActivity: () => string | null;
+};
+
+/**
+ * Quality-insights telemetry (M8 port): deps-injected instead of
+ * `SharedInstance`-based — enablement and config tracking read the v2
+ * `ConfigController` directly (one coarse subscription + snapshot diff
+ * replaces the per-`*cfg/*`-key ctx subscriptions), and the solution/activity
+ * payload fields come from injected getters, so nothing here touches the `$`
+ * state.
+ */
+export class TelemetryManager {
+  private readonly _deps: TelemetryManagerDeps;
   private readonly _sessionId: string = UID.generateRandomUUID();
   private readonly _telemetryInstance: TelemetryAPIService;
   private _config: ConfigType = structuredClone(initialConfig);
   private _initialized = false;
   private _lastPayload: TelemetryState | null = null;
   private readonly _queue: Queue;
-  private _isEnabled = false;
+  private _unsubConfig: () => void;
 
-  public constructor(sharedInstancesBag: SharedInstancesBag) {
-    super(sharedInstancesBag);
+  public constructor(deps: TelemetryManagerDeps) {
+    this._deps = deps;
     this._telemetryInstance = new TelemetryAPIService();
     this._queue = new Queue(10);
 
-    this.addSub(
-      this._ctx.sub(sharedConfigKey('qualityInsights'), (value) => {
-        this._isEnabled = Boolean(value);
-      }),
-    );
+    this._unsubConfig = deps.config.subscribe(() => this._trackConfigChange());
+    // Seed the snapshot with the current values (nothing is sent before
+    // `_initialized`, matching the v1 immediate-subscription pass).
+    this._trackConfigChange();
+  }
 
+  private get _isEnabled(): boolean {
+    return Boolean(this._deps.config.get('qualityInsights'));
+  }
+
+  /**
+   * Diff the tracked snapshot against the config controller. Disabled
+   * telemetry tracks nothing (v1 parity); a change after the init event sends
+   * `CHANGE_CONFIG` with the updated snapshot attached.
+   */
+  private _trackConfigChange(): void {
+    if (!this._isEnabled) {
+      return;
+    }
+    let changed = false;
     for (const key of Object.keys(this._config) as (keyof ConfigType)[]) {
-      this.addSub(
-        this._ctx.sub(sharedConfigKey(key), (value) => {
-          if (!this._isEnabled) {
-            return;
-          }
-          if (this._initialized && this._config[key] !== value) {
-            this.sendEvent({
-              eventType: InternalEventType.CHANGE_CONFIG,
-            });
-          }
-
-          this._setConfig(key, value);
-        }),
-      );
+      const value = this._deps.config.get(key);
+      if (this._config[key] !== value) {
+        changed = true;
+        (this._config as Record<string, unknown>)[key] = value;
+      }
+    }
+    if (changed && this._initialized) {
+      this.sendEvent({
+        eventType: InternalEventType.CHANGE_CONFIG,
+      });
     }
   }
 
@@ -63,14 +90,6 @@ export class TelemetryManager extends SharedInstance {
     if (type === InternalEventType.INIT_SOLUTION && !this._initialized) {
       this._initialized = true;
     }
-  }
-
-  private _setConfig<T extends keyof ConfigType>(key: T, value: ConfigType[T]): void {
-    if (this._config[key] === value) {
-      return;
-    }
-
-    this._config[key] = value;
   }
 
   private _formattingPayload(body: Partial<Pick<TelemetryState, 'eventType' | 'payload' | 'config'>>): TelemetryState {
@@ -91,7 +110,7 @@ export class TelemetryManager extends SharedInstance {
       appName: PACKAGE_NAME,
       sessionId: this._sessionId,
       component: this._solution,
-      activity: this._activity,
+      activity: this._deps.getActivity(),
       projectPubkey: this._config.pubkey,
       userAgent: navigator.userAgent,
       eventType: result.eventType ?? '',
@@ -205,21 +224,15 @@ export class TelemetryManager extends SharedInstance {
   }
 
   private get _solution(): string | null {
-    if (!this._ctx.has('*solution')) {
-      return null;
-    }
-    const solution = this._ctx.read('*solution');
+    const solution = this._deps.getSolution();
     return solution ? solution.toLowerCase() : null;
-  }
-
-  private get _activity(): string | null {
-    if (!this._ctx.has('*router')) {
-      return null;
-    }
-    return this._ctx.read('*router').currentActivity;
   }
 
   private get _location(): string {
     return location.origin;
+  }
+
+  public destroy(): void {
+    this._unsubConfig();
   }
 }

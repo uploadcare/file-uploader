@@ -1,10 +1,10 @@
 import type { UploadcareGroup } from '@uploadcare/upload-client';
+import type { ClipboardController } from '../abstract/controllers/ClipboardController';
 import type { RouterController } from '../abstract/controllers/RouterController';
 import type { SecureUploadsController } from '../abstract/controllers/SecureUploadsController';
 import type { UploadCollectionController } from '../abstract/controllers/UploadCollectionController';
 import type { UploadController } from '../abstract/controllers/UploadController';
 import type { ValidationController } from '../abstract/controllers/ValidationController';
-import type { ClipboardLayer } from '../abstract/features/ClipboardLayer';
 import type { LocaleDefinition } from '../abstract/localeRegistry';
 import type { A11y } from '../abstract/managers/a11y';
 import type { LocaleManager } from '../abstract/managers/LocaleManager';
@@ -95,7 +95,7 @@ type DynamicBlockState = {
   '*telemetryManager': TelemetryManager;
   '*a11y': A11y;
   '*router': RouterController;
-  '*clipboard': ClipboardLayer;
+  '*clipboard': ClipboardController;
   '*pluginManager': PluginController;
 };
 
