@@ -1,13 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { EventBus } from '../EventBus';
 import { ConfigController } from './ConfigController';
+import { LocaleController } from './LocaleController';
 import { UploaderController } from './UploaderController';
 
 describe('UploaderController', () => {
-  it('constructs with an event bus and a config controller', () => {
+  it('constructs with event, config, and locale controllers', () => {
     const controller = new UploaderController();
     expect(controller.events).toBeInstanceOf(EventBus);
     expect(controller.config).toBeInstanceOf(ConfigController);
+    expect(controller.locale).toBeInstanceOf(LocaleController);
   });
 
   it('destroy() tears down without throwing', () => {

@@ -118,3 +118,66 @@ describe('PubSub config (*cfg/*) facade', () => {
     expect(cb).toHaveBeenCalledWith('changed');
   });
 });
+
+describe('PubSub locale (*l10n/*) facade', () => {
+  it('routes locale keys to the controller, not the nanostores store', () => {
+    const ctx = freshCtx();
+    expect(ctx.has('*l10n/upload')).toBe(false);
+
+    ctx.add('*l10n/upload', 'Upload');
+
+    expect(ctx.has('*l10n/upload')).toBe(true);
+    expect(ctx.read('*l10n/upload')).toBe('Upload');
+    expect('*l10n/upload' in ctx.store).toBe(false);
+  });
+
+  it('add() is first-write-wins; rewrite overwrites (LocaleManager seeding semantics)', () => {
+    const ctx = freshCtx();
+    ctx.add('*l10n/upload', 'Upload');
+
+    ctx.add('*l10n/upload', 'Send'); // no rewrite — keeps
+    expect(ctx.read('*l10n/upload')).toBe('Upload');
+
+    ctx.add('*l10n/upload', 'Send', true); // rewrite (override / plugin l10n)
+    expect(ctx.read('*l10n/upload')).toBe('Send');
+  });
+
+  it('sub fires on that key only, with per-key change semantics', () => {
+    const ctx = freshCtx();
+    ctx.add('*l10n/upload', 'Upload');
+    const cb = vi.fn();
+    ctx.sub('*l10n/upload', cb, false);
+
+    ctx.add('*l10n/cancel', 'Cancel', true); // different key — no fire
+    expect(cb).not.toHaveBeenCalled();
+
+    ctx.add('*l10n/upload', 'Send', true);
+    expect(cb).toHaveBeenLastCalledWith('Send');
+    expect(cb).toHaveBeenCalledTimes(1);
+  });
+
+  it('config and locale share one controller per ctx', () => {
+    const ctx = freshCtx();
+    const id = ctx.id;
+    ctx.read('*cfg/multiple');
+    ctx.add('*l10n/upload', 'Upload', true);
+
+    const controller = UploaderRegistry.get(id);
+    expect(controller?.locale.get('upload')).toBe('Upload');
+  });
+
+  it('warns when reading a missing locale key but not a present one (typo surfacing)', () => {
+    const ctx = freshCtx();
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    ctx.read('*l10n/typoKey');
+    expect(warn).toHaveBeenCalledWith('PubSub#read: Key "*l10n/typoKey" not found');
+
+    warn.mockClear();
+    ctx.add('*l10n/upload', 'Upload');
+    ctx.read('*l10n/upload');
+    expect(warn).not.toHaveBeenCalled();
+
+    warn.mockRestore();
+  });
+});
