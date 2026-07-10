@@ -62,4 +62,12 @@ describe('LocaleController', () => {
     locale.set('upload', 'Upload');
     expect(listener).not.toHaveBeenCalled();
   });
+
+  it('values exposes the stored dictionary reflecting writes', () => {
+    const locale = new LocaleController();
+    expect(Object.keys(locale.values)).toEqual([]);
+
+    locale.set('upload', 'Upload');
+    expect(locale.values.upload).toBe('Upload');
+  });
 });

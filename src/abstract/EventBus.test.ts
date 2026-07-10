@@ -83,4 +83,55 @@ describe('EventBus', () => {
 
     expect(handler).not.toHaveBeenCalled();
   });
+
+  it('emit is a no-op for a type with no listeners', () => {
+    const bus = new EventBus();
+    expect(() => bus.emit(UploaderEventType.UPLOAD_CLICK, undefined)).not.toThrow();
+  });
+
+  it('drops the listener set on full unsubscribe and re-subscribes cleanly', () => {
+    const bus = new EventBus();
+    const first = vi.fn();
+    const off = bus.on(UploaderEventType.UPLOAD_CLICK, first);
+    off(); // last listener removed → backing Set is deleted
+
+    const second = vi.fn();
+    bus.on(UploaderEventType.UPLOAD_CLICK, second);
+    bus.emit(UploaderEventType.UPLOAD_CLICK, undefined);
+
+    expect(second).toHaveBeenCalledTimes(1);
+    expect(first).not.toHaveBeenCalled();
+  });
+
+  it('isolates a throwing payload thunk in emitDebounced', () => {
+    vi.useFakeTimers();
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const bus = new EventBus();
+    const handler = vi.fn();
+    bus.on(UploaderEventType.UPLOAD_CLICK, handler);
+
+    bus.emitDebounced(
+      UploaderEventType.UPLOAD_CLICK,
+      () => {
+        throw new Error('thunk boom');
+      },
+      10,
+    );
+
+    expect(() => vi.advanceTimersByTime(10)).not.toThrow();
+    expect(handler).not.toHaveBeenCalled();
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it('onAny returns an unsubscribe that stops delivery', () => {
+    const bus = new EventBus();
+    const any = vi.fn();
+    const off = bus.onAny(any);
+
+    off();
+    bus.emit(UploaderEventType.UPLOAD_CLICK, undefined);
+
+    expect(any).not.toHaveBeenCalled();
+  });
 });
