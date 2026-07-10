@@ -4,7 +4,7 @@ import { property, state } from 'lit/decorators.js';
 import '../blocks/ActivityHeader/ActivityHeader';
 import '../blocks/Icon/Icon';
 import './unsplash-activity.css';
-import type { PluginUploaderApi, UploaderPlugin } from '../abstract/managers/plugin/index';
+import type { PluginRouterApi, PluginUploaderApi, UploaderPlugin } from '../abstract/managers/plugin/index';
 
 const UNSPLASH_ACTIVITY_ID = 'unsplash-gallery';
 
@@ -25,6 +25,9 @@ class UcUnsplashActivity extends LitElement {
 
   @property({ attribute: false })
   public uploaderApi!: PluginUploaderApi;
+
+  @property({ attribute: false })
+  public routerApi!: PluginRouterApi;
 
   @property({ attribute: false })
   public override accessKey = '';
@@ -75,7 +78,10 @@ class UcUnsplashActivity extends LitElement {
       fileName: `unsplash-${photo.id}.jpg`,
       source: 'unsplash',
     });
-    this.uploaderApi.navigate('upload-list');
+    // Post-add routing intent, like the built-in sources — lets the preset's
+    // afterFileAdd hooks decide (e.g. minimal keeps its modal closed) instead
+    // of forcing the upload list open.
+    this.routerApi.afterFileAdd();
   }
 
   public override render() {
@@ -204,6 +210,7 @@ export const unsplashPlugin: UploaderPlugin = {
       render(el) {
         const activityEl = document.createElement('uc-unsplash-activity') as UcUnsplashActivity;
         activityEl.uploaderApi = uploaderApi;
+        activityEl.routerApi = pluginApi.router;
         activityEl.accessKey = pluginApi.config.get('unsplashAccessKey');
 
         const unsubscribe = pluginApi.config.subscribe('unsplashAccessKey', (value) => {

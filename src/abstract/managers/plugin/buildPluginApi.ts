@@ -13,6 +13,7 @@ import type {
   PluginFileEntryUpdate,
   PluginFilesApi,
   PluginRegistryApi,
+  PluginRouterApi,
 } from './PluginTypes';
 
 export function buildPluginApi(
@@ -92,5 +93,9 @@ export function buildPluginApi(
     },
   };
 
-  return { registry: registryApi, config: configApi, activity: activityApi, files: filesApi };
+  const routerApi: PluginRouterApi = {
+    afterFileAdd: () => sharedInstancesBag.router.afterFileAdd(),
+  };
+
+  return { registry: registryApi, config: configApi, activity: activityApi, files: filesApi, router: routerApi };
 }

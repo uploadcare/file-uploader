@@ -155,11 +155,29 @@ export type PluginFilesApi = {
   update: (internalId: string, changes: PluginFileEntryUpdate) => void;
 };
 
+/**
+ * Deliberately minimal router surface for plugins — navigation *intents* only,
+ * not the full router. Plugins that need a hard navigation already have
+ * `uploaderApi.navigate()`/`traverse()`; this exists for the flows where the
+ * host's hooks must stay in charge.
+ */
+export type PluginRouterApi = {
+  /**
+   * Run the standard post-file-add routing intent, exactly like the built-in
+   * sources (camera, URL, drop area): defaults to opening `upload-list`, but
+   * registered `afterFileAdd` hooks may intercept (e.g. the minimal preset
+   * keeps its modal closed and shows status inline). Call this after adding
+   * files instead of navigating to `upload-list` directly.
+   */
+  afterFileAdd: () => void;
+};
+
 export type PluginApi = {
   registry: PluginRegistryApi;
   config: PluginConfigApi;
   activity: PluginActivityApi;
   files: PluginFilesApi;
+  router: PluginRouterApi;
 };
 
 export type PluginUploaderApi = UploaderPublicApi;
