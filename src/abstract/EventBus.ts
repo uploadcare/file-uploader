@@ -1,10 +1,11 @@
-import type { UploadcareGroup } from '@uploadcare/upload-client';
+import type { ActivityType } from '../lit/activity-constants';
 import type { OutputCollectionState, OutputFileEntry } from '../types/exported';
 
 /**
- * v2 event surface. Mirrors v1's `EventType` from
- * `src/blocks/UploadCtxProvider/EventEmitter.ts` so consumers can swap
- * v1 → v2 without touching their event handlers.
+ * Canonical event surface for the whole library. `EventEmitter`
+ * (`src/blocks/UploadCtxProvider/EventEmitter.ts`) re-exports these as the
+ * documented `EventType`/`EventPayload`, so there is a single source of truth —
+ * the v1 and v2 names cannot drift apart.
  */
 export const UploaderEventType = Object.freeze({
   FILE_ADDED: 'file-added',
@@ -43,22 +44,9 @@ export type UploaderEventPayload = {
   'file-upload-failed': OutputFileEntry<'failed'>;
   'file-url-changed': OutputFileEntry<'success'>;
 
-  /**
-   * `modalId` is the v1 name for the modal/activity. `activity` is the v2
-   * name. Both fields carry the same value; consumers may use either.
-   */
-  'modal-open': { activity: string; modalId: string };
-  /**
-   * `modalId` is the v1 name; `activity` is the v2 equivalent (both null
-   * after a close). `hasActiveModals` is v1-compat — always `false` in v2
-   * since the router has a single foreground slot that just closed.
-   */
-  'modal-close': {
-    activity: string | null;
-    modalId: string | null;
-    hasActiveModals: boolean;
-  };
-  'activity-change': { activity: string | null };
+  'modal-open': { modalId: ActivityType };
+  'modal-close': { modalId: ActivityType; hasActiveModals: boolean };
+  'activity-change': { activity: ActivityType };
 
   'upload-click': undefined;
   'done-click': OutputCollectionState;
@@ -69,7 +57,7 @@ export type UploaderEventPayload = {
   'common-upload-failed': OutputCollectionState<'failed'>;
 
   change: OutputCollectionState;
-  'group-created': OutputCollectionState<'success', 'has-group'> & { groupInfo: UploadcareGroup };
+  'group-created': OutputCollectionState<'success', 'has-group'>;
 };
 
 /**
