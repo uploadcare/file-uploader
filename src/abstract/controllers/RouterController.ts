@@ -12,6 +12,9 @@ export type EdgeTarget = ActivityId | null;
 export const NAVIGATE_CANCEL: unique symbol = Symbol('uc:navigate-cancel');
 export type NavigateCancel = typeof NAVIGATE_CANCEL;
 
+/** The navigation intents resolvable via {@link RouterController.traverse}. */
+export type NavigationEdge = 'onBack' | 'onCancel' | 'onClose' | 'onDone' | 'onFileAdd';
+
 /** Per-preset routing config, set by the solution via {@link RouterController.configure}. */
 export interface RouteTable {
   /** Activity to land on after a completed flow (preset-specific). */
@@ -368,7 +371,7 @@ export class RouterController {
    * - `onDone` → navigate to the configured {@link doneActivity},
    * - `onFileAdd` → navigate to `upload-list`.
    */
-  public traverse(edge: 'onBack' | 'onCancel' | 'onClose' | 'onDone' | 'onFileAdd'): void {
+  public traverse(edge: NavigationEdge): void {
     // `proposed`/`defaults()` carry a concrete target only when the default
     // *is* a target (`onDone` → done activity, `onFileAdd` → upload-list).
     // For `onBack`/`onCancel`/`onClose` the default is an *action*

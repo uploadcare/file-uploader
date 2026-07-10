@@ -94,7 +94,7 @@ export function buildPluginApi(
   };
 
   const routerApi: PluginRouterApi = {
-    afterFileAdd: () => sharedInstancesBag.router.traverse('onFileAdd'),
+    traverse: (edge) => sharedInstancesBag.router.traverse(edge),
   };
 
   return { registry: registryApi, config: configApi, activity: activityApi, files: filesApi, router: routerApi };

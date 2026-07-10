@@ -79,22 +79,22 @@ class UcUnsplashActivity extends LitElement {
       source: 'unsplash',
     });
     // Post-add routing intent, like the built-in sources — lets the preset's
-    // afterFileAdd hooks decide (e.g. minimal keeps its modal closed) instead
+    // onFileAdd hooks decide (e.g. minimal keeps its modal closed) instead
     // of forcing the upload list open.
-    this.routerApi.afterFileAdd();
+    this.routerApi.traverse('onFileAdd');
   }
 
   public override render() {
     return html`
       <div class="uc-ui-activity-header">
-        <button type="button" class="uc-ui-icon-btn" title="Back" @click=${() => this.uploaderApi.traverse('onBack')}>
+        <button type="button" class="uc-ui-icon-btn" title="Back" @click=${() => this.routerApi.traverse('onBack')}>
           <uc-icon name="back"></uc-icon>
         </button>
         <div>
           <uc-icon name="unsplash"></uc-icon>
           <span>Unsplash</span>
         </div>
-        <button type="button" class="uc-ui-icon-btn" title="Close" @click=${() => this.uploaderApi.traverse('onClose')}>
+        <button type="button" class="uc-ui-icon-btn" title="Close" @click=${() => this.routerApi.traverse('onClose')}>
           <uc-icon name="close"></uc-icon>
         </button>
       </div>

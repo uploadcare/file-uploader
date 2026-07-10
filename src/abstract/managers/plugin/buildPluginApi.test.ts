@@ -22,17 +22,25 @@ const setup = () => {
 
 describe('buildPluginApi', () => {
   describe('router api', () => {
-    it('afterFileAdd runs the standard post-add routing (default: upload-list)', () => {
+    it('traverse(onFileAdd) runs the standard post-add routing (default: upload-list)', () => {
       const { api, router } = setup();
-      api.router.afterFileAdd();
+      api.router.traverse('onFileAdd');
       expect(router.currentActivity).toBe('upload-list');
     });
 
-    it('afterFileAdd is interceptable by the registered hooks, like any built-in source', () => {
+    it('traverse is interceptable by the registered hooks, like any built-in source', () => {
       const { api, router } = setup();
       router.hooks.onFileAdd(() => null); // e.g. DynamicBtn keeping the modal closed
-      api.router.afterFileAdd();
+      api.router.traverse('onFileAdd');
       expect(router.currentActivity).toBeNull();
+    });
+
+    it('traverse(onBack) resolves through the router history', () => {
+      const { api, router } = setup();
+      router.navigate('start-from');
+      router.navigate('camera');
+      api.router.traverse('onBack');
+      expect(router.currentActivity).toBe('start-from');
     });
   });
 });
