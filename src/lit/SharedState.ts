@@ -9,7 +9,7 @@ import type { LocaleDefinition } from '../abstract/localeRegistry';
 import type { A11y } from '../abstract/managers/a11y';
 import type { LocaleManager } from '../abstract/managers/LocaleManager';
 import type { ModalManager } from '../abstract/managers/ModalManager';
-import type { PluginManager } from '../abstract/managers/plugin';
+import type { PluginController } from '../abstract/managers/plugin';
 import type { LazyPluginEntry } from '../abstract/managers/plugin/LazyPluginLoader';
 import type { TelemetryManager } from '../abstract/managers/TelemetryManager';
 import type { UploaderPublicApi } from '../abstract/UploaderPublicApi';
@@ -107,7 +107,7 @@ type DynamicBlockState = {
   '*modalManager': ModalManager | null;
   '*clipboard': ClipboardLayer;
   '*routerLayer': RouterHooksLayer;
-  '*pluginManager': PluginManager;
+  '*pluginManager': PluginController;
 };
 
 type DynamicUploaderBlockState = {

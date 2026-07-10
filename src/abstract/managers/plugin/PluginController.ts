@@ -1,34 +1,70 @@
-import type { Unsubscriber } from '../../../lit/PubSubCompat';
-import { SharedInstance, type SharedInstancesBag } from '../../../lit/shared-instances';
 import { fileIsImage } from '../../../utils/fileTypes';
 import type { UploadEntryTypedData } from '../../uploadEntrySchema';
-import { buildPluginApi } from './buildPluginApi';
-import { LazyPluginLoader } from './LazyPluginLoader';
 import { PluginRegistry } from './PluginRegistry';
-import type { PluginRegistrySnapshot, UploaderPlugin } from './PluginTypes';
+import type { PluginApi, PluginRegistrySnapshot, PluginUploaderApi, UploaderPlugin } from './PluginTypes';
 
-export class PluginManager extends SharedInstance {
+type Unsubscribe = () => void;
+
+export type PluginControllerDeps = {
+  /** Build the per-plugin public `PluginApi` (config/activity/files bridged to the host). */
+  buildApi: (registry: PluginRegistry, pluginId: string, configSubscriptions: Unsubscribe[]) => PluginApi;
+  /** The public uploader API passed to each plugin's `setup`. */
+  getUploaderApi: () => PluginUploaderApi;
+  /**
+   * Subscribe to the resolved plugin list (user `cfg.plugins` + lazy plugins).
+   * Each emission is a promise of the plugins to sync to. Returns a teardown.
+   */
+  watchPlugins: (onCompute: (pluginsPromise: Promise<UploaderPlugin[] | undefined>) => void) => Unsubscribe;
+  /** Debug logger — defaults to a no-op. */
+  debug?: (...args: unknown[]) => void;
+};
+
+type RegisteredPlugin = {
+  plugin: UploaderPlugin;
+  dispose?: Unsubscribe;
+  configSubscriptions: Unsubscribe[];
+};
+
+/**
+ * DOM-free plugin engine — a faithful port of v1's `PluginManager` (which was a
+ * `SharedInstance`). Owns the {@link PluginRegistry}, runs the install/uninstall
+ * lifecycle (dedup, error isolation, dispose + config-subscription cleanup), and
+ * the `onAdd` hook chain. Its ctx/bag couplings are injected: `buildApi`
+ * (wraps `buildPluginApi`), `getUploaderApi`, and `watchPlugins` (wraps the
+ * ctx-watching `LazyPluginLoader`) — so it constructs without a DOM and is unit
+ * testable. Consumers still reach it through the unchanged `pluginManager`
+ * getter / `*pluginManager` shared instance.
+ */
+export class PluginController {
+  private _deps: PluginControllerDeps;
+  private _debug: (...args: unknown[]) => void;
+  private _isDestroyed = false;
   private _plugins: Map<string, RegisteredPlugin> = new Map();
-  private _subscribers: Set<Unsubscriber> = new Set();
+  private _subscribers: Set<Unsubscribe> = new Set();
   private _pluginsUpdate: Promise<void> = Promise.resolve();
-  private _lazyPluginLoader: LazyPluginLoader;
+  private _unwatchPlugins: Unsubscribe;
   public readonly registry = new PluginRegistry(() => this._notifySubscribers());
 
   public get configRegistry() {
     return this.registry.config;
   }
 
-  public constructor(sharedInstancesBag: SharedInstancesBag) {
-    super(sharedInstancesBag);
+  public constructor(deps: PluginControllerDeps) {
+    this._deps = deps;
+    this._debug = deps.debug ?? (() => {});
 
-    this._lazyPluginLoader = new LazyPluginLoader(this._ctx, (pluginsPromise) => {
+    this._unwatchPlugins = deps.watchPlugins((pluginsPromise) => {
       this._pluginsUpdate = this._pluginsUpdate
         .then(() => pluginsPromise)
         .then((plugins) => {
-          if (plugins) {
-            return this._syncPlugins(plugins);
-          }
-          return;
+          // Skip once destroyed so a queued emission can't re-register on a dead controller.
+          if (this._isDestroyed || !plugins) return;
+          return this._syncPlugins(plugins);
+        })
+        // Recover the queue: a rejected emission must not permanently poison the
+        // chain so later emissions never run. (`_pluginsUpdate` always resolves.)
+        .catch((error) => {
+          console.error('[PluginManager] Failed to sync plugins', error);
         });
     });
   }
@@ -37,7 +73,7 @@ export class PluginManager extends SharedInstance {
     return this._pluginsUpdate;
   }
 
-  public onPluginsChange(callback: Unsubscriber): Unsubscriber {
+  public onPluginsChange(callback: Unsubscribe): Unsubscribe {
     this._subscribers.add(callback);
     return () => {
       this._subscribers.delete(callback);
@@ -82,17 +118,11 @@ export class PluginManager extends SharedInstance {
       this._unregisterPlugin(plugin.id);
     }
 
-    const configSubscriptions: Unsubscriber[] = [];
-    const pluginApi = buildPluginApi(
-      this.registry,
-      this._ctx,
-      this._sharedInstancesBag,
-      plugin.id,
-      configSubscriptions,
-    );
+    const configSubscriptions: Unsubscribe[] = [];
+    const pluginApi = this._deps.buildApi(this.registry, plugin.id, configSubscriptions);
 
-    const uploaderApi = this._sharedInstancesBag.api;
-    let pluginDispose: Unsubscriber | undefined;
+    const uploaderApi = this._deps.getUploaderApi();
+    let pluginDispose: Unsubscribe | undefined;
     try {
       pluginDispose = (await plugin.setup({ pluginApi, uploaderApi })) ?? undefined;
     } catch (error) {
@@ -100,7 +130,7 @@ export class PluginManager extends SharedInstance {
         try {
           unsub();
         } catch (e) {
-          this._debugPrint('Failed to unsubscribe config listener', e);
+          this._debug('Failed to unsubscribe config listener', e);
         }
       }
       throw error;
@@ -120,11 +150,15 @@ export class PluginManager extends SharedInstance {
       try {
         unsub();
       } catch (error) {
-        this._debugPrint('Failed to unsubscribe config listener', error);
+        this._debug('Failed to unsubscribe config listener', error);
       }
     }
 
-    registered.dispose?.();
+    try {
+      registered.dispose?.();
+    } catch (error) {
+      this._debug('Failed to dispose plugin', error);
+    }
     this._plugins.delete(pluginId);
     this._notifySubscribers();
   }
@@ -166,13 +200,14 @@ export class PluginManager extends SharedInstance {
     }
   }
 
-  public override destroy(): void {
+  public destroy(): void {
+    this._isDestroyed = true;
+    // Stop new emissions first so a queued sync can't re-register on a dead controller.
+    this._unwatchPlugins();
     for (const pluginId of Array.from(this._plugins.keys())) {
       this._unregisterPlugin(pluginId);
     }
     this.registry.destroy();
-    this._lazyPluginLoader.destroy();
-    super.destroy();
   }
 
   private _notifySubscribers(): void {
@@ -185,9 +220,3 @@ export class PluginManager extends SharedInstance {
     }
   }
 }
-
-type RegisteredPlugin = {
-  plugin: UploaderPlugin;
-  dispose?: Unsubscriber;
-  configSubscriptions: Unsubscriber[];
-};
