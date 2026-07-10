@@ -89,10 +89,13 @@ export class ExternalSource extends LitUploaderBlock {
       this._mountIframe();
     }
 
-    this.sub('*currentActivityParams', () => {
+    this.subActivityParams(() => {
       setTimeout(() => {
-        // Since activity params are set before current activity, we need to wait for the next tick to ensure that the activity is still active before processing the params change.
-        // Otherwise, if the activity was changed, we might end up mounting the iframe with params from the next activity.
+        // Defer a tick before reacting to a params change: the router updates
+        // params and the current activity together in one transition, so a
+        // params change that coincides with navigating *away* from this activity
+        // would otherwise remount the iframe just as this block is being torn
+        // down. Waiting a tick lets that disconnect settle so we can bail here.
         if (!this.isConnected) {
           return;
         }
@@ -211,11 +214,11 @@ export class ExternalSource extends LitUploaderBlock {
       });
     }
 
-    this.routerLayer.navigateAfterFileAdd();
+    this.router.traverse('onFileAdd');
   };
 
   private _handleCancel = (): void => {
-    this.historyBack();
+    this.router.traverse('onCancel');
   };
 
   private _handleSelectAll = (): void => {
@@ -295,7 +298,7 @@ export class ExternalSource extends LitUploaderBlock {
         <button
           type="button"
           class="uc-mini-btn uc-close-btn"
-          @click=${this.$['*historyBack']}
+          @click=${() => this.router.traverse('onClose')}
           title=${this.l10n('a11y-activity-header-button-close')}
           aria-label=${this.l10n('a11y-activity-header-button-close')}
         >

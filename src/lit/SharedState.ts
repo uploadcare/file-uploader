@@ -1,14 +1,13 @@
 import type { UploadcareGroup } from '@uploadcare/upload-client';
+import type { RouterController } from '../abstract/controllers/RouterController';
 import type { SecureUploadsController } from '../abstract/controllers/SecureUploadsController';
 import type { UploadCollectionController } from '../abstract/controllers/UploadCollectionController';
 import type { UploadController } from '../abstract/controllers/UploadController';
 import type { ValidationController } from '../abstract/controllers/ValidationController';
 import type { ClipboardLayer } from '../abstract/features/ClipboardLayer';
-import type { RouterHooksLayer } from '../abstract/features/RouterHooksLayer';
 import type { LocaleDefinition } from '../abstract/localeRegistry';
 import type { A11y } from '../abstract/managers/a11y';
 import type { LocaleManager } from '../abstract/managers/LocaleManager';
-import type { ModalManager } from '../abstract/managers/ModalManager';
 import type { PluginController } from '../abstract/managers/plugin';
 import type { LazyPluginEntry } from '../abstract/managers/plugin/LazyPluginLoader';
 import type { TelemetryManager } from '../abstract/managers/TelemetryManager';
@@ -23,7 +22,6 @@ import type {
 } from '../blocks/CloudImageEditor/src/types';
 import type { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter';
 import type { ConfigType, CustomConfig, OutputCollectionState, OutputErrorCollection } from '../types';
-import type { RegisteredActivityType } from './LitActivityBlock';
 import type { LitBlock } from './LitBlock';
 import type { ISharedInstance } from './shared-instances';
 import type { Uid } from './Uid';
@@ -38,15 +36,7 @@ type SharedCustomConfigState = {
 
 export type BlocksRegistry = Set<LitBlock>;
 
-type ActivityBlockCtxState = {
-  '*currentActivity': RegisteredActivityType | null;
-  '*currentActivityParams': Record<string, unknown>;
-  '*history': (RegisteredActivityType | null)[];
-  '*historyBack': (() => void) | null;
-  '*closeModal': () => void;
-};
-
-type UploaderBlockCtxState = ActivityBlockCtxState & {
+type UploaderBlockCtxState = {
   '*commonProgress': number;
   '*uploadList': { uid: Uid }[];
   '*collectionErrors': OutputErrorCollection[];
@@ -104,9 +94,8 @@ type DynamicBlockState = {
   '*localeManager': LocaleManager;
   '*telemetryManager': TelemetryManager;
   '*a11y': A11y;
-  '*modalManager': ModalManager | null;
+  '*router': RouterController;
   '*clipboard': ClipboardLayer;
-  '*routerLayer': RouterHooksLayer;
   '*pluginManager': PluginController;
 };
 

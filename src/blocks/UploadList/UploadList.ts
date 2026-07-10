@@ -1,6 +1,6 @@
 import { html } from 'lit';
 import { state } from 'lit/decorators.js';
-import { LitActivityBlock } from '../../lit/LitActivityBlock';
+import { ACTIVITY_TYPES } from '../../lit/activity-constants';
 import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
 import type { OutputCollectionErrorType, OutputError } from '../../types';
 import { throttle } from '../../utils/throttle';
@@ -25,8 +25,7 @@ export type Summary = {
 
 export class UploadList extends LitUploaderBlock {
   public override couldBeCtxOwner = true;
-  protected override historyTracked = true;
-  public override activityType = LitActivityBlock.activities.UPLOAD_LIST;
+  public override activityType = ACTIVITY_TYPES.UPLOAD_LIST;
 
   @state()
   private _doneBtnVisible = false;
@@ -103,9 +102,9 @@ export class UploadList extends LitUploaderBlock {
     }
     this._updateUploadsState();
 
-    if (!this.couldOpenActivity && this.$['*currentActivity'] === this.activityType) {
-      this.historyBack();
-    }
+    // The router guard (registered in initCallback) decides whether the empty
+    // list may stay open; ask it to re-check now that the collection changed.
+    this.router.revalidate();
 
     if (!this.cfg.confirmUpload) {
       this.api.uploadAll();
@@ -174,14 +173,18 @@ export class UploadList extends LitUploaderBlock {
     return localizedText('total');
   }
 
-  public override get couldOpenActivity(): boolean {
-    return this.cfg.showEmptyList || this.uploadCollection.size > 0;
-  }
+  private _unregisterGuard?: () => void;
 
   public override initCallback() {
     super.initCallback();
 
-    this.registerActivity(this.activityType);
+    // Guard: the upload list may only be open while it has files (or
+    // `showEmptyList`). The router blocks navigating into it otherwise and
+    // `revalidate()` (called on collection changes) leaves it once it empties.
+    this._unregisterGuard = this.router.guard(
+      this.activityType,
+      () => this.cfg.showEmptyList || this.uploadCollection.size > 0,
+    );
 
     this.subConfigValue('multiple', this._throttledHandleCollectionUpdate);
     this.subConfigValue('multipleMin', this._throttledHandleCollectionUpdate);
@@ -194,12 +197,6 @@ export class UploadList extends LitUploaderBlock {
 
     this.subConfigValue('filesViewMode', (mode: FilesViewMode) => {
       this.setAttribute('mode', mode);
-    });
-
-    this.sub('*currentActivity', (currentActivity) => {
-      if (!this.couldOpenActivity && currentActivity === this.activityType) {
-        this.$['*currentActivity'] = this.initActivity;
-      }
     });
 
     // TODO: could be performance issue on many files
@@ -219,6 +216,8 @@ export class UploadList extends LitUploaderBlock {
 
   public override disconnectedCallback(): void {
     super.disconnectedCallback();
+    this._unregisterGuard?.();
+    this._unregisterGuard = undefined;
     if (this.has('*uploadCollection')) {
       this.uploadCollection.unobserveProperties(this._throttledHandleCollectionUpdate);
       this.uploadCollection.unobserveCollection(this._throttledHandleCollectionUpdate);
@@ -232,7 +231,7 @@ export class UploadList extends LitUploaderBlock {
     <button
       type="button"
       class="uc-mini-btn uc-close-btn"
-      @click=${this.$['*closeModal']}
+      @click=${() => this.router.traverse('onClose')}
       title=${this.l10n('a11y-activity-header-button-close')}
       aria-label=${this.l10n('a11y-activity-header-button-close')}
     >

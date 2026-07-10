@@ -137,7 +137,7 @@ export class DropArea extends LitUploaderBlock {
           }
         });
         if (this.uploadCollection.size > prevSize) {
-          this.routerLayer.navigateAfterFileAdd();
+          this.router.traverse('onFileAdd');
         }
       },
     });

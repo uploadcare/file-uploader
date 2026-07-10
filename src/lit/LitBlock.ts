@@ -1,10 +1,10 @@
 import { LitElement } from 'lit';
 import { blockCtx } from '../abstract/CTX';
+import { RouterController, type RouterControllerDeps } from '../abstract/controllers/RouterController';
+import { type UploaderEventKey, type UploaderEventPayload, UploaderEventType } from '../abstract/EventBus';
 import { ClipboardLayer } from '../abstract/features/ClipboardLayer';
-import { RouterHooksLayer } from '../abstract/features/RouterHooksLayer';
 import { A11y } from '../abstract/managers/a11y';
 import { LocaleManager, localeStateKey } from '../abstract/managers/LocaleManager';
-import { ModalManager } from '../abstract/managers/ModalManager';
 import { PluginController } from '../abstract/managers/plugin';
 import { buildPluginApi } from '../abstract/managers/plugin/buildPluginApi';
 import { LazyPluginLoader } from '../abstract/managers/plugin/LazyPluginLoader';
@@ -18,6 +18,7 @@ import { extractCdnUrlModifiers, extractFilename, extractUuid } from '../utils/c
 import { getLocaleDirection } from '../utils/getLocaleDirection';
 import { applyTemplateData } from '../utils/template-utils';
 import { WindowHeightTracker } from '../utils/WindowHeightTracker';
+import type { ActivityId } from './activity-constants';
 import { CssDataMixin } from './CssDataMixin';
 import { createDebugPrinter } from './createDebugPrinter';
 import { LightDomMixin } from './LightDomMixin';
@@ -111,9 +112,8 @@ export class LitBlock extends LitBlockBase {
     );
     this._addSharedContextInstance('*eventEmitter', (sharedInstancesBag) => new EventEmitter(sharedInstancesBag));
     this._addSharedContextInstance('*localeManager', (sharedInstancesBag) => new LocaleManager(sharedInstancesBag));
-    this._addSharedContextInstance('*modalManager', (sharedInstancesBag) => new ModalManager(sharedInstancesBag));
     this._addSharedContextInstance('*a11y', () => new A11y());
-    this._addSharedContextInstance('*routerLayer', (sharedInstancesBag) => new RouterHooksLayer(sharedInstancesBag));
+    this._addSharedContextInstance('*router', () => new RouterController({ emit: this._routerEmit }));
     this._addSharedContextInstance('*clipboard', (sharedInstancesBag) => new ClipboardLayer(sharedInstancesBag));
     this._addSharedContextInstance(
       '*telemetryManager',
@@ -142,9 +142,76 @@ export class LitBlock extends LitBlockBase {
     return testId;
   }
 
-  public get modalManager(): ModalManager | null {
-    return this._getSharedContextInstance('*modalManager', false);
+  public get router(): RouterController {
+    return this._getSharedContextInstance('*router');
   }
+
+  /**
+   * Telemetry-augmented emit, narrowed to the router's documented payloads and
+   * matching v1's debounce behavior (modal events debounce; activity-change
+   * fires immediately). Injected into the {@link RouterController}.
+   */
+  private _routerEmit: RouterControllerDeps['emit'] = (
+    type: UploaderEventKey,
+    payload: UploaderEventPayload[UploaderEventKey],
+  ): void => {
+    const debounce = type === UploaderEventType.MODAL_OPEN || type === UploaderEventType.MODAL_CLOSE;
+    // `this.emit` already accepts the widened `(UploaderEventKey, payload)` union
+    // that the field's `RouterEmit` type funnels down to, so no cast is needed —
+    // and it must stay a bound method call (`this.emit`, not an extracted ref) so
+    // it keeps its `this` when the router invokes it.
+    this.emit(type, payload, debounce ? { debounce: true } : undefined);
+  };
+
+  /**
+   * Subscribe to a value derived from router state: fires immediately with
+   * the current value, then on every change (reference dedup). All the
+   * `sub*` router helpers are one-liners over this. Auto-cleaned on
+   * disconnect.
+   */
+  private _subRouterDerived<T>(select: () => T, cb: (value: T) => void): () => void {
+    let last = select();
+    cb(last);
+    const unsub = this.router.subscribe(() => {
+      const next = select();
+      if (next !== last) {
+        last = next;
+        cb(next);
+      }
+    });
+    this._routerUnsubs.add(unsub);
+    return unsub;
+  }
+
+  /**
+   * Subscribe to the effective current activity (foreground modal, else
+   * background). Fires immediately with the current value, then on every
+   * change. Replaces `this.sub('*currentActivity', cb)`. Auto-cleaned on
+   * disconnect.
+   */
+  protected subActivity(cb: (activity: ActivityId | null) => void): () => void {
+    return this._subRouterDerived(() => this.router.currentActivity, cb);
+  }
+
+  /** Subscribe to the current activity params. Fires immediately + on change. */
+  protected subActivityParams(cb: (params: Readonly<Record<string, unknown>>) => void): () => void {
+    return this._subRouterDerived(() => this.router.params, cb);
+  }
+
+  /**
+   * Subscribe to *any* router change (slot or params). Fires immediately, then
+   * on every notification — no value dedup. Use when a reader depends on a slot
+   * the effective-activity dedup would hide (e.g. a modal opening on the id
+   * that's already the background activity). Auto-cleaned on disconnect.
+   */
+  protected subRouter(cb: () => void): () => void {
+    cb();
+    const unsub = this.router.subscribe(cb);
+    this._routerUnsubs.add(unsub);
+    return unsub;
+  }
+
+  private _routerUnsubs = new Set<() => void>();
 
   public get telemetryManager(): TelemetryManager {
     return this._getSharedContextInstance('*telemetryManager');
@@ -162,10 +229,6 @@ export class LitBlock extends LitBlockBase {
     return this._getSharedContextInstance('*clipboard');
   }
 
-  public get routerLayer(): RouterHooksLayer {
-    return this._getSharedContextInstance('*routerLayer');
-  }
-
   public get blocksRegistry(): Set<LitBlock> {
     return this._getSharedContextInstance('*blocksRegistry');
   }
@@ -177,6 +240,9 @@ export class LitBlock extends LitBlockBase {
   public override disconnectedCallback(): void {
     super.disconnectedCallback();
     WindowHeightTracker.unregisterClient(this);
+
+    for (const unsub of this._routerUnsubs) unsub();
+    this._routerUnsubs.clear();
 
     const blocksRegistry = this.blocksRegistry;
     blocksRegistry?.delete(this);
@@ -238,7 +304,7 @@ export class LitBlock extends LitBlockBase {
     key: TKey,
     isRequired: TRequired = true as TRequired,
   ): TRequired extends true ? NonNullable<SharedState[TKey]> : SharedState[TKey] {
-    if (this.has(key) && !!this.$[key]) {
+    if (this.has(key) && this.$[key]) {
       return this.$[key] as NonNullable<SharedState[TKey]>;
     }
 

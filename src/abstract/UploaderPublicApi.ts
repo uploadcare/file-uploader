@@ -3,10 +3,11 @@
 import { calcCameraModes } from '../blocks/CameraSource/calcCameraModes';
 import { CameraSourceTypes, type ModeCameraType } from '../blocks/CameraSource/constants';
 import { type EventKey, type EventPayload, EventType } from '../blocks/UploadCtxProvider/EventEmitter';
+import type { ActivityParamsMap, ActivityType } from '../lit/activity-constants';
 import { ACTIVITY_TYPES } from '../lit/activity-constants';
-import { findBlockInCtx } from '../lit/findBlockInCtx';
 import { waitForBlockInCtx } from '../lit/hasBlockInCtx';
-import type { ActivityParamsMap, ActivityType, LitActivityBlock } from '../lit/LitActivityBlock';
+import type { LitActivityBlock } from '../lit/LitActivityBlock';
+import type { LitBlock } from '../lit/LitBlock';
 import { createL10n } from '../lit/l10n';
 import { SharedInstance } from '../lit/shared-instances';
 import type { Uid } from '../lit/Uid';
@@ -37,6 +38,13 @@ export type ApiAddFileCommonOptions = {
   fileName?: string;
   source?: string;
 };
+
+/**
+ * Narrows a registry block to a {@link LitActivityBlock}. Non-activity blocks
+ * (config, form-input, sources, …) carry no `activityType`, so this filters
+ * them out instead of blindly casting and reading `undefined`.
+ */
+const isActivityBlock = (block: LitBlock): block is LitActivityBlock => 'activityType' in block;
 
 export class UploaderPublicApi extends SharedInstance {
   private _l10n = createL10n(() => this._ctx);
@@ -229,7 +237,7 @@ export class UploaderPublicApi extends SharedInstance {
           });
         });
         // To call uploadTrigger UploadList should draw file items first.
-        this._sharedInstancesBag.routerLayer.navigateAfterFileAdd();
+        this._sharedInstancesBag.router.traverse('onFileAdd');
         fileInput.remove();
       },
       {
@@ -302,9 +310,9 @@ export class UploaderPublicApi extends SharedInstance {
   }
 
   public initFlow = (force = false): void => {
+    const router = this._sharedInstancesBag.router;
     if (this._uploadCollection.size > 0 && !force) {
-      this._ctx.pub('*currentActivity', ACTIVITY_TYPES.UPLOAD_LIST);
-      this._sharedInstancesBag.modalManager?.open(ACTIVITY_TYPES.UPLOAD_LIST);
+      router.navigate(ACTIVITY_TYPES.UPLOAD_LIST);
     } else {
       if (this._sourceList?.length === 1) {
         const srcKey = this._sourceList[0];
@@ -320,35 +328,29 @@ export class UploaderPublicApi extends SharedInstance {
               const target = sources.find((s) => s.id === expandedIds[0]) ?? registeredSource;
               target.onSelect();
             } else {
-              this._ctx.pub('*currentActivity', ACTIVITY_TYPES.START_FROM);
-              this._sharedInstancesBag.modalManager?.open(ACTIVITY_TYPES.START_FROM);
+              router.navigate(ACTIVITY_TYPES.START_FROM);
             }
             return;
           }
 
-          if (this._ctx.read('*currentActivity')) {
-            this._sharedInstancesBag.modalManager?.open(this._ctx.read('*currentActivity'));
+          const current = router.currentActivity;
+          if (current) {
+            router.openModal(current);
           }
         });
       } else {
-        this._ctx.pub('*currentActivity', ACTIVITY_TYPES.START_FROM);
-        this._sharedInstancesBag.modalManager?.open(ACTIVITY_TYPES.START_FROM);
+        router.navigate(ACTIVITY_TYPES.START_FROM);
       }
     }
   };
 
   public doneFlow = (): void => {
-    const activityBlock = findBlockInCtx(this._sharedInstancesBag.blocksRegistry, (b) => 'doneActivity' in b) as
-      | LitActivityBlock
-      | undefined;
-
-    if (!activityBlock) {
-      return;
-    }
-    this._ctx.pub('*currentActivity', activityBlock.doneActivity);
-    this._ctx.pub('*history', activityBlock.doneActivity ? [activityBlock.doneActivity] : []);
-    if (!this._ctx.read('*currentActivity')) {
-      this._sharedInstancesBag.modalManager?.closeAll();
+    // Reset the router: clear everything (also wipes history), then land on the
+    // preset's configured done activity (set via `router.configure`).
+    const router = this._sharedInstancesBag.router;
+    router.navigate(null);
+    if (router.doneActivity) {
+      router.navigate(router.doneActivity);
     }
   };
 
@@ -357,6 +359,43 @@ export class UploaderPublicApi extends SharedInstance {
     return pluginManager.pluginsReady();
   }
 
+  /**
+   * Navigate to an activity and show it in the slot appropriate for the current
+   * preset (a modal in `regular`, inline in `inline`, a modal over the trigger
+   * in `minimal`). Pass `null` to close everything.
+   *
+   * This is the v2 routing entry point — the single-call replacement for the
+   * `setCurrentActivity` + `setModalState(true)` pair.
+   */
+  public navigate = <T extends ActivityType>(
+    activityType: T,
+    ...params: T extends keyof ActivityParamsMap
+      ? [ActivityParamsMap[T]] extends [never]
+        ? []
+        : [ActivityParamsMap[T]]
+      : []
+  ) => {
+    void this._pluginsReady().then(() => {
+      this._sharedInstancesBag.router.navigate(activityType, params[0] ?? {});
+      if (activityType !== null) {
+        waitForBlockInCtx(
+          this._sharedInstancesBag.blocksRegistry,
+          (b) => isActivityBlock(b) && b.activityType === activityType,
+          {
+            onTimeout: () => console.warn(`Activity type "${activityType}" not found in the context`),
+            timeout: 100,
+          },
+        );
+      }
+    });
+  };
+
+  /**
+   * @deprecated Use {@link navigate} instead — it sets the activity *and* shows
+   * it in one call. `setCurrentActivity` only sets the activity (in the
+   * background slot) without opening the modal, so it must be paired with
+   * `setModalState(true)`.
+   */
   public setCurrentActivity = <T extends ActivityType>(
     activityType: T,
     ...params: T extends keyof ActivityParamsMap
@@ -366,11 +405,17 @@ export class UploaderPublicApi extends SharedInstance {
       : []
   ) => {
     void this._pluginsReady().then(() => {
-      this._ctx.pub('*currentActivityParams', params[0] ?? {});
-      this._ctx.pub('*currentActivity', activityType);
+      // `setCurrentActivity(null)` means "no current activity" — close every
+      // slot (background + modal). Otherwise set the background activity (no
+      // modal); a paired `setModalState(true)` opens it in the modal slot.
+      if (activityType === null) {
+        this._sharedInstancesBag.router.navigate(null);
+        return;
+      }
+      this._sharedInstancesBag.router.setActivity(activityType, params[0]);
       waitForBlockInCtx(
         this._sharedInstancesBag.blocksRegistry,
-        (b) => (b as LitActivityBlock).activityType === activityType,
+        (b) => isActivityBlock(b) && b.activityType === activityType,
         {
           onTimeout: () => console.warn(`Activity type "${activityType}" not found in the context`),
           timeout: 100,
@@ -384,23 +429,32 @@ export class UploaderPublicApi extends SharedInstance {
   };
 
   public getCurrentActivity = (): ActivityType => {
-    return this._ctx.read('*currentActivity');
+    return this._sharedInstancesBag.router.currentActivity;
   };
 
   public historyBack = (): void => {
-    const fn = this._ctx.read('*historyBack');
-    fn?.();
+    this._sharedInstancesBag.router.back();
   };
 
+  /**
+   * @deprecated Use {@link navigate} to open an activity, or `navigate(null)`
+   * to close. `setModalState` only toggles the modal for the activity that was
+   * already set via `setCurrentActivity`.
+   */
   public setModalState = (opened: boolean): void => {
     void this._pluginsReady().then(() => {
+      const router = this._sharedInstancesBag.router;
       if (!opened) {
-        this._sharedInstancesBag.modalManager?.close(this._ctx.read('*currentActivity'));
-        this._ctx.pub('*currentActivity', null);
+        // Close everything (matches v1: close the modal + null the activity,
+        // which also cleared history).
+        router.navigate(null);
         return;
       }
 
-      const activityType = this._ctx.read('*currentActivity');
+      // Open the modal for the *intended* activity — the one `setCurrentActivity`
+      // put in the background slot — not the effective current activity (which,
+      // if a modal is already open, is that stale modal and would no-op).
+      const activityType = router.activity ?? router.currentActivity;
       if (!activityType) {
         console.warn(`Can't open modal without current activity. Please use "setCurrentActivity" method first.`);
         return;
@@ -408,12 +462,12 @@ export class UploaderPublicApi extends SharedInstance {
 
       return waitForBlockInCtx(
         this._sharedInstancesBag.blocksRegistry,
-        (b) => (b as LitActivityBlock).activityType === activityType,
+        (b) => isActivityBlock(b) && b.activityType === activityType,
         {
           onTimeout: () => console.warn(`Activity block "${activityType}" not found in the context`),
         },
       ).then(() => {
-        this._sharedInstancesBag.modalManager?.open(activityType);
+        router.openModal(activityType);
       });
     });
   };

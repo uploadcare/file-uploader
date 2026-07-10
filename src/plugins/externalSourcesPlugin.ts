@@ -1,5 +1,5 @@
 import { defineComponents } from '../abstract/defineComponents';
-import type { UploaderPlugin } from '../abstract/managers/plugin';
+import type { UploaderPlugin } from '../abstract/managers/plugin/index';
 import { ExternalSource } from '../blocks/ExternalSource/ExternalSource';
 import { ACTIVITY_TYPES } from '../lit/activity-constants';
 import { ExternalUploadSource } from '../utils/UploadSource';
@@ -26,8 +26,7 @@ export const externalSourcesPlugin: UploaderPlugin = {
         label: `src-type-${sourceId}`,
         icon: sourceId,
         onSelect: () => {
-          uploaderApi.setCurrentActivity(ACTIVITY_TYPES.EXTERNAL, { externalSourceType: sourceId });
-          uploaderApi.setModalState(true);
+          uploaderApi.navigate(ACTIVITY_TYPES.EXTERNAL, { externalSourceType: sourceId });
         },
       });
     }

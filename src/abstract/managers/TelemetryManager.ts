@@ -213,10 +213,10 @@ export class TelemetryManager extends SharedInstance {
   }
 
   private get _activity(): string | null {
-    if (!this._ctx.has('*currentActivity')) {
+    if (!this._ctx.has('*router')) {
       return null;
     }
-    return this._ctx.read('*currentActivity');
+    return this._ctx.read('*router').currentActivity;
   }
 
   private get _location(): string {

@@ -55,7 +55,7 @@ export class DynamicBtn extends LitUploaderBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-dynamic-btn'];
   public override couldBeCtxOwner = true;
 
-  private _unregisterAfterFileAddHook?: () => void;
+  private _unregisterOnFileAddHook?: () => void;
 
   @property({ attribute: 'dropzone', type: Boolean })
   public dropzone = true;
@@ -182,22 +182,18 @@ export class DynamicBtn extends LitUploaderBlock {
     this.uploadCollection.observeProperties(this._throttledHandleCollectionUpdate);
     this.uploadCollection.observeCollection(this._throttledHandleCollectionUpdate);
 
-    this._unregisterAfterFileAddHook = this.routerLayer.registerAfterFileAddHook(({ historyLength }) => {
+    this._unregisterOnFileAddHook = this.router.hooks.onFileAdd(() => {
+      // With confirmUpload, always land on the upload list.
       if (this.cfg.confirmUpload) {
-        this._sharedInstancesBag.ctx.pub('*currentActivity', ACTIVITY_TYPES.UPLOAD_LIST);
-        this.modalManager?.open(ACTIVITY_TYPES.UPLOAD_LIST);
-        return true;
+        return ACTIVITY_TYPES.UPLOAD_LIST;
       }
-
-      if (historyLength > 0) return false;
-      const currentActivity = this._sharedInstancesBag.ctx.read('*currentActivity');
-      if (currentActivity) {
-        this.modalManager?.close(currentActivity);
-      } else {
-        this.modalManager?.closeAll();
+      // If the user navigated somewhere to add the file, fall through to the
+      // default (upload list); otherwise close everything so the dynamic button
+      // just shows inline status.
+      if (this.router.canGoBack) {
+        return undefined;
       }
-      this._sharedInstancesBag.ctx.pub('*currentActivity', null);
-      return true;
+      return null;
     });
   }
 
@@ -205,7 +201,7 @@ export class DynamicBtn extends LitUploaderBlock {
     if (typeof this._throttledHandleCollectionUpdate.cancel === 'function') {
       this._throttledHandleCollectionUpdate.cancel();
     }
-    this._unregisterAfterFileAddHook?.();
+    this._unregisterOnFileAddHook?.();
     super.disconnectedCallback();
   }
 

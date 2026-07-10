@@ -3,7 +3,7 @@ import { state } from 'lit/decorators.js';
 import './index.css';
 
 import { InternalEventType } from '../../../blocks/UploadCtxProvider/EventEmitter';
-import { LitActivityBlock, type RegisteredActivityType } from '../../../lit/LitActivityBlock';
+import { ACTIVITY_TYPES } from '../../../lit/activity-constants';
 import { LitSolutionBlock } from '../../../lit/LitSolutionBlock';
 import { fileUploaderLazyPlugins } from '../lazyPlugins.js';
 
@@ -40,34 +40,26 @@ export class FileUploaderInline extends LitSolutionBlock {
 
   private _handleCancel = (): void => {
     if (this._couldHistoryBack) {
-      const historyBack = this.$['*historyBack'] as (() => void) | undefined;
-      historyBack?.();
+      this.router.traverse('onBack');
       return;
     }
 
     if (this._couldShowList) {
-      this.$['*currentActivity'] = LitActivityBlock.activities.UPLOAD_LIST;
+      this.router.setActivity(ACTIVITY_TYPES.UPLOAD_LIST);
     }
   };
 
   private get _couldHistoryBack(): boolean {
-    const history = this.$['*history'] as string[] | undefined;
-    if (!history || history.length <= 1) {
+    const history = this.router.history;
+    if (history.length <= 1) {
       return false;
     }
-    return history[history.length - 1] !== LitActivityBlock.activities.START_FROM;
+    return history[history.length - 1] !== ACTIVITY_TYPES.START_FROM;
   }
 
   private get _couldShowList(): boolean {
     const uploadList = this.$['*uploadList'] as unknown[] | undefined;
     return this.cfg.showEmptyList || (Array.isArray(uploadList) && uploadList.length > 0);
-  }
-
-  private _getInitActivity(): RegisteredActivityType {
-    return (
-      (this.getCssData('--cfg-init-activity') as RegisteredActivityType | undefined) ||
-      LitActivityBlock.activities.START_FROM
-    );
   }
 
   public override initCallback(): void {
@@ -77,21 +69,26 @@ export class FileUploaderInline extends LitSolutionBlock {
       eventType: InternalEventType.INIT_SOLUTION,
     });
 
-    const initActivity = this._getInitActivity();
+    const initActivity = ACTIVITY_TYPES.START_FROM;
 
-    this.sub('*currentActivity', (val) => {
+    // Inline renders every activity in place (no modal), so all navigation
+    // targets the background slot; a completed flow returns to start-from.
+    this.router.navigationStrategy = () => 'background';
+    this.router.configure({ doneActivity: ACTIVITY_TYPES.START_FROM });
+
+    this.subActivity((val) => {
       if (!val) {
-        this.$['*currentActivity'] = initActivity;
+        this.router.setActivity(initActivity);
       }
     });
 
     this.sub('*uploadList', (list) => {
-      if (Array.isArray(list) && list.length > 0 && this.$['*currentActivity'] === initActivity) {
-        this.$['*currentActivity'] = LitActivityBlock.activities.UPLOAD_LIST;
+      if (Array.isArray(list) && list.length > 0 && this.router.currentActivity === initActivity) {
+        this.router.setActivity(ACTIVITY_TYPES.UPLOAD_LIST);
       }
     });
 
-    this.sub('*history', () => {
+    this.subRouter(() => {
       this._couldCancel = this._couldHistoryBack || this._couldShowList;
     });
   }

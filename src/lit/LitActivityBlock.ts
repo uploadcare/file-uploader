@@ -1,110 +1,60 @@
+import type { PropertyValues } from 'lit';
 import { activityBlockCtx } from '../abstract/CTX';
-import type { ActivityParams as CloudImageEditorActivityParams } from '../blocks/CloudImageEditorActivity/CloudImageEditorActivity';
-import type { ActivityParams as ExternalSourceActivityParams } from '../blocks/ExternalSource/ExternalSource';
-import { EventType } from '../blocks/UploadCtxProvider/EventEmitter';
-import { debounce } from '../utils/debounce';
-import { ACTIVITY_TYPES, type ActivityType, type RegisteredActivityType } from './activity-constants';
+import { ACTIVITY_TYPES, type ActivityParamsMap, type ActivityType } from './activity-constants';
 import { LitBlock } from './LitBlock';
 
 const ACTIVE_ATTR = 'active';
-const ACTIVE_PROP = '___ACTIVITY_IS_ACTIVE___';
 
-// biome-ignore lint/suspicious/noEmptyInterface: This is user augmented interface
-export interface CustomActivities {}
-
-export type ActivityParamsMap = {
-  'cloud-image-edit': CloudImageEditorActivityParams;
-  external: ExternalSourceActivityParams;
-} & {
-  [Key in keyof CustomActivities]: CustomActivities[Key]['params'];
-};
-
+/**
+ * Base for activity blocks. A subclass declares its `activityType`; the base
+ * reflects the `[active]` attribute whenever this block owns its slot, and
+ * re-renders on every router transition.
+ *
+ * Slot is chosen by DOM location: a block inside a `<uc-modal>` tracks the
+ * foreground slot (`router.modal`); an inline block tracks the background slot
+ * (`router.activity`). This lets minimal's two `<uc-start-from>` elements (same
+ * `activityType`, different DOM scopes) light up under different conditions.
+ * History and the `activity-change` event are owned by the `RouterController`.
+ */
 export class LitActivityBlock extends LitBlock {
-  protected historyTracked = false;
-
   public activityType: ActivityType = null;
-
-  private [ACTIVE_PROP]?: boolean;
 
   public override init$ = activityBlockCtx(this);
 
-  private _debouncedHistoryFlush = debounce(this._historyFlush.bind(this), 10);
-
-  private _deactivate(): void {
-    const actDesc = LitActivityBlock._activityCallbacks.get(this);
-    this[ACTIVE_PROP] = false;
-    this.removeAttribute(ACTIVE_ATTR);
-    actDesc?.deactivateCallback?.();
-  }
-
-  private _activate(): void {
-    const actDesc = LitActivityBlock._activityCallbacks.get(this);
-    this.$['*historyBack'] = this.historyBack.bind(this);
-    this[ACTIVE_PROP] = true;
-    this.setAttribute(ACTIVE_ATTR, '');
-    actDesc?.activateCallback?.();
-
-    this._debouncedHistoryFlush();
-
-    this.emit(EventType.ACTIVITY_CHANGE, {
-      activity: this.activityType,
-    });
-  }
-
-  // must match visibility of base class
   public override initCallback(): void {
     super.initCallback();
 
+    // Only blocks that actually represent an activity react to the router.
+    // Many `LitActivityBlock`/`LitUploaderBlock` subclasses (source buttons,
+    // source list, headers, …) have no `activityType` and would otherwise
+    // re-render on every navigation for nothing.
+    if (!this.activityType) {
+      return;
+    }
     // TODO: rename activityType to activityId
+    if (!this.hasAttribute('activity')) {
+      this.setAttribute('activity', this.activityType);
+    }
+    // Re-render on every router transition so `updated()` re-evaluates the slot.
+    this.subRouter(() => this.requestUpdate());
+  }
+
+  /** Whether this block's activity currently owns its slot. */
+  protected get isActivityActive(): boolean {
+    if (!this.activityType) {
+      return false;
+    }
+    const isInModal = this.closest('uc-modal') !== null;
+    const slot = isInModal ? this.router.modal : this.router.activity;
+    return slot === this.activityType;
+  }
+
+  protected override updated(changed: PropertyValues<this>): void {
+    super.updated(changed);
     if (this.activityType) {
-      if (!this.hasAttribute('activity')) {
-        this.setAttribute('activity', this.activityType);
-      }
-      this.sub('*currentActivity', (val: string | null) => {
-        try {
-          if (this.activityType !== val && this[ACTIVE_PROP]) {
-            this._deactivate();
-          } else if (this.activityType === val && !this[ACTIVE_PROP]) {
-            this._activate();
-          }
-        } catch (err) {
-          this.telemetryManager.sendEventError(err, `activity "${this.activityType}"`);
-          console.error(`Error in activity "${this.activityType}". `, err);
-          const nextActivity = this.$['*history'][this.$['*history'].length - 1] as RegisteredActivityType | undefined;
-          this.$['*currentActivity'] = nextActivity ?? null;
-        }
-
-        if (!val) {
-          this.$['*history'] = [];
-        }
-      });
+      this.toggleAttribute(ACTIVE_ATTR, this.isActivityActive);
     }
   }
-
-  private _historyFlush(): void {
-    let history = this.$['*history'];
-    if (history) {
-      if (history.length > 10) {
-        history = history.slice(history.length - 11, history.length - 1);
-      }
-      if (this.historyTracked && history[history.length - 1] !== this.activityType) {
-        history.push(this.activityType);
-      }
-      this.$['*history'] = history;
-    }
-  }
-
-  protected _isActivityRegistered(): boolean {
-    return !!this.activityType && LitActivityBlock._activityCallbacks.has(this);
-  }
-
-  private static _activityCallbacks: Map<
-    LitActivityBlock,
-    {
-      activateCallback?: (() => void) | undefined;
-      deactivateCallback?: (() => void) | undefined;
-    }
-  > = new Map();
 
   // declare static activities to satisfy type references below
   public static activities: Readonly<{
@@ -116,82 +66,9 @@ export class LitActivityBlock extends LitBlock {
     EXTERNAL: 'external';
   }>;
 
-  protected get isActivityActive(): boolean {
-    return !!this[ACTIVE_PROP];
-  }
-
-  public get couldOpenActivity(): boolean {
-    return true;
-  }
-
-  /** TODO: remove name argument */
-  protected registerActivity(
-    _name: string,
-    options: { onActivate?: () => void; onDeactivate?: () => void } = {},
-  ): void {
-    const { onActivate, onDeactivate } = options;
-    LitActivityBlock._activityCallbacks.set(this, {
-      activateCallback: onActivate,
-      deactivateCallback: onDeactivate,
-    });
-  }
-
-  private _unregisterActivity(): void {
-    if (this.isActivityActive) {
-      this._deactivate();
-    }
-    LitActivityBlock._activityCallbacks.delete(this);
-  }
-
-  public override disconnectedCallback(): void {
-    super.disconnectedCallback();
-    this._isActivityRegistered() && this._unregisterActivity();
-  }
-
   public get activityParams(): ActivityParamsMap[keyof ActivityParamsMap] {
-    return this.$['*currentActivityParams'] as ActivityParamsMap[keyof ActivityParamsMap];
-  }
-
-  public get initActivity(): RegisteredActivityType | null {
-    return (this.getCssData('--cfg-init-activity') as RegisteredActivityType | null) ?? null;
-  }
-
-  public get doneActivity(): RegisteredActivityType | null {
-    return (this.getCssData('--cfg-done-activity') as RegisteredActivityType | null) ?? null;
-  }
-
-  public historyBack(): void {
-    const history = this.$['*history'];
-
-    if (history) {
-      let nextActivity = history.pop() as RegisteredActivityType | null;
-
-      while (nextActivity === this.activityType) {
-        nextActivity = history.pop() as RegisteredActivityType | null;
-      }
-
-      let couldOpenActivity = !!nextActivity;
-      if (nextActivity) {
-        const nextLitActivityBlock = [...this.blocksRegistry].find(
-          (block) => (block as LitActivityBlock).activityType === nextActivity,
-        );
-        couldOpenActivity = (nextLitActivityBlock as LitActivityBlock | undefined)?.couldOpenActivity ?? false;
-      }
-
-      nextActivity = couldOpenActivity ? (nextActivity as RegisteredActivityType | null) : null;
-
-      this.$['*currentActivity'] = (nextActivity as RegisteredActivityType | null) ?? null;
-
-      if (nextActivity) this.modalManager?.open(nextActivity as RegisteredActivityType);
-      this.$['*history'] = history;
-
-      if (!nextActivity) {
-        this.modalManager?.closeAll();
-      }
-    }
+    return this.router.params as ActivityParamsMap[keyof ActivityParamsMap];
   }
 }
 
 LitActivityBlock.activities = ACTIVITY_TYPES;
-
-export type { RegisteredActivityType, ActivityType };

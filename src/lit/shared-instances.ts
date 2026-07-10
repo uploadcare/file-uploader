@@ -1,12 +1,11 @@
 import type { ConfigType, UploaderPublicApi } from '..';
+import type { RouterController } from '../abstract/controllers/RouterController';
 import type { SecureUploadsController } from '../abstract/controllers/SecureUploadsController';
 import type { UploadCollectionController } from '../abstract/controllers/UploadCollectionController';
 import type { UploadController } from '../abstract/controllers/UploadController';
 import type { ValidationController } from '../abstract/controllers/ValidationController';
-import type { RouterHooksLayer } from '../abstract/features/RouterHooksLayer';
 import type { A11y } from '../abstract/managers/a11y';
 import type { LocaleManager } from '../abstract/managers/LocaleManager';
-import type { ModalManager } from '../abstract/managers/ModalManager';
 import type { PluginController } from '../abstract/managers/plugin';
 import type { TelemetryManager } from '../abstract/managers/TelemetryManager';
 import { sharedConfigKey } from '../abstract/sharedConfigKey';
@@ -74,13 +73,12 @@ export class SharedInstance {
 }
 
 const instanceKeyMap = {
-  modalManager: '*modalManager',
+  router: '*router',
   pluginManager: '*pluginManager',
   telemetryManager: '*telemetryManager',
   localeManager: '*localeManager',
   a11y: '*a11y',
   clipboard: '*clipboard',
-  routerLayer: '*routerLayer',
   blocksRegistry: '*blocksRegistry',
   eventEmitter: '*eventEmitter',
   uploadCollection: '*uploadCollection',
@@ -124,8 +122,8 @@ export const createSharedInstancesBag = (getCtx: () => PubSub<SharedState>) => {
     get ctx(): PubSub<SharedState> {
       return getCtx();
     },
-    get modalManager(): ModalManager | null {
-      return getSharedInstance(getCtx(), '*modalManager', false);
+    get router(): RouterController {
+      return getSharedInstance(getCtx(), '*router');
     },
     get pluginManager(): PluginController {
       return getSharedInstance(getCtx(), '*pluginManager');
@@ -138,9 +136,6 @@ export const createSharedInstancesBag = (getCtx: () => PubSub<SharedState>) => {
     },
     get a11y(): A11y {
       return getSharedInstance(getCtx(), '*a11y');
-    },
-    get routerLayer(): RouterHooksLayer {
-      return getSharedInstance(getCtx(), '*routerLayer');
     },
     get blocksRegistry(): Set<LitBlock> {
       return getSharedInstance(getCtx(), '*blocksRegistry');

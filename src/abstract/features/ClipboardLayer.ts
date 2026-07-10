@@ -81,7 +81,7 @@ export class ClipboardLayer extends SharedInstance {
   }
 
   private openUploadList() {
-    this._sharedInstancesBag.routerLayer.navigateAfterFileAdd();
+    this._sharedInstancesBag.router.traverse('onFileAdd');
   }
 
   private async _listener(event: ClipboardEvent) {
@@ -97,7 +97,7 @@ export class ClipboardLayer extends SharedInstance {
       return;
     }
 
-    const currentActivity = this._sharedInstancesBag.ctx.read('*currentActivity');
+    const currentActivity = this._sharedInstancesBag.router.currentActivity;
     const isInitialState = currentActivity === null;
     const isAllowedActivity = this._isAllowedPasteActivity(currentActivity);
 

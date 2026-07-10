@@ -10,7 +10,6 @@ export { UID } from './utils/UID';
 export { defineComponents } from './abstract/defineComponents';
 export { loadFileUploaderFrom } from './abstract/loadFileUploaderFrom';
 export { defineLocale } from './abstract/localeRegistry';
-export { ModalEvents, type ModalId } from './abstract/managers/ModalManager';
 export { toKebabCase } from './utils/toKebabCase';
 
 // Abstract:
