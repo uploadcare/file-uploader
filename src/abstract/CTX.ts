@@ -1,5 +1,4 @@
 import type { UploadcareGroup } from '@uploadcare/upload-client';
-import { Queue } from '@uploadcare/upload-client';
 import type { LitBlock } from '../lit/LitBlock';
 import type { OutputCollectionState, OutputErrorCollection } from '../types/index';
 import type { LazyPluginEntry } from './managers/plugin/LazyPluginLoader';
@@ -24,7 +23,6 @@ export const uploaderBlockCtx = (fnCtx: LitBlock) => ({
   ...activityBlockCtx(fnCtx),
   '*commonProgress': 0,
   '*uploadList': [],
-  '*uploadQueue': new Queue(1),
   '*collectionErrors': [] as OutputErrorCollection[],
   '*collectionState': null as OutputCollectionState | null,
   '*groupInfo': null as UploadcareGroup | null,
