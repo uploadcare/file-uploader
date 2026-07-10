@@ -1,27 +1,21 @@
 // @ts-check
 
-import { uploadFileGroup } from '@uploadcare/upload-client';
 import { uploaderBlockCtx } from '../abstract/CTX';
 import { SecureUploadsController } from '../abstract/controllers/SecureUploadsController';
-import type {
-  CollectionObserver,
-  UploadCollectionChangeMap,
-  UploadCollectionController,
-} from '../abstract/controllers/UploadCollectionController';
+import type { UploadCollectionController } from '../abstract/controllers/UploadCollectionController';
 import { UploadController } from '../abstract/controllers/UploadController';
+import { UploadEventsController } from '../abstract/controllers/UploadEventsController';
 import { ValidationController } from '../abstract/controllers/ValidationController';
-import { TypedData } from '../abstract/TypedData';
 import { UploaderPublicApi } from '../abstract/UploaderPublicApi';
-import type { UploadEntryData } from '../abstract/uploadEntrySchema';
 import { calculateMaxCenteredCropFrame } from '../blocks/CloudImageEditor/src/crop-utils';
 import { parseCropPreset } from '../blocks/CloudImageEditor/src/lib/parseCropPreset';
 import { EventType } from '../blocks/UploadCtxProvider/EventEmitter';
-import type { OutputCollectionState, OutputFileEntry } from '../types/index';
+import type { OutputCollectionState, OutputFileEntry, OutputFileStatus } from '../types/index';
 import { createCdnUrl, createCdnUrlModifiers } from '../utils/cdn-utils';
-import { debounce } from '../utils/debounce';
 import { ExternalUploadSource, UploadSource } from '../utils/UploadSource';
 import { getOutputData } from './getOutputData';
 import { LitActivityBlock } from './LitActivityBlock';
+import type { Uid } from './Uid';
 
 export class LitUploaderBlock extends LitActivityBlock {
   public static extSrcList: Readonly<typeof ExternalUploadSource>;
@@ -30,8 +24,7 @@ export class LitUploaderBlock extends LitActivityBlock {
 
   private _isCtxOwner = false;
 
-  private _unobserveCollection?: () => void;
-  private _unobserveCollectionProperties?: () => void;
+  private _uploadEvents?: UploadEventsController;
 
   public override init$ = uploaderBlockCtx(this);
 
@@ -133,263 +126,58 @@ export class LitUploaderBlock extends LitActivityBlock {
     super.disconnectedCallback();
 
     if (this._isCtxOwner) {
-      this._unobserveUploadCollection();
+      this._uploadEvents?.unobserve();
     }
-
-    this._flushOutputItems.cancel();
   }
 
   public override connectedCallback(): void {
     super.connectedCallback();
 
     if (this._isCtxOwner) {
-      this._observeUploadCollection();
+      this._uploadEvents?.observe();
     }
   }
 
   private _initCtxOwner(): void {
     this._isCtxOwner = true;
 
-    this._observeUploadCollection();
+    // The collection→events derivation lives in the DOM-free UploadEventsController;
+    // this block just wires its collaborators (api, validation, plugin hooks) and
+    // the v1 `*`-shared-state sinks.
+    this._uploadEvents = new UploadEventsController({
+      collection: this.uploadCollection,
+      config: this.sharedCtx.uploaderController().config,
+      validation: this.validationManager,
+      emit: (type, payload, options) => this.emit(type, payload, options),
+      getOutputItem: <TStatus extends OutputFileStatus>(uid: Uid) => this.api.getOutputItem<TStatus>(uid),
+      getOutputCollectionState: () => this.api.getOutputCollectionState(),
+      getOutputData: () => this.getOutputData(),
+      buildUploadOptions: () => this.uploadController.buildUploadOptions(),
+      runOnAddHooks: (entry) =>
+        void this._sharedInstancesBag.wait('pluginManager').then((pluginManager) => pluginManager.runOnAddHooks(entry)),
+      applyInitialCrop: () => this._setInitialCrop(),
+      uploadTrigger: () => this.$['*uploadTrigger'],
+      setUploadList: (list) => {
+        this.$['*uploadList'] = list;
+      },
+      getCollectionState: () => this.$['*collectionState'],
+      setCollectionState: (state) => {
+        this.$['*collectionState'] = state;
+      },
+      getCommonProgress: () => this.$['*commonProgress'],
+      setCommonProgress: (progress) => {
+        this.$['*commonProgress'] = progress;
+      },
+      setGroupInfo: (group) => {
+        this.$['*groupInfo'] = group;
+      },
+      getCollectionErrors: () => this.$['*collectionErrors'],
+    });
+    this._uploadEvents.observe();
 
     // Upload-queue concurrency is owned by the UploadController, which syncs it
     // from `maxConcurrentRequests` itself.
   }
-
-  private _observeUploadCollection(): void {
-    this._unobserveUploadCollection();
-
-    this._unobserveCollection = this.uploadCollection.observeCollection(this._handleCollectionUpdate);
-
-    this._unobserveCollectionProperties = this.uploadCollection.observeProperties(
-      this._handleCollectionPropertiesUpdate,
-    );
-  }
-
-  private _unobserveUploadCollection(): void {
-    this._unobserveCollectionProperties?.();
-    this._unobserveCollection?.();
-
-    this._unobserveCollectionProperties = undefined;
-    this._unobserveCollection = undefined;
-  }
-
-  private async _createGroup(collectionState: OutputCollectionState): Promise<void> {
-    const uploadClientOptions = await this.uploadController.buildUploadOptions();
-    const uuidList = collectionState.allEntries.map((entry) => {
-      return entry.uuid + (entry.cdnUrlModifiers ? `/${entry.cdnUrlModifiers}` : '');
-    });
-    const abortController = new AbortController();
-    const resp = await uploadFileGroup(uuidList, {
-      ...uploadClientOptions,
-      signal: abortController.signal,
-    });
-    if (this.$['*collectionState'] !== collectionState) {
-      abortController.abort();
-      return;
-    }
-    this.$['*groupInfo'] = resp;
-    const collectionStateWithGroup = this.api.getOutputCollectionState() as OutputCollectionState<
-      'success',
-      'has-group'
-    >;
-    this.emit(EventType.GROUP_CREATED, collectionStateWithGroup);
-    this.emit(EventType.CHANGE, () => this.api.getOutputCollectionState(), {
-      debounce: true,
-    });
-    this.$['*collectionState'] = collectionStateWithGroup;
-  }
-
-  private _flushOutputItems = debounce(async () => {
-    const data = this.getOutputData();
-    if (data.length !== this.uploadCollection.size) {
-      return;
-    }
-    const collectionState = this.api.getOutputCollectionState();
-    this.$['*collectionState'] = collectionState;
-    this.emit(EventType.CHANGE, () => this.api.getOutputCollectionState(), {
-      debounce: true,
-    });
-
-    if (this.cfg.groupOutput && collectionState.totalCount > 0 && collectionState.status === 'success') {
-      this._createGroup(collectionState);
-    }
-  }, 300);
-
-  private _handleCollectionUpdate: CollectionObserver = (entries, added, removed) => {
-    if (!this.isConnected) return;
-    if (added.size || removed.size) {
-      this.$['*groupInfo'] = null;
-    }
-
-    this.validationManager.runFileValidators(
-      'add',
-      [...added].map((e) => e.uid),
-    );
-
-    for (const entry of added) {
-      if (!entry.getValue('silent')) {
-        this.emit(EventType.FILE_ADDED, this.api.getOutputItem(entry.uid));
-      }
-      void this._sharedInstancesBag.wait('pluginManager').then((pluginManager) => pluginManager.runOnAddHooks(entry));
-    }
-
-    this.validationManager.runCollectionValidators();
-
-    for (const entry of removed) {
-      this.$['*uploadTrigger'].delete(entry.uid);
-
-      this.validationManager.cleanupValidationForEntry(entry);
-      entry.getValue('abortController')?.abort();
-      entry.setMultipleValues({
-        isRemoved: true,
-        abortController: null,
-        isUploading: false,
-        uploadProgress: 0,
-      });
-      const thumbUrl = entry?.getValue('thumbUrl');
-      thumbUrl && URL.revokeObjectURL(thumbUrl);
-      this.emit(EventType.FILE_REMOVED, this.api.getOutputItem(entry.uid));
-    }
-
-    this.$['*uploadList'] = entries.map((uid) => {
-      return { uid };
-    });
-
-    this._flushCommonUploadProgress();
-    this._flushOutputItems();
-  };
-
-  private _handleCollectionPropertiesUpdate = (changeMap: UploadCollectionChangeMap): void => {
-    if (!this.isConnected) return;
-    this._flushOutputItems();
-
-    const uploadCollection = this.uploadCollection;
-    const entriesToRunValidation = [
-      ...new Set(
-        Object.entries(changeMap)
-          .filter(([key]) => ['file', 'uploadError', 'fileInfo', 'cdnUrl', 'cdnUrlModifiers'].includes(key))
-          .flatMap(([, ids]) => [...(ids ?? [])]),
-      ),
-    ];
-
-    entriesToRunValidation.length > 0 &&
-      setTimeout(() => {
-        if (!this.isConnected) return;
-        // We can't modify entry properties in the same tick, so we need to wait a bit
-        const entriesToRunOnUpload = entriesToRunValidation.filter(
-          (entryId) =>
-            changeMap.fileInfo?.has(entryId) && !!TypedData.getByUid<UploadEntryData>(entryId)?.snapshot().fileInfo,
-        );
-        if (entriesToRunOnUpload.length > 0) {
-          this.validationManager.runFileValidators('upload', entriesToRunOnUpload);
-        }
-        this.validationManager.runFileValidators('change', entriesToRunValidation);
-      });
-
-    if (changeMap.uploadProgress) {
-      for (const entryId of changeMap.uploadProgress) {
-        const entry = TypedData.getByUid<UploadEntryData>(entryId);
-        if (!entry) continue;
-        const { isUploading, silent } = entry.snapshot();
-        if (isUploading && !silent) {
-          this.emit(EventType.FILE_UPLOAD_PROGRESS, this.api.getOutputItem(entryId));
-        }
-      }
-
-      this._flushCommonUploadProgress();
-    }
-    if (changeMap.isUploading) {
-      for (const entryId of changeMap.isUploading) {
-        const entry = TypedData.getByUid<UploadEntryData>(entryId);
-        if (!entry) continue;
-        const { isUploading, silent } = entry.snapshot();
-        if (isUploading && !silent) {
-          this.emit(EventType.FILE_UPLOAD_START, this.api.getOutputItem(entryId));
-        }
-      }
-    }
-    if (changeMap.fileInfo) {
-      for (const entryId of changeMap.fileInfo) {
-        const entry = TypedData.getByUid<UploadEntryData>(entryId);
-        if (!entry) continue;
-        const { fileInfo, silent } = entry.snapshot();
-        if (fileInfo && !silent) {
-          this.emit(EventType.FILE_UPLOAD_SUCCESS, this.api.getOutputItem(entryId));
-        }
-      }
-      if (this.cfg.cropPreset) {
-        this._setInitialCrop();
-      }
-    }
-    if (changeMap.errors) {
-      this.validationManager.runCollectionValidators();
-
-      for (const entryId of changeMap.errors) {
-        const entry = TypedData.getByUid<UploadEntryData>(entryId);
-        if (!entry) continue;
-        const { errors } = entry.snapshot();
-        if (errors.length > 0) {
-          this.emit(EventType.FILE_UPLOAD_FAILED, this.api.getOutputItem(entryId));
-          this.emit(
-            EventType.COMMON_UPLOAD_FAILED,
-            () => this.api.getOutputCollectionState() as OutputCollectionState<'failed'>,
-            { debounce: true },
-          );
-        }
-      }
-      const loadedItems = uploadCollection.findItems((entry) => {
-        return !!entry.getValue('fileInfo');
-      });
-      const errorItems = uploadCollection.findItems((entry) => {
-        return entry.getValue('errors').length > 0;
-      });
-      if (
-        uploadCollection.size > 0 &&
-        errorItems.length === 0 &&
-        uploadCollection.size === loadedItems.length &&
-        this.$['*collectionErrors'].length === 0
-      ) {
-        this.emit(
-          EventType.COMMON_UPLOAD_SUCCESS,
-          this.api.getOutputCollectionState() as OutputCollectionState<'success'>,
-        );
-      }
-    }
-    if (changeMap.cdnUrl) {
-      const uids = [...changeMap.cdnUrl].filter((uid) => {
-        return !!this.uploadCollection.read(uid)?.getValue('cdnUrl');
-      });
-      uids.forEach((uid) => {
-        this.emit(EventType.FILE_URL_CHANGED, this.api.getOutputItem(uid));
-      });
-
-      this.$['*groupInfo'] = null;
-    }
-  };
-
-  private _flushCommonUploadProgress = (): void => {
-    let commonProgress = 0;
-    const uploadTrigger = this.$['*uploadTrigger'];
-    const items = [...uploadTrigger].filter((id) => !!this.uploadCollection.read(id));
-    items.forEach((id) => {
-      const uploadProgress = this.uploadCollection.readProp(id, 'uploadProgress');
-      if (typeof uploadProgress === 'number') {
-        commonProgress += uploadProgress;
-      }
-    });
-    const progress = items.length ? Math.round(commonProgress / items.length) : 0;
-
-    if (this.$['*commonProgress'] === progress) {
-      return;
-    }
-
-    this.$['*commonProgress'] = progress;
-    this.emit(
-      EventType.COMMON_UPLOAD_PROGRESS,
-      this.api.getOutputCollectionState() as OutputCollectionState<'uploading'>,
-    );
-  };
 
   private _setInitialCrop(): void {
     const cropPreset = parseCropPreset(this.cfg.cropPreset);
