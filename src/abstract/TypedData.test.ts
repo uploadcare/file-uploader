@@ -137,4 +137,18 @@ describe('TypedData', () => {
     ctx.destroy();
     expect(TypedData.getByUid(id)).toBeNull();
   });
+
+  it('warns when reading an unknown property and returns undefined', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const ctx = new TypedData<{ a: number }>({ a: 1 });
+
+    // biome-ignore lint/suspicious/noExplicitAny: exercising the unknown-key read guard
+    const value = ctx.getValue('missing' as any);
+
+    expect(value).toBeUndefined();
+    expect(warn).toHaveBeenCalledWith(expect.stringMatching(/\[Typed State\] Wrong property name:/));
+
+    ctx.destroy();
+    warn.mockRestore();
+  });
 });

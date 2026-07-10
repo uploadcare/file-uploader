@@ -103,4 +103,35 @@ describe('ConfigController', () => {
     config.setCustom('unsplashApiKey', 'y');
     expect(listener).not.toHaveBeenCalled();
   });
+
+  it('values exposes the live config object reflecting writes', () => {
+    const config = new ConfigController();
+    expect(config.values.multiple).toBe(initialConfig.multiple);
+
+    config.set('multiple', false);
+    expect(config.values.multiple).toBe(false);
+  });
+
+  it('customDefinition returns the registered definition (or undefined)', () => {
+    const config = new ConfigController();
+    const def = { name: 'unsplashApiKey', defaultValue: 'x', normalize: (v: unknown) => String(v) };
+    config.register(def);
+
+    expect(config.customDefinition('unsplashApiKey')).toBe(def);
+    expect(config.customDefinition('not-registered')).toBeUndefined();
+  });
+
+  it('setCustom does not notify when the value is unchanged', () => {
+    const config = new ConfigController();
+    config.setCustom('unsplashApiKey', 'v');
+
+    const listener = vi.fn();
+    config.subscribe(listener);
+
+    config.setCustom('unsplashApiKey', 'v'); // unchanged → no notify
+    expect(listener).not.toHaveBeenCalled();
+
+    config.setCustom('unsplashApiKey', 'w'); // changed → notify
+    expect(listener).toHaveBeenCalledTimes(1);
+  });
 });
