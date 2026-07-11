@@ -42,7 +42,10 @@ const REDACTED_VALUE = '[redacted]';
 export type TelemetryManagerDeps = {
   /** v2 config source of truth — enablement, snapshot, and change detection. */
   config: ConfigController;
-  /** Solution tag name (lowercased for the payload); null before a solution registers. */
+  /**
+   * Payload-ready solution name (`UploaderController.solutionName`, already
+   * lowercased); null before a solution registers.
+   */
   getSolution: () => string | null;
   /** Effective current activity; null before the router exists / nothing open. */
   getActivity: () => string | null;
@@ -253,8 +256,7 @@ export class TelemetryManager {
   }
 
   private get _solution(): string | null {
-    const solution = this._deps.getSolution();
-    return solution ? solution.toLowerCase() : null;
+    return this._deps.getSolution();
   }
 
   private get _location(): string {

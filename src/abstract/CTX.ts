@@ -21,6 +21,5 @@ export const uploaderBlockCtx = (fnCtx: LitBlock) => ({
 
 export const solutionBlockCtx = (fnCtx: LitBlock) => ({
   ...uploaderBlockCtx(fnCtx),
-  '*solution': null as string | null,
   '*lazyPlugins': null as LazyPluginEntry[] | null,
 });

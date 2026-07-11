@@ -38,6 +38,28 @@ describe('UploaderController', () => {
     expect(controller.collection).toBeInstanceOf(UploadCollectionController);
   });
 
+  describe('solutionName', () => {
+    it('stores the name lowercased (tag names arrive uppercase)', () => {
+      const controller = new UploaderController();
+      expect(controller.solutionName).toBeNull();
+
+      controller.setSolutionName('UC-FILE-UPLOADER-REGULAR');
+
+      expect(controller.solutionName).toBe('uc-file-uploader-regular');
+    });
+
+    it('lets the most recently initialized solution identify the scope', () => {
+      const controller = new UploaderController();
+
+      // Several solutions sharing one ctx-name is a supported composition
+      // (e.g. uploader + standalone editor) — v1 pub last-writer parity.
+      controller.setSolutionName('UC-FILE-UPLOADER-REGULAR');
+      controller.setSolutionName('UC-CLOUD-IMAGE-EDITOR');
+
+      expect(controller.solutionName).toBe('uc-cloud-image-editor');
+    });
+  });
+
   it('destroy() tears down without throwing', () => {
     const controller = new UploaderController();
     expect(() => controller.destroy()).not.toThrow();

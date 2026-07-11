@@ -1,5 +1,4 @@
 import { EventBus } from '../EventBus';
-import { Listeners } from '../host-subscription';
 import { ConfigController } from './ConfigController';
 import { LocaleController } from './LocaleController';
 import { UploadCollectionController } from './UploadCollectionController';
@@ -41,12 +40,10 @@ export class UploaderController {
   public readonly locale: LocaleController;
   public readonly collection: UploadCollectionController;
 
-  // ─── Solution (M8) ───
-  // Source of truth for the v1 `*solution` key: the solution block's tag name,
-  // published once by `LitSolutionBlock`, read by telemetry. `PubSubCompat`
-  // routes the `*solution` key here.
-  private _solution: string | null = null;
-  private _solutionListeners = new Listeners();
+  // The solution (preset) identity of this uploader scope — a boot-time fact,
+  // not reactive state: set once by the solution element, read lazily by
+  // telemetry. Stored lowercased, payload-ready.
+  private _solutionName: string | null = null;
 
   public constructor(deps: UploaderControllerDeps = {}) {
     this.events = deps.events ?? new EventBus();
@@ -55,19 +52,18 @@ export class UploaderController {
     this.collection = deps.collection ?? new UploadCollectionController();
   }
 
-  public get solution(): string | null {
-    return this._solution;
+  public get solutionName(): string | null {
+    return this._solutionName;
   }
 
-  /** Notifies only on an actual change (per-key change semantics). */
-  public setSolution(name: string | null): void {
-    if (this._solution === name) return;
-    this._solution = name;
-    this._solutionListeners.notify();
-  }
-
-  public subscribeSolution(listener: () => void): () => void {
-    return this._solutionListeners.subscribe(listener);
+  /**
+   * Register the solution (preset) owning this scope. Several solutions may
+   * share one `ctx-name` (a supported composition — e.g. an uploader plus a
+   * standalone editor); the most recently initialized one identifies the
+   * scope, matching v1's `pub('*solution', …)` last-writer semantics.
+   */
+  public setSolutionName(name: string): void {
+    this._solutionName = name.toLowerCase();
   }
 
   public destroy(): void {
@@ -75,6 +71,5 @@ export class UploaderController {
     this.config.destroy();
     this.locale.destroy();
     this.collection.destroy();
-    this._solutionListeners.clear();
   }
 }
