@@ -1,8 +1,8 @@
 import { LitElement } from 'lit';
 import { blockCtx } from '../abstract/CTX';
+import { ClipboardController } from '../abstract/controllers/ClipboardController';
 import { RouterController, type RouterControllerDeps } from '../abstract/controllers/RouterController';
 import { type UploaderEventKey, type UploaderEventPayload, UploaderEventType } from '../abstract/EventBus';
-import { ClipboardLayer } from '../abstract/features/ClipboardLayer';
 import { A11y } from '../abstract/managers/a11y';
 import { LocaleManager, localeStateKey } from '../abstract/managers/LocaleManager';
 import { PluginController } from '../abstract/managers/plugin';
@@ -114,10 +114,26 @@ export class LitBlock extends LitBlockBase {
     this._addSharedContextInstance('*localeManager', (sharedInstancesBag) => new LocaleManager(sharedInstancesBag));
     this._addSharedContextInstance('*a11y', () => new A11y());
     this._addSharedContextInstance('*router', () => new RouterController({ emit: this._routerEmit }));
-    this._addSharedContextInstance('*clipboard', (sharedInstancesBag) => new ClipboardLayer(sharedInstancesBag));
+    this._addSharedContextInstance(
+      '*clipboard',
+      (sharedInstancesBag) =>
+        new ClipboardController({
+          getPasteScope: () => sharedInstancesBag.ctx.read(sharedConfigKey('pasteScope')),
+          getCurrentActivity: () => sharedInstancesBag.router.currentActivity,
+          addFileFromObject: (file, options) => sharedInstancesBag.api.addFileFromObject(file, options),
+          addFileFromUrl: (url, options) => sharedInstancesBag.api.addFileFromUrl(url, options),
+          onFileAdd: () => sharedInstancesBag.router.traverse('onFileAdd'),
+        }),
+    );
     this._addSharedContextInstance(
       '*telemetryManager',
-      (sharedInstancesBag) => new TelemetryManager(sharedInstancesBag),
+      (sharedInstancesBag) =>
+        new TelemetryManager({
+          config: sharedInstancesBag.ctx.uploaderController().config,
+          getSolution: () => sharedInstancesBag.ctx.uploaderController().solutionName,
+          getActivity: () =>
+            sharedInstancesBag.ctx.has('*router') ? sharedInstancesBag.ctx.read('*router').currentActivity : null,
+        }),
     );
 
     this.sub(localeStateKey('locale-id'), (localeId: string) => {
@@ -225,7 +241,7 @@ export class LitBlock extends LitBlockBase {
     return this._getSharedContextInstance('*a11y');
   }
 
-  public get clipboardLayer(): ClipboardLayer {
+  public get clipboardLayer(): ClipboardController {
     return this._getSharedContextInstance('*clipboard');
   }
 

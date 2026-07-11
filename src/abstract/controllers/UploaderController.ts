@@ -40,11 +40,30 @@ export class UploaderController {
   public readonly locale: LocaleController;
   public readonly collection: UploadCollectionController;
 
+  // The solution (preset) identity of this uploader scope — a boot-time fact,
+  // not reactive state: set once by the solution element, read lazily by
+  // telemetry. Stored lowercased, payload-ready.
+  private _solutionName: string | null = null;
+
   public constructor(deps: UploaderControllerDeps = {}) {
     this.events = deps.events ?? new EventBus();
     this.config = deps.config ?? new ConfigController();
     this.locale = deps.locale ?? new LocaleController();
     this.collection = deps.collection ?? new UploadCollectionController();
+  }
+
+  public get solutionName(): string | null {
+    return this._solutionName;
+  }
+
+  /**
+   * Register the solution (preset) owning this scope. Several solutions may
+   * share one `ctx-name` (a supported composition — e.g. an uploader plus a
+   * standalone editor); the most recently initialized one identifies the
+   * scope, matching v1's `pub('*solution', …)` last-writer semantics.
+   */
+  public setSolutionName(name: string): void {
+    this._solutionName = name.toLowerCase();
   }
 
   public destroy(): void {
