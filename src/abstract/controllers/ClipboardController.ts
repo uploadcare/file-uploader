@@ -34,7 +34,13 @@ export class ClipboardController {
   public constructor(deps: ClipboardControllerDeps) {
     this._deps = deps;
     this._eventTarget = deps.eventTarget ?? window;
-    this._listener = (event) => void this._handlePasteEvent(event);
+    // Isolate-and-warn (AGENTS.md #3): a rejection from an injected add-file
+    // dep must stay contained here, not surface as an unhandled rejection.
+    this._listener = (event) => {
+      this._handlePasteEvent(event).catch((err) => {
+        console.warn('[uc] clipboard paste handling failed', err);
+      });
+    };
     this._eventTarget.addEventListener('paste', this._listener);
   }
 

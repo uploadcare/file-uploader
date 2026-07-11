@@ -20,6 +20,21 @@ type TelemetryEventBody = Partial<Pick<TelemetryState, 'payload' | 'config'>> & 
   eventType?: CommonEventType;
 };
 
+/**
+ * Config keys stripped from the reported snapshot: secrets (signatures,
+ * expiry, proxy) and integrator-supplied data (`metadata`) must never leave
+ * the page via telemetry. The full snapshot is still tracked internally for
+ * change detection — only the emitted payload is redacted.
+ */
+const SENSITIVE_CONFIG_KEYS: ReadonlySet<string> = new Set([
+  'secureSignature',
+  'secureExpire',
+  'secureDeliveryProxy',
+  'secureUploadsSignatureResolver',
+  'secureDeliveryProxyUrlResolver',
+  'metadata',
+]);
+
 export type TelemetryManagerDeps = {
   /** v2 config source of truth — enablement, snapshot, and change detection. */
   config: ConfigController;
@@ -86,6 +101,11 @@ export class TelemetryManager {
     }
   }
 
+  private _redactedConfig(): TelemetryState['config'] {
+    const entries = Object.entries(this._config).filter(([key]) => !SENSITIVE_CONFIG_KEYS.has(key));
+    return Object.fromEntries(entries) as TelemetryState['config'];
+  }
+
   private _init(type: CommonEventType | undefined): void {
     if (type === InternalEventType.INIT_SOLUTION && !this._initialized) {
       this._initialized = true;
@@ -100,7 +120,7 @@ export class TelemetryManager {
 
     const result: Partial<Pick<TelemetryState, 'eventType' | 'payload' | 'config'>> = { ...body };
     if (body.eventType === InternalEventType.INIT_SOLUTION || body.eventType === InternalEventType.CHANGE_CONFIG) {
-      result.config = this._config as TelemetryState['config'];
+      result.config = this._redactedConfig();
     }
 
     return {

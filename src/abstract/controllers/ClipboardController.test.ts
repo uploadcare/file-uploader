@@ -311,6 +311,21 @@ describe('ClipboardController', () => {
     expect(onFileAdd).toHaveBeenCalledTimes(1);
   });
 
+  it('contains a rejection from an injected add-file dep (warns instead of unhandled rejection)', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const { layer, api } = setup({ pasteScope: 'global', currentActivity: 'start-from' });
+    track(layer);
+    layer.registerScope(connectedScope());
+    api.addFileFromObject.mockImplementation(() => {
+      throw new Error('boom');
+    });
+
+    window.dispatchEvent(pasteEvent([fileItem(new File(['x'], 'x.txt'))]));
+    await flush();
+
+    expect(warn).toHaveBeenCalledWith('[uc] clipboard paste handling failed', expect.any(Error));
+  });
+
   it('destroy() detaches the window listener and clears scopes', async () => {
     const { layer, api } = setup({ pasteScope: 'global', currentActivity: 'start-from' });
     layer.registerScope(connectedScope());

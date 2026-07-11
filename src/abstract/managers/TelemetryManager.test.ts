@@ -74,6 +74,24 @@ describe('TelemetryManager', () => {
     expect(typeof payload.sessionId).toBe('string');
   });
 
+  it('redacts sensitive keys from the reported config snapshot', async () => {
+    const { manager, setConfig } = setup();
+    setConfig('secureSignature', 'sig-secret');
+    setConfig('metadata', { userId: 'private' });
+
+    manager.sendEvent({ eventType: InternalEventType.INIT_SOLUTION });
+    await flush();
+
+    const payload = sendEventMock.mock.calls[0]?.[0] as { config: Record<string, unknown> };
+    expect(payload.config.secureSignature).toBeUndefined();
+    expect(payload.config.secureExpire).toBeUndefined();
+    expect(payload.config.secureDeliveryProxy).toBeUndefined();
+    expect(payload.config.metadata).toBeUndefined();
+    expect(payload.config.secureUploadsSignatureResolver).toBeUndefined();
+    expect(payload.config.secureDeliveryProxyUrlResolver).toBeUndefined();
+    expect(payload.config.multiple).toBe(true); // non-sensitive keys stay
+  });
+
   it('reports a null component when no solution is registered', async () => {
     const { manager, enable } = setup();
     enable();
