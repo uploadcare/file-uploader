@@ -130,8 +130,8 @@ export class LitBlock extends LitBlockBase {
       (sharedInstancesBag) =>
         new TelemetryManager({
           config: sharedInstancesBag.ctx.uploaderController().config,
-          getSolution: () =>
-            sharedInstancesBag.ctx.has('*solution') ? sharedInstancesBag.ctx.read('*solution') : null,
+          // `*solution` is controller-backed now, so it's always readable.
+          getSolution: () => sharedInstancesBag.ctx.read('*solution'),
           getActivity: () =>
             sharedInstancesBag.ctx.has('*router') ? sharedInstancesBag.ctx.read('*router').currentActivity : null,
         }),
