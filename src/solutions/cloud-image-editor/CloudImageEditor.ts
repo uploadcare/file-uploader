@@ -1,25 +1,17 @@
 import { CloudImageEditorBlock } from '../../blocks/CloudImageEditor/src/CloudImageEditorBlock';
 import { InternalEventType } from '../../blocks/UploadCtxProvider/EventEmitter';
 
-type BaseInitState = InstanceType<typeof CloudImageEditorBlock>['init$'];
-interface CloudImageEditorInitState extends BaseInitState {
-  '*solution': string;
-}
-
 export class CloudImageEditor extends CloudImageEditorBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-wgt-common'];
 
-  public constructor() {
-    super();
-
-    this.init$ = {
-      ...this.init$,
-      '*solution': this.tagName,
-    } as CloudImageEditorInitState;
-  }
-
   public override initCallback(): void {
     super.initCallback();
+
+    // Register the solution identity before the init event so the telemetry
+    // payload's `component` carries it. (The old `init$`-seeded `*solution`
+    // entry was first-write-wins and depended on this element initializing
+    // before any other block in the ctx — an explicit call has no such race.)
+    this.sharedCtx.uploaderController().setSolutionName(this.tagName);
 
     this.telemetryManager.sendEvent({
       eventType: InternalEventType.INIT_SOLUTION,

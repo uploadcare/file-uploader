@@ -1,4 +1,4 @@
-import type { PasteScope } from '../../abstract/features/ClipboardLayer';
+import type { PasteScope } from '../../abstract/controllers/ClipboardController';
 import type { Metadata, MetadataCallback } from '../../types/index';
 import { deserializeCsv } from '../../utils/comma-separated';
 import type { ModeCameraType } from '../CameraSource/constants';
