@@ -74,22 +74,27 @@ describe('TelemetryManager', () => {
     expect(typeof payload.sessionId).toBe('string');
   });
 
-  it('redacts sensitive keys from the reported config snapshot', async () => {
+  it('replaces customized sensitive config values with a redaction marker', async () => {
     const { manager, setConfig } = setup();
     setConfig('secureSignature', 'sig-secret');
-    setConfig('metadata', { userId: 'private' });
+    setConfig('metadata', { userId: 'private-data' });
 
     manager.sendEvent({ eventType: InternalEventType.INIT_SOLUTION });
     await flush();
 
     const payload = sendEventMock.mock.calls[0]?.[0] as { config: Record<string, unknown> };
-    expect(payload.config.secureSignature).toBeUndefined();
-    expect(payload.config.secureExpire).toBeUndefined();
-    expect(payload.config.secureDeliveryProxy).toBeUndefined();
-    expect(payload.config.metadata).toBeUndefined();
-    expect(payload.config.secureUploadsSignatureResolver).toBeUndefined();
-    expect(payload.config.secureDeliveryProxyUrlResolver).toBeUndefined();
-    expect(payload.config.multiple).toBe(true); // non-sensitive keys stay
+    // Customized sensitive options stay visible as "used", value hidden.
+    expect(payload.config.secureSignature).toBe('[redacted]');
+    expect(payload.config.metadata).toBe('[redacted]');
+    // Untouched sensitive options pass through as their (default) values.
+    expect(payload.config.secureExpire).toBe('');
+    expect(payload.config.secureDeliveryProxy).toBe('');
+    // Non-sensitive keys are untouched.
+    expect(payload.config.multiple).toBe(true);
+    // The raw values never appear anywhere in the payload.
+    const serialized = JSON.stringify(payload.config);
+    expect(serialized).not.toContain('sig-secret');
+    expect(serialized).not.toContain('private-data');
   });
 
   it('reports a null component when no solution is registered', async () => {

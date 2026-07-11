@@ -62,7 +62,14 @@ export class LitUploaderBlock extends LitActivityBlock {
         getFileHooks: () => sharedInstancesBag.pluginManager?.snapshot().fileHooks ?? [],
         getOutputItem: (uid) => sharedInstancesBag.api.getOutputItem(uid),
         onUploadError: (error, context) => {
-          sharedInstancesBag.telemetryManager.sendEventError(error, context);
+          // An upload's async error handler can fire after the ctx (and its
+          // telemetry instance) is torn down — error *reporting* must never
+          // throw, or the original failure becomes an unhandled rejection.
+          try {
+            sharedInstancesBag.telemetryManager.sendEventError(error, context);
+          } catch (err) {
+            this.debugPrint('telemetry unavailable for an upload error report', err);
+          }
         },
         debug: (...args) => this.debugPrint(...args),
       });

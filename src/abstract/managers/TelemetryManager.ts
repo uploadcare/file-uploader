@@ -21,19 +21,23 @@ type TelemetryEventBody = Partial<Pick<TelemetryState, 'payload' | 'config'>> & 
 };
 
 /**
- * Config keys stripped from the reported snapshot: secrets (signatures,
- * expiry, proxy) and integrator-supplied data (`metadata`) must never leave
- * the page via telemetry. The full snapshot is still tracked internally for
- * change detection — only the emitted payload is redacted.
+ * Config keys whose *values* must never leave the page via telemetry: the
+ * `secure*` options and integrator-supplied `metadata`. They are not dropped
+ * from the snapshot — a non-default value is replaced with
+ * {@link REDACTED_VALUE}, so the data still shows the option is in use while
+ * the value itself stays private. The full snapshot is still tracked
+ * internally for change detection.
  */
-const SENSITIVE_CONFIG_KEYS: ReadonlySet<string> = new Set([
+const SENSITIVE_CONFIG_KEYS: ReadonlySet<keyof ConfigType> = new Set([
   'secureSignature',
   'secureExpire',
   'secureDeliveryProxy',
   'secureUploadsSignatureResolver',
   'secureDeliveryProxyUrlResolver',
   'metadata',
-]);
+] as const);
+
+const REDACTED_VALUE = '[redacted]';
 
 export type TelemetryManagerDeps = {
   /** v2 config source of truth — enablement, snapshot, and change detection. */
@@ -101,9 +105,14 @@ export class TelemetryManager {
     }
   }
 
-  private _redactedConfig(): TelemetryState['config'] {
-    const entries = Object.entries(this._config).filter(([key]) => !SENSITIVE_CONFIG_KEYS.has(key));
-    return Object.fromEntries(entries) as TelemetryState['config'];
+  private _sanitizedConfig(): TelemetryState['config'] {
+    const sanitized: Record<string, unknown> = { ...this._config };
+    for (const key of SENSITIVE_CONFIG_KEYS) {
+      if (this._config[key] !== initialConfig[key]) {
+        sanitized[key] = REDACTED_VALUE;
+      }
+    }
+    return sanitized as TelemetryState['config'];
   }
 
   private _init(type: CommonEventType | undefined): void {
@@ -120,7 +129,7 @@ export class TelemetryManager {
 
     const result: Partial<Pick<TelemetryState, 'eventType' | 'payload' | 'config'>> = { ...body };
     if (body.eventType === InternalEventType.INIT_SOLUTION || body.eventType === InternalEventType.CHANGE_CONFIG) {
-      result.config = this._redactedConfig();
+      result.config = this._sanitizedConfig();
     }
 
     return {
