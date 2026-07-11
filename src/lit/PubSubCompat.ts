@@ -11,12 +11,10 @@ type PubSubStore<T extends Record<string, unknown>> = MapStore<T>;
 /**
  * Namespaces routed to the per-ctx `UploaderController` instead of the
  * nanostores map: config (`*cfg/<key>`) → `controller.config`, locale
- * (`*l10n/<key>`) → `controller.locale`, and the exact `*solution` key →
- * `controller.solution` (M8). Everything else stays on nanostores.
+ * (`*l10n/<key>`) → `controller.locale`. Everything else stays on nanostores.
  */
 const CFG_PREFIX = '*cfg/';
 const L10N_PREFIX = '*l10n/';
-const SOLUTION_KEY = '*solution';
 
 export class PubSub<T extends Record<string, unknown>> {
   private static _contexts = new Map<string, PubSubStore<Record<string, unknown>>>();
@@ -107,10 +105,6 @@ export class PubSub<T extends Record<string, unknown>> {
       this._config().setCustom(cfg, value);
       return;
     }
-    if (key === SOLUTION_KEY) {
-      this._uploader().setSolution(value as string | null);
-      return;
-    }
     const loc = this._l10nName(key);
     if (loc !== null) {
       this._locale().set(loc, value as unknown as string);
@@ -143,15 +137,6 @@ export class PubSub<T extends Record<string, unknown>> {
         init,
       );
     }
-    if (key === SOLUTION_KEY) {
-      const uploader = this._uploader();
-      return this._subDerived<T[K]>(
-        () => uploader.solution as T[K],
-        (l) => uploader.subscribeSolution(l),
-        callback,
-        init,
-      );
-    }
     const unsubscribe = (init ? subscribeKeys : listenKeys)(this._store, [key as any], (values: Partial<T>) => {
       callback(values[key] as T[K]);
     });
@@ -172,9 +157,6 @@ export class PubSub<T extends Record<string, unknown>> {
       const locale = this._locale();
       if (!locale.has(loc)) console.warn(`PubSub#read: Key "${String(key)}" not found`);
       return locale.get(loc) as T[K];
-    }
-    if (key === SOLUTION_KEY) {
-      return this._uploader().solution as T[K];
     }
     if (!(key in this._store.get())) {
       console.warn(`PubSub#read: Key "${String(key)}" not found`);
@@ -206,13 +188,6 @@ export class PubSub<T extends Record<string, unknown>> {
       if (!locale.has(loc) || rewrite) locale.set(loc, value as unknown as string);
       return;
     }
-    if (key === SOLUTION_KEY) {
-      // The controller always carries the key (default `null`), so a plain
-      // `add` (the `init$` seeding) never clobbers a published solution name —
-      // only an explicit rewrite writes through.
-      if (rewrite) this._uploader().setSolution(value as string | null);
-      return;
-    }
     const exists = key in this._store.get();
 
     if (!exists || rewrite) {
@@ -226,7 +201,6 @@ export class PubSub<T extends Record<string, unknown>> {
     if (cfg !== null) return this._config().hasKey(cfg);
     const loc = this._l10nName(key);
     if (loc !== null) return this._locale().has(loc);
-    if (key === SOLUTION_KEY) return true; // always known on the controller
     return key in this._store.get();
   }
 

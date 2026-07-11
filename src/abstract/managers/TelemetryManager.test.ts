@@ -57,7 +57,7 @@ describe('TelemetryManager', () => {
   });
 
   it('sends the init event with app/session/config metadata once enabled', async () => {
-    const { manager, enable } = setup({ solution: 'UC-FILE-UPLOADER-REGULAR', activity: 'start-from' });
+    const { manager, enable } = setup({ solution: 'uc-file-uploader-regular', activity: 'start-from' });
     enable();
 
     manager.sendEvent({ eventType: InternalEventType.INIT_SOLUTION });

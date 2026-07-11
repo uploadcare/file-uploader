@@ -46,7 +46,6 @@ type UploaderBlockCtxState = {
 };
 
 type SolutionBlockCtxState = UploaderBlockCtxState & {
-  '*solution': string | null;
   '*lazyPlugins': LazyPluginEntry[] | null;
 };
 

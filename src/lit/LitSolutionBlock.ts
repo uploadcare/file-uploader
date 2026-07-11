@@ -16,7 +16,9 @@ export class LitSolutionBlock extends LitBlock {
     super.initCallback();
     this.a11y?.registerBlock(this);
     this._unregisterClipboardScope = this.clipboardLayer?.registerScope(this) ?? null;
-    this.sharedCtx.pub('*solution', this.tagName);
+    // A boot-time identity fact on the controller, not pub/sub state — read
+    // lazily by telemetry as the payload's `component`.
+    this.sharedCtx.uploaderController().setSolutionName(this.tagName);
     const entries = (this.constructor as typeof LitSolutionBlock).lazyPlugins;
     if (entries) {
       this.sharedCtx.pub('*lazyPlugins', entries);
