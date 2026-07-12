@@ -66,10 +66,12 @@ export const waitForActivityBlock = (
 
     const timer = setTimeout(() => {
       cancelAnimationFrame(rafId);
-      onTimeout?.();
       // Settle instead of leaving the promise pending forever (unlike the
       // legacy `waitForBlockInCtx`): callers gate on the resolved value.
+      // Resolve BEFORE the callback so a throwing `onTimeout` can't leave
+      // the promise pending.
       resolve(false);
+      onTimeout?.();
     }, timeout);
 
     const check = () => {
