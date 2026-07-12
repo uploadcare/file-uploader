@@ -25,6 +25,7 @@ type EditorToolbar = import('../dist/index.ts').EditorToolbar;
 type Icon = import('../dist/index.ts').Icon;
 type Img = import('../dist/index.ts').Img;
 type SimpleBtn = import('../dist/index.ts').SimpleBtn;
+type Spinner = import('../dist/index.ts').Spinner;
 type StartFrom = import('../dist/index.ts').StartFrom;
 type DropArea = import('../dist/index.ts').DropArea;
 type SourceBtn = import('../dist/index.ts').SourceBtn;
@@ -70,6 +71,7 @@ declare namespace JSX {
     'uc-copyright': CustomElement<Copyright>;
     'uc-img': CustomElement<Img> & React.DetailedHTMLProps<React.ImgHTMLAttributes<HTMLImageElement>, HTMLImageElement>;
     'uc-simple-btn': CustomElement<SimpleBtn>;
+    'uc-spinner': CustomElement<Spinner>;
     'uc-start-from': CustomElement<StartFrom>;
     'uc-drop-area': CustomElement<DropArea>;
     'uc-source-btn': CustomElement<SourceBtn>;
