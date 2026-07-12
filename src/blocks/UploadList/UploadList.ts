@@ -1,7 +1,8 @@
 import { html } from 'lit';
 import { state } from 'lit/decorators.js';
+import type { UploaderController } from '../../abstract/controllers/UploaderController';
+import { ActivityChildBlock } from '../../lit/ActivityChildBlock';
 import { ACTIVITY_TYPES } from '../../lit/activity-constants';
-import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
 import type { OutputCollectionErrorType, OutputError } from '../../types';
 import { throttle } from '../../utils/throttle';
 import { EventType, InternalEventType } from '../UploadCtxProvider/EventEmitter';
@@ -23,7 +24,7 @@ export type Summary = {
   validatingBeforeUploading: number;
 };
 
-export class UploadList extends LitUploaderBlock {
+export class UploadList extends ActivityChildBlock {
   public override activityType = ACTIVITY_TYPES.UPLOAD_LIST;
 
   @state()
@@ -58,7 +59,7 @@ export class UploadList extends LitUploaderBlock {
   }
 
   private _handleAdd = (): void => {
-    this.telemetryManager.sendEvent({
+    this.bag.telemetryManager.sendEvent({
       eventType: InternalEventType.ACTION_EVENT,
       payload: {
         metadata: {
@@ -67,22 +68,22 @@ export class UploadList extends LitUploaderBlock {
         },
       },
     });
-    this.api.initFlow(true);
+    this.bag.api.initFlow(true);
   };
 
   private _handleUpload = (): void => {
     this.emit(EventType.UPLOAD_CLICK);
-    this.api.uploadAll();
+    this.bag.api.uploadAll();
     this._throttledHandleCollectionUpdate();
   };
 
   private _handleDone = (): void => {
-    this.emit(EventType.DONE_CLICK, this.api.getOutputCollectionState());
-    this.api.doneFlow();
+    this.emit(EventType.DONE_CLICK, this.bag.api.getOutputCollectionState());
+    this.bag.api.doneFlow();
   };
 
   private _handleCancel = (): void => {
-    this.telemetryManager.sendEvent({
+    this.bag.telemetryManager.sendEvent({
       eventType: InternalEventType.ACTION_EVENT,
       payload: {
         metadata: {
@@ -92,7 +93,7 @@ export class UploadList extends LitUploaderBlock {
       },
     });
 
-    this.uploadCollection.clearAll();
+    this.bag.uploadCollection.clearAll();
   };
 
   private _throttledHandleCollectionUpdate = throttle(() => {
@@ -101,17 +102,17 @@ export class UploadList extends LitUploaderBlock {
     }
     this._updateUploadsState();
 
-    // The router guard (registered in initCallback) decides whether the empty
+    // The router guard (registered in controllerReady) decides whether the empty
     // list may stay open; ask it to re-check now that the collection changed.
-    this.router.revalidate();
+    this.bag.router.revalidate();
 
-    if (!this.cfg.confirmUpload) {
-      this.api.uploadAll();
+    if (!this.uploader.config.get('confirmUpload')) {
+      this.bag.api.uploadAll();
     }
   }, 300);
 
   private _updateUploadsState(): void {
-    const collectionState = this.api.getOutputCollectionState();
+    const collectionState = this.bag.api.getOutputCollectionState();
     const summary: Summary = {
       total: collectionState.totalCount,
       succeed: collectionState.successCount,
@@ -123,7 +124,8 @@ export class UploadList extends LitUploaderBlock {
       (err) => err.type === 'TOO_MANY_FILES' || err.type === 'TOO_FEW_FILES',
     );
     const tooMany = collectionState.errors.some((err) => err.type === 'TOO_MANY_FILES');
-    const exact = collectionState.totalCount === (this.cfg.multiple ? this.cfg.multipleMax : 1);
+    const multiple = this.uploader.config.get('multiple');
+    const exact = collectionState.totalCount === (multiple ? this.uploader.config.get('multipleMax') : 1);
     const isValidationPending = collectionState.allEntries.some((entry) => entry.isValidationPending);
     const validationOk = summary.failed === 0 && collectionState.errors.length === 0 && !isValidationPending;
     let uploadBtnVisible = false;
@@ -131,11 +133,11 @@ export class UploadList extends LitUploaderBlock {
     let doneBtnEnabled = false;
 
     const readyToUpload = summary.total - summary.succeed - summary.uploading - summary.failed;
-    if (readyToUpload > 0 && fitCountRestrictions && validationOk && this.cfg.confirmUpload) {
+    if (readyToUpload > 0 && fitCountRestrictions && validationOk && this.uploader.config.get('confirmUpload')) {
       uploadBtnVisible = true;
     } else {
       allDone = true;
-      const groupOk = this.cfg.groupOutput ? !!collectionState.group : true;
+      const groupOk = this.uploader.config.get('groupOutput') ? !!collectionState.group : true;
       doneBtnEnabled = summary.total === summary.succeed && fitCountRestrictions && validationOk && groupOk;
     }
 
@@ -143,7 +145,7 @@ export class UploadList extends LitUploaderBlock {
     this._doneBtnEnabled = doneBtnEnabled;
     this._uploadBtnVisible = uploadBtnVisible;
     this._addMoreBtnEnabled = summary.total === 0 || (!tooMany && !exact);
-    this._addMoreBtnVisible = !exact || this.cfg.multiple;
+    this._addMoreBtnVisible = !exact || multiple;
     this._hasFiles = summary.total > 0;
 
     this._latestSummary = summary;
@@ -174,25 +176,30 @@ export class UploadList extends LitUploaderBlock {
 
   private _unregisterGuard?: () => void;
 
-  public override initCallback() {
-    super.initCallback();
+  protected override controllerReady(ctrl: UploaderController): void {
+    super.controllerReady(ctrl);
 
     // Guard: the upload list may only be open while it has files (or
     // `showEmptyList`). The router blocks navigating into it otherwise and
     // `revalidate()` (called on collection changes) leaves it once it empties.
-    this._unregisterGuard = this.router.guard(
+    // `uploadCollection` may not have registered yet when this guard is later
+    // invoked by the router (FileItem/DynamicBtn `bag.when`/`OrNull` precedent
+    // for the adoption-reentrancy race) — read it null-tolerantly.
+    this._unregisterGuard = this.bag.router.guard(
       this.activityType,
-      () => this.cfg.showEmptyList || this.uploadCollection.size > 0,
+      () => this.uploader.config.get('showEmptyList') || (this.bag.uploadCollectionOrNull?.size ?? 0) > 0,
     );
 
     this.subConfigValue('multiple', this._throttledHandleCollectionUpdate);
     this.subConfigValue('multipleMin', this._throttledHandleCollectionUpdate);
     this.subConfigValue('multipleMax', this._throttledHandleCollectionUpdate);
-    this.sub('*groupInfo', (groupInfo) => {
-      if (groupInfo) {
-        this._throttledHandleCollectionUpdate();
-      }
-    });
+    this.trackSub(
+      this.bag.ctx.sub('*groupInfo', (groupInfo) => {
+        if (groupInfo) {
+          this._throttledHandleCollectionUpdate();
+        }
+      }),
+    );
 
     this.subConfigValue('filesViewMode', (mode: FilesViewMode) => {
       this.setAttribute('mode', mode);
@@ -200,27 +207,39 @@ export class UploadList extends LitUploaderBlock {
 
     // TODO: could be performance issue on many files
     // there is no need to update buttons state on every progress tick
-    this.uploadCollection.observeProperties(this._throttledHandleCollectionUpdate);
-    this.uploadCollection.observeCollection(this._throttledHandleCollectionUpdate);
+    //
+    // The uploader-scope `*uploadCollection` instance may not have registered
+    // yet when this block's controller adopts — go through `bag.when` rather
+    // than the throwing `bag.uploadCollection` getter (FileItem/DynamicBtn
+    // precedent), and track the observer unsubscribers so release/re-adoption
+    // can't stack duplicate observers.
+    this.trackSub(
+      this.bag.when('uploadCollection', (collection) => {
+        this.trackSub(collection.observeProperties(this._throttledHandleCollectionUpdate));
+        this.trackSub(collection.observeCollection(this._throttledHandleCollectionUpdate));
+      }),
+    );
 
-    this.sub('*collectionErrors', (errors: OutputError<OutputCollectionErrorType>[]) => {
-      const firstError = errors.filter((err) => err.type !== 'SOME_FILES_HAS_ERRORS')[0];
-      if (!firstError) {
-        this._commonErrorMessage = null;
-        return;
-      }
-      this._commonErrorMessage = firstError.message;
-    });
+    this.trackSub(
+      this.bag.ctx.sub('*collectionErrors', (errors: OutputError<OutputCollectionErrorType>[]) => {
+        const firstError = errors.filter((err) => err.type !== 'SOME_FILES_HAS_ERRORS')[0];
+        if (!firstError) {
+          this._commonErrorMessage = null;
+          return;
+        }
+        this._commonErrorMessage = firstError.message;
+      }),
+    );
   }
 
   public override disconnectedCallback(): void {
     super.disconnectedCallback();
     this._unregisterGuard?.();
     this._unregisterGuard = undefined;
-    if (this.has('*uploadCollection')) {
-      this.uploadCollection.unobserveProperties(this._throttledHandleCollectionUpdate);
-      this.uploadCollection.unobserveCollection(this._throttledHandleCollectionUpdate);
-    }
+  }
+
+  protected override subscriptionsFor(ctrl: UploaderController) {
+    return [(listener: () => void) => ctrl.locale.subscribe(listener)];
   }
 
   public override render() {
@@ -230,7 +249,7 @@ export class UploadList extends LitUploaderBlock {
     <button
       type="button"
       class="uc-mini-btn uc-close-btn"
-      @click=${() => this.router.traverse('onClose')}
+      @click=${() => this.bag.router.traverse('onClose')}
       title=${this.l10n('a11y-activity-header-button-close')}
       aria-label=${this.l10n('a11y-activity-header-button-close')}
     >
@@ -245,7 +264,7 @@ export class UploadList extends LitUploaderBlock {
   <div class="uc-files">
     <div class="uc-files-wrapper">
     ${repeat(
-      this.$['*uploadList'] ?? [],
+      this.bag.ctx.read('*uploadList') ?? [],
       ({ uid }) => uid,
       ({ uid }) => html`<uc-file-item .uid=${uid}></uc-file-item>`,
     )}
