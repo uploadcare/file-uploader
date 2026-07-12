@@ -31,16 +31,24 @@ export class Modal extends LitBlock {
 
   /** WARNING: Do not rename/change this, it's used in dashboard */
   protected closeDialog = (): void => {
+    // The native <dialog> "close" event is dispatched from a queued task and
+    // can land after this block's ctx was torn down (deferred destroyCtx once
+    // the last block disconnects) — there is no router to notify then, and
+    // nothing left to close.
+    const router = this._getSharedContextInstance('*router', false);
+    if (!router) {
+      return;
+    }
     // Only close when *this* modal is the one currently in the foreground slot.
     // `hide()` fires the native `<dialog>` "close" event even when we hid this
     // modal programmatically to switch to another — without this guard that
     // stale close would tear down the modal we just navigated to.
-    if (this.router.modal !== (this.id as RegisteredActivityType)) {
+    if (router.modal !== (this.id as RegisteredActivityType)) {
       return;
     }
     // Close the foreground modal slot; the router owns the close transition
     // (and the `modal-close` event).
-    this.router.closeModal();
+    router.closeModal();
   };
 
   private _handleDialogClose = (): void => {
