@@ -186,6 +186,13 @@ export const createSharedInstancesBag = (getCtx: () => PubSub<SharedState>) => {
         return null;
       }
     },
+    get routerOrNull(): RouterController | null {
+      try {
+        return getSharedInstance(getCtx(), '*router', false) ?? null;
+      } catch {
+        return null;
+      }
+    },
 
     when<TName extends InstanceName>(
       name: TName,

@@ -4,6 +4,7 @@ import { property, state } from 'lit/decorators.js';
 import type { UploaderController } from '../abstract/controllers/UploaderController';
 import { resolveSecureDeliveryProxyUrl } from '../abstract/secureDeliveryProxyUrl';
 import { UploaderRegistry } from '../abstract/UploaderRegistry';
+import type { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter';
 import type { ConfigType } from '../types';
 import type { ActivityId } from './activity-constants';
 import { LightDomMixin } from './LightDomMixin';
@@ -113,6 +114,34 @@ export abstract class ChildBlock extends ChildBlockBase {
    * text re-renders when the dictionary loads or the locale switches.
    */
   public l10n = createL10n(() => this._requireCtx());
+
+  /**
+   * Emit a documented uploader event with the telemetry mirror — same
+   * contract as v1 `LitBlock.emit`. Guarded for teardown: emissions can race
+   * ctx destruction (queued events), so a missing emitter is a no-op and a
+   * telemetry failure is contained.
+   */
+  public emit(
+    type: Parameters<EventEmitter['emit']>[0],
+    payload?: Parameters<EventEmitter['emit']>[1],
+    options?: Parameters<EventEmitter['emit']>[2],
+  ): void {
+    const ctx = this.effectiveCtxName ? PubSub.getCtx<SharedState>(this.effectiveCtxName) : null;
+    const eventEmitter = ctx?.has('*eventEmitter') ? ctx.read('*eventEmitter') : undefined;
+    if (!eventEmitter) {
+      return;
+    }
+    eventEmitter.emit(type, payload, options);
+    const resolvedPayload = typeof payload === 'function' ? payload() : payload;
+    try {
+      this.bag.telemetryManager.sendEvent({
+        eventType: type,
+        payload: (resolvedPayload ?? undefined) as Record<string, unknown> | undefined,
+      });
+    } catch {
+      // Telemetry may already be torn down — reporting must never throw.
+    }
+  }
 
   public override connectedCallback(): void {
     super.connectedCallback();
