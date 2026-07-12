@@ -13,7 +13,10 @@ import type { UploadCollectionController } from './controllers/UploadCollectionC
  */
 export function applyInitialCrop(collection: UploadCollectionController, cropPreset: ConfigType['cropPreset']): void {
   const parsed = parseCropPreset(cropPreset);
-  if (!parsed) return;
+  // `parseCropPreset` never returns a falsy value — an empty or fully-invalid
+  // preset yields an empty list. Bail out then: a rejected preset must not
+  // fall through to the 1:1 default and crop images nobody asked to crop.
+  if (parsed.length === 0) return;
 
   const [aspectRatioPreset] = parsed;
   const entries = collection
