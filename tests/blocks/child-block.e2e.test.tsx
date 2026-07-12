@@ -16,7 +16,10 @@ class TestChildBlock extends ChildBlock {
   public cleanupRanAfterThrow = false;
 
   protected override subscriptionsFor(ctrl: UploaderController) {
-    return [(listener: () => void) => ctrl.config.subscribe(listener)];
+    return [
+      (listener: () => void) => ctrl.config.subscribe(listener),
+      (listener: () => void) => ctrl.locale.subscribe(listener),
+    ];
   }
 
   protected override controllerReady(): void {
@@ -36,7 +39,8 @@ class TestChildBlock extends ChildBlock {
   }
 
   public override render() {
-    return html`<span class="pk">${this.uploaderOrNull?.config.get('pubkey') ?? ''}</span>`;
+    return html`<span class="pk">${this.uploaderOrNull?.config.get('pubkey') ?? ''}</span
+      ><span class="l10n">${this.l10n('upload-file')}</span>`;
   }
 }
 
@@ -213,5 +217,21 @@ describe('ChildBlock', () => {
     const child = document.createElement('test-child-block');
     // biome-ignore lint/suspicious/noExplicitAny: reaching into a protected getter
     expect(() => (child as any).uploader).toThrowError(/test-child-block/);
+  });
+
+  it('l10n resolves dictionary keys once the locale is loaded', async () => {
+    const ctxName = getCtxName();
+    page.render(<uc-config ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>);
+    const child = append('test-child-block', { 'ctx-name': ctxName });
+    await expect.poll(() => child.querySelector('.l10n')?.textContent).toBe('Upload file');
+  });
+
+  it('l10n falls back to the key for unknown keys', async () => {
+    const ctxName = getCtxName();
+    page.render(<uc-config ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>);
+    const child = append('test-child-block', { 'ctx-name': ctxName });
+    await expect.poll(() => child.readyCount).toBe(1);
+    // biome-ignore lint/suspicious/noExplicitAny: reaching into the helper directly
+    expect((child as any).l10n('definitely-not-a-key')).toBe('definitely-not-a-key');
   });
 });
