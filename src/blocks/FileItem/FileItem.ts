@@ -1,6 +1,7 @@
 import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
-import type { PluginFileActionRegistration } from '../../abstract/managers/plugin';
+import type { UploaderController } from '../../abstract/controllers/UploaderController';
+import type { PluginController, PluginFileActionRegistration } from '../../abstract/managers/plugin';
 import type { Owned } from '../../abstract/managers/plugin/PluginTypes';
 import type { UploadEntryTypedData } from '../../abstract/uploadEntrySchema';
 import { debounce } from '../../utils/debounce';
@@ -80,10 +81,10 @@ export class FileItem extends FileItemConfig {
 
   private _renderedOnce = false;
   private _observer?: IntersectionObserver;
-  private _unsubscribePlugins?: () => void;
+  private _pluginManager: PluginController | null = null;
 
   private _handleRemove = (): void => {
-    this.telemetryManager.sendEvent({
+    this.bag.telemetryManager.sendEvent({
       payload: {
         metadata: {
           event: 'remove-file',
@@ -92,9 +93,9 @@ export class FileItem extends FileItemConfig {
       },
     });
 
-    if (this.uid && this.uploadCollection.hasItem(this.uid)) {
+    if (this.uid && this.bag.ctx.has('*uploadCollection') && this.bag.uploadCollection.hasItem(this.uid)) {
       this.entry?.getValue('abortController')?.abort();
-      this.uploadCollection.remove(this.uid);
+      this.bag.uploadCollection.remove(this.uid);
     }
   };
 
@@ -201,7 +202,8 @@ export class FileItem extends FileItemConfig {
   private _handleEntryId(id: Uid): void {
     this.reset();
 
-    const entry = this.uploadCollection?.read(id);
+    // The uploader-scope shared instances exist only once an uploader block initializes this ctx.
+    const entry = this.bag.ctx.has('*uploadCollection') ? this.bag.uploadCollection.read(id) : null;
     this.entry = entry;
 
     if (!entry) {
@@ -254,7 +256,7 @@ export class FileItem extends FileItemConfig {
   }
 
   private _updateShowFileNames(value: boolean): void {
-    const isListMode = this.cfg.filesViewMode === 'list';
+    const isListMode = this.uploader.config.get('filesViewMode') === 'list';
     if (isListMode) {
       this._showFileNames = true;
       return;
@@ -272,14 +274,20 @@ export class FileItem extends FileItemConfig {
   }
 
   private _updatePluginFileActions(): void {
-    const pluginManager = this._sharedInstancesBag.pluginManager;
+    const pluginManager = this._pluginManager;
     if (!pluginManager || !this.uid) {
       this._pluginFileActions = [];
       return;
     }
 
+    // The uploader-scope shared instances exist only once an uploader block initializes this ctx.
+    if (!this.bag.ctx.has('*publicApi')) {
+      this._pluginFileActions = [];
+      return;
+    }
+
     const allFileActions = pluginManager.snapshot().fileActions;
-    const outputFileEntry = this.api.getOutputItem(this.uid);
+    const outputFileEntry = this.bag.api.getOutputItem(this.uid);
 
     if (!outputFileEntry) {
       this._pluginFileActions = [];
@@ -301,12 +309,12 @@ export class FileItem extends FileItemConfig {
       return;
     }
 
-    const outputFileEntry = this.api.getOutputItem(this.uid);
+    const outputFileEntry = this.bag.api.getOutputItem(this.uid);
     if (!outputFileEntry) {
       return;
     }
 
-    this.telemetryManager.sendEvent({
+    this.bag.telemetryManager.sendEvent({
       payload: {
         metadata: {
           event: action.id,
@@ -323,13 +331,11 @@ export class FileItem extends FileItemConfig {
     }
   }
 
-  public override initCallback(): void {
-    super.initCallback();
-
+  protected override controllerReady(): void {
     this._handleEntryId(this.uid);
 
     this.subConfigValue('filesViewMode', (mode) => {
-      this._updateShowFileNames(this.cfg.gridShowFileNames);
+      this._updateShowFileNames(this.uploader.config.get('gridShowFileNames'));
 
       this.setAttribute('mode', mode);
     });
@@ -348,20 +354,32 @@ export class FileItem extends FileItemConfig {
       });
     };
 
-    this.sub('*uploadTrigger', (itemsToUpload) => {
-      if (this.entry && !itemsToUpload.has(this.entry.uid)) {
-        return;
-      }
-      setTimeout(() => this.isConnected && this._upload());
-    });
+    this.trackSub(
+      this.bag.ctx.sub('*uploadTrigger', (itemsToUpload) => {
+        if (this.entry && !itemsToUpload.has(this.entry.uid)) {
+          return;
+        }
+        setTimeout(() => this.isConnected && this._upload());
+      }),
+    );
 
-    const pluginManager = this._sharedInstancesBag.pluginManager;
-    if (pluginManager?.onPluginsChange) {
-      this._unsubscribePlugins = pluginManager.onPluginsChange(() => this._updatePluginFileActions());
-    }
-    this._updatePluginFileActions();
+    this.trackSub(
+      this.bag.when('pluginManager', (pm) => {
+        this._pluginManager = pm;
+        this.trackSub(pm.onPluginsChange(() => this._updatePluginFileActions()));
+        this._updatePluginFileActions();
+      }),
+    );
 
     FileItem.activeInstances.add(this);
+  }
+
+  protected override controllerReleased(): void {
+    this._pluginManager = null;
+  }
+
+  protected override subscriptionsFor(ctrl: UploaderController) {
+    return [(listener: () => void) => ctrl.locale.subscribe(listener)];
   }
 
   public override connectedCallback(): void {
@@ -374,8 +392,6 @@ export class FileItem extends FileItemConfig {
   }
 
   public override disconnectedCallback(): void {
-    this._unsubscribePlugins?.();
-    this._unsubscribePlugins = undefined;
     super.disconnectedCallback();
 
     this._observer?.disconnect();
@@ -390,7 +406,7 @@ export class FileItem extends FileItemConfig {
   // trigger; it reacts to the resulting entry mutations through its existing
   // per-entry subscriptions (`isUploading`/`errors`/… → `_debouncedCalculateState`).
   private _upload = this.withEntry(async (entry) => {
-    await this.uploadController.uploadEntry(entry.uid);
+    await this.bag.uploadController.uploadEntry(entry.uid);
   });
 
   public static activeInstances: Set<FileItem> = new Set<FileItem>();

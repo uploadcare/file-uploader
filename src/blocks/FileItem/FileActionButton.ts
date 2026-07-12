@@ -1,7 +1,8 @@
 import { html } from 'lit';
 import { property } from 'lit/decorators.js';
 import { styleMap } from 'lit/directives/style-map.js';
-import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
+import type { UploaderController } from '../../abstract/controllers/UploaderController';
+import { ChildBlock } from '../../lit/ChildBlock';
 
 import '../Icon/Icon';
 
@@ -10,7 +11,7 @@ import { classMap } from 'lit/directives/class-map.js';
 
 const L10N_REMOVE_KEY = 'file-item-remove-button';
 
-export class FileActionButton extends LitUploaderBlock {
+export class FileActionButton extends ChildBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-file-action-button'];
 
   @property({ type: Boolean })
@@ -33,6 +34,10 @@ export class FileActionButton extends LitUploaderBlock {
 
   private get _normalizedProgress(): number {
     return Math.min(Math.max(this.progress || 0, 0), 100);
+  }
+
+  protected override subscriptionsFor(ctrl: UploaderController) {
+    return [(listener: () => void) => ctrl.locale.subscribe(listener)];
   }
 
   private _handleAction() {

@@ -4,6 +4,7 @@ type LitElement = import('lit').LitElement;
 type UploadCtxProvider = import('../dist/index.ts').UploadCtxProvider;
 type Config = import('../dist/index.ts').Config;
 type Copyright = import('../dist/index.ts').Copyright;
+type Thumb = import('../dist/index.ts').Thumb;
 type FileUploaderInline = import('../dist/index.ts').FileUploaderInline;
 type FileUploaderRegular = import('../dist/index.ts').FileUploaderRegular;
 type FileUploaderMinimal = import('../dist/index.ts').FileUploaderMinimal;
@@ -80,6 +81,7 @@ declare namespace JSX {
     'uc-source-btn': CustomElement<SourceBtn>;
     'uc-source-list': CustomElement<SourceList>;
     'uc-file-item': CustomElement<FileItem>;
+    'uc-thumb': CustomElement<Thumb>;
     'uc-modal': CustomElement<Modal>;
     'uc-upload-list': CustomElement<UploadList>;
     'uc-url-source': CustomElement<UrlSource>;
