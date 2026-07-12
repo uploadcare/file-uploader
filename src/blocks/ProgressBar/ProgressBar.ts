@@ -38,12 +38,12 @@ export class ProgressBar extends ChildBlock {
   protected override controllerReady(): void {
     // Pre-adoption property writes never reach `updated` (gated cycles clear
     // changed-properties) — re-derive the visibility class and progress state
-    // from current values on adoption.
+    // from current values on adoption, mirroring `firstUpdated` (which only
+    // fires once ever, so re-adoptions must re-sync here).
     this.classList.toggle('uc-progress-bar--hidden', !this.visible);
+    this._progressValue = this._normalizeProgressValue(this.value);
     if (this.visible) {
       this._updateProgressValueStyle();
-    } else {
-      this._progressValue = this._normalizeProgressValue(this.value);
     }
   }
 
