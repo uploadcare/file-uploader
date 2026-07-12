@@ -216,11 +216,6 @@ export class LitBlock extends LitBlockBase {
     return this._subRouterDerived(() => this.router.currentActivity, cb);
   }
 
-  /** Subscribe to the current activity params. Fires immediately + on change. */
-  protected subActivityParams(cb: (params: Readonly<Record<string, unknown>>) => void): () => void {
-    return this._subRouterDerived(() => this.router.params, cb);
-  }
-
   /**
    * Subscribe to *any* router change (slot or params). Fires immediately, then
    * on every notification — no value dedup. Use when a reader depends on a slot
