@@ -17,14 +17,34 @@ export class SourceList extends ChildBlock {
   @property({ type: Boolean, attribute: 'wrap', noAccessor: true })
   public wrap = false;
 
+  private _sourceListController: SourceListController | null = null;
+
   protected override controllerReady(): void {
-    new SourceListController(this, {
+    // Re-adoption (release-while-connected followed by re-adopt) would otherwise
+    // stack a new SourceListController per adoption without ever removing the
+    // previous one — tear down the old instance's subscriptions first.
+    this._teardownSourceListController();
+
+    this._sourceListController = new SourceListController(this, {
       ctx: this.bag.ctx,
       sharedInstancesBag: this.bag,
       onSourcesChange: (sources) => {
         this._sources = sources;
       },
     });
+  }
+
+  protected override controllerReleased(): void {
+    this._teardownSourceListController();
+  }
+
+  private _teardownSourceListController(): void {
+    if (!this._sourceListController) {
+      return;
+    }
+    this._sourceListController.hostDisconnected();
+    this.removeController(this._sourceListController);
+    this._sourceListController = null;
   }
 
   protected override updated(changedProperties: PropertyValues<this>): void {

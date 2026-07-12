@@ -96,18 +96,22 @@ export class UploadList extends ActivityChildBlock {
     this.bag.uploadCollection.clearAll();
   };
 
+  // A trailing tick can fire after the block is released while still connected
+  // (registry unregistration race) — read the controller null-tolerantly and
+  // bail rather than throwing uncaught in the timeout (DynamicBtn precedent).
   private _throttledHandleCollectionUpdate = throttle(() => {
-    if (!this.isConnected) {
+    const uploader = this.uploaderOrNull;
+    if (!this.isConnected || !uploader) {
       return;
     }
     this._updateUploadsState();
 
     // The router guard (registered in controllerReady) decides whether the empty
     // list may stay open; ask it to re-check now that the collection changed.
-    this.bag.router.revalidate();
+    this.bag.routerOrNull?.revalidate();
 
-    if (!this.uploader.config.get('confirmUpload')) {
-      this.bag.api.uploadAll();
+    if (!uploader.config.get('confirmUpload')) {
+      this.bag.apiOrNull?.uploadAll();
     }
   }, 300);
 
