@@ -9,13 +9,17 @@ import type { UploaderController } from './controllers/UploaderController';
  * if a controller is already registered, immediately when one registers, and
  * AGAIN whenever the registration changes (e.g. the owning element is removed
  * and a new one with the same `ctx-name` is rendered). This lets consumers
- * re-adopt across a remount without losing their bindings.
+ * re-adopt across a remount without losing their bindings. It also fires with
+ * `null` when the registered controller for that `ctxName` is actually
+ * unregistered (the owning element disconnected and nothing has taken its
+ * place yet) — consumers must release the controller, not just ignore the
+ * notification, so they don't outlive the ctx they were reading from.
  *
  * Introduced as a standalone primitive in M0; wired to nothing yet.
  */
 class UploaderRegistryImpl {
   private _map = new Map<string, UploaderController>();
-  private _consumers = new Map<string, Set<(c: UploaderController) => void>>();
+  private _consumers = new Map<string, Set<(c: UploaderController | null) => void>>();
 
   public register(ctxName: string, controller: UploaderController): void {
     const existing = this._map.get(ctxName);
@@ -46,8 +50,23 @@ class UploaderRegistryImpl {
   }
 
   public unregister(ctxName: string, controller: UploaderController): void {
-    if (this._map.get(ctxName) === controller) {
-      this._map.delete(ctxName);
+    if (this._map.get(ctxName) !== controller) {
+      // Stale unregister (e.g. deferred from a disconnected element already
+      // replaced by a new registration) — the current owner is unaffected.
+      return;
+    }
+    this._map.delete(ctxName);
+    const set = this._consumers.get(ctxName);
+    if (set) {
+      // Isolate each consumer: a single throwing callback must not abort
+      // notification of the others or bubble out of `unregister()`.
+      for (const cb of set) {
+        try {
+          cb(null);
+        } catch (err) {
+          console.warn(`[uc] a whenAvailable consumer for ctx-name="${ctxName}" threw`, err);
+        }
+      }
     }
   }
 
@@ -58,9 +77,11 @@ class UploaderRegistryImpl {
   /**
    * Subscribe to the controller under `ctxName`. Fires synchronously with the
    * current controller (if registered), then again each time a new controller
-   * registers under the same name. Returns an unsubscribe.
+   * registers under the same name, and with `null` when that controller is
+   * unregistered (its ctx is gone — consumers must release, not just wait for
+   * a replacement that may never come). Returns an unsubscribe.
    */
-  public whenAvailable(ctxName: string, cb: (c: UploaderController) => void): () => void {
+  public whenAvailable(ctxName: string, cb: (c: UploaderController | null) => void): () => void {
     let set = this._consumers.get(ctxName);
     if (!set) {
       set = new Set();
