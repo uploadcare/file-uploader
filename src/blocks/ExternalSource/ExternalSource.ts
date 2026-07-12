@@ -202,6 +202,9 @@ export class ExternalSource extends ChildBlock {
     const socialBaseUrl = this.uploader.config.get('socialBaseUrl');
     const multiple = this.uploader.config.get('multiple');
     const { externalSourceType } = this.bag.router.params as ActivityParams;
+    if (!externalSourceType) {
+      throw new Error(`Param "externalSourceType" is required for external source activity`);
+    }
     const sourceName = SOCIAL_SOURCE_MAPPING[externalSourceType] ?? externalSourceType;
     const lang = this.l10n('social-source-lang')?.split('-')?.[0] || 'en';
     const params = {
@@ -224,6 +227,9 @@ export class ExternalSource extends ChildBlock {
       const url = this._extractUrlFromSelectedFile(message);
       const { filename } = message;
       const { externalSourceType } = this.bag.router.params as ActivityParams;
+      if (!externalSourceType) {
+        throw new Error(`Param "externalSourceType" is required for external source activity`);
+      }
       this.bag.api.addFileFromUrl(url, {
         fileName: filename,
         source: externalSourceType,
