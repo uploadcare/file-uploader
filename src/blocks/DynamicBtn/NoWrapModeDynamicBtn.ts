@@ -1,6 +1,6 @@
-import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
+import { ChildBlock } from '../../lit/ChildBlock';
 
-export class NoWrapModeDynamicBtn extends LitUploaderBlock {
+export class NoWrapModeDynamicBtn extends ChildBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-no-wrap-mode-dynamic-btn'];
 }
 
