@@ -1,6 +1,7 @@
 import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
-import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
+import type { UploaderController } from '../../abstract/controllers/UploaderController';
+import { ChildBlock } from '../../lit/ChildBlock';
 import './source-btn.css';
 
 import '../Icon/Icon';
@@ -13,7 +14,7 @@ export type SourceButtonConfig = {
   onClick: () => void | Promise<void>;
 };
 
-export class SourceBtn extends LitUploaderBlock {
+export class SourceBtn extends ChildBlock {
   @property({ attribute: false })
   public source?: SourceButtonConfig;
 
@@ -49,10 +50,14 @@ export class SourceBtn extends LitUploaderBlock {
     this._iconName = icon ?? id ?? 'default';
   }
 
+  protected override subscriptionsFor(ctrl: UploaderController) {
+    return [(listener: () => void) => ctrl.locale.subscribe(listener)];
+  }
+
   public activate(): void {
     if (!this.source) return;
 
-    this.telemetryManager.sendEvent({
+    this.bag.telemetryManager.sendEvent({
       eventType: InternalEventType.ACTION_EVENT,
       payload: {
         sourceId: this.source.id,
