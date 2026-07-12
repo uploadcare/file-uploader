@@ -104,4 +104,24 @@ describe('uc-progress-bar', () => {
     fakeLine().dispatchEvent(new Event('animationiteration'));
     await expect.poll(() => fakeLine().classList.contains('uc-fake-progress--hidden')).toBe(true);
   });
+
+  it('applies visibility while the render gate was still closed', async () => {
+    const ctxName = getCtxName();
+    // Mount the bar BEFORE any ctx exists, then set properties — the
+    // scheduled update flushes gated, so Lit clears changedProperties.
+    const bar = document.createElement('uc-progress-bar');
+    bar.setAttribute('ctx-name', ctxName);
+    document.body.append(bar);
+    await bar.updateComplete;
+    bar.visible = false;
+    bar.value = 30;
+    await bar.updateComplete;
+
+    // Now create the ctx; the bar adopts and must reflect the hidden state
+    // it was given pre-adoption, not the stale defaults.
+    page.render(<uc-config ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>);
+    await expect.poll(() => bar.classList.contains('uc-progress-bar--hidden')).toBe(true);
+    await expect.poll(() => progressVar(bar)).toBe('');
+    bar.remove();
+  });
 });
