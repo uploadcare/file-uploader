@@ -7,7 +7,8 @@ import './external-source.css';
 import { html } from 'lit';
 import { state } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
-import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
+import type { UploaderController } from '../../abstract/controllers/UploaderController';
+import { ChildBlock } from '../../lit/ChildBlock';
 import { MessageBridge } from './MessageBridge';
 import { queryString } from './query-string';
 import type { InputMessageMap } from './types';
@@ -22,7 +23,7 @@ const SOCIAL_SOURCE_MAPPING: Record<string, string> = {
 
 export type ActivityParams = { externalSourceType: string };
 
-export class ExternalSource extends LitUploaderBlock {
+export class ExternalSource extends ChildBlock {
   private _messageBridge?: MessageBridge;
 
   private _iframeRef = createRef<HTMLIFrameElement>();
@@ -30,6 +31,8 @@ export class ExternalSource extends LitUploaderBlock {
     selectedCount: number;
     total: number;
   } | null = null;
+
+  private _lastActivityParams: Readonly<Record<string, unknown>> | undefined = undefined;
 
   @state()
   private _selectedList: NonNullable<InputMessageMap['selected-files-change']['selectedFiles']> = [];
@@ -70,25 +73,24 @@ export class ExternalSource extends LitUploaderBlock {
     });
   }
 
-  public override get activityParams(): ActivityParams {
-    const params = super.activityParams;
-    if ('externalSourceType' in params) {
-      return params as ActivityParams;
-    }
-    throw new Error(`External Source activity params not found`);
+  protected override subscriptionsFor(ctrl: UploaderController) {
+    return [(listener: () => void) => ctrl.locale.subscribe(listener)];
   }
 
-  public override initCallback(): void {
-    super.initCallback();
-
-    const { externalSourceType } = this.activityParams;
+  protected override controllerReady(): void {
+    const { externalSourceType } = this.bag.router.params as ActivityParams;
     if (!externalSourceType) {
       console.error(`Param "externalSourceType" is required for external source activity`);
     } else {
       this._mountIframe();
     }
 
-    this.subActivityParams(() => {
+    this.subRouter(() => {
+      const params = this.bag.router.params;
+      if (params === this._lastActivityParams) {
+        return;
+      }
+      this._lastActivityParams = params;
       setTimeout(() => {
         // Defer a tick before reacting to a params change: the router updates
         // params and the current activity together in one transition, so a
@@ -119,7 +121,7 @@ export class ExternalSource extends LitUploaderBlock {
     selectedFile: NonNullable<InputMessageMap['selected-files-change']['selectedFiles']>[number],
   ): string {
     if (selectedFile.alternatives) {
-      const preferredTypes = stringToArray(this.cfg.externalSourcesPreferredTypes);
+      const preferredTypes = stringToArray(this.uploader.config.get('externalSourcesPreferredTypes'));
       for (const preferredType of preferredTypes) {
         const regexp = wildcardRegexp(preferredType);
         for (const [type, typeUrl] of Object.entries(selectedFile.alternatives)) {
@@ -138,7 +140,7 @@ export class ExternalSource extends LitUploaderBlock {
   }
 
   private async _handleSelectedFilesChange(message: InputMessageMap['selected-files-change']) {
-    if (this.cfg.multiple !== message.isMultipleMode) {
+    if (this.uploader.config.get('multiple') !== message.isMultipleMode) {
       console.error('Multiple mode mismatch');
       return;
     }
@@ -156,7 +158,7 @@ export class ExternalSource extends LitUploaderBlock {
   }
 
   private _handleIframeLoad(): void {
-    this._applyEmbedCss(this.cfg.externalSourcesEmbedCss);
+    this._applyEmbedCss(this.uploader.config.get('externalSourcesEmbedCss'));
     this._applyTheme();
     this._setupL10n();
   }
@@ -178,13 +180,16 @@ export class ExternalSource extends LitUploaderBlock {
   private _setupL10n(): void {
     this._messageBridge?.send({
       type: 'set-locale-definition',
-      localeDefinition: this.cfg.localeName,
+      localeDefinition: this.uploader.config.get('localeName'),
     });
   }
 
   private _remoteUrl(): string {
-    const { pubkey, remoteTabSessionKey, socialBaseUrl, multiple } = this.cfg;
-    const { externalSourceType } = this.activityParams;
+    const pubkey = this.uploader.config.get('pubkey');
+    const remoteTabSessionKey = this.uploader.config.get('remoteTabSessionKey');
+    const socialBaseUrl = this.uploader.config.get('socialBaseUrl');
+    const multiple = this.uploader.config.get('multiple');
+    const { externalSourceType } = this.bag.router.params as ActivityParams;
     const sourceName = SOCIAL_SOURCE_MAPPING[externalSourceType] ?? externalSourceType;
     const lang = this.l10n('social-source-lang')?.split('-')?.[0] || 'en';
     const params = {
@@ -194,8 +199,8 @@ export class ExternalSource extends LitUploaderBlock {
       session_key: remoteTabSessionKey,
       wait_for_theme: true,
       multiple: multiple.toString(),
-      origin: this.cfg.topLevelOrigin || getTopLevelOrigin(),
-      debug: this.cfg.debug,
+      origin: this.uploader.config.get('topLevelOrigin') || getTopLevelOrigin(),
+      debug: this.uploader.config.get('debug'),
     };
     const url = new URL(`/window4/${sourceName}`, socialBaseUrl);
     url.search = queryString(params);
@@ -206,18 +211,18 @@ export class ExternalSource extends LitUploaderBlock {
     for (const message of this._selectedList) {
       const url = this._extractUrlFromSelectedFile(message);
       const { filename } = message;
-      const { externalSourceType } = this.activityParams;
-      this.api.addFileFromUrl(url, {
+      const { externalSourceType } = this.bag.router.params as ActivityParams;
+      this.bag.api.addFileFromUrl(url, {
         fileName: filename,
         source: externalSourceType,
       });
     }
 
-    this.router.traverse('onFileAdd');
+    this.bag.router.traverse('onFileAdd');
   };
 
   private _handleCancel = (): void => {
-    this.router.traverse('onCancel');
+    this.bag.router.traverse('onCancel');
   };
 
   private _handleSelectAll = (): void => {
@@ -257,7 +262,7 @@ export class ExternalSource extends LitUploaderBlock {
 
     this._messageBridge?.destroy();
 
-    this._messageBridge = new MessageBridge(iframe.contentWindow, () => this.cfg.socialBaseUrl);
+    this._messageBridge = new MessageBridge(iframe.contentWindow, () => this.uploader.config.get('socialBaseUrl'));
     this._messageBridge.on('selected-files-change', this._handleSelectedFilesChange.bind(this));
     this._messageBridge.on('toolbar-state-change', this._handleToolbarStateChange.bind(this));
 
@@ -297,7 +302,7 @@ export class ExternalSource extends LitUploaderBlock {
         <button
           type="button"
           class="uc-mini-btn uc-close-btn"
-          @click=${() => this.router.traverse('onClose')}
+          @click=${() => this.bag.router.traverse('onClose')}
           title=${this.l10n('a11y-activity-header-button-close')}
           aria-label=${this.l10n('a11y-activity-header-button-close')}
         >
