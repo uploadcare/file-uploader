@@ -310,7 +310,16 @@ export class Thumb extends FileItemConfig {
     // isolated composition) has no collection and therefore no entry.
     const collection = this.bag.ctx.has('*uploadCollection') ? this.bag.uploadCollection : null;
     const entry = collection?.read(id);
-    if (!entry || entry === this.entry) {
+    if (!entry) {
+      // The uid no longer resolves (entry removed, scope lost, or uid swapped
+      // to an unknown id) — drop the previous entry's subscriptions and image
+      // instead of keeping a stale thumb alive.
+      if (this.entry) {
+        this.reset();
+      }
+      return;
+    }
+    if (entry === this.entry) {
       return;
     }
 

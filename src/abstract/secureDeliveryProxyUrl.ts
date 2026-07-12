@@ -39,7 +39,7 @@ export async function resolveSecureDeliveryProxyUrl(
     return applyTemplateData(
       config.secureDeliveryProxy,
       { previewUrl: url },
-      { transform: (value) => window.encodeURIComponent(value) },
+      { transform: (value) => encodeURIComponent(value) },
     );
   }
   return url;
