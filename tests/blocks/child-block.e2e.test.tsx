@@ -5,7 +5,6 @@ import type { UploaderController } from '@/abstract/controllers/UploaderControll
 import type { Config } from '@/index.ts';
 import { ChildBlock } from '@/lit/ChildBlock';
 import { LitBlock } from '@/lit/LitBlock';
-import { delay } from '@/utils/delay';
 import { getCtxName } from '../utils/getCtxName';
 import '../../types/jsx';
 
@@ -88,7 +87,8 @@ describe('ChildBlock', () => {
 
   it('does not render before a controller is available', async () => {
     const child = append('test-child-block', { 'ctx-name': getCtxName() });
-    await delay(50);
+    // Wait for the (gated) initial update cycle to settle instead of a timed grace period.
+    await child.updateComplete;
     expect(child.querySelector('.pk')).toBeNull();
     expect(child.readyCount).toBe(0);
   });
@@ -163,7 +163,7 @@ describe('ChildBlock', () => {
     const ctxName = getCtxName();
     page.render(<uc-config ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>);
     const child = append('test-child-block');
-    await delay(20);
+    await child.updateComplete;
     expect(child.readyCount).toBe(0);
 
     child.setAttribute('ctx-name', ctxName);
