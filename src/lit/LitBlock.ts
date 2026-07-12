@@ -9,14 +9,13 @@ import { PluginController } from '../abstract/managers/plugin';
 import { buildPluginApi } from '../abstract/managers/plugin/buildPluginApi';
 import { LazyPluginLoader } from '../abstract/managers/plugin/LazyPluginLoader';
 import { TelemetryManager } from '../abstract/managers/TelemetryManager';
+import { resolveSecureDeliveryProxyUrl } from '../abstract/secureDeliveryProxyUrl';
 import { sharedConfigKey } from '../abstract/sharedConfigKey';
 import { initialConfig } from '../blocks/Config/initialConfig';
 import { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter';
 import { PubSub } from '../lit/PubSubCompat';
 import type { ConfigType } from '../types';
-import { extractCdnUrlModifiers, extractFilename, extractUuid } from '../utils/cdn-utils';
 import { getLocaleDirection } from '../utils/getLocaleDirection';
-import { applyTemplateData } from '../utils/template-utils';
 import { WindowHeightTracker } from '../utils/WindowHeightTracker';
 import type { ActivityId } from './activity-constants';
 import { CssDataMixin } from './CssDataMixin';
@@ -332,35 +331,11 @@ export class LitBlock extends LitBlockBase {
   }
 
   protected async proxyUrl(url: string): Promise<string> {
-    if (this.cfg.secureDeliveryProxy && this.cfg.secureDeliveryProxyUrlResolver) {
-      console.warn(
-        'Both secureDeliveryProxy and secureDeliveryProxyUrlResolver are set. The secureDeliveryProxyUrlResolver will be used.',
-      );
-    }
-    if (this.cfg.secureDeliveryProxyUrlResolver) {
-      try {
-        return await this.cfg.secureDeliveryProxyUrlResolver(url, {
-          uuid: extractUuid(url),
-          cdnUrlModifiers: extractCdnUrlModifiers(url),
-          fileName: extractFilename(url),
-        });
-      } catch (err) {
-        console.error('Failed to resolve secure delivery proxy URL. Falling back to the default URL.', err);
-        this.telemetryManager.sendEventError(
-          err,
-          'secureDeliveryProxyUrlResolver. Failed to resolve secure delivery proxy URL. Falling back to the default URL.',
-        );
-        return url;
-      }
-    }
-    if (this.cfg.secureDeliveryProxy) {
-      return applyTemplateData(
-        this.cfg.secureDeliveryProxy,
-        { previewUrl: url },
-        { transform: (value) => window.encodeURIComponent(value) },
-      );
-    }
-    return url;
+    return resolveSecureDeliveryProxyUrl(
+      this.cfg,
+      (error, context) => this.telemetryManager.sendEventError(error, context),
+      url,
+    );
   }
 
   public get cfg(): ConfigType {
