@@ -2,10 +2,11 @@ import { html } from 'lit';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import type { UploaderController } from '@/abstract/controllers/UploaderController';
-import type { Config } from '@/index.ts';
+import type { Config, UploadCtxProvider } from '@/index.ts';
 import { ChildBlock } from '@/lit/ChildBlock';
 import { LitBlock } from '@/lit/LitBlock';
 import { getCtxName } from '../utils/getCtxName';
+import { cleanup } from '../utils/test-renderer';
 import '../../types/jsx';
 
 class TestChildBlock extends ChildBlock {
@@ -15,6 +16,14 @@ class TestChildBlock extends ChildBlock {
   public throwOnRelease = false;
   public throwInReady = false;
   public cleanupRanAfterThrow = false;
+
+  public fireDocumentedEvent(): void {
+    this.emit('upload-click', undefined);
+  }
+
+  public routerOrNull() {
+    return this.bag.routerOrNull;
+  }
 
   protected override subscriptionsFor(ctrl: UploaderController) {
     return [
@@ -275,5 +284,76 @@ describe('ChildBlock', () => {
     } finally {
       warnSpy.mockRestore();
     }
+  });
+
+  it('bag.routerOrNull is null (no throw) before adoption and resolves once a controller is adopted', async () => {
+    const child = document.createElement('test-child-block');
+    // No ctx-name at all: `_requireCtx` throws internally; `routerOrNull` must
+    // swallow that and report `null`, same contract as `uploadCollectionOrNull`/`apiOrNull`.
+    expect(child.routerOrNull()).toBeNull();
+
+    const ctxName = getCtxName();
+    page.render(<uc-config ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>);
+    child.setAttribute('ctx-name', ctxName);
+    document.body.append(child);
+    appended.push(child);
+
+    await expect.poll(() => child.readyCount).toBe(1);
+    expect(child.routerOrNull()).not.toBeNull();
+  });
+
+  it('emit dispatches the documented event on the same-ctx uc-upload-ctx-provider', async () => {
+    const ctxName = getCtxName();
+    page.render(
+      <>
+        <uc-config ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
+        <uc-upload-ctx-provider ctx-name={ctxName}></uc-upload-ctx-provider>
+      </>,
+    );
+    const child = append('test-child-block', { 'ctx-name': ctxName });
+    await expect.poll(() => child.readyCount).toBe(1);
+
+    const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
+    const handler = vi.fn<(e: CustomEvent<unknown>) => void>();
+    ctxProvider.addEventListener('upload-click', handler);
+
+    child.fireDocumentedEvent();
+
+    await expect.poll(() => handler.mock.calls.length).toBe(1);
+  });
+
+  it('emit is a silent no-op once the ctx has been torn down', async () => {
+    const ctxName = getCtxName();
+    page.render(
+      <>
+        <uc-file-uploader-regular ctx-name={ctxName}></uc-file-uploader-regular>
+        <uc-config qualityInsights={false} ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
+      </>,
+    );
+    const child = append('test-child-block', { 'ctx-name': ctxName });
+    await expect.poll(() => child.readyCount).toBe(1);
+
+    // Disconnect the child (releasing its controller/subscriptions, same as
+    // any real unmount) and unmount the rest of the uploader; the ctx
+    // destroys via a deferred task once the last block disconnects. The
+    // child's `ctx-name` attribute is untouched by `remove()` — same as a
+    // queued event callback holding a reference to an unmounted block.
+    child.remove();
+    cleanup();
+    const { PubSub } = await import('@/lit/PubSubCompat.js');
+    await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(false);
+
+    const errors: string[] = [];
+    const onError = (event: ErrorEvent) => {
+      errors.push(String(event.error?.message ?? event.message));
+      event.preventDefault();
+    };
+    window.addEventListener('error', onError);
+    try {
+      expect(() => child.fireDocumentedEvent()).not.toThrow();
+    } finally {
+      window.removeEventListener('error', onError);
+    }
+    expect(errors).toEqual([]);
   });
 });
