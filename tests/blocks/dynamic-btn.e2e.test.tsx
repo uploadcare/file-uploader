@@ -47,6 +47,11 @@ describe('DynamicBtn remove/abort action', () => {
     api.addFileFromUrl(TEST_IMAGE_URL);
     api.uploadAll();
 
+    // Pin the branch precondition: the collection must actually be in the
+    // uploading state before clicking, or this could silently exercise the
+    // failed/finished branches instead.
+    await expect.poll(() => api.getOutputCollectionState().status).toBe('uploading');
+
     const abortBtn = dynamicBtn.getByLabelText('Remove');
     await expect.element(abortBtn).toBeVisible();
     // Still mid-flight: the upload has not resolved yet.
