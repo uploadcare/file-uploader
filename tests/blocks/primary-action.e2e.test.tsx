@@ -93,6 +93,17 @@ describe('uc-primary-action', () => {
     await expect.poll(buttonText).toBe('3 files uploaded');
   });
 
+  it('renders the header-total text for idle entries with totalCount > 0 (not uploading/failed/success)', async () => {
+    // `_headerTextDependentOnEntries` (src/blocks/DynamicBtn/PrimaryAction.ts)
+    // only special-cases `status` 'uploading' | 'failed' | 'success'; any
+    // other status (e.g. 'idle') with `totalCount > 0` falls through to the
+    // `header-total` l10n key: '{{count}} {{plural:file(count)}} selected'.
+    const { btn } = renderPrimaryAction();
+    btn.entries = { status: 'idle', totalCount: 2, allEntries: [{}, {}] } as unknown as Entries;
+
+    await expect.poll(buttonText).toBe('2 files selected');
+  });
+
   it('renders the source icon when dynamicButtonShowFirstIcon is truthy and there are no entries', async () => {
     const { config, btn } = renderPrimaryAction();
     config.dynamicButtonShowFirstIcon = true;
