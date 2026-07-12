@@ -2,7 +2,7 @@ import { html } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { cache } from 'lit/directives/cache.js';
 import { SourceListController } from '../../abstract/controllers';
-import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
+import { ChildBlock } from '../../lit/ChildBlock';
 import type { Uid } from '../../lit/Uid';
 import type { SourceButtonConfig } from '../SourceBtn/SourceBtn';
 
@@ -51,10 +51,8 @@ const iconsBasedOnMode: Record<Exclude<DynamicButtonMode, 'toolbar'>, string> = 
 
 const AUTO_MODE_INLINE_THRESHOLD = 3;
 
-export class DynamicBtn extends LitUploaderBlock {
+export class DynamicBtn extends ChildBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-dynamic-btn'];
-
-  private _unregisterOnFileAddHook?: () => void;
 
   @property({ attribute: 'dropzone', type: Boolean })
   public dropzone = true;
@@ -140,7 +138,7 @@ export class DynamicBtn extends LitUploaderBlock {
   }, 300);
 
   private _updateButtonBasedOnCollectionState() {
-    const collectionState = this.api?.getOutputCollectionState();
+    const collectionState = this.bag.api?.getOutputCollectionState();
 
     if (!collectionState) {
       console.warn('Collection state is undefined');
@@ -155,9 +153,7 @@ export class DynamicBtn extends LitUploaderBlock {
     this._mainAndRemainSources = adjustSourceBasedOnMode(this._sources, this._mode);
   }
 
-  public override initCallback(): void {
-    super.initCallback();
-
+  protected override controllerReady(): void {
     this.subConfigValue('dynamicButtonViewMode', (value) => {
       if (this._mode === value) return;
 
@@ -165,42 +161,54 @@ export class DynamicBtn extends LitUploaderBlock {
       this._updateSourceSplit();
     });
 
-    this.sub('*commonProgress', (progress: number) => {
-      this._progress = progress;
-    });
+    this.trackSub(
+      this.bag.ctx.sub('*commonProgress', (progress: number) => {
+        this._progress = progress;
+      }),
+    );
 
     new SourceListController(this, {
-      ctx: this._sharedInstancesBag.ctx,
-      sharedInstancesBag: this._sharedInstancesBag,
+      ctx: this.bag.ctx,
+      sharedInstancesBag: this.bag,
       onSourcesChange: (sources) => {
         this._sources = sources;
         this._updateSourceSplit();
       },
     });
 
-    this.uploadCollection.observeProperties(this._throttledHandleCollectionUpdate);
-    this.uploadCollection.observeCollection(this._throttledHandleCollectionUpdate);
+    // The uploader-scope `*uploadCollection` instance may not have registered
+    // yet when this block's controller adopts (it's published once the
+    // uploader/solution block finishes its own init, which can race this
+    // block's adoption) — go through `bag.when` rather than the throwing
+    // `bag.uploadCollection` getter (FileItem precedent for `pluginManager`).
+    this.trackSub(
+      this.bag.when('uploadCollection', (collection) => {
+        collection.observeProperties(this._throttledHandleCollectionUpdate);
+        collection.observeCollection(this._throttledHandleCollectionUpdate);
+      }),
+    );
 
-    this._unregisterOnFileAddHook = this.router.hooks.onFileAdd(() => {
-      // With confirmUpload, always land on the upload list.
-      if (this.cfg.confirmUpload) {
-        return ACTIVITY_TYPES.UPLOAD_LIST;
-      }
-      // If the user navigated somewhere to add the file, fall through to the
-      // default (upload list); otherwise close everything so the dynamic button
-      // just shows inline status.
-      if (this.router.canGoBack) {
-        return undefined;
-      }
-      return null;
-    });
+    this.trackSub(
+      this.bag.router.hooks.onFileAdd(() => {
+        // With confirmUpload, always land on the upload list.
+        if (this.uploader.config.get('confirmUpload')) {
+          return ACTIVITY_TYPES.UPLOAD_LIST;
+        }
+        // If the user navigated somewhere to add the file, fall through to the
+        // default (upload list); otherwise close everything so the dynamic button
+        // just shows inline status.
+        if (this.bag.router.canGoBack) {
+          return undefined;
+        }
+        return null;
+      }),
+    );
   }
 
   public override disconnectedCallback(): void {
     if (typeof this._throttledHandleCollectionUpdate.cancel === 'function') {
       this._throttledHandleCollectionUpdate.cancel();
     }
-    this._unregisterOnFileAddHook?.();
     super.disconnectedCallback();
   }
 
@@ -219,18 +227,18 @@ export class DynamicBtn extends LitUploaderBlock {
   }
 
   private _clearAllEntries() {
-    this.uploadCollection.clearAll();
+    this.bag.uploadCollection.clearAll();
   }
 
   private _clearAllFailedEntries() {
     this._collection.failedEntries.forEach((it) => {
-      if (it && this.uploadCollection.hasItem(it.internalId as Uid)) {
-        this.uploadCollection.remove(it.internalId as Uid);
+      if (it && this.bag.uploadCollection.hasItem(it.internalId as Uid)) {
+        this.bag.uploadCollection.remove(it.internalId as Uid);
       }
     });
   }
   private _abortAllEntries() {
-    this.uploadCollection.abortAll();
+    this.bag.uploadCollection.abortAll();
   }
 
   private _handleRemove() {
