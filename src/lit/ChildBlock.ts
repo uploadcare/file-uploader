@@ -5,6 +5,7 @@ import type { UploaderController } from '../abstract/controllers/UploaderControl
 import { resolveSecureDeliveryProxyUrl } from '../abstract/secureDeliveryProxyUrl';
 import { UploaderRegistry } from '../abstract/UploaderRegistry';
 import type { ConfigType } from '../types';
+import type { ActivityId } from './activity-constants';
 import { LightDomMixin } from './LightDomMixin';
 import { createL10n } from './l10n';
 import { PubSub } from './PubSubCompat';
@@ -178,7 +179,14 @@ export abstract class ChildBlock extends ChildBlockBase {
     }
     this._subs.push(ctrl.config.subscribe(() => this._syncTestId(ctrl)));
     this._syncTestId(ctrl);
-    this.controllerReady(ctrl);
+    try {
+      this.controllerReady(ctrl);
+    } catch (err) {
+      // One block's adoption hook must not break the adoption cycle or escape
+      // the registry callback as an unhandled error (isolate-and-warn, as in
+      // teardown and EventBus fan-out).
+      console.warn(`[uc] ${this.tagName.toLowerCase()}: controllerReady threw during adoption`, err);
+    }
     this.requestUpdate();
   }
 
@@ -227,6 +235,38 @@ export abstract class ChildBlock extends ChildBlockBase {
     const unsub = config.subscribe(() => {
       const next = config.get(key);
       if (!Object.is(next, last)) {
+        last = next;
+        callback(next);
+      }
+    });
+    this.trackSub(unsub);
+    return unsub;
+  }
+
+  /**
+   * Subscribe to *any* router change. Fires immediately, then on every
+   * notification — no value dedup. Auto-tracked. Call from `controllerReady`
+   * or later (`bag.router` requires the ctx).
+   */
+  protected subRouter(callback: () => void): () => void {
+    callback();
+    const unsub = this.bag.router.subscribe(callback);
+    this.trackSub(unsub);
+    return unsub;
+  }
+
+  /**
+   * Subscribe to the effective current activity (foreground modal, else
+   * background). Fires immediately with the current value, then on change
+   * (reference dedup). Auto-tracked.
+   */
+  protected subActivity(callback: (activity: ActivityId | null) => void): () => void {
+    const router = this.bag.router;
+    let last: ActivityId | null = router.currentActivity;
+    callback(last);
+    const unsub = router.subscribe(() => {
+      const next: ActivityId | null = router.currentActivity;
+      if (next !== last) {
         last = next;
         callback(next);
       }

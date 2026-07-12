@@ -308,8 +308,7 @@ export class Thumb extends FileItemConfig {
     // The uploader-scope shared instances exist only once an uploader block
     // initializes this ctx — a thumb rendered outside that scope (e.g. an
     // isolated composition) has no collection and therefore no entry.
-    const collection = this.bag.ctx.has('*uploadCollection') ? this.bag.uploadCollection : null;
-    const entry = collection?.read(id);
+    const entry = this.bag.uploadCollectionOrNull?.read(id);
     if (!entry) {
       // The uid no longer resolves (entry removed, scope lost, or uid swapped
       // to an unknown id) — drop the previous entry's subscriptions and image

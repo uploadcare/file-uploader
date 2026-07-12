@@ -1,7 +1,7 @@
-import { LitActivityBlock } from '../../lit/LitActivityBlock';
+import { ActivityChildBlock } from '../../lit/ActivityChildBlock';
 import './activity-header.css';
 
-export class ActivityHeader extends LitActivityBlock {}
+export class ActivityHeader extends ActivityChildBlock {}
 
 declare global {
   interface HTMLElementTagNameMap {

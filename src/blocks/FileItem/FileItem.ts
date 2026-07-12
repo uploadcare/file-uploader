@@ -93,9 +93,10 @@ export class FileItem extends FileItemConfig {
       },
     });
 
-    if (this.uid && this.bag.ctx.has('*uploadCollection') && this.bag.uploadCollection.hasItem(this.uid)) {
+    const collection = this.bag.uploadCollectionOrNull;
+    if (this.uid && collection?.hasItem(this.uid)) {
       this.entry?.getValue('abortController')?.abort();
-      this.bag.uploadCollection.remove(this.uid);
+      collection.remove(this.uid);
     }
   };
 
@@ -203,7 +204,7 @@ export class FileItem extends FileItemConfig {
     this.reset();
 
     // The uploader-scope shared instances exist only once an uploader block initializes this ctx.
-    const entry = this.bag.ctx.has('*uploadCollection') ? this.bag.uploadCollection.read(id) : null;
+    const entry = this.bag.uploadCollectionOrNull?.read(id) ?? null;
     this.entry = entry;
 
     if (!entry) {
@@ -281,13 +282,14 @@ export class FileItem extends FileItemConfig {
     }
 
     // The uploader-scope shared instances exist only once an uploader block initializes this ctx.
-    if (!this.bag.ctx.has('*publicApi')) {
+    const api = this.bag.apiOrNull;
+    if (!api) {
       this._pluginFileActions = [];
       return;
     }
 
     const allFileActions = pluginManager.snapshot().fileActions;
-    const outputFileEntry = this.bag.api.getOutputItem(this.uid);
+    const outputFileEntry = api.getOutputItem(this.uid);
 
     if (!outputFileEntry) {
       this._pluginFileActions = [];
@@ -309,7 +311,12 @@ export class FileItem extends FileItemConfig {
       return;
     }
 
-    const outputFileEntry = this.bag.api.getOutputItem(this.uid);
+    const api = this.bag.apiOrNull;
+    if (!api) {
+      return;
+    }
+
+    const outputFileEntry = api.getOutputItem(this.uid);
     if (!outputFileEntry) {
       return;
     }
