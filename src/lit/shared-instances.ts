@@ -164,6 +164,29 @@ export const createSharedInstancesBag = (getCtx: () => PubSub<SharedState>) => {
       return getSharedInstance(getCtx(), '*validationManager');
     },
 
+    /**
+     * Null-tolerant reads for the uploader-scope instances (registered only
+     * once an uploader block initializes the ctx, and pubbed `null` again at
+     * teardown — `ctx.has()` alone reports stale keys as present). Use these
+     * from blocks that may render outside an uploader scope.
+     */
+    get uploadCollectionOrNull(): UploadCollectionController | null {
+      // `getCtx` itself may throw when no ctx exists at all (bare block,
+      // post-teardown callback) — OrNull means never throwing, either way.
+      try {
+        return getSharedInstance(getCtx(), '*uploadCollection', false) ?? null;
+      } catch {
+        return null;
+      }
+    },
+    get apiOrNull(): UploaderPublicApi | null {
+      try {
+        return getSharedInstance(getCtx(), '*publicApi', false) ?? null;
+      } catch {
+        return null;
+      }
+    },
+
     when<TName extends InstanceName>(
       name: TName,
       callback: (instance: NonNullable<InstanceTypeMap[TName]>) => void,

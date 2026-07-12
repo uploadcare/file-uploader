@@ -163,6 +163,34 @@ export class RouterController {
     }
   }
 
+  // ─── Mounted activities ───
+
+  // Mounted-activity signal: ported activity blocks (ActivityChildBlock)
+  // report themselves here on adoption/release, replacing their former
+  // membership in the v1 `*blocksRegistry` for "is this activity's block
+  // mounted?" waits. Refcounted — the same activityType can be mounted in
+  // several slots at once (e.g. minimal's two <uc-start-from>).
+  private _mountedActivities = new Map<string, number>();
+
+  /** Report a mounted activity block. Returns the matching un-mount call. */
+  public activityBlockMounted(activityType: string): () => void {
+    this._mountedActivities.set(activityType, (this._mountedActivities.get(activityType) ?? 0) + 1);
+    this._listeners.notify();
+    let released = false;
+    return () => {
+      if (released) return;
+      released = true;
+      const next = (this._mountedActivities.get(activityType) ?? 1) - 1;
+      if (next <= 0) this._mountedActivities.delete(activityType);
+      else this._mountedActivities.set(activityType, next);
+      this._listeners.notify();
+    };
+  }
+
+  public hasMountedActivity(activityType: string): boolean {
+    return this._mountedActivities.has(activityType);
+  }
+
   // ─── Hooks ───
   /**
    * Register interceptors for navigation intents. A hook may redirect (return
@@ -445,6 +473,7 @@ export class RouterController {
   public destroy(): void {
     this._listeners.clear();
     this._guards.clear();
+    this._mountedActivities.clear();
     this._hooks = { beforeChange: [], onFileAdd: [], onBack: [], onCancel: [], onClose: [], onDone: [] };
   }
 }
