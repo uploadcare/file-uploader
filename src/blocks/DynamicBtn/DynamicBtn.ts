@@ -183,8 +183,11 @@ export class DynamicBtn extends ChildBlock {
     // `bag.uploadCollection` getter (FileItem precedent for `pluginManager`).
     this.trackSub(
       this.bag.when('uploadCollection', (collection) => {
-        collection.observeProperties(this._throttledHandleCollectionUpdate);
-        collection.observeCollection(this._throttledHandleCollectionUpdate);
+        // Deliberate post-parity improvement (v1 never unobserved these):
+        // track the unsubscribers so a release/re-adoption cycle can't stack
+        // duplicate observers (same shape as ProgressBarCommon).
+        this.trackSub(collection.observeProperties(this._throttledHandleCollectionUpdate));
+        this.trackSub(collection.observeCollection(this._throttledHandleCollectionUpdate));
       }),
     );
 
