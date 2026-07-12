@@ -148,6 +148,18 @@ describe('ChildBlock', () => {
     await expect.poll(() => child.readyCount).toBe(2);
   });
 
+  it('adopts when ctx-name is set after connection', async () => {
+    const ctxName = getCtxName();
+    page.render(<uc-config ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>);
+    const child = append('test-child-block');
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(child.readyCount).toBe(0);
+
+    child.setAttribute('ctx-name', ctxName);
+    await expect.poll(() => child.querySelector('.pk')?.textContent).toBe('demopublickey');
+    expect(child.readyCount).toBe(1);
+  });
+
   it('throws a descriptive error when uploader is read before adoption', () => {
     const child = document.createElement('test-child-block');
     // biome-ignore lint/suspicious/noExplicitAny: reaching into a protected getter

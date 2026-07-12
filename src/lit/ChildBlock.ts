@@ -25,6 +25,10 @@ const ChildBlockBase = RegisterableElementMixin(LightDomMixin(LitElement));
  * nanostores. Rendering is gated until a controller is adopted (matching
  * v1's `shouldUpdate` gate on ctx init); do controller-dependent setup in
  * `controllerReady`, never in `connectedCallback`.
+ * Note: while the render gate is closed Lit still clears its
+ * changed-properties tracking, so pre-adoption property writes will not
+ * appear in `changedProperties` at the first real render — read current
+ * values instead of `changedProperties.has(...)` in `firstUpdated`.
  */
 export abstract class ChildBlock extends ChildBlockBase {
   public static styleAttrs: string[] = [];
@@ -95,7 +99,6 @@ export abstract class ChildBlock extends ChildBlockBase {
 
   protected override willUpdate(changed: PropertyValues<this>): void {
     super.willUpdate(changed);
-    if (changed.has('ctxName')) this._watchRegistry();
     // Re-provide the effective ctx-name downward so v1 children nested under
     // a ported block keep resolving their ctx exactly as they would under a
     // v1 parent.
@@ -121,6 +124,10 @@ export abstract class ChildBlock extends ChildBlockBase {
   }
 
   protected override shouldUpdate(changed: PropertyValues<this>): boolean {
+    // ctx-name may arrive or change while the render gate below is still
+    // closed (willUpdate never runs then) — react to it here, where Lit
+    // calls in even for gated updates.
+    if (changed.has('ctxName')) this._watchRegistry();
     // v1 parity: SymbioteCompatMixin gates rendering until the ctx is
     // initialized; here the gate is controller adoption.
     if (!this._controller) {
