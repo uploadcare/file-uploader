@@ -17,6 +17,8 @@ export class Icon extends ChildBlock {
   private _pluginSvg: string | null = null;
 
   private _iconHrefResolver: IconHrefResolver | null = null;
+  // Transiently null until the shared PluginController registers (bag.when) —
+  // render falls back to the sprite href meanwhile.
   private _pluginManager: PluginController | null = null;
 
   public override connectedCallback(): void {
