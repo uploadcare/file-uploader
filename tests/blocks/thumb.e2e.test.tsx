@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { page } from 'vitest/browser';
 import type { Config, Thumb, UploadCtxProvider } from '@/index.ts';
+import type { Uid } from '../../src/lit/Uid';
 import { TRANSPARENT_PIXEL_SRC } from '../../src/utils/transparentPixelSrc';
 import { TEST_IMAGE_URL } from '../utils/constants';
 import { getCtxName } from '../utils/getCtxName';
@@ -92,6 +93,36 @@ describe('uc-thumb (parity, real upload flow)', () => {
       renderStandaloneThumb();
       await expect.element(page.getByTestId('uc-thumb')).toBeInTheDocument();
       await expect.poll(() => thumbImg()?.getAttribute('src')).toBe(TRANSPARENT_PIXEL_SRC);
+      expect(thumbImg()?.hasAttribute('hidden')).toBe(true);
+    } finally {
+      window.removeEventListener('error', onError);
+    }
+
+    expect(errors).toEqual([]);
+  });
+
+  // M9e regression — the ChildBlock port made `*uploadCollection` a required
+  // getter; a thumb rendered outside any uploader-block scope (e.g. the
+  // primary-action parity suite, which mounts a bare `<uc-thumb>` alongside
+  // `<uc-config>` with no uploader/ctx-provider) has no collection registered,
+  // so a truthy `uid` must fall back gracefully instead of throwing from
+  // `_bindToEntry`.
+  it('renders the fallback without unhandled errors when given a uid outside an uploader scope', async () => {
+    const errors: string[] = [];
+    const onError = (event: ErrorEvent) => {
+      errors.push(String(event.error?.message ?? event.message));
+      event.preventDefault();
+    };
+    window.addEventListener('error', onError);
+
+    try {
+      const { thumb } = renderStandaloneThumb();
+      thumb.uid = 'some-uid' as Uid;
+
+      await thumb.updateComplete;
+      // Give any async/microtask-scheduled throw a moment to surface as an
+      // unhandled window error before asserting.
+      await expect.poll(() => thumbImg()?.getAttribute('src'), { timeout: 2_000 }).toBe(TRANSPARENT_PIXEL_SRC);
       expect(thumbImg()?.hasAttribute('hidden')).toBe(true);
     } finally {
       window.removeEventListener('error', onError);

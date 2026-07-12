@@ -202,7 +202,8 @@ export class FileItem extends FileItemConfig {
   private _handleEntryId(id: Uid): void {
     this.reset();
 
-    const entry = this.bag.uploadCollection.read(id);
+    // The uploader-scope shared instances exist only once an uploader block initializes this ctx.
+    const entry = this.bag.ctx.has('*uploadCollection') ? this.bag.uploadCollection.read(id) : null;
     this.entry = entry;
 
     if (!entry) {
