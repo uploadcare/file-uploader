@@ -136,8 +136,8 @@ describe('ActivityChildBlock', () => {
     // Re-setting the same background activity still notifies subscribers
     // (RouterController.setActivity always calls _transition), but the
     // *effective* activity is unchanged — subActivity must not re-fire.
+    // Router notifications are synchronous — assert immediately.
     router.setActivity('start-from');
-    await new Promise((resolve) => setTimeout(resolve, 10));
     expect(seen).toEqual([null, 'start-from']);
 
     router.openModal('camera');
