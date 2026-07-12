@@ -1,5 +1,5 @@
 import { html } from 'lit';
-import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import type { UploaderController } from '@/abstract/controllers/UploaderController';
 import type { Config } from '@/index.ts';
@@ -12,6 +12,8 @@ class TestChildBlock extends ChildBlock {
   public static override styleAttrs = ['test-child-style'];
   public readyCount = 0;
   public releasedCount = 0;
+  public throwOnRelease = false;
+  public cleanupRanAfterThrow = false;
 
   protected override subscriptionsFor(ctrl: UploaderController) {
     return [(listener: () => void) => ctrl.config.subscribe(listener)];
@@ -19,6 +21,14 @@ class TestChildBlock extends ChildBlock {
 
   protected override controllerReady(): void {
     this.readyCount += 1;
+    if (this.throwOnRelease) {
+      this.trackSub(() => {
+        throw new Error('boom');
+      });
+      this.trackSub(() => {
+        this.cleanupRanAfterThrow = true;
+      });
+    }
   }
 
   protected override controllerReleased(): void {
@@ -158,6 +168,44 @@ describe('ChildBlock', () => {
     child.setAttribute('ctx-name', ctxName);
     await expect.poll(() => child.querySelector('.pk')?.textContent).toBe('demopublickey');
     expect(child.readyCount).toBe(1);
+  });
+
+  it('releases the controller and re-gates when ctx-name switches to a not-yet-available ctx', async () => {
+    const ctxNameA = getCtxName();
+    const ctxNameB = getCtxName();
+    page.render(<uc-config ctx-name={ctxNameA} pubkey="demopublickey" testMode></uc-config>);
+    const child = append('test-child-block', { 'ctx-name': ctxNameA });
+    await expect.poll(() => child.querySelector('.pk')?.textContent).toBe('demopublickey');
+
+    child.setAttribute('ctx-name', ctxNameB);
+    await expect.poll(() => child.releasedCount).toBe(1);
+    // biome-ignore lint/suspicious/noExplicitAny: reaching into a protected getter
+    expect((child as any).uploaderOrNull).toBeNull();
+
+    append('uc-config', { 'ctx-name': ctxNameB, pubkey: 'otherkey' });
+    await expect.poll(() => child.querySelector('.pk')?.textContent).toBe('otherkey');
+    expect(child.readyCount).toBe(2);
+  });
+
+  it('isolates a throwing unsubscriber during release, warns, and finishes teardown', async () => {
+    const ctxName = getCtxName();
+    page.render(<uc-config ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>);
+    const child = document.createElement('test-child-block');
+    child.throwOnRelease = true;
+    child.setAttribute('ctx-name', ctxName);
+    document.body.append(child);
+    appended.push(child);
+    await expect.poll(() => child.readyCount).toBe(1);
+
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      child.remove();
+      expect(child.releasedCount).toBe(1);
+      expect(child.cleanupRanAfterThrow).toBe(true);
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('teardown threw'), expect.any(Error));
+    } finally {
+      warnSpy.mockRestore();
+    }
   });
 
   it('throws a descriptive error when uploader is read before adoption', () => {

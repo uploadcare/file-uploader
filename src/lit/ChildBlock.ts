@@ -138,11 +138,19 @@ export abstract class ChildBlock extends ChildBlockBase {
 
   private _watchRegistry(): void {
     const ctxName = this.effectiveCtxName;
-    if (!this.isConnected || !ctxName || ctxName === this._watchedCtxName) {
+    if (!this.isConnected || ctxName === this._watchedCtxName) {
       return;
     }
     this._registryUnsub?.();
+    this._registryUnsub = undefined;
     this._watchedCtxName = ctxName;
+    // Scope switch (or ctx-name removed entirely): drop the current controller
+    // right away so the render gate closes instead of serving the previous
+    // scope's data while the new controller is still pending.
+    this._releaseController();
+    if (!ctxName) {
+      return;
+    }
     this._registryUnsub = UploaderRegistry.whenAvailable(ctxName, (ctrl) => this._adoptController(ctrl));
   }
 
@@ -165,9 +173,13 @@ export abstract class ChildBlock extends ChildBlockBase {
     for (const unsub of this._subs) {
       try {
         unsub();
-      } catch {
+      } catch (err) {
         // Teardown must be isolated: one throwing unsubscriber must not
         // prevent the rest from running.
+        console.warn(
+          `[uc] ${this.tagName.toLowerCase()}: a subscription teardown threw during controller release`,
+          err,
+        );
       }
     }
     this._subs = [];
