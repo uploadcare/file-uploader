@@ -1,4 +1,5 @@
 import type { RouterController } from '../abstract/controllers/RouterController';
+import type { ActivityId } from './activity-constants';
 import type { LitActivityBlock } from './LitActivityBlock';
 import type { LitBlock } from './LitBlock';
 import type { BlocksRegistry } from './SharedState';
@@ -58,7 +59,7 @@ export const waitForBlockInCtx = (
 export const waitForActivityBlock = (
   blocksRegistry: BlocksRegistry,
   router: RouterController,
-  activityType: string,
+  activityType: ActivityId,
   { timeout = 1000, onTimeout }: { timeout?: number; onTimeout?: () => void } = {},
 ): Promise<boolean> => {
   return new Promise((resolve) => {
