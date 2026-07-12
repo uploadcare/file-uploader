@@ -5,6 +5,7 @@ import type { UploaderController } from '../abstract/controllers/UploaderControl
 import { UploaderRegistry } from '../abstract/UploaderRegistry';
 import type { ConfigType } from '../types';
 import { LightDomMixin } from './LightDomMixin';
+import { createL10n } from './l10n';
 import { PubSub } from './PubSubCompat';
 import { RegisterableElementMixin } from './RegisterableElementMixin';
 import type { SharedState } from './SharedState';
@@ -75,19 +76,31 @@ export abstract class ChildBlock extends ChildBlockBase {
     return this._controller;
   }
 
-  /**
-   * Shared v1 manager/controller instances for this ctx. Getters throw until
-   * the instance registers — inside `controllerReady` prefer `bag.when(name,
-   * cb)` (async-safe) over direct getters.
-   */
-  protected bag: SharedInstancesBag = createSharedInstancesBag(() => {
+  private _requireCtx(): PubSub<SharedState> {
     const ctxName = this.effectiveCtxName;
     const ctx = ctxName ? PubSub.getCtx<SharedState>(ctxName) : null;
     if (!ctx) {
       throw new Error(`${this.tagName.toLowerCase()}: shared context is not initialized yet.`);
     }
     return ctx;
-  });
+  }
+
+  /**
+   * Shared v1 manager/controller instances for this ctx. Getters throw until
+   * the instance registers — inside `controllerReady` prefer `bag.when(name,
+   * cb)` (async-safe) over direct getters.
+   */
+  protected bag: SharedInstancesBag = createSharedInstancesBag(() => this._requireCtx());
+
+  /**
+   * Same contract as v1 `LitBlock.l10n` (`createL10n`): dictionary lookup with
+   * key fallback, template variables, pluralization. Reads route through the
+   * ctx's `*l10n/*` facade to `LocaleController`. Call at render time (the
+   * render gate guarantees the ctx exists); blocks that render l10n text
+   * should add `(l) => ctrl.locale.subscribe(l)` to `subscriptionsFor` so the
+   * text re-renders when the dictionary loads or the locale switches.
+   */
+  public l10n = createL10n(() => this._requireCtx());
 
   public override connectedCallback(): void {
     super.connectedCallback();
