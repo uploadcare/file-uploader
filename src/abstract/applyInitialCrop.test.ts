@@ -21,18 +21,27 @@ describe('applyInitialCrop', () => {
     vi.useRealTimers();
   });
 
-  it('is a no-op when cropPreset is empty/unparseable and there is nothing to crop (no entry mutated)', () => {
-    // Empty collection: findItems() finds nothing to iterate, regardless of
-    // what parseCropPreset makes of an empty/garbage preset string.
+  it('is a no-op when cropPreset is empty or fully invalid — eligible entries stay uncropped', () => {
+    const cdnUrl = 'https://cdn.example.com/uuid/';
+    const id = collection.add({
+      isImage: true,
+      fileInfo: fileInfo(800, 600),
+      cdnUrl,
+      cdnUrlModifiers: null,
+    });
+
     expect(() => applyInitialCrop(collection, '')).not.toThrow();
-    expect(collection.size).toBe(0);
 
     // 'not-a-preset' is unparseable and makes parseCropPreset itself warn —
     // suppress that unrelated noise so the assertion stays about applyInitialCrop.
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     expect(() => applyInitialCrop(collection, 'not-a-preset')).not.toThrow();
-    expect(collection.size).toBe(0);
     warnSpy.mockRestore();
+
+    // A rejected preset must not fall through to the 1:1 default crop.
+    const entry = collection.read(id);
+    expect(entry?.getValue('cdnUrlModifiers')).toBeNull();
+    expect(entry?.getValue('cdnUrl')).toBe(cdnUrl);
   });
 
   it('applies a centered crop modifier + rewritten cdnUrl to an image entry without an existing crop modifier', () => {
