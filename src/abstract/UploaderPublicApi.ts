@@ -5,9 +5,7 @@ import { CameraSourceTypes, type ModeCameraType } from '../blocks/CameraSource/c
 import { type EventKey, type EventPayload, EventType } from '../blocks/UploadCtxProvider/EventEmitter';
 import type { ActivityParamsMap, ActivityType } from '../lit/activity-constants';
 import { ACTIVITY_TYPES } from '../lit/activity-constants';
-import { waitForBlockInCtx } from '../lit/hasBlockInCtx';
-import type { LitActivityBlock } from '../lit/LitActivityBlock';
-import type { LitBlock } from '../lit/LitBlock';
+import { waitForActivityBlock } from '../lit/hasBlockInCtx';
 import { createL10n } from '../lit/l10n';
 import { SharedInstance } from '../lit/shared-instances';
 import type { Uid } from '../lit/Uid';
@@ -38,13 +36,6 @@ export type ApiAddFileCommonOptions = {
   fileName?: string;
   source?: string;
 };
-
-/**
- * Narrows a registry block to a {@link LitActivityBlock}. Non-activity blocks
- * (config, form-input, sources, …) carry no `activityType`, so this filters
- * them out instead of blindly casting and reading `undefined`.
- */
-const isActivityBlock = (block: LitBlock): block is LitActivityBlock => 'activityType' in block;
 
 export class UploaderPublicApi extends SharedInstance {
   private _l10n = createL10n(() => this._ctx);
@@ -378,14 +369,10 @@ export class UploaderPublicApi extends SharedInstance {
     void this._pluginsReady().then(() => {
       this._sharedInstancesBag.router.navigate(activityType, params[0] ?? {});
       if (activityType !== null) {
-        waitForBlockInCtx(
-          this._sharedInstancesBag.blocksRegistry,
-          (b) => isActivityBlock(b) && b.activityType === activityType,
-          {
-            onTimeout: () => console.warn(`Activity type "${activityType}" not found in the context`),
-            timeout: 100,
-          },
-        );
+        waitForActivityBlock(this._sharedInstancesBag.blocksRegistry, this._sharedInstancesBag.router, activityType, {
+          onTimeout: () => console.warn(`Activity type "${activityType}" not found in the context`),
+          timeout: 100,
+        });
       }
     });
   };
@@ -413,14 +400,10 @@ export class UploaderPublicApi extends SharedInstance {
         return;
       }
       this._sharedInstancesBag.router.setActivity(activityType, params[0]);
-      waitForBlockInCtx(
-        this._sharedInstancesBag.blocksRegistry,
-        (b) => isActivityBlock(b) && b.activityType === activityType,
-        {
-          onTimeout: () => console.warn(`Activity type "${activityType}" not found in the context`),
-          timeout: 100,
-        },
-      );
+      waitForActivityBlock(this._sharedInstancesBag.blocksRegistry, this._sharedInstancesBag.router, activityType, {
+        onTimeout: () => console.warn(`Activity type "${activityType}" not found in the context`),
+        timeout: 100,
+      });
     });
   };
 
@@ -460,9 +443,10 @@ export class UploaderPublicApi extends SharedInstance {
         return;
       }
 
-      return waitForBlockInCtx(
+      return waitForActivityBlock(
         this._sharedInstancesBag.blocksRegistry,
-        (b) => isActivityBlock(b) && b.activityType === activityType,
+        this._sharedInstancesBag.router,
+        activityType,
         {
           onTimeout: () => console.warn(`Activity block "${activityType}" not found in the context`),
         },
