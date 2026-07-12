@@ -5,9 +5,9 @@ import { SourceListController } from '../../abstract/controllers';
 import type { SourceButtonConfig } from '../SourceBtn/SourceBtn';
 
 import '../SourceBtn/SourceBtn';
-import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
+import { ChildBlock } from '../../lit/ChildBlock';
 
-export class SourceList extends LitUploaderBlock {
+export class SourceList extends ChildBlock {
   @state()
   private _sources: SourceButtonConfig[] = [];
 
@@ -17,12 +17,10 @@ export class SourceList extends LitUploaderBlock {
   @property({ type: Boolean, attribute: 'wrap', noAccessor: true })
   public wrap = false;
 
-  public override initCallback(): void {
-    super.initCallback();
-
+  protected override controllerReady(): void {
     new SourceListController(this, {
-      ctx: this._sharedInstancesBag.ctx,
-      sharedInstancesBag: this._sharedInstancesBag,
+      ctx: this.bag.ctx,
+      sharedInstancesBag: this.bag,
       onSourcesChange: (sources) => {
         this._sources = sources;
       },
@@ -32,7 +30,7 @@ export class SourceList extends LitUploaderBlock {
   protected override updated(changedProperties: PropertyValues<this>): void {
     super.updated(changedProperties);
 
-    if (this.cfg.sourceListWrap) {
+    if (this.uploader.config.get('sourceListWrap')) {
       this.style.removeProperty('display');
     } else {
       this.style.display = 'contents';
