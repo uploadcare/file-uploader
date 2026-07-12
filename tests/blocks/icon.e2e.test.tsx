@@ -1,7 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { page } from 'vitest/browser';
 import type { Config, Icon, UploaderPlugin } from '@/index.ts';
-import { delay } from '@/utils/delay';
 import { getCtxName } from '../utils/getCtxName';
 import '../../types/jsx';
 
@@ -83,7 +82,6 @@ describe('uc-icon', () => {
         });
       },
     };
-    await delay(0);
     config.plugins = [plugin];
 
     await expect.poll(() => testedIcon().querySelector('svg[viewBox="0 0 24 24"] rect')).toBeTruthy();
