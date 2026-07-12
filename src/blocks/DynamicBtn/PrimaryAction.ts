@@ -1,6 +1,7 @@
 import { html } from 'lit';
 import { property, state } from 'lit/decorators.js';
-import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
+import type { UploaderController } from '../../abstract/controllers/UploaderController';
+import { ChildBlock } from '../../lit/ChildBlock';
 import type { Uid } from '../../lit/Uid';
 import type { OutputCollectionState, OutputCollectionStatus } from '../../types';
 import { UploadSource } from '../../utils/UploadSource';
@@ -10,7 +11,7 @@ import './primary-action.css';
 import '../Icon/Icon';
 import '../Thumb/Thumb';
 
-export class PrimaryAction extends LitUploaderBlock {
+export class PrimaryAction extends ChildBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-primary-action'];
 
   private static readonly SOURCE_TEXT_CONFIG: Record<string, { action: string }> = {
@@ -33,9 +34,11 @@ export class PrimaryAction extends LitUploaderBlock {
   @state()
   private _isMultiple = false;
 
-  public override initCallback(): void {
-    super.initCallback();
+  protected override subscriptionsFor(ctrl: UploaderController) {
+    return [(listener: () => void) => ctrl.locale.subscribe(listener)];
+  }
 
+  protected override controllerReady(): void {
     this.subConfigValue('dynamicButtonShowFirstIcon', (value) => {
       this.showIcon = value;
     });
@@ -122,7 +125,7 @@ export class PrimaryAction extends LitUploaderBlock {
 
   private _handleClick() {
     if (this.hasEntries) {
-      this.router.navigate('upload-list');
+      this.bag.router.navigate('upload-list');
       return;
     }
 

@@ -1,6 +1,6 @@
 import { html } from 'lit';
 import { property } from 'lit/decorators.js';
-import { LitBlock } from '../../lit/LitBlock';
+import { ChildBlock } from '../../lit/ChildBlock';
 import './select.css';
 
 type SelectOption = {
@@ -8,7 +8,7 @@ type SelectOption = {
   value: string;
 };
 
-export class Select extends LitBlock {
+export class Select extends ChildBlock {
   @property({ type: String, attribute: false })
   public value = '';
 

@@ -30,6 +30,13 @@ export class SourceBtn extends ChildBlock {
   @state()
   private _srcTypeKey = '';
 
+  protected override controllerReady(): void {
+    // A `source` set while the render gate was closed never reaches
+    // `willUpdate` (Lit clears changed-properties for gated cycles) —
+    // re-derive from the current value on adoption.
+    this._applySource(this.source);
+  }
+
   protected override willUpdate(changedProperties: PropertyValues<this>): void {
     super.willUpdate(changedProperties);
 
