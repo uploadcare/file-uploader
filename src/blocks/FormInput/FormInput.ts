@@ -33,8 +33,13 @@ export class FormInput extends ChildBlock {
   }
 
   protected override controllerReady(): void {
-    this._validationInputElement = this._createValidationInput();
-    this.appendChild(this._validationInputElement);
+    // `controllerReady` re-runs on controller re-adoption — guard the append
+    // so duplicate hidden inputs can't stack (same guard as the subscription
+    // callback below).
+    if (!this._validationInputElement) {
+      this._validationInputElement = this._createValidationInput();
+      this.appendChild(this._validationInputElement);
+    }
 
     this.trackSub(
       this.bag.ctx.sub(
