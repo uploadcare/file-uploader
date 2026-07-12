@@ -45,6 +45,12 @@ export class Icon extends ChildBlock {
     this._pluginManager = null;
   }
 
+  // Pre-adoption safety: unlike `willUpdate`-gated derivations, a `name` set
+  // before adoption is not lost here — `controllerReady`'s `subConfigValue`/
+  // `bag.when` subscriptions above both call `_updateResolvedHref()` when
+  // they first fire on adoption. If this restructures, keep one of those
+  // subscriptions calling it (or add an explicit re-derive here) so a
+  // pre-adoption `name` write still resolves.
   protected override willUpdate(changedProperties: PropertyValues<this>): void {
     super.willUpdate(changedProperties);
     if (changedProperties.has('name')) {

@@ -19,6 +19,21 @@ beforeAll(async () => {
 // cast is narrowed to the public `OutputCollectionState` shape (not `any`).
 type Entries = OutputCollectionState<OutputCollectionStatus, 'maybe-has-group'>;
 
+// Fixture helper: every call site above only ever sets the subset of
+// `Entries` fields `PrimaryAction` reads (see comment above), with
+// `allEntries` items shaped as plain `{}` / partial objects rather than full
+// `OutputFileEntry`s — so `Partial<Pick<...>>` still can't satisfy the full
+// discriminated-union `Entries` type. The single narrow cast lives here
+// instead of being repeated (as `as unknown as Entries`) at every call site.
+const makeEntries = (
+  partial: Partial<
+    Pick<
+      Entries,
+      'status' | 'totalCount' | 'allEntries' | 'uploadingCount' | 'failedCount' | 'successCount' | 'isSuccess'
+    >
+  >,
+): Entries => partial as Entries;
+
 // Booleans are driven as JS properties on `config` after render (same pattern
 // as tests/blocks/simple-btn.e2e.test.tsx's `config.multiple = false`), not as
 // JSX attributes: the render-jsx `CommonDOMRenderer` maps a `false`-valued JSX
@@ -60,7 +75,7 @@ describe('uc-primary-action', () => {
     const onClick = vi.fn();
     const source: SourceButtonConfig = { id: 'local', label: 'src-type-local', onClick };
     btn.source = source;
-    btn.entries = { totalCount: 0, allEntries: [] } as unknown as Entries;
+    btn.entries = makeEntries({ totalCount: 0, allEntries: [] });
 
     await expect.poll(buttonText).toBe('Upload from device');
     expect(ariaLabel()).toBe('Upload from device');
@@ -68,27 +83,27 @@ describe('uc-primary-action', () => {
 
   it('renders the header-uploading text with count while uploading', async () => {
     const { btn } = renderPrimaryAction();
-    btn.entries = { status: 'uploading', uploadingCount: 2, allEntries: [{}], totalCount: 2 } as unknown as Entries;
+    btn.entries = makeEntries({ status: 'uploading', uploadingCount: 2, allEntries: [{}], totalCount: 2 });
 
     await expect.poll(buttonText).toBe('Uploading 2 files');
   });
 
   it('renders the header-failed text with count when failed', async () => {
     const { btn } = renderPrimaryAction();
-    btn.entries = { status: 'failed', failedCount: 1, allEntries: [{}], totalCount: 1 } as unknown as Entries;
+    btn.entries = makeEntries({ status: 'failed', failedCount: 1, allEntries: [{}], totalCount: 1 });
 
     await expect.poll(buttonText).toBe('1 error');
   });
 
   it('renders the header-succeed text with count on success', async () => {
     const { btn } = renderPrimaryAction();
-    btn.entries = {
+    btn.entries = makeEntries({
       status: 'success',
       successCount: 3,
       allEntries: [{}, {}, {}],
       isSuccess: true,
       totalCount: 3,
-    } as unknown as Entries;
+    });
 
     await expect.poll(buttonText).toBe('3 files uploaded');
   });
@@ -99,7 +114,7 @@ describe('uc-primary-action', () => {
     // other status (e.g. 'idle') with `totalCount > 0` falls through to the
     // `header-total` l10n key: '{{count}} {{plural:file(count)}} selected'.
     const { btn } = renderPrimaryAction();
-    btn.entries = { status: 'idle', totalCount: 2, allEntries: [{}, {}] } as unknown as Entries;
+    btn.entries = makeEntries({ status: 'idle', totalCount: 2, allEntries: [{}, {}] });
 
     await expect.poll(buttonText).toBe('2 files selected');
   });
@@ -108,7 +123,7 @@ describe('uc-primary-action', () => {
     const { config, btn } = renderPrimaryAction();
     config.dynamicButtonShowFirstIcon = true;
     btn.source = { id: 'local', label: 'src-type-local', icon: 'my-icon', onClick: () => {} };
-    btn.entries = { totalCount: 0, allEntries: [] } as unknown as Entries;
+    btn.entries = makeEntries({ totalCount: 0, allEntries: [] });
 
     await expect.poll(iconName).toBe('my-icon');
   });
@@ -117,7 +132,7 @@ describe('uc-primary-action', () => {
     const { config, btn } = renderPrimaryAction();
     config.dynamicButtonShowFirstIcon = false;
     btn.source = { id: 'local', label: 'src-type-local', icon: 'my-icon', onClick: () => {} };
-    btn.entries = { totalCount: 0, allEntries: [] } as unknown as Entries;
+    btn.entries = makeEntries({ totalCount: 0, allEntries: [] });
 
     await expect.poll(buttonText).toBe('Upload from device');
     expect(iconEl()).toBeNull();
@@ -127,13 +142,13 @@ describe('uc-primary-action', () => {
     const { config, btn } = renderPrimaryAction();
     config.multiple = false;
     await expect.poll(() => config.multiple).toBe(false);
-    btn.entries = {
+    btn.entries = makeEntries({
       status: 'success',
       successCount: 1,
       isSuccess: true,
       totalCount: 1,
       allEntries: [{ isImage: true, internalId: 'test-uid' }],
-    } as unknown as Entries;
+    });
 
     await expect.poll(() => thumbEl()).toBeTruthy();
   });
@@ -143,13 +158,13 @@ describe('uc-primary-action', () => {
     config.multiple = true;
     config.dynamicButtonShowFirstIcon = true;
     btn.source = { id: 'local', label: 'src-type-local', icon: 'my-icon', onClick: () => {} };
-    btn.entries = {
+    btn.entries = makeEntries({
       status: 'success',
       successCount: 1,
       isSuccess: true,
       totalCount: 1,
       allEntries: [{ isImage: true, internalId: 'test-uid' }],
-    } as unknown as Entries;
+    });
 
     await expect.poll(buttonText).toBe('1 file uploaded');
     expect(thumbEl()).toBeNull();
@@ -160,7 +175,7 @@ describe('uc-primary-action', () => {
     const { btn } = renderPrimaryAction();
     const onClick = vi.fn();
     btn.source = { id: 'local', label: 'src-type-local', onClick };
-    btn.entries = { totalCount: 0, allEntries: [] } as unknown as Entries;
+    btn.entries = makeEntries({ totalCount: 0, allEntries: [] });
     await expect.poll(buttonText).toBe('Upload from device');
 
     (document.querySelector('uc-primary-action button') as HTMLButtonElement).click();
@@ -171,13 +186,13 @@ describe('uc-primary-action', () => {
     const { btn } = renderPrimaryAction();
     const onClick = vi.fn();
     btn.source = { id: 'local', label: 'src-type-local', onClick };
-    btn.entries = {
+    btn.entries = makeEntries({
       status: 'success',
       successCount: 1,
       isSuccess: true,
       totalCount: 1,
       allEntries: [{ isImage: false, internalId: 'test-uid' }],
-    } as unknown as Entries;
+    });
     await expect.poll(buttonText).toBe('1 file uploaded');
 
     // `_handleClick` is synchronous and branches on `hasEntries` before ever
