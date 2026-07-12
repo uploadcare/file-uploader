@@ -8,7 +8,6 @@ import '../Icon/Icon';
 
 export class SimpleBtn extends LitUploaderBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-simple-btn'];
-  public override couldBeCtxOwner = true;
 
   @property({ attribute: 'dropzone', type: Boolean })
   public dropzone = true;

@@ -23,7 +23,6 @@ const SOCIAL_SOURCE_MAPPING: Record<string, string> = {
 export type ActivityParams = { externalSourceType: string };
 
 export class ExternalSource extends LitUploaderBlock {
-  public override couldBeCtxOwner = true;
   private _messageBridge?: MessageBridge;
 
   private _iframeRef = createRef<HTMLIFrameElement>();

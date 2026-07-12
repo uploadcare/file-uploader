@@ -144,4 +144,44 @@ describe('upload events wiring', () => {
       expect.objectContaining({ internalId: secondEntry.internalId, status: 'removed' }),
     );
   }, 30_000);
+
+  it('keeps deriving upload events after an owner-candidate block is removed', async () => {
+    const ctxName = getCtxName();
+    page.render(
+      <>
+        <uc-file-uploader-regular ctx-name={ctxName}></uc-file-uploader-regular>
+        <uc-config qualityInsights={false} ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
+        <uc-upload-ctx-provider ctx-name={ctxName}></uc-upload-ctx-provider>
+      </>,
+    );
+
+    const uploadCtxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
+    const api = uploadCtxProvider.api;
+
+    const commonSuccessHandler = vi.fn<(e: CustomEvent<EventPayload['common-upload-success']>) => void>();
+    uploadCtxProvider.addEventListener('common-upload-success', commonSuccessHandler);
+
+    api.addFileFromUrl(TEST_IMAGE_URL);
+    api.uploadAll();
+
+    await expect.poll(() => api.getOutputCollectionState().successCount, { timeout: 20_000 }).toBe(1);
+    await expect.poll(() => commonSuccessHandler.mock.calls.length, { timeout: 20_000 }).toBeGreaterThanOrEqual(1);
+    const callsBeforeRemoval = commonSuccessHandler.mock.calls.length;
+
+    // Remove the internal `uc-simple-btn` — under v1 semantics this was the
+    // ctx-owner candidate rendered by the solution first, and its removal
+    // could pause event derivation. Under M9b, `*uploadEvents` is a per-ctx
+    // shared instance independent of any single block's lifecycle.
+    document.querySelector('uc-simple-btn')?.remove();
+
+    api.addFileFromUrl(TEST_IMAGE_URL);
+    api.uploadAll();
+
+    // Proves event derivation kept running after the owner-candidate's removal:
+    // a second `common-upload-success` fires and successCount reaches 2.
+    await expect
+      .poll(() => commonSuccessHandler.mock.calls.length, { timeout: 20_000 })
+      .toBeGreaterThan(callsBeforeRemoval);
+    await expect.poll(() => api.getOutputCollectionState().successCount, { timeout: 20_000 }).toBe(2);
+  }, 30_000);
 });

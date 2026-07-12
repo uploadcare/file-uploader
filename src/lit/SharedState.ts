@@ -4,6 +4,7 @@ import type { RouterController } from '../abstract/controllers/RouterController'
 import type { SecureUploadsController } from '../abstract/controllers/SecureUploadsController';
 import type { UploadCollectionController } from '../abstract/controllers/UploadCollectionController';
 import type { UploadController } from '../abstract/controllers/UploadController';
+import type { UploadEventsController } from '../abstract/controllers/UploadEventsController';
 import type { ValidationController } from '../abstract/controllers/ValidationController';
 import type { LocaleDefinition } from '../abstract/localeRegistry';
 import type { A11y } from '../abstract/managers/a11y';
@@ -104,6 +105,7 @@ type DynamicUploaderBlockState = {
   '*validationManager': ValidationController;
   '*secureUploadsManager': SecureUploadsController;
   '*uploadController': UploadController;
+  '*uploadEvents': UploadEventsController;
 };
 
 type LocaleState = {
