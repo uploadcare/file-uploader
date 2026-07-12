@@ -86,4 +86,23 @@ describe('uc-source-btn', () => {
     renderSourceBtn();
     await expect.element(page.getByTestId('uc-source-btn')).toBeInTheDocument();
   });
+
+  it('applies a source set while the render gate was still closed', async () => {
+    const ctxName = getCtxName();
+    // Mount the button BEFORE any ctx exists, then set the property — the
+    // scheduled update flushes gated, so Lit clears changedProperties.
+    const btn = document.createElement('uc-source-btn');
+    btn.setAttribute('ctx-name', ctxName);
+    document.body.append(btn);
+    await btn.updateComplete;
+    btn.source = { id: 'late-src', label: 'late-label-key', onClick: () => {} };
+    await btn.updateComplete;
+
+    // Now create the ctx; the button adopts and must render the label it was
+    // given pre-adoption, not the stale defaults.
+    page.render(<uc-config ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>);
+    await expect.poll(() => btn.querySelector('.uc-txt')?.textContent).toBe('late-label-key');
+    await expect.poll(() => btn.querySelector('uc-icon')?.getAttribute('name')).toBe('late-src');
+    btn.remove();
+  });
 });
