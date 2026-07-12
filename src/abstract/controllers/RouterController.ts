@@ -170,10 +170,10 @@ export class RouterController {
   // membership in the v1 `*blocksRegistry` for "is this activity's block
   // mounted?" waits. Refcounted — the same activityType can be mounted in
   // several slots at once (e.g. minimal's two <uc-start-from>).
-  private _mountedActivities = new Map<string, number>();
+  private _mountedActivities = new Map<ActivityId, number>();
 
   /** Report a mounted activity block. Returns the matching un-mount call. */
-  public activityBlockMounted(activityType: string): () => void {
+  public activityBlockMounted(activityType: ActivityId): () => void {
     this._mountedActivities.set(activityType, (this._mountedActivities.get(activityType) ?? 0) + 1);
     this._listeners.notify();
     let released = false;
@@ -187,7 +187,7 @@ export class RouterController {
     };
   }
 
-  public hasMountedActivity(activityType: string): boolean {
+  public hasMountedActivity(activityType: ActivityId): boolean {
     return this._mountedActivities.has(activityType);
   }
 

@@ -13,6 +13,7 @@ import { RegisterableElementMixin } from './RegisterableElementMixin';
 import type { SharedState } from './SharedState';
 import { ctxNameContext } from './SymbioteCompatMixin';
 import { createSharedInstancesBag, type SharedInstancesBag } from './shared-instances';
+import { TestModeController } from './TestModeController';
 
 const ChildBlockBase = RegisterableElementMixin(LightDomMixin(LitElement));
 
@@ -47,6 +48,15 @@ export abstract class ChildBlock extends ChildBlockBase {
   private _registryUnsub?: () => void;
   private _subs: Array<() => void> = [];
   private _ctxNameProvider: ContextProvider<{ __context__: string | undefined }> | undefined = undefined;
+
+  public constructor() {
+    super();
+    new TestModeController(this);
+  }
+
+  public get testId(): string {
+    return this.tagName.toLowerCase();
+  }
 
   // biome-ignore lint/correctness/noUnusedPrivateClassMembers: `ContextConsumer` subscribes by side effect — the field keeps it alive for the host's lifetime.
   private _ctxNameConsumer = new ContextConsumer(this, {
@@ -215,6 +225,32 @@ export abstract class ChildBlock extends ChildBlockBase {
     } else {
       this.removeAttribute('data-testid');
     }
+  }
+
+  /**
+   * TestModeController hook — subscribe once a controller is adopted.
+   * Subscribes directly on the controller's config (not via `subConfigValue`/
+   * `trackSub`) so the `TestModeController`'s own `_unsubscribe` is the sole
+   * owner of the teardown, rather than being released early by controller
+   * re-adoption. This binds to the first adopted controller's config for the
+   * host's lifetime, matching v1's single-ctx `LitBlock` lifetime; ctx swaps
+   * mid-life are exotic and not covered here.
+   */
+  public trySubscribeTestMode(callback: (enabled: boolean) => void): (() => void) | undefined {
+    const ctrl = this.uploaderOrNull;
+    if (!ctrl) {
+      return undefined;
+    }
+    const config = ctrl.config;
+    let last = config.get('testMode');
+    callback(Boolean(last));
+    return config.subscribe(() => {
+      const next = config.get('testMode');
+      if (!Object.is(next, last)) {
+        last = next;
+        callback(Boolean(next));
+      }
+    });
   }
 
   /** Track a subscription for auto-teardown on controller release / disconnect. */

@@ -1,8 +1,14 @@
 import type { LitElement, ReactiveController, ReactiveControllerHost } from 'lit';
-import { sharedConfigKey } from '../abstract/sharedConfigKey';
-import type { LitBlock } from './LitBlock';
 
-type TestModeHost = ReactiveControllerHost & LitElement & LitBlock;
+export type TestModeHost = ReactiveControllerHost &
+  LitElement & {
+    readonly testId: string;
+    /**
+     * Subscribe to `testMode` once the config source is available; return the
+     * unsubscribe, or `undefined` to be retried on the next host update.
+     */
+    trySubscribeTestMode(callback: (enabled: boolean) => void): (() => void) | undefined;
+  };
 
 const isCustomElement = (el: Element): boolean => {
   return el.tagName?.includes('-') ?? false;
@@ -28,12 +34,11 @@ export class TestModeController implements ReactiveController {
   }
 
   public hostUpdated(): void {
-    if (!this._unsubscribe && this._host.has(sharedConfigKey('testMode'))) {
-      const unsubscribe = this._host.subConfigValue('testMode', (isEnabled: boolean) => {
+    if (!this._unsubscribe) {
+      this._unsubscribe = this._host.trySubscribeTestMode((isEnabled) => {
         this._enabled = Boolean(isEnabled);
         this._applyTestMode();
       });
-      this._unsubscribe = unsubscribe as (() => void) | undefined;
     }
 
     this._collectElements();
