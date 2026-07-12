@@ -1,11 +1,9 @@
 import { html } from 'lit';
-import { LitBlock } from '../../lit/LitBlock';
+import { ChildBlock } from '../../lit/ChildBlock';
 import './copyright.css';
 
-export class Copyright extends LitBlock {
-  public override initCallback(): void {
-    super.initCallback();
-
+export class Copyright extends ChildBlock {
+  protected override controllerReady(): void {
     this.subConfigValue('removeCopyright', (value) => {
       this.toggleAttribute('hidden', !!value);
     });
