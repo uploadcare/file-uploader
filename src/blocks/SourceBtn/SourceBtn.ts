@@ -14,8 +14,6 @@ export type SourceButtonConfig = {
 };
 
 export class SourceBtn extends LitUploaderBlock {
-  public override couldBeCtxOwner = true;
-
   @property({ attribute: false })
   public source?: SourceButtonConfig;
 

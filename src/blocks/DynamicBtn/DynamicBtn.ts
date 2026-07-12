@@ -53,7 +53,6 @@ const AUTO_MODE_INLINE_THRESHOLD = 3;
 
 export class DynamicBtn extends LitUploaderBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-dynamic-btn'];
-  public override couldBeCtxOwner = true;
 
   private _unregisterOnFileAddHook?: () => void;
 

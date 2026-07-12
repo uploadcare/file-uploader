@@ -3,6 +3,7 @@ import type { RouterController } from '../abstract/controllers/RouterController'
 import type { SecureUploadsController } from '../abstract/controllers/SecureUploadsController';
 import type { UploadCollectionController } from '../abstract/controllers/UploadCollectionController';
 import type { UploadController } from '../abstract/controllers/UploadController';
+import type { UploadEventsController } from '../abstract/controllers/UploadEventsController';
 import type { ValidationController } from '../abstract/controllers/ValidationController';
 import type { A11y } from '../abstract/managers/a11y';
 import type { LocaleManager } from '../abstract/managers/LocaleManager';
@@ -84,6 +85,7 @@ const instanceKeyMap = {
   uploadCollection: '*uploadCollection',
   secureUploadsManager: '*secureUploadsManager',
   uploadController: '*uploadController',
+  uploadEvents: '*uploadEvents',
   api: '*publicApi',
   validationManager: '*validationManager',
 } satisfies Record<string, keyof SharedState>;
@@ -151,6 +153,9 @@ export const createSharedInstancesBag = (getCtx: () => PubSub<SharedState>) => {
     },
     get uploadController(): UploadController {
       return getSharedInstance(getCtx(), '*uploadController');
+    },
+    get uploadEvents(): UploadEventsController {
+      return getSharedInstance(getCtx(), '*uploadEvents');
     },
     get api(): UploaderPublicApi {
       return getSharedInstance(getCtx(), '*publicApi');
