@@ -1,12 +1,13 @@
 import { html } from 'lit';
 import { property, state } from 'lit/decorators.js';
-import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
+import type { UploaderController } from '../../abstract/controllers/UploaderController';
+import { ChildBlock } from '../../lit/ChildBlock';
 import './simple-btn.css';
 
 import '../DropArea/DropArea';
 import '../Icon/Icon';
 
-export class SimpleBtn extends LitUploaderBlock {
+export class SimpleBtn extends ChildBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-simple-btn'];
 
   @property({ attribute: 'dropzone', type: Boolean })
@@ -16,12 +17,14 @@ export class SimpleBtn extends LitUploaderBlock {
   private _buttonTextKey = 'upload-file';
 
   private readonly _handleClick = () => {
-    this.api.initFlow();
+    this.bag.api.initFlow();
   };
 
-  public override initCallback(): void {
-    super.initCallback();
+  protected override subscriptionsFor(ctrl: UploaderController) {
+    return [(listener: () => void) => ctrl.locale.subscribe(listener)];
+  }
 
+  protected override controllerReady(): void {
     this.subConfigValue('multiple', (val) => {
       this._buttonTextKey = val ? 'upload-files' : 'upload-file';
     });
