@@ -44,7 +44,8 @@ class TestChildBlock extends ChildBlock {
 
   public override render() {
     return html`<span class="pk">${this.uploaderOrNull?.config.get('pubkey') ?? ''}</span
-      ><span class="l10n">${this.l10n('upload-file')}</span>`;
+      ><span class="l10n">${this.l10n('upload-file')}</span
+      ><span class="inner" data-testid="inner"></span>`;
   }
 }
 
@@ -152,6 +153,18 @@ describe('ChildBlock', () => {
     const config = page.getByTestId('uc-config').query()! as Config;
     config.testMode = false;
     await expect.poll(() => child.hasAttribute('data-testid')).toBe(false);
+  });
+
+  it('rewrites descendant bare data-testid attrs to the scoped convention under testMode', async () => {
+    const ctxName = getCtxName();
+    page.render(<uc-config ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>);
+    const child = append('test-child-block', { 'ctx-name': ctxName });
+
+    await expect.poll(() => child.querySelector('.inner')?.getAttribute('data-testid')).toBe('test-child-block--inner');
+
+    const config = page.getByTestId('uc-config').query()! as Config;
+    config.testMode = false;
+    await expect.poll(() => child.querySelector('.inner')?.hasAttribute('data-testid')).toBe(false);
   });
 
   it('releases subscriptions on disconnect and re-adopts on reconnect', async () => {
