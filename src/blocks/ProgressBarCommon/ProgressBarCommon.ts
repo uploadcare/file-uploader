@@ -1,52 +1,54 @@
 import { html, type PropertyValues } from 'lit';
 import { state } from 'lit/decorators.js';
-import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
+import { ChildBlock } from '../../lit/ChildBlock';
 import './progress-bar-common.css';
 
 import '../ProgressBar/ProgressBar';
 
-type BaseInitState = InstanceType<typeof LitUploaderBlock>['init$'];
-
-interface ProgressBarCommonInitState extends BaseInitState {
-  '*commonProgress': number;
-}
-
-export class ProgressBarCommon extends LitUploaderBlock {
-  private _unobserveCollectionCb?: () => void;
-
+export class ProgressBarCommon extends ChildBlock {
   @state()
   private _visible = false;
 
   @state()
   private _value = 0;
 
-  public constructor() {
-    super();
-    this.init$ = {
-      ...this.init$,
-      '*commonProgress': 0,
-    } as ProgressBarCommonInitState;
-  }
+  // No `init$` here: `*commonProgress` is a ctx-scope key seeded by v1
+  // uploader blocks (`UploaderController`/solution wiring), not by this
+  // block — `ChildBlock` has no `init$` seam to declare it in.
+  protected override controllerReady(): void {
+    this.trackSub(
+      this.bag.ctx.sub('*commonProgress', (progress: number) => {
+        this._value = progress;
+      }),
+    );
 
-  public override initCallback(): void {
-    super.initCallback();
-    this._unobserveCollectionCb = this.uploadCollection.observeProperties(() => {
-      const anyUploading = this.uploadCollection.items().some((id) => {
-        const item = this.uploadCollection.read(id);
-        return item?.getValue('isUploading') ?? false;
-      });
+    // The uploader-scope `*uploadCollection` instance may not have registered
+    // yet when this block's controller adopts — go through `bag.when` rather
+    // than the throwing `bag.uploadCollection` getter (DynamicBtn precedent).
+    this.trackSub(
+      this.bag.when('uploadCollection', (collection) => {
+        this.trackSub(
+          collection.observeProperties(() => {
+            const anyUploading = collection.items().some((id) => {
+              const item = collection.read(id);
+              return item?.getValue('isUploading') ?? false;
+            });
 
-      this._visible = anyUploading;
-    });
-
-    this.sub('*commonProgress', (progress: number) => {
-      this._value = progress;
-    });
+            this._visible = anyUploading;
+          }),
+        );
+      }),
+    );
   }
 
   protected override updated(changedProperties: PropertyValues<this>): void {
     super.updated(changedProperties);
 
+    // Known-dead code, preserved bug-for-bug from v1: this checks
+    // `changedProperties.has('visible')` but the backing field is `_visible`,
+    // so this branch never fires and the host `active` attribute is never
+    // toggled. Not fixed here — activating it would change CSS-visible
+    // behavior that v1 never exercised (see M9h task-3 brief / progress.md).
     if (changedProperties.has('visible' as keyof ProgressBarCommon)) {
       if (this._visible) {
         this.setAttribute('active', '');
@@ -54,12 +56,6 @@ export class ProgressBarCommon extends LitUploaderBlock {
         this.removeAttribute('active');
       }
     }
-  }
-
-  public override disconnectedCallback(): void {
-    super.disconnectedCallback();
-    this._unobserveCollectionCb?.();
-    this._unobserveCollectionCb = undefined;
   }
 
   public override render() {
