@@ -3,9 +3,9 @@ import type { PropertyValues } from 'lit';
 import { html } from 'lit';
 import { property } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
-import { LitBlock } from '../../lit/LitBlock';
+import { ChildBlock } from '../../lit/ChildBlock';
 
-export class ProgressBar extends LitBlock {
+export class ProgressBar extends ChildBlock {
   @property({ type: Boolean, noAccessor: true })
   public hasFileName = false;
 
