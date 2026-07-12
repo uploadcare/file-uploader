@@ -1,7 +1,7 @@
 import { html } from 'lit';
 import { property } from 'lit/decorators.js';
 import { styleMap } from 'lit/directives/style-map.js';
-import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
+import { ChildBlock } from '../../lit/ChildBlock';
 
 import '../Icon/Icon';
 
@@ -10,7 +10,7 @@ import { classMap } from 'lit/directives/class-map.js';
 
 const L10N_REMOVE_KEY = 'file-item-remove-button';
 
-export class FileActionButton extends LitUploaderBlock {
+export class FileActionButton extends ChildBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-file-action-button'];
 
   @property({ type: Boolean })
