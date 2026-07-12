@@ -138,7 +138,7 @@ export class DynamicBtn extends ChildBlock {
   }, 300);
 
   private _updateButtonBasedOnCollectionState() {
-    const collectionState = this.bag.api?.getOutputCollectionState();
+    const collectionState = this.bag.apiOrNull?.getOutputCollectionState();
 
     if (!collectionState) {
       console.warn('Collection state is undefined');
