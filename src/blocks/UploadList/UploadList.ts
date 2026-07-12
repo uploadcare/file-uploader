@@ -24,7 +24,6 @@ export type Summary = {
 };
 
 export class UploadList extends LitUploaderBlock {
-  public override couldBeCtxOwner = true;
   public override activityType = ACTIVITY_TYPES.UPLOAD_LIST;
 
   @state()

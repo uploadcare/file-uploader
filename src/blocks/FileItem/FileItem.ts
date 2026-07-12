@@ -28,8 +28,6 @@ const FileItemState = Object.freeze({
 type FileItemStateValue = (typeof FileItemState)[keyof typeof FileItemState];
 
 export class FileItem extends FileItemConfig {
-  protected override couldBeCtxOwner = true;
-
   @state()
   private _pauseRender = true;
 

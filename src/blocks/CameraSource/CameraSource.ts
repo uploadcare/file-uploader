@@ -51,7 +51,6 @@ export type CameraMode = 'photo' | 'video';
 export type CameraStatus = 'shot' | 'retake' | 'accept' | 'play' | 'stop' | 'pause' | 'resume';
 
 export class CameraSource extends LitUploaderBlock {
-  public override couldBeCtxOwner = true;
   private _unsubPermissions: (() => void) | null = null;
 
   private _capturing = false;
