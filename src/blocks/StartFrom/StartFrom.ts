@@ -1,9 +1,9 @@
 import './start-from.css';
 import { html } from 'lit';
+import { ActivityChildBlock } from '../../lit/ActivityChildBlock';
 import { ACTIVITY_TYPES, type ActivityType } from '../../lit/activity-constants';
-import { LitActivityBlock } from '../../lit/LitActivityBlock';
 
-export class StartFrom extends LitActivityBlock {
+export class StartFrom extends ActivityChildBlock {
   public override activityType: ActivityType = ACTIVITY_TYPES.START_FROM;
 
   public override render() {
