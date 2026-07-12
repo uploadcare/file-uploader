@@ -178,7 +178,14 @@ export abstract class ChildBlock extends ChildBlockBase {
     }
     this._subs.push(ctrl.config.subscribe(() => this._syncTestId(ctrl)));
     this._syncTestId(ctrl);
-    this.controllerReady(ctrl);
+    try {
+      this.controllerReady(ctrl);
+    } catch (err) {
+      // One block's adoption hook must not break the adoption cycle or escape
+      // the registry callback as an unhandled error (isolate-and-warn, as in
+      // teardown and EventBus fan-out).
+      console.warn(`[uc] ${this.tagName.toLowerCase()}: controllerReady threw during adoption`, err);
+    }
     this.requestUpdate();
   }
 

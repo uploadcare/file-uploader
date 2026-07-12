@@ -13,6 +13,7 @@ class TestChildBlock extends ChildBlock {
   public readyCount = 0;
   public releasedCount = 0;
   public throwOnRelease = false;
+  public throwInReady = false;
   public cleanupRanAfterThrow = false;
 
   protected override subscriptionsFor(ctrl: UploaderController) {
@@ -23,6 +24,9 @@ class TestChildBlock extends ChildBlock {
   }
 
   protected override controllerReady(): void {
+    if (this.throwInReady) {
+      throw new Error('boom in controllerReady');
+    }
     this.readyCount += 1;
     if (this.throwOnRelease) {
       this.trackSub(() => {
@@ -233,5 +237,30 @@ describe('ChildBlock', () => {
     await expect.poll(() => child.readyCount).toBe(1);
     // biome-ignore lint/suspicious/noExplicitAny: reaching into the helper directly
     expect((child as any).l10n('definitely-not-a-key')).toBe('definitely-not-a-key');
+  });
+
+  it('isolates a throwing controllerReady during adoption, warns, and finishes the update', async () => {
+    const ctxName = getCtxName();
+    page.render(<uc-config ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>);
+    const child = document.createElement('test-child-block');
+    child.throwInReady = true;
+    child.setAttribute('ctx-name', ctxName);
+
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      document.body.append(child);
+      appended.push(child);
+
+      // Adoption must still complete (post-hook requestUpdate ran) even though
+      // controllerReady threw.
+      await expect.poll(() => child.querySelector('.pk')?.textContent).toBe('demopublickey');
+      expect(child.readyCount).toBe(0);
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('controllerReady threw during adoption'),
+        expect.any(Error),
+      );
+    } finally {
+      warnSpy.mockRestore();
+    }
   });
 });
