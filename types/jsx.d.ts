@@ -41,6 +41,9 @@ type ExternalSource = import('../dist/index.ts').ExternalSource;
 type CloudImageEditorActivity = import('../dist/index.ts').CloudImageEditorActivity;
 type FormInput = import('../dist/index.ts').FormInput;
 type CloudImageEditorBlock = import('../dist/index.ts').CloudImageEditorBlock;
+type PrimaryAction = import('../dist/index.ts').PrimaryAction;
+type DropDown = import('../dist/index.ts').DropDown;
+type Select = import('../dist/index.ts').Select;
 
 type CommonHtmlAttributes<T> = Partial<
   Pick<React.HTMLAttributes<T>, 'id' | 'children' | 'hidden'> & { class: React.HTMLAttributes<T>['className'] }
@@ -93,5 +96,8 @@ declare namespace JSX {
     'uc-file-uploader-inline': CustomElement<FileUploaderInline>;
     'uc-upload-ctx-provider': CustomElement<UploadCtxProvider>;
     'uc-config': CustomElement<Config>;
+    'uc-primary-action': CustomElement<PrimaryAction>;
+    'uc-drop-down': CustomElement<DropDown>;
+    'uc-select': CustomElement<Select>;
   }
 }
