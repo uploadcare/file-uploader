@@ -60,13 +60,16 @@ export const waitForActivityBlock = (
   router: RouterController,
   activityType: string,
   { timeout = 1000, onTimeout }: { timeout?: number; onTimeout?: () => void } = {},
-): Promise<void> => {
+): Promise<boolean> => {
   return new Promise((resolve) => {
     let rafId: ReturnType<typeof requestAnimationFrame>;
 
     const timer = setTimeout(() => {
       cancelAnimationFrame(rafId);
       onTimeout?.();
+      // Settle instead of leaving the promise pending forever (unlike the
+      // legacy `waitForBlockInCtx`): callers gate on the resolved value.
+      resolve(false);
     }, timeout);
 
     const check = () => {
@@ -75,7 +78,7 @@ export const waitForActivityBlock = (
         hasBlockInCtx(blocksRegistry, (b) => isActivityBlock(b) && b.activityType === activityType);
       if (found) {
         clearTimeout(timer);
-        resolve();
+        resolve(true);
         return;
       }
       rafId = requestAnimationFrame(check);
