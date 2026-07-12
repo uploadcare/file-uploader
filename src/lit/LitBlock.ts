@@ -157,6 +157,14 @@ export class LitBlock extends LitBlockBase {
     return testId;
   }
 
+  /** TestModeController hook — subscribe once the shared ctx carries the key. */
+  public trySubscribeTestMode(callback: (enabled: boolean) => void): (() => void) | undefined {
+    if (!this.has(sharedConfigKey('testMode'))) {
+      return undefined;
+    }
+    return this.subConfigValue('testMode', (value) => callback(Boolean(value)));
+  }
+
   public get router(): RouterController {
     return this._getSharedContextInstance('*router');
   }
