@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { page } from 'vitest/browser';
+import { PubSub } from '@/lit/PubSubCompat';
 import { getCtxName } from '../utils/getCtxName';
 import { cleanup } from '../utils/test-renderer';
 import '../../types/jsx';
@@ -27,9 +28,9 @@ describe('uc-modal teardown', () => {
     expect(dialog).toBeTruthy();
 
     // Unmount everything; the ctx destroys via a deferred task once the last
-    // block disconnects.
+    // block disconnects. Wait for the destruction fact, not a fixed delay.
     cleanup();
-    await new Promise((resolve) => setTimeout(resolve, 20));
+    await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(false);
 
     // The native <dialog> "close" event is dispatched from a queued task and
     // can land exactly here in real teardowns. It must be a no-op, not an
