@@ -93,7 +93,7 @@ export class FileItem extends FileItemConfig {
       },
     });
 
-    if (this.uid && this.bag.uploadCollection.hasItem(this.uid)) {
+    if (this.uid && this.bag.ctx.has('*uploadCollection') && this.bag.uploadCollection.hasItem(this.uid)) {
       this.entry?.getValue('abortController')?.abort();
       this.bag.uploadCollection.remove(this.uid);
     }
@@ -276,6 +276,12 @@ export class FileItem extends FileItemConfig {
   private _updatePluginFileActions(): void {
     const pluginManager = this._pluginManager;
     if (!pluginManager || !this.uid) {
+      this._pluginFileActions = [];
+      return;
+    }
+
+    // The uploader-scope shared instances exist only once an uploader block initializes this ctx.
+    if (!this.bag.ctx.has('*publicApi')) {
       this._pluginFileActions = [];
       return;
     }
