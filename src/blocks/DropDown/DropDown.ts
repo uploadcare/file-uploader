@@ -1,11 +1,11 @@
 import { html } from 'lit';
 
-import { LitBlock } from '../../lit/LitBlock';
+import { ChildBlock } from '../../lit/ChildBlock';
 import { UID } from '../../utils/UID';
 import './drop-down.css';
 import { state } from 'lit/decorators.js';
 
-export class DropDown extends LitBlock {
+export class DropDown extends ChildBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-drop-down'];
 
   @state()
