@@ -27,11 +27,8 @@ type Entries = OutputCollectionState<OutputCollectionStatus, 'maybe-has-group'>;
 // instead of being repeated (as `as unknown as Entries`) at every call site.
 const makeEntries = (
   partial: Partial<
-    Pick<
-      Entries,
-      'status' | 'totalCount' | 'allEntries' | 'uploadingCount' | 'failedCount' | 'successCount' | 'isSuccess'
-    >
-  >,
+    Pick<Entries, 'status' | 'totalCount' | 'uploadingCount' | 'failedCount' | 'successCount' | 'isSuccess'>
+  > & { allEntries?: Array<Partial<Entries['allEntries'][number]>> },
 ): Entries => partial as Entries;
 
 // Booleans are driven as JS properties on `config` after render (same pattern
