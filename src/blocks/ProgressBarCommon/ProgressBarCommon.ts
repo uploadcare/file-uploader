@@ -1,4 +1,4 @@
-import { html, type PropertyValues } from 'lit';
+import { html } from 'lit';
 import { state } from 'lit/decorators.js';
 import { ChildBlock } from '../../lit/ChildBlock';
 import './progress-bar-common.css';
@@ -39,23 +39,6 @@ export class ProgressBarCommon extends ChildBlock {
         );
       }),
     );
-  }
-
-  protected override updated(changedProperties: PropertyValues<this>): void {
-    super.updated(changedProperties);
-
-    // Known-dead code, preserved bug-for-bug from v1: this checks
-    // `changedProperties.has('visible')` but the backing field is `_visible`,
-    // so this branch never fires and the host `active` attribute is never
-    // toggled. Not fixed here — activating it would change CSS-visible
-    // behavior that v1 never exercised (see M9h task-3 brief / progress.md).
-    if (changedProperties.has('visible' as keyof ProgressBarCommon)) {
-      if (this._visible) {
-        this.setAttribute('active', '');
-      } else {
-        this.removeAttribute('active');
-      }
-    }
   }
 
   public override render() {

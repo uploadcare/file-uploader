@@ -174,8 +174,6 @@ export class UploadList extends ActivityChildBlock {
     return localizedText('total');
   }
 
-  private _unregisterGuard?: () => void;
-
   protected override controllerReady(ctrl: UploaderController): void {
     super.controllerReady(ctrl);
 
@@ -184,10 +182,17 @@ export class UploadList extends ActivityChildBlock {
     // `revalidate()` (called on collection changes) leaves it once it empties.
     // `uploadCollection` may not have registered yet when this guard is later
     // invoked by the router (FileItem/DynamicBtn `bag.when`/`OrNull` precedent
-    // for the adoption-reentrancy race) — read it null-tolerantly.
-    this._unregisterGuard = this.bag.router.guard(
-      this.activityType,
-      () => this.uploader.config.get('showEmptyList') || (this.bag.uploadCollectionOrNull?.size ?? 0) > 0,
+    // for the adoption-reentrancy race) — read it null-tolerantly. Tracked
+    // like the other subscriptions below so teardown is uniform (release-time,
+    // not just disconnect) and the predicate itself reads the controller
+    // non-throwingly so a teardown-time navigation can't warn spuriously.
+    this.trackSub(
+      this.bag.router.guard(
+        this.activityType,
+        () =>
+          (this.uploaderOrNull?.config.get('showEmptyList') ?? false) ||
+          (this.bag.uploadCollectionOrNull?.size ?? 0) > 0,
+      ),
     );
 
     this.subConfigValue('multiple', this._throttledHandleCollectionUpdate);
@@ -230,12 +235,6 @@ export class UploadList extends ActivityChildBlock {
         this._commonErrorMessage = firstError.message;
       }),
     );
-  }
-
-  public override disconnectedCallback(): void {
-    super.disconnectedCallback();
-    this._unregisterGuard?.();
-    this._unregisterGuard = undefined;
   }
 
   protected override subscriptionsFor(ctrl: UploaderController) {
