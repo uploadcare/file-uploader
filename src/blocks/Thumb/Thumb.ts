@@ -7,7 +7,9 @@ import { generateThumb } from '../../utils/resizeImage';
 import { FileItemConfig } from '../FileItem/FileItemConfig';
 import { fileCssBg } from '../svg-backgrounds/svg-backgrounds';
 import './thumb.css';
+import type { UploaderController } from '../../abstract/controllers/UploaderController';
 import type { Uid } from '../../lit/Uid';
+import type { ConfigType } from '../../types';
 import { TRANSPARENT_PIXEL_SRC } from '../../utils/transparentPixelSrc';
 
 import '../Icon/Icon';
@@ -38,7 +40,7 @@ export class Thumb extends FileItemConfig {
 
   private _isIntersecting = false;
 
-  private _firstViewMode = this.cfg.filesViewMode;
+  private _firstViewMode: ConfigType['filesViewMode'] | undefined;
 
   private _observer?: IntersectionObserver;
 
@@ -52,7 +54,7 @@ export class Thumb extends FileItemConfig {
     let size = Math.max(
       parseInt(String(this?._thumbRect?.height || 0), 10),
       parseInt(String(this?._thumbRect?.width || 0), 10),
-      this.cfg.thumbSize,
+      this.uploader.config.get('thumbSize'),
     );
 
     if (window.devicePixelRatio > 1) {
@@ -74,7 +76,7 @@ export class Thumb extends FileItemConfig {
     if (fileInfo && isImage && uuid) {
       const thumbUrl = await this.proxyUrl(
         createCdnUrl(
-          createOriginalUrl(this.cfg.cdnCname, uuid),
+          createOriginalUrl(this.uploader.config.get('cdnCname'), uuid),
           createCdnUrlModifiers(entry.getValue('cdnUrlModifiers'), `stretch/off`, `scale_crop/${size}x${size}/center`),
         ),
       );
@@ -98,7 +100,7 @@ export class Thumb extends FileItemConfig {
             const blobThumbUrl = await generateThumb(file, size);
             entry.setValue('thumbUrl', blobThumbUrl);
           } catch (err) {
-            this.telemetryManager.sendEventError(err, 'thumbnail generation. Failed to generate thumb from file');
+            this.bag.telemetryManager.sendEventError(err, 'thumbnail generation. Failed to generate thumb from file');
             const color = window.getComputedStyle(this).getPropertyValue('--uc-muted-foreground');
             entry.setValue('thumbUrl', fileCssBg(color));
           }
@@ -117,7 +119,7 @@ export class Thumb extends FileItemConfig {
         const thumbUrl = await generateThumb(file, size);
         entry.setValue('thumbUrl', thumbUrl);
       } catch (err) {
-        this.telemetryManager.sendEventError(err, 'thumbnail generation. Failed to generate thumb from file');
+        this.bag.telemetryManager.sendEventError(err, 'thumbnail generation. Failed to generate thumb from file');
         const color = window.getComputedStyle(this).getPropertyValue('--uc-muted-foreground');
         entry.setValue('thumbUrl', fileCssBg(color));
       }
@@ -303,8 +305,21 @@ export class Thumb extends FileItemConfig {
       return;
     }
 
-    const entry = this.uploadCollection?.read(id);
-    if (!entry || entry === this.entry) {
+    // The uploader-scope shared instances exist only once an uploader block
+    // initializes this ctx — a thumb rendered outside that scope (e.g. an
+    // isolated composition) has no collection and therefore no entry.
+    const collection = this.bag.ctx.has('*uploadCollection') ? this.bag.uploadCollection : null;
+    const entry = collection?.read(id);
+    if (!entry) {
+      // The uid no longer resolves (entry removed, scope lost, or uid swapped
+      // to an unknown id) — drop the previous entry's subscriptions and image
+      // instead of keeping a stale thumb alive.
+      if (this.entry) {
+        this.reset();
+      }
+      return;
+    }
+    if (entry === this.entry) {
       return;
     }
 
@@ -330,8 +345,8 @@ export class Thumb extends FileItemConfig {
     this._requestThumbGeneration(true);
   }
 
-  public override initCallback(): void {
-    super.initCallback();
+  protected override controllerReady(ctrl: UploaderController): void {
+    this._firstViewMode ??= ctrl.config.get('filesViewMode');
 
     this.subConfigValue('filesViewMode', (viewMode) => {
       if (viewMode === 'grid' && !this._renderedGridOnce) {
@@ -341,6 +356,8 @@ export class Thumb extends FileItemConfig {
         this._renderedGridOnce = true;
       }
     });
+
+    this._bindToEntry();
   }
 
   public override connectedCallback(): void {

@@ -2,6 +2,7 @@ import { ContextConsumer, ContextProvider } from '@lit/context';
 import { LitElement, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import type { UploaderController } from '../abstract/controllers/UploaderController';
+import { resolveSecureDeliveryProxyUrl } from '../abstract/secureDeliveryProxyUrl';
 import { UploaderRegistry } from '../abstract/UploaderRegistry';
 import type { ConfigType } from '../types';
 import { LightDomMixin } from './LightDomMixin';
@@ -248,4 +249,13 @@ export abstract class ChildBlock extends ChildBlockBase {
 
   /** Called after the controller is released (disconnect or re-adoption). */
   protected controllerReleased(_ctrl: UploaderController): void {}
+
+  /** Resolve a CDN url through the configured secure-delivery proxy, if any. */
+  protected async proxyUrl(url: string): Promise<string> {
+    return resolveSecureDeliveryProxyUrl(
+      this.uploader.config.values,
+      (error, context) => this.bag.telemetryManager.sendEventError(error, context),
+      url,
+    );
+  }
 }
