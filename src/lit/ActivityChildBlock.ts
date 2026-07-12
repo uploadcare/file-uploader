@@ -27,6 +27,9 @@ export class ActivityChildBlock extends ChildBlock {
     }
     // Re-render on every router transition so `updated()` re-evaluates the slot.
     this.subRouter(() => this.requestUpdate());
+    // Report this activity as mounted so API waits (navigate/setModalState)
+    // can find it now that ported blocks are not in `*blocksRegistry`.
+    this.trackSub(this.bag.router.activityBlockMounted(this.activityType));
   }
 
   /** Whether this block's activity currently owns its slot. */

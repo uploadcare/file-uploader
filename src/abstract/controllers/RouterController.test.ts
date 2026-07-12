@@ -627,6 +627,54 @@ describe('RouterController (v2)', () => {
     });
   });
 
+  describe('mounted activities', () => {
+    it('reports a mounted activity as present', () => {
+      const { router } = setup();
+
+      router.activityBlockMounted('start-from');
+
+      expect(router.hasMountedActivity('start-from')).toBe(true);
+      expect(router.hasMountedActivity('camera')).toBe(false);
+    });
+
+    it('notifies subscribers on mount and on unmount', () => {
+      const { router } = setup();
+      const onChange = vi.fn();
+      router.subscribe(onChange);
+
+      const release = router.activityBlockMounted('start-from');
+      expect(onChange).toHaveBeenCalledTimes(1);
+
+      release();
+      expect(onChange).toHaveBeenCalledTimes(2);
+    });
+
+    it('refcounts — stays mounted while any slot still holds it, clears once all release', () => {
+      const { router } = setup();
+
+      const releaseA = router.activityBlockMounted('start-from');
+      const releaseB = router.activityBlockMounted('start-from');
+      expect(router.hasMountedActivity('start-from')).toBe(true);
+
+      releaseA();
+      expect(router.hasMountedActivity('start-from')).toBe(true); // second slot still mounted
+
+      releaseB();
+      expect(router.hasMountedActivity('start-from')).toBe(false);
+    });
+
+    it('releasing is idempotent — calling the same release fn twice does not under-count', () => {
+      const { router } = setup();
+
+      const releaseA = router.activityBlockMounted('start-from');
+      router.activityBlockMounted('start-from');
+
+      releaseA();
+      releaseA(); // double-release must not double-decrement
+      expect(router.hasMountedActivity('start-from')).toBe(true);
+    });
+  });
+
   describe('destroy', () => {
     it('clears registered guards', () => {
       const { router } = setup();
