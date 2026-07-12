@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import type { Config, FileItem, OutputFileEntry, UploadCtxProvider, UploaderPlugin } from '@/index.ts';
+import type { Uid } from '../../src/lit/Uid';
 import { TEST_IMAGE_URL } from '../utils/constants';
 import { getCtxName } from '../utils/getCtxName';
 import '../../types/jsx';
@@ -33,6 +34,21 @@ const renderFileItemHost = (plugins: UploaderPlugin[] = []) => {
 };
 
 const fileItemEl = () => document.querySelector('uc-file-item') as FileItem | null;
+
+// Standalone-block composition (same shape as tests/blocks/thumb.e2e.test.tsx)
+// for the uploader-scope-free regression case, which needs no upload
+// collection / uploader block at all.
+const renderStandaloneFileItem = () => {
+  const ctxName = getCtxName();
+  page.render(
+    <>
+      <uc-file-item ctx-name={ctxName}></uc-file-item>
+      <uc-config ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
+    </>,
+  );
+  const fileItem = document.querySelector('uc-file-item')! as FileItem;
+  return { ctxName, fileItem };
+};
 
 describe('uc-file-item (parity, real upload flow)', () => {
   it('renders with the file name visible in list mode and a "mode" attribute reflecting the view mode', async () => {
@@ -131,4 +147,40 @@ describe('uc-file-item (parity, real upload flow)', () => {
       expect(entry).toHaveProperty('status');
     });
   }, 30_000);
+
+  // M9e regression — `*pluginManager` is registered by any LitBlock, so
+  // `bag.when('pluginManager', ...)` fires synchronously during
+  // `controllerReady`, driving `_updatePluginFileActions()` →
+  // `this.bag.api.getOutputItem(this.uid)`. `*publicApi` is uploader-scope-only
+  // (registered by an uploader block), so a `<uc-file-item>` rendered outside
+  // that scope (e.g. alongside a bare `<uc-config>`, no uploader block) must
+  // fall back gracefully instead of throwing an unhandled error from the
+  // required-getter read.
+  it('renders without unhandled errors when given a uid outside an uploader scope', async () => {
+    const errors: string[] = [];
+    const onError = (event: ErrorEvent) => {
+      errors.push(String(event.error?.message ?? event.message));
+      event.preventDefault();
+    };
+    window.addEventListener('error', onError);
+
+    try {
+      const { fileItem } = renderStandaloneFileItem();
+      // Let the IntersectionObserver-gated render open before assigning `uid` —
+      // a uid write while the gate is still closed doesn't surface in the next
+      // `willUpdate`'s changedProperties (see ChildBlock's render-gate note).
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      fileItem.uid = 'some-uid' as Uid;
+
+      await fileItem.updateComplete;
+      // Give any async/microtask-scheduled throw a moment to surface as an
+      // unhandled window error before asserting.
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      expect(fileItem.isConnected).toBe(true);
+    } finally {
+      window.removeEventListener('error', onError);
+    }
+
+    expect(errors).toEqual([]);
+  });
 });
