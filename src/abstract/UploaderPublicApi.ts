@@ -450,7 +450,12 @@ export class UploaderPublicApi extends SharedInstance {
         {
           onTimeout: () => console.warn(`Activity block "${activityType}" not found in the context`),
         },
-      ).then(() => {
+      ).then((found) => {
+        if (!found) {
+          // Timeout — the activity's block never appeared; keep the modal
+          // closed (same observable behavior as before the promise settled).
+          return;
+        }
         router.openModal(activityType);
       });
     });

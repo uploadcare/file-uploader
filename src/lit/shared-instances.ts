@@ -171,10 +171,20 @@ export const createSharedInstancesBag = (getCtx: () => PubSub<SharedState>) => {
      * from blocks that may render outside an uploader scope.
      */
     get uploadCollectionOrNull(): UploadCollectionController | null {
-      return getSharedInstance(getCtx(), '*uploadCollection', false) ?? null;
+      // `getCtx` itself may throw when no ctx exists at all (bare block,
+      // post-teardown callback) — OrNull means never throwing, either way.
+      try {
+        return getSharedInstance(getCtx(), '*uploadCollection', false) ?? null;
+      } catch {
+        return null;
+      }
     },
     get apiOrNull(): UploaderPublicApi | null {
-      return getSharedInstance(getCtx(), '*publicApi', false) ?? null;
+      try {
+        return getSharedInstance(getCtx(), '*publicApi', false) ?? null;
+      } catch {
+        return null;
+      }
     },
 
     when<TName extends InstanceName>(

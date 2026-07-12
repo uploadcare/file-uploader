@@ -93,9 +93,10 @@ export class FileItem extends FileItemConfig {
       },
     });
 
-    if (this.uid && this.bag.uploadCollectionOrNull?.hasItem(this.uid)) {
+    const collection = this.bag.uploadCollectionOrNull;
+    if (this.uid && collection?.hasItem(this.uid)) {
       this.entry?.getValue('abortController')?.abort();
-      this.bag.uploadCollectionOrNull.remove(this.uid);
+      collection.remove(this.uid);
     }
   };
 
