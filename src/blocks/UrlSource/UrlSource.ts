@@ -1,6 +1,7 @@
 import { html } from 'lit';
 import { state } from 'lit/decorators.js';
-import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
+import type { UploaderController } from '../../abstract/controllers/UploaderController';
+import { ChildBlock } from '../../lit/ChildBlock';
 import { UploadSource } from '../../utils/UploadSource';
 import { InternalEventType } from '../UploadCtxProvider/EventEmitter';
 import './url-source.css';
@@ -8,9 +9,13 @@ import './url-source.css';
 import '../ActivityHeader/ActivityHeader';
 import '../Icon/Icon';
 
-export class UrlSource extends LitUploaderBlock {
+export class UrlSource extends ChildBlock {
   @state()
   private _url = '';
+
+  protected override subscriptionsFor(ctrl: UploaderController) {
+    return [(listener: () => void) => ctrl.locale.subscribe(listener)];
+  }
 
   private _handleInput = (event: Event) => {
     this._url = (event.target as HTMLInputElement | null)?.value ?? '';
@@ -18,7 +23,7 @@ export class UrlSource extends LitUploaderBlock {
 
   private _handleUpload = (event: Event) => {
     event.preventDefault();
-    this.telemetryManager.sendEvent({
+    this.bag.telemetryManager.sendEvent({
       eventType: InternalEventType.ACTION_EVENT,
       payload: {
         metadata: {
@@ -31,8 +36,8 @@ export class UrlSource extends LitUploaderBlock {
     if (!url) {
       return;
     }
-    this.api.addFileFromUrl(url, { source: UploadSource.URL });
-    this.router.traverse('onFileAdd');
+    this.bag.api.addFileFromUrl(url, { source: UploadSource.URL });
+    this.bag.router.traverse('onFileAdd');
   };
 
   public override render() {
@@ -41,7 +46,7 @@ export class UrlSource extends LitUploaderBlock {
         <button
           type="button"
           class="uc-mini-btn"
-          @click=${() => this.router.traverse('onBack')}
+          @click=${() => this.bag.router.traverse('onBack')}
           title=${this.l10n('back')}
           aria-label=${this.l10n('back')}
         >
@@ -54,7 +59,7 @@ export class UrlSource extends LitUploaderBlock {
         <button
           type="button"
           class="uc-mini-btn uc-close-btn"
-          @click=${() => this.router.traverse('onClose')}
+          @click=${() => this.bag.router.traverse('onClose')}
           title=${this.l10n('a11y-activity-header-button-close')}
           aria-label=${this.l10n('a11y-activity-header-button-close')}
         >
