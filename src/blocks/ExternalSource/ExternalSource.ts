@@ -78,32 +78,44 @@ export class ExternalSource extends ChildBlock {
   }
 
   protected override controllerReady(): void {
-    const { externalSourceType } = this.bag.router.params as ActivityParams;
-    if (!externalSourceType) {
-      console.error(`Param "externalSourceType" is required for external source activity`);
-    } else {
-      this._mountIframe();
-    }
-
-    this.subRouter(() => {
-      const params = this.bag.router.params;
-      if (params === this._lastActivityParams) {
+    // The iframe container ref only exists after the first render, so the
+    // initial mount is deferred a tick (v1 relied on its immediate-fire
+    // params subscription for exactly this — its pre-render direct
+    // `_mountIframe()` call was a no-op against an empty ref).
+    this._lastActivityParams = this.bag.router.params;
+    setTimeout(() => {
+      if (!this.isConnected) {
         return;
       }
-      this._lastActivityParams = params;
-      setTimeout(() => {
-        // Defer a tick before reacting to a params change: the router updates
-        // params and the current activity together in one transition, so a
-        // params change that coincides with navigating *away* from this activity
-        // would otherwise remount the iframe just as this block is being torn
-        // down. Waiting a tick lets that disconnect settle so we can bail here.
-        if (!this.isConnected) {
+      const { externalSourceType } = this.bag.router.params as ActivityParams;
+      if (!externalSourceType) {
+        console.error(`Param "externalSourceType" is required for external source activity`);
+        return;
+      }
+      this._unmountIframe();
+      this._mountIframe();
+    });
+    this.trackSub(
+      this.bag.router.subscribe(() => {
+        const params = this.bag.router.params;
+        if (params === this._lastActivityParams) {
           return;
         }
-        this._unmountIframe();
-        this._mountIframe();
-      });
-    });
+        this._lastActivityParams = params;
+        setTimeout(() => {
+          // Defer a tick before reacting to a params change: the router updates
+          // params and the current activity together in one transition, so a
+          // params change that coincides with navigating *away* from this activity
+          // would otherwise remount the iframe just as this block is being torn
+          // down. Waiting a tick lets that disconnect settle so we can bail here.
+          if (!this.isConnected) {
+            return;
+          }
+          this._unmountIframe();
+          this._mountIframe();
+        });
+      }),
+    );
     this.subConfigValue('multiple', (multiple) => {
       this._showSelectionStatus = multiple;
     });
@@ -247,8 +259,6 @@ export class ExternalSource extends ChildBlock {
     iframe.frameBorder = '0';
     // @ts-expect-error
     iframe.allowTransparency = true;
-    iframe.addEventListener('load', this._handleIframeLoad.bind(this));
-
     iframe.addEventListener('load', this._handleIframeLoad.bind(this));
 
     if (this._iframeRef.value) {
