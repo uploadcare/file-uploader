@@ -24,7 +24,11 @@ const ChildBlockBase = RegisterableElementMixin(LightDomMixin(LitElement));
  * `ctx-name` attribute or, when absent, from the nearest v1 ancestor's
  * `ctxNameContext` provider — via `UploaderRegistry.whenAvailable`, which
  * fires synchronously when a controller is already registered and again
- * across a remount, so subclasses re-adopt without losing bindings.
+ * across a remount, so subclasses re-adopt without losing bindings. If the
+ * ctx dies while this block stays connected (the last v1 block elsewhere
+ * disconnected and tore the ctx down), the registry notifies with `null` and
+ * the block releases its controller — closing the render gate — rather than
+ * outliving the ctx it was reading from.
  *
  * Subclasses read controllers directly: no `$` proxy, no `init$`, no
  * nanostores. Rendering is gated until a controller is adopted (matching
@@ -205,7 +209,13 @@ export abstract class ChildBlock extends ChildBlockBase {
     if (!ctxName) {
       return;
     }
-    this._registryUnsub = UploaderRegistry.whenAvailable(ctxName, (ctrl) => this._adoptController(ctrl));
+    this._registryUnsub = UploaderRegistry.whenAvailable(ctxName, (ctrl) => {
+      if (ctrl) {
+        this._adoptController(ctrl);
+      } else {
+        this._releaseController();
+      }
+    });
   }
 
   private _adoptController(ctrl: UploaderController): void {

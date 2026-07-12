@@ -356,4 +356,39 @@ describe('ChildBlock', () => {
     }
     expect(errors).toEqual([]);
   });
+
+  it('releases the controller when its ctx is destroyed while still connected, and a later render throws no window errors', async () => {
+    const ctxName = getCtxName();
+    page.render(<uc-config ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>);
+    const child = append('test-child-block', { 'ctx-name': ctxName });
+    await expect.poll(() => child.querySelector('.pk')?.textContent).toBe('demopublickey');
+    expect(child.releasedCount).toBe(0);
+
+    // Tear down the ctx while the fixture stays connected: only the
+    // uc-config (a v1 LitBlock) unmounts, so the ctx is destroyed via the
+    // deferred blocksRegistry-empty task, exactly as when the last v1 block
+    // elsewhere in the tree disconnects.
+    cleanup();
+    const { PubSub } = await import('@/lit/PubSubCompat.js');
+    await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(false);
+
+    expect(child.isConnected).toBe(true);
+    await expect.poll(() => child.releasedCount).toBe(1);
+    // biome-ignore lint/suspicious/noExplicitAny: reaching into a protected getter
+    expect((child as any).uploaderOrNull).toBeNull();
+
+    const errors: string[] = [];
+    const onError = (event: ErrorEvent) => {
+      errors.push(String(event.error?.message ?? event.message));
+      event.preventDefault();
+    };
+    window.addEventListener('error', onError);
+    try {
+      child.requestUpdate();
+      await child.updateComplete;
+    } finally {
+      window.removeEventListener('error', onError);
+    }
+    expect(errors).toEqual([]);
+  });
 });
