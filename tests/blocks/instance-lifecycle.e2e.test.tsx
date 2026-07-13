@@ -3,6 +3,7 @@ import { page } from 'vitest/browser';
 import { TelemetryManager } from '@/abstract/managers/TelemetryManager';
 import type { Config, UploadCtxProvider } from '@/index.js';
 import { PubSub } from '@/lit/PubSubCompat';
+import type { SharedState } from '@/lit/SharedState';
 import { getCtxName } from '../utils/getCtxName';
 import { cleanup } from '../utils/test-renderer';
 import '../../types/jsx';
@@ -25,7 +26,7 @@ describe('instance lifecycle (config-only ctx)', () => {
     page.render(<uc-config ctx-name={ctxName} pubkey="demopublickey" qualityInsights={false} testMode></uc-config>);
 
     await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(true);
-    const ctx = PubSub.getCtx(ctxName)!;
+    const ctx = PubSub.getCtx<SharedState>(ctxName)!;
 
     // Every instance `LitBlock.initCallback` adds unconditionally, even with
     // no uploader block in the tree.
@@ -145,7 +146,7 @@ describe('instance lifecycle (destroy -> recreate cycle)', () => {
       </>,
     );
     await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(true);
-    const firstCtx = PubSub.getCtx(ctxName)!;
+    const firstCtx = PubSub.getCtx<SharedState>(ctxName)!;
     const firstRouter = firstCtx.read('*router');
     const firstTelemetry = firstCtx.read('*telemetryManager');
 
@@ -166,7 +167,7 @@ describe('instance lifecycle (destroy -> recreate cycle)', () => {
       </>,
     );
     await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(true);
-    const secondCtx = PubSub.getCtx(ctxName)!;
+    const secondCtx = PubSub.getCtx<SharedState>(ctxName)!;
     const secondRouter = secondCtx.read('*router');
     const secondTelemetry = secondCtx.read('*telemetryManager');
 
@@ -188,7 +189,7 @@ describe('instance lifecycle (single-owner teardown, M9k Task 3)', () => {
       </>,
     );
     await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(true);
-    const ctx = PubSub.getCtx(ctxName)!;
+    const ctx = PubSub.getCtx<SharedState>(ctxName)!;
 
     // The five controller-owned shared instances (M9k): teardown runs through
     // two paths — `LitBlock._destroySharedContextInstances` (the DOM-layer
