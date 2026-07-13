@@ -339,8 +339,8 @@ describe('ClipboardController', () => {
 
   // Gap-fill ahead of M9l's lazy-arm split: a fresh instance with
   // `registerScope` never called even once (not merely with a disconnected
-  // scope) — this is exactly the shape a config-only ctx produces today
-  // (`LitBlock.initCallback` constructs `*clipboard` unconditionally;
+  // scope) — this is exactly the shape a config-only ctx produces
+  // (`UploaderController` constructs `*clipboard` unconditionally;
   // `registerScope` only runs from `LitSolutionBlock`/`CloudImageEditor`
   // `initCallback`). Pins the load-bearing fact behind arm-on-registration:
   // `_hasConnectedScope()` over an empty `Set` is unconditionally `false`, so
@@ -449,8 +449,8 @@ describe('ClipboardController', () => {
     const removeSpy = vi.spyOn(window, 'removeEventListener');
 
     // Pins pairing, not timing: whether `addEventListener('paste', ...)` fires
-    // at construction (today) or is deferred to first `registerScope` (M9l's
-    // lazy-arm split), the net effect of a full lifecycle must be that every
+    // at construction (v1) or on first `registerScope` (M9l's lazy-arm split,
+    // current), the net effect of a full lifecycle must be that every
     // `paste` listener this instance added is removed by the time `destroy()`
     // returns — no leaked window listener survives the cycle.
     const { layer } = setup({ pasteScope: 'global', currentActivity: 'start-from' });

@@ -8,9 +8,9 @@ import { A11y } from './a11y';
 const asLitBlock = (node: Node): LitBlock => node as unknown as LitBlock;
 
 /**
- * Coverage gap-fill ahead of M9l's lazy-arm split (A11y currently attaches its
- * `keyux`-driven window listeners at construction, before any block registers
- * a scope). These pin CURRENT behavior:
+ * Coverage written ahead of M9l's lazy-arm split (v1 attached the
+ * `keyux`-driven window listeners at construction; they now arm on the first
+ * `registerBlock`). These pins are timing-agnostic and hold either way:
  *  - a constructed-but-unregistered instance is provably inert on real window
  *    events (the load-bearing fact for "arm-on-registration is
  *    behavior-identical to arm-at-construction");
@@ -135,8 +135,8 @@ describe('A11y', () => {
     const removeSpy = vi.spyOn(window, 'removeEventListener');
 
     // Pins pairing, not timing: whether the keyux window listeners attach at
-    // construction (today) or are deferred to first `registerBlock` (M9l's
-    // lazy-arm split), the net effect of a full lifecycle — including a real
+    // construction (v1) or on first `registerBlock` (M9l's lazy-arm split,
+    // current), the net effect of a full lifecycle — including a real
     // scope registration — must be that every `window.addEventListener` this
     // instance made (click, focusin, focusout, keydown, keyup, keyuxJump — one
     // per keyux feature) is undone by a matching `removeEventListener` of the
