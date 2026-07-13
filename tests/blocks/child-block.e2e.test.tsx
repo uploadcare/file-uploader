@@ -392,3 +392,58 @@ describe('ChildBlock', () => {
     expect(errors).toEqual([]);
   });
 });
+
+/**
+ * Gap-fill ahead of M9o Task 3 (unified teardown: a ctx dies when
+ * `*blocksRegistry` is empty/absent AND `UploaderRegistry` has no
+ * `whenAvailable` consumers for that ctxName). Pins the CURRENT observable
+ * end-state of a mixed v1 + ChildBlock composition — today, teardown is
+ * driven solely by `*blocksRegistry` emptiness (v1 `LitBlock` instances);
+ * `ChildBlock`'s `UploaderRegistry.whenAvailable` subscription plays no part
+ * in keeping the ctx alive or tearing it down. This is the coexistence
+ * behavior Task 3's refcount must preserve (or deliberately change).
+ */
+describe('mixed lifecycle (v1 blocks + ChildBlock on one ctx)', () => {
+  it('stays alive while any v1 block remains, tears down only once the last v1 block disconnects — regardless of the still-connected ChildBlock', async () => {
+    const ctxName = getCtxName();
+    const { PubSub } = await import('@/lit/PubSubCompat.js');
+    const { delay } = await import('@/utils/delay.js');
+
+    // Two v1 LitBlock instances (both register in `*blocksRegistry`) on the
+    // same ctx — `uc-upload-ctx-provider` is a `ChildBlock` (M9b), not a
+    // `LitBlock`, so a second `<uc-config>` is the plain way to get a second
+    // `*blocksRegistry` member — plus a ported ChildBlock on the same ctx.
+    page.render(<uc-config ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>);
+    const configA = page.getByTestId('uc-config').query()!;
+
+    const configB = document.createElement('uc-config');
+    configB.setAttribute('ctx-name', ctxName);
+    document.body.append(configB);
+    appended.push(configB);
+
+    const child = append('test-child-block', { 'ctx-name': ctxName });
+    await expect.poll(() => child.readyCount).toBe(1);
+    await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(true);
+
+    // Disconnect ONE of the two v1 blocks: `*blocksRegistry` still holds the
+    // other v1 block, so the ctx must stay alive and the ChildBlock keeps its
+    // adopted controller — even past the deferred destroy-check window.
+    configA.remove();
+    await delay(0);
+
+    expect(PubSub.hasCtx(ctxName)).toBe(true);
+    expect(child.releasedCount).toBe(0);
+    // biome-ignore lint/suspicious/noExplicitAny: reaching into a protected getter
+    expect((child as any).uploaderOrNull).not.toBeNull();
+
+    // Disconnect the LAST v1 block: `*blocksRegistry` empties and the ctx
+    // tears down via the deferred task. The ChildBlock is not part of
+    // `*blocksRegistry` and does not keep the ctx alive on its own — it just
+    // releases once notified.
+    configB.remove();
+    await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(false);
+    await expect.poll(() => child.releasedCount).toBe(1);
+    // biome-ignore lint/suspicious/noExplicitAny: reaching into a protected getter
+    expect((child as any).uploaderOrNull).toBeNull();
+  });
+});
