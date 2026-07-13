@@ -248,6 +248,10 @@ describe('instance lifecycle (controller-owned identity pins, M9l final-review f
       '*uploadCollection': () => controller.collection,
       '*a11y': () => controller.a11y,
       '*clipboard': () => controller.clipboard,
+      '*secureUploadsManager': () => controller.secureUploadsManager,
+      '*uploadController': () => controller.uploadController,
+      '*validationManager': () => controller.validationManager,
+      '*uploadEvents': () => controller.uploadEvents,
     } satisfies Record<string, () => unknown>;
 
     // Fence: `controllerOwnedInstanceKeys` must not outgrow this map.

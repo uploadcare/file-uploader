@@ -1,4 +1,5 @@
 import { EventEmitter } from '../../blocks/UploadCtxProvider/EventEmitter';
+import { applyInitialCrop } from '../applyInitialCrop';
 import { EventBus, type UploaderEventKey, type UploaderEventPayload, UploaderEventType } from '../EventBus';
 import { A11y } from '../managers/a11y';
 import { LocaleManager } from '../managers/LocaleManager';
@@ -8,7 +9,11 @@ import { ClipboardController } from './ClipboardController';
 import { ConfigController } from './ConfigController';
 import { LocaleController } from './LocaleController';
 import { RouterController } from './RouterController';
+import { SecureUploadsController, type SecureUploadsControllerDeps } from './SecureUploadsController';
 import { UploadCollectionController } from './UploadCollectionController';
+import { UploadController, type UploadControllerDeps } from './UploadController';
+import { UploadEventsController, type UploadEventsControllerDeps } from './UploadEventsController';
+import { ValidationController, type ValidationControllerDeps } from './ValidationController';
 
 /**
  * Root controller — one instance per uploader scope (keyed by `ctx-name` in
@@ -68,6 +73,63 @@ export type UploaderControllerDeps = {
   clipboard?: ClipboardController;
 };
 
+/**
+ * Every element-side (DOM/`PubSub`-touching) callback `attachUploaderScope`
+ * needs to build `SecureUploadsController`, `UploadController`,
+ * `ValidationController`, and `UploadEventsController` — the v1 shared-context
+ * resolvers' closures, moved verbatim. Everything that can resolve purely from
+ * the controller's own members (telemetry mirrors, `buildUploadOptions`,
+ * `applyInitialCrop`) is built internally by `attachUploaderScope` instead and
+ * does NOT appear here — see the field-by-field notes on each resolver below.
+ *
+ * Reuses each sub-controller's own `*Deps` field types (rather than
+ * redeclaring them) so a signature change downstream is a compile error here,
+ * not silent drift.
+ */
+export type UploaderScopeDeps = {
+  /** Debug logger — wired to the block's `debugPrint`. Shared by secureUploads + uploadController. */
+  debug?: SecureUploadsControllerDeps['debug'];
+  /** Snapshot of the registered plugin file hooks (bag.pluginManager). */
+  getFileHooks: UploadControllerDeps['getFileHooks'];
+  /** Resolves the public output entry (bag.api.getOutputItem) — shared by uploadController + uploadEvents. */
+  getOutputItem: UploadEventsControllerDeps['getOutputItem'];
+  /** The public API passed to validators (bag.api). */
+  getApi: ValidationControllerDeps['getApi'];
+  /** Sink for collection-level errors — v1 wrote `this.$['*collectionErrors']`. */
+  setCollectionErrors: ValidationControllerDeps['setCollectionErrors'];
+  /** Fires the debounced `common-upload-failed` event — reads bag.eventEmitter + bag.api, kept verbatim (api isn't controller-owned). */
+  emitCommonUploadFailed: ValidationControllerDeps['emitCommonUploadFailed'];
+  /**
+   * Telemetry-augmented emit — v1's `ctx.has('*eventEmitter')` teardown guard,
+   * kept verbatim: it observes the pub-null pass that runs BEFORE
+   * `UploaderController.destroy()`, and collapsing it onto `controller.emit`
+   * would shift that teardown-suppression window.
+   */
+  emit: UploadEventsControllerDeps['emit'];
+  getOutputCollectionState: UploadEventsControllerDeps['getOutputCollectionState'];
+  /** Needs the shared-instances bag (`getOutputData(bag)`) — DOM-layer only. */
+  getOutputData: UploadEventsControllerDeps['getOutputData'];
+  /** Runs plugin `onAdd` hooks — needs `bag.wait('pluginManager')`. */
+  runOnAddHooks: UploadEventsControllerDeps['runOnAddHooks'];
+
+  // ─── v1 shared-state bridge (`*`-keys via the `$` proxy) — element-side only ───
+  uploadTrigger: UploadEventsControllerDeps['uploadTrigger'];
+  setUploadList: UploadEventsControllerDeps['setUploadList'];
+  getCollectionState: UploadEventsControllerDeps['getCollectionState'];
+  setCollectionState: UploadEventsControllerDeps['setCollectionState'];
+  getCommonProgress: UploadEventsControllerDeps['getCommonProgress'];
+  setCommonProgress: UploadEventsControllerDeps['setCommonProgress'];
+  setGroupInfo: UploadEventsControllerDeps['setGroupInfo'];
+  getCollectionErrors: UploadEventsControllerDeps['getCollectionErrors'];
+};
+
+type UploaderScope = {
+  secureUploadsManager: SecureUploadsController;
+  uploadController: UploadController;
+  validationManager: ValidationController;
+  uploadEvents: UploadEventsController;
+};
+
 export class UploaderController {
   public readonly events: EventBus;
   public readonly config: ConfigController;
@@ -89,6 +151,10 @@ export class UploaderController {
   // callbacks read this, and only at paste time.
   private _api: UploaderPublicApi | null = null;
   private _destroyed = false;
+  // The upload stack — only constructed once an uploader is actually present
+  // in the scope (`attachUploaderScope`, called by `LitUploaderBlock`). A
+  // bare `<uc-config>` + provider ctx (no uploader tag) never gets one.
+  private _uploaderScope: UploaderScope | null = null;
 
   public constructor(deps: UploaderControllerDeps = {}) {
     this.events = deps.events ?? new EventBus();
@@ -188,12 +254,129 @@ export class UploaderController {
     this._api = api;
   }
 
+  /**
+   * Construct the upload stack — `SecureUploadsController`, `UploadController`,
+   * `ValidationController`, `UploadEventsController` — behind the
+   * uploader-present gate (only `LitUploaderBlock.initCallback` calls this; a
+   * scope with just `<uc-config>` + a provider never does). Idempotent: a
+   * second call is a no-op, matching `_addSharedContextInstance`'s
+   * first-write-wins semantics. Inert once `destroy()` has run.
+   *
+   * Construction order is load-bearing: `uploadController` needs
+   * `secureUploadsManager`; `uploadEvents` needs `validationManager` (and,
+   * internally, `uploadController.buildUploadOptions()`).
+   */
+  public attachUploaderScope(deps: UploaderScopeDeps): void {
+    if (this._uploaderScope || this._destroyed) {
+      return;
+    }
+
+    const secureUploadsManager = new SecureUploadsController({
+      config: this.config,
+      onResolverError: (error, context) => {
+        this.telemetryManager.sendEventError(error, context);
+      },
+      debug: deps.debug,
+    });
+
+    const uploadController = new UploadController({
+      collection: this.collection,
+      config: this.config,
+      secureUploads: secureUploadsManager,
+      getFileHooks: deps.getFileHooks,
+      getOutputItem: deps.getOutputItem,
+      onUploadError: (error, context) => {
+        // An upload's async error handler can fire after the scope (and its
+        // telemetry instance) is torn down — error *reporting* must never
+        // throw, or the original failure becomes an unhandled rejection.
+        try {
+          this.telemetryManager.sendEventError(error, context);
+        } catch (err) {
+          deps.debug?.('telemetry unavailable for an upload error report', err);
+        }
+      },
+      debug: deps.debug,
+    });
+
+    const validationManager = new ValidationController({
+      config: this.config,
+      collection: this.collection,
+      getApi: deps.getApi,
+      setCollectionErrors: deps.setCollectionErrors,
+      emitCommonUploadFailed: deps.emitCommonUploadFailed,
+      onValidatorError: (error, context) => {
+        this.telemetryManager.sendEventError(error, context);
+      },
+    });
+
+    const uploadEvents = new UploadEventsController({
+      collection: this.collection,
+      config: this.config,
+      validation: validationManager,
+      emit: deps.emit,
+      getOutputItem: deps.getOutputItem,
+      getOutputCollectionState: deps.getOutputCollectionState,
+      getOutputData: deps.getOutputData,
+      buildUploadOptions: () => uploadController.buildUploadOptions(),
+      runOnAddHooks: deps.runOnAddHooks,
+      applyInitialCrop: () => applyInitialCrop(this.collection, this.config.get('cropPreset')),
+      uploadTrigger: deps.uploadTrigger,
+      setUploadList: deps.setUploadList,
+      getCollectionState: deps.getCollectionState,
+      setCollectionState: deps.setCollectionState,
+      getCommonProgress: deps.getCommonProgress,
+      setCommonProgress: deps.setCommonProgress,
+      setGroupInfo: deps.setGroupInfo,
+      getCollectionErrors: deps.getCollectionErrors,
+    });
+
+    this._uploaderScope = { secureUploadsManager, uploadController, validationManager, uploadEvents };
+    uploadEvents.observe();
+  }
+
+  private _requireUploaderScope<TKey extends keyof UploaderScope>(key: TKey): UploaderScope[TKey] {
+    if (!this._uploaderScope) {
+      throw new Error(`Unexpected error: UploaderController.${key} accessed before attachUploaderScope()`);
+    }
+    return this._uploaderScope[key];
+  }
+
+  public get secureUploadsManager(): SecureUploadsController {
+    return this._requireUploaderScope('secureUploadsManager');
+  }
+
+  public get uploadController(): UploadController {
+    return this._requireUploaderScope('uploadController');
+  }
+
+  public get validationManager(): ValidationController {
+    return this._requireUploaderScope('validationManager');
+  }
+
+  public get uploadEvents(): UploadEventsController {
+    return this._requireUploaderScope('uploadEvents');
+  }
+
   public destroy(): void {
     this._destroyed = true;
 
     this.events.destroy();
     this.config.destroy();
     this.locale.destroy();
+
+    // The uploader-scope stack tears down BEFORE `this.collection.destroy()`,
+    // in reverse construction order: `UploadEventsController.unobserve()`
+    // detaches its `observeCollection`/`observeProperties` subscriptions,
+    // which must run while the collection they're registered against is
+    // still the live, intact instance — destroying the collection first would
+    // let its own teardown race those detaching observers.
+    if (this._uploaderScope) {
+      this._uploaderScope.uploadEvents.destroy();
+      this._uploaderScope.validationManager.destroy();
+      this._uploaderScope.uploadController.destroy();
+      this._uploaderScope.secureUploadsManager.destroy();
+    }
+
     this.collection.destroy();
 
     // Reverse construction order.
@@ -203,5 +386,10 @@ export class UploaderController {
     this.telemetryManager.destroy();
     this.eventEmitter.destroy();
     this.localeManager.destroy();
+
+    // M9l follow-up: restore v1's throw-on-teardown-straddle parity — reading
+    // `api` after destroy() must throw again, not keep returning a torn-down
+    // instance.
+    this._api = null;
   }
 }
