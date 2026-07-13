@@ -18,6 +18,9 @@ export class ActivityChildBlock extends ChildBlock {
 
   public static activities = ACTIVITY_TYPES;
 
+  /** Un-report callback for the current `reportActivityMounted()` report, if any. */
+  private _unreportActivityMounted?: () => void;
+
   protected override controllerReady(_ctrl: UploaderController): void {
     if (!this.activityType) {
       return;
@@ -27,9 +30,37 @@ export class ActivityChildBlock extends ChildBlock {
     }
     // Re-render on every router transition so `updated()` re-evaluates the slot.
     this.subRouter(() => this.requestUpdate());
-    // Report this activity as mounted so API waits (navigate/setModalState)
-    // can find it now that ported blocks are not in `*blocksRegistry`.
-    this.trackSub(this.bag.router.activityBlockMounted(this.activityType));
+    this.reportActivityMounted();
+  }
+
+  /**
+   * Report `this.activityType` as mounted with the router so API waits
+   * (navigate/setModalState) can find it now that ported blocks are not in
+   * `*blocksRegistry`. Idempotent: releases any prior report first, so it's
+   * safe to call again after `activityType` changes post-adoption (e.g.
+   * `PluginActivityHost`'s late-registration sync) to move the report from
+   * the old id to the new one. A no-op (after releasing the prior report)
+   * when `activityType` is `null`.
+   */
+  protected reportActivityMounted(): void {
+    this._unreportActivityMounted?.();
+    this._unreportActivityMounted = undefined;
+    if (!this.activityType) {
+      return;
+    }
+    this._unreportActivityMounted = this.bag.router.activityBlockMounted(this.activityType);
+  }
+
+  protected override controllerReleased(ctrl: UploaderController): void {
+    super.controllerReleased(ctrl);
+    this._unreportActivityMounted?.();
+    this._unreportActivityMounted = undefined;
+  }
+
+  public override disconnectedCallback(): void {
+    this._unreportActivityMounted?.();
+    this._unreportActivityMounted = undefined;
+    super.disconnectedCallback();
   }
 
   /** Whether this block's activity currently owns its slot. */

@@ -2,14 +2,21 @@ import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import { repeat } from 'lit/directives/repeat.js';
-import type { Owned, PluginActivityRegistration, PluginRenderDispose } from '../../abstract/managers/plugin';
+import type { RouterController } from '../../abstract/controllers/RouterController';
+import type { UploaderController } from '../../abstract/controllers/UploaderController';
+import type {
+  Owned,
+  PluginActivityRegistration,
+  PluginController,
+  PluginRenderDispose,
+} from '../../abstract/managers/plugin';
+import { ActivityChildBlock } from '../../lit/ActivityChildBlock';
 import type { ActivityType } from '../../lit/activity-constants';
-import { LitActivityBlock } from '../../lit/LitActivityBlock';
-import { LitBlock } from '../../lit/LitBlock';
+import { ChildBlock } from '../../lit/ChildBlock';
 import '../Modal/Modal';
 import './uc-plugin-activity-host.css';
 
-export class PluginActivityHost extends LitActivityBlock {
+export class PluginActivityHost extends ActivityChildBlock {
   @property({ attribute: false })
   public registration!: Owned<PluginActivityRegistration>;
 
@@ -17,9 +24,14 @@ export class PluginActivityHost extends LitActivityBlock {
   private _containerRef = createRef<HTMLDivElement>();
   private _isMounted = false;
 
-  public override initCallback(): void {
+  /** Test-only public surface (`plugin-activity-host.e2e.test.tsx`) mirroring v1's `LitBlock.router` getter. */
+  public get router(): RouterController {
+    return this.bag.router;
+  }
+
+  protected override controllerReady(ctrl: UploaderController): void {
     this.activityType = (this.registration?.id as ActivityType) ?? null;
-    super.initCallback();
+    super.controllerReady(ctrl);
   }
 
   protected override updated(changed: PropertyValues<this>): void {
@@ -32,6 +44,10 @@ export class PluginActivityHost extends LitActivityBlock {
       if (id) {
         this.setAttribute('activity', id);
       }
+      // Move the mounted-activity signal from the stale id to the new one so
+      // API waits (navigate/setModalState) find this host under its current
+      // activityType right away, rather than after the next render cycle.
+      this.reportActivityMounted();
     }
 
     // Own the plugin's render()/dispose() lifecycle: mount when this activity
@@ -50,7 +66,7 @@ export class PluginActivityHost extends LitActivityBlock {
       return;
     }
     try {
-      this._dispose = this.registration.render(container, this.router.params) ?? undefined;
+      this._dispose = this.registration.render(container, this.bag.router.params) ?? undefined;
       this._isMounted = true;
     } catch (error) {
       console.error(`[Plugin "${this.registration.pluginId}"] Activity render() threw an error`, error);
@@ -78,40 +94,39 @@ export class PluginActivityHost extends LitActivityBlock {
   }
 }
 
-export class PluginActivityRenderer extends LitBlock {
+export class PluginActivityRenderer extends ChildBlock {
   @property({ type: String })
   public mode: 'modal' | 'inline' = 'modal';
 
   @state()
   private _activities: Owned<PluginActivityRegistration>[] = [];
 
-  private _unsubscribePlugins?: () => void;
+  // Transiently null until the shared PluginController registers (bag.when) —
+  // render falls back to an empty activity list meanwhile (Icon/FileItem precedent).
+  private _pluginManager: PluginController | null = null;
 
-  public override initCallback(): void {
-    super.initCallback();
+  protected override controllerReady(): void {
+    this.trackSub(
+      this.bag.when('pluginManager', (pluginManager) => {
+        this._pluginManager = pluginManager;
+        this.trackSub(pluginManager.onPluginsChange(() => this._syncActivities()));
+        this._syncActivities();
+      }),
+    );
+  }
 
-    const pluginManager = this._sharedInstancesBag.pluginManager;
-    if (pluginManager?.onPluginsChange) {
-      this._unsubscribePlugins = pluginManager.onPluginsChange(() => this._syncActivities());
-    }
-
-    this._syncActivities();
+  protected override controllerReleased(): void {
+    this._pluginManager = null;
   }
 
   private _syncActivities(): void {
-    const pluginManager = this._sharedInstancesBag.pluginManager;
+    const pluginManager = this._pluginManager;
     if (!pluginManager) {
       this._activities = [];
       return;
     }
 
     this._activities = pluginManager.snapshot().activities;
-  }
-
-  public override disconnectedCallback(): void {
-    this._unsubscribePlugins?.();
-    this._unsubscribePlugins = undefined;
-    super.disconnectedCallback();
   }
 
   public override render() {
