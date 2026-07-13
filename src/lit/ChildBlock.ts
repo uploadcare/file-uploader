@@ -7,6 +7,7 @@ import { UploaderRegistry } from '../abstract/UploaderRegistry';
 import type { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter';
 import type { ConfigType } from '../types';
 import type { ActivityId } from './activity-constants';
+import { ensureUploaderCtx } from './ensureUploaderCtx';
 import { LightDomMixin } from './LightDomMixin';
 import { createL10n } from './l10n';
 import { PubSub } from './PubSubCompat';
@@ -208,6 +209,15 @@ export abstract class ChildBlock extends ChildBlockBase {
     this._releaseController();
     if (!ctxName) {
       return;
+    }
+    // Self-bootstrap: a ChildBlock is a pure consumer, so with no v1 block
+    // anywhere in the composition the ctx (and its controller) would never
+    // come into existence and `whenAvailable` below would wait forever.
+    // `ensureUploaderCtx` is idempotent — if a v1 block or a sibling
+    // ChildBlock already created the ctx, `getCtx` is non-null and this is a
+    // no-op; the existing creator (and its seed) wins, unchanged.
+    if (!PubSub.getCtx(ctxName)) {
+      ensureUploaderCtx(ctxName);
     }
     this._registryUnsub = UploaderRegistry.whenAvailable(ctxName, (ctrl) => {
       if (ctrl) {

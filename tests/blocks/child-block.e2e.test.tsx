@@ -103,12 +103,30 @@ describe('ChildBlock', () => {
     expect(child.hasAttribute('test-child-style')).toBe(true);
   });
 
-  it('does not render before a controller is available', async () => {
-    const child = append('test-child-block', { 'ctx-name': getCtxName() });
+  it('does not render before a ctx-name resolves (nothing to bootstrap)', async () => {
+    // No `ctx-name` attribute and no inherited v1 ancestor: `effectiveCtxName`
+    // is undefined, so `_watchRegistry` has nothing to bootstrap or watch —
+    // distinct from the M9o self-bootstrap case below, where a ctx-name IS
+    // present and the block creates its own ctx rather than gating forever.
+    const child = append('test-child-block');
     // Wait for the (gated) initial update cycle to settle instead of a timed grace period.
     await child.updateComplete;
     expect(child.querySelector('.pk')).toBeNull();
     expect(child.readyCount).toBe(0);
+  });
+
+  it('self-bootstraps its own ctx and renders immediately with no v1 block ever present (M9o)', async () => {
+    const ctxName = getCtxName();
+    const { PubSub } = await import('@/lit/PubSubCompat.js');
+    expect(PubSub.hasCtx(ctxName)).toBe(false);
+
+    const child = append('test-child-block', { 'ctx-name': ctxName });
+
+    await expect.poll(() => child.readyCount).toBe(1);
+    expect(PubSub.hasCtx(ctxName)).toBe(true);
+    // Plain ConfigController defaults — nothing seeded them beyond
+    // `ensureUploaderCtx`'s own bootstrap.
+    expect(child.querySelector('.pk')?.textContent).toBe('');
   });
 
   it('inherits ctx-name from a v1 ancestor via context', async () => {
@@ -201,7 +219,7 @@ describe('ChildBlock', () => {
     expect(child.readyCount).toBe(1);
   });
 
-  it('releases the controller and re-gates when ctx-name switches to a not-yet-available ctx', async () => {
+  it('releases the old controller and self-bootstraps a fresh ctx when ctx-name switches to a not-yet-available name (M9o)', async () => {
     const ctxNameA = getCtxName();
     const ctxNameB = getCtxName();
     page.render(<uc-config ctx-name={ctxNameA} pubkey="demopublickey" testMode></uc-config>);
@@ -210,12 +228,29 @@ describe('ChildBlock', () => {
 
     child.setAttribute('ctx-name', ctxNameB);
     await expect.poll(() => child.releasedCount).toBe(1);
+    // Pre-M9o this block re-gated and waited forever absent a v1 block: now
+    // `_watchRegistry` self-bootstraps `ctxNameB` synchronously (no creator
+    // exists yet), so the controller is never actually null here — it is the
+    // freshly-bootstrapped one, seeded with plain config defaults (`pubkey`
+    // is the ConfigController default `''`, not yet `demopublickey`/`otherkey`).
     // biome-ignore lint/suspicious/noExplicitAny: reaching into a protected getter
-    expect((child as any).uploaderOrNull).toBeNull();
+    expect((child as any).uploaderOrNull).not.toBeNull();
+    expect(child.readyCount).toBe(2);
+    expect(child.querySelector('.pk')?.textContent).toBe('');
 
+    const { PubSub } = await import('@/lit/PubSubCompat.js');
+    expect(PubSub.hasCtx(ctxNameB)).toBe(true);
+
+    // A v1 block arriving later for the same ctx-name must find the
+    // self-bootstrapped ctx (via `getCtx ?? registerCtx` inside
+    // `ensureUploaderCtx`) rather than clobbering it with a second one — its
+    // own config values apply on top, same seed either way.
     append('uc-config', { 'ctx-name': ctxNameB, pubkey: 'otherkey' });
     await expect.poll(() => child.querySelector('.pk')?.textContent).toBe('otherkey');
+    // No extra release/adopt cycle: the v1 block joins the existing
+    // controller instead of triggering a `UploaderRegistry` replacement.
     expect(child.readyCount).toBe(2);
+    expect(child.releasedCount).toBe(1);
   });
 
   it('isolates a throwing unsubscriber during release, warns, and finishes teardown', async () => {
