@@ -7,6 +7,7 @@ import { UploaderRegistry } from '../abstract/UploaderRegistry';
 import type { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter';
 import type { ConfigType } from '../types';
 import type { ActivityId } from './activity-constants';
+import { destroyCtx, isCtxUnreferenced } from './ctx-lifecycle';
 import { ensureUploaderCtx } from './ensureUploaderCtx';
 import { LightDomMixin } from './LightDomMixin';
 import { createL10n } from './l10n';
@@ -175,11 +176,38 @@ export abstract class ChildBlock extends ChildBlockBase {
   }
 
   public override disconnectedCallback(): void {
+    // Capture before releasing anything below — `effectiveCtxName` itself
+    // doesn't depend on controller/watch state, but grabbing it up front
+    // means the deferred check below is unambiguous about which ctx it's
+    // asking about, even if the attribute changes before the timeout fires
+    // (that reconnect path re-watches a possibly different name; this
+    // deferred check is only about the ctx this disconnect was leaving).
+    const ctxName = this.effectiveCtxName;
     this._registryUnsub?.();
     this._registryUnsub = undefined;
     this._watchedCtxName = undefined;
     this._releaseController();
     super.disconnectedCallback();
+
+    if (!ctxName) {
+      return;
+    }
+    // Unified consumer-refcount teardown (M9o Task 3): this block was one of
+    // possibly several things keeping the ctx alive (v1 `*blocksRegistry`
+    // members, other `ChildBlock`s watching via `UploaderRegistry`). Defer
+    // the check exactly like `LitBlock.disconnectedCallback` — same
+    // `setTimeout(0)` + reconnect-guard shape — so a same-tick disconnect ->
+    // reconnect (e.g. a DOM move) doesn't tear down a ctx this block is
+    // about to re-watch.
+    setTimeout(() => {
+      if (this.isConnected) {
+        return;
+      }
+      if (!isCtxUnreferenced(ctxName)) {
+        return;
+      }
+      destroyCtx(ctxName);
+    }, 0);
   }
 
   protected override shouldUpdate(changed: PropertyValues<this>): boolean {

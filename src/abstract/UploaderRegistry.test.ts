@@ -239,4 +239,44 @@ describe('UploaderRegistry', () => {
 
     UploaderRegistry.unregister(name, third);
   });
+
+  // M9o Task 3: `hasConsumers` is the query the unified teardown predicate
+  // reads to decide whether a v2 `ChildBlock` is still watching a ctx.
+  describe('hasConsumers', () => {
+    it('is false when nobody is watching the name', () => {
+      const name = uniqueName();
+      expect(UploaderRegistry.hasConsumers(name)).toBe(false);
+    });
+
+    it('is true while at least one whenAvailable subscription is live', () => {
+      const name = uniqueName();
+      const offA = UploaderRegistry.whenAvailable(name, vi.fn());
+      expect(UploaderRegistry.hasConsumers(name)).toBe(true);
+
+      const offB = UploaderRegistry.whenAvailable(name, vi.fn());
+      expect(UploaderRegistry.hasConsumers(name)).toBe(true);
+
+      offA();
+      expect(UploaderRegistry.hasConsumers(name)).toBe(true);
+
+      offB();
+      expect(UploaderRegistry.hasConsumers(name)).toBe(false);
+    });
+
+    it('is unaffected by whether a controller is registered under the name', () => {
+      const name = uniqueName();
+      const controller = new UploaderController();
+      UploaderRegistry.register(name, controller);
+      expect(UploaderRegistry.hasConsumers(name)).toBe(false);
+
+      const off = UploaderRegistry.whenAvailable(name, vi.fn());
+      expect(UploaderRegistry.hasConsumers(name)).toBe(true);
+
+      UploaderRegistry.unregister(name, controller);
+      expect(UploaderRegistry.hasConsumers(name)).toBe(true);
+
+      off();
+      expect(UploaderRegistry.hasConsumers(name)).toBe(false);
+    });
+  });
 });
