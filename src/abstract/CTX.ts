@@ -1,16 +1,20 @@
 import type { UploadcareGroup } from '@uploadcare/upload-client';
-import type { LitBlock } from '../lit/LitBlock';
 import type { OutputCollectionState, OutputErrorCollection } from '../types/index';
 import type { LazyPluginEntry } from './managers/plugin/LazyPluginLoader';
 
+// All seeds below are static values — none derive from an element instance.
+// (Audited ahead of the M9n ctx-creation seam: these used to take an unused
+// `fnCtx: LitBlock` parameter, kept only so call sites could write
+// `uploaderBlockCtx(this)`; dropped so the seam can build the full seed set
+// pre-any-element, with no element to pass.)
 export const blockCtx = () => ({});
 
-export const activityBlockCtx = (_fnCtx: LitBlock) => ({
+export const activityBlockCtx = () => ({
   ...blockCtx(),
 });
 
-export const uploaderBlockCtx = (fnCtx: LitBlock) => ({
-  ...activityBlockCtx(fnCtx),
+export const uploaderBlockCtx = () => ({
+  ...activityBlockCtx(),
   '*commonProgress': 0,
   '*uploadList': [],
   '*collectionErrors': [] as OutputErrorCollection[],
@@ -19,7 +23,7 @@ export const uploaderBlockCtx = (fnCtx: LitBlock) => ({
   '*uploadTrigger': new Set<string>(),
 });
 
-export const solutionBlockCtx = (fnCtx: LitBlock) => ({
-  ...uploaderBlockCtx(fnCtx),
+export const solutionBlockCtx = () => ({
+  ...uploaderBlockCtx(),
   '*lazyPlugins': null as LazyPluginEntry[] | null,
 });

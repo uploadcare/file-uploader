@@ -145,6 +145,55 @@ describe('upload events wiring', () => {
     );
   }, 30_000);
 
+  it('stops dispatching DOM events on a ctx-provider once it disconnects, while a sibling on the same ctx keeps receiving them', async () => {
+    // M9n Task 1 — gap-fill ahead of the ctx-creation-seam move. Pins
+    // `EventBridgeController.hostDisconnected` (src/lit/EventBridgeController.ts):
+    // once a `<uc-upload-ctx-provider>` disconnects, it must stop re-dispatching
+    // the per-ctx `EventBus` as DOM CustomEvents on itself — the bus keeps
+    // running (a sibling provider on the same ctx still gets every event).
+    // Nothing in the existing suite disconnects the ctx-provider element
+    // itself and observes the bridge stop; the "owner-candidate removal" test
+    // above only removes an unrelated block.
+    const ctxName = getCtxName();
+    page.render(
+      <>
+        <uc-file-uploader-regular ctx-name={ctxName}></uc-file-uploader-regular>
+        <uc-config qualityInsights={false} ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
+        <uc-upload-ctx-provider ctx-name={ctxName}></uc-upload-ctx-provider>
+        <uc-upload-ctx-provider ctx-name={ctxName}></uc-upload-ctx-provider>
+      </>,
+    );
+
+    const survivingProvider = page.getByTestId('uc-upload-ctx-provider').nth(0).query()! as UploadCtxProvider;
+    const disconnectingProvider = page.getByTestId('uc-upload-ctx-provider').nth(1).query()! as UploadCtxProvider;
+    const api = survivingProvider.api;
+
+    const survivingHandler = vi.fn<(e: CustomEvent<EventPayload['file-added']>) => void>();
+    const disconnectingHandler = vi.fn<(e: CustomEvent<EventPayload['file-added']>) => void>();
+    survivingProvider.addEventListener('file-added', survivingHandler);
+    disconnectingProvider.addEventListener('file-added', disconnectingHandler);
+
+    api.addFileFromUrl(TEST_IMAGE_URL);
+
+    // Both providers bridge the same ctx's EventBus before either disconnects.
+    await vi.waitFor(() => {
+      expect(survivingHandler).toHaveBeenCalledOnce();
+      expect(disconnectingHandler).toHaveBeenCalledOnce();
+    });
+
+    disconnectingProvider.remove();
+
+    api.addFileFromUrl(TEST_IMAGE_URL);
+
+    // Waiting on the surviving provider's second call proves the ctx's event
+    // bus has ticked past the point where the removed provider would have
+    // re-dispatched too, had its bridge not unsubscribed on disconnect.
+    await vi.waitFor(() => {
+      expect(survivingHandler).toHaveBeenCalledTimes(2);
+    });
+    expect(disconnectingHandler).toHaveBeenCalledOnce();
+  }, 30_000);
+
   it('keeps deriving upload events after an owner-candidate block is removed', async () => {
     const ctxName = getCtxName();
     page.render(

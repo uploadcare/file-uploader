@@ -3,7 +3,8 @@ import type { LitElement, PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { debounce } from '../utils/debounce';
 import type { Constructor } from './Constructor';
-import { PubSub } from './PubSubCompat';
+import { ensureUploaderCtx } from './ensureUploaderCtx';
+import type { PubSub } from './PubSubCompat';
 
 type SymbioteStateBag<T extends Record<string, unknown>> = T;
 
@@ -194,7 +195,6 @@ export function SymbioteMixin<TState extends Record<string, unknown> = Record<st
        * Initialize shared context after ctxName is available
        */
       private _initSharedContext() {
-        const initialValue = this.init$;
         const ctxName = this._effectiveCtxName;
 
         if (!ctxName) {
@@ -203,9 +203,20 @@ export function SymbioteMixin<TState extends Record<string, unknown> = Record<st
         }
 
         if (!this._symbioteSharedPubSub) {
-          this._symbioteSharedPubSub =
-            PubSub.getCtx<TState>(ctxName) ?? PubSub.registerCtx<TState>(initialValue, ctxName);
+          // Map acquisition (idempotent: creates + seeds + forces the
+          // controller into existence on first call for this ctx name, or
+          // returns the existing map untouched) — see `ensureUploaderCtx`.
+          // `TState` is always `SharedState` in practice (the only
+          // production `SymbioteMixin<TState>()` instantiation, in
+          // `LitBlock.ts`); this bridges the seam's concrete `SharedState`
+          // typing to this class's generic `TState`, the same "generic
+          // param assumed to equal the real runtime shape" contract
+          // `init$: TState = {} as TState` already relies on above.
+          this._symbioteSharedPubSub = ensureUploaderCtx(ctxName) as unknown as PubSub<TState>;
 
+          // v1 extras on top of the seam's base seed: this element's OWN
+          // `init$` keys (e.g. `Config`'s `*cfg/*` defaults, CIE's
+          // `ctxOwner`-rewritten keys) — unchanged rewrite semantics.
           for (const [key, defaultValue] of Object.entries(this.init$) as [keyof TState, TState[keyof TState]][]) {
             this._symbioteSharedPubSub.add(key, defaultValue, this.ctxOwner);
           }
