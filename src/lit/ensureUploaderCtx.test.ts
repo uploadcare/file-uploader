@@ -100,4 +100,19 @@ describe('ensureUploaderCtx', () => {
     // the seam only seeds on first creation, never on an existing map.
     expect(ctx.has('*commonProgress')).toBe(false);
   });
+
+  // Pin ahead of M9o Task 2 (ChildBlock._watchRegistry calling this function
+  // to self-bootstrap a ctx): a pre-existing map with no controller yet (the
+  // exact shape a bare `PubSub.registerCtx` caller leaves behind) must still
+  // get a controller forced into the registry — every path through this
+  // function, not just first-creation, is a controller-existence guarantee.
+  it('forces a controller into existence when the ctx map pre-exists WITHOUT one', () => {
+    const ctxName = freshCtxName();
+    PubSub.registerCtx<Record<string, unknown>>({ plain: 'seed' }, ctxName);
+    expect(UploaderRegistry.get(ctxName)).toBeUndefined();
+
+    ensureUploaderCtx(ctxName);
+
+    expect(UploaderRegistry.get(ctxName)).toBeInstanceOf(UploaderController);
+  });
 });

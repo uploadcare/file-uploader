@@ -6,6 +6,7 @@ import type { Config, UploadCtxProvider } from '@/index.js';
 import { PubSub } from '@/lit/PubSubCompat';
 import type { SharedState } from '@/lit/SharedState';
 import { controllerOwnedInstanceKeys } from '@/lit/shared-instances';
+import { delay } from '@/utils/delay';
 import { getCtxName } from '../utils/getCtxName';
 import { cleanup } from '../utils/test-renderer';
 import '../../types/jsx';
@@ -75,6 +76,41 @@ describe('instance lifecycle (config-only ctx)', () => {
       window.removeEventListener('error', onError);
     }
     expect(errors).toEqual([]);
+  });
+});
+
+/**
+ * Gap-fill ahead of M9o Tasks 2-3 (self-bootstrap ctx creation + unified
+ * consumer-refcount teardown). Pins the current `setTimeout(0)` deferral
+ * guard in `LitBlock.disconnectedCallback` (:263-271) — a DOM-move-in-the-
+ * same-tick must not destroy the ctx — so the upcoming refcount-based
+ * teardown condition has a regression net for this seam.
+ */
+describe('instance lifecycle (v1 teardown deferral guard)', () => {
+  it('a block disconnecting then reconnecting within the same tick does not tear down the ctx', async () => {
+    const ctxName = getCtxName();
+    page.render(<uc-config ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>);
+    await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(true);
+    const firstController = PubSub.getCtx<SharedState>(ctxName)!.uploaderController();
+
+    const el = page.getByTestId('uc-config').query()!;
+    const parent = el.parentElement!;
+
+    // Moving the element within the DOM (remove + re-append) runs
+    // disconnectedCallback then connectedCallback synchronously, before the
+    // deferred `setTimeout(0)` destroy check (scheduled by the disconnect)
+    // fires — its re-check of `this.isConnected` must see it reconnected and
+    // bail out without destroying the ctx.
+    el.remove();
+    parent.append(el);
+
+    // Let that deferred setTimeout(0) task actually run before asserting
+    // nothing was torn down.
+    await delay(0);
+
+    expect(PubSub.hasCtx(ctxName)).toBe(true);
+    // Same ctx/controller instance — not destroyed and recreated.
+    expect(PubSub.getCtx<SharedState>(ctxName)!.uploaderController()).toBe(firstController);
   });
 });
 

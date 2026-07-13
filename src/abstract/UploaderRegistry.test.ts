@@ -192,4 +192,51 @@ describe('UploaderRegistry', () => {
     expect(cb).not.toHaveBeenCalled();
     UploaderRegistry.unregister(name, controller);
   });
+
+  // Pin ahead of the M9o unified-teardown change, which will treat this
+  // consumer set as a live refcount (ctx dies when it's empty AND
+  // blocksRegistry is empty). These pin the set's cardinality semantics
+  // directly: N subscribers -> N independent slots, each unsub removes
+  // exactly one, and the set only "empties" (stops notifying anyone) once
+  // every subscriber has unsubscribed.
+  it('consumer count is a faithful live refcount: N subscriptions -> N independent slots', () => {
+    const name = uniqueName();
+    const a = vi.fn();
+    const b = vi.fn();
+    const c = vi.fn();
+    const offA = UploaderRegistry.whenAvailable(name, a);
+    const offB = UploaderRegistry.whenAvailable(name, b);
+    const offC = UploaderRegistry.whenAvailable(name, c);
+
+    const controller = new UploaderController();
+    UploaderRegistry.register(name, controller);
+    expect(a).toHaveBeenCalledWith(controller);
+    expect(b).toHaveBeenCalledWith(controller);
+    expect(c).toHaveBeenCalledWith(controller);
+    a.mockClear();
+    b.mockClear();
+    c.mockClear();
+
+    // Unsubscribing one of three removes exactly that one slot — the other
+    // two remain live and keep receiving notifications.
+    offB();
+    const second = new UploaderController();
+    UploaderRegistry.register(name, second);
+    expect(a).toHaveBeenCalledWith(second);
+    expect(c).toHaveBeenCalledWith(second);
+    expect(b).not.toHaveBeenCalled();
+    a.mockClear();
+    c.mockClear();
+
+    // Unsubscribing the remaining two empties the set: a subsequent
+    // register notifies nobody.
+    offA();
+    offC();
+    const third = new UploaderController();
+    expect(() => UploaderRegistry.register(name, third)).not.toThrow();
+    expect(a).not.toHaveBeenCalled();
+    expect(c).not.toHaveBeenCalled();
+
+    UploaderRegistry.unregister(name, third);
+  });
 });
