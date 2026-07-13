@@ -16,6 +16,7 @@ import { UploaderController, type UploaderScopeDeps } from './UploaderController
 import { ValidationController } from './ValidationController';
 
 const makeUploaderScopeDeps = (overrides: Partial<UploaderScopeDeps> = {}): UploaderScopeDeps => ({
+  controllers: { SecureUploadsController, UploadController, ValidationController, UploadEventsController },
   getFileHooks: () => [],
   getOutputItem: (() => ({}) as never) as never,
   getApi: () => ({}) as never,
