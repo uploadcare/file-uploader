@@ -1,10 +1,20 @@
 import { describe, expect, it, vi } from 'vitest';
 import { ConfigController } from '../controllers/ConfigController';
 import { LocaleController } from '../controllers/LocaleController';
+import type { LocaleDefinition } from '../localeRegistry';
+import * as localeRegistry from '../localeRegistry';
 import { LocaleManager } from './LocaleManager';
 import type { PluginController } from './plugin';
 
 type FakePluginManager = Pick<PluginController, 'onPluginsChange' | 'snapshot'>;
+
+// Wraps the real resolver as the default implementation (so every other test
+// in this file resolves locales for real), while letting the same-tick
+// staleness spec below swap in controllable deferreds for specific calls.
+vi.mock('../localeRegistry', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../localeRegistry')>();
+  return { ...actual, resolveLocaleDefinition: vi.fn(actual.resolveLocaleDefinition) };
+});
 
 /**
  * Dedicated coverage for `LocaleManager.activate()` (M9k Task 3 follow-up):
@@ -112,5 +122,40 @@ describe('LocaleManager.activate', () => {
     const manager = new LocaleManager({ config, locale });
 
     expect(() => manager.destroy()).not.toThrow();
+  });
+
+  it('applies only the second locale when its stale-but-still-in-flight predecessor resolves later — even on the default "en" path', async () => {
+    const config = new ConfigController();
+    const locale = new LocaleController();
+    const manager = new LocaleManager({ config, locale });
+
+    let resolveEn!: (definition: Partial<LocaleDefinition>) => void;
+    let resolveFr!: (definition: Partial<LocaleDefinition>) => void;
+    const enPromise = new Promise<Partial<LocaleDefinition>>((resolve) => {
+      resolveEn = resolve;
+    });
+    const frPromise = new Promise<Partial<LocaleDefinition>>((resolve) => {
+      resolveFr = resolve;
+    });
+
+    const resolveMock = vi.mocked(localeRegistry.resolveLocaleDefinition);
+    // First call: activate()'s initial `en` subscription fire (a real ctx's
+    // default `localeName`). Second call: the rapid follow-up `fr` change.
+    resolveMock.mockImplementationOnce(() => enPromise as Promise<LocaleDefinition>);
+    resolveMock.mockImplementationOnce(() => frPromise as Promise<LocaleDefinition>);
+
+    manager.activate(null); // synchronously fires cb('en') -> resolveLocaleDefinition('en')
+    config.set('localeName', 'fr'); // same tick -> resolveLocaleDefinition('fr')
+
+    // Resolve out of order: the newer ("fr") request settles first, the
+    // stale ("en") one settles after. `await <promise>` here is guaranteed to
+    // run after LocaleManager's own continuation on that same promise, since
+    // its `.then` was registered first.
+    resolveFr({ upload: 'FR upload' });
+    await frPromise;
+    resolveEn({ upload: 'EN stale upload' });
+    await enPromise;
+
+    expect(locale.get('upload')).toBe('FR upload');
   });
 });

@@ -39,6 +39,7 @@ export class LocaleManager {
   private readonly _deps: LocaleManagerDeps;
   private _localeName = '';
   private _activated = false;
+  private _destroyed = false;
   private _unsubs = new Set<() => void>();
   private _pluginManager: Pick<PluginController, 'onPluginsChange' | 'snapshot'> | null = null;
   private _pluginManagerUnsub?: () => void;
@@ -84,7 +85,14 @@ export class LocaleManager {
         }
         this._localeName = localeName;
         const definition = await resolveLocaleDefinition(localeName);
-        if (localeName !== DEFAULT_LOCALE && this._localeName !== localeName) {
+        // Uniform staleness guard: `resolveLocaleDefinition` always crosses a
+        // microtask boundary — even for the `en` default — so a rapid
+        // second `localeName` change in the same tick can settle this
+        // continuation after `_localeName` has already moved on. Applying it
+        // then would clobber the newer locale's dictionary with the stale
+        // one's. Bail uniformly (no `en`-only carve-out) and also bail if
+        // the manager was torn down while this resolution was in flight.
+        if (this._destroyed || this._localeName !== localeName) {
           return;
         }
         this._applyPluginLocales(localeName);
@@ -166,6 +174,7 @@ export class LocaleManager {
   }
 
   public destroy(): void {
+    this._destroyed = true;
     this._pluginManagerUnsub?.();
     this._pluginManagerUnsub = undefined;
     for (const unsub of this._unsubs) {

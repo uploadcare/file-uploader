@@ -313,24 +313,27 @@ describe('PubSub (M9k Task 3: pre-connect construction timing)', () => {
     // ctx, matching the M9k Task 2 shift: the controller (and its four
     // managers) now come into being the moment *any* `*cfg/*`/`*l10n/*` key is
     // touched, not when a DOM element's `initCallback` runs.
-    const ctx = freshCtx();
-    expect(() => ctx.read('*cfg/multiple')).not.toThrow();
+    try {
+      const ctx = freshCtx();
+      expect(() => ctx.read('*cfg/multiple')).not.toThrow();
 
-    const controller = UploaderRegistry.get(ctx.id);
-    expect(controller).toBeDefined();
-    expect(controller!.localeManager).toBeInstanceOf(LocaleManager);
-    expect(controller!.eventEmitter).toBeInstanceOf(EventEmitter);
-    expect(controller!.telemetryManager).toBeInstanceOf(TelemetryManager);
-    expect(controller!.router).toBeInstanceOf(RouterController);
+      const controller = UploaderRegistry.get(ctx.id);
+      expect(controller).toBeDefined();
+      expect(controller!.localeManager).toBeInstanceOf(LocaleManager);
+      expect(controller!.eventEmitter).toBeInstanceOf(EventEmitter);
+      expect(controller!.telemetryManager).toBeInstanceOf(TelemetryManager);
+      expect(controller!.router).toBeInstanceOf(RouterController);
 
-    // Nothing on this path reaches into the DOM/global scope — a11y and
-    // clipboard (element-triggered only, added by `LitBlock.initCallback`)
-    // are the guard: this ctx never had a block connect, so they must not
-    // exist at all.
-    expect(ctx.has('*a11y')).toBe(false);
-    expect(ctx.has('*clipboard')).toBe(false);
+      // Nothing on this path reaches into the DOM/global scope — a11y and
+      // clipboard (element-triggered only, added by `LitBlock.initCallback`)
+      // are the guard: this ctx never had a block connect, so they must not
+      // exist at all.
+      expect(ctx.has('*a11y')).toBe(false);
+      expect(ctx.has('*clipboard')).toBe(false);
 
-    expect(addEventListenerSpy).not.toHaveBeenCalled();
-    addEventListenerSpy.mockRestore();
+      expect(addEventListenerSpy).not.toHaveBeenCalled();
+    } finally {
+      addEventListenerSpy.mockRestore();
+    }
   });
 });
