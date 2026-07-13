@@ -1,4 +1,5 @@
 import { SecureUploadsController } from '../../abstract/controllers/SecureUploadsController';
+import type { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
 import { UploadController } from '../../abstract/controllers/UploadController';
 import { UploadEventsController } from '../../abstract/controllers/UploadEventsController';
 import type { UploaderController } from '../../abstract/controllers/UploaderController';
@@ -123,6 +124,16 @@ export class UploadCtxProvider extends ChildBlock {
     if (!ctx.has('*uploadEvents')) {
       ctx.add('*uploadEvents', ctrl.uploadEvents, true);
     }
+  }
+
+  /**
+   * Same contract as v1 `LitUploaderBlock.get uploadCollection()` — part of the
+   * documented `<uc-upload-ctx-provider>` type surface (pinned by
+   * `types/test/uc-upload-ctx-provider.test-d.tsx`). Throws pre-adoption via
+   * `bag`, exactly as the v1 getter did before `initCallback` ran.
+   */
+  public get uploadCollection(): UploadCollectionController {
+    return this.bag.uploadCollection;
   }
 
   /** Same contract as v1 `LitUploaderBlock.getAPI()` — returns the ctx's public API. */
