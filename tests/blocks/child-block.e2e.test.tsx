@@ -253,6 +253,63 @@ describe('ChildBlock', () => {
     expect(child.releasedCount).toBe(1);
   });
 
+  it('tears down an abandoned self-bootstrapped ctx once unreferenced when ctx-name switches while connected (M9o follow-up)', async () => {
+    const ctxNameA = getCtxName();
+    const ctxNameB = getCtxName();
+    const { PubSub } = await import('@/lit/PubSubCompat.js');
+    const { delay } = await import('@/utils/delay.js');
+    expect(PubSub.hasCtx(ctxNameA)).toBe(false);
+
+    // No ctx-name yet: nothing to bootstrap.
+    const child = append('test-child-block');
+    await child.updateComplete;
+
+    // Assign ctx-name=A: self-bootstraps ctxA (no v1 block, no other
+    // consumer) and adopts its controller.
+    child.setAttribute('ctx-name', ctxNameA);
+    await expect.poll(() => child.readyCount).toBe(1);
+    expect(PubSub.hasCtx(ctxNameA)).toBe(true);
+
+    // Switch to ctx-name=B while still connected: the old watch on ctxA is
+    // dropped and ctxB is self-bootstrapped and adopted. Nothing else was
+    // ever referencing ctxA, so once the deferred check fires it must be
+    // torn down instead of leaking.
+    child.setAttribute('ctx-name', ctxNameB);
+    await expect.poll(() => child.releasedCount).toBe(1);
+    expect(PubSub.hasCtx(ctxNameB)).toBe(true);
+
+    await delay(0);
+
+    expect(PubSub.hasCtx(ctxNameA)).toBe(false);
+    expect(PubSub.hasCtx(ctxNameB)).toBe(true);
+    // biome-ignore lint/suspicious/noExplicitAny: reaching into a protected getter
+    expect((child as any).uploaderOrNull).not.toBeNull();
+  });
+
+  it('does not tear down the abandoned ctx on switch when another consumer still references it', async () => {
+    const ctxNameA = getCtxName();
+    const ctxNameB = getCtxName();
+    const { PubSub } = await import('@/lit/PubSubCompat.js');
+    const { delay } = await import('@/utils/delay.js');
+
+    // ctxA has a v1 block keeping it alive, plus a self-bootstrapping
+    // ChildBlock that will later switch away from it.
+    page.render(<uc-config ctx-name={ctxNameA} pubkey="demopublickey" testMode></uc-config>);
+    const child = append('test-child-block', { 'ctx-name': ctxNameA });
+    await expect.poll(() => child.readyCount).toBe(1);
+    expect(PubSub.hasCtx(ctxNameA)).toBe(true);
+
+    child.setAttribute('ctx-name', ctxNameB);
+    await expect.poll(() => child.releasedCount).toBe(1);
+    expect(PubSub.hasCtx(ctxNameB)).toBe(true);
+
+    await delay(0);
+
+    // The v1 block is still on ctxA: the deferred check must find it
+    // referenced and leave it alone.
+    expect(PubSub.hasCtx(ctxNameA)).toBe(true);
+  });
+
   it('isolates a throwing unsubscriber during release, warns, and finishes teardown', async () => {
     const ctxName = getCtxName();
     page.render(<uc-config ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>);
