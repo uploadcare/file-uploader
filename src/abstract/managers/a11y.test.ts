@@ -89,6 +89,47 @@ describe('A11y', () => {
     expect(() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }))).not.toThrow();
   });
 
+  it('construction attaches no window listener (arming is deferred to first registerBlock)', () => {
+    const addSpy = vi.spyOn(window, 'addEventListener');
+
+    track(new A11y());
+
+    expect(addSpy).not.toHaveBeenCalled();
+  });
+
+  it('arms exactly once across multiple registerBlock calls (idempotent)', () => {
+    const addSpy = vi.spyOn(window, 'addEventListener');
+    const a11y = track(new A11y());
+
+    a11y.registerBlock(asLitBlock(document.createElement('div')));
+    const firstCallCount = addSpy.mock.calls.length;
+    expect(firstCallCount).toBeGreaterThan(0);
+
+    a11y.registerBlock(asLitBlock(document.createElement('div')));
+    a11y.registerBlock(asLitBlock(document.createElement('div')));
+
+    expect(addSpy.mock.calls.length).toBe(firstCallCount);
+  });
+
+  it('destroy() disarms unconditionally, and registerBlock after destroy() does not re-arm', () => {
+    const addSpy = vi.spyOn(window, 'addEventListener');
+    const a11y = new A11y();
+
+    a11y.registerBlock(asLitBlock(document.createElement('div')));
+    a11y.destroy();
+    addSpy.mockClear();
+
+    const scope = document.createElement('div');
+    document.body.append(scope);
+    const button = document.createElement('button');
+    scope.append(button);
+    a11y.registerBlock(asLitBlock(scope));
+
+    expect(addSpy).not.toHaveBeenCalled();
+    button.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    expect(button.classList.contains('is-pressed')).toBe(false);
+  });
+
   it('destroy() returns the real window listener count to baseline across a full construct → registerBlock → destroy() cycle', () => {
     const addSpy = vi.spyOn(window, 'addEventListener');
     const removeSpy = vi.spyOn(window, 'removeEventListener');

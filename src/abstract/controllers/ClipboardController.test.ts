@@ -357,6 +357,93 @@ describe('ClipboardController', () => {
     expect(onFileAdd).not.toHaveBeenCalled();
   });
 
+  it('construction attaches no window listener (arming is deferred to first registerScope)', () => {
+    const addSpy = vi.spyOn(window, 'addEventListener');
+
+    track(setup({ pasteScope: 'global', currentActivity: 'start-from' }).layer);
+
+    const pasteAdds = addSpy.mock.calls.filter((call) => call[0] === 'paste');
+    expect(pasteAdds).toHaveLength(0);
+  });
+
+  it('arms exactly once across multiple registerScope calls (idempotent)', () => {
+    const addSpy = vi.spyOn(window, 'addEventListener');
+    const { layer } = setup({ pasteScope: 'global', currentActivity: 'start-from' });
+    track(layer);
+
+    layer.registerScope(connectedScope());
+    layer.registerScope(connectedScope());
+    layer.registerScope(connectedScope());
+
+    const pasteAdds = addSpy.mock.calls.filter((call) => call[0] === 'paste');
+    expect(pasteAdds).toHaveLength(1);
+  });
+
+  it('disarms only once the last registered scope is unregistered', () => {
+    const removeSpy = vi.spyOn(window, 'removeEventListener');
+    const { layer } = setup({ pasteScope: 'global', currentActivity: 'start-from' });
+    track(layer);
+
+    const unregisterA = layer.registerScope(connectedScope());
+    const unregisterB = layer.registerScope(connectedScope());
+
+    unregisterA();
+    expect(removeSpy.mock.calls.filter((call) => call[0] === 'paste')).toHaveLength(0);
+
+    unregisterB();
+    expect(removeSpy.mock.calls.filter((call) => call[0] === 'paste')).toHaveLength(1);
+  });
+
+  it('re-arms after a full disarm + re-registration cycle (scopes can cycle 0 → 1 → 0 → 1)', async () => {
+    const { layer, api } = setup({ pasteScope: 'global', currentActivity: 'start-from' });
+    track(layer);
+
+    const unregisterFirst = layer.registerScope(connectedScope());
+    unregisterFirst();
+
+    layer.registerScope(connectedScope());
+    window.dispatchEvent(pasteEvent([fileItem(new File(['x'], 'x.txt'))]));
+    await flush();
+
+    expect(api.addFileFromObject).toHaveBeenCalled();
+  });
+
+  it('destroy() disarms unconditionally, and registrations after destroy() do not re-arm', async () => {
+    const addSpy = vi.spyOn(window, 'addEventListener');
+    const { layer, api } = setup({ pasteScope: 'global', currentActivity: 'start-from' });
+
+    layer.registerScope(connectedScope());
+    layer.destroy();
+    addSpy.mockClear();
+
+    layer.registerScope(connectedScope());
+    const pasteAdds = addSpy.mock.calls.filter((call) => call[0] === 'paste');
+    expect(pasteAdds).toHaveLength(0);
+
+    window.dispatchEvent(pasteEvent([fileItem(new File(['x'], 'x.txt'))]));
+    await flush();
+    expect(api.addFileFromObject).not.toHaveBeenCalled();
+  });
+
+  it('default eventTarget (window) is dereferenced lazily at arm time, not at construction', () => {
+    // Constructing with no injected eventTarget must not touch `window` at
+    // all until the first registerScope arms the listener.
+    const addSpy = vi.spyOn(window, 'addEventListener');
+    const layer = new ClipboardController({
+      getPasteScope: () => 'global',
+      getCurrentActivity: () => null,
+      addFileFromObject: vi.fn(),
+      addFileFromUrl: vi.fn(),
+      onFileAdd: vi.fn(),
+    });
+    track(layer);
+
+    expect(addSpy.mock.calls.filter((call) => call[0] === 'paste')).toHaveLength(0);
+
+    layer.registerScope(connectedScope());
+    expect(addSpy.mock.calls.filter((call) => call[0] === 'paste')).toHaveLength(1);
+  });
+
   it('the window paste listener add/remove count returns to baseline across a full construct → registerScope → unregister → destroy() cycle', () => {
     const addSpy = vi.spyOn(window, 'addEventListener');
     const removeSpy = vi.spyOn(window, 'removeEventListener');
