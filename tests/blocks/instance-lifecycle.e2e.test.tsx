@@ -77,7 +77,7 @@ describe('instance lifecycle (emit contract, router-driven path)', () => {
     sendEventSpy.mockClear(); // drop init-solution/config noise from setup
 
     // The router's own navigation — not a block calling `emit` directly —
-    // drives this: `RouterController` → `LitBlock._routerEmit` → `LitBlock.emit`.
+    // drives this: `RouterController` → `UploaderController.emit`.
     await page.getByText('Upload files', { exact: true }).click();
     await expect.element(page.getByTestId('uc-start-from')).toBeVisible();
 
