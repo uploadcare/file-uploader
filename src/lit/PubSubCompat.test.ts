@@ -217,6 +217,27 @@ describe('PubSub (additional coverage)', () => {
     expect(ctx.read('extra')).toBe('two');
   });
 
+  it('add() rewrite semantics pin what ctxOwner buys: first-write-wins normally, force-overwrite when rewrite=true (CloudImageEditorBlock/EditorImageCropper init$ seeding path)', () => {
+    // `SymbioteCompatMixin._initSharedContext` calls `add(key, defaultValue,
+    // this.ctxOwner)` for every `init$` key on connect (src/lit/SymbioteCompatMixin.ts).
+    // `CloudImageEditorBlock` (16 keys via `initState()`, CloudImageEditorBlock.ts:120-123)
+    // and `EditorImageCropper` (4 keys seeded in its constructor, EditorImageCropper.ts:65-85)
+    // are the only two classes that set `ctxOwner = true`, so for their real
+    // seeded keys `add` is called with `rewrite=true` instead of the default
+    // `false`. This pins that the two rewrite values genuinely differ — not
+    // that a collision currently exists (none does; no other co-resident
+    // block seeds the same keys today, so the rewrite is presently inert in
+    // practice, just live in mechanism).
+    const ctx = freshCtx();
+
+    ctx.add('*imageBox', 'v1'); // non-owner seeding: rewrite=false (default)
+    ctx.add('*imageBox', 'v2'); // a second non-owner seed — first-write-wins
+    expect(ctx.read('*imageBox')).toBe('v1');
+
+    ctx.add('*imageBox', 'v3', true); // ctxOwner=true path — forces overwrite
+    expect(ctx.read('*imageBox')).toBe('v3');
+  });
+
   it('pub warns for an unknown non-facade key', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const ctx = freshCtx();
