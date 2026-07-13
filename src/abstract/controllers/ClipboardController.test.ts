@@ -395,6 +395,7 @@ describe('ClipboardController', () => {
   });
 
   it('re-arms after a full disarm + re-registration cycle (scopes can cycle 0 → 1 → 0 → 1)', async () => {
+    const addSpy = vi.spyOn(window, 'addEventListener');
     const { layer, api } = setup({ pasteScope: 'global', currentActivity: 'start-from' });
     track(layer);
 
@@ -406,6 +407,10 @@ describe('ClipboardController', () => {
     await flush();
 
     expect(api.addFileFromObject).toHaveBeenCalled();
+    // Precision over the functional re-arm assertion above: the double cycle
+    // (arm → disarm → re-arm) must add the `paste` listener exactly twice —
+    // once per arm — not merely "at least once".
+    expect(addSpy.mock.calls.filter((call) => call[0] === 'paste')).toHaveLength(2);
   });
 
   it('destroy() disarms unconditionally, and registrations after destroy() do not re-arm', async () => {

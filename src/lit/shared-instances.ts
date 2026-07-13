@@ -115,6 +115,14 @@ const instanceKeyMap = {
  * `LitBlock` still pub-nulls both keys in `_destroySharedContextInstances`,
  * but `UploaderController.destroy()` now owns the actual `.destroy()` call
  * for both (see its destroy-order doc), since it constructs them too.
+ *
+ * `*secureUploadsManager`, `*uploadController`, `*validationManager`, and
+ * `*uploadEvents` join the set in M9m (Task 2): `UploaderController.
+ * attachUploaderScope()` now constructs and (in `destroy()`) tears down all
+ * four, gated on an uploader actually being present in the scope.
+ * `LitUploaderBlock`'s `_addSharedContextInstance` calls for these four keys
+ * are re-exposers only (`() => this.sharedCtx.uploaderController().X`) — the
+ * same recipe as the others above.
  */
 export const controllerOwnedInstanceKeys: ReadonlySet<keyof SharedState> = new Set([
   instanceKeyMap.eventEmitter,
@@ -124,6 +132,10 @@ export const controllerOwnedInstanceKeys: ReadonlySet<keyof SharedState> = new S
   instanceKeyMap.uploadCollection,
   instanceKeyMap.a11y,
   instanceKeyMap.clipboard,
+  instanceKeyMap.secureUploadsManager,
+  instanceKeyMap.uploadController,
+  instanceKeyMap.validationManager,
+  instanceKeyMap.uploadEvents,
 ]);
 
 type InstanceTypeMap = {

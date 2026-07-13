@@ -1,7 +1,10 @@
 // @ts-check
 
-import { applyInitialCrop } from '../abstract/applyInitialCrop';
 import { uploaderBlockCtx } from '../abstract/CTX';
+// Value imports on purpose: this element hands the four upload-stack
+// constructors to `UploaderController.attachUploaderScope` — the controller
+// itself only type-imports them, keeping editor-only bundles (which have no
+// `LitUploaderBlock`) free of `@uploadcare/upload-client` and friends.
 import { SecureUploadsController } from '../abstract/controllers/SecureUploadsController';
 import type { UploadCollectionController } from '../abstract/controllers/UploadCollectionController';
 import { UploadController } from '../abstract/controllers/UploadController';
@@ -28,39 +31,14 @@ export class LitUploaderBlock extends LitActivityBlock {
     // shared instance resolves to it so all blocks share one source of truth.
     this._addSharedContextInstance('*uploadCollection', () => this.sharedCtx.uploaderController().collection);
 
-    this._addSharedContextInstance('*secureUploadsManager', (sharedInstancesBag) => {
-      return new SecureUploadsController({
-        config: this.sharedCtx.uploaderController().config,
-        onResolverError: (error, context) => {
-          sharedInstancesBag.telemetryManager.sendEventError(error, context);
-        },
-        debug: (...args) => this.debugPrint(...args),
-      });
-    });
-    this._addSharedContextInstance('*uploadController', (sharedInstancesBag) => {
-      const uploader = this.sharedCtx.uploaderController();
-      return new UploadController({
-        collection: uploader.collection,
-        config: uploader.config,
-        secureUploads: this.secureUploadsManager,
-        getFileHooks: () => sharedInstancesBag.pluginManager?.snapshot().fileHooks ?? [],
-        getOutputItem: (uid) => sharedInstancesBag.api.getOutputItem(uid),
-        onUploadError: (error, context) => {
-          // An upload's async error handler can fire after the ctx (and its
-          // telemetry instance) is torn down — error *reporting* must never
-          // throw, or the original failure becomes an unhandled rejection.
-          try {
-            sharedInstancesBag.telemetryManager.sendEventError(error, context);
-          } catch (err) {
-            this.debugPrint('telemetry unavailable for an upload error report', err);
-          }
-        },
-        debug: (...args) => this.debugPrint(...args),
-      });
-    });
-    // Register *publicApi before *validationManager: the ValidationController
-    // resolves `sharedInstancesBag.api` (which constructs *publicApi on demand),
-    // so the api factory must already be registered when validation first runs.
+    // Register *publicApi before attaching the uploader scope:
+    // `_addSharedContextInstance` runs its resolver eagerly, right here, not
+    // lazily on first read — so *publicApi must already exist by the time
+    // `sharedInstancesBag.api` is first resolved. `ValidationController`'s
+    // ctor SCHEDULES `_runAllValidators` (debounce(0), a macrotask), so the
+    // `getApi` read lands after this initCallback's sync frame — registering
+    // *publicApi anywhere in this frame suffices, but keeping it first also
+    // serves `setApi` below, which clipboard needs before any paste can arm.
     // Also hand it straight to the controller (`setApi`) — the DOM-free
     // `ClipboardController` (constructed by `UploaderController`, M9l) needs it
     // for its add-file callbacks, but only the DOM layer can construct
@@ -70,74 +48,72 @@ export class LitUploaderBlock extends LitActivityBlock {
       this.sharedCtx.uploaderController().setApi(api);
       return api;
     });
-    this._addSharedContextInstance('*validationManager', (sharedInstancesBag) => {
-      const uploader = this.sharedCtx.uploaderController();
-      return new ValidationController({
-        config: uploader.config,
-        collection: uploader.collection,
-        getApi: () => sharedInstancesBag.api,
-        setCollectionErrors: (errors) => {
-          this.$['*collectionErrors'] = errors;
-        },
-        emitCommonUploadFailed: () => {
-          sharedInstancesBag.eventEmitter.emit(
-            EventType.COMMON_UPLOAD_FAILED,
-            () => sharedInstancesBag.api.getOutputCollectionState() as OutputCollectionState<'failed'>,
-            { debounce: true },
-          );
-        },
-        onValidatorError: (error, context) => {
-          sharedInstancesBag.telemetryManager.sendEventError(error, context);
-        },
-      });
+
+    // `SecureUploadsController`, `UploadController`, `ValidationController`,
+    // and `UploadEventsController` are constructed by `UploaderController`
+    // itself (`attachUploaderScope`, M9m) — behind the uploader-present gate,
+    // idempotent (first uploader block to connect wins, matching the old
+    // `_addSharedContextInstance` first-write-wins semantics). This element
+    // only supplies the callbacks that must stay DOM/PubSub-side.
+    const uploader = this.sharedCtx.uploaderController();
+    const ctx = this._sharedInstancesBag.ctx;
+    uploader.attachUploaderScope({
+      controllers: { SecureUploadsController, UploadController, ValidationController, UploadEventsController },
+      debug: (...args) => this.debugPrint(...args),
+      getFileHooks: () => this._sharedInstancesBag.pluginManager?.snapshot().fileHooks ?? [],
+      getOutputItem: <TStatus extends OutputFileStatus>(uid: Uid) =>
+        this._sharedInstancesBag.api.getOutputItem<TStatus>(uid),
+      getApi: () => this._sharedInstancesBag.api,
+      setCollectionErrors: (errors) => {
+        this.$['*collectionErrors'] = errors;
+      },
+      emitCommonUploadFailed: () => {
+        this._sharedInstancesBag.eventEmitter.emit(
+          EventType.COMMON_UPLOAD_FAILED,
+          () => this._sharedInstancesBag.api.getOutputCollectionState() as OutputCollectionState<'failed'>,
+          { debounce: true },
+        );
+      },
+      // Emit parity with LitBlock.emit: EventEmitter dispatch + telemetry
+      // mirror, guarded for teardown (emissions can race ctx destruction).
+      emit: (type, payload, options) => {
+        const eventEmitter = ctx.has('*eventEmitter') ? ctx.read('*eventEmitter') : undefined;
+        if (!eventEmitter) return;
+        eventEmitter.emit(type, payload, options);
+        const resolvedPayload = typeof payload === 'function' ? payload() : payload;
+        try {
+          this._sharedInstancesBag.telemetryManager.sendEvent({
+            eventType: type,
+            payload: (resolvedPayload ?? undefined) as Record<string, unknown> | undefined,
+          });
+        } catch (err) {
+          this.debugPrint('telemetry unavailable for an upload event report', err);
+        }
+      },
+      getOutputCollectionState: () => this._sharedInstancesBag.api.getOutputCollectionState(),
+      getOutputData: () => getOutputData(this._sharedInstancesBag),
+      runOnAddHooks: (entry) =>
+        void this._sharedInstancesBag.wait('pluginManager').then((pluginManager) => pluginManager.runOnAddHooks(entry)),
+      uploadTrigger: () => ctx.read('*uploadTrigger'),
+      setUploadList: (list) => ctx.pub('*uploadList', list),
+      getCollectionState: () => ctx.read('*collectionState'),
+      setCollectionState: (state) => ctx.pub('*collectionState', state),
+      getCommonProgress: () => ctx.read('*commonProgress'),
+      setCommonProgress: (progress) => ctx.pub('*commonProgress', progress),
+      setGroupInfo: (group) => ctx.pub('*groupInfo', group),
+      getCollectionErrors: () => ctx.read('*collectionErrors'),
     });
 
-    // The collection→events derivation lives in the DOM-free UploadEventsController,
-    // a per-ctx shared instance — first-write-wins, so exactly one is created no
-    // matter how many blocks register it or in what order they connect/disconnect.
-    this._addSharedContextInstance('*uploadEvents', (sharedInstancesBag) => {
-      const uploader = this.sharedCtx.uploaderController();
-      const ctx = sharedInstancesBag.ctx;
-      const uploadEvents = new UploadEventsController({
-        collection: uploader.collection,
-        config: uploader.config,
-        validation: sharedInstancesBag.validationManager,
-        // Emit parity with LitBlock.emit: EventEmitter dispatch + telemetry
-        // mirror, guarded for teardown (emissions can race ctx destruction).
-        emit: (type, payload, options) => {
-          const eventEmitter = ctx.has('*eventEmitter') ? ctx.read('*eventEmitter') : undefined;
-          if (!eventEmitter) return;
-          eventEmitter.emit(type, payload, options);
-          const resolvedPayload = typeof payload === 'function' ? payload() : payload;
-          try {
-            sharedInstancesBag.telemetryManager.sendEvent({
-              eventType: type,
-              payload: (resolvedPayload ?? undefined) as Record<string, unknown> | undefined,
-            });
-          } catch (err) {
-            this.debugPrint('telemetry unavailable for an upload event report', err);
-          }
-        },
-        getOutputItem: <TStatus extends OutputFileStatus>(uid: Uid) =>
-          sharedInstancesBag.api.getOutputItem<TStatus>(uid),
-        getOutputCollectionState: () => sharedInstancesBag.api.getOutputCollectionState(),
-        getOutputData: () => getOutputData(sharedInstancesBag),
-        buildUploadOptions: () => sharedInstancesBag.uploadController.buildUploadOptions(),
-        runOnAddHooks: (entry) =>
-          void sharedInstancesBag.wait('pluginManager').then((pluginManager) => pluginManager.runOnAddHooks(entry)),
-        applyInitialCrop: () => applyInitialCrop(uploader.collection, uploader.config.get('cropPreset')),
-        uploadTrigger: () => ctx.read('*uploadTrigger'),
-        setUploadList: (list) => ctx.pub('*uploadList', list),
-        getCollectionState: () => ctx.read('*collectionState'),
-        setCollectionState: (state) => ctx.pub('*collectionState', state),
-        getCommonProgress: () => ctx.read('*commonProgress'),
-        setCommonProgress: (progress) => ctx.pub('*commonProgress', progress),
-        setGroupInfo: (group) => ctx.pub('*groupInfo', group),
-        getCollectionErrors: () => ctx.read('*collectionErrors'),
-      });
-      uploadEvents.observe();
-      return uploadEvents;
-    });
+    // The four are now controller-owned identity — these re-exposers just
+    // let existing shared-instance readers (`this.secureUploadsManager`, …)
+    // keep working unchanged.
+    this._addSharedContextInstance(
+      '*secureUploadsManager',
+      () => this.sharedCtx.uploaderController().secureUploadsManager,
+    );
+    this._addSharedContextInstance('*uploadController', () => this.sharedCtx.uploaderController().uploadController);
+    this._addSharedContextInstance('*validationManager', () => this.sharedCtx.uploaderController().validationManager);
+    this._addSharedContextInstance('*uploadEvents', () => this.sharedCtx.uploaderController().uploadEvents);
   }
 
   public getAPI(): UploaderPublicApi {

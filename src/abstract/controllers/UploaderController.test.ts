@@ -8,8 +8,34 @@ import { ClipboardController } from './ClipboardController';
 import { ConfigController } from './ConfigController';
 import { LocaleController } from './LocaleController';
 import { RouterController } from './RouterController';
+import { SecureUploadsController } from './SecureUploadsController';
 import { UploadCollectionController } from './UploadCollectionController';
-import { UploaderController } from './UploaderController';
+import { UploadController } from './UploadController';
+import { UploadEventsController } from './UploadEventsController';
+import { UploaderController, type UploaderScopeDeps } from './UploaderController';
+import { ValidationController } from './ValidationController';
+
+const makeUploaderScopeDeps = (overrides: Partial<UploaderScopeDeps> = {}): UploaderScopeDeps => ({
+  controllers: { SecureUploadsController, UploadController, ValidationController, UploadEventsController },
+  getFileHooks: () => [],
+  getOutputItem: (() => ({}) as never) as never,
+  getApi: () => ({}) as never,
+  setCollectionErrors: () => {},
+  emitCommonUploadFailed: () => {},
+  emit: () => {},
+  getOutputCollectionState: () => ({}) as never,
+  getOutputData: () => [],
+  runOnAddHooks: () => {},
+  uploadTrigger: () => new Set(),
+  setUploadList: () => {},
+  getCollectionState: () => null,
+  setCollectionState: () => {},
+  getCommonProgress: () => 0,
+  setCommonProgress: () => {},
+  setGroupInfo: () => {},
+  getCollectionErrors: () => [],
+  ...overrides,
+});
 
 describe('UploaderController', () => {
   it('constructs with event, config, and locale controllers', () => {
@@ -281,5 +307,133 @@ describe('UploaderController', () => {
     } finally {
       globalThis.document = realDocument;
     }
+  });
+
+  describe('attachUploaderScope (the upload stack, behind the uploader-present gate)', () => {
+    it('throws accessing any of the four getters before attach — matching the `api` getter convention', () => {
+      const controller = new UploaderController();
+      expect(() => controller.secureUploadsManager).toThrow(/attachUploaderScope/);
+      expect(() => controller.uploadController).toThrow(/attachUploaderScope/);
+      expect(() => controller.validationManager).toThrow(/attachUploaderScope/);
+      expect(() => controller.uploadEvents).toThrow(/attachUploaderScope/);
+    });
+
+    it('constructs the four sub-controllers, wired to the same config/collection', () => {
+      const controller = new UploaderController();
+
+      controller.attachUploaderScope(makeUploaderScopeDeps());
+
+      expect(controller.secureUploadsManager).toBeInstanceOf(SecureUploadsController);
+      expect(controller.uploadController).toBeInstanceOf(UploadController);
+      expect(controller.validationManager).toBeInstanceOf(ValidationController);
+      expect(controller.uploadEvents).toBeInstanceOf(UploadEventsController);
+
+      controller.destroy();
+    });
+
+    it('starts the upload-events collection observation (v1 parity: observe() at the end of construction)', () => {
+      const controller = new UploaderController();
+      const observeSpy = vi.spyOn(UploadEventsController.prototype, 'observe');
+
+      controller.attachUploaderScope(makeUploaderScopeDeps());
+
+      expect(observeSpy).toHaveBeenCalledTimes(1);
+
+      controller.destroy();
+      observeSpy.mockRestore();
+    });
+
+    it('is idempotent — a second call does not reconstruct any of the four', () => {
+      const controller = new UploaderController();
+      controller.attachUploaderScope(makeUploaderScopeDeps());
+      const secureUploadsManager = controller.secureUploadsManager;
+      const uploadController = controller.uploadController;
+      const validationManager = controller.validationManager;
+      const uploadEvents = controller.uploadEvents;
+
+      controller.attachUploaderScope(makeUploaderScopeDeps());
+
+      expect(controller.secureUploadsManager).toBe(secureUploadsManager);
+      expect(controller.uploadController).toBe(uploadController);
+      expect(controller.validationManager).toBe(validationManager);
+      expect(controller.uploadEvents).toBe(uploadEvents);
+
+      controller.destroy();
+    });
+
+    it('is inert after destroy() — a late attach never constructs the stack', () => {
+      const controller = new UploaderController();
+      controller.destroy();
+
+      controller.attachUploaderScope(makeUploaderScopeDeps());
+
+      expect(() => controller.secureUploadsManager).toThrow(/attachUploaderScope/);
+      expect(() => controller.uploadController).toThrow(/attachUploaderScope/);
+      expect(() => controller.validationManager).toThrow(/attachUploaderScope/);
+      expect(() => controller.uploadEvents).toThrow(/attachUploaderScope/);
+    });
+
+    it("routes onResolverError to the controller's own telemetryManager", async () => {
+      const controller = new UploaderController();
+      const sendEventError = vi.spyOn(controller.telemetryManager, 'sendEventError');
+      controller.attachUploaderScope(makeUploaderScopeDeps());
+      controller.config.set('secureUploadsSignatureResolver', (() => {
+        throw new Error('boom');
+      }) as never);
+
+      await controller.secureUploadsManager.getSecureToken();
+
+      expect(sendEventError).toHaveBeenCalledWith(
+        expect.any(Error),
+        expect.stringContaining('secureUploadsSignatureResolver'),
+      );
+
+      controller.destroy();
+    });
+
+    it('destroy() tears down the four in reverse construction order, before the collection', () => {
+      const controller = new UploaderController();
+      controller.attachUploaderScope(makeUploaderScopeDeps());
+
+      const uploadEventsDestroy = vi.spyOn(controller.uploadEvents, 'destroy');
+      const validationDestroy = vi.spyOn(controller.validationManager, 'destroy');
+      const uploadControllerDestroy = vi.spyOn(controller.uploadController, 'destroy');
+      const secureUploadsDestroy = vi.spyOn(controller.secureUploadsManager, 'destroy');
+      const collectionDestroy = vi.spyOn(controller.collection, 'destroy');
+
+      controller.destroy();
+
+      expect(uploadEventsDestroy).toHaveBeenCalled();
+      expect(validationDestroy).toHaveBeenCalled();
+      expect(uploadControllerDestroy).toHaveBeenCalled();
+      expect(secureUploadsDestroy).toHaveBeenCalled();
+      expect(collectionDestroy).toHaveBeenCalled();
+
+      const uploadEventsOrder = uploadEventsDestroy.mock.invocationCallOrder[0]!;
+      const validationOrder = validationDestroy.mock.invocationCallOrder[0]!;
+      const uploadControllerOrder = uploadControllerDestroy.mock.invocationCallOrder[0]!;
+      const secureUploadsOrder = secureUploadsDestroy.mock.invocationCallOrder[0]!;
+      const collectionOrder = collectionDestroy.mock.invocationCallOrder[0]!;
+
+      expect(uploadEventsOrder).toBeLessThan(validationOrder);
+      expect(validationOrder).toBeLessThan(uploadControllerOrder);
+      expect(uploadControllerOrder).toBeLessThan(secureUploadsOrder);
+      // uploadEvents.unobserve() must detach from a still-live collection.
+      expect(secureUploadsOrder).toBeLessThan(collectionOrder);
+    });
+
+    it('destroy() tolerates never having attached the uploader scope', () => {
+      const controller = new UploaderController();
+      expect(() => controller.destroy()).not.toThrow();
+    });
+
+    it('destroy() nulls the held api — accessing it afterwards throws (M9l follow-up)', () => {
+      const controller = new UploaderController();
+      controller.setApi({ addFileFromObject: vi.fn(), addFileFromUrl: vi.fn() } as never);
+
+      controller.destroy();
+
+      expect(() => controller.api).toThrow(/setApi/);
+    });
   });
 });
