@@ -126,8 +126,10 @@ tests/             Browser e2e (*.e2e.test.tsx)
 - **State:** one nanostores `MapStore` per `ctx-name` (`PubSubCompat`), reached
   through the `$` proxy and `sub`/`pub`/`read`/`cfg` on `SymbioteCompatMixin`.
   Flat string keys (`*cfg/<key>`, `*currentActivity`, `*uploadList`, …).
-- **Base classes:** `LitBlock` → `LitActivityBlock` → `LitUploaderBlock` →
-  `LitSolutionBlock`. Singleton managers (`ModalManager`, `EventEmitter`,
+- **Base classes:** `LitBlock` → `LitActivityBlock` → `LitUploaderBlock`;
+  `LitSolutionBlock` extends `LitBlock` directly (NOT `LitUploaderBlock`), so a
+  solution tag does not itself attach the uploader scope — the `<uc-drop-area>`
+  in its template does. Singleton managers (`ModalManager`, `EventEmitter`,
   `PluginManager`, `ValidationManager`, …) live in the shared store.
 - **Public JS API:** `element.getAPI()` → `UploaderPublicApi`. Events dispatch
   on `<uc-upload-ctx-provider>` (`EventType` in `EventEmitter.ts`).
