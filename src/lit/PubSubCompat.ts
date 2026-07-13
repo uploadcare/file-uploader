@@ -53,7 +53,34 @@ export class PubSub<T extends Record<string, unknown>> {
   private _uploader(): UploaderController {
     let controller = PubSub._controllers.get(this._ctxId);
     if (!controller) {
-      controller = new UploaderController();
+      // The 9 v1 shared-state (`*`-key) read/write bridges the upload stack
+      // needs (validation's `setCollectionErrors`, uploadEvents' 8) — built
+      // here, at controller-creation time, closing over THIS ctx via the
+      // same `pub`/`read` this class already routes cfg/locale/nanostores
+      // keys through. None of these 9 keys are `*cfg/`- or `*l10n/`-prefixed,
+      // so `pub`/`read` fall straight through to the nanostores map — same
+      // shape as the v1 closures moved here verbatim (see the M9n Task 3
+      // report). `pub`/`read` are generic over this instance's own `T`; these
+      // keys aren't statically known to be `keyof T` (they're only ever
+      // touched by the uploader stack, not declared per-ctx-shape), hence the
+      // casts — behaviorally identical to the untyped `ctx.pub`/`ctx.read`
+      // calls this replaces.
+      const pub = <V>(key: string, value: V): void => this.pub(key as keyof T, value as T[keyof T]);
+      const read = <V>(key: string): V => this.read(key as keyof T) as V;
+
+      controller = new UploaderController({
+        stateBridges: {
+          setCollectionErrors: (errors) => pub('*collectionErrors', errors),
+          uploadTrigger: () => read('*uploadTrigger'),
+          setUploadList: (list) => pub('*uploadList', list),
+          getCollectionState: () => read('*collectionState'),
+          setCollectionState: (state) => pub('*collectionState', state),
+          getCommonProgress: () => read('*commonProgress'),
+          setCommonProgress: (progress) => pub('*commonProgress', progress),
+          setGroupInfo: (group) => pub('*groupInfo', group),
+          getCollectionErrors: () => read('*collectionErrors'),
+        },
+      });
       PubSub._controllers.set(this._ctxId, controller);
       UploaderRegistry.register(this._ctxId, controller);
     }

@@ -67,6 +67,31 @@ import type { ValidationController, ValidationControllerDeps } from './Validatio
  * always after `setApi` has run, since a paste can only ever add a file
  * through an already-constructed uploader element.
  */
+/**
+ * The v1 shared-state (`*`-key, via the `$`/`PubSub` proxy) read/write bridges
+ * that the upload stack needs — `ValidationController`'s `setCollectionErrors`
+ * and `UploadEventsController`'s 8. Built by whoever creates the controller
+ * (lit-side: `PubSubCompat._uploader()`, closing over that ctx's `pub`/`read`)
+ * and handed in at construction time, rather than injected later at
+ * `attachUploaderScope()` — so the controller's identity (and these bridges)
+ * exist from birth, before an uploader element ever attaches. The controller
+ * itself stays PubSub-free: it only ever calls these functions, never imports
+ * `PubSub`.
+ */
+export type UploaderStateBridges = {
+  /** Sink for collection-level errors — v1 wrote `this.$['*collectionErrors']`. */
+  setCollectionErrors: ValidationControllerDeps['setCollectionErrors'];
+  /** The live `*uploadTrigger` set (mutated in place on remove). */
+  uploadTrigger: UploadEventsControllerDeps['uploadTrigger'];
+  setUploadList: UploadEventsControllerDeps['setUploadList'];
+  getCollectionState: UploadEventsControllerDeps['getCollectionState'];
+  setCollectionState: UploadEventsControllerDeps['setCollectionState'];
+  getCommonProgress: UploadEventsControllerDeps['getCommonProgress'];
+  setCommonProgress: UploadEventsControllerDeps['setCommonProgress'];
+  setGroupInfo: UploadEventsControllerDeps['setGroupInfo'];
+  getCollectionErrors: UploadEventsControllerDeps['getCollectionErrors'];
+};
+
 export type UploaderControllerDeps = {
   events?: EventBus;
   config?: ConfigController;
@@ -78,6 +103,8 @@ export type UploaderControllerDeps = {
   router?: RouterController;
   a11y?: A11y;
   clipboard?: ClipboardController;
+  /** See `UploaderStateBridges` doc. Defaults to inert no-ops (editor-only scopes never attach an uploader). */
+  stateBridges?: UploaderStateBridges;
 };
 
 /**
@@ -92,6 +119,11 @@ export type UploaderControllerDeps = {
  * Reuses each sub-controller's own `*Deps` field types (rather than
  * redeclaring them) so a signature change downstream is a compile error here,
  * not silent drift.
+ *
+ * M9n (Task 3) moved the 9 v1 shared-state (`*`-key) read/write bridges —
+ * validation's `setCollectionErrors` and uploadEvents' 8 — out of this type
+ * and into `UploaderStateBridges`, injected at controller construction
+ * instead of here at attach time (see that type's doc).
  */
 export type UploaderScopeDeps = {
   /**
@@ -114,8 +146,6 @@ export type UploaderScopeDeps = {
   getOutputItem: UploadEventsControllerDeps['getOutputItem'];
   /** The public API passed to validators (bag.api). */
   getApi: ValidationControllerDeps['getApi'];
-  /** Sink for collection-level errors — v1 wrote `this.$['*collectionErrors']`. */
-  setCollectionErrors: ValidationControllerDeps['setCollectionErrors'];
   /** Fires the debounced `common-upload-failed` event — reads bag.eventEmitter + bag.api, kept verbatim (api isn't controller-owned). */
   emitCommonUploadFailed: ValidationControllerDeps['emitCommonUploadFailed'];
   /**
@@ -130,16 +160,6 @@ export type UploaderScopeDeps = {
   getOutputData: UploadEventsControllerDeps['getOutputData'];
   /** Runs plugin `onAdd` hooks — needs `bag.wait('pluginManager')`. */
   runOnAddHooks: UploadEventsControllerDeps['runOnAddHooks'];
-
-  // ─── v1 shared-state bridge (`*`-keys via the `$` proxy) — element-side only ───
-  uploadTrigger: UploadEventsControllerDeps['uploadTrigger'];
-  setUploadList: UploadEventsControllerDeps['setUploadList'];
-  getCollectionState: UploadEventsControllerDeps['getCollectionState'];
-  setCollectionState: UploadEventsControllerDeps['setCollectionState'];
-  getCommonProgress: UploadEventsControllerDeps['getCommonProgress'];
-  setCommonProgress: UploadEventsControllerDeps['setCommonProgress'];
-  setGroupInfo: UploadEventsControllerDeps['setGroupInfo'];
-  getCollectionErrors: UploadEventsControllerDeps['getCollectionErrors'];
 };
 
 type UploaderScope = {
@@ -174,6 +194,9 @@ export class UploaderController {
   // in the scope (`attachUploaderScope`, called by `LitUploaderBlock`). A
   // bare `<uc-config>` + provider ctx (no uploader tag) never gets one.
   private _uploaderScope: UploaderScope | null = null;
+  // See `UploaderStateBridges` doc. Lives from construction — a scope that
+  // never attaches an uploader (editor-only) simply never calls these.
+  private readonly _stateBridges: UploaderStateBridges;
 
   public constructor(deps: UploaderControllerDeps = {}) {
     this.events = deps.events ?? new EventBus();
@@ -210,6 +233,17 @@ export class UploaderController {
         addFileFromUrl: (url, options) => this.api.addFileFromUrl(url, options),
         onFileAdd: () => this.router.traverse('onFileAdd'),
       });
+    this._stateBridges = deps.stateBridges ?? {
+      setCollectionErrors: () => {},
+      uploadTrigger: () => new Set(),
+      setUploadList: () => {},
+      getCollectionState: () => null,
+      setCollectionState: () => {},
+      getCommonProgress: () => 0,
+      setCommonProgress: () => {},
+      setGroupInfo: () => {},
+      getCollectionErrors: () => [],
+    };
   }
 
   /**
@@ -326,7 +360,7 @@ export class UploaderController {
       config: this.config,
       collection: this.collection,
       getApi: deps.getApi,
-      setCollectionErrors: deps.setCollectionErrors,
+      setCollectionErrors: this._stateBridges.setCollectionErrors,
       emitCommonUploadFailed: deps.emitCommonUploadFailed,
       onValidatorError: (error, context) => {
         // Same teardown race as `onUploadError` above: reporting never throws.
@@ -349,14 +383,14 @@ export class UploaderController {
       buildUploadOptions: () => uploadController.buildUploadOptions(),
       runOnAddHooks: deps.runOnAddHooks,
       applyInitialCrop: () => applyInitialCrop(this.collection, this.config.get('cropPreset')),
-      uploadTrigger: deps.uploadTrigger,
-      setUploadList: deps.setUploadList,
-      getCollectionState: deps.getCollectionState,
-      setCollectionState: deps.setCollectionState,
-      getCommonProgress: deps.getCommonProgress,
-      setCommonProgress: deps.setCommonProgress,
-      setGroupInfo: deps.setGroupInfo,
-      getCollectionErrors: deps.getCollectionErrors,
+      uploadTrigger: this._stateBridges.uploadTrigger,
+      setUploadList: this._stateBridges.setUploadList,
+      getCollectionState: this._stateBridges.getCollectionState,
+      setCollectionState: this._stateBridges.setCollectionState,
+      getCommonProgress: this._stateBridges.getCommonProgress,
+      setCommonProgress: this._stateBridges.setCommonProgress,
+      setGroupInfo: this._stateBridges.setGroupInfo,
+      getCollectionErrors: this._stateBridges.getCollectionErrors,
     });
 
     this._uploaderScope = { secureUploadsManager, uploadController, validationManager, uploadEvents };

@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { EventEmitter } from '../../blocks/UploadCtxProvider/EventEmitter';
+import type { Uid } from '../../lit/Uid';
 import { EventBus, UploaderEventType } from '../EventBus';
 import { A11y } from '../managers/a11y';
 import { LocaleManager } from '../managers/LocaleManager';
@@ -12,7 +13,7 @@ import { SecureUploadsController } from './SecureUploadsController';
 import { UploadCollectionController } from './UploadCollectionController';
 import { UploadController } from './UploadController';
 import { UploadEventsController } from './UploadEventsController';
-import { UploaderController, type UploaderScopeDeps } from './UploaderController';
+import { UploaderController, type UploaderScopeDeps, type UploaderStateBridges } from './UploaderController';
 import { ValidationController } from './ValidationController';
 
 const makeUploaderScopeDeps = (overrides: Partial<UploaderScopeDeps> = {}): UploaderScopeDeps => ({
@@ -20,20 +21,24 @@ const makeUploaderScopeDeps = (overrides: Partial<UploaderScopeDeps> = {}): Uplo
   getFileHooks: () => [],
   getOutputItem: (() => ({}) as never) as never,
   getApi: () => ({}) as never,
-  setCollectionErrors: () => {},
   emitCommonUploadFailed: () => {},
   emit: () => {},
   getOutputCollectionState: () => ({}) as never,
   getOutputData: () => [],
   runOnAddHooks: () => {},
-  uploadTrigger: () => new Set(),
-  setUploadList: () => {},
-  getCollectionState: () => null,
-  setCollectionState: () => {},
-  getCommonProgress: () => 0,
-  setCommonProgress: () => {},
-  setGroupInfo: () => {},
-  getCollectionErrors: () => [],
+  ...overrides,
+});
+
+const makeStateBridges = (overrides: Partial<UploaderStateBridges> = {}): UploaderStateBridges => ({
+  setCollectionErrors: vi.fn(),
+  uploadTrigger: vi.fn(() => new Set<Uid>()),
+  setUploadList: vi.fn(),
+  getCollectionState: vi.fn(() => null),
+  setCollectionState: vi.fn(),
+  getCommonProgress: vi.fn(() => 0),
+  setCommonProgress: vi.fn(),
+  setGroupInfo: vi.fn(),
+  getCollectionErrors: vi.fn(() => []),
   ...overrides,
 });
 
@@ -434,6 +439,99 @@ describe('UploaderController', () => {
       controller.destroy();
 
       expect(() => controller.api).toThrow(/setApi/);
+    });
+
+    describe('stateBridges (constructor-time, M9n Task 3 — no longer part of UploaderScopeDeps)', () => {
+      it("wires validation's setCollectionErrors from the constructor-injected stateBridges, not attach-time deps", () => {
+        const stateBridges = makeStateBridges();
+        const controller = new UploaderController({ stateBridges });
+        let capturedDeps: { setCollectionErrors: UploaderStateBridges['setCollectionErrors'] } | undefined;
+        const ValidationControllerSpy = vi.fn(function (
+          this: unknown,
+          deps: { setCollectionErrors: UploaderStateBridges['setCollectionErrors'] },
+        ) {
+          capturedDeps = deps;
+          return new ValidationController(deps as never);
+        }) as unknown as typeof ValidationController;
+
+        controller.attachUploaderScope({
+          ...makeUploaderScopeDeps(),
+          controllers: {
+            SecureUploadsController,
+            UploadController,
+            ValidationController: ValidationControllerSpy,
+            UploadEventsController,
+          },
+        });
+
+        expect(capturedDeps?.setCollectionErrors).toBe(stateBridges.setCollectionErrors);
+
+        controller.destroy();
+      });
+
+      it('wires all 8 uploadEvents state bridges from the constructor-injected stateBridges, not attach-time deps', () => {
+        const stateBridges = makeStateBridges();
+        const controller = new UploaderController({ stateBridges });
+        let capturedDeps:
+          | Pick<
+              UploaderStateBridges,
+              | 'uploadTrigger'
+              | 'setUploadList'
+              | 'getCollectionState'
+              | 'setCollectionState'
+              | 'getCommonProgress'
+              | 'setCommonProgress'
+              | 'setGroupInfo'
+              | 'getCollectionErrors'
+            >
+          | undefined;
+        const UploadEventsControllerSpy = vi.fn(function (
+          this: unknown,
+          deps: Pick<
+            UploaderStateBridges,
+            | 'uploadTrigger'
+            | 'setUploadList'
+            | 'getCollectionState'
+            | 'setCollectionState'
+            | 'getCommonProgress'
+            | 'setCommonProgress'
+            | 'setGroupInfo'
+            | 'getCollectionErrors'
+          >,
+        ) {
+          capturedDeps = deps;
+          return new UploadEventsController(deps as never);
+        }) as unknown as typeof UploadEventsController;
+
+        controller.attachUploaderScope({
+          ...makeUploaderScopeDeps(),
+          controllers: {
+            SecureUploadsController,
+            UploadController,
+            ValidationController,
+            UploadEventsController: UploadEventsControllerSpy,
+          },
+        });
+
+        expect(capturedDeps?.uploadTrigger).toBe(stateBridges.uploadTrigger);
+        expect(capturedDeps?.setUploadList).toBe(stateBridges.setUploadList);
+        expect(capturedDeps?.getCollectionState).toBe(stateBridges.getCollectionState);
+        expect(capturedDeps?.setCollectionState).toBe(stateBridges.setCollectionState);
+        expect(capturedDeps?.getCommonProgress).toBe(stateBridges.getCommonProgress);
+        expect(capturedDeps?.setCommonProgress).toBe(stateBridges.setCommonProgress);
+        expect(capturedDeps?.setGroupInfo).toBe(stateBridges.setGroupInfo);
+        expect(capturedDeps?.getCollectionErrors).toBe(stateBridges.getCollectionErrors);
+
+        controller.destroy();
+      });
+
+      it('defaults stateBridges to inert no-ops when not injected — attach never throws', () => {
+        const controller = new UploaderController();
+
+        expect(() => controller.attachUploaderScope(makeUploaderScopeDeps())).not.toThrow();
+
+        controller.destroy();
+      });
     });
   });
 });
