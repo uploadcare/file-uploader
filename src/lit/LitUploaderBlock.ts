@@ -61,7 +61,15 @@ export class LitUploaderBlock extends LitActivityBlock {
     // Register *publicApi before *validationManager: the ValidationController
     // resolves `sharedInstancesBag.api` (which constructs *publicApi on demand),
     // so the api factory must already be registered when validation first runs.
-    this._addSharedContextInstance('*publicApi', (sharedInstancesBag) => new UploaderPublicApi(sharedInstancesBag));
+    // Also hand it straight to the controller (`setApi`) — the DOM-free
+    // `ClipboardController` (constructed by `UploaderController`, M9l) needs it
+    // for its add-file callbacks, but only the DOM layer can construct
+    // `UploaderPublicApi` (it needs the shared-instances bag).
+    this._addSharedContextInstance('*publicApi', (sharedInstancesBag) => {
+      const api = new UploaderPublicApi(sharedInstancesBag);
+      this.sharedCtx.uploaderController().setApi(api);
+      return api;
+    });
     this._addSharedContextInstance('*validationManager', (sharedInstancesBag) => {
       const uploader = this.sharedCtx.uploaderController();
       return new ValidationController({

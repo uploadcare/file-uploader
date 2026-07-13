@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { ClipboardController } from '../abstract/controllers/ClipboardController';
 import { RouterController } from '../abstract/controllers/RouterController';
+import { A11y } from '../abstract/managers/a11y';
 import { LocaleManager } from '../abstract/managers/LocaleManager';
 import { TelemetryManager } from '../abstract/managers/TelemetryManager';
 import { UploaderRegistry } from '../abstract/UploaderRegistry';
@@ -305,14 +307,17 @@ describe('PubSub (additional coverage)', () => {
   });
 });
 
-describe('PubSub (M9k Task 3: pre-connect construction timing)', () => {
-  it('touching a *cfg/* key before any element connects builds all four controller-owned managers, with no global side effects', () => {
+describe('PubSub (M9k/M9l Task 3: pre-connect construction timing)', () => {
+  it('touching a *cfg/* key before any element connects builds all six controller-owned managers, with no global side effects', () => {
     const addEventListenerSpy = vi.spyOn(window, 'addEventListener');
 
     // Bare ctx + a config read — no `<uc-config>`/`LitBlock` ever touches this
-    // ctx, matching the M9k Task 2 shift: the controller (and its four
+    // ctx, matching the M9k Task 2 shift: the controller (and its owned
     // managers) now come into being the moment *any* `*cfg/*`/`*l10n/*` key is
-    // touched, not when a DOM element's `initCallback` runs.
+    // touched, not when a DOM element's `initCallback` runs. M9l Task 2's
+    // lazy-arm split (a11y/clipboard attach zero window listeners at
+    // construction, only on first registration) is what makes constructing
+    // them this early safe.
     try {
       const ctx = freshCtx();
       expect(() => ctx.read('*cfg/multiple')).not.toThrow();
@@ -323,11 +328,14 @@ describe('PubSub (M9k Task 3: pre-connect construction timing)', () => {
       expect(controller!.eventEmitter).toBeInstanceOf(EventEmitter);
       expect(controller!.telemetryManager).toBeInstanceOf(TelemetryManager);
       expect(controller!.router).toBeInstanceOf(RouterController);
+      expect(controller!.a11y).toBeInstanceOf(A11y);
+      expect(controller!.clipboard).toBeInstanceOf(ClipboardController);
 
-      // Nothing on this path reaches into the DOM/global scope — a11y and
-      // clipboard (element-triggered only, added by `LitBlock.initCallback`)
-      // are the guard: this ctx never had a block connect, so they must not
-      // exist at all.
+      // Nothing on this path reaches into the DOM/global scope. The ctx
+      // itself never sees `*a11y`/`*clipboard` — those v1 shared-instance
+      // keys are only registered by `LitBlock.initCallback` (element-
+      // triggered), and this ctx never had a block connect — even though the
+      // controller now constructs both instances eagerly alongside the rest.
       expect(ctx.has('*a11y')).toBe(false);
       expect(ctx.has('*clipboard')).toBe(false);
 
