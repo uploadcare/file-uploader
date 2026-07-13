@@ -229,6 +229,41 @@ describe('TelemetryManager', () => {
     expect(payload.activity).toBeNull();
   });
 
+  it('resolves solution/activity from the live getters, not a construction-time snapshot — covers construction before the solution/router register (the pre-connect timing the controller-owned move introduces)', async () => {
+    // Mirrors the real wiring in LitBlock.initCallback: `getSolution`/`getActivity`
+    // are closures re-evaluated on every send, not values captured once at
+    // construction. Constructing the manager while both are still unset (as
+    // happens if construction moves earlier than the solution/router exist)
+    // must not freeze a null forever — later registration must be reflected.
+    let solution: string | null = null;
+    let activity: string | null = null;
+    const config = new ConfigController();
+    const manager = new TelemetryManager({
+      config,
+      getSolution: () => solution,
+      getActivity: () => activity,
+    });
+    config.set('qualityInsights', true);
+
+    manager.sendEvent({ eventType: InternalEventType.INIT_SOLUTION });
+    await flush();
+    let payload = sendEventMock.mock.calls[0]?.[0] as Record<string, unknown>;
+    expect(payload.component).toBeNull();
+    expect(payload.activity).toBeNull();
+
+    sendEventMock.mockClear();
+    solution = 'UC-FILE-UPLOADER-REGULAR'.toLowerCase();
+    activity = 'start-from';
+    vi.setSystemTime(1_700_000_002_000); // distinct payload for the dedup check
+    manager.sendEvent({ eventType: EventType.MODAL_OPEN });
+    await flush();
+
+    expect(sendEventMock).toHaveBeenCalledTimes(1);
+    payload = sendEventMock.mock.calls[0]?.[0] as Record<string, unknown>;
+    expect(payload.component).toBe('uc-file-uploader-regular');
+    expect(payload.activity).toBe('start-from');
+  });
+
   it('dedupes payloads that differ only in key order', async () => {
     const { manager, enable } = setup();
     enable();

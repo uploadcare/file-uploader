@@ -90,6 +90,35 @@ const instanceKeyMap = {
   validationManager: '*validationManager',
 } satisfies Record<string, keyof SharedState>;
 
+/**
+ * The v1 shared-instance keys whose backing instance is now constructed
+ * *and* destroyed by `UploaderController` (M9k), not by the DOM layer.
+ * `LitBlock._destroySharedContextInstances` still pub-nulls these keys (so
+ * `bag.when`/`ctx.sub` readers see the same teardown signal as before) but
+ * must skip calling `.destroy()` on them directly — `UploaderController.destroy()`
+ * owns that call, and it runs *after* the DOM layer's pub-null loop (via
+ * `PubSub.deleteCtx`), so double-destroying here would tear them down early,
+ * while the ctx (and any reader still using it) is still technically "up".
+ *
+ * `*uploadCollection` joins this set too (M9k Task 3): it was already
+ * *constructed* by the controller (`controller.collection`, since Task 2),
+ * but until now it was also `.destroy()`-ed here in the DOM loop AND again by
+ * `UploaderController.destroy()` — a harmless-but-real double-destroy (the
+ * collection's `destroy()` just re-clears already-empty collections the
+ * second time). None of the sibling shared instances registered after it
+ * (`*secureUploadsManager`, `*uploadController`, `*validationManager`,
+ * `*uploadEvents`) read from the collection during their own `.destroy()`,
+ * so deferring its real destroy to the controller (same as the other four)
+ * is order-safe.
+ */
+export const controllerOwnedInstanceKeys: ReadonlySet<keyof SharedState> = new Set([
+  instanceKeyMap.eventEmitter,
+  instanceKeyMap.localeManager,
+  instanceKeyMap.telemetryManager,
+  instanceKeyMap.router,
+  instanceKeyMap.uploadCollection,
+]);
+
 type InstanceTypeMap = {
   [key in keyof typeof instanceKeyMap]: SharedState[(typeof instanceKeyMap)[key]];
 };

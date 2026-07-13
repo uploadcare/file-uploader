@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { RouterController } from '../abstract/controllers/RouterController';
+import { LocaleManager } from '../abstract/managers/LocaleManager';
+import { TelemetryManager } from '../abstract/managers/TelemetryManager';
 import { UploaderRegistry } from '../abstract/UploaderRegistry';
 import { initialConfig } from '../blocks/Config/initialConfig';
+import { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter';
 import { PubSub } from './PubSubCompat';
 
 // Each test uses a unique ctx id and tears it down so the module-level
@@ -244,5 +248,92 @@ describe('PubSub (additional coverage)', () => {
     // Never touched a *cfg/ or *l10n/ key, so no UploaderController exists.
     expect(() => PubSub.deleteCtx(ctx.id)).not.toThrow();
     expect(PubSub.hasCtx(ctx.id)).toBe(false);
+  });
+
+  it('reusing the same ctx id after a full teardown rebuilds a brand-new controller, not the destroyed one', () => {
+    const id = freshCtx().id;
+    const firstCtx = PubSub.getCtx<Record<string, unknown>>(id)!;
+    firstCtx.pub('*cfg/multiple', false); // mutate away from the default
+    const firstController = UploaderRegistry.get(id);
+    expect(firstController).toBeDefined();
+
+    PubSub.deleteCtx(id);
+    expect(PubSub.hasCtx(id)).toBe(false);
+    expect(UploaderRegistry.get(id)).toBeUndefined();
+
+    // Same id, re-registered — the controller-owned managers this milestone
+    // moves onto UploaderController must not survive under a stale reference
+    // keyed by ctx id; a fresh registration must get a fresh controller.
+    const secondCtx = PubSub.registerCtx<Record<string, unknown>>({ plain: 'seed' }, id);
+    secondCtx.read('*cfg/multiple'); // triggers lazy controller (re-)creation
+    const secondController = UploaderRegistry.get(id);
+
+    expect(secondController).toBeDefined();
+    expect(secondController).not.toBe(firstController);
+    // Fresh defaults — no leakage of the mutated value from the destroyed ctx.
+    expect(secondCtx.read('*cfg/multiple')).toBe(initialConfig.multiple);
+  });
+
+  it('deleteCtx orders: ctx removal, then UploaderRegistry unregister (null-notify), then controller.destroy()', () => {
+    const ctx = freshCtx();
+    const id = ctx.id;
+    ctx.read('*cfg/multiple'); // triggers lazy controller creation
+    const controller = UploaderRegistry.get(id)!;
+
+    const callOrder: string[] = [];
+    const destroySpy = vi.spyOn(controller, 'destroy');
+
+    // `whenAvailable` fires synchronously with `null` from inside
+    // `UploaderRegistry.unregister` — record what the ctx/controller state
+    // looks like at that exact moment.
+    const unsub = UploaderRegistry.whenAvailable(id, (c) => {
+      if (c === null) {
+        callOrder.push('unregister-null-notify');
+        expect(PubSub.hasCtx(id)).toBe(false); // ctx already gone by this point
+        expect(destroySpy).not.toHaveBeenCalled(); // controller not yet destroyed
+      }
+    });
+
+    destroySpy.mockImplementation(() => {
+      callOrder.push('controller.destroy');
+    });
+
+    PubSub.deleteCtx(id);
+    unsub();
+
+    expect(callOrder).toEqual(['unregister-null-notify', 'controller.destroy']);
+  });
+});
+
+describe('PubSub (M9k Task 3: pre-connect construction timing)', () => {
+  it('touching a *cfg/* key before any element connects builds all four controller-owned managers, with no global side effects', () => {
+    const addEventListenerSpy = vi.spyOn(window, 'addEventListener');
+
+    // Bare ctx + a config read — no `<uc-config>`/`LitBlock` ever touches this
+    // ctx, matching the M9k Task 2 shift: the controller (and its four
+    // managers) now come into being the moment *any* `*cfg/*`/`*l10n/*` key is
+    // touched, not when a DOM element's `initCallback` runs.
+    try {
+      const ctx = freshCtx();
+      expect(() => ctx.read('*cfg/multiple')).not.toThrow();
+
+      const controller = UploaderRegistry.get(ctx.id);
+      expect(controller).toBeDefined();
+      expect(controller!.localeManager).toBeInstanceOf(LocaleManager);
+      expect(controller!.eventEmitter).toBeInstanceOf(EventEmitter);
+      expect(controller!.telemetryManager).toBeInstanceOf(TelemetryManager);
+      expect(controller!.router).toBeInstanceOf(RouterController);
+
+      // Nothing on this path reaches into the DOM/global scope — a11y and
+      // clipboard (element-triggered only, added by `LitBlock.initCallback`)
+      // are the guard: this ctx never had a block connect, so they must not
+      // exist at all.
+      expect(ctx.has('*a11y')).toBe(false);
+      expect(ctx.has('*clipboard')).toBe(false);
+
+      expect(addEventListenerSpy).not.toHaveBeenCalled();
+    } finally {
+      addEventListenerSpy.mockRestore();
+    }
   });
 });
