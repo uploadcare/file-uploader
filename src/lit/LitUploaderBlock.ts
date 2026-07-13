@@ -1,11 +1,15 @@
 // @ts-check
 
 import { uploaderBlockCtx } from '../abstract/CTX';
-import type { SecureUploadsController } from '../abstract/controllers/SecureUploadsController';
+// Value imports on purpose: this element hands the four upload-stack
+// constructors to `UploaderController.attachUploaderScope` — the controller
+// itself only type-imports them, keeping editor-only bundles (which have no
+// `LitUploaderBlock`) free of `@uploadcare/upload-client` and friends.
+import { SecureUploadsController } from '../abstract/controllers/SecureUploadsController';
 import type { UploadCollectionController } from '../abstract/controllers/UploadCollectionController';
-import type { UploadController } from '../abstract/controllers/UploadController';
-import type { UploadEventsController } from '../abstract/controllers/UploadEventsController';
-import type { ValidationController } from '../abstract/controllers/ValidationController';
+import { UploadController } from '../abstract/controllers/UploadController';
+import { UploadEventsController } from '../abstract/controllers/UploadEventsController';
+import { ValidationController } from '../abstract/controllers/ValidationController';
 import { UploaderPublicApi } from '../abstract/UploaderPublicApi';
 import { EventType } from '../blocks/UploadCtxProvider/EventEmitter';
 import type { OutputCollectionState, OutputFileEntry, OutputFileStatus } from '../types/index';
@@ -52,6 +56,7 @@ export class LitUploaderBlock extends LitActivityBlock {
     const uploader = this.sharedCtx.uploaderController();
     const ctx = this._sharedInstancesBag.ctx;
     uploader.attachUploaderScope({
+      controllers: { SecureUploadsController, UploadController, ValidationController, UploadEventsController },
       debug: (...args) => this.debugPrint(...args),
       getFileHooks: () => this._sharedInstancesBag.pluginManager?.snapshot().fileHooks ?? [],
       getOutputItem: <TStatus extends OutputFileStatus>(uid: Uid) =>

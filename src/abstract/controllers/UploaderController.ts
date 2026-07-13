@@ -9,11 +9,18 @@ import { ClipboardController } from './ClipboardController';
 import { ConfigController } from './ConfigController';
 import { LocaleController } from './LocaleController';
 import { RouterController } from './RouterController';
-import { SecureUploadsController, type SecureUploadsControllerDeps } from './SecureUploadsController';
+// The four uploader-scope classes are TYPE-ONLY imports (they erase at
+// runtime): `UploaderController` is constructed for every ctx — including
+// editor-only scopes that never upload — and a static value import here would
+// drag the whole upload stack (`@uploadcare/upload-client` and friends) into
+// bundles that can't tree-shake a reachable method body. The element layer
+// (`LitUploaderBlock`), which only exists in upload-capable bundles, injects
+// the constructors through `UploaderScopeDeps.controllers`.
+import type { SecureUploadsController, SecureUploadsControllerDeps } from './SecureUploadsController';
 import { UploadCollectionController } from './UploadCollectionController';
-import { UploadController, type UploadControllerDeps } from './UploadController';
-import { UploadEventsController, type UploadEventsControllerDeps } from './UploadEventsController';
-import { ValidationController, type ValidationControllerDeps } from './ValidationController';
+import type { UploadController, UploadControllerDeps } from './UploadController';
+import type { UploadEventsController, UploadEventsControllerDeps } from './UploadEventsController';
+import type { ValidationController, ValidationControllerDeps } from './ValidationController';
 
 /**
  * Root controller — one instance per uploader scope (keyed by `ctx-name` in
@@ -87,6 +94,18 @@ export type UploaderControllerDeps = {
  * not silent drift.
  */
 export type UploaderScopeDeps = {
+  /**
+   * The four sub-controller constructors, injected by the element layer (see
+   * the import note above) so editor-only bundles never carry the upload
+   * stack. Typed via `typeof X` type queries on the type-only imports, so the
+   * instance types still flow into the getters below.
+   */
+  controllers: {
+    SecureUploadsController: typeof SecureUploadsController;
+    UploadController: typeof UploadController;
+    ValidationController: typeof ValidationController;
+    UploadEventsController: typeof UploadEventsController;
+  };
   /** Debug logger — wired to the block's `debugPrint`. Shared by secureUploads + uploadController. */
   debug?: SecureUploadsControllerDeps['debug'];
   /** Snapshot of the registered plugin file hooks (bag.pluginManager). */
@@ -271,7 +290,7 @@ export class UploaderController {
       return;
     }
 
-    const secureUploadsManager = new SecureUploadsController({
+    const secureUploadsManager = new deps.controllers.SecureUploadsController({
       config: this.config,
       onResolverError: (error, context) => {
         this.telemetryManager.sendEventError(error, context);
@@ -279,7 +298,7 @@ export class UploaderController {
       debug: deps.debug,
     });
 
-    const uploadController = new UploadController({
+    const uploadController = new deps.controllers.UploadController({
       collection: this.collection,
       config: this.config,
       secureUploads: secureUploadsManager,
@@ -298,7 +317,7 @@ export class UploaderController {
       debug: deps.debug,
     });
 
-    const validationManager = new ValidationController({
+    const validationManager = new deps.controllers.ValidationController({
       config: this.config,
       collection: this.collection,
       getApi: deps.getApi,
@@ -309,7 +328,7 @@ export class UploaderController {
       },
     });
 
-    const uploadEvents = new UploadEventsController({
+    const uploadEvents = new deps.controllers.UploadEventsController({
       collection: this.collection,
       config: this.config,
       validation: validationManager,
