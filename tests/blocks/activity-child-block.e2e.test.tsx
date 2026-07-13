@@ -21,10 +21,25 @@ class TestNoActivityBlock extends ActivityChildBlock {
   }
 }
 
+class TestDynamicActivityBlock extends ActivityChildBlock {
+  public override activityType: ActivityChildBlock['activityType'] = 'start-from';
+
+  /** Test-only hook mirroring `PluginActivityHost`'s late-sync path. */
+  public changeActivityType(next: ActivityChildBlock['activityType']): void {
+    this.activityType = next;
+    this.reportActivityMounted();
+  }
+
+  public override render() {
+    return html`<span class="marker">dynamic</span>`;
+  }
+}
+
 declare global {
   interface HTMLElementTagNameMap {
     'test-activity-block': TestActivityBlock;
     'test-no-activity-block': TestNoActivityBlock;
+    'test-dynamic-activity-block': TestDynamicActivityBlock;
   }
 }
 
@@ -34,6 +49,9 @@ beforeAll(async () => {
   if (!customElements.get('test-activity-block')) customElements.define('test-activity-block', TestActivityBlock);
   if (!customElements.get('test-no-activity-block')) {
     customElements.define('test-no-activity-block', TestNoActivityBlock);
+  }
+  if (!customElements.get('test-dynamic-activity-block')) {
+    customElements.define('test-dynamic-activity-block', TestDynamicActivityBlock);
   }
 });
 
@@ -143,5 +161,21 @@ describe('ActivityChildBlock', () => {
     router.openModal('camera');
     await expect.poll(() => seen.length).toBe(3);
     expect(seen).toEqual([null, 'start-from', 'camera']);
+  });
+
+  it('re-reports the mounted-activity signal (old id un-reported, new id reported) when activityType changes dynamically', async () => {
+    const ctxName = getCtxName();
+    page.render(<uc-config ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>);
+    const child = append('test-dynamic-activity-block', { 'ctx-name': ctxName });
+    await expect.poll(() => child.getAttribute('activity')).toBe('start-from');
+
+    const router = routerOf(child);
+    expect(router.hasMountedActivity('start-from')).toBe(true);
+    expect(router.hasMountedActivity('camera')).toBe(false);
+
+    child.changeActivityType('camera');
+
+    expect(router.hasMountedActivity('start-from')).toBe(false);
+    expect(router.hasMountedActivity('camera')).toBe(true);
   });
 });
