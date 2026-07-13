@@ -70,26 +70,28 @@ describe('instance lifecycle (emit contract, router-driven path)', () => {
       </>,
     );
 
-    const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
-    const openHandler = vi.fn<(e: CustomEvent<unknown>) => void>();
-    ctxProvider.addEventListener('modal-open', openHandler);
+    try {
+      const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
+      const openHandler = vi.fn<(e: CustomEvent<unknown>) => void>();
+      ctxProvider.addEventListener('modal-open', openHandler);
 
-    sendEventSpy.mockClear(); // drop init-solution/config noise from setup
+      sendEventSpy.mockClear(); // drop init-solution/config noise from setup
 
-    // The router's own navigation — not a block calling `emit` directly —
-    // drives this: `RouterController` → `UploaderController.emit`.
-    await page.getByText('Upload files', { exact: true }).click();
-    await expect.element(page.getByTestId('uc-start-from')).toBeVisible();
+      // The router's own navigation — not a block calling `emit` directly —
+      // drives this: `RouterController` → `UploaderController.emit`.
+      await page.getByText('Upload files', { exact: true }).click();
+      await expect.element(page.getByTestId('uc-start-from')).toBeVisible();
 
-    await expect.poll(() => openHandler.mock.calls.length).toBe(1);
-    expect((openHandler.mock.calls[0][0] as CustomEvent).detail).toMatchObject({ modalId: 'start-from' });
+      await expect.poll(() => openHandler.mock.calls.length).toBe(1);
+      expect((openHandler.mock.calls[0][0] as CustomEvent).detail).toMatchObject({ modalId: 'start-from' });
 
-    // Telemetry mirror: the same router-driven emit reaches `sendEvent` with
-    // the matching documented event type (debounced, but the queued call
-    // still lands within the poll window).
-    await expect.poll(() => sendEventSpy.mock.calls.some((call) => call[0]?.eventType === 'modal-open')).toBe(true);
-
-    sendEventSpy.mockRestore();
+      // Telemetry mirror: the same router-driven emit reaches `sendEvent` with
+      // the matching documented event type (debounced, but the queued call
+      // still lands within the poll window).
+      await expect.poll(() => sendEventSpy.mock.calls.some((call) => call[0]?.eventType === 'modal-open')).toBe(true);
+    } finally {
+      sendEventSpy.mockRestore();
+    }
   });
 
   it('emitting on a LitBlock instance after its ctx has been torn down is a silent no-op (no telemetry, no throw)', async () => {
@@ -104,29 +106,31 @@ describe('instance lifecycle (emit contract, router-driven path)', () => {
     );
     await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(true);
 
-    // Keep a live reference to a v1 LitBlock past the DOM teardown — same
-    // shape as a queued callback holding a reference to an unmounted block.
-    const config = page.getByTestId('uc-config').query()! as Config;
-
-    cleanup();
-    await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(false);
-
-    sendEventSpy.mockClear();
-    const errors: string[] = [];
-    const onError = (event: ErrorEvent) => {
-      errors.push(String(event.error?.message ?? event.message));
-      event.preventDefault();
-    };
-    window.addEventListener('error', onError);
     try {
-      expect(() => config.emit('modal-close', { modalId: 'start-from', hasActiveModals: false })).not.toThrow();
-    } finally {
-      window.removeEventListener('error', onError);
-    }
-    expect(errors).toEqual([]);
-    expect(sendEventSpy).not.toHaveBeenCalled();
+      // Keep a live reference to a v1 LitBlock past the DOM teardown — same
+      // shape as a queued callback holding a reference to an unmounted block.
+      const config = page.getByTestId('uc-config').query()! as Config;
 
-    sendEventSpy.mockRestore();
+      cleanup();
+      await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(false);
+
+      sendEventSpy.mockClear();
+      const errors: string[] = [];
+      const onError = (event: ErrorEvent) => {
+        errors.push(String(event.error?.message ?? event.message));
+        event.preventDefault();
+      };
+      window.addEventListener('error', onError);
+      try {
+        expect(() => config.emit('modal-close', { modalId: 'start-from', hasActiveModals: false })).not.toThrow();
+      } finally {
+        window.removeEventListener('error', onError);
+      }
+      expect(errors).toEqual([]);
+      expect(sendEventSpy).not.toHaveBeenCalled();
+    } finally {
+      sendEventSpy.mockRestore();
+    }
   });
 });
 
