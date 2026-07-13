@@ -129,6 +129,27 @@ describe('ChildBlock', () => {
     expect(child.querySelector('.pk')?.textContent).toBe('');
   });
 
+  it('adopts when the ctx map pre-exists WITHOUT a controller (bare PubSub.registerCtx, review finding)', async () => {
+    // A ctx map can exist with no controller yet — e.g. a bare
+    // `PubSub.registerCtx` call, or a transient state before `ensureUploaderCtx`
+    // has forced a controller into existence. `UploaderRegistry.whenAvailable`
+    // only fires once a controller is registered, so a guard like
+    // `if (!PubSub.getCtx(ctxName)) ensureUploaderCtx(ctxName)` would see the
+    // map already exists, skip bootstrapping, and the block would wait forever
+    // for a controller nothing ever creates. The bootstrap call must be
+    // unconditional.
+    const ctxName = getCtxName();
+    const { PubSub } = await import('@/lit/PubSubCompat.js');
+    PubSub.registerCtx<Record<string, unknown>>({ plain: 'seed' }, ctxName);
+    expect(PubSub.hasCtx(ctxName)).toBe(true);
+
+    const child = append('test-child-block', { 'ctx-name': ctxName });
+
+    await expect.poll(() => child.readyCount, { timeout: 2000 }).toBe(1);
+    // biome-ignore lint/suspicious/noExplicitAny: reaching into a protected getter
+    expect((child as any).uploaderOrNull).not.toBeNull();
+  });
+
   it('inherits ctx-name from a v1 ancestor via context', async () => {
     const ctxName = getCtxName();
     page.render(<uc-config ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>);

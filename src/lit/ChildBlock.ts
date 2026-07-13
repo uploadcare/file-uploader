@@ -277,13 +277,15 @@ export abstract class ChildBlock extends ChildBlockBase {
     }
     // Self-bootstrap: a ChildBlock is a pure consumer, so with no v1 block
     // anywhere in the composition the ctx (and its controller) would never
-    // come into existence and `whenAvailable` below would wait forever.
-    // `ensureUploaderCtx` is idempotent — if a v1 block or a sibling
-    // ChildBlock already created the ctx, `getCtx` is non-null and this is a
-    // no-op; the existing creator (and its seed) wins, unchanged.
-    if (!PubSub.getCtx(ctxName)) {
-      ensureUploaderCtx(ctxName);
-    }
+    // come into existence and `whenAvailable` below would wait forever. Call
+    // this unconditionally — a ctx map can exist without a controller (e.g. a
+    // bare `PubSub.registerCtx`), and `whenAvailable` won't fire until a
+    // controller is registered, so guarding on `PubSub.getCtx(ctxName)` alone
+    // could still hang. `ensureUploaderCtx` is idempotent and (M9n) forces the
+    // controller into existence on every path; if a v1 block or a sibling
+    // ChildBlock already created the ctx (and its controller), this is a
+    // no-op — the existing creator (and its seed) wins, unchanged.
+    ensureUploaderCtx(ctxName);
     this._registryUnsub = UploaderRegistry.whenAvailable(ctxName, (ctrl) => {
       if (ctrl) {
         this._adoptController(ctrl);

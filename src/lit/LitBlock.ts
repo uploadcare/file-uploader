@@ -273,7 +273,7 @@ export class LitBlock extends LitBlockBase {
           return;
         }
         // Destroy global context after all blocks are destroyed and all callbacks are run
-        this.destroyCtxCallback();
+        this.destroyCtxCallback(ctxName);
       }, 0);
     }
   }
@@ -282,8 +282,8 @@ export class LitBlock extends LitBlockBase {
    * Called when the ctx becomes unreferenced by both the v1 and v2 sides.
    * Note that inheritors must run their callback before that.
    */
-  private destroyCtxCallback(): void {
-    destroyCtx(this.ctxName);
+  private destroyCtxCallback(ctxName: string): void {
+    destroyCtx(ctxName);
   }
 
   private _getSharedContextInstances(): Map<string, ISharedInstance> {

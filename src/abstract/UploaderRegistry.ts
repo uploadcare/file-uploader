@@ -17,9 +17,17 @@ import type { UploaderController } from './controllers/UploaderController';
  *
  * Introduced as a standalone primitive in M0; wired to nothing yet.
  */
+/** A single `whenAvailable` subscription. Wrapped in its own object (rather
+ * than storing the callback directly) so two subscriptions passing the SAME
+ * callback reference still occupy two distinct entries — deduping by
+ * identity would let one unsubscribe silently evict the other. */
+interface ConsumerSubscription {
+  cb: (c: UploaderController | null) => void;
+}
+
 class UploaderRegistryImpl {
   private _map = new Map<string, UploaderController>();
-  private _consumers = new Map<string, Set<(c: UploaderController | null) => void>>();
+  private _consumers = new Map<string, Set<ConsumerSubscription>>();
 
   public register(ctxName: string, controller: UploaderController): void {
     const existing = this._map.get(ctxName);
@@ -38,10 +46,12 @@ class UploaderRegistryImpl {
     const set = this._consumers.get(ctxName);
     if (set) {
       // Isolate each consumer: a single throwing callback must not abort
-      // notification of the others or bubble out of `register()`.
-      for (const cb of set) {
+      // notification of the others or bubble out of `register()`. Snapshot
+      // first — a consumer's callback may synchronously subscribe/unsubscribe
+      // (mutating `set`) during notification.
+      for (const sub of [...set]) {
         try {
-          cb(controller);
+          sub.cb(controller);
         } catch (err) {
           console.warn(`[uc] a whenAvailable consumer for ctx-name="${ctxName}" threw`, err);
         }
@@ -59,10 +69,12 @@ class UploaderRegistryImpl {
     const set = this._consumers.get(ctxName);
     if (set) {
       // Isolate each consumer: a single throwing callback must not abort
-      // notification of the others or bubble out of `unregister()`.
-      for (const cb of set) {
+      // notification of the others or bubble out of `unregister()`. Snapshot
+      // first — a consumer's callback may synchronously subscribe/unsubscribe
+      // (mutating `set`) during notification.
+      for (const sub of [...set]) {
         try {
-          cb(null);
+          sub.cb(null);
         } catch (err) {
           console.warn(`[uc] a whenAvailable consumer for ctx-name="${ctxName}" threw`, err);
         }
@@ -97,11 +109,15 @@ class UploaderRegistryImpl {
       set = new Set();
       this._consumers.set(ctxName, set);
     }
-    set.add(cb);
+    // A fresh wrapper per call — even if `cb` is the same function reference
+    // as an existing subscription, this is a distinct slot in the Set so the
+    // two subscriptions' lifecycles stay independent (see `ConsumerSubscription`).
+    const sub: ConsumerSubscription = { cb };
+    set.add(sub);
     const existing = this._map.get(ctxName);
     if (existing) cb(existing);
     return () => {
-      set.delete(cb);
+      set.delete(sub);
       // Drop the empty consumer Set so unused ctx-names don't accumulate in
       // this module-level singleton over the app's lifetime.
       if (set.size === 0) this._consumers.delete(ctxName);

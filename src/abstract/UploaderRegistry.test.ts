@@ -279,4 +279,38 @@ describe('UploaderRegistry', () => {
       expect(UploaderRegistry.hasConsumers(name)).toBe(false);
     });
   });
+
+  // M9o review finding: `_consumers` must track each `whenAvailable` call as
+  // a distinct subscription, not dedupe by callback identity. Two
+  // subscriptions sharing the same callback reference are independent
+  // slots — unsubscribing one must not silence or evict the other.
+  it('two whenAvailable subscriptions sharing the same callback are independent slots', () => {
+    const name = uniqueName();
+    const cb = vi.fn();
+    const offFirst = UploaderRegistry.whenAvailable(name, cb);
+    const offSecond = UploaderRegistry.whenAvailable(name, cb);
+
+    const controller = new UploaderController();
+    UploaderRegistry.register(name, controller);
+    // Both subscriptions notify independently, even though it's the same
+    // function reference — one call per live subscription, not deduped.
+    expect(cb).toHaveBeenCalledTimes(2);
+    expect(cb).toHaveBeenCalledWith(controller);
+    cb.mockClear();
+
+    // Unsubscribing just one of the two must leave the other live.
+    offFirst();
+    expect(UploaderRegistry.hasConsumers(name)).toBe(true);
+
+    const second = new UploaderController();
+    UploaderRegistry.register(name, second);
+    expect(cb).toHaveBeenCalledTimes(1);
+    expect(cb).toHaveBeenCalledWith(second);
+    cb.mockClear();
+
+    offSecond();
+    expect(UploaderRegistry.hasConsumers(name)).toBe(false);
+
+    UploaderRegistry.unregister(name, second);
+  });
 });
