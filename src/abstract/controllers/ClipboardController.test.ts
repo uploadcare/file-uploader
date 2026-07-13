@@ -357,17 +357,24 @@ describe('ClipboardController', () => {
     expect(onFileAdd).not.toHaveBeenCalled();
   });
 
-  it('the window paste listener is added exactly once at construction and removed exactly once at destroy()', () => {
+  it('the window paste listener add/remove count returns to baseline across a full construct → registerScope → unregister → destroy() cycle', () => {
     const addSpy = vi.spyOn(window, 'addEventListener');
     const removeSpy = vi.spyOn(window, 'removeEventListener');
 
+    // Pins pairing, not timing: whether `addEventListener('paste', ...)` fires
+    // at construction (today) or is deferred to first `registerScope` (M9l's
+    // lazy-arm split), the net effect of a full lifecycle must be that every
+    // `paste` listener this instance added is removed by the time `destroy()`
+    // returns — no leaked window listener survives the cycle.
     const { layer } = setup({ pasteScope: 'global', currentActivity: 'start-from' });
-    const pasteAdds = addSpy.mock.calls.filter((call) => call[0] === 'paste');
-    expect(pasteAdds).toHaveLength(1);
-
+    const unregister = layer.registerScope(connectedScope());
+    unregister();
     layer.destroy();
-    const pasteRemoves = removeSpy.mock.calls.filter((call) => call[0] === 'paste');
-    expect(pasteRemoves).toHaveLength(1);
-    expect(pasteRemoves[0]?.[1]).toBe(pasteAdds[0]?.[1]);
+
+    const pasteAdds = addSpy.mock.calls.filter((call) => call[0] === 'paste').map((call) => call[1]);
+    const pasteRemoves = removeSpy.mock.calls.filter((call) => call[0] === 'paste').map((call) => call[1]);
+
+    expect(pasteAdds.length).toBeGreaterThan(0);
+    expect(pasteRemoves).toEqual(pasteAdds);
   });
 });
