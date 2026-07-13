@@ -1,7 +1,10 @@
 import { EventEmitter } from '../../blocks/UploadCtxProvider/EventEmitter';
 import { EventBus, type UploaderEventKey, type UploaderEventPayload, UploaderEventType } from '../EventBus';
+import { A11y } from '../managers/a11y';
 import { LocaleManager } from '../managers/LocaleManager';
 import { TelemetryManager } from '../managers/TelemetryManager';
+import type { UploaderPublicApi } from '../UploaderPublicApi';
+import { ClipboardController } from './ClipboardController';
 import { ConfigController } from './ConfigController';
 import { LocaleController } from './LocaleController';
 import { RouterController } from './RouterController';
@@ -31,15 +34,26 @@ import { UploadCollectionController } from './UploadCollectionController';
  * default-parameter injection — no container/decorators; the DOM layer already
  * has its own wiring via `@lit/context`.
  *
- * M9k also moves four of the five v1 ctx-scope managers here (construction +
+ * M9k moved four of the six v1 ctx-scope managers here (construction +
  * teardown ownership): `localeManager`, `eventEmitter`, `telemetryManager`,
- * `router`. `PluginController` (the fifth) stays constructed by the DOM layer
- * (`LitBlock`) — it genuinely needs the PubSub ctx (`*lazyPlugins`, arbitrary
- * shared state) and the `*publicApi` shared instance, neither of which the
- * DOM-free controller can reach without importing `PubSub` here, which would
- * both create a circular import (`PubSubCompat` already imports
+ * `router`. M9l (Task 3) moves the remaining two that don't need the PubSub
+ * ctx: `a11y`, `clipboard`. `PluginController` stays constructed by the DOM
+ * layer (`LitBlock`) — it genuinely needs the PubSub ctx (`*lazyPlugins`,
+ * arbitrary shared state) and the `*publicApi` shared instance, neither of
+ * which the DOM-free controller can reach without importing `PubSub` here,
+ * which would both create a circular import (`PubSubCompat` already imports
  * `UploaderController`) and break the "abstract/ touches no DOM" boundary in
  * spirit. See the M9k task report for the full audit.
+ *
+ * `clipboard`'s add-file callbacks need the uploader-scope public API
+ * (`*publicApi`), which is itself DOM-layer-constructed (`LitUploaderBlock`,
+ * since `UploaderPublicApi` needs the shared-instances bag) — the controller
+ * does not, and must not, construct it. Instead the controller holds a
+ * settable `api` reference (`setApi`, mirroring the existing `setSolutionName`
+ * pattern): `LitUploaderBlock` calls it right after constructing `*publicApi`.
+ * `clipboard`'s callbacks read `this.api` lazily, at paste time — which is
+ * always after `setApi` has run, since a paste can only ever add a file
+ * through an already-constructed uploader element.
  */
 export type UploaderControllerDeps = {
   events?: EventBus;
@@ -50,6 +64,8 @@ export type UploaderControllerDeps = {
   eventEmitter?: EventEmitter;
   telemetryManager?: TelemetryManager;
   router?: RouterController;
+  a11y?: A11y;
+  clipboard?: ClipboardController;
 };
 
 export class UploaderController {
@@ -61,11 +77,17 @@ export class UploaderController {
   public readonly eventEmitter: EventEmitter;
   public readonly telemetryManager: TelemetryManager;
   public readonly router: RouterController;
+  public readonly a11y: A11y;
+  public readonly clipboard: ClipboardController;
 
   // The solution (preset) identity of this uploader scope — a boot-time fact,
   // not reactive state: set once by the solution element, read lazily by
   // telemetry. Stored lowercased, payload-ready.
   private _solutionName: string | null = null;
+  // The uploader-scope public API — element-constructed (see class doc),
+  // handed to the controller once it exists. Only `clipboard`'s add-file
+  // callbacks read this, and only at paste time.
+  private _api: UploaderPublicApi | null = null;
   private _destroyed = false;
 
   public constructor(deps: UploaderControllerDeps = {}) {
@@ -92,6 +114,16 @@ export class UploaderController {
           const debounce = type === UploaderEventType.MODAL_OPEN || type === UploaderEventType.MODAL_CLOSE;
           this.emit(type, payload, debounce ? { debounce: true } : undefined);
         },
+      });
+    this.a11y = deps.a11y ?? new A11y();
+    this.clipboard =
+      deps.clipboard ??
+      new ClipboardController({
+        getPasteScope: () => this.config.get('pasteScope'),
+        getCurrentActivity: () => this.router.currentActivity,
+        addFileFromObject: (file, options) => this.api.addFileFromObject(file, options),
+        addFileFromUrl: (url, options) => this.api.addFileFromUrl(url, options),
+        onFileAdd: () => this.router.traverse('onFileAdd'),
       });
   }
 
@@ -138,6 +170,24 @@ export class UploaderController {
     this._solutionName = name.toLowerCase();
   }
 
+  /**
+   * The uploader-scope public API — see the class doc. Throws if read before
+   * `setApi()` has run (parity with v1's `getSharedInstance` default of
+   * `isRequired: true`: reaching a paste handler without an API is a bug, not
+   * a silent no-op).
+   */
+  public get api(): UploaderPublicApi {
+    if (!this._api) {
+      throw new Error('Unexpected error: UploaderController.api accessed before setApi()');
+    }
+    return this._api;
+  }
+
+  /** Called once by `LitUploaderBlock` right after constructing `*publicApi`. */
+  public setApi(api: UploaderPublicApi): void {
+    this._api = api;
+  }
+
   public destroy(): void {
     this._destroyed = true;
 
@@ -147,6 +197,8 @@ export class UploaderController {
     this.collection.destroy();
 
     // Reverse construction order.
+    this.clipboard.destroy();
+    this.a11y.destroy();
     this.router.destroy();
     this.telemetryManager.destroy();
     this.eventEmitter.destroy();

@@ -110,6 +110,11 @@ const instanceKeyMap = {
  * `*uploadEvents`) read from the collection during their own `.destroy()`,
  * so deferring its real destroy to the controller (same as the other four)
  * is order-safe.
+ *
+ * `*a11y` and `*clipboard` join the set in M9l (Task 3): the same recipe —
+ * `LitBlock` still pub-nulls both keys in `_destroySharedContextInstances`,
+ * but `UploaderController.destroy()` now owns the actual `.destroy()` call
+ * for both (see its destroy-order doc), since it constructs them too.
  */
 export const controllerOwnedInstanceKeys: ReadonlySet<keyof SharedState> = new Set([
   instanceKeyMap.eventEmitter,
@@ -117,6 +122,8 @@ export const controllerOwnedInstanceKeys: ReadonlySet<keyof SharedState> = new S
   instanceKeyMap.telemetryManager,
   instanceKeyMap.router,
   instanceKeyMap.uploadCollection,
+  instanceKeyMap.a11y,
+  instanceKeyMap.clipboard,
 ]);
 
 type InstanceTypeMap = {

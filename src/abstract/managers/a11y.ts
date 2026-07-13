@@ -68,9 +68,23 @@ class ScopedMinimalWindow implements MinimalWindow {
 export class A11y implements ISharedInstance {
   private _destroyKeyUX: ReturnType<typeof startKeyUX> | undefined;
   private readonly _scopedWindow: ScopedMinimalWindow;
+  private _armed = false;
+  private _destroyed = false;
 
   public constructor() {
     this._scopedWindow = new ScopedMinimalWindow();
+  }
+
+  /**
+   * Attaches the keyux window listeners. Lazy: called on first
+   * `registerBlock` rather than at construction, so a constructed-but-unused
+   * instance never touches `window`.
+   */
+  private _arm(): void {
+    if (this._armed || this._destroyed) {
+      return;
+    }
+    this._armed = true;
     this._destroyKeyUX = startKeyUX(this._scopedWindow, [
       focusGroupKeyUX(),
       pressKeyUX('is-pressed'),
@@ -80,11 +94,18 @@ export class A11y implements ISharedInstance {
   }
 
   public registerBlock(scope: LitBlock): void {
+    if (this._destroyed) {
+      return;
+    }
     this._scopedWindow.registerScope(scope);
+    this._arm();
   }
 
   public destroy(): void {
+    this._destroyed = true;
+    this._armed = false;
     this._destroyKeyUX?.();
+    this._destroyKeyUX = undefined;
     this._scopedWindow.destroy();
   }
 }
