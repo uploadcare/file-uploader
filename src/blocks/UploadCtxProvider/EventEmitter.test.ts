@@ -1,16 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { EventBus } from '../../abstract/EventBus';
-import type { SharedInstancesBag } from '../../lit/shared-instances';
 import type { OutputFileEntry } from '../../types';
 import { EventEmitter, EventType } from './EventEmitter';
 
-// The facade reads `ctx.uploaderController().events`; stub that chain to a real
-// EventBus so we exercise the actual delegation (not a mock of it).
+// The facade wraps a real EventBus directly (owned by `UploaderController`)
+// so we exercise the actual delegation (not a mock of it).
 const setup = () => {
   const bus = new EventBus();
-  const ctx = { uploaderController: () => ({ events: bus }) };
-  const bag = { ctx } as unknown as SharedInstancesBag;
-  const emitter = new EventEmitter(bag);
+  const emitter = new EventEmitter(bus);
   return { emitter, bus };
 };
 
