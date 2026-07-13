@@ -101,6 +101,84 @@ describe('UploaderRegistry', () => {
     expect(UploaderRegistry.get(name)).toBeUndefined();
   });
 
+  it('unregister notifies consumers with null', () => {
+    const name = uniqueName();
+    const controller = new UploaderController();
+    UploaderRegistry.register(name, controller);
+
+    const cb = vi.fn();
+    const off = UploaderRegistry.whenAvailable(name, cb);
+    cb.mockClear();
+
+    UploaderRegistry.unregister(name, controller);
+
+    expect(cb).toHaveBeenCalledWith(null);
+    off();
+  });
+
+  it('unregister of a stale controller does not notify consumers', () => {
+    const name = uniqueName();
+    const current = new UploaderController();
+    const stale = new UploaderController();
+    UploaderRegistry.register(name, current);
+
+    const cb = vi.fn();
+    const off = UploaderRegistry.whenAvailable(name, cb);
+    cb.mockClear();
+
+    UploaderRegistry.unregister(name, stale);
+
+    expect(cb).not.toHaveBeenCalled();
+
+    off();
+    UploaderRegistry.unregister(name, current);
+  });
+
+  it('re-registering after an unregister fires the new controller', () => {
+    const name = uniqueName();
+    const first = new UploaderController();
+    UploaderRegistry.register(name, first);
+
+    const cb = vi.fn();
+    const off = UploaderRegistry.whenAvailable(name, cb);
+    cb.mockClear();
+
+    UploaderRegistry.unregister(name, first);
+    expect(cb).toHaveBeenCalledWith(null);
+    cb.mockClear();
+
+    const second = new UploaderController();
+    UploaderRegistry.register(name, second);
+    expect(cb).toHaveBeenCalledWith(second);
+
+    off();
+    UploaderRegistry.unregister(name, second);
+  });
+
+  it('isolates a throwing consumer so other consumers are still notified on unregister', () => {
+    const name = uniqueName();
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const controller = new UploaderController();
+
+    const bad = vi.fn(() => {
+      throw new Error('boom');
+    });
+    const good = vi.fn();
+    const offBad = UploaderRegistry.whenAvailable(name, bad);
+    const offGood = UploaderRegistry.whenAvailable(name, good);
+    UploaderRegistry.register(name, controller);
+    bad.mockClear();
+    good.mockClear();
+
+    expect(() => UploaderRegistry.unregister(name, controller)).not.toThrow();
+    expect(good).toHaveBeenCalledWith(null);
+    expect(warn).toHaveBeenCalled();
+
+    offBad();
+    offGood();
+    warn.mockRestore();
+  });
+
   it('unsubscribe stops further notifications', () => {
     const name = uniqueName();
     const cb = vi.fn();

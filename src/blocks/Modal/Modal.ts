@@ -1,12 +1,12 @@
 import { html } from 'lit';
-import { LitBlock } from '../../lit/LitBlock';
+import { ChildBlock } from '../../lit/ChildBlock';
 import './modal.css';
 import { property } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import type { RegisteredActivityType } from '../../lit/activity-constants';
 import { getScrollLock } from '../../utils/scroll-lock';
 
-export class Modal extends LitBlock {
+export class Modal extends ChildBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-modal'];
 
   private _mouseDownTarget: EventTarget | null | undefined;
@@ -35,7 +35,7 @@ export class Modal extends LitBlock {
     // can land after this block's ctx was torn down (deferred destroyCtx once
     // the last block disconnects) — there is no router to notify then, and
     // nothing left to close.
-    const router = this._getSharedContextInstance('*router', false);
+    const router = this.bag.routerOrNull;
     if (!router) {
       return;
     }
@@ -96,9 +96,7 @@ export class Modal extends LitBlock {
     }
   }
 
-  public override initCallback(): void {
-    super.initCallback();
-
+  protected override controllerReady(): void {
     this.subConfigValue('modalBackdropStrokes', (val: boolean) => {
       if (val) {
         this.setAttribute('strokes', '');
@@ -118,8 +116,8 @@ export class Modal extends LitBlock {
     // refcount keeps the body locked across modal-to-modal swaps and across
     // other uploader instances on the same page.
     this.subRouter(() => {
-      const isForeground = this.router.modal === (this.id as RegisteredActivityType);
-      if (isForeground && this.cfg.modalScrollLock) {
+      const isForeground = this.bag.router.modal === (this.id as RegisteredActivityType);
+      if (isForeground && this.uploader.config.get('modalScrollLock')) {
         this._releaseScrollLock ??= getScrollLock(document).acquire();
       } else {
         this._releaseScrollLock?.();

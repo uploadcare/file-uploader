@@ -60,6 +60,8 @@ export class DynamicBtn extends ChildBlock {
   @state()
   private _mode: DynamicButtonMode = 'auto';
 
+  private _sourceListController: SourceListController | null = null;
+
   @state()
   private _sources: SourceButtonConfig[] = [];
 
@@ -138,7 +140,7 @@ export class DynamicBtn extends ChildBlock {
   }, 300);
 
   private _updateButtonBasedOnCollectionState() {
-    const collectionState = this.bag.api?.getOutputCollectionState();
+    const collectionState = this.bag.apiOrNull?.getOutputCollectionState();
 
     if (!collectionState) {
       console.warn('Collection state is undefined');
@@ -167,7 +169,10 @@ export class DynamicBtn extends ChildBlock {
       }),
     );
 
-    new SourceListController(this, {
+    // Re-adoption would otherwise stack a new SourceListController per
+    // adoption without removing the previous one (same shape as SourceList).
+    this._teardownSourceListController();
+    this._sourceListController = new SourceListController(this, {
       ctx: this.bag.ctx,
       sharedInstancesBag: this.bag,
       onSourcesChange: (sources) => {
@@ -312,6 +317,19 @@ export class DynamicBtn extends ChildBlock {
         <uc-icon name="arrow-down"></uc-icon>
       </div>
     `;
+  }
+
+  protected override controllerReleased(): void {
+    this._teardownSourceListController();
+  }
+
+  private _teardownSourceListController(): void {
+    if (!this._sourceListController) {
+      return;
+    }
+    this._sourceListController.hostDisconnected();
+    this.removeController(this._sourceListController);
+    this._sourceListController = null;
   }
 
   public override render() {

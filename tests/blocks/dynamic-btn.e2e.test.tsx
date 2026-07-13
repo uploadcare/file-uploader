@@ -64,29 +64,51 @@ describe('DynamicBtn remove/abort action', () => {
     expect(api.getOutputCollectionState().successCount).toBe(0);
   }, 30_000);
 
-  it('clears only failed entries when the abort action is clicked in the failed state', async () => {
+  it('clears only the failed entry when the abort action is clicked over a mixed failed/uploading collection', async () => {
     const { dynamicBtn, api } = renderDynamicBtn();
     const config = page.getByTestId('uc-config').query()! as Config;
-    config.fileValidators = [() => ({ message: 'Bad file' })];
+    // Only the entry named 'bad.jpg' is destined to fail — the valid entry
+    // added alongside it must survive `_clearAllFailedEntries` untouched.
+    config.fileValidators = [(entry) => (entry.name === 'bad.jpg' ? { message: 'Bad file' } : undefined)];
 
     await expect.element(dynamicBtn).toBeVisible();
 
-    // Go through the file chooser (not `api.initFlow()`, which navigates
-    // straight to the upload-list modal once the collection is non-empty)
-    // so DynamicBtn's own `onFileAdd` hook stays in control and the modal
-    // never opens over the abort button — matching the non-confirm flow
-    // already pinned in tests/dynamic-btn-upload-list.e2e.test.tsx.
-    commands.waitFileChooserAndUpload(['../fixtures/test_image.jpeg']);
-    await dynamicBtn.click();
+    const badFile = new File(['(⌐□_□)'], 'bad.jpg', { type: 'image/jpeg' });
+    api.addFileFromObject(badFile);
 
-    await expect.poll(() => api.getOutputCollectionState().status).toBe('failed');
+    // Validation runs asynchronously (`ValidationController`'s debounced
+    // queue) — let the bad entry actually fail *before* adding the valid one
+    // and calling `uploadAll()`, or `uploadAll()` (which only skips entries
+    // that already carry errors) could race the validator and upload it too.
+    await expect.poll(() => api.getOutputCollectionState().failedCount, { timeout: 10_000 }).toBe(1);
+
+    api.addFileFromUrl(TEST_IMAGE_URL);
+    api.uploadAll();
+
+    // `buildOutputCollectionState`'s status resolves `isFailed` before
+    // `isUploading` (see `src/abstract/buildOutputCollectionState.ts`), so the
+    // collection reaches 'failed' even while the valid entry is still
+    // mid-upload — pinning that `_handleRemove`'s switch takes the 'failed'
+    // branch (`_clearAllFailedEntries`), not the 'uploading' one, in a mix.
+    await expect.poll(() => api.getOutputCollectionState().status, { timeout: 10_000 }).toBe('failed');
+    expect(api.getOutputCollectionState().failedCount).toBe(1);
+    expect(api.getOutputCollectionState().totalCount).toBe(2);
 
     const abortBtn = dynamicBtn.getByLabelText('Remove');
     await expect.element(abortBtn).toBeVisible();
+    // `_handleRemove`'s branch is keyed off DynamicBtn's own throttled
+    // `_status` (not the raw collection state polled above), so wait for the
+    // button's `uc-failed` class — its render is driven by that same
+    // `_status` — before clicking, or a race could still catch the button in
+    // an earlier ('uploading'/'idle') branch and abort/clear everything.
+    await expect.poll(() => abortBtn.element().classList.contains('uc-failed'), { timeout: 10_000 }).toBe(true);
     await abortBtn.click();
 
-    await expect.poll(() => api.getOutputCollectionState().totalCount).toBe(0);
-  });
+    await expect.poll(() => api.getOutputCollectionState().failedCount, { timeout: 10_000 }).toBe(0);
+    // The valid, still in-flight entry must not be swept up by the clear.
+    expect(api.getOutputCollectionState().totalCount).toBe(1);
+    expect(api.getOutputCollectionState().allEntries[0]?.externalUrl).toBe(TEST_IMAGE_URL);
+  }, 30_000);
 
   it('clears all entries when the remove action is clicked after a successful upload', async () => {
     const { dynamicBtn, api } = renderDynamicBtn();

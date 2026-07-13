@@ -4,6 +4,7 @@ import { property, state } from 'lit/decorators.js';
 import type { UploaderController } from '../abstract/controllers/UploaderController';
 import { resolveSecureDeliveryProxyUrl } from '../abstract/secureDeliveryProxyUrl';
 import { UploaderRegistry } from '../abstract/UploaderRegistry';
+import type { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter';
 import type { ConfigType } from '../types';
 import type { ActivityId } from './activity-constants';
 import { LightDomMixin } from './LightDomMixin';
@@ -23,7 +24,11 @@ const ChildBlockBase = RegisterableElementMixin(LightDomMixin(LitElement));
  * `ctx-name` attribute or, when absent, from the nearest v1 ancestor's
  * `ctxNameContext` provider — via `UploaderRegistry.whenAvailable`, which
  * fires synchronously when a controller is already registered and again
- * across a remount, so subclasses re-adopt without losing bindings.
+ * across a remount, so subclasses re-adopt without losing bindings. If the
+ * ctx dies while this block stays connected (the last v1 block elsewhere
+ * disconnected and tore the ctx down), the registry notifies with `null` and
+ * the block releases its controller — closing the render gate — rather than
+ * outliving the ctx it was reading from.
  *
  * Subclasses read controllers directly: no `$` proxy, no `init$`, no
  * nanostores. Rendering is gated until a controller is adopted (matching
@@ -114,6 +119,34 @@ export abstract class ChildBlock extends ChildBlockBase {
    */
   public l10n = createL10n(() => this._requireCtx());
 
+  /**
+   * Emit a documented uploader event with the telemetry mirror — same
+   * contract as v1 `LitBlock.emit`. Guarded for teardown: emissions can race
+   * ctx destruction (queued events), so a missing emitter is a no-op and a
+   * telemetry failure is contained.
+   */
+  public emit(
+    type: Parameters<EventEmitter['emit']>[0],
+    payload?: Parameters<EventEmitter['emit']>[1],
+    options?: Parameters<EventEmitter['emit']>[2],
+  ): void {
+    const ctx = this.effectiveCtxName ? PubSub.getCtx<SharedState>(this.effectiveCtxName) : null;
+    const eventEmitter = ctx?.has('*eventEmitter') ? ctx.read('*eventEmitter') : undefined;
+    if (!eventEmitter) {
+      return;
+    }
+    eventEmitter.emit(type, payload, options);
+    const resolvedPayload = typeof payload === 'function' ? payload() : payload;
+    try {
+      this.bag.telemetryManager.sendEvent({
+        eventType: type,
+        payload: (resolvedPayload ?? undefined) as Record<string, unknown> | undefined,
+      });
+    } catch {
+      // Telemetry may already be torn down — reporting must never throw.
+    }
+  }
+
   public override connectedCallback(): void {
     super.connectedCallback();
     for (const attr of (this.constructor as typeof ChildBlock).styleAttrs) {
@@ -176,7 +209,13 @@ export abstract class ChildBlock extends ChildBlockBase {
     if (!ctxName) {
       return;
     }
-    this._registryUnsub = UploaderRegistry.whenAvailable(ctxName, (ctrl) => this._adoptController(ctrl));
+    this._registryUnsub = UploaderRegistry.whenAvailable(ctxName, (ctrl) => {
+      if (ctrl) {
+        this._adoptController(ctrl);
+      } else {
+        this._releaseController();
+      }
+    });
   }
 
   private _adoptController(ctrl: UploaderController): void {
