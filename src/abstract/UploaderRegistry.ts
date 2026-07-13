@@ -75,6 +75,16 @@ class UploaderRegistryImpl {
   }
 
   /**
+   * Whether any `whenAvailable` consumer is currently watching `ctxName` —
+   * the v2 half of the unified consumer-refcount teardown predicate (M9o):
+   * a ctx stays alive while either a v1 `LitBlock` is in `*blocksRegistry`
+   * OR a v2 `ChildBlock` is still watching it here.
+   */
+  public hasConsumers(ctxName: string): boolean {
+    return (this._consumers.get(ctxName)?.size ?? 0) > 0;
+  }
+
+  /**
    * Subscribe to the controller under `ctxName`. Fires synchronously with the
    * current controller (if registered), then again each time a new controller
    * registers under the same name, and with `null` when that controller is
