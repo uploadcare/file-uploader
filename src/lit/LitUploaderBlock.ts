@@ -22,7 +22,7 @@ export class LitUploaderBlock extends LitActivityBlock {
   public static extSrcList: Readonly<typeof ExternalUploadSource>;
   public static sourceTypes: Readonly<typeof UploadSource>;
 
-  public override init$ = uploaderBlockCtx(this);
+  public override init$ = uploaderBlockCtx();
 
   public override initCallback(): void {
     super.initCallback();

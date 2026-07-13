@@ -19,7 +19,7 @@ const ACTIVE_ATTR = 'active';
 export class LitActivityBlock extends LitBlock {
   public activityType: ActivityType = null;
 
-  public override init$ = activityBlockCtx(this);
+  public override init$ = activityBlockCtx();
 
   public override initCallback(): void {
     super.initCallback();
