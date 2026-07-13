@@ -1,8 +1,8 @@
 import { LitElement } from 'lit';
 import { blockCtx } from '../abstract/CTX';
-import { ClipboardController } from '../abstract/controllers/ClipboardController';
+import type { ClipboardController } from '../abstract/controllers/ClipboardController';
 import type { RouterController } from '../abstract/controllers/RouterController';
-import { A11y } from '../abstract/managers/a11y';
+import type { A11y } from '../abstract/managers/a11y';
 import { type LocaleManager, localeStateKey } from '../abstract/managers/LocaleManager';
 import { PluginController } from '../abstract/managers/plugin';
 import { buildPluginApi } from '../abstract/managers/plugin/buildPluginApi';
@@ -109,10 +109,11 @@ export class LitBlock extends LitBlockBase {
           debug: createDebugPrinter(() => sharedInstancesBag.ctx, 'PluginController'),
         }),
     );
-    // The remaining four ctx-scope managers are constructed and owned by
-    // `UploaderController` (M9k) — these `_addSharedContextInstance` calls just
-    // re-expose the controller's instances under their v1 shared-instance keys
-    // (so `_getSharedContextInstance`/`bag.when`/`ctx.sub` readers are
+    // The remaining ctx-scope managers are constructed and owned by
+    // `UploaderController` (M9k five + M9l's `a11y`/`clipboard`) — these
+    // `_addSharedContextInstance` calls just re-expose the controller's
+    // instances under their v1 shared-instance keys (so
+    // `_getSharedContextInstance`/`bag.when`/`ctx.sub` readers are
     // unaffected), while construction and teardown now live on the controller.
     // `PluginController` stays constructed here — it needs the PubSub ctx
     // (`*lazyPlugins`, the `*publicApi` instance), which the DOM-free
@@ -132,21 +133,14 @@ export class LitBlock extends LitBlockBase {
     // constructed `LocaleManager` itself. Both `*eventEmitter`/`*localeManager`
     // and `*pluginManager` are registered by now.
     this.localeManager.activate(this._sharedInstancesBag.pluginManager);
-    this._addSharedContextInstance('*a11y', () => new A11y());
+    this._addSharedContextInstance('*a11y', (sharedInstancesBag) => sharedInstancesBag.ctx.uploaderController().a11y);
     this._addSharedContextInstance(
       '*router',
       (sharedInstancesBag) => sharedInstancesBag.ctx.uploaderController().router,
     );
     this._addSharedContextInstance(
       '*clipboard',
-      (sharedInstancesBag) =>
-        new ClipboardController({
-          getPasteScope: () => sharedInstancesBag.ctx.read(sharedConfigKey('pasteScope')),
-          getCurrentActivity: () => sharedInstancesBag.router.currentActivity,
-          addFileFromObject: (file, options) => sharedInstancesBag.api.addFileFromObject(file, options),
-          addFileFromUrl: (url, options) => sharedInstancesBag.api.addFileFromUrl(url, options),
-          onFileAdd: () => sharedInstancesBag.router.traverse('onFileAdd'),
-        }),
+      (sharedInstancesBag) => sharedInstancesBag.ctx.uploaderController().clipboard,
     );
     this._addSharedContextInstance(
       '*telemetryManager',
