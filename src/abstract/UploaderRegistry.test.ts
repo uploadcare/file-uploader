@@ -169,6 +169,7 @@ describe('UploaderRegistry', () => {
     UploaderRegistry.register(name, controller);
     bad.mockClear();
     good.mockClear();
+    warn.mockClear();
 
     expect(() => UploaderRegistry.unregister(name, controller)).not.toThrow();
     expect(good).toHaveBeenCalledWith(null);

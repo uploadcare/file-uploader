@@ -210,6 +210,10 @@ export class UploadList extends ActivityChildBlock {
       }),
     );
 
+    // Restores v1's next-tick item appearance: re-render as soon as the list
+    // changes instead of waiting for the throttled derived-state tick below.
+    this.trackSub(this.bag.ctx.sub('*uploadList', () => this.requestUpdate()));
+
     this.subConfigValue('filesViewMode', (mode: FilesViewMode) => {
       this.setAttribute('mode', mode);
     });

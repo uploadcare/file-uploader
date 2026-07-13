@@ -369,7 +369,7 @@ export class UploaderPublicApi extends SharedInstance {
     void this._pluginsReady().then(() => {
       this._sharedInstancesBag.router.navigate(activityType, params[0] ?? {});
       if (activityType !== null) {
-        waitForActivityBlock(this._sharedInstancesBag.blocksRegistry, this._sharedInstancesBag.router, activityType, {
+        waitForActivityBlock(this._sharedInstancesBag.router, activityType, {
           onTimeout: () => console.warn(`Activity type "${activityType}" not found in the context`),
           timeout: 100,
         });
@@ -400,7 +400,7 @@ export class UploaderPublicApi extends SharedInstance {
         return;
       }
       this._sharedInstancesBag.router.setActivity(activityType, params[0]);
-      waitForActivityBlock(this._sharedInstancesBag.blocksRegistry, this._sharedInstancesBag.router, activityType, {
+      waitForActivityBlock(this._sharedInstancesBag.router, activityType, {
         onTimeout: () => console.warn(`Activity type "${activityType}" not found in the context`),
         timeout: 100,
       });
@@ -443,14 +443,9 @@ export class UploaderPublicApi extends SharedInstance {
         return;
       }
 
-      return waitForActivityBlock(
-        this._sharedInstancesBag.blocksRegistry,
-        this._sharedInstancesBag.router,
-        activityType,
-        {
-          onTimeout: () => console.warn(`Activity block "${activityType}" not found in the context`),
-        },
-      ).then((found) => {
+      return waitForActivityBlock(this._sharedInstancesBag.router, activityType, {
+        onTimeout: () => console.warn(`Activity block "${activityType}" not found in the context`),
+      }).then((found) => {
         if (!found) {
           // Timeout — the activity's block never appeared; keep the modal
           // closed (same observable behavior as before the promise settled).
