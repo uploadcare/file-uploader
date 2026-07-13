@@ -336,4 +336,38 @@ describe('ClipboardController', () => {
 
     expect(api.addFileFromObject).not.toHaveBeenCalled();
   });
+
+  // Gap-fill ahead of M9l's lazy-arm split: a fresh instance with
+  // `registerScope` never called even once (not merely with a disconnected
+  // scope) — this is exactly the shape a config-only ctx produces today
+  // (`LitBlock.initCallback` constructs `*clipboard` unconditionally;
+  // `registerScope` only runs from `LitSolutionBlock`/`CloudImageEditor`
+  // `initCallback`). Pins the load-bearing fact behind arm-on-registration:
+  // `_hasConnectedScope()` over an empty `Set` is unconditionally `false`, so
+  // `_handlePasteEvent` bails before any side effect.
+  it('a never-registered instance is inert on a real window paste event', async () => {
+    const { layer, api, onFileAdd } = setup({ pasteScope: 'global', currentActivity: 'start-from' });
+    track(layer);
+
+    window.dispatchEvent(pasteEvent([fileItem(new File(['x'], 'x.png'))]));
+    await flush();
+
+    expect(api.addFileFromObject).not.toHaveBeenCalled();
+    expect(api.addFileFromUrl).not.toHaveBeenCalled();
+    expect(onFileAdd).not.toHaveBeenCalled();
+  });
+
+  it('the window paste listener is added exactly once at construction and removed exactly once at destroy()', () => {
+    const addSpy = vi.spyOn(window, 'addEventListener');
+    const removeSpy = vi.spyOn(window, 'removeEventListener');
+
+    const { layer } = setup({ pasteScope: 'global', currentActivity: 'start-from' });
+    const pasteAdds = addSpy.mock.calls.filter((call) => call[0] === 'paste');
+    expect(pasteAdds).toHaveLength(1);
+
+    layer.destroy();
+    const pasteRemoves = removeSpy.mock.calls.filter((call) => call[0] === 'paste');
+    expect(pasteRemoves).toHaveLength(1);
+    expect(pasteRemoves[0]?.[1]).toBe(pasteAdds[0]?.[1]);
+  });
 });
