@@ -34,9 +34,11 @@ export class LitUploaderBlock extends LitActivityBlock {
     // Register *publicApi before attaching the uploader scope:
     // `_addSharedContextInstance` runs its resolver eagerly, right here, not
     // lazily on first read — so *publicApi must already exist by the time
-    // `sharedInstancesBag.api` is resolved during `attachUploaderScope`
-    // (`ValidationController`'s ctor runs `_runAllValidators` synchronously,
-    // which reads `sharedInstancesBag.api` via `getApi`).
+    // `sharedInstancesBag.api` is first resolved. `ValidationController`'s
+    // ctor SCHEDULES `_runAllValidators` (debounce(0), a macrotask), so the
+    // `getApi` read lands after this initCallback's sync frame — registering
+    // *publicApi anywhere in this frame suffices, but keeping it first also
+    // serves `setApi` below, which clipboard needs before any paste can arm.
     // Also hand it straight to the controller (`setApi`) — the DOM-free
     // `ClipboardController` (constructed by `UploaderController`, M9l) needs it
     // for its add-file callbacks, but only the DOM layer can construct
