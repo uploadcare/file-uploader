@@ -27,13 +27,18 @@ export type ClipboardControllerDeps = {
  */
 export class ClipboardController {
   private _deps: ClipboardControllerDeps;
-  private _eventTarget: Pick<Window, 'addEventListener' | 'removeEventListener'>;
+  private readonly _eventTarget: Pick<Window, 'addEventListener' | 'removeEventListener'> | undefined;
+  private _armedEventTarget: Pick<Window, 'addEventListener' | 'removeEventListener'> | undefined;
   private _scopes: Set<Node> = new Set();
   private _listener: (event: ClipboardEvent) => void;
+  private _armed = false;
+  private _destroyed = false;
 
   public constructor(deps: ClipboardControllerDeps) {
     this._deps = deps;
-    this._eventTarget = deps.eventTarget ?? window;
+    // Stored as provided; the `window` default is resolved lazily in `_arm`
+    // so construction never touches `window` (safe in window-less contexts).
+    this._eventTarget = deps.eventTarget;
     // Isolate-and-warn (AGENTS.md #3): a rejection from an injected add-file
     // dep must stay contained here, not surface as an unhandled rejection.
     this._listener = (event) => {
@@ -41,7 +46,29 @@ export class ClipboardController {
         console.warn('[uc] clipboard paste handling failed', err);
       });
     };
-    this._eventTarget.addEventListener('paste', this._listener);
+  }
+
+  /**
+   * Attaches the window `paste` listener. Lazy: called on the first
+   * registered scope (0 → 1) rather than at construction, and re-callable
+   * after a full disarm (scopes can cycle 0 → 1 → 0 → 1).
+   */
+  private _arm(): void {
+    if (this._armed || this._destroyed) {
+      return;
+    }
+    this._armed = true;
+    this._armedEventTarget = this._eventTarget ?? window;
+    this._armedEventTarget.addEventListener('paste', this._listener);
+  }
+
+  private _disarm(): void {
+    if (!this._armed) {
+      return;
+    }
+    this._armed = false;
+    this._armedEventTarget?.removeEventListener('paste', this._listener);
+    this._armedEventTarget = undefined;
   }
 
   private _isEditableTarget(target: EventTarget | null): boolean {
@@ -190,15 +217,27 @@ export class ClipboardController {
    * must merely be connected). Returns an unregister fn.
    */
   public registerScope(scope: Node): () => void {
+    if (this._destroyed) {
+      return () => {};
+    }
+
+    const wasEmpty = this._scopes.size === 0;
     this._scopes.add(scope);
+    if (wasEmpty) {
+      this._arm();
+    }
 
     return () => {
       this._scopes.delete(scope);
+      if (this._scopes.size === 0) {
+        this._disarm();
+      }
     };
   }
 
   public destroy(): void {
-    this._eventTarget.removeEventListener('paste', this._listener);
+    this._destroyed = true;
+    this._disarm();
     this._scopes.clear();
   }
 }
