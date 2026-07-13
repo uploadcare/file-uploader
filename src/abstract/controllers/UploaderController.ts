@@ -293,7 +293,12 @@ export class UploaderController {
     const secureUploadsManager = new deps.controllers.SecureUploadsController({
       config: this.config,
       onResolverError: (error, context) => {
-        this.telemetryManager.sendEventError(error, context);
+        // Same teardown race as `onUploadError` below: reporting never throws.
+        try {
+          this.telemetryManager.sendEventError(error, context);
+        } catch (err) {
+          deps.debug?.('telemetry unavailable for a resolver error report', err);
+        }
       },
       debug: deps.debug,
     });
@@ -324,7 +329,12 @@ export class UploaderController {
       setCollectionErrors: deps.setCollectionErrors,
       emitCommonUploadFailed: deps.emitCommonUploadFailed,
       onValidatorError: (error, context) => {
-        this.telemetryManager.sendEventError(error, context);
+        // Same teardown race as `onUploadError` above: reporting never throws.
+        try {
+          this.telemetryManager.sendEventError(error, context);
+        } catch (err) {
+          deps.debug?.('telemetry unavailable for a validator error report', err);
+        }
       },
     });
 
