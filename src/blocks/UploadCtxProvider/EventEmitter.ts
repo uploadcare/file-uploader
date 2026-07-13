@@ -4,7 +4,6 @@ import {
   type UploaderEventPayload,
   UploaderEventType,
 } from '../../abstract/EventBus';
-import { SharedInstance } from '../../lit/shared-instances';
 
 const DEFAULT_DEBOUNCE_TIMEOUT = 20;
 
@@ -28,16 +27,27 @@ export { UploaderEventType as EventType };
 export type { UploaderEventKey as EventKey, UploaderEventPayload as EventPayload };
 
 /**
- * Facade over the per-ctx DOM-free `EventBus` (`UploaderController.events`).
+ * Facade over the per-ctx DOM-free `EventBus`.
  *
  * `on`/`emit` delegate to the bus; the DOM `CustomEvent` dispatch lives in the
  * reactive `EventBridgeController` attached to `<uc-upload-ctx-provider>`. The
  * public surface (event types, debounce, payload thunks, `api.on`) is
  * unchanged — only the storage/dispatch moved behind the bus.
+ *
+ * M9k reshape: constructed and owned by `UploaderController` directly, so it
+ * takes the `EventBus` it wraps instead of a ctx-bound `SharedInstancesBag`
+ * (it previously extended `SharedInstance` only to reach
+ * `ctx.uploaderController().events` lazily — it never used any other
+ * `SharedInstance` facility, so no behavior is lost by holding the bus
+ * directly). `destroy()` is a no-op — the facade itself holds no
+ * subscriptions to unwind; it exists so the controller can treat all its
+ * owned managers uniformly.
  */
-export class EventEmitter extends SharedInstance {
-  private get _bus(): EventBus {
-    return this._ctx.uploaderController().events;
+export class EventEmitter {
+  private readonly _bus: EventBus;
+
+  public constructor(bus: EventBus) {
+    this._bus = bus;
   }
 
   public on<T extends UploaderEventKey>(type: T, handler: (payload: UploaderEventPayload[T]) => void): () => void {
@@ -60,5 +70,9 @@ export class EventEmitter extends SharedInstance {
     }
     const timeout = typeof debounce === 'number' ? debounce : DEFAULT_DEBOUNCE_TIMEOUT;
     this._bus.emitDebounced(type, resolve, timeout);
+  }
+
+  public destroy(): void {
+    // No-op: the facade holds no subscriptions of its own.
   }
 }
