@@ -105,20 +105,28 @@ describe('uc-progress-bar', () => {
     await expect.poll(() => fakeLine().classList.contains('uc-fake-progress--hidden')).toBe(true);
   });
 
-  it('applies visibility while the render gate was still closed', async () => {
+  it('applies visibility while gated before a ctx-name is assigned', async () => {
     const ctxName = getCtxName();
-    // Mount the bar BEFORE any ctx exists, then set properties — the
-    // scheduled update flushes gated, so Lit clears changedProperties.
+    // Mount the bar with NO ctx-name at all — `ChildBlock` only self-bootstraps
+    // (and adopts a controller) once a ctx-name resolves, so this is the
+    // still-reachable gated window post self-bootstrap. Set properties while
+    // gated — the scheduled update flushes gated, so Lit clears changedProperties.
     const bar = document.createElement('uc-progress-bar');
-    bar.setAttribute('ctx-name', ctxName);
     document.body.append(bar);
     await bar.updateComplete;
     bar.visible = false;
     bar.value = 30;
     await bar.updateComplete;
+    // Still gated: none of the pre-adoption writes reached a real render —
+    // the hidden class from `visible = false` above never got applied
+    // because `updated()` never ran while the gate stayed closed (no
+    // ctx-name means `_watchRegistry` never self-bootstraps a controller).
+    expect(bar.classList.contains('uc-progress-bar--hidden')).toBe(false);
 
-    // Now create the ctx; the bar adopts and must reflect the hidden state
-    // it was given pre-adoption, not the stale defaults.
+    // Now assign the ctx-name; this triggers `_watchRegistry` -> self-bootstrap
+    // -> the ctx is created and the bar adopts. It must reflect the hidden
+    // state it was given pre-adoption, not the stale defaults.
+    bar.setAttribute('ctx-name', ctxName);
     page.render(<uc-config ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>);
     await expect.poll(() => bar.classList.contains('uc-progress-bar--hidden')).toBe(true);
     await expect.poll(() => progressVar(bar)).toBe('');
