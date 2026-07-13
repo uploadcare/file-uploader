@@ -172,3 +172,44 @@ describe('instance lifecycle (destroy -> recreate cycle)', () => {
     expect(secondRouter.currentActivity).toBeNull();
   });
 });
+
+describe('instance lifecycle (single-owner teardown, M9k Task 3)', () => {
+  it('a full ctx teardown destroys each controller-owned manager exactly once', async () => {
+    const ctxName = getCtxName();
+    page.render(
+      <>
+        <uc-file-uploader-regular ctx-name={ctxName}></uc-file-uploader-regular>
+        <uc-config qualityInsights={false} ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
+        <uc-upload-ctx-provider ctx-name={ctxName}></uc-upload-ctx-provider>
+      </>,
+    );
+    await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(true);
+    const ctx = PubSub.getCtx(ctxName)!;
+
+    // The five controller-owned shared instances (M9k): teardown runs through
+    // two paths — `LitBlock._destroySharedContextInstances` (the DOM-layer
+    // pub-null loop) and `UploaderController.destroy()` (via
+    // `PubSub.deleteCtx`) — and only the latter may actually call `.destroy()`
+    // on these, or they'd be torn down twice.
+    const eventEmitter = ctx.read('*eventEmitter');
+    const localeManager = ctx.read('*localeManager');
+    const telemetryManager = ctx.read('*telemetryManager');
+    const router = ctx.read('*router');
+    const uploadCollection = ctx.read('*uploadCollection');
+
+    const eventEmitterDestroy = vi.spyOn(eventEmitter, 'destroy');
+    const localeManagerDestroy = vi.spyOn(localeManager, 'destroy');
+    const telemetryManagerDestroy = vi.spyOn(telemetryManager, 'destroy');
+    const routerDestroy = vi.spyOn(router, 'destroy');
+    const uploadCollectionDestroy = vi.spyOn(uploadCollection, 'destroy');
+
+    cleanup();
+    await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(false);
+
+    expect(eventEmitterDestroy).toHaveBeenCalledTimes(1);
+    expect(localeManagerDestroy).toHaveBeenCalledTimes(1);
+    expect(telemetryManagerDestroy).toHaveBeenCalledTimes(1);
+    expect(routerDestroy).toHaveBeenCalledTimes(1);
+    expect(uploadCollectionDestroy).toHaveBeenCalledTimes(1);
+  });
+});
