@@ -1,22 +1,21 @@
 // @ts-check
 
 import { uploaderBlockCtx } from '../abstract/CTX';
-// Value imports on purpose: this element hands the four upload-stack
-// constructors to `UploaderController.attachUploaderScope` — the controller
-// itself only type-imports them, keeping editor-only bundles (which have no
-// `LitUploaderBlock`) free of `@uploadcare/upload-client` and friends.
-import { SecureUploadsController } from '../abstract/controllers/SecureUploadsController';
+// The four upload-stack controllers are type-only here — the value imports (and
+// the bundle-size rationale) live in `buildUploaderScopeDeps`, which hands the
+// constructors to `attachUploaderScope`. These types are still needed for the
+// re-exposer getters below.
+import type { SecureUploadsController } from '../abstract/controllers/SecureUploadsController';
 import type { UploadCollectionController } from '../abstract/controllers/UploadCollectionController';
-import { UploadController } from '../abstract/controllers/UploadController';
-import { UploadEventsController } from '../abstract/controllers/UploadEventsController';
-import { ValidationController } from '../abstract/controllers/ValidationController';
+import type { UploadController } from '../abstract/controllers/UploadController';
+import type { UploadEventsController } from '../abstract/controllers/UploadEventsController';
+import type { ValidationController } from '../abstract/controllers/ValidationController';
 import { UploaderPublicApi } from '../abstract/UploaderPublicApi';
-import { EventType } from '../blocks/UploadCtxProvider/EventEmitter';
-import type { OutputCollectionState, OutputFileEntry, OutputFileStatus } from '../types/index';
+import type { OutputFileEntry } from '../types/index';
 import { ExternalUploadSource, UploadSource } from '../utils/UploadSource';
+import { buildUploaderScopeDeps } from './buildUploaderScopeDeps';
 import { getOutputData } from './getOutputData';
 import { LitActivityBlock } from './LitActivityBlock';
-import type { Uid } from './Uid';
 
 export class LitUploaderBlock extends LitActivityBlock {
   public static extSrcList: Readonly<typeof ExternalUploadSource>;
@@ -64,41 +63,28 @@ export class LitUploaderBlock extends LitActivityBlock {
     // controller's birth, not from this element's `initCallback`.
     const uploader = this.sharedCtx.uploaderController();
     const ctx = this._sharedInstancesBag.ctx;
-    uploader.attachUploaderScope({
-      controllers: { SecureUploadsController, UploadController, ValidationController, UploadEventsController },
-      debug: (...args) => this.debugPrint(...args),
-      getFileHooks: () => this._sharedInstancesBag.pluginManager?.snapshot().fileHooks ?? [],
-      getOutputItem: <TStatus extends OutputFileStatus>(uid: Uid) =>
-        this._sharedInstancesBag.api.getOutputItem<TStatus>(uid),
-      getApi: () => this._sharedInstancesBag.api,
-      emitCommonUploadFailed: () => {
-        this._sharedInstancesBag.eventEmitter.emit(
-          EventType.COMMON_UPLOAD_FAILED,
-          () => this._sharedInstancesBag.api.getOutputCollectionState() as OutputCollectionState<'failed'>,
-          { debounce: true },
-        );
-      },
-      // Emit parity with LitBlock.emit: EventEmitter dispatch + telemetry
-      // mirror, guarded for teardown (emissions can race ctx destruction).
-      emit: (type, payload, options) => {
-        const eventEmitter = ctx.has('*eventEmitter') ? ctx.read('*eventEmitter') : undefined;
-        if (!eventEmitter) return;
-        eventEmitter.emit(type, payload, options);
-        const resolvedPayload = typeof payload === 'function' ? payload() : payload;
-        try {
-          this._sharedInstancesBag.telemetryManager.sendEvent({
-            eventType: type,
-            payload: (resolvedPayload ?? undefined) as Record<string, unknown> | undefined,
-          });
-        } catch (err) {
-          this.debugPrint('telemetry unavailable for an upload event report', err);
-        }
-      },
-      getOutputCollectionState: () => this._sharedInstancesBag.api.getOutputCollectionState(),
-      getOutputData: () => getOutputData(this._sharedInstancesBag),
-      runOnAddHooks: (entry) =>
-        void this._sharedInstancesBag.wait('pluginManager').then((pluginManager) => pluginManager.runOnAddHooks(entry)),
-    });
+    uploader.attachUploaderScope(
+      buildUploaderScopeDeps(
+        this._sharedInstancesBag,
+        (...args) => this.debugPrint(...args),
+        // Emit parity with LitBlock.emit: EventEmitter dispatch + telemetry
+        // mirror, guarded for teardown (emissions can race ctx destruction).
+        (type, payload, options) => {
+          const eventEmitter = ctx.has('*eventEmitter') ? ctx.read('*eventEmitter') : undefined;
+          if (!eventEmitter) return;
+          eventEmitter.emit(type, payload, options);
+          const resolvedPayload = typeof payload === 'function' ? payload() : payload;
+          try {
+            this._sharedInstancesBag.telemetryManager.sendEvent({
+              eventType: type,
+              payload: (resolvedPayload ?? undefined) as Record<string, unknown> | undefined,
+            });
+          } catch (err) {
+            this.debugPrint('telemetry unavailable for an upload event report', err);
+          }
+        },
+      ),
+    );
 
     // The four are now controller-owned identity — these re-exposers just
     // let existing shared-instance readers (`this.secureUploadsManager`, …)
