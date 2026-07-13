@@ -1,18 +1,17 @@
 import { LitElement } from 'lit';
 import { blockCtx } from '../abstract/CTX';
 import { ClipboardController } from '../abstract/controllers/ClipboardController';
-import { RouterController, type RouterControllerDeps } from '../abstract/controllers/RouterController';
-import { type UploaderEventKey, type UploaderEventPayload, UploaderEventType } from '../abstract/EventBus';
+import type { RouterController } from '../abstract/controllers/RouterController';
 import { A11y } from '../abstract/managers/a11y';
-import { LocaleManager, localeStateKey } from '../abstract/managers/LocaleManager';
+import { type LocaleManager, localeStateKey } from '../abstract/managers/LocaleManager';
 import { PluginController } from '../abstract/managers/plugin';
 import { buildPluginApi } from '../abstract/managers/plugin/buildPluginApi';
 import { LazyPluginLoader } from '../abstract/managers/plugin/LazyPluginLoader';
-import { TelemetryManager } from '../abstract/managers/TelemetryManager';
+import type { TelemetryManager } from '../abstract/managers/TelemetryManager';
 import { resolveSecureDeliveryProxyUrl } from '../abstract/secureDeliveryProxyUrl';
 import { sharedConfigKey } from '../abstract/sharedConfigKey';
 import { initialConfig } from '../blocks/Config/initialConfig';
-import { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter';
+import type { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter';
 import { PubSub } from '../lit/PubSubCompat';
 import type { ConfigType } from '../types';
 import { getLocaleDirection } from '../utils/getLocaleDirection';
@@ -26,6 +25,7 @@ import { RegisterableElementMixin } from './RegisterableElementMixin';
 import type { SharedState } from './SharedState';
 import { SymbioteMixin } from './SymbioteCompatMixin';
 import {
+  controllerOwnedInstanceKeys,
   createSharedInstancesBag,
   type ISharedInstance,
   type SharedInstancesBag,
@@ -109,10 +109,34 @@ export class LitBlock extends LitBlockBase {
           debug: createDebugPrinter(() => sharedInstancesBag.ctx, 'PluginController'),
         }),
     );
-    this._addSharedContextInstance('*eventEmitter', (sharedInstancesBag) => new EventEmitter(sharedInstancesBag));
-    this._addSharedContextInstance('*localeManager', (sharedInstancesBag) => new LocaleManager(sharedInstancesBag));
+    // The remaining four ctx-scope managers are constructed and owned by
+    // `UploaderController` (M9k) — these `_addSharedContextInstance` calls just
+    // re-expose the controller's instances under their v1 shared-instance keys
+    // (so `_getSharedContextInstance`/`bag.when`/`ctx.sub` readers are
+    // unaffected), while construction and teardown now live on the controller.
+    // `PluginController` stays constructed here — it needs the PubSub ctx
+    // (`*lazyPlugins`, the `*publicApi` instance), which the DOM-free
+    // controller must not reach (see `UploaderController`'s class doc).
+    this._addSharedContextInstance(
+      '*eventEmitter',
+      (sharedInstancesBag) => sharedInstancesBag.ctx.uploaderController().eventEmitter,
+    );
+    this._addSharedContextInstance(
+      '*localeManager',
+      (sharedInstancesBag) => sharedInstancesBag.ctx.uploaderController().localeManager,
+    );
+    // `LocaleManager`'s construction-time work (seeding the `en` dictionary,
+    // subscribing to `localeName`/`localeDefinitionOverride`, and wiring the
+    // plugin-manager coupling) is deferred out of `UploaderController`'s ctor
+    // (see `LocaleManager.activate`'s doc) — run it now, right where v1
+    // constructed `LocaleManager` itself. Both `*eventEmitter`/`*localeManager`
+    // and `*pluginManager` are registered by now.
+    this.localeManager.activate(this._sharedInstancesBag.pluginManager);
     this._addSharedContextInstance('*a11y', () => new A11y());
-    this._addSharedContextInstance('*router', () => new RouterController({ emit: this._routerEmit }));
+    this._addSharedContextInstance(
+      '*router',
+      (sharedInstancesBag) => sharedInstancesBag.ctx.uploaderController().router,
+    );
     this._addSharedContextInstance(
       '*clipboard',
       (sharedInstancesBag) =>
@@ -126,13 +150,7 @@ export class LitBlock extends LitBlockBase {
     );
     this._addSharedContextInstance(
       '*telemetryManager',
-      (sharedInstancesBag) =>
-        new TelemetryManager({
-          config: sharedInstancesBag.ctx.uploaderController().config,
-          getSolution: () => sharedInstancesBag.ctx.uploaderController().solutionName,
-          getActivity: () =>
-            sharedInstancesBag.ctx.has('*router') ? sharedInstancesBag.ctx.read('*router').currentActivity : null,
-        }),
+      (sharedInstancesBag) => sharedInstancesBag.ctx.uploaderController().telemetryManager,
     );
 
     this.sub(localeStateKey('locale-id'), (localeId: string) => {
@@ -168,23 +186,6 @@ export class LitBlock extends LitBlockBase {
   public get router(): RouterController {
     return this._getSharedContextInstance('*router');
   }
-
-  /**
-   * Telemetry-augmented emit, narrowed to the router's documented payloads and
-   * matching v1's debounce behavior (modal events debounce; activity-change
-   * fires immediately). Injected into the {@link RouterController}.
-   */
-  private _routerEmit: RouterControllerDeps['emit'] = (
-    type: UploaderEventKey,
-    payload: UploaderEventPayload[UploaderEventKey],
-  ): void => {
-    const debounce = type === UploaderEventType.MODAL_OPEN || type === UploaderEventType.MODAL_CLOSE;
-    // `this.emit` already accepts the widened `(UploaderEventKey, payload)` union
-    // that the field's `RouterEmit` type funnels down to, so no cast is needed —
-    // and it must stay a bound method call (`this.emit`, not an extracted ref) so
-    // it keeps its `this` when the router invokes it.
-    this.emit(type, payload, debounce ? { debounce: true } : undefined);
-  };
 
   /**
    * Subscribe to a value derived from router state: fires immediately with
@@ -312,7 +313,13 @@ export class LitBlock extends LitBlockBase {
   private _destroySharedContextInstances(): void {
     const instances = this._getSharedContextInstances();
     for (const [key, instance] of instances.entries()) {
-      instance?.destroy?.();
+      // Controller-owned instances (M9k) are destroyed by
+      // `UploaderController.destroy()`, which `PubSub.deleteCtx` triggers right
+      // after this loop — destroying them here too would tear them down while
+      // the ctx is still up. Still pub-null them below, same as every other key.
+      if (!controllerOwnedInstanceKeys.has(key as keyof SharedState)) {
+        instance?.destroy?.();
+      }
       this.pub(key as keyof SharedState, null as never);
     }
     instances.clear();
