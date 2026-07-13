@@ -8,7 +8,7 @@ import { LitBlock } from './LitBlock';
 export class LitSolutionBlock extends LitBlock {
   public static override styleAttrs = ['uc-wgt-common'];
   public static lazyPlugins: LazyPluginEntry[] | null = null;
-  public override init$ = solutionBlockCtx(this);
+  public override init$ = solutionBlockCtx();
 
   private _unregisterClipboardScope: (() => void) | null = null;
 
