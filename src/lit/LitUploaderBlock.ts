@@ -58,9 +58,11 @@ export class LitUploaderBlock extends LitActivityBlock {
         debug: (...args) => this.debugPrint(...args),
       });
     });
-    // Register *publicApi before *validationManager: the ValidationController
-    // resolves `sharedInstancesBag.api` (which constructs *publicApi on demand),
-    // so the api factory must already be registered when validation first runs.
+    // Register *publicApi before *validationManager: `_addSharedContextInstance`
+    // runs its resolver eagerly, right here, not lazily on first read — so
+    // *publicApi must already exist by the time `sharedInstancesBag.api` is
+    // resolved below (the ValidationController ctor runs `_runAllValidators`
+    // synchronously, which reads `sharedInstancesBag.api` via `getApi`).
     // Also hand it straight to the controller (`setApi`) — the DOM-free
     // `ClipboardController` (constructed by `UploaderController`, M9l) needs it
     // for its add-file callbacks, but only the DOM layer can construct

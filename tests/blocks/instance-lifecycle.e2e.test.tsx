@@ -4,6 +4,7 @@ import { TelemetryManager } from '@/abstract/managers/TelemetryManager';
 import type { Config, UploadCtxProvider } from '@/index.js';
 import { PubSub } from '@/lit/PubSubCompat';
 import type { SharedState } from '@/lit/SharedState';
+import { controllerOwnedInstanceKeys } from '@/lit/shared-instances';
 import { getCtxName } from '../utils/getCtxName';
 import { cleanup } from '../utils/test-renderer';
 import '../../types/jsx';
@@ -216,5 +217,46 @@ describe('instance lifecycle (single-owner teardown, M9k Task 3)', () => {
     expect(telemetryManagerDestroy).toHaveBeenCalledTimes(1);
     expect(routerDestroy).toHaveBeenCalledTimes(1);
     expect(uploadCollectionDestroy).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('instance lifecycle (controller-owned identity pins, M9l final-review follow-up)', () => {
+  it('every controller-owned shared-instance key resolves to the exact instance UploaderController owns (no re-shadowing)', async () => {
+    const ctxName = getCtxName();
+    page.render(
+      <>
+        <uc-file-uploader-regular ctx-name={ctxName}></uc-file-uploader-regular>
+        <uc-config qualityInsights={false} ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
+        <uc-upload-ctx-provider ctx-name={ctxName}></uc-upload-ctx-provider>
+      </>,
+    );
+    await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(true);
+    const ctx = PubSub.getCtx<SharedState>(ctxName)!;
+    const controller = ctx.uploaderController();
+
+    // Explicit key -> controller-member map: self-documenting, and the two
+    // assertions below make it exhaustive against `controllerOwnedInstanceKeys`
+    // itself (imported, not hand-copied) — a key added to the Set without a
+    // matching entry here fails loudly instead of silently passing every
+    // other test while an element-side `new X()` re-shadows the real,
+    // controller-owned instance (and leaks its listeners at teardown).
+    const ownerByKey: Record<string, () => unknown> = {
+      '*eventEmitter': () => controller.eventEmitter,
+      '*localeManager': () => controller.localeManager,
+      '*telemetryManager': () => controller.telemetryManager,
+      '*router': () => controller.router,
+      '*uploadCollection': () => controller.collection,
+      '*a11y': () => controller.a11y,
+      '*clipboard': () => controller.clipboard,
+    } satisfies Record<string, () => unknown>;
+
+    // Fence: `controllerOwnedInstanceKeys` must not outgrow this map.
+    expect(new Set(Object.keys(ownerByKey))).toEqual(new Set(controllerOwnedInstanceKeys));
+
+    for (const key of controllerOwnedInstanceKeys) {
+      const getOwnerInstance = ownerByKey[key];
+      expect(getOwnerInstance, `no identity-pin mapping registered for key "${String(key)}"`).toBeDefined();
+      expect(ctx.read(key)).toBe(getOwnerInstance!());
+    }
   });
 });
