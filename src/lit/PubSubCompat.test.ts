@@ -245,4 +245,28 @@ describe('PubSub (additional coverage)', () => {
     expect(() => PubSub.deleteCtx(ctx.id)).not.toThrow();
     expect(PubSub.hasCtx(ctx.id)).toBe(false);
   });
+
+  it('reusing the same ctx id after a full teardown rebuilds a brand-new controller, not the destroyed one', () => {
+    const id = freshCtx().id;
+    const firstCtx = PubSub.getCtx<Record<string, unknown>>(id)!;
+    firstCtx.pub('*cfg/multiple', false); // mutate away from the default
+    const firstController = UploaderRegistry.get(id);
+    expect(firstController).toBeDefined();
+
+    PubSub.deleteCtx(id);
+    expect(PubSub.hasCtx(id)).toBe(false);
+    expect(UploaderRegistry.get(id)).toBeUndefined();
+
+    // Same id, re-registered — the controller-owned managers this milestone
+    // moves onto UploaderController must not survive under a stale reference
+    // keyed by ctx id; a fresh registration must get a fresh controller.
+    const secondCtx = PubSub.registerCtx<Record<string, unknown>>({ plain: 'seed' }, id);
+    secondCtx.read('*cfg/multiple'); // triggers lazy controller (re-)creation
+    const secondController = UploaderRegistry.get(id);
+
+    expect(secondController).toBeDefined();
+    expect(secondController).not.toBe(firstController);
+    // Fresh defaults — no leakage of the mutated value from the destroyed ctx.
+    expect(secondCtx.read('*cfg/multiple')).toBe(initialConfig.multiple);
+  });
 });
