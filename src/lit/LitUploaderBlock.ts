@@ -55,6 +55,13 @@ export class LitUploaderBlock extends LitActivityBlock {
     // idempotent (first uploader block to connect wins, matching the old
     // `_addSharedContextInstance` first-write-wins semantics). This element
     // only supplies the callbacks that must stay DOM/PubSub-side.
+    //
+    // The 9 v1 shared-state (`*`-key) read/write bridges validation +
+    // uploadEvents need (`setCollectionErrors` and the 8 below it) are NOT
+    // supplied here (M9n, Task 3) — they're built at controller-creation time
+    // in `PubSubCompat._uploader()`, closing over that ctx, and handed to
+    // `new UploaderController({ stateBridges })`. They live from the
+    // controller's birth, not from this element's `initCallback`.
     const uploader = this.sharedCtx.uploaderController();
     const ctx = this._sharedInstancesBag.ctx;
     uploader.attachUploaderScope({
@@ -64,9 +71,6 @@ export class LitUploaderBlock extends LitActivityBlock {
       getOutputItem: <TStatus extends OutputFileStatus>(uid: Uid) =>
         this._sharedInstancesBag.api.getOutputItem<TStatus>(uid),
       getApi: () => this._sharedInstancesBag.api,
-      setCollectionErrors: (errors) => {
-        this.$['*collectionErrors'] = errors;
-      },
       emitCommonUploadFailed: () => {
         this._sharedInstancesBag.eventEmitter.emit(
           EventType.COMMON_UPLOAD_FAILED,
@@ -94,14 +98,6 @@ export class LitUploaderBlock extends LitActivityBlock {
       getOutputData: () => getOutputData(this._sharedInstancesBag),
       runOnAddHooks: (entry) =>
         void this._sharedInstancesBag.wait('pluginManager').then((pluginManager) => pluginManager.runOnAddHooks(entry)),
-      uploadTrigger: () => ctx.read('*uploadTrigger'),
-      setUploadList: (list) => ctx.pub('*uploadList', list),
-      getCollectionState: () => ctx.read('*collectionState'),
-      setCollectionState: (state) => ctx.pub('*collectionState', state),
-      getCommonProgress: () => ctx.read('*commonProgress'),
-      setCommonProgress: (progress) => ctx.pub('*commonProgress', progress),
-      setGroupInfo: (group) => ctx.pub('*groupInfo', group),
-      getCollectionErrors: () => ctx.read('*collectionErrors'),
     });
 
     // The four are now controller-owned identity — these re-exposers just
