@@ -233,9 +233,15 @@ export class UploaderController {
         addFileFromUrl: (url, options) => this.api.addFileFromUrl(url, options),
         onFileAdd: () => this.router.traverse('onFileAdd'),
       });
+    // Default no-op bridges for construction without a PubSub ctx (tests /
+    // non-element callers). `uploadTrigger` MUST return a STABLE set — the
+    // real bridge exposes the live `*uploadTrigger` set that
+    // `UploadEventsController` mutates in place (`.delete(...)`) and iterates,
+    // so a fresh `new Set()` per call would silently break those invariants.
+    const defaultUploadTrigger: ReturnType<UploaderStateBridges['uploadTrigger']> = new Set();
     this._stateBridges = deps.stateBridges ?? {
       setCollectionErrors: () => {},
-      uploadTrigger: () => new Set(),
+      uploadTrigger: () => defaultUploadTrigger,
       setUploadList: () => {},
       getCollectionState: () => null,
       setCollectionState: () => {},

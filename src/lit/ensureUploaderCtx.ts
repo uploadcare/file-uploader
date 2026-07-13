@@ -33,18 +33,21 @@ import type { SharedState } from './SharedState';
  * unchanged by this seam.
  */
 export function ensureUploaderCtx(ctxName: string): PubSub<SharedState> {
-  const existing = PubSub.getCtx<SharedState>(ctxName);
-  if (existing) {
-    return existing;
-  }
-
   // `solutionBlockCtx()` returns only the plain uploader/solution seed keys
   // (a small subset of `SharedState`, which also covers `*cfg/*`, `*l10n/*`,
   // and every controller-owned instance key) — the same "seed value typed as
   // the full shared-state shape" contract every v1 block's `init$` field
   // already relies on (e.g. `LitBlock.init$ = blockCtx()` for `TState`).
-  const seed = solutionBlockCtx() as unknown as SharedState;
-  const ctx = PubSub.registerCtx<SharedState>(seed, ctxName);
+  const existing = PubSub.getCtx<SharedState>(ctxName);
+  const ctx = existing ?? PubSub.registerCtx<SharedState>(solutionBlockCtx() as unknown as SharedState, ctxName);
+
+  // Force the controller into existence on EVERY path, not just first
+  // creation. A map can pre-exist without a controller — created by a v1
+  // element's raw `PubSub.registerCtx`, a test harness, or a future ported
+  // ctx-creator — and this function's contract is that the controller exists
+  // the moment the ctx does (so `ChildBlock`s never wait forever on
+  // `UploaderRegistry`). `uploaderController()` is idempotent: it returns the
+  // registered controller or creates+registers one.
   ctx.uploaderController();
   return ctx;
 }
