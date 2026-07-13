@@ -89,20 +89,29 @@ describe('A11y', () => {
     expect(() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }))).not.toThrow();
   });
 
-  it('destroy() returns the real window listener count to baseline (add/remove pairing across all keyux event types)', () => {
+  it('destroy() returns the real window listener count to baseline across a full construct → registerBlock → destroy() cycle', () => {
     const addSpy = vi.spyOn(window, 'addEventListener');
     const removeSpy = vi.spyOn(window, 'removeEventListener');
 
+    // Pins pairing, not timing: whether the keyux window listeners attach at
+    // construction (today) or are deferred to first `registerBlock` (M9l's
+    // lazy-arm split), the net effect of a full lifecycle — including a real
+    // scope registration — must be that every `window.addEventListener` this
+    // instance made (click, focusin, focusout, keydown, keyup, keyuxJump — one
+    // per keyux feature) is undone by a matching `removeEventListener` of the
+    // same type by the time `destroy()` returns. No unregister path exists for
+    // a registered block, so `registerBlock` then `destroy()` is the full cycle.
     const a11y = new A11y();
+    const scope = document.createElement('div');
+    document.body.append(scope);
+    a11y.registerBlock(asLitBlock(scope));
+
     const addedTypes = addSpy.mock.calls.map((call) => call[0]).sort();
     expect(addedTypes.length).toBeGreaterThan(0);
 
     a11y.destroy();
     const removedTypes = removeSpy.mock.calls.map((call) => call[0]).sort();
 
-    // Every `window.addEventListener` this instance made (click, focusin,
-    // focusout, keydown, keyup, keyuxJump — one per keyux feature) is undone
-    // by a matching `window.removeEventListener` of the same type.
     expect(removedTypes).toEqual(addedTypes);
   });
 
