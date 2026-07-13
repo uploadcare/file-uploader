@@ -1,16 +1,10 @@
-import { SecureUploadsController } from '../../abstract/controllers/SecureUploadsController';
 import type { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
-import { UploadController } from '../../abstract/controllers/UploadController';
-import { UploadEventsController } from '../../abstract/controllers/UploadEventsController';
 import type { UploaderController } from '../../abstract/controllers/UploaderController';
-import { ValidationController } from '../../abstract/controllers/ValidationController';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
+import { buildUploaderScopeDeps } from '../../lit/buildUploaderScopeDeps';
 import { ChildBlock } from '../../lit/ChildBlock';
 import { createDebugPrinter } from '../../lit/createDebugPrinter';
 import { EventBridgeController } from '../../lit/EventBridgeController';
-import { getOutputData } from '../../lit/getOutputData';
-import type { Uid } from '../../lit/Uid';
-import type { OutputCollectionState, OutputFileStatus } from '../../types/index';
 import { type EventPayload, EventType } from './EventEmitter';
 
 // biome-ignore lint/suspicious/noUnsafeDeclarationMerging: This is intentional interface merging, used to add event listener types
@@ -71,9 +65,9 @@ export class UploadCtxProvider extends ChildBlock {
    * (first-write-wins + `attachUploaderScope`'s own gate), so this is a no-op
    * once a solution or a sibling provider has already attached.
    *
-   * NOTE: the `attachUploaderScope(...)` deps below intentionally mirror
-   * `LitUploaderBlock.initCallback`'s — the two are kept in sync by hand.
-   * Extracting a shared builder is a queued follow-up (see the M9n ledger).
+   * The `attachUploaderScope` deps come from the shared `buildUploaderScopeDeps`
+   * (one source of truth with `LitUploaderBlock.initCallback`); only `debug`
+   * and `emit` are host-specific.
    */
   private _attachUploaderScopeIfNeeded(ctrl: UploaderController): void {
     const ctx = this.bag.ctx;
@@ -88,27 +82,15 @@ export class UploadCtxProvider extends ChildBlock {
       ctx.add('*publicApi', api, true);
     }
 
-    ctrl.attachUploaderScope({
-      controllers: { SecureUploadsController, UploadController, ValidationController, UploadEventsController },
-      debug: (...args) => this._debugPrint(...args),
-      getFileHooks: () => this.bag.pluginManager?.snapshot().fileHooks ?? [],
-      getOutputItem: <TStatus extends OutputFileStatus>(uid: Uid) => this.bag.api.getOutputItem<TStatus>(uid),
-      getApi: () => this.bag.api,
-      emitCommonUploadFailed: () => {
-        this.bag.eventEmitter.emit(
-          EventType.COMMON_UPLOAD_FAILED,
-          () => this.bag.api.getOutputCollectionState() as OutputCollectionState<'failed'>,
-          { debounce: true },
-        );
-      },
-      // Same contract as `ChildBlock.emit`: EventEmitter dispatch + telemetry
-      // mirror, guarded for teardown races.
-      emit: (type, payload, options) => this.emit(type, payload, options),
-      getOutputCollectionState: () => this.bag.api.getOutputCollectionState(),
-      getOutputData: () => getOutputData(this.bag),
-      runOnAddHooks: (entry) =>
-        void this.bag.wait('pluginManager').then((pluginManager) => pluginManager.runOnAddHooks(entry)),
-    });
+    ctrl.attachUploaderScope(
+      buildUploaderScopeDeps(
+        this.bag,
+        (...args) => this._debugPrint(...args),
+        // Same contract as `ChildBlock.emit`: EventEmitter dispatch + telemetry
+        // mirror, guarded for teardown races.
+        (type, payload, options) => this.emit(type, payload, options),
+      ),
+    );
 
     // Re-expose the controller-owned instances under their v1 shared-instance
     // keys (readers like `FileItem.bag.uploadController` expect them there).
