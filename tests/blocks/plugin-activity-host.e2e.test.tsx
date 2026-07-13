@@ -72,6 +72,15 @@ describe('PluginActivityHost — dynamic registration (gap-fill ahead of ChildBl
 
     await expect.poll(() => host.getAttribute('activity')).toBe('late-activity');
     await expect.poll(() => renderedEl?.textContent).toBe('late content');
+
+    // Regression: a host that adopted before its `.registration` arrived must
+    // still have a router subscription wired (`subRouter` in
+    // `ActivityChildBlock.controllerReady`), even though `activityType` was
+    // null at adoption time. Otherwise, once the late registration mounts the
+    // plugin, navigating away never re-renders the host and the plugin content
+    // stays mounted forever.
+    router.setActivity(null);
+    await expect.poll(() => renderedEl?.textContent).toBe('');
   });
 });
 

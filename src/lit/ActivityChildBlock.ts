@@ -22,14 +22,20 @@ export class ActivityChildBlock extends ChildBlock {
   private _unreportActivityMounted?: () => void;
 
   protected override controllerReady(_ctrl: UploaderController): void {
+    // Wire the router subscription unconditionally, even when `activityType`
+    // is still null at adoption time (e.g. a `PluginActivityHost` whose
+    // `.registration` arrives later, in `updated()`). Otherwise a host that
+    // starts with a null activityType and only later syncs a real one ends up
+    // with no router subscription, so subsequent navigation never re-renders
+    // it and its mounted content is never torn down. Harmless extra
+    // re-renders for a null-activity host in the meantime.
+    this.subRouter(() => this.requestUpdate());
     if (!this.activityType) {
       return;
     }
     if (!this.hasAttribute('activity')) {
       this.setAttribute('activity', this.activityType);
     }
-    // Re-render on every router transition so `updated()` re-evaluates the slot.
-    this.subRouter(() => this.requestUpdate());
     this.reportActivityMounted();
   }
 
