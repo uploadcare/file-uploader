@@ -473,6 +473,7 @@ export class FileItem extends FileItemConfig {
           },
           signal: abortController.signal,
           metadata: await this.getMetadataFor(entry.uid),
+          tags: await this.getTagsFor(entry.uid),
         };
         this.debugPrint('upload options', fileInput, uploadClientOptions);
         return uploadFile(fileInput, uploadClientOptions);

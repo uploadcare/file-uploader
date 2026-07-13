@@ -24,6 +24,7 @@ import {
   asPasteScope,
   asStore,
   asString,
+  asTags,
 } from './validatorsType';
 
 type ConfigNormalizer<TKey extends keyof ConfigType> = (value: unknown) => ConfigType[TKey] | undefined;
@@ -84,6 +85,7 @@ const mapping: { [Key in keyof ConfigType]: ConfigNormalizer<Key> } = {
   localeName: asString,
 
   metadata: asMetadata,
+  tags: asTags,
   secureUploadsExpireThreshold: asNumber,
   localeDefinitionOverride: (value) => asObject<LocaleDefinitionOverride>(value),
   secureUploadsSignatureResolver: (value) => asFunction<SecureUploadsSignatureResolver>(value),

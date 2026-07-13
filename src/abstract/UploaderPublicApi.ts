@@ -327,6 +327,7 @@ export class UploaderPublicApi extends SharedInstance {
       uploadProgress: uploadEntryData.uploadProgress,
       fileInfo: fileInfo ?? null,
       metadata: uploadEntryData.metadata ?? fileInfo?.metadata ?? null,
+      tags: uploadEntryData.tags ?? fileInfo?.tags ?? null,
       isSuccess: status === 'success',
       isUploading: status === 'uploading',
       isFailed: status === 'failed',

@@ -1,4 +1,4 @@
-import type { Metadata, UploadcareFile } from '@uploadcare/upload-client';
+import type { Metadata, Tags, UploadcareFile } from '@uploadcare/upload-client';
 import type { OutputErrorFile } from '../types/index';
 import type { TypedData } from './TypedData';
 
@@ -23,6 +23,7 @@ export interface UploadEntryData extends Record<string, unknown> {
   source: string | null;
   fullPath: string | null;
   metadata: Metadata | null;
+  tags: Tags | null;
   errors: OutputErrorFile[];
   uploadError: Error | null;
   isRemoved: boolean;
@@ -52,6 +53,7 @@ export const initialUploadEntryData: UploadEntryData = {
   source: null,
   fullPath: null,
   metadata: null,
+  tags: null,
   errors: [],
   uploadError: null,
   isRemoved: false,
