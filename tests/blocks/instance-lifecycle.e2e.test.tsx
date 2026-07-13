@@ -1,9 +1,11 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
+import { UploadEventsController } from '@/abstract/controllers/UploadEventsController';
 import { TelemetryManager } from '@/abstract/managers/TelemetryManager';
 import type { Config, UploadCtxProvider } from '@/index.js';
 import { PubSub } from '@/lit/PubSubCompat';
 import type { SharedState } from '@/lit/SharedState';
+import { controllerOwnedInstanceKeys } from '@/lit/shared-instances';
 import { getCtxName } from '../utils/getCtxName';
 import { cleanup } from '../utils/test-renderer';
 import '../../types/jsx';
@@ -42,6 +44,23 @@ describe('instance lifecycle (config-only ctx)', () => {
     // `*uploadCollection` is added by `LitUploaderBlock`, not `LitBlock` —
     // `<uc-config>` alone must not create it.
     expect(ctx.has('*uploadCollection')).toBe(false);
+
+    // The four upload-stack keys (M9m `attachUploaderScope`) are only
+    // registered by `LitUploaderBlock.initCallback` — a bare `<uc-config>`
+    // never runs that path, so none of them exist either.
+    expect(ctx.has('*secureUploadsManager')).toBe(false);
+    expect(ctx.has('*uploadController')).toBe(false);
+    expect(ctx.has('*validationManager')).toBe(false);
+    expect(ctx.has('*uploadEvents')).toBe(false);
+
+    // And `attachUploaderScope` itself was never called — the controller's
+    // upload-stack getters still throw the pre-attach error, same as a
+    // freshly-constructed `UploaderController`.
+    const controller = ctx.uploaderController();
+    expect(() => controller.secureUploadsManager).toThrow(/attachUploaderScope/);
+    expect(() => controller.uploadController).toThrow(/attachUploaderScope/);
+    expect(() => controller.validationManager).toThrow(/attachUploaderScope/);
+    expect(() => controller.uploadEvents).toThrow(/attachUploaderScope/);
 
     const errors: string[] = [];
     const onError = (event: ErrorEvent) => {
@@ -149,6 +168,7 @@ describe('instance lifecycle (destroy -> recreate cycle)', () => {
     const firstCtx = PubSub.getCtx<SharedState>(ctxName)!;
     const firstRouter = firstCtx.read('*router');
     const firstTelemetry = firstCtx.read('*telemetryManager');
+    const firstUploadController = firstCtx.read('*uploadController');
 
     // Prove the first router carries real navigation state before teardown.
     await page.getByText('Upload files', { exact: true }).click();
@@ -170,9 +190,13 @@ describe('instance lifecycle (destroy -> recreate cycle)', () => {
     const secondCtx = PubSub.getCtx<SharedState>(ctxName)!;
     const secondRouter = secondCtx.read('*router');
     const secondTelemetry = secondCtx.read('*telemetryManager');
+    const secondUploadController = secondCtx.read('*uploadController');
 
     expect(secondRouter).not.toBe(firstRouter);
     expect(secondTelemetry).not.toBe(firstTelemetry);
+    // The upload-stack (M9m `attachUploaderScope`) is rebuilt fresh too — not
+    // resurrected from the destroyed scope.
+    expect(secondUploadController).not.toBe(firstUploadController);
     // Fresh router state — no leaked navigation from the destroyed ctx.
     expect(secondRouter.currentActivity).toBeNull();
   });
@@ -191,7 +215,7 @@ describe('instance lifecycle (single-owner teardown, M9k Task 3)', () => {
     await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(true);
     const ctx = PubSub.getCtx<SharedState>(ctxName)!;
 
-    // The five controller-owned shared instances (M9k): teardown runs through
+    // The controller-owned shared instances (M9k + M9m): teardown runs through
     // two paths — `LitBlock._destroySharedContextInstances` (the DOM-layer
     // pub-null loop) and `UploaderController.destroy()` (via
     // `PubSub.deleteCtx`) — and only the latter may actually call `.destroy()`
@@ -201,12 +225,23 @@ describe('instance lifecycle (single-owner teardown, M9k Task 3)', () => {
     const telemetryManager = ctx.read('*telemetryManager');
     const router = ctx.read('*router');
     const uploadCollection = ctx.read('*uploadCollection');
+    // The four upload-stack instances (M9m `attachUploaderScope`): same
+    // single-owner concern — `LitUploaderBlock`'s re-exposers just resolve to
+    // the controller's instances, they never construct or destroy them.
+    const secureUploadsManager = ctx.read('*secureUploadsManager');
+    const uploadController = ctx.read('*uploadController');
+    const validationManager = ctx.read('*validationManager');
+    const uploadEvents = ctx.read('*uploadEvents');
 
     const eventEmitterDestroy = vi.spyOn(eventEmitter, 'destroy');
     const localeManagerDestroy = vi.spyOn(localeManager, 'destroy');
     const telemetryManagerDestroy = vi.spyOn(telemetryManager, 'destroy');
     const routerDestroy = vi.spyOn(router, 'destroy');
     const uploadCollectionDestroy = vi.spyOn(uploadCollection, 'destroy');
+    const secureUploadsManagerDestroy = vi.spyOn(secureUploadsManager, 'destroy');
+    const uploadControllerDestroy = vi.spyOn(uploadController, 'destroy');
+    const validationManagerDestroy = vi.spyOn(validationManager, 'destroy');
+    const uploadEventsDestroy = vi.spyOn(uploadEvents, 'destroy');
 
     cleanup();
     await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(false);
@@ -216,5 +251,94 @@ describe('instance lifecycle (single-owner teardown, M9k Task 3)', () => {
     expect(telemetryManagerDestroy).toHaveBeenCalledTimes(1);
     expect(routerDestroy).toHaveBeenCalledTimes(1);
     expect(uploadCollectionDestroy).toHaveBeenCalledTimes(1);
+    expect(secureUploadsManagerDestroy).toHaveBeenCalledTimes(1);
+    expect(uploadControllerDestroy).toHaveBeenCalledTimes(1);
+    expect(validationManagerDestroy).toHaveBeenCalledTimes(1);
+    expect(uploadEventsDestroy).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('instance lifecycle (attachUploaderScope idempotency across two LitUploaderBlock instances, M9m Task 3)', () => {
+  it('a second LitUploaderBlock joining the same ctx does not double-construct the upload stack', async () => {
+    const ctxName = getCtxName();
+    const observeSpy = vi.spyOn(UploadEventsController.prototype, 'observe');
+
+    try {
+      // First LitUploaderBlock instance: its `initCallback` calls
+      // `attachUploaderScope`, constructing the four sub-controllers and
+      // starting `UploadEventsController.observe()` once.
+      page.render(
+        <>
+          <uc-config qualityInsights={false} ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
+          <uc-file-uploader-regular ctx-name={ctxName}></uc-file-uploader-regular>
+        </>,
+      );
+      await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(true);
+      const ctx = PubSub.getCtx<SharedState>(ctxName)!;
+      await expect.poll(() => ctx.has('*uploadController')).toBe(true);
+
+      const firstUploadController = ctx.read('*uploadController');
+      const firstUploadEvents = ctx.read('*uploadEvents');
+      expect(observeSpy).toHaveBeenCalledTimes(1);
+
+      // Second LitUploaderBlock instance joins the SAME ctx-name —
+      // `uc-upload-ctx-provider` also extends `LitUploaderBlock`, so its
+      // `initCallback` runs `attachUploaderScope` again against the same
+      // `UploaderController`. The idempotency guard (`this._uploaderScope`)
+      // must make this a no-op: same instances, no second `observe()`.
+      page.render(<uc-upload-ctx-provider ctx-name={ctxName}></uc-upload-ctx-provider>);
+      await expect.poll(() => page.getByTestId('uc-upload-ctx-provider').query()).not.toBeNull();
+
+      expect(ctx.read('*uploadController')).toBe(firstUploadController);
+      expect(ctx.read('*uploadEvents')).toBe(firstUploadEvents);
+      expect(observeSpy).toHaveBeenCalledTimes(1);
+    } finally {
+      observeSpy.mockRestore();
+    }
+  });
+});
+
+describe('instance lifecycle (controller-owned identity pins, M9l final-review follow-up)', () => {
+  it('every controller-owned shared-instance key resolves to the exact instance UploaderController owns (no re-shadowing)', async () => {
+    const ctxName = getCtxName();
+    page.render(
+      <>
+        <uc-file-uploader-regular ctx-name={ctxName}></uc-file-uploader-regular>
+        <uc-config qualityInsights={false} ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
+        <uc-upload-ctx-provider ctx-name={ctxName}></uc-upload-ctx-provider>
+      </>,
+    );
+    await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(true);
+    const ctx = PubSub.getCtx<SharedState>(ctxName)!;
+    const controller = ctx.uploaderController();
+
+    // Explicit key -> controller-member map: self-documenting, and the two
+    // assertions below make it exhaustive against `controllerOwnedInstanceKeys`
+    // itself (imported, not hand-copied) — a key added to the Set without a
+    // matching entry here fails loudly instead of silently passing every
+    // other test while an element-side `new X()` re-shadows the real,
+    // controller-owned instance (and leaks its listeners at teardown).
+    const ownerByKey: Record<string, () => unknown> = {
+      '*eventEmitter': () => controller.eventEmitter,
+      '*localeManager': () => controller.localeManager,
+      '*telemetryManager': () => controller.telemetryManager,
+      '*router': () => controller.router,
+      '*uploadCollection': () => controller.collection,
+      '*a11y': () => controller.a11y,
+      '*clipboard': () => controller.clipboard,
+      '*secureUploadsManager': () => controller.secureUploadsManager,
+      '*uploadController': () => controller.uploadController,
+      '*validationManager': () => controller.validationManager,
+      '*uploadEvents': () => controller.uploadEvents,
+    } satisfies Record<string, () => unknown>;
+
+    // Fence: `controllerOwnedInstanceKeys` must not outgrow this map.
+    expect(new Set(Object.keys(ownerByKey))).toEqual(new Set(controllerOwnedInstanceKeys));
+
+    for (const key of controllerOwnedInstanceKeys) {
+      const getOwnerInstance = ownerByKey[key];
+      expect(getOwnerInstance, `no identity-pin mapping registered for key "${String(key)}"`).toBeDefined();
+      expect(ctx.read(key)).toBe(getOwnerInstance!());
+    }
   });
 });
