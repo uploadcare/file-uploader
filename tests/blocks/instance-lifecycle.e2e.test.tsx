@@ -23,25 +23,66 @@ beforeAll(async () => {
  * `LitBlock.initCallback` onto `UploaderController`). Pins instance-lifecycle
  * behavior nothing else currently exercises, so the construction move has a
  * regression net.
+ *
+ * UPDATED at the M9p `<uc-config>` port: `<uc-config>` stopped being a v1
+ * `LitBlock` (it's now a `ChildBlock`), so it no longer runs
+ * `LitBlock.initCallback`'s unconditional bootstrap of `*blocksRegistry`,
+ * `*pluginManager`, and the re-exposed `*eventEmitter`/`*localeManager`/
+ * `*a11y`/`*router`/`*clipboard`/`*telemetryManager` legacy ctx keys — that
+ * bootstrap is tied to an actual v1 `LitBlock` instance existing somewhere in
+ * the composition (e.g. a solution block), which a config-only composition no
+ * longer has. `ensureUploaderCtx` still forces the `UploaderController` (and
+ * therefore `ConfigController`, `EventBus`, `LocaleController`,
+ * `RouterController`, `A11y`, `ClipboardController`, `TelemetryManager`) into
+ * existence the moment the ctx exists — those six are readable directly off
+ * the controller, just not re-exposed under their legacy `*`-prefixed ctx
+ * keys without a v1 block to do the re-exposing. `*pluginManager` has no
+ * controller equivalent at all (it stays DOM/`LitBlock`-constructed by
+ * design — see `PluginController`'s and `LitBlock.initCallback`'s own
+ * comments) so a config-only ctx genuinely has no plugin manager; custom
+ * (plugin-registered) configs are unavailable in that composition, same as
+ * before this port for any other ChildBlock-only scope.
  */
 describe('instance lifecycle (config-only ctx)', () => {
-  it('a config-only ctx (no uploader block) still builds every LitBlock-scope instance, and tears down cleanly', async () => {
+  it('a config-only ctx (no v1 LitBlock) still builds the controller and its owned instances, and tears down cleanly', async () => {
     const ctxName = getCtxName();
     page.render(<uc-config ctx-name={ctxName} pubkey="demopublickey" qualityInsights={false} testMode></uc-config>);
 
     await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(true);
     const ctx = PubSub.getCtx<SharedState>(ctxName)!;
+    const controller = ctx.uploaderController();
 
-    // Every instance `LitBlock.initCallback` adds unconditionally, even with
-    // no uploader block in the tree.
-    expect(ctx.has('*blocksRegistry')).toBe(true);
-    expect(ctx.has('*pluginManager')).toBe(true);
+    // The controller and its own six always-constructed members exist —
+    // `ensureUploaderCtx` forces the controller into existence the moment the
+    // ctx does, with no v1 block required.
+    expect(controller.eventEmitter).toBeTruthy();
+    expect(controller.localeManager).toBeTruthy();
+    expect(controller.a11y).toBeTruthy();
+    expect(controller.router).toBeTruthy();
+    expect(controller.clipboard).toBeTruthy();
+    expect(controller.telemetryManager).toBeTruthy();
+
+    // M9q: the ctx-creation seam (`ensureUploaderCtx`) registers the six
+    // controller-owned re-exposer keys the moment the controller exists — no
+    // v1 `LitBlock` required — each pointing at the matching `controller.X`.
     expect(ctx.has('*eventEmitter')).toBe(true);
     expect(ctx.has('*localeManager')).toBe(true);
     expect(ctx.has('*a11y')).toBe(true);
     expect(ctx.has('*router')).toBe(true);
     expect(ctx.has('*clipboard')).toBe(true);
     expect(ctx.has('*telemetryManager')).toBe(true);
+    expect(ctx.read('*eventEmitter')).toBe(controller.eventEmitter);
+    expect(ctx.read('*localeManager')).toBe(controller.localeManager);
+    expect(ctx.read('*a11y')).toBe(controller.a11y);
+    expect(ctx.read('*router')).toBe(controller.router);
+    expect(ctx.read('*clipboard')).toBe(controller.clipboard);
+    expect(ctx.read('*telemetryManager')).toBe(controller.telemetryManager);
+
+    // But `*blocksRegistry` (LitBlock-owned) and `*pluginManager`
+    // (LitBlock-constructed, needs plugins) are NOT seam-registered — a
+    // config-only ctx never runs `LitBlock.initCallback`, so neither exists.
+    expect(ctx.has('*blocksRegistry')).toBe(false);
+    expect(ctx.has('*pluginManager')).toBe(false);
 
     // `*uploadCollection` is added by `LitUploaderBlock`, not `LitBlock` —
     // `<uc-config>` alone must not create it.
@@ -58,7 +99,6 @@ describe('instance lifecycle (config-only ctx)', () => {
     // And `attachUploaderScope` itself was never called — the controller's
     // upload-stack getters still throw the pre-attach error, same as a
     // freshly-constructed `UploaderController`.
-    const controller = ctx.uploaderController();
     expect(() => controller.secureUploadsManager).toThrow(/attachUploaderScope/);
     expect(() => controller.uploadController).toThrow(/attachUploaderScope/);
     expect(() => controller.validationManager).toThrow(/attachUploaderScope/);
