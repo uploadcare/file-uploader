@@ -19,6 +19,12 @@ import '../../../blocks/PluginActivityRenderer/PluginActivityRenderer';
 export class FileUploaderInline extends SolutionChildBlock {
   public static override lazyPlugins = fileUploaderLazyPlugins;
 
+  // Type-only: feeds the JSX attribute typing (`ReflectAttributes` in
+  // `types/jsx.d.ts` reads `attributesMeta`). Kept on the ChildBlock port —
+  // the documented attribute surface, same as the merged `Config` port.
+  public declare attributesMeta: {
+    'ctx-name': string;
+  };
   public static override styleAttrs = [...super.styleAttrs, 'uc-file-uploader-inline'];
 
   @state()
