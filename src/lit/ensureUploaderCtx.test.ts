@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { UploaderController } from '../abstract/controllers/UploaderController';
+import { localeStateKey } from '../abstract/managers/LocaleManager';
 import { UploaderRegistry } from '../abstract/UploaderRegistry';
 import { ensureUploaderCtx } from './ensureUploaderCtx';
 import { PubSub } from './PubSubCompat';
@@ -42,13 +43,33 @@ describe('ensureUploaderCtx', () => {
     expect(ctx.read('*lazyPlugins')).toBeNull();
   });
 
-  it('does NOT seed any instance key — those stay element-gated (re-exposer registration)', () => {
+  it('seeds the six controller-owned re-exposer keys, but not the v1-element-gated ones (M9q Task 2)', () => {
+    const ctxName = freshCtxName();
+    const ctx = ensureUploaderCtx(ctxName);
+    const controller = UploaderRegistry.get(ctxName)!;
+
+    // The six keys this seam now registers itself — identity-pinned against
+    // the controller's own instances, same recipe as `LitBlock`'s re-exposers.
+    expect(ctx.read('*eventEmitter')).toBe(controller.eventEmitter);
+    expect(ctx.read('*localeManager')).toBe(controller.localeManager);
+    expect(ctx.read('*a11y')).toBe(controller.a11y);
+    expect(ctx.read('*router')).toBe(controller.router);
+    expect(ctx.read('*clipboard')).toBe(controller.clipboard);
+    expect(ctx.read('*telemetryManager')).toBe(controller.telemetryManager);
+
+    // Still v1-element-gated — never registered by this v1-free seam.
+    expect(ctx.has('*pluginManager')).toBe(false);
+    expect(ctx.has('*blocksRegistry')).toBe(false);
+    expect(ctx.has('*uploadCollection')).toBe(false);
+  });
+
+  it('activates LocaleManager with a null plugin manager (no *pluginManager registered in this v1-free seam)', () => {
     const ctxName = freshCtxName();
     const ctx = ensureUploaderCtx(ctxName);
 
-    expect(ctx.has('*uploadCollection')).toBe(false);
-    expect(ctx.has('*eventEmitter')).toBe(false);
-    expect(ctx.has('*a11y')).toBe(false);
+    // `LocaleManager.activate` seeds the `en` dictionary unconditionally —
+    // proves `activate` actually ran, not just that the manager exists.
+    expect(ctx.read(localeStateKey('upload-file'))).toBe('Upload file');
   });
 
   it('forces the UploaderController into existence immediately, not lazily on first *cfg/*l10n touch', () => {
