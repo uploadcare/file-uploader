@@ -120,16 +120,20 @@ describe('Config', () => {
       expect(PubSub.hasCtx(ctxNameB)).toBe(false);
 
       config.setAttribute('ctx-name', ctxNameB);
-      await new Promise((resolve) => setTimeout(resolve, 20));
+      await config.updateComplete;
 
       // The DOM attribute switched...
       expect(config.getAttribute('ctx-name')).toBe(ctxNameB);
       // ...but `_symbioteFirstUpdated` gates `_performInitialization` to a
       // single call per element lifetime: the shared PubSub binding never
       // moves. Values keep reading/writing through the original ctx, and no
-      // second ctx is ever created for this reassignment. A future port must
-      // preserve this (not silently start re-adopting like `ChildBlock` does)
-      // unless the migration explicitly decides to change it.
+      // second ctx is ever created for this reassignment.
+      //
+      // INTENDED CHANGE at the M9p port: `ChildBlock` re-adopts on ctx-name
+      // switch (M9o), so the ported `<uc-config>` WILL rebind to ctxNameB and
+      // (refcount-)tear down ctxNameA. The Task-2 port must UPDATE this test to
+      // the re-adopt behavior — not preserve the v1 quirk below (mirrors the
+      // M9o "gates forever" child-block pin that was likewise inverted).
       expect(config.pubkey).toBe('demopublickey');
       expect(PubSub.hasCtx(ctxNameA)).toBe(true);
       expect(PubSub.hasCtx(ctxNameB)).toBe(false);
