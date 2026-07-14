@@ -62,16 +62,27 @@ describe('instance lifecycle (config-only ctx)', () => {
     expect(controller.clipboard).toBeTruthy();
     expect(controller.telemetryManager).toBeTruthy();
 
-    // No v1 `LitBlock` ever ran `initCallback`'s bootstrap, so none of these
-    // legacy re-exposer keys (or the DOM-constructed plugin manager) exist.
+    // M9q: the ctx-creation seam (`ensureUploaderCtx`) registers the six
+    // controller-owned re-exposer keys the moment the controller exists — no
+    // v1 `LitBlock` required — each pointing at the matching `controller.X`.
+    expect(ctx.has('*eventEmitter')).toBe(true);
+    expect(ctx.has('*localeManager')).toBe(true);
+    expect(ctx.has('*a11y')).toBe(true);
+    expect(ctx.has('*router')).toBe(true);
+    expect(ctx.has('*clipboard')).toBe(true);
+    expect(ctx.has('*telemetryManager')).toBe(true);
+    expect(ctx.read('*eventEmitter')).toBe(controller.eventEmitter);
+    expect(ctx.read('*localeManager')).toBe(controller.localeManager);
+    expect(ctx.read('*a11y')).toBe(controller.a11y);
+    expect(ctx.read('*router')).toBe(controller.router);
+    expect(ctx.read('*clipboard')).toBe(controller.clipboard);
+    expect(ctx.read('*telemetryManager')).toBe(controller.telemetryManager);
+
+    // But `*blocksRegistry` (LitBlock-owned) and `*pluginManager`
+    // (LitBlock-constructed, needs plugins) are NOT seam-registered — a
+    // config-only ctx never runs `LitBlock.initCallback`, so neither exists.
     expect(ctx.has('*blocksRegistry')).toBe(false);
     expect(ctx.has('*pluginManager')).toBe(false);
-    expect(ctx.has('*eventEmitter')).toBe(false);
-    expect(ctx.has('*localeManager')).toBe(false);
-    expect(ctx.has('*a11y')).toBe(false);
-    expect(ctx.has('*router')).toBe(false);
-    expect(ctx.has('*clipboard')).toBe(false);
-    expect(ctx.has('*telemetryManager')).toBe(false);
 
     // `*uploadCollection` is added by `LitUploaderBlock`, not `LitBlock` —
     // `<uc-config>` alone must not create it.
