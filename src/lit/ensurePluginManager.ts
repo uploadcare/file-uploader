@@ -2,7 +2,7 @@ import { PluginController } from '../abstract/managers/plugin';
 import { buildPluginApi } from '../abstract/managers/plugin/buildPluginApi';
 import { LazyPluginLoader } from '../abstract/managers/plugin/LazyPluginLoader';
 import { createDebugPrinter } from './createDebugPrinter';
-import type { SharedInstancesBag } from './shared-instances';
+import { addCtxSharedInstance, type SharedInstancesBag } from './shared-instances';
 
 /**
  * ChildBlock-reachable construction of the ctx's `*pluginManager`, lifted from
@@ -30,18 +30,31 @@ export function ensurePluginManager(bag: SharedInstancesBag): void {
   if (ctx.has('*pluginManager')) {
     return;
   }
-  const pluginManager = new PluginController({
-    buildApi: (registry, pluginId, configSubscriptions) =>
-      buildPluginApi(registry, ctx, bag, pluginId, configSubscriptions),
-    getUploaderApi: () => bag.api,
-    watchPlugins: (onCompute) => {
-      const loader = new LazyPluginLoader(ctx, onCompute);
-      return () => loader.destroy();
-    },
-    // Scope debug output to the controller (not a hosting block) so its logs
-    // stay consistently prefixed, as v1's `SharedInstance` did.
-    debug: createDebugPrinter(() => ctx, 'PluginController'),
-  });
-  ctx.add('*pluginManager', pluginManager, true);
-  ctx.uploaderController().localeManager.activate(pluginManager);
+  // Register through `addCtxSharedInstance` (NOT a raw `ctx.add`) so the manager
+  // is recorded in the `*sharedContextInstances` bookkeeping map — exactly what
+  // v1's `LitBlock._addSharedContextInstance` did. `destroyCtx` walks that map
+  // and calls `.destroy()` on non-controller-owned instances, so this is what
+  // makes the plugin manager (its `LazyPluginLoader` subscriptions, registry)
+  // actually tear down on ctx destroy. A raw `ctx.add` would leak it.
+  addCtxSharedInstance(
+    ctx,
+    '*pluginManager',
+    () =>
+      new PluginController({
+        buildApi: (registry, pluginId, configSubscriptions) =>
+          buildPluginApi(registry, ctx, bag, pluginId, configSubscriptions),
+        getUploaderApi: () => bag.api,
+        watchPlugins: (onCompute) => {
+          const loader = new LazyPluginLoader(ctx, onCompute);
+          return () => loader.destroy();
+        },
+        // Scope debug output to the controller (not a hosting block) so its
+        // logs stay consistently prefixed, as v1's `SharedInstance` did.
+        debug: createDebugPrinter(() => ctx, 'PluginController'),
+      }),
+  );
+  const pluginManager = ctx.has('*pluginManager') ? ctx.read('*pluginManager') : null;
+  if (pluginManager) {
+    ctx.uploaderController().localeManager.activate(pluginManager);
+  }
 }
