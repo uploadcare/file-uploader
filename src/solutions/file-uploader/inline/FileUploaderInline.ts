@@ -1,10 +1,11 @@
 import { html } from 'lit';
 import { state } from 'lit/decorators.js';
-import './index.css';
-
+import type { UploaderController } from '../../../abstract/controllers/UploaderController';
 import { InternalEventType } from '../../../blocks/UploadCtxProvider/EventEmitter';
 import { ACTIVITY_TYPES } from '../../../lit/activity-constants';
-import { LitSolutionBlock } from '../../../lit/LitSolutionBlock';
+import { SolutionChildBlock } from '../../../lit/SolutionChildBlock';
+import './index.css';
+
 import { fileUploaderLazyPlugins } from '../lazyPlugins.js';
 
 import '../../../blocks/StartFrom/StartFrom';
@@ -15,13 +16,12 @@ import '../../../blocks/UploadList/UploadList';
 import '../../../blocks/CloudImageEditorActivity/CloudImageEditorActivity';
 import '../../../blocks/PluginActivityRenderer/PluginActivityRenderer';
 
-type BaseInitState = InstanceType<typeof LitSolutionBlock>['init$'];
-
-type FileUploaderInlineInitState = BaseInitState;
-
-export class FileUploaderInline extends LitSolutionBlock {
+export class FileUploaderInline extends SolutionChildBlock {
   public static override lazyPlugins = fileUploaderLazyPlugins;
 
+  // Type-only: feeds the JSX attribute typing (`ReflectAttributes` in
+  // `types/jsx.d.ts` reads `attributesMeta`). Kept on the ChildBlock port —
+  // the documented attribute surface, same as the merged `Config` port.
   public declare attributesMeta: {
     'ctx-name': string;
   };
@@ -30,27 +30,19 @@ export class FileUploaderInline extends LitSolutionBlock {
   @state()
   private _couldCancel = false;
 
-  public constructor() {
-    super();
-
-    this.init$ = {
-      ...this.init$,
-    } as FileUploaderInlineInitState;
-  }
-
   private _handleCancel = (): void => {
     if (this._couldHistoryBack) {
-      this.router.traverse('onBack');
+      this.bag.router.traverse('onBack');
       return;
     }
 
     if (this._couldShowList) {
-      this.router.setActivity(ACTIVITY_TYPES.UPLOAD_LIST);
+      this.bag.router.setActivity(ACTIVITY_TYPES.UPLOAD_LIST);
     }
   };
 
   private get _couldHistoryBack(): boolean {
-    const history = this.router.history;
+    const history = this.bag.router.history;
     if (history.length <= 1) {
       return false;
     }
@@ -58,14 +50,14 @@ export class FileUploaderInline extends LitSolutionBlock {
   }
 
   private get _couldShowList(): boolean {
-    const uploadList = this.$['*uploadList'] as unknown[] | undefined;
-    return this.cfg.showEmptyList || (Array.isArray(uploadList) && uploadList.length > 0);
+    const uploadList = this.bag.ctx.read('*uploadList') ?? [];
+    return this.uploader.config.get('showEmptyList') || (Array.isArray(uploadList) && uploadList.length > 0);
   }
 
-  public override initCallback(): void {
-    super.initCallback();
+  protected override controllerReady(ctrl: UploaderController): void {
+    super.controllerReady(ctrl);
 
-    this.telemetryManager.sendEvent({
+    this.bag.telemetryManager.sendEvent({
       eventType: InternalEventType.INIT_SOLUTION,
     });
 
@@ -73,24 +65,30 @@ export class FileUploaderInline extends LitSolutionBlock {
 
     // Inline renders every activity in place (no modal), so all navigation
     // targets the background slot; a completed flow returns to start-from.
-    this.router.navigationStrategy = () => 'background';
-    this.router.configure({ doneActivity: ACTIVITY_TYPES.START_FROM });
+    this.bag.router.navigationStrategy = () => 'background';
+    this.bag.router.configure({ doneActivity: ACTIVITY_TYPES.START_FROM });
 
     this.subActivity((val) => {
       if (!val) {
-        this.router.setActivity(initActivity);
+        this.bag.router.setActivity(initActivity);
       }
     });
 
-    this.sub('*uploadList', (list) => {
-      if (Array.isArray(list) && list.length > 0 && this.router.currentActivity === initActivity) {
-        this.router.setActivity(ACTIVITY_TYPES.UPLOAD_LIST);
-      }
-    });
+    this.trackSub(
+      this.bag.ctx.sub('*uploadList', (list) => {
+        if (list.length > 0 && this.bag.router.currentActivity === initActivity) {
+          this.bag.router.setActivity(ACTIVITY_TYPES.UPLOAD_LIST);
+        }
+      }),
+    );
 
     this.subRouter(() => {
       this._couldCancel = this._couldHistoryBack || this._couldShowList;
     });
+  }
+
+  protected override subscriptionsFor(ctrl: UploaderController) {
+    return [(listener: () => void) => ctrl.locale.subscribe(listener)];
   }
 
   public override render() {

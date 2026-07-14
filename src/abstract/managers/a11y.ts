@@ -1,5 +1,4 @@
 import { focusGroupKeyUX, hiddenKeyUX, jumpKeyUX, pressKeyUX, startKeyUX } from 'keyux';
-import type { LitBlock } from '../../lit/LitBlock';
 import type { ISharedInstance } from '../../lit/shared-instances';
 
 /**
@@ -93,7 +92,12 @@ export class A11y implements ISharedInstance {
     ]);
   }
 
-  public registerBlock(scope: LitBlock): void {
+  /**
+   * Only reaches into `scope` as a `Node` (forwarded to
+   * `ScopedMinimalWindow.registerScope`) — widened from `LitBlock` (v1) so
+   * v2 `ChildBlock`-based elements can register too, without a cast.
+   */
+  public registerBlock(scope: Node): void {
     if (this._destroyed) {
       return;
     }

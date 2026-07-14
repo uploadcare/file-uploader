@@ -17,6 +17,7 @@ export class SourceListController implements ReactiveController {
   private _rawSourceList: string[] = [];
   private _unsubscribePlugins?: () => void;
   private _unsubscribeConfig?: () => void;
+  private _unsubscribePluginManagerWhen?: () => void;
   private _ctx: PubSub<SharedState>;
   private _sharedInstancesBag: SharedInstancesBag;
   private _onSourcesChange: (sources: SourceButtonConfig[]) => void;
@@ -34,10 +35,19 @@ export class SourceListController implements ReactiveController {
       this._updateSources();
     });
 
-    const pluginManager = this._sharedInstancesBag.pluginManager;
-    if (pluginManager?.onPluginsChange) {
-      this._unsubscribePlugins = pluginManager.onPluginsChange(() => this._updateSources());
-    }
+    // `*pluginManager` is constructed by a v1 `LitBlock` (e.g. `<uc-drop-area>`)
+    // and isn't guaranteed to exist yet at hostConnected time — a `ChildBlock`-
+    // only composition (a ported solution root with no v1 block having
+    // connected yet) can adopt this controller before that registration lands.
+    // `bag.when` fires immediately if it's already there, else waits and fires
+    // once — re-run `_updateSources` either way so plugin-provided sources
+    // (e.g. camera) show up once the plugin manager becomes available.
+    this._unsubscribePluginManagerWhen = this._sharedInstancesBag.when('pluginManager', (pluginManager) => {
+      if (pluginManager.onPluginsChange) {
+        this._unsubscribePlugins = pluginManager.onPluginsChange(() => this._updateSources());
+      }
+      this._updateSources();
+    });
 
     this._updateSources();
   }
@@ -48,10 +58,13 @@ export class SourceListController implements ReactiveController {
 
     this._unsubscribeConfig?.();
     this._unsubscribeConfig = undefined;
+
+    this._unsubscribePluginManagerWhen?.();
+    this._unsubscribePluginManagerWhen = undefined;
   }
 
   private _updateSources(): void {
-    const pluginManager = this._sharedInstancesBag.pluginManager;
+    const pluginManager = this._sharedInstancesBag.pluginManagerOrNull;
     const pluginSources = pluginManager?.snapshot().sources ?? [];
     const pluginSourceById = new Map(pluginSources.map((source) => [source.id, source]));
 
