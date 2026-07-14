@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { UploadEventsController } from '@/abstract/controllers/UploadEventsController';
+import { localeStateKey } from '@/abstract/managers/LocaleManager';
 import { TelemetryManager } from '@/abstract/managers/TelemetryManager';
 import type { Config, UploadCtxProvider } from '@/index.js';
 import { PubSub } from '@/lit/PubSubCompat';
@@ -331,6 +332,103 @@ describe('instance lifecycle (attachUploaderScope idempotency across two LitUplo
     } finally {
       observeSpy.mockRestore();
     }
+  });
+});
+
+/**
+ * M9q pins (RED ahead of the seam fix). M9k/M9l moved six managers'
+ * *construction* onto `UploaderController`, but their ctx-scope KEY
+ * registration (`_addSharedContextInstance('*router', …)` etc.) plus
+ * `LocaleManager.activate` still live on `LitBlock.initCallback` only.
+ * `ensureUploaderCtx` (the `ChildBlock` self-bootstrap path, M9o) forces the
+ * controller into existence but registers NO instance keys — so a
+ * ChildBlock-only composition (no v1 block anywhere) has a controller with
+ * all six managers constructed, yet `bag.router`/`ctx.read('*router')`/etc.
+ * still throw "shared instance … not available", and the locale dictionary
+ * is never seeded (`LocaleManager.activate` never runs). These pins fail
+ * RED today and must go green once M9q registers the keys (+ runs
+ * `activate`) from the ctx-scope seam itself, not `LitBlock`.
+ */
+describe('instance lifecycle (M9q ChildBlock-only ctx-scope keys)', () => {
+  it('a ChildBlock-only ctx (no v1 block anywhere) resolves all six controller-owned ctx-scope keys after adoption', async () => {
+    const ctxName = getCtxName();
+    // `uc-copyright` is a pure-consumer ported `ChildBlock` — no `uc-config`,
+    // no solution tag, no `uc-drop-area`: nothing v1 in this composition.
+    page.render(<uc-copyright ctx-name={ctxName}></uc-copyright>);
+
+    await expect.element(page.getByText('Powered by Uploadcare', { exact: true })).toBeVisible();
+    await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(true);
+
+    const ctx = PubSub.getCtx<SharedState>(ctxName)!;
+    const controller = ctx.uploaderController();
+
+    // RED today: none of these keys were ever registered by anything in a
+    // v1-free composition — `ensureUploaderCtx` only forces the controller,
+    // it registers no `*`-keys, and no `LitBlock.initCallback` ran.
+    expect(ctx.has('*router')).toBe(true);
+    expect(ctx.has('*eventEmitter')).toBe(true);
+    expect(ctx.has('*localeManager')).toBe(true);
+    expect(ctx.has('*a11y')).toBe(true);
+    expect(ctx.has('*clipboard')).toBe(true);
+    expect(ctx.has('*telemetryManager')).toBe(true);
+
+    // Identity, not just presence: the re-exposed key must be the exact
+    // instance the controller itself owns (same recipe as the M9l
+    // identity-pin test above), not some re-shadowed duplicate.
+    expect(ctx.read('*router')).toBe(controller.router);
+    expect(ctx.read('*eventEmitter')).toBe(controller.eventEmitter);
+    expect(ctx.read('*localeManager')).toBe(controller.localeManager);
+    expect(ctx.read('*a11y')).toBe(controller.a11y);
+    expect(ctx.read('*clipboard')).toBe(controller.clipboard);
+    expect(ctx.read('*telemetryManager')).toBe(controller.telemetryManager);
+
+    // `l10n` resolves a real dictionary entry — proves `LocaleManager.
+    // activate` actually ran (seeded the `en` dictionary), not just that the
+    // manager instance exists. RED today: `activate` is only ever called
+    // from `LitBlock.initCallback`, which never runs here.
+    expect(ctx.read(localeStateKey('upload-file'))).toBe('Upload file');
+  });
+
+  it('the same ChildBlock-only ctx tears down cleanly once the block disconnects (M9o refcount, no double-destroy)', async () => {
+    const ctxName = getCtxName();
+    page.render(<uc-copyright ctx-name={ctxName}></uc-copyright>);
+    await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(true);
+
+    const errors: string[] = [];
+    const onError = (event: ErrorEvent) => {
+      errors.push(String(event.error?.message ?? event.message));
+      event.preventDefault();
+    };
+    window.addEventListener('error', onError);
+    try {
+      cleanup();
+      // The deferred (`setTimeout(0)`) consumer-refcount check needs a real
+      // macrotask flush before `isCtxUnreferenced` re-evaluates.
+      await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(false);
+    } finally {
+      window.removeEventListener('error', onError);
+    }
+    expect(errors).toEqual([]);
+  });
+
+  it('inert under v1: a normal composition is unchanged — one `*router` instance, identical to the controller’s', async () => {
+    const ctxName = getCtxName();
+    page.render(
+      <>
+        <uc-file-uploader-regular ctx-name={ctxName}></uc-file-uploader-regular>
+        <uc-config qualityInsights={false} ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
+        <uc-upload-ctx-provider ctx-name={ctxName}></uc-upload-ctx-provider>
+      </>,
+    );
+    await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(true);
+    const ctx = PubSub.getCtx<SharedState>(ctxName)!;
+    const controller = ctx.uploaderController();
+
+    expect(ctx.read('*router')).toBe(controller.router);
+    expect(ctx.read(localeStateKey('upload-file'))).toBe('Upload file');
+
+    cleanup();
+    await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(false);
   });
 });
 
