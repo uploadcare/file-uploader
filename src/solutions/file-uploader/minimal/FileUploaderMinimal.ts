@@ -53,8 +53,8 @@ export class FileUploaderMinimal extends SolutionChildBlock {
     // Background slot follows file state: the upload list once files exist,
     // otherwise the start-from trigger.
     this.trackSub(
-      this.bag.ctx.sub('*uploadList', (list: unknown) => {
-        const hasFiles = Array.isArray(list) && list.length > 0;
+      this.bag.ctx.sub('*uploadList', (list) => {
+        const hasFiles = list.length > 0;
         this.bag.router.setActivity(hasFiles ? ACTIVITY_TYPES.UPLOAD_LIST : ACTIVITY_TYPES.START_FROM);
       }),
     );
