@@ -107,7 +107,7 @@ describe('Config', () => {
   });
 
   describe('ctx-name reassignment on a live element', () => {
-    it('current v1 behavior: reassigning ctx-name on an already-initialized element updates the attribute/state but stays bound to the original ctx (SymbioteCompatMixin never re-initializes)', async () => {
+    it('M9p port behavior: reassigning ctx-name on an already-initialized element rebinds to the new ctx (ChildBlock re-adopts) and refcount-tears-down the abandoned ctx', async () => {
       cleanup();
       const ctxNameA = getCtxName();
       const ctxNameB = getCtxName();
@@ -124,19 +124,21 @@ describe('Config', () => {
 
       // The DOM attribute switched...
       expect(config.getAttribute('ctx-name')).toBe(ctxNameB);
-      // ...but `_symbioteFirstUpdated` gates `_performInitialization` to a
-      // single call per element lifetime: the shared PubSub binding never
-      // moves. Values keep reading/writing through the original ctx, and no
-      // second ctx is ever created for this reassignment.
-      //
-      // INTENDED CHANGE at the M9p port: `ChildBlock` re-adopts on ctx-name
-      // switch (M9o), so the ported `<uc-config>` WILL rebind to ctxNameB and
-      // (refcount-)tear down ctxNameA. The Task-2 port must UPDATE this test to
-      // the re-adopt behavior — not preserve the v1 quirk below (mirrors the
-      // M9o "gates forever" child-block pin that was likewise inverted).
+      // ...and — INTENDED CHANGE at the M9p port — `ChildBlock` re-adopts on
+      // ctx-name switch (M9o): the ported `<uc-config>` rebinds to ctxNameB
+      // (the new ctx now exists, seeded with the value carried over from the
+      // element's local property cache) and, once nothing else references it,
+      // the abandoned ctxNameA is refcount-torn-down (M9o). This inverts the
+      // v1 quirk above — `SymbioteCompatMixin` never re-initialized and the
+      // binding stayed on the original ctx forever.
       expect(config.pubkey).toBe('demopublickey');
-      expect(PubSub.hasCtx(ctxNameA)).toBe(true);
-      expect(PubSub.hasCtx(ctxNameB)).toBe(false);
+      await expect.poll(() => PubSub.hasCtx(ctxNameB)).toBe(true);
+      await expect.poll(() => PubSub.hasCtx(ctxNameA)).toBe(false);
+
+      // The value did move to the new ctx's `ConfigController` — not just the
+      // element's local cache — confirming reads/writes now go through ctxB.
+      const configApi = PubSub.getCtx(ctxNameB)!.uploaderController().config;
+      expect(configApi.get('pubkey')).toBe('demopublickey');
     });
   });
 
