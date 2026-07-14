@@ -75,8 +75,8 @@ export class FileUploaderInline extends SolutionChildBlock {
     });
 
     this.trackSub(
-      this.bag.ctx.sub('*uploadList', (list: unknown) => {
-        if (Array.isArray(list) && list.length > 0 && this.bag.router.currentActivity === initActivity) {
+      this.bag.ctx.sub('*uploadList', (list) => {
+        if (list.length > 0 && this.bag.router.currentActivity === initActivity) {
           this.bag.router.setActivity(ACTIVITY_TYPES.UPLOAD_LIST);
         }
       }),
