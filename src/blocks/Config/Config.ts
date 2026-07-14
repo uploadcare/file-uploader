@@ -90,7 +90,13 @@ export class Config extends ChildBlock {
    * Get the custom config definition for a key
    */
   private _getCustomConfigDefinition(key: string) {
-    const pluginManager = this.bag.pluginManager;
+    // Read null-tolerantly: `bag.pluginManager` throws when `*pluginManager`
+    // is absent (config-only / plugin-less ctx), and this helper is reachable
+    // with a stale `_customConfigKeys`/`_customAttrKeyMapping` — e.g. the
+    // MutationObserver forwards a custom attribute during a live `ctx-name`
+    // switch, before `attributeChangedCallback` reaches its own guard, or after
+    // a re-adoption into a ctx that has no plugin manager.
+    const pluginManager = this.bag.pluginManagerOrNull;
     if (!pluginManager) return undefined;
     return pluginManager.configRegistry.get(key);
   }
@@ -332,16 +338,24 @@ export class Config extends ChildBlock {
   }
 
   private _setupCustomConfigs(): void {
-    // Use when API to ensure pluginManager is available before setting up custom configs
-    this.bag.when('pluginManager', (pluginManager) => {
-      // Initial setup
-      this._processCustomConfigs(pluginManager);
-
-      // Subscribe to plugin changes to reload custom configs dynamically
-      this._pluginChangeUnsubscribe = pluginManager.onPluginsChange(() => {
+    // Use the `when` API to ensure pluginManager is available before setting up
+    // custom configs. When `*pluginManager` isn't present yet, `when` subscribes
+    // to the CURRENT ctx and returns a real unsubscriber — track it so a
+    // re-adoption (ctx-name switch) tears down the previous ctx's pending
+    // subscription instead of leaving it to fire against the wrong controller.
+    // (A `when` that resolves synchronously returns a no-op unsub; tracking it
+    // is harmless.)
+    this.trackSub(
+      this.bag.when('pluginManager', (pluginManager) => {
+        // Initial setup
         this._processCustomConfigs(pluginManager);
-      });
-    });
+
+        // Subscribe to plugin changes to reload custom configs dynamically
+        this._pluginChangeUnsubscribe = pluginManager.onPluginsChange(() => {
+          this._processCustomConfigs(pluginManager);
+        });
+      }),
+    );
   }
 
   private _setupMutationObserver(): void {
