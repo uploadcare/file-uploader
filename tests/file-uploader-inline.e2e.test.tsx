@@ -96,10 +96,10 @@ describe('File uploader inline — M9r solution-block safety net', () => {
 
       const el = page.getByTestId('uc-file-uploader-inline').query()! as FileUploaderInline;
 
-      expect(el.router.navigationStrategy(ACTIVITY_TYPES.UPLOAD_LIST)).toBe('background');
-      expect(el.router.navigationStrategy(ACTIVITY_TYPES.START_FROM)).toBe('background');
-      expect(el.router.navigationStrategy(ACTIVITY_TYPES.CAMERA)).toBe('background');
-      expect(el.router.navigationStrategy(ACTIVITY_TYPES.URL)).toBe('background');
+      expect((el as any).bag.router.navigationStrategy(ACTIVITY_TYPES.UPLOAD_LIST)).toBe('background');
+      expect((el as any).bag.router.navigationStrategy(ACTIVITY_TYPES.START_FROM)).toBe('background');
+      expect((el as any).bag.router.navigationStrategy(ACTIVITY_TYPES.CAMERA)).toBe('background');
+      expect((el as any).bag.router.navigationStrategy(ACTIVITY_TYPES.URL)).toBe('background');
     });
   });
 
