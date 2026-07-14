@@ -8,6 +8,7 @@ import { runAssertions } from './assertions';
 import './config.css';
 import { ChildBlock } from '../../lit/ChildBlock';
 import { createDebugPrinter } from '../../lit/createDebugPrinter';
+import { PubSub } from '../../lit/PubSubCompat';
 import { type ComputedPropertyControllers, computeProperty } from './computed-properties';
 import { initialConfig } from './initialConfig';
 import { normalizeConfigValue } from './normalizeConfigValue';
@@ -517,8 +518,22 @@ export class Config extends ChildBlock {
       // and handled on initialization.
       anyThis[builtInKey] = newVal;
     } else {
-      // Handle custom config attributes (registered by plugins)
-      // This runs asynchronously once pluginManager is available
+      // Handle custom config attributes (registered by plugins).
+      //
+      // `attributeChangedCallback` can fire before the ctx `this.bag` resolves
+      // against exists — during custom-element upgrade (no ctx yet), OR on a
+      // live `ctx-name` switch (still adopted to the OLD controller, but `bag`
+      // now targets the NEW `effectiveCtxName` whose ctx isn't created yet).
+      // In either case touching `this.bag` throws synchronously (`bag.when` →
+      // `_requireCtx` → "shared context is not initialized yet") and aborts
+      // init. Guard on the EXACT condition `_requireCtx` checks —
+      // `PubSub.getCtx(effectiveCtxName)` — not adoption state, and defer: the
+      // value is on the DOM attribute and `controllerReady` →
+      // `_setupCustomConfigs` → `_processCustomConfigs` reads pre-existing
+      // attribute values on adoption (matching v1's deferral).
+      if (!this.effectiveCtxName || !PubSub.getCtx(this.effectiveCtxName)) {
+        return;
+      }
       this.bag.when('pluginManager', (pluginManager) => {
         const currentAttrValue = this.getAttribute(name);
         if (currentAttrValue && currentAttrValue !== newVal) {
