@@ -116,10 +116,10 @@ describe('File uploader minimal — M9r solution-block safety net', () => {
 
       const el = page.getByTestId('uc-file-uploader-minimal').query()! as FileUploaderMinimal;
 
-      expect(el.router.navigationStrategy(ACTIVITY_TYPES.UPLOAD_LIST)).toBe('background');
-      expect(el.router.navigationStrategy(ACTIVITY_TYPES.START_FROM)).toBe('foreground');
-      expect(el.router.navigationStrategy(ACTIVITY_TYPES.CAMERA)).toBe('foreground');
-      expect(el.router.navigationStrategy(ACTIVITY_TYPES.URL)).toBe('foreground');
+      expect((el as any).bag.router.navigationStrategy(ACTIVITY_TYPES.UPLOAD_LIST)).toBe('background');
+      expect((el as any).bag.router.navigationStrategy(ACTIVITY_TYPES.START_FROM)).toBe('foreground');
+      expect((el as any).bag.router.navigationStrategy(ACTIVITY_TYPES.CAMERA)).toBe('foreground');
+      expect((el as any).bag.router.navigationStrategy(ACTIVITY_TYPES.URL)).toBe('foreground');
     });
   });
 

@@ -1,8 +1,9 @@
 import { html } from 'lit';
 import { state } from 'lit/decorators.js';
+import type { UploaderController } from '../../../abstract/controllers/UploaderController';
 import { InternalEventType } from '../../../blocks/UploadCtxProvider/EventEmitter';
 import { ACTIVITY_TYPES } from '../../../lit/activity-constants';
-import { LitSolutionBlock } from '../../../lit/LitSolutionBlock';
+import { SolutionChildBlock } from '../../../lit/SolutionChildBlock';
 import './index.css';
 import { fileUploaderLazyPlugins } from '../lazyPlugins.js';
 
@@ -15,15 +16,9 @@ import '../../../blocks/SourceList/SourceList';
 import '../../../blocks/CloudImageEditorActivity/CloudImageEditorActivity';
 import '../../../blocks/PluginActivityRenderer/PluginActivityRenderer';
 
-type BaseInitState = InstanceType<typeof LitSolutionBlock>['init$'];
-type FileUploaderMinimalInitState = BaseInitState;
-
-export class FileUploaderMinimal extends LitSolutionBlock {
+export class FileUploaderMinimal extends SolutionChildBlock {
   public static override lazyPlugins = fileUploaderLazyPlugins;
 
-  public declare attributesMeta: {
-    'ctx-name': string;
-  };
   public static override styleAttrs = [...super.styleAttrs, 'uc-file-uploader-minimal'];
 
   @state()
@@ -32,18 +27,10 @@ export class FileUploaderMinimal extends LitSolutionBlock {
   @state()
   private _buttonTextKey = 'choose-file';
 
-  public constructor() {
-    super();
+  protected override controllerReady(ctrl: UploaderController): void {
+    super.controllerReady(ctrl);
 
-    this.init$ = {
-      ...this.init$,
-    } as FileUploaderMinimalInitState;
-  }
-
-  public override initCallback(): void {
-    super.initCallback();
-
-    this.telemetryManager.sendEvent({
+    this.bag.telemetryManager.sendEvent({
       eventType: InternalEventType.INIT_SOLUTION,
     });
 
@@ -54,28 +41,30 @@ export class FileUploaderMinimal extends LitSolutionBlock {
     // and `<uc-upload-list>` light up via the background slot's `[active]`
     // attribute (no manual class toggling). A completed flow lands on the
     // upload list.
-    this.router.navigationStrategy = (to) => (to === ACTIVITY_TYPES.UPLOAD_LIST ? 'background' : 'foreground');
-    this.router.configure({ doneActivity: ACTIVITY_TYPES.UPLOAD_LIST });
+    this.bag.router.navigationStrategy = (to) => (to === ACTIVITY_TYPES.UPLOAD_LIST ? 'background' : 'foreground');
+    this.bag.router.configure({ doneActivity: ACTIVITY_TYPES.UPLOAD_LIST });
 
     // Background slot follows file state: the upload list once files exist,
     // otherwise the start-from trigger.
-    this.sub('*uploadList', (list: unknown) => {
-      const hasFiles = Array.isArray(list) && list.length > 0;
-      this.router.setActivity(hasFiles ? ACTIVITY_TYPES.UPLOAD_LIST : ACTIVITY_TYPES.START_FROM);
-    });
+    this.trackSub(
+      this.bag.ctx.sub('*uploadList', (list: unknown) => {
+        const hasFiles = Array.isArray(list) && list.length > 0;
+        this.bag.router.setActivity(hasFiles ? ACTIVITY_TYPES.UPLOAD_LIST : ACTIVITY_TYPES.START_FROM);
+      }),
+    );
 
     this.subActivity((val) => {
       if (val === ACTIVITY_TYPES.UPLOAD_LIST) {
-        this.router.closeModal();
+        this.bag.router.closeModal();
       }
       if (!val) {
-        this.router.setActivity(ACTIVITY_TYPES.START_FROM);
+        this.bag.router.setActivity(ACTIVITY_TYPES.START_FROM);
       }
     });
 
     this.subConfigValue('confirmUpload', (confirmUpload) => {
       if (confirmUpload !== false) {
-        this.cfg.confirmUpload = false;
+        this.uploader.config.set('confirmUpload', false);
       }
     });
 
@@ -103,6 +92,10 @@ export class FileUploaderMinimal extends LitSolutionBlock {
     });
   }
 
+  protected override subscriptionsFor(ctrl: UploaderController) {
+    return [(listener: () => void) => ctrl.locale.subscribe(listener)];
+  }
+
   public override render() {
     return html`
       ${super.render()}
@@ -124,7 +117,7 @@ export class FileUploaderMinimal extends LitSolutionBlock {
           <button
             type="button"
             class="uc-secondary-btn"
-            @click=${() => this.router.traverse('onCancel')}
+            @click=${() => this.bag.router.traverse('onCancel')}
           >${this.l10n('start-from-cancel')}</button>
         </uc-start-from>
       </uc-modal>
