@@ -1,3 +1,9 @@
+# [1.32.0](https://github.com/uploadcare/file-uploader/compare/v1.31.2...v1.32.0) (2026-07-13)
+
+
+### Features
+
+* **config:** add tags option for file uploads ([#998](https://github.com/uploadcare/file-uploader/issues/998)) ([586d5e0](https://github.com/uploadcare/file-uploader/commit/586d5e0332932088dd4734bfa6ec7585f4dbffd3)). See the [documentation](https://uploadcare.com/docs/file-uploader/options/#tags) for details.
 ## [1.31.2](https://github.com/uploadcare/file-uploader/compare/v1.31.1...v1.31.2) (2026-07-07)
 
 ### Internal features
