@@ -167,6 +167,51 @@ export const getSharedInstance = <TKey extends keyof SharedInstancesState, TRequ
   throw new Error(`Unexpected error: shared instance for key "${String(key)}" is not available`);
 };
 
+/**
+ * Ctx-scope equivalent of `LitBlock._addSharedContextInstance` (M9q Task 2).
+ *
+ * `_addSharedContextInstance` is a `LitBlock` instance method — it needs an
+ * element to call `this.add`/`this.has`/`this.$` on. `ensureUploaderCtx` (the
+ * `ChildBlock` self-bootstrap seam) has no element, only the ctx itself — but
+ * `PubSub`'s `add`/`has`/`read` are the exact same primitives `this.add`/
+ * `this.has`/`this.$[key]` write through to (see `ctx-lifecycle.ts`'s doc on
+ * `*sharedContextInstances` being ctx-scoped, not element-instance-scoped), so
+ * this helper reimplements the identical first-write-wins recipe directly
+ * against a `PubSub<SharedState>` ctx, with no element/bag required.
+ *
+ * Registering into the SAME `*sharedContextInstances` map is what makes this
+ * compose with teardown for free: `destroyCtx` (`ctx-lifecycle.ts`) already
+ * pub-nulls every entry in that map and skips `.destroy()` for
+ * `controllerOwnedInstanceKeys` members — it has no idea (and needs no idea)
+ * whether an entry was registered by a `LitBlock` or by this helper.
+ *
+ * First-write-wins (via the `instances.has(key)` check) also means calling
+ * this from `ensureUploaderCtx` on every ctx access, and later from a v1
+ * `LitBlock.initCallback` sharing the same ctx, is inert after the first
+ * call — both resolvers produce the exact same `controller.X` instance
+ * anyway, so which one "wins" is irrelevant.
+ */
+export function addCtxSharedInstance<TKey extends keyof SharedInstancesState>(
+  ctx: PubSub<SharedState>,
+  key: TKey,
+  resolver: (ctx: PubSub<SharedState>) => NonNullable<SharedInstancesState[TKey]>,
+): void {
+  const instancesKey = '*sharedContextInstances';
+  let instances: Map<string, ISharedInstance> | undefined = ctx.has(instancesKey) ? ctx.read(instancesKey) : undefined;
+  if (!instances) {
+    instances = new Map<string, ISharedInstance>();
+    ctx.add(instancesKey, instances, true);
+  }
+  if (instances.has(key)) {
+    return;
+  }
+  if (!ctx.has(key) || !ctx.read(key)) {
+    const instance = resolver(ctx);
+    ctx.add(key, instance, true);
+    instances.set(key, instance as ISharedInstance);
+  }
+}
+
 export const createSharedInstancesBag = (getCtx: () => PubSub<SharedState>) => {
   return {
     get ctx(): PubSub<SharedState> {
