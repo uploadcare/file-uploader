@@ -1,6 +1,7 @@
 import type { UploaderController, UploaderScopeDeps } from '../abstract/controllers/UploaderController';
 import { UploaderPublicApi } from '../abstract/UploaderPublicApi';
 import { buildUploaderScopeDeps } from './buildUploaderScopeDeps';
+import { ensurePluginManager } from './ensurePluginManager';
 import type { SharedInstancesBag } from './shared-instances';
 
 /**
@@ -48,4 +49,14 @@ export function ensureUploaderScope(
   if (!ctx.has('*uploadEvents')) {
     ctx.add('*uploadEvents', ctrl.uploadEvents, true);
   }
+
+  // Construct the ctx's `*pluginManager` if no v1 `LitBlock` in this
+  // composition already did (first-write-wins). Historically the plugin
+  // manager was built by `LitBlock.initCallback`; once every block in an
+  // uploader composition is a `ChildBlock` (the DropArea port removes the last
+  // `LitBlock`), nothing else would construct it, and lazy plugins / plugin
+  // sources would never load. It lives here — the uploader-present seam —
+  // because plugins are an uploader concern and `*publicApi` (the lazy
+  // `getUploaderApi`) is now registered above.
+  ensurePluginManager(bag);
 }
