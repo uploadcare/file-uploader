@@ -1,10 +1,10 @@
 import type { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
 import type { UploaderController } from '../../abstract/controllers/UploaderController';
-import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
-import { buildUploaderScopeDeps } from '../../lit/buildUploaderScopeDeps';
+import type { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { ChildBlock } from '../../lit/ChildBlock';
 import { createDebugPrinter } from '../../lit/createDebugPrinter';
 import { EventBridgeController } from '../../lit/EventBridgeController';
+import { ensureUploaderScope } from '../../lit/ensureUploaderScope';
 import { type EventPayload, EventType } from './EventEmitter';
 
 // biome-ignore lint/suspicious/noUnsafeDeclarationMerging: This is intentional interface merging, used to add event listener types
@@ -67,45 +67,20 @@ export class UploadCtxProvider extends ChildBlock {
    *
    * The `attachUploaderScope` deps come from the shared `buildUploaderScopeDeps`
    * (one source of truth with `LitUploaderBlock.initCallback`); only `debug`
-   * and `emit` are host-specific.
+   * and `emit` are host-specific. The guarded/idempotent body itself lives in
+   * `ensureUploaderScope` (`src/lit/ensureUploaderScope.ts`) — a free-function
+   * seam shared with the ported `<uc-drop-area>`, which needs the identical
+   * synchronous-attach guarantee.
    */
   private _attachUploaderScopeIfNeeded(ctrl: UploaderController): void {
-    const ctx = this.bag.ctx;
-
-    if (!ctx.has('*uploadCollection')) {
-      ctx.add('*uploadCollection', ctrl.collection, true);
-    }
-
-    if (!ctx.has('*publicApi')) {
-      const api = new UploaderPublicApi(this.bag);
-      ctrl.setApi(api);
-      ctx.add('*publicApi', api, true);
-    }
-
-    ctrl.attachUploaderScope(
-      buildUploaderScopeDeps(
-        this.bag,
-        (...args) => this._debugPrint(...args),
-        // Same contract as `ChildBlock.emit`: EventEmitter dispatch + telemetry
-        // mirror, guarded for teardown races.
-        (type, payload, options) => this.emit(type, payload, options),
-      ),
+    ensureUploaderScope(
+      this.bag,
+      ctrl,
+      (...args) => this._debugPrint(...args),
+      // Same contract as `ChildBlock.emit`: EventEmitter dispatch + telemetry
+      // mirror, guarded for teardown races.
+      (type, payload, options) => this.emit(type, payload, options),
     );
-
-    // Re-expose the controller-owned instances under their v1 shared-instance
-    // keys (readers like `FileItem.bag.uploadController` expect them there).
-    if (!ctx.has('*secureUploadsManager')) {
-      ctx.add('*secureUploadsManager', ctrl.secureUploadsManager, true);
-    }
-    if (!ctx.has('*uploadController')) {
-      ctx.add('*uploadController', ctrl.uploadController, true);
-    }
-    if (!ctx.has('*validationManager')) {
-      ctx.add('*validationManager', ctrl.validationManager, true);
-    }
-    if (!ctx.has('*uploadEvents')) {
-      ctx.add('*uploadEvents', ctrl.uploadEvents, true);
-    }
   }
 
   /**
