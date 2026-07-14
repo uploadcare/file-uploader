@@ -192,11 +192,16 @@ describe('File uploader regular — M9r solution-block safety net', () => {
       await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(true);
 
       const el = page.getByTestId('uc-file-uploader-regular').query()! as FileUploaderRegular;
+      // Post-ChildBlock-port accessor: `router` is no longer a public instance
+      // getter (v1 `LitBlock` surface) — reach it via the protected `bag`,
+      // same pattern as `tests/blocks/activity-child-block.e2e.test.tsx`'s
+      // `routerOf`.
+      const router = (el as any).bag.router;
 
-      expect(el.router.navigationStrategy(ACTIVITY_TYPES.UPLOAD_LIST)).toBe('foreground');
-      expect(el.router.navigationStrategy(ACTIVITY_TYPES.START_FROM)).toBe('foreground');
-      expect(el.router.navigationStrategy(ACTIVITY_TYPES.CAMERA)).toBe('foreground');
-      expect(el.router.navigationStrategy(ACTIVITY_TYPES.URL)).toBe('foreground');
+      expect(router.navigationStrategy(ACTIVITY_TYPES.UPLOAD_LIST)).toBe('foreground');
+      expect(router.navigationStrategy(ACTIVITY_TYPES.START_FROM)).toBe('foreground');
+      expect(router.navigationStrategy(ACTIVITY_TYPES.CAMERA)).toBe('foreground');
+      expect(router.navigationStrategy(ACTIVITY_TYPES.URL)).toBe('foreground');
     });
   });
 
