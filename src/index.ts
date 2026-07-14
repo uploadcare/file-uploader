@@ -14,7 +14,6 @@ export { toKebabCase } from './utils/toKebabCase';
 
 // Abstract:
 export { LitBlock as Block } from './lit/LitBlock';
-export { LitSolutionBlock as SolutionBlock } from './lit/LitSolutionBlock';
 export { LitUploaderBlock as UploaderBlock } from './lit/LitUploaderBlock';
 export { LitActivityBlock as ActivityBlock } from './lit/LitActivityBlock';
 
