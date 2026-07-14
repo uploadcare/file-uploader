@@ -187,7 +187,11 @@ describe('Config', () => {
     it('an attribute set on a freshly-created, unconnected uc-config (before any ctx/controller exists) is applied once the element connects and initializes', async () => {
       cleanup();
       const ctxName = getCtxName();
-      const el = document.createElement('uc-config') as Config;
+      // `document.createElement('uc-config')` resolves to the src `Config`
+      // class, while the ambient `Config` (from `../types/jsx`) is the built
+      // `dist` declaration; a direct cast trips TS2352 on their separate
+      // private `_debugPrint`. Bridge through `unknown` (test-only boundary).
+      const el = document.createElement('uc-config') as unknown as Config;
 
       // Set the attribute before the element is ever connected: no ctx, no
       // PubSub map, no controller exists for `ctxName` at this point.
