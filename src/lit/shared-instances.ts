@@ -286,6 +286,17 @@ export const createSharedInstancesBag = (getCtx: () => PubSub<SharedState>) => {
         return null;
       }
     },
+    get pluginManagerOrNull(): PluginController | null {
+      // `*pluginManager` is absent in a config-only / plugin-less ctx (it is
+      // constructed by `LitBlock`, and never registered by the ChildBlock
+      // self-bootstrap seam). Read it without throwing for blocks that touch
+      // custom-config paths but may run outside an uploader/plugin scope.
+      try {
+        return getSharedInstance(getCtx(), '*pluginManager', false) ?? null;
+      } catch {
+        return null;
+      }
+    },
 
     when<TName extends InstanceName>(
       name: TName,
