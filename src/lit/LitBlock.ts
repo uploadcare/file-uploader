@@ -12,20 +12,19 @@ import { resolveSecureDeliveryProxyUrl } from '../abstract/secureDeliveryProxyUr
 import { sharedConfigKey } from '../abstract/sharedConfigKey';
 import { initialConfig } from '../blocks/Config/initialConfig';
 import type { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter';
-import { PubSub } from '../lit/PubSubCompat';
 import type { ConfigType } from '../types';
 import { getLocaleDirection } from '../utils/getLocaleDirection';
 import { WindowHeightTracker } from '../utils/WindowHeightTracker';
 import type { ActivityId } from './activity-constants';
 import { CssDataMixin } from './CssDataMixin';
 import { createDebugPrinter } from './createDebugPrinter';
+import { destroyCtx, isCtxUnreferenced } from './ctx-lifecycle';
 import { LightDomMixin } from './LightDomMixin';
 import { createL10n } from './l10n';
 import { RegisterableElementMixin } from './RegisterableElementMixin';
 import type { SharedState } from './SharedState';
 import { SymbioteMixin } from './SymbioteCompatMixin';
 import {
-  controllerOwnedInstanceKeys,
   createSharedInstancesBag,
   type ISharedInstance,
   type SharedInstancesBag,
@@ -259,24 +258,32 @@ export class LitBlock extends LitBlockBase {
 
     const blocksRegistry = this.blocksRegistry;
     blocksRegistry?.delete(this);
+    const ctxName = this.ctxName;
 
     if (blocksRegistry?.size === 0) {
       setTimeout(() => {
-        if (this.isConnected || blocksRegistry?.size > 0) {
+        if (this.isConnected || blocksRegistry.size > 0) {
+          return;
+        }
+        // A v2 `ChildBlock` may still be watching this ctx via
+        // `UploaderRegistry.whenAvailable` even though `*blocksRegistry` (the
+        // v1 side) is now empty — the unified refcount predicate (M9o) checks
+        // both before tearing down.
+        if (!isCtxUnreferenced(ctxName)) {
           return;
         }
         // Destroy global context after all blocks are destroyed and all callbacks are run
-        this.destroyCtxCallback();
+        this.destroyCtxCallback(ctxName);
       }, 0);
     }
   }
 
   /**
-   * Called when the last block is removed from the context. Note that inheritors must run their callback before that.
+   * Called when the ctx becomes unreferenced by both the v1 and v2 sides.
+   * Note that inheritors must run their callback before that.
    */
-  private destroyCtxCallback(): void {
-    this._destroySharedContextInstances();
-    PubSub.deleteCtx(this.ctxName);
+  private destroyCtxCallback(ctxName: string): void {
+    destroyCtx(ctxName);
   }
 
   private _getSharedContextInstances(): Map<string, ISharedInstance> {
@@ -302,21 +309,6 @@ export class LitBlock extends LitBlockBase {
       instances.set(key, instance as ISharedInstance);
       return;
     }
-  }
-
-  private _destroySharedContextInstances(): void {
-    const instances = this._getSharedContextInstances();
-    for (const [key, instance] of instances.entries()) {
-      // Controller-owned instances (M9k) are destroyed by
-      // `UploaderController.destroy()`, which `PubSub.deleteCtx` triggers right
-      // after this loop — destroying them here too would tear them down while
-      // the ctx is still up. Still pub-null them below, same as every other key.
-      if (!controllerOwnedInstanceKeys.has(key as keyof SharedState)) {
-        instance?.destroy?.();
-      }
-      this.pub(key as keyof SharedState, null as never);
-    }
-    instances.clear();
   }
 
   protected _getSharedContextInstance<TKey extends keyof SharedState, TRequired extends boolean = true>(

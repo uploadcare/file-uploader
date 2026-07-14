@@ -7,6 +7,8 @@ import { UploaderRegistry } from '../abstract/UploaderRegistry';
 import type { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter';
 import type { ConfigType } from '../types';
 import type { ActivityId } from './activity-constants';
+import { destroyCtx, isCtxUnreferenced } from './ctx-lifecycle';
+import { ensureUploaderCtx } from './ensureUploaderCtx';
 import { LightDomMixin } from './LightDomMixin';
 import { createL10n } from './l10n';
 import { PubSub } from './PubSubCompat';
@@ -174,11 +176,69 @@ export abstract class ChildBlock extends ChildBlockBase {
   }
 
   public override disconnectedCallback(): void {
+    // Capture before releasing anything below — `effectiveCtxName` itself
+    // doesn't depend on controller/watch state, but grabbing it up front
+    // means the deferred check below is unambiguous about which ctx it's
+    // asking about, even if the attribute changes before the timeout fires
+    // (that reconnect path re-watches a possibly different name; this
+    // deferred check is only about the ctx this disconnect was leaving).
+    const ctxName = this.effectiveCtxName;
     this._registryUnsub?.();
     this._registryUnsub = undefined;
     this._watchedCtxName = undefined;
     this._releaseController();
     super.disconnectedCallback();
+
+    if (!ctxName) {
+      return;
+    }
+    // Unified consumer-refcount teardown (M9o Task 3): this block was one of
+    // possibly several things keeping the ctx alive (v1 `*blocksRegistry`
+    // members, other `ChildBlock`s watching via `UploaderRegistry`). Defer
+    // the check exactly like `LitBlock.disconnectedCallback` — same
+    // `setTimeout(0)` + reconnect-guard shape — so a same-tick disconnect ->
+    // reconnect (e.g. a DOM move) doesn't tear down a ctx this block is
+    // about to re-watch.
+    setTimeout(() => {
+      if (this.isConnected) {
+        return;
+      }
+      this._teardownCtxIfUnreferenced(ctxName);
+    }, 0);
+  }
+
+  /**
+   * Shared tail of both deferred teardown checks below (disconnect and
+   * ctx-name switch): re-test `isCtxUnreferenced` at fire time — not at
+   * schedule time — since another consumer may have shown up in between, and
+   * only then run the single `destroyCtx` path.
+   */
+  private _teardownCtxIfUnreferenced(ctxName: string): void {
+    if (!isCtxUnreferenced(ctxName)) {
+      return;
+    }
+    destroyCtx(ctxName);
+  }
+
+  /**
+   * Release-on-switch trigger (mirrors the disconnect trigger above): a
+   * `ChildBlock` can self-bootstrap a ctx it's the only consumer of
+   * (`ensureUploaderCtx` in `_watchRegistry`). If it's then reassigned to a
+   * different `ctx-name` while staying connected, nothing else schedules a
+   * teardown check for the ctx it just abandoned — it would otherwise leak
+   * (controller + managers kept alive by a ctx nothing reads from anymore).
+   * Same `setTimeout(0)` + guard shape as the disconnect path, except the
+   * guard re-checks `_watchedCtxName` (rather than `isConnected`, which stays
+   * true across a same-tick switch) so a switch back to `ctxName` before the
+   * timeout fires — analogous to a disconnect/reconnect — cancels the check.
+   */
+  private _scheduleAbandonedCtxTeardown(ctxName: string): void {
+    setTimeout(() => {
+      if (this._watchedCtxName === ctxName) {
+        return;
+      }
+      this._teardownCtxIfUnreferenced(ctxName);
+    }, 0);
   }
 
   protected override shouldUpdate(changed: PropertyValues<this>): boolean {
@@ -199,6 +259,7 @@ export abstract class ChildBlock extends ChildBlockBase {
     if (!this.isConnected || ctxName === this._watchedCtxName) {
       return;
     }
+    const oldCtxName = this._watchedCtxName;
     this._registryUnsub?.();
     this._registryUnsub = undefined;
     this._watchedCtxName = ctxName;
@@ -206,9 +267,25 @@ export abstract class ChildBlock extends ChildBlockBase {
     // right away so the render gate closes instead of serving the previous
     // scope's data while the new controller is still pending.
     this._releaseController();
+    if (oldCtxName) {
+      // This block may have been the ctx's only consumer (self-bootstrapped,
+      // no v1 block ever attached) — check whether it's now orphaned.
+      this._scheduleAbandonedCtxTeardown(oldCtxName);
+    }
     if (!ctxName) {
       return;
     }
+    // Self-bootstrap: a ChildBlock is a pure consumer, so with no v1 block
+    // anywhere in the composition the ctx (and its controller) would never
+    // come into existence and `whenAvailable` below would wait forever. Call
+    // this unconditionally — a ctx map can exist without a controller (e.g. a
+    // bare `PubSub.registerCtx`), and `whenAvailable` won't fire until a
+    // controller is registered, so guarding on `PubSub.getCtx(ctxName)` alone
+    // could still hang. `ensureUploaderCtx` is idempotent and (M9n) forces the
+    // controller into existence on every path; if a v1 block or a sibling
+    // ChildBlock already created the ctx (and its controller), this is a
+    // no-op — the existing creator (and its seed) wins, unchanged.
+    ensureUploaderCtx(ctxName);
     this._registryUnsub = UploaderRegistry.whenAvailable(ctxName, (ctrl) => {
       if (ctrl) {
         this._adoptController(ctrl);
