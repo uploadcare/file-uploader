@@ -1,12 +1,13 @@
 // @ts-check
+import type { UploaderController } from '../../abstract/controllers/UploaderController';
 import type { CustomConfig } from '../../abstract/customConfigOptions';
 import type { PluginController } from '../../abstract/managers/plugin';
-import { sharedConfigKey } from '../../abstract/sharedConfigKey';
 import type { ConfigComplexType, ConfigPlainType, ConfigType } from '../../types';
 import { toKebabCase } from '../../utils/toKebabCase';
 import { runAssertions } from './assertions';
 import './config.css';
-import { LitBlock } from '../../lit/LitBlock';
+import { ChildBlock } from '../../lit/ChildBlock';
+import { createDebugPrinter } from '../../lit/createDebugPrinter';
 import { type ComputedPropertyControllers, computeProperty } from './computed-properties';
 import { initialConfig } from './initialConfig';
 import { normalizeConfigValue } from './normalizeConfigValue';
@@ -49,17 +50,13 @@ const builtinAttrKeyMapping: Record<string, keyof ConfigPlainType> = {
 const getLocalPropName = (key: string) => `__${key}`;
 
 // biome-ignore lint/suspicious/noUnsafeDeclarationMerging: This is intentional interface merging, used to add configuration setters/getters
-export class Config extends LitBlock {
+export class Config extends ChildBlock {
   public declare attributesMeta: Partial<ConfigPlainType> & {
     'ctx-name': string;
   };
 
-  public override init$ = {
-    ...this.init$,
-    ...Object.fromEntries(
-      Object.entries(initialConfig).map(([key, value]) => [sharedConfigKey(key as keyof ConfigType), value]),
-    ),
-  } as unknown as LitBlock['init$'] & ConfigType;
+  /** Same contract as v1 `LitBlock.debugPrint` (`createDebugPrinter`), scoped to this ctx. */
+  private _debugPrint = createDebugPrinter(() => this.bag.ctx, this.constructor.name);
 
   private _computationControllers: ComputedPropertyControllers = new Map();
   private _pluginChangeUnsubscribe?: () => void;
@@ -92,7 +89,7 @@ export class Config extends LitBlock {
    * Get the custom config definition for a key
    */
   private _getCustomConfigDefinition(key: string) {
-    const pluginManager = this._sharedInstancesBag.pluginManager;
+    const pluginManager = this.bag.pluginManager;
     if (!pluginManager) return undefined;
     return pluginManager.configRegistry.get(key);
   }
@@ -131,16 +128,26 @@ export class Config extends LitBlock {
   }
 
   private _flushValueToState(key: string, value: unknown) {
-    const stateKey = sharedConfigKey(key as keyof ConfigType);
-    if (this.$[stateKey] !== value) {
+    const isCustom = this._isCustomConfig(key);
+    const configKey = key as keyof ConfigType;
+    const currentValue = isCustom ? this.uploader.config.getCustom(key) : this.uploader.config.get(configKey);
+
+    if (currentValue !== value) {
       if (typeof value === 'undefined' || value === null) {
         // For built-in configs, use initial value; for custom configs, keep undefined
-        const defaultValue = initialConfig[key as keyof ConfigType];
-        // @ts-expect-error
-        this.$[stateKey] = defaultValue !== undefined ? defaultValue : value;
+        const defaultValue = initialConfig[configKey];
+        const nextValue = defaultValue !== undefined ? defaultValue : value;
+        if (isCustom) {
+          this.uploader.config.setCustom(key, nextValue);
+        } else {
+          this.uploader.config.set(configKey, nextValue as ConfigType[typeof configKey]);
+        }
       } else {
-        // @ts-expect-error
-        this.$[stateKey] = value;
+        if (isCustom) {
+          this.uploader.config.setCustom(key, value);
+        } else {
+          this.uploader.config.set(configKey, value as ConfigType[typeof configKey]);
+        }
       }
     }
   }
@@ -177,22 +184,27 @@ export class Config extends LitBlock {
     this._flushValueToAttribute(key, normalizedValue);
     this._flushValueToState(key, normalizedValue);
 
-    this.debugPrint(`"${key}"`, normalizedValue);
+    this._debugPrint(`"${key}"`, normalizedValue);
 
     // Only run assertions for built-in configs
     if (!this._isCustomConfig(key)) {
-      runAssertions(this.cfg);
+      runAssertions(this.uploader.config.values);
     }
   }
 
   private _getValue(key: string) {
     const anyThis = this as any;
     const localPropName = getLocalPropName(key);
-    return anyThis[localPropName] ?? this.$[sharedConfigKey(key as keyof ConfigType)];
+    return (
+      anyThis[localPropName] ??
+      (this._isCustomConfig(key)
+        ? this.uploader.config.getCustom(key)
+        : this.uploader.config.get(key as keyof ConfigType))
+    );
   }
 
   private _assertSameValueDifferentReference(key: string, previousValue: unknown, nextValue: unknown) {
-    if (this.cfg.debug) {
+    if (this.uploader.config.values.debug) {
       if (
         nextValue !== previousValue &&
         typeof nextValue === 'object' &&
@@ -227,9 +239,6 @@ export class Config extends LitBlock {
     }
 
     for (const [name, definition] of customConfigs) {
-      const configKey = name as keyof CustomConfig;
-      const stateKey = sharedConfigKey(configKey as keyof ConfigType);
-
       // Build attribute name mappings (kebab-case and lowercase)
       // Add to mapping unless attribute is explicitly disabled (default is true)
       if (definition.attribute) {
@@ -268,10 +277,12 @@ export class Config extends LitBlock {
         }
       }
 
-      // Set initial value in state if not already set
-      if (!this.sharedCtx.has(stateKey)) {
-        this.sharedCtx.add(stateKey, definition.defaultValue);
-      }
+      // No separate state seeding here: `buildPluginApi`'s `registerConfig`
+      // already seeded this key on the ctx's `ConfigController` (via
+      // `ConfigController.register`) at plugin-setup time, before this
+      // definition could ever appear in `configRegistry.getAll()`. The
+      // registry lookup below is used only for adapter metadata (attribute
+      // mapping, `fromAttribute`/`normalize`), not to re-seed state.
 
       // Create property accessor (getter/setter) if not already defined
       const descriptor = Object.getOwnPropertyDescriptor(this, name);
@@ -292,27 +303,36 @@ export class Config extends LitBlock {
 
       // Subscribe to state changes (only if not already subscribed)
       if (!this._customConfigSubscriptions.has(name)) {
-        const unsub = this.sub(
-          stateKey,
-          (value) => {
+        // Manual per-key dedup over the coarse `ConfigController.subscribe`
+        // notification — same contract as v1's `this.sub(stateKey, cb, false)`
+        // (init=false: no immediate call, only on subsequent changes).
+        let lastValue = this.uploader.config.getCustom(name);
+        const unsub = this.uploader.config.subscribe(() => {
+          const nextValue = this.uploader.config.getCustom(name);
+          if (!Object.is(nextValue, lastValue)) {
+            lastValue = nextValue;
             // Use _setValue for consistent handling (matches built-in config pattern)
             // The early return guard in _setValue prevents circular updates
-            this._setValue(name, value);
-          },
-          false,
-        );
+            this._setValue(name, nextValue);
+          }
+        });
         this._customConfigSubscriptions.set(name, unsub);
+        this.trackSub(unsub);
       }
 
       if (hasPreExistingValue) {
         this._setValue(name, preExistingValue);
+        // Same re-adoption hazard as the built-in `allConfigKeys` loop above:
+        // force the flush through in case `_setValue`'s local-cache dedup
+        // no-op'd against a value already cached from a previous ctx.
+        this._flushValueToState(name, this._getValue(name));
       }
     }
   }
 
   private _setupCustomConfigs(): void {
     // Use when API to ensure pluginManager is available before setting up custom configs
-    this._sharedInstancesBag.when('pluginManager', (pluginManager) => {
+    this.bag.when('pluginManager', (pluginManager) => {
       // Initial setup
       this._processCustomConfigs(pluginManager);
 
@@ -361,26 +381,56 @@ export class Config extends LitBlock {
     });
   }
 
-  public override initCallback(): void {
-    super.initCallback();
+  /**
+   * Fires on every controller adoption — the initial one and any re-adoption
+   * (ctx-name switch, or ctx death + re-adopt on a v1-managed ctx). All
+   * subscriptions below route through `trackSub` (or the manual
+   * `ConfigController.subscribe` + dedup, tracked the same way) so a
+   * re-adoption tears the previous cycle's subscriptions down instead of
+   * stacking a second set on top. The plugin-change listener and the
+   * MutationObserver are host/DOM-level and not covered by `trackSub` — see
+   * the teardown-before-resubscribe below and the idempotent guard,
+   * respectively.
+   */
+  protected override controllerReady(_ctrl: UploaderController): void {
     const anyThis = this as any;
 
-    // Setup custom configs first
+    // Setup custom configs first. Tear down the previous cycle's
+    // plugin-change subscription before resubscribing — otherwise a
+    // re-adoption would stack a second `onPluginsChange` listener on top of
+    // one still bound to the previously-adopted controller's plugin manager
+    // (mirrors `UploadCtxProvider`'s `EventBridgeController` teardown-first
+    // pattern for the same re-adoption hazard).
+    if (this._pluginChangeUnsubscribe) {
+      this._pluginChangeUnsubscribe();
+      this._pluginChangeUnsubscribe = undefined;
+    }
     this._setupCustomConfigs();
 
-    // Setup MutationObserver to detect dynamic attribute changes
-    this._setupMutationObserver();
+    // Setup MutationObserver to detect dynamic attribute changes. This
+    // observes the DOM node itself, not the controller/ctx, so it must only
+    // be created once per element lifetime — re-adoption must not stack a
+    // second observer on the same node.
+    if (!this._mutationObserver) {
+      this._setupMutationObserver();
+    }
 
     // Subscribe to the state changes and update the local properties and attributes.
     // Initial callback call is disabled to prevent the initial value to be set here.
     // Initial value will be set below, skipping the default values.
+    // `trackSub` (not `subConfigValue`, which fires init=true) preserves the
+    // manual per-key dedup over the coarse `ConfigController.subscribe`
+    // notification, and ties teardown to controller release/re-adoption.
     for (const key of plainConfigKeys) {
-      this.sub(
-        sharedConfigKey(key),
-        (value) => {
-          this._setValue(key, value);
-        },
-        false,
+      let lastValue = this.uploader.config.get(key);
+      this.trackSub(
+        this.uploader.config.subscribe(() => {
+          const nextValue = this.uploader.config.get(key);
+          if (!Object.is(nextValue, lastValue)) {
+            lastValue = nextValue;
+            this._setValue(key, nextValue);
+          }
+        }),
       );
     }
 
@@ -388,9 +438,17 @@ export class Config extends LitBlock {
       // Flush the initial value to the state.
       // Initial value is taken from the DOM property if it was set before the element was initialized.
       // If no DOM property was set, the initial value is taken from the initialConfig.
-      const initialValue = anyThis[key] ?? this.$[sharedConfigKey(key)];
+      const initialValue = anyThis[key] ?? this.uploader.config.get(key);
       if (initialValue !== initialConfig[key]) {
         this._setValue(key, initialValue);
+        // `_setValue`'s no-op guard (skip when the local property cache
+        // already equals the normalized value) exists to avoid redundant
+        // local writes — it must not also skip seeding a *freshly-adopted*
+        // controller's state on re-adoption (ctx-name switch), whose
+        // `ConfigController` starts from `initialConfig` regardless of what
+        // this element's local cache already holds. Force the flush using
+        // the now-current (possibly already-cached) normalized value.
+        this._flushValueToState(key, anyThis[getLocalPropName(key)]);
       }
 
       // Define DOM property setters and getters
@@ -419,8 +477,27 @@ export class Config extends LitBlock {
     };
 
     for (const key of allConfigKeys) {
-      this.sub(sharedConfigKey(key), () => runComputeProperty(key));
+      this.subConfigValue(key, () => runComputeProperty(key));
     }
+  }
+
+  /**
+   * Release counterpart of `controllerReady` (disconnect, or a scope switch
+   * that drops the controller ahead of a re-adopt). Tears down the
+   * plugin-change subscription (idempotent — already-cleared is a no-op) and
+   * clears the custom-config bookkeeping so a subsequent `controllerReady`
+   * (re-adoption onto a different ctx) starts subscribing fresh instead of
+   * skipping names it thinks are already subscribed on a now-defunct
+   * controller's `ConfigController`. The `trackSub`-registered subscriptions
+   * themselves are already torn down by `ChildBlock._releaseController`
+   * before this hook runs.
+   */
+  protected override controllerReleased(): void {
+    if (this._pluginChangeUnsubscribe) {
+      this._pluginChangeUnsubscribe();
+      this._pluginChangeUnsubscribe = undefined;
+    }
+    this._customConfigSubscriptions.clear();
   }
 
   public override attributeChangedCallback(name: string, oldVal: string, newVal: string) {
@@ -433,7 +510,7 @@ export class Config extends LitBlock {
 
     // Handle built-in config attributes
     if (builtInKey) {
-      // attributeChangedCallback could be called before the initCallback
+      // attributeChangedCallback could be called before the controller is adopted
       // so we set the DOM property instead of calling this._setValue.
       // If the block was initialized, the value will be handled by the setter.
       // If the block was not initialized, the value will be set to the DOM property
@@ -442,7 +519,7 @@ export class Config extends LitBlock {
     } else {
       // Handle custom config attributes (registered by plugins)
       // This runs asynchronously once pluginManager is available
-      this._sharedInstancesBag.when('pluginManager', (pluginManager) => {
+      this.bag.when('pluginManager', (pluginManager) => {
         const currentAttrValue = this.getAttribute(name);
         if (currentAttrValue && currentAttrValue !== newVal) {
           return;
@@ -463,7 +540,8 @@ export class Config extends LitBlock {
   public override disconnectedCallback(): void {
     super.disconnectedCallback();
 
-    // Clean up plugin change subscription
+    // Clean up plugin change subscription (already cleared in most cases by
+    // `controllerReleased`, above — this is a defensive no-op then).
     if (this._pluginChangeUnsubscribe) {
       this._pluginChangeUnsubscribe();
       this._pluginChangeUnsubscribe = undefined;
