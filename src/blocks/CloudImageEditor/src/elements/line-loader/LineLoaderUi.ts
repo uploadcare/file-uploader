@@ -1,10 +1,16 @@
-import type { PropertyValues } from 'lit';
-import { html } from 'lit';
+import { html, LitElement, type PropertyValues } from 'lit';
 import { property } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
-import { LitBlock } from '../../../../../lit/LitBlock';
+import { LightDomMixin } from '../../../../../lit/LightDomMixin';
+import { RegisterableElementMixin } from '../../../../../lit/RegisterableElementMixin';
 
-export class LineLoaderUi extends LitBlock {
+// Pure presentational leaf: no editor-state/l10n/ctx dependency, so it needs
+// neither `ChildBlock` nor `EditorBlock` — just the two structural mixins
+// (light-DOM rendering + `reg()` registration), same base shape as
+// `ChildBlockBase`/`EditorBlockBase`.
+const LineLoaderUiBase = RegisterableElementMixin(LightDomMixin(LitElement));
+
+export class LineLoaderUi extends LineLoaderUiBase {
   @property({ type: Boolean, reflect: true })
   public active = false;
 
