@@ -1,9 +1,16 @@
-import { html, type PropertyValues } from 'lit';
+import { html, LitElement, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
-import { LitBlock } from '../../../../../lit/LitBlock';
+import { LightDomMixin } from '../../../../../lit/LightDomMixin';
+import { RegisterableElementMixin } from '../../../../../lit/RegisterableElementMixin';
 
-export class SliderUi extends LitBlock {
+// Pure presentational leaf: no editor-state/l10n/ctx dependency, so it needs
+// neither `ChildBlock` nor `EditorBlock` — just the two structural mixins
+// (light-DOM rendering + `reg()` registration), same base shape as
+// `ChildBlockBase`/`EditorBlockBase`.
+const SliderUiBase = RegisterableElementMixin(LightDomMixin(LitElement));
+
+export class SliderUi extends SliderUiBase {
   private _observer?: ResizeObserver;
   private _thumbSize = 0;
   private _zeroDotEl?: HTMLDivElement;
