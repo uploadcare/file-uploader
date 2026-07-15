@@ -118,6 +118,9 @@ export class CloudImageEditorController {
    * itself notify subscribers — callers that want descendants to re-render
    * on a services swap (e.g. a locale/config change) should follow up with
    * `notify()`.
+   *
+   * Replaces the whole set (unlike `setHandlers`, which merges) — `EditorServices`
+   * is a complete, non-partial interface, so a full object is always required.
    */
   public setServices(services: EditorServices): void {
     this._services = services;
