@@ -1,8 +1,7 @@
 import type { PropertyValues, TemplateResult } from 'lit';
 import { html } from 'lit';
-import { state } from 'lit/decorators.js';
+import { property, state } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
-import { LitBlock } from '../../../lit/LitBlock';
 import { UID } from '../../../utils/UID';
 import {
   clamp,
@@ -27,14 +26,31 @@ import {
   THUMB_SIDE_SIZE,
   THUMB_STROKE_WIDTH,
 } from './cropper-constants.js';
+import { EditorBlock } from './editor-context';
 import { classNames } from './lib/classNames.js';
-import type { CropAspectRatio, Direction, FrameThumbs, Rectangle } from './types';
+import type { Direction, FrameThumbs, Rectangle } from './types';
 
 type FrameThumb = NonNullable<FrameThumbs[Direction]>;
 
 type Delta = [number, number];
 
-export class CropFrame extends LitBlock {
+const EMPTY_RECT: Rectangle = { x: 0, y: 0, width: 0, height: 0 };
+
+/** Dispatched by `CropFrame` when a drag gesture moves/resizes the crop box — the parent (`EditorImageCropper`) is the source of truth for `cropBox` and writes it back down as a prop. */
+export type CropBoxChangeEvent = CustomEvent<Rectangle>;
+
+export class CropFrame extends EditorBlock {
+  // Passed down by `EditorImageCropper` (cropper-subtree-local state — see
+  // the M12 "State scoping principle"): NOT read from the shared ctx or the
+  // editor controller. Drag changes are reported back up via `cropboxchange`
+  // (see `_commitCropBox`); the parent is the single source of truth and
+  // re-passes the (possibly clamped) value down.
+  @property({ attribute: false })
+  public imageBox: Rectangle = EMPTY_RECT;
+
+  @property({ attribute: false })
+  public cropBox: Rectangle = EMPTY_RECT;
+
   private _backdropMask?: SVGMaskElement;
   private _backdropMaskInner?: SVGRectElement;
   private readonly _backdropMaskId = `uc-backdrop-mask-${UID.generateFastUid()}`;
@@ -83,10 +99,7 @@ export class CropFrame extends LitBlock {
   }
 
   private _shouldThumbBeDisabled(direction: Direction): boolean {
-    const imageBox = this.$['*imageBox'] as Rectangle | undefined;
-    if (!imageBox) {
-      return false;
-    }
+    const imageBox = this.imageBox;
 
     if (direction === '' && imageBox.height <= MIN_CROP_SIZE && imageBox.width <= MIN_CROP_SIZE) {
       return true;
@@ -98,10 +111,7 @@ export class CropFrame extends LitBlock {
   }
 
   private _createBackdrop(): void {
-    const cropBox = this.$['*cropBox'] as Rectangle | undefined;
-    if (!cropBox) {
-      return;
-    }
+    const cropBox = this.cropBox;
     const { x, y, width, height } = cropBox;
     const svg = this._svgElement;
     if (!svg) {
@@ -159,19 +169,16 @@ export class CropFrame extends LitBlock {
   }
 
   private _updateBackdrop(): void {
-    const cropBox = this.$['*cropBox'] as Rectangle | undefined;
-    if (!cropBox) {
-      return;
-    }
+    const cropBox = this.cropBox;
     const { x, y, width, height } = cropBox;
 
     this._backdropMaskInner && setSvgNodeAttrs(this._backdropMaskInner, { x, y, width, height });
   }
 
   private _updateFrame(): void {
-    const cropBox = this.$['*cropBox'] as Rectangle | undefined;
+    const cropBox = this.cropBox;
 
-    if (!cropBox || !this._frameGuides || !this._frameThumbs) {
+    if (!this._frameGuides || !this._frameThumbs) {
       return;
     }
     for (const thumb of Object.values(this._frameThumbs)) {
@@ -359,7 +366,7 @@ export class CropFrame extends LitBlock {
       return;
     }
 
-    const cropBox = this.$['*cropBox'] as Rectangle;
+    const cropBox = this.cropBox;
     const svgElement = this._svgElement;
     if (!svgElement) {
       return;
@@ -406,16 +413,27 @@ export class CropFrame extends LitBlock {
 
     const movedCropBox = this._calcCropBox(direction, [dx, dy]);
     if (movedCropBox) {
-      this.$['*cropBox'] = movedCropBox;
+      this._commitCropBox(movedCropBox);
     }
   };
 
+  /** Reports a drag-driven crop-box change up to the parent (`EditorImageCropper`), which owns `cropBox` and re-passes the (possibly clamped) value back down as a prop — see `CropBoxChangeEvent`. */
+  private _commitCropBox(rect: Rectangle): void {
+    this.dispatchEvent(
+      new CustomEvent<Rectangle>('cropboxchange', {
+        detail: rect,
+        bubbles: true,
+        composed: true,
+      }) satisfies CropBoxChangeEvent,
+    );
+  }
+
   private _calcCropBox(direction: Direction, delta: Delta): Rectangle | undefined {
     const [dx, dy] = delta;
-    const imageBox = this.$['*imageBox'] as Rectangle;
-    let rect = this._dragStartCrop ?? (this.$['*cropBox'] as Rectangle);
+    const imageBox = this.imageBox;
+    let rect = this._dragStartCrop ?? this.cropBox;
 
-    const cropPreset = this.$['*currentAspectRatio'] as CropAspectRatio | null;
+    const cropPreset = this.editorController.get('*currentAspectRatio');
     const aspectRatio = cropPreset ? cropPreset.width / cropPreset.height : undefined;
 
     if (direction === '') {
@@ -496,9 +514,9 @@ export class CropFrame extends LitBlock {
   }
 
   private _updateMask(): void {
-    const cropBox = this.$['*cropBox'] as Rectangle | undefined;
+    const cropBox = this.cropBox;
 
-    if (!cropBox || !this._frameImage) {
+    if (!this._frameImage) {
       return;
     }
 
@@ -538,41 +556,50 @@ export class CropFrame extends LitBlock {
     }
   }
 
-  public override initCallback(): void {
-    super.initCallback();
+  public constructor() {
+    super();
 
-    this.sub('*imageBox', () => {
-      this._resizeBackdrop();
-      if (!this._svgReady) {
-        return;
-      }
-      window.requestAnimationFrame(() => {
-        this._render();
-      });
-    });
-
-    this.sub('*cropBox', (cropBox: Rectangle | undefined) => {
-      if (!cropBox) {
-        return;
-      }
-      this._guidesHidden = cropBox.height <= MIN_CROP_SIZE || cropBox.width <= MIN_CROP_SIZE;
-      this._applyGuidesDragState();
-      if (!this._svgReady) {
-        return;
-      }
-      window.requestAnimationFrame(() => {
-        this._render();
-      });
-    });
-
-    this.subConfigValue('cloudImageEditorMaskHref', (maskHref: string | null) => {
+    // Controller-dependent setup (mirrors `ChildBlock.controllerReady` /
+    // the v1 base's `initCallback`): reads the mask config once per
+    // (re)attach. `cloudImageEditorMaskHref` is effectively static for the
+    // life of an editor instance, so a one-shot read is enough — unlike
+    // the cross-cutting keys, no coarse `subscribeEditor` is needed here.
+    this.onEditorAttach(() => {
+      const maskHref = this.editorController.getConfig('cloudImageEditorMaskHref');
       if (maskHref) {
         this._createMask(maskHref);
       }
     });
+  }
+
+  public override connectedCallback(): void {
+    super.connectedCallback();
 
     document.addEventListener('pointermove', this._handlePointerMove, true);
     document.addEventListener('pointerup', this._handlePointerUp, true);
+  }
+
+  protected override updated(changedProperties: PropertyValues<this>): void {
+    super.updated(changedProperties);
+
+    if (changedProperties.has('imageBox')) {
+      this._resizeBackdrop();
+      if (this._svgReady) {
+        window.requestAnimationFrame(() => {
+          this._render();
+        });
+      }
+    }
+
+    if (changedProperties.has('cropBox')) {
+      this._guidesHidden = this.cropBox.height <= MIN_CROP_SIZE || this.cropBox.width <= MIN_CROP_SIZE;
+      this._applyGuidesDragState();
+      if (this._svgReady) {
+        window.requestAnimationFrame(() => {
+          this._render();
+        });
+      }
+    }
   }
 
   protected override firstUpdated(changedProperties: PropertyValues<this>): void {
