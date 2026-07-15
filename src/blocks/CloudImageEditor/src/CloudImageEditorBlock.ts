@@ -20,7 +20,7 @@ import { classNames } from './lib/classNames.js';
 import { getClosestAspectRatio, parseCropPreset } from './lib/parseCropPreset.js';
 import { parseTabs } from './lib/parseTabs.js';
 import { operationsToTransformations, transformationsToOperations } from './lib/transformationUtils.js';
-import { initState } from './state.js';
+import { createCloudImageEditorState } from './state.js';
 import svgIconsSprite from './svg-sprite';
 import { ALL_TABS, TabId } from './toolbar-constants.js';
 import type { ApplyResult, CropPresetList, ImageSize, Transformations } from './types';
@@ -119,8 +119,8 @@ export class CloudImageEditorBlock extends LitBlock {
 
   public override init$ = {
     ...this.init$,
-    ...initState(this),
-  } as ReturnType<typeof initState>;
+    ...createCloudImageEditorState(this),
+  } as ReturnType<typeof createCloudImageEditorState>;
 
   public override initCallback(): void {
     super.initCallback();

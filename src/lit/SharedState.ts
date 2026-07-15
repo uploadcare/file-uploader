@@ -13,14 +13,7 @@ import type { PluginController } from '../abstract/managers/plugin';
 import type { LazyPluginEntry } from '../abstract/managers/plugin/LazyPluginLoader';
 import type { TelemetryManager } from '../abstract/managers/TelemetryManager';
 import type { UploaderPublicApi } from '../abstract/UploaderPublicApi';
-import type { EditorImageCropper, EditorImageFader, EditorSlider } from '../blocks/CloudImageEditor';
-import type { TabIdValue } from '../blocks/CloudImageEditor/src/toolbar-constants';
-import type {
-  CropAspectRatio,
-  CropPresetList,
-  LoadingOperations,
-  Transformations,
-} from '../blocks/CloudImageEditor/src/types';
+import type { CloudImageEditorState } from '../blocks/CloudImageEditor/src/state';
 import type { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter';
 import type { ConfigType, CustomConfig, OutputCollectionState, OutputErrorCollection } from '../types';
 import type { LitBlock } from './LitBlock';
@@ -48,41 +41,6 @@ type UploaderBlockCtxState = {
 
 type SolutionBlockCtxState = UploaderBlockCtxState & {
   '*lazyPlugins': LazyPluginEntry[] | null;
-};
-
-type CloudImageEditorState = {
-  '*originalUrl': string | null;
-  '*loadingOperations': LoadingOperations;
-  '*faderEl': EditorImageFader | null;
-  '*cropperEl': EditorImageCropper | null;
-  '*imgEl': HTMLImageElement | null;
-  '*imgContainerEl': HTMLElement | null;
-  '*networkProblems': boolean;
-  '*imageSize': { width: number; height: number } | null;
-  '*editorTransformations': Transformations;
-  '*cropPresetList': CropPresetList;
-  '*currentAspectRatio': CropAspectRatio | null;
-  '*tabList': readonly TabIdValue[];
-  '*tabId': TabIdValue;
-  '*on.retryNetwork': () => void;
-  '*on.apply': (transformations: Transformations) => void;
-  '*on.cancel': () => void;
-};
-
-type EditorImageCropperState = {
-  '*padding': number;
-  '*operations': { rotate: number; mirror: boolean; flip: boolean };
-  '*imageBox': { x: number; y: number; width: number; height: number };
-  '*cropBox': { x: number; y: number; width: number; height: number };
-};
-
-type EditorToolbarState = {
-  '*showListAspectRatio': boolean;
-  '*sliderEl': EditorSlider | null;
-  '*showSlider': boolean;
-  '*currentFilter': string;
-  '*currentOperation': string | null;
-  '*operationTooltip': string | null;
 };
 
 type SharedContextInstances = Map<string, ISharedInstance>;
@@ -116,8 +74,6 @@ export type SharedState = SolutionBlockCtxState &
   SharedConfigState &
   SharedCustomConfigState &
   CloudImageEditorState &
-  EditorImageCropperState &
-  EditorToolbarState &
   DynamicBlockState &
   DynamicUploaderBlockState &
   LocaleState;
