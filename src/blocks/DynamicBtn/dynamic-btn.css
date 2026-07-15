@@ -9,6 +9,7 @@
   }
 
   :where([uc-dynamic-btn] .uc-dynamic-btn-inner) {
+    width: 100%;
     display: flex;
     gap: 3px;
     background-color: var(--uc-simple-btn);
