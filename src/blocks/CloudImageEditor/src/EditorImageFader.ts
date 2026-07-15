@@ -8,7 +8,7 @@ import { EditorBlock } from './editor-context';
 import { classNames } from './lib/classNames.js';
 import { linspace } from './lib/linspace.js';
 import { COLOR_OPERATIONS_CONFIG } from './toolbar-constants.js';
-import type { LoadingOperations, Transformations } from './types';
+import type { Transformations } from './types';
 import { viewerImageSrc } from './util.js';
 
 type OperationKey = keyof typeof COLOR_OPERATIONS_CONFIG;
@@ -173,7 +173,7 @@ export class EditorImageFader extends EditorBlock {
   private _handleImageLoading(controller: CloudImageEditorController, src: string): () => void {
     const operation = this._operation;
 
-    const loadingOperations = controller.get('*loadingOperations') as LoadingOperations;
+    const loadingOperations = controller.get('*loadingOperations');
     if (!loadingOperations.has(operation)) {
       loadingOperations.set(operation, new Map());
     }

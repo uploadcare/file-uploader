@@ -8,8 +8,6 @@ import { when } from 'lit/directives/when.js';
 import { debounce } from '../../../utils/debounce';
 import { batchPreloadImages } from '../../../utils/preloadImage';
 import type { FilterSelectEvent } from './EditorFilterControl';
-import type { EditorImageCropper } from './EditorImageCropper';
-import type { EditorImageFader } from './EditorImageFader';
 import type { OperationSelectEvent } from './EditorOperationControl';
 import {
   type EditorSlider,
@@ -244,8 +242,8 @@ export class EditorToolbar extends EditorBlock {
 
     this.activeTab = id;
 
-    const faderEl = this.editorController.get('*faderEl') as EditorImageFader | null;
-    const cropperEl = this.editorController.get('*cropperEl') as EditorImageCropper | null;
+    const faderEl = this.editorController.get('*faderEl');
+    const cropperEl = this.editorController.get('*cropperEl');
 
     if (id === TabId.CROP) {
       faderEl?.deactivate();
@@ -483,7 +481,12 @@ export class EditorToolbar extends EditorBlock {
 
     if (changedProperties.has('imageSize') && this.imageSize) {
       setTimeout(() => {
-        this._activateTab(this.editorController.get('*tabId'), { fromViewer: true });
+        // Guard the deferred callback: the editor may be torn down within this
+        // macrotask (apply/cancel, router nav), nulling the adopted controller.
+        const ctrl = this.editorControllerOrNull;
+        if (ctrl) {
+          this._activateTab(ctrl.get('*tabId'), { fromViewer: true });
+        }
       }, 0);
     }
 

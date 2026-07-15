@@ -19,7 +19,7 @@ import { CROP_PADDING } from './cropper-constants.js';
 import { EditorBlock } from './editor-context';
 import { classNames } from './lib/classNames.js';
 import { pick } from './lib/pick.js';
-import type { CropAspectRatio, ImageSize, LoadingOperations, Rectangle, Transformations } from './types';
+import type { CropAspectRatio, ImageSize, Rectangle, Transformations } from './types';
 import { viewerImageSrc } from './util.js';
 
 import './CropFrame';
@@ -528,7 +528,7 @@ export class EditorImageCropper extends EditorBlock {
 
   private _handleImageLoading(controller: CloudImageEditorController, src: string): () => void {
     const operation = 'crop';
-    const loadingOperations = controller.get('*loadingOperations') as LoadingOperations;
+    const loadingOperations = controller.get('*loadingOperations');
     let operationMap = loadingOperations.get(operation);
     if (!operationMap) {
       operationMap = new Map<string, boolean>();
