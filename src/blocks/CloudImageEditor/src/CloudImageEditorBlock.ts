@@ -391,13 +391,15 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
   }
 
   private _handleCancel(): void {
-    this.remove();
+    // Dispatch before removing — once detached the element has no ancestor
+    // path, so bubbling listeners on a container/document would miss `cancel`.
     this.dispatchEvent(
       new CustomEvent('cancel', {
         bubbles: true,
         composed: true,
       }),
     );
+    this.remove();
   }
 
   /** Resolve a CDN url through the configured secure-delivery proxy, if any. */

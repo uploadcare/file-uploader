@@ -528,23 +528,26 @@ export class EditorImageCropper extends EditorBlock {
 
   private _handleImageLoading(controller: CloudImageEditorController, src: string): () => void {
     const operation = 'crop';
-    const loadingOperations = controller.get('*loadingOperations');
-    let operationMap = loadingOperations.get(operation);
-    if (!operationMap) {
-      operationMap = new Map<string, boolean>();
-      loadingOperations.set(operation, operationMap);
-    }
-
-    if (!operationMap.get(src)) {
+    // Immutable update: `StateController.set` dedupes by `Object.is`, so we must
+    // publish a NEW Map reference (outer + inner) or subscribers never notify.
+    const current = controller.get('*loadingOperations');
+    if (!current.get(operation)?.get(src)) {
+      const next = new Map(current);
+      const operationMap = new Map(next.get(operation) ?? []);
       operationMap.set(src, true);
-      controller.set('*loadingOperations', loadingOperations);
+      next.set(operation, operationMap);
+      controller.set('*loadingOperations', next);
     }
 
     return () => {
-      const map = loadingOperations.get(operation);
-      if (map?.has(src)) {
-        map.delete(src);
-        controller.set('*loadingOperations', loadingOperations);
+      const current = controller.get('*loadingOperations');
+      const operationMap = current.get(operation);
+      if (operationMap?.has(src)) {
+        const next = new Map(current);
+        const nextOperationMap = new Map(operationMap);
+        nextOperationMap.delete(src);
+        next.set(operation, nextOperationMap);
+        controller.set('*loadingOperations', next);
       }
     };
   }
