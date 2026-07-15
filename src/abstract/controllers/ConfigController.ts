@@ -1,7 +1,7 @@
 import type { CustomConfigDefinition } from '../../abstract/customConfigOptions';
 import { initialConfig } from '../../blocks/Config/initialConfig';
 import type { ConfigType } from '../../types/exported';
-import { Listeners } from '../host-subscription';
+import { StateController } from './StateController';
 
 /**
  * Pure-logic config store. Knows nothing about DOM, attributes, or Lit.
@@ -17,22 +17,19 @@ import { Listeners } from '../host-subscription';
  *
  * Custom (plugin-registered) keys live in the same backing object as built-ins
  * — `register()` adds them, `getCustom`/`setCustom` access them.
+ *
+ * Extends the shared `StateController` (get/set/subscribe/notify/destroy) and
+ * adds config-specific custom-key registration on top.
  */
-export class ConfigController {
-  // Null-prototype backing object: custom (plugin-registered) key names flow
-  // into `getCustom`/`setCustom`, so a key like `__proto__` must create a
-  // plain own property here rather than mutate the prototype chain.
-  private _values: ConfigType = Object.assign(Object.create(null), initialConfig);
+export class ConfigController extends StateController<ConfigType> {
   private _customKeys = new Set<string>();
   private _customDefs = new Map<string, CustomConfigDefinition<unknown>>();
-  private _listeners = new Listeners();
 
-  public get values(): Readonly<ConfigType> {
-    return this._values;
-  }
-
-  public subscribe(listener: () => void): () => void {
-    return this._listeners.subscribe(listener);
+  public constructor() {
+    // Null-prototype backing object: custom (plugin-registered) key names flow
+    // into `getCustom`/`setCustom`, so a key like `__proto__` must create a
+    // plain own property here rather than mutate the prototype chain.
+    super(Object.assign(Object.create(null), initialConfig));
   }
 
   /** True for any known key — a built-in default or a registered custom key. */
@@ -40,21 +37,6 @@ export class ConfigController {
     // Own-property check: `in` would walk the prototype chain and wrongly
     // report `toString`, `constructor`, `__proto__`, etc. as known keys.
     return Object.hasOwn(initialConfig, name) || this._customKeys.has(name);
-  }
-
-  public get<K extends keyof ConfigType>(key: K): ConfigType[K] {
-    return this._values[key];
-  }
-
-  /**
-   * Raw write — no coercion (v1 `PubSub.pub` parity; `<uc-config>` normalizes
-   * upstream). Notifies only when the value actually changes, matching the
-   * per-key change semantics of the nanostores map it replaces.
-   */
-  public set<K extends keyof ConfigType>(key: K, value: ConfigType[K]): void {
-    if (this._values[key] === value) return;
-    this._values[key] = value;
-    this._listeners.notify();
   }
 
   // ─── Custom (plugin-registered) keys ───────────────────────────────────
@@ -68,7 +50,7 @@ export class ConfigController {
     }
     this._customKeys.add(def.name);
     this._customDefs.set(def.name, def as CustomConfigDefinition<unknown>);
-    const bag = this._values as Record<string, unknown>;
+    const bag = this._state as Record<string, unknown>;
     // Keep any value set before the plugin registered (e.g. an attribute that
     // landed first), otherwise seed the registered default. Own-property check
     // (not `=== undefined`) mirrors the nanostores `key in store` semantics, so
@@ -76,7 +58,7 @@ export class ConfigController {
     if (!Object.hasOwn(bag, def.name)) {
       bag[def.name] = def.defaultValue;
     }
-    this._listeners.notify();
+    this.notify();
   }
 
   public customDefinition(name: string): CustomConfigDefinition<unknown> | undefined {
@@ -84,19 +66,19 @@ export class ConfigController {
   }
 
   public getCustom<T = unknown>(name: string): T {
-    return (this._values as Record<string, unknown>)[name] as T;
+    return (this._state as Record<string, unknown>)[name] as T;
   }
 
   public setCustom(name: string, value: unknown): void {
-    const bag = this._values as Record<string, unknown>;
+    const bag = this._state as Record<string, unknown>;
     if (bag[name] === value) return;
     bag[name] = value;
-    this._listeners.notify();
+    this.notify();
   }
 
-  public destroy(): void {
+  public override destroy(): void {
     this._customKeys.clear();
     this._customDefs.clear();
-    this._listeners.clear();
+    super.destroy();
   }
 }
