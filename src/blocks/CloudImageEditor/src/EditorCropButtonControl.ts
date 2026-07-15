@@ -1,7 +1,6 @@
 import type { PropertyValues } from 'lit';
 import { property } from 'lit/decorators.js';
 import { EditorButtonControl } from './EditorButtonControl.js';
-import type { EditorImageCropper } from './EditorImageCropper.js';
 import type { CropOperation } from './toolbar-constants';
 
 function nextAngle(prev: number): number {
@@ -44,7 +43,13 @@ export class EditorCropButtonControl extends EditorButtonControl {
       return;
     }
 
-    const cropper = this.editorController.get('*cropperEl') as EditorImageCropper;
+    // `*cropperEl` is null unless the cropper is the mounted/active tab — a
+    // crop op can be clicked before it registers (or from another tab). Guard
+    // rather than crash (matches the `?.` at the root's activate/deactivate).
+    const cropper = this.editorController.get('*cropperEl');
+    if (!cropper) {
+      return;
+    }
     const prev = cropper.getValue(this.operation);
     const next = nextValue(this.operation, prev);
 
