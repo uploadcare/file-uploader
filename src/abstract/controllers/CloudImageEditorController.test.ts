@@ -111,6 +111,59 @@ describe('CloudImageEditorController', () => {
     expect(() => controller.retryNetwork()).not.toThrow();
   });
 
+  it('falls back to inert default services until setServices is called', () => {
+    const controller = new CloudImageEditorController();
+    expect(controller.l10n('cancel')).toBe('cancel'); // identity fallback
+    expect(controller.getConfig('pubkey')).toBeUndefined();
+    expect(controller.telemetry.sendEvent({})).toBeUndefined(); // no-op, doesn't throw
+    expect(controller.telemetry.sendEventError(new Error('x'))).toBeUndefined();
+    return expect(controller.proxyUrl('https://example.com/a.png')).resolves.toBe('https://example.com/a.png');
+  });
+
+  it('setServices swaps in the injected l10n/getConfig/telemetry/proxyUrl', async () => {
+    const controller = new CloudImageEditorController();
+    const sendEvent = vi.fn();
+    const sendEventError = vi.fn();
+    controller.setServices({
+      l10n: (key, variables) => `${key}:${JSON.stringify(variables ?? {})}`,
+      getConfig: ((key: string) =>
+        key === 'pubkey' ? 'demopublickey' : undefined) as CloudImageEditorController['getConfig'],
+      telemetry: { sendEvent, sendEventError },
+      proxyUrl: async (url) => `https://proxy.example.com/?u=${url}`,
+    });
+
+    expect(controller.l10n('cancel', { n: 1 })).toBe('cancel:{"n":1}');
+    expect(controller.getConfig('pubkey')).toBe('demopublickey');
+    controller.telemetry.sendEvent({ type: 'x' });
+    expect(sendEvent).toHaveBeenCalledWith({ type: 'x' });
+    controller.telemetry.sendEventError('boom', 'ctx');
+    expect(sendEventError).toHaveBeenCalledWith('boom', 'ctx');
+    await expect(controller.proxyUrl('https://example.com/a.png')).resolves.toBe(
+      'https://proxy.example.com/?u=https://example.com/a.png',
+    );
+  });
+
+  it('constructor accepts services up front, equivalent to setServices', () => {
+    const controller = new CloudImageEditorController(undefined, {
+      l10n: (key) => `pre:${key}`,
+      getConfig: (() => undefined) as CloudImageEditorController['getConfig'],
+      telemetry: { sendEvent: () => {}, sendEventError: () => {} },
+      proxyUrl: async (url) => url,
+    });
+    expect(controller.l10n('cancel')).toBe('pre:cancel');
+  });
+
+  it('notify() fires subscribers with no state change (e.g. after a services swap)', () => {
+    const controller = new CloudImageEditorController();
+    const listener = vi.fn();
+    controller.subscribe(listener);
+
+    controller.notify();
+    expect(listener).toHaveBeenCalledTimes(1);
+    // No state mutated.
+    expect(controller.get('*tabId')).toBe(TabId.CROP);
+  });
+
   it('destroy() clears subscribers and handlers', () => {
     const controller = new CloudImageEditorController();
     const listener = vi.fn();
