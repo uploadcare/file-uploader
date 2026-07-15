@@ -2,7 +2,7 @@ import type { CloudImageEditorState } from '../../blocks/CloudImageEditor/src/st
 import { ALL_TABS, TabId } from '../../blocks/CloudImageEditor/src/toolbar-constants';
 import type { Transformations } from '../../blocks/CloudImageEditor/src/types';
 import type { ConfigType } from '../../types';
-import { Listeners } from '../host-subscription';
+import { StateController } from './StateController';
 
 /**
  * The cross-cutting subset of `CloudImageEditorState` (M12 "State scoping
@@ -101,14 +101,12 @@ function createDefaultServices(): EditorServices {
  * machine, image-URL/modifier computation) accretes here as each block ports
  * in P5/P6 (strangler) — kept minimal in this phase (state container only).
  */
-export class CloudImageEditorController {
-  private _state: CloudImageEditorControllerState;
-  private _listeners = new Listeners();
+export class CloudImageEditorController extends StateController<CloudImageEditorControllerState> {
   private _handlers: Partial<CloudImageEditorHandlers> = {};
   private _services: EditorServices;
 
   public constructor(initial?: Partial<CloudImageEditorControllerState>, services?: EditorServices) {
-    this._state = { ...createDefaultState(), ...initial };
+    super({ ...createDefaultState(), ...initial });
     this._services = services ?? createDefaultServices();
   }
 
@@ -147,40 +145,22 @@ export class CloudImageEditorController {
   }
 
   /**
-   * Coarse notify with no state change — for the root to call after swapping
-   * services (`setServices`) or otherwise mutating something descendants
-   * read through the controller but that isn't itself a `CloudImageEditorControllerState`
-   * key (e.g. a locale dictionary load or a config change upstream). Reuses
-   * the same `Listeners` instance as `set()`, so `EditorBlock`'s automatic
-   * re-render subscription picks it up for free.
+   * `notify()` is inherited from `StateController` — the root calls it after
+   * swapping services (`setServices`) or otherwise mutating something
+   * descendants read through the controller but that isn't itself a
+   * `CloudImageEditorControllerState` key (e.g. a locale dictionary load or a
+   * config change upstream). Reuses the same `Listeners` instance as `set()`,
+   * so `EditorBlock`'s automatic re-render subscription picks it up for free.
+   *
+   * Current state snapshot (read-only reference — mutate via `set`). Thin
+   * alias over the inherited `values`, kept for the editor's established naming.
    */
-  public notify(): void {
-    this._listeners.notify();
-  }
-
-  /** Current state snapshot (read-only reference — mutate via `set`). */
   public get state(): Readonly<CloudImageEditorControllerState> {
-    return this._state;
+    return this.values;
   }
 
   public getState(): Readonly<CloudImageEditorControllerState> {
-    return this._state;
-  }
-
-  public get<K extends keyof CloudImageEditorControllerState>(key: K): CloudImageEditorControllerState[K] {
-    return this._state[key];
-  }
-
-  /** Notifies only when the value actually changes (`Object.is` dedup), same contract as `ConfigController.set`. */
-  public set<K extends keyof CloudImageEditorControllerState>(key: K, value: CloudImageEditorControllerState[K]): void {
-    if (Object.is(this._state[key], value)) return;
-    this._state[key] = value;
-    this._listeners.notify();
-  }
-
-  /** Coarse subscribe — fires on any state change, not per-key (mirrors `ConfigController.subscribe`). */
-  public subscribe(listener: () => void): () => void {
-    return this._listeners.subscribe(listener);
+    return this.values;
   }
 
   /**
@@ -204,8 +184,8 @@ export class CloudImageEditorController {
     this._handlers.onRetryNetwork?.();
   }
 
-  public destroy(): void {
-    this._listeners.clear();
+  public override destroy(): void {
     this._handlers = {};
+    super.destroy();
   }
 }
