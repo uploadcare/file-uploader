@@ -1,19 +1,33 @@
 import { html, type PropertyValues } from 'lit';
 import { state } from 'lit/decorators.js';
-import { LitBlock } from '../../../lit/LitBlock';
 import type { EditorImageFader } from './EditorImageFader';
+import { EditorBlock } from './editor-context';
 import type { ColorOperation, FilterId } from './toolbar-constants';
 import { COLOR_OPERATIONS_CONFIG } from './toolbar-constants';
 import type { Transformations } from './types';
 
 import './elements/slider/SliderUi';
 
-type SliderOperation = ColorOperation | 'filter';
-type SliderFilter = FilterId | typeof FAKE_ORIGINAL_FILTER;
+export type SliderOperation = ColorOperation | 'filter';
+export type SliderFilter = FilterId | typeof FAKE_ORIGINAL_FILTER;
 
 export const FAKE_ORIGINAL_FILTER = 'original';
 
-export class EditorSlider extends LitBlock {
+/** Bubbles up on every tooltip recompute — `EditorToolbar` owns the toolbar-local `operationTooltip` state and displays it in the top overlay. */
+export class SliderTooltipChangeEvent extends Event {
+  public static readonly eventName = 'uc-slider-tooltip-change';
+  public constructor(public readonly tooltip: string) {
+    super(SliderTooltipChangeEvent.eventName, { bubbles: true, composed: true });
+  }
+}
+
+declare global {
+  interface HTMLElementEventMap {
+    [SliderTooltipChangeEvent.eventName]: SliderTooltipChangeEvent;
+  }
+}
+
+export class EditorSlider extends EditorBlock {
   // This is public because it's used in the updated lifecycle to assign to the shared state.
   @state()
   public state = {
@@ -30,7 +44,7 @@ export class EditorSlider extends LitBlock {
 
   private _handleInput = (e: CustomEvent<{ value: number }>): void => {
     const { value } = e.detail;
-    const fader = this.$['*faderEl'] as EditorImageFader | undefined;
+    const fader = this.editorController.get('*faderEl') as EditorImageFader | null;
     fader?.set(value);
     this.state = { ...this.state, value };
   };
@@ -40,8 +54,8 @@ export class EditorSlider extends LitBlock {
 
     this._initializeValues();
 
-    const fader = this.$['*faderEl'] as EditorImageFader | undefined;
-    const originalUrl = this.state.originalUrl || (this.$['*originalUrl'] as string | undefined);
+    const fader = this.editorController.get('*faderEl') as EditorImageFader | null;
+    const originalUrl = this.state.originalUrl || this.editorController.get('*originalUrl') || undefined;
     if (fader && originalUrl) {
       fader.activate({
         url: originalUrl,
@@ -60,7 +74,7 @@ export class EditorSlider extends LitBlock {
 
     this.state = { ...this.state, min, max, zero };
 
-    const editorTransformations = this.$['*editorTransformations'] as Transformations;
+    const editorTransformations = this.editorController.get('*editorTransformations');
     const transformation = editorTransformations[operation];
 
     if (operation === 'filter') {
@@ -79,7 +93,7 @@ export class EditorSlider extends LitBlock {
   }
 
   public apply(): void {
-    const editorTransformations = this.$['*editorTransformations'] as Transformations;
+    const editorTransformations = this.editorController.get('*editorTransformations');
     const transformations: Transformations = { ...editorTransformations };
 
     if (this.state.operation === 'filter') {
@@ -92,18 +106,18 @@ export class EditorSlider extends LitBlock {
       transformations[this.state.operation] = this.state.value as Transformations[typeof this.state.operation];
     }
 
-    this.$['*editorTransformations'] = transformations;
+    this.editorController.set('*editorTransformations', transformations);
   }
 
   public cancel(): void {
-    const fader = this.$['*faderEl'] as EditorImageFader | undefined;
+    const fader = this.editorController.get('*faderEl') as EditorImageFader | null;
     fader?.deactivate({ hide: false });
   }
 
-  public override initCallback(): void {
-    super.initCallback();
+  public constructor() {
+    super();
 
-    this.sub('*originalUrl', (originalUrl: string | null) => {
+    this.subEditorKey('*originalUrl', (originalUrl: string | null) => {
       if (!originalUrl) {
         return;
       }
@@ -116,7 +130,7 @@ export class EditorSlider extends LitBlock {
 
     if (changedProperties.has('state')) {
       const tooltip = `${this.state.filter ?? this.state.operation} ${this.state.value}`;
-      this.$['*operationTooltip'] = tooltip;
+      this.dispatchEvent(new SliderTooltipChangeEvent(tooltip));
     }
   }
 
