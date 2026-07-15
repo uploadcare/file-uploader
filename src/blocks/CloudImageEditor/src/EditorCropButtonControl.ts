@@ -29,8 +29,8 @@ export class EditorCropButtonControl extends EditorButtonControl {
     super.willUpdate(changedProperties);
 
     if (this.operation) {
-      this.titleProp = this.l10n('a11y-cloud-editor-apply-crop', {
-        name: this.l10n(this.operation).toLowerCase(),
+      this.titleProp = this.l10nSafe('a11y-cloud-editor-apply-crop', {
+        name: this.l10nSafe(this.operation).toLowerCase(),
       });
       this.icon = this.operation;
     } else {
@@ -44,11 +44,11 @@ export class EditorCropButtonControl extends EditorButtonControl {
       return;
     }
 
-    const cropper = this.$['*cropperEl'] as EditorImageCropper;
+    const cropper = this.editorController.get('*cropperEl') as EditorImageCropper;
     const prev = cropper.getValue(this.operation);
     const next = nextValue(this.operation, prev);
 
-    this.telemetryManager.sendEventCloudImageEditor(e, this.$['*tabId'], {
+    this.editorController.telemetry.sendEventCloudImageEditor(e, this.editorController.get('*tabId'), {
       operation: this.operation,
       next,
       prev,

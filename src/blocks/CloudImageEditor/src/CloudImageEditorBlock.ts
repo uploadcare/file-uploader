@@ -117,6 +117,7 @@ export class CloudImageEditorBlock extends LitBlock {
    */
   private readonly _editorController = new CloudImageEditorController();
 
+  // biome-ignore lint/correctness/noUnusedPrivateClassMembers: side-effecting @lit/context registration, never read after construction
   private readonly _editorControllerProvider = new ContextProvider(this, {
     context: cloudImageEditorContext,
     initialValue: this._editorController,
@@ -194,6 +195,8 @@ export class CloudImageEditorBlock extends LitBlock {
       telemetry: {
         sendEvent: (event) => this.telemetryManager.sendEvent(event as Parameters<TelemetryManager['sendEvent']>[0]),
         sendEventError: (err, context) => this.telemetryManager.sendEventError(err, context as string | undefined),
+        sendEventCloudImageEditor: (e, tabId, options) =>
+          this.telemetryManager.sendEventCloudImageEditor(e, tabId, options),
       },
       proxyUrl: (url) => this.proxyUrl(url),
     });
