@@ -1,6 +1,5 @@
 import { html, type PropertyValues } from 'lit';
 import { state } from 'lit/decorators.js';
-import type { EditorImageFader } from './EditorImageFader';
 import { EditorBlock } from './editor-context';
 import type { ColorOperation, FilterId } from './toolbar-constants';
 import { COLOR_OPERATIONS_CONFIG } from './toolbar-constants';
@@ -44,7 +43,7 @@ export class EditorSlider extends EditorBlock {
 
   private _handleInput = (e: CustomEvent<{ value: number }>): void => {
     const { value } = e.detail;
-    const fader = this.editorController.get('*faderEl') as EditorImageFader | null;
+    const fader = this.editorController.get('*faderEl');
     fader?.set(value);
     this.state = { ...this.state, value };
   };
@@ -54,7 +53,7 @@ export class EditorSlider extends EditorBlock {
 
     this._initializeValues();
 
-    const fader = this.editorController.get('*faderEl') as EditorImageFader | null;
+    const fader = this.editorController.get('*faderEl');
     const originalUrl = this.state.originalUrl || this.editorController.get('*originalUrl') || undefined;
     if (fader && originalUrl) {
       fader.activate({
@@ -110,7 +109,7 @@ export class EditorSlider extends EditorBlock {
   }
 
   public cancel(): void {
-    const fader = this.editorController.get('*faderEl') as EditorImageFader | null;
+    const fader = this.editorController.get('*faderEl');
     fader?.deactivate({ hide: false });
   }
 

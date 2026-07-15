@@ -449,7 +449,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
   }
 
   private get _imageClassName(): string {
-    const tabId = this._editorController.get('*tabId') as TabIdValue;
+    const tabId = this._editorController.get('*tabId');
     return classNames('uc-image', {
       'uc-image_hidden_to_cropper': tabId === TabId.CROP,
       'uc-image_hidden_effects': tabId !== TabId.CROP,
