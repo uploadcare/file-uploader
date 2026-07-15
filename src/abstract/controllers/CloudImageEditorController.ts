@@ -1,13 +1,7 @@
 import type { EditorImageCropper } from '../../blocks/CloudImageEditor/src/EditorImageCropper';
 import type { EditorImageFader } from '../../blocks/CloudImageEditor/src/EditorImageFader';
-import { ALL_TABS, TabId, type TabIdValue } from '../../blocks/CloudImageEditor/src/toolbar-constants';
-import type {
-  CropAspectRatio,
-  CropPresetList,
-  ImageSize,
-  LoadingOperations,
-  Transformations,
-} from '../../blocks/CloudImageEditor/src/types';
+import { TabId, type TabIdValue } from '../../blocks/CloudImageEditor/src/toolbar-constants';
+import type { CropAspectRatio, LoadingOperations, Transformations } from '../../blocks/CloudImageEditor/src/types';
 import type { ConfigType } from '../../types';
 import { StateController } from './StateController';
 
@@ -18,7 +12,9 @@ import { StateController } from './StateController';
  * `*cropBox`) and toolbar-local (`*showListAspectRatio`/`*sliderEl`/
  * `*showSlider`/`*currentFilter`/`*currentOperation`/`*operationTooltip`) keys
  * are deliberately excluded — they are plain Lit `@state` on their owning
- * element, not controller state.
+ * element, not controller state. So are `cropPresetList`/`tabList`/`imageSize`,
+ * which the root now passes to `<uc-editor-toolbar>` as plain Lit props (root →
+ * single child, no cross-subtree sharing).
  *
  * `*faderEl`/`*cropperEl`/`*imgContainerEl` are cross-component coordination
  * refs (a smell, flagged in the plan for a later refinement to controller
@@ -29,11 +25,8 @@ export type CloudImageEditorControllerState = {
   '*originalUrl': string | null;
   '*loadingOperations': LoadingOperations;
   '*networkProblems': boolean;
-  '*imageSize': ImageSize | null;
   '*editorTransformations': Transformations;
-  '*cropPresetList': CropPresetList;
   '*currentAspectRatio': CropAspectRatio | null;
-  '*tabList': readonly TabIdValue[];
   '*tabId': TabIdValue;
   '*faderEl': EditorImageFader | null;
   '*cropperEl': EditorImageCropper | null;
@@ -45,11 +38,8 @@ function createDefaultState(): CloudImageEditorControllerState {
     '*originalUrl': null,
     '*loadingOperations': new Map(),
     '*networkProblems': false,
-    '*imageSize': null,
     '*editorTransformations': {},
-    '*cropPresetList': [],
     '*currentAspectRatio': null,
-    '*tabList': ALL_TABS,
     '*tabId': TabId.CROP,
     '*faderEl': null,
     '*cropperEl': null,
