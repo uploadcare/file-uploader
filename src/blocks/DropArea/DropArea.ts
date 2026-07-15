@@ -1,7 +1,10 @@
 import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { createRef, type Ref, ref } from 'lit/directives/ref.js';
-import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
+import type { UploaderController } from '../../abstract/controllers/UploaderController';
+import { ChildBlock } from '../../lit/ChildBlock';
+import { createDebugPrinter } from '../../lit/createDebugPrinter';
+import { ensureUploaderScope } from '../../lit/ensureUploaderScope';
 import { stringToArray } from '../../utils/stringToArray';
 import { UploadSource } from '../../utils/UploadSource';
 import { addDropzone, DropzoneState, type DropzoneStateValue } from './addDropzone';
@@ -12,8 +15,23 @@ import '../Icon/Icon';
 
 const dropAreaRegistry = new Set<DropArea>();
 
-export class DropArea extends LitUploaderBlock {
+export class DropArea extends ChildBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-drop-area'];
+
+  public declare attributesMeta: {
+    single?: boolean;
+    ghost?: boolean;
+    disabled?: boolean;
+    clickable?: boolean;
+    'with-icon'?: boolean;
+    fullscreen?: boolean;
+    initflow?: boolean;
+    text?: string;
+    'ctx-name': string;
+  };
+
+  /** Same contract as v1 `LitBlock.debugPrint` (`createDebugPrinter`), scoped to this ctx. */
+  private _debugPrint = createDebugPrinter(() => this.bag.ctx, this.constructor.name);
 
   /**
    * CSS-only attribute
@@ -76,11 +94,11 @@ export class DropArea extends LitUploaderBlock {
     }
 
     if (this.initflow) {
-      this.api.initFlow();
+      this.bag.api.initFlow();
       return;
     }
 
-    this.api.openSystemDialog();
+    this.bag.api.openSystemDialog();
   };
   private _sourceListAllowsLocal = true;
   private _clickableListenersAttached = false;
@@ -103,8 +121,27 @@ export class DropArea extends LitUploaderBlock {
     return hasSize && visible && isInViewport;
   }
 
-  public override initCallback(): void {
-    super.initCallback();
+  protected override controllerReady(ctrl: UploaderController): void {
+    // `<uc-drop-area>` is the uploader block in the built-in solutions (they
+    // never render `<uc-upload-ctx-provider>`), so it must attach the
+    // uploader scope itself — same contract as v1's `LitUploaderBlock.
+    // initCallback`, and the identical seam `<uc-upload-ctx-provider>` uses.
+    ensureUploaderScope(
+      this.bag,
+      ctrl,
+      (...args) => this._debugPrint(...args),
+      (type, payload, options) => this.emit(type, payload, options),
+    );
+
+    // Re-adoption (release-while-connected followed by re-adopt) would
+    // otherwise stack a new dropzone per adoption without ever removing the
+    // previous one's listeners — tear down any prior instances first (mirrors
+    // `UploadCtxProvider`'s `EventBridgeController` teardown-then-recreate
+    // pattern).
+    this._destroyDropzone?.();
+    this._destroyDropzone = null;
+    this._destroyContentWrapperDropzone?.();
+    this._destroyContentWrapperDropzone = null;
 
     dropAreaRegistry.add(this);
     this._updateIsEnabled();
@@ -122,22 +159,22 @@ export class DropArea extends LitUploaderBlock {
         if (!items.length) {
           return;
         }
-        const prevSize = this.uploadCollection.size;
+        const prevSize = this.bag.uploadCollection.size;
 
         items.forEach((item) => {
           if (item.type === 'url') {
-            this.api.addFileFromUrl(item.url, {
+            this.bag.api.addFileFromUrl(item.url, {
               source: UploadSource.DROP_AREA,
             });
           } else if (item.type === 'file') {
-            this.api.addFileFromObject(item.file, {
+            this.bag.api.addFileFromObject(item.file, {
               source: UploadSource.DROP_AREA,
               fullPath: item.fullPath,
             });
           }
         });
-        if (this.uploadCollection.size > prevSize) {
-          this.router.traverse('onFileAdd');
+        if (this.bag.uploadCollection.size > prevSize) {
+          this.bag.router.traverse('onFileAdd');
         }
       },
     });
@@ -157,7 +194,18 @@ export class DropArea extends LitUploaderBlock {
     });
   }
 
-  protected override willUpdate(changedProperties: PropertyValues<this & { localeId: string }>): void {
+  protected override controllerReleased(): void {
+    this._destroyDropzone?.();
+    this._destroyDropzone = null;
+    this._destroyContentWrapperDropzone?.();
+    this._destroyContentWrapperDropzone = null;
+  }
+
+  protected override subscriptionsFor(ctrl: UploaderController): Array<(listener: () => void) => () => void> {
+    return [(l: () => void) => ctrl.locale.subscribe(l)];
+  }
+
+  protected override willUpdate(changedProperties: PropertyValues<this>): void {
     super.willUpdate(changedProperties);
 
     if (changedProperties.has('disabled')) {
@@ -165,7 +213,7 @@ export class DropArea extends LitUploaderBlock {
       this._updateVisibility();
     }
 
-    if (changedProperties.has('text') || changedProperties.has('localeId')) {
+    if (changedProperties.has('text')) {
       this._updateDropText();
     }
   }
@@ -199,9 +247,9 @@ export class DropArea extends LitUploaderBlock {
   }
 
   private _couldHandleFiles(): boolean {
-    const isMultiple = this.cfg.multiple;
-    const multipleMax = this.cfg.multipleMax;
-    const currentFilesCount = this.uploadCollection.size;
+    const isMultiple = this.uploader.config.get('multiple');
+    const multipleMax = this.uploader.config.get('multipleMax');
+    const currentFilesCount = this.bag.uploadCollection.size;
 
     if (isMultiple && multipleMax && currentFilesCount >= multipleMax) {
       return false;
@@ -275,7 +323,9 @@ export class DropArea extends LitUploaderBlock {
     dropAreaRegistry.delete(this);
 
     this._destroyDropzone?.();
+    this._destroyDropzone = null;
     this._destroyContentWrapperDropzone?.();
+    this._destroyContentWrapperDropzone = null;
     if (this._clickableListenersAttached) {
       this.removeEventListener('keydown', this._handleAreaInteraction);
       this.removeEventListener('click', this._handleAreaInteraction);
