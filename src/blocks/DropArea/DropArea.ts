@@ -135,9 +135,11 @@ export class DropArea extends ChildBlock {
 
     // Re-adoption (release-while-connected followed by re-adopt) would
     // otherwise stack a new dropzone per adoption without ever removing the
-    // previous one's listeners — tear down any prior instances first (mirrors
-    // `UploadCtxProvider`'s `EventBridgeController` teardown-then-recreate
-    // pattern).
+    // previous one's listeners — tear down any prior instances before
+    // recreating them below (same teardown-before-recreate hazard
+    // `UploadCtxProvider` handles for its `EventBridgeController`). The
+    // `ensureUploaderScope` call above is idempotent and never touches the
+    // dropzones, so its position relative to this teardown is immaterial.
     this._destroyDropzone?.();
     this._destroyDropzone = null;
     this._destroyContentWrapperDropzone?.();
