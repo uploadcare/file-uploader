@@ -28,7 +28,7 @@ const getAdjustResolutions = (value: CropAspectRatio) => {
 
 /** Bubbles up to `EditorToolbar`, which owns the toolbar-local `showListAspectRatio` state. */
 export class ShowAspectRatioListEvent extends Event {
-  public static readonly eventName = 'uc-show-aspect-ratio-list';
+  public static readonly eventName = 'uc-internal:show-aspect-ratio-list';
   public constructor() {
     super(ShowAspectRatioListEvent.eventName, { bubbles: true, composed: true });
   }

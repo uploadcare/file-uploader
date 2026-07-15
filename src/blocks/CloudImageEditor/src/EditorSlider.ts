@@ -15,7 +15,7 @@ export const FAKE_ORIGINAL_FILTER = 'original';
 
 /** Bubbles up on every tooltip recompute — `EditorToolbar` owns the toolbar-local `operationTooltip` state and displays it in the top overlay. */
 export class SliderTooltipChangeEvent extends Event {
-  public static readonly eventName = 'uc-slider-tooltip-change';
+  public static readonly eventName = 'uc-internal:slider-tooltip-change';
   public constructor(public readonly tooltip: string) {
     super(SliderTooltipChangeEvent.eventName, { bubbles: true, composed: true });
   }
@@ -142,7 +142,7 @@ export class EditorSlider extends EditorBlock {
         .max=${this.state.max}
         .defaultValue=${this.state.defaultValue}
         .zero=${this.state.zero}
-        @slider-input=${this._handleInput}
+        @uc-internal:slider-input=${this._handleInput}
       ></uc-slider-ui>
     `;
   }

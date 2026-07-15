@@ -180,7 +180,16 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
   };
 
   private readonly _handleRetryNetwork = (): void => {
-    this._editorController.retryNetwork();
+    this._retryNetworkImages();
+  };
+
+  /** Descendant apply/cancel intents arrive as bubbling `uc-internal:*` events (the controller holds no callbacks). */
+  private readonly _onInternalApply = (e: CustomEvent<Transformations>): void => {
+    this._handleApply(e.detail);
+  };
+
+  private readonly _onInternalCancel = (): void => {
+    this._handleCancel();
   };
 
   private _scheduleInitialization(): void {
@@ -307,12 +316,6 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
           this.telemetryManager.sendEventCloudImageEditor(e, tabId, options),
       },
       proxyUrl: (url) => this.proxyUrl(url),
-    });
-
-    this._editorController.setHandlers({
-      onApply: (transformations) => this._handleApply(transformations),
-      onCancel: () => this._handleCancel(),
-      onRetryNetwork: () => this._retryNetworkImages(),
     });
 
     const uploaderController = ctx.uploaderController();
@@ -539,7 +542,11 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
 
     return html`
       ${unsafeSVG(svgIconsSprite)}
-      <div class="uc-wrapper uc-wrapper_desktop">
+      <div
+        class="uc-wrapper uc-wrapper_desktop"
+        @uc-internal:apply=${this._onInternalApply}
+        @uc-internal:cancel=${this._onInternalCancel}
+      >
         <uc-presence-toggle class="uc-network_problems_splash" .visible=${showNetworkProblems}>
           <div class="uc-network_problems_content">
             <div class="uc-network_problems_icon">
@@ -744,5 +751,10 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
 declare global {
   interface HTMLElementTagNameMap {
     'uc-cloud-image-editor-block': CloudImageEditorBlock;
+  }
+  interface HTMLElementEventMap {
+    /** Internal apply/cancel intents dispatched by descendants (e.g. the toolbar), listened for by the root — replaces the former controller callbacks. */
+    'uc-internal:apply': CustomEvent<Transformations>;
+    'uc-internal:cancel': CustomEvent<void>;
   }
 }

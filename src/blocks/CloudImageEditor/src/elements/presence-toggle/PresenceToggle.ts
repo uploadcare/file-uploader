@@ -68,7 +68,7 @@ export class PresenceToggle extends PresenceToggleBase {
 
     this._initialRenderComplete = true;
     this.dispatchEvent(
-      new CustomEvent('initial-render', {
+      new CustomEvent('uc-internal:initial-render', {
         bubbles: true,
         composed: true,
       }),

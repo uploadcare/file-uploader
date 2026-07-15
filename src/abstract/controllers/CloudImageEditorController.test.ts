@@ -72,45 +72,6 @@ describe('CloudImageEditorController', () => {
     expect(listener).not.toHaveBeenCalled();
   });
 
-  it('setHandlers wires apply/cancel/retryNetwork without notifying subscribers', () => {
-    const controller = new CloudImageEditorController();
-    const listener = vi.fn();
-    controller.subscribe(listener);
-
-    const onApply = vi.fn();
-    const onCancel = vi.fn();
-    const onRetryNetwork = vi.fn();
-    controller.setHandlers({ onApply, onCancel, onRetryNetwork });
-    expect(listener).not.toHaveBeenCalled();
-
-    controller.apply({ rotate: 90 });
-    expect(onApply).toHaveBeenCalledWith({ rotate: 90 });
-
-    controller.cancel();
-    expect(onCancel).toHaveBeenCalledTimes(1);
-
-    controller.retryNetwork();
-    expect(onRetryNetwork).toHaveBeenCalledTimes(1);
-  });
-
-  it('setHandlers merges partial updates rather than replacing the whole set', () => {
-    const controller = new CloudImageEditorController();
-    const onApply = vi.fn();
-    const onCancel = vi.fn();
-    controller.setHandlers({ onApply, onCancel });
-    controller.setHandlers({ onCancel: vi.fn() });
-
-    controller.apply({});
-    expect(onApply).toHaveBeenCalledTimes(1); // still wired from the first call
-  });
-
-  it('action methods are no-ops when no handler is set', () => {
-    const controller = new CloudImageEditorController();
-    expect(() => controller.apply({})).not.toThrow();
-    expect(() => controller.cancel()).not.toThrow();
-    expect(() => controller.retryNetwork()).not.toThrow();
-  });
-
   it('falls back to inert default services until setServices is called', () => {
     const controller = new CloudImageEditorController();
     expect(controller.l10n('cancel')).toBe('cancel'); // identity fallback
@@ -165,19 +126,14 @@ describe('CloudImageEditorController', () => {
     expect(controller.get('*tabId')).toBe(TabId.CROP);
   });
 
-  it('destroy() clears subscribers and handlers', () => {
+  it('destroy() clears subscribers', () => {
     const controller = new CloudImageEditorController();
     const listener = vi.fn();
     controller.subscribe(listener);
-    const onCancel = vi.fn();
-    controller.setHandlers({ onCancel });
 
     controller.destroy();
 
     controller.set('*tabId', TabId.TUNING);
     expect(listener).not.toHaveBeenCalled();
-
-    controller.cancel();
-    expect(onCancel).not.toHaveBeenCalled();
   });
 });

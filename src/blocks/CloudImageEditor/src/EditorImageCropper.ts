@@ -585,7 +585,7 @@ export class EditorImageCropper extends EditorBlock {
         ${ref(this._frameRef)}
         .imageBox=${this._imageBox}
         .cropBox=${this._cropBox}
-        @cropboxchange=${this._handleCropBoxChange}
+        @uc-internal:cropboxchange=${this._handleCropBoxChange}
       ></uc-crop-frame>
     `;
   }
