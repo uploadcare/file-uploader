@@ -119,6 +119,31 @@ describe('EditorChildBlock / cloudImageEditorContext', () => {
     expect(requestUpdateSpy).not.toHaveBeenCalled();
   });
 
+  it('keeps re-rendering after a light-DOM reconnect of the same node (the reconnect-fix guard)', async () => {
+    const ctxName = getCtxName();
+    page.render(<uc-config ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>);
+    const root = append('uc-test-editor-root', { 'ctx-name': ctxName });
+    root.id = 'test-editor-root-reconnect';
+    const child = document.createElement('uc-test-editor-child');
+    child.id = 'test-editor-child-reconnect';
+    root.append(child);
+    await expect.poll(() => child.querySelector('.tab-id')?.textContent).toBe('crop');
+
+    // Light-DOM reconnect: remove + re-append the SAME node — exactly what an
+    // ancestor re-render via `this.yield('')` does under the hood
+    // (`insertBefore` fires disconnectedCallback + connectedCallback
+    // back-to-back on the same element). The `CloudImageEditorContextController`
+    // must re-establish its re-render subscription; the reconnect fix (resetting
+    // `_controller` in `hostDisconnected`) exists precisely so `_attach`'s
+    // identity-dedup doesn't silently drop it. Without the fix this poll times
+    // out (child stays 'crop').
+    child.remove();
+    root.append(child);
+
+    root.controller.set('*tabId', 'tuning');
+    await expect.poll(() => child.querySelector('.tab-id')?.textContent).toBe('tuning');
+  });
+
   it('root teardown does not throw and leaves the controller usable (root does not own controller.destroy in this phase)', async () => {
     const ctxName = getCtxName();
     page.render(<uc-config ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>);
