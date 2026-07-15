@@ -173,22 +173,26 @@ export class EditorImageFader extends EditorBlock {
   private _handleImageLoading(controller: CloudImageEditorController, src: string): () => void {
     const operation = this._operation;
 
-    const loadingOperations = controller.get('*loadingOperations');
-    if (!loadingOperations.has(operation)) {
-      loadingOperations.set(operation, new Map());
-    }
-
-    const operationMap = loadingOperations.get(operation);
-    if (operationMap && !operationMap.get(src)) {
+    // Immutable update: `StateController.set` dedupes by `Object.is`, so we must
+    // publish a NEW Map reference (outer + inner) or subscribers never notify.
+    const current = controller.get('*loadingOperations');
+    if (!current.get(operation)?.get(src)) {
+      const next = new Map(current);
+      const operationMap = new Map(next.get(operation) ?? []);
       operationMap.set(src, true);
-      controller.set('*loadingOperations', loadingOperations);
+      next.set(operation, operationMap);
+      controller.set('*loadingOperations', next);
     }
 
     return () => {
-      const currentOperationMap = loadingOperations.get(operation);
-      if (currentOperationMap?.has(src)) {
-        currentOperationMap.delete(src);
-        controller.set('*loadingOperations', loadingOperations);
+      const current = controller.get('*loadingOperations');
+      const operationMap = current.get(operation);
+      if (operationMap?.has(src)) {
+        const next = new Map(current);
+        const nextOperationMap = new Map(operationMap);
+        nextOperationMap.delete(src);
+        next.set(operation, nextOperationMap);
+        controller.set('*loadingOperations', next);
       }
     };
   }

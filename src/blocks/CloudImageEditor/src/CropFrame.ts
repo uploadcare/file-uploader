@@ -577,6 +577,12 @@ export class CropFrame extends EditorBlock {
 
     document.addEventListener('pointermove', this._handlePointerMove, true);
     document.addEventListener('pointerup', this._handlePointerUp, true);
+    // Re-attach the svg listener that `disconnectedCallback` removed — the svg
+    // is set up once in `_initializeSvg` (gated by `_svgReady`), so on a
+    // light-DOM reconnect that method early-returns and would not re-add it.
+    if (this._svgReady) {
+      this._svgElement?.addEventListener('pointermove', this._handleSvgPointerMove, true);
+    }
   }
 
   protected override updated(changedProperties: PropertyValues<this>): void {
