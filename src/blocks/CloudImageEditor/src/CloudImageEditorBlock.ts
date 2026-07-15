@@ -1,9 +1,16 @@
+import { ContextProvider } from '@lit/context';
 import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import { unsafeSVG } from 'lit/directives/unsafe-svg.js';
 import { when } from 'lit/directives/when.js';
+import {
+  CloudImageEditorController,
+  type CloudImageEditorControllerState,
+} from '../../../abstract/controllers/CloudImageEditorController';
+import type { TelemetryManager } from '../../../abstract/managers/TelemetryManager';
 import { LitBlock } from '../../../lit/LitBlock';
+import type { SharedState } from '../../../lit/SharedState';
 import {
   createCdnUrl,
   createCdnUrlModifiers,
@@ -16,6 +23,7 @@ import { debounce } from '../../../utils/debounce.js';
 import { TRANSPARENT_PIXEL_SRC } from '../../../utils/transparentPixelSrc';
 import type { EditorImageCropper } from './EditorImageCropper';
 import type { EditorImageFader } from './EditorImageFader';
+import { cloudImageEditorContext } from './editor-context';
 import { classNames } from './lib/classNames.js';
 import { getClosestAspectRatio, parseCropPreset } from './lib/parseCropPreset.js';
 import { parseTabs } from './lib/parseTabs.js';
@@ -36,6 +44,27 @@ import '../../Icon/Icon';
 type TabIdValue = (typeof TabId)[keyof typeof TabId];
 
 const DEFAULT_TABS = serializeCsv([...ALL_TABS]);
+
+/**
+ * The cross-cutting state keys bridged bidirectionally between the shared
+ * uploader ctx (`this.$`) and the `CloudImageEditorController` (M12 P1
+ * scaffolding) — kept in sync while descendants are still reading `this.$`
+ * directly. Must match `CloudImageEditorControllerState` exactly.
+ */
+const EDITOR_CONTROLLER_BRIDGE_KEYS = [
+  '*originalUrl',
+  '*loadingOperations',
+  '*networkProblems',
+  '*imageSize',
+  '*editorTransformations',
+  '*cropPresetList',
+  '*currentAspectRatio',
+  '*tabList',
+  '*tabId',
+  '*faderEl',
+  '*cropperEl',
+  '*imgContainerEl',
+] as const satisfies readonly (keyof CloudImageEditorControllerState)[];
 
 export class CloudImageEditorBlock extends LitBlock {
   public declare attributesMeta: ({ uuid: string } | { 'cdn-url': string }) &
@@ -79,6 +108,21 @@ export class CloudImageEditorBlock extends LitBlock {
   private _pendingInitUpdate: Promise<void> | null = null;
 
   private _pendingSizeWait: Promise<void> | null = null;
+
+  /**
+   * DOM-free editor controller (M12 P1 scaffolding) — created and provided
+   * down the editor DOM tree so descendants can start consuming it in later
+   * steps. Kept in sync with `this.$` via `_setupEditorControllerBridge`;
+   * nothing reads from it yet, so this must not change observable behavior.
+   */
+  private readonly _editorController = new CloudImageEditorController();
+
+  private readonly _editorControllerProvider = new ContextProvider(this, {
+    context: cloudImageEditorContext,
+    initialValue: this._editorController,
+  });
+
+  private _editorBridgeUnsubs: Array<() => void> = [];
 
   private readonly _debouncedShowLoader = debounce((show: boolean) => {
     this._showLoader = show;
@@ -127,6 +171,75 @@ export class CloudImageEditorBlock extends LitBlock {
 
     this._syncTabListFromProp();
     this._syncCropPresetState();
+
+    this._setupEditorController();
+  }
+
+  /**
+   * Wires the `CloudImageEditorController` (M12 P1 scaffolding): injects the
+   * cross-cutting services + action handlers, then bridges the 12
+   * cross-cutting state keys bidirectionally with `this.$` so the controller
+   * stays a faithful mirror while descendants are still reading `this.$`
+   * directly (unported). See `EDITOR_CONTROLLER_BRIDGE_KEYS`.
+   *
+   * Loop-safety: `StateController.set` and the shared-ctx pub/sub both dedupe
+   * via value equality before notifying, so a value arriving from one side
+   * and written back to the other is recognized as unchanged and the
+   * propagation stops there — no infinite ping-pong.
+   */
+  private _setupEditorController(): void {
+    this._editorController.setServices({
+      l10n: (key, variables) => this.l10n(key, variables),
+      getConfig: (key) => this.cfg[key],
+      telemetry: {
+        sendEvent: (event) => this.telemetryManager.sendEvent(event as Parameters<TelemetryManager['sendEvent']>[0]),
+        sendEventError: (err, context) => this.telemetryManager.sendEventError(err, context as string | undefined),
+      },
+      proxyUrl: (url) => this.proxyUrl(url),
+    });
+
+    this._editorController.setHandlers({
+      onApply: this.$['*on.apply'],
+      onCancel: this.$['*on.cancel'],
+      onRetryNetwork: this.$['*on.retryNetwork'],
+    });
+
+    // ctx -> controller: `sub`'s default `init = true` also seeds the
+    // controller with the current value on first subscribe.
+    for (const key of EDITOR_CONTROLLER_BRIDGE_KEYS) {
+      this._editorBridgeUnsubs.push(this._bridgeKeyToController(key));
+    }
+
+    // controller -> ctx: coarse subscribe (fires on any controller state
+    // change), write back only the keys that actually differ.
+    this._editorBridgeUnsubs.push(
+      this._editorController.subscribe(() => {
+        for (const key of EDITOR_CONTROLLER_BRIDGE_KEYS) {
+          this._bridgeKeyToCtx(key);
+        }
+      }),
+    );
+  }
+
+  /**
+   * ctx -> controller for a single bridge key. A real generic parameter (not
+   * a union collapsed from a `for...of`) so TS can verify `SharedState[K]`
+   * and `CloudImageEditorControllerState[K]` line up for the same `K`.
+   */
+  private _bridgeKeyToController<K extends (typeof EDITOR_CONTROLLER_BRIDGE_KEYS)[number]>(key: K): () => void {
+    return this.sub(key, (value) => this._editorController.set(key, value));
+  }
+
+  /** controller -> ctx for a single bridge key, only if the value actually changed. */
+  private _bridgeKeyToCtx<K extends (typeof EDITOR_CONTROLLER_BRIDGE_KEYS)[number]>(key: K): void {
+    const controllerValue = this._editorController.get(key);
+    if (!Object.is(controllerValue, this.$[key])) {
+      // `CloudImageEditorControllerState` is a `Pick` of `CloudImageEditorState`, which `SharedState`
+      // includes verbatim, so the value type for these 12 keys is identical on both sides — TS just
+      // can't prove that correlation across two independently-declared interfaces through a shared
+      // generic `K`. Narrow boundary cast, not a loosening of the state's real shape.
+      this.$[key] = controllerValue as SharedState[K];
+    }
   }
 
   private _assignSharedElements(): void {
@@ -252,6 +365,11 @@ export class CloudImageEditorBlock extends LitBlock {
 
   public override disconnectedCallback(): void {
     this._detachImageListeners();
+
+    for (const unsub of this._editorBridgeUnsubs) unsub();
+    this._editorBridgeUnsubs = [];
+    this._editorController.destroy();
+
     super.disconnectedCallback();
   }
 
