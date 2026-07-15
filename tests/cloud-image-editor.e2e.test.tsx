@@ -34,6 +34,39 @@ describe('Cloud Image Editor', () => {
     await expect.element(page.getByTestId('uc-cloud-image-editor')).toBeVisible();
   });
 
+  it('activates the cropper on the crop tab (renders the image + crop frame)', async () => {
+    // Regression guard (M12 editor port): "should be rendered" only proves the
+    // shell mounts — it does NOT prove the cropper draws the image. The cropper
+    // is rendered behind an `_isInitialized` gate, so the root captures its ref
+    // and calls `activate()` only *after* that subtree renders. When that
+    // post-init ref capture regressed, the cropper element existed but stayed
+    // blank (no `<img>`/canvas draw, no crop frame) — every other test here
+    // still passed. `activate()` is what marks the element `uc-active_from_*`
+    // and draws the CDN image onto its canvas, so assert we actually get there.
+    const cropper = page.getByTestId('uc-editor-image-cropper');
+    await expect.element(cropper).toBeVisible();
+    await expect.poll(() => cropper.element().className).toMatch(/uc-active_from_/);
+  });
+
+  it('renders editor icons (nested uc-icon ChildBlocks adopt the editor ctx)', async () => {
+    // Regression guard (M12 flip): editor icons are `uc-icon` — a ChildBlock
+    // that must adopt the shared uploader ctx to render its sprite `<use>`.
+    // That only happens if the light editor root *re-provides* the ctx-name
+    // `@lit/context` down its tree (ChildBlock does this for its own
+    // descendants; the light base doesn't). When it didn't, every toolbar/tab
+    // icon rendered empty while the rest of the editor looked fine — invisible
+    // to a suite that only checks the shell mounts.
+    await expect
+      .poll(
+        () =>
+          [...document.querySelectorAll('uc-icon')].filter((ic) => {
+            const use = ic.querySelector('svg use');
+            return (use?.getAttribute('href') ?? use?.getAttribute('xlink:href'))?.startsWith('#uc-icon-');
+          }).length,
+      )
+      .toBeGreaterThan(0);
+  });
+
   it('should select tunings tab', async () => {
     const flip = page.getByTestId('uc-editor-crop-button-control').nth(2);
 

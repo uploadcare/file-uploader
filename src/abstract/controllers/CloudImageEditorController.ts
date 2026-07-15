@@ -1,38 +1,44 @@
-import type { CloudImageEditorState } from '../../blocks/CloudImageEditor/src/state';
-import { ALL_TABS, TabId } from '../../blocks/CloudImageEditor/src/toolbar-constants';
-import type { Transformations } from '../../blocks/CloudImageEditor/src/types';
+import type { EditorImageCropper } from '../../blocks/CloudImageEditor/src/EditorImageCropper';
+import type { EditorImageFader } from '../../blocks/CloudImageEditor/src/EditorImageFader';
+import { ALL_TABS, TabId, type TabIdValue } from '../../blocks/CloudImageEditor/src/toolbar-constants';
+import type {
+  CropAspectRatio,
+  CropPresetList,
+  ImageSize,
+  LoadingOperations,
+  Transformations,
+} from '../../blocks/CloudImageEditor/src/types';
 import type { ConfigType } from '../../types';
 import { StateController } from './StateController';
 
 /**
- * The cross-cutting subset of `CloudImageEditorState` (M12 "State scoping
+ * The cross-cutting editor state owned by the controller (M12 "State scoping
  * principle") — keys read/written across more than one component subtree of
  * the editor. The cropper-local (`*padding`/`*operations`/`*imageBox`/
  * `*cropBox`) and toolbar-local (`*showListAspectRatio`/`*sliderEl`/
  * `*showSlider`/`*currentFilter`/`*currentOperation`/`*operationTooltip`) keys
- * are deliberately excluded — they become plain Lit `@state` on their owning
- * element when that subtree ports (P6), not controller state.
+ * are deliberately excluded — they are plain Lit `@state` on their owning
+ * element, not controller state.
  *
  * `*faderEl`/`*cropperEl`/`*imgContainerEl` are cross-component coordination
  * refs (a smell, flagged in the plan for a later refinement to controller
  * methods) — the controller only stores/returns them, it never touches the
  * DOM itself.
  */
-export type CloudImageEditorControllerState = Pick<
-  CloudImageEditorState,
-  | '*originalUrl'
-  | '*loadingOperations'
-  | '*networkProblems'
-  | '*imageSize'
-  | '*editorTransformations'
-  | '*cropPresetList'
-  | '*currentAspectRatio'
-  | '*tabList'
-  | '*tabId'
-  | '*faderEl'
-  | '*cropperEl'
-  | '*imgContainerEl'
->;
+export type CloudImageEditorControllerState = {
+  '*originalUrl': string | null;
+  '*loadingOperations': LoadingOperations;
+  '*networkProblems': boolean;
+  '*imageSize': ImageSize | null;
+  '*editorTransformations': Transformations;
+  '*cropPresetList': CropPresetList;
+  '*currentAspectRatio': CropAspectRatio | null;
+  '*tabList': readonly TabIdValue[];
+  '*tabId': TabIdValue;
+  '*faderEl': EditorImageFader | null;
+  '*cropperEl': EditorImageCropper | null;
+  '*imgContainerEl': HTMLElement | null;
+};
 
 function createDefaultState(): CloudImageEditorControllerState {
   return {
