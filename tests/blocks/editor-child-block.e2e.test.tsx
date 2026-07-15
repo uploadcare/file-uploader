@@ -1,21 +1,32 @@
 import { ContextProvider } from '@lit/context';
-import { html } from 'lit';
+import { html, LitElement } from 'lit';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
-import { page } from 'vitest/browser';
-import { CloudImageEditorController } from '@/abstract/controllers/CloudImageEditorController';
-import { cloudImageEditorContext, EditorChildBlock } from '@/blocks/CloudImageEditor/src/editor-context';
-import { ChildBlock } from '@/lit/ChildBlock';
-import { getCtxName } from '../utils/getCtxName';
+import { CloudImageEditorController, type EditorServices } from '@/abstract/controllers/CloudImageEditorController';
+import { cloudImageEditorContext, EditorBlock } from '@/blocks/CloudImageEditor/src/editor-context';
+import { LightDomMixin } from '@/lit/LightDomMixin';
+import { RegisterableElementMixin } from '@/lit/RegisterableElementMixin';
 import '../../types/jsx';
 
 /**
- * Throwaway coverage tags for M12 P3 infrastructure: a `ChildBlock`-rooted
- * provider (real editor blocks provide the controller from `P5` onward — this
- * root stands in for that) and an `EditorChildBlock` consumer. Not real
- * editor blocks — just enough to prove the context + base wiring.
+ * Throwaway coverage tags for M12 P3 (reworked) infrastructure: a light,
+ * non-`ChildBlock` root that constructs a `CloudImageEditorController` with
+ * simple inline services and provides it via `ContextProvider`, and an
+ * `EditorBlock` consumer. Not real editor blocks — just enough to prove the
+ * context + light-base wiring per the "Bundle-independence constraints" (the
+ * root here stands in for the real `CloudImageEditorBlock`, wired in P5).
  */
-class TestEditorRoot extends ChildBlock {
-  public readonly controller = new CloudImageEditorController();
+const TestEditorRootBase = RegisterableElementMixin(LightDomMixin(LitElement));
+
+class TestEditorRoot extends TestEditorRootBase {
+  public readonly telemetrySendEvent = vi.fn();
+  public readonly telemetrySendEventError = vi.fn();
+  public readonly controller = new CloudImageEditorController(undefined, {
+    l10n: (key) => (key === 'cancel' ? 'Cancel' : key),
+    getConfig: ((key: string) => (key === 'pubkey' ? 'demopublickey' : undefined)) as EditorServices['getConfig'],
+    telemetry: { sendEvent: this.telemetrySendEvent, sendEventError: this.telemetrySendEventError },
+    proxyUrl: async (url) => url,
+  });
+
   // biome-ignore lint/correctness/noUnusedPrivateClassMembers: `ContextProvider` provides by side effect — the field keeps it alive for the host's lifetime.
   private readonly _provider = new ContextProvider(this, {
     context: cloudImageEditorContext,
@@ -23,17 +34,16 @@ class TestEditorRoot extends ChildBlock {
   });
 
   public override render() {
-    // ChildBlock is light-DOM (LightDomMixin) — render via `this.yield('')`,
-    // NOT a literal `<slot>`, or projected children silently vanish (M12 PoC
-    // gotcha).
+    // Light-DOM — render via `this.yield('')`, NOT a literal `<slot>`, or
+    // projected children silently vanish (M12 PoC gotcha).
     return html`${this.yield('')}`;
   }
 }
 
-class TestEditorChild extends EditorChildBlock {
+class TestEditorChild extends EditorBlock {
   public override render() {
     return html`<span class="tab-id">${this.editorControllerOrNull?.get('*tabId') ?? ''}</span
-      ><span class="l10n">${this.l10n('cancel')}</span>`;
+      ><span class="l10n">${this.editorControllerOrNull?.l10n('cancel') ?? ''}</span>`;
   }
 }
 
@@ -44,17 +54,15 @@ declare global {
   }
 }
 
-beforeAll(async () => {
-  const UC = await import('@/index.js');
-  UC.defineComponents(UC);
+beforeAll(() => {
   if (!customElements.get('uc-test-editor-root')) customElements.define('uc-test-editor-root', TestEditorRoot);
   if (!customElements.get('uc-test-editor-child')) customElements.define('uc-test-editor-child', TestEditorChild);
 });
 
 const appended: HTMLElement[] = [];
-const append = <K extends keyof HTMLElementTagNameMap>(tag: K, attrs: Record<string, string> = {}) => {
+const append = <K extends keyof HTMLElementTagNameMap>(tag: K, id: string) => {
   const el = document.createElement(tag);
-  for (const [name, value] of Object.entries(attrs)) el.setAttribute(name, value);
+  el.id = id;
   document.body.append(el);
   appended.push(el);
   return el;
@@ -65,19 +73,15 @@ afterEach(() => {
   appended.length = 0;
 });
 
-describe('EditorChildBlock / cloudImageEditorContext', () => {
-  it('resolves the provided controller, renders its state, reads the uploader l10n surface, and re-renders on set()', async () => {
-    const ctxName = getCtxName();
-    page.render(<uc-config ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>);
-    const root = append('uc-test-editor-root', { 'ctx-name': ctxName });
-    root.id = 'test-editor-root-direct';
+describe('EditorBlock / cloudImageEditorContext (light, non-ChildBlock base)', () => {
+  it('resolves the provided controller, renders its state, reads the injected l10n service, and re-renders on set()', async () => {
+    const root = append('uc-test-editor-root', 'test-editor-root-direct');
     const child = document.createElement('uc-test-editor-child');
     child.id = 'test-editor-child-direct';
     root.append(child);
 
     await expect.poll(() => child.querySelector('.tab-id')?.textContent).toBe('crop');
-    // Uploader surface (`l10n`) resolved alongside the editor context, on the
-    // same ChildBlock/EditorChildBlock.
+    // Services surface (`l10n`), read through the controller — not ChildBlock.
     await expect.poll(() => child.querySelector('.l10n')?.textContent).toBe('Cancel');
 
     root.controller.set('*tabId', 'tuning');
@@ -85,10 +89,7 @@ describe('EditorChildBlock / cloudImageEditorContext', () => {
   });
 
   it('resolves the editor context through an intervening plain element, two levels deep', async () => {
-    const ctxName = getCtxName();
-    page.render(<uc-config ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>);
-    const root = append('uc-test-editor-root', { 'ctx-name': ctxName });
-    root.id = 'test-editor-root-nested';
+    const root = append('uc-test-editor-root', 'test-editor-root-nested');
     const wrapper = document.createElement('div');
     root.append(wrapper);
     const child = document.createElement('uc-test-editor-child');
@@ -102,10 +103,9 @@ describe('EditorChildBlock / cloudImageEditorContext', () => {
   });
 
   it('stops re-rendering once the child disconnects (no dangling subscription)', async () => {
-    const ctxName = getCtxName();
-    page.render(<uc-config ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>);
-    const root = append('uc-test-editor-root', { 'ctx-name': ctxName });
+    const root = append('uc-test-editor-root', 'test-editor-root-teardown');
     const child = document.createElement('uc-test-editor-child');
+    child.id = 'test-editor-child-teardown';
     root.append(child);
     await expect.poll(() => child.querySelector('.tab-id')?.textContent).toBe('crop');
 
@@ -120,10 +120,7 @@ describe('EditorChildBlock / cloudImageEditorContext', () => {
   });
 
   it('keeps re-rendering after a light-DOM reconnect of the same node (the reconnect-fix guard)', async () => {
-    const ctxName = getCtxName();
-    page.render(<uc-config ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>);
-    const root = append('uc-test-editor-root', { 'ctx-name': ctxName });
-    root.id = 'test-editor-root-reconnect';
+    const root = append('uc-test-editor-root', 'test-editor-root-reconnect');
     const child = document.createElement('uc-test-editor-child');
     child.id = 'test-editor-child-reconnect';
     root.append(child);
@@ -145,9 +142,7 @@ describe('EditorChildBlock / cloudImageEditorContext', () => {
   });
 
   it('root teardown does not throw and leaves the controller usable (root does not own controller.destroy in this phase)', async () => {
-    const ctxName = getCtxName();
-    page.render(<uc-config ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>);
-    const root = append('uc-test-editor-root', { 'ctx-name': ctxName });
+    const root = append('uc-test-editor-root', 'test-editor-root-remove');
     const child = document.createElement('uc-test-editor-child');
     root.append(child);
     await expect.poll(() => child.querySelector('.tab-id')?.textContent).toBe('crop');

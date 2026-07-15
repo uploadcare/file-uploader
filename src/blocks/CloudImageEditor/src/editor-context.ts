@@ -1,14 +1,15 @@
 import { ContextConsumer, createContext } from '@lit/context';
-import type { ReactiveController, ReactiveControllerHost } from 'lit';
+import { LitElement, type ReactiveController, type ReactiveControllerHost } from 'lit';
 import type { CloudImageEditorController } from '../../../abstract/controllers/CloudImageEditorController';
-import { ChildBlock } from '../../../lit/ChildBlock';
+import { LightDomMixin } from '../../../lit/LightDomMixin';
+import { RegisterableElementMixin } from '../../../lit/RegisterableElementMixin';
 
 /**
  * The editor's own `@lit/context` — resolved by DOM ancestry, distinct from
  * (and coexisting with) the uploader ctx's `ctxNameContext`. The root
  * `<uc-cloud-image-editor>` provides a `CloudImageEditorController` instance
  * here (`ContextProvider`, wired in a later phase); descendants consume it
- * through `CloudImageEditorContextController`/`EditorChildBlock` below.
+ * through `CloudImageEditorContextController`/`EditorBlock` below.
  */
 export const cloudImageEditorContext = createContext<CloudImageEditorController>('cloud-image-editor-controller');
 
@@ -24,7 +25,7 @@ export class CloudImageEditorContextController implements ReactiveController {
   private _controller?: CloudImageEditorController;
   private _subscriptions = new Set<() => void>();
   // Attach listeners are persistent (unlike the spike's one-shot `onAttach`,
-  // which existed only to gate a single `initCallback` run): `EditorChildBlock`
+  // which existed only to gate a single `initCallback` run): `EditorBlock`
   // needs its re-render subscription re-wired on every (re)attach, not just
   // the first, so a listener registered via `onAttach` fires immediately if a
   // controller is already adopted, and again on every later (re)attach.
@@ -46,8 +47,8 @@ export class CloudImageEditorContextController implements ReactiveController {
 
   public hostDisconnected(): void {
     this._cleanupSubscriptions();
-    // Forget the adopted controller (not just its subscriptions): `ChildBlock`
-    // is light-DOM (`LightDomMixin`), and re-rendering an ancestor that
+    // Forget the adopted controller (not just its subscriptions): the editor
+    // base is light-DOM (`LightDomMixin`), and re-rendering an ancestor that
     // `yield()`s this host can physically re-`insertBefore` the same DOM node
     // — which fires disconnectedCallback then connectedCallback back to back
     // for the *same* controller instance. Without this reset, `_attach`'s
@@ -112,23 +113,40 @@ export class CloudImageEditorContextController implements ReactiveController {
   }
 }
 
+// Light-DOM Lit base with NO ChildBlock coupling: no `ensureUploaderCtx`
+// (which value-imports the `UploaderController` graph), no `UploaderRegistry`
+// (adopt/registry machinery), no ctx-lifecycle, no upload stack. See the
+// "Bundle-independence constraints" section of the M12 plan
+// (`docs/superpowers/plans/2026-07-15-v2-m12-cloud-image-editor-port.md`):
+// editor blocks must not pull that machinery into the standalone editor
+// bundle. Only the two structural mixins ChildBlock itself is built on.
+const EditorBlockBase = RegisterableElementMixin(LightDomMixin(LitElement));
+
 /**
- * Base for editor descendants: the uploader surface (`l10n`, `bag`,
- * `proxyUrl`, `subConfigValue`, …) via `ChildBlock`, plus the editor
- * controller consumer. The ROOT *provides* the controller (via
- * `ContextProvider`, wired when `CloudImageEditorBlock` ports in P5) — this
- * base only *consumes*.
+ * Base for editor descendants. Deliberately NOT `ChildBlock` — see the
+ * "Bundle-independence constraints" in the M12 plan: `ChildBlock`
+ * value-imports `ensureUploaderCtx`/`UploaderRegistry` (the `UploaderController`
+ * adoption graph), which would bloat the standalone `<uc-cloud-image-editor>`
+ * bundle with uploader machinery it doesn't use today.
+ *
+ * Descendants get EVERYTHING — cross-cutting editor state AND the
+ * l10n/config/telemetry/proxy services — through `this.editorController`,
+ * which the root injects (`CloudImageEditorController.setServices`) from
+ * whatever it resolves them from (today: the shared uploader ctx read by the
+ * root only; see the plan for the deferred fully-standalone follow-up). No
+ * ctx-name resolution, no uploader ctx read, happens in this base or its
+ * descendants.
  */
-export abstract class EditorChildBlock extends ChildBlock {
+export abstract class EditorBlock extends EditorBlockBase {
   private readonly _editorCtx = new CloudImageEditorContextController(this);
   private _editorRerenderSub?: () => void;
 
   public constructor() {
     super();
-    // Re-render whenever the editor controller notifies — wired on every
-    // (re)attach so a controller swap (exotic, but symmetric with
-    // `ChildBlock`'s own controller re-adoption) doesn't leave a stale
-    // subscription behind.
+    // Re-render whenever the editor controller notifies (state change,
+    // `notify()` after a services swap, etc.) — wired on every (re)attach so
+    // a controller swap (exotic, but symmetric with `ChildBlock`'s own
+    // controller re-adoption) doesn't leave a stale subscription behind.
     this._editorCtx.onAttach(() => {
       this._editorRerenderSub?.();
       this._editorRerenderSub = this._editorCtx.subscribe(() => this.requestUpdate());
