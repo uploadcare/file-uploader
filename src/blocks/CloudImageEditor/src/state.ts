@@ -1,11 +1,66 @@
 import { createCdnUrl, createCdnUrlModifiers } from '../../../utils/cdn-utils';
 import { TRANSPARENT_PIXEL_SRC } from '../../../utils/transparentPixelSrc';
 import type { CloudImageEditorBlock } from './CloudImageEditorBlock';
+import type { EditorImageCropper } from './EditorImageCropper';
+import type { EditorImageFader } from './EditorImageFader';
+import type { EditorSlider } from './EditorSlider';
 import { transformationsToOperations } from './lib/transformationUtils';
+import type { TabIdValue } from './toolbar-constants';
 import { ALL_TABS, TabId } from './toolbar-constants';
-import type { ApplyResult, LoadingOperations, Transformations } from './types';
+import type { ApplyResult, CropAspectRatio, CropPresetList, LoadingOperations, Transformations } from './types';
 
-export function initState(fnCtx: CloudImageEditorBlock) {
+/**
+ * State for the top-level cloud image editor block.
+ */
+type CloudImageEditorBlockState = {
+  '*originalUrl': string | null;
+  '*loadingOperations': LoadingOperations;
+  '*faderEl': EditorImageFader | null;
+  '*cropperEl': EditorImageCropper | null;
+  '*imgEl': HTMLImageElement | null;
+  '*imgContainerEl': HTMLElement | null;
+  '*networkProblems': boolean;
+  '*imageSize': { width: number; height: number } | null;
+  '*editorTransformations': Transformations;
+  '*cropPresetList': CropPresetList;
+  '*currentAspectRatio': CropAspectRatio | null;
+  '*tabList': readonly TabIdValue[];
+  '*tabId': TabIdValue;
+  '*on.retryNetwork': () => void;
+  '*on.apply': (transformations: Transformations) => void;
+  '*on.cancel': () => void;
+};
+
+/**
+ * State for the image cropper sub-block.
+ */
+type EditorImageCropperState = {
+  '*padding': number;
+  '*operations': { rotate: number; mirror: boolean; flip: boolean };
+  '*imageBox': { x: number; y: number; width: number; height: number };
+  '*cropBox': { x: number; y: number; width: number; height: number };
+};
+
+/**
+ * State for the editor toolbar sub-block.
+ */
+type EditorToolbarState = {
+  '*showListAspectRatio': boolean;
+  '*sliderEl': EditorSlider | null;
+  '*showSlider': boolean;
+  '*currentFilter': string;
+  '*currentOperation': string | null;
+  '*operationTooltip': string | null;
+};
+
+/**
+ * Full set of ctx keys owned by the cloud image editor and its sub-blocks
+ * (cropper, toolbar). Still lives in the shared uploader ctx (`SharedState`)
+ * — this is a type-only relocation, not a new state container.
+ */
+export type CloudImageEditorState = CloudImageEditorBlockState & EditorImageCropperState & EditorToolbarState;
+
+export function createCloudImageEditorState(fnCtx: CloudImageEditorBlock) {
   return {
     '*originalUrl': null,
     '*loadingOperations': new Map() as LoadingOperations,

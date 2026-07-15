@@ -220,7 +220,7 @@ describe('PubSub (additional coverage)', () => {
   it('add() rewrite semantics pin what ctxOwner buys: first-write-wins normally, force-overwrite when rewrite=true (CloudImageEditorBlock/EditorImageCropper init$ seeding path)', () => {
     // `SymbioteCompatMixin._initSharedContext` calls `add(key, defaultValue,
     // this.ctxOwner)` for every `init$` key on connect (src/lit/SymbioteCompatMixin.ts).
-    // `CloudImageEditorBlock` (16 keys via `initState()`, CloudImageEditorBlock.ts:120-123)
+    // `CloudImageEditorBlock` (16 keys via `createCloudImageEditorState()`, CloudImageEditorBlock.ts:120-123)
     // and `EditorImageCropper` (4 keys seeded in its constructor, EditorImageCropper.ts:65-85)
     // are the only two classes that set `ctxOwner = true`, so for their real
     // seeded keys `add` is called with `rewrite=true` instead of the default
