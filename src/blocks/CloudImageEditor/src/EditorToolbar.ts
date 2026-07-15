@@ -1,6 +1,6 @@
 import type { PropertyValues, TemplateResult } from 'lit';
 import { html, nothing } from 'lit';
-import { state } from 'lit/decorators.js';
+import { property, state } from 'lit/decorators.js';
 import type { Ref } from 'lit/directives/ref.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import { styleMap } from 'lit/directives/style-map.js';
@@ -28,7 +28,7 @@ import {
   type CropOperation,
   TabId,
 } from './toolbar-constants';
-import type { CropAspectRatio, Transformations } from './types';
+import type { CropAspectRatio, CropPresetList, ImageSize, Transformations } from './types';
 import { viewerImageSrc } from './util';
 import { parseFilterValue } from './utils/parseFilterValue';
 
@@ -59,9 +59,16 @@ export class EditorToolbar extends EditorBlock {
   @state()
   private _showTabToggles = true;
 
-  // This is public because it's used in the updated lifecycle to assign to the shared state.
-  @state()
+  // Passed in from the root (`<uc-cloud-image-editor>`) as plain Lit props —
+  // root → single child, not controller state (see the "State scoping principle").
+  @property({ attribute: false })
   public tabList: readonly TabIdValue[] = [...ALL_TABS];
+
+  @property({ attribute: false })
+  public cropPresetList: CropPresetList = [];
+
+  @property({ attribute: false })
+  public imageSize: ImageSize | null = null;
 
   // This is public because it's used in the updated lifecycle to assign to the shared state.
   @state()
@@ -242,7 +249,7 @@ export class EditorToolbar extends EditorBlock {
 
     if (id === TabId.CROP) {
       faderEl?.deactivate();
-      const imageSize = this.editorController.get('*imageSize');
+      const imageSize = this.imageSize;
       if (imageSize) {
         cropperEl?.activate(imageSize, { fromViewer });
       }
@@ -395,18 +402,6 @@ export class EditorToolbar extends EditorBlock {
   public constructor() {
     super();
 
-    this.subEditorKey('*cropPresetList', (cropPresetList) => {
-      this._cropPresets = [...(cropPresetList ?? [])];
-    });
-
-    this.subEditorKey('*imageSize', (imageSize) => {
-      if (imageSize) {
-        setTimeout(() => {
-          this._activateTab(this.editorController.get('*tabId'), { fromViewer: true });
-        }, 0);
-      }
-    });
-
     this.subEditorKey('*editorTransformations', (editorTransformations) => {
       const appliedFilter = editorTransformations?.filter?.name;
       if (this._currentFilter !== appliedFilter) {
@@ -442,21 +437,6 @@ export class EditorToolbar extends EditorBlock {
       this._debouncedShowLoader(anyLoading);
     });
 
-    this.subEditorKey('*tabList', (tabList) => {
-      this.tabList = tabList;
-      this._showTabToggles = tabList.length > 1;
-
-      if (!tabList.includes(this.editorController.get('*tabId')) && tabList.length > 0) {
-        const [firstTab] = tabList;
-        if (firstTab) {
-          this._activateTab(firstTab, { fromViewer: false });
-        }
-        return;
-      }
-
-      this._syncTabIndicator();
-    });
-
     this.onEditorAttach(() => {
       this._updateInfoTooltip();
     });
@@ -473,8 +453,39 @@ export class EditorToolbar extends EditorBlock {
     this._syncTabIndicator();
   }
 
+  protected override willUpdate(changedProperties: PropertyValues<this>): void {
+    super.willUpdate(changedProperties);
+
+    // Pure derived state from the root-passed props — compute in `willUpdate` so
+    // it folds into the current render (no follow-up update scheduled).
+    if (changedProperties.has('cropPresetList')) {
+      this._cropPresets = [...(this.cropPresetList ?? [])];
+    }
+    if (changedProperties.has('tabList')) {
+      this._showTabToggles = this.tabList.length > 1;
+    }
+  }
+
   protected override updated(changedProperties: PropertyValues<this>): void {
     super.updated(changedProperties);
+
+    // Side effects reacting to the root-passed props (formerly `subEditorKey`
+    // subscriptions on the controller) — same transitions → same effects.
+    if (changedProperties.has('tabList')) {
+      const ctrl = this.editorControllerOrNull;
+      if (ctrl && this.tabList.length > 0 && !this.tabList.includes(ctrl.get('*tabId'))) {
+        const [firstTab] = this.tabList;
+        if (firstTab) {
+          this._activateTab(firstTab, { fromViewer: false });
+        }
+      }
+    }
+
+    if (changedProperties.has('imageSize') && this.imageSize) {
+      setTimeout(() => {
+        this._activateTab(this.editorController.get('*tabId'), { fromViewer: true });
+      }, 0);
+    }
 
     if (changedProperties.has('activeTab') || changedProperties.has('tabList')) {
       this.updateComplete.then(() => this._syncTabIndicator());

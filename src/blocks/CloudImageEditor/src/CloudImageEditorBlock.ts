@@ -4,10 +4,7 @@ import { property, state } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import { unsafeSVG } from 'lit/directives/unsafe-svg.js';
 import { when } from 'lit/directives/when.js';
-import {
-  CloudImageEditorController,
-  type CloudImageEditorControllerState,
-} from '../../../abstract/controllers/CloudImageEditorController';
+import { CloudImageEditorController } from '../../../abstract/controllers/CloudImageEditorController';
 import type { A11y } from '../../../abstract/managers/a11y';
 import type { TelemetryManager } from '../../../abstract/managers/TelemetryManager';
 import { resolveSecureDeliveryProxyUrl } from '../../../abstract/secureDeliveryProxyUrl';
@@ -99,6 +96,17 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
 
   @state()
   private _isInitialized = false;
+
+  // Root-owned, single-child data passed to `<uc-editor-toolbar>` as plain Lit
+  // props (not controller state — see the "State scoping principle").
+  @state()
+  private _imageSize: ImageSize | null = null;
+
+  @state()
+  private _cropPresetList: CropPresetList = [];
+
+  @state()
+  private _tabList: readonly TabIdValue[] = [...ALL_TABS];
 
   private _pendingInitUpdate: Promise<void> | null = null;
 
@@ -221,7 +229,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
    */
   private _activateViewer(): void {
     const editorController = this._editorController;
-    const imageSize = editorController.get('*imageSize');
+    const imageSize = this._imageSize;
     if (!imageSize) {
       return;
     }
@@ -572,11 +580,35 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
         <div class="uc-toolbar">
           <uc-line-loader-ui .active=${showLoader}></uc-line-loader-ui>
           <div class="uc-toolbar_content uc-toolbar_content__editor">
-            ${when(this._isInitialized, () => html`<uc-editor-toolbar></uc-editor-toolbar>`)}
+            ${when(
+              this._isInitialized,
+              () =>
+                html`<uc-editor-toolbar
+                  .cropPresetList=${this._cropPresetList}
+                  .tabList=${this._tabList}
+                  .imageSize=${this._imageSize}
+                ></uc-editor-toolbar>`,
+            )}
           </div>
         </div>
       </div>
     `;
+  }
+
+  protected override willUpdate(changedProperties: PropertyValues<this>): void {
+    super.willUpdate(changedProperties);
+
+    // Derive the toolbar-prop state (`_tabList`/`_cropPresetList`) from the
+    // reflected attributes in `willUpdate`, not `updated` — so the assignment
+    // folds into the current render instead of scheduling a wasteful follow-up
+    // (Lit "change-in-update").
+    if (changedProperties.has('tabs')) {
+      this._syncTabListFromProp();
+    }
+
+    if (changedProperties.has('cropPreset') || changedProperties.has('cdnUrl')) {
+      this._syncCropPresetState();
+    }
   }
 
   protected override updated(changedProperties: PropertyValues<this>): void {
@@ -589,19 +621,11 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
     if (changedProperties.has('cdnUrl') && this.cdnUrl) {
       void this.updateImage();
     }
-
-    if (changedProperties.has('tabs')) {
-      this._syncTabListFromProp();
-    }
-
-    if (changedProperties.has('cropPreset') || changedProperties.has('cdnUrl')) {
-      this._syncCropPresetState();
-    }
   }
 
   private _syncTabListFromProp(): void {
     const tabsValue = this.tabs || DEFAULT_TABS;
-    this._editorController.set('*tabList', parseTabs(tabsValue) as CloudImageEditorControllerState['*tabList']);
+    this._tabList = parseTabs(tabsValue);
   }
 
   private _syncCropPresetState(): void {
@@ -618,7 +642,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       }
     }
 
-    this._editorController.set('*cropPresetList', list);
+    this._cropPresetList = list;
     this._editorController.set('*currentAspectRatio', closest ?? list?.[0] ?? null);
   }
 
@@ -679,8 +703,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       }
 
       const { width, height } = json;
-      const imageSize: ImageSize = { width, height };
-      editorController.set('*imageSize', imageSize);
+      this._imageSize = { width, height };
 
       this._activateViewer();
     } catch (err) {
