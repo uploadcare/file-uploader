@@ -42,7 +42,7 @@ export class SliderUi extends SliderUiBase {
     this.setAttribute('with-effects', '');
   }
 
-  private _emitSliderEvent(type: 'slider-input', value: number): void {
+  private _emitSliderEvent(type: 'uc-internal:slider-input', value: number): void {
     this.dispatchEvent(
       new CustomEvent(type, {
         detail: { value },
@@ -59,7 +59,7 @@ export class SliderUi extends SliderUiBase {
       return;
     }
     this._setCurrentValue(value);
-    this._emitSliderEvent('slider-input', value);
+    this._emitSliderEvent('uc-internal:slider-input', value);
   };
 
   private readonly _handleSliderChange = (event: Event): void => {

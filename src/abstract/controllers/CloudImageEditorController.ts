@@ -57,13 +57,6 @@ function createDefaultState(): CloudImageEditorControllerState {
   };
 }
 
-/** The editor's action callbacks — set by the root, invoked by descendants via the controller's methods. Not state: overwriting a handler does not notify subscribers. */
-export type CloudImageEditorHandlers = {
-  onApply: (transformations: Transformations) => void;
-  onCancel: () => void;
-  onRetryNetwork: () => void;
-};
-
 /**
  * Cross-cutting services the editor needs but does not own — injected by the
  * root (from whatever it resolves them from: today's shared uploader ctx,
@@ -101,9 +94,11 @@ function createDefaultServices(): EditorServices {
 /**
  * DOM-free editor controller (the `UploaderController`/`ConfigController`
  * pattern — no `lit`, no DOM). Owns the cross-cutting editor state (see
- * `CloudImageEditorControllerState`), the editor's action callbacks, and an
- * injected `EditorServices` seam (l10n/config/telemetry/proxy) so descendants
- * never need to reach back into `ChildBlock`/the uploader ctx directly.
+ * `CloudImageEditorControllerState`) and an injected `EditorServices` seam
+ * (l10n/config/telemetry/proxy) so descendants never need to reach back into
+ * `ChildBlock`/the uploader ctx directly. Action intents (apply/cancel) are NOT
+ * stored here — descendants dispatch `uc-internal:*` DOM events that the root
+ * (`<uc-cloud-image-editor>`) listens for; the controller holds no callbacks.
  * Provided down the editor DOM tree via `cloudImageEditorContext`
  * (`@lit/context`) from the root `<uc-cloud-image-editor>`; consumed by
  * `EditorBlock` descendants.
@@ -113,7 +108,6 @@ function createDefaultServices(): EditorServices {
  * in P5/P6 (strangler) — kept minimal in this phase (state container only).
  */
 export class CloudImageEditorController extends StateController<CloudImageEditorControllerState> {
-  private _handlers: Partial<CloudImageEditorHandlers> = {};
   private _services: EditorServices;
 
   public constructor(initial?: Partial<CloudImageEditorControllerState>, services?: EditorServices) {
@@ -128,8 +122,8 @@ export class CloudImageEditorController extends StateController<CloudImageEditor
    * on a services swap (e.g. a locale/config change) should follow up with
    * `notify()`.
    *
-   * Replaces the whole set (unlike `setHandlers`, which merges) — `EditorServices`
-   * is a complete, non-partial interface, so a full object is always required.
+   * Replaces the whole set — `EditorServices` is a complete, non-partial
+   * interface, so a full object is always required.
    */
   public setServices(services: EditorServices): void {
     this._services = services;
@@ -172,31 +166,5 @@ export class CloudImageEditorController extends StateController<CloudImageEditor
 
   public getState(): Readonly<CloudImageEditorControllerState> {
     return this.values;
-  }
-
-  /**
-   * Set (or replace) the editor's action handlers. Called by the root once it
-   * has resolved the actual apply/cancel/retryNetwork behavior. Handlers are
-   * plain callbacks, not state — setting them does not notify subscribers.
-   */
-  public setHandlers(handlers: Partial<CloudImageEditorHandlers>): void {
-    this._handlers = { ...this._handlers, ...handlers };
-  }
-
-  public apply(transformations: Transformations): void {
-    this._handlers.onApply?.(transformations);
-  }
-
-  public cancel(): void {
-    this._handlers.onCancel?.();
-  }
-
-  public retryNetwork(): void {
-    this._handlers.onRetryNetwork?.();
-  }
-
-  public override destroy(): void {
-    this._handlers = {};
-    super.destroy();
   }
 }

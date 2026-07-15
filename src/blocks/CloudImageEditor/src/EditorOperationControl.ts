@@ -6,7 +6,7 @@ import type { Transformations } from './types';
 
 /** Bubbles up to `EditorToolbar`, which owns the toolbar-local `currentOperation`/`showSlider` state and the slider ref. */
 export class OperationSelectEvent extends Event {
-  public static readonly eventName = 'uc-operation-select';
+  public static readonly eventName = 'uc-internal:operation-select';
   public constructor(
     public readonly operation: ColorOperation | '',
     public readonly originalEvent: MouseEvent,

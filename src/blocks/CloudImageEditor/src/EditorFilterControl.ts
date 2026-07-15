@@ -20,7 +20,7 @@ import '../../Icon/Icon';
  * slider to adjust" branch without needing them back as props.
  */
 export class FilterSelectEvent extends Event {
-  public static readonly eventName = 'uc-filter-select';
+  public static readonly eventName = 'uc-internal:filter-select';
   public constructor(
     public readonly operation: 'filter',
     public readonly filter: string,

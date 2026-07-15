@@ -28,7 +28,7 @@ import {
   type CropOperation,
   TabId,
 } from './toolbar-constants';
-import type { CropAspectRatio } from './types';
+import type { CropAspectRatio, Transformations } from './types';
 import { viewerImageSrc } from './util';
 import { parseFilterValue } from './utils/parseFilterValue';
 
@@ -340,7 +340,7 @@ export class EditorToolbar extends EditorBlock {
 
   private _renderFreeformControl(): TemplateResult {
     return html`<uc-editor-freeform-button-control
-      @uc-show-aspect-ratio-list=${this._handleShowAspectRatioList}
+      @uc-internal:show-aspect-ratio-list=${this._handleShowAspectRatioList}
     ></uc-editor-freeform-button-control>`;
   }
 
@@ -356,14 +356,14 @@ export class EditorToolbar extends EditorBlock {
     return html`<uc-editor-filter-control
       .filter=${filterId}
       .currentFilter=${this._currentFilter}
-      @uc-filter-select=${this._handleFilterSelect}
+      @uc-internal:filter-select=${this._handleFilterSelect}
     ></uc-editor-filter-control>`;
   }
 
   private _renderOperationControl(operation: ColorOperation | ''): TemplateResult {
     return html`<uc-editor-operation-control
       .operation=${operation}
-      @uc-operation-select=${this._handleOperationSelect}
+      @uc-internal:operation-select=${this._handleOperationSelect}
     ></uc-editor-operation-control>`;
   }
 
@@ -494,14 +494,20 @@ export class EditorToolbar extends EditorBlock {
       action: 'cancel',
     });
     this._cancelPreload?.();
-    this.editorController.cancel();
+    this.dispatchEvent(new CustomEvent('uc-internal:cancel', { bubbles: true, composed: true }));
   };
 
   private readonly _handleApply = (e: MouseEvent): void => {
     this.editorController.telemetry.sendEventCloudImageEditor(e, this.editorController.get('*tabId'), {
       action: 'apply',
     });
-    this.editorController.apply(this.editorController.get('*editorTransformations'));
+    this.dispatchEvent(
+      new CustomEvent<Transformations>('uc-internal:apply', {
+        detail: this.editorController.get('*editorTransformations'),
+        bubbles: true,
+        composed: true,
+      }),
+    );
   };
 
   private readonly _handleApplySlider = (e: MouseEvent): void => {
@@ -656,7 +662,7 @@ export class EditorToolbar extends EditorBlock {
               class="uc-tab-toggles"
               .visible=${this._showTabToggles}
               .styles=${this._tabTogglesStyles}
-              @initial-render=${() => this._syncTabIndicator()}
+              @uc-internal:initial-render=${() => this._syncTabIndicator()}
             >
               <div
                 class="uc-tab-toggles_indicator"
@@ -678,7 +684,7 @@ export class EditorToolbar extends EditorBlock {
           <div class="uc-slider" ?hidden=${!this._useSliderPanel}>
             <uc-editor-slider
               ${ref(this._sliderRef)}
-              @uc-slider-tooltip-change=${this._handleSliderTooltipChange}
+              @uc-internal:slider-tooltip-change=${this._handleSliderTooltipChange}
             ></uc-editor-slider>
           </div>
 

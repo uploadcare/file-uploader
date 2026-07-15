@@ -420,7 +420,7 @@ export class CropFrame extends EditorBlock {
   /** Reports a drag-driven crop-box change up to the parent (`EditorImageCropper`), which owns `cropBox` and re-passes the (possibly clamped) value back down as a prop — see `CropBoxChangeEvent`. */
   private _commitCropBox(rect: Rectangle): void {
     this.dispatchEvent(
-      new CustomEvent<Rectangle>('cropboxchange', {
+      new CustomEvent<Rectangle>('uc-internal:cropboxchange', {
         detail: rect,
         bubbles: true,
         composed: true,
