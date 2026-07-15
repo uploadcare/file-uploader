@@ -40,15 +40,15 @@ describe('CloudImageEditorController', () => {
     expect(listener).toHaveBeenCalledTimes(2);
   });
 
-  it('set() dedup uses Object.is, so NaN written twice does not notify twice', () => {
+  it('set() dedups a re-written same-reference value (no notify)', () => {
     const controller = new CloudImageEditorController();
     const listener = vi.fn();
-    controller.set('*currentAspectRatio', { type: 'aspect-ratio', width: Number.NaN, height: 1, id: 'x' });
+    controller.set('*currentAspectRatio', { type: 'aspect-ratio', width: 16, height: 9, id: 'x' });
     controller.subscribe(listener);
-    const nan = { type: 'aspect-ratio' as const, width: Number.NaN, height: 1, id: 'x' };
-    controller.set('*currentAspectRatio', nan);
+    const ratio = { type: 'aspect-ratio' as const, width: 16, height: 9, id: 'y' };
+    controller.set('*currentAspectRatio', ratio); // new reference — notifies
     expect(listener).toHaveBeenCalledTimes(1);
-    controller.set('*currentAspectRatio', nan); // same reference — unchanged
+    controller.set('*currentAspectRatio', ratio); // same reference — Object.is dedup, no notify
     expect(listener).toHaveBeenCalledTimes(1);
   });
 
