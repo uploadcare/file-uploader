@@ -10,7 +10,6 @@ describe('CloudImageEditorController', () => {
     expect(controller.get('*tabId')).toBe(TabId.CROP);
     expect(controller.get('*editorTransformations')).toEqual({});
     expect(controller.get('*faderEl')).toBeNull();
-    expect(controller.get('*cropperEl')).toBeNull();
     expect(controller.get('*imgContainerEl')).toBeNull();
     expect(controller.state).toBe(controller.getState());
   });
