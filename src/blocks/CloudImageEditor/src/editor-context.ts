@@ -1,6 +1,9 @@
 import { ContextConsumer, createContext } from '@lit/context';
 import { LitElement, type ReactiveController, type ReactiveControllerHost } from 'lit';
-import type { CloudImageEditorController } from '../../../abstract/controllers/CloudImageEditorController';
+import type {
+  CloudImageEditorController,
+  CloudImageEditorControllerState,
+} from '../../../abstract/controllers/CloudImageEditorController';
 import { LightDomMixin } from '../../../lit/LightDomMixin';
 import { RegisterableElementMixin } from '../../../lit/RegisterableElementMixin';
 
@@ -150,6 +153,32 @@ export abstract class EditorBlock extends EditorBlockBase {
     this._editorCtx.onAttach(() => {
       this._editorRerenderSub?.();
       this._editorRerenderSub = this._editorCtx.subscribe(() => this.requestUpdate());
+      // A descendant's FIRST render can race ahead of the context actually
+      // resolving (property bindings from a parent's render commit before
+      // `ContextConsumer`'s own `hostConnected` dispatches the
+      // `context-request` event that finds the provider) — any
+      // `editorController`/`l10nSafe`-dependent output computed during that
+      // first pass (a11y labels, translated text, …) would otherwise be
+      // frozen on its no-controller fallback forever, since arming the
+      // subscription above only reacts to FUTURE controller notifications,
+      // not to the attach itself. Force one re-render right on attach so
+      // `render()`/`willUpdate()` recompute with the now-available controller.
+      this.requestUpdate();
+    });
+
+    // `data-testid` for e2e/`getByTestId` locators — same contract as
+    // `ChildBlock._syncTestId`/v1 `LitBlock.subConfigValue('testMode', ...)`,
+    // reimplemented here since `EditorBlock` deliberately isn't `ChildBlock`
+    // (see the class doc). `testMode` is read once per (re)attach rather than
+    // tracked reactively — `EditorServices.getConfig` has no dedicated
+    // config-change subscription (only the coarse controller `notify()`), and
+    // `testMode` isn't expected to flip after setup.
+    this.onEditorAttach(() => {
+      if (this.editorController.getConfig('testMode')) {
+        this.setAttribute('data-testid', this.tagName.toLowerCase());
+      } else {
+        this.removeAttribute('data-testid');
+      }
     });
   }
 
@@ -160,6 +189,20 @@ export abstract class EditorBlock extends EditorBlockBase {
 
   protected get editorControllerOrNull(): CloudImageEditorController | null {
     return this._editorCtx.controllerOrNull;
+  }
+
+  /**
+   * `l10n` that tolerates running with no adopted controller — falls back to
+   * the raw key. For lifecycle hooks (`willUpdate`/`updated`/a debounced
+   * callback) that can still fire once during teardown, after the editor
+   * context has already released its controller (a disconnect can land
+   * between the debounce's `setTimeout` firing and its callback running).
+   * Interaction handlers gated by user input (`onClick` et al.) only ever run
+   * while connected/attached, so they can keep using `editorController.l10n`
+   * directly.
+   */
+  protected l10nSafe(key: string, variables?: Record<string, string | number>): string {
+    return this.editorControllerOrNull?.l10n(key, variables) ?? key;
   }
 
   /**
@@ -175,5 +218,39 @@ export abstract class EditorBlock extends EditorBlockBase {
   /** Run `callback` once the editor controller is available (immediately if already attached, else on first/next attach). */
   protected onEditorAttach(callback: () => void): void {
     this._editorCtx.onAttach(callback);
+  }
+
+  /**
+   * Per-key reactive subscription to a single cross-cutting controller state
+   * key — mirrors `ChildBlock.subConfigValue`. `subscribeEditor` above is
+   * coarse (fires on ANY controller state change, for "re-render on
+   * anything"); many descendants instead have per-key imperative reactions
+   * (the old shared-ctx `this.sub('*tabId', ...)`, etc.) that must NOT fire on
+   * unrelated changes — this filters the coarse notifications down to one key
+   * via `Object.is` dedup, firing `cb` immediately with the current value and
+   * again only when that key's value actually changes.
+   *
+   * Wired through `onEditorAttach` (not just called once), so it re-seeds and
+   * re-subscribes on every (re)attach — same reasoning as `EditorImageCropper`
+   * /`EditorImageFader`'s constructor-time `onEditorAttach` setup: a
+   * controller re-attach tears down the previous coarse subscription (see
+   * `CloudImageEditorContextController.hostDisconnected`/`_attach`), so the
+   * per-key tracking must be re-established alongside it.
+   */
+  protected subEditorKey<K extends keyof CloudImageEditorControllerState>(
+    key: K,
+    cb: (value: CloudImageEditorControllerState[K]) => void,
+  ): void {
+    this.onEditorAttach(() => {
+      let last = this.editorController.get(key);
+      cb(last);
+      this.subscribeEditor(() => {
+        const next = this.editorController.get(key);
+        if (!Object.is(next, last)) {
+          last = next;
+          cb(next);
+        }
+      });
+    });
   }
 }

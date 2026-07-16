@@ -26,13 +26,26 @@ const getAdjustResolutions = (value: CropAspectRatio) => {
   return { width, height };
 };
 
-export class EditorFreeformButtonControl extends EditorButtonControl {
-  public override initCallback(): void {
-    super.initCallback();
+/** Bubbles up to `EditorToolbar`, which owns the toolbar-local `showListAspectRatio` state. */
+export class ShowAspectRatioListEvent extends Event {
+  public static readonly eventName = 'uc-internal:show-aspect-ratio-list';
+  public constructor() {
+    super(ShowAspectRatioListEvent.eventName, { bubbles: true, composed: true });
+  }
+}
 
+declare global {
+  interface HTMLElementEventMap {
+    [ShowAspectRatioListEvent.eventName]: ShowAspectRatioListEvent;
+  }
+}
+
+export class EditorFreeformButtonControl extends EditorButtonControl {
+  public constructor() {
+    super();
     this.icon = 'arrow-dropdown';
 
-    this.sub('*currentAspectRatio', (opt: CropAspectRatio | null) => {
+    this.subEditorKey('*currentAspectRatio', (opt: CropAspectRatio | null) => {
       const title = this._computeTitle(opt);
       this.title = title;
       this.titleProp = title;
@@ -40,7 +53,7 @@ export class EditorFreeformButtonControl extends EditorButtonControl {
   }
 
   public override onClick(): void {
-    this.$['*showListAspectRatio'] = true;
+    this.dispatchEvent(new ShowAspectRatioListEvent());
   }
 
   private _computeTitle(aspectRatio: CropAspectRatio | null): string {
@@ -48,8 +61,8 @@ export class EditorFreeformButtonControl extends EditorButtonControl {
       return '';
     }
     return aspectRatio.hasFreeform
-      ? this.l10n('freeform-crop')
-      : this.l10n('crop-to-shape', { value: `${aspectRatio.width}:${aspectRatio.height}` });
+      ? this.l10nSafe('freeform-crop')
+      : this.l10nSafe('crop-to-shape', { value: `${aspectRatio.width}:${aspectRatio.height}` });
   }
 
   public override render() {
@@ -94,14 +107,22 @@ export class EditorAspectRatioButtonControl extends EditorButtonControl {
     }
   }
 
-  public override initCallback(): void {
-    super.initCallback();
+  public constructor() {
+    super();
 
-    if (this._aspectRatio) {
-      this._updateAspectRatioPresentation(this._aspectRatio);
-    }
+    // The `aspectRatio` prop is typically set (by `EditorToolbar`'s template
+    // binding) before the editor context finishes resolving, so the one-shot
+    // `_updateAspectRatioPresentation` call from the property setter above
+    // can run with no controller yet (`l10nSafe` falling back to the raw
+    // key). Redo it once the controller actually attaches so the real l10n
+    // labels land.
+    this.onEditorAttach(() => {
+      if (this._aspectRatio) {
+        this._updateAspectRatioPresentation(this._aspectRatio);
+      }
+    });
 
-    this.sub('*currentAspectRatio', (opt: CropAspectRatio | null) => {
+    this.subEditorKey('*currentAspectRatio', (opt: CropAspectRatio | null) => {
       this.active =
         (opt && opt.id === this._aspectRatio?.id) ||
         (opt?.width === this._aspectRatio?.width && opt?.height === this._aspectRatio?.height);
@@ -109,12 +130,12 @@ export class EditorAspectRatioButtonControl extends EditorButtonControl {
   }
 
   protected override onClick(): void {
-    const currentAspectRatio = this.$['*currentAspectRatio'] as CropAspectRatio | undefined;
+    const currentAspectRatio = this.editorController.get('*currentAspectRatio');
     if (currentAspectRatio?.id === this._aspectRatio?.id) {
       return;
     }
 
-    this.$['*currentAspectRatio'] = this._aspectRatio;
+    this.editorController.set('*currentAspectRatio', this._aspectRatio);
   }
 
   private _updateAspectRatioPresentation(value: CropAspectRatio): void {
@@ -123,16 +144,16 @@ export class EditorAspectRatioButtonControl extends EditorButtonControl {
     this.toggleAttribute('uc-aspect-ratio-freeform', isFreeform);
 
     const resolveTitle = () => {
-      const titleText = isFreeform ? this.l10n('custom') : `${value.width}:${value.height}`;
+      const titleText = isFreeform ? this.l10nSafe('custom') : `${value.width}:${value.height}`;
       this.title = titleText;
       return titleText;
     };
 
     const resolveTitleProp = () => {
-      const label = this.l10n('a11y-cloud-editor-apply-aspect-ratio', {
+      const label = this.l10nSafe('a11y-cloud-editor-apply-aspect-ratio', {
         name: isFreeform
-          ? this.l10n('custom').toLowerCase()
-          : this.l10n('crop-to-shape', { value: `${value.width}:${value.height}` }).toLowerCase(),
+          ? this.l10nSafe('custom').toLowerCase()
+          : this.l10nSafe('crop-to-shape', { value: `${value.width}:${value.height}` }).toLowerCase(),
         value: '',
       });
       this.titleProp = label;

@@ -13,7 +13,6 @@ import type { PluginController } from '../abstract/managers/plugin';
 import type { LazyPluginEntry } from '../abstract/managers/plugin/LazyPluginLoader';
 import type { TelemetryManager } from '../abstract/managers/TelemetryManager';
 import type { UploaderPublicApi } from '../abstract/UploaderPublicApi';
-import type { CloudImageEditorState } from '../blocks/CloudImageEditor/src/state';
 import type { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter';
 import type { ConfigType, CustomConfig, OutputCollectionState, OutputErrorCollection } from '../types';
 import type { LitBlock } from './LitBlock';
@@ -73,7 +72,6 @@ type LocaleState = {
 export type SharedState = SolutionBlockCtxState &
   SharedConfigState &
   SharedCustomConfigState &
-  CloudImageEditorState &
   DynamicBlockState &
   DynamicUploaderBlockState &
   LocaleState;
