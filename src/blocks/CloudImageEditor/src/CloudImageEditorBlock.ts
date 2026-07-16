@@ -61,7 +61,6 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       'secure-delivery-proxy': string;
       'cloud-image-editor-mask-href': string;
       secureDeliveryProxyUrlResolver: SecureDeliveryProxyUrlResolver;
-      'locale-name': string;
       localeDefinition: Record<string, string>;
       'test-mode': boolean;
       // Optional: the standalone editor needs no ctx-name (config comes from its
@@ -109,13 +108,20 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
   @property({ attribute: 'cloud-image-editor-mask-href' })
   public maskHref?: string;
 
-  @property({ attribute: 'locale-name' })
-  public localeName?: string;
-
   @property({ attribute: false })
   public localeDefinition?: Record<string, string>;
 
-  @property({ type: Boolean, attribute: 'test-mode' })
+  @property({
+    attribute: 'test-mode',
+    // Preserve `undefined` for an absent/removed attribute so an unset prop
+    // falls through to the sibling `<uc-config>`/default per the config
+    // precedence contract. Lit's stock Boolean converter maps a removed
+    // attribute to `false`, which would pin a spurious override and shadow the
+    // fallback. Present with any value but "false" → true.
+    converter: {
+      fromAttribute: (value: string | null): boolean | undefined => (value === null ? undefined : value !== 'false'),
+    },
+  })
   public testMode?: boolean;
 
   /** Own `ctx-name` attribute — mirrors `SymbioteCompatMixin`'s `_ctxNameAttr`. */
@@ -396,10 +402,11 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
    */
   private _setupEditorController(): void {
     this._editorController.setServices({
-      // Standalone bundles only this editor's English subset. `locale-name` is
-      // honored by the removable `<uc-config>` compat bridge path; without that
-      // bridge we intentionally do not load every uploader locale into the
-      // standalone editor bundle.
+      // Standalone bundles only this editor's English subset; a sibling
+      // `<uc-config>` locale is honored through the removable compat bridge
+      // (`_compatL10n`). We intentionally do not load every uploader locale
+      // into the standalone editor bundle. `localeDefinition` covers an
+      // explicit standalone override.
       l10n: this._resolveL10n,
       // Precedence: this element's own prop (see `_ownEditorConfigValue`) →
       // the removable uploader-config compat bridge → the controller's
@@ -727,7 +734,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       }
     }
 
-    if (changedProperties.has('localeDefinition') || changedProperties.has('localeName')) {
+    if (changedProperties.has('localeDefinition')) {
       this._editorController.notify();
     }
   }
