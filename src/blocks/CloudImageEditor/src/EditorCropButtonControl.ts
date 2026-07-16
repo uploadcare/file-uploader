@@ -2,6 +2,7 @@ import type { PropertyValues } from 'lit';
 import { property } from 'lit/decorators.js';
 import { EditorButtonControl } from './EditorButtonControl.js';
 import type { CropOperation } from './toolbar-constants';
+import type { Transformations } from './types';
 
 function nextAngle(prev: number): number {
   let angle = prev + 90;
@@ -43,14 +44,11 @@ export class EditorCropButtonControl extends EditorButtonControl {
       return;
     }
 
-    // `*cropperEl` is null unless the cropper is the mounted/active tab — a
-    // crop op can be clicked before it registers (or from another tab). Guard
-    // rather than crash (matches the `?.` at the root's activate/deactivate).
-    const cropper = this.editorController.get('*cropperEl');
-    if (!cropper) {
-      return;
-    }
-    const prev = cropper.getValue(this.operation);
+    // Crop ops are modelled through state: write the next value to
+    // `*editorTransformations`; the cropper reacts (applies + re-commits the
+    // consistent crop). No element ref needed — see `EditorImageCropper`.
+    const transformations = this.editorController.get('*editorTransformations');
+    const prev = (transformations[this.operation] ?? (this.operation === 'rotate' ? 0 : false)) as number | boolean;
     const next = nextValue(this.operation, prev);
 
     this.editorController.telemetry.sendEventCloudImageEditor(e, this.editorController.get('*tabId'), {
@@ -59,7 +57,10 @@ export class EditorCropButtonControl extends EditorButtonControl {
       prev,
     });
 
-    cropper.setValue(this.operation, next);
+    this.editorController.set('*editorTransformations', {
+      ...transformations,
+      [this.operation]: next,
+    } as Transformations);
   }
 }
 

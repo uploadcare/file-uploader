@@ -242,21 +242,18 @@ export class EditorToolbar extends EditorBlock {
 
     this.activeTab = id;
 
+    // The cropper self-activates/deactivates from `*tabId`/`*originalUrl` + its
+    // `imageSize` prop (see `EditorImageCropper._syncActivation`); the toolbar
+    // no longer drives it. The fader is still driven imperatively here.
     const faderEl = this.editorController.get('*faderEl');
-    const cropperEl = this.editorController.get('*cropperEl');
 
     if (id === TabId.CROP) {
       faderEl?.deactivate();
-      const imageSize = this.imageSize;
-      if (imageSize) {
-        cropperEl?.activate(imageSize, { fromViewer });
-      }
     } else {
       faderEl?.activate({
         url: this.editorController.get('*originalUrl') as string,
         fromViewer,
       });
-      cropperEl?.deactivate();
     }
 
     for (const tabId of ALL_TABS) {

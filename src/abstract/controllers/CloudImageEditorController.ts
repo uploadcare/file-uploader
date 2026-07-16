@@ -1,4 +1,3 @@
-import type { EditorImageCropper } from '../../blocks/CloudImageEditor/src/EditorImageCropper';
 import type { EditorImageFader } from '../../blocks/CloudImageEditor/src/EditorImageFader';
 import { TabId, type TabIdValue } from '../../blocks/CloudImageEditor/src/toolbar-constants';
 import type { CropAspectRatio, LoadingOperations, Transformations } from '../../blocks/CloudImageEditor/src/types';
@@ -40,10 +39,12 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
  * which the root now passes to `<uc-editor-toolbar>` as plain Lit props (root →
  * single child, no cross-subtree sharing).
  *
- * `*faderEl`/`*cropperEl`/`*imgContainerEl` are cross-component coordination
- * refs (a smell, flagged in the plan for a later refinement to controller
- * methods) — the controller only stores/returns them, it never touches the
- * DOM itself.
+ * `*faderEl`/`*imgContainerEl` are cross-component coordination refs (a smell,
+ * flagged for a later refinement) — the controller only stores/returns them, it
+ * never touches the DOM. The cropper is no longer held in state: it
+ * self-activates from `*tabId`/`*originalUrl` + the root's `imageSize` prop, and
+ * crop ops arrive through `*editorTransformations` (the fader follows in a
+ * later stage).
  */
 export type CloudImageEditorControllerState = {
   '*originalUrl': string | null;
@@ -53,7 +54,6 @@ export type CloudImageEditorControllerState = {
   '*currentAspectRatio': CropAspectRatio | null;
   '*tabId': TabIdValue;
   '*faderEl': EditorImageFader | null;
-  '*cropperEl': EditorImageCropper | null;
   '*imgContainerEl': HTMLElement | null;
 };
 
@@ -66,7 +66,6 @@ function createDefaultState(): CloudImageEditorControllerState {
     '*currentAspectRatio': null,
     '*tabId': TabId.CROP,
     '*faderEl': null,
-    '*cropperEl': null,
     '*imgContainerEl': null,
   };
 }

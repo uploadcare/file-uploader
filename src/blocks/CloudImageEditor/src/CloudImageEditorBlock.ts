@@ -255,10 +255,9 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       this._pendingInitUpdate = null;
       this._isInitialized = true;
       // `_isInitialized` renders the init-gated subtree (the cropper + toolbar);
-      // wait for that render to commit, then capture the now-live refs and
-      // activate the viewer. `firstUpdated`/`updateImage` ran before this flip,
-      // so `*cropperEl` was still null and its `activate()` no-oped — without
-      // this the cropper renders but never gets its `<img>`/crop frame.
+      // wait for that render to commit, then share the fader/container refs and
+      // activate the fader. The cropper self-activates once it mounts with its
+      // `imageSize` prop set on the crop tab, so it needs no external kick here.
       await this.updateComplete;
       if (!this.isConnected) {
         return;
@@ -276,13 +275,12 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
    */
   private _activateViewer(): void {
     const editorController = this._editorController;
-    const imageSize = this._imageSize;
-    if (!imageSize) {
+    if (!this._imageSize) {
       return;
     }
-    if (editorController.get('*tabId') === TabId.CROP) {
-      editorController.get('*cropperEl')?.activate(imageSize);
-    } else {
+    // The cropper self-activates from `*tabId`/`*originalUrl` + its `imageSize`
+    // prop (see EditorImageCropper); only the fader is activated here now.
+    if (editorController.get('*tabId') !== TabId.CROP) {
       const originalUrl = editorController.get('*originalUrl');
       if (originalUrl) {
         editorController.get('*faderEl')?.activate({ url: originalUrl });
@@ -526,11 +524,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       this._editorController.set('*faderEl', faderEl);
     }
 
-    const cropperEl = this._cropperRef.value;
-    if (cropperEl) {
-      this._editorController.set('*cropperEl', cropperEl);
-    }
-
+    // The cropper is no longer shared through the controller — it self-activates.
     const imgContainerEl = this._imgContainerRef.value;
     if (imgContainerEl) {
       this._editorController.set('*imgContainerEl', imgContainerEl);
@@ -677,7 +671,14 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
           </div>
           <div class="uc-image_container" ${ref(this._imgContainerRef)}>
             <img src=${src} class=${this._imageClassName} ${ref(this._imgRef)} />
-            ${when(this._isInitialized, () => html`<uc-editor-image-cropper ${ref(this._cropperRef)}></uc-editor-image-cropper>`)}
+            ${when(
+              this._isInitialized,
+              () =>
+                html`<uc-editor-image-cropper
+                  .imageSize=${this._imageSize}
+                  ${ref(this._cropperRef)}
+                ></uc-editor-image-cropper>`,
+            )}
             <uc-editor-image-fader ${ref(this._faderRef)}></uc-editor-image-fader>
           </div>
           <div class="uc-info_pan">${message}</div>
@@ -849,9 +850,9 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       throw new Error('No UUID nor CDN URL provided');
     }
 
-    if (editorController.get('*tabId') === TabId.CROP) {
-      editorController.get('*cropperEl')?.deactivate({ reset: true });
-    } else {
+    // The cropper resets itself when `*originalUrl` changes (see
+    // EditorImageCropper); only the fader is reset here.
+    if (editorController.get('*tabId') !== TabId.CROP) {
       editorController.get('*faderEl')?.deactivate();
     }
 

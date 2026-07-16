@@ -92,6 +92,25 @@ describe('Cloud Image Editor', () => {
     await expect.element(freeform).toBeVisible();
   });
 
+  it('applies a crop operation through state (rotate/flip) without recursion', async () => {
+    // Regression guard (editor-isolation Task 5): crop ops are modelled through
+    // `*editorTransformations` — `EditorCropButtonControl` writes it and the
+    // cropper reacts + re-commits, instead of the button calling
+    // `cropper.setValue` via a `*cropperEl` state ref. The commit re-notifies
+    // synchronously, so the cropper's reaction has a re-entrancy guard; without
+    // it a deactivate→commit→notify cycle recursed to a RangeError. Clicking a
+    // crop op repeatedly must apply cleanly and keep the cropper active.
+    const cropper = page.getByTestId('uc-editor-image-cropper');
+    await expect.element(cropper).toBeVisible();
+    await expect.poll(() => cropper.element().className).toMatch(/uc-active_from_/);
+
+    const cropButtons = page.getByTestId('uc-editor-crop-button-control');
+    await userEvent.click(cropButtons.nth(0));
+    await userEvent.click(cropButtons.nth(0));
+
+    await expect.poll(() => cropper.element().className).toMatch(/uc-active_from_/);
+  });
+
   it("should apply 'brightness' operation", async () => {
     const tuningTab = page.getByRole('tab', { name: /tuning/i });
     await userEvent.click(tuningTab);
