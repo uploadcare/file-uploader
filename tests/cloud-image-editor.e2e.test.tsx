@@ -92,23 +92,39 @@ describe('Cloud Image Editor', () => {
     await expect.element(freeform).toBeVisible();
   });
 
-  it('applies a crop operation through state (rotate/flip) without recursion', async () => {
+  it('applies a crop operation through state (rotate) without recursion', async () => {
     // Regression guard (editor-isolation Task 5): crop ops are modelled through
     // `*editorTransformations` — `EditorCropButtonControl` writes it and the
     // cropper reacts + re-commits, instead of the button calling
     // `cropper.setValue` via a `*cropperEl` state ref. The commit re-notifies
     // synchronously, so the cropper's reaction has a re-entrancy guard; without
-    // it a deactivate→commit→notify cycle recursed to a RangeError. Clicking a
-    // crop op repeatedly must apply cleanly and keep the cropper active.
+    // it a deactivate→commit→notify cycle recursed to a RangeError.
     const cropper = page.getByTestId('uc-editor-image-cropper');
     await expect.element(cropper).toBeVisible();
     await expect.poll(() => cropper.element().className).toMatch(/uc-active_from_/);
 
-    const cropButtons = page.getByTestId('uc-editor-crop-button-control');
-    await userEvent.click(cropButtons.nth(0));
-    await userEvent.click(cropButtons.nth(0));
+    // Capture the applied transformations (the toolbar's `done` button emits
+    // `uc-internal:apply` with the current `*editorTransformations`) so we
+    // assert the clicks actually took effect, not just that the cropper stayed
+    // alive. `rotate` is the first crop button (ALL_CROP_OPERATIONS order).
+    let applied: { rotate?: number } | null = null;
+    const onApply = (event: Event) => {
+      applied = (event as CustomEvent<{ rotate?: number }>).detail;
+    };
+    document.addEventListener('uc-internal:apply', onApply);
+    try {
+      const cropButtons = page.getByTestId('uc-editor-crop-button-control');
+      await userEvent.click(cropButtons.nth(0));
+      await userEvent.click(cropButtons.nth(0));
 
-    await expect.poll(() => cropper.element().className).toMatch(/uc-active_from_/);
+      // Cropper survived the repeated state-driven ops (recursion guard).
+      await expect.poll(() => cropper.element().className).toMatch(/uc-active_from_/);
+
+      await userEvent.click(page.getByRole('button', { name: /apply/i }));
+      await expect.poll(() => applied?.rotate).toBe(180);
+    } finally {
+      document.removeEventListener('uc-internal:apply', onApply);
+    }
   });
 
   it("should apply 'brightness' operation", async () => {
