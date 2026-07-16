@@ -2,22 +2,12 @@ import type { PropertyValues } from 'lit';
 import { property } from 'lit/decorators.js';
 import { EditorButtonControl } from './EditorButtonControl.js';
 import type { CropOperation } from './toolbar-constants';
+import type { Transformations } from './types';
 
 function nextAngle(prev: number): number {
   let angle = prev + 90;
   angle = angle >= 360 ? 0 : angle;
   return angle;
-}
-
-function nextValue(operation: CropOperation, prev: number | boolean): number | boolean {
-  if (operation === 'rotate') {
-    const angle = typeof prev === 'number' ? prev : 0;
-    return nextAngle(angle);
-  }
-  if (operation === 'mirror' || operation === 'flip') {
-    return !prev;
-  }
-  throw new Error(`Unsupported operation: ${operation}`);
 }
 
 export class EditorCropButtonControl extends EditorButtonControl {
@@ -43,15 +33,28 @@ export class EditorCropButtonControl extends EditorButtonControl {
       return;
     }
 
-    // `*cropperEl` is null unless the cropper is the mounted/active tab — a
-    // crop op can be clicked before it registers (or from another tab). Guard
-    // rather than crash (matches the `?.` at the root's activate/deactivate).
-    const cropper = this.editorController.get('*cropperEl');
-    if (!cropper) {
-      return;
+    // Crop ops are modelled through state: write the next value to
+    // `*editorTransformations`; the cropper reacts (applies + re-commits the
+    // consistent crop). No element ref needed — see `EditorImageCropper`.
+    // Branch per operation so `patch` is a strongly-typed `Partial<Transformations>`
+    // (`rotate` is a number, `flip`/`mirror` are booleans) — no assertions.
+    const transformations = this.editorController.get('*editorTransformations');
+    let prev: number | boolean;
+    let next: number | boolean;
+    let patch: Partial<Transformations>;
+    if (this.operation === 'rotate') {
+      prev = transformations.rotate ?? 0;
+      next = nextAngle(prev);
+      patch = { rotate: next };
+    } else if (this.operation === 'flip') {
+      prev = transformations.flip ?? false;
+      next = !prev;
+      patch = { flip: next };
+    } else {
+      prev = transformations.mirror ?? false;
+      next = !prev;
+      patch = { mirror: next };
     }
-    const prev = cropper.getValue(this.operation);
-    const next = nextValue(this.operation, prev);
 
     this.editorController.telemetry.sendEventCloudImageEditor(e, this.editorController.get('*tabId'), {
       operation: this.operation,
@@ -59,7 +62,7 @@ export class EditorCropButtonControl extends EditorButtonControl {
       prev,
     });
 
-    cropper.setValue(this.operation, next);
+    this.editorController.set('*editorTransformations', { ...transformations, ...patch });
   }
 }
 
