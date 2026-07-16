@@ -349,19 +349,23 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       // `ConfigType[K]` verbatim via `SharedConfigState`'s mapped type — TS can't
       // prove that identity through the generic `K` here; narrow boundary cast.
       getConfig: <K extends keyof ConfigType>(key: K): ConfigType[K] => {
-        const ownValue = this._ownEditorConfigValue(key);
+        const editorConfigKey = CloudImageEditorBlock._toEditorConfigKey(key);
+        // Own-prop tier: the explicit override the controller holds (present
+        // only when the element's prop set it), so a set value — even falsy —
+        // wins, and an unset prop falls through.
+        const ownValue = editorConfigKey ? this._editorController.getOwnConfigValue(editorConfigKey) : undefined;
         if (ownValue !== undefined) {
           return ownValue as unknown as ConfigType[K];
         }
+        // Transitional ctx tier (removed in the compat-bridge task).
         const ctxValue = ctx.read(sharedConfigKey<K>(key)) as unknown as ConfigType[K];
         if (ctxValue !== undefined) {
           return ctxValue;
         }
-        const editorConfigKey = CloudImageEditorBlock._toEditorConfigKey(key);
-        if (editorConfigKey) {
-          return this._editorController.getConfigValue(editorConfigKey) as unknown as ConfigType[K];
-        }
-        return ctxValue;
+        // Built-in default tier.
+        return editorConfigKey
+          ? (this._editorController.getConfigValue(editorConfigKey) as unknown as ConfigType[K])
+          : ctxValue;
       },
       telemetry: {
         sendEvent: (event) => this.telemetryManager.sendEvent(event as Parameters<TelemetryManager['sendEvent']>[0]),
@@ -675,42 +679,18 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
    * the ctx-fallback/default layers underneath with `undefined`.
    */
   private _syncEditorConfigFromProps(): void {
-    const patch: Partial<EditorConfig> = {};
-    if (this.cdnCname !== undefined) patch.cdnCname = this.cdnCname;
-    if (this.secureDeliveryProxy !== undefined) patch.secureDeliveryProxy = this.secureDeliveryProxy;
-    if (this.secureDeliveryProxyUrlResolver !== undefined) {
-      patch.secureDeliveryProxyUrlResolver = this.secureDeliveryProxyUrlResolver;
-    }
-    if (this.maskHref !== undefined) patch.cloudImageEditorMaskHref = this.maskHref;
-    if (this.testMode !== undefined) patch.testMode = this.testMode;
-
-    this._editorController.setConfig(patch);
-  }
-
-  /**
-   * The own-element-prop tier of the `getConfig` precedence (see
-   * `_setupEditorController`) — reads the element's own reactive properties
-   * directly (NOT `this._editorController.getConfigValue`, which always
-   * carries a built-in default and so can't distinguish "unset" from
-   * "explicitly set to the default value"). Returns `undefined` for any
-   * `ConfigType` key outside the editor's config surface, or when the
-   * matching prop itself isn't set.
-   */
-  private _ownEditorConfigValue<K extends keyof ConfigType>(key: K): ConfigType[K] | undefined {
-    switch (key) {
-      case 'cdnCname':
-        return this.cdnCname as ConfigType[K] | undefined;
-      case 'secureDeliveryProxy':
-        return this.secureDeliveryProxy as ConfigType[K] | undefined;
-      case 'secureDeliveryProxyUrlResolver':
-        return this.secureDeliveryProxyUrlResolver as ConfigType[K] | undefined;
-      case 'cloudImageEditorMaskHref':
-        return this.maskHref as ConfigType[K] | undefined;
-      case 'testMode':
-        return this.testMode as ConfigType[K] | undefined;
-      default:
-        return undefined;
-    }
+    // Pass every editor prop each time (undefined when unset). `setConfig`
+    // removes the keys whose prop is undefined, so unsetting a prop restores
+    // the ctx/default fallback rather than leaving a stale override. All these
+    // props are optional with no initializer, so `undefined` means "not set on
+    // the editor element" — including `testMode` (never a spurious `false`).
+    this._editorController.setConfig({
+      cdnCname: this.cdnCname,
+      secureDeliveryProxy: this.secureDeliveryProxy,
+      secureDeliveryProxyUrlResolver: this.secureDeliveryProxyUrlResolver,
+      cloudImageEditorMaskHref: this.maskHref,
+      testMode: this.testMode,
+    });
   }
 
   /** Maps a `ConfigType` key onto its `EditorConfig` counterpart, if it's part of the editor's config surface. */

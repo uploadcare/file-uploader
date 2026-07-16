@@ -144,4 +144,22 @@ describe('CloudImageEditorController', () => {
     expect(controller.getConfigValue('cdnCname')).toBe('https://cdn.example.com/');
     expect(controller.getConfigValue('testMode')).toBe(true);
   });
+
+  it('getOwnConfigValue distinguishes an explicit override from unset', () => {
+    const controller = new CloudImageEditorController();
+    // Nothing set yet → own is undefined (caller falls through to ctx/default).
+    expect(controller.getOwnConfigValue('cdnCname')).toBeUndefined();
+    controller.setConfig({ cdnCname: 'https://cdn.example.com/' });
+    expect(controller.getOwnConfigValue('cdnCname')).toBe('https://cdn.example.com/');
+  });
+
+  it('setConfig with undefined REMOVES the override so it falls back to the default', () => {
+    const controller = new CloudImageEditorController();
+    controller.setConfig({ cdnCname: 'https://cdn.example.com/' });
+    expect(controller.getConfigValue('cdnCname')).toBe('https://cdn.example.com/');
+    // Prop unset (undefined) — override removed, not left stale.
+    controller.setConfig({ cdnCname: undefined });
+    expect(controller.getOwnConfigValue('cdnCname')).toBeUndefined();
+    expect(controller.getConfigValue('cdnCname')).toBe('https://ucarecdn.com');
+  });
 });
