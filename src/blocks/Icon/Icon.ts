@@ -4,6 +4,7 @@ import { unsafeSVG } from 'lit/directives/unsafe-svg.js';
 import type { PluginController } from '../../abstract/managers/plugin';
 import { ChildBlock } from '../../lit/ChildBlock';
 import type { IconHrefResolver } from '../../types/index';
+import { renderIconSvg } from './renderIconSvg';
 import './icon.css';
 
 export class Icon extends ChildBlock {
@@ -84,14 +85,7 @@ export class Icon extends ChildBlock {
       return html`${this.yield('', html`${unsafeSVG(this._pluginSvg)}`)}`;
     }
 
-    return html`
-      ${this.yield(
-        '',
-        html`<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <use href=${this._resolvedHref}></use>
-      </svg>`,
-      )}
-    `;
+    return html` ${this.yield('', renderIconSvg(this._resolvedHref))} `;
   }
 }
 

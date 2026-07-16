@@ -5,7 +5,7 @@ import { ifDefined } from 'lit/directives/if-defined.js';
 import { EditorButtonControl } from './EditorButtonControl.js';
 import type { CropAspectRatio } from './types';
 
-import '../../Icon/Icon';
+import './EditorIcon';
 
 const SIZE_RECT_FIXED = 12;
 const SIZE_SVG_WRAPPER = 16;
@@ -78,7 +78,7 @@ export class EditorFreeformButtonControl extends EditorButtonControl {
         @click=${clickHandler}
       >
         <div class="uc-title" ?hidden=${!title}>${title}</div>
-        <uc-icon name=${this.icon}></uc-icon>
+        <uc-editor-icon name=${this.icon}></uc-editor-icon>
       </button>
     `;
   }
@@ -171,7 +171,7 @@ export class EditorAspectRatioButtonControl extends EditorButtonControl {
   private _renderIcon() {
     const ratio = this._aspectRatio;
     if (!ratio || ratio.hasFreeform) {
-      return html`<uc-icon name=${this.icon}></uc-icon>`;
+      return html`<uc-editor-icon name=${this.icon}></uc-editor-icon>`;
     }
 
     const { width, height } = getAdjustResolutions(ratio);
@@ -179,7 +179,7 @@ export class EditorAspectRatioButtonControl extends EditorButtonControl {
     const y = (SIZE_SVG_WRAPPER - height) / 2;
 
     return html`
-      <uc-icon>
+      <uc-editor-icon>
       <svg
         viewBox="0 0 ${SIZE_SVG_WRAPPER} ${SIZE_SVG_WRAPPER}"
         aria-hidden="true"
@@ -197,7 +197,7 @@ export class EditorAspectRatioButtonControl extends EditorButtonControl {
           stroke-linejoin="round"
         ></rect>
       </svg>
-      </uc-icon>
+      </uc-editor-icon>
     `;
   }
 

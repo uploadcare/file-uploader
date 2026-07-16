@@ -3,10 +3,9 @@ import { html } from 'lit';
 import { property } from 'lit/decorators.js';
 import { classMap } from 'lit/directives/class-map.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
-import { EditorBlock } from '../../editor-context';
-
-import '../../../../Icon/Icon';
 import type { AriaRole } from '../../../../../types/dom';
+import { EditorBlock } from '../../editor-context';
+import '../../EditorIcon';
 
 type Theme = string | null;
 
@@ -94,11 +93,11 @@ export class BtnUi extends EditorBlock {
         aria-label=${ifDefined(this.l10nSafe(this.titleProp))}
         title=${ifDefined(this.l10nSafe(this.titleProp))}
       >
-        <uc-icon
+        <uc-editor-icon
           class=${classMap(this._iconClassMap)}
           name=${ifDefined(this.icon || undefined)}
           ?hidden=${this._computedIconHidden}
-        ></uc-icon>
+        ></uc-editor-icon>
         <div class="uc-text">${this.text}</div>
       </button>
     `;
