@@ -19,6 +19,13 @@ const L10N_PREFIX = '*l10n/';
 export class PubSub<T extends Record<string, unknown>> {
   private static _contexts = new Map<string, PubSubStore<Record<string, unknown>>>();
   /**
+   * Callbacks waiting for a ctx that doesn't exist yet — flushed by
+   * `registerCtx`. Lets a consumer attach to a ctx created LATER (e.g. the
+   * standalone editor's compat bridge, when its sibling `<uc-config>` connects
+   * after it) without polling. See `whenCtx`.
+   */
+  private static _ctxWaiters = new Map<string, Set<(ctx: PubSub<Record<string, unknown>>) => void>>();
+  /**
    * One `UploaderController` per ctx-name. Created lazily the first time a
    * `*cfg/*` key is touched on a context (so per-upload-entry stores, which
    * never carry config keys, never get a controller). This is the v1 → v2
@@ -243,7 +250,18 @@ export class PubSub<T extends Record<string, unknown>> {
     const store = map<T>(initialValue);
 
     PubSub._contexts.set(ctxId, store);
-    return new PubSub<T>(ctxId, store);
+    const wrapper = new PubSub<T>(ctxId, store);
+
+    // Notify anyone that was waiting for this ctx to appear (see `whenCtx`).
+    const waiters = PubSub._ctxWaiters.get(ctxId);
+    if (waiters) {
+      PubSub._ctxWaiters.delete(ctxId);
+      for (const waiter of waiters) {
+        waiter(wrapper as unknown as PubSub<Record<string, unknown>>);
+      }
+    }
+
+    return wrapper;
   }
 
   public static deleteCtx(ctxId: string): void {
@@ -266,5 +284,32 @@ export class PubSub<T extends Record<string, unknown>> {
 
   public static hasCtx(ctxId: string): boolean {
     return PubSub._contexts.has(ctxId);
+  }
+
+  /**
+   * Run `cb` with the ctx as soon as it exists: synchronously now if already
+   * registered, otherwise when `registerCtx` next creates it. Returns an
+   * unsubscribe that cancels a still-pending waiter (no-op once fired). Lets a
+   * consumer bind to a ctx created out of order without polling.
+   */
+  public static whenCtx<T extends Record<string, unknown> = Record<string, unknown>>(
+    ctxId: string,
+    cb: (ctx: PubSub<T>) => void,
+  ): () => void {
+    const existing = PubSub.getCtx<T>(ctxId);
+    if (existing) {
+      cb(existing);
+      return () => {};
+    }
+    const waiter = cb as unknown as (ctx: PubSub<Record<string, unknown>>) => void;
+    let waiters = PubSub._ctxWaiters.get(ctxId);
+    if (!waiters) {
+      waiters = new Set();
+      PubSub._ctxWaiters.set(ctxId, waiters);
+    }
+    waiters.add(waiter);
+    return () => {
+      PubSub._ctxWaiters.get(ctxId)?.delete(waiter);
+    };
   }
 }

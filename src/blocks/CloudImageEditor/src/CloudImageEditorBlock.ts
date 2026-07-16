@@ -7,17 +7,12 @@ import { when } from 'lit/directives/when.js';
 import {
   CloudImageEditorController,
   type EditorConfig,
+  type EditorServices,
 } from '../../../abstract/controllers/CloudImageEditorController';
-import type { A11y } from '../../../abstract/managers/a11y';
 import type { TelemetryManager } from '../../../abstract/managers/TelemetryManager';
 import { resolveSecureDeliveryProxyUrl } from '../../../abstract/secureDeliveryProxyUrl';
-import { sharedConfigKey } from '../../../abstract/sharedConfigKey';
-import { ensureUploaderCtx } from '../../../lit/ensureUploaderCtx';
 import { LightDomMixin } from '../../../lit/LightDomMixin';
-import { createL10n } from '../../../lit/l10n';
-import type { PubSub } from '../../../lit/PubSubCompat';
 import { RegisterableElementMixin } from '../../../lit/RegisterableElementMixin';
-import type { SharedState } from '../../../lit/SharedState';
 import { ctxNameContext } from '../../../lit/SymbioteCompatMixin';
 import type { ConfigType, SecureDeliveryProxyUrlResolver } from '../../../types';
 import {
@@ -32,6 +27,7 @@ import { debounce } from '../../../utils/debounce.js';
 import { TRANSPARENT_PIXEL_SRC } from '../../../utils/transparentPixelSrc';
 import type { EditorImageCropper } from './EditorImageCropper';
 import type { EditorImageFader } from './EditorImageFader';
+import { subscribeUploaderConfigCompat } from './editor-config-compat';
 import { cloudImageEditorContext } from './editor-context';
 import { classNames } from './lib/classNames.js';
 import { getClosestAspectRatio, parseCropPreset } from './lib/parseCropPreset.js';
@@ -141,13 +137,12 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
 
   private _editorInitialized = false;
 
-  /**
-   * Resolved shared uploader ctx (`ensureUploaderCtx`) — this root is the
-   * editor's ctx owner (v1-parity: creates the ctx if it doesn't exist yet,
-   * or joins an existing one, e.g. when embedded inside
-   * `<uc-cloud-image-editor-activity>`).
-   */
-  private _ctx: PubSub<SharedState> | undefined;
+  private _uploaderConfigCompat: Partial<EditorConfig> = {};
+
+  private _telemetryManager: TelemetryManager | undefined;
+
+  /** Interpolating l10n from a sibling `<uc-config>` (compat bridge); undefined until it resolves / when standalone (falls back to the key until a bundled default lands). */
+  private _compatL10n?: (key: string, variables?: Record<string, string | number>) => string;
 
   // biome-ignore lint/correctness/noUnusedPrivateClassMembers: side-effecting @lit/context registration, resolves `_ctxNameFromContext` from an ancestor provider
   private readonly _ctxNameConsumer = new ContextConsumer(this, {
@@ -158,7 +153,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
         return;
       }
       this._ctxNameFromContext = value;
-      this._maybeInitializeCtx();
+      this._setupEditor();
     },
   });
 
@@ -184,14 +179,13 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
   // *consumes* ctx-name, so without this a nested `ChildBlock` never adopts
   // and renders empty. (Editor icons are `uc-editor-icon` — plain-Lit,
   // ctx-free — so they don't depend on this provider.) Value set in
-  // `_maybeInitializeCtx` once the effective ctx-name is known.
+  // `_setupEditor` once the effective ctx-name is known.
   private readonly _ctxNameProvider = new ContextProvider(this, {
     context: ctxNameContext,
     initialValue: undefined,
   });
 
   private _configChangeUnsub: (() => void) | undefined;
-  private _localeChangeUnsub: (() => void) | undefined;
 
   private readonly _debouncedShowLoader = debounce((show: boolean) => {
     this._showLoader = show;
@@ -271,24 +265,12 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
     }
   }
 
-  /** Resolved shared uploader ctx. Throws if the ctx-name hasn't resolved yet (see `_maybeInitializeCtx`). */
-  protected get uploaderCtx(): PubSub<SharedState> {
-    if (!this._ctx) {
-      throw new Error('CloudImageEditorBlock: shared uploader ctx is not initialized yet (missing ctx-name).');
-    }
-    return this._ctx;
-  }
-
-  protected get telemetryManager(): TelemetryManager {
-    return this.uploaderCtx.read('*telemetryManager');
-  }
-
-  protected get a11y(): A11y {
-    return this.uploaderCtx.read('*a11y');
-  }
-
   private get _effectiveCtxName(): string | undefined {
     return this.ctxName || this._ctxNameFromContext || undefined;
+  }
+
+  protected get telemetry(): EditorServices['telemetry'] {
+    return this._editorController.telemetry;
   }
 
   public override connectedCallback(): void {
@@ -301,10 +283,10 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
     for (const attr of (this.constructor as typeof CloudImageEditorBlock).styleAttrs) {
       if (!this.hasAttribute(attr)) this.setAttribute(attr, '');
     }
-    this._maybeInitializeCtx();
+    this._setupEditor();
   }
 
-  private _maybeInitializeCtx(): void {
+  private _setupEditor(): void {
     if (this._editorInitialized) {
       return;
     }
@@ -313,41 +295,34 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       return;
     }
     this._editorInitialized = true;
-    this._ctx = ensureUploaderCtx(ctxName);
     // Hand the ctx-name to any descendant ChildBlocks so they adopt the same
-    // uploader ctx.
+    // uploader ctx if one already exists.
     this._ctxNameProvider.setValue(ctxName);
 
     this._syncTabListFromProp();
     this._syncCropPresetState();
 
-    this._setupEditorController();
+    this._setupEditorController(ctxName);
     this.initCallback();
   }
 
-  /** Hook for subclasses (e.g. the `<uc-cloud-image-editor>` solution) — called once the shared ctx is resolved. */
+  /** Hook for subclasses (e.g. the `<uc-cloud-image-editor>` solution) — called once the editor is configured. */
   protected initCallback(): void {}
 
   /**
    * Wires the `CloudImageEditorController`'s injected services (l10n/config/
-   * telemetry/proxy) and action handlers from the resolved shared ctx, then
-   * subscribes to config/locale changes so descendants re-render on either
-   * (replaces the old shared-ctx `subConfigValue`/locale-direction
-   * reactivity `LitBlock` used to provide for free).
+   * telemetry/proxy) and action handlers. Config and telemetry may be supplied
+   * transitionally by a removable read-only uploader-ctx compat bridge.
    */
-  private _setupEditorController(): void {
-    const ctx = this.uploaderCtx;
-
+  private _setupEditorController(ctxName: string): void {
     this._editorController.setServices({
-      l10n: createL10n(() => ctx),
+      // Compat bridge supplies interpolating l10n from a sibling `<uc-config>`;
+      // falls back to the key until a bundled default locale lands (later task).
+      l10n: (key, variables) => (this._compatL10n ? this._compatL10n(key, variables) : key),
       // Precedence: this element's own prop (see `_ownEditorConfigValue`) →
-      // the shared ctx (TRANSITIONAL — Task 3 replaces this with the
-      // removable compat bridge and drops `ensureUploaderCtx`) → the
-      // controller's built-in default (`EditorConfig`'s defaults, reached via
+      // the removable uploader-config compat bridge → the controller's
+      // built-in default (`EditorConfig`'s defaults, reached via
       // `getConfigValue` when neither of the above supplied a value).
-      // `ctx.read(sharedConfigKey(key))` returns `SharedState[`*cfg/${K}`]`, which is
-      // `ConfigType[K]` verbatim via `SharedConfigState`'s mapped type — TS can't
-      // prove that identity through the generic `K` here; narrow boundary cast.
       getConfig: <K extends keyof ConfigType>(key: K): ConfigType[K] => {
         const editorConfigKey = CloudImageEditorBlock._toEditorConfigKey(key);
         // Own-prop tier: the explicit override the controller holds (present
@@ -357,35 +332,44 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
         if (ownValue !== undefined) {
           return ownValue as unknown as ConfigType[K];
         }
-        // Transitional ctx tier (removed in the compat-bridge task).
-        const ctxValue = ctx.read(sharedConfigKey<K>(key)) as unknown as ConfigType[K];
-        if (ctxValue !== undefined) {
-          return ctxValue;
+        const compatValue = editorConfigKey ? this._uploaderConfigCompat[editorConfigKey] : undefined;
+        if (compatValue !== undefined) {
+          return compatValue as unknown as ConfigType[K];
         }
         // Built-in default tier.
         return editorConfigKey
           ? (this._editorController.getConfigValue(editorConfigKey) as unknown as ConfigType[K])
-          : ctxValue;
+          : (undefined as unknown as ConfigType[K]);
       },
       telemetry: {
-        sendEvent: (event) => this.telemetryManager.sendEvent(event as Parameters<TelemetryManager['sendEvent']>[0]),
-        sendEventError: (err, context) => this.telemetryManager.sendEventError(err, context as string | undefined),
+        sendEvent: (event) => this._telemetryManager?.sendEvent(event as Parameters<TelemetryManager['sendEvent']>[0]),
+        sendEventError: (err, context) => this._telemetryManager?.sendEventError(err, context as string | undefined),
         sendEventCloudImageEditor: (e, tabId, options) =>
-          this.telemetryManager.sendEventCloudImageEditor(e, tabId, options),
+          this._telemetryManager?.sendEventCloudImageEditor(e, tabId, options),
       },
       proxyUrl: (url) => this.proxyUrl(url),
     });
 
-    const uploaderController = ctx.uploaderController();
     this._syncTestId();
-    this._configChangeUnsub = uploaderController.config.subscribe(() => {
-      // Re-sync `data-testid` too: a standalone `<uc-config testMode>` sibling
-      // may connect and set `testMode` after this element (documented
-      // composition order), so the flag isn't known at first setup.
-      this._syncTestId();
-      this._editorController.notify();
-    });
-    this._localeChangeUnsub = uploaderController.locale.subscribe(() => this._editorController.notify());
+    this._configChangeUnsub = subscribeUploaderConfigCompat(
+      ctxName,
+      (patch) => {
+        this._uploaderConfigCompat = { ...this._uploaderConfigCompat, ...patch };
+        // Re-sync `data-testid` too: a standalone `<uc-config testMode>` sibling
+        // may connect and set `testMode` after this element (documented
+        // composition order), so the flag isn't known at first setup.
+        this._syncTestId();
+        this._editorController.notify();
+      },
+      (l10n) => {
+        this._compatL10n = l10n;
+        this._editorController.notify();
+        this.requestUpdate();
+      },
+      (telemetryManager) => {
+        this._telemetryManager = telemetryManager;
+      },
+    );
   }
 
   /**
@@ -454,13 +438,12 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
 
   /** Resolve a CDN url through the configured secure-delivery proxy, if any. */
   protected proxyUrl(url: string): Promise<string> {
-    const ctx = this.uploaderCtx;
     return resolveSecureDeliveryProxyUrl(
       {
-        secureDeliveryProxy: ctx.read(sharedConfigKey('secureDeliveryProxy')),
-        secureDeliveryProxyUrlResolver: ctx.read(sharedConfigKey('secureDeliveryProxyUrlResolver')),
+        secureDeliveryProxy: this._editorController.getConfig('secureDeliveryProxy'),
+        secureDeliveryProxyUrlResolver: this._editorController.getConfig('secureDeliveryProxyUrlResolver'),
       },
-      (error, context) => this.telemetryManager.sendEventError(error, context as string | undefined),
+      (error, context) => this._editorController.telemetry.sendEventError(error, context),
       url,
     );
   }
@@ -586,8 +569,6 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
 
     this._configChangeUnsub?.();
     this._configChangeUnsub = undefined;
-    this._localeChangeUnsub?.();
-    this._localeChangeUnsub = undefined;
     this._editorController.destroy();
 
     super.disconnectedCallback();
@@ -770,7 +751,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       const transformations = operationsToTransformations(operations) as Transformations;
       editorController.set('*editorTransformations', transformations);
     } else if (this.uuid) {
-      const cdnCname = this.uploaderCtx.read(sharedConfigKey('cdnCname'));
+      const cdnCname = editorController.getConfig('cdnCname');
       const originalUrl = createOriginalUrl(cdnCname, this.uuid as string);
       if (originalUrl === editorController.get('*originalUrl')) {
         return;
@@ -804,7 +785,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       this._activateViewer();
     } catch (err) {
       if (err) {
-        this.telemetryManager.sendEventError(err, 'cloud editor image. Failed to load image info');
+        editorController.telemetry.sendEventError(err, 'cloud editor image. Failed to load image info');
         console.error('Failed to load image info', err);
       }
     }
