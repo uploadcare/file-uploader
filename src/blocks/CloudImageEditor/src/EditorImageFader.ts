@@ -1,13 +1,14 @@
 import type { TemplateResult } from 'lit';
 import { html } from 'lit';
 import { createRef, ref } from 'lit/directives/ref.js';
-import { LitBlock } from '../../../lit/LitBlock';
+import type { CloudImageEditorController } from '../../../abstract/controllers/CloudImageEditorController';
 import { debounce } from '../../../utils/debounce.js';
 import { batchPreloadImages } from '../../../utils/preloadImage.js';
+import { EditorBlock } from './editor-context';
 import { classNames } from './lib/classNames.js';
 import { linspace } from './lib/linspace.js';
 import { COLOR_OPERATIONS_CONFIG } from './toolbar-constants.js';
-import type { LoadingOperations, Transformations } from './types';
+import type { Transformations } from './types';
 import { viewerImageSrc } from './util.js';
 
 type OperationKey = keyof typeof COLOR_OPERATIONS_CONFIG;
@@ -84,7 +85,7 @@ function keypointsRange(operation: OperationKey, value: number): number[] {
   );
 }
 
-export class EditorImageFader extends LitBlock {
+export class EditorImageFader extends EditorBlock {
   private _isActive = false;
   private _hidden = true;
   private _operation: OperationKey | 'initial' = 'initial';
@@ -107,16 +108,25 @@ export class EditorImageFader extends LitBlock {
 
     this.classList.add('uc-inactive_to_cropper');
     this._addKeypointDebounced = debounce(async (operation, filter, value) => {
+      // Capture the controller once, before any `await`, so the rest of this
+      // callback keeps working off a stable instance even if the element
+      // disconnects mid-flight (the `editorController` accessor throws once
+      // detached; the captured instance stays usable) — same lesson as
+      // `EditorImageCropper.activate`.
+      const controller = this.editorControllerOrNull;
+      if (!controller) {
+        return;
+      }
       const shouldSkip = () =>
         !this._isSame(operation, filter) || this._value !== value || !!this._keypoints.find((kp) => kp.value === value);
 
       if (shouldSkip()) {
         return;
       }
-      const keypoint = await this._constructKeypoint(operation, value);
+      const keypoint = await this._constructKeypoint(controller, operation, value);
       const image = new Image();
       image.src = keypoint.src;
-      const stop = this._handleImageLoading(keypoint.src);
+      const stop = this._handleImageLoading(controller, keypoint.src);
       image.addEventListener('load', stop, { once: true });
       image.addEventListener('error', stop, { once: true });
       keypoint.image = image;
@@ -153,32 +163,36 @@ export class EditorImageFader extends LitBlock {
       image.addEventListener(
         'error',
         () => {
-          this.$['*networkProblems'] = true;
+          controller.set('*networkProblems', true);
         },
         { once: true },
       );
     }, 600);
   }
 
-  private _handleImageLoading(src: string): () => void {
+  private _handleImageLoading(controller: CloudImageEditorController, src: string): () => void {
     const operation = this._operation;
 
-    const loadingOperations = this.$['*loadingOperations'] as LoadingOperations;
-    if (!loadingOperations.has(operation)) {
-      loadingOperations.set(operation, new Map());
-    }
-
-    const operationMap = loadingOperations.get(operation);
-    if (operationMap && !operationMap.get(src)) {
+    // Immutable update: `StateController.set` dedupes by `Object.is`, so we must
+    // publish a NEW Map reference (outer + inner) or subscribers never notify.
+    const current = controller.get('*loadingOperations');
+    if (!current.get(operation)?.get(src)) {
+      const next = new Map(current);
+      const operationMap = new Map(next.get(operation) ?? []);
       operationMap.set(src, true);
-      this.$['*loadingOperations'] = loadingOperations;
+      next.set(operation, operationMap);
+      controller.set('*loadingOperations', next);
     }
 
     return () => {
-      const currentOperationMap = loadingOperations.get(operation);
-      if (currentOperationMap?.has(src)) {
-        currentOperationMap.delete(src);
-        this.$['*loadingOperations'] = loadingOperations;
+      const current = controller.get('*loadingOperations');
+      const operationMap = current.get(operation);
+      if (operationMap?.has(src)) {
+        const next = new Map(current);
+        const nextOperationMap = new Map(operationMap);
+        nextOperationMap.delete(src);
+        next.set(operation, nextOperationMap);
+        controller.set('*loadingOperations', next);
       }
     };
   }
@@ -196,12 +210,10 @@ export class EditorImageFader extends LitBlock {
     });
   }
 
-  private _imageSrc({
-    url = this._url,
-    filter = this._filter ?? undefined,
-    operation,
-    value,
-  }: ImageSrcOptions = {}): Promise<string> {
+  private _imageSrc(
+    controller: CloudImageEditorController,
+    { url = this._url, filter = this._filter ?? undefined, operation, value }: ImageSrcOptions = {},
+  ): Promise<string> {
     if (!url) {
       throw new Error('URL is not defined');
     }
@@ -219,11 +231,15 @@ export class EditorImageFader extends LitBlock {
 
     // do not use getBoundingClientRect because scale transform affects it
     const width = this.offsetWidth;
-    return this.proxyUrl(viewerImageSrc(url, width, transformations));
+    return controller.proxyUrl(viewerImageSrc(url, width, transformations));
   }
 
-  private async _constructKeypoint(operation: OperationKey, value: number): Promise<Keypoint> {
-    const src = await this._imageSrc({ operation, value });
+  private async _constructKeypoint(
+    controller: CloudImageEditorController,
+    operation: OperationKey,
+    value: number,
+  ): Promise<Keypoint> {
+    const src = await this._imageSrc(controller, { operation, value });
     return {
       src,
       image: undefined,
@@ -281,6 +297,13 @@ export class EditorImageFader extends LitBlock {
   }
 
   private async _initNodes(): Promise<void> {
+    // Fire-and-forget from `activate` (not awaited), so it needs its own
+    // controller capture rather than relying on one threaded in from a caller.
+    const controller = this.editorControllerOrNull;
+    if (!controller) {
+      return;
+    }
+
     this._previewImage = this._previewImage || this._createPreviewImage();
     const previewImage = this._previewImage;
     if (previewImage) {
@@ -291,7 +314,7 @@ export class EditorImageFader extends LitBlock {
 
     const { images, promise, cancel } = batchPreloadImages(srcList);
     images.forEach((node) => {
-      const stop = this._handleImageLoading(node.src);
+      const stop = this._handleImageLoading(controller, node.src);
       node.addEventListener('load', stop);
       node.addEventListener('error', stop);
     });
@@ -323,9 +346,11 @@ export class EditorImageFader extends LitBlock {
 
   public async setTransformations(transformations: Transformations): Promise<void> {
     this._transformations = transformations;
-    if (this._previewImage) {
-      const src = await this._imageSrc();
-      const stop = this._handleImageLoading(src);
+    // Capture before the `await` below (see `_addKeypointDebounced`'s doc).
+    const controller = this.editorControllerOrNull;
+    if (this._previewImage && controller) {
+      const src = await this._imageSrc(controller);
+      const stop = this._handleImageLoading(controller, src);
       this._previewImage.src = src;
       this._previewImage.addEventListener('load', stop, { once: true });
       this._previewImage.addEventListener('error', stop, { once: true });
@@ -334,7 +359,7 @@ export class EditorImageFader extends LitBlock {
       this._previewImage.addEventListener(
         'error',
         () => {
-          this.$['*networkProblems'] = true;
+          controller.set('*networkProblems', true);
         },
         { once: true },
       );
@@ -355,16 +380,22 @@ export class EditorImageFader extends LitBlock {
     if (!operation || typeof value !== 'number') {
       return;
     }
+    const controller = this.editorControllerOrNull;
+    if (!controller) {
+      return;
+    }
     this._cancelBatchPreload?.();
 
     const keypoints = keypointsRange(operation, value);
-    const srcList = await Promise.all(keypoints.map((kp) => this._imageSrc({ url, filter, operation, value: kp })));
+    const srcList = await Promise.all(
+      keypoints.map((kp) => this._imageSrc(controller, { url, filter, operation, value: kp })),
+    );
     const { cancel } = batchPreloadImages(srcList);
 
     this._cancelBatchPreload = cancel;
   }
 
-  private _setOriginalSrc(src: string): void {
+  private _setOriginalSrc(controller: CloudImageEditorController, src: string): void {
     const image = this._previewImage || this._createPreviewImage();
     this._ensurePreviewAttached(image);
     this._previewImage = image;
@@ -381,7 +412,7 @@ export class EditorImageFader extends LitBlock {
       return;
     }
     image.style.opacity = '0';
-    const stop = this._handleImageLoading(src);
+    const stop = this._handleImageLoading(controller, src);
     image.addEventListener('error', stop, { once: true });
     image.src = src;
     image.addEventListener(
@@ -404,7 +435,7 @@ export class EditorImageFader extends LitBlock {
     image.addEventListener(
       'error',
       () => {
-        this.$['*networkProblems'] = true;
+        controller.set('*networkProblems', true);
       },
       { once: true },
     );
@@ -426,6 +457,14 @@ export class EditorImageFader extends LitBlock {
     this._isActive = true;
     this._hidden = false;
     await this.updateComplete;
+    // Capture once, right after the gate-await above, and reuse this instance
+    // for the remainder of the method (including across the further awaits
+    // below) rather than re-reading the `editorController` accessor — mirrors
+    // `EditorImageCropper.activate`.
+    const controller = this.editorControllerOrNull;
+    if (!controller) {
+      return;
+    }
     this._url = url;
     this._operation = operation ?? 'initial';
     this._value = value;
@@ -434,8 +473,8 @@ export class EditorImageFader extends LitBlock {
 
     const isOriginal = typeof value !== 'number' && !filter;
     if (isOriginal) {
-      const src = await this._imageSrc({ operation, value });
-      this._setOriginalSrc(src);
+      const src = await this._imageSrc(controller, { operation, value });
+      this._setOriginalSrc(controller, src);
       this._clearLayersHost();
       return;
     }
@@ -443,7 +482,7 @@ export class EditorImageFader extends LitBlock {
       return;
     }
     this._keypoints = await Promise.all(
-      keypointsRange(operation, value).map((keyValue) => this._constructKeypoint(operation, keyValue)),
+      keypointsRange(operation, value).map((keyValue) => this._constructKeypoint(controller, operation, keyValue)),
     );
 
     this._update(operation, value);

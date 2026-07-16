@@ -23,7 +23,11 @@ class TestEditorRoot extends TestEditorRootBase {
   public readonly controller = new CloudImageEditorController(undefined, {
     l10n: (key) => (key === 'cancel' ? 'Cancel' : key),
     getConfig: ((key: string) => (key === 'pubkey' ? 'demopublickey' : undefined)) as EditorServices['getConfig'],
-    telemetry: { sendEvent: this.telemetrySendEvent, sendEventError: this.telemetrySendEventError },
+    telemetry: {
+      sendEvent: this.telemetrySendEvent,
+      sendEventError: this.telemetrySendEventError,
+      sendEventCloudImageEditor: vi.fn(),
+    },
     proxyUrl: async (url) => url,
   });
 

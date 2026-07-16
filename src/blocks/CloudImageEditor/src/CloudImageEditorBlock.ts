@@ -1,9 +1,22 @@
-import { html, type PropertyValues } from 'lit';
+import { ContextConsumer, ContextProvider } from '@lit/context';
+import { html, LitElement, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import { unsafeSVG } from 'lit/directives/unsafe-svg.js';
 import { when } from 'lit/directives/when.js';
-import { LitBlock } from '../../../lit/LitBlock';
+import { CloudImageEditorController } from '../../../abstract/controllers/CloudImageEditorController';
+import type { A11y } from '../../../abstract/managers/a11y';
+import type { TelemetryManager } from '../../../abstract/managers/TelemetryManager';
+import { resolveSecureDeliveryProxyUrl } from '../../../abstract/secureDeliveryProxyUrl';
+import { sharedConfigKey } from '../../../abstract/sharedConfigKey';
+import { ensureUploaderCtx } from '../../../lit/ensureUploaderCtx';
+import { LightDomMixin } from '../../../lit/LightDomMixin';
+import { createL10n } from '../../../lit/l10n';
+import type { PubSub } from '../../../lit/PubSubCompat';
+import { RegisterableElementMixin } from '../../../lit/RegisterableElementMixin';
+import type { SharedState } from '../../../lit/SharedState';
+import { ctxNameContext } from '../../../lit/SymbioteCompatMixin';
+import type { ConfigType } from '../../../types';
 import {
   createCdnUrl,
   createCdnUrlModifiers,
@@ -16,11 +29,11 @@ import { debounce } from '../../../utils/debounce.js';
 import { TRANSPARENT_PIXEL_SRC } from '../../../utils/transparentPixelSrc';
 import type { EditorImageCropper } from './EditorImageCropper';
 import type { EditorImageFader } from './EditorImageFader';
+import { cloudImageEditorContext } from './editor-context';
 import { classNames } from './lib/classNames.js';
 import { getClosestAspectRatio, parseCropPreset } from './lib/parseCropPreset.js';
 import { parseTabs } from './lib/parseTabs.js';
 import { operationsToTransformations, transformationsToOperations } from './lib/transformationUtils.js';
-import { createCloudImageEditorState } from './state.js';
 import svgIconsSprite from './svg-sprite';
 import { ALL_TABS, TabId } from './toolbar-constants.js';
 import type { ApplyResult, CropPresetList, ImageSize, Transformations } from './types';
@@ -37,14 +50,15 @@ type TabIdValue = (typeof TabId)[keyof typeof TabId];
 
 const DEFAULT_TABS = serializeCsv([...ALL_TABS]);
 
-export class CloudImageEditorBlock extends LitBlock {
+const CloudImageEditorBlockBase = RegisterableElementMixin(LightDomMixin(LitElement));
+
+export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
   public declare attributesMeta: ({ uuid: string } | { 'cdn-url': string }) &
     Partial<{ tabs: string; 'crop-preset': string }> & {
       'ctx-name': string;
     };
 
-  public override ctxOwner = true;
-  public static override styleAttrs = ['uc-cloud-image-editor'];
+  public static styleAttrs = ['uc-cloud-image-editor'];
 
   @state()
   private _statusMessage = '';
@@ -70,15 +84,86 @@ export class CloudImageEditorBlock extends LitBlock {
   @property({ type: String, reflect: true })
   public tabs: string | null = DEFAULT_TABS;
 
+  /** Own `ctx-name` attribute — mirrors `SymbioteCompatMixin`'s `_ctxNameAttr`. */
+  @property({ type: String, attribute: 'ctx-name', reflect: true })
+  public ctxName: string | null = null;
+
+  @state()
+  private _ctxNameFromContext: string | undefined;
+
   @state()
   private _hasNetworkProblems = false;
 
   @state()
   private _isInitialized = false;
 
+  // Root-owned, single-child data passed to `<uc-editor-toolbar>` as plain Lit
+  // props (not controller state — see the "State scoping principle").
+  @state()
+  private _imageSize: ImageSize | null = null;
+
+  @state()
+  private _cropPresetList: CropPresetList = [];
+
+  @state()
+  private _tabList: readonly TabIdValue[] = [...ALL_TABS];
+
   private _pendingInitUpdate: Promise<void> | null = null;
 
   private _pendingSizeWait: Promise<void> | null = null;
+
+  private _editorInitialized = false;
+
+  /**
+   * Resolved shared uploader ctx (`ensureUploaderCtx`) — this root is the
+   * editor's ctx owner (v1-parity: creates the ctx if it doesn't exist yet,
+   * or joins an existing one, e.g. when embedded inside
+   * `<uc-cloud-image-editor-activity>`).
+   */
+  private _ctx: PubSub<SharedState> | undefined;
+
+  // biome-ignore lint/correctness/noUnusedPrivateClassMembers: side-effecting @lit/context registration, resolves `_ctxNameFromContext` from an ancestor provider
+  private readonly _ctxNameConsumer = new ContextConsumer(this, {
+    context: ctxNameContext,
+    subscribe: true,
+    callback: (value) => {
+      if (!value) {
+        return;
+      }
+      this._ctxNameFromContext = value;
+      this._maybeInitializeCtx();
+    },
+  });
+
+  /**
+   * The DOM-free editor controller — OWNS the editor's cross-cutting state
+   * (see `CloudImageEditorControllerState`). Created and provided down the
+   * editor DOM tree so descendants (`EditorBlock`) can read/write it
+   * directly; there is no more shared-ctx bridge (removed in M12 final —
+   * previously `EDITOR_CONTROLLER_BRIDGE_KEYS`/`_setupEditorControllerBridge`
+   * scaffolding).
+   */
+  private readonly _editorController = new CloudImageEditorController();
+
+  // biome-ignore lint/correctness/noUnusedPrivateClassMembers: side-effecting @lit/context registration, never read after construction
+  private readonly _editorControllerProvider = new ContextProvider(this, {
+    context: cloudImageEditorContext,
+    initialValue: this._editorController,
+  });
+
+  // Re-provide the resolved ctx-name down the editor tree so nested
+  // `ChildBlock`s (`uc-icon`, ...) can adopt the shared uploader ctx and
+  // render. `ChildBlock` does this for its own descendants; the editor root's
+  // light base only *consumes* ctx-name, so without this the editor's icons
+  // never adopt and render empty (no sprite `<use>`). Value set in
+  // `_maybeInitializeCtx` once the effective ctx-name is known.
+  private readonly _ctxNameProvider = new ContextProvider(this, {
+    context: ctxNameContext,
+    initialValue: undefined,
+  });
+
+  private _configChangeUnsub: (() => void) | undefined;
+  private _localeChangeUnsub: (() => void) | undefined;
 
   private readonly _debouncedShowLoader = debounce((show: boolean) => {
     this._showLoader = show;
@@ -93,61 +178,257 @@ export class CloudImageEditorBlock extends LitBlock {
     this._debouncedShowLoader(false);
 
     if (this._imageSrc !== TRANSPARENT_PIXEL_SRC) {
-      this.$['*networkProblems'] = false;
+      this._editorController.set('*networkProblems', false);
     }
   };
 
   private readonly _handleImageError = (): void => {
     this._debouncedShowLoader(false);
-    this.$['*networkProblems'] = true;
+    this._editorController.set('*networkProblems', true);
   };
 
   private readonly _handleRetryNetwork = (): void => {
-    const retry = this.$['*on.retryNetwork'] as (() => void) | undefined;
-    retry?.();
+    this._retryNetworkImages();
+  };
+
+  /** Descendant apply/cancel intents arrive as bubbling `uc-internal:*` events (the controller holds no callbacks). */
+  private readonly _onInternalApply = (e: CustomEvent<Transformations>): void => {
+    this._handleApply(e.detail);
+  };
+
+  private readonly _onInternalCancel = (): void => {
+    this._handleCancel();
   };
 
   private _scheduleInitialization(): void {
     if (this._isInitialized || this._pendingInitUpdate) {
       return;
     }
-    this._pendingInitUpdate = this.updateComplete.then(() => {
+    this._pendingInitUpdate = this.updateComplete.then(async () => {
       this._pendingInitUpdate = null;
       this._isInitialized = true;
+      // `_isInitialized` renders the init-gated subtree (the cropper + toolbar);
+      // wait for that render to commit, then capture the now-live refs and
+      // activate the viewer. `firstUpdated`/`updateImage` ran before this flip,
+      // so `*cropperEl` was still null and its `activate()` no-oped — without
+      // this the cropper renders but never gets its `<img>`/crop frame.
+      await this.updateComplete;
+      if (!this.isConnected) {
+        return;
+      }
+      this._assignSharedElements();
+      this._activateViewer();
     });
   }
 
-  public override init$ = {
-    ...this.init$,
-    ...createCloudImageEditorState(this),
-  } as ReturnType<typeof createCloudImageEditorState>;
+  /**
+   * (Re)activate the crop or fader viewer for the current tab, using the loaded
+   * image size. No-op until the image size is known. Called after image info
+   * loads (`updateImage`) and again once the init-gated cropper subtree has
+   * rendered (`_scheduleInitialization`).
+   */
+  private _activateViewer(): void {
+    const editorController = this._editorController;
+    const imageSize = this._imageSize;
+    if (!imageSize) {
+      return;
+    }
+    if (editorController.get('*tabId') === TabId.CROP) {
+      editorController.get('*cropperEl')?.activate(imageSize);
+    } else {
+      const originalUrl = editorController.get('*originalUrl');
+      if (originalUrl) {
+        editorController.get('*faderEl')?.activate({ url: originalUrl });
+      }
+    }
+  }
 
-  public override initCallback(): void {
-    super.initCallback();
+  /** Resolved shared uploader ctx. Throws if the ctx-name hasn't resolved yet (see `_maybeInitializeCtx`). */
+  protected get uploaderCtx(): PubSub<SharedState> {
+    if (!this._ctx) {
+      throw new Error('CloudImageEditorBlock: shared uploader ctx is not initialized yet (missing ctx-name).');
+    }
+    return this._ctx;
+  }
+
+  protected get telemetryManager(): TelemetryManager {
+    return this.uploaderCtx.read('*telemetryManager');
+  }
+
+  protected get a11y(): A11y {
+    return this.uploaderCtx.read('*a11y');
+  }
+
+  private get _effectiveCtxName(): string | undefined {
+    return this.ctxName || this._ctxNameFromContext || undefined;
+  }
+
+  public override connectedCallback(): void {
+    super.connectedCallback();
+    // Apply `styleAttrs` as bare attributes — the entire editor stylesheet is
+    // scoped under `[uc-cloud-image-editor]` (incl. the `.uc-editor_ON`
+    // visibility class), so without this the editor and every descendant
+    // render unstyled/invisible. `ChildBlock` does this for the uploader
+    // blocks; the editor's light base does not, so the root does it itself.
+    for (const attr of (this.constructor as typeof CloudImageEditorBlock).styleAttrs) {
+      if (!this.hasAttribute(attr)) this.setAttribute(attr, '');
+    }
+    this._maybeInitializeCtx();
+  }
+
+  private _maybeInitializeCtx(): void {
+    if (this._editorInitialized) {
+      return;
+    }
+    const ctxName = this._effectiveCtxName;
+    if (!ctxName || !this.isConnected) {
+      return;
+    }
+    this._editorInitialized = true;
+    this._ctx = ensureUploaderCtx(ctxName);
+    // Hand the ctx-name to descendant ChildBlocks (e.g. `uc-icon`) so they
+    // adopt the same uploader ctx.
+    this._ctxNameProvider.setValue(ctxName);
 
     this._syncTabListFromProp();
     this._syncCropPresetState();
+
+    this._setupEditorController();
+    this.initCallback();
+  }
+
+  /** Hook for subclasses (e.g. the `<uc-cloud-image-editor>` solution) — called once the shared ctx is resolved. */
+  protected initCallback(): void {}
+
+  /**
+   * Wires the `CloudImageEditorController`'s injected services (l10n/config/
+   * telemetry/proxy) and action handlers from the resolved shared ctx, then
+   * subscribes to config/locale changes so descendants re-render on either
+   * (replaces the old shared-ctx `subConfigValue`/locale-direction
+   * reactivity `LitBlock` used to provide for free).
+   */
+  private _setupEditorController(): void {
+    const ctx = this.uploaderCtx;
+
+    this._editorController.setServices({
+      l10n: createL10n(() => ctx),
+      // `ctx.read(sharedConfigKey(key))` returns `SharedState[`*cfg/${K}`]`, which is
+      // `ConfigType[K]` verbatim via `SharedConfigState`'s mapped type — TS can't
+      // prove that identity through the generic `K` here; narrow boundary cast.
+      getConfig: <K extends keyof ConfigType>(key: K): ConfigType[K] =>
+        ctx.read(sharedConfigKey<K>(key)) as unknown as ConfigType[K],
+      telemetry: {
+        sendEvent: (event) => this.telemetryManager.sendEvent(event as Parameters<TelemetryManager['sendEvent']>[0]),
+        sendEventError: (err, context) => this.telemetryManager.sendEventError(err, context as string | undefined),
+        sendEventCloudImageEditor: (e, tabId, options) =>
+          this.telemetryManager.sendEventCloudImageEditor(e, tabId, options),
+      },
+      proxyUrl: (url) => this.proxyUrl(url),
+    });
+
+    const uploaderController = ctx.uploaderController();
+    this._syncTestId();
+    this._configChangeUnsub = uploaderController.config.subscribe(() => {
+      // Re-sync `data-testid` too: a standalone `<uc-config testMode>` sibling
+      // may connect and set `testMode` after this element (documented
+      // composition order), so the flag isn't known at first setup.
+      this._syncTestId();
+      this._editorController.notify();
+    });
+    this._localeChangeUnsub = uploaderController.locale.subscribe(() => this._editorController.notify());
+  }
+
+  /**
+   * Mirror `data-testid` from the `testMode` config for e2e/`getByTestId`
+   * locators — same contract as `ChildBlock._syncTestId` / v1 `LitBlock`'s
+   * `subConfigValue('testMode', ...)`, reimplemented here since the root's
+   * light base deliberately isn't `ChildBlock`.
+   */
+  private _syncTestId(): void {
+    if (this._editorController.getConfig('testMode')) {
+      this.setAttribute('data-testid', this.tagName.toLowerCase());
+    } else {
+      this.removeAttribute('data-testid');
+    }
+  }
+
+  private _retryNetworkImages(): void {
+    const images = this.querySelectorAll('img');
+    for (const img of images) {
+      const originalSrc = img.src;
+      img.src = TRANSPARENT_PIXEL_SRC;
+      img.src = originalSrc;
+    }
+    this._editorController.set('*networkProblems', false);
+  }
+
+  private _handleApply(transformations: Transformations): void {
+    if (!transformations) {
+      return;
+    }
+    const originalUrl = this._editorController.get('*originalUrl');
+    if (!originalUrl) {
+      console.warn('Original URL is null, cannot apply transformations');
+      return;
+    }
+    const cdnUrlModifiers = createCdnUrlModifiers(transformationsToOperations(transformations), 'preview');
+    const cdnUrl = createCdnUrl(originalUrl, cdnUrlModifiers);
+
+    const eventData: ApplyResult = {
+      originalUrl,
+      cdnUrlModifiers,
+      cdnUrl,
+      transformations,
+    };
+    this.dispatchEvent(
+      new CustomEvent<ApplyResult>('apply', {
+        detail: eventData,
+        bubbles: true,
+        composed: true,
+      }),
+    );
+    this.remove();
+  }
+
+  private _handleCancel(): void {
+    // Dispatch before removing — once detached the element has no ancestor
+    // path, so bubbling listeners on a container/document would miss `cancel`.
+    this.dispatchEvent(
+      new CustomEvent('cancel', {
+        bubbles: true,
+        composed: true,
+      }),
+    );
+    this.remove();
+  }
+
+  /** Resolve a CDN url through the configured secure-delivery proxy, if any. */
+  protected proxyUrl(url: string): Promise<string> {
+    const ctx = this.uploaderCtx;
+    return resolveSecureDeliveryProxyUrl(
+      {
+        secureDeliveryProxy: ctx.read(sharedConfigKey('secureDeliveryProxy')),
+        secureDeliveryProxyUrlResolver: ctx.read(sharedConfigKey('secureDeliveryProxyUrlResolver')),
+      },
+      (error, context) => this.telemetryManager.sendEventError(error, context as string | undefined),
+      url,
+    );
   }
 
   private _assignSharedElements(): void {
     const faderEl = this._faderRef.value;
     if (faderEl) {
-      this.$['*faderEl'] = faderEl;
+      this._editorController.set('*faderEl', faderEl);
     }
 
     const cropperEl = this._cropperRef.value;
     if (cropperEl) {
-      this.$['*cropperEl'] = cropperEl;
+      this._editorController.set('*cropperEl', cropperEl);
     }
 
     const imgContainerEl = this._imgContainerRef.value;
     if (imgContainerEl) {
-      this.$['*imgContainerEl'] = imgContainerEl;
-    }
-
-    const imgEl = this._imgRef.value;
-    if (imgEl) {
-      this.$['*imgEl'] = imgEl;
+      this._editorController.set('*imgContainerEl', imgContainerEl);
     }
   }
 
@@ -170,7 +451,7 @@ export class CloudImageEditorBlock extends LitBlock {
   }
 
   private get _imageClassName(): string {
-    const tabId = this.$['*tabId'] as TabIdValue;
+    const tabId = this._editorController.get('*tabId');
     return classNames('uc-image', {
       'uc-image_hidden_to_cropper': tabId === TabId.CROP,
       'uc-image_hidden_effects': tabId !== TabId.CROP,
@@ -252,6 +533,13 @@ export class CloudImageEditorBlock extends LitBlock {
 
   public override disconnectedCallback(): void {
     this._detachImageListeners();
+
+    this._configChangeUnsub?.();
+    this._configChangeUnsub = undefined;
+    this._localeChangeUnsub?.();
+    this._localeChangeUnsub = undefined;
+    this._editorController.destroy();
+
     super.disconnectedCallback();
   }
 
@@ -264,7 +552,11 @@ export class CloudImageEditorBlock extends LitBlock {
 
     return html`
       ${unsafeSVG(svgIconsSprite)}
-      <div class="uc-wrapper uc-wrapper_desktop">
+      <div
+        class="uc-wrapper uc-wrapper_desktop"
+        @uc-internal:apply=${this._onInternalApply}
+        @uc-internal:cancel=${this._onInternalCancel}
+      >
         <uc-presence-toggle class="uc-network_problems_splash" .visible=${showNetworkProblems}>
           <div class="uc-network_problems_content">
             <div class="uc-network_problems_icon">
@@ -290,11 +582,35 @@ export class CloudImageEditorBlock extends LitBlock {
         <div class="uc-toolbar">
           <uc-line-loader-ui .active=${showLoader}></uc-line-loader-ui>
           <div class="uc-toolbar_content uc-toolbar_content__editor">
-            ${when(this._isInitialized, () => html`<uc-editor-toolbar></uc-editor-toolbar>`)}
+            ${when(
+              this._isInitialized,
+              () =>
+                html`<uc-editor-toolbar
+                  .cropPresetList=${this._cropPresetList}
+                  .tabList=${this._tabList}
+                  .imageSize=${this._imageSize}
+                ></uc-editor-toolbar>`,
+            )}
           </div>
         </div>
       </div>
     `;
+  }
+
+  protected override willUpdate(changedProperties: PropertyValues<this>): void {
+    super.willUpdate(changedProperties);
+
+    // Derive the toolbar-prop state (`_tabList`/`_cropPresetList`) from the
+    // reflected attributes in `willUpdate`, not `updated` — so the assignment
+    // folds into the current render instead of scheduling a wasteful follow-up
+    // (Lit "change-in-update").
+    if (changedProperties.has('tabs')) {
+      this._syncTabListFromProp();
+    }
+
+    if (changedProperties.has('cropPreset') || changedProperties.has('cdnUrl')) {
+      this._syncCropPresetState();
+    }
   }
 
   protected override updated(changedProperties: PropertyValues<this>): void {
@@ -307,19 +623,11 @@ export class CloudImageEditorBlock extends LitBlock {
     if (changedProperties.has('cdnUrl') && this.cdnUrl) {
       void this.updateImage();
     }
-
-    if (changedProperties.has('tabs')) {
-      this._syncTabListFromProp();
-    }
-
-    if (changedProperties.has('cropPreset') || changedProperties.has('cdnUrl')) {
-      this._syncCropPresetState();
-    }
   }
 
   private _syncTabListFromProp(): void {
     const tabsValue = this.tabs || DEFAULT_TABS;
-    this.$['*tabList'] = parseTabs(tabsValue);
+    this._tabList = parseTabs(tabsValue);
   }
 
   private _syncCropPresetState(): void {
@@ -336,8 +644,8 @@ export class CloudImageEditorBlock extends LitBlock {
       }
     }
 
-    this.$['*cropPresetList'] = list;
-    this.$['*currentAspectRatio'] = closest ?? list?.[0] ?? null;
+    this._cropPresetList = list;
+    this._editorController.set('*currentAspectRatio', closest ?? list?.[0] ?? null);
   }
 
   public async updateImage(): Promise<void> {
@@ -354,49 +662,52 @@ export class CloudImageEditorBlock extends LitBlock {
       return;
     }
 
+    const editorController = this._editorController;
+
     if (this.cdnUrl) {
       const cdnUrlValue = this.cdnUrl as string;
       const uuid = extractUuid(cdnUrlValue);
       const originalUrl = createOriginalUrl(cdnUrlValue, uuid);
-      if (originalUrl === this.$['*originalUrl']) {
+      if (originalUrl === editorController.get('*originalUrl')) {
         return;
       }
-      this.$['*originalUrl'] = originalUrl;
+      editorController.set('*originalUrl', originalUrl);
       const operations = extractOperations(cdnUrlValue);
       const transformations = operationsToTransformations(operations) as Transformations;
-      this.$['*editorTransformations'] = transformations;
+      editorController.set('*editorTransformations', transformations);
     } else if (this.uuid) {
-      const originalUrl = createOriginalUrl(this.cfg.cdnCname, this.uuid as string);
-      if (originalUrl === this.$['*originalUrl']) {
+      const cdnCname = this.uploaderCtx.read(sharedConfigKey('cdnCname'));
+      const originalUrl = createOriginalUrl(cdnCname, this.uuid as string);
+      if (originalUrl === editorController.get('*originalUrl')) {
         return;
       }
-      this.$['*originalUrl'] = originalUrl;
-      if (Object.keys(this.$['*editorTransformations']).length > 0) {
-        this.$['*editorTransformations'] = {};
+      editorController.set('*originalUrl', originalUrl);
+      if (Object.keys(editorController.get('*editorTransformations')).length > 0) {
+        editorController.set('*editorTransformations', {});
       }
     } else {
       throw new Error('No UUID nor CDN URL provided');
     }
 
-    if (this.$['*tabId'] === TabId.CROP) {
-      (this.$['*cropperEl'] as EditorImageCropper)?.deactivate({ reset: true });
+    if (editorController.get('*tabId') === TabId.CROP) {
+      editorController.get('*cropperEl')?.deactivate({ reset: true });
     } else {
-      (this.$['*faderEl'] as EditorImageFader)?.deactivate();
+      editorController.get('*faderEl')?.deactivate();
     }
 
     try {
-      const originalUrlValue = this.$['*originalUrl'] as string;
+      const originalUrlValue = editorController.get('*originalUrl') as string;
       const cdnUrl = await this.proxyUrl(createCdnUrl(originalUrlValue, createCdnUrlModifiers('json')));
       const json = (await fetch(cdnUrl).then((response) => response.json())) as { width: number; height: number };
 
-      const { width, height } = json;
-      this.$['*imageSize'] = { width, height };
-
-      if (this.$['*tabId'] === TabId.CROP) {
-        (this.$['*cropperEl'] as EditorImageCropper)?.activate(this.$['*imageSize'] as ImageSize);
-      } else {
-        (this.$['*faderEl'] as EditorImageFader)?.activate({ url: originalUrlValue });
+      if (!this.isConnected) {
+        return;
       }
+
+      const { width, height } = json;
+      this._imageSize = { width, height };
+
+      this._activateViewer();
     } catch (err) {
       if (err) {
         this.telemetryManager.sendEventError(err, 'cloud editor image. Failed to load image info');
@@ -414,44 +725,61 @@ export class CloudImageEditorBlock extends LitBlock {
       return;
     }
 
+    if (!this.isConnected) {
+      return;
+    }
+
     this.classList.add('uc-editor_ON');
 
-    this.sub('*networkProblems', (networkProblems) => {
-      const hasIssues = Boolean(networkProblems);
-      this._hasNetworkProblems = hasIssues;
+    const editorController = this._editorController;
+
+    editorController.subscribe(() => {
+      const networkProblems = Boolean(editorController.get('*networkProblems'));
+      if (networkProblems !== this._hasNetworkProblems) {
+        this._hasNetworkProblems = networkProblems;
+      }
     });
+    this._hasNetworkProblems = Boolean(editorController.get('*networkProblems'));
 
-    this.sub(
-      '*editorTransformations',
-      (transformations: Transformations) => {
-        if (Object.keys(transformations).length === 0) {
-          return;
-        }
-        const originalUrl = this.$['*originalUrl'] as string;
-        const cdnUrlModifiers = createCdnUrlModifiers(transformationsToOperations(transformations), 'preview');
-        const cdnUrl = createCdnUrl(originalUrl, cdnUrlModifiers);
+    let lastTransformations = editorController.get('*editorTransformations');
+    editorController.subscribe(() => {
+      const transformations = editorController.get('*editorTransformations');
+      if (transformations === lastTransformations) {
+        return;
+      }
+      lastTransformations = transformations;
 
-        const eventData: ApplyResult = {
-          originalUrl,
-          cdnUrlModifiers,
-          cdnUrl,
-          transformations,
-        };
-        this.dispatchEvent(
-          new CustomEvent<ApplyResult>('change', {
-            detail: eventData,
-            bubbles: true,
-            composed: true,
-          }),
-        );
-      },
-      false,
-    );
+      if (Object.keys(transformations).length === 0) {
+        return;
+      }
+      const originalUrl = editorController.get('*originalUrl') as string;
+      const cdnUrlModifiers = createCdnUrlModifiers(transformationsToOperations(transformations), 'preview');
+      const cdnUrl = createCdnUrl(originalUrl, cdnUrlModifiers);
+
+      const eventData: ApplyResult = {
+        originalUrl,
+        cdnUrlModifiers,
+        cdnUrl,
+        transformations,
+      };
+      this.dispatchEvent(
+        new CustomEvent<ApplyResult>('change', {
+          detail: eventData,
+          bubbles: true,
+          composed: true,
+        }),
+      );
+    });
   }
 }
 
 declare global {
   interface HTMLElementTagNameMap {
     'uc-cloud-image-editor-block': CloudImageEditorBlock;
+  }
+  interface HTMLElementEventMap {
+    /** Internal apply/cancel intents dispatched by descendants (e.g. the toolbar), listened for by the root — replaces the former controller callbacks. */
+    'uc-internal:apply': CustomEvent<Transformations>;
+    'uc-internal:cancel': CustomEvent<void>;
   }
 }
