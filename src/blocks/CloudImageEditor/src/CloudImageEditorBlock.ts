@@ -173,18 +173,6 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
     initialValue: this._editorController,
   });
 
-  // Re-provide the resolved ctx-name down the editor tree so any nested
-  // `ChildBlock`s can adopt the shared uploader ctx and render. `ChildBlock`
-  // does this for its own descendants; the editor root's light base only
-  // *consumes* ctx-name, so without this a nested `ChildBlock` never adopts
-  // and renders empty. (Editor icons are `uc-editor-icon` — plain-Lit,
-  // ctx-free — so they don't depend on this provider.) Value set in
-  // `_setupEditor` once the effective ctx-name is known.
-  private readonly _ctxNameProvider = new ContextProvider(this, {
-    context: ctxNameContext,
-    initialValue: undefined,
-  });
-
   private _configChangeUnsub: (() => void) | undefined;
 
   private readonly _debouncedShowLoader = debounce((show: boolean) => {
@@ -295,9 +283,6 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       return;
     }
     this._editorInitialized = true;
-    // Hand the ctx-name to any descendant ChildBlocks so they adopt the same
-    // uploader ctx if one already exists.
-    this._ctxNameProvider.setValue(ctxName);
 
     this._syncTabListFromProp();
     this._syncCropPresetState();

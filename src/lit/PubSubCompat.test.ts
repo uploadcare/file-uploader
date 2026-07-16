@@ -366,3 +366,49 @@ describe('PubSub (M9k/M9l Task 3: pre-connect construction timing)', () => {
     }
   });
 });
+
+describe('PubSub.whenCtx', () => {
+  const nextId = () => {
+    const id = `pubsub-test-${seq++}`;
+    ids.push(id);
+    return id;
+  };
+
+  it('fires synchronously when the ctx already exists', () => {
+    const id = nextId();
+    PubSub.registerCtx<Record<string, unknown>>({ plain: 'seed' }, id);
+    const cb = vi.fn();
+    PubSub.whenCtx(id, cb);
+    expect(cb).toHaveBeenCalledTimes(1);
+  });
+
+  it('fires on a microtask (not re-entrantly) when the ctx is created later', async () => {
+    const id = nextId();
+    const cb = vi.fn();
+    PubSub.whenCtx(id, cb);
+    expect(cb).not.toHaveBeenCalled();
+    PubSub.registerCtx<Record<string, unknown>>({ plain: 'seed' }, id);
+    expect(cb).not.toHaveBeenCalled(); // deferred, NOT synchronous inside registerCtx
+    await Promise.resolve();
+    expect(cb).toHaveBeenCalledTimes(1);
+  });
+
+  it('cancel before creation prevents firing', async () => {
+    const id = nextId();
+    const cb = vi.fn();
+    PubSub.whenCtx(id, cb)();
+    PubSub.registerCtx<Record<string, unknown>>({ plain: 'seed' }, id);
+    await Promise.resolve();
+    expect(cb).not.toHaveBeenCalled();
+  });
+
+  it('cancel AFTER registerCtx schedules but BEFORE the microtask still prevents firing', async () => {
+    const id = nextId();
+    const cb = vi.fn();
+    const cancel = PubSub.whenCtx(id, cb);
+    PubSub.registerCtx<Record<string, unknown>>({ plain: 'seed' }, id); // schedules the microtask
+    cancel(); // race: cancel before the microtask runs
+    await Promise.resolve();
+    expect(cb).not.toHaveBeenCalled();
+  });
+});
