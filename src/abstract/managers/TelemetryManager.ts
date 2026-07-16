@@ -15,7 +15,7 @@ type TelemetryState = TelemetryRequest & {
   eventTimestamp: number;
   location: string;
 };
-type TelemetryEventBody = Partial<Pick<TelemetryState, 'payload' | 'config'>> & {
+type TelemetryEventBody = Partial<Pick<TelemetryState, 'payload' | 'config' | 'component'>> & {
   modalId?: string;
   eventType?: CommonEventType;
 };
@@ -124,7 +124,9 @@ export class TelemetryManager {
     }
   }
 
-  private _formattingPayload(body: Partial<Pick<TelemetryState, 'eventType' | 'payload' | 'config'>>): TelemetryState {
+  private _formattingPayload(
+    body: Partial<Pick<TelemetryState, 'eventType' | 'payload' | 'config' | 'component'>>,
+  ): TelemetryState {
     const payload = (body.payload ? { ...body.payload } : {}) as Record<string, unknown>;
     if (payload.activity) {
       payload.activity = undefined;
@@ -141,7 +143,10 @@ export class TelemetryManager {
       appVersion: PACKAGE_VERSION,
       appName: PACKAGE_NAME,
       sessionId: this._sessionId,
-      component: this._solution,
+      // A caller may attribute an event to its own component (the standalone
+      // editor solution does this, since it registers no uploader
+      // `solutionName`); otherwise fall back to the registered solution.
+      component: body.component ?? this._solution,
       activity: this._deps.getActivity(),
       projectPubkey: this._config.pubkey,
       userAgent: navigator.userAgent,
@@ -183,6 +188,7 @@ export class TelemetryManager {
       eventType: body.eventType,
       payload: body.payload,
       config: body.config,
+      component: body.component,
     });
 
     this._init(body.eventType);

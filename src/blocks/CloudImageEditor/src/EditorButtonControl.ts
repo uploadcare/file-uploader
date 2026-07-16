@@ -4,7 +4,7 @@ import { state } from 'lit/decorators.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
 import { EditorBlock } from './editor-context';
 
-import '../../Icon/Icon';
+import './EditorIcon';
 
 export class EditorButtonControl extends EditorBlock {
   // This is public because it's used in the updated lifecycle to assign to the shared state.
@@ -62,7 +62,7 @@ export class EditorButtonControl extends EditorBlock {
         title=${ifDefined(this.titleProp)}
         @click=${clickHandler}
       >
-        <uc-icon name=${this.icon}></uc-icon>
+        <uc-editor-icon name=${this.icon}></uc-editor-icon>
         <div class="uc-title" ?hidden=${!title}>${title}</div>
       </button>
     `;
