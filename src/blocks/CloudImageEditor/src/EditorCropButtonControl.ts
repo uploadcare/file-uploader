@@ -10,17 +10,6 @@ function nextAngle(prev: number): number {
   return angle;
 }
 
-function nextValue(operation: CropOperation, prev: number | boolean): number | boolean {
-  if (operation === 'rotate') {
-    const angle = typeof prev === 'number' ? prev : 0;
-    return nextAngle(angle);
-  }
-  if (operation === 'mirror' || operation === 'flip') {
-    return !prev;
-  }
-  throw new Error(`Unsupported operation: ${operation}`);
-}
-
 export class EditorCropButtonControl extends EditorButtonControl {
   @property({ type: String })
   public operation: CropOperation | undefined = undefined;
@@ -47,9 +36,25 @@ export class EditorCropButtonControl extends EditorButtonControl {
     // Crop ops are modelled through state: write the next value to
     // `*editorTransformations`; the cropper reacts (applies + re-commits the
     // consistent crop). No element ref needed — see `EditorImageCropper`.
+    // Branch per operation so `patch` is a strongly-typed `Partial<Transformations>`
+    // (`rotate` is a number, `flip`/`mirror` are booleans) — no assertions.
     const transformations = this.editorController.get('*editorTransformations');
-    const prev = (transformations[this.operation] ?? (this.operation === 'rotate' ? 0 : false)) as number | boolean;
-    const next = nextValue(this.operation, prev);
+    let prev: number | boolean;
+    let next: number | boolean;
+    let patch: Partial<Transformations>;
+    if (this.operation === 'rotate') {
+      prev = transformations.rotate ?? 0;
+      next = nextAngle(prev);
+      patch = { rotate: next };
+    } else if (this.operation === 'flip') {
+      prev = transformations.flip ?? false;
+      next = !prev;
+      patch = { flip: next };
+    } else {
+      prev = transformations.mirror ?? false;
+      next = !prev;
+      patch = { mirror: next };
+    }
 
     this.editorController.telemetry.sendEventCloudImageEditor(e, this.editorController.get('*tabId'), {
       operation: this.operation,
@@ -57,10 +62,7 @@ export class EditorCropButtonControl extends EditorButtonControl {
       prev,
     });
 
-    this.editorController.set('*editorTransformations', {
-      ...transformations,
-      [this.operation]: next,
-    } as Transformations);
+    this.editorController.set('*editorTransformations', { ...transformations, ...patch });
   }
 }
 

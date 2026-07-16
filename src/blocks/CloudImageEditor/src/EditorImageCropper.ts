@@ -33,6 +33,9 @@ type Operations = {
   rotate: number;
 };
 
+const OPERATION_KEYS = ['rotate', 'mirror', 'flip'] as const satisfies readonly (keyof Operations)[];
+const DEFAULT_OPERATIONS: Readonly<Operations> = { rotate: 0, mirror: false, flip: false };
+
 function validateCrop(crop: Transformations['crop']): boolean {
   if (!crop) {
     return true;
@@ -54,11 +57,7 @@ export class EditorImageCropper extends EditorBlock {
   // as reactive props (`.imageBox`/`.cropBox`); `CropFrame` reports drag
   // changes back up via a `cropboxchange` event (see `_handleCropBoxChange`).
   @state()
-  private _operations: Operations = {
-    rotate: 0,
-    mirror: false,
-    flip: false,
-  };
+  private _operations: Operations = { ...DEFAULT_OPERATIONS };
 
   @state()
   private _imageBox: Rectangle = { x: 0, y: 0, width: 0, height: 0 };
@@ -82,6 +81,10 @@ export class EditorImageCropper extends EditorBlock {
   // notifies synchronously, so without this a commit would re-fire the reaction
   // (e.g. deactivate commits before flipping `_isActive`, recursing forever).
   private _reacting = false;
+  // Bumped on every deactivate (incl. the new-image reset). A fire-and-forget
+  // `activate()` captures the value at its start and bails after each `await` if
+  // it no longer matches, so a stale image load can't finish over a newer one.
+  private _activationGeneration = 0;
 
   /**
    * Loaded image size, passed down from the root (`<uc-cloud-image-editor>`) as
@@ -146,14 +149,21 @@ export class EditorImageCropper extends EditorBlock {
           }
           this._lastNetworkProblems = this.editorController.get('*networkProblems');
 
-          // A new image (originalUrl change) invalidates the current crop —
-          // reset before the fresh `imageSize` prop arrives and re-activates us.
+          // A new image (originalUrl change) invalidates the current crop.
+          // Reset the ops to a clean slate and stay INACTIVE until the root
+          // supplies the new image's `imageSize` prop — reactivation then
+          // happens in `updated`. Reactivating here would use the previous
+          // image's still-stale `imageSize` (the root clears it to null before
+          // the size fetch). `deactivate` also bumps the activation generation,
+          // aborting any in-flight activation of the old image.
           const originalUrl = this.editorController.get('*originalUrl');
           if (originalUrl !== this._lastOriginalUrl) {
             this._lastOriginalUrl = originalUrl;
+            this._operations = { ...DEFAULT_OPERATIONS };
             if (this._isActive) {
               this.deactivate({ reset: true });
             }
+            return;
           }
 
           // Self-activate/deactivate from controller state + the imageSize prop
@@ -185,10 +195,7 @@ export class EditorImageCropper extends EditorBlock {
 
   private _syncTransformations(): void {
     const transformations = this.editorController.get('*editorTransformations');
-    const pickedTransformations = pick(
-      transformations,
-      Object.keys(this._operations) as readonly (keyof Transformations)[],
-    ) as Partial<Operations>;
+    const pickedTransformations = pick(transformations, OPERATION_KEYS) as Partial<Operations>;
     const operations: Operations = { ...this._operations, ...pickedTransformations };
     this._operations = operations;
   }
@@ -425,11 +432,7 @@ export class EditorImageCropper extends EditorBlock {
 
   /** True when the committed crop ops differ from what the cropper has applied. */
   private _cropOpsDiffer(transformations: Transformations): boolean {
-    return (
-      (transformations.rotate ?? 0) !== this._operations.rotate ||
-      (transformations.mirror ?? false) !== this._operations.mirror ||
-      (transformations.flip ?? false) !== this._operations.flip
-    );
+    return OPERATION_KEYS.some((key) => (transformations[key] ?? DEFAULT_OPERATIONS[key]) !== this._operations[key]);
   }
 
   /** Activate on the crop tab once the image + its size are ready; deactivate (committing) otherwise. */
@@ -456,7 +459,14 @@ export class EditorImageCropper extends EditorBlock {
       return;
     }
     this._isActive = true;
+    // Snapshot the generation: a deactivate/new-image reset during the awaits
+    // below bumps it, so this fire-and-forget activation aborts instead of
+    // drawing a superseded image (see `_activationGeneration`).
+    const generation = this._activationGeneration;
     await this.updateComplete;
+    if (!this.isConnected || generation !== this._activationGeneration) {
+      return;
+    }
     this._initCanvas();
     this._imageSize = imageSize;
     this.removeEventListener('transitionend', this._reset);
@@ -475,7 +485,7 @@ export class EditorImageCropper extends EditorBlock {
       const originalUrl = controller.get('*originalUrl') as string;
       const transformations = controller.get('*editorTransformations');
       this._image = await this._waitForImage(controller, originalUrl, transformations);
-      if (!this.isConnected) {
+      if (!this.isConnected || generation !== this._activationGeneration) {
         return;
       }
       this._syncTransformations();
@@ -502,6 +512,8 @@ export class EditorImageCropper extends EditorBlock {
     if (!this._isActive) {
       return;
     }
+    // Invalidate any in-flight `activate()` (see `_activationGeneration`).
+    this._activationGeneration += 1;
     !reset && this._commit();
     this._isActive = false;
 

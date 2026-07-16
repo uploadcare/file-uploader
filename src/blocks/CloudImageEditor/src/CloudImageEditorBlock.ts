@@ -850,6 +850,12 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       throw new Error('No UUID nor CDN URL provided');
     }
 
+    // Clear the size until the new image's info loads below. The cropper takes
+    // `imageSize` as a prop and self-activates only once it's set, so this keeps
+    // it from reactivating with the *previous* image's dimensions (a null→value
+    // transition also re-triggers activation even when the new size matches).
+    this._imageSize = null;
+
     // The cropper resets itself when `*originalUrl` changes (see
     // EditorImageCropper); only the fader is reset here.
     if (editorController.get('*tabId') !== TabId.CROP) {
