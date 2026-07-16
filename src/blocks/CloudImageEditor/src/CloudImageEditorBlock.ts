@@ -63,9 +63,10 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       'locale-name': string;
       localeDefinition: Record<string, string>;
       'test-mode': boolean;
-    }> & {
+      // Optional: the standalone editor needs no ctx-name (config comes from its
+      // own props); it's only used to find a sibling <uc-config> compat bridge.
       'ctx-name': string;
-    };
+    }>;
 
   public static styleAttrs = ['uc-cloud-image-editor'];
 
