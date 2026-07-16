@@ -1,5 +1,6 @@
-import type { TemplateResult } from 'lit';
+import type { PropertyValues, TemplateResult } from 'lit';
 import { html } from 'lit';
+import { property } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import type { CloudImageEditorController } from '../../../abstract/controllers/CloudImageEditorController';
 import { debounce } from '../../../utils/debounce.js';
@@ -7,8 +8,8 @@ import { batchPreloadImages } from '../../../utils/preloadImage.js';
 import { EditorBlock } from './editor-context';
 import { classNames } from './lib/classNames.js';
 import { linspace } from './lib/linspace.js';
-import { COLOR_OPERATIONS_CONFIG } from './toolbar-constants.js';
-import type { Transformations } from './types';
+import { COLOR_OPERATIONS_CONFIG, type ColorPreview, TabId, type TabIdValue } from './toolbar-constants.js';
+import type { ImageSize, Transformations } from './types';
 import { viewerImageSrc } from './util.js';
 
 type OperationKey = keyof typeof COLOR_OPERATIONS_CONFIG;
@@ -103,6 +104,27 @@ export class EditorImageFader extends EditorBlock {
   private readonly _previewHostRef = createRef<HTMLDivElement>();
   private readonly _layersHostRef = createRef<HTMLDivElement>();
 
+  /**
+   * Loaded image size, passed from the root as a plain Lit prop (DOM-derived,
+   * not controller state) — the fader shows only once it and `*originalUrl` are
+   * ready on a non-crop tab (see `_syncFromState`). Root clears it to null on a
+   * new image, which reliably re-triggers the reaction.
+   */
+  @property({ attribute: false })
+  public imageSize: ImageSize | null = null;
+
+  // Last-seen controller values, to detect real per-key changes in the coarse
+  // `subscribeEditor` reaction (it fires on ANY state change).
+  private _lastTabId?: TabIdValue;
+  private _lastOriginalUrl: string | null = null;
+  private _lastColorPreview: ColorPreview = null;
+  private _lastTransformations?: Transformations;
+  private _shown = false;
+  // Guards the reaction against re-entering itself: the fader's own methods
+  // write state (`*loadingOperations`, `*networkProblems`) and `set` notifies
+  // synchronously (same lesson as EditorImageCropper).
+  private _reacting = false;
+
   public constructor() {
     super();
 
@@ -168,6 +190,111 @@ export class EditorImageFader extends EditorBlock {
         { once: true },
       );
     }, 600);
+
+    // Controller-dependent setup (mirrors EditorImageCropper): the fader now
+    // drives itself from state instead of the toolbar/root/slider calling its
+    // methods. It reacts to `*tabId`/`*originalUrl`/`*editorTransformations`/
+    // `*colorPreview` (+ the `imageSize` prop) and calls its own unchanged
+    // activate/set/deactivate/setTransformations.
+    this.onEditorAttach(() => {
+      const controller = this.editorController;
+      this._lastTabId = controller.get('*tabId');
+      this._lastOriginalUrl = controller.get('*originalUrl');
+      this._lastColorPreview = controller.get('*colorPreview');
+      this.subscribeEditor(() => this._syncFromState());
+    });
+  }
+
+  protected override updated(changedProperties: PropertyValues<this>): void {
+    super.updated(changedProperties);
+    // `imageSize` is a prop, not controller state, so `subscribeEditor` won't
+    // fire for it — re-evaluate visibility when the root updates it.
+    if (changedProperties.has('imageSize')) {
+      this._syncFromState();
+    }
+  }
+
+  /**
+   * Reconcile the fader with controller state — the reactive replacement for
+   * the old imperative calls from the toolbar (`_applyTabState`,
+   * `*editorTransformations`, `*originalUrl`), the root (`_activateViewer`),
+   * and the slider (`set`/`activate`/`deactivate`).
+   */
+  private _syncFromState(): void {
+    if (this._reacting) {
+      return;
+    }
+    this._reacting = true;
+    try {
+      const controller = this.editorControllerOrNull;
+      if (!controller) {
+        return;
+      }
+      const tabId = controller.get('*tabId');
+      const originalUrl = controller.get('*originalUrl');
+      const colorPreview = controller.get('*colorPreview');
+      const transformations = controller.get('*editorTransformations');
+      const shouldShow = tabId !== TabId.CROP && !!originalUrl && !!this.imageSize;
+
+      // New image: hide + drop the stale preview so it re-shows cleanly below.
+      if (originalUrl !== this._lastOriginalUrl) {
+        this._lastOriginalUrl = originalUrl;
+        this._lastColorPreview = null;
+        if (this._shown) {
+          this.deactivate();
+          this._shown = false;
+        }
+      }
+      this._lastTabId = tabId;
+
+      if (shouldShow && !this._shown) {
+        // Enter viewer mode: seed `_transformations` so `activate` (original)
+        // renders the committed result, matching the old tab-switch behaviour.
+        this._shown = true;
+        this._lastTransformations = transformations;
+        this._transformations = transformations;
+        void this.activate({ url: originalUrl as string, fromViewer: false });
+      } else if (!shouldShow && this._shown) {
+        this._shown = false;
+        this.deactivate();
+      }
+
+      if (!this._shown) {
+        return;
+      }
+
+      // Committed transformations → refresh the viewer image (old toolbar sub).
+      if (transformations !== this._lastTransformations) {
+        this._lastTransformations = transformations;
+        void this.setTransformations(transformations);
+      }
+
+      // Live slider preview: op/filter change → rebuild keypoints (`activate`);
+      // same op, new value → `set`; cleared → back to the committed viewer.
+      if (colorPreview !== this._lastColorPreview) {
+        const previous = this._lastColorPreview;
+        this._lastColorPreview = colorPreview;
+        if (colorPreview) {
+          const opChanged =
+            !previous || previous.operation !== colorPreview.operation || previous.filter !== colorPreview.filter;
+          if (opChanged) {
+            void this.activate({
+              url: originalUrl as string,
+              operation: colorPreview.operation,
+              value: colorPreview.value,
+              filter: colorPreview.filter,
+              fromViewer: false,
+            });
+          } else if (typeof colorPreview.value === 'number') {
+            this.set(colorPreview.value);
+          }
+        } else if (previous) {
+          this.deactivate({ hide: false });
+        }
+      }
+    } finally {
+      this._reacting = false;
+    }
   }
 
   private _handleImageLoading(controller: CloudImageEditorController, src: string): () => void {

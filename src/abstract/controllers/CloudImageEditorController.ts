@@ -1,5 +1,4 @@
-import type { EditorImageFader } from '../../blocks/CloudImageEditor/src/EditorImageFader';
-import { TabId, type TabIdValue } from '../../blocks/CloudImageEditor/src/toolbar-constants';
+import { type ColorPreview, TabId, type TabIdValue } from '../../blocks/CloudImageEditor/src/toolbar-constants';
 import type { CropAspectRatio, LoadingOperations, Transformations } from '../../blocks/CloudImageEditor/src/types';
 import type { ConfigType, SecureDeliveryProxyUrlResolver } from '../../types';
 import { StateController } from './StateController';
@@ -39,12 +38,13 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
  * which the root now passes to `<uc-editor-toolbar>` as plain Lit props (root →
  * single child, no cross-subtree sharing).
  *
- * `*faderEl`/`*imgContainerEl` are cross-component coordination refs (a smell,
- * flagged for a later refinement) — the controller only stores/returns them, it
- * never touches the DOM. The cropper is no longer held in state: it
- * self-activates from `*tabId`/`*originalUrl` + the root's `imageSize` prop, and
- * crop ops arrive through `*editorTransformations` (the fader follows in a
- * later stage).
+ * `*colorPreview` is the slider's live, uncommitted color/filter adjustment;
+ * the fader reacts to it and renders the preview (see `ColorPreview`).
+ * `*imgContainerEl` is a cross-component coordination ref (a smell, flagged for
+ * a later refinement) — the controller only stores/returns it, never touches
+ * the DOM. The cropper/fader elements are no longer held in state: they
+ * self-activate from `*tabId`/`*originalUrl`/`*colorPreview` + the root's
+ * `imageSize` prop.
  */
 export type CloudImageEditorControllerState = {
   '*originalUrl': string | null;
@@ -53,7 +53,7 @@ export type CloudImageEditorControllerState = {
   '*editorTransformations': Transformations;
   '*currentAspectRatio': CropAspectRatio | null;
   '*tabId': TabIdValue;
-  '*faderEl': EditorImageFader | null;
+  '*colorPreview': ColorPreview;
   '*imgContainerEl': HTMLElement | null;
 };
 
@@ -65,7 +65,7 @@ function createDefaultState(): CloudImageEditorControllerState {
     '*editorTransformations': {},
     '*currentAspectRatio': null,
     '*tabId': TabId.CROP,
-    '*faderEl': null,
+    '*colorPreview': null,
     '*imgContainerEl': null,
   };
 }

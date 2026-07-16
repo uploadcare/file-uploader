@@ -41,10 +41,19 @@ export class EditorSlider extends EditorBlock {
     zero: 0,
   };
 
+  /** The live, uncommitted preview intent for the fader (see `*colorPreview`). `null` clears it. */
+  private _publishPreview(value: number | undefined): void {
+    this.editorController.set('*colorPreview', {
+      operation: this.state.operation,
+      value: this.state.filter === FAKE_ORIGINAL_FILTER ? undefined : value,
+      filter: this.state.filter === FAKE_ORIGINAL_FILTER ? undefined : this.state.filter,
+    });
+  }
+
   private _handleInput = (e: CustomEvent<{ value: number }>): void => {
     const { value } = e.detail;
-    const fader = this.editorController.get('*faderEl');
-    fader?.set(value);
+    // Was `fader.set(value)`; the fader reacts to `*colorPreview` now.
+    this._publishPreview(value);
     this.state = { ...this.state, value };
   };
 
@@ -53,17 +62,9 @@ export class EditorSlider extends EditorBlock {
 
     this._initializeValues();
 
-    const fader = this.editorController.get('*faderEl');
-    const originalUrl = this.state.originalUrl || this.editorController.get('*originalUrl') || undefined;
-    if (fader && originalUrl) {
-      fader.activate({
-        url: originalUrl,
-        operation: this.state.operation,
-        value: this.state.filter === FAKE_ORIGINAL_FILTER ? undefined : this.state.value,
-        filter: this.state.filter === FAKE_ORIGINAL_FILTER ? undefined : this.state.filter,
-        fromViewer: false,
-      });
-    }
+    // Was `fader.activate({...})`; publish the preview and let the fader react
+    // (an operation/filter change rebuilds its keypoints — see EditorImageFader).
+    this._publishPreview(this.state.value);
   }
 
   private _initializeValues(): void {
@@ -106,11 +107,14 @@ export class EditorSlider extends EditorBlock {
     }
 
     this.editorController.set('*editorTransformations', transformations);
+    // Committed — clear the live preview so the fader shows the committed result.
+    this.editorController.set('*colorPreview', null);
   }
 
   public cancel(): void {
-    const fader = this.editorController.get('*faderEl');
-    fader?.deactivate({ hide: false });
+    // Was `fader.deactivate({ hide: false })`; clearing the preview returns the
+    // fader to the committed viewer (see EditorImageFader).
+    this.editorController.set('*colorPreview', null);
   }
 
   public constructor() {

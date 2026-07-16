@@ -255,37 +255,15 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       this._pendingInitUpdate = null;
       this._isInitialized = true;
       // `_isInitialized` renders the init-gated subtree (the cropper + toolbar);
-      // wait for that render to commit, then share the fader/container refs and
-      // activate the fader. The cropper self-activates once it mounts with its
-      // `imageSize` prop set on the crop tab, so it needs no external kick here.
+      // wait for that render to commit, then share the container ref. The
+      // cropper and fader self-activate once they mount with their `imageSize`
+      // prop set for the current tab, so they need no external kick here.
       await this.updateComplete;
       if (!this.isConnected) {
         return;
       }
       this._assignSharedElements();
-      this._activateViewer();
     });
-  }
-
-  /**
-   * (Re)activate the crop or fader viewer for the current tab, using the loaded
-   * image size. No-op until the image size is known. Called after image info
-   * loads (`updateImage`) and again once the init-gated cropper subtree has
-   * rendered (`_scheduleInitialization`).
-   */
-  private _activateViewer(): void {
-    const editorController = this._editorController;
-    if (!this._imageSize) {
-      return;
-    }
-    // The cropper self-activates from `*tabId`/`*originalUrl` + its `imageSize`
-    // prop (see EditorImageCropper); only the fader is activated here now.
-    if (editorController.get('*tabId') !== TabId.CROP) {
-      const originalUrl = editorController.get('*originalUrl');
-      if (originalUrl) {
-        editorController.get('*faderEl')?.activate({ url: originalUrl });
-      }
-    }
   }
 
   private get _effectiveCtxName(): string | undefined {
@@ -519,12 +497,8 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
   }
 
   private _assignSharedElements(): void {
-    const faderEl = this._faderRef.value;
-    if (faderEl) {
-      this._editorController.set('*faderEl', faderEl);
-    }
-
-    // The cropper is no longer shared through the controller — it self-activates.
+    // The cropper and fader self-activate from state; only the image container
+    // ref is still shared (used by the toolbar's preload — retired next stage).
     const imgContainerEl = this._imgContainerRef.value;
     if (imgContainerEl) {
       this._editorController.set('*imgContainerEl', imgContainerEl);
@@ -679,7 +653,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
                   ${ref(this._cropperRef)}
                 ></uc-editor-image-cropper>`,
             )}
-            <uc-editor-image-fader ${ref(this._faderRef)}></uc-editor-image-fader>
+            <uc-editor-image-fader .imageSize=${this._imageSize} ${ref(this._faderRef)}></uc-editor-image-fader>
           </div>
           <div class="uc-info_pan">${message}</div>
         </div>
@@ -850,17 +824,12 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       throw new Error('No UUID nor CDN URL provided');
     }
 
-    // Clear the size until the new image's info loads below. The cropper takes
-    // `imageSize` as a prop and self-activates only once it's set, so this keeps
-    // it from reactivating with the *previous* image's dimensions (a null→value
-    // transition also re-triggers activation even when the new size matches).
+    // Clear the size until the new image's info loads below. The cropper and
+    // fader take `imageSize` as a prop and self-activate only once it's set, so
+    // this keeps them from reactivating with the *previous* image's dimensions
+    // (a null→value transition also re-triggers activation even when the new
+    // size matches). Both also self-reset on the `*originalUrl` change above.
     this._imageSize = null;
-
-    // The cropper resets itself when `*originalUrl` changes (see
-    // EditorImageCropper); only the fader is reset here.
-    if (editorController.get('*tabId') !== TabId.CROP) {
-      editorController.get('*faderEl')?.deactivate();
-    }
 
     try {
       const originalUrlValue = editorController.get('*originalUrl') as string;
@@ -873,8 +842,6 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
 
       const { width, height } = json;
       this._imageSize = { width, height };
-
-      this._activateViewer();
     } catch (err) {
       if (err) {
         editorController.telemetry.sendEventError(err, 'cloud editor image. Failed to load image info');
