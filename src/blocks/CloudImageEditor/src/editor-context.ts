@@ -116,9 +116,9 @@ export class CloudImageEditorContextController implements ReactiveController {
   }
 }
 
-// Light-DOM Lit base with NO ChildBlock coupling: no `ensureUploaderCtx`
-// (which value-imports the `UploaderController` graph), no `UploaderRegistry`
-// (adopt/registry machinery), no ctx-lifecycle, no upload stack. See the
+// Light-DOM Lit base with NO ChildBlock coupling: no forced uploader-scope
+// creation, no uploader controller graph, no registry adoption machinery,
+// no ctx-lifecycle, no upload stack. See the
 // "Bundle-independence constraints" section of the M12 plan
 // (`docs/superpowers/plans/2026-07-15-v2-m12-cloud-image-editor-port.md`):
 // editor blocks must not pull that machinery into the standalone editor
@@ -128,8 +128,7 @@ const EditorBlockBase = RegisterableElementMixin(LightDomMixin(LitElement));
 /**
  * Base for editor descendants. Deliberately NOT `ChildBlock` — see the
  * "Bundle-independence constraints" in the M12 plan: `ChildBlock`
- * value-imports `ensureUploaderCtx`/`UploaderRegistry` (the `UploaderController`
- * adoption graph), which would bloat the standalone `<uc-cloud-image-editor>`
+ * value-imports the uploader adoption graph, which would bloat the standalone `<uc-cloud-image-editor>`
  * bundle with uploader machinery it doesn't use today.
  *
  * Descendants get EVERYTHING — cross-cutting editor state AND the
