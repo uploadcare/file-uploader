@@ -60,7 +60,7 @@ function attach(
   }
 
   // Hand over an l10n bound to this ctx's locale — restores the interpolating
-  // labels the editor read from the ctx before `ensureUploaderCtx` was dropped.
+  // labels the editor used to read from the shared ctx directly.
   // `createL10n` reads the ctx live, so later locale population is reflected.
   onLocale?.(createL10n(() => ctx));
 

@@ -252,13 +252,28 @@ export class PubSub<T extends Record<string, unknown>> {
     PubSub._contexts.set(ctxId, store);
     const wrapper = new PubSub<T>(ctxId, store);
 
-    // Notify anyone that was waiting for this ctx to appear (see `whenCtx`).
+    // Notify anyone waiting for this ctx to appear (see `whenCtx`). Deferred to
+    // a microtask so waiters don't run re-entrantly INSIDE `registerCtx` — e.g.
+    // the editor compat bridge reading `*cfg/*` before the caller
+    // (`ensureUploaderCtx`) has finished its own controller setup. Each waiter
+    // is isolated so one throwing can't break `registerCtx` for the rest.
     const waiters = PubSub._ctxWaiters.get(ctxId);
     if (waiters) {
       PubSub._ctxWaiters.delete(ctxId);
-      for (const waiter of waiters) {
-        waiter(wrapper as unknown as PubSub<Record<string, unknown>>);
-      }
+      queueMicrotask(() => {
+        for (const waiter of [...waiters]) {
+          // Skip waiters cancelled between scheduling and this microtask (the
+          // canceller deletes from this same Set — captured by `whenCtx`).
+          if (!waiters.has(waiter)) {
+            continue;
+          }
+          try {
+            waiter(wrapper as unknown as PubSub<Record<string, unknown>>);
+          } catch (err) {
+            console.error('[PubSub] whenCtx waiter failed', err);
+          }
+        }
+      });
     }
 
     return wrapper;
@@ -308,8 +323,15 @@ export class PubSub<T extends Record<string, unknown>> {
       PubSub._ctxWaiters.set(ctxId, waiters);
     }
     waiters.add(waiter);
+    // Capture the Set directly: `registerCtx` deletes the map entry when it
+    // flushes (before the microtask fires), so a map lookup here would miss it.
+    // Deleting from the captured Set still cancels a scheduled-but-unfired waiter.
+    const set = waiters;
     return () => {
-      PubSub._ctxWaiters.get(ctxId)?.delete(waiter);
+      set.delete(waiter);
+      if (set.size === 0 && PubSub._ctxWaiters.get(ctxId) === set) {
+        PubSub._ctxWaiters.delete(ctxId);
+      }
     };
   }
 }
