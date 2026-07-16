@@ -2,8 +2,33 @@ import type { EditorImageCropper } from '../../blocks/CloudImageEditor/src/Edito
 import type { EditorImageFader } from '../../blocks/CloudImageEditor/src/EditorImageFader';
 import { TabId, type TabIdValue } from '../../blocks/CloudImageEditor/src/toolbar-constants';
 import type { CropAspectRatio, LoadingOperations, Transformations } from '../../blocks/CloudImageEditor/src/types';
-import type { ConfigType } from '../../types';
+import type { ConfigType, SecureDeliveryProxyUrlResolver } from '../../types';
 import { StateController } from './StateController';
+
+/**
+ * Editor-owned config surface — the subset of `ConfigType` the editor cares
+ * about, held directly by the controller (not read through the shared
+ * uploader ctx). Populated from the element's own props (`willUpdate` on
+ * `<uc-cloud-image-editor>`), with the shared ctx kept only as a transitional
+ * fallback (see `_setupEditorController`) until the compat bridge lands.
+ */
+export type EditorConfig = {
+  cdnCname: string;
+  secureDeliveryProxy?: string;
+  secureDeliveryProxyUrlResolver?: SecureDeliveryProxyUrlResolver;
+  cloudImageEditorMaskHref?: string;
+  testMode: boolean;
+};
+
+function createDefaultConfig(): EditorConfig {
+  return {
+    cdnCname: 'https://ucarecdn.com',
+    secureDeliveryProxy: undefined,
+    secureDeliveryProxyUrlResolver: undefined,
+    cloudImageEditorMaskHref: undefined,
+    testMode: false,
+  };
+}
 
 /**
  * The cross-cutting editor state owned by the controller (M12 "State scoping
@@ -100,9 +125,21 @@ function createDefaultServices(): EditorServices {
 export class CloudImageEditorController extends StateController<CloudImageEditorControllerState> {
   private _services: EditorServices;
 
+  private _config: EditorConfig = createDefaultConfig();
+
   public constructor(initial?: Partial<CloudImageEditorControllerState>, services?: EditorServices) {
     super({ ...createDefaultState(), ...initial });
     this._services = services ?? createDefaultServices();
+  }
+
+  /** Patch the editor-owned config (own-element-prop layer — see `EditorConfig`). Does not itself `notify()`. */
+  public setConfig(patch: Partial<EditorConfig>): void {
+    this._config = { ...this._config, ...patch };
+  }
+
+  /** Read an editor-owned config value (defaults + any `setConfig` patches applied so far). */
+  public getConfigValue<K extends keyof EditorConfig>(key: K): EditorConfig[K] {
+    return this._config[key];
   }
 
   /**

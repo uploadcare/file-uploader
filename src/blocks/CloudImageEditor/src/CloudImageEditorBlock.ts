@@ -4,7 +4,10 @@ import { property, state } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import { unsafeSVG } from 'lit/directives/unsafe-svg.js';
 import { when } from 'lit/directives/when.js';
-import { CloudImageEditorController } from '../../../abstract/controllers/CloudImageEditorController';
+import {
+  CloudImageEditorController,
+  type EditorConfig,
+} from '../../../abstract/controllers/CloudImageEditorController';
 import type { A11y } from '../../../abstract/managers/a11y';
 import type { TelemetryManager } from '../../../abstract/managers/TelemetryManager';
 import { resolveSecureDeliveryProxyUrl } from '../../../abstract/secureDeliveryProxyUrl';
@@ -16,7 +19,7 @@ import type { PubSub } from '../../../lit/PubSubCompat';
 import { RegisterableElementMixin } from '../../../lit/RegisterableElementMixin';
 import type { SharedState } from '../../../lit/SharedState';
 import { ctxNameContext } from '../../../lit/SymbioteCompatMixin';
-import type { ConfigType } from '../../../types';
+import type { ConfigType, SecureDeliveryProxyUrlResolver } from '../../../types';
 import {
   createCdnUrl,
   createCdnUrlModifiers,
@@ -54,7 +57,14 @@ const CloudImageEditorBlockBase = RegisterableElementMixin(LightDomMixin(LitElem
 
 export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
   public declare attributesMeta: ({ uuid: string } | { 'cdn-url': string }) &
-    Partial<{ tabs: string; 'crop-preset': string }> & {
+    Partial<{
+      tabs: string;
+      'crop-preset': string;
+      'cdn-cname': string;
+      'secure-delivery-proxy': string;
+      'cloud-image-editor-mask-href': string;
+      'test-mode': boolean;
+    }> & {
       'ctx-name': string;
     };
 
@@ -83,6 +93,23 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
 
   @property({ type: String, reflect: true })
   public tabs: string | null = DEFAULT_TABS;
+
+  // Editor config surface, own-element-prop layer (see `EditorConfig` /
+  // `_setupEditorController`) — takes precedence over the shared uploader ctx.
+  @property({ attribute: 'cdn-cname' })
+  public cdnCname?: string;
+
+  @property({ attribute: 'secure-delivery-proxy' })
+  public secureDeliveryProxy?: string;
+
+  @property({ attribute: false })
+  public secureDeliveryProxyUrlResolver?: SecureDeliveryProxyUrlResolver;
+
+  @property({ attribute: 'cloud-image-editor-mask-href' })
+  public maskHref?: string;
+
+  @property({ type: Boolean, attribute: 'test-mode' })
+  public testMode?: boolean;
 
   /** Own `ctx-name` attribute — mirrors `SymbioteCompatMixin`'s `_ctxNameAttr`. */
   @property({ type: String, attribute: 'ctx-name', reflect: true })
@@ -313,11 +340,29 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
 
     this._editorController.setServices({
       l10n: createL10n(() => ctx),
+      // Precedence: this element's own prop (see `_ownEditorConfigValue`) →
+      // the shared ctx (TRANSITIONAL — Task 3 replaces this with the
+      // removable compat bridge and drops `ensureUploaderCtx`) → the
+      // controller's built-in default (`EditorConfig`'s defaults, reached via
+      // `getConfigValue` when neither of the above supplied a value).
       // `ctx.read(sharedConfigKey(key))` returns `SharedState[`*cfg/${K}`]`, which is
       // `ConfigType[K]` verbatim via `SharedConfigState`'s mapped type — TS can't
       // prove that identity through the generic `K` here; narrow boundary cast.
-      getConfig: <K extends keyof ConfigType>(key: K): ConfigType[K] =>
-        ctx.read(sharedConfigKey<K>(key)) as unknown as ConfigType[K],
+      getConfig: <K extends keyof ConfigType>(key: K): ConfigType[K] => {
+        const ownValue = this._ownEditorConfigValue(key);
+        if (ownValue !== undefined) {
+          return ownValue as unknown as ConfigType[K];
+        }
+        const ctxValue = ctx.read(sharedConfigKey<K>(key)) as unknown as ConfigType[K];
+        if (ctxValue !== undefined) {
+          return ctxValue;
+        }
+        const editorConfigKey = CloudImageEditorBlock._toEditorConfigKey(key);
+        if (editorConfigKey) {
+          return this._editorController.getConfigValue(editorConfigKey) as unknown as ConfigType[K];
+        }
+        return ctxValue;
+      },
       telemetry: {
         sendEvent: (event) => this.telemetryManager.sendEvent(event as Parameters<TelemetryManager['sendEvent']>[0]),
         sendEventError: (err, context) => this.telemetryManager.sendEventError(err, context as string | undefined),
@@ -611,6 +656,74 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
 
     if (changedProperties.has('cropPreset') || changedProperties.has('cdnUrl')) {
       this._syncCropPresetState();
+    }
+
+    if (
+      changedProperties.has('cdnCname') ||
+      changedProperties.has('secureDeliveryProxy') ||
+      changedProperties.has('secureDeliveryProxyUrlResolver') ||
+      changedProperties.has('maskHref') ||
+      changedProperties.has('testMode')
+    ) {
+      this._syncEditorConfigFromProps();
+    }
+  }
+
+  /**
+   * Own-element-prop layer of the editor config (see `EditorConfig`) — only
+   * forwards props that are actually set, so an unset prop doesn't clobber
+   * the ctx-fallback/default layers underneath with `undefined`.
+   */
+  private _syncEditorConfigFromProps(): void {
+    const patch: Partial<EditorConfig> = {};
+    if (this.cdnCname !== undefined) patch.cdnCname = this.cdnCname;
+    if (this.secureDeliveryProxy !== undefined) patch.secureDeliveryProxy = this.secureDeliveryProxy;
+    if (this.secureDeliveryProxyUrlResolver !== undefined) {
+      patch.secureDeliveryProxyUrlResolver = this.secureDeliveryProxyUrlResolver;
+    }
+    if (this.maskHref !== undefined) patch.cloudImageEditorMaskHref = this.maskHref;
+    if (this.testMode !== undefined) patch.testMode = this.testMode;
+
+    this._editorController.setConfig(patch);
+  }
+
+  /**
+   * The own-element-prop tier of the `getConfig` precedence (see
+   * `_setupEditorController`) — reads the element's own reactive properties
+   * directly (NOT `this._editorController.getConfigValue`, which always
+   * carries a built-in default and so can't distinguish "unset" from
+   * "explicitly set to the default value"). Returns `undefined` for any
+   * `ConfigType` key outside the editor's config surface, or when the
+   * matching prop itself isn't set.
+   */
+  private _ownEditorConfigValue<K extends keyof ConfigType>(key: K): ConfigType[K] | undefined {
+    switch (key) {
+      case 'cdnCname':
+        return this.cdnCname as ConfigType[K] | undefined;
+      case 'secureDeliveryProxy':
+        return this.secureDeliveryProxy as ConfigType[K] | undefined;
+      case 'secureDeliveryProxyUrlResolver':
+        return this.secureDeliveryProxyUrlResolver as ConfigType[K] | undefined;
+      case 'cloudImageEditorMaskHref':
+        return this.maskHref as ConfigType[K] | undefined;
+      case 'testMode':
+        return this.testMode as ConfigType[K] | undefined;
+      default:
+        return undefined;
+    }
+  }
+
+  /** Maps a `ConfigType` key onto its `EditorConfig` counterpart, if it's part of the editor's config surface. */
+  private static _toEditorConfigKey<K extends keyof ConfigType>(key: K): keyof EditorConfig | undefined {
+    switch (key) {
+      case 'cdnCname':
+      case 'secureDeliveryProxy':
+      case 'secureDeliveryProxyUrlResolver':
+      case 'cloudImageEditorMaskHref':
+      case 'testMode':
+        return key;
+      default:
+        return undefined;
     }
   }
 

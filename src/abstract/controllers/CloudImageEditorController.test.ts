@@ -135,4 +135,13 @@ describe('CloudImageEditorController', () => {
     controller.set('*tabId', TabId.TUNING);
     expect(listener).not.toHaveBeenCalled();
   });
+
+  it('owns editor config with defaults and setConfig patch', () => {
+    const controller = new CloudImageEditorController();
+    expect(controller.getConfigValue('cdnCname')).toBe('https://ucarecdn.com');
+    expect(controller.getConfigValue('testMode')).toBe(false);
+    controller.setConfig({ cdnCname: 'https://cdn.example.com/', testMode: true });
+    expect(controller.getConfigValue('cdnCname')).toBe('https://cdn.example.com/');
+    expect(controller.getConfigValue('testMode')).toBe(true);
+  });
 });
