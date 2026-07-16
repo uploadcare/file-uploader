@@ -824,6 +824,12 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       throw new Error('No UUID nor CDN URL provided');
     }
 
+    // Drop any in-progress live slider preview so it isn't reapplied to the new
+    // image (the fader keys its preview off `*colorPreview`).
+    if (editorController.get('*colorPreview')) {
+      editorController.set('*colorPreview', null);
+    }
+
     // Clear the size until the new image's info loads below. The cropper and
     // fader take `imageSize` as a prop and self-activate only once it's set, so
     // this keeps them from reactivating with the *previous* image's dimensions

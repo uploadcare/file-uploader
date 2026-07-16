@@ -8,7 +8,7 @@ import { batchPreloadImages } from '../../../utils/preloadImage.js';
 import { EditorBlock } from './editor-context';
 import { classNames } from './lib/classNames.js';
 import { linspace } from './lib/linspace.js';
-import { COLOR_OPERATIONS_CONFIG, type ColorPreview, TabId, type TabIdValue } from './toolbar-constants.js';
+import { COLOR_OPERATIONS_CONFIG, type ColorPreview, TabId } from './toolbar-constants.js';
 import type { ImageSize, Transformations } from './types';
 import { viewerImageSrc } from './util.js';
 
@@ -115,7 +115,6 @@ export class EditorImageFader extends EditorBlock {
 
   // Last-seen controller values, to detect real per-key changes in the coarse
   // `subscribeEditor` reaction (it fires on ANY state change).
-  private _lastTabId?: TabIdValue;
   private _lastOriginalUrl: string | null = null;
   private _lastColorPreview: ColorPreview = null;
   private _lastTransformations?: Transformations;
@@ -198,7 +197,6 @@ export class EditorImageFader extends EditorBlock {
     // activate/set/deactivate/setTransformations.
     this.onEditorAttach(() => {
       const controller = this.editorController;
-      this._lastTabId = controller.get('*tabId');
       this._lastOriginalUrl = controller.get('*originalUrl');
       this._lastColorPreview = controller.get('*colorPreview');
       this.subscribeEditor(() => this._syncFromState());
@@ -236,7 +234,11 @@ export class EditorImageFader extends EditorBlock {
       const transformations = controller.get('*editorTransformations');
       const shouldShow = tabId !== TabId.CROP && !!originalUrl && !!this.imageSize;
 
-      // New image: hide + drop the stale preview so it re-shows cleanly below.
+      // New image: hide and stay hidden until the root supplies the new image's
+      // `imageSize` prop (reactivation then happens via `updated`). Returning
+      // here avoids re-activating with the previous image's still-stale
+      // `imageSize` (root clears it to null asynchronously) or reapplying its
+      // live preview — the root also clears `*colorPreview` on image change.
       if (originalUrl !== this._lastOriginalUrl) {
         this._lastOriginalUrl = originalUrl;
         this._lastColorPreview = null;
@@ -244,8 +246,8 @@ export class EditorImageFader extends EditorBlock {
           this.deactivate();
           this._shown = false;
         }
+        return;
       }
-      this._lastTabId = tabId;
 
       if (shouldShow && !this._shown) {
         // Enter viewer mode: seed `_transformations` so `activate` (original)
