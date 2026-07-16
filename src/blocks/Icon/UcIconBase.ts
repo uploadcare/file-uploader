@@ -4,10 +4,10 @@ import { LightDomMixin } from '../../lit/LightDomMixin';
 import { RegisterableElementMixin } from '../../lit/RegisterableElementMixin';
 import { renderIconSvg } from './renderIconSvg';
 
-// `RegisterableElementMixin` provides the static `reg(tagName)` that
-// `defineComponents` calls — so subclasses register through the same
-// export-then-`defineComponents(UC)` path as every other block, not a
-// self-`customElements.define`. It's only the define wrapper — no ctx coupling.
+// Shared icon base — the `name`→sprite rendering. It carries
+// `RegisterableElementMixin` so concrete subclasses (e.g. `EditorIcon`) inherit
+// the static `reg(tagName)`, but the base itself is intentionally NOT exported
+// from any `index.ts`, so `defineComponents(UC)` never registers it as a tag.
 export class UcIconBase extends RegisterableElementMixin(LightDomMixin(LitElement)) {
   @property({ type: String })
   public name = '';
