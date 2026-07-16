@@ -60,6 +60,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       'cdn-cname': string;
       'secure-delivery-proxy': string;
       'cloud-image-editor-mask-href': string;
+      secureDeliveryProxyUrlResolver: SecureDeliveryProxyUrlResolver;
       'locale-name': string;
       localeDefinition: Record<string, string>;
       'test-mode': boolean;
@@ -150,6 +151,20 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
   private _uploaderConfigCompat: Partial<EditorConfig> = {};
 
   private _telemetryManager: TelemetryManager | undefined;
+
+  // Telemetry emitted before the compat bridge supplies a TelemetryManager
+  // (e.g. the solution's INIT event in `initCallback`, which runs before the
+  // async bridge resolves) is buffered and flushed once one arrives. Bounded so
+  // a standalone editor — where telemetry never arrives — can't accumulate.
+  private _pendingTelemetry: Array<(tm: TelemetryManager) => void> = [];
+
+  private _emitTelemetry(fn: (tm: TelemetryManager) => void): void {
+    if (this._telemetryManager) {
+      fn(this._telemetryManager);
+    } else if (this._pendingTelemetry.length < 25) {
+      this._pendingTelemetry.push(fn);
+    }
+  }
 
   /** Interpolating l10n from a sibling `<uc-config>` (compat bridge); undefined until it resolves / when standalone. */
   private _compatL10n?: (key: string, variables?: Record<string, string | number>) => string;
@@ -361,6 +376,12 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       },
       (telemetryManager) => {
         this._telemetryManager = telemetryManager;
+        // Flush any telemetry buffered before the manager arrived (e.g. INIT).
+        const pending = this._pendingTelemetry;
+        this._pendingTelemetry = [];
+        for (const fn of pending) {
+          fn(telemetryManager);
+        }
       },
     );
   }
@@ -403,10 +424,12 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
           : (undefined as unknown as ConfigType[K]);
       },
       telemetry: {
-        sendEvent: (event) => this._telemetryManager?.sendEvent(event as Parameters<TelemetryManager['sendEvent']>[0]),
-        sendEventError: (err, context) => this._telemetryManager?.sendEventError(err, context as string | undefined),
+        sendEvent: (event) =>
+          this._emitTelemetry((tm) => tm.sendEvent(event as Parameters<TelemetryManager['sendEvent']>[0])),
+        sendEventError: (err, context) =>
+          this._emitTelemetry((tm) => tm.sendEventError(err, context as string | undefined)),
         sendEventCloudImageEditor: (e, tabId, options) =>
-          this._telemetryManager?.sendEventCloudImageEditor(e, tabId, options),
+          this._emitTelemetry((tm) => tm.sendEventCloudImageEditor(e, tabId, options)),
       },
       proxyUrl: (url) => this.proxyUrl(url),
     });
@@ -696,8 +719,11 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       // Own-prop `testMode` may have just changed the resolved config — re-sync
       // `data-testid` (standalone has no compat-bridge callback to do this, and
       // `_setupEditorController`'s initial sync ran before the prop was applied).
+      // Notify descendants that read config through the controller (`setConfig`
+      // itself does not notify) so they re-render on a config-prop change.
       if (this._editorInitialized) {
         this._syncTestId();
+        this._editorController.notify();
       }
     }
 
