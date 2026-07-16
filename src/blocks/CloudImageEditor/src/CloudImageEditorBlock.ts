@@ -29,6 +29,7 @@ import type { EditorImageCropper } from './EditorImageCropper';
 import type { EditorImageFader } from './EditorImageFader';
 import { subscribeUploaderConfigCompat } from './editor-config-compat';
 import { cloudImageEditorContext } from './editor-context';
+import { type EditorL10n, resolveEditorL10n } from './editor-locale';
 import { classNames } from './lib/classNames.js';
 import { getClosestAspectRatio, parseCropPreset } from './lib/parseCropPreset.js';
 import { parseTabs } from './lib/parseTabs.js';
@@ -59,6 +60,8 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       'cdn-cname': string;
       'secure-delivery-proxy': string;
       'cloud-image-editor-mask-href': string;
+      'locale-name': string;
+      localeDefinition: Record<string, string>;
       'test-mode': boolean;
     }> & {
       'ctx-name': string;
@@ -104,6 +107,12 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
   @property({ attribute: 'cloud-image-editor-mask-href' })
   public maskHref?: string;
 
+  @property({ attribute: 'locale-name' })
+  public localeName?: string;
+
+  @property({ attribute: false })
+  public localeDefinition?: Record<string, string>;
+
   @property({ type: Boolean, attribute: 'test-mode' })
   public testMode?: boolean;
 
@@ -141,8 +150,14 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
 
   private _telemetryManager: TelemetryManager | undefined;
 
-  /** Interpolating l10n from a sibling `<uc-config>` (compat bridge); undefined until it resolves / when standalone (falls back to the key until a bundled default lands). */
+  /** Interpolating l10n from a sibling `<uc-config>` (compat bridge); undefined until it resolves / when standalone. */
   private _compatL10n?: (key: string, variables?: Record<string, string | number>) => string;
+
+  private readonly _defaultEditorL10n = resolveEditorL10n();
+
+  private _localeDefinitionSource?: Record<string, string>;
+
+  private _localeDefinitionL10n?: EditorL10n;
 
   // biome-ignore lint/correctness/noUnusedPrivateClassMembers: side-effecting @lit/context registration, resolves `_ctxNameFromContext` from an ancestor provider
   private readonly _ctxNameConsumer = new ContextConsumer(this, {
@@ -261,6 +276,29 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
     return this._editorController.telemetry;
   }
 
+  private _getLocaleDefinitionL10n(): EditorL10n | undefined {
+    if (!this.localeDefinition) {
+      this._localeDefinitionSource = undefined;
+      this._localeDefinitionL10n = undefined;
+      return undefined;
+    }
+
+    if (this._localeDefinitionSource !== this.localeDefinition) {
+      this._localeDefinitionSource = this.localeDefinition;
+      this._localeDefinitionL10n = resolveEditorL10n(this.localeDefinition);
+    }
+
+    return this._localeDefinitionL10n;
+  }
+
+  private readonly _resolveL10n: EditorL10n = (key, variables) => {
+    return (
+      this._getLocaleDefinitionL10n()?.(key, variables) ??
+      this._compatL10n?.(key, variables) ??
+      this._defaultEditorL10n(key, variables)
+    );
+  };
+
   public override connectedCallback(): void {
     super.connectedCallback();
     // Apply `styleAttrs` as bare attributes — the entire editor stylesheet is
@@ -275,20 +313,55 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
   }
 
   private _setupEditor(): void {
-    if (this._editorInitialized) {
+    if (!this.isConnected) {
+      return;
+    }
+    // Controller + services are set up ONCE, independent of any ctx-name — a
+    // fully standalone editor (no ctx-name, no `<uc-config>`) still needs its
+    // own config/locale wired. The removable compat bridge is wired separately,
+    // only when a ctx-name is available (now, or when an ancestor provides it).
+    if (!this._editorInitialized) {
+      this._editorInitialized = true;
+      this._syncTabListFromProp();
+      this._syncCropPresetState();
+      this._setupEditorController();
+      this.initCallback();
+    }
+    this._maybeWireConfigBridge();
+  }
+
+  /**
+   * Wire the removable `<uc-config>` config/locale/telemetry compat bridge —
+   * only when a ctx-name is available (skipped entirely for the standalone
+   * editor). Idempotent: wires at most once.
+   */
+  private _maybeWireConfigBridge(): void {
+    if (this._configChangeUnsub) {
       return;
     }
     const ctxName = this._effectiveCtxName;
-    if (!ctxName || !this.isConnected) {
+    if (!ctxName) {
       return;
     }
-    this._editorInitialized = true;
-
-    this._syncTabListFromProp();
-    this._syncCropPresetState();
-
-    this._setupEditorController(ctxName);
-    this.initCallback();
+    this._configChangeUnsub = subscribeUploaderConfigCompat(
+      ctxName,
+      (patch) => {
+        this._uploaderConfigCompat = { ...this._uploaderConfigCompat, ...patch };
+        // Re-sync `data-testid` too: a `<uc-config testMode>` sibling may
+        // connect and set `testMode` after this element (documented composition
+        // order), so the flag isn't known at first setup.
+        this._syncTestId();
+        this._editorController.notify();
+      },
+      (l10n) => {
+        this._compatL10n = l10n;
+        this._editorController.notify();
+        this.requestUpdate();
+      },
+      (telemetryManager) => {
+        this._telemetryManager = telemetryManager;
+      },
+    );
   }
 
   /** Hook for subclasses (e.g. the `<uc-cloud-image-editor>` solution) — called once the editor is configured. */
@@ -299,11 +372,13 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
    * telemetry/proxy) and action handlers. Config and telemetry may be supplied
    * transitionally by a removable read-only uploader-ctx compat bridge.
    */
-  private _setupEditorController(ctxName: string): void {
+  private _setupEditorController(): void {
     this._editorController.setServices({
-      // Compat bridge supplies interpolating l10n from a sibling `<uc-config>`;
-      // falls back to the key until a bundled default locale lands (later task).
-      l10n: (key, variables) => (this._compatL10n ? this._compatL10n(key, variables) : key),
+      // Standalone bundles only this editor's English subset. `locale-name` is
+      // honored by the removable `<uc-config>` compat bridge path; without that
+      // bridge we intentionally do not load every uploader locale into the
+      // standalone editor bundle.
+      l10n: this._resolveL10n,
       // Precedence: this element's own prop (see `_ownEditorConfigValue`) →
       // the removable uploader-config compat bridge → the controller's
       // built-in default (`EditorConfig`'s defaults, reached via
@@ -336,25 +411,6 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
     });
 
     this._syncTestId();
-    this._configChangeUnsub = subscribeUploaderConfigCompat(
-      ctxName,
-      (patch) => {
-        this._uploaderConfigCompat = { ...this._uploaderConfigCompat, ...patch };
-        // Re-sync `data-testid` too: a standalone `<uc-config testMode>` sibling
-        // may connect and set `testMode` after this element (documented
-        // composition order), so the flag isn't known at first setup.
-        this._syncTestId();
-        this._editorController.notify();
-      },
-      (l10n) => {
-        this._compatL10n = l10n;
-        this._editorController.notify();
-        this.requestUpdate();
-      },
-      (telemetryManager) => {
-        this._telemetryManager = telemetryManager;
-      },
-    );
   }
 
   /**
@@ -636,6 +692,16 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       changedProperties.has('testMode')
     ) {
       this._syncEditorConfigFromProps();
+      // Own-prop `testMode` may have just changed the resolved config — re-sync
+      // `data-testid` (standalone has no compat-bridge callback to do this, and
+      // `_setupEditorController`'s initial sync ran before the prop was applied).
+      if (this._editorInitialized) {
+        this._syncTestId();
+      }
+    }
+
+    if (changedProperties.has('localeDefinition') || changedProperties.has('localeName')) {
+      this._editorController.notify();
     }
   }
 
