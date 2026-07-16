@@ -3,6 +3,7 @@ export { CropFrame } from './CropFrame';
 export { EditorAspectRatioButtonControl, EditorFreeformButtonControl } from './EditorAspectRatioButtonControl';
 export { EditorCropButtonControl } from './EditorCropButtonControl';
 export { EditorFilterControl } from './EditorFilterControl';
+export { EditorIcon } from './EditorIcon';
 export { EditorImageCropper } from './EditorImageCropper';
 export { EditorImageFader } from './EditorImageFader';
 export { EditorOperationControl } from './EditorOperationControl';

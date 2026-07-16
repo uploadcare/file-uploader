@@ -108,6 +108,19 @@ describe('TelemetryManager', () => {
     expect(payload.component).toBeNull();
   });
 
+  it('lets an event carry its own component, overriding the registered solution', async () => {
+    // The standalone editor solution attributes its own events without
+    // registering an uploader `solutionName`.
+    const { manager, enable } = setup({ solution: 'uc-file-uploader-regular' });
+    enable();
+
+    manager.sendEvent({ eventType: InternalEventType.INIT_SOLUTION, component: 'uc-cloud-image-editor' });
+    await flush();
+
+    const payload = sendEventMock.mock.calls[0]?.[0] as Record<string, unknown>;
+    expect(payload.component).toBe('uc-cloud-image-editor');
+  });
+
   it('strips the activity field from the caller-provided payload', async () => {
     const { manager, enable } = setup({ activity: 'camera' });
     enable();
