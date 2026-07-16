@@ -1,10 +1,9 @@
 import { UcIconBase } from '../../Icon/UcIconBase';
 
+// Registered via `defineComponents(UC)` like every other block (exported from
+// `CloudImageEditor/src/index.ts` → derived tag `uc-editor-icon`), not a
+// self-`customElements.define`.
 export class EditorIcon extends UcIconBase {}
-
-if (!customElements.get('uc-editor-icon')) {
-  customElements.define('uc-editor-icon', EditorIcon);
-}
 
 declare global {
   interface HTMLElementTagNameMap {

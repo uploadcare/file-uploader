@@ -1,9 +1,14 @@
 import { LitElement } from 'lit';
 import { property } from 'lit/decorators.js';
 import { LightDomMixin } from '../../lit/LightDomMixin';
+import { RegisterableElementMixin } from '../../lit/RegisterableElementMixin';
 import { renderIconSvg } from './renderIconSvg';
 
-export class UcIconBase extends LightDomMixin(LitElement) {
+// `RegisterableElementMixin` provides the static `reg(tagName)` that
+// `defineComponents` calls — so subclasses register through the same
+// export-then-`defineComponents(UC)` path as every other block, not a
+// self-`customElements.define`. It's only the define wrapper — no ctx coupling.
+export class UcIconBase extends RegisterableElementMixin(LightDomMixin(LitElement)) {
   @property({ type: String })
   public name = '';
 
