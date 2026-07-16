@@ -11,7 +11,7 @@ import { FAKE_ORIGINAL_FILTER } from './EditorSlider.js';
 import { COMMON_OPERATIONS, transformationsToOperations } from './lib/transformationUtils.js';
 import type { Transformations } from './types';
 
-import '../../Icon/Icon';
+import './EditorIcon';
 
 /**
  * Bubbles up to `EditorToolbar`, which owns the toolbar-local `currentFilter`/
@@ -359,11 +359,11 @@ export class EditorFilterControl extends EditorButtonControl {
         @click=${clickHandler}
       >
         <div class="uc-preview" ?data-loaded=${this._previewLoaded} style=${styleMap(previewStyles)}></div>
-        <uc-icon
+        <uc-editor-icon
           class=${classMap({ 'uc-original-icon': this.isOriginal })}
           name=${this.icon}
           style=${styleMap(iconStyles)}
-        ></uc-icon>
+        ></uc-editor-icon>
       </button>
     `;
   }

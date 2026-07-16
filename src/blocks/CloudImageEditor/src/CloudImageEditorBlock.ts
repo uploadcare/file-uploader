@@ -44,7 +44,7 @@ import './elements/button/BtnUi';
 import './EditorImageCropper';
 import './EditorImageFader';
 import './EditorToolbar';
-import '../../Icon/Icon';
+import './EditorIcon';
 
 type TabIdValue = (typeof TabId)[keyof typeof TabId];
 
@@ -151,11 +151,12 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
     initialValue: this._editorController,
   });
 
-  // Re-provide the resolved ctx-name down the editor tree so nested
-  // `ChildBlock`s (`uc-icon`, ...) can adopt the shared uploader ctx and
-  // render. `ChildBlock` does this for its own descendants; the editor root's
-  // light base only *consumes* ctx-name, so without this the editor's icons
-  // never adopt and render empty (no sprite `<use>`). Value set in
+  // Re-provide the resolved ctx-name down the editor tree so any nested
+  // `ChildBlock`s can adopt the shared uploader ctx and render. `ChildBlock`
+  // does this for its own descendants; the editor root's light base only
+  // *consumes* ctx-name, so without this a nested `ChildBlock` never adopts
+  // and renders empty. (Editor icons are `uc-editor-icon` — plain-Lit,
+  // ctx-free — so they don't depend on this provider.) Value set in
   // `_maybeInitializeCtx` once the effective ctx-name is known.
   private readonly _ctxNameProvider = new ContextProvider(this, {
     context: ctxNameContext,
@@ -286,8 +287,8 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
     }
     this._editorInitialized = true;
     this._ctx = ensureUploaderCtx(ctxName);
-    // Hand the ctx-name to descendant ChildBlocks (e.g. `uc-icon`) so they
-    // adopt the same uploader ctx.
+    // Hand the ctx-name to any descendant ChildBlocks so they adopt the same
+    // uploader ctx.
     this._ctxNameProvider.setValue(ctxName);
 
     this._syncTabListFromProp();
@@ -560,7 +561,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
         <uc-presence-toggle class="uc-network_problems_splash" .visible=${showNetworkProblems}>
           <div class="uc-network_problems_content">
             <div class="uc-network_problems_icon">
-              <uc-icon name="sad"></uc-icon>
+              <uc-editor-icon name="sad"></uc-editor-icon>
             </div>
             <div class="uc-network_problems_text">Network error</div>
           </div>

@@ -48,18 +48,19 @@ describe('Cloud Image Editor', () => {
     await expect.poll(() => cropper.element().className).toMatch(/uc-active_from_/);
   });
 
-  it('renders editor icons (nested uc-icon ChildBlocks adopt the editor ctx)', async () => {
-    // Regression guard (M12 flip): editor icons are `uc-icon` — a ChildBlock
-    // that must adopt the shared uploader ctx to render its sprite `<use>`.
-    // That only happens if the light editor root *re-provides* the ctx-name
-    // `@lit/context` down its tree (ChildBlock does this for its own
-    // descendants; the light base doesn't). When it didn't, every toolbar/tab
-    // icon rendered empty while the rest of the editor looked fine — invisible
-    // to a suite that only checks the shell mounts.
+  it('renders editor icons (uc-editor-icon, plain-Lit and ctx-free)', async () => {
+    // Regression guard (M12 flip / editor-isolation Task 1): editor icons are
+    // `uc-editor-icon` — a plain-Lit, ctx-free element (no ChildBlock, no
+    // uploader ctx adoption needed) that renders its sprite `<use>` directly
+    // off its `name` property. Previously this guarded `uc-icon` (a
+    // ChildBlock) needing the light editor root to re-provide ctx-name down
+    // its tree; that coupling no longer exists for icons, but we keep the
+    // guard so a broken sprite/name binding still fails a suite that
+    // otherwise only checks the shell mounts.
     await expect
       .poll(
         () =>
-          [...document.querySelectorAll('uc-icon')].filter((ic) => {
+          [...document.querySelectorAll('uc-editor-icon')].filter((ic) => {
             const use = ic.querySelector('svg use');
             return (use?.getAttribute('href') ?? use?.getAttribute('xlink:href'))?.startsWith('#uc-icon-');
           }).length,
