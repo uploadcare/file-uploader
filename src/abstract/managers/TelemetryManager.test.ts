@@ -334,6 +334,47 @@ describe('TelemetryManager', () => {
 
       expect(sendEventMock).not.toHaveBeenCalled();
     });
+
+    it("a debounced modal emit (RouterController._emit's {debounce:true} path) is not seen synchronously, then reaches telemetry once the window elapses", async () => {
+      // RouterController._emit debounces MODAL_OPEN/MODAL_CLOSE via
+      // `EventEmitter.emit(type, payload, { debounce: true })` →
+      // `EventBus.emitDebounced` (~20ms). Telemetry, as a bus observer, sees
+      // that already-debounced delivery — this pins the accepted behavior
+      // change (modal telemetry is no longer synchronous with the transition).
+      vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout'] });
+      vi.setSystemTime(1_700_000_000_000);
+      const { container, enable } = setup({ solution: 'uc-file-uploader-regular' });
+      enable();
+      const emitter = container.get(EventEmitter);
+
+      emitter.emit(EventType.MODAL_OPEN, { modalId: 'start-from' } as never, { debounce: true });
+
+      // Still inside the debounce window — must not have fired yet.
+      expect(sendEventMock).not.toHaveBeenCalled();
+
+      vi.advanceTimersByTime(20);
+
+      expect(sendEventMock).toHaveBeenCalledTimes(1);
+      const payload = sendEventMock.mock.calls[0]?.[0] as Record<string, unknown>;
+      expect(payload.eventType).toBe(EventType.MODAL_OPEN);
+    });
+
+    it('two rapid same-type debounced emits within the window collapse into a single telemetry delivery', async () => {
+      vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout'] });
+      vi.setSystemTime(1_700_000_000_000);
+      const { container, enable } = setup({ solution: 'uc-file-uploader-regular' });
+      enable();
+      const emitter = container.get(EventEmitter);
+
+      emitter.emit(EventType.MODAL_OPEN, { modalId: 'start-from' } as never, { debounce: true });
+      emitter.emit(EventType.MODAL_OPEN, { modalId: 'start-from' } as never, { debounce: true });
+
+      vi.advanceTimersByTime(20);
+
+      // Collapsed by EventBus.emitDebounced (later emit resets the pending
+      // timer) — telemetry sees one delivery, not two.
+      expect(sendEventMock).toHaveBeenCalledTimes(1);
+    });
   });
 
   it("defaults a missing eventType to '' in the payload", async () => {

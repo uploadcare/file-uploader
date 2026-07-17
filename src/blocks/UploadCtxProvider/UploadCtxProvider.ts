@@ -77,8 +77,9 @@ export class UploadCtxProvider extends ChildBlock {
       this.bag,
       ctrl,
       (...args) => this._debugPrint(...args),
-      // Same contract as `ChildBlock.emit`: EventEmitter dispatch + telemetry
-      // mirror, guarded for teardown races.
+      // Same contract as `ChildBlock.emit`: pure EventEmitter dispatch (no
+      // telemetry mirror — telemetry observes the bus independently via
+      // `TelemetryManager.init()`), guarded for teardown races.
       (type, payload, options) => this.emit(type, payload, options),
     );
   }
