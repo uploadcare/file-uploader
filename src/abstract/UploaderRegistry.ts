@@ -87,10 +87,13 @@ class UploaderRegistryImpl {
   }
 
   /**
-   * Whether any `whenAvailable` consumer is currently watching `ctxName` — the
-   * consumer-refcount teardown predicate (`isCtxUnreferenced`): a ctx stays
-   * alive while a `ChildBlock` is still watching it here. (The v1
-   * `*blocksRegistry` half was removed with the v1 element layer in M11.)
+   * Whether any `whenAvailable` consumer is currently watching `ctxName`.
+   *
+   * Was the consumer-refcount teardown predicate until M-god step 6a, which
+   * moved that role onto the per-ctx `ControllerContainer`
+   * (`container.isUnreferenced()`, see `ctx-lifecycle.isCtxUnreferenced`). Kept
+   * as a standalone registry query. (The v1 `*blocksRegistry` half was removed
+   * with the v1 element layer in M11.)
    */
   public hasConsumers(ctxName: string): boolean {
     return (this._consumers.get(ctxName)?.size ?? 0) > 0;

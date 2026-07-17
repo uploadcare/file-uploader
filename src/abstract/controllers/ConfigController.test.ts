@@ -1,3 +1,4 @@
+import { Signal } from '@lit-labs/signals';
 import { describe, expect, it, vi } from 'vitest';
 import { initialConfig } from '../../blocks/Config/initialConfig';
 import { ConfigController } from './ConfigController';
@@ -128,6 +129,35 @@ describe('ConfigController', () => {
 
     config.notify();
     expect(listener).toHaveBeenCalledTimes(1);
+  });
+
+  it('getTracked returns the current value, matching get() (M-god step 6a)', () => {
+    const config = new ConfigController();
+    expect(config.getTracked('removeCopyright')).toBe(config.get('removeCopyright'));
+
+    config.set('removeCopyright', true);
+    expect(config.getTracked('removeCopyright')).toBe(true);
+    expect(config.getTracked('removeCopyright')).toBe(config.get('removeCopyright'));
+  });
+
+  it('getTracked auto-tracks the key under a Signal watcher; set() notifies it', () => {
+    const config = new ConfigController();
+    let notified = 0;
+    const watcher = new Signal.subtle.Watcher(() => {
+      notified++;
+    });
+    // A computed that reads via getTracked establishes the dependency on the
+    // 'removeCopyright' key's signal — the exact path SignalWatcher uses in a
+    // migrated render().
+    const c = new Signal.Computed(() => config.getTracked('removeCopyright'));
+    watcher.watch(c);
+    expect(c.get()).toBe(false);
+
+    config.set('removeCopyright', true); // tracked write → watcher notified
+    expect(notified).toBe(1);
+    expect(c.get()).toBe(true);
+
+    watcher.unwatch(c);
   });
 
   it('setCustom does not notify when the value is unchanged', () => {
