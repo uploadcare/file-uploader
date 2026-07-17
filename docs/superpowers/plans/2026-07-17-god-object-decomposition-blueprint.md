@@ -167,15 +167,25 @@ canary export test. **No behavior change** — nothing consumes these yet.
 
 ## Step 2 — Container bridge (keeps everything green)
 
-**Modify** `src/lit/PubSubCompat.ts`: `_uploader()` lazily creates+caches a
-`ControllerContainer`, registers it in `UploaderRegistry`, and `bind`s a single
-`UploaderController` facade (constructed exactly as today via its existing
-`deps ?? new`). `_config()`/`_locale()` return `container.get(UploaderController).config/locale`.
-`_controllers: Map<string, UploaderController>` → `Map<string, ControllerContainer>`.
-**Modify** `src/abstract/UploaderRegistry.ts`: retarget its map to
-`ControllerContainer`; `whenAvailable` callback becomes `(c: ControllerContainer | null)`.
-`bag`/`ctx.read('*X')`/`.X` all still work (UploaderController unchanged). Zero
-behavior change; tests target the container in isolation.
+Goal: introduce the per-ctx `ControllerContainer` as the *creation + ownership*
+mechanism for the (still-monolithic) `UploaderController`, with **zero consumer
+ripple**. `UploaderController` itself is UNCHANGED (still `deps ?? new`); nothing
+is decomposed yet.
+
+**Modify** `src/lit/PubSubCompat.ts`:
+- `_controllers: Map<string, UploaderController>` → `Map<string, ControllerContainer>`.
+- `_uploader()`: if no container for this ctx, create one, `container.bind(UploaderController, () => new UploaderController({ ...the exact deps built today... }))`, then `const ctrl = container.get(UploaderController)` and register **`ctrl`** (the `UploaderController`, as today) in `UploaderRegistry`; store the container. Return `ctrl`.
+- `_config()`/`_locale()` return `_uploader().config`/`.locale` (unchanged shape).
+- Teardown (`deleteCtx`): call `container.dispose()` (which calls `UploaderController.destroy()` — the single cached instance) instead of `controller.destroy()` directly; then unregister. Behavior identical.
+
+**Do NOT change** `src/abstract/UploaderRegistry.ts`'s public types — it keeps
+storing/yielding `UploaderController`, so `ChildBlock`/`whenAvailable` consumers
+are untouched. (Retargeting the registry to `ControllerContainer` happens in
+step 6, when block consumers migrate to `this.use()`.)
+
+`bag`/`ctx.read('*X')`/`.X` all still work (UploaderController unchanged). **Zero
+behavior change**; tests assert the container is the owner (dispose tears down the
+controller) and per-ctx identity is preserved.
 
 ---
 
