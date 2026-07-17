@@ -18,10 +18,7 @@ exports[`NPM package > exports \`web\` should match snapshot > web/file-uploader
 
 exports[`NPM package > exports \`web\` should match snapshot > web/file-uploader.min.js 1`] = `
 {
-  "ActivityBlock": [Function],
   "ActivityHeader": [Function],
-  "BaseComponent": [Function],
-  "Block": [Function],
   "BtnUi": [Function],
   "CameraSource": [Function],
   "CloudImageEditor": [Function],
@@ -77,7 +74,6 @@ exports[`NPM package > exports \`web\` should match snapshot > web/file-uploader
   "Select": [Function],
   "SimpleBtn": [Function],
   "SliderUi": [Function],
-  "SolutionBlock": [Function],
   "SourceBtn": [Function],
   "SourceList": [Function],
   "Spinner": [Function],
@@ -103,7 +99,6 @@ exports[`NPM package > exports \`web\` should match snapshot > web/file-uploader
     "ONEDRIVE": "onedrive",
     "URL": "url",
   },
-  "UploaderBlock": [Function],
   "UrlSource": [Function],
   "defineComponents": [Function],
   "defineLocale": [Function],
@@ -157,10 +152,7 @@ exports[`NPM package > exports \`web\` should match snapshot > web/uc-file-uploa
 
 exports[`NPM package > exports \`web\` should match snapshot > web/uc-file-uploader-inline.min.js 1`] = `
 {
-  "ActivityBlock": [Function],
   "ActivityHeader": [Function],
-  "BaseComponent": [Function],
-  "Block": [Function],
   "BtnUi": [Function],
   "CameraSource": [Function],
   "CloudImageEditor": [Function],
@@ -216,7 +208,6 @@ exports[`NPM package > exports \`web\` should match snapshot > web/uc-file-uploa
   "Select": [Function],
   "SimpleBtn": [Function],
   "SliderUi": [Function],
-  "SolutionBlock": [Function],
   "SourceBtn": [Function],
   "SourceList": [Function],
   "Spinner": [Function],
@@ -242,7 +233,6 @@ exports[`NPM package > exports \`web\` should match snapshot > web/uc-file-uploa
     "ONEDRIVE": "onedrive",
     "URL": "url",
   },
-  "UploaderBlock": [Function],
   "UrlSource": [Function],
   "defineComponents": [Function],
   "defineLocale": [Function],
@@ -259,10 +249,7 @@ exports[`NPM package > exports \`web\` should match snapshot > web/uc-file-uploa
 
 exports[`NPM package > exports \`web\` should match snapshot > web/uc-file-uploader-minimal.min.js 1`] = `
 {
-  "ActivityBlock": [Function],
   "ActivityHeader": [Function],
-  "BaseComponent": [Function],
-  "Block": [Function],
   "BtnUi": [Function],
   "CameraSource": [Function],
   "CloudImageEditor": [Function],
@@ -318,7 +305,6 @@ exports[`NPM package > exports \`web\` should match snapshot > web/uc-file-uploa
   "Select": [Function],
   "SimpleBtn": [Function],
   "SliderUi": [Function],
-  "SolutionBlock": [Function],
   "SourceBtn": [Function],
   "SourceList": [Function],
   "Spinner": [Function],
@@ -344,7 +330,6 @@ exports[`NPM package > exports \`web\` should match snapshot > web/uc-file-uploa
     "ONEDRIVE": "onedrive",
     "URL": "url",
   },
-  "UploaderBlock": [Function],
   "UrlSource": [Function],
   "defineComponents": [Function],
   "defineLocale": [Function],
@@ -361,10 +346,7 @@ exports[`NPM package > exports \`web\` should match snapshot > web/uc-file-uploa
 
 exports[`NPM package > exports \`web\` should match snapshot > web/uc-file-uploader-regular.min.js 1`] = `
 {
-  "ActivityBlock": [Function],
   "ActivityHeader": [Function],
-  "BaseComponent": [Function],
-  "Block": [Function],
   "BtnUi": [Function],
   "CameraSource": [Function],
   "CloudImageEditor": [Function],
@@ -420,7 +402,6 @@ exports[`NPM package > exports \`web\` should match snapshot > web/uc-file-uploa
   "Select": [Function],
   "SimpleBtn": [Function],
   "SliderUi": [Function],
-  "SolutionBlock": [Function],
   "SourceBtn": [Function],
   "SourceList": [Function],
   "Spinner": [Function],
@@ -446,7 +427,6 @@ exports[`NPM package > exports \`web\` should match snapshot > web/uc-file-uploa
     "ONEDRIVE": "onedrive",
     "URL": "url",
   },
-  "UploaderBlock": [Function],
   "UrlSource": [Function],
   "defineComponents": [Function],
   "defineLocale": [Function],
@@ -463,10 +443,7 @@ exports[`NPM package > exports \`web\` should match snapshot > web/uc-img.min.js
 
 exports[`NPM package > root ssr stubs export should match snapshot > root export 1`] = `
 {
-  "ActivityBlock": [Function],
   "ActivityHeader": [Function],
-  "BaseComponent": [Function],
-  "Block": [Function],
   "BtnUi": [Function],
   "CameraSource": [Function],
   "CloudImageEditor": [Function],
@@ -523,7 +500,6 @@ exports[`NPM package > root ssr stubs export should match snapshot > root export
   "Select": [Function],
   "SimpleBtn": [Function],
   "SliderUi": [Function],
-  "SolutionBlock": [Function],
   "SourceBtn": [Function],
   "SourceList": [Function],
   "Spinner": [Function],
@@ -549,7 +525,6 @@ exports[`NPM package > root ssr stubs export should match snapshot > root export
     "ONEDRIVE": "onedrive",
     "URL": "url",
   },
-  "UploaderBlock": [Function],
   "UrlSource": [Function],
   "defineComponents": [Function],
   "defineLocale": [Function],

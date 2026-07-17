@@ -11,9 +11,9 @@ import {
 } from '../../../abstract/controllers/CloudImageEditorController';
 import type { TelemetryManager } from '../../../abstract/managers/TelemetryManager';
 import { resolveSecureDeliveryProxyUrl } from '../../../abstract/secureDeliveryProxyUrl';
+import { ctxNameContext } from '../../../lit/ctx-name-context';
 import { LightDomMixin } from '../../../lit/LightDomMixin';
 import { RegisterableElementMixin } from '../../../lit/RegisterableElementMixin';
-import { ctxNameContext } from '../../../lit/SymbioteCompatMixin';
 import type { ConfigType, SecureDeliveryProxyUrlResolver } from '../../../types';
 import {
   createCdnUrl,

@@ -13,7 +13,6 @@ import { sharedConfigKey } from '../abstract/sharedConfigKey';
 import { initialConfig } from '../blocks/Config/initialConfig';
 import type { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter';
 import { createDebugPrinter } from './createDebugPrinter';
-import type { LitBlock } from './LitBlock';
 import type { PubSub } from './PubSubCompat';
 import type { SharedState } from './SharedState';
 
@@ -80,7 +79,6 @@ const instanceKeyMap = {
   localeManager: '*localeManager',
   a11y: '*a11y',
   clipboard: '*clipboard',
-  blocksRegistry: '*blocksRegistry',
   eventEmitter: '*eventEmitter',
   uploadCollection: '*uploadCollection',
   secureUploadsManager: '*secureUploadsManager',
@@ -231,9 +229,6 @@ export const createSharedInstancesBag = (getCtx: () => PubSub<SharedState>) => {
     },
     get a11y(): A11y {
       return getSharedInstance(getCtx(), '*a11y');
-    },
-    get blocksRegistry(): Set<LitBlock> {
-      return getSharedInstance(getCtx(), '*blocksRegistry');
     },
     get eventEmitter(): EventEmitter {
       return getSharedInstance(getCtx(), '*eventEmitter');

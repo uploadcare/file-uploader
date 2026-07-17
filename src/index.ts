@@ -1,9 +1,7 @@
 /** biome-ignore-all assist/source/organizeImports: Order should be pretty */
 import './blocks/themes/uc-basic/index.css';
 
-// Symbiote.js
 export { PubSub as Data } from './lit/PubSubCompat';
-export { BaseComponent } from './lit/BaseComponent';
 export { UID } from './utils/UID';
 
 // Utils:
@@ -11,12 +9,6 @@ export { defineComponents } from './abstract/defineComponents';
 export { loadFileUploaderFrom } from './abstract/loadFileUploaderFrom';
 export { defineLocale } from './abstract/localeRegistry';
 export { toKebabCase } from './utils/toKebabCase';
-
-// Abstract:
-export { LitBlock as Block } from './lit/LitBlock';
-export { LitSolutionBlock as SolutionBlock } from './lit/LitSolutionBlock';
-export { LitUploaderBlock as UploaderBlock } from './lit/LitUploaderBlock';
-export { LitActivityBlock as ActivityBlock } from './lit/LitActivityBlock';
 
 // Shared:
 export { Icon } from './blocks/Icon/Icon';

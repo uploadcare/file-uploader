@@ -1,7 +1,7 @@
 import { LitElement } from 'lit';
 import { PACKAGE_NAME, PACKAGE_VERSION } from '../../env.js';
-import { CssDataMixin } from '../../lit/CssDataMixin.js';
 import { RegisterableElementMixin } from '../../lit/RegisterableElementMixin.js';
+import { CssDataMixin } from './CssDataMixin.js';
 import { CSS_PREF } from './configurations.js';
 import { PROPS_MAP } from './props-map.js';
 

@@ -59,7 +59,6 @@ describe('ensureUploaderCtx', () => {
 
     // Still v1-element-gated — never registered by this v1-free seam.
     expect(ctx.has('*pluginManager')).toBe(false);
-    expect(ctx.has('*blocksRegistry')).toBe(false);
     expect(ctx.has('*uploadCollection')).toBe(false);
   });
 
