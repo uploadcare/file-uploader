@@ -1,5 +1,4 @@
 import { EventEmitter } from '../../blocks/UploadCtxProvider/EventEmitter';
-import { applyInitialCrop } from '../applyInitialCrop';
 import type { ControllerContainer } from '../di/ControllerContainer';
 import { EventBus, type UploaderEventKey, type UploaderEventPayload } from '../EventBus';
 import { A11y } from '../managers/a11y';
@@ -11,18 +10,17 @@ import { ClipboardController } from './ClipboardController';
 import { ConfigController } from './ConfigController';
 import { LocaleController } from './LocaleController';
 import { RouterController } from './RouterController';
-// The four uploader-scope classes are TYPE-ONLY imports (they erase at
-// runtime): `UploaderController` is constructed for every ctx — including
-// editor-only scopes that never upload — and a static value import here would
-// drag the whole upload stack (`@uploadcare/upload-client` and friends) into
-// bundles that can't tree-shake a reachable method body. The element layer
-// (`LitUploaderBlock`), which only exists in upload-capable bundles, injects
-// the constructors through `UploaderScopeDeps.controllers`.
-import type { SecureUploadsController, SecureUploadsControllerDeps } from './SecureUploadsController';
 import { UploadCollectionController } from './UploadCollectionController';
-import type { UploadController, UploadControllerDeps } from './UploadController';
-import type { UploadEventsController, UploadEventsControllerDeps } from './UploadEventsController';
-import type { ValidationController, ValidationControllerDeps } from './ValidationController';
+
+// NOTE: the four upload-stack classes (`SecureUploadsController`,
+// `UploadController`, `ValidationController`, `UploadEventsController`) are NOT
+// imported here — not even type-only. They are owned by the per-ctx container
+// and registered by the element-layer `registerUploadStack`/`ensureUploaderScope`
+// (M-god step 5). `UploaderController` is constructed for EVERY ctx — including
+// editor-only scopes that never upload — so any reference to those classes (each
+// of which drags `@uploadcare/upload-client`) would leak the upload stack into
+// the editor bundle. The editor path never calls `registerUploadStack`, so
+// `container.get(SecureUploadsController)` is never reached from it.
 
 /**
  * Root controller — one instance per uploader scope (keyed by `ctx-name` in
@@ -52,11 +50,17 @@ import type { ValidationController, ValidationControllerDeps } from './Validatio
  * mirror on this controller's `emit`). The constructor eagerly resolves
  * `config`/`router`/`telemetry` so they exist from birth (telemetry subscribes
  * to the bus before any event fires). Step 4 moved `collection` onto the
- * container too (a delegating getter; a leaf with no deps). The rest —
- * `clipboard` — is still constructor-injected (mirroring `ValidationController`'s
- * deps-object style): it defaults to a freshly-constructed instance, so tests
- * and later milestones can substitute a fake. Later milestones move the rest
- * onto the container one slice at a time.
+ * container too (a delegating getter; a leaf with no deps).
+ *
+ * Step 5 moved the upload stack (`SecureUploadsController`, `UploadController`,
+ * `ValidationController`, `UploadEventsController`) onto the container as well:
+ * they `@inject` their controller peers + a `UploadHostBridge` host-value token,
+ * and the element layer registers them via `registerUploadStack`/
+ * `ensureUploaderScope` — so this controller no longer references those classes
+ * at all (keeping the upload stack out of the editor bundle) and no longer tears
+ * them down (the container disposes them). The only still-constructor-injected
+ * member is `clipboard` (a later cluster moves it); it defaults to a freshly-
+ * constructed instance so tests can substitute a fake.
  *
  * `PluginController` stays constructed by the DOM layer (`LitBlock`) — it
  * genuinely needs the PubSub ctx (`*lazyPlugins`, arbitrary shared state) and
@@ -76,97 +80,8 @@ import type { ValidationController, ValidationControllerDeps } from './Validatio
  * always after `setApi` has run, since a paste can only ever add a file
  * through an already-constructed uploader element.
  */
-/**
- * The v1 shared-state (`*`-key, via the `$`/`PubSub` proxy) read/write bridges
- * that the upload stack needs — `ValidationController`'s `setCollectionErrors`
- * and `UploadEventsController`'s 8. Built by whoever creates the controller
- * (lit-side: `PubSubCompat._uploader()`, closing over that ctx's `pub`/`read`)
- * and handed in at construction time, rather than injected later at
- * `attachUploaderScope()` — so the controller's identity (and these bridges)
- * exist from birth, before an uploader element ever attaches. The controller
- * itself stays PubSub-free: it only ever calls these functions, never imports
- * `PubSub`.
- */
-export type UploaderStateBridges = {
-  /** Sink for collection-level errors — v1 wrote `this.$['*collectionErrors']`. */
-  setCollectionErrors: ValidationControllerDeps['setCollectionErrors'];
-  /** The live `*uploadTrigger` set (mutated in place on remove). */
-  uploadTrigger: UploadEventsControllerDeps['uploadTrigger'];
-  setUploadList: UploadEventsControllerDeps['setUploadList'];
-  getCollectionState: UploadEventsControllerDeps['getCollectionState'];
-  setCollectionState: UploadEventsControllerDeps['setCollectionState'];
-  getCommonProgress: UploadEventsControllerDeps['getCommonProgress'];
-  setCommonProgress: UploadEventsControllerDeps['setCommonProgress'];
-  setGroupInfo: UploadEventsControllerDeps['setGroupInfo'];
-  getCollectionErrors: UploadEventsControllerDeps['getCollectionErrors'];
-};
-
 export type UploaderControllerDeps = {
   clipboard?: ClipboardController;
-  /** See `UploaderStateBridges` doc. Defaults to inert no-ops (editor-only scopes never attach an uploader). */
-  stateBridges?: UploaderStateBridges;
-};
-
-/**
- * Every element-side (DOM/`PubSub`-touching) callback `attachUploaderScope`
- * needs to build `SecureUploadsController`, `UploadController`,
- * `ValidationController`, and `UploadEventsController` — the v1 shared-context
- * resolvers' closures, moved verbatim. Everything that can resolve purely from
- * the controller's own members (telemetry mirrors, `buildUploadOptions`,
- * `applyInitialCrop`) is built internally by `attachUploaderScope` instead and
- * does NOT appear here — see the field-by-field notes on each resolver below.
- *
- * Reuses each sub-controller's own `*Deps` field types (rather than
- * redeclaring them) so a signature change downstream is a compile error here,
- * not silent drift.
- *
- * M9n (Task 3) moved the 9 v1 shared-state (`*`-key) read/write bridges —
- * validation's `setCollectionErrors` and uploadEvents' 8 — out of this type
- * and into `UploaderStateBridges`, injected at controller construction
- * instead of here at attach time (see that type's doc).
- */
-export type UploaderScopeDeps = {
-  /**
-   * The four sub-controller constructors, injected by the element layer (see
-   * the import note above) so editor-only bundles never carry the upload
-   * stack. Typed via `typeof X` type queries on the type-only imports, so the
-   * instance types still flow into the getters below.
-   */
-  controllers: {
-    SecureUploadsController: typeof SecureUploadsController;
-    UploadController: typeof UploadController;
-    ValidationController: typeof ValidationController;
-    UploadEventsController: typeof UploadEventsController;
-  };
-  /** Debug logger — wired to the block's `debugPrint`. Shared by secureUploads + uploadController. */
-  debug?: SecureUploadsControllerDeps['debug'];
-  /** Snapshot of the registered plugin file hooks (bag.pluginManager). */
-  getFileHooks: UploadControllerDeps['getFileHooks'];
-  /** Resolves the public output entry (bag.api.getOutputItem) — shared by uploadController + uploadEvents. */
-  getOutputItem: UploadEventsControllerDeps['getOutputItem'];
-  /** The public API passed to validators (bag.api). */
-  getApi: ValidationControllerDeps['getApi'];
-  /** Fires the debounced `common-upload-failed` event — reads bag.eventEmitter + bag.api, kept verbatim (api isn't controller-owned). */
-  emitCommonUploadFailed: ValidationControllerDeps['emitCommonUploadFailed'];
-  /**
-   * Telemetry-augmented emit — v1's `ctx.has('*eventEmitter')` teardown guard,
-   * kept verbatim: it observes the pub-null pass that runs BEFORE
-   * `UploaderController.destroy()`, and collapsing it onto `controller.emit`
-   * would shift that teardown-suppression window.
-   */
-  emit: UploadEventsControllerDeps['emit'];
-  getOutputCollectionState: UploadEventsControllerDeps['getOutputCollectionState'];
-  /** Needs the shared-instances bag (`getOutputData(bag)`) — DOM-layer only. */
-  getOutputData: UploadEventsControllerDeps['getOutputData'];
-  /** Runs plugin `onAdd` hooks — needs `bag.wait('pluginManager')`. */
-  runOnAddHooks: UploadEventsControllerDeps['runOnAddHooks'];
-};
-
-type UploaderScope = {
-  secureUploadsManager: SecureUploadsController;
-  uploadController: UploadController;
-  validationManager: ValidationController;
-  uploadEvents: UploadEventsController;
 };
 
 export class UploaderController {
@@ -177,16 +92,11 @@ export class UploaderController {
   // callbacks read this, and only at paste time.
   private _api: UploaderPublicApi | null = null;
   private _destroyed = false;
-  // The upload stack — only constructed once an uploader is actually present
-  // in the scope (`attachUploaderScope`, called by `LitUploaderBlock`). A
-  // bare `<uc-config>` + provider ctx (no uploader tag) never gets one.
-  private _uploaderScope: UploaderScope | null = null;
-  // See `UploaderStateBridges` doc. Lives from construction — a scope that
-  // never attaches an uploader (editor-only) simply never calls these.
-  private readonly _stateBridges: UploaderStateBridges;
   // The per-ctx DI container that owns this controller (M-god step 3). It also
-  // owns `config`/`locale` now — the delegating getters below resolve them
-  // through it, and `container.dispose()` (not this class) tears them down.
+  // owns `config`/`locale`/the upload stack now — the delegating getters below
+  // resolve through it, and `container.dispose()` (not this class) tears them
+  // down. Exposed via `container` so the element layer (`ensureUploaderScope`)
+  // can register the upload stack against it (M-god step 5).
   private readonly _container: ControllerContainer;
 
   public constructor(container: ControllerContainer, deps: UploaderControllerDeps = {}) {
@@ -218,24 +128,17 @@ export class UploaderController {
     this._container.get(ConfigController);
     this._container.get(RouterController);
     this._container.get(TelemetryManager);
+  }
 
-    // Default no-op bridges for construction without a PubSub ctx (tests /
-    // non-element callers). `uploadTrigger` MUST return a STABLE set — the
-    // real bridge exposes the live `*uploadTrigger` set that
-    // `UploadEventsController` mutates in place (`.delete(...)`) and iterates,
-    // so a fresh `new Set()` per call would silently break those invariants.
-    const defaultUploadTrigger: ReturnType<UploaderStateBridges['uploadTrigger']> = new Set();
-    this._stateBridges = deps.stateBridges ?? {
-      setCollectionErrors: () => {},
-      uploadTrigger: () => defaultUploadTrigger,
-      setUploadList: () => {},
-      getCollectionState: () => null,
-      setCollectionState: () => {},
-      getCommonProgress: () => 0,
-      setCommonProgress: () => {},
-      setGroupInfo: () => {},
-      getCollectionErrors: () => [],
-    };
+  /**
+   * The per-ctx DI container that owns this controller and its sibling
+   * controllers. Exposed so the element layer (`ensureUploaderScope`) can
+   * register the upload stack against it (`registerUploadStack`) and resolve the
+   * upload-stack instances for their v1 `*`-key re-exposure. Removed when this
+   * facade is dissolved (M-god step 8).
+   */
+  public get container(): ControllerContainer {
+    return this._container;
   }
 
   /**
@@ -353,152 +256,23 @@ export class UploaderController {
     this._api = api;
   }
 
-  /**
-   * Construct the upload stack — `SecureUploadsController`, `UploadController`,
-   * `ValidationController`, `UploadEventsController` — behind the
-   * uploader-present gate (only `LitUploaderBlock.initCallback` calls this; a
-   * scope with just `<uc-config>` + a provider never does). Idempotent: a
-   * second call is a no-op, matching `_addSharedContextInstance`'s
-   * first-write-wins semantics. Inert once `destroy()` has run.
-   *
-   * Construction order is load-bearing: `uploadController` needs
-   * `secureUploadsManager`; `uploadEvents` needs `validationManager` (and,
-   * internally, `uploadController.buildUploadOptions()`).
-   */
-  public attachUploaderScope(deps: UploaderScopeDeps): void {
-    if (this._uploaderScope || this._destroyed) {
-      return;
-    }
-
-    const secureUploadsManager = new deps.controllers.SecureUploadsController({
-      config: this.config,
-      onResolverError: (error, context) => {
-        // Same teardown race as `onUploadError` below: reporting never throws.
-        try {
-          this.telemetryManager.sendEventError(error, context);
-        } catch (err) {
-          deps.debug?.('telemetry unavailable for a resolver error report', err);
-        }
-      },
-      debug: deps.debug,
-    });
-
-    const uploadController = new deps.controllers.UploadController({
-      collection: this.collection,
-      config: this.config,
-      secureUploads: secureUploadsManager,
-      getFileHooks: deps.getFileHooks,
-      getOutputItem: deps.getOutputItem,
-      onUploadError: (error, context) => {
-        // An upload's async error handler can fire after the scope (and its
-        // telemetry instance) is torn down — error *reporting* must never
-        // throw, or the original failure becomes an unhandled rejection.
-        try {
-          this.telemetryManager.sendEventError(error, context);
-        } catch (err) {
-          deps.debug?.('telemetry unavailable for an upload error report', err);
-        }
-      },
-      debug: deps.debug,
-    });
-
-    const validationManager = new deps.controllers.ValidationController({
-      config: this.config,
-      collection: this.collection,
-      getApi: deps.getApi,
-      setCollectionErrors: this._stateBridges.setCollectionErrors,
-      emitCommonUploadFailed: deps.emitCommonUploadFailed,
-      onValidatorError: (error, context) => {
-        // Same teardown race as `onUploadError` above: reporting never throws.
-        try {
-          this.telemetryManager.sendEventError(error, context);
-        } catch (err) {
-          deps.debug?.('telemetry unavailable for a validator error report', err);
-        }
-      },
-    });
-
-    const uploadEvents = new deps.controllers.UploadEventsController({
-      collection: this.collection,
-      config: this.config,
-      validation: validationManager,
-      emit: deps.emit,
-      getOutputItem: deps.getOutputItem,
-      getOutputCollectionState: deps.getOutputCollectionState,
-      getOutputData: deps.getOutputData,
-      buildUploadOptions: () => uploadController.buildUploadOptions(),
-      runOnAddHooks: deps.runOnAddHooks,
-      applyInitialCrop: () => applyInitialCrop(this.collection, this.config.get('cropPreset')),
-      uploadTrigger: this._stateBridges.uploadTrigger,
-      setUploadList: this._stateBridges.setUploadList,
-      getCollectionState: this._stateBridges.getCollectionState,
-      setCollectionState: this._stateBridges.setCollectionState,
-      getCommonProgress: this._stateBridges.getCommonProgress,
-      setCommonProgress: this._stateBridges.setCommonProgress,
-      setGroupInfo: this._stateBridges.setGroupInfo,
-      getCollectionErrors: this._stateBridges.getCollectionErrors,
-    });
-
-    this._uploaderScope = { secureUploadsManager, uploadController, validationManager, uploadEvents };
-    uploadEvents.observe();
-  }
-
-  private _requireUploaderScope<TKey extends keyof UploaderScope>(key: TKey): UploaderScope[TKey] {
-    if (!this._uploaderScope) {
-      throw new Error(`Unexpected error: UploaderController.${key} accessed before attachUploaderScope()`);
-    }
-    return this._uploaderScope[key];
-  }
-
-  public get secureUploadsManager(): SecureUploadsController {
-    return this._requireUploaderScope('secureUploadsManager');
-  }
-
-  public get uploadController(): UploadController {
-    return this._requireUploaderScope('uploadController');
-  }
-
-  public get validationManager(): ValidationController {
-    return this._requireUploaderScope('validationManager');
-  }
-
-  public get uploadEvents(): UploadEventsController {
-    return this._requireUploaderScope('uploadEvents');
-  }
-
   public destroy(): void {
     this._destroyed = true;
 
-    // `events`/`eventEmitter`/`localeManager`/`a11y`/`router`/`telemetryManager`
-    // and `config`/`locale`/`AppInfo` are NOT torn down here — the container owns
-    // them and disposes them in reverse construction order. Step 3c eagerly
-    // resolves `config`/`router`/`telemetry` in the constructor (telemetry's
-    // `init()` pulls `EventBus`), so `EventBus` now registers BEFORE this
-    // controller and is disposed just AFTER this `destroy()` runs. That is safe:
-    // teardown emissions are already suppressed (this `_destroyed` guard;
+    // Nothing container-owned is torn down here — the container owns
+    // `config`/`locale`/`events`/`eventEmitter`/`localeManager`/`a11y`/`router`/
+    // `telemetryManager`/`collection` AND (M-god step 5) the whole upload stack
+    // (`SecureUploadsController`/`UploadController`/`ValidationController`/
+    // `UploadEventsController`), disposing them all in reverse construction
+    // order. The upload stack is registered AFTER this controller (which is
+    // resolved first, in `_resolveContainer`), so it is disposed BEFORE this
+    // `destroy()` runs — `UploadEventsController.unobserve()` detaches its
+    // collection observers while the collection is still alive (the collection
+    // was registered even earlier, so it disposes last of the group). Teardown
+    // emissions are already suppressed (this `_destroyed` guard;
     // `ChildBlock.emit`'s null-ctx guard once `deleteCtx` removes the ctx), so
-    // nothing reaches the still-live bus during `destroy()`, and the telemetry
-    // observer detaches when `EventBus.destroy()` clears its listeners.
+    // nothing reaches the still-live bus during disposal.
 
-    // The uploader-scope stack tears down in reverse construction order:
-    // `UploadEventsController.unobserve()` detaches its `observeCollection`/
-    // `observeProperties` subscriptions. The collection itself is NO LONGER
-    // destroyed here (M-god step 4) — it is container-owned, so
-    // `container.dispose()` destroys it (in reverse construction order, i.e.
-    // BEFORE this `destroy()` runs, since this controller is resolved first and
-    // disposed last). That ordering is safe: `container.dispose()` runs the
-    // whole teardown synchronously with no notify-on-destroy, so the later
-    // `uploadEvents.unobserve()` here just deletes handlers from the (already
-    // cleared) collection observer sets — a harmless no-op, no race.
-    if (this._uploaderScope) {
-      this._uploaderScope.uploadEvents.destroy();
-      this._uploaderScope.validationManager.destroy();
-      this._uploaderScope.uploadController.destroy();
-      this._uploaderScope.secureUploadsManager.destroy();
-    }
-
-    // `router`/`telemetryManager` are NOT torn down here (M-god step 3c) — the
-    // container owns them and disposes them in reverse construction order.
     // `clipboard` stays controller-owned (a later cluster moves it).
     this.clipboard.destroy();
 

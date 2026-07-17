@@ -1,4 +1,6 @@
-import type { UploaderController, UploaderScopeDeps } from '../abstract/controllers/UploaderController';
+import { registerUploadStack } from '../abstract/controllers/registerUploadStack';
+import type { UploaderController } from '../abstract/controllers/UploaderController';
+import type { UploadHostDebug, UploadHostEmit } from '../abstract/controllers/UploadHostBridge';
 import { UploaderPublicApi } from '../abstract/UploaderPublicApi';
 import { buildUploaderScopeDeps } from './buildUploaderScopeDeps';
 import { ensurePluginManager } from './ensurePluginManager';
@@ -18,10 +20,11 @@ import type { SharedInstancesBag } from './shared-instances';
 export function ensureUploaderScope(
   bag: SharedInstancesBag,
   ctrl: UploaderController,
-  debug: UploaderScopeDeps['debug'],
-  emit: UploaderScopeDeps['emit'],
+  debug: UploadHostDebug | undefined,
+  emit: UploadHostEmit,
 ): void {
   const ctx = bag.ctx;
+  const container = ctrl.container;
 
   if (!ctx.has('*uploadCollection')) {
     ctx.add('*uploadCollection', ctrl.collection, true);
@@ -33,21 +36,29 @@ export function ensureUploaderScope(
     ctx.add('*publicApi', api, true);
   }
 
-  ctrl.attachUploaderScope(buildUploaderScopeDeps(bag, debug, emit));
+  // Register the upload stack on the per-ctx container (M-god step 5). This is
+  // the ONE place the four upload-stack constructors (and thus
+  // `@uploadcare/upload-client`) enter — the element/upload layer, never the
+  // editor. `registerUploadStack` is idempotent + binds the host-value bridge.
+  const { controllers, host } = buildUploaderScopeDeps(bag, debug, emit);
+  registerUploadStack(container, controllers, host);
 
-  // Re-expose the controller-owned instances under their v1 shared-instance
-  // keys (readers like `FileItem.bag.uploadController` expect them there).
+  // Re-expose the container-owned upload-stack instances under their v1 shared-
+  // instance keys (readers like `FileItem.bag.uploadController` expect them
+  // there). Resolving them here (using the concrete ctors this layer imports)
+  // also fixes the container's insertion — and therefore reverse-dispose —
+  // order: SecureUploads → Upload → Validation → UploadEvents.
   if (!ctx.has('*secureUploadsManager')) {
-    ctx.add('*secureUploadsManager', ctrl.secureUploadsManager, true);
+    ctx.add('*secureUploadsManager', container.get(controllers.SecureUploadsController), true);
   }
   if (!ctx.has('*uploadController')) {
-    ctx.add('*uploadController', ctrl.uploadController, true);
+    ctx.add('*uploadController', container.get(controllers.UploadController), true);
   }
   if (!ctx.has('*validationManager')) {
-    ctx.add('*validationManager', ctrl.validationManager, true);
+    ctx.add('*validationManager', container.get(controllers.ValidationController), true);
   }
   if (!ctx.has('*uploadEvents')) {
-    ctx.add('*uploadEvents', ctrl.uploadEvents, true);
+    ctx.add('*uploadEvents', container.get(controllers.UploadEventsController), true);
   }
 
   // Construct the ctx's `*pluginManager` if no v1 `LitBlock` in this

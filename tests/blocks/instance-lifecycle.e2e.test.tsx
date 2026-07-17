@@ -1,6 +1,9 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
+import { SecureUploadsController } from '@/abstract/controllers/SecureUploadsController';
+import { UploadController } from '@/abstract/controllers/UploadController';
 import { UploadEventsController } from '@/abstract/controllers/UploadEventsController';
+import { ValidationController } from '@/abstract/controllers/ValidationController';
 import { localeStateKey } from '@/abstract/managers/LocaleManager';
 import { TelemetryManager } from '@/abstract/managers/TelemetryManager';
 import type { Config, UploadCtxProvider } from '@/index.js';
@@ -86,21 +89,21 @@ describe('instance lifecycle (config-only ctx)', () => {
     // config-only seam — `<uc-config>` alone must not create it.
     expect(ctx.has('*uploadCollection')).toBe(false);
 
-    // The four upload-stack keys (M9m `attachUploaderScope`) are only
-    // registered by `LitUploaderBlock.initCallback` — a bare `<uc-config>`
-    // never runs that path, so none of them exist either.
+    // The four upload-stack keys are only registered by the element-layer
+    // `ensureUploaderScope`/`registerUploadStack` (M-god step 5) — a bare
+    // `<uc-config>` never runs that path, so none of them exist either.
     expect(ctx.has('*secureUploadsManager')).toBe(false);
     expect(ctx.has('*uploadController')).toBe(false);
     expect(ctx.has('*validationManager')).toBe(false);
     expect(ctx.has('*uploadEvents')).toBe(false);
 
-    // And `attachUploaderScope` itself was never called — the controller's
-    // upload-stack getters still throw the pre-attach error, same as a
-    // freshly-constructed `UploaderController`.
-    expect(() => controller.secureUploadsManager).toThrow(/attachUploaderScope/);
-    expect(() => controller.uploadController).toThrow(/attachUploaderScope/);
-    expect(() => controller.validationManager).toThrow(/attachUploaderScope/);
-    expect(() => controller.uploadEvents).toThrow(/attachUploaderScope/);
+    // And `registerUploadStack` itself was never called — the container never
+    // resolved the upload stack (it lives on the container now, not as getters
+    // on the controller).
+    expect(controller.container.has(SecureUploadsController)).toBe(false);
+    expect(controller.container.has(UploadController)).toBe(false);
+    expect(controller.container.has(ValidationController)).toBe(false);
+    expect(controller.container.has(UploadEventsController)).toBe(false);
 
     const errors: string[] = [];
     const onError = (event: ErrorEvent) => {
@@ -498,10 +501,10 @@ describe('instance lifecycle (controller-owned identity pins, M9l final-review f
       '*uploadCollection': () => controller.collection,
       '*a11y': () => controller.a11y,
       '*clipboard': () => controller.clipboard,
-      '*secureUploadsManager': () => controller.secureUploadsManager,
-      '*uploadController': () => controller.uploadController,
-      '*validationManager': () => controller.validationManager,
-      '*uploadEvents': () => controller.uploadEvents,
+      '*secureUploadsManager': () => controller.container.get(SecureUploadsController),
+      '*uploadController': () => controller.container.get(UploadController),
+      '*validationManager': () => controller.container.get(ValidationController),
+      '*uploadEvents': () => controller.container.get(UploadEventsController),
     } satisfies Record<string, () => unknown>;
 
     // Fence: `controllerOwnedInstanceKeys` must not outgrow this map.

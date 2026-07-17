@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
 import { EventEmitter } from '../../blocks/UploadCtxProvider/EventEmitter';
-import type { Uid } from '../../lit/Uid';
 import { ControllerContainer } from '../di/ControllerContainer';
 import { EventBus, UploaderEventType } from '../EventBus';
 import { A11y } from '../managers/a11y';
@@ -11,44 +10,14 @@ import { ClipboardController } from './ClipboardController';
 import { ConfigController } from './ConfigController';
 import { LocaleController } from './LocaleController';
 import { RouterController } from './RouterController';
-import { SecureUploadsController } from './SecureUploadsController';
 import { UploadCollectionController } from './UploadCollectionController';
-import { UploadController } from './UploadController';
-import { UploadEventsController } from './UploadEventsController';
-import { UploaderController, type UploaderScopeDeps, type UploaderStateBridges } from './UploaderController';
-import { ValidationController } from './ValidationController';
-
-const makeUploaderScopeDeps = (overrides: Partial<UploaderScopeDeps> = {}): UploaderScopeDeps => ({
-  controllers: { SecureUploadsController, UploadController, ValidationController, UploadEventsController },
-  getFileHooks: () => [],
-  getOutputItem: (() => ({}) as never) as never,
-  getApi: () => ({}) as never,
-  emitCommonUploadFailed: () => {},
-  emit: () => {},
-  getOutputCollectionState: () => ({}) as never,
-  getOutputData: () => [],
-  runOnAddHooks: () => {},
-  ...overrides,
-});
+import { UploaderController } from './UploaderController';
 
 // The controller now receives its per-ctx DI container at construction (the
 // container owns `config`/`locale`). Tests that don't care about the container
 // build one throwaway per controller.
 const makeController = (deps?: ConstructorParameters<typeof UploaderController>[1]): UploaderController =>
   new UploaderController(new ControllerContainer(), deps);
-
-const makeStateBridges = (overrides: Partial<UploaderStateBridges> = {}): UploaderStateBridges => ({
-  setCollectionErrors: vi.fn(),
-  uploadTrigger: vi.fn(() => new Set<Uid>()),
-  setUploadList: vi.fn(),
-  getCollectionState: vi.fn(() => null),
-  setCollectionState: vi.fn(),
-  getCommonProgress: vi.fn(() => 0),
-  setCommonProgress: vi.fn(),
-  setGroupInfo: vi.fn(),
-  getCollectionErrors: vi.fn(() => []),
-  ...overrides,
-});
 
 describe('UploaderController', () => {
   it('constructs with event, config, and locale controllers', () => {
@@ -378,130 +347,19 @@ describe('UploaderController', () => {
     }
   });
 
-  describe('attachUploaderScope (the upload stack, behind the uploader-present gate)', () => {
-    it('throws accessing any of the four getters before attach — matching the `api` getter convention', () => {
-      const controller = makeController();
-      expect(() => controller.secureUploadsManager).toThrow(/attachUploaderScope/);
-      expect(() => controller.uploadController).toThrow(/attachUploaderScope/);
-      expect(() => controller.validationManager).toThrow(/attachUploaderScope/);
-      expect(() => controller.uploadEvents).toThrow(/attachUploaderScope/);
-    });
-
-    it('constructs the four sub-controllers, wired to the same config/collection', () => {
-      const controller = makeController();
-
-      controller.attachUploaderScope(makeUploaderScopeDeps());
-
-      expect(controller.secureUploadsManager).toBeInstanceOf(SecureUploadsController);
-      expect(controller.uploadController).toBeInstanceOf(UploadController);
-      expect(controller.validationManager).toBeInstanceOf(ValidationController);
-      expect(controller.uploadEvents).toBeInstanceOf(UploadEventsController);
-
-      controller.destroy();
-    });
-
-    it('starts the upload-events collection observation (v1 parity: observe() at the end of construction)', () => {
-      const controller = makeController();
-      const observeSpy = vi.spyOn(UploadEventsController.prototype, 'observe');
-
-      controller.attachUploaderScope(makeUploaderScopeDeps());
-
-      expect(observeSpy).toHaveBeenCalledTimes(1);
-
-      controller.destroy();
-      observeSpy.mockRestore();
-    });
-
-    it('is idempotent — a second call does not reconstruct any of the four', () => {
-      const controller = makeController();
-      controller.attachUploaderScope(makeUploaderScopeDeps());
-      const secureUploadsManager = controller.secureUploadsManager;
-      const uploadController = controller.uploadController;
-      const validationManager = controller.validationManager;
-      const uploadEvents = controller.uploadEvents;
-
-      controller.attachUploaderScope(makeUploaderScopeDeps());
-
-      expect(controller.secureUploadsManager).toBe(secureUploadsManager);
-      expect(controller.uploadController).toBe(uploadController);
-      expect(controller.validationManager).toBe(validationManager);
-      expect(controller.uploadEvents).toBe(uploadEvents);
-
-      controller.destroy();
-    });
-
-    it('is inert after destroy() — a late attach never constructs the stack', () => {
-      const controller = makeController();
-      controller.destroy();
-
-      controller.attachUploaderScope(makeUploaderScopeDeps());
-
-      expect(() => controller.secureUploadsManager).toThrow(/attachUploaderScope/);
-      expect(() => controller.uploadController).toThrow(/attachUploaderScope/);
-      expect(() => controller.validationManager).toThrow(/attachUploaderScope/);
-      expect(() => controller.uploadEvents).toThrow(/attachUploaderScope/);
-    });
-
-    it("routes onResolverError to the controller's own telemetryManager", async () => {
-      const controller = makeController();
-      const sendEventError = vi.spyOn(controller.telemetryManager, 'sendEventError');
-      controller.attachUploaderScope(makeUploaderScopeDeps());
-      controller.config.set('secureUploadsSignatureResolver', (() => {
-        throw new Error('boom');
-      }) as never);
-
-      await controller.secureUploadsManager.getSecureToken();
-
-      expect(sendEventError).toHaveBeenCalledWith(
-        expect.any(Error),
-        expect.stringContaining('secureUploadsSignatureResolver'),
-      );
-
-      controller.destroy();
-    });
-
-    it('destroy() tears down the four in reverse construction order', () => {
-      const controller = makeController();
-      controller.attachUploaderScope(makeUploaderScopeDeps());
-
-      const uploadEventsDestroy = vi.spyOn(controller.uploadEvents, 'destroy');
-      const validationDestroy = vi.spyOn(controller.validationManager, 'destroy');
-      const uploadControllerDestroy = vi.spyOn(controller.uploadController, 'destroy');
-      const secureUploadsDestroy = vi.spyOn(controller.secureUploadsManager, 'destroy');
-
-      controller.destroy();
-
-      expect(uploadEventsDestroy).toHaveBeenCalled();
-      expect(validationDestroy).toHaveBeenCalled();
-      expect(uploadControllerDestroy).toHaveBeenCalled();
-      expect(secureUploadsDestroy).toHaveBeenCalled();
-
-      const uploadEventsOrder = uploadEventsDestroy.mock.invocationCallOrder[0]!;
-      const validationOrder = validationDestroy.mock.invocationCallOrder[0]!;
-      const uploadControllerOrder = uploadControllerDestroy.mock.invocationCallOrder[0]!;
-      const secureUploadsOrder = secureUploadsDestroy.mock.invocationCallOrder[0]!;
-
-      expect(uploadEventsOrder).toBeLessThan(validationOrder);
-      expect(validationOrder).toBeLessThan(uploadControllerOrder);
-      expect(uploadControllerOrder).toBeLessThan(secureUploadsOrder);
-    });
-
-    it('does NOT destroy the collection itself — the container owns its disposal (M-god step 4)', () => {
-      // Build via the container so its dispose() drives teardown, like production.
+  describe('destroy (upload stack now container-owned via registerUploadStack — M-god step 5)', () => {
+    it('exposes its container so the element layer can register the upload stack', () => {
       const container = new ControllerContainer();
       container.bind(UploaderController, (c) => new UploaderController(c));
       const controller = container.get(UploaderController);
-      controller.attachUploaderScope(makeUploaderScopeDeps());
+      expect(controller.container).toBe(container);
+    });
 
-      const collectionDestroy = vi.spyOn(controller.collection, 'destroy');
-
-      // The controller's own destroy() must leave the collection alive...
-      controller.destroy();
-      expect(collectionDestroy).not.toHaveBeenCalled();
-
-      // ...the container disposes it (a leaf, so exactly once).
-      container.dispose();
-      expect(collectionDestroy).toHaveBeenCalledTimes(1);
+    it('no longer owns the four upload-stack getters (moved to the container)', () => {
+      const controller = makeController();
+      expect((controller as unknown as Record<string, unknown>).secureUploadsManager).toBeUndefined();
+      expect((controller as unknown as Record<string, unknown>).uploadEvents).toBeUndefined();
+      expect((controller as unknown as Record<string, unknown>).attachUploaderScope).toBeUndefined();
     });
 
     it('destroy() tolerates never having attached the uploader scope', () => {
@@ -516,99 +374,6 @@ describe('UploaderController', () => {
       controller.destroy();
 
       expect(() => controller.api).toThrow(/setApi/);
-    });
-
-    describe('stateBridges (constructor-time, M9n Task 3 — no longer part of UploaderScopeDeps)', () => {
-      it("wires validation's setCollectionErrors from the constructor-injected stateBridges, not attach-time deps", () => {
-        const stateBridges = makeStateBridges();
-        const controller = makeController({ stateBridges });
-        let capturedDeps: { setCollectionErrors: UploaderStateBridges['setCollectionErrors'] } | undefined;
-        const ValidationControllerSpy = vi.fn(function (
-          this: unknown,
-          deps: { setCollectionErrors: UploaderStateBridges['setCollectionErrors'] },
-        ) {
-          capturedDeps = deps;
-          return new ValidationController(deps as never);
-        }) as unknown as typeof ValidationController;
-
-        controller.attachUploaderScope({
-          ...makeUploaderScopeDeps(),
-          controllers: {
-            SecureUploadsController,
-            UploadController,
-            ValidationController: ValidationControllerSpy,
-            UploadEventsController,
-          },
-        });
-
-        expect(capturedDeps?.setCollectionErrors).toBe(stateBridges.setCollectionErrors);
-
-        controller.destroy();
-      });
-
-      it('wires all 8 uploadEvents state bridges from the constructor-injected stateBridges, not attach-time deps', () => {
-        const stateBridges = makeStateBridges();
-        const controller = makeController({ stateBridges });
-        let capturedDeps:
-          | Pick<
-              UploaderStateBridges,
-              | 'uploadTrigger'
-              | 'setUploadList'
-              | 'getCollectionState'
-              | 'setCollectionState'
-              | 'getCommonProgress'
-              | 'setCommonProgress'
-              | 'setGroupInfo'
-              | 'getCollectionErrors'
-            >
-          | undefined;
-        const UploadEventsControllerSpy = vi.fn(function (
-          this: unknown,
-          deps: Pick<
-            UploaderStateBridges,
-            | 'uploadTrigger'
-            | 'setUploadList'
-            | 'getCollectionState'
-            | 'setCollectionState'
-            | 'getCommonProgress'
-            | 'setCommonProgress'
-            | 'setGroupInfo'
-            | 'getCollectionErrors'
-          >,
-        ) {
-          capturedDeps = deps;
-          return new UploadEventsController(deps as never);
-        }) as unknown as typeof UploadEventsController;
-
-        controller.attachUploaderScope({
-          ...makeUploaderScopeDeps(),
-          controllers: {
-            SecureUploadsController,
-            UploadController,
-            ValidationController,
-            UploadEventsController: UploadEventsControllerSpy,
-          },
-        });
-
-        expect(capturedDeps?.uploadTrigger).toBe(stateBridges.uploadTrigger);
-        expect(capturedDeps?.setUploadList).toBe(stateBridges.setUploadList);
-        expect(capturedDeps?.getCollectionState).toBe(stateBridges.getCollectionState);
-        expect(capturedDeps?.setCollectionState).toBe(stateBridges.setCollectionState);
-        expect(capturedDeps?.getCommonProgress).toBe(stateBridges.getCommonProgress);
-        expect(capturedDeps?.setCommonProgress).toBe(stateBridges.setCommonProgress);
-        expect(capturedDeps?.setGroupInfo).toBe(stateBridges.setGroupInfo);
-        expect(capturedDeps?.getCollectionErrors).toBe(stateBridges.getCollectionErrors);
-
-        controller.destroy();
-      });
-
-      it('defaults stateBridges to inert no-ops when not injected — attach never throws', () => {
-        const controller = makeController();
-
-        expect(() => controller.attachUploaderScope(makeUploaderScopeDeps())).not.toThrow();
-
-        controller.destroy();
-      });
     });
   });
 });
