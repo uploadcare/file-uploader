@@ -142,7 +142,6 @@ exports[`NPM package > exports \`web\` should match snapshot > web/uc-cloud-imag
   "EditorScroller": [Function],
   "EditorSlider": [Function],
   "EditorToolbar": [Function],
-  "Icon": [Function],
   "LineLoaderUi": [Function],
   "PresenceToggle": [Function],
   "SliderUi": [Function],
