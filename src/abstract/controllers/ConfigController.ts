@@ -1,7 +1,7 @@
 import type { CustomConfigDefinition } from '../../abstract/customConfigOptions';
 import { initialConfig } from '../../blocks/Config/initialConfig';
 import type { ConfigType } from '../../types/exported';
-import { StateController } from './StateController';
+import { SignalMap } from '../di/SignalMap';
 
 /**
  * Pure-logic config store. Knows nothing about DOM, attributes, or Lit.
@@ -15,28 +15,54 @@ import { StateController } from './StateController';
  * migrate into this controller in later milestones (when `<uc-config>` is
  * finally retired).
  *
- * Custom (plugin-registered) keys live in the same backing object as built-ins
- * — `register()` adds them, `getCustom`/`setCustom` access them.
+ * Custom (plugin-registered) keys live in the same signal-backed map as
+ * built-ins — `register()` adds them, `getCustom`/`setCustom` access them.
  *
- * Extends the shared `StateController` (get/set/subscribe/notify/destroy) and
- * adds config-specific custom-key registration on top.
+ * Backed by a composed `SignalMap` (has-a, not a base class): reads auto-track
+ * under a `SignalWatcher`, `set()`/`setCustom()` dedup with `Object.is` and
+ * fire the map's coarse notify, and `subscribe()` fans out on any change —
+ * preserving the exact `get`/`set`/`subscribe`/`values`/`notify` semantics the
+ * `PubSubCompat` `*cfg/` routing depends on. The map is typed over `ConfigType`
+ * intersected with a string index so runtime custom keys type cleanly.
  */
-export class ConfigController extends StateController<ConfigType> {
-  private _customKeys = new Set<string>();
-  private _customDefs = new Map<string, CustomConfigDefinition<unknown>>();
+export class ConfigController {
+  // Signal-backed store, seeded with the built-in defaults. The `Record<string,
+  // unknown>` arm models the dynamic plugin-registered keyspace so custom-key
+  // access needs no per-call cast.
+  #state = new SignalMap<ConfigType & Record<string, unknown>>(initialConfig);
+  #customKeys = new Set<string>();
+  #customDefs = new Map<string, CustomConfigDefinition<unknown>>();
 
-  public constructor() {
-    // Null-prototype backing object: custom (plugin-registered) key names flow
-    // into `getCustom`/`setCustom`, so a key like `__proto__` must create a
-    // plain own property here rather than mutate the prototype chain.
-    super(Object.assign(Object.create(null), initialConfig));
+  /** Live config object (stable reference — mutate via `set`/`setCustom`). */
+  public get values(): Readonly<ConfigType> {
+    return this.#state.values;
+  }
+
+  public get<K extends keyof ConfigType>(key: K): ConfigType[K] {
+    // Every built-in is seeded at construction, so the value is always present.
+    return this.#state.get(key) as ConfigType[K];
+  }
+
+  /** Notifies only when the value actually changes (`Object.is` dedup). */
+  public set<K extends keyof ConfigType>(key: K, value: ConfigType[K]): void {
+    this.#state.set(key, value);
+  }
+
+  /** Coarse subscribe — fires on any config change, not per-key. */
+  public subscribe(listener: () => void): () => void {
+    return this.#state.subscribe(listener);
+  }
+
+  /** Coarse notify with no state change — for a re-render on a non-keyed change. */
+  public notify(): void {
+    this.#state.notify();
   }
 
   /** True for any known key — a built-in default or a registered custom key. */
   public hasKey(name: string): boolean {
     // Own-property check: `in` would walk the prototype chain and wrongly
     // report `toString`, `constructor`, `__proto__`, etc. as known keys.
-    return Object.hasOwn(initialConfig, name) || this._customKeys.has(name);
+    return Object.hasOwn(initialConfig, name) || this.#customKeys.has(name);
   }
 
   // ─── Custom (plugin-registered) keys ───────────────────────────────────
@@ -44,41 +70,36 @@ export class ConfigController extends StateController<ConfigType> {
   public register<T>(nameOrDef: string | CustomConfigDefinition<T>, defaultValue?: T): void {
     const def: CustomConfigDefinition<T> =
       typeof nameOrDef === 'string' ? { name: nameOrDef, defaultValue: defaultValue as T } : nameOrDef;
-    if (this._customKeys.has(def.name)) {
+    if (this.#customKeys.has(def.name)) {
       // Already registered — keep the existing value (idempotent re-register).
       return;
     }
-    this._customKeys.add(def.name);
-    this._customDefs.set(def.name, def as CustomConfigDefinition<unknown>);
-    const bag = this._state as Record<string, unknown>;
+    this.#customKeys.add(def.name);
+    this.#customDefs.set(def.name, def as CustomConfigDefinition<unknown>);
     // Keep any value set before the plugin registered (e.g. an attribute that
-    // landed first), otherwise seed the registered default. Own-property check
-    // (not `=== undefined`) mirrors the nanostores `key in store` semantics, so
-    // an explicit pre-registration write of `undefined` is preserved.
-    if (!Object.hasOwn(bag, def.name)) {
-      bag[def.name] = def.defaultValue;
-    }
-    this.notify();
+    // landed first), otherwise seed the registered default. `seed` is a no-op
+    // when the key is already present, mirroring the v1 own-property check, so
+    // an explicit pre-registration write (including of `undefined`) is
+    // preserved. The single `notify()` below fires exactly once either way.
+    this.#state.seed(def.name, def.defaultValue);
+    this.#state.notify();
   }
 
   public customDefinition(name: string): CustomConfigDefinition<unknown> | undefined {
-    return this._customDefs.get(name);
+    return this.#customDefs.get(name);
   }
 
   public getCustom<T = unknown>(name: string): T {
-    return (this._state as Record<string, unknown>)[name] as T;
+    return this.#state.get(name) as T;
   }
 
   public setCustom(name: string, value: unknown): void {
-    const bag = this._state as Record<string, unknown>;
-    if (bag[name] === value) return;
-    bag[name] = value;
-    this.notify();
+    this.#state.set(name, value);
   }
 
-  public override destroy(): void {
-    this._customKeys.clear();
-    this._customDefs.clear();
-    super.destroy();
+  public destroy(): void {
+    this.#customKeys.clear();
+    this.#customDefs.clear();
+    this.#state.destroy();
   }
 }

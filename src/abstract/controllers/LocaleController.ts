@@ -1,4 +1,4 @@
-import { Listeners } from '../host-subscription';
+import { SignalMap } from '../di/SignalMap';
 
 /**
  * Pure-logic locale string store. Knows nothing about DOM or Lit.
@@ -12,41 +12,38 @@ import { Listeners } from '../host-subscription';
  * `l10n.ts` reads from here to do ICU-plural + template substitution — so
  * behavior is byte-identical to v1. That orchestration migrates into this
  * controller when `LocaleManager` is retired.
+ *
+ * Backed by a composed `SignalMap` (has-a): reads auto-track under a
+ * `SignalWatcher`, `set()` dedups unchanged writes and fires the map's coarse
+ * notify, and `subscribe()` fans out on any change — preserving the per-key
+ * change semantics the `PubSubCompat` `*l10n/` routing depends on. A locale
+ * key named `__proto__` is an ordinary map key, never a prototype write.
  */
 export class LocaleController {
-  // Null-prototype backing object: locale keys can be plugin-supplied, so a
-  // key like `__proto__` must create a plain own property here rather than
-  // touch the prototype chain.
-  private _values: Record<string, string> = Object.create(null);
-  private _listeners = new Listeners();
+  #values = new SignalMap<Record<string, string>>();
 
   public get values(): Readonly<Record<string, string>> {
-    return this._values;
+    return this.#values.values;
   }
 
   public subscribe(listener: () => void): () => void {
-    return this._listeners.subscribe(listener);
+    return this.#values.subscribe(listener);
   }
 
   public has(key: string): boolean {
-    // Own-property check: `in` would walk the prototype chain and wrongly
-    // report `toString`, `__proto__`, etc. as present.
-    return Object.hasOwn(this._values, key);
+    return this.#values.has(key);
   }
 
   public get(key: string): string | undefined {
-    return this._values[key];
+    return this.#values.get(key);
   }
 
   /** Notifies only when the value actually changes (per-key change semantics). */
   public set(key: string, value: string): void {
-    if (this._values[key] === value) return;
-    this._values[key] = value;
-    this._listeners.notify();
+    this.#values.set(key, value);
   }
 
   public destroy(): void {
-    this._values = Object.create(null);
-    this._listeners.clear();
+    this.#values.destroy();
   }
 }
