@@ -15,7 +15,6 @@ import type { TelemetryManager } from '../abstract/managers/TelemetryManager';
 import type { UploaderPublicApi } from '../abstract/UploaderPublicApi';
 import type { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter';
 import type { ConfigType, CustomConfig, OutputCollectionState, OutputErrorCollection } from '../types';
-import type { LitBlock } from './LitBlock';
 import type { ISharedInstance } from './shared-instances';
 import type { Uid } from './Uid';
 
@@ -26,8 +25,6 @@ type SharedConfigState = {
 type SharedCustomConfigState = {
   [K in keyof CustomConfig as `*cfg/${K}`]: CustomConfig[K];
 };
-
-export type BlocksRegistry = Set<LitBlock>;
 
 type UploaderBlockCtxState = {
   '*commonProgress': number;
@@ -46,7 +43,6 @@ type SharedContextInstances = Map<string, ISharedInstance>;
 
 type DynamicBlockState = {
   '*sharedContextInstances': SharedContextInstances;
-  '*blocksRegistry': BlocksRegistry;
   '*eventEmitter': EventEmitter;
   '*localeManager': LocaleManager;
   '*telemetryManager': TelemetryManager;
