@@ -1,13 +1,17 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import type { PubSub } from '../../../lit/PubSubCompat';
 import type { SharedState } from '../../../lit/SharedState';
 import type { SharedInstancesBag } from '../../../lit/shared-instances';
 import { RouterController } from '../../controllers/RouterController';
+import { ControllerContainer } from '../../di/ControllerContainer';
 import { buildPluginApi } from './buildPluginApi';
 import { PluginRegistry } from './PluginRegistry';
 
 const setup = () => {
-  const router = new RouterController({ emit: vi.fn() });
+  // RouterController is container-resolved now (M-god step 3c): its emit target
+  // (`EventEmitter`) is `@inject`-ed, so build it through a container. Navigation
+  // in these specs emits to the auto-constructed bus (no listeners) harmlessly.
+  const router = new ControllerContainer().get(RouterController);
   const bag = { router } as unknown as SharedInstancesBag;
   const registry = new PluginRegistry(() => {});
   const ctx = {

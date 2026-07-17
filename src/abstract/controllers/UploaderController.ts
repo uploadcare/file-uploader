@@ -1,7 +1,7 @@
 import { EventEmitter } from '../../blocks/UploadCtxProvider/EventEmitter';
 import { applyInitialCrop } from '../applyInitialCrop';
 import type { ControllerContainer } from '../di/ControllerContainer';
-import { EventBus, type UploaderEventKey, type UploaderEventPayload, UploaderEventType } from '../EventBus';
+import { EventBus, type UploaderEventKey, type UploaderEventPayload } from '../EventBus';
 import { A11y } from '../managers/a11y';
 import { LocaleManager } from '../managers/LocaleManager';
 import { TelemetryManager } from '../managers/TelemetryManager';
@@ -47,12 +47,15 @@ import type { ValidationController, ValidationControllerDeps } from './Validatio
  * `container.dispose()` in reverse construction order). Step 3a moved `config`
  * and `locale`; step 3b moved `events`, `eventEmitter`, `localeManager`,
  * `a11y`, and the solution identity (`solutionName`/`setSolutionName`, now
- * owned by the container's `AppInfo`). The rest — `collection`,
- * `telemetryManager`, `router`, `clipboard` — are still constructor-injected
- * (mirroring `ValidationController`'s deps-object style): each defaults to a
- * freshly-constructed instance, so tests and later milestones can substitute a
- * fake or share an existing instance. Later milestones move the rest onto the
- * container one slice at a time.
+ * owned by the container's `AppInfo`); step 3c moved `router` and
+ * `telemetryManager` (the latter now an `EventBus` observer rather than a
+ * mirror on this controller's `emit`). The constructor eagerly resolves
+ * `config`/`router`/`telemetry` so they exist from birth (telemetry subscribes
+ * to the bus before any event fires). The rest — `collection`, `clipboard` —
+ * are still constructor-injected (mirroring `ValidationController`'s deps-object
+ * style): each defaults to a freshly-constructed instance, so tests and later
+ * milestones can substitute a fake or share an existing instance. Later
+ * milestones move the rest onto the container one slice at a time.
  *
  * `PluginController` stays constructed by the DOM layer (`LitBlock`) — it
  * genuinely needs the PubSub ctx (`*lazyPlugins`, arbitrary shared state) and
@@ -99,8 +102,6 @@ export type UploaderStateBridges = {
 
 export type UploaderControllerDeps = {
   collection?: UploadCollectionController;
-  telemetryManager?: TelemetryManager;
-  router?: RouterController;
   clipboard?: ClipboardController;
   /** See `UploaderStateBridges` doc. Defaults to inert no-ops (editor-only scopes never attach an uploader). */
   stateBridges?: UploaderStateBridges;
@@ -170,8 +171,6 @@ type UploaderScope = {
 
 export class UploaderController {
   public readonly collection: UploadCollectionController;
-  public readonly telemetryManager: TelemetryManager;
-  public readonly router: RouterController;
   public readonly clipboard: ClipboardController;
 
   // The uploader-scope public API — element-constructed (see class doc),
@@ -192,29 +191,11 @@ export class UploaderController {
   private readonly _container: ControllerContainer;
 
   public constructor(container: ControllerContainer, deps: UploaderControllerDeps = {}) {
-    // Assigned FIRST — the eager deps below (telemetryManager/router/clipboard
-    // closures) read `this.config`/`this.eventEmitter`/`this.solutionName`,
-    // which are now delegating getters resolving through this container.
+    // Assigned FIRST — the eager resolutions and the clipboard closures below
+    // read `this.config`/`this.router`, delegating getters resolving here.
     this._container = container;
     this.collection = deps.collection ?? new UploadCollectionController();
 
-    this.telemetryManager =
-      deps.telemetryManager ??
-      new TelemetryManager({
-        config: this.config,
-        getSolution: () => this.solutionName,
-        getActivity: () => this.router.currentActivity,
-      });
-    this.router =
-      deps.router ??
-      new RouterController({
-        emit: (type, payload) => {
-          // Matches v1's `LitBlock._routerEmit`: modal transitions debounce,
-          // activity-change fires immediately.
-          const debounce = type === UploaderEventType.MODAL_OPEN || type === UploaderEventType.MODAL_CLOSE;
-          this.emit(type, payload, debounce ? { debounce: true } : undefined);
-        },
-      });
     this.clipboard =
       deps.clipboard ??
       new ClipboardController({
@@ -224,6 +205,22 @@ export class UploaderController {
         addFileFromUrl: (url, options) => this.api.addFileFromUrl(url, options),
         onFileAdd: () => this.router.traverse('onFileAdd'),
       });
+
+    // Eagerly resolve the container-owned managers that must exist from birth
+    // (M-god step 3c — parity with their former eager construction). The order
+    // fixes reverse-insertion disposal and the observer's subscribe timing:
+    //  - `config` first → disposed LAST (telemetry's `_unsubConfig` runs during
+    //    teardown; the returned unsubscribe is a safe no-op even after config is
+    //    disposed, but config outliving telemetry keeps intent clear);
+    //  - `router` before `telemetry` (telemetry reads `router.currentActivity`);
+    //  - `telemetry` last, so its `init()` subscribes to the bus BEFORE any
+    //    event can fire — the observer then sees every event the old per-emit
+    //    telemetry mirror used to (and, additionally, the direct
+    //    `eventEmitter.emit` callers the mirror never reached).
+    this._container.get(ConfigController);
+    this._container.get(RouterController);
+    this._container.get(TelemetryManager);
+
     // Default no-op bridges for construction without a PubSub ctx (tests /
     // non-element callers). `uploadTrigger` MUST return a STABLE set — the
     // real bridge exposes the live `*uploadTrigger` set that
@@ -244,10 +241,14 @@ export class UploaderController {
   }
 
   /**
-   * Telemetry-augmented emit — matches v1 `LitBlock.emit`'s guard + payload-
-   * function resolution exactly, plus `ChildBlock.emit`'s try/catch around the
-   * telemetry mirror (teardown-safe: a send racing `destroy()` must never
-   * throw back into the caller). A silent no-op once destroyed.
+   * Pure-dispatch emit — matches v1 `LitBlock.emit`'s guard exactly. A silent
+   * no-op once destroyed.
+   *
+   * M-god step 3c removed the telemetry mirror that used to live here: telemetry
+   * is now an `EventBus` observer (`TelemetryManager.init()` subscribes to
+   * `bus.onAny`), so every `eventEmitter.emit` — from here, from
+   * `ChildBlock.emit`, or from a direct caller like `UploaderPublicApi.uploadAll`
+   * — reaches telemetry via the bus, without any per-emit mirror.
    */
   public emit<T extends UploaderEventKey>(
     type: T,
@@ -259,17 +260,6 @@ export class UploaderController {
     }
 
     this.eventEmitter.emit(type, payload, options);
-
-    const resolvedPayload = typeof payload === 'function' ? payload() : payload;
-
-    try {
-      this.telemetryManager.sendEvent({
-        eventType: type,
-        payload: (resolvedPayload ?? undefined) as Record<string, unknown> | undefined,
-      });
-    } catch {
-      // Telemetry may already be torn down — reporting must never throw.
-    }
   }
 
   /**
@@ -308,6 +298,16 @@ export class UploaderController {
   /** Keyboard-UX (a11y) manager — container-owned (M-god step 3b). */
   public get a11y(): A11y {
     return this._container.get(A11y);
+  }
+
+  /** Dual-slot router — container-owned (M-god step 3c). */
+  public get router(): RouterController {
+    return this._container.get(RouterController);
+  }
+
+  /** Quality-insights telemetry (a bus observer) — container-owned (M-god step 3c). */
+  public get telemetryManager(): TelemetryManager {
+    return this._container.get(TelemetryManager);
   }
 
   /** Solution (preset) identity — owned by the container's `AppInfo` (M-god step 3b). */
@@ -460,11 +460,16 @@ export class UploaderController {
   public destroy(): void {
     this._destroyed = true;
 
-    // `events`/`eventEmitter`/`localeManager`/`a11y` and `config`/`locale`/
-    // `AppInfo` are NOT torn down here — the container owns them and disposes
-    // them (around this `destroy()`) in reverse construction order. `events`
-    // (registered after this controller) is therefore disposed just before
-    // this runs, preserving v1's events-first teardown.
+    // `events`/`eventEmitter`/`localeManager`/`a11y`/`router`/`telemetryManager`
+    // and `config`/`locale`/`AppInfo` are NOT torn down here — the container owns
+    // them and disposes them in reverse construction order. Step 3c eagerly
+    // resolves `config`/`router`/`telemetry` in the constructor (telemetry's
+    // `init()` pulls `EventBus`), so `EventBus` now registers BEFORE this
+    // controller and is disposed just AFTER this `destroy()` runs. That is safe:
+    // teardown emissions are already suppressed (this `_destroyed` guard;
+    // `ChildBlock.emit`'s null-ctx guard once `deleteCtx` removes the ctx), so
+    // nothing reaches the still-live bus during `destroy()`, and the telemetry
+    // observer detaches when `EventBus.destroy()` clears its listeners.
 
     // The uploader-scope stack tears down BEFORE `this.collection.destroy()`,
     // in reverse construction order: `UploadEventsController.unobserve()`
@@ -481,10 +486,10 @@ export class UploaderController {
 
     this.collection.destroy();
 
-    // Reverse construction order for the controller's still-owned managers.
+    // `router`/`telemetryManager` are NOT torn down here (M-god step 3c) — the
+    // container owns them and disposes them in reverse construction order.
+    // `clipboard` stays controller-owned (a later cluster moves it).
     this.clipboard.destroy();
-    this.router.destroy();
-    this.telemetryManager.destroy();
 
     // M9l follow-up: restore v1's throw-on-teardown-straddle parity — reading
     // `api` after destroy() must throw again, not keep returning a torn-down
