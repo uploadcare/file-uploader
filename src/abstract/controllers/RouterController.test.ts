@@ -1,11 +1,19 @@
-import { afterEach, describe, expect, it, type Mock, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { EventEmitter } from '../../blocks/UploadCtxProvider/EventEmitter';
 import type { ActivityId } from '../../lit/activity-constants';
+import { ControllerContainer } from '../di/ControllerContainer';
 import { UploaderEventType } from '../EventBus';
-import { NAVIGATE_CANCEL, RouterController, type RouterControllerDeps } from './RouterController';
+import { NAVIGATE_CANCEL, RouterController } from './RouterController';
 
 const setup = () => {
-  const emit = vi.fn() as Mock & RouterControllerDeps['emit'];
-  const router = new RouterController({ emit });
+  // RouterController is container-resolved (M-god step 3c): it emits via the
+  // container-owned `EventEmitter`, `@inject`-ed lazily. Bind a spy so specs can
+  // assert the exact `(type, payload, options)` dispatch — including the modal
+  // debounce, which now lives inside RouterController's own `_emit`.
+  const container = new ControllerContainer();
+  const emit = vi.fn();
+  container.bind(EventEmitter, () => ({ emit }) as unknown as EventEmitter);
+  const router = container.get(RouterController);
   return { router, emit };
 };
 
@@ -36,7 +44,7 @@ describe('RouterController (v2)', () => {
       expect(router.modal).toBe('camera');
       expect(router.activity).toBeNull();
       expect(router.currentActivity).toBe('camera');
-      expect(emit).toHaveBeenCalledWith(UploaderEventType.MODAL_OPEN, { modalId: 'camera' });
+      expect(emit).toHaveBeenCalledWith(UploaderEventType.MODAL_OPEN, { modalId: 'camera' }, { debounce: true });
     });
 
     it('a background navigation closes an open modal first', () => {
@@ -53,6 +61,7 @@ describe('RouterController (v2)', () => {
       expect(emit).toHaveBeenCalledWith(
         UploaderEventType.MODAL_CLOSE,
         expect.objectContaining({ hasActiveModals: false }),
+        { debounce: true },
       );
     });
 
@@ -383,10 +392,14 @@ describe('RouterController (v2)', () => {
       emit.mockClear();
       router.closeModal();
       expect(router.modal).toBeNull();
-      expect(emit).toHaveBeenCalledWith(UploaderEventType.MODAL_CLOSE, {
-        modalId: 'camera',
-        hasActiveModals: false,
-      });
+      expect(emit).toHaveBeenCalledWith(
+        UploaderEventType.MODAL_CLOSE,
+        {
+          modalId: 'camera',
+          hasActiveModals: false,
+        },
+        { debounce: true },
+      );
     });
   });
 
@@ -672,6 +685,102 @@ describe('RouterController (v2)', () => {
       releaseA();
       releaseA(); // double-release must not double-decrement
       expect(router.hasMountedActivity('start-from')).toBe(true);
+    });
+  });
+
+  describe('emit debounce (M-god step 3c — debounce lives in RouterController)', () => {
+    it('debounces MODAL_OPEN and MODAL_CLOSE, emits ACTIVITY_CHANGE immediately', () => {
+      const { router, emit } = setup();
+
+      // openModal emits both MODAL_OPEN (debounced) and ACTIVITY_CHANGE (the
+      // effective activity changed) — the modal carries the debounce option, the
+      // activity change does not.
+      router.openModal('camera');
+      expect(emit).toHaveBeenCalledWith(UploaderEventType.MODAL_OPEN, { modalId: 'camera' }, { debounce: true });
+      expect(emit).toHaveBeenCalledWith(UploaderEventType.ACTIVITY_CHANGE, { activity: 'camera' });
+
+      router.closeModal();
+      expect(emit).toHaveBeenCalledWith(
+        UploaderEventType.MODAL_CLOSE,
+        { modalId: 'camera', hasActiveModals: false },
+        { debounce: true },
+      );
+    });
+
+    it('never passes an options object for a non-modal (activity) event', () => {
+      const { router, emit } = setup();
+      router.navigate('start-from');
+      const activityCall = emit.mock.calls.find(([type]) => type === UploaderEventType.ACTIVITY_CHANGE);
+      expect(activityCall).toBeDefined();
+      expect(activityCall).toHaveLength(2); // (type, payload) only — no debounce arg
+    });
+  });
+
+  describe('currentActivity (signal-backed field, M-god step 3c)', () => {
+    it('tracks the effective (modal-aware) activity across transitions', () => {
+      const { router } = setup();
+      expect(router.currentActivity).toBeNull();
+
+      router.setActivity('start-from');
+      expect(router.currentActivity).toBe('start-from'); // background slot
+
+      router.openModal('camera');
+      expect(router.currentActivity).toBe('camera'); // foreground wins
+
+      router.closeModal();
+      expect(router.currentActivity).toBe('start-from'); // falls back to background
+
+      router.navigate(null);
+      expect(router.currentActivity).toBeNull();
+    });
+  });
+
+  describe('guard-refused slot writes', () => {
+    it('setActivity into a guarded-out target is refused (activity unchanged)', () => {
+      const { router } = setup();
+      router.guard('upload-list', () => false);
+
+      router.setActivity('upload-list', { x: 1 });
+
+      expect(router.activity).toBeNull();
+      expect(router.params).toEqual({}); // params untouched — never entered
+    });
+
+    it('openModal into a guarded-out target is refused (no modal opens, no emit)', () => {
+      const { router, emit } = setup();
+      router.guard('camera', () => false);
+
+      router.openModal('camera');
+
+      expect(router.modal).toBeNull();
+      expect(emit).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('onDone edge hook', () => {
+    it('an onDone hook redirects the intent to its returned target', () => {
+      const { router } = setup();
+      router.configure({ doneActivity: 'upload-list' });
+      router.hooks.onDone(() => 'camera'); // override the configured done activity
+      router.traverse('onDone');
+      expect(router.currentActivity).toBe('camera');
+    });
+  });
+
+  describe('edge cases (coverage)', () => {
+    it('revalidate() with nothing active is a no-op (null is always activatable)', () => {
+      const { router } = setup();
+      expect(() => router.revalidate()).not.toThrow();
+      expect(router.currentActivity).toBeNull();
+    });
+
+    it('a mounted-activity release after destroy() cleared the map is a safe no-op', () => {
+      const { router } = setup();
+      const release = router.activityBlockMounted('start-from');
+      router.destroy(); // clears the mounted-activity map
+      // The release still runs (it was never called before), now against an empty
+      // map — the refcount fallback keeps it from throwing / under-counting.
+      expect(() => release()).not.toThrow();
     });
   });
 

@@ -136,8 +136,8 @@ describe('UploaderController', () => {
   describe('ctx-scope managers', () => {
     it('exposes localeManager, eventEmitter, telemetryManager, router, a11y, and clipboard', () => {
       const controller = makeController();
-      // localeManager/eventEmitter/a11y resolve from the container; the rest
-      // are constructor-owned.
+      // localeManager/eventEmitter/a11y/router/telemetryManager resolve from the
+      // container (M-god step 3b + 3c); clipboard is constructor-owned.
       expect(controller.localeManager).toBeInstanceOf(LocaleManager);
       expect(controller.eventEmitter).toBeInstanceOf(EventEmitter);
       expect(controller.telemetryManager).toBeInstanceOf(TelemetryManager);
@@ -146,13 +146,7 @@ describe('UploaderController', () => {
       expect(controller.clipboard).toBeInstanceOf(ClipboardController);
     });
 
-    it('uses constructor-injected telemetry/router/clipboard instead of constructing its own', () => {
-      const telemetryManager = new TelemetryManager({
-        config: new ConfigController(),
-        getSolution: () => null,
-        getActivity: () => null,
-      });
-      const router = new RouterController({ emit: () => {} });
+    it('uses the constructor-injected clipboard instead of constructing its own', () => {
       const clipboard = new ClipboardController({
         getPasteScope: () => false,
         getCurrentActivity: () => null,
@@ -161,40 +155,44 @@ describe('UploaderController', () => {
         onFileAdd: () => {},
       });
 
-      const controller = makeController({
-        telemetryManager,
-        router,
-        clipboard,
-      });
+      const controller = makeController({ clipboard });
 
-      expect(controller.telemetryManager).toBe(telemetryManager);
-      expect(controller.router).toBe(router);
       expect(controller.clipboard).toBe(clipboard);
     });
 
-    it('resolves eventEmitter/localeManager/a11y from the container (bound instances)', () => {
+    it('resolves eventEmitter/localeManager/a11y/router/telemetryManager from the container (bound instances)', () => {
       const container = new ControllerContainer();
       const eventEmitter = new EventEmitter();
       const localeManager = new LocaleManager();
       const a11y = new A11y();
+      const router = new RouterController();
+      const telemetryManager = new TelemetryManager();
       container.bind(EventEmitter, () => eventEmitter);
       container.bind(LocaleManager, () => localeManager);
       container.bind(A11y, () => a11y);
+      container.bind(RouterController, () => router);
+      container.bind(TelemetryManager, () => telemetryManager);
 
       const controller = new UploaderController(container);
 
       expect(controller.eventEmitter).toBe(eventEmitter);
       expect(controller.localeManager).toBe(localeManager);
       expect(controller.a11y).toBe(a11y);
+      expect(controller.router).toBe(router);
+      expect(controller.telemetryManager).toBe(telemetryManager);
     });
 
-    it("wires the router's emit to the controller's own emit, debouncing modal transitions", () => {
-      const controller = makeController();
-      const emitSpy = vi.spyOn(controller, 'emit');
+    it('wires the router to emit through the container EventEmitter, debouncing modal transitions (M-god step 3c)', () => {
+      // The debounce moved into RouterController; it emits directly to the
+      // container-owned EventEmitter (no longer via UploaderController.emit).
+      const container = new ControllerContainer();
+      const emit = vi.fn();
+      container.bind(EventEmitter, () => ({ emit }) as unknown as EventEmitter);
+      const controller = new UploaderController(container);
 
       controller.router.openModal('camera' as never);
 
-      expect(emitSpy).toHaveBeenCalledWith(UploaderEventType.MODAL_OPEN, { modalId: 'camera' }, { debounce: true });
+      expect(emit).toHaveBeenCalledWith(UploaderEventType.MODAL_OPEN, { modalId: 'camera' }, { debounce: true });
     });
   });
 
@@ -209,28 +207,21 @@ describe('UploaderController', () => {
       expect(handler).toHaveBeenCalledTimes(1);
     });
 
-    it('mirrors the event to the owned TelemetryManager', () => {
+    it('resolves a function payload for its listeners', () => {
       const controller = makeController();
-      const sendEventSpy = vi.spyOn(controller.telemetryManager, 'sendEvent');
-
-      controller.emit(UploaderEventType.UPLOAD_CLICK, undefined);
-
-      expect(sendEventSpy).toHaveBeenCalledWith({ eventType: UploaderEventType.UPLOAD_CLICK, payload: undefined });
-    });
-
-    it('resolves a function payload before mirroring to telemetry', () => {
-      const controller = makeController();
-      const sendEventSpy = vi.spyOn(controller.telemetryManager, 'sendEvent');
+      const handler = vi.fn();
+      controller.eventEmitter.on(UploaderEventType.DONE_CLICK, handler);
 
       controller.emit(UploaderEventType.DONE_CLICK, () => ({ foo: 'bar' }) as never);
 
-      expect(sendEventSpy).toHaveBeenCalledWith({
-        eventType: UploaderEventType.DONE_CLICK,
-        payload: { foo: 'bar' },
-      });
+      expect(handler).toHaveBeenCalledWith({ foo: 'bar' });
     });
 
-    it('contains a telemetry mirror failure — the listener still ran, and emit never throws', () => {
+    it('is pure dispatch — no telemetry mirror from emit (telemetry observes the bus, M-god step 3c)', () => {
+      // UploaderController.emit no longer calls telemetry.sendEvent itself. A
+      // broken telemetry observer therefore cannot break emit: the bus isolates
+      // a throwing listener (isolate-and-warn), so emit never throws and the
+      // real listener still runs.
       const controller = makeController();
       const handler = vi.fn();
       controller.eventEmitter.on(UploaderEventType.UPLOAD_CLICK, handler);
@@ -242,7 +233,7 @@ describe('UploaderController', () => {
       expect(handler).toHaveBeenCalledTimes(1);
     });
 
-    it('is a silent no-op after destroy()', () => {
+    it('is a silent no-op after destroy() — no dispatch, so the bus observer never fires', () => {
       const controller = makeController();
       const handler = vi.fn();
       controller.eventEmitter.on(UploaderEventType.UPLOAD_CLICK, handler);
@@ -252,27 +243,32 @@ describe('UploaderController', () => {
       expect(() => controller.emit(UploaderEventType.UPLOAD_CLICK)).not.toThrow();
 
       expect(handler).not.toHaveBeenCalled();
+      // The `_destroyed` guard skips `eventEmitter.emit`, so nothing reaches the
+      // bus and the telemetry observer is never invoked.
       expect(sendEventSpy).not.toHaveBeenCalled();
     });
   });
 
-  it('destroy() tears down the controller-owned managers in reverse construction order', () => {
-    const controller = makeController();
+  it('destroy() tears down the controller-owned clipboard, leaving router/telemetry for the container (M-god step 3c)', () => {
+    const container = new ControllerContainer();
+    container.bind(UploaderController, (c) => new UploaderController(c));
+    const controller = container.get(UploaderController);
     const clipboardDestroy = vi.spyOn(controller.clipboard, 'destroy');
     const routerDestroy = vi.spyOn(controller.router, 'destroy');
     const telemetryDestroy = vi.spyOn(controller.telemetryManager, 'destroy');
 
     controller.destroy();
 
-    expect(clipboardDestroy).toHaveBeenCalled();
-    expect(routerDestroy).toHaveBeenCalled();
-    expect(telemetryDestroy).toHaveBeenCalled();
+    // clipboard is still controller-owned...
+    expect(clipboardDestroy).toHaveBeenCalledTimes(1);
+    // ...router/telemetry are container-owned now — not torn down by the controller.
+    expect(routerDestroy).not.toHaveBeenCalled();
+    expect(telemetryDestroy).not.toHaveBeenCalled();
 
-    const clipboardOrder = clipboardDestroy.mock.invocationCallOrder[0]!;
-    const routerOrder = routerDestroy.mock.invocationCallOrder[0]!;
-    const telemetryOrder = telemetryDestroy.mock.invocationCallOrder[0]!;
-    expect(clipboardOrder).toBeLessThan(routerOrder);
-    expect(routerOrder).toBeLessThan(telemetryOrder);
+    // The container disposes them (reverse construction order).
+    container.dispose();
+    expect(routerDestroy).toHaveBeenCalledTimes(1);
+    expect(telemetryDestroy).toHaveBeenCalledTimes(1);
   });
 
   it('leaves events/eventEmitter/localeManager/a11y for the container to dispose (not destroyed by controller.destroy())', () => {

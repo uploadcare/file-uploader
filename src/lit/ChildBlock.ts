@@ -123,10 +123,17 @@ export abstract class ChildBlock extends ChildBlockBase {
   public l10n = createL10n(() => this._requireCtx());
 
   /**
-   * Emit a documented uploader event with the telemetry mirror — same
-   * contract as v1 `LitBlock.emit`. Guarded for teardown: emissions can race
-   * ctx destruction (queued events), so a missing emitter is a no-op and a
-   * telemetry failure is contained.
+   * Emit a documented uploader event — same contract as v1 `LitBlock.emit`.
+   * Guarded for teardown: emissions can race ctx destruction (queued events),
+   * so a missing emitter is a no-op.
+   *
+   * M-god step 3c removed the per-emit telemetry mirror that used to live here:
+   * telemetry is now an `EventBus` observer (`TelemetryManager.init()`
+   * subscribes to `bus.onAny`), and this `eventEmitter.emit` funnels into that
+   * same bus — so keeping a mirror here would double-count every event this
+   * path dispatches (buttons' `UPLOAD_CLICK`/`DONE_CLICK`, the upload stack's
+   * `COMMON_UPLOAD_SUCCESS`/`GROUP_CREATED`/…). The teardown guard stays: a
+   * suppressed emit reaches neither the bus nor, therefore, telemetry.
    */
   public emit(
     type: Parameters<EventEmitter['emit']>[0],
@@ -139,15 +146,6 @@ export abstract class ChildBlock extends ChildBlockBase {
       return;
     }
     eventEmitter.emit(type, payload, options);
-    const resolvedPayload = typeof payload === 'function' ? payload() : payload;
-    try {
-      this.bag.telemetryManager.sendEvent({
-        eventType: type,
-        payload: (resolvedPayload ?? undefined) as Record<string, unknown> | undefined,
-      });
-    } catch {
-      // Telemetry may already be torn down — reporting must never throw.
-    }
   }
 
   public override connectedCallback(): void {

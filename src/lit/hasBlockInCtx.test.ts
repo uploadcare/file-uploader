@@ -1,8 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 import { RouterController } from '../abstract/controllers/RouterController';
+import { ControllerContainer } from '../abstract/di/ControllerContainer';
 import { waitForActivityBlock } from './hasBlockInCtx';
 
-const setup = () => new RouterController({ emit: vi.fn() });
+// RouterController is container-resolved now (M-god step 3c): its emit target
+// (`EventEmitter`) is `@inject`-ed, so build it through a container.
+const setup = () => new ControllerContainer().get(RouterController);
 
 describe('waitForActivityBlock', () => {
   it('resolves true synchronously when the activity is already mounted', async () => {

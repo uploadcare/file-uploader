@@ -1,5 +1,8 @@
+import { EventEmitter } from '../../blocks/UploadCtxProvider/EventEmitter';
 import type { ActivityId } from '../../lit/activity-constants';
-import { UploaderEventType } from '../EventBus';
+import { inject } from '../di/inject';
+import { signalState } from '../di/signalState';
+import { type UploaderEventKey, type UploaderEventPayload, UploaderEventType } from '../EventBus';
 import { Listeners } from '../host-subscription';
 
 export type EdgeTarget = ActivityId | null;
@@ -32,22 +35,6 @@ export interface EdgeContext {
 type Hook = (ctx: EdgeContext) => EdgeTarget | NavigateCancel | undefined;
 
 /**
- * Emit the router's documented events with their exact documented payloads
- * (see `UploaderEventPayload` in `EventBus`). Activity ids are typed as the
- * strict `ActivityId`; the documented `ActivityType` view is bridged where this
- * is wired to the block's telemetry-augmented `emit`.
- */
-type RouterEmit = {
-  (type: typeof UploaderEventType.ACTIVITY_CHANGE, payload: { activity: ActivityId | null }): void;
-  (type: typeof UploaderEventType.MODAL_OPEN, payload: { modalId: ActivityId }): void;
-  (type: typeof UploaderEventType.MODAL_CLOSE, payload: { modalId: ActivityId; hasActiveModals: boolean }): void;
-};
-
-export type RouterControllerDeps = {
-  emit: RouterEmit;
-};
-
-/**
  * v2-native dual-slot router. Tracks two independent activity slots:
  *
  * - `activity` (background): what's rendered inline in the host (minimal's
@@ -62,11 +49,21 @@ export type RouterControllerDeps = {
  * the only side effect is the injected `emit`.
  */
 export class RouterController {
-  private _emit: RouterEmit;
+  // Container-resolved emit target (M-god step 3c). Thunked `@inject` because
+  // the module graph around the event surface is circular-prone; resolution is
+  // lazy so there is zero construction cycle. Telemetry observes the bus, so
+  // there is NO telemetry mirror here — `_emit` is pure dispatch + debounce.
+  @inject(() => EventEmitter) private readonly _eventEmitter!: EventEmitter;
   private _listeners = new Listeners();
   private _table: RouteTable = {};
   private _activity: ActivityId | null = null;
   private _modal: ActivityId | null = null;
+  // The single "effective" activity as a signal-backed field (M-god step 3c) —
+  // kept in lockstep with the two slots by `_transition` (its sole writer, via
+  // the two slots' sole writer). Backed by `@signalState` so a future
+  // `SignalWatcher` consumer can track it; the coarse `_listeners.notify()`
+  // change-notification every current reader relies on is preserved unchanged.
+  @signalState() private _currentActivity: ActivityId | null = null;
   private _params: Record<string, unknown> = {};
   private _history: ActivityId[] = [];
   private _hooks = {
@@ -78,8 +75,22 @@ export class RouterController {
     onDone: [] as Hook[],
   };
 
-  public constructor(deps: RouterControllerDeps) {
-    this._emit = deps.emit;
+  // Zero-arg constructor: the container builds this with `new RouterController()`
+  // and the emit target resolves lazily through `@inject`.
+
+  /**
+   * Emit a router event to the container-owned {@link EventEmitter}, debouncing
+   * modal transitions (matches v1 `LitBlock._routerEmit`: modal open/close
+   * debounce, activity-change fires immediately). This is the debounce that
+   * used to live in `UploaderController`'s router-emit closure (M-god step 3c);
+   * telemetry sees the already-debounced bus event since it observes the bus.
+   */
+  private _emit<T extends UploaderEventKey>(type: T, payload: UploaderEventPayload[T]): void {
+    if (type === UploaderEventType.MODAL_OPEN || type === UploaderEventType.MODAL_CLOSE) {
+      this._eventEmitter.emit(type, payload, { debounce: true });
+    } else {
+      this._eventEmitter.emit(type, payload);
+    }
   }
 
   // ─── State (reactive reads) ───
@@ -95,7 +106,7 @@ export class RouterController {
    * semantics: what the activity FSM activates on and what most readers want.
    */
   public get currentActivity(): ActivityId | null {
-    return this._modal ?? this._activity;
+    return this._currentActivity;
   }
   public get params(): Readonly<Record<string, unknown>> {
     return this._params;
@@ -344,10 +355,11 @@ export class RouterController {
    */
   private _transition(nextActivity: EdgeTarget, nextModal: EdgeTarget): void {
     const prevModal = this._modal;
-    const prevEffective = this.currentActivity;
+    const prevEffective = this._currentActivity;
     this._activity = nextActivity;
     this._modal = nextModal;
-    const nextEffective = this.currentActivity;
+    const nextEffective = this._modal ?? this._activity;
+    this._currentActivity = nextEffective;
 
     if (prevModal === null && nextModal !== null) {
       this._emit(UploaderEventType.MODAL_OPEN, { modalId: nextModal });
