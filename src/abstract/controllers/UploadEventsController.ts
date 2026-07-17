@@ -15,7 +15,7 @@ import type { ValidationController } from './ValidationController';
 
 type Unsubscribe = () => void;
 
-/** Emit on the event backbone (telemetry-augmented `LitBlock.emit`). */
+/** Emit on the event backbone (pure event dispatch — telemetry observes the bus independently, not this call). */
 type EmitFn = <T extends UploaderEventKey>(
   type: T,
   payload?: UploaderEventPayload[T] | (() => UploaderEventPayload[T]),
@@ -65,10 +65,11 @@ const VALIDATION_TRIGGER_KEYS: (keyof UploadEntryData)[] = [
  *
  * It observes the upload collection and, as entries are added/removed and their
  * properties change, drives validation, emits the documented events (via the
- * injected telemetry-augmented `emit`, which reaches the EventBus), maintains
- * the derived `*uploadList`/`*collectionState`/`*commonProgress`/`*groupInfo`
- * shared state through injected sinks, and creates the output group. All
- * collaborators are injected, so it runs without a DOM and is unit-testable.
+ * injected `emit`, a pure event dispatch that reaches the EventBus; telemetry
+ * observes that bus independently, not this call), maintains the derived
+ * `*uploadList`/`*collectionState`/`*commonProgress`/`*groupInfo` shared state
+ * through injected sinks, and creates the output group. All collaborators are
+ * injected, so it runs without a DOM and is unit-testable.
  */
 export class UploadEventsController {
   private _deps: UploadEventsControllerDeps;
