@@ -10,7 +10,13 @@
  * (the upload-client SDK, DOM callbacks, …) enter only through `bind()`.
  */
 
-export type Ctor<T> = new () => T;
+// A token constructor. Unbound tokens are built by the container with a
+// zero-arg `new Ctrl()`; a token whose constructor needs arguments (e.g.
+// `UploaderController`, which receives its container) MUST be `bind()`-ed with
+// a factory, so its args never reach the container's `new`. The `never[]` rest
+// keeps such constructors assignable as tokens while still permitting the
+// zero-arg `new Ctrl()` on the unbound path (`never` is assignable to any arg).
+export type Ctor<T> = new (...args: never[]) => T;
 export type Token<T> = Ctor<T> | (() => Ctor<T>);
 
 /** Tag written onto every container-built instance so `@inject` can resolve. */

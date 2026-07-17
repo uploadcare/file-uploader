@@ -1,5 +1,6 @@
 import { EventEmitter } from '../../blocks/UploadCtxProvider/EventEmitter';
 import { applyInitialCrop } from '../applyInitialCrop';
+import type { ControllerContainer } from '../di/ControllerContainer';
 import { EventBus, type UploaderEventKey, type UploaderEventPayload, UploaderEventType } from '../EventBus';
 import { A11y } from '../managers/a11y';
 import { LocaleManager } from '../managers/LocaleManager';
@@ -39,12 +40,14 @@ import type { ValidationController, ValidationControllerDeps } from './Validatio
  * - `collection`: source of truth for the upload entries — the `*uploadCollection`
  *   shared instance resolves to this.
  *
- * Sub-controllers are constructor-injected (mirroring `ValidationController`'s
- * deps-object style): each defaults to a freshly-constructed instance, so
- * `new UploaderController()` keeps working, while tests and later milestones can
- * substitute a fake or share an existing instance. This is deliberately just
- * default-parameter injection — no container/decorators; the DOM layer already
- * has its own wiring via `@lit/context`.
+ * The per-ctx DI `ControllerContainer` is injected at construction (M-god step
+ * 3): it owns `config` and `locale`, which are exposed here as delegating
+ * getters resolving through the container (stable identity per ctx, disposed by
+ * `container.dispose()`). The remaining sub-controllers are still
+ * constructor-injected (mirroring `ValidationController`'s deps-object style):
+ * each defaults to a freshly-constructed instance, so tests and later
+ * milestones can substitute a fake or share an existing instance. Later
+ * milestones move the rest onto the container one slice at a time.
  *
  * M9k moved four of the six v1 ctx-scope managers here (construction +
  * teardown ownership): `localeManager`, `eventEmitter`, `telemetryManager`,
@@ -94,8 +97,6 @@ export type UploaderStateBridges = {
 
 export type UploaderControllerDeps = {
   events?: EventBus;
-  config?: ConfigController;
-  locale?: LocaleController;
   collection?: UploadCollectionController;
   localeManager?: LocaleManager;
   eventEmitter?: EventEmitter;
@@ -171,8 +172,6 @@ type UploaderScope = {
 
 export class UploaderController {
   public readonly events: EventBus;
-  public readonly config: ConfigController;
-  public readonly locale: LocaleController;
   public readonly collection: UploadCollectionController;
   public readonly localeManager: LocaleManager;
   public readonly eventEmitter: EventEmitter;
@@ -197,11 +196,14 @@ export class UploaderController {
   // See `UploaderStateBridges` doc. Lives from construction — a scope that
   // never attaches an uploader (editor-only) simply never calls these.
   private readonly _stateBridges: UploaderStateBridges;
+  // The per-ctx DI container that owns this controller (M-god step 3). It also
+  // owns `config`/`locale` now — the delegating getters below resolve them
+  // through it, and `container.dispose()` (not this class) tears them down.
+  private readonly _container: ControllerContainer;
 
-  public constructor(deps: UploaderControllerDeps = {}) {
+  public constructor(container: ControllerContainer, deps: UploaderControllerDeps = {}) {
+    this._container = container;
     this.events = deps.events ?? new EventBus();
-    this.config = deps.config ?? new ConfigController();
-    this.locale = deps.locale ?? new LocaleController();
     this.collection = deps.collection ?? new UploadCollectionController();
 
     this.localeManager = deps.localeManager ?? new LocaleManager({ config: this.config, locale: this.locale });
@@ -279,6 +281,20 @@ export class UploaderController {
     } catch {
       // Telemetry may already be torn down — reporting must never throw.
     }
+  }
+
+  /**
+   * Config store — owned by the container, not this class. Resolved lazily on
+   * every access (the container caches a single instance per ctx), so identity
+   * is stable and disposal is the container's responsibility.
+   */
+  public get config(): ConfigController {
+    return this._container.get(ConfigController);
+  }
+
+  /** Locale store — container-owned, same ownership model as `config`. */
+  public get locale(): LocaleController {
+    return this._container.get(LocaleController);
   }
 
   public get solutionName(): string | null {
@@ -430,8 +446,8 @@ export class UploaderController {
     this._destroyed = true;
 
     this.events.destroy();
-    this.config.destroy();
-    this.locale.destroy();
+    // `config`/`locale` are NOT torn down here — the container owns them and
+    // disposes them (after this `destroy()`) in reverse construction order.
 
     // The uploader-scope stack tears down BEFORE `this.collection.destroy()`,
     // in reverse construction order: `UploadEventsController.unobserve()`

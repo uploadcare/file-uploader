@@ -47,7 +47,12 @@ async function build(buildItem: BuildItem) {
     skipNodeModulesBundle: true,
     esbuildOptions(options) {
       options.conditions = ['browser'];
-      options.mainFields = ['exports'];
+      // `exports` first (modern packages resolve via conditions), then the
+      // classic `module`/`main` fallback for deps that ship no `exports` map —
+      // e.g. `signal-polyfill` (ESM, `main`-only), pulled in via `SignalMap`.
+      // Packages that DO declare `exports` are unaffected (esbuild ignores
+      // mainFields when an `exports` condition matches).
+      options.mainFields = ['exports', 'module', 'main'];
       options.platform = 'browser';
       options.legalComments = 'linked';
       options.logOverride = { 'ignored-bare-import': 'silent' };
