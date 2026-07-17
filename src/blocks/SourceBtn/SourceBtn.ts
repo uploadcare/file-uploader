@@ -1,6 +1,7 @@
 import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import type { UploaderController } from '../../abstract/controllers/UploaderController';
+import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
 import { ChildBlock } from '../../lit/ChildBlock';
 import './source-btn.css';
 
@@ -15,6 +16,8 @@ export type SourceButtonConfig = {
 };
 
 export class SourceBtn extends ChildBlock {
+  public static override readonly uses = [TelemetryManager] as const;
+
   @property({ attribute: false })
   public source?: SourceButtonConfig;
 
@@ -64,7 +67,7 @@ export class SourceBtn extends ChildBlock {
   public activate(): void {
     if (!this.source) return;
 
-    this.bag.telemetryManager.sendEvent({
+    this.use(TelemetryManager).sendEvent({
       eventType: InternalEventType.ACTION_EVENT,
       payload: {
         sourceId: this.source.id,
