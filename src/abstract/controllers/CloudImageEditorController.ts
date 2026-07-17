@@ -39,12 +39,11 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
  * single child, no cross-subtree sharing).
  *
  * `*colorPreview` is the slider's live, uncommitted color/filter adjustment;
- * the fader reacts to it and renders the preview (see `ColorPreview`).
- * `*imgContainerEl` is a cross-component coordination ref (a smell, flagged for
- * a later refinement) — the controller only stores/returns it, never touches
- * the DOM. The cropper/fader elements are no longer held in state: they
- * self-activate from `*tabId`/`*originalUrl`/`*colorPreview` + the root's
- * `imageSize` prop.
+ * the fader reacts to it and renders the preview (see `ColorPreview`). The state
+ * holds NO DOM references: the cropper/fader self-activate from
+ * `*tabId`/`*originalUrl`/`*colorPreview` + the root's `imageSize` prop, and the
+ * toolbar's preload measures the root's image container, passed down as a plain
+ * Lit prop.
  */
 export type CloudImageEditorControllerState = {
   '*originalUrl': string | null;
@@ -54,7 +53,6 @@ export type CloudImageEditorControllerState = {
   '*currentAspectRatio': CropAspectRatio | null;
   '*tabId': TabIdValue;
   '*colorPreview': ColorPreview;
-  '*imgContainerEl': HTMLElement | null;
 };
 
 function createDefaultState(): CloudImageEditorControllerState {
@@ -66,7 +64,6 @@ function createDefaultState(): CloudImageEditorControllerState {
     '*currentAspectRatio': null,
     '*tabId': TabId.CROP,
     '*colorPreview': null,
-    '*imgContainerEl': null,
   };
 }
 
