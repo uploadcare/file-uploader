@@ -1,5 +1,5 @@
 import type { LitElement } from 'lit';
-import type { Constructor } from './Constructor';
+import type { Constructor } from '../../lit/Constructor';
 import { parseCssPropertyValue } from './parseCssPropertyValue';
 
 declare class CssDataMixinClassInterface {

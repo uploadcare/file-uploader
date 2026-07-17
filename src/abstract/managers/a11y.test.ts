@@ -1,11 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { LitBlock } from '../../lit/LitBlock';
 import { A11y } from './a11y';
 
 // `A11y.registerBlock` only reaches into its argument as a `Node` (see
-// `ScopedMinimalWindow.registerScope`); a bare DOM element stands in for a
-// `LitBlock` here so these specs don't need a full Lit fixture.
-const asLitBlock = (node: Node): LitBlock => node as unknown as LitBlock;
+// `ScopedMinimalWindow.registerScope`), so a bare DOM element stands in here
+// (no full Lit fixture needed).
+const asNode = (node: Node): Node => node;
 
 /**
  * Coverage written ahead of M9l's lazy-arm split (v1 attached the
@@ -58,7 +57,7 @@ describe('A11y', () => {
     const button = document.createElement('button');
     scope.append(button);
 
-    a11y.registerBlock(asLitBlock(scope));
+    a11y.registerBlock(asNode(scope));
     button.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
 
     expect(button.classList.contains('is-pressed')).toBe(true);
@@ -68,7 +67,7 @@ describe('A11y', () => {
     const a11y = track(new A11y());
     const scope = document.createElement('div');
     document.body.append(scope);
-    a11y.registerBlock(asLitBlock(scope));
+    a11y.registerBlock(asNode(scope));
 
     // Button lives outside the registered scope.
     const outsideButton = pressableButton();
@@ -81,7 +80,7 @@ describe('A11y', () => {
     const a11y = track(new A11y());
     const scope = document.createElement('div');
     document.body.append(scope);
-    a11y.registerBlock(asLitBlock(scope));
+    a11y.registerBlock(asNode(scope));
 
     // Dispatched directly on `window`, `event.target` is the `Window` object
     // itself — not a `Node` — so `ScopedMinimalWindow`'s wrapped listener must
@@ -101,12 +100,12 @@ describe('A11y', () => {
     const addSpy = vi.spyOn(window, 'addEventListener');
     const a11y = track(new A11y());
 
-    a11y.registerBlock(asLitBlock(document.createElement('div')));
+    a11y.registerBlock(asNode(document.createElement('div')));
     const firstCallCount = addSpy.mock.calls.length;
     expect(firstCallCount).toBeGreaterThan(0);
 
-    a11y.registerBlock(asLitBlock(document.createElement('div')));
-    a11y.registerBlock(asLitBlock(document.createElement('div')));
+    a11y.registerBlock(asNode(document.createElement('div')));
+    a11y.registerBlock(asNode(document.createElement('div')));
 
     expect(addSpy.mock.calls.length).toBe(firstCallCount);
   });
@@ -115,7 +114,7 @@ describe('A11y', () => {
     const addSpy = vi.spyOn(window, 'addEventListener');
     const a11y = new A11y();
 
-    a11y.registerBlock(asLitBlock(document.createElement('div')));
+    a11y.registerBlock(asNode(document.createElement('div')));
     a11y.destroy();
     addSpy.mockClear();
 
@@ -123,7 +122,7 @@ describe('A11y', () => {
     document.body.append(scope);
     const button = document.createElement('button');
     scope.append(button);
-    a11y.registerBlock(asLitBlock(scope));
+    a11y.registerBlock(asNode(scope));
 
     expect(addSpy).not.toHaveBeenCalled();
     button.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
@@ -145,7 +144,7 @@ describe('A11y', () => {
     const a11y = new A11y();
     const scope = document.createElement('div');
     document.body.append(scope);
-    a11y.registerBlock(asLitBlock(scope));
+    a11y.registerBlock(asNode(scope));
 
     const addedTypes = addSpy.mock.calls.map((call) => call[0]).sort();
     expect(addedTypes.length).toBeGreaterThan(0);
@@ -162,7 +161,7 @@ describe('A11y', () => {
     document.body.append(scope);
     const button = document.createElement('button');
     scope.append(button);
-    a11y.registerBlock(asLitBlock(scope));
+    a11y.registerBlock(asNode(scope));
 
     a11y.destroy();
     button.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));

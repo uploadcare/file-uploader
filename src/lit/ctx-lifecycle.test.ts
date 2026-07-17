@@ -27,27 +27,13 @@ describe('isCtxUnreferenced', () => {
     expect(isCtxUnreferenced(ctxName)).toBe(true);
   });
 
-  it('is true when the ctx exists but *blocksRegistry is absent and there are no whenAvailable consumers', () => {
+  it('is true when the ctx exists but there are no whenAvailable consumers', () => {
     const ctxName = freshCtxName();
     PubSub.registerCtx<SharedState>({} as SharedState, ctxName);
     expect(isCtxUnreferenced(ctxName)).toBe(true);
   });
 
-  it('is false while *blocksRegistry holds at least one entry', () => {
-    const ctxName = freshCtxName();
-    const ctx = PubSub.registerCtx<SharedState>({} as SharedState, ctxName);
-    ctx.add('*blocksRegistry', new Set([{}]) as unknown as SharedState['*blocksRegistry'], true);
-    expect(isCtxUnreferenced(ctxName)).toBe(false);
-  });
-
-  it('is true when *blocksRegistry is present but empty and there are no consumers', () => {
-    const ctxName = freshCtxName();
-    const ctx = PubSub.registerCtx<SharedState>({} as SharedState, ctxName);
-    ctx.add('*blocksRegistry', new Set() as unknown as SharedState['*blocksRegistry'], true);
-    expect(isCtxUnreferenced(ctxName)).toBe(true);
-  });
-
-  it('is false while a UploaderRegistry whenAvailable consumer is watching, even with no *blocksRegistry at all', () => {
+  it('is false while a UploaderRegistry whenAvailable consumer is watching', () => {
     const ctxName = freshCtxName();
     const off = UploaderRegistry.whenAvailable(ctxName, vi.fn());
     expect(isCtxUnreferenced(ctxName)).toBe(false);

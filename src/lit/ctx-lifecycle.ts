@@ -4,26 +4,17 @@ import type { SharedState } from './SharedState';
 import { controllerOwnedInstanceKeys, type ISharedInstance } from './shared-instances';
 
 /**
- * Unified consumer-refcount teardown predicate (M9o Task 3). A ctx is dead
- * — nothing left referencing it — when BOTH halves of the composition have
- * released it:
+ * Consumer-refcount teardown predicate: a ctx is dead — nothing left
+ * referencing it — when no `ChildBlock` is still watching it via
+ * `UploaderRegistry.whenAvailable` (`UploaderRegistry.hasConsumers`).
  *
- * - v1: no `LitBlock` remains in `*blocksRegistry` (absent or empty, read
- *   straight off the ctx rather than any one element, since a v2-triggered
- *   check has no `LitBlock` instance to ask).
- * - v2: no `ChildBlock` is still watching it via `UploaderRegistry.
- *   whenAvailable` (`UploaderRegistry.hasConsumers`).
- *
- * Both `LitBlock.disconnectedCallback` and `ChildBlock.disconnectedCallback`
- * schedule a deferred (`setTimeout(0)`) call to this predicate before
- * running `destroyCtx` — so a still-connected consumer on either side keeps
- * the ctx alive regardless of which side's disconnect triggered the check.
+ * `ChildBlock.disconnectedCallback` schedules a deferred (`setTimeout(0)`)
+ * call to this predicate before running `destroyCtx`, so a still-connected
+ * consumer keeps the ctx alive. (The v1 `*blocksRegistry` half was removed
+ * with the v1 element layer in M11 — no `LitBlock` populates it anymore.)
  */
 export function isCtxUnreferenced(ctxName: string): boolean {
-  const ctx = PubSub.getCtx<SharedState>(ctxName);
-  const blocksRegistry = ctx?.has('*blocksRegistry') ? ctx.read('*blocksRegistry') : undefined;
-  const hasV1Blocks = !!blocksRegistry && blocksRegistry.size > 0;
-  return !hasV1Blocks && !UploaderRegistry.hasConsumers(ctxName);
+  return !UploaderRegistry.hasConsumers(ctxName);
 }
 
 /**
