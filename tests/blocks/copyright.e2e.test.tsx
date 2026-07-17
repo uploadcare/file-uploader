@@ -31,21 +31,28 @@ describe('uc-copyright', () => {
   });
 
   it('hides when removeCopyright is set, shows again when unset', async () => {
-    // M-god step 6a: Copyright now reads `removeCopyright` through the tracked
-    // config signal inside `render()`, so a `SignalWatcher` re-render toggles
-    // `?hidden` on the `<a>` (was an imperative `toggleAttribute('hidden')` on
-    // the host). This asserts the reactive path end-to-end in a real browser:
-    // an external `<uc-config>` change re-renders the overridden `render()`.
+    // M-god step 6a review: Copyright reads `removeCopyright` through the tracked
+    // config signal in `willUpdate()` and toggles `[hidden]` on the HOST
+    // `<uc-copyright>` (not the inner `<a>`), matching pre-6a behavior. The host
+    // attribute is what the inline solution's `:has(uc-copyright[hidden])` layout
+    // CSS keys off, so it must land on the host. This asserts the reactive path
+    // end-to-end in a real browser: an external `<uc-config>` change re-runs the
+    // update and re-toggles the host attribute, in both directions.
     const { config } = renderCopyright();
+    const host = () => document.querySelector<HTMLElement>('uc-copyright')!;
     const link = () => document.querySelector<HTMLAnchorElement>('uc-copyright .uc-credits')!;
     await expect.element(page.getByText('Powered by Uploadcare', { exact: true })).toBeVisible();
+    expect(host().hasAttribute('hidden')).toBe(false);
     expect(link().hasAttribute('hidden')).toBe(false);
 
     config.removeCopyright = true;
-    await expect.poll(() => link().hasAttribute('hidden')).toBe(true);
+    await expect.poll(() => host().hasAttribute('hidden')).toBe(true);
+    // The inner <a> must stay free of `hidden` — only the host carries it.
+    expect(link().hasAttribute('hidden')).toBe(false);
 
     config.removeCopyright = false;
-    await expect.poll(() => link().hasAttribute('hidden')).toBe(false);
+    await expect.poll(() => host().hasAttribute('hidden')).toBe(false);
+    expect(link().hasAttribute('hidden')).toBe(false);
   });
 
   it('reflects data-testid under testMode', async () => {

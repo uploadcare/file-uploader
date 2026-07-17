@@ -46,10 +46,14 @@ describe('Copyright (M-god step 6a probe)', () => {
     const a = link(el);
     expect(a).not.toBeNull();
     expect(a?.textContent?.trim()).toBe('Powered by Uploadcare');
+    // The inner <a> never carries `hidden` — visibility is driven from the host
+    // (see below), which the inline solution's `:has(uc-copyright[hidden])` CSS
+    // keys off.
     expect(a?.hasAttribute('hidden')).toBe(false);
+    expect(el.hasAttribute('hidden')).toBe(false);
   });
 
-  it('re-renders the overridden render() into light DOM when the external config signal changes', async () => {
+  it('toggles [hidden] on the HOST (not the inner <a>) when the external config signal changes', async () => {
     const ctxName = freshCtxName();
     // Force the ctx/container/controller into existence so we can drive config
     // through the SAME ConfigController instance the block resolves via use().
@@ -58,18 +62,24 @@ describe('Copyright (M-god step 6a probe)', () => {
     expect(config).toBeDefined();
 
     const el = await mount(ctxName);
+    expect(el.hasAttribute('hidden')).toBe(false);
+    // The <a> must never receive `hidden` — the host owns that state so the
+    // inline `:has(uc-copyright[hidden])` selector matches.
     expect(link(el)?.hasAttribute('hidden')).toBe(false);
 
     // External config change — no imperative wiring on the block. SignalWatcher
-    // tracked the `removeCopyright` read during render(), so this re-renders.
+    // tracked the `removeCopyright` read during willUpdate(), so this re-runs the
+    // update and re-toggles the host attribute.
     config?.set('removeCopyright', true);
     await el.updateComplete;
     await delay(0);
-    expect(link(el)?.hasAttribute('hidden')).toBe(true);
+    expect(el.hasAttribute('hidden')).toBe(true);
+    expect(link(el)?.hasAttribute('hidden')).toBe(false);
 
     config?.set('removeCopyright', false);
     await el.updateComplete;
     await delay(0);
+    expect(el.hasAttribute('hidden')).toBe(false);
     expect(link(el)?.hasAttribute('hidden')).toBe(false);
   });
 
