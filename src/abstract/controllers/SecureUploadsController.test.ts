@@ -1,8 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import type { ConfigType } from '../../types';
 import type { SecureUploadsSignatureAndExpire } from '../../types/index';
+import { ControllerContainer } from '../di/ControllerContainer';
 import { ConfigController } from './ConfigController';
 import { SecureUploadsController } from './SecureUploadsController';
+import { UploadHostBridge } from './UploadHostBridge';
 
 // Apply a bag of config overrides onto a ConfigController. The key/value share
 // the same `K`, but TS can't track that correlation across the loop, so the
@@ -16,17 +18,38 @@ const applyConfig = (config: ConfigController, overrides: Partial<ConfigType>): 
   }
 };
 
+// A full `UploadHostBridge` with inert defaults; only the members a test cares
+// about are overridden. Inlined (not shared) so it stays out of coverage.
+const makeUploadHost = (overrides: Partial<UploadHostBridge> = {}): UploadHostBridge =>
+  ({
+    debug: () => {},
+    getFileHooks: () => [],
+    getOutputItem: ((uid: string) => ({ internalId: uid })) as unknown as UploadHostBridge['getOutputItem'],
+    getApi: (() => ({})) as unknown as UploadHostBridge['getApi'],
+    emitCommonUploadFailed: () => {},
+    emit: () => {},
+    getOutputCollectionState: (() => ({})) as unknown as UploadHostBridge['getOutputCollectionState'],
+    getOutputData: () => [],
+    runOnAddHooks: () => {},
+    onResolverError: () => {},
+    onUploadError: () => {},
+    onValidatorError: () => {},
+    ...overrides,
+  }) satisfies UploadHostBridge;
+
 describe('SecureUploadsController', () => {
   let controller: SecureUploadsController;
   let debug: Mock<(...args: unknown[]) => void>;
   let onResolverError: Mock<(error: unknown, context: string) => void>;
 
   const createController = (cfgOverrides: Partial<ConfigType> = {}) => {
-    const config = new ConfigController();
+    const container = new ControllerContainer();
+    const config = container.get(ConfigController);
     applyConfig(config, cfgOverrides);
     debug = vi.fn<(...args: unknown[]) => void>();
     onResolverError = vi.fn<(error: unknown, context: string) => void>();
-    controller = new SecureUploadsController({ config, debug, onResolverError });
+    container.bind(UploadHostBridge, () => makeUploadHost({ debug, onResolverError }));
+    controller = container.get(SecureUploadsController);
   };
 
   beforeEach(() => {
@@ -44,12 +67,15 @@ describe('SecureUploadsController', () => {
       expect(controller).toBeInstanceOf(SecureUploadsController);
     });
 
-    it('defaults debug to a no-op when not provided', async () => {
-      const config = new ConfigController();
+    it('resolves against a minimal host (inert debug/onResolverError)', async () => {
+      const container = new ControllerContainer();
+      const config = container.get(ConfigController);
       applyConfig(config, { secureSignature: 'sig', secureExpire: '1234567890' });
-      const bare = new SecureUploadsController({ config });
+      // A bare host (inert defaults, no debug/onResolverError override) → must
+      // still resolve without throwing.
+      container.bind(UploadHostBridge, () => makeUploadHost());
+      const bare = container.get(SecureUploadsController);
 
-      // No debug/onResolverError injected → must still resolve without throwing.
       await expect(bare.getSecureToken()).resolves.toEqual({
         secureSignature: 'sig',
         secureExpire: '1234567890',

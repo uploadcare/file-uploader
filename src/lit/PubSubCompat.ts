@@ -107,43 +107,16 @@ export class PubSub<T extends Record<string, unknown>> {
       return existing;
     }
 
-    // The 9 v1 shared-state (`*`-key) read/write bridges the upload stack
-    // needs (validation's `setCollectionErrors`, uploadEvents' 8) — built
-    // here, at controller-creation time, closing over THIS ctx via the
-    // same `pub`/`read` this class already routes cfg/locale/nanostores
-    // keys through. None of these 9 keys are `*cfg/`- or `*l10n/`-prefixed,
-    // so `pub`/`read` fall straight through to the nanostores map — same
-    // shape as the v1 closures moved here verbatim (see the M9n Task 3
-    // report). `pub`/`read` are generic over this instance's own `T`; these
-    // keys aren't statically known to be `keyof T` (they're only ever
-    // touched by the uploader stack, not declared per-ctx-shape), hence the
-    // casts — behaviorally identical to the untyped `ctx.pub`/`ctx.read`
-    // calls this replaces.
-    const pub = <V>(key: string, value: V): void => this.pub(key as keyof T, value as T[keyof T]);
-    const read = <V>(key: string): V => this.read(key as keyof T) as V;
-
     // The per-ctx container is the creation/owner of the (still-monolithic)
-    // UploaderController: bind its factory (the EXACT deps object built here
-    // today, closing over THIS ctx's pub/read), then `get` the single
-    // instance. `container.dispose()` (in `deleteCtx`) is what tears it down.
+    // UploaderController: bind its factory, then `get` the single instance.
+    // `container.dispose()` (in `deleteCtx`) is what tears it down. M-god step 5
+    // removed the 9 v1 shared-state (`*`-key) read/write bridges that used to be
+    // built here — the upload stack now writes the six derived collection keys
+    // directly to the container-owned `CollectionStateController` (the same
+    // instance `PubSubCompat`'s `*uploadList`…`*uploadTrigger` routing resolves),
+    // so no ctx-closure bridge is needed.
     const container = new ControllerContainer();
-    container.bind(
-      UploaderController,
-      (c) =>
-        new UploaderController(c, {
-          stateBridges: {
-            setCollectionErrors: (errors) => pub('*collectionErrors', errors),
-            uploadTrigger: () => read('*uploadTrigger'),
-            setUploadList: (list) => pub('*uploadList', list),
-            getCollectionState: () => read('*collectionState'),
-            setCollectionState: (state) => pub('*collectionState', state),
-            getCommonProgress: () => read('*commonProgress'),
-            setCommonProgress: (progress) => pub('*commonProgress', progress),
-            setGroupInfo: (group) => pub('*groupInfo', group),
-            getCollectionErrors: () => read('*collectionErrors'),
-          },
-        }),
-    );
+    container.bind(UploaderController, (c) => new UploaderController(c));
     const controller = container.get(UploaderController);
     PubSub._controllers.set(this._ctxId, container);
     // Register the UploaderController itself (exactly as before), so

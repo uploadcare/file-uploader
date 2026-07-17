@@ -2,12 +2,33 @@ import { CancelError, UploadcareError, type UploadcareFile, uploadFile } from '@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Uid } from '../../lit/Uid';
 import type { ConfigType, OutputFileEntry } from '../../types';
+import { ControllerContainer } from '../di/ControllerContainer';
 import type { Owned, PluginFileHookRegistration } from '../managers/plugin/PluginTypes';
 import type { UploadEntryData } from '../uploadEntrySchema';
 import { ConfigController } from './ConfigController';
 import { SecureUploadsController } from './SecureUploadsController';
 import { UploadCollectionController } from './UploadCollectionController';
 import { UploadController } from './UploadController';
+import { UploadHostBridge } from './UploadHostBridge';
+
+// A full `UploadHostBridge` with inert defaults; only the members a test cares
+// about are overridden. Inlined (not shared) so it stays out of coverage.
+const makeUploadHost = (overrides: Partial<UploadHostBridge> = {}): UploadHostBridge =>
+  ({
+    debug: () => {},
+    getFileHooks: () => [],
+    getOutputItem: ((uid: string) => ({ internalId: uid })) as unknown as UploadHostBridge['getOutputItem'],
+    getApi: (() => ({})) as unknown as UploadHostBridge['getApi'],
+    emitCommonUploadFailed: () => {},
+    emit: () => {},
+    getOutputCollectionState: (() => ({})) as unknown as UploadHostBridge['getOutputCollectionState'],
+    getOutputData: () => [],
+    runOnAddHooks: () => {},
+    onResolverError: () => {},
+    onUploadError: () => {},
+    onValidatorError: () => {},
+    ...overrides,
+  }) satisfies UploadHostBridge;
 
 vi.mock('@uploadcare/upload-client', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@uploadcare/upload-client')>();
@@ -61,23 +82,26 @@ type SetupOpts = {
 };
 
 const setup = (opts: SetupOpts = {}) => {
-  const config = new ConfigController();
+  const container = new ControllerContainer();
+  const config = container.get(ConfigController);
   applyConfig(config, opts.cfg ?? {});
-  const collection = new UploadCollectionController();
-  const secureUploads = new SecureUploadsController({ config });
+  const collection = container.get(UploadCollectionController);
   const getFileHooks = vi.fn<() => readonly FileHook[]>(() => opts.hooks ?? []);
   const getOutputItem = vi.fn<(uid: Uid) => OutputFileEntry>((uid) => makeOutputItem(uid));
   const onUploadError = vi.fn<(error: unknown, context: string) => void>();
   const debug = vi.fn<(...args: unknown[]) => void>();
-  const controller = new UploadController({
-    collection,
-    config,
-    secureUploads,
-    getFileHooks,
-    getOutputItem,
-    onUploadError: opts.withOnError === false ? undefined : onUploadError,
-    debug: opts.withDebug === false ? undefined : debug,
-  });
+  container.bind(UploadHostBridge, () =>
+    makeUploadHost({
+      getFileHooks,
+      getOutputItem: getOutputItem as unknown as UploadHostBridge['getOutputItem'],
+      // `withOnError: false` / `withDebug: false` → an inert no-op sink,
+      // mirroring v1's "no sink provided" path.
+      onUploadError: opts.withOnError === false ? () => {} : onUploadError,
+      debug: opts.withDebug === false ? () => {} : debug,
+    }),
+  );
+  const secureUploads = container.get(SecureUploadsController);
+  const controller = container.get(UploadController);
   return { controller, config, collection, secureUploads, getFileHooks, getOutputItem, onUploadError, debug };
 };
 
@@ -514,17 +538,14 @@ describe('UploadController', () => {
     });
 
     it('falls back to no secure token when getSecureToken rejects', async () => {
-      const config = new ConfigController();
+      const container = new ControllerContainer();
       const secureUploads = {
         getSecureToken: () => Promise.reject(new Error('boom')),
       } as unknown as SecureUploadsController;
-      const controller = new UploadController({
-        collection: new UploadCollectionController(),
-        config,
-        secureUploads,
-        getFileHooks: () => [],
-        getOutputItem: (uid) => makeOutputItem(uid),
-      });
+      // Bind a fake secure-uploads whose token resolution rejects.
+      container.bind(SecureUploadsController, () => secureUploads);
+      container.bind(UploadHostBridge, () => makeUploadHost());
+      const controller = container.get(UploadController);
 
       const opts = await controller.buildUploadOptions();
 
