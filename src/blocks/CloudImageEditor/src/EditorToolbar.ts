@@ -68,6 +68,10 @@ export class EditorToolbar extends EditorBlock {
   @property({ attribute: false })
   public imageSize: ImageSize | null = null;
 
+  /** The editor's image container, passed from the root — measured for image preloading. */
+  @property({ attribute: false })
+  public imageContainer: HTMLElement | null = null;
+
   // This is public because it's used in the updated lifecycle to assign to the shared state.
   @state()
   public activeTab: TabIdValue = TabId.CROP;
@@ -361,10 +365,12 @@ export class EditorToolbar extends EditorBlock {
   }
 
   private async _preloadEditedImage(): Promise<void> {
-    const imgContainerEl = this.editorController.get('*imgContainerEl');
     const originalUrl = this.editorController.get('*originalUrl');
-    if (imgContainerEl && originalUrl) {
-      const width = imgContainerEl.offsetWidth;
+    // Preload at the rendered viewer width, measured from the image container
+    // the root passes down as a prop (UI-layer plumbing, not a controller state
+    // ref). Skip if it isn't laid out yet (width 0).
+    const width = this.imageContainer?.offsetWidth ?? 0;
+    if (originalUrl && width > 0) {
       const src = await this.editorController.proxyUrl(
         viewerImageSrc(originalUrl, width, this.editorController.get('*editorTransformations')),
       );
