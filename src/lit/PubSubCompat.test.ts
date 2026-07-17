@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ClipboardController } from '../abstract/controllers/ClipboardController';
 import { RouterController } from '../abstract/controllers/RouterController';
+import { UploaderController } from '../abstract/controllers/UploaderController';
 import { A11y } from '../abstract/managers/a11y';
 import { LocaleManager } from '../abstract/managers/LocaleManager';
 import { TelemetryManager } from '../abstract/managers/TelemetryManager';
@@ -364,6 +365,49 @@ describe('PubSub (M9k/M9l Task 3: pre-connect construction timing)', () => {
     } finally {
       addEventListenerSpy.mockRestore();
     }
+  });
+});
+
+describe('PubSub (M-god step 2: per-ctx ControllerContainer ownership)', () => {
+  it('the per-ctx container owns the controller — ctx teardown disposes it, calling UploaderController.destroy() exactly once', () => {
+    const ctx = freshCtx();
+    const id = ctx.id;
+    const controller = ctx.uploaderController(); // lazily creates the container + controller
+
+    const destroySpy = vi.spyOn(controller, 'destroy');
+
+    PubSub.deleteCtx(id);
+    // dispose() runs the single cached UploaderController.destroy() once.
+    expect(destroySpy).toHaveBeenCalledTimes(1);
+
+    // A second teardown of the same (already-removed) ctx must NOT destroy again.
+    PubSub.deleteCtx(id);
+    expect(destroySpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('per-ctx identity: the same ctx yields one controller across repeated resolution; a different ctx yields a different one', () => {
+    const ctxA = freshCtx();
+    const ctxB = freshCtx();
+
+    const a1 = ctxA.uploaderController();
+    const a2 = ctxA.uploaderController();
+    // A fresh wrapper for the same ctx id resolves the same container/controller.
+    const a3 = PubSub.getCtx<Record<string, unknown>>(ctxA.id)!.uploaderController();
+    const b1 = ctxB.uploaderController();
+
+    expect(a1).toBe(a2);
+    expect(a1).toBe(a3);
+    expect(b1).not.toBe(a1);
+  });
+
+  it('the instance registered in UploaderRegistry is still the UploaderController (consumers see no change)', () => {
+    const ctx = freshCtx();
+    ctx.uploaderController(); // triggers container + controller creation + registration
+
+    const registered = UploaderRegistry.get(ctx.id);
+    expect(registered).toBeInstanceOf(UploaderController);
+    // It is the exact instance the container owns and hands out.
+    expect(registered).toBe(ctx.uploaderController());
   });
 });
 
