@@ -1,12 +1,26 @@
 import { describe, expect, it, vi } from 'vitest';
+import { delay } from '../../utils/delay';
 import { ConfigController } from '../controllers/ConfigController';
 import { LocaleController } from '../controllers/LocaleController';
+import { ControllerContainer } from '../di/ControllerContainer';
 import type { LocaleDefinition } from '../localeRegistry';
 import * as localeRegistry from '../localeRegistry';
 import { LocaleManager } from './LocaleManager';
 import type { PluginController } from './plugin';
 
 type FakePluginManager = Pick<PluginController, 'onPluginsChange' | 'snapshot'>;
+
+// `LocaleManager` is container-resolved now (M-god step 3b): a zero-arg ctor
+// that `@inject`s `ConfigController`/`LocaleController`. Build all three through
+// one throwaway container so the manager injects the same config/locale the
+// specs then read/spy on.
+const setup = () => {
+  const container = new ControllerContainer();
+  const config = container.get(ConfigController);
+  const locale = container.get(LocaleController);
+  const manager = container.get(LocaleManager);
+  return { container, config, locale, manager };
+};
 
 // Wraps the real resolver as the default implementation (so every other test
 // in this file resolves locales for real), while letting the same-tick
@@ -26,9 +40,7 @@ vi.mock('../localeRegistry', async (importOriginal) => {
  */
 describe('LocaleManager.activate', () => {
   it('is idempotent: a second activate() does not re-register the config subscriptions', () => {
-    const config = new ConfigController();
-    const locale = new LocaleController();
-    const manager = new LocaleManager({ config, locale });
+    const { config, manager } = setup();
     const subscribeSpy = vi.spyOn(config, 'subscribe');
 
     manager.activate(null);
@@ -43,9 +55,7 @@ describe('LocaleManager.activate', () => {
   });
 
   it('is idempotent: a second activate() does not re-seed the en dictionary over a value set since', () => {
-    const config = new ConfigController();
-    const locale = new LocaleController();
-    const manager = new LocaleManager({ config, locale });
+    const { locale, manager } = setup();
 
     manager.activate(null);
     // Simulate a value having changed since first activation (e.g. a plugin
@@ -58,9 +68,7 @@ describe('LocaleManager.activate', () => {
   });
 
   it('re-couples to a new plugin manager on re-activate without stacking the old subscription', () => {
-    const config = new ConfigController();
-    const locale = new LocaleController();
-    const manager = new LocaleManager({ config, locale });
+    const { manager } = setup();
 
     const unsub1 = vi.fn();
     const pm1: FakePluginManager = {
@@ -92,9 +100,7 @@ describe('LocaleManager.activate', () => {
   });
 
   it('destroy() releases the config subscriptions and the plugin coupling: subsequent changes produce no callbacks', () => {
-    const config = new ConfigController();
-    const locale = new LocaleController();
-    const manager = new LocaleManager({ config, locale });
+    const { config, locale, manager } = setup();
 
     const unsub = vi.fn();
     const pm: FakePluginManager = {
@@ -117,17 +123,80 @@ describe('LocaleManager.activate', () => {
   });
 
   it('destroy() is safe to call before activate() (never activated)', () => {
-    const config = new ConfigController();
-    const locale = new LocaleController();
-    const manager = new LocaleManager({ config, locale });
+    const { manager } = setup();
 
     expect(() => manager.destroy()).not.toThrow();
   });
 
+  it('applies plugin-provided locales for the active locale when plugins change', async () => {
+    const { locale, manager } = setup();
+    let pluginsChanged: (() => void) | undefined;
+    const pm: FakePluginManager = {
+      onPluginsChange: vi.fn((cb: () => void) => {
+        pluginsChanged = cb;
+        return vi.fn();
+      }),
+      snapshot: vi.fn(
+        () =>
+          ({
+            l10n: [
+              // Active-locale ('en') entry: applied, but an `undefined` value is skipped.
+              { pluginId: 'p', en: { 'plugin-key': 'Plugin value', 'skip-key': undefined } },
+              // Non-active-locale entry: skipped entirely (no `en` key).
+              { pluginId: 'q', fr: { 'plugin-key': 'Valeur du plugin' } },
+            ],
+          }) as never,
+      ),
+    };
+
+    manager.activate(pm);
+    // Let the default localeName ('en') resolution settle so `_localeName` is set.
+    await delay(0);
+
+    // A plugins-change re-applies plugin locales alone (no base override after it).
+    pluginsChanged?.();
+
+    expect(locale.get('plugin-key')).toBe('Plugin value');
+    expect(locale.has('skip-key')).toBe(false);
+  });
+
+  it('ignores an empty localeName without attempting a resolution', async () => {
+    const { config, manager } = setup();
+    const resolveMock = vi.mocked(localeRegistry.resolveLocaleDefinition);
+    manager.activate(null);
+    await delay(0);
+    resolveMock.mockClear();
+
+    config.set('localeName', '');
+    await delay(0);
+
+    expect(resolveMock).not.toHaveBeenCalled();
+  });
+
+  it('applies a localeDefinitionOverride that targets the active locale', async () => {
+    const { config, locale, manager } = setup();
+    manager.activate(null);
+    await delay(0);
+
+    config.set('localeDefinitionOverride', { en: { 'upload-file': 'Overridden upload' } });
+
+    expect(locale.get('upload-file')).toBe('Overridden upload');
+  });
+
+  it('ignores a localeDefinitionOverride that targets a different locale', async () => {
+    const { config, locale, manager } = setup();
+    manager.activate(null);
+    await delay(0);
+    const before = locale.get('upload-file');
+
+    // `_localeName` is the default 'en', so an fr-targeted override must not apply.
+    config.set('localeDefinitionOverride', { fr: { 'upload-file': 'Televerser un fichier' } });
+
+    expect(locale.get('upload-file')).toBe(before);
+  });
+
   it('applies only the second locale when its stale-but-still-in-flight predecessor resolves later — even on the default "en" path', async () => {
-    const config = new ConfigController();
-    const locale = new LocaleController();
-    const manager = new LocaleManager({ config, locale });
+    const { config, locale, manager } = setup();
 
     let resolveEn!: (definition: Partial<LocaleDefinition>) => void;
     let resolveFr!: (definition: Partial<LocaleDefinition>) => void;

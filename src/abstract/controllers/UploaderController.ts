@@ -6,6 +6,7 @@ import { A11y } from '../managers/a11y';
 import { LocaleManager } from '../managers/LocaleManager';
 import { TelemetryManager } from '../managers/TelemetryManager';
 import type { UploaderPublicApi } from '../UploaderPublicApi';
+import { AppInfo } from './AppInfo';
 import { ClipboardController } from './ClipboardController';
 import { ConfigController } from './ConfigController';
 import { LocaleController } from './LocaleController';
@@ -41,24 +42,25 @@ import type { ValidationController, ValidationControllerDeps } from './Validatio
  *   shared instance resolves to this.
  *
  * The per-ctx DI `ControllerContainer` is injected at construction (M-god step
- * 3): it owns `config` and `locale`, which are exposed here as delegating
- * getters resolving through the container (stable identity per ctx, disposed by
- * `container.dispose()`). The remaining sub-controllers are still
- * constructor-injected (mirroring `ValidationController`'s deps-object style):
- * each defaults to a freshly-constructed instance, so tests and later
- * milestones can substitute a fake or share an existing instance. Later
- * milestones move the rest onto the container one slice at a time.
+ * 3): it owns a growing set of controllers exposed here as delegating getters
+ * resolving through the container (stable identity per ctx, disposed by
+ * `container.dispose()` in reverse construction order). Step 3a moved `config`
+ * and `locale`; step 3b moved `events`, `eventEmitter`, `localeManager`,
+ * `a11y`, and the solution identity (`solutionName`/`setSolutionName`, now
+ * owned by the container's `AppInfo`). The rest — `collection`,
+ * `telemetryManager`, `router`, `clipboard` — are still constructor-injected
+ * (mirroring `ValidationController`'s deps-object style): each defaults to a
+ * freshly-constructed instance, so tests and later milestones can substitute a
+ * fake or share an existing instance. Later milestones move the rest onto the
+ * container one slice at a time.
  *
- * M9k moved four of the six v1 ctx-scope managers here (construction +
- * teardown ownership): `localeManager`, `eventEmitter`, `telemetryManager`,
- * `router`. M9l (Task 3) moves the remaining two that don't need the PubSub
- * ctx: `a11y`, `clipboard`. `PluginController` stays constructed by the DOM
- * layer (`LitBlock`) — it genuinely needs the PubSub ctx (`*lazyPlugins`,
- * arbitrary shared state) and the `*publicApi` shared instance, neither of
- * which the DOM-free controller can reach without importing `PubSub` here,
- * which would both create a circular import (`PubSubCompat` already imports
- * `UploaderController`) and break the "abstract/ touches no DOM" boundary in
- * spirit. See the M9k task report for the full audit.
+ * `PluginController` stays constructed by the DOM layer (`LitBlock`) — it
+ * genuinely needs the PubSub ctx (`*lazyPlugins`, arbitrary shared state) and
+ * the `*publicApi` shared instance, neither of which the DOM-free controller
+ * can reach without importing `PubSub` here, which would both create a circular
+ * import (`PubSubCompat` already imports `UploaderController`) and break the
+ * "abstract/ touches no DOM" boundary in spirit. See the M9k task report for
+ * the full audit.
  *
  * `clipboard`'s add-file callbacks need the uploader-scope public API
  * (`*publicApi`), which is itself DOM-layer-constructed (`LitUploaderBlock`,
@@ -96,13 +98,9 @@ export type UploaderStateBridges = {
 };
 
 export type UploaderControllerDeps = {
-  events?: EventBus;
   collection?: UploadCollectionController;
-  localeManager?: LocaleManager;
-  eventEmitter?: EventEmitter;
   telemetryManager?: TelemetryManager;
   router?: RouterController;
-  a11y?: A11y;
   clipboard?: ClipboardController;
   /** See `UploaderStateBridges` doc. Defaults to inert no-ops (editor-only scopes never attach an uploader). */
   stateBridges?: UploaderStateBridges;
@@ -171,19 +169,11 @@ type UploaderScope = {
 };
 
 export class UploaderController {
-  public readonly events: EventBus;
   public readonly collection: UploadCollectionController;
-  public readonly localeManager: LocaleManager;
-  public readonly eventEmitter: EventEmitter;
   public readonly telemetryManager: TelemetryManager;
   public readonly router: RouterController;
-  public readonly a11y: A11y;
   public readonly clipboard: ClipboardController;
 
-  // The solution (preset) identity of this uploader scope — a boot-time fact,
-  // not reactive state: set once by the solution element, read lazily by
-  // telemetry. Stored lowercased, payload-ready.
-  private _solutionName: string | null = null;
   // The uploader-scope public API — element-constructed (see class doc),
   // handed to the controller once it exists. Only `clipboard`'s add-file
   // callbacks read this, and only at paste time.
@@ -202,12 +192,12 @@ export class UploaderController {
   private readonly _container: ControllerContainer;
 
   public constructor(container: ControllerContainer, deps: UploaderControllerDeps = {}) {
+    // Assigned FIRST — the eager deps below (telemetryManager/router/clipboard
+    // closures) read `this.config`/`this.eventEmitter`/`this.solutionName`,
+    // which are now delegating getters resolving through this container.
     this._container = container;
-    this.events = deps.events ?? new EventBus();
     this.collection = deps.collection ?? new UploadCollectionController();
 
-    this.localeManager = deps.localeManager ?? new LocaleManager({ config: this.config, locale: this.locale });
-    this.eventEmitter = deps.eventEmitter ?? new EventEmitter(this.events);
     this.telemetryManager =
       deps.telemetryManager ??
       new TelemetryManager({
@@ -225,7 +215,6 @@ export class UploaderController {
           this.emit(type, payload, debounce ? { debounce: true } : undefined);
         },
       });
-    this.a11y = deps.a11y ?? new A11y();
     this.clipboard =
       deps.clipboard ??
       new ClipboardController({
@@ -297,18 +286,44 @@ export class UploaderController {
     return this._container.get(LocaleController);
   }
 
-  public get solutionName(): string | null {
-    return this._solutionName;
+  /** Typed event bus — container-owned (M-god step 3b). */
+  public get events(): EventBus {
+    return this._container.get(EventBus);
   }
 
   /**
-   * Register the solution (preset) owning this scope. Several solutions may
-   * share one `ctx-name` (a supported composition — e.g. an uploader plus a
-   * standalone editor); the most recently initialized one identifies the
-   * scope, matching v1's `pub('*solution', …)` last-writer semantics.
+   * Pure-dispatch event facade over `events` — container-owned (M-god step 3b).
+   * `container.get(EventEmitter)` is the same instance the `bag`/`*eventEmitter`
+   * surface exposes.
+   */
+  public get eventEmitter(): EventEmitter {
+    return this._container.get(EventEmitter);
+  }
+
+  /** Locale orchestration manager — container-owned (M-god step 3b). */
+  public get localeManager(): LocaleManager {
+    return this._container.get(LocaleManager);
+  }
+
+  /** Keyboard-UX (a11y) manager — container-owned (M-god step 3b). */
+  public get a11y(): A11y {
+    return this._container.get(A11y);
+  }
+
+  /** Solution (preset) identity — owned by the container's `AppInfo` (M-god step 3b). */
+  public get solutionName(): string | null {
+    return this._container.get(AppInfo).solutionName;
+  }
+
+  /**
+   * Register the solution (preset) owning this scope — delegates to the
+   * container-owned `AppInfo`. Several solutions may share one `ctx-name` (a
+   * supported composition — e.g. an uploader plus a standalone editor); the
+   * most recently initialized one identifies the scope, matching v1's
+   * `pub('*solution', …)` last-writer semantics.
    */
   public setSolutionName(name: string): void {
-    this._solutionName = name.toLowerCase();
+    this._container.get(AppInfo).setSolutionName(name);
   }
 
   /**
@@ -445,9 +460,11 @@ export class UploaderController {
   public destroy(): void {
     this._destroyed = true;
 
-    this.events.destroy();
-    // `config`/`locale` are NOT torn down here — the container owns them and
-    // disposes them (after this `destroy()`) in reverse construction order.
+    // `events`/`eventEmitter`/`localeManager`/`a11y` and `config`/`locale`/
+    // `AppInfo` are NOT torn down here — the container owns them and disposes
+    // them (around this `destroy()`) in reverse construction order. `events`
+    // (registered after this controller) is therefore disposed just before
+    // this runs, preserving v1's events-first teardown.
 
     // The uploader-scope stack tears down BEFORE `this.collection.destroy()`,
     // in reverse construction order: `UploadEventsController.unobserve()`
@@ -464,13 +481,10 @@ export class UploaderController {
 
     this.collection.destroy();
 
-    // Reverse construction order.
+    // Reverse construction order for the controller's still-owned managers.
     this.clipboard.destroy();
-    this.a11y.destroy();
     this.router.destroy();
     this.telemetryManager.destroy();
-    this.eventEmitter.destroy();
-    this.localeManager.destroy();
 
     // M9l follow-up: restore v1's throw-on-teardown-straddle parity — reading
     // `api` after destroy() must throw again, not keep returning a torn-down

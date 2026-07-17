@@ -6,6 +6,7 @@ import { EventBus, UploaderEventType } from '../EventBus';
 import { A11y } from '../managers/a11y';
 import { LocaleManager } from '../managers/LocaleManager';
 import { TelemetryManager } from '../managers/TelemetryManager';
+import { AppInfo } from './AppInfo';
 import { ClipboardController } from './ClipboardController';
 import { ConfigController } from './ConfigController';
 import { LocaleController } from './LocaleController';
@@ -58,17 +59,19 @@ describe('UploaderController', () => {
     expect(controller.locale).toBeInstanceOf(LocaleController);
   });
 
-  it('resolves config/locale from the container and takes injected events/collection', () => {
+  it('resolves config/locale/events from the container and takes an injected collection', () => {
     const container = new ControllerContainer();
     const events = new EventBus();
     const config = new ConfigController();
     const locale = new LocaleController();
     const collection = new UploadCollectionController();
-    // The container owns config/locale — bind them here to pin the instances.
+    // The container owns config/locale/events — bind them here to pin the
+    // instances the delegating getters must resolve.
     container.bind(ConfigController, () => config);
     container.bind(LocaleController, () => locale);
+    container.bind(EventBus, () => events);
 
-    const controller = new UploaderController(container, { events, collection });
+    const controller = new UploaderController(container, { collection });
 
     expect(controller.events).toBe(events);
     expect(controller.config).toBe(config);
@@ -131,8 +134,10 @@ describe('UploaderController', () => {
   });
 
   describe('ctx-scope managers', () => {
-    it('constructs its own localeManager, eventEmitter, telemetryManager, router, a11y, and clipboard', () => {
+    it('exposes localeManager, eventEmitter, telemetryManager, router, a11y, and clipboard', () => {
       const controller = makeController();
+      // localeManager/eventEmitter/a11y resolve from the container; the rest
+      // are constructor-owned.
       expect(controller.localeManager).toBeInstanceOf(LocaleManager);
       expect(controller.eventEmitter).toBeInstanceOf(EventEmitter);
       expect(controller.telemetryManager).toBeInstanceOf(TelemetryManager);
@@ -141,16 +146,13 @@ describe('UploaderController', () => {
       expect(controller.clipboard).toBeInstanceOf(ClipboardController);
     });
 
-    it('uses injected managers instead of constructing its own', () => {
-      const localeManager = new LocaleManager({ config: new ConfigController(), locale: new LocaleController() });
-      const eventEmitter = new EventEmitter(new EventBus());
+    it('uses constructor-injected telemetry/router/clipboard instead of constructing its own', () => {
       const telemetryManager = new TelemetryManager({
         config: new ConfigController(),
         getSolution: () => null,
         getActivity: () => null,
       });
       const router = new RouterController({ emit: () => {} });
-      const a11y = new A11y();
       const clipboard = new ClipboardController({
         getPasteScope: () => false,
         getCurrentActivity: () => null,
@@ -160,20 +162,30 @@ describe('UploaderController', () => {
       });
 
       const controller = makeController({
-        localeManager,
-        eventEmitter,
         telemetryManager,
         router,
-        a11y,
         clipboard,
       });
 
-      expect(controller.localeManager).toBe(localeManager);
-      expect(controller.eventEmitter).toBe(eventEmitter);
       expect(controller.telemetryManager).toBe(telemetryManager);
       expect(controller.router).toBe(router);
-      expect(controller.a11y).toBe(a11y);
       expect(controller.clipboard).toBe(clipboard);
+    });
+
+    it('resolves eventEmitter/localeManager/a11y from the container (bound instances)', () => {
+      const container = new ControllerContainer();
+      const eventEmitter = new EventEmitter();
+      const localeManager = new LocaleManager();
+      const a11y = new A11y();
+      container.bind(EventEmitter, () => eventEmitter);
+      container.bind(LocaleManager, () => localeManager);
+      container.bind(A11y, () => a11y);
+
+      const controller = new UploaderController(container);
+
+      expect(controller.eventEmitter).toBe(eventEmitter);
+      expect(controller.localeManager).toBe(localeManager);
+      expect(controller.a11y).toBe(a11y);
     });
 
     it("wires the router's emit to the controller's own emit, debouncing modal transitions", () => {
@@ -244,35 +256,61 @@ describe('UploaderController', () => {
     });
   });
 
-  it('destroy() tears down the ctx-scope managers too, in reverse construction order', () => {
+  it('destroy() tears down the controller-owned managers in reverse construction order', () => {
     const controller = makeController();
     const clipboardDestroy = vi.spyOn(controller.clipboard, 'destroy');
-    const a11yDestroy = vi.spyOn(controller.a11y, 'destroy');
     const routerDestroy = vi.spyOn(controller.router, 'destroy');
     const telemetryDestroy = vi.spyOn(controller.telemetryManager, 'destroy');
-    const eventEmitterDestroy = vi.spyOn(controller.eventEmitter, 'destroy');
-    const localeManagerDestroy = vi.spyOn(controller.localeManager, 'destroy');
 
     controller.destroy();
 
     expect(clipboardDestroy).toHaveBeenCalled();
-    expect(a11yDestroy).toHaveBeenCalled();
     expect(routerDestroy).toHaveBeenCalled();
     expect(telemetryDestroy).toHaveBeenCalled();
-    expect(eventEmitterDestroy).toHaveBeenCalled();
-    expect(localeManagerDestroy).toHaveBeenCalled();
 
     const clipboardOrder = clipboardDestroy.mock.invocationCallOrder[0]!;
-    const a11yOrder = a11yDestroy.mock.invocationCallOrder[0]!;
     const routerOrder = routerDestroy.mock.invocationCallOrder[0]!;
     const telemetryOrder = telemetryDestroy.mock.invocationCallOrder[0]!;
-    const eventEmitterOrder = eventEmitterDestroy.mock.invocationCallOrder[0]!;
-    const localeManagerOrder = localeManagerDestroy.mock.invocationCallOrder[0]!;
-    expect(clipboardOrder).toBeLessThan(a11yOrder);
-    expect(a11yOrder).toBeLessThan(routerOrder);
+    expect(clipboardOrder).toBeLessThan(routerOrder);
     expect(routerOrder).toBeLessThan(telemetryOrder);
-    expect(telemetryOrder).toBeLessThan(eventEmitterOrder);
-    expect(eventEmitterOrder).toBeLessThan(localeManagerOrder);
+  });
+
+  it('leaves events/eventEmitter/localeManager/a11y for the container to dispose (not destroyed by controller.destroy())', () => {
+    const container = new ControllerContainer();
+    container.bind(UploaderController, (c) => new UploaderController(c));
+    const controller = container.get(UploaderController);
+    // Touch each so the container has actually constructed + registered them.
+    const eventsDestroy = vi.spyOn(controller.events, 'destroy');
+    const eventEmitterDestroy = vi.spyOn(controller.eventEmitter, 'destroy');
+    const localeManagerDestroy = vi.spyOn(controller.localeManager, 'destroy');
+    const a11yDestroy = vi.spyOn(controller.a11y, 'destroy');
+
+    controller.destroy();
+    // The controller must leave the container-owned managers alone...
+    expect(eventsDestroy).not.toHaveBeenCalled();
+    expect(eventEmitterDestroy).not.toHaveBeenCalled();
+    expect(localeManagerDestroy).not.toHaveBeenCalled();
+    expect(a11yDestroy).not.toHaveBeenCalled();
+
+    // ...the container disposes them.
+    container.dispose();
+    expect(eventsDestroy).toHaveBeenCalledTimes(1);
+    expect(eventEmitterDestroy).toHaveBeenCalledTimes(1);
+    expect(localeManagerDestroy).toHaveBeenCalledTimes(1);
+    expect(a11yDestroy).toHaveBeenCalledTimes(1);
+  });
+
+  it('delegates solutionName/setSolutionName to the container-owned AppInfo', () => {
+    const container = new ControllerContainer();
+    container.bind(UploaderController, (c) => new UploaderController(c));
+    const controller = container.get(UploaderController);
+
+    expect(controller.solutionName).toBeNull();
+    controller.setSolutionName('UC-FILE-UPLOADER-REGULAR');
+
+    // The write lands on the shared AppInfo instance and reads back normalized.
+    expect(controller.solutionName).toBe('uc-file-uploader-regular');
+    expect(container.get(AppInfo).solutionName).toBe('uc-file-uploader-regular');
   });
 
   it('destroy() tolerates running with the api never set (no paste ever happened)', () => {
