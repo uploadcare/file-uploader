@@ -1,7 +1,9 @@
 import { ContextConsumer, ContextProvider } from '@lit/context';
+import { SignalWatcher } from '@lit-labs/signals';
 import { LitElement, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import type { UploaderController } from '../abstract/controllers/UploaderController';
+import type { ControllerContainer, Token } from '../abstract/di/ControllerContainer';
 import { resolveSecureDeliveryProxyUrl } from '../abstract/secureDeliveryProxyUrl';
 import { UploaderRegistry } from '../abstract/UploaderRegistry';
 import type { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter';
@@ -19,7 +21,14 @@ import type { SharedState } from './SharedState';
 import { createSharedInstancesBag, type SharedInstancesBag } from './shared-instances';
 import { TestModeController } from './TestModeController';
 
-const ChildBlockBase = RegisterableElementMixin(LightDomMixin(LitElement));
+// `SignalWatcher` sits at the base of the mixin chain so it wraps
+// `performUpdate` (not `render()`): a fully-overridden `render()`/`shouldUpdate()`
+// in a leaf block still auto-tracks any `@lit-labs/signals` signal read during
+// its update, and re-renders when that signal changes. Non-migrated blocks read
+// state imperatively (`bag`/`subConfigValue`/`this.uploader.*`, none of which
+// touch a signal), so the watcher tracks nothing for them and their update cycle
+// is behavior-identical — it only adds a per-element watcher no signal notifies.
+const ChildBlockBase = SignalWatcher(RegisterableElementMixin(LightDomMixin(LitElement)));
 
 /**
  * Base class for blocks ported off `SymbioteCompatMixin` (M9). Resolves the
@@ -45,6 +54,18 @@ const ChildBlockBase = RegisterableElementMixin(LightDomMixin(LitElement));
 export abstract class ChildBlock extends ChildBlockBase {
   public static styleAttrs: string[] = [];
 
+  /**
+   * The container-owned controllers this block depends on. A migrated block
+   * declares them here (`static override readonly uses = [ConfigController] as
+   * const`) and reads them at render time via `this.use(Token)`. `uses` is
+   * documentation + pre-warm + drives nothing type-wise (`use()` is generically
+   * typed off its token argument, not off this list): on adoption every entry is
+   * eagerly resolved from this ctx's container so the dep exists before first
+   * render. Empty by default — non-migrated blocks still read via
+   * `bag`/`subConfigValue`/`this.uploader.*`.
+   */
+  public static readonly uses: readonly Token<unknown>[] = [];
+
   @property({ attribute: 'ctx-name' })
   public ctxName: string | undefined = undefined;
 
@@ -52,6 +73,10 @@ export abstract class ChildBlock extends ChildBlockBase {
   private _inheritedCtxName: string | undefined = undefined;
 
   private _controller: UploaderController | null = null;
+  // This ctx's DI container, adopted alongside the controller (`ctrl.container`).
+  // It is the resolution source for `use()` and the consumer-refcount anchor for
+  // teardown (`addConsumer`/`removeConsumer`/`isUnreferenced`).
+  private _container: ControllerContainer | null = null;
   private _watchedCtxName: string | undefined = undefined;
   private _registryUnsub?: () => void;
   private _subs: Array<() => void> = [];
@@ -96,6 +121,27 @@ export abstract class ChildBlock extends ChildBlockBase {
     return this._controller;
   }
 
+  /**
+   * Resolve a single-responsibility controller from this ctx's DI container —
+   * the v2 successor to reading off the monolithic `this.uploader`. Read it at
+   * render time (or in/after `controllerReady`); the render gate guarantees the
+   * container is adopted by then. Reading a `@signalState`/`SignalMap`-backed
+   * value off the returned controller (e.g. `ConfigController.getTracked`)
+   * inside `render()` auto-tracks it via `SignalWatcher`.
+   *
+   * Throws if the container isn't adopted yet (pre-adoption access is a bug,
+   * matching `this.uploader`'s guard).
+   */
+  protected use<T>(token: Token<T>): T {
+    if (!this._container) {
+      throw new Error(
+        `${this.tagName.toLowerCase()}: controller container is not available yet. ` +
+          'Call use() in render() or controllerReady(), not connectedCallback().',
+      );
+    }
+    return this._container.get(token);
+  }
+
   private _requireCtx(): PubSub<SharedState> {
     const ctxName = this.effectiveCtxName;
     const ctx = ctxName ? PubSub.getCtx<SharedState>(ctxName) : null;
@@ -109,6 +155,10 @@ export abstract class ChildBlock extends ChildBlockBase {
    * Shared v1 manager/controller instances for this ctx. Getters throw until
    * the instance registers — inside `controllerReady` prefer `bag.when(name,
    * cb)` (async-safe) over direct getters.
+   *
+   * @deprecated Transitional v1 compat. Migrated blocks resolve controllers via
+   * `this.use(Token)` and read reactive state through signals (e.g.
+   * `ConfigController.getTracked`). Removed once every block is migrated.
    */
   protected bag: SharedInstancesBag = createSharedInstancesBag(() => this._requireCtx());
 
@@ -302,6 +352,26 @@ export abstract class ChildBlock extends ChildBlockBase {
     if (this._controller === ctrl) return;
     this._releaseController();
     this._controller = ctrl;
+    // Anchor the consumer refcount on the container (M-god step 6a): this block
+    // now keeps its ctx alive by being a container consumer, not by holding a
+    // `UploaderRegistry.whenAvailable` subscription. `addConsumer`/`removeConsumer`
+    // run at adopt/release, which — because `whenAvailable` fires synchronously
+    // once `ensureUploaderCtx` has forced the controller into existence — is the
+    // same instant the registry subscription used to be the refcount, preserving
+    // exact teardown timing (`isCtxUnreferenced` now reads `container.isUnreferenced()`).
+    const container = ctrl.container;
+    this._container = container;
+    container.addConsumer(this);
+    // Pre-warm declared dependencies so they exist before first render. Isolate-
+    // and-warn: one dep's construction failure must not abort adoption (mirrors
+    // controllerReady / teardown / EventBus fan-out).
+    for (const token of (this.constructor as typeof ChildBlock).uses) {
+      try {
+        container.get(token);
+      } catch (err) {
+        console.warn(`[uc] ${this.tagName.toLowerCase()}: pre-warming a declared dependency threw`, err);
+      }
+    }
     const rerender = () => this.requestUpdate();
     for (const subscribe of this.subscriptionsFor(ctrl)) {
       this._subs.push(subscribe(rerender));
@@ -321,6 +391,7 @@ export abstract class ChildBlock extends ChildBlockBase {
 
   private _releaseController(): void {
     const ctrl = this._controller;
+    const container = this._container;
     for (const unsub of this._subs) {
       try {
         unsub();
@@ -335,6 +406,13 @@ export abstract class ChildBlock extends ChildBlockBase {
     }
     this._subs = [];
     this._controller = null;
+    // Drop the container refcount BEFORE the deferred teardown check fires: once
+    // the last consumer is gone `container.isUnreferenced()` reports the ctx dead
+    // and `_teardownCtxIfUnreferenced` disposes it (via `destroyCtx`). A disposed
+    // container has already cleared its consumer set, so a late `removeConsumer`
+    // here (e.g. a null-notify after teardown) is a harmless no-op.
+    container?.removeConsumer(this);
+    this._container = null;
     if (ctrl) this.controllerReleased(ctrl);
   }
 
@@ -372,7 +450,13 @@ export abstract class ChildBlock extends ChildBlockBase {
     });
   }
 
-  /** Track a subscription for auto-teardown on controller release / disconnect. */
+  /**
+   * Track a subscription for auto-teardown on controller release / disconnect.
+   *
+   * @deprecated Transitional v1 compat — a migrated block tracks reactive state
+   * with signals (`SignalWatcher` auto-tracks + auto-disposes), not manual
+   * subscriptions. Removed once every block is migrated.
+   */
   protected trackSub(unsub: () => void): void {
     this._subs.push(unsub);
   }
@@ -382,6 +466,10 @@ export abstract class ChildBlock extends ChildBlockBase {
    * then on every change of that key (`Object.is` dedup over the coarse
    * config notification). Same contract as v1 `LitBlock.subConfigValue`.
    * Call from `controllerReady` or later; auto-tracked.
+   *
+   * @deprecated Transitional v1 compat. A migrated block reads config
+   * reactively in `render()` via `this.use(ConfigController).getTracked(key)`,
+   * which `SignalWatcher` auto-tracks. Removed once every block is migrated.
    */
   protected subConfigValue<K extends keyof ConfigType>(key: K, callback: (value: ConfigType[K]) => void): () => void {
     const config = this.uploader.config;
@@ -402,6 +490,10 @@ export abstract class ChildBlock extends ChildBlockBase {
    * Subscribe to *any* router change. Fires immediately, then on every
    * notification — no value dedup. Auto-tracked. Call from `controllerReady`
    * or later (`bag.router` requires the ctx).
+   *
+   * @deprecated Transitional v1 compat — a migrated block reads router state
+   * reactively via signals under `SignalWatcher`. Removed once every block is
+   * migrated.
    */
   protected subRouter(callback: () => void): () => void {
     callback();
@@ -414,6 +506,10 @@ export abstract class ChildBlock extends ChildBlockBase {
    * Subscribe to the effective current activity (foreground modal, else
    * background). Fires immediately with the current value, then on change
    * (reference dedup). Auto-tracked.
+   *
+   * @deprecated Transitional v1 compat — a migrated block reads activity state
+   * reactively via signals under `SignalWatcher`. Removed once every block is
+   * migrated.
    */
   protected subActivity(callback: (activity: ActivityId | null) => void): () => void {
     const router = this.bag.router;

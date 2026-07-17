@@ -31,15 +31,21 @@ describe('uc-copyright', () => {
   });
 
   it('hides when removeCopyright is set, shows again when unset', async () => {
+    // M-god step 6a: Copyright now reads `removeCopyright` through the tracked
+    // config signal inside `render()`, so a `SignalWatcher` re-render toggles
+    // `?hidden` on the `<a>` (was an imperative `toggleAttribute('hidden')` on
+    // the host). This asserts the reactive path end-to-end in a real browser:
+    // an external `<uc-config>` change re-renders the overridden `render()`.
     const { config } = renderCopyright();
-    const el = () => document.querySelector('uc-copyright')!;
+    const link = () => document.querySelector<HTMLAnchorElement>('uc-copyright .uc-credits')!;
     await expect.element(page.getByText('Powered by Uploadcare', { exact: true })).toBeVisible();
+    expect(link().hasAttribute('hidden')).toBe(false);
 
     config.removeCopyright = true;
-    await expect.poll(() => el().hasAttribute('hidden')).toBe(true);
+    await expect.poll(() => link().hasAttribute('hidden')).toBe(true);
 
     config.removeCopyright = false;
-    await expect.poll(() => el().hasAttribute('hidden')).toBe(false);
+    await expect.poll(() => link().hasAttribute('hidden')).toBe(false);
   });
 
   it('reflects data-testid under testMode', async () => {
