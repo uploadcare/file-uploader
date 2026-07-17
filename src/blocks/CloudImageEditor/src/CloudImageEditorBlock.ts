@@ -25,8 +25,6 @@ import {
 import { serializeCsv } from '../../../utils/comma-separated';
 import { debounce } from '../../../utils/debounce.js';
 import { TRANSPARENT_PIXEL_SRC } from '../../../utils/transparentPixelSrc';
-import type { EditorImageCropper } from './EditorImageCropper';
-import type { EditorImageFader } from './EditorImageFader';
 import { subscribeUploaderConfigCompat } from './editor-config-compat';
 import { cloudImageEditorContext } from './editor-context';
 import { type EditorL10n, resolveEditorL10n } from './editor-locale';
@@ -216,9 +214,14 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
     this._showLoader = show;
   }, 300);
 
-  private readonly _imgRef = createRef<HTMLImageElement>();
-  private readonly _cropperRef = createRef<EditorImageCropper>();
-  private readonly _faderRef = createRef<EditorImageFader>();
+  /**
+   * The image container, passed to `<uc-editor-toolbar>` as a plain Lit prop
+   * (UI-layer plumbing, not controller state) so it can measure the rendered
+   * width for image preloading. Read via `.value`: the container renders before
+   * the init-gated toolbar, so the ref is populated by the time the toolbar's
+   * prop binding evaluates.
+   */
+  private readonly _imgContainerRef = createRef<HTMLDivElement>();
 
   private readonly _handleImageLoad = (): void => {
     this._debouncedShowLoader(false);
@@ -489,24 +492,6 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
     );
   }
 
-  private _attachImageListeners(): void {
-    const imgEl = this._imgRef.value;
-    if (!imgEl) {
-      return;
-    }
-    imgEl.addEventListener('load', this._handleImageLoad);
-    imgEl.addEventListener('error', this._handleImageError);
-  }
-
-  private _detachImageListeners(): void {
-    const imgEl = this._imgRef.value;
-    if (!imgEl) {
-      return;
-    }
-    imgEl.removeEventListener('load', this._handleImageLoad);
-    imgEl.removeEventListener('error', this._handleImageError);
-  }
-
   private get _imageClassName(): string {
     const tabId = this._editorController.get('*tabId');
     return classNames('uc-image', {
@@ -577,7 +562,6 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
 
   public override firstUpdated(changedProperties: PropertyValues<this>): void {
     super.firstUpdated(changedProperties);
-    this._attachImageListeners();
     void this.initEditor();
 
     const hasInitialSource = Boolean(this.uuid || this.cdnUrl);
@@ -588,8 +572,6 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
   }
 
   public override disconnectedCallback(): void {
-    this._detachImageListeners();
-
     this._configChangeUnsub?.();
     this._configChangeUnsub = undefined;
     this._editorController.destroy();
@@ -626,17 +608,13 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
           <div class="uc-file_type_outer">
             <div class="uc-file_type">${fileType}</div>
           </div>
-          <div class="uc-image_container">
-            <img src=${src} class=${this._imageClassName} ${ref(this._imgRef)} />
+          <div class="uc-image_container" ${ref(this._imgContainerRef)}>
+            <img src=${src} class=${this._imageClassName} @load=${this._handleImageLoad} @error=${this._handleImageError} />
             ${when(
               this._isInitialized,
-              () =>
-                html`<uc-editor-image-cropper
-                  .imageSize=${this._imageSize}
-                  ${ref(this._cropperRef)}
-                ></uc-editor-image-cropper>`,
+              () => html`<uc-editor-image-cropper .imageSize=${this._imageSize}></uc-editor-image-cropper>`,
             )}
-            <uc-editor-image-fader .imageSize=${this._imageSize} ${ref(this._faderRef)}></uc-editor-image-fader>
+            <uc-editor-image-fader .imageSize=${this._imageSize}></uc-editor-image-fader>
           </div>
           <div class="uc-info_pan">${message}</div>
         </div>
@@ -650,6 +628,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
                   .cropPresetList=${this._cropPresetList}
                   .tabList=${this._tabList}
                   .imageSize=${this._imageSize}
+                  .imageContainer=${this._imgContainerRef.value ?? null}
                 ></uc-editor-toolbar>`,
             )}
           </div>
