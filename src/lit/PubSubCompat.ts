@@ -2,6 +2,7 @@ import { listenKeys, type MapStore, map, subscribeKeys } from 'nanostores';
 import type { ConfigController } from '../abstract/controllers/ConfigController';
 import type { LocaleController } from '../abstract/controllers/LocaleController';
 import { UploaderController } from '../abstract/controllers/UploaderController';
+import { ControllerContainer } from '../abstract/di/ControllerContainer';
 import { UploaderRegistry } from '../abstract/UploaderRegistry';
 
 export type Unsubscriber = () => void;
@@ -26,13 +27,16 @@ export class PubSub<T extends Record<string, unknown>> {
    */
   private static _ctxWaiters = new Map<string, Set<(ctx: PubSub<Record<string, unknown>>) => void>>();
   /**
-   * One `UploaderController` per ctx-name. Created lazily the first time a
-   * `*cfg/*` key is touched on a context (so per-upload-entry stores, which
-   * never carry config keys, never get a controller). This is the v1 → v2
+   * One per-ctx `ControllerContainer` per ctx-name. Created lazily the first
+   * time a `*cfg/*` key is touched on a context (so per-upload-entry stores,
+   * which never carry config keys, never get a controller). Each container
+   * owns exactly one (still-monolithic) `UploaderController` — it is the
+   * creation/ownership seam: the controller is `bind`+`get` through the
+   * container, and `container.dispose()` tears it down. This is the v1 → v2
    * strangler seam: config state lives in `controller.config`, not in the
    * nanostores map, while the rest of the shared state stays on nanostores.
    */
-  private static _controllers = new Map<string, UploaderController>();
+  private static _controllers = new Map<string, ControllerContainer>();
 
   private _store: PubSubStore<T>;
   private _ctxId: string;
@@ -58,39 +62,55 @@ export class PubSub<T extends Record<string, unknown>> {
 
   /** Get (or lazily create + register) the controller for this ctx. */
   private _uploader(): UploaderController {
-    let controller = PubSub._controllers.get(this._ctxId);
-    if (!controller) {
-      // The 9 v1 shared-state (`*`-key) read/write bridges the upload stack
-      // needs (validation's `setCollectionErrors`, uploadEvents' 8) — built
-      // here, at controller-creation time, closing over THIS ctx via the
-      // same `pub`/`read` this class already routes cfg/locale/nanostores
-      // keys through. None of these 9 keys are `*cfg/`- or `*l10n/`-prefixed,
-      // so `pub`/`read` fall straight through to the nanostores map — same
-      // shape as the v1 closures moved here verbatim (see the M9n Task 3
-      // report). `pub`/`read` are generic over this instance's own `T`; these
-      // keys aren't statically known to be `keyof T` (they're only ever
-      // touched by the uploader stack, not declared per-ctx-shape), hence the
-      // casts — behaviorally identical to the untyped `ctx.pub`/`ctx.read`
-      // calls this replaces.
-      const pub = <V>(key: string, value: V): void => this.pub(key as keyof T, value as T[keyof T]);
-      const read = <V>(key: string): V => this.read(key as keyof T) as V;
-
-      controller = new UploaderController({
-        stateBridges: {
-          setCollectionErrors: (errors) => pub('*collectionErrors', errors),
-          uploadTrigger: () => read('*uploadTrigger'),
-          setUploadList: (list) => pub('*uploadList', list),
-          getCollectionState: () => read('*collectionState'),
-          setCollectionState: (state) => pub('*collectionState', state),
-          getCommonProgress: () => read('*commonProgress'),
-          setCommonProgress: (progress) => pub('*commonProgress', progress),
-          setGroupInfo: (group) => pub('*groupInfo', group),
-          getCollectionErrors: () => read('*collectionErrors'),
-        },
-      });
-      PubSub._controllers.set(this._ctxId, controller);
-      UploaderRegistry.register(this._ctxId, controller);
+    const existing = PubSub._controllers.get(this._ctxId);
+    if (existing) {
+      // Idempotent: the container caches its single UploaderController, so this
+      // returns the same instance registered at creation time (no re-init).
+      return existing.get(UploaderController);
     }
+
+    // The 9 v1 shared-state (`*`-key) read/write bridges the upload stack
+    // needs (validation's `setCollectionErrors`, uploadEvents' 8) — built
+    // here, at controller-creation time, closing over THIS ctx via the
+    // same `pub`/`read` this class already routes cfg/locale/nanostores
+    // keys through. None of these 9 keys are `*cfg/`- or `*l10n/`-prefixed,
+    // so `pub`/`read` fall straight through to the nanostores map — same
+    // shape as the v1 closures moved here verbatim (see the M9n Task 3
+    // report). `pub`/`read` are generic over this instance's own `T`; these
+    // keys aren't statically known to be `keyof T` (they're only ever
+    // touched by the uploader stack, not declared per-ctx-shape), hence the
+    // casts — behaviorally identical to the untyped `ctx.pub`/`ctx.read`
+    // calls this replaces.
+    const pub = <V>(key: string, value: V): void => this.pub(key as keyof T, value as T[keyof T]);
+    const read = <V>(key: string): V => this.read(key as keyof T) as V;
+
+    // The per-ctx container is the creation/owner of the (still-monolithic)
+    // UploaderController: bind its factory (the EXACT deps object built here
+    // today, closing over THIS ctx's pub/read), then `get` the single
+    // instance. `container.dispose()` (in `deleteCtx`) is what tears it down.
+    const container = new ControllerContainer();
+    container.bind(
+      UploaderController,
+      () =>
+        new UploaderController({
+          stateBridges: {
+            setCollectionErrors: (errors) => pub('*collectionErrors', errors),
+            uploadTrigger: () => read('*uploadTrigger'),
+            setUploadList: (list) => pub('*uploadList', list),
+            getCollectionState: () => read('*collectionState'),
+            setCollectionState: (state) => pub('*collectionState', state),
+            getCommonProgress: () => read('*commonProgress'),
+            setCommonProgress: (progress) => pub('*commonProgress', progress),
+            setGroupInfo: (group) => pub('*groupInfo', group),
+            getCollectionErrors: () => read('*collectionErrors'),
+          },
+        }),
+    );
+    const controller = container.get(UploaderController);
+    PubSub._controllers.set(this._ctxId, container);
+    // Register the UploaderController itself (exactly as before), so
+    // `UploaderRegistry`/`ChildBlock`/`whenAvailable` consumers are untouched.
+    UploaderRegistry.register(this._ctxId, controller);
     return controller;
   }
 
@@ -281,11 +301,17 @@ export class PubSub<T extends Record<string, unknown>> {
 
   public static deleteCtx(ctxId: string): void {
     PubSub._contexts.delete(ctxId);
-    const controller = PubSub._controllers.get(ctxId);
-    if (controller) {
+    const container = PubSub._controllers.get(ctxId);
+    if (container) {
       PubSub._controllers.delete(ctxId);
+      // The container caches the single UploaderController, so this returns the
+      // exact instance registered at creation (no re-init) — needed for the
+      // identity-checked unregister. Unregister (null-notify) BEFORE dispose,
+      // preserving the v1 teardown order. `dispose()` then runs the single
+      // cached `UploaderController.destroy()` exactly once.
+      const controller = container.get(UploaderController);
       UploaderRegistry.unregister(ctxId, controller);
-      controller.destroy();
+      container.dispose();
     }
   }
 
