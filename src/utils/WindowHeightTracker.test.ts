@@ -41,4 +41,15 @@ describe('WindowHeightTracker', () => {
     // Last client gone — the var is cleared.
     expect(read()).toBe('');
   });
+
+  it('a register→unregister within the debounce window leaves the var unset (pending flush cancelled)', () => {
+    const client = document.createElement('div');
+    WindowHeightTracker.registerClient(client);
+    // Unregister before the 100ms debounced flush fires.
+    WindowHeightTracker.unregisterClient(client);
+    vi.advanceTimersByTime(200);
+
+    // detachTracker cancelled the pending flush — no stale value re-set.
+    expect(read()).toBe('');
+  });
 });

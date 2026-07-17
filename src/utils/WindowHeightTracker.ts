@@ -33,6 +33,9 @@ export class WindowHeightTracker {
 
   private static detachTracker(): void {
     window.removeEventListener('resize', WindowHeightTracker.flush, { capture: true });
+    // Cancel any pending debounced flush so a register→unregister within the
+    // debounce window can't re-set the property after we remove it below.
+    WindowHeightTracker.flush.cancel();
     document.documentElement.style.removeProperty(WINDOW_HEIGHT_TRACKER_PROPERTY);
   }
 }
