@@ -7,7 +7,11 @@ import { EventType, InternalEventType } from '../../blocks/UploadCtxProvider/Eve
 import { PACKAGE_NAME, PACKAGE_VERSION } from '../../env';
 import type { ConfigType } from '../../types/index';
 import { UID } from '../../utils/UID';
-import type { ConfigController } from '../controllers/ConfigController';
+import { AppInfo } from '../controllers/AppInfo';
+import { ConfigController } from '../controllers/ConfigController';
+import { RouterController } from '../controllers/RouterController';
+import { inject } from '../di/inject';
+import { EventBus } from '../EventBus';
 
 type CommonEventType = InternalEventKey | EventKey;
 
@@ -39,49 +43,65 @@ const SENSITIVE_CONFIG_KEYS: ReadonlySet<keyof ConfigType> = new Set([
 
 const REDACTED_VALUE = '[redacted]';
 
-export type TelemetryManagerDeps = {
-  /** v2 config source of truth — enablement, snapshot, and change detection. */
-  config: ConfigController;
-  /**
-   * Payload-ready solution name (`UploaderController.solutionName`, already
-   * lowercased); null before a solution registers.
-   */
-  getSolution: () => string | null;
-  /** Effective current activity; null before the router exists / nothing open. */
-  getActivity: () => string | null;
-};
-
 /**
- * Quality-insights telemetry (M8 port): deps-injected instead of
- * `SharedInstance`-based — enablement and config tracking read the v2
- * `ConfigController` directly (one coarse subscription + snapshot diff
- * replaces the per-`*cfg/*`-key ctx subscriptions), and the solution/activity
- * payload fields come from injected getters, so nothing here touches the `$`
- * state.
+ * Quality-insights telemetry (M8 port): container-resolved (M-god step 3c) and
+ * an EventBus OBSERVER. Enablement and config tracking read the v2
+ * `ConfigController` directly (one coarse subscription + snapshot diff replaces
+ * the per-`*cfg/*`-key ctx subscriptions); the solution/activity payload fields
+ * read the container-owned `AppInfo`/`RouterController` lazily, so nothing here
+ * touches the `$` state.
+ *
+ * `init()` subscribes to `bus.onAny` and forwards every emitted event to
+ * `sendEvent` — replacing the per-emit telemetry mirror that
+ * `UploaderController.emit`/`ChildBlock.emit` used to carry (the "augmented
+ * emit" god-method). The bus fires on every `EventEmitter.emit`, so telemetry
+ * still sees every event those paths dispatch; it additionally sees the direct
+ * `eventEmitter.emit` callers (`uploadAll`'s `common-upload-start`,
+ * `emitCommonUploadFailed`'s `common-upload-failed`) that the old per-path
+ * mirror never reached — an intended consistency improvement.
  */
 export class TelemetryManager {
-  private readonly _deps: TelemetryManagerDeps;
+  // Container-resolved collaborators (M-god step 3c). `ConfigController` is a
+  // direct `@inject` (no import cycle); the rest are thunked because the event
+  // surface's module graph is circular-prone. All resolve lazily on access.
+  @inject(ConfigController) private readonly _configController!: ConfigController;
+  @inject(() => EventBus) private readonly _bus!: EventBus;
+  @inject(() => AppInfo) private readonly _appInfo!: AppInfo;
+  @inject(() => RouterController) private readonly _router!: RouterController;
+
   private readonly _sessionId: string = UID.generateRandomUUID();
-  private readonly _telemetryInstance: TelemetryAPIService;
+  private readonly _telemetryInstance: TelemetryAPIService = new TelemetryAPIService();
   private _config: ConfigType = structuredClone(initialConfig);
   private _initialized = false;
   private _lastPayload: TelemetryState | null = null;
-  private readonly _queue: Queue;
-  private _unsubConfig: () => void;
+  private readonly _queue: Queue = new Queue(10);
+  private _unsubConfig: () => void = () => {};
+  private _unsubBus: () => void = () => {};
 
-  public constructor(deps: TelemetryManagerDeps) {
-    this._deps = deps;
-    this._telemetryInstance = new TelemetryAPIService();
-    this._queue = new Queue(10);
-
-    this._unsubConfig = deps.config.subscribe(() => this._trackConfigChange());
+  /**
+   * Container lifecycle hook — runs after the container has tagged + cached this
+   * instance, so `@inject` fields resolve. Subscribes to the config store (for
+   * `CHANGE_CONFIG` tracking) and, as a bus observer, to every emitted event.
+   */
+  public init(): void {
+    this._unsubConfig = this._configController.subscribe(() => this._trackConfigChange());
     // Seed the snapshot with the current values (nothing is sent before
     // `_initialized`, matching the v1 immediate-subscription pass).
     this._trackConfigChange();
+    // Observe the per-ctx bus: every `EventEmitter.emit` reaches here, so
+    // telemetry sees every event without any per-emit mirror. The bus fan-out
+    // is isolate-and-warn (see `EventBus.emit`), so a throw here can't break the
+    // fan-out — no extra try/catch needed around this observer.
+    this._unsubBus = this._bus.onAny((type, payload) =>
+      this.sendEvent({
+        eventType: type as CommonEventType,
+        payload: (payload ?? undefined) as Record<string, unknown> | undefined,
+      }),
+    );
   }
 
   private get _isEnabled(): boolean {
-    return Boolean(this._deps.config.get('qualityInsights'));
+    return Boolean(this._configController.get('qualityInsights'));
   }
 
   /**
@@ -95,7 +115,7 @@ export class TelemetryManager {
     }
     let changed = false;
     for (const key of Object.keys(this._config) as (keyof ConfigType)[]) {
-      const value = this._deps.config.get(key);
+      const value = this._configController.get(key);
       if (this._config[key] !== value) {
         changed = true;
         (this._config as Record<string, unknown>)[key] = value;
@@ -147,7 +167,7 @@ export class TelemetryManager {
       // editor solution does this, since it registers no uploader
       // `solutionName`); otherwise fall back to the registered solution.
       component: body.component ?? this._solution,
-      activity: this._deps.getActivity(),
+      activity: this._router.currentActivity,
       projectPubkey: this._config.pubkey,
       userAgent: navigator.userAgent,
       eventType: result.eventType ?? '',
@@ -262,7 +282,7 @@ export class TelemetryManager {
   }
 
   private get _solution(): string | null {
-    return this._deps.getSolution();
+    return this._appInfo.solutionName;
   }
 
   private get _location(): string {
@@ -271,5 +291,9 @@ export class TelemetryManager {
 
   public destroy(): void {
     this._unsubConfig();
+    // Detach the bus observer. Safe even if the container already disposed the
+    // EventBus (its `destroy()` cleared listeners): the returned unsubscribe is
+    // an idempotent `Set.delete`.
+    this._unsubBus();
   }
 }
