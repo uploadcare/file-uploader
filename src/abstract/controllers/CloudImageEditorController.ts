@@ -42,7 +42,8 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
  * the fader reacts to it and renders the preview (see `ColorPreview`). The state
  * holds NO DOM references: the cropper/fader self-activate from
  * `*tabId`/`*originalUrl`/`*colorPreview` + the root's `imageSize` prop, and the
- * toolbar's preload measures the image container from its own light DOM.
+ * toolbar's preload measures the root's image container, passed down as a plain
+ * Lit prop.
  */
 export type CloudImageEditorControllerState = {
   '*originalUrl': string | null;
