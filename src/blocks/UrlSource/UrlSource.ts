@@ -1,6 +1,8 @@
 import { html } from 'lit';
 import { state } from 'lit/decorators.js';
+import { RouterController } from '../../abstract/controllers/RouterController';
 import type { UploaderController } from '../../abstract/controllers/UploaderController';
+import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
 import { ChildBlock } from '../../lit/ChildBlock';
 import { UploadSource } from '../../utils/UploadSource';
 import { InternalEventType } from '../UploadCtxProvider/EventEmitter';
@@ -10,6 +12,8 @@ import '../ActivityHeader/ActivityHeader';
 import '../Icon/Icon';
 
 export class UrlSource extends ChildBlock {
+  public static override readonly uses = [TelemetryManager, RouterController] as const;
+
   @state()
   private _url = '';
 
@@ -23,7 +27,7 @@ export class UrlSource extends ChildBlock {
 
   private _handleUpload = (event: Event) => {
     event.preventDefault();
-    this.bag.telemetryManager.sendEvent({
+    this.use(TelemetryManager).sendEvent({
       eventType: InternalEventType.ACTION_EVENT,
       payload: {
         metadata: {
@@ -36,8 +40,10 @@ export class UrlSource extends ChildBlock {
     if (!url) {
       return;
     }
+    // `api` (UploaderPublicApi) is not container-resolved (set via
+    // UploaderController.setApi, no DI token), so it stays on the v1 `bag`.
     this.bag.api.addFileFromUrl(url, { source: UploadSource.URL });
-    this.bag.router.traverse('onFileAdd');
+    this.use(RouterController).traverse('onFileAdd');
   };
 
   public override render() {
@@ -46,7 +52,7 @@ export class UrlSource extends ChildBlock {
         <button
           type="button"
           class="uc-mini-btn"
-          @click=${() => this.bag.router.traverse('onBack')}
+          @click=${() => this.use(RouterController).traverse('onBack')}
           title=${this.l10n('back')}
           aria-label=${this.l10n('back')}
         >
@@ -59,7 +65,7 @@ export class UrlSource extends ChildBlock {
         <button
           type="button"
           class="uc-mini-btn uc-close-btn"
-          @click=${() => this.bag.router.traverse('onClose')}
+          @click=${() => this.use(RouterController).traverse('onClose')}
           title=${this.l10n('a11y-activity-header-button-close')}
           aria-label=${this.l10n('a11y-activity-header-button-close')}
         >
