@@ -131,7 +131,11 @@ export class ValidationController {
   }
 
   private _rerunSnapshot(): string {
-    return RERUN_CONFIG_KEYS.map((key) => String(this._config.get(key))).join(' ');
+    // NUL delimiter (via the `\x00` escape — clean ASCII source, unlike the
+    // literal NUL byte that historically corrupted this file into a binary
+    // blob): config string values can contain spaces, so a space delimiter
+    // risks snapshot collisions; NUL cannot appear in a config value.
+    return RERUN_CONFIG_KEYS.map((key) => String(this._config.get(key))).join('\x00');
   }
 
   public runFileValidators(runOn: FileValidatorDescriptor['runOn'], entryIds?: Uid[]): void {
