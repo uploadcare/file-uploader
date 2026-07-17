@@ -97,6 +97,9 @@ export class SignalMap<T extends object> {
   public seed<K extends keyof T>(key: K, value: T[K]): void {
     if (!Object.hasOwn(this.#bag, key)) {
       this.#bag[key] = value;
+      // Keep an already-materialized signal in lockstep with the bag, same as `set` —
+      // otherwise a `signal(key)` consumer created before this key is seeded would go stale.
+      this.#signals.get(key)?.set(value);
     }
   }
 
