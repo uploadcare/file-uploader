@@ -91,8 +91,8 @@ export class PubSub<T extends Record<string, unknown>> {
     const container = new ControllerContainer();
     container.bind(
       UploaderController,
-      () =>
-        new UploaderController({
+      (c) =>
+        new UploaderController(c, {
           stateBridges: {
             setCollectionErrors: (errors) => pub('*collectionErrors', errors),
             uploadTrigger: () => read('*uploadTrigger'),
