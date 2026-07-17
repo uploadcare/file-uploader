@@ -63,7 +63,21 @@ class ConfigController {
 - Defines a prototype getter/setter backed by a per-instance
   `@lit-labs/signals` signal. Reads auto-track under `SignalWatcher`; writes
   dedup with `Object.is`. **No `StateController` base class** — reactivity
-  composes per field. `StateController` is deleted, not reimplemented.
+  composes per field. For controllers with a fixed set of reactive fields
+  (`RouterController.currentActivity`, `AppInfo.solutionName`,
+  `CollectionStateController`'s six fields, `PluginController.lazyPlugins`).
+
+### `SignalMap` — reactive dynamic keyspace
+
+For controllers whose state is a **dynamic key bag**, not fixed fields
+(`ConfigController` = ~55 `ConfigType` keys + runtime-registered custom keys;
+`LocaleController` = arbitrary locale strings), per-field `@signalState` does not
+fit. They **compose** (has-a) a small `SignalMap<T>` utility: a lazily-populated
+`Map<keyof T, Signal.State>` with `get`/`set`(`Object.is` dedup)/`subscribe`
+(coarse, reused `Listeners`)/`values`/`seed`/`destroy`. This is the signal-backed
+equivalent of the old `StateController` internals, but as a composable utility a
+controller *owns*, not a base class it extends. `set` fires the coarse `subscribe`
+listeners so the existing `*cfg/`/`*l10n/` routing keeps working during migration.
 
 ### Mixins — cross-cutting behavior
 

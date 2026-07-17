@@ -195,10 +195,16 @@ Each field becomes its own controller with `@inject` deps + `@signalState`
 state + zero-arg ctor + optional `init()`. Wiring (all `@inject`, thunk where the
 target is declared later/circular):
 
-| Controller | `@inject` deps | `@signalState` | Notes |
+Reactive state: **static-field** controllers use `@signalState`; **dynamic-keyspace**
+controllers (`ConfigController`, `LocaleController`) **compose a `SignalMap`**
+(added in step 3a — a lazily-keyed signal map with coarse `subscribe`; the
+signal-backed successor to `StateController`'s internals, as a has-a utility not a
+base class). `@signalState` per-field does NOT fit a dynamic key bag.
+
+| Controller | `@inject` deps | reactive state | Notes |
 |---|---|---|---|
-| `ConfigController` | — | config values | |
-| `LocaleController` | — | locale strings | |
+| `ConfigController` | — | `SignalMap` (config + custom keys) | composes SignalMap; keep full public API |
+| `LocaleController` | — | `SignalMap` (locale strings) | composes SignalMap |
 | `EventBus` | — | — | pure bus |
 | `EventEmitter` | `EventBus` | — | **pure dispatch** (no telemetry) |
 | `TelemetryController` | `ConfigController`, `() => EventBus`, `() => AppInfo`, `() => RouterController` | — | **observer**: `init()` subscribes `bus.onAny` → `sendEvent`; reads solution/activity lazily |
