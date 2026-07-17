@@ -108,6 +108,20 @@ describe('SignalMap', () => {
     expect(map.get('a')).toBe(1);
   });
 
+  it('seed() keeps an already-materialized signal in sync (without notifying)', () => {
+    const map = new SignalMap<Shape>();
+    const sig = map.signal('a');
+    expect(sig.get()).toBeUndefined();
+
+    const listener = vi.fn();
+    map.subscribe(listener);
+
+    map.seed('a', 1);
+    expect(sig.get()).toBe(1);
+    expect(map.get('a')).toBe(1);
+    expect(listener).not.toHaveBeenCalled();
+  });
+
   it('notify() fires subscribers without a state change', () => {
     const map = new SignalMap<Shape>();
     const listener = vi.fn();
