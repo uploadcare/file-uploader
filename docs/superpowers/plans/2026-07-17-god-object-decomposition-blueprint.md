@@ -1,340 +1,300 @@
-# God-Object Decomposition — Implementation Blueprint
+# God-Object Decomposition — Implementation Blueprint (composable model)
 
 **Companion to:** `docs/superpowers/specs/2026-07-17-god-object-decomposition-design.md`
-**Date:** 2026-07-17 · **Branch:** `feat/v2-god-object-decompose` (→ `feat/v2-migration`)
+**Date:** 2026-07-17 (rev. 2) · **Branch:** `feat/v2-god-object-decompose` → `feat/v2-migration`
 **Status:** Blueprint — awaiting approval before step-1 implementation.
 
-This blueprint is the authoritative build document. Where it disagrees with the
-spec, **it wins** — it was verified against the real constructors. Key
-corrections to the spec are flagged **[CORRECTS SPEC]**.
+Authoritative build doc. Internals are **composed via experimental decorators +
+mixins**: no god classes, no mixed responsibilities. All decorator/DI/signal
+mechanics below were validated by a strict-TS + experimental-decorator spike.
 
 ---
 
-## Correction 0 — `bind()` factories, not `static deps`, for most controllers **[CORRECTS SPEC]**
+## Verified foundations (from spike)
 
-The spec assumed every controller takes peer **instances** positionally
-(`static deps` + positional injection). Reading the real constructors: only
-6 do. Everything else takes a **deps object of closures** over other
-controllers' live state (e.g. `getActivity: () => router.currentActivity`).
-That is deliberate — it's how the current code resolves the
-`TelemetryManager ↔ RouterController` mutual need without a construction cycle.
-
-So the container supports **both**:
-- `static deps = [...]` + positional `new` — for the 6 leaf/simple controllers.
-- `container.bind(Token, (c) => new Token({ ... c.get(X) ... }))` — for the rest,
-  where cross-controller reads live inside **lazy closures** that call `c.get()`
-  at *use* time, not at bind time. `container.get` is safe to call re-entrantly
-  from inside a bind factory as long as it isn't a true construction-time cycle.
-
-**Construction-order proof (the Telemetry/EventEmitter/Router triangle is a DAG):**
-the eager edges are linear — `EventBus, ConfigController, AppInfo → TelemetryManager
-→ EventEmitter → RouterController`. Router is only ever referenced inside closures
-that run later (at `sendEvent`/emit time), never mid-resolution. Any first-entry
-order terminates. **Test this** by resolving every eager controller in several
-first-entry orders and asserting no cycle-throw + identical wiring.
+- `@inject`/`@signalState` are **experimental property decorators** — plain
+  decorated fields (**no `accessor` keyword**), defining prototype getters/setters.
+- `@inject` resolves **lazily on access** ⇒ mutual/circular controller references
+  have **zero construction cycle**. Forward/circular refs **must** use a token
+  **thunk** `@inject(() => Other)` (direct reference to a later/circular class is
+  a TDZ error at decoration time).
+- Container `get()` = `new Token()` → tag `instance[CONTAINER] = this` → cache →
+  `init?.()`. Zero-arg constructors; cross-controller wiring is fields, not ctor
+  args. `bind(Token, factory)` is **only** for host/boundary values.
+- `dispose()` = reverse-insertion order; `Object.is` dedup on signal writes.
+- **esbuild decorator determinism** — the root `tsconfig.json` is solution-style
+  (`files:[]` + references), so esbuild's decorator mode for `src` files is
+  ambiguous; existing Lit decorators are dual-mode and mask it, ours aren't.
 
 ---
 
-## Step 1 — Signals foundation (behavior-preserving)
+## Step 1 — Foundation (decorators, container, mixins; no consumers yet)
 
-**Modify** `package.json`: add `"@lit-labs/signals": "^0.3.0"` to `dependencies`.
-Before coding, read the installed `.d.ts` to pin exact exports
-(`signal`, `computed`, `SignalWatcher`, `Signal.State`) — Labs package, shape
-can drift. Add a **canary unit test** asserting those exports exist (fails loudly
-on a breaking minor). Confirm `signal-polyfill` transitive dep doesn't break
-`size-limit` budgets.
+**Modify** `package.json`: add `"@lit-labs/signals": "^0.3.0"`. Read its `.d.ts`
+first; add a **canary test** asserting `signal`/`computed`/`SignalWatcher`/
+`Signal.State` exist and that `SignalWatcher` is a plain mixin (no ECMA
+decorators). Confirm `signal-polyfill` doesn't break `size-limit`.
 
-**Modify** `src/abstract/controllers/StateController.ts` — signal-backed internals,
-**public API unchanged**:
-
+**Modify** `vite.config.ts` **and** `vitest.config.ts`: add
 ```ts
-import { signal, type Signal } from '@lit-labs/signals';
-import { Listeners } from '../host-subscription';
-
-export class StateController<TState extends object> {
-  protected _state: TState;
-  private _listeners = new Listeners();
-  private _signals = new Map<keyof TState, Signal.State<TState[keyof TState]>>();
-
-  public constructor(initial: TState) { this._state = initial; }
-
-  private _sig<K extends keyof TState>(key: K): Signal.State<TState[K]> {
-    let s = this._signals.get(key);
-    if (!s) { s = signal(this._state[key]) as Signal.State<TState[keyof TState]>; this._signals.set(key, s); }
-    return s as Signal.State<TState[K]>;
-  }
-
-  public get values(): Readonly<TState> { return this._state; }
-
-  public get<K extends keyof TState>(key: K): TState[K] { return this._sig(key).get(); }
-
-  public set<K extends keyof TState>(key: K, value: TState[K]): void {
-    const sig = this._sig(key);
-    if (Object.is(sig.get(), value)) return;   // dedup preserved exactly
-    sig.set(value);
-    this._state[key] = value;                  // kept in lockstep
-    this._listeners.notify();                  // coarse compat surface unchanged
-  }
-
-  /** Seed a value bypassing set()'s dedup (default-seeding), keeping signal + _state in lockstep. */
-  protected seed<K extends keyof TState>(key: K, value: TState[K]): void {
-    this._state[key] = value;
-    this._sig(key).set(value);
-  }
-
-  public subscribe(listener: () => void): () => void { return this._listeners.subscribe(listener); }
-  public notify(): void { this._listeners.notify(); }
-  public destroy(): void { this._listeners.clear(); this._signals.clear(); }
-}
+esbuild: { tsconfigRaw: { compilerOptions: { experimentalDecorators: true, useDefineForClassFields: false } } }
 ```
+(merge with vitest's existing `esbuild.jsxInject`). This makes the runtime
+transform deterministically experimental, matching `tsc`. **Validate with the
+full e2e gate** — this touches every decorator in the codebase; Lit supports
+both modes and this is its recommended mode, but prove it green before building on it.
 
-**Modify** `src/abstract/controllers/ConfigController.ts`: route `getCustom` →
-`this.get(...)`, `setCustom` → `this.set(...)` (tightens `===` to `Object.is` — a
-strict improvement, note in PR), `register()` default-seeding → `this.seed(...)`
-(keep the `Object.hasOwn` gate + trailing `notify()`).
-
-**Modify (in-scope)** `src/abstract/controllers/LocaleController.ts`: extend
-`StateController<Record<string, string>>` instead of duplicating get/set/
-subscribe/notify/destroy — step 7 needs it to expose signal reads exactly like
-`ConfigController`.
-
-**Checklist:** `grep -n "_state\[" src/abstract/controllers/CloudImageEditorController.ts`
-and port any direct `_state` mutation to `get`/`set`/`seed`. The editor controller
-must keep working unchanged.
-
-**Tests:** signal-backed StateController (dedup, lockstep, subscribe fires on
-change only); canary export test; ConfigController custom-key + register-seed
-paths at 100% before the edit (cover-before-refactor).
-
----
-
-## Step 2 — `ControllerContainer` + per-ctx registry
-
-**Create** `src/abstract/ControllerContainer.ts` (DOM-free, no `lit`):
+**Create** `src/abstract/di/ControllerContainer.ts` (DOM-free):
 
 ```ts
-export interface ControllerCtor<T, D extends readonly unknown[] = readonly unknown[]> {
-  new (...args: D): T;
-  readonly deps?: { readonly [K in keyof D]: ControllerCtor<D[K]> };
-}
-export function deps<D extends readonly ControllerCtor<unknown>[]>(...ctors: D): D { return ctors; }
+export type Ctor<T> = new () => T;
+export type Token<T> = Ctor<T> | (() => Ctor<T>);
+export const CONTAINER = Symbol('uc.container');
+
+const isThunk = <T>(t: Token<T>): t is () => Ctor<T> =>
+  typeof t === 'function' && !(t as Ctor<T>).prototype;
+export const resolveToken = <T>(t: Token<T>): Ctor<T> => (isThunk(t) ? t() : t);
+
+export interface Initializable { init?(): void; }
+export interface Destroyable { destroy?(): void; }
 
 export class ControllerContainer {
-  #instances = new Map<ControllerCtor<unknown>, unknown>();
-  #bindings = new Map<ControllerCtor<unknown>, (c: ControllerContainer) => unknown>();
-  #resolving = new Set<ControllerCtor<unknown>>();
-  #insertionOrder: ControllerCtor<unknown>[] = [];
+  #instances = new Map<Ctor<unknown>, unknown>();
+  #order: Ctor<unknown>[] = [];
+  #resolving = new Set<Ctor<unknown>>();
   #consumers = new Set<unknown>();
+  #boundValues = new Map<Ctor<unknown>, (c: ControllerContainer) => unknown>();
 
-  public bind<T>(token: ControllerCtor<T>, factory: (c: ControllerContainer) => T): void {
-    if (this.#instances.has(token)) throw new Error(`ControllerContainer: cannot bind ${token.name} after resolution`);
-    this.#bindings.set(token, factory as (c: ControllerContainer) => unknown);
+  public bind<T>(token: Token<T>, factory: (c: ControllerContainer) => T): void {
+    const Ctrl = resolveToken(token);
+    if (this.#instances.has(Ctrl)) throw new Error(`[uc] bind(${Ctrl.name}) after resolution`);
+    this.#boundValues.set(Ctrl, factory as (c: ControllerContainer) => unknown);
   }
 
-  public get<T>(Ctrl: ControllerCtor<T>): T {
+  public get<T>(token: Token<T>): T {
+    const Ctrl = resolveToken(token);
     const cached = this.#instances.get(Ctrl);
     if (cached !== undefined) return cached as T;
     if (this.#resolving.has(Ctrl)) throw new Error(`[uc] controller cycle at ${Ctrl.name}`);
     this.#resolving.add(Ctrl);
     try {
-      const binding = this.#bindings.get(Ctrl);
-      const instance = binding
-        ? (binding(this) as T)
-        : new Ctrl(...((Ctrl.deps ?? []).map((d) => this.get(d)) as never[]));
-      this.#instances.set(Ctrl, instance);
-      this.#insertionOrder.push(Ctrl);
-      return instance;
+      const boundFactory = this.#boundValues.get(Ctrl);
+      const inst = (boundFactory ? boundFactory(this) : new Ctrl()) as T & { [CONTAINER]?: ControllerContainer };
+      inst[CONTAINER] = this;                 // tag BEFORE init so @inject works in init()
+      this.#instances.set(Ctrl, inst);        // cache BEFORE init so re-entrant get() is safe
+      this.#order.push(Ctrl);
+      (inst as Initializable).init?.();
+      return inst;
     } finally { this.#resolving.delete(Ctrl); }
   }
 
-  public has<T>(Ctrl: ControllerCtor<T>): boolean { return this.#instances.has(Ctrl); }
-
+  public has<T>(token: Token<T>): boolean { return this.#instances.has(resolveToken(token)); }
   public addConsumer(c: unknown): void { this.#consumers.add(c); }
   public removeConsumer(c: unknown): void { this.#consumers.delete(c); }
   public isUnreferenced(): boolean { return this.#consumers.size === 0; }
 
   public dispose(): void {
-    for (let i = this.#insertionOrder.length - 1; i >= 0; i--) {
-      const Ctrl = this.#insertionOrder[i]!;
-      const inst = this.#instances.get(Ctrl) as { destroy?: () => void };
-      try { inst.destroy?.(); } catch (err) { console.warn(`[uc] ${Ctrl.name}.destroy() threw during dispose`, err); }
+    for (let i = this.#order.length - 1; i >= 0; i--) {
+      const inst = this.#instances.get(this.#order[i]!) as Destroyable;
+      try { inst.destroy?.(); } catch (err) { console.warn(`[uc] ${this.#order[i]!.name}.destroy() threw`, err); }
     }
-    this.#instances.clear(); this.#insertionOrder = []; this.#bindings.clear(); this.#consumers.clear();
+    this.#instances.clear(); this.#order = []; this.#boundValues.clear(); this.#consumers.clear();
   }
 }
 ```
 
-The internal cast in `get()` is the single legitimate erasure boundary
-(heterogeneous ctor arities) — AGENTS.md #4 allows it.
+**Create** `src/abstract/di/inject.ts`:
 
-**Modify** `src/abstract/UploaderRegistry.ts`: retarget the existing
-`Map<string, UploaderController>` → `Map<string, ControllerContainer>` (do **not**
-add a second map). `whenAvailable`'s callback becomes
-`(c: ControllerContainer | null) => void`. `hasConsumers` is unchanged (it counts
-`ChildBlock` watchers, orthogonal to what's watched) — but consumer-refcount now
-also lives on the container itself (`addConsumer`/`isUnreferenced`); pick one as
-the source of truth at implementation time and document it.
+```ts
+import { CONTAINER, type ControllerContainer, type Token } from './ControllerContainer';
 
-**Modify** `src/lit/PubSubCompat.ts`: `_uploader()` lazily creates+caches a
-`ControllerContainer`, registers it, and returns `container.get(UploaderController)`
-during the bridge window; `_config()`/`_locale()` return
-`container.get(ConfigController)`/`get(LocaleController)`.
+export function inject<T>(token: Token<T>) {
+  return function (target: object, key: string): void {
+    Object.defineProperty(target, key, {
+      get(this: { [CONTAINER]?: ControllerContainer }): T {
+        const c = this[CONTAINER];
+        if (!c) throw new Error(`@inject on '${key}': instance not created by a container`);
+        return c.get(token);
+      },
+      enumerable: false,
+      configurable: true,
+    });
+  };
+}
+```
 
-**Step-2 bridge (keeps everything green):** register one
-`bind(UploaderController, (c) => new UploaderController({ events: c.get(EventBus), config: c.get(ConfigController), ... }))`
-for already-container-managed fields, defaulting the rest inside
-`UploaderController`'s own ctor exactly as today. `bag`/`ctx.read('*X')`/`.X`
-getters all still work — the container is pure indirection at this point. **Zero
-behavior change.** Tests target the container primitive in isolation (lazy
-singleton-per-ctx, topo-resolve, cycle-throw, bind-override, **dispose order**).
+**Create** `src/abstract/di/signalState.ts`:
+
+```ts
+import { signal, type Signal } from '@lit-labs/signals';
+
+export function signalState() {
+  return function (target: object, key: string): void {
+    const store = new WeakMap<object, Signal.State<unknown>>();
+    const sig = (inst: object): Signal.State<unknown> => {
+      let s = store.get(inst);
+      if (!s) { s = signal<unknown>(undefined); store.set(inst, s); }
+      return s;
+    };
+    Object.defineProperty(target, key, {
+      get(this: object): unknown { return sig(this).get(); },
+      set(this: object, v: unknown): void {
+        const s = sig(this);
+        if (Object.is(s.get(), v)) return;
+        s.set(v);
+      },
+      enumerable: true,
+      configurable: true,
+    });
+  };
+}
+```
+
+Field initializers seed the signal via the setter (`useDefineForClassFields:false`
+⇒ `this.field = init` runs in ctor, hitting the prototype setter) — spike-confirmed.
+
+**Create** `src/abstract/di/mixins.ts`: `Disposable(Base)` (a `#disposers`
+set + `addDisposer`/`destroy`), `Subscribable(Base)` (a `Listeners` +
+`subscribe`/`notify` for coarse compat).
+
+**Tests:** `@inject` (lazy, thunk forward-ref, missing-container throw,
+container-tag); `@signalState` (seed-from-init, `Object.is` dedup, tracking under
+a watcher); mixins; container (lazy singleton-per-ctx, `bind` override + bind-
+after-resolve throw, dispose reverse-order + isolate-and-warn, cycle guard);
+canary export test. **No behavior change** — nothing consumes these yet.
 
 ---
 
-## Step 3 — Extract eager controllers
+## Step 2 — Container bridge (keeps everything green)
 
-Move each eager field to its own container-registered controller. Per-controller
-resolution (verified against real ctors):
+**Modify** `src/lit/PubSubCompat.ts`: `_uploader()` lazily creates+caches a
+`ControllerContainer`, registers it in `UploaderRegistry`, and `bind`s a single
+`UploaderController` facade (constructed exactly as today via its existing
+`deps ?? new`). `_config()`/`_locale()` return `container.get(UploaderController).config/locale`.
+`_controllers: Map<string, UploaderController>` → `Map<string, ControllerContainer>`.
+**Modify** `src/abstract/UploaderRegistry.ts`: retarget its map to
+`ControllerContainer`; `whenAvailable` callback becomes `(c: ControllerContainer | null)`.
+`bag`/`ctx.read('*X')`/`.X` all still work (UploaderController unchanged). Zero
+behavior change; tests target the container in isolation.
 
-| Controller | `static deps` | `bind()` factory? | Notes |
+---
+
+## Step 3 — Extract eager controllers (single-responsibility)
+
+Each field becomes its own controller with `@inject` deps + `@signalState`
+state + zero-arg ctor + optional `init()`. Wiring (all `@inject`, thunk where the
+target is declared later/circular):
+
+| Controller | `@inject` deps | `@signalState` | Notes |
 |---|---|---|---|
-| `ConfigController` | `[]` | no | |
-| `LocaleController` | `[]` | no | |
-| `EventBus` | `[]` | no | |
-| `UploadCollectionController` | `[]` | no | owns orphan state (step 4) |
-| `AppInfo` (**new**, tiny) | `[]` | no | `solutionName` signal |
-| `LocaleManager` | `[ConfigController, LocaleController]` | no | `.activate(pluginManager)` stays a post-construct call from UI layer |
-| `A11y` | `[]` | no | |
-| `TelemetryManager` | — | **yes** | `[Config]` eager; `getSolution: () => c.get(AppInfo).solutionName`, `getActivity: () => c.get(RouterController).currentActivity` are lazy closures |
-| `EventEmitter` | — | **yes** | widened ctor `(bus, telemetry)`; **absorbs `UploaderController.emit`** — see below |
-| `RouterController` | — | **yes** | `emit: (t,p,o) => c.get(EventEmitter).emit(...)` (the *augmented* emit, not raw EventBus) |
-| `ClipboardController` | — | **yes** | closures over `c.get(Config/Router/UploaderPublicApi)`; replaces the `setApi()` two-phase dance |
-| `PluginController` | — | **yes** | **prerequisite:** its `watchPlugins` closure is ctx-coupled today — a cover-before-refactor sub-PR must repoint it to read `ConfigController` directly. Budget as its own sub-PR; do not let it be silent mid-PR scope creep |
+| `ConfigController` | — | config values | |
+| `LocaleController` | — | locale strings | |
+| `EventBus` | — | — | pure bus |
+| `EventEmitter` | `EventBus` | — | **pure dispatch** (no telemetry) |
+| `TelemetryController` | `ConfigController`, `() => EventBus`, `() => AppInfo`, `() => RouterController` | — | **observer**: `init()` subscribes `bus.onAny` → `sendEvent`; reads solution/activity lazily |
+| `RouterController` | `() => EventEmitter` | `currentActivity` | debounced MODAL_OPEN/CLOSE DOM-emit stays here |
+| `A11y` | — | — | |
+| `AppInfo` (new) | — | `solutionName` | |
+| `LocaleManager` | `ConfigController`, `LocaleController` | — | `.activate(pluginManager)` stays a UI-layer post-construct call |
+| `ClipboardController` | `ConfigController`, `() => RouterController`, `() => UploaderPublicApi` | — | replaces the `setApi()` two-phase dance |
+| `PluginController` | `ConfigController` | `lazyPlugins` | **prereq:** ctx-coupled `watchPlugins` → read `ConfigController` directly (own cover-before-refactor sub-PR) |
 
-**Augmented emit [CORRECTS SPEC].** `UploaderController.emit` does bus-emit +
-un-debounced try/catch telemetry mirror + `_destroyed` no-op; three call sites
-(`ChildBlock.emit`, Router's injected `emit`, upload-stack `deps.emit`) depend on
-that exact combo. Fold it into `EventEmitter.emit` (widen ctor to take
-`TelemetryManager`; `EventEmitter` owns its own `_destroyed`). Audit
-`UploaderPublicApi.uploadAll`'s **direct** `bag.eventEmitter.emit` (which bypasses
-telemetry today) — decide parity explicitly in the PR, no silent change either way.
+**Telemetry as observer [removes the "augmented emit" god-method].**
+`UploaderController.emit` today does bus-emit + un-debounced telemetry mirror.
+Now `EventEmitter.emit` is pure; `TelemetryController.init()` does
+`this.bus.onAny((type, payload) => this.sendEvent(type, payload))`. Semantics
+preserved: bus fires on every emit (telemetry sees all, pre-debounce); the DOM
+CustomEvent debounce stays in `EventBridgeController`/`RouterController`. Audit
+`UploaderPublicApi.uploadAll`'s direct `eventEmitter.emit` — with telemetry now a
+bus observer it will *also* be seen by telemetry; confirm that's desired parity
+(likely yes) and note in the PR.
 
-**Bridge:** as each field extracts, `UploaderController.X` becomes a getter
-delegating to `container.get(X)` (or `bag`/`*X` registration points at
-`container.get(X)` — a one-line-per-key change in the registration code, not a
-`shared-instances.ts` rewrite). `bag.X` getters stay pointed at `ctx.read('*X')`.
+**Bridge:** as each field extracts, its `bag`/`*X` registration point delegates
+to `container.get(X)`; `UploaderController.X` becomes a `container.get(X)`
+delegating getter. `bag.X` getters stay pointed at `ctx.read('*X')`.
 
 ---
 
 ## Step 4 — Orphan-state ownership
 
-Composed (not inherited) `StateController` on the owning controllers:
+**Create** `src/abstract/controllers/CollectionStateController.ts` — owns the
+derived UI state as `@signalState` fields: `uploadList`, `commonProgress`,
+`collectionState`, `collectionErrors`, `groupInfo`, `uploadTrigger`. Separate
+from `UploadCollectionController` (raw entries + observer). Writers `@inject` it.
 
-**`UploadCollectionController`** — add `public readonly shared = new StateController<CollectionSharedState>({...})`
-holding `uploadList`, `commonProgress`, `collectionState`, `collectionErrors`,
-`groupInfo`, `uploadTrigger`; call `this.shared.destroy()` in `destroy()`.
+**Modify** `PluginController`: `@signalState() lazyPlugins` (from step 3).
 
-**`PluginController`** — add `public readonly shared = new StateController<{ lazyPlugins: LazyPluginEntry[] | null }>({ lazyPlugins: null })`.
-
-**`src/lit/PubSubCompat.ts`** — add literal-key routing branches (mirroring the
-`_cfgName`/`_l10nName` pattern), reusing the existing `_subDerived` helper so
-**per-key subscribe granularity is preserved** (a `*commonProgress` write must NOT
-fire a `*uploadList` subscriber):
-
-```ts
-const COLLECTION_KEYS = { '*uploadList':'uploadList','*commonProgress':'commonProgress',
-  '*collectionState':'collectionState','*collectionErrors':'collectionErrors',
-  '*groupInfo':'groupInfo','*uploadTrigger':'uploadTrigger' } as const;
-// read → collection.shared.get(field); pub → .set(field, v);
-// sub → _subDerived(() => shared.get(field), (l) => shared.subscribe(l), cb, init);
-// '*lazyPlugins' → pluginManager.shared analogously.
-```
-
-**The 9 `stateBridges` closures are untouched here** — their call surface
-(`pub`/`read` on `PubSub`) is unchanged; only routing changes internally. Their
-direct-injection rewrite is step 5.
-
-**Tests:** per-key granularity (change one field ⇒ only that key's subscriber
-fires); `uploadTrigger: Set` dedup is by *reference* — confirm call sites replace
-the Set rather than mutate in place.
+**Modify** `src/lit/PubSubCompat.ts`: add literal-key routing branches (mirroring
+`_cfgName`/`_l10nName`, reusing `_subDerived` so **per-key subscribe granularity
+is preserved**) mapping `*uploadList`…`*uploadTrigger` →
+`container.get(CollectionStateController)` fields and `*lazyPlugins` →
+`PluginController`. The 9 `stateBridges` are untouched here (their `pub`/`read`
+surface is unchanged; only routing changes). **Test:** a `*commonProgress` write
+does not fire a `*uploadList` subscriber; `uploadTrigger: Set` dedup is by
+reference — confirm call sites replace rather than mutate.
 
 ---
 
-## Step 5 — Upload stack behind container bindings
+## Step 5 — Upload stack behind host-value binds
 
-**Create** `src/abstract/controllers/UploadStackBindings.ts` (DOM-free; imports the
-4 upload-stack classes **type-only**, receives concrete ctors as params — preserves
-the `@uploadcare/upload-client` bundle boundary):
-`registerUploadStackBindings(container, ctors, hostDeps)` binds SecureUploads /
-Upload / Validation / UploadEvents, each factory pulling peers via `c.get(...)` and
-the augmented `emit` via `c.get(EventEmitter)`. The 9 `stateBridges` become direct
-`c.get(UploadCollectionController).shared.set(...)` writes (step 4 already landed
-the signals).
-
-**Modify** `src/lit/ensureUploaderScope.ts` (the registration call site — only
-invoked from the element layer, still injects the 4 ctors type-only): replace
-`ctrl.attachUploaderScope(...)` with `registerUploadStackBindings(...)` +
-`container.get(UploadEventsController).observe()`. Idempotent via
-`if (container.has(UploadEventsController)) return;`.
-
-The editor assembly never calls `registerUploadStackBindings`, so
-`container.get(SecureUploadsController)` is never reached from the editor path →
-bundle isolation preserved by the same mechanism as today.
+**Create** `src/abstract/controllers/registerUploadStack.ts` (DOM-free; imports
+the 4 upload-stack classes **type-only**, receives concrete ctors + host hooks
+as params): `bind`s the host-value tokens (upload-client SDK, `getFileHooks`,
+`getOutputItem`, `onUploadError`, `debug`, …) and, since the 4 controllers use
+`@inject` for their controller deps, just needs `container.get(UploadEventsController).observe()`
+to trigger the subtree. **Modify** `src/lit/ensureUploaderScope.ts` (element-
+layer call site, still injects the 4 ctors type-only) to call it. The 9
+`stateBridges` become direct `container.get(CollectionStateController).<field> = …`
+writes. Editor assembly never calls this ⇒ upload-client boundary preserved.
 
 ---
 
 ## Step 6 — Block base: `static uses` + `this.use()` + `SignalWatcher`
 
-**Modify** `src/lit/ChildBlock.ts` (evolve in place — preserve all ctx-name
-resolution / teardown machinery verbatim in shape):
+**Modify** `src/lit/ChildBlock.ts` (evolve in place; preserve ctx-name resolution
+/ teardown machinery verbatim in shape):
 
 ```ts
 import { SignalWatcher } from '@lit-labs/signals';
 const ChildBlockBase = SignalWatcher(RegisterableElementMixin(LightDomMixin(LitElement)));
 
 export abstract class ChildBlock extends ChildBlockBase {
-  public static readonly uses: readonly ControllerCtor<unknown>[] = [];
+  public static readonly uses: readonly Token<unknown>[] = [];
   private _container: ControllerContainer | null = null;
 
-  protected use<T>(Ctrl: ControllerCtor<T>): T {
-    if (!this._container) throw new Error(`${this.tagName.toLowerCase()}: container not available yet — use() from controllerReady() or later`);
-    return this._container.get(Ctrl);
+  protected use<T>(token: Token<T>): T {
+    if (!this._container) throw new Error(`${this.tagName.toLowerCase()}: container not available yet`);
+    return this._container.get(token);
   }
-  // _adoptController → _adoptContainer(container): set _container, addConsumer(this),
-  //   pre-warm each `uses` entry (isolate-and-warn), call controllerReady, requestUpdate.
-  // _releaseController → _releaseContainer(): teardown _subs, removeConsumer, controllerReleased.
-  // shouldUpdate gate: if (!this._container) return false;
+  // _adoptContainer(c): set _container, c.addConsumer(this), pre-warm `uses`
+  //   (isolate-and-warn), controllerReady, requestUpdate.
+  // _releaseContainer(): teardown _subs, c.removeConsumer(this), controllerReleased.
+  // shouldUpdate: if (!this._container) return false;
   // disconnectedCallback → setTimeout(0) → teardown chain UNCHANGED in shape;
-  //   predicate swaps to container.isUnreferenced(); destroyCtx → container.dispose().
+  //   predicate → c.isUnreferenced(); teardown → c.dispose() + drop registry entry.
 }
 ```
 
-`SignalWatcher` is applied at the base of the mixin chain (wraps `performUpdate`,
-not `render()` — so fully-overridden `render()`/`shouldUpdate()` in leaf blocks
-still auto-track). **Verify empirically** with a light-DOM spec that an external
-signal mutation re-renders a fully-overridden `render()`.
-
-Legacy `subscriptionsFor`/`subConfigValue`/`subRouter`/`subActivity`/`trackSub`
-stay `@deprecated` and functional; retire per-block. Delete them only once a
-`src/`-wide grep shows zero callers (tail of step 6 / step 9).
+`SignalWatcher` at the base wraps `performUpdate` (not `render()`), so fully-
+overridden `render()`/`shouldUpdate()` in leaf blocks still auto-track — **verify
+with a light-DOM spec** (external signal mutation re-renders an overridden
+`render()`). `subConfigValue`/`subRouter`/`subActivity`/`trackSub` stay
+`@deprecated` + functional; retire per-block once a `src`-wide grep is clean.
 
 **Representative migration — `Copyright`:**
 ```ts
 export class Copyright extends ChildBlock {
   public static override readonly uses = [ConfigController] as const;
   public override render() {
-    const removeCopyright = this.use(ConfigController).get('removeCopyright');
-    return html`<a ?hidden=${!!removeCopyright} ...>Powered by Uploadcare</a>`;
+    return html`<a ?hidden=${!!this.use(ConfigController).removeCopyright} ...>Powered by Uploadcare</a>`;
   }
 }
 ```
-Blocks with genuine imperative side-effects (not "render from a value") keep the
-`sub*` helpers until rewritten around `@lit-labs/signals`' `effect()` (out of scope
-here; leave a forward-reference comment).
-
-`static uses` is documentation / pre-warm / lifecycle only — **not** the type
-source for `use()` (per spec risk note); don't build a mapped union from it.
-
-Migrate the 29 `extends ChildBlock` files group-by-group, each its own gated PR.
+(`removeCopyright` is now a `@signalState` field read.) Blocks with genuine
+imperative side-effects keep `sub*` until rewritten around `@lit-labs/signals`
+`effect()` (out of scope; forward-reference in a comment). `static uses` is
+documentation/pre-warm/lifecycle only — not the type source for `use()`. Migrate
+the 29 `extends ChildBlock` files group-by-group, each a gated PR.
 
 ---
 
@@ -343,79 +303,54 @@ Migrate the 29 `extends ChildBlock` files group-by-group, each its own gated PR.
 Call sites (grep `sharedConfigKey(`, `'*cfg/`, `createL10n(`): `ChildBlock.ts`,
 `l10n.ts`, `shared-instances.ts`, `PubSubCompat.ts`, `SourceListController.ts`,
 `UploaderPublicApi.ts`, `buildPluginApi.ts`, `createDebugPrinter.ts`,
-`LazyPluginLoader.ts`, + editor (§Step 9). Most are a pure reference swap
-(`ctx.read(sharedConfigKey(k))` → `this._config.get(k)`), since consumers already
-hold injected `ConfigController` refs by now.
-
-`createL10n` signature change: `(getCtx: () => PubSub) → (getLocale: () => LocaleController)`,
-reading `getLocale().get(str)`. `ChildBlock.l10n = createL10n(() => this.use(LocaleController))`.
-
-Once all call sites migrate, delete the `_cfgName`/`_l10nName`/`_config()`/
-`_locale()` branches in `PubSubCompat`. Note: `subConfigValue` already reads
-`this.uploader.config` (not the `*cfg/` facade) — orthogonal to block migration.
+`LazyPluginLoader.ts` (+ editor, §Step 9). Most are a reference swap
+(`ctx.read(sharedConfigKey(k))` → injected `this.config.<k>`). `createL10n`
+signature: `(getCtx) → (getLocale: () => LocaleController)`. Once migrated, delete
+the `_cfgName`/`_l10nName`/`_config()`/`_locale()` branches in `PubSubCompat`.
 
 ---
 
 ## Step 8 — Dissolve `UploaderController`
 
-Every field now has a home (`events→EventBus`, `config→ConfigController`,
-`locale→LocaleController`, `collection→UploadCollectionController`,
-`localeManager→LocaleManager`, `eventEmitter→EventEmitter`,
-`telemetryManager→TelemetryManager`, `router→RouterController`, `a11y→A11y`,
-`clipboard→ClipboardController`, `solutionName→AppInfo`, `api→UploaderPublicApi`,
-upload stack→4 controllers, `emit()→EventEmitter.emit`).
-
-**`UploaderPublicApi` rewrite (largest single diff — cover to 100% first).** Drop
-`extends SharedInstance(bag)`; take an explicit deps object
-`{ config, locale, collection, eventEmitter, router, getPluginManager, getOutputData }`.
-Replace the `SharedInstance` cfg/l10n proxy with direct `ConfigController`/
-`LocaleController` reads; `uploadAll`'s `ctx.pub('*uploadTrigger', ...)` →
-`collection.shared.set('uploadTrigger', ...)`; `_pluginsReady`'s
-`bag.wait('pluginManager')` stays a thunk until Plugin migrates, then collapses to
-`container.get(PluginController)`. Constructed via `container.bind(UploaderPublicApi, ...)`.
-
-Public surface repoints: `UploadCtxProvider.getAPI()` → `this.use(UploaderPublicApi)`;
-`EventBridgeController` thunk → `() => container.get(EventBus)`; `<uc-config>` →
-`this.use(ConfigController)`; `solutionName` → `container.get(AppInfo).setSolutionName`.
-`ensureUploaderCtx` creates/registers a `ControllerContainer` (same idempotent
-contract). **Delete `UploaderController.ts`.** Exit criterion: clean grep for
-`\.uploader\.` and `UploaderController`.
+**`UploaderPublicApi`** rewrite (largest diff; cover to 100% first): drop
+`extends SharedInstance(bag)`; make it a thin `@inject` facade
+(`@inject ConfigController/LocaleController/UploadCollectionController/
+CollectionStateController/EventEmitter/RouterController/(() => PluginController)`),
+delegating only. `uploadAll`'s `ctx.pub('*uploadTrigger', …)` →
+`this.collectionState.uploadTrigger = …`. Public repoints:
+`UploadCtxProvider.getAPI()` → `this.use(UploaderPublicApi)`; `EventBridgeController`
+→ `() => this.use(EventBus)`; `<uc-config>` → `this.use(ConfigController)`;
+`solutionName` → `container.get(AppInfo)`. `ensureUploaderCtx` creates/registers a
+container. **Delete `UploaderController.ts`.** Exit: clean grep for `\.uploader\.`
+and `UploaderController`.
 
 ---
 
 ## Step 9 — Delete scaffolding + editor repoint
 
-**Editor repoint** `src/blocks/CloudImageEditor/src/editor-config-compat.ts`:
-resolve `ConfigController`/`LocaleController`/`TelemetryManager` from the ctx
-container (`whenContainer(ctxName, ...)`) instead of `PubSub.whenCtx` + `*cfg/`
-routing. **Behavior change [CORRECTS SPEC]:** the old `readConfigPatch` only
-emitted a key if set-in-store *or* differing-from-default; `config.get(key)` always
-returns a value, so the new initial patch always includes every `EDITOR_CONFIG_KEY`.
-This is a deliberate simplification — update `editor-config-compat.test.ts`
-assertions to match (documented change, not a loosening). Confirm editor bundle
-isolation via `size-limit` on `web/uc-cloud-image-editor.min.js` (≤50 KB, ideally
-smaller).
+**Editor** `editor-config-compat.ts`: resolve `ConfigController`/`LocaleController`/
+`TelemetryController` from the ctx container (`whenContainer(ctxName, …)`).
+**Behavior change:** the new initial config patch always includes every
+`EDITOR_CONFIG_KEY` (a signal always has a value) — update
+`editor-config-compat.test.ts` to match (documented change, not a loosening).
+Confirm editor bundle isolation via `size-limit` on
+`web/uc-cloud-image-editor.min.js` (≤50 KB, ideally smaller).
 
-**Delete** (after grep-confirming zero callers, remove co-located tests too):
-`PubSubCompat.ts`, `shared-instances.ts`, `SharedState.ts`, the `UploaderRegistry`
-controller-map role (read the file fully first — it may retain the ctx→container
-registry role), and the `nanostores` dependency. Full green gate + `size-limit`
-(dropping nanostores should be a measurable win — if not, a stray re-export exists).
-This is inherently the **last** PR, gated on steps 2/3/5/8 all merged.
+**Delete** (grep-confirm zero callers; remove co-located tests): `PubSubCompat.ts`,
+`shared-instances.ts`, `SharedState.ts`, the `UploaderRegistry` controller-map
+role (read fully first — it may keep the ctx→container registry role), and the
+`nanostores` dependency. Full green gate + `size-limit` (dropping nanostores
+should be a measurable win). Inherently the **last** PR, gated on steps 2–8.
 
 ---
 
 ## Cross-cutting
 
-- **Every PR:** full green gate (`tsc:app`, `tsc`, `build`, `test:specs`,
-  `test:locales`, `test:e2e`, `lint`); cover touched files to 100% as an additive
-  first step (AGENTS.md #1); Conventional Commit; one concern per PR.
-- **Coordination point:** steps 3/6 depend on the exact `ControllerContainer`
-  consumer-lifecycle API names from step 2 — freeze that interface in step 2.
-- **Highest-risk items needing dedicated tests:** dispose ordering
-  (collection outlives upload stack); Telemetry/Router DAG across entry orders;
-  per-key subscribe granularity (step 4); SignalWatcher + light DOM +
-  fully-overridden `render()` (step 6).
-- **Blocking risk to surface early:** if `SignalWatcher` internally uses
-  standard/ECMA decorators, that violates AGENTS.md ("don't switch decorators") —
-  verify from its `.d.ts` in step 1 before committing to the approach.
+- Every PR: full green gate; cover touched files to 100% additively first;
+  Conventional Commit; one concern per PR.
+- Freeze the `ControllerContainer` / `@inject` / consumer-lifecycle API in step 1
+  — steps 3/6 build against it.
+- Highest-risk items needing dedicated tests: esbuild decorator determinism
+  (step 1, full e2e); telemetry-observer parity vs today's emit; dispose ordering
+  (collection outlives upload stack); per-key subscribe granularity (step 4);
+  `SignalWatcher` + light DOM + overridden `render()` (step 6).

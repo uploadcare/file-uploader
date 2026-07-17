@@ -1,66 +1,80 @@
 # God-Object Decomposition — Design Spec
 
-**Date:** 2026-07-17
+**Date:** 2026-07-17 (rev. 2 — composable model)
 **Branch base:** `feat/v2-migration`
 **Status:** Design — awaiting approval before implementation (via feature-dev).
 
 ## Goal
 
-Dissolve the `UploaderController` "god object". Replace it with a **per-ctx
-dependency-injection container** of small, single-purpose controllers that are
-**created lazily and atomically by need** (a block gets only the controllers it
-asks for; getting a controller builds only its dependency subtree). Dependencies
-between controllers are **declared statically and injected via constructor**.
-Reactive state moves to **`@lit-labs/signals`**; `nanostores`, the `*`-key
-`SharedState` map, `PubSubCompat`, and the `shared-instances` bag are deleted.
-Blocks **declare the controllers they use** (`static uses = [...]`). The
+Dissolve the `UploaderController` "god object". Replace it with **small,
+single-responsibility controllers** that are **composed via decorators and
+mixins** — no god classes, no mixed responsibilities. A per-ctx container
+creates each controller **lazily and atomically by need**; controllers declare
+their dependencies as **`@inject` lazy fields** and their reactive state as
+**`@signalState` fields** (backed by `@lit-labs/signals`). `nanostores`, the
+`*`-key `SharedState` map, `PubSubCompat`, and the `shared-instances` bag are
+deleted. Blocks **declare the controllers they use** (`static uses`). The
 documented public API is preserved throughout.
 
 ## Why (the triplication)
 
-Today one instance is reachable three ways, and the whole graph is built at once:
+One instance is reachable three ways today, and the whole graph is built at
+once: `UploaderController.X` (owns it), `ctx.read('*X')` (nanostores re-exposure,
+a v1 strangler bridge), `bag.X` (`shared-instances` getters). `StateController`
+is a hand-rolled `_state` + coarse `Listeners` — no per-key granularity, no
+composability. Post-M11 the `*`-key re-exposure exists only to feed the bag.
 
-- **`UploaderController.X`** — the god object *owns* every instance: eager in the
-  constructor (`UploaderController.ts:201–253`) for events/config/locale/collection
-  /localeManager/eventEmitter/telemetry/router/a11y/clipboard, and lazily in
-  `attachUploaderScope` (`:328–404`) for the upload stack
-  (secureUploads/upload/validation/uploadEvents).
-- **`ctx.read('*X')`** — `PubSubCompat._uploader()` lazily builds the controller on
-  first config/locale/instance access and registers each instance into the
-  nanostores map under a `*`-key.
-- **`bag.X`** — `shared-instances` re-exposes those `*`-keys as lazy getters for
-  `ChildBlock` (`shared-instances.ts:213–330`).
+## Composable primitives
 
-`StateController` (`StateController.ts`) is a hand-rolled `_state` + coarse
-`Listeners` set — no per-key granularity, no computed values. Exactly what signals
-replace.
+These are **experimental** property decorators (`experimentalDecorators: true`,
+`useDefineForClassFields: false` — per AGENTS.md; **not** ECMA/standard
+decorators, **no `accessor` keyword**). Validated by spike under strict TS.
 
-Post-M11 (the v1 element layer is gone), the `*`-key re-exposure exists only to
-feed the bag — the indirection has outlived its reason.
+### `@inject` — lazy dependency fields
 
-## State inventory (where every `*`-key goes)
+```ts
+class TelemetryController {
+  @inject(ConfigController) private config!: ConfigController;      // plain field, no `accessor`
+  @inject(() => RouterController) private router!: RouterController; // thunk for forward/circular refs
+}
+```
 
-Three buckets, from `SharedState.ts`:
+- Defines a **prototype getter** that resolves the token from the owning
+  container **on access** (not at construction). Construction never touches a
+  dependency — so mutual references (`Router ↔ Telemetry`) have **zero
+  construction cycle** (proven in spike). This **eliminates** the earlier
+  `static deps`-vs-`bind()`-factory split.
+- Accepts a **token thunk** `() => Ctor` for forward/circular references — a
+  direct class reference to a later-declared/circular class hits the TDZ at
+  decoration time (spike-confirmed). Thunk is the default idiom for
+  controller-to-controller injection.
+- The container **tags each instance** it builds (`instance[CONTAINER] = this`)
+  so `@inject` getters can resolve. Test mocks set the tag or use a real
+  container.
 
-1. **Re-exposed controller instances** — `*eventEmitter`, `*localeManager`,
-   `*telemetryManager`, `*a11y`, `*router`, `*clipboard`, `*pluginManager`,
-   `*uploadCollection`, `*publicApi`, `*validationManager`, `*secureUploadsManager`,
-   `*uploadController`, `*uploadEvents`, `*sharedContextInstances`.
-   → **Dissolve into the container.** Blocks resolve the controller directly.
-2. **Config/locale facades** — `*cfg/${K}`, `*l10n/${K}`. → Already single-source
-   over `ConfigController`/`LocaleController`; **read the controller's signals
-   directly**, drop the facade routing.
-3. **Genuine orphan UI/collection state** — `*uploadList`, `*commonProgress`,
-   `*collectionState`, `*collectionErrors`, `*groupInfo`, `*uploadTrigger`
-   (all collection-derived), and `*lazyPlugins`. These have **no controller owner
-   today**. → Assign owners: the collection keys become **signals on
-   `UploadCollectionController`**; `*lazyPlugins` becomes a signal on
-   `PluginController`.
+### `@signalState` — reactive fields
 
-The 9 `stateBridges` (`UploaderController.ts:81–93`) are closures that write
-bucket-3 keys (collection errors + upload-events state). They **disappear**: the
-upload controllers write those signals directly through their injected
-`UploadCollectionController`, not through bridge closures.
+```ts
+class ConfigController {
+  @signalState() theme = 'light'; // signal-backed; no base class
+}
+```
+
+- Defines a prototype getter/setter backed by a per-instance
+  `@lit-labs/signals` signal. Reads auto-track under `SignalWatcher`; writes
+  dedup with `Object.is`. **No `StateController` base class** — reactivity
+  composes per field. `StateController` is deleted, not reimplemented.
+
+### Mixins — cross-cutting behavior
+
+- `Disposable(Base)` — collects disposers, runs them in `destroy()`.
+- `Subscribable(Base)` — the coarse `subscribe()` compat surface needed while
+  blocks migrate from imperative subscription to `SignalWatcher` reads;
+  retired once no consumer needs it.
+
+Controllers compose only what they need. Zero-arg constructors (deps are
+`@inject` fields); post-construct wiring goes in an optional `init()` the
+container calls after tagging + caching.
 
 ## End-state architecture
 
@@ -68,201 +82,142 @@ upload controllers write those signals directly through their injected
 
 - A `ctx-name → ControllerContainer` registry replaces `PubSubCompat._controllers`
   and `UploaderRegistry`'s controller map.
-- `container.get(Ctrl)` → lazily constructs and caches a **singleton per ctx**.
-- **Constructor-injection + static deps.** Each controller declares
-  `static deps = [A, B] as const`; the container resolves the deps first
-  (topological), constructs the subtree, and injects instances **positionally**.
-  Getting a controller builds only its dep subtree — atomic by need.
-- **Cycle detection:** the container tracks an in-progress resolution set and
-  **throws** on a cycle. The current graph is a DAG (see §2), so this is a guard,
-  not a routine path.
-- **Upload-client import boundary preserved.** The upload-stack controllers must
-  not be statically imported by the abstract/editor layer (they drag
-  `@uploadcare/upload-client`). The container supports **binding overrides**:
-  `container.bind(Token, factory)`. The uploader assembly (provider / drop-area
-  bootstrap, i.e. today's `ensureUploaderScope`) registers concrete bindings for
-  the upload-stack tokens; `container.get` uses a registered binding if present,
-  else `new Ctrl(...deps)`. The editor assembly never registers them, so the
-  editor bundle never pulls them.
+- `container.get(Token)` — lazily `new Token()`, tags it (`[CONTAINER] = this`),
+  caches, then calls `init?.()`; returns the cached singleton per ctx.
+- `container.bind(Token, factory)` — **only for host/boundary values**: the
+  `@uploadcare/upload-client` SDK, DOM/host callbacks (`getFileHooks`,
+  `getOutputItem`, `onUploadError`, `debug`, etc.). Internal controller wiring
+  never uses `bind` — it's all `@inject`. The **editor assembly never binds the
+  upload-client/upload-stack value tokens**, so the editor bundle can't pull
+  them in — bundle isolation falls out (supersedes the dropped tree-shake "B").
+- `dispose()` — destroys cached instances in **reverse insertion order**
+  (topological construction ⇒ insertion order is a valid reverse-teardown order
+  for free; matches today's hand-written reverse teardown). Isolate-and-warn per
+  instance.
+- Cycle guard: `get` tracks an in-progress set and throws on a true
+  construction cycle (with zero-arg ctors + lazy `@inject`, real construction
+  cycles cannot arise from injection — the guard covers `init()` misuse).
 
-```ts
-type Ctor<T> = { new (...deps: never[]): T; deps?: readonly Ctor<unknown>[] };
+### 2. Controllers (single-responsibility units)
 
-class ControllerContainer {
-  #instances = new Map<Ctor<unknown>, unknown>();
-  #bindings = new Map<Ctor<unknown>, (c: ControllerContainer) => unknown>();
-  #resolving = new Set<Ctor<unknown>>();
+Every field currently on `UploaderController` becomes its own controller, wired
+by `@inject`, state via `@signalState`:
 
-  bind<T>(token: Ctor<T>, factory: (c: ControllerContainer) => T): void { /* … */ }
+`ConfigController`, `LocaleController`, `EventBus`, `EventEmitter` (pure
+dispatch), `RouterController` (owns `currentActivity`), `A11y`,
+`ClipboardController`, `LocaleManager`, `TelemetryController`,
+`PluginController` (owns `lazyPlugins`), `AppInfo` (owns `solutionName`),
+`UploadCollectionController` (raw entries + observer), `CollectionStateController`
+(**new** — owns the derived UI state: `uploadList`, `commonProgress`,
+`collectionState`, `collectionErrors`, `groupInfo`, `uploadTrigger`),
+`SecureUploadsController`, `UploadController`, `ValidationController`,
+`UploadEventsController`, `UploaderPublicApi` (thin delegating facade).
 
-  get<T>(Ctrl: Ctor<T>): T {
-    const cached = this.#instances.get(Ctrl);
-    if (cached) return cached as T;
-    if (this.#resolving.has(Ctrl)) throw new Error(`Controller cycle at ${Ctrl.name}`);
-    this.#resolving.add(Ctrl);
-    const binding = this.#bindings.get(Ctrl);
-    const deps = (Ctrl.deps ?? []).map((d) => this.get(d));
-    const instance = binding ? binding(this) : new (Ctrl as new (...a: unknown[]) => T)(...deps);
-    this.#resolving.delete(Ctrl);
-    this.#instances.set(Ctrl, instance);
-    return instance;
-  }
-
-  dispose(): void { /* destroy cached instances in reverse insertion order */ }
-}
-```
-
-### 2. Controllers (the decomposition) and their dependency edges
-
-Derived from the current wiring map. `[]` = no deps.
-
-| Controller | Deps (`static deps`) | Owns (signals) |
-|---|---|---|
-| `ConfigController` | `[]` | config values |
-| `LocaleController` | `[]` | locale strings |
-| `EventBus` | `[]` | — |
-| `UploadCollectionController` | `[]` | `uploadList`, `commonProgress`, `collectionState`, `collectionErrors`, `groupInfo`, `uploadTrigger` |
-| `LocaleManager` | `[Config, Locale]` | — |
-| `EventEmitter` | `[EventBus]` | — |
-| `TelemetryManager` | `[Config, Router]` (solution via `AppInfo`) | — |
-| `RouterController` | `[EventBus]` | `currentActivity` |
-| `A11y` | `[]` | — |
-| `ClipboardController` | `[Config, Router, PublicApi]` | — |
-| `PluginController` | `[]` | `lazyPlugins` |
-| `SecureUploadsController` | `[Config]` | — |
-| `UploadController` | `[Config, Collection, SecureUploads]` | — |
-| `ValidationController` | `[Config, Collection, PublicApi]` | — |
-| `UploadEventsController` | `[Collection, Config, Validation, Upload, EventBus]` | — |
-| `UploaderPublicApi` | `[Config, Collection, …]` | — |
-| `AppInfo` (new, tiny) | `[]` | `solutionName` |
-
-Notes:
-- `solutionName` (currently `UploaderController.solutionName`) moves to a tiny
-  `AppInfo` controller (a single signal), set by the solution element.
-- `currentActivity` (router) and `solutionName` are what `TelemetryManager` reads
-  via accessors today — it now takes `Router` + `AppInfo` as deps.
-- `ClipboardController`/`ValidationController` depend on `UploaderPublicApi`, which
-  depends on config/collection — a DAG (PublicApi does not depend back on them).
-- The router's debounced MODAL_OPEN/CLOSE emit (`UploaderController.ts:219–224`)
-  moves into `RouterController` itself (it already takes `EventBus`).
+Two responsibility splits that kill the remaining "god" smells:
+- **Telemetry is an `EventBus` observer**, not folded into `emit`. It `@inject`s
+  the bus and, in `init()`, subscribes to `bus.onAny` and forwards to
+  `sendEvent`. `EventEmitter` stays **pure dispatch**. Timing is preserved:
+  the bus fires on every emit; the DOM-bridge debounce stays at the bridge
+  layer; telemetry listens pre-debounce (matches today).
+- **`CollectionStateController` is split from `UploadCollectionController`** —
+  derived UI state vs. raw entries/observer are two responsibilities, two units.
 
 ### 3. State via `@lit-labs/signals`
 
-- Add `@lit-labs/signals@^0.3.0` (compatible with installed Lit 3.3.2).
-- `StateController<T>` becomes **signal-backed**: each field a `signal()`, derived
-  values `computed()`. Its public `get`/`set`/`subscribe`/`notify` stay as a thin
-  compat surface during migration (so existing subscribers keep working), but the
-  target read path for blocks is **direct signal access under `SignalWatcher`**.
-- The block base mixes in `SignalWatcher(LitElement)` → automatic fine-grained
-  tracking; manual `subscribe`/`trackSub` wiring is retired as blocks migrate.
-- **Deleted at the end:** `nanostores` dependency, `SharedState.ts`,
-  `PubSubCompat.ts`, `shared-instances.ts`, the `*`-key routing, and
-  `UploaderRegistry`'s controller map (controller-availability becomes a signal /
-  the container registry).
+Add `@lit-labs/signals@^0.3.0` (compatible with installed Lit 3.3.2). Reactive
+state is `@signalState` fields on the owning controller. Blocks mix in
+`SignalWatcher` and read fields directly. The three `*`-key buckets get real
+owners: instances dissolve into the container; config/locale facades read the
+controller; orphan UI state lives on `CollectionStateController`/`PluginController`.
+Deleted at the end: `nanostores`, `SharedState`, `PubSubCompat`,
+`shared-instances`, the `*`-key routing, `UploaderRegistry`'s controller map.
 
 ### 4. Block base — declared dependencies
 
-- New base (evolving `ChildBlock`): `static uses = [ConfigController, UploadCollectionController] as const`.
-- On connect the base attaches to the ctx container (self-bootstrapping the
-  container if absent), **pre-warms** each `uses` entry, and registers the block as
-  a **consumer** of the ctx.
-- Blocks read a controller via a typed `this.use(ConfigController)` accessor
-  (`= container.get(...)`, cache-hit after pre-warm). `static uses` documents the
-  dependency set, drives pre-warm, and drives consumer-lifecycle bookkeeping.
-- Render gating: container resolution is synchronous, so no async gate is needed
-  once the ctx container exists (it exists as soon as any block in the ctx
-  connects). During migration the existing `shouldUpdate` gate is preserved.
-- **Lifecycle:** the container owns the consumer refcount (replacing
-  `UploaderRegistry.hasConsumers` / `isCtxUnreferenced`). When the last consumer
-  disconnects, the container `dispose()`s its controllers (reverse insertion order,
-  matching today's reverse-teardown ordering constraint) and the registry entry is
-  dropped. The `ChildBlock` teardown chain (`disconnectedCallback` →
-  `setTimeout(0)` → teardown-if-unreferenced) is preserved in shape.
+- Evolve `ChildBlock`: `static uses = [ConfigController] as const` (documents +
+  pre-warms + drives consumer lifecycle), typed `this.use(Token)` accessor
+  (`= container.get(...)`), `SignalWatcher(RegisterableElementMixin(LightDomMixin(LitElement)))`
+  base for automatic fine-grained tracking.
+- Lifecycle: the container owns the consumer refcount; last consumer out →
+  `dispose()`. The existing `disconnectedCallback → setTimeout(0) → teardown`
+  chain keeps its shape; only the predicate/teardown target swaps to the
+  container.
 
 ### 5. Public surface (backward-compat; `UploaderController` fully dissolved)
 
-- **`<uc-config>`** → writes `this.use(ConfigController)` (today it writes
-  `this.uploader.config` — same instance, one hop shorter).
-- **`getAPI()`** on `UploadCtxProvider` → `this.use(UploaderPublicApi)`.
-  `UploaderPublicApi` is constructed by the container (deps: config/collection/…)
-  instead of taking the `bag`.
-- **Events** → `EventBridgeController` points at `this.use(EventBus)` /
-  `EventEmitter`; DOM dispatch on `<uc-upload-ctx-provider>` is unchanged.
-- **`solutionName` / activity** → `AppInfo` / `RouterController`.
-- **`attachUploaderScope` / `ensureUploaderScope` / `ensureUploaderCtx`** → become
-  container bootstrap + upload-stack binding registration when an uploader element
-  (provider / drop-area) is present.
+`<uc-config>` → `this.use(ConfigController)`; `getAPI()` → `this.use(UploaderPublicApi)`;
+events → `EventBridgeController` reads `this.use(EventBus)`; `solutionName` →
+`AppInfo`; `attachUploaderScope`/`ensureUploaderScope`/`ensureUploaderCtx` →
+container bootstrap + host-value `bind`s. `UploaderController.ts` is deleted.
 
 ### 6. Editor isolation (falls out)
 
-`editor-config-compat.ts` repoints from `PubSub.whenCtx`/`*cfg/` routing to
-resolving `ConfigController` from the ctx container (still now-or-when-created).
-Because `UploaderController` no longer exists and the upload stack is behind
-container bindings the editor never registers, the editor bundle cannot drag the
-uploader graph — the bundle-isolation goal is achieved as a side effect, without
-the fragile `sideEffects` tree-shaking approach previously rejected.
+`editor-config-compat.ts` resolves `ConfigController` from the ctx container.
+The editor never binds upload-stack value tokens ⇒ the upload-client stays out
+of the editor bundle; verified by `size-limit`.
 
 ## Migration order (strangler; full green gate each PR)
 
-Each step is a PR into `feat/v2-migration`, behavior-preserving, gate-green.
-Per AGENTS.md "cover before you refactor," each step brings its touched files to
-100% coverage as a purely-additive first move.
-
-1. **Signals foundation.** Add `@lit-labs/signals`; make `StateController`
-   signal-backed internally (public API unchanged). No behavior change.
-2. **Container.** Introduce `ControllerContainer` + per-ctx registry. Have
-   `PubSubCompat._uploader()` delegate to the container, which for now assembles a
-   single `UploaderController` binding. Everything still works.
-3. **Split eager fields.** Extract the eager controllers (localeManager, telemetry,
-   router, a11y, clipboard, plugin — config/locale/events/collection are already
-   standalone) into container-resolved controllers with `static deps`. During
-   transition, the `bag` getters and `UploaderController.X` getters delegate to
-   `container.get`.
-4. **Own the orphan state.** Move bucket-3 `*`-keys onto signals of
-   `UploadCollectionController` / `PluginController`; the nanostores map delegates
-   to those signals during transition.
-5. **Split the upload stack.** Turn the upload-stack into container bindings
-   (preserving the type-only-import boundary). Replace the 9 `stateBridges` with
-   direct signal writes through injected controllers.
-6. **Block base.** Introduce `static uses` + `this.use()` + `SignalWatcher`;
-   migrate blocks off `bag` / `this.uploader.*` group by group to direct container
-   + signal reads.
-7. **Drop the facades.** Repoint `*cfg/*` / `*l10n/*` reads to direct
-   `ConfigController` / `LocaleController` signal reads.
-8. **Dissolve the god object.** Move `getAPI` / events / `solutionName` onto
-   container-resolved controllers; delete `UploaderController`.
-9. **Delete the scaffolding.** Remove `PubSubCompat`, `shared-instances`,
-   `SharedState`, the `UploaderRegistry` controller map, and the `nanostores`
-   dependency. Repoint `editor-config-compat` to the container; confirm editor
-   bundle isolation via `size-limit`.
+1. **Foundation.** Add `@lit-labs/signals`; make `esbuild` decorator handling
+   deterministic (`tsconfigRaw.experimentalDecorators` in vite/vitest — see
+   risks); ship `@inject`, `@signalState`, `Disposable`/`Subscribable`,
+   `ControllerContainer` (+ per-ctx registry) with full unit tests. No behavior
+   change (nothing consumes them yet).
+2. **Container bridge.** `PubSubCompat._uploader()` creates/caches a container;
+   for now it `bind`s a single `UploaderController` facade so `bag`/`*X`/`.X` all
+   still work. Zero behavior change.
+3. **Extract eager controllers.** Move config/locale/events/collection/
+   localeManager/router/a11y/clipboard/telemetry/appInfo/plugin to `@inject`+
+   `@signalState` controllers; telemetry becomes a bus observer; split
+   `CollectionStateController`. `bag`/`*X` registration points delegate to
+   `container.get`. (Plugin's ctx-coupled `watchPlugins` is a cover-before-
+   refactor sub-step.)
+4. **Own the orphan state.** Orphan `*`-keys route to
+   `CollectionStateController`/`PluginController` signals; nanostores map
+   delegates during transition (per-key granularity preserved).
+5. **Upload stack.** Upload-stack controllers via `@inject` + host-value `bind`s
+   registered by the uploader assembly (preserving the upload-client boundary);
+   the 9 `stateBridges` become direct signal writes.
+6. **Block base.** `static uses` + `this.use()` + `SignalWatcher`; migrate blocks
+   off `bag`/`this.uploader.*` group by group.
+7. **Drop facades.** `*cfg/*`/`*l10n/*` → direct controller reads;
+   `createL10n(() => LocaleController)`.
+8. **Dissolve.** Rewrite `UploaderPublicApi` as a thin `@inject` facade; repoint
+   `getAPI`/events/`solutionName`; delete `UploaderController`.
+9. **Delete scaffolding.** Remove `PubSubCompat`, `shared-instances`,
+   `SharedState`, the registry controller-map role, `nanostores`; repoint
+   `editor-config-compat`; confirm editor bundle isolation via `size-limit`.
 
 ## Testing
 
-- Full green gate every PR: `tsc:app`, `tsc`, `build`, `test:specs`,
-  `test:locales`, `test:e2e`, `lint`.
-- New unit specs: container (lazy creation, per-ctx caching, topological resolve,
-  cycle-throw, binding override, dispose order); signal-backed `StateController`;
-  each extracted controller; block-base resolution + consumer lifecycle.
-- Cover-before-refactor: touched files to 100% as an additive step before each
-  behavioral change.
+Full green gate every PR (`tsc:app`, `tsc`, `build`, `test:specs`,
+`test:locales`, `test:e2e`, `lint`). Cover-before-refactor to 100% (AGENTS.md
+#1). New unit tests: `@inject` (lazy, thunk/forward-ref, container-tag,
+missing-container throw), `@signalState` (seed, dedup, tracking),
+`Disposable`/`Subscribable`, container (lazy singleton, bind override, dispose
+order, cycle guard), each extracted controller, telemetry-observer wiring, block
+base resolution + consumer lifecycle.
 
 ## Risks & mitigations
 
-- **Large surface (~28 blocks + public API + editor).** Mitigated by the strangler
-  order and the bag/`*`-key → container delegation bridge, keeping every step green.
-- **`static uses` accessor typing.** Provide a typed `this.use(Ctrl)`; keep `uses`
-  as documentation/pre-warm/lifecycle rather than the type source, to avoid brittle
-  mapped-type gymnastics.
-- **Signal ↔ coarse-subscribe interop during transition.** `StateController` keeps
-  its `subscribe` surface until blocks move to `SignalWatcher`.
-- **Upload-client import boundary.** Enforced by container bindings (no static
-  imports in the abstract/editor layer); verified by `size-limit` on the editor
-  bundle.
-- **Editor↔uploader lifecycle coupling** (the deferred cleanup backlog) — stay
-  scope-aware; do not entangle this refactor with those pre-existing bugs.
+- **Decorator toolchain determinism (step-1 blocker).** esbuild's decorator mode
+  for `src` files is ambiguous under the solution-style root tsconfig; existing
+  Lit decorators are dual-mode and can't disambiguate. Our `@inject`/
+  `@signalState` are experimental-only. Set `esbuild.tsconfigRaw.compilerOptions`
+  `{ experimentalDecorators: true, useDefineForClassFields: false }` in
+  `vite.config.ts` + `vitest.config.ts`; validate with the **full e2e gate**
+  (flipping the runtime transform could affect existing Lit decorators — Lit
+  supports both, and experimental+`useDefineForClassFields:false` is its
+  recommended mode, but prove it).
+- **`SignalWatcher` internals.** Confirm from its `.d.ts` it's a plain mixin (no
+  ECMA decorators) before adopting.
+- **`signal-polyfill` bundle weight** — verify `size-limit` budgets survive.
+- **Large surface (~28 blocks + public API + editor)** — mitigated by strangler
+  order + bag/`*`-key → container delegation bridge.
+- **Upload-client boundary** — enforced by host-value `bind`s the editor never
+  registers; verified by `size-limit`.
 
 ## Out of scope
 
-- The deferred M10 single `<uc-uploader>` tag + presets.
-- The editor↔uploader isolation cleanup backlog (root-lifecycle, updateImage
-  dedup, etc.) beyond repointing `editor-config-compat`.
+Deferred M10 (`<uc-uploader>` tag + presets); the editor↔uploader lifecycle
+cleanup backlog beyond repointing `editor-config-compat`.
