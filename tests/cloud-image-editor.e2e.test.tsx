@@ -145,6 +145,33 @@ describe('Cloud Image Editor', () => {
     await expect.element(tuningTab).toBeVisible();
   });
 
+  it('fader self-activates on a color tab and previews via *colorPreview (no *faderEl)', async () => {
+    // Regression guard (editor-isolation Task 6): the fader self-activates from
+    // `*tabId`/`*originalUrl` + its `imageSize` prop, and the slider drives its
+    // live preview through `*colorPreview` — no `*faderEl` ref. Its reaction has
+    // the same re-entrancy guard as the cropper (deactivate commits + notifies
+    // synchronously), so entering the tab + previewing must not crash/recurse.
+    await userEvent.click(page.getByRole('tab', { name: /tuning/i }));
+
+    // Self-activation: entering a non-crop tab activates the fader (its layers
+    // are absolutely positioned, so assert the active class like the cropper
+    // test does, not `toBeVisible`). The fader has no `data-testid` (it renders
+    // before `testMode` config propagates), so locate it by tag. Activation
+    // resolves a proxied CDN URL then loads the image → allow a generous window.
+    const faderClass = () => document.querySelector('uc-editor-image-fader')?.className ?? '';
+    await expect.poll(faderClass, { timeout: 5000 }).toMatch(/uc-active_from_/);
+
+    // Slider preview flows through `*colorPreview` → the fader reacts.
+    await userEvent.click(page.getByRole('option', { name: /Brightness/i }));
+    const slider = page.getByTestId('uc-editor-slider');
+    await expect.element(slider).toBeVisible();
+    await userEvent.click(slider);
+    await userEvent.keyboard('[ArrowRight]');
+
+    // Preview stayed live (no recursion/teardown).
+    await expect.poll(faderClass, { timeout: 5000 }).toMatch(/uc-active_from_/);
+  });
+
   it('should log timeout without unhandled rejection when container size stays zero', async () => {
     cleanup();
 
