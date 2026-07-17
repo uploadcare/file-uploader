@@ -361,10 +361,14 @@ export class EditorToolbar extends EditorBlock {
   }
 
   private async _preloadEditedImage(): Promise<void> {
-    const imgContainerEl = this.editorController.get('*imgContainerEl');
     const originalUrl = this.editorController.get('*originalUrl');
-    if (imgContainerEl && originalUrl) {
-      const width = imgContainerEl.offsetWidth;
+    // Preload at the rendered viewer width. Measured from the editor's image
+    // container in the light DOM (a sibling subtree of the toolbar) rather than
+    // a `*imgContainerEl` state ref — it's a one-off measurement, not shared
+    // state. Skip if the container isn't laid out yet (width 0).
+    const container = this.closest('uc-cloud-image-editor')?.querySelector('.uc-image_container');
+    const width = container instanceof HTMLElement ? container.offsetWidth : 0;
+    if (originalUrl && width > 0) {
       const src = await this.editorController.proxyUrl(
         viewerImageSrc(originalUrl, width, this.editorController.get('*editorTransformations')),
       );

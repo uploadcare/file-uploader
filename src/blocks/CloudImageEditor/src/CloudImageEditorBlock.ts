@@ -219,7 +219,6 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
   private readonly _imgRef = createRef<HTMLImageElement>();
   private readonly _cropperRef = createRef<EditorImageCropper>();
   private readonly _faderRef = createRef<EditorImageFader>();
-  private readonly _imgContainerRef = createRef<HTMLDivElement>();
 
   private readonly _handleImageLoad = (): void => {
     this._debouncedShowLoader(false);
@@ -251,18 +250,12 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
     if (this._isInitialized || this._pendingInitUpdate) {
       return;
     }
-    this._pendingInitUpdate = this.updateComplete.then(async () => {
+    this._pendingInitUpdate = this.updateComplete.then(() => {
       this._pendingInitUpdate = null;
+      // Render the init-gated subtree (the cropper + toolbar). The cropper and
+      // fader self-activate once they mount with their `imageSize` prop set for
+      // the current tab, so they need no external kick here.
       this._isInitialized = true;
-      // `_isInitialized` renders the init-gated subtree (the cropper + toolbar);
-      // wait for that render to commit, then share the container ref. The
-      // cropper and fader self-activate once they mount with their `imageSize`
-      // prop set for the current tab, so they need no external kick here.
-      await this.updateComplete;
-      if (!this.isConnected) {
-        return;
-      }
-      this._assignSharedElements();
     });
   }
 
@@ -496,15 +489,6 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
     );
   }
 
-  private _assignSharedElements(): void {
-    // The cropper and fader self-activate from state; only the image container
-    // ref is still shared (used by the toolbar's preload — retired next stage).
-    const imgContainerEl = this._imgContainerRef.value;
-    if (imgContainerEl) {
-      this._editorController.set('*imgContainerEl', imgContainerEl);
-    }
-  }
-
   private _attachImageListeners(): void {
     const imgEl = this._imgRef.value;
     if (!imgEl) {
@@ -593,7 +577,6 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
 
   public override firstUpdated(changedProperties: PropertyValues<this>): void {
     super.firstUpdated(changedProperties);
-    this._assignSharedElements();
     this._attachImageListeners();
     void this.initEditor();
 
@@ -643,7 +626,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
           <div class="uc-file_type_outer">
             <div class="uc-file_type">${fileType}</div>
           </div>
-          <div class="uc-image_container" ${ref(this._imgContainerRef)}>
+          <div class="uc-image_container">
             <img src=${src} class=${this._imageClassName} ${ref(this._imgRef)} />
             ${when(
               this._isInitialized,
