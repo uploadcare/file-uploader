@@ -391,6 +391,18 @@ export class PubSub<T extends Record<string, unknown>> {
     }
   }
 
+  /**
+   * The per-ctx `ControllerContainer` for `ctxId`, or `null` if none has been
+   * created yet (a ctx map can exist without a container — created by a bare
+   * `registerCtx` before any config/controller touch). Exposed for the
+   * consumer-refcount teardown predicate (`ctx-lifecycle.isCtxUnreferenced`),
+   * which routes through `container.isUnreferenced()` (M-god step 6a) — the
+   * container is the single owner of both the controllers and the consumer set.
+   */
+  public static getContainer(ctxId: string): ControllerContainer | null {
+    return PubSub._controllers.get(ctxId) ?? null;
+  }
+
   public static getCtx<T extends Record<string, unknown> = Record<string, unknown>>(ctxId: string): PubSub<T> | null {
     const store = PubSub._contexts.get(ctxId);
     if (!store) {
