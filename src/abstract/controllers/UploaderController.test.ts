@@ -59,19 +59,20 @@ describe('UploaderController', () => {
     expect(controller.locale).toBeInstanceOf(LocaleController);
   });
 
-  it('resolves config/locale/events from the container and takes an injected collection', () => {
+  it('resolves config/locale/events/collection from the container (pinned instances)', () => {
     const container = new ControllerContainer();
     const events = new EventBus();
     const config = new ConfigController();
     const locale = new LocaleController();
     const collection = new UploadCollectionController();
-    // The container owns config/locale/events — bind them here to pin the
-    // instances the delegating getters must resolve.
+    // The container owns config/locale/events/collection — bind them here to pin
+    // the instances the delegating getters must resolve.
     container.bind(ConfigController, () => config);
     container.bind(LocaleController, () => locale);
     container.bind(EventBus, () => events);
+    container.bind(UploadCollectionController, () => collection);
 
-    const controller = new UploaderController(container, { collection });
+    const controller = new UploaderController(container);
 
     expect(controller.events).toBe(events);
     expect(controller.config).toBe(config);
@@ -79,13 +80,14 @@ describe('UploaderController', () => {
     expect(controller.collection).toBe(collection);
   });
 
-  it('returns the same config/locale instance on every access (container-cached)', () => {
+  it('returns the same config/locale/collection instance on every access (container-cached)', () => {
     const controller = makeController();
     expect(controller.config).toBe(controller.config);
     expect(controller.locale).toBe(controller.locale);
-    // The rest still default to fresh instances.
-    expect(controller.events).toBeInstanceOf(EventBus);
+    // Collection is container-owned now (M-god step 4) — stable identity.
     expect(controller.collection).toBeInstanceOf(UploadCollectionController);
+    expect(controller.collection).toBe(controller.collection);
+    expect(controller.events).toBeInstanceOf(EventBus);
   });
 
   describe('solutionName', () => {
@@ -458,7 +460,7 @@ describe('UploaderController', () => {
       controller.destroy();
     });
 
-    it('destroy() tears down the four in reverse construction order, before the collection', () => {
+    it('destroy() tears down the four in reverse construction order', () => {
       const controller = makeController();
       controller.attachUploaderScope(makeUploaderScopeDeps());
 
@@ -466,7 +468,6 @@ describe('UploaderController', () => {
       const validationDestroy = vi.spyOn(controller.validationManager, 'destroy');
       const uploadControllerDestroy = vi.spyOn(controller.uploadController, 'destroy');
       const secureUploadsDestroy = vi.spyOn(controller.secureUploadsManager, 'destroy');
-      const collectionDestroy = vi.spyOn(controller.collection, 'destroy');
 
       controller.destroy();
 
@@ -474,19 +475,33 @@ describe('UploaderController', () => {
       expect(validationDestroy).toHaveBeenCalled();
       expect(uploadControllerDestroy).toHaveBeenCalled();
       expect(secureUploadsDestroy).toHaveBeenCalled();
-      expect(collectionDestroy).toHaveBeenCalled();
 
       const uploadEventsOrder = uploadEventsDestroy.mock.invocationCallOrder[0]!;
       const validationOrder = validationDestroy.mock.invocationCallOrder[0]!;
       const uploadControllerOrder = uploadControllerDestroy.mock.invocationCallOrder[0]!;
       const secureUploadsOrder = secureUploadsDestroy.mock.invocationCallOrder[0]!;
-      const collectionOrder = collectionDestroy.mock.invocationCallOrder[0]!;
 
       expect(uploadEventsOrder).toBeLessThan(validationOrder);
       expect(validationOrder).toBeLessThan(uploadControllerOrder);
       expect(uploadControllerOrder).toBeLessThan(secureUploadsOrder);
-      // uploadEvents.unobserve() must detach from a still-live collection.
-      expect(secureUploadsOrder).toBeLessThan(collectionOrder);
+    });
+
+    it('does NOT destroy the collection itself — the container owns its disposal (M-god step 4)', () => {
+      // Build via the container so its dispose() drives teardown, like production.
+      const container = new ControllerContainer();
+      container.bind(UploaderController, (c) => new UploaderController(c));
+      const controller = container.get(UploaderController);
+      controller.attachUploaderScope(makeUploaderScopeDeps());
+
+      const collectionDestroy = vi.spyOn(controller.collection, 'destroy');
+
+      // The controller's own destroy() must leave the collection alive...
+      controller.destroy();
+      expect(collectionDestroy).not.toHaveBeenCalled();
+
+      // ...the container disposes it (a leaf, so exactly once).
+      container.dispose();
+      expect(collectionDestroy).toHaveBeenCalledTimes(1);
     });
 
     it('destroy() tolerates never having attached the uploader scope', () => {

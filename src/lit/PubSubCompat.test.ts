@@ -411,6 +411,157 @@ describe('PubSub (M-god step 2: per-ctx ControllerContainer ownership)', () => {
   });
 });
 
+describe('PubSub collection-state (M-god step 4) facade', () => {
+  it('reads the seeded defaults from the controller, not the nanostores store', () => {
+    const ctx = freshCtx();
+    expect(ctx.read('*uploadList')).toEqual([]);
+    expect(ctx.read('*commonProgress')).toBe(0);
+    expect(ctx.read('*collectionState')).toBeNull();
+    expect(ctx.read('*collectionErrors')).toEqual([]);
+    expect(ctx.read('*groupInfo')).toBeNull();
+    expect(ctx.read('*uploadTrigger')).toBeInstanceOf(Set);
+    // Routed away from the raw store (the store is seeded with `{ plain }` only).
+    expect('*uploadList' in ctx.store).toBe(false);
+  });
+
+  it('round-trips a write through the controller', () => {
+    const ctx = freshCtx();
+    ctx.pub('*commonProgress', 55);
+    expect(ctx.read('*commonProgress')).toBe(55);
+  });
+
+  it('sub fires immediately (init) then on subsequent changes to that key', () => {
+    const ctx = freshCtx();
+    const cb = vi.fn();
+    ctx.sub('*commonProgress', cb, true);
+    expect(cb).toHaveBeenLastCalledWith(0);
+
+    ctx.pub('*commonProgress', 33);
+    expect(cb).toHaveBeenLastCalledWith(33);
+    expect(cb).toHaveBeenCalledTimes(2);
+  });
+
+  it('per-key granularity: a *commonProgress write does NOT fire a *uploadList subscriber', () => {
+    const ctx = freshCtx();
+    const listCb = vi.fn();
+    const progressCb = vi.fn();
+    ctx.sub('*uploadList', listCb, false);
+    ctx.sub('*commonProgress', progressCb, false);
+
+    ctx.pub('*commonProgress', 70);
+
+    expect(progressCb).toHaveBeenCalledTimes(1);
+    expect(listCb).not.toHaveBeenCalled(); // the exact _subDerived Object.is trap
+
+    ctx.pub('*uploadList', [{ uid: 'x' }]);
+    expect(listCb).toHaveBeenCalledTimes(1);
+    expect(progressCb).toHaveBeenCalledTimes(1); // still not re-fired
+  });
+
+  it('*uploadTrigger dedup is by reference: replacing fires the sub, mutating in place does not', () => {
+    const ctx = freshCtx();
+    const cb = vi.fn();
+    ctx.sub('*uploadTrigger', cb, false);
+
+    ctx.pub('*uploadTrigger', new Set(['a']));
+    expect(cb).toHaveBeenCalledTimes(1);
+
+    // Mutating the live set in place (as UploadEventsController does) — no fire.
+    (ctx.read('*uploadTrigger') as Set<string>).delete('a');
+    expect(cb).toHaveBeenCalledTimes(1);
+
+    ctx.pub('*uploadTrigger', new Set(['b'])); // new reference
+    expect(cb).toHaveBeenCalledTimes(2);
+  });
+
+  it('the 9-stateBridges path shares the same CollectionStateController instance the reads see', () => {
+    const ctx = freshCtx();
+    // Force the container + UploaderController (which wires the stateBridges over
+    // this ctx's pub/read) into existence.
+    ctx.uploaderController();
+    // A read through the facade and a write through the facade hit one instance.
+    ctx.pub('*collectionState', { totalCount: 3 } as never);
+    expect(ctx.read('*collectionState')).toEqual({ totalCount: 3 });
+  });
+
+  it('has() falls through to the store seed (v1 parity): false on a plain ctx, true when seeded', () => {
+    const plain = freshCtx();
+    // A plain ctx (store seeded with `{ plain }` only) — the collection keys
+    // are the value-source of the controller but `has` reflects store seeding.
+    expect(plain.has('*uploadList')).toBe(false);
+
+    const id = `pubsub-test-${seq++}`;
+    ids.push(id);
+    const seeded = PubSub.registerCtx<Record<string, unknown>>({ '*uploadList': [] }, id);
+    expect(seeded.has('*uploadList')).toBe(true);
+  });
+
+  it('add() is first-write-wins and overwrites only on rewrite', () => {
+    const ctx = freshCtx();
+    ctx.pub('*commonProgress', 12);
+
+    ctx.add('*commonProgress', 99); // no rewrite — keeps
+    expect(ctx.read('*commonProgress')).toBe(12);
+
+    ctx.add('*commonProgress', 99, true); // rewrite
+    expect(ctx.read('*commonProgress')).toBe(99);
+  });
+});
+
+describe('PubSub *lazyPlugins (M-god step 4) facade', () => {
+  it('seeds to null and routes reads away from the nanostores store', () => {
+    const ctx = freshCtx();
+    expect(ctx.read('*lazyPlugins')).toBeNull();
+    // `has` falls through to the store seed (v1 parity) — plain ctx, not seeded.
+    expect(ctx.has('*lazyPlugins')).toBe(false);
+    expect('*lazyPlugins' in ctx.store).toBe(false);
+  });
+
+  it('pub/sub round-trips (SolutionChildBlock pub → LazyPluginLoader sub)', () => {
+    const ctx = freshCtx();
+    const cb = vi.fn();
+    ctx.sub('*lazyPlugins', cb, false);
+
+    const entries = [{ configDeps: [], isEnabled: () => true, load: () => undefined }];
+    ctx.pub('*lazyPlugins', entries);
+
+    expect(cb).toHaveBeenCalledTimes(1);
+    expect(ctx.read('*lazyPlugins')).toBe(entries);
+  });
+
+  it('add() rewrite semantics', () => {
+    const ctx = freshCtx();
+    const a = [{ configDeps: [], isEnabled: () => true, load: () => undefined }];
+    const b = [{ configDeps: [], isEnabled: () => false, load: () => undefined }];
+
+    ctx.add('*lazyPlugins', a); // seeded to null → first-write-wins keeps null (rewrite=false)
+    expect(ctx.read('*lazyPlugins')).toBeNull();
+
+    ctx.add('*lazyPlugins', b, true); // rewrite
+    expect(ctx.read('*lazyPlugins')).toBe(b);
+  });
+});
+
+describe('PubSub collection-state ownership', () => {
+  it('deleteCtx disposes the CollectionStateController + LazyPluginsController with the container', () => {
+    const ctx = freshCtx();
+    const id = ctx.id;
+    ctx.pub('*commonProgress', 5);
+    ctx.pub('*lazyPlugins', [{ configDeps: [], isEnabled: () => true, load: () => undefined }]);
+
+    // A fresh wrapper for the same ctx sees the same collection/lazy state.
+    const ctx2 = PubSub.getCtx<Record<string, unknown>>(id)!;
+    expect(ctx2.read('*commonProgress')).toBe(5);
+
+    PubSub.deleteCtx(id);
+
+    // Re-registering the same id yields fresh, default state (no leak).
+    const ctx3 = PubSub.registerCtx<Record<string, unknown>>({ plain: 'seed' }, id);
+    expect(ctx3.read('*commonProgress')).toBe(0);
+    expect(ctx3.read('*lazyPlugins')).toBeNull();
+  });
+});
+
 describe('PubSub.whenCtx', () => {
   const nextId = () => {
     const id = `pubsub-test-${seq++}`;

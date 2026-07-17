@@ -51,11 +51,12 @@ import type { ValidationController, ValidationControllerDeps } from './Validatio
  * `telemetryManager` (the latter now an `EventBus` observer rather than a
  * mirror on this controller's `emit`). The constructor eagerly resolves
  * `config`/`router`/`telemetry` so they exist from birth (telemetry subscribes
- * to the bus before any event fires). The rest — `collection`, `clipboard` —
- * are still constructor-injected (mirroring `ValidationController`'s deps-object
- * style): each defaults to a freshly-constructed instance, so tests and later
- * milestones can substitute a fake or share an existing instance. Later
- * milestones move the rest onto the container one slice at a time.
+ * to the bus before any event fires). Step 4 moved `collection` onto the
+ * container too (a delegating getter; a leaf with no deps). The rest —
+ * `clipboard` — is still constructor-injected (mirroring `ValidationController`'s
+ * deps-object style): it defaults to a freshly-constructed instance, so tests
+ * and later milestones can substitute a fake. Later milestones move the rest
+ * onto the container one slice at a time.
  *
  * `PluginController` stays constructed by the DOM layer (`LitBlock`) — it
  * genuinely needs the PubSub ctx (`*lazyPlugins`, arbitrary shared state) and
@@ -101,7 +102,6 @@ export type UploaderStateBridges = {
 };
 
 export type UploaderControllerDeps = {
-  collection?: UploadCollectionController;
   clipboard?: ClipboardController;
   /** See `UploaderStateBridges` doc. Defaults to inert no-ops (editor-only scopes never attach an uploader). */
   stateBridges?: UploaderStateBridges;
@@ -170,7 +170,6 @@ type UploaderScope = {
 };
 
 export class UploaderController {
-  public readonly collection: UploadCollectionController;
   public readonly clipboard: ClipboardController;
 
   // The uploader-scope public API — element-constructed (see class doc),
@@ -194,7 +193,6 @@ export class UploaderController {
     // Assigned FIRST — the eager resolutions and the clipboard closures below
     // read `this.config`/`this.router`, delegating getters resolving here.
     this._container = container;
-    this.collection = deps.collection ?? new UploadCollectionController();
 
     this.clipboard =
       deps.clipboard ??
@@ -274,6 +272,17 @@ export class UploaderController {
   /** Locale store — container-owned, same ownership model as `config`. */
   public get locale(): LocaleController {
     return this._container.get(LocaleController);
+  }
+
+  /**
+   * Upload collection (source of truth for the entries; `*uploadCollection`
+   * resolves here) — container-owned (M-god step 4). A leaf with no deps; the
+   * container caches a single instance per ctx, so identity is stable across the
+   * upload stack / `publicApi` / stateBridges, and `container.dispose()` (not
+   * this class) tears it down.
+   */
+  public get collection(): UploadCollectionController {
+    return this._container.get(UploadCollectionController);
   }
 
   /** Typed event bus — container-owned (M-god step 3b). */
@@ -471,20 +480,22 @@ export class UploaderController {
     // nothing reaches the still-live bus during `destroy()`, and the telemetry
     // observer detaches when `EventBus.destroy()` clears its listeners.
 
-    // The uploader-scope stack tears down BEFORE `this.collection.destroy()`,
-    // in reverse construction order: `UploadEventsController.unobserve()`
-    // detaches its `observeCollection`/`observeProperties` subscriptions,
-    // which must run while the collection they're registered against is
-    // still the live, intact instance — destroying the collection first would
-    // let its own teardown race those detaching observers.
+    // The uploader-scope stack tears down in reverse construction order:
+    // `UploadEventsController.unobserve()` detaches its `observeCollection`/
+    // `observeProperties` subscriptions. The collection itself is NO LONGER
+    // destroyed here (M-god step 4) — it is container-owned, so
+    // `container.dispose()` destroys it (in reverse construction order, i.e.
+    // BEFORE this `destroy()` runs, since this controller is resolved first and
+    // disposed last). That ordering is safe: `container.dispose()` runs the
+    // whole teardown synchronously with no notify-on-destroy, so the later
+    // `uploadEvents.unobserve()` here just deletes handlers from the (already
+    // cleared) collection observer sets — a harmless no-op, no race.
     if (this._uploaderScope) {
       this._uploaderScope.uploadEvents.destroy();
       this._uploaderScope.validationManager.destroy();
       this._uploaderScope.uploadController.destroy();
       this._uploaderScope.secureUploadsManager.destroy();
     }
-
-    this.collection.destroy();
 
     // `router`/`telemetryManager` are NOT torn down here (M-god step 3c) — the
     // container owns them and disposes them in reverse construction order.
