@@ -87,10 +87,10 @@ class UploaderRegistryImpl {
   }
 
   /**
-   * Whether any `whenAvailable` consumer is currently watching `ctxName` —
-   * the v2 half of the unified consumer-refcount teardown predicate (M9o):
-   * a ctx stays alive while either a v1 `LitBlock` is in `*blocksRegistry`
-   * OR a v2 `ChildBlock` is still watching it here.
+   * Whether any `whenAvailable` consumer is currently watching `ctxName` — the
+   * consumer-refcount teardown predicate (`isCtxUnreferenced`): a ctx stays
+   * alive while a `ChildBlock` is still watching it here. (The v1
+   * `*blocksRegistry` half was removed with the v1 element layer in M11.)
    */
   public hasConsumers(ctxName: string): boolean {
     return (this._consumers.get(ctxName)?.size ?? 0) > 0;

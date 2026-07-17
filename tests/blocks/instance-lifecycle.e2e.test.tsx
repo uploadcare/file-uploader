@@ -78,14 +78,12 @@ describe('instance lifecycle (config-only ctx)', () => {
     expect(ctx.read('*clipboard')).toBe(controller.clipboard);
     expect(ctx.read('*telemetryManager')).toBe(controller.telemetryManager);
 
-    // But `*blocksRegistry` (LitBlock-owned) and `*pluginManager`
-    // (LitBlock-constructed, needs plugins) are NOT seam-registered — a
-    // config-only ctx never runs `LitBlock.initCallback`, so neither exists.
-    expect(ctx.has('*blocksRegistry')).toBe(false);
+    // `*pluginManager` is v1-element-gated (needs plugins) — a config-only ctx
+    // never registers it.
     expect(ctx.has('*pluginManager')).toBe(false);
 
-    // `*uploadCollection` is added by `LitUploaderBlock`, not `LitBlock` —
-    // `<uc-config>` alone must not create it.
+    // `*uploadCollection` is added by the uploader element layer, not the
+    // config-only seam — `<uc-config>` alone must not create it.
     expect(ctx.has('*uploadCollection')).toBe(false);
 
     // The four upload-stack keys (M9m `attachUploaderScope`) are only

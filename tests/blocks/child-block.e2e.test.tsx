@@ -4,7 +4,6 @@ import { page } from 'vitest/browser';
 import type { UploaderController } from '@/abstract/controllers/UploaderController';
 import type { Config, UploadCtxProvider } from '@/index.ts';
 import { ChildBlock } from '@/lit/ChildBlock';
-import { LitBlock } from '@/lit/LitBlock';
 import { getCtxName } from '../utils/getCtxName';
 import { cleanup } from '../utils/test-renderer';
 import '../../types/jsx';
@@ -58,16 +57,9 @@ class TestChildBlock extends ChildBlock {
   }
 }
 
-class TestV1Host extends LitBlock {
-  public override render() {
-    return html`${this.yield('')}`;
-  }
-}
-
 declare global {
   interface HTMLElementTagNameMap {
     'test-child-block': TestChildBlock;
-    'test-v1-host': TestV1Host;
   }
 }
 
@@ -75,7 +67,6 @@ beforeAll(async () => {
   const UC = await import('@/index.js');
   UC.defineComponents(UC);
   if (!customElements.get('test-child-block')) customElements.define('test-child-block', TestChildBlock);
-  if (!customElements.get('test-v1-host')) customElements.define('test-v1-host', TestV1Host);
 });
 
 const appended: HTMLElement[] = [];
@@ -148,16 +139,6 @@ describe('ChildBlock', () => {
     await expect.poll(() => child.readyCount, { timeout: 2000 }).toBe(1);
     // biome-ignore lint/suspicious/noExplicitAny: reaching into a protected getter
     expect((child as any).uploaderOrNull).not.toBeNull();
-  });
-
-  it('inherits ctx-name from a v1 ancestor via context', async () => {
-    const ctxName = getCtxName();
-    page.render(<uc-config ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>);
-    const host = append('test-v1-host', { 'ctx-name': ctxName });
-    const child = document.createElement('test-child-block');
-    host.append(child);
-
-    await expect.poll(() => child.querySelector('.pk')?.textContent).toBe('demopublickey');
   });
 
   it('re-renders on controller change notifications (subscriptionsFor)', async () => {

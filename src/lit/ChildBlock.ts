@@ -6,15 +6,16 @@ import { resolveSecureDeliveryProxyUrl } from '../abstract/secureDeliveryProxyUr
 import { UploaderRegistry } from '../abstract/UploaderRegistry';
 import type { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter';
 import type { ConfigType } from '../types';
+import { WindowHeightTracker } from '../utils/WindowHeightTracker';
 import type { ActivityId } from './activity-constants';
 import { destroyCtx, isCtxUnreferenced } from './ctx-lifecycle';
+import { ctxNameContext } from './ctx-name-context';
 import { ensureUploaderCtx } from './ensureUploaderCtx';
 import { LightDomMixin } from './LightDomMixin';
 import { createL10n } from './l10n';
 import { PubSub } from './PubSubCompat';
 import { RegisterableElementMixin } from './RegisterableElementMixin';
 import type { SharedState } from './SharedState';
-import { ctxNameContext } from './SymbioteCompatMixin';
 import { createSharedInstancesBag, type SharedInstancesBag } from './shared-instances';
 import { TestModeController } from './TestModeController';
 
@@ -154,6 +155,9 @@ export abstract class ChildBlock extends ChildBlockBase {
     for (const attr of (this.constructor as typeof ChildBlock).styleAttrs) {
       if (!this.hasAttribute(attr)) this.setAttribute(attr, '');
     }
+    // Keep `--uploadcare-blocks-window-height` live (consumed by
+    // `--uc-dialog-max-height`) — v1 registered this in `LitBlock.initCallback`.
+    WindowHeightTracker.registerClient(this);
     this._watchRegistry();
   }
 
@@ -183,6 +187,7 @@ export abstract class ChildBlock extends ChildBlockBase {
     // (that reconnect path re-watches a possibly different name; this
     // deferred check is only about the ctx this disconnect was leaving).
     const ctxName = this.effectiveCtxName;
+    WindowHeightTracker.unregisterClient(this);
     this._registryUnsub?.();
     this._registryUnsub = undefined;
     this._watchedCtxName = undefined;
