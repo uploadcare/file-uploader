@@ -130,9 +130,11 @@ dispatch), `RouterController` (owns `currentActivity`), `A11y`,
 Two responsibility splits that kill the remaining "god" smells:
 - **Telemetry is an `EventBus` observer**, not folded into `emit`. It `@inject`s
   the bus and, in `init()`, subscribes to `bus.onAny` and forwards to
-  `sendEvent`. `EventEmitter` stays **pure dispatch**. Timing is preserved:
-  the bus fires on every emit; the DOM-bridge debounce stays at the bridge
-  layer; telemetry listens pre-debounce (matches today).
+  `sendEvent`. `EventEmitter` stays **pure dispatch** (both the UC and
+  `ChildBlock` telemetry mirrors are removed to avoid double-firing). Accepted
+  consequence (step 3c, user-decided): modal telemetry is now debounced (was
+  immediate) and `common-upload-start`/`failed` now reach telemetry — see the
+  blueprint's "Telemetry as observer" note.
 - **`CollectionStateController` is split from `UploadCollectionController`** —
   derived UI state vs. raw entries/observer are two responsibilities, two units.
 

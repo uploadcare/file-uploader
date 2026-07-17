@@ -216,14 +216,24 @@ base class). `@signalState` per-field does NOT fit a dynamic key bag.
 | `PluginController` | `ConfigController` | `lazyPlugins` | **prereq:** ctx-coupled `watchPlugins` → read `ConfigController` directly (own cover-before-refactor sub-PR) |
 
 **Telemetry as observer [removes the "augmented emit" god-method].**
-`UploaderController.emit` today does bus-emit + un-debounced telemetry mirror.
-Now `EventEmitter.emit` is pure; `TelemetryController.init()` does
-`this.bus.onAny((type, payload) => this.sendEvent(type, payload))`. Semantics
-preserved: bus fires on every emit (telemetry sees all, pre-debounce); the DOM
-CustomEvent debounce stays in `EventBridgeController`/`RouterController`. Audit
-`UploaderPublicApi.uploadAll`'s direct `eventEmitter.emit` — with telemetry now a
-bus observer it will *also* be seen by telemetry; confirm that's desired parity
-(likely yes) and note in the PR.
+`UploaderController.emit` (and `ChildBlock.emit`) today do bus-emit + un-debounced
+telemetry mirror. Now both emits are pure; `TelemetryController.init()` does
+`this.bus.onAny((type, payload) => this.sendEvent(type, payload))`. **Both**
+telemetry mirrors are removed (they hit the same per-ctx bus telemetry now
+observes — keeping either would double-fire).
+
+ACCEPTED behavior changes (documented, per user decision 2026-07-17):
+- **Modal telemetry is now debounced.** Previously the mirror fired
+  MODAL_OPEN/CLOSE telemetry immediately/per-call (pre-debounce). As a bus
+  observer, telemetry now sees the debounced bus stream — modal events are
+  delayed ~20ms, collapsed within the window, and reordered relative to the
+  un-debounced ACTIVITY_CHANGE. Accepted as a minor analytics change (irrelevant
+  at human modal-interaction speed); covered by a test asserting the debounced
+  path. (This supersedes the earlier "telemetry sees all, pre-debounce" note.)
+- **`common-upload-start`/`common-upload-failed`** (direct `eventEmitter.emit`
+  callers) now reach telemetry (were partially/never mirrored) — additive and
+  symmetric with the already-telemetried SUCCESS/GROUP_CREATED. Not on the
+  exclusion list; no test asserted their exclusion.
 
 **Bridge:** as each field extracts, its `bag`/`*X` registration point delegates
 to `container.get(X)`; `UploaderController.X` becomes a `container.get(X)`
