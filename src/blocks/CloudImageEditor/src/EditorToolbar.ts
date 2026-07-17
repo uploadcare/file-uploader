@@ -221,20 +221,14 @@ export class EditorToolbar extends EditorBlock {
     }
   }
 
-  private _activateTab(
-    id: TabIdValue,
-    { fromViewer = false, force = false }: { fromViewer?: boolean; force?: boolean } = {},
-  ): void {
+  private _activateTab(id: TabIdValue, { force = false }: { force?: boolean } = {}): void {
     if (this.editorController.get('*tabId') !== id) {
       this.editorController.set('*tabId', id);
     }
-    this._applyTabState(id, { fromViewer, force });
+    this._applyTabState(id, { force });
   }
 
-  private _applyTabState(
-    id: TabIdValue,
-    { fromViewer, force = false }: { fromViewer: boolean; force?: boolean },
-  ): void {
+  private _applyTabState(id: TabIdValue, { force = false }: { force?: boolean } = {}): void {
     if (!force && this.activeTab === id) {
       this._syncTabIndicator();
       return;
@@ -242,20 +236,10 @@ export class EditorToolbar extends EditorBlock {
 
     this.activeTab = id;
 
-    // The cropper self-activates/deactivates from `*tabId`/`*originalUrl` + its
-    // `imageSize` prop (see `EditorImageCropper._syncActivation`); the toolbar
-    // no longer drives it. The fader is still driven imperatively here.
-    const faderEl = this.editorController.get('*faderEl');
-
-    if (id === TabId.CROP) {
-      faderEl?.deactivate();
-    } else {
-      faderEl?.activate({
-        url: this.editorController.get('*originalUrl') as string,
-        fromViewer,
-      });
-    }
-
+    // The cropper and fader both self-activate/deactivate from controller state
+    // (`*tabId`/`*originalUrl`/`*colorPreview`) + their `imageSize` prop — see
+    // `EditorImageCropper` / `EditorImageFader`. The toolbar only owns the tab
+    // UI now.
     for (const tabId of ALL_TABS) {
       const isCurrentTab = tabId === id;
       const toggleRef = this.tabToggleRefs[tabId];
@@ -404,17 +388,15 @@ export class EditorToolbar extends EditorBlock {
       }
       this._updateInfoTooltip();
       this._preloadEditedImage();
-      this.editorController.get('*faderEl')?.setTransformations(editorTransformations);
+      // The fader reacts to `*editorTransformations` itself now.
     });
 
     this.subEditorKey('*tabId', (tabId) => {
-      this._applyTabState(tabId, { fromViewer: false, force: true });
+      this._applyTabState(tabId, { force: true });
       this._updateInfoTooltip();
     });
 
-    this.subEditorKey('*originalUrl', () => {
-      this.editorController.get('*faderEl')?.deactivate();
-    });
+    // The fader self-deactivates on `*originalUrl` change (see EditorImageFader).
 
     this.subEditorKey('*loadingOperations', (loadingOperations) => {
       let anyLoading = false;
@@ -471,7 +453,7 @@ export class EditorToolbar extends EditorBlock {
       if (ctrl && this.tabList.length > 0 && !this.tabList.includes(ctrl.get('*tabId'))) {
         const [firstTab] = this.tabList;
         if (firstTab) {
-          this._activateTab(firstTab, { fromViewer: false });
+          this._activateTab(firstTab);
         }
       }
     }
@@ -482,7 +464,7 @@ export class EditorToolbar extends EditorBlock {
         // macrotask (apply/cancel, router nav), nulling the adopted controller.
         const ctrl = this.editorControllerOrNull;
         if (ctrl) {
-          this._activateTab(ctrl.get('*tabId'), { fromViewer: true });
+          this._activateTab(ctrl.get('*tabId'));
         }
       }, 0);
     }
@@ -547,7 +529,7 @@ export class EditorToolbar extends EditorBlock {
       return;
     }
     this.editorController.telemetry.sendEventCloudImageEditor(e, id);
-    this._activateTab(id, { fromViewer: false });
+    this._activateTab(id);
   };
 
   /** `EditorFilterControl`'s reported selection — replaces the old cross-writes to `*sliderEl`/`*showSlider`/`*currentFilter`/`*tabId`-scoped telemetry. */

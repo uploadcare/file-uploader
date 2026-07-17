@@ -78,7 +78,18 @@ type ColorOperationConfig = {
   keypointsNumber: number;
 };
 
-type ColorOperationConfigKey = ColorOperation | 'filter';
+export type ColorOperationConfigKey = ColorOperation | 'filter';
+
+/**
+ * The slider's live, uncommitted color/filter adjustment, published to the
+ * controller (`*colorPreview`) so the fader reacts and renders the preview.
+ * `null` = no live preview (render the committed `*editorTransformations`).
+ */
+export type ColorPreview = {
+  operation: ColorOperationConfigKey;
+  value?: number;
+  filter?: string;
+} | null;
 
 const NUMERIC_OPERATION_DEFAULTS = OPERATIONS_DEFAULTS as Record<ColorOperationConfigKey, number>;
 
