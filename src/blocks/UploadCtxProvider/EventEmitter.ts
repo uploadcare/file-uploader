@@ -1,9 +1,5 @@
-import {
-  type EventBus,
-  type UploaderEventKey,
-  type UploaderEventPayload,
-  UploaderEventType,
-} from '../../abstract/EventBus';
+import { inject } from '../../abstract/di/inject';
+import { EventBus, type UploaderEventKey, type UploaderEventPayload, UploaderEventType } from '../../abstract/EventBus';
 
 const DEFAULT_DEBOUNCE_TIMEOUT = 20;
 
@@ -34,21 +30,19 @@ export type { UploaderEventKey as EventKey, UploaderEventPayload as EventPayload
  * public surface (event types, debounce, payload thunks, `api.on`) is
  * unchanged — only the storage/dispatch moved behind the bus.
  *
- * M9k reshape: constructed and owned by `UploaderController` directly, so it
- * takes the `EventBus` it wraps instead of a ctx-bound `SharedInstancesBag`
- * (it previously extended `SharedInstance` only to reach
+ * M9k reshape: reached the `EventBus` it wraps instead of a ctx-bound
+ * `SharedInstancesBag` (it previously extended `SharedInstance` only to reach
  * `ctx.uploaderController().events` lazily — it never used any other
  * `SharedInstance` facility, so no behavior is lost by holding the bus
- * directly). `destroy()` is a no-op — the facade itself holds no
- * subscriptions to unwind; it exists so the controller can treat all its
- * owned managers uniformly.
+ * directly). M-god step 3b reshape: container-resolved with a zero-arg ctor,
+ * `@inject`-ing the per-ctx `EventBus`; `container.get(EventEmitter)` yields
+ * the single instance the `bag`/`*eventEmitter` surface exposes. This facade
+ * stays PURE dispatch — no telemetry. `destroy()` is a no-op — the facade
+ * itself holds no subscriptions to unwind; it exists so the container can treat
+ * all its owned managers uniformly.
  */
 export class EventEmitter {
-  private readonly _bus: EventBus;
-
-  public constructor(bus: EventBus) {
-    this._bus = bus;
-  }
+  @inject(EventBus) private readonly _bus!: EventBus;
 
   public on<T extends UploaderEventKey>(type: T, handler: (payload: UploaderEventPayload[T]) => void): () => void {
     return this._bus.on(type, handler);

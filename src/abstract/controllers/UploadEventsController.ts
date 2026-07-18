@@ -1,53 +1,21 @@
-import { type FileFromOptions, type UploadcareGroup, uploadFileGroup } from '@uploadcare/upload-client';
+import { uploadFileGroup } from '@uploadcare/upload-client';
 import type { Uid } from '../../lit/Uid';
-import type { OutputCollectionState, OutputErrorCollection, OutputFileEntry, OutputFileStatus } from '../../types';
+import type { OutputCollectionState } from '../../types';
 import { debounce } from '../../utils/debounce';
-import { type UploaderEventKey, type UploaderEventPayload, UploaderEventType } from '../EventBus';
+import { applyInitialCrop } from '../applyInitialCrop';
+import { inject } from '../di/inject';
+import { UploaderEventType } from '../EventBus';
 import { TypedData } from '../TypedData';
 import type { UploadEntryData } from '../uploadEntrySchema';
-import type { ConfigController } from './ConfigController';
-import type {
-  CollectionObserver,
-  UploadCollectionChangeMap,
-  UploadCollectionController,
-} from './UploadCollectionController';
-import type { ValidationController } from './ValidationController';
+import { CollectionStateController } from './CollectionStateController';
+import { ConfigController } from './ConfigController';
+import type { CollectionObserver, UploadCollectionChangeMap } from './UploadCollectionController';
+import { UploadCollectionController } from './UploadCollectionController';
+import { UploadController } from './UploadController';
+import { UploadHostBridge } from './UploadHostBridge';
+import { ValidationController } from './ValidationController';
 
 type Unsubscribe = () => void;
-
-/** Emit on the event backbone (telemetry-augmented `LitBlock.emit`). */
-type EmitFn = <T extends UploaderEventKey>(
-  type: T,
-  payload?: UploaderEventPayload[T] | (() => UploaderEventPayload[T]),
-  options?: { debounce?: boolean | number },
-) => void;
-
-export type UploadEventsControllerDeps = {
-  collection: UploadCollectionController;
-  config: ConfigController;
-  validation: ValidationController;
-  emit: EmitFn;
-  getOutputItem: <TStatus extends OutputFileStatus>(uid: Uid) => OutputFileEntry<TStatus>;
-  getOutputCollectionState: () => OutputCollectionState;
-  getOutputData: () => OutputFileEntry[];
-  /** Base upload-client options for the grouped upload (from `UploadController`). */
-  buildUploadOptions: () => Promise<FileFromOptions>;
-  /** Run plugin `onAdd` hooks for a freshly-added entry. */
-  runOnAddHooks: (entry: TypedData<UploadEntryData>) => void;
-  /** Apply the `cropPreset` to freshly-uploaded images (lives in the UI layer). */
-  applyInitialCrop: () => void;
-
-  // ─── v1 shared-state bridge (`*`-keys via the `$` proxy) ───
-  /** The live `*uploadTrigger` set (mutated in place on remove). */
-  uploadTrigger: () => Set<Uid>;
-  setUploadList: (list: { uid: Uid }[]) => void;
-  getCollectionState: () => OutputCollectionState | null;
-  setCollectionState: (state: OutputCollectionState | null) => void;
-  getCommonProgress: () => number;
-  setCommonProgress: (progress: number) => void;
-  setGroupInfo: (group: UploadcareGroup | null) => void;
-  getCollectionErrors: () => OutputErrorCollection[];
-};
 
 const VALIDATION_TRIGGER_KEYS: (keyof UploadEntryData)[] = [
   'file',
@@ -65,13 +33,25 @@ const VALIDATION_TRIGGER_KEYS: (keyof UploadEntryData)[] = [
  *
  * It observes the upload collection and, as entries are added/removed and their
  * properties change, drives validation, emits the documented events (via the
- * injected telemetry-augmented `emit`, which reaches the EventBus), maintains
- * the derived `*uploadList`/`*collectionState`/`*commonProgress`/`*groupInfo`
- * shared state through injected sinks, and creates the output group. All
- * collaborators are injected, so it runs without a DOM and is unit-testable.
+ * host `emit`, a pure event dispatch that reaches the EventBus; telemetry
+ * observes that bus independently, not this call), maintains the derived
+ * `uploadList`/`collectionState`/`commonProgress`/`groupInfo` collection state
+ * (owned by `CollectionStateController`), and creates the output group.
+ *
+ * Container-resolved (M-god step 5): controller peers (collection, config,
+ * validation, upload, collection-state) and the `UploadHostBridge` (output-state
+ * readers, plugin `onAdd` hooks, the host `emit`) are `@inject`-ed, so it runs
+ * zero-arg without a DOM and is unit-testable. `observe()` is called explicitly
+ * by `registerUploadStack` once the whole stack is resolved.
  */
 export class UploadEventsController {
-  private _deps: UploadEventsControllerDeps;
+  @inject(UploadCollectionController) private readonly _collection!: UploadCollectionController;
+  @inject(ConfigController) private readonly _config!: ConfigController;
+  @inject(ValidationController) private readonly _validation!: ValidationController;
+  @inject(UploadController) private readonly _upload!: UploadController;
+  @inject(CollectionStateController) private readonly _collectionState!: CollectionStateController;
+  @inject(UploadHostBridge) private readonly _host!: UploadHostBridge;
+
   // Active while observing (the v1 `isConnected` guard) — survives disconnect/
   // reconnect cycles; gates the debounced flush + deferred validation that may
   // fire after the host disconnects.
@@ -79,16 +59,27 @@ export class UploadEventsController {
   private _unobserveCollection?: Unsubscribe;
   private _unobserveProperties?: Unsubscribe;
 
-  public constructor(deps: UploadEventsControllerDeps) {
-    this._deps = deps;
+  /**
+   * The live `*uploadTrigger` set — the exact reference `CollectionStateController`
+   * holds, so `.delete(uid)` here mutates in place (Object.is dedup → no notify),
+   * exactly as v1's shared-state bridge did. `UploaderPublicApi.uploadAll`
+   * replaces the whole Set (fires); this path only mutates the live one.
+   */
+  private get _uploadTrigger(): Set<Uid> {
+    return this._collectionState.get('uploadTrigger');
+  }
+
+  /** Apply the `cropPreset` to freshly-uploaded images (was a host-injected callback). */
+  private _applyInitialCrop(): void {
+    applyInitialCrop(this._collection, this._config.get('cropPreset'));
   }
 
   /** Start observing the collection. Idempotent. */
   public observe(): void {
     this.unobserve();
     this._active = true;
-    this._unobserveCollection = this._deps.collection.observeCollection(this._handleCollectionUpdate);
-    this._unobserveProperties = this._deps.collection.observeProperties(this._handleCollectionPropertiesUpdate);
+    this._unobserveCollection = this._collection.observeCollection(this._handleCollectionUpdate);
+    this._unobserveProperties = this._collection.observeProperties(this._handleCollectionPropertiesUpdate);
   }
 
   public unobserve(): void {
@@ -107,13 +98,13 @@ export class UploadEventsController {
 
   private _handleCollectionUpdate: CollectionObserver = (entries, added, removed) => {
     if (!this._active) return;
-    const { validation, emit, getOutputItem } = this._deps;
+    const { emit, getOutputItem } = this._host;
 
     if (added.size || removed.size) {
-      this._deps.setGroupInfo(null);
+      this._collectionState.set('groupInfo', null);
     }
 
-    validation.runFileValidators(
+    this._validation.runFileValidators(
       'add',
       [...added].map((e) => e.uid),
     );
@@ -122,15 +113,15 @@ export class UploadEventsController {
       if (!entry.getValue('silent')) {
         emit(UploaderEventType.FILE_ADDED, getOutputItem(entry.uid));
       }
-      this._deps.runOnAddHooks(entry);
+      this._host.runOnAddHooks(entry);
     }
 
-    validation.runCollectionValidators();
+    this._validation.runCollectionValidators();
 
     for (const entry of removed) {
-      this._deps.uploadTrigger().delete(entry.uid);
+      this._uploadTrigger.delete(entry.uid);
 
-      validation.cleanupValidationForEntry(entry);
+      this._validation.cleanupValidationForEntry(entry);
       entry.getValue('abortController')?.abort();
       entry.setMultipleValues({
         isRemoved: true,
@@ -143,7 +134,10 @@ export class UploadEventsController {
       emit(UploaderEventType.FILE_REMOVED, getOutputItem(entry.uid));
     }
 
-    this._deps.setUploadList(entries.map((uid) => ({ uid })));
+    this._collectionState.set(
+      'uploadList',
+      entries.map((uid) => ({ uid })),
+    );
 
     this._flushCommonUploadProgress();
     this._flushOutputItems();
@@ -151,7 +145,10 @@ export class UploadEventsController {
 
   private _handleCollectionPropertiesUpdate = (changeMap: UploadCollectionChangeMap): void => {
     if (!this._active) return;
-    const { collection, config, validation, emit, getOutputItem, getOutputCollectionState } = this._deps;
+    const collection = this._collection;
+    const config = this._config;
+    const validation = this._validation;
+    const { emit, getOutputItem, getOutputCollectionState } = this._host;
 
     this._flushOutputItems();
 
@@ -209,7 +206,7 @@ export class UploadEventsController {
         }
       }
       if (config.get('cropPreset')) {
-        this._deps.applyInitialCrop();
+        this._applyInitialCrop();
       }
     }
     if (changeMap.errors) {
@@ -234,7 +231,7 @@ export class UploadEventsController {
         collection.size > 0 &&
         errorItems.length === 0 &&
         collection.size === loadedItems.length &&
-        this._deps.getCollectionErrors().length === 0
+        this._collectionState.get('collectionErrors').length === 0
       ) {
         emit(UploaderEventType.COMMON_UPLOAD_SUCCESS, getOutputCollectionState() as OutputCollectionState<'success'>);
       }
@@ -245,18 +242,20 @@ export class UploadEventsController {
         emit(UploaderEventType.FILE_URL_CHANGED, getOutputItem(uid));
       });
 
-      this._deps.setGroupInfo(null);
+      this._collectionState.set('groupInfo', null);
     }
   };
 
   private _flushOutputItems = debounce(async () => {
-    const { collection, config, emit, getOutputCollectionState, getOutputData, setCollectionState } = this._deps;
+    const collection = this._collection;
+    const config = this._config;
+    const { emit, getOutputCollectionState, getOutputData } = this._host;
     const data = getOutputData();
     if (data.length !== collection.size) {
       return;
     }
     const collectionState = getOutputCollectionState();
-    setCollectionState(collectionState);
+    this._collectionState.set('collectionState', collectionState);
     emit(UploaderEventType.CHANGE, () => getOutputCollectionState(), { debounce: true });
 
     if (config.get('groupOutput') && collectionState.totalCount > 0 && collectionState.status === 'success') {
@@ -265,9 +264,8 @@ export class UploadEventsController {
   }, 300);
 
   private async _createGroup(collectionState: OutputCollectionState): Promise<void> {
-    const { emit, getOutputCollectionState, getCollectionState, setCollectionState, setGroupInfo, buildUploadOptions } =
-      this._deps;
-    const uploadClientOptions = await buildUploadOptions();
+    const { emit, getOutputCollectionState } = this._host;
+    const uploadClientOptions = await this._upload.buildUploadOptions();
     const uuidList = collectionState.allEntries.map((entry) => {
       return entry.uuid + (entry.cdnUrlModifiers ? `/${entry.cdnUrlModifiers}` : '');
     });
@@ -279,21 +277,22 @@ export class UploadEventsController {
     // Bail if the controller was unobserved mid-flight (the `_active` check is
     // new with the controller lifecycle) or the collection state moved on
     // (mirrors v1).
-    if (!this._active || getCollectionState() !== collectionState) {
+    if (!this._active || this._collectionState.get('collectionState') !== collectionState) {
       abortController.abort();
       return;
     }
-    setGroupInfo(resp);
+    this._collectionState.set('groupInfo', resp);
     const collectionStateWithGroup = getOutputCollectionState() as OutputCollectionState<'success', 'has-group'>;
     emit(UploaderEventType.GROUP_CREATED, collectionStateWithGroup);
     emit(UploaderEventType.CHANGE, () => getOutputCollectionState(), { debounce: true });
-    setCollectionState(collectionStateWithGroup);
+    this._collectionState.set('collectionState', collectionStateWithGroup);
   }
 
   private _flushCommonUploadProgress = (): void => {
-    const { collection, emit, getOutputCollectionState, getCommonProgress, setCommonProgress } = this._deps;
+    const collection = this._collection;
+    const { emit, getOutputCollectionState } = this._host;
     let commonProgress = 0;
-    const items = [...this._deps.uploadTrigger()].filter((id) => !!collection.read(id));
+    const items = [...this._uploadTrigger].filter((id) => !!collection.read(id));
     items.forEach((id) => {
       const uploadProgress = collection.readProp(id, 'uploadProgress');
       if (typeof uploadProgress === 'number') {
@@ -302,11 +301,11 @@ export class UploadEventsController {
     });
     const progress = items.length ? Math.round(commonProgress / items.length) : 0;
 
-    if (getCommonProgress() === progress) {
+    if (this._collectionState.get('commonProgress') === progress) {
       return;
     }
 
-    setCommonProgress(progress);
+    this._collectionState.set('commonProgress', progress);
     emit(UploaderEventType.COMMON_UPLOAD_PROGRESS, getOutputCollectionState() as OutputCollectionState<'uploading'>);
   };
 }

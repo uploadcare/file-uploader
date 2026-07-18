@@ -1,9 +1,31 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Uid } from '../../lit/Uid';
 import type { OutputErrorCollection, UploaderPublicApi } from '../../types';
+import { ControllerContainer } from '../di/ControllerContainer';
+import { CollectionStateController } from './CollectionStateController';
 import { ConfigController } from './ConfigController';
 import { UploadCollectionController } from './UploadCollectionController';
-import { ValidationController, type ValidationControllerDeps } from './ValidationController';
+import { UploadHostBridge } from './UploadHostBridge';
+import { ValidationController } from './ValidationController';
+
+// A full `UploadHostBridge` with inert defaults; only the members a test cares
+// about are overridden. Inlined (not shared) so it stays out of coverage.
+const makeUploadHost = (overrides: Partial<UploadHostBridge> = {}): UploadHostBridge =>
+  ({
+    debug: () => {},
+    getFileHooks: () => [],
+    getOutputItem: ((uid: string) => ({ internalId: uid })) as unknown as UploadHostBridge['getOutputItem'],
+    getApi: (() => ({})) as unknown as UploadHostBridge['getApi'],
+    emitCommonUploadFailed: () => {},
+    emit: () => {},
+    getOutputCollectionState: (() => ({})) as unknown as UploadHostBridge['getOutputCollectionState'],
+    getOutputData: () => [],
+    runOnAddHooks: () => {},
+    onResolverError: () => {},
+    onUploadError: () => {},
+    onValidatorError: () => {},
+    ...overrides,
+  }) satisfies UploadHostBridge;
 
 // The async path runs through a 500ms queue debounce, so the async tests use
 // real timers and wait it out rather than choreographing fake timers across
@@ -49,10 +71,11 @@ function buildOutputItem(collection: UploadCollectionController, uid: Uid) {
 
 const active: ValidationController[] = [];
 
-function setup(opts: Partial<ValidationControllerDeps> = {}) {
-  const config = new ConfigController();
-  const collection = new UploadCollectionController();
-  const setCollectionErrors = vi.fn();
+function setup(hostOverrides: Partial<UploadHostBridge> = {}) {
+  const container = new ControllerContainer();
+  const config = container.get(ConfigController);
+  const collection = container.get(UploadCollectionController);
+  const collectionState = container.get(CollectionStateController);
   const emitCommonUploadFailed = vi.fn();
   const onValidatorError = vi.fn();
   // A minimal public-api stand-in. Only the members the controller and the
@@ -68,17 +91,25 @@ function setup(opts: Partial<ValidationControllerDeps> = {}) {
       allEntries: collection.items().map((id) => buildOutputItem(collection, id)),
     }),
   } as unknown as UploaderPublicApi;
-  const controller = new ValidationController({
+  // The collection-errors sink is now a direct `CollectionStateController.set`
+  // write; spy on it so the old `setCollectionErrors` assertions (called / last
+  // value) still hold. `set('collectionErrors', errors)` → value at index [1].
+  const setCollectionErrors = vi.spyOn(collectionState, 'set');
+  container.bind(UploadHostBridge, () =>
+    makeUploadHost({ getApi: () => api, emitCommonUploadFailed, onValidatorError, ...hostOverrides }),
+  );
+  const controller = container.get(ValidationController);
+  active.push(controller);
+  return {
+    controller,
     config,
     collection,
-    getApi: () => api,
+    collectionState,
     setCollectionErrors,
     emitCommonUploadFailed,
     onValidatorError,
-    ...opts,
-  });
-  active.push(controller);
-  return { controller, config, collection, setCollectionErrors, emitCommonUploadFailed, onValidatorError, api };
+    api,
+  };
 }
 
 describe('ValidationController', () => {
@@ -97,13 +128,13 @@ describe('ValidationController', () => {
   });
 
   it('runCollectionValidators reports the built-in multiple (too few) error and fires common-upload-failed', () => {
-    const { controller, config, setCollectionErrors, emitCommonUploadFailed } = setup();
+    const { controller, config, collectionState, emitCommonUploadFailed } = setup();
     config.set('multiple', true);
     config.set('multipleMin', 2);
 
     controller.runCollectionValidators();
 
-    const errors: OutputErrorCollection[] = setCollectionErrors.mock.calls.at(-1)?.[0] ?? [];
+    const errors: OutputErrorCollection[] = collectionState.get('collectionErrors');
     expect(errors.some((e) => e.type === 'TOO_FEW_FILES')).toBe(true);
     expect(emitCommonUploadFailed).toHaveBeenCalled();
   });
@@ -287,6 +318,45 @@ describe('ValidationController', () => {
     const { controller, config } = setup();
     config.set('validationConcurrency', 5);
     expect(() => controller.runFileValidators('change')).not.toThrow();
+  });
+
+  it('falls back to concurrency 20 when validationConcurrency is not positive', () => {
+    const { controller, config } = setup();
+    const queue = (controller as unknown as { _queue: { concurrency: number } })._queue;
+    config.set('validationConcurrency', 5);
+    expect(queue.concurrency).toBe(5);
+    // A non-positive value re-runs `_concurrencyFromConfig`'s `: 20` fallback.
+    config.set('validationConcurrency', 0);
+    expect(queue.concurrency).toBe(20);
+  });
+
+  it('skips ids with no backing entry (stale uid) in runFileValidators', () => {
+    const { controller } = setup();
+    // `read()` returns null for a stale id → the `if (entry)` guard skips it.
+    expect(() => controller.runFileValidators('change', ['ghost' as Uid])).not.toThrow();
+  });
+
+  it('swallows a telemetry sink that itself throws while reporting a validator error', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    // `onValidatorError` throwing makes the per-task catch handler reject, which
+    // the queued `Promise.all(...).catch(() => {})` swallows — no unhandled crash.
+    const { controller, config, collection } = setup({
+      onValidatorError: () => {
+        throw new Error('telemetry boom');
+      },
+    });
+    await flush(20);
+    config.set('fileValidators', [
+      () => {
+        throw new Error('validator boom');
+      },
+    ]);
+    const id = collection.add({ fileName: 'a.txt', mimeType: 'text/plain' });
+
+    controller.runFileValidators('change', [id]);
+    await flush();
+
+    expect(collection.read(id)?.getValue('isValidationPending')).toBe(false);
   });
 
   it('is inert after destroy', async () => {

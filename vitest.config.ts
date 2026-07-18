@@ -17,6 +17,17 @@ export default defineConfig({
   },
   esbuild: {
     jsxInject: "import { renderer } from '~/tests/utils/test-renderer';",
+    // Force esbuild's decorator transform to the experimental (legacy) mode so
+    // it deterministically matches `tsc`. Without this, the solution-style root
+    // tsconfig leaves esbuild's inferred decorator mode ambiguous for `src`
+    // files; the DI `@inject`/`@signalState` decorators require the legacy
+    // transform, and every existing Lit decorator is happy with it too.
+    tsconfigRaw: {
+      compilerOptions: {
+        experimentalDecorators: true,
+        useDefineForClassFields: false,
+      },
+    },
   },
   test: {
     coverage: {

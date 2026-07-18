@@ -18,6 +18,20 @@ export default defineConfig(({ command }) => {
       resolve: {
         alias,
       },
+      // Force esbuild's decorator transform to the experimental (legacy) mode so
+      // it deterministically matches `tsc` (experimentalDecorators +
+      // useDefineForClassFields:false). The solution-style root tsconfig makes
+      // esbuild's inferred mode ambiguous for `src` files; pinning it here keeps
+      // the DI `@inject`/`@signalState` decorators (and every Lit decorator)
+      // transformed identically at runtime.
+      esbuild: {
+        tsconfigRaw: {
+          compilerOptions: {
+            experimentalDecorators: true,
+            useDefineForClassFields: false,
+          },
+        },
+      },
     };
   }
 

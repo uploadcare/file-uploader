@@ -2,45 +2,109 @@ import type { FileFromOptions, UploadcareGroup } from '@uploadcare/upload-client
 import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import type { Uid } from '../../lit/Uid';
 import type { OutputCollectionState, OutputFileEntry } from '../../types';
+import { ControllerContainer } from '../di/ControllerContainer';
 import { UploaderEventType } from '../EventBus';
 import type { TypedData } from '../TypedData';
 import type { UploadEntryData } from '../uploadEntrySchema';
+import { CollectionStateController } from './CollectionStateController';
 import { ConfigController } from './ConfigController';
 import type { CollectionObserver, PropertyObserver } from './UploadCollectionController';
 import { UploadCollectionController } from './UploadCollectionController';
-import { UploadEventsController, type UploadEventsControllerDeps } from './UploadEventsController';
-import type { ValidationController } from './ValidationController';
+import { UploadController } from './UploadController';
+import { UploadEventsController } from './UploadEventsController';
+import { UploadHostBridge } from './UploadHostBridge';
+import { ValidationController } from './ValidationController';
 
 vi.mock('@uploadcare/upload-client', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@uploadcare/upload-client')>();
   return { ...actual, uploadFileGroup: vi.fn() };
 });
 
+// `applyInitialCrop` is now an internal method calling this util; mock it so the
+// crop-applied assertions have a spy to check (and avoid the real crop-utils).
+vi.mock('../applyInitialCrop', () => ({ applyInitialCrop: vi.fn() }));
+
 import { uploadFileGroup } from '@uploadcare/upload-client';
+import { applyInitialCrop } from '../applyInitialCrop';
 
 const mockUploadFileGroup = vi.mocked(uploadFileGroup);
+const mockApplyInitialCrop = vi.mocked(applyInitialCrop);
 
 type Entry = TypedData<UploadEntryData>;
+
+// A full `UploadHostBridge` with inert defaults; only the members a test cares
+// about are overridden. Inlined (not shared) so it stays out of coverage.
+const makeUploadHost = (overrides: Partial<UploadHostBridge> = {}): UploadHostBridge =>
+  ({
+    debug: () => {},
+    getFileHooks: () => [],
+    getOutputItem: ((uid: string) => ({ internalId: uid })) as unknown as UploadHostBridge['getOutputItem'],
+    getApi: (() => ({})) as unknown as UploadHostBridge['getApi'],
+    emitCommonUploadFailed: () => {},
+    emit: () => {},
+    getOutputCollectionState: (() => ({})) as unknown as UploadHostBridge['getOutputCollectionState'],
+    getOutputData: () => [],
+    runOnAddHooks: () => {},
+    onResolverError: () => {},
+    onUploadError: () => {},
+    onValidatorError: () => {},
+    ...overrides,
+  }) satisfies UploadHostBridge;
 
 const makeState = (overrides: Partial<OutputCollectionState> = {}): OutputCollectionState =>
   ({ totalCount: 0, status: 'idle', allEntries: [], ...overrides }) as OutputCollectionState;
 
 const setup = (opts: { collectionState?: OutputCollectionState; outputDataLength?: number } = {}) => {
-  const collection = new UploadCollectionController();
+  const container = new ControllerContainer();
+  const collection = container.get(UploadCollectionController);
+  const config = container.get(ConfigController);
+  const collectionState = container.get(CollectionStateController);
+
   const validation = {
     runFileValidators: vi.fn(),
     runCollectionValidators: vi.fn(),
     cleanupValidationForEntry: vi.fn(),
   } as unknown as ValidationController;
+  container.bind(ValidationController, () => validation);
+  const upload = {
+    buildUploadOptions: vi.fn(async () => ({}) as FileFromOptions),
+  } as unknown as UploadController;
+  container.bind(UploadController, () => upload);
 
   // Invoke thunk payloads like the real emit does, so deferred-payload bodies run.
   const emit = vi.fn((_type: unknown, payload?: unknown) => {
     if (typeof payload === 'function') (payload as () => unknown)();
-  }) as Mock & UploadEventsControllerDeps['emit'];
-  const uploadTriggerSet = new Set<Uid>();
-  let collectionState = opts.collectionState ?? makeState();
-  let commonProgress = 0;
-  const collectionErrors: never[] = [];
+  }) as Mock & UploadHostBridge['emit'];
+  const runOnAddHooks = vi.fn();
+  const outputCollectionState = opts.collectionState ?? makeState();
+
+  container.bind(UploadHostBridge, () =>
+    makeUploadHost({
+      emit,
+      getOutputItem: ((uid: Uid) => ({ internalId: uid })) as unknown as UploadHostBridge['getOutputItem'],
+      getOutputCollectionState: () => outputCollectionState,
+      getOutputData: () => new Array(opts.outputDataLength ?? collection.size).fill(0) as OutputFileEntry[],
+      runOnAddHooks,
+    }),
+  );
+
+  // The six derived collection keys are now written to `CollectionStateController`
+  // via `set(key, value)`. Fan the writes out to per-key spies so the original
+  // `set<Key>(value)`-shaped assertions still hold, while the real set still runs.
+  const setGroupInfo = vi.fn();
+  const setUploadList = vi.fn();
+  const setCollectionState = vi.fn();
+  const setCommonProgress = vi.fn();
+  const realSet = collectionState.set.bind(collectionState);
+  vi.spyOn(collectionState, 'set').mockImplementation((key, value) => {
+    realSet(key, value);
+    if (key === 'groupInfo') setGroupInfo(value);
+    else if (key === 'uploadList') setUploadList(value);
+    else if (key === 'collectionState') setCollectionState(value);
+    else if (key === 'commonProgress') setCommonProgress(value);
+  });
+  // The live `*uploadTrigger` set the controller mutates in place.
+  const uploadTriggerSet = collectionState.get('uploadTrigger');
 
   // Capture the observer callbacks so tests invoke the handlers directly with
   // controlled (entries, added, removed) / changeMap — no collection debounce.
@@ -55,48 +119,34 @@ const setup = (opts: { collectionState?: OutputCollectionState; outputDataLength
     return () => {};
   });
 
-  const config = new ConfigController();
-
-  const deps: UploadEventsControllerDeps = {
-    collection,
-    config,
-    validation,
-    emit,
-    getOutputItem: ((uid: Uid) => ({ internalId: uid })) as unknown as UploadEventsControllerDeps['getOutputItem'],
-    getOutputCollectionState: () => collectionState,
-    getOutputData: () => new Array(opts.outputDataLength ?? collection.size).fill(0) as OutputFileEntry[],
-    buildUploadOptions: vi.fn(async () => ({}) as FileFromOptions),
-    runOnAddHooks: vi.fn(),
-    applyInitialCrop: vi.fn(),
-    uploadTrigger: () => uploadTriggerSet,
-    setUploadList: vi.fn(),
-    getCollectionState: () => collectionState,
-    setCollectionState: vi.fn((s) => {
-      collectionState = s ?? makeState();
-    }),
-    getCommonProgress: () => commonProgress,
-    setCommonProgress: vi.fn((p) => {
-      commonProgress = p;
-    }),
-    setGroupInfo: vi.fn(),
-    getCollectionErrors: () => collectionErrors,
-  };
-
-  const controller = new UploadEventsController(deps);
+  const controller = container.get(UploadEventsController);
   controller.observe();
+
+  const deps = {
+    validation,
+    runOnAddHooks,
+    applyInitialCrop: mockApplyInitialCrop,
+    setGroupInfo,
+    setUploadList,
+    setCollectionState,
+    setCommonProgress,
+  };
 
   return {
     controller,
     collection,
     config,
+    collectionState,
     deps,
     emit,
     uploadTriggerSet,
     fireCollection: (entries: Uid[], added: Set<Entry>, removed: Set<Entry>) =>
       collectionObserver(entries, added, removed),
     fireProperties: (changeMap: Parameters<PropertyObserver>[0]) => propertyObserver(changeMap),
+    // Simulate the derived collection-state being replaced mid-flight (v1 wrote
+    // `*collectionState`) — the group-creation race check reads this back.
     setCollectionStateValue: (s: OutputCollectionState) => {
-      collectionState = s;
+      collectionState.set('collectionState', s);
     },
   };
 };
@@ -108,6 +158,7 @@ describe('UploadEventsController', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     mockUploadFileGroup.mockReset();
+    mockApplyInitialCrop.mockClear();
   });
   afterEach(() => {
     vi.useRealTimers();

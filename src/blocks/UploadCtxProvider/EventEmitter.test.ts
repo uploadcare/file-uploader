@@ -1,13 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ControllerContainer } from '../../abstract/di/ControllerContainer';
 import { EventBus } from '../../abstract/EventBus';
 import type { OutputFileEntry } from '../../types';
 import { EventEmitter, EventType } from './EventEmitter';
 
-// The facade wraps a real EventBus directly (owned by `UploaderController`)
-// so we exercise the actual delegation (not a mock of it).
+// The facade is container-resolved now (M-god step 3b): a zero-arg ctor that
+// `@inject`s the per-ctx `EventBus`. Build both through one throwaway container
+// so we exercise the actual delegation to a real bus (not a mock of it).
 const setup = () => {
-  const bus = new EventBus();
-  const emitter = new EventEmitter(bus);
+  const container = new ControllerContainer();
+  const bus = container.get(EventBus);
+  const emitter = container.get(EventEmitter);
   return { emitter, bus };
 };
 
