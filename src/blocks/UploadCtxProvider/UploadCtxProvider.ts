@@ -1,6 +1,7 @@
 import type { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
 import type { UploaderController } from '../../abstract/controllers/UploaderController';
-import type { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
+import { EventBus } from '../../abstract/EventBus';
+import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { ChildBlock } from '../../lit/ChildBlock';
 import { createDebugPrinter } from '../../lit/createDebugPrinter';
 import { EventBridgeController } from '../../lit/EventBridgeController';
@@ -32,7 +33,7 @@ export class UploadCtxProvider extends ChildBlock {
     // rather than staying latched onto a released one.
     this._eventBridge = new EventBridgeController(
       this,
-      () => this.uploader.events,
+      () => this.use(EventBus),
       (...args) => this._debugPrint(...args),
     );
   }
@@ -94,14 +95,18 @@ export class UploadCtxProvider extends ChildBlock {
     return this.bag.uploadCollection;
   }
 
-  /** Same contract as v1 `LitUploaderBlock.getAPI()` — returns the ctx's public API. */
+  /**
+   * Same contract as v1 `LitUploaderBlock.getAPI()` — returns the ctx's public
+   * API. Resolved from the ctx's container (M-god step 8a); the same single
+   * instance `bag.api`/`*publicApi` exposes.
+   */
   public getAPI(): UploaderPublicApi {
-    return this.bag.api;
+    return this.use(UploaderPublicApi);
   }
 
-  /** Same contract as v1 `LitUploaderBlock.get api()` — throws pre-adoption via `bag`. */
+  /** Same contract as v1 `LitUploaderBlock.get api()` — throws pre-adoption via `use()`. */
   public get api(): UploaderPublicApi {
-    return this.bag.api;
+    return this.use(UploaderPublicApi);
   }
 }
 
