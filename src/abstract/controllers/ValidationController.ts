@@ -15,6 +15,7 @@ import {
   validateMaxSizeLimit,
   validateUploadError,
 } from '../../utils/validators/file/index';
+import { Disposables } from '../di/Disposables';
 import { inject } from '../di/inject';
 import type { TypedData } from '../TypedData';
 import type { UploadEntryData } from '../uploadEntrySchema';
@@ -93,8 +94,7 @@ export class ValidationController {
 
   private _isDestroyed = false;
   private _entryValidationState = new Map<string, EntryValidationState>();
-  // Assigned in `init()` (always run by the container before any method call).
-  private _unsubConfig!: () => void;
+  readonly #disposables = new Disposables();
   private _lastRerunSnapshot = '';
 
   private _runAllValidators = debounce(() => {
@@ -112,14 +112,18 @@ export class ValidationController {
   public init(): void {
     this._queue.concurrency = this._concurrencyFromConfig();
     this._lastRerunSnapshot = this._rerunSnapshot();
-    this._unsubConfig = this._config.subscribe(() => {
-      this._queue.concurrency = this._concurrencyFromConfig();
-      const next = this._rerunSnapshot();
-      if (next !== this._lastRerunSnapshot) {
-        this._lastRerunSnapshot = next;
-        this._runAllValidators();
-      }
-    });
+    this.#disposables.add(
+      this._config.subscribe(() => {
+        this._queue.concurrency = this._concurrencyFromConfig();
+        const next = this._rerunSnapshot();
+        if (next !== this._lastRerunSnapshot) {
+          this._lastRerunSnapshot = next;
+          this._runAllValidators();
+        }
+      }),
+    );
+    this.#disposables.add(() => this._runAllValidators.cancel());
+    this.#disposables.add(() => this._runQueueDebounced.cancel());
     // v1 parity: the config subscriptions fired immediately, kicking off one
     // initial validation pass.
     this._runAllValidators();
@@ -346,9 +350,8 @@ export class ValidationController {
 
   public destroy(): void {
     this._isDestroyed = true;
-    this._unsubConfig();
-    this._runAllValidators.cancel();
-    this._runQueueDebounced.cancel();
+    // Runs the config-subscription teardown + the two debounce cancels.
+    this.#disposables.run();
 
     for (const state of this._entryValidationState.values()) {
       state.abortController?.abort();
