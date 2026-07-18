@@ -31,7 +31,7 @@ export type { UploaderEventKey as EventKey, UploaderEventPayload as EventPayload
  * unchanged — only the storage/dispatch moved behind the bus.
  *
  * M9k reshape: reached the `EventBus` it wraps instead of a ctx-bound
- * `SharedInstancesBag` (it previously extended `SharedInstance` only to reach
+ * shared-instances bag (it previously extended `SharedInstance` only to reach
  * `ctx.uploaderController().events` lazily — it never used any other
  * `SharedInstance` facility, so no behavior is lost by holding the bus
  * directly). M-god step 3b reshape: container-resolved with a zero-arg ctor,

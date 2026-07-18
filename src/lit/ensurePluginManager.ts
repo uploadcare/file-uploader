@@ -1,4 +1,5 @@
 import { ConfigController } from '../abstract/controllers/ConfigController';
+import type { ControllerContainer } from '../abstract/di/ControllerContainer';
 import { PluginManagerBridge } from '../abstract/di/PluginManagerBridge';
 import { LocaleManager } from '../abstract/managers/LocaleManager';
 import { PluginController } from '../abstract/managers/plugin';
@@ -6,7 +7,9 @@ import { buildPluginApi } from '../abstract/managers/plugin/buildPluginApi';
 import { LazyPluginLoader } from '../abstract/managers/plugin/LazyPluginLoader';
 import { UploaderPublicApi } from '../abstract/UploaderPublicApi';
 import { createDebugPrinter } from './createDebugPrinter';
-import { addCtxSharedInstance, type SharedInstancesBag } from './shared-instances';
+import type { PubSub } from './PubSubCompat';
+import type { SharedState } from './SharedState';
+import { addCtxSharedInstance } from './shared-instances';
 
 /**
  * ChildBlock-reachable construction of the ctx's `*pluginManager`, lifted from
@@ -30,22 +33,25 @@ import { addCtxSharedInstance, type SharedInstancesBag } from './shared-instance
  * after constructing it.
  *
  * M-god step 8c: `PluginController` is now **container-owned**. It has
- * host/closure deps (`buildApi` wraps `buildPluginApi` + `bag`, `watchPlugins`
- * wraps the ctx-watching `LazyPluginLoader`, `getUploaderApi` resolves the
- * public API, `debug`), so it can't be a zero-arg container token — it is
- * `bind`-ed here with a host-value factory (the same element-layer seam that
- * used to `new` it inline). The `*pluginManager` shared instance stays as a
+ * host/closure deps (`buildApi` wraps `buildPluginApi` + the container,
+ * `watchPlugins` wraps the ctx-watching `LazyPluginLoader`, `getUploaderApi`
+ * resolves the public API, `debug`), so it can't be a zero-arg container token —
+ * it is `bind`-ed here with a host-value factory (the same element-layer seam
+ * that used to `new` it inline). The `*pluginManager` shared instance stays as a
  * re-exposer of the SAME container instance, so `bag.pluginManager` /
  * `ctx.read('*pluginManager')` / `bag.when('pluginManager')` keep resolving it
  * unchanged during the transition — while `UploaderPublicApi` now reaches it
  * via `@inject(() => PluginController)`.
+ *
+ * M-god step 9c-1: takes the ctx's `PubSub` + `ControllerContainer` directly
+ * (was the `bag`). The ctx is still needed for the `LazyPluginLoader` and the
+ * `*pluginManager` re-exposer registration; `buildPluginApi` now receives the
+ * container instead of the bag.
  */
-export function ensurePluginManager(bag: SharedInstancesBag): void {
-  const ctx = bag.ctx;
+export function ensurePluginManager(ctx: PubSub<SharedState>, container: ControllerContainer): void {
   if (ctx.has('*pluginManager')) {
     return;
   }
-  const container = ctx.container();
   // Resolve the ctx's `ConfigController` once — the plugin API and lazy loader
   // read config directly off it (M-god step 7), not through the `*cfg/*` facade.
   const config = container.get(ConfigController);
@@ -59,7 +65,7 @@ export function ensurePluginManager(bag: SharedInstancesBag): void {
     (c) =>
       new PluginController({
         buildApi: (registry, pluginId, configSubscriptions) =>
-          buildPluginApi(registry, config, bag, pluginId, configSubscriptions),
+          buildPluginApi(registry, config, container, pluginId, configSubscriptions),
         getUploaderApi: () => c.get(UploaderPublicApi),
         watchPlugins: (onCompute) => {
           const loader = new LazyPluginLoader(ctx, config, onCompute);

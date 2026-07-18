@@ -82,12 +82,13 @@ describe('ensureUploaderScope (ctx + container signature)', () => {
     expect(ctx.read('*publicApi')).toBe(api);
   });
 
-  it('wires the public api bag bridge so getOutputCollectionState resolves', () => {
+  it('registers a public api whose getOutputCollectionState resolves off its container', () => {
     const { ctx, attach } = setup();
     attach();
     const api = ctx.read('*publicApi') as SharedState['*publicApi'];
-    // The bridge (`setBagBridge`) is wired from the internally-built bag; a bare
-    // call must resolve (throws if the bridge was never set).
+    // M-god step 9c-1: no `setBagBridge` — the api resolves the derived-collection
+    // controllers from its own `CONTAINER`-tagged container, so a bare call
+    // resolves without any bag wiring.
     expect(() => api?.getOutputCollectionState()).not.toThrow();
   });
 });
