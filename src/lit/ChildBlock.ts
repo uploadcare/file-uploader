@@ -367,8 +367,8 @@ export abstract class ChildBlock extends ChildBlockBase {
     // path sets this (the container tags instances IT constructs, but a block is
     // created by the browser and merely adopts its container here). Cleared in
     // `_releaseController`, so pre-adoption / post-release `@inject` reads throw
-    // exactly as `use()` does; `render()` is gated on adoption, so reads there
-    // are safe.
+    // (the same "no container" contract as `use()`, though the thrown message
+    // differs); `render()` is gated on adoption, so reads there are safe.
     (this as { [CONTAINER]?: ControllerContainer })[CONTAINER] = container;
     container.addConsumer(this);
     // Container-owned controllers are resolved lazily on first access through

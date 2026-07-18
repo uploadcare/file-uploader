@@ -58,7 +58,15 @@ export class LocaleManager {
     // Re-wire the plugin-manager coupling: run the previous unsubscribe (detach
     // the old manager's `onPluginsChange`) and un-register it from `#disposables`
     // so `destroy()`'s `run()` won't double-invoke a stale unsub.
-    this._pluginManagerUnsub?.();
+    try {
+      this._pluginManagerUnsub?.();
+    } catch (err) {
+      // Isolate-and-warn: a throwing detach of the old manager's
+      // `onPluginsChange` must not abort re-wiring (matching `destroy()`'s
+      // `#disposables.run()` teardown convention), or the manager would be left
+      // half re-wired with the new coupling never established.
+      console.warn('[uc] LocaleManager: previous plugin-manager unsubscribe threw', err);
+    }
     this._cancelPluginManagerReg?.();
     this._pluginManagerUnsub = undefined;
     this._cancelPluginManagerReg = undefined;

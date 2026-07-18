@@ -99,6 +99,41 @@ describe('LocaleManager.activate', () => {
     expect(unsub1).toHaveBeenCalledTimes(1);
   });
 
+  it('re-activate isolate-and-warns: a throwing previous unsubscribe does not stop the new coupling being wired', () => {
+    const { manager } = setup();
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const unsub1 = vi.fn(() => {
+      throw new Error('detach boom');
+    });
+    const pm1: FakePluginManager = {
+      onPluginsChange: vi.fn(() => unsub1),
+      snapshot: vi.fn(() => ({ l10n: [] }) as never),
+    };
+    manager.activate(pm1);
+
+    const unsub2 = vi.fn();
+    const pm2: FakePluginManager = {
+      onPluginsChange: vi.fn(() => unsub2),
+      snapshot: vi.fn(() => ({ l10n: [] }) as never),
+    };
+
+    // The old unsub throws on re-wire, but activate() contains it and still
+    // establishes the new coupling rather than aborting half re-wired.
+    expect(() => manager.activate(pm2)).not.toThrow();
+    expect(unsub1).toHaveBeenCalledTimes(1);
+    expect(warnSpy).toHaveBeenCalled();
+    expect(pm2.onPluginsChange).toHaveBeenCalledTimes(1);
+
+    // The stale (already-run) unsub was un-registered, so destroy() releases only
+    // the new coupling and never re-invokes the throwing one.
+    manager.destroy();
+    expect(unsub2).toHaveBeenCalledTimes(1);
+    expect(unsub1).toHaveBeenCalledTimes(1);
+
+    warnSpy.mockRestore();
+  });
+
   it('destroy() isolate-and-warns: a throwing plugin-coupling teardown does not stop the config-subscription teardowns', () => {
     const { config, locale, manager } = setup();
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
