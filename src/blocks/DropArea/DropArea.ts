@@ -1,6 +1,8 @@
 import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { createRef, type Ref, ref } from 'lit/directives/ref.js';
+import { ConfigController } from '../../abstract/controllers/ConfigController';
+import { RouterController } from '../../abstract/controllers/RouterController';
 import type { UploaderController } from '../../abstract/controllers/UploaderController';
 import { ChildBlock } from '../../lit/ChildBlock';
 import { createDebugPrinter } from '../../lit/createDebugPrinter';
@@ -17,6 +19,8 @@ const dropAreaRegistry = new Set<DropArea>();
 
 export class DropArea extends ChildBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-drop-area'];
+
+  public static override readonly uses = [ConfigController, RouterController] as const;
 
   public declare attributesMeta: {
     single?: boolean;
@@ -93,6 +97,8 @@ export class DropArea extends ChildBlock {
       return;
     }
 
+    // `api` (UploaderPublicApi) has no DI token (set via UploaderController.setApi),
+    // so it stays on the v1 `bag` (step 8) — same for the `onItems` add-file calls.
     if (this.initflow) {
       this.bag.api.initFlow();
       return;
@@ -176,13 +182,19 @@ export class DropArea extends ChildBlock {
           }
         });
         if (this.bag.uploadCollection.size > prevSize) {
-          this.bag.router.traverse('onFileAdd');
+          this.use(RouterController).traverse('onFileAdd');
         }
       },
     });
 
     this.updateComplete.then(() => this._setupContentWrapperDropzone());
 
+    // Kept as `subConfigValue` (side-effecting, not pure render reads): both
+    // drive imperative host/DOM state read outside `render()` — `sourceList`
+    // recomputes `_isEnabled` (consulted by the drop-handler `_shouldIgnore`/
+    // `isActive`) and toggles `this.hidden` on the host; `multiple` seeds
+    // `_dropTextKey`. `subConfigValue` reads the same `ConfigController`, so
+    // this is behavior-identical to a tracked read while staying imperative.
     this.subConfigValue('sourceList', (value: string) => {
       const list = stringToArray(value);
       this._sourceListAllowsLocal = list.includes(UploadSource.LOCAL);
@@ -249,8 +261,11 @@ export class DropArea extends ChildBlock {
   }
 
   private _couldHandleFiles(): boolean {
-    const isMultiple = this.uploader.config.get('multiple');
-    const multipleMax = this.uploader.config.get('multipleMax');
+    // Imperative reads (drop-handler path, not render) — `get()`, not the tracked
+    // `getTracked()`. `uploadCollection` has no DI token (registration race),
+    // so it stays on the v1 `bag` (step 8).
+    const isMultiple = this.use(ConfigController).get('multiple');
+    const multipleMax = this.use(ConfigController).get('multipleMax');
     const currentFilesCount = this.bag.uploadCollection.size;
 
     if (isMultiple && multipleMax && currentFilesCount >= multipleMax) {

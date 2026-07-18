@@ -1,5 +1,7 @@
 import { html } from 'lit';
-import { property, state } from 'lit/decorators.js';
+import { property } from 'lit/decorators.js';
+import { ConfigController } from '../../abstract/controllers/ConfigController';
+import { RouterController } from '../../abstract/controllers/RouterController';
 import type { UploaderController } from '../../abstract/controllers/UploaderController';
 import { ChildBlock } from '../../lit/ChildBlock';
 import type { Uid } from '../../lit/Uid';
@@ -13,6 +15,8 @@ import '../Thumb/Thumb';
 
 export class PrimaryAction extends ChildBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-primary-action'];
+
+  public static override readonly uses = [ConfigController, RouterController] as const;
 
   private static readonly SOURCE_TEXT_CONFIG: Record<string, { action: string }> = {
     [UploadSource.LOCAL]: { action: 'upload-from' },
@@ -28,24 +32,20 @@ export class PrimaryAction extends ChildBlock {
   @property({ type: Object })
   public entries!: OutputCollectionState<OutputCollectionStatus, 'maybe-has-group'>;
 
-  @state()
-  private showIcon = false;
+  // Config-derived render inputs read through the tracked signal path: reading
+  // them in `render()`/`_renderThumbnail()` auto-tracks the key under
+  // `SignalWatcher`, so a later `set()` re-renders — replacing the v1
+  // `subConfigValue` subscriptions that mirrored these into `@state`.
+  private get showIcon(): boolean {
+    return this.use(ConfigController).getTracked('dynamicButtonShowFirstIcon');
+  }
 
-  @state()
-  private _isMultiple = false;
+  private get _isMultiple(): boolean {
+    return this.use(ConfigController).getTracked('multiple');
+  }
 
   protected override subscriptionsFor(ctrl: UploaderController) {
     return [(listener: () => void) => ctrl.locale.subscribe(listener)];
-  }
-
-  protected override controllerReady(): void {
-    this.subConfigValue('dynamicButtonShowFirstIcon', (value) => {
-      this.showIcon = value;
-    });
-
-    this.subConfigValue('multiple', (value) => {
-      this._isMultiple = value;
-    });
   }
 
   private get hasEntries(): boolean {
@@ -125,7 +125,7 @@ export class PrimaryAction extends ChildBlock {
 
   private _handleClick() {
     if (this.hasEntries) {
-      this.bag.router.navigate('upload-list');
+      this.use(RouterController).navigate('upload-list');
       return;
     }
 

@@ -1,6 +1,8 @@
 import { html } from 'lit';
 import { property } from 'lit/decorators.js';
+import { RouterController } from '../../../abstract/controllers/RouterController';
 import type { UploaderController } from '../../../abstract/controllers/UploaderController';
+import { TelemetryManager } from '../../../abstract/managers/TelemetryManager';
 import { InternalEventType } from '../../../blocks/UploadCtxProvider/EventEmitter';
 import { SolutionChildBlock } from '../../../lit/SolutionChildBlock';
 import './index.css';
@@ -19,6 +21,8 @@ import '../../../blocks/PluginActivityRenderer/PluginActivityRenderer';
 
 export class FileUploaderRegular extends SolutionChildBlock {
   public static override lazyPlugins = fileUploaderLazyPlugins;
+
+  public static override readonly uses = [RouterController, TelemetryManager] as const;
 
   // Type-only: feeds the JSX attribute typing (`ReflectAttributes` in
   // `types/jsx.d.ts` reads `attributesMeta`). Kept on the ChildBlock port —
@@ -41,9 +45,9 @@ export class FileUploaderRegular extends SolutionChildBlock {
 
     // Regular renders every activity inside a `<uc-modal>`, so all navigation
     // targets the foreground (modal) slot.
-    this.bag.router.navigationStrategy = () => 'foreground';
+    this.use(RouterController).navigationStrategy = () => 'foreground';
 
-    this.bag.telemetryManager.sendEvent({
+    this.use(TelemetryManager).sendEvent({
       eventType: InternalEventType.INIT_SOLUTION,
     });
   }
@@ -90,7 +94,7 @@ export class FileUploaderRegular extends SolutionChildBlock {
     <uc-start-from>
       <uc-drop-area with-icon clickable></uc-drop-area>
       <uc-source-list role="list" wrap></uc-source-list>
-      <button type="button" class="uc-secondary-btn" @click=${() => this.bag.router.traverse('onCancel')}>${this.l10n('start-from-cancel')}</button>
+      <button type="button" class="uc-secondary-btn" @click=${() => this.use(RouterController).traverse('onCancel')}>${this.l10n('start-from-cancel')}</button>
       <uc-copyright></uc-copyright>
     </uc-start-from>
   </uc-modal>
