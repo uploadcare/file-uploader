@@ -31,7 +31,15 @@ export function ensureUploaderScope(
   }
 
   if (!ctx.has('*publicApi')) {
-    const api = new UploaderPublicApi(bag);
+    // M-god step 8a: the public API is now container-resolved (zero-arg ctor +
+    // `@inject` fields), so it must be built through the container — a bare
+    // `new` would leave `@inject` unable to find its container. `container.get`
+    // constructs + tags it; `setBagBridge` then wires the two dependencies not
+    // yet container-resolvable (the plugin manager + `buildOutputCollectionState`)
+    // before any consumer can reach the api. It stays reachable as
+    // `bag.api`/`*publicApi`/`ctrl.api` (the same single instance).
+    const api = container.get(UploaderPublicApi);
+    api.setBagBridge(() => bag);
     ctrl.setApi(api);
     ctx.add('*publicApi', api, true);
   }

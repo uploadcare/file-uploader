@@ -11,7 +11,9 @@ import type { UploadcareFile } from '../types/index';
 import { BASIC_IMAGE_WILDCARD, BASIC_VIDEO_WILDCARD } from '../utils/fileTypes';
 import { UploadSource } from '../utils/UploadSource';
 import type { UploaderController } from './controllers/UploaderController';
+import { ControllerContainer } from './di/ControllerContainer';
 import type { UploaderPublicApi } from './UploaderPublicApi';
+import { UploaderPublicApi as UploaderPublicApiClass } from './UploaderPublicApi';
 
 /**
  * Behavior-preservation coverage for `UploaderPublicApi`, written BEFORE the
@@ -720,6 +722,23 @@ describe('UploaderPublicApi', () => {
       Object.defineProperty(input, 'files', { value: null, configurable: true });
       input.dispatchEvent(new Event('change'));
       expect(ctrl.collection.size).toBe(0);
+    });
+  });
+
+  describe('container wiring (M-god step 8a)', () => {
+    it('is reachable as bag.api / *publicApi / ctrl.api as the same instance', () => {
+      const { api, bag, ctx, ctrl } = setup();
+      expect(bag.api).toBe(api);
+      expect(ctx.read('*publicApi')).toBe(api);
+      expect(ctrl.api).toBe(api);
+    });
+
+    it('throws with a clear message when used before its bag bridge is wired', () => {
+      // Resolve a bare api from a container (as the container would) without
+      // calling setBagBridge — the bag-dependent methods must fail loudly.
+      const container = new ControllerContainer();
+      const api = container.get(UploaderPublicApiClass);
+      expect(() => api.getOutputCollectionState()).toThrow(/bag bridge/);
     });
   });
 });
