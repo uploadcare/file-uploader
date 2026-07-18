@@ -726,11 +726,13 @@ describe('UploaderPublicApi', () => {
   });
 
   describe('container wiring (M-god step 8a)', () => {
-    it('is reachable as bag.api / *publicApi / ctrl.api as the same instance', () => {
+    it('is reachable as bag.api / *publicApi / container.get(UploaderPublicApi) as the same instance', () => {
       const { api, bag, ctx, ctrl } = setup();
       expect(bag.api).toBe(api);
       expect(ctx.read('*publicApi')).toBe(api);
-      expect(ctrl.api).toBe(api);
+      // M-god step 8b removed `ctrl.api`/`setApi` (the clipboard now `@inject`s
+      // the api directly); the single instance is reachable via the container.
+      expect(ctrl.container.get(UploaderPublicApiClass)).toBe(api);
     });
 
     it('throws with a clear message when used before its bag bridge is wired', () => {

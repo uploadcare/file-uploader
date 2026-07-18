@@ -13,11 +13,10 @@ import { RouterController } from './RouterController';
 import { UploadCollectionController } from './UploadCollectionController';
 import { UploaderController } from './UploaderController';
 
-// The controller now receives its per-ctx DI container at construction (the
-// container owns `config`/`locale`). Tests that don't care about the container
-// build one throwaway per controller.
-const makeController = (deps?: ConstructorParameters<typeof UploaderController>[1]): UploaderController =>
-  new UploaderController(new ControllerContainer(), deps);
+// The controller now receives only its per-ctx DI container at construction
+// (the container owns config/locale/clipboard/…). Tests that don't care about
+// the container build one throwaway per controller.
+const makeController = (): UploaderController => new UploaderController(new ControllerContainer());
 
 describe('UploaderController', () => {
   it('constructs with event, config, and locale controllers', () => {
@@ -107,8 +106,8 @@ describe('UploaderController', () => {
   describe('ctx-scope managers', () => {
     it('exposes localeManager, eventEmitter, telemetryManager, router, a11y, and clipboard', () => {
       const controller = makeController();
-      // localeManager/eventEmitter/a11y/router/telemetryManager resolve from the
-      // container (M-god step 3b + 3c); clipboard is constructor-owned.
+      // localeManager/eventEmitter/a11y/router/telemetryManager/clipboard all
+      // resolve from the container (M-god step 3b + 3c; clipboard 8b).
       expect(controller.localeManager).toBeInstanceOf(LocaleManager);
       expect(controller.eventEmitter).toBeInstanceOf(EventEmitter);
       expect(controller.telemetryManager).toBeInstanceOf(TelemetryManager);
@@ -117,18 +116,16 @@ describe('UploaderController', () => {
       expect(controller.clipboard).toBeInstanceOf(ClipboardController);
     });
 
-    it('uses the constructor-injected clipboard instead of constructing its own', () => {
-      const clipboard = new ClipboardController({
-        getPasteScope: () => false,
-        getCurrentActivity: () => null,
-        addFileFromObject: () => {},
-        addFileFromUrl: () => {},
-        onFileAdd: () => {},
-      });
+    it('resolves clipboard from the container (stable identity, M-god step 8b)', () => {
+      const container = new ControllerContainer();
+      container.bind(UploaderController, (c) => new UploaderController(c));
+      const controller = container.get(UploaderController);
 
-      const controller = makeController({ clipboard });
-
-      expect(controller.clipboard).toBe(clipboard);
+      // The delegating getter resolves the container-owned instance, cached, so
+      // identity is stable across accesses and equals `container.get(...)`.
+      expect(controller.clipboard).toBeInstanceOf(ClipboardController);
+      expect(controller.clipboard).toBe(controller.clipboard);
+      expect(controller.clipboard).toBe(container.get(ClipboardController));
     });
 
     it('resolves eventEmitter/localeManager/a11y/router/telemetryManager from the container (bound instances)', () => {
@@ -220,24 +217,26 @@ describe('UploaderController', () => {
     });
   });
 
-  it('destroy() tears down the controller-owned clipboard, leaving router/telemetry for the container (M-god step 3c)', () => {
+  it('leaves clipboard/router/telemetry for the container to dispose — not torn down by controller.destroy() (M-god step 8b)', () => {
     const container = new ControllerContainer();
     container.bind(UploaderController, (c) => new UploaderController(c));
     const controller = container.get(UploaderController);
+    // Touch clipboard so the container has actually constructed + registered it.
     const clipboardDestroy = vi.spyOn(controller.clipboard, 'destroy');
     const routerDestroy = vi.spyOn(controller.router, 'destroy');
     const telemetryDestroy = vi.spyOn(controller.telemetryManager, 'destroy');
 
     controller.destroy();
 
-    // clipboard is still controller-owned...
-    expect(clipboardDestroy).toHaveBeenCalledTimes(1);
-    // ...router/telemetry are container-owned now — not torn down by the controller.
+    // clipboard/router/telemetry are all container-owned now (clipboard moved in
+    // 8b) — the controller no longer tears any of them down itself.
+    expect(clipboardDestroy).not.toHaveBeenCalled();
     expect(routerDestroy).not.toHaveBeenCalled();
     expect(telemetryDestroy).not.toHaveBeenCalled();
 
     // The container disposes them (reverse construction order).
     container.dispose();
+    expect(clipboardDestroy).toHaveBeenCalledTimes(1);
     expect(routerDestroy).toHaveBeenCalledTimes(1);
     expect(telemetryDestroy).toHaveBeenCalledTimes(1);
   });
@@ -280,59 +279,6 @@ describe('UploaderController', () => {
     expect(container.get(AppInfo).solutionName).toBe('uc-file-uploader-regular');
   });
 
-  it('destroy() tolerates running with the api never set (no paste ever happened)', () => {
-    const controller = makeController();
-    expect(() => controller.destroy()).not.toThrow();
-  });
-
-  describe('api (uploader-scope public API — element-constructed, controller-held)', () => {
-    it('throws if accessed before setApi()', () => {
-      const controller = makeController();
-      expect(() => controller.api).toThrow(/setApi/);
-    });
-
-    it('returns the instance passed to setApi()', () => {
-      const controller = makeController();
-      const fakeApi = { addFileFromObject: vi.fn(), addFileFromUrl: vi.fn() } as never;
-
-      controller.setApi(fakeApi);
-
-      expect(controller.api).toBe(fakeApi);
-    });
-
-    it("wires the clipboard controller's add-file callbacks to setApi()'s instance, resolved lazily", async () => {
-      const controller = makeController();
-      const addFileFromObject = vi.fn();
-      const addFileFromUrl = vi.fn();
-
-      // setApi() runs AFTER the clipboard controller is already constructed —
-      // proving the callbacks resolve `api` lazily rather than capturing it
-      // at construction time.
-      controller.setApi({ addFileFromObject, addFileFromUrl } as never);
-
-      const file = new File(['x'], 'x.txt');
-      const scope = document.createElement('div');
-      document.body.appendChild(scope);
-      controller.clipboard.registerScope(scope);
-      try {
-        const clipboardData = {
-          items: [{ kind: 'file', getAsFile: () => file }],
-        } as unknown as DataTransfer;
-        const event = new ClipboardEvent('paste', { clipboardData: undefined });
-        Object.defineProperty(event, 'clipboardData', { value: clipboardData });
-        Object.defineProperty(event, 'target', { value: scope });
-        window.dispatchEvent(event);
-        await Promise.resolve();
-        await Promise.resolve();
-
-        expect(addFileFromObject).toHaveBeenCalledWith(file, { source: 'clipboard' });
-      } finally {
-        scope.remove();
-        controller.destroy();
-      }
-    });
-  });
-
   it('is DOM-free — constructing touches no element APIs', () => {
     // The controller must never reach into the document. Constructing it
     // with `document` made unavailable proves it (the UI adapter layer owns
@@ -365,15 +311,6 @@ describe('UploaderController', () => {
     it('destroy() tolerates never having attached the uploader scope', () => {
       const controller = makeController();
       expect(() => controller.destroy()).not.toThrow();
-    });
-
-    it('destroy() nulls the held api — accessing it afterwards throws (M9l follow-up)', () => {
-      const controller = makeController();
-      controller.setApi({ addFileFromObject: vi.fn(), addFileFromUrl: vi.fn() } as never);
-
-      controller.destroy();
-
-      expect(() => controller.api).toThrow(/setApi/);
     });
   });
 });

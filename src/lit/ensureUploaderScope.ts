@@ -37,10 +37,11 @@ export function ensureUploaderScope(
     // constructs + tags it; `setBagBridge` then wires the two dependencies not
     // yet container-resolvable (the plugin manager + `buildOutputCollectionState`)
     // before any consumer can reach the api. It stays reachable as
-    // `bag.api`/`*publicApi`/`ctrl.api` (the same single instance).
+    // `bag.api`/`*publicApi` (the same single instance). M-god step 8b: the
+    // clipboard now `@inject`s this same container instance directly, so there
+    // is no longer a `ctrl.setApi(api)` hand-off here.
     const api = container.get(UploaderPublicApi);
     api.setBagBridge(() => bag);
-    ctrl.setApi(api);
     ctx.add('*publicApi', api, true);
   }
 
