@@ -51,7 +51,13 @@ export function buildUploaderScopeDeps(
       try {
         bag.telemetryManager.sendEventError(error, context);
       } catch (err) {
-        hostDebug(report, err);
+        // The fallback logger must not throw either, or the original async
+        // upload failure becomes an unhandled rejection.
+        try {
+          hostDebug(report, err);
+        } catch {
+          // Error reporting must never mask the original failure.
+        }
       }
     };
 

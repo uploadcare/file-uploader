@@ -1,3 +1,4 @@
+import { computed } from '@lit-labs/signals';
 import { describe, expect, it, vi } from 'vitest';
 import { LocaleController } from './LocaleController';
 
@@ -25,6 +26,25 @@ describe('LocaleController', () => {
 
     locale.set('upload', 'Send');
     expect(listener).toHaveBeenCalledTimes(2);
+  });
+
+  it('getTracked() reads the value and auto-tracks the key under a computed', () => {
+    const locale = new LocaleController();
+    locale.set('upload', 'Upload');
+
+    // A computed that reads through getTracked depends on the per-key signal, so
+    // it recomputes when the key changes — the trackable read the plain,
+    // bag-reading get() deliberately does not provide.
+    const tracked = computed(() => locale.getTracked('upload'));
+    expect(tracked.get()).toBe('Upload');
+
+    locale.set('upload', 'Send');
+    expect(tracked.get()).toBe('Send');
+  });
+
+  it('getTracked() returns undefined for an absent key', () => {
+    const locale = new LocaleController();
+    expect(locale.getTracked('missing')).toBeUndefined();
   });
 
   it('unsubscribe stops notifications', () => {

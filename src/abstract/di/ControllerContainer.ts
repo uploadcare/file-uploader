@@ -57,11 +57,13 @@ export class ControllerContainer {
 
   public get<T>(token: Token<T>): T {
     const Ctrl = resolveToken(token);
-    const cached = this.#instances.get(Ctrl);
-    if (cached !== undefined) {
+    // `has()` (not `get() !== undefined`): a bound factory may legitimately
+    // yield `undefined`, and treating that as a miss would re-run the factory
+    // on every access, breaking the singleton-per-token contract.
+    if (this.#instances.has(Ctrl)) {
       // Erasure boundary: the map stores heterogeneous instances as `unknown`,
       // keyed by their own constructor, so the cast back to `T` is sound.
-      return cached as T;
+      return this.#instances.get(Ctrl) as T;
     }
     if (this.#resolving.has(Ctrl)) {
       throw new Error(`[uc] controller cycle at ${Ctrl.name}`);
@@ -73,7 +75,28 @@ export class ControllerContainer {
       inst[CONTAINER] = this; // tag BEFORE init so @inject works in init()
       this.#instances.set(Ctrl, inst); // cache BEFORE init so re-entrant get() is safe
       this.#order.push(Ctrl);
-      (inst as Initializable).init?.();
+      try {
+        (inst as Initializable).init?.();
+      } catch (err) {
+        // `init()` threw: the cached-before-init instance is only partially
+        // wired, so roll it back (remove from `#instances`/`#order`) rather than
+        // leaving a broken singleton every later `get()` would return. A
+        // dependency `init()` resolved before throwing stays cached (it is
+        // fully built); only `Ctrl` — appended once, guaranteed non-re-entrant
+        // by `#resolving` — is removed. Best-effort teardown, then rethrow.
+        this.#instances.delete(Ctrl);
+        const idx = this.#order.indexOf(Ctrl);
+        if (idx !== -1) {
+          this.#order.splice(idx, 1);
+        }
+        try {
+          (inst as Destroyable).destroy?.();
+        } catch {
+          // Teardown of a half-initialized instance is best-effort — never let
+          // it mask the original `init()` failure.
+        }
+        throw err;
+      }
       return inst;
     } finally {
       this.#resolving.delete(Ctrl);
@@ -97,14 +120,20 @@ export class ControllerContainer {
   }
 
   public dispose(): void {
-    for (let i = this.#order.length - 1; i >= 0; i--) {
-      const inst = this.#instances.get(this.#order[i]!) as Destroyable;
+    // Drain the live LIFO list rather than iterating fixed indexes: a
+    // `destroy()` can touch a not-yet-resolved `@inject` peer, which appends a
+    // fresh instance to `#order` mid-loop. Popping until empty guarantees every
+    // instance — including any lazily resolved during teardown — is destroyed
+    // exactly once, still in reverse-insertion order.
+    while (this.#order.length > 0) {
+      const Ctrl = this.#order.pop()!;
+      const inst = this.#instances.get(Ctrl) as Destroyable | undefined;
       try {
-        inst.destroy?.();
+        inst?.destroy?.();
       } catch (err) {
         // Isolate-and-warn: one controller's failed teardown must not abort the
         // rest of the disposal chain (mirrors EventBus/Listeners fan-out).
-        console.warn(`[uc] ${this.#order[i]!.name}.destroy() threw`, err);
+        console.warn(`[uc] ${Ctrl.name}.destroy() threw`, err);
       }
     }
     this.#instances.clear();

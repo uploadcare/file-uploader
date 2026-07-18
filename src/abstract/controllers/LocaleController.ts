@@ -13,8 +13,9 @@ import { SignalMap } from '../di/SignalMap';
  * behavior is byte-identical to v1. That orchestration migrates into this
  * controller when `LocaleManager` is retired.
  *
- * Backed by a composed `SignalMap` (has-a): reads auto-track under a
- * `SignalWatcher`, `set()` dedups unchanged writes and fires the map's coarse
+ * Backed by a composed `SignalMap` (has-a): `getTracked()` auto-tracks a single
+ * key under a `SignalWatcher`, `get()` is the fast non-tracking read the
+ * compat path uses, `set()` dedups unchanged writes and fires the map's coarse
  * notify, and `subscribe()` fans out on any change — preserving the per-key
  * change semantics the `PubSubCompat` `*l10n/` routing depends on. A locale
  * key named `__proto__` is an ordinary map key, never a prototype write.
@@ -36,6 +37,16 @@ export class LocaleController {
 
   public get(key: string): string | undefined {
     return this.#values.get(key);
+  }
+
+  /**
+   * Trackable read: returns the value and, under a `SignalWatcher`, subscribes
+   * that consumer to this specific key. Use when a Lit reactive consumer must
+   * re-render on a locale change; the compat path keeps using the fast,
+   * non-tracking `get`.
+   */
+  public getTracked(key: string): string | undefined {
+    return this.#values.signal(key).get();
   }
 
   /** Notifies only when the value actually changes (per-key change semantics). */

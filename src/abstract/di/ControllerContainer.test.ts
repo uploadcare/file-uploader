@@ -105,6 +105,68 @@ describe('ControllerContainer', () => {
     expect(container.get(A).dep).toBe(container.get(Dep));
   });
 
+  it('rolls back a failed init() so a later get() retries construction', () => {
+    let attempts = 0;
+    let destroyed = 0;
+    class A {
+      public init(): void {
+        attempts++;
+        if (attempts === 1) {
+          throw new Error('init boom');
+        }
+      }
+      public destroy(): void {
+        destroyed++;
+      }
+    }
+    const container = new ControllerContainer();
+
+    expect(() => container.get(A)).toThrow(/init boom/);
+    // The partially-initialized singleton must not linger.
+    expect(container.has(A)).toBe(false);
+    expect(destroyed).toBe(1); // best-effort teardown ran on the failed instance
+
+    // A later get() retries construction rather than returning the broken one.
+    const inst = container.get(A);
+    expect(inst).toBeInstanceOf(A);
+    expect(attempts).toBe(2);
+    expect(container.has(A)).toBe(true);
+
+    // The rolled-back instance was removed from #order, so dispose() tears down
+    // only the successful instance (destroyed 1 → 2).
+    container.dispose();
+    expect(destroyed).toBe(2);
+  });
+
+  it('disposes an instance lazily resolved during another destroy()', () => {
+    const order: string[] = [];
+    class Late {
+      public destroy(): void {
+        order.push('Late');
+      }
+    }
+    class Early {
+      #container: ControllerContainer;
+      public constructor(c: ControllerContainer) {
+        this.#container = c;
+      }
+      public destroy(): void {
+        // Touch a not-yet-resolved peer during teardown: it is appended to
+        // #order mid-dispose. Draining the live list must still destroy it.
+        this.#container.get(Late);
+        order.push('Early');
+      }
+    }
+    const container = new ControllerContainer();
+    container.bind(Early, (c) => new Early(c));
+    container.get(Early);
+
+    container.dispose();
+
+    expect(order).toEqual(['Early', 'Late']);
+    expect(container.has(Late)).toBe(false);
+  });
+
   it('throws when bind() is called after resolution', () => {
     class A {}
     const container = new ControllerContainer();
