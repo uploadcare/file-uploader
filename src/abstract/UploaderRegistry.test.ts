@@ -1,5 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
+import { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter';
+import { ConfigController } from './controllers/ConfigController';
+import { RouterController } from './controllers/RouterController';
 import { ControllerContainer } from './di/ControllerContainer';
+import { UploaderEventType } from './EventBus';
+import { TelemetryManager } from './managers/TelemetryManager';
 import { UploaderRegistry } from './UploaderRegistry';
 
 // The registry is a module-level singleton, so each test uses a unique
@@ -318,5 +323,119 @@ describe('UploaderRegistry', () => {
     expect(UploaderRegistry.hasConsumers(name)).toBe(false);
 
     UploaderRegistry.unregister(name, second);
+  });
+
+  // M-god step 9a: the container lifecycle (create + cache + eager
+  // Config -> Router -> Telemetry init + dispose) was folded here out of
+  // `PubSubCompat._resolveContainer`/`deleteCtx`, so it is now covered directly
+  // against the registry — independent of any `PubSubCompat`/nanostores map.
+  describe('ensure / dispose (container lifecycle)', () => {
+    it('ensure creates and caches one container per ctx-name', () => {
+      const name = uniqueName();
+      const c1 = UploaderRegistry.ensure(name);
+      const c2 = UploaderRegistry.ensure(name);
+      expect(c1).toBeInstanceOf(ControllerContainer);
+      expect(c2).toBe(c1);
+      // A different name gets a different container.
+      const other = uniqueName();
+      expect(UploaderRegistry.ensure(other)).not.toBe(c1);
+
+      UploaderRegistry.dispose(name);
+      UploaderRegistry.dispose(other);
+    });
+
+    it('ensure caches the container so get() sees it, and eagerly builds the config/router/telemetry set', () => {
+      const name = uniqueName();
+      const container = UploaderRegistry.ensure(name);
+      expect(UploaderRegistry.get(name)).toBe(container);
+      // `has()` is true only for already-constructed tokens — these three are
+      // resolved by `ensure` itself, without any consumer `get()`.
+      expect(container.has(ConfigController)).toBe(true);
+      expect(container.has(RouterController)).toBe(true);
+      expect(container.has(TelemetryManager)).toBe(true);
+
+      UploaderRegistry.dispose(name);
+    });
+
+    it('the eagerly-constructed telemetry observes the ctx bus (init() ran at creation)', () => {
+      const name = uniqueName();
+      const container = UploaderRegistry.ensure(name);
+      const telemetry = container.get(TelemetryManager);
+      const sendEvent = vi.spyOn(telemetry, 'sendEvent');
+
+      // Emitting on the ctx bus reaches telemetry only if its `init()` subscribed
+      // at construction — proving the eager set wired the bus observer.
+      container.get(EventEmitter).emit(UploaderEventType.UPLOAD_CLICK);
+      expect(sendEvent).toHaveBeenCalled();
+
+      UploaderRegistry.dispose(name);
+    });
+
+    it('ensure notifies a pre-existing whenAvailable consumer AFTER the eager init', () => {
+      const name = uniqueName();
+      let hadTelemetryAtNotify = false;
+      const cb = vi.fn((c: ControllerContainer | null) => {
+        // At notify time the eager set must already be constructed.
+        if (c) hadTelemetryAtNotify = c.has(TelemetryManager);
+      });
+      const off = UploaderRegistry.whenAvailable(name, cb);
+      expect(cb).not.toHaveBeenCalled(); // nothing registered yet
+
+      const container = UploaderRegistry.ensure(name);
+      expect(cb).toHaveBeenCalledWith(container);
+      expect(hadTelemetryAtNotify).toBe(true);
+
+      off();
+      UploaderRegistry.dispose(name);
+    });
+
+    it('dispose null-notifies consumers, then disposes the container, then clears the map', () => {
+      const name = uniqueName();
+      const container = UploaderRegistry.ensure(name);
+      const disposeSpy = vi.spyOn(container, 'dispose');
+      const order: string[] = [];
+
+      const off = UploaderRegistry.whenAvailable(name, (c) => {
+        if (c === null) {
+          order.push('null-notify');
+          // Not yet disposed at null-notify time (consumers release first).
+          expect(disposeSpy).not.toHaveBeenCalled();
+        }
+      });
+      disposeSpy.mockImplementation(() => {
+        order.push('dispose');
+      });
+
+      UploaderRegistry.dispose(name);
+
+      expect(order).toEqual(['null-notify', 'dispose']);
+      expect(UploaderRegistry.get(name)).toBeUndefined();
+      off();
+    });
+
+    it('dispose is a no-op when no container exists for the name', () => {
+      const name = uniqueName();
+      expect(() => UploaderRegistry.dispose(name)).not.toThrow();
+    });
+
+    it('dispose is idempotent: a second dispose does not dispose the container again', () => {
+      const name = uniqueName();
+      const container = UploaderRegistry.ensure(name);
+      const disposeSpy = vi.spyOn(container, 'dispose');
+
+      UploaderRegistry.dispose(name);
+      expect(disposeSpy).toHaveBeenCalledTimes(1);
+      UploaderRegistry.dispose(name);
+      expect(disposeSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('re-using a name after dispose builds a brand-new container', () => {
+      const name = uniqueName();
+      const first = UploaderRegistry.ensure(name);
+      UploaderRegistry.dispose(name);
+      const second = UploaderRegistry.ensure(name);
+      expect(second).not.toBe(first);
+      UploaderRegistry.dispose(name);
+    });
   });
 });

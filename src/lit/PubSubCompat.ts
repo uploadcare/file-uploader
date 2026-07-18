@@ -4,9 +4,7 @@ import { CollectionStateController } from '../abstract/controllers/CollectionSta
 import { ConfigController } from '../abstract/controllers/ConfigController';
 import { LazyPluginsController } from '../abstract/controllers/LazyPluginsController';
 import { LocaleController } from '../abstract/controllers/LocaleController';
-import { RouterController } from '../abstract/controllers/RouterController';
-import { ControllerContainer } from '../abstract/di/ControllerContainer';
-import { TelemetryManager } from '../abstract/managers/TelemetryManager';
+import type { ControllerContainer } from '../abstract/di/ControllerContainer';
 import { UploaderRegistry } from '../abstract/UploaderRegistry';
 
 export type Unsubscriber = () => void;
@@ -48,20 +46,6 @@ export class PubSub<T extends Record<string, unknown>> {
    * after it) without polling. See `whenCtx`.
    */
   private static _ctxWaiters = new Map<string, Set<(ctx: PubSub<Record<string, unknown>>) => void>>();
-  /**
-   * One per-ctx `ControllerContainer` per ctx-name. Created lazily by
-   * `_resolveContainer` the first time ANY container-routed key is touched on a
-   * context — a `*cfg/*` or `*l10n/*` key, one of the six collection-state keys,
-   * or `*lazyPlugins` (so per-upload-entry stores, which carry none of these,
-   * never get a container). Each container owns the ctx's controllers directly
-   * (M-god step 8e dissolved the monolithic `UploaderController` facade): the
-   * container is registered in `UploaderRegistry` and `container.dispose()`
-   * tears its controllers down. This is the v1 → v2 strangler seam: config state
-   * lives in `container.get(ConfigController)`, not in the nanostores map, while
-   * the rest of the shared state stays on nanostores.
-   */
-  private static _controllers = new Map<string, ControllerContainer>();
-
   private _store: PubSubStore<T>;
   private _ctxId: string;
 
@@ -95,43 +79,21 @@ export class PubSub<T extends Record<string, unknown>> {
   }
 
   /**
-   * Get (or lazily create + register) the per-ctx `ControllerContainer`. Shared
-   * by the `_config`/`_locale` routing and the M-god step 4 orphan-state routing
+   * Get (or lazily create) the per-ctx `ControllerContainer`. Shared by the
+   * `_config`/`_locale` routing and the M-god step 4 orphan-state routing
    * (`_collectionState`/`_lazyPlugins`) so any of them touching a ctx first
-   * creates + registers the one container that owns them all.
+   * resolves the one container that owns them all.
+   *
+   * M-god step 9a: the container lifecycle (create + cache + eager
+   * Config -> Router -> Telemetry init + `whenAvailable` notify + dispose) is
+   * owned by `UploaderRegistry`. This is now a thin delegate to
+   * `UploaderRegistry.ensure` — the container's existence no longer depends on
+   * `PubSubCompat`. Kept as a method (rather than inlined at call sites) so the
+   * `_config`/`_locale`/... routers stay readable; the whole `PubSubCompat`
+   * container seam is removed in step 9c.
    */
   private _resolveContainer(): ControllerContainer {
-    const existing = PubSub._controllers.get(this._ctxId);
-    if (existing) {
-      // Idempotent: the container caches its controllers, so this returns the
-      // same instances registered at creation time (no re-init).
-      return existing;
-    }
-
-    // The per-ctx container owns the ctx's controllers directly (M-god step 8e
-    // dissolved the `UploaderController` facade). `container.dispose()` (in
-    // `deleteCtx`) tears them down in reverse construction order.
-    const container = new ControllerContainer();
-    PubSub._controllers.set(this._ctxId, container);
-    // Eagerly resolve the managers that must exist from birth — exactly the set
-    // `UploaderController`'s constructor used to eager-resolve (M-god step 8e
-    // moved this here so the side effects fire at the same instant the container
-    // is created, on EVERY creation path — a bare `*cfg/*` touch, not only
-    // `ensureUploaderCtx`). The order fixes reverse-insertion disposal and the
-    // observer's subscribe timing:
-    //  - `config` first → disposed LAST (telemetry's `_unsubConfig` runs during
-    //    teardown; the returned unsubscribe is a safe no-op even after config is
-    //    disposed);
-    //  - `router` before `telemetry` (telemetry reads `router.currentActivity`);
-    //  - `telemetry` last, so its `init()` subscribes to the bus BEFORE any
-    //    event can fire — the observer then sees every emitted event.
-    container.get(ConfigController);
-    container.get(RouterController);
-    container.get(TelemetryManager);
-    // Register the container so `UploaderRegistry`/`ChildBlock`/`whenAvailable`
-    // consumers resolve it (and pull their controllers off it via `use()`).
-    UploaderRegistry.register(this._ctxId, container);
-    return container;
+    return UploaderRegistry.ensure(this._ctxId);
   }
 
   private _config(): ConfigController {
@@ -388,16 +350,12 @@ export class PubSub<T extends Record<string, unknown>> {
 
   public static deleteCtx(ctxId: string): void {
     PubSub._contexts.delete(ctxId);
-    const container = PubSub._controllers.get(ctxId);
-    if (container) {
-      PubSub._controllers.delete(ctxId);
-      // Unregister (null-notify) the container BEFORE dispose, preserving the v1
-      // teardown order (consumers release before the controllers are destroyed).
-      // `dispose()` then destroys the container-owned controllers exactly once,
-      // in reverse construction order.
-      UploaderRegistry.unregister(ctxId, container);
-      container.dispose();
-    }
+    // M-god step 9a: container teardown (null-notify before dispose, preserving
+    // the v1 order where consumers release before the controllers are destroyed)
+    // lives in `UploaderRegistry.dispose`. No-op if the ctx never had a
+    // container. Delete the nanostores map FIRST so a null-notify consumer sees
+    // `hasCtx(ctxId) === false` (a teardown-ordering invariant tests pin).
+    UploaderRegistry.dispose(ctxId);
   }
 
   /**
@@ -409,7 +367,7 @@ export class PubSub<T extends Record<string, unknown>> {
    * container is the single owner of both the controllers and the consumer set.
    */
   public static getContainer(ctxId: string): ControllerContainer | null {
-    return PubSub._controllers.get(ctxId) ?? null;
+    return UploaderRegistry.get(ctxId) ?? null;
   }
 
   public static getCtx<T extends Record<string, unknown> = Record<string, unknown>>(ctxId: string): PubSub<T> | null {
