@@ -1,5 +1,6 @@
 import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
 import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
+import { inject } from '../../abstract/di/inject';
 import { EventBus } from '../../abstract/EventBus';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { ChildBlock } from '../../lit/ChildBlock';
@@ -13,7 +14,12 @@ export class UploadCtxProvider extends ChildBlock {
   public static override styleAttrs = ['uc-wgt-common'];
   public static EventType = EventType;
 
-  public static override readonly uses = [EventBus, UploaderPublicApi, UploadCollectionController] as const;
+  // `EventBus` is always-bound → `@inject` field. `UploaderPublicApi` and
+  // `UploadCollectionController` are uploader-scope-bound host-boundary tokens
+  // exposed through the documented `getAPI()`/`.api`/`.uploadCollection` getters
+  // (they throw pre-adoption exactly as the v1 getters did), so they stay on
+  // `use()`.
+  @inject(EventBus) private readonly _eventBus!: EventBus;
 
   /** Same contract as v1 `LitBlock.debugPrint` (`createDebugPrinter`), scoped to this ctx. */
   private _debugPrint = createDebugPrinter(() => this.containerOrNull, this.constructor.name);
@@ -35,7 +41,7 @@ export class UploadCtxProvider extends ChildBlock {
     // rather than staying latched onto a released one.
     this._eventBridge = new EventBridgeController(
       this,
-      () => this.use(EventBus),
+      () => this._eventBus,
       (...args) => this._debugPrint(...args),
     );
   }

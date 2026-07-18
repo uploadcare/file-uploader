@@ -49,8 +49,16 @@ const mount = async (ctxName: string, attrs: Record<string, string> = {}): Promi
 };
 
 describe('Config (<uc-config>) — M-god step 6b-5 use(ConfigController)', () => {
-  it('declares its dependency via static uses', () => {
-    expect(Config.uses).toEqual([ConfigController]);
+  it('resolves its ConfigController dependency via the @inject field on the element', async () => {
+    const ctxName = freshCtxName();
+    const config = controllerFor(ctxName);
+    const el = await mount(ctxName);
+    // The `@inject(ConfigController)` field resolves through the container the
+    // block adopted (tagged as `this[CONTAINER]`), yielding the very same
+    // controller instance the ctx owns — the mechanism that replaces
+    // `static uses` + `this.use()`. (The plugin-manager reads stay on the
+    // editor-safe `PluginManagerBridge`, unaffected.)
+    expect((el as unknown as { _config: ConfigController })._config).toBe(config);
   });
 
   it('writes a DOM-property value into the SAME ConfigController the app reads', async () => {

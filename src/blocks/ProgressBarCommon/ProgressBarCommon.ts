@@ -2,13 +2,14 @@ import { html } from 'lit';
 import { state } from 'lit/decorators.js';
 import { CollectionStateController } from '../../abstract/controllers/CollectionStateController';
 import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
+import { inject } from '../../abstract/di/inject';
 import { ChildBlock } from '../../lit/ChildBlock';
 import './progress-bar-common.css';
 
 import '../ProgressBar/ProgressBar';
 
 export class ProgressBarCommon extends ChildBlock {
-  public static override readonly uses = [CollectionStateController] as const;
+  @inject(CollectionStateController) private readonly _collectionState!: CollectionStateController;
 
   @state()
   private _visible = false;
@@ -19,7 +20,7 @@ export class ProgressBarCommon extends ChildBlock {
   // into a `_value` @state. No `init$`: `commonProgress` is seeded by the
   // controller, not this block.
   private get _value(): number {
-    return this.use(CollectionStateController).getTracked('commonProgress');
+    return this._collectionState.getTracked('commonProgress');
   }
 
   protected override controllerReady(): void {

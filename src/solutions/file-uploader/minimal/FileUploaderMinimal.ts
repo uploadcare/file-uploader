@@ -4,6 +4,7 @@ import { ConfigController } from '../../../abstract/controllers/ConfigController
 import { LocaleController } from '../../../abstract/controllers/LocaleController';
 import { RouterController } from '../../../abstract/controllers/RouterController';
 import type { ControllerContainer } from '../../../abstract/di/ControllerContainer';
+import { inject } from '../../../abstract/di/inject';
 import { TelemetryManager } from '../../../abstract/managers/TelemetryManager';
 import { InternalEventType } from '../../../blocks/UploadCtxProvider/EventEmitter';
 import { ACTIVITY_TYPES } from '../../../lit/activity-constants';
@@ -31,12 +32,10 @@ export class FileUploaderMinimal extends SolutionChildBlock {
   };
   public static override styleAttrs = [...super.styleAttrs, 'uc-file-uploader-minimal'];
 
-  public static override readonly uses = [
-    RouterController,
-    ConfigController,
-    CollectionStateController,
-    TelemetryManager,
-  ] as const;
+  @inject(RouterController) private readonly _router!: RouterController;
+  @inject(ConfigController) private readonly _config!: ConfigController;
+  @inject(CollectionStateController) private readonly _collectionState!: CollectionStateController;
+  @inject(TelemetryManager) private readonly _telemetry!: TelemetryManager;
 
   /**
    * Grid single-upload flag feeding `?single=` on the inline drop-area — true
@@ -45,19 +44,19 @@ export class FileUploaderMinimal extends SolutionChildBlock {
    * auto-tracks both keys under `SignalWatcher`, so a config change re-renders.
    */
   private get _singleUpload(): boolean {
-    const config = this.use(ConfigController);
+    const config = this._config;
     return config.getTracked('filesViewMode') === 'grid' && !config.getTracked('multiple');
   }
 
   /** Trigger label key, derived reactively from `multiple` (drops the v1 `@state`). */
   private get _buttonTextKey(): string {
-    return this.use(ConfigController).getTracked('multiple') ? 'choose-files' : 'choose-file';
+    return this._config.getTracked('multiple') ? 'choose-files' : 'choose-file';
   }
 
   protected override controllerReady(container: ControllerContainer): void {
     super.controllerReady(container);
 
-    this.use(TelemetryManager).sendEvent({
+    this._telemetry.sendEvent({
       eventType: InternalEventType.INIT_SOLUTION,
     });
 
@@ -68,7 +67,7 @@ export class FileUploaderMinimal extends SolutionChildBlock {
     // and `<uc-upload-list>` light up via the background slot's `[active]`
     // attribute (no manual class toggling). A completed flow lands on the
     // upload list.
-    const router = this.use(RouterController);
+    const router = this._router;
     router.navigationStrategy = (to) => (to === ACTIVITY_TYPES.UPLOAD_LIST ? 'background' : 'foreground');
     router.configure({ doneActivity: ACTIVITY_TYPES.UPLOAD_LIST });
 
@@ -80,7 +79,7 @@ export class FileUploaderMinimal extends SolutionChildBlock {
     // `PubSub.sub('*uploadList', …)` semantics (`_subDerived`): fire once now,
     // then only when the `uploadList` reference actually changes — NOT on every
     // coarse collection-state notify (e.g. a `commonProgress` tick).
-    const collectionState = this.use(CollectionStateController);
+    const collectionState = this._collectionState;
     let lastUploadList = collectionState.get('uploadList');
     const applyUploadListActivity = (list: typeof lastUploadList) => {
       const hasFiles = list.length > 0;
@@ -124,7 +123,7 @@ export class FileUploaderMinimal extends SolutionChildBlock {
     // Side-effecting config write (minimal forces `confirmUpload` off) — stays
     // imperative, now off `ConfigController` directly (replaces `subConfigValue`).
     // Per-key `Object.is` dedup + eager fire reproduce `subConfigValue`'s contract.
-    const config = this.use(ConfigController);
+    const config = this._config;
     let lastConfirmUpload = config.get('confirmUpload');
     const applyConfirmUpload = (confirmUpload: typeof lastConfirmUpload) => {
       if (confirmUpload !== false) {
@@ -159,7 +158,7 @@ export class FileUploaderMinimal extends SolutionChildBlock {
     // so a config change re-runs this update and re-applies the attribute/style —
     // matching the v1 subscription's reactivity. Neither is a reactive property,
     // so toggling them schedules no further update.
-    const config = this.use(ConfigController);
+    const config = this._config;
     const mode = config.getTracked('filesViewMode');
     const multiple = config.getTracked('multiple');
     this.setAttribute('mode', mode);
@@ -191,7 +190,7 @@ export class FileUploaderMinimal extends SolutionChildBlock {
           <button
             type="button"
             class="uc-secondary-btn"
-            @click=${() => this.use(RouterController).traverse('onCancel')}
+            @click=${() => this._router.traverse('onCancel')}
           >${this.l10n('start-from-cancel')}</button>
         </uc-start-from>
       </uc-modal>

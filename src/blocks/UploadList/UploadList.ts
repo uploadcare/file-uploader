@@ -6,6 +6,7 @@ import { LocaleController } from '../../abstract/controllers/LocaleController';
 import { RouterController } from '../../abstract/controllers/RouterController';
 import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
 import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
+import { inject } from '../../abstract/di/inject';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { ActivityChildBlock } from '../../lit/ActivityChildBlock';
@@ -31,21 +32,18 @@ export type Summary = {
 };
 
 export class UploadList extends ActivityChildBlock {
-  // Includes `RouterController` (the base `ActivityChildBlock` declares it for
-  // its `[active]` toggle) alongside the controllers this block reads directly:
+  // Always-bound controllers read directly become `@inject` fields:
   // `ConfigController` (tracked `filesViewMode` host attr + imperative
   // derived-state reads), `CollectionStateController` (tracked `uploadList` /
   // `collectionErrors` render reads), `TelemetryManager` (add-more / clear-all
-  // action events), `UploaderPublicApi` (flow actions + output-state reads) and
-  // `UploadCollectionController` (clear-all + the guard's size read).
-  public static override readonly uses = [
-    ConfigController,
-    CollectionStateController,
-    RouterController,
-    TelemetryManager,
-    UploaderPublicApi,
-    UploadCollectionController,
-  ] as const;
+  // action events). `RouterController` is inherited from `ActivityChildBlock`
+  // (its `protected _router` @inject field). `UploaderPublicApi` (flow actions +
+  // output-state reads) and `UploadCollectionController` (clear-all + the guard's
+  // size read) are uploader-scope-bound — read via `use()`/`useOrNull`/
+  // `whenController`, so they stay off `@inject`.
+  @inject(ConfigController) private readonly _config!: ConfigController;
+  @inject(CollectionStateController) private readonly _collectionState!: CollectionStateController;
+  @inject(TelemetryManager) private readonly _telemetry!: TelemetryManager;
 
   public override activityType = ACTIVITY_TYPES.UPLOAD_LIST;
 
@@ -86,13 +84,13 @@ export class UploadList extends ActivityChildBlock {
    * non-`SOME_FILES_HAS_ERRORS` error into a `_commonErrorMessage` @state.
    */
   private get _commonErrorMessage(): string | null {
-    const errors = this.use(CollectionStateController).getTracked('collectionErrors');
+    const errors = this._collectionState.getTracked('collectionErrors');
     const firstError = errors.filter((err) => err.type !== 'SOME_FILES_HAS_ERRORS')[0];
     return firstError?.message ?? null;
   }
 
   private _handleAdd = (): void => {
-    this.use(TelemetryManager).sendEvent({
+    this._telemetry.sendEvent({
       eventType: InternalEventType.ACTION_EVENT,
       payload: {
         metadata: {
@@ -119,7 +117,7 @@ export class UploadList extends ActivityChildBlock {
   };
 
   private _handleCancel = (): void => {
-    this.use(TelemetryManager).sendEvent({
+    this._telemetry.sendEvent({
       eventType: InternalEventType.ACTION_EVENT,
       payload: {
         metadata: {
@@ -161,7 +159,7 @@ export class UploadList extends ActivityChildBlock {
     // container guard, so the container is adopted and `use()` is safe. Config
     // reads use the untracked `get()` (a re-render is driven by the throttled
     // tick's `subConfigValue`/collection observers, not by tracking here).
-    const config = this.use(ConfigController);
+    const config = this._config;
     const collectionState = this.use(UploaderPublicApi).getOutputCollectionState();
     const summary: Summary = {
       total: collectionState.totalCount,
@@ -241,7 +239,7 @@ export class UploadList extends ActivityChildBlock {
     // `useOrNull` reads — it can fire during a teardown-time navigation, after
     // the container is released, where `use()` would throw.
     this.trackSub(
-      this.use(RouterController).guard(
+      this._router.guard(
         this.activityType,
         () =>
           (this.useOrNull(ConfigController)?.get('showEmptyList') ?? false) ||
@@ -263,7 +261,7 @@ export class UploadList extends ActivityChildBlock {
     // `Object.is` dedup so an unrelated collection-state write (e.g.
     // `commonProgress`) never re-triggers this — behavior-identical to the v1
     // `ctx.sub('*groupInfo')`.
-    const collectionState = this.use(CollectionStateController);
+    const collectionState = this._collectionState;
     let lastGroupInfo = collectionState.get('groupInfo');
     const onGroupInfo = (groupInfo: typeof lastGroupInfo): void => {
       if (groupInfo) {
@@ -312,7 +310,7 @@ export class UploadList extends ActivityChildBlock {
     // runs on the first post-adoption render — before first paint, matching v1's
     // eager `subConfigValue` fire. `mode` is not a reactive property, so setting
     // it schedules no further update.
-    this.setAttribute('mode', this.use(ConfigController).getTracked('filesViewMode'));
+    this.setAttribute('mode', this._config.getTracked('filesViewMode'));
   }
 
   protected override subscriptionsFor(container: ControllerContainer) {
@@ -324,7 +322,7 @@ export class UploadList extends ActivityChildBlock {
     // `collectionErrors` (via `_commonErrorMessage`) drives the common-error row —
     // both `getTracked` off `CollectionStateController`, auto-tracked under
     // `SignalWatcher`, so a collection change re-renders with no `ctx.sub`.
-    const uploadList = this.use(CollectionStateController).getTracked('uploadList');
+    const uploadList = this._collectionState.getTracked('uploadList');
     const commonErrorMessage = this._commonErrorMessage;
     return html`
   <uc-activity-header>
@@ -332,7 +330,7 @@ export class UploadList extends ActivityChildBlock {
     <button
       type="button"
       class="uc-mini-btn uc-close-btn"
-      @click=${() => this.use(RouterController).traverse('onClose')}
+      @click=${() => this._router.traverse('onClose')}
       title=${this.l10n('a11y-activity-header-button-close')}
       aria-label=${this.l10n('a11y-activity-header-button-close')}
     >

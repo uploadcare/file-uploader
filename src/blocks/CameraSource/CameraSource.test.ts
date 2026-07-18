@@ -2,7 +2,6 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { RouterController } from '../../abstract/controllers/RouterController';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
-import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { UploaderRegistry } from '../../abstract/UploaderRegistry';
 import { ensureUploaderCtx } from '../../lit/ensureUploaderCtx';
 import { delay } from '../../utils/delay';
@@ -43,8 +42,22 @@ const mount = async (ctxName: string): Promise<{ el: CameraSource; config: Confi
 const videoEl = (el: CameraSource): HTMLVideoElement | null => el.querySelector('video');
 
 describe('CameraSource (M-god step 6b-3 migration)', () => {
-  it('declares its dependencies via static uses', () => {
-    expect(CameraSource.uses).toEqual([ConfigController, RouterController, TelemetryManager, UploaderPublicApi]);
+  it('resolves its always-bound dependencies via @inject fields on the element', async () => {
+    const ctxName = freshCtxName();
+    const { el, config } = await mount(ctxName);
+    const container = UploaderRegistry.get(ctxName);
+    // Always-bound controllers become `@inject` fields resolving through the
+    // container the block adopted (tagged as `this[CONTAINER]`); the
+    // uploader-scope-bound `UploaderPublicApi` (read via `use()` in `_toSend`)
+    // deliberately stays off `@inject`.
+    const injected = el as unknown as {
+      _config: ConfigController;
+      _router: RouterController;
+      _telemetry: TelemetryManager;
+    };
+    expect(injected._config).toBe(config);
+    expect(injected._router).toBe(container?.get(RouterController));
+    expect(injected._telemetry).toBe(container?.get(TelemetryManager));
   });
 
   it('re-renders the video transform reactively when cameraMirror changes (getTracked, no subConfigValue)', async () => {
