@@ -2,9 +2,9 @@ import { html, nothing } from 'lit';
 import { state } from 'lit/decorators.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
-import { RouterController } from '../../abstract/controllers/RouterController';
 import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
 import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
+import { inject } from '../../abstract/di/inject';
 import type { TypedData } from '../../abstract/TypedData';
 import { ActivityChildBlock } from '../../lit/ActivityChildBlock';
 import { createDebugPrinter } from '../../lit/createDebugPrinter';
@@ -18,13 +18,13 @@ import '../../solutions/cloud-image-editor/CloudImageEditor';
 export type ActivityParams = { internalId: string };
 
 export class CloudImageEditorActivity extends ActivityChildBlock {
-  // `RouterController` is what the base `ActivityChildBlock` already declares (its
-  // `[active]` toggle reads it, and this block traverses on apply/cancel);
-  // `ConfigController` is added for the tracked `cropPreset` /
-  // `cloudImageEditorTabs` render reads that feed the editor's attributes.
-  // `uploadCollection` (the entry source) has no DI token yet (registration
-  // race), so it stays on the v1 `bag` (step 8).
-  public static override readonly uses = [RouterController, ConfigController] as const;
+  // `RouterController` is inherited as the base `ActivityChildBlock`'s
+  // `protected _router` @inject field (its `[active]` toggle reads it, and this
+  // block traverses on apply/cancel); `ConfigController` is added here for the
+  // tracked `cropPreset` / `cloudImageEditorTabs` render reads that feed the
+  // editor's attributes. `UploadCollectionController` (the entry source) can
+  // race adoption, so it stays on `whenController` (see `_mountEditor`).
+  @inject(ConfigController) private readonly _config!: ConfigController;
 
   private _entry?: TypedData<UploadEntryData>;
 
@@ -60,13 +60,13 @@ export class CloudImageEditorActivity extends ActivityChildBlock {
     });
     // The back intent closes the cloud-editor activity and returns to the
     // previous one.
-    this.use(RouterController).traverse('onBack');
+    this._router.traverse('onBack');
   }
 
   private _handleCancel(event?: Event): void {
     const detail = event instanceof CustomEvent ? event.detail : undefined;
     this._debugPrint(`editor event "cancel"`, detail);
-    this.use(RouterController).traverse('onBack');
+    this._router.traverse('onBack');
   }
 
   public handleChange(event: CustomEvent<ChangeResult>): void {
@@ -77,7 +77,7 @@ export class CloudImageEditorActivity extends ActivityChildBlock {
     // `internalId` comes from the router-params object, whose shape is a
     // per-activity contract (ExternalSource precedent) rather than a runtime
     // guard the router already enforces.
-    const { internalId } = this.use(RouterController).params as ActivityParams;
+    const { internalId } = this._router.params as ActivityParams;
     // The uploader-scope `UploadCollectionController` is resolved on the
     // container only once the uploader/solution block attaches its scope
     // (`ensureUploaderScope`), which can race this adoption path — go through
@@ -117,7 +117,7 @@ export class CloudImageEditorActivity extends ActivityChildBlock {
     // `subConfigValue('cropPreset' | 'cloudImageEditorTabs')` subscriptions this
     // replaces. While unmounted (`_cdnUrl === null`) nothing renders and nothing
     // tracks, mirroring the v1 `if (!this._editorConfig) return` guard.
-    const config = this.use(ConfigController);
+    const config = this._config;
     const cropPreset = config.getTracked('cropPreset');
     const tabs = config.getTracked('cloudImageEditorTabs');
 

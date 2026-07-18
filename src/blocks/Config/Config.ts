@@ -2,6 +2,7 @@
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import type { CustomConfig } from '../../abstract/customConfigOptions';
 import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
+import { inject } from '../../abstract/di/inject';
 import { PluginManagerBridge } from '../../abstract/di/PluginManagerBridge';
 import type { PluginController } from '../../abstract/managers/plugin';
 import type { ConfigComplexType, ConfigPlainType, ConfigType } from '../../types';
@@ -54,7 +55,7 @@ const getLocalPropName = (key: string) => `__${key}`;
 // biome-ignore lint/suspicious/noUnsafeDeclarationMerging: This is intentional interface merging, used to add configuration setters/getters
 export class Config extends ChildBlock {
   // `<uc-config>` is the config WRITER: it resolves the ctx's `ConfigController`
-  // via `this.use(ConfigController)` and writes attribute/property values into it
+  // via `this._config` and writes attribute/property values into it
   // (`set`/`setCustom`/`register`). This is the SAME instance the rest of the app
   // reads (v1's `this.uploader.config` resolved to `container.get(ConfigController)` too),
   // so writes land where every reader looks. The plugin manager (custom-config
@@ -69,7 +70,7 @@ export class Config extends ChildBlock {
   // `PluginController` here would drag it (and `PluginRegistry`) into that bundle
   // and blow its 50 KB size-limit — the `declare`-only `PluginManagerBridge` keeps
   // it out while resolving to the SAME container instance (M-god step 9b-3).
-  public static override readonly uses = [ConfigController] as const;
+  @inject(ConfigController) private readonly _config!: ConfigController;
 
   public declare attributesMeta: Partial<ConfigPlainType> & {
     'ctx-name': string;
@@ -160,9 +161,7 @@ export class Config extends ChildBlock {
   private _flushValueToState(key: string, value: unknown) {
     const isCustom = this._isCustomConfig(key);
     const configKey = key as keyof ConfigType;
-    const currentValue = isCustom
-      ? this.use(ConfigController).getCustom(key)
-      : this.use(ConfigController).get(configKey);
+    const currentValue = isCustom ? this._config.getCustom(key) : this._config.get(configKey);
 
     if (currentValue !== value) {
       if (typeof value === 'undefined' || value === null) {
@@ -170,15 +169,15 @@ export class Config extends ChildBlock {
         const defaultValue = initialConfig[configKey];
         const nextValue = defaultValue !== undefined ? defaultValue : value;
         if (isCustom) {
-          this.use(ConfigController).setCustom(key, nextValue);
+          this._config.setCustom(key, nextValue);
         } else {
-          this.use(ConfigController).set(configKey, nextValue as ConfigType[typeof configKey]);
+          this._config.set(configKey, nextValue as ConfigType[typeof configKey]);
         }
       } else {
         if (isCustom) {
-          this.use(ConfigController).setCustom(key, value);
+          this._config.setCustom(key, value);
         } else {
-          this.use(ConfigController).set(configKey, value as ConfigType[typeof configKey]);
+          this._config.set(configKey, value as ConfigType[typeof configKey]);
         }
       }
     }
@@ -220,7 +219,7 @@ export class Config extends ChildBlock {
 
     // Only run assertions for built-in configs
     if (!this._isCustomConfig(key)) {
-      runAssertions(this.use(ConfigController).values);
+      runAssertions(this._config.values);
     }
   }
 
@@ -229,14 +228,12 @@ export class Config extends ChildBlock {
     const localPropName = getLocalPropName(key);
     return (
       anyThis[localPropName] ??
-      (this._isCustomConfig(key)
-        ? this.use(ConfigController).getCustom(key)
-        : this.use(ConfigController).get(key as keyof ConfigType))
+      (this._isCustomConfig(key) ? this._config.getCustom(key) : this._config.get(key as keyof ConfigType))
     );
   }
 
   private _assertSameValueDifferentReference(key: string, previousValue: unknown, nextValue: unknown) {
-    if (this.use(ConfigController).values.debug) {
+    if (this._config.values.debug) {
       if (
         nextValue !== previousValue &&
         typeof nextValue === 'object' &&
@@ -338,9 +335,9 @@ export class Config extends ChildBlock {
         // Manual per-key dedup over the coarse `ConfigController.subscribe`
         // notification — same contract as v1's `this.sub(stateKey, cb, false)`
         // (init=false: no immediate call, only on subsequent changes).
-        let lastValue = this.use(ConfigController).getCustom(name);
-        const unsub = this.use(ConfigController).subscribe(() => {
-          const nextValue = this.use(ConfigController).getCustom(name);
+        let lastValue = this._config.getCustom(name);
+        const unsub = this._config.subscribe(() => {
+          const nextValue = this._config.getCustom(name);
           if (!Object.is(nextValue, lastValue)) {
             lastValue = nextValue;
             // Use _setValue for consistent handling (matches built-in config pattern)
@@ -464,10 +461,10 @@ export class Config extends ChildBlock {
     // manual per-key dedup over the coarse `ConfigController.subscribe`
     // notification, and ties teardown to controller release/re-adoption.
     for (const key of plainConfigKeys) {
-      let lastValue = this.use(ConfigController).get(key);
+      let lastValue = this._config.get(key);
       this.trackSub(
-        this.use(ConfigController).subscribe(() => {
-          const nextValue = this.use(ConfigController).get(key);
+        this._config.subscribe(() => {
+          const nextValue = this._config.get(key);
           if (!Object.is(nextValue, lastValue)) {
             lastValue = nextValue;
             this._setValue(key, nextValue);
@@ -480,7 +477,7 @@ export class Config extends ChildBlock {
       // Flush the initial value to the state.
       // Initial value is taken from the DOM property if it was set before the element was initialized.
       // If no DOM property was set, the initial value is taken from the initialConfig.
-      const initialValue = anyThis[key] ?? this.use(ConfigController).get(key);
+      const initialValue = anyThis[key] ?? this._config.get(key);
       if (initialValue !== initialConfig[key]) {
         this._setValue(key, initialValue);
         // `_setValue`'s no-op guard (skip when the local property cache

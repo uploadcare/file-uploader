@@ -1,6 +1,7 @@
 import type { PropertyValues } from 'lit';
 import { RouterController } from '../abstract/controllers/RouterController';
-import type { ControllerContainer, Token } from '../abstract/di/ControllerContainer';
+import type { ControllerContainer } from '../abstract/di/ControllerContainer';
+import { inject } from '../abstract/di/inject';
 import { ACTIVITY_TYPES, type ActivityParamsMap, type ActivityType } from './activity-constants';
 import { ChildBlock } from './ChildBlock';
 
@@ -15,13 +16,12 @@ const ACTIVE_ATTR = 'active';
  * Subclasses overriding `controllerReady` MUST call `super.controllerReady(ctrl)`.
  */
 export class ActivityChildBlock extends ChildBlock {
-  // Widened to the same `readonly Token<unknown>[]` shape `ChildBlock` declares
-  // (not a narrow `as const` tuple) so a subclass can override `uses` with its
-  // own controller set — e.g. `UploadList` adds Config/CollectionState/Telemetry
-  // (M-god step 6b-8). The value still pre-warms `RouterController` for every
-  // activity block (the base's `[active]` toggle reads it); a non-overriding
-  // subclass inherits exactly that, unchanged.
-  public static override readonly uses: readonly Token<unknown>[] = [RouterController];
+  // The base's `[active]` toggle (and every activity block's navigation) reads
+  // the ctx's `RouterController`. `protected` so subclasses (`UploadList`,
+  // `CloudImageEditorActivity`, `PluginActivityHost`) reuse this one inherited
+  // `@inject` field instead of redeclaring their own (a duplicate private name
+  // across the hierarchy would not type-check).
+  @inject(RouterController) protected readonly _router!: RouterController;
 
   public activityType: ActivityType = null;
 
@@ -48,7 +48,7 @@ export class ActivityChildBlock extends ChildBlock {
     // would not re-track and the toggle would go stale. The coarse subscription
     // fires on every transition (both slots), preserving the exact re-render
     // timing of the v1 `subRouter(() => this.requestUpdate())` this replaces.
-    const router = this.use(RouterController);
+    const router = this._router;
     this.requestUpdate();
     this.trackSub(router.subscribe(() => this.requestUpdate()));
     if (!this.activityType) {
@@ -75,7 +75,7 @@ export class ActivityChildBlock extends ChildBlock {
     if (!this.activityType) {
       return;
     }
-    this._unreportActivityMounted = this.use(RouterController).activityBlockMounted(this.activityType);
+    this._unreportActivityMounted = this._router.activityBlockMounted(this.activityType);
   }
 
   protected override controllerReleased(container: ControllerContainer): void {
@@ -95,7 +95,7 @@ export class ActivityChildBlock extends ChildBlock {
     if (!this.activityType) {
       return false;
     }
-    const router = this.use(RouterController);
+    const router = this._router;
     const isInModal = this.closest('uc-modal') !== null;
     // `router.modal` is a tracked signal (read here under `SignalWatcher` when
     // `updated()` calls in); `router.activity` is a plain field — the coarse
@@ -113,6 +113,6 @@ export class ActivityChildBlock extends ChildBlock {
   }
 
   public get activityParams(): ActivityParamsMap[keyof ActivityParamsMap] {
-    return this.use(RouterController).params as ActivityParamsMap[keyof ActivityParamsMap];
+    return this._router.params as ActivityParamsMap[keyof ActivityParamsMap];
   }
 }

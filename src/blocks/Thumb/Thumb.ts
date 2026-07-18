@@ -2,6 +2,7 @@ import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
+import { inject } from '../../abstract/di/inject';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
 import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../utils/cdn-utils';
 import { debounce } from '../../utils/debounce';
@@ -27,13 +28,15 @@ type PendingThumbUpdate = {
 
 export class Thumb extends FileItemConfig {
   // All config/telemetry reads here are imperative side-effects of thumbnail
-  // generation (not render reads), so they use the untracked `use(...).get()` /
-  // `use(TelemetryManager)` path. The thumb image itself renders from the
-  // per-entry `thumbUrl` observer, which has no DI token and stays on the v1
-  // `subEntry` path (step 8). `UploadCollectionController` is the entry source
-  // for `_bindToEntry`, read null-tolerantly via `useOrNull` (a thumb can render
-  // outside an uploader scope).
-  public static override readonly uses = [ConfigController, UploadCollectionController, TelemetryManager] as const;
+  // generation (not render reads), so they read the always-bound
+  // `ConfigController`/`TelemetryManager` `@inject` fields imperatively
+  // (`.get()` / method calls). The thumb image itself renders from the per-entry
+  // `thumbUrl` observer, which has no DI token and stays on the v1 `subEntry`
+  // path (step 8). `UploadCollectionController` is the entry source for
+  // `_bindToEntry`, read null-tolerantly via `useOrNull` (a thumb can render
+  // outside an uploader scope), so it stays off `@inject`.
+  @inject(ConfigController) private readonly _config!: ConfigController;
+  @inject(TelemetryManager) private readonly _telemetry!: TelemetryManager;
 
   @property({ type: String })
   public badgeIcon = '';
@@ -66,7 +69,7 @@ export class Thumb extends FileItemConfig {
     let size = Math.max(
       parseInt(String(this?._thumbRect?.height || 0), 10),
       parseInt(String(this?._thumbRect?.width || 0), 10),
-      this.use(ConfigController).get('thumbSize'),
+      this._config.get('thumbSize'),
     );
 
     if (window.devicePixelRatio > 1) {
@@ -88,7 +91,7 @@ export class Thumb extends FileItemConfig {
     if (fileInfo && isImage && uuid) {
       const thumbUrl = await this.proxyUrl(
         createCdnUrl(
-          createOriginalUrl(this.use(ConfigController).get('cdnCname'), uuid),
+          createOriginalUrl(this._config.get('cdnCname'), uuid),
           createCdnUrlModifiers(entry.getValue('cdnUrlModifiers'), `stretch/off`, `scale_crop/${size}x${size}/center`),
         ),
       );
@@ -112,7 +115,7 @@ export class Thumb extends FileItemConfig {
             const blobThumbUrl = await generateThumb(file, size);
             entry.setValue('thumbUrl', blobThumbUrl);
           } catch (err) {
-            this.use(TelemetryManager).sendEventError(err, 'thumbnail generation. Failed to generate thumb from file');
+            this._telemetry.sendEventError(err, 'thumbnail generation. Failed to generate thumb from file');
             const color = window.getComputedStyle(this).getPropertyValue('--uc-muted-foreground');
             entry.setValue('thumbUrl', fileCssBg(color));
           }
@@ -131,7 +134,7 @@ export class Thumb extends FileItemConfig {
         const thumbUrl = await generateThumb(file, size);
         entry.setValue('thumbUrl', thumbUrl);
       } catch (err) {
-        this.use(TelemetryManager).sendEventError(err, 'thumbnail generation. Failed to generate thumb from file');
+        this._telemetry.sendEventError(err, 'thumbnail generation. Failed to generate thumb from file');
         const color = window.getComputedStyle(this).getPropertyValue('--uc-muted-foreground');
         entry.setValue('thumbUrl', fileCssBg(color));
       }
@@ -358,7 +361,7 @@ export class Thumb extends FileItemConfig {
   }
 
   protected override controllerReady(_container: ControllerContainer): void {
-    this._firstViewMode ??= this.use(ConfigController).get('filesViewMode');
+    this._firstViewMode ??= this._config.get('filesViewMode');
 
     // Side-effecting subscription (forces a one-time thumb regeneration on the
     // first list->grid switch so the higher grid resolution is fetched), not a

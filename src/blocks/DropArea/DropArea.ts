@@ -6,6 +6,7 @@ import { LocaleController } from '../../abstract/controllers/LocaleController';
 import { RouterController } from '../../abstract/controllers/RouterController';
 import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
 import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
+import { inject } from '../../abstract/di/inject';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { ChildBlock } from '../../lit/ChildBlock';
 import { createDebugPrinter } from '../../lit/createDebugPrinter';
@@ -23,12 +24,12 @@ const dropAreaRegistry = new Set<DropArea>();
 export class DropArea extends ChildBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-drop-area'];
 
-  public static override readonly uses = [
-    ConfigController,
-    RouterController,
-    UploadCollectionController,
-    UploaderPublicApi,
-  ] as const;
+  @inject(ConfigController) private readonly _config!: ConfigController;
+  @inject(RouterController) private readonly _router!: RouterController;
+  // `UploadCollectionController` and `UploaderPublicApi` are uploader-scope-bound
+  // (this block attaches the scope itself in `controllerReady` via
+  // `ensureUploaderScope`); their reads run after that attach, so they stay on
+  // `use()` rather than becoming eagerly-resolving `@inject` fields.
 
   public declare attributesMeta: {
     single?: boolean;
@@ -192,7 +193,7 @@ export class DropArea extends ChildBlock {
           }
         });
         if (collection.size > prevSize) {
-          this.use(RouterController).traverse('onFileAdd');
+          this._router.traverse('onFileAdd');
         }
       },
     });
@@ -274,8 +275,8 @@ export class DropArea extends ChildBlock {
     // Imperative reads (drop-handler path, not render) — `get()`, not the tracked
     // `getTracked()`. `uploadCollection` is container-owned (M-god step 4),
     // resolved here via `use()` (this path runs only after adoption).
-    const isMultiple = this.use(ConfigController).get('multiple');
-    const multipleMax = this.use(ConfigController).get('multipleMax');
+    const isMultiple = this._config.get('multiple');
+    const multipleMax = this._config.get('multipleMax');
     const currentFilesCount = this.use(UploadCollectionController).size;
 
     if (isMultiple && multipleMax && currentFilesCount >= multipleMax) {

@@ -6,6 +6,7 @@ import { LocaleController } from '../../abstract/controllers/LocaleController';
 import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
 import { UploadController } from '../../abstract/controllers/UploadController';
 import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
+import { inject } from '../../abstract/di/inject';
 import { PluginController, type PluginFileActionRegistration } from '../../abstract/managers/plugin';
 import type { Owned } from '../../abstract/managers/plugin/PluginTypes';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
@@ -36,12 +37,15 @@ const FileItemState = Object.freeze({
 type FileItemStateValue = (typeof FileItemState)[keyof typeof FileItemState];
 
 export class FileItem extends FileItemConfig {
-  public static override readonly uses = [
-    ConfigController,
-    UploadCollectionController,
-    UploaderPublicApi,
-    TelemetryManager,
-  ] as const;
+  // Always-bound controllers become `@inject` fields. `UploadCollectionController`
+  // and `UploaderPublicApi` are uploader-scope-bound and read null-tolerantly via
+  // `useOrNull` (handlers can run outside an adopted scope / during a teardown
+  // race); `PluginController` is conditionally bound and read via `whenController`;
+  // the upload stack's `UploadController` is a bound host-boundary token read via
+  // `use()` from the post-adoption upload trigger — all stay off `@inject`.
+  @inject(ConfigController) private readonly _config!: ConfigController;
+  @inject(CollectionStateController) private readonly _collectionState!: CollectionStateController;
+  @inject(TelemetryManager) private readonly _telemetry!: TelemetryManager;
 
   @state()
   private _pauseRender = true;
@@ -92,7 +96,7 @@ export class FileItem extends FileItemConfig {
   private _pluginManager: PluginController | null = null;
 
   private _handleRemove = (): void => {
-    this.use(TelemetryManager).sendEvent({
+    this._telemetry.sendEvent({
       payload: {
         metadata: {
           event: 'remove-file',
@@ -269,7 +273,7 @@ export class FileItem extends FileItemConfig {
    * subscription.
    */
   private get _showFileNames(): boolean {
-    const config = this.use(ConfigController);
+    const config = this._config;
     return config.getTracked('filesViewMode') === 'list' ? true : config.getTracked('gridShowFileNames');
   }
 
@@ -328,7 +332,7 @@ export class FileItem extends FileItemConfig {
       return;
     }
 
-    this.use(TelemetryManager).sendEvent({
+    this._telemetry.sendEvent({
       payload: {
         metadata: {
           event: action.id,
@@ -379,7 +383,7 @@ export class FileItem extends FileItemConfig {
     // mutates in place — see `CollectionStateController.set`), so the `Object.is`
     // guard fires on a new Set and skips unrelated collection-state writes —
     // behavior-identical to the v1 `ctx.sub('*uploadTrigger')`.
-    const collectionState = this.use(CollectionStateController);
+    const collectionState = this._collectionState;
     let lastTrigger = collectionState.get('uploadTrigger');
     const onTrigger = (itemsToUpload: typeof lastTrigger): void => {
       if (this.entry && !itemsToUpload.has(this.entry.uid)) {

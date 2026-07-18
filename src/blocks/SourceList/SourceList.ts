@@ -4,13 +4,14 @@ import { property, state } from 'lit/decorators.js';
 import { SourceListController } from '../../abstract/controllers';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
+import { inject } from '../../abstract/di/inject';
 import type { SourceButtonConfig } from '../SourceBtn/SourceBtn';
 
 import '../SourceBtn/SourceBtn';
 import { ChildBlock } from '../../lit/ChildBlock';
 
 export class SourceList extends ChildBlock {
-  public static override readonly uses = [ConfigController] as const;
+  @inject(ConfigController) private readonly _config!: ConfigController;
 
   @state()
   private _sources: SourceButtonConfig[] = [];
@@ -30,7 +31,7 @@ export class SourceList extends ChildBlock {
     this._teardownSourceListController();
 
     this._sourceListController = new SourceListController(this, {
-      config: this.use(ConfigController),
+      config: this._config,
       container,
       onSourcesChange: (sources) => {
         this._sources = sources;
@@ -58,7 +59,7 @@ export class SourceList extends ChildBlock {
     // the tracked `getTracked()`: v1 re-evaluated this only on re-render (driven
     // by `_sources`), not as its own reactive trigger, so keep it untracked to
     // preserve behavior exactly.
-    if (this.use(ConfigController).get('sourceListWrap')) {
+    if (this._config.get('sourceListWrap')) {
       this.style.removeProperty('display');
     } else {
       this.style.display = 'contents';
