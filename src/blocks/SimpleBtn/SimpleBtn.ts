@@ -1,7 +1,8 @@
 import { html } from 'lit';
 import { property } from 'lit/decorators.js';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
-import type { UploaderController } from '../../abstract/controllers/UploaderController';
+import { LocaleController } from '../../abstract/controllers/LocaleController';
+import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { ChildBlock } from '../../lit/ChildBlock';
 import './simple-btn.css';
@@ -23,8 +24,8 @@ export class SimpleBtn extends ChildBlock {
     this.use(UploaderPublicApi).initFlow();
   };
 
-  protected override subscriptionsFor(ctrl: UploaderController) {
-    return [(listener: () => void) => ctrl.locale.subscribe(listener)];
+  protected override subscriptionsFor(container: ControllerContainer) {
+    return [(listener: () => void) => container.get(LocaleController).subscribe(listener)];
   }
 
   public override render() {

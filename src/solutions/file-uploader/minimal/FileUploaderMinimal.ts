@@ -1,8 +1,9 @@
 import { html, type PropertyValues } from 'lit';
 import { CollectionStateController } from '../../../abstract/controllers/CollectionStateController';
 import { ConfigController } from '../../../abstract/controllers/ConfigController';
+import { LocaleController } from '../../../abstract/controllers/LocaleController';
 import { RouterController } from '../../../abstract/controllers/RouterController';
-import type { UploaderController } from '../../../abstract/controllers/UploaderController';
+import type { ControllerContainer } from '../../../abstract/di/ControllerContainer';
 import { TelemetryManager } from '../../../abstract/managers/TelemetryManager';
 import { InternalEventType } from '../../../blocks/UploadCtxProvider/EventEmitter';
 import { ACTIVITY_TYPES } from '../../../lit/activity-constants';
@@ -53,8 +54,8 @@ export class FileUploaderMinimal extends SolutionChildBlock {
     return this.use(ConfigController).getTracked('multiple') ? 'choose-files' : 'choose-file';
   }
 
-  protected override controllerReady(ctrl: UploaderController): void {
-    super.controllerReady(ctrl);
+  protected override controllerReady(container: ControllerContainer): void {
+    super.controllerReady(container);
 
     this.use(TelemetryManager).sendEvent({
       eventType: InternalEventType.INIT_SOLUTION,
@@ -142,8 +143,8 @@ export class FileUploaderMinimal extends SolutionChildBlock {
     );
   }
 
-  protected override subscriptionsFor(ctrl: UploaderController) {
-    return [(listener: () => void) => ctrl.locale.subscribe(listener)];
+  protected override subscriptionsFor(container: ControllerContainer) {
+    return [(listener: () => void) => container.get(LocaleController).subscribe(listener)];
   }
 
   protected override willUpdate(changed: PropertyValues<this>): void {

@@ -1,12 +1,17 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { UploaderController } from '../abstract/controllers/UploaderController';
-import { localeStateKey } from '../abstract/managers/LocaleManager';
+import { ClipboardController } from '../abstract/controllers/ClipboardController';
+import { RouterController } from '../abstract/controllers/RouterController';
+import { ControllerContainer } from '../abstract/di/ControllerContainer';
+import { A11y } from '../abstract/managers/a11y';
+import { LocaleManager, localeStateKey } from '../abstract/managers/LocaleManager';
+import { TelemetryManager } from '../abstract/managers/TelemetryManager';
 import { UploaderRegistry } from '../abstract/UploaderRegistry';
+import { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter';
 import { ensureUploaderCtx } from './ensureUploaderCtx';
 import { PubSub } from './PubSubCompat';
 
 // Each test uses a unique ctx id and tears it down so the module-level
-// context/controller maps and the global UploaderRegistry don't leak.
+// context/container maps and the global UploaderRegistry don't leak.
 let seq = 0;
 const ids: string[] = [];
 const freshCtxName = () => {
@@ -43,19 +48,19 @@ describe('ensureUploaderCtx', () => {
     expect(ctx.read('*lazyPlugins')).toBeNull();
   });
 
-  it('seeds the six controller-owned re-exposer keys, but not the v1-element-gated ones (M9q Task 2)', () => {
+  it('seeds the six container-owned re-exposer keys, but not the v1-element-gated ones (M9q Task 2)', () => {
     const ctxName = freshCtxName();
     const ctx = ensureUploaderCtx(ctxName);
-    const controller = UploaderRegistry.get(ctxName)!;
+    const container = UploaderRegistry.get(ctxName)!;
 
     // The six keys this seam now registers itself — identity-pinned against
-    // the controller's own instances, same recipe as `LitBlock`'s re-exposers.
-    expect(ctx.read('*eventEmitter')).toBe(controller.eventEmitter);
-    expect(ctx.read('*localeManager')).toBe(controller.localeManager);
-    expect(ctx.read('*a11y')).toBe(controller.a11y);
-    expect(ctx.read('*router')).toBe(controller.router);
-    expect(ctx.read('*clipboard')).toBe(controller.clipboard);
-    expect(ctx.read('*telemetryManager')).toBe(controller.telemetryManager);
+    // the container-owned instances, same recipe as `LitBlock`'s re-exposers.
+    expect(ctx.read('*eventEmitter')).toBe(container.get(EventEmitter));
+    expect(ctx.read('*localeManager')).toBe(container.get(LocaleManager));
+    expect(ctx.read('*a11y')).toBe(container.get(A11y));
+    expect(ctx.read('*router')).toBe(container.get(RouterController));
+    expect(ctx.read('*clipboard')).toBe(container.get(ClipboardController));
+    expect(ctx.read('*telemetryManager')).toBe(container.get(TelemetryManager));
 
     // Still v1-element-gated — never registered by this v1-free seam.
     expect(ctx.has('*pluginManager')).toBe(false);
@@ -71,27 +76,27 @@ describe('ensureUploaderCtx', () => {
     expect(ctx.read(localeStateKey('upload-file'))).toBe('Upload file');
   });
 
-  it('forces the UploaderController into existence immediately, not lazily on first *cfg/*l10n touch', () => {
+  it('forces the ctx container into existence immediately, not lazily on first *cfg/*l10n touch', () => {
     const ctxName = freshCtxName();
     ensureUploaderCtx(ctxName);
 
-    const controller = UploaderRegistry.get(ctxName);
-    expect(controller).toBeInstanceOf(UploaderController);
+    const container = UploaderRegistry.get(ctxName);
+    expect(container).toBeInstanceOf(ControllerContainer);
   });
 
-  it('is idempotent: a second call against an existing ctx returns the same ctx/controller, untouched', () => {
+  it('is idempotent: a second call against an existing ctx returns the same ctx/container, untouched', () => {
     const ctxName = freshCtxName();
     const first = ensureUploaderCtx(ctxName);
-    const firstController = UploaderRegistry.get(ctxName);
+    const firstContainer = UploaderRegistry.get(ctxName);
 
     // Mutate a seeded value to prove idempotency doesn't re-seed over it.
     first.pub('*commonProgress', 42);
 
     const second = ensureUploaderCtx(ctxName);
-    const secondController = UploaderRegistry.get(ctxName);
+    const secondContainer = UploaderRegistry.get(ctxName);
 
     expect(second.id).toBe(first.id);
-    expect(secondController).toBe(firstController);
+    expect(secondContainer).toBe(firstContainer);
     // No re-seed clobber of the live value set above.
     expect(second.read('*commonProgress')).toBe(42);
   });
@@ -122,17 +127,17 @@ describe('ensureUploaderCtx', () => {
   });
 
   // Pin ahead of M9o Task 2 (ChildBlock._watchRegistry calling this function
-  // to self-bootstrap a ctx): a pre-existing map with no controller yet (the
+  // to self-bootstrap a ctx): a pre-existing map with no container yet (the
   // exact shape a bare `PubSub.registerCtx` caller leaves behind) must still
-  // get a controller forced into the registry — every path through this
-  // function, not just first-creation, is a controller-existence guarantee.
-  it('forces a controller into existence when the ctx map pre-exists WITHOUT one', () => {
+  // get a container forced into the registry — every path through this
+  // function, not just first-creation, is a container-existence guarantee.
+  it('forces a container into existence when the ctx map pre-exists WITHOUT one', () => {
     const ctxName = freshCtxName();
     PubSub.registerCtx<Record<string, unknown>>({ plain: 'seed' }, ctxName);
     expect(UploaderRegistry.get(ctxName)).toBeUndefined();
 
     ensureUploaderCtx(ctxName);
 
-    expect(UploaderRegistry.get(ctxName)).toBeInstanceOf(UploaderController);
+    expect(UploaderRegistry.get(ctxName)).toBeInstanceOf(ControllerContainer);
   });
 });

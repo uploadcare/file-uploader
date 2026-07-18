@@ -2,8 +2,8 @@ import { ContextConsumer, ContextProvider } from '@lit/context';
 import { SignalWatcher } from '@lit-labs/signals';
 import { LitElement, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
+import { ConfigController } from '../abstract/controllers/ConfigController';
 import { LocaleController } from '../abstract/controllers/LocaleController';
-import type { UploaderController } from '../abstract/controllers/UploaderController';
 import type { ControllerContainer, Token } from '../abstract/di/ControllerContainer';
 import { resolveSecureDeliveryProxyUrl } from '../abstract/secureDeliveryProxyUrl';
 import { UploaderRegistry } from '../abstract/UploaderRegistry';
@@ -26,27 +26,27 @@ import { TestModeController } from './TestModeController';
 // `performUpdate` (not `render()`): a fully-overridden `render()`/`shouldUpdate()`
 // in a leaf block still auto-tracks any `@lit-labs/signals` signal read during
 // its update, and re-renders when that signal changes. Non-migrated blocks read
-// state imperatively (`bag`/`subConfigValue`/`this.uploader.*`, none of which
+// state imperatively (`bag`/`subConfigValue`, none of which
 // touch a signal), so the watcher tracks nothing for them and their update cycle
 // is behavior-identical — it only adds a per-element watcher no signal notifies.
 const ChildBlockBase = SignalWatcher(RegisterableElementMixin(LightDomMixin(LitElement)));
 
 /**
  * Base class for blocks ported off `SymbioteCompatMixin` (M9). Resolves the
- * per-ctx `UploaderController` by ctx-name — from the element's own
+ * per-ctx `ControllerContainer` by ctx-name — from the element's own
  * `ctx-name` attribute or, when absent, from the nearest v1 ancestor's
  * `ctxNameContext` provider — via `UploaderRegistry.whenAvailable`, which
- * fires synchronously when a controller is already registered and again
+ * fires synchronously when a container is already registered and again
  * across a remount, so subclasses re-adopt without losing bindings. If the
- * ctx dies while this block stays connected (the last v1 block elsewhere
+ * ctx dies while this block stays connected (the last consumer elsewhere
  * disconnected and tore the ctx down), the registry notifies with `null` and
- * the block releases its controller — closing the render gate — rather than
+ * the block releases its container — closing the render gate — rather than
  * outliving the ctx it was reading from.
  *
- * Subclasses read controllers directly: no `$` proxy, no `init$`, no
- * nanostores. Rendering is gated until a controller is adopted (matching
- * v1's `shouldUpdate` gate on ctx init); do controller-dependent setup in
- * `controllerReady`, never in `connectedCallback`.
+ * Subclasses read controllers directly off the container (`this.use(Token)`):
+ * no `$` proxy, no `init$`, no nanostores. Rendering is gated until a container
+ * is adopted (matching v1's `shouldUpdate` gate on ctx init); do
+ * container-dependent setup in `controllerReady`, never in `connectedCallback`.
  * Note: while the render gate is closed Lit still clears its
  * changed-properties tracking, so pre-adoption property writes will not
  * appear in `changedProperties` at the first real render — read current
@@ -73,10 +73,10 @@ export abstract class ChildBlock extends ChildBlockBase {
   @state()
   private _inheritedCtxName: string | undefined = undefined;
 
-  private _controller: UploaderController | null = null;
-  // This ctx's DI container, adopted alongside the controller (`ctrl.container`).
-  // It is the resolution source for `use()` and the consumer-refcount anchor for
-  // teardown (`addConsumer`/`removeConsumer`/`isUnreferenced`).
+  // This ctx's DI container, adopted from `UploaderRegistry.whenAvailable`. It
+  // is the resolution source for `use()`, the render gate (adopted = container
+  // present), and the consumer-refcount anchor for teardown
+  // (`addConsumer`/`removeConsumer`/`isUnreferenced`).
   private _container: ControllerContainer | null = null;
   private _watchedCtxName: string | undefined = undefined;
   private _registryUnsub?: () => void;
@@ -108,30 +108,15 @@ export abstract class ChildBlock extends ChildBlockBase {
     return this.ctxName || this._inheritedCtxName;
   }
 
-  protected get uploader(): UploaderController {
-    if (!this._controller) {
-      throw new Error(
-        `${this.tagName.toLowerCase()}: UploaderController is not available yet. ` +
-          'Read it in controllerReady() or use uploaderOrNull for guarded access.',
-      );
-    }
-    return this._controller;
-  }
-
-  protected get uploaderOrNull(): UploaderController | null {
-    return this._controller;
-  }
-
   /**
    * Resolve a single-responsibility controller from this ctx's DI container —
-   * the v2 successor to reading off the monolithic `this.uploader`. Read it at
+   * the v2 successor to the dissolved monolithic `UploaderController`. Read it at
    * render time (or in/after `controllerReady`); the render gate guarantees the
    * container is adopted by then. Reading a `@signalState`/`SignalMap`-backed
    * value off the returned controller (e.g. `ConfigController.getTracked`)
    * inside `render()` auto-tracks it via `SignalWatcher`.
    *
-   * Throws if the container isn't adopted yet (pre-adoption access is a bug,
-   * matching `this.uploader`'s guard).
+   * Throws if the container isn't adopted yet (pre-adoption access is a bug).
    */
   protected use<T>(token: Token<T>): T {
     if (!this._container) {
@@ -144,8 +129,8 @@ export abstract class ChildBlock extends ChildBlockBase {
   }
 
   /**
-   * Null-tolerant `use()` — the container counterpart to `uploaderOrNull`.
-   * Returns `null` when no container is adopted (pre-adoption, or after
+   * Null-tolerant `use()`. Returns `null` when no container is adopted
+   * (pre-adoption, or after
    * `_releaseController` cleared it during a teardown / not-yet-adopted race),
    * instead of throwing. Use it from callbacks that can outlive adoption — a
    * trailing throttle/debounce tick, or a router guard predicate invoked during
@@ -323,8 +308,8 @@ export abstract class ChildBlock extends ChildBlockBase {
     // calls in even for gated updates.
     if (changed.has('ctxName')) this._watchRegistry();
     // v1 parity: SymbioteCompatMixin gates rendering until the ctx is
-    // initialized; here the gate is controller adoption.
-    if (!this._controller) {
+    // initialized; here the gate is container adoption.
+    if (!this._container) {
       return false;
     }
     return super.shouldUpdate(changed);
@@ -339,9 +324,9 @@ export abstract class ChildBlock extends ChildBlockBase {
     this._registryUnsub?.();
     this._registryUnsub = undefined;
     this._watchedCtxName = ctxName;
-    // Scope switch (or ctx-name removed entirely): drop the current controller
+    // Scope switch (or ctx-name removed entirely): drop the current container
     // right away so the render gate closes instead of serving the previous
-    // scope's data while the new controller is still pending.
+    // scope's data while the new container is still pending.
     this._releaseController();
     if (oldCtxName) {
       // This block may have been the ctx's only consumer (self-bootstrapped,
@@ -362,27 +347,25 @@ export abstract class ChildBlock extends ChildBlockBase {
     // ChildBlock already created the ctx (and its controller), this is a
     // no-op — the existing creator (and its seed) wins, unchanged.
     ensureUploaderCtx(ctxName);
-    this._registryUnsub = UploaderRegistry.whenAvailable(ctxName, (ctrl) => {
-      if (ctrl) {
-        this._adoptController(ctrl);
+    this._registryUnsub = UploaderRegistry.whenAvailable(ctxName, (container) => {
+      if (container) {
+        this._adoptController(container);
       } else {
         this._releaseController();
       }
     });
   }
 
-  private _adoptController(ctrl: UploaderController): void {
-    if (this._controller === ctrl) return;
+  private _adoptController(container: ControllerContainer): void {
+    if (this._container === container) return;
     this._releaseController();
-    this._controller = ctrl;
     // Anchor the consumer refcount on the container (M-god step 6a): this block
-    // now keeps its ctx alive by being a container consumer, not by holding a
+    // keeps its ctx alive by being a container consumer, not by holding a
     // `UploaderRegistry.whenAvailable` subscription. `addConsumer`/`removeConsumer`
     // run at adopt/release, which — because `whenAvailable` fires synchronously
-    // once `ensureUploaderCtx` has forced the controller into existence — is the
+    // once `ensureUploaderCtx` has forced the container into existence — is the
     // same instant the registry subscription used to be the refcount, preserving
-    // exact teardown timing (`isCtxUnreferenced` now reads `container.isUnreferenced()`).
-    const container = ctrl.container;
+    // exact teardown timing (`isCtxUnreferenced` reads `container.isUnreferenced()`).
     this._container = container;
     container.addConsumer(this);
     // Pre-warm declared dependencies so they exist before first render. Isolate-
@@ -396,13 +379,13 @@ export abstract class ChildBlock extends ChildBlockBase {
       }
     }
     const rerender = () => this.requestUpdate();
-    for (const subscribe of this.subscriptionsFor(ctrl)) {
+    for (const subscribe of this.subscriptionsFor(container)) {
       this._subs.push(subscribe(rerender));
     }
-    this._subs.push(ctrl.config.subscribe(() => this._syncTestId(ctrl)));
-    this._syncTestId(ctrl);
+    this._subs.push(container.get(ConfigController).subscribe(() => this._syncTestId(container)));
+    this._syncTestId(container);
     try {
-      this.controllerReady(ctrl);
+      this.controllerReady(container);
     } catch (err) {
       // One block's adoption hook must not break the adoption cycle or escape
       // the registry callback as an unhandled error (isolate-and-warn, as in
@@ -413,7 +396,6 @@ export abstract class ChildBlock extends ChildBlockBase {
   }
 
   private _releaseController(): void {
-    const ctrl = this._controller;
     const container = this._container;
     for (const unsub of this._subs) {
       try {
@@ -428,7 +410,6 @@ export abstract class ChildBlock extends ChildBlockBase {
       }
     }
     this._subs = [];
-    this._controller = null;
     // Drop the container refcount BEFORE the deferred teardown check fires: once
     // the last consumer is gone `container.isUnreferenced()` reports the ctx dead
     // and `_teardownCtxIfUnreferenced` disposes it (via `destroyCtx`). A disposed
@@ -436,11 +417,11 @@ export abstract class ChildBlock extends ChildBlockBase {
     // here (e.g. a null-notify after teardown) is a harmless no-op.
     container?.removeConsumer(this);
     this._container = null;
-    if (ctrl) this.controllerReleased(ctrl);
+    if (container) this.controllerReleased(container);
   }
 
-  private _syncTestId(ctrl: UploaderController): void {
-    if (ctrl.config.get('testMode')) {
+  private _syncTestId(container: ControllerContainer): void {
+    if (container.get(ConfigController).get('testMode')) {
       this.setAttribute('data-testid', this.tagName.toLowerCase());
     } else {
       this.removeAttribute('data-testid');
@@ -457,11 +438,10 @@ export abstract class ChildBlock extends ChildBlockBase {
    * mid-life are exotic and not covered here.
    */
   public trySubscribeTestMode(callback: (enabled: boolean) => void): (() => void) | undefined {
-    const ctrl = this.uploaderOrNull;
-    if (!ctrl) {
+    const config = this.useOrNull(ConfigController);
+    if (!config) {
       return undefined;
     }
-    const config = ctrl.config;
     let last = config.get('testMode');
     callback(Boolean(last));
     return config.subscribe(() => {
@@ -495,7 +475,7 @@ export abstract class ChildBlock extends ChildBlockBase {
    * which `SignalWatcher` auto-tracks. Removed once every block is migrated.
    */
   protected subConfigValue<K extends keyof ConfigType>(key: K, callback: (value: ConfigType[K]) => void): () => void {
-    const config = this.uploader.config;
+    const config = this.use(ConfigController);
     let last = config.get(key);
     callback(last);
     const unsub = config.subscribe(() => {
@@ -551,23 +531,23 @@ export abstract class ChildBlock extends ChildBlockBase {
 
   /**
    * Controller-change subscriptions that should trigger a re-render — return
-   * `subscribe` functions (e.g. `(l) => ctrl.config.subscribe(l)`). Wired on
-   * adoption, torn down on release.
+   * `subscribe` functions (e.g. `(l) => container.get(LocaleController).subscribe(l)`).
+   * Wired on adoption, torn down on release.
    */
-  protected subscriptionsFor(_ctrl: UploaderController): Array<(listener: () => void) => () => void> {
+  protected subscriptionsFor(_container: ControllerContainer): Array<(listener: () => void) => () => void> {
     return [];
   }
 
-  /** Called after a controller is adopted (initial and on re-adoption). */
-  protected controllerReady(_ctrl: UploaderController): void {}
+  /** Called after the ctx's container is adopted (initial and on re-adoption). */
+  protected controllerReady(_container: ControllerContainer): void {}
 
-  /** Called after the controller is released (disconnect or re-adoption). */
-  protected controllerReleased(_ctrl: UploaderController): void {}
+  /** Called after the container is released (disconnect or re-adoption). */
+  protected controllerReleased(_container: ControllerContainer): void {}
 
   /** Resolve a CDN url through the configured secure-delivery proxy, if any. */
   protected async proxyUrl(url: string): Promise<string> {
     return resolveSecureDeliveryProxyUrl(
-      this.uploader.config.values,
+      this.use(ConfigController).values,
       (error, context) => this.bag.telemetryManager.sendEventError(error, context),
       url,
     );
