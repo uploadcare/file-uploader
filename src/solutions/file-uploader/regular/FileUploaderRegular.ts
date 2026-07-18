@@ -1,6 +1,5 @@
 import { html } from 'lit';
 import { property } from 'lit/decorators.js';
-import { LocaleController } from '../../../abstract/controllers/LocaleController';
 import { RouterController } from '../../../abstract/controllers/RouterController';
 import type { ControllerContainer } from '../../../abstract/di/ControllerContainer';
 import { inject } from '../../../abstract/di/inject';
@@ -53,13 +52,6 @@ export class FileUploaderRegular extends SolutionChildBlock {
     this._telemetry.sendEvent({
       eventType: InternalEventType.INIT_SOLUTION,
     });
-  }
-
-  protected override subscriptionsFor(container: ControllerContainer) {
-    // The cancel button's label is rendered through `this.l10n(...)` — re-render
-    // when the dictionary loads or the locale switches (same convention as every
-    // other l10n-rendering ChildBlock, e.g. SimpleBtn/UploadList).
-    return [(listener: () => void) => container.get(LocaleController).subscribe(listener)];
   }
 
   /**

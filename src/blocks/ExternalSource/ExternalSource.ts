@@ -8,9 +8,7 @@ import { html } from 'lit';
 import { state } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
-import { LocaleController } from '../../abstract/controllers/LocaleController';
 import { RouterController } from '../../abstract/controllers/RouterController';
-import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
 import { inject } from '../../abstract/di/inject';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { ChildBlock } from '../../lit/ChildBlock';
@@ -82,10 +80,6 @@ export class ExternalSource extends ChildBlock {
       count: selectedCount,
       total,
     });
-  }
-
-  protected override subscriptionsFor(container: ControllerContainer) {
-    return [(listener: () => void) => container.get(LocaleController).subscribe(listener)];
   }
 
   protected override controllerReady(): void {

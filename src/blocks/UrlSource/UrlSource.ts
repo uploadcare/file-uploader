@@ -1,8 +1,6 @@
 import { html } from 'lit';
 import { state } from 'lit/decorators.js';
-import { LocaleController } from '../../abstract/controllers/LocaleController';
 import { RouterController } from '../../abstract/controllers/RouterController';
-import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
 import { inject } from '../../abstract/di/inject';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
@@ -23,10 +21,6 @@ export class UrlSource extends ChildBlock {
 
   @state()
   private _url = '';
-
-  protected override subscriptionsFor(container: ControllerContainer) {
-    return [(listener: () => void) => container.get(LocaleController).subscribe(listener)];
-  }
 
   private _handleInput = (event: Event) => {
     this._url = (event.target as HTMLInputElement | null)?.value ?? '';

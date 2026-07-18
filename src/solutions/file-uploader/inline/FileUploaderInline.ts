@@ -2,7 +2,6 @@ import { html } from 'lit';
 import { state } from 'lit/decorators.js';
 import { CollectionStateController } from '../../../abstract/controllers/CollectionStateController';
 import { ConfigController } from '../../../abstract/controllers/ConfigController';
-import { LocaleController } from '../../../abstract/controllers/LocaleController';
 import { RouterController } from '../../../abstract/controllers/RouterController';
 import type { ControllerContainer } from '../../../abstract/di/ControllerContainer';
 import { inject } from '../../../abstract/di/inject';
@@ -157,10 +156,6 @@ export class FileUploaderInline extends SolutionChildBlock {
     };
     recomputeCouldCancel();
     this.trackSub(router.subscribe(recomputeCouldCancel));
-  }
-
-  protected override subscriptionsFor(container: ControllerContainer) {
-    return [(listener: () => void) => container.get(LocaleController).subscribe(listener)];
   }
 
   public override render() {
