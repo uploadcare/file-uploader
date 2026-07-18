@@ -192,15 +192,14 @@ export class DynamicBtn extends ChildBlock {
       },
     });
 
-    // The uploader-scope `*uploadCollection` instance may not have registered
-    // yet when this block's controller adopts (it's published once the
-    // uploader/solution block finishes its own init, which can race this
-    // block's adoption) — go through `bag.when` rather than the throwing
-    // `bag.uploadCollection` getter (FileItem precedent for `pluginManager`).
-    // Kept on the v1 `bag` path: the registration race makes an eager
-    // `use(UploadCollectionController)` unsafe here (step 8).
+    // The uploader-scope `UploadCollectionController` is resolved on the
+    // container only once the uploader/solution block attaches its scope
+    // (`ensureUploaderScope`), which can race this block's adoption — go through
+    // `whenController` (fires now if already resolved, else on first resolution)
+    // rather than the throwing `use(UploadCollectionController)`. Same
+    // now-or-when-available semantics as the v1 `bag.when('uploadCollection')`.
     this.trackSub(
-      this.bag.when('uploadCollection', (collection) => {
+      this.container.whenController(UploadCollectionController, (collection) => {
         // Deliberate post-parity improvement (v1 never unobserved these):
         // track the unsubscribers so a release/re-adoption cycle can't stack
         // duplicate observers (same shape as ProgressBarCommon).
