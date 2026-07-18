@@ -1,10 +1,8 @@
-import type { PubSub } from '../../../lit/PubSubCompat';
-import type { SharedState } from '../../../lit/SharedState';
 import type { SharedInstancesBag } from '../../../lit/shared-instances';
 import type { Uid } from '../../../lit/Uid';
 import type { ConfigType } from '../../../types';
+import type { ConfigController } from '../../controllers/ConfigController';
 import type { CustomConfig } from '../../customConfigOptions';
-import { sharedConfigKey } from '../../sharedConfigKey';
 import type { PluginRegistry } from './PluginRegistry';
 import type {
   PluginActivityApi,
@@ -18,7 +16,7 @@ import type {
 
 export function buildPluginApi(
   registry: PluginRegistry,
-  ctx: PubSub<SharedState>,
+  config: ConfigController,
   sharedInstancesBag: SharedInstancesBag,
   pluginId: string,
   configSubscriptions: (() => void)[],
@@ -32,26 +30,35 @@ export function buildPluginApi(
     registerL10n: (l10n) => registry.addL10n(pluginId, l10n),
     registerConfig: (definition) => {
       registry.addConfig(pluginId, definition);
-      const stateKey = sharedConfigKey(definition.name as keyof (ConfigType & CustomConfig));
-      if (!ctx.has(stateKey as keyof SharedState)) {
-        ctx.add(stateKey, definition.defaultValue as unknown as SharedState[typeof stateKey]);
+      // Seed the custom config key only on first sight (M-god step 7: direct
+      // `ConfigController`, off the `*cfg/*` facade). Matches the old
+      // `!ctx.has(stateKey)` guard + `ctx.add` first-write-wins: `register` is
+      // idempotent and keeps any value written before the plugin registered.
+      if (!config.hasKey(definition.name)) {
+        config.register(definition.name, definition.defaultValue);
       }
     },
   };
 
   const configApi: PluginConfigApi = {
     get: <TKey extends keyof (ConfigType & CustomConfig)>(configName: TKey): (ConfigType & CustomConfig)[TKey] => {
-      const stateKey = sharedConfigKey(configName);
-      return ctx.read(stateKey) as unknown as (ConfigType & CustomConfig)[TKey];
+      return config.getCustom(configName);
     },
 
     subscribe: <TKey extends keyof (ConfigType & CustomConfig)>(
       configName: TKey,
       callback: (value: (ConfigType & CustomConfig)[TKey]) => void,
     ): (() => void) => {
-      const stateKey = sharedConfigKey(configName);
-      const unsub = ctx.sub(stateKey, (value) => {
-        callback(value as unknown as (ConfigType & CustomConfig)[TKey]);
+      // Immediate fire + per-key `Object.is` dedup — the same semantics the
+      // `ctx.sub(sharedConfigKey(configName), …)` facade subscription gave.
+      let last = config.getCustom<(ConfigType & CustomConfig)[TKey]>(configName);
+      callback(last);
+      const unsub = config.subscribe(() => {
+        const next = config.getCustom<(ConfigType & CustomConfig)[TKey]>(configName);
+        if (!Object.is(next, last)) {
+          last = next;
+          callback(next);
+        }
       });
       configSubscriptions.push(unsub);
       return unsub;

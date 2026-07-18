@@ -60,9 +60,12 @@ function attach(
   }
 
   // Hand over an l10n bound to this ctx's locale — restores the interpolating
-  // labels the editor used to read from the shared ctx directly.
-  // `createL10n` reads the ctx live, so later locale population is reflected.
-  onLocale?.(createL10n(() => ctx));
+  // labels the editor used to read from the shared ctx directly. `createL10n`
+  // reads the `LocaleController` live (M-god step 7), so later locale population
+  // is reflected. The `*cfg/*` config reads below stay on the facade until the
+  // step-9 editor repoint; this is the minimal getter change forced by
+  // `createL10n`'s new signature.
+  onLocale?.(createL10n(() => ctx.uploaderController().locale));
 
   const telemetryManager = ctx.store['*telemetryManager'];
   if (telemetryManager) {

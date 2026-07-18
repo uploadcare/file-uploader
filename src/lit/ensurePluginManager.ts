@@ -30,6 +30,9 @@ export function ensurePluginManager(bag: SharedInstancesBag): void {
   if (ctx.has('*pluginManager')) {
     return;
   }
+  // Resolve the ctx's `ConfigController` once — the plugin API and lazy loader
+  // read config directly off it (M-god step 7), not through the `*cfg/*` facade.
+  const config = ctx.uploaderController().config;
   // Register through `addCtxSharedInstance` (NOT a raw `ctx.add`) so the manager
   // is recorded in the `*sharedContextInstances` bookkeeping map — exactly what
   // v1's `LitBlock._addSharedContextInstance` did. `destroyCtx` walks that map
@@ -42,10 +45,10 @@ export function ensurePluginManager(bag: SharedInstancesBag): void {
     () =>
       new PluginController({
         buildApi: (registry, pluginId, configSubscriptions) =>
-          buildPluginApi(registry, ctx, bag, pluginId, configSubscriptions),
+          buildPluginApi(registry, config, bag, pluginId, configSubscriptions),
         getUploaderApi: () => bag.api,
         watchPlugins: (onCompute) => {
-          const loader = new LazyPluginLoader(ctx, onCompute);
+          const loader = new LazyPluginLoader(ctx, config, onCompute);
           return () => loader.destroy();
         },
         // Scope debug output to the controller (not a hosting block) so its

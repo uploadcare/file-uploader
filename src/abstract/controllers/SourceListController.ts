@@ -1,14 +1,12 @@
 import type { ReactiveController, ReactiveControllerHost } from 'lit';
 import type { SourceButtonConfig } from '../../blocks/SourceBtn/SourceBtn';
-import type { PubSub } from '../../lit/PubSubCompat';
-import type { SharedState } from '../../lit/SharedState';
 import type { SharedInstancesBag } from '../../lit/shared-instances';
 import { stringToArray } from '../../utils/stringToArray';
 import type { PluginSourceRegistration } from '../managers/plugin';
-import { sharedConfigKey } from '../sharedConfigKey';
+import type { ConfigController } from './ConfigController';
 
 export type SourceListControllerOptions = {
-  ctx: PubSub<SharedState>;
+  config: ConfigController;
   sharedInstancesBag: SharedInstancesBag;
   onSourcesChange: (sources: SourceButtonConfig[]) => void;
 };
@@ -18,21 +16,35 @@ export class SourceListController implements ReactiveController {
   private _unsubscribePlugins?: () => void;
   private _unsubscribeConfig?: () => void;
   private _unsubscribePluginManagerWhen?: () => void;
-  private _ctx: PubSub<SharedState>;
+  private _config: ConfigController;
   private _sharedInstancesBag: SharedInstancesBag;
   private _onSourcesChange: (sources: SourceButtonConfig[]) => void;
 
   public constructor(host: ReactiveControllerHost, options: SourceListControllerOptions) {
-    this._ctx = options.ctx;
+    this._config = options.config;
     this._sharedInstancesBag = options.sharedInstancesBag;
     this._onSourcesChange = options.onSourcesChange;
     host.addController(this);
   }
 
   public hostConnected(): void {
-    this._unsubscribeConfig = this._ctx.sub(sharedConfigKey('sourceList'), (val: string) => {
+    // Read the `sourceList` config key directly off the `ConfigController`
+    // (M-god step 7: off the `*cfg/*` facade). Fire once with the current value,
+    // then on every actual change of this key — the same immediate-then-deduped
+    // per-key semantics the `ctx.sub(sharedConfigKey('sourceList'), …)` facade
+    // subscription provided.
+    let lastSourceList = this._config.get('sourceList');
+    const applySourceList = (val: string): void => {
       this._rawSourceList = stringToArray(val);
       this._updateSources();
+    };
+    applySourceList(lastSourceList);
+    this._unsubscribeConfig = this._config.subscribe(() => {
+      const next = this._config.get('sourceList');
+      if (!Object.is(next, lastSourceList)) {
+        lastSourceList = next;
+        applySourceList(next);
+      }
     });
 
     // `*pluginManager` is constructed by a v1 `LitBlock` (e.g. `<uc-drop-area>`)
