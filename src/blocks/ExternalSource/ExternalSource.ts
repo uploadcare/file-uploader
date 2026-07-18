@@ -7,6 +7,8 @@ import './external-source.css';
 import { html } from 'lit';
 import { state } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
+import { ConfigController } from '../../abstract/controllers/ConfigController';
+import { RouterController } from '../../abstract/controllers/RouterController';
 import type { UploaderController } from '../../abstract/controllers/UploaderController';
 import { ChildBlock } from '../../lit/ChildBlock';
 import { MessageBridge } from './MessageBridge';
@@ -24,6 +26,8 @@ const SOCIAL_SOURCE_MAPPING: Record<string, string> = {
 export type ActivityParams = { externalSourceType: string };
 
 export class ExternalSource extends ChildBlock {
+  public static override readonly uses = [ConfigController, RouterController] as const;
+
   private _messageBridge?: MessageBridge;
 
   private _iframeRef = createRef<HTMLIFrameElement>();
@@ -82,12 +86,12 @@ export class ExternalSource extends ChildBlock {
     // initial mount is deferred a tick (v1 relied on its immediate-fire
     // params subscription for exactly this — its pre-render direct
     // `_mountIframe()` call was a no-op against an empty ref).
-    this._lastActivityParams = this.bag.router.params;
+    this._lastActivityParams = this.use(RouterController).params;
     setTimeout(() => {
       if (!this.isConnected) {
         return;
       }
-      const { externalSourceType } = this.bag.router.params as ActivityParams;
+      const { externalSourceType } = this.use(RouterController).params as ActivityParams;
       if (!externalSourceType) {
         console.error(`Param "externalSourceType" is required for external source activity`);
         return;
@@ -96,8 +100,8 @@ export class ExternalSource extends ChildBlock {
       this._mountIframe();
     });
     this.trackSub(
-      this.bag.router.subscribe(() => {
-        const params = this.bag.router.params;
+      this.use(RouterController).subscribe(() => {
+        const params = this.use(RouterController).params;
         if (params === this._lastActivityParams) {
           return;
         }
@@ -116,6 +120,12 @@ export class ExternalSource extends ChildBlock {
         });
       }),
     );
+    // These stay on `subConfigValue` (which reads the same ConfigController):
+    // they are side-effecting subscriptions, not pure render reads — `multiple`
+    // seeds a `_showSelectionStatus` that the iframe's selection messages then
+    // overwrite, and `localeName`/`externalSourcesEmbedCss` `postMessage` into
+    // the iframe. A tracked `render()` read cannot express either, so they are
+    // not convertible to `getTracked` here (step 8).
     this.subConfigValue('multiple', (multiple) => {
       this._showSelectionStatus = multiple;
     });
@@ -133,7 +143,7 @@ export class ExternalSource extends ChildBlock {
     selectedFile: NonNullable<InputMessageMap['selected-files-change']['selectedFiles']>[number],
   ): string {
     if (selectedFile.alternatives) {
-      const preferredTypes = stringToArray(this.uploader.config.get('externalSourcesPreferredTypes'));
+      const preferredTypes = stringToArray(this.use(ConfigController).get('externalSourcesPreferredTypes'));
       for (const preferredType of preferredTypes) {
         const regexp = wildcardRegexp(preferredType);
         for (const [type, typeUrl] of Object.entries(selectedFile.alternatives)) {
@@ -152,7 +162,7 @@ export class ExternalSource extends ChildBlock {
   }
 
   private async _handleSelectedFilesChange(message: InputMessageMap['selected-files-change']) {
-    if (this.uploader.config.get('multiple') !== message.isMultipleMode) {
+    if (this.use(ConfigController).get('multiple') !== message.isMultipleMode) {
       console.error('Multiple mode mismatch');
       return;
     }
@@ -170,7 +180,7 @@ export class ExternalSource extends ChildBlock {
   }
 
   private _handleIframeLoad(): void {
-    this._applyEmbedCss(this.uploader.config.get('externalSourcesEmbedCss'));
+    this._applyEmbedCss(this.use(ConfigController).get('externalSourcesEmbedCss'));
     this._applyTheme();
     this._setupL10n();
   }
@@ -192,16 +202,16 @@ export class ExternalSource extends ChildBlock {
   private _setupL10n(): void {
     this._messageBridge?.send({
       type: 'set-locale-definition',
-      localeDefinition: this.uploader.config.get('localeName'),
+      localeDefinition: this.use(ConfigController).get('localeName'),
     });
   }
 
   private _remoteUrl(): string {
-    const pubkey = this.uploader.config.get('pubkey');
-    const remoteTabSessionKey = this.uploader.config.get('remoteTabSessionKey');
-    const socialBaseUrl = this.uploader.config.get('socialBaseUrl');
-    const multiple = this.uploader.config.get('multiple');
-    const { externalSourceType } = this.bag.router.params as ActivityParams;
+    const pubkey = this.use(ConfigController).get('pubkey');
+    const remoteTabSessionKey = this.use(ConfigController).get('remoteTabSessionKey');
+    const socialBaseUrl = this.use(ConfigController).get('socialBaseUrl');
+    const multiple = this.use(ConfigController).get('multiple');
+    const { externalSourceType } = this.use(RouterController).params as ActivityParams;
     if (!externalSourceType) {
       throw new Error(`Param "externalSourceType" is required for external source activity`);
     }
@@ -214,8 +224,8 @@ export class ExternalSource extends ChildBlock {
       session_key: remoteTabSessionKey,
       wait_for_theme: true,
       multiple: multiple.toString(),
-      origin: this.uploader.config.get('topLevelOrigin') || getTopLevelOrigin(),
-      debug: this.uploader.config.get('debug'),
+      origin: this.use(ConfigController).get('topLevelOrigin') || getTopLevelOrigin(),
+      debug: this.use(ConfigController).get('debug'),
     };
     const url = new URL(`/window4/${sourceName}`, socialBaseUrl);
     url.search = queryString(params);
@@ -226,21 +236,23 @@ export class ExternalSource extends ChildBlock {
     for (const message of this._selectedList) {
       const url = this._extractUrlFromSelectedFile(message);
       const { filename } = message;
-      const { externalSourceType } = this.bag.router.params as ActivityParams;
+      const { externalSourceType } = this.use(RouterController).params as ActivityParams;
       if (!externalSourceType) {
         throw new Error(`Param "externalSourceType" is required for external source activity`);
       }
+      // `api` (UploaderPublicApi) is not container-resolved (set via
+      // UploaderController.setApi, no DI token), so it stays on the v1 `bag` (step 8).
       this.bag.api.addFileFromUrl(url, {
         fileName: filename,
         source: externalSourceType,
       });
     }
 
-    this.bag.router.traverse('onFileAdd');
+    this.use(RouterController).traverse('onFileAdd');
   };
 
   private _handleCancel = (): void => {
-    this.bag.router.traverse('onCancel');
+    this.use(RouterController).traverse('onCancel');
   };
 
   private _handleSelectAll = (): void => {
@@ -278,7 +290,9 @@ export class ExternalSource extends ChildBlock {
 
     this._messageBridge?.destroy();
 
-    this._messageBridge = new MessageBridge(iframe.contentWindow, () => this.uploader.config.get('socialBaseUrl'));
+    this._messageBridge = new MessageBridge(iframe.contentWindow, () =>
+      this.use(ConfigController).get('socialBaseUrl'),
+    );
     this._messageBridge.on('selected-files-change', this._handleSelectedFilesChange.bind(this));
     this._messageBridge.on('toolbar-state-change', this._handleToolbarStateChange.bind(this));
 
@@ -318,7 +332,7 @@ export class ExternalSource extends ChildBlock {
         <button
           type="button"
           class="uc-mini-btn uc-close-btn"
-          @click=${() => this.bag.router.traverse('onClose')}
+          @click=${() => this.use(RouterController).traverse('onClose')}
           title=${this.l10n('a11y-activity-header-button-close')}
           aria-label=${this.l10n('a11y-activity-header-button-close')}
         >
