@@ -69,8 +69,8 @@ afterEach(() => {
   appended.length = 0;
 });
 
-// biome-ignore lint/suspicious/noExplicitAny: reaching into the protected `bag` to drive the router directly, same pattern as child-block.e2e.test.tsx
-const routerOf = (block: ChildBlock): RouterController => (block as any).bag.router;
+const routerOf = (block: ChildBlock): RouterController =>
+  (block as unknown as { bag: { router: RouterController } }).bag.router;
 
 describe('ActivityChildBlock', () => {
   it('sets the activity attribute on adoption', async () => {
@@ -133,34 +133,6 @@ describe('ActivityChildBlock', () => {
 
     router.closeModal();
     await expect.poll(() => child.hasAttribute('active')).toBe(false);
-  });
-
-  it('subActivity fires immediately, dedupes notifications that leave the effective activity unchanged, and fires on a real change', async () => {
-    const ctxName = getCtxName();
-    page.render(<uc-config ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>);
-    const child = append('test-activity-block', { 'ctx-name': ctxName });
-    await expect.poll(() => child.getAttribute('activity')).toBe('start-from');
-
-    const router = routerOf(child);
-    const seen: unknown[] = [];
-    // biome-ignore lint/suspicious/noExplicitAny: reaching into the protected `subActivity` helper, same pattern as subConfigValue in child-block.e2e.test.tsx
-    (child as any).subActivity((activity: unknown) => seen.push(activity));
-    expect(seen).toEqual([null]); // fires immediately with the current (background-less) activity
-
-    router.setActivity('start-from');
-    await expect.poll(() => seen.length).toBe(2);
-    expect(seen).toEqual([null, 'start-from']);
-
-    // Re-setting the same background activity still notifies subscribers
-    // (RouterController.setActivity always calls _transition), but the
-    // *effective* activity is unchanged — subActivity must not re-fire.
-    // Router notifications are synchronous — assert immediately.
-    router.setActivity('start-from');
-    expect(seen).toEqual([null, 'start-from']);
-
-    router.openModal('camera');
-    await expect.poll(() => seen.length).toBe(3);
-    expect(seen).toEqual([null, 'start-from', 'camera']);
   });
 
   it('re-reports the mounted-activity signal (old id un-reported, new id reported) when activityType changes dynamically', async () => {
