@@ -399,6 +399,42 @@ describe('UploaderPublicApi', () => {
       expect(state.allEntries).toHaveLength(1);
       expect(state.idleEntries).toHaveLength(1);
     });
+
+    // M-god step 9c-1: full output-shape coverage for the container-resolved
+    // build (was `buildOutputCollectionState(bag)`). A success entry exercises
+    // every derived getter — counts, status, boolean flags, and the filtered
+    // entry arrays that all read through `getOutputData(container)`.
+    it('reports a success collection state byte-shape from the container', () => {
+      const { api } = setup();
+      api.addFileFromUploadcareFile({
+        uuid: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
+        cdnUrl: 'https://ucarecdn.com/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/',
+        originalFilename: 'pic.png',
+        size: 123,
+        isImage: true,
+        mimeType: 'image/png',
+        contentInfo: { mime: { mime: 'image/png' } },
+      } as unknown as UploadcareFile);
+
+      const state = api.getOutputCollectionState();
+      expect(state.status).toBe('success');
+      expect(state.isSuccess).toBe(true);
+      expect(state.isUploading).toBe(false);
+      expect(state.isFailed).toBe(false);
+      expect(state.totalCount).toBe(1);
+      expect(state.successCount).toBe(1);
+      expect(state.failedCount).toBe(0);
+      expect(state.uploadingCount).toBe(0);
+      expect(state.allEntries).toHaveLength(1);
+      expect(state.successEntries).toHaveLength(1);
+      expect(state.successEntries[0]?.uuid).toBe('aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee');
+      expect(state.failedEntries).toHaveLength(0);
+      expect(state.uploadingEntries).toHaveLength(0);
+      expect(state.idleEntries).toHaveLength(0);
+      expect(state.errors).toEqual([]);
+      expect(state.group).toBeNull();
+      expect(state.progress).toBe(0);
+    });
   });
 
   describe('flow navigation', () => {
@@ -769,12 +805,25 @@ describe('UploaderPublicApi', () => {
       expect(ctrl.container.get(UploaderPublicApiClass)).toBe(api);
     });
 
-    it('throws with a clear message when used before its bag bridge is wired', () => {
-      // Resolve a bare api from a container (as the container would) without
-      // calling setBagBridge — the bag-dependent methods must fail loudly.
+    it('resolves getOutputCollectionState from its own container — no bag bridge (M-god step 9c-1)', () => {
+      // The api reaches its per-ctx container through the `CONTAINER` tag every
+      // container-built instance carries, so a container-resolved api can build
+      // its output state with no `setBagBridge` hand-off. A bare, empty container
+      // yields an idle/empty collection state (not a throw).
       const container = new ControllerContainer();
       const api = container.get(UploaderPublicApiClass);
-      expect(() => api.getOutputCollectionState()).toThrow(/bag bridge/);
+      const state = api.getOutputCollectionState();
+      expect(state.status).toBe('idle');
+      expect(state.totalCount).toBe(0);
+      expect(state.allEntries).toHaveLength(0);
+    });
+
+    it('throws when used on an instance no container created (untagged)', () => {
+      // Defensive: an api not built by a container has no `CONTAINER` tag, so
+      // `getOutputCollectionState` (via `_container`) must fail loudly rather
+      // than silently misbehave.
+      const api = new UploaderPublicApiClass();
+      expect(() => api.getOutputCollectionState()).toThrow(/not created by a container/);
     });
   });
 

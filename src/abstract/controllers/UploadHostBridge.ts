@@ -36,21 +36,21 @@ export type UploadHostDebug = (...args: unknown[]) => void;
 export class UploadHostBridge {
   /** Debug logger — shared by secure-uploads + upload controllers. */
   public declare readonly debug: UploadHostDebug;
-  /** Snapshot of the registered plugin file hooks (`bag.pluginManager`). */
+  /** Snapshot of the registered plugin file hooks (`PluginController`). */
   public declare readonly getFileHooks: () => readonly Owned<PluginFileHookRegistration>[];
-  /** Resolves the public output entry (`bag.api.getOutputItem`). */
+  /** Resolves the public output entry (`UploaderPublicApi.getOutputItem`). */
   public declare readonly getOutputItem: <TStatus extends OutputFileStatus>(uid: Uid) => OutputFileEntry<TStatus>;
-  /** The public API passed to validators (`bag.api`). */
+  /** The public API passed to validators (`UploaderPublicApi`). */
   public declare readonly getApi: () => UploaderPublicApi;
-  /** Fires the debounced `common-upload-failed` event (`bag.eventEmitter` + `bag.api`). */
+  /** Fires the debounced `common-upload-failed` event (`EventEmitter` + `UploaderPublicApi`). */
   public declare readonly emitCommonUploadFailed: () => void;
   /** Host `emit` — pure EventEmitter dispatch, guarded for teardown races. */
   public declare readonly emit: UploadHostEmit;
-  /** Current output collection state (`bag.api.getOutputCollectionState`). */
+  /** Current output collection state (`UploaderPublicApi.getOutputCollectionState`). */
   public declare readonly getOutputCollectionState: () => OutputCollectionState;
-  /** Current output entries (`getOutputData(bag)`). */
+  /** Current output entries (`getOutputData(container)`). */
   public declare readonly getOutputData: () => OutputFileEntry[];
-  /** Runs plugin `onAdd` hooks (`bag.wait('pluginManager')`). */
+  /** Runs plugin `onAdd` hooks (`container.whenController(PluginController)`). */
   public declare readonly runOnAddHooks: (entry: TypedData<UploadEntryData>) => void;
   /** Telemetry sink for a signature resolver that throws (never throws itself). */
   public declare readonly onResolverError: (error: unknown, context: string) => void;

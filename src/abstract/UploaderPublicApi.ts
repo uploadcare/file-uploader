@@ -7,7 +7,6 @@ import type { ActivityParamsMap, ActivityType } from '../lit/activity-constants'
 import { ACTIVITY_TYPES } from '../lit/activity-constants';
 import { waitForActivityBlock } from '../lit/hasBlockInCtx';
 import { createL10n } from '../lit/l10n';
-import type { SharedInstancesBag } from '../lit/shared-instances';
 import type { Uid } from '../lit/Uid';
 import type {
   ConfigType,
@@ -35,6 +34,7 @@ import { ConfigController } from './controllers/ConfigController';
 import { LocaleController } from './controllers/LocaleController';
 import { RouterController } from './controllers/RouterController';
 import { UploadCollectionController } from './controllers/UploadCollectionController';
+import { CONTAINER, type ControllerContainer } from './di/ControllerContainer';
 import { inject } from './di/inject';
 import { PluginController } from './managers/plugin';
 import { TypedData } from './TypedData';
@@ -62,11 +62,14 @@ export type ApiAddFileCommonOptions = {
  * `@inject(() => PluginController)` (a lazy thunk, resolved at plugin-read time;
  * `PluginController` is bound on the container by `ensurePluginManager`, which
  * runs in the same `ensureUploaderScope` that registers this api, so it is
- * always available by the time any plugin read fires on user action). The ONLY
- * dependency left on the bag bridge (`setBagBridge`, wired at registration in
- * `ensureUploaderScope`) is `buildOutputCollectionState`, which still reads the
- * derived collection keys off the `bag`/ctx (its own off-facade rewrite is a
- * later concern). Everything else is `@inject`.
+ * always available by the time any plugin read fires on user action).
+ *
+ * M-god step 9c-1: the last bag dependency is gone. `getOutputCollectionState`
+ * now calls `buildOutputCollectionState(this._container)` — the api reaches its
+ * own per-ctx `ControllerContainer` through the `CONTAINER` tag every
+ * container-built instance carries (the same tag `@inject` reads), so
+ * `buildOutputCollectionState` resolves the derived-collection controllers
+ * itself. The bag bridge is removed; the api has NO shared-instances dependency.
  */
 export class UploaderPublicApi {
   @inject(ConfigController) private readonly _config!: ConfigController;
@@ -81,30 +84,22 @@ export class UploaderPublicApi {
   // `ensurePluginManager` points at this container binding).
   @inject(() => PluginController) private readonly _pluginManager!: PluginController;
 
-  // Bag bridge for the one still-not-injectable dependency
-  // (`buildOutputCollectionState`, see class doc). Set once at registration;
-  // a later step dissolves it entirely.
-  private _getBag: (() => SharedInstancesBag) | null = null;
-
   // `createL10n` reads the injected `LocaleController` live on every lookup, so a
   // dictionary load / locale switch is reflected without recreating the fn.
   private _l10n = createL10n(() => this._locale);
 
   /**
-   * Wire the bag bridge (used only by `getOutputCollectionState` →
-   * `buildOutputCollectionState`). Called once by `ensureUploaderScope` right
-   * after the container resolves this instance — before any consumer can reach
-   * the api.
+   * The per-ctx `ControllerContainer` that built this instance, reached through
+   * the `CONTAINER` tag every container-built instance carries (the same tag
+   * `@inject` resolves through). Used by `getOutputCollectionState` to hand the
+   * container to `buildOutputCollectionState`.
    */
-  public setBagBridge(getBag: () => SharedInstancesBag): void {
-    this._getBag = getBag;
-  }
-
-  private get _bag(): SharedInstancesBag {
-    if (!this._getBag) {
-      throw new Error('Unexpected error: UploaderPublicApi used before its bag bridge was wired');
+  private get _container(): ControllerContainer {
+    const container = (this as { [CONTAINER]?: ControllerContainer })[CONTAINER];
+    if (!container) {
+      throw new Error('Unexpected error: UploaderPublicApi was not created by a container');
     }
-    return this._getBag();
+    return container;
   }
 
   public get _uploadCollection(): UploadCollectionController {
@@ -370,7 +365,7 @@ export class UploaderPublicApi {
   }
 
   public getOutputCollectionState<TStatus extends OutputCollectionStatus>() {
-    return buildOutputCollectionState(this._bag) as ReturnType<typeof buildOutputCollectionState<TStatus>>;
+    return buildOutputCollectionState(this._container) as ReturnType<typeof buildOutputCollectionState<TStatus>>;
   }
 
   public initFlow = (force = false): void => {

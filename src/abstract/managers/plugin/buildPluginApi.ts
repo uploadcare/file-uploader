@@ -1,8 +1,10 @@
-import type { SharedInstancesBag } from '../../../lit/shared-instances';
 import type { Uid } from '../../../lit/Uid';
 import type { ConfigType } from '../../../types';
 import type { ConfigController } from '../../controllers/ConfigController';
+import { RouterController } from '../../controllers/RouterController';
+import { UploadCollectionController } from '../../controllers/UploadCollectionController';
 import type { CustomConfig } from '../../customConfigOptions';
+import type { ControllerContainer } from '../../di/ControllerContainer';
 import type { PluginRegistry } from './PluginRegistry';
 import type {
   PluginActivityApi,
@@ -17,10 +19,14 @@ import type {
 export function buildPluginApi(
   registry: PluginRegistry,
   config: ConfigController,
-  sharedInstancesBag: SharedInstancesBag,
+  container: ControllerContainer,
   pluginId: string,
   configSubscriptions: (() => void)[],
 ): PluginApi {
+  // M-god step 9c-1: router/collection resolved off the container (was the
+  // shared-instances `bag`'s `router`/`uploadCollection` getters) — the same
+  // per-ctx singletons those getters re-exposed.
+  const router = container.get(RouterController);
   const registryApi: PluginRegistryApi = {
     registerSource: (source) => registry.addSource(pluginId, source),
     registerActivity: (activity) => registry.addActivity(pluginId, activity),
@@ -67,11 +73,10 @@ export function buildPluginApi(
 
   const activityApi: PluginActivityApi = {
     getParams: (): Record<string, unknown> => {
-      return sharedInstancesBag.router.params as Record<string, unknown>;
+      return router.params as Record<string, unknown>;
     },
 
     subscribeToParams: (callback: (params: Record<string, unknown>) => void): (() => void) => {
-      const router = sharedInstancesBag.router;
       let last = router.params;
       // Fire immediately with the current params (matches v1's `ctx.sub`).
       callback(last as Record<string, unknown>);
@@ -88,7 +93,7 @@ export function buildPluginApi(
 
   const filesApi: PluginFilesApi = {
     update: (internalId: string, changes: PluginFileEntryUpdate) => {
-      const entry = sharedInstancesBag.uploadCollection?.read(internalId as Uid);
+      const entry = container.getOrNull(UploadCollectionController)?.read(internalId as Uid);
       if (!entry) return;
       if (changes.file !== undefined) {
         entry.setValue('file', changes.file as File);
@@ -101,7 +106,7 @@ export function buildPluginApi(
   };
 
   const routerApi: PluginRouterApi = {
-    traverse: (edge) => sharedInstancesBag.router.traverse(edge),
+    traverse: (edge) => router.traverse(edge),
   };
 
   return { registry: registryApi, config: configApi, activity: activityApi, files: filesApi, router: routerApi };
