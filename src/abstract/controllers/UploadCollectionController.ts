@@ -30,7 +30,7 @@ export type CollectionObserver = (
  * This is the v2 rewrite of v1's `TypedCollection`: identical observation
  * semantics (one-tick-debounced collection + property observers, a watch-list
  * change-map, and a ~10s deferred destroy of removed entries) but backed by a
- * plain `Map<uid, TypedData>` instead of a nanostores `PubSub` context, and
+ * plain `Map<uid, TypedData>` instead of a per-ctx store `PubSub` context, and
  * using global timers so it runs without a DOM. Entries are `TypedData`
  * instances (already DOM-free as of M3a). The public API mirrors the former
  * `TypedCollection` (now removed) for drop-in parity with its consumers.

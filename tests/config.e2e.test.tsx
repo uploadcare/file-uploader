@@ -2,6 +2,7 @@ import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { page } from 'vitest/browser';
 import { ConfigController } from '@/abstract/controllers/ConfigController';
 import '../types/jsx';
+import { containerOf, hasCtx } from './utils/registry';
 import { cleanup, getCtxName } from './utils/test-renderer';
 
 beforeAll(async () => {
@@ -79,8 +80,7 @@ describe('Config', () => {
    *    (self-bootstrap + M9o refcount teardown on its own);
    *  - `ctx-name` reassignment on an already-initialized, live element;
    *  - a custom-config attribute mutated DURING a live `ctx-name` switch —
-   *    the exact case the pre-ctx guard (`PubSub.getCtx(effectiveCtxName)`)
-   *    covers and `uploaderOrNull` did not;
+   *    the exact case the pre-ctx guard (`this.containerOrNull`) covers;
    *  - an attribute set on a freshly-created (unconnected) element, before any
    *    ctx/controller exists at all.
    * These are additive only — no existing test is modified.
@@ -89,8 +89,7 @@ describe('Config', () => {
     it('self-bootstraps its own ctx, exposes readable config defaults, and tears the ctx down once removed (M9o refcount)', async () => {
       cleanup();
       const ctxName = getCtxName();
-      const { PubSub } = await import('@/lit/PubSubCompat.js');
-      expect(PubSub.hasCtx(ctxName)).toBe(false);
+      expect(hasCtx(ctxName)).toBe(false);
 
       // No uc-file-uploader-*, no uc-upload-ctx-provider: `<uc-config>` is the
       // only block in the composition.
@@ -99,7 +98,7 @@ describe('Config', () => {
 
       // The ctx now exists purely because this one ChildBlock self-bootstrapped
       // it (`_watchRegistry` → `ensureUploaderCtx`), with no v1 block present.
-      expect(PubSub.hasCtx(ctxName)).toBe(true);
+      expect(hasCtx(ctxName)).toBe(true);
       // Plain ConfigController default, readable with no other block present.
       expect(config.cdnCname).toBe('https://ucarecdn.com');
 
@@ -107,7 +106,7 @@ describe('Config', () => {
       // driven by `ChildBlock.disconnectedCallback`'s deferred M9o refcount
       // check (`isCtxUnreferenced` → `!UploaderRegistry.hasConsumers`).
       cleanup();
-      await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(false);
+      await expect.poll(() => hasCtx(ctxName)).toBe(false);
     });
   });
 
@@ -116,13 +115,12 @@ describe('Config', () => {
       cleanup();
       const ctxNameA = getCtxName();
       const ctxNameB = getCtxName();
-      const { PubSub } = await import('@/lit/PubSubCompat.js');
 
       page.render(<uc-config ctx-name={ctxNameA} pubkey="demopublickey" testMode></uc-config>);
       const config = page.getByTestId('uc-config').query()! as Config;
       expect(config.pubkey).toBe('demopublickey');
-      expect(PubSub.hasCtx(ctxNameA)).toBe(true);
-      expect(PubSub.hasCtx(ctxNameB)).toBe(false);
+      expect(hasCtx(ctxNameA)).toBe(true);
+      expect(hasCtx(ctxNameB)).toBe(false);
 
       config.setAttribute('ctx-name', ctxNameB);
       await config.updateComplete;
@@ -137,50 +135,45 @@ describe('Config', () => {
       // v1 quirk above — `SymbioteCompatMixin` never re-initialized and the
       // binding stayed on the original ctx forever.
       expect(config.pubkey).toBe('demopublickey');
-      await expect.poll(() => PubSub.hasCtx(ctxNameB)).toBe(true);
-      await expect.poll(() => PubSub.hasCtx(ctxNameA)).toBe(false);
+      await expect.poll(() => hasCtx(ctxNameB)).toBe(true);
+      await expect.poll(() => hasCtx(ctxNameA)).toBe(false);
 
       // The value did move to the new ctx's `ConfigController` — not just the
       // element's local cache — confirming reads/writes now go through ctxB.
-      const configApi = PubSub.getCtx(ctxNameB)!.container().get(ConfigController);
+      const configApi = containerOf(ctxNameB).get(ConfigController);
       expect(configApi.get('pubkey')).toBe('demopublickey');
     });
   });
 
   describe('custom-config attribute mutated mid ctx-name switch', () => {
-    it('does not throw when a custom-config attr fires while pointing at a not-yet-created ctx — the PubSub.getCtx guard uploaderOrNull did not cover', async () => {
+    it('does not throw when a custom-config attr fires while pointing at a not-yet-created ctx — covered by the containerOrNull guard', async () => {
       cleanup();
       const ctxNameA = getCtxName();
       const ctxNameB = getCtxName();
-      const { PubSub } = await import('@/lit/PubSubCompat.js');
 
       page.render(<uc-config ctx-name={ctxNameA} testMode></uc-config>);
       const config = page.getByTestId('uc-config').query()! as Config;
       await config.updateComplete;
-      expect(PubSub.hasCtx(ctxNameA)).toBe(true);
+      expect(hasCtx(ctxNameA)).toBe(true);
 
       // Point the element at a brand-new ctx name. `super.attributeChangedCallback`
       // updates `effectiveCtxName` to B synchronously, but `ChildBlock`'s adoption
       // (`_watchRegistry` → `ensureUploaderCtx`) runs in a later microtask, so B's
       // ctx does NOT exist yet — this is the guard's window.
       config.setAttribute('ctx-name', ctxNameB);
-      expect(PubSub.hasCtx(ctxNameB)).toBe(false);
+      expect(hasCtx(ctxNameB)).toBe(false);
 
       // In that window a custom-config attribute mutation reaches
       // `attributeChangedCallback`'s else-branch — exactly how the
       // `_bindObservedCustomAttributes` MutationObserver forwards custom attrs
-      // (`this.attributeChangedCallback(attrName, …)`, `Config.ts`). The element
-      // is still adopted to controller A while `this.bag` now targets nonexistent
-      // ctx B: the case the rejected `uploaderOrNull` guard did NOT cover (it
-      // stayed truthy = A and let `bag.when` → `_requireCtx(B)` throw "shared
-      // context is not initialized yet", aborting init — the M9p regression that
-      // spawned M9q). The shipped `PubSub.getCtx(effectiveCtxName)` guard returns
-      // early instead of touching the bag.
+      // (`this.attributeChangedCallback(attrName, …)`, `Config.ts`). The new ctx
+      // B has no adopted container yet: the shipped `this.containerOrNull` guard
+      // returns early (rather than throwing) instead of touching a controller.
       expect(() => config.attributeChangedCallback('a-custom-plugin-config', '', 'mid-switch')).not.toThrow();
 
       // ...and the switch still resolves cleanly afterwards.
       await config.updateComplete;
-      await expect.poll(() => PubSub.hasCtx(ctxNameB)).toBe(true);
+      await expect.poll(() => hasCtx(ctxNameB)).toBe(true);
     });
   });
 
@@ -195,7 +188,7 @@ describe('Config', () => {
       const el = document.createElement('uc-config') as unknown as Config;
 
       // Set the attribute before the element is ever connected: no ctx, no
-      // PubSub map, no controller exists for `ctxName` at this point.
+      // registered container, no controller exists for `ctxName` at this point.
       el.setAttribute('pubkey', 'pre-connect-key');
       // No setter/getter has been installed yet (that happens in
       // `controllerReady`, which only runs once connected + adopted) — the

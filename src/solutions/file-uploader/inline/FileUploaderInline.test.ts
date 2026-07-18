@@ -3,8 +3,8 @@ import { CollectionStateController } from '../../../abstract/controllers/Collect
 import { ConfigController } from '../../../abstract/controllers/ConfigController';
 import { RouterController } from '../../../abstract/controllers/RouterController';
 import { TelemetryManager } from '../../../abstract/managers/TelemetryManager';
+import { UploaderRegistry } from '../../../abstract/UploaderRegistry';
 import { ensureUploaderCtx } from '../../../lit/ensureUploaderCtx';
-import { PubSub } from '../../../lit/PubSubCompat';
 import type { Uid } from '../../../lit/Uid';
 import { delay } from '../../../utils/delay';
 import { FileUploaderInline } from './FileUploaderInline';
@@ -25,7 +25,7 @@ const freshCtxName = (): string => {
 afterEach(() => {
   for (const el of mounted.splice(0)) el.remove();
   for (const name of ctxNames.splice(0)) {
-    if (PubSub.hasCtx(name)) PubSub.deleteCtx(name);
+    UploaderRegistry.dispose(name);
   }
 });
 
@@ -38,7 +38,7 @@ const mount = async (
   collection: CollectionStateController;
 }> => {
   ensureUploaderCtx(ctxName);
-  const container = PubSub.getContainer(ctxName);
+  const container = UploaderRegistry.get(ctxName);
   const config = container?.get(ConfigController);
   const router = container?.get(RouterController);
   const collection = container?.get(CollectionStateController);

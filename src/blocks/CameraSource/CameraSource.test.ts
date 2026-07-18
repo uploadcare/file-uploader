@@ -3,8 +3,8 @@ import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { RouterController } from '../../abstract/controllers/RouterController';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
+import { UploaderRegistry } from '../../abstract/UploaderRegistry';
 import { ensureUploaderCtx } from '../../lit/ensureUploaderCtx';
-import { PubSub } from '../../lit/PubSubCompat';
 import { delay } from '../../utils/delay';
 import { CameraSource } from './CameraSource';
 
@@ -24,13 +24,13 @@ const freshCtxName = (): string => {
 afterEach(() => {
   for (const el of mounted.splice(0)) el.remove();
   for (const name of ctxNames.splice(0)) {
-    if (PubSub.hasCtx(name)) PubSub.deleteCtx(name);
+    UploaderRegistry.dispose(name);
   }
 });
 
 const mount = async (ctxName: string): Promise<{ el: CameraSource; config: ConfigController }> => {
   ensureUploaderCtx(ctxName);
-  const config = PubSub.getContainer(ctxName)?.get(ConfigController);
+  const config = UploaderRegistry.get(ctxName)?.get(ConfigController);
   if (!config) throw new Error('config controller not resolved');
   const el = document.createElement('uc-camera-source') as CameraSource;
   el.setAttribute('ctx-name', ctxName);

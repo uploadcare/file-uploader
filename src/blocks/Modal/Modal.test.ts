@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { RouterController } from '../../abstract/controllers/RouterController';
+import { UploaderRegistry } from '../../abstract/UploaderRegistry';
 import { ensureUploaderCtx } from '../../lit/ensureUploaderCtx';
-import { PubSub } from '../../lit/PubSubCompat';
 import { delay } from '../../utils/delay';
 import { Modal } from './Modal';
 
@@ -22,7 +22,7 @@ const freshCtxName = (): string => {
 afterEach(() => {
   for (const el of mounted.splice(0)) el.remove();
   for (const name of ctxNames.splice(0)) {
-    if (PubSub.hasCtx(name)) PubSub.deleteCtx(name);
+    UploaderRegistry.dispose(name);
   }
 });
 
@@ -31,7 +31,7 @@ const mount = async (
   id: string,
 ): Promise<{ el: Modal; router: RouterController; config: ConfigController }> => {
   ensureUploaderCtx(ctxName);
-  const container = PubSub.getContainer(ctxName);
+  const container = UploaderRegistry.get(ctxName);
   const router = container?.get(RouterController);
   const config = container?.get(ConfigController);
   if (!router || !config) throw new Error('controllers not resolved');

@@ -1,10 +1,10 @@
 import { html } from 'lit';
 import { afterEach, describe, expect, it } from 'vitest';
 import { RouterController } from '../abstract/controllers/RouterController';
+import { UploaderRegistry } from '../abstract/UploaderRegistry';
 import { delay } from '../utils/delay';
 import { ActivityChildBlock } from './ActivityChildBlock';
 import { ACTIVITY_TYPES } from './activity-constants';
-import { PubSub } from './PubSubCompat';
 
 // ─── Test-only ActivityChildBlock subclasses ─────────────────────────────────
 // A background activity block (rendered inline, not inside `<uc-modal>`): its
@@ -58,7 +58,7 @@ const freshCtxName = (): string => {
 };
 
 const router = (ctxName: string): RouterController => {
-  const container = PubSub.getContainer(ctxName);
+  const container = UploaderRegistry.get(ctxName);
   if (!container) throw new Error(`no container for ctx "${ctxName}"`);
   return container.get(RouterController);
 };
@@ -71,7 +71,7 @@ const flush = async (el: HTMLElement & { updateComplete: Promise<unknown> }): Pr
 afterEach(() => {
   for (const el of mounted.splice(0)) el.remove();
   for (const name of ctxNames.splice(0)) {
-    if (PubSub.hasCtx(name)) PubSub.deleteCtx(name);
+    UploaderRegistry.dispose(name);
   }
 });
 

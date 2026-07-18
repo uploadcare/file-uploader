@@ -1,7 +1,8 @@
 import { html } from 'lit';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { page } from 'vitest/browser';
-import type { RouterController } from '@/abstract/controllers/RouterController';
+import { RouterController } from '@/abstract/controllers/RouterController';
+import type { ControllerContainer } from '@/abstract/di/ControllerContainer';
 import { ActivityChildBlock } from '@/lit/ActivityChildBlock';
 import type { ChildBlock } from '@/lit/ChildBlock';
 import { getCtxName } from '../utils/getCtxName';
@@ -70,7 +71,7 @@ afterEach(() => {
 });
 
 const routerOf = (block: ChildBlock): RouterController =>
-  (block as unknown as { bag: { router: RouterController } }).bag.router;
+  (block as unknown as { container: ControllerContainer }).container.get(RouterController);
 
 describe('ActivityChildBlock', () => {
   it('sets the activity attribute on adoption', async () => {

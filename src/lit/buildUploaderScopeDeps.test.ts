@@ -3,7 +3,6 @@ import { TelemetryManager } from '../abstract/managers/TelemetryManager';
 import { UploaderRegistry } from '../abstract/UploaderRegistry';
 import { buildUploaderScopeDeps } from './buildUploaderScopeDeps';
 import { ensureUploaderCtx } from './ensureUploaderCtx';
-import { PubSub } from './PubSubCompat';
 
 // Each test uses a unique ctx id and tears it down so the module-level
 // context/controller maps and the global UploaderRegistry don't leak (same
@@ -17,7 +16,7 @@ const freshCtxName = () => {
 };
 
 afterEach(() => {
-  for (const id of ids.splice(0)) PubSub.deleteCtx(id);
+  for (const id of ids.splice(0)) UploaderRegistry.dispose(id);
 });
 
 describe('buildUploaderScopeDeps', () => {

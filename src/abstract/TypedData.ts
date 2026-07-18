@@ -8,7 +8,7 @@ const MSG_NAME = '[Typed State] Wrong property name: ';
  *
  * As of the v1 → v2 strangler (M3a) this is self-contained — a plain
  * null-prototype field object plus per-key listener sets — rather than a
- * nanostores `PubSub` context per entry. A module-level registry keyed by the
+ * per-ctx store `PubSub` context per entry. A module-level registry keyed by the
  * entry's `uid` replaces the old `PubSub.getCtx(uid)` lookup that hot paths
  * (`getOutputItem`, event emission) used to read entry state by id; because
  * the collection defers `destroy()` ~10s after removal, `getByUid` keeps

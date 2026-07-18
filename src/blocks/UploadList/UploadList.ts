@@ -259,7 +259,7 @@ export class UploadList extends ActivityChildBlock {
     this.subConfigValue('multipleMax', this._throttledHandleCollectionUpdate);
     // `*groupInfo` is owned by `CollectionStateController` (M-god step 4).
     // Subscribe over its coarse notify but fire only when `groupInfo` itself
-    // changes, replicating `PubSubCompat._subDerived`'s eager-init + per-key
+    // changes, replicating `the v1 per-key derived subscription`'s eager-init + per-key
     // `Object.is` dedup so an unrelated collection-state write (e.g.
     // `commonProgress`) never re-triggers this — behavior-identical to the v1
     // `ctx.sub('*groupInfo')`.

@@ -9,7 +9,7 @@ import type { ControllerContainer, Token } from '../abstract/di/ControllerContai
 import { TelemetryManager } from '../abstract/managers/TelemetryManager';
 import { resolveSecureDeliveryProxyUrl } from '../abstract/secureDeliveryProxyUrl';
 import { UploaderRegistry } from '../abstract/UploaderRegistry';
-import type { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter';
+import { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter';
 import type { ConfigType } from '../types';
 import { WindowHeightTracker } from '../utils/WindowHeightTracker';
 import { destroyCtx, isCtxUnreferenced } from './ctx-lifecycle';
@@ -17,19 +17,16 @@ import { ctxNameContext } from './ctx-name-context';
 import { ensureUploaderCtx } from './ensureUploaderCtx';
 import { LightDomMixin } from './LightDomMixin';
 import { createL10n } from './l10n';
-import { PubSub } from './PubSubCompat';
 import { RegisterableElementMixin } from './RegisterableElementMixin';
-import type { SharedState } from './SharedState';
-import { createSharedInstancesBag, type SharedInstancesBag } from './shared-instances';
 import { TestModeController } from './TestModeController';
 
 // `SignalWatcher` sits at the base of the mixin chain so it wraps
 // `performUpdate` (not `render()`): a fully-overridden `render()`/`shouldUpdate()`
 // in a leaf block still auto-tracks any `@lit-labs/signals` signal read during
-// its update, and re-renders when that signal changes. Non-migrated blocks read
-// state imperatively (`bag`/`subConfigValue`, none of which
-// touch a signal), so the watcher tracks nothing for them and their update cycle
-// is behavior-identical — it only adds a per-element watcher no signal notifies.
+// its update, and re-renders when that signal changes. Blocks reading state
+// imperatively (`subConfigValue`, which does not touch a signal) have nothing
+// tracked, so their update cycle is behavior-identical — it only adds a
+// per-element watcher no signal notifies.
 const ChildBlockBase = SignalWatcher(RegisterableElementMixin(LightDomMixin(LitElement)));
 
 /**
@@ -45,7 +42,7 @@ const ChildBlockBase = SignalWatcher(RegisterableElementMixin(LightDomMixin(LitE
  * outliving the ctx it was reading from.
  *
  * Subclasses read controllers directly off the container (`this.use(Token)`):
- * no `$` proxy, no `init$`, no nanostores. Rendering is gated until a container
+ * no `$` proxy, no per-ctx store. Rendering is gated until a container
  * is adopted (matching v1's `shouldUpdate` gate on ctx init); do
  * container-dependent setup in `controllerReady`, never in `connectedCallback`.
  * Note: while the render gate is closed Lit still clears its
@@ -63,8 +60,8 @@ export abstract class ChildBlock extends ChildBlockBase {
    * documentation + pre-warm + drives nothing type-wise (`use()` is generically
    * typed off its token argument, not off this list): on adoption every entry is
    * eagerly resolved from this ctx's container so the dep exists before first
-   * render. Empty by default — non-migrated blocks still read via
-   * `bag`/`subConfigValue`/`this.uploader.*`.
+   * render. Empty by default — blocks may also read config imperatively via
+   * `subConfigValue`.
    */
   public static readonly uses: readonly Token<unknown>[] = [];
 
@@ -181,41 +178,6 @@ export abstract class ChildBlock extends ChildBlockBase {
   }
 
   /**
-   * This ctx's `PubSub` store, resolved by name (NOT via `bag`). Transitional
-   * element-layer seam: `ensureUploaderScope` still needs a ctx to re-expose the
-   * `*`-keyed shared instances and to build the residual bag its api/plugin deps
-   * consume until those retire (9b-3). Exposed here so the uploader blocks can
-   * hand it over without touching `this.bag` (which step 9c deletes). Throws if
-   * the ctx isn't initialized — same contract as the former `this.bag.ctx` read.
-   *
-   * @deprecated Transitional v1 compat. Removed with `bag`/PubSub once the
-   * api/plugin bag deps are container-resolved.
-   */
-  protected requireCtx(): PubSub<SharedState> {
-    return this._requireCtx();
-  }
-
-  private _requireCtx(): PubSub<SharedState> {
-    const ctxName = this.effectiveCtxName;
-    const ctx = ctxName ? PubSub.getCtx<SharedState>(ctxName) : null;
-    if (!ctx) {
-      throw new Error(`${this.tagName.toLowerCase()}: shared context is not initialized yet.`);
-    }
-    return ctx;
-  }
-
-  /**
-   * Shared v1 manager/controller instances for this ctx. Getters throw until
-   * the instance registers — inside `controllerReady` prefer `bag.when(name,
-   * cb)` (async-safe) over direct getters.
-   *
-   * @deprecated Transitional v1 compat. Migrated blocks resolve controllers via
-   * `this.use(Token)` and read reactive state through signals (e.g.
-   * `ConfigController.getTracked`). Removed once every block is migrated.
-   */
-  protected bag: SharedInstancesBag = createSharedInstancesBag(() => this._requireCtx());
-
-  /**
    * Same contract as v1 `LitBlock.l10n` (`createL10n`): dictionary lookup with
    * key fallback, template variables, pluralization. Reads directly from this
    * ctx's `LocaleController` (M-god step 7: off the `*l10n/*` PubSub facade).
@@ -244,8 +206,10 @@ export abstract class ChildBlock extends ChildBlockBase {
     payload?: Parameters<EventEmitter['emit']>[1],
     options?: Parameters<EventEmitter['emit']>[2],
   ): void {
-    const ctx = this.effectiveCtxName ? PubSub.getCtx<SharedState>(this.effectiveCtxName) : null;
-    const eventEmitter = ctx?.has('*eventEmitter') ? ctx.read('*eventEmitter') : undefined;
+    // Resolve the ctx's `EventEmitter` off this block's adopted container. A
+    // teardown-time emit (released container) resolves `null` → no-op, matching
+    // the v1 guard where a torn-down ctx had no emitter.
+    const eventEmitter = this.useOrNull(EventEmitter);
     if (!eventEmitter) {
       return;
     }
@@ -382,16 +346,12 @@ export abstract class ChildBlock extends ChildBlockBase {
     if (!ctxName) {
       return;
     }
-    // Self-bootstrap: a ChildBlock is a pure consumer, so with no v1 block
-    // anywhere in the composition the ctx (and its controller) would never
+    // Self-bootstrap: a ChildBlock is a pure consumer, so with nothing else in
+    // the composition creating the ctx, its `ControllerContainer` would never
     // come into existence and `whenAvailable` below would wait forever. Call
-    // this unconditionally — a ctx map can exist without a controller (e.g. a
-    // bare `PubSub.registerCtx`), and `whenAvailable` won't fire until a
-    // controller is registered, so guarding on `PubSub.getCtx(ctxName)` alone
-    // could still hang. `ensureUploaderCtx` is idempotent and (M9n) forces the
-    // controller into existence on every path; if a v1 block or a sibling
-    // ChildBlock already created the ctx (and its controller), this is a
-    // no-op — the existing creator (and its seed) wins, unchanged.
+    // `ensureUploaderCtx` unconditionally — it is idempotent and creates (or
+    // returns) the ctx's container on every path; if a sibling ChildBlock
+    // already created it, this is a no-op — the existing container wins.
     ensureUploaderCtx(ctxName);
     this._registryUnsub = UploaderRegistry.whenAvailable(ctxName, (container) => {
       if (container) {

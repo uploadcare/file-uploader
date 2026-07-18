@@ -31,7 +31,7 @@ export class SourceListController implements ReactiveController {
     // Read the `sourceList` config key directly off the `ConfigController`
     // (M-god step 7: off the `*cfg/*` facade). Fire once with the current value,
     // then on every actual change of this key — the same immediate-then-deduped
-    // per-key semantics the `ctx.sub(sharedConfigKey('sourceList'), …)` facade
+    // per-key semantics the `ctx.sub('*cfg/sourceList', …)` facade
     // subscription provided.
     let lastSourceList = this._config.get('sourceList');
     const applySourceList = (val: string): void => {

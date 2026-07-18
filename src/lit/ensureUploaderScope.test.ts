@@ -1,32 +1,33 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { SecureUploadsController } from '../abstract/controllers/SecureUploadsController';
 import { UploadCollectionController } from '../abstract/controllers/UploadCollectionController';
+import { UploadController } from '../abstract/controllers/UploadController';
+import { UploadEventsController } from '../abstract/controllers/UploadEventsController';
+import { ValidationController } from '../abstract/controllers/ValidationController';
+import type { Token } from '../abstract/di/ControllerContainer';
 import { PluginController } from '../abstract/managers/plugin';
 import { UploaderPublicApi } from '../abstract/UploaderPublicApi';
+import { UploaderRegistry } from '../abstract/UploaderRegistry';
 import { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter';
 import { ensureUploaderCtx } from './ensureUploaderCtx';
 import { ensureUploaderScope } from './ensureUploaderScope';
-import { PubSub } from './PubSubCompat';
-import type { SharedState } from './SharedState';
 
-// M-god step 9b-1: `ensureUploaderScope` takes the ctx's `PubSub` + its
-// `ControllerContainer` directly (was the `bag`), builds its residual bag
-// internally, resolves the upload stack off the container, and re-exposes the
-// instances under their v1 `*`-keys. These specs pin that wiring + idempotency.
+// M-god step 9c: `ensureUploaderScope` takes the ctx's `ControllerContainer`
+// directly (the v1 ctx/`bag` layer is gone). It resolves the upload stack, the
+// public API, and the plugin manager off the container. These specs pin that
+// wiring + idempotency.
 
 let seq = 0;
 const created: string[] = [];
 
 const setup = () => {
   const ctxName = `ensure-scope-test-${seq++}`;
-  const ctx = ensureUploaderCtx(ctxName);
+  const container = ensureUploaderCtx(ctxName);
   created.push(ctxName);
-  const container = ctx.container();
   const eventEmitter = container.get(EventEmitter);
   const attach = () =>
-    ensureUploaderScope(ctx, container, undefined, (type, payload, options) =>
-      eventEmitter.emit(type, payload, options),
-    );
-  return { ctxName, ctx, container, attach };
+    ensureUploaderScope(container, undefined, (type, payload, options) => eventEmitter.emit(type, payload, options));
+  return { ctxName, container, attach };
 };
 
 beforeEach(() => {
@@ -36,59 +37,53 @@ beforeEach(() => {
 afterEach(() => {
   vi.restoreAllMocks();
   for (const name of created.splice(0)) {
-    if (PubSub.hasCtx(name)) PubSub.deleteCtx(name);
+    UploaderRegistry.dispose(name);
   }
 });
 
-describe('ensureUploaderScope (ctx + container signature)', () => {
-  it('re-exposes the container-owned upload scope under the v1 *-keys', () => {
-    const { ctx, attach } = setup();
-    expect(ctx.has('*uploadCollection')).toBe(false);
-    expect(ctx.has('*publicApi')).toBe(false);
+describe('ensureUploaderScope (container signature)', () => {
+  it('resolves the container-owned upload scope controllers', () => {
+    const { container, attach } = setup();
+    expect(container.has(UploadCollectionController)).toBe(false);
+    expect(container.has(UploaderPublicApi)).toBe(false);
 
     attach();
 
-    for (const key of [
-      '*uploadCollection',
-      '*publicApi',
-      '*secureUploadsManager',
-      '*uploadController',
-      '*validationManager',
-      '*uploadEvents',
-      '*pluginManager',
-    ] as const) {
-      expect(ctx.has(key)).toBe(true);
+    const tokens: Token<unknown>[] = [
+      UploadCollectionController,
+      UploaderPublicApi,
+      SecureUploadsController,
+      UploadController,
+      ValidationController,
+      UploadEventsController,
+      PluginController,
+    ];
+    for (const token of tokens) {
+      expect(container.has(token)).toBe(true);
     }
   });
 
-  it('re-exposes the SAME container singletons under the *-keys', () => {
-    const { ctx, container, attach } = setup();
+  it('is idempotent — a second attach keeps the first-resolved instances', () => {
+    const { container, attach } = setup();
     attach();
-
-    expect(ctx.read('*uploadCollection')).toBe(container.get(UploadCollectionController));
-    expect(ctx.read('*publicApi')).toBe(container.get(UploaderPublicApi));
-    expect(ctx.read('*pluginManager')).toBe(container.get(PluginController));
-  });
-
-  it('is idempotent — a second attach keeps the first-write-wins instances', () => {
-    const { ctx, attach } = setup();
-    attach();
-    const collection = ctx.read('*uploadCollection');
-    const api = ctx.read('*publicApi');
+    const collection = container.get(UploadCollectionController);
+    const api = container.get(UploaderPublicApi);
+    const pluginManager = container.get(PluginController);
 
     attach();
 
-    expect(ctx.read('*uploadCollection')).toBe(collection);
-    expect(ctx.read('*publicApi')).toBe(api);
+    expect(container.get(UploadCollectionController)).toBe(collection);
+    expect(container.get(UploaderPublicApi)).toBe(api);
+    expect(container.get(PluginController)).toBe(pluginManager);
   });
 
   it('registers a public api whose getOutputCollectionState resolves off its container', () => {
-    const { ctx, attach } = setup();
+    const { container, attach } = setup();
     attach();
-    const api = ctx.read('*publicApi') as SharedState['*publicApi'];
+    const api = container.get(UploaderPublicApi);
     // M-god step 9c-1: no `setBagBridge` — the api resolves the derived-collection
     // controllers from its own `CONTAINER`-tagged container, so a bare call
     // resolves without any bag wiring.
-    expect(() => api?.getOutputCollectionState()).not.toThrow();
+    expect(() => api.getOutputCollectionState()).not.toThrow();
   });
 });

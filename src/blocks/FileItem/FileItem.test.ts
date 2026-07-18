@@ -6,8 +6,8 @@ import { UploadController } from '../../abstract/controllers/UploadController';
 import { PluginController } from '../../abstract/managers/plugin';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
+import { UploaderRegistry } from '../../abstract/UploaderRegistry';
 import { ensureUploaderCtx } from '../../lit/ensureUploaderCtx';
-import { PubSub } from '../../lit/PubSubCompat';
 import type { Uid } from '../../lit/Uid';
 import { delay } from '../../utils/delay';
 import { FileItem } from './FileItem';
@@ -39,13 +39,13 @@ const freshCtxName = (): string => {
 afterEach(() => {
   for (const el of mounted.splice(0)) el.remove();
   for (const name of ctxNames.splice(0)) {
-    if (PubSub.hasCtx(name)) PubSub.deleteCtx(name);
+    UploaderRegistry.dispose(name);
   }
 });
 
 const mount = async (ctxName: string): Promise<{ el: FileItem; config: ConfigController }> => {
   ensureUploaderCtx(ctxName);
-  const config = PubSub.getContainer(ctxName)?.get(ConfigController);
+  const config = UploaderRegistry.get(ctxName)?.get(ConfigController);
   if (!config) throw new Error('config controller not resolved');
   const el = document.createElement('uc-file-item') as FileItem;
   el.setAttribute('ctx-name', ctxName);
@@ -66,7 +66,7 @@ describe('FileItem (M-god step 6b-6 migration)', () => {
   it('pre-warms its declared dependencies into the container on adoption', async () => {
     const ctxName = freshCtxName();
     await mount(ctxName);
-    const container = PubSub.getContainer(ctxName);
+    const container = UploaderRegistry.get(ctxName);
     // `static uses` pre-warm resolves both deps eagerly on adoption, so they
     // exist (as the container's own singletons) before first render.
     expect(container?.get(ConfigController)).toBeInstanceOf(ConfigController);
@@ -126,7 +126,7 @@ describe('FileItem (M-god step 6b-6 migration)', () => {
     // real, entry-less `_upload` (a no-op) before swapping in the spy.
     await delay(0);
 
-    const collectionState = PubSub.getContainer(ctxName)?.get(CollectionStateController);
+    const collectionState = UploaderRegistry.get(ctxName)?.get(CollectionStateController);
     if (!collectionState) throw new Error('collection-state controller not resolved');
 
     const upload = vi.fn();
@@ -156,7 +156,7 @@ describe('FileItem (M-god step 6b-6 migration)', () => {
   it('_upload delegates to use(UploadController).uploadEntry with the entry uid', async () => {
     const ctxName = freshCtxName();
     const { el } = await mount(ctxName);
-    const container = PubSub.getContainer(ctxName);
+    const container = UploaderRegistry.get(ctxName);
     if (!container) throw new Error('container not resolved');
 
     const uploadEntry = vi.fn();
@@ -171,7 +171,7 @@ describe('FileItem (M-god step 6b-6 migration)', () => {
   it('wires the plugin manager via whenController once the PluginController resolves, and unsubscribes on disconnect', async () => {
     const ctxName = freshCtxName();
     ensureUploaderCtx(ctxName);
-    const container = PubSub.getContainer(ctxName);
+    const container = UploaderRegistry.get(ctxName);
     if (!container) throw new Error('container not resolved');
 
     const unsub = vi.fn();

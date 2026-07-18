@@ -20,7 +20,7 @@ const ALLOWED_PASTE_ACTIVITIES = new Set<string>([ACTIVITY_TYPES.START_FROM, ACT
  *
  * The public API is reached through the container-bound {@link UploadHostBridge}
  * (`getApi()`), NOT a direct `@inject(UploaderPublicApi)` — deliberately.
- * `UploaderController` (in the editor-alone bundle via `PubSubCompat`) exposes
+ * `UploaderController` (in the editor-alone bundle via the v1 ctx facade) exposes
  * `clipboard`, so this module is in that bundle's static graph; a value import
  * of `UploaderPublicApi` here would drag the whole public API (camera modes,
  * output-state builder, upload sources) into the editor bundle and blow its

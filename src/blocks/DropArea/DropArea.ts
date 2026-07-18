@@ -142,7 +142,6 @@ export class DropArea extends ChildBlock {
     // uploader scope itself — same contract as v1's `LitUploaderBlock.
     // initCallback`, and the identical seam `<uc-upload-ctx-provider>` uses.
     ensureUploaderScope(
-      this.requireCtx(),
       container,
       (...args) => this._debugPrint(...args),
       (type, payload, options) => this.emit(type, payload, options),

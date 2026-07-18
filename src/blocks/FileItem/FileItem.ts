@@ -384,7 +384,7 @@ export class FileItem extends FileItemConfig {
     // Side-effecting subscription (fires `_upload`, not a render read):
     // `*uploadTrigger` is owned by `CollectionStateController` (M-god step 4).
     // Subscribe over its coarse notify but fire only when `uploadTrigger` itself
-    // changes, replicating `PubSubCompat._subDerived`'s eager-init + per-key
+    // changes, replicating `the v1 per-key derived subscription`'s eager-init + per-key
     // `Object.is` dedup. `uploadTrigger` is a `Set` the writer REPLACES (never
     // mutates in place — see `CollectionStateController.set`), so the `Object.is`
     // guard fires on a new Set and skips unrelated collection-state writes —

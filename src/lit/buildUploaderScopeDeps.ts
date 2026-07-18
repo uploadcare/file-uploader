@@ -41,7 +41,7 @@ export type UploaderScopeDeps = {
  * host `debug`.
  *
  * M-god step 9c-1: resolves every instance off the `ControllerContainer` (was
- * the shared-instances `bag`) — the same per-ctx singletons the bag re-exposed:
+ * the shared instances `bag`) — the same per-ctx singletons the bag re-exposed:
  * `container.get(TelemetryManager)` for the sinks, `container.get(EventEmitter)`
  * / `container.get(UploaderPublicApi)` for dispatch/output, and
  * `container.getOrNull` / `container.whenController` for the conditionally-bound
