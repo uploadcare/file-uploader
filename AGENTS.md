@@ -12,9 +12,9 @@ just point here.
 
 `@uploadcare/file-uploader` — a framework-agnostic **Web Components** file
 upload widget (works with React/Vue/Angular/Svelte/plain HTML, no adapters).
-Built on **Lit**, with state managed through a **nanostores**-backed
-compatibility shim (`SymbioteCompatMixin`). Ships as ESM library (`dist/`) and
-bundled browser builds (`web/`).
+Built on **Lit**, with state managed through per-ctx dependency-injected
+controllers (a `ControllerContainer` + `@inject`) backed by **`@lit-labs/signals`**.
+Ships as ESM library (`dist/`) and bundled browser builds (`web/`).
 
 The public API is documented in a **separate repo**, `fern-docs`
 (`~/workspace/fern-docs/fern/pages/file-uploader/*`). That documented surface is
@@ -104,8 +104,8 @@ Single package on `main` (root `package.json` = `@uploadcare/file-uploader`,
 
 ```text
 src/
-  abstract/        Logic layer: managers/, controllers/, UploaderPublicApi, EventBus, …
-  lit/             Base element classes + state shim (LitBlock, SymbioteCompatMixin, PubSubCompat)
+  abstract/        Logic layer: di/ (ControllerContainer, @inject, @signalState, SignalMap), controllers/, managers/, UploaderPublicApi, EventBus, UploaderRegistry, …
+  lit/             Block base classes + Lit glue (ChildBlock, ActivityChildBlock, SolutionChildBlock, RegisterableElementMixin, LightDomMixin)
   blocks/          Custom elements (Modal, DropArea, UploadList, Config, CloudImageEditor, …)
   solutions/       Presets (file-uploader regular/minimal/inline)
   plugins/         Built-in plugins (camera, url, external-sources, cloud-image-editor, …)
@@ -123,19 +123,36 @@ tests/             Browser e2e (*.e2e.test.tsx)
 - **Composition:** documented multi-tag model — `<uc-config>` +
   `<uc-file-uploader-regular|minimal|inline>` + `<uc-upload-ctx-provider>` +
   `<uc-form-input>`, wired by a shared `ctx-name` string and `@lit/context`.
-- **State:** one nanostores `MapStore` per `ctx-name` (`PubSubCompat`), reached
-  through the `$` proxy and `sub`/`pub`/`read`/`cfg` on `SymbioteCompatMixin`.
-  Flat string keys (`*cfg/<key>`, `*currentActivity`, `*uploadList`, …).
-- **Base classes:** `LitBlock` → `LitActivityBlock` → `LitUploaderBlock`;
-  `LitSolutionBlock` extends `LitBlock` directly (NOT `LitUploaderBlock`), so a
-  solution tag does not itself attach the uploader scope — the `<uc-drop-area>`
-  in its template does. Singleton managers (`ModalManager`, `EventEmitter`,
-  `PluginManager`, `ValidationManager`, …) live in the shared store.
-- **Public JS API:** `element.getAPI()` → `UploaderPublicApi`. Events dispatch
-  on `<uc-upload-ctx-provider>` (`EventType` in `EventEmitter.ts`).
+- **State / DI:** each `ctx-name` owns one `ControllerContainer`
+  (`src/abstract/di/ControllerContainer.ts`), registered in `UploaderRegistry`,
+  that lazily creates one instance per single-responsibility controller
+  (`ConfigController`, `RouterController`, `UploadCollectionController`,
+  `CollectionStateController`, `EventEmitter`, `TelemetryManager`,
+  `PluginController`, `UploaderPublicApi`, the upload stack, …). Controllers
+  declare their dependencies with the experimental `@inject` decorator (lazy
+  field resolution; a `() => X` thunk for circular refs) and hold reactive state
+  via `@signalState` fields or a composed `SignalMap`, both backed by
+  **`@lit-labs/signals`**. There is **no** global store and **no** `*`-keys.
+  Host/boundary values (upload-client SDK, DOM hooks, the api/plugin manager for
+  editor-bundle-isolated blocks) are provided via `declare`-only bridge tokens
+  (`UploadHostBridge`, `PluginManagerBridge`) + `container.bind`.
+- **Base classes:** `ChildBlock`
+  (`SignalWatcher(RegisterableElementMixin(LightDomMixin(LitElement)))`) is the
+  block base; `ActivityChildBlock` / `SolutionChildBlock` / `FileItemConfig`
+  extend it. Blocks declare `static uses = [...]` and resolve controllers via
+  `this.use(Token)` / `useOrNull(Token)` / `container.whenController(Token, cb)`,
+  reading reactive state via `getTracked(...)` under `SignalWatcher` (imperative
+  reads use `get(...)`). Controllers are plain DOM-free classes owned by the
+  container — they must **not** import `lit` or touch the DOM.
+- **Public JS API:** `element.getAPI()` → `UploaderPublicApi` (a thin `@inject`
+  facade resolved from the container). Events dispatch on
+  `<uc-upload-ctx-provider>` (`EventType` in `EventEmitter.ts`).
 
-Symbiote is **gone at runtime** — `SymbioteCompatMixin` is a Lit + nanostores
-shim, not a dependency on `@symbiotejs/symbiote`.
+Symbiote and the v1 state layer (`@symbiotejs/symbiote`, `nanostores`,
+`PubSubCompat`, `SymbioteCompatMixin`, `shared-instances`/the `$` proxy, the
+`LitBlock`/`LitUploaderBlock` hierarchy, and the monolithic `UploaderController`)
+are **all gone** — the per-ctx `ControllerContainer` + `@lit-labs/signals` are
+the state mechanism.
 
 ---
 
